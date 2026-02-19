@@ -136,7 +136,8 @@ func wikiOverview(_ game.GameState) string {
 AgeForge is an idle/clicker game where you build a civilization
 from nothing. Starting in the Primitive Age with just your
 bare hands, you gather resources, build structures, recruit
-villagers, and advance through 8 ages of human history.
+villagers, and advance through 22 ages — from primitive
+survival to galactic transcendence.
 
 [gold]Core Loop[-]
   1. [cyan]Gather[-] resources manually
@@ -174,26 +175,31 @@ and nothing else. Here's your first steps:
 
 [gold]Step 1: Gather Wood[-]
   Type: [cyan]gather wood[-]
-  You get 5 wood per gather. You need 10 for your first hut.
+  You get 5 wood per gather. You need 5 for your first stash.
 
-[gold]Step 2: Build a Hut[-]
+[gold]Step 2: Build a Stash[-]
+  Type: [cyan]build stash[-]
+  Stashes provide +30 storage. You need more storage before
+  you can hold enough resources for the Stone Age (100 food).
+
+[gold]Step 3: Build a Hut[-]
   Type: [cyan]build hut[-]
   Huts provide +2 population capacity. You need housing
   before you can recruit villagers.
 
-[gold]Step 3: Recruit a Worker[-]
+[gold]Step 4: Recruit a Worker[-]
   Type: [cyan]recruit worker[-]
   Workers can be assigned to gather resources automatically.
 
-[gold]Step 4: Assign Workers[-]
+[gold]Step 5: Assign Workers[-]
   Type: [cyan]assign worker food[-]
   Workers gather 0.3 resources per tick when assigned.
   Each worker eats 0.15 food/tick, so roughly 1 in 3
   workers should be on food duty.
 
-[gold]Step 5: Keep Building[-]
-  Build more huts, recruit more workers, assign them.
-  Watch the age progress bar at the top — when all
+[gold]Step 6: Keep Building[-]
+  Build more huts and stashes, recruit more workers, assign
+  them. Watch the age progress bar at the top — when all
   requirements turn [green]green[-], you'll advance!
 
 [gold]The Food Balance[-]
@@ -205,8 +211,9 @@ and nothing else. Here's your first steps:
 
 [gold]Storage Matters[-]
   Base storage is only [yellow]50[-] per resource. Resources stop
-  accumulating when storage is full! Build Storage Pits
-  (Stone Age) and Warehouses (Bronze Age) to increase caps.`
+  accumulating when storage is full! Build Stashes
+  (Primitive Age), Storage Pits (Stone Age), and Warehouses
+  (Bronze Age) to increase caps.`
 }
 
 func wikiResources(state game.GameState) string {
@@ -231,11 +238,14 @@ func wikiResources(state game.GameState) string {
 	}
 
 	sb.WriteString("[gold]Storage[-]\n")
-	sb.WriteString("  Base storage starts at 30-50 per resource.\n")
+	sb.WriteString("  Base storage starts at 10-50 per resource.\n")
 	sb.WriteString("  Build storage buildings to increase caps:\n")
+	sb.WriteString("  • [cyan]Stash[-] (Primitive Age): +30 all resources\n")
 	sb.WriteString("  • [cyan]Storage Pit[-] (Stone Age): +50 all resources\n")
 	sb.WriteString("  • [cyan]Warehouse[-] (Bronze Age): +150 all resources\n")
 	sb.WriteString("  • [cyan]Granary[-] (Iron Age): +200 food only\n")
+	sb.WriteString("  Each age has a dedicated storage building with\n")
+	sb.WriteString("  increasing capacity to handle scaling costs.\n")
 
 	return sb.String()
 }
@@ -664,7 +674,7 @@ func wikiPrestige(state game.GameState) string {
 
 	sb.WriteString("[gold]Point Calculation[-]\n")
 	sb.WriteString("  • Base: 1 point per age beyond Primitive\n")
-	sb.WriteString("    (Medieval = 4, Modern = 7)\n")
+	sb.WriteString("    (Medieval = 5, Modern = 12)\n")
 	sb.WriteString("  • Bonus: +1 per 10 milestones completed\n")
 	sb.WriteString("  • Bonus: +1 per 15 techs researched\n")
 	sb.WriteString("  • Bonus: +1 per 50 buildings built\n")
@@ -830,7 +840,7 @@ Most have single-letter shortcuts.
 
   F1-F5 / Tab    Switch between dashboard tabs
   Shift+Tab      Previous tab
-  ↑↓ / 1-8       Navigate wiki pages (in Wiki tab)
+  ↑↓ / 1-9       Navigate wiki pages (in Wiki tab)
   PgUp/PgDn      Scroll wiki content
   ESC            Auto-save and return to main menu`
 }
@@ -840,15 +850,16 @@ func wikiStrategy(_ game.GameState) string {
 
 [gold]── Early Game (Primitive Age) ──[-]
 
-  • Gather wood first — you need 10 for your first hut
-  • Build 2-3 huts before recruiting many workers
+  • Gather wood first — you need 5 for your first stash
+  • Build stashes early! Base storage is 50 but you need
+    100 food for the Stone Age
+  • Build 2-3 huts, then recruit and assign workers
   • Keep 1/3 of workers on food at all times
   • Don't recruit faster than you can feed
-  • You only have food and wood — keep it simple
 
 [gold]── Stone Age ──[-]
 
-  • Build Storage Pits early — 50 base cap fills fast
+  • Build Storage Pits early — caps fill fast
   • Stone Pits are slow (0.1/tick) so build several
   • Firepits generate knowledge for Bronze Age
   • You need 500 food, 300 stone, 100 knowledge for Bronze
@@ -911,8 +922,14 @@ func wikiStrategy(_ game.GameState) string {
   Worker food cost:    0.15 / tick
   Scholar gather rate:  0.50 / tick
   Scholar food cost:   0.20 / tick
-  Merchant gather rate: 0.60 / tick (gold only)
+  Merchant gather rate: 0.60 / tick (gold, crypto)
   Merchant food cost:  0.20 / tick
+  Engineer gather rate: 0.70 / tick (oil, electricity, data)
+  Engineer food cost:  0.25 / tick
+  Hacker gather rate:  0.80 / tick (data, crypto)
+  Hacker food cost:    0.30 / tick
+  Astronaut gather rate: 1.00 / tick (titanium, dark matter, plasma)
+  Astronaut food cost: 0.40 / tick
 
   Per hour (1800 ticks):
     1 worker gathering:  540 resources

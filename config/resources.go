@@ -31,8 +31,24 @@ func BaseResources() []ResourceDef {
 		{Name: "Culture", Key: "culture", BaseStorage: 50, Age: "renaissance_age", Description: "Art and cultural influence"},
 		// Industrial Age
 		{Name: "Oil", Key: "oil", BaseStorage: 50, Age: "industrial_age", Description: "Fuel for machines and industry"},
+		// Victorian Age
+		{Name: "Electricity", Key: "electricity", BaseStorage: 50, Age: "victorian_age", Description: "Powers modern infrastructure"},
+		// Atomic Age
+		{Name: "Uranium", Key: "uranium", BaseStorage: 30, Age: "atomic_age", Description: "Radioactive fuel for reactors"},
 		// Modern Age
-		{Name: "Electricity", Key: "electricity", BaseStorage: 50, Age: "modern_age", Description: "Powers modern infrastructure"},
+		{Name: "Data", Key: "data", BaseStorage: 50, Age: "modern_age", Description: "Digital information and analytics"},
+		// Cyberpunk Age
+		{Name: "Crypto", Key: "crypto", BaseStorage: 50, Age: "cyberpunk_age", Description: "Decentralized digital currency"},
+		// Fusion Age
+		{Name: "Plasma", Key: "plasma", BaseStorage: 30, Age: "fusion_age", Description: "Superheated ionized gas for energy"},
+		// Space Age
+		{Name: "Titanium", Key: "titanium", BaseStorage: 30, Age: "space_age", Description: "Lightweight metal for space construction"},
+		// Interstellar Age
+		{Name: "Dark Matter", Key: "dark_matter", BaseStorage: 20, Age: "interstellar_age", Description: "Exotic matter for warp technology"},
+		// Galactic Age
+		{Name: "Antimatter", Key: "antimatter", BaseStorage: 20, Age: "galactic_age", Description: "Annihilation fuel for megastructures"},
+		// Quantum Age
+		{Name: "Quantum Flux", Key: "quantum_flux", BaseStorage: 10, Age: "quantum_age", Description: "Unstable quantum energy for reality manipulation"},
 	}
 }
 

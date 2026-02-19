@@ -178,6 +178,114 @@ func RandomEvents() []EventDef {
 				{Type: "steal_resource", Target: "oil", Value: 15},
 			},
 		},
+
+		// === COLONIAL+ NEW EVENTS ===
+		{
+			Name: "Colonial Windfall", Key: "colonial_windfall",
+			MinAge: "colonial_age", Weight: 8, MinTick: 300, Cooldown: 150,
+			Duration: 0,
+			Description: "A colonial expedition returns with treasure.",
+			LogMessage:  "Colonial windfall! +100 gold, +30 culture.",
+			Effects: []Effect{
+				{Type: "instant_resource", Target: "gold", Value: 100},
+				{Type: "instant_resource", Target: "culture", Value: 30},
+			},
+		},
+		{
+			Name: "Pirate Attack", Key: "pirate_attack",
+			MinAge: "colonial_age", Weight: 7, MinTick: 320, Cooldown: 140,
+			Duration: 0,
+			Description: "Pirates raid your trade routes.",
+			LogMessage:  "Pirates attack! Lost gold and trade goods.",
+			Effects: []Effect{
+				{Type: "steal_resource", Target: "gold", Value: 50},
+				{Type: "steal_resource", Target: "food", Value: 30},
+			},
+		},
+		{
+			Name: "Power Surge", Key: "power_surge",
+			MinAge: "victorian_age", Weight: 6, MinTick: 400, Cooldown: 160,
+			Duration: 10,
+			Description: "An electrical surge boosts production temporarily.",
+			LogMessage:  "Power surge! Electricity production boosted for 10 ticks.",
+			Effects: []Effect{
+				{Type: "production", Target: "electricity", Value: 3.0},
+			},
+		},
+		{
+			Name: "Nuclear Scare", Key: "nuclear_scare",
+			MinAge: "atomic_age", Weight: 4, MinTick: 500, Cooldown: 250,
+			Duration: 12,
+			Description: "Nuclear anxiety reduces productivity.",
+			LogMessage:  "Nuclear scare! Production reduced for 12 ticks.",
+			Effects: []Effect{
+				{Type: "production", Target: "electricity", Value: -2.0},
+				{Type: "production", Target: "knowledge", Value: -1.0},
+			},
+		},
+		{
+			Name: "Data Breach", Key: "data_breach",
+			MinAge: "information_age", Weight: 6, MinTick: 600, Cooldown: 180,
+			Duration: 0,
+			Description: "Hackers steal your data reserves.",
+			LogMessage:  "Data breach! Lost data and crypto.",
+			Effects: []Effect{
+				{Type: "steal_resource", Target: "data", Value: 50},
+				{Type: "steal_resource", Target: "gold", Value: 100},
+			},
+		},
+		{
+			Name: "Crypto Boom", Key: "crypto_boom",
+			MinAge: "cyberpunk_age", Weight: 7, MinTick: 700, Cooldown: 200,
+			Duration: 15,
+			Description: "Cryptocurrency values skyrocket temporarily.",
+			LogMessage:  "Crypto boom! Crypto production boosted for 15 ticks.",
+			Effects: []Effect{
+				{Type: "production", Target: "crypto", Value: 5.0},
+			},
+		},
+		{
+			Name: "Plasma Storm", Key: "plasma_storm",
+			MinAge: "fusion_age", Weight: 5, MinTick: 800, Cooldown: 220,
+			Duration: 10,
+			Description: "Solar plasma eruption disrupts power but yields plasma.",
+			LogMessage:  "Plasma storm! Lost electricity but gained plasma.",
+			Effects: []Effect{
+				{Type: "production", Target: "electricity", Value: -5.0},
+				{Type: "production", Target: "plasma", Value: 3.0},
+			},
+		},
+		{
+			Name: "First Contact", Key: "first_contact",
+			MinAge: "space_age", Weight: 3, MinTick: 900, Cooldown: 300,
+			Duration: 0,
+			Description: "Contact with alien intelligence yields knowledge.",
+			LogMessage:  "First contact! +500 knowledge, +50 titanium.",
+			Effects: []Effect{
+				{Type: "instant_resource", Target: "knowledge", Value: 500},
+				{Type: "instant_resource", Target: "titanium", Value: 50},
+			},
+		},
+		{
+			Name: "Dark Matter Rift", Key: "dark_matter_rift",
+			MinAge: "interstellar_age", Weight: 4, MinTick: 1000, Cooldown: 280,
+			Duration: 15,
+			Description: "A rift in spacetime leaks dark matter.",
+			LogMessage:  "Dark matter rift! Dark matter production boosted for 15 ticks.",
+			Effects: []Effect{
+				{Type: "production", Target: "dark_matter", Value: 3.0},
+			},
+		},
+		{
+			Name: "Quantum Fluctuation", Key: "quantum_fluctuation",
+			MinAge: "quantum_age", Weight: 3, MinTick: 1100, Cooldown: 300,
+			Duration: 10,
+			Description: "Reality destabilizes briefly but yields quantum flux.",
+			LogMessage:  "Quantum fluctuation! Quantum flux production boosted for 10 ticks.",
+			Effects: []Effect{
+				{Type: "production", Target: "quantum_flux", Value: 5.0},
+			},
+		},
 	}
 }
 

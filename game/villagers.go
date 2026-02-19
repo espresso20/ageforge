@@ -28,12 +28,12 @@ func DefaultVillagerTypes() []VillagerTypeDef {
 	return []VillagerTypeDef{
 		{
 			Name: "Worker", Key: "worker", FoodCost: 0.15,
-			CanGather:  []string{"food", "wood", "stone", "iron", "gold", "coal", "oil"},
+			CanGather:  []string{"food", "wood", "stone", "iron", "gold", "coal", "oil", "electricity", "uranium", "titanium"},
 			GatherRate: 0.3,
 		},
 		{
 			Name: "Scholar", Key: "scholar", FoodCost: 0.2,
-			CanGather:  []string{"knowledge", "culture"},
+			CanGather:  []string{"knowledge", "culture", "data"},
 			GatherRate: 0.5,
 		},
 		{
@@ -43,8 +43,23 @@ func DefaultVillagerTypes() []VillagerTypeDef {
 		},
 		{
 			Name: "Merchant", Key: "merchant", FoodCost: 0.2,
-			CanGather:  []string{"gold"},
+			CanGather:  []string{"gold", "crypto"},
 			GatherRate: 0.6,
+		},
+		{
+			Name: "Engineer", Key: "engineer", FoodCost: 0.25,
+			CanGather:  []string{"oil", "electricity", "data"},
+			GatherRate: 0.7,
+		},
+		{
+			Name: "Hacker", Key: "hacker", FoodCost: 0.3,
+			CanGather:  []string{"data", "crypto"},
+			GatherRate: 0.8,
+		},
+		{
+			Name: "Astronaut", Key: "astronaut", FoodCost: 0.4,
+			CanGather:  []string{"titanium", "dark_matter", "plasma"},
+			GatherRate: 1.0,
 		},
 	}
 }

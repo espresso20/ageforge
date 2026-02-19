@@ -25,15 +25,25 @@ type BuildingDef struct {
 // BaseBuildings returns all building definitions
 func BaseBuildings() []BuildingDef {
 	return []BuildingDef{
-		// ===== STONE AGE =====
+		// ===== PRIMITIVE AGE =====
 		{
 			Name: "Hut", Key: "hut", Category: "housing",
 			BaseCost:  map[string]float64{"wood": 10},
 			CostScale: 1.3,
 			Effects:   []Effect{{Type: "capacity", Target: "population", Value: 2}},
-			RequiredAge: "stone_age",
+			RequiredAge: "primitive_age",
 			Description: "A crude shelter of sticks and leaves. +2 pop cap.",
 		},
+		{
+			Name: "Stash", Key: "stash", Category: "storage",
+			BaseCost:  map[string]float64{"wood": 5},
+			CostScale: 1.3,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 30}},
+			RequiredAge: "primitive_age",
+			Description: "A hidden pile of supplies. +30 storage.",
+		},
+
+		// ===== STONE AGE =====
 		{
 			Name: "Gathering Camp", Key: "gathering_camp", Category: "production",
 			BaseCost:  map[string]float64{"wood": 8},
@@ -177,6 +187,45 @@ func BaseBuildings() []BuildingDef {
 			Description: "Stores extra food. +200 food storage.",
 		},
 
+		// ===== CLASSICAL AGE =====
+		{
+			Name: "Forum", Key: "forum", Category: "production",
+			BaseCost:  map[string]float64{"stone": 80, "gold": 30, "iron": 25},
+			CostScale: 1.4,
+			Effects: []Effect{
+				{Type: "production", Target: "gold", Value: 0.5},
+				{Type: "production", Target: "knowledge", Value: 0.3},
+			},
+			RequiredAge: "classical_age",
+			Description: "Center of civic life. +0.5 gold, +0.3 knowledge/tick.",
+		},
+		{
+			Name: "Aqueduct", Key: "aqueduct", Category: "production",
+			BaseCost:  map[string]float64{"stone": 100, "iron": 30},
+			CostScale: 1.4,
+			Effects: []Effect{
+				{Type: "production", Target: "food", Value: 1.0},
+			},
+			RequiredAge: "classical_age",
+			Description: "Water infrastructure boosts food. +1.0 food/tick.",
+		},
+		{
+			Name: "Amphitheater", Key: "amphitheater", Category: "production",
+			BaseCost:  map[string]float64{"stone": 90, "gold": 25, "wood": 40},
+			CostScale: 1.4,
+			Effects:   []Effect{{Type: "production", Target: "culture", Value: 0.3}},
+			RequiredAge: "classical_age",
+			Description: "Drama and performance. +0.3 culture/tick.",
+		},
+		{
+			Name: "Classical Vault", Key: "classical_vault", Category: "storage",
+			BaseCost:  map[string]float64{"stone": 70, "iron": 20, "gold": 15},
+			CostScale: 1.4,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 300}},
+			RequiredAge: "classical_age",
+			Description: "Stone vault for valuables. +300 storage.",
+		},
+
 		// ===== MEDIEVAL AGE =====
 		{
 			Name: "Cathedral", Key: "cathedral", Category: "production",
@@ -238,6 +287,53 @@ func BaseBuildings() []BuildingDef {
 			MaxCount:    3,
 			Description: "Studies the stars. +2.0 knowledge/tick. Max 3.",
 		},
+		{
+			Name: "Renaissance Vault", Key: "renaissance_vault", Category: "storage",
+			BaseCost:  map[string]float64{"stone": 80, "gold": 40, "iron": 25},
+			CostScale: 1.4,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 500}},
+			RequiredAge: "renaissance_age",
+			Description: "Ornate storage facility. +500 storage.",
+		},
+
+		// ===== COLONIAL AGE =====
+		{
+			Name: "Colony", Key: "colony", Category: "production",
+			BaseCost:  map[string]float64{"wood": 100, "gold": 80, "steel": 20},
+			CostScale: 1.45,
+			Effects: []Effect{
+				{Type: "production", Target: "food", Value: 2.0},
+				{Type: "production", Target: "gold", Value: 1.5},
+			},
+			RequiredAge: "colonial_age",
+			Description: "Overseas colony. +2.0 food, +1.5 gold/tick.",
+		},
+		{
+			Name: "Port", Key: "port", Category: "production",
+			BaseCost:  map[string]float64{"wood": 80, "stone": 60, "gold": 40},
+			CostScale: 1.4,
+			Effects: []Effect{
+				{Type: "production", Target: "gold", Value: 2.0},
+			},
+			RequiredAge: "colonial_age",
+			Description: "Maritime trade hub. +2.0 gold/tick.",
+		},
+		{
+			Name: "Plantation", Key: "plantation", Category: "production",
+			BaseCost:  map[string]float64{"wood": 60, "gold": 30, "iron": 15},
+			CostScale: 1.35,
+			Effects:   []Effect{{Type: "production", Target: "food", Value: 3.0}},
+			RequiredAge: "colonial_age",
+			Description: "Large-scale farming. +3.0 food/tick.",
+		},
+		{
+			Name: "Colonial Warehouse", Key: "colonial_warehouse", Category: "storage",
+			BaseCost:  map[string]float64{"wood": 70, "stone": 50, "gold": 30},
+			CostScale: 1.4,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 800}},
+			RequiredAge: "colonial_age",
+			Description: "Trade goods warehouse. +800 storage.",
+		},
 
 		// ===== INDUSTRIAL AGE =====
 		{
@@ -267,23 +363,146 @@ func BaseBuildings() []BuildingDef {
 			RequiredAge: "industrial_age",
 			Description: "Dense housing. +25 pop cap.",
 		},
+		{
+			Name: "Industrial Depot", Key: "industrial_depot", Category: "storage",
+			BaseCost:  map[string]float64{"steel": 30, "iron": 40, "coal": 20},
+			CostScale: 1.4,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 1200}},
+			RequiredAge: "industrial_age",
+			Description: "Industrial-scale storage. +1200 storage.",
+		},
+
+		// ===== VICTORIAN AGE =====
+		{
+			Name: "Power Grid", Key: "power_grid", Category: "production",
+			BaseCost:  map[string]float64{"steel": 60, "coal": 40, "gold": 50},
+			CostScale: 1.45,
+			Effects:   []Effect{{Type: "production", Target: "electricity", Value: 0.8}},
+			RequiredAge: "victorian_age",
+			Description: "Steam-powered electrical generation. +0.8 electricity/tick.",
+		},
+		{
+			Name: "Telegraph", Key: "telegraph", Category: "research",
+			BaseCost:  map[string]float64{"steel": 40, "gold": 30, "iron": 25},
+			CostScale: 1.4,
+			Effects:   []Effect{{Type: "production", Target: "knowledge", Value: 3.0}},
+			RequiredAge: "victorian_age",
+			Description: "Long-distance communication. +3.0 knowledge/tick.",
+		},
+		{
+			Name: "Clocktower", Key: "clocktower", Category: "production",
+			BaseCost:  map[string]float64{"steel": 35, "gold": 45, "stone": 50},
+			CostScale: 1.4,
+			Effects: []Effect{
+				{Type: "bonus", Target: "production_all", Value: 0.05},
+			},
+			RequiredAge: "victorian_age",
+			MaxCount:    5,
+			Description: "Precision timekeeping boosts efficiency. +5% all production. Max 5.",
+		},
+		{
+			Name: "Victorian Vault", Key: "victorian_vault", Category: "storage",
+			BaseCost:  map[string]float64{"steel": 50, "gold": 40, "iron": 30},
+			CostScale: 1.4,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 2000}},
+			RequiredAge: "victorian_age",
+			Description: "Reinforced vault. +2000 storage.",
+		},
+
+		// ===== ELECTRIC AGE =====
+		{
+			Name: "Electric Mill", Key: "electric_mill", Category: "production",
+			BaseCost:  map[string]float64{"steel": 80, "electricity": 20, "iron": 50},
+			CostScale: 1.45,
+			Effects: []Effect{
+				{Type: "production", Target: "steel", Value: 1.5},
+				{Type: "production", Target: "iron", Value: 3.0},
+			},
+			RequiredAge: "electric_age",
+			Description: "Electric-powered manufacturing. +1.5 steel, +3.0 iron/tick.",
+		},
+		{
+			Name: "Telephone Exchange", Key: "telephone_exchange", Category: "research",
+			BaseCost:  map[string]float64{"steel": 60, "electricity": 15, "gold": 40},
+			CostScale: 1.4,
+			Effects:   []Effect{{Type: "production", Target: "knowledge", Value: 5.0}},
+			RequiredAge: "electric_age",
+			Description: "Connected communication network. +5.0 knowledge/tick.",
+		},
+		{
+			Name: "Train Station", Key: "train_station", Category: "production",
+			BaseCost:  map[string]float64{"steel": 70, "coal": 50, "gold": 35},
+			CostScale: 1.4,
+			Effects: []Effect{
+				{Type: "production", Target: "gold", Value: 4.0},
+				{Type: "storage", Target: "all", Value: 500},
+			},
+			RequiredAge: "electric_age",
+			Description: "Rail transport hub. +4.0 gold/tick, +500 storage.",
+		},
+		{
+			Name: "Electric Warehouse", Key: "electric_warehouse", Category: "storage",
+			BaseCost:  map[string]float64{"steel": 60, "electricity": 10, "iron": 40},
+			CostScale: 1.4,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 3500}},
+			RequiredAge: "electric_age",
+			Description: "Climate-controlled storage. +3500 storage.",
+		},
+
+		// ===== ATOMIC AGE =====
+		{
+			Name: "Reactor", Key: "reactor", Category: "production",
+			BaseCost:  map[string]float64{"steel": 150, "electricity": 50, "gold": 100},
+			CostScale: 1.5,
+			Effects: []Effect{
+				{Type: "production", Target: "electricity", Value: 5.0},
+				{Type: "production", Target: "uranium", Value: 0.3},
+			},
+			RequiredAge: "atomic_age",
+			Description: "Nuclear reactor. +5.0 electricity, +0.3 uranium/tick.",
+		},
+		{
+			Name: "Bunker", Key: "bunker", Category: "military",
+			BaseCost:  map[string]float64{"steel": 120, "stone": 200, "iron": 80},
+			CostScale: 1.45,
+			Effects:   []Effect{{Type: "capacity", Target: "military", Value: 50}},
+			RequiredAge: "atomic_age",
+			Description: "Fortified underground shelter. +50 military cap.",
+		},
+		{
+			Name: "Missile Silo", Key: "missile_silo", Category: "military",
+			BaseCost:  map[string]float64{"steel": 200, "uranium": 10, "gold": 150},
+			CostScale: 1.5,
+			Effects:   []Effect{{Type: "bonus", Target: "military_power", Value: 0.3}},
+			RequiredAge: "atomic_age",
+			MaxCount:    5,
+			Description: "Nuclear deterrent. +30% military power. Max 5.",
+		},
+		{
+			Name: "Atomic Vault", Key: "atomic_vault", Category: "storage",
+			BaseCost:  map[string]float64{"steel": 100, "stone": 150, "iron": 60},
+			CostScale: 1.45,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 6000}},
+			RequiredAge: "atomic_age",
+			Description: "Radiation-shielded storage. +6000 storage.",
+		},
 
 		// ===== MODERN AGE =====
 		{
 			Name: "Power Plant", Key: "power_plant", Category: "production",
 			BaseCost:  map[string]float64{"steel": 60, "oil": 30, "gold": 80},
 			CostScale: 1.5,
-			Effects:   []Effect{{Type: "production", Target: "electricity", Value: 1.0}},
+			Effects:   []Effect{{Type: "production", Target: "electricity", Value: 8.0}},
 			RequiredAge: "modern_age",
-			Description: "Generates electricity. +1.0 electricity/tick.",
+			Description: "Advanced power generation. +8.0 electricity/tick.",
 		},
 		{
 			Name: "Research Lab", Key: "research_lab", Category: "research",
 			BaseCost:  map[string]float64{"steel": 50, "gold": 60, "electricity": 20},
 			CostScale: 1.5,
-			Effects:   []Effect{{Type: "production", Target: "knowledge", Value: 4.0}},
+			Effects:   []Effect{{Type: "production", Target: "knowledge", Value: 8.0}},
 			RequiredAge: "modern_age",
-			Description: "Cutting-edge research. +4.0 knowledge/tick.",
+			Description: "Cutting-edge research. +8.0 knowledge/tick.",
 		},
 		{
 			Name: "Skyscraper", Key: "skyscraper", Category: "housing",
@@ -293,8 +512,350 @@ func BaseBuildings() []BuildingDef {
 			RequiredAge: "modern_age",
 			Description: "Massive housing. +50 pop cap.",
 		},
+		{
+			Name: "Modern Depot", Key: "modern_depot", Category: "storage",
+			BaseCost:  map[string]float64{"steel": 70, "gold": 50, "electricity": 15},
+			CostScale: 1.45,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 10000}},
+			RequiredAge: "modern_age",
+			Description: "Automated logistics center. +10000 storage.",
+		},
 
-		// ===== WONDERS (one per age, unique) =====
+		// ===== INFORMATION AGE =====
+		{
+			Name: "Server Farm", Key: "server_farm", Category: "production",
+			BaseCost:  map[string]float64{"steel": 100, "electricity": 50, "gold": 80},
+			CostScale: 1.5,
+			Effects: []Effect{
+				{Type: "production", Target: "data", Value: 2.0},
+				{Type: "production", Target: "knowledge", Value: 5.0},
+			},
+			RequiredAge: "information_age",
+			Description: "Data processing center. +2.0 data, +5.0 knowledge/tick.",
+		},
+		{
+			Name: "Fiber Hub", Key: "fiber_hub", Category: "production",
+			BaseCost:  map[string]float64{"steel": 80, "gold": 60, "electricity": 30},
+			CostScale: 1.45,
+			Effects:   []Effect{{Type: "production", Target: "data", Value: 3.0}},
+			RequiredAge: "information_age",
+			Description: "High-speed network infrastructure. +3.0 data/tick.",
+		},
+		{
+			Name: "Media Center", Key: "media_center", Category: "production",
+			BaseCost:  map[string]float64{"steel": 70, "gold": 50, "data": 10},
+			CostScale: 1.4,
+			Effects: []Effect{
+				{Type: "production", Target: "culture", Value: 3.0},
+				{Type: "production", Target: "gold", Value: 5.0},
+			},
+			RequiredAge: "information_age",
+			Description: "Digital entertainment. +3.0 culture, +5.0 gold/tick.",
+		},
+		{
+			Name: "Info Vault", Key: "info_vault", Category: "storage",
+			BaseCost:  map[string]float64{"steel": 80, "electricity": 30, "data": 5},
+			CostScale: 1.45,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 18000}},
+			RequiredAge: "information_age",
+			Description: "Digital-physical storage hybrid. +18000 storage.",
+		},
+
+		// ===== DIGITAL AGE =====
+		{
+			Name: "Data Center", Key: "data_center", Category: "production",
+			BaseCost:  map[string]float64{"steel": 150, "electricity": 80, "data": 20},
+			CostScale: 1.5,
+			Effects:   []Effect{{Type: "production", Target: "data", Value: 8.0}},
+			RequiredAge: "digital_age",
+			Description: "Massive data processing. +8.0 data/tick.",
+		},
+		{
+			Name: "AI Lab", Key: "ai_lab", Category: "research",
+			BaseCost:  map[string]float64{"steel": 120, "data": 30, "electricity": 50},
+			CostScale: 1.5,
+			Effects: []Effect{
+				{Type: "production", Target: "knowledge", Value: 15.0},
+				{Type: "production", Target: "data", Value: 3.0},
+			},
+			RequiredAge: "digital_age",
+			Description: "Artificial intelligence research. +15.0 knowledge, +3.0 data/tick.",
+		},
+		{
+			Name: "Smart Grid", Key: "smart_grid", Category: "production",
+			BaseCost:  map[string]float64{"steel": 100, "electricity": 40, "data": 15},
+			CostScale: 1.45,
+			Effects: []Effect{
+				{Type: "production", Target: "electricity", Value: 12.0},
+				{Type: "bonus", Target: "production_all", Value: 0.03},
+			},
+			RequiredAge: "digital_age",
+			Description: "AI-optimized power grid. +12.0 electricity/tick, +3% all production.",
+		},
+		{
+			Name: "Digital Archive", Key: "digital_archive", Category: "storage",
+			BaseCost:  map[string]float64{"steel": 100, "data": 20, "electricity": 30},
+			CostScale: 1.45,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 30000}},
+			RequiredAge: "digital_age",
+			Description: "Quantum-encrypted storage. +30000 storage.",
+		},
+
+		// ===== CYBERPUNK AGE =====
+		{
+			Name: "Augmentation Clinic", Key: "augmentation_clinic", Category: "production",
+			BaseCost:  map[string]float64{"steel": 200, "data": 50, "gold": 150},
+			CostScale: 1.5,
+			Effects: []Effect{
+				{Type: "bonus", Target: "gather_rate", Value: 0.1},
+				{Type: "production", Target: "crypto", Value: 1.0},
+			},
+			RequiredAge: "cyberpunk_age",
+			Description: "Cybernetic enhancements. +10% gather rate, +1.0 crypto/tick.",
+		},
+		{
+			Name: "Neon Tower", Key: "neon_tower", Category: "housing",
+			BaseCost:  map[string]float64{"steel": 180, "electricity": 100, "gold": 120},
+			CostScale: 1.5,
+			Effects:   []Effect{{Type: "capacity", Target: "population", Value: 100}},
+			RequiredAge: "cyberpunk_age",
+			Description: "Towering arcology. +100 pop cap.",
+		},
+		{
+			Name: "Black Market", Key: "black_market", Category: "production",
+			BaseCost:  map[string]float64{"gold": 200, "data": 40, "crypto": 5},
+			CostScale: 1.45,
+			Effects: []Effect{
+				{Type: "production", Target: "crypto", Value: 3.0},
+				{Type: "production", Target: "gold", Value: 10.0},
+			},
+			RequiredAge: "cyberpunk_age",
+			Description: "Underground economy. +3.0 crypto, +10.0 gold/tick.",
+		},
+		{
+			Name: "Cyber Vault", Key: "cyber_vault", Category: "storage",
+			BaseCost:  map[string]float64{"steel": 150, "data": 30, "crypto": 5},
+			CostScale: 1.45,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 50000}},
+			RequiredAge: "cyberpunk_age",
+			Description: "Encrypted digital vault. +50000 storage.",
+		},
+
+		// ===== FUSION AGE =====
+		{
+			Name: "Fusion Reactor", Key: "fusion_reactor", Category: "production",
+			BaseCost:  map[string]float64{"steel": 300, "electricity": 200, "uranium": 50},
+			CostScale: 1.5,
+			Effects: []Effect{
+				{Type: "production", Target: "electricity", Value: 50.0},
+				{Type: "production", Target: "plasma", Value: 2.0},
+			},
+			RequiredAge: "fusion_age",
+			Description: "Clean fusion power. +50.0 electricity, +2.0 plasma/tick.",
+		},
+		{
+			Name: "Plasma Forge", Key: "plasma_forge", Category: "production",
+			BaseCost:  map[string]float64{"steel": 250, "plasma": 10, "electricity": 150},
+			CostScale: 1.5,
+			Effects: []Effect{
+				{Type: "production", Target: "steel", Value: 10.0},
+				{Type: "production", Target: "plasma", Value: 1.5},
+			},
+			RequiredAge: "fusion_age",
+			Description: "Plasma-based manufacturing. +10.0 steel, +1.5 plasma/tick.",
+		},
+		{
+			Name: "Maglev Station", Key: "maglev_station", Category: "production",
+			BaseCost:  map[string]float64{"steel": 200, "electricity": 100, "gold": 150},
+			CostScale: 1.45,
+			Effects: []Effect{
+				{Type: "production", Target: "gold", Value: 20.0},
+				{Type: "bonus", Target: "production_all", Value: 0.05},
+			},
+			RequiredAge: "fusion_age",
+			Description: "Magnetic levitation transport. +20.0 gold/tick, +5% all production.",
+		},
+		{
+			Name: "Fusion Vault", Key: "fusion_vault", Category: "storage",
+			BaseCost:  map[string]float64{"steel": 200, "plasma": 10, "electricity": 100},
+			CostScale: 1.45,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 100000}},
+			RequiredAge: "fusion_age",
+			Description: "Plasma-shielded storage. +100000 storage.",
+		},
+
+		// ===== SPACE AGE =====
+		{
+			Name: "Launch Pad", Key: "launch_pad", Category: "production",
+			BaseCost:  map[string]float64{"steel": 400, "plasma": 30, "titanium": 10},
+			CostScale: 1.5,
+			Effects: []Effect{
+				{Type: "production", Target: "titanium", Value: 2.0},
+				{Type: "production", Target: "knowledge", Value: 30.0},
+			},
+			RequiredAge: "space_age",
+			Description: "Orbital launch facility. +2.0 titanium, +30.0 knowledge/tick.",
+		},
+		{
+			Name: "Space Station", Key: "space_station", Category: "research",
+			BaseCost:  map[string]float64{"titanium": 20, "plasma": 40, "electricity": 300},
+			CostScale: 1.55,
+			Effects: []Effect{
+				{Type: "production", Target: "knowledge", Value: 50.0},
+				{Type: "production", Target: "data", Value: 20.0},
+			},
+			RequiredAge: "space_age",
+			Description: "Orbital research platform. +50.0 knowledge, +20.0 data/tick.",
+		},
+		{
+			Name: "Orbital Habitat", Key: "orbital_habitat", Category: "housing",
+			BaseCost:  map[string]float64{"titanium": 30, "steel": 300, "plasma": 20},
+			CostScale: 1.5,
+			Effects:   []Effect{{Type: "capacity", Target: "population", Value: 200}},
+			RequiredAge: "space_age",
+			Description: "Space habitat ring. +200 pop cap.",
+		},
+		{
+			Name: "Orbital Depot", Key: "orbital_depot", Category: "storage",
+			BaseCost:  map[string]float64{"titanium": 15, "steel": 250, "plasma": 15},
+			CostScale: 1.5,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 200000}},
+			RequiredAge: "space_age",
+			Description: "Zero-gravity storage facility. +200000 storage.",
+		},
+
+		// ===== INTERSTELLAR AGE =====
+		{
+			Name: "Warp Gate", Key: "warp_gate", Category: "production",
+			BaseCost:  map[string]float64{"titanium": 100, "dark_matter": 10, "plasma": 80},
+			CostScale: 1.55,
+			Effects: []Effect{
+				{Type: "production", Target: "dark_matter", Value: 2.0},
+				{Type: "bonus", Target: "production_all", Value: 0.08},
+			},
+			RequiredAge: "interstellar_age",
+			Description: "Faster-than-light gate. +2.0 dark matter/tick, +8% all production.",
+		},
+		{
+			Name: "Colony Ship", Key: "colony_ship", Category: "production",
+			BaseCost:  map[string]float64{"titanium": 80, "dark_matter": 5, "steel": 500},
+			CostScale: 1.5,
+			Effects: []Effect{
+				{Type: "production", Target: "food", Value: 50.0},
+				{Type: "production", Target: "titanium", Value: 5.0},
+			},
+			RequiredAge: "interstellar_age",
+			Description: "Interstellar colonization vessel. +50.0 food, +5.0 titanium/tick.",
+		},
+		{
+			Name: "Star Forge", Key: "star_forge", Category: "production",
+			BaseCost:  map[string]float64{"titanium": 120, "plasma": 100, "dark_matter": 8},
+			CostScale: 1.55,
+			Effects: []Effect{
+				{Type: "production", Target: "steel", Value: 50.0},
+				{Type: "production", Target: "titanium", Value: 8.0},
+			},
+			RequiredAge: "interstellar_age",
+			Description: "Stellar-powered forge. +50.0 steel, +8.0 titanium/tick.",
+		},
+		{
+			Name: "Stellar Vault", Key: "stellar_vault", Category: "storage",
+			BaseCost:  map[string]float64{"titanium": 60, "dark_matter": 5, "plasma": 50},
+			CostScale: 1.5,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 500000}},
+			RequiredAge: "interstellar_age",
+			Description: "Pocket-dimension storage. +500000 storage.",
+		},
+
+		// ===== GALACTIC AGE =====
+		{
+			Name: "Galactic Hub", Key: "galactic_hub", Category: "production",
+			BaseCost:  map[string]float64{"dark_matter": 50, "titanium": 200, "antimatter": 5},
+			CostScale: 1.55,
+			Effects: []Effect{
+				{Type: "production", Target: "gold", Value: 100.0},
+				{Type: "production", Target: "knowledge", Value: 100.0},
+				{Type: "bonus", Target: "production_all", Value: 0.1},
+			},
+			RequiredAge: "galactic_age",
+			Description: "Galactic trade network. +100 gold, +100 knowledge/tick, +10% all.",
+		},
+		{
+			Name: "Antimatter Plant", Key: "antimatter_plant", Category: "production",
+			BaseCost:  map[string]float64{"dark_matter": 40, "plasma": 200, "electricity": 1000},
+			CostScale: 1.55,
+			Effects:   []Effect{{Type: "production", Target: "antimatter", Value: 3.0}},
+			RequiredAge: "galactic_age",
+			Description: "Produces antimatter from dark energy. +3.0 antimatter/tick.",
+		},
+		{
+			Name: "Megastructure", Key: "megastructure", Category: "production",
+			BaseCost:  map[string]float64{"titanium": 300, "dark_matter": 30, "antimatter": 10},
+			CostScale: 1.6,
+			Effects: []Effect{
+				{Type: "capacity", Target: "population", Value: 500},
+				{Type: "storage", Target: "all", Value: 200000},
+			},
+			RequiredAge: "galactic_age",
+			MaxCount:    5,
+			Description: "Massive orbital structure. +500 pop cap, +200000 storage. Max 5.",
+		},
+		{
+			Name: "Galactic Vault", Key: "galactic_vault", Category: "storage",
+			BaseCost:  map[string]float64{"dark_matter": 20, "titanium": 100, "antimatter": 3},
+			CostScale: 1.5,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 1000000}},
+			RequiredAge: "galactic_age",
+			Description: "Galaxy-spanning storage network. +1000000 storage.",
+		},
+
+		// ===== QUANTUM AGE =====
+		{
+			Name: "Quantum Computer", Key: "quantum_computer", Category: "research",
+			BaseCost:  map[string]float64{"antimatter": 50, "dark_matter": 80, "quantum_flux": 5},
+			CostScale: 1.6,
+			Effects: []Effect{
+				{Type: "production", Target: "knowledge", Value: 500.0},
+				{Type: "production", Target: "quantum_flux", Value: 2.0},
+			},
+			RequiredAge: "quantum_age",
+			Description: "Computes across realities. +500 knowledge, +2.0 quantum flux/tick.",
+		},
+		{
+			Name: "Reality Engine", Key: "reality_engine", Category: "production",
+			BaseCost:  map[string]float64{"quantum_flux": 10, "antimatter": 40, "dark_matter": 60},
+			CostScale: 1.6,
+			Effects: []Effect{
+				{Type: "production", Target: "quantum_flux", Value: 5.0},
+				{Type: "bonus", Target: "production_all", Value: 0.15},
+			},
+			RequiredAge: "quantum_age",
+			Description: "Manipulates reality itself. +5.0 quantum flux/tick, +15% all production.",
+		},
+		{
+			Name: "Transcendence Beacon", Key: "transcendence_beacon", Category: "production",
+			BaseCost:  map[string]float64{"quantum_flux": 15, "antimatter": 60, "dark_matter": 100},
+			CostScale: 1.6,
+			Effects: []Effect{
+				{Type: "bonus", Target: "production_all", Value: 0.2},
+				{Type: "production", Target: "quantum_flux", Value: 3.0},
+			},
+			RequiredAge: "quantum_age",
+			Description: "Beacon to the next plane. +20% all production, +3.0 quantum flux/tick.",
+		},
+		{
+			Name: "Quantum Vault", Key: "quantum_vault", Category: "storage",
+			BaseCost:  map[string]float64{"quantum_flux": 5, "antimatter": 20, "dark_matter": 40},
+			CostScale: 1.55,
+			Effects:   []Effect{{Type: "storage", Target: "all", Value: 5000000}},
+			RequiredAge: "quantum_age",
+			Description: "Stores matter in quantum superposition. +5000000 storage.",
+		},
+
+		// ===== TRANSCENDENT AGE =====
+		// (singularity_core is a wonder, listed below)
+
+		// ===== WONDERS =====
 		{
 			Name: "Stonehenge", Key: "stonehenge", Category: "wonder",
 			BaseCost:  map[string]float64{"stone": 150, "wood": 80},
@@ -322,6 +883,19 @@ func BaseBuildings() []BuildingDef {
 			Description: "Grand arena. +20 pop cap, +1.0 culture/tick.",
 		},
 		{
+			Name: "Parthenon", Key: "parthenon", Category: "wonder",
+			BaseCost:  map[string]float64{"stone": 300, "gold": 80, "iron": 50},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "production", Target: "culture", Value: 2.0},
+				{Type: "production", Target: "knowledge", Value: 3.0},
+			},
+			RequiredAge: "classical_age",
+			MaxCount:    1,
+			BuildTicks:  18,
+			Description: "Temple of wisdom. +2.0 culture, +3.0 knowledge/tick.",
+		},
+		{
 			Name: "Great Library", Key: "great_library", Category: "wonder",
 			BaseCost:  map[string]float64{"stone": 250, "gold": 100, "knowledge": 80},
 			CostScale: 1.0,
@@ -345,6 +919,45 @@ func BaseBuildings() []BuildingDef {
 			MaxCount:    1,
 			BuildTicks:  30,
 			Description: "The ultimate achievement. +10 knowledge, +5 culture/tick.",
+		},
+		{
+			Name: "Particle Accelerator", Key: "particle_accelerator", Category: "wonder",
+			BaseCost:  map[string]float64{"steel": 300, "electricity": 200, "uranium": 30},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "production", Target: "knowledge", Value: 25.0},
+				{Type: "production", Target: "uranium", Value: 1.0},
+			},
+			RequiredAge: "atomic_age",
+			MaxCount:    1,
+			BuildTicks:  25,
+			Description: "Smashes atoms for science. +25 knowledge, +1.0 uranium/tick.",
+		},
+		{
+			Name: "Dyson Scaffold", Key: "dyson_scaffold", Category: "wonder",
+			BaseCost:  map[string]float64{"titanium": 50, "plasma": 60, "steel": 500},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "production", Target: "electricity", Value: 200.0},
+				{Type: "production", Target: "plasma", Value: 10.0},
+			},
+			RequiredAge: "space_age",
+			MaxCount:    1,
+			BuildTicks:  40,
+			Description: "Framework for a Dyson sphere. +200 electricity, +10 plasma/tick.",
+		},
+		{
+			Name: "Singularity Core", Key: "singularity_core", Category: "wonder",
+			BaseCost:  map[string]float64{"quantum_flux": 50, "antimatter": 100, "dark_matter": 200},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "bonus", Target: "production_all", Value: 1.0},
+				{Type: "production", Target: "quantum_flux", Value: 20.0},
+			},
+			RequiredAge: "transcendent_age",
+			MaxCount:    1,
+			BuildTicks:  50,
+			Description: "The final wonder. +100% all production, +20 quantum flux/tick.",
 		},
 	}
 }

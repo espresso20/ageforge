@@ -40,7 +40,7 @@ func (pm *PrestigeManager) CalculatePoints(age string, ageOrder map[string]int, 
 	divisor := math.Sqrt(float64(pm.level + 1))
 	points := int(total / divisor)
 
-	if points < 1 && base >= 4 {
+	if points < 1 && base >= 5 {
 		points = 1 // minimum 1 point if you've reached Medieval+
 	}
 	return points
@@ -52,8 +52,8 @@ func (pm *PrestigeManager) CanPrestige(age string, ageOrder map[string]int) bool
 	if !ok {
 		return false
 	}
-	// Medieval Age is order 4
-	return idx >= 4
+	// Medieval Age is order 5
+	return idx >= 5
 }
 
 // Prestige increments level and adds points

@@ -161,6 +161,37 @@ func Technologies() []TechDef {
 			},
 		},
 
+		// === CLASSICAL AGE ===
+		{
+			Name: "Philosophy", Key: "philosophy",
+			Age: "classical_age", Cost: 200, ResearchTicks: 22,
+			Prerequisites: []string{"mathematics", "primitive_writing"},
+			Description: "Systematic inquiry into fundamental questions.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "knowledge_rate", Value: 0.8},
+				{Type: "production", Target: "culture", Value: 0.2},
+			},
+		},
+		{
+			Name: "Civil Engineering", Key: "civil_engineering",
+			Age: "classical_age", Cost: 180, ResearchTicks: 20,
+			Prerequisites: []string{"masonry", "road_building"},
+			Description: "Large-scale construction and infrastructure.",
+			Effects: []Effect{
+				{Type: "storage", Target: "all", Value: 100},
+				{Type: "bonus", Target: "build_cost", Value: -0.05},
+			},
+		},
+		{
+			Name: "Imperial Legions", Key: "imperial_legions",
+			Age: "classical_age", Cost: 220, ResearchTicks: 22,
+			Prerequisites: []string{"siege_warfare", "iron_smelting"},
+			Description: "Professional standing armies with superior discipline.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "military_power", Value: 0.4},
+			},
+		},
+
 		// === MEDIEVAL AGE ===
 		{
 			Name: "Steel Forging", Key: "steel_forging",
@@ -175,7 +206,7 @@ func Technologies() []TechDef {
 		{
 			Name: "Theology", Key: "theology",
 			Age: "medieval_age", Cost: 200, ResearchTicks: 20,
-			Prerequisites: []string{"primitive_writing"},
+			Prerequisites: []string{"philosophy"},
 			Description: "Organized religion provides faith and social cohesion.",
 			Effects: []Effect{
 				{Type: "production", Target: "faith", Value: 0.3},
@@ -252,6 +283,38 @@ func Technologies() []TechDef {
 			},
 		},
 
+		// === COLONIAL AGE ===
+		{
+			Name: "Cartography", Key: "cartography",
+			Age: "colonial_age", Cost: 800, ResearchTicks: 30,
+			Prerequisites: []string{"navigation"},
+			Description: "Detailed maps enable global exploration.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "expedition_reward", Value: 0.5},
+				{Type: "bonus", Target: "gold_rate", Value: 0.5},
+			},
+		},
+		{
+			Name: "Mercantilism", Key: "mercantilism",
+			Age: "colonial_age", Cost: 750, ResearchTicks: 28,
+			Prerequisites: []string{"banking", "navigation"},
+			Description: "National trade policies maximize wealth.",
+			Effects: []Effect{
+				{Type: "production", Target: "gold", Value: 2.0},
+				{Type: "bonus", Target: "gold_rate", Value: 0.3},
+			},
+		},
+		{
+			Name: "Colonialism", Key: "colonialism",
+			Age: "colonial_age", Cost: 900, ResearchTicks: 32,
+			Prerequisites: []string{"cartography", "gunpowder"},
+			Description: "Overseas territorial expansion.",
+			Effects: []Effect{
+				{Type: "production", Target: "food", Value: 2.0},
+				{Type: "bonus", Target: "military_power", Value: 0.3},
+			},
+		},
+
 		// === INDUSTRIAL AGE ===
 		{
 			Name: "Steam Power", Key: "steam_power",
@@ -292,44 +355,357 @@ func Technologies() []TechDef {
 			},
 		},
 
+		// === VICTORIAN AGE ===
+		{
+			Name: "Electrification", Key: "electrification",
+			Age: "victorian_age", Cost: 1800, ResearchTicks: 40,
+			Prerequisites: []string{"industrialization"},
+			Description: "Electrical power begins to transform society.",
+			Effects: []Effect{
+				{Type: "production", Target: "electricity", Value: 1.0},
+				{Type: "bonus", Target: "production_all", Value: 0.2},
+			},
+		},
+		{
+			Name: "Telecommunications", Key: "telecommunications",
+			Age: "victorian_age", Cost: 1500, ResearchTicks: 35,
+			Prerequisites: []string{"electrification"},
+			Description: "Telegraph and early telephone networks.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "knowledge_rate", Value: 1.0},
+				{Type: "bonus", Target: "gold_rate", Value: 0.5},
+			},
+		},
+		{
+			Name: "Mass Production", Key: "mass_production",
+			Age: "victorian_age", Cost: 2000, ResearchTicks: 42,
+			Prerequisites: []string{"industrialization", "railroads"},
+			Description: "Assembly line manufacturing.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "production_all", Value: 0.4},
+				{Type: "production", Target: "steel", Value: 1.0},
+			},
+		},
+
+		// === ELECTRIC AGE ===
+		{
+			Name: "Power Distribution", Key: "power_distribution",
+			Age: "electric_age", Cost: 3000, ResearchTicks: 45,
+			Prerequisites: []string{"electrification"},
+			Description: "AC power grids span entire regions.",
+			Effects: []Effect{
+				{Type: "production", Target: "electricity", Value: 3.0},
+				{Type: "bonus", Target: "production_all", Value: 0.3},
+			},
+		},
+		{
+			Name: "Radio", Key: "radio",
+			Age: "electric_age", Cost: 2500, ResearchTicks: 38,
+			Prerequisites: []string{"telecommunications"},
+			Description: "Wireless communication reaches the masses.",
+			Effects: []Effect{
+				{Type: "production", Target: "culture", Value: 2.0},
+				{Type: "bonus", Target: "knowledge_rate", Value: 1.0},
+			},
+		},
+		{
+			Name: "Chemical Engineering", Key: "chemical_engineering",
+			Age: "electric_age", Cost: 2800, ResearchTicks: 40,
+			Prerequisites: []string{"mass_production"},
+			Description: "Industrial chemistry and synthetic materials.",
+			Effects: []Effect{
+				{Type: "production", Target: "oil", Value: 1.0},
+				{Type: "bonus", Target: "production_all", Value: 0.2},
+			},
+		},
+
+		// === ATOMIC AGE ===
+		{
+			Name: "Nuclear Fission", Key: "nuclear_fission",
+			Age: "atomic_age", Cost: 5000, ResearchTicks: 50,
+			Prerequisites: []string{"power_distribution", "chemical_engineering"},
+			Description: "Splitting the atom for energy and weapons.",
+			Effects: []Effect{
+				{Type: "production", Target: "electricity", Value: 5.0},
+				{Type: "production", Target: "uranium", Value: 0.5},
+			},
+		},
+		{
+			Name: "Rocketry", Key: "rocketry",
+			Age: "atomic_age", Cost: 4000, ResearchTicks: 45,
+			Prerequisites: []string{"rifling", "chemical_engineering"},
+			Description: "Rocket technology enables space exploration.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "military_power", Value: 1.0},
+				{Type: "bonus", Target: "expedition_reward", Value: 0.5},
+			},
+		},
+		{
+			Name: "Nuclear Deterrence", Key: "nuclear_deterrence",
+			Age: "atomic_age", Cost: 6000, ResearchTicks: 55,
+			Prerequisites: []string{"nuclear_fission", "rocketry"},
+			Description: "Mutually assured destruction maintains peace.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "military_power", Value: 1.5},
+			},
+		},
+
 		// === MODERN AGE ===
 		{
 			Name: "Electricity", Key: "electricity_tech",
-			Age: "modern_age", Cost: 2000, ResearchTicks: 45,
-			Prerequisites: []string{"industrialization"},
-			Description: "Electrical power transforms civilization.",
+			Age: "modern_age", Cost: 8000, ResearchTicks: 50,
+			Prerequisites: []string{"nuclear_fission"},
+			Description: "Advanced electrical systems transform civilization.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.5},
-				{Type: "production", Target: "electricity", Value: 1.0},
+				{Type: "production", Target: "electricity", Value: 5.0},
 			},
 		},
 		{
 			Name: "Computers", Key: "computers",
-			Age: "modern_age", Cost: 3000, ResearchTicks: 50,
-			Prerequisites: []string{"electricity_tech", "mathematics"},
+			Age: "modern_age", Cost: 10000, ResearchTicks: 55,
+			Prerequisites: []string{"electricity_tech"},
 			Description: "Digital computing accelerates all research.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "knowledge_rate", Value: 2.0},
 			},
 		},
 		{
-			Name: "Nuclear Power", Key: "nuclear_power",
-			Age: "modern_age", Cost: 5000, ResearchTicks: 60,
-			Prerequisites: []string{"electricity_tech"},
-			Description: "Harnessing atomic energy for massive power generation.",
+			Name: "Satellite Technology", Key: "satellite_tech",
+			Age: "modern_age", Cost: 12000, ResearchTicks: 55,
+			Prerequisites: []string{"rocketry", "electricity_tech"},
+			Description: "Orbital satellites for communication and surveillance.",
 			Effects: []Effect{
-				{Type: "production", Target: "electricity", Value: 5.0},
+				{Type: "production", Target: "data", Value: 1.0},
+				{Type: "bonus", Target: "knowledge_rate", Value: 1.5},
+			},
+		},
+
+		// === INFORMATION AGE ===
+		{
+			Name: "Internet", Key: "internet",
+			Age: "information_age", Cost: 20000, ResearchTicks: 60,
+			Prerequisites: []string{"computers", "satellite_tech"},
+			Description: "Global network connecting all of humanity.",
+			Effects: []Effect{
+				{Type: "production", Target: "data", Value: 3.0},
+				{Type: "bonus", Target: "knowledge_rate", Value: 3.0},
+			},
+		},
+		{
+			Name: "Cybersecurity", Key: "cybersecurity",
+			Age: "information_age", Cost: 18000, ResearchTicks: 55,
+			Prerequisites: []string{"computers"},
+			Description: "Defense against digital threats.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "military_power", Value: 1.0},
+				{Type: "storage", Target: "data", Value: 5000},
+			},
+		},
+		{
+			Name: "Social Media", Key: "social_media",
+			Age: "information_age", Cost: 15000, ResearchTicks: 50,
+			Prerequisites: []string{"internet"},
+			Description: "Mass digital communication platforms.",
+			Effects: []Effect{
+				{Type: "production", Target: "culture", Value: 5.0},
+				{Type: "production", Target: "gold", Value: 5.0},
+			},
+		},
+
+		// === DIGITAL AGE ===
+		{
+			Name: "Machine Learning", Key: "machine_learning",
+			Age: "digital_age", Cost: 35000, ResearchTicks: 65,
+			Prerequisites: []string{"internet", "cybersecurity"},
+			Description: "Algorithms that learn and improve autonomously.",
+			Effects: []Effect{
+				{Type: "production", Target: "data", Value: 5.0},
+				{Type: "bonus", Target: "production_all", Value: 0.5},
+			},
+		},
+		{
+			Name: "Cloud Computing", Key: "cloud_computing",
+			Age: "digital_age", Cost: 30000, ResearchTicks: 60,
+			Prerequisites: []string{"internet"},
+			Description: "Distributed computing at global scale.",
+			Effects: []Effect{
+				{Type: "production", Target: "data", Value: 8.0},
+				{Type: "storage", Target: "all", Value: 10000},
+			},
+		},
+
+		// === CYBERPUNK AGE ===
+		{
+			Name: "Neural Interface", Key: "neural_interface",
+			Age: "cyberpunk_age", Cost: 60000, ResearchTicks: 70,
+			Prerequisites: []string{"machine_learning"},
+			Description: "Direct brain-computer interface technology.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "gather_rate", Value: 0.3},
+				{Type: "bonus", Target: "knowledge_rate", Value: 5.0},
+			},
+		},
+		{
+			Name: "Blockchain", Key: "blockchain",
+			Age: "cyberpunk_age", Cost: 50000, ResearchTicks: 65,
+			Prerequisites: []string{"cybersecurity", "cloud_computing"},
+			Description: "Decentralized trustless systems.",
+			Effects: []Effect{
+				{Type: "production", Target: "crypto", Value: 2.0},
+				{Type: "bonus", Target: "gold_rate", Value: 2.0},
+			},
+		},
+		{
+			Name: "Cybernetics", Key: "cybernetics",
+			Age: "cyberpunk_age", Cost: 55000, ResearchTicks: 68,
+			Prerequisites: []string{"neural_interface"},
+			Description: "Mechanical augmentation of the human body.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "production_all", Value: 0.5},
+				{Type: "bonus", Target: "military_power", Value: 1.0},
+			},
+		},
+
+		// === FUSION AGE ===
+		{
+			Name: "Fusion Power", Key: "fusion_power",
+			Age: "fusion_age", Cost: 100000, ResearchTicks: 75,
+			Prerequisites: []string{"nuclear_fission", "cybernetics"},
+			Description: "Controlled nuclear fusion for limitless energy.",
+			Effects: []Effect{
+				{Type: "production", Target: "electricity", Value: 20.0},
+				{Type: "production", Target: "plasma", Value: 1.0},
+			},
+		},
+		{
+			Name: "Plasma Physics", Key: "plasma_physics",
+			Age: "fusion_age", Cost: 90000, ResearchTicks: 72,
+			Prerequisites: []string{"fusion_power"},
+			Description: "Mastery of superheated matter states.",
+			Effects: []Effect{
+				{Type: "production", Target: "plasma", Value: 3.0},
 				{Type: "bonus", Target: "production_all", Value: 0.3},
 			},
 		},
 		{
-			Name: "Rocketry", Key: "rocketry",
-			Age: "modern_age", Cost: 4000, ResearchTicks: 55,
-			Prerequisites: []string{"rifling", "industrialization"},
-			Description: "Rocket technology enables space exploration.",
+			Name: "Superconductors", Key: "superconductors",
+			Age: "fusion_age", Cost: 110000, ResearchTicks: 78,
+			Prerequisites: []string{"fusion_power"},
+			Description: "Zero-resistance materials revolutionize technology.",
 			Effects: []Effect{
-				{Type: "bonus", Target: "military_power", Value: 1.0},
-				{Type: "bonus", Target: "expedition_reward", Value: 0.5},
+				{Type: "bonus", Target: "production_all", Value: 0.5},
+				{Type: "storage", Target: "all", Value: 50000},
+			},
+		},
+
+		// === SPACE AGE ===
+		{
+			Name: "Orbital Mechanics", Key: "orbital_mechanics",
+			Age: "space_age", Cost: 200000, ResearchTicks: 80,
+			Prerequisites: []string{"rocketry", "plasma_physics"},
+			Description: "Advanced spaceflight and orbital dynamics.",
+			Effects: []Effect{
+				{Type: "production", Target: "titanium", Value: 1.0},
+				{Type: "bonus", Target: "expedition_reward", Value: 1.0},
+			},
+		},
+		{
+			Name: "Space Mining", Key: "space_mining",
+			Age: "space_age", Cost: 180000, ResearchTicks: 78,
+			Prerequisites: []string{"orbital_mechanics"},
+			Description: "Asteroid and lunar resource extraction.",
+			Effects: []Effect{
+				{Type: "production", Target: "titanium", Value: 3.0},
+				{Type: "production", Target: "iron", Value: 20.0},
+			},
+		},
+		{
+			Name: "Zero-G Manufacturing", Key: "zero_g_manufacturing",
+			Age: "space_age", Cost: 220000, ResearchTicks: 82,
+			Prerequisites: []string{"orbital_mechanics", "superconductors"},
+			Description: "Space-based manufacturing for perfect materials.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "production_all", Value: 0.5},
+				{Type: "production", Target: "steel", Value: 10.0},
+			},
+		},
+
+		// === INTERSTELLAR AGE ===
+		{
+			Name: "Warp Drive", Key: "warp_drive",
+			Age: "interstellar_age", Cost: 400000, ResearchTicks: 90,
+			Prerequisites: []string{"space_mining", "zero_g_manufacturing"},
+			Description: "Faster-than-light propulsion.",
+			Effects: []Effect{
+				{Type: "production", Target: "dark_matter", Value: 1.0},
+				{Type: "bonus", Target: "expedition_reward", Value: 2.0},
+			},
+		},
+		{
+			Name: "Stellar Engineering", Key: "stellar_engineering",
+			Age: "interstellar_age", Cost: 450000, ResearchTicks: 92,
+			Prerequisites: []string{"warp_drive"},
+			Description: "Harnessing and shaping stars themselves.",
+			Effects: []Effect{
+				{Type: "production", Target: "plasma", Value: 10.0},
+				{Type: "production", Target: "electricity", Value: 100.0},
+			},
+		},
+
+		// === GALACTIC AGE ===
+		{
+			Name: "Galactic Navigation", Key: "galactic_navigation",
+			Age: "galactic_age", Cost: 800000, ResearchTicks: 100,
+			Prerequisites: []string{"warp_drive", "stellar_engineering"},
+			Description: "Charting paths across the galaxy.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "production_all", Value: 0.5},
+				{Type: "production", Target: "dark_matter", Value: 5.0},
+			},
+		},
+		{
+			Name: "Antimatter Synthesis", Key: "antimatter_synthesis",
+			Age: "galactic_age", Cost: 900000, ResearchTicks: 105,
+			Prerequisites: []string{"galactic_navigation"},
+			Description: "Controlled production of antimatter.",
+			Effects: []Effect{
+				{Type: "production", Target: "antimatter", Value: 2.0},
+				{Type: "bonus", Target: "production_all", Value: 0.3},
+			},
+		},
+
+		// === QUANTUM AGE ===
+		{
+			Name: "Quantum Mechanics", Key: "quantum_mechanics",
+			Age: "quantum_age", Cost: 1500000, ResearchTicks: 110,
+			Prerequisites: []string{"antimatter_synthesis"},
+			Description: "Mastery of quantum phenomena at all scales.",
+			Effects: []Effect{
+				{Type: "production", Target: "quantum_flux", Value: 2.0},
+				{Type: "bonus", Target: "production_all", Value: 1.0},
+			},
+		},
+		{
+			Name: "Reality Manipulation", Key: "reality_manipulation",
+			Age: "quantum_age", Cost: 2000000, ResearchTicks: 120,
+			Prerequisites: []string{"quantum_mechanics"},
+			Description: "Bending the fabric of spacetime.",
+			Effects: []Effect{
+				{Type: "production", Target: "quantum_flux", Value: 5.0},
+				{Type: "bonus", Target: "production_all", Value: 1.0},
+			},
+		},
+
+		// === TRANSCENDENT AGE ===
+		{
+			Name: "Transcendence", Key: "transcendence",
+			Age: "transcendent_age", Cost: 5000000, ResearchTicks: 150,
+			Prerequisites: []string{"reality_manipulation"},
+			Description: "Ascension beyond physical limitations.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "production_all", Value: 2.0},
+				{Type: "production", Target: "quantum_flux", Value: 10.0},
 			},
 		},
 	}
