@@ -85,6 +85,7 @@ func (t *LogsTab) Refresh(state game.GameState) {
 	}
 
 	t.content.SetText(sb.String())
+	t.content.ScrollToEnd()
 }
 
 // renderGameLogs shows only game activity logs

@@ -837,6 +837,13 @@ Most have single-letter shortcuts.
   Game auto-saves when you press ESC to return to menu.
   Saves are stored in data/saves/ as JSON files.
 
+[gold]── Debug ──[-]
+
+  [cyan]dump[-]
+  Export all logs and engine state to a file for debugging.
+  Creates a timestamped file in data/logs/.
+  Example: [yellow]dump[-]
+
 [gold]── Other ──[-]
 
   [cyan]quit[-]          Save and exit the game

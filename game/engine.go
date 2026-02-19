@@ -10,7 +10,7 @@ import (
 
 const (
 	TickInterval = 2 * time.Second
-	MaxLogSize   = 100
+	MaxLogSize   = 500
 )
 
 // GameEngine is the central game coordinator
@@ -121,6 +121,9 @@ func (ge *GameEngine) doTick() {
 
 	// Process build queue
 	ge.processBuildQueue()
+	if len(ge.buildQueue) > 0 {
+		ge.addLog("debug", fmt.Sprintf("Build queue: %d item(s) in progress", len(ge.buildQueue)))
+	}
 
 	// Process research
 	ge.processResearch()
@@ -136,6 +139,19 @@ func (ge *GameEngine) doTick() {
 
 	// Apply resource rates (production - consumption)
 	ge.Resources.ApplyRates()
+
+	// Log net food rate and capped resources every 10 ticks
+	if ge.tick%10 == 0 {
+		snap := ge.Resources.Snapshot()
+		if f, ok := snap["food"]; ok {
+			ge.addLog("debug", fmt.Sprintf("Food: %.1f (rate %+.3f/t), pop=%d", f.Amount, f.Rate, ge.Villagers.TotalPop()))
+		}
+		for key, rs := range snap {
+			if rs.Unlocked && rs.Amount >= rs.Storage && rs.Storage > 0 {
+				ge.addLog("debug", fmt.Sprintf("Resource at cap: %s (%.0f/%.0f)", key, rs.Amount, rs.Storage))
+			}
+		}
+	}
 
 	// Track gathered amounts in stats
 	for key, r := range ge.Resources.Snapshot() {
@@ -172,11 +188,15 @@ func (ge *GameEngine) processResearch() {
 	completed := ge.Research.Tick()
 	if completed != "" {
 		def := config.TechByKey()[completed]
+		ge.addLog("debug", fmt.Sprintf("Research complete: %s", def.Name))
 		ge.addLog("success", fmt.Sprintf("Research complete: %s!", def.Name))
 		ge.Bus.Publish(EventData{
 			Type:    EventResearchDone,
 			Payload: map[string]interface{}{"tech": completed},
 		})
+	} else if ge.Research.currentTech != "" {
+		ge.addLog("debug", fmt.Sprintf("Research: %s %d/%d ticks",
+			ge.Research.currentTech, ge.Research.totalTicks-ge.Research.ticksLeft, ge.Research.totalTicks))
 	}
 }
 
@@ -186,12 +206,14 @@ func (ge *GameEngine) processEvents() {
 	triggered, expired := ge.Events.Tick(ge.tick, ge.age, ageOrder)
 
 	for _, def := range triggered {
+		ge.addLog("debug", fmt.Sprintf("Event triggered: %s (sentiment: %s)", def.Name, def.Sentiment))
 		ge.addLog("event", def.LogMessage)
 		// Process instant effects
 		for _, eff := range def.Effects {
 			switch eff.Type {
 			case "instant_resource":
 				ge.Resources.Add(eff.Target, eff.Value)
+				ge.addLog("debug", fmt.Sprintf("Event effect: %s %s %+.1f", eff.Type, eff.Target, eff.Value))
 			case "steal_resource":
 				current := ge.Resources.Get(eff.Target)
 				loss := eff.Value
@@ -199,12 +221,14 @@ func (ge *GameEngine) processEvents() {
 					loss = current
 				}
 				ge.Resources.Remove(eff.Target, loss)
+				ge.addLog("debug", fmt.Sprintf("Event effect: %s %s -%.1f", eff.Type, eff.Target, loss))
 			}
 		}
 	}
 
 	for _, key := range expired {
 		def := config.EventByKey()[key]
+		ge.addLog("debug", fmt.Sprintf("Event expired: %s", key))
 		ge.addLog("info", fmt.Sprintf("%s has ended.", def.Name))
 	}
 }
@@ -215,8 +239,12 @@ func (ge *GameEngine) processExpeditions() {
 	militaryBonus := ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + prestigeBonuses["military_power"]
 	expeditionBonus := ge.Research.GetBonus("expedition_reward") + ge.permanentBonuses["expedition_reward"] + prestigeBonuses["expedition_reward"]
 
+	if ge.Military.active != nil {
+		ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", ge.Military.active.Name, ge.Military.active.TicksLeft))
+	}
 	rewards, message, soldiersLost := ge.Military.Tick(militaryBonus, expeditionBonus)
 	if message != "" {
+		ge.addLog("debug", fmt.Sprintf("Expedition resolved (soldiers lost: %d, rewards: %d types)", soldiersLost, len(rewards)))
 		ge.addLog("event", message)
 		// Add rewards to resources
 		for res, amount := range rewards {
@@ -417,6 +445,9 @@ func (ge *GameEngine) advanceAge(newAge string) {
 
 	oldName := ge.progress.GetAgeName(oldAge)
 	newName := ge.progress.GetAgeName(newAge)
+	unlocks := ge.progress.GetUnlocks(newAge)
+	ge.addLog("debug", fmt.Sprintf("Age advance: %s → %s (unlocks: %d buildings, %d resources, %d villagers)",
+		oldAge, newAge, len(unlocks.UnlockBuildings), len(unlocks.UnlockResources), len(unlocks.UnlockVillagers)))
 	ge.addLog("success", fmt.Sprintf("Advanced from %s to %s!", oldName, newName))
 
 	ge.Bus.Publish(EventData{
@@ -450,6 +481,7 @@ func (ge *GameEngine) processBuildQueue() {
 		if item.TicksLeft <= 0 {
 			ge.Buildings.counts[item.BuildingKey]++
 			def := ge.Buildings.defs[item.BuildingKey]
+			ge.addLog("debug", fmt.Sprintf("Build complete: %s (count now %d)", def.Name, ge.Buildings.GetCount(item.BuildingKey)))
 			ge.addLog("success", fmt.Sprintf("%s completed! (#%d)", def.Name, ge.Buildings.GetCount(item.BuildingKey)))
 			ge.Stats.RecordBuild()
 			ge.Bus.Publish(EventData{
@@ -457,6 +489,8 @@ func (ge *GameEngine) processBuildQueue() {
 				Payload: map[string]interface{}{"building": item.BuildingKey},
 			})
 		} else {
+			def := ge.Buildings.defs[item.BuildingKey]
+			ge.addLog("debug", fmt.Sprintf("Build queue: %s %d/%d ticks", def.Name, item.TotalTicks-item.TicksLeft, item.TotalTicks))
 			remaining = append(remaining, item)
 		}
 	}
@@ -475,6 +509,7 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 	}
 	actual := ge.Resources.Add(resource, amount)
 	ge.Stats.RecordGather(resource, amount)
+	ge.addLog("debug", fmt.Sprintf("Gather: %s +%.1f (total: %.1f)", resource, amount, actual))
 	return actual, nil
 }
 
@@ -503,6 +538,7 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 		return fmt.Errorf("cannot afford %s (need: %s)", def.Name, formatCost(cost))
 	}
 
+	ge.addLog("debug", fmt.Sprintf("Build start: %s (cost: %s)", def.Name, formatCost(cost)))
 	if def.BuildTicks > 0 {
 		// Queue for construction
 		ge.buildQueue = append(ge.buildQueue, BuildQueueItem{
@@ -542,6 +578,7 @@ func (ge *GameEngine) RecruitVillager(vType string, count int) error {
 		return fmt.Errorf("cannot recruit %d %s(s) (pop: %d/%d)", count, vType, totalPop, popCap)
 	}
 	ge.Stats.RecordRecruit(count)
+	ge.addLog("debug", fmt.Sprintf("Recruit: %d %s (pop: %d/%d)", count, vType, ge.Villagers.TotalPop(), popCap))
 	ge.addLog("info", fmt.Sprintf("Recruited %d %s(s)", count, vType))
 	return nil
 }
@@ -556,6 +593,7 @@ func (ge *GameEngine) AssignVillager(vType, resource string, count int) error {
 		return fmt.Errorf("cannot assign %d %s(s) to %s (idle: %d)", count, vType, resource, idle)
 	}
 	ge.recalculateRates()
+	ge.addLog("debug", fmt.Sprintf("Assign: %d %s → %s", count, vType, resource))
 	ge.addLog("info", fmt.Sprintf("Assigned %d %s(s) to %s", count, vType, resource))
 	return nil
 }
@@ -569,6 +607,7 @@ func (ge *GameEngine) UnassignVillager(vType, resource string, count int) error 
 		return fmt.Errorf("cannot unassign %d %s(s) from %s", count, vType, resource)
 	}
 	ge.recalculateRates()
+	ge.addLog("debug", fmt.Sprintf("Unassign: %d %s ← %s", count, vType, resource))
 	ge.addLog("info", fmt.Sprintf("Unassigned %d %s(s) from %s", count, vType, resource))
 	return nil
 }
@@ -588,6 +627,7 @@ func (ge *GameEngine) StartResearch(techKey string) error {
 	// Pay knowledge cost
 	def := config.TechByKey()[techKey]
 	ge.Resources.Remove("knowledge", def.Cost)
+	ge.addLog("debug", fmt.Sprintf("Research start: %s (cost: %.0f knowledge, %d ticks)", def.Name, def.Cost, ge.Research.totalTicks))
 	ge.addLog("info", fmt.Sprintf("Started researching %s (%d ticks)", def.Name, ge.Research.totalTicks))
 	return nil
 }
@@ -622,6 +662,7 @@ func (ge *GameEngine) LaunchExpedition(key string) error {
 		return err
 	}
 
+	ge.addLog("debug", fmt.Sprintf("Expedition start: %s (soldiers: %d, bonus: %.1f%%)", ge.Military.active.Name, soldierCount, militaryBonus*100))
 	ge.addLog("info", fmt.Sprintf("Expedition launched: %s", ge.Military.active.Name))
 	return nil
 }
@@ -780,6 +821,15 @@ func (ge *GameEngine) AddLog(logType, message string) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	ge.addLog(logType, message)
+}
+
+// GetLogs returns a copy of the full log (thread-safe)
+func (ge *GameEngine) GetLogs() []LogEntry {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	logCopy := make([]LogEntry, len(ge.log))
+	copy(logCopy, ge.log)
+	return logCopy
 }
 
 // formatCost formats a cost map for display

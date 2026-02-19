@@ -2,8 +2,10 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/user/ageforge/game"
 )
@@ -45,6 +47,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdExpedition(args, engine)
 	case "prestige":
 		return cmdPrestige(args, engine)
+	case "dump", "exportlogs":
+		return cmdDump(args, engine)
 	case "save":
 		return cmdSave(args, engine)
 	case "load":
@@ -74,12 +78,80 @@ func cmdHelp(args []string) CommandResult {
   [cyan]prestige[-] shop               - View prestige upgrades
   [cyan]prestige[-] buy <key>          - Buy a prestige upgrade
   [cyan]status[-]                      - Show detailed status
+  [cyan]dump[-]                        - Export logs to file for debugging
   [cyan]save[-] [name]                 - Save game (default: autosave)
   [cyan]load[-] [name]                 - Load game (default: autosave)
   [cyan]help[-]                        - Show this help
 
 [gold]Shortcuts:[-] g=gather, b=build, r=recruit, a=assign, u=unassign, s=status, res=research, exp=expedition`
 	return CommandResult{Message: help, Type: "info"}
+}
+
+func cmdDump(args []string, engine *game.GameEngine) CommandResult {
+	state := engine.GetState()
+	logs := engine.GetLogs()
+
+	// Create data/logs directory
+	if err := os.MkdirAll("data/logs", 0755); err != nil {
+		return CommandResult{Message: fmt.Sprintf("Failed to create logs directory: %v", err), Type: "error"}
+	}
+
+	// Generate timestamped filename
+	ts := time.Now().Format("2006-01-02_150405")
+	filename := fmt.Sprintf("data/logs/dump_%s.log", ts)
+
+	var sb strings.Builder
+
+	// Header with engine state
+	sb.WriteString("=== AgeForge Log Dump ===\n")
+	sb.WriteString(fmt.Sprintf("Timestamp: %s\n", time.Now().Format(time.RFC3339)))
+	sb.WriteString(fmt.Sprintf("Tick: %d\n", state.Tick))
+	sb.WriteString(fmt.Sprintf("Age: %s (%s)\n", state.AgeName, state.Age))
+	sb.WriteString(fmt.Sprintf("Population: %d/%d (idle: %d, food drain: %.2f/tick)\n",
+		state.Villagers.TotalPop, state.Villagers.MaxPop, state.Villagers.TotalIdle, state.Villagers.FoodDrain))
+	sb.WriteString("\n--- Resources ---\n")
+	for _, rs := range state.Resources {
+		if !rs.Unlocked {
+			continue
+		}
+		sb.WriteString(fmt.Sprintf("  %-12s %8.1f / %8.0f  rate: %+.3f/tick\n",
+			rs.Name, rs.Amount, rs.Storage, rs.Rate))
+	}
+	sb.WriteString("\n--- Build Queue ---\n")
+	if len(state.BuildQueue) == 0 {
+		sb.WriteString("  (empty)\n")
+	}
+	for _, bq := range state.BuildQueue {
+		sb.WriteString(fmt.Sprintf("  %s: %d/%d ticks\n", bq.Name, bq.TotalTicks-bq.TicksLeft, bq.TotalTicks))
+	}
+	sb.WriteString("\n--- Active Events ---\n")
+	if len(state.ActiveEvents) == 0 {
+		sb.WriteString("  (none)\n")
+	}
+	for _, evt := range state.ActiveEvents {
+		sb.WriteString(fmt.Sprintf("  %s: %d ticks left\n", evt.Name, evt.TicksLeft))
+	}
+	if state.Research.CurrentTech != "" {
+		sb.WriteString(fmt.Sprintf("\n--- Research ---\n  %s: %d/%d ticks\n",
+			state.Research.CurrentTechName,
+			state.Research.TotalTicks-state.Research.TicksLeft,
+			state.Research.TotalTicks))
+	}
+
+	// All log entries
+	sb.WriteString(fmt.Sprintf("\n=== Log Entries (%d) ===\n", len(logs)))
+	for _, entry := range logs {
+		sb.WriteString(fmt.Sprintf("T%-5d [%-7s] %s\n", entry.Tick, entry.Type, entry.Message))
+	}
+
+	if err := os.WriteFile(filename, []byte(sb.String()), 0644); err != nil {
+		return CommandResult{Message: fmt.Sprintf("Failed to write dump: %v", err), Type: "error"}
+	}
+
+	return CommandResult{
+		Message: fmt.Sprintf("Logs exported to %s (%d entries)", filename, len(logs)),
+		Type:    "success",
+	}
 }
 
 func cmdGather(args []string, engine *game.GameEngine) CommandResult {
