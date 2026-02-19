@@ -178,6 +178,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.Prestige.LoadState(save.Prestige.Level, save.Prestige.TotalEarned, save.Prestige.Available, save.Prestige.Upgrades)
 
 	ge.recalculateRates()
+	ge.recalculateTickSpeed()
 	return nil
 }
 

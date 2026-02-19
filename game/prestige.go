@@ -90,9 +90,10 @@ func (pm *PrestigeManager) BuyUpgrade(key string) error {
 func (pm *PrestigeManager) GetBonuses() map[string]float64 {
 	bonuses := make(map[string]float64)
 
-	// Passive bonus: +2% production_all per prestige level
+	// Passive bonus: +2% production_all and +1% tick_speed per prestige level
 	if pm.level > 0 {
 		bonuses["production_all"] = float64(pm.level) * 0.02
+		bonuses["tick_speed"] = float64(pm.level) * 0.01
 	}
 
 	// Upgrade bonuses (rate and flat bonuses, not starting resources)

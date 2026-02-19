@@ -23,6 +23,8 @@ type GameState struct {
 	Log            []LogEntry
 	Stats          StatsSnapshot
 	SaveExists     bool
+	TickSpeedBonus float64
+	TickIntervalMs int
 }
 
 // BuildQueueSnapshot represents a building under construction for UI

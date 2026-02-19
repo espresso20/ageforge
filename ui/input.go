@@ -63,7 +63,7 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 
 func cmdHelp(args []string) CommandResult {
 	help := `[gold]Commands:[-]
-  [cyan]gather[-] <wood|stone> [amount] - Hand-gather wood or stone (max 5)
+  [cyan]gather[-] <food|wood|stone> [n] - Hand-gather resources (max 5)
   [cyan]build[-] <building>            - Build a structure
   [cyan]recruit[-] <type> [count]      - Recruit villagers (default: 1)
   [cyan]assign[-] <type> <resource> [n]- Assign villagers to gather
@@ -156,11 +156,11 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 
 func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
-		return CommandResult{Message: "Usage: gather <wood|stone> [amount] (max 5)", Type: "error"}
+		return CommandResult{Message: "Usage: gather <food|wood|stone> [amount] (max 5)", Type: "error"}
 	}
 	resource := strings.ToLower(args[0])
-	if resource != "wood" && resource != "stone" {
-		return CommandResult{Message: "You can only hand-gather wood or stone.", Type: "error"}
+	if resource != "food" && resource != "wood" && resource != "stone" {
+		return CommandResult{Message: "You can only hand-gather food, wood, or stone.", Type: "error"}
 	}
 	amount := 3.0
 	if len(args) >= 2 {
@@ -475,6 +475,7 @@ func cmdPrestigeShop(engine *game.GameEngine) CommandResult {
 	for _, key := range []string{
 		"gather_boost", "storage_bonus", "research_speed", "military_power",
 		"starting_food", "starting_wood", "population_cap", "expedition_loot",
+		"tick_speed",
 	} {
 		u, ok := p.Upgrades[key]
 		if !ok {

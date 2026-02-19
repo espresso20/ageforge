@@ -127,8 +127,15 @@ func (t *LogsTab) renderVerbose(sb *strings.Builder, state game.GameState) {
 	sb.WriteString("[gold]═══ Engine State ═══[-]\n")
 	fmt.Fprintf(sb, " Tick: [cyan]%d[-]  Age: [cyan]%s[-]  Pop: [cyan]%d/%d[-]\n",
 		state.Tick, state.AgeName, state.Villagers.TotalPop, state.Villagers.MaxPop)
-	fmt.Fprintf(sb, " Food drain: [yellow]%.2f/tick[-]  Idle: [yellow]%d[-]\n\n",
+	fmt.Fprintf(sb, " Food drain: [yellow]%.2f/tick[-]  Idle: [yellow]%d[-]\n",
 		state.Villagers.FoodDrain, state.Villagers.TotalIdle)
+	if state.TickSpeedBonus > 0 {
+		fmt.Fprintf(sb, " Tick speed: [green]+%.0f%%[-] (interval: [cyan]%dms[-])\n",
+			state.TickSpeedBonus*100, state.TickIntervalMs)
+	} else {
+		fmt.Fprintf(sb, " Tick speed: [gray]base[-] (interval: [cyan]%dms[-])\n", state.TickIntervalMs)
+	}
+	sb.WriteString("\n")
 
 	// Resource rates
 	sb.WriteString("[gold]═══ Resource Rates ═══[-]\n")

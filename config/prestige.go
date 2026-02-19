@@ -71,6 +71,13 @@ func PrestigeUpgrades() []PrestigeUpgradeDef {
 			PerTier: 0.05, MaxTier: 5,
 			Costs: []int{3, 6, 12, 20, 35},
 		},
+		{
+			Key: "tick_speed", Name: "Temporal Mastery",
+			Description: "Game ticks 5% faster per tier",
+			EffectKey: "tick_speed", EffectType: "rate_bonus",
+			PerTier: 0.05, MaxTier: 5,
+			Costs: []int{5, 10, 20, 35, 50},
+		},
 	}
 }
 

@@ -241,6 +241,14 @@ func Technologies() []TechDef {
 				{Type: "production", Target: "gold", Value: 0.1},
 			},
 		},
+		{
+			Name: "Chronometry", Key: "chronometry",
+			Age: "medieval_age", Cost: 200, ResearchTicks: 50,
+			Description: "Precise timekeeping accelerates all activity.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "tick_speed", Value: 0.05},
+			},
+		},
 
 		// === RENAISSANCE AGE ===
 		{
@@ -352,6 +360,15 @@ func Technologies() []TechDef {
 			Description: "Precision firearms improve military effectiveness.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "military_power", Value: 0.5},
+			},
+		},
+		{
+			Name: "Clockwork Automation", Key: "clockwork_automation",
+			Age: "industrial_age", Cost: 500, ResearchTicks: 60,
+			Prerequisites: []string{"chronometry"},
+			Description: "Mechanical automation speeds up every process.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "tick_speed", Value: 0.10},
 			},
 		},
 
@@ -694,6 +711,15 @@ func Technologies() []TechDef {
 			Effects: []Effect{
 				{Type: "production", Target: "quantum_flux", Value: 5.0},
 				{Type: "bonus", Target: "production_all", Value: 1.0},
+			},
+		},
+		{
+			Name: "Quantum Computing", Key: "quantum_computing",
+			Age: "quantum_age", Cost: 1500000, ResearchTicks: 80,
+			Prerequisites: []string{"clockwork_automation"},
+			Description: "Quantum processing collapses wait times.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "tick_speed", Value: 0.15},
 			},
 		},
 

@@ -9,8 +9,9 @@ import (
 )
 
 const (
-	TickInterval = 2 * time.Second
-	MaxLogSize   = 500
+	BaseTickInterval = 2 * time.Second
+	MinTickInterval  = 200 * time.Millisecond
+	MaxLogSize       = 500
 )
 
 // GameEngine is the central game coordinator
@@ -40,6 +41,9 @@ type GameEngine struct {
 
 	// Permanent bonuses from milestones
 	permanentBonuses map[string]float64
+
+	// Dynamic tick speed
+	tickSpeedBonus float64
 }
 
 // BuildQueueItem represents a building under construction
@@ -89,16 +93,47 @@ func (ge *GameEngine) Start() {
 	ge.running = true
 	ge.mu.Unlock()
 
-	ticker := time.NewTicker(TickInterval)
-	defer ticker.Stop()
+	timer := time.NewTimer(ge.getTickInterval())
+	defer timer.Stop()
 
 	for {
 		select {
-		case <-ticker.C:
+		case <-timer.C:
 			ge.doTick()
+			timer.Reset(ge.getTickInterval())
 		case <-ge.stopCh:
 			return
 		}
+	}
+}
+
+// getTickInterval returns the current tick interval based on tick speed bonus
+func (ge *GameEngine) getTickInterval() time.Duration {
+	ge.mu.RLock()
+	bonus := ge.tickSpeedBonus
+	ge.mu.RUnlock()
+
+	interval := time.Duration(float64(BaseTickInterval) / (1.0 + bonus))
+	if interval < MinTickInterval {
+		interval = MinTickInterval
+	}
+	return interval
+}
+
+// recalculateTickSpeed sums all tick speed bonuses (must be called with lock held)
+func (ge *GameEngine) recalculateTickSpeed() {
+	oldBonus := ge.tickSpeedBonus
+	bonus := ge.Research.GetBonus("tick_speed") +
+		ge.permanentBonuses["tick_speed"] +
+		ge.Prestige.GetBonuses()["tick_speed"]
+	ge.tickSpeedBonus = bonus
+
+	if bonus != oldBonus {
+		interval := time.Duration(float64(BaseTickInterval) / (1.0 + bonus))
+		if interval < MinTickInterval {
+			interval = MinTickInterval
+		}
+		ge.addLog("debug", fmt.Sprintf("Tick speed: +%.0f%% (interval: %dms)", bonus*100, interval.Milliseconds()))
 	}
 }
 
@@ -181,6 +216,9 @@ func (ge *GameEngine) doTick() {
 	if nextAge := ge.progress.CheckAdvancement(ge.age, ge.Resources, ge.Buildings); nextAge != "" {
 		ge.advanceAge(nextAge)
 	}
+
+	// Recalculate tick speed from all sources
+	ge.recalculateTickSpeed()
 }
 
 // processResearch handles research tick
@@ -712,8 +750,11 @@ func (ge *GameEngine) DoPrestige() error {
 		ge.Resources.Add(res, amount)
 	}
 
+	ge.recalculateTickSpeed()
+
 	ge.addLog("success", fmt.Sprintf("Prestige complete! Level %d (+%d points)", ge.Prestige.GetLevel(), points))
-	ge.addLog("info", fmt.Sprintf("Passive bonus: +%.0f%% production", float64(ge.Prestige.GetLevel())*2))
+	ge.addLog("info", fmt.Sprintf("Passive bonus: +%.0f%% production, +%.0f%% tick speed",
+		float64(ge.Prestige.GetLevel())*2, ge.tickSpeedBonus*100))
 	ge.addLog("info", "Type [cyan]help[-] to get started again.")
 
 	return nil
@@ -780,6 +821,11 @@ func (ge *GameEngine) GetState() GameState {
 		ge.Stats.TotalBuilt,
 	)
 
+	tickInterval := time.Duration(float64(BaseTickInterval) / (1.0 + ge.tickSpeedBonus))
+	if tickInterval < MinTickInterval {
+		tickInterval = MinTickInterval
+	}
+
 	return GameState{
 		Tick:             ge.tick,
 		Age:              ge.age,
@@ -800,6 +846,8 @@ func (ge *GameEngine) GetState() GameState {
 		Log:              logCopy,
 		Stats:            ge.Stats.Snapshot(),
 		SaveExists:       SaveExists("autosave"),
+		TickSpeedBonus:   ge.tickSpeedBonus,
+		TickIntervalMs:   int(tickInterval.Milliseconds()),
 	}
 }
 

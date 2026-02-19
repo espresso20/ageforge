@@ -685,9 +685,11 @@ func wikiPrestige(state game.GameState) string {
 	sb.WriteString("  • Bonus: +1 per 50 buildings built\n")
 	sb.WriteString("  • Diminishing returns at higher prestige levels\n\n")
 
-	sb.WriteString("[gold]Passive Bonus[-]\n")
-	sb.WriteString("  Each prestige level gives [green]+2% production[-] to all\n")
-	sb.WriteString("  resources. This stacks and applies automatically.\n\n")
+	sb.WriteString("[gold]Passive Bonuses[-]\n")
+	sb.WriteString("  Each prestige level gives:\n")
+	sb.WriteString("  • [green]+2% production[-] to all resources\n")
+	sb.WriteString("  • [green]+1% tick speed[-] (game runs faster!)\n")
+	sb.WriteString("  These stack and apply automatically.\n\n")
 
 	// Live status
 	p := state.Prestige
@@ -709,6 +711,7 @@ func wikiPrestige(state game.GameState) string {
 	for _, key := range []string{
 		"gather_boost", "storage_bonus", "research_speed", "military_power",
 		"starting_food", "starting_wood", "population_cap", "expedition_loot",
+		"tick_speed",
 	} {
 		u, ok := p.Upgrades[key]
 		if !ok {
@@ -749,10 +752,10 @@ Most have single-letter shortcuts.
 
 [gold]── Resource Gathering ──[-]
 
-  [cyan]gather[-] <wood|stone> [amount]
+  [cyan]gather[-] <food|wood|stone> [amount]
   Shortcut: [cyan]g[-]
-  Hand-gather wood or stone. Default 3, max 5.
-  Example: [yellow]gather wood[-] or [yellow]g stone 5[-]
+  Hand-gather food, wood, or stone. Default 3, max 5.
+  Example: [yellow]gather food[-], [yellow]g wood 5[-], [yellow]g stone[-]
 
 [gold]── Building ──[-]
 
@@ -907,7 +910,8 @@ func wikiStrategy(_ game.GameState) string {
   • Don't prestige too early — push past Medieval for more points
   • [yellow]Starting Food/Wood[-] upgrades help early game the most
   • [yellow]Gather Boost[-] and [yellow]Research Speed[-] compound over time
-  • The passive +2% production per level adds up fast
+  • The passive +2% production and +1% tick speed per level adds up
+  • [yellow]Temporal Mastery[-] upgrade gives +5% tick speed per tier
   • Each prestige is faster than the last thanks to bonuses
 
 [gold]── General Tips ──[-]
