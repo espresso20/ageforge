@@ -16,9 +16,10 @@ func BaseResources() []ResourceDef {
 		// Primitive Age
 		{Name: "Food", Key: "food", BaseStorage: 50, Age: "primitive_age", Description: "Feeds your population"},
 		{Name: "Wood", Key: "wood", BaseStorage: 50, Age: "primitive_age", Description: "Basic building material"},
+		// Primitive Age (cont.)
+		{Name: "Knowledge", Key: "knowledge", BaseStorage: 30, Age: "primitive_age", Description: "Powers research"},
 		// Stone Age
 		{Name: "Stone", Key: "stone", BaseStorage: 50, Age: "stone_age", Description: "Durable building material"},
-		{Name: "Knowledge", Key: "knowledge", BaseStorage: 30, Age: "stone_age", Description: "Powers research"},
 		// Bronze Age
 		{Name: "Iron", Key: "iron", BaseStorage: 50, Age: "bronze_age", Description: "Metal for tools and weapons"},
 		{Name: "Gold", Key: "gold", BaseStorage: 50, Age: "bronze_age", Description: "Currency and trade"},

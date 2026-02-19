@@ -42,6 +42,14 @@ func BaseBuildings() []BuildingDef {
 			RequiredAge: "primitive_age",
 			Description: "A hidden pile of supplies. +30 storage.",
 		},
+		{
+			Name: "Altar", Key: "altar", Category: "research",
+			BaseCost:  map[string]float64{"wood": 8},
+			CostScale: 1.35,
+			Effects:   []Effect{{Type: "production", Target: "knowledge", Value: 0.05}},
+			RequiredAge: "primitive_age",
+			Description: "A sacred stone circle where shamans commune with spirits. +0.05 knowledge/tick.",
+		},
 
 		// ===== STONE AGE =====
 		{

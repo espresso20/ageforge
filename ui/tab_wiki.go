@@ -180,26 +180,31 @@ and nothing else. Here's your first steps:
 [gold]Step 2: Build a Stash[-]
   Type: [cyan]build stash[-]
   Stashes provide +30 storage. You need more storage before
-  you can hold enough resources for the Stone Age (100 food).
+  you can hold enough resources for the Stone Age (200 food).
 
 [gold]Step 3: Build a Hut[-]
   Type: [cyan]build hut[-]
   Huts provide +2 population capacity. You need housing
   before you can recruit villagers.
 
-[gold]Step 4: Recruit a Worker[-]
-  Type: [cyan]recruit worker[-]
-  Workers can be assigned to gather resources automatically.
+[gold]Step 4: Build an Altar[-]
+  Type: [cyan]build altar[-]
+  Altars slowly generate knowledge (+0.05/tick). You need
+  30 knowledge and 2 altars for the Stone Age.
 
-[gold]Step 5: Assign Workers[-]
-  Type: [cyan]assign worker food[-]
-  Workers gather 0.3 resources per tick when assigned.
-  Each worker eats 0.15 food/tick, so roughly 1 in 3
-  workers should be on food duty.
+[gold]Step 5: Recruit Workers & Shamans[-]
+  Type: [cyan]recruit worker[-] or [cyan]recruit shaman[-]
+  Workers gather food/wood (0.3/tick). Shamans gather
+  knowledge (0.4/tick). You need both to advance.
 
-[gold]Step 6: Keep Building[-]
-  Build more huts and stashes, recruit more workers, assign
-  them. Watch the age progress bar at the top — when all
+[gold]Step 6: Assign Villagers[-]
+  Type: [cyan]assign worker food[-] or [cyan]assign shaman knowledge[-]
+  Each worker eats 0.15 food/tick, shamans eat 0.2/tick.
+  Keep ~1/3 of workers on food duty.
+
+[gold]Step 7: Keep Building[-]
+  Build more huts, stashes, and altars. Recruit and assign
+  villagers. Watch the age progress bar — when all
   requirements turn [green]green[-], you'll advance!
 
 [gold]The Food Balance[-]
@@ -852,9 +857,11 @@ func wikiStrategy(_ game.GameState) string {
 
   • Gather wood first — you need 5 for your first stash
   • Build stashes early! Base storage is 50 but you need
-    100 food for the Stone Age
-  • Build 2-3 huts, then recruit and assign workers
-  • Keep 1/3 of workers on food at all times
+    200 food for the Stone Age
+  • Build an altar to start generating knowledge — you
+    need 30 knowledge and 2 altars for Stone Age
+  • Recruit shamans and assign them to knowledge
+  • Build huts, recruit workers, keep 1/3 on food
   • Don't recruit faster than you can feed
 
 [gold]── Stone Age ──[-]
@@ -920,6 +927,8 @@ func wikiStrategy(_ game.GameState) string {
 
   Worker gather rate:  0.30 / tick (every 2 sec)
   Worker food cost:    0.15 / tick
+  Shaman gather rate:  0.40 / tick (knowledge only)
+  Shaman food cost:    0.20 / tick
   Scholar gather rate:  0.50 / tick
   Scholar food cost:   0.20 / tick
   Merchant gather rate: 0.60 / tick (gold, crypto)

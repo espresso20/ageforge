@@ -22,18 +22,18 @@ func Ages() []AgeDef {
 		{
 			Name: "Primitive Age", Key: "primitive_age", Order: 0,
 			Description:     "Survival. Nothing but your hands and wits.",
-			UnlockBuildings: []string{"hut", "stash"},
-			UnlockResources: []string{"food", "wood"},
-			UnlockVillagers: []string{"worker"},
+			UnlockBuildings: []string{"hut", "stash", "altar"},
+			UnlockResources: []string{"food", "wood", "knowledge"},
+			UnlockVillagers: []string{"worker", "shaman"},
 		},
 		// === 1: STONE AGE ===
 		{
 			Name: "Stone Age", Key: "stone_age", Order: 1,
 			Description:  "Tools of stone change everything.",
-			ResourceReqs: map[string]float64{"food": 100, "wood": 75},
-			BuildingReqs: map[string]int{"hut": 3},
+			ResourceReqs: map[string]float64{"food": 200, "wood": 150, "knowledge": 30},
+			BuildingReqs: map[string]int{"hut": 5, "altar": 2},
 			UnlockBuildings: []string{"gathering_camp", "woodcutter_camp", "stone_pit", "firepit", "storage_pit"},
-			UnlockResources: []string{"stone", "knowledge"},
+			UnlockResources: []string{"stone"},
 		},
 		// === 2: BRONZE AGE ===
 		{
