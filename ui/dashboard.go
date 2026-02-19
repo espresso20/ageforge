@@ -2,365 +2,399 @@ package ui
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
-	"github.com/user/civcli/game"
+
+	"github.com/user/ageforge/game"
 )
 
-// Dashboard provides the main game interface
+// Dashboard is the main gameplay screen with tabbed layout
 type Dashboard struct {
-	ui   *UIManager
-	view *tview.Flex
+	app    *tview.Application
+	engine *game.GameEngine
+	pages  *tview.Pages
+	root   *tview.Flex
 
-	// Layout panels
-	statsPanel     *tview.TextView
-	buildingsPanel *tview.TextView
-	researchPanel  *tview.TextView
-	logPanel       *tview.TextView
-	commandInput   *tview.InputField
-	helpText       *tview.TextView
+	// Tab system
+	tabBar    *tview.TextView
+	tabPages  *tview.Pages
+	activeTab int
+	tabNames  []string
 
-	// State tracking
-	gameState *game.GameState
-	messages  []Message
+	// Tabs
+	economyTab  *EconomyTab
+	researchTab *ResearchTab
+	militaryTab *MilitaryTab
+	statsTab    *StatsTab
+	wikiTab     *WikiTab
+
+	// Shared UI
+	logTV      *tview.TextView
+	helpTV     *tview.TextView
+	statusTV   *tview.TextView
+	ageTV      *tview.TextView
+	inputField *tview.InputField
+
+	stopCh chan struct{}
 }
 
-// Message represents a game message with type and timestamp
-type Message struct {
-	Text      string
-	Type      string // "info", "success", "warning", "error"
-	Timestamp time.Time
-}
-
-// NewDashboard creates a new game dashboard
-func NewDashboard(ui *UIManager) *Dashboard {
+// NewDashboard creates the gameplay dashboard
+func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.Pages) *Dashboard {
 	d := &Dashboard{
-		ui:       ui,
-		view:     tview.NewFlex(),
-		messages: make([]Message, 0),
+		app:      app,
+		engine:   engine,
+		pages:    pages,
+		stopCh:   make(chan struct{}),
+		tabNames: []string{"Economy", "Research", "Military", "Stats", "Wiki"},
 	}
-
-	d.initializePanels()
-	d.setupLayout()
-	d.setupInputHandling()
-
+	d.build()
 	return d
 }
 
-// initializePanels creates all dashboard components
-func (d *Dashboard) initializePanels() {
-	theme := d.ui.GetTheme()
+func (d *Dashboard) build() {
+	// Create tabs
+	d.economyTab = NewEconomyTab()
+	d.researchTab = NewResearchTab()
+	d.militaryTab = NewMilitaryTab()
+	d.statsTab = NewStatsTab()
+	d.wikiTab = NewWikiTab()
 
-	// Stats panel - top left
-	d.statsPanel = tview.NewTextView()
-	d.statsPanel.SetBorder(true).
-		SetTitle(" 📊 Civilization Stats ").
-		SetTitleAlign(tview.AlignCenter).
-		SetBorderColor(theme.Border)
-	d.statsPanel.SetDynamicColors(true)
+	// Tab bar
+	d.tabBar = tview.NewTextView().
+		SetDynamicColors(true).
+		SetTextAlign(tview.AlignLeft)
+	d.updateTabBar()
 
-	// Buildings panel - top right
-	d.buildingsPanel = tview.NewTextView()
-	d.buildingsPanel.SetBorder(true).
-		SetTitle(" 🏛️ Buildings & Infrastructure ").
-		SetTitleAlign(tview.AlignCenter).
-		SetBorderColor(theme.Border)
-	d.buildingsPanel.SetDynamicColors(true)
+	// Tab pages
+	d.tabPages = tview.NewPages()
+	d.tabPages.AddPage("Economy", d.economyTab.Root(), true, true)
+	d.tabPages.AddPage("Research", d.researchTab.Root(), true, false)
+	d.tabPages.AddPage("Military", d.militaryTab.Root(), true, false)
+	d.tabPages.AddPage("Stats", d.statsTab.Root(), true, false)
+	d.tabPages.AddPage("Wiki", d.wikiTab.Root(), true, false)
 
-	// Research panel - middle right
-	d.researchPanel = tview.NewTextView()
-	d.researchPanel.SetBorder(true).
-		SetTitle(" 🔬 Research & Technology ").
-		SetTitleAlign(tview.AlignCenter).
-		SetBorderColor(theme.Border)
-	d.researchPanel.SetDynamicColors(true)
+	// Log panel
+	d.logTV = tview.NewTextView().
+		SetDynamicColors(true).
+		SetScrollable(true).
+		SetMaxLines(100)
+	d.logTV.SetBorder(true).SetTitle(" Log ").SetTitleColor(ColorDim)
 
-	// Log panel - bottom
-	d.logPanel = tview.NewTextView()
-	d.logPanel.SetBorder(true).
-		SetTitle(" 📜 Recent Events ").
-		SetTitleAlign(tview.AlignCenter).
-		SetBorderColor(theme.Border)
-	d.logPanel.SetDynamicColors(true).
-		SetScrollable(true)
+	// Help/tips panel
+	d.helpTV = tview.NewTextView().
+		SetDynamicColors(true)
+	d.helpTV.SetBorder(true).SetTitle(" Quick Reference ").SetTitleColor(ColorTitle)
+	d.helpTV.SetText(helpText())
 
-	// Command input - bottom
-	d.commandInput = tview.NewInputField().
-		SetLabel("Command: ").
-		SetPlaceholder("Type commands here (e.g., 'build huts', 'research farming') or 'help' for assistance").
-		SetFieldBackgroundColor(theme.Background).
-		SetFieldTextColor(theme.Foreground)
+	// Status bar
+	d.statusTV = tview.NewTextView().
+		SetDynamicColors(true).
+		SetTextAlign(tview.AlignCenter)
 
-	// Help text - bottom
-	d.helpText = tview.NewTextView().
-		SetText(" Press [yellow]F1[white] for help • [yellow]Ctrl+Q[white] to quit • [yellow]Tab[white] to navigate ").
-		SetTextAlign(tview.AlignCenter).
+	// Age progress tracker
+	d.ageTV = tview.NewTextView().
 		SetDynamicColors(true)
 
-	// Initialize with default content
-	d.updateStatsDisplay()
-	d.updateBuildingsDisplay()
-	d.updateResearchDisplay()
-	d.updateLogDisplay()
-}
+	// Command input
+	d.inputField = tview.NewInputField().
+		SetLabel("> ").
+		SetFieldWidth(0).
+		SetFieldBackgroundColor(tcell.ColorDefault).
+		SetLabelColor(ColorAccent)
 
-// setupLayout arranges the dashboard components
-func (d *Dashboard) setupLayout() {
-	// Create main horizontal split
-	mainSplit := tview.NewFlex().SetDirection(tview.FlexColumn)
-
-	// Left column (stats and log)
-	leftColumn := tview.NewFlex().SetDirection(tview.FlexRow)
-	leftColumn.
-		AddItem(d.statsPanel, 0, 1, false).
-		AddItem(d.logPanel, 0, 1, false)
-
-	// Right column (buildings and research)
-	rightColumn := tview.NewFlex().SetDirection(tview.FlexRow)
-	rightColumn.
-		AddItem(d.buildingsPanel, 0, 1, false).
-		AddItem(d.researchPanel, 0, 1, false)
-
-	// Add columns to main split
-	mainSplit.
-		AddItem(leftColumn, 0, 1, false).
-		AddItem(rightColumn, 0, 1, false)
-
-	// Bottom input area
-	inputArea := tview.NewFlex().SetDirection(tview.FlexRow)
-	inputArea.
-		AddItem(d.commandInput, 1, 0, true).
-		AddItem(d.helpText, 1, 0, false)
-
-	// Main layout
-	d.view.SetDirection(tview.FlexRow)
-	d.view.
-		AddItem(mainSplit, 0, 1, false).
-		AddItem(inputArea, 3, 0, true)
-}
-
-// setupInputHandling configures command input processing
-func (d *Dashboard) setupInputHandling() {
-	d.commandInput.SetDoneFunc(func(key tcell.Key) {
+	d.inputField.SetDoneFunc(func(key tcell.Key) {
 		if key == tcell.KeyEnter {
-			command := d.commandInput.GetText()
-			if command != "" {
-				// Send command to game engine
-				d.ui.SendInput(command)
-				d.addMessage(fmt.Sprintf("> %s", command), "command")
-				d.commandInput.SetText("")
+			text := d.inputField.GetText()
+			d.inputField.SetText("")
+			if text == "" {
+				return
+			}
+			if strings.ToLower(strings.TrimSpace(text)) == "quit" {
+				d.engine.SaveGame("autosave")
+				d.app.Stop()
+				return
+			}
+			result := HandleCommand(text, d.engine)
+			if result.Message != "" {
+				d.engine.AddLog(result.Type, result.Message)
 			}
 		}
 	})
 
-	// Set up input capture for navigation
-	d.commandInput.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// Bottom area: log + help side by side
+	bottomArea := tview.NewFlex().SetDirection(tview.FlexColumn).
+		AddItem(d.logTV, 0, 1, false).
+		AddItem(d.helpTV, 0, 1, false)
+
+	// Main content area: tab content + bottom
+	contentArea := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(d.tabPages, 0, 2, false).
+		AddItem(bottomArea, 0, 1, false)
+
+	// Root layout
+	d.root = tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(d.statusTV, 1, 0, false).
+		AddItem(d.ageTV, 2, 0, false).
+		AddItem(d.tabBar, 1, 0, false).
+		AddItem(contentArea, 0, 1, false).
+		AddItem(d.inputField, 1, 0, true)
+
+	// Global key handling
+	d.root.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
+		case tcell.KeyEsc:
+			d.engine.SaveGame("autosave")
+			d.engine.Stop()
+			d.pages.SwitchToPage("splash")
+			return nil
+		case tcell.KeyF1:
+			d.switchTab(0)
+			return nil
+		case tcell.KeyF2:
+			d.switchTab(1)
+			return nil
+		case tcell.KeyF3:
+			d.switchTab(2)
+			return nil
+		case tcell.KeyF4:
+			d.switchTab(3)
+			return nil
+		case tcell.KeyF5:
+			d.switchTab(4)
+			return nil
 		case tcell.KeyTab:
-			// Tab cycles through focusable elements
-			return event
+			d.switchTab((d.activeTab + 1) % len(d.tabNames))
+			return nil
+		case tcell.KeyBacktab:
+			d.switchTab((d.activeTab + len(d.tabNames) - 1) % len(d.tabNames))
+			return nil
+		}
+
+		// When wiki tab is active, intercept navigation keys
+		if d.activeTab == 4 {
+			switch event.Key() {
+			case tcell.KeyUp:
+				d.wikiTab.PrevPage()
+				return nil
+			case tcell.KeyDown:
+				d.wikiTab.NextPage()
+				return nil
+			case tcell.KeyPgUp:
+				d.wikiTab.ScrollUp()
+				return nil
+			case tcell.KeyPgDn:
+				d.wikiTab.ScrollDown()
+				return nil
+			}
+			// Number keys for quick nav
+			if event.Rune() >= '1' && event.Rune() <= '9' {
+				idx := int(event.Rune() - '1')
+				d.wikiTab.GoToPage(idx)
+				return nil
+			}
+		}
+
+		// Always focus input field for typing (except wiki nav)
+		if !d.inputField.HasFocus() {
+			d.app.SetFocus(d.inputField)
 		}
 		return event
 	})
 }
 
-// UpdateState updates the dashboard with new game state
-func (d *Dashboard) UpdateState(state game.GameState) {
-	d.gameState = &state
-	d.updateStatsDisplay()
-	d.updateBuildingsDisplay()
-	d.updateResearchDisplay()
-	// Remove the direct Draw() call to prevent potential deadlocks
+func (d *Dashboard) switchTab(index int) {
+	d.activeTab = index
+	d.tabPages.SwitchToPage(d.tabNames[index])
+	d.updateTabBar()
 }
 
-// updateStatsDisplay refreshes the stats panel
-func (d *Dashboard) updateStatsDisplay() {
-	var content strings.Builder
-
-	if d.gameState != nil {
-		state := d.gameState
-
-		content.WriteString(fmt.Sprintf("[yellow]📅 Age:[white] %s\n", state.Age))
-		content.WriteString(fmt.Sprintf("[yellow]⏰ Tick:[white] %d\n", state.Tick))
-		content.WriteString(fmt.Sprintf("[yellow]👥 Villagers:[white] %d/%d\n", len(state.Villagers), state.VillagerCap))
-		content.WriteString("\n[cyan]Resources:[white]\n")
-
-		// Display resources from the map
-		for resource, amount := range state.Resources {
-			emoji := d.getResourceEmoji(resource)
-			content.WriteString(fmt.Sprintf("  %s %s: %.1f\n", emoji, resource, amount))
+func (d *Dashboard) updateTabBar() {
+	var parts []string
+	for i, name := range d.tabNames {
+		key := fmt.Sprintf("F%d", i+1)
+		if i == d.activeTab {
+			parts = append(parts, fmt.Sprintf(" [black:gold] %s %s [-:-] ", key, name))
+		} else {
+			parts = append(parts, fmt.Sprintf(" [gray]%s %s[-] ", key, name))
 		}
-
-		content.WriteString(fmt.Sprintf("\n[green]Total Food:[white] %.1f\n", state.TotalFood))
-		content.WriteString(fmt.Sprintf("[yellow]Tick Duration:[white] %.1fs\n", state.TickDurationSeconds))
-	} else {
-		content.WriteString("[yellow]Welcome to CivIdleCli![white]\n\n")
-		content.WriteString("🌟 Starting a new civilization...\n")
-		content.WriteString("🏕️ Stone Age begins\n")
-		content.WriteString("👥 Starting villagers...\n")
-		content.WriteString("🌾 Gathering food...\n")
-		content.WriteString("\n[cyan]Tip:[white] Start by building")
-		content.WriteString(" hutss to support more villagers!")
 	}
-
-	d.statsPanel.SetText(content.String())
+	d.tabBar.SetText(strings.Join(parts, "  "))
 }
 
-// updateBuildingsDisplay refreshes the buildings panel
-func (d *Dashboard) updateBuildingsDisplay() {
-	var content strings.Builder
-
-	if d.gameState != nil && len(d.gameState.Buildings) > 0 {
-		content.WriteString("[cyan]Current Buildings:[white]\n\n")
-		for building, count := range d.gameState.Buildings {
-			content.WriteString(fmt.Sprintf("🏠 %s: %d\n", building, count))
-		}
-	} else {
-		content.WriteString("[yellow]Available Buildings:[white]\n\n")
-		content.WriteString("🏠 [green]huts[white] - Increase population capacity\n")
-		content.WriteString("   Cost: 10 Wood, 5 Stone\n\n")
-		content.WriteString("🌾 [green]Farm[white] - Produce food automatically\n")
-		content.WriteString("   Cost: 5 Wood, 15 Food\n\n")
-		content.WriteString("🌲 [green]Lumber Mill[white] - Produce wood\n")
-		content.WriteString("   Cost: 20 Wood, 10 Stone\n\n")
-		content.WriteString("⛏️ [green]Quarry[white] - Produce stone\n")
-		content.WriteString("   Cost: 15 Wood, 25 Stone\n\n")
-		content.WriteString("[cyan]Use:[white] 'build <building>' to construct")
-	}
-
-	d.buildingsPanel.SetText(content.String())
+// Root returns the root primitive for page registration
+func (d *Dashboard) Root() tview.Primitive {
+	return d.root
 }
 
-// updateResearchDisplay refreshes the research panel
-func (d *Dashboard) updateResearchDisplay() {
-	var content strings.Builder
-
-	if d.gameState != nil {
-		if len(d.gameState.Research.Researched) > 0 {
-			content.WriteString("[cyan]Researched Technologies:[white]\n\n")
-			for _, tech := range d.gameState.Research.Researched {
-				content.WriteString(fmt.Sprintf("🔬 %s\n", tech))
+// StartUpdates begins the UI refresh loop
+func (d *Dashboard) StartUpdates() {
+	go func() {
+		ticker := time.NewTicker(500 * time.Millisecond)
+		defer ticker.Stop()
+		for {
+			select {
+			case <-ticker.C:
+				d.app.QueueUpdateDraw(func() {
+					d.refresh()
+				})
+			case <-d.stopCh:
+				return
 			}
-			content.WriteString("\n")
 		}
-
-		if d.gameState.Research.Current != "" {
-			content.WriteString(fmt.Sprintf("[yellow]Current Research:[white] %s\n", d.gameState.Research.Current))
-			progress := (d.gameState.Research.Progress / d.gameState.Research.Cost) * 100
-			content.WriteString(fmt.Sprintf("[cyan]Progress:[white] %.1f%%\n\n", progress))
-		}
-
-		content.WriteString("[yellow]Available Research:[white]\n")
-		content.WriteString("🔬 [green]Agriculture[white] - Unlock advanced farming\n")
-		content.WriteString("⚒️ [green]Tool Making[white] - Create better tools\n")
-		content.WriteString("🏛️ [green]Construction[white] - Build larger structures\n")
-	} else {
-		content.WriteString("[yellow]Available Research:[white]\n\n")
-		content.WriteString("🔬 [green]Agriculture[white] - Unlock advanced farming\n")
-		content.WriteString("   Improves food production\n\n")
-		content.WriteString("⚒️ [green]Tool Making[white] - Create better tools\n")
-		content.WriteString("   Improves resource gathering\n\n")
-		content.WriteString("🏛️ [green]Construction[white] - Build larger structures\n")
-		content.WriteString("   Unlock new building types\n\n")
-	}
-
-	content.WriteString("\n[cyan]Use:[white] 'research <technology>' to advance")
-	d.researchPanel.SetText(content.String())
+	}()
 }
 
-// updateLogDisplay refreshes the message log
-func (d *Dashboard) updateLogDisplay() {
-	var content strings.Builder
-
-	if len(d.messages) == 0 {
-		content.WriteString("[cyan]Game started successfully![white]\n")
-		content.WriteString("Type 'help' for a list of available commands.\n")
-		content.WriteString("Begin by building hutss and farms to grow your civilization!\n")
-	} else {
-		// Show last 10 messages
-		start := 0
-		if len(d.messages) > 10 {
-			start = len(d.messages) - 10
-		}
-
-		for i := start; i < len(d.messages); i++ {
-			msg := d.messages[i]
-			color := d.getMessageColor(msg.Type)
-			timestamp := msg.Timestamp.Format("15:04")
-			content.WriteString(fmt.Sprintf("[gray]%s[white] %s%s[white]\n",
-				timestamp, color, msg.Text))
-		}
-	}
-
-	d.logPanel.SetText(content.String())
-}
-
-// getResourceEmoji returns an appropriate emoji for the resource type
-func (d *Dashboard) getResourceEmoji(resource string) string {
-	switch resource {
-	case "food", "foraging", "hunting":
-		return "🌾"
-	case "wood", "lumber":
-		return "🪵"
-	case "stone":
-		return "🗿"
-	case "tools":
-		return "⚒️"
-	case "population":
-		return "👥"
+// StopUpdates stops the UI refresh loop
+func (d *Dashboard) StopUpdates() {
+	select {
+	case d.stopCh <- struct{}{}:
 	default:
-		return "📦"
 	}
 }
 
-// getMessageColor returns the appropriate color for message type
-func (d *Dashboard) getMessageColor(msgType string) string {
-	switch msgType {
-	case "success":
-		return "[green]"
-	case "warning":
-		return "[yellow]"
-	case "error":
-		return "[red]"
-	case "command":
-		return "[cyan]"
-	default:
-		return "[white]"
+func (d *Dashboard) refresh() {
+	state := d.engine.GetState()
+	d.refreshStatus(state)
+	d.refreshAgeProgress(state)
+	d.refreshLog(state)
+
+	// Only refresh the active tab
+	switch d.activeTab {
+	case 0:
+		d.economyTab.Refresh(state)
+	case 1:
+		d.researchTab.Refresh(state)
+	case 2:
+		d.militaryTab.Refresh(state)
+	case 3:
+		d.statsTab.Refresh(state)
+	case 4:
+		d.wikiTab.Refresh(state)
 	}
 }
 
-// ShowMessage adds a message to the log
-func (d *Dashboard) ShowMessage(message, msgType string) {
-	d.addMessage(message, msgType)
-	d.updateLogDisplay()
-	// Remove Draw() call to prevent potential conflicts during page transitions
+func (d *Dashboard) refreshStatus(state game.GameState) {
+	nextAgeStr := ""
+	if state.NextAge != "" {
+		nextAgeStr = fmt.Sprintf("  [gray]Next: %s[-]", state.NextAge)
+	}
+	prestigeStr := ""
+	if state.Prestige.Level > 0 {
+		prestigeStr = fmt.Sprintf("  [cyan]P%d[-]", state.Prestige.Level)
+	}
+	d.statusTV.SetText(fmt.Sprintf(
+		"[gold]%s[-]%s  Tick: %d%s  |  Pop: %d/%d  |  [gray]Tab=Switch  ESC=Menu[-]",
+		state.AgeName, prestigeStr, state.Tick, nextAgeStr,
+		state.Villagers.TotalPop, state.Villagers.MaxPop,
+	))
 }
 
-// addMessage adds a message to the internal log
-func (d *Dashboard) addMessage(message, msgType string) {
-	msg := Message{
-		Text:      message,
-		Type:      msgType,
-		Timestamp: time.Now(),
+func (d *Dashboard) refreshAgeProgress(state game.GameState) {
+	if state.NextAge == "" {
+		d.ageTV.SetText(" [gold]You have reached the final age![-]")
+		return
 	}
 
-	d.messages = append(d.messages, msg)
+	var sb strings.Builder
+	fmt.Fprintf(&sb, " [gold]Next Age: %s[-]  ", state.NextAgeName)
 
-	// Keep only last 50 messages
-	if len(d.messages) > 50 {
-		d.messages = d.messages[len(d.messages)-50:]
+	// Resource requirements
+	resKeys := make([]string, 0, len(state.NextAgeResReqs))
+	for k := range state.NextAgeResReqs {
+		resKeys = append(resKeys, k)
 	}
+	sort.Strings(resKeys)
+	for _, key := range resKeys {
+		req := state.NextAgeResReqs[key]
+		current := 0.0
+		if rs, ok := state.Resources[key]; ok {
+			current = rs.Amount
+		}
+		color := "red"
+		if current >= req {
+			color = "green"
+		}
+		fmt.Fprintf(&sb, "[%s]%s:%.0f/%.0f[-]  ", color, key, current, req)
+	}
+
+	// Building requirements
+	bldKeys := make([]string, 0, len(state.NextAgeBldReqs))
+	for k := range state.NextAgeBldReqs {
+		bldKeys = append(bldKeys, k)
+	}
+	sort.Strings(bldKeys)
+	if len(bldKeys) > 0 {
+		sb.WriteString(" ")
+		for _, key := range bldKeys {
+			req := state.NextAgeBldReqs[key]
+			current := 0
+			if bs, ok := state.Buildings[key]; ok {
+				current = bs.Count
+			}
+			color := "red"
+			if current >= req {
+				color = "green"
+			}
+			fmt.Fprintf(&sb, "[%s]%s:%d/%d[-]  ", color, key, current, req)
+		}
+	}
+
+	d.ageTV.SetText(sb.String())
 }
 
-// GetView returns the dashboard view
-func (d *Dashboard) GetView() tview.Primitive {
-	return d.view
+func (d *Dashboard) refreshLog(state game.GameState) {
+	var sb strings.Builder
+	start := 0
+	if len(state.Log) > 20 {
+		start = len(state.Log) - 20
+	}
+	for _, entry := range state.Log[start:] {
+		color := "white"
+		switch entry.Type {
+		case "success":
+			color = "green"
+		case "warning":
+			color = "yellow"
+		case "error":
+			color = "red"
+		case "event":
+			color = "gold"
+		}
+		fmt.Fprintf(&sb, "[gray]T%d[-] [%s]%s[-]\n", entry.Tick, color, entry.Message)
+	}
+	d.logTV.SetText(sb.String())
+	d.logTV.ScrollToEnd()
 }
 
-// Focus sets focus to the dashboard
-func (d *Dashboard) Focus() {
-	d.ui.GetApp().SetFocus(d.commandInput)
+func helpText() string {
+	return ` [gold]Commands[-]
+ [cyan]gather[-] <resource> [n]    Gather by hand
+ [cyan]build[-] <building>         Build a structure
+ [cyan]recruit[-] <type> [n]       Recruit villagers
+ [cyan]assign[-] <type> <res> [n]  Put to work
+ [cyan]unassign[-] <type> <res> [n] Remove from work
+ [cyan]research[-] <tech>          Research tech
+ [cyan]expedition[-] <key>         Launch expedition
+ [cyan]prestige[-] [shop|buy|confirm] Prestige system
+ [cyan]status[-]                   Detailed overview
+ [cyan]save[-] / [cyan]load[-] [name]       Save or load game
+
+ [gold]Shortcuts[-]
+ g=gather  b=build  r=recruit
+ a=assign  u=unassign  s=status
+ res=research  exp=expedition
+
+ [gold]Navigation[-]
+ F1-F5 / Tab    Switch tabs
+ ESC            Save & menu
+
+ [gold]Villager Types[-]
+ [mediumpurple]Worker[-]    Gathers resources
+ [mediumpurple]Scholar[-]   Generates knowledge
+ [mediumpurple]Soldier[-]   Military (Bronze+)
+ [mediumpurple]Merchant[-]  Earns gold (Medieval)`
 }

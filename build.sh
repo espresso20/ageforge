@@ -1,14 +1,14 @@
 #!/bin/bash
 
-# Build script for CivIdleCli
+# Build script for AgeForge
 
-echo "Building CivIdleCli..."
+echo "Building AgeForge..."
 
 # Build for current platform
-go build -o cividlecli
+go build -o ageforge
 
 if [ $? -eq 0 ]; then
-    echo "Build successful! Run ./cividlecli to start the game."
+    echo "Build successful! Run ./ageforge to start the game."
 else
     echo "Build failed."
     exit 1

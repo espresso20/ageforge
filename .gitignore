@@ -4,7 +4,7 @@
 *.dll
 *.so
 *.dylib
-cividlecli
+ageforge
 bin/
 
 # Test binary, built with `go test -c`

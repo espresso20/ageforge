@@ -1,272 +1,206 @@
 package game
 
-// ResearchManager handles technology research and unlocking new abilities
-type ResearchManager struct {
-	technologies     map[string]Technology
-	researchedTechs  map[string]bool
-	currentResearch  string
-	researchProgress float64
-}
+import (
+	"fmt"
 
-// Technology represents a researchable technology
-type Technology struct {
-	Name          string
-	Description   string
-	Age           string
-	Cost          float64
-	Prerequisites []string
-	Unlocks       map[string]interface{}
+	"github.com/user/ageforge/config"
+)
+
+// ResearchManager manages the tech tree and research progress
+type ResearchManager struct {
+	defs       map[string]config.TechDef
+	researched map[string]bool
+	// Currently researching
+	currentTech string
+	ticksLeft   int
+	totalTicks  int
+	// Permanent bonuses from research
+	bonuses map[string]float64
 }
 
 // NewResearchManager creates a new research manager
 func NewResearchManager() *ResearchManager {
-	rm := &ResearchManager{
-		technologies:    make(map[string]Technology),
-		researchedTechs: make(map[string]bool),
-		currentResearch: "",
+	return &ResearchManager{
+		defs:       config.TechByKey(),
+		researched: make(map[string]bool),
+		bonuses:    make(map[string]float64),
 	}
-
-	// Define technologies
-	rm.technologies["agriculture"] = Technology{
-		Name:          "Agriculture",
-		Description:   "Improve food production methods",
-		Age:           "Stone Age",
-		Cost:          20,
-		Prerequisites: []string{},
-		Unlocks: map[string]interface{}{
-			"food_production_bonus": 0.2,
-		},
-	}
-
-	rm.technologies["Bows"] = Technology{
-		Name:          "Bows",
-		Description:   "Develop bows for hunting and defense",
-		Age:           "Stone Age",
-		Cost:          30,
-		Prerequisites: []string{"agriculture"},
-		Unlocks: map[string]interface{}{
-			"hunting_production_bonus": 0.15,
-		},
-	}
-
-	rm.technologies["toolmaking"] = Technology{
-		Name:          "Toolmaking",
-		Description:   "Develop better tools for resource gathering",
-		Age:           "Stone Age",
-		Cost:          25,
-		Prerequisites: []string{},
-		Unlocks: map[string]interface{}{
-			"resource_production_bonus": 0.1,
-		},
-	}
-
-	rm.technologies["writing"] = Technology{
-		Name:          "Writing",
-		Description:   "Develop a writing system to record knowledge",
-		Age:           "Bronze Age",
-		Cost:          40,
-		Prerequisites: []string{},
-		Unlocks: map[string]interface{}{
-			"knowledge_production_bonus": 0.2,
-		},
-	}
-
-	rm.technologies["metallurgy"] = Technology{
-		Name:          "Metallurgy",
-		Description:   "Learn how to work with metals",
-		Age:           "Bronze Age",
-		Cost:          50,
-		Prerequisites: []string{},
-		Unlocks: map[string]interface{}{
-			"new_building": "foundry",
-		},
-	}
-
-	rm.technologies["mathematics"] = Technology{
-		Name:          "Mathematics",
-		Description:   "Develop mathematical concepts",
-		Age:           "Iron Age",
-		Cost:          60,
-		Prerequisites: []string{"writing"},
-		Unlocks: map[string]interface{}{
-			"knowledge_production_bonus": 0.3,
-			"resource_production_bonus":  0.1,
-		},
-	}
-
-	return rm
 }
 
-// StartResearch begins research on a technology
-func (rm *ResearchManager) StartResearch(techName string, knowledgePoints float64) bool {
-	// Check if technology exists
-	tech, exists := rm.technologies[techName]
-	if !exists {
-		return false
+// StartResearch begins researching a technology
+func (rm *ResearchManager) StartResearch(key string, currentAge string, ageOrder map[string]int, knowledge float64) error {
+	def, ok := rm.defs[key]
+	if !ok {
+		return fmt.Errorf("unknown technology: %s", key)
 	}
-
-	// Check if already researched
-	if rm.researchedTechs[techName] {
-		return false
+	if rm.researched[key] {
+		return fmt.Errorf("%s is already researched", def.Name)
 	}
-
+	if rm.currentTech != "" {
+		currentDef := rm.defs[rm.currentTech]
+		return fmt.Errorf("already researching %s (%d ticks left)", currentDef.Name, rm.ticksLeft)
+	}
+	// Check age requirement
+	if ageOrder[def.Age] > ageOrder[currentAge] {
+		return fmt.Errorf("%s requires %s age", def.Name, def.Age)
+	}
 	// Check prerequisites
-	for _, prereq := range tech.Prerequisites {
-		if !rm.researchedTechs[prereq] {
-			return false
+	for _, prereq := range def.Prerequisites {
+		if !rm.researched[prereq] {
+			prereqDef := rm.defs[prereq]
+			return fmt.Errorf("%s requires %s to be researched first", def.Name, prereqDef.Name)
 		}
 	}
+	// Check cost
+	if knowledge < def.Cost {
+		return fmt.Errorf("not enough knowledge (have: %.0f, need: %.0f)", knowledge, def.Cost)
+	}
 
-	// Start research
-	rm.currentResearch = techName
-	rm.researchProgress = knowledgePoints
-	return true
+	rm.currentTech = key
+	ticks := def.ResearchTicks
+	// Apply research speed bonus
+	if bonus, ok := rm.bonuses["research_speed"]; ok && bonus > 0 {
+		ticks = int(float64(ticks) * (1.0 - bonus))
+		if ticks < 1 {
+			ticks = 1
+		}
+	}
+	rm.ticksLeft = ticks
+	rm.totalTicks = ticks
+	return nil
 }
 
-// ContinueResearch adds knowledge points to current research
-func (rm *ResearchManager) ContinueResearch(knowledgePoints float64) (string, bool) {
-	if rm.currentResearch == "" {
+// Tick processes one tick of research. Returns completed tech key or empty string.
+func (rm *ResearchManager) Tick() string {
+	if rm.currentTech == "" {
+		return ""
+	}
+	rm.ticksLeft--
+	if rm.ticksLeft <= 0 {
+		completed := rm.currentTech
+		rm.researched[completed] = true
+
+		// Apply effects as permanent bonuses
+		def := rm.defs[completed]
+		for _, eff := range def.Effects {
+			rm.bonuses[eff.Target] += eff.Value
+		}
+
+		rm.currentTech = ""
+		rm.ticksLeft = 0
+		rm.totalTicks = 0
+		return completed
+	}
+	return ""
+}
+
+// CancelResearch cancels current research
+func (rm *ResearchManager) CancelResearch() (string, bool) {
+	if rm.currentTech == "" {
 		return "", false
 	}
+	tech := rm.currentTech
+	rm.currentTech = ""
+	rm.ticksLeft = 0
+	rm.totalTicks = 0
+	return tech, true
+}
 
-	tech := rm.technologies[rm.currentResearch]
-	rm.researchProgress += knowledgePoints
+// IsResearched returns whether a tech has been completed
+func (rm *ResearchManager) IsResearched(key string) bool {
+	return rm.researched[key]
+}
 
-	// Check if research is complete
-	if rm.researchProgress >= tech.Cost {
-		completedTech := rm.currentResearch
-		rm.researchedTechs[completedTech] = true
-		rm.currentResearch = ""
-		rm.researchProgress = 0
-		return completedTech, true
+// GetBonus returns the accumulated bonus for a target
+func (rm *ResearchManager) GetBonus(target string) float64 {
+	return rm.bonuses[target]
+}
+
+// ResearchedCount returns how many techs have been researched
+func (rm *ResearchManager) ResearchedCount() int {
+	return len(rm.researched)
+}
+
+// GetResearched returns all researched tech keys
+func (rm *ResearchManager) GetResearched() []string {
+	var keys []string
+	for k := range rm.researched {
+		keys = append(keys, k)
 	}
-
-	return "", false
+	return keys
 }
 
-// GetProgress returns the current research progress
-func (rm *ResearchManager) GetProgress() (string, float64, float64) {
-	if rm.currentResearch == "" {
-		return "", 0, 0
+// GetBonuses returns a copy of all bonuses
+func (rm *ResearchManager) GetBonuses() map[string]float64 {
+	out := make(map[string]float64)
+	for k, v := range rm.bonuses {
+		out[k] = v
 	}
-
-	tech := rm.technologies[rm.currentResearch]
-	return rm.currentResearch, rm.researchProgress, tech.Cost
+	return out
 }
 
-// IsResearched checks if a technology has been researched
-func (rm *ResearchManager) IsResearched(techName string) bool {
-	return rm.researchedTechs[techName]
-}
+// Snapshot returns research state for UI
+func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) ResearchState {
+	techs := make(map[string]TechState)
 
-// GetAvailableTechnologies returns technologies available for research in the current age
-func (rm *ResearchManager) GetAvailableTechnologies(currentAge string) map[string]Technology {
-	result := make(map[string]Technology)
-
-	// Get age index
-	ageIndex := 0
-	ages := []string{"Stone Age", "Bronze Age", "Iron Age", "Medieval Age", "Renaissance Age", "Industrial Age", "Modern Age"}
-	for i, age := range ages {
-		if age == currentAge {
-			ageIndex = i
-			break
+	for key, def := range rm.defs {
+		available := true
+		// Check age
+		if ageOrder[def.Age] > ageOrder[currentAge] {
+			available = false
 		}
-	}
-
-	// Get technologies from current and previous ages
-	for name, tech := range rm.technologies {
-		techAgeIndex := 0
-		for i, age := range ages {
-			if age == tech.Age {
-				techAgeIndex = i
+		// Check prereqs
+		prereqsMet := true
+		for _, prereq := range def.Prerequisites {
+			if !rm.researched[prereq] {
+				prereqsMet = false
+				available = false
 				break
 			}
 		}
 
-		// Technology is from current or previous age and not already researched
-		if techAgeIndex <= ageIndex && !rm.researchedTechs[name] {
-			// Check prerequisites
-			allPrereqsMet := true
-			for _, prereq := range tech.Prerequisites {
-				if !rm.researchedTechs[prereq] {
-					allPrereqsMet = false
-					break
-				}
-			}
-
-			if allPrereqsMet {
-				result[name] = tech
-			}
+		techs[key] = TechState{
+			Name:          def.Name,
+			Age:           def.Age,
+			Cost:          def.Cost,
+			Prerequisites: def.Prerequisites,
+			Description:   def.Description,
+			Researched:    rm.researched[key],
+			Available:     available && !rm.researched[key],
+			PrereqsMet:    prereqsMet,
 		}
 	}
 
-	return result
-}
-
-// GetResearchedTechnologies returns all researched technologies
-func (rm *ResearchManager) GetResearchedTechnologies() map[string]Technology {
-	result := make(map[string]Technology)
-	for name := range rm.researchedTechs {
-		if tech, exists := rm.technologies[name]; exists && rm.researchedTechs[name] {
-			result[name] = tech
-		}
-	}
-	return result
-}
-
-// GetAllTechnologies returns all technologies
-func (rm *ResearchManager) GetAllTechnologies() map[string]Technology {
-	return rm.technologies
-}
-
-// ApplyResearchBonuses applies research bonuses to resource production
-func (rm *ResearchManager) ApplyResearchBonuses(resourceRates map[string]float64) map[string]float64 {
-	result := make(map[string]float64)
-	for resource, rate := range resourceRates {
-		result[resource] = rate
+	var currentName string
+	if rm.currentTech != "" {
+		currentName = rm.defs[rm.currentTech].Name
 	}
 
-	// Apply global resource production bonus
-	globalBonus := 0.0
-	for tech, researched := range rm.researchedTechs {
-		if researched {
-			if bonus, exists := rm.technologies[tech].Unlocks["resource_production_bonus"]; exists {
-				globalBonus += bonus.(float64)
+	return ResearchState{
+		Techs:            techs,
+		CurrentTech:      rm.currentTech,
+		CurrentTechName:  currentName,
+		TicksLeft:        rm.ticksLeft,
+		TotalTicks:       rm.totalTicks,
+		TotalResearched:  len(rm.researched),
+		Bonuses:          rm.GetBonuses(),
+	}
+}
+
+// LoadState restores research state from save data
+func (rm *ResearchManager) LoadState(researched []string, currentTech string, ticksLeft, totalTicks int) {
+	rm.researched = make(map[string]bool)
+	rm.bonuses = make(map[string]float64)
+	for _, key := range researched {
+		rm.researched[key] = true
+		// Re-apply bonuses
+		if def, ok := rm.defs[key]; ok {
+			for _, eff := range def.Effects {
+				rm.bonuses[eff.Target] += eff.Value
 			}
 		}
 	}
-
-	if globalBonus > 0 {
-		for resource, rate := range result {
-			result[resource] = rate * (1 + globalBonus)
-		}
-	}
-
-	// Apply specific resource bonuses
-	for tech, researched := range rm.researchedTechs {
-		if researched {
-			for unlock, value := range rm.technologies[tech].Unlocks {
-				if resource := getResourceBonusType(unlock); resource != "" {
-					if bonus, ok := value.(float64); ok {
-						if _, exists := result[resource]; exists {
-							result[resource] = result[resource] * (1 + bonus)
-						}
-					}
-				}
-			}
-		}
-	}
-
-	return result
-}
-
-// Helper function to extract resource type from bonus name
-func getResourceBonusType(bonusName string) string {
-	resourceTypes := []string{"foraging", "hunting", "wood", "stone", "gold", "knowledge"}
-	for _, resource := range resourceTypes {
-		if bonusName == resource+"_production_bonus" {
-			return resource
-		}
-	}
-	return ""
+	rm.currentTech = currentTech
+	rm.ticksLeft = ticksLeft
+	rm.totalTicks = totalTicks
 }

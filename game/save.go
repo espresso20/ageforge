@@ -10,181 +10,208 @@ import (
 
 // GameSave represents a saved game state
 type GameSave struct {
-	Timestamp      time.Time               `json:"timestamp"`
-	Tick           int                     `json:"tick"`
-	Age            string                  `json:"age"`
-	Resources      map[string]float64      `json:"resources"`
-	Buildings      map[string]int          `json:"buildings"`
-	Villagers      map[string]VillagerInfo `json:"villagers"`
-	Stats          *GameStats              `json:"stats"`
-	LastUpdateTime time.Time               `json:"lastUpdateTime"`
+	Timestamp  time.Time               `json:"timestamp"`
+	Tick       int                     `json:"tick"`
+	Age        string                  `json:"age"`
+	Resources  map[string]float64      `json:"resources"`
+	Storage    map[string]float64      `json:"storage"`
+	Buildings  map[string]int          `json:"buildings"`
+	Villagers  map[string]VillagerInfo `json:"villagers"`
+	Unlocked   UnlockedState           `json:"unlocked"`
+	Stats      *GameStats              `json:"stats"`
+	// Phase 3 additions
+	Research         ResearchSave   `json:"research"`
+	Military         MilitarySave   `json:"military"`
+	Events           EventSave      `json:"events"`
+	Milestones       []string       `json:"milestones"`
+	PermanentBonuses map[string]float64 `json:"permanent_bonuses"`
+	BuildQueue       []BuildQueueItem   `json:"build_queue"`
+	Prestige         PrestigeSave        `json:"prestige"`
 }
 
-// SaveGame saves the current game state to a file
+// PrestigeSave holds prestige state for save
+type PrestigeSave struct {
+	Level       int            `json:"level"`
+	TotalEarned int            `json:"total_earned"`
+	Available   int            `json:"available"`
+	Upgrades    map[string]int `json:"upgrades"`
+}
+
+// ResearchSave holds research state for save
+type ResearchSave struct {
+	Researched  []string `json:"researched"`
+	CurrentTech string   `json:"current_tech"`
+	TicksLeft   int      `json:"ticks_left"`
+	TotalTicks  int      `json:"total_ticks"`
+}
+
+// MilitarySave holds military state for save
+type MilitarySave struct {
+	ActiveExpedition *ActiveExpedition  `json:"active_expedition"`
+	CompletedCount   int                `json:"completed_count"`
+	TotalLoot        map[string]float64 `json:"total_loot"`
+}
+
+// EventSave holds event state for save
+type EventSave struct {
+	LastFired map[string]int `json:"last_fired"`
+	Active    []ActiveEvent  `json:"active"`
+}
+
+// UnlockedState tracks what's been unlocked
+type UnlockedState struct {
+	Resources []string `json:"resources"`
+	Buildings []string `json:"buildings"`
+	Villagers []string `json:"villagers"`
+}
+
+const saveDir = "data/saves"
+
+// SaveGame saves the current game state
 func (ge *GameEngine) SaveGame(filename string) error {
-	// Create save directory if it doesn't exist
-	saveDir := filepath.Join(".", "data", "saves")
 	if err := os.MkdirAll(saveDir, 0755); err != nil {
 		return fmt.Errorf("failed to create save directory: %w", err)
 	}
 
-	// Prepare save data
 	save := GameSave{
-		Timestamp:      time.Now(),
-		Tick:           ge.Tick,
-		Age:            ge.Age,
-		Resources:      ge.Resources.GetAll(),
-		Buildings:      ge.Buildings.GetAll(),
-		Villagers:      ge.Villagers.GetAll(),
-		Stats:          ge.Stats,
-		LastUpdateTime: ge.LastUpdateTime,
+		Timestamp:  time.Now(),
+		Tick:       ge.tick,
+		Age:        ge.age,
+		Resources:  ge.Resources.GetAll(),
+		Storage:    ge.Resources.GetAllStorage(),
+		Buildings:  ge.Buildings.GetAll(),
+		Villagers:  ge.Villagers.GetAll(),
+		Unlocked:   ge.getUnlockedState(),
+		Stats:      ge.Stats,
+		BuildQueue: ge.buildQueue,
+		Research: ResearchSave{
+			Researched:  ge.Research.GetResearched(),
+			CurrentTech: ge.Research.currentTech,
+			TicksLeft:   ge.Research.ticksLeft,
+			TotalTicks:  ge.Research.totalTicks,
+		},
+		Military: MilitarySave{
+			ActiveExpedition: ge.Military.GetActiveForSave(),
+			CompletedCount:   ge.Military.completedCount,
+			TotalLoot:        ge.Military.totalLoot,
+		},
+		Events: EventSave{
+			LastFired: ge.Events.GetLastFired(),
+			Active:    ge.Events.GetActiveForSave(),
+		},
+		Milestones:       ge.Milestones.GetCompleted(),
+		PermanentBonuses: ge.permanentBonuses,
+		Prestige: PrestigeSave{
+			Level:       ge.Prestige.level,
+			TotalEarned: ge.Prestige.totalEarned,
+			Available:   ge.Prestige.available,
+			Upgrades:    ge.Prestige.upgrades,
+		},
 	}
 
-	// Marshal to JSON
-	saveData, err := json.MarshalIndent(save, "", "  ")
+	data, err := json.MarshalIndent(save, "", "  ")
 	if err != nil {
-		return fmt.Errorf("failed to marshal save data: %w", err)
+		return fmt.Errorf("failed to marshal save: %w", err)
 	}
 
-	// Write to file
-	savePath := filepath.Join(saveDir, filename+".json")
-	if err := os.WriteFile(savePath, saveData, 0644); err != nil {
-		return fmt.Errorf("failed to write save file: %w", err)
+	path := filepath.Join(saveDir, filename+".json")
+	if err := os.WriteFile(path, data, 0644); err != nil {
+		return fmt.Errorf("failed to write save: %w", err)
 	}
-
 	return nil
 }
 
-// LoadGame loads a game state from a file
+// LoadGame restores game state from a file
 func (ge *GameEngine) LoadGame(filename string) error {
-	savePath := filepath.Join(".", "data", "saves", filename+".json")
-
-	// Read the save file
-	saveData, err := os.ReadFile(savePath)
+	path := filepath.Join(saveDir, filename+".json")
+	data, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("failed to read save file: %w", err)
+		return fmt.Errorf("failed to read save: %w", err)
 	}
 
-	// Unmarshal the JSON
 	var save GameSave
-	if err := json.Unmarshal(saveData, &save); err != nil {
-		return fmt.Errorf("failed to unmarshal save data - save file may be corrupted or from an incompatible version: %w", err)
+	if err := json.Unmarshal(data, &save); err != nil {
+		return fmt.Errorf("failed to parse save: %w", err)
 	}
 
-	// Validate essential fields
-	if save.Age == "" {
-		return fmt.Errorf("save file is missing required 'age' field")
+	ge.tick = save.Tick
+	ge.age = save.Age
+	ge.Resources.LoadAmounts(save.Resources)
+	if save.Storage != nil {
+		ge.Resources.LoadStorage(save.Storage)
 	}
-	if save.Resources == nil {
-		return fmt.Errorf("save file is missing required 'resources' field")
-	}
-
-	// Note: We don't stop the game engine anymore since it can cause the main loop to exit
-	// The game state update is atomic enough that we can safely update while running
-
-	// Restore game state safely
-	ge.Tick = save.Tick
-	ge.Age = save.Age
-
-	// Restore resources (ensure Resources manager exists)
-	if ge.Resources == nil {
-		ge.Resources = NewResourceManager()
-	}
-	// Clear and restore resources
-	ge.Resources.resources = make(map[string]float64)
-	for resource, amount := range save.Resources {
-		ge.Resources.resources[resource] = amount
-	}
-
-	// Restore buildings (ensure Buildings manager exists)
-	if ge.Buildings == nil {
-		ge.Buildings = NewBuildingManager()
-	}
-	// Clear and restore buildings
-	ge.Buildings.buildings = make(map[string]int)
-	if save.Buildings != nil {
-		for building, count := range save.Buildings {
-			ge.Buildings.buildings[building] = count
-		}
-	}
-
-	// Restore villagers (ensure Villagers manager exists)
-	if ge.Villagers == nil {
-		ge.Villagers = NewVillagerManager()
-	}
-	// Clear and restore villagers
-	ge.Villagers.villagers = make(map[string]*VillagerType)
-	if save.Villagers != nil {
-		for vtype, info := range save.Villagers {
-			// Create new villager entry with safe defaults
-			assignment := make(VillagerAssignment)
-			if info.Assignment != nil {
-				for resource, count := range info.Assignment {
-					assignment[resource] = count
-				}
-			}
-
-			ge.Villagers.villagers[vtype] = &VillagerType{
-				Count:      info.Count,
-				FoodCost:   0.5, // Default food cost
-				Assignment: assignment,
-			}
-		}
-	}
-
-	// Ensure other managers exist
-	if ge.Progress == nil {
-		ge.Progress = NewProgressManager()
-	}
-	if ge.Research == nil {
-		ge.Research = NewResearchManager()
-	}
-	// if ge.Library == nil {
-	// 	ge.Library = NewLibrarySystem()
-	// }
-
-	// Restore or create statistics
+	ge.Buildings.LoadCounts(save.Buildings)
+	ge.Villagers.LoadVillagers(save.Villagers)
 	if save.Stats != nil {
 		ge.Stats = save.Stats
-	} else {
-		if ge.Stats == nil {
-			ge.Stats = NewGameStats()
-		}
+	}
+	ge.buildQueue = save.BuildQueue
+
+	// Restore unlocks
+	for _, key := range save.Unlocked.Resources {
+		ge.Resources.UnlockResource(key)
+	}
+	for _, key := range save.Unlocked.Buildings {
+		ge.Buildings.UnlockBuilding(key)
+	}
+	for _, key := range save.Unlocked.Villagers {
+		ge.Villagers.UnlockType(key)
 	}
 
-	// Restore LastUpdateTime or set to current time
-	if !save.LastUpdateTime.IsZero() {
-		ge.LastUpdateTime = save.LastUpdateTime
-	} else {
-		ge.LastUpdateTime = time.Now()
+	// Restore Phase 3 systems
+	ge.Research.LoadState(save.Research.Researched, save.Research.CurrentTech, save.Research.TicksLeft, save.Research.TotalTicks)
+	ge.Military.LoadState(save.Military.ActiveExpedition, save.Military.CompletedCount, save.Military.TotalLoot)
+	ge.Events.LoadState(save.Events.LastFired, save.Events.Active)
+	ge.Milestones.LoadState(save.Milestones)
+
+	if save.PermanentBonuses != nil {
+		ge.permanentBonuses = save.PermanentBonuses
 	}
 
-	// No need to restart the engine since we didn't stop it
+	// Restore prestige
+	ge.Prestige.LoadState(save.Prestige.Level, save.Prestige.TotalEarned, save.Prestige.Available, save.Prestige.Upgrades)
+
+	ge.recalculateRates()
 	return nil
 }
 
-// ListSaves returns a list of available save files
-func ListSaves() ([]string, error) {
-	saveDir := filepath.Join(".", "data", "saves")
-
-	// Check if directory exists
-	if _, err := os.Stat(saveDir); os.IsNotExist(err) {
-		return []string{}, nil
-	}
-
-	// Read directory
-	files, err := os.ReadDir(saveDir)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read save directory: %w", err)
-	}
-
-	// Extract filenames
-	var saves []string
-	for _, file := range files {
-		if !file.IsDir() && filepath.Ext(file.Name()) == ".json" {
-			saves = append(saves, file.Name()[:len(file.Name())-5]) // Remove .json extension
+// getUnlockedState collects all unlock states for saving
+func (ge *GameEngine) getUnlockedState() UnlockedState {
+	state := UnlockedState{}
+	for _, def := range ge.progress.ages {
+		order := ge.progress.ageIndex[def.Key]
+		currentOrder := ge.progress.ageIndex[ge.age]
+		if order <= currentOrder {
+			state.Resources = append(state.Resources, def.UnlockResources...)
+			state.Buildings = append(state.Buildings, def.UnlockBuildings...)
+			state.Villagers = append(state.Villagers, def.UnlockVillagers...)
 		}
 	}
+	return state
+}
 
+// ListSaves returns available save files
+func ListSaves() ([]string, error) {
+	entries, err := os.ReadDir(saveDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	var saves []string
+	for _, e := range entries {
+		if !e.IsDir() && filepath.Ext(e.Name()) == ".json" {
+			name := e.Name()
+			saves = append(saves, name[:len(name)-5]) // strip .json
+		}
+	}
 	return saves, nil
+}
+
+// SaveExists checks if a save file exists
+func SaveExists(filename string) bool {
+	path := filepath.Join(saveDir, filename+".json")
+	_, err := os.Stat(path)
+	return err == nil
 }

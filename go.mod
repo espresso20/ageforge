@@ -1,4 +1,4 @@
-module github.com/user/civcli
+module github.com/user/ageforge
 
 go 1.23.6
 
