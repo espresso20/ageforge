@@ -40,6 +40,7 @@ func NewWikiTab() *WikiTab {
 		{title: "Military", render: wikiMilitary},
 		{title: "Ages", render: wikiAges},
 		{title: "Events", render: wikiEvents},
+		{title: "Prestige", render: wikiPrestige},
 		{title: "Commands", render: wikiCommands},
 		{title: "Tips & Strategy", render: wikiStrategy},
 	}
@@ -154,6 +155,7 @@ villagers, and advance through 8 ages of human history.
   • [yellow]Research[-] costs knowledge and unlocks permanent bonuses.
   • [yellow]Events[-] happen randomly — some help, some hurt.
   • [yellow]Milestones[-] reward permanent bonuses for achievements.
+  • [yellow]Prestige[-] lets you reset at Medieval+ for permanent bonuses.
 
 [gold]Game Speed[-]
   The game ticks every 2 seconds. Production and consumption
@@ -641,6 +643,89 @@ func wikiEvents(state game.GameState) string {
 	return sb.String()
 }
 
+func wikiPrestige(state game.GameState) string {
+	var sb strings.Builder
+	sb.WriteString("[gold]Prestige System[-]\n\n")
+	sb.WriteString("Prestige is the endgame loop. Once you reach the\n")
+	sb.WriteString("[yellow]Medieval Age[-] or later, you can prestige to reset\n")
+	sb.WriteString("your game and earn permanent bonuses.\n\n")
+
+	sb.WriteString("[gold]How It Works[-]\n")
+	sb.WriteString("  1. Play until you reach [yellow]Medieval Age[-] or beyond\n")
+	sb.WriteString("  2. Type [cyan]prestige confirm[-] to reset\n")
+	sb.WriteString("  3. Earn [yellow]prestige points[-] based on progress\n")
+	sb.WriteString("  4. Spend points in the [yellow]prestige shop[-]\n")
+	sb.WriteString("  5. Start over with permanent bonuses!\n\n")
+
+	sb.WriteString("[gold]What Gets Reset[-]\n")
+	sb.WriteString("  [red]Wiped:[-] Resources, buildings, villagers, research,\n")
+	sb.WriteString("  military, events, milestones, build queue, age\n")
+	sb.WriteString("  [green]Kept:[-] Prestige level, points, purchased upgrades\n\n")
+
+	sb.WriteString("[gold]Point Calculation[-]\n")
+	sb.WriteString("  • Base: 1 point per age beyond Primitive\n")
+	sb.WriteString("    (Medieval = 4, Modern = 7)\n")
+	sb.WriteString("  • Bonus: +1 per 10 milestones completed\n")
+	sb.WriteString("  • Bonus: +1 per 15 techs researched\n")
+	sb.WriteString("  • Bonus: +1 per 50 buildings built\n")
+	sb.WriteString("  • Diminishing returns at higher prestige levels\n\n")
+
+	sb.WriteString("[gold]Passive Bonus[-]\n")
+	sb.WriteString("  Each prestige level gives [green]+2% production[-] to all\n")
+	sb.WriteString("  resources. This stacks and applies automatically.\n\n")
+
+	// Live status
+	p := state.Prestige
+	sb.WriteString("[gold]Your Prestige Status[-]\n")
+	fmt.Fprintf(&sb, "  Level: [cyan]%d[-]\n", p.Level)
+	fmt.Fprintf(&sb, "  Points: [cyan]%d[-] available / [cyan]%d[-] total earned\n", p.Available, p.TotalEarned)
+	if p.PassiveBonus > 0 {
+		fmt.Fprintf(&sb, "  Passive: [green]+%.0f%%[-] production\n", p.PassiveBonus*100)
+	}
+	if p.CanPrestige {
+		fmt.Fprintf(&sb, "  [green]You can prestige now for %d points![-]\n", p.PendingPoints)
+	} else {
+		fmt.Fprintf(&sb, "  [yellow]Reach Medieval Age to prestige[-]\n")
+	}
+	sb.WriteString("\n")
+
+	// Shop listing
+	sb.WriteString("[gold]Prestige Shop[-]\n\n")
+	for _, key := range []string{
+		"gather_boost", "storage_bonus", "research_speed", "military_power",
+		"starting_food", "starting_wood", "population_cap", "expedition_loot",
+	} {
+		u, ok := p.Upgrades[key]
+		if !ok {
+			continue
+		}
+		icon := "[gray]○[-]"
+		if u.Tier >= u.MaxTier {
+			icon = "[green]★[-]"
+		} else if u.Tier > 0 {
+			icon = "[cyan]◆[-]"
+		}
+		costStr := "[gray]MAXED[-]"
+		if u.NextCost > 0 {
+			costStr = fmt.Sprintf("%d pts", u.NextCost)
+		}
+		fmt.Fprintf(&sb, " %s [cyan]%s[-] (%d/%d)\n", icon, u.Name, u.Tier, u.MaxTier)
+		fmt.Fprintf(&sb, "   %s\n", u.Description)
+		if u.Tier > 0 {
+			fmt.Fprintf(&sb, "   Current: [green]%s[-]\n", u.Effect)
+		}
+		fmt.Fprintf(&sb, "   Next tier: %s\n\n", costStr)
+	}
+
+	sb.WriteString("[gold]Commands[-]\n")
+	sb.WriteString("  [cyan]prestige[-]              — View prestige status\n")
+	sb.WriteString("  [cyan]prestige confirm[-]      — Reset with prestige bonus\n")
+	sb.WriteString("  [cyan]prestige shop[-]         — View upgrade shop\n")
+	sb.WriteString("  [cyan]prestige buy[-] <key>    — Purchase an upgrade tier\n")
+
+	return sb.String()
+}
+
 func wikiCommands(_ game.GameState) string {
 	return `[gold]Commands[-]
 
@@ -704,6 +789,22 @@ Most have single-letter shortcuts.
 
   [cyan]expedition list[-]
   Show available expeditions.
+
+[gold]── Prestige ──[-]
+
+  [cyan]prestige[-]
+  View your prestige level, points, and bonuses.
+
+  [cyan]prestige confirm[-]
+  Reset the game and earn prestige points.
+  Requires Medieval Age or later.
+
+  [cyan]prestige shop[-]
+  View available prestige upgrades and costs.
+
+  [cyan]prestige buy[-] <upgrade_key>
+  Purchase the next tier of a prestige upgrade.
+  Example: [yellow]prestige buy gather_boost[-]
 
 [gold]── Information ──[-]
 
@@ -775,6 +876,14 @@ func wikiStrategy(_ game.GameState) string {
   • Start with easier expeditions (Scout Ruins) to build loot
   • Military bonuses from research improve expedition success
   • Failed expeditions still give partial loot
+
+[gold]── Prestige ──[-]
+
+  • Don't prestige too early — push past Medieval for more points
+  • [yellow]Starting Food/Wood[-] upgrades help early game the most
+  • [yellow]Gather Boost[-] and [yellow]Research Speed[-] compound over time
+  • The passive +2% production per level adds up fast
+  • Each prestige is faster than the last thanks to bonuses
 
 [gold]── General Tips ──[-]
 
