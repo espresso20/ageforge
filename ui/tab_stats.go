@@ -10,12 +10,13 @@ import (
 	"github.com/user/ageforge/game"
 )
 
-// StatsTab displays game statistics, milestones, and active events
+// StatsTab displays game statistics, milestones, active events, and prestige
 type StatsTab struct {
 	root       *tview.Flex
 	statsTV    *tview.TextView
 	milestoTV  *tview.TextView
 	eventsTV   *tview.TextView
+	prestigeTV *tview.TextView
 }
 
 // NewStatsTab creates the stats tab
@@ -31,9 +32,13 @@ func NewStatsTab() *StatsTab {
 	t.eventsTV = tview.NewTextView().SetDynamicColors(true).SetScrollable(true)
 	t.eventsTV.SetBorder(true).SetTitle(" Active Events ").SetTitleColor(ColorTitle)
 
-	// Left: stats, Right: milestones + events
+	t.prestigeTV = tview.NewTextView().SetDynamicColors(true).SetScrollable(true)
+	t.prestigeTV.SetBorder(true).SetTitle(" Prestige ").SetTitleColor(ColorTitle)
+
+	// Left: stats, Right: events + prestige + milestones
 	rightPanel := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(t.eventsTV, 8, 0, false).
+		AddItem(t.eventsTV, 6, 0, false).
+		AddItem(t.prestigeTV, 12, 0, false).
 		AddItem(t.milestoTV, 0, 1, false)
 
 	t.root = tview.NewFlex().SetDirection(tview.FlexColumn).
@@ -51,6 +56,7 @@ func (t *StatsTab) Root() tview.Primitive {
 // Refresh updates the stats tab
 func (t *StatsTab) Refresh(state game.GameState) {
 	t.refreshStats(state)
+	t.refreshPrestige(state)
 	t.refreshMilestones(state)
 	t.refreshEvents(state)
 }
@@ -58,32 +64,6 @@ func (t *StatsTab) Refresh(state game.GameState) {
 func (t *StatsTab) refreshStats(state game.GameState) {
 	var sb strings.Builder
 	s := state.Stats
-	p := state.Prestige
-
-	// Prestige section (only show if level > 0)
-	if p.Level > 0 {
-		fmt.Fprintf(&sb, " [gold]Prestige Level:[-]    [cyan]%d[-]\n", p.Level)
-		fmt.Fprintf(&sb, " [gold]Prestige Points:[-]   %d available / %d total\n", p.Available, p.TotalEarned)
-		fmt.Fprintf(&sb, " [gold]Passive Bonus:[-]     [green]+%.0f%%[-] production\n", p.PassiveBonus*100)
-
-		// Show purchased upgrades
-		hasPurchased := false
-		for _, key := range []string{
-			"gather_boost", "storage_bonus", "research_speed", "military_power",
-			"starting_food", "starting_wood", "population_cap", "expedition_loot",
-		} {
-			u, ok := p.Upgrades[key]
-			if !ok || u.Tier == 0 {
-				continue
-			}
-			if !hasPurchased {
-				sb.WriteString(" [gold]Prestige Upgrades:[-]\n")
-				hasPurchased = true
-			}
-			fmt.Fprintf(&sb, "   %s %d/%d — %s\n", u.Name, u.Tier, u.MaxTier, u.Effect)
-		}
-		sb.WriteString("\n")
-	}
 
 	fmt.Fprintf(&sb, " [gold]Play Time:[-]         %s\n", s.PlayTime.Truncate(1e9))
 	fmt.Fprintf(&sb, " [gold]Total Ticks:[-]       %d\n", state.Tick)
@@ -108,6 +88,52 @@ func (t *StatsTab) refreshStats(state game.GameState) {
 	}
 
 	t.statsTV.SetText(sb.String())
+}
+
+func (t *StatsTab) refreshPrestige(state game.GameState) {
+	var sb strings.Builder
+	p := state.Prestige
+
+	fmt.Fprintf(&sb, " [gold]Level:[-] [cyan]%d[-]", p.Level)
+	if p.PassiveBonus > 0 {
+		fmt.Fprintf(&sb, "  [green]+%.0f%% production[-]", p.PassiveBonus*100)
+	}
+	sb.WriteString("\n")
+	fmt.Fprintf(&sb, " [gold]Points:[-] [cyan]%d[-] available / %d total\n", p.Available, p.TotalEarned)
+
+	if p.CanPrestige {
+		fmt.Fprintf(&sb, " [green]Can prestige for %d pts![-]\n", p.PendingPoints)
+	} else if p.Level == 0 {
+		sb.WriteString(" [gray]Reach Medieval Age to prestige[-]\n")
+	} else {
+		sb.WriteString(" [yellow]Reach Medieval Age to prestige again[-]\n")
+	}
+
+	// Show purchased upgrades
+	upgradeKeys := []string{
+		"gather_boost", "storage_bonus", "research_speed", "military_power",
+		"starting_food", "starting_wood", "population_cap", "expedition_loot",
+	}
+	hasPurchased := false
+	for _, key := range upgradeKeys {
+		u, ok := p.Upgrades[key]
+		if !ok || u.Tier == 0 {
+			continue
+		}
+		if !hasPurchased {
+			sb.WriteString("\n [gold]Upgrades:[-]\n")
+			hasPurchased = true
+		}
+		bar := ProgressBar(float64(u.Tier), float64(u.MaxTier), 5)
+		fmt.Fprintf(&sb, "  %s %s [green]%s[-]\n", u.Name, bar, u.Effect)
+	}
+
+	if !hasPurchased && p.Level > 0 {
+		sb.WriteString("\n [gray]No upgrades purchased yet[-]\n")
+		sb.WriteString(" [gray]Type 'prestige shop' to browse[-]\n")
+	}
+
+	t.prestigeTV.SetText(sb.String())
 }
 
 func (t *StatsTab) refreshMilestones(state game.GameState) {
@@ -142,7 +168,6 @@ func (t *StatsTab) refreshEvents(state game.GameState) {
 
 	if len(state.ActiveEvents) == 0 {
 		sb.WriteString(" [gray]No active events[-]\n")
-		sb.WriteString(" [gray]Random events occur as you play[-]\n")
 	} else {
 		for _, evt := range state.ActiveEvents {
 			fmt.Fprintf(&sb, " [yellow]⚡[-] [yellow]%s[-] (%d ticks left)\n", evt.Name, evt.TicksLeft)
