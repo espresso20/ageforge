@@ -45,7 +45,7 @@ func BaseBuildings() []BuildingDef {
 		},
 		{
 			Name: "Altar", Key: "altar", Category: "research",
-			BaseCost:    map[string]float64{"wood": 80},
+			BaseCost:    map[string]float64{"wood": 300},
 			CostScale:   1.35,
 			Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.05}},
 			RequiredAge: "primitive_age",
