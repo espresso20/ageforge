@@ -4,11 +4,12 @@ package config
 type EventDef struct {
 	Name        string
 	Key         string
-	MinAge      string  // earliest age this can trigger
-	Weight      int     // relative probability (higher = more common)
-	MinTick     int     // earliest tick this can trigger
-	Cooldown    int     // minimum ticks between occurrences
-	Duration    int     // how many ticks the effect lasts (0 = instant)
+	MinAge      string // earliest age this can trigger
+	Weight      int    // relative probability (higher = more common)
+	MinTick     int    // earliest tick this can trigger
+	Cooldown    int    // minimum ticks between occurrences
+	Duration    int    // how many ticks the effect lasts (0 = instant)
+	Sentiment   string // "good", "bad", or "mixed"
 	Effects     []Effect
 	Description string
 	LogMessage  string // what shows in the game log
@@ -21,7 +22,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Bountiful Harvest", Key: "bountiful_harvest",
 			MinAge: "primitive_age", Weight: 15, MinTick: 20, Cooldown: 50,
-			Duration: 0,
+			Duration: 0, Sentiment: "good",
 			Description: "A season of plenty yields bonus food.",
 			LogMessage:  "A bountiful harvest! +25 food.",
 			Effects: []Effect{
@@ -31,7 +32,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Wandering Traders", Key: "wandering_traders",
 			MinAge: "bronze_age", Weight: 12, MinTick: 60, Cooldown: 80,
-			Duration: 0,
+			Duration: 0, Sentiment: "good",
 			Description: "Traveling merchants share their goods.",
 			LogMessage:  "Wandering traders visit! +15 gold, +10 food.",
 			Effects: []Effect{
@@ -42,7 +43,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Gold Rush", Key: "gold_rush",
 			MinAge: "bronze_age", Weight: 8, MinTick: 100, Cooldown: 150,
-			Duration: 15,
+			Duration: 15, Sentiment: "good",
 			Description: "Gold deposits discovered! Temporary gold production boost.",
 			LogMessage:  "Gold rush! Gold production boosted for 15 ticks.",
 			Effects: []Effect{
@@ -52,7 +53,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Skilled Immigrants", Key: "skilled_immigrants",
 			MinAge: "stone_age", Weight: 10, MinTick: 40, Cooldown: 100,
-			Duration: 0,
+			Duration: 0, Sentiment: "good",
 			Description: "Skilled people seek to join your civilization.",
 			LogMessage:  "Skilled immigrants arrive! +10 knowledge.",
 			Effects: []Effect{
@@ -62,7 +63,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Ancient Discovery", Key: "ancient_discovery",
 			MinAge: "iron_age", Weight: 6, MinTick: 150, Cooldown: 200,
-			Duration: 0,
+			Duration: 0, Sentiment: "good",
 			Description: "Ancient ruins reveal forgotten knowledge.",
 			LogMessage:  "Ancient ruins discovered! +50 knowledge.",
 			Effects: []Effect{
@@ -72,7 +73,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Trade Boom", Key: "trade_boom",
 			MinAge: "medieval_age", Weight: 8, MinTick: 200, Cooldown: 120,
-			Duration: 20,
+			Duration: 20, Sentiment: "good",
 			Description: "A surge in trade activity boosts gold production.",
 			LogMessage:  "Trade boom! Gold production doubled for 20 ticks.",
 			Effects: []Effect{
@@ -84,7 +85,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Drought", Key: "drought",
 			MinAge: "primitive_age", Weight: 12, MinTick: 30, Cooldown: 80,
-			Duration: 10,
+			Duration: 10, Sentiment: "bad",
 			Description: "Dry conditions reduce food production.",
 			LogMessage:  "Drought strikes! Food production reduced for 10 ticks.",
 			Effects: []Effect{
@@ -94,7 +95,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Plague", Key: "plague",
 			MinAge: "stone_age", Weight: 6, MinTick: 80, Cooldown: 200,
-			Duration: 8,
+			Duration: 8, Sentiment: "bad",
 			Description: "Disease spreads through your population.",
 			LogMessage:  "Plague! Food drain increased for 8 ticks.",
 			Effects: []Effect{
@@ -104,7 +105,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Bandit Raid", Key: "bandit_raid",
 			MinAge: "bronze_age", Weight: 10, MinTick: 60, Cooldown: 60,
-			Duration: 0,
+			Duration: 0, Sentiment: "bad",
 			Description: "Bandits attack and steal resources.",
 			LogMessage:  "Bandit raid! Lost some resources.",
 			Effects: []Effect{
@@ -115,7 +116,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Storm", Key: "storm",
 			MinAge: "primitive_age", Weight: 14, MinTick: 25, Cooldown: 50,
-			Duration: 5,
+			Duration: 5, Sentiment: "bad",
 			Description: "A fierce storm hampers wood gathering.",
 			LogMessage:  "Storm! Wood production reduced for 5 ticks.",
 			Effects: []Effect{
@@ -125,7 +126,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Mine Collapse", Key: "mine_collapse",
 			MinAge: "iron_age", Weight: 7, MinTick: 120, Cooldown: 150,
-			Duration: 8,
+			Duration: 8, Sentiment: "bad",
 			Description: "A mine collapse reduces iron and coal production.",
 			LogMessage:  "Mine collapse! Iron and coal production reduced for 8 ticks.",
 			Effects: []Effect{
@@ -136,7 +137,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Heresy", Key: "heresy",
 			MinAge: "medieval_age", Weight: 5, MinTick: 200, Cooldown: 180,
-			Duration: 12,
+			Duration: 12, Sentiment: "bad",
 			Description: "Religious dissent reduces faith generation.",
 			LogMessage:  "Heresy spreads! Faith production reduced for 12 ticks.",
 			Effects: []Effect{
@@ -148,7 +149,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Earthquake", Key: "earthquake",
 			MinAge: "stone_age", Weight: 5, MinTick: 100, Cooldown: 200,
-			Duration: 0,
+			Duration: 0, Sentiment: "mixed",
 			Description: "An earthquake damages structures but reveals stone deposits.",
 			LogMessage:  "Earthquake! Lost some wood but gained stone.",
 			Effects: []Effect{
@@ -159,7 +160,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Renaissance Fair", Key: "renaissance_fair",
 			MinAge: "renaissance_age", Weight: 10, MinTick: 250, Cooldown: 100,
-			Duration: 15,
+			Duration: 15, Sentiment: "good",
 			Description: "A cultural festival boosts culture and gold.",
 			LogMessage:  "Renaissance fair! Culture and gold production boosted for 15 ticks.",
 			Effects: []Effect{
@@ -170,7 +171,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Industrial Accident", Key: "industrial_accident",
 			MinAge: "industrial_age", Weight: 8, MinTick: 300, Cooldown: 120,
-			Duration: 0,
+			Duration: 0, Sentiment: "bad",
 			Description: "A factory accident destroys some steel and oil.",
 			LogMessage:  "Industrial accident! Lost steel and oil.",
 			Effects: []Effect{
@@ -183,7 +184,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Colonial Windfall", Key: "colonial_windfall",
 			MinAge: "colonial_age", Weight: 8, MinTick: 300, Cooldown: 150,
-			Duration: 0,
+			Duration: 0, Sentiment: "good",
 			Description: "A colonial expedition returns with treasure.",
 			LogMessage:  "Colonial windfall! +100 gold, +30 culture.",
 			Effects: []Effect{
@@ -194,7 +195,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Pirate Attack", Key: "pirate_attack",
 			MinAge: "colonial_age", Weight: 7, MinTick: 320, Cooldown: 140,
-			Duration: 0,
+			Duration: 0, Sentiment: "bad",
 			Description: "Pirates raid your trade routes.",
 			LogMessage:  "Pirates attack! Lost gold and trade goods.",
 			Effects: []Effect{
@@ -205,7 +206,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Power Surge", Key: "power_surge",
 			MinAge: "victorian_age", Weight: 6, MinTick: 400, Cooldown: 160,
-			Duration: 10,
+			Duration: 10, Sentiment: "good",
 			Description: "An electrical surge boosts production temporarily.",
 			LogMessage:  "Power surge! Electricity production boosted for 10 ticks.",
 			Effects: []Effect{
@@ -215,7 +216,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Nuclear Scare", Key: "nuclear_scare",
 			MinAge: "atomic_age", Weight: 4, MinTick: 500, Cooldown: 250,
-			Duration: 12,
+			Duration: 12, Sentiment: "bad",
 			Description: "Nuclear anxiety reduces productivity.",
 			LogMessage:  "Nuclear scare! Production reduced for 12 ticks.",
 			Effects: []Effect{
@@ -226,7 +227,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Data Breach", Key: "data_breach",
 			MinAge: "information_age", Weight: 6, MinTick: 600, Cooldown: 180,
-			Duration: 0,
+			Duration: 0, Sentiment: "bad",
 			Description: "Hackers steal your data reserves.",
 			LogMessage:  "Data breach! Lost data and crypto.",
 			Effects: []Effect{
@@ -237,7 +238,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Crypto Boom", Key: "crypto_boom",
 			MinAge: "cyberpunk_age", Weight: 7, MinTick: 700, Cooldown: 200,
-			Duration: 15,
+			Duration: 15, Sentiment: "good",
 			Description: "Cryptocurrency values skyrocket temporarily.",
 			LogMessage:  "Crypto boom! Crypto production boosted for 15 ticks.",
 			Effects: []Effect{
@@ -247,7 +248,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Plasma Storm", Key: "plasma_storm",
 			MinAge: "fusion_age", Weight: 5, MinTick: 800, Cooldown: 220,
-			Duration: 10,
+			Duration: 10, Sentiment: "mixed",
 			Description: "Solar plasma eruption disrupts power but yields plasma.",
 			LogMessage:  "Plasma storm! Lost electricity but gained plasma.",
 			Effects: []Effect{
@@ -258,7 +259,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "First Contact", Key: "first_contact",
 			MinAge: "space_age", Weight: 3, MinTick: 900, Cooldown: 300,
-			Duration: 0,
+			Duration: 0, Sentiment: "good",
 			Description: "Contact with alien intelligence yields knowledge.",
 			LogMessage:  "First contact! +500 knowledge, +50 titanium.",
 			Effects: []Effect{
@@ -269,7 +270,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Dark Matter Rift", Key: "dark_matter_rift",
 			MinAge: "interstellar_age", Weight: 4, MinTick: 1000, Cooldown: 280,
-			Duration: 15,
+			Duration: 15, Sentiment: "good",
 			Description: "A rift in spacetime leaks dark matter.",
 			LogMessage:  "Dark matter rift! Dark matter production boosted for 15 ticks.",
 			Effects: []Effect{
@@ -279,7 +280,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Quantum Fluctuation", Key: "quantum_fluctuation",
 			MinAge: "quantum_age", Weight: 3, MinTick: 1100, Cooldown: 300,
-			Duration: 10,
+			Duration: 10, Sentiment: "good",
 			Description: "Reality destabilizes briefly but yields quantum flux.",
 			LogMessage:  "Quantum fluctuation! Quantum flux production boosted for 10 ticks.",
 			Effects: []Effect{

@@ -16,18 +16,29 @@ type ActiveEvent struct {
 
 // EventManager handles random event triggering and processing
 type EventManager struct {
-	defs      []config.EventDef
-	defMap    map[string]config.EventDef
-	lastFired map[string]int // key -> last tick fired
-	active    []ActiveEvent
+	defs          []config.EventDef
+	defMap        map[string]config.EventDef
+	lastFired     map[string]int // key -> last tick fired
+	active        []ActiveEvent
+	nextEventTick int // global cooldown: earliest tick the next event can fire
+	goodStreak    int // consecutive good events (reset on bad/mixed)
+	badStreak     int // consecutive bad events (reset on good/mixed)
 }
+
+const (
+	eventMinDelay = 150 // 5 minutes (150 ticks * 2s)
+	eventMaxDelay = 600 // 20 minutes (600 ticks * 2s)
+)
 
 // NewEventManager creates a new event manager
 func NewEventManager() *EventManager {
+	// Schedule first event between 150-600 ticks from start
+	firstDelay := eventMinDelay + rand.Intn(eventMaxDelay-eventMinDelay+1)
 	return &EventManager{
-		defs:      config.RandomEvents(),
-		defMap:    config.EventByKey(),
-		lastFired: make(map[string]int),
+		defs:          config.RandomEvents(),
+		defMap:        config.EventByKey(),
+		lastFired:     make(map[string]int),
+		nextEventTick: firstDelay,
 	}
 }
 
@@ -46,8 +57,16 @@ func (em *EventManager) Tick(tick int, currentAge string, ageOrder map[string]in
 	}
 	em.active = stillActive
 
+	// Only check for new events after the global cooldown expires
+	if tick < em.nextEventTick {
+		return
+	}
+
+	// Determine sentiment constraints based on streaks
+	forceSentiment := em.requiredSentiment()
+
 	// Check for new random events (one per tick max)
-	eligible := em.getEligible(tick, currentAge, ageOrder)
+	eligible := em.getEligible(tick, currentAge, ageOrder, forceSentiment)
 	if len(eligible) == 0 {
 		return
 	}
@@ -66,21 +85,24 @@ func (em *EventManager) Tick(tick int, currentAge string, ageOrder map[string]in
 	for _, def := range eligible {
 		cumulative += def.Weight
 		if roll < cumulative {
-			// Only trigger with ~8% chance per tick to avoid spam
-			if rand.Intn(100) < 8 {
-				em.lastFired[def.Key] = tick
-				triggered = append(triggered, def)
+			em.lastFired[def.Key] = tick
+			triggered = append(triggered, def)
 
-				// If duration > 0, add to active
-				if def.Duration > 0 {
-					em.active = append(em.active, ActiveEvent{
-						Key:       def.Key,
-						Name:      def.Name,
-						TicksLeft: def.Duration,
-						Effects:   def.Effects,
-					})
-				}
+			// Update streak tracking
+			em.updateStreaks(def.Sentiment)
+
+			// If duration > 0, add to active
+			if def.Duration > 0 {
+				em.active = append(em.active, ActiveEvent{
+					Key:       def.Key,
+					Name:      def.Name,
+					TicksLeft: def.Duration,
+					Effects:   def.Effects,
+				})
 			}
+
+			// Schedule next event 5-20 minutes from now
+			em.nextEventTick = tick + eventMinDelay + rand.Intn(eventMaxDelay-eventMinDelay+1)
 			break
 		}
 	}
@@ -88,10 +110,51 @@ func (em *EventManager) Tick(tick int, currentAge string, ageOrder map[string]in
 	return
 }
 
-// getEligible returns events that can trigger right now
-func (em *EventManager) getEligible(tick int, currentAge string, ageOrder map[string]int) []config.EventDef {
+// requiredSentiment returns a sentiment filter based on current streaks.
+// "" means no constraint, "good" means only good/mixed, "bad" means only bad/mixed.
+func (em *EventManager) requiredSentiment() string {
+	// Hard rule: never more than 2 bad in a row → force good
+	if em.badStreak >= 2 {
+		return "good"
+	}
+	// After 3 good in a row, force bad (with a tiny 3% chance to reset and allow more good)
+	if em.goodStreak >= 3 {
+		if rand.Intn(100) < 3 {
+			em.goodStreak = 0 // lucky reset
+			return ""
+		}
+		return "bad"
+	}
+	return ""
+}
+
+// updateStreaks updates the good/bad consecutive counters after an event fires.
+func (em *EventManager) updateStreaks(sentiment string) {
+	switch sentiment {
+	case "good":
+		em.goodStreak++
+		em.badStreak = 0
+	case "bad":
+		em.badStreak++
+		em.goodStreak = 0
+	default: // "mixed" — resets both
+		em.goodStreak = 0
+		em.badStreak = 0
+	}
+}
+
+// getEligible returns events that can trigger right now.
+// forceSentiment filters: "good" = only good/mixed, "bad" = only bad/mixed, "" = any.
+func (em *EventManager) getEligible(tick int, currentAge string, ageOrder map[string]int, forceSentiment string) []config.EventDef {
 	var eligible []config.EventDef
 	for _, def := range em.defs {
+		// Sentiment filter
+		if forceSentiment == "good" && def.Sentiment == "bad" {
+			continue
+		}
+		if forceSentiment == "bad" && def.Sentiment == "good" {
+			continue
+		}
 		// Check min tick
 		if tick < def.MinTick {
 			continue
@@ -145,11 +208,21 @@ func (em *EventManager) GetActive() []ActiveEventState {
 }
 
 // LoadState restores event manager state from save
-func (em *EventManager) LoadState(lastFired map[string]int, active []ActiveEvent) {
+func (em *EventManager) LoadState(lastFired map[string]int, active []ActiveEvent, nextEventTick int, goodStreak int, badStreak int) {
 	if lastFired != nil {
 		em.lastFired = lastFired
 	}
 	em.active = active
+	if nextEventTick > 0 {
+		em.nextEventTick = nextEventTick
+	}
+	em.goodStreak = goodStreak
+	em.badStreak = badStreak
+}
+
+// GetNextEventTick returns the next event tick for saving
+func (em *EventManager) GetNextEventTick() int {
+	return em.nextEventTick
 }
 
 // GetLastFired returns the last-fired map for saving

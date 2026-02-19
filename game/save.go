@@ -54,8 +54,11 @@ type MilitarySave struct {
 
 // EventSave holds event state for save
 type EventSave struct {
-	LastFired map[string]int `json:"last_fired"`
-	Active    []ActiveEvent  `json:"active"`
+	LastFired     map[string]int `json:"last_fired"`
+	Active        []ActiveEvent  `json:"active"`
+	NextEventTick int            `json:"next_event_tick"`
+	GoodStreak    int            `json:"good_streak"`
+	BadStreak     int            `json:"bad_streak"`
 }
 
 // UnlockedState tracks what's been unlocked
@@ -96,8 +99,11 @@ func (ge *GameEngine) SaveGame(filename string) error {
 			TotalLoot:        ge.Military.totalLoot,
 		},
 		Events: EventSave{
-			LastFired: ge.Events.GetLastFired(),
-			Active:    ge.Events.GetActiveForSave(),
+			LastFired:     ge.Events.GetLastFired(),
+			Active:        ge.Events.GetActiveForSave(),
+			NextEventTick: ge.Events.GetNextEventTick(),
+			GoodStreak:    ge.Events.goodStreak,
+			BadStreak:     ge.Events.badStreak,
 		},
 		Milestones:       ge.Milestones.GetCompleted(),
 		PermanentBonuses: ge.permanentBonuses,
@@ -161,7 +167,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// Restore Phase 3 systems
 	ge.Research.LoadState(save.Research.Researched, save.Research.CurrentTech, save.Research.TicksLeft, save.Research.TotalTicks)
 	ge.Military.LoadState(save.Military.ActiveExpedition, save.Military.CompletedCount, save.Military.TotalLoot)
-	ge.Events.LoadState(save.Events.LastFired, save.Events.Active)
+	ge.Events.LoadState(save.Events.LastFired, save.Events.Active, save.Events.NextEventTick, save.Events.GoodStreak, save.Events.BadStreak)
 	ge.Milestones.LoadState(save.Milestones)
 
 	if save.PermanentBonuses != nil {

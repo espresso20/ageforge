@@ -31,6 +31,7 @@ type Dashboard struct {
 	militaryTab *MilitaryTab
 	statsTab    *StatsTab
 	wikiTab     *WikiTab
+	logsTab     *LogsTab
 
 	// Shared UI
 	logTV      *tview.TextView
@@ -49,7 +50,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		engine:   engine,
 		pages:    pages,
 		stopCh:   make(chan struct{}),
-		tabNames: []string{"Economy", "Research", "Military", "Stats", "Wiki"},
+		tabNames: []string{"Economy", "Research", "Military", "Stats", "Wiki", "Logs"},
 	}
 	d.build()
 	return d
@@ -62,6 +63,7 @@ func (d *Dashboard) build() {
 	d.militaryTab = NewMilitaryTab()
 	d.statsTab = NewStatsTab()
 	d.wikiTab = NewWikiTab()
+	d.logsTab = NewLogsTab()
 
 	// Tab bar
 	d.tabBar = tview.NewTextView().
@@ -76,6 +78,7 @@ func (d *Dashboard) build() {
 	d.tabPages.AddPage("Military", d.militaryTab.Root(), true, false)
 	d.tabPages.AddPage("Stats", d.statsTab.Root(), true, false)
 	d.tabPages.AddPage("Wiki", d.wikiTab.Root(), true, false)
+	d.tabPages.AddPage("Logs", d.logsTab.Root(), true, false)
 
 	// Log panel
 	d.logTV = tview.NewTextView().
@@ -173,6 +176,25 @@ func (d *Dashboard) build() {
 		case tcell.KeyF5:
 			d.switchTab(4)
 			return nil
+		case tcell.KeyF9:
+			d.switchTab(5)
+			return nil
+		}
+
+		// When logs tab is active, intercept navigation keys
+		if d.activeTab == 5 {
+			switch event.Key() {
+			case tcell.KeyPgUp:
+				d.logsTab.ScrollUp()
+				return nil
+			case tcell.KeyPgDn:
+				d.logsTab.ScrollDown()
+				return nil
+			}
+			if event.Rune() == 'v' {
+				d.logsTab.ToggleVerbose()
+				return nil
+			}
 		}
 
 		// When wiki tab is active, intercept navigation keys
@@ -215,8 +237,9 @@ func (d *Dashboard) switchTab(index int) {
 
 func (d *Dashboard) updateTabBar() {
 	var parts []string
+	tabKeys := map[int]string{0: "F1", 1: "F2", 2: "F3", 3: "F4", 4: "F5", 5: "F9"}
 	for i, name := range d.tabNames {
-		key := fmt.Sprintf("F%d", i+1)
+		key := tabKeys[i]
 		if i == d.activeTab {
 			parts = append(parts, fmt.Sprintf(" [black:gold] %s %s [-:-] ", key, name))
 		} else {
@@ -275,6 +298,8 @@ func (d *Dashboard) refresh() {
 		d.statsTab.Refresh(state)
 	case 4:
 		d.wikiTab.Refresh(state)
+	case 5:
+		d.logsTab.Refresh(state)
 	}
 }
 
@@ -288,7 +313,7 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		prestigeStr = fmt.Sprintf("  [cyan]P%d[-]", state.Prestige.Level)
 	}
 	d.statusTV.SetText(fmt.Sprintf(
-		"[gold]%s[-]%s  Tick: %d%s  |  Pop: %d/%d  |  [gray]F1-F5=Tabs  ESC=Menu[-]",
+		"[gold]%s[-]%s  Tick: %d%s  |  Pop: %d/%d  |  [gray]F1-F5,F9=Tabs  ESC=Menu[-]",
 		state.AgeName, prestigeStr, state.Tick, nextAgeStr,
 		state.Villagers.TotalPop, state.Villagers.MaxPop,
 	))
@@ -390,7 +415,7 @@ func helpText() string {
  res=research  exp=expedition
 
  [gold]Navigation[-]
- F1-F5          Switch tabs
+ F1-F5,F9       Switch tabs
  Tab            Autocomplete
  ESC            Save & menu
 

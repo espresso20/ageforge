@@ -749,10 +749,10 @@ Most have single-letter shortcuts.
 
 [gold]── Resource Gathering ──[-]
 
-  [cyan]gather[-] <resource> [amount]
+  [cyan]gather[-] <wood|stone> [amount]
   Shortcut: [cyan]g[-]
-  Manually gather resources. Default amount is 3.
-  Example: [yellow]gather wood[-] or [yellow]g food 10[-]
+  Hand-gather wood or stone. Default 3, max 5.
+  Example: [yellow]gather wood[-] or [yellow]g stone 5[-]
 
 [gold]── Building ──[-]
 

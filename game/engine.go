@@ -149,6 +149,15 @@ func (ge *GameEngine) doTick() {
 		ge.addLog("warning", "Your people are starving! Food has run out.")
 	}
 
+	// Periodic debug snapshot every 50 ticks
+	if ge.tick%50 == 0 {
+		snap := ge.Resources.Snapshot()
+		foodAmt := snap["food"].Amount
+		foodRate := snap["food"].Rate
+		ge.addLog("debug", fmt.Sprintf("Tick %d snapshot: food=%.1f (%+.3f/t), pop=%d, queue=%d",
+			ge.tick, foodAmt, foodRate, ge.Villagers.TotalPop(), len(ge.buildQueue)))
+	}
+
 	// Check milestones
 	ge.checkMilestones()
 
