@@ -106,6 +106,13 @@ func (d *Dashboard) build() {
 		SetFieldBackgroundColor(tcell.ColorDefault).
 		SetLabelColor(ColorAccent)
 
+	// Wire up autocomplete
+	d.inputField.SetAutocompleteFunc(NewAutoCompleter(d.engine))
+	d.inputField.SetAutocompletedFunc(func(text string, index, source int) bool {
+		d.inputField.SetText(text + " ")
+		return true
+	})
+
 	d.inputField.SetDoneFunc(func(key tcell.Key) {
 		if key == tcell.KeyEnter {
 			text := d.inputField.GetText()
@@ -165,12 +172,6 @@ func (d *Dashboard) build() {
 			return nil
 		case tcell.KeyF5:
 			d.switchTab(4)
-			return nil
-		case tcell.KeyTab:
-			d.switchTab((d.activeTab + 1) % len(d.tabNames))
-			return nil
-		case tcell.KeyBacktab:
-			d.switchTab((d.activeTab + len(d.tabNames) - 1) % len(d.tabNames))
 			return nil
 		}
 
@@ -287,7 +288,7 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		prestigeStr = fmt.Sprintf("  [cyan]P%d[-]", state.Prestige.Level)
 	}
 	d.statusTV.SetText(fmt.Sprintf(
-		"[gold]%s[-]%s  Tick: %d%s  |  Pop: %d/%d  |  [gray]Tab=Switch  ESC=Menu[-]",
+		"[gold]%s[-]%s  Tick: %d%s  |  Pop: %d/%d  |  [gray]F1-F5=Tabs  ESC=Menu[-]",
 		state.AgeName, prestigeStr, state.Tick, nextAgeStr,
 		state.Villagers.TotalPop, state.Villagers.MaxPop,
 	))
@@ -389,7 +390,8 @@ func helpText() string {
  res=research  exp=expedition
 
  [gold]Navigation[-]
- F1-F5 / Tab    Switch tabs
+ F1-F5          Switch tabs
+ Tab            Autocomplete
  ESC            Save & menu
 
  [gold]Villager Types[-]
