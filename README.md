@@ -1,69 +1,60 @@
-# CivIdleCli - Command Line Civilization Builder Game
+# AgeForge - CLI Idle Empire Builder
 
-CivIdleCli is a text-based clicker-style progression game where you build and manage your own civilization through different ages, all within your terminal.
+AgeForge is a text-based idle/clicker game where you forge an empire from nothing, progressing through 8 ages of history — all within your terminal.
 
 ## Overview
 
-In CivIdleCli, you start with a small tribe in the Stone Age. Your goal is to gather resources, build structures, recruit villagers, and advance through multiple ages of civilization.
+Start in the Primitive Age with bare hands and 15 food. Gather resources, build structures, recruit villagers, research technologies, launch military expeditions, and advance through ages that span months of real-time play.
 
 ## Features
 
-- **Resource Management**: Gather and manage resources like food, wood, stone, gold, and knowledge
-- **Villager System**: Recruit villagers and assign them to different tasks
-- **Building System**: Construct various buildings that provide bonuses and unlock new capabilities
-- **Age Progression**: Advance through different ages, from Stone Age to Modern Age
-- **Command-based Interface**: Simple text commands with auto-completion
-- **Rich Terminal UI**: Colorful and informative terminal interface with live updates
-- **True Idle Gameplay**: Progress continues automatically based on real-world time, even when you're away
-- **Live Stats Display**: Watch your resources accumulate in real-time without entering commands
-- **Distributable Binary**: Built with Go, can be distributed as a single binary file
+- **Resource Management**: 12 resources across 8 ages with storage limits and production chains
+- **Building System**: 28 buildings with scaling costs, construction queues, and 4 Wonders
+- **Villager System**: 4 types (Worker, Scholar, Soldier, Merchant) with food economy
+- **Tech Tree**: 30 technologies with prerequisites and permanent bonuses
+- **Military**: Expeditions with risk/reward, soldier management, and defense ratings
+- **Random Events**: 15 events (beneficial, harmful, mixed) that trigger during play
+- **Milestones**: 20 achievements with permanent bonus rewards
+- **Age Progression**: 8 ages with exponential requirements (designed for months of play)
+- **Full Wiki**: In-game wiki with live stats and complete documentation
+- **Tab-based TUI**: 5 tabs (Economy, Research, Military, Stats, Wiki) with keyboard navigation
+- **Save/Load**: JSON save system with auto-save on exit
 
-## Installation
-
-### Pre-built Binary
-
-Download the latest release for your platform from the Releases page.
-
-### Build from Source
+## Build & Run
 
 ```bash
-# Clone the repository
-git clone https://github.com/yourusername/cividlecli.git
-cd cividlecli
+go build -o ageforge .
+./ageforge
 
-# Build the project
-go build -o cividlecli
-
-# Run the game
-./cividlecli
+# or use the run script
+./run.sh
 ```
 
 ## How to Play
 
-### Basic Commands
+### Getting Started
+1. `gather wood` — collect wood (need 10 for first hut)
+2. `build hut` — build shelter (+2 population cap)
+3. `recruit worker` — recruit your first worker
+4. `assign worker food` — put them to work gathering food
+5. Keep ~1/3 of workers on food to sustain your population
 
-- `help` - Display available commands
-- `gather <resource> <count>` - Assign villagers to gather resources
-- `build <building>` - Build a structure
-- `recruit <villager_type> <count>` - Recruit new villagers
-- `assign <villager_type> <resource> <count>` - Assign villagers to tasks
-- `status` - Show detailed status of your civilization
-- `buildings` - List available buildings and their costs
-- `quit` - Exit the game
+### Commands
+- `gather <resource> [n]` — manually gather resources
+- `build <building>` — construct a building
+- `recruit <type> [n]` — recruit villagers
+- `assign <type> <resource> [n]` — assign villagers to gather
+- `unassign <type> <resource> [n]` — remove assignment
+- `research <tech_key>` — start researching a technology
+- `expedition <key>` — launch a military expedition
+- `status` — detailed overview
+- `save/load [name]` — save or load game
 
-## Game Progression
-
-1. Start in the Stone Age with basic resources
-2. Build huts to increase population capacity
-3. Assign villagers to gather resources
-4. Build farms for food production
-5. Advance to the Bronze Age
-6. Continue expanding and advancing through ages
-7. Unlock new buildings, resources, and villager types
-8. Reach the Modern Age and build an advanced civilization
-
-Progress continues automatically even when you're not playing, making this a true idle game where your civilization grows over time.
+### Navigation
+- F1-F5 / Tab — switch between dashboard tabs
+- ESC — auto-save and return to menu
+- Arrow keys / PgUp/PgDn — navigate wiki (in Wiki tab)
 
 ## Requirements
 
-- To build from source: Go 1.21 or higher
+- Go 1.23+ to build from source
