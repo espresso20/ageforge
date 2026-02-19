@@ -27,9 +27,9 @@ type villagerRuntime struct {
 func DefaultVillagerTypes() []VillagerTypeDef {
 	return []VillagerTypeDef{
 		{
-			Name: "Worker", Key: "worker", FoodCost: 0.12,
+			Name: "Worker", Key: "worker", FoodCost: 0.10,
 			CanGather:  []string{"food", "wood", "stone", "iron", "gold", "coal", "steel", "oil", "electricity", "uranium", "titanium"},
-			GatherRate: 0.15,
+			GatherRate: 0.25,
 		},
 		{
 			Name: "Shaman", Key: "shaman", FoodCost: 0.2,
