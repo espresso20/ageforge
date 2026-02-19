@@ -179,7 +179,7 @@ and nothing else. Here's your first steps:
 
 [gold]Step 2: Build a Stash[-]
   Type: [cyan]build stash[-]
-  Stashes provide +30 storage. You need more storage before
+  Stashes provide +100 storage. You need more storage before
   you can hold enough resources for the Stone Age (200 food).
 
 [gold]Step 3: Build a Hut[-]

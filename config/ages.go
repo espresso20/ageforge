@@ -69,7 +69,7 @@ func Ages() []AgeDef {
 			Description:  "Kingdoms rise and feudalism takes hold.",
 			ResourceReqs: map[string]float64{"stone": 50000, "iron": 12500, "gold": 7500, "knowledge": 10000},
 			BuildingReqs: map[string]int{"forum": 2, "library": 4, "barracks": 3},
-			UnlockBuildings: []string{"cathedral", "manor", "university", "castle", "great_library"},
+			UnlockBuildings: []string{"cathedral", "manor", "university", "castle", "keep", "great_library"},
 			UnlockResources: []string{"steel", "faith"},
 			UnlockVillagers: []string{"merchant"},
 		},
