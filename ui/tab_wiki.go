@@ -175,12 +175,12 @@ and nothing else. Here's your first steps:
 
 [gold]Step 1: Gather Wood[-]
   Type: [cyan]gather wood[-]
-  You get 5 wood per gather. You need 5 for your first stash.
+  You get 3 wood per gather. You need more for your first stash.
 
 [gold]Step 2: Build a Stash[-]
   Type: [cyan]build stash[-]
   Stashes provide +100 storage. You need more storage before
-  you can hold enough resources for the Stone Age (200 food).
+  you can hold enough resources for the Stone Age (500 food).
 
 [gold]Step 3: Build a Hut[-]
   Type: [cyan]build hut[-]
@@ -189,18 +189,18 @@ and nothing else. Here's your first steps:
 
 [gold]Step 4: Build an Altar[-]
   Type: [cyan]build altar[-]
-  Altars slowly generate knowledge (+0.05/tick). You need
-  30 knowledge and 2 altars for the Stone Age.
+  Altars slowly generate knowledge (+0.025/tick). You need
+  75 knowledge and 3 altars for the Stone Age.
 
 [gold]Step 5: Recruit Workers & Shamans[-]
   Type: [cyan]recruit worker[-] or [cyan]recruit shaman[-]
-  Workers gather food/wood (0.3/tick). Shamans gather
-  knowledge (0.4/tick). You need both to advance.
+  Workers gather food/wood (0.15/tick). Shamans gather
+  knowledge (0.2/tick). You need both to advance.
 
 [gold]Step 6: Assign Villagers[-]
   Type: [cyan]assign worker food[-] or [cyan]assign shaman knowledge[-]
-  Each worker eats 0.15 food/tick, shamans eat 0.2/tick.
-  Keep ~1/3 of workers on food duty.
+  Each worker eats 0.12 food/tick, shamans eat 0.2/tick.
+  Keep workers balanced on food duty.
 
 [gold]Step 7: Keep Building[-]
   Build more huts, stashes, and altars. Recruit and assign
@@ -209,10 +209,10 @@ and nothing else. Here's your first steps:
 
 [gold]The Food Balance[-]
   This is the most important early game concept:
-  • Each worker eats [yellow]0.15 food/tick[-]
-  • Each worker gathers [yellow]0.3 resource/tick[-]
-  • So 1 food worker supports ~2 other workers
-  • Keep ~1/3 of your workers on food
+  • Each worker eats [yellow]0.12 food/tick[-]
+  • Each worker gathers [yellow]0.15 resource/tick[-]
+  • So 2 food workers produce net +0.06 for others
+  • Keep most early workers on food
 
 [gold]Storage Matters[-]
   Base storage is only [yellow]50[-] per resource. Resources stop
@@ -365,13 +365,13 @@ func wikiVillagers(state game.GameState) string {
 	}
 
 	sb.WriteString("[gold]Food Economy[-]\n")
-	sb.WriteString("  Each worker eats 0.15 food/tick but gathers 0.30/tick.\n")
-	sb.WriteString("  So 1 worker on food produces net +0.15 for others.\n")
-	sb.WriteString("  Rule of thumb: keep ~1/3 of workers on food.\n\n")
+	sb.WriteString("  Each worker eats 0.12 food/tick but gathers 0.15/tick.\n")
+	sb.WriteString("  So 1 worker on food produces net +0.03 for others.\n")
+	sb.WriteString("  Food is tight early — keep most workers on food.\n\n")
 	sb.WriteString("  Workers on food: covers this many others:\n")
-	sb.WriteString("    1 food worker → 2 other workers\n")
-	sb.WriteString("    2 food workers → 4 other workers\n")
-	sb.WriteString("    5 food workers → 10 other workers\n")
+	sb.WriteString("    2 food workers → ~1 other worker\n")
+	sb.WriteString("    4 food workers → ~2 other workers\n")
+	sb.WriteString("    8 food workers → ~4 other workers\n")
 
 	return sb.String()
 }
@@ -751,7 +751,7 @@ Most have single-letter shortcuts.
 
   [cyan]gather[-] <resource> [amount]
   Shortcut: [cyan]g[-]
-  Manually gather resources. Default amount is 5.
+  Manually gather resources. Default amount is 3.
   Example: [yellow]gather wood[-] or [yellow]g food 10[-]
 
 [gold]── Building ──[-]
@@ -857,9 +857,9 @@ func wikiStrategy(_ game.GameState) string {
 
   • Gather wood first — you need 5 for your first stash
   • Build stashes early! Base storage is 50 but you need
-    200 food for the Stone Age
+    500 food for the Stone Age
   • Build an altar to start generating knowledge — you
-    need 30 knowledge and 2 altars for Stone Age
+    need 75 knowledge and 3 altars for Stone Age
   • Recruit shamans and assign them to knowledge
   • Build huts, recruit workers, keep 1/3 on food
   • Don't recruit faster than you can feed
@@ -869,7 +869,7 @@ func wikiStrategy(_ game.GameState) string {
   • Build Storage Pits early — caps fill fast
   • Stone Pits are slow (0.1/tick) so build several
   • Firepits generate knowledge for Bronze Age
-  • You need 500 food, 300 stone, 100 knowledge for Bronze
+  • You need 1250 food, 750 stone, 250 knowledge for Bronze
   • That means LOTS of storage buildings first
 
 [gold]── Bronze Age ──[-]
@@ -925,23 +925,23 @@ func wikiStrategy(_ game.GameState) string {
 
 [gold]── Production Math ──[-]
 
-  Worker gather rate:  0.30 / tick (every 2 sec)
-  Worker food cost:    0.15 / tick
-  Shaman gather rate:  0.40 / tick (knowledge only)
+  Worker gather rate:  0.15 / tick (every 2 sec)
+  Worker food cost:    0.12 / tick
+  Shaman gather rate:  0.20 / tick (knowledge only)
   Shaman food cost:    0.20 / tick
-  Scholar gather rate:  0.50 / tick
+  Scholar gather rate:  0.25 / tick
   Scholar food cost:   0.20 / tick
-  Merchant gather rate: 0.60 / tick (gold, crypto)
+  Merchant gather rate: 0.30 / tick (gold, crypto)
   Merchant food cost:  0.20 / tick
-  Engineer gather rate: 0.70 / tick (oil, electricity, data)
+  Engineer gather rate: 0.35 / tick (oil, electricity, data)
   Engineer food cost:  0.25 / tick
-  Hacker gather rate:  0.80 / tick (data, crypto)
+  Hacker gather rate:  0.40 / tick (data, crypto)
   Hacker food cost:    0.30 / tick
-  Astronaut gather rate: 1.00 / tick (titanium, dark matter, plasma)
+  Astronaut gather rate: 0.50 / tick (titanium, dark matter, plasma)
   Astronaut food cost: 0.40 / tick
 
   Per hour (1800 ticks):
-    1 worker gathering:  540 resources
-    1 worker food cost:  270 food
-    1 building at 0.2/tick: 360 resources`
+    1 worker gathering:  270 resources
+    1 worker food cost:  216 food
+    1 building at 0.1/tick: 180 resources`
 }

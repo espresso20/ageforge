@@ -59,7 +59,7 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 
 func cmdHelp(args []string) CommandResult {
 	help := `[gold]Commands:[-]
-  [cyan]gather[-] <resource> [amount]  - Manually gather resources (default: 5)
+  [cyan]gather[-] <resource> [amount]  - Manually gather resources (default: 3)
   [cyan]build[-] <building>            - Build a structure
   [cyan]recruit[-] <type> [count]      - Recruit villagers (default: 1)
   [cyan]assign[-] <type> <resource> [n]- Assign villagers to gather
@@ -87,7 +87,7 @@ func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 		return CommandResult{Message: "Usage: gather <resource> [amount]", Type: "error"}
 	}
 	resource := strings.ToLower(args[0])
-	amount := 5.0
+	amount := 3.0
 	if len(args) >= 2 {
 		if n, err := strconv.ParseFloat(args[1], 64); err == nil && n > 0 {
 			amount = n

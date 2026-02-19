@@ -19,7 +19,7 @@ func Technologies() []TechDef {
 		// === PRIMITIVE AGE ===
 		{
 			Name: "Tool Making", Key: "tool_making",
-			Age: "primitive_age", Cost: 10, ResearchTicks: 5,
+			Age: "primitive_age", Cost: 10, ResearchTicks: 10,
 			Description: "Primitive stone tools improve gathering efficiency.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "gather_rate", Value: 0.15},
@@ -27,7 +27,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Fire Mastery", Key: "fire_mastery",
-			Age: "primitive_age", Cost: 15, ResearchTicks: 8,
+			Age: "primitive_age", Cost: 15, ResearchTicks: 16,
 			Prerequisites: []string{"tool_making"},
 			Description: "Control of fire improves food preservation and warmth.",
 			Effects: []Effect{
@@ -38,7 +38,7 @@ func Technologies() []TechDef {
 		// === STONE AGE ===
 		{
 			Name: "Stoneworking", Key: "stoneworking",
-			Age: "stone_age", Cost: 25, ResearchTicks: 10,
+			Age: "stone_age", Cost: 25, ResearchTicks: 20,
 			Prerequisites: []string{"tool_making"},
 			Description: "Cutting and shaping stone for construction.",
 			Effects: []Effect{
@@ -47,7 +47,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Animal Husbandry", Key: "animal_husbandry",
-			Age: "stone_age", Cost: 30, ResearchTicks: 12,
+			Age: "stone_age", Cost: 30, ResearchTicks: 24,
 			Prerequisites: []string{"fire_mastery"},
 			Description: "Domesticating animals for food and labor.",
 			Effects: []Effect{
@@ -56,7 +56,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Pottery", Key: "pottery",
-			Age: "stone_age", Cost: 20, ResearchTicks: 8,
+			Age: "stone_age", Cost: 20, ResearchTicks: 16,
 			Prerequisites: []string{"fire_mastery"},
 			Description: "Clay vessels for storage and trade.",
 			Effects: []Effect{
@@ -65,7 +65,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Primitive Writing", Key: "primitive_writing",
-			Age: "stone_age", Cost: 40, ResearchTicks: 15,
+			Age: "stone_age", Cost: 40, ResearchTicks: 30,
 			Prerequisites: []string{"pottery"},
 			Description: "Early symbols enable knowledge transfer.",
 			Effects: []Effect{
@@ -76,7 +76,7 @@ func Technologies() []TechDef {
 		// === BRONZE AGE ===
 		{
 			Name: "Bronze Working", Key: "bronze_working",
-			Age: "bronze_age", Cost: 60, ResearchTicks: 15,
+			Age: "bronze_age", Cost: 60, ResearchTicks: 30,
 			Prerequisites: []string{"stoneworking"},
 			Description: "Alloying copper and tin creates durable tools.",
 			Effects: []Effect{
@@ -86,7 +86,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Agriculture", Key: "agriculture",
-			Age: "bronze_age", Cost: 50, ResearchTicks: 12,
+			Age: "bronze_age", Cost: 50, ResearchTicks: 24,
 			Prerequisites: []string{"animal_husbandry"},
 			Description: "Systematic farming dramatically increases food output.",
 			Effects: []Effect{
@@ -95,7 +95,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Currency", Key: "currency",
-			Age: "bronze_age", Cost: 70, ResearchTicks: 15,
+			Age: "bronze_age", Cost: 70, ResearchTicks: 30,
 			Prerequisites: []string{"primitive_writing"},
 			Description: "Standardized money enables trade.",
 			Effects: []Effect{
@@ -104,7 +104,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Masonry", Key: "masonry",
-			Age: "bronze_age", Cost: 55, ResearchTicks: 12,
+			Age: "bronze_age", Cost: 55, ResearchTicks: 24,
 			Prerequisites: []string{"stoneworking"},
 			Description: "Advanced stone construction techniques.",
 			Effects: []Effect{
@@ -113,7 +113,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Military Tactics", Key: "military_tactics",
-			Age: "bronze_age", Cost: 80, ResearchTicks: 18,
+			Age: "bronze_age", Cost: 80, ResearchTicks: 36,
 			Prerequisites: []string{"bronze_working"},
 			Description: "Organized warfare and defense strategies.",
 			Effects: []Effect{
@@ -124,7 +124,7 @@ func Technologies() []TechDef {
 		// === IRON AGE ===
 		{
 			Name: "Iron Smelting", Key: "iron_smelting",
-			Age: "iron_age", Cost: 120, ResearchTicks: 20,
+			Age: "iron_age", Cost: 120, ResearchTicks: 40,
 			Prerequisites: []string{"bronze_working"},
 			Description: "Smelting iron ore into usable metal.",
 			Effects: []Effect{
@@ -134,7 +134,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Road Building", Key: "road_building",
-			Age: "iron_age", Cost: 100, ResearchTicks: 15,
+			Age: "iron_age", Cost: 100, ResearchTicks: 30,
 			Prerequisites: []string{"masonry"},
 			Description: "Paved roads improve trade and movement.",
 			Effects: []Effect{
@@ -144,7 +144,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Mathematics", Key: "mathematics",
-			Age: "iron_age", Cost: 150, ResearchTicks: 20,
+			Age: "iron_age", Cost: 150, ResearchTicks: 40,
 			Prerequisites: []string{"primitive_writing", "currency"},
 			Description: "Advanced calculation enables engineering.",
 			Effects: []Effect{
@@ -153,7 +153,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Siege Warfare", Key: "siege_warfare",
-			Age: "iron_age", Cost: 140, ResearchTicks: 18,
+			Age: "iron_age", Cost: 140, ResearchTicks: 36,
 			Prerequisites: []string{"military_tactics"},
 			Description: "Siege engines and fortification techniques.",
 			Effects: []Effect{
@@ -164,7 +164,7 @@ func Technologies() []TechDef {
 		// === CLASSICAL AGE ===
 		{
 			Name: "Philosophy", Key: "philosophy",
-			Age: "classical_age", Cost: 200, ResearchTicks: 22,
+			Age: "classical_age", Cost: 200, ResearchTicks: 33,
 			Prerequisites: []string{"mathematics", "primitive_writing"},
 			Description: "Systematic inquiry into fundamental questions.",
 			Effects: []Effect{
@@ -174,7 +174,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Civil Engineering", Key: "civil_engineering",
-			Age: "classical_age", Cost: 180, ResearchTicks: 20,
+			Age: "classical_age", Cost: 180, ResearchTicks: 30,
 			Prerequisites: []string{"masonry", "road_building"},
 			Description: "Large-scale construction and infrastructure.",
 			Effects: []Effect{
@@ -184,7 +184,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Imperial Legions", Key: "imperial_legions",
-			Age: "classical_age", Cost: 220, ResearchTicks: 22,
+			Age: "classical_age", Cost: 220, ResearchTicks: 33,
 			Prerequisites: []string{"siege_warfare", "iron_smelting"},
 			Description: "Professional standing armies with superior discipline.",
 			Effects: []Effect{
@@ -195,7 +195,7 @@ func Technologies() []TechDef {
 		// === MEDIEVAL AGE ===
 		{
 			Name: "Steel Forging", Key: "steel_forging",
-			Age: "medieval_age", Cost: 250, ResearchTicks: 25,
+			Age: "medieval_age", Cost: 250, ResearchTicks: 38,
 			Prerequisites: []string{"iron_smelting"},
 			Description: "Refining iron into steel for superior tools and weapons.",
 			Effects: []Effect{
@@ -205,7 +205,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Theology", Key: "theology",
-			Age: "medieval_age", Cost: 200, ResearchTicks: 20,
+			Age: "medieval_age", Cost: 200, ResearchTicks: 30,
 			Prerequisites: []string{"philosophy"},
 			Description: "Organized religion provides faith and social cohesion.",
 			Effects: []Effect{
@@ -214,7 +214,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Banking", Key: "banking",
-			Age: "medieval_age", Cost: 300, ResearchTicks: 22,
+			Age: "medieval_age", Cost: 300, ResearchTicks: 33,
 			Prerequisites: []string{"currency", "mathematics"},
 			Description: "Financial institutions multiply gold generation.",
 			Effects: []Effect{
@@ -224,7 +224,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Feudalism", Key: "feudalism",
-			Age: "medieval_age", Cost: 220, ResearchTicks: 18,
+			Age: "medieval_age", Cost: 220, ResearchTicks: 27,
 			Prerequisites: []string{"military_tactics"},
 			Description: "Feudal system improves population management.",
 			Effects: []Effect{
@@ -233,7 +233,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Alchemy", Key: "alchemy",
-			Age: "medieval_age", Cost: 280, ResearchTicks: 25,
+			Age: "medieval_age", Cost: 280, ResearchTicks: 38,
 			Prerequisites: []string{"mathematics"},
 			Description: "Proto-chemistry yields material insights.",
 			Effects: []Effect{
@@ -245,7 +245,7 @@ func Technologies() []TechDef {
 		// === RENAISSANCE AGE ===
 		{
 			Name: "Printing Press", Key: "printing_press",
-			Age: "renaissance_age", Cost: 500, ResearchTicks: 30,
+			Age: "renaissance_age", Cost: 500, ResearchTicks: 45,
 			Prerequisites: []string{"theology", "alchemy"},
 			Description: "Mass production of books accelerates knowledge.",
 			Effects: []Effect{
@@ -255,7 +255,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Navigation", Key: "navigation",
-			Age: "renaissance_age", Cost: 450, ResearchTicks: 25,
+			Age: "renaissance_age", Cost: 450, ResearchTicks: 38,
 			Prerequisites: []string{"mathematics", "road_building"},
 			Description: "Ocean navigation opens new trade routes.",
 			Effects: []Effect{
@@ -265,7 +265,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Gunpowder", Key: "gunpowder",
-			Age: "renaissance_age", Cost: 550, ResearchTicks: 28,
+			Age: "renaissance_age", Cost: 550, ResearchTicks: 42,
 			Prerequisites: []string{"alchemy", "siege_warfare"},
 			Description: "Explosive weaponry transforms warfare.",
 			Effects: []Effect{
@@ -274,7 +274,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Patronage", Key: "patronage",
-			Age: "renaissance_age", Cost: 400, ResearchTicks: 22,
+			Age: "renaissance_age", Cost: 400, ResearchTicks: 33,
 			Prerequisites: []string{"banking"},
 			Description: "Wealthy patrons fund arts and science.",
 			Effects: []Effect{
@@ -286,7 +286,7 @@ func Technologies() []TechDef {
 		// === COLONIAL AGE ===
 		{
 			Name: "Cartography", Key: "cartography",
-			Age: "colonial_age", Cost: 800, ResearchTicks: 30,
+			Age: "colonial_age", Cost: 800, ResearchTicks: 45,
 			Prerequisites: []string{"navigation"},
 			Description: "Detailed maps enable global exploration.",
 			Effects: []Effect{
@@ -296,7 +296,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Mercantilism", Key: "mercantilism",
-			Age: "colonial_age", Cost: 750, ResearchTicks: 28,
+			Age: "colonial_age", Cost: 750, ResearchTicks: 42,
 			Prerequisites: []string{"banking", "navigation"},
 			Description: "National trade policies maximize wealth.",
 			Effects: []Effect{
@@ -306,7 +306,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Colonialism", Key: "colonialism",
-			Age: "colonial_age", Cost: 900, ResearchTicks: 32,
+			Age: "colonial_age", Cost: 900, ResearchTicks: 48,
 			Prerequisites: []string{"cartography", "gunpowder"},
 			Description: "Overseas territorial expansion.",
 			Effects: []Effect{
@@ -318,7 +318,7 @@ func Technologies() []TechDef {
 		// === INDUSTRIAL AGE ===
 		{
 			Name: "Steam Power", Key: "steam_power",
-			Age: "industrial_age", Cost: 1000, ResearchTicks: 35,
+			Age: "industrial_age", Cost: 1000, ResearchTicks: 53,
 			Prerequisites: []string{"steel_forging"},
 			Description: "Steam engines revolutionize production.",
 			Effects: []Effect{
@@ -327,7 +327,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Industrialization", Key: "industrialization",
-			Age: "industrial_age", Cost: 1200, ResearchTicks: 40,
+			Age: "industrial_age", Cost: 1200, ResearchTicks: 60,
 			Prerequisites: []string{"steam_power"},
 			Description: "Factory systems massively increase output.",
 			Effects: []Effect{
@@ -337,7 +337,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Railroads", Key: "railroads",
-			Age: "industrial_age", Cost: 900, ResearchTicks: 30,
+			Age: "industrial_age", Cost: 900, ResearchTicks: 45,
 			Prerequisites: []string{"steam_power", "road_building"},
 			Description: "Rail networks connect your civilization.",
 			Effects: []Effect{
@@ -347,7 +347,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Rifling", Key: "rifling",
-			Age: "industrial_age", Cost: 800, ResearchTicks: 25,
+			Age: "industrial_age", Cost: 800, ResearchTicks: 38,
 			Prerequisites: []string{"gunpowder"},
 			Description: "Precision firearms improve military effectiveness.",
 			Effects: []Effect{

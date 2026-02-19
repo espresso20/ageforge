@@ -27,19 +27,19 @@ type villagerRuntime struct {
 func DefaultVillagerTypes() []VillagerTypeDef {
 	return []VillagerTypeDef{
 		{
-			Name: "Worker", Key: "worker", FoodCost: 0.15,
+			Name: "Worker", Key: "worker", FoodCost: 0.12,
 			CanGather:  []string{"food", "wood", "stone", "iron", "gold", "coal", "steel", "oil", "electricity", "uranium", "titanium"},
-			GatherRate: 0.3,
+			GatherRate: 0.15,
 		},
 		{
 			Name: "Shaman", Key: "shaman", FoodCost: 0.2,
 			CanGather:  []string{"knowledge", "faith"},
-			GatherRate: 0.4,
+			GatherRate: 0.2,
 		},
 		{
 			Name: "Scholar", Key: "scholar", FoodCost: 0.2,
 			CanGather:  []string{"knowledge", "culture", "data"},
-			GatherRate: 0.5,
+			GatherRate: 0.25,
 		},
 		{
 			Name: "Soldier", Key: "soldier", FoodCost: 0.25,
@@ -49,22 +49,22 @@ func DefaultVillagerTypes() []VillagerTypeDef {
 		{
 			Name: "Merchant", Key: "merchant", FoodCost: 0.2,
 			CanGather:  []string{"gold", "crypto"},
-			GatherRate: 0.6,
+			GatherRate: 0.3,
 		},
 		{
 			Name: "Engineer", Key: "engineer", FoodCost: 0.25,
 			CanGather:  []string{"oil", "electricity", "steel", "data"},
-			GatherRate: 0.7,
+			GatherRate: 0.35,
 		},
 		{
 			Name: "Hacker", Key: "hacker", FoodCost: 0.3,
 			CanGather:  []string{"data", "crypto"},
-			GatherRate: 0.8,
+			GatherRate: 0.4,
 		},
 		{
 			Name: "Astronaut", Key: "astronaut", FoodCost: 0.4,
 			CanGather:  []string{"titanium", "dark_matter", "plasma"},
-			GatherRate: 1.0,
+			GatherRate: 0.5,
 		},
 	}
 }
