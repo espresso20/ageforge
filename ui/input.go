@@ -47,9 +47,18 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdExpedition(args, engine)
 	case "prestige":
 		return cmdPrestige(args, engine)
+	case "rates":
+		return cmdRates(engine)
+	case "speed":
+		return cmdSpeed(args, engine)
 	case "dump", "exportlogs":
 		return cmdDump(args, engine)
+	case "saves":
+		return cmdSaveList()
 	case "save":
+		if len(args) > 0 && args[0] == "list" {
+			return cmdSaveList()
+		}
 		return cmdSave(args, engine)
 	case "load":
 		return cmdLoad(args, engine)
@@ -66,21 +75,24 @@ func cmdHelp(args []string) CommandResult {
   [cyan]gather[-] <food|wood|stone> [n] - Hand-gather resources (max 5)
   [cyan]build[-] <building>            - Build a structure
   [cyan]recruit[-] <type> [count]      - Recruit villagers (default: 1)
-  [cyan]assign[-] <type> <resource> [n]- Assign villagers to gather
-  [cyan]unassign[-] <type> <resource> [n]- Unassign villagers
+  [cyan]assign[-] <type> <resource> [n|all]- Assign villagers to gather
+  [cyan]unassign[-] <type> <resource> [n|all]- Unassign villagers
   [cyan]research[-] <tech_key>         - Research a technology
   [cyan]research[-] cancel             - Cancel current research
   [cyan]research[-] list               - List available techs
   [cyan]expedition[-] <key>            - Launch a military expedition
   [cyan]expedition[-] list             - List available expeditions
   [cyan]prestige[-]                    - View prestige status
-  [cyan]prestige[-] confirm            - Reset game with prestige bonus
+  [cyan]prestige[-] confirm yes        - Reset game with prestige bonus
   [cyan]prestige[-] shop               - View prestige upgrades
   [cyan]prestige[-] buy <key>          - Buy a prestige upgrade
+  [cyan]rates[-]                       - Show resource rate breakdown
   [cyan]status[-]                      - Show detailed status
   [cyan]dump[-]                        - Export logs to file for debugging
   [cyan]save[-] [name]                 - Save game (default: autosave)
   [cyan]load[-] [name]                 - Load game (default: autosave)
+  [cyan]saves[-]                       - List all save files
+  [cyan]speed[-] [1|2|5|10]            - Set game speed multiplier
   [cyan]help[-]                        - Show this help
 
 [gold]Shortcuts:[-] g=gather, b=build, r=recruit, a=assign, u=unassign, s=status, res=research, exp=expedition`
@@ -234,10 +246,20 @@ func cmdRecruit(args []string, engine *game.GameEngine) CommandResult {
 
 func cmdAssign(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 2 {
-		return CommandResult{Message: "Usage: assign <type> <resource> [count]", Type: "error"}
+		return CommandResult{Message: "Usage: assign <type> <resource> [count|all]", Type: "error"}
 	}
 	vType := strings.ToLower(args[0])
 	resource := strings.ToLower(args[1])
+	if len(args) >= 3 && strings.ToLower(args[2]) == "all" {
+		n, err := engine.AssignAll(vType, resource)
+		if err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{
+			Message: fmt.Sprintf("Assigned all %d %s(s) to %s", n, vType, resource),
+			Type:    "success",
+		}
+	}
 	count := 1
 	if len(args) >= 3 {
 		if n, err := strconv.Atoi(args[2]); err == nil && n > 0 {
@@ -255,10 +277,20 @@ func cmdAssign(args []string, engine *game.GameEngine) CommandResult {
 
 func cmdUnassign(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 2 {
-		return CommandResult{Message: "Usage: unassign <type> <resource> [count]", Type: "error"}
+		return CommandResult{Message: "Usage: unassign <type> <resource> [count|all]", Type: "error"}
 	}
 	vType := strings.ToLower(args[0])
 	resource := strings.ToLower(args[1])
+	if len(args) >= 3 && strings.ToLower(args[2]) == "all" {
+		n, err := engine.UnassignAll(vType, resource)
+		if err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{
+			Message: fmt.Sprintf("Unassigned all %d %s(s) from %s", n, vType, resource),
+			Type:    "success",
+		}
+	}
 	count := 1
 	if len(args) >= 3 {
 		if n, err := strconv.Atoi(args[2]); err == nil && n > 0 {
@@ -332,6 +364,89 @@ func cmdLoad(args []string, engine *game.GameEngine) CommandResult {
 		return CommandResult{Message: fmt.Sprintf("Load failed: %v", err), Type: "error"}
 	}
 	return CommandResult{Message: fmt.Sprintf("Game loaded from '%s'", name), Type: "success"}
+}
+
+func cmdRates(engine *game.GameEngine) CommandResult {
+	state := engine.GetState()
+	var lines []string
+	lines = append(lines, "[gold]Resource Rate Breakdown:[-]")
+
+	for _, rs := range state.Resources {
+		if !rs.Unlocked || (rs.Rate == 0 && rs.Breakdown == (game.RateBreakdown{})) {
+			continue
+		}
+		lines = append(lines, fmt.Sprintf("  [cyan]%s[-]:  %s/tick", rs.Name, FormatRate(rs.Rate)))
+		b := rs.Breakdown
+		var parts []string
+		if b.BuildingRate != 0 {
+			parts = append(parts, fmt.Sprintf("Buildings: %+.2f", b.BuildingRate))
+		}
+		if b.VillagerRate != 0 {
+			parts = append(parts, fmt.Sprintf("Villagers: %+.2f", b.VillagerRate))
+		}
+		if b.ResearchRate != 0 {
+			parts = append(parts, fmt.Sprintf("Research: %+.2f", b.ResearchRate))
+		}
+		if b.EventRate != 0 {
+			parts = append(parts, fmt.Sprintf("Events: %+.2f", b.EventRate))
+		}
+		if b.BonusRate != 0 {
+			parts = append(parts, fmt.Sprintf("Bonuses: %+.2f", b.BonusRate))
+		}
+		if b.FoodDrain != 0 {
+			parts = append(parts, fmt.Sprintf("Drain: %+.2f", b.FoodDrain))
+		}
+		if len(parts) > 0 {
+			lines = append(lines, fmt.Sprintf("    %s", strings.Join(parts, "  ")))
+		}
+	}
+
+	if len(lines) == 1 {
+		lines = append(lines, "  [gray]No active resource rates[-]")
+	}
+	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
+
+func cmdSpeed(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 {
+		mult := engine.GetSpeedMultiplier()
+		return CommandResult{
+			Message: fmt.Sprintf("Current game speed: [cyan]%.0fx[-] (valid: 1, 2, 5, 10)", mult),
+			Type:    "info",
+		}
+	}
+	n, err := strconv.ParseFloat(args[0], 64)
+	if err != nil {
+		return CommandResult{Message: "Usage: speed [1|2|5|10]", Type: "error"}
+	}
+	if err := engine.SetSpeedMultiplier(n); err != nil {
+		return CommandResult{Message: err.Error(), Type: "error"}
+	}
+	return CommandResult{
+		Message: fmt.Sprintf("Game speed set to %.0fx", n),
+		Type:    "success",
+	}
+}
+
+func cmdSaveList() CommandResult {
+	saves, err := game.ListSaveDetails()
+	if err != nil {
+		return CommandResult{Message: fmt.Sprintf("Failed to list saves: %v", err), Type: "error"}
+	}
+	if len(saves) == 0 {
+		return CommandResult{Message: "No save files found.", Type: "info"}
+	}
+	var lines []string
+	lines = append(lines, "[gold]Save Files:[-]")
+	for _, s := range saves {
+		age := s.Age
+		if age == "" {
+			age = "unknown"
+		}
+		lines = append(lines, fmt.Sprintf("  [cyan]%-15s[-] %s  [gray](%s)[-]",
+			s.Name, s.Timestamp.Format("2006-01-02 15:04:05"), age))
+	}
+	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
 
 func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
@@ -414,13 +529,27 @@ func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
 
 	switch subcmd {
 	case "confirm":
-		if err := engine.DoPrestige(); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+		// Require "prestige confirm yes" to actually execute
+		if len(args) >= 2 && strings.ToLower(args[1]) == "yes" {
+			if err := engine.DoPrestige(); err != nil {
+				return CommandResult{Message: err.Error(), Type: "error"}
+			}
+			return CommandResult{
+				Message: "Prestige complete! Your empire has been reset with permanent bonuses.",
+				Type:    "success",
+			}
 		}
-		return CommandResult{
-			Message: "Prestige complete! Your empire has been reset with permanent bonuses.",
-			Type:    "success",
-		}
+		// Show warning
+		state := engine.GetState()
+		p := state.Prestige
+		var lines []string
+		lines = append(lines, "[yellow]⚠ PRESTIGE WARNING ⚠[-]")
+		lines = append(lines, fmt.Sprintf("  You will earn [cyan]%d[-] prestige points.", p.PendingPoints))
+		lines = append(lines, "  [red]ALL progress will be reset:[-] resources, buildings, villagers, research, military.")
+		lines = append(lines, "  Only prestige points and upgrades are kept.")
+		lines = append(lines, "")
+		lines = append(lines, "  Type [cyan]prestige confirm yes[-] to proceed.")
+		return CommandResult{Message: strings.Join(lines, "\n"), Type: "warning"}
 	case "shop":
 		return cmdPrestigeShop(engine)
 	case "buy":

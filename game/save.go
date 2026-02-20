@@ -27,6 +27,7 @@ type GameSave struct {
 	PermanentBonuses map[string]float64 `json:"permanent_bonuses"`
 	BuildQueue       []BuildQueueItem   `json:"build_queue"`
 	Prestige         PrestigeSave        `json:"prestige"`
+	SpeedMultiplier  float64             `json:"speed_multiplier"`
 }
 
 // PrestigeSave holds prestige state for save
@@ -175,6 +176,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			Available:   ge.Prestige.available,
 			Upgrades:    upgrades,
 		},
+		SpeedMultiplier: ge.speedMultiplier,
 	}
 }
 
@@ -246,8 +248,18 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// Restore prestige
 	ge.Prestige.LoadState(save.Prestige.Level, save.Prestige.TotalEarned, save.Prestige.Available, save.Prestige.Upgrades)
 
+	// Restore speed multiplier
+	ge.speedMultiplier = save.SpeedMultiplier
+	if ge.speedMultiplier < 1.0 {
+		ge.speedMultiplier = 1.0
+	}
+
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()
+
+	// Apply offline progress for time since save
+	ge.applyOfflineProgress(time.Since(save.Timestamp))
+
 	return nil
 }
 
@@ -281,6 +293,49 @@ func ListSaves() ([]string, error) {
 			name := e.Name()
 			saves = append(saves, name[:len(name)-5]) // strip .json
 		}
+	}
+	return saves, nil
+}
+
+// SaveInfo holds metadata about a save file
+type SaveInfo struct {
+	Name      string
+	Timestamp time.Time
+	Age       string
+}
+
+// ListSaveDetails returns metadata for each save file
+func ListSaveDetails() ([]SaveInfo, error) {
+	entries, err := os.ReadDir(saveDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	var saves []SaveInfo
+	for _, e := range entries {
+		if e.IsDir() || filepath.Ext(e.Name()) != ".json" {
+			continue
+		}
+		name := e.Name()[:len(e.Name())-5]
+		path := filepath.Join(saveDir, e.Name())
+		data, err := os.ReadFile(path)
+		if err != nil {
+			continue
+		}
+		var header struct {
+			Timestamp time.Time `json:"timestamp"`
+			Age       string    `json:"age"`
+		}
+		if err := json.Unmarshal(data, &header); err != nil {
+			continue
+		}
+		saves = append(saves, SaveInfo{
+			Name:      name,
+			Timestamp: header.Timestamp,
+			Age:       header.Age,
+		})
 	}
 	return saves, nil
 }

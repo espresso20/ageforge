@@ -23,8 +23,9 @@ type GameState struct {
 	Log            []LogEntry
 	Stats          StatsSnapshot
 	SaveExists     bool
-	TickSpeedBonus float64
-	TickIntervalMs int
+	TickSpeedBonus   float64
+	TickIntervalMs   int
+	SpeedMultiplier  float64
 }
 
 // BuildQueueSnapshot represents a building under construction for UI
@@ -34,13 +35,24 @@ type BuildQueueSnapshot struct {
 	TotalTicks int
 }
 
+// RateBreakdown shows the components that make up a resource's net rate
+type RateBreakdown struct {
+	BuildingRate float64
+	VillagerRate float64
+	ResearchRate float64
+	EventRate    float64
+	FoodDrain    float64
+	BonusRate    float64
+}
+
 // ResourceState represents a single resource's current state
 type ResourceState struct {
-	Amount   float64
-	Rate     float64
-	Storage  float64
-	Name     string
-	Unlocked bool
+	Amount    float64
+	Rate      float64
+	Storage   float64
+	Name      string
+	Unlocked  bool
+	Breakdown RateBreakdown
 }
 
 // BuildingState represents a building type's current state

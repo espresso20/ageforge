@@ -22,6 +22,7 @@ func main() {
 	signal.Notify(sigs, syscall.SIGINT, syscall.SIGTERM)
 	go func() {
 		<-sigs
+		engine.SaveGame("autosave")
 		engine.Stop()
 		app.Stop()
 	}()

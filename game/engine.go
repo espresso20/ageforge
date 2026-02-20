@@ -43,7 +43,8 @@ type GameEngine struct {
 	permanentBonuses map[string]float64
 
 	// Dynamic tick speed
-	tickSpeedBonus float64
+	tickSpeedBonus  float64
+	speedMultiplier float64
 }
 
 // BuildQueueItem represents a building under construction
@@ -69,6 +70,7 @@ func NewGameEngine() *GameEngine {
 		Bus:              NewEventBus(),
 		progress:         NewProgressManager(),
 		permanentBonuses: make(map[string]float64),
+		speedMultiplier:  1.0,
 		stopCh:           make(chan struct{}),
 	}
 	ge.applyAgeUnlocks("primitive_age")
@@ -87,7 +89,7 @@ func NewGameEngine() *GameEngine {
 	return ge
 }
 
-const AutosaveInterval = 5 * time.Minute
+const AutosaveInterval = 60 * time.Second
 
 // Start begins the game tick loop
 func (ge *GameEngine) Start() {
@@ -138,14 +140,18 @@ func (ge *GameEngine) safeTick() {
 	ge.doTick()
 }
 
-// getTickInterval returns the current tick interval based on tick speed bonus
+// getTickInterval returns the current tick interval based on tick speed bonus and speed multiplier
 func (ge *GameEngine) getTickInterval() time.Duration {
-	// tickSpeedBonus is only written under the write lock in doTick/LoadGame,
-	// and this is called from the same goroutine after doTick returns,
-	// so a direct read is safe here.
+	// tickSpeedBonus and speedMultiplier are only written under the write lock
+	// in doTick/LoadGame, and this is called from the same goroutine after
+	// doTick returns, so a direct read is safe here.
 	bonus := ge.tickSpeedBonus
+	mult := ge.speedMultiplier
+	if mult < 1.0 {
+		mult = 1.0
+	}
 
-	interval := time.Duration(float64(BaseTickInterval) / (1.0 + bonus))
+	interval := time.Duration(float64(BaseTickInterval) / ((1.0 + bonus) * mult))
 	if interval < MinTickInterval {
 		interval = MinTickInterval
 	}
@@ -167,6 +173,25 @@ func (ge *GameEngine) recalculateTickSpeed() {
 		}
 		ge.addLog("debug", fmt.Sprintf("Tick speed: +%.0f%% (interval: %dms)", bonus*100, interval.Milliseconds()))
 	}
+}
+
+// SetSpeedMultiplier sets the game speed multiplier (1, 2, 5, or 10)
+func (ge *GameEngine) SetSpeedMultiplier(mult float64) error {
+	if mult != 1 && mult != 2 && mult != 5 && mult != 10 {
+		return fmt.Errorf("invalid speed: %.0f (valid: 1, 2, 5, 10)", mult)
+	}
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.speedMultiplier = mult
+	ge.addLog("info", fmt.Sprintf("Game speed set to %.0fx", mult))
+	return nil
+}
+
+// GetSpeedMultiplier returns the current speed multiplier
+func (ge *GameEngine) GetSpeedMultiplier() float64 {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	return ge.speedMultiplier
 }
 
 // Stop halts the game engine (safe to call multiple times)
@@ -376,9 +401,13 @@ func (ge *GameEngine) checkMilestones() {
 
 // recalculateRates recalculates all resource production rates
 func (ge *GameEngine) recalculateRates() {
-	// Reset all rates
+	// Reset all rates and breakdowns
 	for _, def := range ge.Resources.defs {
-		ge.Resources.SetRate(def.Key, 0)
+		r := ge.Resources.resources[def.Key]
+		if r != nil {
+			r.Rate = 0
+			r.Breakdown = RateBreakdown{}
+		}
 	}
 
 	// Building production
@@ -387,6 +416,7 @@ func (ge *GameEngine) recalculateRates() {
 			r := ge.Resources.resources[eff.Target]
 			if r != nil {
 				r.Rate += eff.Value
+				r.Breakdown.BuildingRate += eff.Value
 			}
 		}
 	}
@@ -396,6 +426,7 @@ func (ge *GameEngine) recalculateRates() {
 		r := ge.Resources.resources[res]
 		if r != nil {
 			r.Rate += rate
+			r.Breakdown.VillagerRate += rate
 		}
 	}
 
@@ -452,6 +483,7 @@ func (ge *GameEngine) recalculateRates() {
 			r := ge.Resources.resources[eff.Target]
 			if r != nil {
 				r.Rate += eff.Value
+				r.Breakdown.ResearchRate += eff.Value
 			}
 		}
 	}
@@ -462,6 +494,7 @@ func (ge *GameEngine) recalculateRates() {
 			r := ge.Resources.resources[eff.Target]
 			if r != nil {
 				r.Rate += eff.Value
+				r.Breakdown.EventRate += eff.Value
 			}
 		}
 	}
@@ -472,6 +505,17 @@ func (ge *GameEngine) recalculateRates() {
 		r := ge.Resources.resources["food"]
 		if r != nil {
 			r.Rate -= drain
+			r.Breakdown.FoodDrain = -drain
+		}
+	}
+
+	// Calculate bonus rates (the difference from multipliers)
+	for _, def := range ge.Resources.defs {
+		r := ge.Resources.resources[def.Key]
+		if r != nil {
+			knownComponents := r.Breakdown.BuildingRate + r.Breakdown.VillagerRate +
+				r.Breakdown.ResearchRate + r.Breakdown.EventRate + r.Breakdown.FoodDrain
+			r.Breakdown.BonusRate = r.Rate - knownComponents
 		}
 	}
 
@@ -675,6 +719,44 @@ func (ge *GameEngine) AssignVillager(vType, resource string, count int) error {
 	return nil
 }
 
+// AssignAll assigns all idle villagers of a type to a resource
+func (ge *GameEngine) AssignAll(vType, resource string) (int, error) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	idle := ge.Villagers.IdleCount(vType)
+	if idle <= 0 {
+		return 0, fmt.Errorf("no idle %s(s) to assign", vType)
+	}
+	if !ge.Villagers.Assign(vType, resource, idle) {
+		return 0, fmt.Errorf("cannot assign %s(s) to %s", vType, resource)
+	}
+	ge.recalculateRates()
+	ge.addLog("info", fmt.Sprintf("Assigned all %d %s(s) to %s", idle, vType, resource))
+	return idle, nil
+}
+
+// UnassignAll removes all villagers of a type from a resource
+func (ge *GameEngine) UnassignAll(vType, resource string) (int, error) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	st, ok := ge.Villagers.types[vType]
+	if !ok {
+		return 0, fmt.Errorf("unknown villager type: %s", vType)
+	}
+	assigned := st.assignment[resource]
+	if assigned <= 0 {
+		return 0, fmt.Errorf("no %s(s) assigned to %s", vType, resource)
+	}
+	if !ge.Villagers.Unassign(vType, resource, assigned) {
+		return 0, fmt.Errorf("cannot unassign %s(s) from %s", vType, resource)
+	}
+	ge.recalculateRates()
+	ge.addLog("info", fmt.Sprintf("Unassigned all %d %s(s) from %s", assigned, vType, resource))
+	return assigned, nil
+}
+
 // UnassignVillager removes villagers from a resource assignment
 func (ge *GameEngine) UnassignVillager(vType, resource string, count int) error {
 	ge.mu.Lock()
@@ -860,7 +942,11 @@ func (ge *GameEngine) GetState() GameState {
 		ge.Stats.TotalBuilt,
 	)
 
-	tickInterval := time.Duration(float64(BaseTickInterval) / (1.0 + ge.tickSpeedBonus))
+	speedMult := ge.speedMultiplier
+	if speedMult < 1.0 {
+		speedMult = 1.0
+	}
+	tickInterval := time.Duration(float64(BaseTickInterval) / ((1.0 + ge.tickSpeedBonus) * speedMult))
 	if tickInterval < MinTickInterval {
 		tickInterval = MinTickInterval
 	}
@@ -887,6 +973,7 @@ func (ge *GameEngine) GetState() GameState {
 		SaveExists:       SaveExists("autosave"),
 		TickSpeedBonus:   ge.tickSpeedBonus,
 		TickIntervalMs:   int(tickInterval.Milliseconds()),
+		SpeedMultiplier:  speedMult,
 	}
 }
 
@@ -917,6 +1004,72 @@ func (ge *GameEngine) GetLogs() []LogEntry {
 	logCopy := make([]LogEntry, len(ge.log))
 	copy(logCopy, ge.log)
 	return logCopy
+}
+
+const (
+	MaxOfflineTime    = 24 * time.Hour
+	OfflineEfficiency = 0.5
+)
+
+// applyOfflineProgress applies simulated progress for time spent offline (must be called with lock held)
+func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
+	if elapsed < 5*time.Second {
+		return // too short to matter
+	}
+	if elapsed > MaxOfflineTime {
+		elapsed = MaxOfflineTime
+	}
+
+	bonus := ge.tickSpeedBonus
+	mult := ge.speedMultiplier
+	if mult < 1.0 {
+		mult = 1.0
+	}
+	tickInterval := time.Duration(float64(BaseTickInterval) / ((1.0 + bonus) * mult))
+	if tickInterval < MinTickInterval {
+		tickInterval = MinTickInterval
+	}
+
+	offlineTicks := int(elapsed / tickInterval)
+	if offlineTicks <= 0 {
+		return
+	}
+
+	gains := make(map[string]float64)
+	for key, r := range ge.Resources.resources {
+		if !ge.Resources.unlocked[key] || r.Rate <= 0 {
+			continue
+		}
+		amount := r.Rate * float64(offlineTicks) * OfflineEfficiency
+		if r.Amount+amount > r.Storage {
+			amount = r.Storage - r.Amount
+		}
+		if amount > 0 {
+			ge.Resources.Add(key, amount)
+			gains[key] = amount
+		}
+	}
+
+	ge.tick += offlineTicks
+
+	// Log welcome back message
+	minutes := int(elapsed.Minutes())
+	hours := minutes / 60
+	mins := minutes % 60
+	var timeStr string
+	if hours > 0 {
+		timeStr = fmt.Sprintf("%dh %dm", hours, mins)
+	} else {
+		timeStr = fmt.Sprintf("%dm", mins)
+	}
+
+	ge.addLog("event", fmt.Sprintf("Welcome back! You were away for %s.", timeStr))
+	if len(gains) > 0 {
+		ge.addLog("info", fmt.Sprintf("Offline progress (%d ticks at 50%% efficiency):", offlineTicks))
+		for res, amount := range gains {
+			ge.addLog("info", fmt.Sprintf("  +%.1f %s", amount, res))
+		}
+	}
 }
 
 // formatCost formats a cost map for display

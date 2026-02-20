@@ -4,9 +4,10 @@ import "github.com/user/ageforge/config"
 
 // Resource holds the runtime state of a single resource
 type Resource struct {
-	Amount  float64
-	Rate    float64
-	Storage float64
+	Amount    float64
+	Rate      float64
+	Storage   float64
+	Breakdown RateBreakdown
 }
 
 // ResourceManager manages all resources
@@ -172,11 +173,12 @@ func (rm *ResourceManager) Snapshot() map[string]ResourceState {
 	for key, r := range rm.resources {
 		def := rm.defs[key]
 		out[key] = ResourceState{
-			Amount:   r.Amount,
-			Rate:     r.Rate,
-			Storage:  r.Storage,
-			Name:     def.Name,
-			Unlocked: rm.unlocked[key],
+			Amount:    r.Amount,
+			Rate:      r.Rate,
+			Storage:   r.Storage,
+			Name:      def.Name,
+			Unlocked:  rm.unlocked[key],
+			Breakdown: r.Breakdown,
 		}
 	}
 	return out

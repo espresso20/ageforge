@@ -11,7 +11,7 @@ import (
 var commands = []string{
 	"gather", "build", "recruit", "assign", "unassign",
 	"research", "expedition", "prestige",
-	"status", "save", "load", "help", "quit",
+	"rates", "status", "speed", "save", "saves", "load", "help", "quit",
 }
 
 // NewAutoCompleter returns an autocomplete function for the command input field.
@@ -76,16 +76,20 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 		if len(completed) == 0 {
 			return filterPrefix(unlockedVillagerTypes(state), partial, prefix)
 		}
-		// Second arg: resources that type can gather
-		return filterPrefix(unlockedResourceKeys(state), partial, prefix)
+		if len(completed) == 1 {
+			return filterPrefix(unlockedResourceKeys(state), partial, prefix)
+		}
+		return filterPrefix([]string{"all"}, partial, prefix)
 
 	case "unassign", "u":
 		if len(completed) == 0 {
 			return filterPrefix(unlockedVillagerTypes(state), partial, prefix)
 		}
-		// Second arg: resources the villager is assigned to
-		vType := strings.ToLower(completed[0])
-		return filterPrefix(assignedResources(state, vType), partial, prefix)
+		if len(completed) == 1 {
+			vType := strings.ToLower(completed[0])
+			return filterPrefix(assignedResources(state, vType), partial, prefix)
+		}
+		return filterPrefix([]string{"all"}, partial, prefix)
 
 	case "research", "res":
 		keys := availableTechKeys(state)
@@ -104,6 +108,12 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 		if strings.ToLower(completed[0]) == "buy" {
 			return filterPrefix(prestigeUpgradeKeys(state), partial, prefix)
 		}
+		if strings.ToLower(completed[0]) == "confirm" {
+			return filterPrefix([]string{"yes"}, partial, prefix)
+		}
+
+	case "speed":
+		return filterPrefix([]string{"1", "2", "5", "10"}, partial, prefix)
 
 	case "save":
 		return filterPrefix(saveNames(), partial, prefix)

@@ -30,8 +30,8 @@ func Ages() []AgeDef {
 		{
 			Name: "Stone Age", Key: "stone_age", Order: 1,
 			Description:  "Tools of stone change everything.",
-			ResourceReqs: map[string]float64{"food": 500, "wood": 400, "knowledge": 75},
-			BuildingReqs: map[string]int{"hut": 6, "altar": 3},
+			ResourceReqs: map[string]float64{"food": 1500, "wood": 1200, "knowledge": 200},
+			BuildingReqs: map[string]int{"hut": 10, "altar": 5},
 			UnlockBuildings: []string{"gathering_camp", "woodcutter_camp", "stone_pit", "firepit", "storage_pit"},
 			UnlockResources: []string{"stone"},
 		},

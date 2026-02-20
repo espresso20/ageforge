@@ -69,8 +69,16 @@ func (t *EconomyTab) refreshResources(state game.GameState) {
 	for _, key := range keys {
 		rs := state.Resources[key]
 		bar := ProgressBar(rs.Amount, rs.Storage, 12)
-		fmt.Fprintf(&sb, " %-12s %6s / %-6s %s %s\n",
-			rs.Name, FormatNumber(rs.Amount), FormatNumber(rs.Storage),
+		amtColor := "white"
+		if rs.Storage > 0 && rs.Amount >= rs.Storage*0.9 {
+			amtColor = "yellow"
+		} else if rs.Rate > 0 {
+			amtColor = "green"
+		} else if rs.Rate < 0 {
+			amtColor = "red"
+		}
+		fmt.Fprintf(&sb, " %-12s [%s]%6s[-] / %-6s %s %s\n",
+			rs.Name, amtColor, FormatNumber(rs.Amount), FormatNumber(rs.Storage),
 			FormatRate(rs.Rate), bar)
 	}
 	t.resourceTV.SetText(sb.String())
@@ -102,7 +110,8 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 		sb.WriteString("\n [gold]Under Construction:[-]\n")
 		for _, item := range state.BuildQueue {
 			bar := ProgressBar(float64(item.TotalTicks-item.TicksLeft), float64(item.TotalTicks), 10)
-			fmt.Fprintf(&sb, "   [yellow]%s[-] %s %d ticks left\n", item.Name, bar, item.TicksLeft)
+			eta := FormatETA(state.TickIntervalMs * item.TicksLeft)
+			fmt.Fprintf(&sb, "   [yellow]%s[-] %s %d ticks (%s)\n", item.Name, bar, item.TicksLeft, eta)
 		}
 	}
 

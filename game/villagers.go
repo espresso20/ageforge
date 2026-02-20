@@ -34,12 +34,12 @@ func DefaultVillagerTypes() []VillagerTypeDef {
 		{
 			Name: "Shaman", Key: "shaman", FoodCost: 0.2,
 			CanGather:  []string{"knowledge", "faith"},
-			GatherRate: 0.2,
+			GatherRate: 0.08,
 		},
 		{
 			Name: "Scholar", Key: "scholar", FoodCost: 0.2,
 			CanGather:  []string{"knowledge", "culture", "data"},
-			GatherRate: 0.25,
+			GatherRate: 0.10,
 		},
 		{
 			Name: "Soldier", Key: "soldier", FoodCost: 0.25,

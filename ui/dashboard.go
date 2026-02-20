@@ -31,14 +31,18 @@ type Dashboard struct {
 	militaryTab *MilitaryTab
 	statsTab    *StatsTab
 	wikiTab     *WikiTab
+	mapTab      *MapTab
 	logsTab     *LogsTab
 
 	// Shared UI
 	logTV      *tview.TextView
-	helpTV     *tview.TextView
+	miniMap    *MiniMap
 	statusTV   *tview.TextView
 	ageTV      *tview.TextView
 	inputField *tview.InputField
+	lastAge    string
+	toastMgr   *ToastManager
+	toastTV    *tview.TextView
 
 	stopCh chan struct{}
 }
@@ -50,7 +54,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		engine:   engine,
 		pages:    pages,
 		stopCh:   make(chan struct{}),
-		tabNames: []string{"Economy", "Research", "Military", "Stats", "Wiki", "Logs"},
+		tabNames: []string{"Economy", "Research", "Military", "Stats", "Wiki", "Map", "Logs"},
 	}
 	d.build()
 	return d
@@ -63,6 +67,7 @@ func (d *Dashboard) build() {
 	d.militaryTab = NewMilitaryTab()
 	d.statsTab = NewStatsTab()
 	d.wikiTab = NewWikiTab()
+	d.mapTab = NewMapTab()
 	d.logsTab = NewLogsTab()
 
 	// Tab bar
@@ -78,6 +83,7 @@ func (d *Dashboard) build() {
 	d.tabPages.AddPage("Military", d.militaryTab.Root(), true, false)
 	d.tabPages.AddPage("Stats", d.statsTab.Root(), true, false)
 	d.tabPages.AddPage("Wiki", d.wikiTab.Root(), true, false)
+	d.tabPages.AddPage("Map", d.mapTab.Root(), true, false)
 	d.tabPages.AddPage("Logs", d.logsTab.Root(), true, false)
 
 	// Log panel
@@ -87,11 +93,8 @@ func (d *Dashboard) build() {
 		SetMaxLines(100)
 	d.logTV.SetBorder(true).SetTitle(" Log ").SetTitleColor(ColorDim)
 
-	// Help/tips panel
-	d.helpTV = tview.NewTextView().
-		SetDynamicColors(true)
-	d.helpTV.SetBorder(true).SetTitle(" Quick Reference ").SetTitleColor(ColorTitle)
-	d.helpTV.SetText(helpText())
+	// Mini-map panel (replaces Quick Reference)
+	d.miniMap = NewMiniMap()
 
 	// Status bar
 	d.statusTV = tview.NewTextView().
@@ -101,6 +104,31 @@ func (d *Dashboard) build() {
 	// Age progress tracker
 	d.ageTV = tview.NewTextView().
 		SetDynamicColors(true)
+
+	// Toast notification
+	d.toastMgr = NewToastManager()
+	d.toastTV = tview.NewTextView().
+		SetDynamicColors(true).
+		SetTextAlign(tview.AlignCenter)
+
+	// Subscribe to events for toasts
+	d.engine.Bus.Subscribe(game.EventAgeAdvanced, func(e game.EventData) {
+		if newAge, ok := e.Payload["new_age"].(string); ok {
+			_ = newAge
+		}
+		d.toastMgr.Show("AGE ADVANCED!", "gold", 5*time.Second)
+	})
+	d.engine.Bus.Subscribe(game.EventResearchDone, func(e game.EventData) {
+		tech, _ := e.Payload["tech"].(string)
+		d.toastMgr.Show(fmt.Sprintf("Research Complete: %s", tech), "cyan", 4*time.Second)
+	})
+	d.engine.Bus.Subscribe(game.EventBuildingBuilt, func(e game.EventData) {
+		building, _ := e.Payload["building"].(string)
+		// Only toast for wonders
+		if bs, ok := d.engine.GetState().Buildings[building]; ok && bs.Category == "wonder" {
+			d.toastMgr.Show(fmt.Sprintf("Wonder Built: %s", bs.Name), "green", 4*time.Second)
+		}
+	})
 
 	// Command input
 	d.inputField = tview.NewInputField().
@@ -135,10 +163,10 @@ func (d *Dashboard) build() {
 		}
 	})
 
-	// Bottom area: log + help side by side
+	// Bottom area: log + mini-map side by side
 	bottomArea := tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(d.logTV, 0, 1, false).
-		AddItem(d.helpTV, 0, 1, false)
+		AddItem(d.miniMap.Box(), 0, 1, false)
 
 	// Main content area: tab content + bottom
 	contentArea := tview.NewFlex().SetDirection(tview.FlexRow).
@@ -148,6 +176,7 @@ func (d *Dashboard) build() {
 	// Root layout
 	d.root = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(d.statusTV, 1, 0, false).
+		AddItem(d.toastTV, 1, 0, false).
 		AddItem(d.ageTV, 2, 0, false).
 		AddItem(d.tabBar, 1, 0, false).
 		AddItem(contentArea, 0, 1, false).
@@ -176,13 +205,16 @@ func (d *Dashboard) build() {
 		case tcell.KeyF5:
 			d.switchTab(4)
 			return nil
-		case tcell.KeyF9:
+		case tcell.KeyF6:
 			d.switchTab(5)
+			return nil
+		case tcell.KeyF9:
+			d.switchTab(6)
 			return nil
 		}
 
 		// When logs tab is active, intercept navigation keys
-		if d.activeTab == 5 {
+		if d.activeTab == 6 {
 			switch event.Key() {
 			case tcell.KeyPgUp:
 				d.logsTab.ScrollUp()
@@ -237,7 +269,7 @@ func (d *Dashboard) switchTab(index int) {
 
 func (d *Dashboard) updateTabBar() {
 	var parts []string
-	tabKeys := map[int]string{0: "F1", 1: "F2", 2: "F3", 3: "F4", 4: "F5", 5: "F9"}
+	tabKeys := map[int]string{0: "F1", 1: "F2", 2: "F3", 3: "F4", 4: "F5", 5: "F6", 6: "F9"}
 	for i, name := range d.tabNames {
 		key := tabKeys[i]
 		if i == d.activeTab {
@@ -282,9 +314,17 @@ func (d *Dashboard) StopUpdates() {
 
 func (d *Dashboard) refresh() {
 	state := d.engine.GetState()
+
+	if d.lastAge != state.Age {
+		ApplyAgePalette(state.Age)
+		d.lastAge = state.Age
+	}
+
 	d.refreshStatus(state)
 	d.refreshAgeProgress(state)
 	d.refreshLog(state)
+	d.toastTV.SetText(d.toastMgr.GetCurrent())
+	d.miniMap.UpdateState(state)
 
 	// Only refresh the active tab
 	switch d.activeTab {
@@ -299,6 +339,8 @@ func (d *Dashboard) refresh() {
 	case 4:
 		d.wikiTab.Refresh(state)
 	case 5:
+		d.mapTab.Refresh(state)
+	case 6:
 		d.logsTab.Refresh(state)
 	}
 }
@@ -312,9 +354,13 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 	if state.Prestige.Level > 0 {
 		prestigeStr = fmt.Sprintf("  [cyan]P%d[-]", state.Prestige.Level)
 	}
+	speedStr := ""
+	if state.SpeedMultiplier > 1 {
+		speedStr = fmt.Sprintf("  [yellow]%.0fx[-]", state.SpeedMultiplier)
+	}
 	d.statusTV.SetText(fmt.Sprintf(
-		"[gold]%s[-]%s  Tick: %d%s  |  Pop: %d/%d  |  [gray]F1-F5,F9=Tabs  ESC=Menu[-]",
-		state.AgeName, prestigeStr, state.Tick, nextAgeStr,
+		"[gold]%s[-]%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]F1-F6,F9=Tabs  ESC=Menu[-]",
+		state.AgeName, prestigeStr, state.Tick, nextAgeStr, speedStr,
 		state.Villagers.TotalPop, state.Villagers.MaxPop,
 	))
 }
@@ -344,7 +390,8 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 		if current >= req {
 			color = "green"
 		}
-		fmt.Fprintf(&sb, "[%s]%s:%.0f/%.0f[-]  ", color, key, current, req)
+		bar := ProgressBar(current, req, 8)
+		fmt.Fprintf(&sb, "[%s]%s:%.0f/%.0f %s[-]  ", color, key, current, req, bar)
 	}
 
 	// Building requirements
@@ -365,7 +412,8 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 			if current >= req {
 				color = "green"
 			}
-			fmt.Fprintf(&sb, "[%s]%s:%d/%d[-]  ", color, key, current, req)
+			bar := ProgressBar(float64(current), float64(req), 8)
+			fmt.Fprintf(&sb, "[%s]%s:%d/%d %s[-]  ", color, key, current, req, bar)
 		}
 	}
 
@@ -396,32 +444,3 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 	d.logTV.ScrollToEnd()
 }
 
-func helpText() string {
-	return ` [gold]Commands[-]
- [cyan]gather[-] <resource> [n]    Gather by hand
- [cyan]build[-] <building>         Build a structure
- [cyan]recruit[-] <type> [n]       Recruit villagers
- [cyan]assign[-] <type> <res> [n]  Put to work
- [cyan]unassign[-] <type> <res> [n] Remove from work
- [cyan]research[-] <tech>          Research tech
- [cyan]expedition[-] <key>         Launch expedition
- [cyan]prestige[-] [shop|buy|confirm] Prestige system
- [cyan]status[-]                   Detailed overview
- [cyan]save[-] / [cyan]load[-] [name]       Save or load game
-
- [gold]Shortcuts[-]
- g=gather  b=build  r=recruit
- a=assign  u=unassign  s=status
- res=research  exp=expedition
-
- [gold]Navigation[-]
- F1-F5,F9       Switch tabs
- Tab            Autocomplete
- ESC            Save & menu
-
- [gold]Villager Types[-]
- [mediumpurple]Worker[-]    Gathers resources
- [mediumpurple]Scholar[-]   Generates knowledge
- [mediumpurple]Soldier[-]   Military (Bronze+)
- [mediumpurple]Merchant[-]  Earns gold (Medieval)`
-}

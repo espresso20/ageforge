@@ -189,13 +189,13 @@ and nothing else. Here's your first steps:
 
 [gold]Step 4: Build an Altar[-]
   Type: [cyan]build altar[-]
-  Altars slowly generate knowledge (+0.025/tick). You need
-  75 knowledge and 3 altars for the Stone Age.
+  Altars slowly generate knowledge (+0.01/tick). You need
+  200 knowledge and 5 altars for the Stone Age.
 
 [gold]Step 5: Recruit Workers & Shamans[-]
   Type: [cyan]recruit worker[-] or [cyan]recruit shaman[-]
   Workers gather food/wood (0.35/tick). Shamans gather
-  knowledge (0.2/tick). You need both to advance.
+  knowledge (0.08/tick). You need both to advance.
 
 [gold]Step 6: Assign Villagers[-]
   Type: [cyan]assign worker food[-] or [cyan]assign shaman knowledge[-]
@@ -212,7 +212,7 @@ and nothing else. Here's your first steps:
   • Each worker eats [yellow]0.10 food/tick[-]
   • Each worker gathers [yellow]0.35 resource/tick[-]
   • So 1 food worker produces net +0.25 for others
-  • 1 food worker covers ~1 shaman (0.20 food) or 2 workers
+  • 1 food worker covers ~1 shaman (0.20 food) or 2.5 workers
 
 [gold]Storage Matters[-]
   Base storage is only [yellow]50[-] per resource. Resources stop
@@ -367,10 +367,10 @@ func wikiVillagers(state game.GameState) string {
 	sb.WriteString("[gold]Food Economy[-]\n")
 	sb.WriteString("  Each worker eats 0.10 food/tick but gathers 0.35/tick.\n")
 	sb.WriteString("  So 1 worker on food produces net +0.25 for others.\n")
-	sb.WriteString("  That covers 1 shaman (0.20) or 2 other workers (0.10 each).\n\n")
+	sb.WriteString("  That covers 1 shaman (0.20) or 2.5 other workers (0.10 each).\n\n")
 	sb.WriteString("  Workers on food: covers this many others:\n")
-	sb.WriteString("    1 food worker  → 1 shaman or 2 workers\n")
-	sb.WriteString("    2 food workers → 2 shamans + 1 worker\n")
+	sb.WriteString("    1 food worker  → 1 shaman + 1 worker\n")
+	sb.WriteString("    2 food workers → 2 shamans + 2 workers\n")
 	sb.WriteString("    4 food workers → ~5 shamans or ~10 workers\n")
 
 	return sb.String()
@@ -867,9 +867,9 @@ func wikiStrategy(_ game.GameState) string {
 
   • Gather wood first — you need 5 for your first stash
   • Build stashes early! Base storage is 50 but you need
-    500 food for the Stone Age
-  • Build an altar to start generating knowledge — you
-    need 75 knowledge and 3 altars for Stone Age
+    1500 food for the Stone Age
+  • Build altars to start generating knowledge — you
+    need 200 knowledge and 5 altars for Stone Age
   • Recruit shamans and assign them to knowledge
   • Build huts, recruit workers, keep 1/3 on food
   • Don't recruit faster than you can feed
