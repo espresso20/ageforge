@@ -340,6 +340,23 @@ func ListSaveDetails() ([]SaveInfo, error) {
 	return saves, nil
 }
 
+// WipeAllSaves deletes all save files
+func WipeAllSaves() error {
+	entries, err := os.ReadDir(saveDir)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil
+		}
+		return err
+	}
+	for _, e := range entries {
+		if !e.IsDir() && filepath.Ext(e.Name()) == ".json" {
+			os.Remove(filepath.Join(saveDir, e.Name()))
+		}
+	}
+	return nil
+}
+
 // SaveExists checks if a save file exists
 func SaveExists(filename string) bool {
 	path := filepath.Join(saveDir, filename+".json")

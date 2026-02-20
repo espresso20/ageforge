@@ -893,6 +893,37 @@ func (ge *GameEngine) BuyPrestigeUpgrade(key string) error {
 	return nil
 }
 
+// Reset completely reinitializes the engine to a fresh state (including prestige)
+func (ge *GameEngine) Reset() {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	ge.tick = 0
+	ge.age = "primitive_age"
+	ge.Resources = NewResourceManager()
+	ge.Buildings = NewBuildingManager()
+	ge.Villagers = NewVillagerManager()
+	ge.Research = NewResearchManager()
+	ge.Military = NewMilitaryManager()
+	ge.Events = NewEventManager()
+	ge.Milestones = NewMilestoneManager()
+	ge.Prestige = NewPrestigeManager()
+	ge.Stats = NewGameStats()
+	ge.Bus = NewEventBus()
+	ge.permanentBonuses = make(map[string]float64)
+	ge.tickSpeedBonus = 0
+	ge.speedMultiplier = 1.0
+	ge.buildQueue = nil
+	ge.log = nil
+
+	ge.applyAgeUnlocks("primitive_age")
+	ge.Resources.Add("food", 15)
+	ge.Resources.Add("wood", 12)
+
+	ge.addLog("event", "Game wiped! Starting fresh.")
+	ge.addLog("info", "Type [cyan]help[-] for commands.")
+}
+
 // GetState returns a snapshot of the game state for UI
 func (ge *GameEngine) GetState() GameState {
 	ge.mu.RLock()
