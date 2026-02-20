@@ -87,6 +87,8 @@ func NewGameEngine() *GameEngine {
 	return ge
 }
 
+const AutosaveInterval = 5 * time.Minute
+
 // Start begins the game tick loop
 func (ge *GameEngine) Start() {
 	ge.mu.Lock()
@@ -96,10 +98,27 @@ func (ge *GameEngine) Start() {
 	timer := time.NewTimer(ge.getTickInterval())
 	defer timer.Stop()
 
+	lastAutosave := time.Now()
+
 	for {
 		select {
 		case <-timer.C:
-			ge.doTick()
+			ge.safeTick()
+
+			// Periodic autosave (outside the tick lock)
+			if time.Since(lastAutosave) >= AutosaveInterval {
+				if err := ge.SaveGame("autosave"); err != nil {
+					ge.mu.Lock()
+					ge.addLog("warning", fmt.Sprintf("Autosave failed: %v", err))
+					ge.mu.Unlock()
+				} else {
+					ge.mu.Lock()
+					ge.addLog("debug", "Autosave complete")
+					ge.mu.Unlock()
+				}
+				lastAutosave = time.Now()
+			}
+
 			timer.Reset(ge.getTickInterval())
 		case <-ge.stopCh:
 			return
@@ -107,11 +126,24 @@ func (ge *GameEngine) Start() {
 	}
 }
 
+// safeTick wraps doTick with panic recovery to prevent the tick goroutine from dying
+func (ge *GameEngine) safeTick() {
+	defer func() {
+		if r := recover(); r != nil {
+			ge.mu.Lock()
+			ge.addLog("error", fmt.Sprintf("Tick recovered from panic: %v", r))
+			ge.mu.Unlock()
+		}
+	}()
+	ge.doTick()
+}
+
 // getTickInterval returns the current tick interval based on tick speed bonus
 func (ge *GameEngine) getTickInterval() time.Duration {
-	ge.mu.RLock()
+	// tickSpeedBonus is only written under the write lock in doTick/LoadGame,
+	// and this is called from the same goroutine after doTick returns,
+	// so a direct read is safe here.
 	bonus := ge.tickSpeedBonus
-	ge.mu.RUnlock()
 
 	interval := time.Duration(float64(BaseTickInterval) / (1.0 + bonus))
 	if interval < MinTickInterval {
@@ -556,10 +588,17 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	if !ge.Buildings.IsUnlocked(key) {
-		return fmt.Errorf("building '%s' is not yet unlocked", key)
+	def, exists := ge.Buildings.defs[key]
+	if !exists {
+		// Unknown building key — suggest closest match
+		if suggestion := ge.Buildings.SuggestKey(key); suggestion != "" {
+			return fmt.Errorf("unknown building '%s' — did you mean '%s'?", key, suggestion)
+		}
+		return fmt.Errorf("unknown building '%s'. Type 'build' to see available buildings.", key)
 	}
-	def := ge.Buildings.defs[key]
+	if !ge.Buildings.IsUnlocked(key) {
+		return fmt.Errorf("building '%s' is not yet unlocked", def.Name)
+	}
 	if def.MaxCount > 0 && ge.Buildings.GetCount(key) >= def.MaxCount {
 		return fmt.Errorf("%s is at max count (%d)", def.Name, def.MaxCount)
 	}

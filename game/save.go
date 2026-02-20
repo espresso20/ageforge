@@ -76,17 +76,79 @@ func (ge *GameEngine) SaveGame(filename string) error {
 		return fmt.Errorf("failed to create save directory: %w", err)
 	}
 
-	save := GameSave{
-		Timestamp:  time.Now(),
-		Tick:       ge.tick,
-		Age:        ge.age,
-		Resources:  ge.Resources.GetAll(),
-		Storage:    ge.Resources.GetAllStorage(),
-		Buildings:  ge.Buildings.GetAll(),
-		Villagers:  ge.Villagers.GetAll(),
-		Unlocked:   ge.getUnlockedState(),
-		Stats:      ge.Stats,
-		BuildQueue: ge.buildQueue,
+	// Snapshot + marshal under lock. The data is small so marshal is fast,
+	// and this avoids aliasing bugs where doTick mutates shared maps/slices
+	// while json.Marshal reads them concurrently.
+	ge.mu.RLock()
+	save := ge.buildSaveSnapshot()
+	data, err := json.MarshalIndent(save, "", "  ")
+	ge.mu.RUnlock()
+
+	if err != nil {
+		return fmt.Errorf("failed to marshal save: %w", err)
+	}
+
+	// Atomic write: temp file + rename to prevent corruption on crash
+	path := filepath.Join(saveDir, filename+".json")
+	tmpPath := path + ".tmp"
+	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
+		return fmt.Errorf("failed to write save: %w", err)
+	}
+	if err := os.Rename(tmpPath, path); err != nil {
+		return fmt.Errorf("failed to finalize save: %w", err)
+	}
+	return nil
+}
+
+// buildSaveSnapshot creates a GameSave from current state (must be called with lock held)
+func (ge *GameEngine) buildSaveSnapshot() GameSave {
+	// Deep copy build queue
+	queue := make([]BuildQueueItem, len(ge.buildQueue))
+	copy(queue, ge.buildQueue)
+
+	// Deep copy permanent bonuses
+	permBonuses := make(map[string]float64, len(ge.permanentBonuses))
+	for k, v := range ge.permanentBonuses {
+		permBonuses[k] = v
+	}
+
+	// Deep copy military loot
+	totalLoot := make(map[string]float64, len(ge.Military.totalLoot))
+	for k, v := range ge.Military.totalLoot {
+		totalLoot[k] = v
+	}
+
+	// Deep copy prestige upgrades
+	upgrades := make(map[string]int, len(ge.Prestige.upgrades))
+	for k, v := range ge.Prestige.upgrades {
+		upgrades[k] = v
+	}
+
+	// Deep copy stats
+	statsGathered := make(map[string]float64, len(ge.Stats.TotalGathered))
+	for k, v := range ge.Stats.TotalGathered {
+		statsGathered[k] = v
+	}
+	agesReached := make([]string, len(ge.Stats.AgesReached))
+	copy(agesReached, ge.Stats.AgesReached)
+
+	return GameSave{
+		Timestamp: time.Now(),
+		Tick:      ge.tick,
+		Age:       ge.age,
+		Resources: ge.Resources.GetAll(),
+		Storage:   ge.Resources.GetAllStorage(),
+		Buildings: ge.Buildings.GetAll(),
+		Villagers: ge.Villagers.GetAll(),
+		Unlocked:  ge.getUnlockedState(),
+		Stats: &GameStats{
+			TotalBuilt:     ge.Stats.TotalBuilt,
+			TotalRecruited: ge.Stats.TotalRecruited,
+			TotalGathered:  statsGathered,
+			GameStarted:    ge.Stats.GameStarted,
+			AgesReached:    agesReached,
+		},
+		BuildQueue: queue,
 		Research: ResearchSave{
 			Researched:  ge.Research.GetResearched(),
 			CurrentTech: ge.Research.currentTech,
@@ -96,7 +158,7 @@ func (ge *GameEngine) SaveGame(filename string) error {
 		Military: MilitarySave{
 			ActiveExpedition: ge.Military.GetActiveForSave(),
 			CompletedCount:   ge.Military.completedCount,
-			TotalLoot:        ge.Military.totalLoot,
+			TotalLoot:        totalLoot,
 		},
 		Events: EventSave{
 			LastFired:     ge.Events.GetLastFired(),
@@ -106,29 +168,19 @@ func (ge *GameEngine) SaveGame(filename string) error {
 			BadStreak:     ge.Events.badStreak,
 		},
 		Milestones:       ge.Milestones.GetCompleted(),
-		PermanentBonuses: ge.permanentBonuses,
+		PermanentBonuses: permBonuses,
 		Prestige: PrestigeSave{
 			Level:       ge.Prestige.level,
 			TotalEarned: ge.Prestige.totalEarned,
 			Available:   ge.Prestige.available,
-			Upgrades:    ge.Prestige.upgrades,
+			Upgrades:    upgrades,
 		},
 	}
-
-	data, err := json.MarshalIndent(save, "", "  ")
-	if err != nil {
-		return fmt.Errorf("failed to marshal save: %w", err)
-	}
-
-	path := filepath.Join(saveDir, filename+".json")
-	if err := os.WriteFile(path, data, 0644); err != nil {
-		return fmt.Errorf("failed to write save: %w", err)
-	}
-	return nil
 }
 
 // LoadGame restores game state from a file
 func (ge *GameEngine) LoadGame(filename string) error {
+	// File I/O outside the lock
 	path := filepath.Join(saveDir, filename+".json")
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -140,6 +192,10 @@ func (ge *GameEngine) LoadGame(filename string) error {
 		return fmt.Errorf("failed to parse save: %w", err)
 	}
 
+	// All state mutations under write lock to avoid racing with doTick
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
 	ge.tick = save.Tick
 	ge.age = save.Age
 	ge.Resources.LoadAmounts(save.Resources)
@@ -149,7 +205,20 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.Buildings.LoadCounts(save.Buildings)
 	ge.Villagers.LoadVillagers(save.Villagers)
 	if save.Stats != nil {
-		ge.Stats = save.Stats
+		// Deep copy stats to avoid aliasing with the deserialized save
+		gathered := make(map[string]float64, len(save.Stats.TotalGathered))
+		for k, v := range save.Stats.TotalGathered {
+			gathered[k] = v
+		}
+		ages := make([]string, len(save.Stats.AgesReached))
+		copy(ages, save.Stats.AgesReached)
+		ge.Stats = &GameStats{
+			TotalBuilt:     save.Stats.TotalBuilt,
+			TotalRecruited: save.Stats.TotalRecruited,
+			TotalGathered:  gathered,
+			GameStarted:    save.Stats.GameStarted,
+			AgesReached:    ages,
+		}
 	}
 	ge.buildQueue = save.BuildQueue
 
