@@ -40,9 +40,11 @@ type Dashboard struct {
 	statusTV   *tview.TextView
 	ageTV      *tview.TextView
 	inputField *tview.InputField
-	lastAge    string
-	toastMgr   *ToastManager
-	toastTV    *tview.TextView
+	lastAge     string
+	toastMgr    *ToastManager
+	toastTV     *tview.TextView
+	contentArea *tview.Flex
+	bottomArea  *tview.Flex
 
 	stopCh chan struct{}
 }
@@ -164,14 +166,14 @@ func (d *Dashboard) build() {
 	})
 
 	// Bottom area: log + mini-map side by side
-	bottomArea := tview.NewFlex().SetDirection(tview.FlexColumn).
+	d.bottomArea = tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(d.logTV, 0, 1, false).
 		AddItem(d.miniMap.Box(), 0, 1, false)
 
 	// Main content area: tab content + bottom
-	contentArea := tview.NewFlex().SetDirection(tview.FlexRow).
+	d.contentArea = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(d.tabPages, 0, 2, false).
-		AddItem(bottomArea, 0, 1, false)
+		AddItem(d.bottomArea, 0, 1, false)
 
 	// Root layout
 	d.root = tview.NewFlex().SetDirection(tview.FlexRow).
@@ -179,7 +181,7 @@ func (d *Dashboard) build() {
 		AddItem(d.toastTV, 1, 0, false).
 		AddItem(d.ageTV, 2, 0, false).
 		AddItem(d.tabBar, 1, 0, false).
-		AddItem(contentArea, 0, 1, false).
+		AddItem(d.contentArea, 0, 1, false).
 		AddItem(d.inputField, 1, 0, true)
 
 	// Global key handling
@@ -265,6 +267,16 @@ func (d *Dashboard) switchTab(index int) {
 	d.activeTab = index
 	d.tabPages.SwitchToPage(d.tabNames[index])
 	d.updateTabBar()
+
+	// Map tab (index 5) is full-screen — hide bottom area
+	if index == 5 {
+		d.contentArea.RemoveItem(d.bottomArea)
+	} else {
+		// Re-add bottom area if not already present
+		if d.contentArea.GetItemCount() < 2 {
+			d.contentArea.AddItem(d.bottomArea, 0, 1, false)
+		}
+	}
 }
 
 func (d *Dashboard) updateTabBar() {
