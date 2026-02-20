@@ -1,49 +1,36 @@
 package ui
 
 import (
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/user/ageforge/game"
 )
 
-// MiniMap is a widget that displays a procedural ASCII settlement map
+// MiniMap is a widget that displays a procedural pixel settlement map
 type MiniMap struct {
-	box       *tview.Box
-	grid      [][]MapCell
-	lastHash  uint64
-	lastAge   string
-	lastTick  int
+	image    *tview.Image
+	lastHash uint64
+	lastAge  string
+	lastTick int
 }
 
 // NewMiniMap creates a new mini-map widget
 func NewMiniMap() *MiniMap {
 	m := &MiniMap{}
-	m.box = tview.NewBox().SetBorder(true).SetTitle(" Map ").SetTitleColor(ColorTitle)
-	m.box.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
-		// Draw the cached grid
-		if m.grid == nil {
-			return x, y, width, height
-		}
-		for gy := 0; gy < len(m.grid) && gy < height; gy++ {
-			for gx := 0; gx < len(m.grid[gy]) && gx < width; gx++ {
-				cell := m.grid[gy][gx]
-				screen.SetContent(x+gx, y+gy, cell.Char, nil, cell.Style)
-			}
-		}
-		return x, y, width, height
-	})
+	m.image = tview.NewImage()
+	m.image.SetBorder(true).SetTitle(" Map ").SetTitleColor(ColorTitle)
+	m.image.SetColors(tview.TrueColor)
 	return m
 }
 
-// Box returns the underlying tview.Box primitive
-func (m *MiniMap) Box() *tview.Box {
-	return m.box
+// Primitive returns the underlying tview primitive
+func (m *MiniMap) Primitive() tview.Primitive {
+	return m.image
 }
 
-// UpdateState regenerates the map when buildings/age change
+// UpdateState regenerates the map when buildings/age change or tick advances
 func (m *MiniMap) UpdateState(state game.GameState) {
-	// Compute a quick hash of building counts + age to avoid unnecessary regeneration
+	// Quick hash to avoid unnecessary regen
 	h := hashKey(state.Age)
 	for k, bs := range state.Buildings {
 		if bs.Count > 0 {
@@ -58,20 +45,26 @@ func (m *MiniMap) UpdateState(state game.GameState) {
 		return
 	}
 
-	_, _, w, ht := m.box.GetInnerRect()
-	if w < 5 || ht < 5 {
+	// Use inner rect to determine pixel dimensions
+	// Half-blocks give 2x vertical resolution, so pixels = cols x (rows*2)
+	_, _, w, ht := m.image.GetInnerRect()
+	if w < 4 || ht < 4 {
 		return
 	}
+	pixW := w
+	pixH := ht * 2 // half-block chars double vertical resolution
 
-	m.grid = GenerateMap(MapGenConfig{
-		Width:       w,
-		Height:      ht,
+	img := GenerateMapImage(MapGenConfig{
+		Width:       pixW,
+		Height:      pixH,
 		DetailLevel: 0,
 		Buildings:   state.Buildings,
 		AgeKey:      state.Age,
 		Tick:        state.Tick,
 		TotalPop:    state.Villagers.TotalPop,
 	})
+
+	m.image.SetImage(img)
 
 	m.lastHash = h
 	m.lastAge = state.Age

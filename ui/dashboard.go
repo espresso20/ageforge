@@ -168,7 +168,7 @@ func (d *Dashboard) build() {
 	// Bottom area: log + mini-map side by side
 	d.bottomArea = tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(d.logTV, 0, 1, false).
-		AddItem(d.miniMap.Box(), 0, 1, false)
+		AddItem(d.miniMap.Primitive(), 0, 1, false)
 
 	// Main content area: tab content + bottom
 	d.contentArea = tview.NewFlex().SetDirection(tview.FlexRow).

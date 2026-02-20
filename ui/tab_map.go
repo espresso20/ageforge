@@ -1,55 +1,43 @@
 package ui
 
 import (
-	"github.com/gdamore/tcell/v2"
+	"fmt"
+
 	"github.com/rivo/tview"
 
 	"github.com/user/ageforge/game"
 )
 
-// MapTab displays a full-screen procedural settlement map
+// MapTab displays a full-screen procedural pixel settlement map
 type MapTab struct {
-	box            *tview.Box
-	grid           [][]MapCell
-	settlementName string
-	lastHash       uint64
-	lastAge        string
-	lastTick       int
+	root     *tview.Flex
+	image    *tview.Image
+	titleTV  *tview.TextView
+	lastHash uint64
+	lastAge  string
+	lastTick int
 }
 
 // NewMapTab creates a new full-screen map tab
 func NewMapTab() *MapTab {
 	t := &MapTab{}
-	t.box = tview.NewBox()
-	t.box.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
-		if t.grid == nil {
-			return x, y, width, height
-		}
+	t.image = tview.NewImage()
+	t.image.SetColors(tview.TrueColor)
 
-		// Draw settlement name centered at top
-		if t.settlementName != "" {
-			labelX := x + (width-len(t.settlementName))/2
-			for i, ch := range t.settlementName {
-				screen.SetContent(labelX+i, y, ch, nil, tcell.StyleDefault.Foreground(tcell.ColorGold).Bold(true))
-			}
-		}
+	t.titleTV = tview.NewTextView().
+		SetDynamicColors(true).
+		SetTextAlign(tview.AlignCenter)
 
-		// Draw grid starting from row 1 (below label)
-		startY := y + 1
-		for gy := 0; gy < len(t.grid) && gy < height-1; gy++ {
-			for gx := 0; gx < len(t.grid[gy]) && gx < width; gx++ {
-				cell := t.grid[gy][gx]
-				screen.SetContent(x+gx, startY+gy, cell.Char, nil, cell.Style)
-			}
-		}
-		return x, y, width, height
-	})
+	t.root = tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(t.titleTV, 1, 0, false).
+		AddItem(t.image, 0, 1, false)
+
 	return t
 }
 
 // Root returns the root primitive
 func (t *MapTab) Root() tview.Primitive {
-	return t.box
+	return t.root
 }
 
 // Refresh updates the map with current game state
@@ -69,10 +57,12 @@ func (t *MapTab) Refresh(state game.GameState) {
 		return
 	}
 
-	_, _, w, ht := t.box.GetRect()
-	if w < 5 || ht < 5 {
+	_, _, w, ht := t.image.GetRect()
+	if w < 4 || ht < 4 {
 		return
 	}
+	pixW := w
+	pixH := ht * 2
 
 	// Count buildings for settlement label
 	totalBuildings := 0
@@ -80,9 +70,9 @@ func (t *MapTab) Refresh(state game.GameState) {
 		totalBuildings += bs.Count
 	}
 
-	t.grid = GenerateMap(MapGenConfig{
-		Width:       w,
-		Height:      ht - 1,
+	img := GenerateMapImage(MapGenConfig{
+		Width:       pixW,
+		Height:      pixH,
 		DetailLevel: 1,
 		Buildings:   state.Buildings,
 		AgeKey:      state.Age,
@@ -90,7 +80,10 @@ func (t *MapTab) Refresh(state game.GameState) {
 		TotalPop:    state.Villagers.TotalPop,
 	})
 
-	t.settlementName = settlementLabel(totalBuildings)
+	t.image.SetImage(img)
+	label := settlementLabel(totalBuildings)
+	t.titleTV.SetText(fmt.Sprintf("[gold]── %s ──[-]", label))
+
 	t.lastHash = h
 	t.lastAge = state.Age
 	t.lastTick = state.Tick
