@@ -9,6 +9,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
+	"github.com/user/ageforge/config"
 	"github.com/user/ageforge/game"
 )
 
@@ -126,9 +127,9 @@ func (d *Dashboard) build() {
 	})
 	d.engine.Bus.Subscribe(game.EventBuildingBuilt, func(e game.EventData) {
 		building, _ := e.Payload["building"].(string)
-		// Only toast for wonders
-		if bs, ok := d.engine.GetState().Buildings[building]; ok && bs.Category == "wonder" {
-			d.toastMgr.Show(fmt.Sprintf("Wonder Built: %s", bs.Name), "green", 4*time.Second)
+		// Only toast for wonders — look up from config, not engine state (avoids deadlock)
+		if def, ok := config.BuildingByKey()[building]; ok && def.Category == "wonder" {
+			d.toastMgr.Show(fmt.Sprintf("Wonder Built: %s", def.Name), "green", 4*time.Second)
 		}
 	})
 
