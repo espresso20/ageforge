@@ -29,7 +29,7 @@ func DefaultVillagerTypes() []VillagerTypeDef {
 		{
 			Name: "Worker", Key: "worker", FoodCost: 0.10,
 			CanGather:  []string{"food", "wood", "stone", "iron", "gold", "coal", "steel", "oil", "electricity", "uranium", "titanium"},
-			GatherRate: 0.25,
+			GatherRate: 0.35,
 		},
 		{
 			Name: "Shaman", Key: "shaman", FoodCost: 0.2,

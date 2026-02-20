@@ -194,13 +194,13 @@ and nothing else. Here's your first steps:
 
 [gold]Step 5: Recruit Workers & Shamans[-]
   Type: [cyan]recruit worker[-] or [cyan]recruit shaman[-]
-  Workers gather food/wood (0.15/tick). Shamans gather
+  Workers gather food/wood (0.35/tick). Shamans gather
   knowledge (0.2/tick). You need both to advance.
 
 [gold]Step 6: Assign Villagers[-]
   Type: [cyan]assign worker food[-] or [cyan]assign shaman knowledge[-]
   Each worker eats 0.10 food/tick, shamans eat 0.2/tick.
-  About 1 food worker can sustain 1-2 others.
+  1 food worker can sustain 1 shaman with food to spare.
 
 [gold]Step 7: Keep Building[-]
   Build more huts, stashes, and altars. Recruit and assign
@@ -210,9 +210,9 @@ and nothing else. Here's your first steps:
 [gold]The Food Balance[-]
   This is the most important early game concept:
   • Each worker eats [yellow]0.10 food/tick[-]
-  • Each worker gathers [yellow]0.25 resource/tick[-]
-  • So 1 food worker produces net +0.15 for others
-  • A healthy ratio is ~1 food worker per 2 others
+  • Each worker gathers [yellow]0.35 resource/tick[-]
+  • So 1 food worker produces net +0.25 for others
+  • 1 food worker covers ~1 shaman (0.20 food) or 2 workers
 
 [gold]Storage Matters[-]
   Base storage is only [yellow]50[-] per resource. Resources stop
@@ -365,13 +365,13 @@ func wikiVillagers(state game.GameState) string {
 	}
 
 	sb.WriteString("[gold]Food Economy[-]\n")
-	sb.WriteString("  Each worker eats 0.10 food/tick but gathers 0.25/tick.\n")
-	sb.WriteString("  So 1 worker on food produces net +0.15 for others.\n")
-	sb.WriteString("  That covers about 1-2 non-food workers per food worker.\n\n")
+	sb.WriteString("  Each worker eats 0.10 food/tick but gathers 0.35/tick.\n")
+	sb.WriteString("  So 1 worker on food produces net +0.25 for others.\n")
+	sb.WriteString("  That covers 1 shaman (0.20) or 2 other workers (0.10 each).\n\n")
 	sb.WriteString("  Workers on food: covers this many others:\n")
-	sb.WriteString("    1 food worker  → ~1 other worker\n")
-	sb.WriteString("    2 food workers → ~3 other workers\n")
-	sb.WriteString("    4 food workers → ~6 other workers\n")
+	sb.WriteString("    1 food worker  → 1 shaman or 2 workers\n")
+	sb.WriteString("    2 food workers → 2 shamans + 1 worker\n")
+	sb.WriteString("    4 food workers → ~5 shamans or ~10 workers\n")
 
 	return sb.String()
 }
@@ -936,8 +936,8 @@ func wikiStrategy(_ game.GameState) string {
 
 [gold]── Production Math ──[-]
 
-  Worker gather rate:  0.25 / tick (every 2 sec)
-  Worker food cost:    0.10 / tick
+  Worker gather rate:  0.35 / tick (every 2 sec)
+  Worker food cost:    0.10 / tick  (net food: +0.25)
   Shaman gather rate:  0.20 / tick (knowledge only)
   Shaman food cost:    0.20 / tick
   Scholar gather rate:  0.25 / tick
@@ -952,7 +952,7 @@ func wikiStrategy(_ game.GameState) string {
   Astronaut food cost: 0.40 / tick
 
   Per hour (1800 ticks):
-    1 worker gathering:  270 resources
-    1 worker food cost:  216 food
+    1 worker gathering:  630 resources
+    1 worker food cost:  180 food
     1 building at 0.1/tick: 180 resources`
 }
