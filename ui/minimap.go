@@ -11,7 +11,6 @@ type MiniMap struct {
 	image    *tview.Image
 	lastHash uint64
 	lastAge  string
-	lastTick int
 }
 
 // NewMiniMap creates a new mini-map widget
@@ -28,9 +27,8 @@ func (m *MiniMap) Primitive() tview.Primitive {
 	return m.image
 }
 
-// UpdateState regenerates the map when buildings/age change or tick advances
+// UpdateState regenerates the map when buildings or age change
 func (m *MiniMap) UpdateState(state game.GameState) {
-	// Quick hash to avoid unnecessary regen
 	h := hashKey(state.Age)
 	for k, bs := range state.Buildings {
 		if bs.Count > 0 {
@@ -38,21 +36,17 @@ func (m *MiniMap) UpdateState(state game.GameState) {
 		}
 	}
 
-	needRegen := h != m.lastHash || state.Age != m.lastAge
-	tickChanged := state.Tick != m.lastTick
-
-	if !needRegen && !tickChanged {
+	if h == m.lastHash && state.Age == m.lastAge {
 		return
 	}
 
-	// Use inner rect to determine pixel dimensions
-	// Half-blocks give 2x vertical resolution, so pixels = cols x (rows*2)
 	_, _, w, ht := m.image.GetInnerRect()
 	if w < 4 || ht < 4 {
 		return
 	}
-	pixW := w
-	pixH := ht * 2 // half-block chars double vertical resolution
+	// Half-blocks give 2x vertical res; bump horizontal 2x for more detail
+	pixW := w * 2
+	pixH := ht * 4
 
 	img := GenerateMapImage(MapGenConfig{
 		Width:       pixW,
@@ -60,13 +54,9 @@ func (m *MiniMap) UpdateState(state game.GameState) {
 		DetailLevel: 0,
 		Buildings:   state.Buildings,
 		AgeKey:      state.Age,
-		Tick:        state.Tick,
-		TotalPop:    state.Villagers.TotalPop,
 	})
 
 	m.image.SetImage(img)
-
 	m.lastHash = h
 	m.lastAge = state.Age
-	m.lastTick = state.Tick
 }

@@ -15,7 +15,6 @@ type MapTab struct {
 	titleTV  *tview.TextView
 	lastHash uint64
 	lastAge  string
-	lastTick int
 }
 
 // NewMapTab creates a new full-screen map tab
@@ -42,7 +41,6 @@ func (t *MapTab) Root() tview.Primitive {
 
 // Refresh updates the map with current game state
 func (t *MapTab) Refresh(state game.GameState) {
-	// Compute hash
 	h := hashKey(state.Age)
 	for k, bs := range state.Buildings {
 		if bs.Count > 0 {
@@ -50,10 +48,7 @@ func (t *MapTab) Refresh(state game.GameState) {
 		}
 	}
 
-	needRegen := h != t.lastHash || state.Age != t.lastAge
-	tickChanged := state.Tick != t.lastTick
-
-	if !needRegen && !tickChanged {
+	if h == t.lastHash && state.Age == t.lastAge {
 		return
 	}
 
@@ -61,10 +56,10 @@ func (t *MapTab) Refresh(state game.GameState) {
 	if w < 4 || ht < 4 {
 		return
 	}
-	pixW := w
-	pixH := ht * 2
+	// Higher resolution for full tab: 2x horizontal, 4x vertical (half-block doubled)
+	pixW := w * 2
+	pixH := ht * 4
 
-	// Count buildings for settlement label
 	totalBuildings := 0
 	for _, bs := range state.Buildings {
 		totalBuildings += bs.Count
@@ -76,8 +71,6 @@ func (t *MapTab) Refresh(state game.GameState) {
 		DetailLevel: 1,
 		Buildings:   state.Buildings,
 		AgeKey:      state.Age,
-		Tick:        state.Tick,
-		TotalPop:    state.Villagers.TotalPop,
 	})
 
 	t.image.SetImage(img)
@@ -86,5 +79,4 @@ func (t *MapTab) Refresh(state game.GameState) {
 
 	t.lastHash = h
 	t.lastAge = state.Age
-	t.lastTick = state.Tick
 }
