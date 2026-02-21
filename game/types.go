@@ -20,6 +20,8 @@ type GameState struct {
 	Milestones     MilestoneState
 	ActiveEvents   []ActiveEventState
 	Prestige       PrestigeState
+	Trade          TradeState
+	Diplomacy      DiplomacyState
 	Log            []LogEntry
 	Stats          StatsSnapshot
 	SaveExists     bool
@@ -41,6 +43,7 @@ type RateBreakdown struct {
 	VillagerRate float64
 	ResearchRate float64
 	EventRate    float64
+	TradeRate    float64
 	FoodDrain    float64
 	BonusRate    float64
 }
@@ -213,4 +216,64 @@ type ActiveEventState struct {
 	Name      string
 	Key       string
 	TicksLeft int
+}
+
+// === Trade Types ===
+
+// TradeState represents the trade system state for UI
+type TradeState struct {
+	ExchangeRates   map[string]ExchangeRateInfo
+	ActiveRoutes    []ActiveRouteInfo
+	AvailableRoutes []TradeRouteInfo
+	TotalExchanged  map[string]float64
+	TotalImported   map[string]float64
+}
+
+// ExchangeRateInfo represents a single exchange rate for UI
+type ExchangeRateInfo struct {
+	From     string
+	To       string
+	Rate     float64
+	BaseRate float64
+	Pressure float64
+}
+
+// ActiveRouteInfo represents an active trade route for UI
+type ActiveRouteInfo struct {
+	Name       string
+	Key        string
+	TicksLeft  int
+	CyclesDone int
+	Export     map[string]float64
+	Import     map[string]float64
+}
+
+// TradeRouteInfo represents an available trade route for UI
+type TradeRouteInfo struct {
+	Name        string
+	Key         string
+	Export      map[string]float64
+	Import      map[string]float64
+	CanStart    bool
+	RequiredBld string
+	MinCount    int
+	Description string
+}
+
+// === Diplomacy Types ===
+
+// DiplomacyState represents the diplomacy system state for UI
+type DiplomacyState struct {
+	Factions map[string]FactionInfo
+}
+
+// FactionInfo represents an NPC faction for UI
+type FactionInfo struct {
+	Name       string
+	Discovered bool
+	Opinion    int
+	Status     string
+	Specialty  string
+	TradeBonus float64
+	TradeCount int
 }

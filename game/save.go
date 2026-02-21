@@ -27,7 +27,23 @@ type GameSave struct {
 	PermanentBonuses map[string]float64 `json:"permanent_bonuses"`
 	BuildQueue       []BuildQueueItem   `json:"build_queue"`
 	Prestige         PrestigeSave        `json:"prestige"`
+	Trade            TradeSave           `json:"trade"`
+	Diplomacy        DiplomacySave       `json:"diplomacy"`
 	SpeedMultiplier  float64             `json:"speed_multiplier"`
+}
+
+// TradeSave holds trade state for save
+type TradeSave struct {
+	ActiveRoutes   map[string]ActiveRoute `json:"active_routes"`
+	SupplyPressure map[string]float64     `json:"supply_pressure"`
+	TotalExchanged map[string]float64     `json:"total_exchanged"`
+	TotalImported  map[string]float64     `json:"total_imported"`
+	TotalExported  map[string]float64     `json:"total_exported"`
+}
+
+// DiplomacySave holds diplomacy state for save
+type DiplomacySave struct {
+	Factions map[string]FactionStateSave `json:"factions"`
 }
 
 // PrestigeSave holds prestige state for save
@@ -125,6 +141,28 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		upgrades[k] = v
 	}
 
+	// Deep copy trade state
+	tradeActiveRoutes := make(map[string]ActiveRoute, len(ge.Trade.activeRoutes))
+	for k, v := range ge.Trade.activeRoutes {
+		tradeActiveRoutes[k] = *v
+	}
+	tradePressure := make(map[string]float64, len(ge.Trade.supplyPressure))
+	for k, v := range ge.Trade.supplyPressure {
+		tradePressure[k] = v
+	}
+	tradeExchanged := make(map[string]float64, len(ge.Trade.totalExchanged))
+	for k, v := range ge.Trade.totalExchanged {
+		tradeExchanged[k] = v
+	}
+	tradeImported := make(map[string]float64, len(ge.Trade.totalImported))
+	for k, v := range ge.Trade.totalImported {
+		tradeImported[k] = v
+	}
+	tradeExported := make(map[string]float64, len(ge.Trade.totalExported))
+	for k, v := range ge.Trade.totalExported {
+		tradeExported[k] = v
+	}
+
 	// Deep copy stats
 	statsGathered := make(map[string]float64, len(ge.Stats.TotalGathered))
 	for k, v := range ge.Stats.TotalGathered {
@@ -175,6 +213,16 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			TotalEarned: ge.Prestige.totalEarned,
 			Available:   ge.Prestige.available,
 			Upgrades:    upgrades,
+		},
+		Trade: TradeSave{
+			ActiveRoutes:   tradeActiveRoutes,
+			SupplyPressure: tradePressure,
+			TotalExchanged: tradeExchanged,
+			TotalImported:  tradeImported,
+			TotalExported:  tradeExported,
+		},
+		Diplomacy: DiplomacySave{
+			Factions: ge.Diplomacy.GetFactionsForSave(),
 		},
 		SpeedMultiplier: ge.speedMultiplier,
 	}
@@ -247,6 +295,12 @@ func (ge *GameEngine) LoadGame(filename string) error {
 
 	// Restore prestige
 	ge.Prestige.LoadState(save.Prestige.Level, save.Prestige.TotalEarned, save.Prestige.Available, save.Prestige.Upgrades)
+
+	// Restore trade
+	ge.Trade.LoadState(save.Trade.ActiveRoutes, save.Trade.SupplyPressure, save.Trade.TotalExchanged, save.Trade.TotalImported, save.Trade.TotalExported)
+
+	// Restore diplomacy
+	ge.Diplomacy.LoadState(save.Diplomacy.Factions)
 
 	// Restore speed multiplier
 	ge.speedMultiplier = save.SpeedMultiplier
