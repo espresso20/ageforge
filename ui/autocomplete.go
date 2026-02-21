@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"sort"
 	"strings"
 
@@ -165,7 +166,7 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 		}
 
 	case "speed":
-		return filterPrefix([]string{"1", "2", "5", "10"}, partial, prefix)
+		return filterPrefix(availableSpeedOptions(engine), partial, prefix)
 
 	case "save":
 		return filterPrefix(saveNames(), partial, prefix)
@@ -299,6 +300,15 @@ func discoveredFactionKeys(state game.GameState) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+func availableSpeedOptions(engine *game.GameEngine) []string {
+	maxSpeed := engine.GetMaxSpeed()
+	var options []string
+	for s := 1.0; s <= maxSpeed; s += 0.5 {
+		options = append(options, fmt.Sprintf("%.1f", s))
+	}
+	return options
 }
 
 func upgradeableBuildingKeys(engine *game.GameEngine) []string {

@@ -112,7 +112,7 @@ func cmdHelp(args []string) CommandResult {
   [cyan]save[-] [name]                 - Save game (default: autosave)
   [cyan]load[-] [name]                 - Load game (default: autosave)
   [cyan]saves[-]                       - List all save files
-  [cyan]speed[-] [1|2|5|10]            - Set game speed multiplier
+  [cyan]speed[-] [1.0|1.5|2.0|...]     - Set game speed (unlocks per age)
   [cyan]help[-]                        - Show this help
 
 [gold]Shortcuts:[-] g=gather, b=build, r=recruit, a=assign, u=unassign, s=status, res=research, exp=expedition, t=trade, dip=diplomacy`
@@ -515,20 +515,21 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 func cmdSpeed(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
 		mult := engine.GetSpeedMultiplier()
+		maxSpeed := engine.GetMaxSpeed()
 		return CommandResult{
-			Message: fmt.Sprintf("Current game speed: [cyan]%.0fx[-] (valid: 1, 2, 5, 10)", mult),
+			Message: fmt.Sprintf("Current speed: [cyan]%.1fx[-] (max: [green]%.1fx[-], +0.5x per age)", mult, maxSpeed),
 			Type:    "info",
 		}
 	}
 	n, err := strconv.ParseFloat(args[0], 64)
 	if err != nil {
-		return CommandResult{Message: "Usage: speed [1|2|5|10]", Type: "error"}
+		return CommandResult{Message: "Usage: speed <1.0|1.5|2.0|...>", Type: "error"}
 	}
 	if err := engine.SetSpeedMultiplier(n); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
 	}
 	return CommandResult{
-		Message: fmt.Sprintf("Game speed set to %.0fx", n),
+		Message: fmt.Sprintf("Game speed set to %.1fx", n),
 		Type:    "success",
 	}
 }

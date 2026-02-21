@@ -179,15 +179,28 @@ func (ge *GameEngine) recalculateTickSpeed() {
 	}
 }
 
-// SetSpeedMultiplier sets the game speed multiplier (1, 2, 5, or 10)
+// MaxSpeedForAge returns the maximum speed multiplier allowed for the given age.
+// Primitive = 1x only, then +0.5x per age advancement.
+func (ge *GameEngine) MaxSpeedForAge() float64 {
+	ageOrder := ge.progress.GetAgeOrder()
+	order := ageOrder[ge.age]
+	return 1.0 + float64(order)*0.5
+}
+
+// SetSpeedMultiplier sets the game speed multiplier (0.5 increments, capped by age)
 func (ge *GameEngine) SetSpeedMultiplier(mult float64) error {
-	if mult != 1 && mult != 2 && mult != 5 && mult != 10 {
-		return fmt.Errorf("invalid speed: %.0f (valid: 1, 2, 5, 10)", mult)
+	// Validate it's a 0.5 increment and at least 1.0
+	if mult < 1.0 || mult != float64(int(mult*2))/2 {
+		return fmt.Errorf("invalid speed: %.1f (must be 1.0, 1.5, 2.0, etc.)", mult)
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
+	maxSpeed := ge.MaxSpeedForAge()
+	if mult > maxSpeed {
+		return fmt.Errorf("speed %.1fx not unlocked yet (max: %.1fx in %s)", mult, maxSpeed, ge.progress.GetAgeName(ge.age))
+	}
 	ge.speedMultiplier = mult
-	ge.addLog("info", fmt.Sprintf("Game speed set to %.0fx", mult))
+	ge.addLog("info", fmt.Sprintf("Game speed set to %.1fx", mult))
 	return nil
 }
 
@@ -196,6 +209,13 @@ func (ge *GameEngine) GetSpeedMultiplier() float64 {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
 	return ge.speedMultiplier
+}
+
+// GetMaxSpeed returns the max speed allowed for the current age (thread-safe)
+func (ge *GameEngine) GetMaxSpeed() float64 {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	return ge.MaxSpeedForAge()
 }
 
 // Stop halts the game engine (safe to call multiple times)

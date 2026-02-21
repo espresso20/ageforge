@@ -388,7 +388,7 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 	}
 	speedStr := ""
 	if state.SpeedMultiplier > 1 {
-		speedStr = fmt.Sprintf("  [yellow]%.0fx[-]", state.SpeedMultiplier)
+		speedStr = fmt.Sprintf("  [yellow]%.1fx[-]", state.SpeedMultiplier)
 	}
 	d.statusTV.SetText(fmt.Sprintf(
 		"[gold]%s[-]%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]F1-F7,F9=Tabs  ESC=Menu[-]",
