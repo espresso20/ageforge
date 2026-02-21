@@ -9,8 +9,10 @@ const (
 	EventAgeAdvanced    = "age_advanced"
 	EventResourceDepleted = "resource_depleted"
 	EventResearchDone   = "research_done"
-	EventGameSaved      = "game_saved"
-	EventGameLoaded     = "game_loaded"
+	EventGameSaved           = "game_saved"
+	EventGameLoaded          = "game_loaded"
+	EventMilestoneCompleted  = "milestone_completed"
+	EventChainCompleted      = "chain_completed"
 )
 
 // EventData carries data for an event

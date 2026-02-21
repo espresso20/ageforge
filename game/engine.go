@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"strings"
 	"sync"
 	"time"
 
@@ -169,6 +170,12 @@ func (ge *GameEngine) recalculateTickSpeed() {
 	bonus := ge.Research.GetBonus("tick_speed") +
 		ge.permanentBonuses["tick_speed"] +
 		ge.Prestige.GetBonuses()["tick_speed"]
+	// Add active event tick_speed effects (e.g., milestone chain boosts)
+	for _, eff := range ge.Events.GetActiveEffects() {
+		if eff.Type == "tick_speed" {
+			bonus += eff.Value
+		}
+	}
 	ge.tickSpeedBonus = bonus
 
 	if bonus != oldBonus {
@@ -404,7 +411,7 @@ func (ge *GameEngine) processDiplomacy() {
 	}
 }
 
-// checkMilestones checks for newly completed milestones
+// checkMilestones checks for newly completed milestones and chains
 func (ge *GameEngine) checkMilestones() {
 	ageOrder := ge.progress.GetAgeOrder()
 	researchedTechs := make(map[string]bool)
@@ -438,6 +445,7 @@ func (ge *GameEngine) checkMilestones() {
 	)
 
 	for _, ms := range completed {
+		rewardText := formatMilestoneRewards(ms.Rewards)
 		ge.addLog("success", fmt.Sprintf("Milestone achieved: %s!", ms.Name))
 		// Apply rewards
 		for _, eff := range ms.Rewards {
@@ -448,7 +456,43 @@ func (ge *GameEngine) checkMilestones() {
 				ge.permanentBonuses[eff.Target] += eff.Value
 			}
 		}
+		// Publish milestone event
+		ge.Bus.Publish(EventData{
+			Type: EventMilestoneCompleted,
+			Payload: map[string]interface{}{
+				"name":        ms.Name,
+				"key":         ms.Key,
+				"reward_text": rewardText,
+			},
+		})
 	}
+
+	// Check chains
+	newChains := ge.Milestones.CheckChains()
+	for _, chain := range newChains {
+		ge.addLog("success", fmt.Sprintf("Chain complete: %s! Title: %s", chain.Name, chain.Title))
+		// Inject speed boost event
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       chain.Key + "_boost",
+			Name:      chain.Name + " Speed Boost",
+			TicksLeft: chain.BoostDuration,
+			Effects: []config.Effect{
+				{Type: "tick_speed", Target: "tick_speed", Value: chain.BoostValue},
+			},
+		})
+		// Publish chain event
+		ge.Bus.Publish(EventData{
+			Type: EventChainCompleted,
+			Payload: map[string]interface{}{
+				"name":  chain.Name,
+				"key":   chain.Key,
+				"title": chain.Title,
+			},
+		})
+	}
+
+	// Recalculate title
+	ge.Milestones.recalculateTitle()
 }
 
 // recalculateRates recalculates all resource production rates
@@ -1180,7 +1224,20 @@ func (ge *GameEngine) GetState() GameState {
 		Villagers:        ge.Villagers.Snapshot(popCap),
 		Research:         ge.Research.Snapshot(ge.age, ageOrder),
 		Military:         ge.Military.Snapshot(ge.age, ageOrder, soldierCount, militaryBonus, expeditionBonus),
-		Milestones:       ge.Milestones.Snapshot(),
+		Milestones: ge.Milestones.Snapshot(MilestoneSnapshotParams{
+			Tick:            ge.tick,
+			Age:             ge.age,
+			AgeOrder:        ageOrder,
+			Resources:       ge.Resources.GetAll(),
+			Buildings:       ge.Buildings.GetAll(),
+			Population:      ge.Villagers.TotalPop(),
+			TechCount:       ge.Research.ResearchedCount(),
+			TotalBuilt:      ge.Stats.TotalBuilt,
+			SoldierCount:    soldierCount,
+			WonderCount:     ge.countWonders(),
+			ResearchedTechs: ge.getResearchedTechMap(),
+			activeEvents:    ge.Events.GetActive(),
+		}),
 		ActiveEvents:     ge.Events.GetActive(),
 		Prestige:         prestigeSnap,
 		Trade:            ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings),
@@ -1548,6 +1605,47 @@ type UpgradeInfo struct {
 	Count     int
 	Cost      map[string]float64
 	CanAfford bool
+}
+
+// countWonders returns the total number of wonders built (must be called with lock held)
+func (ge *GameEngine) countWonders() int {
+	count := 0
+	for key, c := range ge.Buildings.counts {
+		if def, ok := ge.Buildings.defs[key]; ok && def.Category == "wonder" && c > 0 {
+			count += c
+		}
+	}
+	return count
+}
+
+// getResearchedTechMap returns a map of researched tech keys (must be called with lock held)
+func (ge *GameEngine) getResearchedTechMap() map[string]bool {
+	m := make(map[string]bool)
+	for _, key := range ge.Research.GetResearched() {
+		m[key] = true
+	}
+	return m
+}
+
+// formatMilestoneRewards formats milestone reward effects for display
+func formatMilestoneRewards(effects []config.Effect) string {
+	var parts []string
+	for _, e := range effects {
+		switch e.Type {
+		case "instant_resource":
+			parts = append(parts, fmt.Sprintf("+%.0f %s", e.Value, e.Target))
+		case "permanent_bonus":
+			if e.Value < 0 {
+				parts = append(parts, fmt.Sprintf("%.0f%% %s", e.Value*100, e.Target))
+			} else {
+				parts = append(parts, fmt.Sprintf("+%.0f%% %s", e.Value*100, e.Target))
+			}
+		}
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return "(" + strings.Join(parts, ", ") + ")"
 }
 
 // formatCost formats a cost map for display

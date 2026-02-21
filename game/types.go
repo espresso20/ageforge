@@ -177,13 +177,58 @@ type MilestoneState struct {
 	Milestones     map[string]MilestoneInfo
 	CompletedCount int
 	TotalCount     int
+	VisibleCount   int
+	Chains         []ChainInfo
+	CurrentTitle   string
 }
 
 // MilestoneInfo represents one milestone for UI
 type MilestoneInfo struct {
 	Name        string
 	Description string
+	Category    string
+	Hidden      bool
+	Visible     bool // computed: completed || !hidden || progress > 0.5
 	Completed   bool
+	RewardText  string
+	Progress    []MilestoneProgress
+	ChainKey    string
+}
+
+// MilestoneProgress represents progress toward one condition of a milestone
+type MilestoneProgress struct {
+	Label   string
+	Current float64
+	Target  float64
+	Met     bool
+}
+
+// ChainInfo represents a milestone chain for UI
+type ChainInfo struct {
+	Name           string
+	Key            string
+	Category       string
+	CompletedCount int
+	TotalCount     int
+	Complete       bool
+	Title          string
+	BoostActive    bool
+}
+
+// MilestoneSnapshotParams holds data needed to compute milestone progress/visibility
+type MilestoneSnapshotParams struct {
+	Tick            int
+	Age             string
+	AgeOrder        map[string]int
+	Resources       map[string]float64
+	Buildings       map[string]int
+	Population      int
+	TechCount       int
+	TotalBuilt      int
+	SoldierCount    int
+	WonderCount     int
+	ResearchedTechs map[string]bool
+	activeEvents    []ActiveEventState // unexported — only set by engine
 }
 
 // === Prestige Types ===

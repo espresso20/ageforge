@@ -24,6 +24,8 @@ type GameSave struct {
 	Military         MilitarySave   `json:"military"`
 	Events           EventSave      `json:"events"`
 	Milestones       []string       `json:"milestones"`
+	ChainsCompleted  []string       `json:"chains_completed,omitempty"`
+	CurrentTitle     string         `json:"current_title,omitempty"`
 	PermanentBonuses map[string]float64 `json:"permanent_bonuses"`
 	BuildQueue       []BuildQueueItem   `json:"build_queue"`
 	Prestige         PrestigeSave        `json:"prestige"`
@@ -207,6 +209,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			BadStreak:     ge.Events.badStreak,
 		},
 		Milestones:       ge.Milestones.GetCompleted(),
+		ChainsCompleted:  ge.Milestones.GetChainsCompleted(),
+		CurrentTitle:     ge.Milestones.GetCurrentTitle(),
 		PermanentBonuses: permBonuses,
 		Prestige: PrestigeSave{
 			Level:       ge.Prestige.level,
@@ -287,7 +291,12 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.Research.LoadState(save.Research.Researched, save.Research.CurrentTech, save.Research.TicksLeft, save.Research.TotalTicks)
 	ge.Military.LoadState(save.Military.ActiveExpedition, save.Military.CompletedCount, save.Military.TotalLoot)
 	ge.Events.LoadState(save.Events.LastFired, save.Events.Active, save.Events.NextEventTick, save.Events.GoodStreak, save.Events.BadStreak)
-	ge.Milestones.LoadState(save.Milestones)
+	ge.Milestones.LoadState(save.Milestones, save.ChainsCompleted, save.CurrentTitle)
+	// Reconstruct chains and title for old saves that don't have them
+	if len(save.ChainsCompleted) == 0 {
+		ge.Milestones.CheckChains()
+		ge.Milestones.recalculateTitle()
+	}
 
 	if save.PermanentBonuses != nil {
 		ge.permanentBonuses = save.PermanentBonuses

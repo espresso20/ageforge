@@ -185,6 +185,11 @@ func (em *EventManager) getEligible(tick int, currentAge string, ageOrder map[st
 	return eligible
 }
 
+// InjectEvent adds an event directly to the active list (called under engine write lock)
+func (em *EventManager) InjectEvent(event ActiveEvent) {
+	em.active = append(em.active, event)
+}
+
 // GetActiveEffects returns all effects from currently active timed events
 func (em *EventManager) GetActiveEffects() []config.Effect {
 	var effects []config.Effect

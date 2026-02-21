@@ -145,6 +145,20 @@ func (d *Dashboard) build() {
 			d.toastMgr.Show(fmt.Sprintf("Wonder Built: %s", def.Name), "green", 4*time.Second)
 		}
 	})
+	d.engine.Bus.Subscribe(game.EventMilestoneCompleted, func(e game.EventData) {
+		name, _ := e.Payload["name"].(string)
+		rewardText, _ := e.Payload["reward_text"].(string)
+		msg := fmt.Sprintf("Milestone: %s!", name)
+		if rewardText != "" {
+			msg += " " + rewardText
+		}
+		d.toastMgr.Show(msg, "gold", 4*time.Second)
+	})
+	d.engine.Bus.Subscribe(game.EventChainCompleted, func(e game.EventData) {
+		name, _ := e.Payload["name"].(string)
+		title, _ := e.Payload["title"].(string)
+		d.toastMgr.Show(fmt.Sprintf("Chain Complete: %s! Title: %s — Speed Boost!", name, title), "cyan", 5*time.Second)
+	})
 
 	// Command input
 	d.inputField = tview.NewInputField().
@@ -404,9 +418,13 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 	if state.SpeedMultiplier > 1 {
 		speedStr = fmt.Sprintf("  [yellow]%.1fx[-]", state.SpeedMultiplier)
 	}
+	titleStr := ""
+	if state.Milestones.CurrentTitle != "" {
+		titleStr = fmt.Sprintf("  [yellow]\"%s\"[-]", state.Milestones.CurrentTitle)
+	}
 	d.statusTV.SetText(fmt.Sprintf(
-		"[gold]%s[-]%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]F1-F9=Tabs  ESC=Menu[-]",
-		state.AgeName, prestigeStr, state.Tick, nextAgeStr, speedStr,
+		"[gold]%s[-]%s%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]F1-F9=Tabs  ESC=Menu[-]",
+		state.AgeName, prestigeStr, titleStr, state.Tick, nextAgeStr, speedStr,
 		state.Villagers.TotalPop, state.Villagers.MaxPop,
 	))
 }
