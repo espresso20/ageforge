@@ -45,12 +45,18 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdResearch(args, engine)
 	case "expedition", "exp":
 		return cmdExpedition(args, engine)
+	case "trade", "t":
+		return cmdTrade(args, engine)
+	case "diplomacy", "dip":
+		return cmdDiplomacy(args, engine)
 	case "prestige":
 		return cmdPrestige(args, engine)
 	case "rates":
 		return cmdRates(engine)
 	case "speed":
 		return cmdSpeed(args, engine)
+	case "upgrade":
+		return cmdUpgrade(args, engine)
 	case "dump", "exportlogs":
 		return cmdDump(args, engine)
 	case "saves":
@@ -73,8 +79,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 func cmdHelp(args []string) CommandResult {
 	help := `[gold]Commands:[-]
   [cyan]gather[-] <food|wood|stone> [n] - Hand-gather resources (max 5)
-  [cyan]build[-] <building>            - Build a structure
-  [cyan]recruit[-] <type> [count]      - Recruit villagers (default: 1)
+  [cyan]build[-] <building> [count|max] - Build structure(s) (default: 1)
+  [cyan]recruit[-] <type> [count|max]  - Recruit villagers (default: 1)
   [cyan]assign[-] <type> <resource> [n|all]- Assign villagers to gather
   [cyan]unassign[-] <type> <resource> [n|all]- Unassign villagers
   [cyan]research[-] <tech_key>         - Research a technology
@@ -82,12 +88,26 @@ func cmdHelp(args []string) CommandResult {
   [cyan]research[-] list               - List available techs
   [cyan]expedition[-] <key>            - Launch a military expedition
   [cyan]expedition[-] list             - List available expeditions
+  [cyan]trade[-] <from> <to> <amount>  - Exchange resources
+  [cyan]trade[-] list                  - Show exchange rates
+  [cyan]trade[-] route list            - List trade routes
+  [cyan]trade[-] route start <key>     - Start a trade route
+  [cyan]trade[-] route stop <key>      - Stop a trade route
+  [cyan]diplomacy[-]                   - Show faction status
+  [cyan]diplomacy[-] ally <faction>    - Ally with faction (costs gold)
+  [cyan]diplomacy[-] rival <faction>   - Declare rivalry
+  [cyan]diplomacy[-] embargo <faction> - Embargo faction
+  [cyan]diplomacy[-] gift <faction>    - Send gift (+15 opinion)
+  [cyan]diplomacy[-] neutral <faction> - Reset to neutral
   [cyan]prestige[-]                    - View prestige status
   [cyan]prestige[-] confirm yes        - Reset game with prestige bonus
   [cyan]prestige[-] shop               - View prestige upgrades
   [cyan]prestige[-] buy <key>          - Buy a prestige upgrade
   [cyan]rates[-]                       - Show resource rate breakdown
   [cyan]status[-]                      - Show detailed status
+  [cyan]upgrade[-]                     - List available building upgrades
+  [cyan]upgrade[-] <building>          - Upgrade all of that building type
+  [cyan]upgrade[-] all                 - Upgrade everything affordable
   [cyan]dump[-]                        - Export logs to file for debugging
   [cyan]save[-] [name]                 - Save game (default: autosave)
   [cyan]load[-] [name]                 - Load game (default: autosave)
@@ -95,8 +115,55 @@ func cmdHelp(args []string) CommandResult {
   [cyan]speed[-] [1|2|5|10]            - Set game speed multiplier
   [cyan]help[-]                        - Show this help
 
-[gold]Shortcuts:[-] g=gather, b=build, r=recruit, a=assign, u=unassign, s=status, res=research, exp=expedition`
+[gold]Shortcuts:[-] g=gather, b=build, r=recruit, a=assign, u=unassign, s=status, res=research, exp=expedition, t=trade, dip=diplomacy`
 	return CommandResult{Message: help, Type: "info"}
+}
+
+func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 {
+		// List available upgrades
+		upgrades := engine.GetAvailableUpgrades()
+		if len(upgrades) == 0 {
+			return CommandResult{Message: "No building upgrades available right now.", Type: "info"}
+		}
+		var lines []string
+		lines = append(lines, "[gold]Available Upgrades (25% of target cost):[-]")
+		for _, u := range upgrades {
+			affordable := "[red]✗[-]"
+			if u.CanAfford {
+				affordable = "[green]✓[-]"
+			}
+			lines = append(lines, fmt.Sprintf("  %s [cyan]%s[-] → [cyan]%s[-] (%d available) - Cost: %s",
+				affordable, u.FromKey, u.ToKey, u.Count, FormatCost(u.Cost)))
+		}
+		lines = append(lines, "\n  Type [cyan]upgrade <building>[-] or [cyan]upgrade all[-]")
+		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	}
+
+	key := strings.ToLower(args[0])
+	if key == "all" {
+		result, err := engine.UpgradeAll()
+		if err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		total := 0
+		for _, n := range result {
+			total += n
+		}
+		return CommandResult{
+			Message: fmt.Sprintf("Upgraded %d buildings total!", total),
+			Type:    "success",
+		}
+	}
+
+	n, err := engine.UpgradeBuilding(key)
+	if err != nil {
+		return CommandResult{Message: err.Error(), Type: "error"}
+	}
+	return CommandResult{
+		Message: fmt.Sprintf("Upgraded %d %s!", n, key),
+		Type:    "success",
+	}
 }
 
 func cmdDump(args []string, engine *game.GameEngine) CommandResult {
@@ -215,6 +282,28 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
 	key := strings.ToLower(args[0])
+
+	// Check for count or "max"
+	if len(args) >= 2 {
+		countArg := strings.ToLower(args[1])
+		count := 0
+		if countArg == "max" {
+			count = 10000 // BuildMultiple will stop when resources run out or max is hit
+		} else if n, err := strconv.Atoi(countArg); err == nil && n > 0 {
+			count = n
+		}
+		if count > 0 {
+			built, err := engine.BuildMultiple(key, count)
+			if err != nil {
+				return CommandResult{Message: err.Error(), Type: "error"}
+			}
+			return CommandResult{
+				Message: fmt.Sprintf("Built %d %s!", built, key),
+				Type:    "success",
+			}
+		}
+	}
+
 	if err := engine.BuildBuilding(key); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
 	}
@@ -226,9 +315,22 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 
 func cmdRecruit(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
-		return CommandResult{Message: "Usage: recruit <worker|scholar> [count]", Type: "error"}
+		return CommandResult{Message: "Usage: recruit <worker|scholar> [count|max]", Type: "error"}
 	}
 	vType := strings.ToLower(args[0])
+
+	// Check for "max"
+	if len(args) >= 2 && strings.ToLower(args[1]) == "max" {
+		recruited, err := engine.RecruitMax(vType)
+		if err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{
+			Message: fmt.Sprintf("Recruited %d %s(s)!", recruited, vType),
+			Type:    "success",
+		}
+	}
+
 	count := 1
 	if len(args) >= 2 {
 		if n, err := strconv.Atoi(args[1]); err == nil && n > 0 {
@@ -389,6 +491,9 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 		}
 		if b.EventRate != 0 {
 			parts = append(parts, fmt.Sprintf("Events: %+.2f", b.EventRate))
+		}
+		if b.TradeRate != 0 {
+			parts = append(parts, fmt.Sprintf("Trade: %+.2f", b.TradeRate))
 		}
 		if b.BonusRate != 0 {
 			parts = append(parts, fmt.Sprintf("Bonuses: %+.2f", b.BonusRate))
@@ -644,6 +749,209 @@ func cmdExpeditionList(engine *game.GameEngine) CommandResult {
 
 	if len(state.Military.Expeditions) == 0 {
 		lines = append(lines, "  [gray]No expeditions available yet[-]")
+	}
+
+	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
+
+func cmdTrade(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 {
+		return cmdTradeList(engine)
+	}
+	subcmd := strings.ToLower(args[0])
+
+	if subcmd == "list" {
+		return cmdTradeList(engine)
+	}
+	if subcmd == "route" {
+		return cmdTradeRoute(args[1:], engine)
+	}
+
+	// Exchange: trade <from> <to> <amount>
+	if len(args) < 3 {
+		return CommandResult{Message: "Usage: trade <from> <to> <amount> or trade list / trade route list", Type: "error"}
+	}
+	from := strings.ToLower(args[0])
+	to := strings.ToLower(args[1])
+	amount, err := strconv.ParseFloat(args[2], 64)
+	if err != nil || amount <= 0 {
+		return CommandResult{Message: "Amount must be a positive number", Type: "error"}
+	}
+
+	got, err := engine.ExchangeResources(from, to, amount)
+	if err != nil {
+		return CommandResult{Message: err.Error(), Type: "error"}
+	}
+	return CommandResult{
+		Message: fmt.Sprintf("Exchanged %.0f %s → %.1f %s", amount, from, got, to),
+		Type:    "success",
+	}
+}
+
+func cmdTradeList(engine *game.GameEngine) CommandResult {
+	state := engine.GetState()
+	trade := state.Trade
+	var lines []string
+	lines = append(lines, "[gold]Exchange Rates:[-]")
+
+	if len(trade.ExchangeRates) == 0 {
+		lines = append(lines, "  [gray]No exchange rates available (build a market first)[-]")
+	} else {
+		for _, info := range trade.ExchangeRates {
+			pressureStr := ""
+			if info.Pressure > 0.05 {
+				pressureStr = fmt.Sprintf(" [red]↓%.0f%%[-]", info.Pressure*30)
+			}
+			lines = append(lines, fmt.Sprintf("  [cyan]%s → %s[-]: %.2f%s", info.From, info.To, info.Rate, pressureStr))
+		}
+	}
+	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
+
+func cmdTradeRoute(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 || strings.ToLower(args[0]) == "list" {
+		return cmdTradeRouteList(engine)
+	}
+	subcmd := strings.ToLower(args[0])
+
+	if len(args) < 2 {
+		return CommandResult{Message: "Usage: trade route start|stop <route_key>", Type: "error"}
+	}
+	routeKey := strings.Join(args[1:], "_")
+
+	switch subcmd {
+	case "start":
+		if err := engine.StartTradeRoute(routeKey); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Trade route started: %s", routeKey), Type: "success"}
+	case "stop":
+		if err := engine.StopTradeRoute(routeKey); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Trade route stopped: %s", routeKey), Type: "success"}
+	default:
+		return CommandResult{Message: "Usage: trade route start|stop <route_key>", Type: "error"}
+	}
+}
+
+func cmdTradeRouteList(engine *game.GameEngine) CommandResult {
+	state := engine.GetState()
+	trade := state.Trade
+	var lines []string
+	lines = append(lines, "[gold]Trade Routes:[-]")
+
+	if len(trade.ActiveRoutes) > 0 {
+		lines = append(lines, "\n[green]Active:[-]")
+		for _, route := range trade.ActiveRoutes {
+			lines = append(lines, fmt.Sprintf("  [cyan]%s[-] (%s) - %d ticks left, %d cycles done",
+				route.Name, route.Key, route.TicksLeft, route.CyclesDone))
+		}
+	}
+
+	if len(trade.AvailableRoutes) > 0 {
+		lines = append(lines, "\n[yellow]Available:[-]")
+		for _, route := range trade.AvailableRoutes {
+			status := "[red]✗[-]"
+			if route.CanStart {
+				status = "[green]✓[-]"
+			}
+			lines = append(lines, fmt.Sprintf("  %s [cyan]%s[-] - %s", status, route.Key, route.Name))
+			lines = append(lines, fmt.Sprintf("    %s", route.Description))
+		}
+	}
+
+	if len(trade.ActiveRoutes) == 0 && len(trade.AvailableRoutes) == 0 {
+		lines = append(lines, "  [gray]No trade routes available yet[-]")
+	}
+
+	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
+
+func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 {
+		return cmdDiplomacyStatus(engine)
+	}
+	subcmd := strings.ToLower(args[0])
+
+	switch subcmd {
+	case "ally":
+		if len(args) < 2 {
+			return CommandResult{Message: "Usage: diplomacy ally <faction_key>", Type: "error"}
+		}
+		factionKey := strings.Join(args[1:], "_")
+		if err := engine.SetDiplomaticStatus(factionKey, "allied"); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Allied with %s!", factionKey), Type: "success"}
+
+	case "rival":
+		if len(args) < 2 {
+			return CommandResult{Message: "Usage: diplomacy rival <faction_key>", Type: "error"}
+		}
+		factionKey := strings.Join(args[1:], "_")
+		if err := engine.SetDiplomaticStatus(factionKey, "rival"); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Declared rivalry with %s!", factionKey), Type: "warning"}
+
+	case "embargo":
+		if len(args) < 2 {
+			return CommandResult{Message: "Usage: diplomacy embargo <faction_key>", Type: "error"}
+		}
+		factionKey := strings.Join(args[1:], "_")
+		if err := engine.SetDiplomaticStatus(factionKey, "embargo"); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Embargoed %s!", factionKey), Type: "warning"}
+
+	case "gift":
+		if len(args) < 2 {
+			return CommandResult{Message: "Usage: diplomacy gift <faction_key>", Type: "error"}
+		}
+		factionKey := strings.Join(args[1:], "_")
+		if err := engine.SendGift(factionKey); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Sent gift to %s (+15 opinion)", factionKey), Type: "success"}
+
+	case "neutral":
+		if len(args) < 2 {
+			return CommandResult{Message: "Usage: diplomacy neutral <faction_key>", Type: "error"}
+		}
+		factionKey := strings.Join(args[1:], "_")
+		if err := engine.SetDiplomaticStatus(factionKey, "neutral"); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Reset %s to neutral", factionKey), Type: "info"}
+
+	default:
+		return CommandResult{Message: "Usage: diplomacy [ally|rival|embargo|gift|neutral] <faction_key>", Type: "error"}
+	}
+}
+
+func cmdDiplomacyStatus(engine *game.GameEngine) CommandResult {
+	state := engine.GetState()
+	dip := state.Diplomacy
+	var lines []string
+	lines = append(lines, "[gold]Faction Status:[-]")
+
+	if len(dip.Factions) == 0 {
+		lines = append(lines, "  [gray]No factions discovered yet (reach Colonial Age)[-]")
+		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	}
+
+	for key, f := range dip.Factions {
+		if !f.Discovered {
+			lines = append(lines, fmt.Sprintf("  [gray]%s [Undiscovered][-]", f.Name))
+			continue
+		}
+		bonusStr := ""
+		if f.Status == "allied" && f.TradeBonus > 0 {
+			bonusStr = fmt.Sprintf("  [green]+%.0f%% %s[-]", f.TradeBonus*100, f.Specialty)
+		}
+		lines = append(lines, fmt.Sprintf("  [cyan]%s[-] (%s) [%s]  Opinion: %d%s  Trades: %d",
+			f.Name, key, f.Status, f.Opinion, bonusStr, f.TradeCount))
 	}
 
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}

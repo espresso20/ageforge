@@ -29,6 +29,8 @@ type GameEngine struct {
 	Events     *EventManager
 	Milestones *MilestoneManager
 	Prestige   *PrestigeManager
+	Trade      *TradeManager
+	Diplomacy  *DiplomacyManager
 	Stats      *GameStats
 	Bus        *EventBus
 
@@ -66,6 +68,8 @@ func NewGameEngine() *GameEngine {
 		Events:           NewEventManager(),
 		Milestones:       NewMilestoneManager(),
 		Prestige:         NewPrestigeManager(),
+		Trade:            NewTradeManager(),
+		Diplomacy:        NewDiplomacyManager(),
 		Stats:            NewGameStats(),
 		Bus:              NewEventBus(),
 		progress:         NewProgressManager(),
@@ -226,6 +230,12 @@ func (ge *GameEngine) doTick() {
 	// Process expeditions
 	ge.processExpeditions()
 
+	// Process trade routes
+	ge.processTrade()
+
+	// Process diplomacy
+	ge.processDiplomacy()
+
 	// Apply building production
 	ge.recalculateRates()
 
@@ -349,6 +359,23 @@ func (ge *GameEngine) processExpeditions() {
 		if soldiersLost > 0 {
 			ge.Villagers.RemoveSoldiers(soldiersLost)
 		}
+	}
+}
+
+// processTrade handles trade route ticks
+func (ge *GameEngine) processTrade() {
+	messages := ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy)
+	for _, msg := range messages {
+		ge.addLog("warning", msg)
+	}
+}
+
+// processDiplomacy handles diplomacy ticks
+func (ge *GameEngine) processDiplomacy() {
+	ageOrder := ge.progress.GetAgeOrder()
+	messages := ge.Diplomacy.Tick(ge.age, ageOrder, ge.tick)
+	for _, msg := range messages {
+		ge.addLog("event", msg)
 	}
 }
 
@@ -499,6 +526,19 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
+	// Diplomacy trade bonuses on specific resource rates
+	for _, def := range ge.Resources.defs {
+		bonus := ge.Diplomacy.GetTradeBonus(def.Key)
+		if bonus > 0 {
+			r := ge.Resources.resources[def.Key]
+			if r != nil && r.Rate > 0 {
+				tradeBonus := r.Rate * bonus
+				r.Rate += tradeBonus
+				r.Breakdown.TradeRate += tradeBonus
+			}
+		}
+	}
+
 	// Food consumption
 	drain := ge.Villagers.FoodDrain()
 	if drain > 0 {
@@ -514,7 +554,7 @@ func (ge *GameEngine) recalculateRates() {
 		r := ge.Resources.resources[def.Key]
 		if r != nil {
 			knownComponents := r.Breakdown.BuildingRate + r.Breakdown.VillagerRate +
-				r.Breakdown.ResearchRate + r.Breakdown.EventRate + r.Breakdown.FoodDrain
+				r.Breakdown.ResearchRate + r.Breakdown.EventRate + r.Breakdown.TradeRate + r.Breakdown.FoodDrain
 			r.Breakdown.BonusRate = r.Rate - knownComponents
 		}
 	}
@@ -556,6 +596,12 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	ge.age = newAge
 	ge.applyAgeUnlocks(newAge)
 	ge.Stats.RecordAge(newAge)
+
+	// Reduce all resources to 25% on age transition
+	for _, r := range ge.Resources.resources {
+		r.Amount *= 0.25
+	}
+	ge.addLog("info", "Age transition: resources reduced to 25%")
 
 	oldName := ge.progress.GetAgeName(oldAge)
 	newName := ge.progress.GetAgeName(newAge)
@@ -680,6 +726,106 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 		})
 	}
 	return nil
+}
+
+// BuildMultiple constructs up to count buildings, stopping when resources run out or max is hit.
+// Returns the number actually built.
+func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	def, exists := ge.Buildings.defs[key]
+	if !exists {
+		if suggestion := ge.Buildings.SuggestKey(key); suggestion != "" {
+			return 0, fmt.Errorf("unknown building '%s' — did you mean '%s'?", key, suggestion)
+		}
+		return 0, fmt.Errorf("unknown building '%s'. Type 'build' to see available buildings.", key)
+	}
+	if !ge.Buildings.IsUnlocked(key) {
+		return 0, fmt.Errorf("building '%s' is not yet unlocked", def.Name)
+	}
+
+	built := 0
+	for i := 0; i < count; i++ {
+		if def.MaxCount > 0 && ge.Buildings.GetCount(key) >= def.MaxCount {
+			break
+		}
+		// For unique buildings, check build queue
+		if def.MaxCount > 0 {
+			inQueue := false
+			for _, item := range ge.buildQueue {
+				if item.BuildingKey == key {
+					inQueue = true
+					break
+				}
+			}
+			if inQueue {
+				break
+			}
+		}
+
+		cost := ge.Buildings.GetCost(key)
+		if !ge.Resources.Pay(cost) {
+			break
+		}
+
+		if def.BuildTicks > 0 {
+			ge.buildQueue = append(ge.buildQueue, BuildQueueItem{
+				BuildingKey: key,
+				TicksLeft:   def.BuildTicks,
+				TotalTicks:  def.BuildTicks,
+			})
+		} else {
+			ge.Buildings.counts[key]++
+			ge.Stats.RecordBuild()
+			ge.Bus.Publish(EventData{
+				Type:    EventBuildingBuilt,
+				Payload: map[string]interface{}{"building": key},
+			})
+		}
+		built++
+	}
+
+	if built == 0 {
+		if def.MaxCount > 0 && ge.Buildings.GetCount(key) >= def.MaxCount {
+			return 0, fmt.Errorf("%s is at max count (%d)", def.Name, def.MaxCount)
+		}
+		cost := ge.Buildings.GetCost(key)
+		return 0, fmt.Errorf("cannot afford %s (need: %s)", def.Name, formatCost(cost))
+	}
+
+	if def.BuildTicks > 0 {
+		ge.addLog("info", fmt.Sprintf("Queued %d %s for construction", built, def.Name))
+	} else {
+		ge.recalculateRates()
+		ge.addLog("success", fmt.Sprintf("Built %d %s (total: %d)", built, def.Name, ge.Buildings.GetCount(key)))
+	}
+	return built, nil
+}
+
+// RecruitMax recruits as many villagers as possible up to the pop cap
+func (ge *GameEngine) RecruitMax(vType string) (int, error) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	if !ge.Villagers.IsUnlocked(vType) {
+		return 0, fmt.Errorf("villager type '%s' is not yet unlocked", vType)
+	}
+
+	popCap := ge.Buildings.GetPopCapacity()
+	popCap += int(ge.Research.GetBonus("population") + ge.permanentBonuses["population"] + ge.Prestige.GetBonuses()["population"])
+
+	available := popCap - ge.Villagers.TotalPop()
+	if available <= 0 {
+		return 0, fmt.Errorf("population cap reached (%d/%d)", ge.Villagers.TotalPop(), popCap)
+	}
+
+	if !ge.Villagers.Recruit(vType, available, popCap) {
+		return 0, fmt.Errorf("cannot recruit %s(s)", vType)
+	}
+	ge.Stats.RecordRecruit(available)
+	ge.addLog("info", fmt.Sprintf("Recruited %d %s(s) (pop: %d/%d)", available, vType, ge.Villagers.TotalPop(), popCap))
+	return available, nil
 }
 
 // RecruitVillager recruits villagers
@@ -855,6 +1001,8 @@ func (ge *GameEngine) DoPrestige() error {
 	ge.Military = NewMilitaryManager()
 	ge.Events = NewEventManager()
 	ge.Milestones = NewMilestoneManager()
+	ge.Trade = NewTradeManager()
+	ge.Diplomacy = NewDiplomacyManager()
 	ge.Stats = NewGameStats()
 	ge.Bus = NewEventBus()
 	ge.permanentBonuses = make(map[string]float64)
@@ -908,6 +1056,8 @@ func (ge *GameEngine) Reset() {
 	ge.Events = NewEventManager()
 	ge.Milestones = NewMilestoneManager()
 	ge.Prestige = NewPrestigeManager()
+	ge.Trade = NewTradeManager()
+	ge.Diplomacy = NewDiplomacyManager()
 	ge.Stats = NewGameStats()
 	ge.Bus = NewEventBus()
 	ge.permanentBonuses = make(map[string]float64)
@@ -999,6 +1149,8 @@ func (ge *GameEngine) GetState() GameState {
 		Milestones:       ge.Milestones.Snapshot(),
 		ActiveEvents:     ge.Events.GetActive(),
 		Prestige:         prestigeSnap,
+		Trade:            ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings),
+		Diplomacy:        ge.Diplomacy.Snapshot(ge.age, ageOrder),
 		Log:              logCopy,
 		Stats:            ge.Stats.Snapshot(),
 		SaveExists:       SaveExists("autosave"),
@@ -1101,6 +1253,267 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 			ge.addLog("info", fmt.Sprintf("  +%.1f %s", amount, res))
 		}
 	}
+}
+
+// ExchangeResources performs a resource exchange via the trade system
+func (ge *GameEngine) ExchangeResources(from, to string, amount float64) (float64, error) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	got, err := ge.Trade.Exchange(from, to, amount, ge.Resources, ge.Buildings, ge.tick)
+	if err != nil {
+		return 0, err
+	}
+	ge.addLog("info", fmt.Sprintf("Traded %.0f %s → %.1f %s", amount, from, got, to))
+	return got, nil
+}
+
+// StartTradeRoute activates a trade route
+func (ge *GameEngine) StartTradeRoute(key string) error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	ageOrder := ge.progress.GetAgeOrder()
+	if err := ge.Trade.StartRoute(key, ge.Buildings, ge.age, ageOrder); err != nil {
+		return err
+	}
+	ge.addLog("info", fmt.Sprintf("Trade route started: %s", key))
+	return nil
+}
+
+// StopTradeRoute deactivates a trade route
+func (ge *GameEngine) StopTradeRoute(key string) error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	if err := ge.Trade.StopRoute(key); err != nil {
+		return err
+	}
+	ge.addLog("info", fmt.Sprintf("Trade route stopped: %s", key))
+	return nil
+}
+
+// SetDiplomaticStatus changes diplomatic status with a faction
+func (ge *GameEngine) SetDiplomaticStatus(factionKey, status string) error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	gold := ge.Resources.Get("gold")
+	cost, err := ge.Diplomacy.SetStatus(factionKey, status, gold)
+	if err != nil {
+		return err
+	}
+	if cost > 0 {
+		ge.Resources.Remove("gold", cost)
+	}
+	ge.addLog("info", fmt.Sprintf("Diplomatic status with %s set to %s", factionKey, status))
+	return nil
+}
+
+// SendGift sends a gift to a faction
+func (ge *GameEngine) SendGift(factionKey string) error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	gold := ge.Resources.Get("gold")
+	cost, err := ge.Diplomacy.SendGift(factionKey, gold)
+	if err != nil {
+		return err
+	}
+	ge.Resources.Remove("gold", cost)
+	ge.addLog("info", fmt.Sprintf("Sent gift to %s (+15 opinion)", factionKey))
+	return nil
+}
+
+// UpgradeBuilding upgrades all buildings of fromKey to the next tier.
+// Returns the number upgraded and any error.
+func (ge *GameEngine) UpgradeBuilding(fromKey string) (int, error) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	upgrades := config.UpgradesFromKey()
+	upg, ok := upgrades[fromKey]
+	if !ok {
+		return 0, fmt.Errorf("no upgrade path for '%s'", fromKey)
+	}
+
+	// Check age requirement
+	ageOrder := ge.progress.GetAgeOrder()
+	currentOrder, ok1 := ageOrder[ge.age]
+	requiredOrder, ok2 := ageOrder[upg.MinAge]
+	if !ok1 || !ok2 || currentOrder < requiredOrder {
+		return 0, fmt.Errorf("upgrade requires %s", ge.progress.GetAgeName(upg.MinAge))
+	}
+
+	// Ensure target building is unlocked
+	if !ge.Buildings.IsUnlocked(upg.To) {
+		ge.Buildings.UnlockBuilding(upg.To)
+	}
+
+	// Get base cost of target building, scaled by upgrade discount
+	toDef, toExists := ge.Buildings.defs[upg.To]
+	if !toExists {
+		return 0, fmt.Errorf("target building '%s' not found", upg.To)
+	}
+
+	count := ge.Buildings.counts[fromKey]
+	if count <= 0 {
+		return 0, fmt.Errorf("no %s to upgrade", fromKey)
+	}
+
+	upgraded := 0
+	for i := 0; i < count; i++ {
+		// Check max count on target
+		if toDef.MaxCount > 0 && ge.Buildings.counts[upg.To] >= toDef.MaxCount {
+			break
+		}
+		// Calculate discounted cost
+		cost := make(map[string]float64)
+		for res, base := range toDef.BaseCost {
+			cost[res] = base * upg.CostScale
+		}
+		if !ge.Resources.Pay(cost) {
+			break
+		}
+		ge.Buildings.counts[fromKey]--
+		ge.Buildings.counts[upg.To]++
+		upgraded++
+	}
+
+	if upgraded == 0 {
+		cost := make(map[string]float64)
+		for res, base := range toDef.BaseCost {
+			cost[res] = base * upg.CostScale
+		}
+		return 0, fmt.Errorf("cannot afford upgrade to %s (need: %s)", toDef.Name, formatCost(cost))
+	}
+
+	fromDef := ge.Buildings.defs[fromKey]
+	ge.recalculateRates()
+	ge.addLog("success", fmt.Sprintf("Upgraded %d %s → %s", upgraded, fromDef.Name, toDef.Name))
+	return upgraded, nil
+}
+
+// UpgradeAll upgrades all affordable buildings across all chains.
+// Returns a map of fromKey -> count upgraded.
+func (ge *GameEngine) UpgradeAll() (map[string]int, error) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	ageOrder := ge.progress.GetAgeOrder()
+	currentOrder := ageOrder[ge.age]
+	upgrades := config.BuildingUpgrades()
+	result := make(map[string]int)
+
+	for _, upg := range upgrades {
+		requiredOrder, ok := ageOrder[upg.MinAge]
+		if !ok || currentOrder < requiredOrder {
+			continue
+		}
+
+		count := ge.Buildings.counts[upg.From]
+		if count <= 0 {
+			continue
+		}
+
+		toDef, toExists := ge.Buildings.defs[upg.To]
+		if !toExists {
+			continue
+		}
+
+		if !ge.Buildings.IsUnlocked(upg.To) {
+			ge.Buildings.UnlockBuilding(upg.To)
+		}
+
+		for i := 0; i < count; i++ {
+			if toDef.MaxCount > 0 && ge.Buildings.counts[upg.To] >= toDef.MaxCount {
+				break
+			}
+			cost := make(map[string]float64)
+			for res, base := range toDef.BaseCost {
+				cost[res] = base * upg.CostScale
+			}
+			if !ge.Resources.Pay(cost) {
+				break
+			}
+			ge.Buildings.counts[upg.From]--
+			ge.Buildings.counts[upg.To]++
+			result[upg.From]++
+		}
+	}
+
+	if len(result) == 0 {
+		return nil, fmt.Errorf("nothing to upgrade (no affordable upgrades available)")
+	}
+
+	ge.recalculateRates()
+	for from, n := range result {
+		fromDef := ge.Buildings.defs[from]
+		upg := config.UpgradesFromKey()[from]
+		toDef := ge.Buildings.defs[upg.To]
+		ge.addLog("success", fmt.Sprintf("Upgraded %d %s → %s", n, fromDef.Name, toDef.Name))
+	}
+	return result, nil
+}
+
+// GetAvailableUpgrades returns upgrade info for display
+func (ge *GameEngine) GetAvailableUpgrades() []UpgradeInfo {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+
+	ageOrder := ge.progress.GetAgeOrder()
+	currentOrder := ageOrder[ge.age]
+	upgrades := config.BuildingUpgrades()
+	var result []UpgradeInfo
+
+	for _, upg := range upgrades {
+		requiredOrder, ok := ageOrder[upg.MinAge]
+		if !ok || currentOrder < requiredOrder {
+			continue
+		}
+
+		count := ge.Buildings.counts[upg.From]
+		if count <= 0 {
+			continue
+		}
+
+		fromDef := ge.Buildings.defs[upg.From]
+		toDef := ge.Buildings.defs[upg.To]
+		cost := make(map[string]float64)
+		for res, base := range toDef.BaseCost {
+			cost[res] = base * upg.CostScale
+		}
+
+		canAfford := true
+		for res, need := range cost {
+			if ge.Resources.Get(res) < need {
+				canAfford = false
+				break
+			}
+		}
+
+		result = append(result, UpgradeInfo{
+			FromKey:   upg.From,
+			ToKey:     upg.To,
+			FromName:  fromDef.Name,
+			ToName:    toDef.Name,
+			Count:     count,
+			Cost:      cost,
+			CanAfford: canAfford,
+		})
+	}
+	return result
+}
+
+// UpgradeInfo describes an available building upgrade for display
+type UpgradeInfo struct {
+	FromKey   string
+	ToKey     string
+	FromName  string
+	ToName    string
+	Count     int
+	Cost      map[string]float64
+	CanAfford bool
 }
 
 // formatCost formats a cost map for display

@@ -30,7 +30,7 @@ func Ages() []AgeDef {
 		{
 			Name: "Stone Age", Key: "stone_age", Order: 1,
 			Description:  "Tools of stone change everything.",
-			ResourceReqs: map[string]float64{"food": 1500, "wood": 1200, "knowledge": 200},
+			ResourceReqs: map[string]float64{"food": 1500, "wood": 1200, "knowledge": 400},
 			BuildingReqs: map[string]int{"hut": 10, "altar": 5},
 			UnlockBuildings: []string{"gathering_camp", "woodcutter_camp", "stone_pit", "firepit", "storage_pit"},
 			UnlockResources: []string{"stone"},
@@ -39,7 +39,7 @@ func Ages() []AgeDef {
 		{
 			Name: "Bronze Age", Key: "bronze_age", Order: 2,
 			Description:  "Discovery of metalworking changes everything.",
-			ResourceReqs: map[string]float64{"food": 1250, "stone": 750, "knowledge": 250},
+			ResourceReqs: map[string]float64{"food": 1250, "stone": 750, "knowledge": 500},
 			BuildingReqs: map[string]int{"hut": 8, "stone_pit": 4, "firepit": 3},
 			UnlockBuildings: []string{"farm", "lumber_mill", "quarry", "mine", "market", "library", "house", "warehouse", "stonehenge"},
 			UnlockResources: []string{"iron", "gold"},
@@ -49,7 +49,7 @@ func Ages() []AgeDef {
 		{
 			Name: "Iron Age", Key: "iron_age", Order: 3,
 			Description:  "Iron tools and weapons transform society.",
-			ResourceReqs: map[string]float64{"stone": 5000, "iron": 1250, "knowledge": 1000},
+			ResourceReqs: map[string]float64{"stone": 5000, "iron": 1250, "knowledge": 2500},
 			BuildingReqs: map[string]int{"mine": 5, "lumber_mill": 4, "library": 3},
 			UnlockBuildings: []string{"coal_mine", "smithy", "barracks", "granary", "colosseum"},
 			UnlockResources: []string{"coal"},
@@ -59,7 +59,7 @@ func Ages() []AgeDef {
 		{
 			Name: "Classical Age", Key: "classical_age", Order: 4,
 			Description:  "Great empires rise and philosophy flourishes.",
-			ResourceReqs: map[string]float64{"stone": 25000, "iron": 6000, "gold": 4000, "knowledge": 5000},
+			ResourceReqs: map[string]float64{"stone": 25000, "iron": 6000, "gold": 4000, "knowledge": 12000},
 			BuildingReqs: map[string]int{"barracks": 3, "library": 4, "market": 4},
 			UnlockBuildings: []string{"forum", "aqueduct", "amphitheater", "classical_vault", "parthenon"},
 		},

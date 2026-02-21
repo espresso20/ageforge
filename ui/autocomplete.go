@@ -11,6 +11,7 @@ import (
 var commands = []string{
 	"gather", "build", "recruit", "assign", "unassign",
 	"research", "expedition", "prestige",
+	"trade", "diplomacy", "upgrade",
 	"rates", "status", "speed", "save", "saves", "load", "help", "quit",
 }
 
@@ -67,10 +68,20 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 		return filterPrefix(unlockedResourceKeys(state), partial, prefix)
 
 	case "build", "b":
-		return filterPrefix(unlockedBuildingKeys(state), partial, prefix)
+		if len(completed) == 0 {
+			return filterPrefix(unlockedBuildingKeys(state), partial, prefix)
+		}
+		if len(completed) == 1 {
+			return filterPrefix([]string{"max"}, partial, prefix)
+		}
 
 	case "recruit", "r":
-		return filterPrefix(unlockedVillagerTypes(state), partial, prefix)
+		if len(completed) == 0 {
+			return filterPrefix(unlockedVillagerTypes(state), partial, prefix)
+		}
+		if len(completed) == 1 {
+			return filterPrefix([]string{"max"}, partial, prefix)
+		}
 
 	case "assign", "a":
 		if len(completed) == 0 {
@@ -110,6 +121,47 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 		}
 		if strings.ToLower(completed[0]) == "confirm" {
 			return filterPrefix([]string{"yes"}, partial, prefix)
+		}
+
+	case "trade", "t":
+		if len(completed) == 0 {
+			// First arg: "list", "route", or resource name for exchange
+			keys := unlockedResourceKeys(state)
+			keys = append(keys, "list", "route")
+			return filterPrefix(keys, partial, prefix)
+		}
+		if strings.ToLower(completed[0]) == "route" {
+			if len(completed) == 1 {
+				return filterPrefix([]string{"list", "start", "stop"}, partial, prefix)
+			}
+			if len(completed) == 2 {
+				sub := strings.ToLower(completed[1])
+				if sub == "start" {
+					return filterPrefix(availableTradeRouteKeys(state), partial, prefix)
+				}
+				if sub == "stop" {
+					return filterPrefix(activeTradeRouteKeys(state), partial, prefix)
+				}
+			}
+		}
+		if len(completed) == 1 {
+			// Second arg for exchange: target resource
+			return filterPrefix(unlockedResourceKeys(state), partial, prefix)
+		}
+
+	case "diplomacy", "dip":
+		if len(completed) == 0 {
+			return filterPrefix([]string{"ally", "rival", "embargo", "gift", "neutral"}, partial, prefix)
+		}
+		if len(completed) == 1 {
+			return filterPrefix(discoveredFactionKeys(state), partial, prefix)
+		}
+
+	case "upgrade":
+		if len(completed) == 0 {
+			keys := upgradeableBuildingKeys(engine)
+			keys = append(keys, "all")
+			return filterPrefix(keys, partial, prefix)
 		}
 
 	case "speed":
@@ -215,6 +267,45 @@ func prestigeUpgradeKeys(state game.GameState) []string {
 		if u.NextCost > 0 { // not maxed
 			keys = append(keys, key)
 		}
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func availableTradeRouteKeys(state game.GameState) []string {
+	var keys []string
+	for _, route := range state.Trade.AvailableRoutes {
+		keys = append(keys, route.Key)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func activeTradeRouteKeys(state game.GameState) []string {
+	var keys []string
+	for _, route := range state.Trade.ActiveRoutes {
+		keys = append(keys, route.Key)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func discoveredFactionKeys(state game.GameState) []string {
+	var keys []string
+	for key, f := range state.Diplomacy.Factions {
+		if f.Discovered {
+			keys = append(keys, key)
+		}
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+func upgradeableBuildingKeys(engine *game.GameEngine) []string {
+	upgrades := engine.GetAvailableUpgrades()
+	var keys []string
+	for _, u := range upgrades {
+		keys = append(keys, u.FromKey)
 	}
 	sort.Strings(keys)
 	return keys

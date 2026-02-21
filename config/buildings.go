@@ -49,10 +49,10 @@ func BaseBuildings() []BuildingDef {
 			Name: "Altar", Key: "altar", Category: "research",
 			BaseCost:    map[string]float64{"wood": 300},
 			CostScale:   1.35,
-			Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.01}},
+			Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.004}},
 			BuildTicks:  3,
 			RequiredAge: "primitive_age",
-			Description: "A sacred stone circle where shamans commune with spirits. +0.01 knowledge/tick.",
+			Description: "A sacred stone circle where shamans commune with spirits. +0.004 knowledge/tick.",
 		},
 
 		// ===== STONE AGE (costs: 200-1000) =====
@@ -87,10 +87,10 @@ func BaseBuildings() []BuildingDef {
 			Name: "Firepit", Key: "firepit", Category: "research",
 			BaseCost:    map[string]float64{"wood": 300, "stone": 200},
 			CostScale:   1.35,
-			Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.02}},
+			Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.008}},
 			BuildTicks:  5,
 			RequiredAge: "stone_age",
-			Description: "Elders share stories by the fire. +0.02 knowledge/tick.",
+			Description: "Elders share stories by the fire. +0.008 knowledge/tick.",
 		},
 		{
 			Name: "Storage Pit", Key: "storage_pit", Category: "storage",

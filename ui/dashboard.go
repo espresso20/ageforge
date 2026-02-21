@@ -30,6 +30,7 @@ type Dashboard struct {
 	economyTab  *EconomyTab
 	researchTab *ResearchTab
 	militaryTab *MilitaryTab
+	tradeTab    *TradeTab
 	statsTab    *StatsTab
 	wikiTab     *WikiTab
 	mapTab      *MapTab
@@ -41,8 +42,9 @@ type Dashboard struct {
 	statusTV   *tview.TextView
 	ageTV      *tview.TextView
 	inputField *tview.InputField
-	lastAge     string
-	toastMgr    *ToastManager
+	lastAge          string
+	pendingAgeSplash string // set by bus handler, consumed by refresh()
+	toastMgr         *ToastManager
 	toastTV     *tview.TextView
 	contentArea *tview.Flex
 	bottomArea  *tview.Flex
@@ -57,7 +59,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		engine:   engine,
 		pages:    pages,
 		stopCh:   make(chan struct{}),
-		tabNames: []string{"Economy", "Research", "Military", "Stats", "Wiki", "Map", "Logs"},
+		tabNames: []string{"Economy", "Research", "Military", "Trade", "Stats", "Wiki", "Map", "Logs"},
 	}
 	d.build()
 	return d
@@ -68,6 +70,7 @@ func (d *Dashboard) build() {
 	d.economyTab = NewEconomyTab()
 	d.researchTab = NewResearchTab()
 	d.militaryTab = NewMilitaryTab()
+	d.tradeTab = NewTradeTab()
 	d.statsTab = NewStatsTab()
 	d.wikiTab = NewWikiTab()
 	d.mapTab = NewMapTab()
@@ -84,6 +87,7 @@ func (d *Dashboard) build() {
 	d.tabPages.AddPage("Economy", d.economyTab.Root(), true, true)
 	d.tabPages.AddPage("Research", d.researchTab.Root(), true, false)
 	d.tabPages.AddPage("Military", d.militaryTab.Root(), true, false)
+	d.tabPages.AddPage("Trade", d.tradeTab.Root(), true, false)
 	d.tabPages.AddPage("Stats", d.statsTab.Root(), true, false)
 	d.tabPages.AddPage("Wiki", d.wikiTab.Root(), true, false)
 	d.tabPages.AddPage("Map", d.mapTab.Root(), true, false)
@@ -117,7 +121,9 @@ func (d *Dashboard) build() {
 	// Subscribe to events for toasts
 	d.engine.Bus.Subscribe(game.EventAgeAdvanced, func(e game.EventData) {
 		if newAge, ok := e.Payload["new_age"].(string); ok {
-			_ = newAge
+			// Store for splash — consumed in refresh() which runs in UI goroutine
+			// (this handler runs under engine lock, so no GetState here!)
+			d.pendingAgeSplash = newAge
 		}
 		d.toastMgr.Show("AGE ADVANCED!", "gold", 5*time.Second)
 	})
@@ -211,13 +217,16 @@ func (d *Dashboard) build() {
 		case tcell.KeyF6:
 			d.switchTab(5)
 			return nil
-		case tcell.KeyF9:
+		case tcell.KeyF7:
 			d.switchTab(6)
+			return nil
+		case tcell.KeyF9:
+			d.switchTab(7)
 			return nil
 		}
 
 		// When logs tab is active, intercept navigation keys
-		if d.activeTab == 6 {
+		if d.activeTab == 7 {
 			switch event.Key() {
 			case tcell.KeyPgUp:
 				d.logsTab.ScrollUp()
@@ -233,7 +242,7 @@ func (d *Dashboard) build() {
 		}
 
 		// When wiki tab is active, intercept navigation keys
-		if d.activeTab == 4 {
+		if d.activeTab == 5 {
 			switch event.Key() {
 			case tcell.KeyUp:
 				d.wikiTab.PrevPage()
@@ -269,8 +278,8 @@ func (d *Dashboard) switchTab(index int) {
 	d.tabPages.SwitchToPage(d.tabNames[index])
 	d.updateTabBar()
 
-	// Map tab (index 5) is full-screen — hide bottom area
-	if index == 5 {
+	// Map tab (index 6) is full-screen — hide bottom area
+	if index == 6 {
 		d.contentArea.RemoveItem(d.bottomArea)
 	} else {
 		// Re-add bottom area if not already present
@@ -282,7 +291,7 @@ func (d *Dashboard) switchTab(index int) {
 
 func (d *Dashboard) updateTabBar() {
 	var parts []string
-	tabKeys := map[int]string{0: "F1", 1: "F2", 2: "F3", 3: "F4", 4: "F5", 5: "F6", 6: "F9"}
+	tabKeys := map[int]string{0: "F1", 1: "F2", 2: "F3", 3: "F4", 4: "F5", 5: "F6", 6: "F7", 7: "F9"}
 	for i, name := range d.tabNames {
 		key := tabKeys[i]
 		if i == d.activeTab {
@@ -326,6 +335,14 @@ func (d *Dashboard) StopUpdates() {
 }
 
 func (d *Dashboard) refresh() {
+	// Check for pending age splash (set by bus handler under engine lock)
+	if d.pendingAgeSplash != "" {
+		newAge := d.pendingAgeSplash
+		oldAge := d.lastAge
+		d.pendingAgeSplash = ""
+		ShowAgeSplash(d.app, d.pages, oldAge, newAge)
+	}
+
 	state := d.engine.GetState()
 
 	if d.lastAge != state.Age {
@@ -348,12 +365,14 @@ func (d *Dashboard) refresh() {
 	case 2:
 		d.militaryTab.Refresh(state)
 	case 3:
-		d.statsTab.Refresh(state)
+		d.tradeTab.Refresh(state)
 	case 4:
-		d.wikiTab.Refresh(state)
+		d.statsTab.Refresh(state)
 	case 5:
-		d.mapTab.Refresh(state)
+		d.wikiTab.Refresh(state)
 	case 6:
+		d.mapTab.Refresh(state)
+	case 7:
 		d.logsTab.Refresh(state)
 	}
 }
@@ -372,7 +391,7 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		speedStr = fmt.Sprintf("  [yellow]%.0fx[-]", state.SpeedMultiplier)
 	}
 	d.statusTV.SetText(fmt.Sprintf(
-		"[gold]%s[-]%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]F1-F6,F9=Tabs  ESC=Menu[-]",
+		"[gold]%s[-]%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]F1-F7,F9=Tabs  ESC=Menu[-]",
 		state.AgeName, prestigeStr, state.Tick, nextAgeStr, speedStr,
 		state.Villagers.TotalPop, state.Villagers.MaxPop,
 	))
