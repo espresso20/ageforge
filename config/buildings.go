@@ -903,10 +903,42 @@ func BaseBuildings() []BuildingDef {
 		// ===== TRANSCENDENT AGE =====
 		// (singularity_core is a wonder, listed below)
 
-		// ===== WONDERS (scaled to their age) =====
+		// ===== WONDERS =====
+		// Each wonder unlocks +0.5x game speed. Costs are brutal — ~15-20x normal buildings.
+		// Build ticks are extremely long. One per age, max 1 each.
+
+		// Primitive Age — normal costs: 30-300
+		{
+			Name: "Sacred Grove", Key: "sacred_grove", Category: "wonder",
+			BaseCost:  map[string]float64{"wood": 5000, "food": 3000},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "production", Target: "knowledge", Value: 0.02},
+				{Type: "production", Target: "food", Value: 0.05},
+			},
+			RequiredAge: "primitive_age",
+			MaxCount:    1,
+			BuildTicks:  60,
+			Description: "An ancient clearing where nature's power flows. +0.02 knowledge, +0.05 food/tick. Unlocks +0.5x speed.",
+		},
+		// Stone Age — normal costs: 200-1000
+		{
+			Name: "Great Monolith", Key: "great_monolith", Category: "wonder",
+			BaseCost:  map[string]float64{"stone": 15000, "wood": 10000, "food": 8000},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "production", Target: "knowledge", Value: 0.05},
+				{Type: "storage", Target: "all", Value: 500},
+			},
+			RequiredAge: "stone_age",
+			MaxCount:    1,
+			BuildTicks:  80,
+			Description: "A towering stone pillar visible for miles. +0.05 knowledge/tick, +500 storage. Unlocks +0.5x speed.",
+		},
+		// Bronze Age — normal costs: 1500-2500
 		{
 			Name: "Stonehenge", Key: "stonehenge", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 8000, "wood": 5000},
+			BaseCost:  map[string]float64{"stone": 40000, "wood": 25000, "iron": 5000},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "production", Target: "knowledge", Value: 0.8},
@@ -914,12 +946,13 @@ func BaseBuildings() []BuildingDef {
 			},
 			RequiredAge: "bronze_age",
 			MaxCount:    1,
-			BuildTicks:  10,
-			Description: "Ancient monument. +0.8 knowledge, +0.5 faith/tick.",
+			BuildTicks:  100,
+			Description: "Massive stone circle aligned to the cosmos. +0.8 knowledge, +0.5 faith/tick. Unlocks +0.5x speed.",
 		},
+		// Iron Age — normal costs: 8k-12k
 		{
 			Name: "Colosseum", Key: "colosseum", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 40000, "iron": 12000, "gold": 8000},
+			BaseCost:  map[string]float64{"stone": 200000, "iron": 80000, "gold": 40000},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "capacity", Target: "population", Value: 20},
@@ -927,12 +960,13 @@ func BaseBuildings() []BuildingDef {
 			},
 			RequiredAge: "iron_age",
 			MaxCount:    1,
-			BuildTicks:  15,
-			Description: "Grand arena. +20 pop cap, +1.0 culture/tick.",
+			BuildTicks:  120,
+			Description: "Grand arena of blood and glory. +20 pop cap, +1.0 culture/tick. Unlocks +0.5x speed.",
 		},
+		// Classical Age — normal costs: 40k-80k
 		{
 			Name: "Parthenon", Key: "parthenon", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 200000, "gold": 50000, "iron": 30000},
+			BaseCost:  map[string]float64{"stone": 1200000, "gold": 400000, "iron": 200000},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "production", Target: "culture", Value: 2.0},
@@ -940,37 +974,97 @@ func BaseBuildings() []BuildingDef {
 			},
 			RequiredAge: "classical_age",
 			MaxCount:    1,
-			BuildTicks:  18,
-			Description: "Temple of wisdom. +2.0 culture, +1.2 knowledge/tick.",
+			BuildTicks:  150,
+			Description: "Perfect temple of marble and wisdom. +2.0 culture, +1.2 knowledge/tick. Unlocks +0.5x speed.",
 		},
+		// Medieval Age — normal costs: 180k-360k
 		{
 			Name: "Great Library", Key: "great_library", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 400000, "gold": 150000, "knowledge": 120000},
+			BaseCost:  map[string]float64{"stone": 5000000, "gold": 2000000, "knowledge": 1500000},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "production", Target: "knowledge", Value: 2.0},
+				{Type: "bonus", Target: "knowledge_rate", Value: 0.1},
 			},
 			RequiredAge: "medieval_age",
 			MaxCount:    1,
-			BuildTicks:  20,
-			Description: "Repository of all knowledge. +2.0 knowledge/tick.",
+			BuildTicks:  180,
+			Description: "Repository of all knowledge. +2.0 knowledge/tick, +10% knowledge rate. Unlocks +0.5x speed.",
 		},
+		// Renaissance Age — normal costs: 400k-600k
 		{
-			Name: "Space Program", Key: "space_program", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 60e9, "gold": 90e9, "electricity": 30e9, "knowledge": 60e9},
+			Name: "Sistine Chapel", Key: "sistine_chapel", Category: "wonder",
+			BaseCost:  map[string]float64{"stone": 8000000, "gold": 5000000, "faith": 2000000, "culture": 1000000},
 			CostScale: 1.0,
 			Effects: []Effect{
-				{Type: "production", Target: "knowledge", Value: 4.0},
-				{Type: "production", Target: "culture", Value: 5.0},
+				{Type: "production", Target: "culture", Value: 3.0},
+				{Type: "production", Target: "faith", Value: 1.5},
 			},
-			RequiredAge: "modern_age",
+			RequiredAge: "renaissance_age",
 			MaxCount:    1,
-			BuildTicks:  30,
-			Description: "The ultimate achievement. +4 knowledge, +5 culture/tick.",
+			BuildTicks:  200,
+			Description: "Ceiling painted by divine hands. +3.0 culture, +1.5 faith/tick. Unlocks +0.5x speed.",
 		},
+		// Colonial Age — normal costs: 1.2M-2M
+		{
+			Name: "Grand Lighthouse", Key: "grand_lighthouse", Category: "wonder",
+			BaseCost:  map[string]float64{"stone": 30e6, "gold": 20e6, "steel": 5e6},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "production", Target: "gold", Value: 5.0},
+				{Type: "bonus", Target: "expedition_reward", Value: 0.5},
+			},
+			RequiredAge: "colonial_age",
+			MaxCount:    1,
+			BuildTicks:  220,
+			Description: "Beacon visible across oceans. +5.0 gold/tick, +50% expedition rewards. Unlocks +0.5x speed.",
+		},
+		// Industrial Age — normal costs: 12M-25M
+		{
+			Name: "Crystal Palace", Key: "crystal_palace", Category: "wonder",
+			BaseCost:  map[string]float64{"steel": 400e6, "iron": 300e6, "gold": 250e6, "coal": 100e6},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "bonus", Target: "production_all", Value: 0.15},
+				{Type: "production", Target: "gold", Value: 8.0},
+			},
+			RequiredAge: "industrial_age",
+			MaxCount:    1,
+			BuildTicks:  250,
+			Description: "Glass cathedral of industry. +15% all production, +8.0 gold/tick. Unlocks +0.5x speed.",
+		},
+		// Victorian Age — normal costs: 90M-150M
+		{
+			Name: "Eiffel Tower", Key: "eiffel_tower", Category: "wonder",
+			BaseCost:  map[string]float64{"steel": 2.5e9, "iron": 1.5e9, "gold": 2e9},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "production", Target: "culture", Value: 5.0},
+				{Type: "production", Target: "knowledge", Value: 2.0},
+			},
+			RequiredAge: "victorian_age",
+			MaxCount:    1,
+			BuildTicks:  280,
+			Description: "Iron monument piercing the sky. +5.0 culture, +2.0 knowledge/tick. Unlocks +0.5x speed.",
+		},
+		// Electric Age — normal costs: 500M-1B
+		{
+			Name: "Hoover Dam", Key: "hoover_dam", Category: "wonder",
+			BaseCost:  map[string]float64{"steel": 15e9, "stone": 20e9, "electricity": 5e9},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "production", Target: "electricity", Value: 10.0},
+				{Type: "bonus", Target: "production_all", Value: 0.1},
+			},
+			RequiredAge: "electric_age",
+			MaxCount:    1,
+			BuildTicks:  300,
+			Description: "Taming a river to power a nation. +10.0 electricity/tick, +10% all production. Unlocks +0.5x speed.",
+		},
+		// Atomic Age — normal costs: 3B-10B
 		{
 			Name: "Particle Accelerator", Key: "particle_accelerator", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 15e9, "electricity": 10e9, "uranium": 1.5e9},
+			BaseCost:  map[string]float64{"steel": 150e9, "electricity": 100e9, "uranium": 20e9},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "production", Target: "knowledge", Value: 10.0},
@@ -978,12 +1072,83 @@ func BaseBuildings() []BuildingDef {
 			},
 			RequiredAge: "atomic_age",
 			MaxCount:    1,
-			BuildTicks:  25,
-			Description: "Smashes atoms for science. +10 knowledge, +1.0 uranium/tick.",
+			BuildTicks:  320,
+			Description: "Smashes atoms for science. +10 knowledge, +1.0 uranium/tick. Unlocks +0.5x speed.",
 		},
+		// Modern Age — normal costs: 15B-40B
+		{
+			Name: "Space Program", Key: "space_program", Category: "wonder",
+			BaseCost:  map[string]float64{"steel": 600e9, "gold": 500e9, "electricity": 300e9, "knowledge": 200e9},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "production", Target: "knowledge", Value: 6.0},
+				{Type: "production", Target: "culture", Value: 8.0},
+			},
+			RequiredAge: "modern_age",
+			MaxCount:    1,
+			BuildTicks:  350,
+			Description: "Reaching for the stars. +6 knowledge, +8 culture/tick. Unlocks +0.5x speed.",
+		},
+		// Information Age — normal costs: 75B-125B
+		{
+			Name: "Global Network", Key: "global_network", Category: "wonder",
+			BaseCost:  map[string]float64{"steel": 2e12, "data": 100e9, "electricity": 800e9, "gold": 1.5e12},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "production", Target: "data", Value: 10.0},
+				{Type: "bonus", Target: "knowledge_rate", Value: 0.3},
+			},
+			RequiredAge: "information_age",
+			MaxCount:    1,
+			BuildTicks:  380,
+			Description: "Every mind connected. +10.0 data/tick, +30% knowledge rate. Unlocks +0.5x speed.",
+		},
+		// Digital Age — normal costs: 400B-750B
+		{
+			Name: "World Simulation", Key: "world_simulation", Category: "wonder",
+			BaseCost:  map[string]float64{"steel": 10e12, "data": 500e9, "electricity": 5e12},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "production", Target: "data", Value: 20.0},
+				{Type: "production", Target: "knowledge", Value: 15.0},
+			},
+			RequiredAge: "digital_age",
+			MaxCount:    1,
+			BuildTicks:  400,
+			Description: "A digital twin of reality itself. +20 data, +15 knowledge/tick. Unlocks +0.5x speed.",
+		},
+		// Cyberpunk Age — normal costs: 2T-4T
+		{
+			Name: "Neon Citadel", Key: "neon_citadel", Category: "wonder",
+			BaseCost:  map[string]float64{"steel": 60e12, "electricity": 40e12, "crypto": 5e12, "data": 2e12},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "production", Target: "crypto", Value: 10.0},
+				{Type: "capacity", Target: "population", Value: 200},
+			},
+			RequiredAge: "cyberpunk_age",
+			MaxCount:    1,
+			BuildTicks:  420,
+			Description: "A city within a city, lit by eternal neon. +10 crypto/tick, +200 pop cap. Unlocks +0.5x speed.",
+		},
+		// Fusion Age — normal costs: 10T-15T
+		{
+			Name: "Stellar Cradle", Key: "stellar_cradle", Category: "wonder",
+			BaseCost:  map[string]float64{"steel": 250e12, "plasma": 100e12, "electricity": 200e12, "uranium": 50e12},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "production", Target: "plasma", Value: 15.0},
+				{Type: "production", Target: "electricity", Value: 100.0},
+			},
+			RequiredAge: "fusion_age",
+			MaxCount:    1,
+			BuildTicks:  450,
+			Description: "A miniature star harnessed for power. +15 plasma, +100 electricity/tick. Unlocks +0.5x speed.",
+		},
+		// Space Age — normal costs: 50T-80T
 		{
 			Name: "Dyson Scaffold", Key: "dyson_scaffold", Category: "wonder",
-			BaseCost:  map[string]float64{"titanium": 10e12, "plasma": 12e12, "steel": 100e12},
+			BaseCost:  map[string]float64{"titanium": 200e12, "plasma": 250e12, "steel": 1500e12},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "production", Target: "electricity", Value: 200.0},
@@ -991,12 +1156,55 @@ func BaseBuildings() []BuildingDef {
 			},
 			RequiredAge: "space_age",
 			MaxCount:    1,
-			BuildTicks:  40,
-			Description: "Framework for a Dyson sphere. +200 electricity, +10 plasma/tick.",
+			BuildTicks:  480,
+			Description: "Framework for a Dyson sphere. +200 electricity, +10 plasma/tick. Unlocks +0.5x speed.",
 		},
+		// Interstellar Age — normal costs: 250T-500T
+		{
+			Name: "Warp Nexus", Key: "warp_nexus", Category: "wonder",
+			BaseCost:  map[string]float64{"titanium": 2e15, "dark_matter": 200e12, "plasma": 1.5e15},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "production", Target: "dark_matter", Value: 8.0},
+				{Type: "bonus", Target: "production_all", Value: 0.2},
+			},
+			RequiredAge: "interstellar_age",
+			MaxCount:    1,
+			BuildTicks:  500,
+			Description: "Hub of faster-than-light corridors. +8 dark matter/tick, +20% all production. Unlocks +0.5x speed.",
+		},
+		// Galactic Age — normal costs: 1Q-1.5Q
+		{
+			Name: "Cosmic Beacon", Key: "cosmic_beacon", Category: "wonder",
+			BaseCost:  map[string]float64{"dark_matter": 5e15, "antimatter": 2e15, "titanium": 15e15},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "production", Target: "antimatter", Value: 10.0},
+				{Type: "bonus", Target: "production_all", Value: 0.3},
+			},
+			RequiredAge: "galactic_age",
+			MaxCount:    1,
+			BuildTicks:  500,
+			Description: "A signal fire across the galaxy. +10 antimatter/tick, +30% all production. Unlocks +0.5x speed.",
+		},
+		// Quantum Age — normal costs: 2.5Q-5Q
+		{
+			Name: "Reality Anchor", Key: "reality_anchor", Category: "wonder",
+			BaseCost:  map[string]float64{"quantum_flux": 10e15, "antimatter": 30e15, "dark_matter": 50e15},
+			CostScale: 1.0,
+			Effects: []Effect{
+				{Type: "production", Target: "quantum_flux", Value: 15.0},
+				{Type: "bonus", Target: "production_all", Value: 0.5},
+			},
+			RequiredAge: "quantum_age",
+			MaxCount:    1,
+			BuildTicks:  500,
+			Description: "Stabilizes reality across dimensions. +15 quantum flux/tick, +50% all production. Unlocks +0.5x speed.",
+		},
+		// Transcendent Age
 		{
 			Name: "Singularity Core", Key: "singularity_core", Category: "wonder",
-			BaseCost:  map[string]float64{"quantum_flux": 2.5e15, "antimatter": 5e15, "dark_matter": 10e15},
+			BaseCost:  map[string]float64{"quantum_flux": 50e15, "antimatter": 100e15, "dark_matter": 200e15},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 1.0},
@@ -1004,8 +1212,8 @@ func BaseBuildings() []BuildingDef {
 			},
 			RequiredAge: "transcendent_age",
 			MaxCount:    1,
-			BuildTicks:  50,
-			Description: "The final wonder. +100% all production, +20 quantum flux/tick.",
+			BuildTicks:  500,
+			Description: "The final wonder. +100% all production, +20 quantum flux/tick. Unlocks +0.5x speed.",
 		},
 	}
 }

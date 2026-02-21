@@ -88,6 +88,7 @@ func NewGameEngine() *GameEngine {
 	ge.addLog("info", "  2. [cyan]gather food[-] — forage for food")
 	ge.addLog("info", "  3. [cyan]build hut[-] — build shelter (costs 10 wood)")
 	ge.addLog("info", "  4. [cyan]recruit worker[-] — recruit your first worker")
+	ge.addLog("event", "★ Wonder available: Sacred Grove — build it to unlock +0.5x speed!")
 	ge.addLog("info", "  5. [cyan]assign worker food[-] — put them to work!")
 	ge.addLog("info", "  Type [cyan]help[-] for all commands.")
 	return ge
@@ -179,12 +180,16 @@ func (ge *GameEngine) recalculateTickSpeed() {
 	}
 }
 
-// MaxSpeedForAge returns the maximum speed multiplier allowed for the given age.
-// Primitive = 1x only, then +0.5x per age advancement.
+// MaxSpeedForAge returns the maximum speed multiplier based on wonders built.
+// Base speed is 1.0x. Each wonder built adds +0.5x.
 func (ge *GameEngine) MaxSpeedForAge() float64 {
-	ageOrder := ge.progress.GetAgeOrder()
-	order := ageOrder[ge.age]
-	return 1.0 + float64(order)*0.5
+	wonderCount := 0
+	for key, count := range ge.Buildings.counts {
+		if def, ok := ge.Buildings.defs[key]; ok && def.Category == "wonder" && count > 0 {
+			wonderCount++
+		}
+	}
+	return 1.0 + float64(wonderCount)*0.5
 }
 
 // SetSpeedMultiplier sets the game speed multiplier (0.5 increments, capped by age)
@@ -197,7 +202,7 @@ func (ge *GameEngine) SetSpeedMultiplier(mult float64) error {
 	defer ge.mu.Unlock()
 	maxSpeed := ge.MaxSpeedForAge()
 	if mult > maxSpeed {
-		return fmt.Errorf("speed %.1fx not unlocked yet (max: %.1fx in %s)", mult, maxSpeed, ge.progress.GetAgeName(ge.age))
+		return fmt.Errorf("speed %.1fx not unlocked yet (max: %.1fx — build more wonders!)", mult, maxSpeed)
 	}
 	ge.speedMultiplier = mult
 	ge.addLog("info", fmt.Sprintf("Game speed set to %.1fx", mult))
@@ -629,6 +634,14 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	ge.addLog("debug", fmt.Sprintf("Age advance: %s → %s (unlocks: %d buildings, %d resources, %d villagers)",
 		oldAge, newAge, len(unlocks.UnlockBuildings), len(unlocks.UnlockResources), len(unlocks.UnlockVillagers)))
 	ge.addLog("success", fmt.Sprintf("Advanced from %s to %s!", oldName, newName))
+
+	// Notify player about the wonder available in this age
+	for _, bKey := range unlocks.UnlockBuildings {
+		if def, ok := ge.Buildings.defs[bKey]; ok && def.Category == "wonder" {
+			ge.addLog("event", fmt.Sprintf("★ Wonder available: %s — build it to unlock +0.5x speed!", def.Name))
+			break
+		}
+	}
 
 	ge.Bus.Publish(EventData{
 		Type: EventAgeAdvanced,

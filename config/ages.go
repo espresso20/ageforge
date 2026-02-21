@@ -22,7 +22,7 @@ func Ages() []AgeDef {
 		{
 			Name: "Primitive Age", Key: "primitive_age", Order: 0,
 			Description:     "Survival. Nothing but your hands and wits.",
-			UnlockBuildings: []string{"hut", "stash", "altar"},
+			UnlockBuildings: []string{"hut", "stash", "altar", "sacred_grove"},
 			UnlockResources: []string{"food", "wood", "knowledge"},
 			UnlockVillagers: []string{"worker", "shaman"},
 		},
@@ -32,7 +32,7 @@ func Ages() []AgeDef {
 			Description:  "Tools of stone change everything.",
 			ResourceReqs: map[string]float64{"food": 1500, "wood": 1200, "knowledge": 400},
 			BuildingReqs: map[string]int{"hut": 10, "altar": 5},
-			UnlockBuildings: []string{"gathering_camp", "woodcutter_camp", "stone_pit", "firepit", "storage_pit"},
+			UnlockBuildings: []string{"gathering_camp", "woodcutter_camp", "stone_pit", "firepit", "storage_pit", "great_monolith"},
 			UnlockResources: []string{"stone"},
 		},
 		// === 2: BRONZE AGE ===
@@ -79,7 +79,7 @@ func Ages() []AgeDef {
 			Description:  "Art, science, and exploration flourish.",
 			ResourceReqs: map[string]float64{"gold": 95000, "knowledge": 125000, "steel": 12500, "faith": 25000},
 			BuildingReqs: map[string]int{"university": 4, "market": 6, "castle": 2},
-			UnlockBuildings: []string{"art_studio", "bank", "observatory", "renaissance_vault"},
+			UnlockBuildings: []string{"art_studio", "bank", "observatory", "renaissance_vault", "sistine_chapel"},
 			UnlockResources: []string{"culture"},
 		},
 		// === 7: COLONIAL AGE ===
@@ -88,7 +88,7 @@ func Ages() []AgeDef {
 			Description:  "Exploration and trade span the globe.",
 			ResourceReqs: map[string]float64{"gold": 470000, "knowledge": 625000, "steel": 62500, "culture": 37500},
 			BuildingReqs: map[string]int{"bank": 4, "observatory": 3, "art_studio": 4},
-			UnlockBuildings: []string{"colony", "port", "plantation", "colonial_warehouse"},
+			UnlockBuildings: []string{"colony", "port", "plantation", "colonial_warehouse", "grand_lighthouse"},
 		},
 		// === 8: INDUSTRIAL AGE ===
 		{
@@ -96,7 +96,7 @@ func Ages() []AgeDef {
 			Description:  "Machines revolutionize production.",
 			ResourceReqs: map[string]float64{"steel": 310000, "gold": 2340000, "knowledge": 3125000},
 			BuildingReqs: map[string]int{"colony": 3, "port": 4, "plantation": 4},
-			UnlockBuildings: []string{"factory", "oil_well", "apartment", "industrial_depot"},
+			UnlockBuildings: []string{"factory", "oil_well", "apartment", "industrial_depot", "crystal_palace"},
 			UnlockResources: []string{"oil"},
 			UnlockVillagers: []string{"engineer"},
 		},
@@ -106,7 +106,7 @@ func Ages() []AgeDef {
 			Description:  "Steam and innovation drive progress.",
 			ResourceReqs: map[string]float64{"steel": 625000, "oil": 125000, "gold": 4687500},
 			BuildingReqs: map[string]int{"factory": 4, "oil_well": 3, "apartment": 3},
-			UnlockBuildings: []string{"power_grid", "telegraph", "clocktower", "victorian_vault"},
+			UnlockBuildings: []string{"power_grid", "telegraph", "clocktower", "victorian_vault", "eiffel_tower"},
 			UnlockResources: []string{"electricity"},
 		},
 		// === 10: ELECTRIC AGE ===
@@ -115,7 +115,7 @@ func Ages() []AgeDef {
 			Description:  "Electrification transforms daily life.",
 			ResourceReqs: map[string]float64{"steel": 3125000, "oil": 625000, "electricity": 250000},
 			BuildingReqs: map[string]int{"power_grid": 3, "telegraph": 2, "factory": 6},
-			UnlockBuildings: []string{"electric_mill", "telephone_exchange", "train_station", "electric_warehouse"},
+			UnlockBuildings: []string{"electric_mill", "telephone_exchange", "train_station", "electric_warehouse", "hoover_dam"},
 		},
 		// === 11: ATOMIC AGE ===
 		{
@@ -141,7 +141,7 @@ func Ages() []AgeDef {
 			Description:  "The Internet connects the world.",
 			ResourceReqs: map[string]float64{"electricity": 31250000, "data": 5000000, "gold": 100000000},
 			BuildingReqs: map[string]int{"research_lab": 3, "skyscraper": 3, "power_plant": 3},
-			UnlockBuildings: []string{"server_farm", "fiber_hub", "media_center", "info_vault"},
+			UnlockBuildings: []string{"server_farm", "fiber_hub", "media_center", "info_vault", "global_network"},
 			UnlockVillagers: []string{"hacker"},
 		},
 		// === 14: DIGITAL AGE ===
@@ -150,7 +150,7 @@ func Ages() []AgeDef {
 			Description:  "Full digitization of civilization.",
 			ResourceReqs: map[string]float64{"data": 25000000, "electricity": 156250000},
 			BuildingReqs: map[string]int{"server_farm": 3, "fiber_hub": 2, "media_center": 2},
-			UnlockBuildings: []string{"data_center", "ai_lab", "smart_grid", "digital_archive"},
+			UnlockBuildings: []string{"data_center", "ai_lab", "smart_grid", "digital_archive", "world_simulation"},
 		},
 		// === 15: CYBERPUNK AGE ===
 		{
@@ -158,7 +158,7 @@ func Ages() []AgeDef {
 			Description:  "Neon lights and cybernetic augmentation.",
 			ResourceReqs: map[string]float64{"data": 125000000, "electricity": 781250000},
 			BuildingReqs: map[string]int{"ai_lab": 3, "data_center": 3, "smart_grid": 2},
-			UnlockBuildings: []string{"augmentation_clinic", "neon_tower", "black_market", "cyber_vault"},
+			UnlockBuildings: []string{"augmentation_clinic", "neon_tower", "black_market", "cyber_vault", "neon_citadel"},
 			UnlockResources: []string{"crypto"},
 		},
 		// === 16: FUSION AGE ===
@@ -167,7 +167,7 @@ func Ages() []AgeDef {
 			Description:  "Clean energy breakthrough changes everything.",
 			ResourceReqs: map[string]float64{"electricity": 3906250000, "crypto": 200000000, "data": 625000000},
 			BuildingReqs: map[string]int{"augmentation_clinic": 2, "neon_tower": 3, "black_market": 2},
-			UnlockBuildings: []string{"fusion_reactor", "plasma_forge", "maglev_station", "fusion_vault"},
+			UnlockBuildings: []string{"fusion_reactor", "plasma_forge", "maglev_station", "fusion_vault", "stellar_cradle"},
 			UnlockResources: []string{"plasma"},
 		},
 		// === 17: SPACE AGE ===
@@ -186,7 +186,7 @@ func Ages() []AgeDef {
 			Description:  "Between the stars, new frontiers await.",
 			ResourceReqs: map[string]float64{"titanium": 1000000000, "plasma": 2500000000},
 			BuildingReqs: map[string]int{"launch_pad": 3, "space_station": 2, "orbital_habitat": 2},
-			UnlockBuildings: []string{"warp_gate", "colony_ship", "star_forge", "stellar_vault"},
+			UnlockBuildings: []string{"warp_gate", "colony_ship", "star_forge", "stellar_vault", "warp_nexus"},
 			UnlockResources: []string{"dark_matter"},
 		},
 		// === 19: GALACTIC AGE ===
@@ -195,7 +195,7 @@ func Ages() []AgeDef {
 			Description:  "Galactic civilization spans the cosmos.",
 			ResourceReqs: map[string]float64{"dark_matter": 2000000000, "titanium": 5000000000},
 			BuildingReqs: map[string]int{"warp_gate": 3, "colony_ship": 2, "star_forge": 2},
-			UnlockBuildings: []string{"galactic_hub", "antimatter_plant", "megastructure", "galactic_vault"},
+			UnlockBuildings: []string{"galactic_hub", "antimatter_plant", "megastructure", "galactic_vault", "cosmic_beacon"},
 			UnlockResources: []string{"antimatter"},
 		},
 		// === 20: QUANTUM AGE ===
@@ -204,7 +204,7 @@ func Ages() []AgeDef {
 			Description:  "Reality bends to quantum mastery.",
 			ResourceReqs: map[string]float64{"antimatter": 5000000000, "dark_matter": 10000000000},
 			BuildingReqs: map[string]int{"galactic_hub": 2, "antimatter_plant": 3, "megastructure": 1},
-			UnlockBuildings: []string{"quantum_computer", "reality_engine", "transcendence_beacon", "quantum_vault"},
+			UnlockBuildings: []string{"quantum_computer", "reality_engine", "transcendence_beacon", "quantum_vault", "reality_anchor"},
 			UnlockResources: []string{"quantum_flux"},
 		},
 		// === 21: TRANSCENDENT AGE ===

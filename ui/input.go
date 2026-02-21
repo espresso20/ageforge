@@ -112,7 +112,7 @@ func cmdHelp(args []string) CommandResult {
   [cyan]save[-] [name]                 - Save game (default: autosave)
   [cyan]load[-] [name]                 - Load game (default: autosave)
   [cyan]saves[-]                       - List all save files
-  [cyan]speed[-] [1.0|1.5|2.0|...]     - Set game speed (unlocks per age)
+  [cyan]speed[-] [1.0|1.5|2.0|...]     - Set game speed (unlocks per wonder built)
   [cyan]help[-]                        - Show this help
 
 [gold]Shortcuts:[-] g=gather, b=build, r=recruit, a=assign, u=unassign, s=status, res=research, exp=expedition, t=trade, dip=diplomacy`
@@ -517,7 +517,7 @@ func cmdSpeed(args []string, engine *game.GameEngine) CommandResult {
 		mult := engine.GetSpeedMultiplier()
 		maxSpeed := engine.GetMaxSpeed()
 		return CommandResult{
-			Message: fmt.Sprintf("Current speed: [cyan]%.1fx[-] (max: [green]%.1fx[-], +0.5x per age)", mult, maxSpeed),
+			Message: fmt.Sprintf("Current speed: [cyan]%.1fx[-] (max: [green]%.1fx[-], +0.5x per wonder built)", mult, maxSpeed),
 			Type:    "info",
 		}
 	}

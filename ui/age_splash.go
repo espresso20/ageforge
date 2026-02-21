@@ -51,9 +51,9 @@ func ShowAgeSplash(app *tview.Application, pages *tview.Pages, oldAge, newAge st
 	fmt.Fprintf(&sb, "\n")
 
 	// Show new unlocks
+	allBuildings := config.BuildingByKey()
 	if len(newDef.UnlockBuildings) > 0 {
 		bNames := make([]string, 0, len(newDef.UnlockBuildings))
-		allBuildings := config.BuildingByKey()
 		for _, bKey := range newDef.UnlockBuildings {
 			if def, ok := allBuildings[bKey]; ok {
 				bNames = append(bNames, def.Name)
@@ -68,6 +68,15 @@ func ShowAgeSplash(app *tview.Application, pages *tview.Pages, oldAge, newAge st
 	}
 	if len(newDef.UnlockVillagers) > 0 {
 		fmt.Fprintf(&sb, "[yellow]New Villagers:[-] %s\n", strings.Join(newDef.UnlockVillagers, ", "))
+	}
+
+	// Highlight the wonder for this age
+	for _, bKey := range newDef.UnlockBuildings {
+		if def, ok := allBuildings[bKey]; ok && def.Category == "wonder" {
+			fmt.Fprintf(&sb, "\n[gold::b]★ Wonder Unlocked: %s[-]\n", def.Name)
+			fmt.Fprintf(&sb, "[white]Build it to unlock +0.5x game speed![-]\n")
+			break
+		}
 	}
 
 	fmt.Fprintf(&sb, "\n[gray]Press any key to continue[-]")

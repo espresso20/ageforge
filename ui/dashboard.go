@@ -34,12 +34,14 @@ type Dashboard struct {
 	statsTab    *StatsTab
 	wikiTab     *WikiTab
 	mapTab      *MapTab
+	wondersTab  *WondersTab
 	logsTab     *LogsTab
 
 	// Shared UI
-	logTV      *tview.TextView
-	miniMap    *MiniMap
-	statusTV   *tview.TextView
+	logTV       *tview.TextView
+	miniMap     *MiniMap
+	wonderPanel *WonderPanel
+	statusTV    *tview.TextView
 	ageTV      *tview.TextView
 	inputField *tview.InputField
 	lastAge          string
@@ -59,7 +61,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		engine:   engine,
 		pages:    pages,
 		stopCh:   make(chan struct{}),
-		tabNames: []string{"Economy", "Research", "Military", "Trade", "Stats", "Wiki", "Map", "Logs"},
+		tabNames: []string{"Economy", "Research", "Military", "Trade", "Stats", "Wiki", "Map", "Wonders", "Logs"},
 	}
 	d.build()
 	return d
@@ -74,6 +76,7 @@ func (d *Dashboard) build() {
 	d.statsTab = NewStatsTab()
 	d.wikiTab = NewWikiTab()
 	d.mapTab = NewMapTab()
+	d.wondersTab = NewWondersTab()
 	d.logsTab = NewLogsTab()
 
 	// Tab bar
@@ -91,6 +94,7 @@ func (d *Dashboard) build() {
 	d.tabPages.AddPage("Stats", d.statsTab.Root(), true, false)
 	d.tabPages.AddPage("Wiki", d.wikiTab.Root(), true, false)
 	d.tabPages.AddPage("Map", d.mapTab.Root(), true, false)
+	d.tabPages.AddPage("Wonders", d.wondersTab.Root(), true, false)
 	d.tabPages.AddPage("Logs", d.logsTab.Root(), true, false)
 
 	// Log panel
@@ -102,6 +106,9 @@ func (d *Dashboard) build() {
 
 	// Mini-map panel (replaces Quick Reference)
 	d.miniMap = NewMiniMap()
+
+	// Wonder panel (current age's wonder)
+	d.wonderPanel = NewWonderPanel()
 
 	// Status bar
 	d.statusTV = tview.NewTextView().
@@ -172,9 +179,10 @@ func (d *Dashboard) build() {
 		}
 	})
 
-	// Bottom area: log + mini-map side by side
+	// Bottom area: log + wonder panel + mini-map side by side
 	d.bottomArea = tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(d.logTV, 0, 1, false).
+		AddItem(d.wonderPanel.Primitive(), 0, 1, false).
 		AddItem(d.miniMap.Primitive(), 0, 1, false)
 
 	// Main content area: tab content + bottom
@@ -220,13 +228,16 @@ func (d *Dashboard) build() {
 		case tcell.KeyF7:
 			d.switchTab(6)
 			return nil
-		case tcell.KeyF9:
+		case tcell.KeyF8:
 			d.switchTab(7)
+			return nil
+		case tcell.KeyF9:
+			d.switchTab(8)
 			return nil
 		}
 
 		// When logs tab is active, intercept navigation keys
-		if d.activeTab == 7 {
+		if d.activeTab == 8 {
 			switch event.Key() {
 			case tcell.KeyPgUp:
 				d.logsTab.ScrollUp()
@@ -291,7 +302,7 @@ func (d *Dashboard) switchTab(index int) {
 
 func (d *Dashboard) updateTabBar() {
 	var parts []string
-	tabKeys := map[int]string{0: "F1", 1: "F2", 2: "F3", 3: "F4", 4: "F5", 5: "F6", 6: "F7", 7: "F9"}
+	tabKeys := map[int]string{0: "F1", 1: "F2", 2: "F3", 3: "F4", 4: "F5", 5: "F6", 6: "F7", 7: "F8", 8: "F9"}
 	for i, name := range d.tabNames {
 		key := tabKeys[i]
 		if i == d.activeTab {
@@ -355,6 +366,7 @@ func (d *Dashboard) refresh() {
 	d.refreshLog(state)
 	d.toastTV.SetText(d.toastMgr.GetCurrent())
 	d.miniMap.UpdateState(state)
+	d.wonderPanel.UpdateState(state)
 
 	// Only refresh the active tab
 	switch d.activeTab {
@@ -373,6 +385,8 @@ func (d *Dashboard) refresh() {
 	case 6:
 		d.mapTab.Refresh(state)
 	case 7:
+		d.wondersTab.Refresh(state)
+	case 8:
 		d.logsTab.Refresh(state)
 	}
 }
@@ -391,7 +405,7 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		speedStr = fmt.Sprintf("  [yellow]%.1fx[-]", state.SpeedMultiplier)
 	}
 	d.statusTV.SetText(fmt.Sprintf(
-		"[gold]%s[-]%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]F1-F7,F9=Tabs  ESC=Menu[-]",
+		"[gold]%s[-]%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]F1-F9=Tabs  ESC=Menu[-]",
 		state.AgeName, prestigeStr, state.Tick, nextAgeStr, speedStr,
 		state.Villagers.TotalPop, state.Villagers.MaxPop,
 	))
