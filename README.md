@@ -78,7 +78,7 @@ go build -o ageforge .
 # Quick compile check (build + vet)
 ./dev.sh check
 
-# Build + vet + run tests
+# Build + vet + run the full test suite (formatted output)
 ./dev.sh test
 
 # Build + run the game
@@ -94,11 +94,77 @@ go build -o ageforge .
 Or use `make`:
 
 ```bash
-make check    # build + vet
-make test     # build + vet + tests
-make run      # build + run
-make clean    # remove binary
+make check      # build + vet
+make test       # build + vet + tests (formatted output)
+make test-raw   # build + vet + tests (raw go test -v, for CI/piping)
+make run        # build + run
+make clean      # remove binary
+make release    # cross-compile for darwin/linux/windows
 ```
+
+### Running Tests
+
+The test suite covers all game systems with **74 tests** across 10 test files:
+
+| File | Tests | What it covers |
+|------|-------|----------------|
+| `resources_test.go` | 7 | Add, storage cap, remove, pay/afford, rates, unlock, save/load |
+| `buildings_test.go` | 5 | Unlock, cost scaling, pop capacity, get all, load counts |
+| `villagers_test.go` | 9 | Recruit, cap limits, unlock, assign/unassign, food drain, production, soldiers, save/load |
+| `research_test.go` | 9 | Start, afford check, age gating, prereqs, tick completion, bonuses, cancel, duplicate, save/load |
+| `milestones_test.go` | 8 | First shelter, population, age gating, chains, titles, snapshots, hidden visibility, save/load |
+| `prestige_test.go` | 5 | Can prestige, point calc, diminishing returns, level grants, save/load |
+| `progress_test.go` | 5 | Age order, next age, display names, advancement check, requirements |
+| `bus_test.go` | 4 | Subscribe/publish, multiple subscribers, no subscribers, event isolation |
+| `events_test.go` | 3 | Inject event, expiration, save/load |
+| `engine_test.go` | 19 | Full integration: init, resources, gather, build, recruit, assign, research, cancel, state consistency, speed, reset, milestone events, chain events, build multiple, save/load |
+
+**Run the suite:**
+
+```bash
+./dev.sh test
+# or
+make test
+```
+
+Output shows a per-test checklist with pass/fail indicators, then a summary:
+
+```
+  ✓ TestBuildingManager_UnlockAndCount (0.00s)
+  ✓ TestBuildingManager_CostScaling (0.00s)
+  ✗ TestSomething_Broken (0.00s)
+
+━━━ Test Summary ━━━
+
+Packages:
+  ✓ game (0.18s)
+
+Results:  73 passed  1 failed  0 skipped  (74 total)
+
+Failures:
+  ✗ TestSomething_Broken
+    → some_test.go:42 → expected 10, got 5
+```
+
+**Run a single test:**
+
+```bash
+go test ./game/ -run TestEngine_BuildMultiple -v
+```
+
+**Run tests for one package with raw output:**
+
+```bash
+go test ./game/ -v -count=1
+```
+
+**Common test patterns used:**
+
+- Tests create isolated managers (`NewResourceManager()`, `NewBuildingManager()`, etc.) — no shared state
+- Resource tests must respect `BaseStorage` caps (food: 50, wood: 50, knowledge: 30) — use `AddStorage()` before `Add()` if you need large amounts
+- Milestone tests use `fullAgeOrder()` (via `NewProgressManager().GetAgeOrder()`) to get the complete age map — incomplete maps cause milestones with missing `MinAge` entries to auto-complete
+- Engine tests access internals via `ge.mu.Lock()` for setup, then use public API methods for the actual test
+- Save/load round-trip tests create a file, defer cleanup with `defer os.Remove(...)`, and verify state survives serialization
 
 ### Project Structure
 

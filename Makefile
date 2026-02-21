@@ -1,4 +1,4 @@
-.PHONY: build run clean check test all release
+.PHONY: build run clean check test vet all release
 
 # Default: build + vet + run
 all: check run
@@ -19,11 +19,13 @@ vet:
 check: build vet
 	@echo "\033[0;32m[  OK  ]\033[0m All checks passed"
 
-# Run tests
-test: build vet
-	@echo "\033[0;36m[ageforge]\033[0m Running tests..."
-	@go test ./... -v
-	@echo "\033[0;32m[  OK  ]\033[0m Tests done"
+# Run tests with formatted output (delegates to dev.sh)
+test:
+	@bash dev.sh test
+
+# Run tests (raw go test output, for CI or piping)
+test-raw: build vet
+	@go test ./... -v -count=1
 
 # Run the game
 run: build
@@ -32,6 +34,7 @@ run: build
 # Clean build artifacts
 clean:
 	@rm -f ageforge
+	@rm -rf bin
 	@echo "\033[0;32m[  OK  ]\033[0m Cleaned"
 
 # Build for multiple platforms
