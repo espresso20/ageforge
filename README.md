@@ -104,20 +104,23 @@ make release    # cross-compile for darwin/linux/windows
 
 ### Running Tests
 
-The test suite covers all game systems with **74 tests** across 10 test files:
+The test suite covers all game systems with **86 tests** across 11 test files:
 
-| File | Tests | What it covers |
-|------|-------|----------------|
-| `resources_test.go` | 7 | Add, storage cap, remove, pay/afford, rates, unlock, save/load |
-| `buildings_test.go` | 5 | Unlock, cost scaling, pop capacity, get all, load counts |
-| `villagers_test.go` | 9 | Recruit, cap limits, unlock, assign/unassign, food drain, production, soldiers, save/load |
-| `research_test.go` | 9 | Start, afford check, age gating, prereqs, tick completion, bonuses, cancel, duplicate, save/load |
-| `milestones_test.go` | 8 | First shelter, population, age gating, chains, titles, snapshots, hidden visibility, save/load |
-| `prestige_test.go` | 5 | Can prestige, point calc, diminishing returns, level grants, save/load |
-| `progress_test.go` | 5 | Age order, next age, display names, advancement check, requirements |
-| `bus_test.go` | 4 | Subscribe/publish, multiple subscribers, no subscribers, event isolation |
-| `events_test.go` | 3 | Inject event, expiration, save/load |
-| `engine_test.go` | 19 | Full integration: init, resources, gather, build, recruit, assign, research, cancel, state consistency, speed, reset, milestone events, chain events, build multiple, save/load |
+| File | Pkg | Tests | What it covers |
+|------|-----|-------|----------------|
+| `config/validate_test.go` | config | 12 | Cross-validates all config keys: ages, buildings, techs, milestones, trade, events, upgrades reference valid keys; no duplicates; all buildings/resources reachable; effect targets valid |
+| `game/resources_test.go` | game | 7 | Add, storage cap, remove, pay/afford, rates, unlock, save/load |
+| `game/buildings_test.go` | game | 5 | Unlock, cost scaling, pop capacity, get all, load counts |
+| `game/villagers_test.go` | game | 9 | Recruit, cap limits, unlock, assign/unassign, food drain, production, soldiers, save/load |
+| `game/research_test.go` | game | 9 | Start, afford check, age gating, prereqs, tick completion, bonuses, cancel, duplicate, save/load |
+| `game/milestones_test.go` | game | 8 | First shelter, population, age gating, chains, titles, snapshots, hidden visibility, save/load |
+| `game/prestige_test.go` | game | 5 | Can prestige, point calc, diminishing returns, level grants, save/load |
+| `game/progress_test.go` | game | 5 | Age order, next age, display names, advancement check, requirements |
+| `game/bus_test.go` | game | 4 | Subscribe/publish, multiple subscribers, no subscribers, event isolation |
+| `game/events_test.go` | game | 3 | Inject event, expiration, save/load |
+| `game/engine_test.go` | game | 19 | Full integration: init, resources, gather, build, recruit, assign, research, cancel, state consistency, speed, reset, milestone events, chain events, build multiple, save/load |
+
+The **config validation tests** are the safety net that would have caught typos like `"foods"` instead of `"food"` or `"woodcutter_camps"` instead of `"woodcutter_camp"`. They cross-reference every string key in every config file against the canonical key lists, so a bad key anywhere in ages, buildings, techs, milestones, trade routes, events, or upgrades will fail the test.
 
 **Run the suite:**
 

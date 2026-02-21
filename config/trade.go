@@ -77,7 +77,7 @@ func BaseExchangeRates() []ExchangeRateDef {
 		{From: "gold", To: "crypto", BaseRate: 0.04, MinAge: "cyberpunk_age"},
 
 		// Space Age+
-		{From: "exotic_matter", To: "gold", BaseRate: 50.0, MinAge: "space_age"},
+		{From: "dark_matter", To: "gold", BaseRate: 50.0, MinAge: "space_age"},
 		{From: "quantum_flux", To: "gold", BaseRate: 100.0, MinAge: "quantum_age"},
 	}
 }
@@ -186,7 +186,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			Name: "Fusion Export", Key: "fusion_export",
 			MinAge: "fusion_age", RequiredBld: "fusion_reactor", MinCount: 1,
 			TicksPerRun: 12,
-			Export:       map[string]float64{"energy": 200},
+			Export:       map[string]float64{"electricity": 200},
 			Import:       map[string]float64{"gold": 1000},
 			Description:  "Export fusion energy to nearby civilizations.",
 		},
@@ -195,14 +195,14 @@ func BaseTradeRoutes() []TradeRouteDef {
 			MinAge: "space_age", RequiredBld: "warp_gate", MinCount: 1,
 			TicksPerRun: 15,
 			Export:       map[string]float64{"gold": 500},
-			Import:       map[string]float64{"exotic_matter": 200},
+			Import:       map[string]float64{"dark_matter": 200},
 			Description:  "Trade across warp gates for exotic matter.",
 		},
 		{
 			Name: "Stellar Exchange", Key: "stellar_exchange",
 			MinAge: "galactic_age", RequiredBld: "galactic_hub", MinCount: 1,
 			TicksPerRun: 20,
-			Export:       map[string]float64{"exotic_matter": 100},
+			Export:       map[string]float64{"dark_matter": 100},
 			Import:       map[string]float64{"gold": 2000},
 			Description:  "Conduct interstellar trade at galactic scale.",
 		},
@@ -251,7 +251,7 @@ func BaseFactions() []FactionDef {
 		},
 		{
 			Name: "Stellar Federation", Key: "stellar_federation",
-			MinAge: "space_age", Specialty: "exotic_matter", TradeBonus: 0.20,
+			MinAge: "space_age", Specialty: "dark_matter", TradeBonus: 0.20,
 			Description: "An interstellar alliance of spacefaring civilizations.",
 		},
 		{
