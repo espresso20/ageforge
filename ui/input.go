@@ -229,7 +229,7 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 
 	return CommandResult{
 		Message: fmt.Sprintf("Logs exported to %s (%d entries)", filename, len(logs)),
-		Type:    "success",
+		Type:    "info",
 	}
 }
 
@@ -454,7 +454,7 @@ func cmdSave(args []string, engine *game.GameEngine) CommandResult {
 	if err := engine.SaveGame(name); err != nil {
 		return CommandResult{Message: fmt.Sprintf("Save failed: %v", err), Type: "error"}
 	}
-	return CommandResult{Message: fmt.Sprintf("Game saved as '%s'", name), Type: "success"}
+	return CommandResult{Message: fmt.Sprintf("Game saved as '%s'", name), Type: "info"}
 }
 
 func cmdLoad(args []string, engine *game.GameEngine) CommandResult {
@@ -465,7 +465,7 @@ func cmdLoad(args []string, engine *game.GameEngine) CommandResult {
 	if err := engine.LoadGame(name); err != nil {
 		return CommandResult{Message: fmt.Sprintf("Load failed: %v", err), Type: "error"}
 	}
-	return CommandResult{Message: fmt.Sprintf("Game loaded from '%s'", name), Type: "success"}
+	return CommandResult{Message: fmt.Sprintf("Game loaded from '%s'", name), Type: "info"}
 }
 
 func cmdRates(engine *game.GameEngine) CommandResult {

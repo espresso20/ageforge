@@ -166,7 +166,7 @@ func (d *Dashboard) build() {
 				return
 			}
 			result := HandleCommand(text, d.engine)
-			if result.Message != "" {
+			if result.Message != "" && result.Type != "success" {
 				d.engine.AddLog(result.Type, result.Message)
 			}
 		}
