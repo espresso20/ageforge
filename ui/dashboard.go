@@ -454,11 +454,18 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 
 func (d *Dashboard) refreshLog(state game.GameState) {
 	var sb strings.Builder
-	start := 0
-	if len(state.Log) > 20 {
-		start = len(state.Log) - 20
+	// Filter to only user-facing entries (skip debug)
+	var visible []game.LogEntry
+	for _, entry := range state.Log {
+		if entry.Type != "debug" {
+			visible = append(visible, entry)
+		}
 	}
-	for _, entry := range state.Log[start:] {
+	start := 0
+	if len(visible) > 20 {
+		start = len(visible) - 20
+	}
+	for _, entry := range visible[start:] {
 		color := "white"
 		switch entry.Type {
 		case "success":
@@ -469,6 +476,8 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 			color = "red"
 		case "event":
 			color = "gold"
+		case "info":
+			color = "cyan"
 		}
 		fmt.Fprintf(&sb, "[gray]T%d[-] [%s]%s[-]\n", entry.Tick, color, entry.Message)
 	}

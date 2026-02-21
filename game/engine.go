@@ -670,6 +670,7 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 	actual := ge.Resources.Add(resource, amount)
 	ge.Stats.RecordGather(resource, amount)
 	ge.addLog("debug", fmt.Sprintf("Gather: %s +%.1f (total: %.1f)", resource, amount, actual))
+	ge.addLog("success", fmt.Sprintf("Gathered %.0f %s", amount, resource))
 	return actual, nil
 }
 
