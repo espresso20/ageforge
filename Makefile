@@ -1,4 +1,4 @@
-.PHONY: build run clean check test vet all release
+.PHONY: build run clean check test vet validate all release
 
 # Default: build + vet + run
 all: check run
@@ -15,8 +15,20 @@ vet:
 	@go vet ./...
 	@echo "\033[0;32m[  OK  ]\033[0m go vet passed"
 
-# Build + vet (no run)
-check: build vet
+# Validate config keys (fast — catches typos in resource/building/tech/age keys)
+validate:
+	@echo "\033[0;36m[ageforge]\033[0m Validating config keys..."
+	@go test ./config/ -count=1 -run TestConfig 2>&1 | \
+		if grep -q "^ok"; then \
+			echo "\033[0;32m[  OK  ]\033[0m Config keys valid"; \
+		else \
+			go test ./config/ -v -count=1 -run TestConfig 2>&1 | grep -A20 "FAIL\|Bad\|Orphaned\|Duplicate"; \
+			echo "\033[0;31m[ FAIL ]\033[0m Config validation failed — see errors above"; \
+			exit 1; \
+		fi
+
+# Build + vet + validate config (no run)
+check: build vet validate
 	@echo "\033[0;32m[  OK  ]\033[0m All checks passed"
 
 # Run tests with formatted output (delegates to dev.sh)

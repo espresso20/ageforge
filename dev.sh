@@ -175,6 +175,20 @@ step_test() {
     fi
 }
 
+step_validate() {
+    log "Validating config keys..."
+    if output=$(go test ./config/ -count=1 -run TestConfig 2>&1); then
+        ok "Config keys valid"
+    else
+        fail "Config validation failed:"
+        # Re-run verbose to show the helpful error messages
+        go test ./config/ -v -count=1 -run TestConfig 2>&1 | grep -E "^\s+(Bad|Orphaned|Duplicate|File:|Age:|Building:|Tech:|Milestone:|Route:|Event:|Upgrade:|Faction:|Field:|Got:|Fix:|Chain:|Resource:|Rate:|did you mean)" | while IFS= read -r line; do
+            echo "  $line"
+        done
+        return 1
+    fi
+}
+
 step_run() {
     log "Starting AgeForge..."
     echo ""
@@ -187,6 +201,7 @@ case "$cmd" in
     check)
         step_build
         step_vet
+        step_validate
         ok "All checks passed — ready to run"
         ;;
     test)
