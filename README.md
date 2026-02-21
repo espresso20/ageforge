@@ -66,6 +66,78 @@ go build -o ageforge .
 - Arrow keys / PgUp/PgDn — navigate wiki (in Wiki tab)
 - v — toggle verbose logs (in Logs tab)
 
-## Requirements
+## Contributing
 
-- Go 1.23+ to build from source
+### Requirements
+
+- Go 1.23+
+
+### Dev Scripts
+
+```bash
+# Quick compile check (build + vet)
+./dev.sh check
+
+# Build + vet + run tests
+./dev.sh test
+
+# Build + run the game
+./dev.sh run
+
+# Build + vet + run (default)
+./dev.sh
+
+# Auto-rebuild on file changes (requires: brew install fswatch)
+./dev.sh watch
+```
+
+Or use `make`:
+
+```bash
+make check    # build + vet
+make test     # build + vet + tests
+make run      # build + run
+make clean    # remove binary
+```
+
+### Project Structure
+
+```
+config/     Data definitions (resources, buildings, techs, ages, milestones).
+            Pure data, no logic. All content is config-driven.
+game/       Game engine, managers, tick loop. No UI imports.
+ui/         tview-based TUI. Reads GameState snapshots only.
+main.go     Entry point, wires engine + UI.
+```
+
+### Key Patterns
+
+- **Config-Driven Content**: All game content (buildings, techs, ages, milestones, events, trade routes) is defined as data in `config/`. Add new content there, not in game logic.
+- **Manager Pattern**: Each system (resources, buildings, villagers, research, military, milestones, trade, diplomacy, prestige) has its own manager struct in `game/` with a clear API.
+- **GameState Snapshot**: `engine.GetState()` returns a read-only snapshot. UI reads snapshots, never touches engine internals.
+- **Event Bus**: Systems communicate via `game.EventBus` (pub/sub). Subscribe in `ui/dashboard.go` for toasts, in managers for cross-system reactions.
+- **No Global State**: Pass dependencies explicitly. No singletons.
+
+### Adding Content
+
+**New building**: Add a `BuildingDef` to `config/buildings.go`, unlock it in the appropriate age in `config/ages.go`.
+
+**New milestone**: Add a `MilestoneDef` to `config/milestones.go` with a `Category`. If it belongs in a chain, add its key to the chain's `MilestoneKeys` in `MilestoneChains()`.
+
+**New age**: Add an `AgeDef` to `config/ages.go` with resource/building requirements, unlocks, and wonder. Add a matching age milestone to `config/milestones.go`.
+
+**New tech**: Add a `TechDef` to `config/techs.go` with age gating and prerequisites.
+
+**New random event**: Add an `EventDef` to `config/events.go` with sentiment, weight, cooldown, and effects.
+
+### Important: Event Bus Deadlock
+
+Bus handlers run synchronously under the engine's write lock. **Never call `engine.GetState()` or any lock-acquiring method inside a bus subscriber.** Use `config.*ByKey()` functions (pure data, no locks) for lookups in handlers.
+
+### Conventions
+
+- Package names: lowercase, single word (`config`, `game`, `ui`)
+- Config keys: `snake_case` strings (`"lumber_mill"`, `"stone_age"`)
+- `float64` for resource amounts, `int` for building counts
+- Return errors up, log at boundaries
+- Keep changes minimal — don't refactor code you didn't need to touch

@@ -1,28 +1,45 @@
-.PHONY: build run clean all
+.PHONY: build run clean check test all release
 
-# Default target
-all: build
+# Default: build + vet + run
+all: check run
 
-# Build the game
+# Build the binary
 build:
-	@echo "Building AgeForge..."
-	@go build -o ageforge
+	@echo "\033[0;36m[ageforge]\033[0m Building..."
+	@go build -o ageforge .
+	@echo "\033[0;32m[  OK  ]\033[0m Build succeeded"
+
+# Run go vet
+vet:
+	@echo "\033[0;36m[ageforge]\033[0m Running go vet..."
+	@go vet ./...
+	@echo "\033[0;32m[  OK  ]\033[0m go vet passed"
+
+# Build + vet (no run)
+check: build vet
+	@echo "\033[0;32m[  OK  ]\033[0m All checks passed"
+
+# Run tests
+test: build vet
+	@echo "\033[0;36m[ageforge]\033[0m Running tests..."
+	@go test ./... -v
+	@echo "\033[0;32m[  OK  ]\033[0m Tests done"
 
 # Run the game
 run: build
-	@echo "Running AgeForge..."
 	@./ageforge
 
 # Clean build artifacts
 clean:
-	@echo "Cleaning up..."
 	@rm -f ageforge
+	@echo "\033[0;32m[  OK  ]\033[0m Cleaned"
 
 # Build for multiple platforms
 release:
-	@echo "Building releases for multiple platforms..."
+	@echo "\033[0;36m[ageforge]\033[0m Building releases..."
+	@mkdir -p bin
 	@GOOS=darwin GOARCH=amd64 go build -o ./bin/ageforge-darwin-amd64
 	@GOOS=darwin GOARCH=arm64 go build -o ./bin/ageforge-darwin-arm64
 	@GOOS=linux GOARCH=amd64 go build -o ./bin/ageforge-linux-amd64
 	@GOOS=windows GOARCH=amd64 go build -o ./bin/ageforge-windows-amd64.exe
-	@echo "Release builds complete."
+	@echo "\033[0;32m[  OK  ]\033[0m Release builds complete"
