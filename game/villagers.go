@@ -13,8 +13,8 @@ type VillagerTypeDef struct {
 
 // VillagerManager manages population and assignments
 type VillagerManager struct {
-	types      map[string]*villagerRuntime
-	unlocked   map[string]bool
+	types       map[string]*villagerRuntime
+	unlocked    map[string]bool
 	definitions map[string]VillagerTypeDef
 }
 
@@ -32,14 +32,14 @@ func DefaultVillagerTypes() []VillagerTypeDef {
 			GatherRate: 0.35,
 		},
 		{
-			Name: "Shaman", Key: "shaman", FoodCost: 0.2,
+			Name: "Shaman", Key: "shaman", FoodCost: 0.5,
 			CanGather:  []string{"knowledge", "faith"},
-			GatherRate: 0.08,
+			GatherRate: 0.01,
 		},
 		{
-			Name: "Scholar", Key: "scholar", FoodCost: 0.2,
+			Name: "Scholar", Key: "scholar", FoodCost: 0.8,
 			CanGather:  []string{"knowledge", "culture", "data"},
-			GatherRate: 0.10,
+			GatherRate: 0.05,
 		},
 		{
 			Name: "Soldier", Key: "soldier", FoodCost: 0.25,

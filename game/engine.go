@@ -80,12 +80,12 @@ func NewGameEngine() *GameEngine {
 	}
 	ge.applyAgeUnlocks("primitive_age")
 	// Give starting resources — enough for first hut + a little food
-	ge.Resources.Add("food", 15)
-	ge.Resources.Add("wood", 12)
+	ge.Resources.Add("food", 25)
+	ge.Resources.Add("wood", 50)
 	// Startup tutorial
 	ge.addLog("event", "Welcome to AgeForge! You have nothing but your hands.")
 	ge.addLog("info", "[gold]Getting Started:[-]")
-	ge.addLog("info", "  1. [cyan]gather wood[-] — collect wood by hand")
+	ge.addLog("info", "  1. [cyan]gather wood 5[-] — collect wood by hand")
 	ge.addLog("info", "  2. [cyan]gather food[-] — forage for food")
 	ge.addLog("info", "  3. [cyan]build hut[-] — build shelter (costs 10 wood)")
 	ge.addLog("info", "  4. [cyan]recruit worker[-] — recruit your first worker")
@@ -668,9 +668,9 @@ func (ge *GameEngine) advanceAge(newAge string) {
 
 	// Reduce all resources to 25% on age transition
 	for _, r := range ge.Resources.resources {
-		r.Amount *= 0.25
+		r.Amount *= 0.10
 	}
-	ge.addLog("info", "Age transition: resources reduced to 25%")
+	ge.addLog("info", "Age transition: resources reduced to 10%")
 
 	oldName := ge.progress.GetAgeName(oldAge)
 	newName := ge.progress.GetAgeName(newAge)
@@ -682,7 +682,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// Notify player about the wonder available in this age
 	for _, bKey := range unlocks.UnlockBuildings {
 		if def, ok := ge.Buildings.defs[bKey]; ok && def.Category == "wonder" {
-			ge.addLog("event", fmt.Sprintf("★ Wonder available: %s — build it to unlock +0.5x speed!", def.Name))
+			ge.addLog("event", fmt.Sprintf("★ Wonder available: %s — build it to unlock a permanent +0.5x speed bonus!", def.Name))
 			break
 		}
 	}
@@ -1211,19 +1211,19 @@ func (ge *GameEngine) GetState() GameState {
 	}
 
 	return GameState{
-		Tick:             ge.tick,
-		Age:              ge.age,
-		AgeName:          ge.progress.GetAgeName(ge.age),
-		NextAge:          nextAge,
-		NextAgeName:      nextAgeName,
-		NextAgeResReqs:   nextAgeResReqs,
-		NextAgeBldReqs:   nextAgeBldReqs,
-		Resources:        ge.Resources.Snapshot(),
-		Buildings:        ge.Buildings.Snapshot(ge.Resources),
-		BuildQueue:       queue,
-		Villagers:        ge.Villagers.Snapshot(popCap),
-		Research:         ge.Research.Snapshot(ge.age, ageOrder),
-		Military:         ge.Military.Snapshot(ge.age, ageOrder, soldierCount, militaryBonus, expeditionBonus),
+		Tick:           ge.tick,
+		Age:            ge.age,
+		AgeName:        ge.progress.GetAgeName(ge.age),
+		NextAge:        nextAge,
+		NextAgeName:    nextAgeName,
+		NextAgeResReqs: nextAgeResReqs,
+		NextAgeBldReqs: nextAgeBldReqs,
+		Resources:      ge.Resources.Snapshot(),
+		Buildings:      ge.Buildings.Snapshot(ge.Resources),
+		BuildQueue:     queue,
+		Villagers:      ge.Villagers.Snapshot(popCap),
+		Research:       ge.Research.Snapshot(ge.age, ageOrder),
+		Military:       ge.Military.Snapshot(ge.age, ageOrder, soldierCount, militaryBonus, expeditionBonus),
 		Milestones: ge.Milestones.Snapshot(MilestoneSnapshotParams{
 			Tick:            ge.tick,
 			Age:             ge.age,
@@ -1238,16 +1238,16 @@ func (ge *GameEngine) GetState() GameState {
 			ResearchedTechs: ge.getResearchedTechMap(),
 			activeEvents:    ge.Events.GetActive(),
 		}),
-		ActiveEvents:     ge.Events.GetActive(),
-		Prestige:         prestigeSnap,
-		Trade:            ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings),
-		Diplomacy:        ge.Diplomacy.Snapshot(ge.age, ageOrder),
-		Log:              logCopy,
-		Stats:            ge.Stats.Snapshot(),
-		SaveExists:       SaveExists("autosave"),
-		TickSpeedBonus:   ge.tickSpeedBonus,
-		TickIntervalMs:   int(tickInterval.Milliseconds()),
-		SpeedMultiplier:  speedMult,
+		ActiveEvents:    ge.Events.GetActive(),
+		Prestige:        prestigeSnap,
+		Trade:           ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings),
+		Diplomacy:       ge.Diplomacy.Snapshot(ge.age, ageOrder),
+		Log:             logCopy,
+		Stats:           ge.Stats.Snapshot(),
+		SaveExists:      SaveExists("autosave"),
+		TickSpeedBonus:  ge.tickSpeedBonus,
+		TickIntervalMs:  int(tickInterval.Milliseconds()),
+		SpeedMultiplier: speedMult,
 	}
 }
 
