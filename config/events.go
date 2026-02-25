@@ -246,6 +246,16 @@ func RandomEvents() []EventDef {
 			},
 		},
 		{
+			Name: "Crypto Winter", Key: "crypto_winter",
+			MinAge: "cyberpunk_age", Weight: 8, MinTick: 700, Cooldown: 300,
+			Duration: 14, Sentiment: "bad",
+			Description: "Cryptocurrency values plumment amid a flash crash.",
+			LogMessage:  "Crypto flash crash! Crypto tanks for 14 ticks.",
+			Effects: []Effect{
+				{Type: "steal_resource", Target: "crypto", Value: 4.5},
+			},
+		},
+		{
 			Name: "Plasma Storm", Key: "plasma_storm",
 			MinAge: "fusion_age", Weight: 5, MinTick: 800, Cooldown: 220,
 			Duration: 10, Sentiment: "mixed",
