@@ -15,7 +15,7 @@ CLI idle/clicker empire builder game built with Go + tview/tcell. 22 ages, 80 bu
 - **VillagerManager** - 8 types with food drain, assignments, idle tracking
 - **ResearchManager** - 52 techs with prerequisites, age gating, permanent bonuses
 - **MilitaryManager** - 15 expeditions with risk/reward, soldiers, loot
-- **EventManager** - 27 random events with sentiment streaks, timed effects, InjectEvent() for chain boosts
+- **EventManager** - 28 random events with sentiment streaks, timed effects, InjectEvent() for chain boosts
 - **MilestoneManager** - 33 milestones in 5 categories, 5 chains with speed boosts/titles, progress tracking, hidden milestone visibility
 - **TradeManager** - 15 trade routes, resource exchange with supply/demand pressure
 - **DiplomacyManager** - 6 NPC factions with opinion, status, trade bonuses
