@@ -13,13 +13,13 @@ import (
 
 // TerrainPalette defines the color palette for a terrain era
 type TerrainPalette struct {
-	Ground, GroundAlt                      color.RGBA
-	Water, WaterLight, WaterDeep           color.RGBA
-	Tree, TreeDark, TreeLight              color.RGBA
-	Road, RoadEdge                         color.RGBA
-	Hill, HillLight                        color.RGBA
-	Farmland, FarmAlt                      color.RGBA
-	Accent1, Accent2                       color.RGBA // era-specific accents
+	Ground, GroundAlt            color.RGBA
+	Water, WaterLight, WaterDeep color.RGBA
+	Tree, TreeDark, TreeLight    color.RGBA
+	Road, RoadEdge               color.RGBA
+	Hill, HillLight              color.RGBA
+	Farmland, FarmAlt            color.RGBA
+	Accent1, Accent2             color.RGBA // era-specific accents
 }
 
 // MapGenConfig holds parameters for map generation
@@ -216,103 +216,103 @@ type BuildingVisual struct {
 
 var buildingVisuals = map[string]BuildingVisual{
 	// ── Housing (greens/browns) ──
-	"hut":              {ShapeCircle, c(160, 120, 70), c(190, 170, 60)},
-	"house":            {ShapeSquare, c(140, 90, 50), c(170, 80, 50)},
-	"manor":            {ShapeTriangle, c(140, 140, 130), c(130, 40, 35)},
-	"apartment":        {ShapeTower, c(180, 165, 140), c(120, 85, 55)},
-	"skyscraper":       {ShapeTower, c(130, 160, 190), c(220, 220, 225)},
-	"neon_tower":       {ShapeTower, c(60, 20, 80), c(255, 50, 150)},
-	"orbital_habitat":  {ShapeCircle, c(180, 185, 190), c(140, 180, 220)},
+	"hut":             {ShapeCircle, c(160, 120, 70), c(190, 170, 60)},
+	"house":           {ShapeSquare, c(140, 90, 50), c(170, 80, 50)},
+	"manor":           {ShapeTriangle, c(140, 140, 130), c(130, 40, 35)},
+	"apartment":       {ShapeTower, c(180, 165, 140), c(120, 85, 55)},
+	"skyscraper":      {ShapeTower, c(130, 160, 190), c(220, 220, 225)},
+	"neon_tower":      {ShapeTower, c(60, 20, 80), c(255, 50, 150)},
+	"orbital_habitat": {ShapeCircle, c(180, 185, 190), c(140, 180, 220)},
 
 	// ── Production (warm yellows/oranges/distinct) ──
-	"gathering_camp":   {ShapeTriangle, c(100, 110, 50), c(110, 80, 40)},
-	"woodcutter_camp":  {ShapeTriangle, c(120, 80, 40), c(40, 80, 30)},
-	"stone_pit":        {ShapeWide, c(130, 130, 125), c(90, 90, 85)},
-	"farm":             {ShapeWide, c(140, 170, 50), c(190, 170, 40)},
-	"lumber_mill":      {ShapeLShape, c(120, 80, 40), c(80, 55, 30)},
-	"quarry":           {ShapeWide, c(120, 115, 100), c(100, 80, 55)},
-	"mine":             {ShapeDiamond, c(80, 80, 80), c(190, 150, 40)},
-	"market":           {ShapeDiamond, c(200, 170, 40), c(180, 50, 40)},
-	"coal_mine":        {ShapeDiamond, c(55, 50, 45), c(200, 120, 30)},
-	"smithy":           {ShapeLShape, c(140, 40, 30), c(210, 140, 30)},
-	"forum":            {ShapeSquare, c(220, 210, 180), c(200, 170, 40)},
-	"aqueduct":         {ShapeWide, c(160, 155, 140), c(60, 100, 180)},
-	"amphitheater":     {ShapeRing, c(190, 170, 130), c(170, 90, 55)},
-	"cathedral":        {ShapeCross, c(160, 155, 140), c(200, 170, 40)},
-	"art_studio":       {ShapeSquare, c(170, 150, 190), c(190, 120, 140)},
-	"bank":             {ShapeSquare, c(200, 170, 40), c(40, 80, 50)},
-	"colony":           {ShapeSquare, c(170, 150, 110), c(80, 130, 60)},
-	"port":             {ShapeWide, c(110, 120, 135), c(100, 70, 40)},
-	"plantation":       {ShapeWide, c(40, 100, 40), c(200, 180, 40)},
-	"factory":          {ShapeLShape, c(150, 60, 40), c(110, 110, 110)},
-	"oil_well":         {ShapeTower, c(30, 30, 30), c(210, 130, 20)},
-	"power_grid":       {ShapeCross, c(200, 190, 40), c(130, 130, 130)},
-	"telegraph":        {ShapeDish, c(110, 80, 40), c(170, 110, 50)},
-	"clocktower":       {ShapeTower, c(150, 145, 130), c(200, 170, 40)},
-	"electric_mill":    {ShapeLShape, c(140, 150, 160), c(170, 110, 50)},
-	"train_station":    {ShapeWide, c(120, 80, 40), c(170, 40, 30)},
-	"reactor":          {ShapeCircle, c(140, 140, 140), c(60, 180, 60)},
-	"power_plant":      {ShapeLShape, c(160, 160, 155), c(200, 190, 40)},
-	"server_farm":      {ShapeSquare, c(30, 50, 100), c(40, 160, 60)},
-	"fiber_hub":        {ShapeHexagon, c(40, 140, 130), c(220, 220, 225)},
-	"media_center":     {ShapeSquare, c(220, 220, 225), c(60, 100, 200)},
-	"data_center":      {ShapeSquare, c(60, 70, 85), c(40, 190, 200)},
-	"smart_grid":       {ShapeCross, c(170, 175, 180), c(40, 190, 200)},
-	"augmentation_clinic": {ShapeCross, c(220, 220, 225), c(40, 220, 80)},
-	"black_market":     {ShapeDiamond, c(70, 70, 70), c(200, 40, 160)},
-	"fusion_reactor":   {ShapeCircle, c(60, 100, 200), c(240, 230, 200)},
-	"plasma_forge":     {ShapeLShape, c(220, 140, 30), c(240, 230, 200)},
-	"maglev_station":   {ShapeWide, c(170, 175, 180), c(60, 100, 200)},
-	"launch_pad":       {ShapeWide, c(160, 160, 155), c(220, 130, 30)},
-	"warp_gate":        {ShapeRing, c(60, 40, 130), c(230, 230, 240)},
-	"colony_ship":      {ShapeTriangle, c(170, 175, 180), c(60, 100, 200)},
-	"star_forge":       {ShapeHexagon, c(220, 140, 30), c(240, 230, 200)},
-	"galactic_hub":     {ShapeHexagon, c(200, 170, 40), c(60, 100, 200)},
-	"antimatter_plant": {ShapeCircle, c(60, 20, 80), c(220, 100, 160)},
-	"megastructure":    {ShapeStar, c(170, 175, 180), c(200, 170, 40)},
-	"reality_engine":   {ShapeHexagon, c(120, 50, 160), c(230, 230, 240)},
+	"gathering_camp":       {ShapeTriangle, c(100, 110, 50), c(110, 80, 40)},
+	"woodcutter_camp":      {ShapeTriangle, c(120, 80, 40), c(40, 80, 30)},
+	"stone_pit":            {ShapeWide, c(130, 130, 125), c(90, 90, 85)},
+	"farm":                 {ShapeWide, c(140, 170, 50), c(190, 170, 40)},
+	"lumber_mill":          {ShapeLShape, c(120, 80, 40), c(80, 55, 30)},
+	"quarry":               {ShapeWide, c(120, 115, 100), c(100, 80, 55)},
+	"mine":                 {ShapeDiamond, c(80, 80, 80), c(190, 150, 40)},
+	"market":               {ShapeDiamond, c(200, 170, 40), c(180, 50, 40)},
+	"coal_mine":            {ShapeDiamond, c(55, 50, 45), c(200, 120, 30)},
+	"smithy":               {ShapeLShape, c(140, 40, 30), c(210, 140, 30)},
+	"forum":                {ShapeSquare, c(220, 210, 180), c(200, 170, 40)},
+	"aqueduct":             {ShapeWide, c(160, 155, 140), c(60, 100, 180)},
+	"amphitheater":         {ShapeRing, c(190, 170, 130), c(170, 90, 55)},
+	"cathedral":            {ShapeCross, c(160, 155, 140), c(200, 170, 40)},
+	"art_studio":           {ShapeSquare, c(170, 150, 190), c(190, 120, 140)},
+	"bank":                 {ShapeSquare, c(200, 170, 40), c(40, 80, 50)},
+	"colony":               {ShapeSquare, c(170, 150, 110), c(80, 130, 60)},
+	"port":                 {ShapeWide, c(110, 120, 135), c(100, 70, 40)},
+	"plantation":           {ShapeWide, c(40, 100, 40), c(200, 180, 40)},
+	"factory":              {ShapeLShape, c(150, 60, 40), c(110, 110, 110)},
+	"oil_well":             {ShapeTower, c(30, 30, 30), c(210, 130, 20)},
+	"power_grid":           {ShapeCross, c(200, 190, 40), c(130, 130, 130)},
+	"telegraph":            {ShapeDish, c(110, 80, 40), c(170, 110, 50)},
+	"clocktower":           {ShapeTower, c(150, 145, 130), c(200, 170, 40)},
+	"electric_mill":        {ShapeLShape, c(140, 150, 160), c(170, 110, 50)},
+	"train_station":        {ShapeWide, c(120, 80, 40), c(170, 40, 30)},
+	"reactor":              {ShapeCircle, c(140, 140, 140), c(60, 180, 60)},
+	"power_plant":          {ShapeLShape, c(160, 160, 155), c(200, 190, 40)},
+	"server_farm":          {ShapeSquare, c(30, 50, 100), c(40, 160, 60)},
+	"fiber_hub":            {ShapeHexagon, c(40, 140, 130), c(220, 220, 225)},
+	"media_center":         {ShapeSquare, c(220, 220, 225), c(60, 100, 200)},
+	"data_center":          {ShapeSquare, c(60, 70, 85), c(40, 190, 200)},
+	"smart_grid":           {ShapeCross, c(170, 175, 180), c(40, 190, 200)},
+	"augmentation_clinic":  {ShapeCross, c(220, 220, 225), c(40, 220, 80)},
+	"black_market":         {ShapeDiamond, c(70, 70, 70), c(200, 40, 160)},
+	"fusion_reactor":       {ShapeCircle, c(60, 100, 200), c(240, 230, 200)},
+	"plasma_forge":         {ShapeLShape, c(220, 140, 30), c(240, 230, 200)},
+	"maglev_station":       {ShapeWide, c(170, 175, 180), c(60, 100, 200)},
+	"launch_pad":           {ShapeWide, c(160, 160, 155), c(220, 130, 30)},
+	"warp_gate":            {ShapeRing, c(60, 40, 130), c(230, 230, 240)},
+	"colony_ship":          {ShapeTriangle, c(170, 175, 180), c(60, 100, 200)},
+	"star_forge":           {ShapeHexagon, c(220, 140, 30), c(240, 230, 200)},
+	"galactic_hub":         {ShapeHexagon, c(200, 170, 40), c(60, 100, 200)},
+	"antimatter_plant":     {ShapeCircle, c(60, 20, 80), c(220, 100, 160)},
+	"megastructure":        {ShapeStar, c(170, 175, 180), c(200, 170, 40)},
+	"reality_engine":       {ShapeHexagon, c(120, 50, 160), c(230, 230, 240)},
 	"transcendence_beacon": {ShapeTower, c(210, 190, 50), c(240, 240, 240)},
 
 	// ── Research (blues/cyans) ──
-	"altar":            {ShapeDiamond, c(90, 85, 80), c(50, 70, 170)},
-	"firepit":          {ShapeCircle, c(210, 130, 30), c(180, 40, 20)},
-	"library":          {ShapeSquare, c(110, 70, 35), c(50, 70, 170)},
-	"university":       {ShapeTriangle, c(150, 145, 130), c(40, 60, 160)},
-	"observatory":      {ShapeDish, c(30, 40, 100), c(170, 175, 180)},
+	"altar":              {ShapeDiamond, c(90, 85, 80), c(50, 70, 170)},
+	"firepit":            {ShapeCircle, c(210, 130, 30), c(180, 40, 20)},
+	"library":            {ShapeSquare, c(110, 70, 35), c(50, 70, 170)},
+	"university":         {ShapeTriangle, c(150, 145, 130), c(40, 60, 160)},
+	"observatory":        {ShapeDish, c(30, 40, 100), c(170, 175, 180)},
 	"telephone_exchange": {ShapeSquare, c(110, 80, 40), c(170, 110, 50)},
-	"research_lab":     {ShapeCross, c(220, 220, 225), c(40, 80, 200)},
-	"space_station":    {ShapeRing, c(170, 175, 180), c(60, 100, 200)},
-	"ai_lab":           {ShapeHexagon, c(25, 40, 100), c(40, 190, 200)},
-	"quantum_computer": {ShapeHexagon, c(60, 30, 120), c(140, 60, 200)},
+	"research_lab":       {ShapeCross, c(220, 220, 225), c(40, 80, 200)},
+	"space_station":      {ShapeRing, c(170, 175, 180), c(60, 100, 200)},
+	"ai_lab":             {ShapeHexagon, c(25, 40, 100), c(40, 190, 200)},
+	"quantum_computer":   {ShapeHexagon, c(60, 30, 120), c(140, 60, 200)},
 
 	// ── Military (reds/dark) ──
-	"barracks":         {ShapeLShape, c(120, 35, 30), c(100, 100, 100)},
-	"castle":           {ShapeSquare, c(140, 135, 120), c(70, 65, 60)},
-	"bunker":           {ShapeSquare, c(140, 140, 135), c(50, 70, 45)},
-	"missile_silo":     {ShapeTower, c(120, 120, 120), c(180, 40, 30)},
+	"barracks":     {ShapeLShape, c(120, 35, 30), c(100, 100, 100)},
+	"castle":       {ShapeSquare, c(140, 135, 120), c(70, 65, 60)},
+	"bunker":       {ShapeSquare, c(140, 140, 135), c(50, 70, 45)},
+	"missile_silo": {ShapeTower, c(120, 120, 120), c(180, 40, 30)},
 
 	// ── Storage (purples/grays) ──
-	"stash":            {ShapeCircle, c(160, 130, 90), c(120, 85, 55)},
-	"storage_pit":      {ShapeWide, c(120, 95, 60), c(100, 75, 45)},
-	"warehouse":        {ShapeSquare, c(120, 80, 40), c(110, 110, 110)},
-	"granary":          {ShapeCircle, c(200, 170, 50), c(120, 85, 55)},
-	"classical_vault":  {ShapeSquare, c(200, 195, 185), c(200, 170, 40)},
-	"keep":             {ShapeSquare, c(130, 125, 115), c(60, 55, 50)},
-	"renaissance_vault": {ShapeSquare, c(220, 210, 185), c(200, 170, 40)},
+	"stash":              {ShapeCircle, c(160, 130, 90), c(120, 85, 55)},
+	"storage_pit":        {ShapeWide, c(120, 95, 60), c(100, 75, 45)},
+	"warehouse":          {ShapeSquare, c(120, 80, 40), c(110, 110, 110)},
+	"granary":            {ShapeCircle, c(200, 170, 50), c(120, 85, 55)},
+	"classical_vault":    {ShapeSquare, c(200, 195, 185), c(200, 170, 40)},
+	"keep":               {ShapeSquare, c(130, 125, 115), c(60, 55, 50)},
+	"renaissance_vault":  {ShapeSquare, c(220, 210, 185), c(200, 170, 40)},
 	"colonial_warehouse": {ShapeSquare, c(120, 80, 40), c(160, 40, 30)},
-	"industrial_depot": {ShapeLShape, c(120, 120, 120), c(100, 75, 45)},
-	"victorian_vault":  {ShapeSquare, c(120, 35, 30), c(200, 170, 40)},
+	"industrial_depot":   {ShapeLShape, c(120, 120, 120), c(100, 75, 45)},
+	"victorian_vault":    {ShapeSquare, c(120, 35, 30), c(200, 170, 40)},
 	"electric_warehouse": {ShapeSquare, c(140, 150, 160), c(200, 190, 40)},
-	"atomic_vault":     {ShapeSquare, c(160, 160, 155), c(60, 150, 60)},
-	"modern_depot":     {ShapeSquare, c(120, 120, 125), c(60, 100, 180)},
-	"info_vault":       {ShapeSquare, c(30, 40, 90), c(100, 50, 140)},
-	"digital_archive":  {ShapeHexagon, c(60, 70, 85), c(40, 190, 200)},
-	"cyber_vault":      {ShapeDiamond, c(50, 50, 50), c(200, 40, 160)},
-	"fusion_vault":     {ShapeCircle, c(60, 100, 200), c(230, 230, 240)},
-	"orbital_depot":    {ShapeSquare, c(170, 175, 180), c(60, 100, 200)},
-	"stellar_vault":    {ShapeDiamond, c(200, 170, 40), c(60, 100, 200)},
-	"galactic_vault":   {ShapeHexagon, c(100, 50, 140), c(200, 170, 40)},
-	"quantum_vault":    {ShapeDiamond, c(60, 30, 120), c(140, 60, 200)},
+	"atomic_vault":       {ShapeSquare, c(160, 160, 155), c(60, 150, 60)},
+	"modern_depot":       {ShapeSquare, c(120, 120, 125), c(60, 100, 180)},
+	"info_vault":         {ShapeSquare, c(30, 40, 90), c(100, 50, 140)},
+	"digital_archive":    {ShapeHexagon, c(60, 70, 85), c(40, 190, 200)},
+	"cyber_vault":        {ShapeDiamond, c(50, 50, 50), c(200, 40, 160)},
+	"fusion_vault":       {ShapeCircle, c(60, 100, 200), c(230, 230, 240)},
+	"orbital_depot":      {ShapeSquare, c(170, 175, 180), c(60, 100, 200)},
+	"stellar_vault":      {ShapeDiamond, c(200, 170, 40), c(60, 100, 200)},
+	"galactic_vault":     {ShapeHexagon, c(100, 50, 140), c(200, 170, 40)},
+	"quantum_vault":      {ShapeDiamond, c(60, 30, 120), c(140, 60, 200)},
 
 	// ── Wonders (vivid, unique) ──
 	"sacred_grove":         {ShapeCircle, c(30, 120, 40), c(80, 200, 60)},
@@ -330,7 +330,7 @@ var buildingVisuals = map[string]BuildingVisual{
 	"space_program":        {ShapeStar, c(230, 230, 235), c(220, 140, 30)},
 	"global_network":       {ShapeHexagon, c(20, 60, 100), c(0, 200, 255)},
 	"world_simulation":     {ShapeHexagon, c(15, 30, 70), c(0, 180, 220)},
-	"neon_citadel":          {ShapeStar, c(40, 10, 60), c(255, 0, 180)},
+	"neon_citadel":         {ShapeStar, c(40, 10, 60), c(255, 0, 180)},
 	"stellar_cradle":       {ShapeCircle, c(220, 160, 40), c(255, 200, 80)},
 	"dyson_scaffold":       {ShapeStar, c(210, 180, 40), c(220, 140, 30)},
 	"warp_nexus":           {ShapeHexagon, c(80, 40, 160), c(160, 80, 255)},
@@ -443,9 +443,9 @@ func GenerateMapImage(cfg MapGenConfig) *image.RGBA {
 	// ═══════════════════════════════════════════
 	// 3. RIVER
 	// ═══════════════════════════════════════════
-	riverBaseX := float64(w) * 0.28
-	riverW := 3 + dl*3
-	bankW := 1 + dl
+	riverBaseX := float64(w) * 0.46
+	riverW := 5 + dl*4
+	bankW := 2 + dl
 	// No river in space/cosmic
 	if era < 7 {
 		for y := 0; y < h; y++ {
@@ -830,7 +830,7 @@ func shapeTriangle(dx, dy, r int) (inside, accent bool) {
 	}
 	// Top 40% is peaked triangle
 	mid := 0
-	peakH := r + r/3 // height of peak region
+	peakH := r + r/3  // height of peak region
 	fromTop := dy + r // distance from top
 	span := r * fromTop / peakH
 	if dx >= mid-span && dx <= mid+span {
@@ -1088,7 +1088,6 @@ func drawBuildingShape(img *image.RGBA, w, h int, b bldInfo, vis BuildingVisual,
 		}
 	}
 }
-
 
 // ─── Infrastructure drawing helpers ──────────────────────
 
