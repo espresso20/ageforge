@@ -24,9 +24,9 @@ func RandomEvents() []EventDef {
 			MinAge: "primitive_age", Weight: 15, MinTick: 20, Cooldown: 50,
 			Duration: 0, Sentiment: "good",
 			Description: "A season of plenty yields bonus food.",
-			LogMessage:  "A bountiful harvest! +25 food.",
+			LogMessage:  "A bountiful harvest! +250 food.",
 			Effects: []Effect{
-				{Type: "instant_resource", Target: "food", Value: 25},
+				{Type: "instant_resource", Target: "food", Value: 250},
 			},
 		},
 		{
