@@ -1,35 +1,92 @@
 // ── AgeForge site JS ─────────────────────────────────────────────────────────
 
-// ── Starfield canvas ─────────────────────────────────────────────────────────
+// ── Starfield canvas (multi-layer parallax + nebulae) ────────────────────────
 (function () {
   const canvas = document.getElementById("starfield");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
-  let stars = [];
 
-  function resize() {
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-    stars = Array.from({ length: 180 }, () => ({
+  // Track scroll for parallax
+  let scrollY = 0;
+  window.addEventListener("scroll", () => { scrollY = window.scrollY; }, { passive: true });
+
+  // Three depth layers: [background, mid, foreground]
+  const LAYER_DEFS = [
+    { count: 160, rMin: 0.15, rMax: 0.65, sMin: 0.03, sMax: 0.12, parallax: 0.00, aMin: 0.15, aMax: 0.50 },
+    { count:  70, rMin: 0.65, rMax: 1.35, sMin: 0.06, sMax: 0.25, parallax: 0.04, aMin: 0.30, aMax: 0.78 },
+    { count:  22, rMin: 1.35, rMax: 2.40, sMin: 0.10, sMax: 0.38, parallax: 0.11, aMin: 0.55, aMax: 1.00 },
+  ];
+
+  // Nebula blobs — fixed viewport fractions, very subtle colour clouds
+  const NEBULAE = [
+    { fx: 0.12, fy: 0.22, fr: 0.32, r: 70, g: 35, b: 155 },   // indigo upper-left
+    { fx: 0.82, fy: 0.10, fr: 0.26, r:  0, g: 75, b: 160 },   // cobalt upper-right
+    { fx: 0.55, fy: 0.68, fr: 0.38, r: 150, g: 25, b: 80 },   // ruby lower-center
+    { fx: 0.22, fy: 0.82, fr: 0.22, r: 15, g: 80, b: 120 },   // teal lower-left
+  ];
+
+  let layers = [];
+
+  function mkStars(def) {
+    return Array.from({ length: def.count }, () => ({
       x: Math.random() * canvas.width,
       y: Math.random() * canvas.height,
-      r: Math.random() * 1.4 + 0.2,
-      speed: Math.random() * 0.3 + 0.05,
-      bright: Math.random(),
+      r: def.rMin + Math.random() * (def.rMax - def.rMin),
+      speed: def.sMin + Math.random() * (def.sMax - def.sMin),
+      phase: Math.random() * Math.PI * 2,
     }));
+  }
+
+  function resize() {
+    canvas.width  = window.innerWidth;
+    canvas.height = window.innerHeight;
+    layers = LAYER_DEFS.map(def => ({ ...def, stars: mkStars(def) }));
   }
 
   function draw() {
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const t = Date.now() / 1000;
-    for (const s of stars) {
-      const alpha =
-        0.35 + 0.65 * Math.abs(Math.sin(t * s.speed + s.bright * 6.28));
+
+    // Nebulae (no parallax — ambient colour wash behind everything)
+    for (const n of NEBULAE) {
+      const cx = n.fx * canvas.width;
+      const cy = n.fy * canvas.height;
+      const r  = n.fr * Math.max(canvas.width, canvas.height);
+      const g  = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+      g.addColorStop(0,   `rgba(${n.r},${n.g},${n.b},0.048)`);
+      g.addColorStop(0.5, `rgba(${n.r},${n.g},${n.b},0.020)`);
+      g.addColorStop(1,   `rgba(${n.r},${n.g},${n.b},0)`);
+      ctx.fillStyle = g;
       ctx.beginPath();
-      ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-      ctx.fillStyle = `rgba(201,209,217,${alpha.toFixed(2)})`;
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
       ctx.fill();
     }
+
+    // Star layers — foreground layers shift more with scroll (parallax depth)
+    for (const layer of layers) {
+      for (const s of layer.stars) {
+        const sy  = ((s.y + scrollY * layer.parallax) % canvas.height + canvas.height) % canvas.height;
+        const alpha = layer.aMin + (layer.aMax - layer.aMin) *
+          Math.abs(Math.sin(t * s.speed + s.phase));
+
+        // Halo glow for the largest (foreground) stars
+        if (s.r > 1.3) {
+          const halo = ctx.createRadialGradient(s.x, sy, 0, s.x, sy, s.r * 5);
+          halo.addColorStop(0, `rgba(201,209,217,${(alpha * 0.35).toFixed(3)})`);
+          halo.addColorStop(1, "rgba(201,209,217,0)");
+          ctx.fillStyle = halo;
+          ctx.beginPath();
+          ctx.arc(s.x, sy, s.r * 5, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
+        ctx.beginPath();
+        ctx.arc(s.x, sy, s.r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(201,209,217,${alpha.toFixed(3)})`;
+        ctx.fill();
+      }
+    }
+
     requestAnimationFrame(draw);
   }
 

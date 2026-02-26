@@ -28,7 +28,7 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 html { scroll-behavior: smooth; }
 body {
-  background: var(--bg);
+  background: #070b10;
   color: var(--text);
   font-family: var(--font-ui);
   line-height: 1.6;
@@ -149,22 +149,23 @@ code {
 
 /* ── Hero ───────────────────────────────────────────────────────────────── */
 .hero {
-  position: relative;
+  position: relative; z-index: 2;
   min-height: 100vh;
   display: flex; flex-direction: column; align-items: center; justify-content: center;
   padding: 80px 24px 60px;
-  overflow: hidden;
 }
 .starfield {
-  position: absolute; inset: 0;
+  position: fixed; inset: 0;
+  width: 100vw; height: 100vh;
   pointer-events: none;
+  z-index: 0;
 }
 .scanlines {
-  position: absolute; inset: 0;
+  position: fixed; inset: 0;
   background: repeating-linear-gradient(
     to bottom,
     transparent 0px, transparent 2px,
-    rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px
+    rgba(0,0,0,0.06) 2px, rgba(0,0,0,0.06) 4px
   );
   pointer-events: none;
   z-index: 1;
@@ -313,10 +314,11 @@ code {
 
 /* ── Features ───────────────────────────────────────────────────────────── */
 .features {
+  position: relative; z-index: 2;
   padding: 100px 24px;
-  background: var(--bg2);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  background: transparent;
+  border-top: 1px solid rgba(48,54,61,0.4);
+  border-bottom: 1px solid rgba(48,54,61,0.4);
 }
 .feat-grid {
   display: grid;
@@ -324,8 +326,10 @@ code {
   gap: 20px;
 }
 .feat-card {
-  background: var(--bg3);
-  border: 1px solid var(--border);
+  background: rgba(28,33,40,0.60);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(48,54,61,0.7);
   border-radius: var(--radius-lg);
   padding: 28px;
   transition: border-color .25s, transform .25s, box-shadow .25s;
@@ -352,6 +356,7 @@ code {
 
 /* ── Ages ───────────────────────────────────────────────────────────────── */
 .ages-section {
+  position: relative; z-index: 2;
   padding: 100px 0;
   overflow: hidden;
 }
@@ -386,8 +391,10 @@ code {
   min-height: 340px;
   padding: 36px 28px 32px;
   border-radius: 4px;
-  background: var(--bg2);
-  border: 1px solid var(--border);
+  background: rgba(22,27,34,0.65);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(48,54,61,0.65);
   cursor: default;
   transition: border-color .3s, box-shadow .3s, transform .3s;
   scroll-snap-align: start;
@@ -437,8 +444,8 @@ code {
 .age-dot {
   width: 100px; height: 100px;
   border-radius: 50%;
-  background: var(--bg3);
-  border: 2px solid var(--border);
+  background: rgba(28,33,40,0.75);
+  border: 2px solid rgba(48,54,61,0.8);
   display: flex; align-items: center; justify-content: center;
   font-size: 3.4rem;
   transition: border-color .25s, box-shadow .25s, transform .3s;
@@ -478,10 +485,11 @@ code {
 
 /* ── How to Play ────────────────────────────────────────────────────────── */
 .howto {
+  position: relative; z-index: 2;
   padding: 100px 24px;
-  background: var(--bg2);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  background: transparent;
+  border-top: 1px solid rgba(48,54,61,0.4);
+  border-bottom: 1px solid rgba(48,54,61,0.4);
 }
 .steps {
   display: flex; flex-direction: column; gap: 0;
@@ -521,8 +529,10 @@ code {
   line-height: 1.7;
 }
 .codeblock {
-  background: var(--bg);
-  border: 1px solid var(--border);
+  background: rgba(13,17,23,0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(48,54,61,0.6);
   border-left: 3px solid var(--gold);
   border-radius: var(--radius);
   padding: 12px 16px;
@@ -543,6 +553,7 @@ code {
 
 /* ── Commands ───────────────────────────────────────────────────────────── */
 .commands-section {
+  position: relative; z-index: 2;
   padding: 100px 24px;
 }
 .cmd-grid {
@@ -579,9 +590,10 @@ code {
 
 /* ── Download ───────────────────────────────────────────────────────────── */
 .download {
+  position: relative; z-index: 2;
   padding: 100px 24px;
-  background: var(--bg2);
-  border-top: 1px solid var(--border);
+  background: transparent;
+  border-top: 1px solid rgba(48,54,61,0.4);
 }
 .ptabs {
   display: flex; gap: 8px; flex-wrap: wrap;
@@ -626,10 +638,11 @@ code {
 
 /* ── Community + Support ─────────────────────────────────────────────────── */
 .community-support {
+  position: relative; z-index: 2;
   padding: 80px 24px;
-  background: var(--bg2);
-  border-top: 1px solid var(--border);
-  border-bottom: 1px solid var(--border);
+  background: transparent;
+  border-top: 1px solid rgba(48,54,61,0.4);
+  border-bottom: 1px solid rgba(48,54,61,0.4);
 }
 .cs-grid {
   display: grid;
@@ -637,8 +650,10 @@ code {
   gap: 24px;
 }
 .cs-card {
-  background: var(--bg3);
-  border: 1px solid var(--border);
+  background: rgba(28,33,40,0.60);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(48,54,61,0.7);
   border-radius: var(--radius-lg);
   padding: 36px;
   display: flex;
@@ -719,8 +734,12 @@ code {
 
 /* ── Footer ─────────────────────────────────────────────────────────────── */
 .footer {
+  position: relative; z-index: 2;
   padding: 56px 24px 40px;
-  border-top: 1px solid var(--border);
+  background: rgba(7,11,16,0.55);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-top: 1px solid rgba(48,54,61,0.5);
   text-align: center;
 }
 .footer-inner { max-width: 600px; margin: 0 auto; }
