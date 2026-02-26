@@ -123,7 +123,7 @@ document.querySelectorAll("[data-anim]").forEach((el) => obs.observe(el));
 // ── Ages timeline ─────────────────────────────────────────────────────────────
 const AGES = [
   { name: 'Primitive\nAge',     icon: '🪨', era: 'primitive',   desc: 'Survival. Nothing but your hands and wits.' },
-  { name: 'Stone\nAge',         icon: '🪓', era: 'primitive',   desc: 'Crude tools of stone change everything.' },
+  { name: 'Stone\nAge',         icon: '⛏️', era: 'primitive',   desc: 'Crude tools of stone change everything.' },
   { name: 'Bronze\nAge',        icon: '🛡', era: 'ancient',     desc: 'Metalworking unlocks a new world of possibility.' },
   { name: 'Iron\nAge',          icon: '⚔️',  era: 'ancient',     desc: 'Iron tools and weapons transform society.' },
   { name: 'Classical\nAge',     icon: '🏛',  era: 'classical',   desc: 'Great empires rise. Philosophy and art flourish.' },
@@ -175,7 +175,13 @@ if (track) {
       const cards = track.querySelectorAll('.age-node');
       if (!cards.length) return;
       agesIdx = Math.max(0, Math.min(idx, cards.length - 1));
-      agesScroll.scrollTo({ left: cards[agesIdx].offsetLeft, behavior: 'smooth' });
+      // Use getBoundingClientRect so the position is correct regardless of
+      // which ancestor is the offsetParent.
+      const card = cards[agesIdx];
+      const containerRect = agesScroll.getBoundingClientRect();
+      const cardRect = card.getBoundingClientRect();
+      const scrollLeft = agesScroll.scrollLeft + (cardRect.left - containerRect.left);
+      agesScroll.scrollTo({ left: scrollLeft, behavior: 'smooth' });
     }
 
     prevBtn.addEventListener('click', () => scrollToAge(agesIdx - 1));
@@ -184,10 +190,10 @@ if (track) {
     // Keep agesIdx in sync when user swipes/scrolls manually
     agesScroll.addEventListener('scrollend', () => {
       const cards = [...track.querySelectorAll('.age-node')];
-      const mid = agesScroll.scrollLeft + agesScroll.offsetWidth / 2;
+      const containerMid = agesScroll.getBoundingClientRect().left + agesScroll.offsetWidth / 2;
       let best = 0, bestDist = Infinity;
       cards.forEach((c, i) => {
-        const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid);
+        const d = Math.abs(c.getBoundingClientRect().left + c.offsetWidth / 2 - containerMid);
         if (d < bestDist) { bestDist = d; best = i; }
       });
       agesIdx = best;
