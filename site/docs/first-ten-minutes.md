@@ -11,13 +11,20 @@ You're in the **Primitive Age**. The screen shows:
 - Age progress bar: requirements for Stone Age
 - Economy tab open by default
 
-You have 1 worker and minimal resources. Let's fix that.
+You have 0 workers and minimal resources. Let's fix that.
+
+```
+gather wood 5
+gather food 5
+``` 
+
+repeat until you have gathered enough wood to build a hut
 
 ---
 
 ## Step 1: Build housing immediately
 
-Your pop cap is 6. You need more. Build huts first — nothing else matters yet.
+Your pop cap is 6. You need more. Build huts first — realize those worker gains.
 
 ```
 build hut
@@ -25,7 +32,7 @@ build hut
 build hut
 ```
 
-While those build (3 ticks each), watch the build queue progress bar in the Economy tab. Queue a new one as soon as each finishes. **Aim for 5 huts in your first minute.**
+While those build (3 ticks each), watch the build queue progress bar in the Economy tab. Queue a new one as soon as each finishes and you have gathered enough resources to build more!. **Aim for 5 huts in your first minute.**
 
 ---
 
