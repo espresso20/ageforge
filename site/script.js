@@ -65,116 +65,41 @@ document.querySelectorAll("[data-anim]").forEach((el) => obs.observe(el));
 
 // ── Ages timeline ─────────────────────────────────────────────────────────────
 const AGES = [
-  {
-    name: "Primitive\nAge",
-    icon: "🪨",
-    desc: "Survival. Nothing but your hands and wits.",
-  },
-  { name: "Stone\nAge", icon: "🪓", desc: "Tools of stone change everything." },
-  {
-    name: "Bronze\nAge",
-    icon: "🛡",
-    desc: "Discovery of metalworking changes everything.",
-  },
-  {
-    name: "Iron\nAge",
-    icon: "⚔️",
-    desc: "Iron tools and weapons transform society.",
-  },
-  {
-    name: "Classical\nAge",
-    icon: "🏛",
-    desc: "Great empires and philosophy flourish.",
-  },
-  {
-    name: "Medieval\nAge",
-    icon: "🏰",
-    desc: "Kingdoms rise and feudalism takes hold.",
-  },
-  {
-    name: "Renaissance\nAge",
-    icon: "🎨",
-    desc: "Art, science, and exploration flourish.",
-  },
-  {
-    name: "Colonial\nAge",
-    icon: "⚓",
-    desc: "Navies and colonies reshape the world.",
-  },
-  {
-    name: "Industrial\nAge",
-    icon: "🏭",
-    desc: "Steam power drives exponential growth.",
-  },
-  {
-    name: "Victorian\nAge",
-    icon: "🎩",
-    desc: "Empires at their peak of confidence.",
-  },
-  {
-    name: "Electric\nAge",
-    icon: "⚡",
-    desc: "Electricity rewires civilization.",
-  },
-  {
-    name: "Atomic\nAge",
-    icon: "☢️",
-    desc: "The atom unlocks both power and peril.",
-  },
-  {
-    name: "Modern\nAge",
-    icon: "🌐",
-    desc: "Global infrastructure and mass production.",
-  },
-  {
-    name: "Information\nAge",
-    icon: "📡",
-    desc: "Data becomes the new resource.",
-  },
-  { name: "Digital\nAge", icon: "💻", desc: "Code shapes reality." },
-  {
-    name: "Cyberpunk\nAge",
-    icon: "🤖",
-    desc: "Megacorps and augmented streets.",
-  },
-  {
-    name: "Fusion\nAge",
-    icon: "🔬",
-    desc: "Unlimited clean energy changes everything.",
-  },
-  { name: "Space\nAge", icon: "🚀", desc: "Humanity reaches for the stars." },
-  {
-    name: "Interstellar\nAge",
-    icon: "🛸",
-    desc: "Colonizing distant systems.",
-  },
-  {
-    name: "Galactic\nAge",
-    icon: "🌌",
-    desc: "An empire that spans the galaxy.",
-  },
-  {
-    name: "Quantum\nAge",
-    icon: "⚛️",
-    desc: "Reality itself becomes programmable.",
-  },
-  {
-    name: "Transcendent\nAge",
-    icon: "✨",
-    desc: "Beyond physical form. The final age.",
-  },
+  { name: 'Primitive\nAge',     icon: '🪨', era: 'primitive',   desc: 'Survival. Nothing but your hands and wits.' },
+  { name: 'Stone\nAge',         icon: '🪓', era: 'primitive',   desc: 'Crude tools of stone change everything.' },
+  { name: 'Bronze\nAge',        icon: '🛡', era: 'ancient',     desc: 'Metalworking unlocks a new world of possibility.' },
+  { name: 'Iron\nAge',          icon: '⚔️',  era: 'ancient',     desc: 'Iron tools and weapons transform society.' },
+  { name: 'Classical\nAge',     icon: '🏛',  era: 'classical',   desc: 'Great empires rise. Philosophy and art flourish.' },
+  { name: 'Medieval\nAge',      icon: '🏰', era: 'medieval',    desc: 'Kingdoms clash. Feudalism takes hold.' },
+  { name: 'Renaissance\nAge',   icon: '🎨', era: 'renaissance', desc: 'Art, science, and exploration bloom.' },
+  { name: 'Colonial\nAge',      icon: '⚓', era: 'renaissance', desc: 'Navies and colonies reshape the known world.' },
+  { name: 'Industrial\nAge',    icon: '🏭', era: 'industrial',  desc: 'Steam power ignites exponential growth.' },
+  { name: 'Victorian\nAge',     icon: '🎩', era: 'industrial',  desc: 'Empires at their absolute peak of confidence.' },
+  { name: 'Electric\nAge',      icon: '⚡', era: 'electric',    desc: 'Electricity rewires every corner of civilization.' },
+  { name: 'Atomic\nAge',        icon: '☢️',  era: 'atomic',      desc: 'The atom unlocks both limitless power and peril.' },
+  { name: 'Modern\nAge',        icon: '🌐', era: 'atomic',      desc: 'Global infrastructure. Mass production. Superpowers.' },
+  { name: 'Information\nAge',   icon: '📡', era: 'digital',     desc: 'Data becomes the most valuable resource on Earth.' },
+  { name: 'Digital\nAge',       icon: '💻', era: 'digital',     desc: 'Code shapes reality. The physical world goes virtual.' },
+  { name: 'Cyberpunk\nAge',     icon: '🤖', era: 'cyber',       desc: 'Megacorps rule. Augmented streets glow neon.' },
+  { name: 'Fusion\nAge',        icon: '🔬', era: 'cyber',       desc: 'Clean unlimited energy. The energy crisis: solved.' },
+  { name: 'Space\nAge',         icon: '🚀', era: 'cosmic',      desc: 'Humanity escapes the cradle and reaches for the stars.' },
+  { name: 'Interstellar\nAge',  icon: '🛸', era: 'cosmic',      desc: 'Colony ships cross the void to distant star systems.' },
+  { name: 'Galactic\nAge',      icon: '🌌', era: 'cosmic',      desc: 'An empire that spans hundreds of star systems.' },
+  { name: 'Quantum\nAge',       icon: '⚛️',  era: 'cosmic',      desc: 'Reality itself becomes programmable.' },
+  { name: 'Transcendent\nAge',  icon: '✨', era: 'cosmic',      desc: 'Beyond physical form. The final age of civilisation.' },
 ];
 
-const track = document.getElementById("ages-track");
+const track = document.getElementById('ages-track');
 if (track) {
   AGES.forEach((age, i) => {
-    const node = document.createElement("div");
-    node.className = "age-node";
-    node.title = age.desc;
+    const node = document.createElement('div');
+    node.className = 'age-node';
+    node.dataset.era = age.era;
     node.innerHTML = `
       <div class="age-dot">${age.icon}</div>
-      <div class="age-order">${String(i).padStart(2, "0")}</div>
+      <div class="age-order">AGE ${String(i).padStart(2, '0')}</div>
       <div class="age-name">${age.name}</div>
+      <div class="age-desc">${age.desc}</div>
     `;
     track.appendChild(node);
   });
