@@ -14,6 +14,7 @@ var commands = []string{
 	"research", "expedition", "prestige",
 	"trade", "diplomacy", "upgrade",
 	"rates", "status", "speed", "save", "saves", "load", "help", "quit",
+	"wonder", "collect",
 }
 
 // NewAutoCompleter returns an autocomplete function for the command input field.

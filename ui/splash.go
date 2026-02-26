@@ -75,7 +75,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	sepTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[gray]──────────────────[-]")
+		SetText("[gold]══════════════════════════════════════[-]")
 
 	// Danger action list (Wipe → Quit)
 	dangerList := tview.NewList()
@@ -146,11 +146,11 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 // showWipeConfirmation shows the "are you sure?" modal before wiping data.
 func showWipeConfirmation(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, wikiServer *game.WikiServer) {
 	modal := tview.NewModal().
-		SetText("⚠  WIPE ALL DATA  ⚠\n\nThis will permanently delete ALL save files\nand reset the game to zero.\n\nPrestige, upgrades, progress — everything gone.\n\nAre you sure?").
-		AddButtons([]string{"Cancel", "WIPE EVERYTHING"}).
+		SetText("⚠  WIPE ALL DATA  ⚠\n\nThis will permanently delete ALL save files\nand reset the game to zero.\n\nPrestige, upgrades, progress — everything gone.\n\nAre you REALLY sure?").
+		AddButtons([]string{"I'm Kidding!", "NUKE IT ALL"}).
 		SetDoneFunc(func(_ int, buttonLabel string) {
 			pages.RemovePage("wipe_confirm")
-			if buttonLabel == "WIPE EVERYTHING" {
+			if buttonLabel == "NUKE IT ALL" {
 				game.WipeAllSaves()
 				engine.Reset()
 				pages.RemovePage("splash")

@@ -4,18 +4,18 @@ import "github.com/gdamore/tcell/v2"
 
 // Color theme
 var (
-	ColorBg        = tcell.ColorDefault
-	ColorFg        = tcell.ColorWhite
-	ColorTitle     = tcell.ColorGold
-	ColorAccent    = tcell.ColorDodgerBlue
-	ColorSuccess   = tcell.ColorGreen
-	ColorWarning   = tcell.ColorYellow
-	ColorError     = tcell.ColorRed
-	ColorDim       = tcell.ColorGray
-	ColorResource  = tcell.ColorTeal
-	ColorBuilding  = tcell.ColorOrangeRed
-	ColorVillager  = tcell.ColorPurple
-	ColorAge       = tcell.ColorGold
+	ColorBg       = tcell.ColorDefault
+	ColorFg       = tcell.ColorWhite
+	ColorTitle    = tcell.ColorGold
+	ColorAccent   = tcell.ColorDodgerBlue
+	ColorSuccess  = tcell.ColorGreen
+	ColorWarning  = tcell.ColorYellow
+	ColorError    = tcell.ColorRed
+	ColorDim      = tcell.ColorGray
+	ColorResource = tcell.ColorTeal
+	ColorBuilding = tcell.ColorOrangeRed
+	ColorVillager = tcell.ColorPurple
+	ColorAge      = tcell.ColorGold
 )
 
 // AgePalette defines the color theme for an age era
@@ -46,20 +46,20 @@ var AgePalettes = map[string]AgePalette{
 	"victorian_age":  {tcell.ColorRosyBrown, tcell.ColorDarkKhaki, tcell.ColorSlateGray, tcell.ColorBrown, tcell.ColorDimGray},
 	"electric_age":   {tcell.ColorYellow, tcell.ColorGold, tcell.ColorTeal, tcell.ColorOrangeRed, tcell.ColorGray},
 	// Modern: clean blue and white
-	"atomic_age":  {tcell.ColorLimeGreen, tcell.ColorGreen, tcell.ColorDarkCyan, tcell.ColorRed, tcell.ColorDarkGray},
-	"modern_age":  {tcell.ColorDodgerBlue, tcell.ColorSteelBlue, tcell.ColorTeal, tcell.ColorOrangeRed, tcell.ColorGray},
+	"atomic_age":      {tcell.ColorLimeGreen, tcell.ColorGreen, tcell.ColorDarkCyan, tcell.ColorRed, tcell.ColorDarkGray},
+	"modern_age":      {tcell.ColorDodgerBlue, tcell.ColorSteelBlue, tcell.ColorTeal, tcell.ColorOrangeRed, tcell.ColorGray},
 	"information_age": {tcell.ColorDeepSkyBlue, tcell.ColorCornflowerBlue, tcell.ColorMediumAquamarine, tcell.ColorOrangeRed, tcell.ColorLightGray},
 	// Digital: blue/cyan tech
 	"digital_age":   {tcell.ColorDarkCyan, tcell.ColorDodgerBlue, tcell.ColorMediumAquamarine, tcell.ColorDeepPink, tcell.ColorDarkSlateGray},
 	"cyberpunk_age": {tcell.ColorHotPink, tcell.ColorDarkMagenta, tcell.ColorAqua, tcell.ColorLime, tcell.ColorDarkSlateGray},
 	// Fusion/Space: blue and white
-	"fusion_age":        {tcell.ColorAquaMarine, tcell.ColorDarkCyan, tcell.ColorTurquoise, tcell.ColorOrangeRed, tcell.ColorSlateGray},
-	"space_age":         {tcell.ColorSteelBlue, tcell.ColorLightSkyBlue, tcell.ColorLightCyan, tcell.ColorOrangeRed, tcell.ColorSlateGray},
-	"interstellar_age":  {tcell.ColorMediumPurple, tcell.ColorSlateBlue, tcell.ColorLightBlue, tcell.ColorGold, tcell.ColorDimGray},
+	"fusion_age":       {tcell.ColorAquaMarine, tcell.ColorDarkCyan, tcell.ColorTurquoise, tcell.ColorOrangeRed, tcell.ColorSlateGray},
+	"space_age":        {tcell.ColorSteelBlue, tcell.ColorLightSkyBlue, tcell.ColorLightCyan, tcell.ColorOrangeRed, tcell.ColorSlateGray},
+	"interstellar_age": {tcell.ColorMediumPurple, tcell.ColorSlateBlue, tcell.ColorLightBlue, tcell.ColorGold, tcell.ColorDimGray},
 	// Cosmic: deep purple and gold
-	"galactic_age":      {tcell.ColorBlueViolet, tcell.ColorMediumPurple, tcell.ColorLavender, tcell.ColorGold, tcell.ColorDimGray},
-	"quantum_age":       {tcell.ColorMediumOrchid, tcell.ColorOrchid, tcell.ColorPlum, tcell.ColorGold, tcell.ColorDarkSlateGray},
-	"transcendent_age":  {tcell.ColorGold, tcell.ColorWhite, tcell.ColorLightGoldenrodYellow, tcell.ColorGold, tcell.ColorLightGray},
+	"galactic_age":     {tcell.ColorBlueViolet, tcell.ColorMediumPurple, tcell.ColorLavender, tcell.ColorGold, tcell.ColorDimGray},
+	"quantum_age":      {tcell.ColorMediumOrchid, tcell.ColorOrchid, tcell.ColorPlum, tcell.ColorGold, tcell.ColorDarkSlateGray},
+	"transcendent_age": {tcell.ColorGold, tcell.ColorWhite, tcell.ColorLightGoldenrodYellow, tcell.ColorGold, tcell.ColorLightGray},
 }
 
 // ApplyAgePalette sets global color variables based on the current age
@@ -77,11 +77,13 @@ func ApplyAgePalette(ageKey string) {
 
 // ASCII art for splash screen
 const SplashArt = `
- █████╗  ██████╗ ███████╗███████╗ ██████╗ ██████╗  ██████╗ ███████╗
-██╔══██╗██╔════╝ ██╔════╝██╔════╝██╔═══██╗██╔══██╗██╔════╝ ██╔════╝
-███████║██║  ███╗█████╗  █████╗  ██║   ██║██████╔╝██║  ███╗█████╗
-██╔══██║██║   ██║██╔══╝  ██╔══╝  ██║   ██║██╔══██╗██║   ██║██╔══╝
-██║  ██║╚██████╔╝███████╗██║     ╚██████╔╝██║  ██║╚██████╔╝███████╗
-╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝      ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝`
 
-const SplashTagline = "Forge Your Empire Through the Ages"
+  █████╗  ██████╗ ███████╗        ███████╗ ██████╗ ██████╗  ██████╗ ███████╗
+ ██╔══██╗██╔════╝ ██╔════╝        ██╔════╝██╔═══██╗██╔══██╗██╔════╝ ██╔════╝
+███████║██║  ███╗█████╗  ╔████╗  █████╗  ██║   ██║██████╔╝██║  ███╗█████╗
+██╔══██║██║   ██║██╔══╝  ╚════╝  ██╔══╝  ██║   ██║██╔══██╗██║   ██║██╔══╝
+ ██║  ██║╚██████╔╝███████╗        ██║     ╚██████╔╝██║  ██║╚██████╔╝███████╗
+ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝        ╚═╝      ╚═════╝ ╚═╝  ╚═╝ ╚═════╝ ╚══════╝
+`
+
+const SplashTagline = "Forge the Ultimate Empire Through the Ages"
