@@ -38,9 +38,10 @@ type Dashboard struct {
 	logsTab     *LogsTab
 
 	// Shared UI
-	logTV       *tview.TextView
-	miniMap     *MiniMap
-	wonderPanel *WonderPanel
+	logTV         *tview.TextView
+	miniMap       *MiniMap
+	wonderPanel   *WonderPanel
+	villagerPanel *VillagerPanel
 	statusTV    *tview.TextView
 	ageTV      *tview.TextView
 	inputField *tview.InputField
@@ -109,6 +110,9 @@ func (d *Dashboard) build() {
 
 	// Wonder panel (current age's wonder)
 	d.wonderPanel = NewWonderPanel()
+
+	// Villager panel
+	d.villagerPanel = NewVillagerPanel()
 
 	// Status bar
 	d.statusTV = tview.NewTextView().
@@ -193,9 +197,10 @@ func (d *Dashboard) build() {
 		}
 	})
 
-	// Bottom area: log + wonder panel + mini-map side by side
+	// Bottom area: log + villagers + wonder panel + mini-map side by side
 	d.bottomArea = tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(d.logTV, 0, 1, false).
+		AddItem(d.villagerPanel.Primitive(), 0, 1, false).
 		AddItem(d.wonderPanel.Primitive(), 0, 1, false).
 		AddItem(d.miniMap.Primitive(), 0, 1, false)
 
@@ -333,6 +338,11 @@ func (d *Dashboard) Root() tview.Primitive {
 	return d.root
 }
 
+// GoToWiki switches the dashboard to the Wiki tab (tab index 5).
+func (d *Dashboard) GoToWiki() {
+	d.switchTab(5)
+}
+
 // StartUpdates begins the UI refresh loop
 func (d *Dashboard) StartUpdates() {
 	go func() {
@@ -381,6 +391,7 @@ func (d *Dashboard) refresh() {
 	d.toastTV.SetText(d.toastMgr.GetCurrent())
 	d.miniMap.UpdateState(state)
 	d.wonderPanel.UpdateState(state)
+	d.villagerPanel.UpdateState(state)
 
 	// Only refresh the active tab
 	switch d.activeTab {

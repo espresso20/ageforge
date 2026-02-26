@@ -752,6 +752,27 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 }
 
 // BuildBuilding constructs a building (instant or queued)
+// BankWonderResource deposits resources from player storage into a wonder's bank.
+func (ge *GameEngine) BankWonderResource(wonderKey, resource string, amount float64) error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	deposited, err := ge.Buildings.BankResource(wonderKey, resource, amount, ge.Resources)
+	if err != nil {
+		return err
+	}
+
+	def := ge.Buildings.defs[wonderKey]
+	banked := ge.Buildings.wonderBanks[wonderKey][resource]
+	need := def.BaseCost[resource]
+	ge.addLog("info", fmt.Sprintf("Banked %.0f %s toward %s (%.0f / %.0f)", deposited, resource, def.Name, banked, need))
+
+	if ge.Buildings.IsWonderBankFull(wonderKey) {
+		ge.addLog("success", fmt.Sprintf("%s bank is full! Type 'build %s' to begin construction.", def.Name, wonderKey))
+	}
+	return nil
+}
+
 func (ge *GameEngine) BuildBuilding(key string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -778,12 +799,19 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 		}
 	}
 
-	cost := ge.Buildings.GetCost(key)
-	if !ge.Resources.Pay(cost) {
-		return fmt.Errorf("cannot afford %s (need: %s)", def.Name, formatCost(cost))
+	if def.Category == "wonder" {
+		if !ge.Buildings.IsWonderBankFull(key) {
+			return fmt.Errorf("%s bank is not full — use 'wonder collect <resource> <amount>' to bank resources first", def.Name)
+		}
+		// Resources were already deducted when banked; nothing to pay here.
+	} else {
+		cost := ge.Buildings.GetCost(key)
+		if !ge.Resources.Pay(cost) {
+			return fmt.Errorf("cannot afford %s (need: %s)", def.Name, formatCost(cost))
+		}
 	}
 
-	ge.addLog("debug", fmt.Sprintf("Build start: %s (cost: %s)", def.Name, formatCost(cost)))
+	ge.addLog("debug", fmt.Sprintf("Build start: %s", def.Name))
 	if def.BuildTicks > 0 {
 		// Queue for construction
 		ge.buildQueue = append(ge.buildQueue, BuildQueueItem{
@@ -1057,7 +1085,7 @@ func (ge *GameEngine) DoPrestige() error {
 
 	ageOrder := ge.progress.GetAgeOrder()
 	if !ge.Prestige.CanPrestige(ge.age, ageOrder) {
-		return fmt.Errorf("must reach Medieval Age or later to prestige")
+		return fmt.Errorf("must reach Modern Age or later to prestige")
 	}
 
 	points := ge.Prestige.CalculatePoints(

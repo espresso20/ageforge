@@ -68,6 +68,9 @@ type BuildingState struct {
 	// Cost for next building
 	NextCost map[string]float64
 	CanBuild bool
+	// Wonder-specific: resources banked toward construction
+	WonderBank     map[string]float64
+	WonderBankFull bool
 }
 
 // VillagerState represents all villager info

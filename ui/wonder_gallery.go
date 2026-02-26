@@ -14,6 +14,24 @@ import (
 	"github.com/user/ageforge/game"
 )
 
+// wonderProgressBar returns a simple 10-char fill bar, e.g. "[████░░░░░░]"
+func wonderProgressBar(pct float64, width int) string {
+	filled := int(pct * float64(width))
+	if filled > width {
+		filled = width
+	}
+	bar := "["
+	for i := 0; i < width; i++ {
+		if i < filled {
+			bar += "█"
+		} else {
+			bar += "░"
+		}
+	}
+	bar += "]"
+	return bar
+}
+
 // wonderInfo holds config + state for a wonder
 type wonderInfo struct {
 	key     string
@@ -88,6 +106,12 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 			if bs.Unlocked {
 				h ^= 13
 			}
+			if bs.WonderBankFull {
+				h ^= 997
+			}
+			for res, amt := range bs.WonderBank {
+				h ^= hashKey(res) * uint64(amt+1)
+			}
 		}
 	}
 	// Also hash wonder count for speed display
@@ -155,25 +179,39 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 	}
 	fmt.Fprintf(&sb, "  [gold]+0.5x game speed[-]\n")
 
-	// Build cost if not built
+	// Bank progress if not built
 	if !built {
-		fmt.Fprintf(&sb, "\n[cyan]Cost:[-]\n")
-		costKeys := make([]string, 0, len(current.def.BaseCost))
-		for k := range current.def.BaseCost {
-			costKeys = append(costKeys, k)
-		}
-		sort.Strings(costKeys)
-		for _, k := range costKeys {
-			v := current.def.BaseCost[k]
-			have := 0.0
-			if rs, ok := state.Resources[k]; ok {
-				have = rs.Amount
+		if bs, ok := state.Buildings[current.key]; ok {
+			fmt.Fprintf(&sb, "\n[cyan]Wonder Bank:[-]\n")
+			costKeys := make([]string, 0, len(current.def.BaseCost))
+			for k := range current.def.BaseCost {
+				costKeys = append(costKeys, k)
 			}
-			clr := "red"
-			if have >= v {
-				clr = "green"
+			sort.Strings(costKeys)
+			for _, k := range costKeys {
+				need := current.def.BaseCost[k]
+				banked := bs.WonderBank[k]
+				pct := 0.0
+				if need > 0 {
+					pct = banked / need
+					if pct > 1 {
+						pct = 1
+					}
+				}
+				clr := "red"
+				if pct >= 1.0 {
+					clr = "green"
+				} else if pct > 0 {
+					clr = "yellow"
+				}
+				bar := wonderProgressBar(pct, 8)
+				fmt.Fprintf(&sb, "  [%s]%s %s %s / %s[-]\n", clr, k, bar, FormatNumber(banked), FormatNumber(need))
 			}
-			fmt.Fprintf(&sb, "  [%s]%s: %s / %s[-]\n", clr, k, FormatNumber(have), FormatNumber(v))
+			if bs.WonderBankFull {
+				fmt.Fprintf(&sb, "  [green]✓ Bank full! Type 'build %s'[-]\n", current.key)
+			} else {
+				fmt.Fprintf(&sb, "  [gray]wonder collect <res> <amt|all>[-]\n")
+			}
 		}
 		fmt.Fprintf(&sb, "\n[gray]Build ticks: %d[-]\n", current.def.BuildTicks)
 	}

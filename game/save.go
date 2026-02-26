@@ -32,6 +32,7 @@ type GameSave struct {
 	Trade            TradeSave           `json:"trade"`
 	Diplomacy        DiplomacySave       `json:"diplomacy"`
 	SpeedMultiplier  float64             `json:"speed_multiplier"`
+	WonderBanks      map[string]map[string]float64 `json:"wonder_banks,omitempty"`
 }
 
 // TradeSave holds trade state for save
@@ -229,6 +230,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			Factions: ge.Diplomacy.GetFactionsForSave(),
 		},
 		SpeedMultiplier: ge.speedMultiplier,
+		WonderBanks:     ge.Buildings.GetWonderBanks(),
 	}
 }
 
@@ -310,6 +312,11 @@ func (ge *GameEngine) LoadGame(filename string) error {
 
 	// Restore diplomacy
 	ge.Diplomacy.LoadState(save.Diplomacy.Factions)
+
+	// Restore wonder banks
+	if save.WonderBanks != nil {
+		ge.Buildings.LoadWonderBanks(save.WonderBanks)
+	}
 
 	// Restore speed multiplier
 	ge.speedMultiplier = save.SpeedMultiplier

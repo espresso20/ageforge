@@ -574,10 +574,45 @@ func placeBuildingsRadial(buildings map[string]game.BuildingState, cx, cy, w, h,
 	var placements []bldInfo
 	maxDist := float64(min(w, h)) / 2.0
 
+	// Count non-wonder buildings to compute city spread factor.
+	// As the city grows beyond ~40 buildings the rings expand outward,
+	// preventing the tight overlap seen at 100+ huts.
+	totalCity := 0
+	for _, bs := range buildings {
+		if bs.Unlocked && bs.Count > 0 && bs.Category != "wonder" {
+			totalCity += bs.Count
+		}
+	}
+	spreadFactor := 1.0
+	if totalCity > 40 {
+		spreadFactor = 1.0 + float64(totalCity-40)/200.0
+		if spreadFactor > 1.8 {
+			spreadFactor = 1.8
+		}
+	}
+
 	for key, bs := range buildings {
 		if !bs.Unlocked || bs.Count == 0 {
 			continue
 		}
+
+		// ── Wonders: placed in far outer zone, visually isolated from city ──
+		if bs.Category == "wonder" {
+			bHash := hashKey(key)
+			angle := float64(bHash%3600) / 3600.0 * 2.0 * math.Pi
+			distRatio := 0.60 + float64(bHash%180)/1000.0 // 0.60–0.78
+			dist := distRatio * maxDist
+			bx := cx + int(math.Cos(angle)*dist)
+			by := cy + int(math.Sin(angle)*dist*0.75)
+			size := 5 + dl*2
+			if era >= 4 {
+				size++
+			}
+			placements = append(placements, bldInfo{key, bs.Category, bx, by, size})
+			continue
+		}
+
+		// ── Regular city buildings ──
 		ringMin, ringMax := 0.08, 0.35
 		switch bs.Category {
 		case "housing":
@@ -586,36 +621,90 @@ func placeBuildingsRadial(buildings map[string]game.BuildingState, cx, cy, w, h,
 			ringMin, ringMax = 0.12, 0.32
 		case "military":
 			ringMin, ringMax = 0.22, 0.42
-		case "wonder":
-			ringMin, ringMax = 0.03, 0.16
 		case "research":
 			ringMin, ringMax = 0.08, 0.26
 		case "storage":
 			ringMin, ringMax = 0.06, 0.20
 		}
 
+		// Apply spread factor; cap at 0.55 to preserve the wonder gap
+		if spreadFactor > 1.0 {
+			ringMax = math.Min(ringMax*spreadFactor, 0.55)
+			ringMin = math.Min(ringMin*(1.0+(spreadFactor-1.0)*0.4), ringMax-0.04)
+		}
+
 		for i := 0; i < bs.Count; i++ {
 			bHash := hashKey(key + string(rune(i)))
-			angle := float64(bHash%3600) / 3600.0 * 2.0 * math.Pi
-			distRatio := ringMin + float64(bHash%1000)/1000.0*(ringMax-ringMin)
+
+			// ── Era-specific layout pattern ──
+			var angle, distRatio float64
+			switch era {
+			case 0:
+				// Primitive: tight organic scatter — small jitter, compressed rings
+				angle = float64(bHash%3600) / 3600.0 * 2.0 * math.Pi
+				jitter := float64(int(bHash%200)-100) / 1000.0
+				distRatio = ringMin + float64(bHash%1000)/1000.0*(ringMax-ringMin)*0.75 + jitter
+
+			case 1, 2:
+				// Ancient / Medieval: classic loose radial (unchanged baseline)
+				angle = float64(bHash%3600) / 3600.0 * 2.0 * math.Pi
+				distRatio = ringMin + float64(bHash%1000)/1000.0*(ringMax-ringMin)
+
+			case 3:
+				// Industrial: 8-direction grid snap — buildings line up in rows
+				dir := int(bHash % 8)
+				jitterDeg := int(bHash%22) - 11
+				angle = float64(dir*45+jitterDeg) * math.Pi / 180.0
+				distRatio = ringMin + float64(bHash%1000)/1000.0*(ringMax-ringMin)
+
+			case 4, 5:
+				// Modern / Digital: 12-sector radial — clock-face positions
+				sector := int(bHash % 12)
+				jitter := float64(int(bHash%314)-157) / 5000.0
+				angle = float64(sector)/12.0*2.0*math.Pi + jitter
+				distRatio = ringMin + float64(bHash%1000)/1000.0*(ringMax-ringMin)
+
+			case 6:
+				// Cyberpunk: dense, slightly compressed rings
+				angle = float64(bHash%3600) / 3600.0 * 2.0 * math.Pi
+				distRatio = ringMin + float64(bHash%1000)/1000.0*(ringMax-ringMin)*0.85
+
+			default:
+				// Space / Cosmic: perfect orbital circles — evenly spaced by count
+				baseAngle := float64(hashKey(key)%3600) / 3600.0 * 2.0 * math.Pi
+				total := bs.Count
+				if total < 1 {
+					total = 1
+				}
+				angle = baseAngle + float64(i)/float64(total)*2.0*math.Pi
+				distRatio = (ringMin + ringMax) / 2.0
+			}
+
+			distRatio = math.Max(0.03, math.Min(distRatio, 0.55))
 			dist := distRatio * maxDist
 			bx := cx + int(math.Cos(angle)*dist)
-			by := cy + int(math.Sin(angle)*dist*0.7)
 
-			// Building size scales with era
+			// Vertical compression varies by era for distinct silhouettes
+			vc := 0.70
+			switch {
+			case era >= 7:
+				vc = 0.85 // space: near-isometric
+			case era == 6:
+				vc = 0.90 // cyberpunk: tall, vertical feel
+			case era == 0:
+				vc = 0.65 // primitive: squat, ground-hugging
+			}
+			by := cy + int(math.Sin(angle)*dist*vc)
+
 			size := 3
 			switch {
-			case era >= 6: // cyber+ = mega towers
+			case era >= 6:
 				size = 5
-			case era >= 4: // modern = skyscrapers
-				size = 4
-			case era >= 3: // industrial = bigger
+			case era >= 3:
 				size = 4
 			}
-			if bs.Category == "wonder" {
-				size += 3
-			} else if bs.Category == "military" {
-				size += 1
+			if bs.Category == "military" {
+				size++
 			}
 			if dl > 0 {
 				size += 2

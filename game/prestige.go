@@ -46,14 +46,14 @@ func (pm *PrestigeManager) CalculatePoints(age string, ageOrder map[string]int, 
 	return points
 }
 
-// CanPrestige returns true if the player can prestige (Medieval Age or later)
+// CanPrestige returns true if the player can prestige (Modern Age or later)
 func (pm *PrestigeManager) CanPrestige(age string, ageOrder map[string]int) bool {
 	idx, ok := ageOrder[age]
 	if !ok {
 		return false
 	}
-	// Medieval Age is order 5
-	return idx >= 5
+	// Modern Age is order 12
+	return idx >= 12
 }
 
 // Prestige increments level and adds points

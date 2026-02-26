@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"os"
+	"sort"
 	"strconv"
 	"strings"
 	"time"
@@ -49,6 +50,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdTrade(args, engine)
 	case "diplomacy", "dip":
 		return cmdDiplomacy(args, engine)
+	case "wonder":
+		return cmdWonder(args, engine)
 	case "prestige":
 		return cmdPrestige(args, engine)
 	case "rates":
@@ -74,6 +77,97 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 			Type:    "error",
 		}
 	}
+}
+
+func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
+	state := engine.GetState()
+
+	// Find the wonder for the current age
+	var curWonder *wonderInfo
+	for _, w := range getWonderList() {
+		if w.ageKey == state.Age {
+			wCopy := w
+			curWonder = &wCopy
+			break
+		}
+	}
+	if curWonder == nil {
+		return CommandResult{Message: "No wonder available this age.", Type: "error"}
+	}
+
+	bs := state.Buildings[curWonder.key]
+	if bs.Count > 0 {
+		return CommandResult{
+			Message: fmt.Sprintf("[gold]★ %s[-] is already built!", curWonder.name),
+			Type:    "info",
+		}
+	}
+
+	// "wonder collect <resource> <amount|all>"
+	if len(args) >= 3 && strings.ToLower(args[0]) == "collect" {
+		resource := strings.ToLower(args[1])
+		var amount float64
+		if strings.ToLower(args[2]) == "all" {
+			if rs, ok := state.Resources[resource]; ok {
+				amount = rs.Amount
+			} else {
+				return CommandResult{Message: fmt.Sprintf("Unknown resource: %s", args[1]), Type: "error"}
+			}
+		} else {
+			var err error
+			amount, err = strconv.ParseFloat(args[2], 64)
+			if err != nil || amount <= 0 {
+				return CommandResult{Message: "Usage: wonder collect <resource> <amount|all>", Type: "error"}
+			}
+		}
+		if err := engine.BankWonderResource(curWonder.key, resource, amount); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		newBS := engine.GetState().Buildings[curWonder.key]
+		banked := newBS.WonderBank[resource]
+		need := curWonder.def.BaseCost[resource]
+		msg := fmt.Sprintf("Banked %.0f %s into %s (%s / %s)", amount, resource, curWonder.name, FormatNumber(banked), FormatNumber(need))
+		if newBS.WonderBankFull {
+			msg += fmt.Sprintf("\n[green]Bank full! Type 'build %s' to begin construction.[-]", curWonder.key)
+		}
+		return CommandResult{Message: msg, Type: "success"}
+	}
+
+	// Default: show bank status
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "[gold::b]%s[-] — Wonder Bank\n\n", curWonder.name)
+
+	costKeys := make([]string, 0, len(curWonder.def.BaseCost))
+	for k := range curWonder.def.BaseCost {
+		costKeys = append(costKeys, k)
+	}
+	sort.Strings(costKeys)
+
+	for _, res := range costKeys {
+		need := curWonder.def.BaseCost[res]
+		banked := bs.WonderBank[res]
+		pct := 0.0
+		if need > 0 {
+			pct = banked / need * 100
+			if pct > 100 {
+				pct = 100
+			}
+		}
+		clr := "red"
+		if pct >= 100 {
+			clr = "green"
+		} else if pct > 0 {
+			clr = "yellow"
+		}
+		fmt.Fprintf(&sb, "  [%s]%s: %s / %s (%.0f%%)[-]\n", clr, res, FormatNumber(banked), FormatNumber(need), pct)
+	}
+
+	if bs.WonderBankFull {
+		fmt.Fprintf(&sb, "\n[green]Bank full! Type 'build %s' to begin construction.[-]", curWonder.key)
+	} else {
+		fmt.Fprintf(&sb, "\n[gray]Use 'wonder collect <resource> <amount|all>' to bank resources.[-]")
+	}
+	return CommandResult{Message: sb.String(), Type: "info"}
 }
 
 func cmdHelp(args []string) CommandResult {
@@ -112,6 +206,8 @@ func cmdHelp(args []string) CommandResult {
   [cyan]save[-] [name]                 - Save game (default: autosave)
   [cyan]load[-] [name]                 - Load game (default: autosave)
   [cyan]saves[-]                       - List all save files
+  [cyan]wonder[-]                      - Show current wonder bank status
+  [cyan]wonder collect[-] <res> <amt|all> - Bank resources into current wonder
   [cyan]speed[-] [1.0|1.5|2.0|...]     - Set game speed (unlocks per wonder built)
   [cyan]help[-]                        - Show this help
 

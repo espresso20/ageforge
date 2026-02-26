@@ -26,9 +26,15 @@ func NewApp(engine *game.GameEngine) *App {
 }
 
 func (a *App) setup() {
-	// Create pages
-	splash := CreateSplashPage(a.tviewApp, a.pages, a.engine)
 	a.dashboard = NewDashboard(a.tviewApp, a.engine, a.pages)
+
+	onWiki := func() {
+		a.pages.SwitchToPage("dashboard")
+		a.dashboard.GoToWiki()
+		go a.engine.Start()
+	}
+
+	splash := CreateSplashPage(a.tviewApp, a.pages, a.engine, onWiki)
 
 	a.pages.AddPage("splash", splash, true, true)
 	a.pages.AddPage("dashboard", a.dashboard.Root(), true, false)

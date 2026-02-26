@@ -62,6 +62,12 @@ func (t *WondersTab) Refresh(state game.GameState) {
 			if bs.Unlocked {
 				h ^= hashKey(w.key) * 3
 			}
+			if bs.WonderBankFull {
+				h ^= hashKey(w.key) * 11
+			}
+			for res, amt := range bs.WonderBank {
+				h ^= hashKey(res) * uint64(amt+1)
+			}
 		}
 	}
 	if h == t.lastHash {
@@ -100,9 +106,31 @@ func (t *WondersTab) Refresh(state game.GameState) {
 			}
 			fmt.Fprintf(&listSB, "   [gold]+0.5x speed[-]\n\n")
 		} else if unlocked {
-			// List entry: available
-			fmt.Fprintf(&listSB, " [yellow]○[-] [yellow]%s[-]\n", w.name)
-			fmt.Fprintf(&listSB, "   [gray]%s — available[-]\n\n", w.ageName)
+			bs := state.Buildings[w.key]
+			if bs.WonderBankFull {
+				fmt.Fprintf(&listSB, " [yellow]○[-] [yellow]%s[-] [green][BANK FULL][-]\n", w.name)
+				fmt.Fprintf(&listSB, "   [gray]%s — ready to build![-]\n\n", w.ageName)
+			} else {
+				// Compute overall fill percentage
+				totalNeed, totalBanked := 0.0, 0.0
+				for res, need := range w.def.BaseCost {
+					totalNeed += need
+					totalBanked += bs.WonderBank[res]
+				}
+				pct := 0.0
+				if totalNeed > 0 {
+					pct = totalBanked / totalNeed * 100
+					if pct > 100 {
+						pct = 100
+					}
+				}
+				if pct > 0 {
+					fmt.Fprintf(&listSB, " [yellow]○[-] [yellow]%s[-] [gray](%.0f%% banked)[-]\n", w.name, pct)
+				} else {
+					fmt.Fprintf(&listSB, " [yellow]○[-] [yellow]%s[-]\n", w.name)
+				}
+				fmt.Fprintf(&listSB, "   [gray]%s — bank resources to build[-]\n\n", w.ageName)
+			}
 		} else {
 			// List entry: locked
 			fmt.Fprintf(&listSB, " [gray]?[-] [gray]???[-]\n")

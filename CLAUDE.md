@@ -37,6 +37,16 @@ CLI idle/clicker empire builder game built with Go + tview/tcell. 22 ages, 80 bu
 - No global state; pass dependencies explicitly
 - Bus handlers run under engine write lock — never call GetState() or other lock-acquiring methods inside them
 
+## TODO / DONE Workflow
+- **TODO.md** tracks all pending and in-progress work, organized by phase.
+- **DONE.md** is the permanent history of completed work — items are moved here (never deleted) when finished.
+- When working on any multi-step plan or feature:
+  - Mark items `[~]` (in progress) in TODO.md before starting them
+  - Mark items `[x]` and move them to DONE.md (with a brief date/note) when finished
+  - Add newly discovered sub-tasks to TODO.md immediately — do not hold them in context only
+  - Never implement something already listed in DONE.md; check it first to avoid duplication
+- The goal: full session-resumability. TODO.md + DONE.md should always reflect true current state.
+
 ## Build & Run
 ```bash
 go build -o ageforge .

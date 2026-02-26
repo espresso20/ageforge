@@ -9,16 +9,22 @@ func TestPrestigeManager_CanPrestige(t *testing.T) {
 	ageOrder := map[string]int{
 		"primitive_age": 0, "stone_age": 1, "bronze_age": 2,
 		"iron_age": 3, "classical_age": 4, "medieval_age": 5,
+		"renaissance_age": 6, "colonial_age": 7, "industrial_age": 8,
+		"victorian_age": 9, "gilded_age": 10, "early_modern_age": 11,
+		"modern_age": 12,
 	}
 
 	if pm.CanPrestige("primitive_age", ageOrder) {
 		t.Error("should not be able to prestige in primitive_age")
 	}
-	if pm.CanPrestige("bronze_age", ageOrder) {
-		t.Error("should not be able to prestige in bronze_age")
+	if pm.CanPrestige("medieval_age", ageOrder) {
+		t.Error("should not be able to prestige in medieval_age — requires Modern Age")
 	}
-	if !pm.CanPrestige("medieval_age", ageOrder) {
-		t.Error("should be able to prestige in medieval_age")
+	if pm.CanPrestige("industrial_age", ageOrder) {
+		t.Error("should not be able to prestige in industrial_age — requires Modern Age")
+	}
+	if !pm.CanPrestige("modern_age", ageOrder) {
+		t.Error("should be able to prestige in modern_age")
 	}
 }
 

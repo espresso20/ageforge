@@ -22,26 +22,26 @@ func TestEngine_StartingResources(t *testing.T) {
 	state := ge.GetState()
 
 	food := state.Resources["food"]
-	if food.Amount != 15 {
-		t.Errorf("starting food = %v, want 15", food.Amount)
+	if food.Amount != 25 {
+		t.Errorf("starting food = %v, want 25", food.Amount)
 	}
 	wood := state.Resources["wood"]
-	if wood.Amount != 12 {
-		t.Errorf("starting wood = %v, want 12", wood.Amount)
+	if wood.Amount != 50 {
+		t.Errorf("starting wood = %v, want 50", wood.Amount)
 	}
 }
 
 func TestEngine_GatherResource(t *testing.T) {
 	ge := NewGameEngine()
 
-	_, err := ge.GatherResource("wood", 5)
+	_, err := ge.GatherResource("food", 5)
 	if err != nil {
 		t.Errorf("GatherResource failed: %v", err)
 	}
 
 	state := ge.GetState()
-	if state.Resources["wood"].Amount != 17 { // 12 starting + 5
-		t.Errorf("wood after gather = %v, want 17", state.Resources["wood"].Amount)
+	if state.Resources["food"].Amount != 30 { // 25 starting + 5
+		t.Errorf("food after gather = %v, want 30", state.Resources["food"].Amount)
 	}
 }
 
@@ -144,7 +144,8 @@ func TestEngine_StartResearch(t *testing.T) {
 	ge := NewGameEngine()
 
 	ge.mu.Lock()
-	ge.Resources.Add("knowledge", 100)
+	ge.Resources.AddStorage("knowledge", 10000)
+	ge.Resources.Add("knowledge", 2500)
 	ge.mu.Unlock()
 
 	err := ge.StartResearch("tool_making")
@@ -162,7 +163,8 @@ func TestEngine_CancelResearch(t *testing.T) {
 	ge := NewGameEngine()
 
 	ge.mu.Lock()
-	ge.Resources.Add("knowledge", 100)
+	ge.Resources.AddStorage("knowledge", 10000)
+	ge.Resources.Add("knowledge", 2500)
 	ge.mu.Unlock()
 
 	ge.StartResearch("tool_making")
