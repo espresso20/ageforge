@@ -8,10 +8,11 @@ import (
 
 // App manages the tview application and page routing
 type App struct {
-	tviewApp  *tview.Application
-	pages     *tview.Pages
-	engine    *game.GameEngine
-	dashboard *Dashboard
+	tviewApp   *tview.Application
+	pages      *tview.Pages
+	engine     *game.GameEngine
+	dashboard  *Dashboard
+	wikiServer *game.WikiServer
 }
 
 // NewApp creates the UI application
@@ -27,14 +28,9 @@ func NewApp(engine *game.GameEngine) *App {
 
 func (a *App) setup() {
 	a.dashboard = NewDashboard(a.tviewApp, a.engine, a.pages)
+	a.wikiServer = game.NewWikiServer()
 
-	onWiki := func() {
-		a.pages.SwitchToPage("dashboard")
-		a.dashboard.GoToWiki()
-		go a.engine.Start()
-	}
-
-	splash := CreateSplashPage(a.tviewApp, a.pages, a.engine, onWiki)
+	splash := CreateSplashPage(a.tviewApp, a.pages, a.engine, a.wikiServer)
 
 	a.pages.AddPage("splash", splash, true, true)
 	a.pages.AddPage("dashboard", a.dashboard.Root(), true, false)
@@ -49,7 +45,8 @@ func (a *App) Run() error {
 	return a.tviewApp.Run()
 }
 
-// Stop halts the tview application
+// Stop halts the tview application and wiki server
 func (a *App) Stop() {
+	a.wikiServer.Stop()
 	a.tviewApp.Stop()
 }

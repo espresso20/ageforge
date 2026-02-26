@@ -60,5 +60,16 @@ Items are moved here from TODO.md when finished. Do not re-implement anything li
   - `app.go`: passes `onWiki` callback to CreateSplashPage; creates dashboard before splash
   - `dashboard.go`: added exported `GoToWiki()` method
 
+## HTTP Wiki Server
+- [x] Embedded localhost HTTP wiki server (port 7891) accessible from splash screen (2026-02-25)
+  - `game/wiki_server.go` — `WikiServer` struct with `Start()`/`Stop()`/`IsRunning()`/`URL()`/`OpenBrowser()`
+  - `OpenBrowser()` uses `os/exec` + `runtime.GOOS` switch (darwin=`open`, windows=`cmd/start`, linux=`xdg-open`)
+  - 10 HTTP routes: `/`, `/ages`, `/buildings`, `/resources`, `/techs`, `/events`, `/milestones`, `/prestige`, `/villagers`, `/trade`
+  - All data read from `config.*` — works without starting the game engine
+  - Dark-themed HTML with gold nav bar, badge-colored effects, grouped sections
+  - `ui/app.go` — `App.wikiServer` field, initialized in `setup()`, stopped in `Stop()`
+  - `ui/splash.go` — Wiki button calls `wikiServer.Start()` + `wikiServer.OpenBrowser()` (no engine start from splash)
+  - `showWipeConfirmation` and `CreateSplashPage` now take `*game.WikiServer` instead of `onWiki func()`
+
 ## General / Misc
 - [x] Established TODO.md + DONE.md workflow for session-resumable planning (2026-02-25)

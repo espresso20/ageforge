@@ -12,8 +12,8 @@ import (
 )
 
 // CreateSplashPage creates the main menu splash screen.
-// onWiki is called when the player selects Wiki (opens dashboard wiki tab).
-func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, onWiki func()) tview.Primitive {
+// wikiServer is started and opened in the browser when the player selects Wiki.
+func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, wikiServer *game.WikiServer) tview.Primitive {
 	saveExists := game.SaveExists("autosave")
 	prestigeLevel := engine.Prestige.GetLevel()
 
@@ -64,8 +64,10 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 		go engine.Start()
 	})
 	mainList.AddItem("  Wiki", "", 'w', func() {
-		if onWiki != nil {
-			onWiki()
+		if wikiServer != nil {
+			if err := wikiServer.Start(); err == nil {
+				wikiServer.OpenBrowser()
+			}
 		}
 	})
 
@@ -83,7 +85,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	dangerList.ShowSecondaryText(false)
 
 	dangerList.AddItem("  Wipe Save", "", 'x', func() {
-		showWipeConfirmation(app, pages, engine, onWiki)
+		showWipeConfirmation(app, pages, engine, wikiServer)
 	})
 	dangerList.AddItem("  Quit", "", 'q', func() {
 		app.Stop()
@@ -142,7 +144,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 }
 
 // showWipeConfirmation shows the "are you sure?" modal before wiping data.
-func showWipeConfirmation(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, onWiki func()) {
+func showWipeConfirmation(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, wikiServer *game.WikiServer) {
 	modal := tview.NewModal().
 		SetText("⚠  WIPE ALL DATA  ⚠\n\nThis will permanently delete ALL save files\nand reset the game to zero.\n\nPrestige, upgrades, progress — everything gone.\n\nAre you sure?").
 		AddButtons([]string{"Cancel", "WIPE EVERYTHING"}).
@@ -152,7 +154,7 @@ func showWipeConfirmation(app *tview.Application, pages *tview.Pages, engine *ga
 				game.WipeAllSaves()
 				engine.Reset()
 				pages.RemovePage("splash")
-				newSplash := CreateSplashPage(app, pages, engine, onWiki)
+				newSplash := CreateSplashPage(app, pages, engine, wikiServer)
 				pages.AddPage("splash", newSplash, true, true)
 			}
 		})
