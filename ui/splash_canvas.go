@@ -97,18 +97,53 @@ func (sc *splashCanvas) halt() {
 
 // Draw implements tview.Primitive.
 func (sc *splashCanvas) Draw(screen tcell.Screen) {
-	sc.DrawForSubclass(screen, sc) // draws border/title if set
+	sc.DrawForSubclass(screen, sc)
 	bx, by, bw, bh := sc.GetInnerRect()
 
 	sc.mu.RLock()
 	tick := sc.tick
 	sc.mu.RUnlock()
 
-	// ── Stars ────────────────────────────────────────────────────────────────
+	// ── Pre-compute all text positions ───────────────────────────────────────
+	// Must happen before the star loop so we can exclude the text zone.
+
+	lines := strings.Split(strings.TrimSpace(SplashArt), "\n")
+	titleH := len(lines)
+	titleW := 0
+	for _, l := range lines {
+		n := 0
+		for range l {
+			n++
+		}
+		if n > titleW {
+			titleW = n
+		}
+	}
+	// Vertically centre title in the upper 45% of the canvas.
+	originY := by + bh*9/20 - titleH/2
+	originX := bx + (bw-titleW)/2
+
+	tagline := SplashTagline
+	tly := originY + titleH + 2
+	tlx := bx + (bw-len(tagline))/2
+
+	// Bounding box that excludes stars — title block + tagline + 1-cell margin.
+	exY2 := tly + 2
+	if sc.prestigeLevel > 0 {
+		exY2 += 2
+	}
+	exX1, exY1 := originX-1, originY-1
+	exX2 := originX + titleW + 1
+
+	// ── Stars (skip the text exclusion zone) ─────────────────────────────────
 	for _, s := range sc.stars {
 		px := bx + int(s.nx*float64(bw))
 		py := by + int(s.ny*float64(bh))
 		if px < bx || px >= bx+bw || py < by || py >= by+bh {
+			continue
+		}
+		// Leave the text area completely clear of stars.
+		if px >= exX1 && px < exX2 && py >= exY1 && py < exY2 {
 			continue
 		}
 		raw := (math.Sin(tick*s.speed+s.phase) + 1.0) / 2.0
@@ -129,30 +164,12 @@ func (sc *splashCanvas) Draw(screen tcell.Screen) {
 	}
 
 	// ── AGEFORGE title ───────────────────────────────────────────────────────
-	lines := strings.Split(strings.TrimSpace(SplashArt), "\n")
-
-	titleH := len(lines)
-	titleW := 0
-	for _, l := range lines {
-		cols := 0
-		for range l {
-			cols++
-		}
-		if cols > titleW {
-			titleW = cols
-		}
-	}
-
-	// Place title in the upper-centre of the canvas (45% down)
-	originY := by + bh*9/20 - titleH/2
-	originX := bx + (bw-titleW)/2
-
-	// Slow pulse: gold hue breathes between dim and bright
-	pulse := (math.Sin(tick*0.55) + 1.0) / 2.0 // 0–1
+	pulse := (math.Sin(tick*0.55) + 1.0) / 2.0
 	goldR := int32(182 + int(pulse*73))
 	goldG := int32(112 + int(pulse*68))
 	titleFG := tcell.NewRGBColor(goldR, goldG, 0)
 	titleStyle := tcell.StyleDefault.Foreground(titleFG).Bold(true)
+	blank := tcell.StyleDefault
 
 	for i, line := range lines {
 		ty := originY + i
@@ -163,19 +180,37 @@ func (sc *splashCanvas) Draw(screen tcell.Screen) {
 		for _, ch := range line {
 			tx := originX + col
 			col++
-			if ch == ' ' || tx < bx || tx >= bx+bw {
+			if tx < bx || tx >= bx+bw {
 				continue
 			}
-			screen.SetContent(tx, ty, ch, nil, titleStyle)
+			// Draw spaces explicitly — this erases any content underneath.
+			// Without this, stars drawn in a previous tick's space cells linger.
+			if ch == ' ' {
+				screen.SetContent(tx, ty, ' ', nil, blank)
+			} else {
+				screen.SetContent(tx, ty, ch, nil, titleStyle)
+			}
+		}
+		// Clear any remaining columns in this row for lines shorter than titleW.
+		for col < titleW {
+			tx := originX + col
+			col++
+			if tx >= bx && tx < bx+bw {
+				screen.SetContent(tx, ty, ' ', nil, blank)
+			}
 		}
 	}
 
-	// ── Tagline ──────────────────────────────────────────────────────────────
-	tagline := SplashTagline
-	tly := originY + titleH + 2
-	tlx := bx + (bw-len(tagline))/2
+	// ── Tagline ───────────────────────────────────────────────────────────────
 	if tly >= by && tly < by+bh {
 		mutedStyle := tcell.StyleDefault.Foreground(tcell.NewRGBColor(139, 148, 158))
+		// Wipe the row across the title width first.
+		for col := 0; col < titleW; col++ {
+			tx := originX + col
+			if tx >= bx && tx < bx+bw {
+				screen.SetContent(tx, tly, ' ', nil, blank)
+			}
+		}
 		col := 0
 		for _, ch := range tagline {
 			tx := tlx + col
