@@ -253,7 +253,7 @@ const TERM_LINES = [
   ),
 
   // ── row 6: column headers
-  m("  ──────────────────── Resources ────────────────────") +
+  m("  ──────────────────── Resources ─────────────────────") +
     m("│") +
     m("──────────────── Buildings ────────────────"),
 
@@ -321,7 +321,7 @@ const TERM_LINES = [
     m("── Production ──"),
 
   // ── row 11: villager header / building row
-  m("  ──────────────────── Villagers ────────────────────") +
+  m("  ──────────────────── Villagers ─────────────────────") +
     m("│") +
     "  " +
     gr("✓") +
