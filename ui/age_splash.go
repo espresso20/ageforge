@@ -13,7 +13,7 @@ import (
 )
 
 // ShowAgeSplash displays a full-screen overlay celebrating an age advancement.
-// It auto-dismisses after 8 seconds or on any keypress.
+// It auto-dismisses after 20 seconds or on any keypress.
 func ShowAgeSplash(app *tview.Application, pages *tview.Pages, oldAge, newAge string) {
 	ages := config.AgeByKey()
 	newDef := ages[newAge]
@@ -108,7 +108,7 @@ func ShowAgeSplash(app *tview.Application, pages *tview.Pages, oldAge, newAge st
 
 	// Auto-dismiss after 8 seconds
 	go func() {
-		time.Sleep(8 * time.Second)
+		time.Sleep(20 * time.Second)
 		app.QueueUpdateDraw(func() {
 			dismiss()
 		})
