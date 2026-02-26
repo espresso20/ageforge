@@ -66,8 +66,9 @@ type BuildingState struct {
 	Description string
 	Unlocked    bool
 	// Cost for next building
-	NextCost map[string]float64
-	CanBuild bool
+	NextCost   map[string]float64
+	CanBuild   bool
+	AtMaxCount bool
 	// Wonder-specific: resources banked toward construction
 	WonderBank     map[string]float64
 	WonderBankFull bool

@@ -290,12 +290,15 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager) map[string]Build
 			Unlocked:    bm.unlocked[key],
 			NextCost:    cost,
 		}
+		if def.MaxCount > 0 && bm.counts[key] >= def.MaxCount {
+			state.AtMaxCount = true
+		}
 		if def.Category == "wonder" {
 			state.WonderBank = bm.GetWonderBank(key)
 			state.WonderBankFull = bm.IsWonderBankFull(key)
 			state.CanBuild = bm.unlocked[key] && bm.counts[key] == 0 && state.WonderBankFull
 		} else {
-			state.CanBuild = bm.unlocked[key] && resources.CanAfford(cost)
+			state.CanBuild = bm.unlocked[key] && !state.AtMaxCount && resources.CanAfford(cost)
 		}
 		out[key] = state
 	}

@@ -39,7 +39,8 @@ func BaseBuildings() []BuildingDef {
 		{
 			Name: "Stash", Key: "stash", Category: "storage",
 			BaseCost:    map[string]float64{"wood": 10},
-			CostScale:   1.2,
+			CostScale:   1.12,
+			MaxCount:    30,
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 200}},
 			BuildTicks:  3,
 			RequiredAge: "primitive_age",

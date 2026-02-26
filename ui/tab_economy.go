@@ -97,12 +97,21 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 
 	for _, key := range keys {
 		bs := state.Buildings[key]
-		icon := "[green]✓[-]"
-		if !bs.CanBuild {
+		var icon string
+		switch {
+		case bs.AtMaxCount:
+			icon = "[yellow]MAX[-]"
+		case bs.CanBuild:
+			icon = "[green]✓[-]"
+		default:
 			icon = "[red]✗[-]"
 		}
 		fmt.Fprintf(&sb, " %s [cyan]%s[-] [gray]x%d[-]\n", icon, bs.Name, bs.Count)
-		fmt.Fprintf(&sb, "   Cost: %s\n", FormatCost(bs.NextCost))
+		if bs.AtMaxCount {
+			fmt.Fprintf(&sb, "   [yellow]Building limit reached.[-]\n")
+		} else {
+			fmt.Fprintf(&sb, "   Cost: %s\n", FormatCost(bs.NextCost))
+		}
 		fmt.Fprintf(&sb, "   [gray]%s[-]\n", bs.Description)
 	}
 
