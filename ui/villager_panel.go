@@ -6,7 +6,7 @@ import (
 
 	"github.com/rivo/tview"
 
-	"github.com/user/ageforge/game"
+	"github.com/espresso20/ageforge/game"
 )
 
 // VillagerPanel shows recruitable villager types, their rates, and active bonuses

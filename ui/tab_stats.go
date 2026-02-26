@@ -7,7 +7,7 @@ import (
 
 	"github.com/rivo/tview"
 
-	"github.com/user/ageforge/game"
+	"github.com/espresso20/ageforge/game"
 )
 
 // StatsTab displays game statistics, milestones, active events, and prestige

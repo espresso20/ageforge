@@ -1,4 +1,0 @@
-rich>=10.0.0
-prompt-toolkit>=3.0.0
-pyfiglet>=0.8.0
-PyYAML>=6.0

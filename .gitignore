@@ -28,15 +28,15 @@ go.work
 *.swp
 *.swo
 
-# Python related files (from previous version)
-__pycache__/
-*.py[cod]
-*$py.class
-venv/
-
-# Ignore game saves and wiki repository
+# Ignore game saves
 data/saves/
-wiki/
+
+# Build output
+dist/
+releases/
 
 # Local Netlify folder
 .netlify
+
+# Claude Code session files
+.claude/

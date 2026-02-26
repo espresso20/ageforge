@@ -8,7 +8,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
-	"github.com/user/ageforge/game"
+	"github.com/espresso20/ageforge/game"
 )
 
 // CreateSplashPage creates the main menu splash screen.

@@ -3,7 +3,7 @@ package game
 import (
 	"math/rand"
 
-	"github.com/user/ageforge/config"
+	"github.com/espresso20/ageforge/config"
 )
 
 // ActiveEvent represents a currently active timed event

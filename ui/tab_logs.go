@@ -6,7 +6,7 @@ import (
 
 	"github.com/rivo/tview"
 
-	"github.com/user/ageforge/game"
+	"github.com/espresso20/ageforge/game"
 )
 
 // LogsTab shows game logs with a toggle between game-only and verbose mode

@@ -12,7 +12,7 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/user/ageforge/config"
+	"github.com/espresso20/ageforge/config"
 )
 
 const wikiPort = "7891"

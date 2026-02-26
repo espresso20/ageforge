@@ -3,7 +3,7 @@ package game
 import (
 	"fmt"
 
-	"github.com/user/ageforge/config"
+	"github.com/espresso20/ageforge/config"
 )
 
 // DiplomacyManager handles NPC factions and diplomatic relations

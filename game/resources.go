@@ -1,6 +1,6 @@
 package game
 
-import "github.com/user/ageforge/config"
+import "github.com/espresso20/ageforge/config"
 
 // Resource holds the runtime state of a single resource
 type Resource struct {

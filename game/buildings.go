@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"math"
 
-	"github.com/user/ageforge/config"
+	"github.com/espresso20/ageforge/config"
 )
 
 // BuildingManager manages all buildings

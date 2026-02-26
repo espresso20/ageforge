@@ -5,7 +5,7 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/user/ageforge/game"
+	"github.com/espresso20/ageforge/game"
 )
 
 // commands is the full list of command names for autocomplete

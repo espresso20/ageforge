@@ -3,7 +3,7 @@ package game
 import (
 	"fmt"
 
-	"github.com/user/ageforge/config"
+	"github.com/espresso20/ageforge/config"
 )
 
 // TradeManager handles resource exchange and trade routes

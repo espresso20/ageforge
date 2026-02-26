@@ -7,8 +7,8 @@ import (
 	"math"
 	"sort"
 
-	"github.com/user/ageforge/config"
-	"github.com/user/ageforge/game"
+	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/game"
 )
 
 // TerrainPalette defines the color palette for a terrain era

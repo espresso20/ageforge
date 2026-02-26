@@ -5,7 +5,7 @@ import (
 
 	"github.com/rivo/tview"
 
-	"github.com/user/ageforge/game"
+	"github.com/espresso20/ageforge/game"
 )
 
 // MapTab displays a full-screen procedural pixel settlement map

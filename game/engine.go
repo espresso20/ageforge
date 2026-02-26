@@ -6,7 +6,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/user/ageforge/config"
+	"github.com/espresso20/ageforge/config"
 )
 
 const (

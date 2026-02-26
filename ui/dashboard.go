@@ -9,8 +9,8 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
-	"github.com/user/ageforge/config"
-	"github.com/user/ageforge/game"
+	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/game"
 )
 
 // Dashboard is the main gameplay screen with tabbed layout

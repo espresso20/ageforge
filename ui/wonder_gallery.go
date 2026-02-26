@@ -10,8 +10,8 @@ import (
 
 	"github.com/rivo/tview"
 
-	"github.com/user/ageforge/config"
-	"github.com/user/ageforge/game"
+	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/game"
 )
 
 // wonderProgressBar returns a simple 10-char fill bar, e.g. "[████░░░░░░]"

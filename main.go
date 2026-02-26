@@ -6,8 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/user/ageforge/game"
-	"github.com/user/ageforge/ui"
+	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/ui"
 )
 
 func main() {

@@ -3,7 +3,7 @@ package ui
 import (
 	"github.com/rivo/tview"
 
-	"github.com/user/ageforge/game"
+	"github.com/espresso20/ageforge/game"
 )
 
 // MiniMap is a widget that displays a procedural pixel settlement map

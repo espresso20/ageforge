@@ -1,6 +1,6 @@
 package game
 
-import "github.com/user/ageforge/config"
+import "github.com/espresso20/ageforge/config"
 
 // ProgressManager handles age progression
 type ProgressManager struct {

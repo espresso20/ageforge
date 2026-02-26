@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"github.com/user/ageforge/game"
+	"github.com/espresso20/ageforge/game"
 )
 
 // CommandResult represents the result of a command execution

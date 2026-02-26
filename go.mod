@@ -1,4 +1,4 @@
-module github.com/user/ageforge
+module github.com/espresso20/ageforge
 
 go 1.23.6
 

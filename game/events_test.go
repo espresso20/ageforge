@@ -3,7 +3,7 @@ package game
 import (
 	"testing"
 
-	"github.com/user/ageforge/config"
+	"github.com/espresso20/ageforge/config"
 )
 
 func TestEventManager_InjectEvent(t *testing.T) {

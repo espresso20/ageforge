@@ -3,7 +3,7 @@ package ui
 import (
 	"github.com/rivo/tview"
 
-	"github.com/user/ageforge/game"
+	"github.com/espresso20/ageforge/game"
 )
 
 // App manages the tview application and page routing
