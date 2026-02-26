@@ -49,7 +49,7 @@ func Ages() []AgeDef {
 		{
 			Name: "Iron Age", Key: "iron_age", Order: 3,
 			Description:     "Iron tools and weapons transform society.",
-			ResourceReqs:    map[string]float64{"food": 300000, "wood": 20000, "stone": 8000, "iron": 4000, "knowledge": 10000},
+			ResourceReqs:    map[string]float64{"food": 40000, "wood": 20000, "stone": 8000, "iron": 4000, "knowledge": 10000},
 			BuildingReqs:    map[string]int{"mine": 10, "lumber_mill": 10, "library": 5},
 			UnlockBuildings: []string{"coal_mine", "smithy", "barracks", "granary", "colosseum"},
 			UnlockResources: []string{"coal"},

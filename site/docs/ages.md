@@ -57,7 +57,7 @@ Starting age. No requirements.
 
 | Requirement | Amount |
 |---|---|
-| Food | 300,000 |
+| Food | 40,000 |
 | Wood | 20,000 |
 | Stone | 8,000 |
 | Iron | 4,000 |

@@ -37,24 +37,33 @@ build cancel
 ---
 
 ## Storage
-*Raises resource caps so production doesn't go to waste.*
+*Raises resource caps so production doesn't go to waste. All storage buildings increase the cap for every resource.*
 
-| Building | Key | Age | Effect |
-|---|---|---|---|
-| Stash | `stash` | Primitive | +50 all storage |
-| Storage Pit | `storage_pit` | Stone | +80 all storage |
-| Warehouse | `warehouse` | Bronze | +150 all storage |
-| Classical Vault | `classical_vault` | Classical | +300 all storage |
-| Industrial Depot | `industrial_depot` | Industrial | +600 all storage |
-| Modern Depot | `modern_depot` | Modern | +1,500 all storage |
-| Info Vault | `info_vault` | Information | +3,000 data storage |
-| Digital Archive | `digital_archive` | Digital | +6,000 data storage |
-| Cyber Vault | `cyber_vault` | Cyberpunk | +1,000 crypto storage |
-| Fusion Vault | `fusion_vault` | Fusion | +500 plasma storage |
-| Orbital Depot | `orbital_depot` | Space | +300 titanium storage |
-| Stellar Vault | `stellar_vault` | Interstellar | +100 dark matter storage |
-| Galactic Vault | `galactic_vault` | Galactic | +50 antimatter storage |
-| Quantum Vault | `quantum_vault` | Quantum | +20 quantum flux storage |
+| Building | Key | Age | Effect | Max |
+|---|---|---|---|---|
+| Stash | `stash` | Primitive | +300 all storage | 30 |
+| Storage Pit | `storage_pit` | Stone | +500 all storage | — |
+| Warehouse | `warehouse` | Bronze | +3,000 all storage | — |
+| Granary | `granary` | Iron | +12,000 all storage | — |
+| Classical Vault | `classical_vault` | Classical | +25,000 all storage | — |
+| Keep | `keep` | Medieval | +60,000 all storage | — |
+| Renaissance Vault | `renaissance_vault` | Renaissance | +500,000 all storage | — |
+| Colonial Warehouse | `colonial_warehouse` | Colonial | +10M all storage | — |
+| Industrial Depot | `industrial_depot` | Industrial | +50M all storage | — |
+| Victorian Vault | `victorian_vault` | Victorian | +350M all storage | — |
+| Electric Warehouse | `electric_warehouse` | Electric | +3.5B all storage | — |
+| Atomic Vault | `atomic_vault` | Atomic | +15B all storage | — |
+| Modern Depot | `modern_depot` | Modern | +45B all storage | — |
+| Info Vault | `info_vault` | Information | +250B all storage | — |
+| Digital Archive | `digital_archive` | Digital | +1.5T all storage | — |
+| Cyber Vault | `cyber_vault` | Cyberpunk | +5T all storage | — |
+| Fusion Vault | `fusion_vault` | Fusion | +30T all storage | — |
+| Orbital Depot | `orbital_depot` | Space | +200T all storage | — |
+| Stellar Vault | `stellar_vault` | Interstellar | +500T all storage | — |
+| Galactic Vault | `galactic_vault` | Galactic | +2Q all storage | — |
+| Quantum Vault | `quantum_vault` | Quantum | +5Q all storage | — |
+
+> **Tip:** Stash is capped at 30. After that, transition to Storage Pit (Stone Age) and Warehouse (Bronze Age). Each tier's storage building is the bottleneck unlock — build one as soon as you enter a new age.
 
 ---
 
