@@ -331,7 +331,7 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 
 func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
-		return CommandResult{Message: "Usage: gather <food|wood|stone> [amount] (max 5)", Type: "error"}
+		return CommandResult{Message: "Usage: gather <food|wood|stone> [amount] (max 10)", Type: "error"}
 	}
 	resource := strings.ToLower(args[0])
 	if resource != "food" && resource != "wood" && resource != "stone" {
@@ -343,8 +343,8 @@ func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 			amount = n
 		}
 	}
-	if amount > 5 {
-		amount = 5
+	if amount > 10 {
+		amount = 10000
 	}
 	actual, err := engine.GatherResource(resource, amount)
 	if err != nil {

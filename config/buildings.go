@@ -29,12 +29,12 @@ func BaseBuildings() []BuildingDef {
 		// ===== PRIMITIVE AGE (costs: 30-100) =====
 		{
 			Name: "Hut", Key: "hut", Category: "housing",
-			BaseCost:    map[string]float64{"wood": 30},
-			CostScale:   1.2,
-			Effects:     []Effect{{Type: "capacity", Target: "population", Value: 2}},
+			BaseCost:    map[string]float64{"wood": 10},
+			CostScale:   1.12,
+			Effects:     []Effect{{Type: "capacity", Target: "population", Value: 3}},
 			BuildTicks:  3,
 			RequiredAge: "primitive_age",
-			Description: "A crude shelter of sticks and leaves. +2 pop cap.",
+			Description: "A crude shelter of sticks and leaves. +3 pop cap.",
 		},
 		{
 			Name: "Stash", Key: "stash", Category: "storage",

@@ -1,0 +1,91 @@
+/* ── AgeForge Wiki — Docsify dark theme overrides ────────────────────────── */
+:root {
+  --theme-color:         #f0a500;
+  --sidebar-background:  #0d1117;
+  --sidebar-nav-link-color:         #8b949e;
+  --sidebar-nav-link-color--hover:  #f0a500;
+  --sidebar-nav-link-color--active: #f0a500;
+  --content-max-width:   860px;
+  --base-background-color:  #0d1117;
+  --base-color:             #c9d1d9;
+  --heading-color:           #e6edf3;
+  --link-color:              #79c0ff;
+  --link-color--hover:       #f0a500;
+  --code-background:         #161b22;
+  --code-theme-background:   #161b22;
+  --code-block-border-radius: 6px;
+  --mono-font:  'JetBrains Mono', 'Fira Code', monospace;
+}
+
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; }
+
+/* Sidebar */
+.sidebar-nav > ul > li > a {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.5rem;
+  letter-spacing: 1px;
+}
+.sidebar { border-right: 1px solid #30363d !important; }
+.sidebar .app-name a {
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.75rem;
+  color: #f0a500;
+}
+
+/* Headings */
+h1, h2 {
+  font-family: 'Press Start 2P', monospace;
+  letter-spacing: 2px;
+  line-height: 1.5;
+}
+h1 { font-size: 1.1rem; color: #f0a500; }
+h2 { font-size: 0.8rem; color: #e6edf3; border-bottom: 1px solid #30363d; padding-bottom: 10px; }
+h3 { font-size: 1rem; color: #79c0ff; }
+
+/* Code blocks */
+pre[class*="language-"], .token.code {
+  font-family: 'JetBrains Mono', monospace !important;
+  border: 1px solid #30363d;
+  border-left: 3px solid #f0a500;
+  border-radius: 6px;
+  background: #161b22 !important;
+}
+code { color: #39d0c8; background: #1c2128; border: 1px solid #30363d; border-radius: 3px; }
+
+/* Blockquote / tip */
+blockquote {
+  border-left: 4px solid #f0a500;
+  background: rgba(240,165,0,0.06);
+  border-radius: 0 6px 6px 0;
+  padding: 12px 20px;
+  color: #c9d1d9;
+}
+
+/* Tables */
+table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+th {
+  background: #161b22;
+  color: #f0a500;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 0.45rem;
+  letter-spacing: 1px;
+  padding: 10px 14px;
+  text-align: left;
+  border-bottom: 2px solid #30363d;
+}
+td {
+  padding: 8px 14px;
+  border-bottom: 1px solid #30363d;
+  font-size: 0.9rem;
+  color: #c9d1d9;
+}
+tr:hover td { background: rgba(240,165,0,0.04); }
+
+/* Search */
+.search { border-bottom: 1px solid #30363d !important; }
+.search input {
+  background: #161b22 !important;
+  color: #c9d1d9 !important;
+  border: 1px solid #30363d !important;
+  border-radius: 4px;
+}

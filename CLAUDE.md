@@ -59,3 +59,18 @@ go run main.go
 ```bash
 go test ./...
 ```
+
+## Website & Wiki Sync Rule
+**Any change to the game MUST also update the appropriate pages in `site/`.**
+- Balance change (building cost, resource rate, tech effect, age requirement) → update `site/docs/` wiki page for that system
+- New building/tech/age/resource/wonder/expedition → add it to the relevant wiki page AND the landing page if it affects headline stats (age count, building count, etc.)
+- Mechanic change (new command, removed command, renamed key) → update `site/docs/commands.md` and any affected wiki page
+- The landing page `site/index.html` hero stats (22 Ages / 80 Buildings / 52 Techs / ∞ Prestige) must stay accurate
+- Use a subagent for the wiki update if it spans more than 2 files
+
+## Subagent Usage
+- **Always use subagents (Task tool) for large, multi-file work** — wiki pages, bulk file reads, research across many config files, parallel writes.
+- Use `subagent_type=Explore` for reading/summarising multiple config or source files.
+- Use `subagent_type=general-purpose` for tasks that need reading + writing across many files in parallel.
+- Reserve main context for reasoning, architecture decisions, and small targeted edits.
+- When writing many files (e.g. wiki pages, site sections), spawn a subagent or batch writes so the main context stays clean.

@@ -71,5 +71,22 @@ Items are moved here from TODO.md when finished. Do not re-implement anything li
   - `ui/splash.go` — Wiki button calls `wikiServer.Start()` + `wikiServer.OpenBrowser()` (no engine start from splash)
   - `showWipeConfirmation` and `CreateSplashPage` now take `*game.WikiServer` instead of `onWiki func()`
 
+## Web Port — Phase 1 (Repo Restructure)
+- [x] Split game/save.go into 3 files (2026-02-25):
+  - `save_common.go` — GameSave structs + `buildSaveSnapshot` + `applySaveState` (no build tag, shared)
+  - `save_native.go` — file I/O backend (`//go:build !js`)
+  - `save_wasm.go` — localStorage backend (`//go:build js && wasm`)
+- [x] `game/wiki_server.go` — added `//go:build !js` tag
+- [x] `cmd/wasm/main.go` — WASM entry point; exports `init`, `start`, `stop`, `getState`, `command`, `loadSave`, `exportSave`, `importSave`, `saveExists`, `wipeSaves` to JS; full command dispatcher for all engine actions
+- [x] `web/index.html` — full app shell: loading screen, top bar, 9-tab nav, modal overlay, toast container
+- [x] `web/style.css` — complete dark theme: CSS vars, tab bar, tables, badges, cards, progress bars, toasts, modal
+- [x] `web/game.js` — WASM loader, tick loop (1s), autosave (60s), all 9 tab renderers, command dispatcher, save/export/import UI, wonder bank panel
+- [x] `web/map.js` — PixiJS v8 map renderer skeleton (placeholder until Phase 6 mapgen extraction)
+- [x] `web/manifest.json` — PWA manifest (ageforge.io)
+- [x] `web/sw.js` — service worker for offline + WASM caching
+- [x] `Makefile` — added `make web` and `make web-clean` targets; `GOOS=js GOARCH=wasm go build ./cmd/wasm/`
+- [x] `netlify.toml` — build command, publish dir, WASM MIME header, security headers, SPA redirect
+- [x] `.go-version` — pins Go 1.23 for Netlify build image
+
 ## General / Misc
 - [x] Established TODO.md + DONE.md workflow for session-resumable planning (2026-02-25)

@@ -37,3 +37,6 @@ venv/
 # Ignore game saves and wiki repository
 data/saves/
 wiki/
+
+# Local Netlify folder
+.netlify
