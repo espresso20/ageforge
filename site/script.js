@@ -152,6 +152,8 @@ if (track) {
     const node = document.createElement('div');
     node.className = 'age-node';
     node.dataset.era = age.era;
+    // Stagger the float animation so adjacent cards aren't in sync
+    node.style.animationDelay = `${((i * 0.55) % 7).toFixed(2)}s`;
     node.innerHTML = `
       <div class="age-dot">${age.icon}</div>
       <div class="age-order">AGE ${String(i).padStart(2, '0')}</div>
@@ -160,6 +162,37 @@ if (track) {
     `;
     track.appendChild(node);
   });
+
+  // ── Arrow navigation ────────────────────────────────────────────────────
+  const agesScroll = document.getElementById('ages-scroll');
+  const prevBtn    = document.getElementById('ages-prev');
+  const nextBtn    = document.getElementById('ages-next');
+
+  if (agesScroll && prevBtn && nextBtn) {
+    let agesIdx = 0;
+
+    function scrollToAge(idx) {
+      const cards = track.querySelectorAll('.age-node');
+      if (!cards.length) return;
+      agesIdx = Math.max(0, Math.min(idx, cards.length - 1));
+      agesScroll.scrollTo({ left: cards[agesIdx].offsetLeft, behavior: 'smooth' });
+    }
+
+    prevBtn.addEventListener('click', () => scrollToAge(agesIdx - 1));
+    nextBtn.addEventListener('click', () => scrollToAge(agesIdx + 1));
+
+    // Keep agesIdx in sync when user swipes/scrolls manually
+    agesScroll.addEventListener('scrollend', () => {
+      const cards = [...track.querySelectorAll('.age-node')];
+      const mid = agesScroll.scrollLeft + agesScroll.offsetWidth / 2;
+      let best = 0, bestDist = Infinity;
+      cards.forEach((c, i) => {
+        const d = Math.abs(c.offsetLeft + c.offsetWidth / 2 - mid);
+        if (d < bestDist) { bestDist = d; best = i; }
+      });
+      agesIdx = best;
+    }, { passive: true });
+  }
 }
 
 // ── Platform tabs ─────────────────────────────────────────────────────────────

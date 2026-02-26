@@ -358,27 +358,55 @@ code {
 .ages-section {
   position: relative; z-index: 2;
   padding: 100px 0;
-  overflow: hidden;
 }
-.ages-section .section-wrap { margin-bottom: 0; padding-bottom: 52px; }
-.ages-scroll {
+.ages-section .section-wrap { padding-bottom: 52px; }
+.ages-carousel {
+  display: flex;
+  align-items: center;
+  gap: 16px;
   width: 100%;
-  overflow-x: auto;
-  padding: 0 5vw 32px;
-  scrollbar-color: var(--gold) transparent;
-  scrollbar-width: thin;
+}
+.ages-arrow {
+  flex-shrink: 0;
+  width: 52px; height: 52px;
+  border-radius: 50%;
+  background: rgba(240,165,0,0.10);
+  border: 1px solid rgba(240,165,0,0.35);
+  color: var(--gold);
+  font-size: 1.5rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .2s, border-color .2s, transform .15s, box-shadow .2s;
+  box-shadow: 0 0 0 rgba(240,165,0,0);
+}
+.ages-arrow:hover {
+  background: rgba(240,165,0,0.22);
+  border-color: var(--gold);
+  transform: scale(1.10);
+  box-shadow: 0 0 22px rgba(240,165,0,0.28);
+}
+.ages-arrow:active { transform: scale(0.94); }
+.ages-scroll {
+  flex: 1;
+  min-width: 0;
+  overflow-x: scroll;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
   scroll-snap-type: x mandatory;
   -webkit-overflow-scrolling: touch;
 }
-.ages-scroll::-webkit-scrollbar { height: 5px; }
-.ages-scroll::-webkit-scrollbar-track { background: transparent; }
-.ages-scroll::-webkit-scrollbar-thumb { background: var(--gold); border-radius: 3px; opacity: .5; }
+.ages-scroll::-webkit-scrollbar { display: none; }
 .ages-track {
   display: flex;
-  gap: 20px;
+  gap: 24px;
   width: max-content;
-  padding: 12px 0 12px;
+  padding: 24px 0 32px;
   align-items: stretch;
+}
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-10px); }
 }
 .age-node {
   position: relative;
@@ -386,21 +414,23 @@ code {
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  width: min(42vw, 460px);
-  min-width: 260px;
+  width: min(42vw, 440px);
+  min-width: 240px;
   min-height: 340px;
   padding: 36px 28px 32px;
-  border-radius: 4px;
+  border-radius: 8px;
   background: rgba(22,27,34,0.65);
   backdrop-filter: blur(18px);
   -webkit-backdrop-filter: blur(18px);
-  border: 1px solid rgba(48,54,61,0.65);
+  border: none;
+  box-shadow: 0 14px 48px rgba(0,0,0,0.55), 0 2px 12px rgba(0,0,0,0.4);
   cursor: default;
-  transition: border-color .3s, box-shadow .3s, transform .3s;
+  transition: box-shadow .3s, transform .3s;
   scroll-snap-align: start;
   text-align: center;
   gap: 18px;
   overflow: hidden;
+  animation: float 7s ease-in-out infinite;
 }
 /* era colour bar at top */
 .age-node::before {
@@ -422,11 +452,12 @@ code {
   pointer-events: none;
 }
 .age-node:hover {
-  border-color: var(--ac, var(--gold));
-  box-shadow: 0 0 40px color-mix(in srgb, var(--ac, var(--gold)) 20%, transparent);
-  transform: translateY(-5px);
+  animation-play-state: paused;
+  box-shadow:
+    0 20px 60px rgba(0,0,0,0.65),
+    0 0 50px color-mix(in srgb, var(--ac, var(--gold)) 25%, transparent);
 }
-.age-node:hover::after { opacity: .06; }
+.age-node:hover::after { opacity: .08; }
 
 /* era accent colours via data-era */
 .age-node[data-era="primitive"]   { --ac: #b8914a; }
@@ -764,19 +795,7 @@ code {
 .footer-links a:hover { color: var(--gold); }
 .footer-copy { color: var(--border); font-size: 0.78rem; }
 
-/* ── Pixel art decorative border ────────────────────────────────────────── */
-.ages-section::before,
-.ages-section::after {
-  content: '';
-  display: block;
-  height: 4px;
-  background: repeating-linear-gradient(
-    to right,
-    var(--gold) 0px, var(--gold) 8px,
-    transparent 8px, transparent 16px
-  );
-  opacity: 0.25;
-}
+/* ── Pixel art decorative border (removed) ──────────────────────────────── */
 
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 960px) {
