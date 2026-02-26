@@ -255,7 +255,7 @@ const TERM_LINES = [
   // ── row 6: column headers
   m("  ──────────────────── Resources ─────────────────────") +
     m("│") +
-    m("──────────────── Buildings ────────────────"),
+    m("──────────────── Buildings ──────────────"),
 
   // ── row 7-10: resources left, buildings right
   "  " +
