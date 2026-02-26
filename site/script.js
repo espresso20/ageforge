@@ -253,7 +253,7 @@ const TERM_LINES = [
   ),
 
   // ── row 6: column headers
-  m("  ──────────────── Resources ────────────────────") +
+  m("  ──────────────────── Resources ────────────────────") +
     m("│") +
     m("──────────────── Buildings ────────────────"),
 
@@ -321,7 +321,7 @@ const TERM_LINES = [
     m("── Production ──"),
 
   // ── row 11: villager header / building row
-  m("  ──────────────────── Villagers ──────────────────") +
+  m("  ──────────────────── Villagers ────────────────────) +
     m("│") +
     "  " +
     gr("✓") +
@@ -338,7 +338,7 @@ const TERM_LINES = [
     m("  Food: ") +
     rd("-4/t") +
     "    " +
-    m("               │") +
+    m("                 │") +
     "  " +
     gr("✓") +
     " " +
@@ -351,7 +351,7 @@ const TERM_LINES = [
     g("(2 idle)") +
     m("  food:8") +
     "      " +
-    m("               │") +
+    m("                │") +
     "  " +
     m("·") +
     " " +
@@ -363,7 +363,7 @@ const TERM_LINES = [
     m("× 6") +
     m("  knowledge:3") +
     "          " +
-    m("               │"),
+    m("                │"),
 
   // ── row 14: divider + logs
   m(
