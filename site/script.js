@@ -223,6 +223,29 @@ document.querySelectorAll(".ptab").forEach((tab) => {
   // Mac is already the default active tab; no action needed
 })();
 
+// ── Copy buttons on all codeblocks ───────────────────────────────────────────
+document.querySelectorAll(".codeblock").forEach((block) => {
+  const btn = document.createElement("button");
+  btn.className = "copy-btn";
+  btn.textContent = "Copy";
+  btn.setAttribute("aria-label", "Copy code");
+
+  btn.addEventListener("click", () => {
+    const code = block.querySelector("code");
+    const text = code ? code.innerText : block.innerText;
+    navigator.clipboard.writeText(text.trim()).then(() => {
+      btn.textContent = "Copied!";
+      btn.classList.add("copied");
+      setTimeout(() => {
+        btn.textContent = "Copy";
+        btn.classList.remove("copied");
+      }, 2000);
+    });
+  });
+
+  block.appendChild(btn);
+});
+
 // ── Terminal mockup — static HTML lines, typewriter per line ─────────────────
 const m = (s) => `<span class="tc-m">${s}</span>`; // muted
 const g = (s) => `<span class="tc-g">${s}</span>`; // gold
