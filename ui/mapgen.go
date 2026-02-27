@@ -604,9 +604,9 @@ func placeBuildingsRadial(buildings map[string]game.BuildingState, cx, cy, w, h,
 			dist := distRatio * maxDist
 			bx := cx + int(math.Cos(angle)*dist)
 			by := cy + int(math.Sin(angle)*dist*0.75)
-			size := 5 + dl*2
+			size := 14 + dl*5
 			if era >= 4 {
-				size++
+				size += 3
 			}
 			placements = append(placements, bldInfo{key, bs.Category, bx, by, size})
 			continue
@@ -864,9 +864,10 @@ func drawBuildings(img *image.RGBA, w, h, era, dl int, pal TerrainPalette, place
 		vis := getBuildingVisual(b.key, b.category)
 		drawBuildingShape(img, w, h, b, vis, era, dl)
 
-		// Wonder glow (all eras)
+		// Wonder glow (all eras) — large multi-ring corona
 		if b.category == "wonder" {
-			glowR := size + 3 + dl*3
+			// Outer diffuse halo
+			glowR := size + 14 + dl*8
 			for dy := -glowR; dy <= glowR; dy++ {
 				for dx := -glowR; dx <= glowR; dx++ {
 					d := math.Sqrt(float64(dx*dx + dy*dy))
@@ -883,7 +884,28 @@ func drawBuildings(img *image.RGBA, w, h, era, dl int, pal TerrainPalette, place
 						gc = pal.Accent2
 					}
 					existing := img.RGBAAt(px, py)
-					img.SetRGBA(px, py, lerp(existing, gc, fade*0.25))
+					img.SetRGBA(px, py, lerp(existing, gc, fade*0.55))
+				}
+			}
+			// Inner bright corona ring
+			innerR := size/2 + 4 + dl*2
+			for dy := -innerR; dy <= innerR; dy++ {
+				for dx := -innerR; dx <= innerR; dx++ {
+					d := math.Sqrt(float64(dx*dx + dy*dy))
+					if d < float64(size/2+1) || d > float64(innerR) {
+						continue
+					}
+					px, py := bx+dx, by+dy
+					if px < 0 || px >= w || py < 0 || py >= h {
+						continue
+					}
+					ringFade := 1.0 - math.Abs(d-float64(size/2+2))/float64(innerR-size/2)
+					gc := pal.Accent2
+					if era >= 6 {
+						gc = pal.Accent1
+					}
+					existing := img.RGBAAt(px, py)
+					img.SetRGBA(px, py, lerp(existing, gc, ringFade*0.75))
 				}
 			}
 		}
