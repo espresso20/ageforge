@@ -433,8 +433,8 @@ code {
     z-index: 2;
     padding: 100px 24px;
     background: transparent;
-    border-top: 1px solid rgba(48, 54, 61, 0.4);
-    border-bottom: 1px solid rgba(48, 54, 61, 0.4);
+    /*border-top: 1px solid rgba(48, 54, 61, 0.4);*/
+    /*border-bottom: 1px solid rgba(48, 54, 61, 0.4);*/
 }
 .feat-grid {
     display: grid;
@@ -716,8 +716,8 @@ code {
     z-index: 2;
     padding: 100px 24px;
     background: transparent;
-    border-top: 1px solid rgba(48, 54, 61, 0.4);
-    border-bottom: 1px solid rgba(48, 54, 61, 0.4);
+    /*border-top: 1px solid rgba(48, 54, 61, 0.4);*/
+    /*border-bottom: 1px solid rgba(48, 54, 61, 0.4);*/
 }
 .steps {
     display: flex;
@@ -852,7 +852,7 @@ code {
     z-index: 2;
     padding: 100px 24px;
     background: transparent;
-    border-top: 1px solid rgba(48, 54, 61, 0.4);
+    /*border-top: 1px solid rgba(48, 54, 61, 0.4);*/
 }
 .ptabs {
     display: flex;
@@ -927,8 +927,8 @@ code {
     z-index: 2;
     padding: 80px 24px;
     background: transparent;
-    border-top: 1px solid rgba(48, 54, 61, 0.4);
-    border-bottom: 1px solid rgba(48, 54, 61, 0.4);
+    /*border-top: 1px solid rgba(48, 54, 61, 0.4);*/
+    /*border-bottom: 1px solid rgba(48, 54, 61, 0.4);*/
 }
 .cs-grid {
     display: grid;
