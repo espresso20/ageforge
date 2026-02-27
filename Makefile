@@ -1,4 +1,4 @@
-.PHONY: build run clean check test vet validate all release
+.PHONY: build run clean check test vet validate all release release-patch release-minor release-major
 
 # Default: build + vet + run
 all: check run
@@ -49,12 +49,22 @@ clean:
 	@rm -rf bin
 	@echo "\033[0;32m[  OK  ]\033[0m Cleaned"
 
-# Build for multiple platforms
+# Build for multiple platforms (local, no version injection)
 release:
 	@echo "\033[0;36m[ageforge]\033[0m Building releases..."
 	@mkdir -p bin
-	@GOOS=darwin GOARCH=amd64 go build -o ./bin/ageforge-darwin-amd64
-	@GOOS=darwin GOARCH=arm64 go build -o ./bin/ageforge-darwin-arm64
-	@GOOS=linux GOARCH=amd64 go build -o ./bin/ageforge-linux-amd64
+	@GOOS=darwin  GOARCH=amd64 go build -o ./bin/ageforge-darwin-amd64
+	@GOOS=darwin  GOARCH=arm64 go build -o ./bin/ageforge-darwin-arm64
+	@GOOS=linux   GOARCH=amd64 go build -o ./bin/ageforge-linux-amd64
 	@GOOS=windows GOARCH=amd64 go build -o ./bin/ageforge-windows-amd64.exe
 	@echo "\033[0;32m[  OK  ]\033[0m Release builds complete"
+
+# Bump version, update CHANGELOG, commit, tag, and push to trigger CI release
+release-patch:
+	@bash scripts/release.sh patch
+
+release-minor:
+	@bash scripts/release.sh minor
+
+release-major:
+	@bash scripts/release.sh major
