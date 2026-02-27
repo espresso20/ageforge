@@ -6,6 +6,10 @@ All notable changes to AgeForge are documented here.
 
 ## [Unreleased]
 
+---
+
+## [v1.0.0] — 2026-02-26
+
 ### Added
 - 22 playable ages from Primitive to Transcendent
 - 80 buildings (58 standard + 22 wonders) with scaling costs
