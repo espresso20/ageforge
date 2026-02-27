@@ -202,20 +202,26 @@ if (track) {
 }
 
 // ── Platform tabs ─────────────────────────────────────────────────────────────
+function activateTab(id) {
+  document.querySelectorAll(".ptab").forEach((t) => t.classList.remove("active"));
+  document.querySelectorAll(".pane").forEach((p) => p.classList.remove("active"));
+  const btn = document.querySelector(`.ptab[data-tab="${id}"]`);
+  const pane = document.getElementById("pane-" + id);
+  if (btn) btn.classList.add("active");
+  if (pane) pane.classList.add("active");
+}
+
 document.querySelectorAll(".ptab").forEach((tab) => {
-  tab.addEventListener("click", () => {
-    const id = tab.dataset.tab;
-    document
-      .querySelectorAll(".ptab")
-      .forEach((t) => t.classList.remove("active"));
-    document
-      .querySelectorAll(".pane")
-      .forEach((p) => p.classList.remove("active"));
-    tab.classList.add("active");
-    const pane = document.getElementById("pane-" + id);
-    if (pane) pane.classList.add("active");
-  });
+  tab.addEventListener("click", () => activateTab(tab.dataset.tab));
 });
+
+// Auto-select tab based on visitor OS
+(function () {
+  const ua = navigator.userAgent;
+  if (/Windows/i.test(ua)) activateTab("win");
+  else if (/Linux/i.test(ua)) activateTab("linux");
+  // Mac is already the default active tab; no action needed
+})();
 
 // ── Terminal mockup — static HTML lines, typewriter per line ─────────────────
 const m = (s) => `<span class="tc-m">${s}</span>`; // muted

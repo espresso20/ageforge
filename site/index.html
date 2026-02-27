@@ -462,84 +462,82 @@
                 </div>
 
                 <div class="pane active" id="pane-mac">
-                    <div class="install-steps">
-                        <div class="install-step">
-                            <span class="istep-label"
-                                >1. Download the binary</span
-                            >
-                            <div class="codeblock">
-                                <code
-                                    >curl -L
-                                    https://github.com/espresso20/ageforge/releases/latest/download/ageforge-darwin-arm64
-                                    -o ageforge</code
-                                >
-                            </div>
-                        </div>
-                        <div class="install-step">
-                            <span class="istep-label"
-                                >2. Make it executable</span
-                            >
-                            <div class="codeblock">
-                                <code>chmod +x ageforge</code>
-                            </div>
-                        </div>
-                        <div class="install-step">
-                            <span class="istep-label">3. Run</span>
-                            <div class="codeblock"><code>./ageforge</code></div>
-                        </div>
+                    <div class="dl-direct">
+                        <a
+                            href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-arm64"
+                            class="btn btn-gold btn-lg"
+                        >⬇ Download for macOS — Apple Silicon</a>
+                        <a
+                            href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-amd64"
+                            class="dl-btn-alt"
+                        >Intel Mac →</a>
                     </div>
+
+                    <div class="post-download">
+                        <span class="post-download-label">After downloading, open Terminal and run:</span>
+                        <div class="codeblock"><code>chmod +x ~/Downloads/ageforge-macos-arm64 &amp;&amp; ~/Downloads/ageforge-macos-arm64</code></div>
+                    </div>
+
                     <p class="install-note">
-                        💡 Intel Mac? Use
-                        <code>ageforge-darwin-amd64</code> instead.
+                        🔒 <strong>macOS security prompt?</strong> Right-click the file → Open → Open Anyway.
+                        Or: <code>xattr -d com.apple.quarantine ~/Downloads/ageforge-macos-arm64</code>
                     </p>
+
+                    <details class="nerdy-path">
+                        <summary>Prefer the command line?</summary>
+                        <div class="install-steps">
+                            <div class="install-step">
+                                <span class="istep-label">Download + make executable + run</span>
+                                <div class="codeblock"><code>curl -L https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-arm64 -o ageforge &amp;&amp; chmod +x ageforge &amp;&amp; ./ageforge</code></div>
+                            </div>
+                        </div>
+                    </details>
                 </div>
 
                 <div class="pane" id="pane-linux">
-                    <div class="install-steps">
-                        <div class="install-step">
-                            <span class="istep-label"
-                                >1. Download the binary</span
-                            >
-                            <div class="codeblock">
-                                <code
-                                    >curl -L
-                                    https://github.com/espresso20/ageforge/releases/latest/download/ageforge-linux-amd64
-                                    -o ageforge</code
-                                >
-                            </div>
-                        </div>
-                        <div class="install-step">
-                            <span class="istep-label"
-                                >2. Make it executable</span
-                            >
-                            <div class="codeblock">
-                                <code>chmod +x ageforge</code>
-                            </div>
-                        </div>
-                        <div class="install-step">
-                            <span class="istep-label">3. Run</span>
-                            <div class="codeblock"><code>./ageforge</code></div>
-                        </div>
+                    <div class="dl-direct">
+                        <a
+                            href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-linux-amd64"
+                            class="btn btn-gold btn-lg"
+                        >⬇ Download for Linux — x86_64</a>
+                        <a
+                            href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-linux-arm64"
+                            class="dl-btn-alt"
+                        >ARM64 →</a>
                     </div>
-                    <p class="install-note">
-                        💡 ARM server? Use
-                        <code>ageforge-linux-arm64</code> instead.
-                    </p>
+
+                    <div class="post-download">
+                        <span class="post-download-label">After downloading, open a terminal and run:</span>
+                        <div class="codeblock"><code>chmod +x ~/Downloads/ageforge-linux-amd64 &amp;&amp; ~/Downloads/ageforge-linux-amd64</code></div>
+                    </div>
+
+                    <details class="nerdy-path">
+                        <summary>Prefer the command line?</summary>
+                        <div class="install-steps">
+                            <div class="install-step">
+                                <span class="istep-label">Download + make executable + run</span>
+                                <div class="codeblock"><code>curl -L https://github.com/espresso20/ageforge/releases/latest/download/ageforge-linux-amd64 -o ageforge &amp;&amp; chmod +x ageforge &amp;&amp; ./ageforge</code></div>
+                            </div>
+                        </div>
+                    </details>
                 </div>
 
                 <div class="pane" id="pane-win">
-                    <p>
-                        Download <code>ageforge-windows-amd64.exe</code> from
-                        the releases page and run it in
-                        <strong>Windows Terminal</strong> for full color
-                        support.
-                    </p>
-                    <div class="codeblock">
-                        <code>.\ageforge-windows-amd64.exe</code>
+                    <div class="dl-direct">
+                        <a
+                            href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-windows-amd64.exe"
+                            class="btn btn-gold btn-lg"
+                        >⬇ Download for Windows</a>
                     </div>
+
+                    <div class="post-download">
+                        <span class="post-download-label">After downloading, open Windows Terminal and run:</span>
+                        <div class="codeblock"><code>cd %USERPROFILE%\Downloads &amp;&amp; .\ageforge-windows-amd64.exe</code></div>
+                    </div>
+
                     <p class="install-note">
-                        ⚠ Use Windows Terminal or a modern emulator — cmd.exe
-                        doesn't support ANSI colors.
+                        🔒 <strong>SmartScreen warning?</strong> Click "More info" → "Run anyway".<br>
+                        ⚠ Use <strong>Windows Terminal</strong> — cmd.exe doesn't support ANSI colors.
                     </p>
                 </div>
 

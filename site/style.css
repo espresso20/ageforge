@@ -912,6 +912,63 @@ code {
 .install-note code {
     color: var(--cyan);
 }
+.dl-direct {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 24px;
+}
+.dl-btn-alt {
+    font-family: var(--font-px);
+    font-size: 0.52rem;
+    color: var(--muted);
+    text-decoration: none;
+    letter-spacing: 1px;
+    transition: color 0.2s;
+}
+.dl-btn-alt:hover {
+    color: var(--gold);
+}
+.post-download {
+    background: rgba(240, 165, 0, 0.06);
+    border: 1px solid rgba(240, 165, 0, 0.2);
+    border-radius: var(--radius);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.post-download-label {
+    font-family: var(--font-px);
+    font-size: 0.48rem;
+    color: var(--gold);
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+.nerdy-path {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border);
+}
+.nerdy-path summary {
+    font-family: var(--font-px);
+    font-size: 0.5rem;
+    color: var(--muted);
+    letter-spacing: 1px;
+    cursor: pointer;
+    margin-bottom: 16px;
+    transition: color 0.2s;
+    user-select: none;
+}
+.nerdy-path summary:hover {
+    color: var(--text);
+}
+.nerdy-path[open] summary {
+    color: var(--text);
+    margin-bottom: 20px;
+}
 .dl-cta {
     display: flex;
     gap: 14px;
