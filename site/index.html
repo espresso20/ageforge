@@ -154,8 +154,7 @@
                 </h2>
                 <p class="section-sub">
                     No browser needed! No install wizard and no cloud account.
-                    Just old school keyboard and a terminal wide enough to dream
-                    big.
+                    Just a keyboard and a terminal wide enough to dream big.
                 </p>
                 <div class="feat-grid">
                     <div class="feat-card" data-anim>
@@ -228,13 +227,25 @@
                     — each age unlocks new buildings, resources, and mechanics.
                 </p>
                 <div class="ages-carousel">
-                    <button class="ages-arrow" id="ages-prev" aria-label="Previous ages">&#8592;</button>
+                    <button
+                        class="ages-arrow"
+                        id="ages-prev"
+                        aria-label="Previous ages"
+                    >
+                        &#8592;
+                    </button>
                     <div class="ages-scroll" id="ages-scroll">
                         <div class="ages-track" id="ages-track">
                             <!-- injected by script.js -->
                         </div>
                     </div>
-                    <button class="ages-arrow" id="ages-next" aria-label="Next ages">&#8594;</button>
+                    <button
+                        class="ages-arrow"
+                        id="ages-next"
+                        aria-label="Next ages"
+                    >
+                        &#8594;
+                    </button>
                 </div>
             </div>
         </section>
@@ -450,8 +461,8 @@
             <div class="section-wrap">
                 <h2 class="section-title">Download &amp; Install</h2>
                 <p class="section-sub">
-                    A single static binary. No runtime, no dependencies, no
-                    installer.
+                    A single static binary. No runtime, dependencies, or
+                    installers required!.
                 </p>
 
                 <div class="ptabs">
@@ -466,29 +477,64 @@
                         <a
                             href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-arm64"
                             class="btn btn-gold btn-lg"
-                        >⬇ Download for macOS — Apple Silicon</a>
+                            >⬇ Download for macOS — Apple Silicon</a
+                        >
                         <a
                             href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-amd64"
                             class="dl-btn-alt"
-                        >Intel Mac →</a>
+                            >Intel Mac →</a
+                        >
                     </div>
 
                     <div class="post-download">
-                        <span class="post-download-label">After downloading, open Terminal and run:</span>
-                        <div class="codeblock"><code>chmod +x ~/Downloads/ageforge-macos-arm64 &amp;&amp; ~/Downloads/ageforge-macos-arm64</code></div>
+                        <span class="post-download-label"
+                            >After downloading, open Terminal and run:</span
+                        >
+                        <div class="codeblock">
+                            <code
+                                >chmod +x ~/Downloads/ageforge-macos-arm64
+                                &amp;&amp;
+                                ~/Downloads/ageforge-macos-arm64</code
+                            >
+                        </div>
                     </div>
 
-                    <p class="install-note">
-                        🔒 <strong>macOS security prompt?</strong> Right-click the file → Open → Open Anyway.
-                        Or: <code>xattr -d com.apple.quarantine ~/Downloads/ageforge-macos-arm64</code>
-                    </p>
+
+                    <div class="security-note">
+                        <span class="post-download-label"
+                            🔒 <strong>macOS security prompt?</strong> Right-click
+                            the file → Open → Open Anyway. Or:
+                            <div class="codeblock">
+                                <code
+                                    >xattr -d com.apple.quarantine
+                                    ~/Downloads/ageforge-macos-arm64</code
+                                >
+                            </div>
+                    </div>
+                    <!--<p class="install-note">
+                        🔒 <strong>macOS security prompt?</strong> Right-click
+                        the file → Open → Open Anyway. Or:
+                        <code
+                            >xattr -d com.apple.quarantine
+                            ~/Downloads/ageforge-macos-arm64</code
+                        >
+                    </p>-->
 
                     <details class="nerdy-path">
                         <summary>Prefer the command line?</summary>
                         <div class="install-steps">
                             <div class="install-step">
-                                <span class="istep-label">Download + make executable + run</span>
-                                <div class="codeblock"><code>curl -L https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-arm64 -o ageforge &amp;&amp; chmod +x ageforge &amp;&amp; ./ageforge</code></div>
+                                <span class="istep-label"
+                                    >Download + make executable + run</span
+                                >
+                                <div class="codeblock">
+                                    <code
+                                        >curl -L
+                                        https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-arm64
+                                        -o ageforge &amp;&amp; chmod +x ageforge
+                                        &amp;&amp; ./ageforge</code
+                                    >
+                                </div>
                             </div>
                         </div>
                     </details>
@@ -499,24 +545,43 @@
                         <a
                             href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-linux-amd64"
                             class="btn btn-gold btn-lg"
-                        >⬇ Download for Linux — x86_64</a>
+                            >⬇ Download for Linux — x86_64</a
+                        >
                         <a
                             href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-linux-arm64"
                             class="dl-btn-alt"
-                        >ARM64 →</a>
+                            >ARM64 →</a
+                        >
                     </div>
 
                     <div class="post-download">
-                        <span class="post-download-label">After downloading, open a terminal and run:</span>
-                        <div class="codeblock"><code>chmod +x ~/Downloads/ageforge-linux-amd64 &amp;&amp; ~/Downloads/ageforge-linux-amd64</code></div>
+                        <span class="post-download-label"
+                            >After downloading, open a terminal and run:</span
+                        >
+                        <div class="codeblock">
+                            <code
+                                >chmod +x ~/Downloads/ageforge-linux-amd64
+                                &amp;&amp;
+                                ~/Downloads/ageforge-linux-amd64</code
+                            >
+                        </div>
                     </div>
 
                     <details class="nerdy-path">
                         <summary>Prefer the command line?</summary>
                         <div class="install-steps">
                             <div class="install-step">
-                                <span class="istep-label">Download + make executable + run</span>
-                                <div class="codeblock"><code>curl -L https://github.com/espresso20/ageforge/releases/latest/download/ageforge-linux-amd64 -o ageforge &amp;&amp; chmod +x ageforge &amp;&amp; ./ageforge</code></div>
+                                <span class="istep-label"
+                                    >Download + make executable + run</span
+                                >
+                                <div class="codeblock">
+                                    <code
+                                        >curl -L
+                                        https://github.com/espresso20/ageforge/releases/latest/download/ageforge-linux-amd64
+                                        -o ageforge &amp;&amp; chmod +x ageforge
+                                        &amp;&amp; ./ageforge</code
+                                    >
+                                </div>
                             </div>
                         </div>
                     </details>
@@ -527,17 +592,28 @@
                         <a
                             href="https://github.com/espresso20/ageforge/releases/latest/download/ageforge-windows-amd64.exe"
                             class="btn btn-gold btn-lg"
-                        >⬇ Download for Windows</a>
+                            >⬇ Download for Windows</a
+                        >
                     </div>
 
                     <div class="post-download">
-                        <span class="post-download-label">After downloading, open Windows Terminal and run:</span>
-                        <div class="codeblock"><code>cd %USERPROFILE%\Downloads &amp;&amp; .\ageforge-windows-amd64.exe</code></div>
+                        <span class="post-download-label"
+                            >After downloading, open Windows Terminal and
+                            run:</span
+                        >
+                        <div class="codeblock">
+                            <code
+                                >cd %USERPROFILE%\Downloads &amp;&amp;
+                                .\ageforge-windows-amd64.exe</code
+                            >
+                        </div>
                     </div>
 
                     <p class="install-note">
-                        🔒 <strong>SmartScreen warning?</strong> Click "More info" → "Run anyway".<br>
-                        ⚠ Use <strong>Windows Terminal</strong> — cmd.exe doesn't support ANSI colors.
+                        🔒 <strong>SmartScreen warning?</strong> Click "More
+                        info" → "Run anyway".<br />
+                        ⚠ Use <strong>Windows Terminal</strong> — cmd.exe
+                        doesn't support ANSI colors.
                     </p>
                 </div>
 
