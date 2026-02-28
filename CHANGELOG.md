@@ -8,6 +8,10 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v1.1.0] — 2026-02-27
+
+---
+
 ## [v1.0.0] — 2026-02-26
 
 ### Added
