@@ -11,7 +11,7 @@ import (
 
 // CreateSplashPage creates the main menu splash screen.
 // wikiServer is started and opened in the browser when the player selects Wiki.
-func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, wikiServer *game.WikiServer) tview.Primitive {
+func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, wikiServer *game.WikiServer, currentVersion string) tview.Primitive {
 	saveExists := game.SaveExists("autosave")
 	prestigeLevel := engine.Prestige.GetLevel()
 
@@ -81,8 +81,11 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	dangerList.SetSelectedTextColor(tcell.ColorWhite)
 	dangerList.ShowSecondaryText(false)
 
+	dangerList.AddItem("  ↑  Check for Update", "", 'u', func() {
+		showUpdateCheck(app, pages, currentVersion)
+	})
 	dangerList.AddItem("  ✗  Wipe Save", "", 'x', func() {
-		showWipeConfirmation(app, pages, engine, wikiServer, canvas.halt)
+		showWipeConfirmation(app, pages, engine, wikiServer, canvas.halt, currentVersion)
 	})
 	dangerList.AddItem("  ✗  Quit", "", 'q', func() {
 		canvas.halt()
@@ -99,7 +102,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	menuPanel := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(mainList, 5, 0, true).
 		AddItem(sepTV, 1, 0, false).
-		AddItem(dangerList, 4, 0, false).
+		AddItem(dangerList, 5, 0, false).
 		AddItem(footerTV, 1, 0, false)
 	menuPanel.
 		SetBorder(true).
@@ -117,7 +120,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	// Canvas fills top space; compact menu anchored at bottom.
 	outer := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(canvas, 0, 1, false).
-		AddItem(menuRow, 13, 0, true)
+		AddItem(menuRow, 14, 0, true)
 
 	// Tab cycles between the two lists
 	outer.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -145,7 +148,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 
 // showWipeConfirmation shows the "are you sure?" modal before wiping data.
 // cleanup is called (to halt the canvas animation) before recreating the splash.
-func showWipeConfirmation(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, wikiServer *game.WikiServer, cleanup func()) {
+func showWipeConfirmation(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, wikiServer *game.WikiServer, cleanup func(), currentVersion string) {
 	modal := tview.NewModal().
 		SetText("⚠  WIPE ALL DATA  ⚠\n\nThis will permanently delete ALL save files\nand reset the game to zero.\n\nPrestige, upgrades, progress — everything gone.\n\nAre you REALLY sure?").
 		AddButtons([]string{"I'm Kidding!", "NUKE IT ALL"}).
@@ -156,10 +159,80 @@ func showWipeConfirmation(app *tview.Application, pages *tview.Pages, engine *ga
 				game.WipeAllSaves()
 				engine.Reset()
 				pages.RemovePage("splash")
-				newSplash := CreateSplashPage(app, pages, engine, wikiServer)
+				newSplash := CreateSplashPage(app, pages, engine, wikiServer, currentVersion)
 				pages.AddPage("splash", newSplash, true, true)
 			}
 		})
 	modal.SetBackgroundColor(tcell.ColorDarkRed)
 	pages.AddPage("wipe_confirm", modal, true, true)
+}
+
+// ── Update flow ───────────────────────────────────────────────────────────────
+
+const updateModalPage = "update_modal"
+
+func showUpdateCheck(app *tview.Application, pages *tview.Pages, currentVersion string) {
+	modal := tview.NewModal().SetText("Checking for updates...")
+	pages.AddPage(updateModalPage, modal, true, true)
+
+	go func() {
+		result, err := game.CheckLatest(currentVersion)
+		app.QueueUpdateDraw(func() {
+			pages.RemovePage(updateModalPage)
+			if err != nil {
+				showUpdateMsg(app, pages, "Update check failed:\n\n"+err.Error())
+				return
+			}
+			if !result.IsNewer {
+				showUpdateMsg(app, pages, "You're up to date!\n\n"+currentVersion+" is the latest version.")
+				return
+			}
+			showUpdateConfirm(app, pages, result)
+		})
+	}()
+}
+
+func showUpdateMsg(app *tview.Application, pages *tview.Pages, msg string) {
+	modal := tview.NewModal().
+		SetText(msg).
+		AddButtons([]string{"OK"}).
+		SetDoneFunc(func(_ int, _ string) {
+			pages.RemovePage(updateModalPage)
+		})
+	pages.AddPage(updateModalPage, modal, true, true)
+}
+
+func showUpdateConfirm(app *tview.Application, pages *tview.Pages, result game.UpdateResult) {
+	msg := fmt.Sprintf(
+		"  ✦  Update Available  ✦\n\n  Latest:   %s\n  Current:  %s\n\nDownload and install now?",
+		result.LatestVersion, result.CurrentVersion,
+	)
+	modal := tview.NewModal().
+		SetText(msg).
+		AddButtons([]string{"Update Now", "Later"}).
+		SetDoneFunc(func(_ int, label string) {
+			pages.RemovePage(updateModalPage)
+			if label == "Update Now" {
+				showUpdateInstall(app, pages, result)
+			}
+		})
+	pages.AddPage(updateModalPage, modal, true, true)
+}
+
+func showUpdateInstall(app *tview.Application, pages *tview.Pages, result game.UpdateResult) {
+	modal := tview.NewModal().
+		SetText(fmt.Sprintf("Downloading %s...\n\n%s", result.LatestVersion, result.BinaryName))
+	pages.AddPage(updateModalPage, modal, true, true)
+
+	go func() {
+		msg, err := game.DownloadAndInstall(result)
+		app.QueueUpdateDraw(func() {
+			pages.RemovePage(updateModalPage)
+			if err != nil {
+				showUpdateMsg(app, pages, "Update failed:\n\n"+err.Error())
+				return
+			}
+			showUpdateMsg(app, pages, "  ✓  "+msg)
+		})
+	}()
 }

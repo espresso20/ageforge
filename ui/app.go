@@ -13,14 +13,16 @@ type App struct {
 	engine     *game.GameEngine
 	dashboard  *Dashboard
 	wikiServer *game.WikiServer
+	version    string
 }
 
 // NewApp creates the UI application
-func NewApp(engine *game.GameEngine) *App {
+func NewApp(engine *game.GameEngine, version string) *App {
 	a := &App{
 		tviewApp: tview.NewApplication(),
 		pages:    tview.NewPages(),
 		engine:   engine,
+		version:  version,
 	}
 	a.setup()
 	return a
@@ -30,7 +32,7 @@ func (a *App) setup() {
 	a.dashboard = NewDashboard(a.tviewApp, a.engine, a.pages)
 	a.wikiServer = game.NewWikiServer()
 
-	splash := CreateSplashPage(a.tviewApp, a.pages, a.engine, a.wikiServer)
+	splash := CreateSplashPage(a.tviewApp, a.pages, a.engine, a.wikiServer, a.version)
 
 	a.pages.AddPage("splash", splash, true, true)
 	a.pages.AddPage("dashboard", a.dashboard.Root(), true, false)

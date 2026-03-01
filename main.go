@@ -20,7 +20,7 @@ func main() {
 	engine := game.NewGameEngine()
 
 	// Create UI
-	app := ui.NewApp(engine)
+	app := ui.NewApp(engine, version)
 
 	// Handle OS signals for clean exit
 	sigs := make(chan os.Signal, 1)
