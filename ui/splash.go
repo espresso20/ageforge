@@ -25,7 +25,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 		fn()
 	}
 
-	// ── Primary action list ───────────────────────────────────────────────────
+	// ── Single action list ───────────────────────────────────────────────────
 	mainList := tview.NewList()
 	mainList.SetBorder(false)
 	mainList.SetSelectedBackgroundColor(tcell.ColorGold)
@@ -62,47 +62,31 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 			}
 		}
 	})
+	mainList.AddItem("  ✗  Quit", "", 'q', func() {
+		canvas.halt()
+		app.Stop()
+	})
+	mainList.AddItem("  ✗  Wipe Save", "", 'x', func() {
+		showWipeConfirmation(app, pages, engine, wikiServer, canvas.halt, currentVersion)
+	})
+	mainList.AddItem("  ↑  Check for Update", "", 'u', func() {
+		showUpdateCheck(app, pages, currentVersion)
+	})
 
 	// Default selection
 	if !saveExists {
 		mainList.SetCurrentItem(1)
 	}
 
-	// Separator
-	sepTV := tview.NewTextView().
-		SetDynamicColors(true).
-		SetTextAlign(tview.AlignCenter).
-		SetText("[gold]━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━[-]")
-
-	// ── Danger action list ────────────────────────────────────────────────────
-	dangerList := tview.NewList()
-	dangerList.SetBorder(false)
-	dangerList.SetSelectedBackgroundColor(tcell.ColorDarkRed)
-	dangerList.SetSelectedTextColor(tcell.ColorWhite)
-	dangerList.ShowSecondaryText(false)
-
-	dangerList.AddItem("  ↑  Check for Update", "", 'u', func() {
-		showUpdateCheck(app, pages, currentVersion)
-	})
-	dangerList.AddItem("  ✗  Wipe Save", "", 'x', func() {
-		showWipeConfirmation(app, pages, engine, wikiServer, canvas.halt, currentVersion)
-	})
-	dangerList.AddItem("  ✗  Quit", "", 'q', func() {
-		canvas.halt()
-		app.Stop()
-	})
-
 	// Footer hint
 	footerTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[#8b949e]Arrow keys · Enter · Tab to switch list[-]")
+		SetText("[#8b949e]Arrow keys · Enter[-]")
 
 	// ── Menu panel ────────────────────────────────────────────────────────────
 	menuPanel := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(mainList, 5, 0, true).
-		AddItem(sepTV, 1, 0, false).
-		AddItem(dangerList, 5, 0, false).
+		AddItem(mainList, 8, 0, true).
 		AddItem(footerTV, 1, 0, false)
 	menuPanel.
 		SetBorder(true).
@@ -120,28 +104,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	// Canvas fills top space; compact menu anchored at bottom.
 	outer := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(canvas, 0, 1, false).
-		AddItem(menuRow, 14, 0, true)
-
-	// Tab cycles between the two lists
-	outer.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyTab:
-			if mainList.HasFocus() {
-				app.SetFocus(dangerList)
-			} else {
-				app.SetFocus(mainList)
-			}
-			return nil
-		case tcell.KeyBacktab:
-			if dangerList.HasFocus() {
-				app.SetFocus(mainList)
-			} else {
-				app.SetFocus(dangerList)
-			}
-			return nil
-		}
-		return event
-	})
+		AddItem(menuRow, 12, 0, true)
 
 	return outer
 }
