@@ -40,45 +40,45 @@ jobs:
             > /tmp/release_notes.md
           [ -s /tmp/release_notes.md ] || echo "See CHANGELOG.md for details." > /tmp/release_notes.md
 
-      # - name: Create GitHub Release
-      #   uses: softprops/action-gh-release@v2
-      #   with:
-      #     body_path: /tmp/release_notes.md
-      #     files: dist/*
-      #     draft: false
-      #     prerelease: false
-      #   env:
-      #     GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      # - name: Notify Discord
-      #   if: success()
-      #   env:
-      #     WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
-      #   run: |
-      #     VERSION="${{ github.ref_name }}"
-      #     NOTES=$(head -20 /tmp/release_notes.md)
-      #     URL="https://github.com/espresso20/ageforge/releases/tag/${VERSION}"
-      #     PAYLOAD=$(jq -n \
-      #       --arg title "AgeForge ${VERSION} Released!" \
-      #       --arg url "$URL" \
-      #       --arg desc "$NOTES" \
-      #       '{username:"AgeForge Releases",embeds:[{title:$title,url:$url,color:15771904,description:$desc,footer:{text:"github.com/espresso20/ageforge/releases"}}]}')
-      #     curl -s -X POST "$WEBHOOK_URL" \
-      #       -H "Content-Type: application/json" \
-      #       -d "$PAYLOAD"
-
-  releases-to-discord:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-      - name: GitHub Releases to Discord
-        uses: SethCohen/github-releases-to-discord@v1
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
         with:
-          webhook_url: ${{ secrets.WEBHOOK_URL }}
-          color: "2105893"
-          username: "Release Changelog"
-          avatar_url: "https://cdn.discordapp.com/avatars/487431320314576937/bd64361e4ba6313d561d54e78c9e7171.png"
-          content: "||@everyone||"
-          footer_title: "Changelog"
-          reduce_headings: true
+          body_path: /tmp/release_notes.md
+          files: dist/*
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify Discord
+        if: success()
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        run: |
+          VERSION="${{ github.ref_name }}"
+          NOTES=$(head -20 /tmp/release_notes.md)
+          URL="https://github.com/espresso20/ageforge/releases/tag/${VERSION}"
+          PAYLOAD=$(jq -n \
+            --arg title "AgeForge ${VERSION} Released!" \
+            --arg url "$URL" \
+            --arg desc "$NOTES" \
+            '{username:"AgeForge Releases",embeds:[{title:$title,url:$url,color:15771904,description:$desc,footer:{text:"github.com/espresso20/ageforge/releases"}}]}')
+          curl -s -X POST "$WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"
+
+  # releases-to-discord:
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - name: Checkout
+  #       uses: actions/checkout@v3
+  #     - name: GitHub Releases to Discord
+  #       uses: SethCohen/github-releases-to-discord@v1
+  #       with:
+  #         webhook_url: ${{ secrets.WEBHOOK_URL }}
+  #         color: "2105893"
+  #         username: "Release Changelog"
+  #         avatar_url: "https://cdn.discordapp.com/avatars/487431320314576937/bd64361e4ba6313d561d54e78c9e7171.png"
+  #         content: "||@everyone||"
+  #         footer_title: "Changelog"
+  #         reduce_headings: true
