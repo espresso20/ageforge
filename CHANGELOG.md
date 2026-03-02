@@ -8,6 +8,13 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v2.4.7] — 2026-03-02
+
+### Added
+- show version + async update badge
+
+---
+
 ## [v2.4.6] — 2026-03-01
 
 ### Fixed
