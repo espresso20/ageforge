@@ -1267,6 +1267,9 @@ code {
     transition: box-shadow 0.3s, transform 0.3s, border-color 0.3s;
     cursor: default;
     position: relative;
+    display: flex;
+    flex-direction: column;
+    align-self: flex-start;
 }
 .ss-card:hover {
     border-color: rgba(240, 165, 0, 0.5);
