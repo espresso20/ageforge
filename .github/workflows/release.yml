@@ -43,5 +43,7 @@ jobs:
         with:
           body_path: /tmp/release_notes.md
           files: dist/*
+          draft: false
+          prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
