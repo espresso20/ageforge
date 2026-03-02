@@ -47,3 +47,44 @@ jobs:
           prerelease: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Notify Discord
+        if: success()
+        env:
+          WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
+        run: |
+          VERSION="${GITHUB_REF_NAME}"
+          RELEASE_URL="https://github.com/espresso20/ageforge/releases/tag/${VERSION}"
+          NOTES=$(head -20 /tmp/release_notes.md)
+          python3 - <<PYEOF
+          import os, json, urllib.request
+
+          version  = os.environ["VERSION"] if "VERSION" in os.environ else "${VERSION}"
+          url      = "${RELEASE_URL}"
+          notes    = """${NOTES}"""
+          webhook  = os.environ.get("WEBHOOK_URL", "")
+
+          if not webhook:
+              print("No WEBHOOK_URL set, skipping Discord notification")
+              exit(0)
+
+          # Trim notes to fit Discord embed description limit
+          if len(notes) > 3000:
+              notes = notes[:2997] + "..."
+
+          payload = {
+              "username": "AgeForge Releases",
+              "embeds": [{
+                  "title": f"AgeForge {version} Released!",
+                  "url": url,
+                  "color": 0xf0a500,
+                  "description": notes if notes.strip() else "See release page for details.",
+                  "footer": {"text": "Download at github.com/espresso20/ageforge/releases"}
+              }]
+          }
+
+          data = json.dumps(payload).encode()
+          req  = urllib.request.Request(webhook, data=data, headers={"Content-Type": "application/json"})
+          urllib.request.urlopen(req)
+          print(f"Discord notified for {version}")
+          PYEOF
