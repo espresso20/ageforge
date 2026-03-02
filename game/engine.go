@@ -48,6 +48,9 @@ type GameEngine struct {
 	// Dynamic tick speed
 	tickSpeedBonus  float64
 	speedMultiplier float64
+
+	// Age advancement — set when requirements are met; player must type 'advance' to proceed
+	ageReady bool
 }
 
 // BuildQueueItem represents a building under construction
@@ -311,9 +314,15 @@ func (ge *GameEngine) doTick() {
 	// Check milestones
 	ge.checkMilestones()
 
-	// Check age advancement
+	// Check age advancement — notify once when ready, but wait for player to type 'advance'
 	if nextAge := ge.progress.CheckAdvancement(ge.age, ge.Resources, ge.Buildings); nextAge != "" {
-		ge.advanceAge(nextAge)
+		if !ge.ageReady {
+			ge.ageReady = true
+			nextName := ge.progress.GetAgeName(nextAge)
+			ge.addLog("event", fmt.Sprintf("✦ Ready to advance to the %s! Type 'advance' when you're ready.", nextName))
+		}
+	} else {
+		ge.ageReady = false // requirements dropped — not ready anymore
 	}
 
 	// Recalculate tick speed from all sources
@@ -659,10 +668,11 @@ func (ge *GameEngine) getAllResearchProductionEffects() []config.Effect {
 	return effects
 }
 
-// advanceAge advances to the next age
+// advanceAge advances to the next age. Caller must hold the write lock.
 func (ge *GameEngine) advanceAge(newAge string) {
 	oldAge := ge.age
 	ge.age = newAge
+	ge.ageReady = false
 	ge.applyAgeUnlocks(newAge)
 	ge.Stats.RecordAge(newAge)
 
@@ -735,6 +745,25 @@ func (ge *GameEngine) processBuildQueue() {
 }
 
 // --- Public API for commands ---
+
+// AdvanceAge manually advances to the next age if requirements are met.
+func (ge *GameEngine) AdvanceAge() error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	if !ge.ageReady {
+		nextAge := ge.progress.CheckAdvancement(ge.age, ge.Resources, ge.Buildings)
+		if nextAge == "" {
+			return fmt.Errorf("age requirements not met yet — check the Stats tab for what's needed")
+		}
+	}
+	nextAge := ge.progress.GetNextAge(ge.age)
+	if nextAge == "" {
+		return fmt.Errorf("you are already at the final age")
+	}
+	ge.advanceAge(nextAge)
+	return nil
+}
 
 // GatherResource manually gathers a resource
 func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, error) {
@@ -1249,6 +1278,7 @@ func (ge *GameEngine) GetState() GameState {
 		Tick:           ge.tick,
 		Age:            ge.age,
 		AgeName:        ge.progress.GetAgeName(ge.age),
+		AgeReady:       ge.ageReady,
 		NextAge:        nextAge,
 		NextAgeName:    nextAgeName,
 		NextAgeResReqs: nextAgeResReqs,

@@ -7,6 +7,7 @@ type GameState struct {
 	Tick           int
 	Age            string
 	AgeName        string
+	AgeReady       bool   // requirements met — player can type 'advance' to proceed
 	NextAge        string
 	NextAgeName    string
 	NextAgeResReqs map[string]float64

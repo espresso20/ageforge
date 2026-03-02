@@ -60,6 +60,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdSpeed(args, engine)
 	case "upgrade":
 		return cmdUpgrade(args, engine)
+	case "advance":
+		return cmdAdvance(engine)
 	case "dump", "exportlogs":
 		return cmdDump(args, engine)
 	case "saves":
@@ -170,6 +172,17 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: sb.String(), Type: "info"}
 }
 
+func cmdAdvance(engine *game.GameEngine) CommandResult {
+	if err := engine.AdvanceAge(); err != nil {
+		return CommandResult{Message: err.Error(), Type: "error"}
+	}
+	state := engine.GetState()
+	return CommandResult{
+		Message: fmt.Sprintf("Your civilization enters the [gold]%s[-]!", state.AgeName),
+		Type:    "success",
+	}
+}
+
 func cmdHelp(args []string) CommandResult {
 	help := `[gold]Commands:[-]
   [cyan]gather[-] <food|wood|stone> [n] - Hand-gather resources (max 5)
@@ -177,6 +190,7 @@ func cmdHelp(args []string) CommandResult {
   [cyan]recruit[-] <type> [count|max]  - Recruit villagers (default: 1)
   [cyan]assign[-] <type> <resource> [n|all]- Assign villagers to gather
   [cyan]unassign[-] <type> <resource> [n|all]- Unassign villagers
+  [cyan]advance[-]                     - Advance to the next age (when ready)
   [cyan]research[-] <tech_key>         - Research a technology
   [cyan]research[-] cancel             - Cancel current research
   [cyan]research[-] list               - List available techs
