@@ -63,6 +63,7 @@ jobs:
           sect() { awk "/^### $1/{p=1;next} /^###/{p=0} p && /^-/{print}" /tmp/release_notes.md | head -8; }
           ADDED=$(sect "Added")
           FIXED=$(sect "Fixed")
+          BALANCE=$(sect "Balance")
           CHANGED=$(sect "Changed")
           OTHER=$(sect "Other")
 
@@ -70,12 +71,14 @@ jobs:
           FIELDS=$(jq -n \
             --arg added   "$ADDED"   \
             --arg fixed   "$FIXED"   \
+            --arg balance "$BALANCE" \
             --arg changed "$CHANGED" \
             --arg other   "$OTHER"   \
             --arg url     "$URL"     \
             '[
               if $added   != "" then {"name":"✨  Added",   "value":$added,   "inline":false} else empty end,
               if $fixed   != "" then {"name":"🔧  Fixed",   "value":$fixed,   "inline":false} else empty end,
+              if $balance != "" then {"name":"⚖️  Balance",  "value":$balance, "inline":false} else empty end,
               if $changed != "" then {"name":"🔄  Changed", "value":$changed, "inline":false} else empty end,
               if $other   != "" then {"name":"📋  Other",   "value":$other,   "inline":false} else empty end,
               {"name":"📥  Download", "value":("[**GitHub Releases →**](" + $url + ")"), "inline":false}

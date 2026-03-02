@@ -51,18 +51,20 @@ import sys, re
 raw = sys.argv[1]
 lines = [l.strip() for l in raw.splitlines() if l.strip()]
 
-sections = {"feat": [], "fix": [], "refactor": [], "perf": [], "other": []}
-pattern = re.compile(r'^(feat|fix|refactor|perf|chore|docs|style|test)(\(.+?\))?!?:\s*(.+)$', re.IGNORECASE)
+sections = {"feat": [], "fix": [], "balance": [], "refactor": [], "perf": [], "other": []}
+pattern = re.compile(r'^(feat|fix|balance|refactor|perf|chore|docs|style|test)(\(.+?\))?!?:\s*(.+)$', re.IGNORECASE)
 
 for line in lines:
     m = pattern.match(line)
     if m:
         kind = m.group(1).lower()
         msg  = m.group(3)
-        if kind in ("feat",):
+        if kind == "feat":
             sections["feat"].append(msg)
-        elif kind in ("fix",):
+        elif kind == "fix":
             sections["fix"].append(msg)
+        elif kind == "balance":
+            sections["balance"].append(msg)
         elif kind in ("refactor", "perf"):
             sections["refactor"].append(msg)
         elif kind in ("chore", "docs", "style", "test"):
@@ -75,7 +77,7 @@ for line in lines:
             sections["other"].append(line)
 
 out = []
-labels = [("feat", "### Added"), ("fix", "### Fixed"), ("refactor", "### Changed"), ("other", "### Other")]
+labels = [("feat", "### Added"), ("fix", "### Fixed"), ("balance", "### Balance"), ("refactor", "### Changed"), ("other", "### Other")]
 for key, header in labels:
     if sections[key]:
         out.append(header)
@@ -93,8 +95,8 @@ import sys, re
 raw = sys.argv[1]
 lines = [l.strip() for l in raw.splitlines() if l.strip()]
 
-sections = {"feat": [], "fix": [], "refactor": [], "other": []}
-pattern = re.compile(r'^(feat|fix|refactor|perf|chore|docs|style|test)(\(.+?\))?!?:\s*(.+)$', re.IGNORECASE)
+sections = {"feat": [], "fix": [], "balance": [], "refactor": [], "other": []}
+pattern = re.compile(r'^(feat|fix|balance|refactor|perf|chore|docs|style|test)(\(.+?\))?!?:\s*(.+)$', re.IGNORECASE)
 
 for line in lines:
     m = pattern.match(line)
@@ -105,6 +107,8 @@ for line in lines:
             sections["feat"].append(msg)
         elif kind == "fix":
             sections["fix"].append(msg)
+        elif kind == "balance":
+            sections["balance"].append(msg)
         elif kind in ("refactor", "perf"):
             sections["refactor"].append(msg)
     else:
@@ -112,7 +116,7 @@ for line in lines:
             sections["other"].append(line)
 
 out = []
-labels = [("feat", "### Added"), ("fix", "### Fixed"), ("refactor", "### Changed"), ("other", "### Other")]
+labels = [("feat", "### Added"), ("fix", "### Fixed"), ("balance", "### Balance"), ("refactor", "### Changed"), ("other", "### Other")]
 for key, header in labels:
     if sections[key]:
         out.append(header)

@@ -8,6 +8,7 @@ set -uo pipefail
 GOLD='\033[0;33m'
 GREEN='\033[0;32m'
 CYAN='\033[0;36m'
+RED='\033[0;31m'
 GRAY='\033[0;90m'
 BOLD='\033[1m'
 RESET='\033[0m'
@@ -30,37 +31,60 @@ echo ""
 
 # ── Pick type ─────────────────────────────────────────────────────────────────
 echo -e "${CYAN}${BOLD}What kind of change?${RESET}"
-echo -e "  ${GOLD}1${RESET}  feat      — new feature or content          → ### Added in release notes"
-echo -e "  ${GOLD}2${RESET}  fix       — bug fix                         → ### Fixed in release notes"
-echo -e "  ${GOLD}3${RESET}  refactor  — cleanup, no behavior change     → ### Changed in release notes"
-echo -e "  ${GOLD}4${RESET}  chore     — build/tooling/deps              (skipped in release notes)"
-echo -e "  ${GOLD}5${RESET}  docs      — docs/comments only              (skipped in release notes)"
+echo -e "  ${GOLD}1${RESET}  feat      — new feature or content          → ### Added"
+echo -e "  ${GOLD}2${RESET}  fix       — bug fix                         → ### Fixed"
+echo -e "  ${GOLD}3${RESET}  balance   — tuning costs, rates, numbers    → ### Balance"
+echo -e "  ${GOLD}4${RESET}  refactor  — cleanup, no behavior change     → ### Changed"
+echo -e "  ${GOLD}5${RESET}  chore     — build/tooling/deps              (skipped in notes)"
+echo -e "  ${GOLD}6${RESET}  docs      — docs/comments only              (skipped in notes)"
 echo ""
-read -rp "  Choice [1-5, default 1]: " TYPE_CHOICE || true
+read -rp "  Choice [1-6, default 1]: " TYPE_CHOICE || true
 echo ""
 
 case "${TYPE_CHOICE:-1}" in
   2) TYPE="fix" ;;
-  3) TYPE="refactor" ;;
-  4) TYPE="chore" ;;
-  5) TYPE="docs" ;;
+  3) TYPE="balance" ;;
+  4) TYPE="refactor" ;;
+  5) TYPE="chore" ;;
+  6) TYPE="docs" ;;
   *) TYPE="feat" ;;
 esac
 
-# ── Plain-English description — we handle formatting ─────────────────────────
-read -rp "  What did you change? (plain English, no prefix needed): " DESC || true
+# ── Short subject line (≤72 chars enforced) ───────────────────────────────────
+while true; do
+  read -rp "  Short summary (≤72 chars): " DESC || true
+  DESC="$(echo "$DESC" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' | sed 's/\.$//')"
+  FIRST="$(echo "${DESC:0:1}" | tr '[:upper:]' '[:lower:]')"
+  DESC="${FIRST}${DESC:1}"
+  SUBJECT="${TYPE}: ${DESC}"
+  LEN=${#SUBJECT}
+  if [[ $LEN -le 72 ]]; then
+    break
+  fi
+  echo -e "  ${RED}Too long (${LEN} chars — max 72). Keep it short here; add details below.${RESET}"
+  echo ""
+done
 echo ""
 
-# Trim whitespace + trailing period, lowercase first char
-DESC="$(echo "$DESC" | sed 's/^[[:space:]]*//' | sed 's/[[:space:]]*$//' | sed 's/\.$//')"
-FIRST="$(echo "${DESC:0:1}" | tr '[:upper:]' '[:lower:]')"
-DESC="${FIRST}${DESC:1}"
-
-MSG="${TYPE}: ${DESC}"
+# ── Optional bullet-point body ────────────────────────────────────────────────
+echo -e "  ${GRAY}Details / bullet points? (one per line, blank line to finish, skip with Enter)${RESET}"
+BODY_LINES=()
+while true; do
+  read -rp "  · " LINE || true
+  [[ -z "$LINE" ]] && break
+  BODY_LINES+=("- $LINE")
+done
+echo ""
 
 # ── Preview ───────────────────────────────────────────────────────────────────
 echo -e "${GOLD}┌── Commit Message ──────────────────────────────────────────────┐${RESET}"
-echo -e "│  ${BOLD}${MSG}${RESET}"
+echo -e "│  ${BOLD}${SUBJECT}${RESET}"
+if [[ ${#BODY_LINES[@]} -gt 0 ]]; then
+  echo -e "│"
+  for line in "${BODY_LINES[@]}"; do
+    echo -e "│  ${GRAY}${line}${RESET}"
+  done
+fi
 echo -e "${GOLD}└────────────────────────────────────────────────────────────────┘${RESET}"
 echo ""
 
@@ -71,7 +95,16 @@ if [[ "${CONFIRM_COMMIT:-y}" =~ ^[Nn] ]]; then
   exit 0
 fi
 
-git commit -m "$MSG"
+# Build full commit message
+if [[ ${#BODY_LINES[@]} -gt 0 ]]; then
+  FULL_MSG="${SUBJECT}"$'\n\n'
+  for line in "${BODY_LINES[@]}"; do
+    FULL_MSG+="${line}"$'\n'
+  done
+  git commit -m "$FULL_MSG"
+else
+  git commit -m "$SUBJECT"
+fi
 echo ""
 
 # ── Push ──────────────────────────────────────────────────────────────────────
@@ -83,4 +116,4 @@ fi
 
 git push origin master
 echo ""
-echo -e "${GREEN}✓ ${BOLD}${MSG}${RESET}"
+echo -e "${GREEN}✓ ${BOLD}${SUBJECT}${RESET}"
