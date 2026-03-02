@@ -8,6 +8,22 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v2.4.0] — 2026-03-01
+
+### Added
+- add auto-discovering screenshots carousel to site
+
+### Fixed
+- show correct precision for small resource rates in economy tab
+- build max now correctly queues multiple buildings with a MaxCount
+- update screenshots section heading and subtitle
+
+### Other
+- add webook url for discord connect
+- add screenshot
+
+---
+
 ## [v2.3.0] — 2026-03-01
 
 ### Added
