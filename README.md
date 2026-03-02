@@ -24,7 +24,7 @@
   </a>
   &nbsp;
   <a href="https://ageforge.io">
-    <img src="https://img.shields.io/badge/Website-ageforge.netlify.app-f0a500?style=for-the-badge&labelColor=1a1a1a&logoColor=white" alt="Website">
+    <img src="https://img.shields.io/badge/Website-ageforge.io-f0a500?style=for-the-badge&labelColor=1a1a1a&logoColor=white" alt="Website">
   </a>
 </p>
 
