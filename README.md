@@ -1,4 +1,34 @@
-# AgeForge - CLI Idle Empire Builder
+<p align="center">
+  <a href="https://ageforge.netlify.app">
+    <img src="https://raw.githubusercontent.com/espresso20/ageforge/master/ageforge-3.png" alt="AgeForge" width="200">
+  </a>
+</p>
+
+<h1 align="center">AgeForge</h1>
+
+<p align="center">
+  <em>Forge a civilization from nothing — all within your terminal.</em>
+</p>
+
+<p align="center">
+  <a href="https://github.com/espresso20/ageforge/releases/latest">
+    <img src="https://img.shields.io/github/v/release/espresso20/ageforge?style=for-the-badge&color=f0a500&labelColor=1a1a1a&logo=github&logoColor=white" alt="Latest Release">
+  </a>
+  &nbsp;
+  <a href="https://golang.org">
+    <img src="https://img.shields.io/badge/Go-1.23-00ADD8?style=for-the-badge&logo=go&logoColor=white&labelColor=1a1a1a" alt="Go 1.23">
+  </a>
+  &nbsp;
+  <a href="https://github.com/espresso20/ageforge/blob/master/LICENSE">
+    <img src="https://img.shields.io/github/license/espresso20/ageforge?style=for-the-badge&color=4a4a4a&labelColor=1a1a1a" alt="License">
+  </a>
+  &nbsp;
+  <a href="https://ageforge.netlify.app">
+    <img src="https://img.shields.io/badge/Website-ageforge.netlify.app-f0a500?style=for-the-badge&labelColor=1a1a1a&logoColor=white" alt="Website">
+  </a>
+</p>
+
+<br>
 
 AgeForge is a text-based idle/clicker game where you forge an empire from nothing, progressing through 22 ages of history — all within your terminal.
 
@@ -32,10 +62,16 @@ go build -o ageforge .
 
 # Check version
 ./ageforge --version
-
-# or use the run script
-./run.sh
 ```
+
+Or use `make`:
+
+| Command | What it does |
+|---------|-------------|
+| `make build` | Compile the binary |
+| `make run` | Build and launch |
+| `make test` | Run all tests |
+| `make commit` | Interactive commit helper (conventional commits) |
 
 ## How to Play
 
@@ -74,131 +110,24 @@ go build -o ageforge .
 
 See [CONTRIBUTING.md](CONTRIBUTING.md) for the full dev guide — commit workflow, release process, test patterns, project structure, adding content, and how the math works.
 
-Quick reference:
+### Commit style
 
-```bash
-make commit          # interactive commit helper (stages, prompts type + message, pushes)
-make check           # build + vet + config validation
-make test            # full test suite
-make release-patch   # cut a patch release
-make release-minor   # cut a minor release
-make release-major   # cut a major release
-```
-
-### Writing Commits
-
-Use `make commit` instead of `git add . && git commit && git push`. It stages everything, walks you through the message interactively, and enforces the format that drives automatic release notes.
+Use `make commit` — it prompts you interactively and formats the message correctly:
 
 ```
-make commit
-```
-
-```
-┌── Staged Changes ──────────────────────────────────────────────┐
-│   config/buildings.go | 4 ++--
-│   game/engine.go      | 6 +++---
-└────────────────────────────────────────────────────────────────┘
-
 What kind of change?
-  1  feat      — new feature or content          → ### Added
-  2  fix       — bug fix                         → ### Fixed
-  3  balance   — tuning costs, rates, numbers    → ### Balance
-  4  refactor  — cleanup, no behavior change     → ### Changed
-  5  chore     — build/tooling/deps              (skipped in notes)
-  6  docs      — docs/comments only              (skipped in notes)
+  1  feat      — new feature or content
+  2  fix       — bug fix
+  3  balance   — tuning costs, rates, numbers
+  4  refactor  — cleanup, no behavior change
+  5  chore     — build/tooling/deps
+  6  docs      — docs/comments only
 
-  Choice [1-6, default 1]: 2
-
-  Short summary (≤72 chars): stash building count was capped at 1 instead of max
-
-  Details / bullet points? (blank line to finish, skip with Enter)
-  · BuildMultiple inQueue check was comparing bool instead of counting
-  · fix applies to all buildings with MaxCount > 0
+Short summary (≤72 chars): add iron smeltery building
+Optional details (bullet then Enter, empty Enter when done):
+  · costs 50 stone and 20 coal
+  · produces iron at 0.5/s
   ·
-
-┌── Commit Message ──────────────────────────────────────────────┐
-│  fix: stash building count was capped at 1 instead of max
-│
-│  - BuildMultiple inQueue check was comparing bool instead of counting
-│  - fix applies to all buildings with MaxCount > 0
-└────────────────────────────────────────────────────────────────┘
-
-  Commit? [Y/n]: y
-  Push to origin/master now? [Y/n]: y
 ```
 
-#### Commit Types
-
-| Type | Use for | Shows up in release notes as |
-|---|---|---|
-| `feat` | New game content, new commands, new UI features | `### Added` |
-| `fix` | Bug fixes — wrong behavior, crashes, display errors | `### Fixed` |
-| `balance` | Tuning numbers — costs, rates, durations, caps | `### Balance` |
-| `refactor` | Code cleanup with no behavior change | `### Changed` |
-| `chore` | Build scripts, CI, tooling, deps | *(skipped)* |
-| `docs` | README, comments, wiki pages only | *(skipped)* |
-
-#### Rules
-
-- **Subject line ≤ 72 chars.** The script enforces this — it re-prompts if you go over. This is what shows in `git log` and GitHub.
-- **Write in plain English.** The script lowercases the first letter and strips trailing periods. Just describe what changed.
-- **Use bullet points for multiple changes.** Enter them one per line at the details prompt. Blank line to finish. Details go into the commit body and are readable in `git log --format=medium`.
-- **One concern per commit.** If you changed both a bug fix and a balance tweak, make two commits. The release notes are cleaner and `git bisect` actually works.
-
-#### Examples
-
-**Good — a focused fix:**
-```
-fix: knowledge rate was displaying +0.0 for values below 0.1
-```
-
-**Good — a balance change with bullet details:**
-```
-balance: rebalance primitive age pacing
-
-- hut build time raised from 10 to 20 ticks
-- altar knowledge output raised from 0.004 to 0.008
-- stash max count raised from 10 to 50
-```
-
-**Good — a new feature:**
-```
-feat: manual age advancement — type 'advance' when ready
-```
-
-**Bad — too vague:**
-```
-fix: stuff     ← doesn't say what broke or what changed
-```
-
-**Bad — too long for subject, no detail separation:**
-```
-balance: stash now has max count of 50, all buildings in primitive take longer to build, altar production raised from .004 to .008 knowledge
-← this wraps in every tool and dumps everything into one line
-```
-
----
-
-### Release Process
-
-Releases are cut manually when ready. From `master` with a clean working tree:
-
-```bash
-make release-patch   # v2.4.5 → v2.4.6  (bug fixes, balance tweaks)
-make release-minor   # v2.4.5 → v2.5.0  (new features, new content)
-make release-major   # v2.4.5 → v3.0.0  (breaking changes, major redesigns)
-```
-
-**When to use which:**
-- `patch` — fixes, balance changes, small improvements. No new gameplay systems.
-- `minor` — new commands, new ages/buildings/techs/mechanics. Backwards-compatible saves.
-- `major` — save format changes, full system rewrites, anything that could break existing saves.
-
-**What happens when you run it** (`scripts/release.sh`):
-1. Validates you're on `master` with a clean working tree
-2. Scrapes `git log` since the last tag, groups commits by type into `### Added / Fixed / Balance / Changed / Other`
-3. Stamps `CHANGELOG.md` with the new version block and generated notes
-4. Commits, tags (`vX.Y.Z`), and pushes to `origin/master`
-5. GitHub Actions picks up the tag and: builds 5 binaries (Linux/macOS/Windows × amd64/arm64), generates `SHA256SUMS.txt`, creates the GitHub Release with the changelog as the body, and posts a rich Discord embed
-
-Version is baked into the binary at build time. Dev builds report `dev`.
+Produces: `feat: add iron smeltery building` with the bullets as body. This drives the auto-generated changelog on every release.
