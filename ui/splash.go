@@ -78,6 +78,28 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 		mainList.SetCurrentItem(1)
 	}
 
+	// Version row — always shows current version; update badge appears here async
+	versionTV := tview.NewTextView().
+		SetDynamicColors(true).
+		SetTextAlign(tview.AlignCenter).
+		SetText(fmt.Sprintf("[gold]%s[-]", currentVersion))
+
+	// Background update check — no-op on dev builds or network errors
+	if currentVersion != "dev" {
+		go func() {
+			result, err := game.CheckLatest(currentVersion)
+			if err != nil || !result.IsNewer {
+				return
+			}
+			app.QueueUpdateDraw(func() {
+				versionTV.SetText(fmt.Sprintf(
+					"[gold]%s  ✦ new update available! (u)[-]",
+					currentVersion,
+				))
+			})
+		}()
+	}
+
 	// Footer hint
 	footerTV := tview.NewTextView().
 		SetDynamicColors(true).
@@ -87,6 +109,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	// ── Menu panel ────────────────────────────────────────────────────────────
 	menuPanel := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(mainList, 8, 0, true).
+		AddItem(versionTV, 1, 0, false).
 		AddItem(footerTV, 1, 0, false)
 	menuPanel.
 		SetBorder(true).
