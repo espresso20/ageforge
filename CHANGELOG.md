@@ -8,6 +8,14 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v2.5.0] — 2026-03-02
+
+### Added
+- manual age advancement — type 'advance' when ready
+- add interactive conventional commit helper (make commit)
+
+---
+
 ## [v2.4.7] — 2026-03-02
 
 ### Added
