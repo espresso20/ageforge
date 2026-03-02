@@ -152,6 +152,60 @@ make release-major   # v2.4.5 → v3.0.0  (breaking changes, save format changes
 
 Version is baked in at build time: `go build -ldflags "-X main.version=vX.Y.Z"`. Dev builds report `dev`.
 
+### How the release pipeline works
+
+This is a **tag-based release** pattern. The git tag is the source of truth for what has shipped. Here's the full chain:
+
+```
+make release-patch
+      │
+      ├─ bumps version, writes CHANGELOG.md
+      ├─ git commit "chore: release vX.Y.Z"
+      ├─ git tag vX.Y.Z
+      └─ git push origin master + vX.Y.Z
+                              │
+                              ▼
+                     GitHub Actions (release.yml)
+                              │
+                              ├─ builds 5 binaries
+                              ├─ generates SHA256SUMS.txt
+                              ├─ creates GitHub Release (with changelog body)
+                              └─ posts Discord embed
+```
+
+### What happens when a build fails
+
+All commits since the **last successful tag** accumulate and get picked up by the next release — the script runs `git log <last-tag>..HEAD` to scrape commit messages. This is sometimes called a **release train**: commits queue up and ship together on the next run that succeeds.
+
+**If the Actions build fails after the tag was already pushed**, you have two options:
+
+**Option 1 — Re-run the workflow (preferred for infra failures)**
+
+Go to the [Actions tab](https://github.com/espresso20/ageforge/actions), find the failed run, and click **Re-run jobs**. The tag already exists so GitHub re-triggers the same job on the same tag. No new commit or tag needed. Use this when the failure was environmental — a flaky dependency download, a runner hiccup, a typo in a config file that you've since fixed and pushed.
+
+**Option 2 — Delete the tag and re-release (for code bugs caught post-tag)**
+
+Use this if you caught a real bug in the code after tagging but before anyone downloaded it.
+
+```bash
+git tag -d vX.Y.Z                      # delete local tag
+git push origin :refs/tags/vX.Y.Z      # delete remote tag
+# fix the bug, commit it
+make release-patch                      # cuts a fresh vX.Y.Z+1
+```
+
+### What the tag represents
+
+Once a tag exists in git, that version is considered "attempted." Even if the GitHub Release was never created (build failed), the tag marks that point in history. The next `make release-*` will always bump from the latest tag, so you will never accidentally re-release the same version number.
+
+### Checking release status
+
+```bash
+git tag --sort=-version:refname | head -5    # recent tags
+gh run list --workflow=release.yml            # recent workflow runs
+gh release list                               # published GitHub releases
+```
+
 ---
 
 ## Running Tests
