@@ -6,6 +6,12 @@ All notable changes to AgeForge are documented here.
 
 ## [Unreleased]
 
+### Fixed
+- release workflow: awk now skips [Unreleased] section and targets versioned entries only — release notes no longer blank
+- release workflow: removed redundant github-release-to-discord.yml (GITHUB_TOKEN releases don't trigger release: published in other workflows)
+- release workflow: cleaned up dead commented-out SethCohen job
+- discord notification: rich embed with per-section fields (Added/Fixed/Changed/Other), thumbnail, timestamp, and download link
+
 ---
 
 ## [v2.4.5] — 2026-03-01

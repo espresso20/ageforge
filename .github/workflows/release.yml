@@ -56,29 +56,53 @@ jobs:
           WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
         run: |
           VERSION="${{ github.ref_name }}"
-          NOTES=$(head -20 /tmp/release_notes.md)
           URL="https://github.com/espresso20/ageforge/releases/tag/${VERSION}"
+          THUMB="https://github.com/espresso20.png"
+
+          # Pull bullet lines from each changelog section (max 8 per section)
+          sect() { awk "/^### $1/{p=1;next} /^###/{p=0} p && /^-/{print}" /tmp/release_notes.md | head -8; }
+          ADDED=$(sect "Added")
+          FIXED=$(sect "Fixed")
+          CHANGED=$(sect "Changed")
+          OTHER=$(sect "Other")
+
+          # Build fields array — omit empty sections, always append Download
+          FIELDS=$(jq -n \
+            --arg added   "$ADDED"   \
+            --arg fixed   "$FIXED"   \
+            --arg changed "$CHANGED" \
+            --arg other   "$OTHER"   \
+            --arg url     "$URL"     \
+            '[
+              if $added   != "" then {"name":"✨  Added",   "value":$added,   "inline":false} else empty end,
+              if $fixed   != "" then {"name":"🔧  Fixed",   "value":$fixed,   "inline":false} else empty end,
+              if $changed != "" then {"name":"🔄  Changed", "value":$changed, "inline":false} else empty end,
+              if $other   != "" then {"name":"📋  Other",   "value":$other,   "inline":false} else empty end,
+              {"name":"📥  Download", "value":("[**GitHub Releases →**](" + $url + ")"), "inline":false}
+            ]')
+
           PAYLOAD=$(jq -n \
-            --arg title "AgeForge ${VERSION} Released!" \
-            --arg url "$URL" \
-            --arg desc "$NOTES" \
-            '{username:"AgeForge Releases",embeds:[{title:$title,url:$url,color:15771904,description:$desc,footer:{text:"github.com/espresso20/ageforge/releases"}}]}')
+            --arg  version "$VERSION" \
+            --arg  url     "$URL"     \
+            --arg  thumb   "$THUMB"   \
+            --argjson fields "$FIELDS" \
+            --arg  ts      "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{
+              username:   "AgeForge",
+              avatar_url: $thumb,
+              embeds: [{
+                title:       ("🏛️  AgeForge " + $version + " — Now Live"),
+                url:         $url,
+                color:       15771904,
+                description: "A new version is live. Build your civilization from the **Primitive Age** to the **Transcendent**.",
+                fields:      $fields,
+                thumbnail:   {url: $thumb},
+                footer:      {text: "github.com/espresso20/ageforge/releases"},
+                timestamp:   $ts
+              }]
+            }')
+
           curl -s -X POST "$WEBHOOK_URL" \
             -H "Content-Type: application/json" \
             -d "$PAYLOAD"
 
-  # releases-to-discord:
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v3
-  #     - name: GitHub Releases to Discord
-  #       uses: SethCohen/github-releases-to-discord@v1
-  #       with:
-  #         webhook_url: ${{ secrets.WEBHOOK_URL }}
-  #         color: "2105893"
-  #         username: "Release Changelog"
-  #         avatar_url: "https://cdn.discordapp.com/avatars/487431320314576937/bd64361e4ba6313d561d54e78c9e7171.png"
-  #         content: "||@everyone||"
-  #         footer_title: "Changelog"
-  #         reduce_headings: true
