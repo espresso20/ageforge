@@ -799,7 +799,9 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 		}
 	}
 
-	if def.Category == "wonder" {
+	if DevGodMode {
+		// godmode: skip all cost/bank checks, build instantly below
+	} else if def.Category == "wonder" {
 		if !ge.Buildings.IsWonderBankFull(key) {
 			return fmt.Errorf("%s bank is not full — use 'wonder collect <resource> <amount>' to bank resources first", def.Name)
 		}
@@ -812,7 +814,7 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 	}
 
 	ge.addLog("debug", fmt.Sprintf("Build start: %s", def.Name))
-	if def.BuildTicks > 0 {
+	if !DevGodMode && def.BuildTicks > 0 {
 		// Queue for construction
 		ge.buildQueue = append(ge.buildQueue, BuildQueueItem{
 			BuildingKey: key,
@@ -1035,9 +1037,15 @@ func (ge *GameEngine) StartResearch(techKey string) error {
 		return err
 	}
 
-	// Pay knowledge cost
+	// Pay knowledge cost (waived in godmode)
 	def := config.TechByKey()[techKey]
-	ge.Resources.Remove("knowledge", def.Cost)
+	if !DevGodMode {
+		ge.Resources.Remove("knowledge", def.Cost)
+	}
+	if DevGodMode {
+		// complete immediately
+		ge.Research.ticksLeft = 0
+	}
 	ge.addLog("debug", fmt.Sprintf("Research start: %s (cost: %.0f knowledge, %d ticks)", def.Name, def.Cost, ge.Research.totalTicks))
 	ge.addLog("info", fmt.Sprintf("Started researching %s (%d ticks)", def.Name, ge.Research.totalTicks))
 	return nil

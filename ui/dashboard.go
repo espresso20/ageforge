@@ -52,6 +52,9 @@ type Dashboard struct {
 	contentArea *tview.Flex
 	bottomArea  *tview.Flex
 
+	devConsole *devConsole
+	devUnlockBuf string // accumulates Ctrl+K keystrokes for passphrase modal
+
 	stopCh chan struct{}
 }
 
@@ -65,6 +68,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		tabNames: []string{"Economy", "Research", "Military", "Trade", "Stats", "Wiki", "Map", "Wonders", "Logs"},
 	}
 	d.build()
+	d.devConsole = newDevConsole(app, pages, engine)
 	return d
 }
 
@@ -220,6 +224,16 @@ func (d *Dashboard) build() {
 
 	// Global key handling
 	d.root.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		// Ctrl+K — open passphrase modal (dev unlock)
+		if event.Key() == tcell.KeyCtrlK {
+			d.showDevUnlockModal()
+			return nil
+		}
+		// Backtick — toggle dev console (only if unlocked)
+		if event.Rune() == '`' && game.DevModeActive {
+			d.devConsole.toggle()
+			return nil
+		}
 		switch event.Key() {
 		case tcell.KeyEsc:
 			d.engine.SaveGame("autosave")
@@ -528,3 +542,54 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 	d.logTV.ScrollToEnd()
 }
 
+
+// showDevUnlockModal opens an unlabelled passphrase input modal.
+// No hint text is shown — the existence of this modal is not advertised.
+func (d *Dashboard) showDevUnlockModal() {
+	if game.DevModeActive {
+		// Already unlocked — just toggle the console
+		d.devConsole.toggle()
+		return
+	}
+
+	const devUnlockPage = "__dev_unlock__"
+	field := tview.NewInputField().
+		SetLabel("").
+		SetFieldWidth(40).
+		SetMaskCharacter('·').
+		SetFieldBackgroundColor(tcell.ColorBlack).
+		SetFieldTextColor(tcell.ColorWhite)
+
+	field.SetDoneFunc(func(key tcell.Key) {
+		if key == tcell.KeyEscape {
+			d.pages.RemovePage(devUnlockPage)
+			d.app.SetFocus(d.inputField)
+			return
+		}
+		if key == tcell.KeyEnter {
+			input := field.GetText()
+			d.pages.RemovePage(devUnlockPage)
+			d.app.SetFocus(d.inputField)
+			if game.CheckDevKey(input) {
+				d.devConsole.toggle()
+			}
+		}
+	})
+
+	box := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(field, 1, 0, true)
+	box.SetBorder(true).
+		SetBorderColor(tcell.ColorDarkGray).
+		SetBackgroundColor(tcell.ColorBlack)
+
+	centered := tview.NewFlex().
+		AddItem(nil, 0, 1, false).
+		AddItem(tview.NewFlex().SetDirection(tview.FlexRow).
+			AddItem(nil, 0, 1, false).
+			AddItem(box, 3, 0, true).
+			AddItem(nil, 0, 1, false), 44, 0, true).
+		AddItem(nil, 0, 1, false)
+
+	d.pages.AddPage(devUnlockPage, centered, true, true)
+	d.app.SetFocus(field)
+}
