@@ -52,38 +52,15 @@ jobs:
         if: success()
         env:
           WEBHOOK_URL: ${{ secrets.WEBHOOK_URL }}
-          VERSION: ${{ github.ref_name }}
         run: |
+          VERSION="${{ github.ref_name }}"
           NOTES=$(head -20 /tmp/release_notes.md)
-          export RELEASE_NOTES="$NOTES"
-          python3 << 'PYEOF'
-import os, json, urllib.request
-
-version = os.environ.get("VERSION", "unknown")
-webhook = os.environ.get("WEBHOOK_URL", "")
-notes   = os.environ.get("RELEASE_NOTES", "")
-url     = f"https://github.com/espresso20/ageforge/releases/tag/{version}"
-
-if not webhook:
-    print("No WEBHOOK_URL set, skipping Discord notification")
-    exit(0)
-
-if len(notes) > 3000:
-    notes = notes[:2997] + "..."
-
-payload = {
-    "username": "AgeForge Releases",
-    "embeds": [{
-        "title": f"AgeForge {version} Released!",
-        "url": url,
-        "color": 0xf0a500,
-        "description": notes if notes.strip() else "See release page for details.",
-        "footer": {"text": "Download at github.com/espresso20/ageforge/releases"}
-    }]
-}
-
-data = json.dumps(payload).encode()
-req  = urllib.request.Request(webhook, data=data, headers={"Content-Type": "application/json"})
-urllib.request.urlopen(req)
-print(f"Discord notified for {version}")
-PYEOF
+          URL="https://github.com/espresso20/ageforge/releases/tag/${VERSION}"
+          PAYLOAD=$(jq -n \
+            --arg title "AgeForge ${VERSION} Released!" \
+            --arg url "$URL" \
+            --arg desc "$NOTES" \
+            '{username:"AgeForge Releases",embeds:[{title:$title,url:$url,color:15771904,description:$desc,footer:{text:"github.com/espresso20/ageforge/releases"}}]}')
+          curl -s -X POST "$WEBHOOK_URL" \
+            -H "Content-Type: application/json" \
+            -d "$PAYLOAD"
