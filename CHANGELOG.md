@@ -6,6 +6,16 @@ All notable changes to AgeForge are documented here.
 
 ## [Unreleased]
 
+---
+
+## [v2.4.6] — 2026-03-01
+
+### Fixed
+- rich Discord embeds + fix blank release notes
+
+### Other
+- patch release notes
+
 ### Fixed
 - release workflow: awk now skips [Unreleased] section and targets versioned entries only — release notes no longer blank
 - release workflow: removed redundant github-release-to-discord.yml (GITHUB_TOKEN releases don't trigger release: published in other workflows)
