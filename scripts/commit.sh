@@ -67,7 +67,7 @@ done
 echo ""
 
 # ── Optional bullet-point body ────────────────────────────────────────────────
-echo -e "  ${GRAY}Details / bullet points? (one per line, blank line to finish, skip with Enter)${RESET}"
+echo -e "  ${GRAY}Optional details — type a bullet then Enter, repeat. Empty Enter when done.${RESET}"
 BODY_LINES=()
 while true; do
   read -rp "  · " LINE || true
