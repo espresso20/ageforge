@@ -1,5 +1,5 @@
 <p align="center">
-  <a href="https://ageforge.netlify.app">
+  <a href="https://ageforge.io">
     <img src="https://raw.githubusercontent.com/espresso20/ageforge/master/ageforge-3.png" alt="AgeForge" width="200">
   </a>
 </p>
@@ -23,7 +23,7 @@
     <img src="https://img.shields.io/github/license/espresso20/ageforge?style=for-the-badge&color=4a4a4a&labelColor=1a1a1a" alt="License">
   </a>
   &nbsp;
-  <a href="https://ageforge.netlify.app">
+  <a href="https://ageforge.io">
     <img src="https://img.shields.io/badge/Website-ageforge.netlify.app-f0a500?style=for-the-badge&labelColor=1a1a1a&logoColor=white" alt="Website">
   </a>
 </p>
