@@ -8,6 +8,13 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v2.4.4] — 2026-03-01
+
+### Fixed
+- replace Python heredoc with jq+curl for Discord notification
+
+---
+
 ## [v2.4.3] — 2026-03-01
 
 ### Fixed
