@@ -8,6 +8,14 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v2.4.1] — 2026-03-01
+
+### Fixed
+- explicitly mark GitHub releases as published to trigger Discord webhook
+- screenshot caption renders below image, not overlapping it
+
+---
+
 ## [v2.4.0] — 2026-03-01
 
 ### Added
