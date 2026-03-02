@@ -1,0 +1,275 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>Changelog — AgeForge</title>
+        <meta name="description" content="AgeForge release history and update notes." />
+        <meta name="theme-color" content="#f0a500" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+        <link
+            href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=JetBrains+Mono:wght@400;700&display=swap"
+            rel="stylesheet"
+        />
+        <link rel="stylesheet" href="style.css" />
+        <style>
+            .cl-hero {
+                padding: 7rem 2rem 3rem;
+                text-align: center;
+            }
+            .cl-hero h1 {
+                font-family: var(--font-px);
+                font-size: clamp(1rem, 3vw, 1.6rem);
+                color: var(--gold);
+                text-shadow: var(--glow-gold);
+                margin-bottom: 0.75rem;
+            }
+            .cl-hero p {
+                color: var(--muted);
+                font-family: var(--font-mono);
+                font-size: 0.85rem;
+            }
+
+            .cl-feed {
+                max-width: 760px;
+                margin: 0 auto;
+                padding: 2rem 1.5rem 6rem;
+            }
+
+            .cl-entry {
+                border-left: 3px solid var(--border);
+                padding: 0 0 2.5rem 2rem;
+                position: relative;
+            }
+            .cl-entry::before {
+                content: "";
+                position: absolute;
+                left: -6px;
+                top: 6px;
+                width: 9px;
+                height: 9px;
+                border-radius: 50%;
+                background: var(--gold);
+                box-shadow: 0 0 8px rgba(240,165,0,0.6);
+            }
+            .cl-entry:last-child {
+                border-left-color: transparent;
+            }
+
+            .cl-tag {
+                display: inline-block;
+                font-family: var(--font-px);
+                font-size: 0.65rem;
+                color: var(--gold);
+                background: rgba(240,165,0,0.08);
+                border: 1px solid rgba(240,165,0,0.3);
+                border-radius: var(--radius);
+                padding: 0.3rem 0.7rem;
+                margin-bottom: 0.35rem;
+            }
+            .cl-date {
+                font-family: var(--font-mono);
+                font-size: 0.72rem;
+                color: var(--muted);
+                margin-left: 0.75rem;
+            }
+            .cl-body {
+                margin-top: 0.9rem;
+                color: var(--text);
+                font-family: var(--font-mono);
+                font-size: 0.82rem;
+                line-height: 1.75;
+                white-space: pre-wrap;
+            }
+            .cl-body h3 {
+                font-family: var(--font-mono);
+                font-size: 0.78rem;
+                font-weight: 700;
+                margin: 1rem 0 0.35rem;
+                text-transform: uppercase;
+                letter-spacing: 0.05em;
+            }
+            .cl-body h3:first-child { margin-top: 0; }
+
+            /* colour-code section headers */
+            .cl-body .sec-added   { color: var(--green); }
+            .cl-body .sec-fixed   { color: var(--blue); }
+            .cl-body .sec-changed { color: var(--cyan); }
+            .cl-body .sec-other   { color: var(--muted); }
+
+            .cl-body li { margin-left: 1.2em; }
+
+            .cl-gh-link {
+                display: inline-block;
+                margin-top: 0.75rem;
+                font-family: var(--font-mono);
+                font-size: 0.72rem;
+                color: var(--muted);
+                border: 1px solid var(--border);
+                border-radius: var(--radius);
+                padding: 0.25rem 0.6rem;
+                transition: color 0.2s, border-color 0.2s;
+            }
+            .cl-gh-link:hover {
+                color: var(--gold);
+                border-color: var(--gold-dim);
+            }
+
+            /* states */
+            .cl-loading, .cl-empty, .cl-error {
+                text-align: center;
+                padding: 4rem 1rem;
+                font-family: var(--font-mono);
+                font-size: 0.85rem;
+                color: var(--muted);
+            }
+            .cl-error { color: var(--red); }
+
+            .cl-dot-spin {
+                display: inline-block;
+                animation: spin 1s linear infinite;
+                margin-right: 0.5rem;
+            }
+            @keyframes spin { to { transform: rotate(360deg); } }
+        </style>
+    </head>
+    <body>
+        <!-- ═══ NAV ═══════════════════════════════════════════════════════ -->
+        <nav class="nav" id="nav">
+            <div class="nav-inner">
+                <a href="index.html" class="nav-logo">
+                    <span class="nav-logo-text">AgeForge</span>
+                </a>
+                <div class="nav-links">
+                    <a href="index.html#ages">Ages</a>
+                    <a href="index.html#how-to-play">How to Play</a>
+                    <a href="index.html#download">Download</a>
+                    <a href="changelog.html" class="active">Changelog</a>
+                    <a href="docs/" class="nav-wiki">📖 Wiki</a>
+                    <a
+                        href="https://discord.gg/EPvyd5vjpj"
+                        target="_blank"
+                        rel="noopener"
+                        class="nav-discord"
+                    >Discord</a>
+                    <a
+                        href="https://github.com/espresso20/ageforge"
+                        target="_blank"
+                        rel="noopener"
+                        class="nav-gh"
+                    >GitHub</a>
+                </div>
+            </div>
+        </nav>
+
+        <!-- ═══ HERO ══════════════════════════════════════════════════════ -->
+        <section class="cl-hero">
+            <h1>Changelog</h1>
+            <p>Every release, what changed, and why.</p>
+        </section>
+
+        <!-- ═══ FEED ══════════════════════════════════════════════════════ -->
+        <main class="cl-feed" id="cl-feed">
+            <div class="cl-loading">
+                <span class="cl-dot-spin">◆</span> Loading releases…
+            </div>
+        </main>
+
+        <!-- ═══ SCRIPTS ══════════════════════════════════════════════════ -->
+        <script>
+        const REPO = "espresso20/ageforge";
+        const API  = `https://api.github.com/repos/${REPO}/releases?per_page=30`;
+
+        // Very small markdown-to-HTML converter for release body content.
+        function renderMarkdown(md) {
+            if (!md) return "<em style='color:var(--muted)'>No notes for this release.</em>";
+            const lines = md.split("\n");
+            let html = "";
+            let inList = false;
+
+            for (let raw of lines) {
+                const line = raw.trimEnd();
+
+                // h3
+                if (/^### (.+)/.test(line)) {
+                    if (inList) { html += "</ul>"; inList = false; }
+                    const text = line.replace(/^### /, "");
+                    let cls = "sec-other";
+                    if (/added/i.test(text))   cls = "sec-added";
+                    if (/fixed/i.test(text))   cls = "sec-fixed";
+                    if (/changed/i.test(text)) cls = "sec-changed";
+                    html += `<h3 class="${cls}">${escHtml(text)}</h3>`;
+                    continue;
+                }
+                // h2
+                if (/^## (.+)/.test(line)) {
+                    if (inList) { html += "</ul>"; inList = false; }
+                    html += `<h3 class="sec-other">${escHtml(line.replace(/^## /, ""))}</h3>`;
+                    continue;
+                }
+                // list item
+                if (/^[-*] (.+)/.test(line)) {
+                    if (!inList) { html += "<ul>"; inList = true; }
+                    html += `<li>${escHtml(line.replace(/^[-*] /, ""))}</li>`;
+                    continue;
+                }
+                // blank line
+                if (line === "") {
+                    if (inList) { html += "</ul>"; inList = false; }
+                    continue;
+                }
+                // paragraph
+                if (inList) { html += "</ul>"; inList = false; }
+                html += `<p>${escHtml(line)}</p>`;
+            }
+            if (inList) html += "</ul>";
+            return html;
+        }
+
+        function escHtml(s) {
+            return s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+        }
+
+        function fmtDate(iso) {
+            const d = new Date(iso);
+            return d.toLocaleDateString("en-US", { year:"numeric", month:"long", day:"numeric" });
+        }
+
+        async function loadReleases() {
+            const feed = document.getElementById("cl-feed");
+            try {
+                const res = await fetch(API, {
+                    headers: { Accept: "application/vnd.github+json" }
+                });
+                if (!res.ok) throw new Error(`GitHub API ${res.status}`);
+                const releases = await res.json();
+
+                if (!releases.length) {
+                    feed.innerHTML = `<div class="cl-empty">No releases yet.</div>`;
+                    return;
+                }
+
+                feed.innerHTML = releases.map(r => `
+                    <article class="cl-entry">
+                        <div>
+                            <span class="cl-tag">${escHtml(r.tag_name)}</span>
+                            <span class="cl-date">${fmtDate(r.published_at)}</span>
+                        </div>
+                        <div class="cl-body">${renderMarkdown(r.body)}</div>
+                        <a class="cl-gh-link"
+                           href="${escHtml(r.html_url)}"
+                           target="_blank" rel="noopener">
+                            View on GitHub ↗
+                        </a>
+                    </article>
+                `).join("");
+            } catch (err) {
+                feed.innerHTML = `<div class="cl-error">Could not load releases: ${escHtml(err.message)}</div>`;
+            }
+        }
+
+        loadReleases();
+        </script>
+    </body>
+</html>

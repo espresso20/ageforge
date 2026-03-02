@@ -20,7 +20,6 @@ fi
 # ── Compute new version ───────────────────────────────────────────────────────
 
 CURRENT="$(git describe --tags --abbrev=0 2>/dev/null || echo "v0.0.0")"
-# Strip leading 'v'
 RAW="${CURRENT#v}"
 MAJOR="$(echo "$RAW" | cut -d. -f1)"
 MINOR="$(echo "$RAW" | cut -d. -f2)"
@@ -41,6 +40,91 @@ TODAY="$(date +%Y-%m-%d)"
 
 echo "Releasing ${NEW_VERSION} (${TODAY})..."
 
+# ── Scrape commits since last tag ─────────────────────────────────────────────
+# Group conventional commits into sections for the release notes.
+
+COMMITS="$(git log "${CURRENT}..HEAD" --pretty=format:"%s" --no-merges 2>/dev/null || true)"
+
+python3 - "$COMMITS" <<'PYEOF'
+import sys, re
+
+raw = sys.argv[1]
+lines = [l.strip() for l in raw.splitlines() if l.strip()]
+
+sections = {"feat": [], "fix": [], "refactor": [], "perf": [], "other": []}
+pattern = re.compile(r'^(feat|fix|refactor|perf|chore|docs|style|test)(\(.+?\))?!?:\s*(.+)$', re.IGNORECASE)
+
+for line in lines:
+    m = pattern.match(line)
+    if m:
+        kind = m.group(1).lower()
+        msg  = m.group(3)
+        if kind in ("feat",):
+            sections["feat"].append(msg)
+        elif kind in ("fix",):
+            sections["fix"].append(msg)
+        elif kind in ("refactor", "perf"):
+            sections["refactor"].append(msg)
+        elif kind in ("chore", "docs", "style", "test"):
+            pass  # skip meta commits from release notes
+        else:
+            sections["other"].append(line)
+    else:
+        # non-conventional — keep if not a chore/version bump
+        if not re.match(r'^chore:', line, re.IGNORECASE):
+            sections["other"].append(line)
+
+out = []
+labels = [("feat", "### Added"), ("fix", "### Fixed"), ("refactor", "### Changed"), ("other", "### Other")]
+for key, header in labels:
+    if sections[key]:
+        out.append(header)
+        for item in sections[key]:
+            out.append(f"- {item}")
+        out.append("")
+
+print("\n".join(out).strip())
+PYEOF
+
+# Capture the generated notes
+NOTES="$(python3 - "$COMMITS" <<'PYEOF'
+import sys, re
+
+raw = sys.argv[1]
+lines = [l.strip() for l in raw.splitlines() if l.strip()]
+
+sections = {"feat": [], "fix": [], "refactor": [], "other": []}
+pattern = re.compile(r'^(feat|fix|refactor|perf|chore|docs|style|test)(\(.+?\))?!?:\s*(.+)$', re.IGNORECASE)
+
+for line in lines:
+    m = pattern.match(line)
+    if m:
+        kind = m.group(1).lower()
+        msg  = m.group(3)
+        if kind == "feat":
+            sections["feat"].append(msg)
+        elif kind == "fix":
+            sections["fix"].append(msg)
+        elif kind in ("refactor", "perf"):
+            sections["refactor"].append(msg)
+    else:
+        if not re.match(r'^chore:', line, re.IGNORECASE):
+            sections["other"].append(line)
+
+out = []
+labels = [("feat", "### Added"), ("fix", "### Fixed"), ("refactor", "### Changed"), ("other", "### Other")]
+for key, header in labels:
+    if sections[key]:
+        out.append(header)
+        for item in sections[key]:
+            out.append(f"- {item}")
+        out.append("")
+
+result = "\n".join(out).strip()
+print(result if result else "- Maintenance and improvements.")
+PYEOF
+)"
+
 # ── Update CHANGELOG ──────────────────────────────────────────────────────────
 
 CHANGELOG="CHANGELOG.md"
@@ -50,21 +134,15 @@ if ! grep -q "^## \[Unreleased\]" "$CHANGELOG"; then
   exit 1
 fi
 
-# Replace "## [Unreleased]" with the versioned header, then prepend a fresh
-# [Unreleased] block at the top of the entries section.
-python3 - "$CHANGELOG" "$NEW_VERSION" "$TODAY" <<'PYEOF'
-import sys, re
+python3 - "$CHANGELOG" "$NEW_VERSION" "$TODAY" "$NOTES" <<'PYEOF'
+import sys
 
-path, ver, today = sys.argv[1], sys.argv[2], sys.argv[3]
+path, ver, today, notes = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
 with open(path) as f:
     content = f.read()
 
-# Replace first [Unreleased] header with versioned header
-content = content.replace(
-    "## [Unreleased]",
-    f"## [Unreleased]\n\n---\n\n## [{ver}] — {today}",
-    1
-)
+versioned_block = f"## [Unreleased]\n\n---\n\n## [{ver}] — {today}\n\n{notes}"
+content = content.replace("## [Unreleased]", versioned_block, 1)
 
 with open(path, "w") as f:
     f.write(content)

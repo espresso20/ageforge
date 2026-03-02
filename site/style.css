@@ -113,6 +113,9 @@ code {
 .nav-links a:hover {
     color: var(--text);
 }
+.nav-links a.active {
+    color: var(--gold);
+}
 .nav-wiki {
     background: var(--bg3);
     border: 1px solid var(--border);
