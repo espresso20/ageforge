@@ -1,4 +1,4 @@
-package confi
+package config
 
 // Effect represents a game effect from a building or tech
 type Effect struct {
