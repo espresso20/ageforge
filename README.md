@@ -72,322 +72,133 @@ go build -o ageforge .
 
 ## Contributing
 
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full dev guide — commit workflow, release process, test patterns, project structure, adding content, and how the math works.
+
+Quick reference:
+
+```bash
+make commit          # interactive commit helper (stages, prompts type + message, pushes)
+make check           # build + vet + config validation
+make test            # full test suite
+make release-patch   # cut a patch release
+make release-minor   # cut a minor release
+make release-major   # cut a major release
+```
+
+### Writing Commits
+
+Use `make commit` instead of `git add . && git commit && git push`. It stages everything, walks you through the message interactively, and enforces the format that drives automatic release notes.
+
+```
+make commit
+```
+
+```
+┌── Staged Changes ──────────────────────────────────────────────┐
+│   config/buildings.go | 4 ++--
+│   game/engine.go      | 6 +++---
+└────────────────────────────────────────────────────────────────┘
+
+What kind of change?
+  1  feat      — new feature or content          → ### Added
+  2  fix       — bug fix                         → ### Fixed
+  3  balance   — tuning costs, rates, numbers    → ### Balance
+  4  refactor  — cleanup, no behavior change     → ### Changed
+  5  chore     — build/tooling/deps              (skipped in notes)
+  6  docs      — docs/comments only              (skipped in notes)
+
+  Choice [1-6, default 1]: 2
+
+  Short summary (≤72 chars): stash building count was capped at 1 instead of max
+
+  Details / bullet points? (blank line to finish, skip with Enter)
+  · BuildMultiple inQueue check was comparing bool instead of counting
+  · fix applies to all buildings with MaxCount > 0
+  ·
+
+┌── Commit Message ──────────────────────────────────────────────┐
+│  fix: stash building count was capped at 1 instead of max
+│
+│  - BuildMultiple inQueue check was comparing bool instead of counting
+│  - fix applies to all buildings with MaxCount > 0
+└────────────────────────────────────────────────────────────────┘
+
+  Commit? [Y/n]: y
+  Push to origin/master now? [Y/n]: y
+```
+
+#### Commit Types
+
+| Type | Use for | Shows up in release notes as |
+|---|---|---|
+| `feat` | New game content, new commands, new UI features | `### Added` |
+| `fix` | Bug fixes — wrong behavior, crashes, display errors | `### Fixed` |
+| `balance` | Tuning numbers — costs, rates, durations, caps | `### Balance` |
+| `refactor` | Code cleanup with no behavior change | `### Changed` |
+| `chore` | Build scripts, CI, tooling, deps | *(skipped)* |
+| `docs` | README, comments, wiki pages only | *(skipped)* |
+
+#### Rules
+
+- **Subject line ≤ 72 chars.** The script enforces this — it re-prompts if you go over. This is what shows in `git log` and GitHub.
+- **Write in plain English.** The script lowercases the first letter and strips trailing periods. Just describe what changed.
+- **Use bullet points for multiple changes.** Enter them one per line at the details prompt. Blank line to finish. Details go into the commit body and are readable in `git log --format=medium`.
+- **One concern per commit.** If you changed both a bug fix and a balance tweak, make two commits. The release notes are cleaner and `git bisect` actually works.
+
+#### Examples
+
+**Good — a focused fix:**
+```
+fix: knowledge rate was displaying +0.0 for values below 0.1
+```
+
+**Good — a balance change with bullet details:**
+```
+balance: rebalance primitive age pacing
+
+- hut build time raised from 10 to 20 ticks
+- altar knowledge output raised from 0.004 to 0.008
+- stash max count raised from 10 to 50
+```
+
+**Good — a new feature:**
+```
+feat: manual age advancement — type 'advance' when ready
+```
+
+**Bad — too vague:**
+```
+fix: stuff     ← doesn't say what broke or what changed
+```
+
+**Bad — too long for subject, no detail separation:**
+```
+balance: stash now has max count of 50, all buildings in primitive take longer to build, altar production raised from .004 to .008 knowledge
+← this wraps in every tool and dumps everything into one line
+```
+
+---
+
 ### Release Process
 
-Releases are fully automated. From master with a clean working tree:
+Releases are cut manually when ready. From `master` with a clean working tree:
 
 ```bash
-make release-patch   # v1.2.3 → v1.2.4
-make release-minor   # v1.2.3 → v1.3.0
-make release-major   # v1.2.3 → v2.0.0
+make release-patch   # v2.4.5 → v2.4.6  (bug fixes, balance tweaks)
+make release-minor   # v2.4.5 → v2.5.0  (new features, new content)
+make release-major   # v2.4.5 → v3.0.0  (breaking changes, major redesigns)
 ```
 
-The script (`scripts/release.sh`):
-1. Validates you are on `master` with a clean tree
-2. Scrapes `git log` since the last tag and groups commits by type (`feat/fix/refactor`) to auto-generate release notes
-3. Stamps `CHANGELOG.md` with the new version and notes
-4. Commits, tags, and pushes — GitHub Actions builds 5 cross-platform binaries, generates `SHA256SUMS.txt`, creates the GitHub Release, and posts to Discord
-
-Version is baked into the binary at build time via ldflags (`-X main.version=vX.Y.Z`). Development builds report `dev`.
-
-### Requirements
-
-- Go 1.23+
-
-### Dev Scripts
-
-```bash
-# Quick compile check (build + vet)
-./dev.sh check
-
-# Build + vet + run the full test suite (formatted output)
-./dev.sh test
-
-# Build + run the game
-./dev.sh run
-
-# Build + vet + run (default)
-./dev.sh
-
-# Auto-rebuild on file changes (requires: brew install fswatch)
-./dev.sh watch
-```
-
-Or use `make`:
-
-```bash
-make check        # build + vet
-make test         # build + vet + tests (formatted output)
-make test-raw     # build + vet + tests (raw go test -v, for CI/piping)
-make run          # build + run
-make clean        # remove binary
-make release      # cross-compile for darwin/linux/windows
-make release-patch   # bump patch version, update CHANGELOG, tag, push
-make release-minor   # bump minor version, update CHANGELOG, tag, push
-make release-major   # bump major version, update CHANGELOG, tag, push
-```
-
-### Running Tests
-
-The test suite covers all game systems with **86 tests** across 11 test files:
-
-| File | Pkg | Tests | What it covers |
-|------|-----|-------|----------------|
-| `config/validate_test.go` | config | 12 | Cross-validates all config keys: ages, buildings, techs, milestones, trade, events, upgrades reference valid keys; no duplicates; all buildings/resources reachable; effect targets valid |
-| `game/resources_test.go` | game | 7 | Add, storage cap, remove, pay/afford, rates, unlock, save/load |
-| `game/buildings_test.go` | game | 5 | Unlock, cost scaling, pop capacity, get all, load counts |
-| `game/villagers_test.go` | game | 9 | Recruit, cap limits, unlock, assign/unassign, food drain, production, soldiers, save/load |
-| `game/research_test.go` | game | 9 | Start, afford check, age gating, prereqs, tick completion, bonuses, cancel, duplicate, save/load |
-| `game/milestones_test.go` | game | 8 | First shelter, population, age gating, chains, titles, snapshots, hidden visibility, save/load |
-| `game/prestige_test.go` | game | 5 | Can prestige, point calc, diminishing returns, level grants, save/load |
-| `game/progress_test.go` | game | 5 | Age order, next age, display names, advancement check, requirements |
-| `game/bus_test.go` | game | 4 | Subscribe/publish, multiple subscribers, no subscribers, event isolation |
-| `game/events_test.go` | game | 3 | Inject event, expiration, save/load |
-| `game/engine_test.go` | game | 19 | Full integration: init, resources, gather, build, recruit, assign, research, cancel, state consistency, speed, reset, milestone events, chain events, build multiple, save/load |
-
-The **config validation tests** are the safety net that would have caught typos like `"foods"` instead of `"food"` or `"woodcutter_camps"` instead of `"woodcutter_camp"`. They cross-reference every string key in every config file against the canonical key lists, so a bad key anywhere in ages, buildings, techs, milestones, trade routes, events, or upgrades will fail the test.
-
-**Run the suite:**
-
-```bash
-./dev.sh test
-# or
-make test
-```
-
-Output shows a per-test checklist with pass/fail indicators, then a summary:
-
-```
-  ✓ TestBuildingManager_UnlockAndCount (0.00s)
-  ✓ TestBuildingManager_CostScaling (0.00s)
-  ✗ TestSomething_Broken (0.00s)
-
-━━━ Test Summary ━━━
-
-Packages:
-  ✓ game (0.18s)
-
-Results:  73 passed  1 failed  0 skipped  (74 total)
-
-Failures:
-  ✗ TestSomething_Broken
-    → some_test.go:42 → expected 10, got 5
-```
-
-**Run a single test:**
-
-```bash
-go test ./game/ -run TestEngine_BuildMultiple -v
-```
-
-**Run tests for one package with raw output:**
-
-```bash
-go test ./game/ -v -count=1
-```
-
-**Common test patterns used:**
-
-- Tests create isolated managers (`NewResourceManager()`, `NewBuildingManager()`, etc.) — no shared state
-- Resource tests must respect `BaseStorage` caps (food: 50, wood: 50, knowledge: 30) — use `AddStorage()` before `Add()` if you need large amounts
-- Milestone tests use `fullAgeOrder()` (via `NewProgressManager().GetAgeOrder()`) to get the complete age map — incomplete maps cause milestones with missing `MinAge` entries to auto-complete
-- Engine tests access internals via `ge.mu.Lock()` for setup, then use public API methods for the actual test
-- Save/load round-trip tests create a file, defer cleanup with `defer os.Remove(...)`, and verify state survives serialization
-
-### Project Structure
-
-```
-config/     Data definitions (resources, buildings, techs, ages, milestones).
-            Pure data, no logic. All content is config-driven.
-game/       Game engine, managers, tick loop. No UI imports.
-ui/         tview-based TUI. Reads GameState snapshots only.
-main.go     Entry point, wires engine + UI.
-```
-
-### Key Patterns
-
-- **Config-Driven Content**: All game content (buildings, techs, ages, milestones, events, trade routes) is defined as data in `config/`. Add new content there, not in game logic.
-- **Manager Pattern**: Each system (resources, buildings, villagers, research, military, milestones, trade, diplomacy, prestige) has its own manager struct in `game/` with a clear API.
-- **GameState Snapshot**: `engine.GetState()` returns a read-only snapshot. UI reads snapshots, never touches engine internals.
-- **Event Bus**: Systems communicate via `game.EventBus` (pub/sub). Subscribe in `ui/dashboard.go` for toasts, in managers for cross-system reactions.
-- **No Global State**: Pass dependencies explicitly. No singletons.
-
-### Developer Tools
-
-A hidden developer console is available for playtesting without grinding through all 22 ages.
-
-**Unlock:** Press `Ctrl+K` anywhere in the dashboard. An unlabelled masked input appears — type the developer passphrase and press Enter. If correct, a **Dev** tab appears in the tab bar (`F10`).
-
-**Access:** Press `F10` or `` ` `` (backtick) to switch to the Dev tab. The normal `>` game input at the bottom still works everywhere.
-
-**Dev commands** (typed in the Dev tab input):
-
-| Command | Effect |
-|---|---|
-| `/ages` | List all 22 age keys |
-| `/age <key>` | Jump to any age instantly |
-| `/fill` | Fill all resources to storage cap |
-| `/give <resource> <amount>` | Add specific resource |
-| `/techs` | Unlock all techs up to current age |
-| `/build <key>` | Instantly place any building |
-| `/prestige <n>` | Set prestige level 0-9 |
-| `/speed <n>` | Set tick speed multiplier |
-| `/god` | Toggle godmode — zero costs, instant builds |
-
-The passphrase is stored as a SHA256 hash in `game/devmode.go` — never in plain text. Dev mode is never saved to disk; it resets on restart.
-
-### Adding Content
-
-**New building**: Add a `BuildingDef` to `config/buildings.go` with `BaseCost`, `CostScale`, `BuildTicks`, `Category`, and `Effects`. Unlock it in the appropriate age's `UnlockBuildings` list in `config/ages.go`. The cost formula is `floor(BaseCost * CostScale^count)` — typical CostScale values are 1.25-1.6.
-
-**New milestone**: Add a `MilestoneDef` to `config/milestones.go` with a `Category` (settlement/builder/scholar/military/ages). Set `Hidden: true` if it should only appear when the player is close to completing it (>50% progress). If it belongs in a chain, add its key to the chain's `MilestoneKeys` in `MilestoneChains()`. The engine auto-detects chain completion and grants the speed boost.
-
-**New age**: Add an `AgeDef` to `config/ages.go` with `ResourceReqs`, `BuildingReqs`, `UnlockResources`, `UnlockBuildings`, `UnlockVillagers`. Add a matching age milestone to `config/milestones.go` with `MinAge` set and `Category: "ages"`. On advancement, all resources are reduced to 25%.
-
-**New tech**: Add a `TechDef` to `config/techs.go` with `Age` (gating), `Cost` (knowledge), `Prerequisites` (tech keys), and `Effects`. Effect types: `"production"` (per-tick output), `"bonus"` (multiplier on a rate like `"gold_rate"` or `"tick_speed"`).
-
-**New random event**: Add an `EventDef` to `config/events.go` with `Sentiment` (good/bad/mixed), `Weight` (higher = more likely), `Cooldown` (min ticks between repeats), `Duration` (0 for instant), `MinAge`, and `Effects`. The streak system caps bad events at 2 consecutive and forces a bad event after 3 good ones.
-
-**New expedition**: Add an expedition def to the `getExpeditions()` function in `game/military.go` with `SoldiersNeeded`, `Duration`, `DifficultyBase`, `Rewards`, and `MinAge`. Success chance = `random() > (DifficultyBase - military_bonus * 0.3)`.
-
-**New trade route**: Add a `TradeRouteDef` to `config/trade.go` with `Export`/`Import` maps, `TicksPerRun`, `RequiredBuilding`, and `MinAge`. Routes auto-cycle: deduct exports, add imports scaled by diplomacy bonuses.
-
-**New villager type**: Add a `VillagerTypeDef` to `game/villagers.go` with `FoodCost` (per tick) and `GatherRate` (per tick when assigned). Unlock it in the appropriate age in `config/ages.go`.
-
-### How the Math Works
-
-#### Tick Loop
-
-The game runs on a tick loop. Each tick processes: build queue, research, random events, expeditions, trade routes, diplomacy, production rates, resource application, milestones, age advancement, and tick speed recalculation. The base tick interval is **2 seconds**, modified by bonuses.
-
-#### Tick Speed
-
-```
-tick_interval = 2000ms / ((1.0 + tick_speed_bonus) * speed_multiplier)
-minimum: 200ms (hard floor)
-```
-
-`tick_speed_bonus` comes from: research, milestones, prestige (+1% per level), and active chain boosts. `speed_multiplier` is player-set in 0.5x increments, capped at `1.0 + (wonders_built * 0.5)`.
-
-#### Resource Rates
-
-Rates are recalculated every tick in this order:
-
-1. **Base rates**: building production + villager gathering + research effects + event effects
-2. **`production_all` multiplier**: `rate *= (1.0 + bonus)` on all positive rates
-3. **Per-resource multiplier**: e.g. `gold_rate` bonus: `rate *= (1.0 + bonus)`
-4. **Gather rate bonus**: additive on villager rates
-5. **Diplomacy trade bonuses**: multiplicative on positive rates
-6. **Food drain subtracted**: `sum(villager_count * food_cost_per_type)`
-
-Storage = `BaseStorage + all_storage_bonuses + per_resource_bonuses` (from buildings, research, milestones, prestige).
-
-#### Building Costs
-
-```
-cost = floor(base_cost * cost_scale ^ current_count)
-```
-
-Example: Hut costs 30 wood with scale 1.3 — 1st: 30, 2nd: 39, 3rd: 50, 4th: 66...
-
-Building upgrades cost `target_base_cost * 0.25` (75% discount).
-
-#### Food Economy
-
-Each villager type has a per-tick food cost. Workers cost 0.10/tick, soldiers 0.25/tick, astronauts 0.40/tick. Total drain = `sum(count * cost)`. When food hits 0, a starvation warning fires. Keep ~1/3 of your workforce on food.
-
-#### Expeditions
-
-```
-adjusted_difficulty = max(0.05, base_difficulty - military_bonus * 0.3)
-success = random() > adjusted_difficulty
-loot = base_reward * (1.0 + expedition_bonus)    # on success
-loot = base_reward * 0.3                          # on failure (partial)
-soldier_loss: success = 0-1, failure = 1-2
-```
-
-#### Trade & Exchange
-
-Resource exchange uses supply/demand pressure:
-
-```
-rate = base_rate * (1.0 - pressure * 0.3)     # min 50% of base
-pressure_increase = 0.1 / (1.0 + market_count * 0.2)
-pressure_decay = pressure * 0.98 per tick      # recovers over time
-```
-
-More markets = less pressure per trade. Pressure decays 2% per tick naturally.
-
-Trade routes cycle every `TicksPerRun` ticks: deduct exports, add `imports * (1.0 + diplomacy_bonus)`.
-
-#### Prestige
-
-Requires Medieval Age+. Points formula:
-
-```
-base = age_order_index
-bonus = floor(milestones/10) + floor(techs/15) + floor(buildings/50)
-points = floor((base + bonus) / sqrt(prestige_level + 1))
-```
-
-Each prestige level grants +2% production, +1% tick speed permanently. 9 upgrades purchasable with prestige points.
-
-#### Offline Progress
-
-On load, the game simulates missed time:
-
-```
-offline_ticks = min(elapsed, 24h) / tick_interval
-resource_gain = rate * offline_ticks * 0.5       # 50% efficiency
-capped at remaining storage
-```
-
-#### Milestone Chains
-
-5 chains (Settlement, Scholar, Builder, Military, Ancient Ages). Completing all milestones in a chain grants:
-- A civilization title (displayed in status bar)
-- A temporary tick_speed boost injected as an active event (e.g. Settlement: +3.0x for 180 ticks)
-
-Hidden milestones become visible when progress exceeds 50%, or (for age milestones) when the player reaches the preceding age.
-
-### Wiring: How Systems Connect
-
-```
-config/*.go          game/*.go                    ui/*.go
------------          ---------                    -------
-BuildingDef    -->   BuildingManager.Build()  --> EconomyTab.Refresh()
-                     BuildingManager.GetCost()
-                     engine.processBuildQueue()
-                         |
-                         v
-                     EventBus.Publish(BuildingBuilt)
-                         |
-                         v
-                     dashboard.go subscriber --> ToastManager.Show()
-                     MilestoneManager.Check()
-                         |
-                         v (if chain completes)
-                     EventManager.InjectEvent(speed boost)
-                     EventBus.Publish(ChainCompleted)
-```
-
-The flow for any system follows this pattern:
-1. **Config** defines the data (costs, effects, requirements)
-2. **Manager** in `game/` owns the state and logic
-3. **Engine** orchestrates managers in `doTick()` and public API methods
-4. **EventBus** notifies other systems (pub/sub, synchronous under write lock)
-5. **UI** reads `GetState()` snapshots every 500ms — never writes to engine
-
-To add a new toast notification: subscribe to an event in `ui/dashboard.go`'s `build()` method. To add a new UI display: update the relevant tab's `Refresh()` method using fields from `GameState`.
-
-### Important: Event Bus Deadlock
-
-Bus handlers run synchronously under the engine's write lock. **Never call `engine.GetState()` or any lock-acquiring method inside a bus subscriber.** Use `config.*ByKey()` functions (pure data, no locks) for lookups in handlers.
-
-### Conventions
-
-- Package names: lowercase, single word (`config`, `game`, `ui`)
-- Config keys: `snake_case` strings (`"lumber_mill"`, `"stone_age"`)
-- `float64` for resource amounts, `int` for building counts
-- Return errors up, log at boundaries
-- Keep changes minimal — don't refactor code you didn't need to touch
+**When to use which:**
+- `patch` — fixes, balance changes, small improvements. No new gameplay systems.
+- `minor` — new commands, new ages/buildings/techs/mechanics. Backwards-compatible saves.
+- `major` — save format changes, full system rewrites, anything that could break existing saves.
+
+**What happens when you run it** (`scripts/release.sh`):
+1. Validates you're on `master` with a clean working tree
+2. Scrapes `git log` since the last tag, groups commits by type into `### Added / Fixed / Balance / Changed / Other`
+3. Stamps `CHANGELOG.md` with the new version block and generated notes
+4. Commits, tags (`vX.Y.Z`), and pushes to `origin/master`
+5. GitHub Actions picks up the tag and: builds 5 binaries (Linux/macOS/Windows × amd64/arm64), generates `SHA256SUMS.txt`, creates the GitHub Release with the changelog as the body, and posts a rich Discord embed
+
+Version is baked into the binary at build time. Dev builds report `dev`.
