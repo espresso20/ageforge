@@ -858,16 +858,15 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 		if def.MaxCount > 0 && ge.Buildings.GetCount(key) >= def.MaxCount {
 			break
 		}
-		// For unique buildings, check build queue
+		// Don't exceed MaxCount when accounting for items already in queue
 		if def.MaxCount > 0 {
-			inQueue := false
+			inQueue := 0
 			for _, item := range ge.buildQueue {
 				if item.BuildingKey == key {
-					inQueue = true
-					break
+					inQueue++
 				}
 			}
-			if inQueue {
+			if ge.Buildings.GetCount(key)+inQueue >= def.MaxCount {
 				break
 			}
 		}
