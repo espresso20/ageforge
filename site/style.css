@@ -1257,8 +1257,8 @@ code {
 }
 .ss-card {
     flex-shrink: 0;
-    width: min(72vw, 720px);
-    min-width: 280px;
+    width: min(44vw, 480px);
+    min-width: 220px;
     border-radius: 8px;
     background: var(--bg2);
     border: 1px solid var(--border);
@@ -1319,4 +1319,65 @@ code {
     font-size: 0.85rem;
     color: var(--muted);
     padding: 2rem 0;
+}
+
+/* ── Screenshot lightbox ────────────────────────────────────────────────── */
+.ss-card {
+    cursor: zoom-in;
+}
+.ss-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.92);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+.ss-lightbox.open {
+    opacity: 1;
+    pointer-events: all;
+}
+.ss-lightbox img {
+    max-width: 92vw;
+    max-height: 88vh;
+    object-fit: contain;
+    border-radius: 6px;
+    box-shadow: 0 0 80px rgba(0,0,0,0.9);
+    display: block;
+}
+.ss-lightbox-caption {
+    position: absolute;
+    bottom: 2rem;
+    left: 50%;
+    transform: translateX(-50%);
+    font-family: var(--font-mono);
+    font-size: 0.78rem;
+    color: var(--muted);
+    white-space: nowrap;
+}
+.ss-lightbox-close {
+    position: absolute;
+    top: 1.25rem;
+    right: 1.5rem;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 1.2rem;
+    line-height: 1;
+    width: 2rem;
+    height: 2rem;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, border-color 0.2s;
+}
+.ss-lightbox-close:hover {
+    color: var(--text);
+    border-color: var(--text);
 }

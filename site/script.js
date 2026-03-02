@@ -488,13 +488,46 @@ document.querySelectorAll(".step").forEach((step, i) => {
   const REPO_CONTENTS = 'https://api.github.com/repos/espresso20/ageforge/contents/site/screenshots';
   const IMAGE_EXTS    = /\.(png|jpg|jpeg|gif|webp|avif)$/i;
 
-  function toCaption(filename) {
-    return filename
-      .replace(/\.[^.]+$/, '')          // strip extension
-      .replace(/[-_]+/g, ' ')           // dashes/underscores → spaces
-      .replace(/\b\w/g, c => c.toUpperCase()); // title case
+  // ── Lightbox ──────────────────────────────────────────────────────────────
+  const lightbox = document.createElement('div');
+  lightbox.className = 'ss-lightbox';
+  lightbox.innerHTML = `
+    <button class="ss-lightbox-close" aria-label="Close">&#x2715;</button>
+    <img src="" alt="" />
+    <div class="ss-lightbox-caption"></div>
+  `;
+  document.body.appendChild(lightbox);
+
+  const lbImg     = lightbox.querySelector('img');
+  const lbCaption = lightbox.querySelector('.ss-lightbox-caption');
+  const lbClose   = lightbox.querySelector('.ss-lightbox-close');
+
+  function openLightbox(src, caption) {
+    lbImg.src = src;
+    lbImg.alt = caption;
+    lbCaption.textContent = caption;
+    lightbox.classList.add('open');
+    document.body.style.overflow = 'hidden';
   }
 
+  function closeLightbox() {
+    lightbox.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+
+  lbClose.addEventListener('click', closeLightbox);
+  lightbox.addEventListener('click', e => { if (e.target === lightbox) closeLightbox(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+  function toCaption(filename) {
+    return filename
+      .replace(/\.[^.]+$/, '')
+      .replace(/[-_]+/g, ' ')
+      .replace(/\b\w/g, c => c.toUpperCase());
+  }
+
+  // ── Build carousel ────────────────────────────────────────────────────────
   function buildCarousel(files) {
     const images = files.filter(f => f.type === 'file' && IMAGE_EXTS.test(f.name));
     if (!images.length) {
@@ -503,14 +536,16 @@ document.querySelectorAll(".step").forEach((step, i) => {
     }
 
     images.forEach(file => {
+      const caption = toCaption(file.name);
       const card = document.createElement('div');
       card.className = 'ss-card';
       card.innerHTML = `
         <div class="ss-frame">
-          <img src="${file.download_url}" alt="${toCaption(file.name)}" loading="lazy" decoding="async" />
+          <img src="${file.download_url}" alt="${caption}" loading="lazy" decoding="async" />
         </div>
-        <div class="ss-caption">${toCaption(file.name)}</div>
+        <div class="ss-caption">${caption}</div>
       `;
+      card.addEventListener('click', () => openLightbox(file.download_url, caption));
       track.appendChild(card);
     });
 
