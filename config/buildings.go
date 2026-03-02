@@ -1,4 +1,4 @@
-package config
+package confi
 
 // Effect represents a game effect from a building or tech
 type Effect struct {
@@ -32,7 +32,7 @@ func BaseBuildings() []BuildingDef {
 			BaseCost:    map[string]float64{"wood": 10},
 			CostScale:   1.12,
 			Effects:     []Effect{{Type: "capacity", Target: "population", Value: 3}},
-			BuildTicks:  3,
+			BuildTicks:  5,
 			RequiredAge: "primitive_age",
 			Description: "A crude shelter of sticks and leaves. +3 pop cap.",
 		},
@@ -40,9 +40,9 @@ func BaseBuildings() []BuildingDef {
 			Name: "Stash", Key: "stash", Category: "storage",
 			BaseCost:    map[string]float64{"wood": 10},
 			CostScale:   1.12,
-			MaxCount:    30,
+			MaxCount:    50,
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 300}},
-			BuildTicks:  3,
+			BuildTicks:  10,
 			RequiredAge: "primitive_age",
 			Description: "A hidden pile of supplies. +300 storage.",
 		},
@@ -50,8 +50,8 @@ func BaseBuildings() []BuildingDef {
 			Name: "Altar", Key: "altar", Category: "research",
 			BaseCost:    map[string]float64{"wood": 300},
 			CostScale:   1.35,
-			Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.004}},
-			BuildTicks:  5,
+			Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.008}},
+			BuildTicks:  20,
 			RequiredAge: "primitive_age",
 			Description: "A sacred stone circle where shamans commune with spirits. +0.004 knowledge/tick.",
 		},
