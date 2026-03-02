@@ -8,6 +8,20 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v2.4.2] — 2026-03-01
+
+### Added
+- screenshot lightbox on click + smaller cards showing 2 at a time
+
+### Fixed
+- move Discord notification into release.yml as a final step
+
+### Other
+- update screen shots mechanism
+- new screenshots
+
+---
+
 ## [v2.4.1] — 2026-03-01
 
 ### Fixed
