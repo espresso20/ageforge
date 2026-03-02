@@ -8,6 +8,17 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v2.5.1] — 2026-03-02
+
+### Fixed
+- clarify bullet point prompt wording in commit helper
+- commit helper adds balance type, length enforcement, and bullet body
+
+### Changed
+- stash now has max count of 50, all buildings in primitive take longer to build, altar production raised from .004 to .008 knowledge
+
+---
+
 ## [v2.5.0] — 2026-03-02
 
 ### Added
