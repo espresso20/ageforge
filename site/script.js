@@ -474,3 +474,75 @@ document.querySelectorAll(".step").forEach((step, i) => {
   step.style.transitionDelay = i * 60 + "ms";
   obs.observe(step);
 });
+
+// ── Screenshots carousel ──────────────────────────────────────────────────────
+(function () {
+  const track   = document.getElementById('ss-track');
+  const scroll  = document.getElementById('ss-scroll');
+  const prevBtn = document.getElementById('ss-prev');
+  const nextBtn = document.getElementById('ss-next');
+  const empty   = document.getElementById('ss-empty');
+
+  if (!track) return;
+
+  const REPO_CONTENTS = 'https://api.github.com/repos/espresso20/ageforge/contents/site/screenshots';
+  const IMAGE_EXTS    = /\.(png|jpg|jpeg|gif|webp|avif)$/i;
+
+  function toCaption(filename) {
+    return filename
+      .replace(/\.[^.]+$/, '')          // strip extension
+      .replace(/[-_]+/g, ' ')           // dashes/underscores → spaces
+      .replace(/\b\w/g, c => c.toUpperCase()); // title case
+  }
+
+  function buildCarousel(files) {
+    const images = files.filter(f => f.type === 'file' && IMAGE_EXTS.test(f.name));
+    if (!images.length) {
+      if (empty) empty.style.display = '';
+      return;
+    }
+
+    images.forEach(file => {
+      const card = document.createElement('div');
+      card.className = 'ss-card';
+      card.innerHTML = `
+        <div class="ss-frame">
+          <img src="${file.download_url}" alt="${toCaption(file.name)}" loading="lazy" decoding="async" />
+        </div>
+        <div class="ss-caption">${toCaption(file.name)}</div>
+      `;
+      track.appendChild(card);
+    });
+
+    // Arrow navigation — same pattern as ages carousel
+    let idx = 0;
+
+    function scrollTo(i) {
+      const cards = track.querySelectorAll('.ss-card');
+      if (!cards.length) return;
+      idx = Math.max(0, Math.min(i, cards.length - 1));
+      const containerRect = scroll.getBoundingClientRect();
+      const cardRect = cards[idx].getBoundingClientRect();
+      scroll.scrollTo({ left: scroll.scrollLeft + (cardRect.left - containerRect.left), behavior: 'smooth' });
+    }
+
+    prevBtn.addEventListener('click', () => scrollTo(idx - 1));
+    nextBtn.addEventListener('click', () => scrollTo(idx + 1));
+
+    scroll.addEventListener('scrollend', () => {
+      const cards = [...track.querySelectorAll('.ss-card')];
+      const mid = scroll.getBoundingClientRect().left + scroll.offsetWidth / 2;
+      let best = 0, bestDist = Infinity;
+      cards.forEach((c, i) => {
+        const d = Math.abs(c.getBoundingClientRect().left + c.offsetWidth / 2 - mid);
+        if (d < bestDist) { bestDist = d; best = i; }
+      });
+      idx = best;
+    }, { passive: true });
+  }
+
+  fetch(REPO_CONTENTS, { headers: { Accept: 'application/vnd.github+json' } })
+    .then(r => r.ok ? r.json() : [])
+    .then(buildCarousel)
+    .catch(() => { if (empty) empty.style.display = ''; });
+})();
