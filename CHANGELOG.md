@@ -8,6 +8,13 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v2.5.2] — 2026-03-02
+
+### Fixed
+- package declaration typo in config/buildings.go (confi → config)
+
+---
+
 ## [v2.5.1] — 2026-03-02
 
 ### Fixed
