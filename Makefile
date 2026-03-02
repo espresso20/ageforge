@@ -1,4 +1,4 @@
-.PHONY: build run clean check test vet validate all release release-patch release-minor release-major
+.PHONY: build run clean check test vet validate all release release-patch release-minor release-major commit
 
 # Default: build + vet + run
 all: check run
@@ -68,3 +68,7 @@ release-minor:
 
 release-major:
 	@bash scripts/release.sh major
+
+# Interactive conventional commit — stages everything, prompts for type + description, commits + pushes
+commit:
+	@bash scripts/commit.sh
