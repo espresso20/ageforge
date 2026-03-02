@@ -8,6 +8,13 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v2.3.0] — 2026-03-01
+
+### Added
+- auto-generate release notes from commits + changelog page on site
+
+---
+
 ## [v2.2.0] — 2026-03-01
 
 ---
