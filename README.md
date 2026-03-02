@@ -30,6 +30,9 @@ Start in the Primitive Age with bare hands and 15 food. Gather resources, build 
 go build -o ageforge .
 ./ageforge
 
+# Check version
+./ageforge --version
+
 # or use the run script
 ./run.sh
 ```
@@ -62,11 +65,30 @@ go build -o ageforge .
 
 ### Navigation
 - F1-F9 — switch between tabs
+- F10 — Dev console tab (only visible after developer unlock)
 - ESC — auto-save and return to menu
 - Arrow keys / PgUp/PgDn — navigate wiki (in Wiki tab)
 - v — toggle verbose logs (in Logs tab)
 
 ## Contributing
+
+### Release Process
+
+Releases are fully automated. From master with a clean working tree:
+
+```bash
+make release-patch   # v1.2.3 → v1.2.4
+make release-minor   # v1.2.3 → v1.3.0
+make release-major   # v1.2.3 → v2.0.0
+```
+
+The script (`scripts/release.sh`):
+1. Validates you are on `master` with a clean tree
+2. Scrapes `git log` since the last tag and groups commits by type (`feat/fix/refactor`) to auto-generate release notes
+3. Stamps `CHANGELOG.md` with the new version and notes
+4. Commits, tags, and pushes — GitHub Actions builds 5 cross-platform binaries, generates `SHA256SUMS.txt`, creates the GitHub Release, and posts to Discord
+
+Version is baked into the binary at build time via ldflags (`-X main.version=vX.Y.Z`). Development builds report `dev`.
 
 ### Requirements
 
@@ -94,12 +116,15 @@ go build -o ageforge .
 Or use `make`:
 
 ```bash
-make check      # build + vet
-make test       # build + vet + tests (formatted output)
-make test-raw   # build + vet + tests (raw go test -v, for CI/piping)
-make run        # build + run
-make clean      # remove binary
-make release    # cross-compile for darwin/linux/windows
+make check        # build + vet
+make test         # build + vet + tests (formatted output)
+make test-raw     # build + vet + tests (raw go test -v, for CI/piping)
+make run          # build + run
+make clean        # remove binary
+make release      # cross-compile for darwin/linux/windows
+make release-patch   # bump patch version, update CHANGELOG, tag, push
+make release-minor   # bump minor version, update CHANGELOG, tag, push
+make release-major   # bump major version, update CHANGELOG, tag, push
 ```
 
 ### Running Tests
@@ -186,6 +211,30 @@ main.go     Entry point, wires engine + UI.
 - **GameState Snapshot**: `engine.GetState()` returns a read-only snapshot. UI reads snapshots, never touches engine internals.
 - **Event Bus**: Systems communicate via `game.EventBus` (pub/sub). Subscribe in `ui/dashboard.go` for toasts, in managers for cross-system reactions.
 - **No Global State**: Pass dependencies explicitly. No singletons.
+
+### Developer Tools
+
+A hidden developer console is available for playtesting without grinding through all 22 ages.
+
+**Unlock:** Press `Ctrl+K` anywhere in the dashboard. An unlabelled masked input appears — type the developer passphrase and press Enter. If correct, a **Dev** tab appears in the tab bar (`F10`).
+
+**Access:** Press `F10` or `` ` `` (backtick) to switch to the Dev tab. The normal `>` game input at the bottom still works everywhere.
+
+**Dev commands** (typed in the Dev tab input):
+
+| Command | Effect |
+|---|---|
+| `/ages` | List all 22 age keys |
+| `/age <key>` | Jump to any age instantly |
+| `/fill` | Fill all resources to storage cap |
+| `/give <resource> <amount>` | Add specific resource |
+| `/techs` | Unlock all techs up to current age |
+| `/build <key>` | Instantly place any building |
+| `/prestige <n>` | Set prestige level 0-9 |
+| `/speed <n>` | Set tick speed multiplier |
+| `/god` | Toggle godmode — zero costs, instant builds |
+
+The passphrase is stored as a SHA256 hash in `game/devmode.go` — never in plain text. Dev mode is never saved to disk; it resets on restart.
 
 ### Adding Content
 
