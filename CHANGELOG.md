@@ -8,6 +8,13 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v2.4.3] — 2026-03-01
+
+### Fixed
+- Discord notify step - pass values via env vars not heredoc interpolation
+
+---
+
 ## [v2.4.2] — 2026-03-01
 
 ### Added
