@@ -52,8 +52,8 @@ type Dashboard struct {
 	contentArea *tview.Flex
 	bottomArea  *tview.Flex
 
-	devConsole *devConsole
-	devUnlockBuf string // accumulates Ctrl+K keystrokes for passphrase modal
+	devTab     *DevTab
+	devTabActive bool
 
 	stopCh chan struct{}
 }
@@ -68,7 +68,9 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		tabNames: []string{"Economy", "Research", "Military", "Trade", "Stats", "Wiki", "Map", "Wonders", "Logs"},
 	}
 	d.build()
-	d.devConsole = newDevConsole(app, pages, engine)
+	d.devTab = newDevTab(engine)
+	// Register the dev tab page — hidden until passphrase accepted
+	d.tabPages.AddPage("Dev", d.devTab.Primitive(), true, false)
 	return d
 }
 
@@ -229,9 +231,9 @@ func (d *Dashboard) build() {
 			d.showDevUnlockModal()
 			return nil
 		}
-		// Backtick — toggle dev console (only if unlocked)
+		// Backtick — switch to dev tab (only if unlocked)
 		if event.Rune() == '`' && game.DevModeActive {
-			d.devConsole.toggle()
+			d.switchToDevTab()
 			return nil
 		}
 		switch event.Key() {
@@ -267,6 +269,11 @@ func (d *Dashboard) build() {
 		case tcell.KeyF9:
 			d.switchTab(8)
 			return nil
+		case tcell.KeyF10:
+			if game.DevModeActive {
+				d.switchToDevTab()
+				return nil
+			}
 		}
 
 		// When logs tab is active, intercept navigation keys
@@ -321,6 +328,7 @@ func (d *Dashboard) switchTab(index int) {
 	d.activeTab = index
 	d.tabPages.SwitchToPage(d.tabNames[index])
 	d.updateTabBar()
+	d.app.SetFocus(d.inputField)
 
 	// Map tab (index 6) is full-screen — hide bottom area
 	if index == 6 {
@@ -335,7 +343,7 @@ func (d *Dashboard) switchTab(index int) {
 
 func (d *Dashboard) updateTabBar() {
 	var parts []string
-	tabKeys := map[int]string{0: "F1", 1: "F2", 2: "F3", 3: "F4", 4: "F5", 5: "F6", 6: "F7", 7: "F8", 8: "F9"}
+	tabKeys := map[int]string{0: "F1", 1: "F2", 2: "F3", 3: "F4", 4: "F5", 5: "F6", 6: "F7", 7: "F8", 8: "F9", 9: "F10"}
 	for i, name := range d.tabNames {
 		key := tabKeys[i]
 		if i == d.activeTab {
@@ -547,8 +555,7 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 // No hint text is shown — the existence of this modal is not advertised.
 func (d *Dashboard) showDevUnlockModal() {
 	if game.DevModeActive {
-		// Already unlocked — just toggle the console
-		d.devConsole.toggle()
+		d.switchToDevTab()
 		return
 	}
 
@@ -569,9 +576,10 @@ func (d *Dashboard) showDevUnlockModal() {
 		if key == tcell.KeyEnter {
 			input := field.GetText()
 			d.pages.RemovePage(devUnlockPage)
-			d.app.SetFocus(d.inputField)
 			if game.CheckDevKey(input) {
-				d.devConsole.toggle()
+				d.switchToDevTab()
+			} else {
+				d.app.SetFocus(d.inputField)
 			}
 		}
 	})
@@ -592,4 +600,25 @@ func (d *Dashboard) showDevUnlockModal() {
 
 	d.pages.AddPage(devUnlockPage, centered, true, true)
 	d.app.SetFocus(field)
+}
+
+// switchToDevTab reveals the Dev tab (first time) and switches to it.
+// Hard gate: silently does nothing unless DevModeActive is confirmed.
+func (d *Dashboard) switchToDevTab() {
+	if !game.DevModeActive {
+		return
+	}
+	if !d.devTabActive {
+		d.tabNames = append(d.tabNames, "Dev")
+		d.devTabActive = true
+	}
+	idx := len(d.tabNames) - 1
+	d.activeTab = idx
+	d.tabPages.SwitchToPage("Dev")
+	d.updateTabBar()
+	// Re-add bottom area (dev tab is not full-screen like map)
+	if d.contentArea.GetItemCount() < 2 {
+		d.contentArea.AddItem(d.bottomArea, 0, 1, false)
+	}
+	d.app.SetFocus(d.devTab.FocusInput())
 }

@@ -42,6 +42,9 @@ func CheckDevKey(input string) bool {
 //	/god               — toggle godmode (free costs, instant builds)
 //	/ages              — list all age keys
 func DevExecCommand(cmd string, ge *GameEngine) string {
+	if !DevModeActive {
+		return ""
+	}
 	parts := strings.Fields(cmd)
 	if len(parts) == 0 {
 		return ""
