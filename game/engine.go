@@ -51,6 +51,10 @@ type GameEngine struct {
 
 	// Age advancement — set when requirements are met; player must type 'advance' to proceed
 	ageReady bool
+
+	// Save integrity badges (set on load, never persisted separately)
+	cheaterBadge bool
+	eliteBadge   bool
 }
 
 // BuildQueueItem represents a building under construction
@@ -1212,6 +1216,9 @@ func (ge *GameEngine) Reset() {
 	ge.Resources.Add("food", 15)
 	ge.Resources.Add("wood", 12)
 
+	ge.cheaterBadge = false
+	ge.eliteBadge = false
+
 	ge.addLog("event", "Game wiped! Starting fresh.")
 	ge.addLog("info", "Type [cyan]help[-] for commands.")
 }
@@ -1313,6 +1320,8 @@ func (ge *GameEngine) GetState() GameState {
 		TickSpeedBonus:  ge.tickSpeedBonus,
 		TickIntervalMs:  int(tickInterval.Milliseconds()),
 		SpeedMultiplier: speedMult,
+		CheaterBadge:    ge.cheaterBadge,
+		EliteBadge:      ge.eliteBadge,
 	}
 }
 

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"math/rand"
 	"sort"
 	"strings"
 	"time"
@@ -12,6 +13,15 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
+
+var shameMessages = []string{
+	"✦ FORGED SCROLLS ✦",
+	"✦ ILLEGITIMATE EMPIRE ✦",
+	"✦ COUNTERFEIT DYNASTY ✦",
+	"✦ USURPER'S THRONE ✦",
+	"✦ THE FABRICATED AGE ✦",
+	"✦ DECREE OF DISHONOR ✦",
+}
 
 // Dashboard is the main gameplay screen with tabbed layout
 type Dashboard struct {
@@ -54,6 +64,10 @@ type Dashboard struct {
 
 	devTab     *DevTab
 	devTabActive bool
+
+	// Shame badge — set once on first load when CheaterBadge is true
+	cheaterTV       *tview.TextView
+	activeShameBadge string
 
 	stopCh chan struct{}
 }
@@ -119,6 +133,11 @@ func (d *Dashboard) build() {
 
 	// Villager panel
 	d.villagerPanel = NewVillagerPanel()
+
+	// Shame badge bar (1 fixed line; text only shown when CheaterBadge is true)
+	d.cheaterTV = tview.NewTextView().
+		SetDynamicColors(true).
+		SetTextAlign(tview.AlignCenter)
 
 	// Status bar
 	d.statusTV = tview.NewTextView().
@@ -217,6 +236,7 @@ func (d *Dashboard) build() {
 
 	// Root layout
 	d.root = tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(d.cheaterTV, 1, 0, false).
 		AddItem(d.statusTV, 1, 0, false).
 		AddItem(d.toastTV, 1, 0, false).
 		AddItem(d.ageTV, 2, 0, false).
@@ -401,6 +421,14 @@ func (d *Dashboard) refresh() {
 	}
 
 	state := d.engine.GetState()
+
+	// Shame badge — pick once per session, never change after that
+	if state.CheaterBadge && d.activeShameBadge == "" {
+		d.activeShameBadge = shameMessages[rand.Intn(len(shameMessages))]
+	}
+	if d.activeShameBadge != "" {
+		d.cheaterTV.SetText(fmt.Sprintf("[red]%s[-]", d.activeShameBadge))
+	}
 
 	if d.lastAge != state.Age {
 		ApplyAgePalette(state.Age)
