@@ -296,6 +296,18 @@ func (d *Dashboard) build() {
 			}
 		}
 
+		// When economy tab is active, intercept scroll keys for buildings panel
+		if d.activeTab == 0 {
+			switch event.Key() {
+			case tcell.KeyPgUp:
+				d.economyTab.ScrollUp()
+				return nil
+			case tcell.KeyPgDn:
+				d.economyTab.ScrollDown()
+				return nil
+			}
+		}
+
 		// When logs tab is active, intercept navigation keys
 		if d.activeTab == 8 {
 			switch event.Key() {

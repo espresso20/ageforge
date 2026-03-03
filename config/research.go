@@ -19,7 +19,7 @@ func Technologies() []TechDef {
 		// === PRIMITIVE AGE === (~1 min each)
 		{
 			Name: "Tool Making", Key: "tool_making",
-			Age: "primitive_age", Cost: 2500, ResearchTicks: 300,
+			Age: "primitive_age", Cost: 800, ResearchTicks: 200,
 			Description: "Primitive stone tools improve gathering efficiency.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "gather_rate", Value: 0.15},
@@ -27,7 +27,7 @@ func Technologies() []TechDef {
 		},
 		{
 			Name: "Fire Mastery", Key: "fire_mastery",
-			Age: "primitive_age", Cost: 3500, ResearchTicks: 400,
+			Age: "primitive_age", Cost: 1000, ResearchTicks: 200,
 			Prerequisites: []string{"tool_making"},
 			Description:   "Control of fire improves food preservation and warmth.",
 			Effects: []Effect{

@@ -68,6 +68,7 @@ type BuildingState struct {
 	Category    string
 	Description string
 	Unlocked    bool
+	AgeKey      string // age this building first becomes available
 	// Cost for next building
 	NextCost   map[string]float64
 	CanBuild   bool

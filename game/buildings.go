@@ -288,6 +288,7 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager) map[string]Build
 			Category:    def.Category,
 			Description: def.Description,
 			Unlocked:    bm.unlocked[key],
+			AgeKey:      def.RequiredAge,
 			NextCost:    cost,
 		}
 		if def.MaxCount > 0 && bm.counts[key] >= def.MaxCount {

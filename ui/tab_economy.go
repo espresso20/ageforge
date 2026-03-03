@@ -7,6 +7,7 @@ import (
 
 	"github.com/rivo/tview"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -85,38 +86,76 @@ func (t *EconomyTab) refreshResources(state game.GameState) {
 }
 
 func (t *EconomyTab) refreshBuildings(state game.GameState) {
-	var sb strings.Builder
+	// Build age ordering from config
+	ageOrder := config.AgeOrder()
+	ageIndex := make(map[string]int, len(ageOrder))
+	for i, k := range ageOrder {
+		ageIndex[k] = i
+	}
+	ageByKey := config.AgeByKey()
 
-	keys := make([]string, 0)
+	// Group unlocked buildings by their age key
+	byAge := make(map[string][]string)
 	for key, bs := range state.Buildings {
 		if bs.Unlocked {
-			keys = append(keys, key)
+			byAge[bs.AgeKey] = append(byAge[bs.AgeKey], key)
 		}
 	}
-	sort.Strings(keys)
 
-	for _, key := range keys {
-		bs := state.Buildings[key]
-		var icon string
-		switch {
-		case bs.AtMaxCount:
-			icon = "[yellow]MAX[-]"
-		case bs.CanBuild:
-			icon = "[green]✓[-]"
-		default:
-			icon = "[red]✗[-]"
+	// Sort groups: current age first, then descending (most recent prior age first)
+	groupKeys := make([]string, 0, len(byAge))
+	for k := range byAge {
+		groupKeys = append(groupKeys, k)
+	}
+	sort.Slice(groupKeys, func(i, j int) bool {
+		if groupKeys[i] == state.Age {
+			return true
 		}
-		fmt.Fprintf(&sb, " %s [cyan]%s[-] [gray]x%d[-]\n", icon, bs.Name, bs.Count)
-		if bs.AtMaxCount {
-			fmt.Fprintf(&sb, "   [yellow]Building limit reached.[-]\n")
-		} else {
-			fmt.Fprintf(&sb, "   Cost: %s\n", FormatCost(bs.NextCost))
+		if groupKeys[j] == state.Age {
+			return false
 		}
-		fmt.Fprintf(&sb, "   [gray]%s[-]\n", bs.Description)
+		return ageIndex[groupKeys[i]] > ageIndex[groupKeys[j]]
+	})
+
+	var sb strings.Builder
+	for _, ageKey := range groupKeys {
+		keys := byAge[ageKey]
+		sort.Strings(keys)
+
+		ageName := ageKey
+		if def, ok := ageByKey[ageKey]; ok {
+			ageName = def.Name
+		}
+		headerColor := "gray"
+		if ageKey == state.Age {
+			headerColor = "gold"
+		}
+		fmt.Fprintf(&sb, " [%s]── %s ──[-]\n", headerColor, ageName)
+
+		for _, key := range keys {
+			bs := state.Buildings[key]
+			var icon string
+			switch {
+			case bs.AtMaxCount:
+				icon = "[yellow]MAX[-]"
+			case bs.CanBuild:
+				icon = "[green]✓[-]"
+			default:
+				icon = "[red]✗[-]"
+			}
+			fmt.Fprintf(&sb, " %s [cyan]%s[-] [gray]x%d[-]\n", icon, bs.Name, bs.Count)
+			if bs.AtMaxCount {
+				fmt.Fprintf(&sb, "   [yellow]Building limit reached.[-]\n")
+			} else {
+				fmt.Fprintf(&sb, "   Cost: %s\n", FormatCost(bs.NextCost))
+			}
+			fmt.Fprintf(&sb, "   [gray]%s[-]\n", bs.Description)
+		}
+		sb.WriteString("\n")
 	}
 
 	if len(state.BuildQueue) > 0 {
-		sb.WriteString("\n [gold]Under Construction:[-]\n")
+		sb.WriteString(" [gold]Under Construction:[-]\n")
 		for _, item := range state.BuildQueue {
 			bar := ProgressBar(float64(item.TotalTicks-item.TicksLeft), float64(item.TotalTicks), 10)
 			eta := FormatETA(state.TickIntervalMs * item.TicksLeft)
@@ -128,6 +167,18 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 		sb.WriteString(" [gray]No buildings unlocked yet[-]")
 	}
 	t.buildingTV.SetText(sb.String())
+}
+
+// ScrollUp scrolls the buildings panel up
+func (t *EconomyTab) ScrollUp() {
+	row, col := t.buildingTV.GetScrollOffset()
+	t.buildingTV.ScrollTo(row-10, col)
+}
+
+// ScrollDown scrolls the buildings panel down
+func (t *EconomyTab) ScrollDown() {
+	row, col := t.buildingTV.GetScrollOffset()
+	t.buildingTV.ScrollTo(row+10, col)
 }
 
 func (t *EconomyTab) refreshVillagers(state game.GameState) {
