@@ -797,6 +797,7 @@ code {
     color: var(--cyan);
     line-height: 1.6;
     position: relative;
+    overflow-x: auto;
 }
 .copy-btn {
     position: absolute;
@@ -1130,11 +1131,6 @@ code {
     transform: translateY(-1px);
     box-shadow: 0 6px 24px rgba(255, 221, 0, 0.4);
 }
-@media (max-width: 760px) {
-    .cs-grid {
-        grid-template-columns: 1fr;
-    }
-}
 
 /* ── Footer ─────────────────────────────────────────────────────────────── */
 .footer {
@@ -1200,6 +1196,106 @@ code {
 
 /* ── Pixel art decorative border (removed) ──────────────────────────────── */
 
+/* ── Hamburger + Mobile Menu ─────────────────────────────────────────────── */
+.nav-hamburger {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 6px;
+    z-index: 200;
+    flex-shrink: 0;
+}
+.nav-hamburger span {
+    display: block;
+    width: 22px;
+    height: 2px;
+    background: var(--text);
+    border-radius: 2px;
+    transition: transform 0.25s, opacity 0.25s;
+}
+.nav-hamburger.open span:nth-child(1) {
+    transform: translateY(7px) rotate(45deg);
+}
+.nav-hamburger.open span:nth-child(2) {
+    opacity: 0;
+}
+.nav-hamburger.open span:nth-child(3) {
+    transform: translateY(-7px) rotate(-45deg);
+}
+.nav-mobile-menu {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(7, 11, 16, 0.97);
+    z-index: 150;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 28px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+}
+.nav-mobile-menu.open {
+    display: flex;
+}
+.nav-mobile-link {
+    font-family: var(--font-px);
+    font-size: 0.75rem;
+    color: var(--text);
+    letter-spacing: 2px;
+    transition: color 0.2s;
+    padding: 8px 0;
+    text-align: center;
+}
+.nav-mobile-link:hover {
+    color: var(--gold);
+}
+.nav-mobile-discord {
+    background: #5865f2;
+    color: #fff !important;
+    padding: 10px 28px;
+    border-radius: var(--radius);
+    margin-top: 8px;
+}
+.nav-mobile-discord:hover {
+    color: #fff !important;
+    opacity: 0.85;
+}
+.nav-mobile-gh {
+    background: var(--gold);
+    color: #000 !important;
+    padding: 10px 28px;
+    border-radius: var(--radius);
+}
+.nav-mobile-gh:hover {
+    color: #000 !important;
+    opacity: 0.85;
+}
+.nav-mobile-close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: none;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 1.1rem;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.2s, border-color 0.2s;
+}
+.nav-mobile-close:hover {
+    color: var(--text);
+    border-color: var(--text);
+}
+
 /* ── Responsive ─────────────────────────────────────────────────────────── */
 @media (max-width: 960px) {
     .hero-layout {
@@ -1213,36 +1309,227 @@ code {
         max-width: 100%;
     }
 }
-@media (max-width: 680px) {
-    .nav-links {
-        gap: 14px;
-        font-size: 0.78rem;
+@media (max-width: 760px) {
+    .cs-grid {
+        grid-template-columns: 1fr;
     }
-    .nav-links a:not(.nav-wiki):not(.nav-gh) {
+}
+@media (max-width: 680px) {
+    /* Nav — switch to hamburger */
+    .nav-hamburger {
+        display: flex;
+    }
+    .nav-links {
         display: none;
+    }
+
+    /* Hero */
+    .hero {
+        padding: 72px 16px 48px;
+    }
+    .hero-layout {
+        gap: 28px;
+    }
+    .hero-logo {
+        width: 72px;
+        margin-bottom: 14px;
+    }
+    .hero-badge {
+        font-size: 0.38rem;
+        letter-spacing: 1.5px;
     }
     .hero-title {
         font-size: 2rem;
+        letter-spacing: 2px;
     }
-    .hero-badge {
-        font-size: 0.4rem;
+    .hero-sub {
+        font-size: 0.9rem;
+        margin-bottom: 24px;
     }
+    .hero-btns {
+        flex-direction: column;
+        gap: 10px;
+    }
+    .hero-btns .btn {
+        width: 100%;
+        justify-content: center;
+    }
+    .hero-stats {
+        gap: 20px;
+        flex-wrap: wrap;
+    }
+    .hstat-n {
+        font-size: 1rem;
+    }
+
+    /* Terminal — shrink, prevent overflow */
+    .hero-terminal {
+        overflow: hidden;
+        border-radius: var(--radius-lg);
+    }
+    .term-screen {
+        min-height: 200px;
+        overflow: hidden;
+    }
+    .term-pre {
+        font-size: 0.6rem;
+    }
+
+    /* Sections — reduce padding */
+    .features {
+        padding: 64px 16px;
+    }
+    .howto {
+        padding: 64px 16px;
+    }
+    .commands-section {
+        padding: 64px 16px;
+    }
+    .download {
+        padding: 64px 16px;
+    }
+    .community-support {
+        padding: 56px 16px;
+    }
+    .ages-section {
+        padding: 64px 0;
+    }
+    .ss-section {
+        padding: 56px 0;
+    }
+    .section-wrap {
+        padding: 0 16px;
+    }
+    .ages-section .section-wrap {
+        padding-bottom: 28px;
+    }
+    .section-sub {
+        margin-bottom: 32px;
+        font-size: 0.9rem;
+    }
+
+    /* Ages / Screenshots carousel — hide arrows, use native touch scroll */
+    .ages-arrow {
+        display: none;
+    }
+    .ages-carousel,
+    .ss-carousel {
+        padding: 0 16px;
+    }
+
+    /* Age cards — comfortable touch targets */
+    .age-node {
+        width: min(80vw, 300px);
+        min-width: 220px;
+        padding: 28px 20px 24px;
+    }
+
+    /* Steps */
     .step {
         flex-direction: column;
         gap: 14px;
+        padding: 24px 0;
     }
     .step-num {
         font-size: 1.2rem;
         min-width: auto;
     }
+
+    /* Grids */
     .cmd-grid {
         grid-template-columns: 1fr;
     }
     .feat-grid {
         grid-template-columns: 1fr;
     }
+
+    /* Feature cards */
+    .feat-card {
+        padding: 22px 20px;
+    }
+
+    /* Community cards — stack icon and body */
+    .cs-card {
+        flex-direction: column;
+        gap: 16px;
+        padding: 24px;
+    }
+
+    /* Download */
     .dl-cta {
         flex-direction: column;
+    }
+    .dl-direct {
+        flex-direction: column;
+        gap: 12px;
+    }
+    .dl-direct .btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    /* Platform tabs */
+    .ptabs {
+        gap: 6px;
+    }
+    .ptab {
+        font-size: 0.45rem;
+        padding: 8px 10px;
+    }
+}
+
+/* Extra-small phones */
+@media (max-width: 480px) {
+    /* Hero title */
+    .hero-title {
+        font-size: 1.6rem;
+    }
+
+    /* Hide terminal entirely — too small to render meaningfully */
+    .hero-terminal {
+        display: none;
+    }
+
+    /* Tighter hero stats */
+    .hero-stats {
+        gap: 12px;
+    }
+    .hstat-n {
+        font-size: 0.9rem;
+    }
+    .hstat-l {
+        font-size: 0.65rem;
+    }
+
+    /* Section titles */
+    .section-title {
+        font-size: 0.8rem;
+    }
+
+    /* Age cards even narrower */
+    .age-node {
+        width: min(84vw, 260px);
+        min-width: 200px;
+    }
+    .age-dot {
+        width: 80px;
+        height: 80px;
+        font-size: 2.8rem;
+    }
+
+    /* Nav logo — hide text, keep image */
+    .logo-word {
+        display: none;
+    }
+
+    /* Buttons */
+    .btn {
+        font-size: 0.52rem;
+        padding: 10px 18px;
+    }
+    .btn-lg {
+        font-size: 0.55rem;
+        padding: 12px 20px;
     }
 }
 

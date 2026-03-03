@@ -581,3 +581,39 @@ document.querySelectorAll(".step").forEach((step, i) => {
     .then(buildCarousel)
     .catch(() => { if (empty) empty.style.display = ''; });
 })();
+
+// ── Hamburger menu ────────────────────────────────────────────────────────
+(function () {
+    const btn   = document.getElementById('nav-hamburger');
+    const menu  = document.getElementById('nav-mobile-menu');
+    const close = document.getElementById('nav-mobile-close');
+    if (!btn || !menu) return;
+
+    function openMenu() {
+        menu.classList.add('open');
+        menu.setAttribute('aria-hidden', 'false');
+        btn.classList.add('open');
+        btn.setAttribute('aria-expanded', 'true');
+        document.body.style.overflow = 'hidden';
+    }
+    function closeMenu() {
+        menu.classList.remove('open');
+        menu.setAttribute('aria-hidden', 'true');
+        btn.classList.remove('open');
+        btn.setAttribute('aria-expanded', 'false');
+        document.body.style.overflow = '';
+    }
+
+    btn.addEventListener('click', openMenu);
+    close.addEventListener('click', closeMenu);
+
+    // Close on any nav link click (scrolls to section)
+    menu.querySelectorAll('.nav-mobile-link').forEach(function (link) {
+        link.addEventListener('click', closeMenu);
+    });
+
+    // Close on Escape key
+    document.addEventListener('keydown', function (e) {
+        if (e.key === 'Escape' && menu.classList.contains('open')) closeMenu();
+    });
+})();

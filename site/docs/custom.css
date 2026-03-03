@@ -89,3 +89,56 @@ tr:hover td { background: rgba(240,165,0,0.04); }
   border: 1px solid #30363d !important;
   border-radius: 4px;
 }
+
+/* ── Mobile overrides ────────────────────────────────────────────────────── */
+
+/* Tables: horizontal scroll on small screens */
+.markdown-section table {
+    display: block;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    max-width: 100%;
+}
+
+/* Code blocks: prevent horizontal overflow */
+pre[class*="language-"],
+pre {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Inline code: allow wrapping on very small screens */
+p code, li code {
+    word-break: break-word;
+}
+
+@media (max-width: 768px) {
+    /* Shrink heavy pixel font headings */
+    h1 { font-size: 0.85rem !important; }
+    h2 { font-size: 0.65rem !important; }
+
+    /* Sidebar toggle button — make it easier to tap */
+    .sidebar-toggle {
+        width: 42px !important;
+        height: 42px !important;
+    }
+
+    /* Content padding */
+    .content {
+        padding: 16px !important;
+    }
+
+    /* Blockquote */
+    blockquote {
+        padding: 10px 14px;
+    }
+
+    /* Table cells — smaller padding */
+    th, td {
+        padding: 7px 10px;
+        font-size: 0.82rem;
+    }
+    th {
+        font-size: 0.4rem;
+    }
+}
