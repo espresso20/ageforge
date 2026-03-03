@@ -1,12 +1,18 @@
 package game
 
 import (
+	"crypto/hmac"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
 	"time"
 )
+
+// saveHMACKey is used to sign the save payload. Knowing this key allows clearing the shame badge.
+const saveHMACKey = "ageforge-v1-save-integrity"
 
 // GameSave represents a saved game state
 type GameSave struct {
@@ -33,6 +39,67 @@ type GameSave struct {
 	Diplomacy        DiplomacySave       `json:"diplomacy"`
 	SpeedMultiplier  float64             `json:"speed_multiplier"`
 	WonderBanks      map[string]map[string]float64 `json:"wonder_banks,omitempty"`
+	// Integrity fields
+	CheaterBadge bool   `json:"cheater_badge,omitempty"`
+	EliteBadge   bool   `json:"elite_badge,omitempty"`
+	Signature    string `json:"_sig,omitempty"`
+	Proof        string `json:"_proof,omitempty"`
+}
+
+// signSave returns the HMAC-SHA256 hex of the save payload (sig and proof cleared).
+func signSave(gs GameSave, key string) string {
+	gs.Signature = ""
+	gs.Proof = ""
+	data, _ := json.Marshal(gs)
+	mac := hmac.New(sha256.New, []byte(key))
+	mac.Write(data)
+	return hex.EncodeToString(mac.Sum(nil))
+}
+
+// verifySave checks the save's HMAC signature and optional elite proof.
+// sigValid is true when the save is unsigned (legacy) or the sig matches.
+// eliteValid is true when a valid proof is present alongside a valid sig.
+func verifySave(gs *GameSave) (sigValid, eliteValid bool) {
+	savedSig := gs.Signature
+	savedProof := gs.Proof
+
+	// Unsigned save (pre-integrity era) — grant benefit of the doubt
+	if savedSig == "" {
+		return true, false
+	}
+
+	expectedSig := signSave(*gs, saveHMACKey)
+	sigValid = hmac.Equal([]byte(savedSig), []byte(expectedSig))
+
+	if sigValid && savedProof != "" {
+		mac := hmac.New(sha256.New, []byte(forgeMasterKey))
+		mac.Write([]byte(savedSig))
+		expectedProof := hex.EncodeToString(mac.Sum(nil))
+		eliteValid = hmac.Equal([]byte(savedProof), []byte(expectedProof))
+	}
+	return
+}
+
+// PeekSaveBadges reads a save file and returns its badge state without loading the engine.
+// Used by the splash screen to show the elite badge before the game starts.
+func PeekSaveBadges(filename string) (cheater, elite bool) {
+	path := filepath.Join(saveDir, filename+".json")
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return false, false
+	}
+	var gs GameSave
+	if err := json.Unmarshal(data, &gs); err != nil {
+		return false, false
+	}
+	sigValid, eliteValid := verifySave(&gs)
+	if !sigValid {
+		return true, false
+	}
+	if eliteValid {
+		return false, true
+	}
+	return gs.CheaterBadge, false
 }
 
 // TradeSave holds trade state for save
@@ -96,11 +163,19 @@ func (ge *GameEngine) SaveGame(filename string) error {
 		return fmt.Errorf("failed to create save directory: %w", err)
 	}
 
-	// Snapshot + marshal under lock. The data is small so marshal is fast,
+	// Snapshot + sign + marshal under lock. The data is small so marshal is fast,
 	// and this avoids aliasing bugs where doTick mutates shared maps/slices
 	// while json.Marshal reads them concurrently.
 	ge.mu.RLock()
 	save := ge.buildSaveSnapshot()
+	// Sign the payload (sig/proof are empty in snapshot)
+	sig := signSave(save, saveHMACKey)
+	save.Signature = sig
+	if ge.eliteBadge {
+		mac := hmac.New(sha256.New, []byte(forgeMasterKey))
+		mac.Write([]byte(sig))
+		save.Proof = hex.EncodeToString(mac.Sum(nil))
+	}
 	data, err := json.MarshalIndent(save, "", "  ")
 	ge.mu.RUnlock()
 
@@ -231,6 +306,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		},
 		SpeedMultiplier: ge.speedMultiplier,
 		WonderBanks:     ge.Buildings.GetWonderBanks(),
+		CheaterBadge:    ge.cheaterBadge,
+		EliteBadge:      ge.eliteBadge,
 	}
 }
 
@@ -246,6 +323,17 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	var save GameSave
 	if err := json.Unmarshal(data, &save); err != nil {
 		return fmt.Errorf("failed to parse save: %w", err)
+	}
+
+	// Verify integrity before loading — set badge flags on the save struct
+	sigValid, eliteValid := verifySave(&save)
+	if !sigValid {
+		// Sig present but invalid — save was tampered with
+		save.CheaterBadge = true
+	}
+	if eliteValid {
+		save.EliteBadge = true
+		save.CheaterBadge = false
 	}
 
 	// All state mutations under write lock to avoid racing with doTick
@@ -323,6 +411,10 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	if ge.speedMultiplier < 1.0 {
 		ge.speedMultiplier = 1.0
 	}
+
+	// Restore badge state (verified above)
+	ge.cheaterBadge = save.CheaterBadge
+	ge.eliteBadge = save.EliteBadge
 
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()

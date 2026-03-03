@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"math/rand"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -9,10 +10,21 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
+// eliteMessages are shown on the splash to players who have achieved the elite badge.
+// Each message uses tview color tags: gold outer decorators, cyan inner text.
+var eliteMessages = []string{
+	"[gold]⚡[-][cyan] MASTER FORGER [-][gold]⚡[-]",
+	"[gold]{[-][cyan] TOUCHED BY THE SOURCE [-][gold]}[-]",
+	"[gold]✦[-][cyan] ARCHITECT OF THE FORGE [-][gold]✦[-]",
+	"[gold][[-][cyan] REALITY.EXE PATCHED [-][gold]][-]",
+	"[gold]⚙[-][cyan] THE FIRST MAKER [-][gold]⚙[-]",
+}
+
 // CreateSplashPage creates the main menu splash screen.
 // wikiServer is started and opened in the browser when the player selects Wiki.
 func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, wikiServer *game.WikiServer, currentVersion string) tview.Primitive {
 	saveExists := game.SaveExists("autosave")
+	_, eliteBadge := game.PeekSaveBadges("autosave")
 	prestigeLevel := engine.Prestige.GetLevel()
 
 	// Animated starfield + title canvas (takes the upper portion of the screen)
@@ -107,7 +119,16 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 		SetText("[#8b949e]Arrow keys · Enter[-]")
 
 	// ── Menu panel ────────────────────────────────────────────────────────────
-	menuPanel := tview.NewFlex().SetDirection(tview.FlexRow).
+	menuPanel := tview.NewFlex().SetDirection(tview.FlexRow)
+	if eliteBadge {
+		msg := eliteMessages[rand.Intn(len(eliteMessages))]
+		eliteBadgeTV := tview.NewTextView().
+			SetDynamicColors(true).
+			SetTextAlign(tview.AlignCenter).
+			SetText(msg)
+		menuPanel.AddItem(eliteBadgeTV, 1, 0, false)
+	}
+	menuPanel.
 		AddItem(mainList, 8, 0, true).
 		AddItem(versionTV, 1, 0, false).
 		AddItem(footerTV, 1, 0, false)
@@ -125,9 +146,14 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 
 	// ── Outer layout ─────────────────────────────────────────────────────────
 	// Canvas fills top space; compact menu anchored at bottom.
+	// Elite badge adds 1 extra line to the menu panel height.
+	menuHeight := 12
+	if eliteBadge {
+		menuHeight = 13
+	}
 	outer := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(canvas, 0, 1, false).
-		AddItem(menuRow, 12, 0, true)
+		AddItem(menuRow, menuHeight, 0, true)
 
 	return outer
 }

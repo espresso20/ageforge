@@ -11,6 +11,10 @@ import (
 // devKeyHash is the SHA256 of the developer passphrase.
 const devKeyHash = "ef3d0375543ef25277bf004b685160c420813e13047396914538e9803f4ead4f"
 
+// forgeMasterKey signs the save signature itself, granting the elite badge.
+// Finding this key is the easter egg — it lives here on purpose.
+const forgeMasterKey = "ageforge-master-forger-v1"
+
 // DevModeActive is true once the developer passphrase has been accepted.
 // It is never persisted to disk.
 var DevModeActive bool

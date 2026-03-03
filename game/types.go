@@ -29,6 +29,8 @@ type GameState struct {
 	TickSpeedBonus   float64
 	TickIntervalMs   int
 	SpeedMultiplier  float64
+	CheaterBadge   bool
+	EliteBadge     bool
 }
 
 // BuildQueueSnapshot represents a building under construction for UI
