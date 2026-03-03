@@ -83,7 +83,7 @@ func verifySave(gs *GameSave) (sigValid, eliteValid bool) {
 // PeekSaveBadges reads a save file and returns its badge state without loading the engine.
 // Used by the splash screen to show the elite badge before the game starts.
 func PeekSaveBadges(filename string) (cheater, elite bool) {
-	path := filepath.Join(saveDir, filename+".json")
+	path := savePath(filename)
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return false, false
@@ -155,11 +155,39 @@ type UnlockedState struct {
 	Villagers []string `json:"villagers"`
 }
 
-const saveDir = "data/saves"
+// saveDirectory returns the canonical save directory: data/saves/ next to the binary.
+// Falls back to a CWD-relative path if the binary path cannot be determined.
+func saveDirectory() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return "data/saves"
+	}
+	exe, err = filepath.EvalSymlinks(exe)
+	if err != nil {
+		return "data/saves"
+	}
+	return filepath.Join(filepath.Dir(exe), "data", "saves")
+}
+
+// savePath returns the full path for a named save file.
+// It checks the canonical (binary-relative) location first, then falls back to
+// the legacy CWD-relative location so saves from older versions are still found.
+func savePath(filename string) string {
+	primary := filepath.Join(saveDirectory(), filename+".json")
+	if _, err := os.Stat(primary); err == nil {
+		return primary
+	}
+	legacy := filepath.Join("data", "saves", filename+".json")
+	if _, err := os.Stat(legacy); err == nil {
+		return legacy
+	}
+	return primary // default to canonical for new saves
+}
 
 // SaveGame saves the current game state
 func (ge *GameEngine) SaveGame(filename string) error {
-	if err := os.MkdirAll(saveDir, 0755); err != nil {
+	dir := saveDirectory()
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create save directory: %w", err)
 	}
 
@@ -184,7 +212,7 @@ func (ge *GameEngine) SaveGame(filename string) error {
 	}
 
 	// Atomic write: temp file + rename to prevent corruption on crash
-	path := filepath.Join(saveDir, filename+".json")
+	path := filepath.Join(dir, filename+".json")
 	tmpPath := path + ".tmp"
 	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
 		return fmt.Errorf("failed to write save: %w", err)
@@ -314,7 +342,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 // LoadGame restores game state from a file
 func (ge *GameEngine) LoadGame(filename string) error {
 	// File I/O outside the lock
-	path := filepath.Join(saveDir, filename+".json")
+	path := savePath(filename)
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to read save: %w", err)
@@ -442,7 +470,7 @@ func (ge *GameEngine) getUnlockedState() UnlockedState {
 
 // ListSaves returns available save files
 func ListSaves() ([]string, error) {
-	entries, err := os.ReadDir(saveDir)
+	entries, err := os.ReadDir(saveDirectory())
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -468,7 +496,8 @@ type SaveInfo struct {
 
 // ListSaveDetails returns metadata for each save file
 func ListSaveDetails() ([]SaveInfo, error) {
-	entries, err := os.ReadDir(saveDir)
+	dir := saveDirectory()
+	entries, err := os.ReadDir(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -481,7 +510,7 @@ func ListSaveDetails() ([]SaveInfo, error) {
 			continue
 		}
 		name := e.Name()[:len(e.Name())-5]
-		path := filepath.Join(saveDir, e.Name())
+		path := filepath.Join(dir, e.Name())
 		data, err := os.ReadFile(path)
 		if err != nil {
 			continue
@@ -504,7 +533,8 @@ func ListSaveDetails() ([]SaveInfo, error) {
 
 // WipeAllSaves deletes all save files
 func WipeAllSaves() error {
-	entries, err := os.ReadDir(saveDir)
+	dir := saveDirectory()
+	entries, err := os.ReadDir(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -513,15 +543,14 @@ func WipeAllSaves() error {
 	}
 	for _, e := range entries {
 		if !e.IsDir() && filepath.Ext(e.Name()) == ".json" {
-			os.Remove(filepath.Join(saveDir, e.Name()))
+			os.Remove(filepath.Join(dir, e.Name()))
 		}
 	}
 	return nil
 }
 
-// SaveExists checks if a save file exists
+// SaveExists checks if a save file exists at either the canonical or legacy path.
 func SaveExists(filename string) bool {
-	path := filepath.Join(saveDir, filename+".json")
-	_, err := os.Stat(path)
+	_, err := os.Stat(savePath(filename))
 	return err == nil
 }
