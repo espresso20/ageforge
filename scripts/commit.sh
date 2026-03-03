@@ -22,12 +22,25 @@ if git diff --cached --quiet; then
   exit 0
 fi
 
+# ── Detect if we're on main/master ─────────────────────────────────────────────
+CURRENT_BRANCH=$(git branch --show-current)
+ON_MAIN=false
+FEATURE_BRANCH=""
+if [[ "$CURRENT_BRANCH" == "main" || "$CURRENT_BRANCH" == "master" ]]; then
+  ON_MAIN=true
+fi
+
 # ── Show what's staged ────────────────────────────────────────────────────────
 echo ""
 echo -e "${GOLD}┌── Staged Changes ──────────────────────────────────────────────┐${RESET}"
 git diff --cached --stat | sed 's/^/│  /'
 echo -e "${GOLD}└────────────────────────────────────────────────────────────────┘${RESET}"
 echo ""
+
+if [[ "$ON_MAIN" == true ]]; then
+  echo -e "  ${CYAN}On ${BOLD}${CURRENT_BRANCH}${RESET}${CYAN} — a feature branch will be created automatically.${RESET}"
+  echo ""
+fi
 
 # ── Pick type ─────────────────────────────────────────────────────────────────
 echo -e "${CYAN}${BOLD}What kind of change?${RESET}"
@@ -66,6 +79,21 @@ while true; do
 done
 echo ""
 
+# ── Derive feature branch name from summary ────────────────────────────────────
+if [[ "$ON_MAIN" == true ]]; then
+  SLUG=$(echo "$DESC" \
+    | tr '[:upper:]' '[:lower:]' \
+    | sed 's/[^a-z0-9 ]/-/g' \
+    | tr ' ' '-' \
+    | sed 's/-\+/-/g' \
+    | sed 's/^-//' \
+    | sed 's/-$//' \
+    | cut -d'-' -f1-5)
+  FEATURE_BRANCH="feat/espresso/${SLUG}"
+  echo -e "  ${GOLD}Branch:${RESET} ${BOLD}${FEATURE_BRANCH}${RESET}"
+  echo ""
+fi
+
 # ── Optional bullet-point body ────────────────────────────────────────────────
 echo -e "  ${GRAY}Optional details — type a bullet then Enter, repeat. Empty Enter when done.${RESET}"
 BODY_LINES=()
@@ -78,6 +106,10 @@ echo ""
 
 # ── Preview ───────────────────────────────────────────────────────────────────
 echo -e "${GOLD}┌── Commit Message ──────────────────────────────────────────────┐${RESET}"
+if [[ -n "$FEATURE_BRANCH" ]]; then
+  echo -e "│  ${GRAY}branch:${RESET}  ${CYAN}${FEATURE_BRANCH}${RESET}"
+  echo -e "│"
+fi
 echo -e "│  ${BOLD}${SUBJECT}${RESET}"
 if [[ ${#BODY_LINES[@]} -gt 0 ]]; then
   echo -e "│"
@@ -95,6 +127,13 @@ if [[ "${CONFIRM_COMMIT:-y}" =~ ^[Nn] ]]; then
   exit 0
 fi
 
+# Create feature branch before committing (if on main/master)
+if [[ -n "$FEATURE_BRANCH" ]]; then
+  echo -e "  ${CYAN}Creating branch ${BOLD}${FEATURE_BRANCH}${RESET}${CYAN}…${RESET}"
+  git checkout -b "$FEATURE_BRANCH"
+  echo ""
+fi
+
 # Build full commit message
 if [[ ${#BODY_LINES[@]} -gt 0 ]]; then
   FULL_MSG="${SUBJECT}"$'\n\n'
@@ -108,12 +147,16 @@ fi
 echo ""
 
 # ── Push ──────────────────────────────────────────────────────────────────────
-read -rp "  Push to origin/master now? [Y/n]: " CONFIRM_PUSH || true
+PUSH_TARGET="${FEATURE_BRANCH:-$CURRENT_BRANCH}"
+read -rp "  Push to origin/${PUSH_TARGET} now? [Y/n]: " CONFIRM_PUSH || true
 if [[ "${CONFIRM_PUSH:-y}" =~ ^[Nn] ]]; then
-  echo -e "${GREEN}✓ Committed locally.${RESET} Push later with: git push origin master"
+  echo -e "${GREEN}✓ Committed locally.${RESET} Push later with: git push -u origin ${PUSH_TARGET}"
   exit 0
 fi
 
-git push origin master
+git push -u origin "$PUSH_TARGET"
 echo ""
 echo -e "${GREEN}✓ ${BOLD}${SUBJECT}${RESET}"
+if [[ -n "$FEATURE_BRANCH" ]]; then
+  echo -e "  ${CYAN}Branch: ${BOLD}${FEATURE_BRANCH}${RESET}"
+fi
