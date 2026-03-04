@@ -76,6 +76,10 @@ type BuildingState struct {
 	// Wonder-specific: resources banked toward construction
 	WonderBank     map[string]float64
 	WonderBankFull bool
+	// Phase 6: worker assignment fields
+	WorkerDomain    string
+	WorkerCapacity  int // per-building-instance capacity
+	WorkersAssigned int // total workers assigned across all instances
 }
 
 // VillagerState represents all villager info

@@ -97,5 +97,37 @@ Items are moved here from TODO.md when finished. Do not re-implement anything li
 - [x] `config/buildings.go`: renamed `BaseBuildings()` → `baseBuildingsRaw()`; added `buildingMeta()` map covering all 111 buildings; new `BaseBuildings()` merges metadata in — all buildings now carry lineage/domain/epoch/output data
 - Note: 111 buildings total (89 standard + 22 wonders), not 80 as previously counted
 
+## Economy Redesign — Phase 6: Worker-Building Coupling Engine (2026-03-05)
+- [x] `game/villagers.go`: MAJOR REWRITE — domain-based system replacing 8-type resource-centric model
+  - 12 worker domains (food/faith/knowledge/military/trade/engineering/hacker/astronaut/lumber/masonry/metallurgy/energy)
+  - `domainRuntime` with `count` + `assignments map[string]int` (buildingKey → worker count)
+  - `Assign(domain, buildingKey, count)` — validates building WorkerDomain matches
+  - `FoodDrain()` uses WorkerClassDef food costs from config (geometric tier scaling)
+  - `GetAssignedCount(domain, buildingKey)` — used by production formula
+  - `GetDomainCount(domain)` — replaces direct `.types["soldier"].count` access
+  - `SetAge(ageKey)` — updates WorkerClassDef lookups on age change
+  - Legacy alias map: "worker"→"food", "shaman"→"faith", etc. for backward compat
+  - `Snapshot()` keys by legacy type names for UI compat (domainToLegacy map)
+  - `LoadVillagers()` handles both new (buildingKey) and old (resource key) save formats
+  - `DefaultVillagerTypes()` + `VillagerTypeDef` kept for villager_panel.go backward compat
+- [x] `game/types.go`: Added `WorkerDomain`, `WorkerCapacity`, `WorkersAssigned` to `BuildingState`
+- [x] `game/buildings.go`: Added `WorkerScaledProduction(getAssigned func)` — computes per-resource
+  rates with formula `base × count × (0.20 + 0.80 × assigned/totalCap)` (20% floor);
+  updated `Snapshot(resources, getWorkerCount)` to populate worker fields
+- [x] `game/engine.go`:
+  - `recalculateRates()` now calls `Buildings.WorkerScaledProduction(Villagers.GetAssignedCount)`
+  - `advanceAge()` calls `Villagers.SetAge(newAge)` for food cost / class name updates
+  - `AssignVillager/AssignAll/UnassignAll/UnassignVillager` — all updated to (domain, buildingKey)
+  - Removed all `ge.Villagers.types[...]` direct field accesses; replaced with `GetDomainCount`
+  - `GetState()`: `Buildings.Snapshot` now passes `Villagers.GetAssignedCount`
+  - Tutorial log updated to reference new assign syntax
+- [x] `game/save.go`: `LoadGame()` calls `Villagers.SetAge(save.Age)` after restoring age
+- [x] `game/villagers_test.go`: Rewrote all tests for domain+buildingKey semantics;
+  added `TestVillagerManager_GetAssignedCount`, `TestVillagerManager_AssignWrongDomain`,
+  `TestVillagerManager_LegacyLoadCompat`
+- [x] `game/engine_test.go`: Updated `TestEngine_AssignVillager` to use new API
+- [x] `ui/input.go`: Updated `cmdAssign`/`cmdUnassign` to use domain+building syntax; updated help text
+- All tests passing, `go build ./...` clean
+
 ## General / Misc
 - [x] Established TODO.md + DONE.md workflow for session-resumable planning (2026-02-25)

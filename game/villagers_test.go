@@ -4,6 +4,8 @@ import (
 	"testing"
 )
 
+// gathering_camp is a stone_age food-domain building (WorkerDomain:"food", WorkerCapacity:5)
+
 func TestVillagerManager_RecruitAndPop(t *testing.T) {
 	vm := NewVillagerManager()
 	vm.UnlockType("worker")
@@ -49,17 +51,17 @@ func TestVillagerManager_AssignAndUnassign(t *testing.T) {
 	vm.UnlockType("worker")
 	vm.Recruit("worker", 5, 10)
 
-	// Assign 3 to food
-	ok := vm.Assign("worker", "food", 3)
+	// Assign 3 workers to gathering_camp (food domain building)
+	ok := vm.Assign("worker", "gathering_camp", 3)
 	if !ok {
-		t.Error("Assign should succeed")
+		t.Error("Assign should succeed for valid domain+building pair")
 	}
 	if vm.IdleCount("worker") != 2 {
 		t.Errorf("idle after assign = %v, want 2", vm.IdleCount("worker"))
 	}
 
 	// Unassign 1
-	ok = vm.Unassign("worker", "food", 1)
+	ok = vm.Unassign("worker", "gathering_camp", 1)
 	if !ok {
 		t.Error("Unassign should succeed")
 	}
@@ -68,7 +70,7 @@ func TestVillagerManager_AssignAndUnassign(t *testing.T) {
 	}
 
 	// Can't unassign more than assigned
-	ok = vm.Unassign("worker", "food", 10)
+	ok = vm.Unassign("worker", "gathering_camp", 10)
 	if ok {
 		t.Error("Unassign should fail when count > assigned")
 	}
@@ -79,9 +81,21 @@ func TestVillagerManager_AssignMoreThanIdle(t *testing.T) {
 	vm.UnlockType("worker")
 	vm.Recruit("worker", 2, 10)
 
-	ok := vm.Assign("worker", "food", 5)
+	ok := vm.Assign("worker", "gathering_camp", 5)
 	if ok {
 		t.Error("Assign should fail when count > idle")
+	}
+}
+
+func TestVillagerManager_AssignWrongDomain(t *testing.T) {
+	vm := NewVillagerManager()
+	vm.UnlockType("scholar") // knowledge domain
+	vm.Recruit("scholar", 3, 10)
+
+	// gathering_camp is food domain, not knowledge — should fail
+	ok := vm.Assign("scholar", "gathering_camp", 1)
+	if ok {
+		t.Error("Assign should fail when building domain doesn't match worker domain")
 	}
 }
 
@@ -100,22 +114,29 @@ func TestVillagerManager_FoodDrain(t *testing.T) {
 	}
 
 	// Drain should scale with count
-	vm.Recruit("worker", 5, 10)
+	vm.Recruit("worker", 5, 20)
 	drain2 := vm.FoodDrain()
 	if drain2 <= drain {
 		t.Errorf("drain should increase: 5 workers=%v, 10 workers=%v", drain, drain2)
 	}
 }
 
-func TestVillagerManager_ProductionRates(t *testing.T) {
+func TestVillagerManager_GetAssignedCount(t *testing.T) {
 	vm := NewVillagerManager()
 	vm.UnlockType("worker")
-	vm.Recruit("worker", 3, 10)
-	vm.Assign("worker", "food", 2)
+	vm.Recruit("worker", 5, 10)
 
-	rates := vm.GetProductionRates()
-	if rates["food"] <= 0 {
-		t.Errorf("food production rate = %v, want > 0", rates["food"])
+	vm.Assign("worker", "gathering_camp", 3)
+
+	count := vm.GetAssignedCount("food", "gathering_camp")
+	if count != 3 {
+		t.Errorf("GetAssignedCount = %v, want 3", count)
+	}
+
+	// Zero for unassigned building
+	count2 := vm.GetAssignedCount("food", "farm")
+	if count2 != 0 {
+		t.Errorf("GetAssignedCount for unassigned building = %v, want 0", count2)
 	}
 }
 
@@ -134,7 +155,7 @@ func TestVillagerManager_SaveLoadRoundTrip(t *testing.T) {
 	vm := NewVillagerManager()
 	vm.UnlockType("worker")
 	vm.Recruit("worker", 5, 10)
-	vm.Assign("worker", "food", 3)
+	vm.Assign("worker", "gathering_camp", 3)
 
 	saved := vm.GetAll()
 
@@ -144,5 +165,30 @@ func TestVillagerManager_SaveLoadRoundTrip(t *testing.T) {
 
 	if vm2.TotalPop() != 5 {
 		t.Errorf("loaded pop = %v, want 5", vm2.TotalPop())
+	}
+
+	// Building assignments should survive the round trip
+	count := vm2.GetAssignedCount("food", "gathering_camp")
+	if count != 3 {
+		t.Errorf("loaded assigned count = %v, want 3", count)
+	}
+}
+
+func TestVillagerManager_LegacyLoadCompat(t *testing.T) {
+	// Simulate an old-format save with resource-based assignments — should load without crash
+	vm := NewVillagerManager()
+	vm.UnlockType("worker")
+
+	oldData := map[string]VillagerInfo{
+		"worker": {Count: 5, FoodCost: 0.1, Assignment: map[string]int{"food": 3, "wood": 2}},
+	}
+	vm.LoadVillagers(oldData)
+
+	// Count should be restored, but legacy resource assignments are discarded (workers idle)
+	if vm.TotalPop() != 5 {
+		t.Errorf("loaded pop from legacy save = %v, want 5", vm.TotalPop())
+	}
+	if vm.IdleCount("food") != 5 {
+		t.Errorf("idle count after legacy load = %v, want 5 (all idle)", vm.IdleCount("food"))
 	}
 }

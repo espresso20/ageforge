@@ -126,7 +126,8 @@ func (bm *BuildingManager) Build(key string, resources *ResourceManager) bool {
 	return true
 }
 
-// GetEffects returns the total effects from all built buildings
+// GetEffects returns the total effects from all built buildings (non-production effects only).
+// For production rates, use WorkerScaledProduction instead.
 func (bm *BuildingManager) GetEffects() []config.Effect {
 	var effects []config.Effect
 	for key, count := range bm.counts {
@@ -144,6 +145,39 @@ func (bm *BuildingManager) GetEffects() []config.Effect {
 		}
 	}
 	return effects
+}
+
+// WorkerScaledProduction computes production rates per resource, applying worker fill ratios.
+// getAssigned(workerDomain, buildingKey) returns the number of assigned workers for that building type.
+// Buildings with WorkerDomain set use: rate = base × count × (0.20 + 0.80 × assigned/totalCap).
+// Buildings without workers use: rate = base × count (unchanged behaviour).
+func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(domain, key string) int) map[string]float64 {
+	rates := make(map[string]float64)
+	for key, count := range bm.counts {
+		if count == 0 {
+			continue
+		}
+		def := bm.defs[key]
+		for _, eff := range def.Effects {
+			if eff.Type != "production" {
+				continue
+			}
+			var rate float64
+			if def.WorkerDomain != "" && def.WorkerCapacity > 0 && getAssigned != nil {
+				assigned := getAssigned(def.WorkerDomain, key)
+				totalCap := float64(count * def.WorkerCapacity)
+				fillRatio := float64(assigned) / totalCap
+				if fillRatio > 1.0 {
+					fillRatio = 1.0
+				}
+				rate = eff.Value * float64(count) * (0.20 + 0.80*fillRatio)
+			} else {
+				rate = eff.Value * float64(count)
+			}
+			rates[eff.Target] += rate
+		}
+	}
+	return rates
 }
 
 // GetPopCapacity returns total population capacity from housing buildings
@@ -277,13 +311,16 @@ func (bm *BuildingManager) LoadWonderBanks(banks map[string]map[string]float64) 
 	}
 }
 
-// Snapshot returns building states for UI
-func (bm *BuildingManager) Snapshot(resources *ResourceManager) map[string]BuildingState {
+// Snapshot returns building states for UI.
+// getWorkerCount(workerDomain, buildingKey) returns the number of workers assigned to that building;
+// pass nil to skip worker field population.
+func (bm *BuildingManager) Snapshot(resources *ResourceManager, getWorkerCount func(domain, key string) int) map[string]BuildingState {
 	out := make(map[string]BuildingState)
 	for key, def := range bm.defs {
 		cost := bm.GetCost(key)
+		count := bm.counts[key]
 		state := BuildingState{
-			Count:       bm.counts[key],
+			Count:       count,
 			Name:        def.Name,
 			Category:    def.Category,
 			Description: def.Description,
@@ -291,15 +328,23 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager) map[string]Build
 			AgeKey:      def.RequiredAge,
 			NextCost:    cost,
 		}
-		if def.MaxCount > 0 && bm.counts[key] >= def.MaxCount {
+		if def.MaxCount > 0 && count >= def.MaxCount {
 			state.AtMaxCount = true
 		}
 		if def.Category == "wonder" {
 			state.WonderBank = bm.GetWonderBank(key)
 			state.WonderBankFull = bm.IsWonderBankFull(key)
-			state.CanBuild = bm.unlocked[key] && bm.counts[key] == 0 && state.WonderBankFull
+			state.CanBuild = bm.unlocked[key] && count == 0 && state.WonderBankFull
 		} else {
 			state.CanBuild = bm.unlocked[key] && !state.AtMaxCount && resources.CanAfford(cost)
+		}
+		// Phase 6: worker fields
+		if def.WorkerDomain != "" {
+			state.WorkerDomain = def.WorkerDomain
+			state.WorkerCapacity = def.WorkerCapacity
+			if getWorkerCount != nil {
+				state.WorkersAssigned = getWorkerCount(def.WorkerDomain, key)
+			}
 		}
 		out[key] = state
 	}

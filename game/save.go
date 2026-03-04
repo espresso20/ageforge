@@ -370,6 +370,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 
 	ge.tick = save.Tick
 	ge.age = save.Age
+	ge.Villagers.SetAge(save.Age)
 	ge.Resources.LoadAmounts(save.Resources)
 	if save.Storage != nil {
 		ge.Resources.LoadStorage(save.Storage)

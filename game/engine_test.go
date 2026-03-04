@@ -126,10 +126,14 @@ func TestEngine_AssignVillager(t *testing.T) {
 
 	ge.mu.Lock()
 	ge.Buildings.counts["hut"] = 5
+	// gathering_camp is the food-domain building (unlocks at stone_age but we bypass that here)
+	ge.Buildings.counts["gathering_camp"] = 1
+	ge.Buildings.unlocked["gathering_camp"] = true
 	ge.mu.Unlock()
 
 	ge.RecruitVillager("worker", 3)
-	err := ge.AssignVillager("worker", "food", 2)
+	// Assign using new domain+buildingKey syntax; "worker" alias → "food" domain
+	err := ge.AssignVillager("worker", "gathering_camp", 2)
 	if err != nil {
 		t.Errorf("AssignVillager failed: %v", err)
 	}

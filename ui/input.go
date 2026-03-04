@@ -188,8 +188,8 @@ func cmdHelp(args []string) CommandResult {
   [cyan]gather[-] <food|wood|stone> [n] - Hand-gather resources (max 5)
   [cyan]build[-] <building> [count|max] - Build structure(s) (default: 1)
   [cyan]recruit[-] <type> [count|max]  - Recruit villagers (default: 1)
-  [cyan]assign[-] <type> <resource> [n|all]- Assign villagers to gather
-  [cyan]unassign[-] <type> <resource> [n|all]- Unassign villagers
+  [cyan]assign[-] <domain> <building> [n|all] - Assign workers to a building
+  [cyan]unassign[-] <domain> <building> [n|all]- Unassign workers from a building
   [cyan]advance[-]                     - Advance to the next age (when ready)
   [cyan]research[-] <tech_key>         - Research a technology
   [cyan]research[-] cancel             - Cancel current research
@@ -458,17 +458,17 @@ func cmdRecruit(args []string, engine *game.GameEngine) CommandResult {
 
 func cmdAssign(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 2 {
-		return CommandResult{Message: "Usage: assign <type> <resource> [count|all]", Type: "error"}
+		return CommandResult{Message: "Usage: assign <domain> <building> [count|all]", Type: "error"}
 	}
-	vType := strings.ToLower(args[0])
-	resource := strings.ToLower(args[1])
+	domain := strings.ToLower(args[0])
+	building := strings.ToLower(args[1])
 	if len(args) >= 3 && strings.ToLower(args[2]) == "all" {
-		n, err := engine.AssignAll(vType, resource)
+		n, err := engine.AssignAll(domain, building)
 		if err != nil {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
 		return CommandResult{
-			Message: fmt.Sprintf("Assigned all %d %s(s) to %s", n, vType, resource),
+			Message: fmt.Sprintf("Assigned all %d %s workers to %s", n, domain, building),
 			Type:    "success",
 		}
 	}
@@ -478,28 +478,28 @@ func cmdAssign(args []string, engine *game.GameEngine) CommandResult {
 			count = n
 		}
 	}
-	if err := engine.AssignVillager(vType, resource, count); err != nil {
+	if err := engine.AssignVillager(domain, building, count); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
 	}
 	return CommandResult{
-		Message: fmt.Sprintf("Assigned %d %s(s) to %s", count, vType, resource),
+		Message: fmt.Sprintf("Assigned %d %s worker(s) to %s", count, domain, building),
 		Type:    "success",
 	}
 }
 
 func cmdUnassign(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 2 {
-		return CommandResult{Message: "Usage: unassign <type> <resource> [count|all]", Type: "error"}
+		return CommandResult{Message: "Usage: unassign <domain> <building> [count|all]", Type: "error"}
 	}
-	vType := strings.ToLower(args[0])
-	resource := strings.ToLower(args[1])
+	domain := strings.ToLower(args[0])
+	building := strings.ToLower(args[1])
 	if len(args) >= 3 && strings.ToLower(args[2]) == "all" {
-		n, err := engine.UnassignAll(vType, resource)
+		n, err := engine.UnassignAll(domain, building)
 		if err != nil {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
 		return CommandResult{
-			Message: fmt.Sprintf("Unassigned all %d %s(s) from %s", n, vType, resource),
+			Message: fmt.Sprintf("Unassigned all %d %s workers from %s", n, domain, building),
 			Type:    "success",
 		}
 	}
@@ -509,11 +509,11 @@ func cmdUnassign(args []string, engine *game.GameEngine) CommandResult {
 			count = n
 		}
 	}
-	if err := engine.UnassignVillager(vType, resource, count); err != nil {
+	if err := engine.UnassignVillager(domain, building, count); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
 	}
 	return CommandResult{
-		Message: fmt.Sprintf("Unassigned %d %s(s) from %s", count, vType, resource),
+		Message: fmt.Sprintf("Unassigned %d %s worker(s) from %s", count, domain, building),
 		Type:    "success",
 	}
 }
@@ -546,9 +546,9 @@ func cmdStatus(engine *game.GameEngine) CommandResult {
 			continue
 		}
 		lines = append(lines, fmt.Sprintf("  %-10s %d (idle: %d)", vt.Name, vt.Count, vt.IdleCount))
-		for res, count := range vt.Assignments {
+		for building, count := range vt.Assignments {
 			if count > 0 {
-				lines = append(lines, fmt.Sprintf("    → %s: %d", res, count))
+				lines = append(lines, fmt.Sprintf("    → %s: %d", building, count))
 			}
 		}
 	}
