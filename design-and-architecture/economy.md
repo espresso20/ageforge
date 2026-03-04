@@ -79,22 +79,22 @@ This means:
 
 ## Worker Domain Mapping
 
-Worker types map to production domains, not individual buildings. One worker type serves
-all buildings in its domain.
+Worker types map to production domains, not individual buildings. One worker type (per age tier)
+serves all buildings in its domain. **See [workers.md](workers.md) for the full tier table**
+with age-specific class names (Gatherer → Tribesman → Laborer → Serf → ... → Harvester).
 
-| Worker Type | Production Domain | Example Buildings |
-|-------------|-------------------|-------------------|
-| Worker | Raw materials (food, wood, stone) | gathering_camp, woodcutter_camp, stone_pit, farm, quarry, mine |
-| Shaman | Knowledge / faith | altar, sacred_grove, cathedral, university |
-| Scholar | Research acceleration | library, great_library, research_lab, ai_lab |
-| Merchant | Gold / culture / trade | market, port, bank, amphitheater, art_studio |
-| Soldier | Military output | barracks, keep, bunker, missile_silo |
-| Engineer | Industrial / energy resources | factory, reactor, power_plant, fusion_reactor, plasma_forge |
-| Hacker | Data / crypto / digital | server_farm, data_center, fiber_hub, black_market |
-| Astronaut | Space / exotic resources | launch_pad, space_station, warp_gate, stellar_cradle |
+| Domain | Unlocks | Example Buildings |
+|--------|---------|-------------------|
+| Raw Materials | Primitive | gathering_camp, stone_pit, farm, quarry, mine, oil_well |
+| Knowledge | Primitive | altar, sacred_grove, library, cathedral, university |
+| Military | Primitive | barracks, keep, bunker, missile_silo |
+| Trade | Primitive | market, port, bank, amphitheater |
+| Engineering | Bronze | smithy, factory, reactor, plasma_forge, launch_pad |
+| Hacker | Information | server_farm, data_center, ai_lab, smart_grid |
+| Astronaut | Space | space_station, warp_gate, star_forge, reality_anchor |
 
-New buildings must be assigned to an existing worker domain, or a new worker type must be
-justified and added across all relevant ages.
+New buildings must be assigned to an existing domain, or a new domain must be justified
+and added with full tier coverage across all relevant ages.
 
 ---
 
@@ -192,15 +192,27 @@ playing correctly. That's the idle game working as designed.
 
 ---
 
-## Known Issues / TODO
+## Implementation Phases
 
-- [ ] **Hut base rate**: currently +3 pop, needs to be +10 to satisfy housing scale targets
-- [ ] **All housing buildings**: pop-per-building needs to be re-derived using the 5× per tier rule
-- [ ] **Worker capacity**: no per-building worker_capacity field exists yet — requires data
-  model change in config/buildings.go and BuildingDef
-- [ ] **Base production rate** (20% without workers): not yet implemented — currently buildings
-  produce at full rate regardless of worker assignment
-- [ ] **Storage audit**: verify Law 1 across all 22 age transitions
-- [ ] **Cost derivation audit**: recalculate all building base costs using the production-rate
-  formula rather than the current per-building guesses
-- [ ] **Remove MaxCount** from all production/housing buildings in config/buildings.go
+### Phase 1 — Data Model
+- [ ] Add `WorkerDomain string` and `WorkerCapacity int` to `BuildingDef` in config/buildings.go
+- [ ] Add age-tiered worker class entries to config/villagers.go (see workers.md)
+  - Each class: Domain, UnlockAge, FoodCost, OutputMultiplier, Name
+- [ ] Update all ~80 building definitions with their domain + capacity values
+
+### Phase 2 — Engine
+- [ ] Update VillagerManager to handle multi-tier workers per domain
+- [ ] Update ResourceManager production calculation:
+  `rate = building_base_rate × (0.20 + 0.80 × assigned/capacity)`
+- [ ] Update housing pop values (hut: +3 → +10, all tiers rescaled)
+- [ ] Remove MaxCount from all production/housing buildings in config/buildings.go
+
+### Phase 3 — Balance Numbers
+- [ ] Derive all building base costs using: `cost = production_rate_at_age × target_build_ticks`
+- [ ] Verify Storage Covenant (Law 1) for all 22 age transitions
+- [ ] Tune worker food costs and output multipliers against the build time curve (Law 2)
+
+### Phase 4 — UI
+- [ ] Update population panel to show current-tier workers prominently, legacy collapsed
+- [ ] Update resource rate breakdown to show worker contribution separately from building base
+- [ ] Worker assignment UI uses domain name (not class name) to avoid churn on age advance

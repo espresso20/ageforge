@@ -9,6 +9,7 @@ a proposed change would break the game's balance, start here.
 | File | What it covers |
 |------|---------------|
 | [economy.md](economy.md) | Economy laws, cost scaling, production model, worker-building coupling |
+| [workers.md](workers.md) | Age-tiered worker class names, food costs, output multipliers, domain assignments |
 
 ## How to Use These Documents
 
@@ -26,6 +27,7 @@ Decisions recorded here are settled. They can be revisited but require explicit 
 | Date | Decision | Rationale |
 |------|----------|-----------|
 | 2026-03-03 | Workers couple to buildings (Philosophy B) | Preserves assignment mechanic, creates unified production chain |
+| 2026-03-03 | Age-tiered worker classes (Gatherer→Serf→Drone→Harvester etc.) | Flavor + mechanical progression; higher tiers cost more food but produce significantly more |
 | 2026-03-03 | Remove MaxCount from production/housing buildings | Geometric cost scaling is the natural cap |
 | 2026-03-03 | Keep MaxCount on storage buildings and wonders | Unlimited storage breaks resource pressure; wonders are unique by design |
 | 2026-03-03 | Storage cap ≥ 2× next affordable building cost at all times | Prevents the impossible-to-build problem |
