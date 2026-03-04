@@ -9,19 +9,21 @@ import (
 
 // BuildingManager manages all buildings
 type BuildingManager struct {
-	counts      map[string]int
-	defs        map[string]config.BuildingDef
-	unlocked    map[string]bool
-	wonderBanks map[string]map[string]float64 // wonderKey -> resource -> banked amount
+	counts          map[string]int
+	defs            map[string]config.BuildingDef
+	unlocked        map[string]bool
+	wonderBanks     map[string]map[string]float64 // wonderKey -> resource -> banked amount
+	legacyBuildings map[string]bool               // Phase 7: buildings superseded by lineage progression
 }
 
 // NewBuildingManager creates a building manager
 func NewBuildingManager() *BuildingManager {
 	return &BuildingManager{
-		counts:      make(map[string]int),
-		defs:        config.BuildingByKey(),
-		unlocked:    make(map[string]bool),
-		wonderBanks: make(map[string]map[string]float64),
+		counts:          make(map[string]int),
+		defs:            config.BuildingByKey(),
+		unlocked:        make(map[string]bool),
+		wonderBanks:     make(map[string]map[string]float64),
+		legacyBuildings: make(map[string]bool),
 	}
 }
 
@@ -311,6 +313,50 @@ func (bm *BuildingManager) LoadWonderBanks(banks map[string]map[string]float64) 
 	}
 }
 
+// MarkLegacy flags a building type as legacy — functional but superseded, unbuildable.
+func (bm *BuildingManager) MarkLegacy(key string) {
+	bm.legacyBuildings[key] = true
+}
+
+// IsLegacy returns whether a building is flagged as legacy.
+func (bm *BuildingManager) IsLegacy(key string) bool {
+	return bm.legacyBuildings[key]
+}
+
+// GetLegacyBuildings returns all legacy building keys for save serialization.
+func (bm *BuildingManager) GetLegacyBuildings() []string {
+	var keys []string
+	for key := range bm.legacyBuildings {
+		keys = append(keys, key)
+	}
+	return keys
+}
+
+// LoadLegacyBuildings restores legacy building flags from a save.
+func (bm *BuildingManager) LoadLegacyBuildings(keys []string) {
+	for _, key := range keys {
+		bm.legacyBuildings[key] = true
+	}
+}
+
+// TransformBuilding transfers count from oldKey to newKey (age-transition lineage upgrade).
+// Unlocks the new building. Calls renameWorker to transfer worker assignments if provided.
+func (bm *BuildingManager) TransformBuilding(oldKey, newKey string, renameWorker func(domain, oldKey, newKey string)) {
+	count := bm.counts[oldKey]
+	if count == 0 {
+		return
+	}
+	bm.counts[newKey] += count
+	bm.counts[oldKey] = 0
+	bm.unlocked[newKey] = true
+	if renameWorker != nil {
+		newDef := bm.defs[newKey]
+		if newDef.WorkerDomain != "" {
+			renameWorker(newDef.WorkerDomain, oldKey, newKey)
+		}
+	}
+}
+
 // Snapshot returns building states for UI.
 // getWorkerCount(workerDomain, buildingKey) returns the number of workers assigned to that building;
 // pass nil to skip worker field population.
@@ -345,6 +391,11 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, getWorkerCount f
 			if getWorkerCount != nil {
 				state.WorkersAssigned = getWorkerCount(def.WorkerDomain, key)
 			}
+		}
+		// Phase 7: legacy flag — functional but unbuildable
+		if bm.legacyBuildings[key] {
+			state.IsLegacy = true
+			state.CanBuild = false
 		}
 		out[key] = state
 	}

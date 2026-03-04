@@ -31,6 +31,25 @@ type GameState struct {
 	SpeedMultiplier  float64
 	CheaterBadge   bool
 	EliteBadge     bool
+	// Phase 7: result of the last age advance transformation pass
+	LastAgeAdvanceSummary AgeAdvanceSummary
+}
+
+// AgeAdvanceSummary holds data about what changed during an age advance transition.
+type AgeAdvanceSummary struct {
+	OldAge               string
+	NewAge               string
+	BuildingsTransformed []BuildingTransform
+	BuildingsLegacy      []string // keys of buildings newly marked legacy this transition
+}
+
+// BuildingTransform describes one building that upgraded during an age advance.
+type BuildingTransform struct {
+	OldKey  string
+	OldName string
+	NewKey  string
+	NewName string
+	Count   int
 }
 
 // BuildQueueSnapshot represents a building under construction for UI
@@ -80,6 +99,8 @@ type BuildingState struct {
 	WorkerDomain    string
 	WorkerCapacity  int // per-building-instance capacity
 	WorkersAssigned int // total workers assigned across all instances
+	// Phase 7: lineage legacy flag
+	IsLegacy bool // functional but superseded — can't build more; grayed in UI
 }
 
 // VillagerState represents all villager info

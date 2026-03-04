@@ -200,6 +200,20 @@ func (vm *VillagerManager) GetAssignedCount(domain, buildingKey string) int {
 	return rt.assignments[buildingKey]
 }
 
+// RenameAssignment transfers all worker assignments from oldBuildingKey to newBuildingKey
+// within the given domain. Called during the age-transition building transformation pass.
+func (vm *VillagerManager) RenameAssignment(domain, oldKey, newKey string) {
+	rt, ok := vm.domains[domain]
+	if !ok {
+		return
+	}
+	count := rt.assignments[oldKey]
+	if count > 0 {
+		rt.assignments[newKey] += count
+		delete(rt.assignments, oldKey)
+	}
+}
+
 // GetDomainCount returns the total worker count for a domain
 func (vm *VillagerManager) GetDomainCount(domain string) int {
 	rt, ok := vm.domains[domain]

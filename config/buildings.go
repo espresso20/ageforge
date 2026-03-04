@@ -1471,3 +1471,16 @@ func BuildingByKey() map[string]BuildingDef {
 	}
 	return m
 }
+
+// BuildingNextTierForAge returns the next-tier BuildingDef in a lineage for the given new age.
+// Returns nil if no building at tier+1 with RequiredAge == newAgeKey exists in that lineage.
+// Used by the age-transition transformation pass to find what each building evolves into.
+func BuildingNextTierForAge(lineageKey string, currentTier int, newAgeKey string) *BuildingDef {
+	for _, b := range BaseBuildings() {
+		if b.LineageKey == lineageKey && b.LineageTier == currentTier+1 && b.RequiredAge == newAgeKey {
+			result := b
+			return &result
+		}
+	}
+	return nil
+}

@@ -55,6 +55,9 @@ type GameEngine struct {
 	// Save integrity badges (set on load, never persisted separately)
 	cheaterBadge bool
 	eliteBadge   bool
+
+	// Phase 7: result of the most recent age advance transformation pass
+	lastAgeAdvanceSummary AgeAdvanceSummary
 }
 
 // BuildQueueItem represents a building under construction
@@ -674,6 +677,63 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	ge.age = newAge
 	ge.ageReady = false
 	ge.Villagers.SetAge(newAge)
+
+	// Phase 7: Building lineage transformation pass.
+	// Collect transforms first (safe iteration), then apply.
+	type pendingTransform struct {
+		oldKey, oldName, newKey, newName string
+		count                            int
+	}
+	var transforms []pendingTransform
+	for key, count := range ge.Buildings.counts {
+		if count == 0 {
+			continue
+		}
+		def, ok := ge.Buildings.defs[key]
+		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" {
+			continue
+		}
+		next := config.BuildingNextTierForAge(def.LineageKey, def.LineageTier, newAge)
+		if next == nil {
+			continue
+		}
+		transforms = append(transforms, pendingTransform{
+			oldKey: key, oldName: def.Name,
+			newKey: next.Key, newName: next.Name,
+			count: count,
+		})
+	}
+	summary := AgeAdvanceSummary{OldAge: oldAge, NewAge: newAge}
+	for _, t := range transforms {
+		ge.Buildings.TransformBuilding(t.oldKey, t.newKey, ge.Villagers.RenameAssignment)
+		summary.BuildingsTransformed = append(summary.BuildingsTransformed, BuildingTransform{
+			OldKey: t.oldKey, OldName: t.oldName,
+			NewKey: t.newKey, NewName: t.newName,
+			Count: t.count,
+		})
+		ge.addLog("success", fmt.Sprintf("↑ %s → %s (×%d)", t.oldName, t.newName, t.count))
+	}
+	// Mark buildings as legacy if their lineage now has a higher-tier unlocked equivalent.
+	for key, count := range ge.Buildings.counts {
+		if count == 0 || ge.Buildings.IsLegacy(key) {
+			continue
+		}
+		def, ok := ge.Buildings.defs[key]
+		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" {
+			continue
+		}
+		for otherKey, otherDef := range ge.Buildings.defs {
+			if otherDef.LineageKey == def.LineageKey &&
+				otherDef.LineageTier > def.LineageTier &&
+				ge.Buildings.IsUnlocked(otherKey) {
+				ge.Buildings.MarkLegacy(key)
+				summary.BuildingsLegacy = append(summary.BuildingsLegacy, key)
+				break
+			}
+		}
+	}
+	ge.lastAgeAdvanceSummary = summary
+
 	ge.applyAgeUnlocks(newAge)
 	ge.Stats.RecordAge(newAge)
 
@@ -1309,8 +1369,9 @@ func (ge *GameEngine) GetState() GameState {
 		TickSpeedBonus:  ge.tickSpeedBonus,
 		TickIntervalMs:  int(tickInterval.Milliseconds()),
 		SpeedMultiplier: speedMult,
-		CheaterBadge:    ge.cheaterBadge,
-		EliteBadge:      ge.eliteBadge,
+		CheaterBadge:          ge.cheaterBadge,
+		EliteBadge:            ge.eliteBadge,
+		LastAgeAdvanceSummary: ge.lastAgeAdvanceSummary,
 	}
 }
 

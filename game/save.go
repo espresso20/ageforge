@@ -39,6 +39,8 @@ type GameSave struct {
 	Diplomacy        DiplomacySave       `json:"diplomacy"`
 	SpeedMultiplier  float64             `json:"speed_multiplier"`
 	WonderBanks      map[string]map[string]float64 `json:"wonder_banks,omitempty"`
+	// Phase 7: legacy building keys
+	LegacyBuildings []string `json:"legacy_buildings,omitempty"`
 	// Integrity fields
 	CheaterBadge bool   `json:"cheater_badge,omitempty"`
 	EliteBadge   bool   `json:"elite_badge,omitempty"`
@@ -334,6 +336,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		},
 		SpeedMultiplier: ge.speedMultiplier,
 		WonderBanks:     ge.Buildings.GetWonderBanks(),
+		LegacyBuildings: ge.Buildings.GetLegacyBuildings(),
 		CheaterBadge:    ge.cheaterBadge,
 		EliteBadge:      ge.eliteBadge,
 	}
@@ -433,6 +436,11 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// Restore wonder banks
 	if save.WonderBanks != nil {
 		ge.Buildings.LoadWonderBanks(save.WonderBanks)
+	}
+
+	// Restore Phase 7: legacy buildings
+	if len(save.LegacyBuildings) > 0 {
+		ge.Buildings.LoadLegacyBuildings(save.LegacyBuildings)
 	}
 
 	// Restore speed multiplier

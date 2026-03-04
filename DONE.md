@@ -129,5 +129,21 @@ Items are moved here from TODO.md when finished. Do not re-implement anything li
 - [x] `ui/input.go`: Updated `cmdAssign`/`cmdUnassign` to use domain+building syntax; updated help text
 - All tests passing, `go build ./...` clean
 
+## Economy Redesign — Phase 7: Age Transition Transformation Pass (2026-03-04)
+- [x] `config/buildings.go`: Added `BuildingNextTierForAge(lineageKey, currentTier, newAgeKey)` — returns next-tier BuildingDef or nil; all 16 known lineage→age transitions verified correct
+- [x] `game/types.go`: Added `AgeAdvanceSummary`, `BuildingTransform` structs; added `IsLegacy bool` to `BuildingState`; added `LastAgeAdvanceSummary AgeAdvanceSummary` to `GameState`
+- [x] `game/villagers.go`: Added `RenameAssignment(domain, oldKey, newKey)` — transfers building-keyed worker assignments to new key; called by TransformBuilding
+- [x] `game/buildings.go`: Added `legacyBuildings map[string]bool` to `BuildingManager`; added `MarkLegacy`, `IsLegacy`, `GetLegacyBuildings`, `LoadLegacyBuildings`, `TransformBuilding`; updated `Snapshot` to set `IsLegacy=true` and `CanBuild=false` for legacy buildings
+- [x] `game/engine.go`: Added `lastAgeAdvanceSummary` field; transformation pass in `advanceAge()`:
+  - Collects all (lineage, tier, newAge) matches into a pending list (safe from map mutation)
+  - Applies `TransformBuilding(old, new, RenameAssignment)` for each match
+  - Legacy-marks buildings whose lineage has a higher-tier unlocked equivalent
+  - Logs each transformation as a "success" entry
+  - Exposes `LastAgeAdvanceSummary` in `GetState()`
+- [x] `game/save.go`: Added `LegacyBuildings []string` to `GameSave`; serialized in `buildSaveSnapshot`; restored in `LoadGame`
+- Note: UI age advance summary modal deferred to Phase 11 (UI Completion)
+- Note: Worker class rename/restat already handled by `SetAge()` from Phase 6 — no additional villagers.go changes needed
+- All tests passing, `go build ./...` clean
+
 ## General / Misc
 - [x] Established TODO.md + DONE.md workflow for session-resumable planning (2026-02-25)
