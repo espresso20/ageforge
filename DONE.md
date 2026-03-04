@@ -88,5 +88,14 @@ Items are moved here from TODO.md when finished. Do not re-implement anything li
 - [x] `netlify.toml` — build command, publish dir, WASM MIME header, security headers, SPA redirect
 - [x] `.go-version` — pins Go 1.23 for Netlify build image
 
+## Economy Redesign — Phase 5: Config Foundation (2026-03-04)
+- [x] Added 6 new fields to `BuildingDef` struct: `LineageKey`, `LineageTier`, `WorkerDomain`, `WorkerCapacity`, `EpochKey`, `OutputResource`
+- [x] Added `EpochKey` field to `AgeDef`; all 22 ages populated with correct epoch key
+- [x] `config/resources.go`: added 5 new resources (`marble`, `iron_ore`, `nanobots`, `titanium_ore`, `dark_matter_crystals`); fixed faith unlock age (medieval → primitive); fixed culture unlock age (renaissance → classical) — total now 25 resources
+- [x] `config/epochs.go` (NEW): `EpochDef` struct + all 7 epoch definitions + `EpochByKey()` + `EpochForAge()` helper
+- [x] `config/workers.go` (NEW): `WorkerClassDef` struct + 189 worker classes across 12 domains × up to 21 tiers; `WorkerClassByDomainAndAge()` + `WorkerDomains()` helpers; geometric scaling (×1.5 food, ×2.0 multiplier per tier)
+- [x] `config/buildings.go`: renamed `BaseBuildings()` → `baseBuildingsRaw()`; added `buildingMeta()` map covering all 111 buildings; new `BaseBuildings()` merges metadata in — all buildings now carry lineage/domain/epoch/output data
+- Note: 111 buildings total (89 standard + 22 wonders), not 80 as previously counted
+
 ## General / Misc
 - [x] Established TODO.md + DONE.md workflow for session-resumable planning (2026-02-25)
