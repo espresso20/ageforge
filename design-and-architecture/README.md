@@ -12,7 +12,8 @@ a proposed change would break the game's balance, start here.
 | [workers.md](workers.md) | All 12 worker domains, age-tiered class names, food costs, output multipliers |
 | [age-transitions.md](age-transitions.md) | Age advance transformation pass — building lineages, worker renames, legacy rules, UI summary |
 | [lineages.md](lineages.md) | All 13 building lineages — full 21-tier tables, storage buildings, wonders policy |
-| [resources.md](resources.md) | All 21 resources — faith mechanics (draining), culture mechanics (accumulating), resource unlock chain |
+| [resources.md](resources.md) | All 25 resources — faith mechanics (draining), culture mechanics (accumulating), epoch resource chain, 2-stage processing chain |
+| [epochs.md](epochs.md) | 7 epochs × 3 ages, resource transitions per epoch, Civilizational Catastrophe system (Endure vs Succumb), 63 total events across 7 epoch pools, UI epoch badge |
 
 ## How to Use These Documents
 
@@ -45,3 +46,9 @@ Decisions recorded here are settled. They can be revisited but require explicit 
 | 2026-03-03 | Culture accumulates permanently (20% persists through prestige), thresholds unlock permanent bonuses | Creates a long-term civilization identity investment separate from prestige resets |
 | 2026-03-03 | Faith is a draining resource (must maintain); gates morale, cohesion, diplomacy, prestige multiplier | Meaningful idle management loop; neglecting faith has real costs |
 | 2026-03-03 | 13 building lineages, 12 worker domains | Final counts — adding new content requires explicit justification |
+| 2026-03-03 | 7 epochs (3 ages each) as meta-progression layer above ages | Cleaner than per-age transitions; 7 epochs × 3 ages = 21 exactly |
+| 2026-03-03 | Organic Extraction and Geological Extraction change output resource per epoch | "Lumber" is not always wood; the role evolves. Building transforms name AND output at epoch boundary. |
+| 2026-03-03 | 2-stage processing chain everywhere (Geological ore → Metallurgy → refined metal) | Adds satisfying supply chain optimization; every epoch has a bottleneck to balance |
+| 2026-03-03 | 25 resources total (added marble, iron_ore, titanium_ore, dark_matter_crystals) | Intermediate ores enable 2-stage chains without exposing them as build costs |
+| 2026-03-03 | Civilizational Catastrophe system: Endure vs Succumb at each epoch boundary | Narrative-driven alternative/complement to prestige; 7 catastrophes, epoch-specific Legacy Bonuses, 8 Ruins carry forward on Succumb |
+| 2026-03-03 | 63 total events: 28 universal + 5 epoch-exclusive per epoch | Event pool shifts each epoch; events feel contextually appropriate to the era |

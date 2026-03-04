@@ -9,19 +9,43 @@ upgraded). See age-transitions.md for the transformation mechanics.
 **13 lineages total:**
 1. Housing (all ages, no workers)
 2. Food Production (all ages)
-3. Lumber Production (all ages)
-4. Masonry/Stone (all ages)
+3. **Organic Extraction** (all ages) — formerly "Lumber"; produces wood → coal → oil → nanobots → dark_matter → quantum_flux
+4. **Geological Extraction** (all ages) — formerly "Masonry"; produces stone → marble/iron_ore → uranium → titanium_ore → dark_matter_crystals → antimatter
 5. Knowledge (all ages)
 6. Faith (all ages)
 7. Military (all ages)
-8. Trade (Bronze → Quantum)
-9. Engineering (Bronze → Quantum)
+8. Trade (Primitive → Quantum)
+9. Engineering / Infrastructure (Bronze → Quantum)
 10. Culture/Arts (Classical → Quantum, no workers — see resources.md)
-11. Metals/Smelting (Iron → Quantum)
-12. Energy (Industrial → Quantum)
+11. **Metallurgy** (Iron → Quantum) — processes Geological ore into refined construction metals
+12. Energy (Industrial → Quantum) — converts fuel to usable power resources
 13. Digital (Information → Quantum)
 
 **Ageless:** Storage buildings (stack cumulatively, never transform), Wonders (unique, permanent).
+
+### Lineage Output by Epoch
+
+The key design feature: Organic Extraction and Geological Extraction change what resource they
+produce at each epoch boundary. The building names and worker classes also change (via the normal
+age-advance transformation), but the OUTPUT RESOURCE is the epoch-defining change.
+
+| Epoch | Organic Extraction output | Geological Extraction output | Metallurgy output |
+|-------|--------------------------|-----------------------------|--------------------|
+| Stone Era | **wood** | **stone** | — (unlocks Iron Era) |
+| Iron Era | **wood** (declining) | **marble** + **iron_ore** | **iron** |
+| Steel Era | **coal** | **iron_ore** (deep seams) | **steel** |
+| Electric Era | **oil** | **uranium** | **steel** (alloys) |
+| Digital Era | **oil** (refined) / **nanobots** | **titanium_ore** | **titanium** |
+| Neon Era | **nanobots** | **dark_matter_crystals** | **dark_matter** |
+| Cosmic Era | **quantum_flux** (partial) | **antimatter** | (retired — cosmic scale) |
+
+> The Organic lineage transitions from wood to coal at the Steel Era (Renaissance age). The
+> building name changes from "Lumber Works" → "Coal Mine" and the output resource switches
+> from wood to coal. Players see this as part of the age-advance transformation screen.
+
+> The Geological lineage produces BOTH marble and iron_ore in the Iron Era (transition period).
+> Marble is used in Classical/Medieval building costs; iron_ore feeds Metallurgy. Two parallel
+> outputs from the same lineage at this epoch.
 
 ---
 
@@ -83,61 +107,74 @@ Worker domain: **Food** (Gatherer → Reality Cultivator). See workers.md.
 
 ---
 
-## Lineage 3 — Lumber Production
-Worker domain: **Lumber** (Wood Gatherer → Reality Lumberjack). See workers.md.
+## Lineage 3 — Organic Extraction
+Worker domain: **Organic Extraction** (Wood Gatherer → Reality Lumberjack). See workers.md.
+**Output resource changes per epoch** — this lineage extracts carbon-based organic matter;
+what that means evolves from living trees to exotic cosmic organic compounds.
 
-| Age | Building | Worker Capacity |
-|-----|----------|----------------|
-| Primitive | Wood Camp | 3 |
-| Stone | Woodcutter's Camp | 4 |
-| Bronze | Lumber Mill | 5 |
-| Iron | Timber Yard | 5 |
-| Classical | Wood Workshop | 6 |
-| Medieval | Sawmill | 6 |
-| Renaissance | Lumber Works | 7 |
-| Colonial | Timber Plantation | 8 |
-| Industrial | Steam Sawmill | 10 |
-| Victorian | Lumber Mill Complex | 10 |
-| Electric | Automated Sawmill | 12 |
-| Atomic | Chemical Pulp Mill | 12 |
-| Modern | Composite Factory | 14 |
-| Information | Smart Lumber Yard | 15 |
-| Digital | Nano-Wood Processor | 16 |
-| Cyberpunk | Synthetic Wood Vat | 18 |
-| Fusion | Molecular Synthesizer | 20 |
-| Space | Carbon Extractor | 20 |
-| Interstellar | Matter Weaver | 25 |
-| Galactic | Quantum Lumber Works | 25 |
-| Quantum | Reality Wood Works | 30 |
+| Age | Building | Worker Capacity | Output Resource | Epoch |
+|-----|----------|----------------|----------------|-------|
+| Primitive | Wood Camp | 3 | wood | Stone Era |
+| Stone | Woodcutter's Camp | 4 | wood | Stone Era |
+| Bronze | Lumber Mill | 5 | wood | Stone Era |
+| Iron | Timber Yard | 5 | wood | Iron Era |
+| Classical | Wood Workshop | 6 | wood | Iron Era |
+| Medieval | Sawmill | 6 | wood | Iron Era |
+| Renaissance | **Coal Mine** | 7 | **coal** | Steel Era ← epoch transition |
+| Colonial | Coal Works | 8 | coal | Steel Era |
+| Industrial | Steam Coal Plant | 10 | coal | Steel Era |
+| Victorian | **Oil Derrick** | 10 | **oil** | Electric Era ← epoch transition |
+| Electric | Oil Field | 12 | oil | Electric Era |
+| Atomic | Petroleum Refinery | 12 | oil | Electric Era |
+| Modern | Oil Platform | 14 | oil | Digital Era |
+| Information | Smart Refinery | 15 | oil | Digital Era |
+| Digital | **Bio-Fabrication Lab** | 16 | **nanobots** | Digital Era ← epoch transition |
+| Cyberpunk | Nanobot Vat | 18 | nanobots | Neon Era |
+| Fusion | Molecular Synthesizer | 20 | nanobots | Neon Era |
+| Space | **Quantum Organic Extractor** | 20 | **quantum_flux** | Cosmic Era ← epoch transition |
+| Interstellar | Reality Matter Weaver | 25 | quantum_flux | Cosmic Era |
+| Galactic | Cosmic Organic Works | 25 | quantum_flux | Cosmic Era |
+| Quantum | Reality Harvester | 30 | quantum_flux | Cosmic Era |
+
+> **Epoch transitions in this lineage:** At the Renaissance age advance (entering Steel Era),
+> the Sawmill transforms into a Coal Mine and begins producing coal instead of wood. Players
+> see this on the age advance summary screen. At Victorian (entering Electric Era), the Coal Mine
+> transforms into an Oil Derrick. And so on at each epoch boundary.
 
 ---
 
-## Lineage 4 — Masonry / Stone
-Worker domain: **Masonry** (Stone Picker → Reality Excavator). See workers.md.
+## Lineage 4 — Geological Extraction
+Worker domain: **Geological Extraction** (Stone Picker → Reality Excavator). See workers.md.
+**Output resource changes per epoch** — this lineage mines progressively deeper geological
+formations, from surface stone to stellar-core antimatter.
 
-| Age | Building | Worker Capacity |
-|-----|----------|----------------|
-| Primitive | Stone Camp | 3 |
-| Stone | Stone Pit | 4 |
-| Bronze | Quarry | 5 |
-| Iron | Deep Quarry | 5 |
-| Classical | Marble Works | 6 |
-| Medieval | Stonemason's Guild | 6 |
-| Renaissance | Quarry Complex | 7 |
-| Colonial | Mining Settlement | 8 |
-| Industrial | Steam Quarry | 10 |
-| Victorian | Rock Processing Plant | 10 |
-| Electric | Automated Quarry | 12 |
-| Atomic | Blast Mining Works | 12 |
-| Modern | Open Pit Mine | 14 |
-| Information | Smart Quarry | 15 |
-| Digital | Nano-Drill Complex | 16 |
-| Cyberpunk | Augmented Mine | 18 |
-| Fusion | Plasma Cutter Mine | 20 |
-| Space | Asteroid Quarry | 20 |
-| Interstellar | Planetary Core Drill | 25 |
-| Galactic | Neutron Star Mine | 25 |
-| Quantum | Reality Excavator Works | 30 |
+In the Iron Era, this lineage produces **two outputs**: marble (for construction) AND iron_ore
+(fed to Metallurgy). This dual output is the transitional period between stone and full iron
+economy. In implementation, two building slots or a split output rate handles this.
+
+| Age | Building | Worker Capacity | Output Resource | Epoch |
+|-----|----------|----------------|----------------|-------|
+| Primitive | Stone Camp | 3 | stone | Stone Era |
+| Stone | Stone Pit | 4 | stone | Stone Era |
+| Bronze | Quarry | 5 | stone | Stone Era |
+| Iron | **Marble Quarry** | 5 | marble + iron_ore | Iron Era ← epoch transition (dual) |
+| Classical | Marble Works | 6 | marble + iron_ore | Iron Era |
+| Medieval | Stonemason's Guild | 6 | iron_ore | Iron Era |
+| Renaissance | **Iron Mine** | 7 | **iron_ore** | Steel Era ← epoch transition |
+| Colonial | Deep Iron Mine | 8 | iron_ore | Steel Era |
+| Industrial | Steam Mine | 10 | iron_ore | Steel Era |
+| Victorian | **Uranium Mine** | 10 | **uranium** | Electric Era ← epoch transition |
+| Electric | Nuclear Extraction Plant | 12 | uranium | Electric Era |
+| Atomic | Uranium Processing Works | 12 | uranium | Electric Era |
+| Modern | **Titanium Mine** | 14 | **titanium_ore** | Digital Era ← epoch transition |
+| Information | Precision Mine | 15 | titanium_ore | Digital Era |
+| Digital | Nano-Drill Complex | 16 | titanium_ore | Digital Era |
+| Cyberpunk | **Dark Crystal Mine** | 18 | **dark_matter_crystals** | Neon Era ← epoch transition |
+| Fusion | Exotic Mineral Extractor | 20 | dark_matter_crystals | Neon Era |
+| Space | Asteroid Crystal Mine | 20 | dark_matter_crystals | Neon Era |
+| Interstellar | **Stellar Core Drill** | 25 | **antimatter** | Cosmic Era ← epoch transition |
+| Galactic | Neutron Star Mine | 25 | antimatter | Cosmic Era |
+| Quantum | Reality Excavator | 30 | antimatter | Cosmic Era |
 
 ---
 
@@ -315,30 +352,42 @@ See resources.md for full culture accumulation rules, thresholds, and uses.
 
 ---
 
-## Lineage 11 — Metals / Smelting
+## Lineage 11 — Metallurgy (Processing Chain)
 Worker domain: **Metallurgy** (Smelter → Quantum Metallurgist). Unlocks at Iron Age.
-Produces: `iron`, `steel`, `titanium` depending on tier.
 
-| Age | Building | Worker Capacity | Output |
-|-----|----------|----------------|--------|
-| Iron | Smelter | 4 | iron |
-| Classical | Forge | 4 | iron/gold |
-| Medieval | Ironmonger | 5 | iron |
-| Renaissance | Foundry | 5 | iron/steel |
-| Colonial | Iron Works | 6 | steel |
-| Industrial | Steel Mill | 7 | steel |
-| Victorian | Bessemer Plant | 8 | steel |
-| Electric | Electric Arc Furnace | 9 | steel |
-| Atomic | Titanium Works | 10 | titanium/steel |
-| Modern | Advanced Alloy Plant | 11 | titanium |
-| Information | Nano-Materials Lab | 12 | titanium |
-| Digital | Molecular Foundry | 13 | titanium/data |
-| Cyberpunk | Augmented Metal Works | 14 | titanium |
-| Fusion | Plasma Forge | 16 | titanium/plasma |
-| Space | Orbital Smelter | 18 | titanium/dark_matter |
-| Interstellar | Stellar Forge | 20 | dark_matter |
-| Galactic | Neutron Forge | 22 | dark_matter/antimatter |
-| Quantum | Quantum Metal Works | 25 | quantum_flux |
+**2-stage dependency:** Metallurgy consumes raw ore from Geological Extraction and refines it
+into construction metals. It does NOT produce metals from thin air — it requires ore input.
+If ore supply drops below Metallurgy throughput, Metallurgy buildings under-produce.
+
+```
+Geological Extraction → [ore] → Metallurgy → [refined metal] → building costs
+```
+
+| Age | Building | Workers | Ore Input | Metal Output | Epoch |
+|-----|----------|---------|-----------|-------------|-------|
+| Iron | Smelter | 4 | iron_ore | **iron** | Iron Era |
+| Classical | Forge | 4 | iron_ore | **iron** | Iron Era |
+| Medieval | Ironmonger | 5 | iron_ore | **iron** | Iron Era |
+| Renaissance | Foundry | 5 | **iron** | **steel** | Steel Era ← now processes iron into steel |
+| Colonial | Iron Works | 6 | iron | steel | Steel Era |
+| Industrial | Steel Mill | 7 | iron | steel | Steel Era |
+| Victorian | Bessemer Plant | 8 | iron | steel | Electric Era |
+| Electric | Electric Arc Furnace | 9 | iron | steel | Electric Era |
+| Atomic | Advanced Alloy Plant | 10 | iron | steel | Electric Era |
+| Modern | **Titanium Smelter** | 11 | **titanium_ore** | **titanium** | Digital Era ← new ore type |
+| Information | Aerospace Foundry | 12 | titanium_ore | titanium | Digital Era |
+| Digital | Nano-Alloy Plant | 13 | titanium_ore | titanium | Digital Era |
+| Cyberpunk | **Dark Matter Refinery** | 14 | **dark_matter_crystals** | **dark_matter** | Neon Era ← new ore type |
+| Fusion | Exotic Matter Forge | 16 | dark_matter_crystals | dark_matter | Neon Era |
+| Space | Orbital Refinery | 18 | dark_matter_crystals | dark_matter | Neon Era |
+| Interstellar | **Antimatter Forge** | 20 | **antimatter** | antimatter (refined) | Cosmic Era |
+| Galactic | Stellar Metallurgy Works | 22 | antimatter | antimatter (refined) | Cosmic Era |
+| Quantum | Quantum Metal Works | 25 | antimatter | **quantum_flux** | Cosmic Era |
+
+> **Note on the Steel Era transition:** At Renaissance, Metallurgy no longer takes iron_ore as input.
+> It now takes iron (the output of the Iron Era Metallurgy tier itself) and produces steel. This means
+> iron becomes an intermediate resource: Geological → iron_ore → Metallurgy (Iron tier) → iron →
+> Metallurgy (Steel tier) → steel → building costs. Full chain.
 
 ---
 

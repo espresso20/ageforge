@@ -2,13 +2,17 @@
 
 ## Overview
 
-AgeForge has **21 resources** organized into tiers. Resources are produced by buildings,
+AgeForge has **25 resources** organized into tiers. Resources are produced by buildings,
 consumed by costs and workers (food drain), and capped by storage buildings.
 
 Most resources are **flow resources** — produced and consumed continuously, capped at
 storage max, wiped on prestige (with multiplier bonuses carrying over).
 
 Two resources have **special accumulation rules**: Culture and Faith.
+
+Four resources are **intermediate ore/raw resources** — produced by Geological Extraction
+and consumed by Metallurgy to produce refined construction metals. They exist purely as
+the input stage of the 2-stage processing chain and are never used as building costs directly.
 
 ---
 
@@ -17,26 +21,71 @@ Two resources have **special accumulation rules**: Culture and Faith.
 | # | Resource | Type | Unlock Age | Notes |
 |---|----------|------|-----------|-------|
 | 1 | food | Flow | Primitive | Worker drain resource; negative = workers starve |
-| 2 | wood | Flow | Primitive | Core construction material |
-| 3 | stone | Flow | Primitive | Core construction material |
-| 4 | knowledge | Flow | Primitive | Fuels research/tech; produced by Knowledge buildings |
-| 5 | faith | Special (draining) | Primitive | Powers morale, cohesion, diplomacy — see below |
-| 6 | gold | Flow | Bronze | Currency; trade, some building costs |
-| 7 | iron | Flow | Iron | Smelted construction; mid-tier buildings |
-| 8 | culture | Special (accumulating) | Classical | Accumulates forever; gates bonuses — see below |
-| 9 | steel | Flow | Renaissance | Refined iron; advanced construction |
-| 10 | coal | Flow | Industrial | Fuel for industrial buildings |
-| 11 | oil | Flow | Modern | Fuel for modern buildings/energy |
-| 12 | electricity | Flow | Electric | Powers electric+ buildings |
-| 13 | uranium | Flow | Atomic | Nuclear fuel |
-| 14 | titanium | Flow | Atomic | Advanced construction material |
-| 15 | data | Flow | Information | Digital economy; fuels Hacker buildings |
-| 16 | crypto | Flow | Digital | Digital currency; late trade routes |
-| 17 | plasma | Flow | Fusion | Fusion energy; late-game fuel |
-| 18 | dark_matter | Flow | Space | Exotic material; warp/dyson construction |
-| 19 | antimatter | Flow | Galactic | Endgame construction; warp drives |
-| 20 | quantum_flux | Flow | Quantum | Final-tier resource; gates quantum wonders |
-| 21 | nanobots | Flow | Cyberpunk | Augmentation construction material |
+| 2 | wood | Flow | Primitive | Primary structural — Stone Era build costs |
+| 3 | stone | Flow | Primitive | Primary mineral — Stone Era build costs |
+| 4 | marble | Flow (Ore) | Iron | Prestige mineral — Iron Era Classical/Medieval costs; produced by Geological Extraction |
+| 5 | knowledge | Flow | Primitive | Fuels research/tech; produced by Knowledge buildings |
+| 6 | faith | Special (draining) | Primitive | Powers morale, cohesion, diplomacy — see below |
+| 7 | gold | Flow | Bronze | Currency; trade, some building costs across all epochs |
+| 8 | iron_ore | Flow (Ore) | Iron | Raw mineral — produced by Geological Extraction; consumed by Metallurgy → iron |
+| 9 | iron | Flow | Iron | Refined — produced by Metallurgy from iron_ore; Iron/Steel Era build costs |
+| 10 | culture | Special (accumulating) | Classical | Accumulates forever; gates bonuses — see below |
+| 11 | steel | Flow | Renaissance | Refined by Metallurgy from iron; Steel Era primary build cost |
+| 12 | coal | Flow | Colonial | Organic fossil — produced by Organic Extraction; Steel Era energy cost |
+| 13 | electricity | Flow | Victorian | Power — produced by Energy lineage; Electric Era primary cost |
+| 14 | oil | Flow | Victorian | Organic petroleum — produced by Organic Extraction; Electric Era cost |
+| 15 | uranium | Flow | Atomic | Nuclear mineral — produced by Geological Extraction; Electric Era energy |
+| 16 | titanium_ore | Flow (Ore) | Modern | Raw aerospace mineral — produced by Geological; consumed by Metallurgy → titanium |
+| 17 | titanium | Flow | Modern | Refined by Metallurgy from titanium_ore; Digital Era primary build cost |
+| 18 | data | Flow | Information | Digital economy; fuels Hacker buildings; Digital Era cost |
+| 19 | nanobots | Flow | Cyberpunk | Bio-nano — produced by Organic Extraction; Neon Era build cost |
+| 20 | crypto | Flow | Digital | Digital currency; late trade routes |
+| 21 | plasma | Flow | Fusion | Fusion power — produced by Energy lineage; Neon Era energy cost |
+| 22 | dark_matter_crystals | Flow (Ore) | Cyberpunk | Exotic mineral — produced by Geological; consumed by Metallurgy → dark_matter |
+| 23 | dark_matter | Flow | Space | Refined exotic — produced by Metallurgy from dark_matter_crystals; Neon/Cosmic build cost |
+| 24 | antimatter | Flow | Galactic | Stellar extraction — produced by Geological Extraction; Cosmic Era build cost |
+| 25 | quantum_flux | Flow | Quantum | Final-tier — produced by Energy lineage; Cosmic Era primary cost |
+
+---
+
+## Epoch Resource Chain
+
+Each epoch has a dominant primary structural resource and a dominant energy/mineral resource.
+Building costs transition to the current epoch's primary resources. See epochs.md for full
+epoch definitions.
+
+| Epoch | Ages | Primary Structural | Primary Energy/Mineral | Ore Inputs |
+|-------|------|--------------------|----------------------|------------|
+| Stone Era | Prim, Stone, Bronze | wood | stone | — |
+| Iron Era | Iron, Classical, Medieval | iron | marble | iron_ore → iron |
+| Steel Era | Renaissance, Colonial, Industrial | steel | coal | iron → steel |
+| Electric Era | Victorian, Electric, Atomic | steel | electricity, oil, uranium | — |
+| Digital Era | Modern, Information, Digital | titanium | data | titanium_ore → titanium |
+| Neon Era | Cyberpunk, Fusion, Space | dark_matter | plasma, nanobots | dark_matter_crystals → dark_matter |
+| Cosmic Era | Interstellar, Galactic, Quantum | antimatter | quantum_flux | — |
+
+### 2-Stage Processing Chains (Geological → Metallurgy)
+
+The Geological Extraction lineage produces **raw ore** at certain epochs. Metallurgy buildings
+consume that ore and produce **refined construction metal**. This creates an explicit supply chain:
+
+```
+Geological Mine → [iron_ore] → Metallurgy Smelter → [iron] → building costs
+
+Geological Deep Mine → [iron] → Metallurgy Forge → [steel] → building costs
+
+Geological Titanium Works → [titanium_ore] → Metallurgy Alloy Plant → [titanium] → building costs
+
+Geological Dark Crystal Mine → [dark_matter_crystals] → Metallurgy Reality Forge → [dark_matter] → building costs
+```
+
+**Bottleneck loop:** If Metallurgy is producing iron faster than Geological supplies iron_ore,
+Metallurgy buildings idle. If Geological is mining more iron_ore than Metallurgy can process,
+iron_ore piles up in storage. Players balance both lineages against each other — a satisfying
+ongoing optimization.
+
+**Ore resources are ONLY consumed by Metallurgy** — they never appear as building costs and
+never need to be stored for long. Their storage cap can be modest (10× Metallurgy throughput).
 
 ---
 
