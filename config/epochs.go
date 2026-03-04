@@ -77,6 +77,57 @@ func Epochs() []EpochDef {
 	}
 }
 
+// LegacyBonusForEpoch returns the permanent per-resource production bonuses granted by
+// succumbing to the catastrophe in a given epoch. Keys are resource keys, values are
+// fractional multipliers (e.g. 0.20 = +20%). These are additive with other rate bonuses.
+func LegacyBonusForEpoch(epochKey string) map[string]float64 {
+	switch epochKey {
+	case "stone_era":
+		return map[string]float64{"wood": 0.20, "stone": 0.20}
+	case "iron_era":
+		return map[string]float64{"iron": 0.20}
+	case "steel_era":
+		return map[string]float64{"steel": 0.25, "coal": 0.25}
+	case "electric_era":
+		return map[string]float64{"electricity": 0.25, "uranium": 0.25}
+	case "digital_era":
+		return map[string]float64{"data": 0.30, "titanium_ore": 0.30}
+	case "neon_era":
+		return map[string]float64{"plasma": 0.30, "dark_matter_crystals": 0.30}
+	case "cosmic_era":
+		return map[string]float64{"dark_matter": 0.35}
+	}
+	return nil
+}
+
+// CatastropheInfo returns the display name and flavor text for an epoch's catastrophe.
+func CatastropheInfo(epochKey string) (name, flavor string) {
+	switch epochKey {
+	case "stone_era":
+		return "The Great Meteor",
+			"A celestial body has struck your settlement. The sky burns. Your people scatter."
+	case "iron_era":
+		return "The Great Plague",
+			"A devastating plague sweeps your cities. The streets fall silent."
+	case "steel_era":
+		return "The World War",
+			"Industrial warfare tears civilization apart. The factories are ash."
+	case "electric_era":
+		return "The Nuclear Exchange",
+			"Nations unleash the atom. Cities become glass."
+	case "digital_era":
+		return "The Great Hack",
+			"Every system falls silent. The AIs turn on their creators."
+	case "neon_era":
+		return "Corporate Armageddon",
+			"The megacorps end the world with a fusion bomb."
+	case "cosmic_era":
+		return "The Reality Tear",
+			"Exotic matter destabilizes spacetime. Reality cracks open."
+	}
+	return "Unknown Catastrophe", "Something terrible has happened."
+}
+
 // EpochEventDef defines a major epoch transition event (good, challenging, or catastrophe).
 // These fire exactly once per epoch transition — they are NOT part of the regular random event pool.
 type EpochEventDef struct {

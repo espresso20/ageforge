@@ -15,6 +15,7 @@ type BuildingManager struct {
 	unlocked        map[string]bool
 	wonderBanks     map[string]map[string]float64 // wonderKey -> resource -> banked amount
 	legacyBuildings map[string]bool               // Phase 7: buildings superseded by lineage progression
+	ruins           map[string]int                // Phase 9: ruins from Succumb — produce at 50%
 }
 
 // NewBuildingManager creates a building manager
@@ -25,6 +26,7 @@ func NewBuildingManager() *BuildingManager {
 		unlocked:        make(map[string]bool),
 		wonderBanks:     make(map[string]map[string]float64),
 		legacyBuildings: make(map[string]bool),
+		ruins:           make(map[string]int),
 	}
 }
 
@@ -178,6 +180,18 @@ func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(domain, key s
 				rate = eff.Value * float64(count)
 			}
 			rates[eff.Target] += rate
+		}
+	}
+	// Ruins produce at 50% base rate; no worker scaling
+	for key, count := range bm.ruins {
+		if count == 0 {
+			continue
+		}
+		def := bm.defs[key]
+		for _, eff := range def.Effects {
+			if eff.Type == "production" {
+				rates[eff.Target] += eff.Value * float64(count) * 0.50
+			}
 		}
 	}
 	return rates
@@ -340,6 +354,62 @@ func (bm *BuildingManager) LoadLegacyBuildings(keys []string) {
 	}
 }
 
+// === Phase 9: Ruins ===
+
+// GenerateRuins picks up to n random non-wonder building instances from current counts
+// and marks them as ruins. Returns a map of key → ruin count created.
+// The buildings are removed from counts and added to ruins.
+func (bm *BuildingManager) GenerateRuins(n int) map[string]int {
+	type inst struct{ key string }
+	var pool []inst
+	for key, c := range bm.counts {
+		if c == 0 {
+			continue
+		}
+		if def, ok := bm.defs[key]; !ok || def.Category == "wonder" {
+			continue
+		}
+		for i := 0; i < c; i++ {
+			pool = append(pool, inst{key})
+		}
+	}
+	if len(pool) == 0 {
+		return nil
+	}
+	rand.Shuffle(len(pool), func(i, j int) { pool[i], pool[j] = pool[j], pool[i] })
+	if n > len(pool) {
+		n = len(pool)
+	}
+	newRuins := make(map[string]int)
+	for _, inst := range pool[:n] {
+		newRuins[inst.key]++
+	}
+	for key, count := range newRuins {
+		bm.ruins[key] += count
+	}
+	return newRuins
+}
+
+// GetAllRuins returns a copy of the ruins map.
+func (bm *BuildingManager) GetAllRuins() map[string]int {
+	out := make(map[string]int, len(bm.ruins))
+	for k, v := range bm.ruins {
+		if v > 0 {
+			out[k] = v
+		}
+	}
+	return out
+}
+
+// LoadRuins restores ruins from a saved state.
+func (bm *BuildingManager) LoadRuins(ruins map[string]int) {
+	for k, v := range ruins {
+		if v > 0 {
+			bm.ruins[k] += v
+		}
+	}
+}
+
 // DestroyRandom destroys up to count individual building instances chosen at random.
 // Wonders are excluded. Returns a list of human-readable descriptions of what was destroyed.
 func (bm *BuildingManager) DestroyRandom(count int) []string {
@@ -440,6 +510,30 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, getWorkerCount f
 			state.CanBuild = false
 		}
 		out[key] = state
+	}
+	// Phase 9: annotate ruins into existing BuildingState entries (or create new entries)
+	for key, count := range bm.ruins {
+		if count == 0 {
+			continue
+		}
+		bs, exists := out[key]
+		if !exists {
+			// Building not otherwise visible — create minimal entry for display
+			def, ok := bm.defs[key]
+			if !ok {
+				continue
+			}
+			bs = BuildingState{
+				Name:        def.Name,
+				Category:    def.Category,
+				Description: def.Description,
+				Unlocked:    true,
+				AgeKey:      def.RequiredAge,
+			}
+		}
+		bs.RuinCount = count
+		bs.CanBuild = false
+		out[key] = bs
 	}
 	return out
 }

@@ -38,9 +38,12 @@ type GameState struct {
 	EpochName         string
 	EpochIcon         string
 	EpochColor        string // tview color tag
-	EpochSurvived     bool   // player endured a catastrophe this epoch
+	EpochSurvived      bool   // player endured a catastrophe this epoch
 	PendingCatastrophe string // epoch key if catastrophe modal should show; "" otherwise
-	EpochEventHistory []EpochEventRecord
+	EpochEventHistory  []EpochEventRecord
+	// Phase 9: civilization history + legacy bonuses
+	LegacyBonuses      map[string]bool  // epochKey -> true if succumb legacy bonus is active
+	CatastropheHistory []string         // narrative log entries
 }
 
 // AgeAdvanceSummary holds data about what changed during an age advance transition.
@@ -58,6 +61,13 @@ type BuildingTransform struct {
 	NewKey  string
 	NewName string
 	Count   int
+}
+
+// RuinState represents one ruin entry (building type + count) persisting across Succumb resets.
+type RuinState struct {
+	Key   string
+	Name  string
+	Count int
 }
 
 // EpochEventRecord records one epoch transition event for the civilization history log.
@@ -119,6 +129,8 @@ type BuildingState struct {
 	WorkersAssigned int // total workers assigned across all instances
 	// Phase 7: lineage legacy flag
 	IsLegacy bool // functional but superseded — can't build more; grayed in UI
+	// Phase 9: ruins
+	RuinCount int // ruins of this building type (produce at 50%, no workers, can't rebuild)
 }
 
 // VillagerState represents all villager info

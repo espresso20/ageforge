@@ -49,6 +49,10 @@ type GameSave struct {
 	SurvivedEpochs     map[string]bool   `json:"survived_epochs,omitempty"`
 	PendingCatastrophe string            `json:"pending_catastrophe,omitempty"`
 	EpochEventHistory  []EpochEventRecord `json:"epoch_event_history,omitempty"`
+	// Phase 9: catastrophe system (persist across Succumb and Prestige)
+	Ruins              map[string]int    `json:"ruins,omitempty"`
+	LegacyBonuses      map[string]bool   `json:"legacy_bonuses,omitempty"`
+	CatastropheHistory []string          `json:"catastrophe_history,omitempty"`
 	// Integrity fields
 	CheaterBadge bool   `json:"cheater_badge,omitempty"`
 	EliteBadge   bool   `json:"elite_badge,omitempty"`
@@ -352,6 +356,9 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		SurvivedEpochs:     copyBoolMap(ge.survivedEpochs),
 		PendingCatastrophe: ge.pendingCatastrophe,
 		EpochEventHistory:  append([]EpochEventRecord(nil), ge.epochEventHistory...),
+		Ruins:              ge.Buildings.GetAllRuins(),
+		LegacyBonuses:      copyBoolMap(ge.legacyBonuses),
+		CatastropheHistory: append([]string(nil), ge.catastropheHistory...),
 	}
 }
 
@@ -484,6 +491,17 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	}
 	ge.pendingCatastrophe = save.PendingCatastrophe
 	ge.epochEventHistory = save.EpochEventHistory
+
+	// Restore Phase 9: catastrophe system
+	if save.Ruins != nil {
+		ge.Buildings.LoadRuins(save.Ruins)
+	}
+	if save.LegacyBonuses != nil {
+		ge.legacyBonuses = save.LegacyBonuses
+	} else {
+		ge.legacyBonuses = make(map[string]bool)
+	}
+	ge.catastropheHistory = save.CatastropheHistory
 
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()

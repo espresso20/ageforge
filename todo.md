@@ -53,15 +53,8 @@ See: DONE.md for completion notes.
 
 ---
 
-## Phase 9 (Economy Redesign): Catastrophe System
-- [ ] game/engine.go: Endure() — 20% buildings randomly destroyed, resources → 15%, workers -25%, 72h debuffs
-- [ ] game/engine.go: Succumb() — full reset + 8 ruins + legacy bonus + ancient knowledge
-- [ ] game/engine.go: InvokeCatastrophe() error — voluntary trigger
-- [ ] game/engine.go: applyLegacyBonus(epoch) — permanent production multiplier
-- [ ] game/save.go: Ruins, LegacyBonuses, CatastropheHistory, SurvivedEpochs, PendingCatastrophe
-- [ ] game/types.go: RuinBuilding distinction in BuildingState
-- [ ] ui/: catastrophe modal (full-screen panel, Endure/Succumb/Defer)
-- [ ] Civilization history log
+## Phase 9 (Economy Redesign): Catastrophe System ✓ DONE
+See: DONE.md for completion notes.
 
 ---
 

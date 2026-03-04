@@ -66,6 +66,10 @@ type GameEngine struct {
 	survivedEpochs     map[string]bool // epochs where player chose Endure
 	pendingCatastrophe string          // epoch key when catastrophe modal should show; "" otherwise
 	epochEventHistory  []EpochEventRecord
+
+	// Phase 9: catastrophe system (persist across Succumb and Prestige resets)
+	legacyBonuses      map[string]bool // epochKey -> true if succumb legacy bonus active
+	catastropheHistory []string        // narrative civilization log entries
 }
 
 // BuildQueueItem represents a building under construction
@@ -98,6 +102,7 @@ func NewGameEngine() *GameEngine {
 		currentEpoch:     config.EpochForAge("primitive_age"),
 		epochEventFired:  make(map[string]bool),
 		survivedEpochs:   make(map[string]bool),
+		legacyBonuses:    make(map[string]bool),
 	}
 	ge.applyAgeUnlocks("primitive_age")
 	// Give starting resources — enough for first hut + a little food
@@ -578,6 +583,7 @@ func (ge *GameEngine) recalculateRates() {
 	}
 
 	// Apply per-resource rate bonuses (e.g., "gold_rate", "iron_rate")
+	// Includes legacy bonuses (stored in permanentBonuses["wood"] etc. after reapplyLegacyBonuses)
 	for _, def := range ge.Resources.defs {
 		bonusKey := def.Key + "_rate"
 		bonus := researchBonuses[bonusKey] + permanentBonuses[bonusKey]
@@ -1116,6 +1122,187 @@ func (ge *GameEngine) InvokeCatastrophe() error {
 	return nil
 }
 
+// DeferCatastrophe signals the player's intent to decide later.
+// The pendingCatastrophe remains set; the UI handles hiding the modal.
+// This method exists for command-based invocation (no engine state change needed).
+func (ge *GameEngine) DeferCatastrophe() {
+	// No-op on the engine side — pendingCatastrophe stays set.
+	// The UI is responsible for not re-showing the modal until next session refresh.
+}
+
+// reapplyLegacyBonuses adds all active legacy bonus multipliers to permanentBonuses.
+// Call after any reset that zeroes permanentBonuses (prestige, succumb).
+func (ge *GameEngine) reapplyLegacyBonuses() {
+	for epochKey := range ge.legacyBonuses {
+		for res, mult := range config.LegacyBonusForEpoch(epochKey) {
+			ge.permanentBonuses[res+"_rate"] += mult
+		}
+	}
+}
+
+// Endure executes the Endure consequences for the pending catastrophe:
+//   - 20% of buildings randomly destroyed
+//   - All resources drop to 15% of current stored amount
+//   - 25% of workers removed
+//   - Lasting timed debuffs injected (building costs conceptually +20%, food drain +10%)
+//   - Permanent rewards: Survived marker, unique titled logged in civilization history
+func (ge *GameEngine) Endure() error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	if ge.pendingCatastrophe == "" {
+		return fmt.Errorf("no pending catastrophe to endure")
+	}
+	epochKey := ge.pendingCatastrophe
+	ge.pendingCatastrophe = ""
+	ge.survivedEpochs[epochKey] = true
+
+	catName, catFlavor := config.CatastropheInfo(epochKey)
+
+	// 20% of buildings destroyed
+	totalBuilt := 0
+	for _, c := range ge.Buildings.counts {
+		totalBuilt += c
+	}
+	destroyCount := totalBuilt / 5
+	if destroyCount < 1 && totalBuilt > 0 {
+		destroyCount = 1
+	}
+	destroyed := ge.Buildings.DestroyRandom(destroyCount)
+
+	// Resources → 15% of current
+	for key, r := range ge.Resources.resources {
+		if r != nil && ge.Resources.IsUnlocked(key) {
+			r.Amount *= 0.15
+		}
+	}
+
+	// -25% workers
+	ge.Villagers.RemovePct(0.25)
+
+	// Timed debuffs: worker food drain +10% for 216 ticks, production -10% for 216 ticks
+	ge.Events.InjectEvent(ActiveEvent{
+		Key:       "endure_reconstruction",
+		Name:      "Reconstruction Effort",
+		TicksLeft: 216,
+		Effects: []config.Effect{
+			{Type: "production_all", Value: -0.10},
+		},
+	})
+
+	// Log consequences
+	ge.addLog("warning", fmt.Sprintf("☄ ENDURE: %s — %s", catName, catFlavor))
+	ge.addLog("warning", fmt.Sprintf("  Buildings destroyed: %d", destroyCount))
+	for _, desc := range destroyed {
+		ge.addLog("warning", fmt.Sprintf("  → %s lost", desc))
+	}
+	ge.addLog("warning", "  All resources reduced to 15% of stored amounts.")
+	ge.addLog("warning", "  25% of workers lost.")
+	ge.addLog("info", "  Timed: production -10% for 216 ticks (reconstruction period).")
+	ge.addLog("success", fmt.Sprintf("  ✦ Survived marker earned for %s badge.", config.EpochByKey()[epochKey].Name))
+
+	// Civilization history entry
+	histEntry := fmt.Sprintf("Tick %d — Endured %s (%s). %d buildings lost.", ge.tick, catName, config.EpochByKey()[epochKey].Name, destroyCount)
+	ge.catastropheHistory = append(ge.catastropheHistory, histEntry)
+
+	return nil
+}
+
+// Succumb executes the Succumb consequences for the pending catastrophe:
+//   - Generates 8 ruins from current buildings (persist into next run)
+//   - Awards epoch legacy bonus (permanent production multiplier)
+//   - Awards Ancient Knowledge (+25% research speed, permanent)
+//   - Records civilization history entry
+//   - Full reset (all buildings, resources, workers, etc.)
+//   - Restores ruins and legacy bonuses into the fresh civilization
+func (ge *GameEngine) Succumb() error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	if ge.pendingCatastrophe == "" {
+		return fmt.Errorf("no pending catastrophe to succumb to")
+	}
+	epochKey := ge.pendingCatastrophe
+	catName, _ := config.CatastropheInfo(epochKey)
+	ep := config.EpochByKey()[epochKey]
+
+	// Civilization history entry (before reset clears tick/age)
+	histEntry := fmt.Sprintf("Tick %d — Succumbed to %s (%s). Civilization reset. Legacy bonus earned.", ge.tick, catName, ep.Name)
+	ge.catastropheHistory = append(ge.catastropheHistory, histEntry)
+
+	// Generate 8 ruins from current buildings
+	ge.Buildings.GenerateRuins(8)
+	savedRuins := ge.Buildings.GetAllRuins()
+
+	// Award legacy bonus for this epoch
+	ge.legacyBonuses[epochKey] = true
+	savedLegacy := copyBoolMap(ge.legacyBonuses)
+	savedCatHistory := append([]string(nil), ge.catastropheHistory...)
+	savedEpochHistory := append([]EpochEventRecord(nil), ge.epochEventHistory...)
+
+	// Preserve cross-run state
+	savedPrestige := ge.Prestige
+
+	// Full reset (follow DoPrestige pattern — keeps Bus intact for UI subscriptions... well, same as prestige)
+	ge.tick = 0
+	ge.age = "primitive_age"
+	ge.Resources = NewResourceManager()
+	ge.Buildings = NewBuildingManager()
+	ge.Villagers = NewVillagerManager()
+	ge.Research = NewResearchManager()
+	ge.Military = NewMilitaryManager()
+	ge.Events = NewEventManager()
+	ge.Milestones = NewMilestoneManager()
+	ge.Trade = NewTradeManager()
+	ge.Diplomacy = NewDiplomacyManager()
+	ge.Stats = NewGameStats()
+	ge.Bus = NewEventBus()
+	ge.permanentBonuses = make(map[string]float64)
+	ge.buildQueue = nil
+	ge.log = nil
+	ge.speedMultiplier = 1.0
+	ge.tickSpeedBonus = 0
+	ge.ageReady = false
+	ge.currentEpoch = config.EpochForAge("primitive_age")
+	ge.epochEventFired = make(map[string]bool)
+	ge.survivedEpochs = make(map[string]bool)
+	ge.pendingCatastrophe = ""
+
+	// Restore persistent cross-run state
+	ge.Prestige = savedPrestige
+	ge.Buildings.LoadRuins(savedRuins)
+	ge.legacyBonuses = savedLegacy
+	ge.catastropheHistory = savedCatHistory
+	ge.epochEventHistory = savedEpochHistory
+
+	// Ancient Knowledge: +25% research speed (permanent bonus)
+	ge.permanentBonuses["research_speed"] += 0.25
+
+	// Apply all active legacy bonuses
+	ge.reapplyLegacyBonuses()
+
+	// Apply age unlocks and starting resources
+	ge.applyAgeUnlocks("primitive_age")
+	ge.Resources.Add("food", 15)
+	ge.Resources.Add("wood", 12)
+	for res, amount := range ge.Prestige.GetStartingResources() {
+		ge.Resources.Add(res, amount)
+	}
+
+	ge.recalculateTickSpeed()
+
+	// Welcome-back log
+	ge.addLog("event", fmt.Sprintf("☄ %s — civilization has fallen. A new dawn.", catName))
+	ge.addLog("success", fmt.Sprintf("Legacy Bonus: %s production permanently boosted.", ep.Name))
+	ge.addLog("success", "Ancient Knowledge: research speed +25% (permanent).")
+	if len(savedRuins) > 0 {
+		ge.addLog("info", fmt.Sprintf("%d ruin type(s) from the fallen civilization carry forward.", len(savedRuins)))
+	}
+	ge.addLog("info", "Type [cyan]help[-] to rebuild.")
+
+	return nil
+}
+
 // processBuildQueue advances construction on queued buildings
 func (ge *GameEngine) processBuildQueue() {
 	var remaining []BuildQueueItem
@@ -1524,6 +1711,9 @@ func (ge *GameEngine) DoPrestige() error {
 
 	ge.Prestige.Prestige(points)
 
+	// Preserve cross-run state before resetting managers
+	savedRuins := ge.Buildings.GetAllRuins()
+
 	// Reset all game systems
 	ge.tick = 0
 	ge.age = "primitive_age"
@@ -1541,6 +1731,15 @@ func (ge *GameEngine) DoPrestige() error {
 	ge.permanentBonuses = make(map[string]float64)
 	ge.buildQueue = nil
 	ge.log = nil
+	ge.currentEpoch = config.EpochForAge("primitive_age")
+	ge.epochEventFired = make(map[string]bool)
+	ge.survivedEpochs = make(map[string]bool)
+	ge.pendingCatastrophe = ""
+	ge.epochEventHistory = nil
+
+	// Restore cross-run state
+	ge.Buildings.LoadRuins(savedRuins)
+	ge.reapplyLegacyBonuses()
 
 	// Apply age unlocks for primitive age
 	ge.applyAgeUnlocks("primitive_age")
@@ -1557,6 +1756,12 @@ func (ge *GameEngine) DoPrestige() error {
 	ge.addLog("success", fmt.Sprintf("Prestige complete! Level %d (+%d points)", ge.Prestige.GetLevel(), points))
 	ge.addLog("info", fmt.Sprintf("Passive bonus: +%.0f%% production, +%.0f%% tick speed",
 		float64(ge.Prestige.GetLevel())*2, ge.tickSpeedBonus*100))
+	if len(ge.legacyBonuses) > 0 {
+		ge.addLog("info", fmt.Sprintf("Legacy bonuses active: %d epoch(s)", len(ge.legacyBonuses)))
+	}
+	if len(savedRuins) > 0 {
+		ge.addLog("info", fmt.Sprintf("%d ruin type(s) carry forward from past civilizations.", len(savedRuins)))
+	}
 	ge.addLog("info", "Type [cyan]help[-] to get started again.")
 
 	return nil
@@ -1610,6 +1815,8 @@ func (ge *GameEngine) Reset() {
 	ge.survivedEpochs = make(map[string]bool)
 	ge.pendingCatastrophe = ""
 	ge.epochEventHistory = nil
+	ge.legacyBonuses = make(map[string]bool)
+	ge.catastropheHistory = nil
 
 	ge.addLog("event", "Game wiped! Starting fresh.")
 	ge.addLog("info", "Type [cyan]help[-] for commands.")
@@ -1729,6 +1936,14 @@ func (ge *GameEngine) GetState() GameState {
 		EpochSurvived:      ge.survivedEpochs[ge.currentEpoch],
 		PendingCatastrophe: ge.pendingCatastrophe,
 		EpochEventHistory:  ge.epochEventHistory,
+		LegacyBonuses:      func() map[string]bool {
+			out := make(map[string]bool, len(ge.legacyBonuses))
+			for k, v := range ge.legacyBonuses {
+				out[k] = v
+			}
+			return out
+		}(),
+		CatastropheHistory: ge.catastropheHistory,
 	}
 }
 

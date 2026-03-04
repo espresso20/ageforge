@@ -172,5 +172,22 @@ Items are moved here from TODO.md when finished. Do not re-implement anything li
 - Note: `survivedEpochs` tracking deferred to Phase 9 (Endure action)
 - All tests passing, `go build ./...` clean
 
+## Economy Redesign — Phase 9: Catastrophe System (2026-03-04)
+- [x] `config/epochs.go`: Added `LegacyBonusForEpoch(epochKey) map[string]float64` (per-resource rate bonuses per epoch succumb); `CatastropheInfo(epochKey) (name, flavor string)` for modal text
+- [x] `game/types.go`: Added `RuinState` struct; added `RuinCount int` to `BuildingState`; added `LegacyBonuses map[string]bool`, `CatastropheHistory []string` to `GameState`
+- [x] `game/buildings.go`: Added `ruins map[string]int` to `BuildingManager`; `GenerateRuins(n)` — picks n random non-wonder buildings for ruins; `GetAllRuins()`, `LoadRuins()`; ruins included in `WorkerScaledProduction` at 50% base rate; ruins annotate `BuildingState.RuinCount` in `Snapshot()`
+- [x] `game/engine.go`:
+  - Added `legacyBonuses map[string]bool` and `catastropheHistory []string` to struct (persist through Prestige + Succumb)
+  - `reapplyLegacyBonuses()` — applies all active legacy bonuses to `permanentBonuses` after any reset
+  - `Endure() error` — 20% buildings destroyed, resources →15%, workers -25%, timed production -10% for 216 ticks, Survived marker set, history recorded
+  - `Succumb() error` — generates 8 ruins, awards legacy bonus + Ancient Knowledge (+25% research speed), full reset preserving ruins/legacyBonuses/catastropheHistory/prestige/epochHistory, reapplies legacy bonuses
+  - `DeferCatastrophe()` — engine no-op; UI handles hiding modal
+  - `DoPrestige()` updated: preserves ruins across prestige, resets epoch state, calls `reapplyLegacyBonuses()`, logs ruins/legacy count
+  - `GetState()` exposes `LegacyBonuses`, `CatastropheHistory`
+- [x] `game/save.go`: Added `Ruins map[string]int`, `LegacyBonuses map[string]bool`, `CatastropheHistory []string` to `GameSave`; serialized in `buildSaveSnapshot()`; restored in `LoadGame()`
+- [x] `ui/catastrophe_modal.go` (NEW): Full-screen overlay with epoch catastrophe name + flavor, Endure/Succumb/Defer buttons, keyboard shortcuts (E/S/D + Tab navigation), color-coded (dark red border, yellow Succumb), legacy bonus preview text
+- [x] `ui/dashboard.go`: Added `catModalShown string` field; `refresh()` detects `PendingCatastrophe != ""` and shows modal once per new catastrophe; Defer closes modal without resetting `catModalShown` (prevents immediate re-show); clears `catModalShown` when catastrophe is resolved
+- All tests passing, `go build ./...` clean
+
 ## General / Misc
 - [x] Established TODO.md + DONE.md workflow for session-resumable planning (2026-02-25)

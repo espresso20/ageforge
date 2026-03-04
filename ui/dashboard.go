@@ -69,6 +69,10 @@ type Dashboard struct {
 	cheaterTV       *tview.TextView
 	activeShameBadge string
 
+	// Phase 9: catastrophe modal — tracks which catastrophe has already been shown
+	// so Defer doesn't immediately re-show the modal on the next refresh tick
+	catModalShown string
+
 	stopCh chan struct{}
 }
 
@@ -451,6 +455,14 @@ func (d *Dashboard) refresh() {
 	}
 
 	state := d.engine.GetState()
+
+	// Phase 9: catastrophe modal — show once per new pending catastrophe; Defer hides it
+	if state.PendingCatastrophe == "" {
+		d.catModalShown = "" // reset so next catastrophe will show fresh
+	} else if d.catModalShown == "" {
+		d.catModalShown = state.PendingCatastrophe
+		d.showCatastropheModal(state.PendingCatastrophe)
+	}
 
 	// Shame badge — pick once per session, never change after that
 	if state.CheaterBadge && d.activeShameBadge == "" {
