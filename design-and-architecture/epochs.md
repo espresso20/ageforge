@@ -44,16 +44,81 @@ Every 3rd age advance = 1 epoch transition. 7 epochs × 3 ages = 21 ages exactly
 
 ---
 
-## Civilizational Catastrophe System
+## Epoch Event System
 
-At each epoch boundary, the game presents a **Civilizational Catastrophe** — a world-scale event
-that tests your civilization. You are given a choice: endure and survive, or let civilization fall
-and rise again, stronger.
+At each epoch transition, the game rolls a **major epoch event** — a single significant event
+that could be a boon or a disaster. Catastrophe is **not guaranteed** — it is one possible bad
+outcome among several, occurring roughly 15% of the time across a full run.
 
-This system is separate from the regular prestige system. Both can be used in the same run and
-their bonuses stack.
+### The Roll
 
-### The Choice Modal
+```
+Roll at each epoch transition:
+
+  Faith < 25% cap:   40% Good / 60% Bad
+  Faith 25–75% cap:  50% Good / 50% Bad   ← baseline
+  Faith > 75% cap:   60% Good / 40% Bad
+
+  If GOOD → roll from Good Event pool (weighted by Culture level):
+      Low culture:    Minor Good only
+      Medium culture: Minor or Major Good
+      High culture:   Minor, Major, or Legendary Good (rare)
+
+  If BAD → roll from Bad pool (weighted):
+      70% → Challenging Event (severe but recoverable — 8 events)
+      30% → Civilizational Catastrophe (the Endure / Succumb modal)
+```
+
+**Catastrophe probability per epoch:** 50% × 30% ≈ **15% per epoch transition.**
+In a 7-epoch run, expected catastrophes: 0–2. Sometimes none. Sometimes two. Always special.
+
+**Faith matters:** Keeping faith above 75% of its cap improves your odds of a good epoch event
+at every transition. This is a new strategic reason to invest in Faith buildings and workers
+beyond its existing morale/cohesion/diplomacy uses.
+
+**Culture matters:** Culture level gates the tier of good events you can receive. High-culture
+civilizations occasionally receive Legendary Good events — powerful outcomes unavailable at
+lower culture levels.
+
+### Good Epoch Events
+
+**Minor Good — available at any culture level:**
+
+1. **Age of Plenty** — all resource production ×2 for 72 real hours
+2. **Population Surge** — all worker classes +15% count, immediately recruited
+3. **Ancient Cache** — fills 40% of every resource's storage cap with current resources
+4. **Trade Winds** — gold ×3 for 48h; all trade routes open regardless of requirements
+5. **Cultural Festival** — culture +30%, faith +20% instantly; morale bonus for 48h
+
+**Major Good — requires medium culture:**
+
+6. **The Grand Discovery** — 3 free techs from current epoch's research tree
+7. **Worker Innovation** — all worker output multipliers permanently +10% (stacks across events)
+8. **The Architect's Gift** — 10 free buildings of any current-age type, instant, no resource cost
+9. **Peaceful Century** — all negative random events suspended for 96h; all production +20%
+
+**Legendary Good — requires high culture, rare:**
+
+10. **Epoch Blessing** — permanent +15% production for current epoch's primary resource;
+    one unique epoch wonder unlocked (exclusive to this event, not in the normal wonder list);
+    recorded in civilization history as a golden age entry
+
+### Challenging Bad Epoch Events (70% of bad outcomes)
+
+Severe but recoverable — no reset, no modal. Applied immediately on epoch transition.
+
+1. **The Famine** — food production -60% for 120 ticks; workers begin leaving if not corrected
+2. **Merchant Betrayal** — gold -50%; all trade routes suspended for 72 ticks
+3. **The Great Fire** — 8 random buildings destroyed; no targeted penalty on surrounding buildings
+4. **Epidemic** — worker count -20%; food drain +15% for 96h; faith influences severity
+5. **Resource Drought** — current epoch's primary output resource -70% for 90 ticks
+6. **Political Instability** — faith -60%; military output -40%; knowledge production paused 60 ticks
+7. **Economic Crash** — all gold halved; building costs +50% for 72h
+8. **The Dark Age** — knowledge production and all research paused for 48h; one random tech gains a knowledge debt that must be cleared before it can be used
+
+### Civilizational Catastrophe (30% of bad outcomes ≈ 15% overall)
+
+When rolled, the Catastrophe modal appears for the current epoch. The player chooses:
 
 ```
 ╔══════════════════════════════════════════════════════════╗
@@ -67,7 +132,7 @@ their bonuses stack.
 ║  Weather the catastrophe.    Let civilization fall.      ║
 ║                                                          ║
 ║  Your people survive, but:   Everything resets. But:     ║
-║  • 30% buildings destroyed   • Epoch Legacy Bonus        ║
+║  • 20% buildings destroyed   • Epoch Legacy Bonus        ║
 ║  • Resources wiped to 15%    • 8 Ruins carry forward     ║
 ║  • 25% workers lost          • Ancient Knowledge kept    ║
 ║  • Building costs +20%       • Catastrophe title earned  ║
@@ -79,14 +144,20 @@ their bonuses stack.
 ╚══════════════════════════════════════════════════════════╝
 ```
 
-The player can also select a third option: **[DEFER]** — the catastrophe is skipped entirely.
-No bonuses, no consequences. The option to defer can only be used once per catastrophe; if deferred,
-the catastrophe will not re-appear in this run (you've committed to surviving without it).
+### Voluntary Catastrophe
+
+Players can **always invoke a Catastrophe voluntarily** for their current epoch via the Epoch tab
+(or Stats tab). This lets players deliberately chase Legacy Bonuses without relying on the random
+roll. Voluntary catastrophe presents the same Endure/Succumb modal with identical consequences and
+rewards.
+
+A voluntary invocation counts as the epoch's catastrophe — if you already received a catastrophe
+randomly this epoch, the voluntary option is unavailable until the next epoch.
 
 ### ENDURE — Consequences and Rewards
 
-**Immediate damage (all applied on choice):**
-- 30% of buildings randomly destroyed (shown to player as a list: "73 Farms lost, 12 Monasteries lost")
+**Immediate damage (applied on choice):**
+- **20% of buildings randomly destroyed** (shown to player as a list: "43 Farms lost, 8 Monasteries lost")
 - All resources drop to 15% of current stored amount
 - 25% of workers removed (distributed evenly across all domains)
 - Research, milestones, wonders, and age unlocks are fully preserved
@@ -153,16 +224,17 @@ all 7 legacy bonuses simultaneously and has access to all 7 exclusive buildings 
 
 | | Regular Prestige | Catastrophe Succumb |
 |--|-----------------|---------------------|
-| Trigger | Player-initiated anytime | Offered at epoch boundary |
+| Trigger | Player-initiated anytime | Random (~15% per epoch) or voluntary |
 | Reset scope | Full | Full + 8 Ruins carry forward |
 | Bonus pool | Prestige upgrade tree (9 slots) | Epoch Legacy Bonuses (7 slots) |
 | Lore / narrative | None | Civilization history records it |
-| Repeatable | Yes, unlimited | Once per epoch per run |
+| Repeatable | Yes, unlimited | Once per epoch per run (random OR voluntary, not both) |
 | Stack with each other | Yes | Yes — fully compatible |
 
 A player who has both prestiged and succumbed to catastrophes holds both bonus types simultaneously.
 They are designed to reward different play styles: efficiency players use prestige; narrative players
-build catastrophe histories.
+build catastrophe histories. Players who want to guarantee Legacy Bonuses use the voluntary option;
+players who want the full experience let fate decide.
 
 ---
 
@@ -243,7 +315,14 @@ adds 5 exclusive events that only appear during that epoch.
 | Digital Era exclusive | 5 | Digital Era only |
 | Neon Era exclusive | 5 | Neon Era only |
 | Cosmic Era exclusive | 5 | Cosmic Era only |
-| **Total** | **63** | |
+| Good epoch events (major epoch roll) | 10 | One fires per epoch transition (if good) |
+| Challenging bad epoch events (major epoch roll) | 8 | One fires per epoch transition (if bad, non-catastrophe) |
+| Catastrophe events | 7 | One fires per epoch transition (if catastrophe roll) |
+| **Total** | **88** | |
+
+Note: The 10 good + 8 bad + 7 catastrophe events are **epoch transition events**, separate from
+the regular random event pool. They fire exactly once per epoch transition, replacing the normal
+"age advance" announcement.
 
 ---
 
@@ -291,8 +370,10 @@ On epoch transition, the dashboard status bar briefly shows:
 - `AgeDef` needs an `EpochKey string` field mapping each age to its epoch
 - `EpochDef` struct: `Key`, `Name`, `Icon`, `Color`, `Ages []string`, `CatastropheKey string`
 - `CatastropheDef` struct: `EpochKey`, `Name`, `FlavorText`, `EndureConsequences`, `SuccumbLegacyBonus`
-- `GameEngine` tracks: `currentEpoch string`, `catastropheOffered map[string]bool`, `legacyBonuses map[string]bool`,
-  `catastropheHistory []string` (for civilization log)
+- `EpochEventDef` struct: `Key`, `Type` (good_minor/good_major/good_legendary/bad_challenging/catastrophe),
+  `Name`, `FlavorText`, `Effects []EventEffect`
+- `GameEngine` tracks: `currentEpoch string`, `epochEventFired map[string]bool`, `legacyBonuses map[string]bool`,
+  `catastropheHistory []string` (for civilization log), `survivedEpochs map[string]bool`
 
 ### Epoch Transition Trigger
 
@@ -303,32 +384,70 @@ advanceAge() {
     if newEpoch != ge.currentEpoch {
         ge.currentEpoch = newEpoch
         ge.bus.Publish(EpochAdvanced, newEpoch)
-        // trigger catastrophe offer UI
-        if !ge.catastropheOffered[newEpoch] {
-            ge.pendingCatastrophe = newEpoch
+        ge.rollEpochEvent(newEpoch)   // fires immediately on epoch transition
+    }
+}
+
+rollEpochEvent(epoch string) {
+    faithPct := ge.faith / ge.faithCap
+    goodChance := 0.50
+    if faithPct < 0.25 { goodChance = 0.40 }
+    if faithPct > 0.75 { goodChance = 0.60 }
+
+    if rand.Float64() < goodChance {
+        ge.rollGoodEpochEvent()
+    } else {
+        if rand.Float64() < 0.30 {
+            ge.pendingCatastrophe = epoch   // trigger UI modal
+        } else {
+            ge.rollChallengingEpochEvent()
         }
     }
 }
+
+rollGoodEpochEvent() {
+    culturePct := ge.culture / ge.cultureCap
+    var tier string
+    switch {
+    case culturePct > 0.75 && rand.Float64() < 0.15: tier = "legendary"
+    case culturePct > 0.40: tier = "major"
+    default: tier = "minor"
+    }
+    event := pickRandomFromPool(goodEpochEvents, tier)
+    ge.applyEpochEvent(event)
+    ge.bus.Publish(EpochEventFired, event)
+}
 ```
 
-### Event Pool Filtering
+### Event Pool Filtering (Regular Events)
 
-EventManager's random event trigger should filter the available event pool:
+EventManager's regular random event trigger filters the candidate pool by current epoch:
 ```
 candidateEvents = universalEvents + epochExclusiveEvents[currentEpoch]
 ```
 Previous epoch exclusive events are permanently removed from the pool on epoch transition.
+Epoch transition events (good/bad/catastrophe) are a separate pool, fired once per epoch
+transition — NOT drawn from the regular random event pool.
+
+### Voluntary Catastrophe
+
+Exposed via `GameEngine.InvokeCatastrophe() error`:
+- Returns error if catastrophe already occurred this epoch (random or voluntary)
+- Sets `ge.pendingCatastrophe = ge.currentEpoch`
+- UI polls `ge.pendingCatastrophe` to show modal on next tick
 
 ### Catastrophe Save State
 
 In `GameSave`:
 ```go
-LegacyBonuses      map[string]bool   `json:"legacy_bonuses,omitempty"`
-CatastropheHistory []string          `json:"catastrophe_history,omitempty"`
-SurvivedEpochs     map[string]bool   `json:"survived_epochs,omitempty"`
-PendingCatastrophe string            `json:"pending_catastrophe,omitempty"`
-Ruins               []RuinState      `json:"ruins,omitempty"`
+LegacyBonuses        map[string]bool   `json:"legacy_bonuses,omitempty"`
+CatastropheHistory   []string          `json:"catastrophe_history,omitempty"`
+SurvivedEpochs       map[string]bool   `json:"survived_epochs,omitempty"`
+EpochEventFired      map[string]bool   `json:"epoch_event_fired,omitempty"`
+PendingCatastrophe   string            `json:"pending_catastrophe,omitempty"`
+Ruins                []RuinState       `json:"ruins,omitempty"`
 ```
 
 Ruins persist across runs (they're part of your civilization's identity). Legacy bonuses are
-permanent and never removed.
+permanent and never removed. `EpochEventFired` prevents a second roll in the same epoch (for
+voluntary catastrophe gating).

@@ -51,4 +51,9 @@ Decisions recorded here are settled. They can be revisited but require explicit 
 | 2026-03-03 | 2-stage processing chain everywhere (Geological ore → Metallurgy → refined metal) | Adds satisfying supply chain optimization; every epoch has a bottleneck to balance |
 | 2026-03-03 | 25 resources total (added marble, iron_ore, titanium_ore, dark_matter_crystals) | Intermediate ores enable 2-stage chains without exposing them as build costs |
 | 2026-03-03 | Civilizational Catastrophe system: Endure vs Succumb at each epoch boundary | Narrative-driven alternative/complement to prestige; 7 catastrophes, epoch-specific Legacy Bonuses, 8 Ruins carry forward on Succumb |
-| 2026-03-03 | 63 total events: 28 universal + 5 epoch-exclusive per epoch | Event pool shifts each epoch; events feel contextually appropriate to the era |
+| 2026-03-03 | 88 total events: 28 universal + 35 epoch-exclusive + 10 good epoch + 8 bad epoch + 7 catastrophe | Event pool shifts each epoch; transition events are separate from regular random pool |
+| 2026-03-03 | Catastrophe is NOT guaranteed every epoch — it's ~15% per epoch transition | Players would rage if forced into Endure/Succumb 7 times; rarity makes it feel special |
+| 2026-03-03 | Faith influences epoch event roll (40/50/60% good chance) | Meaningful new use for faith investment beyond morale/diplomacy |
+| 2026-03-03 | Culture gates good event tier (minor/major/legendary) | Meaningful new use for culture investment |
+| 2026-03-03 | Endure: 20% buildings destroyed (down from 30%) | 30% felt punishing; 20% is painful but survivable |
+| 2026-03-03 | Voluntary catastrophe always available via Epoch tab | Players who want Legacy Bonuses don't have to wait for RNG |
