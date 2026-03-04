@@ -10,6 +10,7 @@ a proposed change would break the game's balance, start here.
 |------|---------------|
 | [economy.md](economy.md) | Economy laws, cost scaling, production model, worker-building coupling |
 | [workers.md](workers.md) | Age-tiered worker class names, food costs, output multipliers, domain assignments |
+| [age-transitions.md](age-transitions.md) | Age advance transformation pass — building lineages, worker renames, legacy rules, UI summary |
 
 ## How to Use These Documents
 
@@ -28,6 +29,9 @@ Decisions recorded here are settled. They can be revisited but require explicit 
 |------|----------|-----------|
 | 2026-03-03 | Workers couple to buildings (Philosophy B) | Preserves assignment mechanic, creates unified production chain |
 | 2026-03-03 | Age-tiered worker classes (Gatherer→Serf→Drone→Harvester etc.) | Flavor + mechanical progression; higher tiers cost more food but produce significantly more |
+| 2026-03-03 | Age transition transformation pass | Buildings upgrade in-place (count preserved), workers rename on age advance — civilisation feels like it advances rather than just unlocking more |
+| 2026-03-03 | Wonders never transform, storage buildings don't transform (cumulative) | Wonders are landmarks; storage is additive infrastructure |
+| 2026-03-03 | Legacy buildings: no next-tier = stays functional, grayed, unbuildable | Player is never punished by losing production they invested in |
 | 2026-03-03 | Remove MaxCount from production/housing buildings | Geometric cost scaling is the natural cap |
 | 2026-03-03 | Keep MaxCount on storage buildings and wonders | Unlimited storage breaks resource pressure; wonders are unique by design |
 | 2026-03-03 | Storage cap ≥ 2× next affordable building cost at all times | Prevents the impossible-to-build problem |
