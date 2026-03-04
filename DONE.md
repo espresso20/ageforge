@@ -145,5 +145,32 @@ Items are moved here from TODO.md when finished. Do not re-implement anything li
 - Note: Worker class rename/restat already handled by `SetAge()` from Phase 6 — no additional villagers.go changes needed
 - All tests passing, `go build ./...` clean
 
+## Economy Redesign — Phase 8: Epoch System (2026-03-04)
+- [x] `config/epochs.go`: Added `EpochEventDef` struct; `GoodEpochEvents()` (10 events: 5 minor, 4 major, 1 legendary); `ChallengingEpochEvents()` (8 events). Event definitions are pure data (Key, Name, FlavorText, Type, Duration only); all application logic in engine.go.
+- [x] `game/bus.go`: Added `EventEpochAdvanced` and `EventEpochEventFired` event constants
+- [x] `game/types.go`: Added `EpochEventRecord` struct; added EpochKey, EpochName, EpochIcon, EpochColor, EpochSurvived, PendingCatastrophe, EpochEventHistory to `GameState`
+- [x] `game/villagers.go`: Added `AddPctAll(pct)` — instant worker count boost across all domains; `RemovePct(pct)` — proportional removal (epidemic)
+- [x] `game/buildings.go`: Added `DestroyRandom(count)` — destroys N random non-wonder buildings; added `math/rand` import
+- [x] `game/research.go`: Added `ForceCompleteN(n, age, ageOrder)` — completes up to N techs from current age (Grand Discovery event)
+- [x] `game/engine.go`:
+  - Added epoch fields: `currentEpoch`, `epochEventFired`, `survivedEpochs`, `pendingCatastrophe`, `epochEventHistory`
+  - Added `math/rand` import
+  - `NewGameEngine()` and `Reset()` initialize epoch fields
+  - `recalculateRates()` now sums `production_all` effects from active events (epoch boosts)
+  - `advanceAge()` calls `detectEpochTransition()` after age change
+  - `detectEpochTransition(newAge)` — detects epoch change, logs announcement, fires bus event, calls `rollEpochEvent()`
+  - `rollEpochEvent(epochKey)` — faith-gated good/bad roll (40/50/60% good); bad: 70% challenging, 30% catastrophe
+  - `rollGoodEpochEvent()` — culture-gated tier selection (minor/major/legendary), picks from pool, calls `applyGoodEpochEvent()`
+  - `rollChallengingEpochEvent(epochKey)` — random pick from challenging pool, calls `applyChallengingEpochEvent()`
+  - `applyGoodEpochEvent(ev)` — 10 cases: age_of_plenty (+production_all timed), population_surge (+15% workers), ancient_cache (fill 40% storage), trade_winds (gold boost), cultural_festival (culture+faith instant+timed), grand_discovery (3 free techs), worker_innovation (+10% permanent), architects_gift (10 free buildings), peaceful_century (+20% timed), epoch_blessing (+15% permanent)
+  - `applyChallengingEpochEvent(ev, epochKey)` — 8 cases: famine (food debuff), merchant_betrayal (steal gold+debuff), great_fire (destroy 8 buildings), epidemic (remove 20% workers+debuff), resource_drought (primary resource debuff), political_instability (steal faith+knowledge debuff), economic_crash (steal gold+debuff), dark_age (cancel research+steal knowledge+debuff)
+  - `InvokeCatastrophe() error` — voluntary trigger; errors if already fired this epoch; sets pendingCatastrophe
+  - `GetState()` exposes all epoch fields
+- [x] `game/save.go`: Added CurrentEpoch, EpochEventFired, SurvivedEpochs, PendingCatastrophe, EpochEventHistory to `GameSave`; serialize in `buildSaveSnapshot()`; restore in `LoadGame()`; added `copyBoolMap()` helper; added config import
+- [x] `ui/dashboard.go`: Epoch badge in statusTV (icon + color + "·Survived" marker); subscribed to EventEpochAdvanced (toast 6s); subscribed to EventEpochEventFired (toast colored by event type 6s)
+- Note: Catastrophe Endure/Succumb modal deferred to Phase 9
+- Note: `survivedEpochs` tracking deferred to Phase 9 (Endure action)
+- All tests passing, `go build ./...` clean
+
 ## General / Misc
 - [x] Established TODO.md + DONE.md workflow for session-resumable planning (2026-02-25)

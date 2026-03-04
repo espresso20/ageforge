@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 	"sync"
 	"time"
@@ -58,6 +59,13 @@ type GameEngine struct {
 
 	// Phase 7: result of the most recent age advance transformation pass
 	lastAgeAdvanceSummary AgeAdvanceSummary
+
+	// Phase 8: epoch system
+	currentEpoch       string
+	epochEventFired    map[string]bool // epochKey -> true once an epoch event has fired
+	survivedEpochs     map[string]bool // epochs where player chose Endure
+	pendingCatastrophe string          // epoch key when catastrophe modal should show; "" otherwise
+	epochEventHistory  []EpochEventRecord
 }
 
 // BuildQueueItem represents a building under construction
@@ -87,6 +95,9 @@ func NewGameEngine() *GameEngine {
 		permanentBonuses: make(map[string]float64),
 		speedMultiplier:  1.0,
 		stopCh:           make(chan struct{}),
+		currentEpoch:     config.EpochForAge("primitive_age"),
+		epochEventFired:  make(map[string]bool),
+		survivedEpochs:   make(map[string]bool),
 	}
 	ge.applyAgeUnlocks("primitive_age")
 	// Give starting resources — enough for first hut + a little food
@@ -550,7 +561,13 @@ func (ge *GameEngine) recalculateRates() {
 	}
 
 	// Apply production_all bonus (multiplier on all positive rates)
+	// Accumulated from: research bonuses, permanent bonuses, prestige, and active event effects
 	prodAllBonus := researchBonuses["production_all"] + permanentBonuses["production_all"]
+	for _, eff := range ge.Events.GetActiveEffects() {
+		if eff.Type == "production_all" {
+			prodAllBonus += eff.Value
+		}
+	}
 	if prodAllBonus > 0 {
 		for _, def := range ge.Resources.defs {
 			r := ge.Resources.resources[def.Key]
@@ -765,6 +782,9 @@ func (ge *GameEngine) advanceAge(newAge string) {
 			"new_age": newAge,
 		},
 	})
+
+	// Phase 8: detect epoch transition and roll epoch event
+	ge.detectEpochTransition(newAge)
 }
 
 // applyAgeUnlocks unlocks all content for an age
@@ -779,6 +799,321 @@ func (ge *GameEngine) applyAgeUnlocks(ageKey string) {
 	for _, v := range age.UnlockVillagers {
 		ge.Villagers.UnlockType(v)
 	}
+}
+
+// detectEpochTransition checks whether newAge belongs to a different epoch and fires the
+// epoch event roll if so. Must be called at the end of advanceAge (under engine write lock).
+func (ge *GameEngine) detectEpochTransition(newAge string) {
+	newEpoch := config.EpochForAge(newAge)
+	if newEpoch == ge.currentEpoch {
+		return // same epoch, no transition
+	}
+	ge.currentEpoch = newEpoch
+	ep := config.EpochByKey()[newEpoch]
+	ge.addLog("event", fmt.Sprintf("[%s]✦ The %s Dawns — %s[-]", ep.Color, ep.Name, ep.Description))
+	ge.Bus.Publish(EventData{
+		Type: EventEpochAdvanced,
+		Payload: map[string]interface{}{
+			"epoch_key":  newEpoch,
+			"epoch_name": ep.Name,
+			"epoch_icon": ep.Icon,
+		},
+	})
+	ge.rollEpochEvent(newEpoch)
+}
+
+// rollEpochEvent performs the epoch transition event roll (faith gates good/bad, culture gates tier).
+// Must be called under engine write lock.
+func (ge *GameEngine) rollEpochEvent(epochKey string) {
+	// Prevent double-fire per epoch
+	if ge.epochEventFired[epochKey] {
+		return
+	}
+	ge.epochEventFired[epochKey] = true
+
+	faithStorage := ge.Resources.GetStorage("faith")
+	goodChance := 0.50
+	if faithStorage > 0 {
+		faithPct := ge.Resources.Get("faith") / faithStorage
+		if faithPct < 0.25 {
+			goodChance = 0.40
+		} else if faithPct > 0.75 {
+			goodChance = 0.60
+		}
+	}
+
+	if rand.Float64() < goodChance {
+		ge.rollGoodEpochEvent()
+	} else {
+		if rand.Float64() < 0.30 {
+			// Catastrophe
+			ge.pendingCatastrophe = epochKey
+			ep := config.EpochByKey()[epochKey]
+			ge.addLog("warning", fmt.Sprintf("☄ A great catastrophe threatens the %s — prepare yourself.", ep.Name))
+			record := EpochEventRecord{
+				EpochKey: epochKey, EpochName: ep.Name,
+				EventKey: ep.CatastropheKey, EventName: "Catastrophe", EventType: "catastrophe",
+				Tick: ge.tick,
+			}
+			ge.epochEventHistory = append(ge.epochEventHistory, record)
+		} else {
+			ge.rollChallengingEpochEvent(epochKey)
+		}
+	}
+}
+
+// rollGoodEpochEvent picks a good epoch event based on culture level.
+func (ge *GameEngine) rollGoodEpochEvent() {
+	cultureStorage := ge.Resources.GetStorage("culture")
+	tier := "minor"
+	if cultureStorage > 0 {
+		culturePct := ge.Resources.Get("culture") / cultureStorage
+		if culturePct > 0.75 && rand.Float64() < 0.15 {
+			tier = "legendary"
+		} else if culturePct > 0.40 {
+			tier = "major"
+		}
+	}
+
+	pool := config.GoodEpochEvents()
+	var eligible []config.EpochEventDef
+	for _, ev := range pool {
+		switch tier {
+		case "legendary":
+			eligible = append(eligible, ev) // all tiers available
+		case "major":
+			if ev.Type == "good_minor" || ev.Type == "good_major" {
+				eligible = append(eligible, ev)
+			}
+		default: // minor
+			if ev.Type == "good_minor" {
+				eligible = append(eligible, ev)
+			}
+		}
+	}
+	if len(eligible) == 0 {
+		return
+	}
+	ev := eligible[rand.Intn(len(eligible))]
+	ge.applyGoodEpochEvent(ev)
+
+	ep := config.EpochByKey()[ge.currentEpoch]
+	record := EpochEventRecord{
+		EpochKey: ge.currentEpoch, EpochName: ep.Name,
+		EventKey: ev.Key, EventName: ev.Name, EventType: ev.Type,
+		Tick: ge.tick,
+	}
+	ge.epochEventHistory = append(ge.epochEventHistory, record)
+	ge.Bus.Publish(EventData{
+		Type: EventEpochEventFired,
+		Payload: map[string]interface{}{"event_key": ev.Key, "event_name": ev.Name, "event_type": ev.Type},
+	})
+}
+
+// rollChallengingEpochEvent picks a bad (non-catastrophe) epoch event.
+func (ge *GameEngine) rollChallengingEpochEvent(epochKey string) {
+	pool := config.ChallengingEpochEvents()
+	if len(pool) == 0 {
+		return
+	}
+	ev := pool[rand.Intn(len(pool))]
+	ge.applyChallengingEpochEvent(ev, epochKey)
+
+	ep := config.EpochByKey()[epochKey]
+	record := EpochEventRecord{
+		EpochKey: epochKey, EpochName: ep.Name,
+		EventKey: ev.Key, EventName: ev.Name, EventType: ev.Type,
+		Tick: ge.tick,
+	}
+	ge.epochEventHistory = append(ge.epochEventHistory, record)
+	ge.Bus.Publish(EventData{
+		Type: EventEpochEventFired,
+		Payload: map[string]interface{}{"event_key": ev.Key, "event_name": ev.Name, "event_type": ev.Type},
+	})
+}
+
+// applyGoodEpochEvent applies the effects of a good epoch transition event.
+func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
+	ge.addLog("success", fmt.Sprintf("✦ %s — %s", ev.Name, ev.FlavorText))
+	ageOrder := ge.progress.GetAgeOrder()
+	switch ev.Key {
+	case "age_of_plenty":
+		// ×2 all production for Duration ticks via production_all effect
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_age_of_plenty",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production_all", Value: 1.0}},
+		})
+	case "population_surge":
+		// +15% workers across all domains, instant
+		ge.Villagers.AddPctAll(0.15)
+	case "ancient_cache":
+		// Fill 40% of each resource's storage cap
+		for _, def := range ge.Resources.defs {
+			cap := ge.Resources.GetStorage(def.Key)
+			if cap > 0 && ge.Resources.IsUnlocked(def.Key) {
+				ge.Resources.Add(def.Key, cap*0.40)
+			}
+		}
+	case "trade_winds":
+		// Gold ×2 production for Duration ticks
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_trade_winds",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production", Target: "gold", Value: 5.0}},
+		})
+	case "cultural_festival":
+		// Instant culture +30%, faith +20%; timed production boost
+		ge.Resources.Add("culture", ge.Resources.Get("culture")*0.30)
+		ge.Resources.Add("faith", ge.Resources.Get("faith")*0.20)
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_cultural_festival",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects: []config.Effect{
+				{Type: "production", Target: "culture", Value: 1.0},
+				{Type: "production", Target: "faith", Value: 1.0},
+			},
+		})
+	case "grand_discovery":
+		// Complete 3 free techs from current age
+		completed := ge.Research.ForceCompleteN(3, ge.age, ageOrder)
+		for _, key := range completed {
+			def := config.TechByKey()[key]
+			ge.addLog("success", fmt.Sprintf("  → Free tech: %s", def.Name))
+		}
+	case "worker_innovation":
+		// Permanent +10% production_all
+		ge.permanentBonuses["production_all"] += 0.10
+		ge.addLog("success", "  → All production permanently +10%")
+	case "architects_gift":
+		// 10 free buildings of the most common built non-wonder type
+		bestKey := ""
+		bestCount := 0
+		for key, count := range ge.Buildings.counts {
+			if def, ok := ge.Buildings.defs[key]; ok && def.Category != "wonder" && count > bestCount {
+				bestKey = key
+				bestCount = count
+			}
+		}
+		if bestKey != "" {
+			ge.Buildings.counts[bestKey] += 10
+			def := ge.Buildings.defs[bestKey]
+			ge.addLog("success", fmt.Sprintf("  → 10 free %s", def.Name))
+		}
+	case "peaceful_century":
+		// +20% all production for Duration ticks
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_peaceful_century",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production_all", Value: 0.20}},
+		})
+	case "epoch_blessing":
+		// Permanent +15% production_all; recorded as a golden age
+		ge.permanentBonuses["production_all"] += 0.15
+		ge.addLog("success", "  → Epoch Blessing: all production permanently +15%")
+	}
+}
+
+// applyChallengingEpochEvent applies a challenging (non-catastrophe) bad epoch event.
+func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochKey string) {
+	ge.addLog("warning", fmt.Sprintf("⚠ %s — %s", ev.Name, ev.FlavorText))
+	switch ev.Key {
+	case "the_famine":
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_famine",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production", Target: "food", Value: -3.0}},
+		})
+	case "merchant_betrayal":
+		ge.Resources.Remove("gold", ge.Resources.Get("gold")*0.50)
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_merchant_betrayal",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production", Target: "gold", Value: -2.0}},
+		})
+	case "the_great_fire":
+		destroyed := ge.Buildings.DestroyRandom(8)
+		for _, desc := range destroyed {
+			ge.addLog("warning", fmt.Sprintf("  → Destroyed: %s", desc))
+		}
+	case "epidemic":
+		ge.Villagers.RemovePct(0.20)
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_epidemic",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production", Target: "food", Value: -1.5}},
+		})
+	case "resource_drought":
+		// Debuff epoch's primary resource
+		primaryRes := "wood" // fallback
+		if ep, ok := config.EpochByKey()[epochKey]; ok {
+			primaryRes = ep.PrimaryResource
+		}
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_resource_drought",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production", Target: primaryRes, Value: -3.0}},
+		})
+	case "political_instability":
+		ge.Resources.Remove("faith", ge.Resources.Get("faith")*0.60)
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_political_instability",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects: []config.Effect{
+				{Type: "production", Target: "knowledge", Value: -2.0},
+			},
+		})
+	case "economic_crash":
+		ge.Resources.Remove("gold", ge.Resources.Get("gold")*0.50)
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_economic_crash",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production", Target: "gold", Value: -3.0}},
+		})
+	case "the_dark_age":
+		ge.Research.CancelResearch()
+		ge.Resources.Remove("knowledge", ge.Resources.Get("knowledge")*0.80)
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_dark_age",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production", Target: "knowledge", Value: -3.0}},
+		})
+	}
+}
+
+// InvokeCatastrophe voluntarily triggers the catastrophe for the current epoch.
+// Returns an error if a catastrophe has already been invoked this epoch (random or voluntary).
+func (ge *GameEngine) InvokeCatastrophe() error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	if ge.epochEventFired[ge.currentEpoch] {
+		return fmt.Errorf("a catastrophe event has already occurred this epoch (%s)", ge.currentEpoch)
+	}
+	if ge.pendingCatastrophe != "" {
+		return fmt.Errorf("a catastrophe is already pending")
+	}
+	ge.epochEventFired[ge.currentEpoch] = true
+	ge.pendingCatastrophe = ge.currentEpoch
+	ep := config.EpochByKey()[ge.currentEpoch]
+	ge.addLog("warning", fmt.Sprintf("☄ Voluntary catastrophe invoked for the %s.", ep.Name))
+	record := EpochEventRecord{
+		EpochKey: ge.currentEpoch, EpochName: ep.Name,
+		EventKey: ep.CatastropheKey, EventName: "Voluntary Catastrophe", EventType: "catastrophe",
+		Tick: ge.tick,
+	}
+	ge.epochEventHistory = append(ge.epochEventHistory, record)
+	return nil
 }
 
 // processBuildQueue advances construction on queued buildings
@@ -1270,6 +1605,11 @@ func (ge *GameEngine) Reset() {
 
 	ge.cheaterBadge = false
 	ge.eliteBadge = false
+	ge.currentEpoch = config.EpochForAge("primitive_age")
+	ge.epochEventFired = make(map[string]bool)
+	ge.survivedEpochs = make(map[string]bool)
+	ge.pendingCatastrophe = ""
+	ge.epochEventHistory = nil
 
 	ge.addLog("event", "Game wiped! Starting fresh.")
 	ge.addLog("info", "Type [cyan]help[-] for commands.")
@@ -1372,6 +1712,23 @@ func (ge *GameEngine) GetState() GameState {
 		CheaterBadge:          ge.cheaterBadge,
 		EliteBadge:            ge.eliteBadge,
 		LastAgeAdvanceSummary: ge.lastAgeAdvanceSummary,
+		// Phase 8: epoch fields
+		EpochKey:           ge.currentEpoch,
+		EpochName:          func() string {
+			if ep, ok := config.EpochByKey()[ge.currentEpoch]; ok { return ep.Name }
+			return ""
+		}(),
+		EpochIcon:          func() string {
+			if ep, ok := config.EpochByKey()[ge.currentEpoch]; ok { return ep.Icon }
+			return ""
+		}(),
+		EpochColor:         func() string {
+			if ep, ok := config.EpochByKey()[ge.currentEpoch]; ok { return ep.Color }
+			return "white"
+		}(),
+		EpochSurvived:      ge.survivedEpochs[ge.currentEpoch],
+		PendingCatastrophe: ge.pendingCatastrophe,
+		EpochEventHistory:  ge.epochEventHistory,
 	}
 }
 

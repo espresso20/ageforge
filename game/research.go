@@ -106,6 +106,38 @@ func (rm *ResearchManager) CancelResearch() (string, bool) {
 	return tech, true
 }
 
+// ForceCompleteN marks up to n unresearched techs from currentAge as researched,
+// applying their bonuses. Used by Good Epoch Events (Grand Discovery).
+// Returns the keys of techs completed.
+func (rm *ResearchManager) ForceCompleteN(n int, currentAge string, ageOrder map[string]int) []string {
+	var completed []string
+	for key, def := range rm.defs {
+		if len(completed) >= n {
+			break
+		}
+		if rm.researched[key] {
+			continue
+		}
+		if ageOrder[def.Age] > ageOrder[currentAge] {
+			continue
+		}
+		rm.researched[key] = true
+		for _, eff := range def.Effects {
+			rm.bonuses[eff.Target] += eff.Value
+		}
+		completed = append(completed, key)
+	}
+	// Also cancel any in-progress research to avoid state inconsistency
+	if len(completed) > 0 && rm.currentTech != "" {
+		if rm.researched[rm.currentTech] {
+			rm.currentTech = ""
+			rm.ticksLeft = 0
+			rm.totalTicks = 0
+		}
+	}
+	return completed
+}
+
 // IsResearched returns whether a tech has been completed
 func (rm *ResearchManager) IsResearched(key string) bool {
 	return rm.researched[key]

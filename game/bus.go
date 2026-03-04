@@ -13,6 +13,8 @@ const (
 	EventGameLoaded          = "game_loaded"
 	EventMilestoneCompleted  = "milestone_completed"
 	EventChainCompleted      = "chain_completed"
+	EventEpochAdvanced       = "epoch_advanced"
+	EventEpochEventFired     = "epoch_event_fired"
 )
 
 // EventData carries data for an event

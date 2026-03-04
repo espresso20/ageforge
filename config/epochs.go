@@ -77,6 +77,121 @@ func Epochs() []EpochDef {
 	}
 }
 
+// EpochEventDef defines a major epoch transition event (good, challenging, or catastrophe).
+// These fire exactly once per epoch transition — they are NOT part of the regular random event pool.
+type EpochEventDef struct {
+	Key       string // unique key
+	Name      string
+	FlavorText string  // one-line dramatic description shown in log/toast
+	Type      string  // "good_minor" | "good_major" | "good_legendary" | "bad_challenging"
+	Duration  int     // ticks the effect lasts (0 = instant one-time)
+}
+
+// GoodEpochEvents returns the 10 good epoch transition events (minor/major/legendary).
+func GoodEpochEvents() []EpochEventDef {
+	return []EpochEventDef{
+		// --- Minor (any culture level) ---
+		{
+			Key: "age_of_plenty", Name: "Age of Plenty", Type: "good_minor",
+			FlavorText: "Harvests overflow, rivers run clear. Production surges across all domains.",
+			Duration:   216, // ~7 min real
+		},
+		{
+			Key: "population_surge", Name: "Population Surge", Type: "good_minor",
+			FlavorText: "A generation of plenty — workers flock to your banner.",
+			Duration:   0, // instant: +15% workers added
+		},
+		{
+			Key: "ancient_cache", Name: "Ancient Cache", Type: "good_minor",
+			FlavorText: "Explorers uncover a sealed vault of ancient stores.",
+			Duration:   0, // instant: fills 40% of every resource's storage
+		},
+		{
+			Key: "trade_winds", Name: "Trade Winds", Type: "good_minor",
+			FlavorText: "A favorable wind opens all trade routes and multiplies gold income.",
+			Duration:   144, // ~5 min
+		},
+		{
+			Key: "cultural_festival", Name: "Cultural Festival", Type: "good_minor",
+			FlavorText: "A grand festival unites your people. Culture and faith surge.",
+			Duration:   144, // ~5 min
+		},
+		// --- Major (medium culture required) ---
+		{
+			Key: "grand_discovery", Name: "The Grand Discovery", Type: "good_major",
+			FlavorText: "Scholars make a breakthrough. Three technologies complete themselves.",
+			Duration:   0, // instant: complete 3 free techs
+		},
+		{
+			Key: "worker_innovation", Name: "Worker Innovation", Type: "good_major",
+			FlavorText: "A new method transforms your workforce — output climbs permanently.",
+			Duration:   0, // instant: permanent +10% production_all
+		},
+		{
+			Key: "architects_gift", Name: "The Architect's Gift", Type: "good_major",
+			FlavorText: "A master architect offers designs freely. Ten buildings rise without cost.",
+			Duration:   0, // instant: 10 free buildings
+		},
+		{
+			Key: "peaceful_century", Name: "Peaceful Century", Type: "good_major",
+			FlavorText: "An era of peace descends. No disasters. Production climbs.",
+			Duration:   288, // ~10 min
+		},
+		// --- Legendary (high culture, rare) ---
+		{
+			Key: "epoch_blessing", Name: "Epoch Blessing", Type: "good_legendary",
+			FlavorText: "The heavens smile on your civilization. A permanent golden age begins.",
+			Duration:   0, // instant: permanent +15% production_all; recorded in history
+		},
+	}
+}
+
+// ChallengingEpochEvents returns the 8 bad (non-catastrophe) epoch transition events.
+func ChallengingEpochEvents() []EpochEventDef {
+	return []EpochEventDef{
+		{
+			Key: "the_famine", Name: "The Famine", Type: "bad_challenging",
+			FlavorText: "Crops wither. Granaries empty. Your people grow desperate.",
+			Duration:   120,
+		},
+		{
+			Key: "merchant_betrayal", Name: "Merchant Betrayal", Type: "bad_challenging",
+			FlavorText: "Your trading partners vanish with the gold. Markets collapse.",
+			Duration:   72,
+		},
+		{
+			Key: "the_great_fire", Name: "The Great Fire", Type: "bad_challenging",
+			FlavorText: "Flames sweep the city. Buildings crumble before the dawn.",
+			Duration:   0, // instant: 8 random buildings destroyed
+		},
+		{
+			Key: "epidemic", Name: "Epidemic", Type: "bad_challenging",
+			FlavorText: "A plague moves swiftly through your population. Workers fall silent.",
+			Duration:   180,
+		},
+		{
+			Key: "resource_drought", Name: "Resource Drought", Type: "bad_challenging",
+			FlavorText: "The era's vital resource dries up. Supply chains buckle.",
+			Duration:   90,
+		},
+		{
+			Key: "political_instability", Name: "Political Instability", Type: "bad_challenging",
+			FlavorText: "Factions tear at the throne. Faith collapses. The military is paralyzed.",
+			Duration:   60,
+		},
+		{
+			Key: "economic_crash", Name: "Economic Crash", Type: "bad_challenging",
+			FlavorText: "Markets implode. Gold vanishes. Building costs skyrocket.",
+			Duration:   216,
+		},
+		{
+			Key: "the_dark_age", Name: "The Dark Age", Type: "bad_challenging",
+			FlavorText: "Knowledge fades. Research halts. Your scholars fall silent.",
+			Duration:   144,
+		},
+	}
+}
+
 // EpochByKey returns a map of key -> EpochDef.
 func EpochByKey() map[string]EpochDef {
 	m := make(map[string]EpochDef)

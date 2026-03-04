@@ -9,6 +9,8 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // saveHMACKey is used to sign the save payload. Knowing this key allows clearing the shame badge.
@@ -41,6 +43,12 @@ type GameSave struct {
 	WonderBanks      map[string]map[string]float64 `json:"wonder_banks,omitempty"`
 	// Phase 7: legacy building keys
 	LegacyBuildings []string `json:"legacy_buildings,omitempty"`
+	// Phase 8: epoch system
+	CurrentEpoch       string            `json:"current_epoch,omitempty"`
+	EpochEventFired    map[string]bool   `json:"epoch_event_fired,omitempty"`
+	SurvivedEpochs     map[string]bool   `json:"survived_epochs,omitempty"`
+	PendingCatastrophe string            `json:"pending_catastrophe,omitempty"`
+	EpochEventHistory  []EpochEventRecord `json:"epoch_event_history,omitempty"`
 	// Integrity fields
 	CheaterBadge bool   `json:"cheater_badge,omitempty"`
 	EliteBadge   bool   `json:"elite_badge,omitempty"`
@@ -336,9 +344,14 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		},
 		SpeedMultiplier: ge.speedMultiplier,
 		WonderBanks:     ge.Buildings.GetWonderBanks(),
-		LegacyBuildings: ge.Buildings.GetLegacyBuildings(),
-		CheaterBadge:    ge.cheaterBadge,
-		EliteBadge:      ge.eliteBadge,
+		LegacyBuildings:    ge.Buildings.GetLegacyBuildings(),
+		CheaterBadge:       ge.cheaterBadge,
+		EliteBadge:         ge.eliteBadge,
+		CurrentEpoch:       ge.currentEpoch,
+		EpochEventFired:    copyBoolMap(ge.epochEventFired),
+		SurvivedEpochs:     copyBoolMap(ge.survivedEpochs),
+		PendingCatastrophe: ge.pendingCatastrophe,
+		EpochEventHistory:  append([]EpochEventRecord(nil), ge.epochEventHistory...),
 	}
 }
 
@@ -453,6 +466,25 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.cheaterBadge = save.CheaterBadge
 	ge.eliteBadge = save.EliteBadge
 
+	// Restore Phase 8: epoch system
+	if save.CurrentEpoch != "" {
+		ge.currentEpoch = save.CurrentEpoch
+	} else {
+		ge.currentEpoch = config.EpochForAge(save.Age)
+	}
+	if save.EpochEventFired != nil {
+		ge.epochEventFired = save.EpochEventFired
+	} else {
+		ge.epochEventFired = make(map[string]bool)
+	}
+	if save.SurvivedEpochs != nil {
+		ge.survivedEpochs = save.SurvivedEpochs
+	} else {
+		ge.survivedEpochs = make(map[string]bool)
+	}
+	ge.pendingCatastrophe = save.PendingCatastrophe
+	ge.epochEventHistory = save.EpochEventHistory
+
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()
 
@@ -460,6 +492,18 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.applyOfflineProgress(time.Since(save.Timestamp))
 
 	return nil
+}
+
+// copyBoolMap returns a deep copy of a map[string]bool.
+func copyBoolMap(m map[string]bool) map[string]bool {
+	if m == nil {
+		return nil
+	}
+	out := make(map[string]bool, len(m))
+	for k, v := range m {
+		out[k] = v
+	}
+	return out
 }
 
 // getUnlockedState collects all unlock states for saving

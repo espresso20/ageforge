@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"math"
+	"math/rand"
 
 	"github.com/espresso20/ageforge/config"
 )
@@ -337,6 +338,47 @@ func (bm *BuildingManager) LoadLegacyBuildings(keys []string) {
 	for _, key := range keys {
 		bm.legacyBuildings[key] = true
 	}
+}
+
+// DestroyRandom destroys up to count individual building instances chosen at random.
+// Wonders are excluded. Returns a list of human-readable descriptions of what was destroyed.
+func (bm *BuildingManager) DestroyRandom(count int) []string {
+	// Build a pool of destroyable instances (key repeated by count)
+	type inst struct{ key string }
+	var pool []inst
+	for key, c := range bm.counts {
+		if c == 0 {
+			continue
+		}
+		if def, ok := bm.defs[key]; !ok || def.Category == "wonder" {
+			continue
+		}
+		for i := 0; i < c; i++ {
+			pool = append(pool, inst{key})
+		}
+	}
+	if len(pool) == 0 {
+		return nil
+	}
+	rand.Shuffle(len(pool), func(i, j int) { pool[i], pool[j] = pool[j], pool[i] })
+	if count > len(pool) {
+		count = len(pool)
+	}
+	destroyed := make(map[string]int)
+	for _, inst := range pool[:count] {
+		destroyed[inst.key]++
+	}
+	var names []string
+	for key, n := range destroyed {
+		bm.counts[key] -= n
+		if bm.counts[key] < 0 {
+			bm.counts[key] = 0
+		}
+		if def, ok := bm.defs[key]; ok {
+			names = append(names, fmt.Sprintf("%d %s", n, def.Name))
+		}
+	}
+	return names
 }
 
 // TransformBuilding transfers count from oldKey to newKey (age-transition lineage upgrade).

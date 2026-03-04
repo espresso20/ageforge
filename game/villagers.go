@@ -241,6 +241,39 @@ func (vm *VillagerManager) RemoveSoldiers(count int) {
 	}
 }
 
+// AddPctAll adds a percentage of current count to all domains (used by Population Surge event).
+func (vm *VillagerManager) AddPctAll(pct float64) {
+	for _, rt := range vm.domains {
+		add := int(float64(rt.count) * pct)
+		if add > 0 {
+			rt.count += add
+		}
+	}
+}
+
+// RemovePct removes a percentage of workers from all domains (used by Epidemic event).
+// Each domain loses floor(count * pct) workers; assignments are proportionally reduced.
+func (vm *VillagerManager) RemovePct(pct float64) {
+	for _, rt := range vm.domains {
+		remove := int(float64(rt.count) * pct)
+		if remove <= 0 {
+			continue
+		}
+		rt.count -= remove
+		if rt.count < 0 {
+			rt.count = 0
+		}
+		// Scale down assignments proportionally
+		for k, assigned := range rt.assignments {
+			reduced := assigned - int(float64(assigned)*pct)
+			if reduced < 0 {
+				reduced = 0
+			}
+			rt.assignments[k] = reduced
+		}
+	}
+}
+
 // GetAll returns serializable domain-keyed villager info for saving
 func (vm *VillagerManager) GetAll() map[string]VillagerInfo {
 	out := make(map[string]VillagerInfo)

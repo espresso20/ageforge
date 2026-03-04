@@ -33,6 +33,14 @@ type GameState struct {
 	EliteBadge     bool
 	// Phase 7: result of the last age advance transformation pass
 	LastAgeAdvanceSummary AgeAdvanceSummary
+	// Phase 8: epoch system
+	EpochKey          string
+	EpochName         string
+	EpochIcon         string
+	EpochColor        string // tview color tag
+	EpochSurvived     bool   // player endured a catastrophe this epoch
+	PendingCatastrophe string // epoch key if catastrophe modal should show; "" otherwise
+	EpochEventHistory []EpochEventRecord
 }
 
 // AgeAdvanceSummary holds data about what changed during an age advance transition.
@@ -50,6 +58,16 @@ type BuildingTransform struct {
 	NewKey  string
 	NewName string
 	Count   int
+}
+
+// EpochEventRecord records one epoch transition event for the civilization history log.
+type EpochEventRecord struct {
+	EpochKey  string
+	EpochName string
+	EventKey  string
+	EventName string
+	EventType string // good_minor/good_major/good_legendary/bad_challenging/catastrophe
+	Tick      int
 }
 
 // BuildQueueSnapshot represents a building under construction for UI

@@ -33,5 +33,57 @@ Status legend: [ ] pending | [~] in progress | [x] done
 
 ---
 
+## Phase 5 (Economy Redesign): Config Foundation — Data Structures ✓ DONE
+See: DONE.md for completion notes. All items complete except MaxCount removal (deferred to Phase 10).
+
+---
+
+## Phase 6 (Economy Redesign): Worker-Building Coupling Engine ✓ DONE
+See: DONE.md for completion notes.
+
+---
+
+## Phase 7 (Economy Redesign): Age Transition Transformation Pass ✓ DONE
+See: DONE.md for completion notes. UI modal deferred to Phase 11.
+
+---
+
+## Phase 8 (Economy Redesign): Epoch System ✓ DONE
+See: DONE.md for completion notes.
+
+---
+
+## Phase 9 (Economy Redesign): Catastrophe System
+- [ ] game/engine.go: Endure() — 20% buildings randomly destroyed, resources → 15%, workers -25%, 72h debuffs
+- [ ] game/engine.go: Succumb() — full reset + 8 ruins + legacy bonus + ancient knowledge
+- [ ] game/engine.go: InvokeCatastrophe() error — voluntary trigger
+- [ ] game/engine.go: applyLegacyBonus(epoch) — permanent production multiplier
+- [ ] game/save.go: Ruins, LegacyBonuses, CatastropheHistory, SurvivedEpochs, PendingCatastrophe
+- [ ] game/types.go: RuinBuilding distinction in BuildingState
+- [ ] ui/: catastrophe modal (full-screen panel, Endure/Succumb/Defer)
+- [ ] Civilization history log
+
+---
+
+## Phase 10 (Economy Redesign): Balance & Building Content
+- [ ] Replace existing buildings with full 21-tier lineage chains (all 13 lineages)
+- [ ] Housing: hut +3 → +10 pop; all tiers rescaled per lineages.md
+- [ ] Derive costs: cost = production_rate_at_age × target_build_ticks (economy.md Law 2)
+- [ ] Verify Storage Covenant for all 7 epoch transitions
+- [ ] Tune worker food costs and output multipliers against build time curve
+
+---
+
+## Phase 11 (Economy Redesign): UI Completion
+- [ ] Economy tab: per-building worker assignment (assigned/capacity + domain name + +/- buttons)
+- [ ] Villager panel: domain-grouped workers; current-tier prominent, legacy tiers collapsed
+- [ ] Age advance modal: transformation summary + epoch event reveal
+- [ ] Culture: progress bar toward next threshold
+- [ ] Faith: threshold tier indicator
+- [ ] Epoch tab (new): epoch history, legacy bonuses, voluntary catastrophe, civilization log
+- [ ] Stats tab: epoch/catastrophe/legacy bonus fields
+
+---
+
 ## Completed
 <!-- Move items here with [x] as they are finished -->

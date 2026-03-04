@@ -188,6 +188,24 @@ func (d *Dashboard) build() {
 		title, _ := e.Payload["title"].(string)
 		d.toastMgr.Show(fmt.Sprintf("Chain Complete: %s! Title: %s — Speed Boost!", name, title), "cyan", 5*time.Second)
 	})
+	d.engine.Bus.Subscribe(game.EventEpochAdvanced, func(e game.EventData) {
+		epochName, _ := e.Payload["epoch_name"].(string)
+		epochIcon, _ := e.Payload["epoch_icon"].(string)
+		d.toastMgr.Show(fmt.Sprintf("✦ The %s %s Dawns!", epochIcon, epochName), "gold", 6*time.Second)
+	})
+	d.engine.Bus.Subscribe(game.EventEpochEventFired, func(e game.EventData) {
+		eventName, _ := e.Payload["event_name"].(string)
+		eventType, _ := e.Payload["event_type"].(string)
+		color := "cyan"
+		if eventType == "bad_challenging" {
+			color = "red"
+		} else if eventType == "catastrophe" {
+			color = "red"
+		} else if eventType == "good_legendary" {
+			color = "gold"
+		}
+		d.toastMgr.Show(fmt.Sprintf("Epoch Event: %s", eventName), color, 6*time.Second)
+	})
 
 	// Command input
 	d.inputField = tview.NewInputField().
@@ -495,9 +513,18 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 	if state.Milestones.CurrentTitle != "" {
 		titleStr = fmt.Sprintf("  [yellow]\"%s\"[-]", state.Milestones.CurrentTitle)
 	}
+	// Epoch badge
+	epochStr := ""
+	if state.EpochKey != "" {
+		survivedMark := ""
+		if state.EpochSurvived {
+			survivedMark = " ·Survived"
+		}
+		epochStr = fmt.Sprintf("  [%s]%s %s%s[-]", state.EpochColor, state.EpochIcon, state.EpochName, survivedMark)
+	}
 	d.statusTV.SetText(fmt.Sprintf(
-		"[gold]%s[-]%s%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]F1-F9=Tabs  ESC=Menu[-]",
-		state.AgeName, prestigeStr, titleStr, state.Tick, nextAgeStr, speedStr,
+		"[gold]%s[-]%s%s%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]F1-F9=Tabs  ESC=Menu[-]",
+		state.AgeName, prestigeStr, titleStr, epochStr, state.Tick, nextAgeStr, speedStr,
 		state.Villagers.TotalPop, state.Villagers.MaxPop,
 	))
 }
