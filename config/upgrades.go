@@ -14,10 +14,10 @@ func BuildingUpgrades() []BuildingUpgradeDef {
 		// Housing chain: hut → house → manor → apartment → skyscraper → neon_tower → orbital_habitat
 		{From: "hut", To: "house", CostScale: 0.25, MinAge: "bronze_age"},
 		{From: "house", To: "manor", CostScale: 0.25, MinAge: "medieval_age"},
-		{From: "manor", To: "apartment", CostScale: 0.25, MinAge: "industrial_age"},
-		{From: "apartment", To: "skyscraper", CostScale: 0.25, MinAge: "modern_age"},
-		{From: "skyscraper", To: "neon_tower", CostScale: 0.25, MinAge: "cyberpunk_age"},
-		{From: "neon_tower", To: "orbital_habitat", CostScale: 0.25, MinAge: "space_age"},
+		{From: "manor", To: "tenement", CostScale: 0.25, MinAge: "industrial_age"},
+		{From: "tenement", To: "tower_block", CostScale: 0.25, MinAge: "modern_age"},
+		{From: "tower_block", To: "arcology_pod", CostScale: 0.25, MinAge: "cyberpunk_age"},
+		{From: "arcology_pod", To: "orbital_habitat", CostScale: 0.25, MinAge: "space_age"},
 
 		// Storage chain: stash → storage_pit → warehouse → classical_vault → ...
 		{From: "stash", To: "storage_pit", CostScale: 0.25, MinAge: "stone_age"},
@@ -34,16 +34,16 @@ func BuildingUpgrades() []BuildingUpgradeDef {
 		{From: "stellar_vault", To: "galactic_vault", CostScale: 0.25, MinAge: "galactic_age"},
 		{From: "galactic_vault", To: "quantum_vault", CostScale: 0.25, MinAge: "quantum_age"},
 
-		// Knowledge chain: altar → firepit → library → university
-		{From: "altar", To: "firepit", CostScale: 0.25, MinAge: "stone_age"},
-		{From: "firepit", To: "library", CostScale: 0.25, MinAge: "bronze_age"},
+		// Knowledge chain: story_circle → scriptorium → library → university
+		{From: "story_circle", To: "scriptorium", CostScale: 0.25, MinAge: "stone_age"},
+		{From: "scriptorium", To: "library", CostScale: 0.25, MinAge: "bronze_age"},
 		{From: "library", To: "university", CostScale: 0.25, MinAge: "medieval_age"},
 
 		// Resource production chains
 		{From: "gathering_camp", To: "farm", CostScale: 0.25, MinAge: "bronze_age"},
 		{From: "woodcutter_camp", To: "lumber_mill", CostScale: 0.25, MinAge: "bronze_age"},
 		{From: "stone_pit", To: "quarry", CostScale: 0.25, MinAge: "bronze_age"},
-		{From: "mine", To: "smithy", CostScale: 0.25, MinAge: "iron_age"},
+		{From: "iron_mine", To: "smithy", CostScale: 0.25, MinAge: "iron_age"},
 	}
 }
 

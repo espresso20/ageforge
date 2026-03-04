@@ -1446,21 +1446,31 @@ func buildingMeta() map[string]buildingMetaEntry {
 	}
 }
 
-// BaseBuildings returns all building definitions with economy-redesign metadata applied.
+// BaseBuildings returns all building definitions.
+// Production/housing/military/research buildings come from NewProductionBuildings() (Phase 10
+// lineage redesign). Storage buildings and wonders come from baseBuildingsRaw(), enriched
+// with lineage metadata from buildingMeta().
 func BaseBuildings() []BuildingDef {
-	buildings := baseBuildingsRaw()
+	// Start with the new 13-lineage production buildings (all metadata inline).
+	result := NewProductionBuildings()
+
+	// Append storage and wonder buildings from legacy definitions, enriched with meta.
 	meta := buildingMeta()
-	for i, b := range buildings {
-		if m, ok := meta[b.Key]; ok {
-			buildings[i].LineageKey = m.LineageKey
-			buildings[i].LineageTier = m.LineageTier
-			buildings[i].WorkerDomain = m.WorkerDomain
-			buildings[i].WorkerCapacity = m.WorkerCapacity
-			buildings[i].EpochKey = m.EpochKey
-			buildings[i].OutputResource = m.OutputResource
+	for _, b := range baseBuildingsRaw() {
+		if b.Category != "storage" && b.Category != "wonder" {
+			continue // production buildings are now in NewProductionBuildings()
 		}
+		if m, ok := meta[b.Key]; ok {
+			b.LineageKey = m.LineageKey
+			b.LineageTier = m.LineageTier
+			b.WorkerDomain = m.WorkerDomain
+			b.WorkerCapacity = m.WorkerCapacity
+			b.EpochKey = m.EpochKey
+			b.OutputResource = m.OutputResource
+		}
+		result = append(result, b)
 	}
-	return buildings
+	return result
 }
 
 // BuildingByKey returns a map of key -> BuildingDef

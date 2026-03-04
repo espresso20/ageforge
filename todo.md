@@ -58,12 +58,8 @@ See: DONE.md for completion notes.
 
 ---
 
-## Phase 10 (Economy Redesign): Balance & Building Content
-- [ ] Replace existing buildings with full 21-tier lineage chains (all 13 lineages)
-- [ ] Housing: hut +3 → +10 pop; all tiers rescaled per lineages.md
-- [ ] Derive costs: cost = production_rate_at_age × target_build_ticks (economy.md Law 2)
-- [ ] Verify Storage Covenant for all 7 epoch transitions
-- [ ] Tune worker food costs and output multipliers against build time curve
+## Phase 10 (Economy Redesign): Balance & Building Content ✓ DONE
+See: DONE.md for completion notes.
 
 ---
 

@@ -189,5 +189,17 @@ Items are moved here from TODO.md when finished. Do not re-implement anything li
 - [x] `ui/dashboard.go`: Added `catModalShown string` field; `refresh()` detects `PendingCatastrophe != ""` and shows modal once per new catastrophe; Defer closes modal without resetting `catModalShown` (prevents immediate re-show); clears `catModalShown` when catastrophe is resolved
 - All tests passing, `go build ./...` clean
 
+## Economy Redesign — Phase 10: Balance & Building Content (2026-03-04)
+- [x] `config/buildings_new.go` (NEW): `newProductionBuildings()` — lineages 1–4 (Housing 21 tiers, Food 21 tiers, Organic Extraction 21 tiers w/ epoch output transitions wood→coal→oil→nanobots→quantum_flux, Geological Extraction 21 tiers w/ dual output at iron/classical tiers)
+- [x] `config/buildings_new2.go` (NEW): `newProductionBuildings2()` — lineages 5–9 (Knowledge 21, Faith 21, Military 21, Trade 19 tiers bronze→quantum, Engineering 19 tiers bronze→quantum)
+- [x] `config/buildings_new3.go` (NEW): `newProductionBuildings3()` — lineages 10–13 (Culture/Arts 17, Metallurgy 18, Energy 13, Hacker/Digital 8 tiers); culture buildings carry dual effects (production + culture storage cap)
+- [x] `config/buildings_new_merge.go` (NEW): `NewProductionBuildings()` — merges all three helpers into a single slice
+- [x] `config/buildings.go`: `BaseBuildings()` rewritten — prepends `NewProductionBuildings()`, then appends storage+wonder buildings filtered from legacy `baseBuildingsRaw()`; all metadata (`LineageKey`, `LineageTier`, `WorkerDomain`, `WorkerCapacity`, `EpochKey`, `OutputResource`) carried inline in new production defs
+- [x] `config/ages.go`: Complete rewrite — all 22 ages updated with new `UnlockBuildings` arrays referencing new lineage building keys; `BuildingReqs` updated throughout; `coal` added to `UnlockResources` for `renaissance_age`
+- [x] `config/trade.go`: Updated 7 stale `RequiredBld` keys to new building keys (`train_station`→`steam_works`, `oil_well`→`oil_derrick`, `power_grid`→`power_station`, `fiber_hub`→`server_farm`, `warp_gate`→`warp_drive_plant`, `galactic_hub`→`galactic_trade_hub`, `quantum_computer`→`reality_processor`)
+- [x] `config/upgrades.go`: Updated stale building key references in upgrade chain defs (`apartment/skyscraper/neon_tower`→`tenement/tower_block/arcology_pod`; knowledge chain rewritten as `story_circle→scriptorium→library→university`; `mine`→`iron_mine`)
+- Result: 284 total buildings (241 production across 13 lineages + 21 storage + 22 wonders), no duplicate keys, all tests passing, `go build ./...` clean
+- Note: Storage Covenant and food-cost/multiplier tuning are initial-pass complete via lineages.md values; fine-tuning subject to playtesting
+
 ## General / Misc
 - [x] Established TODO.md + DONE.md workflow for session-resumable planning (2026-02-25)

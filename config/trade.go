@@ -144,7 +144,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 		},
 		{
 			Name: "Rail Freight", Key: "rail_freight",
-			MinAge: "industrial_age", RequiredBld: "train_station", MinCount: 1,
+			MinAge: "industrial_age", RequiredBld: "steam_works", MinCount: 1,
 			TicksPerRun: 12,
 			Export:       map[string]float64{"iron": 200},
 			Import:       map[string]float64{"gold": 100, "coal": 50},
@@ -152,7 +152,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 		},
 		{
 			Name: "Oil Pipeline", Key: "oil_pipeline",
-			MinAge: "victorian_age", RequiredBld: "oil_well", MinCount: 2,
+			MinAge: "victorian_age", RequiredBld: "oil_derrick", MinCount: 2,
 			TicksPerRun: 15,
 			Export:       map[string]float64{"oil": 100},
 			Import:       map[string]float64{"gold": 300},
@@ -160,7 +160,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 		},
 		{
 			Name: "Power Exchange", Key: "power_exchange",
-			MinAge: "electric_age", RequiredBld: "power_grid", MinCount: 1,
+			MinAge: "electric_age", RequiredBld: "power_station", MinCount: 1,
 			TicksPerRun: 10,
 			Export:       map[string]float64{"electricity": 500},
 			Import:       map[string]float64{"gold": 200},
@@ -168,7 +168,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 		},
 		{
 			Name: "Data Trade", Key: "data_trade",
-			MinAge: "information_age", RequiredBld: "fiber_hub", MinCount: 1,
+			MinAge: "information_age", RequiredBld: "server_farm", MinCount: 1,
 			TicksPerRun: 10,
 			Export:       map[string]float64{"data": 100},
 			Import:       map[string]float64{"gold": 500},
@@ -192,7 +192,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 		},
 		{
 			Name: "Warp Commerce", Key: "warp_commerce",
-			MinAge: "space_age", RequiredBld: "warp_gate", MinCount: 1,
+			MinAge: "space_age", RequiredBld: "warp_drive_plant", MinCount: 1,
 			TicksPerRun: 15,
 			Export:       map[string]float64{"gold": 500},
 			Import:       map[string]float64{"dark_matter": 200},
@@ -200,7 +200,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 		},
 		{
 			Name: "Stellar Exchange", Key: "stellar_exchange",
-			MinAge: "galactic_age", RequiredBld: "galactic_hub", MinCount: 1,
+			MinAge: "galactic_age", RequiredBld: "galactic_trade_hub", MinCount: 1,
 			TicksPerRun: 20,
 			Export:       map[string]float64{"dark_matter": 100},
 			Import:       map[string]float64{"gold": 2000},
@@ -208,7 +208,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 		},
 		{
 			Name: "Quantum Trade", Key: "quantum_trade",
-			MinAge: "quantum_age", RequiredBld: "quantum_computer", MinCount: 1,
+			MinAge: "quantum_age", RequiredBld: "reality_processor", MinCount: 1,
 			TicksPerRun: 10,
 			Export:       map[string]float64{"quantum_flux": 50},
 			Import:       map[string]float64{"gold": 5000},
