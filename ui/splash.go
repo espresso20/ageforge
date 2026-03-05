@@ -171,7 +171,8 @@ func showWipeConfirmation(app *tview.Application, pages *tview.Pages, engine *ga
 				cleanup() // stop old canvas goroutine
 				game.WipeAllSaves()
 				engine.Reset()
-				pages.RemovePage("splash")
+				// AddPage with an existing name replaces atomically — no RemovePage
+				// needed, and avoids a flash of the dashboard underneath.
 				newSplash := CreateSplashPage(app, pages, engine, wikiServer, currentVersion)
 				pages.AddPage("splash", newSplash, true, true)
 			}
