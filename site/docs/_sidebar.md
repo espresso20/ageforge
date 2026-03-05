@@ -19,6 +19,7 @@
 
 - **Deep Dive**
   - [Epochs](epochs.md)
+  - [Catastrophe System](catastrophe.md)
   - [Faith](faith.md)
   - [Knowledge](knowledge.md)
   - [Workers & Domains (Reference)](workers-and-domains.md)
