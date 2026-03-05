@@ -267,3 +267,23 @@ Items are moved here from TODO.md when finished. Do not re-implement anything li
 - [x] Threaded `currentEpoch` through `Events.Tick()` signature and engine call site
 - [x] Updated `game/events_test.go` — two Tick() calls pass `"stone_era"` as epoch argument
 - [x] All tests passing, `go build ./...` clean — commit bc9ed5b
+
+## Phase 14: Critical Bug Fix Pass (2026-03-04)
+- [x] gather cap typo fixed: `amount = 10000` → `amount = 10` (ui/input.go)
+- [x] Over-assignment blocked: AssignVillager/AssignAll check Buildings.GetCount > 0 before assigning
+- [x] Snapshot domain key alignment: Snapshot() now keys Types by domain ("food") not legacy ("worker"); removed legacyKeyToDomain boilerplate from tab_economy.go and villager_panel.go
+
+## Phase 14b: Purge Dead Legacy Building Code (2026-03-04)
+- [x] Removed 57 dead production/research/housing/military entries from baseBuildingsRaw() in config/buildings.go (695 lines deleted)
+- [x] Also committed user's refactor: buildings_new{1,2,3}.go → 13 buildings_lineage_*.go files
+
+## Phase 17a: Stone + Military Age Gating (2026-03-04)
+- [x] stone_camp moved to stone_age (stone resource not available in primitive_age)
+- [x] hunting_lodge moved to iron_age (military worker domain starts at iron_age per workers.go)
+
+## Phase 17b: Primitive Age Balance Pass (2026-03-04)
+- [x] Worker food drain: 1.0 → 0.08/tick (food domain, primitive+stone age only)
+- [x] gathering_camp: rate 0.05 → 0.50/tick, build time 40 → 12 ticks
+- [x] forager_post: rate 0.10 → 1.00/tick, build time 100 → 30 ticks
+- [x] hut: build time 80 → 8 ticks
+- [x] Break-even verified: 5 food workers in 2 camps sustain 10 total workers
