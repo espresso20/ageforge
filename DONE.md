@@ -287,3 +287,10 @@ Items are moved here from TODO.md when finished. Do not re-implement anything li
 - [x] forager_post: rate 0.10 → 1.00/tick, build time 100 → 30 ticks
 - [x] hut: build time 80 → 8 ticks
 - [x] Break-even verified: 5 food workers in 2 camps sustain 10 total workers
+
+## Phase 19: Legacy Code & Villager→Worker Cleanup (2026-03-05)
+- [x] 19a: Removed legacyAlias, domainToLegacy, resolveDomain() from game/villagers.go; updated config/ages.go UnlockVillagers to domain keys
+- [x] 19b: Renamed VillagerManager→WorkerManager, VillagerState→WorkerState, VillagerTypeState→WorkerDomainState throughout; renamed engine methods RecruitVillager→RecruitWorker, AssignVillager→AssignWorker, UnassignVillager→UnassignWorker; save JSON tags preserved for backward compat
+- [x] 19c: Dropped domain param from assign/unassign commands; assign/unassign now building-centric (domain auto-resolved); updated autocomplete chains; updated recruit usage to domain keys
+- [x] 19d: Updated site docs — commands.md, workers-and-domains, any villager references
+- [x] 19e: Final verification pass — zero legacy symbol matches across all Go source; all four command signatures confirmed building-centric; go build ./... clean; go test ./... passing
