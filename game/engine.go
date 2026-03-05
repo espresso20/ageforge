@@ -372,7 +372,7 @@ func (ge *GameEngine) processResearch() {
 // processEvents handles random events
 func (ge *GameEngine) processEvents() {
 	ageOrder := ge.progress.GetAgeOrder()
-	triggered, expired := ge.Events.Tick(ge.tick, ge.age, ageOrder)
+	triggered, expired := ge.Events.Tick(ge.tick, ge.age, ageOrder, ge.currentEpoch)
 
 	for _, def := range triggered {
 		ge.addLog("debug", fmt.Sprintf("Event triggered: %s (sentiment: %s)", def.Name, def.Sentiment))

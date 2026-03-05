@@ -4,6 +4,7 @@ package config
 type EventDef struct {
 	Name        string
 	Key         string
+	EpochKey    string // if set, only triggers in this epoch; empty = universal
 	MinAge      string // earliest age this can trigger
 	Weight      int    // relative probability (higher = more common)
 	MinTick     int    // earliest tick this can trigger
@@ -300,10 +301,407 @@ func RandomEvents() []EventDef {
 	}
 }
 
+// EpochExclusiveEvents returns epoch-gated events (5 per epoch, 35 total).
+// These are only added to the candidate pool when the player is in the matching epoch.
+func EpochExclusiveEvents() []EventDef {
+	return []EventDef{
+
+		// === STONE ERA ===
+		{
+			Name: "Tribal Raid", Key: "tribal_raid", EpochKey: "stone_era",
+			MinAge: "primitive_age", Weight: 10, MinTick: 10, Cooldown: 80,
+			Duration: 60, Sentiment: "bad",
+			Description: "Rival clans descend on your settlement in the night.",
+			LogMessage:  "Tribal raid! Food production reduced and workers flee.",
+			Effects: []Effect{
+				{Type: "production", Target: "food", Value: -0.15},
+				{Type: "steal_resource", Target: "food", Value: 8},
+			},
+		},
+		{
+			Name: "Sacred Grove", Key: "sacred_grove_found", EpochKey: "stone_era",
+			MinAge: "primitive_age", Weight: 10, MinTick: 20, Cooldown: 100,
+			Duration: 120, Sentiment: "good",
+			Description: "Hunters discover an ancient grove pulsing with spiritual energy.",
+			LogMessage:  "Sacred grove found! Faith boosted and +200 wood.",
+			Effects: []Effect{
+				{Type: "production", Target: "faith", Value: 0.20},
+				{Type: "instant_resource", Target: "wood", Value: 200},
+			},
+		},
+		{
+			Name: "Beast Stampede", Key: "beast_stampede", EpochKey: "stone_era",
+			MinAge: "primitive_age", Weight: 8, MinTick: 15, Cooldown: 90,
+			Duration: 0, Sentiment: "bad",
+			Description: "A herd of megafauna tramples the outer settlement.",
+			LogMessage:  "Beast stampede! Lost wood and food stores.",
+			Effects: []Effect{
+				{Type: "steal_resource", Target: "wood", Value: 30},
+				{Type: "steal_resource", Target: "food", Value: 20},
+			},
+		},
+		{
+			Name: "River Blessing", Key: "river_flooding", EpochKey: "stone_era",
+			MinAge: "primitive_age", Weight: 12, MinTick: 10, Cooldown: 100,
+			Duration: 144, Sentiment: "good",
+			Description: "The river floods its banks, leaving rich silt across your fields.",
+			LogMessage:  "River blessing! Food production boosted for 144 ticks.",
+			Effects: []Effect{
+				{Type: "production", Target: "food", Value: 0.25},
+			},
+		},
+		{
+			Name: "Wandering Sage", Key: "wandering_sage", EpochKey: "stone_era",
+			MinAge: "primitive_age", Weight: 7, MinTick: 30, Cooldown: 120,
+			Duration: 0, Sentiment: "good",
+			Description: "A travelling elder offers wisdom in exchange for shelter.",
+			LogMessage:  "Wandering sage visits! +500 knowledge, +100 faith.",
+			Effects: []Effect{
+				{Type: "instant_resource", Target: "knowledge", Value: 500},
+				{Type: "instant_resource", Target: "faith", Value: 100},
+			},
+		},
+
+		// === IRON ERA ===
+		{
+			Name: "Iron Vein Strike", Key: "iron_vein_strike", EpochKey: "iron_era",
+			MinAge: "iron_age", Weight: 10, MinTick: 100, Cooldown: 120,
+			Duration: 180, Sentiment: "good",
+			Description: "Miners break into a rich seam of high-grade iron ore.",
+			LogMessage:  "Iron vein strike! Iron production boosted for 180 ticks.",
+			Effects: []Effect{
+				{Type: "production", Target: "iron", Value: 0.30},
+			},
+		},
+		{
+			Name: "Locust Swarm", Key: "locust_swarm", EpochKey: "iron_era",
+			MinAge: "iron_age", Weight: 9, MinTick: 100, Cooldown: 100,
+			Duration: 120, Sentiment: "bad",
+			Description: "A biblical plague of locusts strips the fields bare.",
+			LogMessage:  "Locust swarm! Food production severely reduced for 120 ticks.",
+			Effects: []Effect{
+				{Type: "production", Target: "food", Value: -0.35},
+			},
+		},
+		{
+			Name: "Conquered Village", Key: "conquered_village", EpochKey: "iron_era",
+			MinAge: "iron_age", Weight: 8, MinTick: 120, Cooldown: 150,
+			Duration: 0, Sentiment: "good",
+			Description: "Your legions return victorious with tribute and captives.",
+			LogMessage:  "Conquered village! +2000 gold gained.",
+			Effects: []Effect{
+				{Type: "instant_resource", Target: "gold", Value: 2000},
+			},
+		},
+		{
+			Name: "Imperial Road", Key: "roman_road_built", EpochKey: "iron_era",
+			MinAge: "iron_age", Weight: 8, MinTick: 120, Cooldown: 140,
+			Duration: 216, Sentiment: "good",
+			Description: "A great road opens new trade corridors across the realm.",
+			LogMessage:  "Imperial road complete! Gold production boosted for 216 ticks.",
+			Effects: []Effect{
+				{Type: "production", Target: "gold", Value: 0.20},
+			},
+		},
+		{
+			Name: "Oracle's Prophecy", Key: "oracle_prophecy", EpochKey: "iron_era",
+			MinAge: "iron_age", Weight: 7, MinTick: 100, Cooldown: 160,
+			Duration: 144, Sentiment: "good",
+			Description: "The oracle speaks — destiny aligns with your civilization.",
+			LogMessage:  "Oracle prophecy! Faith and research boosted for 144 ticks.",
+			Effects: []Effect{
+				{Type: "production", Target: "faith", Value: 0.30},
+				{Type: "production", Target: "knowledge", Value: 0.15},
+			},
+		},
+
+		// === STEEL ERA ===
+		{
+			Name: "Coal Seam Discovery", Key: "coal_seam_discovery", EpochKey: "steel_era",
+			MinAge: "industrial_age", Weight: 10, MinTick: 250, Cooldown: 120,
+			Duration: 180, Sentiment: "good",
+			Description: "Surveyors uncover a massive coal deposit beneath the hills.",
+			LogMessage:  "Coal seam discovered! Coal production boosted for 180 ticks.",
+			Effects: []Effect{
+				{Type: "production", Target: "coal", Value: 0.40},
+			},
+		},
+		{
+			Name: "Workers' Uprising", Key: "workers_uprising", EpochKey: "steel_era",
+			MinAge: "industrial_age", Weight: 9, MinTick: 250, Cooldown: 130,
+			Duration: 120, Sentiment: "bad",
+			Description: "Factory workers strike, demanding better conditions.",
+			LogMessage:  "Workers' uprising! Production reduced and faith lost.",
+			Effects: []Effect{
+				{Type: "production", Target: "food", Value: -0.15},
+				{Type: "steal_resource", Target: "faith", Value: 500},
+			},
+		},
+		{
+			Name: "Colonial Bounty", Key: "colonial_bounty", EpochKey: "steel_era",
+			MinAge: "colonial_age", Weight: 8, MinTick: 280, Cooldown: 150,
+			Duration: 0, Sentiment: "good",
+			Description: "Trade fleets return laden with gold from distant shores.",
+			LogMessage:  "Colonial bounty! +5000 gold.",
+			Effects: []Effect{
+				{Type: "instant_resource", Target: "gold", Value: 5000},
+			},
+		},
+		{
+			Name: "Steam Age Inventor", Key: "steam_inventor", EpochKey: "steel_era",
+			MinAge: "industrial_age", Weight: 7, MinTick: 260, Cooldown: 160,
+			Duration: 144, Sentiment: "good",
+			Description: "A brilliant inventor unveils a revolutionary steam engine design.",
+			LogMessage:  "Steam inventor! +2000 knowledge and research speed boosted.",
+			Effects: []Effect{
+				{Type: "instant_resource", Target: "knowledge", Value: 2000},
+				{Type: "production", Target: "knowledge", Value: 0.20},
+			},
+		},
+		{
+			Name: "Industrial Blight", Key: "industrial_blight", EpochKey: "steel_era",
+			MinAge: "industrial_age", Weight: 9, MinTick: 250, Cooldown: 120,
+			Duration: 144, Sentiment: "bad",
+			Description: "Factory runoff poisons the river. Crop yields collapse.",
+			LogMessage:  "Industrial blight! Food production reduced and faith lost.",
+			Effects: []Effect{
+				{Type: "production", Target: "food", Value: -0.20},
+				{Type: "steal_resource", Target: "faith", Value: 300},
+			},
+		},
+
+		// === ELECTRIC ERA ===
+		{
+			Name: "Power Surge", Key: "epoch_power_surge", EpochKey: "electric_era",
+			MinAge: "victorian_age", Weight: 10, MinTick: 350, Cooldown: 120,
+			Duration: 144, Sentiment: "good",
+			Description: "An unexpected surge supercharges the power grid.",
+			LogMessage:  "Power surge! Electricity production boosted for 144 ticks.",
+			Effects: []Effect{
+				{Type: "production", Target: "electricity", Value: 0.35},
+			},
+		},
+		{
+			Name: "Oil Strike", Key: "oil_strike", EpochKey: "electric_era",
+			MinAge: "victorian_age", Weight: 8, MinTick: 360, Cooldown: 150,
+			Duration: 180, Sentiment: "good",
+			Description: "Black gold erupts from a borehole — a fortune underground.",
+			LogMessage:  "Oil strike! Oil production boosted and +3000 gold.",
+			Effects: []Effect{
+				{Type: "production", Target: "oil", Value: 0.50},
+				{Type: "instant_resource", Target: "gold", Value: 3000},
+			},
+		},
+		{
+			Name: "The Broadcast", Key: "radio_broadcast", EpochKey: "electric_era",
+			MinAge: "victorian_age", Weight: 8, MinTick: 350, Cooldown: 130,
+			Duration: 180, Sentiment: "good",
+			Description: "A powerful radio signal reaches millions, galvanising the population.",
+			LogMessage:  "The broadcast! +5000 culture and faith boosted.",
+			Effects: []Effect{
+				{Type: "instant_resource", Target: "culture", Value: 5000},
+				{Type: "production", Target: "faith", Value: 0.20},
+			},
+		},
+		{
+			Name: "Labour Movement", Key: "labor_movement", EpochKey: "electric_era",
+			MinAge: "victorian_age", Weight: 9, MinTick: 350, Cooldown: 120,
+			Duration: 60, Sentiment: "bad",
+			Description: "Workers organise for better pay — short disruption before long-term gains.",
+			LogMessage:  "Labour movement! Production reduced for 60 ticks.",
+			Effects: []Effect{
+				{Type: "production", Target: "food", Value: -0.10},
+				{Type: "production", Target: "gold", Value: -0.10},
+			},
+		},
+		{
+			Name: "Nuclear Theory", Key: "nuclear_theory", EpochKey: "electric_era",
+			MinAge: "atomic_age", Weight: 6, MinTick: 400, Cooldown: 200,
+			Duration: 180, Sentiment: "good",
+			Description: "A physicist publishes a paradigm-shifting unified theory.",
+			LogMessage:  "Nuclear theory! +8000 knowledge and research boosted.",
+			Effects: []Effect{
+				{Type: "instant_resource", Target: "knowledge", Value: 8000},
+				{Type: "production", Target: "knowledge", Value: 0.25},
+			},
+		},
+
+		// === DIGITAL ERA ===
+		{
+			Name: "Data Breach", Key: "epoch_data_breach", EpochKey: "digital_era",
+			MinAge: "information_age", Weight: 9, MinTick: 550, Cooldown: 120,
+			Duration: 120, Sentiment: "bad",
+			Description: "A sophisticated attack siphons terabytes of proprietary data.",
+			LogMessage:  "Data breach! Lost data and knowledge production reduced.",
+			Effects: []Effect{
+				{Type: "steal_resource", Target: "data", Value: 5000},
+				{Type: "production", Target: "knowledge", Value: -0.20},
+			},
+		},
+		{
+			Name: "Viral Moment", Key: "viral_moment", EpochKey: "digital_era",
+			MinAge: "information_age", Weight: 10, MinTick: 550, Cooldown: 100,
+			Duration: 0, Sentiment: "good",
+			Description: "A cultural upload spreads across every network simultaneously.",
+			LogMessage:  "Viral moment! +20000 culture.",
+			Effects: []Effect{
+				{Type: "instant_resource", Target: "culture", Value: 20000},
+			},
+		},
+		{
+			Name: "Tech Monopoly", Key: "tech_monopoly", EpochKey: "digital_era",
+			MinAge: "information_age", Weight: 8, MinTick: 560, Cooldown: 150,
+			Duration: 180, Sentiment: "good",
+			Description: "Your platforms dominate global commerce — revenue floods in.",
+			LogMessage:  "Tech monopoly! Gold production boosted for 180 ticks.",
+			Effects: []Effect{
+				{Type: "production", Target: "gold", Value: 0.40},
+			},
+		},
+		{
+			Name: "Server Outage", Key: "server_outage", EpochKey: "digital_era",
+			MinAge: "information_age", Weight: 9, MinTick: 550, Cooldown: 110,
+			Duration: 120, Sentiment: "bad",
+			Description: "A catastrophic hardware failure takes the data centres offline.",
+			LogMessage:  "Server outage! Data production severely reduced for 120 ticks.",
+			Effects: []Effect{
+				{Type: "production", Target: "data", Value: -0.50},
+			},
+		},
+		{
+			Name: "AI Breakthrough", Key: "ai_breakthrough", EpochKey: "digital_era",
+			MinAge: "cyberpunk_age", Weight: 6, MinTick: 650, Cooldown: 200,
+			Duration: 216, Sentiment: "good",
+			Description: "Your research AIs achieve recursive self-improvement.",
+			LogMessage:  "AI breakthrough! Knowledge and research massively boosted.",
+			Effects: []Effect{
+				{Type: "production", Target: "knowledge", Value: 0.50},
+				{Type: "production", Target: "data", Value: 0.20},
+			},
+		},
+
+		// === NEON ERA ===
+		{
+			Name: "Plasma Storm", Key: "epoch_plasma_storm", EpochKey: "neon_era",
+			MinAge: "fusion_age", Weight: 10, MinTick: 750, Cooldown: 120,
+			Duration: 180, Sentiment: "good",
+			Description: "A stellar plasma ejection floods the system with free energy.",
+			LogMessage:  "Plasma storm! Plasma and electricity production boosted.",
+			Effects: []Effect{
+				{Type: "production", Target: "plasma", Value: 0.50},
+				{Type: "production", Target: "electricity", Value: 0.30},
+			},
+		},
+		{
+			Name: "Void Rift", Key: "void_rift", EpochKey: "neon_era",
+			MinAge: "fusion_age", Weight: 7, MinTick: 760, Cooldown: 180,
+			Duration: 0, Sentiment: "good",
+			Description: "A rift in spacetime bleeds exotic matter into local space.",
+			LogMessage:  "Void rift! +5000 dark matter.",
+			Effects: []Effect{
+				{Type: "instant_resource", Target: "dark_matter", Value: 5000},
+			},
+		},
+		{
+			Name: "Neural Uprising", Key: "neural_uprising", EpochKey: "neon_era",
+			MinAge: "fusion_age", Weight: 9, MinTick: 750, Cooldown: 130,
+			Duration: 120, Sentiment: "bad",
+			Description: "Augmented citizens revolt against the bio-surveillance state.",
+			LogMessage:  "Neural uprising! Lost workers and production reduced.",
+			Effects: []Effect{
+				{Type: "steal_resource", Target: "food", Value: 500},
+				{Type: "production", Target: "food", Value: -0.10},
+			},
+		},
+		{
+			Name: "Corporate Espionage", Key: "corporate_espionage", EpochKey: "neon_era",
+			MinAge: "fusion_age", Weight: 8, MinTick: 760, Cooldown: 140,
+			Duration: 0, Sentiment: "bad",
+			Description: "A rival megacorp steals your most valuable research and assets.",
+			LogMessage:  "Corporate espionage! Lost gold and data.",
+			Effects: []Effect{
+				{Type: "steal_resource", Target: "gold", Value: 10000},
+				{Type: "steal_resource", Target: "data", Value: 8000},
+			},
+		},
+		{
+			Name: "Stellar Migration", Key: "stellar_migration", EpochKey: "neon_era",
+			MinAge: "space_age", Weight: 8, MinTick: 800, Cooldown: 160,
+			Duration: 144, Sentiment: "mixed",
+			Description: "A fleet of generation ships arrives, swelling your population.",
+			LogMessage:  "Stellar migration! Population swells but food demand rises.",
+			Effects: []Effect{
+				{Type: "instant_resource", Target: "food", Value: 1000},
+				{Type: "production", Target: "food", Value: -0.15},
+			},
+		},
+
+		// === COSMIC ERA ===
+		{
+			Name: "Reality Fracture", Key: "reality_fracture", EpochKey: "cosmic_era",
+			MinAge: "quantum_age", Weight: 9, MinTick: 1050, Cooldown: 150,
+			Duration: 120, Sentiment: "bad",
+			Description: "A quantum decoherence event destabilises local spacetime.",
+			LogMessage:  "Reality fracture! Quantum flux and all production disrupted.",
+			Effects: []Effect{
+				{Type: "production", Target: "quantum_flux", Value: -0.40},
+				{Type: "production", Target: "knowledge", Value: -0.10},
+			},
+		},
+		{
+			Name: "Dimensional Harvest", Key: "dimensional_harvest", EpochKey: "cosmic_era",
+			MinAge: "quantum_age", Weight: 8, MinTick: 1060, Cooldown: 160,
+			Duration: 0, Sentiment: "good",
+			Description: "A tear in the fabric of reality yields a bounty of exotic matter.",
+			LogMessage:  "Dimensional harvest! +2000 antimatter, +5000 quantum flux.",
+			Effects: []Effect{
+				{Type: "instant_resource", Target: "antimatter", Value: 2000},
+				{Type: "instant_resource", Target: "quantum_flux", Value: 5000},
+			},
+		},
+		{
+			Name: "Galactic Council", Key: "galactic_council", EpochKey: "cosmic_era",
+			MinAge: "quantum_age", Weight: 6, MinTick: 1050, Cooldown: 200,
+			Duration: 216, Sentiment: "good",
+			Description: "Alien civilisations recognise your sovereignty and offer tribute.",
+			LogMessage:  "Galactic council! Production boosted and +20000 gold.",
+			Effects: []Effect{
+				{Type: "production", Target: "gold", Value: 0.20},
+				{Type: "instant_resource", Target: "gold", Value: 20000},
+			},
+		},
+		{
+			Name: "Entropy Wave", Key: "entropy_wave", EpochKey: "cosmic_era",
+			MinAge: "quantum_age", Weight: 8, MinTick: 1050, Cooldown: 140,
+			Duration: 144, Sentiment: "bad",
+			Description: "A wave of cosmic entropy degrades matter across all systems.",
+			LogMessage:  "Entropy wave! All production reduced for 144 ticks.",
+			Effects: []Effect{
+				{Type: "production", Target: "quantum_flux", Value: -0.20},
+				{Type: "production", Target: "knowledge", Value: -0.20},
+			},
+		},
+		{
+			Name: "Transcendence Signal", Key: "transcendence_signal", EpochKey: "cosmic_era",
+			MinAge: "quantum_age", Weight: 4, MinTick: 1100, Cooldown: 300,
+			Duration: 0, Sentiment: "good",
+			Description: "A signal from the edge of the universe rewrites your understanding of reality.",
+			LogMessage:  "Transcendence signal! +100000 knowledge, +50000 culture.",
+			Effects: []Effect{
+				{Type: "instant_resource", Target: "knowledge", Value: 100000},
+				{Type: "instant_resource", Target: "culture", Value: 50000},
+			},
+		},
+	}
+}
+
 // EventByKey returns a map of key -> EventDef
 func EventByKey() map[string]EventDef {
 	m := make(map[string]EventDef)
 	for _, e := range RandomEvents() {
+		m[e.Key] = e
+	}
+	for _, e := range EpochExclusiveEvents() {
 		m[e.Key] = e
 	}
 	return m

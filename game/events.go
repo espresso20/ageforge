@@ -44,7 +44,7 @@ func NewEventManager() *EventManager {
 
 // Tick processes one tick: checks for new events, processes active event durations.
 // Returns list of newly triggered events and list of expired events.
-func (em *EventManager) Tick(tick int, currentAge string, ageOrder map[string]int) (triggered []config.EventDef, expired []string) {
+func (em *EventManager) Tick(tick int, currentAge string, ageOrder map[string]int, currentEpoch string) (triggered []config.EventDef, expired []string) {
 	// Process active events first - decrement durations
 	var stillActive []ActiveEvent
 	for _, ae := range em.active {
@@ -66,7 +66,7 @@ func (em *EventManager) Tick(tick int, currentAge string, ageOrder map[string]in
 	forceSentiment := em.requiredSentiment()
 
 	// Check for new random events (one per tick max)
-	eligible := em.getEligible(tick, currentAge, ageOrder, forceSentiment)
+	eligible := em.getEligible(tick, currentAge, ageOrder, forceSentiment, currentEpoch)
 	if len(eligible) == 0 {
 		return
 	}
@@ -145,9 +145,18 @@ func (em *EventManager) updateStreaks(sentiment string) {
 
 // getEligible returns events that can trigger right now.
 // forceSentiment filters: "good" = only good/mixed, "bad" = only bad/mixed, "" = any.
-func (em *EventManager) getEligible(tick int, currentAge string, ageOrder map[string]int, forceSentiment string) []config.EventDef {
+func (em *EventManager) getEligible(tick int, currentAge string, ageOrder map[string]int, forceSentiment string, currentEpoch string) []config.EventDef {
+	// Build candidate pool: universal events + epoch-exclusive events for the current epoch
+	pool := make([]config.EventDef, len(em.defs))
+	copy(pool, em.defs)
+	for _, ev := range config.EpochExclusiveEvents() {
+		if ev.EpochKey == currentEpoch {
+			pool = append(pool, ev)
+		}
+	}
+
 	var eligible []config.EventDef
-	for _, def := range em.defs {
+	for _, def := range pool {
 		// Sentiment filter
 		if forceSentiment == "good" && def.Sentiment == "bad" {
 			continue
