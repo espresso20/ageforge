@@ -69,7 +69,7 @@ func (t *StatsTab) refreshStats(state game.GameState) {
 	fmt.Fprintf(&sb, " [gold]Play Time:[-]         %s\n", s.PlayTime.Truncate(1e9))
 	fmt.Fprintf(&sb, " [gold]Total Ticks:[-]       %d\n", state.Tick)
 	fmt.Fprintf(&sb, " [gold]Buildings Built:[-]    %d\n", s.TotalBuilt)
-	fmt.Fprintf(&sb, " [gold]Villagers Recruited:[-] %d\n", s.TotalRecruited)
+	fmt.Fprintf(&sb, " [gold]Workers Recruited:[-]   %d\n", s.TotalRecruited)
 	fmt.Fprintf(&sb, " [gold]Techs Researched:[-]  %d\n", state.Research.TotalResearched)
 	fmt.Fprintf(&sb, " [gold]Expeditions Done:[-]  %d\n", state.Military.CompletedCount)
 

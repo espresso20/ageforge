@@ -74,7 +74,7 @@ func ShowAgeSplashFull(app *tview.Application, pages *tview.Pages, oldAge, newAg
 		fmt.Fprintf(&sb, "[green]New Resources:[-] %s\n", strings.Join(newDef.UnlockResources, ", "))
 	}
 	if len(newDef.UnlockVillagers) > 0 {
-		fmt.Fprintf(&sb, "[yellow]New Villagers:[-] %s\n", strings.Join(newDef.UnlockVillagers, ", "))
+		fmt.Fprintf(&sb, "[yellow]New Workers:[-] %s\n", strings.Join(newDef.UnlockVillagers, ", "))
 	}
 
 	// Highlight the wonder for this age

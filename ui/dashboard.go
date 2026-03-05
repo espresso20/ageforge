@@ -52,7 +52,7 @@ type Dashboard struct {
 	logTV         *tview.TextView
 	miniMap       *MiniMap
 	wonderPanel   *WonderPanel
-	villagerPanel *VillagerPanel
+	workerPanel   *WorkerPanel
 	statusTV    *tview.TextView
 	ageTV      *tview.TextView
 	inputField *tview.InputField
@@ -145,8 +145,8 @@ func (d *Dashboard) build() {
 	// Wonder panel (current age's wonder)
 	d.wonderPanel = NewWonderPanel()
 
-	// Villager panel
-	d.villagerPanel = NewVillagerPanel()
+	// Worker panel
+	d.workerPanel = NewWorkerPanel()
 
 	// Shame badge bar (1 fixed line; text only shown when CheaterBadge is true)
 	d.cheaterTV = tview.NewTextView().
@@ -310,10 +310,10 @@ func (d *Dashboard) build() {
 		}
 	})
 
-	// Bottom area: log + villagers + wonder panel + mini-map side by side
+	// Bottom area: log + workers + wonder panel + mini-map side by side
 	d.bottomArea = tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(d.logTV, 0, 1, false).
-		AddItem(d.villagerPanel.Primitive(), 0, 1, false).
+		AddItem(d.workerPanel.Primitive(), 0, 1, false).
 		AddItem(d.wonderPanel.Primitive(), 0, 1, false).
 		AddItem(d.miniMap.Primitive(), 0, 1, false)
 
@@ -558,7 +558,7 @@ func (d *Dashboard) refresh() {
 	d.toastTV.SetText(d.toastMgr.GetCurrent())
 	d.miniMap.UpdateState(state)
 	d.wonderPanel.UpdateState(state)
-	d.villagerPanel.UpdateState(state)
+	d.workerPanel.UpdateState(state)
 
 	// Only refresh the active tab
 	switch d.activeTab {
@@ -614,7 +614,7 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 	d.statusTV.SetText(fmt.Sprintf(
 		"[gold]%s[-]%s%s%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]F1-F10=Tabs  ESC=Menu[-]",
 		state.AgeName, prestigeStr, titleStr, epochStr, state.Tick, nextAgeStr, speedStr,
-		state.Villagers.TotalPop, state.Villagers.MaxPop,
+		state.Workers.TotalPop, state.Workers.MaxPop,
 	))
 }
 

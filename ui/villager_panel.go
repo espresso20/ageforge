@@ -10,15 +10,15 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-// VillagerPanel shows a compact workers-by-domain summary.
-type VillagerPanel struct {
+// WorkerPanel shows a compact workers-by-domain summary.
+type WorkerPanel struct {
 	root     *tview.TextView
 	lastHash uint64
 }
 
-// NewVillagerPanel creates the villager info panel
-func NewVillagerPanel() *VillagerPanel {
-	vp := &VillagerPanel{}
+// NewWorkerPanel creates the worker info panel
+func NewWorkerPanel() *WorkerPanel {
+	vp := &WorkerPanel{}
 	vp.root = tview.NewTextView().
 		SetDynamicColors(true).
 		SetScrollable(true)
@@ -27,7 +27,7 @@ func NewVillagerPanel() *VillagerPanel {
 }
 
 // Primitive returns the underlying tview primitive
-func (vp *VillagerPanel) Primitive() tview.Primitive {
+func (vp *WorkerPanel) Primitive() tview.Primitive {
 	return vp.root
 }
 
@@ -39,14 +39,14 @@ func domainLabel(domain string) string {
 	return strings.ToUpper(domain[:1]) + domain[1:]
 }
 
-// UpdateState refreshes the villager panel with a compact domain summary
-func (vp *VillagerPanel) UpdateState(state game.GameState) {
+// UpdateState refreshes the worker panel with a compact domain summary
+func (vp *WorkerPanel) UpdateState(state game.GameState) {
 	// Hash-based dirty check
 	var h uint64
 	h = hashKey(state.Age)
-	h ^= uint64(state.Villagers.TotalPop+1) * 31
-	h ^= uint64(state.Villagers.FoodDrain*1000) * 37
-	for key, vt := range state.Villagers.Types {
+	h ^= uint64(state.Workers.TotalPop+1) * 31
+	h ^= uint64(state.Workers.FoodDrain*1000) * 37
+	for key, vt := range state.Workers.Types {
 		if vt.Count > 0 {
 			h ^= hashKey(key) * 13
 			h ^= uint64(vt.Count+1) * 7
@@ -60,7 +60,7 @@ func (vp *VillagerPanel) UpdateState(state game.GameState) {
 
 	var sb strings.Builder
 
-	v := state.Villagers
+	v := state.Workers
 	fmt.Fprintf(&sb, " [gold]Total:[-] %d/%d  [gold]Idle:[-] %d  [gold]Food:[-] %.1f/tick\n",
 		v.TotalPop, v.MaxPop, v.TotalIdle, v.FoodDrain)
 	sb.WriteString("\n [gold]Workers by Domain[-]\n")

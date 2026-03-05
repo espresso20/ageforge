@@ -35,7 +35,7 @@ func NewWikiTab() *WikiTab {
 		{title: "Getting Started", render: wikiGettingStarted},
 		{title: "Resources", render: wikiResources},
 		{title: "Buildings", render: wikiBuildings},
-		{title: "Villagers", render: wikiVillagers},
+		{title: "Workers", render: wikiWorkers},
 		{title: "Research", render: wikiResearch},
 		{title: "Military", render: wikiMilitary},
 		{title: "Ages", render: wikiAges},
@@ -136,20 +136,20 @@ func wikiOverview(_ game.GameState) string {
 AgeForge is an idle/clicker game where you build a civilization
 from nothing. Starting in the Primitive Age with just your
 bare hands, you gather resources, build structures, recruit
-villagers, and advance through 22 ages — from primitive
+workers, and advance through 22 ages — from primitive
 survival to galactic transcendence.
 
 [gold]Core Loop[-]
   1. [cyan]Gather[-] resources manually
   2. [cyan]Build[-] structures for housing and production
-  3. [cyan]Recruit[-] villagers and assign them to tasks
+  3. [cyan]Recruit[-] workers and assign them to buildings
   4. [cyan]Research[-] technologies for permanent bonuses
   5. [cyan]Send expeditions[-] for loot and resources
   6. [cyan]Advance[-] to the next age when requirements are met
 
 [gold]Key Concepts[-]
   • [yellow]Resources[-] are capped by storage. Build storage to hold more.
-  • [yellow]Villagers[-] eat food every tick. Balance food workers vs others.
+  • [yellow]Workers[-] eat food every tick. Balance food workers vs others.
   • [yellow]Buildings[-] cost more each time (scaling costs).
   • [yellow]Ages[-] require both resources AND buildings to advance.
   • [yellow]Wonders[-] are unique buildings that take many ticks to build.
@@ -185,7 +185,7 @@ and nothing else. Here's your first steps:
 [gold]Step 3: Build a Hut[-]
   Type: [cyan]build hut[-]
   Huts provide +2 population capacity. You need housing
-  before you can recruit villagers.
+  before you can recruit workers.
 
 [gold]Step 4: Build an Altar[-]
   Type: [cyan]build altar[-]
@@ -197,14 +197,14 @@ and nothing else. Here's your first steps:
   Workers gather food/wood (0.35/tick). Shamans gather
   knowledge (0.08/tick). You need both to advance.
 
-[gold]Step 6: Assign Villagers[-]
-  Type: [cyan]assign worker food[-] or [cyan]assign shaman knowledge[-]
-  Each worker eats 0.10 food/tick, shamans eat 0.2/tick.
+[gold]Step 6: Assign Workers[-]
+  Type: [cyan]assign food gathering_camp 2[-] or [cyan]assign faith shrine 1[-]
+  Each food worker eats 0.08 food/tick (primitive age).
   1 food worker can sustain 1 shaman with food to spare.
 
 [gold]Step 7: Keep Building[-]
   Build more huts, stashes, and altars. Recruit and assign
-  villagers. Watch the age progress bar — when all
+  workers. Watch the age progress bar — when all
   requirements turn [green]green[-], you'll advance!
 
 [gold]The Food Balance[-]
@@ -323,21 +323,21 @@ func wikiBuildings(state game.GameState) string {
 	return sb.String()
 }
 
-func wikiVillagers(state game.GameState) string {
+func wikiWorkers(state game.GameState) string {
 	var sb strings.Builder
-	sb.WriteString("[gold]Villagers[-]\n\n")
-	sb.WriteString("Villagers are your workforce. They consume food each tick\n")
-	sb.WriteString("and can be assigned to gather resources.\n\n")
+	sb.WriteString("[gold]Workers[-]\n\n")
+	sb.WriteString("Workers are your workforce. They consume food each tick\n")
+	sb.WriteString("and are assigned to buildings to produce resources.\n\n")
 
-	v := state.Villagers
+	v := state.Workers
 	sb.WriteString(fmt.Sprintf("[orange]Population: %d / %d  |  Idle: %d  |  Food drain: %.1f/tick[-]\n\n",
 		v.TotalPop, v.MaxPop, v.TotalIdle, v.FoodDrain))
 
-	types := game.DefaultVillagerTypes()
+	types := game.DefaultWorkerTypes()
 	for _, def := range types {
 		sb.WriteString(fmt.Sprintf("[cyan]%s[-] [gray](%s)[-]\n", def.Name, def.Key))
 		sb.WriteString(fmt.Sprintf("  Food cost: [yellow]%.2f/tick[-]\n", def.FoodCost))
-		sb.WriteString(fmt.Sprintf("  Gather rate: [yellow]%.1f/tick[-] per assigned villager\n", def.GatherRate))
+		sb.WriteString(fmt.Sprintf("  Gather rate: [yellow]%.1f/tick[-] per assigned worker\n", def.GatherRate))
 		if len(def.CanGather) > 0 {
 			sb.WriteString(fmt.Sprintf("  Can gather: [yellow]%s[-]\n", strings.Join(def.CanGather, ", ")))
 		} else {
@@ -380,7 +380,7 @@ func wikiAges(state game.GameState) string {
 	var sb strings.Builder
 	sb.WriteString("[gold]Ages[-]\n\n")
 	sb.WriteString("Advancing through ages unlocks new buildings, resources,\n")
-	sb.WriteString("and villager types. Requirements include both resources\n")
+	sb.WriteString("and worker types. Requirements include both resources\n")
 	sb.WriteString("(which are consumed) and buildings (which must exist).\n\n")
 
 	sb.WriteString(fmt.Sprintf("[orange]Current Age: %s[-]\n\n", state.AgeName))
@@ -457,7 +457,7 @@ func wikiAges(state game.GameState) string {
 				strings.Join(age.UnlockResources, ", ")))
 		}
 		if len(age.UnlockVillagers) > 0 {
-			sb.WriteString(fmt.Sprintf("    Unlocks villagers: [yellow]%s[-]\n",
+			sb.WriteString(fmt.Sprintf("    Unlocks workers: [yellow]%s[-]\n",
 				strings.Join(age.UnlockVillagers, ", ")))
 		}
 		sb.WriteString("\n")
@@ -673,7 +673,7 @@ func wikiPrestige(state game.GameState) string {
 	sb.WriteString("  5. Start over with permanent bonuses!\n\n")
 
 	sb.WriteString("[gold]What Gets Reset[-]\n")
-	sb.WriteString("  [red]Wiped:[-] Resources, buildings, villagers, research,\n")
+	sb.WriteString("  [red]Wiped:[-] Resources, buildings, workers, research,\n")
 	sb.WriteString("  military, events, milestones, build queue, age\n")
 	sb.WriteString("  [green]Kept:[-] Prestige level, points, purchased upgrades\n\n")
 
@@ -768,22 +768,22 @@ Most have single-letter shortcuts.
   Buildings with build time (wonders) are queued and
   complete after the required number of ticks.
 
-[gold]── Villagers ──[-]
+[gold]── Workers ──[-]
 
   [cyan]recruit[-] <type> [count]
   Shortcut: [cyan]r[-]
-  Recruit villagers. Requires available population cap.
-  Example: [yellow]recruit worker 3[-] or [yellow]r scholar[-]
+  Recruit workers. Requires available population cap.
+  Example: [yellow]recruit food 3[-] or [yellow]r faith[-]
 
-  [cyan]assign[-] <type> <resource> [count]
+  [cyan]assign[-] <domain> <building> [count]
   Shortcut: [cyan]a[-]
-  Assign idle villagers to gather a resource.
-  Example: [yellow]assign worker food 2[-] or [yellow]a worker wood[-]
+  Assign idle workers to a building.
+  Example: [yellow]assign food gathering_camp 2[-] or [yellow]a faith shrine[-]
 
-  [cyan]unassign[-] <type> <resource> [count]
+  [cyan]unassign[-] <domain> <building> [count]
   Shortcut: [cyan]u[-]
-  Remove villagers from a gathering assignment.
-  Example: [yellow]unassign worker stone 1[-]
+  Remove workers from a building assignment.
+  Example: [yellow]unassign food gathering_camp 1[-]
 
 [gold]── Research ──[-]
 

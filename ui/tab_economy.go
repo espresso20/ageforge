@@ -130,12 +130,12 @@ func formatFaithRow(rs game.ResourceState) string {
 	return fmt.Sprintf(" %-12s %s %s\n", rs.Name, midPart, FormatRate(rs.Rate))
 }
 
-// EconomyTab displays resources, buildings, and villager management
+// EconomyTab displays resources, buildings, and worker management
 type EconomyTab struct {
 	root       *tview.Flex
 	resourceTV *tview.TextView
 	buildingTV *tview.TextView
-	villagerTV *tview.TextView
+	constructionTV *tview.TextView
 }
 
 // NewEconomyTab creates the economy tab
@@ -148,13 +148,13 @@ func NewEconomyTab() *EconomyTab {
 	t.buildingTV = tview.NewTextView().SetDynamicColors(true).SetScrollable(true)
 	t.buildingTV.SetBorder(true).SetTitle(" Buildings ").SetTitleColor(ColorBuilding)
 
-	t.villagerTV = tview.NewTextView().SetDynamicColors(true)
-	t.villagerTV.SetBorder(true).SetTitle(" Under Construction ").SetTitleColor(ColorBuilding)
+	t.constructionTV = tview.NewTextView().SetDynamicColors(true)
+	t.constructionTV.SetBorder(true).SetTitle(" Under Construction ").SetTitleColor(ColorBuilding)
 
 	// Left: resources (tall) + under construction (compact), Right: buildings
 	leftCol := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(t.resourceTV, 0, 4, false).
-		AddItem(t.villagerTV, 0, 1, false)
+		AddItem(t.constructionTV, 0, 1, false)
 
 	t.root = tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(leftCol, 0, 2, false).
@@ -269,7 +269,11 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 			default:
 				icon = "[red]✗[-]"
 			}
-			fmt.Fprintf(&sb, " %s [cyan]%s[-] [gray]x%d[-]\n", icon, bs.Name, bs.Count)
+			countColor := "gray"
+			if bs.Count > 0 {
+				countColor = "gold"
+			}
+			fmt.Fprintf(&sb, " %s [cyan]%s[-] [%s]x%d[-]\n", icon, bs.Name, countColor, bs.Count)
 			if bs.AtMaxCount {
 				fmt.Fprintf(&sb, "   [yellow]Building limit reached.[-]\n")
 			} else {
@@ -396,5 +400,5 @@ func (t *EconomyTab) refreshUnderConstruction(state game.GameState) {
 		}
 	}
 
-	t.villagerTV.SetText(sb.String())
+	t.constructionTV.SetText(sb.String())
 }

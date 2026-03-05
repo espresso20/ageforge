@@ -126,9 +126,9 @@ func (t *LogsTab) renderVerbose(sb *strings.Builder, state game.GameState) {
 	// Engine state header
 	sb.WriteString("[gold]═══ Engine State ═══[-]\n")
 	fmt.Fprintf(sb, " Tick: [cyan]%d[-]  Age: [cyan]%s[-]  Pop: [cyan]%d/%d[-]\n",
-		state.Tick, state.AgeName, state.Villagers.TotalPop, state.Villagers.MaxPop)
+		state.Tick, state.AgeName, state.Workers.TotalPop, state.Workers.MaxPop)
 	fmt.Fprintf(sb, " Food drain: [yellow]%.2f/tick[-]  Idle: [yellow]%d[-]\n",
-		state.Villagers.FoodDrain, state.Villagers.TotalIdle)
+		state.Workers.FoodDrain, state.Workers.TotalIdle)
 	if state.TickSpeedBonus > 0 {
 		fmt.Fprintf(sb, " Tick speed: [green]+%.0f%%[-] (interval: [cyan]%dms[-])\n",
 			state.TickSpeedBonus*100, state.TickIntervalMs)
@@ -183,9 +183,9 @@ func (t *LogsTab) renderVerbose(sb *strings.Builder, state game.GameState) {
 			state.Research.TotalTicks)
 	}
 
-	// Villager assignments
-	sb.WriteString("[gold]═══ Villager Assignments ═══[-]\n")
-	for _, vt := range state.Villagers.Types {
+	// Worker assignments
+	sb.WriteString("[gold]═══ Worker Assignments ═══[-]\n")
+	for _, vt := range state.Workers.Types {
 		if !vt.Unlocked || vt.Count == 0 {
 			continue
 		}
