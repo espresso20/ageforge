@@ -258,3 +258,12 @@ Items are moved here from TODO.md when finished. Do not re-implement anything li
 
 ## General / Misc
 - [x] Established TODO.md + DONE.md workflow for session-resumable planning (2026-02-25)
+
+## Phase 13: Epoch-Exclusive Regular Events (2026-03-04)
+- [x] Added `EpochKey string` field to `EventDef` struct in `config/events.go`
+- [x] Added `EpochExclusiveEvents() []EventDef` with 35 events (5 per epoch × 7 epochs): stone_era, bronze_era, iron_era, medieval_era, industrial_era, digital_era, cosmic_era
+- [x] Updated `EventByKey()` to include epoch-exclusive events in its lookup map
+- [x] Modified `getEligible()` in `game/events.go` to accept `currentEpoch string` and append matching exclusive events to the candidate pool
+- [x] Threaded `currentEpoch` through `Events.Tick()` signature and engine call site
+- [x] Updated `game/events_test.go` — two Tick() calls pass `"stone_era"` as epoch argument
+- [x] All tests passing, `go build ./...` clean — commit bc9ed5b
