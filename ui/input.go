@@ -463,6 +463,15 @@ func cmdAssign(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
 		return CommandResult{Message: "Usage: assign <building> [count|all]", Type: "error"}
 	}
+	// Backward-compat: if args[0] is not a known building key it's probably
+	// a legacy domain/type arg (e.g. "assign worker gathering_camp 4").
+	// Skip it so both old and new syntax work.
+	if len(args) >= 2 {
+		state := engine.GetState()
+		if _, known := state.Buildings[strings.ToLower(args[0])]; !known {
+			args = args[1:]
+		}
+	}
 	building := strings.ToLower(args[0])
 	if len(args) >= 2 && strings.ToLower(args[1]) == "all" {
 		n, err := engine.AssignAll(building)
@@ -492,6 +501,13 @@ func cmdAssign(args []string, engine *game.GameEngine) CommandResult {
 func cmdUnassign(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
 		return CommandResult{Message: "Usage: unassign <building> [count|all]", Type: "error"}
+	}
+	// Backward-compat: skip a leading domain/type arg if it isn't a known building key.
+	if len(args) >= 2 {
+		state := engine.GetState()
+		if _, known := state.Buildings[strings.ToLower(args[0])]; !known {
+			args = args[1:]
+		}
 	}
 	building := strings.ToLower(args[0])
 	if len(args) >= 2 && strings.ToLower(args[1]) == "all" {
