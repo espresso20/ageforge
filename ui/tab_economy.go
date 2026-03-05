@@ -11,6 +11,124 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
+// cultureTresholds are the culture milestone amounts in ascending order.
+var cultureThresholds = []float64{
+	500, 2500, 10000, 50000, 250000, 1_000_000, 5_000_000, 25_000_000, 100_000_000, 500_000_000, 1_000_000_000,
+}
+
+// cultureThresholdLabels are short effect labels for each threshold (parallel to cultureThresholds).
+var cultureThresholdLabels = []string{
+	"+5% knowledge rate",
+	"+10% knowledge rate",
+	"+15% knowledge rate, unlock wonder tier",
+	"+20% knowledge rate",
+	"+25% knowledge rate, culture events",
+	"+30% knowledge rate",
+	"+research speed",
+	"+research speed",
+	"+research speed",
+	"+research speed",
+	"+research speed",
+}
+
+// cultureProgressBar returns a 10-char wide bar using ▓/░ characters.
+func cultureProgressBar(current, max float64) string {
+	const width = 10
+	if max <= 0 {
+		return strings.Repeat("░", width)
+	}
+	ratio := current / max
+	if ratio > 1 {
+		ratio = 1
+	}
+	if ratio < 0 {
+		ratio = 0
+	}
+	filled := int(ratio * float64(width))
+	empty := width - filled
+	return strings.Repeat("▓", filled) + strings.Repeat("░", empty)
+}
+
+// formatCultureRow builds the culture resource row string.
+func formatCultureRow(rs game.ResourceState) string {
+	amount := rs.Amount
+
+	// Find the next threshold not yet reached.
+	nextIdx := -1
+	for i, t := range cultureThresholds {
+		if amount < t {
+			nextIdx = i
+			break
+		}
+	}
+
+	var midPart string
+	if nextIdx < 0 {
+		// Above all thresholds — Culture Mastered.
+		midPart = fmt.Sprintf("[gold]✦ Culture Mastered[-]  %-8s", FormatNumber(amount))
+	} else {
+		threshold := cultureThresholds[nextIdx]
+		bar := cultureProgressBar(amount, threshold)
+		label := cultureThresholdLabels[nextIdx]
+		// Wrap bar in literal [ ] so tview does not interpret the block chars as a color tag.
+		midPart = "\u005b" + bar + "\u005d" + fmt.Sprintf("  %s / %s  [gray]%s[-]",
+			FormatNumber(amount), FormatNumber(threshold), label)
+	}
+
+	return fmt.Sprintf(" %-12s %s %s\n", rs.Name, midPart, FormatRate(rs.Rate))
+}
+
+// faithBand describes a faith band with its label and epoch odds text.
+type faithBand struct {
+	label     string // tview-tagged label
+	epochOdds string // e.g. "40% good"
+}
+
+// faithBandFor returns the appropriate faithBand based on pct (0.0–1.0).
+func faithBandFor(amount, storage float64) faithBand {
+	if storage <= 0 || amount == 0 {
+		return faithBand{"[red]✝ No Faith[-]", "40% good"}
+	}
+	pct := amount / storage
+	switch {
+	case pct <= 0.25:
+		return faithBand{"[gray]◈ Dim Faith[-]", "40% good"}
+	case pct <= 0.50:
+		return faithBand{"[white]◈ Low Faith[-]", "50% good"}
+	case pct <= 0.75:
+		return faithBand{"[yellow]◈ Faith[-]", "50% good"}
+	case pct < 1.0:
+		return faithBand{"[green]◈ Strong Faith[-]", "60% good"}
+	default:
+		return faithBand{"[gold]✦ Faith Full[-]", "60% good + prestige bonus"}
+	}
+}
+
+// formatFaithRow builds the faith resource row string.
+func formatFaithRow(rs game.ResourceState) string {
+	amount := rs.Amount
+	storage := rs.Storage
+
+	band := faithBandFor(amount, storage)
+
+	var pctStr string
+	if storage > 0 {
+		pct := amount / storage * 100
+		pctStr = fmt.Sprintf("%.0f%%", pct)
+	} else {
+		pctStr = "0%"
+	}
+
+	// Build the bar using the same cultureProgressBar helper (▓/░, width 10).
+	bar := cultureProgressBar(amount, storage)
+	barStr := "\u005b" + bar + "\u005d"
+
+	midPart := fmt.Sprintf("%s  %s  %s  [gray](epoch: %s)[-]",
+		barStr, band.label, pctStr, band.epochOdds)
+
+	return fmt.Sprintf(" %-12s %s %s\n", rs.Name, midPart, FormatRate(rs.Rate))
+}
+
 // EconomyTab displays resources, buildings, and villager management
 type EconomyTab struct {
 	root       *tview.Flex
@@ -69,18 +187,25 @@ func (t *EconomyTab) refreshResources(state game.GameState) {
 
 	for _, key := range keys {
 		rs := state.Resources[key]
-		bar := ProgressBar(rs.Amount, rs.Storage, 12)
-		amtColor := "white"
-		if rs.Storage > 0 && rs.Amount >= rs.Storage*0.9 {
-			amtColor = "yellow"
-		} else if rs.Rate > 0 {
-			amtColor = "green"
-		} else if rs.Rate < 0 {
-			amtColor = "red"
+		switch key {
+		case "culture":
+			sb.WriteString(formatCultureRow(rs))
+		case "faith":
+			sb.WriteString(formatFaithRow(rs))
+		default:
+			bar := ProgressBar(rs.Amount, rs.Storage, 12)
+			amtColor := "white"
+			if rs.Storage > 0 && rs.Amount >= rs.Storage*0.9 {
+				amtColor = "yellow"
+			} else if rs.Rate > 0 {
+				amtColor = "green"
+			} else if rs.Rate < 0 {
+				amtColor = "red"
+			}
+			fmt.Fprintf(&sb, " %-12s [%s]%6s[-] / %-6s %s %s\n",
+				rs.Name, amtColor, FormatNumber(rs.Amount), FormatNumber(rs.Storage),
+				FormatRate(rs.Rate), bar)
 		}
-		fmt.Fprintf(&sb, " %-12s [%s]%6s[-] / %-6s %s %s\n",
-			rs.Name, amtColor, FormatNumber(rs.Amount), FormatNumber(rs.Storage),
-			FormatRate(rs.Rate), bar)
 	}
 	t.resourceTV.SetText(sb.String())
 }
