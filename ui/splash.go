@@ -63,6 +63,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	})
 	mainList.AddItem("  ✦  New Game", "", 'n', func() {
 		nav(func() {
+			engine.Reset()
 			pages.SwitchToPage("dashboard")
 			go engine.Start()
 		})

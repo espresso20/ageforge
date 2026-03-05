@@ -232,8 +232,8 @@ func TestEngine_Reset(t *testing.T) {
 	if state.Age != "primitive_age" {
 		t.Errorf("age after reset = %v, want primitive_age", state.Age)
 	}
-	if state.Resources["wood"].Amount != 12 {
-		t.Errorf("wood after reset = %v, want 12", state.Resources["wood"].Amount)
+	if state.Resources["wood"].Amount != 50 {
+		t.Errorf("wood after reset = %v, want 50", state.Resources["wood"].Amount)
 	}
 }
 

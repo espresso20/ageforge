@@ -126,6 +126,14 @@ const AutosaveInterval = 60 * time.Second
 // Start begins the game tick loop
 func (ge *GameEngine) Start() {
 	ge.mu.Lock()
+	// If this engine was previously stopped, reinitialize the stop channel so
+	// Start can be called again after Stop (e.g. ESC → splash → New Game).
+	select {
+	case <-ge.stopCh:
+		ge.stopCh = make(chan struct{})
+		ge.stopOnce = sync.Once{}
+	default:
+	}
 	ge.running = true
 	ge.mu.Unlock()
 
@@ -183,7 +191,13 @@ func (ge *GameEngine) getTickInterval() time.Duration {
 		mult = 1.0
 	}
 
-	interval := time.Duration(float64(BaseTickInterval) / ((1.0 + bonus) * mult))
+	denom := (1.0 + bonus) * mult
+	if denom <= 0 {
+		// Guard: negative or zero denominator (e.g. tick_speed bonus ≤ -1.0)
+		// would produce a timer of +Inf (292 years), freezing the game.
+		return MinTickInterval
+	}
+	interval := time.Duration(float64(BaseTickInterval) / denom)
 	if interval < MinTickInterval {
 		interval = MinTickInterval
 	}
@@ -1243,7 +1257,7 @@ func (ge *GameEngine) Succumb() error {
 	// Preserve cross-run state
 	savedPrestige := ge.Prestige
 
-	// Full reset (follow DoPrestige pattern — keeps Bus intact for UI subscriptions... well, same as prestige)
+	// Full reset — Bus intentionally kept so dashboard subscriptions survive.
 	ge.tick = 0
 	ge.age = "primitive_age"
 	ge.Resources = NewResourceManager()
@@ -1256,7 +1270,6 @@ func (ge *GameEngine) Succumb() error {
 	ge.Trade = NewTradeManager()
 	ge.Diplomacy = NewDiplomacyManager()
 	ge.Stats = NewGameStats()
-	ge.Bus = NewEventBus()
 	ge.permanentBonuses = make(map[string]float64)
 	ge.buildQueue = nil
 	ge.log = nil
@@ -1727,7 +1740,7 @@ func (ge *GameEngine) DoPrestige() error {
 	ge.Trade = NewTradeManager()
 	ge.Diplomacy = NewDiplomacyManager()
 	ge.Stats = NewGameStats()
-	ge.Bus = NewEventBus()
+	// Bus intentionally kept — dashboard subscriptions must survive across resets.
 	ge.permanentBonuses = make(map[string]float64)
 	ge.buildQueue = nil
 	ge.log = nil
@@ -1797,7 +1810,7 @@ func (ge *GameEngine) Reset() {
 	ge.Trade = NewTradeManager()
 	ge.Diplomacy = NewDiplomacyManager()
 	ge.Stats = NewGameStats()
-	ge.Bus = NewEventBus()
+	// Bus intentionally kept — dashboard subscriptions must survive across resets.
 	ge.permanentBonuses = make(map[string]float64)
 	ge.tickSpeedBonus = 0
 	ge.speedMultiplier = 1.0
@@ -1805,8 +1818,8 @@ func (ge *GameEngine) Reset() {
 	ge.log = nil
 
 	ge.applyAgeUnlocks("primitive_age")
-	ge.Resources.Add("food", 15)
-	ge.Resources.Add("wood", 12)
+	ge.Resources.Add("food", 25)
+	ge.Resources.Add("wood", 50)
 
 	ge.cheaterBadge = false
 	ge.eliteBadge = false
