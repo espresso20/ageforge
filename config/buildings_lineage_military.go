@@ -12,14 +12,14 @@ func buildingsLineageMilitary() []BuildingDef {
 	// CostScale: 1.35  Category: "military"
 	// =========================================================================
 
-	// tier 0 — primitive_age  soldiers=10
+	// tier 0 — iron_age  soldiers=10
 	b = append(b, BuildingDef{
 		Name: "Hunting Lodge", Key: "hunting_lodge", Category: "military",
 		BaseCost:    map[string]float64{"wood": 25},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "capacity", Target: "military", Value: 10}},
 		BuildTicks:  80,
-		RequiredAge: "primitive_age",
+		RequiredAge: "iron_age",
 		Description: "A gathering place for hunters. +10 military cap (3 workers).",
 		LineageKey:  "military", LineageTier: 0,
 		WorkerDomain: "military", WorkerCapacity: 3,

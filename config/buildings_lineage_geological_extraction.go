@@ -15,14 +15,14 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// Dual-output tiers (3-4): two Effects each at half rate
 	// =========================================================================
 
-	// tier 0 — primitive_age  rate=0.03  output=stone
+	// tier 0 — stone_age  rate=0.03  output=stone
 	b = append(b, BuildingDef{
 		Name: "Stone Camp", Key: "stone_camp", Category: "production",
 		BaseCost:    map[string]float64{"wood": 15},
 		CostScale:   1.30,
 		Effects:     []Effect{{Type: "production", Target: "stone", Value: 0.03}},
 		BuildTicks:  80,
-		RequiredAge: "primitive_age",
+		RequiredAge: "stone_age",
 		Description: "A basic camp for gathering stones. +0.03 stone/tick (3 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 0,
 		WorkerDomain: "masonry", WorkerCapacity: 3,
