@@ -25,7 +25,7 @@ type GameEngine struct {
 
 	Resources  *ResourceManager
 	Buildings  *BuildingManager
-	Villagers  *VillagerManager
+	Workers    *WorkerManager
 	Research   *ResearchManager
 	Military   *MilitaryManager
 	Events     *EventManager
@@ -85,7 +85,7 @@ func NewGameEngine() *GameEngine {
 		age:              "primitive_age",
 		Resources:        NewResourceManager(),
 		Buildings:        NewBuildingManager(),
-		Villagers:        NewVillagerManager(),
+		Workers:          NewWorkerManager(),
 		Research:         NewResearchManager(),
 		Military:         NewMilitaryManager(),
 		Events:           NewEventManager(),
@@ -318,7 +318,7 @@ func (ge *GameEngine) doTick() {
 	if ge.tick%10 == 0 {
 		snap := ge.Resources.Snapshot()
 		if f, ok := snap["food"]; ok {
-			ge.addLog("debug", fmt.Sprintf("Food: %.1f (rate %+.3f/t), pop=%d", f.Amount, f.Rate, ge.Villagers.TotalPop()))
+			ge.addLog("debug", fmt.Sprintf("Food: %.1f (rate %+.3f/t), pop=%d", f.Amount, f.Rate, ge.Workers.TotalPop()))
 		}
 		for key, rs := range snap {
 			if rs.Unlocked && rs.Amount >= rs.Storage && rs.Storage > 0 {
@@ -335,7 +335,7 @@ func (ge *GameEngine) doTick() {
 	}
 
 	// Check food - starve if negative
-	if ge.Resources.Get("food") <= 0 && ge.Villagers.FoodDrain() > 0 {
+	if ge.Resources.Get("food") <= 0 && ge.Workers.FoodDrain() > 0 {
 		ge.addLog("warning", "Your people are starving! Food has run out.")
 	}
 
@@ -345,7 +345,7 @@ func (ge *GameEngine) doTick() {
 		foodAmt := snap["food"].Amount
 		foodRate := snap["food"].Rate
 		ge.addLog("debug", fmt.Sprintf("Tick %d snapshot: food=%.1f (%+.3f/t), pop=%d, queue=%d",
-			ge.tick, foodAmt, foodRate, ge.Villagers.TotalPop(), len(ge.buildQueue)))
+			ge.tick, foodAmt, foodRate, ge.Workers.TotalPop(), len(ge.buildQueue)))
 	}
 
 	// Check milestones
@@ -435,7 +435,7 @@ func (ge *GameEngine) processExpeditions() {
 		}
 		// Remove lost soldiers
 		if soldiersLost > 0 {
-			ge.Villagers.RemoveSoldiers(soldiersLost)
+			ge.Workers.RemoveSoldiers(soldiersLost)
 		}
 	}
 }
@@ -466,7 +466,7 @@ func (ge *GameEngine) checkMilestones() {
 	}
 
 	// Count soldiers
-	soldierCount := ge.Villagers.GetDomainCount("military")
+	soldierCount := ge.Workers.GetDomainCount("military")
 
 	// Count wonders
 	wonderCount := 0
@@ -479,7 +479,7 @@ func (ge *GameEngine) checkMilestones() {
 	completed := ge.Milestones.CheckMilestones(
 		ge.tick, ge.age, ageOrder,
 		ge.Resources, ge.Buildings,
-		ge.Villagers.TotalPop(),
+		ge.Workers.TotalPop(),
 		ge.Research.ResearchedCount(),
 		ge.Stats.TotalBuilt,
 		researchedTechs,
@@ -551,7 +551,7 @@ func (ge *GameEngine) recalculateRates() {
 
 	// Building production — worker fill ratio applied per building type
 	// rate = base × count × (0.20 + 0.80 × assigned/totalCapacity)
-	for res, rate := range ge.Buildings.WorkerScaledProduction(ge.Villagers.GetAssignedCount) {
+	for res, rate := range ge.Buildings.WorkerScaledProduction(ge.Workers.GetAssignedCount) {
 		r := ge.Resources.resources[res]
 		if r != nil {
 			r.Rate += rate
@@ -559,12 +559,12 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
-	// Villager production (returns empty in Phase 6+ — contribution folded into BuildingRate)
-	for res, rate := range ge.Villagers.GetProductionRates() {
+	// Worker production (returns empty in Phase 6+ — contribution folded into BuildingRate)
+	for res, rate := range ge.Workers.GetProductionRates() {
 		r := ge.Resources.resources[res]
 		if r != nil {
 			r.Rate += rate
-			r.Breakdown.VillagerRate += rate
+			r.Breakdown.WorkerRate += rate
 		}
 	}
 
@@ -609,12 +609,12 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
-	// Apply gather_rate bonus to villager-generated rates
+	// Apply gather_rate bonus to worker-generated rates
 	gatherBonus := researchBonuses["gather_rate"] + permanentBonuses["gather_rate"]
 	if gatherBonus > 0 {
 		// Already applied via multiplier above
-		// This is additive on base villager rates — re-add the bonus portion
-		for res, rate := range ge.Villagers.GetProductionRates() {
+		// This is additive on base worker rates — re-add the bonus portion
+		for res, rate := range ge.Workers.GetProductionRates() {
 			r := ge.Resources.resources[res]
 			if r != nil {
 				r.Rate += rate * gatherBonus
@@ -658,7 +658,7 @@ func (ge *GameEngine) recalculateRates() {
 	}
 
 	// Food consumption
-	drain := ge.Villagers.FoodDrain()
+	drain := ge.Workers.FoodDrain()
 	if drain > 0 {
 		r := ge.Resources.resources["food"]
 		if r != nil {
@@ -671,7 +671,7 @@ func (ge *GameEngine) recalculateRates() {
 	for _, def := range ge.Resources.defs {
 		r := ge.Resources.resources[def.Key]
 		if r != nil {
-			knownComponents := r.Breakdown.BuildingRate + r.Breakdown.VillagerRate +
+			knownComponents := r.Breakdown.BuildingRate + r.Breakdown.WorkerRate +
 				r.Breakdown.ResearchRate + r.Breakdown.EventRate + r.Breakdown.TradeRate + r.Breakdown.FoodDrain
 			r.Breakdown.BonusRate = r.Rate - knownComponents
 		}
@@ -713,7 +713,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	oldAge := ge.age
 	ge.age = newAge
 	ge.ageReady = false
-	ge.Villagers.SetAge(newAge)
+	ge.Workers.SetAge(newAge)
 
 	// Phase 7: Building lineage transformation pass.
 	// Collect transforms first (safe iteration), then apply.
@@ -742,7 +742,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	}
 	summary := AgeAdvanceSummary{OldAge: oldAge, NewAge: newAge}
 	for _, t := range transforms {
-		ge.Buildings.TransformBuilding(t.oldKey, t.newKey, ge.Villagers.RenameAssignment)
+		ge.Buildings.TransformBuilding(t.oldKey, t.newKey, ge.Workers.RenameAssignment)
 		summary.BuildingsTransformed = append(summary.BuildingsTransformed, BuildingTransform{
 			OldKey: t.oldKey, OldName: t.oldName,
 			NewKey: t.newKey, NewName: t.newName,
@@ -783,7 +783,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	oldName := ge.progress.GetAgeName(oldAge)
 	newName := ge.progress.GetAgeName(newAge)
 	unlocks := ge.progress.GetUnlocks(newAge)
-	ge.addLog("debug", fmt.Sprintf("Age advance: %s → %s (unlocks: %d buildings, %d resources, %d villagers)",
+	ge.addLog("debug", fmt.Sprintf("Age advance: %s → %s (unlocks: %d buildings, %d resources, %d workers)",
 		oldAge, newAge, len(unlocks.UnlockBuildings), len(unlocks.UnlockResources), len(unlocks.UnlockVillagers)))
 	ge.addLog("success", fmt.Sprintf("Advanced from %s to %s!", oldName, newName))
 
@@ -817,7 +817,7 @@ func (ge *GameEngine) applyAgeUnlocks(ageKey string) {
 		ge.Buildings.UnlockBuilding(b)
 	}
 	for _, v := range age.UnlockVillagers {
-		ge.Villagers.UnlockType(v)
+		ge.Workers.UnlockType(v)
 	}
 }
 
@@ -967,7 +967,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		})
 	case "population_surge":
 		// +15% workers across all domains, instant
-		ge.Villagers.AddPctAll(0.15)
+		ge.Workers.AddPctAll(0.15)
 	case "ancient_cache":
 		// Fill 40% of each resource's storage cap
 		for _, def := range ge.Resources.defs {
@@ -1063,7 +1063,7 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 			ge.addLog("warning", fmt.Sprintf("  → Destroyed: %s", desc))
 		}
 	case "epidemic":
-		ge.Villagers.RemovePct(0.20)
+		ge.Workers.RemovePct(0.20)
 		ge.Events.InjectEvent(ActiveEvent{
 			Key:       "epoch_epidemic",
 			Name:      ev.Name,
@@ -1192,7 +1192,7 @@ func (ge *GameEngine) Endure() error {
 	}
 
 	// -25% workers
-	ge.Villagers.RemovePct(0.25)
+	ge.Workers.RemovePct(0.25)
 
 	// Timed debuffs: worker food drain +10% for 216 ticks, production -10% for 216 ticks
 	ge.Events.InjectEvent(ActiveEvent{
@@ -1262,7 +1262,7 @@ func (ge *GameEngine) Succumb() error {
 	ge.age = "primitive_age"
 	ge.Resources = NewResourceManager()
 	ge.Buildings = NewBuildingManager()
-	ge.Villagers = NewVillagerManager()
+	ge.Workers = NewWorkerManager()
 	ge.Research = NewResearchManager()
 	ge.Military = NewMilitaryManager()
 	ge.Events = NewEventManager()
@@ -1535,33 +1535,33 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	return built, nil
 }
 
-// RecruitMax recruits as many villagers as possible up to the pop cap
+// RecruitMax recruits as many workers as possible up to the pop cap
 func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	if !ge.Villagers.IsUnlocked(vType) {
-		return 0, fmt.Errorf("villager type '%s' is not yet unlocked", vType)
+	if !ge.Workers.IsUnlocked(vType) {
+		return 0, fmt.Errorf("worker type '%s' is not yet unlocked", vType)
 	}
 
 	popCap := ge.Buildings.GetPopCapacity()
 	popCap += int(ge.Research.GetBonus("population") + ge.permanentBonuses["population"] + ge.Prestige.GetBonuses()["population"])
 
-	available := popCap - ge.Villagers.TotalPop()
+	available := popCap - ge.Workers.TotalPop()
 	if available <= 0 {
-		return 0, fmt.Errorf("population cap reached (%d/%d)", ge.Villagers.TotalPop(), popCap)
+		return 0, fmt.Errorf("population cap reached (%d/%d)", ge.Workers.TotalPop(), popCap)
 	}
 
-	if !ge.Villagers.Recruit(vType, available, popCap) {
+	if !ge.Workers.Recruit(vType, available, popCap) {
 		return 0, fmt.Errorf("cannot recruit %s(s)", vType)
 	}
 	ge.Stats.RecordRecruit(available)
-	ge.addLog("info", fmt.Sprintf("Recruited %d %s(s) (pop: %d/%d)", available, vType, ge.Villagers.TotalPop(), popCap))
+	ge.addLog("info", fmt.Sprintf("Recruited %d %s(s) (pop: %d/%d)", available, vType, ge.Workers.TotalPop(), popCap))
 	return available, nil
 }
 
-// RecruitVillager recruits villagers
-func (ge *GameEngine) RecruitVillager(vType string, count int) error {
+// RecruitWorker recruits workers
+func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
@@ -1569,31 +1569,49 @@ func (ge *GameEngine) RecruitVillager(vType string, count int) error {
 	// Add population capacity from research/milestones/prestige
 	popCap += int(ge.Research.GetBonus("population") + ge.permanentBonuses["population"] + ge.Prestige.GetBonuses()["population"])
 
-	if !ge.Villagers.Recruit(vType, count, popCap) {
-		totalPop := ge.Villagers.TotalPop()
-		if !ge.Villagers.IsUnlocked(vType) {
-			return fmt.Errorf("villager type '%s' is not yet unlocked", vType)
+	if !ge.Workers.Recruit(vType, count, popCap) {
+		totalPop := ge.Workers.TotalPop()
+		if !ge.Workers.IsUnlocked(vType) {
+			return fmt.Errorf("worker type '%s' is not yet unlocked", vType)
 		}
 		return fmt.Errorf("cannot recruit %d %s(s) (pop: %d/%d)", count, vType, totalPop, popCap)
 	}
 	ge.Stats.RecordRecruit(count)
-	ge.addLog("debug", fmt.Sprintf("Recruit: %d %s (pop: %d/%d)", count, vType, ge.Villagers.TotalPop(), popCap))
+	ge.addLog("debug", fmt.Sprintf("Recruit: %d %s (pop: %d/%d)", count, vType, ge.Workers.TotalPop(), popCap))
 	ge.addLog("info", fmt.Sprintf("Recruited %d %s(s)", count, vType))
 	return nil
 }
 
-// AssignVillager assigns workers from a domain to a building.
-// domain may be a legacy type name ("worker") or a domain key ("food").
-// buildingKey must be a building whose WorkerDomain matches the resolved domain.
-func (ge *GameEngine) AssignVillager(domain, buildingKey string, count int) error {
+// AssignWorker assigns workers to a building.
+// The worker domain is auto-resolved from the building's WorkerDomain field.
+func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
 	if ge.Buildings.GetCount(buildingKey) == 0 {
 		return fmt.Errorf("no %s built yet — build one first", buildingKey)
 	}
-	if !ge.Villagers.Assign(domain, buildingKey, count) {
-		idle := ge.Villagers.IdleCount(domain)
+	// Auto-resolve domain from the building's WorkerDomain
+	byKey := config.BuildingByKey()
+	def, ok := byKey[buildingKey]
+	if !ok || def.WorkerDomain == "" {
+		return fmt.Errorf("building %s does not accept workers", buildingKey)
+	}
+	domain := def.WorkerDomain
+	// Enforce capacity cap
+	if def.WorkerCapacity > 0 {
+		totalCap := def.WorkerCapacity * ge.Buildings.GetCount(buildingKey)
+		alreadyAssigned := ge.Workers.GetAssignedCount(domain, buildingKey)
+		available := totalCap - alreadyAssigned
+		if available <= 0 {
+			return fmt.Errorf("all %d worker slot(s) for %s are full", totalCap, buildingKey)
+		}
+		if count > available {
+			return fmt.Errorf("only %d worker slot(s) available for %s (%d/%d filled)", available, buildingKey, alreadyAssigned, totalCap)
+		}
+	}
+	if !ge.Workers.Assign(domain, buildingKey, count) {
+		idle := ge.Workers.IdleCount(domain)
 		return fmt.Errorf("cannot assign %d %s workers to %s (idle: %d)", count, domain, buildingKey, idle)
 	}
 	ge.recalculateRates()
@@ -1602,36 +1620,63 @@ func (ge *GameEngine) AssignVillager(domain, buildingKey string, count int) erro
 	return nil
 }
 
-// AssignAll assigns all idle workers of a domain to a building
-func (ge *GameEngine) AssignAll(domain, buildingKey string) (int, error) {
+// AssignAll assigns all idle workers to a building.
+// The worker domain is auto-resolved from the building's WorkerDomain field.
+func (ge *GameEngine) AssignAll(buildingKey string) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
 	if ge.Buildings.GetCount(buildingKey) == 0 {
 		return 0, fmt.Errorf("no %s built yet — build one first", buildingKey)
 	}
-	idle := ge.Villagers.IdleCount(domain)
-	if idle <= 0 {
+	// Auto-resolve domain from building's WorkerDomain
+	byKey := config.BuildingByKey()
+	def, ok := byKey[buildingKey]
+	if !ok || def.WorkerDomain == "" {
+		return 0, fmt.Errorf("building %s does not accept workers", buildingKey)
+	}
+	domain := def.WorkerDomain
+	// Cap at available capacity
+	toAssign := ge.Workers.IdleCount(domain)
+	if toAssign <= 0 {
 		return 0, fmt.Errorf("no idle %s workers to assign", domain)
 	}
-	if !ge.Villagers.Assign(domain, buildingKey, idle) {
+	if def.WorkerCapacity > 0 {
+		totalCap := def.WorkerCapacity * ge.Buildings.GetCount(buildingKey)
+		alreadyAssigned := ge.Workers.GetAssignedCount(domain, buildingKey)
+		available := totalCap - alreadyAssigned
+		if available <= 0 {
+			return 0, fmt.Errorf("all %d worker slot(s) for %s are full", totalCap, buildingKey)
+		}
+		if toAssign > available {
+			toAssign = available
+		}
+	}
+	if !ge.Workers.Assign(domain, buildingKey, toAssign) {
 		return 0, fmt.Errorf("cannot assign %s workers to %s", domain, buildingKey)
 	}
 	ge.recalculateRates()
-	ge.addLog("info", fmt.Sprintf("Assigned all %d %s worker(s) to %s", idle, domain, buildingKey))
-	return idle, nil
+	ge.addLog("info", fmt.Sprintf("Assigned all %d %s worker(s) to %s", toAssign, domain, buildingKey))
+	return toAssign, nil
 }
 
-// UnassignAll removes all workers of a domain from a building
-func (ge *GameEngine) UnassignAll(domain, buildingKey string) (int, error) {
+// UnassignAll removes all workers from a building.
+// The worker domain is auto-resolved from the building's WorkerDomain field.
+func (ge *GameEngine) UnassignAll(buildingKey string) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	assigned := ge.Villagers.GetAssignedCount(resolveDomain(domain), buildingKey)
+	byKey := config.BuildingByKey()
+	def, ok := byKey[buildingKey]
+	if !ok || def.WorkerDomain == "" {
+		return 0, fmt.Errorf("building %s does not accept workers", buildingKey)
+	}
+	domain := def.WorkerDomain
+	assigned := ge.Workers.GetAssignedCount(domain, buildingKey)
 	if assigned <= 0 {
 		return 0, fmt.Errorf("no %s workers assigned to %s", domain, buildingKey)
 	}
-	if !ge.Villagers.Unassign(domain, buildingKey, assigned) {
+	if !ge.Workers.Unassign(domain, buildingKey, assigned) {
 		return 0, fmt.Errorf("cannot unassign %s workers from %s", domain, buildingKey)
 	}
 	ge.recalculateRates()
@@ -1639,12 +1684,19 @@ func (ge *GameEngine) UnassignAll(domain, buildingKey string) (int, error) {
 	return assigned, nil
 }
 
-// UnassignVillager removes a specific number of workers of a domain from a building
-func (ge *GameEngine) UnassignVillager(domain, buildingKey string, count int) error {
+// UnassignWorker removes a specific number of workers from a building.
+// The worker domain is auto-resolved from the building's WorkerDomain field.
+func (ge *GameEngine) UnassignWorker(buildingKey string, count int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	if !ge.Villagers.Unassign(domain, buildingKey, count) {
+	byKey := config.BuildingByKey()
+	def, ok := byKey[buildingKey]
+	if !ok || def.WorkerDomain == "" {
+		return fmt.Errorf("building %s does not accept workers", buildingKey)
+	}
+	domain := def.WorkerDomain
+	if !ge.Workers.Unassign(domain, buildingKey, count) {
 		return fmt.Errorf("cannot unassign %d %s workers from %s", count, domain, buildingKey)
 	}
 	ge.recalculateRates()
@@ -1699,7 +1751,7 @@ func (ge *GameEngine) LaunchExpedition(key string) error {
 	defer ge.mu.Unlock()
 
 	ageOrder := ge.progress.GetAgeOrder()
-	soldierCount := ge.Villagers.GetDomainCount("military")
+	soldierCount := ge.Workers.GetDomainCount("military")
 	militaryBonus := ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + ge.Prestige.GetBonuses()["military_power"]
 
 	if err := ge.Military.LaunchExpedition(key, soldierCount, ge.age, ageOrder, militaryBonus); err != nil {
@@ -1738,7 +1790,7 @@ func (ge *GameEngine) DoPrestige() error {
 	ge.age = "primitive_age"
 	ge.Resources = NewResourceManager()
 	ge.Buildings = NewBuildingManager()
-	ge.Villagers = NewVillagerManager()
+	ge.Workers = NewWorkerManager()
 	ge.Research = NewResearchManager()
 	ge.Military = NewMilitaryManager()
 	ge.Events = NewEventManager()
@@ -1807,7 +1859,7 @@ func (ge *GameEngine) Reset() {
 	ge.age = "primitive_age"
 	ge.Resources = NewResourceManager()
 	ge.Buildings = NewBuildingManager()
-	ge.Villagers = NewVillagerManager()
+	ge.Workers = NewWorkerManager()
 	ge.Research = NewResearchManager()
 	ge.Military = NewMilitaryManager()
 	ge.Events = NewEventManager()
@@ -1872,7 +1924,7 @@ func (ge *GameEngine) GetState() GameState {
 	}
 
 	ageOrder := ge.progress.GetAgeOrder()
-	soldierCount := ge.Villagers.GetDomainCount("military")
+	soldierCount := ge.Workers.GetDomainCount("military")
 	prestigeBonuses := ge.Prestige.GetBonuses()
 	militaryBonus := ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + prestigeBonuses["military_power"]
 	expeditionBonus := ge.Research.GetBonus("expedition_reward") + ge.permanentBonuses["expedition_reward"] + prestigeBonuses["expedition_reward"]
@@ -1906,9 +1958,9 @@ func (ge *GameEngine) GetState() GameState {
 		NextAgeResReqs: nextAgeResReqs,
 		NextAgeBldReqs: nextAgeBldReqs,
 		Resources:      ge.Resources.Snapshot(),
-		Buildings:      ge.Buildings.Snapshot(ge.Resources, ge.Villagers.GetAssignedCount),
+		Buildings:      ge.Buildings.Snapshot(ge.Resources, ge.Workers.GetAssignedCount),
 		BuildQueue:     queue,
-		Villagers:      ge.Villagers.Snapshot(popCap),
+		Workers:        ge.Workers.Snapshot(popCap),
 		Research:       ge.Research.Snapshot(ge.age, ageOrder),
 		Military:       ge.Military.Snapshot(ge.age, ageOrder, soldierCount, militaryBonus, expeditionBonus),
 		Milestones: ge.Milestones.Snapshot(MilestoneSnapshotParams{
@@ -1917,7 +1969,7 @@ func (ge *GameEngine) GetState() GameState {
 			AgeOrder:        ageOrder,
 			Resources:       ge.Resources.GetAll(),
 			Buildings:       ge.Buildings.GetAll(),
-			Population:      ge.Villagers.TotalPop(),
+			Population:      ge.Workers.TotalPop(),
 			TechCount:       ge.Research.ResearchedCount(),
 			TotalBuilt:      ge.Stats.TotalBuilt,
 			SoldierCount:    soldierCount,

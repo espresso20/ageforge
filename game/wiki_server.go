@@ -55,7 +55,7 @@ func (ws *WikiServer) Start() error {
 	mux.HandleFunc("/events", wikiEvents)
 	mux.HandleFunc("/milestones", wikiMilestones)
 	mux.HandleFunc("/prestige", wikiPrestige)
-	mux.HandleFunc("/villagers", wikiVillagers)
+	mux.HandleFunc("/workers", wikiWorkers)
 	mux.HandleFunc("/trade", wikiTrade)
 	ws.server = &http.Server{Handler: mux}
 	ws.running = true
@@ -135,7 +135,7 @@ const wikiNav = `<nav>
   <a href="/events">Events</a>
   <a href="/milestones">Milestones</a>
   <a href="/prestige">Prestige</a>
-  <a href="/villagers">Villagers</a>
+  <a href="/workers">Workers</a>
   <a href="/trade">Trade</a>
 </nav>`
 
@@ -284,7 +284,7 @@ func wikiHome(w http.ResponseWriter, r *http.Request) {
 <tr><td><a href="/events">Events</a></td><td>Random events — sentiment, duration, effects</td></tr>
 <tr><td><a href="/milestones">Milestones</a></td><td>33 milestones and 5 chains with title rewards</td></tr>
 <tr><td><a href="/prestige">Prestige</a></td><td>9 prestige shop upgrades and tier costs</td></tr>
-<tr><td><a href="/villagers">Villagers</a></td><td>8 villager types — gather rates and food costs</td></tr>
+<tr><td><a href="/workers">Workers</a></td><td>8 worker types — gather rates and food costs</td></tr>
 <tr><td><a href="/trade">Trade</a></td><td>15 trade routes, exchange rates, and 6 factions</td></tr>
 </table>`
 	fmt.Fprint(w, wikiPage("Home", body))
@@ -611,11 +611,11 @@ func wikiPrestige(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, wikiPage("Prestige", b.String()))
 }
 
-func wikiVillagers(w http.ResponseWriter, r *http.Request) {
-	villagers := DefaultVillagerTypes()
+func wikiWorkers(w http.ResponseWriter, r *http.Request) {
+	villagers := DefaultWorkerTypes()
 	var b strings.Builder
-	b.WriteString(`<h1>Villager Types</h1>
-<p>Villagers are assigned to gather resources. Each type costs food per tick and has a base gather rate.</p>
+	b.WriteString(`<h1>Worker Types</h1>
+<p>Workers are assigned to buildings to produce resources. Each type costs food per tick and has a base gather rate.</p>
 <table>
 <tr><th>Name</th><th>Key</th><th>Food/tick</th><th>Base Gather Rate</th><th>Can Gather</th></tr>`)
 	for _, v := range villagers {
@@ -640,7 +640,7 @@ func wikiVillagers(w http.ResponseWriter, r *http.Request) {
 		))
 	}
 	b.WriteString("</table>")
-	fmt.Fprint(w, wikiPage("Villagers", b.String()))
+	fmt.Fprint(w, wikiPage("Workers", b.String()))
 }
 
 func wikiTrade(w http.ResponseWriter, r *http.Request) {

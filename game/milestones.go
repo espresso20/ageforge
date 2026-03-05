@@ -138,7 +138,7 @@ func (mm *MilestoneManager) checkMilestone(
 			return false
 		}
 	case "scholars_haven":
-		// This checks for 5+ scholars — we need villager data
+		// This checks for 5+ scholars — we need worker data
 		// For simplicity, use population >= 10 as proxy (already set in def)
 	}
 

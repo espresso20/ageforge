@@ -15,7 +15,7 @@ type GameState struct {
 	Resources      map[string]ResourceState
 	Buildings      map[string]BuildingState
 	BuildQueue     []BuildQueueSnapshot
-	Villagers      VillagerState
+	Workers        WorkerState
 	Research       ResearchState
 	Military       MilitaryState
 	Milestones     MilestoneState
@@ -90,7 +90,7 @@ type BuildQueueSnapshot struct {
 // RateBreakdown shows the components that make up a resource's net rate
 type RateBreakdown struct {
 	BuildingRate float64
-	VillagerRate float64
+	WorkerRate   float64
 	ResearchRate float64
 	EventRate    float64
 	TradeRate    float64
@@ -133,17 +133,17 @@ type BuildingState struct {
 	RuinCount int // ruins of this building type (produce at 50%, no workers, can't rebuild)
 }
 
-// VillagerState represents all villager info
-type VillagerState struct {
-	Types     map[string]VillagerTypeState
+// WorkerState represents all worker info
+type WorkerState struct {
+	Types     map[string]WorkerDomainState
 	TotalPop  int
 	MaxPop    int
 	TotalIdle int
 	FoodDrain float64
 }
 
-// VillagerTypeState represents one villager type's state
-type VillagerTypeState struct {
+// WorkerDomainState represents one worker domain's state
+type WorkerDomainState struct {
 	Name        string
 	Count       int
 	IdleCount   int
@@ -169,8 +169,8 @@ type StatsSnapshot struct {
 	AgesReached    []string
 }
 
-// VillagerInfo is used for save/load serialization
-type VillagerInfo struct {
+// WorkerInfo is used for save/load serialization
+type WorkerInfo struct {
 	Count      int            `json:"count"`
 	FoodCost   float64        `json:"food_cost"`
 	Assignment map[string]int `json:"assignment"`

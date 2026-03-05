@@ -24,7 +24,7 @@ type GameSave struct {
 	Resources  map[string]float64      `json:"resources"`
 	Storage    map[string]float64      `json:"storage"`
 	Buildings  map[string]int          `json:"buildings"`
-	Villagers  map[string]VillagerInfo `json:"villagers"`
+	Workers    map[string]WorkerInfo   `json:"villagers"`
 	Unlocked   UnlockedState           `json:"unlocked"`
 	Stats      *GameStats              `json:"stats"`
 	// Phase 3 additions
@@ -166,7 +166,7 @@ type EventSave struct {
 type UnlockedState struct {
 	Resources []string `json:"resources"`
 	Buildings []string `json:"buildings"`
-	Villagers []string `json:"villagers"`
+	Workers   []string `json:"villagers"`
 }
 
 // saveDirectory returns the canonical save directory: data/saves/ next to the binary.
@@ -298,7 +298,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		Resources: ge.Resources.GetAll(),
 		Storage:   ge.Resources.GetAllStorage(),
 		Buildings: ge.Buildings.GetAll(),
-		Villagers: ge.Villagers.GetAll(),
+		Workers:   ge.Workers.GetAll(),
 		Unlocked:  ge.getUnlockedState(),
 		Stats: &GameStats{
 			TotalBuilt:     ge.Stats.TotalBuilt,
@@ -393,13 +393,13 @@ func (ge *GameEngine) LoadGame(filename string) error {
 
 	ge.tick = save.Tick
 	ge.age = save.Age
-	ge.Villagers.SetAge(save.Age)
+	ge.Workers.SetAge(save.Age)
 	ge.Resources.LoadAmounts(save.Resources)
 	if save.Storage != nil {
 		ge.Resources.LoadStorage(save.Storage)
 	}
 	ge.Buildings.LoadCounts(save.Buildings)
-	ge.Villagers.LoadVillagers(save.Villagers)
+	ge.Workers.LoadWorkers(save.Workers)
 	if save.Stats != nil {
 		// Deep copy stats to avoid aliasing with the deserialized save
 		gathered := make(map[string]float64, len(save.Stats.TotalGathered))
@@ -425,8 +425,8 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	for _, key := range save.Unlocked.Buildings {
 		ge.Buildings.UnlockBuilding(key)
 	}
-	for _, key := range save.Unlocked.Villagers {
-		ge.Villagers.UnlockType(key)
+	for _, key := range save.Unlocked.Workers {
+		ge.Workers.UnlockType(key)
 	}
 
 	// Restore Phase 3 systems
@@ -533,7 +533,7 @@ func (ge *GameEngine) getUnlockedState() UnlockedState {
 		if order <= currentOrder {
 			state.Resources = append(state.Resources, def.UnlockResources...)
 			state.Buildings = append(state.Buildings, def.UnlockBuildings...)
-			state.Villagers = append(state.Villagers, def.UnlockVillagers...)
+			state.Workers = append(state.Workers, def.UnlockVillagers...)
 		}
 	}
 	return state
