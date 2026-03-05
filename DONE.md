@@ -248,5 +248,13 @@ Items are moved here from TODO.md when finished. Do not re-implement anything li
   - config imported for LegacyBonusForEpoch + EpochByKey
 - [x] All tests passing, `go build ./...` clean
 
+## Phase 12: Documentation Rebuild (2026-03-04)
+- [x] **New pages created**: `epochs.md` (170 lines), `faith.md` (81 lines), `knowledge.md` (96 lines), `workers-and-domains.md` (full 12-domain reference with all 189 class tiers from config/workers.go)
+- [x] **Full rewrites**: `villagers.md` (12-domain system, class progression, assign syntax), `buildings.md` (13-lineage system, output transitions, legacy buildings), `resources.md` (25 resources, corrected unlock ages, faith/culture mechanics, ore chain)
+- [x] **Substantial updates**: `prestige.md` (gate fixed: Transcendent→Modern Age; Prestige & Epochs section added), `ages.md` (epoch column, epoch boundary note, stale building keys removed)
+- [x] **Minor updates**: `commands.md` (new assign syntax, catastrophe invoke, prestige gate fix), `_sidebar.md` (Deep Dive section), `first-ten-minutes.md` (all assign/recruit syntax), `how-to-play.md` (12-domain worker section), `milestones.md` (Culture Thresholds section), `technologies.md` (Ancient Knowledge callout)
+- [x] Notable corrections found: faith resource unlocks Primitive Age (not Medieval), culture unlocks Classical Age (not Renaissance), iron_ore/marble both unlock Classical Age — all corrected
+- [x] All tests passing, `go build ./...` clean, 15 files changed (+1276/-306 lines)
+
 ## General / Misc
 - [x] Established TODO.md + DONE.md workflow for session-resumable planning (2026-02-25)
