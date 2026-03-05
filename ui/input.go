@@ -189,9 +189,9 @@ func cmdHelp(args []string) CommandResult {
 	help := `[gold]Commands:[-]
   [cyan]gather[-] <food|wood|stone> [n] - Hand-gather resources (max 5)
   [cyan]build[-] <building> [count|max] - Build structure(s) (default: 1)
-  [cyan]recruit[-] <type> [count|max]  - Recruit villagers (default: 1)
-  [cyan]assign[-] <domain> <building> [n|all] - Assign workers to a building
-  [cyan]unassign[-] <domain> <building> [n|all]- Unassign workers from a building
+  [cyan]recruit[-] <domain> [count|max] - Recruit workers (default: 1)
+  [cyan]assign[-] <building> [n|all]   - Assign workers to a building
+  [cyan]unassign[-] <building> [n|all] - Unassign workers from a building
   [cyan]advance[-]                     - Advance to the next age (when ready)
   [cyan]research[-] <tech_key>         - Research a technology
   [cyan]research[-] cancel             - Cancel current research
@@ -300,7 +300,7 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	sb.WriteString(fmt.Sprintf("Tick: %d\n", state.Tick))
 	sb.WriteString(fmt.Sprintf("Age: %s (%s)\n", state.AgeName, state.Age))
 	sb.WriteString(fmt.Sprintf("Population: %d/%d (idle: %d, food drain: %.2f/tick)\n",
-		state.Villagers.TotalPop, state.Villagers.MaxPop, state.Villagers.TotalIdle, state.Villagers.FoodDrain))
+		state.Workers.TotalPop, state.Workers.MaxPop, state.Workers.TotalIdle, state.Workers.FoodDrain))
 	sb.WriteString("\n--- Resources ---\n")
 	for _, rs := range state.Resources {
 		if !rs.Unlocked {
@@ -428,7 +428,7 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 
 func cmdRecruit(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
-		return CommandResult{Message: "Usage: recruit <worker|scholar> [count|max]", Type: "error"}
+		return CommandResult{Message: "Usage: recruit <domain> [count|max]", Type: "error"}
 	}
 	vType := strings.ToLower(args[0])
 
@@ -450,7 +450,7 @@ func cmdRecruit(args []string, engine *game.GameEngine) CommandResult {
 			count = n
 		}
 	}
-	if err := engine.RecruitVillager(vType, count); err != nil {
+	if err := engine.RecruitWorker(vType, count); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
 	}
 	return CommandResult{
@@ -460,63 +460,61 @@ func cmdRecruit(args []string, engine *game.GameEngine) CommandResult {
 }
 
 func cmdAssign(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 2 {
-		return CommandResult{Message: "Usage: assign <domain> <building> [count|all]", Type: "error"}
+	if len(args) < 1 {
+		return CommandResult{Message: "Usage: assign <building> [count|all]", Type: "error"}
 	}
-	domain := strings.ToLower(args[0])
-	building := strings.ToLower(args[1])
-	if len(args) >= 3 && strings.ToLower(args[2]) == "all" {
-		n, err := engine.AssignAll(domain, building)
+	building := strings.ToLower(args[0])
+	if len(args) >= 2 && strings.ToLower(args[1]) == "all" {
+		n, err := engine.AssignAll(building)
 		if err != nil {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
 		return CommandResult{
-			Message: fmt.Sprintf("Assigned all %d %s workers to %s", n, domain, building),
+			Message: fmt.Sprintf("Assigned all %d workers to %s", n, building),
 			Type:    "success",
 		}
 	}
 	count := 1
-	if len(args) >= 3 {
-		if n, err := strconv.Atoi(args[2]); err == nil && n > 0 {
+	if len(args) >= 2 {
+		if n, err := strconv.Atoi(args[1]); err == nil && n > 0 {
 			count = n
 		}
 	}
-	if err := engine.AssignVillager(domain, building, count); err != nil {
+	if err := engine.AssignWorker(building, count); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
 	}
 	return CommandResult{
-		Message: fmt.Sprintf("Assigned %d %s worker(s) to %s", count, domain, building),
+		Message: fmt.Sprintf("Assigned %d worker(s) to %s", count, building),
 		Type:    "success",
 	}
 }
 
 func cmdUnassign(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 2 {
-		return CommandResult{Message: "Usage: unassign <domain> <building> [count|all]", Type: "error"}
+	if len(args) < 1 {
+		return CommandResult{Message: "Usage: unassign <building> [count|all]", Type: "error"}
 	}
-	domain := strings.ToLower(args[0])
-	building := strings.ToLower(args[1])
-	if len(args) >= 3 && strings.ToLower(args[2]) == "all" {
-		n, err := engine.UnassignAll(domain, building)
+	building := strings.ToLower(args[0])
+	if len(args) >= 2 && strings.ToLower(args[1]) == "all" {
+		n, err := engine.UnassignAll(building)
 		if err != nil {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
 		return CommandResult{
-			Message: fmt.Sprintf("Unassigned all %d %s workers from %s", n, domain, building),
+			Message: fmt.Sprintf("Unassigned all %d workers from %s", n, building),
 			Type:    "success",
 		}
 	}
 	count := 1
-	if len(args) >= 3 {
-		if n, err := strconv.Atoi(args[2]); err == nil && n > 0 {
+	if len(args) >= 2 {
+		if n, err := strconv.Atoi(args[1]); err == nil && n > 0 {
 			count = n
 		}
 	}
-	if err := engine.UnassignVillager(domain, building, count); err != nil {
+	if err := engine.UnassignWorker(building, count); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
 	}
 	return CommandResult{
-		Message: fmt.Sprintf("Unassigned %d %s worker(s) from %s", count, domain, building),
+		Message: fmt.Sprintf("Unassigned %d worker(s) from %s", count, building),
 		Type:    "success",
 	}
 }
@@ -541,7 +539,7 @@ func cmdStatus(engine *game.GameEngine) CommandResult {
 	lines = append(lines, "")
 
 	// Population
-	v := state.Villagers
+	v := state.Workers
 	lines = append(lines, fmt.Sprintf("[gold]Population:[-] %d/%d (idle: %d, food drain: %.1f/tick)",
 		v.TotalPop, v.MaxPop, v.TotalIdle, v.FoodDrain))
 	for _, vt := range v.Types {
@@ -596,8 +594,8 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 		if b.BuildingRate != 0 {
 			parts = append(parts, fmt.Sprintf("Buildings: %+.2f", b.BuildingRate))
 		}
-		if b.VillagerRate != 0 {
-			parts = append(parts, fmt.Sprintf("Villagers: %+.2f", b.VillagerRate))
+		if b.WorkerRate != 0 {
+			parts = append(parts, fmt.Sprintf("Workers: %+.2f", b.WorkerRate))
 		}
 		if b.ResearchRate != 0 {
 			parts = append(parts, fmt.Sprintf("Research: %+.2f", b.ResearchRate))
@@ -764,7 +762,7 @@ func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
 		var lines []string
 		lines = append(lines, "[yellow]⚠ PRESTIGE WARNING ⚠[-]")
 		lines = append(lines, fmt.Sprintf("  You will earn [cyan]%d[-] prestige points.", p.PendingPoints))
-		lines = append(lines, "  [red]ALL progress will be reset:[-] resources, buildings, villagers, research, military.")
+		lines = append(lines, "  [red]ALL progress will be reset:[-] resources, buildings, workers, research, military.")
 		lines = append(lines, "  Only prestige points and upgrades are kept.")
 		lines = append(lines, "")
 		lines = append(lines, "  Type [cyan]prestige confirm yes[-] to proceed.")

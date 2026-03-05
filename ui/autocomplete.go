@@ -87,28 +87,13 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 
 	case "assign", "a":
 		if len(completed) == 0 {
-			return filterPrefix(unlockedDomainKeys(state), partial, prefix)
-		}
-		if len(completed) == 1 {
-			domain := strings.ToLower(completed[0])
-			return filterPrefix(buildingKeysForDomain(state, domain), partial, prefix)
+			return filterPrefix(workerBuildingKeys(state), partial, prefix)
 		}
 		return filterPrefix([]string{"all"}, partial, prefix)
 
 	case "unassign", "u":
 		if len(completed) == 0 {
-			// First arg: domain keys or "all" (for "unassign all <domain>")
-			keys := unlockedDomainKeys(state)
-			keys = append(keys, "all")
-			return filterPrefix(keys, partial, prefix)
-		}
-		if len(completed) == 1 {
-			if strings.ToLower(completed[0]) == "all" {
-				// "unassign all <domain>" — 2nd arg is a domain key
-				return filterPrefix(unlockedDomainKeys(state), partial, prefix)
-			}
-			domain := strings.ToLower(completed[0])
-			return filterPrefix(assignedBuildingKeys(state, domain), partial, prefix)
+			return filterPrefix(assignedBuildingKeysAll(state), partial, prefix)
 		}
 		return filterPrefix([]string{"all"}, partial, prefix)
 
@@ -243,10 +228,10 @@ func unlockedBuildingKeys(state game.GameState) []string {
 }
 
 // unlockedDomainKeys returns all worker domain keys that are currently unlocked,
-// sourced from state.Villagers.Types which is keyed by domain key (e.g. "food", "knowledge").
+// sourced from state.Workers.Types which is keyed by domain key (e.g. "food", "knowledge").
 func unlockedDomainKeys(state game.GameState) []string {
 	var keys []string
-	for key, vt := range state.Villagers.Types {
+	for key, vt := range state.Workers.Types {
 		if vt.Unlocked {
 			keys = append(keys, key)
 		}
@@ -255,35 +240,33 @@ func unlockedDomainKeys(state game.GameState) []string {
 	return keys
 }
 
-// buildingKeysForDomain returns building keys that belong to the given worker domain
-// and are currently unlocked. Falls back to all unlocked building keys if domain is unknown.
-func buildingKeysForDomain(state game.GameState, domain string) []string {
+// workerBuildingKeys returns all unlocked building keys that accept workers
+// (i.e. have a WorkerDomain and WorkerCapacity > 0).
+func workerBuildingKeys(state game.GameState) []string {
 	var keys []string
 	for key, bs := range state.Buildings {
-		if bs.Unlocked && bs.WorkerDomain == domain {
+		if bs.Unlocked && bs.WorkerDomain != "" && bs.WorkerCapacity > 0 {
 			keys = append(keys, key)
 		}
 	}
 	sort.Strings(keys)
-	if len(keys) == 0 {
-		// Fallback: return all unlocked buildings so autocomplete still works
-		return unlockedBuildingKeys(state)
-	}
 	return keys
 }
 
-// assignedBuildingKeys returns the building keys where the given domain currently
-// has at least one worker assigned.
-func assignedBuildingKeys(state game.GameState, domain string) []string {
-	vt, ok := state.Villagers.Types[domain]
-	if !ok {
-		return nil
+// assignedBuildingKeysAll returns all building keys across all domains that currently
+// have at least one worker assigned.
+func assignedBuildingKeysAll(state game.GameState) []string {
+	seen := map[string]bool{}
+	for _, vt := range state.Workers.Types {
+		for buildingKey, count := range vt.Assignments {
+			if count > 0 {
+				seen[buildingKey] = true
+			}
+		}
 	}
 	var keys []string
-	for buildingKey, count := range vt.Assignments {
-		if count > 0 {
-			keys = append(keys, buildingKey)
-		}
+	for k := range seen {
+		keys = append(keys, k)
 	}
 	sort.Strings(keys)
 	return keys
