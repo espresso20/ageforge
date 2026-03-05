@@ -5,6 +5,7 @@ import "github.com/espresso20/ageforge/config"
 // legacyAlias maps old villager type keys to canonical domain keys
 var legacyAlias = map[string]string{
 	"worker":    "food",
+	"workers":   "food", // plural alias — common typo
 	"shaman":    "faith",
 	"scholar":   "knowledge",
 	"soldier":   "military",

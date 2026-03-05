@@ -149,16 +149,16 @@ func NewEconomyTab() *EconomyTab {
 	t.buildingTV.SetBorder(true).SetTitle(" Buildings ").SetTitleColor(ColorBuilding)
 
 	t.villagerTV = tview.NewTextView().SetDynamicColors(true)
-	t.villagerTV.SetBorder(true).SetTitle(" Workers ").SetTitleColor(ColorVillager)
+	t.villagerTV.SetBorder(true).SetTitle(" Under Construction ").SetTitleColor(ColorBuilding)
 
-	// Left: resources + villagers, Right: buildings
+	// Left: resources (tall) + under construction (compact), Right: buildings
 	leftCol := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(t.resourceTV, 0, 3, false).
-		AddItem(t.villagerTV, 0, 2, false)
+		AddItem(t.resourceTV, 0, 4, false).
+		AddItem(t.villagerTV, 0, 1, false)
 
 	t.root = tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(leftCol, 0, 1, false).
-		AddItem(t.buildingTV, 0, 1, false)
+		AddItem(leftCol, 0, 2, false).
+		AddItem(t.buildingTV, 0, 3, false)
 
 	return t
 }
@@ -172,7 +172,7 @@ func (t *EconomyTab) Root() tview.Primitive {
 func (t *EconomyTab) Refresh(state game.GameState) {
 	t.refreshResources(state)
 	t.refreshBuildings(state)
-	t.refreshVillagers(state)
+	t.refreshUnderConstruction(state)
 }
 
 func (t *EconomyTab) refreshResources(state game.GameState) {
@@ -291,61 +291,6 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 		sb.WriteString("\n")
 	}
 
-	sb.WriteString("\n [gold]Under Construction[-]\n")
-	if len(state.BuildQueue) == 0 {
-		sb.WriteString("  (nothing under construction)\n")
-	} else {
-		// Group queue items by name
-		type queueGroup struct {
-			name      string
-			count     int
-			minTicks  int // fewest ticks left among the group (furthest along)
-			totalTicks int
-		}
-		groupMap := make(map[string]*queueGroup)
-		groupOrder := make([]string, 0)
-		for _, item := range state.BuildQueue {
-			if g, ok := groupMap[item.Name]; ok {
-				g.count++
-				if item.TicksLeft < g.minTicks {
-					g.minTicks = item.TicksLeft
-					g.totalTicks = item.TotalTicks
-				}
-			} else {
-				groupMap[item.Name] = &queueGroup{
-					name:       item.Name,
-					count:      1,
-					minTicks:   item.TicksLeft,
-					totalTicks: item.TotalTicks,
-				}
-				groupOrder = append(groupOrder, item.Name)
-			}
-		}
-		const barWidth = 20
-		for _, name := range groupOrder {
-			g := groupMap[name]
-			label := g.name
-			if g.count > 1 {
-				label = fmt.Sprintf("%s x%d", g.name, g.count)
-			}
-			filled := 0
-			if g.totalTicks > 0 {
-				ratio := float64(g.totalTicks-g.minTicks) / float64(g.totalTicks)
-				filled = int(math.Round(float64(barWidth) * ratio))
-				if filled < 0 {
-					filled = 0
-				}
-				if filled > barWidth {
-					filled = barWidth
-				}
-			}
-			bar := strings.Repeat("█", filled) + strings.Repeat("░", barWidth-filled)
-			// Wrap bar in literal [ ] so tview doesn't interpret the characters as color tags
-			barStr := "\u005b" + bar + "\u005d"
-			fmt.Fprintf(&sb, "  [yellow]%-20s[-] %s %d ticks\n", label, barStr, g.minTicks)
-		}
-	}
-
 	if sb.Len() == 0 {
 		sb.WriteString(" [gray]No buildings unlocked yet[-]")
 	}
@@ -394,52 +339,61 @@ func workerAssignBar(assigned, capacity int) string {
 	return strings.Repeat("▓", filled) + strings.Repeat("░", empty)
 }
 
-func (t *EconomyTab) refreshVillagers(state game.GameState) {
+func (t *EconomyTab) refreshUnderConstruction(state game.GameState) {
 	var sb strings.Builder
-	v := state.Villagers
 
-	fmt.Fprintf(&sb, " [gold]Total:[-] %d/%d  [gold]Idle:[-] %d  [gold]Food:[-] %.1f/tick\n",
-		v.TotalPop, v.MaxPop, v.TotalIdle, v.FoodDrain)
-	sb.WriteString("\n [gold]Workers by Domain[-]\n")
-	sb.WriteString(" [gray]─────────────────────[-]\n")
-
-	// Fixed domain order for deterministic display.
-	domainOrder := []string{"food", "faith", "knowledge", "military", "trade", "engineering", "hacker", "astronaut"}
-
-	anyDomain := false
-	for _, domain := range domainOrder {
-		vt, ok := v.Types[domain]
-		if !ok || !vt.Unlocked || vt.Count == 0 {
-			continue
+	if len(state.BuildQueue) == 0 {
+		sb.WriteString(" [gray](nothing under construction)[-]\n")
+	} else {
+		// Group queue items by name
+		type queueGroup struct {
+			name       string
+			count      int
+			minTicks   int // fewest ticks left among the group (furthest along)
+			totalTicks int
 		}
-		anyDomain = true
-
-		label := domainToLabel[domain]
-		if label == "" {
-			label = vt.Name
+		groupMap := make(map[string]*queueGroup)
+		groupOrder := make([]string, 0)
+		for _, item := range state.BuildQueue {
+			if g, ok := groupMap[item.Name]; ok {
+				g.count++
+				if item.TicksLeft < g.minTicks {
+					g.minTicks = item.TicksLeft
+					g.totalTicks = item.TotalTicks
+				}
+			} else {
+				groupMap[item.Name] = &queueGroup{
+					name:       item.Name,
+					count:      1,
+					minTicks:   item.TicksLeft,
+					totalTicks: item.TotalTicks,
+				}
+				groupOrder = append(groupOrder, item.Name)
+			}
 		}
-
-		// Calculate assigned = total - idle
-		assigned := vt.Count - vt.IdleCount
-		if assigned < 0 {
-			assigned = 0
+		const barWidth = 20
+		for _, name := range groupOrder {
+			g := groupMap[name]
+			label := g.name
+			if g.count > 1 {
+				label = fmt.Sprintf("%s x%d", g.name, g.count)
+			}
+			filled := 0
+			if g.totalTicks > 0 {
+				ratio := float64(g.totalTicks-g.minTicks) / float64(g.totalTicks)
+				filled = int(math.Round(float64(barWidth) * ratio))
+				if filled < 0 {
+					filled = 0
+				}
+				if filled > barWidth {
+					filled = barWidth
+				}
+			}
+			bar := strings.Repeat("█", filled) + strings.Repeat("░", barWidth-filled)
+			// Wrap bar in literal [ ] so tview doesn't interpret the characters as color tags
+			barStr := "\u005b" + bar + "\u005d"
+			fmt.Fprintf(&sb, " [yellow]%-22s[-] %s [gray]%d ticks[-]\n", label, barStr, g.minTicks)
 		}
-
-		// Determine class name from config for display.
-		className := ""
-		if wcd, found := config.WorkerClassByDomainAndAge(domain, state.Age); found {
-			className = wcd.ClassName
-		}
-
-		if className != "" {
-			fmt.Fprintf(&sb, " %-14s [white]%d[-] / [gray]%d[-]  [gray](%s)[-]\n", label, assigned, vt.Count, className)
-		} else {
-			fmt.Fprintf(&sb, " %-14s [white]%d[-] / [gray]%d[-]\n", label, assigned, vt.Count)
-		}
-	}
-
-	if !anyDomain {
-		sb.WriteString(" [gray](no workers yet)[-]\n")
 	}
 
 	t.villagerTV.SetText(sb.String())
