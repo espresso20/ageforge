@@ -201,5 +201,16 @@ Items are moved here from TODO.md when finished. Do not re-implement anything li
 - Result: 284 total buildings (241 production across 13 lineages + 21 storage + 22 wonders), no duplicate keys, all tests passing, `go build ./...` clean
 - Note: Storage Covenant and food-cost/multiplier tuning are initial-pass complete via lineages.md values; fine-tuning subject to playtesting
 
+## Phase 11d: Culture Progress Bar + Faith Threshold Indicator (2026-03-04)
+- [x] `ui/tab_economy.go`: culture and faith resource rows special-cased in `refreshResources()`
+  - `cultureThresholds []float64` — 11 threshold values (500 → 1B)
+  - `cultureThresholdLabels []string` — effect label per threshold
+  - `cultureProgressBar(current, max)` — 10-char `▓`/`░` bar (distinct from existing `ProgressBar`)
+  - `formatCultureRow` — progress bar toward next threshold + grey label + rate; "✦ Culture Mastered" at max
+  - `faithBand` struct + `faithBandFor(amount, storage)` — 6 bands: Dead/Dim/Low/Mid/High/Full
+  - `formatFaithRow` — band label (color-coded) + percentage + epoch odds hint in grey + rate
+  - tview-safe: bar wrapped in `\u005b`/`\u005d` to prevent color-tag misparse
+- All tests passing, `go build ./...` clean
+
 ## General / Misc
 - [x] Established TODO.md + DONE.md workflow for session-resumable planning (2026-02-25)
