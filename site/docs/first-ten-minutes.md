@@ -53,9 +53,9 @@ Build one or two stashes alongside huts.
 Once your huts are up (pop cap raised), recruit:
 
 ```
-recruit villager
-recruit villager
-recruit villager
+recruit food
+recruit food
+recruit knowledge
 ```
 
 Keep recruiting until you're at 8–10 pop. Each villager costs food upfront — check your food rate stays positive.
@@ -67,15 +67,15 @@ Keep recruiting until you're at 8–10 pop. Each villager costs food upfront —
 This is the most important step. **Idle villagers produce nothing.**
 
 ```
-assign worker food 3
-assign worker wood 2
-assign shaman knowledge 1
+assign food gathering_camp 2
+assign food gathering_camp 1
+assign knowledge story_circle 1
 ```
 
 General rule for early game:
-- Half your workers → food
-- Remaining workers → wood
-- All shamans → knowledge
+- Half your workers → food (assign to gathering_camp)
+- Remaining workers → wood (also assign to gathering_camp for now)
+- All knowledge workers → story_circle
 
 Check the status bar shows **Idle: 0**. If it doesn't, assign the rest.
 
@@ -101,7 +101,7 @@ Press `F1` (or just wait — you're already there). Look at the rate column:
 - `wood: +N/t` — should be positive (at least +1)
 - `knowledge: +N/t` — should be positive (at least +1)
 
-If food is negative, add more workers to food. If knowledge is zero, assign more shamans or build more altars.
+If food is negative, add more food workers. If knowledge is zero, assign more knowledge workers or build more altars.
 
 ---
 
@@ -171,7 +171,7 @@ When you reach Stone Age:
 - **Firepit** — better knowledge building
 - **Great Monolith** — first major wonder
 
-Your first priority: build **Stone Pits** and assign workers to wood, because Bronze Age needs a lot of both.
+Your first priority: build **Stone Pits** and assign lumber workers to wood production, because Bronze Age needs a lot of both.
 
 ---
 
@@ -182,9 +182,10 @@ Your first priority: build **Stone Pits** and assign workers to wood, because Br
 | Build a hut | `build hut` |
 | Build a stash | `build stash` |
 | Build an altar | `build altar` |
-| Recruit a villager | `recruit villager` |
-| Assign workers to food | `assign worker food 3` |
-| Assign shaman to knowledge | `assign shaman knowledge 1` |
+| Recruit a food worker | `recruit food` |
+| Recruit a knowledge worker | `recruit knowledge` |
+| Assign food workers to gathering camp | `assign food gathering_camp 3` |
+| Assign knowledge workers to story circle | `assign knowledge story_circle 1` |
 | Start first research | `research tool_making` |
 | Check economy tab | `e` or `F1` |
 | Check logs | `l` or `F7` |

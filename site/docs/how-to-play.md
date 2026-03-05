@@ -65,21 +65,22 @@ Resources cap out quickly. Add storage:
 build stash
 ```
 
-### 3. Recruit your first villager
+### 3. Recruit your first workers
 ```
-recruit villager
-```
-
-### 4. Assign workers to food
-Idle villagers are wasted. Assign them:
-```
-assign worker food 2
+recruit food
+recruit knowledge
 ```
 
-### 5. Assign a shaman to knowledge
-Shamans produce knowledge. Assign one:
+### 4. Assign food workers to a building
+Idle workers produce nothing. Assign them:
 ```
-assign shaman knowledge 1
+assign food gathering_camp 2
+```
+
+### 5. Assign knowledge workers to a building
+Knowledge workers produce knowledge. Assign one:
+```
+assign knowledge story_circle 1
 ```
 
 ### 6. Build a gathering camp
@@ -104,8 +105,22 @@ The second row shows what you need for the next age. Keep building and assigning
 
 - Resources cap at their storage limit — once capped, production is wasted
 - **Food drain** = total pop × 0.5/tick. Always keep food positive
-- **Knowledge** is the most important resource early — prioritise shamans
+- **Knowledge** is the most important resource early — prioritise knowledge workers
 - Watch the `Rate` column in the Economy tab; negative rates will drain you
+
+---
+
+## Workers
+
+Workers are organized into 12 domains, each tied to specific buildings. Recruit workers with `recruit <domain>` and assign them with `assign <domain> <building_key> <count>`.
+
+**Core domains**: food, knowledge, faith, military, trade, engineering
+**Production domains**: lumber, masonry, metallurgy, energy
+**Late-game domains**: hacker, astronaut
+
+Workers assigned to buildings boost production. A building at 0 assigned workers still produces at 20% efficiency (the floor). Full assignment = 100% efficiency.
+
+Food workers are special — they produce food but all workers across all domains consume food per tick. Keep food production above total worker drain.
 
 ---
 

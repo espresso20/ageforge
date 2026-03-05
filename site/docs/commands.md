@@ -22,23 +22,29 @@ gather wood 5
 
 ---
 
-## Villagers
+## Villagers & Workers
 
 | Command | Description |
 |---|---|
-| `recruit villager` | Recruit a new idle villager (costs food) |
-| `assign <type> <resource> <n>` | Assign N villagers of a type to gather a resource |
-| `unassign <type> <resource> <n>` | Free up N assigned villagers |
+| `recruit <domain>` | Recruit a worker in the given domain (current age's tier) |
+| `assign <domain> <building_key> <count>` | Assign N domain workers to a specific building |
+| `unassign <domain> <building_key> <count>` | Unassign N workers from a building |
+| `unassign all <domain>` | Unassign all workers in a domain |
 
-**Villager types:** `worker`, `shaman`, `scholar`, `soldier`, `merchant`
-**Assignable resources vary by type** — workers can gather food/wood/stone; scholars gather knowledge; etc.
+**Worker domains:** `food`, `knowledge`, `faith`, `military`, `trade`, `engineering`, `lumber`, `masonry`, `metallurgy`, `energy`, `hacker`, `astronaut`
+
+Domain must match the building's worker domain — you cannot assign food workers to a library.
 
 ```
-recruit villager
-assign worker food 3
-assign shaman knowledge 1
-unassign worker food 1
+recruit food
+recruit knowledge
+assign food gathering_camp 5
+assign knowledge library 3
+unassign food gathering_camp 2
+unassign all military
 ```
+
+See [Workers & Domains (Reference)](workers-and-domains.md) for the full domain table and efficiency formula.
 
 ---
 
@@ -115,7 +121,7 @@ Wonders are shown in **F6: Wonders** with progress bars for each required resour
 
 | Command | Description |
 |---|---|
-| `prestige go` | Trigger prestige reset (requires Transcendent Age) |
+| `prestige go` | Trigger prestige reset (requires Modern Age) |
 | `prestige buy <key>` | Purchase a prestige upgrade |
 
 ```
@@ -125,6 +131,16 @@ prestige buy vault_keeper
 ```
 
 Available upgrades and costs are shown in **F5: Stats → Prestige** panel.
+
+---
+
+## Catastrophe
+
+| Command | Description |
+|---|---|
+| `catastrophe invoke` | Trigger a voluntary catastrophe for the current epoch |
+
+Voluntary catastrophes let you force an epoch event outside the normal roll. Use with caution — catastrophes can destroy buildings (Endure) or reset your run (Succumb). See [Epochs](epochs.md).
 
 ---
 

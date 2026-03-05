@@ -1,6 +1,6 @@
 # Prestige System
 
-Prestige is the endgame reset loop. When you reach the **Transcendent Age**, you can sacrifice your entire civilization to earn **Prestige Points** and purchase permanent upgrades that carry into every future run.
+Prestige is the endgame reset loop. When you reach the **Modern Age** (Age 12), you can sacrifice your entire civilization to earn **Prestige Points** and purchase permanent upgrades that carry into every future run.
 
 ```
 prestige go
@@ -12,7 +12,7 @@ prestige go
 
 ## How prestige works
 
-1. Reach the **Transcendent Age** (Age 21)
+1. Reach the **Modern Age** (Age 12)
 2. Check your prestige panel (`F5: Stats → Prestige`) — it shows your available points
 3. Type `prestige go` to trigger the reset
 4. You respawn in the **Primitive Age** with all prestige upgrades active
@@ -46,6 +46,30 @@ prestige buy starting_food
 
 ---
 
+## Prestige & Epochs
+
+Prestige interacts with the epoch system in important ways:
+
+**What survives prestige:**
+- Prestige upgrade levels (all purchased upgrades carry over)
+- **Ruins** (from Succumb catastrophes) — they appear in your new run and produce resources
+- **Legacy bonuses** (from Succumb) — permanent resource production bonuses remain active
+- **Ancient Knowledge** bonus — if earned via Succumb, +25% research speed persists
+
+**What resets on prestige:**
+- All resources, buildings, workers, research
+- Epoch event history
+- Current epoch (returns to Stone Era)
+- Culture (reduced to 20% of current value — unlocked threshold bonuses remain)
+
+**Ruins**: Ruins are ancient remnants from a Succumbed civilization. They appear as special buildings in your new run — producing at 50% of the base rate for that building type, with no workers required. A run with many ruins starts significantly ahead.
+
+**Legacy Bonus stacking**: Each time you Succumb to a catastrophe in an epoch, you earn that epoch's legacy bonus permanently. On subsequent runs, these bonuses apply from tick 1. Multiple Succumbs across different epochs stack.
+
+**Faith at prestige**: If your faith is at 100% of its storage cap at the moment you prestige, you receive a faith prestige multiplier bonus (additional prestige points).
+
+---
+
 ## Recommended first-run priorities
 
 | Priority | Upgrade | Why |
@@ -60,7 +84,7 @@ prestige buy starting_food
 
 ## Prestige point formula
 
-Points earned per prestige scale with how far you advanced and how many milestones you completed. Completing the Transcendent Age for the first time typically yields **4–8 points** depending on playstyle.
+Points earned per prestige scale with how far you advanced and how many milestones you completed. Reaching Modern Age for the first time typically yields **4–8 points** depending on playstyle; advancing further (through Transcendent Age) yields significantly more.
 
 ---
 

@@ -2,6 +2,21 @@
 
 AgeForge spans 22 ages from primitive survival to transcendence. Each age unlocks new buildings, resources, and villager types. Advancement is automatic once requirements are met.
 
+## Epoch Overview
+
+Every 3 ages you cross an **epoch boundary**. Epoch transitions trigger an event roll (see [Epochs](epochs.md)) and may shift your buildings' output resources.
+
+| Ages | Epoch | Symbol |
+|------|-------|--------|
+| 0 — Primitive, 1 — Stone, 2 — Bronze | Stone Era | ✧ |
+| 3 — Iron, 4 — Classical, 5 — Medieval | Iron Era | ⚒ |
+| 6 — Renaissance, 7 — Colonial, 8 — Industrial | Steel Era | ⚙ |
+| 9 — Victorian, 10 — Electric, 11 — Atomic | Electric Era | ⚡ |
+| 12 — Modern, 13 — Information, 14 — Digital | Digital Era | ◈ |
+| 15 — Cyberpunk, 16 — Fusion, 17 — Space | Neon Era | ✦ |
+| 18 — Interstellar, 19 — Galactic, 20 — Quantum | Cosmic Era | ★ |
+| 21 — Transcendent | (beyond epochs) | ✨ |
+
 ---
 
 ## Age 0 — Primitive Age 🪨
@@ -29,7 +44,7 @@ Starting age. No requirements.
 | Huts | 20 |
 | Altars | 10 |
 
-**Unlocks:** Gathering Camp, Woodcutter Camp, Stone Pit, Firepit, Storage Pit, Great Monolith · **Resource:** Stone
+**Unlocks:** Gathering Camp, Woodcutter Camp, Stone Pit, Storage Pit, Great Monolith · **Resource:** Stone
 
 ---
 
@@ -47,7 +62,7 @@ Starting age. No requirements.
 | Stone Pits | 10 |
 | Firepits | 10 |
 
-**Unlocks:** Farm, Lumber Mill, Quarry, Mine, Market, Library, House, Warehouse, Stonehenge · **Resources:** Iron, Gold · **Villager:** Scholar
+**Unlocks:** Farm, Lumber Mill, Quarry, Market, Library, House, Warehouse, Stonehenge · **Resources:** Iron, Gold · **Villager:** Scholar
 
 ---
 
@@ -165,7 +180,9 @@ Starting age. No requirements.
 
 > *Global infrastructure and mass production.*
 
-**Unlocks:** Airport, Freeway, Skyscraper, Global Bank, UN Headquarters
+Prestige becomes available at this age. Type `prestige go` to reset with permanent upgrades. See [Prestige System](prestige.md).
+
+**Unlocks:** Airport, Freeway, Global Bank, UN Headquarters
 
 ---
 
@@ -237,7 +254,7 @@ Starting age. No requirements.
 
 > *Beyond physical form. The final age.*
 
-The end of the progression. Once you reach the Transcendent Age, you may **prestige** — resetting your civilization in exchange for permanent upgrades that carry into every future run.
+The end of the progression. Prestige has been available since Modern Age (Age 12). Reaching the Transcendent Age yields maximum prestige points — the ideal moment to prestige if you haven't already.
 
 ```
 prestige go

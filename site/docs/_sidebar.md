@@ -17,6 +17,12 @@
   - [Technologies](technologies.md)
   - [Milestones & Chains](milestones.md)
 
+- **Deep Dive**
+  - [Epochs](epochs.md)
+  - [Faith](faith.md)
+  - [Knowledge](knowledge.md)
+  - [Workers & Domains (Reference)](workers-and-domains.md)
+
 - **Advanced**
   - [Military & Expeditions](military.md)
   - [Trade & Diplomacy](trade.md)

@@ -9,6 +9,8 @@ research <key>
 research cancel
 ```
 
+> **Ancient Knowledge**: Succumbing to an epoch catastrophe grants a permanent +25% research speed bonus that persists through prestige resets. Players who Succumb early (e.g. in Stone Era) gain a significant long-term research advantage. See [Epochs](epochs.md) for details.
+
 ---
 
 ## Primitive Age

@@ -123,3 +123,9 @@ If no chain is completed, fallback titles apply:
 - **Hidden milestones** appear in the Milestones panel once you have >50% progress toward them or have completed the preceding age
 - Chain speed boosts stack with milestone bonuses and prestige upgrades — when multiple boosts fire at once, the multiplication is dramatic
 - The **Transcended** milestone completing the Ancient Ages chain is effectively the game's victory condition before prestige
+
+---
+
+## Culture Thresholds
+
+Culture milestones are separate from the milestone chain system. Reaching culture thresholds (500, 2,500, 10,000, 50,000, 250,000, 1,000,000+) grants permanent knowledge rate bonuses (+5% to +30%) and unlocks wonder tiers. These bonuses are tracked independently and do not appear in the milestone list — check the Economy tab's culture row for your current threshold progress.
