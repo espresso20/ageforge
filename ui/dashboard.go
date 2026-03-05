@@ -75,6 +75,11 @@ type Dashboard struct {
 	// so Defer doesn't immediately re-show the modal on the next refresh tick
 	catModalShown string
 
+	// Phase 16: command history (session-only, not persisted)
+	cmdHistory []string // append-only slice, capped at 50
+	histIdx    int      // -1 = not navigating; 0 = most recent; len-1 = oldest
+	histDraft  string   // draft text saved when user starts navigating history
+
 	stopCh chan struct{}
 }
 
@@ -86,6 +91,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		pages:    pages,
 		stopCh:   make(chan struct{}),
 		tabNames: []string{"Economy", "Research", "Military", "Trade", "Stats", "Wiki", "Map", "Wonders", "Logs", "Epoch"},
+		histIdx:  -1,
 	}
 	d.build()
 	d.devTab = newDevTab(engine)
@@ -237,10 +243,21 @@ func (d *Dashboard) build() {
 		if key == tcell.KeyEnter {
 			text := d.inputField.GetText()
 			d.inputField.SetText("")
+			// Reset history navigation state
+			d.histIdx = -1
+			d.histDraft = ""
 			if text == "" {
 				return
 			}
-			if strings.ToLower(strings.TrimSpace(text)) == "quit" {
+			// Record non-empty trimmed commands in history (cap at 50)
+			cmd := strings.TrimSpace(text)
+			if cmd != "" {
+				if len(d.cmdHistory) >= 50 {
+					d.cmdHistory = d.cmdHistory[1:] // drop oldest
+				}
+				d.cmdHistory = append(d.cmdHistory, cmd)
+			}
+			if strings.ToLower(cmd) == "quit" {
 				d.engine.SaveGame("autosave")
 				d.app.Stop()
 				return
@@ -249,6 +266,47 @@ func (d *Dashboard) build() {
 			if result.Message != "" && result.Type != "success" {
 				d.engine.AddLog(result.Type, result.Message)
 			}
+		}
+	})
+
+	// Phase 16: history navigation via Up/Down arrow keys
+	d.inputField.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyUp:
+			if len(d.cmdHistory) == 0 {
+				return nil // nothing to navigate
+			}
+			if d.histIdx == -1 {
+				// Start navigating: save current draft, go to most recent
+				d.histDraft = d.inputField.GetText()
+				d.histIdx = len(d.cmdHistory) - 1
+			} else if d.histIdx > 0 {
+				d.histIdx--
+			}
+			// histIdx == 0: already at oldest, stay
+			d.inputField.SetText(d.cmdHistory[d.histIdx])
+			return nil // swallow key
+		case tcell.KeyDown:
+			if d.histIdx == -1 {
+				return nil // not in history mode, no-op
+			}
+			if d.histIdx == len(d.cmdHistory)-1 {
+				// Back to draft
+				d.histIdx = -1
+				d.inputField.SetText(d.histDraft)
+			} else {
+				d.histIdx++
+				d.inputField.SetText(d.cmdHistory[d.histIdx])
+			}
+			return nil // swallow key
+		default:
+			// Any other key: exit history mode and update draft
+			if d.histIdx != -1 {
+				d.histIdx = -1
+			}
+			// Keep draft in sync while user types normally
+			// (draft is re-read from field on next Up press, so nothing extra needed)
+			return event
 		}
 	})
 
