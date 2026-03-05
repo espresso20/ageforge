@@ -13,8 +13,8 @@ var commands = []string{
 	"gather", "build", "recruit", "assign", "unassign",
 	"research", "expedition", "prestige",
 	"trade", "diplomacy", "upgrade",
-	"rates", "status", "speed", "save", "saves", "load", "help", "quit",
-	"wonder", "collect", "catastrophe",
+	"advance", "rates", "status", "speed", "save", "saves", "load", "help",
+	"wonder", "catastrophe", "dump", "exportlogs",
 }
 
 // NewAutoCompleter returns an autocomplete function for the command input field.
@@ -97,9 +97,16 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 
 	case "unassign", "u":
 		if len(completed) == 0 {
-			return filterPrefix(unlockedDomainKeys(state), partial, prefix)
+			// First arg: domain keys or "all" (for "unassign all <domain>")
+			keys := unlockedDomainKeys(state)
+			keys = append(keys, "all")
+			return filterPrefix(keys, partial, prefix)
 		}
 		if len(completed) == 1 {
+			if strings.ToLower(completed[0]) == "all" {
+				// "unassign all <domain>" — 2nd arg is a domain key
+				return filterPrefix(unlockedDomainKeys(state), partial, prefix)
+			}
 			domain := strings.ToLower(completed[0])
 			return filterPrefix(assignedBuildingKeys(state, domain), partial, prefix)
 		}
@@ -178,6 +185,20 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 
 	case "catastrophe", "cat":
 		return filterPrefix([]string{"invoke"}, partial, prefix)
+
+	case "wonder":
+		if len(completed) == 0 {
+			// Only subcommand is "collect"
+			return filterPrefix([]string{"collect"}, partial, prefix)
+		}
+		if len(completed) == 1 && strings.ToLower(completed[0]) == "collect" {
+			// 2nd arg: an unlocked resource key
+			return filterPrefix(unlockedResourceKeys(state), partial, prefix)
+		}
+		if len(completed) == 2 && strings.ToLower(completed[0]) == "collect" {
+			// 3rd arg: "all" or common numeric amounts
+			return filterPrefix([]string{"all", "100", "1000"}, partial, prefix)
+		}
 	}
 
 	return nil
