@@ -212,5 +212,18 @@ Items are moved here from TODO.md when finished. Do not re-implement anything li
   - tview-safe: bar wrapped in `\u005b`/`\u005d` to prevent color-tag misparse
 - All tests passing, `go build ./...` clean
 
+## Phase 11a: Economy Tab Worker Assignment Display (2026-03-04)
+- [x] `ui/tab_economy.go`: `refreshVillagers()` rewritten — per-domain headers with class name from `WorkerClassByDomainAndAge`, total/idle count, per-building assignment bars (▓/░ 10-char)
+- [x] `refreshBuildings()` updated — inline worker line per building when `WorkerCapacity > 0` showing domain label, assigned/totalCap, bar
+- [x] New helpers: `legacyKeyToDomain`, `domainToLabel`, `workerAssignBar`
+- [x] All tests passing, `go build ./...` clean
+
+## Phase 11b: Villager Panel Domain-Grouped Rewrite (2026-03-04)
+- [x] `ui/villager_panel.go`: replaced `DefaultVillagerTypes()` legacy loop with live 12-domain data from `GameState.Villagers`
+- [x] Four domain groups: Materials (food/lumber/masonry) / Knowledge (knowledge/faith) / Civil (trade/engineering) / Late-game (military/metallurgy/energy/hacker/astronaut)
+- [x] Per-domain: class name via `config.WorkerClassByDomainAndAge`, count, idle, per-building assignments sorted alphabetically
+- [x] Hash updated: covers TotalPop, FoodDrain, all Assignments map contents
+- [x] All tests passing, `go build ./...` clean
+
 ## General / Misc
 - [x] Established TODO.md + DONE.md workflow for session-resumable planning (2026-02-25)
