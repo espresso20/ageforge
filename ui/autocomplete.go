@@ -14,7 +14,7 @@ var commands = []string{
 	"research", "expedition", "prestige",
 	"trade", "diplomacy", "upgrade",
 	"rates", "status", "speed", "save", "saves", "load", "help", "quit",
-	"wonder", "collect",
+	"wonder", "collect", "catastrophe",
 }
 
 // NewAutoCompleter returns an autocomplete function for the command input field.
@@ -174,6 +174,9 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 
 	case "load":
 		return filterPrefix(saveNames(), partial, prefix)
+
+	case "catastrophe", "cat":
+		return filterPrefix([]string{"invoke"}, partial, prefix)
 	}
 
 	return nil

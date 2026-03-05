@@ -46,6 +46,7 @@ type Dashboard struct {
 	mapTab      *MapTab
 	wondersTab  *WondersTab
 	logsTab     *LogsTab
+	epochTab    *EpochTab
 
 	// Shared UI
 	logTV         *tview.TextView
@@ -84,7 +85,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		engine:   engine,
 		pages:    pages,
 		stopCh:   make(chan struct{}),
-		tabNames: []string{"Economy", "Research", "Military", "Trade", "Stats", "Wiki", "Map", "Wonders", "Logs"},
+		tabNames: []string{"Economy", "Research", "Military", "Trade", "Stats", "Wiki", "Map", "Wonders", "Logs", "Epoch"},
 	}
 	d.build()
 	d.devTab = newDevTab(engine)
@@ -104,6 +105,7 @@ func (d *Dashboard) build() {
 	d.mapTab = NewMapTab()
 	d.wondersTab = NewWondersTab()
 	d.logsTab = NewLogsTab()
+	d.epochTab = NewEpochTab()
 
 	// Tab bar
 	d.tabBar = tview.NewTextView().
@@ -122,6 +124,7 @@ func (d *Dashboard) build() {
 	d.tabPages.AddPage("Map", d.mapTab.Root(), true, false)
 	d.tabPages.AddPage("Wonders", d.wondersTab.Root(), true, false)
 	d.tabPages.AddPage("Logs", d.logsTab.Root(), true, false)
+	d.tabPages.AddPage("Epoch", d.epochTab.Primitive(), true, false)
 
 	// Log panel
 	d.logTV = tview.NewTextView().
@@ -317,10 +320,8 @@ func (d *Dashboard) build() {
 			d.switchTab(8)
 			return nil
 		case tcell.KeyF10:
-			if game.DevModeActive {
-				d.switchToDevTab()
-				return nil
-			}
+			d.switchTab(9)
+			return nil
 		}
 
 		// When economy tab is active, intercept scroll keys for buildings panel
@@ -402,7 +403,7 @@ func (d *Dashboard) switchTab(index int) {
 
 func (d *Dashboard) updateTabBar() {
 	var parts []string
-	tabKeys := map[int]string{0: "F1", 1: "F2", 2: "F3", 3: "F4", 4: "F5", 5: "F6", 6: "F7", 7: "F8", 8: "F9", 9: "F10"}
+	tabKeys := map[int]string{0: "F1", 1: "F2", 2: "F3", 3: "F4", 4: "F5", 5: "F6", 6: "F7", 7: "F8", 8: "F9", 9: "F10", 10: "`"}
 	for i, name := range d.tabNames {
 		key := tabKeys[i]
 		if i == d.activeTab {
@@ -521,6 +522,8 @@ func (d *Dashboard) refresh() {
 		d.wondersTab.Refresh(state)
 	case 8:
 		d.logsTab.Refresh(state)
+	case 9:
+		d.epochTab.Refresh(state)
 	}
 }
 
@@ -551,7 +554,7 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		epochStr = fmt.Sprintf("  [%s]%s %s%s[-]", state.EpochColor, state.EpochIcon, state.EpochName, survivedMark)
 	}
 	d.statusTV.SetText(fmt.Sprintf(
-		"[gold]%s[-]%s%s%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]F1-F9=Tabs  ESC=Menu[-]",
+		"[gold]%s[-]%s%s%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]F1-F10=Tabs  ESC=Menu[-]",
 		state.AgeName, prestigeStr, titleStr, epochStr, state.Tick, nextAgeStr, speedStr,
 		state.Villagers.TotalPop, state.Villagers.MaxPop,
 	))

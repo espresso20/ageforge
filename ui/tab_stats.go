@@ -7,6 +7,7 @@ import (
 
 	"github.com/rivo/tview"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -85,6 +86,74 @@ func (t *StatsTab) refreshStats(state game.GameState) {
 	sort.Strings(gKeys)
 	for _, k := range gKeys {
 		fmt.Fprintf(&sb, "   %-12s %s\n", k, FormatNumber(s.TotalGathered[k]))
+	}
+
+	// Epoch & Legacy section
+	sb.WriteString("\n [yellow]── Epoch & Legacy ──[-]\n")
+
+	epochDisplay := state.EpochIcon + " " + state.EpochName
+	if epochDisplay == " " {
+		epochDisplay = "—"
+	}
+	fmt.Fprintf(&sb, " %-20s [cyan]%s[-]\n", "Current Epoch:", epochDisplay)
+
+	// Epochs survived: EpochSurvived is a bool for the current epoch;
+	// count of fully-survived past epochs comes from LegacyBonuses entries (each true = one succumb = one epoch done)
+	// plus EpochSurvived bool (current epoch endured catastrophe).
+	// The spec says count truthy entries in EpochSurvived — but since it's a bool, we count it as 0 or 1.
+	epochsSurvivedCount := len(state.CatastropheHistory)
+	fmt.Fprintf(&sb, " %-20s %d\n", "Epochs Survived:", epochsSurvivedCount)
+
+	succumbedCount := 0
+	for _, active := range state.LegacyBonuses {
+		if active {
+			succumbedCount++
+		}
+	}
+	totalCatastrophes := len(state.CatastropheHistory)
+	enduredCount := totalCatastrophes - succumbedCount
+	fmt.Fprintf(&sb, " %-20s %d  (Endured: %d  Succumbed: %d)\n",
+		"Catastrophes:", totalCatastrophes, enduredCount, succumbedCount)
+
+	// Legacy Bonuses
+	sb.WriteString("\n [gold]Legacy Bonuses:[-]\n")
+	if len(state.LegacyBonuses) == 0 {
+		sb.WriteString("  [gray]None[-]\n")
+	} else {
+		// Collect epoch keys that have active legacy bonuses, sort for stable output
+		activeEpochs := make([]string, 0, len(state.LegacyBonuses))
+		for epochKey, active := range state.LegacyBonuses {
+			if active {
+				activeEpochs = append(activeEpochs, epochKey)
+			}
+		}
+		sort.Strings(activeEpochs)
+
+		if len(activeEpochs) == 0 {
+			sb.WriteString("  [gray]None[-]\n")
+		} else {
+			epochByKey := config.EpochByKey()
+			for _, epochKey := range activeEpochs {
+				bonuses := config.LegacyBonusForEpoch(epochKey)
+				epochDef, hasEpoch := epochByKey[epochKey]
+				epochLabel := epochKey
+				if hasEpoch {
+					epochLabel = epochDef.Name
+				}
+
+				// Format bonus pairs: "resource +X%, resource +X%"
+				bonusKeys := make([]string, 0, len(bonuses))
+				for k := range bonuses {
+					bonusKeys = append(bonusKeys, k)
+				}
+				sort.Strings(bonusKeys)
+				parts := make([]string, 0, len(bonusKeys))
+				for _, k := range bonusKeys {
+					parts = append(parts, fmt.Sprintf("%s +%.0f%%", k, bonuses[k]*100))
+				}
+				fmt.Fprintf(&sb, "  %-16s %s\n", epochLabel+":", strings.Join(parts, ",  "))
+			}
+		}
 	}
 
 	t.statsTV.SetText(sb.String())

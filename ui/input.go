@@ -62,6 +62,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdUpgrade(args, engine)
 	case "advance":
 		return cmdAdvance(engine)
+	case "catastrophe", "cat":
+		return cmdCatastrophe(args, engine)
 	case "dump", "exportlogs":
 		return cmdDump(args, engine)
 	case "saves":
@@ -223,6 +225,7 @@ func cmdHelp(args []string) CommandResult {
   [cyan]wonder[-]                      - Show current wonder bank status
   [cyan]wonder collect[-] <res> <amt|all> - Bank resources into current wonder
   [cyan]speed[-] [1.0|1.5|2.0|...]     - Set game speed (unlocks per wonder built)
+  [cyan]catastrophe invoke[-]           - Voluntarily trigger the epoch catastrophe
   [cyan]help[-]                        - Show this help
 
 [gold]Shortcuts:[-] g=gather, b=build, r=recruit, a=assign, u=unassign, s=status, res=research, exp=expedition, t=trade, dip=diplomacy`
@@ -1066,4 +1069,21 @@ func cmdDiplomacyStatus(engine *game.GameEngine) CommandResult {
 	}
 
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
+
+func cmdCatastrophe(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) < 1 || strings.ToLower(args[0]) != "invoke" {
+		return CommandResult{
+			Message: "Usage: catastrophe invoke — voluntarily trigger the epoch catastrophe\n" +
+				"  [red]Warning: this will open the Endure / Succumb / Defer modal.[-]",
+			Type: "info",
+		}
+	}
+	if err := engine.InvokeCatastrophe(); err != nil {
+		return CommandResult{Message: err.Error(), Type: "error"}
+	}
+	return CommandResult{
+		Message: "[red]Catastrophe invoked! A choice awaits...[-]",
+		Type:    "warning",
+	}
 }
