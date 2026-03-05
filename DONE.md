@@ -225,5 +225,28 @@ Items are moved here from TODO.md when finished. Do not re-implement anything li
 - [x] Hash updated: covers TotalPop, FoodDrain, all Assignments map contents
 - [x] All tests passing, `go build ./...` clean
 
+## Phase 11c: Age Advance Modal — Transformation Summary + Epoch Reveal (2026-03-04)
+- [x] `config/epochs.go`: added `EpochEventByKey()` — lock-free event lookup by key for UI use
+- [x] `ui/age_splash.go`: `ShowAgeSplashFull()` — extends splash with `AgeAdvanceSummary` + `epochChanged bool` + `EpochEventRecord`; `ShowAgeSplash()` kept as zero-value wrapper
+  - Transformation section: old→new building names with counts, legacy buildings in grey
+  - Epoch section: color-coded (green/red) event name + flavor text + epoch icon
+- [x] `ui/dashboard.go`: `pendingEpochChanged` field; epoch detection in bus handler via `config.EpochForAge()` (pure data, lock-safe); `refresh()` passes summary + epoch event to `ShowAgeSplashFull`
+- [x] All tests passing, `go build ./...` clean
+
+## Phase 11e: Epoch Tab — F10 (2026-03-04)
+- [x] `ui/tab_epoch.go` (NEW): EpochTab struct with 4 sections — current epoch info, epoch history table, legacy bonuses, civilization log
+  - Catastrophe status: PENDING / ✓ Survived / Succumbed / not yet triggered
+  - Helper fns: findEpochEvent, epochHasCatastrophe, epochEventColor, formatAgeKey
+- [x] `ui/dashboard.go`: Epoch tab at index 9 (F10); Dev tab stays on backtick; tab bar updated to F1-F10=Tabs
+- [x] `ui/input.go`: `catastrophe invoke` command wired, calls `engine.InvokeCatastrophe()`, returns error toast on failure
+- [x] `ui/autocomplete.go`: `catastrophe` + `invoke` subcommand added
+- [x] All tests passing, `go build ./...` clean
+
+## Phase 11f: Stats Tab — Epoch/Legacy Fields (2026-03-04)
+- [x] `ui/tab_stats.go`: new Epoch & Legacy section appended to `refreshStats()`
+  - Current epoch (icon + name in cyan), catastrophe count (Endured/Succumbed breakdown), legacy bonuses per epoch with resource+% formatting
+  - config imported for LegacyBonusForEpoch + EpochByKey
+- [x] All tests passing, `go build ./...` clean
+
 ## General / Misc
 - [x] Established TODO.md + DONE.md workflow for session-resumable planning (2026-02-25)
