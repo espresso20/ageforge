@@ -32,18 +32,6 @@ func (vp *VillagerPanel) Primitive() tview.Primitive {
 	return vp.root
 }
 
-// legacyToDomain maps legacy VillagerState.Types keys to their worker domain keys.
-var legacyToDomain = map[string]string{
-	"worker":    "food",
-	"shaman":    "faith",
-	"scholar":   "knowledge",
-	"soldier":   "military",
-	"merchant":  "trade",
-	"engineer":  "engineering",
-	"hacker":    "hacker",
-	"astronaut": "astronaut",
-}
-
 // domainGroups defines the display grouping and order.
 var domainGroups = []struct {
 	label   string
@@ -65,18 +53,10 @@ func domainLabel(domain string) string {
 
 // UpdateState refreshes the villager panel display
 func (vp *VillagerPanel) UpdateState(state game.GameState) {
-	// Build a reverse map: domainKey -> (legacyKey, VillagerTypeState) for present types
-	domainToType := make(map[string]struct {
-		legacyKey string
-		vt        game.VillagerTypeState
-	})
-	for legacyKey, domainKey := range legacyToDomain {
-		if vt, ok := state.Villagers.Types[legacyKey]; ok {
-			domainToType[domainKey] = struct {
-				legacyKey string
-				vt        game.VillagerTypeState
-			}{legacyKey, vt}
-		}
+	// Build a map: domainKey -> VillagerTypeState for present types (keys are already domain keys)
+	domainToType := make(map[string]game.VillagerTypeState)
+	for domainKey, vt := range state.Villagers.Types {
+		domainToType[domainKey] = vt
 	}
 
 	// Hash-based dirty check — include total pop, food drain, and assignment contents
@@ -121,8 +101,8 @@ func (vp *VillagerPanel) UpdateState(state game.GameState) {
 		}
 		var entries []domainEntry
 		for _, dk := range grp.domains {
-			if entry, ok := domainToType[dk]; ok {
-				entries = append(entries, domainEntry{dk, entry.vt})
+			if vt, ok := domainToType[dk]; ok {
+				entries = append(entries, domainEntry{dk, vt})
 			}
 		}
 		if len(entries) == 0 {

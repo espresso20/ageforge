@@ -317,18 +317,6 @@ func (t *EconomyTab) ScrollDown() {
 	t.buildingTV.ScrollTo(row+10, col)
 }
 
-// legacyKeyToDomain maps legacy VillagerState.Types keys to their domain strings.
-var legacyKeyToDomain = map[string]string{
-	"worker":    "food",
-	"shaman":    "faith",
-	"scholar":   "knowledge",
-	"soldier":   "military",
-	"merchant":  "trade",
-	"engineer":  "engineering",
-	"hacker":    "hacker",
-	"astronaut": "astronaut",
-}
-
 // domainToLabel maps domain strings to friendly display labels.
 var domainToLabel = map[string]string{
 	"food":        "Food",
@@ -366,17 +354,15 @@ func (t *EconomyTab) refreshVillagers(state game.GameState) {
 	fmt.Fprintf(&sb, " [gold]Total:[-] %d/%d  [gold]Idle:[-] %d  [gold]Food:[-] %.1f/tick\n\n",
 		v.TotalPop, v.MaxPop, v.TotalIdle, v.FoodDrain)
 
-	// Collect unlocked domain keys in a stable order matching legacyKeyToDomain insertion order.
-	// We define a fixed ordering so the display is deterministic.
-	legacyOrder := []string{"worker", "shaman", "scholar", "soldier", "merchant", "engineer", "hacker", "astronaut"}
+	// Collect unlocked domain keys in a stable order for deterministic display.
+	domainOrder := []string{"food", "faith", "knowledge", "military", "trade", "engineering", "hacker", "astronaut"}
 
-	for _, legacyKey := range legacyOrder {
-		vt, ok := v.Types[legacyKey]
+	for _, domain := range domainOrder {
+		vt, ok := v.Types[domain]
 		if !ok || !vt.Unlocked {
 			continue
 		}
 
-		domain := legacyKeyToDomain[legacyKey]
 		label := domainToLabel[domain]
 		if label == "" {
 			label = vt.Name

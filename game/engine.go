@@ -1589,6 +1589,9 @@ func (ge *GameEngine) AssignVillager(domain, buildingKey string, count int) erro
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
+	if ge.Buildings.GetCount(buildingKey) == 0 {
+		return fmt.Errorf("no %s built yet — build one first", buildingKey)
+	}
 	if !ge.Villagers.Assign(domain, buildingKey, count) {
 		idle := ge.Villagers.IdleCount(domain)
 		return fmt.Errorf("cannot assign %d %s workers to %s (idle: %d)", count, domain, buildingKey, idle)
@@ -1604,6 +1607,9 @@ func (ge *GameEngine) AssignAll(domain, buildingKey string) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
+	if ge.Buildings.GetCount(buildingKey) == 0 {
+		return 0, fmt.Errorf("no %s built yet — build one first", buildingKey)
+	}
 	idle := ge.Villagers.IdleCount(domain)
 	if idle <= 0 {
 		return 0, fmt.Errorf("no idle %s workers to assign", domain)

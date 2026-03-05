@@ -320,7 +320,7 @@ func (vm *VillagerManager) LoadVillagers(data map[string]VillagerInfo) {
 }
 
 // Snapshot returns villager state for UI consumption.
-// Types are keyed by legacy type names for backward compat with villager_panel.go.
+// Types are keyed by domain keys (e.g. "food", "knowledge", "faith").
 func (vm *VillagerManager) Snapshot(popCap int) VillagerState {
 	state := VillagerState{
 		Types:     make(map[string]VillagerTypeState),
@@ -341,12 +341,7 @@ func (vm *VillagerManager) Snapshot(popCap int) VillagerState {
 		if name == "" {
 			name = domain
 		}
-		// Use legacy key for UI backward compat if available
-		uiKey := domain
-		if legKey, ok := domainToLegacy[domain]; ok {
-			uiKey = legKey
-		}
-		state.Types[uiKey] = VillagerTypeState{
+		state.Types[domain] = VillagerTypeState{
 			Name:        name,
 			Count:       rt.count,
 			IdleCount:   idle,

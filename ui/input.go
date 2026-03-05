@@ -361,7 +361,7 @@ func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 		}
 	}
 	if amount > 10 {
-		amount = 10000
+		amount = 10
 	}
 	actual, err := engine.GatherResource(resource, amount)
 	if err != nil {
