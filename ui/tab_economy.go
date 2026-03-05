@@ -275,6 +275,17 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 				fmt.Fprintf(&sb, "   Cost: %s\n", FormatCost(bs.NextCost))
 			}
 			fmt.Fprintf(&sb, "   [gray]%s[-]\n", bs.Description)
+			if bs.WorkerCapacity > 0 {
+				totalCap := bs.Count * bs.WorkerCapacity
+				bar := workerAssignBar(bs.WorkersAssigned, totalCap)
+				barStr := "\u005b" + bar + "\u005d"
+				domainLabel := domainToLabel[bs.WorkerDomain]
+				if domainLabel == "" {
+					domainLabel = bs.WorkerDomain
+				}
+				fmt.Fprintf(&sb, "   [green]Workers:[-] %d / %d %s  %s\n",
+					bs.WorkersAssigned, totalCap, domainLabel, barStr)
+			}
 		}
 		sb.WriteString("\n")
 	}
@@ -306,6 +317,48 @@ func (t *EconomyTab) ScrollDown() {
 	t.buildingTV.ScrollTo(row+10, col)
 }
 
+// legacyKeyToDomain maps legacy VillagerState.Types keys to their domain strings.
+var legacyKeyToDomain = map[string]string{
+	"worker":    "food",
+	"shaman":    "faith",
+	"scholar":   "knowledge",
+	"soldier":   "military",
+	"merchant":  "trade",
+	"engineer":  "engineering",
+	"hacker":    "hacker",
+	"astronaut": "astronaut",
+}
+
+// domainToLabel maps domain strings to friendly display labels.
+var domainToLabel = map[string]string{
+	"food":        "Food",
+	"faith":       "Faith",
+	"knowledge":   "Knowledge",
+	"military":    "Military",
+	"trade":       "Trade",
+	"engineering": "Engineering",
+	"hacker":      "Hacker",
+	"astronaut":   "Astronaut",
+}
+
+// workerAssignBar returns a 10-char ▓/░ bar for assigned/capacity.
+func workerAssignBar(assigned, capacity int) string {
+	const width = 10
+	if capacity <= 0 {
+		return strings.Repeat("░", width)
+	}
+	ratio := float64(assigned) / float64(capacity)
+	if ratio > 1 {
+		ratio = 1
+	}
+	if ratio < 0 {
+		ratio = 0
+	}
+	filled := int(ratio * float64(width))
+	empty := width - filled
+	return strings.Repeat("▓", filled) + strings.Repeat("░", empty)
+}
+
 func (t *EconomyTab) refreshVillagers(state game.GameState) {
 	var sb strings.Builder
 	v := state.Villagers
@@ -313,27 +366,58 @@ func (t *EconomyTab) refreshVillagers(state game.GameState) {
 	fmt.Fprintf(&sb, " [gold]Total:[-] %d/%d  [gold]Idle:[-] %d  [gold]Food:[-] %.1f/tick\n\n",
 		v.TotalPop, v.MaxPop, v.TotalIdle, v.FoodDrain)
 
-	vtKeys := make([]string, 0)
-	for k, vt := range v.Types {
-		if vt.Unlocked {
-			vtKeys = append(vtKeys, k)
-		}
-	}
-	sort.Strings(vtKeys)
+	// Collect unlocked domain keys in a stable order matching legacyKeyToDomain insertion order.
+	// We define a fixed ordering so the display is deterministic.
+	legacyOrder := []string{"worker", "shaman", "scholar", "soldier", "merchant", "engineer", "hacker", "astronaut"}
 
-	for _, vtKey := range vtKeys {
-		vt := v.Types[vtKey]
-		fmt.Fprintf(&sb, " [mediumpurple]%s[-] x%d (idle: %d)\n", vt.Name, vt.Count, vt.IdleCount)
-		aKeys := make([]string, 0, len(vt.Assignments))
-		for res := range vt.Assignments {
-			aKeys = append(aKeys, res)
+	for _, legacyKey := range legacyOrder {
+		vt, ok := v.Types[legacyKey]
+		if !ok || !vt.Unlocked {
+			continue
 		}
-		sort.Strings(aKeys)
-		for _, res := range aKeys {
-			if vt.Assignments[res] > 0 {
-				fmt.Fprintf(&sb, "   → %s: %d\n", res, vt.Assignments[res])
+
+		domain := legacyKeyToDomain[legacyKey]
+		label := domainToLabel[domain]
+		if label == "" {
+			label = vt.Name
+		}
+
+		// Determine class name from config, falling back gracefully.
+		className := ""
+		if wcd, found := config.WorkerClassByDomainAndAge(domain, state.Age); found {
+			className = wcd.ClassName
+		}
+
+		if className != "" {
+			fmt.Fprintf(&sb, " [yellow]── %s Workers (%s) ──[-]\n", label, className)
+		} else {
+			fmt.Fprintf(&sb, " [yellow]── %s Workers ──[-]\n", label)
+		}
+
+		fmt.Fprintf(&sb, "  Total: %d  Idle: %d  Food drain: %.1f/t\n", vt.Count, vt.IdleCount, v.FoodDrain)
+
+		// Per-building assignment lines: only buildings this domain has workers in.
+		bKeys := make([]string, 0, len(vt.Assignments))
+		for bk := range vt.Assignments {
+			bKeys = append(bKeys, bk)
+		}
+		sort.Strings(bKeys)
+
+		for _, bKey := range bKeys {
+			assigned := vt.Assignments[bKey]
+			bs, bsOk := state.Buildings[bKey]
+			if !bsOk {
+				continue
 			}
+			totalCap := bs.Count * bs.WorkerCapacity
+			if totalCap <= 0 {
+				continue
+			}
+			bar := workerAssignBar(assigned, totalCap)
+			barStr := "\u005b" + bar + "\u005d"
+			fmt.Fprintf(&sb, "  %-20s %3d / %-3d %s\n", bs.Name, assigned, totalCap, barStr)
 		}
+		sb.WriteString("\n")
 	}
 	t.villagerTV.SetText(sb.String())
 }

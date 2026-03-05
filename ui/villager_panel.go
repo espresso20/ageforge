@@ -2,14 +2,16 @@ package ui
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/rivo/tview"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
-// VillagerPanel shows recruitable villager types, their rates, and active bonuses
+// VillagerPanel shows workers grouped by domain with building assignments.
 type VillagerPanel struct {
 	root     *tview.TextView
 	lastHash uint64
@@ -30,110 +32,178 @@ func (vp *VillagerPanel) Primitive() tview.Primitive {
 	return vp.root
 }
 
+// legacyToDomain maps legacy VillagerState.Types keys to their worker domain keys.
+var legacyToDomain = map[string]string{
+	"worker":    "food",
+	"shaman":    "faith",
+	"scholar":   "knowledge",
+	"soldier":   "military",
+	"merchant":  "trade",
+	"engineer":  "engineering",
+	"hacker":    "hacker",
+	"astronaut": "astronaut",
+}
+
+// domainGroups defines the display grouping and order.
+var domainGroups = []struct {
+	label   string
+	domains []string
+}{
+	{"Materials", []string{"food", "lumber", "masonry"}},
+	{"Knowledge", []string{"knowledge", "faith"}},
+	{"Civil", []string{"trade", "engineering"}},
+	{"Late-game", []string{"military", "metallurgy", "energy", "hacker", "astronaut"}},
+}
+
+// domainLabel returns a capitalized display label for a domain key.
+func domainLabel(domain string) string {
+	if domain == "" {
+		return ""
+	}
+	return strings.ToUpper(domain[:1]) + domain[1:]
+}
+
 // UpdateState refreshes the villager panel display
 func (vp *VillagerPanel) UpdateState(state game.GameState) {
-	// Hash to skip redundant redraws
+	// Build a reverse map: domainKey -> (legacyKey, VillagerTypeState) for present types
+	domainToType := make(map[string]struct {
+		legacyKey string
+		vt        game.VillagerTypeState
+	})
+	for legacyKey, domainKey := range legacyToDomain {
+		if vt, ok := state.Villagers.Types[legacyKey]; ok {
+			domainToType[domainKey] = struct {
+				legacyKey string
+				vt        game.VillagerTypeState
+			}{legacyKey, vt}
+		}
+	}
+
+	// Hash-based dirty check — include total pop, food drain, and assignment contents
 	var h uint64
 	h = hashKey(state.Age)
+	h ^= uint64(state.Villagers.TotalPop+1) * 31
+	h ^= uint64(state.Villagers.FoodDrain*1000) * 37
 	for key, vt := range state.Villagers.Types {
-		if vt.Unlocked {
+		if vt.Count > 0 || len(vt.Assignments) > 0 {
 			h ^= hashKey(key) * 13
 			h ^= uint64(vt.Count+1) * 7
 			h ^= uint64(vt.IdleCount+1) * 3
-			for res, n := range vt.Assignments {
-				h ^= hashKey(res) * uint64(n+1) * 5
+			for bldKey, n := range vt.Assignments {
+				h ^= hashKey(bldKey) * uint64(n+1) * 5
 			}
 		}
 	}
-	h ^= uint64(state.Research.Bonuses["gather_rate"]*1000) * 17
-	if gu, ok := state.Prestige.Upgrades["gather_boost"]; ok {
-		h ^= uint64(gu.Tier+1) * 11
-	}
-	h ^= uint64(state.Prestige.PassiveBonus*1000) * 19
 	if h == vp.lastHash {
 		return
 	}
 	vp.lastHash = h
 
-	// Index default defs by key for rate lookup
-	defs := make(map[string]game.VillagerTypeDef)
-	for _, d := range game.DefaultVillagerTypes() {
-		defs[d.Key] = d
+	// Build a lookup: buildingKey -> BuildingState for assignment name resolution
+	bldByKey := make(map[string]game.BuildingState, len(state.Buildings))
+	for k, b := range state.Buildings {
+		bldByKey[k] = b
 	}
-
-	// Gather bonus: research + prestige upgrade, both additive on base rate
-	researchGather := state.Research.Bonuses["gather_rate"]
-	prestigeGather := 0.0
-	if gu, ok := state.Prestige.Upgrades["gather_boost"]; ok {
-		prestigeGather = float64(gu.Tier) * 0.05
-	}
-	totalGatherBonus := researchGather + prestigeGather
-	passiveBonus := state.Prestige.PassiveBonus // production_all (2% per prestige level)
 
 	var sb strings.Builder
-	anyUnlocked := false
 
-	// Iterate in canonical definition order
-	for _, def := range game.DefaultVillagerTypes() {
-		vt, ok := state.Villagers.Types[def.Key]
-		if !ok || !vt.Unlocked {
+	// Panel header: WORKERS  45 total · -3.2/t food
+	foodDrainStr := fmt.Sprintf("%.1f", state.Villagers.FoodDrain)
+	fmt.Fprintf(&sb, "[yellow]WORKERS[-]  [gray]%d total · -%s/t food[-]\n\n",
+		state.Villagers.TotalPop, foodDrainStr)
+
+	anyGroup := false
+	for _, grp := range domainGroups {
+		// Collect which domains in this group have entries
+		type domainEntry struct {
+			domainKey string
+			vt        game.VillagerTypeState
+		}
+		var entries []domainEntry
+		for _, dk := range grp.domains {
+			if entry, ok := domainToType[dk]; ok {
+				entries = append(entries, domainEntry{dk, entry.vt})
+			}
+		}
+		if len(entries) == 0 {
 			continue
 		}
-		anyUnlocked = true
 
-		// Name + count header
-		idleColor := "green"
-		if vt.Count > 0 && vt.IdleCount == 0 {
-			idleColor = "yellow"
+		// Group header
+		if anyGroup {
+			sb.WriteByte('\n')
 		}
-		fmt.Fprintf(&sb, "[cyan::b]%s[-]  [%s]%d (idle:%d)[-]\n",
-			def.Name, idleColor, vt.Count, vt.IdleCount)
+		anyGroup = true
+		fmt.Fprintf(&sb, "[yellow]── %s ──[-]\n", grp.label)
 
-		// Current assignments
-		if len(vt.Assignments) > 0 {
-			parts := make([]string, 0, len(vt.Assignments))
-			for res, n := range vt.Assignments {
-				if n > 0 {
-					parts = append(parts, fmt.Sprintf("%s:%d", res, n))
-				}
-			}
-			if len(parts) > 0 {
-				fmt.Fprintf(&sb, "  [gray]→ %s[-]\n", strings.Join(parts, " "))
-			}
-		}
+		for _, e := range entries {
+			dk := e.domainKey
+			vt := e.vt
 
-		// Gather rate (only for types that actually gather)
-		if def.GatherRate > 0 {
-			effective := def.GatherRate * (1.0 + totalGatherBonus) * (1.0 + passiveBonus)
-			if totalGatherBonus > 0 || passiveBonus > 0 {
-				fmt.Fprintf(&sb, "  [gray]%.3f[-][gray]→[-][green]%.3f[-][gray]/t[-]\n",
-					def.GatherRate, effective)
+			// Resolve class name from config
+			className := ""
+			if wcd, ok := config.WorkerClassByDomainAndAge(dk, state.Age); ok {
+				className = wcd.ClassName
+			}
+
+			// Domain line
+			label := domainLabel(dk)
+			if className != "" {
+				fmt.Fprintf(&sb, "[white]%s[-] [gray](%s)[-]  %d  idle: %d\n",
+					label, className, vt.Count, vt.IdleCount)
 			} else {
-				fmt.Fprintf(&sb, "  [gray]%.3f/t[-]\n", def.GatherRate)
+				fmt.Fprintf(&sb, "[white]%s[-]  %d  idle: %d\n",
+					label, vt.Count, vt.IdleCount)
 			}
-		} else {
-			fmt.Fprintf(&sb, "  [gray]combat only[-]\n")
-		}
 
-		sb.WriteByte('\n')
+			// Per-building assignment lines — sort for stable output
+			if len(vt.Assignments) > 0 {
+				type bldEntry struct {
+					key      string
+					name     string
+					assigned int
+					capacity int
+				}
+				var blds []bldEntry
+				for bldKey, assigned := range vt.Assignments {
+					if assigned <= 0 {
+						continue
+					}
+					name := bldKey
+					capacity := 0
+					if bs, ok := bldByKey[bldKey]; ok {
+						if bs.Name != "" {
+							name = bs.Name
+						}
+						// WorkerCapacity is per-instance; total = capacity * count
+						if bs.Count > 0 {
+							capacity = bs.WorkerCapacity * bs.Count
+						}
+					}
+					blds = append(blds, bldEntry{bldKey, name, assigned, capacity})
+				}
+				sort.Slice(blds, func(i, j int) bool {
+					return blds[i].name < blds[j].name
+				})
+				if len(blds) == 0 {
+					sb.WriteString("  [gray](no assignments)[-]\n")
+				} else {
+					for _, b := range blds {
+						if b.capacity > 0 {
+							fmt.Fprintf(&sb, "  %s  %d/%d\n", b.name, b.assigned, b.capacity)
+						} else {
+							fmt.Fprintf(&sb, "  %s  %d\n", b.name, b.assigned)
+						}
+					}
+				}
+			} else {
+				sb.WriteString("  [gray](no assignments)[-]\n")
+			}
+		}
 	}
 
-	if !anyUnlocked {
-		sb.WriteString("[gray]No villager types\\nunlocked yet.[-]\n")
-	}
-
-	// Active bonuses section
-	if totalGatherBonus > 0 || passiveBonus > 0 {
-		sb.WriteString("[gold::b]Bonuses[-]\n")
-		if researchGather > 0 {
-			fmt.Fprintf(&sb, " [cyan]+%.0f%% research[-]\n", researchGather*100)
-		}
-		if prestigeGather > 0 {
-			fmt.Fprintf(&sb, " [cyan]+%.0f%% prestige[-]\n", prestigeGather*100)
-		}
-		if passiveBonus > 0 {
-			fmt.Fprintf(&sb, " [yellow]+%.0f%% prod.all[-]\n", passiveBonus*100)
-		}
+	if !anyGroup {
+		sb.WriteString("[gray]No villager types unlocked yet.[-]\n")
 	}
 
 	vp.root.SetText(sb.String())
