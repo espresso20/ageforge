@@ -426,7 +426,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 		ge.Buildings.UnlockBuilding(key)
 	}
 	for _, key := range save.Unlocked.Workers {
-		ge.Workers.UnlockType(key)
+		ge.Workers.UnlockType(ge.Workers.ResolveClassToDomain(key))
 	}
 
 	// Restore Phase 3 systems

@@ -1,6 +1,10 @@
 package game
 
-import "github.com/espresso20/ageforge/config"
+import (
+	"strings"
+
+	"github.com/espresso20/ageforge/config"
+)
 
 // domainRuntime holds runtime state for one worker domain
 type domainRuntime struct {
@@ -282,6 +286,42 @@ func (vm *WorkerManager) LoadWorkers(data map[string]WorkerInfo) {
 			}
 		}
 	}
+}
+
+// ResolveClassToDomain maps a class name or legacy type name to a domain key.
+// Accepts: domain keys ("food"), current class names ("forager"), legacy type names ("worker").
+func (vm *WorkerManager) ResolveClassToDomain(nameOrDomain string) string {
+	lower := strings.ToLower(nameOrDomain)
+
+	// 1. Already a domain key?
+	if _, ok := vm.domains[lower]; ok {
+		return lower
+	}
+
+	// 2. Match current class name for any domain
+	for domain := range vm.domains {
+		if vm.ageKey != "" {
+			wc, ok := config.WorkerClassByDomainAndAge(domain, vm.ageKey)
+			if ok && strings.ToLower(wc.ClassName) == lower {
+				return domain
+			}
+		}
+	}
+
+	// 3. Legacy save/input alias fallback
+	legacyFallback := map[string]string{
+		"worker": "food", "workers": "food",
+		"shaman":   "faith",
+		"scholar":  "knowledge",
+		"soldier":  "military",
+		"merchant": "trade",
+		"engineer": "engineering",
+	}
+	if canon, ok := legacyFallback[lower]; ok {
+		return canon
+	}
+
+	return nameOrDomain // return as-is; will fail gracefully downstream
 }
 
 // Snapshot returns villager state for UI consumption.

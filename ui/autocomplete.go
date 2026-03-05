@@ -79,7 +79,7 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 
 	case "recruit", "r":
 		if len(completed) == 0 {
-			return filterPrefix(unlockedDomainKeys(state), partial, prefix)
+			return filterPrefix(recruitCompletions(state), partial, prefix)
 		}
 		if len(completed) == 1 {
 			return filterPrefix([]string{"max"}, partial, prefix)
@@ -238,6 +238,25 @@ func unlockedDomainKeys(state game.GameState) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+// recruitCompletions returns the current class names (in lowercase) for all unlocked
+// worker domains, sourced from state.Workers.Types[domain].Name.
+// Falls back to the domain key if the class name is empty.
+func recruitCompletions(state game.GameState) []string {
+	var names []string
+	for domain, vt := range state.Workers.Types {
+		if !vt.Unlocked {
+			continue
+		}
+		name := strings.ToLower(vt.Name)
+		if name == "" {
+			name = domain
+		}
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
 }
 
 // workerBuildingKeys returns all unlocked building keys that accept workers
