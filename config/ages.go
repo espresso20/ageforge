@@ -27,7 +27,7 @@ func Ages() []AgeDef {
 			Description:     "Survival. Nothing but your hands and wits.",
 			UnlockBuildings: []string{"hut", "stash", "gathering_camp", "wood_camp", "story_circle", "shrine", "sacred_grove"},
 			UnlockResources: []string{"food", "wood", "knowledge", "faith"},
-			UnlockVillagers: []string{"worker", "shaman"},
+			UnlockVillagers: []string{"food", "faith"},
 		},
 		// === 1: STONE AGE (Stone Era) ===
 		{
@@ -48,7 +48,7 @@ func Ages() []AgeDef {
 			BuildingReqs:    map[string]int{"hut": 50, "stone_pit": 5, "story_circle": 5},
 			UnlockBuildings: []string{"house", "warehouse", "farm", "lumber_mill", "quarry", "scriptorium", "altar", "barracks", "market", "smithy", "stonehenge"},
 			UnlockResources: []string{"iron", "gold"},
-			UnlockVillagers: []string{"scholar"},
+			UnlockVillagers: []string{"knowledge"},
 		},
 		// === 3: IRON AGE (Iron Era) ===
 		{
@@ -59,7 +59,7 @@ func Ages() []AgeDef {
 			BuildingReqs:    map[string]int{"lumber_mill": 8, "quarry": 8, "library": 3},
 			UnlockBuildings: []string{"townhouse", "granary", "field_works", "timber_yard", "marble_quarry", "agora", "temple", "hunting_lodge", "legion_fort", "trading_post", "ironworks", "smelter", "colosseum"},
 			UnlockResources: []string{"marble", "iron_ore"},
-			UnlockVillagers: []string{"soldier"},
+			UnlockVillagers: []string{"military"},
 		},
 		// === 4: CLASSICAL AGE (Iron Era) ===
 		{
@@ -80,7 +80,7 @@ func Ages() []AgeDef {
 			BuildingReqs:    map[string]int{"merchant_quarter": 3, "library": 20, "barracks": 30},
 			UnlockBuildings: []string{"manor", "keep", "demesne", "sawmill", "stonemasons_guild", "monastery_library", "cathedral", "castle_keep", "guildhall", "workshop", "ironmonger", "great_hall", "great_library"},
 			UnlockResources: []string{"steel"},
-			UnlockVillagers: []string{"merchant"},
+			UnlockVillagers: []string{"trade"},
 		},
 		// === 6: RENAISSANCE AGE (Steel Era) ===
 		{
@@ -110,7 +110,7 @@ func Ages() []AgeDef {
 			BuildingReqs:    map[string]int{"plantation": 5, "port": 8, "market_garden": 5},
 			UnlockBuildings: []string{"tenement", "industrial_depot", "agricultural_works", "steam_coal_plant", "steam_mine", "research_institute", "church", "military_base", "stock_exchange", "iron_works_complex", "steel_mill", "coal_plant", "opera_house", "crystal_palace"},
 			UnlockResources: []string{"oil"},
-			UnlockVillagers: []string{"engineer"},
+			UnlockVillagers: []string{"engineering"},
 		},
 		// === 9: VICTORIAN AGE (Electric Era) ===
 		{

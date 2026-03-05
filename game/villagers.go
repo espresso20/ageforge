@@ -2,56 +2,23 @@ package game
 
 import "github.com/espresso20/ageforge/config"
 
-// legacyAlias maps old villager type keys to canonical domain keys
-var legacyAlias = map[string]string{
-	"worker":    "food",
-	"workers":   "food", // plural alias — common typo
-	"shaman":    "faith",
-	"scholar":   "knowledge",
-	"soldier":   "military",
-	"merchant":  "trade",
-	"engineer":  "engineering",
-	"hacker":    "hacker",
-	"astronaut": "astronaut",
-}
-
-// domainToLegacy is the reverse — used to key VillagerState.Types by old names for UI compat
-var domainToLegacy = map[string]string{
-	"food":        "worker",
-	"faith":       "shaman",
-	"knowledge":   "scholar",
-	"military":    "soldier",
-	"trade":       "merchant",
-	"engineering": "engineer",
-	"hacker":      "hacker",
-	"astronaut":   "astronaut",
-}
-
-// resolveDomain returns the canonical domain key, translating legacy type names
-func resolveDomain(key string) string {
-	if d, ok := legacyAlias[key]; ok {
-		return d
-	}
-	return key
-}
-
 // domainRuntime holds runtime state for one worker domain
 type domainRuntime struct {
 	count       int
 	assignments map[string]int // buildingKey → assigned worker count
 }
 
-// VillagerManager manages population and domain-based worker assignments.
+// WorkerManager manages population and domain-based worker assignments.
 // Workers are assigned to buildings rather than resources; buildings then produce
 // at a rate scaled by their fill ratio (20% floor + 80% × assigned/capacity).
-type VillagerManager struct {
+type WorkerManager struct {
 	domains  map[string]*domainRuntime
 	unlocked map[string]bool // domain key → unlocked
 	ageKey   string          // current age for WorkerClassDef lookups (food cost, class name)
 }
 
-// VillagerTypeDef is kept for UI backward compatibility (villager_panel.go)
-type VillagerTypeDef struct {
+// WorkerTypeDef is kept for UI backward compatibility (villager_panel.go)
+type WorkerTypeDef struct {
 	Name       string
 	Key        string
 	FoodCost   float64
@@ -59,10 +26,10 @@ type VillagerTypeDef struct {
 	GatherRate float64
 }
 
-// DefaultVillagerTypes returns legacy-style definitions for UI display (villager_panel.go).
+// DefaultWorkerTypes returns legacy-style definitions for UI display (villager_panel.go).
 // The GatherRate values reflect old pre-Phase-6 gather rates shown for reference.
-func DefaultVillagerTypes() []VillagerTypeDef {
-	return []VillagerTypeDef{
+func DefaultWorkerTypes() []WorkerTypeDef {
+	return []WorkerTypeDef{
 		{Name: "Worker", Key: "worker", FoodCost: 0.10, CanGather: []string{"food"}, GatherRate: 0.35},
 		{Name: "Shaman", Key: "shaman", FoodCost: 0.5, CanGather: []string{"faith"}, GatherRate: 0.01},
 		{Name: "Scholar", Key: "scholar", FoodCost: 0.8, CanGather: []string{"knowledge"}, GatherRate: 0.05},
@@ -74,9 +41,9 @@ func DefaultVillagerTypes() []VillagerTypeDef {
 	}
 }
 
-// NewVillagerManager creates a new domain-based villager manager
-func NewVillagerManager() *VillagerManager {
-	vm := &VillagerManager{
+// NewWorkerManager creates a new domain-based villager manager
+func NewWorkerManager() *WorkerManager {
+	vm := &WorkerManager{
 		domains:  make(map[string]*domainRuntime),
 		unlocked: make(map[string]bool),
 		ageKey:   "primitive_age",
@@ -88,23 +55,23 @@ func NewVillagerManager() *VillagerManager {
 }
 
 // SetAge updates the current age for WorkerClassDef lookups
-func (vm *VillagerManager) SetAge(ageKey string) {
+func (vm *WorkerManager) SetAge(ageKey string) {
 	vm.ageKey = ageKey
 }
 
-// UnlockType makes a villager type (or domain) recruitable
-func (vm *VillagerManager) UnlockType(key string) {
-	vm.unlocked[resolveDomain(key)] = true
+// UnlockType makes a domain recruitable
+func (vm *WorkerManager) UnlockType(key string) {
+	vm.unlocked[key] = true
 }
 
-// IsUnlocked returns whether a type or domain is available
-func (vm *VillagerManager) IsUnlocked(key string) bool {
-	return vm.unlocked[resolveDomain(key)]
+// IsUnlocked returns whether a domain is available
+func (vm *WorkerManager) IsUnlocked(key string) bool {
+	return vm.unlocked[key]
 }
 
 // Recruit adds workers to a domain. Returns false if not unlocked or over pop cap.
-func (vm *VillagerManager) Recruit(key string, count int, popCap int) bool {
-	domain := resolveDomain(key)
+func (vm *WorkerManager) Recruit(key string, count int, popCap int) bool {
+	domain := key
 	rt, ok := vm.domains[domain]
 	if !ok || !vm.unlocked[domain] {
 		return false
@@ -117,10 +84,9 @@ func (vm *VillagerManager) Recruit(key string, count int, popCap int) bool {
 }
 
 // Assign assigns workers from a domain to a specific building.
-// domain may be a legacy type key ("worker") or a domain key ("food").
-// buildingKey must be a building whose WorkerDomain matches the resolved domain.
-func (vm *VillagerManager) Assign(domain, buildingKey string, count int) bool {
-	domain = resolveDomain(domain)
+// domain must be a domain key ("food", "faith", etc.).
+// buildingKey must be a building whose WorkerDomain matches the domain.
+func (vm *WorkerManager) Assign(domain, buildingKey string, count int) bool {
 	rt, ok := vm.domains[domain]
 	if !ok {
 		return false
@@ -138,8 +104,7 @@ func (vm *VillagerManager) Assign(domain, buildingKey string, count int) bool {
 }
 
 // Unassign removes workers of a domain from a building assignment
-func (vm *VillagerManager) Unassign(domain, buildingKey string, count int) bool {
-	domain = resolveDomain(domain)
+func (vm *WorkerManager) Unassign(domain, buildingKey string, count int) bool {
 	rt, ok := vm.domains[domain]
 	if !ok {
 		return false
@@ -152,8 +117,8 @@ func (vm *VillagerManager) Unassign(domain, buildingKey string, count int) bool 
 }
 
 // IdleCount returns how many workers in a domain are not assigned to any building
-func (vm *VillagerManager) IdleCount(key string) int {
-	domain := resolveDomain(key)
+func (vm *WorkerManager) IdleCount(key string) int {
+	domain := key
 	rt, ok := vm.domains[domain]
 	if !ok {
 		return 0
@@ -166,7 +131,7 @@ func (vm *VillagerManager) IdleCount(key string) int {
 }
 
 // TotalPop returns total population across all domains
-func (vm *VillagerManager) TotalPop() int {
+func (vm *WorkerManager) TotalPop() int {
 	total := 0
 	for _, rt := range vm.domains {
 		total += rt.count
@@ -175,7 +140,7 @@ func (vm *VillagerManager) TotalPop() int {
 }
 
 // FoodDrain returns total food consumption per tick using WorkerClassDef costs
-func (vm *VillagerManager) FoodDrain() float64 {
+func (vm *WorkerManager) FoodDrain() float64 {
 	drain := 0.0
 	for domain, rt := range vm.domains {
 		if rt.count == 0 {
@@ -193,7 +158,7 @@ func (vm *VillagerManager) FoodDrain() float64 {
 
 // GetAssignedCount returns how many workers from a domain are assigned to buildingKey.
 // Used by BuildingManager.WorkerScaledProduction for the fill-ratio formula.
-func (vm *VillagerManager) GetAssignedCount(domain, buildingKey string) int {
+func (vm *WorkerManager) GetAssignedCount(domain, buildingKey string) int {
 	rt, ok := vm.domains[domain]
 	if !ok {
 		return 0
@@ -203,7 +168,7 @@ func (vm *VillagerManager) GetAssignedCount(domain, buildingKey string) int {
 
 // RenameAssignment transfers all worker assignments from oldBuildingKey to newBuildingKey
 // within the given domain. Called during the age-transition building transformation pass.
-func (vm *VillagerManager) RenameAssignment(domain, oldKey, newKey string) {
+func (vm *WorkerManager) RenameAssignment(domain, oldKey, newKey string) {
 	rt, ok := vm.domains[domain]
 	if !ok {
 		return
@@ -216,7 +181,7 @@ func (vm *VillagerManager) RenameAssignment(domain, oldKey, newKey string) {
 }
 
 // GetDomainCount returns the total worker count for a domain
-func (vm *VillagerManager) GetDomainCount(domain string) int {
+func (vm *WorkerManager) GetDomainCount(domain string) int {
 	rt, ok := vm.domains[domain]
 	if !ok {
 		return 0
@@ -226,12 +191,12 @@ func (vm *VillagerManager) GetDomainCount(domain string) int {
 
 // GetProductionRates returns empty — villager production is now handled via
 // building fill ratios in BuildingManager.WorkerScaledProduction.
-func (vm *VillagerManager) GetProductionRates() map[string]float64 {
+func (vm *WorkerManager) GetProductionRates() map[string]float64 {
 	return make(map[string]float64)
 }
 
 // RemoveSoldiers removes workers from the military domain (expedition losses)
-func (vm *VillagerManager) RemoveSoldiers(count int) {
+func (vm *WorkerManager) RemoveSoldiers(count int) {
 	rt, ok := vm.domains["military"]
 	if !ok {
 		return
@@ -243,7 +208,7 @@ func (vm *VillagerManager) RemoveSoldiers(count int) {
 }
 
 // AddPctAll adds a percentage of current count to all domains (used by Population Surge event).
-func (vm *VillagerManager) AddPctAll(pct float64) {
+func (vm *WorkerManager) AddPctAll(pct float64) {
 	for _, rt := range vm.domains {
 		add := int(float64(rt.count) * pct)
 		if add > 0 {
@@ -254,7 +219,7 @@ func (vm *VillagerManager) AddPctAll(pct float64) {
 
 // RemovePct removes a percentage of workers from all domains (used by Epidemic event).
 // Each domain loses floor(count * pct) workers; assignments are proportionally reduced.
-func (vm *VillagerManager) RemovePct(pct float64) {
+func (vm *WorkerManager) RemovePct(pct float64) {
 	for _, rt := range vm.domains {
 		remove := int(float64(rt.count) * pct)
 		if remove <= 0 {
@@ -276,8 +241,8 @@ func (vm *VillagerManager) RemovePct(pct float64) {
 }
 
 // GetAll returns serializable domain-keyed villager info for saving
-func (vm *VillagerManager) GetAll() map[string]VillagerInfo {
-	out := make(map[string]VillagerInfo)
+func (vm *WorkerManager) GetAll() map[string]WorkerInfo {
+	out := make(map[string]WorkerInfo)
 	for domain, rt := range vm.domains {
 		assign := make(map[string]int, len(rt.assignments))
 		for k, v := range rt.assignments {
@@ -286,7 +251,7 @@ func (vm *VillagerManager) GetAll() map[string]VillagerInfo {
 			}
 		}
 		cls, _ := config.WorkerClassByDomainAndAge(domain, vm.ageKey)
-		out[domain] = VillagerInfo{
+		out[domain] = WorkerInfo{
 			Count:      rt.count,
 			FoodCost:   cls.FoodCost,
 			Assignment: assign,
@@ -295,14 +260,13 @@ func (vm *VillagerManager) GetAll() map[string]VillagerInfo {
 	return out
 }
 
-// LoadVillagers restores domain state from save data.
-// Handles both new (domain-keyed, buildingKey assignments) and
-// old (type-keyed, resource assignments) save formats.
-func (vm *VillagerManager) LoadVillagers(data map[string]VillagerInfo) {
+// LoadWorkers restores domain state from save data.
+// Expects domain-keyed data (e.g. "food", "faith"); legacy type-keyed saves
+// (e.g. "worker", "shaman") will simply be skipped (workers become idle).
+func (vm *WorkerManager) LoadWorkers(data map[string]WorkerInfo) {
 	byBuilding := config.BuildingByKey()
 	for key, info := range data {
-		domain := resolveDomain(key)
-		rt, ok := vm.domains[domain]
+		rt, ok := vm.domains[key]
 		if !ok {
 			continue
 		}
@@ -310,7 +274,7 @@ func (vm *VillagerManager) LoadVillagers(data map[string]VillagerInfo) {
 		if info.Assignment != nil {
 			for bKey, cnt := range info.Assignment {
 				def, ok := byBuilding[bKey]
-				if ok && def.WorkerDomain == domain && cnt > 0 {
+				if ok && def.WorkerDomain == key && cnt > 0 {
 					rt.assignments[bKey] = cnt
 				}
 				// Legacy resource keys (e.g. "food", "wood") are silently discarded;
@@ -322,9 +286,9 @@ func (vm *VillagerManager) LoadVillagers(data map[string]VillagerInfo) {
 
 // Snapshot returns villager state for UI consumption.
 // Types are keyed by domain keys (e.g. "food", "knowledge", "faith").
-func (vm *VillagerManager) Snapshot(popCap int) VillagerState {
-	state := VillagerState{
-		Types:     make(map[string]VillagerTypeState),
+func (vm *WorkerManager) Snapshot(popCap int) WorkerState {
+	state := WorkerState{
+		Types:     make(map[string]WorkerDomainState),
 		MaxPop:    popCap,
 		TotalPop:  vm.TotalPop(),
 		FoodDrain: vm.FoodDrain(),
@@ -342,7 +306,7 @@ func (vm *VillagerManager) Snapshot(popCap int) VillagerState {
 		if name == "" {
 			name = domain
 		}
-		state.Types[domain] = VillagerTypeState{
+		state.Types[domain] = WorkerDomainState{
 			Name:        name,
 			Count:       rt.count,
 			IdleCount:   idle,
