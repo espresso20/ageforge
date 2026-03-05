@@ -14,12 +14,13 @@ func buildingsLineageHousing() []BuildingDef {
 	// =========================================================================
 
 	// tier 0 — primitive_age
+	// BuildTicks lowered from 80 → 8 so the player can get pop cap before first workers starve.
 	b = append(b, BuildingDef{
 		Name: "Hut", Key: "hut", Category: "housing",
 		BaseCost:    map[string]float64{"wood": 15},
 		CostScale:   1.12,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 10}},
-		BuildTicks:  80,
+		BuildTicks:  8,
 		RequiredAge: "primitive_age",
 		Description: "A crude shelter of sticks and leaves. +10 pop cap.",
 		LineageKey:  "housing", LineageTier: 0,

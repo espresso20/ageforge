@@ -27,7 +27,7 @@ func wc(domain, ageKey, className string, baseFoodCost float64, tier int) Worker
 
 // WorkerClasses returns all worker class definitions across all 12 domains.
 // Domains and their start ages / base food costs:
-//   food        primitive   1.0   — Forager → Quantum Harvester
+//   food        primitive   0.08  — Forager → Quantum Harvester
 //   lumber      stone       1.0   — Gatherer → Cosmic Extractor
 //   masonry     stone       1.0   — Quarryman → Crystal Miner
 //   knowledge   primitive   1.0   — Shaman → Quantum Theorist
@@ -43,9 +43,11 @@ func wc(domain, ageKey, className string, baseFoodCost float64, tier int) Worker
 func WorkerClasses() []WorkerClassDef {
 	return []WorkerClassDef{
 
-		// === FOOD DOMAIN (starts primitive_age, base food cost 1.0) ===
-		wc("food", "primitive_age", "Forager", 1.0, 0),
-		wc("food", "stone_age", "Farmhand", 1.0, 1),
+		// === FOOD DOMAIN (starts primitive_age, base food cost 0.08) ===
+		// Base cost lowered from 1.0 to 0.08 so early foragers don't drain faster than camps produce.
+		// At tier 0 (primitive): FoodCost = 0.08; tier 1 (stone): 0.12; tier 2 (bronze): 0.18; etc.
+		wc("food", "primitive_age", "Forager", 0.08, 0),
+		wc("food", "stone_age", "Farmhand", 0.08, 1),
 		wc("food", "bronze_age", "Cultivator", 1.0, 2),
 		wc("food", "iron_age", "Laborer", 1.0, 3),
 		wc("food", "classical_age", "Peasant", 1.0, 4),
