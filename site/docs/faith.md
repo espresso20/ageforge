@@ -47,8 +47,8 @@ Shrine → Standing Stones → Altar → Temple → Oracle House → Cathedral �
 
 ```
 recruit faith
-assign faith shrine 3
-assign faith temple 5
+assign shrine 3
+assign temple 5
 ```
 
 ---

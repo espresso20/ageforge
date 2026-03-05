@@ -1,6 +1,6 @@
 # The 22 Ages
 
-AgeForge spans 22 ages from primitive survival to transcendence. Each age unlocks new buildings, resources, and villager types. Advancement is automatic once requirements are met.
+AgeForge spans 22 ages from primitive survival to transcendence. Each age unlocks new buildings, resources, and worker domains. Advancement is automatic once requirements are met.
 
 ## Epoch Overview
 
@@ -28,7 +28,7 @@ Starting age. No requirements.
 **Unlocks:**
 - Buildings: Hut, Stash, Altar, Sacred Grove
 - Resources: Food, Wood, Knowledge
-- Villagers: Worker, Shaman
+- Worker domains: food, knowledge
 
 ---
 
@@ -62,7 +62,7 @@ Starting age. No requirements.
 | Stone Pits | 10 |
 | Firepits | 10 |
 
-**Unlocks:** Farm, Lumber Mill, Quarry, Market, Library, House, Warehouse, Stonehenge · **Resources:** Iron, Gold · **Villager:** Scholar
+**Unlocks:** Farm, Lumber Mill, Quarry, Market, Library, House, Warehouse, Stonehenge · **Resources:** Iron, Gold · **New domain:** trade
 
 ---
 
@@ -81,7 +81,7 @@ Starting age. No requirements.
 | Lumber Mills | 10 |
 | Libraries | 5 |
 
-**Unlocks:** Coal Mine, Smithy, Barracks, Granary, Colosseum · **Resource:** Coal · **Villager:** Soldier
+**Unlocks:** Coal Mine, Smithy, Barracks, Granary, Colosseum · **Resource:** Coal · **New domains:** military, metallurgy
 
 ---
 
@@ -117,7 +117,7 @@ Starting age. No requirements.
 | Libraries | 30 |
 | Barracks | 50 |
 
-**Unlocks:** Cathedral, Manor, University, Castle, Keep, Great Library · **Resources:** Steel, Faith · **Villager:** Merchant
+**Unlocks:** Cathedral, Manor, University, Castle, Keep, Great Library · **Resources:** Steel, Faith · **New domain:** faith
 
 ---
 
@@ -148,7 +148,7 @@ Starting age. No requirements.
 
 > *Steam power drives exponential growth.*
 
-**Unlocks:** Steam Engine, Factory, Railroad, Coal Plant, Steel Mill, Iron Bridge, Crystal Palace · **Resource:** Oil · **Villager:** Engineer
+**Unlocks:** Steam Engine, Factory, Railroad, Coal Plant, Steel Mill, Iron Bridge, Crystal Palace · **Resource:** Oil · **New domains:** engineering, energy
 
 ---
 

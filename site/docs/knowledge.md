@@ -16,9 +16,9 @@ Story Circle → Elders' Hall → Scriptorium → Agora → Library → Monaster
 
 ```
 recruit knowledge
-assign knowledge story_circle 2
-assign knowledge library 5
-assign knowledge university 3
+assign story_circle 2
+assign library 5
+assign university 3
 ```
 
 **Worker efficiency formula:**

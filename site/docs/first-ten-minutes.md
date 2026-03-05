@@ -48,7 +48,7 @@ Build one or two stashes alongside huts.
 
 ---
 
-## Step 3: Recruit villagers
+## Step 3: Recruit workers
 
 Once your huts are up (pop cap raised), recruit:
 
@@ -58,18 +58,18 @@ recruit food
 recruit knowledge
 ```
 
-Keep recruiting until you're at 8–10 pop. Each villager costs food upfront — check your food rate stays positive.
+Keep recruiting until you're at 8–10 pop. Each worker costs food upfront — check your food rate stays positive.
 
 ---
 
 ## Step 4: Assign everyone
 
-This is the most important step. **Idle villagers produce nothing.**
+This is the most important step. **Idle workers produce nothing.**
 
 ```
-assign food gathering_camp 2
-assign food gathering_camp 1
-assign knowledge story_circle 1
+assign gathering_camp 2
+assign gathering_camp 1
+assign story_circle 1
 ```
 
 General rule for early game:
@@ -184,8 +184,8 @@ Your first priority: build **Stone Pits** and assign lumber workers to wood prod
 | Build an altar | `build altar` |
 | Recruit a food worker | `recruit food` |
 | Recruit a knowledge worker | `recruit knowledge` |
-| Assign food workers to gathering camp | `assign food gathering_camp 3` |
-| Assign knowledge workers to story circle | `assign knowledge story_circle 1` |
+| Assign food workers to gathering camp | `assign gathering_camp 3` |
+| Assign knowledge workers to story circle | `assign story_circle 1` |
 | Start first research | `research tool_making` |
 | Check economy tab | `e` or `F1` |
 | Check logs | `l` or `F7` |

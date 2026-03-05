@@ -2,7 +2,7 @@
 
 Workers are the active labour force in AgeForge. Each worker belongs to a **domain** tied to a specific set of building lineages. Assigning workers to buildings increases production efficiency; leaving buildings unstaffed still produces at 20% base rate.
 
-For a gentler introduction see [Villagers](villagers.md).
+For a gentler introduction see [Workers](villagers.md).
 
 ---
 
@@ -18,20 +18,20 @@ For a gentler introduction see [Villagers](villagers.md).
 
 ## Domain Reference
 
-| Domain | Legacy Key | Building Lineage | Primary Output |
-|--------|------------|------------------|----------------|
-| food | worker | Food lineage | food |
-| knowledge | scholar | Knowledge lineage | knowledge |
-| faith | shaman | Faith lineage | faith |
-| military | soldier | Military lineage | soldiers |
-| trade | merchant | Trade lineage | gold |
-| engineering | engineer | Engineering lineage | iron / steel / electricity / plasma |
-| lumber | — | Organic Extraction lineage | wood / coal / oil / nanobots / quantum_flux |
-| masonry | — | Geological Extraction lineage | stone / iron_ore / uranium / titanium_ore |
-| metallurgy | — | Metallurgy lineage | iron / steel / titanium / dark_matter / antimatter |
-| energy | — | Energy lineage | coal / electricity / plasma / dark_matter |
-| hacker | hacker | Hacker / Digital lineage | data |
-| astronaut | astronaut | Space buildings | dark_matter / antimatter |
+| Domain | Building Lineage | Primary Output |
+|--------|------------------|----------------|
+| food | Food lineage | food |
+| knowledge | Knowledge lineage | knowledge |
+| faith | Faith lineage | faith |
+| military | Military lineage | soldiers |
+| trade | Trade lineage | gold |
+| engineering | Engineering lineage | iron / steel / electricity / plasma |
+| lumber | Organic Extraction lineage | wood / coal / oil / nanobots / quantum_flux |
+| masonry | Geological Extraction lineage | stone / iron_ore / uranium / titanium_ore |
+| metallurgy | Metallurgy lineage | iron / steel / titanium / dark_matter / antimatter |
+| energy | Energy lineage | coal / electricity / plasma / dark_matter |
+| hacker | Hacker / Digital lineage | data |
+| astronaut | Space buildings | dark_matter / antimatter |
 
 > Culture has no worker domain — it auto-produces passively and cannot be boosted by assignment.
 
@@ -332,16 +332,16 @@ recruit hacker
 ## Assignment Commands
 
 ```
-assign <domain> <building_key> <count>
-unassign <domain> <building_key> <count>
+assign <building_key> [count|all]
+unassign <building_key> [count|all]
 unassign all <domain>
 ```
 
 **Examples:**
 ```
-assign food gathering_camp 5
-assign knowledge library 3
-unassign food gathering_camp 2
+assign gathering_camp 5
+assign library 3
+unassign gathering_camp 2
 unassign all military
 ```
 
@@ -391,18 +391,18 @@ This means transitioning ages does not break your production — you gradually u
 
 Total food drain per tick = sum of `(domain_food_cost × worker_count)` for every domain.
 
-The Economy tab (`e` or `F1`) shows per-domain food drain in the villager panel. Key tips:
+The Economy tab (`e` or `F1`) shows per-domain food drain in the workers panel. Key tips:
 
 - High-base-cost domains (engineering 8.0, energy 8.0, hacker 16.0, astronaut 32.0) compound quickly with tier scaling — recruit carefully
 - Ensure your food production rate (from food-domain workers and buildings) exceeds your total drain before recruiting in expensive domains
-- `unassign all <domain>` combined with `recruit` in a cheaper domain is a valid rebalancing strategy
+- `unassign all <domain>` combined with `recruit <domain>` in a cheaper domain is a valid rebalancing strategy
 - Faith workers (base 2.0) are cheaper than military (base 2.0 same) but unlock later — plan food accordingly
 
 ---
 
 ## See Also
 
-- [Villagers](villagers.md) — introductory guide to worker types and early-game assignments
+- [Workers](villagers.md) — introductory guide to worker domains and early-game assignments
 - [Buildings](buildings.md) — building lineages and per-building capacity values
 - [Resources](resources.md) — which resources each lineage produces at which age
 - [Epochs](epochs.md) — how epoch transitions affect building output resources

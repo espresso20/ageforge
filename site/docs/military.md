@@ -6,11 +6,11 @@ The military system lets you send soldiers on expeditions for resources, gold, a
 
 ## Soldiers
 
-Soldiers are a villager type unlocked in the **Iron Age** (requires Barracks).
+Soldiers are workers in the **military domain**, unlocked in the **Iron Age** (requires Barracks).
 
 ```
-recruit villager       # recruit a new villager
-assign soldier military 5   # assign them to defense
+recruit military       # recruit a military worker
+assign barracks 5      # assign them to a barracks
 ```
 
 Your **soldier count** determines which expeditions you can launch. Your **defense rating** reduces damage from raids and negative events.

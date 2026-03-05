@@ -71,7 +71,7 @@ These resources are produced by Geological Extraction buildings and consumed by 
 Food is the most critical resource. Every worker in every domain drains food each tick — the rate scales with their class tier (`baseFoodCost × 1.5^tier`). If food hits zero, population begins to starve.
 
 **How to increase food:**
-- Assign food-domain workers to Food lineage buildings (`assign food gathering_camp 5`)
+- Assign food-domain workers to Food lineage buildings (`assign gathering_camp 5`)
 - Build more Food lineage buildings to increase total worker capacity
 - Research Agriculture, Crop Rotation, and related techs for food multipliers
 
@@ -88,7 +88,7 @@ Knowledge powers all research. Technologies cost knowledge to unlock, and your k
 - Build Knowledge lineage buildings (Story Circle → Library → University → ...)
 - Knowledge storage starts at 30 — build Knowledge buildings early to raise the cap
 
-Knowledge workers have the highest production multiplier progression of any domain: at Quantum tier (tier 20), a single Quantum Theorist produces `2^20 × base_rate` — massively more than early-game Shamans.
+Knowledge workers have the highest production multiplier progression of any domain: at Quantum tier (tier 20), a single Quantum Theorist produces `2^20 × base_rate` — massively more than a Primitive-age knowledge worker (tier 0).
 
 ---
 

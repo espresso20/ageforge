@@ -11,8 +11,8 @@ Build → Recruit → Assign → Research → Advance → Repeat
 ```
 
 1. **Build** structures to increase capacity and production
-2. **Recruit** villagers to grow your workforce
-3. **Assign** villagers to gather specific resources
+2. **Recruit** workers to grow your workforce
+3. **Assign** workers to gather specific resources
 4. **Research** technologies that multiply your output
 5. **Advance** to the next age when requirements are met
 6. **Prestige** when you reach the Transcendent Age
@@ -57,7 +57,7 @@ Your starting pop cap is too low. Build huts to raise it:
 ```
 build hut
 ```
-Queue another while the first is building. Population cap unlocks more villagers.
+Queue another while the first is building. Population cap unlocks more workers.
 
 ### 2. Build stashes (storage)
 Resources cap out quickly. Add storage:
@@ -74,13 +74,13 @@ recruit knowledge
 ### 4. Assign food workers to a building
 Idle workers produce nothing. Assign them:
 ```
-assign food gathering_camp 2
+assign gathering_camp 2
 ```
 
 ### 5. Assign knowledge workers to a building
 Knowledge workers produce knowledge. Assign one:
 ```
-assign knowledge story_circle 1
+assign story_circle 1
 ```
 
 ### 6. Build a gathering camp
@@ -112,7 +112,7 @@ The second row shows what you need for the next age. Keep building and assigning
 
 ## Workers
 
-Workers are organized into 12 domains, each tied to specific buildings. Recruit workers with `recruit <domain>` and assign them with `assign <domain> <building_key> <count>`.
+Workers are organized into 12 domains, each tied to specific buildings. Recruit workers with `recruit <domain>` and assign them with `assign <building_key> [count|all]`.
 
 **Core domains**: food, knowledge, faith, military, trade, engineering
 **Production domains**: lumber, masonry, metallurgy, energy

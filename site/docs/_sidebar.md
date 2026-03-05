@@ -9,7 +9,7 @@
   - [How to Play](how-to-play.md)
   - [All Commands](commands.md)
   - [Resources](resources.md)
-  - [Villagers](villagers.md)
+  - [Workers](villagers.md)
 
 - **Progression**
   - [The 22 Ages](ages.md)

@@ -22,25 +22,25 @@ gather wood 5
 
 ---
 
-## Villagers & Workers
+## Workers
 
 | Command | Description |
 |---|---|
 | `recruit <domain>` | Recruit a worker in the given domain (current age's tier) |
-| `assign <domain> <building_key> <count>` | Assign N domain workers to a specific building |
-| `unassign <domain> <building_key> <count>` | Unassign N workers from a building |
+| `assign <building_key> [count\|all]` | Assign workers to a building (domain inferred from building) |
+| `unassign <building_key> [count\|all]` | Unassign workers from a building |
 | `unassign all <domain>` | Unassign all workers in a domain |
 
 **Worker domains:** `food`, `knowledge`, `faith`, `military`, `trade`, `engineering`, `lumber`, `masonry`, `metallurgy`, `energy`, `hacker`, `astronaut`
 
-Domain must match the building's worker domain — you cannot assign food workers to a library.
+Workers are recruited by domain. Assignment targets a building directly — the domain is inferred automatically from the building.
 
 ```
-recruit food
-recruit knowledge
-assign food gathering_camp 5
-assign knowledge library 3
-unassign food gathering_camp 2
+recruit food 5
+recruit faith 3
+assign gathering_camp 3
+assign library all
+unassign shrine
 unassign all military
 ```
 

@@ -1,6 +1,6 @@
-# Workers & Villagers
+# Workers
 
-Workers are your civilization's workforce. They consume food each tick and drive production in every building they are assigned to. The old eight-type system (Worker/Shaman/Scholar/Soldier/Merchant/Engineer/Hacker/Astronaut) has been replaced by a **12-domain system** tied directly to building lineages.
+Workers are your civilization's workforce. They consume food each tick and drive production in every building they are assigned to. Workers are organized into a **12-domain system** tied directly to building lineages.
 
 ---
 
@@ -23,20 +23,20 @@ production = base_rate × building_count × (0.20 + 0.80 × assigned / total_cap
 
 ## The 12 Domains
 
-| Domain | Legacy Name | What They Do | Unlocked |
-|--------|-------------|--------------|----------|
-| food | Worker | Produce food; drain food for all workers | Primitive Age |
-| knowledge | Scholar/Shaman | Generate knowledge for research | Primitive Age |
-| lumber | — | Extract wood, coal, oil, nanobots, quantum flux | Stone Age |
-| masonry | — | Extract stone, iron ore, uranium, titanium ore, dark matter crystals, antimatter | Stone Age |
-| faith | Shaman | Generate faith | Medieval Age |
-| military | Soldier | Train soldiers for expeditions | Iron Age |
-| trade | Merchant | Generate gold | Bronze Age |
-| metallurgy | — | Refine ore into iron, steel, titanium, dark matter | Iron Age |
-| engineering | Engineer | Produce steel, electricity, plasma | Victorian Age |
-| energy | — | Generate electricity, plasma, quantum flux | Victorian Age |
-| hacker | Hacker | Generate data and crypto | Information Age |
-| astronaut | Astronaut | Generate dark matter, antimatter | Space Age |
+| Domain | What They Do | Unlocked |
+|--------|--------------|----------|
+| food | Produce food; drain food for all workers | Primitive Age |
+| knowledge | Generate knowledge for research | Primitive Age |
+| lumber | Extract wood, coal, oil, nanobots, quantum flux | Stone Age |
+| masonry | Extract stone, iron ore, uranium, titanium ore, dark matter crystals, antimatter | Stone Age |
+| faith | Generate faith | Medieval Age |
+| military | Train soldiers for expeditions | Iron Age |
+| trade | Generate gold | Bronze Age |
+| metallurgy | Refine ore into iron, steel, titanium, dark matter | Iron Age |
+| engineering | Produce steel, electricity, plasma | Victorian Age |
+| energy | Generate electricity, plasma, quantum flux | Victorian Age |
+| hacker | Generate data and crypto | Information Age |
+| astronaut | Generate dark matter, antimatter | Space Age |
 
 > **Note:** Culture buildings (Lineage 10) have no worker domain — they produce culture automatically each tick.
 
@@ -137,17 +137,17 @@ You can only recruit the current age's tier. Recruiting costs food upfront; the 
 **Assign workers to a building:**
 
 ```
-assign <domain> <building_key> <count>
+assign <building_key> [count|all]
 ```
 
-Example: `assign food gathering_camp 5`
+Example: `assign gathering_camp 5`
 
-Workers must match the building's domain. A building with worker capacity 15, built 3 times, has 45 total slots.
+The domain is inferred automatically from the building. A building with worker capacity 15, built 3 times, has 45 total slots.
 
 **Unassign workers:**
 
 ```
-unassign <domain> <building_key> <count>
+unassign <building_key> [count|all]
 unassign all <domain>
 ```
 
@@ -167,7 +167,7 @@ Every worker in every domain costs food per tick. The exact amount is `baseFoodC
 
 - **Prioritize food workers early** — every other domain drains food. A food deficit stalls recruitment and can collapse your economy.
 - **Faith workers before epoch transitions** — your faith level as a percentage of storage cap determines epoch roll odds. Keep faith workers assigned ahead of predicted epoch events.
-- **Knowledge workers for fast research** — the knowledge domain multiplier doubles each tier, making late-game scholars vastly more productive than early shamans.
+- **Knowledge workers for fast research** — the knowledge domain multiplier doubles each tier, making late-game knowledge workers vastly more productive than early-tier ones.
 - **Metallurgy requires both extraction and refining** — assign masonry workers to geological extraction buildings to produce raw ore, then metallurgy workers to smelters to refine it.
 - **Legacy class workers** — workers recruited in a previous age retain their tier's food cost and multiplier. New recruits always join at the current tier. Both coexist in the same domain pool.
 - **Check idle count** — press `e` (Economy tab) to see the idle count in the status bar. Unassigned workers still drain food for zero extra production benefit.

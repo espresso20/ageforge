@@ -6,7 +6,7 @@ Prestige is the endgame reset loop. When you reach the **Modern Age** (Age 12), 
 prestige go
 ```
 
-> ⚠ Prestige resets your age, resources, buildings, villagers, and research. Wonders, milestones, and prestige upgrades are **permanent**.
+> ⚠ Prestige resets your age, resources, buildings, workers, and research. Wonders, milestones, and prestige upgrades are **permanent**.
 
 ---
 
@@ -57,7 +57,7 @@ Prestige interacts with the epoch system in important ways:
 - **Ancient Knowledge** bonus — if earned via Succumb, +25% research speed persists
 
 **What resets on prestige:**
-- All resources, buildings, workers, research
+- All resources, buildings, workers, and research
 - Epoch event history
 - Current epoch (returns to Stone Era)
 - Culture (reduced to 20% of current value — unlocked threshold bonuses remain)
@@ -75,7 +75,7 @@ Prestige interacts with the epoch system in important ways:
 | Priority | Upgrade | Why |
 |---|---|---|
 | 1 | `starting_food` + `starting_wood` | Makes the Primitive Age trivially fast (cheap, 1 point each) |
-| 2 | `gather_boost` | All three starting villager types benefit immediately |
+| 2 | `gather_boost` | All starting worker domains benefit immediately |
 | 3 | `research_speed` | Knowledge snowballs — earlier techs = faster progression |
 | 4 | `storage_bonus` | Prevents early resource caps from throttling growth |
 | 5 | `tick_speed` | Best-in-slot late investment; very high cost but permanent |
