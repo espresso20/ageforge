@@ -4,73 +4,72 @@ Status legend: [ ] pending | [~] in progress | [x] done
 
 ---
 
-## Phase 1: Prestige Fixes
-- [x] Increase all prestige shop costs by at least 200% (focus on late-game items like Temporal Mastery)
-- [x] Lock prestige availability until Modern Age
-
----
-
-## Phase 2: Wonder Resource Banking System
-- [x] Add a per-wonder resource bank (tracked separately from player storage)
-- [x] New command: `Wonder Collect <RESOURCE> <AMOUNT|all>` — pulls from player storage into the wonder's bank immediately
-- [x] `Build <WONDER_KEY>` only succeeds once the wonder's bank is fully funded
-- [x] Display wonder bank fill progress in the Wonders tab and Wonder panel (bar + % per resource)
-
----
-
-## Phase 3: Map Improvements
-- [x] Draw the active wonder on the map away from the city (separate visual area)
-- [x] Spread the city layout to avoid overcrowding at high tick counts (100k+ ticks / 100+ huts)
-- [x] Each age set should use a unique city layout pattern — not just the Primitive-age spiral
-
----
-
-## Phase 4: Villager Dashboard Panel
-- [x] Add a panel to the main game screen showing:
-  - Villager types recruitable in the current age
-  - Their current gathering rate per type
-  - Any active bonuses applied to them
-
----
-
-## Phase 5 (Economy Redesign): Config Foundation — Data Structures ✓ DONE
-See: DONE.md for completion notes. All items complete except MaxCount removal (deferred to Phase 10).
-
----
-
+## Phase 1: Prestige Fixes ✓ DONE
+## Phase 2: Wonder Resource Banking System ✓ DONE
+## Phase 3: Map Improvements ✓ DONE
+## Phase 4: Villager Dashboard Panel ✓ DONE
+## Phase 5 (Economy Redesign): Config Foundation ✓ DONE
 ## Phase 6 (Economy Redesign): Worker-Building Coupling Engine ✓ DONE
-See: DONE.md for completion notes.
-
----
-
 ## Phase 7 (Economy Redesign): Age Transition Transformation Pass ✓ DONE
-See: DONE.md for completion notes. UI modal deferred to Phase 11.
-
----
-
 ## Phase 8 (Economy Redesign): Epoch System ✓ DONE
-See: DONE.md for completion notes.
-
----
-
 ## Phase 9 (Economy Redesign): Catastrophe System ✓ DONE
-See: DONE.md for completion notes.
-
----
-
 ## Phase 10 (Economy Redesign): Balance & Building Content ✓ DONE
-See: DONE.md for completion notes.
+## Phase 11 (Economy Redesign): UI Completion ✓ DONE
+## Phase 12: Documentation Rebuild ✓ DONE
+## Phase 13: Epoch-Exclusive Regular Events ✓ DONE
+
+See DONE.md for all completion notes.
 
 ---
 
-## Phase 11 (Economy Redesign): UI Completion
-- [ ] Economy tab: per-building worker assignment (assigned/capacity + domain name + +/- buttons)
-- [ ] Villager panel: domain-grouped workers; current-tier prominent, legacy tiers collapsed
-- [ ] Age advance modal: transformation summary + epoch event reveal
-- [ ] Culture: progress bar toward next threshold
-- [ ] Faith: threshold tier indicator
-- [ ] Epoch tab (new): epoch history, legacy bonuses, voluntary catastrophe, civilization log
-- [ ] Stats tab: epoch/catastrophe/legacy bonus fields
+## Phase 14: Critical Bug Fix Pass
+
+- [ ] Fix `gather` cap — `ui/input.go` clamps `amount = 10000` instead of `amount = 10`
+- [ ] Remove duplicate `gathering_camp` definition — `config/buildings.go` has a stale stone-age entry with no WorkerDomain that shadows the lineage version; delete it
+- [ ] Fix assign command — `assign` expects domain keys (`food`, `knowledge`) but autocomplete and snapshot types use legacy names (`worker`, `shaman`); align so the command and autocomplete both use domain keys
+- [ ] Fix over-assignment — `AssignWorkers` allows assigning workers to a building with count 0; add building-count validation before assigning
+
+---
+
+## Phase 17a: Stone + Military Age Gating
+
+- [ ] `stone_camp` produces `stone` but `stone` is not unlocked until `stone_age` — either unlock stone in `primitive_age` or move `stone_camp` to `stone_age`
+- [ ] Hunting Lodge grants military cap but military domain is not available until Bronze Age — gate Hunting Lodge to bronze_age or remove military cap from primitive-age buildings
+
+---
+
+## Phase 17b: Balance Pass
+
+- [ ] Food rate vs drain — at primitive age, fully-staffed gathering camp produces ~+0.05 food/tick vs -1/tick per worker; players starve immediately. Review and raise gathering camp food rate or lower worker drain
+- [ ] Hut build time — 50–80 ticks is too long; players run out of food before they can shelter workers. Reduce to match early-game pacing
+- [ ] Building tick times across primitive and stone age — audit all early-game BuildTicks for consistency with food drain speed
+- [ ] Stone camp resource bar — if stone is kept in primitive age, add stone to the resources panel for that age
+
+---
+
+## Phase 15: Autocomplete Rewrite
+
+- [ ] Replace `unlockedVillagerTypes` (returns legacy names) with domain key list throughout autocomplete
+- [ ] Remove stale first-arg suggestions (e.g. `assign worker wood`) — `assign` first arg must be domain key
+- [ ] Add autocomplete for `unassign all <domain>` using domain keys
+- [ ] Verify `recruit`, `assign`, `unassign` all suggest the correct canonical keys
+
+---
+
+## Phase 16: Command History
+
+- [ ] Add a ring-buffer command history (last 50 commands) to the input field
+- [ ] Up arrow scrolls back through history; down arrow scrolls forward
+- [ ] History is session-only (not persisted to disk)
+
+---
+
+## Phase 18: Population Screen Redesign
+
+- [ ] Remove or repurpose the Population panel — it duplicates what the Economy tab already shows
+- [ ] Add a dedicated **Under Construction** section to the Economy screen showing active build queue progress bars
+- [ ] If multiple buildings of the same type are queued, show a single combined bar (e.g. `Hut x3 [████░░] 2 ticks`)
+- [ ] Decide fate of population panel: either replace with a compact workers-per-domain summary or remove entirely
 
 ---
 

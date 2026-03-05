@@ -3,33 +3,6 @@
 ## Overview
 CLI idle/clicker empire builder game built with Go + tview/tcell. 22 ages, 284 buildings (13 lineages), 52 techs, 33 milestones, 7 epochs, catastrophe system, 12 worker domains, 25 resources, trade, diplomacy, prestige.
 
-## Architecture
-- **config/** - Data definitions (resources, buildings, techs, ages, milestones, events, trade, diplomacy, prestige, epochs, workers). Pure data, no logic.
-- **game/** - Game engine, managers, tick loop. No UI imports.
-- **ui/** - tview-based TUI. Reads GameState snapshots, never touches engine internals.
-- **main.go** - Entry point, wires engine + UI.
-
-## Key Systems
-- **ResourceManager** - 25 resources with rates, storage caps, breakdowns
-- **BuildingManager** - 284 buildings (241 production across 13 lineages + 21 storage + 22 wonders); lineage tier transforms on age advance; legacy building tracking
-- **VillagerManager** - 12 worker domains (food/faith/knowledge/military/trade/engineering/hacker/astronaut/lumber/masonry/metallurgy/energy); domain+building keyed assignments; age-tiered class names; WorkerScaledProduction (20% floor)
-- **ResearchManager** - 52 techs with prerequisites, age gating, permanent bonuses
-- **MilitaryManager** - 15 expeditions with risk/reward, soldiers, loot
-- **EventManager** - 28 random events with sentiment streaks, timed effects, InjectEvent() for chain boosts
-- **MilestoneManager** - 33 milestones in 5 categories, 5 chains with speed boosts/titles
-- **TradeManager** - 15 trade routes, resource exchange with supply/demand pressure
-- **DiplomacyManager** - 6 NPC factions with opinion, status, trade bonuses
-- **PrestigeManager** - Reset system with 9 upgrades and passive bonuses
-- **ProgressManager** - Age advancement, unlock tracking across 22 ages
-- **EpochSystem** - 7 epochs (3 ages each); epoch event rolls (faith→odds, culture→tier); Catastrophe modal (Endure/Succumb/Defer); legacy bonuses + ruins surviving prestige
-
-## Patterns
-- **Event Bus**: Systems communicate via `game.EventBus` (pub/sub). Events: BuildingBuilt, ResearchDone, AgeAdvanced, MilestoneCompleted, ChainCompleted, etc.
-- **Config-Driven**: All content defined as data in config/, referenced by string keys.
-- **Manager Pattern**: Each system has a manager struct with clear API.
-- **GameState Snapshot**: `engine.GetState()` returns a read-only snapshot for UI consumption.
-- **Toast Notifications**: Bus subscribers in dashboard show temporary toast messages for milestones, chains, wonders, age advances.
-
 ## Conventions
 - Package names: lowercase, single word (config, game, ui)
 - Config keys: snake_case strings ("lumber_mill", "stone_age")
