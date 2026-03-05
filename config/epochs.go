@@ -252,6 +252,18 @@ func EpochByKey() map[string]EpochDef {
 	return m
 }
 
+// EpochEventByKey returns a map of event key -> EpochEventDef across all epoch event pools.
+func EpochEventByKey() map[string]EpochEventDef {
+	m := make(map[string]EpochEventDef)
+	for _, ev := range GoodEpochEvents() {
+		m[ev.Key] = ev
+	}
+	for _, ev := range ChallengingEpochEvents() {
+		m[ev.Key] = ev
+	}
+	return m
+}
+
 // EpochForAge returns the epoch key for a given age key.
 func EpochForAge(ageKey string) string {
 	for _, e := range Epochs() {

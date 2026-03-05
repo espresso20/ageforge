@@ -55,9 +55,10 @@ type Dashboard struct {
 	statusTV    *tview.TextView
 	ageTV      *tview.TextView
 	inputField *tview.InputField
-	lastAge          string
-	pendingAgeSplash string // set by bus handler, consumed by refresh()
-	toastMgr         *ToastManager
+	lastAge             string
+	pendingAgeSplash    string // set by bus handler, consumed by refresh()
+	pendingEpochChanged bool   // whether the pending age advance also crossed an epoch boundary
+	toastMgr            *ToastManager
 	toastTV     *tview.TextView
 	contentArea *tview.Flex
 	bottomArea  *tview.Flex
@@ -164,6 +165,10 @@ func (d *Dashboard) build() {
 			// Store for splash — consumed in refresh() which runs in UI goroutine
 			// (this handler runs under engine lock, so no GetState here!)
 			d.pendingAgeSplash = newAge
+			// Detect epoch transition using config only (no engine lock needed)
+			oldEpoch := config.EpochForAge(d.lastAge)
+			newEpoch := config.EpochForAge(newAge)
+			d.pendingEpochChanged = (oldEpoch != newEpoch && d.lastAge != "")
 		}
 		d.toastMgr.Show("AGE ADVANCED!", "gold", 5*time.Second)
 	})
@@ -450,8 +455,19 @@ func (d *Dashboard) refresh() {
 	if d.pendingAgeSplash != "" {
 		newAge := d.pendingAgeSplash
 		oldAge := d.lastAge
+		epochChanged := d.pendingEpochChanged
 		d.pendingAgeSplash = ""
-		ShowAgeSplash(d.app, d.pages, oldAge, newAge)
+		d.pendingEpochChanged = false
+
+		state := d.engine.GetState()
+		summary := state.LastAgeAdvanceSummary
+
+		var epochEvent game.EpochEventRecord
+		if epochChanged && len(state.EpochEventHistory) > 0 {
+			epochEvent = state.EpochEventHistory[len(state.EpochEventHistory)-1]
+		}
+
+		ShowAgeSplashFull(d.app, d.pages, oldAge, newAge, summary, epochChanged, epochEvent)
 	}
 
 	state := d.engine.GetState()

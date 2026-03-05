@@ -15,6 +15,13 @@ import (
 // ShowAgeSplash displays a full-screen overlay celebrating an age advancement.
 // It auto-dismisses after 20 seconds or on any keypress.
 func ShowAgeSplash(app *tview.Application, pages *tview.Pages, oldAge, newAge string) {
+	ShowAgeSplashFull(app, pages, oldAge, newAge, game.AgeAdvanceSummary{}, false, game.EpochEventRecord{})
+}
+
+// ShowAgeSplashFull is the full variant of ShowAgeSplash that also displays the
+// transformation summary and optional epoch event reveal.
+func ShowAgeSplashFull(app *tview.Application, pages *tview.Pages, oldAge, newAge string,
+	summary game.AgeAdvanceSummary, epochChanged bool, epochEvent game.EpochEventRecord) {
 	ages := config.AgeByKey()
 	newDef := ages[newAge]
 
@@ -76,6 +83,76 @@ func ShowAgeSplash(app *tview.Application, pages *tview.Pages, oldAge, newAge st
 			fmt.Fprintf(&sb, "\n[gold::b]★ Wonder Unlocked: %s[-]\n", def.Name)
 			fmt.Fprintf(&sb, "[white]Build it to unlock +0.5x game speed![-]\n")
 			break
+		}
+	}
+
+	// Transformation summary
+	if len(summary.BuildingsTransformed) > 0 || len(summary.BuildingsLegacy) > 0 {
+		fmt.Fprintf(&sb, "\n")
+		if len(summary.BuildingsTransformed) > 0 {
+			fmt.Fprintf(&sb, "[yellow]── Buildings Transformed ──[-]\n")
+			for _, t := range summary.BuildingsTransformed {
+				oldName := t.OldName
+				if oldName == "" {
+					oldName = strings.ReplaceAll(t.OldKey, "_", " ")
+				}
+				newName := t.NewName
+				if newName == "" {
+					newName = strings.ReplaceAll(t.NewKey, "_", " ")
+				}
+				fmt.Fprintf(&sb, "  %-28s x%d\n",
+					fmt.Sprintf("%s → %s", oldName, newName), t.Count)
+			}
+		}
+		if len(summary.BuildingsLegacy) > 0 {
+			fmt.Fprintf(&sb, "[yellow]── Legacy Buildings ──[-]\n")
+			for _, legKey := range summary.BuildingsLegacy {
+				legName := legKey
+				if def, ok := allBuildings[legKey]; ok {
+					legName = def.Name
+				} else {
+					legName = strings.ReplaceAll(legKey, "_", " ")
+				}
+				fmt.Fprintf(&sb, "  [gray]%s[-]\n", legName)
+			}
+		}
+	}
+
+	// Epoch transition reveal
+	if epochChanged && epochEvent.EpochKey != "" {
+		epochColor := "cyan"
+		eventColor := "green"
+		switch epochEvent.EventType {
+		case "bad_challenging":
+			epochColor = "red"
+			eventColor = "red"
+		case "catastrophe":
+			epochColor = "red"
+			eventColor = "red"
+		case "good_legendary":
+			epochColor = "gold"
+			eventColor = "gold"
+		case "good_major":
+			eventColor = "cyan"
+		}
+
+		// Look up the epoch icon
+		epochIcon := "✦"
+		if ep, ok := config.EpochByKey()[epochEvent.EpochKey]; ok {
+			epochIcon = ep.Icon
+		}
+
+		// Look up the flavor text from config
+		flavorText := ""
+		if evDef, ok := config.EpochEventByKey()[epochEvent.EventKey]; ok {
+			flavorText = evDef.FlavorText
+		}
+
+		fmt.Fprintf(&sb, "\n[gold]══ EPOCH TRANSITION ══[-]\n")
+		fmt.Fprintf(&sb, "[%s]%s %s[-]\n", epochColor, epochIcon, epochEvent.EpochName)
+		fmt.Fprintf(&sb, "\n[%s]%s[-]\n", eventColor, epochEvent.EventName)
+		if flavorText != "" {
+			fmt.Fprintf(&sb, "[white]\"%s\"[-]\n", flavorText)
 		}
 	}
 
