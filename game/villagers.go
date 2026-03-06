@@ -132,9 +132,18 @@ func (vm *WorkerManager) RenameAssignment(_, oldKey, newKey string) {
 	}
 }
 
-// GetDomainCount returns the total worker count. Domain arg is ignored.
-func (vm *WorkerManager) GetDomainCount(_ string) int {
-	return vm.domains["worker"].count
+// GetDomainCount returns the number of workers assigned to buildings of the given domain.
+// This is used for e.g. soldierCount (domain "military") — workers assigned to military buildings.
+func (vm *WorkerManager) GetDomainCount(domain string) int {
+	rt := vm.domains["worker"]
+	byKey := config.BuildingByKey()
+	total := 0
+	for buildingKey, count := range rt.assignments {
+		if def, ok := byKey[buildingKey]; ok && def.WorkerDomain == domain {
+			total += count
+		}
+	}
+	return total
 }
 
 // GetProductionRates returns empty — villager production is now handled via
