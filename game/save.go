@@ -24,7 +24,7 @@ type GameSave struct {
 	Resources  map[string]float64      `json:"resources"`
 	Storage    map[string]float64      `json:"storage"`
 	Buildings  map[string]int          `json:"buildings"`
-	Workers    map[string]WorkerInfo   `json:"villagers"`
+	Workers    map[string]WorkerInfo   `json:"workers"`
 	Unlocked   UnlockedState           `json:"unlocked"`
 	Stats      *GameStats              `json:"stats"`
 	// Phase 3 additions
@@ -166,7 +166,7 @@ type EventSave struct {
 type UnlockedState struct {
 	Resources []string `json:"resources"`
 	Buildings []string `json:"buildings"`
-	Workers   []string `json:"villagers"`
+	Workers   []string `json:"workers"`
 }
 
 // saveDirectory returns the canonical save directory: data/saves/ next to the binary.
@@ -425,8 +425,8 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	for _, key := range save.Unlocked.Buildings {
 		ge.Buildings.UnlockBuilding(key)
 	}
-	for _, key := range save.Unlocked.Workers {
-		ge.Workers.UnlockType(ge.Workers.ResolveClassToDomain(key))
+	if len(save.Unlocked.Workers) > 0 {
+		ge.Workers.UnlockType("worker")
 	}
 
 	// Restore Phase 3 systems

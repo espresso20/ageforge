@@ -1540,7 +1540,6 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	vType = ge.Workers.ResolveClassToDomain(vType)
 
 	if !ge.Workers.IsUnlocked(vType) {
 		return 0, fmt.Errorf("worker type '%s' is not yet unlocked", vType)
@@ -1567,7 +1566,6 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	vType = ge.Workers.ResolveClassToDomain(vType)
 
 	popCap := ge.Buildings.GetPopCapacity()
 	// Add population capacity from research/milestones/prestige

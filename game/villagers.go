@@ -19,23 +19,6 @@ type WorkerManager struct {
 	ageKey   string // current age for WorkerClassDef lookups (food cost, class name)
 }
 
-// WorkerTypeDef is kept for UI backward compatibility (villager_panel.go)
-type WorkerTypeDef struct {
-	Name       string
-	Key        string
-	FoodCost   float64
-	CanGather  []string
-	GatherRate float64
-}
-
-// DefaultWorkerTypes returns legacy-style definitions for UI display (villager_panel.go).
-// The GatherRate values reflect old pre-Phase-6 gather rates shown for reference.
-func DefaultWorkerTypes() []WorkerTypeDef {
-	return []WorkerTypeDef{
-		{Name: "Worker", Key: "worker", FoodCost: 0.10, CanGather: []string{"food"}, GatherRate: 0.35},
-	}
-}
-
 // NewWorkerManager creates a new single-pool worker manager.
 // All workers belong to a single "worker" pool — domain restrictions are removed.
 func NewWorkerManager() *WorkerManager {
@@ -238,10 +221,6 @@ func (vm *WorkerManager) LoadWorkers(data map[string]WorkerInfo) {
 	rt.count = totalCount
 }
 
-// ResolveClassToDomain always returns "worker" — there is only one pool.
-func (vm *WorkerManager) ResolveClassToDomain(_ string) string {
-	return "worker"
-}
 
 // Snapshot returns worker state for UI consumption.
 // Types map has a single "worker" key.
