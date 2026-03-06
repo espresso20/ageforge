@@ -70,7 +70,7 @@ func buildingsLineageMilitary() []BuildingDef {
 		BaseCost:    map[string]float64{"stone": 40000, "gold": 15000, "iron": 10000},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "capacity", Target: "military", Value: 160}},
-		BuildTicks:  3000,
+		BuildTicks:  600,
 		RequiredAge: "classical_age",
 		Description: "Trains elite military officers. +160 military cap (6 workers).",
 		LineageKey:  "military", LineageTier: 4,

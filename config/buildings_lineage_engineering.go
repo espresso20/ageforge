@@ -46,7 +46,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BaseCost:    map[string]float64{"stone": 35000, "gold": 10000, "iron": 8000},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "production", Target: "iron", Value: 0.40}},
-		BuildTicks:  3000,
+		BuildTicks:  600,
 		RequiredAge: "classical_age",
 		Description: "Roman engineering feats improve iron output. +0.40 iron/tick (5 workers).",
 		LineageKey:  "engineering", LineageTier: 2,

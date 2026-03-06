@@ -44,7 +44,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BaseCost:    map[string]float64{"stone": 35000, "gold": 15000, "iron": 10000},
 		CostScale:   1.40,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 0.20}},
-		BuildTicks:  3000,
+		BuildTicks:  600,
 		RequiredAge: "classical_age",
 		Description: "An urban merchant district. +0.20 gold/tick (4 workers).",
 		LineageKey:  "trade", LineageTier: 2,

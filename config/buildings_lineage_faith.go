@@ -69,7 +69,7 @@ func buildingsLineageFaith() []BuildingDef {
 		BaseCost:    map[string]float64{"stone": 30000, "gold": 10000, "iron": 5000},
 		CostScale:   1.30,
 		Effects:     []Effect{{Type: "production", Target: "faith", Value: 0.032}},
-		BuildTicks:  3000,
+		BuildTicks:  600,
 		RequiredAge: "classical_age",
 		Description: "Oracles speak for the gods. +0.032 faith/tick (4 workers).",
 		LineageKey:  "faith", LineageTier: 4,
