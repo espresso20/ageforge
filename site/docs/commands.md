@@ -26,18 +26,17 @@ gather wood 5
 
 | Command | Description |
 |---|---|
-| `recruit <domain>` | Recruit a worker in the given domain (current age's tier) |
+| `recruit [count\|max]` | Recruit one or more workers from available housing capacity |
 | `assign <building_key> [count\|all]` | Assign workers to a building (domain inferred from building) |
 | `unassign <building_key> [count\|all]` | Unassign workers from a building |
 | `unassign all <domain>` | Unassign all workers in a domain |
 
-**Worker domains:** `food`, `knowledge`, `faith`, `military`, `trade`, `engineering`, `lumber`, `masonry`, `metallurgy`, `energy`, `hacker`, `astronaut`
-
-Workers are recruited by domain. Assignment targets a building directly — the domain is inferred automatically from the building.
+Workers are recruited generically from available housing capacity and assigned to buildings, where they become that building's domain class (Gatherer, Lumberjack, etc.).
 
 ```
-recruit food 5
-recruit faith 3
+recruit
+recruit 3
+recruit max
 assign gathering_camp 3
 assign library all
 unassign shrine

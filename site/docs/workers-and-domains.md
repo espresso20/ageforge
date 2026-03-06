@@ -11,7 +11,7 @@ For a gentler introduction see [Workers](villagers.md).
 - 12 worker domains, each covering one or more building lineages
 - Output formula: `output = base_rate × building_count × (0.20 + 0.80 × assigned/total_capacity)`
 - Food drain: `domain_food_cost × worker_count` per tick, scaling geometrically (×1.5 per class tier)
-- Recruitment: `recruit <domain>` — always recruits the current age's tier; cost scales with tier
+- Recruitment: `recruit [count|max]` — recruits workers generically from available housing capacity; workers become their building's domain class on assignment
 - Multiple class tiers can coexist in a domain (older workers keep their tier's food cost and multiplier)
 
 ---
@@ -58,7 +58,7 @@ For a gentler introduction see [Workers](villagers.md).
 
 ## Worker Class Progression
 
-Each domain has one class per age it spans. Recruit the current age's tier with `recruit <domain>`. The first class in each domain is always tier 0 (multiplier ×1.0); each subsequent tier doubles the multiplier and adds ×1.5 to food cost.
+Each domain has one class per age it spans. Workers take on the class of the building they are assigned to, at the current age's tier. The first class in each domain is always tier 0 (multiplier ×1.0); each subsequent tier doubles the multiplier and adds ×1.5 to food cost.
 
 ### food (primitive → quantum, 21 tiers)
 
@@ -314,17 +314,16 @@ Each domain has one class per age it spans. Recruit the current age's tier with 
 ## Recruitment
 
 ```
-recruit <domain>
+recruit [count|max]
 ```
 
-Recruits one worker at the current age's class tier for that domain. Recruitment cost scales with tier. You can only recruit the tier matching your current age — you cannot recruit a future tier or retroactively recruit a past tier.
+Recruits one or more workers from available housing capacity. Workers are domain-agnostic when first recruited; they take on the class of the building they are assigned to (e.g. assigning to a gathering camp makes them Gatherers, assigning to a library makes them Shamans/Elders/etc.). Recruitment cost scales with your current age tier.
 
 **Examples:**
 ```
-recruit food
-recruit knowledge
-recruit military
-recruit hacker
+recruit
+recruit 5
+recruit max
 ```
 
 ---
@@ -395,7 +394,7 @@ The Economy tab (`e` or `F1`) shows per-domain food drain in the workers panel. 
 
 - High-base-cost domains (engineering 8.0, energy 8.0, hacker 16.0, astronaut 32.0) compound quickly with tier scaling — recruit carefully
 - Ensure your food production rate (from food-domain workers and buildings) exceeds your total drain before recruiting in expensive domains
-- `unassign all <domain>` combined with `recruit <domain>` in a cheaper domain is a valid rebalancing strategy
+- `unassign all <domain>` to free workers, then `assign` them to cheaper-domain buildings is a valid rebalancing strategy
 - Faith workers (base 2.0) are cheaper than military (base 2.0 same) but unlock later — plan food accordingly
 
 ---
