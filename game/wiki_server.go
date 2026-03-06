@@ -612,34 +612,19 @@ func wikiPrestige(w http.ResponseWriter, r *http.Request) {
 }
 
 func wikiWorkers(w http.ResponseWriter, r *http.Request) {
-	villagers := DefaultWorkerTypes()
 	var b strings.Builder
-	b.WriteString(`<h1>Worker Types</h1>
-<p>Workers are assigned to buildings to produce resources. Each type costs food per tick and has a base gather rate.</p>
+	b.WriteString(`<h1>Workers</h1>
+<p>Workers are the generic labor force. Any worker can be assigned to any building regardless of what it produces.
+Workers consume food each tick — assign enough workers to food-producing buildings to sustain your population.
+Food cost per worker scales with the current age.</p>
 <table>
-<tr><th>Name</th><th>Key</th><th>Food/tick</th><th>Base Gather Rate</th><th>Can Gather</th></tr>`)
-	for _, v := range villagers {
-		gathers := "—"
-		if len(v.CanGather) > 0 {
-			var gs []string
-			for _, g := range v.CanGather {
-				gs = append(gs, fmt.Sprintf("<code>%s</code>", g))
-			}
-			gathers = strings.Join(gs, " ")
-		}
-		b.WriteString(fmt.Sprintf(`<tr>
-<td><b>%s</b></td>
-<td><code>%s</code></td>
-<td>%.2f</td>
-<td><span class="badge green">%.2f/tick</span></td>
-<td>%s</td>
-</tr>`,
-			v.Name, v.Key,
-			v.FoodCost, v.GatherRate,
-			gathers,
-		))
-	}
-	b.WriteString("</table>")
+<tr><th>Name</th><th>Key</th><th>Description</th></tr>
+<tr>
+<td><b>Worker</b></td>
+<td><code>worker</code></td>
+<td>General-purpose worker. Assign to any building with worker capacity to produce its resource.</td>
+</tr>
+</table>`)
 	fmt.Fprint(w, wikiPage("Workers", b.String()))
 }
 

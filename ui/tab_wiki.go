@@ -333,29 +333,19 @@ func wikiWorkers(state game.GameState) string {
 	sb.WriteString(fmt.Sprintf("[orange]Population: %d / %d  |  Idle: %d  |  Food drain: %.1f/tick[-]\n\n",
 		v.TotalPop, v.MaxPop, v.TotalIdle, v.FoodDrain))
 
-	types := game.DefaultWorkerTypes()
-	for _, def := range types {
-		sb.WriteString(fmt.Sprintf("[cyan]%s[-] [gray](%s)[-]\n", def.Name, def.Key))
-		sb.WriteString(fmt.Sprintf("  Food cost: [yellow]%.2f/tick[-]\n", def.FoodCost))
-		sb.WriteString(fmt.Sprintf("  Gather rate: [yellow]%.1f/tick[-] per assigned worker\n", def.GatherRate))
-		if len(def.CanGather) > 0 {
-			sb.WriteString(fmt.Sprintf("  Can gather: [yellow]%s[-]\n", strings.Join(def.CanGather, ", ")))
-		} else {
-			sb.WriteString("  [gray]Cannot gather resources (military unit)[-]\n")
-		}
-
-		// Live data
-		if vt, ok := v.Types[def.Key]; ok && vt.Unlocked {
+	if vt, ok := v.Types["worker"]; ok {
+		sb.WriteString(fmt.Sprintf("[cyan]%s[-] [gray](worker)[-]\n", vt.Name))
+		if vt.Unlocked {
 			sb.WriteString(fmt.Sprintf("  [orange]Count: %d  Idle: %d[-]\n", vt.Count, vt.IdleCount))
+			sb.WriteString(fmt.Sprintf("  Food drain: [yellow]%.2f/tick[-] (total)\n", v.FoodDrain))
 			aKeys := make([]string, 0, len(vt.Assignments))
 			for k := range vt.Assignments {
 				aKeys = append(aKeys, k)
 			}
 			sort.Strings(aKeys)
-			for _, res := range aKeys {
-				if vt.Assignments[res] > 0 {
-					sb.WriteString(fmt.Sprintf("  [orange]  → %s: %d (producing %.1f/tick)[-]\n",
-						res, vt.Assignments[res], float64(vt.Assignments[res])*def.GatherRate))
+			for _, bKey := range aKeys {
+				if vt.Assignments[bKey] > 0 {
+					sb.WriteString(fmt.Sprintf("  [orange]  → %s: %d workers[-]\n", bKey, vt.Assignments[bKey]))
 				}
 			}
 		} else {
@@ -365,13 +355,9 @@ func wikiWorkers(state game.GameState) string {
 	}
 
 	sb.WriteString("[gold]Food Economy[-]\n")
-	sb.WriteString("  Each worker eats 0.10 food/tick but gathers 0.35/tick.\n")
-	sb.WriteString("  So 1 worker on food produces net +0.25 for others.\n")
-	sb.WriteString("  That covers 1 shaman (0.20) or 2.5 other workers (0.10 each).\n\n")
-	sb.WriteString("  Workers on food: covers this many others:\n")
-	sb.WriteString("    1 food worker  → 1 shaman + 1 worker\n")
-	sb.WriteString("    2 food workers → 2 shamans + 2 workers\n")
-	sb.WriteString("    4 food workers → ~5 shamans or ~10 workers\n")
+	sb.WriteString("  Workers consume food each tick. Assign workers to food-producing\n")
+	sb.WriteString("  buildings to sustain your population. Food drain shown above is total\n")
+	sb.WriteString("  for all workers and scales with age.\n")
 
 	return sb.String()
 }
