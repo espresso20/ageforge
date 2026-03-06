@@ -37,8 +37,8 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== PRIMITIVE AGE (costs: 30-100) =====
 		{
 			Name: "Stash", Key: "stash", Category: "storage",
-			BaseCost:    map[string]float64{"wood": 10},
-			CostScale:   1.12,
+			BaseCost:    map[string]float64{"wood": 50},
+			CostScale:   1.15,
 			MaxCount:    50,
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 300}},
 			BuildTicks:  10,

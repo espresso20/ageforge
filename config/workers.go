@@ -43,11 +43,11 @@ func wc(domain, ageKey, className string, baseFoodCost float64, tier int) Worker
 func WorkerClasses() []WorkerClassDef {
 	return []WorkerClassDef{
 
-		// === FOOD DOMAIN (starts primitive_age, base food cost 0.08) ===
-		// Base cost lowered from 1.0 to 0.08 so early foragers don't drain faster than camps produce.
-		// At tier 0 (primitive): FoodCost = 0.08; tier 1 (stone): 0.12; tier 2 (bronze): 0.18; etc.
-		wc("food", "primitive_age", "Forager", 0.08, 0),
-		wc("food", "stone_age", "Farmhand", 0.08, 1),
+		// === FOOD DOMAIN (starts primitive_age, base food cost 0.05) ===
+		// Base cost lowered from 0.08 to 0.05 so gathering camps can sustain larger populations.
+		// At tier 0 (primitive): FoodCost = 0.05; tier 1 (stone): 0.075; tier 2 (bronze): 0.11; etc.
+		wc("food", "primitive_age", "Forager", 0.05, 0),
+		wc("food", "stone_age", "Farmhand", 0.05, 1),
 		wc("food", "bronze_age", "Cultivator", 1.0, 2),
 		wc("food", "iron_age", "Laborer", 1.0, 3),
 		wc("food", "classical_age", "Peasant", 1.0, 4),

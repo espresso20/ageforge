@@ -9,7 +9,7 @@ func buildingsLineageFood() []BuildingDef {
 
 	// =========================================================================
 	// LINEAGE 2 — FOOD (lineageKey: "food", domain: "food", output: "food")
-	// rate = 0.05 * 2^tier  CostScale: 1.30  Category: "production"
+	// rate = 0.05 * 2^tier  CostScale: 1.18 (tier 0), 1.30 (tiers 1+)  Category: "production"
 	// =========================================================================
 
 	// tier 0 — primitive_age  rate=0.50
@@ -18,7 +18,7 @@ func buildingsLineageFood() []BuildingDef {
 	b = append(b, BuildingDef{
 		Name: "Gathering Camp", Key: "gathering_camp", Category: "production",
 		BaseCost:    map[string]float64{"wood": 20},
-		CostScale:   1.30,
+		CostScale:   1.18,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 0.50}},
 		BuildTicks:  12,
 		RequiredAge: "primitive_age",
