@@ -13,15 +13,15 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 	// Output transitions: wood(0-5) → coal(6-8) → oil(9-13) → nanobots(14-16) → quantum_flux(17-20)
 	// =========================================================================
 
-	// tier 0 — primitive_age  rate=0.04  output=wood
+	// tier 0 — primitive_age  rate=0.20  output=wood
 	b = append(b, BuildingDef{
 		Name: "Wood Camp", Key: "wood_camp", Category: "production",
 		BaseCost:    map[string]float64{"wood": 15},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "wood", Value: 0.04}},
+		Effects:     []Effect{{Type: "production", Target: "wood", Value: 0.20}},
 		BuildTicks:  20,
 		RequiredAge: "primitive_age",
-		Description: "A basic camp for collecting wood. +0.04 wood/tick (3 workers).",
+		Description: "A basic camp for collecting wood. +0.20 wood/tick (3 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 0,
 		WorkerDomain: "lumber", WorkerCapacity: 3,
 		EpochKey: "stone_era", OutputResource: "wood",
