@@ -575,7 +575,7 @@ func placeBuildingsRadial(buildings map[string]game.BuildingState, cx, cy, w, h,
 	maxDist := float64(min(w, h)) / 2.0
 
 	// Count non-wonder buildings to compute city spread factor.
-	// As the city grows beyond ~40 buildings the rings expand outward,
+	// As the city grows beyond ~20 buildings the rings expand outward,
 	// preventing the tight overlap seen at 100+ huts.
 	totalCity := 0
 	for _, bs := range buildings {
@@ -584,8 +584,8 @@ func placeBuildingsRadial(buildings map[string]game.BuildingState, cx, cy, w, h,
 		}
 	}
 	spreadFactor := 1.0
-	if totalCity > 40 {
-		spreadFactor = 1.0 + float64(totalCity-40)/200.0
+	if totalCity > 20 {
+		spreadFactor = 1.0 + float64(totalCity-20)/200.0
 		if spreadFactor > 1.8 {
 			spreadFactor = 1.8
 		}
