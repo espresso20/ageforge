@@ -55,15 +55,15 @@ func buildingsLineageFood() []BuildingDef {
 		WorkerDomain: "food", WorkerCapacity: 5,
 		EpochKey: "stone_era", OutputResource: "food",
 	})
-	// tier 3 — iron_age  rate=0.40
+	// tier 3 — iron_age  rate=4.00
 	b = append(b, BuildingDef{
 		Name: "Field Works", Key: "field_works", Category: "production",
 		BaseCost:    map[string]float64{"stone": 5000, "iron": 2000, "wood": 3000},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "food", Value: 0.40}},
-		BuildTicks:  1000,
+		Effects:     []Effect{{Type: "production", Target: "food", Value: 4.00}},
+		BuildTicks:  300,
 		RequiredAge: "iron_age",
-		Description: "Iron-tool farming with irrigation. +0.40 food/tick (5 workers).",
+		Description: "Iron-tool farming with irrigation. +4.00 food/tick (5 workers).",
 		LineageKey:  "food", LineageTier: 3,
 		WorkerDomain: "food", WorkerCapacity: 5,
 		EpochKey: "iron_era", OutputResource: "food",

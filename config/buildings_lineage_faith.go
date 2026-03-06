@@ -56,7 +56,7 @@ func buildingsLineageFaith() []BuildingDef {
 		BaseCost:    map[string]float64{"stone": 5000, "gold": 2000, "iron": 1000},
 		CostScale:   1.30,
 		Effects:     []Effect{{Type: "production", Target: "faith", Value: 0.016}},
-		BuildTicks:  1000,
+		BuildTicks:  300,
 		RequiredAge: "iron_age",
 		Description: "A formal temple for organised worship. +0.016 faith/tick (3 workers).",
 		LineageKey:  "faith", LineageTier: 3,

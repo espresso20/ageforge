@@ -57,7 +57,7 @@ func buildingsLineageMilitary() []BuildingDef {
 		BaseCost:    map[string]float64{"stone": 7000, "iron": 3500, "gold": 2000},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "capacity", Target: "military", Value: 80}},
-		BuildTicks:  1000,
+		BuildTicks:  300,
 		RequiredAge: "iron_age",
 		Description: "A fortified roman-style legion camp. +80 military cap (6 workers).",
 		LineageKey:  "military", LineageTier: 3,

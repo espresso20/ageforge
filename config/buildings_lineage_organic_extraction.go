@@ -52,15 +52,15 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		WorkerDomain: "lumber", WorkerCapacity: 5,
 		EpochKey: "stone_era", OutputResource: "wood",
 	})
-	// tier 3 — iron_age  rate=0.32  output=wood
+	// tier 3 — iron_age  rate=1.60  output=wood
 	b = append(b, BuildingDef{
 		Name: "Timber Yard", Key: "timber_yard", Category: "production",
 		BaseCost:    map[string]float64{"stone": 4000, "iron": 2500, "wood": 3000},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "wood", Value: 0.32}},
-		BuildTicks:  1000,
+		Effects:     []Effect{{Type: "production", Target: "wood", Value: 1.60}},
+		BuildTicks:  300,
 		RequiredAge: "iron_age",
-		Description: "Iron-saw timber processing yard. +0.32 wood/tick (5 workers).",
+		Description: "Iron-saw timber processing yard. +1.60 wood/tick (5 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 3,
 		WorkerDomain: "lumber", WorkerCapacity: 5,
 		EpochKey: "iron_era", OutputResource: "wood",

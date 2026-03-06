@@ -33,7 +33,7 @@ func buildingsLineageEngineering() []BuildingDef {
 		BaseCost:    map[string]float64{"stone": 6000, "iron": 3000, "coal": 1500},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "production", Target: "iron", Value: 0.20}},
-		BuildTicks:  1000,
+		BuildTicks:  300,
 		RequiredAge: "iron_age",
 		Description: "Organised iron working and tools. +0.20 iron/tick (5 workers).",
 		LineageKey:  "engineering", LineageTier: 1,

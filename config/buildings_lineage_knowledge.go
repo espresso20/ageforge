@@ -56,7 +56,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		BaseCost:    map[string]float64{"stone": 5000, "gold": 2500, "iron": 1500},
 		CostScale:   1.30,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.016}},
-		BuildTicks:  1000,
+		BuildTicks:  300,
 		RequiredAge: "iron_age",
 		Description: "Open marketplace of ideas. +0.016 knowledge/tick (3 workers).",
 		LineageKey:  "knowledge", LineageTier: 3,

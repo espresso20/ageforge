@@ -54,18 +54,18 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		WorkerDomain: "masonry", WorkerCapacity: 5,
 		EpochKey: "stone_era", OutputResource: "stone",
 	})
-	// tier 3 — iron_age  rate=0.24  dual: marble(0.12) + iron_ore(0.12)
+	// tier 3 — iron_age  rate=1.28  dual: marble(0.64) + iron_ore(0.64)
 	b = append(b, BuildingDef{
 		Name: "Marble Quarry", Key: "marble_quarry", Category: "production",
 		BaseCost:  map[string]float64{"stone": 4500, "iron": 2000},
 		CostScale: 1.30,
 		Effects: []Effect{
-			{Type: "production", Target: "marble", Value: 0.12},
-			{Type: "production", Target: "iron_ore", Value: 0.12},
+			{Type: "production", Target: "marble", Value: 0.64},
+			{Type: "production", Target: "iron_ore", Value: 0.64},
 		},
-		BuildTicks:  1000,
+		BuildTicks:  300,
 		RequiredAge: "iron_age",
-		Description: "Marble and iron ore dual extraction. +0.12 marble, +0.12 iron_ore/tick (5 workers).",
+		Description: "Marble and iron ore dual extraction. +0.64 marble, +0.64 iron_ore/tick (5 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 3,
 		WorkerDomain: "masonry", WorkerCapacity: 5,
 		EpochKey: "iron_era", OutputResource: "stone",
