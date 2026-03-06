@@ -80,9 +80,6 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 
 	case "recruit", "r":
 		if len(completed) == 0 {
-			return filterPrefix(recruitCompletions(state), partial, prefix)
-		}
-		if len(completed) == 1 {
 			return filterPrefix([]string{"max"}, partial, prefix)
 		}
 

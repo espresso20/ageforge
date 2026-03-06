@@ -192,7 +192,7 @@ func cmdHelp(args []string) CommandResult {
 	help := `[gold]Commands:[-]
   [cyan]gather[-] <food|wood|stone> [n] - Hand-gather resources (max 5)
   [cyan]build[-] <building> [count|max] - Build structure(s) (default: 1)
-  [cyan]recruit[-] <domain> [count|max] - Recruit workers (default: 1)
+  [cyan]recruit[-] [count|max]          - Recruit workers from available housing capacity and assign to buildings (default: 1)
   [cyan]assign[-] <building> [n|all]   - Assign workers to a building
   [cyan]unassign[-] <building> [n|all] - Unassign workers from a building
   [cyan]advance[-]                     - Advance to the next age (when ready)
@@ -430,36 +430,33 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 }
 
 func cmdRecruit(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 1 {
-		return CommandResult{Message: "Usage: recruit <domain> [count|max]", Type: "error"}
+	if len(args) == 0 {
+		if err := engine.RecruitWorker("worker", 1); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: "Recruited 1 worker!", Type: "success"}
 	}
-	vType := strings.ToLower(args[0])
 
-	// Check for "max"
-	if len(args) >= 2 && strings.ToLower(args[1]) == "max" {
-		recruited, err := engine.RecruitMax(vType)
+	arg := strings.ToLower(args[0])
+	if arg == "max" {
+		recruited, err := engine.RecruitMax("worker")
 		if err != nil {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
-		return CommandResult{
-			Message: fmt.Sprintf("Recruited %d %s(s)!", recruited, vType),
-			Type:    "success",
-		}
+		return CommandResult{Message: fmt.Sprintf("Recruited %d workers!", recruited), Type: "success"}
 	}
 
-	count := 1
-	if len(args) >= 2 {
-		if n, err := strconv.Atoi(args[1]); err == nil && n > 0 {
-			count = n
+	n, err := strconv.Atoi(arg)
+	if err != nil || n <= 0 {
+		return CommandResult{
+			Message: "Usage: recruit [count|max] — workers are recruited from available housing capacity and assigned to buildings.",
+			Type:    "error",
 		}
 	}
-	if err := engine.RecruitWorker(vType, count); err != nil {
+	if err := engine.RecruitWorker("worker", n); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
 	}
-	return CommandResult{
-		Message: fmt.Sprintf("Recruited %d %s(s)!", count, vType),
-		Type:    "success",
-	}
+	return CommandResult{Message: fmt.Sprintf("Recruited %d worker(s)!", n), Type: "success"}
 }
 
 func cmdAssign(args []string, engine *game.GameEngine) CommandResult {
