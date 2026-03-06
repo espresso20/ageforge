@@ -45,6 +45,13 @@ func (om *OverlayManager) Register(name, title string, provide OverlayProvider) 
 		SetTitle(" " + title + " — ESC to close ").
 		SetTitleColor(tcell.ColorGold).
 		SetBackgroundColor(tcell.ColorBlack)
+	tv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyEsc {
+			om.Hide()
+			return nil
+		}
+		return event
+	})
 
 	// Centered 85%×85% box via nested Flex spacers
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
