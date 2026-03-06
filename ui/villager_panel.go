@@ -162,7 +162,7 @@ func renderVillagerPanel(tv *tview.TextView, state *game.GameState) {
 // assignBar renders a small tview-colored progress bar of width w.
 func assignBar(filled, total, w int) string {
 	if total <= 0 {
-		return "[gray]" + strings.Repeat("░", w) + "[-]"
+		return "[" + BarEmptyColor + "]" + strings.Repeat("░", w) + "[-]"
 	}
 	f := (filled * w) / total
 	if f > w {
@@ -171,6 +171,6 @@ func assignBar(filled, total, w int) string {
 	if f < 0 {
 		f = 0
 	}
-	return "[green]" + strings.Repeat("█", f) + "[gray]" + strings.Repeat("░", w-f) + "[-]"
+	return "[" + BarFillColor + "]" + strings.Repeat("█", f) + "[" + BarEmptyColor + "]" + strings.Repeat("░", w-f) + "[-]"
 }
 

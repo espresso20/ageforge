@@ -33,10 +33,11 @@ var cultureThresholdLabels = []string{
 }
 
 // cultureProgressBar returns a 10-char wide bar using ▓/░ characters.
+// Filled portion uses BarFillColor (purple), empty portion uses BarEmptyColor (dark gray).
 func cultureProgressBar(current, max float64) string {
 	const width = 10
 	if max <= 0 {
-		return strings.Repeat("░", width)
+		return "[" + BarEmptyColor + "]" + strings.Repeat("░", width) + "[-]"
 	}
 	ratio := current / max
 	if ratio > 1 {
@@ -47,7 +48,7 @@ func cultureProgressBar(current, max float64) string {
 	}
 	filled := int(ratio * float64(width))
 	empty := width - filled
-	return strings.Repeat("▓", filled) + strings.Repeat("░", empty)
+	return "[" + BarFillColor + "]" + strings.Repeat("▓", filled) + "[" + BarEmptyColor + "]" + strings.Repeat("░", empty) + "[-]"
 }
 
 // formatCultureRow builds the culture resource row string.
@@ -326,10 +327,11 @@ var domainToLabel = map[string]string{
 }
 
 // workerAssignBar returns a 10-char ▓/░ bar for assigned/capacity.
+// Filled portion uses BarFillColor (purple), empty portion uses BarEmptyColor (dark gray).
 func workerAssignBar(assigned, capacity int) string {
 	const width = 10
 	if capacity <= 0 {
-		return strings.Repeat("░", width)
+		return "[" + BarEmptyColor + "]" + strings.Repeat("░", width) + "[-]"
 	}
 	ratio := float64(assigned) / float64(capacity)
 	if ratio > 1 {
@@ -340,7 +342,7 @@ func workerAssignBar(assigned, capacity int) string {
 	}
 	filled := int(ratio * float64(width))
 	empty := width - filled
-	return strings.Repeat("▓", filled) + strings.Repeat("░", empty)
+	return "[" + BarFillColor + "]" + strings.Repeat("▓", filled) + "[" + BarEmptyColor + "]" + strings.Repeat("░", empty) + "[-]"
 }
 
 func (t *EconomyTab) refreshUnderConstruction(state game.GameState) {
@@ -393,10 +395,8 @@ func (t *EconomyTab) refreshUnderConstruction(state game.GameState) {
 					filled = barWidth
 				}
 			}
-			bar := strings.Repeat("█", filled) + strings.Repeat("░", barWidth-filled)
-			// Wrap bar in literal [ ] so tview doesn't interpret the characters as color tags
-			barStr := "\u005b" + bar + "\u005d"
-			fmt.Fprintf(&sb, " [yellow]%-22s[-] %s [gray]%d ticks[-]\n", label, barStr, g.minTicks)
+			bar := "[" + BarFillColor + "]" + strings.Repeat("█", filled) + "[" + BarEmptyColor + "]" + strings.Repeat("░", barWidth-filled) + "[-]"
+			fmt.Fprintf(&sb, " [yellow]%-22s[-] %s [gray]%d ticks[-]\n", label, bar, g.minTicks)
 		}
 	}
 

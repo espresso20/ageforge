@@ -14,22 +14,15 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-// wonderProgressBar returns a simple 10-char fill bar, e.g. "[████░░░░░░]"
+// wonderProgressBar returns a simple fill bar with colored segments.
+// Filled portion uses BarFillColor (purple), empty portion uses BarEmptyColor (dark gray).
 func wonderProgressBar(pct float64, width int) string {
 	filled := int(pct * float64(width))
 	if filled > width {
 		filled = width
 	}
-	bar := "["
-	for i := 0; i < width; i++ {
-		if i < filled {
-			bar += "█"
-		} else {
-			bar += "░"
-		}
-	}
-	bar += "]"
-	return bar
+	empty := width - filled
+	return "[" + BarFillColor + "]" + strings.Repeat("█", filled) + "[" + BarEmptyColor + "]" + strings.Repeat("░", empty) + "[-]"
 }
 
 // wonderInfo holds config + state for a wonder
