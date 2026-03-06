@@ -11,11 +11,10 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-// StatsTab displays game statistics, milestones, active events, and prestige
+// StatsTab displays game statistics, active events, and prestige
 type StatsTab struct {
 	root       *tview.Flex
 	statsTV    *tview.TextView
-	milestoTV  *tview.TextView
 	eventsTV   *tview.TextView
 	prestigeTV *tview.TextView
 }
@@ -27,20 +26,16 @@ func NewStatsTab() *StatsTab {
 	t.statsTV = tview.NewTextView().SetDynamicColors(true).SetScrollable(true)
 	t.statsTV.SetBorder(true).SetTitle(" Statistics ").SetTitleColor(ColorTitle)
 
-	t.milestoTV = tview.NewTextView().SetDynamicColors(true).SetScrollable(true)
-	t.milestoTV.SetBorder(true).SetTitle(" Milestones ").SetTitleColor(ColorTitle)
-
 	t.eventsTV = tview.NewTextView().SetDynamicColors(true).SetScrollable(true)
 	t.eventsTV.SetBorder(true).SetTitle(" Active Events ").SetTitleColor(ColorTitle)
 
 	t.prestigeTV = tview.NewTextView().SetDynamicColors(true).SetScrollable(true)
 	t.prestigeTV.SetBorder(true).SetTitle(" Prestige ").SetTitleColor(ColorTitle)
 
-	// Left: stats, Right: events + prestige + milestones
+	// Left: stats, Right: events + prestige
 	rightPanel := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(t.eventsTV, 6, 0, false).
-		AddItem(t.prestigeTV, 12, 0, false).
-		AddItem(t.milestoTV, 0, 1, false)
+		AddItem(t.prestigeTV, 0, 1, false)
 
 	t.root = tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(t.statsTV, 0, 1, false).
@@ -58,7 +53,6 @@ func (t *StatsTab) Root() tview.Primitive {
 func (t *StatsTab) Refresh(state game.GameState) {
 	t.refreshStats(state)
 	t.refreshPrestige(state)
-	t.refreshMilestones(state)
 	t.refreshEvents(state)
 }
 
@@ -156,6 +150,11 @@ func (t *StatsTab) refreshStats(state game.GameState) {
 		}
 	}
 
+	// Milestone summary hint
+	ms := state.Milestones
+	fmt.Fprintf(&sb, "\n [gray]Milestones: %d/%d — type [white]milestones[-][gray] to view[-]\n",
+		ms.CompletedCount, ms.TotalCount)
+
 	t.statsTV.SetText(sb.String())
 }
 
@@ -205,115 +204,6 @@ func (t *StatsTab) refreshPrestige(state game.GameState) {
 	t.prestigeTV.SetText(sb.String())
 }
 
-func (t *StatsTab) refreshMilestones(state game.GameState) {
-	var sb strings.Builder
-	ms := state.Milestones
-
-	// Header: progress + title
-	fmt.Fprintf(&sb, " [gold]Progress:[-] %d/%d", ms.CompletedCount, ms.TotalCount)
-	if ms.CurrentTitle != "" {
-		fmt.Fprintf(&sb, "  [yellow]\"%s\"[-]", ms.CurrentTitle)
-	}
-	sb.WriteString("\n\n")
-
-	// Build chain lookup by category
-	chainByCategory := make(map[string]game.ChainInfo)
-	for _, chain := range ms.Chains {
-		chainByCategory[chain.Category] = chain
-	}
-
-	// Group milestones by category
-	categoryMilestones := make(map[string][]game.MilestoneInfo)
-	categoryKeys := make(map[string][]string)
-	for key, m := range ms.Milestones {
-		categoryMilestones[m.Category] = append(categoryMilestones[m.Category], m)
-		categoryKeys[m.Category] = append(categoryKeys[m.Category], key)
-	}
-
-	// Display categories in order
-	catOrder := []string{"settlement", "builder", "scholar", "military", "ages"}
-	catNames := map[string]string{
-		"settlement": "Settlement",
-		"builder":    "Builder",
-		"scholar":    "Scholar",
-		"military":   "Military",
-		"ages":       "Ages",
-	}
-
-	for _, cat := range catOrder {
-		milestones := categoryMilestones[cat]
-		if len(milestones) == 0 {
-			continue
-		}
-
-		catName := catNames[cat]
-
-		// Category header with chain progress
-		if chain, ok := chainByCategory[cat]; ok {
-			chainBar := ProgressBar(float64(chain.CompletedCount), float64(chain.TotalCount), 8)
-			if chain.Complete {
-				fmt.Fprintf(&sb, " [green]★ %s[-] [%d/%d %s] [green]✓ %s[-]",
-					catName, chain.CompletedCount, chain.TotalCount, chainBar, chain.Title)
-				if chain.BoostActive {
-					sb.WriteString(" [cyan]⚡BOOST[-]")
-				}
-			} else {
-				fmt.Fprintf(&sb, " [gold]◆ %s[-] [%d/%d %s]",
-					catName, chain.CompletedCount, chain.TotalCount, chainBar)
-			}
-		} else {
-			fmt.Fprintf(&sb, " [gold]◆ %s[-]", catName)
-		}
-		sb.WriteString("\n")
-
-		// Sort: completed first, then by name
-		sort.Slice(milestones, func(i, j int) bool {
-			if milestones[i].Completed != milestones[j].Completed {
-				return milestones[i].Completed
-			}
-			return milestones[i].Name < milestones[j].Name
-		})
-
-		hiddenCount := 0
-		for _, m := range milestones {
-			if !m.Visible {
-				hiddenCount++
-				continue
-			}
-
-			if m.Completed {
-				fmt.Fprintf(&sb, "   [green]✓ %s[-]", m.Name)
-				if m.RewardText != "" {
-					fmt.Fprintf(&sb, "  [cyan]%s[-]", m.RewardText)
-				}
-				sb.WriteString("\n")
-			} else {
-				fmt.Fprintf(&sb, "   [gray]○[-] [white]%s[-]\n", m.Name)
-				fmt.Fprintf(&sb, "     [gray]%s[-]\n", m.Description)
-				// Per-condition progress bars
-				for _, p := range m.Progress {
-					if p.Met {
-						fmt.Fprintf(&sb, "     [green]✓ %s[-]\n", p.Label)
-					} else {
-						bar := ProgressBar(p.Current, p.Target, 10)
-						fmt.Fprintf(&sb, "     [yellow]%.0f/%.0f %s %s[-]\n",
-							p.Current, p.Target, bar, p.Label)
-					}
-				}
-				if m.RewardText != "" {
-					fmt.Fprintf(&sb, "     [gray]Reward: %s[-]\n", m.RewardText)
-				}
-			}
-		}
-
-		if hiddenCount > 0 {
-			fmt.Fprintf(&sb, "   [gray]+ %d hidden milestone(s)[-]\n", hiddenCount)
-		}
-		sb.WriteString("\n")
-	}
-
-	t.milestoTV.SetText(sb.String())
-}
 
 func (t *StatsTab) refreshEvents(state game.GameState) {
 	var sb strings.Builder

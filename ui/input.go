@@ -13,8 +13,9 @@ import (
 
 // CommandResult represents the result of a command execution
 type CommandResult struct {
-	Message string
-	Type    string // "info", "success", "error"
+	Message     string
+	Type        string // "info", "success", "error"
+	OverlayName string // non-empty → dashboard should open this overlay
 }
 
 // HandleCommand parses and executes a command string
@@ -62,6 +63,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdUpgrade(args, engine)
 	case "advance":
 		return cmdAdvance(engine)
+	case "milestones", "ms":
+		return CommandResult{OverlayName: "milestones"}
 	case "catastrophe", "cat":
 		return cmdCatastrophe(args, engine)
 	case "dump", "exportlogs":

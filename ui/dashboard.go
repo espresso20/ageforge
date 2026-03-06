@@ -80,6 +80,8 @@ type Dashboard struct {
 	histIdx    int      // -1 = not navigating; 0 = most recent; len-1 = oldest
 	histDraft  string   // draft text saved when user starts navigating history
 
+	overlayMgr *OverlayManager
+
 	stopCh chan struct{}
 }
 
@@ -94,6 +96,10 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		histIdx:  -1,
 	}
 	d.build()
+	d.overlayMgr = NewOverlayManager(d.pages, d.app, func() {
+		d.app.SetFocus(d.inputField)
+	})
+	d.overlayMgr.Register("milestones", "Milestones", milestonesProvider)
 	d.devTab = newDevTab(engine)
 	// Register the dev tab page — hidden until passphrase accepted
 	d.tabPages.AddPage("Dev", d.devTab.Primitive(), true, false)
@@ -263,6 +269,10 @@ func (d *Dashboard) build() {
 				return
 			}
 			result := HandleCommand(text, d.engine)
+			if result.OverlayName != "" {
+				state := d.engine.GetState()
+				d.overlayMgr.Show(result.OverlayName, state)
+			}
 			if result.Message != "" && result.Type != "success" {
 				d.engine.AddLog(result.Type, result.Message)
 			}
@@ -346,6 +356,10 @@ func (d *Dashboard) build() {
 		}
 		switch event.Key() {
 		case tcell.KeyEsc:
+			if d.overlayMgr != nil && d.overlayMgr.HasActive() {
+				d.overlayMgr.Hide()
+				return nil
+			}
 			d.engine.SaveGame("autosave")
 			d.engine.Stop()
 			d.pages.SwitchToPage("splash")
@@ -588,6 +602,8 @@ func (d *Dashboard) refresh() {
 	case 9:
 		d.epochTab.Refresh(state)
 	}
+
+	d.overlayMgr.Refresh(state)
 }
 
 func (d *Dashboard) refreshStatus(state game.GameState) {
