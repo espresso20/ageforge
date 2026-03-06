@@ -49,7 +49,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== STONE AGE (costs: 200-1000) =====
 		{
 			Name: "Storage Pit", Key: "storage_pit", Category: "storage",
-			BaseCost:    map[string]float64{"wood": 1000, "stone": 800},
+			BaseCost:    map[string]float64{"wood": 300, "stone": 200},
 			CostScale:   1.2,
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 500}},
 			BuildTicks:  60,

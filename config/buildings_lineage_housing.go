@@ -32,7 +32,7 @@ func buildingsLineageHousing() []BuildingDef {
 		BaseCost:    map[string]float64{"wood": 120, "stone": 80},
 		CostScale:   1.12,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 25}},
-		BuildTicks:  200,
+		BuildTicks:  60,
 		RequiredAge: "stone_age",
 		Description: "A communal longhouse. +25 pop cap.",
 		LineageKey:  "housing", LineageTier: 1,

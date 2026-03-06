@@ -15,28 +15,28 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// Dual-output tiers (3-4): two Effects each at half rate
 	// =========================================================================
 
-	// tier 0 — stone_age  rate=0.03  output=stone
+	// tier 0 — stone_age  rate=0.08  output=stone
 	b = append(b, BuildingDef{
 		Name: "Stone Camp", Key: "stone_camp", Category: "production",
 		BaseCost:    map[string]float64{"wood": 15},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "stone", Value: 0.03}},
+		Effects:     []Effect{{Type: "production", Target: "stone", Value: 0.08}},
 		BuildTicks:  80,
 		RequiredAge: "stone_age",
-		Description: "A basic camp for gathering stones. +0.03 stone/tick (3 workers).",
+		Description: "A basic camp for gathering stones. +0.08 stone/tick (3 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 0,
 		WorkerDomain: "masonry", WorkerCapacity: 3,
 		EpochKey: "stone_era", OutputResource: "stone",
 	})
-	// tier 1 — stone_age  rate=0.06  output=stone
+	// tier 1 — stone_age  rate=0.16  output=stone
 	b = append(b, BuildingDef{
 		Name: "Stone Pit", Key: "stone_pit", Category: "production",
 		BaseCost:    map[string]float64{"wood": 100, "stone": 60},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "stone", Value: 0.06}},
+		Effects:     []Effect{{Type: "production", Target: "stone", Value: 0.16}},
 		BuildTicks:  200,
 		RequiredAge: "stone_age",
-		Description: "A shallow pit dug for stone. +0.06 stone/tick (4 workers).",
+		Description: "A shallow pit dug for stone. +0.16 stone/tick (4 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 1,
 		WorkerDomain: "masonry", WorkerCapacity: 4,
 		EpochKey: "stone_era", OutputResource: "stone",
