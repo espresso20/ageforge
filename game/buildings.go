@@ -168,8 +168,8 @@ func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(domain, key s
 				continue
 			}
 			var rate float64
-			if def.WorkerDomain != "" && def.WorkerCapacity > 0 && getAssigned != nil {
-				assigned := getAssigned(def.WorkerDomain, key)
+			if def.WorkerCapacity > 0 && getAssigned != nil {
+				assigned := getAssigned("worker", key)
 				totalCap := float64(count * def.WorkerCapacity)
 				fillRatio := float64(assigned) / totalCap
 				if fillRatio > 1.0 {

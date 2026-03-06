@@ -27,7 +27,7 @@ func Ages() []AgeDef {
 			Description:     "Survival. Nothing but your hands and wits.",
 			UnlockBuildings: []string{"hut", "stash", "gathering_camp", "wood_camp", "story_circle", "shrine", "sacred_grove"},
 			UnlockResources: []string{"food", "wood", "knowledge", "faith"},
-			UnlockVillagers: []string{"food", "faith"},
+			UnlockVillagers: []string{"worker"},
 		},
 		// === 1: STONE AGE (Stone Era) ===
 		{
@@ -48,7 +48,6 @@ func Ages() []AgeDef {
 			BuildingReqs:    map[string]int{"hut": 50, "stone_pit": 5, "story_circle": 5},
 			UnlockBuildings: []string{"house", "warehouse", "farm", "lumber_mill", "quarry", "scriptorium", "altar", "barracks", "market", "smithy", "stonehenge"},
 			UnlockResources: []string{"iron", "gold"},
-			UnlockVillagers: []string{"knowledge"},
 		},
 		// === 3: IRON AGE (Iron Era) ===
 		{
@@ -59,7 +58,6 @@ func Ages() []AgeDef {
 			BuildingReqs:    map[string]int{"lumber_mill": 8, "quarry": 8, "library": 3},
 			UnlockBuildings: []string{"townhouse", "granary", "field_works", "timber_yard", "marble_quarry", "agora", "temple", "hunting_lodge", "legion_fort", "trading_post", "ironworks", "smelter", "colosseum"},
 			UnlockResources: []string{"marble", "iron_ore"},
-			UnlockVillagers: []string{"military"},
 		},
 		// === 4: CLASSICAL AGE (Iron Era) ===
 		{
@@ -80,7 +78,6 @@ func Ages() []AgeDef {
 			BuildingReqs:    map[string]int{"merchant_quarter": 3, "library": 20, "barracks": 30},
 			UnlockBuildings: []string{"manor", "keep", "demesne", "sawmill", "stonemasons_guild", "monastery_library", "cathedral", "castle_keep", "guildhall", "workshop", "ironmonger", "great_hall", "great_library"},
 			UnlockResources: []string{"steel"},
-			UnlockVillagers: []string{"trade"},
 		},
 		// === 6: RENAISSANCE AGE (Steel Era) ===
 		{
@@ -110,7 +107,6 @@ func Ages() []AgeDef {
 			BuildingReqs:    map[string]int{"plantation": 5, "port": 8, "market_garden": 5},
 			UnlockBuildings: []string{"tenement", "industrial_depot", "agricultural_works", "steam_coal_plant", "steam_mine", "research_institute", "church", "military_base", "stock_exchange", "iron_works_complex", "steel_mill", "coal_plant", "opera_house", "crystal_palace"},
 			UnlockResources: []string{"oil"},
-			UnlockVillagers: []string{"engineering"},
 		},
 		// === 9: VICTORIAN AGE (Electric Era) ===
 		{
@@ -159,7 +155,6 @@ func Ages() []AgeDef {
 			ResourceReqs:    map[string]float64{"electricity": 531250000, "data": 55000000, "gold": 1000000000},
 			BuildingReqs:    map[string]int{"think_tank": 50, "tower_block": 30, "oil_refinery": 60},
 			UnlockBuildings: []string{"smart_complex", "info_vault", "smart_farm", "smart_refinery", "precision_mine", "innovation_hub", "digital_temple", "cyber_command", "venture_hub", "smart_grid_node", "aerospace_foundry", "smart_energy_grid", "server_farm", "media_center", "global_network"},
-			UnlockVillagers: []string{"hacker"},
 		},
 		// === 14: DIGITAL AGE (Digital Era) ===
 		{
@@ -199,7 +194,6 @@ func Ages() []AgeDef {
 			BuildingReqs:    map[string]int{"fusion_reactor": 80, "fusion_reactor_array": 60, "plasma_command": 50},
 			UnlockBuildings: []string{"orbital_habitat", "orbital_depot", "hydroponic_bay", "quantum_organic_extractor", "asteroid_crystal_mine", "deep_space_observatory", "orbital_sanctuary", "space_force_base", "asteroid_market", "launch_complex", "orbital_refinery", "solar_collector_array", "orbital_data_relay", "zero_g_gallery", "dyson_scaffold"},
 			UnlockResources: []string{"titanium"},
-			UnlockVillagers: []string{"astronaut"},
 		},
 		// === 18: INTERSTELLAR AGE (Cosmic Era) ===
 		{
