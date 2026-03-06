@@ -10,7 +10,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-// WorkerPanel shows a compact workers summary.
+// WorkerPanel shows a compact workers summary grouped by building domain.
 type WorkerPanel struct {
 	root     *tview.TextView
 	lastHash uint64
@@ -31,7 +31,7 @@ func (vp *WorkerPanel) Primitive() tview.Primitive {
 	return vp.root
 }
 
-// UpdateState refreshes the worker panel with a compact worker summary
+// UpdateState refreshes the worker panel with workers grouped by building domain.
 func (vp *WorkerPanel) UpdateState(state game.GameState) {
 	// Hash-based dirty check
 	var h uint64
@@ -41,43 +41,136 @@ func (vp *WorkerPanel) UpdateState(state game.GameState) {
 	wt := state.Workers.Types["worker"]
 	h ^= uint64(wt.Count+1) * 7
 	h ^= uint64(wt.IdleCount+1) * 3
+	for _, bs := range state.Buildings {
+		if bs.WorkersAssigned > 0 {
+			h ^= uint64(bs.WorkersAssigned+1) * 13
+		}
+	}
 	if h == vp.lastHash {
 		return
 	}
 	vp.lastHash = h
 
+	renderVillagerPanel(vp.root, &state)
+}
+
+// panelDomainLabels maps domain key to display label for the worker panel.
+var panelDomainLabels = map[string]string{
+	"food":        "Food",
+	"lumber":      "Lumber",
+	"masonry":     "Masonry",
+	"knowledge":   "Knowledge",
+	"faith":       "Faith",
+	"military":    "Military",
+	"trade":       "Trade",
+	"engineering": "Engineering",
+	"metallurgy":  "Metallurgy",
+	"energy":      "Energy",
+	"hacker":      "Hacker",
+	"astronaut":   "Astronaut",
+}
+
+// buildingRow holds one row of the assignment display.
+type buildingRow struct {
+	Name            string
+	WorkersAssigned int
+	Capacity        int
+}
+
+func renderVillagerPanel(tv *tview.TextView, state *game.GameState) {
 	var sb strings.Builder
 
-	v := state.Workers
-	fmt.Fprintf(&sb, " [gold]Total:[-] %d/%d  [gold]Idle:[-] %d  [gold]Food:[-] %.1f/tick\n",
-		v.TotalPop, v.MaxPop, v.TotalIdle, v.FoodDrain)
+	wt := state.Workers.Types["worker"]
+	total := state.Workers.TotalPop
+	maxPop := state.Workers.MaxPop
+	foodDrain := state.Workers.FoodDrain
 
-	if !wt.Unlocked || wt.Count == 0 {
-		sb.WriteString("\n [gray](no workers yet)[-]\n")
-		vp.root.SetText(sb.String())
+	if !wt.Unlocked || total == 0 {
+		fmt.Fprintf(&sb, "[white]Workers  [yellow]0[white] / [green]%d[white]\n\n", maxPop)
+		fmt.Fprint(&sb, "[gray]No workers yet.\n")
+		fmt.Fprint(&sb, "Recruit with: [cyan]recruit [count|max][-]\n")
+		tv.SetText(sb.String())
 		return
 	}
 
-	sb.WriteString("\n [gold]Workers[-]\n")
-	sb.WriteString(" [gray]─────────────────────[-]\n")
+	idle := wt.IdleCount
+	fmt.Fprintf(&sb, "[white]Workers  [yellow]%d[white] / [green]%d[white]   Idle: [cyan]%d[white]   Food: [red]%.2f/tick[white]\n\n",
+		total, maxPop, idle, foodDrain)
 
-	// Calculate assigned = total - idle
-	assigned := wt.Count - wt.IdleCount
-	if assigned < 0 {
-		assigned = 0
+	// Build domain groups from buildings with assigned workers.
+	type domainGroup struct {
+		Domain string
+		Rows   []buildingRow
+		Total  int
+	}
+	groupMap := map[string]*domainGroup{}
+	groupOrder := []string{}
+
+	for _, bs := range state.Buildings {
+		if bs.WorkersAssigned <= 0 || bs.WorkerDomain == "" {
+			continue
+		}
+		domain := bs.WorkerDomain
+		if _, exists := groupMap[domain]; !exists {
+			groupMap[domain] = &domainGroup{Domain: domain}
+			groupOrder = append(groupOrder, domain)
+		}
+		// Total capacity = WorkerCapacity per instance × number of built instances.
+		count := bs.Count
+		if count <= 0 {
+			count = 1
+		}
+		cap := bs.WorkerCapacity * count
+		groupMap[domain].Rows = append(groupMap[domain].Rows, buildingRow{
+			Name:            bs.Name,
+			WorkersAssigned: bs.WorkersAssigned,
+			Capacity:        cap,
+		})
+		groupMap[domain].Total += bs.WorkersAssigned
 	}
 
-	// Determine class name from config for display (use "food" domain progression).
-	className := wt.Name
-	if wcd, found := config.WorkerClassByDomainAndAge("food", state.Age); found {
-		className = wcd.ClassName
-	}
-
-	if className != "" {
-		fmt.Fprintf(&sb, " %-14s [white]%d[-] / [gray]%d[-]  [gray](%s)[-]\n", "Workers", assigned, wt.Count, className)
+	if len(groupOrder) == 0 {
+		fmt.Fprintf(&sb, "[cyan]Idle: %d[white] — assign with: [cyan]assign <building> [count|all][-]\n", idle)
 	} else {
-		fmt.Fprintf(&sb, " %-14s [white]%d[-] / [gray]%d[-]\n", "Workers", assigned, wt.Count)
+		for _, domain := range groupOrder {
+			grp := groupMap[domain]
+			label, ok2 := panelDomainLabels[domain]
+			if !ok2 {
+				label = capitalize(domain)
+			}
+			// Class name for this domain at current age.
+			classDisplay := ""
+			if cls, found := config.WorkerClassByDomainAndAge(domain, state.Age); found && cls.ClassName != "" {
+				classDisplay = fmt.Sprintf("  %s × %d", cls.ClassName, grp.Total)
+			}
+			fmt.Fprintf(&sb, "[green][%s][-][white]%s\n", label, classDisplay)
+			for _, row := range grp.Rows {
+				bar := assignBar(row.WorkersAssigned, row.Capacity, 8)
+				fmt.Fprintf(&sb, "  %-20s %s [cyan]%d[white]/[green]%d[white]\n",
+					row.Name, bar, row.WorkersAssigned, row.Capacity)
+			}
+			fmt.Fprintln(&sb)
+		}
+		if idle > 0 {
+			fmt.Fprintf(&sb, "[cyan]Idle: %d[white] — assign with: [cyan]assign <building> [count|all][-]\n", idle)
+		}
 	}
 
-	vp.root.SetText(sb.String())
+	tv.SetText(sb.String())
 }
+
+// assignBar renders a small tview-colored progress bar of width w.
+func assignBar(filled, total, w int) string {
+	if total <= 0 {
+		return "[gray]" + strings.Repeat("░", w) + "[-]"
+	}
+	f := (filled * w) / total
+	if f > w {
+		f = w
+	}
+	if f < 0 {
+		f = 0
+	}
+	return "[green]" + strings.Repeat("█", f) + "[gray]" + strings.Repeat("░", w-f) + "[-]"
+}
+
