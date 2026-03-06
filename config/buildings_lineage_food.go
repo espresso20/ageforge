@@ -81,15 +81,15 @@ func buildingsLineageFood() []BuildingDef {
 		WorkerDomain: "food", WorkerCapacity: 6,
 		EpochKey: "iron_era", OutputResource: "food",
 	})
-	// tier 5 — medieval_age  rate=1.60
+	// tier 5 — medieval_age  rate=16.00
 	b = append(b, BuildingDef{
 		Name: "Demesne", Key: "demesne", Category: "production",
 		BaseCost:    map[string]float64{"stone": 180000, "gold": 60000, "knowledge": 20000},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "food", Value: 1.60}},
-		BuildTicks:  6000,
+		Effects:     []Effect{{Type: "production", Target: "food", Value: 16.00}},
+		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
-		Description: "A lord's demesne with serfs and crop rotation. +1.60 food/tick (6 workers).",
+		Description: "A lord's demesne with serfs and crop rotation. +16.00 food/tick (6 workers).",
 		LineageKey:  "food", LineageTier: 5,
 		WorkerDomain: "food", WorkerCapacity: 6,
 		EpochKey: "iron_era", OutputResource: "food",

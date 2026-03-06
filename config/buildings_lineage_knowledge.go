@@ -82,7 +82,7 @@ func buildingsLineageKnowledge() []BuildingDef {
 		BaseCost:    map[string]float64{"stone": 180000, "gold": 60000, "knowledge": 15000},
 		CostScale:   1.30,
 		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.064}},
-		BuildTicks:  6000,
+		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
 		Description: "Monks preserve and copy scholarly works. +0.064 knowledge/tick (4 workers).",
 		LineageKey:  "knowledge", LineageTier: 5,

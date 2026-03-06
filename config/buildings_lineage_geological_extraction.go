@@ -86,15 +86,15 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		WorkerDomain: "masonry", WorkerCapacity: 6,
 		EpochKey: "iron_era", OutputResource: "stone",
 	})
-	// tier 5 — medieval_age  rate=0.96  output=iron_ore
+	// tier 5 — medieval_age  rate=2.56  output=iron_ore
 	b = append(b, BuildingDef{
 		Name: "Stonemason's Guild", Key: "stonemasons_guild", Category: "production",
 		BaseCost:    map[string]float64{"stone": 160000, "gold": 50000, "knowledge": 15000},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "iron_ore", Value: 0.96}},
-		BuildTicks:  6000,
+		Effects:     []Effect{{Type: "production", Target: "iron_ore", Value: 2.56}},
+		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
-		Description: "Guild of stonemasons extracting iron ore. +0.96 iron_ore/tick (6 workers).",
+		Description: "Guild of stonemasons extracting iron ore. +2.56 iron_ore/tick (6 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 5,
 		WorkerDomain: "masonry", WorkerCapacity: 6,
 		EpochKey: "iron_era", OutputResource: "iron_ore",

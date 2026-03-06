@@ -50,7 +50,7 @@ func WorkerClasses() []WorkerClassDef {
 		wc("food", "bronze_age", "Cultivator", 0.06, 2),
 		wc("food", "iron_age", "Laborer", 0.06, 3),
 		wc("food", "classical_age", "Peasant", 0.06, 4),
-		wc("food", "medieval_age", "Serf", 1.0, 5),
+		wc("food", "medieval_age", "Serf", 0.06, 5),
 		wc("food", "renaissance_age", "Plowman", 1.0, 6),
 		wc("food", "colonial_age", "Colonial Farmer", 1.0, 7),
 		wc("food", "industrial_age", "Factory Hand", 1.0, 8),

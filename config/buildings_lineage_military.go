@@ -83,7 +83,7 @@ func buildingsLineageMilitary() []BuildingDef {
 		BaseCost:    map[string]float64{"stone": 220000, "iron": 70000, "gold": 50000},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "capacity", Target: "military", Value: 320}},
-		BuildTicks:  6000,
+		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
 		Description: "A fortified stone keep. +320 military cap (7 workers).",
 		LineageKey:  "military", LineageTier: 5,

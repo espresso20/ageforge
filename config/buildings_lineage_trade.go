@@ -57,7 +57,7 @@ func buildingsLineageTrade() []BuildingDef {
 		BaseCost:    map[string]float64{"stone": 200000, "gold": 70000, "knowledge": 20000},
 		CostScale:   1.40,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 0.40}},
-		BuildTicks:  6000,
+		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
 		Description: "Merchant guild organises regional trade. +0.40 gold/tick (4 workers).",
 		LineageKey:  "trade", LineageTier: 3,

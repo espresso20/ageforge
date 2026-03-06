@@ -79,10 +79,10 @@ func buildingsLineageHousing() []BuildingDef {
 		Name: "Manor", Key: "manor", Category: "housing",
 		BaseCost:    map[string]float64{"stone": 200000, "gold": 50000},
 		CostScale:   1.12,
-		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 200}},
-		BuildTicks:  6000,
+		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 240}},
+		BuildTicks:  1200,
 		RequiredAge: "medieval_age",
-		Description: "A lord's country manor. +200 pop cap.",
+		Description: "A lord's country manor. +240 pop cap.",
 		LineageKey:  "housing", LineageTier: 5,
 		EpochKey: "iron_era",
 	})
