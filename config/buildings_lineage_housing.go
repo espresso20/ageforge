@@ -44,7 +44,7 @@ func buildingsLineageHousing() []BuildingDef {
 		BaseCost:    map[string]float64{"wood": 600, "stone": 400},
 		CostScale:   1.12,
 		Effects:     []Effect{{Type: "capacity", Target: "population", Value: 50}},
-		BuildTicks:  500,
+		BuildTicks:  150,
 		RequiredAge: "bronze_age",
 		Description: "A sturdy family dwelling. +50 pop cap.",
 		LineageKey:  "housing", LineageTier: 2,

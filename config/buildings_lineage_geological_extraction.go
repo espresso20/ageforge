@@ -41,15 +41,15 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		WorkerDomain: "masonry", WorkerCapacity: 4,
 		EpochKey: "stone_era", OutputResource: "stone",
 	})
-	// tier 2 — bronze_age  rate=0.12  output=stone
+	// tier 2 — bronze_age  rate=0.32  output=stone
 	b = append(b, BuildingDef{
 		Name: "Quarry", Key: "quarry", Category: "production",
 		BaseCost:    map[string]float64{"wood": 600, "stone": 400, "iron": 100},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "stone", Value: 0.12}},
-		BuildTicks:  500,
+		Effects:     []Effect{{Type: "production", Target: "stone", Value: 0.32}},
+		BuildTicks:  150,
 		RequiredAge: "bronze_age",
-		Description: "Organised stone quarrying. +0.12 stone/tick (5 workers).",
+		Description: "Organised stone quarrying. +0.32 stone/tick (5 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 2,
 		WorkerDomain: "masonry", WorkerCapacity: 5,
 		EpochKey: "stone_era", OutputResource: "stone",

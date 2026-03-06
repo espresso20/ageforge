@@ -47,7 +47,7 @@ func WorkerClasses() []WorkerClassDef {
 		// At tier 0 (primitive): FoodCost = 0.06; tier 1 (stone): 0.09; tier 2 (bronze): 0.135; etc.
 		wc("food", "primitive_age", "Forager", 0.06, 0),
 		wc("food", "stone_age", "Farmhand", 0.06, 1),
-		wc("food", "bronze_age", "Cultivator", 1.0, 2),
+		wc("food", "bronze_age", "Cultivator", 0.06, 2),
 		wc("food", "iron_age", "Laborer", 1.0, 3),
 		wc("food", "classical_age", "Peasant", 1.0, 4),
 		wc("food", "medieval_age", "Serf", 1.0, 5),
