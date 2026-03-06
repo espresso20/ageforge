@@ -46,13 +46,5 @@ See DONE.md for completion notes.
 
 ---
 
-## BUG HUNT
-- the number count of current buildings in the buildings ui frame should be a brigher color when there is buildings. currently it shows the count in a dark color grey. make it purple or something different. maybe gold? 
-- i cannot assign a worker to a wood camp T176 cannot assign 1 worker workers to wood_camp
-- i cannot assing a worker to a shrine T218 cannot assign 1 worker workers to shrine
-- worker is not a auto command in the command chain if i type assign it auto fills. worker does not, then the next command such as building does auto fill. 
-- i have 5 gathering camps that can take 15 workers. but iw as able to assign all my workers to the gathering_camps which is not correct. it shhould only assign the max workers for the /available worker slots for that given building pool. 387 Assigned all 58 worker worker(s) to gathering_camps
-- 
-
 ## Completed
 <!-- Move items here with [x] as they are finished -->
