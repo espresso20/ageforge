@@ -14,17 +14,19 @@ You're in the **Primitive Age**. The screen shows:
 You have 0 workers and minimal resources. Let's fix that.
 
 ```
-gather wood 5
-gather food 5
+gather wood 10
+gather food 10
 ``` 
 
-repeat until you have gathered enough wood to build a hut
+Repeat until you have gathered enough wood to build a hut
+
+*hint* You can use the up arrow to recall previous commands and spam that gathering!
 
 ---
 
 ## Step 1: Build housing immediately
 
-Your pop cap is 6. You need more. Build huts first — realize those worker gains.
+Your pop cap is 10 per hut. You need more. Build huts first — realize those worker gains.
 
 ```
 build hut
@@ -32,7 +34,7 @@ build hut
 build hut
 ```
 
-While those build (3 ticks each), watch the build queue progress bar in the Economy tab. Queue a new one as soon as each finishes and you have gathered enough resources to build more!. **Aim for 5 huts in your first minute.**
+While those build (8 ticks each), watch the build queue progress bar in the Economy tab. Queue a new one as soon as each finishes and you have gathered enough resources to build more!. **Aim for 5 huts in your first minute.**
 
 ---
 
@@ -64,7 +66,7 @@ Keep recruiting until you're at 8–10 pop. Each worker costs food upfront — c
 
 ## Step 4: Assign everyone
 
-This is the most important step. **Idle workers produce nothing.**
+This is the most important step. **Idle workers produce nothing and use up your food reserves.**
 
 ```
 assign gathering_camp 2
@@ -81,16 +83,23 @@ Check the status bar shows **Idle: 0**. If it doesn't, assign the rest.
 
 ---
 
-## Step 5: Build an altar
+## Step 5: Build an story_circle
 
-Altars produce knowledge passively. Knowledge is what lets you research techs that multiply everything.
+story_circles produce knowledge passively. Knowledge is what lets you research techs that multiply everything.
 
 ```
-build altar
-build altar
+build story_circle
 ```
 
 Altars are cheap. Build as many as you can afford early.
+
+Also consider building your first **shrine**.
+
+Shrines produce faith, which is required to keep your population happy, and help prevent long term effects of civilzation level disasters.
+
+```
+build shrine
+```
 
 ---
 
@@ -107,7 +116,7 @@ If food is negative, add more food workers. If knowledge is zero, assign more kn
 
 ## Step 7: Research your first tech
 
-Once you hit 2,500 knowledge (watch the knowledge bar):
+Once you hit 800 knowledge (watch the knowledge bar):
 
 ```
 research tool_making
