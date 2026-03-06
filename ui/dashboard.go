@@ -434,8 +434,13 @@ func (d *Dashboard) build() {
 			}
 		}
 
-		// Always focus input field for typing (except wiki nav)
-		if !d.inputField.HasFocus() {
+		// Always focus input field for typing (except wiki nav and dev tab).
+		// When the dev tab is active its own InputField must keep focus —
+		// stealing it here is exactly what caused keystrokes to go to the
+		// main prompt instead of the dev console.
+		devTabIdx := len(d.tabNames) - 1
+		onDevTab := d.devTabActive && d.activeTab == devTabIdx
+		if !onDevTab && !d.inputField.HasFocus() {
 			d.app.SetFocus(d.inputField)
 		}
 		return event

@@ -1558,7 +1558,7 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 		return 0, fmt.Errorf("cannot recruit %s(s)", vType)
 	}
 	ge.Stats.RecordRecruit(available)
-	ge.addLog("info", fmt.Sprintf("Recruited %d %s(s) (pop: %d/%d)", available, vType, ge.Workers.TotalPop(), popCap))
+	ge.addLog("info", fmt.Sprintf("Recruited %d worker(s) (pop: %d/%d)", available, ge.Workers.TotalPop(), popCap))
 	return available, nil
 }
 
@@ -1581,13 +1581,13 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 		return fmt.Errorf("cannot recruit %d %s(s) (pop: %d/%d)", count, vType, totalPop, popCap)
 	}
 	ge.Stats.RecordRecruit(count)
-	ge.addLog("debug", fmt.Sprintf("Recruit: %d %s (pop: %d/%d)", count, vType, ge.Workers.TotalPop(), popCap))
-	ge.addLog("info", fmt.Sprintf("Recruited %d %s(s)", count, vType))
+	ge.addLog("debug", fmt.Sprintf("Recruit: %d worker(s) (pop: %d/%d)", count, ge.Workers.TotalPop(), popCap))
+	ge.addLog("info", fmt.Sprintf("Recruited %d worker(s)", count))
 	return nil
 }
 
 // AssignWorker assigns workers to a building.
-// The worker domain is auto-resolved from the building's WorkerDomain field.
+// Any worker can be assigned to any building with WorkerCapacity > 0.
 func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -1595,37 +1595,33 @@ func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
 	if ge.Buildings.GetCount(buildingKey) == 0 {
 		return fmt.Errorf("no %s built yet — build one first", buildingKey)
 	}
-	// Auto-resolve domain from the building's WorkerDomain
 	byKey := config.BuildingByKey()
 	def, ok := byKey[buildingKey]
-	if !ok || def.WorkerDomain == "" {
+	if !ok || def.WorkerCapacity == 0 {
 		return fmt.Errorf("building %s does not accept workers", buildingKey)
 	}
-	domain := def.WorkerDomain
 	// Enforce capacity cap
-	if def.WorkerCapacity > 0 {
-		totalCap := def.WorkerCapacity * ge.Buildings.GetCount(buildingKey)
-		alreadyAssigned := ge.Workers.GetAssignedCount(domain, buildingKey)
-		available := totalCap - alreadyAssigned
-		if available <= 0 {
-			return fmt.Errorf("all %d worker slot(s) for %s are full", totalCap, buildingKey)
-		}
-		if count > available {
-			return fmt.Errorf("only %d worker slot(s) available for %s (%d/%d filled)", available, buildingKey, alreadyAssigned, totalCap)
-		}
+	totalCap := def.WorkerCapacity * ge.Buildings.GetCount(buildingKey)
+	alreadyAssigned := ge.Workers.GetAssignedCount("worker", buildingKey)
+	available := totalCap - alreadyAssigned
+	if available <= 0 {
+		return fmt.Errorf("all %d worker slot(s) for %s are full", totalCap, buildingKey)
 	}
-	if !ge.Workers.Assign(domain, buildingKey, count) {
-		idle := ge.Workers.IdleCount(domain)
-		return fmt.Errorf("cannot assign %d %s workers to %s (idle: %d)", count, domain, buildingKey, idle)
+	if count > available {
+		return fmt.Errorf("only %d worker slot(s) available for %s (%d/%d filled)", available, buildingKey, alreadyAssigned, totalCap)
+	}
+	if !ge.Workers.Assign("worker", buildingKey, count) {
+		idle := ge.Workers.IdleCount("worker")
+		return fmt.Errorf("cannot assign %d workers to %s (idle: %d)", count, buildingKey, idle)
 	}
 	ge.recalculateRates()
-	ge.addLog("debug", fmt.Sprintf("Assign: %d %s → %s", count, domain, buildingKey))
-	ge.addLog("info", fmt.Sprintf("Assigned %d %s worker(s) to %s", count, domain, buildingKey))
+	ge.addLog("debug", fmt.Sprintf("Assign: %d → %s", count, buildingKey))
+	ge.addLog("info", fmt.Sprintf("Assigned %d worker(s) to %s", count, buildingKey))
 	return nil
 }
 
 // AssignAll assigns all idle workers to a building.
-// The worker domain is auto-resolved from the building's WorkerDomain field.
+// Any worker can be assigned to any building with WorkerCapacity > 0.
 func (ge *GameEngine) AssignAll(buildingKey string) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -1633,79 +1629,71 @@ func (ge *GameEngine) AssignAll(buildingKey string) (int, error) {
 	if ge.Buildings.GetCount(buildingKey) == 0 {
 		return 0, fmt.Errorf("no %s built yet — build one first", buildingKey)
 	}
-	// Auto-resolve domain from building's WorkerDomain
 	byKey := config.BuildingByKey()
 	def, ok := byKey[buildingKey]
-	if !ok || def.WorkerDomain == "" {
+	if !ok || def.WorkerCapacity == 0 {
 		return 0, fmt.Errorf("building %s does not accept workers", buildingKey)
 	}
-	domain := def.WorkerDomain
 	// Cap at available capacity
-	toAssign := ge.Workers.IdleCount(domain)
+	toAssign := ge.Workers.IdleCount("worker")
 	if toAssign <= 0 {
-		return 0, fmt.Errorf("no idle %s workers to assign", domain)
+		return 0, fmt.Errorf("no idle workers to assign")
 	}
-	if def.WorkerCapacity > 0 {
-		totalCap := def.WorkerCapacity * ge.Buildings.GetCount(buildingKey)
-		alreadyAssigned := ge.Workers.GetAssignedCount(domain, buildingKey)
-		available := totalCap - alreadyAssigned
-		if available <= 0 {
-			return 0, fmt.Errorf("all %d worker slot(s) for %s are full", totalCap, buildingKey)
-		}
-		if toAssign > available {
-			toAssign = available
-		}
+	totalCap := def.WorkerCapacity * ge.Buildings.GetCount(buildingKey)
+	alreadyAssigned := ge.Workers.GetAssignedCount("worker", buildingKey)
+	available := totalCap - alreadyAssigned
+	if available <= 0 {
+		return 0, fmt.Errorf("all %d worker slot(s) for %s are full", totalCap, buildingKey)
 	}
-	if !ge.Workers.Assign(domain, buildingKey, toAssign) {
-		return 0, fmt.Errorf("cannot assign %s workers to %s", domain, buildingKey)
+	if toAssign > available {
+		toAssign = available
+	}
+	if !ge.Workers.Assign("worker", buildingKey, toAssign) {
+		return 0, fmt.Errorf("cannot assign workers to %s", buildingKey)
 	}
 	ge.recalculateRates()
-	ge.addLog("info", fmt.Sprintf("Assigned all %d %s worker(s) to %s", toAssign, domain, buildingKey))
+	ge.addLog("info", fmt.Sprintf("Assigned all %d worker(s) to %s", toAssign, buildingKey))
 	return toAssign, nil
 }
 
 // UnassignAll removes all workers from a building.
-// The worker domain is auto-resolved from the building's WorkerDomain field.
 func (ge *GameEngine) UnassignAll(buildingKey string) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
 	byKey := config.BuildingByKey()
 	def, ok := byKey[buildingKey]
-	if !ok || def.WorkerDomain == "" {
+	if !ok || def.WorkerCapacity == 0 {
 		return 0, fmt.Errorf("building %s does not accept workers", buildingKey)
 	}
-	domain := def.WorkerDomain
-	assigned := ge.Workers.GetAssignedCount(domain, buildingKey)
+	assigned := ge.Workers.GetAssignedCount("worker", buildingKey)
 	if assigned <= 0 {
-		return 0, fmt.Errorf("no %s workers assigned to %s", domain, buildingKey)
+		return 0, fmt.Errorf("no workers assigned to %s", buildingKey)
 	}
-	if !ge.Workers.Unassign(domain, buildingKey, assigned) {
-		return 0, fmt.Errorf("cannot unassign %s workers from %s", domain, buildingKey)
+	if !ge.Workers.Unassign("worker", buildingKey, assigned) {
+		return 0, fmt.Errorf("cannot unassign workers from %s", buildingKey)
 	}
 	ge.recalculateRates()
-	ge.addLog("info", fmt.Sprintf("Unassigned all %d %s worker(s) from %s", assigned, domain, buildingKey))
+	ge.addLog("info", fmt.Sprintf("Unassigned all %d worker(s) from %s", assigned, buildingKey))
 	return assigned, nil
 }
 
 // UnassignWorker removes a specific number of workers from a building.
-// The worker domain is auto-resolved from the building's WorkerDomain field.
 func (ge *GameEngine) UnassignWorker(buildingKey string, count int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
 	byKey := config.BuildingByKey()
 	def, ok := byKey[buildingKey]
-	if !ok || def.WorkerDomain == "" {
+	if !ok || def.WorkerCapacity == 0 {
 		return fmt.Errorf("building %s does not accept workers", buildingKey)
 	}
-	domain := def.WorkerDomain
-	if !ge.Workers.Unassign(domain, buildingKey, count) {
-		return fmt.Errorf("cannot unassign %d %s workers from %s", count, domain, buildingKey)
+	if !ge.Workers.Unassign("worker", buildingKey, count) {
+		return fmt.Errorf("cannot unassign %d workers from %s", count, buildingKey)
 	}
 	ge.recalculateRates()
-	ge.addLog("debug", fmt.Sprintf("Unassign: %d %s ← %s", count, domain, buildingKey))
-	ge.addLog("info", fmt.Sprintf("Unassigned %d %s worker(s) from %s", count, domain, buildingKey))
+	ge.addLog("debug", fmt.Sprintf("Unassign: %d ← %s", count, buildingKey))
+	ge.addLog("info", fmt.Sprintf("Unassigned %d worker(s) from %s", count, buildingKey))
 	return nil
 }
 
