@@ -27,7 +27,7 @@ func wc(domain, ageKey, className string, baseFoodCost float64, tier int) Worker
 
 // WorkerClasses returns all worker class definitions across all 12 domains.
 // Domains and their start ages / base food costs:
-//   food        primitive   0.08  — Forager → Quantum Harvester
+//   food        primitive   0.06  — Forager → Quantum Harvester
 //   lumber      stone       1.0   — Gatherer → Cosmic Extractor
 //   masonry     stone       1.0   — Quarryman → Crystal Miner
 //   knowledge   primitive   1.0   — Shaman → Quantum Theorist
@@ -44,28 +44,49 @@ func WorkerClasses() []WorkerClassDef {
 	return []WorkerClassDef{
 
 		// === FOOD DOMAIN (starts primitive_age, base food cost 0.06) ===
-		// At tier 0 (primitive): FoodCost = 0.06; tier 1 (stone): 0.09; tier 2 (bronze): 0.135; etc.
+		// FoodCost = 0.06 × 1.5^tier:
+		//   tier 0  primitive:    0.060  Forager
+		//   tier 1  stone:        0.090  Farmhand
+		//   tier 2  bronze:       0.135  Cultivator
+		//   tier 3  iron:         0.203  Laborer
+		//   tier 4  classical:    0.304  Peasant
+		//   tier 5  medieval:     0.456  Serf
+		//   tier 6  renaissance:  0.684  Plowman
+		//   tier 7  colonial:     1.026  Colonial Farmer
+		//   tier 8  industrial:   1.539  Factory Hand
+		//   tier 9  victorian:    2.309  Agricultural Worker
+		//   tier 10 electric:     3.463  Electric Farmer
+		//   tier 11 atomic:       5.194  Atomic Agronomist
+		//   tier 12 modern:       7.791  Modern Farmer
+		//   tier 13 information: 11.687  Digital Cultivator
+		//   tier 14 digital:     17.530  AI Agronomist
+		//   tier 15 cyberpunk:   26.295  Aug Harvester
+		//   tier 16 fusion:      39.443  Bio-Farmer
+		//   tier 17 space:       59.165  Zero-G Farmer
+		//   tier 18 interstellar:88.747  Stellar Cultivator
+		//   tier 19 galactic:   133.120  Galactic Farmer
+		//   tier 20 quantum:    199.680  Quantum Harvester
 		wc("food", "primitive_age", "Forager", 0.06, 0),
 		wc("food", "stone_age", "Farmhand", 0.06, 1),
 		wc("food", "bronze_age", "Cultivator", 0.06, 2),
 		wc("food", "iron_age", "Laborer", 0.06, 3),
 		wc("food", "classical_age", "Peasant", 0.06, 4),
 		wc("food", "medieval_age", "Serf", 0.06, 5),
-		wc("food", "renaissance_age", "Plowman", 1.0, 6),
-		wc("food", "colonial_age", "Colonial Farmer", 1.0, 7),
-		wc("food", "industrial_age", "Factory Hand", 1.0, 8),
-		wc("food", "victorian_age", "Agricultural Worker", 1.0, 9),
-		wc("food", "electric_age", "Electric Farmer", 1.0, 10),
-		wc("food", "atomic_age", "Atomic Agronomist", 1.0, 11),
-		wc("food", "modern_age", "Modern Farmer", 1.0, 12),
-		wc("food", "information_age", "Digital Cultivator", 1.0, 13),
-		wc("food", "digital_age", "AI Agronomist", 1.0, 14),
-		wc("food", "cyberpunk_age", "Aug Harvester", 1.0, 15),
-		wc("food", "fusion_age", "Bio-Farmer", 1.0, 16),
-		wc("food", "space_age", "Zero-G Farmer", 1.0, 17),
-		wc("food", "interstellar_age", "Stellar Cultivator", 1.0, 18),
-		wc("food", "galactic_age", "Galactic Farmer", 1.0, 19),
-		wc("food", "quantum_age", "Quantum Harvester", 1.0, 20),
+		wc("food", "renaissance_age", "Plowman", 0.06, 6),
+		wc("food", "colonial_age", "Colonial Farmer", 0.06, 7),
+		wc("food", "industrial_age", "Factory Hand", 0.06, 8),
+		wc("food", "victorian_age", "Agricultural Worker", 0.06, 9),
+		wc("food", "electric_age", "Electric Farmer", 0.06, 10),
+		wc("food", "atomic_age", "Atomic Agronomist", 0.06, 11),
+		wc("food", "modern_age", "Modern Farmer", 0.06, 12),
+		wc("food", "information_age", "Digital Cultivator", 0.06, 13),
+		wc("food", "digital_age", "AI Agronomist", 0.06, 14),
+		wc("food", "cyberpunk_age", "Aug Harvester", 0.06, 15),
+		wc("food", "fusion_age", "Bio-Farmer", 0.06, 16),
+		wc("food", "space_age", "Zero-G Farmer", 0.06, 17),
+		wc("food", "interstellar_age", "Stellar Cultivator", 0.06, 18),
+		wc("food", "galactic_age", "Galactic Farmer", 0.06, 19),
+		wc("food", "quantum_age", "Quantum Harvester", 0.06, 20),
 
 		// === LUMBER / ORGANIC EXTRACTION DOMAIN (starts stone_age, base 1.0) ===
 		wc("lumber", "stone_age", "Gatherer", 1.0, 0),

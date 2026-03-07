@@ -9,7 +9,7 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 
 	// =========================================================================
 	// LINEAGE 3 — ORGANIC EXTRACTION (lineageKey: "organic_extraction", domain: "lumber")
-	// rate = 0.04 * 2^tier  CostScale: 1.30  Category: "production"
+	// rate = 0.20 * 2^tier  CostScale: 1.30  Category: "production"
 	// Output transitions: wood(0-5) → coal(6-8) → oil(9-13) → nanobots(14-16) → quantum_flux(17-20)
 	// =========================================================================
 
@@ -91,197 +91,197 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		WorkerDomain: "lumber", WorkerCapacity: 6,
 		EpochKey: "iron_era", OutputResource: "wood",
 	})
-	// tier 6 — renaissance_age  rate=2.56  output=coal
+	// tier 6 — renaissance_age  rate=12.80  output=coal
 	b = append(b, BuildingDef{
 		Name: "Coal Mine", Key: "coal_mine", Category: "production",
 		BaseCost:    map[string]float64{"gold": 550000, "steel": 200000, "knowledge": 80000},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "coal", Value: 2.56}},
-		BuildTicks:  12000,
+		Effects:     []Effect{{Type: "production", Target: "coal", Value: 12.80}},
+		BuildTicks:  2400,
 		RequiredAge: "renaissance_age",
-		Description: "Early coal extraction for industry. +2.56 coal/tick (7 workers).",
+		Description: "Early coal extraction for industry. +12.80 coal/tick (7 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 6,
 		WorkerDomain: "lumber", WorkerCapacity: 7,
 		EpochKey: "steel_era", OutputResource: "coal",
 	})
-	// tier 7 — colonial_age  rate=5.12  output=coal
+	// tier 7 — colonial_age  rate=25.60  output=coal
 	b = append(b, BuildingDef{
 		Name: "Coal Works", Key: "coal_works", Category: "production",
 		BaseCost:    map[string]float64{"gold": 3e6, "steel": 1.5e6},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "coal", Value: 5.12}},
-		BuildTicks:  18000,
+		Effects:     []Effect{{Type: "production", Target: "coal", Value: 25.60}},
+		BuildTicks:  3600,
 		RequiredAge: "colonial_age",
-		Description: "Organised coal extraction and processing. +5.12 coal/tick (8 workers).",
+		Description: "Organised coal extraction and processing. +25.60 coal/tick (8 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 7,
 		WorkerDomain: "lumber", WorkerCapacity: 8,
 		EpochKey: "steel_era", OutputResource: "coal",
 	})
-	// tier 8 — industrial_age  rate=10.24  output=coal
+	// tier 8 — industrial_age  rate=51.20  output=coal
 	b = append(b, BuildingDef{
 		Name: "Steam Coal Plant", Key: "steam_coal_plant", Category: "production",
 		BaseCost:    map[string]float64{"steel": 22e6, "coal": 8e6, "gold": 12e6},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "coal", Value: 10.24}},
-		BuildTicks:  25000,
+		Effects:     []Effect{{Type: "production", Target: "coal", Value: 51.20}},
+		BuildTicks:  3600,
 		RequiredAge: "industrial_age",
-		Description: "Steam-powered coal extraction plant. +10.24 coal/tick (10 workers).",
+		Description: "Steam-powered coal extraction plant. +51.20 coal/tick (10 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 8,
 		WorkerDomain: "lumber", WorkerCapacity: 10,
 		EpochKey: "steel_era", OutputResource: "coal",
 	})
-	// tier 9 — victorian_age  rate=20.48  output=oil
+	// tier 9 — victorian_age  rate=102.40  output=oil
 	b = append(b, BuildingDef{
 		Name: "Oil Derrick", Key: "oil_derrick", Category: "production",
 		BaseCost:    map[string]float64{"steel": 170e6, "iron": 80e6, "gold": 100e6},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "oil", Value: 20.48}},
-		BuildTicks:  50000,
+		Effects:     []Effect{{Type: "production", Target: "oil", Value: 102.40}},
+		BuildTicks:  3600,
 		RequiredAge: "victorian_age",
-		Description: "Early oil extraction derrick. +20.48 oil/tick (10 workers).",
+		Description: "Early oil extraction derrick. +102.40 oil/tick (10 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 9,
 		WorkerDomain: "lumber", WorkerCapacity: 10,
 		EpochKey: "electric_era", OutputResource: "oil",
 	})
-	// tier 10 — electric_age  rate=40.96  output=oil
+	// tier 10 — electric_age  rate=204.80  output=oil
 	b = append(b, BuildingDef{
 		Name: "Oil Field", Key: "oil_field", Category: "production",
 		BaseCost:    map[string]float64{"steel": 900e6, "electricity": 350e6, "oil": 100e6},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "oil", Value: 40.96}},
-		BuildTicks:  75000,
+		Effects:     []Effect{{Type: "production", Target: "oil", Value: 204.80}},
+		BuildTicks:  3600,
 		RequiredAge: "electric_age",
-		Description: "Electrified oil field operations. +40.96 oil/tick (12 workers).",
+		Description: "Electrified oil field operations. +204.80 oil/tick (12 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 10,
 		WorkerDomain: "lumber", WorkerCapacity: 12,
 		EpochKey: "electric_era", OutputResource: "oil",
 	})
-	// tier 11 — atomic_age  rate=81.92  output=oil
+	// tier 11 — atomic_age  rate=409.60  output=oil
 	b = append(b, BuildingDef{
 		Name: "Petroleum Refinery", Key: "petroleum_refinery", Category: "production",
 		BaseCost:    map[string]float64{"steel": 5e9, "electricity": 2e9, "uranium": 300e6},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "oil", Value: 81.92}},
-		BuildTicks:  100000,
+		Effects:     []Effect{{Type: "production", Target: "oil", Value: 409.60}},
+		BuildTicks:  3600,
 		RequiredAge: "atomic_age",
-		Description: "Advanced petroleum refinery. +81.92 oil/tick (12 workers).",
+		Description: "Advanced petroleum refinery. +409.60 oil/tick (12 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 11,
 		WorkerDomain: "lumber", WorkerCapacity: 12,
 		EpochKey: "electric_era", OutputResource: "oil",
 	})
-	// tier 12 — modern_age  rate=163.84  output=oil
+	// tier 12 — modern_age  rate=819.20  output=oil
 	b = append(b, BuildingDef{
 		Name: "Oil Platform", Key: "oil_platform", Category: "production",
 		BaseCost:    map[string]float64{"steel": 28e9, "electricity": 10e9, "data": 800e6},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "oil", Value: 163.84}},
-		BuildTicks:  150000,
+		Effects:     []Effect{{Type: "production", Target: "oil", Value: 819.20}},
+		BuildTicks:  3600,
 		RequiredAge: "modern_age",
-		Description: "Offshore AI-monitored oil platform. +163.84 oil/tick (14 workers).",
+		Description: "Offshore AI-monitored oil platform. +819.20 oil/tick (14 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 12,
 		WorkerDomain: "lumber", WorkerCapacity: 14,
 		EpochKey: "digital_era", OutputResource: "oil",
 	})
-	// tier 13 — information_age  rate=327.68  output=oil
+	// tier 13 — information_age  rate=1638.40  output=oil
 	b = append(b, BuildingDef{
 		Name: "Smart Refinery", Key: "smart_refinery", Category: "production",
 		BaseCost:    map[string]float64{"electricity": 75e9, "data": 7e9, "steel": 140e9},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "oil", Value: 327.68}},
-		BuildTicks:  300000,
+		Effects:     []Effect{{Type: "production", Target: "oil", Value: 1638.40}},
+		BuildTicks:  3600,
 		RequiredAge: "information_age",
-		Description: "AI-optimised smart petroleum refinery. +327.68 oil/tick (15 workers).",
+		Description: "AI-optimised smart petroleum refinery. +1638.40 oil/tick (15 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 13,
 		WorkerDomain: "lumber", WorkerCapacity: 15,
 		EpochKey: "digital_era", OutputResource: "oil",
 	})
-	// tier 14 — digital_age  rate=655.36  output=nanobots
+	// tier 14 — digital_age  rate=3276.80  output=nanobots
 	b = append(b, BuildingDef{
 		Name: "Bio Fabrication Lab", Key: "bio_fabrication_lab", Category: "production",
 		BaseCost:    map[string]float64{"electricity": 380e9, "data": 45e9, "steel": 550e9},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "nanobots", Value: 655.36}},
-		BuildTicks:  500000,
+		Effects:     []Effect{{Type: "production", Target: "nanobots", Value: 3276.80}},
+		BuildTicks:  3600,
 		RequiredAge: "digital_age",
-		Description: "Digital-biological nanofabrication. +655.36 nanobots/tick (16 workers).",
+		Description: "Digital-biological nanofabrication. +3276.80 nanobots/tick (16 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 14,
 		WorkerDomain: "lumber", WorkerCapacity: 16,
 		EpochKey: "digital_era", OutputResource: "nanobots",
 	})
-	// tier 15 — cyberpunk_age  rate=1310.72  output=nanobots
+	// tier 15 — cyberpunk_age  rate=6553.60  output=nanobots
 	b = append(b, BuildingDef{
 		Name: "Nanobot Vat", Key: "nanobot_vat", Category: "production",
 		BaseCost:    map[string]float64{"data": 180e9, "crypto": 1.2e12, "electricity": 2.5e12},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "nanobots", Value: 1310.72}},
-		BuildTicks:  1000000,
+		Effects:     []Effect{{Type: "production", Target: "nanobots", Value: 6553.60}},
+		BuildTicks:  3600,
 		RequiredAge: "cyberpunk_age",
-		Description: "Vat-grown nanobot manufacturing. +1310.72 nanobots/tick (18 workers).",
+		Description: "Vat-grown nanobot manufacturing. +6553.60 nanobots/tick (18 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 15,
 		WorkerDomain: "lumber", WorkerCapacity: 18,
 		EpochKey: "neon_era", OutputResource: "nanobots",
 	})
-	// tier 16 — fusion_age  rate=2621.44  output=nanobots
+	// tier 16 — fusion_age  rate=13107.20  output=nanobots
 	b = append(b, BuildingDef{
 		Name: "Molecular Synthesizer", Key: "molecular_synthesizer", Category: "production",
 		BaseCost:    map[string]float64{"plasma": 4e12, "electricity": 14e12, "steel": 18e12},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "nanobots", Value: 2621.44}},
-		BuildTicks:  1500000,
+		Effects:     []Effect{{Type: "production", Target: "nanobots", Value: 13107.20}},
+		BuildTicks:  3600,
 		RequiredAge: "fusion_age",
-		Description: "Plasma-powered molecular synthesis. +2621.44 nanobots/tick (20 workers).",
+		Description: "Plasma-powered molecular synthesis. +13107.20 nanobots/tick (20 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 16,
 		WorkerDomain: "lumber", WorkerCapacity: 20,
 		EpochKey: "neon_era", OutputResource: "nanobots",
 	})
-	// tier 17 — space_age  rate=5242.88  output=quantum_flux
+	// tier 17 — space_age  rate=26214.40  output=quantum_flux
 	b = append(b, BuildingDef{
 		Name: "Quantum Organic Extractor", Key: "quantum_organic_extractor", Category: "production",
 		BaseCost:    map[string]float64{"titanium": 75e12, "plasma": 35e12, "electricity": 90e12},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 5242.88}},
-		BuildTicks:  2000000,
+		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 26214.40}},
+		BuildTicks:  3600,
 		RequiredAge: "space_age",
-		Description: "Quantum-state organic matter extraction. +5242.88 quantum_flux/tick (20 workers).",
+		Description: "Quantum-state organic matter extraction. +26214.40 quantum_flux/tick (20 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 17,
 		WorkerDomain: "lumber", WorkerCapacity: 20,
 		EpochKey: "neon_era", OutputResource: "quantum_flux",
 	})
-	// tier 18 — interstellar_age  rate=10485.76  output=quantum_flux
+	// tier 18 — interstellar_age  rate=52428.80  output=quantum_flux
 	b = append(b, BuildingDef{
 		Name: "Reality Matter Weaver", Key: "reality_matter_weaver", Category: "production",
 		BaseCost:    map[string]float64{"dark_matter": 90e12, "titanium": 750e12, "plasma": 450e12},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 10485.76}},
-		BuildTicks:  2500000,
+		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 52428.80}},
+		BuildTicks:  3600,
 		RequiredAge: "interstellar_age",
-		Description: "Weaves reality matter into quantum flux. +10485.76 quantum_flux/tick (25 workers).",
+		Description: "Weaves reality matter into quantum flux. +52428.80 quantum_flux/tick (25 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 18,
 		WorkerDomain: "lumber", WorkerCapacity: 25,
 		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
 	})
-	// tier 19 — galactic_age  rate=20971.52  output=quantum_flux
+	// tier 19 — galactic_age  rate=104857.60  output=quantum_flux
 	b = append(b, BuildingDef{
 		Name: "Cosmic Organic Works", Key: "cosmic_organic_works", Category: "production",
 		BaseCost:    map[string]float64{"antimatter": 180e12, "dark_matter": 900e12, "titanium": 4.5e15},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 20971.52}},
-		BuildTicks:  3000000,
+		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 104857.60}},
+		BuildTicks:  3600,
 		RequiredAge: "galactic_age",
-		Description: "Galactic-scale cosmic organic works. +20971.52 quantum_flux/tick (25 workers).",
+		Description: "Galactic-scale cosmic organic works. +104857.60 quantum_flux/tick (25 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 19,
 		WorkerDomain: "lumber", WorkerCapacity: 25,
 		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
 	})
-	// tier 20 — quantum_age  rate=41943.04  output=quantum_flux
+	// tier 20 — quantum_age  rate=209715.20  output=quantum_flux
 	b = append(b, BuildingDef{
 		Name: "Reality Harvester", Key: "reality_harvester", Category: "production",
 		BaseCost:    map[string]float64{"quantum_flux": 180e12, "antimatter": 55e15, "dark_matter": 45e15},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 41943.04}},
-		BuildTicks:  5000000,
+		Effects:     []Effect{{Type: "production", Target: "quantum_flux", Value: 209715.20}},
+		BuildTicks:  3600,
 		RequiredAge: "quantum_age",
-		Description: "Harvests raw quantum flux from reality itself. +41943.04 quantum_flux/tick (30 workers).",
+		Description: "Harvests raw quantum flux from reality itself. +209715.20 quantum_flux/tick (30 workers).",
 		LineageKey:  "organic_extraction", LineageTier: 20,
 		WorkerDomain: "lumber", WorkerCapacity: 30,
 		EpochKey: "cosmic_era", OutputResource: "quantum_flux",

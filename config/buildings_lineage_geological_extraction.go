@@ -99,197 +99,197 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 		WorkerDomain: "masonry", WorkerCapacity: 6,
 		EpochKey: "iron_era", OutputResource: "iron_ore",
 	})
-	// tier 6 — renaissance_age  rate=1.92  output=iron_ore
+	// tier 6 — renaissance_age  rate=5.12  output=iron_ore
 	b = append(b, BuildingDef{
 		Name: "Iron Mine", Key: "iron_mine", Category: "production",
 		BaseCost:    map[string]float64{"gold": 500000, "steel": 180000, "knowledge": 75000},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "iron_ore", Value: 1.92}},
-		BuildTicks:  12000,
+		Effects:     []Effect{{Type: "production", Target: "iron_ore", Value: 5.12}},
+		BuildTicks:  2400,
 		RequiredAge: "renaissance_age",
-		Description: "Deep iron ore mining. +1.92 iron_ore/tick (7 workers).",
+		Description: "Deep iron ore mining. +5.12 iron_ore/tick (7 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 6,
 		WorkerDomain: "masonry", WorkerCapacity: 7,
 		EpochKey: "steel_era", OutputResource: "iron_ore",
 	})
-	// tier 7 — colonial_age  rate=3.84  output=iron_ore
+	// tier 7 — colonial_age  rate=10.24  output=iron_ore
 	b = append(b, BuildingDef{
 		Name: "Deep Iron Mine", Key: "deep_iron_mine", Category: "production",
 		BaseCost:    map[string]float64{"gold": 3e6, "steel": 1.8e6},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "iron_ore", Value: 3.84}},
-		BuildTicks:  18000,
+		Effects:     []Effect{{Type: "production", Target: "iron_ore", Value: 10.24}},
+		BuildTicks:  3600,
 		RequiredAge: "colonial_age",
-		Description: "Colonial deep iron ore extraction. +3.84 iron_ore/tick (8 workers).",
+		Description: "Colonial deep iron ore extraction. +10.24 iron_ore/tick (8 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 7,
 		WorkerDomain: "masonry", WorkerCapacity: 8,
 		EpochKey: "steel_era", OutputResource: "iron_ore",
 	})
-	// tier 8 — industrial_age  rate=7.68  output=iron_ore
+	// tier 8 — industrial_age  rate=20.48  output=iron_ore
 	b = append(b, BuildingDef{
 		Name: "Steam Mine", Key: "steam_mine", Category: "production",
 		BaseCost:    map[string]float64{"steel": 22e6, "coal": 8e6, "gold": 12e6},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "iron_ore", Value: 7.68}},
-		BuildTicks:  25000,
+		Effects:     []Effect{{Type: "production", Target: "iron_ore", Value: 20.48}},
+		BuildTicks:  3600,
 		RequiredAge: "industrial_age",
-		Description: "Steam-powered industrial iron ore mine. +7.68 iron_ore/tick (10 workers).",
+		Description: "Steam-powered industrial iron ore mine. +20.48 iron_ore/tick (10 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 8,
 		WorkerDomain: "masonry", WorkerCapacity: 10,
 		EpochKey: "steel_era", OutputResource: "iron_ore",
 	})
-	// tier 9 — victorian_age  rate=15.36  output=uranium
+	// tier 9 — victorian_age  rate=40.96  output=uranium
 	b = append(b, BuildingDef{
 		Name: "Uranium Mine", Key: "uranium_mine", Category: "production",
 		BaseCost:    map[string]float64{"steel": 175e6, "iron": 80e6, "gold": 100e6},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "uranium", Value: 15.36}},
-		BuildTicks:  50000,
+		Effects:     []Effect{{Type: "production", Target: "uranium", Value: 40.96}},
+		BuildTicks:  3600,
 		RequiredAge: "victorian_age",
-		Description: "Early uranium ore extraction. +15.36 uranium/tick (10 workers).",
+		Description: "Early uranium ore extraction. +40.96 uranium/tick (10 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 9,
 		WorkerDomain: "masonry", WorkerCapacity: 10,
 		EpochKey: "electric_era", OutputResource: "uranium",
 	})
-	// tier 10 — electric_age  rate=30.72  output=uranium
+	// tier 10 — electric_age  rate=81.92  output=uranium
 	b = append(b, BuildingDef{
 		Name: "Nuclear Extraction Plant", Key: "nuclear_extraction_plant", Category: "production",
 		BaseCost:    map[string]float64{"steel": 950e6, "electricity": 380e6, "uranium": 50e6},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "uranium", Value: 30.72}},
-		BuildTicks:  75000,
+		Effects:     []Effect{{Type: "production", Target: "uranium", Value: 81.92}},
+		BuildTicks:  3600,
 		RequiredAge: "electric_age",
-		Description: "High-tech nuclear material extraction. +30.72 uranium/tick (12 workers).",
+		Description: "High-tech nuclear material extraction. +81.92 uranium/tick (12 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 10,
 		WorkerDomain: "masonry", WorkerCapacity: 12,
 		EpochKey: "electric_era", OutputResource: "uranium",
 	})
-	// tier 11 — atomic_age  rate=61.44  output=uranium
+	// tier 11 — atomic_age  rate=163.84  output=uranium
 	b = append(b, BuildingDef{
 		Name: "Uranium Processing Works", Key: "uranium_processing_works", Category: "production",
 		BaseCost:    map[string]float64{"steel": 5e9, "electricity": 2e9, "uranium": 400e6},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "uranium", Value: 61.44}},
-		BuildTicks:  100000,
+		Effects:     []Effect{{Type: "production", Target: "uranium", Value: 163.84}},
+		BuildTicks:  3600,
 		RequiredAge: "atomic_age",
-		Description: "Industrial uranium processing. +61.44 uranium/tick (12 workers).",
+		Description: "Industrial uranium processing. +163.84 uranium/tick (12 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 11,
 		WorkerDomain: "masonry", WorkerCapacity: 12,
 		EpochKey: "electric_era", OutputResource: "uranium",
 	})
-	// tier 12 — modern_age  rate=122.88  output=titanium_ore
+	// tier 12 — modern_age  rate=327.68  output=titanium_ore
 	b = append(b, BuildingDef{
 		Name: "Titanium Mine", Key: "titanium_mine", Category: "production",
 		BaseCost:    map[string]float64{"steel": 28e9, "electricity": 10e9, "data": 800e6},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "titanium_ore", Value: 122.88}},
-		BuildTicks:  150000,
+		Effects:     []Effect{{Type: "production", Target: "titanium_ore", Value: 327.68}},
+		BuildTicks:  3600,
 		RequiredAge: "modern_age",
-		Description: "High-precision titanium ore extraction. +122.88 titanium_ore/tick (14 workers).",
+		Description: "High-precision titanium ore extraction. +327.68 titanium_ore/tick (14 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 12,
 		WorkerDomain: "masonry", WorkerCapacity: 14,
 		EpochKey: "digital_era", OutputResource: "titanium_ore",
 	})
-	// tier 13 — information_age  rate=245.76  output=titanium_ore
+	// tier 13 — information_age  rate=655.36  output=titanium_ore
 	b = append(b, BuildingDef{
 		Name: "Precision Mine", Key: "precision_mine", Category: "production",
 		BaseCost:    map[string]float64{"electricity": 70e9, "data": 7e9, "steel": 130e9},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "titanium_ore", Value: 245.76}},
-		BuildTicks:  300000,
+		Effects:     []Effect{{Type: "production", Target: "titanium_ore", Value: 655.36}},
+		BuildTicks:  3600,
 		RequiredAge: "information_age",
-		Description: "AI-guided precision titanium mining. +245.76 titanium_ore/tick (15 workers).",
+		Description: "AI-guided precision titanium mining. +655.36 titanium_ore/tick (15 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 13,
 		WorkerDomain: "masonry", WorkerCapacity: 15,
 		EpochKey: "digital_era", OutputResource: "titanium_ore",
 	})
-	// tier 14 — digital_age  rate=491.52  output=titanium_ore
+	// tier 14 — digital_age  rate=1310.72  output=titanium_ore
 	b = append(b, BuildingDef{
 		Name: "Nano Drill Complex", Key: "nano_drill_complex", Category: "production",
 		BaseCost:    map[string]float64{"electricity": 360e9, "data": 40e9, "steel": 520e9},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "titanium_ore", Value: 491.52}},
-		BuildTicks:  500000,
+		Effects:     []Effect{{Type: "production", Target: "titanium_ore", Value: 1310.72}},
+		BuildTicks:  3600,
 		RequiredAge: "digital_age",
-		Description: "Nanoscale drilling for titanium ore. +491.52 titanium_ore/tick (16 workers).",
+		Description: "Nanoscale drilling for titanium ore. +1310.72 titanium_ore/tick (16 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 14,
 		WorkerDomain: "masonry", WorkerCapacity: 16,
 		EpochKey: "digital_era", OutputResource: "titanium_ore",
 	})
-	// tier 15 — cyberpunk_age  rate=983.04  output=dark_matter_crystals
+	// tier 15 — cyberpunk_age  rate=2621.44  output=dark_matter_crystals
 	b = append(b, BuildingDef{
 		Name: "Dark Crystal Mine", Key: "dark_crystal_mine", Category: "production",
 		BaseCost:    map[string]float64{"data": 170e9, "crypto": 1.1e12, "electricity": 2.2e12},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "dark_matter_crystals", Value: 983.04}},
-		BuildTicks:  1000000,
+		Effects:     []Effect{{Type: "production", Target: "dark_matter_crystals", Value: 2621.44}},
+		BuildTicks:  3600,
 		RequiredAge: "cyberpunk_age",
-		Description: "Extraction of dark matter crystals. +983.04 dark_matter_crystals/tick (18 workers).",
+		Description: "Extraction of dark matter crystals. +2621.44 dark_matter_crystals/tick (18 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 15,
 		WorkerDomain: "masonry", WorkerCapacity: 18,
 		EpochKey: "neon_era", OutputResource: "dark_matter_crystals",
 	})
-	// tier 16 — fusion_age  rate=1966.08  output=dark_matter_crystals
+	// tier 16 — fusion_age  rate=5242.88  output=dark_matter_crystals
 	b = append(b, BuildingDef{
 		Name: "Exotic Mineral Extractor", Key: "exotic_mineral_extractor", Category: "production",
 		BaseCost:    map[string]float64{"plasma": 4.5e12, "electricity": 13e12, "steel": 17e12},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "dark_matter_crystals", Value: 1966.08}},
-		BuildTicks:  1500000,
+		Effects:     []Effect{{Type: "production", Target: "dark_matter_crystals", Value: 5242.88}},
+		BuildTicks:  3600,
 		RequiredAge: "fusion_age",
-		Description: "Plasma-assisted exotic mineral extraction. +1966.08 dark_matter_crystals/tick (20 workers).",
+		Description: "Plasma-assisted exotic mineral extraction. +5242.88 dark_matter_crystals/tick (20 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 16,
 		WorkerDomain: "masonry", WorkerCapacity: 20,
 		EpochKey: "neon_era", OutputResource: "dark_matter_crystals",
 	})
-	// tier 17 — space_age  rate=3932.16  output=dark_matter_crystals
+	// tier 17 — space_age  rate=10485.76  output=dark_matter_crystals
 	b = append(b, BuildingDef{
 		Name: "Asteroid Crystal Mine", Key: "asteroid_crystal_mine", Category: "production",
 		BaseCost:    map[string]float64{"titanium": 70e12, "plasma": 32e12, "electricity": 85e12},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "dark_matter_crystals", Value: 3932.16}},
-		BuildTicks:  2000000,
+		Effects:     []Effect{{Type: "production", Target: "dark_matter_crystals", Value: 10485.76}},
+		BuildTicks:  3600,
 		RequiredAge: "space_age",
-		Description: "Asteroid belt dark matter crystal mining. +3932.16 dark_matter_crystals/tick (20 workers).",
+		Description: "Asteroid belt dark matter crystal mining. +10485.76 dark_matter_crystals/tick (20 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 17,
 		WorkerDomain: "masonry", WorkerCapacity: 20,
 		EpochKey: "neon_era", OutputResource: "dark_matter_crystals",
 	})
-	// tier 18 — interstellar_age  rate=7864.32  output=antimatter
+	// tier 18 — interstellar_age  rate=20971.52  output=antimatter
 	b = append(b, BuildingDef{
 		Name: "Stellar Core Drill", Key: "stellar_core_drill", Category: "production",
 		BaseCost:    map[string]float64{"dark_matter": 85e12, "titanium": 700e12, "plasma": 420e12},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "antimatter", Value: 7864.32}},
-		BuildTicks:  2500000,
+		Effects:     []Effect{{Type: "production", Target: "antimatter", Value: 20971.52}},
+		BuildTicks:  3600,
 		RequiredAge: "interstellar_age",
-		Description: "Drills into stellar cores for antimatter. +7864.32 antimatter/tick (25 workers).",
+		Description: "Drills into stellar cores for antimatter. +20971.52 antimatter/tick (25 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 18,
 		WorkerDomain: "masonry", WorkerCapacity: 25,
 		EpochKey: "cosmic_era", OutputResource: "antimatter",
 	})
-	// tier 19 — galactic_age  rate=15728.64  output=antimatter
+	// tier 19 — galactic_age  rate=41943.04  output=antimatter
 	b = append(b, BuildingDef{
 		Name: "Neutron Star Mine", Key: "neutron_star_mine", Category: "production",
 		BaseCost:    map[string]float64{"antimatter": 170e12, "dark_matter": 850e12, "titanium": 4.2e15},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "antimatter", Value: 15728.64}},
-		BuildTicks:  3000000,
+		Effects:     []Effect{{Type: "production", Target: "antimatter", Value: 41943.04}},
+		BuildTicks:  3600,
 		RequiredAge: "galactic_age",
-		Description: "Mining neutron stars for antimatter. +15728.64 antimatter/tick (25 workers).",
+		Description: "Mining neutron stars for antimatter. +41943.04 antimatter/tick (25 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 19,
 		WorkerDomain: "masonry", WorkerCapacity: 25,
 		EpochKey: "cosmic_era", OutputResource: "antimatter",
 	})
-	// tier 20 — quantum_age  rate=31457.28  output=antimatter
+	// tier 20 — quantum_age  rate=83886.08  output=antimatter
 	b = append(b, BuildingDef{
 		Name: "Reality Excavator", Key: "reality_excavator", Category: "production",
 		BaseCost:    map[string]float64{"quantum_flux": 160e12, "antimatter": 48e15, "dark_matter": 38e15},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "antimatter", Value: 31457.28}},
-		BuildTicks:  5000000,
+		Effects:     []Effect{{Type: "production", Target: "antimatter", Value: 83886.08}},
+		BuildTicks:  3600,
 		RequiredAge: "quantum_age",
-		Description: "Excavates antimatter from the quantum foam. +31457.28 antimatter/tick (30 workers).",
+		Description: "Excavates antimatter from the quantum foam. +83886.08 antimatter/tick (30 workers).",
 		LineageKey:  "geological_extraction", LineageTier: 20,
 		WorkerDomain: "masonry", WorkerCapacity: 30,
 		EpochKey: "cosmic_era", OutputResource: "antimatter",

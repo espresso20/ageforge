@@ -232,7 +232,7 @@ func Ages() []AgeDef {
 			Description:     "Final ascension. The ultimate civilization.",
 			ResourceReqs:    map[string]float64{"quantum_flux": 150000000000000, "antimatter": 250000000000000},
 			BuildingReqs:    map[string]int{"reality_academy": 500, "reality_forge": 300, "probability_war_room": 200},
-			UnlockBuildings: []string{"singularity_core"},
+			UnlockBuildings: []string{"singularity_core", "transcendent_nexus", "omniversal_war_council", "omniversal_bazaar", "singularity_engine"},
 		},
 	}
 }
