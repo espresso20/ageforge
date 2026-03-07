@@ -1021,8 +1021,8 @@ func getBuildingSprite(domain, buildingKey, eraName string) spriteType {
 	return spriteHut
 }
 
-// drawBuildingSprite renders a pixel-art sprite at (px, py). scale=1 for minimap, scale=2 for full map.
-// Wonders use scale 3.
+// drawBuildingSprite renders a pixel-art sprite at (px, py).
+// scale=1 for minimap, scale=2 for normal full-map buildings, scale=3 for wonders.
 func drawBuildingSprite(img *image.RGBA, imgW, imgH, px, py int, stype spriteType, primary, accent color.RGBA, scale int) {
 	// For minimap (scale <= 1), draw a solid 3×3 block — sprites are too small to matter.
 	if scale <= 1 {
@@ -1995,13 +1995,13 @@ func drawBuildings(img *image.RGBA, w, h, era, dl int, pal TerrainPalette, ageKe
 	for _, b := range placements {
 		bx, by, size := b.x, b.y, b.size
 
-		// Determine scale: wonders get scale 2, full-map gets 1, minimap gets 1
+		// Determine scale: wonders get scale 3, full-map normal buildings get scale 2, minimap gets 1
 		scale := 1
 		if dl > 0 {
 			if b.category == "wonder" {
-				scale = 2
+				scale = 3
 			} else {
-				scale = 1
+				scale = 2
 			}
 		}
 
@@ -2017,7 +2017,7 @@ func drawBuildings(img *image.RGBA, w, h, era, dl int, pal TerrainPalette, ageKe
 		}
 
 		// Shadow under the sprite.
-		// At scale<=1 drawBuildingSprite renders a plain 3×3 block, so the
+		// At scale<=1 (minimap) drawBuildingSprite renders a plain 3×3 block, so the
 		// shadow must also be 3×3 — using the full sprite dimensions would
 		// leave dark artifact pixels visible around the tiny solid block.
 		shadowOff := 1 + dl
@@ -2066,24 +2066,29 @@ func drawBuildings(img *image.RGBA, w, h, era, dl int, pal TerrainPalette, ageKe
 					img.SetRGBA(px, py, lerp(existing, gc, fade*0.55))
 				}
 			}
-			innerR := size/2 + 2 + dl
-			for dy := -innerR; dy <= innerR; dy++ {
-				for dx := -innerR; dx <= innerR; dx++ {
-					d := math.Sqrt(float64(dx*dx + dy*dy))
-					if d < float64(size/2+1) || d > float64(innerR) {
-						continue
+			// Inner accent ring — only draw for medieval+ eras where a wall/ring
+		// motif makes visual sense; in primitive/stone/ancient it produces a
+		// plain circle artifact that looks out of place.
+		if era >= 3 {
+				innerR := size/2 + 2 + dl
+				for dy := -innerR; dy <= innerR; dy++ {
+					for dx := -innerR; dx <= innerR; dx++ {
+						d := math.Sqrt(float64(dx*dx + dy*dy))
+						if d < float64(size/2+1) || d > float64(innerR) {
+							continue
+						}
+						px, py := bx+dx, by+dy
+						if px < 0 || px >= w || py < 0 || py >= h {
+							continue
+						}
+						ringFade := 1.0 - math.Abs(d-float64(size/2+2))/float64(innerR-size/2)
+						gc := pal.Accent2
+						if era >= 6 {
+							gc = pal.Accent1
+						}
+						existing := img.RGBAAt(px, py)
+						img.SetRGBA(px, py, lerp(existing, gc, ringFade*0.75))
 					}
-					px, py := bx+dx, by+dy
-					if px < 0 || px >= w || py < 0 || py >= h {
-						continue
-					}
-					ringFade := 1.0 - math.Abs(d-float64(size/2+2))/float64(innerR-size/2)
-					gc := pal.Accent2
-					if era >= 6 {
-						gc = pal.Accent1
-					}
-					existing := img.RGBAAt(px, py)
-					img.SetRGBA(px, py, lerp(existing, gc, ringFade*0.75))
 				}
 			}
 		}
