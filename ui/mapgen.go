@@ -5,6 +5,7 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"math/rand"
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
@@ -185,6 +186,7 @@ func noise2D(x, y int, seed uint64) float64 {
 type bldInfo struct {
 	key      string
 	category string
+	domain   string
 	x, y     int
 	size     int
 }
@@ -476,7 +478,7 @@ func GenerateMapImage(cfg MapGenConfig) *image.RGBA {
 	// ═══════════════════════════════════════════
 	// 5. COLLECT BUILDING PLACEMENTS
 	// ═══════════════════════════════════════════
-	placements := placeBuildingsRadial(cfg.Buildings, cx, cy, w, h, era, dl)
+	placements := collectBuildingPlacements(img, cfg, newRNG(seed), cx, cy, w, h, era, dl)
 
 	// Sort: furthest first so close buildings draw on top
 	sort.Slice(placements, func(i, j int) bool {
@@ -498,7 +500,7 @@ func GenerateMapImage(cfg MapGenConfig) *image.RGBA {
 	// ═══════════════════════════════════════════
 	// 8. BUILDINGS (era-specific rendering)
 	// ═══════════════════════════════════════════
-	drawBuildings(img, w, h, era, dl, pal, placements)
+	drawBuildings(img, w, h, era, dl, pal, cfg.AgeKey, placements)
 
 	// ═══════════════════════════════════════════
 	// 9. ERA DECORATIONS (smokestacks, power lines, neon, etc)
@@ -569,148 +571,978 @@ func drawVegetation(img *image.RGBA, w, h, era, dl int, pal TerrainPalette, seed
 	}
 }
 
-// ─── Building placement ──────────────────────────────────
-func placeBuildingsRadial(buildings map[string]game.BuildingState, cx, cy, w, h, era, dl int) []bldInfo {
-	var placements []bldInfo
-	maxDist := float64(min(w, h)) / 2.0
+// ─── RNG helper ──────────────────────────────────────────
+func newRNG(seed uint64) *rand.Rand {
+	return rand.New(rand.NewSource(int64(seed))) //nolint:gosec
+}
 
-	// Count non-wonder buildings to compute city spread factor.
-	// As the city grows beyond ~20 buildings the rings expand outward,
-	// preventing the tight overlap seen at 100+ huts.
-	totalCity := 0
-	for _, bs := range buildings {
-		if bs.Unlocked && bs.Count > 0 && bs.Category != "wonder" {
-			totalCity += bs.Count
+// ─── Plot grid (collision avoidance) ─────────────────────
+type plotGrid struct {
+	occupied map[[2]int]bool
+	cellSize int
+}
+
+func newPlotGrid(cellSize int) *plotGrid {
+	return &plotGrid{occupied: make(map[[2]int]bool), cellSize: cellSize}
+}
+
+func (g *plotGrid) claim(px, py, w, h int) {
+	cx0 := px / g.cellSize
+	cy0 := py / g.cellSize
+	cx1 := (px + w) / g.cellSize
+	cy1 := (py + h) / g.cellSize
+	for cx := cx0; cx <= cx1; cx++ {
+		for cy := cy0; cy <= cy1; cy++ {
+			g.occupied[[2]int{cx, cy}] = true
 		}
 	}
-	spreadFactor := 1.0
-	if totalCity > 20 {
-		spreadFactor = 1.0 + float64(totalCity-20)/200.0
-		if spreadFactor > 1.8 {
-			spreadFactor = 1.8
+}
+
+func (g *plotGrid) isFree(px, py, w, h int) bool {
+	cx0 := (px - g.cellSize*2) / g.cellSize
+	cy0 := (py - g.cellSize*2) / g.cellSize
+	cx1 := (px + w + g.cellSize*2) / g.cellSize
+	cy1 := (py + h + g.cellSize*2) / g.cellSize
+	if cx0 < 0 {
+		cx0 = 0
+	}
+	if cy0 < 0 {
+		cy0 = 0
+	}
+	for cx := cx0; cx <= cx1; cx++ {
+		for cy := cy0; cy <= cy1; cy++ {
+			if g.occupied[[2]int{cx, cy}] {
+				return false
+			}
 		}
 	}
+	return true
+}
+
+// ─── Era name mapping ─────────────────────────────────────
+func getEraName(ageKey string) string {
+	switch ageKey {
+	case "primitive_age":
+		return "primitive"
+	case "stone_age":
+		return "stone"
+	case "bronze_age":
+		return "bronze"
+	case "iron_age":
+		return "iron"
+	case "classical_age":
+		return "classical"
+	case "medieval_age":
+		return "medieval"
+	case "renaissance_age":
+		return "renaissance"
+	case "colonial_age":
+		return "colonial"
+	case "industrial_age", "victorian_age":
+		return "industrial"
+	case "electric_age":
+		return "industrial"
+	case "atomic_age":
+		return "atomic"
+	case "modern_age", "information_age":
+		return "modern"
+	case "digital_age":
+		return "digital"
+	case "cyberpunk_age", "fusion_age":
+		return "nano"
+	case "space_age", "interstellar_age":
+		return "space"
+	case "galactic_age", "quantum_age", "transcendent_age":
+		return "galactic"
+	default:
+		return "stone"
+	}
+}
+
+// ─── Sprite types ─────────────────────────────────────────
+type spriteType int
+
+const (
+	spriteHut spriteType = iota
+	spriteFarm
+	spriteMill
+	spriteLumberCamp
+	spriteMine
+	spriteFortress
+	spriteBarracks
+	spriteTemple
+	spriteLibrary
+	spriteMarket
+	spriteFactory
+	spriteWorkshop
+	spritePalace
+	spriteObservatory
+	spriteDome
+	spriteSkyscraper
+	spriteServer
+	spriteSpaceStation
+	spriteWonder
+)
+
+func getBuildingSprite(domain, buildingKey, eraName string) spriteType {
+	// Check wonders by building key
+	wonderKeys := map[string]bool{
+		"sacred_grove": true, "great_monolith": true, "stonehenge": true,
+		"colosseum": true, "parthenon": true, "great_library": true,
+		"sistine_chapel": true, "grand_lighthouse": true, "crystal_palace": true,
+		"eiffel_tower": true, "hoover_dam": true, "particle_accelerator": true,
+		"space_program": true, "global_network": true, "world_simulation": true,
+		"neon_citadel": true, "stellar_cradle": true, "dyson_scaffold": true,
+		"warp_nexus": true, "cosmic_beacon": true, "reality_anchor": true,
+		"singularity_core": true,
+	}
+	if wonderKeys[buildingKey] {
+		return spriteWonder
+	}
+
+	isEarlyEra := eraName == "primitive" || eraName == "stone" || eraName == "bronze" || eraName == "iron" || eraName == "classical"
+	isLateEra := eraName == "space" || eraName == "galactic" || eraName == "nano"
+	isDigitalEra := eraName == "digital" || eraName == "nano"
+
+	switch domain {
+	case "food":
+		if isEarlyEra {
+			return spriteHut
+		}
+		return spriteFarm
+	case "lumber":
+		return spriteLumberCamp
+	case "masonry":
+		return spriteMine
+	case "military":
+		if isEarlyEra {
+			return spriteBarracks
+		}
+		return spriteFortress
+	case "knowledge":
+		if isLateEra {
+			return spriteObservatory
+		}
+		if isDigitalEra {
+			return spriteServer
+		}
+		return spriteLibrary
+	case "faith":
+		return spriteTemple
+	case "trade":
+		return spriteMarket
+	case "engineering", "metallurgy":
+		if isEarlyEra {
+			return spriteWorkshop
+		}
+		return spriteFactory
+	case "energy":
+		if isLateEra {
+			return spriteDome
+		}
+		return spriteWorkshop
+	case "hacker":
+		return spriteServer
+	case "astronaut":
+		return spriteSpaceStation
+	}
+
+	// Fallback by building key patterns
+	switch buildingKey {
+	case "skyscraper", "neon_tower", "apartment":
+		return spriteSkyscraper
+	case "observatory", "quantum_computer", "ai_lab":
+		return spriteObservatory
+	case "reactor", "fusion_reactor", "antimatter_plant":
+		return spriteDome
+	case "server_farm", "data_center", "fiber_hub":
+		return spriteServer
+	case "space_station", "orbital_habitat", "launch_pad", "warp_gate":
+		return spriteSpaceStation
+	}
+
+	return spriteHut
+}
+
+// drawBuildingSprite renders a pixel-art sprite at (px, py). scale=1 for minimap, scale=2 for full map.
+// Wonders use scale 3.
+func drawBuildingSprite(img *image.RGBA, imgW, imgH, px, py int, stype spriteType, primary, accent color.RGBA, scale int) {
+	// For minimap (scale <= 1), draw a solid 3×3 block — sprites are too small to matter.
+	if scale <= 1 {
+		for dy := 0; dy < 3; dy++ {
+			for dx := 0; dx < 3; dx++ {
+				x, y := px+dx, py+dy
+				if x >= 0 && x < imgW && y >= 0 && y < imgH {
+					img.SetRGBA(x, y, primary)
+				}
+			}
+		}
+		return
+	}
+
+	rows := spriteRows(stype)
+	for row, line := range rows {
+		for col, ch := range line {
+			var cl color.RGBA
+			switch ch {
+			case 'P':
+				cl = primary
+			case 'A', 'I':
+				cl = accent
+			default:
+				continue
+			}
+			for sy := 0; sy < scale; sy++ {
+				for sx := 0; sx < scale; sx++ {
+					x := px + col*scale + sx
+					y := py + row*scale + sy
+					if x >= 0 && x < imgW && y >= 0 && y < imgH {
+						img.SetRGBA(x, y, cl)
+					}
+				}
+			}
+		}
+	}
+}
+
+// spriteRows returns the pixel-art row strings for a given sprite type.
+// This is the single source of truth used by both drawBuildingSprite and
+// the shadow-sizing helpers.
+func spriteRows(stype spriteType) []string {
+	switch stype {
+	case spriteHut:
+		return []string{"..P..", ".PPP.", "PPPPP", "A.A.A", "AAAAA"}
+	case spriteFarm:
+		return []string{"AAAAAAA", "PPPPPPP", "AAAAAAA", "PPPPPPP", "..A.A.."}
+	case spriteLumberCamp:
+		return []string{"..A..", "..A..", "PPPPP", "P.P.P", "PPPPP", ".PPP."}
+	case spriteMine:
+		return []string{"PPPPPP", "P.AAP.", "P....P", "AAAAAA"}
+	case spriteBarracks:
+		return []string{"PPPPPPP", "P.P.P.P", "PPPPPPP", "AAAAAAA"}
+	case spriteFortress:
+		return []string{"P.P.P.P", "PPPPPPP", "P.....P", "PPPPPPP", "A.AAA.A"}
+	case spriteTemple:
+		return []string{"..A..", ".AAA.", "AAAAA", "PPPPP", "P.P.P", "PPPPP", "AAAAA"}
+	case spriteLibrary:
+		return []string{"AAAAAAA", "PPPPPPP", "P.P.P.P", "PPPPPPP", "P.....P", "AAAAAAA"}
+	case spriteMarket:
+		return []string{".AAAAA.", "PPPPPPP", "P.P.P.P", "PPPPPPP", "AAAAAAA"}
+	case spriteFactory:
+		return []string{".A..A..", "AA..AA.", "AA..AA.", "PPPPPPPP", "PPPPPPPP", "P.PP.PP.", "AAAAAAAA"}
+	case spriteWorkshop:
+		return []string{".PPPP.", "PPPPPP", "P.PP.P", "PPPPPP", "AAAAAA"}
+	case spriteObservatory:
+		return []string{"..A..", ".AAA.", "AAAAA", "AAAAA", "PPPPP", "P...P", "PPPPP"}
+	case spriteDome:
+		return []string{".AAAA.", "AAAAAA", "AAAAAA", "PPPPPP", "PP..PP", "PPPPPP"}
+	case spriteSkyscraper:
+		return []string{"..A..", ".PAP.", ".PPP.", "PPPPP", "P.P.P", "PPPPP", "AAAAA"}
+	case spriteServer:
+		return []string{"PPPPP", "APPPA", "PPPPP", "APPPA", "PPPPP", "APPPA", "AAAAA"}
+	case spriteSpaceStation:
+		return []string{"....A....", "...AAA...", "AA.AAA.AA", "AA.AAA.AA", "...AAA...", "....A...."}
+	case spriteWonder:
+		return []string{"....AA....", "...AAAA...", "..AAAAAA..", "..PPPPPP..", ".PPPPPPPP.", ".PP....PP.", "PPPPPPPPPP", "PPPPPPPPPP", "A.AAAAAA.A", "AAAAAAAAAA"}
+	case spriteMill:
+		return []string{"..A..", ".AAA.", "PPPPP", "P.P.P", "PPPPP", "AAAAA"}
+	default:
+		return []string{"PPP", "PPP", "AAA"}
+	}
+}
+
+// spriteRowWidth returns the width (in pixels, pre-scale) of the widest row.
+func spriteRowWidth(stype spriteType) string {
+	rows := spriteRows(stype)
+	if len(rows) == 0 {
+		return ""
+	}
+	widest := rows[0]
+	for _, r := range rows[1:] {
+		if len(r) > len(widest) {
+			widest = r
+		}
+	}
+	return widest
+}
+
+// spriteRowCount returns the number of rows (height pre-scale).
+func spriteRowCount(stype spriteType) int {
+	return len(spriteRows(stype))
+}
+
+// ─── isWaterPixel checks if a position is water ───────────
+func isWaterPixel(img *image.RGBA, x, y int, pal TerrainPalette) bool {
+	if x < 0 || y < 0 || x >= img.Bounds().Max.X || y >= img.Bounds().Max.Y {
+		return true
+	}
+	col := img.RGBAAt(x, y)
+	return col == pal.Water || col == pal.WaterDeep || col == pal.WaterLight
+}
+
+// ─── Internal entry type for layout functions ─────────────
+type layoutEntry struct {
+	key      string
+	category string
+	domain   string
+	count    int
+	size     int
+}
+
+func clampInt(v, lo, hi int) int {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
+}
+
+// ─── Building placement entry point ──────────────────────
+// collectBuildingPlacements collects buildings and delegates to the
+// era-appropriate layout function.
+func collectBuildingPlacements(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, cx, cy, w, h, era, dl int) []bldInfo {
+	buildings := cfg.Buildings
+	eraName := getEraName(cfg.AgeKey)
+
+	// Determine base building size by era
+	baseSize := 3
+	switch {
+	case era >= 6:
+		baseSize = 5
+	case era >= 3:
+		baseSize = 4
+	}
+	if dl > 0 {
+		baseSize += 2
+	}
+
+	var entries []layoutEntry
+	var wonders []layoutEntry
 
 	for key, bs := range buildings {
 		if !bs.Unlocked || bs.Count == 0 {
 			continue
 		}
-
-		// ── Wonders: placed in far outer zone, visually isolated from city ──
+		sz := baseSize
+		if bs.Category == "military" {
+			sz++
+		}
 		if bs.Category == "wonder" {
-			bHash := hashKey(key)
-			angle := float64(bHash%3600) / 3600.0 * 2.0 * math.Pi
-			distRatio := 0.60 + float64(bHash%180)/1000.0 // 0.60–0.78
-			dist := distRatio * maxDist
-			bx := cx + int(math.Cos(angle)*dist)
-			by := cy + int(math.Sin(angle)*dist*0.75)
-			size := 7 + dl*3
+			wsz := 7 + dl*3
 			if era >= 4 {
-				size += 2
+				wsz += 2
 			}
-			placements = append(placements, bldInfo{key, bs.Category, bx, by, size})
-			continue
+			wonders = append(wonders, layoutEntry{key, bs.Category, bs.WorkerDomain, bs.Count, wsz})
+		} else {
+			entries = append(entries, layoutEntry{key, bs.Category, bs.WorkerDomain, bs.Count, sz})
 		}
+	}
 
-		// ── Regular city buildings ──
-		ringMin, ringMax := 0.08, 0.35
-		switch bs.Category {
-		case "housing":
-			ringMin, ringMax = 0.05, 0.22
-		case "production":
-			ringMin, ringMax = 0.12, 0.32
-		case "military":
-			ringMin, ringMax = 0.22, 0.42
-		case "research":
-			ringMin, ringMax = 0.08, 0.26
-		case "storage":
-			ringMin, ringMax = 0.06, 0.20
-		}
+	// Sort entries deterministically by key for reproducibility
+	sort.Slice(entries, func(i, j int) bool { return entries[i].key < entries[j].key })
+	sort.Slice(wonders, func(i, j int) bool { return wonders[i].key < wonders[j].key })
 
-		// Apply spread factor; cap at 0.55 to preserve the wonder gap
-		if spreadFactor > 1.0 {
-			ringMax = math.Min(ringMax*spreadFactor, 0.55)
-			ringMin = math.Min(ringMin*(1.0+(spreadFactor-1.0)*0.4), ringMax-0.04)
-		}
+	// Place city buildings using age-appropriate layout
+	cityPlacements := placeAllBuildings(img, cfg, rng, cx, cy, w, h, eraName, entries)
+	placements := append([]bldInfo{}, cityPlacements...)
 
-		for i := 0; i < bs.Count; i++ {
-			bHash := hashKey(key + string(rune(i)))
+	// Place wonders in outer zone
+	maxDist := float64(min(w, h)) / 2.0
+	for _, e := range wonders {
+		bHash := hashKey(e.key)
+		angle := float64(bHash%3600) / 3600.0 * 2.0 * math.Pi
+		distRatio := 0.60 + float64(bHash%180)/1000.0
+		dist := distRatio * maxDist
+		bx := cx + int(math.Cos(angle)*dist)
+		by := cy + int(math.Sin(angle)*dist*0.75)
+		bx = clampInt(bx, 8, w-8)
+		by = clampInt(by, 8, h-8)
+		placements = append(placements, bldInfo{e.key, e.category, e.domain, bx, by, e.size})
+	}
 
-			// ── Era-specific layout pattern ──
-			var angle, distRatio float64
-			switch era {
-			case 0:
-				// Primitive: tight organic scatter — small jitter, compressed rings
-				angle = float64(bHash%3600) / 3600.0 * 2.0 * math.Pi
-				jitter := float64(int(bHash%200)-100) / 1000.0
-				distRatio = ringMin + float64(bHash%1000)/1000.0*(ringMax-ringMin)*0.75 + jitter
+	return placements
+}
 
-			case 1, 2:
-				// Ancient / Medieval: classic loose radial (unchanged baseline)
-				angle = float64(bHash%3600) / 3600.0 * 2.0 * math.Pi
-				distRatio = ringMin + float64(bHash%1000)/1000.0*(ringMax-ringMin)
+// ─── Age-aware layout dispatcher ─────────────────────────
+func placeAllBuildings(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, cx, cy, w, h int, eraName string, entries []layoutEntry) []bldInfo {
+	switch eraName {
+	case "primitive", "stone":
+		return placeBuildingsOrganic(img, cfg, rng, cx, cy, w, h, entries)
+	case "bronze", "iron", "classical":
+		return placeBuildingsVillage(img, cfg, rng, cx, cy, w, h, entries)
+	case "medieval", "renaissance":
+		return placeBuildingsMedieval(img, cfg, rng, cx, cy, w, h, entries)
+	case "colonial", "industrial":
+		return placeBuildingsIndustrial(img, cfg, rng, cx, cy, w, h, entries)
+	case "atomic", "modern":
+		return placeBuildingsModern(img, cfg, rng, cx, cy, w, h, entries)
+	case "digital", "nano":
+		return placeBuildingsCampus(img, cfg, rng, cx, cy, w, h, entries)
+	case "space", "galactic":
+		return placeBuildingsOrbital(img, cfg, rng, cx, cy, w, h, entries)
+	default:
+		return placeBuildingsVillage(img, cfg, rng, cx, cy, w, h, entries)
+	}
+}
 
-			case 3:
-				// Industrial: 8-direction grid snap — buildings line up in rows
-				dir := int(bHash % 8)
-				jitterDeg := int(bHash%22) - 11
-				angle = float64(dir*45+jitterDeg) * math.Pi / 180.0
-				distRatio = ringMin + float64(bHash%1000)/1000.0*(ringMax-ringMin)
+// ─── Organic layout (primitive/stone) ────────────────────
+func placeBuildingsOrganic(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, cx, cy, w, h int, entries []layoutEntry) []bldInfo {
+	var placements []bldInfo
+	pal := getTerrainPalette(eraFromAge(cfg.AgeKey))
+	grid := newPlotGrid(12)
+	maxR := int(float64(min(w, h)) * 0.40)
+	border := 8
 
-			case 4, 5:
-				// Modern / Digital: 12-sector radial — clock-face positions
-				sector := int(bHash % 12)
-				jitter := float64(int(bHash%314)-157) / 5000.0
-				angle = float64(sector)/12.0*2.0*math.Pi + jitter
-				distRatio = ringMin + float64(bHash%1000)/1000.0*(ringMax-ringMin)
+	// Seed anchor points — small groups
+	type anchor struct{ x, y int }
+	var anchors []anchor
 
-			case 6:
-				// Cyberpunk: dense, slightly compressed rings
-				angle = float64(bHash%3600) / 3600.0 * 2.0 * math.Pi
-				distRatio = ringMin + float64(bHash%1000)/1000.0*(ringMax-ringMin)*0.85
+	for _, e := range entries {
+		for i := 0; i < e.count; i++ {
+			size := e.size
+			var px, py int
+			placed := false
 
-			default:
-				// Space / Cosmic: perfect orbital circles — evenly spaced by count
-				baseAngle := float64(hashKey(key)%3600) / 3600.0 * 2.0 * math.Pi
-				total := bs.Count
-				if total < 1 {
-					total = 1
+			for attempt := 0; attempt < 30; attempt++ {
+				if len(anchors) == 0 || (rng.Intn(3) == 0) {
+					// Place near center with random walk
+					ang := rng.Float64() * 2.0 * math.Pi
+					dist := float64(rng.Intn(maxR))
+					px = cx + int(math.Cos(ang)*dist)
+					py = cy + int(math.Sin(ang)*dist*0.65)
+				} else {
+					// Walk from existing anchor
+					anch := anchors[rng.Intn(len(anchors))]
+					px = anch.x + rng.Intn(31) - 15
+					py = anch.y + rng.Intn(21) - 10
 				}
-				angle = baseAngle + float64(i)/float64(total)*2.0*math.Pi
-				distRatio = (ringMin + ringMax) / 2.0
+				px = clampInt(px, border, w-border)
+				py = clampInt(py, border, h-border)
+				if isWaterPixel(img, px, py, pal) {
+					continue
+				}
+				if grid.isFree(px, py, size, size) {
+					placed = true
+					break
+				}
 			}
+			if !placed {
+				continue
+			}
+			grid.claim(px, py, size, size)
+			anchors = append(anchors, anchor{px, py})
+			placements = append(placements, bldInfo{e.key, e.category, e.domain, px, py, size})
+		}
+	}
+	return placements
+}
 
-			distRatio = math.Max(0.03, math.Min(distRatio, 0.55))
-			dist := distRatio * maxDist
-			bx := cx + int(math.Cos(angle)*dist)
+// drawRoadLine draws a 1-2px road between two points using the palette road color
+func drawRoadLine(img *image.RGBA, x0, y0, x1, y1, imgW, imgH, thickness int, col color.RGBA) {
+	dx := float64(x1 - x0)
+	dy := float64(y1 - y0)
+	dist := math.Sqrt(dx*dx + dy*dy)
+	if dist < 1 {
+		return
+	}
+	steps := int(dist) + 1
+	for i := 0; i <= steps; i++ {
+		t := float64(i) / float64(steps)
+		px := x0 + int(dx*t)
+		py := y0 + int(dy*t)
+		for tw := -thickness / 2; tw <= thickness/2; tw++ {
+			nx := px + int(float64(tw)*(-dy/dist))
+			ny := py + int(float64(tw)*(dx/dist))
+			if nx >= 0 && nx < imgW && ny >= 0 && ny < imgH {
+				existing := img.RGBAAt(nx, ny)
+				img.SetRGBA(nx, ny, lerp(existing, col, 0.65))
+			}
+		}
+	}
+}
 
-			// Vertical compression varies by era for distinct silhouettes
-			vc := 0.70
-			switch {
-			case era >= 7:
-				vc = 0.85 // space: near-isometric
-			case era == 6:
-				vc = 0.90 // cyberpunk: tall, vertical feel
-			case era == 0:
-				vc = 0.65 // primitive: squat, ground-hugging
-			}
-			by := cy + int(math.Sin(angle)*dist*vc)
+// ─── Village layout (bronze/iron/classical) ───────────────
+func placeBuildingsVillage(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, cx, cy, w, h int, entries []layoutEntry) []bldInfo {
+	var placements []bldInfo
+	pal := getTerrainPalette(eraFromAge(cfg.AgeKey))
+	grid := newPlotGrid(10)
+	border := 8
+	maxR := int(float64(min(w, h)) * 0.35)
 
-			size := 3
-			switch {
-			case era >= 6:
-				size = 5
-			case era >= 3:
-				size = 4
-			}
-			if bs.Category == "military" {
-				size++
-			}
-			if dl > 0 {
-				size += 2
-			}
+	// Draw 6 radial spokes from center
+	numSpokes := 6
+	spokeColors := lerp(pal.Road, pal.Ground, 0.3)
+	for s := 0; s < numSpokes; s++ {
+		ang := float64(s) / float64(numSpokes) * 2.0 * math.Pi
+		ex := cx + int(math.Cos(ang)*float64(maxR))
+		ey := cy + int(math.Sin(ang)*float64(maxR)*0.70)
+		drawRoadLine(img, cx, cy, ex, ey, w, h, 1, spokeColors)
+	}
 
-			placements = append(placements, bldInfo{key, bs.Category, bx, by, size})
+	// Place buildings along spokes
+	idx := 0
+	for _, e := range entries {
+		for i := 0; i < e.count; i++ {
+			size := e.size
+			spoke := idx % numSpokes
+			ang := float64(spoke)/float64(numSpokes)*2.0*math.Pi
+			// Random distance along spoke
+			dist := float64(8+rng.Intn(maxR-8))
+			side := 1
+			if rng.Intn(2) == 0 {
+				side = -1
+			}
+			perpAng := ang + float64(side)*math.Pi/2.0
+			offset := float64(3 + rng.Intn(8))
+			bx := cx + int(math.Cos(ang)*dist+math.Cos(perpAng)*offset)
+			by := cy + int(math.Sin(ang)*dist*0.70+math.Sin(perpAng)*offset)
+			bx = clampInt(bx, border, w-border)
+			by = clampInt(by, border, h-border)
+
+			placed := false
+			for attempt := 0; attempt < 20; attempt++ {
+				if !isWaterPixel(img, bx, by, pal) && grid.isFree(bx, by, size, size) {
+					placed = true
+					break
+				}
+				bx = clampInt(bx+rng.Intn(11)-5, border, w-border)
+				by = clampInt(by+rng.Intn(7)-3, border, h-border)
+			}
+			if placed {
+				grid.claim(bx, by, size, size)
+				placements = append(placements, bldInfo{e.key, e.category, e.domain, bx, by, size})
+			}
+			idx++
+		}
+	}
+	return placements
+}
+
+// ─── Medieval layout (medieval/renaissance) ───────────────
+func placeBuildingsMedieval(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, cx, cy, w, h int, entries []layoutEntry) []bldInfo {
+	var placements []bldInfo
+	pal := getTerrainPalette(eraFromAge(cfg.AgeKey))
+	grid := newPlotGrid(10)
+	border := 8
+	wallR := 30
+
+	// Draw castle walls (rough square)
+	wallColor := lerp(pal.Accent1, pal.Ground, 0.4)
+	for i := 0; i <= 360; i++ {
+		ang := float64(i) * math.Pi / 180.0
+		// Make it square-ish by clamping to the min of x/y components
+		wx := math.Cos(ang)
+		wy := math.Sin(ang)
+		scale := float64(wallR) / math.Max(math.Abs(wx), math.Abs(wy))
+		wpx := cx + int(wx*scale)
+		wpy := cy + int(wy*scale*0.75)
+		if wpx >= 0 && wpx < w && wpy >= 0 && wpy < h {
+			img.SetRGBA(wpx, wpy, wallColor)
+			if wpx+1 < w {
+				img.SetRGBA(wpx+1, wpy, wallColor)
+			}
+		}
+	}
+
+	// Draw roads to 4 quarters
+	roadCol := lerp(pal.Road, pal.Ground, 0.25)
+	for _, off := range [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+		ex := cx + off[0]*int(float64(min(w, h))*0.45)
+		ey := cy + off[1]*int(float64(min(w, h))*0.35)
+		drawRoadLine(img, cx, cy, ex, ey, w, h, 1, roadCol)
+	}
+
+	// Divide buildings into 4 quarter groups
+	quarters := [4][]layoutEntry{}
+	for i, e := range entries {
+		q := i % 4
+		quarters[q] = append(quarters[q], e)
+	}
+
+	quarterOffsets := [4][2]int{{1, -1}, {-1, -1}, {1, 1}, {-1, 1}}
+	maxR := int(float64(min(w, h)) * 0.40)
+	spacing := 10
+
+	for q, qEntries := range quarters {
+		qox := quarterOffsets[q][0]
+		qoy := quarterOffsets[q][1]
+		startX := cx + qox*(wallR+10)
+		startY := cy + qoy*(wallR+10)
+		col := 0
+		row := 0
+		for _, e := range qEntries {
+			for i := 0; i < e.count; i++ {
+				size := e.size
+				bx := startX + col*spacing*qox
+				by := startY + row*spacing*qoy
+
+				// Clamp into bounds
+				bx = clampInt(bx, border, w-border)
+				by = clampInt(by, border, h-border)
+
+				// Check we haven't gone too far
+				if abs(bx-cx) > maxR || abs(by-cy) > int(float64(maxR)*0.75) {
+					col = 0
+					row = 0
+					bx = startX
+					by = startY
+				}
+
+				placed := false
+				for attempt := 0; attempt < 20; attempt++ {
+					if !isWaterPixel(img, bx, by, pal) && grid.isFree(bx, by, size, size) {
+						placed = true
+						break
+					}
+					bx = clampInt(bx+rng.Intn(9)-4, border, w-border)
+					by = clampInt(by+rng.Intn(7)-3, border, h-border)
+				}
+				if placed {
+					grid.claim(bx, by, size, size)
+					placements = append(placements, bldInfo{e.key, e.category, e.domain, bx, by, size})
+				}
+				col++
+				if col > 3 {
+					col = 0
+					row++
+				}
+			}
+		}
+	}
+	return placements
+}
+
+// ─── Industrial layout (colonial/industrial) ──────────────
+func placeBuildingsIndustrial(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, cx, cy, w, h int, entries []layoutEntry) []bldInfo {
+	var placements []bldInfo
+	pal := getTerrainPalette(eraFromAge(cfg.AgeKey))
+	grid := newPlotGrid(14)
+	border := 8
+	cellSpacing := 14
+
+	// Separate into production (left) and residential (right)
+	var prodEntries, resEntries []layoutEntry
+	prodDomains := map[string]bool{
+		"food": true, "lumber": true, "masonry": true, "metallurgy": true, "energy": true,
+	}
+	for _, e := range entries {
+		if prodDomains[e.domain] || e.category == "production" {
+			prodEntries = append(prodEntries, e)
+		} else {
+			resEntries = append(resEntries, e)
+		}
+	}
+
+	// Draw road grid
+	roadCol := lerp(pal.Road, c(150, 145, 135), 0.4)
+	maxR := int(float64(min(w, h)) * 0.42)
+	// Horizontal roads every 3 cells
+	for ry := cy - maxR; ry <= cy+maxR; ry += cellSpacing * 3 {
+		drawRoadLine(img, cx-maxR, ry, cx+maxR, ry, w, h, 1, roadCol)
+	}
+	// Vertical roads every 4 cells
+	for rx := cx - maxR; rx <= cx+maxR; rx += cellSpacing * 4 {
+		drawRoadLine(img, rx, cy-maxR, rx, cy+maxR, w, h, 1, roadCol)
+	}
+
+	// Place production on left half
+	placeGrid := func(ents []layoutEntry, startX, startY, dirX int) {
+		col := 0
+		row := 0
+		for _, e := range ents {
+			for i := 0; i < e.count; i++ {
+				size := e.size
+				bx := startX + col*cellSpacing*dirX
+				by := startY + row*cellSpacing
+				bx = clampInt(bx, border, w-border)
+				by = clampInt(by, border, h-border)
+
+				placed := false
+				for attempt := 0; attempt < 20; attempt++ {
+					if !isWaterPixel(img, bx, by, pal) && grid.isFree(bx, by, size, size) {
+						placed = true
+						break
+					}
+					bx = clampInt(bx+rng.Intn(5)-2, border, w-border)
+					by = clampInt(by+rng.Intn(5)-2, border, h-border)
+				}
+				if placed {
+					grid.claim(bx, by, size, size)
+					placements = append(placements, bldInfo{e.key, e.category, e.domain, bx, by, size})
+				}
+				col++
+				if col > 4 {
+					col = 0
+					row++
+				}
+			}
+		}
+	}
+
+	startY := cy - int(float64(min(w, h))*0.3)
+	placeGrid(prodEntries, cx-cellSpacing, startY, -1)
+	placeGrid(resEntries, cx+cellSpacing, startY, 1)
+
+	return placements
+}
+
+// ─── Modern layout (modern/atomic) ───────────────────────
+func placeBuildingsModern(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, cx, cy, w, h int, entries []layoutEntry) []bldInfo {
+	var placements []bldInfo
+	pal := getTerrainPalette(eraFromAge(cfg.AgeKey))
+	grid := newPlotGrid(12)
+	border := 8
+	blockW := 6
+	blockH := 4
+	cellSize := 10
+	streetW := 3
+
+	blockTotalW := blockW*cellSize + streetW
+	blockTotalH := blockH*cellSize + streetW
+
+	// Start from top-left of city area
+	cityR := int(float64(min(w, h)) * 0.42)
+	startX := cx - cityR + border
+	startY := cy - cityR + border
+	streetColor := lerp(pal.Road, c(80, 80, 85), 0.5)
+
+	bldIdx := 0
+	// Flatten all buildings into a single list
+	var allBlds []layoutEntry
+	for _, e := range entries {
+		for i := 0; i < e.count; i++ {
+			allBlds = append(allBlds, e)
+		}
+	}
+
+	blockRow := 0
+	blockCol := 0
+	for bldIdx < len(allBlds) {
+		blockX := startX + blockCol*blockTotalW
+		blockY := startY + blockRow*blockTotalH
+
+		if blockX+blockTotalW > cx+cityR || blockY+blockTotalH > cy+cityR {
+			break
+		}
+
+		// Draw streets around this block
+		drawRoadLine(img, blockX-streetW, blockY, blockX+blockTotalW, blockY, w, h, streetW, streetColor)
+		drawRoadLine(img, blockX, blockY-streetW, blockX, blockY+blockTotalH, w, h, streetW, streetColor)
+
+		// Fill block with buildings
+		for row := 0; row < blockH && bldIdx < len(allBlds); row++ {
+			for col := 0; col < blockW && bldIdx < len(allBlds); col++ {
+				e := allBlds[bldIdx]
+				bldIdx++
+				bx := blockX + col*cellSize + cellSize/2
+				by := blockY + row*cellSize + cellSize/2
+				bx = clampInt(bx, border, w-border)
+				by = clampInt(by, border, h-border)
+				if !isWaterPixel(img, bx, by, pal) && grid.isFree(bx, by, e.size, e.size) {
+					grid.claim(bx, by, e.size, e.size)
+					placements = append(placements, bldInfo{e.key, e.category, e.domain, bx, by, e.size})
+				}
+			}
+		}
+
+		blockCol++
+		if blockX+blockTotalW*2 > cx+cityR {
+			blockCol = 0
+			blockRow++
+		}
+	}
+	_ = rng // suppress unused
+	return placements
+}
+
+// ─── Campus layout (digital/nano) ────────────────────────
+func placeBuildingsCampus(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, cx, cy, w, h int, entries []layoutEntry) []bldInfo {
+	var placements []bldInfo
+	pal := getTerrainPalette(eraFromAge(cfg.AgeKey))
+	grid := newPlotGrid(8)
+	border := 8
+
+	// Flatten all buildings
+	var allBlds []layoutEntry
+	for _, e := range entries {
+		for i := 0; i < e.count; i++ {
+			allBlds = append(allBlds, e)
+		}
+	}
+
+	if len(allBlds) == 0 {
+		return placements
+	}
+
+	// Arrange campus cluster centers in hexagonal pattern
+	clusterSize := 8 // buildings per campus
+	numClusters := (len(allBlds) + clusterSize - 1) / clusterSize
+	if numClusters < 1 {
+		numClusters = 1
+	}
+
+	clusterR := int(float64(min(w, h)) * 0.32)
+	pathColor := lerp(pal.Road, pal.Accent1, 0.3)
+
+	type clusterCenter struct{ x, y int }
+	var clusterCenters []clusterCenter
+
+	for ci := 0; ci < numClusters; ci++ {
+		var ccx, ccy int
+		if ci == 0 {
+			ccx, ccy = cx, cy
+		} else {
+			// Hexagonal arrangement
+			ring := 1
+			pos := ci - 1
+			hexDir := [][2]float64{
+				{1, 0}, {0.5, 0.866}, {-0.5, 0.866},
+				{-1, 0}, {-0.5, -0.866}, {0.5, -0.866},
+			}
+			hexIdx := pos % 6
+			ang := math.Atan2(hexDir[hexIdx][1], hexDir[hexIdx][0])
+			_ = ring
+			ccx = cx + int(math.Cos(ang)*float64(clusterR))
+			ccy = cy + int(math.Sin(ang)*float64(clusterR)*0.70)
+		}
+		ccx = clampInt(ccx, border+20, w-border-20)
+		ccy = clampInt(ccy, border+20, h-border-20)
+		clusterCenters = append(clusterCenters, clusterCenter{ccx, ccy})
+	}
+
+	// Draw winding paths between cluster centers
+	for i := 1; i < len(clusterCenters); i++ {
+		a, b := clusterCenters[i-1], clusterCenters[i]
+		drawRoadLine(img, a.x, a.y, b.x, b.y, w, h, 1, pathColor)
+	}
+
+	// Place buildings in each cluster
+	bldIdx := 0
+	for ci, cc := range clusterCenters {
+		_ = ci
+		clusterCellSize := 8
+		for i := 0; i < clusterSize && bldIdx < len(allBlds); i++ {
+			e := allBlds[bldIdx]
+			bldIdx++
+			ang := float64(i) / float64(clusterSize) * 2.0 * math.Pi
+			dist := float64(5 + i%3*clusterCellSize)
+			bx := cc.x + int(math.Cos(ang)*dist)
+			by := cc.y + int(math.Sin(ang)*dist*0.75)
+			bx = clampInt(bx, border, w-border)
+			by = clampInt(by, border, h-border)
+
+			placed := false
+			for attempt := 0; attempt < 20; attempt++ {
+				if !isWaterPixel(img, bx, by, pal) && grid.isFree(bx, by, e.size, e.size) {
+					placed = true
+					break
+				}
+				bx = clampInt(bx+rng.Intn(9)-4, border, w-border)
+				by = clampInt(by+rng.Intn(7)-3, border, h-border)
+			}
+			if placed {
+				grid.claim(bx, by, e.size, e.size)
+				placements = append(placements, bldInfo{e.key, e.category, e.domain, bx, by, e.size})
+			}
+		}
+	}
+	return placements
+}
+
+// ─── Orbital layout (space/galactic) ─────────────────────
+func placeBuildingsOrbital(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, cx, cy, w, h int, entries []layoutEntry) []bldInfo {
+	var placements []bldInfo
+	pal := getTerrainPalette(eraFromAge(cfg.AgeKey))
+	grid := newPlotGrid(10)
+	border := 8
+	_ = rng
+
+	// Flatten buildings
+	var allBlds []layoutEntry
+	for _, e := range entries {
+		for i := 0; i < e.count; i++ {
+			allBlds = append(allBlds, e)
+		}
+	}
+
+	// Central hub: most-assigned building
+	if len(allBlds) > 0 {
+		hub := allBlds[0]
+		grid.claim(cx, cy, hub.size, hub.size)
+		placements = append(placements, bldInfo{hub.key, hub.category, hub.domain, cx, cy, hub.size})
+		allBlds = allBlds[1:]
+	}
+
+	// 3 orbital rings
+	ringRadii := []int{25, 45, 70}
+	orbitColors := []color.RGBA{
+		lerp(pal.Accent1, pal.Ground, 0.5),
+		lerp(pal.Accent2, pal.Ground, 0.5),
+		lerp(pal.Accent1, pal.Accent2, 0.5),
+	}
+
+	// Draw dotted rings
+	for ri, r := range ringRadii {
+		ringC := orbitColors[ri]
+		circumference := int(2.0 * math.Pi * float64(r))
+		for i := 0; i < circumference; i += 3 {
+			ang := float64(i) / float64(circumference) * 2.0 * math.Pi
+			rx := cx + int(math.Cos(ang)*float64(r))
+			ry := cy + int(math.Sin(ang)*float64(r)*0.70)
+			if rx >= 0 && rx < w && ry >= 0 && ry < h {
+				existing := img.RGBAAt(rx, ry)
+				img.SetRGBA(rx, ry, lerp(existing, ringC, 0.6))
+			}
+		}
+	}
+
+	// Distribute remaining buildings across rings
+	bldIdx := 0
+	for ri, r := range ringRadii {
+		if bldIdx >= len(allBlds) {
+			break
+		}
+		// How many buildings fit in this ring?
+		ringCount := len(allBlds) / (len(ringRadii) - ri)
+		if ri == len(ringRadii)-1 {
+			ringCount = len(allBlds) - bldIdx
+		}
+		if ringCount < 1 {
+			ringCount = 1
+		}
+
+		for i := 0; i < ringCount && bldIdx < len(allBlds); i++ {
+			e := allBlds[bldIdx]
+			bldIdx++
+			total := ringCount
+			if total < 1 {
+				total = 1
+			}
+			ang := float64(i) / float64(total) * 2.0 * math.Pi
+			bx := cx + int(math.Cos(ang)*float64(r))
+			by := cy + int(math.Sin(ang)*float64(r)*0.70)
+			bx = clampInt(bx, border, w-border)
+			by = clampInt(by, border, h-border)
+
+			placed := false
+			for attempt := 0; attempt < 20; attempt++ {
+				if !isWaterPixel(img, bx, by, pal) && grid.isFree(bx, by, e.size, e.size) {
+					placed = true
+					break
+				}
+				// Try slight angular offset
+				offAng := ang + float64(attempt)*0.2
+				bx = cx + int(math.Cos(offAng)*float64(r))
+				by = cy + int(math.Sin(offAng)*float64(r)*0.70)
+				bx = clampInt(bx, border, w-border)
+				by = clampInt(by, border, h-border)
+			}
+			if placed {
+				grid.claim(bx, by, e.size, e.size)
+				placements = append(placements, bldInfo{e.key, e.category, e.domain, bx, by, e.size})
+			}
 		}
 	}
 	return placements
@@ -844,29 +1676,54 @@ func drawInfrastructure(img *image.RGBA, w, h, era, dl int, pal TerrainPalette, 
 }
 
 // ─── Building rendering ──────────────────────────────────
-func drawBuildings(img *image.RGBA, w, h, era, dl int, pal TerrainPalette, placements []bldInfo) {
+func drawBuildings(img *image.RGBA, w, h, era, dl int, pal TerrainPalette, ageKey string, placements []bldInfo) {
+	eraName := getEraName(ageKey)
 	for _, b := range placements {
 		bx, by, size := b.x, b.y, b.size
 
-		// Shadow
+		// Determine scale: wonders get scale 3, full-map gets 2, minimap gets 1
+		scale := 1
+		if dl > 0 {
+			if b.category == "wonder" {
+				scale = 3
+			} else {
+				scale = 2
+			}
+		}
+
+		// Look up colors from the existing visual map (keeps all 284 mappings)
+		vis := getBuildingVisual(b.key, b.category)
+		primary := vis.Primary
+		accent := vis.Accent
+
+		// Determine sprite type from domain + era
+		stype := getBuildingSprite(b.domain, b.key, eraName)
+		if b.category == "wonder" {
+			stype = spriteWonder
+		}
+
+		// Shadow under the sprite
 		shadowOff := 1 + dl
-		for dy := 0; dy < size; dy++ {
-			for dx := 0; dx < size; dx++ {
-				px := bx - size/2 + dx + shadowOff
-				py := by - size/2 + dy + shadowOff
+		sprW := len([]rune(spriteRowWidth(stype))) * scale
+		sprH := spriteRowCount(stype) * scale
+		for dy := 0; dy < sprH; dy++ {
+			for dx := 0; dx < sprW; dx++ {
+				px := bx - sprW/2 + dx + shadowOff
+				py := by - sprH/2 + dy + shadowOff
 				if px >= 0 && px < w && py >= 0 && py < h {
 					existing := img.RGBAAt(px, py)
-					img.SetRGBA(px, py, lerp(existing, c(0, 0, 0), 0.35))
+					img.SetRGBA(px, py, lerp(existing, c(0, 0, 0), 0.30))
 				}
 			}
 		}
 
-		vis := getBuildingVisual(b.key, b.category)
-		drawBuildingShape(img, w, h, b, vis, era, dl)
+		// Draw the sprite centred on (bx, by)
+		drawBuildingSprite(img, w, h,
+			bx-sprW/2, by-sprH/2,
+			stype, primary, accent, scale)
 
-		// Wonder glow (all eras) — large multi-ring corona
+		// Wonder glow corona (retained from old system)
 		if b.category == "wonder" {
-			// Outer diffuse halo
 			glowR := size + 7 + dl*4
 			for dy := -glowR; dy <= glowR; dy++ {
 				for dx := -glowR; dx <= glowR; dx++ {
@@ -887,7 +1744,6 @@ func drawBuildings(img *image.RGBA, w, h, era, dl int, pal TerrainPalette, place
 					img.SetRGBA(px, py, lerp(existing, gc, fade*0.55))
 				}
 			}
-			// Inner bright corona ring
 			innerR := size/2 + 2 + dl
 			for dy := -innerR; dy <= innerR; dy++ {
 				for dx := -innerR; dx <= innerR; dx++ {
