@@ -20,6 +20,7 @@ type overlayEntry struct {
 type widgetEntry struct {
 	title      string
 	build      func(state game.GameState) tview.Primitive
+	refreshFn  func(state game.GameState) // optional: in-place update, skips page rebuild
 	fullScreen bool
 }
 
@@ -81,10 +82,11 @@ func (om *OverlayManager) Register(name, title string, provide OverlayProvider) 
 // When fullScreen is false the primitive is wrapped in the same centered 85%×85% modal box
 // (gold border, title, ESC to close). When fullScreen is true the primitive fills the entire
 // screen — useful for the Map which needs every pixel.
-func (om *OverlayManager) RegisterWidget(name, title string, build func(state game.GameState) tview.Primitive, fullScreen bool) {
+func (om *OverlayManager) RegisterWidget(name, title string, build func(state game.GameState) tview.Primitive, refresh func(state game.GameState), fullScreen bool) {
 	om.widgetEntries[name] = &widgetEntry{
 		title:      title,
 		build:      build,
+		refreshFn:  refresh,
 		fullScreen: fullScreen,
 	}
 }
@@ -193,8 +195,12 @@ func (om *OverlayManager) Refresh(state game.GameState) {
 		e.tv.SetText(e.provide(state))
 		return
 	}
-	// Widget overlay path — rebuild and replace.
+	// Widget overlay path — use in-place refresh if available, else rebuild.
 	if we, ok := om.widgetEntries[om.active]; ok {
+		if we.refreshFn != nil {
+			we.refreshFn(state)
+			return
+		}
 		prim := we.build(state)
 		root := om.buildWidgetRoot(we, prim)
 		om.pages.RemovePage(om.active)

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/rivo/tview"
@@ -72,6 +73,7 @@ var panelDomainLabels = map[string]string{
 
 // buildingRow holds one row of the assignment display.
 type buildingRow struct {
+	Key             string
 	Name            string
 	WorkersAssigned int
 	Capacity        int
@@ -106,7 +108,7 @@ func renderVillagerPanel(tv *tview.TextView, state *game.GameState) {
 	groupMap := map[string]*domainGroup{}
 	groupOrder := []string{}
 
-	for _, bs := range state.Buildings {
+	for bKey, bs := range state.Buildings {
 		if bs.WorkersAssigned <= 0 || bs.WorkerDomain == "" {
 			continue
 		}
@@ -122,11 +124,21 @@ func renderVillagerPanel(tv *tview.TextView, state *game.GameState) {
 		}
 		cap := bs.WorkerCapacity * count
 		groupMap[domain].Rows = append(groupMap[domain].Rows, buildingRow{
+			Key:             bKey,
 			Name:            bs.Name,
 			WorkersAssigned: bs.WorkersAssigned,
 			Capacity:        cap,
 		})
 		groupMap[domain].Total += bs.WorkersAssigned
+	}
+
+	// Sort domain groups alphabetically for stable display.
+	sort.Strings(groupOrder)
+	// Sort buildings within each domain group alphabetically by key.
+	for _, grp := range groupMap {
+		sort.Slice(grp.Rows, func(i, j int) bool {
+			return grp.Rows[i].Key < grp.Rows[j].Key
+		})
 	}
 
 	if len(groupOrder) == 0 {
@@ -143,7 +155,7 @@ func renderVillagerPanel(tv *tview.TextView, state *game.GameState) {
 			if cls, found := config.WorkerClassByDomainAndAge(domain, state.Age); found && cls.ClassName != "" {
 				classDisplay = fmt.Sprintf("  %s × %d", cls.ClassName, grp.Total)
 			}
-			fmt.Fprintf(&sb, "[green][%s][-][white]%s\n", label, classDisplay)
+			fmt.Fprintf(&sb, "[cyan][%s][-][white]%s\n", label, classDisplay)
 			for _, row := range grp.Rows {
 				bar := assignBar(row.WorkersAssigned, row.Capacity, 8)
 				fmt.Fprintf(&sb, "  %-20s %s [cyan]%d[white]/[green]%d[white]\n",

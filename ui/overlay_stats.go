@@ -159,5 +159,157 @@ func statsProvider(state game.GameState) string {
 		sb.WriteString(" [gray]Type 'prestige shop' to browse[-]\n")
 	}
 
+	// ─── Resource Rates ───
+	sb.WriteString("\n[gold]═══ Resource Rates (per tick) ═══[-]\n\n")
+	rateKeys := make([]string, 0, len(state.Resources))
+	for k, rs := range state.Resources {
+		if rs.Unlocked {
+			rateKeys = append(rateKeys, k)
+		}
+	}
+	sort.Strings(rateKeys)
+	if len(rateKeys) == 0 {
+		sb.WriteString(" [gray]No unlocked resources[-]\n")
+	} else {
+		for _, k := range rateKeys {
+			rs := state.Resources[k]
+			if rs.Rate >= 0 {
+				fmt.Fprintf(&sb, "  [cyan]%-16s[-] [green]+%.2f /tick[-]\n", k, rs.Rate)
+			} else {
+				fmt.Fprintf(&sb, "  [cyan]%-16s[-] [red]%.2f /tick[-]\n", k, rs.Rate)
+			}
+		}
+	}
+
+	// ─── Active Multipliers ───
+	sb.WriteString("\n[gold]═══ Active Multipliers ═══[-]\n\n")
+
+	type bonusContrib struct {
+		milestones float64
+		research   float64
+		prestige   float64
+		legacy     float64
+	}
+	bonuses := map[string]*bonusContrib{}
+
+	ensureTarget := func(target string) {
+		if bonuses[target] == nil {
+			bonuses[target] = &bonusContrib{}
+		}
+	}
+
+	// 1. Milestone permanent_bonus effects
+	msDefs := config.MilestoneByKey()
+	for msKey, msInfo := range state.Milestones.Milestones {
+		if !msInfo.Completed {
+			continue
+		}
+		def, ok := msDefs[msKey]
+		if !ok {
+			continue
+		}
+		for _, eff := range def.Rewards {
+			if eff.Type == "permanent_bonus" {
+				ensureTarget(eff.Target)
+				bonuses[eff.Target].milestones += eff.Value
+			}
+		}
+	}
+
+	// 2. Research bonus effects (type "bonus" in tech defs; accumulated in Research.Bonuses)
+	// We re-derive per-target research contributions from the researched tech definitions
+	// so we can attribute them correctly.
+	techDefs := config.TechByKey()
+	for techKey, techState := range state.Research.Techs {
+		if !techState.Researched {
+			continue
+		}
+		def, ok := techDefs[techKey]
+		if !ok {
+			continue
+		}
+		for _, eff := range def.Effects {
+			if eff.Type == "bonus" {
+				ensureTarget(eff.Target)
+				bonuses[eff.Target].research += eff.Value
+			}
+		}
+	}
+
+	// 3. Prestige — passive production_all bonus
+	if state.Prestige.PassiveBonus > 0 {
+		ensureTarget("production_all")
+		bonuses["production_all"].prestige += state.Prestige.PassiveBonus
+	}
+	// Prestige — upgrade rate bonuses
+	prestigeDefs := config.PrestigeUpgradeByKey()
+	for key, uState := range state.Prestige.Upgrades {
+		if uState.Tier <= 0 {
+			continue
+		}
+		def, ok := prestigeDefs[key]
+		if !ok {
+			continue
+		}
+		if def.EffectType == "rate_bonus" {
+			ensureTarget(def.EffectKey)
+			bonuses[def.EffectKey].prestige += def.PerTier * float64(uState.Tier)
+		}
+	}
+
+	// 4. Legacy bonuses
+	for epochKey, active := range state.LegacyBonuses {
+		if !active {
+			continue
+		}
+		legBonuses := config.LegacyBonusForEpoch(epochKey)
+		for target, mult := range legBonuses {
+			ensureTarget(target)
+			bonuses[target].legacy += mult
+		}
+	}
+
+	// Collect targets that have any nonzero contribution
+	activeTargets := make([]string, 0, len(bonuses))
+	for target, bc := range bonuses {
+		total := bc.milestones + bc.research + bc.prestige + bc.legacy
+		if total > 0 {
+			activeTargets = append(activeTargets, target)
+		}
+	}
+
+	if len(activeTargets) == 0 {
+		sb.WriteString(" [gray]No active multipliers[-]\n")
+	} else {
+		// Sort: production_all first, then alphabetical
+		sort.Slice(activeTargets, func(i, j int) bool {
+			if activeTargets[i] == "production_all" {
+				return true
+			}
+			if activeTargets[j] == "production_all" {
+				return false
+			}
+			return activeTargets[i] < activeTargets[j]
+		})
+
+		for _, target := range activeTargets {
+			bc := bonuses[target]
+			total := bc.milestones + bc.research + bc.prestige + bc.legacy
+			fmt.Fprintf(&sb, "  [cyan]%-20s[-] [yellow]+%.0f%%[-]\n", target, total*100)
+			if bc.milestones > 0 {
+				fmt.Fprintf(&sb, "  [gray]  milestones     +%.0f%%[-]\n", bc.milestones*100)
+			}
+			if bc.research > 0 {
+				fmt.Fprintf(&sb, "  [gray]  research       +%.0f%%[-]\n", bc.research*100)
+			}
+			if bc.prestige > 0 {
+				fmt.Fprintf(&sb, "  [gray]  prestige       +%.0f%%[-]\n", bc.prestige*100)
+			}
+			if bc.legacy > 0 {
+				fmt.Fprintf(&sb, "  [gray]  legacy         +%.0f%%[-]\n", bc.legacy*100)
+			}
+		}
+	}
+
 	return sb.String()
 }

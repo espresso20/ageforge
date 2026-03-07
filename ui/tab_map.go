@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
@@ -10,11 +11,13 @@ import (
 
 // MapTab displays a full-screen procedural pixel settlement map
 type MapTab struct {
-	root     *tview.Flex
-	image    *tview.Image
-	titleTV  *tview.TextView
-	lastHash uint64
-	lastAge  string
+	root         *tview.Flex
+	image        *tview.Image
+	titleTV      *tview.TextView
+	lastHash     uint64
+	lastAge      string
+	pendingState *game.GameState
+	pendingHash  uint64
 }
 
 // NewMapTab creates a new full-screen map tab
@@ -52,31 +55,41 @@ func (t *MapTab) Refresh(state game.GameState) {
 		return
 	}
 
-	_, _, w, ht := t.image.GetRect()
-	if w < 4 || ht < 4 {
-		return
-	}
-	// Higher resolution for full tab: 2x horizontal, 4x vertical (half-block doubled)
-	pixW := w * 2
-	pixH := ht * 4
-
 	totalBuildings := 0
 	for _, bs := range state.Buildings {
 		totalBuildings += bs.Count
 	}
-
-	img := GenerateMapImage(MapGenConfig{
-		Width:       pixW,
-		Height:      pixH,
-		DetailLevel: 1,
-		Buildings:   state.Buildings,
-		AgeKey:      state.Age,
-	})
-
-	t.image.SetImage(img)
 	label := settlementLabel(totalBuildings)
 	t.titleTV.SetText(fmt.Sprintf("[gold]── %s ──[-]", label))
 
-	t.lastHash = h
-	t.lastAge = state.Age
+	t.pendingState = &state
+	t.pendingHash = h
+
+	// Defer image generation until the widget is drawn and its dimensions are known.
+	// SetDrawFunc fires inside Image.Draw(), before pixels are rendered, so the newly
+	// generated image is available for the current frame.
+	t.image.SetDrawFunc(func(screen tcell.Screen, x, y, w, ht int) (int, int, int, int) {
+		if t.pendingState != nil && w >= 4 && ht >= 4 {
+			s := *t.pendingState
+			ph := t.pendingHash
+			t.pendingState = nil
+
+			// Correct pixel dimensions for tview TrueColor half-block rendering:
+			// each terminal cell = 1 pixel wide × 2 pixels tall
+			pixW := w
+			pixH := ht * 2
+
+			img := GenerateMapImage(MapGenConfig{
+				Width:       pixW,
+				Height:      pixH,
+				DetailLevel: 1,
+				Buildings:   s.Buildings,
+				AgeKey:      s.Age,
+			})
+			t.image.SetImage(img)
+			t.lastHash = ph
+			t.lastAge = s.Age
+		}
+		return x, y, w, ht
+	})
 }

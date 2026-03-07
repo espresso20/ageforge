@@ -95,11 +95,11 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.Register("wonders", "Wonders", wondersProvider)
 	d.overlayMgr.Register("logs", "Logs", logsProvider)
 	d.overlayMgr.Register("epoch", "Epoch", epochProvider)
+	mt := NewMapTab()
 	d.overlayMgr.RegisterWidget("map", "Map", func(state game.GameState) tview.Primitive {
-		mt := NewMapTab()
 		mt.Refresh(state)
 		return mt.Root()
-	}, true)
+	}, mt.Refresh, true)
 	d.devTab = newDevTab(engine)
 	return d
 }
