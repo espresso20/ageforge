@@ -77,7 +77,7 @@ func formatCultureRow(rs game.ResourceState) string {
 			FormatNumber(amount), FormatNumber(threshold), label)
 	}
 
-	return fmt.Sprintf(" %-12s %s %s\n", rs.Name, midPart, FormatRate(rs.Rate))
+	return fmt.Sprintf(" %-12s %s %s\n\n", rs.Name, midPart, FormatRate(rs.Rate))
 }
 
 // faithBand describes a faith band with its label and epoch odds text.
@@ -128,7 +128,7 @@ func formatFaithRow(rs game.ResourceState) string {
 	midPart := fmt.Sprintf("%s  %s  %s  [gray](epoch: %s)[-]",
 		barStr, band.label, pctStr, band.epochOdds)
 
-	return fmt.Sprintf(" %-12s %s %s\n", rs.Name, midPart, FormatRate(rs.Rate))
+	return fmt.Sprintf(" %-12s %s %s\n\n", rs.Name, midPart, FormatRate(rs.Rate))
 }
 
 // EconomyTab displays resources, buildings, and worker management
@@ -195,7 +195,6 @@ func (t *EconomyTab) refreshResources(state game.GameState) {
 		case "faith":
 			sb.WriteString(formatFaithRow(rs))
 		default:
-			bar := ProgressBar(rs.Amount, rs.Storage, 12)
 			amtColor := "white"
 			if rs.Storage > 0 && rs.Amount >= rs.Storage*0.9 {
 				amtColor = "yellow"
@@ -204,9 +203,22 @@ func (t *EconomyTab) refreshResources(state game.GameState) {
 			} else if rs.Rate < 0 {
 				amtColor = "red"
 			}
-			fmt.Fprintf(&sb, " %-12s [%s]%6s[-] / %-6s %s %s\n",
+			rateColor := "green"
+			if rs.Rate < 0 {
+				rateColor = "red"
+			} else if rs.Rate == 0 {
+				rateColor = "gray"
+			}
+			bar := resourceBar(rs.Amount, rs.Storage, 12)
+			glyph := ""
+			if rs.Storage > 0 && rs.Amount/rs.Storage >= 0.95 {
+				glyph = " [gold]◈[-]"
+			} else if rs.Rate < 0 {
+				glyph = " [red]▼[-]"
+			}
+			fmt.Fprintf(&sb, " %-14s [%s]%6s[-] [gray]/[-] [gray]%-6s[-]  [%s]%-8s[-]  %s%s\n\n",
 				rs.Name, amtColor, FormatNumber(rs.Amount), FormatNumber(rs.Storage),
-				FormatRate(rs.Rate), bar)
+				rateColor, FormatRate(rs.Rate), bar, glyph)
 		}
 	}
 	t.resourceTV.SetText(sb.String())
@@ -343,6 +355,41 @@ func workerAssignBar(assigned, capacity int) string {
 	filled := int(ratio * float64(width))
 	empty := width - filled
 	return "[" + BarFillColor + "]" + strings.Repeat("▓", filled) + "[" + BarEmptyColor + "]" + strings.Repeat("░", empty) + "[-]"
+}
+
+// resourceBar returns a width-char bar using █/░ characters with color based on fill level.
+// ratio >= 0.95 → gold (at cap), >= 0.60 → green, >= 0.30 → yellow, < 0.30 → red.
+func resourceBar(amount, storage float64, width int) string {
+	if storage <= 0 {
+		return strings.Repeat("░", width)
+	}
+	ratio := amount / storage
+	if ratio > 1 {
+		ratio = 1
+	}
+	filled := int(ratio * float64(width))
+	empty := width - filled
+
+	var fillColor string
+	switch {
+	case ratio >= 0.95:
+		fillColor = "gold"
+	case ratio >= 0.60:
+		fillColor = "green"
+	case ratio >= 0.30:
+		fillColor = "yellow"
+	default:
+		fillColor = "red"
+	}
+
+	bar := ""
+	if filled > 0 {
+		bar += fmt.Sprintf("[%s]%s[-]", fillColor, strings.Repeat("█", filled))
+	}
+	if empty > 0 {
+		bar += fmt.Sprintf("[gray]%s[-]", strings.Repeat("░", empty))
+	}
+	return bar
 }
 
 func (t *EconomyTab) refreshUnderConstruction(state game.GameState) {

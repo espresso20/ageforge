@@ -18,7 +18,7 @@ func buildingsLineageFood() []BuildingDef {
 	b = append(b, BuildingDef{
 		Name: "Gathering Camp", Key: "gathering_camp", Category: "production",
 		BaseCost:    map[string]float64{"wood": 20},
-		CostScale:   1.18,
+		CostScale:   1.12,
 		Effects:     []Effect{{Type: "production", Target: "food", Value: 0.50}},
 		BuildTicks:  12,
 		RequiredAge: "primitive_age",
