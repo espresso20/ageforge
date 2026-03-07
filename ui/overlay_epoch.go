@@ -197,9 +197,46 @@ func epochProviderCivilizationLog(sb *strings.Builder, state game.GameState) {
 	}
 }
 
+// findEpochEvent returns the most recent EpochEventRecord for the given epoch key, or nil.
+func findEpochEvent(history []game.EpochEventRecord, epochKey string) *game.EpochEventRecord {
+	var last *game.EpochEventRecord
+	for i := range history {
+		if history[i].EpochKey == epochKey {
+			last = &history[i]
+		}
+	}
+	return last
+}
+
+// epochHasCatastrophe returns true if a catastrophe event was recorded for the given epoch.
+func epochHasCatastrophe(history []game.EpochEventRecord, epochKey string) bool {
+	for _, r := range history {
+		if r.EpochKey == epochKey && r.EventType == "catastrophe" {
+			return true
+		}
+	}
+	return false
+}
+
+// epochEventColor returns a tview color tag name for an epoch event type.
+func epochEventColor(eventType string) string {
+	switch eventType {
+	case "good_legendary":
+		return "gold"
+	case "good_major":
+		return "green"
+	case "good_minor":
+		return "cyan"
+	case "bad_challenging":
+		return "red"
+	case "catastrophe":
+		return "red"
+	}
+	return "white"
+}
+
 // epochOverlayFormatAgeKey converts a snake_case age key to a display-friendly title.
 // e.g. "colonial_age" -> "Colonial Age"
-// This is a local copy to avoid collision with formatAgeKey in tab_epoch.go.
 func epochOverlayFormatAgeKey(key string) string {
 	words := strings.Split(key, "_")
 	for i, w := range words {

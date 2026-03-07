@@ -252,3 +252,41 @@ func researchProvider(state game.GameState) string {
 
 	return sb.String()
 }
+
+// formatBonusName converts a bonus key to a display name.
+func formatBonusName(key string) string {
+	switch key {
+	case "gather_rate":
+		return "Gather Rate"
+	case "production_all":
+		return "All Production"
+	case "military_power":
+		return "Military Power"
+	case "expedition_reward":
+		return "Expedition Rewards"
+	case "research_speed":
+		return "Research Speed"
+	case "build_cost":
+		return "Build Cost"
+	case "population":
+		return "Population Cap"
+	}
+	// Convert key_rate pattern
+	if strings.HasSuffix(key, "_rate") {
+		res := strings.TrimSuffix(key, "_rate")
+		return capitalize(res) + " Rate"
+	}
+	parts := strings.Split(key, "_")
+	for i, p := range parts {
+		parts[i] = capitalize(p)
+	}
+	return strings.Join(parts, " ")
+}
+
+// capitalize upper-cases the first letter of s.
+func capitalize(s string) string {
+	if len(s) == 0 {
+		return s
+	}
+	return strings.ToUpper(s[:1]) + s[1:]
+}

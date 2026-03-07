@@ -160,3 +160,20 @@ func tradeProvider(state game.GameState) string {
 
 	return sb.String()
 }
+
+// formatResMap formats a resource map for display.
+func formatResMap(m map[string]float64) string {
+	if len(m) == 0 {
+		return "none"
+	}
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	var parts []string
+	for _, k := range keys {
+		parts = append(parts, fmt.Sprintf("%.0f %s", m[k], k))
+	}
+	return strings.Join(parts, ", ")
+}
