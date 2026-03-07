@@ -2022,10 +2022,18 @@ func drawBuildings(img *image.RGBA, w, h, era, dl int, pal TerrainPalette, ageKe
 			stype = spriteWonder
 		}
 
-		// Shadow under the sprite
+		// Shadow under the sprite.
+		// At scale<=1 drawBuildingSprite renders a plain 3×3 block, so the
+		// shadow must also be 3×3 — using the full sprite dimensions would
+		// leave dark artifact pixels visible around the tiny solid block.
 		shadowOff := 1 + dl
-		sprW := len([]rune(spriteRowWidth(stype))) * scale
-		sprH := spriteRowCount(stype) * scale
+		var sprW, sprH int
+		if scale <= 1 {
+			sprW, sprH = 3, 3
+		} else {
+			sprW = len([]rune(spriteRowWidth(stype))) * scale
+			sprH = spriteRowCount(stype) * scale
+		}
 		for dy := 0; dy < sprH; dy++ {
 			for dx := 0; dx < sprW; dx++ {
 				px := bx - sprW/2 + dx + shadowOff
@@ -2609,15 +2617,25 @@ func drawPowerLine(img *image.RGBA, x0, y0, x1, y1, w, h int, lineC color.RGBA) 
 	}
 }
 
-func settlementLabel(buildingCount int) string {
+func settlementLabel(buildingCount int, ageKey string) string {
+	size := ""
 	switch {
 	case buildingCount <= 5:
-		return "Village"
+		size = "Village"
 	case buildingCount <= 20:
-		return "Town"
+		size = "Town"
 	case buildingCount <= 50:
-		return "City"
+		size = "City"
 	default:
-		return "Metropolis"
+		size = "Metropolis"
 	}
+	eraName := getEraName(ageKey)
+	if eraName == "" {
+		return size
+	}
+	// Capitalise the era name for display
+	if len(eraName) > 0 {
+		eraName = string(eraName[0]-32) + eraName[1:]
+	}
+	return eraName + " " + size
 }

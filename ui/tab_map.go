@@ -59,7 +59,7 @@ func (t *MapTab) Refresh(state game.GameState) {
 	for _, bs := range state.Buildings {
 		totalBuildings += bs.Count
 	}
-	label := settlementLabel(totalBuildings)
+	label := settlementLabel(totalBuildings, state.Age)
 	t.titleTV.SetText(fmt.Sprintf("[gold]── %s ──[-]", label))
 
 	t.pendingState = &state
