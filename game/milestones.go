@@ -49,6 +49,7 @@ func (mm *MilestoneManager) CheckMilestones(
 	researchedTechs map[string]bool,
 	soldierCount int,
 	wonderCount int,
+	knowledgeCount int,
 ) []config.MilestoneDef {
 	var completed []config.MilestoneDef
 
@@ -57,7 +58,7 @@ func (mm *MilestoneManager) CheckMilestones(
 			continue
 		}
 
-		if mm.checkMilestone(def, tick, age, ageOrder, resources, buildings, population, techCount, totalBuilt, researchedTechs, soldierCount, wonderCount) {
+		if mm.checkMilestone(def, tick, age, ageOrder, resources, buildings, population, techCount, totalBuilt, researchedTechs, soldierCount, wonderCount, knowledgeCount) {
 			mm.completed[def.Key] = true
 			completed = append(completed, def)
 		}
@@ -79,6 +80,7 @@ func (mm *MilestoneManager) checkMilestone(
 	researchedTechs map[string]bool,
 	soldierCount int,
 	wonderCount int,
+	knowledgeCount int,
 ) bool {
 	// Check min tick
 	if def.MinTick > 0 && tick < def.MinTick {
@@ -138,8 +140,9 @@ func (mm *MilestoneManager) checkMilestone(
 			return false
 		}
 	case "scholars_haven":
-		// This checks for 5+ scholars — we need worker data
-		// For simplicity, use population >= 10 as proxy (already set in def)
+		if knowledgeCount < 5 {
+			return false
+		}
 	}
 
 	return true

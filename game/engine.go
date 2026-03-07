@@ -465,8 +465,9 @@ func (ge *GameEngine) checkMilestones() {
 		researchedTechs[key] = true
 	}
 
-	// Count soldiers
+	// Count soldiers and knowledge workers
 	soldierCount := ge.Workers.GetDomainCount("military")
+	knowledgeCount := ge.Workers.GetDomainCount("knowledge")
 
 	// Count wonders
 	wonderCount := 0
@@ -485,6 +486,7 @@ func (ge *GameEngine) checkMilestones() {
 		researchedTechs,
 		soldierCount,
 		wonderCount,
+		knowledgeCount,
 	)
 
 	for _, ms := range completed {

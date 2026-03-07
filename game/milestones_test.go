@@ -19,14 +19,14 @@ func TestMilestoneManager_CheckFirstShelter(t *testing.T) {
 	ageOrder := fullAgeOrder()
 
 	// No hut — should not complete
-	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0)
+	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
 	if len(completed) != 0 {
 		t.Errorf("expected 0 completions with no hut, got %d", len(completed))
 	}
 
 	// Build a hut
 	bm.counts["hut"] = 1
-	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0)
+	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
 
 	found := false
 	for _, ms := range completed {
@@ -39,7 +39,7 @@ func TestMilestoneManager_CheckFirstShelter(t *testing.T) {
 	}
 
 	// Should not trigger again
-	completed = mm.CheckMilestones(3, "primitive_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0)
+	completed = mm.CheckMilestones(3, "primitive_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
 	for _, ms := range completed {
 		if ms.Key == "first_shelter" {
 			t.Error("first_shelter should not trigger twice")
@@ -54,14 +54,14 @@ func TestMilestoneManager_PopulationMilestone(t *testing.T) {
 	ageOrder := fullAgeOrder()
 
 	// small_village requires pop 5
-	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, 4, 0, 0, nil, 0, 0)
+	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, 4, 0, 0, nil, 0, 0, 0)
 	for _, ms := range completed {
 		if ms.Key == "small_village" {
 			t.Error("small_village should not trigger at pop 4")
 		}
 	}
 
-	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 5, 0, 0, nil, 0, 0)
+	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 5, 0, 0, nil, 0, 0, 0)
 	found := false
 	for _, ms := range completed {
 		if ms.Key == "small_village" {
@@ -80,14 +80,14 @@ func TestMilestoneManager_AgeMilestone(t *testing.T) {
 	ageOrder := fullAgeOrder()
 
 	// bronze_pioneer requires bronze_age
-	completed := mm.CheckMilestones(1, "stone_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0)
+	completed := mm.CheckMilestones(1, "stone_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
 	for _, ms := range completed {
 		if ms.Key == "bronze_pioneer" {
 			t.Error("bronze_pioneer should not trigger in stone_age")
 		}
 	}
 
-	completed = mm.CheckMilestones(2, "bronze_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0)
+	completed = mm.CheckMilestones(2, "bronze_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
 	found := false
 	for _, ms := range completed {
 		if ms.Key == "bronze_pioneer" {

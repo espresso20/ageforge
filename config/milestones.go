@@ -208,10 +208,9 @@ func Milestones() []MilestoneDef {
 			},
 		},
 		{
-			Name: "Scholar's Haven", Key: "scholars_haven",
-			Description:   "Have 5 scholars working.",
-			Category:      "scholar",
-			MinPopulation: 10,
+			Name:        "Scholar's Haven", Key: "scholars_haven",
+			Description: "Have 5 workers assigned to knowledge buildings.",
+			Category:    "scholar",
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "knowledge_rate", Value: 0.2},
 			},
