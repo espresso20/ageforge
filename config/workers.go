@@ -281,10 +281,44 @@ func WorkerClasses() []WorkerClassDef {
 }
 
 // WorkerClassByDomainAndAge returns the WorkerClassDef for the given domain and age.
-// Returns (def, true) if found, or (zero, false) if no class exists for that combination.
+// First tries an exact age match; if none found, falls back to the highest-tier class
+// whose age order is ≤ the current age (so lumber workers in primitive_age still show
+// "Gatherer"). If the current age is before the domain's start age, returns tier-0.
 func WorkerClassByDomainAndAge(domain, ageKey string) (WorkerClassDef, bool) {
-	for _, wc := range WorkerClasses() {
+	classes := WorkerClasses()
+
+	// Exact match first.
+	for _, wc := range classes {
 		if wc.Domain == domain && wc.AgeKey == ageKey {
+			return wc, true
+		}
+	}
+
+	// Fallback: pick the highest-order age entry for this domain that is ≤ current age.
+	ages := AgeByKey()
+	currentOrder := 1<<30 // treat unknown age as very high so all classes qualify
+	if a, ok := ages[ageKey]; ok {
+		currentOrder = a.Order
+	}
+
+	bestOrder := -1
+	bestIdx := -1
+	for i, wc := range classes {
+		if wc.Domain != domain {
+			continue
+		}
+		if a, ok := ages[wc.AgeKey]; ok && a.Order <= currentOrder && a.Order > bestOrder {
+			bestOrder = a.Order
+			bestIdx = i
+		}
+	}
+	if bestIdx >= 0 {
+		return classes[bestIdx], true
+	}
+
+	// Current age is before domain's start — return tier-0 for this domain.
+	for _, wc := range classes {
+		if wc.Domain == domain {
 			return wc, true
 		}
 	}
