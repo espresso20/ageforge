@@ -23,30 +23,18 @@ var shameMessages = []string{
 	"✦ DECREE OF DISHONOR ✦",
 }
 
-// Dashboard is the main gameplay screen with tabbed layout
+// Dashboard is the main gameplay screen with economy as permanent background and overlay panels
 type Dashboard struct {
 	app    *tview.Application
 	engine *game.GameEngine
 	pages  *tview.Pages
 	root   *tview.Flex
 
-	// Tab system
-	tabBar    *tview.TextView
-	tabPages  *tview.Pages
-	activeTab int
-	tabNames  []string
+	// Tabs (only economy is permanent background)
+	economyTab *EconomyTab
 
-	// Tabs
-	economyTab  *EconomyTab
-	researchTab *ResearchTab
-	militaryTab *MilitaryTab
-	tradeTab    *TradeTab
-	statsTab    *StatsTab
-	wikiTab     *WikiTab
-	mapTab      *MapTab
-	wondersTab  *WondersTab
-	logsTab     *LogsTab
-	epochTab    *EpochTab
+	// Sidebar
+	sidebar *tview.TextView
 
 	// Shared UI
 	logTV         *tview.TextView
@@ -88,55 +76,43 @@ type Dashboard struct {
 // NewDashboard creates the gameplay dashboard
 func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.Pages) *Dashboard {
 	d := &Dashboard{
-		app:      app,
-		engine:   engine,
-		pages:    pages,
-		stopCh:   make(chan struct{}),
-		tabNames: []string{"Economy", "Research", "Military", "Trade", "Stats", "Wiki", "Map", "Wonders", "Logs", "Epoch"},
-		histIdx:  -1,
+		app:    app,
+		engine: engine,
+		pages:  pages,
+		stopCh: make(chan struct{}),
+		histIdx: -1,
 	}
 	d.build()
 	d.overlayMgr = NewOverlayManager(d.pages, d.app, func() {
+		d.updateSidebar("")
 		d.app.SetFocus(d.inputField)
 	})
 	d.overlayMgr.Register("milestones", "Milestones", milestonesProvider)
+	d.overlayMgr.Register("techs", "Research", researchProvider)
+	d.overlayMgr.Register("army", "Military", militaryProvider)
+	d.overlayMgr.Register("trade", "Trade", tradeProvider)
+	d.overlayMgr.Register("stats", "Statistics", statsProvider)
+	d.overlayMgr.Register("wonders", "Wonders", wondersProvider)
+	d.overlayMgr.Register("logs", "Logs", logsProvider)
+	d.overlayMgr.Register("epoch", "Epoch", epochProvider)
+	d.overlayMgr.RegisterWidget("map", "Map", func(state game.GameState) tview.Primitive {
+		mt := NewMapTab()
+		mt.Refresh(state)
+		return mt.Root()
+	}, true)
 	d.devTab = newDevTab(engine)
-	// Register the dev tab page — hidden until passphrase accepted
-	d.tabPages.AddPage("Dev", d.devTab.Primitive(), true, false)
 	return d
 }
 
 func (d *Dashboard) build() {
-	// Create tabs
+	// Create permanent economy tab
 	d.economyTab = NewEconomyTab()
-	d.researchTab = NewResearchTab()
-	d.militaryTab = NewMilitaryTab()
-	d.tradeTab = NewTradeTab()
-	d.statsTab = NewStatsTab()
-	d.wikiTab = NewWikiTab()
-	d.mapTab = NewMapTab()
-	d.wondersTab = NewWondersTab()
-	d.logsTab = NewLogsTab()
-	d.epochTab = NewEpochTab()
 
-	// Tab bar
-	d.tabBar = tview.NewTextView().
+	// Sidebar — command panel hints
+	d.sidebar = tview.NewTextView().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignLeft)
-	d.updateTabBar()
-
-	// Tab pages
-	d.tabPages = tview.NewPages()
-	d.tabPages.AddPage("Economy", d.economyTab.Root(), true, true)
-	d.tabPages.AddPage("Research", d.researchTab.Root(), true, false)
-	d.tabPages.AddPage("Military", d.militaryTab.Root(), true, false)
-	d.tabPages.AddPage("Trade", d.tradeTab.Root(), true, false)
-	d.tabPages.AddPage("Stats", d.statsTab.Root(), true, false)
-	d.tabPages.AddPage("Wiki", d.wikiTab.Root(), true, false)
-	d.tabPages.AddPage("Map", d.mapTab.Root(), true, false)
-	d.tabPages.AddPage("Wonders", d.wondersTab.Root(), true, false)
-	d.tabPages.AddPage("Logs", d.logsTab.Root(), true, false)
-	d.tabPages.AddPage("Epoch", d.epochTab.Primitive(), true, false)
+		SetText(buildSidebarText(""))
+	d.sidebar.SetBorder(true).SetTitle(" Panels ").SetTitleColor(tcell.ColorGold)
 
 	// Log panel
 	d.logTV = tview.NewTextView().
@@ -272,6 +248,7 @@ func (d *Dashboard) build() {
 			if result.OverlayName != "" {
 				state := d.engine.GetState()
 				d.overlayMgr.Show(result.OverlayName, state)
+				d.updateSidebar(result.OverlayName)
 			}
 			if result.Message != "" && result.Type != "success" {
 				d.engine.AddLog(result.Type, result.Message)
@@ -327,18 +304,22 @@ func (d *Dashboard) build() {
 		AddItem(d.wonderPanel.Primitive(), 0, 1, false).
 		AddItem(d.miniMap.Primitive(), 0, 1, false)
 
-	// Main content area: tab content + bottom
+	// Main horizontal: economy (permanent) + sidebar
+	mainHoriz := tview.NewFlex().SetDirection(tview.FlexColumn).
+		AddItem(d.economyTab.Root(), 0, 1, false).
+		AddItem(d.sidebar, 22, 0, false)
+
+	// Main content area: economy+sidebar + bottom
 	d.contentArea = tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(d.tabPages, 0, 2, false).
+		AddItem(mainHoriz, 0, 2, false).
 		AddItem(d.bottomArea, 0, 1, false)
 
-	// Root layout
+	// Root layout (no tab bar)
 	d.root = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(d.cheaterTV, 1, 0, false).
 		AddItem(d.statusTV, 1, 0, false).
 		AddItem(d.toastTV, 1, 0, false).
 		AddItem(d.ageTV, 2, 0, false).
-		AddItem(d.tabBar, 1, 0, false).
 		AddItem(d.contentArea, 0, 1, false).
 		AddItem(d.inputField, 1, 0, true)
 
@@ -349,7 +330,7 @@ func (d *Dashboard) build() {
 			d.showDevUnlockModal()
 			return nil
 		}
-		// Backtick — switch to dev tab (only if unlocked)
+		// Backtick — switch to dev console (only if unlocked)
 		if event.Rune() == '`' && game.DevModeActive {
 			d.switchToDevTab()
 			return nil
@@ -364,142 +345,50 @@ func (d *Dashboard) build() {
 			d.engine.Stop()
 			d.pages.SwitchToPage("splash")
 			return nil
-		case tcell.KeyF1:
-			d.switchTab(0)
-			return nil
-		case tcell.KeyF2:
-			d.switchTab(1)
-			return nil
-		case tcell.KeyF3:
-			d.switchTab(2)
-			return nil
-		case tcell.KeyF4:
-			d.switchTab(3)
-			return nil
-		case tcell.KeyF5:
-			d.switchTab(4)
-			return nil
-		case tcell.KeyF6:
-			d.switchTab(5)
-			return nil
-		case tcell.KeyF7:
-			d.switchTab(6)
-			return nil
-		case tcell.KeyF8:
-			d.switchTab(7)
-			return nil
-		case tcell.KeyF9:
-			d.switchTab(8)
-			return nil
-		case tcell.KeyF10:
-			d.switchTab(9)
-			return nil
-		}
-
-		// When economy tab is active, intercept scroll keys for buildings panel
-		if d.activeTab == 0 {
-			switch event.Key() {
-			case tcell.KeyPgUp:
+		// Economy tab scroll keys (always available since economy is permanent background)
+		case tcell.KeyPgUp:
+			if !d.overlayMgr.HasActive() {
 				d.economyTab.ScrollUp()
 				return nil
-			case tcell.KeyPgDn:
+			}
+		case tcell.KeyPgDn:
+			if !d.overlayMgr.HasActive() {
 				d.economyTab.ScrollDown()
 				return nil
 			}
 		}
 
-		// When logs tab is active, intercept navigation keys
-		if d.activeTab == 8 {
-			switch event.Key() {
-			case tcell.KeyPgUp:
-				d.logsTab.ScrollUp()
-				return nil
-			case tcell.KeyPgDn:
-				d.logsTab.ScrollDown()
-				return nil
-			}
-			if event.Rune() == 'v' {
-				d.logsTab.ToggleVerbose()
-				return nil
-			}
-		}
-
-		// When wiki tab is active, intercept navigation keys
-		if d.activeTab == 5 {
-			switch event.Key() {
-			case tcell.KeyUp:
-				d.wikiTab.PrevPage()
-				return nil
-			case tcell.KeyDown:
-				d.wikiTab.NextPage()
-				return nil
-			case tcell.KeyPgUp:
-				d.wikiTab.ScrollUp()
-				return nil
-			case tcell.KeyPgDn:
-				d.wikiTab.ScrollDown()
-				return nil
-			}
-			// Number keys for quick nav
-			if event.Rune() >= '1' && event.Rune() <= '9' {
-				idx := int(event.Rune() - '1')
-				d.wikiTab.GoToPage(idx)
-				return nil
-			}
-		}
-
-		// Always focus input field for typing (except wiki nav and dev tab).
-		// When the dev tab is active its own InputField must keep focus —
-		// stealing it here is exactly what caused keystrokes to go to the
-		// main prompt instead of the dev console.
-		devTabIdx := len(d.tabNames) - 1
-		onDevTab := d.devTabActive && d.activeTab == devTabIdx
-		if !onDevTab && !d.inputField.HasFocus() {
+		// Always focus input field for typing (except dev console).
+		if !d.devTabActive && !d.inputField.HasFocus() {
 			d.app.SetFocus(d.inputField)
 		}
 		return event
 	})
 }
 
-func (d *Dashboard) switchTab(index int) {
-	d.activeTab = index
-	d.tabPages.SwitchToPage(d.tabNames[index])
-	d.updateTabBar()
-	d.app.SetFocus(d.inputField)
-
-	// Map tab (index 6) is full-screen — hide bottom area
-	if index == 6 {
-		d.contentArea.RemoveItem(d.bottomArea)
-	} else {
-		// Re-add bottom area if not already present
-		if d.contentArea.GetItemCount() < 2 {
-			d.contentArea.AddItem(d.bottomArea, 0, 1, false)
-		}
+func (d *Dashboard) updateSidebar(activeOverlay string) {
+	if d.sidebar != nil {
+		d.sidebar.SetText(buildSidebarText(activeOverlay))
 	}
 }
 
-func (d *Dashboard) updateTabBar() {
-	var parts []string
-	tabKeys := map[int]string{0: "F1", 1: "F2", 2: "F3", 3: "F4", 4: "F5", 5: "F6", 6: "F7", 7: "F8", 8: "F9", 9: "F10", 10: "`"}
-	for i, name := range d.tabNames {
-		key := tabKeys[i]
-		if i == d.activeTab {
-			parts = append(parts, fmt.Sprintf(" [black:gold] %s %s [-:-] ", key, name))
+func buildSidebarText(active string) string {
+	commands := []string{"milestones", "techs", "army", "trade", "stats", "wonders", "logs", "epoch", "map"}
+	var sb strings.Builder
+	sb.WriteString("\n")
+	for _, cmd := range commands {
+		if cmd == active {
+			sb.WriteString(fmt.Sprintf(" [black:gold] %-10s [-:-]\n", cmd))
 		} else {
-			parts = append(parts, fmt.Sprintf(" [gray]%s %s[-] ", key, name))
+			sb.WriteString(fmt.Sprintf(" [white]%-10s[-]\n", cmd))
 		}
 	}
-	d.tabBar.SetText(strings.Join(parts, "  "))
+	return sb.String()
 }
 
 // Root returns the root primitive for page registration
 func (d *Dashboard) Root() tview.Primitive {
 	return d.root
-}
-
-// GoToWiki switches the dashboard to the Wiki tab (tab index 5).
-func (d *Dashboard) GoToWiki() {
-	d.switchTab(5)
 }
 
 // StartUpdates begins the UI refresh loop
@@ -579,31 +468,12 @@ func (d *Dashboard) refresh() {
 	d.wonderPanel.UpdateState(state)
 	d.workerPanel.UpdateState(state)
 
-	// Only refresh the active tab
-	switch d.activeTab {
-	case 0:
-		d.economyTab.Refresh(state)
-	case 1:
-		d.researchTab.Refresh(state)
-	case 2:
-		d.militaryTab.Refresh(state)
-	case 3:
-		d.tradeTab.Refresh(state)
-	case 4:
-		d.statsTab.Refresh(state)
-	case 5:
-		d.wikiTab.Refresh(state)
-	case 6:
-		d.mapTab.Refresh(state)
-	case 7:
-		d.wondersTab.Refresh(state)
-	case 8:
-		d.logsTab.Refresh(state)
-	case 9:
-		d.epochTab.Refresh(state)
-	}
+	// Economy tab is always visible as the permanent background
+	d.economyTab.Refresh(state)
 
+	// Update overlay content and sidebar highlight
 	d.overlayMgr.Refresh(state)
+	d.updateSidebar(d.overlayMgr.ActiveName())
 }
 
 func (d *Dashboard) refreshStatus(state game.GameState) {
@@ -633,7 +503,7 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		epochStr = fmt.Sprintf("  [%s]%s %s%s[-]", state.EpochColor, state.EpochIcon, state.EpochName, survivedMark)
 	}
 	d.statusTV.SetText(fmt.Sprintf(
-		"[gold]%s[-]%s%s%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]F1-F10=Tabs  ESC=Menu[-]",
+		"[gold]%s[-]%s%s%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]type panel name to open  ESC=close/menu[-]",
 		state.AgeName, prestigeStr, titleStr, epochStr, state.Tick, nextAgeStr, speedStr,
 		state.Workers.TotalPop, state.Workers.MaxPop,
 	))
@@ -779,23 +649,17 @@ func (d *Dashboard) showDevUnlockModal() {
 	d.app.SetFocus(field)
 }
 
-// switchToDevTab reveals the Dev tab (first time) and switches to it.
+// switchToDevTab shows the dev console overlay.
 // Hard gate: silently does nothing unless DevModeActive is confirmed.
 func (d *Dashboard) switchToDevTab() {
 	if !game.DevModeActive {
 		return
 	}
 	if !d.devTabActive {
-		d.tabNames = append(d.tabNames, "Dev")
 		d.devTabActive = true
+		// Add dev console as a full-page overlay
+		d.pages.AddPage("Dev", d.devTab.Primitive(), true, false)
 	}
-	idx := len(d.tabNames) - 1
-	d.activeTab = idx
-	d.tabPages.SwitchToPage("Dev")
-	d.updateTabBar()
-	// Re-add bottom area (dev tab is not full-screen like map)
-	if d.contentArea.GetItemCount() < 2 {
-		d.contentArea.AddItem(d.bottomArea, 0, 1, false)
-	}
+	d.pages.ShowPage("Dev")
 	d.app.SetFocus(d.devTab.FocusInput())
 }

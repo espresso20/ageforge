@@ -16,6 +16,7 @@ var commands = []string{
 	"advance", "rates", "status", "speed", "save", "saves", "load", "help",
 	"wonder", "catastrophe", "dump", "exportlogs",
 	"milestones", "ms",
+	"techs", "army", "stats", "wonders", "logs", "epoch", "map",
 }
 
 // NewAutoCompleter returns an autocomplete function for the command input field.

@@ -65,6 +65,20 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdAdvance(engine)
 	case "milestones", "ms":
 		return CommandResult{OverlayName: "milestones"}
+	case "techs":
+		return CommandResult{OverlayName: "techs"}
+	case "army":
+		return CommandResult{OverlayName: "army"}
+	case "stats":
+		return CommandResult{OverlayName: "stats"}
+	case "wonders":
+		return CommandResult{OverlayName: "wonders"}
+	case "logs":
+		return CommandResult{OverlayName: "logs"}
+	case "epoch":
+		return CommandResult{OverlayName: "epoch"}
+	case "map":
+		return CommandResult{OverlayName: "map"}
 	case "catastrophe", "cat":
 		return cmdCatastrophe(args, engine)
 	case "dump", "exportlogs":
@@ -868,7 +882,7 @@ func cmdExpeditionList(engine *game.GameEngine) CommandResult {
 
 func cmdTrade(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
-		return cmdTradeList(engine)
+		return CommandResult{OverlayName: "trade"}
 	}
 	subcmd := strings.ToLower(args[0])
 
