@@ -44,6 +44,9 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 	case "status", "s":
 		return cmdStatus(engine)
 	case "research", "res":
+		if len(args) == 0 {
+			return CommandResult{OverlayName: "techs"}
+		}
 		return cmdResearch(args, engine)
 	case "expedition", "exp":
 		return cmdExpedition(args, engine)
