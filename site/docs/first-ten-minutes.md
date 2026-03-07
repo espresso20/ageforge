@@ -52,50 +52,49 @@ Build one or two stashes alongside huts.
 
 ## Step 3: Recruit workers
 
-Once your huts are up (pop cap raised), recruit:
+Once your huts are up (pop cap raised), recruit some workers:
 
 ```
-recruit food
-recruit food
-recruit knowledge
+recruit 5
 ```
 
-Keep recruiting until you're at 8–10 pop. Each worker costs food upfront — check your food rate stays positive.
+Workers are recruited generically — there's no domain when recruiting. They become what you **assign** them to. Each worker costs food upfront — check your food rate stays positive after recruiting.
 
 ---
 
 ## Step 4: Assign everyone
 
-This is the most important step. **Idle workers produce nothing and use up your food reserves.**
+This is the most important step. **Idle workers produce nothing and still consume food.**
 
 ```
-assign gathering_camp 2
-assign gathering_camp 1
+assign gathering_camp 3
 assign story_circle 1
+assign shrine 1
 ```
 
 General rule for early game:
-- Half your workers → food (assign to gathering_camp)
-- Remaining workers → wood (also assign to gathering_camp for now)
-- All knowledge workers → story_circle
+- 3–4 workers → gathering_camp (food production)
+- 1–2 workers → story_circle (knowledge)
+- 1 worker → shrine (faith)
+- If you have a wood_camp, assign 1–2 there
 
-Check the status bar shows **Idle: 0**. If it doesn't, assign the rest.
+Workers derive their role from what they're assigned to — a worker on `gathering_camp` becomes a Gatherer; one on `story_circle` becomes a Storyteller. Check the Worker panel (press `v`) to see your breakdown by domain.
+
+Check the status bar shows **Idle: 0**. If it doesn't, keep assigning.
 
 ---
 
-## Step 5: Build an story_circle
+## Step 5: Build a story_circle and a shrine
 
-story_circles produce knowledge passively. Knowledge is what lets you research techs that multiply everything.
+Story circles produce knowledge passively. Knowledge is what lets you research techs that multiply everything.
 
 ```
 build story_circle
 ```
 
-Altars are cheap. Build as many as you can afford early.
+Story circles are cheap — build as many as you can afford early.
 
-Also consider building your first **shrine**.
-
-Shrines produce faith, which is required to keep your population happy, and help prevent long term effects of civilzation level disasters.
+Also build your first **shrine**. Shrines produce faith, which helps prevent long-term civilisation-level disasters and contributes to epoch events.
 
 ```
 build shrine
@@ -110,7 +109,7 @@ Press `F1` (or just wait — you're already there). Look at the rate column:
 - `wood: +N/t` — should be positive (at least +1)
 - `knowledge: +N/t` — should be positive (at least +1)
 
-If food is negative, add more food workers. If knowledge is zero, assign more knowledge workers or build more altars.
+If food is negative, assign more workers to gathering_camp. If knowledge is zero, assign workers to story_circle or build more of them.
 
 ---
 
@@ -152,9 +151,9 @@ The second row always shows what you need for the **next age**. For Stone Age:
 - Wood: 5,200
 - Knowledge: 1,400
 - Huts: 20
-- Altars: 10
+- Shrines: 10
 
-Keep building huts and altars. Keep assigning workers. Keep knowledge flowing. The age advances **automatically** when all bars fill.
+Keep building huts and shrines. Keep assigning workers. Keep knowledge flowing. The age advances **automatically** when all bars fill.
 
 ---
 
@@ -162,7 +161,7 @@ Keep building huts and altars. Keep assigning workers. Keep knowledge flowing. T
 
 Before you advance, you should have:
 - [ ] 15–20 huts
-- [ ] 8–10 altars
+- [ ] 8–10 shrines
 - [ ] 3–4 stashes
 - [ ] 10+ pop, all assigned
 - [ ] Tool Making researched
@@ -174,13 +173,13 @@ Before you advance, you should have:
 
 When you reach Stone Age:
 - **Stone** resource unlocks (needed for Bronze Age)
-- **Gathering Camp** — boosts food and wood
 - **Stone Pit** — produces stone passively
 - **Woodcutter Camp** — dedicated wood building
-- **Firepit** — better knowledge building
+- **Standing Stones** — better faith building
+- **Longhouse** — bigger housing (+20 pop cap each)
 - **Great Monolith** — first major wonder
 
-Your first priority: build **Stone Pits** and assign lumber workers to wood production, because Bronze Age needs a lot of both.
+Your first priority: build **Stone Pits** and **Woodcutter Camps**, and assign workers to them. Bronze Age needs a lot of stone and wood.
 
 ---
 
@@ -190,13 +189,15 @@ Your first priority: build **Stone Pits** and assign lumber workers to wood prod
 |---|---|
 | Build a hut | `build hut` |
 | Build a stash | `build stash` |
-| Build an altar | `build altar` |
-| Recruit a food worker | `recruit food` |
-| Recruit a knowledge worker | `recruit knowledge` |
-| Assign food workers to gathering camp | `assign gathering_camp 3` |
-| Assign knowledge workers to story circle | `assign story_circle 1` |
+| Build a story circle | `build story_circle` |
+| Build a shrine | `build shrine` |
+| Recruit workers | `recruit [count]` or `recruit max` |
+| Assign workers to gathering camp | `assign gathering_camp 3` |
+| Assign workers to story circle | `assign story_circle 1` |
+| Unassign a worker from a building | `unassign gathering_camp 1` |
 | Start first research | `research tool_making` |
 | Check economy tab | `e` or `F1` |
+| Check worker panel | `v` |
 | Check logs | `l` or `F7` |
 | Save the game | `Esc` |
 
