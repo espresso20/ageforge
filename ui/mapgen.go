@@ -1308,16 +1308,20 @@ func placeAllBuildings(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, cx, cy
 }
 
 // ─── Organic layout (primitive/stone) ────────────────────
+// Buildings are scattered across a wide zone around the city center.
+// Each building gets a fresh random position within the zone; no anchor-walk
+// is used because that caused a cascading-cluster bug where every building
+// landed within ~15 px of the last one, producing a single circular blob.
 func placeBuildingsOrganic(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, cx, cy, w, h int, entries []layoutEntry) []bldInfo {
 	var placements []bldInfo
 	pal := getTerrainPalette(eraFromAge(cfg.AgeKey))
 	grid := newPlotGrid(12)
-	maxR := int(float64(min(w, h)) * 0.30)
+	// Wide zone: 55% of shorter dimension as radius so buildings spread visibly.
+	zoneR := int(float64(min(w, h)) * 0.55 / 2)
+	if zoneR < 20 {
+		zoneR = 20
+	}
 	border := 8
-
-	// Seed anchor points — small groups
-	type anchor struct{ x, y int }
-	var anchors []anchor
 
 	for _, e := range entries {
 		for i := 0; i < e.count; i++ {
@@ -1325,19 +1329,12 @@ func placeBuildingsOrganic(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, cx
 			var px, py int
 			placed := false
 
-			for attempt := 0; attempt < 30; attempt++ {
-				if len(anchors) == 0 || (rng.Intn(3) == 0) {
-					// Place near center with random walk
-					ang := rng.Float64() * 2.0 * math.Pi
-					dist := float64(rng.Intn(maxR))
-					px = cx + int(math.Cos(ang)*dist)
-					py = cy + int(math.Sin(ang)*dist*0.65)
-				} else {
-					// Walk from existing anchor
-					anch := anchors[rng.Intn(len(anchors))]
-					px = anch.x + rng.Intn(31) - 15
-					py = anch.y + rng.Intn(21) - 10
-				}
+			for attempt := 0; attempt < 60; attempt++ {
+				// Fresh random position each attempt — no anchor-walk clustering.
+				ang := rng.Float64() * 2.0 * math.Pi
+				dist := float64(rng.Intn(zoneR))
+				px = cx + int(math.Cos(ang)*dist)
+				py = cy + int(math.Sin(ang)*dist*0.65)
 				px = clampInt(px, border, w-border)
 				py = clampInt(py, border, h-border)
 				if isWaterPixel(img, px, py, pal) {
@@ -1352,7 +1349,6 @@ func placeBuildingsOrganic(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, cx
 				continue
 			}
 			grid.claim(px, py, size, size)
-			anchors = append(anchors, anchor{px, py})
 			placements = append(placements, bldInfo{e.key, e.category, e.domain, px, py, size})
 		}
 	}
@@ -1950,10 +1946,8 @@ func drawInfrastructure(img *image.RGBA, w, h, era, dl int, pal TerrainPalette, 
 
 	switch {
 	case era == 0:
-		// Dirt footpaths — thin, irregular
-		for _, b := range placements {
-			drawPath(img, cx, cy, b.x, b.y, w, h, pal.Road, 0)
-		}
+		// Primitive: no infrastructure — scattered settlements have no roads or paths.
+		return
 
 	case era <= 2:
 		// Stone/cobble roads
