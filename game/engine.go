@@ -1937,6 +1937,7 @@ func (ge *GameEngine) GetState() GameState {
 
 	ageOrder := ge.progress.GetAgeOrder()
 	soldierCount := ge.Workers.GetDomainCount("military")
+	knowledgeCount := ge.Workers.GetDomainCount("knowledge")
 	prestigeBonuses := ge.Prestige.GetBonuses()
 	militaryBonus := ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + prestigeBonuses["military_power"]
 	expeditionBonus := ge.Research.GetBonus("expedition_reward") + ge.permanentBonuses["expedition_reward"] + prestigeBonuses["expedition_reward"]
@@ -1986,6 +1987,7 @@ func (ge *GameEngine) GetState() GameState {
 			TotalBuilt:      ge.Stats.TotalBuilt,
 			SoldierCount:    soldierCount,
 			WonderCount:     ge.countWonders(),
+			KnowledgeCount:  knowledgeCount,
 			ResearchedTechs: ge.getResearchedTechMap(),
 			activeEvents:    ge.Events.GetActive(),
 		}),

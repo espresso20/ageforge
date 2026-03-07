@@ -112,11 +112,11 @@ func MilestoneChainByKey() map[string]MilestoneChainDef {
 // MilestoneTitles returns fallback titles based on milestone count (sorted ascending)
 func MilestoneTitles() []TitleDef {
 	return []TitleDef{
-		{Title: "Aspiring", MinMilestones: 3},
-		{Title: "Rising Power", MinMilestones: 8},
-		{Title: "Established", MinMilestones: 15},
-		{Title: "Dominant Force", MinMilestones: 22},
-		{Title: "Legend", MinMilestones: 30},
+		{Title: "Aspiring", MinMilestones: 5},
+		{Title: "Rising Power", MinMilestones: 10},
+		{Title: "Established", MinMilestones: 20},
+		{Title: "Dominant Force", MinMilestones: 30},
+		{Title: "Legend", MinMilestones: 36},
 	}
 }
 
@@ -135,45 +135,45 @@ func Milestones() []MilestoneDef {
 		},
 		{
 			Name: "Small Village", Key: "small_village",
-			Description:   "Reach a population of 5.",
+			Description:   "Reach a population of 50.",
 			Category:      "settlement",
-			MinPopulation: 5,
+			MinPopulation: 50,
 			Rewards: []Effect{
 				{Type: "instant_resource", Target: "wood", Value: 20},
 			},
 		},
 		{
 			Name: "Bustling Town", Key: "bustling_town",
-			Description:   "Reach a population of 20.",
+			Description:   "Reach a population of 2000.",
 			Category:      "settlement",
-			MinPopulation: 20,
+			MinPopulation: 2000,
 			Rewards: []Effect{
-				{Type: "permanent_bonus", Target: "gold_rate", Value: 0.1},
+				{Type: "permanent_bonus", Target: "food_rate", Value: 0.1},
 			},
 		},
 		{
 			Name: "Growing City", Key: "growing_city",
-			Description:   "Reach a population of 50.",
+			Description:   "Reach a population of 50000.",
 			Category:      "settlement",
-			MinPopulation: 50,
+			MinPopulation: 500000,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "food_rate", Value: 0.2},
 			},
 		},
 		{
 			Name: "Metropolis", Key: "metropolis",
-			Description: "Reach a population of 100.",
+			Description: "Reach a population of 1000000.",
 			Category:    "settlement", Hidden: true,
-			MinPopulation: 100,
+			MinPopulation: 1000000,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.15},
 			},
 		},
 		{
 			Name: "Megalopolis", Key: "megalopolis",
-			Description: "Reach a population of 500.",
+			Description: "Reach a population of 50000000.",
 			Category:    "settlement", Hidden: true,
-			MinPopulation: 500,
+			MinPopulation: 50000000,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.5},
 			},
@@ -208,7 +208,7 @@ func Milestones() []MilestoneDef {
 			},
 		},
 		{
-			Name:        "Scholar's Haven", Key: "scholars_haven",
+			Name: "Scholar's Haven", Key: "scholars_haven",
 			Description: "Have 5 workers assigned to knowledge buildings.",
 			Category:    "scholar",
 			Rewards: []Effect{
@@ -245,8 +245,8 @@ func Milestones() []MilestoneDef {
 			},
 		},
 		{
-			Name: "Master Builder", Key: "master_builder",
-			Description: "Build 20 structures total.",
+			Name:        "Master Builder", Key: "master_builder",
+			Description: "Build 500 structures total.",
 			Category:    "builder",
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "build_cost", Value: -0.05},

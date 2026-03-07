@@ -290,6 +290,7 @@ type MilestoneSnapshotParams struct {
 	TotalBuilt      int
 	SoldierCount    int
 	WonderCount     int
+	KnowledgeCount  int
 	ResearchedTechs map[string]bool
 	activeEvents    []ActiveEventState // unexported — only set by engine
 }

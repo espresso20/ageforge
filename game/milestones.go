@@ -128,7 +128,7 @@ func (mm *MilestoneManager) checkMilestone(
 	// Special checks based on milestone key
 	switch def.Key {
 	case "master_builder":
-		if totalBuilt < 20 {
+		if totalBuilt < 500 {
 			return false
 		}
 	case "war_machine":
@@ -287,8 +287,8 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 		progress = append(progress, MilestoneProgress{
 			Label:   "Buildings built",
 			Current: float64(params.TotalBuilt),
-			Target:  20,
-			Met:     params.TotalBuilt >= 20,
+			Target:  500,
+			Met:     params.TotalBuilt >= 500,
 		})
 	case "war_machine":
 		progress = append(progress, MilestoneProgress{
@@ -303,6 +303,13 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 			Current: float64(params.WonderCount),
 			Target:  1,
 			Met:     params.WonderCount >= 1,
+		})
+	case "scholars_haven":
+		progress = append(progress, MilestoneProgress{
+			Label:   "Knowledge workers",
+			Current: float64(params.KnowledgeCount),
+			Target:  5,
+			Met:     params.KnowledgeCount >= 5,
 		})
 	}
 

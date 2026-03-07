@@ -53,15 +53,15 @@ func TestMilestoneManager_PopulationMilestone(t *testing.T) {
 	bm := NewBuildingManager()
 	ageOrder := fullAgeOrder()
 
-	// small_village requires pop 5
-	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, 4, 0, 0, nil, 0, 0, 0)
+	// small_village requires pop 50
+	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, 49, 0, 0, nil, 0, 0, 0)
 	for _, ms := range completed {
 		if ms.Key == "small_village" {
-			t.Error("small_village should not trigger at pop 4")
+			t.Error("small_village should not trigger at pop 49")
 		}
 	}
 
-	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 5, 0, 0, nil, 0, 0, 0)
+	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 50, 0, 0, nil, 0, 0, 0)
 	found := false
 	for _, ms := range completed {
 		if ms.Key == "small_village" {
@@ -69,7 +69,7 @@ func TestMilestoneManager_PopulationMilestone(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Error("small_village should trigger at pop 5")
+		t.Error("small_village should trigger at pop 50")
 	}
 }
 
@@ -138,13 +138,15 @@ func TestMilestoneManager_TitleRecalculation(t *testing.T) {
 		t.Errorf("title with 0 milestones = %v, want empty", mm.currentTitle)
 	}
 
-	// 3 milestones = "Aspiring"
+	// 5 milestones = "Aspiring" (MilestoneTitles() requires MinMilestones: 5)
 	mm.completed["first_shelter"] = true
 	mm.completed["small_village"] = true
 	mm.completed["knowledge_seeker"] = true
+	mm.completed["first_research"] = true
+	mm.completed["stone_mason"] = true
 	mm.recalculateTitle()
 	if mm.currentTitle != "Aspiring" {
-		t.Errorf("title with 3 milestones = %v, want Aspiring", mm.currentTitle)
+		t.Errorf("title with 5 milestones = %v, want Aspiring", mm.currentTitle)
 	}
 
 	// Complete a chain — chain title overrides
