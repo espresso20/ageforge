@@ -175,7 +175,7 @@ func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(domain, key s
 				if fillRatio > 1.0 {
 					fillRatio = 1.0
 				}
-				rate = eff.Value * float64(count) * (0.20 + 0.80*fillRatio)
+				rate = eff.Value * float64(count) * (0.0 + 0.80*fillRatio)
 			} else {
 				rate = eff.Value * float64(count)
 			}
