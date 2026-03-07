@@ -73,8 +73,8 @@ func TestEventManager_InjectedEventExpires(t *testing.T) {
 	// Tick 2: should expire
 	_, expired := em.Tick(2, "primitive_age", ageOrder, "stone_era")
 	foundExpired := false
-	for _, key := range expired {
-		if key == "short_boost" {
+	for _, ae := range expired {
+		if ae.Key == "short_boost" {
 			foundExpired = true
 		}
 	}

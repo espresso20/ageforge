@@ -97,10 +97,11 @@ func RandomEvents() []EventDef {
 			Name: "Plague", Key: "plague",
 			MinAge: "stone_age", Weight: 6, MinTick: 80, Cooldown: 200,
 			Duration: 8, Sentiment: "bad",
-			Description: "Disease spreads through your population.",
-			LogMessage:  "Plague! Food drain increased for 8 ticks.",
+			Description: "Disease spreads through your population, killing workers and reducing food production.",
+			LogMessage:  "Plague! Workers die and food drain increases for 8 ticks.",
 			Effects: []Effect{
 				{Type: "production", Target: "food", Value: -1.0},
+				{Type: "worker_loss", Value: 0.15},
 			},
 		},
 		{
@@ -128,11 +129,12 @@ func RandomEvents() []EventDef {
 			Name: "Mine Collapse", Key: "mine_collapse",
 			MinAge: "iron_age", Weight: 7, MinTick: 120, Cooldown: 150,
 			Duration: 8, Sentiment: "bad",
-			Description: "A mine collapse reduces iron and coal production.",
-			LogMessage:  "Mine collapse! Iron and coal production reduced for 8 ticks.",
+			Description: "A mine collapse traps and kills workers, reducing iron and coal production.",
+			LogMessage:  "Mine collapse! Workers killed, iron and coal production reduced for 8 ticks.",
 			Effects: []Effect{
 				{Type: "production", Target: "iron", Value: -0.5},
 				{Type: "production", Target: "coal", Value: -0.3},
+				{Type: "worker_loss", Value: 0.05},
 			},
 		},
 		{
@@ -173,11 +175,12 @@ func RandomEvents() []EventDef {
 			Name: "Industrial Accident", Key: "industrial_accident",
 			MinAge: "industrial_age", Weight: 8, MinTick: 300, Cooldown: 120,
 			Duration: 0, Sentiment: "bad",
-			Description: "A factory accident destroys some steel and oil.",
-			LogMessage:  "Industrial accident! Lost steel and oil.",
+			Description: "A factory accident injures workers and destroys some steel and oil.",
+			LogMessage:  "Industrial accident! Workers injured, lost steel and oil.",
 			Effects: []Effect{
 				{Type: "steal_resource", Target: "steel", Value: 10},
 				{Type: "steal_resource", Target: "oil", Value: 15},
+				{Type: "worker_loss", Value: 0.07},
 			},
 		},
 
@@ -311,11 +314,12 @@ func EpochExclusiveEvents() []EventDef {
 			Name: "Tribal Raid", Key: "tribal_raid", EpochKey: "stone_era",
 			MinAge: "primitive_age", Weight: 10, MinTick: 10, Cooldown: 80,
 			Duration: 60, Sentiment: "bad",
-			Description: "Rival clans descend on your settlement in the night.",
-			LogMessage:  "Tribal raid! Food production reduced and workers flee.",
+			Description: "Rival clans descend on your settlement in the night. Workers flee in the chaos.",
+			LogMessage:  "Tribal raid! Food production reduced, resources stolen, and workers flee.",
 			Effects: []Effect{
 				{Type: "production", Target: "food", Value: -0.15},
 				{Type: "steal_resource", Target: "food", Value: 8},
+				{Type: "worker_loss", Value: 0.10},
 			},
 		},
 		{
@@ -377,10 +381,11 @@ func EpochExclusiveEvents() []EventDef {
 			Name: "Locust Swarm", Key: "locust_swarm", EpochKey: "iron_era",
 			MinAge: "iron_age", Weight: 9, MinTick: 100, Cooldown: 100,
 			Duration: 120, Sentiment: "bad",
-			Description: "A biblical plague of locusts strips the fields bare.",
-			LogMessage:  "Locust swarm! Food production severely reduced for 120 ticks.",
+			Description: "A biblical plague of locusts strips the fields bare. Famine drives workers away.",
+			LogMessage:  "Locust swarm! Food production severely reduced and workers flee the famine.",
 			Effects: []Effect{
 				{Type: "production", Target: "food", Value: -0.35},
+				{Type: "worker_loss", Value: 0.12},
 			},
 		},
 		{
@@ -430,11 +435,12 @@ func EpochExclusiveEvents() []EventDef {
 			Name: "Workers' Uprising", Key: "workers_uprising", EpochKey: "steel_era",
 			MinAge: "industrial_age", Weight: 9, MinTick: 250, Cooldown: 130,
 			Duration: 120, Sentiment: "bad",
-			Description: "Factory workers strike, demanding better conditions.",
-			LogMessage:  "Workers' uprising! Production reduced and faith lost.",
+			Description: "Factory workers strike and some abandon the city, demanding better conditions.",
+			LogMessage:  "Workers' uprising! Lost workers, production reduced and faith lost.",
 			Effects: []Effect{
 				{Type: "production", Target: "food", Value: -0.15},
 				{Type: "steal_resource", Target: "faith", Value: 500},
+				{Type: "worker_loss", Value: 0.08},
 			},
 		},
 		{
@@ -606,11 +612,12 @@ func EpochExclusiveEvents() []EventDef {
 			Name: "Neural Uprising", Key: "neural_uprising", EpochKey: "neon_era",
 			MinAge: "fusion_age", Weight: 9, MinTick: 750, Cooldown: 130,
 			Duration: 120, Sentiment: "bad",
-			Description: "Augmented citizens revolt against the bio-surveillance state.",
-			LogMessage:  "Neural uprising! Lost workers and production reduced.",
+			Description: "Augmented citizens revolt against the bio-surveillance state, deserting en masse.",
+			LogMessage:  "Neural uprising! Workers desert, food stores raided, and production reduced.",
 			Effects: []Effect{
 				{Type: "steal_resource", Target: "food", Value: 500},
 				{Type: "production", Target: "food", Value: -0.10},
+				{Type: "worker_loss", Value: 0.20},
 			},
 		},
 		{

@@ -391,7 +391,10 @@ func (ge *GameEngine) processEvents() {
 	for _, def := range triggered {
 		ge.addLog("debug", fmt.Sprintf("Event triggered: %s (sentiment: %s)", def.Name, def.Sentiment))
 		ge.addLog("event", def.LogMessage)
-		// Process instant effects
+		// Process instant and on-trigger effects.
+		// For timed events (Duration > 0) the losses are also recorded on the active event
+		// so that when it expires the "has ended" message includes a yellow summary.
+		isTimed := def.Duration > 0
 		for _, eff := range def.Effects {
 			switch eff.Type {
 			case "instant_resource":
@@ -405,14 +408,31 @@ func (ge *GameEngine) processEvents() {
 				}
 				ge.Resources.Remove(eff.Target, loss)
 				ge.addLog("debug", fmt.Sprintf("Event effect: %s %s -%.1f", eff.Type, eff.Target, loss))
+				if isTimed && loss > 0 {
+					ge.Events.RecordResourceLoss(def.Key, eff.Target, loss)
+				}
+			case "worker_loss":
+				// Value is a percentage (0.0–1.0) of total workers to remove
+				lost := int(float64(ge.Workers.TotalPop()) * eff.Value)
+				if lost < 1 {
+					lost = 1
+				}
+				ge.Workers.RemovePct(eff.Value)
+				if isTimed {
+					// Loss will be reported in the "has ended" summary; skip standalone log
+					ge.Events.RecordWorkerLoss(def.Key, lost)
+				} else {
+					ge.addLog("warning", fmt.Sprintf("%d workers fled or were lost.", lost))
+				}
+				ge.addLog("debug", fmt.Sprintf("Event effect: worker_loss %.0f%%", eff.Value*100))
 			}
 		}
 	}
 
-	for _, key := range expired {
-		def := config.EventByKey()[key]
-		ge.addLog("debug", fmt.Sprintf("Event expired: %s", key))
-		ge.addLog("info", fmt.Sprintf("%s has ended.", def.Name))
+	for _, ae := range expired {
+		ge.addLog("debug", fmt.Sprintf("Event expired: %s", ae.Key))
+		suffix := buildLossSuffix(ae)
+		ge.addLog("info", fmt.Sprintf("%s has ended.%s", ae.Name, suffix))
 	}
 }
 

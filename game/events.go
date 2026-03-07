@@ -1,17 +1,22 @@
 package game
 
 import (
+	"fmt"
 	"math/rand"
+	"sort"
+	"strings"
 
 	"github.com/espresso20/ageforge/config"
 )
 
 // ActiveEvent represents a currently active timed event
 type ActiveEvent struct {
-	Key       string
-	Name      string
-	TicksLeft int
-	Effects   []config.Effect
+	Key           string
+	Name          string
+	TicksLeft     int
+	Effects       []config.Effect
+	WorkersLost   int                // accumulated workers lost during this event
+	ResourcesLost map[string]float64 // resource key → total amount lost during this event
 }
 
 // EventManager handles random event triggering and processing
@@ -43,14 +48,14 @@ func NewEventManager() *EventManager {
 }
 
 // Tick processes one tick: checks for new events, processes active event durations.
-// Returns list of newly triggered events and list of expired events.
-func (em *EventManager) Tick(tick int, currentAge string, ageOrder map[string]int, currentEpoch string) (triggered []config.EventDef, expired []string) {
+// Returns list of newly triggered events and list of expired ActiveEvents (with accumulated losses).
+func (em *EventManager) Tick(tick int, currentAge string, ageOrder map[string]int, currentEpoch string) (triggered []config.EventDef, expired []ActiveEvent) {
 	// Process active events first - decrement durations
 	var stillActive []ActiveEvent
 	for _, ae := range em.active {
 		ae.TicksLeft--
 		if ae.TicksLeft <= 0 {
-			expired = append(expired, ae.Key)
+			expired = append(expired, ae)
 		} else {
 			stillActive = append(stillActive, ae)
 		}
@@ -253,4 +258,51 @@ func (em *EventManager) GetActiveForSave() []ActiveEvent {
 	out := make([]ActiveEvent, len(em.active))
 	copy(out, em.active)
 	return out
+}
+
+// RecordWorkerLoss accumulates workers lost for the active event matching key.
+func (em *EventManager) RecordWorkerLoss(key string, count int) {
+	for i := range em.active {
+		if em.active[i].Key == key {
+			em.active[i].WorkersLost += count
+			return
+		}
+	}
+}
+
+// RecordResourceLoss accumulates resource stolen for the active event matching key.
+func (em *EventManager) RecordResourceLoss(key string, resource string, amount float64) {
+	for i := range em.active {
+		if em.active[i].Key == key {
+			if em.active[i].ResourcesLost == nil {
+				em.active[i].ResourcesLost = make(map[string]float64)
+			}
+			em.active[i].ResourcesLost[resource] += amount
+			return
+		}
+	}
+}
+
+// buildLossSuffix returns a tview-coloured loss summary string for an expired event,
+// or "" if no losses were recorded.
+func buildLossSuffix(event ActiveEvent) string {
+	var parts []string
+	if event.WorkersLost > 0 {
+		parts = append(parts, fmt.Sprintf("[yellow]%d workers fled[-]", event.WorkersLost))
+	}
+	if len(event.ResourcesLost) > 0 {
+		keys := make([]string, 0, len(event.ResourcesLost))
+		for k := range event.ResourcesLost {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			amt := event.ResourcesLost[k]
+			parts = append(parts, fmt.Sprintf("[yellow]%.0f %s stolen[-]", amt, k))
+		}
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return " " + strings.Join(parts, ", ") + "."
 }
