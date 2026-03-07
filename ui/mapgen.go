@@ -682,9 +682,266 @@ const (
 	spriteServer
 	spriteSpaceStation
 	spriteWonder
+	spriteShelter      // lean-to / open-sided structure
+	spriteStakeHut     // raised platform hut
+	spriteGranary      // rounded storage barn
+	spriteStable       // wide low building with pitched roof
+	spriteForge        // squat blocky furnace building
+	spriteWell         // circular well
+	spriteAqueduct     // arched bridge/aqueduct shape
+	spriteCathederal   // tall spire church
+	spriteArmory       // fortified rectangular storage
+	spriteSiege        // siege weapon platform
+	spriteMonastery    // cloistered courtyard shape
+	spriteApothecary   // narrow tall shop
+	spriteTavern       // wide building with sign-post
+	spriteHarbour      // dock/pier extending out
+	spriteMintHouse    // compact official building
+	spriteGuildHall    // wide official hall
+	spritePrintShop    // narrow two-story
+	spriteGlassworks   // wide factory with tall chimney
+	spriteCoalMine     // mine entrance with cart track
+	spriteSteelMill    // large industrial with multiple chimneys
+	spriteOilDerrick   // tall narrow derrick shape
+	spritePowerPlant   // industrial + towers
+	spriteResearchLab  // modern clean building
+	spriteHospital     // wide building with cross marker
+	spriteDataCenter   // dense rack-row building
+	spriteAntenna      // tall narrow antenna/tower
+	spriteReactor      // dome + cooling towers
+	spriteSpaceDock    // horizontal launch pad
+	spriteCrystalSpire // tall narrow crystalline
 )
 
 func getBuildingSprite(domain, buildingKey, eraName string) spriteType {
+	// Per-building-key overrides first (takes priority over domain+era fallback)
+	switch buildingKey {
+	// ── Food domain ──
+	case "gathering_camp":
+		return spriteHut
+	case "forager_post":
+		return spriteShelter
+	case "hunting_lodge":
+		return spriteStakeHut
+	case "farm", "estate_farm", "market_garden", "plantation", "industrial_farm",
+		"mechanized_farm", "agricultural_complex", "agricultural_works", "agri_complex":
+		return spriteFarm
+	case "vat_farm", "nano_farm", "smart_farm", "hydroponic_bay", "protein_synthesizer",
+		"bio_reactor_farm", "quantum_cultivator", "quantum_organic_extractor",
+		"cosmic_organic_works":
+		return spriteResearchLab
+	case "granary":
+		return spriteGranary
+
+	// ── Lumber domain ──
+	case "wood_camp", "woodcutter_camp", "lumber_camp", "logging_station":
+		return spriteLumberCamp
+	case "sawmill", "lumber_mill", "timber_yard", "mill":
+		return spriteMill
+	case "wood_workshop":
+		return spriteWorkshop
+	case "paper_mill":
+		return spriteGlassworks
+
+	// ── Masonry / Stone domain ──
+	case "stone_camp", "stone_pit":
+		return spriteMine
+	case "quarry", "marble_quarry":
+		return spriteMine
+	case "stonemasons_guild":
+		return spriteWorkshop
+	case "kiln", "smelter", "bloomery", "smithy", "ironmonger", "ironworks",
+		"iron_works", "forge":
+		return spriteForge
+	case "brickworks", "marble_works":
+		return spriteFactory
+	case "cement_plant", "bessemer_plant", "iron_works_complex", "steel_mill":
+		return spriteSteelMill
+
+	// ── Military domain ──
+	case "barracks", "garrison", "fort", "war_camp", "field_works", "command_post":
+		return spriteBarracks
+	case "archery_range", "elders_hall":
+		return spriteBarracks
+	case "stable":
+		return spriteStable
+	case "siege_workshop":
+		return spriteSiege
+	case "fortress", "castle_keep", "bunker_complex", "legion_fort":
+		return spriteFortress
+	case "armory":
+		return spriteArmory
+	case "military_academy", "war_academy":
+		return spriteGuildHall
+	case "dockyard", "naval_yard":
+		return spriteHarbour
+	case "military_base", "space_force_base", "fleet_command", "stellar_armada_hq",
+		"drone_warfare_center", "combat_aug_center", "special_ops_hq",
+		"plasma_command", "omniversal_war_council", "probability_war_room":
+		return spriteFortress
+
+	// ── Knowledge domain ──
+	case "altar", "story_circle", "standing_stones":
+		return spriteTemple
+	case "scriptorium", "natural_philosophy_hall":
+		return spriteLibrary
+	case "library", "monastery_library", "civilization_archive":
+		return spriteLibrary
+	case "scholars_hall", "guildhall", "great_hall":
+		return spriteGuildHall
+	case "observatory", "deep_space_observatory":
+		return spriteObservatory
+	case "academy":
+		return spriteLibrary
+	case "university", "think_tank", "theoretical_institute":
+		return spriteGuildHall
+	case "printing_press":
+		return spritePrintShop
+	case "research_institute", "research_campus", "innovation_hub", "physics_laboratory",
+		"ai_research_lab", "neuro_research_center":
+		return spriteResearchLab
+	case "xenology_institute", "reality_academy":
+		return spriteResearchLab
+	case "neural_grid":
+		return spriteDataCenter
+	case "cosmic_research_station":
+		return spriteResearchLab
+
+	// ── Faith domain ──
+	case "shrine", "firepit":
+		return spriteTemple
+	case "temple":
+		return spriteTemple
+	case "church", "mission", "meditation_center", "spiritual_center":
+		return spriteTemple
+	case "monastery":
+		return spriteMonastery
+	case "cathedral", "grand_cathedral", "basilica":
+		return spriteCathederal
+	case "seminary":
+		return spriteApothecary
+	case "pilgrimage_site":
+		return spriteWell
+	case "oracle_house":
+		return spriteObservatory
+	case "revival_hall":
+		return spriteGuildHall
+	case "neon_sanctuary", "cyber_shrine", "digital_temple":
+		return spriteCrystalSpire
+	case "void_monastery":
+		return spriteMonastery
+	case "orbital_sanctuary", "stellar_shrine":
+		return spriteSpaceStation
+	case "quantum_chapel":
+		return spriteCrystalSpire
+	case "astral_chapel":
+		return spriteCrystalSpire
+
+	// ── Trade domain ──
+	case "market", "agora", "bazaar":
+		return spriteMarket
+	case "trading_post", "merchant_quarter":
+		return spriteMintHouse
+	case "bank", "investment_firm", "financial_district":
+		return spriteMintHouse
+	case "stock_exchange", "exchange", "crypto_exchange", "energy_exchange":
+		return spriteGuildHall
+	case "port", "harbour":
+		return spriteHarbour
+	case "venture_hub", "corporate_hq":
+		return spriteGuildHall
+	case "stellar_exchange", "omniversal_bazaar", "probability_market",
+		"asteroid_market", "galactic_trade_hub":
+		return spriteSkyscraper
+
+	// ── Engineering domain ──
+	case "workshop":
+		return spriteWorkshop
+	case "aqueduct":
+		return spriteAqueduct
+	case "waterwheel":
+		return spriteAqueduct
+	case "steam_works", "steam_turbine":
+		return spriteFactory
+	case "machine_shop", "assembly_plant", "electric_arc_furnace":
+		return spriteFactory
+	case "robotics_lab", "nanobot_vat":
+		return spriteResearchLab
+	case "nano_drill_complex", "molecular_synthesizer", "matter_converter",
+		"exotic_matter_forge", "antimatter_forge", "reality_forge":
+		return spriteReactor
+
+	// ── Metallurgy domain ──
+	case "foundry", "plasma_forge", "augmentation_foundry", "aerospace_foundry":
+		return spriteSteelMill
+	case "coal_mine", "steam_mine":
+		return spriteCoalMine
+	case "iron_mine", "deep_iron_mine", "ore_mine", "uranium_mine",
+		"titanium_mine", "dark_crystal_mine", "neutron_star_mine",
+		"asteroid_crystal_mine", "stellar_core_drill":
+		return spriteMine
+	case "alloy_plant", "advanced_alloy_plant", "nano_alloy_plant", "quantum_metal_works":
+		return spriteGlassworks
+	case "coal_works", "steel_era", "iron_era", "steel_works":
+		return spriteSteelMill
+	case "titanium_smelter", "uranium_processing_works":
+		return spriteSteelMill
+	case "geological_extraction", "precision_mine", "organic_extraction",
+		"nuclear_extraction_plant", "dark_matter_refinery", "reality_excavator",
+		"reality_matter_weaver":
+		return spriteMine
+
+	// ── Energy domain ──
+	case "bonfire":
+		return spriteWell
+	case "coal_plant", "steam_coal_plant":
+		return spriteFactory
+	case "oil_derrick", "oil_field", "oil_platform":
+		return spriteOilDerrick
+	case "oil_refinery", "petroleum_refinery", "smart_refinery":
+		return spriteOilDerrick
+	case "power_station", "power_generator", "power_grid_hub", "smart_energy_grid",
+		"smart_grid_node":
+		return spritePowerPlant
+	case "nuclear_plant", "nuclear_reactor":
+		return spriteReactor
+	case "solar_collector_array":
+		return spriteDome
+	case "fusion_reactor", "fusion_reactor_array":
+		return spriteReactor
+	case "quantum_battery_array", "zero_point_generator":
+		return spriteReactor
+	case "dark_energy_tap", "pulsar_tap", "quasar_tap":
+		return spriteCrystalSpire
+	case "dyson_assembly":
+		return spriteWonder
+
+	// ── Hacker domain ──
+	case "terminal", "cyber_hub":
+		return spriteServer
+	case "server_farm", "quantum_server_farm":
+		return spriteDataCenter
+	case "dark_web_hub", "black_market":
+		return spriteServer
+	case "ai_core", "neural_art_complex":
+		return spriteServer
+	case "quantum_net", "galactic_network_node", "orbital_data_relay":
+		return spriteCrystalSpire
+
+	// ── Astronaut domain ──
+	case "launch_complex", "launch_pad":
+		return spriteSpaceDock
+	case "space_station", "orbital_habitat", "orbital_platform", "habitat_ring",
+		"orbital_refinery", "generation_ship":
+		return spriteSpaceStation
+	case "warp_gate", "warp_drive_plant":
+		return spriteCrystalSpire
+	case "dyson_sphere_habitat":
+		return spriteWonder
+	case "arcology_pod", "megaplex":
+		return spriteDome
+	}
+
 	// Check wonders by building key
 	wonderKeys := map[string]bool{
 		"sacred_grove": true, "great_monolith": true, "stonehenge": true,
@@ -846,6 +1103,64 @@ func spriteRows(stype spriteType) []string {
 		return []string{"....AA....", "...AAAA...", "..AAAAAA..", "..PPPPPP..", ".PPPPPPPP.", ".PP....PP.", "PPPPPPPPPP", "PPPPPPPPPP", "A.AAAAAA.A", "AAAAAAAAAA"}
 	case spriteMill:
 		return []string{"..A..", ".AAA.", "PPPPP", "P.P.P", "PPPPP", "AAAAA"}
+	case spriteShelter:
+		return []string{"AAAAAA", "PPPPPP", "P....P", ".PPPP."}
+	case spriteStakeHut:
+		return []string{".PPP.", "PPPPP", "PAAAP", "..A..", "..A..", ".A.A."}
+	case spriteGranary:
+		return []string{".AAAA.", "AAAAAA", "PPPPPP", "PP..PP", "PPPPPP"}
+	case spriteStable:
+		return []string{"AAAAAAA", "PPPPPPP", "P.P.P.P", "PPPPPPP"}
+	case spriteForge:
+		return []string{"..A..", "PAAAP", "PPPPP", "AAPAA", "AAAAA"}
+	case spriteWell:
+		return []string{"A...A", "AAAAA", "A.P.A", "AAAAA", ".AAA."}
+	case spriteAqueduct:
+		return []string{"AAAAAAA", "AAAAAAA", "A.A.A.A", "P.P.P.P", "PPPPPPP"}
+	case spriteCathederal:
+		return []string{"..AA..", "..AA..", ".AAAA.", "PPPPPP", "P.PP.P", "PPPPPP", "P....P", "PPPPPP"}
+	case spriteArmory:
+		return []string{"AAPPAA", "PPPPPP", "P.PP.P", "PPPPPP", "AAAAAA"}
+	case spriteSiege:
+		return []string{"...A..", "AAAAAP", ".PPPPP", "PPPPPP", ".AA.AA"}
+	case spriteMonastery:
+		return []string{"PPPPPPP", "P.....P", "P..A..P", "P.AAA.P", "P.....P", "PPPPPPP"}
+	case spriteApothecary:
+		return []string{".AA.", "PPPP", "P..P", "PPPP", "P..P", "AAAA"}
+	case spriteTavern:
+		return []string{"AAAAAAA", "PPPPPPP", "P.PPP.P", "PPPPPPP", "AAAAAAA"}
+	case spriteHarbour:
+		return []string{"PP.....", "PP.....", "PPPAAAA", "PPPAAAA", "AAAAAAA", "AAAAAAA"}
+	case spriteMintHouse:
+		return []string{"AAAAA", "PPPPP", "P.A.P", "PPPPP", "AAAAA"}
+	case spriteGuildHall:
+		return []string{"AAAAAAAA", "PPPPPPPP", "P.P..P.P", "PPPPPPPP", "AAAAAAAA"}
+	case spritePrintShop:
+		return []string{"AAAAA", "P...P", "PAAAP", "PPPPP", "P.A.P", "AAAAA"}
+	case spriteGlassworks:
+		return []string{"......AA", "PPPPP.AA", "PPPPPAAA", "PPPPPPPP", "P.P.P.PP", "AAAAAAAA"}
+	case spriteCoalMine:
+		return []string{"AAAAAAA", "PP...PP", "P.AAA.P", "AAAAAAA", ".AA.AA."}
+	case spriteSteelMill:
+		return []string{"...A..A..", "PPPA.AAAP", "PPPAAAAPP", "PPPPPPPPP", "PPP...PPP", "PPPPPPPPP", "AAAAAAAAA"}
+	case spriteOilDerrick:
+		return []string{"..A..", "..A..", ".AAA.", "AAAAA", "A...A", "AAAAA", "A...A", "AAAAA"}
+	case spritePowerPlant:
+		return []string{"AA....AA", "AA....AA", "AAPPPPAA", "AAPPPPAA", "PPPPPPPP", "PP....PP", "PPPPPPPP"}
+	case spriteResearchLab:
+		return []string{"AAAAAAA", "PPPPPPP", "PA.A.AP", "PPPPPPP", "AAAAAAA"}
+	case spriteHospital:
+		return []string{"AAAAAAA", "PPPPPPP", "PP.A.PP", "PAAAAPP", "PP.A.PP", "PPPPPPP", "AAAAAAA"}
+	case spriteDataCenter:
+		return []string{"AAAAAA", "PPPPPP", "AAAAAA", "PPPPPP", "AAAAAA", "PPPPPP"}
+	case spriteAntenna:
+		return []string{".A.", ".A.", "AAA", ".A.", "AAA", "PAP", "PAP", "PPP"}
+	case spriteReactor:
+		return []string{"AA.AA...", "AA.AA...", ".AAAAA..", "AAAAAAAA", "PPPPPPPP", "PP....PP", "PPPPPPPP"}
+	case spriteSpaceDock:
+		return []string{"....A....", "...AAA...", "..AAAAA..", "AAAAAAAAA", "PPPPPPPPP", "PPPPPPPPP"}
+	case spriteCrystalSpire:
+		return []string{"..A..", ".AAA.", "AAAAA", ".AAA.", "AAPAA", "AAPAA", "AAPAA", "AAAAA"}
 	default:
 		return []string{"PPP", "PPP", "AAA"}
 	}
@@ -929,14 +1244,19 @@ func collectBuildingPlacements(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand
 		if bs.Category == "military" {
 			sz++
 		}
+		// Show 1 map instance per 5 real buildings, minimum 1 if any exist
+		mapCount := (bs.Count + 4) / 5
+		if mapCount < 1 {
+			mapCount = 1
+		}
 		if bs.Category == "wonder" {
 			wsz := 7 + dl*3
 			if era >= 4 {
 				wsz += 2
 			}
-			wonders = append(wonders, layoutEntry{key, bs.Category, bs.WorkerDomain, bs.Count, wsz})
+			wonders = append(wonders, layoutEntry{key, bs.Category, bs.WorkerDomain, mapCount, wsz})
 		} else {
-			entries = append(entries, layoutEntry{key, bs.Category, bs.WorkerDomain, bs.Count, sz})
+			entries = append(entries, layoutEntry{key, bs.Category, bs.WorkerDomain, mapCount, sz})
 		}
 	}
 
@@ -992,7 +1312,7 @@ func placeBuildingsOrganic(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, cx
 	var placements []bldInfo
 	pal := getTerrainPalette(eraFromAge(cfg.AgeKey))
 	grid := newPlotGrid(12)
-	maxR := int(float64(min(w, h)) * 0.40)
+	maxR := int(float64(min(w, h)) * 0.30)
 	border := 8
 
 	// Seed anchor points — small groups
@@ -1069,7 +1389,7 @@ func placeBuildingsVillage(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, cx
 	pal := getTerrainPalette(eraFromAge(cfg.AgeKey))
 	grid := newPlotGrid(10)
 	border := 8
-	maxR := int(float64(min(w, h)) * 0.35)
+	maxR := int(float64(min(w, h)) * 0.26)
 
 	// Draw 6 radial spokes from center
 	numSpokes := 6
@@ -1162,7 +1482,7 @@ func placeBuildingsMedieval(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, c
 	}
 
 	quarterOffsets := [4][2]int{{1, -1}, {-1, -1}, {1, 1}, {-1, 1}}
-	maxR := int(float64(min(w, h)) * 0.40)
+	maxR := int(float64(min(w, h)) * 0.30)
 	spacing := 10
 
 	for q, qEntries := range quarters {
@@ -1237,7 +1557,7 @@ func placeBuildingsIndustrial(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand,
 
 	// Draw road grid
 	roadCol := lerp(pal.Road, c(150, 145, 135), 0.4)
-	maxR := int(float64(min(w, h)) * 0.42)
+	maxR := int(float64(min(w, h)) * 0.32)
 	// Horizontal roads every 3 cells
 	for ry := cy - maxR; ry <= cy+maxR; ry += cellSpacing * 3 {
 		drawRoadLine(img, cx-maxR, ry, cx+maxR, ry, w, h, 1, roadCol)
@@ -1303,7 +1623,7 @@ func placeBuildingsModern(img *image.RGBA, cfg MapGenConfig, rng *rand.Rand, cx,
 	blockTotalH := blockH*cellSize + streetW
 
 	// Start from top-left of city area
-	cityR := int(float64(min(w, h)) * 0.42)
+	cityR := int(float64(min(w, h)) * 0.32)
 	startX := cx - cityR + border
 	startY := cy - cityR + border
 	streetColor := lerp(pal.Road, c(80, 80, 85), 0.5)
@@ -1681,13 +2001,13 @@ func drawBuildings(img *image.RGBA, w, h, era, dl int, pal TerrainPalette, ageKe
 	for _, b := range placements {
 		bx, by, size := b.x, b.y, b.size
 
-		// Determine scale: wonders get scale 3, full-map gets 2, minimap gets 1
+		// Determine scale: wonders get scale 2, full-map gets 1, minimap gets 1
 		scale := 1
 		if dl > 0 {
 			if b.category == "wonder" {
-				scale = 3
-			} else {
 				scale = 2
+			} else {
+				scale = 1
 			}
 		}
 

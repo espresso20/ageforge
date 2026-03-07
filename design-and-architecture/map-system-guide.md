@@ -225,6 +225,28 @@ at fixed angles in the outer 60-80% zone) from ordinary buildings (passed to
 `placeAllBuildings`). The latter dispatches to one of seven layout functions based on
 `eraName`.
 
+### 1-per-5 map instance throttle
+
+To avoid overcrowding the map when a player has many copies of the same building,
+`collectBuildingPlacements` throttles the number of map icons placed per building type:
+
+```go
+// Show 1 map instance per 5 real buildings, minimum 1 if any exist
+mapCount := (bs.Count + 4) / 5  // ceiling division by 5
+if mapCount < 1 { mapCount = 1 }
+```
+
+| Real buildings built | Map icons shown |
+|----------------------|-----------------|
+| 1–5 | 1 |
+| 6–10 | 2 |
+| 11–15 | 3 |
+| 16–20 | 4 |
+| … | … |
+
+This applies to both regular buildings and wonders. The throttle uses `BuildingState.Count`
+(the integer count of how many instances the player has built).
+
 ### plotGrid collision system
 
 All layout functions use a shared `plotGrid` to prevent buildings from overlapping.
@@ -257,18 +279,18 @@ if grid.isFree(bx, by, size, size) {
 
 ### placeBuildingsOrganic (eras: primitive, stone)
 
-`cellSize: 12`, `maxR: 40% of min(w,h)`.
+`cellSize: 12`, `maxR: 30% of min(w,h)`.
 
 Buildings are placed using a random-walk anchor system. The first building goes at a random
 point within `maxR` of the center. Subsequent buildings have a 2-in-3 chance of being placed
 near an existing anchor (within ±15 px horizontal, ±10 px vertical), simulating organic
 settlement growth. Water pixels are rejected. Up to 30 placement attempts per building.
 
-Key parameters: `maxR = int(float64(min(w, h)) * 0.40)`, anchor jitter `rng.Intn(31)-15` / `rng.Intn(21)-10`.
+Key parameters: `maxR = int(float64(min(w, h)) * 0.30)`, anchor jitter `rng.Intn(31)-15` / `rng.Intn(21)-10`.
 
 ### placeBuildingsVillage (eras: bronze, iron, classical)
 
-`cellSize: 10`, `maxR: 35% of min(w,h)`, 6 radial spokes.
+`cellSize: 10`, `maxR: 26% of min(w,h)`, 6 radial spokes.
 
 Six road spokes radiate from the city center. Buildings are assigned to spokes round-robin
 and placed at a random distance along the spoke with a small perpendicular offset (3–10 px).
@@ -285,7 +307,8 @@ A roughly square castle wall is drawn at radius 30 from center. Four cardinal ro
 outward. Buildings are divided into four quarter-groups and placed in a 4-column grid within
 each quarter starting just outside the wall. Grid wraps at 4 columns per row.
 
-Key parameters: `wallR = 30`, `spacing = 10`, quarter grid starts at `cx ± (wallR+10)`.
+Key parameters: `wallR = 30`, `spacing = 10`, `maxR = int(float64(min(w,h)) * 0.30)`,
+quarter grid starts at `cx ± (wallR+10)`.
 
 ### placeBuildingsIndustrial (eras: colonial, industrial)
 
@@ -296,7 +319,8 @@ separated onto the left half; all other buildings go on the right. A road grid i
 with horizontal roads every 3 cells and vertical roads every 4 cells. Each group fills a
 5-column grid expanding from `cx ± cellSpacing`.
 
-Key parameters: `cellSpacing = 14`, grid roads at `cellSpacing*3` and `cellSpacing*4` intervals.
+Key parameters: `cellSpacing = 14`, `maxR = int(float64(min(w,h)) * 0.32)`,
+grid roads at `cellSpacing*3` and `cellSpacing*4` intervals.
 
 ### placeBuildingsModern (eras: atomic, modern)
 
@@ -305,7 +329,7 @@ Key parameters: `cellSpacing = 14`, grid roads at `cellSpacing*3` and `cellSpaci
 Buildings are packed into city blocks of `blockW=6` columns and `blockH=4` rows with
 `cellSize=10` pixels per slot and `streetW=3` pixel gutters between blocks. Streets are
 drawn around each block as it is filled. Blocks advance left-to-right within `cityR =
-42% of min(w,h)`, then wrap to the next row. This produces a grid-plan city layout.
+32% of min(w,h)`, then wrap to the next row. This produces a grid-plan city layout.
 
 Key parameters: `blockW = 6`, `blockH = 4`, `cellSize = 10`, `streetW = 3`.
 
@@ -361,6 +385,35 @@ const (
     spriteServer                         // server rack stack
     spriteSpaceStation                   // cross-shaped station with solar panels
     spriteWonder                         // large ornate monument
+    spriteShelter                        // lean-to / open-sided structure
+    spriteStakeHut                       // raised platform hut on stilts
+    spriteGranary                        // rounded storage barn
+    spriteStable                         // wide low building with pitched roof
+    spriteForge                          // squat blocky furnace building
+    spriteWell                           // circular well
+    spriteAqueduct                       // arched bridge/aqueduct shape
+    spriteCathederal                     // tall spire church
+    spriteArmory                         // fortified rectangular storage
+    spriteSiege                          // siege weapon platform
+    spriteMonastery                      // cloistered courtyard shape
+    spriteApothecary                     // narrow tall shop
+    spriteTavern                         // wide building with sign-post
+    spriteHarbour                        // dock/pier extending out
+    spriteMintHouse                      // compact official building
+    spriteGuildHall                      // wide official hall
+    spritePrintShop                      // narrow two-story printshop
+    spriteGlassworks                     // wide factory with tall chimney
+    spriteCoalMine                       // mine entrance with cart track
+    spriteSteelMill                      // large industrial with multiple chimneys
+    spriteOilDerrick                     // tall narrow derrick shape
+    spritePowerPlant                     // industrial building with cooling towers
+    spriteResearchLab                    // modern clean research building
+    spriteHospital                       // wide building with cross marker
+    spriteDataCenter                     // dense rack-row building
+    spriteAntenna                        // tall narrow antenna/tower
+    spriteReactor                        // dome + cooling towers
+    spriteSpaceDock                      // horizontal launch pad
+    spriteCrystalSpire                   // tall narrow crystalline structure
 )
 ```
 
@@ -368,16 +421,20 @@ const (
 
 `getBuildingSprite(domain, buildingKey, eraName string) spriteType` applies rules in order:
 
-1. Wonder keys are checked first by building key — any wonder always returns `spriteWonder`.
-2. Three era-group booleans are set: `isEarlyEra` (primitive through classical),
+1. **Per-building-key overrides** are checked first — a large `switch buildingKey` block at
+   the top of the function maps individual building keys directly to sprite types. These take
+   priority over all domain and era logic. This covers the majority of the 284 buildings with
+   distinct, thematically appropriate sprites.
+2. Wonder keys are checked next by building key — any wonder always returns `spriteWonder`.
+3. Three era-group booleans are set: `isEarlyEra` (primitive through classical),
    `isLateEra` (space, galactic, nano), `isDigitalEra` (digital, nano).
-3. A switch on `domain` maps each worker domain to a sprite, with era overrides.
-4. A fallback switch on `buildingKey` handles specific non-domain buildings
+4. A switch on `domain` maps each worker domain to a sprite, with era overrides.
+5. A fallback switch on `buildingKey` handles specific non-domain buildings
    (skyscrapers, reactors, space stations, etc.).
-5. Default: `spriteHut`.
+6. Default: `spriteHut`.
 
 ```go
-// Domain-to-sprite summary:
+// Domain-to-sprite fallback summary (used when no per-key override matches):
 // "food"             → spriteHut (early) / spriteFarm (later)
 // "lumber"           → spriteLumberCamp
 // "masonry"          → spriteMine
@@ -396,9 +453,10 @@ const (
 `drawBuildingSprite(img, imgW, imgH, px, py, stype, primary, accent, scale)` renders the
 pixel-art pattern from `spriteRows`:
 
-- `scale <= 1` (minimap): draws a solid 3×3 block of `primary` color. No sprite detail.
-- `scale == 2` (full map, regular building): each pixel in the pattern becomes a 2×2 block.
-- `scale == 3` (full map, wonder): each pixel becomes a 3×3 block.
+- `scale <= 1` (minimap, or full map regular buildings): draws a solid 3×3 block of `primary`
+  color. No sprite detail (fast, readable at small sizes).
+- `scale == 2` (full map, wonder): each pixel in the pattern becomes a 2×2 block, producing a
+  larger and more detailed sprite befitting a wonder.
 
 Scale is chosen in `drawBuildings`:
 
@@ -406,12 +464,17 @@ Scale is chosen in `drawBuildings`:
 scale := 1
 if dl > 0 {
     if b.category == "wonder" {
-        scale = 3
-    } else {
         scale = 2
+    } else {
+        scale = 1
     }
 }
 ```
+
+| Building type | Minimap (dl=0) | Full map (dl=1) |
+|---------------|----------------|-----------------|
+| Regular building | scale 1 (3×3 block) | scale 1 (3×3 block) |
+| Wonder | scale 1 (3×3 block) | scale 2 (2× sprite) |
 
 ### How to add a new sprite
 
@@ -419,29 +482,34 @@ Three changes are required:
 
 **Step 1 — Add a constant to the `spriteType` block:**
 
+Add the new constant after `spriteCrystalSpire` (the last existing constant) and before
+the closing `)`:
+
 ```go
 const (
     spriteHut spriteType = iota
     // ... existing constants ...
-    spriteWonder
-    spriteWindmill  // <-- add here, after the last existing constant
+    spriteCrystalSpire
+    spriteMyNewSprite  // <-- add here, after the last existing constant
 )
 ```
 
 **Step 2 — Add a case in `getBuildingSprite`:**
 
+For a per-building-key override (preferred — takes priority over domain logic):
+
 ```go
-// Inside the domain switch, or as a buildingKey fallback:
-case "windmill_key":
-    return spriteWindmill
+// At the top of the per-building-key switch block:
+case "my_building_key":
+    return spriteMyNewSprite
 ```
 
-Or inside the domain switch:
+For a domain-level mapping, add inside the domain switch (lower priority than key overrides):
 
 ```go
 case "lumber":
     if eraName == "colonial" || eraName == "industrial" {
-        return spriteWindmill
+        return spriteMyNewSprite
     }
     return spriteLumberCamp
 ```
@@ -449,10 +517,10 @@ case "lumber":
 **Step 3 — Add a pixel pattern in `spriteRows`:**
 
 ```go
-case spriteWindmill:
+case spriteMyNewSprite:
     return []string{
-        "..A..",   // top sail
-        ".A.A.",   // upper arms
+        "..A..",   // top detail
+        ".A.A.",   // upper section
         "PPPPP",   // body top
         "P.P.P",   // body middle
         "PPPPP",   // body base
@@ -468,8 +536,12 @@ case spriteWindmill:
 | `A` or `I` | Accent color (roof, trim, detail, glow) |
 | `.` | Transparent — pixel is not drawn |
 
-Each row is a string of characters. All rows should be the same width or the widest row
+Each row is a string of characters. All rows should be the same width, or the widest row
 determines the sprite width. The sprite is centered on the placement point.
+
+Sprites can range from 3×3 to 9×10 pixels. At `scale=1` (the current full-map default),
+all regular buildings render as 3×3 solid blocks regardless of sprite detail; sprites only
+show detail at `scale=2` (wonders) or higher. Design sprites that look good at scale 2.
 
 ---
 
@@ -608,7 +680,12 @@ The full map tab uses `pixW = w` and `pixH = ht * 2`.
 |------|----------------|
 | Change a building's color | `buildingVisuals` map in `mapgen.go` |
 | Make buildings larger | Raise `baseSize` in `collectBuildingPlacements` or raise `wsz` for wonders |
+| Change sprite scale (regular) | `scale = 1` line in `drawBuildings` (currently `scale = 1` for dl>0) |
+| Change sprite scale (wonders) | `scale = 2` line in `drawBuildings` (currently `scale = 2` for wonders at dl>0) |
 | Change city spacing | `cellSize` in `newPlotGrid(...)` inside the relevant layout function |
+| Change city radius / spread | `maxR` or `cityR` float constant in the relevant layout function |
+| Change map icon count per building | `(bs.Count + 4) / 5` formula in `collectBuildingPlacements` |
+| Add a per-building-key sprite | Add a `case "key": return spriteXxx` in the key-override switch in `getBuildingSprite` |
 | Change which era uses which layout | `placeAllBuildings` switch in `mapgen.go` |
 | Add a new city layout style | New `placeBuildingsXxx` function + case in `placeAllBuildings` |
 | Change terrain colors | `TerrainPalette` struct literal for the relevant era in `getTerrainPalette` |
