@@ -44,7 +44,7 @@ production = base_rate × building_count × (0.20 + 0.80 × assigned / total_cap
 
 ## Worker Class Names
 
-Each domain has age-tiered class names. When you recruit a worker, they are always created at the current age's tier for that domain. New recruits join at the current tier; existing workers retain their tier and its food cost.
+Each domain has age-tiered class names. Workers are recruited generically and take on a domain class when assigned to a building. When assigned, they join at the current age's tier for that domain. Existing workers retain their tier and its food cost when you advance ages.
 
 **Food drain scales geometrically:** `FoodCost = baseFoodCost × 1.5^tier`
 
@@ -124,15 +124,15 @@ Space: Cadet → Interstellar: Interstellar Pilot → Galactic: Galactic Explore
 
 ## Commands
 
-**Recruit a worker:**
+**Recruit workers:**
 
 ```
-recruit <domain>
+recruit [count|max]
 ```
 
-Examples: `recruit food`, `recruit knowledge`, `recruit military`
+Examples: `recruit`, `recruit 5`, `recruit max`
 
-You can only recruit the current age's tier. Recruiting costs food upfront; the new worker begins draining food per tick immediately.
+Workers are recruited generically from available housing capacity — no domain argument is needed. A freshly recruited worker has no domain class yet; they take on the domain class of the building they are first assigned to (e.g. assigned to a gathering_camp → becomes a Forager; assigned to a story_circle → becomes a Shaman). You can only recruit up to your current housing cap. Recruiting costs food upfront; each new worker begins draining food per tick immediately.
 
 **Assign workers to a building:**
 

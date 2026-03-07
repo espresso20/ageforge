@@ -67,9 +67,9 @@ build stash
 
 ### 3. Recruit your first workers
 ```
-recruit food
-recruit knowledge
+recruit 2
 ```
+Workers are recruited generically — no domain needed. Assign them to buildings to give them a domain class.
 
 ### 4. Assign food workers to a building
 Idle workers produce nothing. Assign them:
@@ -104,7 +104,7 @@ The second row shows what you need for the next age. Keep building and assigning
 ## Resource management tips
 
 - Resources cap at their storage limit — once capped, production is wasted
-- **Food drain** = total pop × 0.5/tick. Always keep food positive
+- **Food drain** = `0.06 × 1.5^tier /tick` per worker, where tier is the current age's food-domain tier. In the Primitive Age this is 0.06/tick per worker; it scales up each age as workers advance to higher tiers. Always keep food production positive
 - **Knowledge** is the most important resource early — prioritise knowledge workers
 - Watch the `Rate` column in the Economy tab; negative rates will drain you
 
@@ -112,7 +112,7 @@ The second row shows what you need for the next age. Keep building and assigning
 
 ## Workers
 
-Workers are organized into 12 domains, each tied to specific buildings. Recruit workers with `recruit <domain>` and assign them with `assign <building_key> [count|all]`.
+Workers are organized into 12 domains, each tied to specific buildings. Recruit workers with `recruit [count|max]` (no domain argument needed) and assign them with `assign <building_key> [count|all]`. Workers take on the domain class of the building they are assigned to.
 
 **Core domains**: food, knowledge, faith, military, trade, engineering
 **Production domains**: lumber, masonry, metallurgy, energy

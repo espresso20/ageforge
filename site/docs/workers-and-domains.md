@@ -348,7 +348,7 @@ unassign all military
 
 ## Assignment Rules
 
-- The domain must match the building's `WorkerDomain` field — you cannot assign food workers to a library or knowledge workers to a farm
+- Workers are domain-agnostic until assigned. On assignment they take on the domain class of the target building (e.g. assigning to a farm gives a food-domain class; assigning to a library gives a knowledge-domain class). You assign the same generic worker pool to any building — the domain is resolved automatically
 - `count` must not exceed the domain's current idle worker pool
 - `total_capacity` = `building_count × per_building_capacity` (shown in the Economy tab)
 - Assigning more workers than capacity allows is rejected — fill more buildings first

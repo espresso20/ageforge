@@ -82,7 +82,7 @@ If no chain is completed, fallback titles apply:
 
 | Milestone | Condition | Reward |
 |---|---|---|
-| War Machine | Maintain 10 soldiers | +20% military power |
+| War Machine | Have 10+ workers assigned to military buildings (hunting lodge, war camp, barracks, etc.) | +20% military power |
 
 **Chain reward:** Title: "The Conquerors" · Speed boost ×0.5 for 30 ticks
 
