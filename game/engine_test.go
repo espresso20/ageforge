@@ -265,7 +265,13 @@ func TestEngine_ChainEvents(t *testing.T) {
 	})
 
 	ge.mu.Lock()
+	// Military chain requires all 5 milestones: first_soldiers, war_machine,
+	// iron_legion, fortress_state, military_superpower
+	ge.Milestones.completed["first_soldiers"] = true
 	ge.Milestones.completed["war_machine"] = true
+	ge.Milestones.completed["iron_legion"] = true
+	ge.Milestones.completed["fortress_state"] = true
+	ge.Milestones.completed["military_superpower"] = true
 	ge.checkMilestones()
 	ge.mu.Unlock()
 

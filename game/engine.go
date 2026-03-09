@@ -11,12 +11,25 @@ import (
 )
 
 const (
+	// BaseTickInterval is the un-boosted tick period. Speed bonuses divide this
+	// value, so higher bonuses produce shorter intervals (faster ticks).
 	BaseTickInterval = 2 * time.Second
-	MinTickInterval  = 200 * time.Millisecond
-	MaxLogSize       = 500
+	// MinTickInterval is the floor imposed after all speed bonuses are applied.
+	// It prevents the tick loop from spinning faster than the UI can render.
+	MinTickInterval = 200 * time.Millisecond
+	MaxLogSize      = 500
 )
 
-// GameEngine is the central game coordinator
+// GameEngine is the central coordinator for all game systems. All subsystems
+// are accessed through their manager fields rather than as globals, so multiple
+// independent engine instances can coexist (useful for tests and prestige resets).
+//
+// Concurrency model: a single background goroutine calls doTick() while the UI
+// and command handler access the engine from other goroutines. All reads and
+// writes to mutable fields must be done under ge.mu (RLock for reads, Lock for
+// writes). Bus handlers fire synchronously inside doTick while the write lock is
+// already held — they MUST NOT call GetState() or any method that would attempt
+// to re-acquire the lock.
 type GameEngine struct {
 	mu sync.RWMutex
 
@@ -61,13 +74,15 @@ type GameEngine struct {
 	lastAgeAdvanceSummary AgeAdvanceSummary
 
 	// Phase 8: epoch system
-	currentEpoch       string
-	epochEventFired    map[string]bool // epochKey -> true once an epoch event has fired
+	currentEpoch string
+	// epochEventFired ensures each epoch fires its roll at most once per civilisation cycle.
+	epochEventFired    map[string]bool
 	survivedEpochs     map[string]bool // epochs where player chose Endure
 	pendingCatastrophe string          // epoch key when catastrophe modal should show; "" otherwise
 	epochEventHistory  []EpochEventRecord
 
-	// Phase 9: catastrophe system (persist across Succumb and Prestige resets)
+	// Phase 9: catastrophe system — these fields intentionally survive Succumb and Prestige
+	// resets so that legacy bonuses and civilization history accumulate across multiple runs.
 	legacyBonuses      map[string]bool // epochKey -> true if succumb legacy bonus active
 	catastropheHistory []string        // narrative civilization log entries
 }
@@ -79,7 +94,8 @@ type BuildQueueItem struct {
 	TotalTicks  int
 }
 
-// NewGameEngine creates a new game engine
+// NewGameEngine creates a new game engine initialised to the Primitive Age.
+// Callers must call Start() to begin the tick loop.
 func NewGameEngine() *GameEngine {
 	ge := &GameEngine{
 		age:              "primitive_age",
@@ -123,11 +139,18 @@ func NewGameEngine() *GameEngine {
 
 const AutosaveInterval = 60 * time.Second
 
-// Start begins the game tick loop
+// Start begins the game tick loop in the calling goroutine. It blocks until
+// Stop is called. Safe to call again after Stop — the stop channel is
+// re-initialised so the engine can restart (e.g. ESC → splash → New Game).
+//
+// NOTE: Do not call Start from inside the UI goroutine without a wrapper; it
+// blocks indefinitely. Wrap with go ge.Start() or run via the app goroutine.
 func (ge *GameEngine) Start() {
 	ge.mu.Lock()
-	// If this engine was previously stopped, reinitialize the stop channel so
+	// If this engine was previously stopped, reinitialise the stop channel so
 	// Start can be called again after Stop (e.g. ESC → splash → New Game).
+	// IMPORTANT: stopOnce must also be reset or the next Stop() call will be
+	// a no-op and the tick goroutine will run forever.
 	select {
 	case <-ge.stopCh:
 		ge.stopCh = make(chan struct{})
@@ -168,7 +191,9 @@ func (ge *GameEngine) Start() {
 	}
 }
 
-// safeTick wraps doTick with panic recovery to prevent the tick goroutine from dying
+// safeTick wraps doTick with panic recovery to keep the tick goroutine alive
+// even if a subsystem panics. Panics are logged as errors rather than crashing
+// the entire application.
 func (ge *GameEngine) safeTick() {
 	defer func() {
 		if r := recover(); r != nil {
@@ -180,7 +205,10 @@ func (ge *GameEngine) safeTick() {
 	ge.doTick()
 }
 
-// getTickInterval returns the current tick interval based on tick speed bonus and speed multiplier
+// getTickInterval computes the current tick interval from all speed sources.
+// Called by the tick goroutine between ticks — no lock needed because
+// tickSpeedBonus and speedMultiplier are only written under the write lock
+// inside doTick/LoadGame, which runs on the same goroutine before this call.
 func (ge *GameEngine) getTickInterval() time.Duration {
 	// tickSpeedBonus and speedMultiplier are only written under the write lock
 	// in doTick/LoadGame, and this is called from the same goroutine after
@@ -204,7 +232,9 @@ func (ge *GameEngine) getTickInterval() time.Duration {
 	return interval
 }
 
-// recalculateTickSpeed sums all tick speed bonuses (must be called with lock held)
+// recalculateTickSpeed sums all tick_speed bonuses from research, permanent
+// bonuses, prestige, and active events. Must be called with the write lock held.
+// The result is cached in ge.tickSpeedBonus; getTickInterval reads it.
 func (ge *GameEngine) recalculateTickSpeed() {
 	oldBonus := ge.tickSpeedBonus
 	bonus := ge.Research.GetBonus("tick_speed") +
@@ -219,7 +249,11 @@ func (ge *GameEngine) recalculateTickSpeed() {
 	ge.tickSpeedBonus = bonus
 
 	if bonus != oldBonus {
-		interval := time.Duration(float64(BaseTickInterval) / (1.0 + bonus))
+		mult := ge.speedMultiplier
+		if mult < 1.0 {
+			mult = 1.0
+		}
+		interval := time.Duration(float64(BaseTickInterval) / ((1.0 + bonus) * mult))
 		if interval < MinTickInterval {
 			interval = MinTickInterval
 		}
@@ -227,8 +261,10 @@ func (ge *GameEngine) recalculateTickSpeed() {
 	}
 }
 
-// MaxSpeedForAge returns the maximum speed multiplier based on wonders built.
-// Base speed is 1.0x. Each wonder built adds +0.5x.
+// MaxSpeedForAge returns the maximum speed multiplier gated by wonders.
+// Each wonder built adds +0.5x on top of the 1.0x base, so players must
+// invest in wonders to unlock higher speed settings via the `speed` command.
+// NOTE: Caller must hold at least an RLock if called from outside the tick goroutine.
 func (ge *GameEngine) MaxSpeedForAge() float64 {
 	wonderCount := 0
 	for key, count := range ge.Buildings.counts {
@@ -270,7 +306,8 @@ func (ge *GameEngine) GetMaxSpeed() float64 {
 	return ge.MaxSpeedForAge()
 }
 
-// Stop halts the game engine (safe to call multiple times)
+// Stop halts the game tick loop. Safe to call multiple times; subsequent
+// calls are no-ops. After Stop returns the Start goroutine has exited.
 func (ge *GameEngine) Stop() {
 	ge.stopOnce.Do(func() {
 		ge.mu.Lock()
@@ -280,7 +317,10 @@ func (ge *GameEngine) Stop() {
 	})
 }
 
-// doTick processes one game tick
+// doTick processes one game tick. It holds the write lock for its entire
+// duration, which means all Bus handlers that fire here (via Publish) also
+// run under the write lock. Bus handlers MUST NOT call GetState() or any
+// other method that acquires the lock — doing so will deadlock.
 func (ge *GameEngine) doTick() {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -351,7 +391,9 @@ func (ge *GameEngine) doTick() {
 	// Check milestones
 	ge.checkMilestones()
 
-	// Check age advancement — notify once when ready, but wait for player to type 'advance'
+	// Check age advancement — notify once when ready, but require player to
+	// type 'advance' to confirm. ageReady resets if requirements drop (e.g.
+	// resources consumed) so the notification fires again if they're re-met.
 	if nextAge := ge.progress.CheckAdvancement(ge.age, ge.Resources, ge.Buildings); nextAge != "" {
 		if !ge.ageReady {
 			ge.ageReady = true
@@ -730,7 +772,14 @@ func (ge *GameEngine) getAllResearchProductionEffects() []config.Effect {
 	return effects
 }
 
-// advanceAge advances to the next age. Caller must hold the write lock.
+// advanceAge advances to newAge and applies all transition consequences:
+//   - Building lineage transformation (old tier → new tier per lineage definition)
+//   - Legacy flags for any lower-tier buildings that now have an unlocked replacement
+//   - Age-gated unlock application (resources, buildings, workers)
+//   - Resource reduction to 10% of current amounts (intended economic reset)
+//   - Epoch detection and epoch event roll if the new age crosses an epoch boundary
+//
+// Caller must hold the write lock.
 func (ge *GameEngine) advanceAge(newAge string) {
 	oldAge := ge.age
 	ge.age = newAge
@@ -796,7 +845,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	ge.applyAgeUnlocks(newAge)
 	ge.Stats.RecordAge(newAge)
 
-	// Reduce all resources to 25% on age transition
+	// Reduce all resources to 10% on age transition
 	for _, r := range ge.Resources.resources {
 		r.Amount *= 0.10
 	}
@@ -843,8 +892,11 @@ func (ge *GameEngine) applyAgeUnlocks(ageKey string) {
 	}
 }
 
-// detectEpochTransition checks whether newAge belongs to a different epoch and fires the
-// epoch event roll if so. Must be called at the end of advanceAge (under engine write lock).
+// detectEpochTransition checks whether newAge belongs to a different epoch
+// and fires the epoch event roll when an epoch boundary is crossed. Must be
+// called at the end of advanceAge while the engine write lock is held.
+// Each epoch fires its roll at most once per civilisation cycle
+// (epochEventFired prevents double-fire on load or re-entry).
 func (ge *GameEngine) detectEpochTransition(newAge string) {
 	newEpoch := config.EpochForAge(newAge)
 	if newEpoch == ge.currentEpoch {
@@ -864,7 +916,11 @@ func (ge *GameEngine) detectEpochTransition(newAge string) {
 	ge.rollEpochEvent(newEpoch)
 }
 
-// rollEpochEvent performs the epoch transition event roll (faith gates good/bad, culture gates tier).
+// rollEpochEvent performs the epoch transition event roll.
+//   - Faith fill % gates good-event probability: <25% → 40%, >75% → 60%, else 50%.
+//   - On a bad roll, a further 30% chance escalates to a catastrophe (modal prompt).
+//   - Otherwise a challenging (non-catastrophe) bad event is applied immediately.
+//
 // Must be called under engine write lock.
 func (ge *GameEngine) rollEpochEvent(epochKey string) {
 	// Prevent double-fire per epoch
@@ -904,7 +960,11 @@ func (ge *GameEngine) rollEpochEvent(epochKey string) {
 	}
 }
 
-// rollGoodEpochEvent picks a good epoch event based on culture level.
+// rollGoodEpochEvent picks a good epoch event gated by culture fill %.
+//   - >40% culture fill → major+minor events eligible.
+//   - >75% culture fill with 15% chance → all tiers (legendary) eligible.
+//
+// Must be called under engine write lock.
 func (ge *GameEngine) rollGoodEpochEvent() {
 	cultureStorage := ge.Resources.GetStorage("culture")
 	tier := "minor"
@@ -1166,8 +1226,9 @@ func (ge *GameEngine) DeferCatastrophe() {
 	// The UI is responsible for not re-showing the modal until next session refresh.
 }
 
-// reapplyLegacyBonuses adds all active legacy bonus multipliers to permanentBonuses.
-// Call after any reset that zeroes permanentBonuses (prestige, succumb).
+// reapplyLegacyBonuses restores all Succumb legacy rate bonuses into
+// permanentBonuses after a reset. Must be called whenever permanentBonuses is
+// cleared (prestige or succumb resets) so cross-run bonuses are not lost.
 func (ge *GameEngine) reapplyLegacyBonuses() {
 	for epochKey := range ge.legacyBonuses {
 		for res, mult := range config.LegacyBonusForEpoch(epochKey) {
@@ -1725,7 +1786,12 @@ func (ge *GameEngine) StartResearch(techKey string) error {
 	ageOrder := ge.progress.GetAgeOrder()
 	knowledge := ge.Resources.Get("knowledge")
 
-	if err := ge.Research.StartResearch(techKey, ge.age, ageOrder, knowledge); err != nil {
+	// Combine research_speed from all sources: techs + permanent bonuses + prestige.
+	// This must be done before StartResearch so the combined value reduces tick count.
+	combinedResearchSpeed := ge.Research.GetBonus("research_speed") +
+		ge.permanentBonuses["research_speed"] +
+		ge.Prestige.GetBonuses()["research_speed"]
+	if err := ge.Research.StartResearchWithSpeed(techKey, ge.age, ageOrder, knowledge, combinedResearchSpeed); err != nil {
 		return err
 	}
 
