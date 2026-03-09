@@ -48,3 +48,20 @@ See DONE.md for completion notes.
 
 ## Completed
 <!-- Move items here with [x] as they are finished -->
+
+---
+
+## Phase 20: Living City Map System ✓ DONE
+See DONE.md for details (2026-03-08).
+
+---
+
+## Phase 21: Balance Pass + Bug Fix
+- [~] Balance audit: age progression, building ROI, food sustainability, wonder costs, tech costs
+- [~] Bug hunt: deadlocks, race conditions, reset correctness, resource leaks
+- [ ] Apply balance fixes from audit
+- [ ] Apply bug fixes from hunt
+- [ ] Wiki updates for balance changes
+
+## Phase 21: Balance Pass + Bug Fix ✓ DONE
+See DONE.md for details (2026-03-08).

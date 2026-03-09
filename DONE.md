@@ -4,6 +4,48 @@ Items are moved here from TODO.md when finished. Do not re-implement anything li
 
 ---
 
+## Phase 21: Balance Pass + Bug Fix (2026-03-08)
+
+**Code bugs:**
+- [x] H-1: Worker production floor restored — unassigned buildings now produce 20% base rate (was 0%)
+- [x] H-2: RemovePct truncation fixed — reconciliation loop prevents idle count going negative
+- [x] H-5: GenerateRuins now decrements `counts` — no more double production from ruined buildings
+- [x] H-6: Wonder bank float epsilon fixed — `remaining <= 0.001` prevents float drift blocking full detection
+- [x] Balance #11: Victorian circular dep removed — `oil_derrick: 5` req → `bessemer_plant: 3`
+- [x] Balance #17: Global Network description corrected (+30.0 data, not +10.0)
+
+**Balance:**
+- [x] Renaissance steel gate: 20,500 → 2,000 (achievable via Steel Forging tech before Foundry unlocks)
+- [x] Colonial→Industrial gold: 5,340,000 → 2,500,000; knowledge: 4,125,000 → 2,000,000
+- [x] Metallurgy build times: all 18 buildings capped to era norms (max was 5,000,000 ticks → 30,000)
+- [x] Quantum age building reqs: 300/200/150 → 120/100/80
+- [x] Faith worker class names: 5 pre-medieval entries added (Devotee→Initiate progression)
+- [x] Engineering worker class names: 7 pre-victorian entries added (Apprentice→Machinist)
+
+**Map:**
+- [x] Terrain noise coarsened: 6×6px cells instead of per-pixel (eliminates TV-static appearance)
+- [x] Ground colour variation clamped to [0.3, 0.7] range (no more jarring adjacent-pixel colour jumps)
+- [x] Tree density halved, noise coarsened to 3×3px cells (cleaner terrain backdrop)
+- [x] F1 → zone map, F2 → living city map keybinds wired
+- [x] `livingmap` / `live` / `lmap` commands added
+
+---
+
+## Phase 20: Living City Map System (2026-03-08)
+- [x] New zone grid system (`ui/map_zones.go`) — divides canvas into typed zones (food/hearth/commerce/civic/research/military/industry/storage/wonder/wilderness) based on building counts
+- [x] 11 scene files (`ui/map_scenes_*.go`) — pixel-art 10×20 ASCII-palette scenes per zone type × era (9 eras), plus wonder scenes (20×40)
+- [x] Scene renderer (`ui/map_renderer.go`) — composites zones onto RGBA canvas, applies era palette + level brightness
+- [x] `RenderCityMap(state, w, h)` — top-level function: builds zone grid → renders all zones → returns `image.Image`
+- [x] `tab_livingmap.go` — animated overlay: goroutine-driven frame counter, particle shimmer, 12fps target
+- [x] `citypulse.go` — sidebar panel replacing minimap: era label, city tier, domain activity bar, F1/F2 hint
+- [x] `tab_map.go` rewired to use `RenderCityMap` (dropped `GenerateMapImage`/`MapGenConfig`)
+- [x] `age_splash.go` updated to use `RenderCityMap`
+- [x] `mapHashKey` function (local to tab_map.go, replacing package-level `hashKey`)
+- [x] F1 keybind → zone map overlay; F2 keybind → living city map overlay
+- [x] Bug fixes: renderer empty-row guard (out-of-bounds), storage scene palette case mismatch (`y`→`Y`)
+
+---
+
 ## Prestige
 - [x] Recalibrated prestige shop costs to ~277 total points (fills in ~70-80 perfect runs, ~100 normal runs) (2026-02-25)
   - Starting resources (food/wood): [1, 2, 3, 4, 5] = 15 each
