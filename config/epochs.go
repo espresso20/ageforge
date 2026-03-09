@@ -1,17 +1,19 @@
 package config
 
-// EpochDef defines a meta-progression era spanning 3 ages.
-// 7 epochs × 3 ages = 21 of the 22 ages; Transcendent Age belongs to Cosmic Era.
+// EpochDef defines a meta-progression era spanning multiple ages.
+// There are 7 epochs. Most span 3 ages; the final Cosmic Era spans 4.
+// At the boundary between epochs the engine rolls a special epoch event
+// (good/bad/catastrophe) that shapes the era's permanent flavour.
 type EpochDef struct {
 	Name            string
 	Key             string
-	Order           int
-	Ages            []string // age keys in this epoch (3 per epoch, 4 for Cosmic)
-	Icon            string   // display symbol
-	Color           string   // tview color tag for UI
-	PrimaryResource string   // dominant construction/structural resource
-	EnergyResource  string   // dominant energy/fuel resource
-	CatastropheKey  string   // flavor key for the catastrophe event in this epoch
+	Order           int      // 0-indexed position in the epoch sequence
+	Ages            []string // age keys that belong to this epoch (3 per epoch; Cosmic has 4)
+	Icon            string   // single Unicode character shown in the UI (e.g. "◈", "⚡")
+	Color           string   // tview dynamic color name used for epoch labels (e.g. "gold", "cyan")
+	PrimaryResource string   // dominant structural/construction resource for this era
+	EnergyResource  string   // dominant energy/fuel resource for this era
+	CatastropheKey  string   // key used to look up the catastrophe event definition for this epoch
 	Description     string
 }
 
@@ -128,14 +130,24 @@ func CatastropheInfo(epochKey string) (name, flavor string) {
 	return "Unknown Catastrophe", "Something terrible has happened."
 }
 
-// EpochEventDef defines a major epoch transition event (good, challenging, or catastrophe).
-// These fire exactly once per epoch transition — they are NOT part of the regular random event pool.
+// EpochEventDef defines a major transition event that fires exactly once per epoch
+// (at the first age advance that crosses into a new epoch). These are separate from
+// the regular random event pool (RandomEvents in events.go).
+//
+// Type values and their selection criteria:
+//   "good_minor"      — always eligible; lower culture gates these out first
+//   "good_major"      — requires medium culture fill %
+//   "good_legendary"  — requires high culture fill % (rare)
+//   "bad_challenging" — bad event; more likely at low culture
+//
+// Duration == 0 means the effect is instant (one-time apply); Duration > 0 means
+// the effect persists in ActiveEvents for that many ticks.
 type EpochEventDef struct {
-	Key       string // unique key
-	Name      string
-	FlavorText string  // one-line dramatic description shown in log/toast
-	Type      string  // "good_minor" | "good_major" | "good_legendary" | "bad_challenging"
-	Duration  int     // ticks the effect lasts (0 = instant one-time)
+	Key        string // unique key used for EpochEventRecord.EventKey
+	Name       string
+	FlavorText string // dramatic one-liner shown in the age splash and epoch overlay
+	Type       string // "good_minor" | "good_major" | "good_legendary" | "bad_challenging"
+	Duration   int    // ticks the effect lasts; 0 = instant
 }
 
 // GoodEpochEvents returns the 10 good epoch transition events (minor/major/legendary).

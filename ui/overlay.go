@@ -6,34 +6,43 @@ import (
 	"github.com/rivo/tview"
 )
 
-// OverlayProvider generates text content for a floating panel.
+// OverlayProvider is a function that generates the full text content for a
+// floating panel from the current game state. Called every 500 ms by Refresh.
 type OverlayProvider func(state game.GameState) string
 
+// overlayEntry holds the tview widgets and content provider for a text-based overlay.
+// The root Flex uses nested nil spacers to centre the TextView at ~85%×85% of the terminal.
 type overlayEntry struct {
 	title   string
 	tv      *tview.TextView
-	root    tview.Primitive // centered flex wrapper
+	root    tview.Primitive // centered flex wrapper — added/removed from pages.Pages
 	provide OverlayProvider
 }
 
-// widgetEntry backs an overlay whose content is an arbitrary tview.Primitive.
+// widgetEntry backs an overlay whose content is any tview.Primitive (e.g. a custom
+// map canvas). When refreshFn is set, Refresh calls it in-place instead of
+// rebuilding and replacing the page (used for panels that manage their own state).
 type widgetEntry struct {
 	title      string
 	build      func(state game.GameState) tview.Primitive
-	refreshFn  func(state game.GameState) // optional: in-place update, skips page rebuild
-	fullScreen bool
+	refreshFn  func(state game.GameState) // optional; nil means full rebuild on each Refresh
+	fullScreen bool                       // true = fills whole terminal; false = 85×85% modal
 }
 
-// OverlayManager manages named floating panels shown on top of d.pages.
+// OverlayManager manages the set of named floating panels shown over the Dashboard.
+// Only one overlay is visible at a time. Panels are added/removed from d.pages.Pages
+// rather than toggled via ShowPage/HidePage so that the underlying dashboard stays live.
 type OverlayManager struct {
 	entries       map[string]*overlayEntry
 	widgetEntries map[string]*widgetEntry
-	active        string // name of currently visible overlay, "" if none
+	active        string // name of currently visible overlay; "" if none
 	pages         *tview.Pages
 	app           *tview.Application
-	onClose       func() // called after hide (to restore focus)
+	onClose       func() // called after hide to restore focus to the command input field
 }
 
+// NewOverlayManager creates an OverlayManager. onClose is called whenever an
+// overlay is closed so the caller can return focus to the command input field.
 func NewOverlayManager(pages *tview.Pages, app *tview.Application, onClose func()) *OverlayManager {
 	return &OverlayManager{
 		entries:       make(map[string]*overlayEntry),
@@ -44,7 +53,10 @@ func NewOverlayManager(pages *tview.Pages, app *tview.Application, onClose func(
 	}
 }
 
-// Register adds a named text overlay. Must be called before Show.
+// Register adds a named text overlay backed by a TextView. Must be called before Show.
+// The overlay is rendered as a centred 85%×85% modal box using nested Flex nil-spacers
+// (tview's idiomatic way to achieve percentage-based positioning in a fixed terminal).
+// NOTE: The ratio 17/20 = 85% — if you change this, update both inner and root Flex items.
 func (om *OverlayManager) Register(name, title string, provide OverlayProvider) {
 	tv := tview.NewTextView().
 		SetDynamicColors(true).
@@ -63,7 +75,7 @@ func (om *OverlayManager) Register(name, title string, provide OverlayProvider) 
 		return event
 	})
 
-	// Centered 85%×85% box via nested Flex spacers
+	// Centered 85%×85% box via nested Flex spacers (nil items act as flexible spacers)
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(nil, 0, 1, false).
 		AddItem(tv, 0, 17, true). // 17/20 = 85% of height

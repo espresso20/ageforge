@@ -1,11 +1,16 @@
 package config
 
-// ResourceDef defines a resource type
+// ResourceDef defines a single game resource. There are 25 resources in total,
+// unlocking progressively through the 22 ages.
+//
+// BaseStorage is the starting storage cap before any storage buildings are built.
+// It is intentionally low — storage buildings are the primary progression gate
+// (you can't accumulate enough resources to advance without building them first).
 type ResourceDef struct {
 	Name        string
 	Key         string
-	BaseStorage float64
-	Age         string // minimum age to unlock
+	BaseStorage float64 // starting storage cap before storage buildings; units match production rates (per-tick)
+	Age         string  // minimum age key at which this resource becomes unlocked
 	Description string
 }
 

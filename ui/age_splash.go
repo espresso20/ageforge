@@ -12,7 +12,8 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-// ShowAgeSplash displays a full-screen overlay celebrating an age advancement.
+// ShowAgeSplash is the simplified variant of ShowAgeSplashFull for callers that
+// don't have an AgeAdvanceSummary or EpochEventRecord available.
 // It auto-dismisses after 20 seconds or on any keypress.
 func ShowAgeSplash(app *tview.Application, pages *tview.Pages, oldAge, newAge string) {
 	ShowAgeSplashFull(app, pages, oldAge, newAge, game.AgeAdvanceSummary{}, false, game.EpochEventRecord{})
@@ -24,25 +25,6 @@ func ShowAgeSplashFull(app *tview.Application, pages *tview.Pages, oldAge, newAg
 	summary game.AgeAdvanceSummary, epochChanged bool, epochEvent game.EpochEventRecord) {
 	ages := config.AgeByKey()
 	newDef := ages[newAge]
-
-	// Generate a pixel art scene for the new age
-	dummyBuildings := make(map[string]game.BuildingState)
-	for _, bKey := range newDef.UnlockBuildings {
-		dummyBuildings[bKey] = game.BuildingState{Count: 3, Unlocked: true}
-	}
-
-	img := GenerateMapImage(MapGenConfig{
-		Width:       160,
-		Height:      80,
-		DetailLevel: 1,
-		Buildings:   dummyBuildings,
-		AgeKey:      newAge,
-	})
-
-	// Build the image widget
-	mapImage := tview.NewImage()
-	mapImage.SetColors(tview.TrueColor)
-	mapImage.SetImage(img)
 
 	// Age title overlay
 	titleTV := tview.NewTextView().
@@ -159,12 +141,12 @@ func ShowAgeSplashFull(app *tview.Application, pages *tview.Pages, oldAge, newAg
 	fmt.Fprintf(&sb, "\n[gray]Press any key to continue[-]")
 	titleTV.SetText(sb.String())
 
-	// Layout: image behind, text overlay on top via Flex
+	// Layout: text-only flex
 	overlay := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(mapImage, 0, 2, false).
 		AddItem(titleTV, 0, 1, false)
 
-	// Dismiss function
+	// dismissed guards against double-dismiss (both the timer goroutine and a
+	// keypress can fire simultaneously; we only want to remove the page once).
 	dismissed := false
 	dismiss := func() {
 		if dismissed {
@@ -175,7 +157,10 @@ func ShowAgeSplashFull(app *tview.Application, pages *tview.Pages, oldAge, newAg
 		pages.SwitchToPage("dashboard")
 	}
 
-	// Capture any key to dismiss
+	// NOTE: SetInputCapture is called on the Flex, not the TextView, so that
+	// any key — including ones the TextView would consume for scrolling — will
+	// dismiss the splash. QueueUpdateDraw is required because this handler
+	// runs inside the tview event loop but pages.RemovePage modifies the layout.
 	overlay.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		app.QueueUpdateDraw(func() {
 			dismiss()
@@ -183,7 +168,7 @@ func ShowAgeSplashFull(app *tview.Application, pages *tview.Pages, oldAge, newAg
 		return nil
 	})
 
-	// Auto-dismiss after 8 seconds
+	// Auto-dismiss after 20 seconds
 	go func() {
 		time.Sleep(20 * time.Second)
 		app.QueueUpdateDraw(func() {

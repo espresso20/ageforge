@@ -12,7 +12,8 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-// cultureTresholds are the culture milestone amounts in ascending order.
+// cultureThresholds defines the culture breakpoints at which rewards unlock.
+// The bar displayed in the economy tab measures progress towards the next threshold.
 var cultureThresholds = []float64{
 	500, 2500, 10000, 50000, 250000, 1_000_000, 5_000_000, 25_000_000, 100_000_000, 500_000_000, 1_000_000_000,
 }
@@ -131,7 +132,10 @@ func formatFaithRow(rs game.ResourceState) string {
 	return fmt.Sprintf(" %-12s %s %s\n\n", rs.Name, midPart, FormatRate(rs.Rate))
 }
 
-// EconomyTab displays resources, buildings, and worker management
+// EconomyTab is the permanent background panel visible at all times on the Dashboard.
+// It is split into three panes: resource summary (left-top), under construction
+// queue (left-bottom), and the full building list (right). The building panel is
+// scrollable via PgUp/PgDn because it can grow very long in late ages.
 type EconomyTab struct {
 	root       *tview.Flex
 	resourceTV *tview.TextView
@@ -139,7 +143,10 @@ type EconomyTab struct {
 	constructionTV *tview.TextView
 }
 
-// NewEconomyTab creates the economy tab
+// NewEconomyTab constructs the economy tab widget tree. The left column uses a
+// 4:1 height ratio between resources and the construction queue so the queue
+// stays compact. The right building panel uses a 2:3 column ratio against the
+// left so the building list gets more horizontal space.
 func NewEconomyTab() *EconomyTab {
 	t := &EconomyTab{}
 
@@ -225,7 +232,7 @@ func (t *EconomyTab) refreshResources(state game.GameState) {
 }
 
 func (t *EconomyTab) refreshBuildings(state game.GameState) {
-	// Build age ordering from config
+	// Build age ordering from config — used to sort building groups chronologically.
 	ageOrder := config.AgeOrder()
 	ageIndex := make(map[string]int, len(ageOrder))
 	for i, k := range ageOrder {
@@ -241,7 +248,8 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 		}
 	}
 
-	// Sort groups: current age first, then descending (most recent prior age first)
+	// Sort groups: current age first (most relevant), then descending age order
+	// so the player sees their newest buildings before ancient ones.
 	groupKeys := make([]string, 0, len(byAge))
 	for k := range byAge {
 		groupKeys = append(groupKeys, k)
@@ -296,6 +304,8 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 			if bs.WorkerCapacity > 0 {
 				totalCap := bs.Count * bs.WorkerCapacity
 				bar := workerAssignBar(bs.WorkersAssigned, totalCap)
+				// NOTE: Wrapping the bar in literal U+005B/U+005D (square brackets) prevents
+				// tview from interpreting the block-fill characters inside as a color tag.
 				barStr := "\u005b" + bar + "\u005d"
 				domainLabel := domainToLabel[bs.WorkerDomain]
 				if domainLabel == "" {

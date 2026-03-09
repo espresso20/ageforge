@@ -11,14 +11,20 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-// CommandResult represents the result of a command execution
+// CommandResult is the return value of HandleCommand. The caller (Dashboard)
+// logs Message if it is non-empty and Type != "success" (successes are
+// ephemeral and only shown as toast/log entries by the engine itself).
+// If OverlayName is set the Dashboard opens that named overlay panel.
 type CommandResult struct {
 	Message     string
-	Type        string // "info", "success", "error"
-	OverlayName string // non-empty → dashboard should open this overlay
+	Type        string // "info", "success", "error", "warning"
+	OverlayName string // non-empty → dashboard should open this overlay panel
 }
 
-// HandleCommand parses and executes a command string
+// HandleCommand parses a raw command string and dispatches to the appropriate
+// sub-handler. Single-letter shortcuts (g, b, r, a, u, s, t) are normalised
+// to their full equivalents before switching. Commands that purely open an
+// overlay return an empty Message with OverlayName set.
 func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 	parts := strings.Fields(strings.TrimSpace(input))
 	if len(parts) == 0 {
@@ -80,8 +86,6 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return CommandResult{OverlayName: "logs"}
 	case "epoch":
 		return CommandResult{OverlayName: "epoch"}
-	case "map":
-		return CommandResult{OverlayName: "map"}
 	case "catastrophe", "cat":
 		return cmdCatastrophe(args, engine)
 	case "dump", "exportlogs":
@@ -416,7 +420,9 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 	}
 	key := strings.ToLower(args[0])
 
-	// Check for count or "max"
+	// "build <key> [count|max]" — passing 10000 as the count is a sentinel
+	// that tells BuildMultiple "keep building until you can't afford it or
+	// hit the MaxCount limit". BuildMultiple returns the actual count built.
 	if len(args) >= 2 {
 		countArg := strings.ToLower(args[1])
 		count := 0
@@ -699,8 +705,8 @@ func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 		return CommandResult{Message: "Research cancelled.", Type: "warning"}
 	}
 
-	// Try to start research
-	// Support multi-word keys by joining with underscore
+	// Support multi-word keys entered with spaces by joining all remaining args
+	// with underscores (e.g. "research bronze working" → "bronze_working").
 	techKey := strings.Join(args, "_")
 	if err := engine.StartResearch(techKey); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}

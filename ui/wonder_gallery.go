@@ -2,9 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"image"
-	"image/color"
-	"math"
 	"sort"
 	"strings"
 
@@ -141,19 +138,7 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 	}
 	_ = unlocked
 
-	// Left side: pixel art
-	pixH := ht * 4
-	pixW := ht * 4 // roughly square
-	if pixW < 16 {
-		pixW = 16
-	}
-
-	imgWidget := tview.NewImage()
-	imgWidget.SetColors(tview.TrueColor)
-	img := renderWonderIcon(*current, pixW, pixH, built)
-	imgWidget.SetImage(img)
-
-	// Right side: text info
+	// Text-only layout
 	infoTV := tview.NewTextView().SetDynamicColors(true)
 
 	var sb strings.Builder
@@ -221,16 +206,6 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 
 	infoTV.SetText(sb.String())
 
-	// Layout: pixel art on left, info on right
-	artWidth := totalW / 3
-	if artWidth < 10 {
-		artWidth = 10
-	}
-	if artWidth > 25 {
-		artWidth = 25
-	}
-
-	wp.root.AddItem(imgWidget, artWidth, 0, false)
 	wp.root.AddItem(infoTV, 0, 1, false)
 }
 
@@ -253,118 +228,3 @@ func formatEffect(eff config.Effect) string {
 	}
 }
 
-// renderWonderIcon generates pixel art for a single wonder
-func renderWonderIcon(w wonderInfo, pixW, pixH int, built bool) *image.RGBA {
-	img := image.NewRGBA(image.Rect(0, 0, pixW, pixH))
-
-	era := eraFromAge(w.ageKey)
-	pal := getTerrainPalette(era)
-	vis := getBuildingVisual(w.key, "wonder")
-
-	// Background
-	for y := 0; y < pixH; y++ {
-		for x := 0; x < pixW; x++ {
-			n := noise2D(x, y, hashKey(w.key))
-			bg := lerp(pal.Ground, pal.GroundAlt, n*0.3)
-			img.SetRGBA(x, y, bg)
-		}
-	}
-
-	cx, cy := pixW/2, pixH/2
-	r := min(pixW, pixH) / 3
-	if r < 4 {
-		r = 4
-	}
-
-	b := bldInfo{
-		key:      w.key,
-		category: "wonder",
-		x:        cx,
-		y:        cy,
-		size:     r * 2,
-	}
-
-	if built {
-		// Glow halo
-		glowR := r + 4
-		for dy := -glowR; dy <= glowR; dy++ {
-			for dx := -glowR; dx <= glowR; dx++ {
-				d := math.Sqrt(float64(dx*dx + dy*dy))
-				if d <= float64(r) || d >= float64(glowR) {
-					continue
-				}
-				px, py := cx+dx, cy+dy
-				if px < 0 || px >= pixW || py < 0 || py >= pixH {
-					continue
-				}
-				fade := 1.0 - (d-float64(r))/float64(glowR-r)
-				gc := pal.Accent1
-				if era >= 6 {
-					gc = pal.Accent2
-				}
-				existing := img.RGBAAt(px, py)
-				img.SetRGBA(px, py, lerp(existing, gc, fade*0.45))
-			}
-		}
-		drawBuildingShape(img, pixW, pixH, b, vis, era, 0)
-	} else {
-		// Ghost: dim outline
-		drawGhostBuilding(img, pixW, pixH, cx, cy, r, vis)
-	}
-
-	return img
-}
-
-// drawGhostBuilding draws a translucent outline of an available-but-unbuilt wonder
-func drawGhostBuilding(img *image.RGBA, w, h, cx, cy, r int, vis BuildingVisual) {
-	ghostPrimary := color.RGBA{
-		R: vis.Primary.R / 3,
-		G: vis.Primary.G / 3,
-		B: vis.Primary.B / 3,
-		A: 255,
-	}
-	ghostAccent := color.RGBA{
-		R: vis.Accent.R / 3,
-		G: vis.Accent.G / 3,
-		B: vis.Accent.B / 3,
-		A: 255,
-	}
-
-	for dy := -r; dy <= r; dy++ {
-		for dx := -r; dx <= r; dx++ {
-			inside, isAccent := testShape(vis.Shape, dx, dy, r)
-			if !inside {
-				continue
-			}
-			px, py := cx+dx, cy+dy
-			if px < 0 || px >= w || py < 0 || py >= h {
-				continue
-			}
-
-			bc := ghostPrimary
-			if isAccent {
-				bc = ghostAccent
-			}
-
-			// Stipple for "buildable" hint
-			if (dx+dy)%3 == 0 {
-				bc = lerp(bc, c(80, 80, 60), 0.3)
-			}
-
-			// Edge highlight
-			isEdge := false
-			for _, dd := range [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
-				ni, _ := testShape(vis.Shape, dx+dd[0], dy+dd[1], r)
-				if !ni {
-					isEdge = true
-					break
-				}
-			}
-			if isEdge {
-				bc = lerp(bc, c(120, 110, 60), 0.5)
-			}
-
-			img.SetRGBA(px, py, bc)
-		}
-	}
-}

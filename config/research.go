@@ -1,19 +1,21 @@
 package config
 
-// TechDef defines a technology in the tech tree
+// TechDef defines a single technology in the tech tree.
+// Technologies are gated by both age (Age field) and prerequisites (all keys in
+// Prerequisites must be researched). Only one tech can be researched at a time.
 type TechDef struct {
 	Name          string
 	Key           string
-	Age           string   // minimum age to research
-	Cost          float64  // knowledge cost
-	Prerequisites []string // tech keys that must be researched first
-	Effects       []Effect
+	Age           string   // minimum age key required to start research
+	Cost          float64  // knowledge points consumed on research completion
+	Prerequisites []string // all tech keys that must already be researched
+	Effects       []Effect // applied permanently when research finishes
 	Description   string
-	ResearchTicks int // how many ticks to complete (0 = instant)
+	ResearchTicks int // game ticks to complete (at 1x speed); scales with research_speed bonus
 }
 
-// Technologies returns all tech tree definitions
-// Organized by age, with branching prerequisites
+// Technologies returns all 52 tech definitions, ordered loosely by age.
+// Use TechByKey() for random access or TechsByAge() to group by age.
 func Technologies() []TechDef {
 	return []TechDef{
 		// === PRIMITIVE AGE === (~1 min each)
@@ -746,7 +748,8 @@ func TechByKey() map[string]TechDef {
 	return m
 }
 
-// TechsByAge returns techs grouped by age
+// TechsByAge groups all tech definitions by their minimum age key.
+// Used by the research overlay to display techs in age buckets.
 func TechsByAge() map[string][]TechDef {
 	m := make(map[string][]TechDef)
 	for _, t := range Technologies() {

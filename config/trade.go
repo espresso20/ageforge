@@ -1,33 +1,39 @@
 package config
 
-// ExchangeRateDef defines base exchange rates between resource pairs
+// ExchangeRateDef defines a one-directional spot exchange between two resources.
+// The actual exchange rate seen in-game is BaseRate adjusted by market pressure
+// (repeated trades drive rates down for a while — see game/trade.go).
 type ExchangeRateDef struct {
-	From     string  // resource key
-	To       string  // resource key
-	BaseRate float64 // how much "To" you get per 1 "From"
-	MinAge   string  // earliest age this exchange is available
+	From     string  // resource key being sold
+	To       string  // resource key being bought
+	BaseRate float64 // units of To received per 1 unit of From at zero market pressure
+	MinAge   string  // earliest age at which this exchange is unlocked
 }
 
-// TradeRouteDef defines a passive trade route unlocked by buildings
+// TradeRouteDef defines a passive recurring trade route. Once started, the
+// engine automatically exports Export resources and adds Import resources every
+// TicksPerRun ticks. The route stops if Export resources are insufficient.
 type TradeRouteDef struct {
 	Name        string
 	Key         string
-	MinAge      string
-	RequiredBld string             // building key required (market, port, etc.)
-	MinCount    int                // minimum building count needed
-	TicksPerRun int                // ticks per trade cycle
-	Export      map[string]float64 // resources consumed per cycle
-	Import      map[string]float64 // resources gained per cycle
+	MinAge      string             // minimum age to unlock this route
+	RequiredBld string             // building key that must be built (e.g. "market", "port")
+	MinCount    int                // minimum count of RequiredBld needed
+	TicksPerRun int                // ticks per trade cycle (at 1x speed)
+	Export      map[string]float64 // resources consumed from player each cycle
+	Import      map[string]float64 // resources added to player each cycle
 	Description string
 }
 
-// FactionDef defines an NPC faction
+// FactionDef defines an NPC diplomatic faction. Factions become discoverable
+// after the player reaches MinAge. When allied, trade involving the faction's
+// Specialty resource gets a TradeBonus multiplier.
 type FactionDef struct {
 	Name        string
 	Key         string
-	MinAge      string
-	Specialty   string  // resource key they're good at
-	TradeBonus  float64 // fractional bonus on trades with them when allied
+	MinAge      string  // age at which this faction is first discoverable
+	Specialty   string  // resource key the faction specialises in (used for TradeBonus)
+	TradeBonus  float64 // fractional bonus (0.20 = +20%) applied to specialty-resource trades when allied
 	Description string
 }
 
@@ -82,7 +88,8 @@ func BaseExchangeRates() []ExchangeRateDef {
 	}
 }
 
-// ExchangeRateByKey returns a map from "from:to" -> ExchangeRateDef
+// ExchangeRateByKey returns exchange rates keyed by "from:to" (e.g. "gold:food").
+// This compound key format avoids ambiguity between directional rate pairs.
 func ExchangeRateByKey() map[string]ExchangeRateDef {
 	out := make(map[string]ExchangeRateDef)
 	for _, def := range BaseExchangeRates() {

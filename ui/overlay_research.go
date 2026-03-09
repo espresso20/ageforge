@@ -30,7 +30,12 @@ func formatTechEffect(eff config.Effect) string {
 	}
 }
 
-// researchProvider generates the research overlay text from the current game state.
+// researchProvider generates the full research overlay text. It renders three
+// sections: (1) currently-in-progress tech with a tick progress bar,
+// (2) active research bonuses, and (3) the full tech tree grouped by age.
+// Tech visibility rules: researched=green ✓, in-progress=yellow ⟳,
+// available=cyan ○, prereqs-met-but-age-locked=gray ○ (age locked),
+// locked=gray • with prerequisite names shown.
 func researchProvider(state game.GameState) string {
 	var sb strings.Builder
 
@@ -40,6 +45,7 @@ func researchProvider(state game.GameState) string {
 	ages := config.AgeByKey()
 
 	// === Header ===
+	fmt.Fprint(&sb, " [blue]research <key>  ·  research cancel  ·  research list[-]\n")
 	fmt.Fprintf(&sb, " [gold]Progress: %d / %d techs researched[-]\n\n", state.Research.TotalResearched, len(state.Research.Techs))
 
 	// === Currently Researching ===
@@ -248,12 +254,14 @@ func researchProvider(state game.GameState) string {
 	}
 
 	// === Footer ===
-	sb.WriteString("\n [gray]research <key>  ·  research cancel  ·  research list[-]\n")
 
 	return sb.String()
 }
 
-// formatBonusName converts a bonus key to a display name.
+// formatBonusName converts a research/milestone bonus key to a human-readable
+// display name. Falls back to title-casing the key with spaces if no explicit
+// mapping is defined (handles dynamically-generated resource rate keys like
+// "iron_rate" → "Iron Rate").
 func formatBonusName(key string) string {
 	switch key {
 	case "gather_rate":

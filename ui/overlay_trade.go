@@ -28,6 +28,9 @@ func tradeProvider(state game.GameState) string {
 
 		for _, key := range keys {
 			info := trade.ExchangeRates[key]
+			// Market pressure is a short-term penalty/bonus from repeated trades.
+			// Positive pressure = price moved against you (recently sold a lot).
+			// Negative pressure = price moved in your favour (recovery period).
 			pressureStr := ""
 			if info.Pressure > 0.1 {
 				pressureStr = fmt.Sprintf(" [red]↓%.0f%%[-]", info.Pressure*30)
@@ -161,7 +164,9 @@ func tradeProvider(state game.GameState) string {
 	return sb.String()
 }
 
-// formatResMap formats a resource map for display.
+// formatResMap formats a resource→amount map into a sorted, comma-separated
+// string (e.g. "50 food, 20 wood"). Returns "none" for empty maps.
+// Keys are sorted for stable output across Go map iteration.
 func formatResMap(m map[string]float64) string {
 	if len(m) == 0 {
 		return "none"

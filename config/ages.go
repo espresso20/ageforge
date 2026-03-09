@@ -1,23 +1,30 @@
+// Package config provides all static game data: ages, buildings, techs,
+// milestones, workers, epochs, events, expeditions, trade routes, and diplomacy.
+// All functions are pure (no global state). Call them at startup or on-demand —
+// they are cheap enough to call per-tick for config lookups.
 package config
 
-// AgeDef defines an age/era in the game
+// AgeDef defines a single playable age. Ages are ordered by the Order field
+// (0 = Primitive Age, 21 = Transcendent Age). Advancing requires meeting both
+// ResourceReqs and BuildingReqs simultaneously.
 type AgeDef struct {
 	Name  string
 	Key   string
-	Order int
-	// Requirements to advance TO this age
-	ResourceReqs map[string]float64
-	BuildingReqs map[string]int
-	// What this age unlocks
-	UnlockBuildings []string
-	UnlockResources []string
-	UnlockVillagers []string
+	Order int // 0-indexed position in the age sequence; used for sorting and comparison
+	// Requirements to advance TO this age (checked at the time of 'advance' command)
+	ResourceReqs map[string]float64 // minimum resource amounts (float64, not capped to storage)
+	BuildingReqs map[string]int     // minimum building counts
+	// What this age unlocks when entered
+	UnlockBuildings []string // building keys made available at the start of this age
+	UnlockResources []string // resource keys made available at the start of this age
+	UnlockVillagers []string // worker domain keys (legacy field — only used for primitive "worker")
 	Description     string
-	// Economy redesign fields (Phase 5+)
-	EpochKey string // which of the 7 epochs this age belongs to
+	EpochKey string // which of the 7 epochs this age belongs to (e.g. "stone_era", "iron_era")
 }
 
-// Ages returns all ages in order
+// Ages returns all 22 age definitions in ascending order (Primitive → Transcendent).
+// Callers that need random access should use AgeByKey(). Callers that need the
+// sorted key list should use AgeOrder().
 func Ages() []AgeDef {
 	return []AgeDef{
 		// === 0: PRIMITIVE AGE (Stone Era) ===
@@ -84,7 +91,7 @@ func Ages() []AgeDef {
 			Name: "Renaissance Age", Key: "renaissance_age", Order: 6,
 			EpochKey:        "steel_era",
 			Description:     "Art, science, and exploration flourish.",
-			ResourceReqs:    map[string]float64{"gold": 100000, "knowledge": 125000, "steel": 20500, "faith": 25000},
+			ResourceReqs:    map[string]float64{"gold": 100000, "knowledge": 125000, "steel": 2000, "faith": 25000},
 			BuildingReqs:    map[string]int{"university": 5, "market": 15, "castle_keep": 3},
 			UnlockBuildings: []string{"estate", "renaissance_vault", "market_garden", "coal_mine", "iron_mine", "university", "basilica", "fortress", "exchange", "mill", "foundry", "art_studio", "sistine_chapel"},
 			UnlockResources: []string{"coal"},
@@ -103,7 +110,7 @@ func Ages() []AgeDef {
 			Name: "Industrial Age", Key: "industrial_age", Order: 8,
 			EpochKey:        "steel_era",
 			Description:     "Machines revolutionize production.",
-			ResourceReqs:    map[string]float64{"steel": 310000, "gold": 5340000, "knowledge": 4125000},
+			ResourceReqs:    map[string]float64{"steel": 310000, "gold": 2500000, "knowledge": 2000000},
 			BuildingReqs:    map[string]int{"plantation": 5, "port": 8, "market_garden": 5},
 			UnlockBuildings: []string{"tenement", "industrial_depot", "agricultural_works", "steam_coal_plant", "steam_mine", "research_institute", "church", "military_base", "stock_exchange", "iron_works_complex", "steel_mill", "coal_plant", "opera_house", "crystal_palace"},
 			UnlockResources: []string{"oil"},
@@ -114,7 +121,7 @@ func Ages() []AgeDef {
 			EpochKey:        "electric_era",
 			Description:     "Steam and innovation drive progress.",
 			ResourceReqs:    map[string]float64{"steel": 1625000, "oil": 725000, "gold": 9687500},
-			BuildingReqs:    map[string]int{"steel_mill": 5, "oil_derrick": 5, "tenement": 30},
+			BuildingReqs:    map[string]int{"steel_mill": 5, "bessemer_plant": 3, "tenement": 30},
 			UnlockBuildings: []string{"row_house", "victorian_vault", "mechanized_farm", "oil_derrick", "uranium_mine", "academy", "grand_cathedral", "garrison", "bank", "steam_works", "bessemer_plant", "steam_turbine", "grand_museum", "eiffel_tower"},
 			UnlockResources: []string{"electricity"},
 		},
@@ -221,7 +228,7 @@ func Ages() []AgeDef {
 			EpochKey:        "cosmic_era",
 			Description:     "Reality bends to quantum mastery.",
 			ResourceReqs:    map[string]float64{"antimatter": 5000000000000, "dark_matter": 10000000000000},
-			BuildingReqs:    map[string]int{"stellar_exchange": 150, "antimatter_forge": 200, "dyson_sphere_habitat": 300},
+			BuildingReqs:    map[string]int{"stellar_exchange": 80, "antimatter_forge": 100, "dyson_sphere_habitat": 120},
 			UnlockBuildings: []string{"reality_fold", "quantum_vault", "quantum_cultivator", "reality_harvester", "reality_excavator", "reality_academy", "transcendence_hall", "probability_war_room", "probability_market", "reality_forge", "quantum_metal_works", "zero_point_generator", "reality_processor", "reality_art_engine", "reality_anchor"},
 			UnlockResources: []string{"quantum_flux"},
 		},

@@ -1,15 +1,22 @@
 package config
 
-// PrestigeUpgradeDef defines a prestige shop upgrade
+// PrestigeUpgradeDef defines a persistent upgrade purchasable with prestige points.
+// Upgrades survive across full resets (DoPrestige/Succumb) — they are the primary
+// permanent progression mechanism.
+//
+// EffectType semantics:
+//   "rate_bonus"        — multiplier added to EffectKey rate (PerTier = fractional, e.g. 0.05 = +5%)
+//   "flat_bonus"        — flat value added to EffectKey cap (PerTier = absolute units)
+//   "starting_resource" — added to the player's starting amount of EffectKey resource on reset
 type PrestigeUpgradeDef struct {
 	Key         string
 	Name        string
 	Description string
-	EffectKey   string  // bonus key applied to engine (e.g., "gather_rate")
-	EffectType  string  // "rate_bonus", "flat_bonus", "starting_resource"
-	PerTier     float64 // value added per tier
-	MaxTier     int
-	Costs       []int // cost at each tier (len == MaxTier)
+	EffectKey   string  // engine bonus key (e.g. "gather_rate", "population") or resource key for starting_resource
+	EffectType  string  // "rate_bonus", "flat_bonus", or "starting_resource"
+	PerTier     float64 // bonus increment per tier (meaning depends on EffectType)
+	MaxTier     int     // maximum purchasable tier; upgrade is "maxed" when Tier == MaxTier
+	Costs       []int   // prestige point cost at each tier; len must equal MaxTier
 }
 
 // PrestigeUpgrades returns all prestige shop upgrades

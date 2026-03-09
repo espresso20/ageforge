@@ -14,6 +14,8 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
+// shameMessages are randomly chosen at session start when the cheater badge is active.
+// Displayed in the top status bar — a deterrent against savegame manipulation.
 var shameMessages = []string{
 	"✦ FORGED SCROLLS ✦",
 	"✦ ILLEGITIMATE EMPIRE ✦",
@@ -23,7 +25,9 @@ var shameMessages = []string{
 	"✦ DECREE OF DISHONOR ✦",
 }
 
-// Dashboard is the main gameplay screen with economy as permanent background and overlay panels
+// Dashboard is the main gameplay screen. The economy tab is the always-visible
+// background; named overlays (research, trade, military, etc.) are rendered on
+// top of it via tview.Pages. Only one overlay can be visible at a time.
 type Dashboard struct {
 	app    *tview.Application
 	engine *game.GameEngine
@@ -38,7 +42,6 @@ type Dashboard struct {
 
 	// Shared UI
 	logTV         *tview.TextView
-	miniMap       *MiniMap
 	wonderPanel   *WonderPanel
 	workerPanel   *WorkerPanel
 	statusTV    *tview.TextView
@@ -59,16 +62,21 @@ type Dashboard struct {
 	cheaterTV       *tview.TextView
 	activeShameBadge string
 
-	// Phase 9: catastrophe modal — tracks which catastrophe has already been shown
-	// so Defer doesn't immediately re-show the modal on the next refresh tick
+	// catModalShown tracks the pending catastrophe key we have already shown a modal for,
+	// so that choosing Defer does not immediately re-show the modal on the next refresh tick.
+	// Reset to "" when PendingCatastrophe clears (player chose Endure or Succumb).
 	catModalShown string
 
-	// Phase 16: command history (session-only, not persisted)
+	// Command history is session-only (never persisted to disk). The slice is
+	// append-only and capped at 50 entries. histIdx == -1 means not in history
+	// navigation mode. histDraft stores whatever was in the input field before
+	// the user started pressing Up.
 	cmdHistory []string // append-only slice, capped at 50
 	histIdx    int      // -1 = not navigating; 0 = most recent; len-1 = oldest
 	histDraft  string   // draft text saved when user starts navigating history
 
 	overlayMgr *OverlayManager
+	lastState  *game.GameState
 
 	stopCh chan struct{}
 }
@@ -95,11 +103,6 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.Register("wonders", "Wonders", wondersProvider)
 	d.overlayMgr.Register("logs", "Logs", logsProvider)
 	d.overlayMgr.Register("epoch", "Epoch", epochProvider)
-	mt := NewMapTab()
-	d.overlayMgr.RegisterWidget("map", "Map", func(state game.GameState) tview.Primitive {
-		mt.Refresh(state)
-		return mt.Root()
-	}, mt.Refresh, true)
 	d.devTab = newDevTab(engine)
 	return d
 }
@@ -120,9 +123,6 @@ func (d *Dashboard) build() {
 		SetScrollable(true).
 		SetMaxLines(100)
 	d.logTV.SetBorder(true).SetTitle(" Log ").SetTitleColor(ColorDim)
-
-	// Mini-map panel (replaces Quick Reference)
-	d.miniMap = NewMiniMap()
 
 	// Wonder panel (current age's wonder)
 	d.wonderPanel = NewWonderPanel()
@@ -151,6 +151,9 @@ func (d *Dashboard) build() {
 		SetTextAlign(tview.AlignCenter)
 
 	// Subscribe to events for toasts
+	// NOTE: Bus handlers run under the engine write lock. Never call GetState()
+	// or any other lock-acquiring method inside these closures — use config.*ByKey()
+	// (pure data lookups) for any data you need beyond the event payload.
 	d.engine.Bus.Subscribe(game.EventAgeAdvanced, func(e game.EventData) {
 		if newAge, ok := e.Payload["new_age"].(string); ok {
 			// Store for splash — consumed in refresh() which runs in UI goroutine
@@ -297,12 +300,11 @@ func (d *Dashboard) build() {
 		}
 	})
 
-	// Bottom area: log + workers + wonder panel + mini-map side by side
+	// Bottom area: log + workers + wonder panel side by side
 	d.bottomArea = tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(d.logTV, 0, 1, false).
 		AddItem(d.workerPanel.Primitive(), 0, 1, false).
-		AddItem(d.wonderPanel.Primitive(), 0, 1, false).
-		AddItem(d.miniMap.Primitive(), 0, 1, false)
+		AddItem(d.wonderPanel.Primitive(), 0, 1, false)
 
 	// Main horizontal: economy (permanent) + sidebar
 	mainHoriz := tview.NewFlex().SetDirection(tview.FlexColumn).
@@ -373,7 +375,7 @@ func (d *Dashboard) updateSidebar(activeOverlay string) {
 }
 
 func buildSidebarText(active string) string {
-	commands := []string{"milestones", "techs", "army", "trade", "stats", "wonders", "logs", "epoch", "map"}
+	commands := []string{"milestones", "research", "army", "trade", "stats", "wonders", "logs", "epoch"}
 	var sb strings.Builder
 	sb.WriteString("\n")
 	for _, cmd := range commands {
@@ -391,7 +393,11 @@ func (d *Dashboard) Root() tview.Primitive {
 	return d.root
 }
 
-// StartUpdates begins the UI refresh loop
+// StartUpdates begins the UI refresh loop, polling at 500 ms (2 fps).
+// This is intentionally slower than the game tick rate (which can reach ~5 fps
+// at 2x speed) to avoid burning CPU on terminal redraws.
+// NOTE: app.QueueUpdateDraw is the only safe way to touch tview primitives from
+// a background goroutine — it serialises with the tview event loop.
 func (d *Dashboard) StartUpdates() {
 	go func() {
 		ticker := time.NewTicker(500 * time.Millisecond)
@@ -409,7 +415,9 @@ func (d *Dashboard) StartUpdates() {
 	}()
 }
 
-// StopUpdates stops the UI refresh loop
+// StopUpdates stops the UI refresh loop by sending on stopCh.
+// The non-blocking send (default branch) prevents a hang if nobody is
+// listening (e.g. StopUpdates called twice before the goroutine drains).
 func (d *Dashboard) StopUpdates() {
 	select {
 	case d.stopCh <- struct{}{}:
@@ -417,6 +425,10 @@ func (d *Dashboard) StopUpdates() {
 	}
 }
 
+// refresh is the central UI update function, called every 500 ms from StartUpdates.
+// It must only be called from within app.QueueUpdateDraw (i.e. on the tview goroutine).
+// Order matters: catastrophe modal and age splash are checked first because they may
+// swap the active page, then all content widgets are updated.
 func (d *Dashboard) refresh() {
 	// Check for pending age splash (set by bus handler under engine lock)
 	if d.pendingAgeSplash != "" {
@@ -438,6 +450,7 @@ func (d *Dashboard) refresh() {
 	}
 
 	state := d.engine.GetState()
+	d.lastState = &state
 
 	// Phase 9: catastrophe modal — show once per new pending catastrophe; Defer hides it
 	if state.PendingCatastrophe == "" {
@@ -464,7 +477,6 @@ func (d *Dashboard) refresh() {
 	d.refreshAgeProgress(state)
 	d.refreshLog(state)
 	d.toastTV.SetText(d.toastMgr.GetCurrent())
-	d.miniMap.UpdateState(state)
 	d.wonderPanel.UpdateState(state)
 	d.workerPanel.UpdateState(state)
 

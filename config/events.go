@@ -1,19 +1,28 @@
 package config
 
-// EventDef defines a random event that can occur during gameplay
+// EventDef defines a random event that the engine may fire each tick.
+// The engine rolls a weighted selection from eligible events (Age ≥ MinAge,
+// Tick ≥ MinTick, and last-occurrence ≥ Cooldown ticks ago).
+//
+// Duration > 0 means the Effects persist for that many ticks and are
+// tracked in state.ActiveEvents. Duration == 0 means the Effects are applied
+// once as an instant_resource grant.
+//
+// EpochKey non-empty means the event is only eligible within that epoch
+// (used for epoch-specific flavour). Empty = available in all epochs.
 type EventDef struct {
 	Name        string
 	Key         string
-	EpochKey    string // if set, only triggers in this epoch; empty = universal
-	MinAge      string // earliest age this can trigger
-	Weight      int    // relative probability (higher = more common)
-	MinTick     int    // earliest tick this can trigger
-	Cooldown    int    // minimum ticks between occurrences
-	Duration    int    // how many ticks the effect lasts (0 = instant)
-	Sentiment   string // "good", "bad", or "mixed"
+	EpochKey    string // epoch restriction; "" = universal
+	MinAge      string // earliest age key that can trigger this event
+	Weight      int    // relative probability weight; higher = more frequent
+	MinTick     int    // earliest game tick this event can fire
+	Cooldown    int    // minimum ticks that must have passed since last occurrence
+	Duration    int    // ticks the effect lasts; 0 = instant (no ActiveEvent entry)
+	Sentiment   string // "good", "bad", or "mixed" — used for UI coloring
 	Effects     []Effect
 	Description string
-	LogMessage  string // what shows in the game log
+	LogMessage  string // user-visible message written to the game log when triggered
 }
 
 // RandomEvents returns all random event definitions

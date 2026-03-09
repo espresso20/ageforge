@@ -155,7 +155,14 @@ func WorkerClasses() []WorkerClassDef {
 		wc("knowledge", "galactic_age", "Galactic Researcher", 1.0, 19),
 		wc("knowledge", "quantum_age", "Quantum Theorist", 1.0, 20),
 
-		// === FAITH DOMAIN (starts medieval_age, base 2.0) ===
+		// === FAITH DOMAIN (starts primitive_age for early shrine/altar buildings, base tiered) ===
+		// Early tiers added so primitive-through-classical faith workers get correct class names
+		// instead of falling back to the tier-0 Acolyte (FoodCost=2.0) via the domain-start fallback.
+		WorkerClassDef{Domain: "faith", AgeKey: "primitive_age", ClassName: "Devotee", FoodCost: 0.08, Multiplier: 1.0},
+		WorkerClassDef{Domain: "faith", AgeKey: "stone_age", ClassName: "Believer", FoodCost: 0.12, Multiplier: 1.0},
+		WorkerClassDef{Domain: "faith", AgeKey: "bronze_age", ClassName: "Worshipper", FoodCost: 0.18, Multiplier: 1.2},
+		WorkerClassDef{Domain: "faith", AgeKey: "iron_age", ClassName: "Celebrant", FoodCost: 0.27, Multiplier: 1.2},
+		WorkerClassDef{Domain: "faith", AgeKey: "classical_age", ClassName: "Initiate", FoodCost: 0.40, Multiplier: 1.5},
 		wc("faith", "medieval_age", "Acolyte", 2.0, 0),
 		wc("faith", "renaissance_age", "Monk", 2.0, 1),
 		wc("faith", "colonial_age", "Missionary", 2.0, 2),
@@ -214,7 +221,16 @@ func WorkerClasses() []WorkerClassDef {
 		wc("trade", "galactic_age", "Galactic Merchant", 1.0, 17),
 		wc("trade", "quantum_age", "Quantum Dealer", 1.0, 18),
 
-		// === ENGINEERING DOMAIN (starts victorian_age, base 8.0) ===
+		// === ENGINEERING DOMAIN (starts bronze_age for early smithy/workshop buildings, base tiered) ===
+		// Early tiers added so bronze-through-industrial engineering workers get correct class names
+		// instead of falling back to the tier-0 Tinker (FoodCost=8.0) via the domain-start fallback.
+		WorkerClassDef{Domain: "engineering", AgeKey: "bronze_age", ClassName: "Apprentice", FoodCost: 0.50, Multiplier: 1.0},
+		WorkerClassDef{Domain: "engineering", AgeKey: "iron_age", ClassName: "Craftsman", FoodCost: 0.75, Multiplier: 1.0},
+		WorkerClassDef{Domain: "engineering", AgeKey: "classical_age", ClassName: "Artisan", FoodCost: 1.10, Multiplier: 1.2},
+		WorkerClassDef{Domain: "engineering", AgeKey: "medieval_age", ClassName: "Engineer", FoodCost: 1.65, Multiplier: 1.2},
+		WorkerClassDef{Domain: "engineering", AgeKey: "renaissance_age", ClassName: "Master Eng.", FoodCost: 2.50, Multiplier: 1.5},
+		WorkerClassDef{Domain: "engineering", AgeKey: "colonial_age", ClassName: "Mechanic", FoodCost: 3.75, Multiplier: 1.5},
+		WorkerClassDef{Domain: "engineering", AgeKey: "industrial_age", ClassName: "Machinist", FoodCost: 5.60, Multiplier: 2.0},
 		wc("engineering", "victorian_age", "Tinker", 8.0, 0),
 		wc("engineering", "electric_age", "Electrical Engineer", 8.0, 1),
 		wc("engineering", "atomic_age", "Nuclear Engineer", 8.0, 2),
@@ -325,7 +341,9 @@ func WorkerClassByDomainAndAge(domain, ageKey string) (WorkerClassDef, bool) {
 	return WorkerClassDef{}, false
 }
 
-// WorkerDomains returns the list of all unique worker domain keys.
+// WorkerDomains returns the canonical ordered list of all 12 worker domain keys.
+// This is used to initialise WorkerState on new games and to drive iteration
+// order in the UI — keep this list in sync with the domains in WorkerClasses().
 func WorkerDomains() []string {
 	return []string{
 		"food", "lumber", "masonry", "knowledge",
