@@ -30,7 +30,7 @@ When you assign a worker to a building, they take on the **class name** for that
 
 - You do not choose which domain a worker belongs to when recruiting
 - Workers can be reassigned freely between any buildings with worker capacity
-- The `status` command and Economy tab (`e` / `F1`) show total population, idle count, and current food drain
+- The `status` command and Economy tab show total population, idle count, and current food drain
 - Population is capped by your housing buildings (huts, longhouses, etc.)
 
 ### Class Name Quick Reference

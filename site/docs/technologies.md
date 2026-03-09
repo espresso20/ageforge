@@ -83,7 +83,7 @@ Cancels the current research. **No refund.** The knowledge cost is lost. Only us
 ```
 research
 ```
-With no arguments, opens the **Research overlay panel** (same as pressing `F2` or switching to the Research tab). The overlay groups techs by age with visual indicators: researched techs show as complete, available ones are highlighted, and locked ones are dimmed.
+With no arguments, opens the **Research overlay panel** (same as the Research overlay panel). The overlay groups techs by age with visual indicators: researched techs show as complete, available ones are highlighted, and locked ones are dimmed.
 
 ---
 
