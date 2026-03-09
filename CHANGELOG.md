@@ -8,6 +8,95 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v3.0.0] — 2026-03-09
+
+### Added
+- expand 33 → 74 milestones and harden all thresholds
+- fix map building scale, density throttle, and 249-building sprite coverage
+- revamp map system with age-appropriate city layouts and building sprites
+- add research as a panel view and command option
+- expressive resource bars with fill-level colour and status glyphs
+- implement worker_loss effect + ended message damage summary
+- worker panel grouping, map fix, stats rate breakdown
+- replace F-tab system with command-summoned overlay panels
+- purple fill color for all progress bars
+- rewrite worker panel with per-domain assignment groups
+- add floating overlay framework + milestones panel
+- collapse 12 domain pools into single generic worker pool
+- simplify assign/unassign/recruit command API
+- rename Villager→Worker across UI layer
+- rename Villager→Worker across game core and engine
+- strip legacy alias system from WorkerManager
+- comprehensive autocomplete revamp
+- population screen redesign
+- add command history ring buffer
+- rewrite autocomplete to use domain keys
+- Phase 13 — epoch-exclusive regular events
+- Phase 11e+11f — Epoch tab (F10) + Stats tab epoch/legacy fields
+- Phase 11c — age advance modal transformation summary + epoch reveal
+- Phase 11a+11b — economy tab worker display + villager panel rewrite
+- Phase 11d — culture progress bar + faith threshold indicator
+- Phase 10 economy redesign — full 13-lineage building content overhaul
+- implement catastrophe system (Phase 9 economy redesign)
+- implement epoch system (Phase 8 economy redesign)
+- Phase 7 economy redesign — age transition building transformation pass
+- Phase 6 economy redesign — worker-building coupling engine
+- Phase 5 economy redesign — config foundation data structures
+- update Savefile system with a new configuration
+- add logo to website nav, hero, footer, and og:image
+
+### Fixed
+- refactor changes for wiki and add updated screenshots
+- remove all F-key references, fix commands at a glance and controls
+- radical threshold hardening + fix blank progress bars
+- fix milestone progress flickering, missing categories, and autocomplete gaps
+- correct military lineage tier order, bad upgrade, and wonder description
+- research_speed permanentBonus now actually reduces research duration
+- restore building scale=2, remove primitive-era wonder circle artifact
+- fix map city circular blob — remove anchor-walk clustering and expand zone
+- fix map building shadow artifact and add era-aware city label
+- wire master_builder and scholars_haven to correct game state
+- worker panel always resolves class name for any domain+age
+- Scholar's Haven now requires 5 knowledge workers assigned
+- war_machine no longer fires in primitive age
+- capture ESC on overlay TextView to close panel
+- recruit log shows worker(s) not domain key; fix dev tab focus
+- assign/unassign gracefully skip legacy domain prefix arg
+- recruit autocomplete shows class names; save-compat; class name resolution
+- worker alias, wood camp timing, UI panel layout
+- Phase 17a — stone_camp and hunting_lodge age gating
+- Phase 14 — worker assignment, gather cap, domain key alignment
+- remove dashboard bleed-through on wipe confirmation
+- three ticker freeze bugs
+- resolve save directory relative to binary, not CWD
+- fix docsify security for mobile use
+
+### Balance
+- full age pass renaissance→quantum — rates, times, food costs
+- city spread ratio sized to 20
+- medieval age pass — rates, build times, food cost
+- classical age pass — rates, build times, food cost
+- iron age pass — rates, build times, food cost
+- bronze age pass — rates, build times, food cost
+- stone age pass — buildings, rates, costs
+- wood camp rate up, food drain nudged higher
+- stash cost up, gathering camp cheaper, food drain reduced
+- Phase 17b — fix primitive age economy (food rate vs drain)
+- game balances, ages and research
+
+### Changed
+- delete dead tab_*.go files, migrate helpers to overlays
+- simplify recruit command — remove domain arg
+- replace DefaultWorkerTypes usage with live worker state
+- remove all backward-compat shims
+- remove assign/unassign backward-compat shims
+- split buildings_new*.go into per-lineage files
+
+### Other
+- Change floor value for buildings to NOT produce if no workers in the building
+
+---
+
 ## [v2.5.2] — 2026-03-02
 
 ### Fixed
