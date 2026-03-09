@@ -78,7 +78,7 @@ General rule for early game:
 - 1 worker → shrine (faith)
 - If you have a wood_camp, assign 1–2 there
 
-Workers derive their role from what they're assigned to — a worker on `gathering_camp` becomes a Gatherer; one on `story_circle` becomes a Shaman. Check the Economy tab (press `e` or `F1`) to see your worker breakdown by domain.
+Workers derive their role from what they're assigned to — a worker on `gathering_camp` becomes a Gatherer; one on `story_circle` becomes a Shaman. Check the Economy tab (type `status` or view the Economy tab) to see your worker breakdown by domain.
 
 Check the status bar shows **Idle: 0**. If it doesn't, keep assigning.
 
@@ -104,7 +104,7 @@ build shrine
 
 ## Step 6: Watch your rates
 
-Press `F1` (or just wait — you're already there). Look at the rate column:
+Open the Economy tab (or just wait — you're already there). Look at the rate column:
 - `food: +N/t` — should be positive (at least +2)
 - `wood: +N/t` — should be positive (at least +1)
 - `knowledge: +N/t` — should be positive (at least +1)
@@ -200,9 +200,9 @@ Your first priority: build **Stone Pits** and **Woodcutter Camps**, and assign w
 | Assign workers to story circle | `assign story_circle 1` |
 | Unassign a worker from a building | `unassign gathering_camp 1` |
 | Start first research | `research tool_making` |
-| Check economy tab | `e` or `F1` |
-| Check worker breakdown | `e` or `F1` |
-| Check logs | `l` or `F7` |
+| Check economy tab | `status` |
+| Check worker breakdown | `status` |
+| Check logs | `logs` |
 | Save the game | `Esc` |
 
 ---

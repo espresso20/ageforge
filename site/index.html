@@ -347,7 +347,7 @@
                             </p>
                             <div class="codeblock">
                                 <code
-                                    >recruit food 5<br />assign gathering_camp
+                                    >recruit 5<br />assign gathering_camp
                                     3</code
                                 >
                             </div>
@@ -363,8 +363,8 @@
                             </p>
                             <div class="codeblock">
                                 <code
-                                    >research basic_tools<br />research
-                                    agriculture</code
+                                    >research tool_making<br />research
+                                    fire_mastery</code
                                 >
                             </div>
                         </div>
@@ -392,12 +392,12 @@
                         <div class="step-body">
                             <h3>Prestige and transcend</h3>
                             <p>
-                                Once you reach the Transcendent Age, reset for
+                                Once you reach the Modern Age or beyond, reset for
                                 permanent upgrades and start again — faster,
                                 stronger, further.
                             </p>
                             <div class="codeblock">
-                                <code>prestige go</code>
+                                <code>prestige confirm yes</code>
                             </div>
                         </div>
                     </div>
@@ -410,49 +410,49 @@
             <div class="section-wrap">
                 <h2 class="section-title">Commands at a glance</h2>
                 <p class="section-sub">
-                    Everything happens through the command prompt. Press
-                    <code>F1–F7</code> to switch panels, <code>Esc</code> to
-                    save.
+                    Everything happens through the command prompt. Type a command
+                    name to open its overlay panel. Press <code>Esc</code> to close.
                 </p>
                 <div class="cmd-grid">
                     <div class="cmd-group">
                         <h4 class="cmd-group-title">Building</h4>
                         <div class="cmd-row">
-                            <code>build &lt;key&gt;</code
-                            ><span>Construct a building</span>
+                            <code>build &lt;key&gt; [count|max]</code
+                            ><span>Construct buildings</span>
                         </div>
                         <div class="cmd-row">
-                            <code>build cancel</code
-                            ><span>Cancel current build</span>
+                            <code>upgrade &lt;key|all&gt;</code
+                            ><span>Upgrade building to next tier</span>
                         </div>
                         <div class="cmd-row">
-                            <code>gather &lt;res&gt; &lt;n&gt;</code
-                            ><span>Manually gather resources</span>
+                            <code>gather &lt;res&gt;</code
+                            ><span>Manually gather food, wood, or stone</span>
                         </div>
                     </div>
                     <div class="cmd-group">
                         <h4 class="cmd-group-title">Workers</h4>
                         <div class="cmd-row">
-                            <code>recruit &lt;domain&gt;</code
-                            ><span>Recruit a new worker</span>
+                            <code>recruit [count|max]</code
+                            ><span>Recruit workers into the pool</span>
                         </div>
                         <div class="cmd-row">
-                            <code
-                                >assign &lt;building&gt; &lt;n&gt;</code
-                            ><span>Assign workers</span>
+                            <code>assign &lt;building&gt; [count|all]</code
+                            ><span>Assign workers to a building</span>
                         </div>
                         <div class="cmd-row">
-                            <code
-                                >unassign &lt;building&gt;
-                                &lt;n&gt;</code
-                            ><span>Free up workers</span>
+                            <code>unassign &lt;building&gt; [count|all]</code
+                            ><span>Return workers to idle pool</span>
                         </div>
                     </div>
                     <div class="cmd-group">
                         <h4 class="cmd-group-title">Research</h4>
                         <div class="cmd-row">
                             <code>research &lt;key&gt;</code
-                            ><span>Start researching a tech</span>
+                            ><span>Start researching a technology</span>
+                        </div>
+                        <div class="cmd-row">
+                            <code>research list</code
+                            ><span>Show available technologies</span>
                         </div>
                         <div class="cmd-row">
                             <code>research cancel</code
@@ -462,42 +462,46 @@
                     <div class="cmd-group">
                         <h4 class="cmd-group-title">Military</h4>
                         <div class="cmd-row">
+                            <code>recruit max</code
+                            ><span>Recruit as many soldiers as food allows</span>
+                        </div>
+                        <div class="cmd-row">
                             <code>expedition &lt;key&gt;</code
                             ><span>Launch an expedition</span>
                         </div>
                         <div class="cmd-row">
-                            <code>speed &lt;1-5&gt;</code
-                            ><span>Set game speed</span>
+                            <code>expedition list</code
+                            ><span>View available expeditions</span>
                         </div>
                     </div>
                     <div class="cmd-group">
-                        <h4 class="cmd-group-title">Trade</h4>
+                        <h4 class="cmd-group-title">Trade &amp; Diplomacy</h4>
                         <div class="cmd-row">
-                            <code>trade start &lt;key&gt;</code
-                            ><span>Start a trade route</span>
+                            <code>trade route start &lt;key&gt;</code
+                            ><span>Activate a trade route</span>
                         </div>
                         <div class="cmd-row">
-                            <code>trade stop &lt;key&gt;</code
-                            ><span>Cancel a trade route</span>
+                            <code>trade route stop &lt;key&gt;</code
+                            ><span>Deactivate a trade route</span>
                         </div>
                         <div class="cmd-row">
-                            <code>diplomacy gift &lt;faction&gt;</code
-                            ><span>Improve relations</span>
+                            <code>diplomacy ally &lt;faction&gt;</code
+                            ><span>Form an alliance</span>
                         </div>
                     </div>
                     <div class="cmd-group">
                         <h4 class="cmd-group-title">Wonders &amp; Prestige</h4>
                         <div class="cmd-row">
-                            <code>wonder collect &lt;res&gt; &lt;n&gt;</code
-                            ><span>Bank resources for a wonder</span>
+                            <code>wonder collect &lt;res&gt; [n|all]</code
+                            ><span>Bank resources toward a wonder</span>
                         </div>
                         <div class="cmd-row">
-                            <code>prestige go</code
+                            <code>prestige shop</code
+                            ><span>View prestige points &amp; upgrades</span>
+                        </div>
+                        <div class="cmd-row">
+                            <code>prestige confirm yes</code
                             ><span>Trigger prestige reset</span>
-                        </div>
-                        <div class="cmd-row">
-                            <code>prestige buy &lt;key&gt;</code
-                            ><span>Buy prestige upgrade</span>
                         </div>
                     </div>
                 </div>
@@ -505,6 +509,71 @@
                     Full command reference →
                     <a href="docs/#/commands">Wiki: Commands</a>
                 </p>
+
+                <h2 class="section-title" style="margin-top:2.5rem">Controls</h2>
+                <p class="section-sub">AgeForge is keyboard-driven. No mouse required.</p>
+                <div class="cmd-grid">
+                    <div class="cmd-group">
+                        <h4 class="cmd-group-title">Navigation</h4>
+                        <div class="cmd-row">
+                            <code>Tab / Shift+Tab</code
+                            ><span>Move between UI regions</span>
+                        </div>
+                        <div class="cmd-row">
+                            <code>↑ ↓ / PgUp PgDn</code
+                            ><span>Scroll lists and panels</span>
+                        </div>
+                        <div class="cmd-row">
+                            <code>Esc</code
+                            ><span>Close overlay panel</span>
+                        </div>
+                    </div>
+                    <div class="cmd-group">
+                        <h4 class="cmd-group-title">Overlay Panels</h4>
+                        <div class="cmd-row">
+                            <code>milestones</code
+                            ><span>Open milestones panel</span>
+                        </div>
+                        <div class="cmd-row">
+                            <code>research</code
+                            ><span>Open research panel</span>
+                        </div>
+                        <div class="cmd-row">
+                            <code>army · trade · stats · wonders · logs · epoch</code
+                            ><span>Open other overlays</span>
+                        </div>
+                    </div>
+                    <div class="cmd-group">
+                        <h4 class="cmd-group-title">Game Speed</h4>
+                        <div class="cmd-row">
+                            <code>speed 1.0</code
+                            ><span>Normal speed</span>
+                        </div>
+                        <div class="cmd-row">
+                            <code>speed 2.0</code
+                            ><span>Double speed (unlocked by wonders)</span>
+                        </div>
+                        <div class="cmd-row">
+                            <code>speed &lt;n.n&gt;</code
+                            ><span>Any float up to your current max</span>
+                        </div>
+                    </div>
+                    <div class="cmd-group">
+                        <h4 class="cmd-group-title">Other</h4>
+                        <div class="cmd-row">
+                            <code>save &lt;name&gt;</code
+                            ><span>Save game to named slot</span>
+                        </div>
+                        <div class="cmd-row">
+                            <code>load &lt;name&gt;</code
+                            ><span>Load a saved game</span>
+                        </div>
+                        <div class="cmd-row">
+                            <code>saves</code
+                            ><span>List all save slots</span>
+                        </div>
+                    </div>
+                </div>
             </div>
         </section>
 

@@ -308,6 +308,6 @@ Culture bonuses gate certain epoch event outcomes and diploma actions — a civi
 
 ## Economy Tab
 
-Press `e` or `F1` to open the Economy tab. Buildings are displayed by lineage on the right panel. Legacy buildings show ☒. The left panel shows your current resource rates and worker assignments.
+Press `status` to open the Economy tab. Buildings are displayed by lineage on the right panel. Legacy buildings show ☒. The left panel shows your current resource rates and worker assignments.
 
 Use `rates` to print the current production/consumption rates for all resources directly in the command output.

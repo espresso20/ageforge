@@ -37,7 +37,7 @@ AgeForge runs entirely in your terminal using a full-screen TUI built with Go + 
 
 | Key | Action |
 |---|---|
-| `F1` – `F7` | Switch tabs (Economy, Research, Military, Trade, Stats, Wonders, Logs) |
+| `status` – `logs` | Switch tabs (Economy, Research, Military, Trade, Stats, Wonders, Logs) |
 | `PgUp` / `PgDn` | Scroll current tab |
 | `↑` / `↓` | Navigate command history |
 | `Esc` | Save game |

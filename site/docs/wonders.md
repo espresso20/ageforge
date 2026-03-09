@@ -13,7 +13,7 @@ wonder collect <resource> <amount>   # bank resources
 build <wonder_key>                   # start construction once bank is full
 ```
 
-Progress is shown in the **F6: Wonders** tab with per-resource progress bars.
+Progress is shown in the **Wonders** overlay (`wonders`) with per-resource progress bars.
 
 ---
 

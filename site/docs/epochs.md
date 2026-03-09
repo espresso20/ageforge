@@ -85,9 +85,9 @@ The epoch transition event itself has no cooldown — it fires once per epoch, f
 
 This prevents both lucky streaks and brutal punishment spirals during normal play.
 
-### Reading the Epoch Tab (F10)
+### Reading the Epoch Tab (`epoch`)
 
-Press **F10** to open the Epoch tab. It displays:
+Press **`epoch`** to open the Epoch tab. It displays:
 
 - Current epoch name, icon, and primary/energy resources
 - The result of your last epoch transition roll

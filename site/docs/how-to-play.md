@@ -23,11 +23,11 @@ Build → Recruit → Assign → Research → Advance → Repeat
 
 ```
 ┌─ Status bar ──────────────────────────────────────────────────────────────────┐
-│ 🏛 Stone Age  [P0]  "Founder"         Tick: 1,247  Pop: 18/30  ×1  F1-F7 Esc │
+│ 🏛 Stone Age  [P0]  "Founder"         Tick: 1,247  Pop: 18/30  ×1  Panels Esc │
 ├─ Age progress ────────────────────────────────────────────────────────────────┤
 │ Next: Bronze Age  food:3102/8000 ████░░  stone:890/4000 ███░░  wood:1240/8000 │
 ├─ Tab bar ─────────────────────────────────────────────────────────────────────┤
-│ F1:Economy  F2:Research  F3:Military  F4:Trade  F5:Stats  F6:Wonders  F7:Logs │
+│ Type a command name to open its overlay panel. Esc to close. │
 ├─ Tab content (scrollable) ────────────────────────────────────────────────────┤
 │  Resources             │  Buildings                                           │
 │  ...                   │  ...                                                 │
@@ -42,7 +42,7 @@ Build → Recruit → Assign → Research → Advance → Repeat
 
 ## Navigation
 
-- **F1–F7** — switch tabs
+- overlay commands (type `research`, `army`, `trade`, etc.) — open panels
 - **PgUp / PgDn** — scroll the active tab
 - **↑ / ↓** — navigate command history
 - **Esc** — save game
@@ -147,4 +147,4 @@ wonder collect stone 500
 build stonehenge
 ```
 
-Each wonder can only be built once. They appear in the **F6: Wonders** tab.
+Each wonder can only be built once. They appear in the **Wonders** overlay (`wonders`).

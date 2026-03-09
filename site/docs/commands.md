@@ -59,7 +59,7 @@ research agriculture
 research iron_smelting
 ```
 
-Tech keys are shown in the **F2: Research** tab (dim grey when locked, gold circle when available).
+Tech keys are shown in the **Research** overlay (`research`) (dim grey when locked, gold circle when available).
 
 ---
 
@@ -76,7 +76,7 @@ expedition ruins_delve
 speed 1.5
 ```
 
-Only one expedition can be active at a time. Check **F3: Military** for available expeditions and soldier requirements.
+Only one expedition can be active at a time. Check **Military** overlay (`army`) for available expeditions and soldier requirements.
 
 ---
 
@@ -94,7 +94,7 @@ trade stop coastal_market
 diplomacy gift forest_clan
 ```
 
-Active trade routes run for a fixed duration. Check **F4: Trade** for rates and faction standings.
+Active trade routes run for a fixed duration. Check **Trade** overlay (`trade`) for rates and faction standings.
 
 ---
 
@@ -111,7 +111,7 @@ wonder collect stone 500
 build great_monolith
 ```
 
-Wonders are shown in **F6: Wonders** with progress bars for each required resource.
+Wonders are shown in **Wonders** overlay (`wonders`) with progress bars for each required resource.
 
 ---
 
@@ -130,7 +130,7 @@ prestige buy gather_boost
 prestige buy tick_speed
 ```
 
-Available upgrades and costs are shown in **F5: Stats → Prestige** panel.
+Available upgrades and costs are shown in **Stats** overlay (`stats`).
 
 ---
 
@@ -163,10 +163,10 @@ Type a single letter to jump straight to a tab:
 
 | Key | Tab |
 |---|---|
-| `e` | Economy (F1) |
-| `r` | Research (F2) |
-| `m` | Military (F3) |
-| `t` | Trade (F4) |
-| `s` | Stats (F5) |
-| `w` | Wonders (F6) |
-| `l` | Logs (F7) |
+| `e` | Economy tab |
+| `r` | Research overlay (`research`) |
+| `m` | Military overlay (`army`) |
+| `t` | Trade overlay (`trade`) |
+| `s` | Stats overlay (`stats`) |
+| `w` | Wonders overlay (`wonders`) |
+| `l` | Logs overlay (`logs`) |
