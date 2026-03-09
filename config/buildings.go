@@ -1,37 +1,56 @@
 package config
 
-// Effect represents a game effect from a building or tech
+// Effect represents a single game effect applied by a building, tech, or milestone.
+// The semantics of Value depend on Type:
+//   - "production":     +Value of Target resource per tick
+//   - "storage":        +Value to the global storage cap for Target resource (or "all")
+//   - "capacity":       +Value to Target (e.g. "population") cap
+//   - "bonus":          multiplier bonus — Value is a fraction (0.1 = +10%)
+//   - "unlock":         unlocks the Target building/resource key
+//   - "instant_resource": immediately add Value of Target resource (milestone reward only)
+//   - "permanent_bonus": persistent multiplier on Target rate (milestone reward only)
 type Effect struct {
-	Type   string  // "production", "capacity", "unlock", "bonus", "storage"
-	Target string  // resource key, building key, etc.
-	Value  float64 // amount per tick, capacity increase, multiplier, etc.
+	Type   string  // see above for valid types
+	Target string  // resource key, building key, or special target (e.g. "all", "production_all")
+	Value  float64 // meaning depends on Type; see above
 }
 
-// BuildingDef defines a building type
+// BuildingDef defines a single building type. All 284 buildings are one of:
+// production (13 lineages), housing (pops), storage, or wonder (max 1 each).
+//
+// Cost scaling: actual cost of the N-th instance = BaseCost × CostScale^(N-1).
+// For wonders CostScale is always 1.0 (no scaling, only 1 can be built).
 type BuildingDef struct {
 	Name         string
 	Key          string
 	Category     string // "production", "housing", "research", "military", "storage", "wonder"
-	BaseCost     map[string]float64
-	CostScale    float64 // each subsequent costs CostScale * previous
+	BaseCost     map[string]float64 // resource costs for the first instance
+	CostScale    float64 // exponential scale per additional instance; 1.0 = flat cost
 	Effects      []Effect
-	BuildTicks   int    // 0 = instant
-	RequiredAge  string // minimum age key
-	RequiredTech string // required tech key (empty = none)
-	MaxCount     int    // 0 = unlimited
+	BuildTicks   int    // construction time in game ticks; 0 = instant (legacy only)
+	RequiredAge  string // minimum age key the player must be in to build
+	RequiredTech string // tech key that must be researched first; "" = no requirement
+	MaxCount     int    // maximum instances allowed; 0 = unlimited
 	Description  string
-	// Economy redesign fields (Phase 5+)
-	LineageKey     string // lineage this building belongs to (e.g. "housing", "food", "metallurgy")
-	LineageTier    int    // 0-indexed tier within the lineage
-	WorkerDomain   string // worker domain assigned to this building (e.g. "food", "knowledge"); "" = no workers
-	WorkerCapacity int    // max workers assignable per building instance; 0 = not applicable
+	// Lineage / economy metadata (added in Phase 5+)
+	LineageKey     string // which of the 13 production lineages (e.g. "food", "metallurgy", "wonder")
+	LineageTier    int    // 0-indexed position within the lineage; higher tier = later age
+	WorkerDomain   string // worker domain key for assignment (e.g. "food", "knowledge"); "" = no workers
+	WorkerCapacity int    // max workers assignable per individual building instance; 0 = not applicable
 	EpochKey       string // epoch this building belongs to (e.g. "stone_era", "iron_era")
-	OutputResource string // primary resource produced (used by engine for lineage resource transitions)
+	OutputResource string // primary resource produced; used by the engine to remap lineage output on age transition
 }
 
-// baseBuildingsRaw returns all building definitions without economy-redesign metadata.
-// Call BaseBuildings() instead for the fully-enriched definitions.
-// Cost scaling: each age's buildings cost ~5x the previous age
+// baseBuildingsRaw returns only the storage and wonder BuildingDef entries,
+// without economy-redesign metadata (lineage, worker domain, epoch key).
+// These definitions are merged with buildingMeta() in BaseBuildings().
+// Production/housing/military buildings are now defined in the 13 lineage files
+// accessed via NewProductionBuildings() and should not be added here.
+//
+// Cost progression guideline per age:
+//   Primitive 30–100 → Stone 200–1k → Bronze 1.5k–5k → Iron 8k–25k →
+//   Classical 40k–120k → Medieval 200k–600k → Renaissance 1M–3M →
+//   Colonial 5M–15M → Industrial 25M–75M → Victorian 125M–375M → ...
 func baseBuildingsRaw() []BuildingDef {
 	return []BuildingDef{
 		// ===== PRIMITIVE AGE (costs: 30-100) =====
@@ -270,8 +289,11 @@ func baseBuildingsRaw() []BuildingDef {
 		// (singularity_core is a wonder, listed below)
 
 		// ===== WONDERS =====
-		// Each wonder unlocks +0.5x game speed. Costs are brutal — ~15-20x normal buildings.
-		// Build ticks are extremely long. One per age, max 1 each.
+		// There is exactly one wonder per age (22 wonders total). Building a wonder
+		// unlocks +0.5x game speed — the primary long-term speed upgrade mechanic.
+		// Wonder costs use WonderBank: resources must be "banked" via 'wonder collect'
+		// before 'build <key>' queues construction. CostScale is always 1.0.
+		// Build ticks are extremely long to make each wonder a meaningful milestone.
 
 		// Primitive Age — normal costs: 30-300
 		{
@@ -467,7 +489,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "information_age",
 			MaxCount:    1,
 			BuildTicks:  63000,
-			Description: "Every mind connected. +10.0 data/tick, +30% knowledge rate. Unlocks +0.5x speed.",
+			Description: "Every mind connected. +30.0 data/tick, +30% knowledge rate. Unlocks +0.5x speed.",
 		},
 		// Digital Age — normal costs: 400B-750B
 		{
@@ -509,7 +531,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "fusion_age",
 			MaxCount:    1,
 			BuildTicks:  450000,
-			Description: "A miniature star harnessed for power. +15 plasma, +100 electricity/tick. Unlocks +0.5x speed.",
+			Description: "A miniature star harnessed for power. +15 plasma, +200 electricity/tick. Unlocks +0.5x speed.",
 		},
 		// Space Age — normal costs: 50T-80T
 		{
@@ -585,6 +607,8 @@ func baseBuildingsRaw() []BuildingDef {
 }
 
 // buildingMetaEntry holds the economy-redesign metadata for a single building.
+// It supplements the legacy BuildingDef entries in baseBuildingsRaw() which
+// were defined before lineage/epoch metadata existed.
 type buildingMetaEntry struct {
 	LineageKey     string
 	LineageTier    int
@@ -782,7 +806,10 @@ func BaseBuildings() []BuildingDef {
 	return result
 }
 
-// BuildingByKey returns a map of key -> BuildingDef
+// BuildingByKey returns a map of building key → BuildingDef, sourced from BaseBuildings().
+// If two entries share a key (e.g. a lineage file and baseBuildingsRaw() both define it),
+// the last one in iteration order wins — in practice lineage files are prepended so
+// storage/wonder entries always shadow any phantom duplicates.
 func BuildingByKey() map[string]BuildingDef {
 	m := make(map[string]BuildingDef)
 	for _, b := range BaseBuildings() {

@@ -43,7 +43,6 @@ func BuildingUpgrades() []BuildingUpgradeDef {
 		{From: "gathering_camp", To: "farm", CostScale: 0.25, MinAge: "bronze_age"},
 		{From: "woodcutter_camp", To: "lumber_mill", CostScale: 0.25, MinAge: "bronze_age"},
 		{From: "stone_pit", To: "quarry", CostScale: 0.25, MinAge: "bronze_age"},
-		{From: "iron_mine", To: "smithy", CostScale: 0.25, MinAge: "iron_age"},
 	}
 }
 

@@ -12,44 +12,44 @@ func buildingsLineageMilitary() []BuildingDef {
 	// CostScale: 1.35  Category: "military"
 	// =========================================================================
 
-	// tier 0 — iron_age  soldiers=10
-	b = append(b, BuildingDef{
-		Name: "Hunting Lodge", Key: "hunting_lodge", Category: "military",
-		BaseCost:    map[string]float64{"wood": 25},
-		CostScale:   1.35,
-		Effects:     []Effect{{Type: "capacity", Target: "military", Value: 10}},
-		BuildTicks:  80,
-		RequiredAge: "iron_age",
-		Description: "A gathering place for hunters. +10 military cap (3 workers).",
-		LineageKey:  "military", LineageTier: 0,
-		WorkerDomain: "military", WorkerCapacity: 3,
-		EpochKey: "stone_era",
-	})
-	// tier 1 — stone_age  soldiers=20
+	// tier 0 — stone_age  soldiers=10
 	b = append(b, BuildingDef{
 		Name: "War Camp", Key: "war_camp", Category: "military",
 		BaseCost:    map[string]float64{"wood": 180, "stone": 100},
 		CostScale:   1.35,
-		Effects:     []Effect{{Type: "capacity", Target: "military", Value: 20}},
+		Effects:     []Effect{{Type: "capacity", Target: "military", Value: 10}},
 		BuildTicks:  200,
 		RequiredAge: "stone_age",
-		Description: "A fortified war camp. +20 military cap (4 workers).",
-		LineageKey:  "military", LineageTier: 1,
-		WorkerDomain: "military", WorkerCapacity: 4,
+		Description: "A fortified war camp. +10 military cap (3 workers).",
+		LineageKey:  "military", LineageTier: 0,
+		WorkerDomain: "military", WorkerCapacity: 3,
 		EpochKey: "stone_era",
 	})
-	// tier 2 — bronze_age  soldiers=40
+	// tier 1 — bronze_age  soldiers=20
 	b = append(b, BuildingDef{
 		Name: "Barracks", Key: "barracks", Category: "military",
 		BaseCost:    map[string]float64{"wood": 900, "stone": 600, "iron": 200},
 		CostScale:   1.35,
-		Effects:     []Effect{{Type: "capacity", Target: "military", Value: 40}},
+		Effects:     []Effect{{Type: "capacity", Target: "military", Value: 20}},
 		BuildTicks:  500,
 		RequiredAge: "bronze_age",
-		Description: "Trains and houses soldiers. +40 military cap (5 workers).",
+		Description: "Trains and houses soldiers. +20 military cap (4 workers).",
+		LineageKey:  "military", LineageTier: 1,
+		WorkerDomain: "military", WorkerCapacity: 4,
+		EpochKey: "stone_era",
+	})
+	// tier 2 — iron_age  soldiers=40
+	b = append(b, BuildingDef{
+		Name: "Hunting Lodge", Key: "hunting_lodge", Category: "military",
+		BaseCost:    map[string]float64{"wood": 25},
+		CostScale:   1.35,
+		Effects:     []Effect{{Type: "capacity", Target: "military", Value: 40}},
+		BuildTicks:  80,
+		RequiredAge: "iron_age",
+		Description: "A gathering place for hunters turned military post. +40 military cap (5 workers).",
 		LineageKey:  "military", LineageTier: 2,
 		WorkerDomain: "military", WorkerCapacity: 5,
-		EpochKey: "stone_era",
+		EpochKey: "iron_era",
 	})
 	// tier 3 — iron_age  soldiers=80
 	b = append(b, BuildingDef{
