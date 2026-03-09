@@ -78,7 +78,7 @@ General rule for early game:
 - 1 worker → shrine (faith)
 - If you have a wood_camp, assign 1–2 there
 
-Workers derive their role from what they're assigned to — a worker on `gathering_camp` becomes a Gatherer; one on `story_circle` becomes a Storyteller. Check the Worker panel (press `v`) to see your breakdown by domain.
+Workers derive their role from what they're assigned to — a worker on `gathering_camp` becomes a Gatherer; one on `story_circle` becomes a Shaman. Check the Economy tab (press `e` or `F1`) to see your worker breakdown by domain.
 
 Check the status bar shows **Idle: 0**. If it doesn't, keep assigning.
 
@@ -151,17 +151,17 @@ The second row always shows what you need for the **next age**. For Stone Age:
 - Wood: 5,200
 - Knowledge: 1,400
 - Huts: 20
-- Shrines: 10
+- Story Circles: 5
 
-Keep building huts and shrines. Keep assigning workers. Keep knowledge flowing. The age advances **automatically** when all bars fill.
+Keep building huts and story circles. Keep assigning workers. Keep knowledge flowing. The age advances **automatically** when all bars fill.
 
 ---
 
 ## Checklist at the Stone Age transition
 
 Before you advance, you should have:
-- [ ] 15–20 huts
-- [ ] 8–10 shrines
+- [ ] 20 huts
+- [ ] 5 story circles
 - [ ] 3–4 stashes
 - [ ] 10+ pop, all assigned
 - [ ] Tool Making researched
@@ -174,9 +174,13 @@ Before you advance, you should have:
 When you reach Stone Age:
 - **Stone** resource unlocks (needed for Bronze Age)
 - **Stone Pit** — produces stone passively
+- **Stone Camp** — early masonry production building
 - **Woodcutter Camp** — dedicated wood building
+- **Forager Post** — upgraded food building
 - **Standing Stones** — better faith building
+- **Elders' Hall** — upgraded knowledge building
 - **Longhouse** — bigger housing (+20 pop cap each)
+- **War Camp** — early military building
 - **Great Monolith** — first major wonder
 
 Your first priority: build **Stone Pits** and **Woodcutter Camps**, and assign workers to them. Bronze Age needs a lot of stone and wood.
@@ -197,7 +201,7 @@ Your first priority: build **Stone Pits** and **Woodcutter Camps**, and assign w
 | Unassign a worker from a building | `unassign gathering_camp 1` |
 | Start first research | `research tool_making` |
 | Check economy tab | `e` or `F1` |
-| Check worker panel | `v` |
+| Check worker breakdown | `e` or `F1` |
 | Check logs | `l` or `F7` |
 | Save the game | `Esc` |
 

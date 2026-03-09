@@ -36,8 +36,8 @@ These resources are produced by Geological Extraction buildings and consumed by 
 
 | Resource | Key | Unlocks | Base Storage | Notes |
 |----------|-----|---------|--------------|-------|
-| Marble | `marble` | Classical Age | 30 | Refined stone for monumental construction |
-| Iron Ore | `iron_ore` | Classical Age | 30 | Raw ore before smelting — feeds Metallurgy lineage |
+| Marble | `marble` | Iron Age | 30 | Refined stone for monumental construction |
+| Iron Ore | `iron_ore` | Iron Age | 30 | Raw ore before smelting — feeds Metallurgy lineage |
 | Titanium Ore | `titanium_ore` | Modern Age | 20 | Raw titanium ore — refines into titanium via Metallurgy |
 | Dark Matter Crystals | `dark_matter_crystals` | Cyberpunk Age | 10 | Crystallised dark matter — refines into dark matter |
 | Nanobots | `nanobots` | Modern Age | 20 | Microscopic machines from Organic Extraction in Digital Era+ |
@@ -94,7 +94,7 @@ Knowledge workers have the highest production multiplier progression of any doma
 
 ## Faith
 
-Faith is a **draining** resource — it declines naturally each tick without active production. The faith resource itself unlocks at the Primitive Age, but the Faith worker domain does not start until the Medieval Age (Acolyte class).
+Faith is a **draining** resource — it declines naturally each tick without active production. The faith resource unlocks at the Primitive Age. Early-age faith workers (Devotee, Believer, Worshipper, Celebrant, Initiate) exist from Primitive through Classical ages with lower food costs. The formal high-cost Faith domain tier (Acolyte, base 2.0 food/t) begins at Medieval Age.
 
 Your faith level as a **percentage of your storage cap** determines epoch event roll odds and provides ongoing civilization bonuses:
 

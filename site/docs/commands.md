@@ -10,7 +10,7 @@ All commands are typed at the `>` prompt at the bottom of the screen. Press `↑
 |---|---|
 | `build <key>` | Start constructing a building |
 | `build cancel` | Cancel the current build in the queue |
-| `gather <resource> [amount]` | Manually gather food, wood, or stone (max 10) |
+| `gather <resource> [amount]` | Manually gather food, wood, or stone (max 10 per command) |
 
 **Example:**
 ```
@@ -29,7 +29,6 @@ gather wood 5
 | `recruit [count\|max]` | Recruit one or more workers from available housing capacity |
 | `assign <building_key> [count\|all]` | Assign workers to a building (domain inferred from building) |
 | `unassign <building_key> [count\|all]` | Unassign workers from a building |
-| `unassign all <domain>` | Unassign all workers in a domain |
 
 Workers are recruited generically from available housing capacity and assigned to buildings, where they become that building's domain class (Gatherer, Lumberjack, etc.).
 
@@ -40,7 +39,7 @@ recruit max
 assign gathering_camp 3
 assign library all
 unassign shrine
-unassign all military
+unassign shrine all
 ```
 
 See [Workers & Domains (Reference)](workers-and-domains.md) for the full domain table and efficiency formula.
@@ -55,9 +54,9 @@ See [Workers & Domains (Reference)](workers-and-domains.md) for the full domain 
 | `research cancel` | Cancel active research (progress is lost) |
 
 ```
-research basic_tools
+research tool_making
 research agriculture
-research smelting
+research iron_smelting
 ```
 
 Tech keys are shown in the **F2: Research** tab (dim grey when locked, gold circle when available).
@@ -69,12 +68,12 @@ Tech keys are shown in the **F2: Research** tab (dim grey when locked, gold circ
 | Command | Description |
 |---|---|
 | `expedition <key>` | Launch a military expedition |
-| `speed <1–5>` | Set game tick speed (1=slow, 5=fast) |
+| `speed [multiplier]` | Set game speed (1.0, 1.5, 2.0 … +0.5 per wonder built) |
 
 ```
 expedition small_raid
 expedition ruins_delve
-speed 3
+speed 1.5
 ```
 
 Only one expedition can be active at a time. Check **F3: Military** for available expeditions and soldier requirements.
@@ -120,13 +119,15 @@ Wonders are shown in **F6: Wonders** with progress bars for each required resour
 
 | Command | Description |
 |---|---|
-| `prestige go` | Trigger prestige reset (requires Modern Age) |
+| `prestige` | View prestige status and available points |
+| `prestige confirm yes` | Trigger prestige reset (requires Modern Age) |
+| `prestige shop` | View prestige upgrade list |
 | `prestige buy <key>` | Purchase a prestige upgrade |
 
 ```
-prestige go
-prestige buy production_mastery
-prestige buy vault_keeper
+prestige confirm yes
+prestige buy gather_boost
+prestige buy tick_speed
 ```
 
 Available upgrades and costs are shown in **F5: Stats → Prestige** panel.
@@ -147,11 +148,11 @@ Voluntary catastrophes let you force an epoch event outside the normal roll. Use
 
 | Command | Description |
 |---|---|
-| `save <name>` | Save the game with a specific name |
+| `save [name]` | Save the game (optional name; defaults to autosave) |
+| `load [name]` | Load a saved game |
+| `saves` | List all save files |
 | `Esc` | Quick-save (autosave slot) |
-| `export` | Export save as a portable token (copied to clipboard) |
-| `import <token>` | Import a save token |
-| `wipe` | Delete all saves (requires typing `wipe` twice) |
+| `dump` | Export logs to a file for debugging |
 | `help` | Show a quick command summary |
 
 ---

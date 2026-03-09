@@ -15,7 +15,7 @@ Build → Recruit → Assign → Research → Advance → Repeat
 3. **Assign** workers to gather specific resources
 4. **Research** technologies that multiply your output
 5. **Advance** to the next age when requirements are met
-6. **Prestige** when you reach the Transcendent Age
+6. **Prestige** when you reach the Modern Age (or later) for permanent bonuses
 
 ---
 
@@ -89,12 +89,12 @@ Gathering camps boost food and wood production:
 build gathering_camp
 ```
 
-### 7. Research basic tools
-Once you have enough knowledge (50 kp):
+### 7. Research tool making
+Once you have enough knowledge (800 kp):
 ```
-research basic_tools
+research tool_making
 ```
-This gives a permanent +20% worker output bonus.
+This gives a permanent +15% gather rate bonus.
 
 ### 8. Watch the age bar
 The second row shows what you need for the next age. Keep building and assigning until the requirements fill up. The game advances automatically.
@@ -104,7 +104,7 @@ The second row shows what you need for the next age. Keep building and assigning
 ## Resource management tips
 
 - Resources cap at their storage limit — once capped, production is wasted
-- **Food drain** = `0.06 × 1.5^tier /tick` per worker, where tier is the current age's food-domain tier. In the Primitive Age this is 0.06/tick per worker; it scales up each age as workers advance to higher tiers. Always keep food production positive
+- **Food drain** = `baseFoodCost × 1.5^tier /tick` per worker. Food domain workers start at 0.06/tick (Primitive Age) — very cheap. Other domains start at 1.0–32.0. Always keep food production positive
 - **Knowledge** is the most important resource early — prioritise knowledge workers
 - Watch the `Rate` column in the Economy tab; negative rates will drain you
 
@@ -128,12 +128,12 @@ Food workers are special — they produce food but all workers across all domain
 
 | Age | Priority buildings |
 |---|---|
-| Primitive | Hut, Stash, Altar, Sacred Grove |
-| Stone Age | Gathering Camp, Woodcutter Camp, Stone Pit, Firepit |
-| Bronze Age | Farm, Lumber Mill, Quarry, Mine, Library |
-| Iron Age | Coal Mine, Smithy, Barracks, Granary |
-| Classical | Forum, Aqueduct, Amphitheater |
-| Medieval | University, Cathedral, Castle |
+| Primitive | Hut, Stash, Gathering Camp, Story Circle, Shrine, Sacred Grove |
+| Stone Age | Stone Pit, Woodcutter Camp, Forager Post, Longhouse, Storage Pit |
+| Bronze Age | Farm, Lumber Mill, Quarry, Scriptorium, Market, Smithy, Warehouse |
+| Iron Age | Smelter, Hunting Lodge, Granary, Trading Post |
+| Classical | Agora, Library, Forge, Amphitheater, Aqueduct |
+| Medieval | University, Cathedral, Castle Keep, Great Library |
 
 ---
 

@@ -15,11 +15,13 @@ Story Circle → Elders' Hall → Scriptorium → Agora → Library → Monaster
 **Recruit and assign Knowledge workers:**
 
 ```
-recruit knowledge
+recruit 3
 assign story_circle 2
 assign library 5
 assign university 3
 ```
+
+Workers are recruited generically (no domain argument). They become Knowledge workers when assigned to a knowledge-domain building.
 
 **Worker efficiency formula:**
 

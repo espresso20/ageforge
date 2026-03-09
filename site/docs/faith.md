@@ -46,10 +46,12 @@ Shrine → Standing Stones → Altar → Temple → Oracle House → Cathedral �
 **Recruit and assign Faith workers:**
 
 ```
-recruit faith
+recruit 3
 assign shrine 3
 assign temple 5
 ```
+
+Workers are recruited generically (no domain argument). They become Faith workers when assigned to a faith-domain building.
 
 ---
 
