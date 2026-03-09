@@ -13,10 +13,21 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// saveHMACKey is used to sign the save payload. Knowing this key allows clearing the shame badge.
+// saveHMACKey is the HMAC signing key for save integrity. Its presence in the
+// binary means a determined player can forge a valid signature, which is
+// intentional — the badge system is cosmetic, not security-critical.
 const saveHMACKey = "ageforge-v1-save-integrity"
 
-// GameSave represents a saved game state
+// GameSave is the serialised on-disk representation of a game state.
+// All subsystem state is flattened into simple slices, maps, and scalars
+// so the file remains readable as plain JSON and backward-compatible across
+// schema additions (new optional fields default to zero/nil on old saves).
+//
+// Integrity fields:
+//   - Signature: HMAC-SHA256 of the payload (excluding sig/proof). Tampered
+//     saves produce a mismatch → cheaterBadge is set on load.
+//   - Proof: HMAC of the Signature using forgeMasterKey. Present only when
+//     the player has the elite badge; verifying this clears the cheater badge.
 type GameSave struct {
 	Timestamp  time.Time               `json:"timestamp"`
 	Tick       int                     `json:"tick"`
@@ -60,7 +71,9 @@ type GameSave struct {
 	Proof        string `json:"_proof,omitempty"`
 }
 
-// signSave returns the HMAC-SHA256 hex of the save payload (sig and proof cleared).
+// signSave returns the HMAC-SHA256 hex of the save payload.
+// Signature and Proof are zeroed before marshalling so the signature covers
+// the game data only, not a prior signature value.
 func signSave(gs GameSave, key string) string {
 	gs.Signature = ""
 	gs.Proof = ""
@@ -198,16 +211,19 @@ func savePath(filename string) string {
 	return primary // default to canonical for new saves
 }
 
-// SaveGame saves the current game state
+// SaveGame serialises current engine state to filename.json in the save directory.
+// The save is written atomically (temp file + rename) to prevent corruption if
+// the process is killed mid-write. The payload is HMAC-signed before writing.
+// NOTE: SaveGame acquires only an RLock for the snapshot, so it can run
+// concurrently with reads but not concurrent writes (doTick).
 func (ge *GameEngine) SaveGame(filename string) error {
 	dir := saveDirectory()
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create save directory: %w", err)
 	}
 
-	// Snapshot + sign + marshal under lock. The data is small so marshal is fast,
-	// and this avoids aliasing bugs where doTick mutates shared maps/slices
-	// while json.Marshal reads them concurrently.
+	// Take the read lock for the snapshot + marshal so doTick cannot mutate
+	// maps/slices while json.Marshal is iterating over them.
 	ge.mu.RLock()
 	save := ge.buildSaveSnapshot()
 	// Sign the payload (sig/proof are empty in snapshot)
@@ -362,9 +378,13 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 	}
 }
 
-// LoadGame restores game state from a file
+// LoadGame reads a save file, verifies its integrity, and restores all engine
+// state under the write lock. File I/O is done outside the lock to avoid
+// blocking doTick for the duration of a slow disk read.
+// Integrity check: if the signature is present and invalid, cheaterBadge is
+// set. If a valid elite proof is found, eliteBadge is set and cheaterBadge cleared.
 func (ge *GameEngine) LoadGame(filename string) error {
-	// File I/O outside the lock
+	// File I/O outside the lock — avoids holding the write lock during disk access
 	path := savePath(filename)
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -524,7 +544,11 @@ func copyBoolMap(m map[string]bool) map[string]bool {
 	return out
 }
 
-// getUnlockedState collects all unlock states for saving
+// getUnlockedState collects all resource, building, and worker unlocks for
+// the current age and all prior ages. On load, these lists are replayed to
+// restore the Buildings.unlocked / Resources.unlocked maps without having to
+// re-run the full age advance sequence.
+// NOTE: Must be called with the lock held (called from buildSaveSnapshot).
 func (ge *GameEngine) getUnlockedState() UnlockedState {
 	state := UnlockedState{}
 	for _, def := range ge.progress.ages {

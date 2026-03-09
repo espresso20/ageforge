@@ -7,12 +7,19 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// PrestigeManager manages prestige level, points, and upgrades
+// PrestigeManager manages the prestige meta-progression layer.
+// Players prestige at Modern Age or later, earning points based on age reached,
+// milestones, techs, and buildings built. Points are spent on persistent upgrades
+// that carry over to the next run.
+//
+// Passive bonuses stack per level: +2% production_all and +1% tick_speed per
+// prestige level (applied independently of purchased upgrades).
+// Upgrade bonuses accumulate on top of passive bonuses in GetBonuses().
 type PrestigeManager struct {
-	level      int
+	level       int
 	totalEarned int
-	available  int
-	upgrades   map[string]int // key -> tier purchased
+	available   int
+	upgrades    map[string]int // upgrade key -> tier purchased (0 = not bought)
 }
 
 // NewPrestigeManager creates a new prestige manager
@@ -22,14 +29,19 @@ func NewPrestigeManager() *PrestigeManager {
 	}
 }
 
-// CalculatePoints computes prestige points for the current run
+// CalculatePoints computes prestige points earned for the current run.
+// Points scale with age reached, achievements, and construction output, but
+// are divided by sqrt(level+1) to apply diminishing returns so high-prestige
+// players earn fewer points per run and cannot snowball indefinitely.
+// A minimum of 1 point is guaranteed at Medieval Age (order ≥ 5) so late-game
+// players always make some progress even after many prestiges.
 func (pm *PrestigeManager) CalculatePoints(age string, ageOrder map[string]int, milestonesCompleted, techsResearched, totalBuilt int) int {
-	// Base: 1 point per age beyond Primitive
+	// Base: 1 point per age index beyond Primitive (primitive=0, stone=1, …)
 	ageIdx, ok := ageOrder[age]
 	if !ok {
 		return 0
 	}
-	base := float64(ageIdx) // primitive=0, stone=1, ..., medieval=4
+	base := float64(ageIdx)
 
 	// Bonus: +1 per 10 milestones, +1 per 15 techs, +1 per 50 buildings
 	bonus := float64(milestonesCompleted/10) + float64(techsResearched/15) + float64(totalBuilt/50)
@@ -46,13 +58,15 @@ func (pm *PrestigeManager) CalculatePoints(age string, ageOrder map[string]int, 
 	return points
 }
 
-// CanPrestige returns true if the player can prestige (Modern Age or later)
+// CanPrestige returns true if the player has reached Modern Age (order ≥ 12).
+// Modern Age is the minimum threshold; later ages are also valid prestige points.
+// The order value is compared against the ageOrder map provided by ProgressManager.
 func (pm *PrestigeManager) CanPrestige(age string, ageOrder map[string]int) bool {
 	idx, ok := ageOrder[age]
 	if !ok {
 		return false
 	}
-	// Modern Age is order 12
+	// Modern Age is order 12 in the 22-age sequence.
 	return idx >= 12
 }
 

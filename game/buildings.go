@@ -8,14 +8,24 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// BuildingManager manages all buildings
+// BuildingManager manages all buildings, including production buildings, wonders,
+// storage structures, wonder construction banks, legacy flags, and ruins.
+//
+// Key invariants:
+//   - counts[key] is the number of fully-constructed instances of building key.
+//   - ruins[key] are separate from counts; they produce at 50% base rate with no
+//     worker scaling and cannot be rebuilt or demolished.
+//   - legacyBuildings marks old-tier buildings that are still functional but
+//     must not be queued for construction (CanBuild = false in snapshot).
+//   - wonderBanks hold incremental resource deposits; a wonder is only completed
+//     when the bank meets the full BaseCost (via BankResource + IsWonderBankFull).
 type BuildingManager struct {
 	counts          map[string]int
 	defs            map[string]config.BuildingDef
 	unlocked        map[string]bool
 	wonderBanks     map[string]map[string]float64 // wonderKey -> resource -> banked amount
-	legacyBuildings map[string]bool               // Phase 7: buildings superseded by lineage progression
-	ruins           map[string]int                // Phase 9: ruins from Succumb — produce at 50%
+	legacyBuildings map[string]bool               // buildings superseded by lineage progression; functional but unbuildable
+	ruins           map[string]int                // ruins from Succumb — produce at 50% base rate, no worker scaling
 }
 
 // NewBuildingManager creates a building manager
@@ -97,7 +107,9 @@ func (bm *BuildingManager) GetCount(key string) int {
 	return bm.counts[key]
 }
 
-// GetCost calculates the cost for the next building of this type (with scaling)
+// GetCost calculates the cost for the next instance of a building type.
+// Cost scales exponentially: base × CostScale^count, floored to the nearest
+// integer. This makes later copies progressively more expensive.
 func (bm *BuildingManager) GetCost(key string) map[string]float64 {
 	def, ok := bm.defs[key]
 	if !ok {
@@ -131,8 +143,9 @@ func (bm *BuildingManager) Build(key string, resources *ResourceManager) bool {
 	return true
 }
 
-// GetEffects returns the total effects from all built buildings (non-production effects only).
-// For production rates, use WorkerScaledProduction instead.
+// GetEffects returns the aggregate non-production effects from all built buildings
+// (e.g. capacity, storage). Production effects are intentionally excluded here
+// because they depend on the worker fill ratio; use WorkerScaledProduction for those.
 func (bm *BuildingManager) GetEffects() []config.Effect {
 	var effects []config.Effect
 	for key, count := range bm.counts {
@@ -175,7 +188,7 @@ func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(domain, key s
 				if fillRatio > 1.0 {
 					fillRatio = 1.0
 				}
-				rate = eff.Value * float64(count) * (0.0 + 0.80*fillRatio)
+				rate = eff.Value * float64(count) * (0.20 + 0.80*fillRatio)
 			} else {
 				rate = eff.Value * float64(count)
 			}
@@ -264,7 +277,7 @@ func (bm *BuildingManager) BankResource(wonderKey, resource string, amount float
 	}
 	banked := bm.wonderBanks[wonderKey][resource]
 	remaining := required - banked
-	if remaining <= 0 {
+	if remaining <= 0.001 {
 		return 0, fmt.Errorf("%s bank for %s is already full", resource, def.Name)
 	}
 	if amount > remaining {
@@ -356,9 +369,11 @@ func (bm *BuildingManager) LoadLegacyBuildings(keys []string) {
 
 // === Phase 9: Ruins ===
 
-// GenerateRuins picks up to n random non-wonder building instances from current counts
-// and marks them as ruins. Returns a map of key → ruin count created.
-// The buildings are removed from counts and added to ruins.
+// GenerateRuins converts up to n randomly selected non-wonder building instances
+// into ruins on a Succumb catastrophe. Ruins are removed from counts (so they
+// no longer receive worker assignments) but continue to produce at 50% base
+// rate via the ruins map in WorkerScaledProduction.
+// Returns a map of building key → number of ruins created (nil if none).
 func (bm *BuildingManager) GenerateRuins(n int) map[string]int {
 	type inst struct{ key string }
 	var pool []inst
@@ -386,6 +401,10 @@ func (bm *BuildingManager) GenerateRuins(n int) map[string]int {
 	}
 	for key, count := range newRuins {
 		bm.ruins[key] += count
+		bm.counts[key] -= count
+		if bm.counts[key] < 0 {
+			bm.counts[key] = 0
+		}
 	}
 	return newRuins
 }
@@ -410,8 +429,11 @@ func (bm *BuildingManager) LoadRuins(ruins map[string]int) {
 	}
 }
 
-// DestroyRandom destroys up to count individual building instances chosen at random.
-// Wonders are excluded. Returns a list of human-readable descriptions of what was destroyed.
+// DestroyRandom destroys up to count individual building instances chosen
+// uniformly at random. Wonders are excluded because they represent one-off
+// civilisation milestones. Unlike GenerateRuins, destroyed buildings are
+// removed entirely (they do not become ruins).
+// Returns human-readable descriptions for the log (e.g. "3 Lumber Mill").
 func (bm *BuildingManager) DestroyRandom(count int) []string {
 	// Build a pool of destroyable instances (key repeated by count)
 	type inst struct{ key string }
@@ -451,8 +473,11 @@ func (bm *BuildingManager) DestroyRandom(count int) []string {
 	return names
 }
 
-// TransformBuilding transfers count from oldKey to newKey (age-transition lineage upgrade).
-// Unlocks the new building. Calls renameWorker to transfer worker assignments if provided.
+// TransformBuilding is called during age transition to upgrade all instances of
+// a lower-tier building into the higher-tier lineage equivalent. It moves the
+// count atomically, unlocks the new key, and delegates worker assignment
+// renaming to the WorkerManager so that no assigned workers become stranded.
+// NOTE: oldKey count is zeroed — do not hold a reference to it afterward.
 func (bm *BuildingManager) TransformBuilding(oldKey, newKey string, renameWorker func(domain, oldKey, newKey string)) {
 	count := bm.counts[oldKey]
 	if count == 0 {

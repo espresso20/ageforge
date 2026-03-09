@@ -19,13 +19,26 @@ type ActiveEvent struct {
 	ResourcesLost map[string]float64 // resource key → total amount lost during this event
 }
 
-// EventManager handles random event triggering and processing
+// EventManager handles random event triggering and management of active
+// timed events. Events are drawn from two pools: universal (base) events
+// and epoch-exclusive events for the player's current epoch.
+//
+// Anti-streak system: goodStreak and badStreak track consecutive same-sentiment
+// events. After 3 good in a row the next event is forced bad; after 2 bad it
+// is forced good. This prevents extended lucky or punishing streaks.
+//
+// A global cooldown (nextEventTick) ensures at most one event fires per 5-20
+// minutes of real time, preventing event spam.
+//
+// NOTE: InjectEvent bypasses all eligibility checks and fires immediately.
+// It is used for milestone chain boosts and epoch event effects; calling it
+// inside a Bus handler is safe because the EventManager is not locked separately.
 type EventManager struct {
 	defs          []config.EventDef
 	defMap        map[string]config.EventDef
-	lastFired     map[string]int // key -> last tick fired
+	lastFired     map[string]int // event key -> last tick fired (for per-event cooldowns)
 	active        []ActiveEvent
-	nextEventTick int // global cooldown: earliest tick the next event can fire
+	nextEventTick int // global cooldown: earliest tick the next random event can fire
 	goodStreak    int // consecutive good events (reset on bad/mixed)
 	badStreak     int // consecutive bad events (reset on good/mixed)
 }
@@ -199,7 +212,10 @@ func (em *EventManager) getEligible(tick int, currentAge string, ageOrder map[st
 	return eligible
 }
 
-// InjectEvent adds an event directly to the active list (called under engine write lock)
+// InjectEvent adds an event directly to the active list, bypassing all
+// eligibility, cooldown, and streak checks. Used for milestone chain speed
+// boosts and epoch event side-effects that must fire unconditionally.
+// IMPORTANT: Must be called under the engine write lock (same as doTick).
 func (em *EventManager) InjectEvent(event ActiveEvent) {
 	em.active = append(em.active, event)
 }

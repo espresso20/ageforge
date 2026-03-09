@@ -11,12 +11,22 @@ type domainRuntime struct {
 }
 
 // WorkerManager manages population and worker assignments.
-// All workers belong to a single "worker" pool that can be assigned to any building,
-// regardless of what domain/resource that building produces.
+//
+// Architecture note: the game previously modelled separate domain pools (food,
+// military, knowledge, etc.) but was simplified to a single "worker" pool so
+// any worker can be assigned to any building. The domain parameter accepted by
+// many methods is intentionally ignored to maintain API compatibility with
+// callers that still pass domain strings (e.g. "military", "food").
+//
+// The domains map always contains exactly one entry keyed "worker". Legacy save
+// files may contain multiple domain entries; LoadWorkers sums them all into the
+// single pool so old saves still load correctly.
 type WorkerManager struct {
 	domains  map[string]*domainRuntime
 	unlocked map[string]bool
-	ageKey   string // current age for WorkerClassDef lookups (food cost, class name)
+	// ageKey is used for WorkerClassDef lookups (food cost per tick, displayed class name).
+	// Update via SetAge on every age advance.
+	ageKey string
 }
 
 // NewWorkerManager creates a new single-pool worker manager.
@@ -101,8 +111,10 @@ func (vm *WorkerManager) TotalPop() int {
 	return vm.domains["worker"].count
 }
 
-// FoodDrain returns total food consumption per tick using WorkerClassDef costs.
-// Uses the "food" domain class progression for naming/cost lookups.
+// FoodDrain returns total food consumed per tick for all workers.
+// The per-worker cost is looked up by (domain="food", age) so it scales with
+// age — early ages have very low drain (primitive: 0.08/tick) to ease onboarding.
+// Falls back to 0.1/worker if no class definition is found for the current age.
 func (vm *WorkerManager) FoodDrain() float64 {
 	rt := vm.domains["worker"]
 	if rt.count == 0 {
@@ -171,8 +183,11 @@ func (vm *WorkerManager) AddPctAll(pct float64) {
 	}
 }
 
-// RemovePct removes a percentage of workers from the pool (used by Epidemic event).
-// Assignments are proportionally reduced.
+// RemovePct removes a percentage of workers from the pool (e.g. Epidemic event).
+// Assignments are proportionally scaled down so the total assigned count never
+// exceeds the remaining population. Integer truncation can leave the total
+// assigned count one or two above the new count; the reconciliation loop at
+// the bottom corrects this by reducing the largest assignment first.
 func (vm *WorkerManager) RemovePct(pct float64) {
 	rt := vm.domains["worker"]
 	remove := int(float64(rt.count) * pct)
@@ -190,6 +205,31 @@ func (vm *WorkerManager) RemovePct(pct float64) {
 			reduced = 0
 		}
 		rt.assignments[k] = reduced
+	}
+	// Reconciliation: integer truncation can leave total assigned > new count.
+	// Reduce the largest assignments one-by-one until total <= count.
+	totalAssigned := 0
+	for _, v := range rt.assignments {
+		totalAssigned += v
+	}
+	for totalAssigned > rt.count {
+		// Find the building with the most assigned workers and reduce it by 1.
+		maxKey := ""
+		maxVal := 0
+		for k, v := range rt.assignments {
+			if v > maxVal {
+				maxVal = v
+				maxKey = k
+			}
+		}
+		if maxKey == "" {
+			break
+		}
+		rt.assignments[maxKey]--
+		if rt.assignments[maxKey] == 0 {
+			delete(rt.assignments, maxKey)
+		}
+		totalAssigned--
 	}
 }
 
@@ -212,9 +252,11 @@ func (vm *WorkerManager) GetAll() map[string]WorkerInfo {
 	}
 }
 
-// LoadWorkers restores state from save data.
-// Handles both new single-pool saves (keyed "worker") and old domain-keyed saves
-// (e.g. "food", "faith") by summing all domain counts into the single "worker" pool.
+// LoadWorkers restores state from save data. Handles forward and backward
+// compatibility: new saves have a single "worker" key; saves from before Phase
+// 19 may have domain-specific keys ("food", "faith", "military", etc.). All
+// domain counts are summed into the single pool and all valid assignments are
+// merged, so old saves load without data loss.
 func (vm *WorkerManager) LoadWorkers(data map[string]WorkerInfo) {
 	rt := vm.domains["worker"]
 	byBuilding := config.BuildingByKey()

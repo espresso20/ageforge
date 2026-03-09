@@ -6,16 +6,26 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// TradeManager handles resource exchange and trade routes
+// TradeManager handles both instant resource exchange and repeating trade routes.
+//
+// Exchange: converts resource A → B at the configured base rate adjusted by
+// supply pressure. Repeated selling of the same pair increases pressure
+// (up to +30% rate reduction); pressure decays 2% per tick toward zero.
+// More markets/ports reduce pressure accumulation per trade.
+//
+// Trade routes: run on a configurable interval (TicksPerRun), automatically
+// consuming Export resources and adding Import resources each cycle. Allied
+// faction bonuses are applied to imported amounts via DiplomacyManager.
+// A route is suspended mid-cycle if its required building is demolished.
 type TradeManager struct {
-	// Exchange system
-	supplyPressure map[string]float64 // "from:to" -> pressure (-1 to 1)
-	lastExchange   map[string]int     // "from:to" -> last tick exchanged
+	// supplyPressure key is "from:to" (e.g. "wood:gold"); range -1..1.
+	// Positive values mean the "from" resource has been oversold, reducing rate.
+	supplyPressure map[string]float64
+	lastExchange   map[string]int // "from:to" -> tick of last exchange (reserved for future cooldowns)
 
-	// Trade routes
-	activeRoutes map[string]*ActiveRoute // route key -> state
+	activeRoutes map[string]*ActiveRoute // route key -> runtime state
 
-	// Stats
+	// Cumulative stats for display in the Trade tab.
 	totalExchanged map[string]float64
 	totalImported  map[string]float64
 	totalExported  map[string]float64
