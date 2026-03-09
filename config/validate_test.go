@@ -465,6 +465,10 @@ func TestConfig_EventKeysExist(t *testing.T) {
 				event.Key, event.Name, event.MinAge, hint(event.MinAge, ageKeys))
 		}
 		for _, eff := range event.Effects {
+			// worker_loss effects operate on workers directly — no resource target needed.
+			if eff.Type == "worker_loss" {
+				continue
+			}
 			if _, ok := resourceKeys[eff.Target]; !ok {
 				if !isSpecialTarget(eff.Target) {
 					t.Errorf("\n"+

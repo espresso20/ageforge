@@ -19,14 +19,14 @@ func TestMilestoneManager_CheckFirstShelter(t *testing.T) {
 	ageOrder := fullAgeOrder()
 
 	// No hut — should not complete
-	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0)
+	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
 	if len(completed) != 0 {
 		t.Errorf("expected 0 completions with no hut, got %d", len(completed))
 	}
 
 	// Build a hut
 	bm.counts["hut"] = 1
-	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0)
+	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
 
 	found := false
 	for _, ms := range completed {
@@ -39,7 +39,7 @@ func TestMilestoneManager_CheckFirstShelter(t *testing.T) {
 	}
 
 	// Should not trigger again
-	completed = mm.CheckMilestones(3, "primitive_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0)
+	completed = mm.CheckMilestones(3, "primitive_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
 	for _, ms := range completed {
 		if ms.Key == "first_shelter" {
 			t.Error("first_shelter should not trigger twice")
@@ -53,15 +53,15 @@ func TestMilestoneManager_PopulationMilestone(t *testing.T) {
 	bm := NewBuildingManager()
 	ageOrder := fullAgeOrder()
 
-	// small_village requires pop 5
-	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, 4, 0, 0, nil, 0, 0)
+	// small_village requires pop 5,000 (hardened threshold)
+	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, 4999, 0, 0, nil, 0, 0, 0)
 	for _, ms := range completed {
 		if ms.Key == "small_village" {
-			t.Error("small_village should not trigger at pop 4")
+			t.Error("small_village should not trigger at pop 4999")
 		}
 	}
 
-	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 5, 0, 0, nil, 0, 0)
+	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 5000, 0, 0, nil, 0, 0, 0)
 	found := false
 	for _, ms := range completed {
 		if ms.Key == "small_village" {
@@ -69,7 +69,7 @@ func TestMilestoneManager_PopulationMilestone(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Error("small_village should trigger at pop 5")
+		t.Error("small_village should trigger at pop 5000")
 	}
 }
 
@@ -80,14 +80,14 @@ func TestMilestoneManager_AgeMilestone(t *testing.T) {
 	ageOrder := fullAgeOrder()
 
 	// bronze_pioneer requires bronze_age
-	completed := mm.CheckMilestones(1, "stone_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0)
+	completed := mm.CheckMilestones(1, "stone_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
 	for _, ms := range completed {
 		if ms.Key == "bronze_pioneer" {
 			t.Error("bronze_pioneer should not trigger in stone_age")
 		}
 	}
 
-	completed = mm.CheckMilestones(2, "bronze_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0)
+	completed = mm.CheckMilestones(2, "bronze_age", ageOrder, rm, bm, 0, 0, 0, nil, 0, 0, 0)
 	found := false
 	for _, ms := range completed {
 		if ms.Key == "bronze_pioneer" {
@@ -102,9 +102,13 @@ func TestMilestoneManager_AgeMilestone(t *testing.T) {
 func TestMilestoneManager_ChainCompletion(t *testing.T) {
 	mm := NewMilestoneManager()
 
-	// Manually mark all military chain milestones as completed
-	// Military chain only has "war_machine"
+	// Military chain now requires: first_soldiers, war_machine, iron_legion,
+	// fortress_state, military_superpower
+	mm.completed["first_soldiers"] = true
 	mm.completed["war_machine"] = true
+	mm.completed["iron_legion"] = true
+	mm.completed["fortress_state"] = true
+	mm.completed["military_superpower"] = true
 
 	chains := mm.CheckChains()
 	found := false
@@ -117,7 +121,7 @@ func TestMilestoneManager_ChainCompletion(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Error("military_chain should complete when war_machine is done")
+		t.Error("military_chain should complete when all military milestones are done")
 	}
 
 	// Should not trigger again
@@ -138,13 +142,15 @@ func TestMilestoneManager_TitleRecalculation(t *testing.T) {
 		t.Errorf("title with 0 milestones = %v, want empty", mm.currentTitle)
 	}
 
-	// 3 milestones = "Aspiring"
+	// 5 milestones = "Aspiring" (MilestoneTitles() requires MinMilestones: 5)
 	mm.completed["first_shelter"] = true
 	mm.completed["small_village"] = true
 	mm.completed["knowledge_seeker"] = true
+	mm.completed["first_research"] = true
+	mm.completed["stone_mason"] = true
 	mm.recalculateTitle()
 	if mm.currentTitle != "Aspiring" {
-		t.Errorf("title with 3 milestones = %v, want Aspiring", mm.currentTitle)
+		t.Errorf("title with 5 milestones = %v, want Aspiring", mm.currentTitle)
 	}
 
 	// Complete a chain — chain title overrides

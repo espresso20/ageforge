@@ -1,108 +1,65 @@
 package game
 
-// VillagerTypeDef defines a villager type's properties
-type VillagerTypeDef struct {
-	Name     string
-	Key      string
-	FoodCost float64
-	// What resources this type can be assigned to gather
-	CanGather []string
-	// Production rate per villager per tick when assigned
-	GatherRate float64
+import (
+	"github.com/espresso20/ageforge/config"
+)
+
+// domainRuntime holds runtime state for one worker domain
+type domainRuntime struct {
+	count       int
+	assignments map[string]int // buildingKey → assigned worker count
 }
 
-// VillagerManager manages population and assignments
-type VillagerManager struct {
-	types       map[string]*villagerRuntime
-	unlocked    map[string]bool
-	definitions map[string]VillagerTypeDef
+// WorkerManager manages population and worker assignments.
+//
+// Architecture note: the game previously modelled separate domain pools (food,
+// military, knowledge, etc.) but was simplified to a single "worker" pool so
+// any worker can be assigned to any building. The domain parameter accepted by
+// many methods is intentionally ignored to maintain API compatibility with
+// callers that still pass domain strings (e.g. "military", "food").
+//
+// The domains map always contains exactly one entry keyed "worker". Legacy save
+// files may contain multiple domain entries; LoadWorkers sums them all into the
+// single pool so old saves still load correctly.
+type WorkerManager struct {
+	domains  map[string]*domainRuntime
+	unlocked map[string]bool
+	// ageKey is used for WorkerClassDef lookups (food cost per tick, displayed class name).
+	// Update via SetAge on every age advance.
+	ageKey string
 }
 
-type villagerRuntime struct {
-	count      int
-	assignment map[string]int // resource key -> assigned count
-}
-
-// DefaultVillagerTypes returns the base villager type definitions
-func DefaultVillagerTypes() []VillagerTypeDef {
-	return []VillagerTypeDef{
-		{
-			Name: "Worker", Key: "worker", FoodCost: 0.10,
-			CanGather:  []string{"food", "wood", "stone", "iron", "gold", "coal", "steel", "oil", "electricity", "uranium", "titanium"},
-			GatherRate: 0.35,
-		},
-		{
-			Name: "Shaman", Key: "shaman", FoodCost: 0.5,
-			CanGather:  []string{"knowledge", "faith"},
-			GatherRate: 0.01,
-		},
-		{
-			Name: "Scholar", Key: "scholar", FoodCost: 0.8,
-			CanGather:  []string{"knowledge", "culture", "data"},
-			GatherRate: 0.05,
-		},
-		{
-			Name: "Soldier", Key: "soldier", FoodCost: 0.25,
-			CanGather:  []string{}, // soldiers don't gather, used for military
-			GatherRate: 0,
-		},
-		{
-			Name: "Merchant", Key: "merchant", FoodCost: 0.2,
-			CanGather:  []string{"gold", "crypto"},
-			GatherRate: 0.3,
-		},
-		{
-			Name: "Engineer", Key: "engineer", FoodCost: 0.25,
-			CanGather:  []string{"oil", "electricity", "steel", "data"},
-			GatherRate: 0.35,
-		},
-		{
-			Name: "Hacker", Key: "hacker", FoodCost: 0.3,
-			CanGather:  []string{"data", "crypto"},
-			GatherRate: 0.4,
-		},
-		{
-			Name: "Astronaut", Key: "astronaut", FoodCost: 0.4,
-			CanGather:  []string{"titanium", "dark_matter", "plasma"},
-			GatherRate: 0.5,
-		},
+// NewWorkerManager creates a new single-pool worker manager.
+// All workers belong to a single "worker" pool — domain restrictions are removed.
+func NewWorkerManager() *WorkerManager {
+	vm := &WorkerManager{
+		domains:  make(map[string]*domainRuntime),
+		unlocked: make(map[string]bool),
+		ageKey:   "primitive_age",
 	}
-}
-
-// NewVillagerManager creates a new villager manager
-func NewVillagerManager() *VillagerManager {
-	vm := &VillagerManager{
-		types:       make(map[string]*villagerRuntime),
-		unlocked:    make(map[string]bool),
-		definitions: make(map[string]VillagerTypeDef),
-	}
-	for _, def := range DefaultVillagerTypes() {
-		vm.definitions[def.Key] = def
-		vm.types[def.Key] = &villagerRuntime{
-			count:      0,
-			assignment: make(map[string]int),
-		}
-	}
+	vm.domains["worker"] = &domainRuntime{assignments: make(map[string]int)}
 	return vm
 }
 
-// UnlockType makes a villager type recruitable
-func (vm *VillagerManager) UnlockType(key string) {
-	vm.unlocked[key] = true
+// SetAge updates the current age for WorkerClassDef lookups
+func (vm *WorkerManager) SetAge(ageKey string) {
+	vm.ageKey = ageKey
 }
 
-// IsUnlocked returns whether a villager type is available
-func (vm *VillagerManager) IsUnlocked(key string) bool {
-	return vm.unlocked[key]
+// UnlockType marks workers as recruitable. Always routes to "worker" pool.
+func (vm *WorkerManager) UnlockType(_ string) {
+	vm.unlocked["worker"] = true
 }
 
-// Recruit adds villagers of a type. Returns false if not unlocked or over pop cap.
-func (vm *VillagerManager) Recruit(key string, count int, popCap int) bool {
-	if !vm.unlocked[key] {
-		return false
-	}
-	rt, ok := vm.types[key]
-	if !ok {
+// IsUnlocked returns whether workers are available.
+func (vm *WorkerManager) IsUnlocked(_ string) bool {
+	return vm.unlocked["worker"]
+}
+
+// Recruit adds workers to the single pool. Returns false if not unlocked or over pop cap.
+func (vm *WorkerManager) Recruit(_ string, count int, popCap int) bool {
+	rt := vm.domains["worker"]
+	if !vm.unlocked["worker"] {
 		return false
 	}
 	if vm.TotalPop()+count > popCap {
@@ -112,153 +69,248 @@ func (vm *VillagerManager) Recruit(key string, count int, popCap int) bool {
 	return true
 }
 
-// Assign assigns villagers to gather a resource
-func (vm *VillagerManager) Assign(vType, resource string, count int) bool {
-	rt, ok := vm.types[vType]
-	if !ok {
+// Assign assigns workers from the single pool to a specific building.
+// The domain argument is ignored — any worker can go to any building with WorkerCapacity > 0.
+func (vm *WorkerManager) Assign(_, buildingKey string, count int) bool {
+	rt := vm.domains["worker"]
+	byKey := config.BuildingByKey()
+	def, ok := byKey[buildingKey]
+	if !ok || def.WorkerCapacity == 0 {
 		return false
 	}
-	def := vm.definitions[vType]
-	// Check this type can gather this resource
-	canGather := false
-	for _, r := range def.CanGather {
-		if r == resource {
-			canGather = true
-			break
-		}
-	}
-	if !canGather {
+	if vm.IdleCount("worker") < count {
 		return false
 	}
-	idle := vm.IdleCount(vType)
-	if idle < count {
-		return false
-	}
-	rt.assignment[resource] += count
+	rt.assignments[buildingKey] += count
 	return true
 }
 
-// Unassign removes villagers from a resource assignment
-func (vm *VillagerManager) Unassign(vType, resource string, count int) bool {
-	rt, ok := vm.types[vType]
-	if !ok {
+// Unassign removes workers from a building assignment
+func (vm *WorkerManager) Unassign(_, buildingKey string, count int) bool {
+	rt := vm.domains["worker"]
+	if rt.assignments[buildingKey] < count {
 		return false
 	}
-	assigned := rt.assignment[resource]
-	if assigned < count {
-		return false
-	}
-	rt.assignment[resource] -= count
+	rt.assignments[buildingKey] -= count
 	return true
 }
 
-// IdleCount returns how many of a type are not assigned
-func (vm *VillagerManager) IdleCount(vType string) int {
-	rt, ok := vm.types[vType]
-	if !ok {
-		return 0
-	}
+// IdleCount returns how many workers are not assigned to any building.
+// The key argument is ignored.
+func (vm *WorkerManager) IdleCount(_ string) int {
+	rt := vm.domains["worker"]
 	assigned := 0
-	for _, c := range rt.assignment {
+	for _, c := range rt.assignments {
 		assigned += c
 	}
 	return rt.count - assigned
 }
 
-// TotalPop returns total population across all types
-func (vm *VillagerManager) TotalPop() int {
+// TotalPop returns total population
+func (vm *WorkerManager) TotalPop() int {
+	return vm.domains["worker"].count
+}
+
+// FoodDrain returns total food consumed per tick for all workers.
+// The per-worker cost is looked up by (domain="food", age) so it scales with
+// age — early ages have very low drain (primitive: 0.08/tick) to ease onboarding.
+// Falls back to 0.1/worker if no class definition is found for the current age.
+func (vm *WorkerManager) FoodDrain() float64 {
+	rt := vm.domains["worker"]
+	if rt.count == 0 {
+		return 0
+	}
+	cls, ok := config.WorkerClassByDomainAndAge("food", vm.ageKey)
+	if !ok {
+		return 0.1 * float64(rt.count)
+	}
+	return cls.FoodCost * float64(rt.count)
+}
+
+// GetAssignedCount returns how many workers are assigned to buildingKey.
+// The domain argument is ignored — there is only one pool.
+func (vm *WorkerManager) GetAssignedCount(_, buildingKey string) int {
+	return vm.domains["worker"].assignments[buildingKey]
+}
+
+// RenameAssignment transfers all worker assignments from oldBuildingKey to newBuildingKey.
+// Called during the age-transition building transformation pass. Domain arg is ignored.
+func (vm *WorkerManager) RenameAssignment(_, oldKey, newKey string) {
+	rt := vm.domains["worker"]
+	count := rt.assignments[oldKey]
+	if count > 0 {
+		rt.assignments[newKey] += count
+		delete(rt.assignments, oldKey)
+	}
+}
+
+// GetDomainCount returns the number of workers assigned to buildings of the given domain.
+// This is used for e.g. soldierCount (domain "military") — workers assigned to military buildings.
+func (vm *WorkerManager) GetDomainCount(domain string) int {
+	rt := vm.domains["worker"]
+	byKey := config.BuildingByKey()
 	total := 0
-	for _, rt := range vm.types {
-		total += rt.count
+	for buildingKey, count := range rt.assignments {
+		if def, ok := byKey[buildingKey]; ok && def.WorkerDomain == domain {
+			total += count
+		}
 	}
 	return total
 }
 
-// FoodDrain returns total food consumption per tick
-func (vm *VillagerManager) FoodDrain() float64 {
-	drain := 0.0
-	for key, rt := range vm.types {
-		def := vm.definitions[key]
-		drain += def.FoodCost * float64(rt.count)
-	}
-	return drain
+// GetProductionRates returns empty — villager production is now handled via
+// building fill ratios in BuildingManager.WorkerScaledProduction.
+func (vm *WorkerManager) GetProductionRates() map[string]float64 {
+	return make(map[string]float64)
 }
 
-// GetProductionRates returns resource production from assigned villagers
-func (vm *VillagerManager) GetProductionRates() map[string]float64 {
-	rates := make(map[string]float64)
-	for key, rt := range vm.types {
-		def := vm.definitions[key]
-		for resource, count := range rt.assignment {
-			rates[resource] += def.GatherRate * float64(count)
-		}
-	}
-	return rates
-}
-
-// GetAll returns serializable villager info (for save)
-func (vm *VillagerManager) GetAll() map[string]VillagerInfo {
-	out := make(map[string]VillagerInfo)
-	for key, rt := range vm.types {
-		def := vm.definitions[key]
-		assign := make(map[string]int)
-		for k, v := range rt.assignment {
-			assign[k] = v
-		}
-		out[key] = VillagerInfo{
-			Count:      rt.count,
-			FoodCost:   def.FoodCost,
-			Assignment: assign,
-		}
-	}
-	return out
-}
-
-// LoadVillagers restores villager state from save data
-func (vm *VillagerManager) LoadVillagers(data map[string]VillagerInfo) {
-	for key, info := range data {
-		if rt, ok := vm.types[key]; ok {
-			rt.count = info.Count
-			rt.assignment = info.Assignment
-		}
-	}
-}
-
-// RemoveSoldiers removes soldiers (from expedition losses)
-func (vm *VillagerManager) RemoveSoldiers(count int) {
-	rt, ok := vm.types["soldier"]
-	if !ok {
-		return
-	}
+// RemoveSoldiers removes workers from the pool (expedition losses).
+// Previously removed from "military" domain; now removes from the single pool.
+func (vm *WorkerManager) RemoveSoldiers(count int) {
+	rt := vm.domains["worker"]
 	rt.count -= count
 	if rt.count < 0 {
 		rt.count = 0
 	}
 }
 
-// Snapshot returns villager state for UI
-func (vm *VillagerManager) Snapshot(popCap int) VillagerState {
-	state := VillagerState{
-		Types:     make(map[string]VillagerTypeState),
-		MaxPop:    popCap,
-		TotalPop:  vm.TotalPop(),
-		FoodDrain: vm.FoodDrain(),
+// AddPctAll adds a percentage of current count to the pool (used by Population Surge event).
+func (vm *WorkerManager) AddPctAll(pct float64) {
+	rt := vm.domains["worker"]
+	add := int(float64(rt.count) * pct)
+	if add > 0 {
+		rt.count += add
 	}
-	for key, rt := range vm.types {
-		def := vm.definitions[key]
-		idle := vm.IdleCount(key)
-		assign := make(map[string]int)
-		for k, v := range rt.assignment {
+}
+
+// RemovePct removes a percentage of workers from the pool (e.g. Epidemic event).
+// Assignments are proportionally scaled down so the total assigned count never
+// exceeds the remaining population. Integer truncation can leave the total
+// assigned count one or two above the new count; the reconciliation loop at
+// the bottom corrects this by reducing the largest assignment first.
+func (vm *WorkerManager) RemovePct(pct float64) {
+	rt := vm.domains["worker"]
+	remove := int(float64(rt.count) * pct)
+	if remove <= 0 {
+		return
+	}
+	rt.count -= remove
+	if rt.count < 0 {
+		rt.count = 0
+	}
+	// Scale down assignments proportionally
+	for k, assigned := range rt.assignments {
+		reduced := assigned - int(float64(assigned)*pct)
+		if reduced < 0 {
+			reduced = 0
+		}
+		rt.assignments[k] = reduced
+	}
+	// Reconciliation: integer truncation can leave total assigned > new count.
+	// Reduce the largest assignments one-by-one until total <= count.
+	totalAssigned := 0
+	for _, v := range rt.assignments {
+		totalAssigned += v
+	}
+	for totalAssigned > rt.count {
+		// Find the building with the most assigned workers and reduce it by 1.
+		maxKey := ""
+		maxVal := 0
+		for k, v := range rt.assignments {
+			if v > maxVal {
+				maxVal = v
+				maxKey = k
+			}
+		}
+		if maxKey == "" {
+			break
+		}
+		rt.assignments[maxKey]--
+		if rt.assignments[maxKey] == 0 {
+			delete(rt.assignments, maxKey)
+		}
+		totalAssigned--
+	}
+}
+
+// GetAll returns serializable worker info for saving, keyed by "worker".
+func (vm *WorkerManager) GetAll() map[string]WorkerInfo {
+	rt := vm.domains["worker"]
+	assign := make(map[string]int, len(rt.assignments))
+	for k, v := range rt.assignments {
+		if v > 0 {
 			assign[k] = v
 		}
-		state.Types[key] = VillagerTypeState{
-			Name:        def.Name,
-			Count:       rt.count,
-			IdleCount:   idle,
-			Assignments: assign,
-			Unlocked:    vm.unlocked[key],
-		}
-		state.TotalIdle += idle
 	}
-	return state
+	cls, _ := config.WorkerClassByDomainAndAge("food", vm.ageKey)
+	return map[string]WorkerInfo{
+		"worker": {
+			Count:      rt.count,
+			FoodCost:   cls.FoodCost,
+			Assignment: assign,
+		},
+	}
+}
+
+// LoadWorkers restores state from save data. Handles forward and backward
+// compatibility: new saves have a single "worker" key; saves from before Phase
+// 19 may have domain-specific keys ("food", "faith", "military", etc.). All
+// domain counts are summed into the single pool and all valid assignments are
+// merged, so old saves load without data loss.
+func (vm *WorkerManager) LoadWorkers(data map[string]WorkerInfo) {
+	rt := vm.domains["worker"]
+	byBuilding := config.BuildingByKey()
+	totalCount := 0
+	for _, info := range data {
+		totalCount += info.Count
+		for bKey, cnt := range info.Assignment {
+			if def, ok := byBuilding[bKey]; ok && def.WorkerCapacity > 0 && cnt > 0 {
+				rt.assignments[bKey] += cnt
+			}
+		}
+	}
+	rt.count = totalCount
+}
+
+
+// Snapshot returns worker state for UI consumption.
+// Types map has a single "worker" key.
+func (vm *WorkerManager) Snapshot(popCap int) WorkerState {
+	rt := vm.domains["worker"]
+	if rt == nil {
+		return WorkerState{Types: map[string]WorkerDomainState{}}
+	}
+	idle := vm.IdleCount("worker")
+	assign := make(map[string]int, len(rt.assignments))
+	for k, v := range rt.assignments {
+		if v > 0 {
+			assign[k] = v
+		}
+	}
+	className := ""
+	drain := 0.0
+	if vm.ageKey != "" {
+		if wc, ok := config.WorkerClassByDomainAndAge("food", vm.ageKey); ok {
+			className = wc.ClassName
+			drain = wc.FoodCost * float64(rt.count)
+		}
+	}
+	if className == "" {
+		className = "Worker"
+	}
+	return WorkerState{
+		Types: map[string]WorkerDomainState{
+			"worker": {
+				Name:        className,
+				Count:       rt.count,
+				IdleCount:   idle,
+				Assignments: assign,
+				Unlocked:    vm.unlocked["worker"],
+			},
+		},
+		TotalPop:  rt.count,
+		MaxPop:    popCap,
+		TotalIdle: idle,
+		FoodDrain: drain,
+	}
 }

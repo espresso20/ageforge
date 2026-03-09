@@ -15,7 +15,7 @@ type GameState struct {
 	Resources      map[string]ResourceState
 	Buildings      map[string]BuildingState
 	BuildQueue     []BuildQueueSnapshot
-	Villagers      VillagerState
+	Workers        WorkerState
 	Research       ResearchState
 	Military       MilitaryState
 	Milestones     MilestoneState
@@ -31,6 +31,53 @@ type GameState struct {
 	SpeedMultiplier  float64
 	CheaterBadge   bool
 	EliteBadge     bool
+	// Phase 7: result of the last age advance transformation pass
+	LastAgeAdvanceSummary AgeAdvanceSummary
+	// Phase 8: epoch system
+	EpochKey          string
+	EpochName         string
+	EpochIcon         string
+	EpochColor        string // tview color tag
+	EpochSurvived      bool   // player endured a catastrophe this epoch
+	PendingCatastrophe string // epoch key if catastrophe modal should show; "" otherwise
+	EpochEventHistory  []EpochEventRecord
+	// Phase 9: civilization history + legacy bonuses
+	LegacyBonuses      map[string]bool  // epochKey -> true if succumb legacy bonus is active
+	CatastropheHistory []string         // narrative log entries
+}
+
+// AgeAdvanceSummary holds data about what changed during an age advance transition.
+type AgeAdvanceSummary struct {
+	OldAge               string
+	NewAge               string
+	BuildingsTransformed []BuildingTransform
+	BuildingsLegacy      []string // keys of buildings newly marked legacy this transition
+}
+
+// BuildingTransform describes one building that upgraded during an age advance.
+type BuildingTransform struct {
+	OldKey  string
+	OldName string
+	NewKey  string
+	NewName string
+	Count   int
+}
+
+// RuinState represents one ruin entry (building type + count) persisting across Succumb resets.
+type RuinState struct {
+	Key   string
+	Name  string
+	Count int
+}
+
+// EpochEventRecord records one epoch transition event for the civilization history log.
+type EpochEventRecord struct {
+	EpochKey  string
+	EpochName string
+	EventKey  string
+	EventName string
+	EventType string // good_minor/good_major/good_legendary/bad_challenging/catastrophe
+	Tick      int
 }
 
 // BuildQueueSnapshot represents a building under construction for UI
@@ -43,7 +90,7 @@ type BuildQueueSnapshot struct {
 // RateBreakdown shows the components that make up a resource's net rate
 type RateBreakdown struct {
 	BuildingRate float64
-	VillagerRate float64
+	WorkerRate   float64
 	ResearchRate float64
 	EventRate    float64
 	TradeRate    float64
@@ -68,6 +115,7 @@ type BuildingState struct {
 	Category    string
 	Description string
 	Unlocked    bool
+	AgeKey      string // age this building first becomes available
 	// Cost for next building
 	NextCost   map[string]float64
 	CanBuild   bool
@@ -75,19 +123,27 @@ type BuildingState struct {
 	// Wonder-specific: resources banked toward construction
 	WonderBank     map[string]float64
 	WonderBankFull bool
+	// Phase 6: worker assignment fields
+	WorkerDomain    string
+	WorkerCapacity  int // per-building-instance capacity
+	WorkersAssigned int // total workers assigned across all instances
+	// Phase 7: lineage legacy flag
+	IsLegacy bool // functional but superseded — can't build more; grayed in UI
+	// Phase 9: ruins
+	RuinCount int // ruins of this building type (produce at 50%, no workers, can't rebuild)
 }
 
-// VillagerState represents all villager info
-type VillagerState struct {
-	Types     map[string]VillagerTypeState
+// WorkerState represents all worker info
+type WorkerState struct {
+	Types     map[string]WorkerDomainState
 	TotalPop  int
 	MaxPop    int
 	TotalIdle int
 	FoodDrain float64
 }
 
-// VillagerTypeState represents one villager type's state
-type VillagerTypeState struct {
+// WorkerDomainState represents one worker domain's state
+type WorkerDomainState struct {
 	Name        string
 	Count       int
 	IdleCount   int
@@ -113,8 +169,8 @@ type StatsSnapshot struct {
 	AgesReached    []string
 }
 
-// VillagerInfo is used for save/load serialization
-type VillagerInfo struct {
+// WorkerInfo is used for save/load serialization
+type WorkerInfo struct {
 	Count      int            `json:"count"`
 	FoodCost   float64        `json:"food_cost"`
 	Assignment map[string]int `json:"assignment"`
@@ -234,6 +290,7 @@ type MilestoneSnapshotParams struct {
 	TotalBuilt      int
 	SoldierCount    int
 	WonderCount     int
+	KnowledgeCount  int
 	ResearchedTechs map[string]bool
 	activeEvents    []ActiveEventState // unexported — only set by engine
 }

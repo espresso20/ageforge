@@ -93,7 +93,7 @@ func TestEngine_BuildLockedBuilding(t *testing.T) {
 	}
 }
 
-func TestEngine_RecruitVillager(t *testing.T) {
+func TestEngine_RecruitWorker(t *testing.T) {
 	ge := NewGameEngine()
 
 	ge.mu.Lock()
@@ -101,42 +101,46 @@ func TestEngine_RecruitVillager(t *testing.T) {
 	ge.Buildings.counts["hut"] = 5
 	ge.mu.Unlock()
 
-	err := ge.RecruitVillager("worker", 2)
+	err := ge.RecruitWorker("food", 2)
 	if err != nil {
-		t.Errorf("RecruitVillager failed: %v", err)
+		t.Errorf("RecruitWorker failed: %v", err)
 	}
 
 	state := ge.GetState()
-	if state.Villagers.TotalPop != 2 {
-		t.Errorf("pop after recruit = %v, want 2", state.Villagers.TotalPop)
+	if state.Workers.TotalPop != 2 {
+		t.Errorf("pop after recruit = %v, want 2", state.Workers.TotalPop)
 	}
 }
 
 func TestEngine_RecruitOverCap(t *testing.T) {
 	ge := NewGameEngine()
 
-	err := ge.RecruitVillager("worker", 1)
+	err := ge.RecruitWorker("food", 1)
 	if err == nil {
-		t.Error("RecruitVillager should fail with 0 pop cap")
+		t.Error("RecruitWorker should fail with 0 pop cap")
 	}
 }
 
-func TestEngine_AssignVillager(t *testing.T) {
+func TestEngine_AssignWorker(t *testing.T) {
 	ge := NewGameEngine()
 
 	ge.mu.Lock()
 	ge.Buildings.counts["hut"] = 5
+	// gathering_camp is the food-domain building (unlocks at stone_age but we bypass that here)
+	ge.Buildings.counts["gathering_camp"] = 1
+	ge.Buildings.unlocked["gathering_camp"] = true
 	ge.mu.Unlock()
 
-	ge.RecruitVillager("worker", 3)
-	err := ge.AssignVillager("worker", "food", 2)
+	ge.RecruitWorker("food", 3)
+	// Assign using building key only (domain auto-resolved)
+	err := ge.AssignWorker("gathering_camp", 2)
 	if err != nil {
-		t.Errorf("AssignVillager failed: %v", err)
+		t.Errorf("AssignWorker failed: %v", err)
 	}
 
 	state := ge.GetState()
-	if state.Villagers.TotalIdle != 1 {
-		t.Errorf("idle after assign = %v, want 1", state.Villagers.TotalIdle)
+	if state.Workers.TotalIdle != 1 {
+		t.Errorf("idle after assign = %v, want 1", state.Workers.TotalIdle)
 	}
 }
 
@@ -228,8 +232,8 @@ func TestEngine_Reset(t *testing.T) {
 	if state.Age != "primitive_age" {
 		t.Errorf("age after reset = %v, want primitive_age", state.Age)
 	}
-	if state.Resources["wood"].Amount != 12 {
-		t.Errorf("wood after reset = %v, want 12", state.Resources["wood"].Amount)
+	if state.Resources["wood"].Amount != 50 {
+		t.Errorf("wood after reset = %v, want 50", state.Resources["wood"].Amount)
 	}
 }
 
@@ -261,7 +265,13 @@ func TestEngine_ChainEvents(t *testing.T) {
 	})
 
 	ge.mu.Lock()
+	// Military chain requires all 5 milestones: first_soldiers, war_machine,
+	// iron_legion, fortress_state, military_superpower
+	ge.Milestones.completed["first_soldiers"] = true
 	ge.Milestones.completed["war_machine"] = true
+	ge.Milestones.completed["iron_legion"] = true
+	ge.Milestones.completed["fortress_state"] = true
+	ge.Milestones.completed["military_superpower"] = true
 	ge.checkMilestones()
 	ge.mu.Unlock()
 
@@ -296,7 +306,7 @@ func TestEngine_SaveLoadRoundTrip(t *testing.T) {
 	ge.Buildings.counts["hut"] = 3
 	ge.mu.Unlock()
 
-	ge.RecruitVillager("worker", 2)
+	ge.RecruitWorker("food", 2)
 
 	err := ge.SaveGame("test_roundtrip")
 	if err != nil {
@@ -314,7 +324,7 @@ func TestEngine_SaveLoadRoundTrip(t *testing.T) {
 	if state.Buildings["hut"].Count != 3 {
 		t.Errorf("loaded hut count = %v, want 3", state.Buildings["hut"].Count)
 	}
-	if state.Villagers.TotalPop != 2 {
-		t.Errorf("loaded pop = %v, want 2", state.Villagers.TotalPop)
+	if state.Workers.TotalPop != 2 {
+		t.Errorf("loaded pop = %v, want 2", state.Workers.TotalPop)
 	}
 }

@@ -370,8 +370,8 @@ const TERM_LINES = [
     "  " +
     m("── Production ──"),
 
-  // ── row 11: villager header / building row
-  m("  ──────────────────── Villagers ─────────────────────") +
+  // ── row 11: worker header / building row
+  m("  ───────────────────── Workers ──────────────────────") +
     m("│") +
     "  " +
     gr("✓") +

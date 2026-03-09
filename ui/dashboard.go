@@ -14,6 +14,8 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
+// shameMessages are randomly chosen at session start when the cheater badge is active.
+// Displayed in the top status bar — a deterrent against savegame manipulation.
 var shameMessages = []string{
 	"✦ FORGED SCROLLS ✦",
 	"✦ ILLEGITIMATE EMPIRE ✦",
@@ -23,41 +25,32 @@ var shameMessages = []string{
 	"✦ DECREE OF DISHONOR ✦",
 }
 
-// Dashboard is the main gameplay screen with tabbed layout
+// Dashboard is the main gameplay screen. The economy tab is the always-visible
+// background; named overlays (research, trade, military, etc.) are rendered on
+// top of it via tview.Pages. Only one overlay can be visible at a time.
 type Dashboard struct {
 	app    *tview.Application
 	engine *game.GameEngine
 	pages  *tview.Pages
 	root   *tview.Flex
 
-	// Tab system
-	tabBar    *tview.TextView
-	tabPages  *tview.Pages
-	activeTab int
-	tabNames  []string
+	// Tabs (only economy is permanent background)
+	economyTab *EconomyTab
 
-	// Tabs
-	economyTab  *EconomyTab
-	researchTab *ResearchTab
-	militaryTab *MilitaryTab
-	tradeTab    *TradeTab
-	statsTab    *StatsTab
-	wikiTab     *WikiTab
-	mapTab      *MapTab
-	wondersTab  *WondersTab
-	logsTab     *LogsTab
+	// Sidebar
+	sidebar *tview.TextView
 
 	// Shared UI
 	logTV         *tview.TextView
-	miniMap       *MiniMap
 	wonderPanel   *WonderPanel
-	villagerPanel *VillagerPanel
+	workerPanel   *WorkerPanel
 	statusTV    *tview.TextView
 	ageTV      *tview.TextView
 	inputField *tview.InputField
-	lastAge          string
-	pendingAgeSplash string // set by bus handler, consumed by refresh()
-	toastMgr         *ToastManager
+	lastAge             string
+	pendingAgeSplash    string // set by bus handler, consumed by refresh()
+	pendingEpochChanged bool   // whether the pending age advance also crossed an epoch boundary
+	toastMgr            *ToastManager
 	toastTV     *tview.TextView
 	contentArea *tview.Flex
 	bottomArea  *tview.Flex
@@ -69,54 +62,60 @@ type Dashboard struct {
 	cheaterTV       *tview.TextView
 	activeShameBadge string
 
+	// catModalShown tracks the pending catastrophe key we have already shown a modal for,
+	// so that choosing Defer does not immediately re-show the modal on the next refresh tick.
+	// Reset to "" when PendingCatastrophe clears (player chose Endure or Succumb).
+	catModalShown string
+
+	// Command history is session-only (never persisted to disk). The slice is
+	// append-only and capped at 50 entries. histIdx == -1 means not in history
+	// navigation mode. histDraft stores whatever was in the input field before
+	// the user started pressing Up.
+	cmdHistory []string // append-only slice, capped at 50
+	histIdx    int      // -1 = not navigating; 0 = most recent; len-1 = oldest
+	histDraft  string   // draft text saved when user starts navigating history
+
+	overlayMgr *OverlayManager
+	lastState  *game.GameState
+
 	stopCh chan struct{}
 }
 
 // NewDashboard creates the gameplay dashboard
 func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.Pages) *Dashboard {
 	d := &Dashboard{
-		app:      app,
-		engine:   engine,
-		pages:    pages,
-		stopCh:   make(chan struct{}),
-		tabNames: []string{"Economy", "Research", "Military", "Trade", "Stats", "Wiki", "Map", "Wonders", "Logs"},
+		app:    app,
+		engine: engine,
+		pages:  pages,
+		stopCh: make(chan struct{}),
+		histIdx: -1,
 	}
 	d.build()
+	d.overlayMgr = NewOverlayManager(d.pages, d.app, func() {
+		d.updateSidebar("")
+		d.app.SetFocus(d.inputField)
+	})
+	d.overlayMgr.Register("milestones", "Milestones", milestonesProvider)
+	d.overlayMgr.Register("techs", "Research", researchProvider)
+	d.overlayMgr.Register("army", "Military", militaryProvider)
+	d.overlayMgr.Register("trade", "Trade", tradeProvider)
+	d.overlayMgr.Register("stats", "Statistics", statsProvider)
+	d.overlayMgr.Register("wonders", "Wonders", wondersProvider)
+	d.overlayMgr.Register("logs", "Logs", logsProvider)
+	d.overlayMgr.Register("epoch", "Epoch", epochProvider)
 	d.devTab = newDevTab(engine)
-	// Register the dev tab page — hidden until passphrase accepted
-	d.tabPages.AddPage("Dev", d.devTab.Primitive(), true, false)
 	return d
 }
 
 func (d *Dashboard) build() {
-	// Create tabs
+	// Create permanent economy tab
 	d.economyTab = NewEconomyTab()
-	d.researchTab = NewResearchTab()
-	d.militaryTab = NewMilitaryTab()
-	d.tradeTab = NewTradeTab()
-	d.statsTab = NewStatsTab()
-	d.wikiTab = NewWikiTab()
-	d.mapTab = NewMapTab()
-	d.wondersTab = NewWondersTab()
-	d.logsTab = NewLogsTab()
 
-	// Tab bar
-	d.tabBar = tview.NewTextView().
+	// Sidebar — command panel hints
+	d.sidebar = tview.NewTextView().
 		SetDynamicColors(true).
-		SetTextAlign(tview.AlignLeft)
-	d.updateTabBar()
-
-	// Tab pages
-	d.tabPages = tview.NewPages()
-	d.tabPages.AddPage("Economy", d.economyTab.Root(), true, true)
-	d.tabPages.AddPage("Research", d.researchTab.Root(), true, false)
-	d.tabPages.AddPage("Military", d.militaryTab.Root(), true, false)
-	d.tabPages.AddPage("Trade", d.tradeTab.Root(), true, false)
-	d.tabPages.AddPage("Stats", d.statsTab.Root(), true, false)
-	d.tabPages.AddPage("Wiki", d.wikiTab.Root(), true, false)
-	d.tabPages.AddPage("Map", d.mapTab.Root(), true, false)
-	d.tabPages.AddPage("Wonders", d.wondersTab.Root(), true, false)
-	d.tabPages.AddPage("Logs", d.logsTab.Root(), true, false)
+		SetText(buildSidebarText(""))
+	d.sidebar.SetBorder(true).SetTitle(" Panels ").SetTitleColor(tcell.ColorGold)
 
 	// Log panel
 	d.logTV = tview.NewTextView().
@@ -125,14 +124,11 @@ func (d *Dashboard) build() {
 		SetMaxLines(100)
 	d.logTV.SetBorder(true).SetTitle(" Log ").SetTitleColor(ColorDim)
 
-	// Mini-map panel (replaces Quick Reference)
-	d.miniMap = NewMiniMap()
-
 	// Wonder panel (current age's wonder)
 	d.wonderPanel = NewWonderPanel()
 
-	// Villager panel
-	d.villagerPanel = NewVillagerPanel()
+	// Worker panel
+	d.workerPanel = NewWorkerPanel()
 
 	// Shame badge bar (1 fixed line; text only shown when CheaterBadge is true)
 	d.cheaterTV = tview.NewTextView().
@@ -155,11 +151,18 @@ func (d *Dashboard) build() {
 		SetTextAlign(tview.AlignCenter)
 
 	// Subscribe to events for toasts
+	// NOTE: Bus handlers run under the engine write lock. Never call GetState()
+	// or any other lock-acquiring method inside these closures — use config.*ByKey()
+	// (pure data lookups) for any data you need beyond the event payload.
 	d.engine.Bus.Subscribe(game.EventAgeAdvanced, func(e game.EventData) {
 		if newAge, ok := e.Payload["new_age"].(string); ok {
 			// Store for splash — consumed in refresh() which runs in UI goroutine
 			// (this handler runs under engine lock, so no GetState here!)
 			d.pendingAgeSplash = newAge
+			// Detect epoch transition using config only (no engine lock needed)
+			oldEpoch := config.EpochForAge(d.lastAge)
+			newEpoch := config.EpochForAge(newAge)
+			d.pendingEpochChanged = (oldEpoch != newEpoch && d.lastAge != "")
 		}
 		d.toastMgr.Show("AGE ADVANCED!", "gold", 5*time.Second)
 	})
@@ -188,6 +191,24 @@ func (d *Dashboard) build() {
 		title, _ := e.Payload["title"].(string)
 		d.toastMgr.Show(fmt.Sprintf("Chain Complete: %s! Title: %s — Speed Boost!", name, title), "cyan", 5*time.Second)
 	})
+	d.engine.Bus.Subscribe(game.EventEpochAdvanced, func(e game.EventData) {
+		epochName, _ := e.Payload["epoch_name"].(string)
+		epochIcon, _ := e.Payload["epoch_icon"].(string)
+		d.toastMgr.Show(fmt.Sprintf("✦ The %s %s Dawns!", epochIcon, epochName), "gold", 6*time.Second)
+	})
+	d.engine.Bus.Subscribe(game.EventEpochEventFired, func(e game.EventData) {
+		eventName, _ := e.Payload["event_name"].(string)
+		eventType, _ := e.Payload["event_type"].(string)
+		color := "cyan"
+		if eventType == "bad_challenging" {
+			color = "red"
+		} else if eventType == "catastrophe" {
+			color = "red"
+		} else if eventType == "good_legendary" {
+			color = "gold"
+		}
+		d.toastMgr.Show(fmt.Sprintf("Epoch Event: %s", eventName), color, 6*time.Second)
+	})
 
 	// Command input
 	d.inputField = tview.NewInputField().
@@ -207,40 +228,100 @@ func (d *Dashboard) build() {
 		if key == tcell.KeyEnter {
 			text := d.inputField.GetText()
 			d.inputField.SetText("")
+			// Reset history navigation state
+			d.histIdx = -1
+			d.histDraft = ""
 			if text == "" {
 				return
 			}
-			if strings.ToLower(strings.TrimSpace(text)) == "quit" {
+			// Record non-empty trimmed commands in history (cap at 50)
+			cmd := strings.TrimSpace(text)
+			if cmd != "" {
+				if len(d.cmdHistory) >= 50 {
+					d.cmdHistory = d.cmdHistory[1:] // drop oldest
+				}
+				d.cmdHistory = append(d.cmdHistory, cmd)
+			}
+			if strings.ToLower(cmd) == "quit" {
 				d.engine.SaveGame("autosave")
 				d.app.Stop()
 				return
 			}
 			result := HandleCommand(text, d.engine)
+			if result.OverlayName != "" {
+				state := d.engine.GetState()
+				d.overlayMgr.Show(result.OverlayName, state)
+				d.updateSidebar(result.OverlayName)
+			}
 			if result.Message != "" && result.Type != "success" {
 				d.engine.AddLog(result.Type, result.Message)
 			}
 		}
 	})
 
-	// Bottom area: log + villagers + wonder panel + mini-map side by side
+	// Phase 16: history navigation via Up/Down arrow keys
+	d.inputField.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyUp:
+			if len(d.cmdHistory) == 0 {
+				return nil // nothing to navigate
+			}
+			if d.histIdx == -1 {
+				// Start navigating: save current draft, go to most recent
+				d.histDraft = d.inputField.GetText()
+				d.histIdx = len(d.cmdHistory) - 1
+			} else if d.histIdx > 0 {
+				d.histIdx--
+			}
+			// histIdx == 0: already at oldest, stay
+			d.inputField.SetText(d.cmdHistory[d.histIdx])
+			return nil // swallow key
+		case tcell.KeyDown:
+			if d.histIdx == -1 {
+				return nil // not in history mode, no-op
+			}
+			if d.histIdx == len(d.cmdHistory)-1 {
+				// Back to draft
+				d.histIdx = -1
+				d.inputField.SetText(d.histDraft)
+			} else {
+				d.histIdx++
+				d.inputField.SetText(d.cmdHistory[d.histIdx])
+			}
+			return nil // swallow key
+		default:
+			// Any other key: exit history mode and update draft
+			if d.histIdx != -1 {
+				d.histIdx = -1
+			}
+			// Keep draft in sync while user types normally
+			// (draft is re-read from field on next Up press, so nothing extra needed)
+			return event
+		}
+	})
+
+	// Bottom area: log + workers + wonder panel side by side
 	d.bottomArea = tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(d.logTV, 0, 1, false).
-		AddItem(d.villagerPanel.Primitive(), 0, 1, false).
-		AddItem(d.wonderPanel.Primitive(), 0, 1, false).
-		AddItem(d.miniMap.Primitive(), 0, 1, false)
+		AddItem(d.workerPanel.Primitive(), 0, 1, false).
+		AddItem(d.wonderPanel.Primitive(), 0, 1, false)
 
-	// Main content area: tab content + bottom
+	// Main horizontal: economy (permanent) + sidebar
+	mainHoriz := tview.NewFlex().SetDirection(tview.FlexColumn).
+		AddItem(d.economyTab.Root(), 0, 1, false).
+		AddItem(d.sidebar, 22, 0, false)
+
+	// Main content area: economy+sidebar + bottom
 	d.contentArea = tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(d.tabPages, 0, 2, false).
+		AddItem(mainHoriz, 0, 2, false).
 		AddItem(d.bottomArea, 0, 1, false)
 
-	// Root layout
+	// Root layout (no tab bar)
 	d.root = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(d.cheaterTV, 1, 0, false).
 		AddItem(d.statusTV, 1, 0, false).
 		AddItem(d.toastTV, 1, 0, false).
 		AddItem(d.ageTV, 2, 0, false).
-		AddItem(d.tabBar, 1, 0, false).
 		AddItem(d.contentArea, 0, 1, false).
 		AddItem(d.inputField, 1, 0, true)
 
@@ -251,128 +332,60 @@ func (d *Dashboard) build() {
 			d.showDevUnlockModal()
 			return nil
 		}
-		// Backtick — switch to dev tab (only if unlocked)
+		// Backtick — switch to dev console (only if unlocked)
 		if event.Rune() == '`' && game.DevModeActive {
 			d.switchToDevTab()
 			return nil
 		}
 		switch event.Key() {
 		case tcell.KeyEsc:
+			if d.overlayMgr != nil && d.overlayMgr.HasActive() {
+				d.overlayMgr.Hide()
+				return nil
+			}
 			d.engine.SaveGame("autosave")
 			d.engine.Stop()
 			d.pages.SwitchToPage("splash")
 			return nil
-		case tcell.KeyF1:
-			d.switchTab(0)
-			return nil
-		case tcell.KeyF2:
-			d.switchTab(1)
-			return nil
-		case tcell.KeyF3:
-			d.switchTab(2)
-			return nil
-		case tcell.KeyF4:
-			d.switchTab(3)
-			return nil
-		case tcell.KeyF5:
-			d.switchTab(4)
-			return nil
-		case tcell.KeyF6:
-			d.switchTab(5)
-			return nil
-		case tcell.KeyF7:
-			d.switchTab(6)
-			return nil
-		case tcell.KeyF8:
-			d.switchTab(7)
-			return nil
-		case tcell.KeyF9:
-			d.switchTab(8)
-			return nil
-		case tcell.KeyF10:
-			if game.DevModeActive {
-				d.switchToDevTab()
+		// Economy tab scroll keys (always available since economy is permanent background)
+		case tcell.KeyPgUp:
+			if !d.overlayMgr.HasActive() {
+				d.economyTab.ScrollUp()
+				return nil
+			}
+		case tcell.KeyPgDn:
+			if !d.overlayMgr.HasActive() {
+				d.economyTab.ScrollDown()
 				return nil
 			}
 		}
 
-		// When logs tab is active, intercept navigation keys
-		if d.activeTab == 8 {
-			switch event.Key() {
-			case tcell.KeyPgUp:
-				d.logsTab.ScrollUp()
-				return nil
-			case tcell.KeyPgDn:
-				d.logsTab.ScrollDown()
-				return nil
-			}
-			if event.Rune() == 'v' {
-				d.logsTab.ToggleVerbose()
-				return nil
-			}
-		}
-
-		// When wiki tab is active, intercept navigation keys
-		if d.activeTab == 5 {
-			switch event.Key() {
-			case tcell.KeyUp:
-				d.wikiTab.PrevPage()
-				return nil
-			case tcell.KeyDown:
-				d.wikiTab.NextPage()
-				return nil
-			case tcell.KeyPgUp:
-				d.wikiTab.ScrollUp()
-				return nil
-			case tcell.KeyPgDn:
-				d.wikiTab.ScrollDown()
-				return nil
-			}
-			// Number keys for quick nav
-			if event.Rune() >= '1' && event.Rune() <= '9' {
-				idx := int(event.Rune() - '1')
-				d.wikiTab.GoToPage(idx)
-				return nil
-			}
-		}
-
-		// Always focus input field for typing (except wiki nav)
-		if !d.inputField.HasFocus() {
+		// Always focus input field for typing (except dev console).
+		if !d.devTabActive && !d.inputField.HasFocus() {
 			d.app.SetFocus(d.inputField)
 		}
 		return event
 	})
 }
 
-func (d *Dashboard) switchTab(index int) {
-	d.activeTab = index
-	d.tabPages.SwitchToPage(d.tabNames[index])
-	d.updateTabBar()
-	d.app.SetFocus(d.inputField)
-
-	// Map tab (index 6) is full-screen — hide bottom area
-	if index == 6 {
-		d.contentArea.RemoveItem(d.bottomArea)
-	} else {
-		// Re-add bottom area if not already present
-		if d.contentArea.GetItemCount() < 2 {
-			d.contentArea.AddItem(d.bottomArea, 0, 1, false)
-		}
+func (d *Dashboard) updateSidebar(activeOverlay string) {
+	if d.sidebar != nil {
+		d.sidebar.SetText(buildSidebarText(activeOverlay))
 	}
 }
 
-func (d *Dashboard) updateTabBar() {
-	var parts []string
-	tabKeys := map[int]string{0: "F1", 1: "F2", 2: "F3", 3: "F4", 4: "F5", 5: "F6", 6: "F7", 7: "F8", 8: "F9", 9: "F10"}
-	for i, name := range d.tabNames {
-		key := tabKeys[i]
-		if i == d.activeTab {
-			parts = append(parts, fmt.Sprintf(" [black:gold] %s %s [-:-] ", key, name))
+func buildSidebarText(active string) string {
+	commands := []string{"milestones", "research", "army", "trade", "stats", "wonders", "logs", "epoch"}
+	var sb strings.Builder
+	sb.WriteString("\n")
+	for _, cmd := range commands {
+		if cmd == active {
+			sb.WriteString(fmt.Sprintf(" [black:gold] %-10s [-:-]\n", cmd))
 		} else {
-			parts = append(parts, fmt.Sprintf(" [gray]%s %s[-] ", key, name))
+			sb.WriteString(fmt.Sprintf(" [white]%-10s[-]\n", cmd))
 		}
 	}
-	d.tabBar.SetText(strings.Join(parts, "  "))
+	return sb.String()
 }
 
 // Root returns the root primitive for page registration
@@ -380,12 +393,11 @@ func (d *Dashboard) Root() tview.Primitive {
 	return d.root
 }
 
-// GoToWiki switches the dashboard to the Wiki tab (tab index 5).
-func (d *Dashboard) GoToWiki() {
-	d.switchTab(5)
-}
-
-// StartUpdates begins the UI refresh loop
+// StartUpdates begins the UI refresh loop, polling at 500 ms (2 fps).
+// This is intentionally slower than the game tick rate (which can reach ~5 fps
+// at 2x speed) to avoid burning CPU on terminal redraws.
+// NOTE: app.QueueUpdateDraw is the only safe way to touch tview primitives from
+// a background goroutine — it serialises with the tview event loop.
 func (d *Dashboard) StartUpdates() {
 	go func() {
 		ticker := time.NewTicker(500 * time.Millisecond)
@@ -403,7 +415,9 @@ func (d *Dashboard) StartUpdates() {
 	}()
 }
 
-// StopUpdates stops the UI refresh loop
+// StopUpdates stops the UI refresh loop by sending on stopCh.
+// The non-blocking send (default branch) prevents a hang if nobody is
+// listening (e.g. StopUpdates called twice before the goroutine drains).
 func (d *Dashboard) StopUpdates() {
 	select {
 	case d.stopCh <- struct{}{}:
@@ -411,16 +425,40 @@ func (d *Dashboard) StopUpdates() {
 	}
 }
 
+// refresh is the central UI update function, called every 500 ms from StartUpdates.
+// It must only be called from within app.QueueUpdateDraw (i.e. on the tview goroutine).
+// Order matters: catastrophe modal and age splash are checked first because they may
+// swap the active page, then all content widgets are updated.
 func (d *Dashboard) refresh() {
 	// Check for pending age splash (set by bus handler under engine lock)
 	if d.pendingAgeSplash != "" {
 		newAge := d.pendingAgeSplash
 		oldAge := d.lastAge
+		epochChanged := d.pendingEpochChanged
 		d.pendingAgeSplash = ""
-		ShowAgeSplash(d.app, d.pages, oldAge, newAge)
+		d.pendingEpochChanged = false
+
+		state := d.engine.GetState()
+		summary := state.LastAgeAdvanceSummary
+
+		var epochEvent game.EpochEventRecord
+		if epochChanged && len(state.EpochEventHistory) > 0 {
+			epochEvent = state.EpochEventHistory[len(state.EpochEventHistory)-1]
+		}
+
+		ShowAgeSplashFull(d.app, d.pages, oldAge, newAge, summary, epochChanged, epochEvent)
 	}
 
 	state := d.engine.GetState()
+	d.lastState = &state
+
+	// Phase 9: catastrophe modal — show once per new pending catastrophe; Defer hides it
+	if state.PendingCatastrophe == "" {
+		d.catModalShown = "" // reset so next catastrophe will show fresh
+	} else if d.catModalShown == "" {
+		d.catModalShown = state.PendingCatastrophe
+		d.showCatastropheModal(state.PendingCatastrophe)
+	}
 
 	// Shame badge — pick once per session, never change after that
 	if state.CheaterBadge && d.activeShameBadge == "" {
@@ -439,31 +477,15 @@ func (d *Dashboard) refresh() {
 	d.refreshAgeProgress(state)
 	d.refreshLog(state)
 	d.toastTV.SetText(d.toastMgr.GetCurrent())
-	d.miniMap.UpdateState(state)
 	d.wonderPanel.UpdateState(state)
-	d.villagerPanel.UpdateState(state)
+	d.workerPanel.UpdateState(state)
 
-	// Only refresh the active tab
-	switch d.activeTab {
-	case 0:
-		d.economyTab.Refresh(state)
-	case 1:
-		d.researchTab.Refresh(state)
-	case 2:
-		d.militaryTab.Refresh(state)
-	case 3:
-		d.tradeTab.Refresh(state)
-	case 4:
-		d.statsTab.Refresh(state)
-	case 5:
-		d.wikiTab.Refresh(state)
-	case 6:
-		d.mapTab.Refresh(state)
-	case 7:
-		d.wondersTab.Refresh(state)
-	case 8:
-		d.logsTab.Refresh(state)
-	}
+	// Economy tab is always visible as the permanent background
+	d.economyTab.Refresh(state)
+
+	// Update overlay content and sidebar highlight
+	d.overlayMgr.Refresh(state)
+	d.updateSidebar(d.overlayMgr.ActiveName())
 }
 
 func (d *Dashboard) refreshStatus(state game.GameState) {
@@ -483,10 +505,19 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 	if state.Milestones.CurrentTitle != "" {
 		titleStr = fmt.Sprintf("  [yellow]\"%s\"[-]", state.Milestones.CurrentTitle)
 	}
+	// Epoch badge
+	epochStr := ""
+	if state.EpochKey != "" {
+		survivedMark := ""
+		if state.EpochSurvived {
+			survivedMark = " ·Survived"
+		}
+		epochStr = fmt.Sprintf("  [%s]%s %s%s[-]", state.EpochColor, state.EpochIcon, state.EpochName, survivedMark)
+	}
 	d.statusTV.SetText(fmt.Sprintf(
-		"[gold]%s[-]%s%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]F1-F9=Tabs  ESC=Menu[-]",
-		state.AgeName, prestigeStr, titleStr, state.Tick, nextAgeStr, speedStr,
-		state.Villagers.TotalPop, state.Villagers.MaxPop,
+		"[gold]%s[-]%s%s%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]type panel name to open  ESC=close/menu[-]",
+		state.AgeName, prestigeStr, titleStr, epochStr, state.Tick, nextAgeStr, speedStr,
+		state.Workers.TotalPop, state.Workers.MaxPop,
 	))
 }
 
@@ -630,23 +661,17 @@ func (d *Dashboard) showDevUnlockModal() {
 	d.app.SetFocus(field)
 }
 
-// switchToDevTab reveals the Dev tab (first time) and switches to it.
+// switchToDevTab shows the dev console overlay.
 // Hard gate: silently does nothing unless DevModeActive is confirmed.
 func (d *Dashboard) switchToDevTab() {
 	if !game.DevModeActive {
 		return
 	}
 	if !d.devTabActive {
-		d.tabNames = append(d.tabNames, "Dev")
 		d.devTabActive = true
+		// Add dev console as a full-page overlay
+		d.pages.AddPage("Dev", d.devTab.Primitive(), true, false)
 	}
-	idx := len(d.tabNames) - 1
-	d.activeTab = idx
-	d.tabPages.SwitchToPage("Dev")
-	d.updateTabBar()
-	// Re-add bottom area (dev tab is not full-screen like map)
-	if d.contentArea.GetItemCount() < 2 {
-		d.contentArea.AddItem(d.bottomArea, 0, 1, false)
-	}
+	d.pages.ShowPage("Dev")
 	d.app.SetFocus(d.devTab.FocusInput())
 }

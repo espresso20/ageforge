@@ -25,7 +25,12 @@ type ActiveExpedition struct {
 	TicksLeft int
 }
 
-// MilitaryManager handles soldiers, defense, and expeditions
+// MilitaryManager handles military expeditions and defense ratings.
+// Only one expedition can be active at a time (active pointer). Soldiers
+// committed to an expedition are removed from the worker pool on completion
+// (win: small chance of 1 loss; loss: 1-2 soldiers lost). The player must
+// have enough workers assigned to military buildings for the `expedition` command
+// to count as "soldiers" — see WorkerManager.GetDomainCount("military").
 type MilitaryManager struct {
 	expeditions    []ExpeditionDef
 	active         *ActiveExpedition
@@ -182,7 +187,13 @@ func (mm *MilitaryManager) LaunchExpedition(key string, soldierCount int, curren
 	return nil
 }
 
-// Tick processes expedition progress. Returns (rewards, message, soldiers_lost) if completed.
+// Tick advances the active expedition by one tick. Returns non-empty rewards,
+// message, and soldiersLost only on the tick when the expedition resolves.
+//
+// Success probability: successRoll > (DifficultyBase - militaryBonus×0.3).
+// militaryBonus reduces effective difficulty; expeditionBonus scales reward amounts.
+// On success: 1 soldier may be lost with probability difficulty×0.3.
+// On failure: 30% rewards, 1-2 soldiers lost.
 func (mm *MilitaryManager) Tick(militaryBonus, expeditionBonus float64) (rewards map[string]float64, message string, soldiersLost int) {
 	if mm.active == nil {
 		return nil, "", 0

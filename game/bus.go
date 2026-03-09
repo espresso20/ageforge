@@ -5,7 +5,7 @@ import "sync"
 // Event types
 const (
 	EventBuildingBuilt  = "building_built"
-	EventVillagerAdded  = "villager_added"
+	EventWorkerAdded    = "worker_added"
 	EventAgeAdvanced    = "age_advanced"
 	EventResourceDepleted = "resource_depleted"
 	EventResearchDone   = "research_done"
@@ -13,6 +13,8 @@ const (
 	EventGameLoaded          = "game_loaded"
 	EventMilestoneCompleted  = "milestone_completed"
 	EventChainCompleted      = "chain_completed"
+	EventEpochAdvanced       = "epoch_advanced"
+	EventEpochEventFired     = "epoch_event_fired"
 )
 
 // EventData carries data for an event

@@ -6,15 +6,22 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// ResearchManager manages the tech tree and research progress
+// ResearchManager manages the tech tree and research progress.
+// Only one technology can be in progress at a time. When research completes,
+// its Effect entries are accumulated into bonuses immediately so they are
+// applied on the next recalculateRates call.
+//
+// NOTE: bonuses are rebuilt from scratch during LoadState by replaying all
+// researched tech effects — do not persist the bonuses map independently.
 type ResearchManager struct {
 	defs       map[string]config.TechDef
 	researched map[string]bool
-	// Currently researching
+	// Currently in-progress tech key, or "" if idle.
 	currentTech string
 	ticksLeft   int
 	totalTicks  int
-	// Permanent bonuses from research
+	// bonuses accumulates effect values keyed by eff.Target (e.g. "tick_speed",
+	// "production_all", "research_speed"). These feed into engine.recalculateRates.
 	bonuses map[string]float64
 }
 
@@ -27,8 +34,15 @@ func NewResearchManager() *ResearchManager {
 	}
 }
 
-// StartResearch begins researching a technology
+// StartResearch begins researching a technology using only tech-derived bonuses.
+// Prefer StartResearchWithSpeed to include permanent and prestige bonuses.
 func (rm *ResearchManager) StartResearch(key string, currentAge string, ageOrder map[string]int, knowledge float64) error {
+	return rm.StartResearchWithSpeed(key, currentAge, ageOrder, knowledge, rm.bonuses["research_speed"])
+}
+
+// StartResearchWithSpeed begins researching a technology, applying the given combined
+// research speed bonus (from techs + permanent bonuses + prestige) to reduce tick count.
+func (rm *ResearchManager) StartResearchWithSpeed(key string, currentAge string, ageOrder map[string]int, knowledge float64, speedBonus float64) error {
 	def, ok := rm.defs[key]
 	if !ok {
 		return fmt.Errorf("unknown technology: %s", key)
@@ -58,9 +72,9 @@ func (rm *ResearchManager) StartResearch(key string, currentAge string, ageOrder
 
 	rm.currentTech = key
 	ticks := def.ResearchTicks
-	// Apply research speed bonus
-	if bonus, ok := rm.bonuses["research_speed"]; ok && bonus > 0 {
-		ticks = int(float64(ticks) * (1.0 - bonus))
+	// Apply combined research speed bonus (tech + permanent + prestige)
+	if speedBonus > 0 {
+		ticks = int(float64(ticks) * (1.0 - speedBonus))
 		if ticks < 1 {
 			ticks = 1
 		}
@@ -104,6 +118,41 @@ func (rm *ResearchManager) CancelResearch() (string, bool) {
 	rm.ticksLeft = 0
 	rm.totalTicks = 0
 	return tech, true
+}
+
+// ForceCompleteN instantly completes up to n unresearched techs available in
+// the current age. Used by the "Grand Discovery" good epoch event to give the
+// player a few free techs without queuing them. Any in-progress research that
+// gets completed by this call is also cleared to avoid a stale state where
+// currentTech is already in the researched map.
+// Returns the keys of techs that were completed.
+func (rm *ResearchManager) ForceCompleteN(n int, currentAge string, ageOrder map[string]int) []string {
+	var completed []string
+	for key, def := range rm.defs {
+		if len(completed) >= n {
+			break
+		}
+		if rm.researched[key] {
+			continue
+		}
+		if ageOrder[def.Age] > ageOrder[currentAge] {
+			continue
+		}
+		rm.researched[key] = true
+		for _, eff := range def.Effects {
+			rm.bonuses[eff.Target] += eff.Value
+		}
+		completed = append(completed, key)
+	}
+	// Also cancel any in-progress research to avoid state inconsistency
+	if len(completed) > 0 && rm.currentTech != "" {
+		if rm.researched[rm.currentTech] {
+			rm.currentTech = ""
+			rm.ticksLeft = 0
+			rm.totalTicks = 0
+		}
+	}
+	return completed
 }
 
 // IsResearched returns whether a tech has been completed
@@ -187,7 +236,10 @@ func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) 
 	}
 }
 
-// LoadState restores research state from save data
+// LoadState restores research state from save data.
+// Bonuses are always recomputed by replaying the effect list of every
+// researched tech — this ensures correct values even if tech definitions
+// changed between versions.
 func (rm *ResearchManager) LoadState(researched []string, currentTech string, ticksLeft, totalTicks int) {
 	rm.researched = make(map[string]bool)
 	rm.bonuses = make(map[string]float64)

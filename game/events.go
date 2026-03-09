@@ -1,26 +1,44 @@
 package game
 
 import (
+	"fmt"
 	"math/rand"
+	"sort"
+	"strings"
 
 	"github.com/espresso20/ageforge/config"
 )
 
 // ActiveEvent represents a currently active timed event
 type ActiveEvent struct {
-	Key       string
-	Name      string
-	TicksLeft int
-	Effects   []config.Effect
+	Key           string
+	Name          string
+	TicksLeft     int
+	Effects       []config.Effect
+	WorkersLost   int                // accumulated workers lost during this event
+	ResourcesLost map[string]float64 // resource key → total amount lost during this event
 }
 
-// EventManager handles random event triggering and processing
+// EventManager handles random event triggering and management of active
+// timed events. Events are drawn from two pools: universal (base) events
+// and epoch-exclusive events for the player's current epoch.
+//
+// Anti-streak system: goodStreak and badStreak track consecutive same-sentiment
+// events. After 3 good in a row the next event is forced bad; after 2 bad it
+// is forced good. This prevents extended lucky or punishing streaks.
+//
+// A global cooldown (nextEventTick) ensures at most one event fires per 5-20
+// minutes of real time, preventing event spam.
+//
+// NOTE: InjectEvent bypasses all eligibility checks and fires immediately.
+// It is used for milestone chain boosts and epoch event effects; calling it
+// inside a Bus handler is safe because the EventManager is not locked separately.
 type EventManager struct {
 	defs          []config.EventDef
 	defMap        map[string]config.EventDef
-	lastFired     map[string]int // key -> last tick fired
+	lastFired     map[string]int // event key -> last tick fired (for per-event cooldowns)
 	active        []ActiveEvent
-	nextEventTick int // global cooldown: earliest tick the next event can fire
+	nextEventTick int // global cooldown: earliest tick the next random event can fire
 	goodStreak    int // consecutive good events (reset on bad/mixed)
 	badStreak     int // consecutive bad events (reset on good/mixed)
 }
@@ -43,14 +61,14 @@ func NewEventManager() *EventManager {
 }
 
 // Tick processes one tick: checks for new events, processes active event durations.
-// Returns list of newly triggered events and list of expired events.
-func (em *EventManager) Tick(tick int, currentAge string, ageOrder map[string]int) (triggered []config.EventDef, expired []string) {
+// Returns list of newly triggered events and list of expired ActiveEvents (with accumulated losses).
+func (em *EventManager) Tick(tick int, currentAge string, ageOrder map[string]int, currentEpoch string) (triggered []config.EventDef, expired []ActiveEvent) {
 	// Process active events first - decrement durations
 	var stillActive []ActiveEvent
 	for _, ae := range em.active {
 		ae.TicksLeft--
 		if ae.TicksLeft <= 0 {
-			expired = append(expired, ae.Key)
+			expired = append(expired, ae)
 		} else {
 			stillActive = append(stillActive, ae)
 		}
@@ -66,7 +84,7 @@ func (em *EventManager) Tick(tick int, currentAge string, ageOrder map[string]in
 	forceSentiment := em.requiredSentiment()
 
 	// Check for new random events (one per tick max)
-	eligible := em.getEligible(tick, currentAge, ageOrder, forceSentiment)
+	eligible := em.getEligible(tick, currentAge, ageOrder, forceSentiment, currentEpoch)
 	if len(eligible) == 0 {
 		return
 	}
@@ -145,9 +163,18 @@ func (em *EventManager) updateStreaks(sentiment string) {
 
 // getEligible returns events that can trigger right now.
 // forceSentiment filters: "good" = only good/mixed, "bad" = only bad/mixed, "" = any.
-func (em *EventManager) getEligible(tick int, currentAge string, ageOrder map[string]int, forceSentiment string) []config.EventDef {
+func (em *EventManager) getEligible(tick int, currentAge string, ageOrder map[string]int, forceSentiment string, currentEpoch string) []config.EventDef {
+	// Build candidate pool: universal events + epoch-exclusive events for the current epoch
+	pool := make([]config.EventDef, len(em.defs))
+	copy(pool, em.defs)
+	for _, ev := range config.EpochExclusiveEvents() {
+		if ev.EpochKey == currentEpoch {
+			pool = append(pool, ev)
+		}
+	}
+
 	var eligible []config.EventDef
-	for _, def := range em.defs {
+	for _, def := range pool {
 		// Sentiment filter
 		if forceSentiment == "good" && def.Sentiment == "bad" {
 			continue
@@ -185,7 +212,10 @@ func (em *EventManager) getEligible(tick int, currentAge string, ageOrder map[st
 	return eligible
 }
 
-// InjectEvent adds an event directly to the active list (called under engine write lock)
+// InjectEvent adds an event directly to the active list, bypassing all
+// eligibility, cooldown, and streak checks. Used for milestone chain speed
+// boosts and epoch event side-effects that must fire unconditionally.
+// IMPORTANT: Must be called under the engine write lock (same as doTick).
 func (em *EventManager) InjectEvent(event ActiveEvent) {
 	em.active = append(em.active, event)
 }
@@ -244,4 +274,51 @@ func (em *EventManager) GetActiveForSave() []ActiveEvent {
 	out := make([]ActiveEvent, len(em.active))
 	copy(out, em.active)
 	return out
+}
+
+// RecordWorkerLoss accumulates workers lost for the active event matching key.
+func (em *EventManager) RecordWorkerLoss(key string, count int) {
+	for i := range em.active {
+		if em.active[i].Key == key {
+			em.active[i].WorkersLost += count
+			return
+		}
+	}
+}
+
+// RecordResourceLoss accumulates resource stolen for the active event matching key.
+func (em *EventManager) RecordResourceLoss(key string, resource string, amount float64) {
+	for i := range em.active {
+		if em.active[i].Key == key {
+			if em.active[i].ResourcesLost == nil {
+				em.active[i].ResourcesLost = make(map[string]float64)
+			}
+			em.active[i].ResourcesLost[resource] += amount
+			return
+		}
+	}
+}
+
+// buildLossSuffix returns a tview-coloured loss summary string for an expired event,
+// or "" if no losses were recorded.
+func buildLossSuffix(event ActiveEvent) string {
+	var parts []string
+	if event.WorkersLost > 0 {
+		parts = append(parts, fmt.Sprintf("[yellow]%d workers fled[-]", event.WorkersLost))
+	}
+	if len(event.ResourcesLost) > 0 {
+		keys := make([]string, 0, len(event.ResourcesLost))
+		for k := range event.ResourcesLost {
+			keys = append(keys, k)
+		}
+		sort.Strings(keys)
+		for _, k := range keys {
+			amt := event.ResourcesLost[k]
+			parts = append(parts, fmt.Sprintf("[yellow]%.0f %s stolen[-]", amt, k))
+		}
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	return " " + strings.Join(parts, ", ") + "."
 }

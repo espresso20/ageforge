@@ -11,11 +11,11 @@ Build → Recruit → Assign → Research → Advance → Repeat
 ```
 
 1. **Build** structures to increase capacity and production
-2. **Recruit** villagers to grow your workforce
-3. **Assign** villagers to gather specific resources
+2. **Recruit** workers to grow your workforce
+3. **Assign** workers to gather specific resources
 4. **Research** technologies that multiply your output
 5. **Advance** to the next age when requirements are met
-6. **Prestige** when you reach the Transcendent Age
+6. **Prestige** when you reach the Modern Age (or later) for permanent bonuses
 
 ---
 
@@ -23,11 +23,11 @@ Build → Recruit → Assign → Research → Advance → Repeat
 
 ```
 ┌─ Status bar ──────────────────────────────────────────────────────────────────┐
-│ 🏛 Stone Age  [P0]  "Founder"         Tick: 1,247  Pop: 18/30  ×1  F1-F7 Esc │
+│ 🏛 Stone Age  [P0]  "Founder"         Tick: 1,247  Pop: 18/30  ×1  Panels Esc │
 ├─ Age progress ────────────────────────────────────────────────────────────────┤
 │ Next: Bronze Age  food:3102/8000 ████░░  stone:890/4000 ███░░  wood:1240/8000 │
 ├─ Tab bar ─────────────────────────────────────────────────────────────────────┤
-│ F1:Economy  F2:Research  F3:Military  F4:Trade  F5:Stats  F6:Wonders  F7:Logs │
+│ Type a command name to open its overlay panel. Esc to close. │
 ├─ Tab content (scrollable) ────────────────────────────────────────────────────┤
 │  Resources             │  Buildings                                           │
 │  ...                   │  ...                                                 │
@@ -42,7 +42,7 @@ Build → Recruit → Assign → Research → Advance → Repeat
 
 ## Navigation
 
-- **F1–F7** — switch tabs
+- overlay commands (type `research`, `army`, `trade`, etc.) — open panels
 - **PgUp / PgDn** — scroll the active tab
 - **↑ / ↓** — navigate command history
 - **Esc** — save game
@@ -57,7 +57,7 @@ Your starting pop cap is too low. Build huts to raise it:
 ```
 build hut
 ```
-Queue another while the first is building. Population cap unlocks more villagers.
+Queue another while the first is building. Population cap unlocks more workers.
 
 ### 2. Build stashes (storage)
 Resources cap out quickly. Add storage:
@@ -65,21 +65,22 @@ Resources cap out quickly. Add storage:
 build stash
 ```
 
-### 3. Recruit your first villager
+### 3. Recruit your first workers
 ```
-recruit villager
+recruit 2
+```
+Workers are recruited generically — no domain needed. Assign them to buildings to give them a domain class.
+
+### 4. Assign food workers to a building
+Idle workers produce nothing. Assign them:
+```
+assign gathering_camp 2
 ```
 
-### 4. Assign workers to food
-Idle villagers are wasted. Assign them:
+### 5. Assign knowledge workers to a building
+Knowledge workers produce knowledge. Assign one:
 ```
-assign worker food 2
-```
-
-### 5. Assign a shaman to knowledge
-Shamans produce knowledge. Assign one:
-```
-assign shaman knowledge 1
+assign story_circle 1
 ```
 
 ### 6. Build a gathering camp
@@ -88,12 +89,12 @@ Gathering camps boost food and wood production:
 build gathering_camp
 ```
 
-### 7. Research basic tools
-Once you have enough knowledge (50 kp):
+### 7. Research tool making
+Once you have enough knowledge (800 kp):
 ```
-research basic_tools
+research tool_making
 ```
-This gives a permanent +20% worker output bonus.
+This gives a permanent +15% gather rate bonus.
 
 ### 8. Watch the age bar
 The second row shows what you need for the next age. Keep building and assigning until the requirements fill up. The game advances automatically.
@@ -103,9 +104,23 @@ The second row shows what you need for the next age. Keep building and assigning
 ## Resource management tips
 
 - Resources cap at their storage limit — once capped, production is wasted
-- **Food drain** = total pop × 0.5/tick. Always keep food positive
-- **Knowledge** is the most important resource early — prioritise shamans
+- **Food drain** = `baseFoodCost × 1.5^tier /tick` per worker. Food domain workers start at 0.06/tick (Primitive Age) — very cheap. Other domains start at 1.0–32.0. Always keep food production positive
+- **Knowledge** is the most important resource early — prioritise knowledge workers
 - Watch the `Rate` column in the Economy tab; negative rates will drain you
+
+---
+
+## Workers
+
+Workers are organized into 12 domains, each tied to specific buildings. Recruit workers with `recruit [count|max]` (no domain argument needed) and assign them with `assign <building_key> [count|all]`. Workers take on the domain class of the building they are assigned to.
+
+**Core domains**: food, knowledge, faith, military, trade, engineering
+**Production domains**: lumber, masonry, metallurgy, energy
+**Late-game domains**: hacker, astronaut
+
+Workers assigned to buildings boost production. A building at 0 assigned workers still produces at 20% efficiency (the floor). Full assignment = 100% efficiency.
+
+Food workers are special — they produce food but all workers across all domains consume food per tick. Keep food production above total worker drain.
 
 ---
 
@@ -113,12 +128,12 @@ The second row shows what you need for the next age. Keep building and assigning
 
 | Age | Priority buildings |
 |---|---|
-| Primitive | Hut, Stash, Altar, Sacred Grove |
-| Stone Age | Gathering Camp, Woodcutter Camp, Stone Pit, Firepit |
-| Bronze Age | Farm, Lumber Mill, Quarry, Mine, Library |
-| Iron Age | Coal Mine, Smithy, Barracks, Granary |
-| Classical | Forum, Aqueduct, Amphitheater |
-| Medieval | University, Cathedral, Castle |
+| Primitive | Hut, Stash, Gathering Camp, Story Circle, Shrine, Sacred Grove |
+| Stone Age | Stone Pit, Woodcutter Camp, Forager Post, Longhouse, Storage Pit |
+| Bronze Age | Farm, Lumber Mill, Quarry, Scriptorium, Market, Smithy, Warehouse |
+| Iron Age | Smelter, Hunting Lodge, Granary, Trading Post |
+| Classical | Agora, Library, Forge, Amphitheater, Aqueduct |
+| Medieval | University, Cathedral, Castle Keep, Great Library |
 
 ---
 
@@ -132,4 +147,4 @@ wonder collect stone 500
 build stonehenge
 ```
 
-Each wonder can only be built once. They appear in the **F6: Wonders** tab.
+Each wonder can only be built once. They appear in the **Wonders** overlay (`wonders`).

@@ -9,13 +9,20 @@
   - [How to Play](how-to-play.md)
   - [All Commands](commands.md)
   - [Resources](resources.md)
-  - [Villagers](villagers.md)
+  - [Workers](villagers.md)
 
 - **Progression**
   - [The 22 Ages](ages.md)
   - [Buildings](buildings.md)
   - [Technologies](technologies.md)
   - [Milestones & Chains](milestones.md)
+
+- **Deep Dive**
+  - [Epochs](epochs.md)
+  - [Catastrophe System](catastrophe.md)
+  - [Faith](faith.md)
+  - [Knowledge](knowledge.md)
+  - [Workers & Domains (Reference)](workers-and-domains.md)
 
 - **Advanced**
   - [Military & Expeditions](military.md)

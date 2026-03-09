@@ -2,18 +2,30 @@ package game
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
 )
 
-// MilestoneManager tracks and checks milestones, chains, and titles
+// MilestoneManager tracks milestone completion, chain progress, and the
+// civilisation title awarded to the player.
+//
+// Milestones are checked each tick via CheckMilestones; once met they are
+// permanently flagged in the completed map and never re-checked. Chains are
+// unlocked when all their constituent milestones are completed and grant a
+// title and a temporary tick-speed boost via InjectEvent.
+//
+// Title priority: chain titles override the count-based fallback title.
+// The most recently completed chain's title wins (last writer in the loop).
 type MilestoneManager struct {
-	defs             []config.MilestoneDef
-	completed        map[string]bool
-	chains           []config.MilestoneChainDef
-	chainsCompleted  map[string]bool
-	currentTitle     string
+	defs            []config.MilestoneDef
+	completed       map[string]bool
+	chains          []config.MilestoneChainDef
+	chainsCompleted map[string]bool
+	currentTitle    string
+	// milestoneToChain is a reverse-index built at construction time for O(1)
+	// chain lookup when rendering the milestone list in the UI.
 	milestoneToChain map[string]string // milestone key -> chain key
 }
 
@@ -49,6 +61,7 @@ func (mm *MilestoneManager) CheckMilestones(
 	researchedTechs map[string]bool,
 	soldierCount int,
 	wonderCount int,
+	knowledgeCount int,
 ) []config.MilestoneDef {
 	var completed []config.MilestoneDef
 
@@ -57,7 +70,7 @@ func (mm *MilestoneManager) CheckMilestones(
 			continue
 		}
 
-		if mm.checkMilestone(def, tick, age, ageOrder, resources, buildings, population, techCount, totalBuilt, researchedTechs, soldierCount, wonderCount) {
+		if mm.checkMilestone(def, tick, age, ageOrder, resources, buildings, population, techCount, totalBuilt, researchedTechs, soldierCount, wonderCount, knowledgeCount) {
 			mm.completed[def.Key] = true
 			completed = append(completed, def)
 		}
@@ -79,6 +92,7 @@ func (mm *MilestoneManager) checkMilestone(
 	researchedTechs map[string]bool,
 	soldierCount int,
 	wonderCount int,
+	knowledgeCount int,
 ) bool {
 	// Check min tick
 	if def.MinTick > 0 && tick < def.MinTick {
@@ -126,20 +140,57 @@ func (mm *MilestoneManager) checkMilestone(
 	// Special checks based on milestone key
 	switch def.Key {
 	case "master_builder":
-		if totalBuilt < 20 {
+		if totalBuilt < 5000 {
+			return false
+		}
+	case "early_builder":
+		if totalBuilt < 500 {
+			return false
+		}
+	case "seasoned_builder":
+		if totalBuilt < 2000 {
+			return false
+		}
+	case "grand_architect":
+		if totalBuilt < 20000 {
+			return false
+		}
+	case "first_soldiers":
+		if soldierCount < 5 {
+			return false
+		}
+	case "standing_army":
+		if soldierCount < 100 {
 			return false
 		}
 	case "war_machine":
-		if soldierCount < 10 {
+		if soldierCount < 250 {
+			return false
+		}
+	case "iron_legion":
+		if soldierCount < 500 {
+			return false
+		}
+	case "military_superpower":
+		if soldierCount < 2000 {
 			return false
 		}
 	case "wonder_builder":
 		if wonderCount < 1 {
 			return false
 		}
+	case "wonder_collector":
+		if wonderCount < 8 {
+			return false
+		}
+	case "wonder_empire":
+		if wonderCount < 15 {
+			return false
+		}
 	case "scholars_haven":
-		// This checks for 5+ scholars — we need villager data
-		// For simplicity, use population >= 10 as proxy (already set in def)
+		if knowledgeCount < 50 {
+			return false
+		}
 	}
 
 	return true
@@ -167,7 +218,9 @@ func (mm *MilestoneManager) CheckChains() []config.MilestoneChainDef {
 	return newlyCompleted
 }
 
-// recalculateTitle picks the best title: chain titles override count-based fallback titles.
+// recalculateTitle selects the current title. Chain titles take precedence over
+// the count-based fallback sequence. Among chain titles the last completed
+// chain (in config order) wins, giving later chains a natural prestige upgrade.
 func (mm *MilestoneManager) recalculateTitle() {
 	// Chain titles take priority (use latest completed chain's title)
 	bestChainTitle := ""
@@ -228,6 +281,15 @@ func (mm *MilestoneManager) GetCurrentTitle() string {
 func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params MilestoneSnapshotParams) []MilestoneProgress {
 	var progress []MilestoneProgress
 
+	if def.MinTick > 0 {
+		progress = append(progress, MilestoneProgress{
+			Label:   "Ticks survived",
+			Current: float64(params.Tick),
+			Target:  float64(def.MinTick),
+			Met:     params.Tick >= def.MinTick,
+		})
+	}
+
 	if def.MinAge != "" {
 		currentOrder := params.AgeOrder[params.Age]
 		targetOrder := params.AgeOrder[def.MinAge]
@@ -240,20 +302,35 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 		})
 	}
 
-	for res, required := range def.MinResources {
+	// Sort resource keys before iterating — map iteration order is random,
+	// which would cause progress bar lines to flicker each tick.
+	resKeys := make([]string, 0, len(def.MinResources))
+	for res := range def.MinResources {
+		resKeys = append(resKeys, res)
+	}
+	sort.Strings(resKeys)
+	for _, res := range resKeys {
+		required := def.MinResources[res]
 		current := params.Resources[res]
 		progress = append(progress, MilestoneProgress{
-			Label:   fmt.Sprintf("%s", res),
+			Label:   res,
 			Current: current,
 			Target:  required,
 			Met:     current >= required,
 		})
 	}
 
-	for bld, required := range def.MinBuildings {
+	// Sort building keys before iterating — same reason as resources.
+	bldKeys := make([]string, 0, len(def.MinBuildings))
+	for bld := range def.MinBuildings {
+		bldKeys = append(bldKeys, bld)
+	}
+	sort.Strings(bldKeys)
+	for _, bld := range bldKeys {
+		required := def.MinBuildings[bld]
 		current := float64(params.Buildings[bld])
 		progress = append(progress, MilestoneProgress{
-			Label:   fmt.Sprintf("%s", bld),
+			Label:   bld,
 			Current: current,
 			Target:  float64(required),
 			Met:     int(current) >= required,
@@ -280,19 +357,68 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 
 	// Special conditions
 	switch def.Key {
+	case "early_builder":
+		progress = append(progress, MilestoneProgress{
+			Label:   "Buildings built",
+			Current: float64(params.TotalBuilt),
+			Target:  500,
+			Met:     params.TotalBuilt >= 500,
+		})
+	case "seasoned_builder":
+		progress = append(progress, MilestoneProgress{
+			Label:   "Buildings built",
+			Current: float64(params.TotalBuilt),
+			Target:  2000,
+			Met:     params.TotalBuilt >= 2000,
+		})
 	case "master_builder":
 		progress = append(progress, MilestoneProgress{
 			Label:   "Buildings built",
 			Current: float64(params.TotalBuilt),
-			Target:  20,
-			Met:     params.TotalBuilt >= 20,
+			Target:  5000,
+			Met:     params.TotalBuilt >= 5000,
+		})
+	case "grand_architect":
+		progress = append(progress, MilestoneProgress{
+			Label:   "Buildings built",
+			Current: float64(params.TotalBuilt),
+			Target:  20000,
+			Met:     params.TotalBuilt >= 20000,
+		})
+	case "first_soldiers":
+		progress = append(progress, MilestoneProgress{
+			Label:   "Soldiers",
+			Current: float64(params.SoldierCount),
+			Target:  5,
+			Met:     params.SoldierCount >= 5,
+		})
+	case "standing_army":
+		progress = append(progress, MilestoneProgress{
+			Label:   "Soldiers",
+			Current: float64(params.SoldierCount),
+			Target:  100,
+			Met:     params.SoldierCount >= 100,
 		})
 	case "war_machine":
 		progress = append(progress, MilestoneProgress{
 			Label:   "Soldiers",
 			Current: float64(params.SoldierCount),
-			Target:  10,
-			Met:     params.SoldierCount >= 10,
+			Target:  250,
+			Met:     params.SoldierCount >= 250,
+		})
+	case "iron_legion":
+		progress = append(progress, MilestoneProgress{
+			Label:   "Soldiers",
+			Current: float64(params.SoldierCount),
+			Target:  500,
+			Met:     params.SoldierCount >= 500,
+		})
+	case "military_superpower":
+		progress = append(progress, MilestoneProgress{
+			Label:   "Soldiers",
+			Current: float64(params.SoldierCount),
+			Target:  2000,
+			Met:     params.SoldierCount >= 2000,
 		})
 	case "wonder_builder":
 		progress = append(progress, MilestoneProgress{
@@ -300,6 +426,27 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 			Current: float64(params.WonderCount),
 			Target:  1,
 			Met:     params.WonderCount >= 1,
+		})
+	case "wonder_collector":
+		progress = append(progress, MilestoneProgress{
+			Label:   "Wonders",
+			Current: float64(params.WonderCount),
+			Target:  8,
+			Met:     params.WonderCount >= 8,
+		})
+	case "wonder_empire":
+		progress = append(progress, MilestoneProgress{
+			Label:   "Wonders",
+			Current: float64(params.WonderCount),
+			Target:  15,
+			Met:     params.WonderCount >= 15,
+		})
+	case "scholars_haven":
+		progress = append(progress, MilestoneProgress{
+			Label:   "Knowledge workers",
+			Current: float64(params.KnowledgeCount),
+			Target:  50,
+			Met:     params.KnowledgeCount >= 50,
 		})
 	}
 

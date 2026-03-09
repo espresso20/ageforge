@@ -6,12 +6,19 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// DiplomacyManager handles NPC factions and diplomatic relations
+// DiplomacyManager handles NPC faction discovery and diplomatic relations.
+// Factions are discovered automatically when the player reaches their MinAge.
+// Opinion drifts toward zero over time and drops for rival/embargo statuses.
+// Allied factions provide trade bonuses for their specialty resource, which
+// TradeManager applies on each trade route cycle.
 type DiplomacyManager struct {
 	factions map[string]*FactionState
 }
 
-// FactionState tracks the relationship with an NPC faction
+// FactionState tracks the relationship with one NPC faction.
+// Opinion range: -100 (hostile) to +100 (beloved).
+// Status transitions: neutral → friendly (opinion ≥ 25 after gift) → allied (opinion ≥ 50, 500 gold).
+// rival and embargo both cause -5 opinion per 50 ticks.
 type FactionState struct {
 	Discovered bool
 	Opinion    int    // -100 to 100
@@ -174,9 +181,11 @@ func (dm *DiplomacyManager) Tick(age string, ageOrder map[string]int, tick int) 
 	return messages
 }
 
-// RecordTrade records a trade cycle completion for faction opinion
+// RecordTrade is called by TradeManager on each completed trade cycle to
+// increment opinion with all discovered factions (+1 per cycle). This
+// provides a passive path to friendly status without spending gold on gifts.
 func (dm *DiplomacyManager) RecordTrade() {
-	// Each active trade gives +1 opinion to all discovered factions
+	// Each active trade cycle gives +1 opinion to all discovered factions
 	for _, fs := range dm.factions {
 		if !fs.Discovered {
 			continue

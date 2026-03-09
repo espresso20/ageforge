@@ -25,7 +25,7 @@ func (gs *GameStats) RecordBuild() {
 	gs.TotalBuilt++
 }
 
-// RecordRecruit records villager recruitment
+// RecordRecruit records worker recruitment
 func (gs *GameStats) RecordRecruit(count int) {
 	gs.TotalRecruited += count
 }

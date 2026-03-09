@@ -9,12 +9,25 @@ import (
 	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/espresso20/ageforge/config"
 )
 
-// saveHMACKey is used to sign the save payload. Knowing this key allows clearing the shame badge.
+// saveHMACKey is the HMAC signing key for save integrity. Its presence in the
+// binary means a determined player can forge a valid signature, which is
+// intentional — the badge system is cosmetic, not security-critical.
 const saveHMACKey = "ageforge-v1-save-integrity"
 
-// GameSave represents a saved game state
+// GameSave is the serialised on-disk representation of a game state.
+// All subsystem state is flattened into simple slices, maps, and scalars
+// so the file remains readable as plain JSON and backward-compatible across
+// schema additions (new optional fields default to zero/nil on old saves).
+//
+// Integrity fields:
+//   - Signature: HMAC-SHA256 of the payload (excluding sig/proof). Tampered
+//     saves produce a mismatch → cheaterBadge is set on load.
+//   - Proof: HMAC of the Signature using forgeMasterKey. Present only when
+//     the player has the elite badge; verifying this clears the cheater badge.
 type GameSave struct {
 	Timestamp  time.Time               `json:"timestamp"`
 	Tick       int                     `json:"tick"`
@@ -22,7 +35,7 @@ type GameSave struct {
 	Resources  map[string]float64      `json:"resources"`
 	Storage    map[string]float64      `json:"storage"`
 	Buildings  map[string]int          `json:"buildings"`
-	Villagers  map[string]VillagerInfo `json:"villagers"`
+	Workers    map[string]WorkerInfo   `json:"workers"`
 	Unlocked   UnlockedState           `json:"unlocked"`
 	Stats      *GameStats              `json:"stats"`
 	// Phase 3 additions
@@ -39,6 +52,18 @@ type GameSave struct {
 	Diplomacy        DiplomacySave       `json:"diplomacy"`
 	SpeedMultiplier  float64             `json:"speed_multiplier"`
 	WonderBanks      map[string]map[string]float64 `json:"wonder_banks,omitempty"`
+	// Phase 7: legacy building keys
+	LegacyBuildings []string `json:"legacy_buildings,omitempty"`
+	// Phase 8: epoch system
+	CurrentEpoch       string            `json:"current_epoch,omitempty"`
+	EpochEventFired    map[string]bool   `json:"epoch_event_fired,omitempty"`
+	SurvivedEpochs     map[string]bool   `json:"survived_epochs,omitempty"`
+	PendingCatastrophe string            `json:"pending_catastrophe,omitempty"`
+	EpochEventHistory  []EpochEventRecord `json:"epoch_event_history,omitempty"`
+	// Phase 9: catastrophe system (persist across Succumb and Prestige)
+	Ruins              map[string]int    `json:"ruins,omitempty"`
+	LegacyBonuses      map[string]bool   `json:"legacy_bonuses,omitempty"`
+	CatastropheHistory []string          `json:"catastrophe_history,omitempty"`
 	// Integrity fields
 	CheaterBadge bool   `json:"cheater_badge,omitempty"`
 	EliteBadge   bool   `json:"elite_badge,omitempty"`
@@ -46,7 +71,9 @@ type GameSave struct {
 	Proof        string `json:"_proof,omitempty"`
 }
 
-// signSave returns the HMAC-SHA256 hex of the save payload (sig and proof cleared).
+// signSave returns the HMAC-SHA256 hex of the save payload.
+// Signature and Proof are zeroed before marshalling so the signature covers
+// the game data only, not a prior signature value.
 func signSave(gs GameSave, key string) string {
 	gs.Signature = ""
 	gs.Proof = ""
@@ -83,7 +110,7 @@ func verifySave(gs *GameSave) (sigValid, eliteValid bool) {
 // PeekSaveBadges reads a save file and returns its badge state without loading the engine.
 // Used by the splash screen to show the elite badge before the game starts.
 func PeekSaveBadges(filename string) (cheater, elite bool) {
-	path := filepath.Join(saveDir, filename+".json")
+	path := savePath(filename)
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return false, false
@@ -152,20 +179,51 @@ type EventSave struct {
 type UnlockedState struct {
 	Resources []string `json:"resources"`
 	Buildings []string `json:"buildings"`
-	Villagers []string `json:"villagers"`
+	Workers   []string `json:"workers"`
 }
 
-const saveDir = "data/saves"
+// saveDirectory returns the canonical save directory: data/saves/ next to the binary.
+// Falls back to a CWD-relative path if the binary path cannot be determined.
+func saveDirectory() string {
+	exe, err := os.Executable()
+	if err != nil {
+		return "data/saves"
+	}
+	exe, err = filepath.EvalSymlinks(exe)
+	if err != nil {
+		return "data/saves"
+	}
+	return filepath.Join(filepath.Dir(exe), "data", "saves")
+}
 
-// SaveGame saves the current game state
+// savePath returns the full path for a named save file.
+// It checks the canonical (binary-relative) location first, then falls back to
+// the legacy CWD-relative location so saves from older versions are still found.
+func savePath(filename string) string {
+	primary := filepath.Join(saveDirectory(), filename+".json")
+	if _, err := os.Stat(primary); err == nil {
+		return primary
+	}
+	legacy := filepath.Join("data", "saves", filename+".json")
+	if _, err := os.Stat(legacy); err == nil {
+		return legacy
+	}
+	return primary // default to canonical for new saves
+}
+
+// SaveGame serialises current engine state to filename.json in the save directory.
+// The save is written atomically (temp file + rename) to prevent corruption if
+// the process is killed mid-write. The payload is HMAC-signed before writing.
+// NOTE: SaveGame acquires only an RLock for the snapshot, so it can run
+// concurrently with reads but not concurrent writes (doTick).
 func (ge *GameEngine) SaveGame(filename string) error {
-	if err := os.MkdirAll(saveDir, 0755); err != nil {
+	dir := saveDirectory()
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create save directory: %w", err)
 	}
 
-	// Snapshot + sign + marshal under lock. The data is small so marshal is fast,
-	// and this avoids aliasing bugs where doTick mutates shared maps/slices
-	// while json.Marshal reads them concurrently.
+	// Take the read lock for the snapshot + marshal so doTick cannot mutate
+	// maps/slices while json.Marshal is iterating over them.
 	ge.mu.RLock()
 	save := ge.buildSaveSnapshot()
 	// Sign the payload (sig/proof are empty in snapshot)
@@ -184,7 +242,7 @@ func (ge *GameEngine) SaveGame(filename string) error {
 	}
 
 	// Atomic write: temp file + rename to prevent corruption on crash
-	path := filepath.Join(saveDir, filename+".json")
+	path := filepath.Join(dir, filename+".json")
 	tmpPath := path + ".tmp"
 	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
 		return fmt.Errorf("failed to write save: %w", err)
@@ -256,7 +314,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		Resources: ge.Resources.GetAll(),
 		Storage:   ge.Resources.GetAllStorage(),
 		Buildings: ge.Buildings.GetAll(),
-		Villagers: ge.Villagers.GetAll(),
+		Workers:   ge.Workers.GetAll(),
 		Unlocked:  ge.getUnlockedState(),
 		Stats: &GameStats{
 			TotalBuilt:     ge.Stats.TotalBuilt,
@@ -306,15 +364,28 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		},
 		SpeedMultiplier: ge.speedMultiplier,
 		WonderBanks:     ge.Buildings.GetWonderBanks(),
-		CheaterBadge:    ge.cheaterBadge,
-		EliteBadge:      ge.eliteBadge,
+		LegacyBuildings:    ge.Buildings.GetLegacyBuildings(),
+		CheaterBadge:       ge.cheaterBadge,
+		EliteBadge:         ge.eliteBadge,
+		CurrentEpoch:       ge.currentEpoch,
+		EpochEventFired:    copyBoolMap(ge.epochEventFired),
+		SurvivedEpochs:     copyBoolMap(ge.survivedEpochs),
+		PendingCatastrophe: ge.pendingCatastrophe,
+		EpochEventHistory:  append([]EpochEventRecord(nil), ge.epochEventHistory...),
+		Ruins:              ge.Buildings.GetAllRuins(),
+		LegacyBonuses:      copyBoolMap(ge.legacyBonuses),
+		CatastropheHistory: append([]string(nil), ge.catastropheHistory...),
 	}
 }
 
-// LoadGame restores game state from a file
+// LoadGame reads a save file, verifies its integrity, and restores all engine
+// state under the write lock. File I/O is done outside the lock to avoid
+// blocking doTick for the duration of a slow disk read.
+// Integrity check: if the signature is present and invalid, cheaterBadge is
+// set. If a valid elite proof is found, eliteBadge is set and cheaterBadge cleared.
 func (ge *GameEngine) LoadGame(filename string) error {
-	// File I/O outside the lock
-	path := filepath.Join(saveDir, filename+".json")
+	// File I/O outside the lock — avoids holding the write lock during disk access
+	path := savePath(filename)
 	data, err := os.ReadFile(path)
 	if err != nil {
 		return fmt.Errorf("failed to read save: %w", err)
@@ -342,12 +413,13 @@ func (ge *GameEngine) LoadGame(filename string) error {
 
 	ge.tick = save.Tick
 	ge.age = save.Age
+	ge.Workers.SetAge(save.Age)
 	ge.Resources.LoadAmounts(save.Resources)
 	if save.Storage != nil {
 		ge.Resources.LoadStorage(save.Storage)
 	}
 	ge.Buildings.LoadCounts(save.Buildings)
-	ge.Villagers.LoadVillagers(save.Villagers)
+	ge.Workers.LoadWorkers(save.Workers)
 	if save.Stats != nil {
 		// Deep copy stats to avoid aliasing with the deserialized save
 		gathered := make(map[string]float64, len(save.Stats.TotalGathered))
@@ -373,8 +445,8 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	for _, key := range save.Unlocked.Buildings {
 		ge.Buildings.UnlockBuilding(key)
 	}
-	for _, key := range save.Unlocked.Villagers {
-		ge.Villagers.UnlockType(key)
+	if len(save.Unlocked.Workers) > 0 {
+		ge.Workers.UnlockType("worker")
 	}
 
 	// Restore Phase 3 systems
@@ -406,6 +478,11 @@ func (ge *GameEngine) LoadGame(filename string) error {
 		ge.Buildings.LoadWonderBanks(save.WonderBanks)
 	}
 
+	// Restore Phase 7: legacy buildings
+	if len(save.LegacyBuildings) > 0 {
+		ge.Buildings.LoadLegacyBuildings(save.LegacyBuildings)
+	}
+
 	// Restore speed multiplier
 	ge.speedMultiplier = save.SpeedMultiplier
 	if ge.speedMultiplier < 1.0 {
@@ -416,6 +493,36 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.cheaterBadge = save.CheaterBadge
 	ge.eliteBadge = save.EliteBadge
 
+	// Restore Phase 8: epoch system
+	if save.CurrentEpoch != "" {
+		ge.currentEpoch = save.CurrentEpoch
+	} else {
+		ge.currentEpoch = config.EpochForAge(save.Age)
+	}
+	if save.EpochEventFired != nil {
+		ge.epochEventFired = save.EpochEventFired
+	} else {
+		ge.epochEventFired = make(map[string]bool)
+	}
+	if save.SurvivedEpochs != nil {
+		ge.survivedEpochs = save.SurvivedEpochs
+	} else {
+		ge.survivedEpochs = make(map[string]bool)
+	}
+	ge.pendingCatastrophe = save.PendingCatastrophe
+	ge.epochEventHistory = save.EpochEventHistory
+
+	// Restore Phase 9: catastrophe system
+	if save.Ruins != nil {
+		ge.Buildings.LoadRuins(save.Ruins)
+	}
+	if save.LegacyBonuses != nil {
+		ge.legacyBonuses = save.LegacyBonuses
+	} else {
+		ge.legacyBonuses = make(map[string]bool)
+	}
+	ge.catastropheHistory = save.CatastropheHistory
+
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()
 
@@ -425,7 +532,23 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	return nil
 }
 
-// getUnlockedState collects all unlock states for saving
+// copyBoolMap returns a deep copy of a map[string]bool.
+func copyBoolMap(m map[string]bool) map[string]bool {
+	if m == nil {
+		return nil
+	}
+	out := make(map[string]bool, len(m))
+	for k, v := range m {
+		out[k] = v
+	}
+	return out
+}
+
+// getUnlockedState collects all resource, building, and worker unlocks for
+// the current age and all prior ages. On load, these lists are replayed to
+// restore the Buildings.unlocked / Resources.unlocked maps without having to
+// re-run the full age advance sequence.
+// NOTE: Must be called with the lock held (called from buildSaveSnapshot).
 func (ge *GameEngine) getUnlockedState() UnlockedState {
 	state := UnlockedState{}
 	for _, def := range ge.progress.ages {
@@ -434,7 +557,7 @@ func (ge *GameEngine) getUnlockedState() UnlockedState {
 		if order <= currentOrder {
 			state.Resources = append(state.Resources, def.UnlockResources...)
 			state.Buildings = append(state.Buildings, def.UnlockBuildings...)
-			state.Villagers = append(state.Villagers, def.UnlockVillagers...)
+			state.Workers = append(state.Workers, def.UnlockVillagers...)
 		}
 	}
 	return state
@@ -442,7 +565,7 @@ func (ge *GameEngine) getUnlockedState() UnlockedState {
 
 // ListSaves returns available save files
 func ListSaves() ([]string, error) {
-	entries, err := os.ReadDir(saveDir)
+	entries, err := os.ReadDir(saveDirectory())
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -468,7 +591,8 @@ type SaveInfo struct {
 
 // ListSaveDetails returns metadata for each save file
 func ListSaveDetails() ([]SaveInfo, error) {
-	entries, err := os.ReadDir(saveDir)
+	dir := saveDirectory()
+	entries, err := os.ReadDir(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil, nil
@@ -481,7 +605,7 @@ func ListSaveDetails() ([]SaveInfo, error) {
 			continue
 		}
 		name := e.Name()[:len(e.Name())-5]
-		path := filepath.Join(saveDir, e.Name())
+		path := filepath.Join(dir, e.Name())
 		data, err := os.ReadFile(path)
 		if err != nil {
 			continue
@@ -504,7 +628,8 @@ func ListSaveDetails() ([]SaveInfo, error) {
 
 // WipeAllSaves deletes all save files
 func WipeAllSaves() error {
-	entries, err := os.ReadDir(saveDir)
+	dir := saveDirectory()
+	entries, err := os.ReadDir(dir)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return nil
@@ -513,15 +638,14 @@ func WipeAllSaves() error {
 	}
 	for _, e := range entries {
 		if !e.IsDir() && filepath.Ext(e.Name()) == ".json" {
-			os.Remove(filepath.Join(saveDir, e.Name()))
+			os.Remove(filepath.Join(dir, e.Name()))
 		}
 	}
 	return nil
 }
 
-// SaveExists checks if a save file exists
+// SaveExists checks if a save file exists at either the canonical or legacy path.
 func SaveExists(filename string) bool {
-	path := filepath.Join(saveDir, filename+".json")
-	_, err := os.Stat(path)
+	_, err := os.Stat(savePath(filename))
 	return err == nil
 }

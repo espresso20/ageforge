@@ -14,17 +14,19 @@ You're in the **Primitive Age**. The screen shows:
 You have 0 workers and minimal resources. Let's fix that.
 
 ```
-gather wood 5
-gather food 5
+gather wood 10
+gather food 10
 ``` 
 
-repeat until you have gathered enough wood to build a hut
+Repeat until you have gathered enough wood to build a hut
+
+*hint* You can use the up arrow to recall previous commands and spam that gathering!
 
 ---
 
 ## Step 1: Build housing immediately
 
-Your pop cap is 6. You need more. Build huts first — realize those worker gains.
+Your pop cap is 10 per hut. You need more. Build huts first — realize those worker gains.
 
 ```
 build hut
@@ -32,7 +34,7 @@ build hut
 build hut
 ```
 
-While those build (3 ticks each), watch the build queue progress bar in the Economy tab. Queue a new one as soon as each finishes and you have gathered enough resources to build more!. **Aim for 5 huts in your first minute.**
+While those build (8 ticks each), watch the build queue progress bar in the Economy tab. Queue a new one as soon as each finishes and you have gathered enough resources to build more!. **Aim for 5 huts in your first minute.**
 
 ---
 
@@ -48,66 +50,72 @@ Build one or two stashes alongside huts.
 
 ---
 
-## Step 3: Recruit villagers
+## Step 3: Recruit workers
 
-Once your huts are up (pop cap raised), recruit:
+Once your huts are up (pop cap raised), recruit some workers:
 
 ```
-recruit villager
-recruit villager
-recruit villager
+recruit 5
 ```
 
-Keep recruiting until you're at 8–10 pop. Each villager costs food upfront — check your food rate stays positive.
+Workers are recruited generically — there's no domain when recruiting. They become what you **assign** them to. Each worker costs food upfront — check your food rate stays positive after recruiting.
 
 ---
 
 ## Step 4: Assign everyone
 
-This is the most important step. **Idle villagers produce nothing.**
+This is the most important step. **Idle workers produce nothing and still consume food.**
 
 ```
-assign worker food 3
-assign worker wood 2
-assign shaman knowledge 1
+assign gathering_camp 3
+assign story_circle 1
+assign shrine 1
 ```
 
 General rule for early game:
-- Half your workers → food
-- Remaining workers → wood
-- All shamans → knowledge
+- 3–4 workers → gathering_camp (food production)
+- 1–2 workers → story_circle (knowledge)
+- 1 worker → shrine (faith)
+- If you have a wood_camp, assign 1–2 there
 
-Check the status bar shows **Idle: 0**. If it doesn't, assign the rest.
+Workers derive their role from what they're assigned to — a worker on `gathering_camp` becomes a Gatherer; one on `story_circle` becomes a Shaman. Check the Economy tab (type `status` or view the Economy tab) to see your worker breakdown by domain.
+
+Check the status bar shows **Idle: 0**. If it doesn't, keep assigning.
 
 ---
 
-## Step 5: Build an altar
+## Step 5: Build a story_circle and a shrine
 
-Altars produce knowledge passively. Knowledge is what lets you research techs that multiply everything.
+Story circles produce knowledge passively. Knowledge is what lets you research techs that multiply everything.
 
 ```
-build altar
-build altar
+build story_circle
 ```
 
-Altars are cheap. Build as many as you can afford early.
+Story circles are cheap — build as many as you can afford early.
+
+Also build your first **shrine**. Shrines produce faith, which helps prevent long-term civilisation-level disasters and contributes to epoch events.
+
+```
+build shrine
+```
 
 ---
 
 ## Step 6: Watch your rates
 
-Press `F1` (or just wait — you're already there). Look at the rate column:
+Open the Economy tab (or just wait — you're already there). Look at the rate column:
 - `food: +N/t` — should be positive (at least +2)
 - `wood: +N/t` — should be positive (at least +1)
 - `knowledge: +N/t` — should be positive (at least +1)
 
-If food is negative, add more workers to food. If knowledge is zero, assign more shamans or build more altars.
+If food is negative, assign more workers to gathering_camp. If knowledge is zero, assign workers to story_circle or build more of them.
 
 ---
 
 ## Step 7: Research your first tech
 
-Once you hit 2,500 knowledge (watch the knowledge bar):
+Once you hit 800 knowledge (watch the knowledge bar):
 
 ```
 research tool_making
@@ -143,17 +151,17 @@ The second row always shows what you need for the **next age**. For Stone Age:
 - Wood: 5,200
 - Knowledge: 1,400
 - Huts: 20
-- Altars: 10
+- Story Circles: 5
 
-Keep building huts and altars. Keep assigning workers. Keep knowledge flowing. The age advances **automatically** when all bars fill.
+Keep building huts and story circles. Keep assigning workers. Keep knowledge flowing. The age advances **automatically** when all bars fill.
 
 ---
 
 ## Checklist at the Stone Age transition
 
 Before you advance, you should have:
-- [ ] 15–20 huts
-- [ ] 8–10 altars
+- [ ] 20 huts
+- [ ] 5 story circles
 - [ ] 3–4 stashes
 - [ ] 10+ pop, all assigned
 - [ ] Tool Making researched
@@ -165,13 +173,17 @@ Before you advance, you should have:
 
 When you reach Stone Age:
 - **Stone** resource unlocks (needed for Bronze Age)
-- **Gathering Camp** — boosts food and wood
 - **Stone Pit** — produces stone passively
+- **Stone Camp** — early masonry production building
 - **Woodcutter Camp** — dedicated wood building
-- **Firepit** — better knowledge building
+- **Forager Post** — upgraded food building
+- **Standing Stones** — better faith building
+- **Elders' Hall** — upgraded knowledge building
+- **Longhouse** — bigger housing (+20 pop cap each)
+- **War Camp** — early military building
 - **Great Monolith** — first major wonder
 
-Your first priority: build **Stone Pits** and assign workers to wood, because Bronze Age needs a lot of both.
+Your first priority: build **Stone Pits** and **Woodcutter Camps**, and assign workers to them. Bronze Age needs a lot of stone and wood.
 
 ---
 
@@ -181,13 +193,16 @@ Your first priority: build **Stone Pits** and assign workers to wood, because Br
 |---|---|
 | Build a hut | `build hut` |
 | Build a stash | `build stash` |
-| Build an altar | `build altar` |
-| Recruit a villager | `recruit villager` |
-| Assign workers to food | `assign worker food 3` |
-| Assign shaman to knowledge | `assign shaman knowledge 1` |
+| Build a story circle | `build story_circle` |
+| Build a shrine | `build shrine` |
+| Recruit workers | `recruit [count]` or `recruit max` |
+| Assign workers to gathering camp | `assign gathering_camp 3` |
+| Assign workers to story circle | `assign story_circle 1` |
+| Unassign a worker from a building | `unassign gathering_camp 1` |
 | Start first research | `research tool_making` |
-| Check economy tab | `e` or `F1` |
-| Check logs | `l` or `F7` |
+| Check economy tab | `status` |
+| Check worker breakdown | `status` |
+| Check logs | `logs` |
 | Save the game | `Esc` |
 
 ---

@@ -7,10 +7,11 @@ import (
 	"strings"
 )
 
-// ProgressBar returns a text-based progress bar
+// ProgressBar returns a text-based progress bar with colored segments.
+// Filled portion uses BarFillColor (purple), empty portion uses BarEmptyColor (dark gray).
 func ProgressBar(current, max float64, width int) string {
 	if max <= 0 {
-		return strings.Repeat("░", width)
+		return "[" + BarEmptyColor + "]" + strings.Repeat("░", width) + "[-]"
 	}
 	ratio := current / max
 	if ratio > 1 {
@@ -21,7 +22,7 @@ func ProgressBar(current, max float64, width int) string {
 	}
 	filled := int(ratio * float64(width))
 	empty := width - filled
-	return strings.Repeat("█", filled) + strings.Repeat("░", empty)
+	return "[" + BarFillColor + "]" + strings.Repeat("█", filled) + "[" + BarEmptyColor + "]" + strings.Repeat("░", empty) + "[-]"
 }
 
 // suffixes for large number formatting

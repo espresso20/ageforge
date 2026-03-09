@@ -11,13 +11,20 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-// CommandResult represents the result of a command execution
+// CommandResult is the return value of HandleCommand. The caller (Dashboard)
+// logs Message if it is non-empty and Type != "success" (successes are
+// ephemeral and only shown as toast/log entries by the engine itself).
+// If OverlayName is set the Dashboard opens that named overlay panel.
 type CommandResult struct {
-	Message string
-	Type    string // "info", "success", "error"
+	Message     string
+	Type        string // "info", "success", "error", "warning"
+	OverlayName string // non-empty → dashboard should open this overlay panel
 }
 
-// HandleCommand parses and executes a command string
+// HandleCommand parses a raw command string and dispatches to the appropriate
+// sub-handler. Single-letter shortcuts (g, b, r, a, u, s, t) are normalised
+// to their full equivalents before switching. Commands that purely open an
+// overlay return an empty Message with OverlayName set.
 func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 	parts := strings.Fields(strings.TrimSpace(input))
 	if len(parts) == 0 {
@@ -43,6 +50,9 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 	case "status", "s":
 		return cmdStatus(engine)
 	case "research", "res":
+		if len(args) == 0 {
+			return CommandResult{OverlayName: "techs"}
+		}
 		return cmdResearch(args, engine)
 	case "expedition", "exp":
 		return cmdExpedition(args, engine)
@@ -62,6 +72,22 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdUpgrade(args, engine)
 	case "advance":
 		return cmdAdvance(engine)
+	case "milestones", "ms":
+		return CommandResult{OverlayName: "milestones"}
+	case "techs":
+		return CommandResult{OverlayName: "techs"}
+	case "army":
+		return CommandResult{OverlayName: "army"}
+	case "stats":
+		return CommandResult{OverlayName: "stats"}
+	case "wonders":
+		return CommandResult{OverlayName: "wonders"}
+	case "logs":
+		return CommandResult{OverlayName: "logs"}
+	case "epoch":
+		return CommandResult{OverlayName: "epoch"}
+	case "catastrophe", "cat":
+		return cmdCatastrophe(args, engine)
 	case "dump", "exportlogs":
 		return cmdDump(args, engine)
 	case "saves":
@@ -187,9 +213,9 @@ func cmdHelp(args []string) CommandResult {
 	help := `[gold]Commands:[-]
   [cyan]gather[-] <food|wood|stone> [n] - Hand-gather resources (max 5)
   [cyan]build[-] <building> [count|max] - Build structure(s) (default: 1)
-  [cyan]recruit[-] <type> [count|max]  - Recruit villagers (default: 1)
-  [cyan]assign[-] <type> <resource> [n|all]- Assign villagers to gather
-  [cyan]unassign[-] <type> <resource> [n|all]- Unassign villagers
+  [cyan]recruit[-] [count|max]          - Recruit workers from available housing capacity and assign to buildings (default: 1)
+  [cyan]assign[-] <building> [n|all]   - Assign workers to a building
+  [cyan]unassign[-] <building> [n|all] - Unassign workers from a building
   [cyan]advance[-]                     - Advance to the next age (when ready)
   [cyan]research[-] <tech_key>         - Research a technology
   [cyan]research[-] cancel             - Cancel current research
@@ -223,6 +249,7 @@ func cmdHelp(args []string) CommandResult {
   [cyan]wonder[-]                      - Show current wonder bank status
   [cyan]wonder collect[-] <res> <amt|all> - Bank resources into current wonder
   [cyan]speed[-] [1.0|1.5|2.0|...]     - Set game speed (unlocks per wonder built)
+  [cyan]catastrophe invoke[-]           - Voluntarily trigger the epoch catastrophe
   [cyan]help[-]                        - Show this help
 
 [gold]Shortcuts:[-] g=gather, b=build, r=recruit, a=assign, u=unassign, s=status, res=research, exp=expedition, t=trade, dip=diplomacy`
@@ -297,7 +324,7 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	sb.WriteString(fmt.Sprintf("Tick: %d\n", state.Tick))
 	sb.WriteString(fmt.Sprintf("Age: %s (%s)\n", state.AgeName, state.Age))
 	sb.WriteString(fmt.Sprintf("Population: %d/%d (idle: %d, food drain: %.2f/tick)\n",
-		state.Villagers.TotalPop, state.Villagers.MaxPop, state.Villagers.TotalIdle, state.Villagers.FoodDrain))
+		state.Workers.TotalPop, state.Workers.MaxPop, state.Workers.TotalIdle, state.Workers.FoodDrain))
 	sb.WriteString("\n--- Resources ---\n")
 	for _, rs := range state.Resources {
 		if !rs.Unlocked {
@@ -358,7 +385,7 @@ func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 		}
 	}
 	if amount > 10 {
-		amount = 10000
+		amount = 10
 	}
 	actual, err := engine.GatherResource(resource, amount)
 	if err != nil {
@@ -393,7 +420,9 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 	}
 	key := strings.ToLower(args[0])
 
-	// Check for count or "max"
+	// "build <key> [count|max]" — passing 10000 as the count is a sentinel
+	// that tells BuildMultiple "keep building until you can't afford it or
+	// hit the MaxCount limit". BuildMultiple returns the actual count built.
 	if len(args) >= 2 {
 		countArg := strings.ToLower(args[1])
 		count := 0
@@ -424,96 +453,91 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 }
 
 func cmdRecruit(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 1 {
-		return CommandResult{Message: "Usage: recruit <worker|scholar> [count|max]", Type: "error"}
+	if len(args) == 0 {
+		if err := engine.RecruitWorker("worker", 1); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: "Recruited 1 worker!", Type: "success"}
 	}
-	vType := strings.ToLower(args[0])
 
-	// Check for "max"
-	if len(args) >= 2 && strings.ToLower(args[1]) == "max" {
-		recruited, err := engine.RecruitMax(vType)
+	arg := strings.ToLower(args[0])
+	if arg == "max" {
+		recruited, err := engine.RecruitMax("worker")
+		if err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Recruited %d workers!", recruited), Type: "success"}
+	}
+
+	n, err := strconv.Atoi(arg)
+	if err != nil || n <= 0 {
+		return CommandResult{
+			Message: "Usage: recruit [count|max] — workers are recruited from available housing capacity and assigned to buildings.",
+			Type:    "error",
+		}
+	}
+	if err := engine.RecruitWorker("worker", n); err != nil {
+		return CommandResult{Message: err.Error(), Type: "error"}
+	}
+	return CommandResult{Message: fmt.Sprintf("Recruited %d worker(s)!", n), Type: "success"}
+}
+
+func cmdAssign(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) < 1 {
+		return CommandResult{Message: "Usage: assign <building> [count|all]", Type: "error"}
+	}
+	building := strings.ToLower(args[0])
+	if len(args) >= 2 && strings.ToLower(args[1]) == "all" {
+		n, err := engine.AssignAll(building)
 		if err != nil {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
 		return CommandResult{
-			Message: fmt.Sprintf("Recruited %d %s(s)!", recruited, vType),
+			Message: fmt.Sprintf("Assigned all %d workers to %s", n, building),
 			Type:    "success",
 		}
 	}
-
 	count := 1
 	if len(args) >= 2 {
 		if n, err := strconv.Atoi(args[1]); err == nil && n > 0 {
 			count = n
 		}
 	}
-	if err := engine.RecruitVillager(vType, count); err != nil {
+	if err := engine.AssignWorker(building, count); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
 	}
 	return CommandResult{
-		Message: fmt.Sprintf("Recruited %d %s(s)!", count, vType),
-		Type:    "success",
-	}
-}
-
-func cmdAssign(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 2 {
-		return CommandResult{Message: "Usage: assign <type> <resource> [count|all]", Type: "error"}
-	}
-	vType := strings.ToLower(args[0])
-	resource := strings.ToLower(args[1])
-	if len(args) >= 3 && strings.ToLower(args[2]) == "all" {
-		n, err := engine.AssignAll(vType, resource)
-		if err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
-		}
-		return CommandResult{
-			Message: fmt.Sprintf("Assigned all %d %s(s) to %s", n, vType, resource),
-			Type:    "success",
-		}
-	}
-	count := 1
-	if len(args) >= 3 {
-		if n, err := strconv.Atoi(args[2]); err == nil && n > 0 {
-			count = n
-		}
-	}
-	if err := engine.AssignVillager(vType, resource, count); err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
-	}
-	return CommandResult{
-		Message: fmt.Sprintf("Assigned %d %s(s) to %s", count, vType, resource),
+		Message: fmt.Sprintf("Assigned %d worker(s) to %s", count, building),
 		Type:    "success",
 	}
 }
 
 func cmdUnassign(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 2 {
-		return CommandResult{Message: "Usage: unassign <type> <resource> [count|all]", Type: "error"}
+	if len(args) < 1 {
+		return CommandResult{Message: "Usage: unassign <building> [count|all]", Type: "error"}
 	}
-	vType := strings.ToLower(args[0])
-	resource := strings.ToLower(args[1])
-	if len(args) >= 3 && strings.ToLower(args[2]) == "all" {
-		n, err := engine.UnassignAll(vType, resource)
+	building := strings.ToLower(args[0])
+	if len(args) >= 2 && strings.ToLower(args[1]) == "all" {
+		n, err := engine.UnassignAll(building)
 		if err != nil {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
 		return CommandResult{
-			Message: fmt.Sprintf("Unassigned all %d %s(s) from %s", n, vType, resource),
+			Message: fmt.Sprintf("Unassigned all %d workers from %s", n, building),
 			Type:    "success",
 		}
 	}
 	count := 1
-	if len(args) >= 3 {
-		if n, err := strconv.Atoi(args[2]); err == nil && n > 0 {
+	if len(args) >= 2 {
+		if n, err := strconv.Atoi(args[1]); err == nil && n > 0 {
 			count = n
 		}
 	}
-	if err := engine.UnassignVillager(vType, resource, count); err != nil {
+	if err := engine.UnassignWorker(building, count); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
 	}
 	return CommandResult{
-		Message: fmt.Sprintf("Unassigned %d %s(s) from %s", count, vType, resource),
+		Message: fmt.Sprintf("Unassigned %d worker(s) from %s", count, building),
 		Type:    "success",
 	}
 }
@@ -538,7 +562,7 @@ func cmdStatus(engine *game.GameEngine) CommandResult {
 	lines = append(lines, "")
 
 	// Population
-	v := state.Villagers
+	v := state.Workers
 	lines = append(lines, fmt.Sprintf("[gold]Population:[-] %d/%d (idle: %d, food drain: %.1f/tick)",
 		v.TotalPop, v.MaxPop, v.TotalIdle, v.FoodDrain))
 	for _, vt := range v.Types {
@@ -546,9 +570,9 @@ func cmdStatus(engine *game.GameEngine) CommandResult {
 			continue
 		}
 		lines = append(lines, fmt.Sprintf("  %-10s %d (idle: %d)", vt.Name, vt.Count, vt.IdleCount))
-		for res, count := range vt.Assignments {
+		for building, count := range vt.Assignments {
 			if count > 0 {
-				lines = append(lines, fmt.Sprintf("    → %s: %d", res, count))
+				lines = append(lines, fmt.Sprintf("    → %s: %d", building, count))
 			}
 		}
 	}
@@ -593,8 +617,8 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 		if b.BuildingRate != 0 {
 			parts = append(parts, fmt.Sprintf("Buildings: %+.2f", b.BuildingRate))
 		}
-		if b.VillagerRate != 0 {
-			parts = append(parts, fmt.Sprintf("Villagers: %+.2f", b.VillagerRate))
+		if b.WorkerRate != 0 {
+			parts = append(parts, fmt.Sprintf("Workers: %+.2f", b.WorkerRate))
 		}
 		if b.ResearchRate != 0 {
 			parts = append(parts, fmt.Sprintf("Research: %+.2f", b.ResearchRate))
@@ -681,8 +705,8 @@ func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 		return CommandResult{Message: "Research cancelled.", Type: "warning"}
 	}
 
-	// Try to start research
-	// Support multi-word keys by joining with underscore
+	// Support multi-word keys entered with spaces by joining all remaining args
+	// with underscores (e.g. "research bronze working" → "bronze_working").
 	techKey := strings.Join(args, "_")
 	if err := engine.StartResearch(techKey); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
@@ -761,7 +785,7 @@ func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
 		var lines []string
 		lines = append(lines, "[yellow]⚠ PRESTIGE WARNING ⚠[-]")
 		lines = append(lines, fmt.Sprintf("  You will earn [cyan]%d[-] prestige points.", p.PendingPoints))
-		lines = append(lines, "  [red]ALL progress will be reset:[-] resources, buildings, villagers, research, military.")
+		lines = append(lines, "  [red]ALL progress will be reset:[-] resources, buildings, workers, research, military.")
 		lines = append(lines, "  Only prestige points and upgrades are kept.")
 		lines = append(lines, "")
 		lines = append(lines, "  Type [cyan]prestige confirm yes[-] to proceed.")
@@ -867,7 +891,7 @@ func cmdExpeditionList(engine *game.GameEngine) CommandResult {
 
 func cmdTrade(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
-		return cmdTradeList(engine)
+		return CommandResult{OverlayName: "trade"}
 	}
 	subcmd := strings.ToLower(args[0])
 
@@ -1066,4 +1090,21 @@ func cmdDiplomacyStatus(engine *game.GameEngine) CommandResult {
 	}
 
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
+
+func cmdCatastrophe(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) < 1 || strings.ToLower(args[0]) != "invoke" {
+		return CommandResult{
+			Message: "Usage: catastrophe invoke — voluntarily trigger the epoch catastrophe\n" +
+				"  [red]Warning: this will open the Endure / Succumb / Defer modal.[-]",
+			Type: "info",
+		}
+	}
+	if err := engine.InvokeCatastrophe(); err != nil {
+		return CommandResult{Message: err.Error(), Type: "error"}
+	}
+	return CommandResult{
+		Message: "[red]Catastrophe invoked! A choice awaits...[-]",
+		Type:    "warning",
+	}
 }

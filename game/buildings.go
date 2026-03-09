@@ -3,25 +3,40 @@ package game
 import (
 	"fmt"
 	"math"
+	"math/rand"
 
 	"github.com/espresso20/ageforge/config"
 )
 
-// BuildingManager manages all buildings
+// BuildingManager manages all buildings, including production buildings, wonders,
+// storage structures, wonder construction banks, legacy flags, and ruins.
+//
+// Key invariants:
+//   - counts[key] is the number of fully-constructed instances of building key.
+//   - ruins[key] are separate from counts; they produce at 50% base rate with no
+//     worker scaling and cannot be rebuilt or demolished.
+//   - legacyBuildings marks old-tier buildings that are still functional but
+//     must not be queued for construction (CanBuild = false in snapshot).
+//   - wonderBanks hold incremental resource deposits; a wonder is only completed
+//     when the bank meets the full BaseCost (via BankResource + IsWonderBankFull).
 type BuildingManager struct {
-	counts      map[string]int
-	defs        map[string]config.BuildingDef
-	unlocked    map[string]bool
-	wonderBanks map[string]map[string]float64 // wonderKey -> resource -> banked amount
+	counts          map[string]int
+	defs            map[string]config.BuildingDef
+	unlocked        map[string]bool
+	wonderBanks     map[string]map[string]float64 // wonderKey -> resource -> banked amount
+	legacyBuildings map[string]bool               // buildings superseded by lineage progression; functional but unbuildable
+	ruins           map[string]int                // ruins from Succumb — produce at 50% base rate, no worker scaling
 }
 
 // NewBuildingManager creates a building manager
 func NewBuildingManager() *BuildingManager {
 	return &BuildingManager{
-		counts:      make(map[string]int),
-		defs:        config.BuildingByKey(),
-		unlocked:    make(map[string]bool),
-		wonderBanks: make(map[string]map[string]float64),
+		counts:          make(map[string]int),
+		defs:            config.BuildingByKey(),
+		unlocked:        make(map[string]bool),
+		wonderBanks:     make(map[string]map[string]float64),
+		legacyBuildings: make(map[string]bool),
+		ruins:           make(map[string]int),
 	}
 }
 
@@ -92,7 +107,9 @@ func (bm *BuildingManager) GetCount(key string) int {
 	return bm.counts[key]
 }
 
-// GetCost calculates the cost for the next building of this type (with scaling)
+// GetCost calculates the cost for the next instance of a building type.
+// Cost scales exponentially: base × CostScale^count, floored to the nearest
+// integer. This makes later copies progressively more expensive.
 func (bm *BuildingManager) GetCost(key string) map[string]float64 {
 	def, ok := bm.defs[key]
 	if !ok {
@@ -126,7 +143,9 @@ func (bm *BuildingManager) Build(key string, resources *ResourceManager) bool {
 	return true
 }
 
-// GetEffects returns the total effects from all built buildings
+// GetEffects returns the aggregate non-production effects from all built buildings
+// (e.g. capacity, storage). Production effects are intentionally excluded here
+// because they depend on the worker fill ratio; use WorkerScaledProduction for those.
 func (bm *BuildingManager) GetEffects() []config.Effect {
 	var effects []config.Effect
 	for key, count := range bm.counts {
@@ -144,6 +163,51 @@ func (bm *BuildingManager) GetEffects() []config.Effect {
 		}
 	}
 	return effects
+}
+
+// WorkerScaledProduction computes production rates per resource, applying worker fill ratios.
+// getAssigned(workerDomain, buildingKey) returns the number of assigned workers for that building type.
+// Buildings with WorkerDomain set use: rate = base × count × (0.20 + 0.80 × assigned/totalCap).
+// Buildings without workers use: rate = base × count (unchanged behaviour).
+func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(domain, key string) int) map[string]float64 {
+	rates := make(map[string]float64)
+	for key, count := range bm.counts {
+		if count == 0 {
+			continue
+		}
+		def := bm.defs[key]
+		for _, eff := range def.Effects {
+			if eff.Type != "production" {
+				continue
+			}
+			var rate float64
+			if def.WorkerCapacity > 0 && getAssigned != nil {
+				assigned := getAssigned("worker", key)
+				totalCap := float64(count * def.WorkerCapacity)
+				fillRatio := float64(assigned) / totalCap
+				if fillRatio > 1.0 {
+					fillRatio = 1.0
+				}
+				rate = eff.Value * float64(count) * (0.20 + 0.80*fillRatio)
+			} else {
+				rate = eff.Value * float64(count)
+			}
+			rates[eff.Target] += rate
+		}
+	}
+	// Ruins produce at 50% base rate; no worker scaling
+	for key, count := range bm.ruins {
+		if count == 0 {
+			continue
+		}
+		def := bm.defs[key]
+		for _, eff := range def.Effects {
+			if eff.Type == "production" {
+				rates[eff.Target] += eff.Value * float64(count) * 0.50
+			}
+		}
+	}
+	return rates
 }
 
 // GetPopCapacity returns total population capacity from housing buildings
@@ -213,7 +277,7 @@ func (bm *BuildingManager) BankResource(wonderKey, resource string, amount float
 	}
 	banked := bm.wonderBanks[wonderKey][resource]
 	remaining := required - banked
-	if remaining <= 0 {
+	if remaining <= 0.001 {
 		return 0, fmt.Errorf("%s bank for %s is already full", resource, def.Name)
 	}
 	if amount > remaining {
@@ -277,30 +341,224 @@ func (bm *BuildingManager) LoadWonderBanks(banks map[string]map[string]float64) 
 	}
 }
 
-// Snapshot returns building states for UI
-func (bm *BuildingManager) Snapshot(resources *ResourceManager) map[string]BuildingState {
+// MarkLegacy flags a building type as legacy — functional but superseded, unbuildable.
+func (bm *BuildingManager) MarkLegacy(key string) {
+	bm.legacyBuildings[key] = true
+}
+
+// IsLegacy returns whether a building is flagged as legacy.
+func (bm *BuildingManager) IsLegacy(key string) bool {
+	return bm.legacyBuildings[key]
+}
+
+// GetLegacyBuildings returns all legacy building keys for save serialization.
+func (bm *BuildingManager) GetLegacyBuildings() []string {
+	var keys []string
+	for key := range bm.legacyBuildings {
+		keys = append(keys, key)
+	}
+	return keys
+}
+
+// LoadLegacyBuildings restores legacy building flags from a save.
+func (bm *BuildingManager) LoadLegacyBuildings(keys []string) {
+	for _, key := range keys {
+		bm.legacyBuildings[key] = true
+	}
+}
+
+// === Phase 9: Ruins ===
+
+// GenerateRuins converts up to n randomly selected non-wonder building instances
+// into ruins on a Succumb catastrophe. Ruins are removed from counts (so they
+// no longer receive worker assignments) but continue to produce at 50% base
+// rate via the ruins map in WorkerScaledProduction.
+// Returns a map of building key → number of ruins created (nil if none).
+func (bm *BuildingManager) GenerateRuins(n int) map[string]int {
+	type inst struct{ key string }
+	var pool []inst
+	for key, c := range bm.counts {
+		if c == 0 {
+			continue
+		}
+		if def, ok := bm.defs[key]; !ok || def.Category == "wonder" {
+			continue
+		}
+		for i := 0; i < c; i++ {
+			pool = append(pool, inst{key})
+		}
+	}
+	if len(pool) == 0 {
+		return nil
+	}
+	rand.Shuffle(len(pool), func(i, j int) { pool[i], pool[j] = pool[j], pool[i] })
+	if n > len(pool) {
+		n = len(pool)
+	}
+	newRuins := make(map[string]int)
+	for _, inst := range pool[:n] {
+		newRuins[inst.key]++
+	}
+	for key, count := range newRuins {
+		bm.ruins[key] += count
+		bm.counts[key] -= count
+		if bm.counts[key] < 0 {
+			bm.counts[key] = 0
+		}
+	}
+	return newRuins
+}
+
+// GetAllRuins returns a copy of the ruins map.
+func (bm *BuildingManager) GetAllRuins() map[string]int {
+	out := make(map[string]int, len(bm.ruins))
+	for k, v := range bm.ruins {
+		if v > 0 {
+			out[k] = v
+		}
+	}
+	return out
+}
+
+// LoadRuins restores ruins from a saved state.
+func (bm *BuildingManager) LoadRuins(ruins map[string]int) {
+	for k, v := range ruins {
+		if v > 0 {
+			bm.ruins[k] += v
+		}
+	}
+}
+
+// DestroyRandom destroys up to count individual building instances chosen
+// uniformly at random. Wonders are excluded because they represent one-off
+// civilisation milestones. Unlike GenerateRuins, destroyed buildings are
+// removed entirely (they do not become ruins).
+// Returns human-readable descriptions for the log (e.g. "3 Lumber Mill").
+func (bm *BuildingManager) DestroyRandom(count int) []string {
+	// Build a pool of destroyable instances (key repeated by count)
+	type inst struct{ key string }
+	var pool []inst
+	for key, c := range bm.counts {
+		if c == 0 {
+			continue
+		}
+		if def, ok := bm.defs[key]; !ok || def.Category == "wonder" {
+			continue
+		}
+		for i := 0; i < c; i++ {
+			pool = append(pool, inst{key})
+		}
+	}
+	if len(pool) == 0 {
+		return nil
+	}
+	rand.Shuffle(len(pool), func(i, j int) { pool[i], pool[j] = pool[j], pool[i] })
+	if count > len(pool) {
+		count = len(pool)
+	}
+	destroyed := make(map[string]int)
+	for _, inst := range pool[:count] {
+		destroyed[inst.key]++
+	}
+	var names []string
+	for key, n := range destroyed {
+		bm.counts[key] -= n
+		if bm.counts[key] < 0 {
+			bm.counts[key] = 0
+		}
+		if def, ok := bm.defs[key]; ok {
+			names = append(names, fmt.Sprintf("%d %s", n, def.Name))
+		}
+	}
+	return names
+}
+
+// TransformBuilding is called during age transition to upgrade all instances of
+// a lower-tier building into the higher-tier lineage equivalent. It moves the
+// count atomically, unlocks the new key, and delegates worker assignment
+// renaming to the WorkerManager so that no assigned workers become stranded.
+// NOTE: oldKey count is zeroed — do not hold a reference to it afterward.
+func (bm *BuildingManager) TransformBuilding(oldKey, newKey string, renameWorker func(domain, oldKey, newKey string)) {
+	count := bm.counts[oldKey]
+	if count == 0 {
+		return
+	}
+	bm.counts[newKey] += count
+	bm.counts[oldKey] = 0
+	bm.unlocked[newKey] = true
+	if renameWorker != nil {
+		newDef := bm.defs[newKey]
+		if newDef.WorkerDomain != "" {
+			renameWorker(newDef.WorkerDomain, oldKey, newKey)
+		}
+	}
+}
+
+// Snapshot returns building states for UI.
+// getWorkerCount(workerDomain, buildingKey) returns the number of workers assigned to that building;
+// pass nil to skip worker field population.
+func (bm *BuildingManager) Snapshot(resources *ResourceManager, getWorkerCount func(domain, key string) int) map[string]BuildingState {
 	out := make(map[string]BuildingState)
 	for key, def := range bm.defs {
 		cost := bm.GetCost(key)
+		count := bm.counts[key]
 		state := BuildingState{
-			Count:       bm.counts[key],
+			Count:       count,
 			Name:        def.Name,
 			Category:    def.Category,
 			Description: def.Description,
 			Unlocked:    bm.unlocked[key],
+			AgeKey:      def.RequiredAge,
 			NextCost:    cost,
 		}
-		if def.MaxCount > 0 && bm.counts[key] >= def.MaxCount {
+		if def.MaxCount > 0 && count >= def.MaxCount {
 			state.AtMaxCount = true
 		}
 		if def.Category == "wonder" {
 			state.WonderBank = bm.GetWonderBank(key)
 			state.WonderBankFull = bm.IsWonderBankFull(key)
-			state.CanBuild = bm.unlocked[key] && bm.counts[key] == 0 && state.WonderBankFull
+			state.CanBuild = bm.unlocked[key] && count == 0 && state.WonderBankFull
 		} else {
 			state.CanBuild = bm.unlocked[key] && !state.AtMaxCount && resources.CanAfford(cost)
 		}
+		// Phase 6: worker fields
+		if def.WorkerDomain != "" {
+			state.WorkerDomain = def.WorkerDomain
+			state.WorkerCapacity = def.WorkerCapacity
+			if getWorkerCount != nil {
+				state.WorkersAssigned = getWorkerCount(def.WorkerDomain, key)
+			}
+		}
+		// Phase 7: legacy flag — functional but unbuildable
+		if bm.legacyBuildings[key] {
+			state.IsLegacy = true
+			state.CanBuild = false
+		}
 		out[key] = state
+	}
+	// Phase 9: annotate ruins into existing BuildingState entries (or create new entries)
+	for key, count := range bm.ruins {
+		if count == 0 {
+			continue
+		}
+		bs, exists := out[key]
+		if !exists {
+			// Building not otherwise visible — create minimal entry for display
+			def, ok := bm.defs[key]
+			if !ok {
+				continue
+			}
+			bs = BuildingState{
+				Name:        def.Name,
+				Category:    def.Category,
+				Description: def.Description,
+				Unlocked:    true,
+				AgeKey:      def.RequiredAge,
+			}
+		}
+		bs.RuinCount = count
+		bs.CanBuild = false
+		out[key] = bs
 	}
 	return out
 }

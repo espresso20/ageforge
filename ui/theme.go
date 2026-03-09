@@ -18,6 +18,13 @@ var (
 	ColorAge      = tcell.ColorGold
 )
 
+// BarFillColor is the tview color tag used for filled progress bar segments.
+// Uses MediumPurple (#9370DB) to match the game's purple accent theme.
+const BarFillColor = "#9370DB"
+
+// BarEmptyColor is the tview color tag for empty bar segments.
+const BarEmptyColor = "#444444"
+
 // AgePalette defines the color theme for an age era
 type AgePalette struct {
 	Title    tcell.Color

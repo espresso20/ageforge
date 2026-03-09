@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"math/rand"
 	"strings"
 	"sync"
 	"time"
@@ -10,12 +11,25 @@ import (
 )
 
 const (
+	// BaseTickInterval is the un-boosted tick period. Speed bonuses divide this
+	// value, so higher bonuses produce shorter intervals (faster ticks).
 	BaseTickInterval = 2 * time.Second
-	MinTickInterval  = 200 * time.Millisecond
-	MaxLogSize       = 500
+	// MinTickInterval is the floor imposed after all speed bonuses are applied.
+	// It prevents the tick loop from spinning faster than the UI can render.
+	MinTickInterval = 200 * time.Millisecond
+	MaxLogSize      = 500
 )
 
-// GameEngine is the central game coordinator
+// GameEngine is the central coordinator for all game systems. All subsystems
+// are accessed through their manager fields rather than as globals, so multiple
+// independent engine instances can coexist (useful for tests and prestige resets).
+//
+// Concurrency model: a single background goroutine calls doTick() while the UI
+// and command handler access the engine from other goroutines. All reads and
+// writes to mutable fields must be done under ge.mu (RLock for reads, Lock for
+// writes). Bus handlers fire synchronously inside doTick while the write lock is
+// already held — they MUST NOT call GetState() or any method that would attempt
+// to re-acquire the lock.
 type GameEngine struct {
 	mu sync.RWMutex
 
@@ -24,7 +38,7 @@ type GameEngine struct {
 
 	Resources  *ResourceManager
 	Buildings  *BuildingManager
-	Villagers  *VillagerManager
+	Workers    *WorkerManager
 	Research   *ResearchManager
 	Military   *MilitaryManager
 	Events     *EventManager
@@ -55,6 +69,22 @@ type GameEngine struct {
 	// Save integrity badges (set on load, never persisted separately)
 	cheaterBadge bool
 	eliteBadge   bool
+
+	// Phase 7: result of the most recent age advance transformation pass
+	lastAgeAdvanceSummary AgeAdvanceSummary
+
+	// Phase 8: epoch system
+	currentEpoch string
+	// epochEventFired ensures each epoch fires its roll at most once per civilisation cycle.
+	epochEventFired    map[string]bool
+	survivedEpochs     map[string]bool // epochs where player chose Endure
+	pendingCatastrophe string          // epoch key when catastrophe modal should show; "" otherwise
+	epochEventHistory  []EpochEventRecord
+
+	// Phase 9: catastrophe system — these fields intentionally survive Succumb and Prestige
+	// resets so that legacy bonuses and civilization history accumulate across multiple runs.
+	legacyBonuses      map[string]bool // epochKey -> true if succumb legacy bonus active
+	catastropheHistory []string        // narrative civilization log entries
 }
 
 // BuildQueueItem represents a building under construction
@@ -64,13 +94,14 @@ type BuildQueueItem struct {
 	TotalTicks  int
 }
 
-// NewGameEngine creates a new game engine
+// NewGameEngine creates a new game engine initialised to the Primitive Age.
+// Callers must call Start() to begin the tick loop.
 func NewGameEngine() *GameEngine {
 	ge := &GameEngine{
 		age:              "primitive_age",
 		Resources:        NewResourceManager(),
 		Buildings:        NewBuildingManager(),
-		Villagers:        NewVillagerManager(),
+		Workers:          NewWorkerManager(),
 		Research:         NewResearchManager(),
 		Military:         NewMilitaryManager(),
 		Events:           NewEventManager(),
@@ -84,6 +115,10 @@ func NewGameEngine() *GameEngine {
 		permanentBonuses: make(map[string]float64),
 		speedMultiplier:  1.0,
 		stopCh:           make(chan struct{}),
+		currentEpoch:     config.EpochForAge("primitive_age"),
+		epochEventFired:  make(map[string]bool),
+		survivedEpochs:   make(map[string]bool),
+		legacyBonuses:    make(map[string]bool),
 	}
 	ge.applyAgeUnlocks("primitive_age")
 	// Give starting resources — enough for first hut + a little food
@@ -97,16 +132,31 @@ func NewGameEngine() *GameEngine {
 	ge.addLog("info", "  3. [cyan]build hut[-] — build shelter (costs 10 wood)")
 	ge.addLog("info", "  4. [cyan]recruit worker[-] — recruit your first worker")
 	ge.addLog("event", "★ Wonder available: Sacred Grove — build it to unlock +0.5x speed!")
-	ge.addLog("info", "  5. [cyan]assign worker food[-] — put them to work!")
+	ge.addLog("info", "  5. Later: [cyan]assign food gathering_camp 3[-] — assign workers to buildings!")
 	ge.addLog("info", "  Type [cyan]help[-] for all commands.")
 	return ge
 }
 
 const AutosaveInterval = 60 * time.Second
 
-// Start begins the game tick loop
+// Start begins the game tick loop in the calling goroutine. It blocks until
+// Stop is called. Safe to call again after Stop — the stop channel is
+// re-initialised so the engine can restart (e.g. ESC → splash → New Game).
+//
+// NOTE: Do not call Start from inside the UI goroutine without a wrapper; it
+// blocks indefinitely. Wrap with go ge.Start() or run via the app goroutine.
 func (ge *GameEngine) Start() {
 	ge.mu.Lock()
+	// If this engine was previously stopped, reinitialise the stop channel so
+	// Start can be called again after Stop (e.g. ESC → splash → New Game).
+	// IMPORTANT: stopOnce must also be reset or the next Stop() call will be
+	// a no-op and the tick goroutine will run forever.
+	select {
+	case <-ge.stopCh:
+		ge.stopCh = make(chan struct{})
+		ge.stopOnce = sync.Once{}
+	default:
+	}
 	ge.running = true
 	ge.mu.Unlock()
 
@@ -141,7 +191,9 @@ func (ge *GameEngine) Start() {
 	}
 }
 
-// safeTick wraps doTick with panic recovery to prevent the tick goroutine from dying
+// safeTick wraps doTick with panic recovery to keep the tick goroutine alive
+// even if a subsystem panics. Panics are logged as errors rather than crashing
+// the entire application.
 func (ge *GameEngine) safeTick() {
 	defer func() {
 		if r := recover(); r != nil {
@@ -153,7 +205,10 @@ func (ge *GameEngine) safeTick() {
 	ge.doTick()
 }
 
-// getTickInterval returns the current tick interval based on tick speed bonus and speed multiplier
+// getTickInterval computes the current tick interval from all speed sources.
+// Called by the tick goroutine between ticks — no lock needed because
+// tickSpeedBonus and speedMultiplier are only written under the write lock
+// inside doTick/LoadGame, which runs on the same goroutine before this call.
 func (ge *GameEngine) getTickInterval() time.Duration {
 	// tickSpeedBonus and speedMultiplier are only written under the write lock
 	// in doTick/LoadGame, and this is called from the same goroutine after
@@ -164,14 +219,22 @@ func (ge *GameEngine) getTickInterval() time.Duration {
 		mult = 1.0
 	}
 
-	interval := time.Duration(float64(BaseTickInterval) / ((1.0 + bonus) * mult))
+	denom := (1.0 + bonus) * mult
+	if denom <= 0 {
+		// Guard: negative or zero denominator (e.g. tick_speed bonus ≤ -1.0)
+		// would produce a timer of +Inf (292 years), freezing the game.
+		return MinTickInterval
+	}
+	interval := time.Duration(float64(BaseTickInterval) / denom)
 	if interval < MinTickInterval {
 		interval = MinTickInterval
 	}
 	return interval
 }
 
-// recalculateTickSpeed sums all tick speed bonuses (must be called with lock held)
+// recalculateTickSpeed sums all tick_speed bonuses from research, permanent
+// bonuses, prestige, and active events. Must be called with the write lock held.
+// The result is cached in ge.tickSpeedBonus; getTickInterval reads it.
 func (ge *GameEngine) recalculateTickSpeed() {
 	oldBonus := ge.tickSpeedBonus
 	bonus := ge.Research.GetBonus("tick_speed") +
@@ -186,7 +249,11 @@ func (ge *GameEngine) recalculateTickSpeed() {
 	ge.tickSpeedBonus = bonus
 
 	if bonus != oldBonus {
-		interval := time.Duration(float64(BaseTickInterval) / (1.0 + bonus))
+		mult := ge.speedMultiplier
+		if mult < 1.0 {
+			mult = 1.0
+		}
+		interval := time.Duration(float64(BaseTickInterval) / ((1.0 + bonus) * mult))
 		if interval < MinTickInterval {
 			interval = MinTickInterval
 		}
@@ -194,8 +261,10 @@ func (ge *GameEngine) recalculateTickSpeed() {
 	}
 }
 
-// MaxSpeedForAge returns the maximum speed multiplier based on wonders built.
-// Base speed is 1.0x. Each wonder built adds +0.5x.
+// MaxSpeedForAge returns the maximum speed multiplier gated by wonders.
+// Each wonder built adds +0.5x on top of the 1.0x base, so players must
+// invest in wonders to unlock higher speed settings via the `speed` command.
+// NOTE: Caller must hold at least an RLock if called from outside the tick goroutine.
 func (ge *GameEngine) MaxSpeedForAge() float64 {
 	wonderCount := 0
 	for key, count := range ge.Buildings.counts {
@@ -237,7 +306,8 @@ func (ge *GameEngine) GetMaxSpeed() float64 {
 	return ge.MaxSpeedForAge()
 }
 
-// Stop halts the game engine (safe to call multiple times)
+// Stop halts the game tick loop. Safe to call multiple times; subsequent
+// calls are no-ops. After Stop returns the Start goroutine has exited.
 func (ge *GameEngine) Stop() {
 	ge.stopOnce.Do(func() {
 		ge.mu.Lock()
@@ -247,7 +317,10 @@ func (ge *GameEngine) Stop() {
 	})
 }
 
-// doTick processes one game tick
+// doTick processes one game tick. It holds the write lock for its entire
+// duration, which means all Bus handlers that fire here (via Publish) also
+// run under the write lock. Bus handlers MUST NOT call GetState() or any
+// other method that acquires the lock — doing so will deadlock.
 func (ge *GameEngine) doTick() {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -285,7 +358,7 @@ func (ge *GameEngine) doTick() {
 	if ge.tick%10 == 0 {
 		snap := ge.Resources.Snapshot()
 		if f, ok := snap["food"]; ok {
-			ge.addLog("debug", fmt.Sprintf("Food: %.1f (rate %+.3f/t), pop=%d", f.Amount, f.Rate, ge.Villagers.TotalPop()))
+			ge.addLog("debug", fmt.Sprintf("Food: %.1f (rate %+.3f/t), pop=%d", f.Amount, f.Rate, ge.Workers.TotalPop()))
 		}
 		for key, rs := range snap {
 			if rs.Unlocked && rs.Amount >= rs.Storage && rs.Storage > 0 {
@@ -302,7 +375,7 @@ func (ge *GameEngine) doTick() {
 	}
 
 	// Check food - starve if negative
-	if ge.Resources.Get("food") <= 0 && ge.Villagers.FoodDrain() > 0 {
+	if ge.Resources.Get("food") <= 0 && ge.Workers.FoodDrain() > 0 {
 		ge.addLog("warning", "Your people are starving! Food has run out.")
 	}
 
@@ -312,13 +385,15 @@ func (ge *GameEngine) doTick() {
 		foodAmt := snap["food"].Amount
 		foodRate := snap["food"].Rate
 		ge.addLog("debug", fmt.Sprintf("Tick %d snapshot: food=%.1f (%+.3f/t), pop=%d, queue=%d",
-			ge.tick, foodAmt, foodRate, ge.Villagers.TotalPop(), len(ge.buildQueue)))
+			ge.tick, foodAmt, foodRate, ge.Workers.TotalPop(), len(ge.buildQueue)))
 	}
 
 	// Check milestones
 	ge.checkMilestones()
 
-	// Check age advancement — notify once when ready, but wait for player to type 'advance'
+	// Check age advancement — notify once when ready, but require player to
+	// type 'advance' to confirm. ageReady resets if requirements drop (e.g.
+	// resources consumed) so the notification fires again if they're re-met.
 	if nextAge := ge.progress.CheckAdvancement(ge.age, ge.Resources, ge.Buildings); nextAge != "" {
 		if !ge.ageReady {
 			ge.ageReady = true
@@ -353,12 +428,15 @@ func (ge *GameEngine) processResearch() {
 // processEvents handles random events
 func (ge *GameEngine) processEvents() {
 	ageOrder := ge.progress.GetAgeOrder()
-	triggered, expired := ge.Events.Tick(ge.tick, ge.age, ageOrder)
+	triggered, expired := ge.Events.Tick(ge.tick, ge.age, ageOrder, ge.currentEpoch)
 
 	for _, def := range triggered {
 		ge.addLog("debug", fmt.Sprintf("Event triggered: %s (sentiment: %s)", def.Name, def.Sentiment))
 		ge.addLog("event", def.LogMessage)
-		// Process instant effects
+		// Process instant and on-trigger effects.
+		// For timed events (Duration > 0) the losses are also recorded on the active event
+		// so that when it expires the "has ended" message includes a yellow summary.
+		isTimed := def.Duration > 0
 		for _, eff := range def.Effects {
 			switch eff.Type {
 			case "instant_resource":
@@ -372,14 +450,31 @@ func (ge *GameEngine) processEvents() {
 				}
 				ge.Resources.Remove(eff.Target, loss)
 				ge.addLog("debug", fmt.Sprintf("Event effect: %s %s -%.1f", eff.Type, eff.Target, loss))
+				if isTimed && loss > 0 {
+					ge.Events.RecordResourceLoss(def.Key, eff.Target, loss)
+				}
+			case "worker_loss":
+				// Value is a percentage (0.0–1.0) of total workers to remove
+				lost := int(float64(ge.Workers.TotalPop()) * eff.Value)
+				if lost < 1 {
+					lost = 1
+				}
+				ge.Workers.RemovePct(eff.Value)
+				if isTimed {
+					// Loss will be reported in the "has ended" summary; skip standalone log
+					ge.Events.RecordWorkerLoss(def.Key, lost)
+				} else {
+					ge.addLog("warning", fmt.Sprintf("%d workers fled or were lost.", lost))
+				}
+				ge.addLog("debug", fmt.Sprintf("Event effect: worker_loss %.0f%%", eff.Value*100))
 			}
 		}
 	}
 
-	for _, key := range expired {
-		def := config.EventByKey()[key]
-		ge.addLog("debug", fmt.Sprintf("Event expired: %s", key))
-		ge.addLog("info", fmt.Sprintf("%s has ended.", def.Name))
+	for _, ae := range expired {
+		ge.addLog("debug", fmt.Sprintf("Event expired: %s", ae.Key))
+		suffix := buildLossSuffix(ae)
+		ge.addLog("info", fmt.Sprintf("%s has ended.%s", ae.Name, suffix))
 	}
 }
 
@@ -402,7 +497,7 @@ func (ge *GameEngine) processExpeditions() {
 		}
 		// Remove lost soldiers
 		if soldiersLost > 0 {
-			ge.Villagers.RemoveSoldiers(soldiersLost)
+			ge.Workers.RemoveSoldiers(soldiersLost)
 		}
 	}
 }
@@ -432,11 +527,9 @@ func (ge *GameEngine) checkMilestones() {
 		researchedTechs[key] = true
 	}
 
-	// Count soldiers
-	soldierCount := 0
-	if st, ok := ge.Villagers.types["soldier"]; ok {
-		soldierCount = st.count
-	}
+	// Count soldiers and knowledge workers
+	soldierCount := ge.Workers.GetDomainCount("military")
+	knowledgeCount := ge.Workers.GetDomainCount("knowledge")
 
 	// Count wonders
 	wonderCount := 0
@@ -449,12 +542,13 @@ func (ge *GameEngine) checkMilestones() {
 	completed := ge.Milestones.CheckMilestones(
 		ge.tick, ge.age, ageOrder,
 		ge.Resources, ge.Buildings,
-		ge.Villagers.TotalPop(),
+		ge.Workers.TotalPop(),
 		ge.Research.ResearchedCount(),
 		ge.Stats.TotalBuilt,
 		researchedTechs,
 		soldierCount,
 		wonderCount,
+		knowledgeCount,
 	)
 
 	for _, ms := range completed {
@@ -519,23 +613,22 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
-	// Building production
-	for _, eff := range ge.Buildings.GetEffects() {
-		if eff.Type == "production" {
-			r := ge.Resources.resources[eff.Target]
-			if r != nil {
-				r.Rate += eff.Value
-				r.Breakdown.BuildingRate += eff.Value
-			}
-		}
-	}
-
-	// Villager production
-	for res, rate := range ge.Villagers.GetProductionRates() {
+	// Building production — worker fill ratio applied per building type
+	// rate = base × count × (0.20 + 0.80 × assigned/totalCapacity)
+	for res, rate := range ge.Buildings.WorkerScaledProduction(ge.Workers.GetAssignedCount) {
 		r := ge.Resources.resources[res]
 		if r != nil {
 			r.Rate += rate
-			r.Breakdown.VillagerRate += rate
+			r.Breakdown.BuildingRate += rate
+		}
+	}
+
+	// Worker production (returns empty in Phase 6+ — contribution folded into BuildingRate)
+	for res, rate := range ge.Workers.GetProductionRates() {
+		r := ge.Resources.resources[res]
+		if r != nil {
+			r.Rate += rate
+			r.Breakdown.WorkerRate += rate
 		}
 	}
 
@@ -551,7 +644,13 @@ func (ge *GameEngine) recalculateRates() {
 	}
 
 	// Apply production_all bonus (multiplier on all positive rates)
+	// Accumulated from: research bonuses, permanent bonuses, prestige, and active event effects
 	prodAllBonus := researchBonuses["production_all"] + permanentBonuses["production_all"]
+	for _, eff := range ge.Events.GetActiveEffects() {
+		if eff.Type == "production_all" {
+			prodAllBonus += eff.Value
+		}
+	}
 	if prodAllBonus > 0 {
 		for _, def := range ge.Resources.defs {
 			r := ge.Resources.resources[def.Key]
@@ -562,6 +661,7 @@ func (ge *GameEngine) recalculateRates() {
 	}
 
 	// Apply per-resource rate bonuses (e.g., "gold_rate", "iron_rate")
+	// Includes legacy bonuses (stored in permanentBonuses["wood"] etc. after reapplyLegacyBonuses)
 	for _, def := range ge.Resources.defs {
 		bonusKey := def.Key + "_rate"
 		bonus := researchBonuses[bonusKey] + permanentBonuses[bonusKey]
@@ -573,12 +673,12 @@ func (ge *GameEngine) recalculateRates() {
 		}
 	}
 
-	// Apply gather_rate bonus to villager-generated rates
+	// Apply gather_rate bonus to worker-generated rates
 	gatherBonus := researchBonuses["gather_rate"] + permanentBonuses["gather_rate"]
 	if gatherBonus > 0 {
 		// Already applied via multiplier above
-		// This is additive on base villager rates — re-add the bonus portion
-		for res, rate := range ge.Villagers.GetProductionRates() {
+		// This is additive on base worker rates — re-add the bonus portion
+		for res, rate := range ge.Workers.GetProductionRates() {
 			r := ge.Resources.resources[res]
 			if r != nil {
 				r.Rate += rate * gatherBonus
@@ -622,7 +722,7 @@ func (ge *GameEngine) recalculateRates() {
 	}
 
 	// Food consumption
-	drain := ge.Villagers.FoodDrain()
+	drain := ge.Workers.FoodDrain()
 	if drain > 0 {
 		r := ge.Resources.resources["food"]
 		if r != nil {
@@ -635,7 +735,7 @@ func (ge *GameEngine) recalculateRates() {
 	for _, def := range ge.Resources.defs {
 		r := ge.Resources.resources[def.Key]
 		if r != nil {
-			knownComponents := r.Breakdown.BuildingRate + r.Breakdown.VillagerRate +
+			knownComponents := r.Breakdown.BuildingRate + r.Breakdown.WorkerRate +
 				r.Breakdown.ResearchRate + r.Breakdown.EventRate + r.Breakdown.TradeRate + r.Breakdown.FoodDrain
 			r.Breakdown.BonusRate = r.Rate - knownComponents
 		}
@@ -672,15 +772,80 @@ func (ge *GameEngine) getAllResearchProductionEffects() []config.Effect {
 	return effects
 }
 
-// advanceAge advances to the next age. Caller must hold the write lock.
+// advanceAge advances to newAge and applies all transition consequences:
+//   - Building lineage transformation (old tier → new tier per lineage definition)
+//   - Legacy flags for any lower-tier buildings that now have an unlocked replacement
+//   - Age-gated unlock application (resources, buildings, workers)
+//   - Resource reduction to 10% of current amounts (intended economic reset)
+//   - Epoch detection and epoch event roll if the new age crosses an epoch boundary
+//
+// Caller must hold the write lock.
 func (ge *GameEngine) advanceAge(newAge string) {
 	oldAge := ge.age
 	ge.age = newAge
 	ge.ageReady = false
+	ge.Workers.SetAge(newAge)
+
+	// Phase 7: Building lineage transformation pass.
+	// Collect transforms first (safe iteration), then apply.
+	type pendingTransform struct {
+		oldKey, oldName, newKey, newName string
+		count                            int
+	}
+	var transforms []pendingTransform
+	for key, count := range ge.Buildings.counts {
+		if count == 0 {
+			continue
+		}
+		def, ok := ge.Buildings.defs[key]
+		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" {
+			continue
+		}
+		next := config.BuildingNextTierForAge(def.LineageKey, def.LineageTier, newAge)
+		if next == nil {
+			continue
+		}
+		transforms = append(transforms, pendingTransform{
+			oldKey: key, oldName: def.Name,
+			newKey: next.Key, newName: next.Name,
+			count: count,
+		})
+	}
+	summary := AgeAdvanceSummary{OldAge: oldAge, NewAge: newAge}
+	for _, t := range transforms {
+		ge.Buildings.TransformBuilding(t.oldKey, t.newKey, ge.Workers.RenameAssignment)
+		summary.BuildingsTransformed = append(summary.BuildingsTransformed, BuildingTransform{
+			OldKey: t.oldKey, OldName: t.oldName,
+			NewKey: t.newKey, NewName: t.newName,
+			Count: t.count,
+		})
+		ge.addLog("success", fmt.Sprintf("↑ %s → %s (×%d)", t.oldName, t.newName, t.count))
+	}
+	// Mark buildings as legacy if their lineage now has a higher-tier unlocked equivalent.
+	for key, count := range ge.Buildings.counts {
+		if count == 0 || ge.Buildings.IsLegacy(key) {
+			continue
+		}
+		def, ok := ge.Buildings.defs[key]
+		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" {
+			continue
+		}
+		for otherKey, otherDef := range ge.Buildings.defs {
+			if otherDef.LineageKey == def.LineageKey &&
+				otherDef.LineageTier > def.LineageTier &&
+				ge.Buildings.IsUnlocked(otherKey) {
+				ge.Buildings.MarkLegacy(key)
+				summary.BuildingsLegacy = append(summary.BuildingsLegacy, key)
+				break
+			}
+		}
+	}
+	ge.lastAgeAdvanceSummary = summary
+
 	ge.applyAgeUnlocks(newAge)
 	ge.Stats.RecordAge(newAge)
 
-	// Reduce all resources to 25% on age transition
+	// Reduce all resources to 10% on age transition
 	for _, r := range ge.Resources.resources {
 		r.Amount *= 0.10
 	}
@@ -689,7 +854,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	oldName := ge.progress.GetAgeName(oldAge)
 	newName := ge.progress.GetAgeName(newAge)
 	unlocks := ge.progress.GetUnlocks(newAge)
-	ge.addLog("debug", fmt.Sprintf("Age advance: %s → %s (unlocks: %d buildings, %d resources, %d villagers)",
+	ge.addLog("debug", fmt.Sprintf("Age advance: %s → %s (unlocks: %d buildings, %d resources, %d workers)",
 		oldAge, newAge, len(unlocks.UnlockBuildings), len(unlocks.UnlockResources), len(unlocks.UnlockVillagers)))
 	ge.addLog("success", fmt.Sprintf("Advanced from %s to %s!", oldName, newName))
 
@@ -708,6 +873,9 @@ func (ge *GameEngine) advanceAge(newAge string) {
 			"new_age": newAge,
 		},
 	})
+
+	// Phase 8: detect epoch transition and roll epoch event
+	ge.detectEpochTransition(newAge)
 }
 
 // applyAgeUnlocks unlocks all content for an age
@@ -720,8 +888,515 @@ func (ge *GameEngine) applyAgeUnlocks(ageKey string) {
 		ge.Buildings.UnlockBuilding(b)
 	}
 	for _, v := range age.UnlockVillagers {
-		ge.Villagers.UnlockType(v)
+		ge.Workers.UnlockType(v)
 	}
+}
+
+// detectEpochTransition checks whether newAge belongs to a different epoch
+// and fires the epoch event roll when an epoch boundary is crossed. Must be
+// called at the end of advanceAge while the engine write lock is held.
+// Each epoch fires its roll at most once per civilisation cycle
+// (epochEventFired prevents double-fire on load or re-entry).
+func (ge *GameEngine) detectEpochTransition(newAge string) {
+	newEpoch := config.EpochForAge(newAge)
+	if newEpoch == ge.currentEpoch {
+		return // same epoch, no transition
+	}
+	ge.currentEpoch = newEpoch
+	ep := config.EpochByKey()[newEpoch]
+	ge.addLog("event", fmt.Sprintf("[%s]✦ The %s Dawns — %s[-]", ep.Color, ep.Name, ep.Description))
+	ge.Bus.Publish(EventData{
+		Type: EventEpochAdvanced,
+		Payload: map[string]interface{}{
+			"epoch_key":  newEpoch,
+			"epoch_name": ep.Name,
+			"epoch_icon": ep.Icon,
+		},
+	})
+	ge.rollEpochEvent(newEpoch)
+}
+
+// rollEpochEvent performs the epoch transition event roll.
+//   - Faith fill % gates good-event probability: <25% → 40%, >75% → 60%, else 50%.
+//   - On a bad roll, a further 30% chance escalates to a catastrophe (modal prompt).
+//   - Otherwise a challenging (non-catastrophe) bad event is applied immediately.
+//
+// Must be called under engine write lock.
+func (ge *GameEngine) rollEpochEvent(epochKey string) {
+	// Prevent double-fire per epoch
+	if ge.epochEventFired[epochKey] {
+		return
+	}
+	ge.epochEventFired[epochKey] = true
+
+	faithStorage := ge.Resources.GetStorage("faith")
+	goodChance := 0.50
+	if faithStorage > 0 {
+		faithPct := ge.Resources.Get("faith") / faithStorage
+		if faithPct < 0.25 {
+			goodChance = 0.40
+		} else if faithPct > 0.75 {
+			goodChance = 0.60
+		}
+	}
+
+	if rand.Float64() < goodChance {
+		ge.rollGoodEpochEvent()
+	} else {
+		if rand.Float64() < 0.30 {
+			// Catastrophe
+			ge.pendingCatastrophe = epochKey
+			ep := config.EpochByKey()[epochKey]
+			ge.addLog("warning", fmt.Sprintf("☄ A great catastrophe threatens the %s — prepare yourself.", ep.Name))
+			record := EpochEventRecord{
+				EpochKey: epochKey, EpochName: ep.Name,
+				EventKey: ep.CatastropheKey, EventName: "Catastrophe", EventType: "catastrophe",
+				Tick: ge.tick,
+			}
+			ge.epochEventHistory = append(ge.epochEventHistory, record)
+		} else {
+			ge.rollChallengingEpochEvent(epochKey)
+		}
+	}
+}
+
+// rollGoodEpochEvent picks a good epoch event gated by culture fill %.
+//   - >40% culture fill → major+minor events eligible.
+//   - >75% culture fill with 15% chance → all tiers (legendary) eligible.
+//
+// Must be called under engine write lock.
+func (ge *GameEngine) rollGoodEpochEvent() {
+	cultureStorage := ge.Resources.GetStorage("culture")
+	tier := "minor"
+	if cultureStorage > 0 {
+		culturePct := ge.Resources.Get("culture") / cultureStorage
+		if culturePct > 0.75 && rand.Float64() < 0.15 {
+			tier = "legendary"
+		} else if culturePct > 0.40 {
+			tier = "major"
+		}
+	}
+
+	pool := config.GoodEpochEvents()
+	var eligible []config.EpochEventDef
+	for _, ev := range pool {
+		switch tier {
+		case "legendary":
+			eligible = append(eligible, ev) // all tiers available
+		case "major":
+			if ev.Type == "good_minor" || ev.Type == "good_major" {
+				eligible = append(eligible, ev)
+			}
+		default: // minor
+			if ev.Type == "good_minor" {
+				eligible = append(eligible, ev)
+			}
+		}
+	}
+	if len(eligible) == 0 {
+		return
+	}
+	ev := eligible[rand.Intn(len(eligible))]
+	ge.applyGoodEpochEvent(ev)
+
+	ep := config.EpochByKey()[ge.currentEpoch]
+	record := EpochEventRecord{
+		EpochKey: ge.currentEpoch, EpochName: ep.Name,
+		EventKey: ev.Key, EventName: ev.Name, EventType: ev.Type,
+		Tick: ge.tick,
+	}
+	ge.epochEventHistory = append(ge.epochEventHistory, record)
+	ge.Bus.Publish(EventData{
+		Type: EventEpochEventFired,
+		Payload: map[string]interface{}{"event_key": ev.Key, "event_name": ev.Name, "event_type": ev.Type},
+	})
+}
+
+// rollChallengingEpochEvent picks a bad (non-catastrophe) epoch event.
+func (ge *GameEngine) rollChallengingEpochEvent(epochKey string) {
+	pool := config.ChallengingEpochEvents()
+	if len(pool) == 0 {
+		return
+	}
+	ev := pool[rand.Intn(len(pool))]
+	ge.applyChallengingEpochEvent(ev, epochKey)
+
+	ep := config.EpochByKey()[epochKey]
+	record := EpochEventRecord{
+		EpochKey: epochKey, EpochName: ep.Name,
+		EventKey: ev.Key, EventName: ev.Name, EventType: ev.Type,
+		Tick: ge.tick,
+	}
+	ge.epochEventHistory = append(ge.epochEventHistory, record)
+	ge.Bus.Publish(EventData{
+		Type: EventEpochEventFired,
+		Payload: map[string]interface{}{"event_key": ev.Key, "event_name": ev.Name, "event_type": ev.Type},
+	})
+}
+
+// applyGoodEpochEvent applies the effects of a good epoch transition event.
+func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
+	ge.addLog("success", fmt.Sprintf("✦ %s — %s", ev.Name, ev.FlavorText))
+	ageOrder := ge.progress.GetAgeOrder()
+	switch ev.Key {
+	case "age_of_plenty":
+		// ×2 all production for Duration ticks via production_all effect
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_age_of_plenty",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production_all", Value: 1.0}},
+		})
+	case "population_surge":
+		// +15% workers across all domains, instant
+		ge.Workers.AddPctAll(0.15)
+	case "ancient_cache":
+		// Fill 40% of each resource's storage cap
+		for _, def := range ge.Resources.defs {
+			cap := ge.Resources.GetStorage(def.Key)
+			if cap > 0 && ge.Resources.IsUnlocked(def.Key) {
+				ge.Resources.Add(def.Key, cap*0.40)
+			}
+		}
+	case "trade_winds":
+		// Gold ×2 production for Duration ticks
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_trade_winds",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production", Target: "gold", Value: 5.0}},
+		})
+	case "cultural_festival":
+		// Instant culture +30%, faith +20%; timed production boost
+		ge.Resources.Add("culture", ge.Resources.Get("culture")*0.30)
+		ge.Resources.Add("faith", ge.Resources.Get("faith")*0.20)
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_cultural_festival",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects: []config.Effect{
+				{Type: "production", Target: "culture", Value: 1.0},
+				{Type: "production", Target: "faith", Value: 1.0},
+			},
+		})
+	case "grand_discovery":
+		// Complete 3 free techs from current age
+		completed := ge.Research.ForceCompleteN(3, ge.age, ageOrder)
+		for _, key := range completed {
+			def := config.TechByKey()[key]
+			ge.addLog("success", fmt.Sprintf("  → Free tech: %s", def.Name))
+		}
+	case "worker_innovation":
+		// Permanent +10% production_all
+		ge.permanentBonuses["production_all"] += 0.10
+		ge.addLog("success", "  → All production permanently +10%")
+	case "architects_gift":
+		// 10 free buildings of the most common built non-wonder type
+		bestKey := ""
+		bestCount := 0
+		for key, count := range ge.Buildings.counts {
+			if def, ok := ge.Buildings.defs[key]; ok && def.Category != "wonder" && count > bestCount {
+				bestKey = key
+				bestCount = count
+			}
+		}
+		if bestKey != "" {
+			ge.Buildings.counts[bestKey] += 10
+			def := ge.Buildings.defs[bestKey]
+			ge.addLog("success", fmt.Sprintf("  → 10 free %s", def.Name))
+		}
+	case "peaceful_century":
+		// +20% all production for Duration ticks
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_peaceful_century",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production_all", Value: 0.20}},
+		})
+	case "epoch_blessing":
+		// Permanent +15% production_all; recorded as a golden age
+		ge.permanentBonuses["production_all"] += 0.15
+		ge.addLog("success", "  → Epoch Blessing: all production permanently +15%")
+	}
+}
+
+// applyChallengingEpochEvent applies a challenging (non-catastrophe) bad epoch event.
+func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochKey string) {
+	ge.addLog("warning", fmt.Sprintf("⚠ %s — %s", ev.Name, ev.FlavorText))
+	switch ev.Key {
+	case "the_famine":
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_famine",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production", Target: "food", Value: -3.0}},
+		})
+	case "merchant_betrayal":
+		ge.Resources.Remove("gold", ge.Resources.Get("gold")*0.50)
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_merchant_betrayal",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production", Target: "gold", Value: -2.0}},
+		})
+	case "the_great_fire":
+		destroyed := ge.Buildings.DestroyRandom(8)
+		for _, desc := range destroyed {
+			ge.addLog("warning", fmt.Sprintf("  → Destroyed: %s", desc))
+		}
+	case "epidemic":
+		ge.Workers.RemovePct(0.20)
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_epidemic",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production", Target: "food", Value: -1.5}},
+		})
+	case "resource_drought":
+		// Debuff epoch's primary resource
+		primaryRes := "wood" // fallback
+		if ep, ok := config.EpochByKey()[epochKey]; ok {
+			primaryRes = ep.PrimaryResource
+		}
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_resource_drought",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production", Target: primaryRes, Value: -3.0}},
+		})
+	case "political_instability":
+		ge.Resources.Remove("faith", ge.Resources.Get("faith")*0.60)
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_political_instability",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects: []config.Effect{
+				{Type: "production", Target: "knowledge", Value: -2.0},
+			},
+		})
+	case "economic_crash":
+		ge.Resources.Remove("gold", ge.Resources.Get("gold")*0.50)
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_economic_crash",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production", Target: "gold", Value: -3.0}},
+		})
+	case "the_dark_age":
+		ge.Research.CancelResearch()
+		ge.Resources.Remove("knowledge", ge.Resources.Get("knowledge")*0.80)
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "epoch_dark_age",
+			Name:      ev.Name,
+			TicksLeft: ev.Duration,
+			Effects:   []config.Effect{{Type: "production", Target: "knowledge", Value: -3.0}},
+		})
+	}
+}
+
+// InvokeCatastrophe voluntarily triggers the catastrophe for the current epoch.
+// Returns an error if a catastrophe has already been invoked this epoch (random or voluntary).
+func (ge *GameEngine) InvokeCatastrophe() error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	if ge.epochEventFired[ge.currentEpoch] {
+		return fmt.Errorf("a catastrophe event has already occurred this epoch (%s)", ge.currentEpoch)
+	}
+	if ge.pendingCatastrophe != "" {
+		return fmt.Errorf("a catastrophe is already pending")
+	}
+	ge.epochEventFired[ge.currentEpoch] = true
+	ge.pendingCatastrophe = ge.currentEpoch
+	ep := config.EpochByKey()[ge.currentEpoch]
+	ge.addLog("warning", fmt.Sprintf("☄ Voluntary catastrophe invoked for the %s.", ep.Name))
+	record := EpochEventRecord{
+		EpochKey: ge.currentEpoch, EpochName: ep.Name,
+		EventKey: ep.CatastropheKey, EventName: "Voluntary Catastrophe", EventType: "catastrophe",
+		Tick: ge.tick,
+	}
+	ge.epochEventHistory = append(ge.epochEventHistory, record)
+	return nil
+}
+
+// DeferCatastrophe signals the player's intent to decide later.
+// The pendingCatastrophe remains set; the UI handles hiding the modal.
+// This method exists for command-based invocation (no engine state change needed).
+func (ge *GameEngine) DeferCatastrophe() {
+	// No-op on the engine side — pendingCatastrophe stays set.
+	// The UI is responsible for not re-showing the modal until next session refresh.
+}
+
+// reapplyLegacyBonuses restores all Succumb legacy rate bonuses into
+// permanentBonuses after a reset. Must be called whenever permanentBonuses is
+// cleared (prestige or succumb resets) so cross-run bonuses are not lost.
+func (ge *GameEngine) reapplyLegacyBonuses() {
+	for epochKey := range ge.legacyBonuses {
+		for res, mult := range config.LegacyBonusForEpoch(epochKey) {
+			ge.permanentBonuses[res+"_rate"] += mult
+		}
+	}
+}
+
+// Endure executes the Endure consequences for the pending catastrophe:
+//   - 20% of buildings randomly destroyed
+//   - All resources drop to 15% of current stored amount
+//   - 25% of workers removed
+//   - Lasting timed debuffs injected (building costs conceptually +20%, food drain +10%)
+//   - Permanent rewards: Survived marker, unique titled logged in civilization history
+func (ge *GameEngine) Endure() error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	if ge.pendingCatastrophe == "" {
+		return fmt.Errorf("no pending catastrophe to endure")
+	}
+	epochKey := ge.pendingCatastrophe
+	ge.pendingCatastrophe = ""
+	ge.survivedEpochs[epochKey] = true
+
+	catName, catFlavor := config.CatastropheInfo(epochKey)
+
+	// 20% of buildings destroyed
+	totalBuilt := 0
+	for _, c := range ge.Buildings.counts {
+		totalBuilt += c
+	}
+	destroyCount := totalBuilt / 5
+	if destroyCount < 1 && totalBuilt > 0 {
+		destroyCount = 1
+	}
+	destroyed := ge.Buildings.DestroyRandom(destroyCount)
+
+	// Resources → 15% of current
+	for key, r := range ge.Resources.resources {
+		if r != nil && ge.Resources.IsUnlocked(key) {
+			r.Amount *= 0.15
+		}
+	}
+
+	// -25% workers
+	ge.Workers.RemovePct(0.25)
+
+	// Timed debuffs: worker food drain +10% for 216 ticks, production -10% for 216 ticks
+	ge.Events.InjectEvent(ActiveEvent{
+		Key:       "endure_reconstruction",
+		Name:      "Reconstruction Effort",
+		TicksLeft: 216,
+		Effects: []config.Effect{
+			{Type: "production_all", Value: -0.10},
+		},
+	})
+
+	// Log consequences
+	ge.addLog("warning", fmt.Sprintf("☄ ENDURE: %s — %s", catName, catFlavor))
+	ge.addLog("warning", fmt.Sprintf("  Buildings destroyed: %d", destroyCount))
+	for _, desc := range destroyed {
+		ge.addLog("warning", fmt.Sprintf("  → %s lost", desc))
+	}
+	ge.addLog("warning", "  All resources reduced to 15% of stored amounts.")
+	ge.addLog("warning", "  25% of workers lost.")
+	ge.addLog("info", "  Timed: production -10% for 216 ticks (reconstruction period).")
+	ge.addLog("success", fmt.Sprintf("  ✦ Survived marker earned for %s badge.", config.EpochByKey()[epochKey].Name))
+
+	// Civilization history entry
+	histEntry := fmt.Sprintf("Tick %d — Endured %s (%s). %d buildings lost.", ge.tick, catName, config.EpochByKey()[epochKey].Name, destroyCount)
+	ge.catastropheHistory = append(ge.catastropheHistory, histEntry)
+
+	return nil
+}
+
+// Succumb executes the Succumb consequences for the pending catastrophe:
+//   - Generates 8 ruins from current buildings (persist into next run)
+//   - Awards epoch legacy bonus (permanent production multiplier)
+//   - Awards Ancient Knowledge (+25% research speed, permanent)
+//   - Records civilization history entry
+//   - Full reset (all buildings, resources, workers, etc.)
+//   - Restores ruins and legacy bonuses into the fresh civilization
+func (ge *GameEngine) Succumb() error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	if ge.pendingCatastrophe == "" {
+		return fmt.Errorf("no pending catastrophe to succumb to")
+	}
+	epochKey := ge.pendingCatastrophe
+	catName, _ := config.CatastropheInfo(epochKey)
+	ep := config.EpochByKey()[epochKey]
+
+	// Civilization history entry (before reset clears tick/age)
+	histEntry := fmt.Sprintf("Tick %d — Succumbed to %s (%s). Civilization reset. Legacy bonus earned.", ge.tick, catName, ep.Name)
+	ge.catastropheHistory = append(ge.catastropheHistory, histEntry)
+
+	// Generate 8 ruins from current buildings
+	ge.Buildings.GenerateRuins(8)
+	savedRuins := ge.Buildings.GetAllRuins()
+
+	// Award legacy bonus for this epoch
+	ge.legacyBonuses[epochKey] = true
+	savedLegacy := copyBoolMap(ge.legacyBonuses)
+	savedCatHistory := append([]string(nil), ge.catastropheHistory...)
+	savedEpochHistory := append([]EpochEventRecord(nil), ge.epochEventHistory...)
+
+	// Preserve cross-run state
+	savedPrestige := ge.Prestige
+
+	// Full reset — Bus intentionally kept so dashboard subscriptions survive.
+	ge.tick = 0
+	ge.age = "primitive_age"
+	ge.Resources = NewResourceManager()
+	ge.Buildings = NewBuildingManager()
+	ge.Workers = NewWorkerManager()
+	ge.Research = NewResearchManager()
+	ge.Military = NewMilitaryManager()
+	ge.Events = NewEventManager()
+	ge.Milestones = NewMilestoneManager()
+	ge.Trade = NewTradeManager()
+	ge.Diplomacy = NewDiplomacyManager()
+	ge.Stats = NewGameStats()
+	ge.permanentBonuses = make(map[string]float64)
+	ge.buildQueue = nil
+	ge.log = nil
+	ge.speedMultiplier = 1.0
+	ge.tickSpeedBonus = 0
+	ge.ageReady = false
+	ge.currentEpoch = config.EpochForAge("primitive_age")
+	ge.epochEventFired = make(map[string]bool)
+	ge.survivedEpochs = make(map[string]bool)
+	ge.pendingCatastrophe = ""
+
+	// Restore persistent cross-run state
+	ge.Prestige = savedPrestige
+	ge.Buildings.LoadRuins(savedRuins)
+	ge.legacyBonuses = savedLegacy
+	ge.catastropheHistory = savedCatHistory
+	ge.epochEventHistory = savedEpochHistory
+
+	// Ancient Knowledge: +25% research speed (permanent bonus)
+	ge.permanentBonuses["research_speed"] += 0.25
+
+	// Apply all active legacy bonuses
+	ge.reapplyLegacyBonuses()
+
+	// Apply age unlocks and starting resources
+	ge.applyAgeUnlocks("primitive_age")
+	ge.Resources.Add("food", 15)
+	ge.Resources.Add("wood", 12)
+	for res, amount := range ge.Prestige.GetStartingResources() {
+		ge.Resources.Add(res, amount)
+	}
+
+	ge.recalculateTickSpeed()
+
+	// Welcome-back log
+	ge.addLog("event", fmt.Sprintf("☄ %s — civilization has fallen. A new dawn.", catName))
+	ge.addLog("success", fmt.Sprintf("Legacy Bonus: %s production permanently boosted.", ep.Name))
+	ge.addLog("success", "Ancient Knowledge: research speed +25% (permanent).")
+	if len(savedRuins) > 0 {
+		ge.addLog("info", fmt.Sprintf("%d ruin type(s) from the fallen civilization carry forward.", len(savedRuins)))
+	}
+	ge.addLog("info", "Type [cyan]help[-] to rebuild.")
+
+	return nil
 }
 
 // processBuildQueue advances construction on queued buildings
@@ -943,117 +1618,163 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	return built, nil
 }
 
-// RecruitMax recruits as many villagers as possible up to the pop cap
+// RecruitMax recruits as many workers as possible up to the pop cap
 func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	if !ge.Villagers.IsUnlocked(vType) {
-		return 0, fmt.Errorf("villager type '%s' is not yet unlocked", vType)
+
+	if !ge.Workers.IsUnlocked(vType) {
+		return 0, fmt.Errorf("worker type '%s' is not yet unlocked", vType)
 	}
 
 	popCap := ge.Buildings.GetPopCapacity()
 	popCap += int(ge.Research.GetBonus("population") + ge.permanentBonuses["population"] + ge.Prestige.GetBonuses()["population"])
 
-	available := popCap - ge.Villagers.TotalPop()
+	available := popCap - ge.Workers.TotalPop()
 	if available <= 0 {
-		return 0, fmt.Errorf("population cap reached (%d/%d)", ge.Villagers.TotalPop(), popCap)
+		return 0, fmt.Errorf("population cap reached (%d/%d)", ge.Workers.TotalPop(), popCap)
 	}
 
-	if !ge.Villagers.Recruit(vType, available, popCap) {
+	if !ge.Workers.Recruit(vType, available, popCap) {
 		return 0, fmt.Errorf("cannot recruit %s(s)", vType)
 	}
 	ge.Stats.RecordRecruit(available)
-	ge.addLog("info", fmt.Sprintf("Recruited %d %s(s) (pop: %d/%d)", available, vType, ge.Villagers.TotalPop(), popCap))
+	ge.addLog("info", fmt.Sprintf("Recruited %d worker(s) (pop: %d/%d)", available, ge.Workers.TotalPop(), popCap))
 	return available, nil
 }
 
-// RecruitVillager recruits villagers
-func (ge *GameEngine) RecruitVillager(vType string, count int) error {
+// RecruitWorker recruits workers
+func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
+
 
 	popCap := ge.Buildings.GetPopCapacity()
 	// Add population capacity from research/milestones/prestige
 	popCap += int(ge.Research.GetBonus("population") + ge.permanentBonuses["population"] + ge.Prestige.GetBonuses()["population"])
 
-	if !ge.Villagers.Recruit(vType, count, popCap) {
-		totalPop := ge.Villagers.TotalPop()
-		if !ge.Villagers.IsUnlocked(vType) {
-			return fmt.Errorf("villager type '%s' is not yet unlocked", vType)
+	if !ge.Workers.Recruit(vType, count, popCap) {
+		totalPop := ge.Workers.TotalPop()
+		if !ge.Workers.IsUnlocked(vType) {
+			return fmt.Errorf("worker type '%s' is not yet unlocked", vType)
 		}
 		return fmt.Errorf("cannot recruit %d %s(s) (pop: %d/%d)", count, vType, totalPop, popCap)
 	}
 	ge.Stats.RecordRecruit(count)
-	ge.addLog("debug", fmt.Sprintf("Recruit: %d %s (pop: %d/%d)", count, vType, ge.Villagers.TotalPop(), popCap))
-	ge.addLog("info", fmt.Sprintf("Recruited %d %s(s)", count, vType))
+	ge.addLog("debug", fmt.Sprintf("Recruit: %d worker(s) (pop: %d/%d)", count, ge.Workers.TotalPop(), popCap))
+	ge.addLog("info", fmt.Sprintf("Recruited %d worker(s)", count))
 	return nil
 }
 
-// AssignVillager assigns villagers to gather a resource
-func (ge *GameEngine) AssignVillager(vType, resource string, count int) error {
+// AssignWorker assigns workers to a building.
+// Any worker can be assigned to any building with WorkerCapacity > 0.
+func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	if !ge.Villagers.Assign(vType, resource, count) {
-		idle := ge.Villagers.IdleCount(vType)
-		return fmt.Errorf("cannot assign %d %s(s) to %s (idle: %d)", count, vType, resource, idle)
+	if ge.Buildings.GetCount(buildingKey) == 0 {
+		return fmt.Errorf("no %s built yet — build one first", buildingKey)
+	}
+	byKey := config.BuildingByKey()
+	def, ok := byKey[buildingKey]
+	if !ok || def.WorkerCapacity == 0 {
+		return fmt.Errorf("building %s does not accept workers", buildingKey)
+	}
+	// Enforce capacity cap
+	totalCap := def.WorkerCapacity * ge.Buildings.GetCount(buildingKey)
+	alreadyAssigned := ge.Workers.GetAssignedCount("worker", buildingKey)
+	available := totalCap - alreadyAssigned
+	if available <= 0 {
+		return fmt.Errorf("all %d worker slot(s) for %s are full", totalCap, buildingKey)
+	}
+	if count > available {
+		return fmt.Errorf("only %d worker slot(s) available for %s (%d/%d filled)", available, buildingKey, alreadyAssigned, totalCap)
+	}
+	if !ge.Workers.Assign("worker", buildingKey, count) {
+		idle := ge.Workers.IdleCount("worker")
+		return fmt.Errorf("cannot assign %d workers to %s (idle: %d)", count, buildingKey, idle)
 	}
 	ge.recalculateRates()
-	ge.addLog("debug", fmt.Sprintf("Assign: %d %s → %s", count, vType, resource))
-	ge.addLog("info", fmt.Sprintf("Assigned %d %s(s) to %s", count, vType, resource))
+	ge.addLog("debug", fmt.Sprintf("Assign: %d → %s", count, buildingKey))
+	ge.addLog("info", fmt.Sprintf("Assigned %d worker(s) to %s", count, buildingKey))
 	return nil
 }
 
-// AssignAll assigns all idle villagers of a type to a resource
-func (ge *GameEngine) AssignAll(vType, resource string) (int, error) {
+// AssignAll assigns all idle workers to a building.
+// Any worker can be assigned to any building with WorkerCapacity > 0.
+func (ge *GameEngine) AssignAll(buildingKey string) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	idle := ge.Villagers.IdleCount(vType)
-	if idle <= 0 {
-		return 0, fmt.Errorf("no idle %s(s) to assign", vType)
+	if ge.Buildings.GetCount(buildingKey) == 0 {
+		return 0, fmt.Errorf("no %s built yet — build one first", buildingKey)
 	}
-	if !ge.Villagers.Assign(vType, resource, idle) {
-		return 0, fmt.Errorf("cannot assign %s(s) to %s", vType, resource)
+	byKey := config.BuildingByKey()
+	def, ok := byKey[buildingKey]
+	if !ok || def.WorkerCapacity == 0 {
+		return 0, fmt.Errorf("building %s does not accept workers", buildingKey)
+	}
+	// Cap at available capacity
+	toAssign := ge.Workers.IdleCount("worker")
+	if toAssign <= 0 {
+		return 0, fmt.Errorf("no idle workers to assign")
+	}
+	totalCap := def.WorkerCapacity * ge.Buildings.GetCount(buildingKey)
+	alreadyAssigned := ge.Workers.GetAssignedCount("worker", buildingKey)
+	available := totalCap - alreadyAssigned
+	if available <= 0 {
+		return 0, fmt.Errorf("all %d worker slot(s) for %s are full", totalCap, buildingKey)
+	}
+	if toAssign > available {
+		toAssign = available
+	}
+	if !ge.Workers.Assign("worker", buildingKey, toAssign) {
+		return 0, fmt.Errorf("cannot assign workers to %s", buildingKey)
 	}
 	ge.recalculateRates()
-	ge.addLog("info", fmt.Sprintf("Assigned all %d %s(s) to %s", idle, vType, resource))
-	return idle, nil
+	ge.addLog("info", fmt.Sprintf("Assigned all %d worker(s) to %s", toAssign, buildingKey))
+	return toAssign, nil
 }
 
-// UnassignAll removes all villagers of a type from a resource
-func (ge *GameEngine) UnassignAll(vType, resource string) (int, error) {
+// UnassignAll removes all workers from a building.
+func (ge *GameEngine) UnassignAll(buildingKey string) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	st, ok := ge.Villagers.types[vType]
-	if !ok {
-		return 0, fmt.Errorf("unknown villager type: %s", vType)
+	byKey := config.BuildingByKey()
+	def, ok := byKey[buildingKey]
+	if !ok || def.WorkerCapacity == 0 {
+		return 0, fmt.Errorf("building %s does not accept workers", buildingKey)
 	}
-	assigned := st.assignment[resource]
+	assigned := ge.Workers.GetAssignedCount("worker", buildingKey)
 	if assigned <= 0 {
-		return 0, fmt.Errorf("no %s(s) assigned to %s", vType, resource)
+		return 0, fmt.Errorf("no workers assigned to %s", buildingKey)
 	}
-	if !ge.Villagers.Unassign(vType, resource, assigned) {
-		return 0, fmt.Errorf("cannot unassign %s(s) from %s", vType, resource)
+	if !ge.Workers.Unassign("worker", buildingKey, assigned) {
+		return 0, fmt.Errorf("cannot unassign workers from %s", buildingKey)
 	}
 	ge.recalculateRates()
-	ge.addLog("info", fmt.Sprintf("Unassigned all %d %s(s) from %s", assigned, vType, resource))
+	ge.addLog("info", fmt.Sprintf("Unassigned all %d worker(s) from %s", assigned, buildingKey))
 	return assigned, nil
 }
 
-// UnassignVillager removes villagers from a resource assignment
-func (ge *GameEngine) UnassignVillager(vType, resource string, count int) error {
+// UnassignWorker removes a specific number of workers from a building.
+func (ge *GameEngine) UnassignWorker(buildingKey string, count int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	if !ge.Villagers.Unassign(vType, resource, count) {
-		return fmt.Errorf("cannot unassign %d %s(s) from %s", count, vType, resource)
+	byKey := config.BuildingByKey()
+	def, ok := byKey[buildingKey]
+	if !ok || def.WorkerCapacity == 0 {
+		return fmt.Errorf("building %s does not accept workers", buildingKey)
+	}
+	if !ge.Workers.Unassign("worker", buildingKey, count) {
+		return fmt.Errorf("cannot unassign %d workers from %s", count, buildingKey)
 	}
 	ge.recalculateRates()
-	ge.addLog("debug", fmt.Sprintf("Unassign: %d %s ← %s", count, vType, resource))
-	ge.addLog("info", fmt.Sprintf("Unassigned %d %s(s) from %s", count, vType, resource))
+	ge.addLog("debug", fmt.Sprintf("Unassign: %d ← %s", count, buildingKey))
+	ge.addLog("info", fmt.Sprintf("Unassigned %d worker(s) from %s", count, buildingKey))
 	return nil
 }
 
@@ -1065,7 +1786,12 @@ func (ge *GameEngine) StartResearch(techKey string) error {
 	ageOrder := ge.progress.GetAgeOrder()
 	knowledge := ge.Resources.Get("knowledge")
 
-	if err := ge.Research.StartResearch(techKey, ge.age, ageOrder, knowledge); err != nil {
+	// Combine research_speed from all sources: techs + permanent bonuses + prestige.
+	// This must be done before StartResearch so the combined value reduces tick count.
+	combinedResearchSpeed := ge.Research.GetBonus("research_speed") +
+		ge.permanentBonuses["research_speed"] +
+		ge.Prestige.GetBonuses()["research_speed"]
+	if err := ge.Research.StartResearchWithSpeed(techKey, ge.age, ageOrder, knowledge, combinedResearchSpeed); err != nil {
 		return err
 	}
 
@@ -1103,10 +1829,7 @@ func (ge *GameEngine) LaunchExpedition(key string) error {
 	defer ge.mu.Unlock()
 
 	ageOrder := ge.progress.GetAgeOrder()
-	soldierCount := 0
-	if st, ok := ge.Villagers.types["soldier"]; ok {
-		soldierCount = st.count
-	}
+	soldierCount := ge.Workers.GetDomainCount("military")
 	militaryBonus := ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + ge.Prestige.GetBonuses()["military_power"]
 
 	if err := ge.Military.LaunchExpedition(key, soldierCount, ge.age, ageOrder, militaryBonus); err != nil {
@@ -1137,12 +1860,15 @@ func (ge *GameEngine) DoPrestige() error {
 
 	ge.Prestige.Prestige(points)
 
+	// Preserve cross-run state before resetting managers
+	savedRuins := ge.Buildings.GetAllRuins()
+
 	// Reset all game systems
 	ge.tick = 0
 	ge.age = "primitive_age"
 	ge.Resources = NewResourceManager()
 	ge.Buildings = NewBuildingManager()
-	ge.Villagers = NewVillagerManager()
+	ge.Workers = NewWorkerManager()
 	ge.Research = NewResearchManager()
 	ge.Military = NewMilitaryManager()
 	ge.Events = NewEventManager()
@@ -1150,10 +1876,19 @@ func (ge *GameEngine) DoPrestige() error {
 	ge.Trade = NewTradeManager()
 	ge.Diplomacy = NewDiplomacyManager()
 	ge.Stats = NewGameStats()
-	ge.Bus = NewEventBus()
+	// Bus intentionally kept — dashboard subscriptions must survive across resets.
 	ge.permanentBonuses = make(map[string]float64)
 	ge.buildQueue = nil
 	ge.log = nil
+	ge.currentEpoch = config.EpochForAge("primitive_age")
+	ge.epochEventFired = make(map[string]bool)
+	ge.survivedEpochs = make(map[string]bool)
+	ge.pendingCatastrophe = ""
+	ge.epochEventHistory = nil
+
+	// Restore cross-run state
+	ge.Buildings.LoadRuins(savedRuins)
+	ge.reapplyLegacyBonuses()
 
 	// Apply age unlocks for primitive age
 	ge.applyAgeUnlocks("primitive_age")
@@ -1170,6 +1905,12 @@ func (ge *GameEngine) DoPrestige() error {
 	ge.addLog("success", fmt.Sprintf("Prestige complete! Level %d (+%d points)", ge.Prestige.GetLevel(), points))
 	ge.addLog("info", fmt.Sprintf("Passive bonus: +%.0f%% production, +%.0f%% tick speed",
 		float64(ge.Prestige.GetLevel())*2, ge.tickSpeedBonus*100))
+	if len(ge.legacyBonuses) > 0 {
+		ge.addLog("info", fmt.Sprintf("Legacy bonuses active: %d epoch(s)", len(ge.legacyBonuses)))
+	}
+	if len(savedRuins) > 0 {
+		ge.addLog("info", fmt.Sprintf("%d ruin type(s) carry forward from past civilizations.", len(savedRuins)))
+	}
 	ge.addLog("info", "Type [cyan]help[-] to get started again.")
 
 	return nil
@@ -1196,7 +1937,7 @@ func (ge *GameEngine) Reset() {
 	ge.age = "primitive_age"
 	ge.Resources = NewResourceManager()
 	ge.Buildings = NewBuildingManager()
-	ge.Villagers = NewVillagerManager()
+	ge.Workers = NewWorkerManager()
 	ge.Research = NewResearchManager()
 	ge.Military = NewMilitaryManager()
 	ge.Events = NewEventManager()
@@ -1205,7 +1946,7 @@ func (ge *GameEngine) Reset() {
 	ge.Trade = NewTradeManager()
 	ge.Diplomacy = NewDiplomacyManager()
 	ge.Stats = NewGameStats()
-	ge.Bus = NewEventBus()
+	// Bus intentionally kept — dashboard subscriptions must survive across resets.
 	ge.permanentBonuses = make(map[string]float64)
 	ge.tickSpeedBonus = 0
 	ge.speedMultiplier = 1.0
@@ -1213,11 +1954,18 @@ func (ge *GameEngine) Reset() {
 	ge.log = nil
 
 	ge.applyAgeUnlocks("primitive_age")
-	ge.Resources.Add("food", 15)
-	ge.Resources.Add("wood", 12)
+	ge.Resources.Add("food", 25)
+	ge.Resources.Add("wood", 50)
 
 	ge.cheaterBadge = false
 	ge.eliteBadge = false
+	ge.currentEpoch = config.EpochForAge("primitive_age")
+	ge.epochEventFired = make(map[string]bool)
+	ge.survivedEpochs = make(map[string]bool)
+	ge.pendingCatastrophe = ""
+	ge.epochEventHistory = nil
+	ge.legacyBonuses = make(map[string]bool)
+	ge.catastropheHistory = nil
 
 	ge.addLog("event", "Game wiped! Starting fresh.")
 	ge.addLog("info", "Type [cyan]help[-] for commands.")
@@ -1254,10 +2002,8 @@ func (ge *GameEngine) GetState() GameState {
 	}
 
 	ageOrder := ge.progress.GetAgeOrder()
-	soldierCount := 0
-	if st, ok := ge.Villagers.types["soldier"]; ok {
-		soldierCount = st.count
-	}
+	soldierCount := ge.Workers.GetDomainCount("military")
+	knowledgeCount := ge.Workers.GetDomainCount("knowledge")
 	prestigeBonuses := ge.Prestige.GetBonuses()
 	militaryBonus := ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + prestigeBonuses["military_power"]
 	expeditionBonus := ge.Research.GetBonus("expedition_reward") + ge.permanentBonuses["expedition_reward"] + prestigeBonuses["expedition_reward"]
@@ -1291,9 +2037,9 @@ func (ge *GameEngine) GetState() GameState {
 		NextAgeResReqs: nextAgeResReqs,
 		NextAgeBldReqs: nextAgeBldReqs,
 		Resources:      ge.Resources.Snapshot(),
-		Buildings:      ge.Buildings.Snapshot(ge.Resources),
+		Buildings:      ge.Buildings.Snapshot(ge.Resources, ge.Workers.GetAssignedCount),
 		BuildQueue:     queue,
-		Villagers:      ge.Villagers.Snapshot(popCap),
+		Workers:        ge.Workers.Snapshot(popCap),
 		Research:       ge.Research.Snapshot(ge.age, ageOrder),
 		Military:       ge.Military.Snapshot(ge.age, ageOrder, soldierCount, militaryBonus, expeditionBonus),
 		Milestones: ge.Milestones.Snapshot(MilestoneSnapshotParams{
@@ -1302,11 +2048,12 @@ func (ge *GameEngine) GetState() GameState {
 			AgeOrder:        ageOrder,
 			Resources:       ge.Resources.GetAll(),
 			Buildings:       ge.Buildings.GetAll(),
-			Population:      ge.Villagers.TotalPop(),
+			Population:      ge.Workers.TotalPop(),
 			TechCount:       ge.Research.ResearchedCount(),
 			TotalBuilt:      ge.Stats.TotalBuilt,
 			SoldierCount:    soldierCount,
 			WonderCount:     ge.countWonders(),
+			KnowledgeCount:  knowledgeCount,
 			ResearchedTechs: ge.getResearchedTechMap(),
 			activeEvents:    ge.Events.GetActive(),
 		}),
@@ -1320,8 +2067,34 @@ func (ge *GameEngine) GetState() GameState {
 		TickSpeedBonus:  ge.tickSpeedBonus,
 		TickIntervalMs:  int(tickInterval.Milliseconds()),
 		SpeedMultiplier: speedMult,
-		CheaterBadge:    ge.cheaterBadge,
-		EliteBadge:      ge.eliteBadge,
+		CheaterBadge:          ge.cheaterBadge,
+		EliteBadge:            ge.eliteBadge,
+		LastAgeAdvanceSummary: ge.lastAgeAdvanceSummary,
+		// Phase 8: epoch fields
+		EpochKey:           ge.currentEpoch,
+		EpochName:          func() string {
+			if ep, ok := config.EpochByKey()[ge.currentEpoch]; ok { return ep.Name }
+			return ""
+		}(),
+		EpochIcon:          func() string {
+			if ep, ok := config.EpochByKey()[ge.currentEpoch]; ok { return ep.Icon }
+			return ""
+		}(),
+		EpochColor:         func() string {
+			if ep, ok := config.EpochByKey()[ge.currentEpoch]; ok { return ep.Color }
+			return "white"
+		}(),
+		EpochSurvived:      ge.survivedEpochs[ge.currentEpoch],
+		PendingCatastrophe: ge.pendingCatastrophe,
+		EpochEventHistory:  ge.epochEventHistory,
+		LegacyBonuses:      func() map[string]bool {
+			out := make(map[string]bool, len(ge.legacyBonuses))
+			for k, v := range ge.legacyBonuses {
+				out[k] = v
+			}
+			return out
+		}(),
+		CatastropheHistory: ge.catastropheHistory,
 	}
 }
 

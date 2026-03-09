@@ -21,8 +21,7 @@ var eliteMessages = []string{
 }
 
 // CreateSplashPage creates the main menu splash screen.
-// wikiServer is started and opened in the browser when the player selects Wiki.
-func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, wikiServer *game.WikiServer, currentVersion string) tview.Primitive {
+func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string) tview.Primitive {
 	saveExists := game.SaveExists("autosave")
 	_, eliteBadge := game.PeekSaveBadges("autosave")
 	prestigeLevel := engine.Prestige.GetLevel()
@@ -63,23 +62,17 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	})
 	mainList.AddItem("  ✦  New Game", "", 'n', func() {
 		nav(func() {
+			engine.Reset()
 			pages.SwitchToPage("dashboard")
 			go engine.Start()
 		})
-	})
-	mainList.AddItem("  📖  Wiki", "", 'w', func() {
-		if wikiServer != nil {
-			if err := wikiServer.Start(); err == nil {
-				wikiServer.OpenBrowser()
-			}
-		}
 	})
 	mainList.AddItem("  ✗  Quit", "", 'q', func() {
 		canvas.halt()
 		app.Stop()
 	})
 	mainList.AddItem("  ✗  Wipe Save", "", 'x', func() {
-		showWipeConfirmation(app, pages, engine, wikiServer, canvas.halt, currentVersion)
+		showWipeConfirmation(app, pages, engine, canvas.halt, currentVersion)
 	})
 	mainList.AddItem("  ↑  Check for Update", "", 'u', func() {
 		showUpdateCheck(app, pages, currentVersion)
@@ -160,7 +153,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 
 // showWipeConfirmation shows the "are you sure?" modal before wiping data.
 // cleanup is called (to halt the canvas animation) before recreating the splash.
-func showWipeConfirmation(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, wikiServer *game.WikiServer, cleanup func(), currentVersion string) {
+func showWipeConfirmation(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, cleanup func(), currentVersion string) {
 	modal := tview.NewModal().
 		SetText("⚠  WIPE ALL DATA  ⚠\n\nThis will permanently delete ALL save files\nand reset the game to zero.\n\nPrestige, upgrades, progress — everything gone.\n\nAre you REALLY sure?").
 		AddButtons([]string{"I'm Kidding!", "NUKE IT ALL"}).
@@ -170,8 +163,9 @@ func showWipeConfirmation(app *tview.Application, pages *tview.Pages, engine *ga
 				cleanup() // stop old canvas goroutine
 				game.WipeAllSaves()
 				engine.Reset()
-				pages.RemovePage("splash")
-				newSplash := CreateSplashPage(app, pages, engine, wikiServer, currentVersion)
+				// AddPage with an existing name replaces atomically — no RemovePage
+				// needed, and avoids a flash of the dashboard underneath.
+				newSplash := CreateSplashPage(app, pages, engine, currentVersion)
 				pages.AddPage("splash", newSplash, true, true)
 			}
 		})

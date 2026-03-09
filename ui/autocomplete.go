@@ -1,3 +1,7 @@
+// Package ui provides all terminal user interface components for AgeForge,
+// built on top of tview/tcell. The package is structured around a permanent
+// Dashboard (economy background) with named overlay panels for research,
+// military, trade, etc. All UI refreshes must happen inside app.QueueUpdateDraw.
 package ui
 
 import (
@@ -8,13 +12,28 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-// commands is the full list of command names for autocomplete
+// commands is the full list of command names for autocomplete.
+// Includes both full names and single-letter/short aliases so they show up in tab completion.
 var commands = []string{
-	"gather", "build", "recruit", "assign", "unassign",
-	"research", "expedition", "prestige",
-	"trade", "diplomacy", "upgrade",
-	"rates", "status", "speed", "save", "saves", "load", "help", "quit",
-	"wonder", "collect",
+	"gather", "g",
+	"build", "b",
+	"recruit", "r",
+	"assign", "a",
+	"unassign", "u",
+	"research", "res",
+	"expedition", "exp",
+	"trade", "t",
+	"diplomacy", "dip",
+	"catastrophe", "cat",
+	"status", "s",
+	"help", "h",
+	"prestige",
+	"upgrade",
+	"advance", "rates", "speed", "save", "saves", "load",
+	"wonder",
+	"dump", "exportlogs",
+	"milestones", "ms",
+	"techs", "army", "stats", "wonders", "logs", "epoch",
 }
 
 // NewAutoCompleter returns an autocomplete function for the command input field.
@@ -67,7 +86,8 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 
 	switch cmd {
 	case "gather", "g":
-		return filterPrefix(unlockedResourceKeys(state), partial, prefix)
+		// cmdGather only accepts food, wood, stone — not all resource keys
+		return filterPrefix([]string{"food", "wood", "stone"}, partial, prefix)
 
 	case "build", "b":
 		if len(completed) == 0 {
@@ -79,28 +99,18 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 
 	case "recruit", "r":
 		if len(completed) == 0 {
-			return filterPrefix(unlockedVillagerTypes(state), partial, prefix)
-		}
-		if len(completed) == 1 {
 			return filterPrefix([]string{"max"}, partial, prefix)
 		}
 
 	case "assign", "a":
 		if len(completed) == 0 {
-			return filterPrefix(unlockedVillagerTypes(state), partial, prefix)
-		}
-		if len(completed) == 1 {
-			return filterPrefix(unlockedResourceKeys(state), partial, prefix)
+			return filterPrefix(workerBuildingKeys(state), partial, prefix)
 		}
 		return filterPrefix([]string{"all"}, partial, prefix)
 
 	case "unassign", "u":
 		if len(completed) == 0 {
-			return filterPrefix(unlockedVillagerTypes(state), partial, prefix)
-		}
-		if len(completed) == 1 {
-			vType := strings.ToLower(completed[0])
-			return filterPrefix(assignedResources(state, vType), partial, prefix)
+			return filterPrefix(assignedBuildingKeysAll(state), partial, prefix)
 		}
 		return filterPrefix([]string{"all"}, partial, prefix)
 
@@ -170,10 +180,30 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 		return filterPrefix(availableSpeedOptions(engine), partial, prefix)
 
 	case "save":
-		return filterPrefix(saveNames(), partial, prefix)
+		// "save list" shows save files; "save [name]" saves to named slot
+		names := saveNames()
+		names = append([]string{"list"}, names...)
+		return filterPrefix(names, partial, prefix)
 
 	case "load":
 		return filterPrefix(saveNames(), partial, prefix)
+
+	case "catastrophe", "cat":
+		return filterPrefix([]string{"invoke"}, partial, prefix)
+
+	case "wonder":
+		if len(completed) == 0 {
+			// Only subcommand is "collect"
+			return filterPrefix([]string{"collect"}, partial, prefix)
+		}
+		if len(completed) == 1 && strings.ToLower(completed[0]) == "collect" {
+			// 2nd arg: an unlocked resource key
+			return filterPrefix(unlockedResourceKeys(state), partial, prefix)
+		}
+		if len(completed) == 2 && strings.ToLower(completed[0]) == "collect" {
+			// 3rd arg: "all" or common numeric amounts
+			return filterPrefix([]string{"all", "100", "1000"}, partial, prefix)
+		}
 	}
 
 	return nil
@@ -195,6 +225,8 @@ func filterPrefix(candidates []string, partial string, prefix string) []string {
 	return results
 }
 
+// unlockedResourceKeys returns all resource keys that are currently unlocked,
+// sorted alphabetically. Used to populate autocomplete for gather/trade commands.
 func unlockedResourceKeys(state game.GameState) []string {
 	var keys []string
 	for key, rs := range state.Resources {
@@ -206,6 +238,8 @@ func unlockedResourceKeys(state game.GameState) []string {
 	return keys
 }
 
+// unlockedBuildingKeys returns all building keys that are currently unlocked,
+// sorted alphabetically. Used for the "build" command autocomplete.
 func unlockedBuildingKeys(state game.GameState) []string {
 	var keys []string
 	for key, bs := range state.Buildings {
@@ -217,9 +251,11 @@ func unlockedBuildingKeys(state game.GameState) []string {
 	return keys
 }
 
-func unlockedVillagerTypes(state game.GameState) []string {
+// unlockedDomainKeys returns all worker domain keys that are currently unlocked,
+// sourced from state.Workers.Types which is keyed by domain key (e.g. "food", "knowledge").
+func unlockedDomainKeys(state game.GameState) []string {
 	var keys []string
-	for key, vt := range state.Villagers.Types {
+	for key, vt := range state.Workers.Types {
 		if vt.Unlocked {
 			keys = append(keys, key)
 		}
@@ -228,21 +264,59 @@ func unlockedVillagerTypes(state game.GameState) []string {
 	return keys
 }
 
-func assignedResources(state game.GameState, vType string) []string {
-	vt, ok := state.Villagers.Types[vType]
-	if !ok {
-		return nil
+// recruitCompletions returns the current class names (in lowercase) for all unlocked
+// worker domains, sourced from state.Workers.Types[domain].Name.
+// Falls back to the domain key if the class name is empty.
+func recruitCompletions(state game.GameState) []string {
+	var names []string
+	for domain, vt := range state.Workers.Types {
+		if !vt.Unlocked {
+			continue
+		}
+		name := strings.ToLower(vt.Name)
+		if name == "" {
+			name = domain
+		}
+		names = append(names, name)
 	}
+	sort.Strings(names)
+	return names
+}
+
+// workerBuildingKeys returns all unlocked building keys that accept workers
+// (i.e. have a WorkerDomain and WorkerCapacity > 0).
+func workerBuildingKeys(state game.GameState) []string {
 	var keys []string
-	for res, count := range vt.Assignments {
-		if count > 0 {
-			keys = append(keys, res)
+	for key, bs := range state.Buildings {
+		if bs.Unlocked && bs.WorkerDomain != "" && bs.WorkerCapacity > 0 {
+			keys = append(keys, key)
 		}
 	}
 	sort.Strings(keys)
 	return keys
 }
 
+// assignedBuildingKeysAll returns all building keys across all domains that currently
+// have at least one worker assigned.
+func assignedBuildingKeysAll(state game.GameState) []string {
+	seen := map[string]bool{}
+	for _, vt := range state.Workers.Types {
+		for buildingKey, count := range vt.Assignments {
+			if count > 0 {
+				seen[buildingKey] = true
+			}
+		}
+	}
+	var keys []string
+	for k := range seen {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// availableTechKeys returns tech keys that are currently available to research
+// (unlocked but not yet started or completed).
 func availableTechKeys(state game.GameState) []string {
 	var keys []string
 	for key, ts := range state.Research.Techs {
@@ -254,6 +328,9 @@ func availableTechKeys(state game.GameState) []string {
 	return keys
 }
 
+// availableExpeditionKeys returns all expedition keys visible in the military state.
+// Unlike tech/building keys, this includes both launchable and locked expeditions —
+// the engine enforces eligibility on launch.
 func availableExpeditionKeys(state game.GameState) []string {
 	var keys []string
 	for _, exp := range state.Military.Expeditions {
@@ -263,6 +340,8 @@ func availableExpeditionKeys(state game.GameState) []string {
 	return keys
 }
 
+// prestigeUpgradeKeys returns upgrade keys that still have tiers remaining
+// (NextCost > 0 means the upgrade is not yet maxed out).
 func prestigeUpgradeKeys(state game.GameState) []string {
 	var keys []string
 	for key, u := range state.Prestige.Upgrades {
@@ -274,6 +353,8 @@ func prestigeUpgradeKeys(state game.GameState) []string {
 	return keys
 }
 
+// availableTradeRouteKeys returns route keys from Trade.AvailableRoutes.
+// These are routes the player can start (not currently active).
 func availableTradeRouteKeys(state game.GameState) []string {
 	var keys []string
 	for _, route := range state.Trade.AvailableRoutes {
@@ -283,6 +364,8 @@ func availableTradeRouteKeys(state game.GameState) []string {
 	return keys
 }
 
+// activeTradeRouteKeys returns route keys from Trade.ActiveRoutes.
+// These are routes that are currently running and can be stopped.
 func activeTradeRouteKeys(state game.GameState) []string {
 	var keys []string
 	for _, route := range state.Trade.ActiveRoutes {
@@ -292,6 +375,8 @@ func activeTradeRouteKeys(state game.GameState) []string {
 	return keys
 }
 
+// discoveredFactionKeys returns faction keys that have been discovered
+// (factions are hidden until the player reaches a certain age or event).
 func discoveredFactionKeys(state game.GameState) []string {
 	var keys []string
 	for key, f := range state.Diplomacy.Factions {
@@ -303,6 +388,9 @@ func discoveredFactionKeys(state game.GameState) []string {
 	return keys
 }
 
+// availableSpeedOptions returns a list of valid speed multiplier strings
+// from 1.0 up to the current max (increments of 0.5). Max speed increases
+// by 0.5x for each wonder the player has built.
 func availableSpeedOptions(engine *game.GameEngine) []string {
 	maxSpeed := engine.GetMaxSpeed()
 	var options []string
@@ -312,6 +400,8 @@ func availableSpeedOptions(engine *game.GameEngine) []string {
 	return options
 }
 
+// upgradeableBuildingKeys returns the "from" building key for every currently
+// available upgrade. Deduplication is not applied — the engine handles it.
 func upgradeableBuildingKeys(engine *game.GameEngine) []string {
 	upgrades := engine.GetAvailableUpgrades()
 	var keys []string

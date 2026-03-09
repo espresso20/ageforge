@@ -5,71 +5,21 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/rivo/tview"
-
 	"github.com/espresso20/ageforge/game"
 )
 
-// TradeTab displays trade exchange, routes, and diplomacy
-type TradeTab struct {
-	root       *tview.Flex
-	exchangeTV *tview.TextView
-	routesTV   *tview.TextView
-	diplomacyTV *tview.TextView
-}
-
-// NewTradeTab creates the trade tab
-func NewTradeTab() *TradeTab {
-	t := &TradeTab{}
-
-	t.exchangeTV = tview.NewTextView().
-		SetDynamicColors(true).
-		SetScrollable(true)
-	t.exchangeTV.SetBorder(true).SetTitle(" Exchange Rates ").SetTitleColor(ColorTitle)
-
-	t.routesTV = tview.NewTextView().
-		SetDynamicColors(true).
-		SetScrollable(true)
-	t.routesTV.SetBorder(true).SetTitle(" Trade Routes ").SetTitleColor(ColorTitle)
-
-	t.diplomacyTV = tview.NewTextView().
-		SetDynamicColors(true).
-		SetScrollable(true)
-	t.diplomacyTV.SetBorder(true).SetTitle(" Diplomacy ").SetTitleColor(ColorTitle)
-
-	// Top: exchange (left) + routes (right), Bottom: diplomacy
-	topPanel := tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(t.exchangeTV, 0, 1, false).
-		AddItem(t.routesTV, 0, 1, false)
-
-	t.root = tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(topPanel, 0, 2, false).
-		AddItem(t.diplomacyTV, 0, 1, false)
-
-	return t
-}
-
-// Root returns the root primitive
-func (t *TradeTab) Root() tview.Primitive {
-	return t.root
-}
-
-// Refresh updates the trade tab with current state
-func (t *TradeTab) Refresh(state game.GameState) {
-	t.refreshExchange(state)
-	t.refreshRoutes(state)
-	t.refreshDiplomacy(state)
-}
-
-func (t *TradeTab) refreshExchange(state game.GameState) {
+// tradeProvider generates the trade overlay text from the current game state.
+// It mirrors the logic from TradeTab.Refresh — same data, formatted as plain text.
+func tradeProvider(state game.GameState) string {
 	var sb strings.Builder
 	trade := state.Trade
 
+	// === Exchange Rates ===
+	fmt.Fprintf(&sb, " [gold]═══ Exchange Rates ═══[-]\n\n")
 	if len(trade.ExchangeRates) == 0 {
 		sb.WriteString(" [gray]No exchange rates available yet[-]\n")
 		sb.WriteString(" [gray]Build a market to unlock trading[-]\n")
 	} else {
-		// Sort keys for stable display
 		keys := make([]string, 0, len(trade.ExchangeRates))
 		for k := range trade.ExchangeRates {
 			keys = append(keys, k)
@@ -78,14 +28,14 @@ func (t *TradeTab) refreshExchange(state game.GameState) {
 
 		for _, key := range keys {
 			info := trade.ExchangeRates[key]
-			pressureColor := "gray"
+			// Market pressure is a short-term penalty/bonus from repeated trades.
+			// Positive pressure = price moved against you (recently sold a lot).
+			// Negative pressure = price moved in your favour (recovery period).
 			pressureStr := ""
 			if info.Pressure > 0.1 {
-				pressureColor = "red"
-				pressureStr = fmt.Sprintf(" [%s]↓%.0f%%[-]", pressureColor, info.Pressure*30)
+				pressureStr = fmt.Sprintf(" [red]↓%.0f%%[-]", info.Pressure*30)
 			} else if info.Pressure < -0.1 {
-				pressureColor = "green"
-				pressureStr = fmt.Sprintf(" [%s]↑%.0f%%[-]", pressureColor, -info.Pressure*30)
+				pressureStr = fmt.Sprintf(" [green]↑%.0f%%[-]", -info.Pressure*30)
 			}
 
 			rateColor := "white"
@@ -103,34 +53,32 @@ func (t *TradeTab) refreshExchange(state game.GameState) {
 	sb.WriteString("\n [gray]Commands: trade <from> <to> <amount>[-]\n")
 	sb.WriteString(" [gray]Example: trade food wood 50[-]\n")
 
-	// Stats
 	if len(trade.TotalExchanged) > 0 {
 		sb.WriteString("\n [gold]Total Exchanged:[-]\n")
-		for res, amount := range trade.TotalExchanged {
-			fmt.Fprintf(&sb, "   %s: %.0f\n", res, amount)
+		exchKeys := make([]string, 0, len(trade.TotalExchanged))
+		for k := range trade.TotalExchanged {
+			exchKeys = append(exchKeys, k)
+		}
+		sort.Strings(exchKeys)
+		for _, res := range exchKeys {
+			fmt.Fprintf(&sb, "   %s: %.0f\n", res, trade.TotalExchanged[res])
 		}
 	}
 
-	t.exchangeTV.SetText(sb.String())
-}
+	// === Trade Routes ===
+	sb.WriteString("\n [gold]═══ Trade Routes ═══[-]\n\n")
 
-func (t *TradeTab) refreshRoutes(state game.GameState) {
-	var sb strings.Builder
-	trade := state.Trade
-
-	// Active routes
 	if len(trade.ActiveRoutes) > 0 {
 		sb.WriteString(" [gold]Active Routes:[-]\n\n")
 		for _, route := range trade.ActiveRoutes {
 			fmt.Fprintf(&sb, " [green]▸[-] [cyan]%s[-]\n", route.Name)
 			fmt.Fprintf(&sb, "   Export: %s\n", formatResMap(route.Export))
 			fmt.Fprintf(&sb, "   Import: %s\n", formatResMap(route.Import))
-			bar := ProgressBar(float64(route.TicksLeft), float64(route.TicksLeft+1), 15)
-			fmt.Fprintf(&sb, "   %s %d ticks  [gray](%d cycles)[-]\n\n", bar, route.TicksLeft, route.CyclesDone)
+			fmt.Fprintf(&sb, "   %d ticks remaining  [gray](%d cycles done)[-]\n\n",
+				route.TicksLeft, route.CyclesDone)
 		}
 	}
 
-	// Available routes
 	if len(trade.AvailableRoutes) > 0 {
 		sb.WriteString(" [gold]Available Routes:[-]\n\n")
 		for _, route := range trade.AvailableRoutes {
@@ -140,7 +88,8 @@ func (t *TradeTab) refreshRoutes(state game.GameState) {
 			}
 			fmt.Fprintf(&sb, " %s [cyan]%s[-]\n", statusIcon, route.Name)
 			fmt.Fprintf(&sb, "   [gray]%s[-]\n", route.Description)
-			fmt.Fprintf(&sb, "   Export: %s → Import: %s\n", formatResMap(route.Export), formatResMap(route.Import))
+			fmt.Fprintf(&sb, "   Export: %s → Import: %s\n",
+				formatResMap(route.Export), formatResMap(route.Import))
 			if route.CanStart {
 				fmt.Fprintf(&sb, "   [green]trade route start %s[-]\n", route.Key)
 			} else {
@@ -157,25 +106,21 @@ func (t *TradeTab) refreshRoutes(state game.GameState) {
 
 	sb.WriteString(" [gray]Commands: trade route start/stop <key>[-]\n")
 
-	t.routesTV.SetText(sb.String())
-}
-
-func (t *TradeTab) refreshDiplomacy(state game.GameState) {
-	var sb strings.Builder
+	// === Diplomacy ===
+	sb.WriteString("\n [gold]═══ Diplomacy ═══[-]\n\n")
 	dip := state.Diplomacy
 
 	if len(dip.Factions) == 0 {
 		sb.WriteString(" [gray]No factions discovered yet[-]\n")
 		sb.WriteString(" [gray]Reach Colonial Age to discover factions[-]\n")
 	} else {
-		// Sort by key for stable display
-		keys := make([]string, 0, len(dip.Factions))
+		factionKeys := make([]string, 0, len(dip.Factions))
 		for k := range dip.Factions {
-			keys = append(keys, k)
+			factionKeys = append(factionKeys, k)
 		}
-		sort.Strings(keys)
+		sort.Strings(factionKeys)
 
-		for _, key := range keys {
+		for _, key := range factionKeys {
 			faction := dip.Factions[key]
 			if !faction.Discovered {
 				fmt.Fprintf(&sb, " [gray]??? %s [Undiscovered][-]\n", faction.Name)
@@ -216,10 +161,12 @@ func (t *TradeTab) refreshDiplomacy(state game.GameState) {
 
 	sb.WriteString("\n [gray]Commands: diplomacy ally/rival/embargo/gift/neutral <faction>[-]\n")
 
-	t.diplomacyTV.SetText(sb.String())
+	return sb.String()
 }
 
-// formatResMap formats a resource map for display
+// formatResMap formats a resource→amount map into a sorted, comma-separated
+// string (e.g. "50 food, 20 wood"). Returns "none" for empty maps.
+// Keys are sorted for stable output across Go map iteration.
 func formatResMap(m map[string]float64) string {
 	if len(m) == 0 {
 		return "none"
