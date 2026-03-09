@@ -34,13 +34,15 @@ func milestonesProvider(state game.GameState) string {
 		categoryMilestones[m.Category] = append(categoryMilestones[m.Category], m)
 	}
 
-	// Display categories in order
-	catOrder := []string{"settlement", "builder", "scholar", "military", "ages"}
+	// Display categories in order — must stay in sync with config.MilestoneCategoryOrder.
+	catOrder := []string{"settlement", "builder", "scholar", "military", "trade", "faith", "ages"}
 	catNames := map[string]string{
 		"settlement": "Settlement",
 		"builder":    "Builder",
 		"scholar":    "Scholar",
 		"military":   "Military",
+		"trade":      "Trade",
+		"faith":      "Faith",
 		"ages":       "Ages",
 	}
 
