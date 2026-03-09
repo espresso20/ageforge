@@ -6,7 +6,7 @@ Workers are your civilization's workforce. They consume food each tick and drive
 
 ## Overview
 
-Workers are organized into 12 domains. Each domain is tied to specific building lineages, and workers in a domain can only be assigned to buildings that share that domain.
+Workers come from a **single generic pool** — all workers are identical until assigned to a building. When you assign a worker to a building, they take on the class name for that building's domain at the current age. There are no separate domain pools; any worker can go to any building.
 
 **Production formula:**
 
@@ -29,11 +29,11 @@ production = base_rate × building_count × (0.20 + 0.80 × assigned / total_cap
 | knowledge | Generate knowledge for research | Primitive Age |
 | lumber | Extract wood, coal, oil, nanobots, quantum flux | Stone Age |
 | masonry | Extract stone, iron ore, uranium, titanium ore, dark matter crystals, antimatter | Stone Age |
-| faith | Generate faith | Medieval Age |
+| faith | Generate faith | Primitive Age (early tiers); formal domain from Medieval Age |
 | military | Train soldiers for expeditions | Iron Age |
 | trade | Generate gold | Bronze Age |
 | metallurgy | Refine ore into iron, steel, titanium, dark matter | Iron Age |
-| engineering | Produce steel, electricity, plasma | Victorian Age |
+| engineering | Produce steel, electricity, plasma | Bronze Age (early tiers); high-cost tier from Victorian Age |
 | energy | Generate electricity, plasma, quantum flux | Victorian Age |
 | hacker | Generate data and crypto | Information Age |
 | astronaut | Generate dark matter, antimatter | Space Age |
@@ -50,7 +50,7 @@ Each domain has age-tiered class names. Workers are recruited generically and ta
 
 **Production scales geometrically:** `Multiplier = 2.0^tier` (vs. the building's base rate)
 
-### Food Domain — base food cost 1.0, starts Primitive Age
+### Food Domain — base food cost 0.06, starts Primitive Age
 
 | Age | Class Name |
 |-----|-----------|
@@ -88,7 +88,9 @@ Stone: Gatherer → Bronze: Woodcutter → Iron: Lumberjack → Classical: Sawye
 
 Stone: Quarryman → Bronze: Stone Cutter → Iron: Miner → Classical: Iron Extractor → Medieval: Medieval Miner → Renaissance: Renaissance Quarryman → Colonial: Colonial Miner → Industrial: Industrial Miner → Victorian: Victorian Quarryman → Electric: Electric Miner → Atomic: Uranium Miner → Modern: Modern Geologist → Information: Data Miner → Digital: Digital Excavator → Cyberpunk: Cyber Miner → Fusion: Plasma Driller → Space: Space Miner → Interstellar: Asteroid Miner → Galactic: Dark Matter Extractor → **Quantum: Crystal Miner**
 
-### Faith Domain — base food cost 2.0, starts Medieval Age
+### Faith Domain — base food cost 0.08 (early tiers, Primitive–Classical); 2.0 (formal tier from Medieval Age)
+
+Early tiers (Primitive: Devotee · Stone: Believer · Bronze: Worshipper · Iron: Celebrant · Classical: Initiate) cover Shrine/Altar buildings at lower food costs. Formal tier begins at Medieval Age.
 
 Medieval: Acolyte → Renaissance: Monk → Colonial: Missionary → Industrial: Revivalist → Victorian: Parish Priest → Electric: Evangelical → Atomic: Atomic Priest → Modern: Modern Shepherd → Information: Digital Devotee → Digital: Virtual Cleric → Cyberpunk: Cyber Cleric → Fusion: Plasma Prophet → Space: Star Preacher → Interstellar: Interstellar Mystic → Galactic: Galactic High Priest → **Quantum: Quantum Sage**
 
@@ -104,9 +106,9 @@ Bronze: Peddler → Iron: Merchant → Classical: Trader → Medieval: Nobleman 
 
 Iron: Smelter → Classical: Ironworker → Medieval: Medieval Smith → Renaissance: Renaissance Metallurgist → Colonial: Foundry Worker → Industrial: Factory Worker → Victorian: Steam Smelter → Electric: Electric Smelter → Atomic: Atomic Metallurgist → Modern: Modern Metallurgist → Information: Digital Foundry Worker → Digital: Digital Smelter → Cyberpunk: Cyber Forge Worker → Fusion: Plasma Metallurgist → Space: Stellar Foundry Worker → Interstellar: Stellar Smelter → Galactic: Galactic Metallurgist → **Quantum: Quantum Smelter**
 
-### Engineering Domain — base food cost 8.0, starts Victorian Age
+### Engineering Domain — early tiers base 0.50/tick (Bronze–Industrial), formal tiers base 8.0 from Victorian Age
 
-Victorian: Tinker → Electric: Electrical Engineer → Atomic: Nuclear Engineer → Modern: Systems Engineer → Information: Software Engineer → Digital: AI Engineer → Cyberpunk: Cyber Engineer → Fusion: Plasma Engineer → Space: Space Engineer → Interstellar: Warp Engineer → Galactic: Galactic Engineer → **Quantum: Quantum Engineer**
+Bronze: Apprentice → Iron: Craftsman → Classical: Artisan → Medieval: Engineer → Renaissance: Master Eng. → Colonial: Mechanic → Industrial: Machinist → Victorian: Tinker → Electric: Electrical Engineer → Atomic: Nuclear Engineer → Modern: Systems Engineer → Information: Software Engineer → Digital: AI Engineer → Cyberpunk: Cyber Engineer → Fusion: Plasma Engineer → Space: Space Engineer → Interstellar: Warp Engineer → Galactic: Galactic Engineer → **Quantum: Quantum Engineer**
 
 ### Energy Domain — base food cost 8.0, starts Victorian Age
 
@@ -148,7 +150,6 @@ The domain is inferred automatically from the building. A building with worker c
 
 ```
 unassign <building_key> [count|all]
-unassign all <domain>
 ```
 
 ---
@@ -157,8 +158,9 @@ unassign all <domain>
 
 Every worker in every domain costs food per tick. The exact amount is `baseFoodCost × 1.5^tier` for their current class tier. As you advance ages and recruit higher-tier workers, food drain rises substantially.
 
-- Tier 0 food workers cost 1.0 food/tick each
-- Tier 5 (Medieval Serf) costs `1.0 × 1.5^5 = ~7.6 food/tick`
+- Tier 0 food workers (Foragers) cost **0.06 food/tick** each — extremely cheap
+- Tier 5 food workers (Medieval Serf) cost `0.06 × 1.5^5 ≈ 0.46 food/tick`
+- Other domain base costs: knowledge/lumber/masonry/trade = 1.0, faith/military/metallurgy = 2.0, engineering/energy = 8.0, hacker = 16.0, astronaut = 32.0
 - High-tier specialists (Hacker at tier 0 = 16.0, Astronaut at tier 0 = 32.0) are expensive — ensure food production keeps up before recruiting them
 
 ---
@@ -169,5 +171,5 @@ Every worker in every domain costs food per tick. The exact amount is `baseFoodC
 - **Faith workers before epoch transitions** — your faith level as a percentage of storage cap determines epoch roll odds. Keep faith workers assigned ahead of predicted epoch events.
 - **Knowledge workers for fast research** — the knowledge domain multiplier doubles each tier, making late-game knowledge workers vastly more productive than early-tier ones.
 - **Metallurgy requires both extraction and refining** — assign masonry workers to geological extraction buildings to produce raw ore, then metallurgy workers to smelters to refine it.
-- **Legacy class workers** — workers recruited in a previous age retain their tier's food cost and multiplier. New recruits always join at the current tier. Both coexist in the same domain pool.
+- **Single pool** — all workers are in one pool regardless of which buildings they are assigned to. Reassign freely between any buildings at any time.
 - **Check idle count** — press `e` (Economy tab) to see the idle count in the status bar. Unassigned workers still drain food for zero extra production benefit.

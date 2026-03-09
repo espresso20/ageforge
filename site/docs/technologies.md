@@ -1,207 +1,595 @@
 # Technologies
 
-52 technologies unlock across all 22 ages. Research is sequential — only one tech can be active at a time. All technologies cost **knowledge points** (kp) and a number of **ticks** to complete.
+Research is your civilization's most powerful long-term lever. 52 technologies span all 22 ages — each one permanently alters your production rates, military strength, storage caps, or the pace of the game itself. Research is **sequential**: only one technology can be in progress at a time, and it must run to completion (or be deliberately cancelled) before you can start the next.
 
-Press `F2` or type `r` to open the Research tab. Available techs show a gold `○`; locked ones show `·`.
+---
+
+## How Research Works
+
+### Starting Research
+
+Research costs **knowledge points (kp)**, deducted immediately when you start. There is no refund if you cancel — the knowledge is gone the moment you type the command.
+
+Once started, the tech counts down in **ticks**. Each game tick decrements the counter by 1. When it hits zero, the effects are applied instantly and permanently.
+
+**Formula for adjusted tick count:**
+```
+adjusted_ticks = max(1,  base_ticks × (1.0 − research_speed_bonus))
+```
+
+A `research_speed` bonus of `0.30` (30%) cuts tick count to 70% of base — not time, but ticks. Since ticks can also run faster via `tick_speed` bonuses, both compound. A civilization with high research speed **and** high tick speed researches dramatically faster.
+
+The adjusted ticks are locked in at the moment you start the tech. Gaining more `research_speed` mid-research does not retroactively shorten the current countdown.
+
+### Knowledge Cost is Upfront
+
+Knowledge is removed from your stockpile when you issue the `research` command — before any ticks pass. If you don't have enough, the command fails. If your knowledge income drops to zero during a long research countdown, **research still completes** — the ticks count down regardless of your current knowledge income. The cost was already paid.
+
+### Only One Slot
+
+There is no queue. If you try to start a second tech while one is in progress, you get an error showing the active tech and how many ticks remain. Plan your research order in advance.
+
+### When Research Completes
+
+Effects are applied the tick the counter hits zero. You'll see a success message in the log. The tech is now marked researched and its bonuses feed into `recalculateRates` on the next tick.
+
+---
+
+## Research Speed Sources
+
+`research_speed` reduces tick count at research start. All three sources add together before being applied:
+
+| Source | How much | Notes |
+|---|---|---|
+| **Tech bonuses** | Varies — see tech list | Accumulate permanently as techs complete |
+| **Ancient Knowledge** (Succumb) | +0.25 (25%) | Granted permanently when you Succumb to an epoch catastrophe; survives all future resets |
+| **Prestige: Research Speed** | +0.05 per tier, max 5 tiers (+25%) | Boosts `knowledge_rate`, not `research_speed` directly — see note below |
+
+> **Note on Prestige "Research Speed":** Despite its name, the prestige upgrade boosts `knowledge_rate` (how fast you generate knowledge), not the `research_speed` tick-reduction multiplier. More knowledge income means you can afford more techs faster, but it doesn't reduce tick counts. The two mechanics are complementary, not the same thing.
+
+No tech in the current tree directly grants `research_speed` as a bonus target — the tick-reduction multiplier comes primarily from Succumb's Ancient Knowledge. Knowledge income, however, is boosted by many techs (see §5 below).
+
+---
+
+## Commands
 
 ```
-research <key>
+research <tech_key>
+```
+Start researching a technology. Deducts knowledge cost immediately. Fails if: unknown key, already researched, another tech in progress, age requirement not met, prerequisites missing, or insufficient knowledge.
+
+You can also enter multi-word tech names with spaces — they are automatically joined with underscores:
+```
+research bronze working
+```
+is equivalent to `research bronze_working`.
+
+---
+
+```
+research list
+```
+Lists all technologies available in the current age with their status (researched, in progress, available, locked by prerequisite). Also shows the currently active research and ticks remaining.
+
+---
+
+```
 research cancel
 ```
-
-> **Ancient Knowledge**: Succumbing to an epoch catastrophe grants a permanent +25% research speed bonus that persists through prestige resets. Players who Succumb early (e.g. in Stone Era) gain a significant long-term research advantage. See [Epochs](epochs.md) for details.
-
----
-
-## Primitive Age
-
-| Tech | Key | Cost | Ticks | Effect |
-|---|---|---|---|---|
-| Tool Making | `tool_making` | 2,500 kp | 300 | +15% gather rate |
-| Fire Mastery | `fire_mastery` | 3,500 kp | 400 | +10% food production |
+Cancels the current research. **No refund.** The knowledge cost is lost. Only use this when pivoting is worth more than the sunk cost.
 
 ---
 
-## Stone Age
-
-| Tech | Key | Cost | Ticks | Effect |
-|---|---|---|---|---|
-| Stoneworking | `stoneworking` | 6,000 kp | 500 | +20% stone rate |
-| Animal Husbandry | `animal_husbandry` | 7,500 kp | 550 | +20% food production |
-| Pottery | `pottery` | 5,000 kp | 450 | +25 all storage |
-| Primitive Writing | `primitive_writing` | 10,000 kp | 600 | +10% knowledge rate |
+```
+research
+```
+With no arguments, opens the **Research overlay panel** (same as pressing `F2` or switching to the Research tab). The overlay groups techs by age with visual indicators: researched techs show as complete, available ones are highlighted, and locked ones are dimmed.
 
 ---
 
-## Bronze Age
-
-| Tech | Key | Cost | Ticks | Effect |
-|---|---|---|---|---|
-| Bronze Working | `bronze_working` | 15,000 kp | 750 | +20% iron rate, +10% gather rate |
-| Agriculture | `agriculture` | 12,000 kp | 700 | +50% food production |
-| Currency | `currency` | 17,500 kp | 800 | +30% gold rate |
-| Masonry | `masonry` | 13,000 kp | 700 | +50 all storage |
-| Military Tactics | `military_tactics` | 20,000 kp | 900 | +20% military power |
+**Shortcut:** `res` is an alias for `research`. All subcommands work identically.
 
 ---
 
-## Iron Age
+## Tech Tree by Age
 
-| Tech | Key | Cost | Ticks | Effect |
-|---|---|---|---|---|
-| Iron Smelting | `iron_smelting` | 30,000 kp | 1,100 | +40% iron rate, +20% iron production |
-| Road Building | `road_building` | 25,000 kp | 950 | +20% gold rate, +10% gather rate |
-| Mathematics | `mathematics` | 37,500 kp | 1,200 | +20% knowledge rate |
-| Siege Warfare | `siege_warfare` | 35,000 kp | 1,005 | +30% military power |
+Prerequisites are listed using tech keys. "—" means no prerequisite.
 
----
+### Primitive Age (~1 min/tech at 1× speed)
 
-## Classical Age
-
-| Tech | Key | Cost | Ticks | Effect |
-|---|---|---|---|---|
-| Philosophy | `philosophy` | 20,000 kp | 1,500 | +30% knowledge rate, +20% culture |
-| Civil Engineering | `civil_engineering` | 18,000 kp | 1,300 | +100 storage, -5% build cost |
-| Imperial Legions | `imperial_legions` | 22,000 kp | 1,600 | +40% military power |
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `tool_making` | Tool Making | 800 kp | 200 | — | +15% gather rate |
+| `fire_mastery` | Fire Mastery | 1,000 kp | 200 | `tool_making` | +10% food production |
 
 ---
 
-## Medieval Age
+### Stone Age (~2 min/tech)
 
-| Tech | Key | Cost | Ticks | Effect |
-|---|---|---|---|---|
-| Steel Forging | `steel_forging` | 25,000 kp | 2,000 | +10% steel, +30% iron rate |
-| Theology | `theology` | 20,000 kp | 1,800 | +30% faith production |
-| Banking | `banking` | 30,000 kp | 2,100 | +50% gold rate, +100 gold storage |
-| Feudalism | `feudalism` | 22,000 kp | 1,700 | +5 population capacity |
-| Alchemy | `alchemy` | 28,000 kp | 2,200 | +15% knowledge rate, +10% gold |
-| Chronometry | `chronometry` | 20,000 kp | 1,900 | +5% tick speed |
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `stoneworking` | Stoneworking | 6,000 kp | 500 | `tool_making` | +20% stone rate |
+| `animal_husbandry` | Animal Husbandry | 7,500 kp | 550 | `fire_mastery` | +20% food production |
+| `pottery` | Pottery | 5,000 kp | 450 | `fire_mastery` | +25 all storage |
+| `primitive_writing` | Primitive Writing | 10,000 kp | 600 | `pottery` | +10% knowledge rate |
 
 ---
 
-## Renaissance Age
+### Bronze Age (~3 min/tech)
 
-| Tech | Key | Cost | Ticks | Effect |
-|---|---|---|---|---|
-| Printing Press | `printing_press` | 50,000 kp | 3,000 | +40% knowledge rate, +30% culture |
-| Navigation | `navigation` | 45,000 kp | 2,600 | +50% gold rate, +30% expedition reward |
-| Gunpowder | `gunpowder` | 55,000 kp | 3,200 | +50% military power |
-| Patronage | `patronage` | 40,000 kp | 2,500 | +50% culture, +12% knowledge |
-
----
-
-## Colonial Age
-
-| Tech | Key | Cost | Ticks | Effect |
-|---|---|---|---|---|
-| Cartography | `cartography` | 80,000 kp | 4,000 | +50% expedition reward, +50% gold rate |
-| Mercantilism | `mercantilism` | 75,000 kp | 3,800 | +200% gold production, +30% gold rate |
-| Colonialism | `colonialism` | 90,000 kp | 4,400 | +200% food production, +30% military |
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `bronze_working` | Bronze Working | 15,000 kp | 750 | `stoneworking` | +20% iron rate, +10% gather rate |
+| `agriculture` | Agriculture | 12,000 kp | 700 | `animal_husbandry` | +50% food production |
+| `currency` | Currency | 17,500 kp | 800 | `primitive_writing` | +30% gold rate |
+| `masonry` | Masonry | 13,000 kp | 700 | `stoneworking` | +50 all storage |
+| `military_tactics` | Military Tactics | 20,000 kp | 900 | `bronze_working` | +20% military power |
 
 ---
 
-## Industrial Age
+### Iron Age (~4 min/tech)
 
-| Tech | Key | Cost | Ticks | Effect |
-|---|---|---|---|---|
-| Steam Power | `steam_power` | 100,000 kp | 5,200 | +30% all production |
-| Industrialization | `industrialization` | 120,000 kp | 6,000 | +50% all, +50% steel |
-| Railroads | `railroads` | 90,000 kp | 5,000 | +100% gold rate, +200 all storage |
-| Rifling | `rifling` | 80,000 kp | 4,800 | +50% military power |
-| Clockwork Automation | `clockwork_automation` | 50,000 kp | 5,400 | +10% tick speed |
-
----
-
-## Victorian Age
-
-| Tech | Key | Cost | Ticks | Effect |
-|---|---|---|---|---|
-| Electrification | `electrification` | 180,000 kp | 7,000 | +100% electricity, +20% all production |
-| Telecommunications | `telecommunications` | 150,000 kp | 6,600 | +40% knowledge rate, +50% gold rate |
-| Mass Production | `mass_production` | 200,000 kp | 7,400 | +40% all, +100% steel |
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `iron_smelting` | Iron Smelting | 30,000 kp | 1,100 | `bronze_working` | +40% iron rate, +20% iron production |
+| `road_building` | Road Building | 25,000 kp | 950 | `masonry` | +20% gold rate, +10% gather rate |
+| `mathematics` | Mathematics | 37,500 kp | 1,200 | `primitive_writing`, `currency` | +20% knowledge rate |
+| `siege_warfare` | Siege Warfare | 35,000 kp | 1,005 | `military_tactics` | +30% military power |
 
 ---
 
-## Electric Age
+### Classical Age (~5 min/tech)
 
-| Tech | Key | Cost | Ticks | Effect |
-|---|---|---|---|---|
-| Power Distribution | `power_distribution` | 300,000 kp | 9,500 | +300% electricity, +30% all |
-| Radio | `radio` | 250,000 kp | 9,000 | +200% culture, +40% knowledge |
-| Chemical Engineering | `chemical_engineering` | 280,000 kp | 9,800 | +100% oil, +20% all |
-
----
-
-## Atomic Age
-
-| Tech | Key | Cost | Ticks | Effect |
-|---|---|---|---|---|
-| Nuclear Fission | `nuclear_fission` | 500,000 kp | 13,050 | +500% electricity, +50% uranium |
-| Rocketry | `rocketry` | 400,000 kp | 12,000 | +100% military, +50% expedition reward |
-| Nuclear Deterrence | `nuclear_deterrence` | 600,000 kp | 15,000 | +150% military power |
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `philosophy` | Philosophy | 20,000 kp | 1,500 | `mathematics`, `primitive_writing` | +30% knowledge rate, +20% culture |
+| `civil_engineering` | Civil Engineering | 18,000 kp | 1,300 | `masonry`, `road_building` | +100 all storage, −5% build cost |
+| `imperial_legions` | Imperial Legions | 22,000 kp | 1,600 | `siege_warfare`, `iron_smelting` | +40% military power |
 
 ---
 
-## Modern – Digital Ages
+### Medieval Age (~7 min/tech)
 
-| Tech | Key | Age | Cost | Effect |
-|---|---|---|---|---|
-| Computers | `computers` | Modern | 1M kp | +80% knowledge rate |
-| Satellite Tech | `satellite_tech` | Modern | 1.2M kp | +100% data, +60% knowledge |
-| Internet | `internet` | Information | 2M kp | +300% data, +120% knowledge |
-| Cybersecurity | `cybersecurity` | Information | 1.8M kp | +100% military, +5k data storage |
-| Social Media | `social_media` | Information | 1.5M kp | +500% culture, +500% gold |
-| Machine Learning | `machine_learning` | Digital | 3.5M kp | +500% data, +50% all |
-| Cloud Computing | `cloud_computing` | Digital | 3M kp | +800% data, +10k all storage |
-
----
-
-## Cyberpunk – Fusion Ages
-
-| Tech | Key | Age | Cost | Effect |
-|---|---|---|---|---|
-| Neural Interface | `neural_interface` | Cyberpunk | 6M kp | +30% gather, +200% knowledge |
-| Blockchain | `blockchain` | Cyberpunk | 5M kp | +200% crypto, +200% gold rate |
-| Cybernetics | `cybernetics` | Cyberpunk | 5.5M kp | +50% all, +100% military |
-| Fusion Power | `fusion_power` | Fusion | 10M kp | +2000% electricity, +100% plasma |
-| Plasma Physics | `plasma_physics` | Fusion | 9M kp | +300% plasma, +30% all |
-| Superconductors | `superconductors` | Fusion | 11M kp | +50% all, +50k all storage |
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `steel_forging` | Steel Forging | 25,000 kp | 2,000 | `iron_smelting` | +10% steel production, +30% iron rate |
+| `theology` | Theology | 20,000 kp | 1,800 | `philosophy` | +30% faith production |
+| `banking` | Banking | 30,000 kp | 2,100 | `currency`, `mathematics` | +50% gold rate, +100 gold storage |
+| `feudalism` | Feudalism | 22,000 kp | 1,700 | `military_tactics` | +5 population capacity |
+| `alchemy` | Alchemy | 28,000 kp | 2,200 | `mathematics` | +15% knowledge rate, +10% gold production |
+| `chronometry` | Chronometry | 20,000 kp | 1,900 | — | +5% tick speed |
 
 ---
 
-## Space – Quantum Ages
+### Renaissance Age (~10 min/tech)
 
-| Tech | Key | Age | Cost | Effect |
-|---|---|---|---|---|
-| Orbital Mechanics | `orbital_mechanics` | Space | 20M kp | +100% titanium, +100% expedition |
-| Space Mining | `space_mining` | Space | 18M kp | +300% titanium, +2000% iron |
-| Zero-G Manufacturing | `zero_g_manufacturing` | Space | 22M kp | +50% all, +1000% steel |
-| Warp Drive | `warp_drive` | Interstellar | 40M kp | +100% dark matter, +200% expedition |
-| Stellar Engineering | `stellar_engineering` | Interstellar | 45M kp | +1000% plasma, +10000% electricity |
-| Galactic Navigation | `galactic_navigation` | Galactic | 80M kp | +50% all, +500% dark matter |
-| Antimatter Synthesis | `antimatter_synthesis` | Galactic | 90M kp | +200% antimatter, +30% all |
-| Quantum Mechanics | `quantum_mechanics` | Quantum | 150M kp | +200% quantum flux, +100% all |
-| Reality Manipulation | `reality_manipulation` | Quantum | 200M kp | +500% quantum flux, +100% all |
-| Quantum Computing | `quantum_computing` | Quantum | 150M kp | **+15% tick speed** |
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `printing_press` | Printing Press | 50,000 kp | 3,000 | `theology`, `alchemy` | +40% knowledge rate, +30% culture |
+| `navigation` | Navigation | 45,000 kp | 2,600 | `mathematics`, `road_building` | +50% gold rate, +30% expedition reward |
+| `gunpowder` | Gunpowder | 55,000 kp | 3,200 | `alchemy`, `siege_warfare` | +50% military power |
+| `patronage` | Patronage | 40,000 kp | 2,500 | `banking` | +50% culture, +12% knowledge production |
 
 ---
 
-## Transcendent Age
+### Colonial Age (~14 min/tech)
 
-| Tech | Key | Cost | Effect |
-|---|---|---|---|
-| Transcendence | `transcendence` | 500M kp | +200% all production, +1000% quantum flux |
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `cartography` | Cartography | 80,000 kp | 4,000 | `navigation` | +50% expedition reward, +50% gold rate |
+| `mercantilism` | Mercantilism | 75,000 kp | 3,800 | `banking`, `navigation` | +200% gold production, +30% gold rate |
+| `colonialism` | Colonialism | 90,000 kp | 4,400 | `cartography`, `gunpowder` | +200% food production, +30% military power |
 
 ---
 
-## Tick speed techs
+### Industrial Age (~18 min/tech)
 
-Three technologies directly increase how fast the game ticks — each one compounds with the others:
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `steam_power` | Steam Power | 100,000 kp | 5,200 | `steel_forging` | +30% all production |
+| `industrialization` | Industrialization | 120,000 kp | 6,000 | `steam_power` | +50% all production, +50% steel |
+| `railroads` | Railroads | 90,000 kp | 5,000 | `steam_power`, `road_building` | +100% gold rate, +200 all storage |
+| `rifling` | Rifling | 80,000 kp | 4,800 | `gunpowder` | +50% military power |
+| `clockwork_automation` | Clockwork Automation | 50,000 kp | 5,400 | `chronometry` | +10% tick speed |
+
+---
+
+### Victorian Age (~23 min/tech)
+
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `electrification` | Electrification | 180,000 kp | 7,000 | `industrialization` | +100% electricity production, +20% all production |
+| `telecommunications` | Telecommunications | 150,000 kp | 6,600 | `electrification` | +40% knowledge rate, +50% gold rate |
+| `mass_production` | Mass Production | 200,000 kp | 7,400 | `industrialization`, `railroads` | +40% all production, +100% steel |
+
+---
+
+### Electric Age (~32 min/tech)
+
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `power_distribution` | Power Distribution | 300,000 kp | 9,500 | `electrification` | +300% electricity, +30% all production |
+| `radio` | Radio | 250,000 kp | 9,000 | `telecommunications` | +200% culture, +40% knowledge rate |
+| `chemical_engineering` | Chemical Engineering | 280,000 kp | 9,800 | `mass_production` | +100% oil production, +20% all production |
+
+---
+
+### Atomic Age (~45 min/tech)
+
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `nuclear_fission` | Nuclear Fission | 500,000 kp | 13,050 | `power_distribution`, `chemical_engineering` | +500% electricity, +50% uranium production |
+| `rocketry` | Rocketry | 400,000 kp | 12,000 | `rifling`, `chemical_engineering` | +100% military power, +50% expedition reward |
+| `nuclear_deterrence` | Nuclear Deterrence | 600,000 kp | 15,000 | `nuclear_fission`, `rocketry` | +150% military power |
+
+---
+
+### Modern Age (~1.1 hr/tech)
+
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `electricity_tech` | Electricity | 800,000 kp | 18,000 | `nuclear_fission` | +50% all production, +500% electricity |
+| `computers` | Computers | 1,000,000 kp | 20,000 | `electricity_tech` | +80% knowledge rate |
+| `satellite_tech` | Satellite Technology | 1,200,000 kp | 19,000 | `rocketry`, `electricity_tech` | +100% data production, +60% knowledge rate |
+
+---
+
+### Information Age (~1.5 hr/tech)
+
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `internet` | Internet | 2,000,000 kp | 26,000 | `computers`, `satellite_tech` | +300% data production, +120% knowledge rate |
+| `cybersecurity` | Cybersecurity | 1,800,000 kp | 24,000 | `computers` | +100% military power, +5,000 data storage |
+| `social_media` | Social Media | 1,500,000 kp | 23,000 | `internet` | +500% culture, +500% gold production |
+
+---
+
+### Digital Age (~1.8 hr/tech)
+
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `machine_learning` | Machine Learning | 3,500,000 kp | 34,000 | `internet`, `cybersecurity` | +500% data production, +50% all production |
+| `cloud_computing` | Cloud Computing | 3,000,000 kp | 32,000 | `internet` | +800% data production, +10,000 all storage |
+
+---
+
+### Cyberpunk Age (~2.8 hr/tech)
+
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `neural_interface` | Neural Interface | 6,000,000 kp | 48,000 | `machine_learning` | +30% gather rate, +200% knowledge rate |
+| `blockchain` | Blockchain | 5,000,000 kp | 45,000 | `cybersecurity`, `cloud_computing` | +200% crypto production, +200% gold rate |
+| `cybernetics` | Cybernetics | 5,500,000 kp | 50,000 | `neural_interface` | +50% all production, +100% military power |
+
+---
+
+### Fusion Age (~3.7 hr/tech)
+
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `fusion_power` | Fusion Power | 10,000,000 kp | 65,000 | `nuclear_fission`, `cybernetics` | +2,000% electricity, +100% plasma production |
+| `plasma_physics` | Plasma Physics | 9,000,000 kp | 62,000 | `fusion_power` | +300% plasma, +30% all production |
+| `superconductors` | Superconductors | 11,000,000 kp | 70,000 | `fusion_power` | +50% all production, +50,000 all storage |
+
+---
+
+### Space Age (~5 hr/tech)
+
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `orbital_mechanics` | Orbital Mechanics | 20,000,000 kp | 85,000 | `rocketry`, `plasma_physics` | +100% titanium production, +100% expedition reward |
+| `space_mining` | Space Mining | 18,000,000 kp | 82,000 | `orbital_mechanics` | +300% titanium, +2,000% iron production |
+| `zero_g_manufacturing` | Zero-G Manufacturing | 22,000,000 kp | 92,000 | `orbital_mechanics`, `superconductors` | +50% all production, +1,000% steel |
+
+---
+
+### Interstellar Age (~7 hr/tech)
+
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `warp_drive` | Warp Drive | 40,000,000 kp | 120,000 | `space_mining`, `zero_g_manufacturing` | +100% dark matter production, +200% expedition reward |
+| `stellar_engineering` | Stellar Engineering | 45,000,000 kp | 130,000 | `warp_drive` | +1,000% plasma, +10,000% electricity |
+
+---
+
+### Galactic Age (~9 hr/tech)
+
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `galactic_navigation` | Galactic Navigation | 80,000,000 kp | 160,000 | `warp_drive`, `stellar_engineering` | +50% all production, +500% dark matter |
+| `antimatter_synthesis` | Antimatter Synthesis | 90,000,000 kp | 180,000 | `galactic_navigation` | +200% antimatter production, +30% all production |
+
+---
+
+### Quantum Age (~12 hr/tech)
+
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `quantum_mechanics` | Quantum Mechanics | 150,000,000 kp | 220,000 | `antimatter_synthesis` | +200% quantum flux, +100% all production |
+| `reality_manipulation` | Reality Manipulation | 200,000,000 kp | 250,000 | `quantum_mechanics` | +500% quantum flux, +100% all production |
+| `quantum_computing` | Quantum Computing | 150,000,000 kp | 200,000 | `clockwork_automation` | **+15% tick speed** |
+
+---
+
+### Transcendent Age (~18 hr)
+
+| Key | Name | Cost | Ticks | Prerequisites | Effect |
+|---|---|---|---|---|---|
+| `transcendence` | Transcendence | 500,000,000 kp | 320,000 | `reality_manipulation` | +200% all production, +1,000% quantum flux |
+
+---
+
+## Tech Effects Reference
+
+### `production_all` — Multiplier on All Positive Rates
+
+These are the biggest single techs in the game. Each adds a fractional multiplier that stacks additively across all sources before being applied to every positive production rate.
 
 | Tech | Bonus |
 |---|---|
-| Chronometry | +5% tick speed |
-| Clockwork Automation | +10% tick speed |
-| Quantum Computing | +15% tick speed |
+| Steam Power | +0.30 |
+| Industrialization | +0.50 |
+| Electrification | +0.20 |
+| Mass Production | +0.40 |
+| Power Distribution | +0.30 |
+| Chemical Engineering | +0.20 |
+| Electricity | +0.50 |
+| Machine Learning | +0.50 |
+| Cybernetics | +0.50 |
+| Plasma Physics | +0.30 |
+| Superconductors | +0.50 |
+| Zero-G Manufacturing | +0.50 |
+| Galactic Navigation | +0.50 |
+| Antimatter Synthesis | +0.30 |
+| Quantum Mechanics | +1.00 |
+| Reality Manipulation | +1.00 |
+| Transcendence | +2.00 |
 
-Combined with prestige Temporal Mastery (+5%/tier × 5 tiers = +25%), max tick speed research reaches roughly **+55% faster** than baseline.
+By the Transcendent Age, accumulated `production_all` bonuses run well past +10.0 (1,000%). Every percentage point compounds against your entire production base.
+
+---
+
+### `knowledge_rate` — Knowledge Income Multiplier
+
+Knowledge rate techs multiply the output of all knowledge-producing buildings. Since more knowledge income means you can fund more expensive late-game techs:
+
+| Tech | Bonus |
+|---|---|
+| Primitive Writing | +10% |
+| Mathematics | +20% |
+| Philosophy | +30% |
+| Alchemy | +15% |
+| Printing Press | +40% |
+| Telecommunications | +40% |
+| Radio | +40% |
+| Computers | +80% |
+| Satellite Technology | +60% |
+| Internet | +120% |
+| Neural Interface | +200% |
+
+---
+
+### `tick_speed` — Faster Game Clock
+
+Three techs accelerate how often ticks fire. They stack with each other and with the Prestige "Temporal Mastery" upgrade (+5% per tier, 5 tiers):
+
+| Source | Bonus |
+|---|---|
+| Chronometry (Medieval) | +5% |
+| Clockwork Automation (Industrial) | +10% |
+| Quantum Computing (Quantum) | +15% |
+| Prestige: Temporal Mastery (max) | +25% |
+| **Total (all maxed)** | **+55%** |
+
+Tick speed compounds with research speed — a +55% faster clock means late-game techs that would take hours complete considerably sooner in wall-clock time.
+
+---
+
+### `military_power` — Combat Strength Multiplier
+
+Applied to expedition success and military calculations.
+
+| Tech | Bonus |
+|---|---|
+| Military Tactics | +20% |
+| Siege Warfare | +30% |
+| Imperial Legions | +40% |
+| Gunpowder | +50% |
+| Rifling | +50% |
+| Colonialism | +30% |
+| Rocketry | +100% |
+| Nuclear Deterrence | +150% |
+| Cybersecurity | +100% |
+| Cybernetics | +100% |
+
+---
+
+### `gold_rate` / `iron_rate` / `stone_rate` / `gather_rate` — Per-Resource Multipliers
+
+Applied to positive production rates of the named resource or worker-gathered rates:
+
+| Tech | Target | Bonus |
+|---|---|---|
+| Bronze Working | iron_rate | +20% |
+| Bronze Working | gather_rate | +10% |
+| Currency | gold_rate | +30% |
+| Road Building | gold_rate | +20% |
+| Road Building | gather_rate | +10% |
+| Iron Smelting | iron_rate | +40% |
+| Banking | gold_rate | +50% |
+| Navigation | gold_rate | +50% |
+| Cartography | gold_rate | +50% |
+| Mercantilism | gold_rate | +30% |
+| Railroads | gold_rate | +100% |
+| Telecommunications | gold_rate | +50% |
+| Blockchain | gold_rate | +200% |
+| Stoneworking | stone_rate | +20% |
+| Steel Forging | iron_rate | +30% |
+| Tool Making | gather_rate | +15% |
+| Neural Interface | gather_rate | +30% |
+
+---
+
+### `expedition_reward` — Expedition Loot Multiplier
+
+| Tech | Bonus |
+|---|---|
+| Navigation | +30% |
+| Cartography | +50% |
+| Rocketry | +50% |
+| Orbital Mechanics | +100% |
+| Warp Drive | +200% |
+
+---
+
+### `storage` — Flat Storage Increases
+
+These add a flat amount to all resource storage caps (or, for Banking, just gold):
+
+| Tech | Target | Amount |
+|---|---|---|
+| Pottery | all | +25 |
+| Masonry | all | +50 |
+| Civil Engineering | all | +100 |
+| Banking | gold | +100 |
+| Railroads | all | +200 |
+| Cybersecurity | data | +5,000 |
+| Cloud Computing | all | +10,000 |
+| Superconductors | all | +50,000 |
+
+---
+
+### `build_cost` — Construction Cost Reduction
+
+Only one tech reduces build cost:
+
+| Tech | Bonus |
+|---|---|
+| Civil Engineering | −5% |
+
+Small but permanent; useful when you're building dozens of structures.
+
+---
+
+### `capacity` — Population Cap
+
+| Tech | Bonus |
+|---|---|
+| Feudalism | +5 population capacity |
+
+---
+
+### Special — `production` (direct production bonus)
+
+Some techs add flat production bonuses to specific resources (distinct from rate multipliers):
+
+| Tech | Resource | Value |
+|---|---|---|
+| Fire Mastery | food | +10% |
+| Animal Husbandry | food | +20% |
+| Agriculture | food | +50% |
+| Colonialism | food | +200% |
+| Iron Smelting | iron | +20% |
+| Patronage | knowledge | +12% |
+| Patronage | culture | +50% |
+| Theology | faith | +30% |
+| Alchemy | gold | +10% |
+| Steel Forging | steel | +10% |
+| Mercantilism | gold | +200% |
+| Electrification | electricity | +100% |
+| Power Distribution | electricity | +300% |
+| Nuclear Fission | electricity | +500%, uranium +50% |
+| Electricity | electricity | +500% |
+| Radio | culture | +200% |
+| Social Media | culture | +500%, gold +500% |
+| Chemical Engineering | oil | +100% |
+| Machine Learning | data | +500% |
+| Cloud Computing | data | +800% |
+| Blockchain | crypto | +200% |
+| Fusion Power | electricity | +2,000%, plasma +100% |
+| Plasma Physics | plasma | +300% |
+| Orbital Mechanics | titanium | +100% |
+| Space Mining | titanium | +300%, iron +2,000% |
+| Zero-G Manufacturing | steel | +1,000% |
+| Warp Drive | dark matter | +100% |
+| Stellar Engineering | plasma | +1,000%, electricity +10,000% |
+| Galactic Navigation | dark matter | +500% |
+| Antimatter Synthesis | antimatter | +200% |
+| Quantum Mechanics | quantum flux | +200% |
+| Reality Manipulation | quantum flux | +500% |
+| Transcendence | quantum flux | +1,000% |
+
+---
+
+## Knowledge Workers
+
+The knowledge domain lineage produces all your research fuel. Workers in knowledge buildings are called **Shamans** in the Primitive Age, eventually becoming **Quantum Theorists** in the Quantum Age. Assign them using:
+
+```
+assign <building_key> [count|all]
+```
+
+Knowledge buildings scale as: `rate = 0.002 × 2^tier`. A fully staffed high-tier knowledge building produces dramatically more per tick than multiple low-tier ones. Prioritise upgrading your knowledge lineage and assigning workers to the highest-tier building you can afford.
+
+The prestige **Research Speed** upgrade adds +5% per tier to `knowledge_rate` — five tiers gives your knowledge buildings a permanent +25% output multiplier from the very start of each run.
+
+---
+
+## Strategy
+
+### Prioritise Knowledge Rate Early
+
+Your first research bottleneck is knowledge income, not tick count. Rush `primitive_writing` → `mathematics` → `philosophy` to stack knowledge rate bonuses in the first three ages. Every percent of knowledge rate you earn early pays off across hundreds of future techs.
+
+### The Research Speed Snowball
+
+There is a natural research compound loop: research rate bonuses that make future research cheaper and faster, then spend that efficiency on the next one. The chain looks like:
+```
+primitive_writing → mathematics → philosophy → printing_press → …
+```
+Each of these improves `knowledge_rate`, meaning the next tech arrives faster in wall-clock time.
+
+### Tick Speed: A Hidden Multiplier
+
+`chronometry` (Medieval, no prerequisites) is one of the cheapest techs relative to its impact. +5% tick speed means every future tick-based process — research, building, expeditions — completes 5% faster. Research it early, then chain `clockwork_automation` in the Industrial Age for another +10%.
+
+### When to Cancel
+
+Cancelling costs you the full knowledge payment — no refund. Cancelling is only sensible when:
+- You've unlocked a new age and realised a different tech path gates a critical resource you need now.
+- An epoch event is about to fire and you want to pivot to a prerequisite for something the event might complete for free (see Grand Discovery below).
+- You started a very expensive tech before realising you can't sustain knowledge income through its duration.
+
+As a rule: if you're more than halfway through the tick count, finish it.
+
+### The Grand Discovery Epoch Event
+
+The **Grand Discovery** (`good_major` epoch event) instantly completes up to 3 available, unresearched technologies from your current age — for free, bypassing knowledge costs. It fires during positive epoch events when your culture is high enough to unlock major events.
+
+You can't control exactly which 3 techs get selected, but you can influence the pool by pre-researching the techs you don't want to "waste" a slot on. If you have 3 desirable expensive techs you haven't started yet when the event fires, all three can complete in a single event.
+
+Any tech currently in progress that gets completed by Grand Discovery is handled cleanly — the in-progress slot clears automatically.
+
+### Late-Game Knowledge Scaling
+
+Knowledge costs scale steeply: from 800 kp (Primitive) to 500,000,000 kp (Transcendent). In the Space and Interstellar ages, individual techs cost tens of millions of kp. Focus your knowledge lineage build and max out all knowledge-rate techs before reaching those ages or the wait becomes prohibitive.
+
+---
+
+## Tips & Common Mistakes
+
+**Knowledge is deducted upfront.** Don't start a tech if your stockpile barely covers the cost — one bad event (The Dark Age cuts knowledge by 80% and cancels your active research) could set you back significantly.
+
+**Prerequisites stack.** Before typing `research mathematics`, check that you have both `primitive_writing` and `currency`. Use `research list` to see what's gated and why.
+
+**The Dark Age epoch event** cancels your active research and drains 80% of your knowledge stockpile. If an epoch catastrophe is imminent, consider whether to delay an expensive research start until after the event resolves.
+
+**Prestige resets research** entirely. All techs, all bonuses — gone. The only persistent research benefit across a prestige reset is the **Ancient Knowledge** bonus (+25% research_speed) that comes from Succumbing, and the knowledge-rate bonus from the prestige upgrade shop.
+
+**Succumbing early is worth considering.** Succumbing to an epoch catastrophe in the Stone Era costs you a run but grants +25% research speed permanently. Players who Succumb at least once and invest in the Research Speed prestige upgrade begin each subsequent run with noticeably faster research from tick one.
+
+**Don't overlook `civil_engineering`** — −5% build cost plus +100 all storage is exceptionally good value in the Classical Age and helps throughout the rest of the run.
+
+---
+
+*See also: [Epochs](epochs.md) for how Grand Discovery and the Dark Age event fire — [Prestige](prestige.md) for the Research Speed upgrade — [Buildings](buildings.md) for knowledge lineage construction.*
