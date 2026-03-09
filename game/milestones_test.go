@@ -53,15 +53,15 @@ func TestMilestoneManager_PopulationMilestone(t *testing.T) {
 	bm := NewBuildingManager()
 	ageOrder := fullAgeOrder()
 
-	// small_village requires pop 50
-	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, 49, 0, 0, nil, 0, 0, 0)
+	// small_village requires pop 1,000 (hardened threshold)
+	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, 999, 0, 0, nil, 0, 0, 0)
 	for _, ms := range completed {
 		if ms.Key == "small_village" {
-			t.Error("small_village should not trigger at pop 49")
+			t.Error("small_village should not trigger at pop 999")
 		}
 	}
 
-	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 50, 0, 0, nil, 0, 0, 0)
+	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 1000, 0, 0, nil, 0, 0, 0)
 	found := false
 	for _, ms := range completed {
 		if ms.Key == "small_village" {
@@ -69,7 +69,7 @@ func TestMilestoneManager_PopulationMilestone(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Error("small_village should trigger at pop 50")
+		t.Error("small_village should trigger at pop 1000")
 	}
 }
 
@@ -102,9 +102,13 @@ func TestMilestoneManager_AgeMilestone(t *testing.T) {
 func TestMilestoneManager_ChainCompletion(t *testing.T) {
 	mm := NewMilestoneManager()
 
-	// Manually mark all military chain milestones as completed
-	// Military chain only has "war_machine"
+	// Military chain now requires: first_soldiers, war_machine, iron_legion,
+	// fortress_state, military_superpower
+	mm.completed["first_soldiers"] = true
 	mm.completed["war_machine"] = true
+	mm.completed["iron_legion"] = true
+	mm.completed["fortress_state"] = true
+	mm.completed["military_superpower"] = true
 
 	chains := mm.CheckChains()
 	found := false
@@ -117,7 +121,7 @@ func TestMilestoneManager_ChainCompletion(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Error("military_chain should complete when war_machine is done")
+		t.Error("military_chain should complete when all military milestones are done")
 	}
 
 	// Should not trigger again
