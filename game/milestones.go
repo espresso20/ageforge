@@ -140,35 +140,39 @@ func (mm *MilestoneManager) checkMilestone(
 	// Special checks based on milestone key
 	switch def.Key {
 	case "master_builder":
-		if totalBuilt < 1500 {
+		if totalBuilt < 5000 {
 			return false
 		}
 	case "early_builder":
-		if totalBuilt < 150 {
-			return false
-		}
-	case "seasoned_builder":
 		if totalBuilt < 500 {
 			return false
 		}
+	case "seasoned_builder":
+		if totalBuilt < 2000 {
+			return false
+		}
 	case "grand_architect":
-		if totalBuilt < 5000 {
+		if totalBuilt < 20000 {
 			return false
 		}
 	case "first_soldiers":
 		if soldierCount < 5 {
 			return false
 		}
+	case "standing_army":
+		if soldierCount < 100 {
+			return false
+		}
 	case "war_machine":
-		if soldierCount < 75 {
+		if soldierCount < 250 {
 			return false
 		}
 	case "iron_legion":
-		if soldierCount < 300 {
+		if soldierCount < 500 {
 			return false
 		}
 	case "military_superpower":
-		if soldierCount < 1000 {
+		if soldierCount < 2000 {
 			return false
 		}
 	case "wonder_builder":
@@ -176,15 +180,15 @@ func (mm *MilestoneManager) checkMilestone(
 			return false
 		}
 	case "wonder_collector":
-		if wonderCount < 5 {
+		if wonderCount < 8 {
 			return false
 		}
 	case "wonder_empire":
-		if wonderCount < 12 {
+		if wonderCount < 15 {
 			return false
 		}
 	case "scholars_haven":
-		if knowledgeCount < 20 {
+		if knowledgeCount < 50 {
 			return false
 		}
 	}
@@ -277,6 +281,15 @@ func (mm *MilestoneManager) GetCurrentTitle() string {
 func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params MilestoneSnapshotParams) []MilestoneProgress {
 	var progress []MilestoneProgress
 
+	if def.MinTick > 0 {
+		progress = append(progress, MilestoneProgress{
+			Label:   "Ticks survived",
+			Current: float64(params.Tick),
+			Target:  float64(def.MinTick),
+			Met:     params.Tick >= def.MinTick,
+		})
+	}
+
 	if def.MinAge != "" {
 		currentOrder := params.AgeOrder[params.Age]
 		targetOrder := params.AgeOrder[def.MinAge]
@@ -348,29 +361,29 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 		progress = append(progress, MilestoneProgress{
 			Label:   "Buildings built",
 			Current: float64(params.TotalBuilt),
-			Target:  150,
-			Met:     params.TotalBuilt >= 150,
+			Target:  500,
+			Met:     params.TotalBuilt >= 500,
 		})
 	case "seasoned_builder":
 		progress = append(progress, MilestoneProgress{
 			Label:   "Buildings built",
 			Current: float64(params.TotalBuilt),
-			Target:  500,
-			Met:     params.TotalBuilt >= 500,
+			Target:  2000,
+			Met:     params.TotalBuilt >= 2000,
 		})
 	case "master_builder":
 		progress = append(progress, MilestoneProgress{
 			Label:   "Buildings built",
 			Current: float64(params.TotalBuilt),
-			Target:  1500,
-			Met:     params.TotalBuilt >= 1500,
+			Target:  5000,
+			Met:     params.TotalBuilt >= 5000,
 		})
 	case "grand_architect":
 		progress = append(progress, MilestoneProgress{
 			Label:   "Buildings built",
 			Current: float64(params.TotalBuilt),
-			Target:  5000,
-			Met:     params.TotalBuilt >= 5000,
+			Target:  20000,
+			Met:     params.TotalBuilt >= 20000,
 		})
 	case "first_soldiers":
 		progress = append(progress, MilestoneProgress{
@@ -379,26 +392,33 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 			Target:  5,
 			Met:     params.SoldierCount >= 5,
 		})
+	case "standing_army":
+		progress = append(progress, MilestoneProgress{
+			Label:   "Soldiers",
+			Current: float64(params.SoldierCount),
+			Target:  100,
+			Met:     params.SoldierCount >= 100,
+		})
 	case "war_machine":
 		progress = append(progress, MilestoneProgress{
 			Label:   "Soldiers",
 			Current: float64(params.SoldierCount),
-			Target:  75,
-			Met:     params.SoldierCount >= 75,
+			Target:  250,
+			Met:     params.SoldierCount >= 250,
 		})
 	case "iron_legion":
 		progress = append(progress, MilestoneProgress{
 			Label:   "Soldiers",
 			Current: float64(params.SoldierCount),
-			Target:  300,
-			Met:     params.SoldierCount >= 300,
+			Target:  500,
+			Met:     params.SoldierCount >= 500,
 		})
 	case "military_superpower":
 		progress = append(progress, MilestoneProgress{
 			Label:   "Soldiers",
 			Current: float64(params.SoldierCount),
-			Target:  1000,
-			Met:     params.SoldierCount >= 1000,
+			Target:  2000,
+			Met:     params.SoldierCount >= 2000,
 		})
 	case "wonder_builder":
 		progress = append(progress, MilestoneProgress{
@@ -411,22 +431,22 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 		progress = append(progress, MilestoneProgress{
 			Label:   "Wonders",
 			Current: float64(params.WonderCount),
-			Target:  5,
-			Met:     params.WonderCount >= 5,
+			Target:  8,
+			Met:     params.WonderCount >= 8,
 		})
 	case "wonder_empire":
 		progress = append(progress, MilestoneProgress{
 			Label:   "Wonders",
 			Current: float64(params.WonderCount),
-			Target:  12,
-			Met:     params.WonderCount >= 12,
+			Target:  15,
+			Met:     params.WonderCount >= 15,
 		})
 	case "scholars_haven":
 		progress = append(progress, MilestoneProgress{
 			Label:   "Knowledge workers",
 			Current: float64(params.KnowledgeCount),
-			Target:  20,
-			Met:     params.KnowledgeCount >= 20,
+			Target:  50,
+			Met:     params.KnowledgeCount >= 50,
 		})
 	}
 

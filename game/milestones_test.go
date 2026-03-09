@@ -53,15 +53,15 @@ func TestMilestoneManager_PopulationMilestone(t *testing.T) {
 	bm := NewBuildingManager()
 	ageOrder := fullAgeOrder()
 
-	// small_village requires pop 1,000 (hardened threshold)
-	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, 999, 0, 0, nil, 0, 0, 0)
+	// small_village requires pop 5,000 (hardened threshold)
+	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, 4999, 0, 0, nil, 0, 0, 0)
 	for _, ms := range completed {
 		if ms.Key == "small_village" {
-			t.Error("small_village should not trigger at pop 999")
+			t.Error("small_village should not trigger at pop 4999")
 		}
 	}
 
-	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 1000, 0, 0, nil, 0, 0, 0)
+	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 5000, 0, 0, nil, 0, 0, 0)
 	found := false
 	for _, ms := range completed {
 		if ms.Key == "small_village" {
@@ -69,7 +69,7 @@ func TestMilestoneManager_PopulationMilestone(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Error("small_village should trigger at pop 1000")
+		t.Error("small_village should trigger at pop 5000")
 	}
 }
 
