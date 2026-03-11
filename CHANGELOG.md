@@ -8,6 +8,13 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v3.1.0] — 2026-03-11
+
+### Fixed
+- wiki update and fix exponential worker growth bug
+
+---
+
 ## [v3.0.0] — 2026-03-09
 
 ### Added
