@@ -385,10 +385,10 @@ Once food is stable, assign some workers to `story_circle` (knowledge) to begin 
 
 ### Milestone: scholars_haven
 
-Requires 20 knowledge workers assigned to library-lineage buildings. Track progress with `milestones` or `ms`.
+Requires **50 knowledge workers** assigned to knowledge-domain buildings and **3 Libraries** built. Track progress with `milestones` or `ms`.
 
 ```
-assign library 20
+assign library 50
 ```
 
 ### Specialise vs. spread

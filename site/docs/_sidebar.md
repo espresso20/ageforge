@@ -19,6 +19,7 @@
 
 - **Deep Dive**
   - [Epochs](epochs.md)
+  - [Events](events.md)
   - [Catastrophe System](catastrophe.md)
   - [Faith](faith.md)
   - [Knowledge](knowledge.md)

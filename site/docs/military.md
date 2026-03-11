@@ -221,18 +221,19 @@ The `expedition_reward` bonus (from research, prestige `expedition_loot`, and ce
 
 ## 7. Military Milestones
 
-The five military milestones form a chain. Completing the full chain grants a permanent title and a cumulative **+0.45 military_power** bonus.
+The five military milestones form a chain. Completing the full chain grants a permanent title and a cumulative **+0.50 military_power** bonus.
 
 | Key | Name | Requirement | Age Gate | Reward |
 |-----|------|-------------|----------|--------|
 | `first_soldiers` | First Soldiers | 5 soldiers | Iron Age | +0.05 military_power |
-| `war_machine` | War Machine | 75 soldiers | Iron Age | +0.10 military_power |
-| `standing_army` | Standing Army | 10 Barracks + 1 Legion Fort | Classical Age | +0.05 military_power |
-| `iron_legion` | Iron Legion | 300 soldiers + 5 Barracks | Classical Age | +0.10 military_power |
-| `fortress_state` | Fortress State | 10 Castle Keeps | Medieval Age | +0.10 military_power |
-| `military_superpower` | Military Superpower | 1,000 soldiers | Industrial Age | +0.15 military_power |
+| `war_machine` | War Machine | 250 soldiers | Iron Age | +0.10 military_power |
+| `iron_legion` | Iron Legion | 500 soldiers + 10 Barracks | Classical Age | +0.10 military_power |
+| `fortress_state` | Fortress State | 20 Castle Keeps | Medieval Age | +0.10 military_power |
+| `military_superpower` | Military Superpower | 2,000 soldiers | Industrial Age | +0.15 military_power |
 
 `iron_legion`, `fortress_state`, and `military_superpower` are **hidden** until their prerequisites are visible (progress > 50% or you're in the preceding age). Don't be surprised when they appear mid-game.
+
+> **Note:** Standing Army (100 soldiers + 10 Barracks, Classical Age, +0.05 military_power) is a standalone military milestone — it is not part of the chain.
 
 ---
 
