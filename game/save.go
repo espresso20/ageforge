@@ -14,8 +14,8 @@ import (
 )
 
 // saveHMACKey is the HMAC signing key for save integrity. Its presence in the
-// binary means a determined player can forge a valid signature, which is
-// intentional — the badge system is cosmetic, not security-critical.
+// binary means a determined player can **** a *** signature, which is
+// ***** — the badge system is cosmetic, not security-critical. [[REDACTED]] :)
 const saveHMACKey = "ageforge-v1-save-integrity"
 
 // GameSave is the serialised on-disk representation of a game state.
@@ -29,41 +29,41 @@ const saveHMACKey = "ageforge-v1-save-integrity"
 //   - Proof: HMAC of the Signature using forgeMasterKey. Present only when
 //     the player has the elite badge; verifying this clears the cheater badge.
 type GameSave struct {
-	Timestamp  time.Time               `json:"timestamp"`
-	Tick       int                     `json:"tick"`
-	Age        string                  `json:"age"`
-	Resources  map[string]float64      `json:"resources"`
-	Storage    map[string]float64      `json:"storage"`
-	Buildings  map[string]int          `json:"buildings"`
-	Workers    map[string]WorkerInfo   `json:"workers"`
-	Unlocked   UnlockedState           `json:"unlocked"`
-	Stats      *GameStats              `json:"stats"`
+	Timestamp time.Time             `json:"timestamp"`
+	Tick      int                   `json:"tick"`
+	Age       string                `json:"age"`
+	Resources map[string]float64    `json:"resources"`
+	Storage   map[string]float64    `json:"storage"`
+	Buildings map[string]int        `json:"buildings"`
+	Workers   map[string]WorkerInfo `json:"workers"`
+	Unlocked  UnlockedState         `json:"unlocked"`
+	Stats     *GameStats            `json:"stats"`
 	// Phase 3 additions
-	Research         ResearchSave   `json:"research"`
-	Military         MilitarySave   `json:"military"`
-	Events           EventSave      `json:"events"`
-	Milestones       []string       `json:"milestones"`
-	ChainsCompleted  []string       `json:"chains_completed,omitempty"`
-	CurrentTitle     string         `json:"current_title,omitempty"`
-	PermanentBonuses map[string]float64 `json:"permanent_bonuses"`
-	BuildQueue       []BuildQueueItem   `json:"build_queue"`
-	Prestige         PrestigeSave        `json:"prestige"`
-	Trade            TradeSave           `json:"trade"`
-	Diplomacy        DiplomacySave       `json:"diplomacy"`
-	SpeedMultiplier  float64             `json:"speed_multiplier"`
+	Research         ResearchSave                  `json:"research"`
+	Military         MilitarySave                  `json:"military"`
+	Events           EventSave                     `json:"events"`
+	Milestones       []string                      `json:"milestones"`
+	ChainsCompleted  []string                      `json:"chains_completed,omitempty"`
+	CurrentTitle     string                        `json:"current_title,omitempty"`
+	PermanentBonuses map[string]float64            `json:"permanent_bonuses"`
+	BuildQueue       []BuildQueueItem              `json:"build_queue"`
+	Prestige         PrestigeSave                  `json:"prestige"`
+	Trade            TradeSave                     `json:"trade"`
+	Diplomacy        DiplomacySave                 `json:"diplomacy"`
+	SpeedMultiplier  float64                       `json:"speed_multiplier"`
 	WonderBanks      map[string]map[string]float64 `json:"wonder_banks,omitempty"`
 	// Phase 7: legacy building keys
 	LegacyBuildings []string `json:"legacy_buildings,omitempty"`
 	// Phase 8: epoch system
-	CurrentEpoch       string            `json:"current_epoch,omitempty"`
-	EpochEventFired    map[string]bool   `json:"epoch_event_fired,omitempty"`
-	SurvivedEpochs     map[string]bool   `json:"survived_epochs,omitempty"`
-	PendingCatastrophe string            `json:"pending_catastrophe,omitempty"`
+	CurrentEpoch       string             `json:"current_epoch,omitempty"`
+	EpochEventFired    map[string]bool    `json:"epoch_event_fired,omitempty"`
+	SurvivedEpochs     map[string]bool    `json:"survived_epochs,omitempty"`
+	PendingCatastrophe string             `json:"pending_catastrophe,omitempty"`
 	EpochEventHistory  []EpochEventRecord `json:"epoch_event_history,omitempty"`
 	// Phase 9: catastrophe system (persist across Succumb and Prestige)
-	Ruins              map[string]int    `json:"ruins,omitempty"`
-	LegacyBonuses      map[string]bool   `json:"legacy_bonuses,omitempty"`
-	CatastropheHistory []string          `json:"catastrophe_history,omitempty"`
+	Ruins              map[string]int  `json:"ruins,omitempty"`
+	LegacyBonuses      map[string]bool `json:"legacy_bonuses,omitempty"`
+	CatastropheHistory []string        `json:"catastrophe_history,omitempty"`
 	// Integrity fields
 	CheaterBadge bool   `json:"cheater_badge,omitempty"`
 	EliteBadge   bool   `json:"elite_badge,omitempty"`
@@ -362,8 +362,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		Diplomacy: DiplomacySave{
 			Factions: ge.Diplomacy.GetFactionsForSave(),
 		},
-		SpeedMultiplier: ge.speedMultiplier,
-		WonderBanks:     ge.Buildings.GetWonderBanks(),
+		SpeedMultiplier:    ge.speedMultiplier,
+		WonderBanks:        ge.Buildings.GetWonderBanks(),
 		LegacyBuildings:    ge.Buildings.GetLegacyBuildings(),
 		CheaterBadge:       ge.cheaterBadge,
 		EliteBadge:         ge.eliteBadge,

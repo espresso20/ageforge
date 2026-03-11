@@ -94,18 +94,15 @@ Knowledge workers have the highest production multiplier progression of any doma
 
 ## Faith
 
-Faith is a **draining** resource — it declines naturally each tick without active production. The faith resource unlocks at the Primitive Age. Early-age faith workers (Devotee, Believer, Worshipper, Celebrant, Initiate) exist from Primitive through Classical ages with lower food costs. The formal high-cost Faith domain tier (Acolyte, base 2.0 food/t) begins at Medieval Age.
+Faith accumulates from Faith lineage buildings and faith-domain workers. It does not drain automatically each tick — it only decreases through specific epoch events (e.g. Political Instability removes 60% of current faith). The faith resource unlocks at the Primitive Age. Early-age faith workers (Devotee, Believer, Worshipper, Celebrant, Initiate) exist from Primitive through Classical ages with lower food costs. The formal high-cost Faith domain tier (Acolyte, base 2.0 food/t) begins at Medieval Age.
 
-Your faith level as a **percentage of your storage cap** determines epoch event roll odds and provides ongoing civilization bonuses:
+Your faith level as a **percentage of your storage cap** determines epoch event roll odds:
 
-| Band | Condition | Epoch Roll (Good) | Other Effects |
-|------|-----------|-------------------|---------------|
-| No Faith | 0% | 40% | Morale penalty |
-| Dim Faith | 1–25% | 40% | — |
-| Low Faith | 26–50% | 50% | Minor cohesion bonus |
-| Mid Faith | 51–75% | 50% | Cohesion bonus |
-| Strong Faith | 76–99% | 60% | Cohesion + morale bonus |
-| Faith Full | 100% | 60% | Cohesion + morale + prestige bonus |
+| Faith % of Cap | Epoch Roll (Good Chance) |
+|----------------|--------------------------|
+| Less than 25% | 40% |
+| 25% to 75% | 50% |
+| More than 75% | 60% |
 
 **Advice:** Assign Faith workers (Acolytes and their successors) well before you expect an epoch transition. Faith production from Faith lineage buildings auto-runs, but workers accelerate accumulation significantly.
 

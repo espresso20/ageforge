@@ -56,7 +56,7 @@ If no chain is completed, fallback titles apply:
 | Knowledge Seeker | Accumulate 200 knowledge | +0.05 knowledge rate |
 | First Research | Complete 1 technology | +50 knowledge |
 | Tech Pioneer | Complete 8 technologies | +0.05 research speed |
-| Scholar's Haven | Build 1 Library + 10 knowledge workers | +0.10 knowledge rate |
+| Scholar's Haven | Build 3 Libraries + 50 knowledge workers | +0.10 knowledge rate |
 | Renaissance Mind *(hidden)* | Complete 20 technologies | +0.10 research speed |
 | Tech Master *(hidden)* | Complete 30 technologies | +0.10 research speed |
 
@@ -87,13 +87,14 @@ If no chain is completed, fallback titles apply:
 | Milestone | Condition | Reward |
 |---|---|---|
 | First Soldiers | Train 5 soldiers | +5% military power |
-| War Machine | Train 25 soldiers | +10% military power |
-| Standing Army | 5 Barracks + Legion Fort | +5% military power |
-| Iron Legion *(hidden)* | 100 soldiers + 3 Barracks | — |
-| Fortress State *(hidden)* | — | — |
-| Military Superpower *(hidden)* | — | — |
+| War Machine | Train 250 soldiers | +10% military power |
+| Iron Legion *(hidden)* | 500 soldiers + 10 Barracks | +10% military power |
+| Fortress State *(hidden)* | 20 Castle Keeps | +10% military power |
+| Military Superpower *(hidden)* | 2,000 soldiers | +15% military power |
 
 **Chain reward:** Title: "The Conquerors" · Speed boost ×0.5 for 60 ticks
+
+> **Note:** Standing Army (100 soldiers + 10 Barracks, Classical Age) is a standalone military milestone and not part of the chain.
 
 ---
 

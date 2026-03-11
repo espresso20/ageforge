@@ -241,7 +241,7 @@ Progress is shown in the **Wonders** overlay (`wonders`) with per-resource progr
 | Electricity | 800T |
 | Uranium | 940T |
 
-**Bonus:** +15.0 plasma/t · +100.0 electricity/t
+**Bonus:** +15.0 plasma/t · +200.0 electricity/t
 
 ---
 

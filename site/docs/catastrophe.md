@@ -195,9 +195,9 @@ Your **faith level** directly controls the probability that any epoch transition
 
 | Faith Level | Threshold | Chance of Good Event |
 |-------------|-----------|---------------------|
-| 0–25% | No Faith / Dim Faith | 40% good |
-| 26–75% | Low Faith / Mid Faith | 50% good |
-| 76–100% | Strong Faith / Faith Full | 60% good |
+| 0–24.9% | No Faith / Dim Faith | 40% good |
+| 25–75% | Low Faith / Mid Faith | 50% good |
+| 75.1–100% | Strong Faith / Faith Full | 60% good |
 
 A bad roll doesn't guarantee a catastrophe — it gives a 70% chance of a Challenging event and only a 30% chance of a Catastrophe. Maintaining 76%+ faith heading into an epoch transition gives you the best possible odds:
 
@@ -209,12 +209,6 @@ That 6% difference across 7 epoch transitions means roughly half a catastrophe m
 > Invest in Faith lineage buildings before every epoch transition. A full faith bar before each transition is the single best risk-reduction measure available.
 
 See [Faith](faith.md) for the full Faith system and building lineage.
-
----
-
-## WonderBank Defense
-
-Beyond faith, your **WonderBank** fill level (how many wonders you've built relative to the 22-wonder total) contributes to epoch event defense rolls. More wonders = better odds of positive outcomes at epoch transitions. Building wonders aggressively reduces catastrophe risk alongside faith investment.
 
 ---
 

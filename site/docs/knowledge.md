@@ -45,7 +45,7 @@ Knowledge is capped by your storage buildings. Build **Storage lineage** buildin
 research <tech_key>
 ```
 
-Knowledge is consumed per tick until the tech's total cost is met. Only one technology can be researched at a time. Research is age-gated — you must be in the correct age to unlock certain techs.
+Knowledge is deducted **upfront** (immediately when you issue the `research` command) — not per tick. Only one technology can be researched at a time. Research is age-gated — you must be in the correct age to unlock certain techs.
 
 See [Technologies](technologies.md) for the full tech tree.
 
