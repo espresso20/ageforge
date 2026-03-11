@@ -78,7 +78,7 @@ General rule for early game:
 - 1 worker → shrine (faith)
 - If you have a wood_camp, assign 1–2 there
 
-Workers derive their role from what they're assigned to — a worker on `gathering_camp` becomes a Gatherer; one on `story_circle` becomes a Shaman. Check the Economy tab (type `status` or view the Economy tab) to see your worker breakdown by domain.
+Workers derive their role from what they're assigned to — a worker on `gathering_camp` becomes a Forager; one on `story_circle` becomes a Shaman. Check the Economy tab (type `status` or view the Economy tab) to see your worker breakdown by domain.
 
 Check the status bar shows **Idle: 0**. If it doesn't, keep assigning.
 

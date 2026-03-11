@@ -100,7 +100,7 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `tool_making` | Tool Making | 800 kp | 200 | — | +15% gather rate |
-| `fire_mastery` | Fire Mastery | 1,000 kp | 200 | `tool_making` | +10% food production |
+| `fire_mastery` | Fire Mastery | 1,000 kp | 200 | `tool_making` | +0.1 food/tick |
 
 ---
 
@@ -109,7 +109,7 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `stoneworking` | Stoneworking | 6,000 kp | 500 | `tool_making` | +20% stone rate |
-| `animal_husbandry` | Animal Husbandry | 7,500 kp | 550 | `fire_mastery` | +20% food production |
+| `animal_husbandry` | Animal Husbandry | 7,500 kp | 550 | `fire_mastery` | +0.2 food/tick |
 | `pottery` | Pottery | 5,000 kp | 450 | `fire_mastery` | +25 all storage |
 | `primitive_writing` | Primitive Writing | 10,000 kp | 600 | `pottery` | +10% knowledge rate |
 
@@ -120,7 +120,7 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `bronze_working` | Bronze Working | 15,000 kp | 750 | `stoneworking` | +20% iron rate, +10% gather rate |
-| `agriculture` | Agriculture | 12,000 kp | 700 | `animal_husbandry` | +50% food production |
+| `agriculture` | Agriculture | 12,000 kp | 700 | `animal_husbandry` | +0.5 food/tick |
 | `currency` | Currency | 17,500 kp | 800 | `primitive_writing` | +30% gold rate |
 | `masonry` | Masonry | 13,000 kp | 700 | `stoneworking` | +50 all storage |
 | `military_tactics` | Military Tactics | 20,000 kp | 900 | `bronze_working` | +20% military power |
@@ -131,7 +131,7 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `iron_smelting` | Iron Smelting | 30,000 kp | 1,100 | `bronze_working` | +40% iron rate, +20% iron production |
+| `iron_smelting` | Iron Smelting | 30,000 kp | 1,100 | `bronze_working` | +40% iron rate, +0.2 iron/tick |
 | `road_building` | Road Building | 25,000 kp | 950 | `masonry` | +20% gold rate, +10% gather rate |
 | `mathematics` | Mathematics | 37,500 kp | 1,200 | `primitive_writing`, `currency` | +20% knowledge rate |
 | `siege_warfare` | Siege Warfare | 35,000 kp | 1,005 | `military_tactics` | +30% military power |
@@ -142,7 +142,7 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `philosophy` | Philosophy | 20,000 kp | 1,500 | `mathematics`, `primitive_writing` | +30% knowledge rate, +20% culture |
+| `philosophy` | Philosophy | 20,000 kp | 1,500 | `mathematics`, `primitive_writing` | +30% knowledge rate, +0.2 culture/tick |
 | `civil_engineering` | Civil Engineering | 18,000 kp | 1,300 | `masonry`, `road_building` | +100 all storage, −5% build cost |
 | `imperial_legions` | Imperial Legions | 22,000 kp | 1,600 | `siege_warfare`, `iron_smelting` | +40% military power |
 
@@ -152,11 +152,11 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `steel_forging` | Steel Forging | 25,000 kp | 2,000 | `iron_smelting` | +10% steel production, +30% iron rate |
-| `theology` | Theology | 20,000 kp | 1,800 | `philosophy` | +30% faith production |
+| `steel_forging` | Steel Forging | 25,000 kp | 2,000 | `iron_smelting` | +0.1 steel/tick, +30% iron rate |
+| `theology` | Theology | 20,000 kp | 1,800 | `philosophy` | +0.3 faith/tick |
 | `banking` | Banking | 30,000 kp | 2,100 | `currency`, `mathematics` | +50% gold rate, +100 gold storage |
 | `feudalism` | Feudalism | 22,000 kp | 1,700 | `military_tactics` | +5 population capacity |
-| `alchemy` | Alchemy | 28,000 kp | 2,200 | `mathematics` | +15% knowledge rate, +10% gold production |
+| `alchemy` | Alchemy | 28,000 kp | 2,200 | `mathematics` | +15% knowledge rate, +0.1 gold/tick |
 | `chronometry` | Chronometry | 20,000 kp | 1,900 | — | +5% tick speed |
 
 ---
@@ -165,10 +165,10 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `printing_press` | Printing Press | 50,000 kp | 3,000 | `theology`, `alchemy` | +40% knowledge rate, +30% culture |
+| `printing_press` | Printing Press | 50,000 kp | 3,000 | `theology`, `alchemy` | +40% knowledge rate, +0.3 culture/tick |
 | `navigation` | Navigation | 45,000 kp | 2,600 | `mathematics`, `road_building` | +50% gold rate, +30% expedition reward |
 | `gunpowder` | Gunpowder | 55,000 kp | 3,200 | `alchemy`, `siege_warfare` | +50% military power |
-| `patronage` | Patronage | 40,000 kp | 2,500 | `banking` | +50% culture, +12% knowledge production |
+| `patronage` | Patronage | 40,000 kp | 2,500 | `banking` | +0.5 culture/tick, +0.12 knowledge/tick |
 
 ---
 
@@ -177,8 +177,8 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `cartography` | Cartography | 80,000 kp | 4,000 | `navigation` | +50% expedition reward, +50% gold rate |
-| `mercantilism` | Mercantilism | 75,000 kp | 3,800 | `banking`, `navigation` | +200% gold production, +30% gold rate |
-| `colonialism` | Colonialism | 90,000 kp | 4,400 | `cartography`, `gunpowder` | +200% food production, +30% military power |
+| `mercantilism` | Mercantilism | 75,000 kp | 3,800 | `banking`, `navigation` | +2.0 gold/tick, +30% gold rate |
+| `colonialism` | Colonialism | 90,000 kp | 4,400 | `cartography`, `gunpowder` | +2.0 food/tick, +30% military power |
 
 ---
 
@@ -187,7 +187,7 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `steam_power` | Steam Power | 100,000 kp | 5,200 | `steel_forging` | +30% all production |
-| `industrialization` | Industrialization | 120,000 kp | 6,000 | `steam_power` | +50% all production, +50% steel |
+| `industrialization` | Industrialization | 120,000 kp | 6,000 | `steam_power` | +50% all production, +0.5 steel/tick |
 | `railroads` | Railroads | 90,000 kp | 5,000 | `steam_power`, `road_building` | +100% gold rate, +200 all storage |
 | `rifling` | Rifling | 80,000 kp | 4,800 | `gunpowder` | +50% military power |
 | `clockwork_automation` | Clockwork Automation | 50,000 kp | 5,400 | `chronometry` | +10% tick speed |
@@ -198,9 +198,9 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `electrification` | Electrification | 180,000 kp | 7,000 | `industrialization` | +100% electricity production, +20% all production |
+| `electrification` | Electrification | 180,000 kp | 7,000 | `industrialization` | +1.0 electricity/tick, +20% all production |
 | `telecommunications` | Telecommunications | 150,000 kp | 6,600 | `electrification` | +40% knowledge rate, +50% gold rate |
-| `mass_production` | Mass Production | 200,000 kp | 7,400 | `industrialization`, `railroads` | +40% all production, +100% steel |
+| `mass_production` | Mass Production | 200,000 kp | 7,400 | `industrialization`, `railroads` | +40% all production, +1.0 steel/tick |
 
 ---
 
@@ -208,9 +208,9 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `power_distribution` | Power Distribution | 300,000 kp | 9,500 | `electrification` | +300% electricity, +30% all production |
-| `radio` | Radio | 250,000 kp | 9,000 | `telecommunications` | +200% culture, +40% knowledge rate |
-| `chemical_engineering` | Chemical Engineering | 280,000 kp | 9,800 | `mass_production` | +100% oil production, +20% all production |
+| `power_distribution` | Power Distribution | 300,000 kp | 9,500 | `electrification` | +3.0 electricity/tick, +30% all production |
+| `radio` | Radio | 250,000 kp | 9,000 | `telecommunications` | +2.0 culture/tick, +40% knowledge rate |
+| `chemical_engineering` | Chemical Engineering | 280,000 kp | 9,800 | `mass_production` | +1.0 oil/tick, +20% all production |
 
 ---
 
@@ -218,7 +218,7 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `nuclear_fission` | Nuclear Fission | 500,000 kp | 13,050 | `power_distribution`, `chemical_engineering` | +500% electricity, +50% uranium production |
+| `nuclear_fission` | Nuclear Fission | 500,000 kp | 13,050 | `power_distribution`, `chemical_engineering` | +5.0 electricity/tick, +0.5 uranium/tick |
 | `rocketry` | Rocketry | 400,000 kp | 12,000 | `rifling`, `chemical_engineering` | +100% military power, +50% expedition reward |
 | `nuclear_deterrence` | Nuclear Deterrence | 600,000 kp | 15,000 | `nuclear_fission`, `rocketry` | +150% military power |
 
@@ -228,9 +228,9 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `electricity_tech` | Electricity | 800,000 kp | 18,000 | `nuclear_fission` | +50% all production, +500% electricity |
+| `electricity_tech` | Electricity | 800,000 kp | 18,000 | `nuclear_fission` | +50% all production, +5.0 electricity/tick |
 | `computers` | Computers | 1,000,000 kp | 20,000 | `electricity_tech` | +80% knowledge rate |
-| `satellite_tech` | Satellite Technology | 1,200,000 kp | 19,000 | `rocketry`, `electricity_tech` | +100% data production, +60% knowledge rate |
+| `satellite_tech` | Satellite Technology | 1,200,000 kp | 19,000 | `rocketry`, `electricity_tech` | +1.0 data/tick, +60% knowledge rate |
 
 ---
 
@@ -238,9 +238,9 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `internet` | Internet | 2,000,000 kp | 26,000 | `computers`, `satellite_tech` | +300% data production, +120% knowledge rate |
+| `internet` | Internet | 2,000,000 kp | 26,000 | `computers`, `satellite_tech` | +3.0 data/tick, +120% knowledge rate |
 | `cybersecurity` | Cybersecurity | 1,800,000 kp | 24,000 | `computers` | +100% military power, +5,000 data storage |
-| `social_media` | Social Media | 1,500,000 kp | 23,000 | `internet` | +500% culture, +500% gold production |
+| `social_media` | Social Media | 1,500,000 kp | 23,000 | `internet` | +5.0 culture/tick, +5.0 gold/tick |
 
 ---
 
@@ -248,8 +248,8 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `machine_learning` | Machine Learning | 3,500,000 kp | 34,000 | `internet`, `cybersecurity` | +500% data production, +50% all production |
-| `cloud_computing` | Cloud Computing | 3,000,000 kp | 32,000 | `internet` | +800% data production, +10,000 all storage |
+| `machine_learning` | Machine Learning | 3,500,000 kp | 34,000 | `internet`, `cybersecurity` | +5.0 data/tick, +50% all production |
+| `cloud_computing` | Cloud Computing | 3,000,000 kp | 32,000 | `internet` | +8.0 data/tick, +10,000 all storage |
 
 ---
 
@@ -258,7 +258,7 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
 | `neural_interface` | Neural Interface | 6,000,000 kp | 48,000 | `machine_learning` | +30% gather rate, +200% knowledge rate |
-| `blockchain` | Blockchain | 5,000,000 kp | 45,000 | `cybersecurity`, `cloud_computing` | +200% crypto production, +200% gold rate |
+| `blockchain` | Blockchain | 5,000,000 kp | 45,000 | `cybersecurity`, `cloud_computing` | +2.0 crypto/tick, +200% gold rate |
 | `cybernetics` | Cybernetics | 5,500,000 kp | 50,000 | `neural_interface` | +50% all production, +100% military power |
 
 ---
@@ -267,8 +267,8 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `fusion_power` | Fusion Power | 10,000,000 kp | 65,000 | `nuclear_fission`, `cybernetics` | +2,000% electricity, +100% plasma production |
-| `plasma_physics` | Plasma Physics | 9,000,000 kp | 62,000 | `fusion_power` | +300% plasma, +30% all production |
+| `fusion_power` | Fusion Power | 10,000,000 kp | 65,000 | `nuclear_fission`, `cybernetics` | +20.0 electricity/tick, +1.0 plasma/tick |
+| `plasma_physics` | Plasma Physics | 9,000,000 kp | 62,000 | `fusion_power` | +3.0 plasma/tick, +30% all production |
 | `superconductors` | Superconductors | 11,000,000 kp | 70,000 | `fusion_power` | +50% all production, +50,000 all storage |
 
 ---
@@ -277,9 +277,9 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `orbital_mechanics` | Orbital Mechanics | 20,000,000 kp | 85,000 | `rocketry`, `plasma_physics` | +100% titanium production, +100% expedition reward |
-| `space_mining` | Space Mining | 18,000,000 kp | 82,000 | `orbital_mechanics` | +300% titanium, +2,000% iron production |
-| `zero_g_manufacturing` | Zero-G Manufacturing | 22,000,000 kp | 92,000 | `orbital_mechanics`, `superconductors` | +50% all production, +1,000% steel |
+| `orbital_mechanics` | Orbital Mechanics | 20,000,000 kp | 85,000 | `rocketry`, `plasma_physics` | +1.0 titanium/tick, +100% expedition reward |
+| `space_mining` | Space Mining | 18,000,000 kp | 82,000 | `orbital_mechanics` | +3.0 titanium/tick, +20.0 iron/tick |
+| `zero_g_manufacturing` | Zero-G Manufacturing | 22,000,000 kp | 92,000 | `orbital_mechanics`, `superconductors` | +50% all production, +10.0 steel/tick |
 
 ---
 
@@ -287,8 +287,8 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `warp_drive` | Warp Drive | 40,000,000 kp | 120,000 | `space_mining`, `zero_g_manufacturing` | +100% dark matter production, +200% expedition reward |
-| `stellar_engineering` | Stellar Engineering | 45,000,000 kp | 130,000 | `warp_drive` | +1,000% plasma, +10,000% electricity |
+| `warp_drive` | Warp Drive | 40,000,000 kp | 120,000 | `space_mining`, `zero_g_manufacturing` | +1.0 dark matter/tick, +200% expedition reward |
+| `stellar_engineering` | Stellar Engineering | 45,000,000 kp | 130,000 | `warp_drive` | +10.0 plasma/tick, +100.0 electricity/tick |
 
 ---
 
@@ -296,8 +296,8 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `galactic_navigation` | Galactic Navigation | 80,000,000 kp | 160,000 | `warp_drive`, `stellar_engineering` | +50% all production, +500% dark matter |
-| `antimatter_synthesis` | Antimatter Synthesis | 90,000,000 kp | 180,000 | `galactic_navigation` | +200% antimatter production, +30% all production |
+| `galactic_navigation` | Galactic Navigation | 80,000,000 kp | 160,000 | `warp_drive`, `stellar_engineering` | +50% all production, +5.0 dark matter/tick |
+| `antimatter_synthesis` | Antimatter Synthesis | 90,000,000 kp | 180,000 | `galactic_navigation` | +2.0 antimatter/tick, +30% all production |
 
 ---
 
@@ -305,8 +305,8 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `quantum_mechanics` | Quantum Mechanics | 150,000,000 kp | 220,000 | `antimatter_synthesis` | +200% quantum flux, +100% all production |
-| `reality_manipulation` | Reality Manipulation | 200,000,000 kp | 250,000 | `quantum_mechanics` | +500% quantum flux, +100% all production |
+| `quantum_mechanics` | Quantum Mechanics | 150,000,000 kp | 220,000 | `antimatter_synthesis` | +2.0 quantum flux/tick, +100% all production |
+| `reality_manipulation` | Reality Manipulation | 200,000,000 kp | 250,000 | `quantum_mechanics` | +5.0 quantum flux/tick, +100% all production |
 | `quantum_computing` | Quantum Computing | 150,000,000 kp | 200,000 | `clockwork_automation` | **+15% tick speed** |
 
 ---
@@ -315,7 +315,7 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `transcendence` | Transcendence | 500,000,000 kp | 320,000 | `reality_manipulation` | +200% all production, +1,000% quantum flux |
+| `transcendence` | Transcendence | 500,000,000 kp | 320,000 | `reality_manipulation` | +200% all production, +10.0 quantum flux/tick |
 
 ---
 
@@ -479,45 +479,45 @@ Small but permanent; useful when you're building dozens of structures.
 
 ---
 
-### Special — `production` (direct production bonus)
+### Special — `production` (flat per-tick addition)
 
-Some techs add flat production bonuses to specific resources (distinct from rate multipliers):
+These techs add a flat amount directly to a resource's per-tick production rate. Unlike `bonus` effects (which are multipliers), `production` effects are additive flat increases — the values below are added to your rate each tick regardless of building count or workers:
 
-| Tech | Resource | Value |
+| Tech | Resource | Flat Bonus |
 |---|---|---|
-| Fire Mastery | food | +10% |
-| Animal Husbandry | food | +20% |
-| Agriculture | food | +50% |
-| Colonialism | food | +200% |
-| Iron Smelting | iron | +20% |
-| Patronage | knowledge | +12% |
-| Patronage | culture | +50% |
-| Theology | faith | +30% |
-| Alchemy | gold | +10% |
-| Steel Forging | steel | +10% |
-| Mercantilism | gold | +200% |
-| Electrification | electricity | +100% |
-| Power Distribution | electricity | +300% |
-| Nuclear Fission | electricity | +500%, uranium +50% |
-| Electricity | electricity | +500% |
-| Radio | culture | +200% |
-| Social Media | culture | +500%, gold +500% |
-| Chemical Engineering | oil | +100% |
-| Machine Learning | data | +500% |
-| Cloud Computing | data | +800% |
-| Blockchain | crypto | +200% |
-| Fusion Power | electricity | +2,000%, plasma +100% |
-| Plasma Physics | plasma | +300% |
-| Orbital Mechanics | titanium | +100% |
-| Space Mining | titanium | +300%, iron +2,000% |
-| Zero-G Manufacturing | steel | +1,000% |
-| Warp Drive | dark matter | +100% |
-| Stellar Engineering | plasma | +1,000%, electricity +10,000% |
-| Galactic Navigation | dark matter | +500% |
-| Antimatter Synthesis | antimatter | +200% |
-| Quantum Mechanics | quantum flux | +200% |
-| Reality Manipulation | quantum flux | +500% |
-| Transcendence | quantum flux | +1,000% |
+| Fire Mastery | food | +0.1/tick |
+| Animal Husbandry | food | +0.2/tick |
+| Agriculture | food | +0.5/tick |
+| Colonialism | food | +2.0/tick |
+| Iron Smelting | iron | +0.2/tick |
+| Patronage | knowledge | +0.12/tick |
+| Patronage | culture | +0.5/tick |
+| Theology | faith | +0.3/tick |
+| Alchemy | gold | +0.1/tick |
+| Steel Forging | steel | +0.1/tick |
+| Mercantilism | gold | +2.0/tick |
+| Electrification | electricity | +1.0/tick |
+| Power Distribution | electricity | +3.0/tick |
+| Nuclear Fission | electricity | +5.0/tick, uranium +0.5/tick |
+| Electricity | electricity | +5.0/tick |
+| Radio | culture | +2.0/tick |
+| Social Media | culture | +5.0/tick, gold +5.0/tick |
+| Chemical Engineering | oil | +1.0/tick |
+| Machine Learning | data | +5.0/tick |
+| Cloud Computing | data | +8.0/tick |
+| Blockchain | crypto | +2.0/tick |
+| Fusion Power | electricity | +20.0/tick, plasma +1.0/tick |
+| Plasma Physics | plasma | +3.0/tick |
+| Orbital Mechanics | titanium | +1.0/tick |
+| Space Mining | titanium | +3.0/tick, iron +20.0/tick |
+| Zero-G Manufacturing | steel | +10.0/tick |
+| Warp Drive | dark matter | +1.0/tick |
+| Stellar Engineering | plasma | +10.0/tick, electricity +100.0/tick |
+| Galactic Navigation | dark matter | +5.0/tick |
+| Antimatter Synthesis | antimatter | +2.0/tick |
+| Quantum Mechanics | quantum flux | +2.0/tick |
+| Reality Manipulation | quantum flux | +5.0/tick |
+| Transcendence | quantum flux | +10.0/tick |
 
 ---
 

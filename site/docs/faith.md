@@ -1,37 +1,30 @@
 # Faith
 
-Faith is a resource that *drains* — unlike culture which accumulates, faith naturally declines unless you continuously produce it. Your faith level as a percentage of your faith storage cap has powerful effects on your civilization, most critically on your [Epoch](epochs.md) event roll odds.
+Faith is a resource that accumulates from Faith lineage buildings and faith-domain workers. It does **not** drain automatically each tick — it only decreases through specific epoch events (e.g. Political Instability removes 60% of current faith). Your faith level as a percentage of your faith storage cap determines your [Epoch](epochs.md) event roll odds.
 
 ---
 
 ## Why Faith Matters
 
-1. **Epoch Roll Odds** — The most important effect. Faith % directly determines your chances of getting a good (vs bad) event at each epoch transition.
-2. **Morale** — High faith boosts soldier effectiveness in expeditions.
-3. **Cohesion** — Mid-to-high faith reduces the severity of negative events.
-4. **Prestige Bonus** — Faith at 100% cap at prestige time grants a bonus prestige multiplier.
-5. **Wonder Requirements** — Some wonders require minimum faith thresholds.
+1. **Epoch Roll Odds** — The only mechanical effect of faith. Faith % directly determines your chances of getting a good (vs bad) event at each epoch transition.
 
 ---
 
 ## Faith Threshold Bands
 
-| Band | Condition | Epoch Good-Roll Odds | Other Effects |
-|------|-----------|---------------------|---------------|
-| No Faith | 0% | 40% | Morale penalty |
-| Dim Faith | 1–25% | 40% | — |
-| Low Faith | 26–50% | 50% | Minor cohesion |
-| Mid Faith | 51–75% | 50% | Cohesion |
-| Strong Faith | 76–99% | 60% | Cohesion + morale |
-| Faith Full | 100% | 60% | All above + prestige bonus |
+| Condition | Epoch Good-Roll Odds |
+|-----------|---------------------|
+| Faith < 25% of cap | 40% |
+| Faith 25–75% of cap | 50% |
+| Faith > 75% of cap | 60% |
 
-The faith % display in the Economy tab shows your current band alongside the epoch odds.
+The faith % display in the Economy tab shows your current percentage alongside the epoch odds.
 
 ---
 
-## How Faith Drains
+## How Faith Decreases
 
-Faith naturally declines each tick. The drain scales with your population — larger civilizations need proportionally more faith investment to maintain their band. If you stop producing faith, it will fall to zero.
+Faith does not drain automatically. It only decreases when specific epoch events fire — for example, Political Instability removes 60% of your current faith, and Cultural Festival adds a temporary faith production bonus that stops after the event duration. Outside of events, your faith total is stable.
 
 ---
 
@@ -75,7 +68,7 @@ Players often neglect faith until the epoch notification appears — but by then
 
 Before reaching the last age of an epoch (e.g. Bronze Age before Iron Era):
 
-- Faith at 76%+ (Strong Faith band) for 60% good roll
+- Faith at 76%+ for 60% good roll
 - Culture at 10,000+ for Major event eligibility, 250,000+ for Legendary
 - Buildings diversified (Great Fire cannot destroy what you haven't over-concentrated)
 - Gold reserves for Economic Crash mitigation

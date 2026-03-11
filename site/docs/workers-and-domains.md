@@ -344,8 +344,8 @@ Key buildings that accept workers, grouped by domain:
 | Story Circle | `story_circle` | knowledge | 2 | Primitive Age |
 | Elders' Hall | `elders_hall` | knowledge | 2 | Stone Age |
 | Library | `library` | knowledge | 4 | Classical Age |
-| War Camp | `war_camp` | military | 3 | Iron Age |
-| Barracks | `barracks` | military | 4 | Iron Age |
+| War Camp | `war_camp` | military | 3 | Stone Age |
+| Barracks | `barracks` | military | 4 | Bronze Age |
 | Hunting Lodge | `hunting_lodge` | military | 5 | Iron Age |
 
 Worker capacity is **per building instance**. If you have built 3 libraries, total capacity is 3 × 4 = 12 slots. Use `assign library all` to fill all available slots.

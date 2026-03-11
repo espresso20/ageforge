@@ -72,29 +72,29 @@ These 27 events have no `EpochKey` — they can fire in any epoch, throughout th
 | Bountiful Harvest | `bountiful_harvest` | Primitive | 15 | +250 food | Instant | Most common good event early |
 | Wandering Traders | `wandering_traders` | Bronze | 12 | +15 gold, +10 food | Instant | |
 | Skilled Immigrants | `skilled_immigrants` | Stone | 10 | +10 knowledge | Instant | |
-| Gold Rush | `gold_rush` | Bronze | 8 | +100% gold production | 15 ticks | |
-| Trade Boom | `trade_boom` | Medieval | 8 | +200% gold production | 20 ticks | |
+| Gold Rush | `gold_rush` | Bronze | 8 | +1.0 gold/tick | 15 ticks | |
+| Trade Boom | `trade_boom` | Medieval | 8 | +2.0 gold/tick | 20 ticks | |
 | Ancient Discovery | `ancient_discovery` | Iron | 6 | +50 knowledge | Instant | |
-| Renaissance Fair | `renaissance_fair` | Renaissance | 10 | +50% culture, +50% gold production | 15 ticks | |
+| Renaissance Fair | `renaissance_fair` | Renaissance | 10 | +0.5 culture/tick, +0.5 gold/tick | 15 ticks | |
 | Colonial Windfall | `colonial_windfall` | Colonial | 8 | +100 gold, +30 culture | Instant | |
-| Power Surge | `power_surge` | Victorian | 6 | +300% electricity production | 10 ticks | |
-| Crypto Boom | `crypto_boom` | Cyberpunk | 7 | +500% crypto production | 15 ticks | |
+| Power Surge | `power_surge` | Victorian | 6 | +3.0 electricity/tick | 10 ticks | |
+| Crypto Boom | `crypto_boom` | Cyberpunk | 7 | +5.0 crypto/tick | 15 ticks | |
 | First Contact | `first_contact` | Space | 3 | +500 knowledge, +50 titanium | Instant | Rarest good event |
-| Dark Matter Rift | `dark_matter_rift` | Interstellar | 4 | +300% dark matter production | 15 ticks | |
-| Quantum Fluctuation | `quantum_fluctuation` | Quantum | 3 | +500% quantum flux production | 10 ticks | |
+| Dark Matter Rift | `dark_matter_rift` | Interstellar | 4 | +3.0 dark matter/tick | 15 ticks | |
+| Quantum Fluctuation | `quantum_fluctuation` | Quantum | 3 | +5.0 quantum flux/tick | 10 ticks | |
 
 ### Bad Events
 
 | Name | Key | Min Age | Weight | Effect | Duration | Notes |
 |------|-----|---------|--------|--------|----------|-------|
-| Storm | `storm` | Primitive | 14 | Wood production -30% | 5 ticks | Most common bad event |
-| Drought | `drought` | Primitive | 12 | Food production -50% | 10 ticks | |
+| Storm | `storm` | Primitive | 14 | Wood production -0.3/tick | 5 ticks | Most common bad event |
+| Drought | `drought` | Primitive | 12 | Food production -0.5/tick | 10 ticks | |
 | Bandit Raid | `bandit_raid` | Bronze | 10 | -10 food, -5 gold stolen | Instant | |
-| Plague | `plague` | Stone | 6 | Food production -100%, -15% workers | 8 ticks | **Workers permanently lost** |
-| Mine Collapse | `mine_collapse` | Iron | 7 | Iron -50%, coal -30%, -5% workers | 8 ticks | **Workers permanently lost** |
-| Heresy | `heresy` | Medieval | 5 | Faith production -50% | 12 ticks | |
+| Plague | `plague` | Stone | 6 | Food production -1.0/tick, -15% workers | 8 ticks | **Workers permanently lost** |
+| Mine Collapse | `mine_collapse` | Iron | 7 | Iron production -0.5/tick, coal -0.3/tick, -5% workers | 8 ticks | **Workers permanently lost** |
+| Heresy | `heresy` | Medieval | 5 | Faith production -0.5/tick | 12 ticks | |
 | Pirate Attack | `pirate_attack` | Colonial | 7 | -50 gold, -30 food stolen | Instant | |
-| Nuclear Scare | `nuclear_scare` | Atomic | 4 | Electricity -200%, knowledge -100% | 12 ticks | |
+| Nuclear Scare | `nuclear_scare` | Atomic | 4 | Electricity -2.0/tick, knowledge -1.0/tick | 12 ticks | |
 | Data Breach | `data_breach` | Information | 6 | -50 data, -100 gold stolen | Instant | |
 | Industrial Accident | `industrial_accident` | Industrial | 8 | -10 steel, -15 oil stolen, -7% workers | Instant | **Workers permanently lost** |
 | Crypto Winter | `crypto_winter` | Cyberpunk | 8 | -4.5 crypto stolen/tick | 14 ticks | Ongoing drain, not one-shot |
@@ -104,7 +104,7 @@ These 27 events have no `EpochKey` — they can fire in any epoch, throughout th
 | Name | Key | Min Age | Weight | Effect | Duration | Notes |
 |------|-----|---------|--------|--------|----------|-------|
 | Earthquake | `earthquake` | Stone | 5 | -15 wood stolen, +20 stone | Instant | Trade-off |
-| Plasma Storm | `plasma_storm` | Fusion | 5 | Electricity -500%, plasma +300% | 10 ticks | Hurts power, helps plasma |
+| Plasma Storm | `plasma_storm` | Fusion | 5 | Electricity -5.0/tick, plasma +3.0/tick | 10 ticks | Hurts power, helps plasma |
 
 ---
 

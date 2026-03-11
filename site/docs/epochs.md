@@ -106,11 +106,11 @@ Press **`epoch`** to open the Epoch tab. It displays:
 
 | Event | Effect | Duration |
 |-------|--------|----------|
-| Age of Plenty | +20% all production | 216 ticks (~7 min) |
+| Age of Plenty | ×2 all production (+100%) | 216 ticks (~7 min) |
 | Population Surge | +15% workers added | Instant |
 | Ancient Cache | Fills 40% of every resource's storage | Instant |
-| Trade Winds | Multiplied gold income | 144 ticks (~5 min) |
-| Cultural Festival | +30% culture, +20% faith (instant) + culture/faith production boost | 144 ticks |
+| Trade Winds | +5.0 gold/tick flat | 144 ticks (~5 min) |
+| Cultural Festival | +30% culture, +20% faith (instant) + culture +1.0/tick, faith +1.0/tick | 144 ticks |
 
 ### Major Events — 40%+ culture fill required
 
@@ -137,14 +137,14 @@ Press **`epoch`** to open the Epoch tab. It displays:
 
 | Event | Effect | Duration |
 |-------|--------|----------|
-| The Famine | Food production debuffed | 120 ticks |
-| Merchant Betrayal | Gold stolen, commerce debuff | 72 ticks |
+| The Famine | Food production -3.0/tick | 120 ticks |
+| Merchant Betrayal | -50% current gold (instant) + gold -2.0/tick | 72 ticks |
 | The Great Fire | 8 buildings destroyed randomly | Instant |
-| Epidemic | 20% of workers removed, population debuff | 180 ticks |
-| Resource Drought | Primary resource production halved | 90 ticks |
-| Political Instability | Faith collapses, knowledge stolen, military paralysed | 60 ticks |
-| Economic Crash | Gold stolen, trade debuff | 216 ticks |
-| The Dark Age | Research halted, knowledge stolen, research debuffed | 144 ticks |
+| Epidemic | -20% workers (instant) + food -1.5/tick | 180 ticks |
+| Resource Drought | Epoch's primary resource -3.0/tick | 90 ticks |
+| Political Instability | -60% current faith (instant) + knowledge -2.0/tick | 60 ticks |
+| Economic Crash | -50% current gold (instant) + gold -3.0/tick | 216 ticks |
+| The Dark Age | Research cancelled, -80% current knowledge (instant) + knowledge -3.0/tick | 144 ticks |
 
 The Great Fire and Epidemic are the two you least want to see. Eight lost buildings in the early game can set you back significantly; 20% worker loss in the Neon or Cosmic era is brutal given how long workers take to replace.
 
@@ -158,70 +158,70 @@ Beyond the transition roll, each epoch has 5 events that only appear in the rand
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| Tribal Raid | Bad | Food production -15%, food stolen, -10% workers — lasts 60 ticks |
-| Sacred Grove | Good | Faith +20% production + 200 wood — lasts 120 ticks |
+| Tribal Raid | Bad | Food production -0.15/tick, food stolen, -10% workers — lasts 60 ticks |
+| Sacred Grove | Good | Faith +0.20/tick + 200 wood — lasts 120 ticks |
 | Beast Stampede | Bad | -30 wood, -20 food (instant) |
-| River Blessing | Good | Food production +25% — lasts 144 ticks |
+| River Blessing | Good | Food production +0.25/tick — lasts 144 ticks |
 | Wandering Sage | Good | +500 knowledge, +100 faith (instant) |
 
 ### Iron Era ⚔
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| Iron Vein Strike | Good | Iron production +30% — lasts 180 ticks |
-| Locust Swarm | Bad | Food -35%, -12% workers — lasts 120 ticks |
+| Iron Vein Strike | Good | Iron production +0.30/tick — lasts 180 ticks |
+| Locust Swarm | Bad | Food -0.35/tick, -12% workers — lasts 120 ticks |
 | Conquered Village | Good | +2000 gold (instant) |
-| Imperial Road | Good | Gold production +20% — lasts 216 ticks |
-| Oracle's Prophecy | Good | Faith +30%, knowledge +15% — lasts 144 ticks |
+| Imperial Road | Good | Gold production +0.20/tick — lasts 216 ticks |
+| Oracle's Prophecy | Good | Faith +0.30/tick, knowledge +0.15/tick — lasts 144 ticks |
 
 ### Steel Era ⚙
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| Coal Seam Discovery | Good | Coal production +40% — lasts 180 ticks |
-| Workers' Uprising | Bad | Food -15%, -500 faith, -8% workers — lasts 120 ticks |
+| Coal Seam Discovery | Good | Coal production +0.40/tick — lasts 180 ticks |
+| Workers' Uprising | Bad | Food -0.15/tick, -500 faith stolen, -8% workers — lasts 120 ticks |
 | Colonial Bounty | Good | +5000 gold (instant) |
-| Steam Inventor | Good | +2000 knowledge + research production +20% — lasts 144 ticks |
-| Industrial Blight | Bad | Food -20%, -300 faith — lasts 144 ticks |
+| Steam Inventor | Good | +2000 knowledge + knowledge production +0.20/tick — lasts 144 ticks |
+| Industrial Blight | Bad | Food -0.20/tick, -300 faith stolen — lasts 144 ticks |
 
 ### Electric Era ⚡
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| Power Surge | Good | Electricity +35% — lasts 144 ticks |
-| Oil Strike | Good | Oil +50% production + 3000 gold — lasts 180 ticks |
-| The Broadcast | Good | +5000 culture + faith +20% — lasts 180 ticks |
-| Labour Movement | Bad | Food -10%, gold -10% — lasts 60 ticks |
-| Nuclear Theory | Good | +8000 knowledge + research +25% — lasts 180 ticks |
+| Power Surge | Good | Electricity +0.35/tick — lasts 144 ticks |
+| Oil Strike | Good | Oil +0.50/tick + 3000 gold — lasts 180 ticks |
+| The Broadcast | Good | +5000 culture + faith +0.20/tick — lasts 180 ticks |
+| Labour Movement | Bad | Food -0.10/tick, gold -0.10/tick — lasts 60 ticks |
+| Nuclear Theory | Good | +8000 knowledge + knowledge production +0.25/tick — lasts 180 ticks |
 
 ### Digital Era ▣
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| Data Breach | Bad | -5000 data, knowledge -20% — lasts 120 ticks |
+| Data Breach | Bad | -5000 data stolen, knowledge -0.20/tick — lasts 120 ticks |
 | Viral Moment | Good | +20,000 culture (instant) |
-| Tech Monopoly | Good | Gold +40% — lasts 180 ticks |
-| Server Outage | Bad | Data -50% — lasts 120 ticks |
-| AI Breakthrough | Good | Knowledge +50%, data +20% — lasts 216 ticks |
+| Tech Monopoly | Good | Gold +0.40/tick — lasts 180 ticks |
+| Server Outage | Bad | Data production -0.50/tick — lasts 120 ticks |
+| AI Breakthrough | Good | Knowledge +0.50/tick, data +0.20/tick — lasts 216 ticks |
 
 ### Neon Era ◉
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| Plasma Storm | Good | Plasma +50%, electricity +30% — lasts 180 ticks |
+| Plasma Storm | Good | Plasma +0.50/tick, electricity +0.30/tick — lasts 180 ticks |
 | Void Rift | Good | +5000 dark matter (instant) |
-| Neural Uprising | Bad | -500 food, food -10%, -20% workers — lasts 120 ticks |
+| Neural Uprising | Bad | -500 food stolen, food -0.10/tick, -20% workers — lasts 120 ticks |
 | Corporate Espionage | Bad | -10,000 gold, -8000 data (instant) |
-| Stellar Migration | Mixed | +1000 food (instant), food -15% — lasts 144 ticks |
+| Stellar Migration | Mixed | +1000 food (instant), food -0.15/tick — lasts 144 ticks |
 
 ### Cosmic Era ✦
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| Reality Fracture | Bad | Quantum flux -40%, knowledge -10% — lasts 120 ticks |
+| Reality Fracture | Bad | Quantum flux -0.40/tick, knowledge -0.10/tick — lasts 120 ticks |
 | Dimensional Harvest | Good | +2000 antimatter, +5000 quantum flux (instant) |
-| Galactic Council | Good | Gold +20% + 20,000 gold — lasts 216 ticks |
-| Entropy Wave | Bad | Quantum flux -20%, knowledge -20% — lasts 144 ticks |
+| Galactic Council | Good | Gold +0.20/tick + 20,000 gold — lasts 216 ticks |
+| Entropy Wave | Bad | Quantum flux -0.20/tick, knowledge -0.20/tick — lasts 144 ticks |
 | Transcendence Signal | Good | +100,000 knowledge, +50,000 culture (instant) |
 
 ---

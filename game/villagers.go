@@ -259,6 +259,9 @@ func (vm *WorkerManager) GetAll() map[string]WorkerInfo {
 // merged, so old saves load without data loss.
 func (vm *WorkerManager) LoadWorkers(data map[string]WorkerInfo) {
 	rt := vm.domains["worker"]
+	// Reset before loading to prevent accumulation on repeated loads.
+	rt.assignments = make(map[string]int)
+	rt.count = 0
 	byBuilding := config.BuildingByKey()
 	totalCount := 0
 	for _, info := range data {

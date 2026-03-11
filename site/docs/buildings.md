@@ -109,7 +109,7 @@ You do not lose progress. A Gathering Camp in the Food lineage may become a Farm
 | 4 | Geological Extraction | masonry | stone → iron ore → uranium → titanium ore → dark matter crystals → antimatter | 21 | Stone Camp | Reality Excavator |
 | 5 | Knowledge | knowledge | knowledge | 21 | Story Circle | Reality Academy |
 | 6 | Faith | faith | faith | 21 | Shrine | Transcendence Hall |
-| 7 | Military | military | soldiers | 21 | Hunting Lodge | Probability War Room |
+| 7 | Military | military | soldiers | 21 | War Camp | Probability War Room |
 | 8 | Trade | trade | gold | 19 | Market | Probability Market |
 | 9 | Engineering | engineering | iron → steel → electricity → plasma → dark matter → quantum flux | 19 | Smithy | Reality Forge |
 | 10 | Culture/Arts | None | culture | 17 | Amphitheater | Reality Art Engine |
@@ -256,7 +256,7 @@ wonder collect <resource> <amount|all>   — bank resources toward the active wo
 build <wonder_key>                       — begin construction once fully funded
 ```
 
-Wonders provide powerful civilization-wide bonuses and contribute to your **WonderBank** — the fill level of your wonder collection feeds into epoch event defense rolls, reducing the probability of bad epoch outcomes.
+Wonders provide powerful civilization-wide bonuses. Each wonder completed grants a permanent +0.5× speed boost to your game tick rate.
 
 Wonders are excluded from building destruction during catastrophe Endure events, and excluded from Succumb ruins generation. They are permanent fixtures of your civilization.
 
