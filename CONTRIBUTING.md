@@ -423,10 +423,30 @@ Flow: **Config** defines data → **Manager** owns state/logic → **Engine** or
 
 ---
 
+## Project Tracking
+
+All active work is tracked on the [AgeForge Trello board](https://trello.com/b/tf31C2cz/ageforge).
+
+| Lane | What lives there |
+|---|---|
+| **Bugs** | One ticket per bug — single fix per card |
+| **Features** | New systems, commands, and content (`feat`) |
+| **Balance** | Cost, rate, and number tuning (`balance`) |
+| **Refactor** | Cleanup with no behavior change (`refactor`) |
+| **Doing** | Actively in progress |
+| **Done** | Shipped — full history of completed work |
+| **Later Enhancements** | Shelved ideas for future consideration |
+
+When picking up work: move the card to **Doing**. When done: move it to **Done** and close the PR.
+
+Commit types map 1:1 to board lanes — if your change is a `fix`, it came from the Bugs lane. If it's `balance`, it came from Balance. This keeps the board and git history in sync.
+
+---
+
 ## Reporting Bugs
 
-Open a [GitHub Issue](https://github.com/espresso20/ageforge/issues) with what you were doing, what you expected, what happened, and your OS + terminal.
+Found a bug? [Open a GitHub Issue](https://github.com/espresso20/ageforge/issues) with what you were doing, what you expected, what happened, and your OS + terminal. It will be triaged into a Trello bug ticket.
 
 ## Questions
 
-Join the [Discord](https://discord.gg/EPvyd5vjpj) for discussion.
+Join the [Discord](https://discord.gg/EPvyd5vjpj) or check the [project board](https://trello.com/b/tf31C2cz/ageforge) to see what's being worked on.
