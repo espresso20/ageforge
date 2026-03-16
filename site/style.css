@@ -155,6 +155,19 @@ code {
 .nav-discord svg {
     flex-shrink: 0;
 }
+.nav-trello {
+    background: #0052cc;
+    color: #fff !important;
+    padding: 5px 12px;
+    border-radius: var(--radius);
+    font-weight: 700;
+    font-size: 0.82rem;
+    transition: opacity 0.2s;
+}
+.nav-trello:hover {
+    opacity: 0.85;
+    color: #fff !important;
+}
 .nav-gh {
     display: flex;
     align-items: center;
