@@ -217,7 +217,7 @@ func RandomEvents() []EventDef {
 			},
 		},
 		{
-			Name: "Power Surge", Key: "power_surge",
+			Name: "Power Surge", Key: "power_surge_base",
 			MinAge: "victorian_age", Weight: 6, MinTick: 400, Cooldown: 160,
 			Duration: 10, Sentiment: "good",
 			Description: "An electrical surge boosts production temporarily.",

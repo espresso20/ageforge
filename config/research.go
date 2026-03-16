@@ -78,11 +78,11 @@ func Technologies() []TechDef {
 		// === BRONZE AGE === (~3 min each)
 		{
 			Name: "Bronze Working", Key: "bronze_working",
-			Age: "bronze_age", Cost: 15000, ResearchTicks: 750,
+			Age: "bronze_age", Cost: 1600, ResearchTicks: 750,
 			Prerequisites: []string{"stoneworking"},
 			Description:   "Alloying copper and tin creates durable tools.",
 			Effects: []Effect{
-				{Type: "bonus", Target: "iron_rate", Value: 0.2},
+				{Type: "bonus", Target: "stone_rate", Value: 0.2},
 				{Type: "bonus", Target: "gather_rate", Value: 0.1},
 			},
 		},
