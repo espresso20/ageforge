@@ -157,11 +157,10 @@ func ShowAgeSplashFull(app *tview.Application, pages *tview.Pages, oldAge, newAg
 		pages.SwitchToPage("dashboard")
 	}
 
-	// NOTE: SetInputCapture is called on the Flex, not the TextView, so that
-	// any key — including ones the TextView would consume for scrolling — will
-	// dismiss the splash. QueueUpdateDraw is required because this handler
-	// runs inside the tview event loop but pages.RemovePage modifies the layout.
-	overlay.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// SetInputCapture on titleTV (the focused child) so keypresses actually reach
+	// the capture handler. QueueUpdateDraw is required because pages.RemovePage
+	// modifies the layout and must run on the main goroutine.
+	titleTV.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		app.QueueUpdateDraw(func() {
 			dismiss()
 		})
@@ -178,4 +177,5 @@ func ShowAgeSplashFull(app *tview.Application, pages *tview.Pages, oldAge, newAg
 
 	pages.AddPage("age_splash", overlay, true, true)
 	pages.SwitchToPage("age_splash")
+	app.SetFocus(titleTV)
 }
