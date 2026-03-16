@@ -8,6 +8,13 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v3.2.0] — 2026-03-16
+
+### Fixed
+- age advancement splash ignores keypresses until auto-dismiss
+
+---
+
 ## [v3.1.0] — 2026-03-11
 
 ### Fixed
