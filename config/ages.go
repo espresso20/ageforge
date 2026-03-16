@@ -152,7 +152,7 @@ func Ages() []AgeDef {
 			ResourceReqs:    map[string]float64{"electricity": 26250000, "uranium": 5500000, "steel": 378125000},
 			BuildingReqs:    map[string]int{"nuclear_reactor": 30, "bunker_complex": 30, "special_ops_hq": 15},
 			UnlockBuildings: []string{"tower_block", "modern_depot", "agri_complex", "oil_platform", "titanium_mine", "think_tank", "meditation_center", "special_ops_hq", "investment_firm", "power_grid_hub", "titanium_smelter", "oil_refinery", "tv_studio", "space_program"},
-			UnlockResources: []string{"data", "nanobots", "titanium_ore"},
+			UnlockResources: []string{"data", "nanobots"},
 		},
 		// === 13: INFORMATION AGE (Digital Era) ===
 		{
@@ -200,7 +200,7 @@ func Ages() []AgeDef {
 			ResourceReqs:    map[string]float64{"plasma": 50000000000, "electricity": 1953125000000, "data": 312500000000},
 			BuildingReqs:    map[string]int{"fusion_reactor": 80, "fusion_reactor_array": 60, "plasma_command": 50},
 			UnlockBuildings: []string{"orbital_habitat", "orbital_depot", "hydroponic_bay", "quantum_organic_extractor", "asteroid_crystal_mine", "deep_space_observatory", "orbital_sanctuary", "space_force_base", "asteroid_market", "launch_complex", "orbital_refinery", "solar_collector_array", "orbital_data_relay", "zero_g_gallery", "dyson_scaffold"},
-			UnlockResources: []string{"titanium"},
+			UnlockResources: []string{"titanium", "titanium_ore"},
 		},
 		// === 18: INTERSTELLAR AGE (Cosmic Era) ===
 		{
