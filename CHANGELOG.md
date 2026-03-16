@@ -8,6 +8,13 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v3.2.1] — 2026-03-16
+
+### Fixed
+- four config bug fixes — event collision, tech rates, cost cliff, titanium age
+
+---
+
 ## [v3.2.0] — 2026-03-16
 
 ### Fixed
