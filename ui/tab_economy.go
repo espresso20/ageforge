@@ -294,7 +294,7 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 			if bs.Count > 0 {
 				countColor = "gold"
 			}
-			fmt.Fprintf(&sb, " %s [cyan]%s[-] [%s]x%d[-]\n", icon, bs.Name, countColor, bs.Count)
+			fmt.Fprintf(&sb, " %s [gold::b]%s[-] [%s]x%d[-]\n", icon, bs.Name, countColor, bs.Count)
 			if bs.AtMaxCount {
 				fmt.Fprintf(&sb, "   [yellow]Building limit reached.[-]\n")
 			} else {
