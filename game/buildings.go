@@ -107,6 +107,42 @@ func (bm *BuildingManager) GetCount(key string) int {
 	return bm.counts[key]
 }
 
+// GetQueueCount returns how many instances of a building key are currently in
+// the build queue. This is used by cost helpers so that queued-but-not-yet-built
+// instances are factored into the cost curve.
+// NOTE: The queue lives on GameEngine, so the caller must pass it in.
+func (bm *BuildingManager) GetQueueCount(key string, queue []BuildQueueItem) int {
+	n := 0
+	for _, item := range queue {
+		if item.BuildingKey == key {
+			n++
+		}
+	}
+	return n
+}
+
+// BuildBatchCost returns the total cost to build n more of a building,
+// accounting for already-built and already-queued instances in the cost curve.
+// cost_i = floor(baseCost × scale^(built+queued+i))  for i in [0, n).
+// Returns (nil, false) if the key is unknown.
+func (bm *BuildingManager) BuildBatchCost(key string, n int, queue []BuildQueueItem) (map[string]float64, bool) {
+	def, ok := bm.defs[key]
+	if !ok {
+		return nil, false
+	}
+	built := bm.counts[key]
+	queued := bm.GetQueueCount(key, queue)
+
+	total := make(map[string]float64)
+	for i := 0; i < n; i++ {
+		exp := float64(built + queued + i)
+		for resource, base := range def.BaseCost {
+			total[resource] += math.Floor(base * math.Pow(def.CostScale, exp))
+		}
+	}
+	return total, true
+}
+
 // GetCost calculates the cost for the next instance of a building type.
 // Cost scales exponentially: base × CostScale^count, floored to the nearest
 // integer. This makes later copies progressively more expensive.
@@ -495,12 +531,15 @@ func (bm *BuildingManager) TransformBuilding(oldKey, newKey string, renameWorker
 }
 
 // Snapshot returns building states for UI.
+// queue is the engine's current build queue, used to compute queue-aware next costs.
 // getWorkerCount(workerDomain, buildingKey) returns the number of workers assigned to that building;
 // pass nil to skip worker field population.
-func (bm *BuildingManager) Snapshot(resources *ResourceManager, getWorkerCount func(domain, key string) int) map[string]BuildingState {
+func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQueueItem, getWorkerCount func(domain, key string) int) map[string]BuildingState {
 	out := make(map[string]BuildingState)
 	for key, def := range bm.defs {
-		cost := bm.GetCost(key)
+		// NextCost uses BuildBatchCost so it reflects queue depth — the displayed
+		// price is the actual cost the player will pay for the next build.
+		cost, _ := bm.BuildBatchCost(key, 1, queue)
 		count := bm.counts[key]
 		state := BuildingState{
 			Count:       count,

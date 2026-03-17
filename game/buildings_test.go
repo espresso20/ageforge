@@ -90,3 +90,74 @@ func TestBuildingManager_LoadCounts(t *testing.T) {
 		t.Errorf("loaded farm count = %v, want 2", bm.GetCount("farm"))
 	}
 }
+
+// TestBuildingManager_BuildBatchCost_NoBuildingsQueued checks that BuildBatchCost
+// with no prior buildings/queue returns the correct cumulative total for N units.
+// Hut: BaseCost={"wood":15}, CostScale=1.12
+// For 5 huts from scratch: cost_i = floor(15 * 1.12^i), i=0..4
+// = floor(15) + floor(16.8) + floor(18.816) + floor(21.07…) + floor(23.60…)
+// = 15 + 16 + 18 + 21 + 23 = 93
+func TestBuildingManager_BuildBatchCost_NoBuildingsQueued(t *testing.T) {
+	bm := NewBuildingManager()
+	bm.UnlockBuilding("hut")
+
+	def := bm.defs["hut"]
+	base := def.BaseCost["wood"]
+	scale := def.CostScale
+
+	expected := 0.0
+	for i := 0; i < 5; i++ {
+		expected += math.Floor(base * math.Pow(scale, float64(i)))
+	}
+
+	cost, ok := bm.BuildBatchCost("hut", 5, nil)
+	if !ok {
+		t.Fatal("BuildBatchCost returned false for known building")
+	}
+	if cost["wood"] != expected {
+		t.Errorf("batch cost wood = %v, want %v", cost["wood"], expected)
+	}
+}
+
+// TestBuildingManager_BuildBatchCost_WithBuiltAndQueued verifies that
+// already-built and already-queued counts shift the exponent correctly.
+// With 2 built and 1 queued, the next unit should cost floor(15 * 1.12^3).
+func TestBuildingManager_BuildBatchCost_WithBuiltAndQueued(t *testing.T) {
+	bm := NewBuildingManager()
+	bm.UnlockBuilding("hut")
+	bm.counts["hut"] = 2
+
+	queue := []BuildQueueItem{
+		{BuildingKey: "hut", TicksLeft: 5, TotalTicks: 8},
+	}
+
+	def := bm.defs["hut"]
+	expected := math.Floor(def.BaseCost["wood"] * math.Pow(def.CostScale, 3))
+
+	cost, ok := bm.BuildBatchCost("hut", 1, queue)
+	if !ok {
+		t.Fatal("BuildBatchCost returned false for known building")
+	}
+	if cost["wood"] != expected {
+		t.Errorf("queue-aware cost wood = %v, want %v (scale^3)", cost["wood"], expected)
+	}
+}
+
+// TestBuildingManager_GetQueueCount verifies queue counting.
+func TestBuildingManager_GetQueueCount(t *testing.T) {
+	bm := NewBuildingManager()
+	queue := []BuildQueueItem{
+		{BuildingKey: "hut"},
+		{BuildingKey: "hut"},
+		{BuildingKey: "longhouse"},
+	}
+	if got := bm.GetQueueCount("hut", queue); got != 2 {
+		t.Errorf("GetQueueCount(hut) = %d, want 2", got)
+	}
+	if got := bm.GetQueueCount("longhouse", queue); got != 1 {
+		t.Errorf("GetQueueCount(longhouse) = %d, want 1", got)
+	}
+	if got := bm.GetQueueCount("hut", nil); got != 0 {
+		t.Errorf("GetQueueCount with nil queue = %d, want 0", got)
+	}
+}

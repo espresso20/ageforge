@@ -1,6 +1,7 @@
 package game
 
 import (
+	"math"
 	"os"
 	"testing"
 )
@@ -294,6 +295,143 @@ func TestEngine_BuildMultiple(t *testing.T) {
 	}
 	if built != 5 {
 		t.Errorf("built = %v, want 5", built)
+	}
+}
+
+// TestEngine_BuildMultiple_CostScaling verifies that batch builds charge the
+// cumulative cost curve rather than flat base-cost × N.
+// Hut: BaseCost={"wood":15}, CostScale=1.12
+// Building 5 from scratch: each unit costs floor(15 * 1.12^i) for i=0..4.
+// Total wood deducted must equal that sum, not 15*5=75.
+func TestEngine_BuildMultiple_CostScaling(t *testing.T) {
+	ge := NewGameEngine()
+
+	def := ge.Buildings.defs["hut"]
+	base := def.BaseCost["wood"]
+	scale := def.CostScale
+
+	expectedCost := 0.0
+	for i := 0; i < 5; i++ {
+		expectedCost += math.Floor(base * math.Pow(scale, float64(i)))
+	}
+
+	// Give enough wood for 5 huts on the curve, plus a buffer.
+	ge.mu.Lock()
+	ge.Resources.AddStorage("wood", expectedCost+1001)
+	ge.Resources.Add("wood", expectedCost+1000)
+	startWood := ge.Resources.Get("wood") // actual capped value after storage rules
+	ge.mu.Unlock()
+
+	built, err := ge.BuildMultiple("hut", 5)
+	if err != nil {
+		t.Fatalf("BuildMultiple failed: %v", err)
+	}
+	if built != 5 {
+		t.Fatalf("built = %v, want 5", built)
+	}
+
+	state := ge.GetState()
+	remainingWood := state.Resources["wood"].Amount
+	actualCost := startWood - remainingWood
+
+	if actualCost != expectedCost {
+		t.Errorf("wood spent = %v, want %v (flat would be %v)", actualCost, expectedCost, base*5)
+	}
+}
+
+// TestEngine_BuildMultiple_QueueAwareCost verifies that batch builds started
+// while a prior unit is already in the queue charge the correct exponent.
+// Queue 1 hut (BuildTicks > 0 means it goes to queue), then BuildMultiple 3 more.
+// The 3 additional units should start at exponent 1, 2, 3 (not 0, 1, 2).
+func TestEngine_BuildMultiple_QueueAwareCost(t *testing.T) {
+	ge := NewGameEngine()
+
+	def := ge.Buildings.defs["hut"]
+	base := def.BaseCost["wood"]
+	scale := def.CostScale
+
+	// Pre-load resources generously.
+	ge.mu.Lock()
+	ge.Resources.AddStorage("wood", 1_000_000)
+	ge.Resources.Add("wood", 1_000_000)
+	startWood := ge.Resources.Get("wood") // actual amount after storage cap
+	ge.mu.Unlock()
+
+	// Build 1 hut — it goes into the queue (BuildTicks=8).
+	if err := ge.BuildBuilding("hut"); err != nil {
+		t.Fatalf("first BuildBuilding failed: %v", err)
+	}
+	// Cost of first unit: floor(15 * 1.12^0) = 15
+	costFirst := math.Floor(base * math.Pow(scale, 0))
+
+	// Now BuildMultiple 3 more — they should cost at exponents 1, 2, 3.
+	built, err := ge.BuildMultiple("hut", 3)
+	if err != nil {
+		t.Fatalf("BuildMultiple failed: %v", err)
+	}
+	if built != 3 {
+		t.Fatalf("built = %v, want 3", built)
+	}
+
+	expectedBatchCost := 0.0
+	for i := 1; i <= 3; i++ {
+		expectedBatchCost += math.Floor(base * math.Pow(scale, float64(i)))
+	}
+	totalExpected := costFirst + expectedBatchCost
+
+	state := ge.GetState()
+	actualCost := startWood - state.Resources["wood"].Amount
+	if actualCost != totalExpected {
+		t.Errorf("total wood spent = %v, want %v", actualCost, totalExpected)
+	}
+}
+
+// TestEngine_BuildMax_CostCurve checks that `build hut max` (implemented as
+// BuildMultiple with count=10000) stops at the correct unit count when the
+// player has a fixed budget, using the cumulative cost curve.
+func TestEngine_BuildMax_CostCurve(t *testing.T) {
+	ge := NewGameEngine()
+
+	def := ge.Buildings.defs["hut"]
+	base := def.BaseCost["wood"]
+	scale := def.CostScale
+
+	// Give exactly enough for 4 huts on the curve but not 5.
+	// A new engine starts with 50 wood already; we need to account for that.
+	budget4 := 0.0
+	for i := 0; i < 4; i++ {
+		budget4 += math.Floor(base * math.Pow(scale, float64(i)))
+	}
+	fifthCost := math.Floor(base * math.Pow(scale, 4))
+
+	// Set storage to budget4 exactly, then fill to storage (existing 50 wood
+	// gets capped, so we zero it by setting storage to 0 first, then expand).
+	// Simplest: set storage = budget4, add a large amount (gets capped to budget4).
+	ge.mu.Lock()
+	// Replace storage so that existing wood + any added = exactly budget4.
+	// Get current wood first.
+	currentWood := ge.Resources.Get("wood")
+	// We need total = budget4 after setup. Existing currentWood may be > budget4.
+	// Set storage to budget4 so amount gets capped.
+	ge.Resources.AddStorage("wood", budget4-ge.Resources.GetStorage("wood"))
+	ge.Resources.Add("wood", budget4) // capped to budget4
+	finalWood := ge.Resources.Get("wood")
+	ge.mu.Unlock()
+
+	if finalWood != budget4 {
+		t.Fatalf("test setup failed: wood=%.1f, want %.1f (currentWood=%.1f)", finalWood, budget4, currentWood)
+	}
+	// Sanity: 5th unit costs more than zero remaining headroom.
+	if fifthCost <= 0 {
+		t.Fatal("test setup error: fifth unit cost should be > 0")
+	}
+
+	built, err := ge.BuildMultiple("hut", 10000)
+	if err != nil {
+		t.Fatalf("BuildMultiple(max) failed: %v", err)
+	}
+	if built != 4 {
+		t.Errorf("max build = %v, want 4 (flat division would give %v)", built, int(budget4/base))
 	}
 }
 

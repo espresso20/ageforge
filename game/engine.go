@@ -1496,8 +1496,11 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 	if !ge.Buildings.IsUnlocked(key) {
 		return fmt.Errorf("building '%s' is not yet unlocked", def.Name)
 	}
-	if def.MaxCount > 0 && ge.Buildings.GetCount(key) >= def.MaxCount {
-		return fmt.Errorf("%s is at max count (%d)", def.Name, def.MaxCount)
+	if def.MaxCount > 0 {
+		inQueue := ge.Buildings.GetQueueCount(key, ge.buildQueue)
+		if ge.Buildings.GetCount(key)+inQueue >= def.MaxCount {
+			return fmt.Errorf("%s is at max count (%d)", def.Name, def.MaxCount)
+		}
 	}
 
 	// Check if already building this (for unique buildings)
@@ -1515,7 +1518,9 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 		}
 		// Resources were already deducted when banked; nothing to pay here.
 	} else {
-		cost := ge.Buildings.GetCost(key)
+		// Use queue-aware cost so that items already in the build queue are
+		// factored into the cost curve (fixes queue-blindness exploit).
+		cost, _ := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
 		if !ge.Resources.Pay(cost) {
 			return fmt.Errorf("cannot afford %s (need: %s)", def.Name, formatCost(cost))
 		}
@@ -1546,6 +1551,13 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 
 // BuildMultiple constructs up to count buildings, stopping when resources run out or max is hit.
 // Returns the number actually built.
+// Each successive unit is priced using the cumulative cost curve:
+//
+//	cost_i = floor(baseCost × scale^(built + queued + i))
+//
+// where built = fully-constructed count and queued = items already in the build
+// queue for this key. This prevents batch purchases and the `max` command from
+// bypassing cost scaling.
 func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -1563,24 +1575,21 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 
 	built := 0
 	for i := 0; i < count; i++ {
-		if def.MaxCount > 0 && ge.Buildings.GetCount(key) >= def.MaxCount {
-			break
-		}
-		// Don't exceed MaxCount when accounting for items already in queue
+		// Check MaxCount against fully-built + queued + what we're about to add
 		if def.MaxCount > 0 {
-			inQueue := 0
-			for _, item := range ge.buildQueue {
-				if item.BuildingKey == key {
-					inQueue++
-				}
-			}
+			inQueue := ge.Buildings.GetQueueCount(key, ge.buildQueue)
 			if ge.Buildings.GetCount(key)+inQueue >= def.MaxCount {
 				break
 			}
 		}
 
-		cost := ge.Buildings.GetCost(key)
-		if !ge.Resources.Pay(cost) {
+		// Cost for this specific unit accounts for already-built and already-queued
+		// instances so the exponential curve is not bypassed by batch purchases.
+		unitCost, ok := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
+		if !ok {
+			break
+		}
+		if !ge.Resources.Pay(unitCost) {
 			break
 		}
 
@@ -1602,11 +1611,14 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	}
 
 	if built == 0 {
-		if def.MaxCount > 0 && ge.Buildings.GetCount(key) >= def.MaxCount {
-			return 0, fmt.Errorf("%s is at max count (%d)", def.Name, def.MaxCount)
+		if def.MaxCount > 0 {
+			inQueue := ge.Buildings.GetQueueCount(key, ge.buildQueue)
+			if ge.Buildings.GetCount(key)+inQueue >= def.MaxCount {
+				return 0, fmt.Errorf("%s is at max count (%d)", def.Name, def.MaxCount)
+			}
 		}
-		cost := ge.Buildings.GetCost(key)
-		return 0, fmt.Errorf("cannot afford %s (need: %s)", def.Name, formatCost(cost))
+		unitCost, _ := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
+		return 0, fmt.Errorf("cannot afford %s (need: %s)", def.Name, formatCost(unitCost))
 	}
 
 	if def.BuildTicks > 0 {
@@ -2037,7 +2049,7 @@ func (ge *GameEngine) GetState() GameState {
 		NextAgeResReqs: nextAgeResReqs,
 		NextAgeBldReqs: nextAgeBldReqs,
 		Resources:      ge.Resources.Snapshot(),
-		Buildings:      ge.Buildings.Snapshot(ge.Resources, ge.Workers.GetAssignedCount),
+		Buildings:      ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount),
 		BuildQueue:     queue,
 		Workers:        ge.Workers.Snapshot(popCap),
 		Research:       ge.Research.Snapshot(ge.age, ageOrder),
