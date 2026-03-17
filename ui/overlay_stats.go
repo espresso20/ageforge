@@ -189,6 +189,7 @@ func statsProvider(state game.GameState) string {
 		research   float64
 		prestige   float64
 		legacy     float64
+		wonders    float64
 	}
 	bonuses := map[string]*bonusContrib{}
 
@@ -269,10 +270,16 @@ func statsProvider(state game.GameState) string {
 		}
 	}
 
+	// 5. Speed multiplier (from wonders)
+	if state.SpeedMultiplier > 1.0 {
+		ensureTarget("speed_multiplier")
+		bonuses["speed_multiplier"].wonders += state.SpeedMultiplier - 1.0
+	}
+
 	// Collect targets that have any nonzero contribution
 	activeTargets := make([]string, 0, len(bonuses))
 	for target, bc := range bonuses {
-		total := bc.milestones + bc.research + bc.prestige + bc.legacy
+		total := bc.milestones + bc.research + bc.prestige + bc.legacy + bc.wonders
 		if total > 0 {
 			activeTargets = append(activeTargets, target)
 		}
@@ -294,8 +301,12 @@ func statsProvider(state game.GameState) string {
 
 		for _, target := range activeTargets {
 			bc := bonuses[target]
-			total := bc.milestones + bc.research + bc.prestige + bc.legacy
-			fmt.Fprintf(&sb, "  [cyan]%-20s[-] [yellow]+%.0f%%[-]\n", target, total*100)
+			total := bc.milestones + bc.research + bc.prestige + bc.legacy + bc.wonders
+			if target == "speed_multiplier" {
+				fmt.Fprintf(&sb, "  [cyan]%-20s[-] [yellow]+%.1fx[-]\n", target, total)
+			} else {
+				fmt.Fprintf(&sb, "  [cyan]%-20s[-] [yellow]+%.0f%%[-]\n", target, total*100)
+			}
 			if bc.milestones > 0 {
 				fmt.Fprintf(&sb, "  [gray]  milestones     +%.0f%%[-]\n", bc.milestones*100)
 			}
@@ -307,6 +318,9 @@ func statsProvider(state game.GameState) string {
 			}
 			if bc.legacy > 0 {
 				fmt.Fprintf(&sb, "  [gray]  legacy         +%.0f%%[-]\n", bc.legacy*100)
+			}
+			if bc.wonders > 0 {
+				fmt.Fprintf(&sb, "  [gray]  wonders        +%.2g[-]\n", bc.wonders)
 			}
 		}
 	}

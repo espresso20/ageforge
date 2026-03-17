@@ -213,7 +213,7 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 func formatEffect(eff config.Effect) string {
 	switch eff.Type {
 	case "production":
-		return fmt.Sprintf("[green]+%.1f %s/tick[-]", eff.Value, eff.Target)
+		return fmt.Sprintf("[green]+%g %s/tick[-]", eff.Value, eff.Target)
 	case "capacity":
 		return fmt.Sprintf("[yellow]+%.0f %s cap[-]", eff.Value, eff.Target)
 	case "storage":
@@ -224,7 +224,7 @@ func formatEffect(eff config.Effect) string {
 	case "bonus":
 		return fmt.Sprintf("[cyan]+%.0f%% %s[-]", eff.Value*100, eff.Target)
 	default:
-		return fmt.Sprintf("%s %s: %.1f", eff.Type, eff.Target, eff.Value)
+		return fmt.Sprintf("%s %s: %g", eff.Type, eff.Target, eff.Value)
 	}
 }
 
