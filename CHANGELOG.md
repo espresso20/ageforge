@@ -8,6 +8,13 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v3.2.2] — 2026-03-16
+
+### Fixed
+- three UI display fixes — wonder rates, building names, speed multiplier
+
+---
+
 ## [v3.2.1] — 2026-03-16
 
 ### Fixed
