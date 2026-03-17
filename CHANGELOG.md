@@ -8,6 +8,13 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v3.2.3] — 2026-03-17
+
+### Fixed
+- building cost scaling now correct for batch, max, and queued builds
+
+---
+
 ## [v3.2.2] — 2026-03-16
 
 ### Fixed
