@@ -29,19 +29,32 @@ build cancel             — cancel the current build queue item
 build                    — list all available buildings (with costs and count built)
 ```
 
-**`max`** is a sentinel that tells the engine "keep building until resources run out or the MaxCount limit is hit." It's the fastest way to fill up a lineage tier at the start of an age when resources are plentiful.
+**`max`** tells the engine to build as many copies as you can afford using the full cumulative cost curve — it stops the moment the next unit would exceed your available resources. It is **not** a flat division of your resources by base cost; each unit is priced correctly at its scaled cost before the decision to continue is made.
 
 ### Cost Scaling
 
-The cost of the N-th instance of a building is:
+Each building has a `BaseCost` and a `CostScale`. The cost of building the next copy depends on how many are already **built** plus how many are currently **in the build queue**:
 
 ```
-cost = BaseCost × CostScale ^ (N-1)
+cost of next unit = floor(BaseCost × CostScale ^ (built + queued))
 ```
 
-Most production buildings use `CostScale = 1.15`. Storage buildings use `CostScale = 1.20`. This means costs grow exponentially as you build more copies of the same building. Plan your resource production before bulk-buying.
+When buying multiple at once (`build <key> <count>` or `build <key> max`), each unit in the batch is priced individually at its correct exponent — the total is the sum, not a flat multiple:
 
-**Example:** If a Gathering Camp costs 30 food at count 0, the second costs `30 × 1.15 = 34.5`, the fifth costs `30 × 1.15^4 ≈ 52.4`, and so on.
+```
+total cost = sum of floor(BaseCost × CostScale ^ (built + queued + i))
+             for i = 0 to count-1
+```
+
+This means bulk-buying is always more expensive per unit than buying one at a time, and queueing buildings increases the price of the next purchase even before construction completes.
+
+Most production buildings use `CostScale = 1.15`. Storage buildings use `CostScale = 1.20`. Costs grow exponentially — plan your resource production before bulk-buying.
+
+**Example:** Gathering Camp, BaseCost=30 food, CostScale=1.15, none built or queued:
+- 1st: 30 food
+- 2nd: 34 food
+- 5th: 52 food
+- Building 5 at once: 30+34+39+45+52 = **200 food total** (not 30×5=150)
 
 ### Upgrade Command
 
