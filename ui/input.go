@@ -47,6 +47,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdAssign(args, engine)
 	case "unassign", "u":
 		return cmdUnassign(args, engine)
+	case "dismiss":
+		return cmdDismiss(args, engine)
 	case "status", "s":
 		return cmdStatus(engine)
 	case "research", "res":
@@ -220,6 +222,7 @@ func cmdHelp(args []string) CommandResult {
   [cyan]recruit[-] [count|max]          - Recruit workers from available housing capacity and assign to buildings (default: 1)
   [cyan]assign[-] <building> [n|all]   - Assign workers to a building
   [cyan]unassign[-] <building> [n|all] - Unassign workers from a building
+  [cyan]dismiss[-] <building> [n|all]  - Fire workers from a building (removes from pool)
   [cyan]advance[-]                     - Advance to the next age (when ready)
   [cyan]research[-] <tech_key>         - Research a technology
   [cyan]research[-] cancel             - Cancel current research
@@ -1094,6 +1097,30 @@ func cmdDiplomacyStatus(engine *game.GameEngine) CommandResult {
 	}
 
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
+
+func cmdDismiss(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) < 1 {
+		return CommandResult{Message: "Usage: dismiss <building> [count|all]", Type: "error"}
+	}
+	building := args[0]
+	all := false
+	count := 1
+	if len(args) >= 2 {
+		if strings.ToLower(args[1]) == "all" {
+			all = true
+		} else {
+			n, err := strconv.Atoi(args[1])
+			if err != nil || n <= 0 {
+				return CommandResult{Message: "Usage: dismiss <building> [count|all]", Type: "error"}
+			}
+			count = n
+		}
+	}
+	if err := engine.DismissWorkers(building, count, all); err != nil {
+		return CommandResult{Message: err.Error(), Type: "error"}
+	}
+	return CommandResult{Message: "", Type: "success"}
 }
 
 func cmdCatastrophe(args []string, engine *game.GameEngine) CommandResult {

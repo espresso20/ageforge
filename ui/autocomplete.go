@@ -20,6 +20,7 @@ var commands = []string{
 	"recruit", "r",
 	"assign", "a",
 	"unassign", "u",
+	"dismiss",
 	"research", "res",
 	"expedition", "exp",
 	"trade", "t",
@@ -109,6 +110,12 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 		return filterPrefix([]string{"all"}, partial, prefix)
 
 	case "unassign", "u":
+		if len(completed) == 0 {
+			return filterPrefix(assignedBuildingKeysAll(state), partial, prefix)
+		}
+		return filterPrefix([]string{"all"}, partial, prefix)
+
+	case "dismiss":
 		if len(completed) == 0 {
 			return filterPrefix(assignedBuildingKeysAll(state), partial, prefix)
 		}

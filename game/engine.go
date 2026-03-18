@@ -1852,6 +1852,28 @@ func (ge *GameEngine) UnassignWorker(buildingKey string, count int) error {
 	return nil
 }
 
+// DismissWorkers removes workers from a building and from the population pool entirely.
+func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	if all {
+		count = ge.Workers.GetAssignedCount("worker", buildingKey)
+	}
+	if count <= 0 {
+		return fmt.Errorf("no workers assigned to %s", buildingKey)
+	}
+	dismissed := ge.Workers.Dismiss(buildingKey, count)
+	if dismissed == 0 {
+		return fmt.Errorf("no workers assigned to %s", buildingKey)
+	}
+	byKey := config.BuildingByKey()
+	def, _ := byKey[buildingKey]
+	ge.recalculateRates()
+	ge.addLog("info", fmt.Sprintf("Dismissed %d workers from %s (pop: %d)", dismissed, def.Name, ge.Workers.TotalPop()))
+	return nil
+}
+
 // StartResearch begins researching a technology
 func (ge *GameEngine) StartResearch(techKey string) error {
 	ge.mu.Lock()

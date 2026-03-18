@@ -95,6 +95,25 @@ func (vm *WorkerManager) Unassign(_, buildingKey string, count int) bool {
 	return true
 }
 
+// Dismiss removes workers from a building assignment and from the pool entirely.
+// Returns the actual number dismissed.
+func (vm *WorkerManager) Dismiss(buildingKey string, count int) int {
+	rt := vm.domains["worker"]
+	assigned := rt.assignments[buildingKey]
+	if assigned <= 0 {
+		return 0
+	}
+	if count > assigned {
+		count = assigned
+	}
+	rt.assignments[buildingKey] -= count
+	rt.count -= count
+	if rt.count < 0 {
+		rt.count = 0
+	}
+	return count
+}
+
 // IdleCount returns how many workers are not assigned to any building.
 // The key argument is ignored.
 func (vm *WorkerManager) IdleCount(_ string) int {
