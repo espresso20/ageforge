@@ -55,9 +55,6 @@ type Dashboard struct {
 	contentArea *tview.Flex
 	bottomArea  *tview.Flex
 
-	devTab     *DevTab
-	devTabActive bool
-
 	// Shame badge — set once on first load when CheaterBadge is true
 	cheaterTV       *tview.TextView
 	activeShameBadge string
@@ -104,7 +101,6 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.Register("logs", "Logs", logsProvider)
 	d.overlayMgr.Register("epoch", "Epoch", epochProvider)
 	d.overlayMgr.Register("history", "Civilization History", historyProvider)
-	d.devTab = newDevTab(engine)
 	return d
 }
 
@@ -248,6 +244,14 @@ func (d *Dashboard) build() {
 				d.app.Stop()
 				return
 			}
+			// Route /commands to dev exec when dev mode is active
+			if game.DevModeActive && strings.HasPrefix(cmd, "/") {
+				result := game.DevExecCommand(cmd, d.engine)
+				if result != "" {
+					d.engine.AddLog("info", "[lime]dev → "+result+"[-]")
+				}
+				return
+			}
 			result := HandleCommand(text, d.engine)
 			if result.OverlayName != "" {
 				state := d.engine.GetState()
@@ -333,11 +337,6 @@ func (d *Dashboard) build() {
 			d.showDevUnlockModal()
 			return nil
 		}
-		// Backtick — switch to dev console (only if unlocked)
-		if event.Rune() == '`' && game.DevModeActive {
-			d.switchToDevTab()
-			return nil
-		}
 		switch event.Key() {
 		case tcell.KeyEsc:
 			if d.overlayMgr != nil && d.overlayMgr.HasActive() {
@@ -361,8 +360,8 @@ func (d *Dashboard) build() {
 			}
 		}
 
-		// Always focus input field for typing (except dev console).
-		if !d.devTabActive && !d.inputField.HasFocus() {
+		// Always focus input field for typing.
+		if !d.inputField.HasFocus() {
 			d.app.SetFocus(d.inputField)
 		}
 		return event
@@ -506,6 +505,10 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 	if state.Milestones.CurrentTitle != "" {
 		titleStr = fmt.Sprintf("  [yellow]\"%s\"[-]", state.Milestones.CurrentTitle)
 	}
+	devStr := ""
+	if game.DevModeActive {
+		devStr = "  [red]DEV[-]"
+	}
 	// Epoch badge
 	epochStr := ""
 	if state.EpochKey != "" {
@@ -516,8 +519,8 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		epochStr = fmt.Sprintf("  [%s]%s %s%s[-]", state.EpochColor, state.EpochIcon, state.EpochName, survivedMark)
 	}
 	d.statusTV.SetText(fmt.Sprintf(
-		"[gold]%s[-]%s%s%s  Tick: %d%s%s  |  Pop: %d/%d  |  [gray]type panel name to open  ESC=close/menu[-]",
-		state.AgeName, prestigeStr, titleStr, epochStr, state.Tick, nextAgeStr, speedStr,
+		"[gold]%s[-]%s%s%s  Tick: %d%s%s%s  |  Pop: %d/%d  |  [gray]type panel name to open  ESC=close/menu[-]",
+		state.AgeName, prestigeStr, titleStr, epochStr, state.Tick, nextAgeStr, speedStr, devStr,
 		state.Workers.TotalPop, state.Workers.MaxPop,
 	))
 }
@@ -615,8 +618,7 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 // No hint text is shown — the existence of this modal is not advertised.
 func (d *Dashboard) showDevUnlockModal() {
 	if game.DevModeActive {
-		d.switchToDevTab()
-		return
+		return // already active, nothing to do
 	}
 
 	const devUnlockPage = "__dev_unlock__"
@@ -637,7 +639,8 @@ func (d *Dashboard) showDevUnlockModal() {
 			input := field.GetText()
 			d.pages.RemovePage(devUnlockPage)
 			if game.CheckDevKey(input) {
-				d.switchToDevTab()
+				d.engine.AddLog("info", "[red]DEV MODE ACTIVE[-] — prefix commands with / (e.g. /god, /fill, /give wood 9999)")
+				d.app.SetFocus(d.inputField)
 			} else {
 				d.app.SetFocus(d.inputField)
 			}
@@ -662,17 +665,3 @@ func (d *Dashboard) showDevUnlockModal() {
 	d.app.SetFocus(field)
 }
 
-// switchToDevTab shows the dev console overlay.
-// Hard gate: silently does nothing unless DevModeActive is confirmed.
-func (d *Dashboard) switchToDevTab() {
-	if !game.DevModeActive {
-		return
-	}
-	if !d.devTabActive {
-		d.devTabActive = true
-		// Add dev console as a full-page overlay
-		d.pages.AddPage("Dev", d.devTab.Primitive(), true, false)
-	}
-	d.pages.ShowPage("Dev")
-	d.app.SetFocus(d.devTab.FocusInput())
-}
