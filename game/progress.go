@@ -4,8 +4,9 @@ import "github.com/espresso20/ageforge/config"
 
 // ProgressManager handles age progression
 type ProgressManager struct {
-	ages     []config.AgeDef
-	ageIndex map[string]int
+	ages       []config.AgeDef
+	ageIndex   map[string]int
+	ageWonders map[string]string // ageKey -> wonder building key (or "")
 }
 
 // NewProgressManager creates a new progress manager
@@ -15,7 +16,17 @@ func NewProgressManager() *ProgressManager {
 	for i, a := range ages {
 		idx[a.Key] = i
 	}
-	return &ProgressManager{ages: ages, ageIndex: idx}
+	pm := &ProgressManager{ages: ages, ageIndex: idx, ageWonders: make(map[string]string)}
+	allBuildings := config.BuildingByKey()
+	for _, age := range ages {
+		for _, bKey := range age.UnlockBuildings {
+			if def, ok := allBuildings[bKey]; ok && def.Category == "wonder" {
+				pm.ageWonders[age.Key] = bKey
+				break
+			}
+		}
+	}
+	return pm
 }
 
 // GetAgeName returns the display name for an age key
@@ -53,7 +64,18 @@ func (pm *ProgressManager) CheckAdvancement(currentKey string, resources *Resour
 			return ""
 		}
 	}
+	// Require current age's wonder to be built before advancing
+	if wonderKey := pm.ageWonders[currentKey]; wonderKey != "" {
+		if buildings.GetCount(wonderKey) < 1 {
+			return ""
+		}
+	}
 	return nextKey
+}
+
+// WonderForAge returns the wonder building key for the given age, or "" if none.
+func (pm *ProgressManager) WonderForAge(ageKey string) string {
+	return pm.ageWonders[ageKey]
 }
 
 // GetUnlocks returns what an age unlocks

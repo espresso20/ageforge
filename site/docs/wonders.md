@@ -17,6 +17,16 @@ Progress is shown in the **Wonders** overlay (`wonders`) with per-resource progr
 
 ---
 
+## Wonders and Age Advancement
+
+Completing a wonder is **required** to advance to the next age. Each age unlocks one wonder — you cannot type `advance` until that wonder is built.
+
+The wonder requirement appears in the **age progress bar** at the top of the screen alongside your other advancement requirements. If the wonder is still missing, you will see a red notice: `✗ Wonder required: <name>`.
+
+If you try to advance before completing your age's wonder, the game will tell you which wonder is blocking and remind you to use `wonder collect` then `build <key>`.
+
+---
+
 ## Wonder list
 
 ### 🌿 Sacred Grove

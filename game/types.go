@@ -7,7 +7,9 @@ type GameState struct {
 	Tick           int
 	Age            string
 	AgeName        string
-	AgeReady       bool   // requirements met — player can type 'advance' to proceed
+	AgeReady            bool   // requirements met — player can type 'advance' to proceed
+	CurrentAgeWonderKey  string // wonder key required before advancing; "" if none or already built
+	CurrentAgeWonderName string // display name of that wonder
 	NextAge        string
 	NextAgeName    string
 	NextAgeResReqs map[string]float64

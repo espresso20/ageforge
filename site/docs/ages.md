@@ -1,6 +1,10 @@
 # The 22 Ages
 
-AgeForge spans 22 ages from primitive survival to transcendence. Each age unlocks new buildings, resources, and worker domains. Advancement is automatic once requirements are met.
+AgeForge spans 22 ages from primitive survival to transcendence. Each age unlocks new buildings, resources, and worker domains. Advancement requires meeting all resource and building requirements **and** completing the age's wonder.
+
+## Wonder Requirement
+
+Each age unlocks exactly one wonder building. You must **build that wonder** before you can advance to the next age — it is a hard requirement alongside the resource and building thresholds listed below. The age progress bar will show a red `✗ Wonder required: <name>` notice until it is complete. See [Wonders](wonders.md) for build costs and instructions.
 
 ## Epoch Overview
 

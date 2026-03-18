@@ -574,6 +574,11 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 		}
 	}
 
+	// Wonder gate: show if current age wonder must still be completed
+	if state.CurrentAgeWonderKey != "" {
+		fmt.Fprintf(&sb, "[red]✗ Wonder required: %s[-]  ", state.CurrentAgeWonderName)
+	}
+
 	d.ageTV.SetText(sb.String())
 }
 
