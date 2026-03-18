@@ -64,6 +64,8 @@ type GameSave struct {
 	Ruins              map[string]int  `json:"ruins,omitempty"`
 	LegacyBonuses      map[string]bool `json:"legacy_bonuses,omitempty"`
 	CatastropheHistory []string        `json:"catastrophe_history,omitempty"`
+	// History overlay samples
+	History *HistoryCollector `json:"history,omitempty"`
 	// Integrity fields
 	CheaterBadge bool   `json:"cheater_badge,omitempty"`
 	EliteBadge   bool   `json:"elite_badge,omitempty"`
@@ -375,6 +377,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		Ruins:              ge.Buildings.GetAllRuins(),
 		LegacyBonuses:      copyBoolMap(ge.legacyBonuses),
 		CatastropheHistory: append([]string(nil), ge.catastropheHistory...),
+		History:            ge.History,
 	}
 }
 
@@ -522,6 +525,13 @@ func (ge *GameEngine) LoadGame(filename string) error {
 		ge.legacyBonuses = make(map[string]bool)
 	}
 	ge.catastropheHistory = save.CatastropheHistory
+
+	// Restore history collector
+	if save.History != nil {
+		ge.History = save.History
+	} else {
+		ge.History = NewHistoryCollector()
+	}
 
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()
