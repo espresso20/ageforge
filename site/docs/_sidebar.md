@@ -30,5 +30,6 @@
   - [Trade & Diplomacy](trade.md)
   - [Wonders](wonders.md)
   - [Prestige System](prestige.md)
+  - [Civilization History](history.md)
 
 - [← Back to Site](/)

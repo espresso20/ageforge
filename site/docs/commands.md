@@ -134,6 +134,18 @@ Available upgrades and costs are shown in **Stats** overlay (`stats`).
 
 ---
 
+## Civilization History
+
+| Command | Description |
+|---|---|
+| `history` | Open the Civilization History overlay — braille line graphs of key metrics over time |
+
+The History overlay shows 6 live graphs: **Population**, **Food Rate**, **Knowledge Rate**, **Faith**, **Production Bonus**, and **Tick Speed**. Each graph covers up to ~1 hour of rolling history (300 samples, one every 10 ticks). Age advances appear as `│` markers across all graphs so you can correlate events with metric changes.
+
+Graphs appear after ~30 seconds of play. History is saved and restored automatically. See [History](history.md) for details.
+
+---
+
 ## Catastrophe
 
 | Command | Description |
@@ -170,3 +182,4 @@ Type a single letter to jump straight to a tab:
 | `s` | Stats overlay (`stats`) |
 | `w` | Wonders overlay (`wonders`) |
 | `l` | Logs overlay (`logs`) |
+| `history` | Civilization History overlay |
