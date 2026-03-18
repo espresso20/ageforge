@@ -164,6 +164,43 @@ func (vm *WorkerManager) GetProductionRates() map[string]float64 {
 	return make(map[string]float64)
 }
 
+// KillWorker removes workers from starvation. Assignments are scaled down
+// proportionally so assigned count never exceeds remaining population.
+func (vm *WorkerManager) KillWorker(count int) int {
+	rt := vm.domains["worker"]
+	if rt.count <= 0 {
+		return 0
+	}
+	if count > rt.count {
+		count = rt.count
+	}
+	rt.count -= count
+	// Reconcile: assigned total must not exceed new count
+	for {
+		assigned := 0
+		for _, c := range rt.assignments {
+			assigned += c
+		}
+		if assigned <= rt.count {
+			break
+		}
+		// Find the largest assignment and reduce it by 1
+		maxKey := ""
+		maxVal := 0
+		for k, c := range rt.assignments {
+			if c > maxVal {
+				maxVal = c
+				maxKey = k
+			}
+		}
+		if maxKey == "" {
+			break
+		}
+		rt.assignments[maxKey]--
+	}
+	return count
+}
+
 // RemoveSoldiers removes workers from the pool (expedition losses).
 // Previously removed from "military" domain; now removes from the single pool.
 func (vm *WorkerManager) RemoveSoldiers(count int) {

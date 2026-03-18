@@ -66,6 +66,9 @@ type GameEngine struct {
 	// Age advancement — set when requirements are met; player must type 'advance' to proceed
 	ageReady bool
 
+	// Starvation tracking — counts consecutive ticks with food <= 0 and active drain
+	starvationTicks int
+
 	// Save integrity badges (set on load, never persisted separately)
 	cheaterBadge bool
 	eliteBadge   bool
@@ -384,9 +387,21 @@ func (ge *GameEngine) doTick() {
 		}
 	}
 
-	// Check food - starve if negative
+	// Starvation: when food is at 0 with active drain, workers die every 5 ticks
 	if ge.Resources.Get("food") <= 0 && ge.Workers.FoodDrain() > 0 {
-		ge.addLog("warning", "Your people are starving! Food has run out.")
+		ge.starvationTicks++
+		if ge.starvationTicks == 1 {
+			ge.addLog("warning", "⚠ Your people are starving! Food has run out.")
+		}
+		if ge.starvationTicks%5 == 0 && ge.Workers.TotalPop() > 0 {
+			killed := ge.Workers.KillWorker(1)
+			if killed > 0 {
+				ge.addLog("error", fmt.Sprintf("☠ A worker has died of starvation! (pop: %d)", ge.Workers.TotalPop()))
+			}
+		}
+	} else if ge.starvationTicks > 0 {
+		ge.starvationTicks = 0
+		ge.addLog("info", "✓ Food supply restored — starvation ended.")
 	}
 
 	// Periodic debug snapshot every 50 ticks
@@ -1398,6 +1413,7 @@ func (ge *GameEngine) Succumb() error {
 	ge.speedMultiplier = 1.0
 	ge.tickSpeedBonus = 0
 	ge.ageReady = false
+	ge.starvationTicks = 0
 	ge.currentEpoch = config.EpochForAge("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
 	ge.survivedEpochs = make(map[string]bool)
