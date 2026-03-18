@@ -8,6 +8,14 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v3.3.0] — 2026-03-18
+
+### Added
+- morale system — worker output multiplier (#21)
+- declutter main screen — workers/wonder panels to overlays (#20)
+
+---
+
 ## [v3.2.5] — 2026-03-17
 
 ### Added
