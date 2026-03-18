@@ -64,6 +64,8 @@ type GameSave struct {
 	Ruins              map[string]int  `json:"ruins,omitempty"`
 	LegacyBonuses      map[string]bool `json:"legacy_bonuses,omitempty"`
 	CatastropheHistory []string        `json:"catastrophe_history,omitempty"`
+	// Morale system
+	Morale float64 `json:"morale,omitempty"`
 	// History overlay samples
 	History *HistoryCollector `json:"history,omitempty"`
 	// Integrity fields
@@ -377,6 +379,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		Ruins:              ge.Buildings.GetAllRuins(),
 		LegacyBonuses:      copyBoolMap(ge.legacyBonuses),
 		CatastropheHistory: append([]string(nil), ge.catastropheHistory...),
+		Morale:             ge.morale,
 		History:            ge.History,
 	}
 }
@@ -532,6 +535,14 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	} else {
 		ge.History = NewHistoryCollector()
 	}
+
+	// Restore morale (default to 1.0 for old saves that have zero value)
+	if save.Morale > 0 {
+		ge.morale = save.Morale
+	} else {
+		ge.morale = 1.0
+	}
+	ge.lowMoraleWarned = false
 
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()

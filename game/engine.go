@@ -88,6 +88,10 @@ type GameEngine struct {
 
 	// History collector — periodic metric samples for the history overlay.
 	History *HistoryCollector
+
+	// Morale system
+	morale          float64 // 0.10–moraleCap(); default 1.0
+	lowMoraleWarned bool    // true after morale warning fired; reset when morale rises above 0.40
 }
 
 // BuildQueueItem represents a building under construction
@@ -117,6 +121,7 @@ func NewGameEngine() *GameEngine {
 		progress:         NewProgressManager(),
 		permanentBonuses: make(map[string]float64),
 		speedMultiplier:  1.0,
+		morale:           1.0,
 		stopCh:           make(chan struct{}),
 		currentEpoch:     config.EpochForAge("primitive_age"),
 		epochEventFired:  make(map[string]bool),
@@ -148,6 +153,94 @@ func NewGameEngine() *GameEngine {
 }
 
 const AutosaveInterval = 60 * time.Second
+
+// moraleCap returns 1.0 + 0.05 per wonder built.
+func (ge *GameEngine) moraleCap() float64 {
+	cap := 1.0
+	for key, count := range ge.Buildings.counts {
+		if count > 0 {
+			def, ok := ge.Buildings.defs[key]
+			if ok && def.Category == "wonder" {
+				cap += 0.05 * float64(count)
+			}
+		}
+	}
+	return cap
+}
+
+// clampMorale clamps ge.morale to [0.10, moraleCap()].
+func (ge *GameEngine) clampMorale() {
+	if ge.morale < 0.10 {
+		ge.morale = 0.10
+	}
+	if c := ge.moraleCap(); ge.morale > c {
+		ge.morale = c
+	}
+}
+
+// applyMorale adds delta to morale and clamps.
+func (ge *GameEngine) applyMorale(delta float64) {
+	ge.morale += delta
+	ge.clampMorale()
+}
+
+// updateMoraleTick applies per-tick morale changes based on food rate,
+// military ratio, idle workers, and passive recovery.
+// Must be called with the write lock held (inside doTick).
+func (ge *GameEngine) updateMoraleTick() {
+	foodRate := 0.0
+	if fr, ok := ge.Resources.resources["food"]; ok {
+		foodRate = fr.Rate
+	}
+	totalPop := ge.Workers.TotalPop()
+
+	// Food surplus/deficit
+	if foodRate > 0 {
+		ge.applyMorale(0.002)
+	} else if foodRate < 0 && ge.Resources.Get("food") <= 0 {
+		ge.applyMorale(-0.005)
+	}
+
+	// Military ratio — if military workers > 30% of pop, drain morale
+	if totalPop > 0 {
+		militaryAssigned := 0
+		for key, bs := range ge.Buildings.counts {
+			if bs == 0 {
+				continue
+			}
+			def, ok := ge.Buildings.defs[key]
+			if ok && def.WorkerDomain == "military" {
+				militaryAssigned += ge.Workers.GetAssignedCount("military", key)
+			}
+		}
+		ratio := float64(militaryAssigned) / float64(totalPop)
+		if ratio > 0.30 {
+			over := (ratio - 0.30) * 10
+			ge.applyMorale(-0.003 * over)
+		}
+	}
+
+	// Idle workers > 50% of pop
+	if totalPop > 0 {
+		idle := ge.Workers.IdleCount("worker")
+		if float64(idle)/float64(totalPop) > 0.50 {
+			ge.applyMorale(-0.002)
+		}
+	}
+
+	// Passive recovery if morale < cap and no active food deficit
+	if ge.morale < ge.moraleCap() && foodRate >= 0 {
+		ge.applyMorale(0.001)
+	}
+
+	// Low morale warning (fires once, resets when morale recovers above 0.40)
+	if ge.morale < 0.40 && !ge.lowMoraleWarned {
+		ge.lowMoraleWarned = true
+		ge.addLog("warning", fmt.Sprintf("⚠ Morale critical: %.0f%% — worker output severely reduced", ge.morale*100))
+	} else if ge.morale >= 0.40 && ge.lowMoraleWarned {
+		ge.lowMoraleWarned = false
+	}
+}
 
 // Start begins the game tick loop in the calling goroutine. It blocks until
 // Stop is called. Safe to call again after Stop — the stop channel is
@@ -389,6 +482,9 @@ func (ge *GameEngine) doTick() {
 		ge.addLog("warning", "Your people are starving! Food has run out.")
 	}
 
+	// Morale tick — must run after recalculateRates() so foodRate is current
+	ge.updateMoraleTick()
+
 	// Periodic debug snapshot every 50 ticks
 	if ge.tick%50 == 0 {
 		snap := ge.Resources.Snapshot()
@@ -511,6 +607,16 @@ func (ge *GameEngine) processEvents() {
 		ge.addLog("debug", fmt.Sprintf("Event expired: %s", ae.Key))
 		suffix := buildLossSuffix(ae)
 		ge.addLog("info", fmt.Sprintf("%s has ended.%s", ae.Name, suffix))
+	}
+
+	// Morale effects from triggered events
+	for _, def := range triggered {
+		switch def.Sentiment {
+		case "good":
+			ge.applyMorale(0.04)
+		case "bad":
+			ge.applyMorale(-0.04)
+		}
 	}
 }
 
@@ -650,12 +756,13 @@ func (ge *GameEngine) recalculateRates() {
 	}
 
 	// Building production — worker fill ratio applied per building type
-	// rate = base × count × (0.20 + 0.80 × assigned/totalCapacity)
+	// rate = base × count × (0.20 + 0.80 × assigned/totalCapacity) × morale
 	for res, rate := range ge.Buildings.WorkerScaledProduction(ge.Workers.GetAssignedCount) {
+		moraleRate := rate * ge.morale
 		r := ge.Resources.resources[res]
 		if r != nil {
-			r.Rate += rate
-			r.Breakdown.BuildingRate += rate
+			r.Rate += moraleRate
+			r.Breakdown.BuildingRate += moraleRate
 		}
 	}
 
@@ -915,6 +1022,9 @@ func (ge *GameEngine) advanceAge(newAge string) {
 
 	// Phase 8: detect epoch transition and roll epoch event
 	ge.detectEpochTransition(newAge)
+
+	// Age advancement celebration morale boost
+	ge.applyMorale(0.08)
 }
 
 // applyAgeUnlocks unlocks all content for an age
@@ -1341,6 +1451,9 @@ func (ge *GameEngine) Endure() error {
 	histEntry := fmt.Sprintf("Tick %d — Endured %s (%s). %d buildings lost.", ge.tick, catName, config.EpochByKey()[epochKey].Name, destroyCount)
 	ge.catastropheHistory = append(ge.catastropheHistory, histEntry)
 
+	// Catastrophe survival hurts morale
+	ge.applyMorale(-0.10)
+
 	return nil
 }
 
@@ -1402,6 +1515,8 @@ func (ge *GameEngine) Succumb() error {
 	ge.epochEventFired = make(map[string]bool)
 	ge.survivedEpochs = make(map[string]bool)
 	ge.pendingCatastrophe = ""
+	ge.morale = 0.50
+	ge.lowMoraleWarned = false
 
 	// Restore persistent cross-run state
 	ge.Prestige = savedPrestige
@@ -1943,6 +2058,8 @@ func (ge *GameEngine) DoPrestige() error {
 	ge.survivedEpochs = make(map[string]bool)
 	ge.pendingCatastrophe = ""
 	ge.epochEventHistory = nil
+	ge.morale = 0.70
+	ge.lowMoraleWarned = false
 
 	// Restore cross-run state
 	ge.Buildings.LoadRuins(savedRuins)
@@ -2024,6 +2141,8 @@ func (ge *GameEngine) Reset() {
 	ge.epochEventHistory = nil
 	ge.legacyBonuses = make(map[string]bool)
 	ge.catastropheHistory = nil
+	ge.morale = 1.0
+	ge.lowMoraleWarned = false
 
 	ge.addLog("event", "Game wiped! Starting fresh.")
 	ge.addLog("info", "Type [cyan]help[-] for commands.")
@@ -2167,6 +2286,8 @@ func (ge *GameEngine) GetState() GameState {
 		}(),
 		CatastropheHistory: ge.catastropheHistory,
 		History:            ge.History,
+		Morale:             ge.morale,
+		MoraleCap:          ge.moraleCap(),
 	}
 }
 

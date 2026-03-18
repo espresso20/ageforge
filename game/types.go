@@ -48,6 +48,9 @@ type GameState struct {
 	CatastropheHistory []string         // narrative log entries
 	// History overlay
 	History *HistoryCollector
+	// Morale system
+	Morale    float64 // current morale 0.10–cap
+	MoraleCap float64 // current cap (1.0 + 0.05 per wonder)
 }
 
 // AgeAdvanceSummary holds data about what changed during an age advance transition.

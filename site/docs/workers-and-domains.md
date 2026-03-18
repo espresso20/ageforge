@@ -299,6 +299,71 @@ Space: Cadet → Interstellar: Interstellar Pilot → Galactic: Galactic Explore
 
 ---
 
+## Morale
+
+Morale is a hidden engine multiplier (0.10–cap) that scales all worker-driven building output every tick.
+
+**Output formula with morale:**
+
+```
+output = base_rate × building_count × (0.20 + 0.80 × assigned / total_capacity) × morale
+```
+
+### Default and floor
+
+- Default morale: **1.0** (100% — no penalty or bonus)
+- Floor: **0.10** (10% — maximum output reduction)
+- Base cap: **1.0** — extended by wonders
+
+### Raising the cap
+
+Each wonder you build adds **+0.05** to the morale cap. With 4 wonders built, the cap is 1.20, allowing morale to reach 120% output.
+
+### What raises morale
+
+| Driver | Change per tick |
+|--------|----------------|
+| Food rate > 0 (surplus) | +0.002 |
+| Age advancement | +0.08 (one-time) |
+| Good event triggered | +0.04 (one-time) |
+| Passive recovery (when below cap, food ≥ 0) | +0.001 |
+
+### What lowers morale
+
+| Driver | Change per tick / event |
+|--------|------------------------|
+| Food = 0 and food rate < 0 (starvation) | −0.005/tick |
+| Military workers > 30% of total pop | −0.003 × (excess ratio × 10) per tick |
+| Idle workers > 50% of total pop | −0.002/tick |
+| Bad event triggered | −0.04 (one-time) |
+| Endure a catastrophe | −0.10 (one-time) |
+
+### Military ratio mechanic
+
+If military-assigned workers exceed 30% of your total population, morale drains proportionally to how far over the threshold you are. At 40% military ratio (10 points over): −0.003 × 1.0 = −0.003/tick. At 50% (20 points over): −0.006/tick. Keep military assignments below 30% of pop to avoid this drain.
+
+### Reset values
+
+| Event | Morale set to |
+|-------|--------------|
+| New game / wipe | 1.0 |
+| Prestige | 0.70 |
+| Succumb (catastrophe) | 0.50 |
+
+### Morale warning
+
+When morale drops below **40%**, a log warning fires: *"⚠ Morale critical: N% — worker output severely reduced"*. The warning resets once morale recovers above 40%.
+
+### Tips
+
+- Keep food income positive — it is the most reliable morale driver
+- Build wonders to raise the cap and allow morale to exceed 1.0
+- Avoid over-militarising early; keep military assignments under 30% of pop
+- After a Succumb or Prestige reset, morale starts below 1.0 — rebuild food production quickly to recover it
+- Idle workers are a double penalty: zero extra production **and** a morale drain if they exceed 50% of pop
+
+---
+
 ## Food Drain
 
 Every worker costs food per tick. The amount is determined by the **food domain's class** for the current age — it is the same for all workers regardless of their building assignment:
