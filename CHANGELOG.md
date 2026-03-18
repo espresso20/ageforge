@@ -8,6 +8,14 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v3.2.4] — 2026-03-17
+
+### Added
+- dynamic overlay width + fix all providers to accept terminal size
+- civilization history overlay with braille line graphs
+
+---
+
 ## [v3.2.3] — 2026-03-17
 
 ### Fixed
