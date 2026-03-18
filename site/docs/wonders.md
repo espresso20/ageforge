@@ -322,6 +322,18 @@ If you try to advance before completing your age's wonder, the game will tell yo
 
 ---
 
+## Wonders and Morale
+
+Every wonder you build raises your **morale cap** by +0.05. Morale is a multiplier on all worker output (default cap: 1.0, floor: 0.10). With the base cap at 1.0, wonders are the only way to push production above that ceiling.
+
+- 5 wonders built → morale cap 1.25 (workers can reach 125% output)
+- 10 wonders built → morale cap 1.50
+- 22 wonders built → morale cap **2.10** (workers can produce at over double their base rate)
+
+This makes wonders a long-term morale investment as much as a direct bonus source. Full-completion runs — building all 22 wonders across a run — unlock the maximum 2.10 morale cap, which stacks on top of all other production multipliers. The combined effect of a full wonder set alongside food surplus ticks and age advance morale boosts can push worker output dramatically above what building counts alone suggest.
+
+---
+
 ## Tips
 
 - Always bank resources across multiple ticks — don't try to dump everything at once
@@ -329,3 +341,4 @@ If you try to advance before completing your age's wonder, the game will tell yo
 - **Grand Lighthouse** + Rocketry tech + prestige `expedition_loot` = absurd expedition loot multipliers
 - Build wonders as early as possible in each age — the speed boost fires when construction completes and helps you hit the next age faster
 - **Crystal Palace** (+15% all production) at the Industrial Age is often the single biggest inflection point in the game
+- Each wonder also raises the morale cap by +0.05 — prioritising wonder completion pays dividends in both direct bonuses and morale headroom

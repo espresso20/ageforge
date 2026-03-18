@@ -50,6 +50,8 @@ Pay a cost and keep your civilization intact.
 
 Endure is painful but survivable. A well-developed civilization with many buildings loses only a fraction of its output — the production penalty is temporary, buildings grow back, and workers can be re-recruited.
 
+**Morale impact:** Endure also deals a **−0.10 morale hit** on top of the building destruction. If morale was already low heading into a catastrophe, this can push it toward the 0.10 floor and significantly slow recovery. Prioritise food surplus after Enduring to stabilise morale alongside rebuilding.
+
 **When to choose Endure:** When your civilization is large and a full reset would cost you more than the legacy bonus is worth. Late in an epoch, with 20+ ages progressed and significant building counts, Endure preserves enormous progress that Succumb would erase.
 
 ---
@@ -65,6 +67,8 @@ Accept total reset and gain permanent power.
 - **Epoch Succumbed** marker recorded in civilization history
 
 The full reset is real — you return to Primitive Age with 15 food and 12 wood. But the permanent bonuses, ruins, and prestige upgrades all survive.
+
+**Morale impact:** After Succumb, morale **resets to 0.50** — below the default 1.0 of a fresh run. You begin the new civilization at half morale output and must recover through food surplus ticks (+0.002/tick), age advances (+0.08 each), and passive recovery (+0.001/tick). Plan early food production accordingly.
 
 **What carries forward after Succumb:**
 
@@ -260,6 +264,12 @@ This history survives all resets, including prestige. You can review it to track
 - You haven't yet claimed the legacy bonus for this epoch
 - You have a high number of ruins already, making the head start on reset very strong
 - You're behind on your expected progression and want to leverage compounding permanent bonuses
+
+### Managing morale through catastrophes
+
+Both Endure and Succumb impose morale costs that compound with the other penalties. The recommended recovery path in either case is the same: keep food in surplus, avoid over-militarising (military workers above 30% of population drain morale further), and let age advances (+0.08 each) do the heavy lifting. Surviving multiple catastrophes in a single run without attending to morale recovery is a common reason civilizations stall — low morale suppresses all worker output until the food situation stabilises.
+
+See [Workers & Domains](workers-and-domains.md) for the full morale system.
 
 ### When Defer is correct
 

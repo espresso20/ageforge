@@ -108,6 +108,24 @@ The second row shows what you need for the next age. Keep building and assigning
 - **Knowledge** is the most important resource early — prioritise knowledge workers
 - Watch the `Rate` column in the Economy tab; negative rates will drain you
 
+## Morale
+
+Morale is a multiplier applied to **all worker output**: `production = base × count × (0.20 + 0.80 × assigned/cap) × morale`. Default morale is 1.0; the floor is 0.10 (near standstill). The base cap is also 1.0, but each built wonder raises it by +0.05 — so building wonders is the only way to push worker output above 100%.
+
+**What drives morale:**
+- Food surplus: **+0.002/tick** while food production is positive
+- Food deficit at zero food: **−0.005/tick**
+- Military workers over 30% of population: **−0.003/tick per 10% over the threshold**
+- Idle workers over 50% of population: **−0.002/tick**
+- Passive recovery: **+0.001/tick** always
+- Age advance: **+0.08** (one-time)
+
+**Key levers:** Keep food in surplus, don't over-militarize (target soldiers below 25–28% of total population), and build wonders to raise the cap.
+
+**Where to see it:** The morale bar appears in the villager panel. The status bar shows a color-coded percentage: green (≥ 80%), yellow (50–79%), red (< 50%).
+
+For full morale details including tick driver math and event interactions, see [Workers & Domains](workers-and-domains.md).
+
 ---
 
 ## Workers
