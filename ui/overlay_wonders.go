@@ -8,10 +8,81 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
+// renderCurrentWonderSummary returns a short text block for the current-age wonder,
+// prepended at the top of the wonders overlay so the player can see their active
+// wonder status without scrolling.
+func renderCurrentWonderSummary(state game.GameState) string {
+	var sb strings.Builder
+	var current *wonderInfo
+	for _, w := range getWonderList() {
+		if w.ageKey == state.Age {
+			wCopy := w
+			current = &wCopy
+			break
+		}
+	}
+	if current == nil {
+		return ""
+	}
+
+	bs, hasBs := state.Buildings[current.key]
+	built := hasBs && bs.Count > 0
+
+	sb.WriteString("[gold]═══ Current Age Wonder ═══[-]\n")
+	if built {
+		fmt.Fprintf(&sb, " [gold]★ %s[-]  [green]BUILT[-]  [gray]%s[-]\n", current.name, current.ageName)
+	} else {
+		fmt.Fprintf(&sb, " [yellow]○ %s[-]  [gray]%s — Not yet built[-]\n", current.name, current.ageName)
+	}
+
+	// Effects
+	for _, eff := range current.def.Effects {
+		fmt.Fprintf(&sb, "   %s\n", formatEffect(eff))
+	}
+	fmt.Fprintf(&sb, "   [gold]+0.5x game speed[-]\n")
+
+	// Bank progress if not built
+	if !built && hasBs {
+		fmt.Fprintf(&sb, "\n [cyan]Wonder Bank:[-]\n")
+		costKeys := make([]string, 0, len(current.def.BaseCost))
+		for k := range current.def.BaseCost {
+			costKeys = append(costKeys, k)
+		}
+		sort.Strings(costKeys)
+		for _, k := range costKeys {
+			need := current.def.BaseCost[k]
+			banked := bs.WonderBank[k]
+			pct := 0.0
+			if need > 0 {
+				pct = banked / need
+				if pct > 1 {
+					pct = 1
+				}
+			}
+			clr := "red"
+			if pct >= 1.0 {
+				clr = "green"
+			} else if pct > 0 {
+				clr = "yellow"
+			}
+			bar := wonderProgressBar(pct, 8)
+			fmt.Fprintf(&sb, "   [%s]%s %s %s / %s[-]\n", clr, k, bar, FormatNumber(banked), FormatNumber(need))
+		}
+		if bs.WonderBankFull {
+			fmt.Fprintf(&sb, "   [green]✓ Bank full! Type 'build %s'[-]\n", current.key)
+		} else {
+			fmt.Fprintf(&sb, "   [gray]wonder collect <res> <amt|all>[-]\n")
+		}
+	}
+	sb.WriteString("\n")
+	return sb.String()
+}
+
 // wondersProvider generates the wonders overlay text from the current game state.
 // Text-only — no pixel art images. Shows wonder name, age, description, effects, and build status.
 func wondersProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
+	sb.WriteString(renderCurrentWonderSummary(state))
 
 	wonders := getWonderList()
 	builtCount := 0
