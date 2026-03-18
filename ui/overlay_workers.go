@@ -9,6 +9,13 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
+const workerSectionWidth = 44
+
+func workerSection(title string) string {
+	bar := strings.Repeat("─", workerSectionWidth-len(title)-3)
+	return fmt.Sprintf("[gray]── %s %s[-]\n", title, bar)
+}
+
 func workersProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 	sb.WriteString("\n[gold]═══ Workers ═══[-]\n\n")
@@ -26,10 +33,93 @@ func workersProvider(state game.GameState, _ int) string {
 	}
 
 	idle := wt.IdleCount
-	fmt.Fprintf(&sb, "[white]Workers  [yellow]%d[white] / [green]%d[white]   Idle: [cyan]%d[white]   Food: [red]%.2f/tick[white]\n\n",
-		total, maxPop, idle, foodDrain)
+	housingLeft := maxPop - total
 
-	// Build domain groups from buildings with assigned workers
+	// ── Summary ──────────────────────────────────
+	sb.WriteString(workerSection("Summary"))
+	fmt.Fprintf(&sb, "  [white]Pop:[white] [yellow]%d[white] / [green]%d[-]   [white]Idle:[white] [cyan]%d[-]   [white]Housing left:[white] [green]%d[-]\n",
+		total, maxPop, idle, housingLeft)
+
+	// Food sustainability
+	foodRS, hasFoodRS := state.Resources["food"]
+	if hasFoodRS {
+		netFood := foodRS.Rate // already net (includes worker drain)
+		drainPerWorker := 0.0
+		if total > 0 {
+			drainPerWorker = foodDrain / float64(total)
+		}
+		breakEven := 0
+		if drainPerWorker > 0 && foodRS.Rate+foodDrain > 0 {
+			breakEven = int((foodRS.Rate + foodDrain) / drainPerWorker)
+		}
+
+		netColor := "green"
+		netPrefix := "+"
+		if netFood < 0 {
+			netColor = "red"
+			netPrefix = ""
+		}
+		fmt.Fprintf(&sb, "  [white]Food drain:[white] [red]%.2f/tick[-]   [white]Net food:[white] [%s]%s%.2f/tick[-]\n",
+			foodDrain, netColor, netPrefix, netFood)
+		if netFood >= 0 && breakEven > 0 {
+			fmt.Fprintf(&sb, "  [gray]Sustains up to [white]%d[-][gray] workers at current food rate[-]\n", breakEven)
+		} else if netFood < 0 {
+			sb.WriteString("  [red]⚠ Food deficit — workers may starve[-]\n")
+		}
+	}
+	sb.WriteString("\n")
+
+	// ── Slot Utilization ─────────────────────────
+	sb.WriteString(workerSection("Slot Utilization"))
+	totalSlots := 0
+	filledSlots := 0
+	type openSlot struct {
+		Name  string
+		Open  int
+	}
+	var openSlots []openSlot
+
+	for _, bs := range state.Buildings {
+		if bs.WorkerDomain == "" || bs.Count <= 0 {
+			continue
+		}
+		cap := bs.WorkerCapacity * bs.Count
+		totalSlots += cap
+		filledSlots += bs.WorkersAssigned
+		open := cap - bs.WorkersAssigned
+		if open > 0 {
+			openSlots = append(openSlots, openSlot{Name: bs.Name, Open: open})
+		}
+	}
+	sort.Slice(openSlots, func(i, j int) bool {
+		return openSlots[i].Open > openSlots[j].Open
+	})
+
+	if totalSlots > 0 {
+		pct := float64(filledSlots) / float64(totalSlots)
+		bar := assignBar(filledSlots, totalSlots, 16)
+		fmt.Fprintf(&sb, "  [white]Filled:[white] [cyan]%d[white] / [green]%d[-]  %s  [gray]%.0f%%[-]\n",
+			filledSlots, totalSlots, bar, pct*100)
+		if len(openSlots) > 0 {
+			parts := make([]string, 0, 4)
+			for i, s := range openSlots {
+				if i >= 4 {
+					break
+				}
+				parts = append(parts, fmt.Sprintf("[cyan]%s[white] (+%d)[-]", s.Name, s.Open))
+			}
+			fmt.Fprintf(&sb, "  [gray]Open slots:[white] %s[-]\n", strings.Join(parts, "[gray],[white] "))
+		} else {
+			sb.WriteString("  [green]✓ All slots filled[-]\n")
+		}
+	} else {
+		sb.WriteString("  [gray]No worker buildings built yet[-]\n")
+	}
+	sb.WriteString("\n")
+
+	// ── Domain Breakdown ─────────────────────────
+	sb.WriteString(workerSection("Domain Breakdown"))
+
 	type domainGroup struct {
 		Domain string
 		Rows   []buildingRow
@@ -69,7 +159,7 @@ func workersProvider(state game.GameState, _ int) string {
 	}
 
 	if len(groupOrder) == 0 {
-		fmt.Fprintf(&sb, "[cyan]Idle: %d[white] — assign with: [cyan]assign <building> [count|all][-]\n", idle)
+		fmt.Fprintf(&sb, "  [cyan]Idle: %d[white] — assign with: [cyan]assign <building> [count|all][-]\n", idle)
 	} else {
 		for _, domain := range groupOrder {
 			grp := groupMap[domain]
@@ -77,20 +167,24 @@ func workersProvider(state game.GameState, _ int) string {
 			if !ok {
 				label = capitalize(domain)
 			}
-			classDisplay := ""
+			classInfo := ""
+			foodCostStr := ""
 			if cls, found := config.WorkerClassByDomainAndAge(domain, state.Age); found && cls.ClassName != "" {
-				classDisplay = fmt.Sprintf("  %s × %d", cls.ClassName, grp.Total)
+				classInfo = fmt.Sprintf(" %s × %d", cls.ClassName, grp.Total)
+				if cls.FoodCost > 0 {
+					foodCostStr = fmt.Sprintf("  [gray]%.3f food/tick each[-]", cls.FoodCost)
+				}
 			}
-			fmt.Fprintf(&sb, "[cyan][%s][-][white]%s\n", label, classDisplay)
+			fmt.Fprintf(&sb, "  [cyan][%s][-][white]%s[-]%s\n", label, classInfo, foodCostStr)
 			for _, row := range grp.Rows {
 				bar := assignBar(row.WorkersAssigned, row.Capacity, 10)
-				fmt.Fprintf(&sb, "  %-28s %s [cyan]%d[white]/[green]%d[white]\n",
+				fmt.Fprintf(&sb, "    %-26s %s [cyan]%d[white]/[green]%d[-]\n",
 					row.Name, bar, row.WorkersAssigned, row.Capacity)
 			}
 			fmt.Fprintln(&sb)
 		}
 		if idle > 0 {
-			fmt.Fprintf(&sb, "[cyan]Idle: %d[white] — assign with: [cyan]assign <building> [count|all][-]\n", idle)
+			fmt.Fprintf(&sb, "  [yellow]Idle: %d[white] — assign with: [cyan]assign <building> [count|all][-]\n", idle)
 		}
 	}
 
