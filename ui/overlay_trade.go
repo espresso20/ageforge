@@ -10,7 +10,7 @@ import (
 
 // tradeProvider generates the trade overlay text from the current game state.
 // It mirrors the logic from TradeTab.Refresh — same data, formatted as plain text.
-func tradeProvider(state game.GameState) string {
+func tradeProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 	trade := state.Trade
 

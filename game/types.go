@@ -44,6 +44,8 @@ type GameState struct {
 	// Phase 9: civilization history + legacy bonuses
 	LegacyBonuses      map[string]bool  // epochKey -> true if succumb legacy bonus is active
 	CatastropheHistory []string         // narrative log entries
+	// History overlay
+	History *HistoryCollector
 }
 
 // AgeAdvanceSummary holds data about what changed during an age advance transition.

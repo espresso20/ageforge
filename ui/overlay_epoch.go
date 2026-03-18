@@ -10,7 +10,7 @@ import (
 
 // epochProvider generates the epoch overlay text from the current game state.
 // Shows current epoch status, epoch history, legacy bonuses, and civilisation log.
-func epochProvider(state game.GameState) string {
+func epochProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 
 	sb.WriteString("[gold]═══ Epoch ═══[-]\n\n")

@@ -36,7 +36,7 @@ func formatTechEffect(eff config.Effect) string {
 // Tech visibility rules: researched=green ✓, in-progress=yellow ⟳,
 // available=cyan ○, prereqs-met-but-age-locked=gray ○ (age locked),
 // locked=gray • with prerequisite names shown.
-func researchProvider(state game.GameState) string {
+func researchProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 
 	allTechs := config.TechByKey()

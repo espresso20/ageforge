@@ -9,7 +9,7 @@ import (
 
 // logsProvider generates the logs overlay text from the current game state.
 // Shows the last ~50 game log entries, skipping debug entries, newest at the bottom.
-func logsProvider(state game.GameState) string {
+func logsProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 
 	sb.WriteString("[gold]═══ Game Log ═══[-]\n\n")

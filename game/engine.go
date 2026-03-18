@@ -85,6 +85,9 @@ type GameEngine struct {
 	// resets so that legacy bonuses and civilization history accumulate across multiple runs.
 	legacyBonuses      map[string]bool // epochKey -> true if succumb legacy bonus active
 	catastropheHistory []string        // narrative civilization log entries
+
+	// History collector — periodic metric samples for the history overlay.
+	History *HistoryCollector
 }
 
 // BuildQueueItem represents a building under construction
@@ -119,6 +122,7 @@ func NewGameEngine() *GameEngine {
 		epochEventFired:  make(map[string]bool),
 		survivedEpochs:   make(map[string]bool),
 		legacyBonuses:    make(map[string]bool),
+		History:          NewHistoryCollector(),
 	}
 	ge.applyAgeUnlocks("primitive_age")
 	// Give starting resources — enough for first hut + a little food
@@ -134,6 +138,12 @@ func NewGameEngine() *GameEngine {
 	ge.addLog("event", "★ Wonder available: Sacred Grove — build it to unlock +0.5x speed!")
 	ge.addLog("info", "  5. Later: [cyan]assign food gathering_camp 3[-] — assign workers to buildings!")
 	ge.addLog("info", "  Type [cyan]help[-] for all commands.")
+	// Subscribe to age advances to record markers in history.
+	// IMPORTANT: Bus handlers run under the engine write lock — do NOT call GetState().
+	ge.Bus.Subscribe(EventAgeAdvanced, func(e EventData) {
+		ageName, _ := e.Payload["new_age"].(string)
+		ge.History.MarkAge(ge.tick, ageName)
+	})
 	return ge
 }
 
@@ -406,6 +416,32 @@ func (ge *GameEngine) doTick() {
 
 	// Recalculate tick speed from all sources
 	ge.recalculateTickSpeed()
+
+	// Record periodic history sample (every historySampleInterval ticks).
+	// All data is read directly from engine fields — no GetState() call here.
+	if ge.tick%historySampleInterval == 0 {
+		ageOrderMap := ge.progress.GetAgeOrder()
+		ageOrder := ageOrderMap[ge.age]
+		snap := ge.Resources.Snapshot()
+		foodRate := 0.0
+		knowRate := 0.0
+		if fr, ok := snap["food"]; ok {
+			foodRate = fr.Rate
+		}
+		if kr, ok := snap["knowledge"]; ok {
+			knowRate = kr.Rate
+		}
+		faith := snap["faith"].Amount
+		ge.History.Sample(ge.tick, HistorySample{
+			Population: float64(ge.Workers.TotalPop()),
+			FoodRate:   foodRate,
+			KnowRate:   knowRate,
+			Faith:      faith,
+			ProdAll:    ge.permanentBonuses["production_all"],
+			TickSpeed:  ge.tickSpeedBonus,
+			AgeOrder:   ageOrder,
+		})
+	}
 }
 
 // processResearch handles research tick
@@ -2107,6 +2143,7 @@ func (ge *GameEngine) GetState() GameState {
 			return out
 		}(),
 		CatastropheHistory: ge.catastropheHistory,
+		History:            ge.History,
 	}
 }
 

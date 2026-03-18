@@ -8,7 +8,7 @@ import (
 
 // OverlayProvider is a function that generates the full text content for a
 // floating panel from the current game state. Called every 500 ms by Refresh.
-type OverlayProvider func(state game.GameState) string
+type OverlayProvider func(state game.GameState, w int) string
 
 // overlayEntry holds the tview widgets and content provider for a text-based overlay.
 // The root Flex uses nested nil spacers to centre the TextView at ~85%×85% of the terminal.
@@ -39,18 +39,25 @@ type OverlayManager struct {
 	pages         *tview.Pages
 	app           *tview.Application
 	onClose       func() // called after hide to restore focus to the command input field
+	screenW       int    // updated every frame via SetBeforeDrawFunc
 }
 
 // NewOverlayManager creates an OverlayManager. onClose is called whenever an
 // overlay is closed so the caller can return focus to the command input field.
 func NewOverlayManager(pages *tview.Pages, app *tview.Application, onClose func()) *OverlayManager {
-	return &OverlayManager{
+	om := &OverlayManager{
 		entries:       make(map[string]*overlayEntry),
 		widgetEntries: make(map[string]*widgetEntry),
 		pages:         pages,
 		app:           app,
 		onClose:       onClose,
+		screenW:       120, // sensible default before first draw
 	}
+	app.SetBeforeDrawFunc(func(screen tcell.Screen) bool {
+		om.screenW, _ = screen.Size()
+		return false
+	})
+	return om
 }
 
 // Register adds a named text overlay backed by a TextView. Must be called before Show.
@@ -153,7 +160,7 @@ func (om *OverlayManager) buildWidgetRoot(we *widgetEntry, prim tview.Primitive)
 func (om *OverlayManager) Show(name string, state game.GameState) bool {
 	// Try text overlays first.
 	if e, ok := om.entries[name]; ok {
-		e.tv.SetText(e.provide(state))
+		e.tv.SetText(e.provide(state, om.screenW))
 		e.tv.ScrollToBeginning()
 		if om.active != name {
 			if om.active != "" {
@@ -204,7 +211,7 @@ func (om *OverlayManager) Refresh(state game.GameState) {
 	}
 	// Text overlay path.
 	if e, ok := om.entries[om.active]; ok {
-		e.tv.SetText(e.provide(state))
+		e.tv.SetText(e.provide(state, om.screenW))
 		return
 	}
 	// Widget overlay path — use in-place refresh if available, else rebuild.
