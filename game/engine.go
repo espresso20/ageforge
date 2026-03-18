@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"math/rand"
+	"sort"
 	"strings"
 	"sync"
 	"time"
@@ -1871,6 +1872,87 @@ func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) er
 	def, _ := byKey[buildingKey]
 	ge.recalculateRates()
 	ge.addLog("info", fmt.Sprintf("Dismissed %d workers from %s (pop: %d)", dismissed, def.Name, ge.Workers.TotalPop()))
+	return nil
+}
+
+// formatResourceMap formats a map[string]float64 as "key1 45, key2 20" sorted by key.
+func formatResourceMap(m map[string]float64) string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	parts := make([]string, 0, len(keys))
+	for _, k := range keys {
+		parts = append(parts, fmt.Sprintf("%s %.0f", k, m[k]))
+	}
+	return strings.Join(parts, ", ")
+}
+
+// SellBuilding removes n copies of a built building, refunds 50% of cost,
+// and unassigns any workers that were in the sold slots.
+func (ge *GameEngine) SellBuilding(key string, n int) error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	if ge.age == "primitive_age" {
+		return fmt.Errorf("sell is not available in the primitive age")
+	}
+
+	byKey := config.BuildingByKey()
+	def, ok := byKey[key]
+	if !ok {
+		if suggestion := ge.Buildings.SuggestKey(key); suggestion != "" {
+			return fmt.Errorf("unknown building '%s' — did you mean '%s'?", key, suggestion)
+		}
+		return fmt.Errorf("unknown building '%s'", key)
+	}
+
+	if def.Category == "wonder" {
+		return fmt.Errorf("wonders cannot be sold")
+	}
+
+	current := ge.Buildings.GetCount(key)
+	if current == 0 {
+		return fmt.Errorf("no %s built", def.Name)
+	}
+
+	if n > current {
+		n = current
+	}
+
+	// Check build queue — reject if any copy of this building is queued
+	for _, item := range ge.buildQueue {
+		if item.BuildingKey == key {
+			return fmt.Errorf("cannot sell a building that is under construction")
+		}
+	}
+
+	// Compute refund before removing
+	refund, _ := ge.Buildings.SellCost(key, n)
+
+	// Remove the buildings
+	ge.Buildings.RemoveBuilding(key, n)
+
+	// Unassign excess workers
+	if def.WorkerCapacity > 0 {
+		newCount := current - n
+		newCap := def.WorkerCapacity * newCount
+		assigned := ge.Workers.GetAssignedCount("worker", key)
+		if newCap == 0 {
+			ge.Workers.Unassign("worker", key, assigned)
+		} else if assigned > newCap {
+			ge.Workers.Unassign("worker", key, assigned-newCap)
+		}
+	}
+
+	// Add refund to resources
+	for res, amount := range refund {
+		ge.Resources.Add(res, amount)
+	}
+
+	ge.recalculateRates()
+	ge.addLog("info", fmt.Sprintf("Sold %d %s — returned: %s", n, def.Name, formatResourceMap(refund)))
 	return nil
 }
 

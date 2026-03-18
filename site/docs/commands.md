@@ -10,6 +10,7 @@ All commands are typed at the `>` prompt at the bottom of the screen. Press `↑
 |---|---|
 | `build <key>` | Start constructing a building |
 | `build cancel` | Cancel the current build in the queue |
+| `sell <building> [count]` | Demolish a building and recover 50% of its build cost. Workers are returned to idle. |
 | `gather <resource> [amount]` | Manually gather food, wood, or stone (max 10 per command) |
 
 **Example:**
@@ -17,6 +18,8 @@ All commands are typed at the `>` prompt at the bottom of the screen. Press `↑
 build hut
 build lumber_mill
 build cancel
+sell lumber_mill
+sell gathering_camp 3
 gather wood 5
 ```
 
