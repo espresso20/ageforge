@@ -104,7 +104,7 @@ The second row shows what you need for the next age. Keep building and assigning
 ## Resource management tips
 
 - Resources cap at their storage limit — once capped, production is wasted
-- **Food drain** = `baseFoodCost × 1.5^tier /tick` per worker. Food domain workers start at 0.06/tick (Primitive Age) — very cheap. Other domains start at 1.0–32.0. Always keep food production positive
+- **Food drain** = `baseFoodCost × 1.12^tier /tick` per worker. Food domain workers start at 0.06/tick (Primitive Age) — very cheap. Other domains start at 1.0–32.0. Always keep food production positive — if food hits zero, workers die at 1 per 5 ticks
 - **Knowledge** is the most important resource early — prioritise knowledge workers
 - Watch the `Rate` column in the Economy tab; negative rates will drain you
 
