@@ -1472,6 +1472,13 @@ func (ge *GameEngine) AdvanceAge() error {
 	if !ge.ageReady {
 		nextAge := ge.progress.CheckAdvancement(ge.age, ge.Resources, ge.Buildings)
 		if nextAge == "" {
+			// Check if wonder is the only blocker
+			wonderKey := ge.progress.WonderForAge(ge.age)
+			if wonderKey != "" && ge.Buildings.GetCount(wonderKey) < 1 {
+				if def, ok := ge.Buildings.defs[wonderKey]; ok {
+					return fmt.Errorf("you must complete the %s wonder before advancing — use 'wonder collect' then 'build %s'", def.Name, wonderKey)
+				}
+			}
 			return fmt.Errorf("age requirements not met yet — check the Stats tab for what's needed")
 		}
 	}
@@ -2078,15 +2085,28 @@ func (ge *GameEngine) GetState() GameState {
 		tickInterval = MinTickInterval
 	}
 
+	// Wonder gate: show which wonder must be built before advancing
+	wonderKey := ge.progress.WonderForAge(ge.age)
+	currentAgeWonderKey := ""
+	currentAgeWonderName := ""
+	if wonderKey != "" && ge.Buildings.GetCount(wonderKey) < 1 {
+		currentAgeWonderKey = wonderKey
+		if def, ok := ge.Buildings.defs[wonderKey]; ok {
+			currentAgeWonderName = def.Name
+		}
+	}
+
 	return GameState{
-		Tick:           ge.tick,
-		Age:            ge.age,
-		AgeName:        ge.progress.GetAgeName(ge.age),
-		AgeReady:       ge.ageReady,
-		NextAge:        nextAge,
-		NextAgeName:    nextAgeName,
-		NextAgeResReqs: nextAgeResReqs,
-		NextAgeBldReqs: nextAgeBldReqs,
+		Tick:                 ge.tick,
+		Age:                  ge.age,
+		AgeName:              ge.progress.GetAgeName(ge.age),
+		AgeReady:             ge.ageReady,
+		CurrentAgeWonderKey:  currentAgeWonderKey,
+		CurrentAgeWonderName: currentAgeWonderName,
+		NextAge:              nextAge,
+		NextAgeName:          nextAgeName,
+		NextAgeResReqs:       nextAgeResReqs,
+		NextAgeBldReqs:       nextAgeBldReqs,
 		Resources:      ge.Resources.Snapshot(),
 		Buildings:      ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount),
 		BuildQueue:     queue,
