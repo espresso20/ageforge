@@ -8,6 +8,17 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v3.2.5] — 2026-03-17
+
+### Added
+- wonder completion required to advance ages (#19)
+
+### Fixed
+- remove full-screen dev console, route dev commands through main input
+- age splash keypress regression and faith preserved on age advance
+
+---
+
 ## [v3.2.4] — 2026-03-17
 
 ### Added
