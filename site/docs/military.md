@@ -272,6 +272,23 @@ Each soldier eats at the current military class food cost (2.0/tick at Iron Age,
 - Use `recruit max` only when food is overflowing and storage is near cap — don't spike your army into a food deficit.
 - After major age advances, review food drain: the ×1.5 per tier scaling means your army costs 50% more food per tick in each successive age.
 
+### Morale and Military Ratio
+
+Maintaining a large standing army has a second cost beyond food: **morale drain**. If military workers exceed **30% of your total population**, morale decays at −0.003/tick for every 10% over the threshold:
+
+| Military ratio | Overage | Morale drain/tick |
+|---------------|---------|------------------|
+| 30% (at threshold) | 0% | 0 |
+| 40% | +10% | −0.003/tick |
+| 50% | +20% | −0.006/tick |
+| 60% | +30% | −0.009/tick |
+
+Morale is a multiplier on all worker output (floor 0.10). Sustained morale drain from an oversized army gradually suppresses production across every domain — food, knowledge, trade, everything — creating a feedback loop where the army's food cost becomes even harder to cover as food workers produce less.
+
+**Recommended target: keep military workers below 25–28% of total population.** This provides a comfortable buffer against the threshold even if population fluctuates from worker loss events. If you need a large army for a high-soldier expedition, build it temporarily, run the expedition, then unassign excess soldiers back to civilian buildings.
+
+Large armies require strong food production and a robust civilian workforce to offset the morale penalty. If you see morale trending downward and your military ratio is over 30%, unassign some soldiers or recruit more civilians before the drain compounds further.
+
 ---
 
 ## 9. Tips & Common Mistakes

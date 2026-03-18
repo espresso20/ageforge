@@ -190,6 +190,26 @@ This is intentional Malthusian gameplay — overpopulating without food infrastr
 
 ---
 
+## Morale
+
+Morale is an engine-level multiplier (0.10–cap) that scales all worker-driven building output.
+
+```
+output = base_rate × building_count × (0.20 + 0.80 × assigned / capacity) × morale
+```
+
+- Default: **1.0** (no penalty). Floor: **0.10**.
+- Morale rises from food surplus, age advances, and good events.
+- Morale falls from starvation, too many idle workers (>50% of pop), over-militarisation (>30% military workers), and bad events.
+- Each wonder built raises the **cap** by +0.05, letting morale exceed 1.0 for a production bonus.
+- After Prestige, morale starts at 0.70; after Succumb, at 0.50.
+
+The Worker panel always shows the current morale bar. The status bar also displays morale %. A warning fires in the log when morale drops below 40%.
+
+For full details see [Workers & Domains](workers-and-domains.md#morale).
+
+---
+
 ## Food Drain
 
 Every worker in every domain costs food per tick. The exact amount is `baseFoodCost × 1.12^tier` for their current class tier. As you advance ages and recruit higher-tier workers, food drain rises — but the curve is much gentler than it used to be (tier-20 is ~9.6× base, not 3325×).

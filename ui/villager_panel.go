@@ -39,6 +39,7 @@ func (vp *WorkerPanel) UpdateState(state game.GameState) {
 	h = hashKey(state.Age)
 	h ^= uint64(state.Workers.TotalPop+1) * 31
 	h ^= uint64(state.Workers.FoodDrain*1000) * 37
+	h ^= uint64(state.Morale*1000) * 41
 	wt := state.Workers.Types["worker"]
 	h ^= uint64(wt.Count+1) * 7
 	h ^= uint64(wt.IdleCount+1) * 3
@@ -87,6 +88,21 @@ func renderVillagerPanel(tv *tview.TextView, state *game.GameState) {
 	maxPop := state.Workers.MaxPop
 	foodDrain := state.Workers.FoodDrain
 
+	// Morale bar (always shown)
+	moraleColor := "green"
+	if state.Morale < 0.50 {
+		moraleColor = "red"
+	} else if state.Morale < 0.80 {
+		moraleColor = "yellow"
+	}
+	moraleBar := assignBar(int(state.Morale*20), 20, 20)
+	capStr := ""
+	if state.MoraleCap > 1.0 {
+		capStr = fmt.Sprintf(" [gray](cap: %.2f)[-]", state.MoraleCap)
+	}
+	fmt.Fprintf(&sb, "[white]Morale:[white] [%s]%.0f%%[-]%s  %s\n\n",
+		moraleColor, state.Morale*100, capStr, moraleBar)
+
 	if !wt.Unlocked || total == 0 {
 		fmt.Fprintf(&sb, "[white]Workers  [yellow]0[white] / [green]%d[white]\n\n", maxPop)
 		fmt.Fprint(&sb, "[gray]No workers yet.\n")
@@ -98,6 +114,12 @@ func renderVillagerPanel(tv *tview.TextView, state *game.GameState) {
 	idle := wt.IdleCount
 	fmt.Fprintf(&sb, "[white]Workers  [yellow]%d[white] / [green]%d[white]   Idle: [cyan]%d[white]   Food: [red]%.2f/tick[white]\n\n",
 		total, maxPop, idle, foodDrain)
+
+	// Morale warning in summary section
+	if state.Morale < 1.0 {
+		fmt.Fprintf(&sb, "  [yellow]⚠ Morale [%s]%.0f%%[-][yellow] — output penalty active[-]\n\n",
+			moraleColor, state.Morale*100)
+	}
 
 	// Build domain groups from buildings with assigned workers.
 	type domainGroup struct {

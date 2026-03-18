@@ -532,10 +532,17 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		}
 		epochStr = fmt.Sprintf("  [%s]%s %s%s[-]", state.EpochColor, state.EpochIcon, state.EpochName, survivedMark)
 	}
+	moraleColor := "green"
+	if state.Morale < 0.50 {
+		moraleColor = "red"
+	} else if state.Morale < 0.80 {
+		moraleColor = "yellow"
+	}
+	moraleStr := fmt.Sprintf("  Morale: [%s]%.0f%%[-]", moraleColor, state.Morale*100)
 	d.statusTV.SetText(fmt.Sprintf(
-		"[gold]%s[-]%s%s%s  Tick: %d%s%s%s  |  Pop: %d/%d  |  [gray]type panel name to open  ESC=close/menu[-]",
+		"[gold]%s[-]%s%s%s  Tick: %d%s%s%s  |  Pop: %d/%d%s  |  [gray]type panel name to open  ESC=close/menu[-]",
 		state.AgeName, prestigeStr, titleStr, epochStr, state.Tick, nextAgeStr, speedStr, devStr,
-		state.Workers.TotalPop, state.Workers.MaxPop,
+		state.Workers.TotalPop, state.Workers.MaxPop, moraleStr,
 	))
 }
 

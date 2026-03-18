@@ -126,6 +126,12 @@ These stack on top of your purchased upgrade bonuses. A prestige level 5 player 
 - Ancient Knowledge bonus (+25% research speed per Succumb) — stacks across all Succumbs
 - Civilization history / catastrophe log
 
+### Morale on Prestige
+
+Morale resets to **0.70** on prestige — not the default 1.0 of a completely fresh run, but not the punishing 0.50 of a Succumb reset either. The 0.70 floor represents institutional memory: your rebuilt civilization begins slightly behind peak output but recovers faster than one starting from scratch.
+
+In practice this means prestige runs begin at roughly 70% worker efficiency and must recover to 1.0 (or higher, with wonders built) through food surplus ticks (+0.002/tick), passive recovery (+0.001/tick), and age advances (+0.08 each). With ruins producing from tick 1 and starting food/wood prestige bonuses, keeping food in surplus from the first few ticks is usually straightforward — morale will tick back toward 1.0 within a few dozen ticks if food stays positive.
+
 ### Culture on Prestige
 
 Culture is reduced to **20% of its current value** rather than fully reset. Any unlocked culture threshold bonuses remain permanently unlocked. This means a player who accumulated culture across multiple runs retains meaningful culture bonuses even after prestige.

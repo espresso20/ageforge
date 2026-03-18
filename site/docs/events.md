@@ -116,8 +116,11 @@ These 27 events have no `EpochKey` — they can fire in any epoch, throughout th
 | `production` | Multiplier bonus or penalty to a specific resource's production rate. Persists for the event duration. Positive = boost, negative = penalty. |
 | `steal_resource` | Removes a fixed amount from a resource. For instant events, applied once. For timed events, can drain per-tick — check the expired log for total losses. |
 | `worker_loss` | Removes a percentage of your total worker pool **permanently**. Workers lost this way do not return when the event ends. |
+| `morale` | Instant one-time adjustment to morale. Good epoch events grant **+0.04 morale**; bad epoch events apply **−0.04 morale**. These reflect the mood and motivation of the population — a windfall lifts spirits, while disasters shake confidence. |
 
-**Worker loss is the only permanent effect** in the random event system. All production modifiers and resource steals are temporary or one-time. If an event has `worker_loss`, treat it as a permanent cost, not a debuff.
+**Worker loss is the only permanent structural effect** in the random event system. Morale changes from events are real but recoverable — food surplus, passive recovery, and age advances will restore morale over time. All production modifiers and resource steals are temporary or one-time. If an event has `worker_loss`, treat it as a permanent cost, not a debuff.
+
+> **Note:** The morale effect applies to **epoch transition events** (the faith/culture roll system documented in [Epochs](epochs.md)), not to the base or epoch-exclusive random events listed in the tables above. A good epoch transition event lifts morale by +0.04; a bad one shaves −0.04. This is separate from catastrophe morale penalties (Endure −0.10, Succumb resets to 0.50).
 
 ---
 
