@@ -38,13 +38,12 @@ type Dashboard struct {
 	economyTab *EconomyTab
 
 	// Sidebar
-	sidebar *tview.TextView
+	sidebar       *tview.TextView
+	workerMiniTV  *tview.TextView
 
 	// Shared UI
-	logTV         *tview.TextView
-	wonderPanel   *WonderPanel
-	workerPanel   *WorkerPanel
-	statusTV    *tview.TextView
+	logTV    *tview.TextView
+	statusTV *tview.TextView
 	ageTV      *tview.TextView
 	inputField *tview.InputField
 	lastAge             string
@@ -53,7 +52,6 @@ type Dashboard struct {
 	toastMgr            *ToastManager
 	toastTV     *tview.TextView
 	contentArea *tview.Flex
-	bottomArea  *tview.Flex
 
 	// Shame badge — set once on first load when CheaterBadge is true
 	cheaterTV       *tview.TextView
@@ -98,6 +96,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.Register("trade", "Trade", tradeProvider)
 	d.overlayMgr.Register("stats", "Statistics", statsProvider)
 	d.overlayMgr.Register("wonders", "Wonders", wondersProvider)
+	d.overlayMgr.Register("workers", "Workers", workersProvider)
 	d.overlayMgr.Register("logs", "Logs", logsProvider)
 	d.overlayMgr.Register("epoch", "Epoch", epochProvider)
 	d.overlayMgr.Register("history", "Civilization History", historyProvider)
@@ -120,12 +119,6 @@ func (d *Dashboard) build() {
 		SetScrollable(true).
 		SetMaxLines(100)
 	d.logTV.SetBorder(true).SetTitle(" Log ").SetTitleColor(ColorDim)
-
-	// Wonder panel (current age's wonder)
-	d.wonderPanel = NewWonderPanel()
-
-	// Worker panel
-	d.workerPanel = NewWorkerPanel()
 
 	// Shame badge bar (1 fixed line; text only shown when CheaterBadge is true)
 	d.cheaterTV = tview.NewTextView().
@@ -305,21 +298,24 @@ func (d *Dashboard) build() {
 		}
 	})
 
-	// Bottom area: log + workers + wonder panel side by side
-	d.bottomArea = tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(d.logTV, 0, 1, false).
-		AddItem(d.workerPanel.Primitive(), 0, 1, false).
-		AddItem(d.wonderPanel.Primitive(), 0, 1, false)
+	// Inject log panel into the economy tab's left column (below Under Construction)
+	d.economyTab.AddToLeftColumn(d.logTV, 0, 1)
 
-	// Main horizontal: economy (permanent) + sidebar
+	// Mini worker summary box — sits below the sidebar in the right column
+	d.workerMiniTV = tview.NewTextView().SetDynamicColors(true)
+	d.workerMiniTV.SetBorder(true).SetTitle(" Workers ").SetTitleColor(ColorVillager)
+
+	rightCol := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(d.sidebar, 0, 1, false).
+		AddItem(d.workerMiniTV, 8, 0, false)
+
+	// Main horizontal: economy (permanent, full height) + right column (sidebar + worker mini)
 	mainHoriz := tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(d.economyTab.Root(), 0, 1, false).
-		AddItem(d.sidebar, 22, 0, false)
+		AddItem(rightCol, 22, 0, false)
 
-	// Main content area: economy+sidebar + bottom
-	d.contentArea = tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(mainHoriz, 0, 2, false).
-		AddItem(d.bottomArea, 0, 1, false)
+	// Content area is just mainHoriz — no bottom strip
+	d.contentArea = mainHoriz
 
 	// Root layout (no tab bar)
 	d.root = tview.NewFlex().SetDirection(tview.FlexRow).
@@ -375,7 +371,7 @@ func (d *Dashboard) updateSidebar(activeOverlay string) {
 }
 
 func buildSidebarText(active string) string {
-	commands := []string{"milestones", "research", "army", "trade", "stats", "wonders", "logs", "epoch", "history"}
+	commands := []string{"milestones", "research", "army", "trade", "stats", "wonders", "workers", "logs", "epoch", "history"}
 	var sb strings.Builder
 	sb.WriteString("\n")
 	for _, cmd := range commands {
@@ -477,8 +473,6 @@ func (d *Dashboard) refresh() {
 	d.refreshAgeProgress(state)
 	d.refreshLog(state)
 	d.toastTV.SetText(d.toastMgr.GetCurrent())
-	d.wonderPanel.UpdateState(state)
-	d.workerPanel.UpdateState(state)
 
 	// Economy tab is always visible as the permanent background
 	d.economyTab.Refresh(state)
@@ -486,6 +480,26 @@ func (d *Dashboard) refresh() {
 	// Update overlay content and sidebar highlight
 	d.overlayMgr.Refresh(state)
 	d.updateSidebar(d.overlayMgr.ActiveName())
+	d.refreshWorkerMini(state)
+}
+
+func (d *Dashboard) refreshWorkerMini(state game.GameState) {
+	w := state.Workers
+	food, hasFoodRS := state.Resources["food"]
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "[yellow]%d[white]/[green]%d[-]  [gray]Idle:[white] %d[-]\n", w.TotalPop, w.MaxPop, w.TotalIdle)
+	fmt.Fprintf(&sb, "[gray]House left:[white] %d[-]\n", w.MaxPop-w.TotalPop)
+	fmt.Fprintf(&sb, "[gray]Drain:[red] %.2f/t[-]\n", w.FoodDrain)
+	if hasFoodRS {
+		netColor := "green"
+		prefix := "+"
+		if food.Rate < 0 {
+			netColor = "red"
+			prefix = ""
+		}
+		fmt.Fprintf(&sb, "[gray]Net:[%s] %s%.2f/t[-]\n", netColor, prefix, food.Rate)
+	}
+	d.workerMiniTV.SetText(sb.String())
 }
 
 func (d *Dashboard) refreshStatus(state game.GameState) {

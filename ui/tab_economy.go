@@ -137,9 +137,10 @@ func formatFaithRow(rs game.ResourceState) string {
 // queue (left-bottom), and the full building list (right). The building panel is
 // scrollable via PgUp/PgDn because it can grow very long in late ages.
 type EconomyTab struct {
-	root       *tview.Flex
-	resourceTV *tview.TextView
-	buildingTV *tview.TextView
+	root           *tview.Flex
+	leftCol        *tview.Flex
+	resourceTV     *tview.TextView
+	buildingTV     *tview.TextView
 	constructionTV *tview.TextView
 }
 
@@ -160,15 +161,21 @@ func NewEconomyTab() *EconomyTab {
 	t.constructionTV.SetBorder(true).SetTitle(" Under Construction ").SetTitleColor(ColorBuilding)
 
 	// Left: resources (tall) + under construction (compact), Right: buildings
-	leftCol := tview.NewFlex().SetDirection(tview.FlexRow).
+	t.leftCol = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(t.resourceTV, 0, 4, false).
 		AddItem(t.constructionTV, 0, 1, false)
 
 	t.root = tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(leftCol, 0, 2, false).
+		AddItem(t.leftCol, 0, 2, false).
 		AddItem(t.buildingTV, 0, 3, false)
 
 	return t
+}
+
+// AddToLeftColumn injects an additional item into the left column flex container.
+// This allows the Dashboard to append the log panel below the construction queue.
+func (t *EconomyTab) AddToLeftColumn(item tview.Primitive, fixedSize, proportion int) {
+	t.leftCol.AddItem(item, fixedSize, proportion, false)
 }
 
 // Root returns the root primitive

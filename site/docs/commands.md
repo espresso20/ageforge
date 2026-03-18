@@ -10,6 +10,7 @@ All commands are typed at the `>` prompt at the bottom of the screen. Press `↑
 |---|---|
 | `build <key>` | Start constructing a building |
 | `build cancel` | Cancel the current build in the queue |
+| `sell <building> [count]` | Demolish a building and recover 50% of its build cost. Workers are returned to idle. |
 | `gather <resource> [amount]` | Manually gather food, wood, or stone (max 10 per command) |
 
 **Example:**
@@ -17,6 +18,8 @@ All commands are typed at the `>` prompt at the bottom of the screen. Press `↑
 build hut
 build lumber_mill
 build cancel
+sell lumber_mill
+sell gathering_camp 3
 gather wood 5
 ```
 
@@ -28,9 +31,11 @@ gather wood 5
 |---|---|
 | `recruit [count\|max]` | Recruit one or more workers from available housing capacity |
 | `assign <building_key> [count\|all]` | Assign workers to a building (domain inferred from building) |
-| `unassign <building_key> [count\|all]` | Unassign workers from a building |
+| `unassign <building_key> [count\|all]` | Unassign workers from a building (returns them to idle pool) |
+| `dismiss <building_key> [count\|all]` | Permanently remove workers from a building and from the population pool entirely |
+| `workers` | Open the worker status overlay (summary, slot utilization, domain breakdown) |
 
-Workers are recruited generically from available housing capacity and assigned to buildings, where they become that building's domain class (Gatherer, Lumberjack, etc.).
+Workers are recruited generically from available housing capacity and assigned to buildings, where they become that building's domain class (Gatherer, Lumberjack, etc.). `unassign` returns workers to idle; `dismiss` reduces total population.
 
 ```
 recruit
@@ -40,6 +45,9 @@ assign gathering_camp 3
 assign library all
 unassign shrine
 unassign shrine all
+dismiss shrine 2
+dismiss barracks all
+workers
 ```
 
 See [Workers & Domains (Reference)](workers-and-domains.md) for the full domain table and efficiency formula.
@@ -183,3 +191,4 @@ Type a single letter to jump straight to a tab:
 | `w` | Wonders overlay (`wonders`) |
 | `l` | Logs overlay (`logs`) |
 | `history` | Civilization History overlay |
+| `workers` | Worker status overlay (summary / slot utilization / domain breakdown) |

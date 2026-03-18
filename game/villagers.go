@@ -95,6 +95,25 @@ func (vm *WorkerManager) Unassign(_, buildingKey string, count int) bool {
 	return true
 }
 
+// Dismiss removes workers from a building assignment and from the pool entirely.
+// Returns the actual number dismissed.
+func (vm *WorkerManager) Dismiss(buildingKey string, count int) int {
+	rt := vm.domains["worker"]
+	assigned := rt.assignments[buildingKey]
+	if assigned <= 0 {
+		return 0
+	}
+	if count > assigned {
+		count = assigned
+	}
+	rt.assignments[buildingKey] -= count
+	rt.count -= count
+	if rt.count < 0 {
+		rt.count = 0
+	}
+	return count
+}
+
 // IdleCount returns how many workers are not assigned to any building.
 // The key argument is ignored.
 func (vm *WorkerManager) IdleCount(_ string) int {
@@ -162,6 +181,43 @@ func (vm *WorkerManager) GetDomainCount(domain string) int {
 // building fill ratios in BuildingManager.WorkerScaledProduction.
 func (vm *WorkerManager) GetProductionRates() map[string]float64 {
 	return make(map[string]float64)
+}
+
+// KillWorker removes workers from starvation. Assignments are scaled down
+// proportionally so assigned count never exceeds remaining population.
+func (vm *WorkerManager) KillWorker(count int) int {
+	rt := vm.domains["worker"]
+	if rt.count <= 0 {
+		return 0
+	}
+	if count > rt.count {
+		count = rt.count
+	}
+	rt.count -= count
+	// Reconcile: assigned total must not exceed new count
+	for {
+		assigned := 0
+		for _, c := range rt.assignments {
+			assigned += c
+		}
+		if assigned <= rt.count {
+			break
+		}
+		// Find the largest assignment and reduce it by 1
+		maxKey := ""
+		maxVal := 0
+		for k, c := range rt.assignments {
+			if c > maxVal {
+				maxVal = c
+				maxKey = k
+			}
+		}
+		if maxKey == "" {
+			break
+		}
+		rt.assignments[maxKey]--
+	}
+	return count
 }
 
 // RemoveSoldiers removes workers from the pool (expedition losses).

@@ -143,6 +143,44 @@ func (bm *BuildingManager) BuildBatchCost(key string, n int, queue []BuildQueueI
 	return total, true
 }
 
+// SellCost returns the 50% refund for selling n copies of a building,
+// assuming current copies are currently built.
+// Sells from the top (most expensive first): copy current, current-1, … current-n+1.
+// Returns (refund map, true) or (nil, false) if key unknown or n <= 0.
+func (bm *BuildingManager) SellCost(key string, n int) (map[string]float64, bool) {
+	def, ok := bm.defs[key]
+	if !ok || n <= 0 {
+		return nil, false
+	}
+	current := bm.counts[key]
+	if n > current {
+		n = current
+	}
+	refund := make(map[string]float64)
+	for i := 0; i < n; i++ {
+		// copy number being removed: current-i (1-indexed), so exponent = current-1-i
+		exp := float64(current - 1 - i)
+		for res, base := range def.BaseCost {
+			refund[res] += math.Floor(base*math.Pow(def.CostScale, exp)) * 0.5
+		}
+	}
+	return refund, true
+}
+
+// RemoveBuilding decrements the count of a built building by n (min 0).
+// Returns the actual number removed.
+func (bm *BuildingManager) RemoveBuilding(key string, n int) int {
+	if n <= 0 {
+		return 0
+	}
+	current := bm.counts[key]
+	if n > current {
+		n = current
+	}
+	bm.counts[key] -= n
+	return n
+}
+
 // GetCost calculates the cost for the next instance of a building type.
 // Cost scales exponentially: base × CostScale^count, floored to the nearest
 // integer. This makes later copies progressively more expensive.

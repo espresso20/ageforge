@@ -3,8 +3,11 @@ package config
 // WorkerClassDef defines a single tier of a worker domain, tied to a specific age.
 // Each domain has one class per age it spans (from its start age through quantum_age).
 // Food cost and production multiplier scale geometrically per tier:
-//   FoodCost = baseFoodCost × 1.5^tier
+//   FoodCost = baseFoodCost × 1.12^tier
 //   Multiplier = 2.0^tier
+// With 1.12 the tier-20 cost is ~9.6× base (vs 3325× with the old 1.5 multiplier).
+// food domain (base 0.06): tier 0 → 0.060, tier 10 → 0.186, tier 20 → 0.579
+// lumber/masonry/knowledge (base 1.0): tier 0 → 1.000, tier 9 → 2.773, tier 19 → 7.690
 type WorkerClassDef struct {
 	Domain     string  // domain key (e.g. "food", "knowledge", "metallurgy")
 	AgeKey     string  // age at which this class tier is active
@@ -19,7 +22,7 @@ func wc(domain, ageKey, className string, baseFoodCost float64, tier int) Worker
 	fc := baseFoodCost
 	mp := 1.0
 	for i := 0; i < tier; i++ {
-		fc *= 1.5
+		fc *= 1.12 // was 1.5 — softer scaling so tier-20 costs ~9x base not 3325x
 		mp *= 2.0
 	}
 	return WorkerClassDef{Domain: domain, AgeKey: ageKey, ClassName: className, FoodCost: fc, Multiplier: mp}
@@ -44,28 +47,28 @@ func WorkerClasses() []WorkerClassDef {
 	return []WorkerClassDef{
 
 		// === FOOD DOMAIN (starts primitive_age, base food cost 0.06) ===
-		// FoodCost = 0.06 × 1.5^tier:
+		// FoodCost = 0.06 × 1.12^tier:
 		//   tier 0  primitive:    0.060  Forager
-		//   tier 1  stone:        0.090  Farmhand
-		//   tier 2  bronze:       0.135  Cultivator
-		//   tier 3  iron:         0.203  Laborer
-		//   tier 4  classical:    0.304  Peasant
-		//   tier 5  medieval:     0.456  Serf
-		//   tier 6  renaissance:  0.684  Plowman
-		//   tier 7  colonial:     1.026  Colonial Farmer
-		//   tier 8  industrial:   1.539  Factory Hand
-		//   tier 9  victorian:    2.309  Agricultural Worker
-		//   tier 10 electric:     3.463  Electric Farmer
-		//   tier 11 atomic:       5.194  Atomic Agronomist
-		//   tier 12 modern:       7.791  Modern Farmer
-		//   tier 13 information: 11.687  Digital Cultivator
-		//   tier 14 digital:     17.530  AI Agronomist
-		//   tier 15 cyberpunk:   26.295  Aug Harvester
-		//   tier 16 fusion:      39.443  Bio-Farmer
-		//   tier 17 space:       59.165  Zero-G Farmer
-		//   tier 18 interstellar:88.747  Stellar Cultivator
-		//   tier 19 galactic:   133.120  Galactic Farmer
-		//   tier 20 quantum:    199.680  Quantum Harvester
+		//   tier 1  stone:        0.067  Farmhand
+		//   tier 2  bronze:       0.075  Cultivator
+		//   tier 3  iron:         0.084  Laborer
+		//   tier 4  classical:    0.095  Peasant
+		//   tier 5  medieval:     0.106  Serf
+		//   tier 6  renaissance:  0.119  Plowman
+		//   tier 7  colonial:     0.133  Colonial Farmer
+		//   tier 8  industrial:   0.149  Factory Hand
+		//   tier 9  victorian:    0.167  Agricultural Worker
+		//   tier 10 electric:     0.187  Electric Farmer
+		//   tier 11 atomic:       0.209  Atomic Agronomist
+		//   tier 12 modern:       0.234  Modern Farmer
+		//   tier 13 information:  0.263  Digital Cultivator
+		//   tier 14 digital:      0.294  AI Agronomist
+		//   tier 15 cyberpunk:    0.330  Aug Harvester
+		//   tier 16 fusion:       0.369  Bio-Farmer
+		//   tier 17 space:        0.414  Zero-G Farmer
+		//   tier 18 interstellar: 0.463  Stellar Cultivator
+		//   tier 19 galactic:     0.519  Galactic Farmer
+		//   tier 20 quantum:      0.581  Quantum Harvester
 		wc("food", "primitive_age", "Forager", 0.06, 0),
 		wc("food", "stone_age", "Farmhand", 0.06, 1),
 		wc("food", "bronze_age", "Cultivator", 0.06, 2),

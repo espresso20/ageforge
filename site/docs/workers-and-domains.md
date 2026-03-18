@@ -74,7 +74,7 @@ Workers are recruited from available housing capacity. No domain argument — wo
 
 **`max` behaviour:** attempts to fill all remaining housing slots (up to population cap). It does not check your food income — you can recruit more workers than your food supports, putting you into a deficit.
 
-**Viewing workers:** type `status` (or `s`) or press `e` for the Economy tab. The population bar shows `total / max (idle: N, food drain: X.X/tick)`.
+**Viewing workers:** type `workers` for the full three-panel overlay (summary, slot utilization, domain breakdown), or press `e` for the Economy tab. The `workers` overlay shows net food/tick color-coded green/red, a break-even or starvation warning, and per-building fill bars. A worker mini-box is always visible in the sidebar showing pop/idle/housing/drain/net at a glance.
 
 ---
 
@@ -153,8 +153,45 @@ Unassigned workers return to the idle pool immediately and can be reassigned els
 **When to unassign:**
 
 - Reassigning workers from low-priority buildings to new higher-tier ones after an age advance
-- Cutting food drain when food stocks are low (unassign expensive-domain buildings first)
 - Freeing workers to send on expeditions (expedition losses come from the pool)
+
+---
+
+## Dismissing Workers
+
+```
+dismiss <building_key> [count|all]
+```
+
+`dismiss` permanently removes workers from a building **and** from the total population pool. Unlike `unassign`, dismissed workers are gone — population decreases immediately.
+
+| Command | Effect |
+|---------|--------|
+| `dismiss gathering_camp 2` | Remove 2 workers from gathering_camp and reduce total pop by 2 |
+| `dismiss barracks all` | Dismiss all workers assigned to barracks |
+
+**When to dismiss:**
+
+- Food deficit — cutting idle workers with `unassign` doesn't help because idle workers still drain food. `dismiss` is the only way to reduce drain without food production changes.
+- Housing pressure — free up housing slots for more productive workers in a different domain
+- Late-game cleanup — remove early-tier cheap workers that are no longer worth their housing slot
+
+---
+
+## Starvation
+
+When food hits 0 and net food income is negative, workers begin dying:
+
+- A warning is logged on the first tick of deficit
+- **1 worker is killed every 5 ticks** until food net income recovers
+- Deaths are logged in red
+- When food returns to positive net income, deaths stop and a recovery message is shown
+
+Starvation is intentional — overpopulating without food infrastructure is punished. Recovery options:
+
+1. `dismiss` workers from low-priority buildings to immediately cut drain
+2. Build more food production buildings and assign workers to them
+3. `unassign` from expensive-domain buildings and `assign` them to food buildings instead
 
 ---
 
@@ -181,33 +218,33 @@ Unassigned workers return to the idle pool immediately and can be reassigned els
 
 ## Worker Class Names by Age
 
-Each domain has one class per age it spans. Class name is cosmetic but also determines the food cost lookup for workers assigned to that domain's buildings. Food costs scale geometrically: `FoodCost = baseFoodCost × 1.5^tier`.
+Each domain has one class per age it spans. Class name is cosmetic but also determines the food cost lookup for workers assigned to that domain's buildings. Food costs scale geometrically: `FoodCost = baseFoodCost × 1.12^tier`.
 
 ### food — base 0.06/tick, starts Primitive Age
 
 | Age | Class Name | Food/tick |
 |-----|-----------|-----------|
 | Primitive | Forager | 0.060 |
-| Stone | Farmhand | 0.090 |
-| Bronze | Cultivator | 0.135 |
-| Iron | Laborer | 0.203 |
-| Classical | Peasant | 0.304 |
-| Medieval | Serf | 0.456 |
-| Renaissance | Plowman | 0.684 |
-| Colonial | Colonial Farmer | 1.026 |
-| Industrial | Factory Hand | 1.539 |
-| Victorian | Agricultural Worker | 2.309 |
-| Electric | Electric Farmer | 3.463 |
-| Atomic | Atomic Agronomist | 5.194 |
-| Modern | Modern Farmer | 7.791 |
-| Information | Digital Cultivator | 11.687 |
-| Digital | AI Agronomist | 17.530 |
-| Cyberpunk | Aug Harvester | 26.295 |
-| Fusion | Bio-Farmer | 39.443 |
-| Space | Zero-G Farmer | 59.165 |
-| Interstellar | Stellar Cultivator | 88.747 |
-| Galactic | Galactic Farmer | 133.120 |
-| Quantum | Quantum Harvester | 199.680 |
+| Stone | Farmhand | 0.067 |
+| Bronze | Cultivator | 0.075 |
+| Iron | Laborer | 0.084 |
+| Classical | Peasant | 0.095 |
+| Medieval | Serf | 0.106 |
+| Renaissance | Plowman | 0.119 |
+| Colonial | Colonial Farmer | 0.133 |
+| Industrial | Factory Hand | 0.149 |
+| Victorian | Agricultural Worker | 0.167 |
+| Electric | Electric Farmer | 0.187 |
+| Atomic | Atomic Agronomist | 0.210 |
+| Modern | Modern Farmer | 0.235 |
+| Information | Digital Cultivator | 0.263 |
+| Digital | AI Agronomist | 0.295 |
+| Cyberpunk | Aug Harvester | 0.330 |
+| Fusion | Bio-Farmer | 0.370 |
+| Space | Zero-G Farmer | 0.415 |
+| Interstellar | Stellar Cultivator | 0.465 |
+| Galactic | Galactic Farmer | 0.521 |
+| Quantum | Quantum Harvester | 0.583 |
 
 ### knowledge — base 1.0/tick, starts Primitive Age
 
@@ -232,22 +269,22 @@ Early tiers cover shrine/altar buildings at lower food costs before the formal d
 | Bronze | Worshipper | 0.18 |
 | Iron | Celebrant | 0.27 |
 | Classical | Initiate | 0.40 |
-| Medieval | Acolyte | 2.0 |
-| Renaissance | Monk | 3.0 |
-| Colonial | Missionary | 4.5 |
-| Industrial | Revivalist | 6.75 |
-| Victorian | Parish Priest | ~10.1 |
-| Electric | Evangelical | ~15.2 |
-| Atomic | Atomic Priest | ~22.8 |
-| Modern | Modern Shepherd | ~34.2 |
-| Information | Digital Devotee | ~51.3 |
-| Digital | Virtual Cleric | ~76.9 |
-| Cyberpunk | Cyber Cleric | ~115.4 |
-| Fusion | Plasma Prophet | ~173.1 |
-| Space | Star Preacher | ~259.7 |
-| Interstellar | Interstellar Mystic | ~389.5 |
-| Galactic | Galactic High Priest | ~584.3 |
-| Quantum | Quantum Sage | ~876.4 |
+| Medieval | Acolyte | 2.00 |
+| Renaissance | Monk | 2.24 |
+| Colonial | Missionary | 2.51 |
+| Industrial | Revivalist | 2.81 |
+| Victorian | Parish Priest | 3.15 |
+| Electric | Evangelical | 3.52 |
+| Atomic | Atomic Priest | 3.95 |
+| Modern | Modern Shepherd | 4.42 |
+| Information | Digital Devotee | 4.95 |
+| Digital | Virtual Cleric | 5.54 |
+| Cyberpunk | Cyber Cleric | 6.21 |
+| Fusion | Plasma Prophet | 6.95 |
+| Space | Star Preacher | 7.79 |
+| Interstellar | Interstellar Mystic | 8.72 |
+| Galactic | Galactic High Priest | 9.77 |
+| Quantum | Quantum Sage | 10.94 |
 
 ### military — base 2.0/tick, starts Iron Age
 
@@ -268,18 +305,18 @@ Bronze: Peddler → Iron: Merchant → Classical: Trader → Medieval: Nobleman 
 | Renaissance | Master Eng. | 2.50 |
 | Colonial | Mechanic | 3.75 |
 | Industrial | Machinist | 5.60 |
-| Victorian | Tinker | 8.0 |
-| Electric | Electrical Engineer | 12.0 |
-| Atomic | Nuclear Engineer | 18.0 |
-| Modern | Systems Engineer | ~27.0 |
-| Information | Software Engineer | ~40.5 |
-| Digital | AI Engineer | ~60.8 |
-| Cyberpunk | Cyber Engineer | ~91.1 |
-| Fusion | Plasma Engineer | ~136.7 |
-| Space | Space Engineer | ~205.1 |
-| Interstellar | Warp Engineer | ~307.6 |
-| Galactic | Galactic Engineer | ~461.4 |
-| Quantum | Quantum Engineer | ~692.1 |
+| Victorian | Tinker | 8.00 |
+| Electric | Electrical Engineer | 8.96 |
+| Atomic | Nuclear Engineer | 10.04 |
+| Modern | Systems Engineer | 11.24 |
+| Information | Software Engineer | 12.59 |
+| Digital | AI Engineer | 14.10 |
+| Cyberpunk | Cyber Engineer | 15.79 |
+| Fusion | Plasma Engineer | 17.69 |
+| Space | Space Engineer | 19.81 |
+| Interstellar | Warp Engineer | 22.19 |
+| Galactic | Galactic Engineer | 24.85 |
+| Quantum | Quantum Engineer | 27.83 |
 
 ### metallurgy — base 2.0/tick, starts Iron Age
 
@@ -307,28 +344,29 @@ Every worker costs food per tick. The amount is determined by the **food domain'
 total_food_drain = food_domain_food_cost × total_worker_count
 ```
 
-Food drain scales with age. In primitive age, workers cost **0.06 food/tick** each — very manageable. By modern age the same worker costs **~7.8 food/tick**, so population size must be matched by food production capacity.
+Food drain scales with age. In primitive age, workers cost **0.06 food/tick** each — very manageable. By modern age a worker costs **~0.24 food/tick** (down significantly from older builds), keeping late-game populations affordable as long as food production scales too.
 
 **Food drain table (all workers, by age tier):**
 
 | Age | Food/tick per worker | 10 workers | 50 workers |
 |-----|---------------------|-----------|-----------|
-| Primitive | 0.060 | 0.6 | 3.0 |
-| Stone | 0.090 | 0.9 | 4.5 |
-| Bronze | 0.135 | 1.35 | 6.75 |
-| Iron | 0.203 | 2.03 | 10.1 |
-| Classical | 0.304 | 3.04 | 15.2 |
-| Medieval | 0.456 | 4.56 | 22.8 |
-| Victorian | 2.309 | 23.1 | 115.4 |
-| Modern | 7.791 | 77.9 | 389.5 |
+| Primitive | 0.060 | 0.60 | 3.0 |
+| Stone | 0.067 | 0.67 | 3.35 |
+| Bronze | 0.075 | 0.75 | 3.75 |
+| Iron | 0.084 | 0.84 | 4.2 |
+| Classical | 0.095 | 0.95 | 4.75 |
+| Medieval | 0.106 | 1.06 | 5.3 |
+| Victorian | 0.167 | 1.67 | 8.35 |
+| Modern | 0.235 | 2.35 | 11.75 |
 
-**What happens at food = 0:** food goes negative. Workers do not die automatically, but negative food income is a drain on all other food-producing systems. Unassign workers from buildings or build more food production to recover.
+**What happens at food = 0:** starvation begins. Workers start dying — 1 killed every 5 ticks — until food net income returns to positive. A warning is logged on the first deficit tick; deaths are shown in red. When food recovers, a recovery message is shown and deaths stop.
 
 **Practical advice:**
 
 - Always ensure food income > food drain before recruiting more workers
-- The `status` command shows current food drain per tick
-- Unassigning workers frees them but they still drain food while idle — the drain reduction only comes from reducing total population (no mechanic to "dismiss" workers permanently short of expedition losses or epidemic events)
+- The `status` command and `workers` overlay both show current food drain per tick and net food/tick
+- `unassign` returns workers to the idle pool — they still drain food while idle. Use `dismiss` to permanently remove workers from the population pool and immediately reduce total drain
+- `dismiss <building_key> [count|all]` cuts population directly; unlike `unassign`, dismissed workers are gone entirely
 
 ---
 
@@ -408,6 +446,8 @@ The command input supports TAB autocomplete for all worker commands:
 | `assign lib` | `library`, `library_of_congress`, … (filtered by prefix) |
 | `unassign ` | only building keys that currently have workers assigned |
 | `unassign barracks ` | `all` |
+| `dismiss ` | only building keys that currently have workers assigned |
+| `dismiss barracks ` | `all` |
 | `recruit ` | `max` |
 
 Autocomplete only shows buildings you have **unlocked** for assign, and buildings with **active assignments** for unassign — it won't suggest buildings you haven't reached yet or that have no workers to remove.

@@ -68,7 +68,7 @@ These resources are produced by Geological Extraction buildings and consumed by 
 
 ## Food
 
-Food is the most critical resource. Every worker in every domain drains food each tick — the rate scales with their class tier (`baseFoodCost × 1.5^tier`). If food hits zero, population begins to starve.
+Food is the most critical resource. Every worker in every domain drains food each tick — the rate scales with their class tier (`baseFoodCost × 1.12^tier`). If food hits zero, workers begin to die at a rate of 1 per 5 ticks until food is restored.
 
 **How to increase food:**
 - Assign food-domain workers to Food lineage buildings (`assign gathering_camp 5`)

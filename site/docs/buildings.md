@@ -31,6 +31,22 @@ build                    — list all available buildings (with costs and count 
 
 **`max`** tells the engine to build as many copies as you can afford using the full cumulative cost curve — it stops the moment the next unit would exceed your available resources. It is **not** a flat division of your resources by base cost; each unit is priced correctly at its scaled cost before the decision to continue is made.
 
+### Selling Buildings
+
+```
+sell <key>           — demolish 1 copy, recover 50% of its scaled cost
+sell <key> <count>   — demolish that many copies (most expensive first)
+```
+
+You can sell non-wonder buildings from the **Stone Age onward** (sell is disabled in the Primitive Age). Selling removes copies from the most expensive end of the cost curve first — the refund for each copy is 50% of what that copy originally cost at its scale step.
+
+**Worker handling:** if the sold copies reduce total worker capacity below the number of workers currently assigned, the excess workers are automatically unassigned and returned to the idle pool. They are not dismissed — their population slot is preserved.
+
+**Restrictions:**
+- Wonders cannot be sold.
+- Buildings currently under construction (in the build queue) cannot be sold until construction completes.
+- Sell is not available in the Primitive Age.
+
 ### Cost Scaling
 
 Each building has a `BaseCost` and a `CostScale`. The cost of building the next copy depends on how many are already **built** plus how many are currently **in the build queue**:

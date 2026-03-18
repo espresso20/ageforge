@@ -46,7 +46,7 @@ production = base_rate × building_count × (0.20 + 0.80 × assigned / total_cap
 
 Each domain has age-tiered class names. Workers are recruited generically and take on a domain class when assigned to a building. When assigned, they join at the current age's tier for that domain. Existing workers retain their tier and its food cost when you advance ages.
 
-**Food drain scales geometrically:** `FoodCost = baseFoodCost × 1.5^tier`
+**Food drain scales geometrically:** `FoodCost = baseFoodCost × 1.12^tier`
 
 **Production scales geometrically:** `Multiplier = 2.0^tier` (vs. the building's base rate)
 
@@ -152,14 +152,50 @@ The domain is inferred automatically from the building. A building with worker c
 unassign <building_key> [count|all]
 ```
 
+Returns workers to the idle pool. They still drain food while idle.
+
+**Permanently dismiss workers:**
+
+```
+dismiss <building_key> [count|all]
+```
+
+`dismiss` removes workers from a building AND from the population pool entirely — it reduces total population, not just reassigns them to idle. Use it to free up housing capacity or cut food drain when you have more workers than you can sustain. Unlike `unassign`, dismissed workers are gone.
+
+**View worker status:**
+
+```
+workers
+```
+
+Opens a three-panel overlay:
+- **Summary** — total pop / max, idle count, housing remaining, food drain/tick, net food/tick (color-coded), and a break-even or starvation warning
+- **Slot Utilization** — filled vs. total slots across all worker buildings, fill bar, top buildings by vacancy
+- **Domain Breakdown** — per-domain class name and food cost, with per-building assignment bars showing assigned/capacity
+
+A worker mini-box is also always visible in the sidebar showing pop/idle/housing/drain/net food at a glance.
+
+---
+
+## Starvation
+
+When food hits 0 and net food income is negative, workers begin dying:
+
+- A warning is logged on the first tick of deficit
+- 1 worker is killed every 5 ticks until food recovers
+- Deaths are logged in red
+- When food returns to positive net income, starvation stops and a recovery message is shown
+
+This is intentional Malthusian gameplay — overpopulating without food infrastructure is punished. The fastest recovery is to `dismiss` workers from low-priority buildings to immediately reduce food drain, or to `unassign` expensive-domain workers and redirect them to food buildings.
+
 ---
 
 ## Food Drain
 
-Every worker in every domain costs food per tick. The exact amount is `baseFoodCost × 1.5^tier` for their current class tier. As you advance ages and recruit higher-tier workers, food drain rises substantially.
+Every worker in every domain costs food per tick. The exact amount is `baseFoodCost × 1.12^tier` for their current class tier. As you advance ages and recruit higher-tier workers, food drain rises — but the curve is much gentler than it used to be (tier-20 is ~9.6× base, not 3325×).
 
 - Tier 0 food workers (Foragers) cost **0.06 food/tick** each — extremely cheap
-- Tier 5 food workers (Medieval Serf) cost `0.06 × 1.5^5 ≈ 0.46 food/tick`
+- Tier 5 food workers (Medieval Serf) cost `0.06 × 1.12^5 ≈ 0.11 food/tick`
 - Other domain base costs: knowledge/lumber/masonry/trade = 1.0, faith/military/metallurgy = 2.0, engineering/energy = 8.0, hacker = 16.0, astronaut = 32.0
 - High-tier specialists (Hacker at tier 0 = 16.0, Astronaut at tier 0 = 32.0) are expensive — ensure food production keeps up before recruiting them
 
@@ -173,3 +209,5 @@ Every worker in every domain costs food per tick. The exact amount is `baseFoodC
 - **Metallurgy requires both extraction and refining** — assign masonry workers to geological extraction buildings to produce raw ore, then metallurgy workers to smelters to refine it.
 - **Single pool** — all workers are in one pool regardless of which buildings they are assigned to. Reassign freely between any buildings at any time.
 - **Check idle count** — press `e` (Economy tab) to see the idle count in the status bar. Unassigned workers still drain food for zero extra production benefit.
+- **Use `dismiss` to cut population** — if you are in a food deficit and can't produce enough, `dismiss` workers from non-critical buildings to permanently reduce drain. `unassign` alone does not help; idle workers still cost food.
+- **Use `workers` for a full picture** — the overlay shows net food/tick and per-domain breakdown, making it easy to spot which domain is draining the most.

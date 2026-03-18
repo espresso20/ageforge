@@ -20,6 +20,8 @@ var commands = []string{
 	"recruit", "r",
 	"assign", "a",
 	"unassign", "u",
+	"dismiss",
+	"sell",
 	"research", "res",
 	"expedition", "exp",
 	"trade", "t",
@@ -33,7 +35,7 @@ var commands = []string{
 	"wonder",
 	"dump", "exportlogs",
 	"milestones", "ms",
-	"techs", "army", "stats", "wonders", "logs", "epoch", "history",
+	"techs", "army", "stats", "wonders", "workers", "logs", "epoch", "history",
 }
 
 // NewAutoCompleter returns an autocomplete function for the command input field.
@@ -113,6 +115,17 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 			return filterPrefix(assignedBuildingKeysAll(state), partial, prefix)
 		}
 		return filterPrefix([]string{"all"}, partial, prefix)
+
+	case "dismiss":
+		if len(completed) == 0 {
+			return filterPrefix(assignedBuildingKeysAll(state), partial, prefix)
+		}
+		return filterPrefix([]string{"all"}, partial, prefix)
+
+	case "sell":
+		if len(completed) == 0 {
+			return filterPrefix(builtBuildingKeys(state), partial, prefix)
+		}
 
 	case "research", "res":
 		keys := availableTechKeys(state)
@@ -281,6 +294,19 @@ func recruitCompletions(state game.GameState) []string {
 	}
 	sort.Strings(names)
 	return names
+}
+
+// builtBuildingKeys returns all building keys where at least one copy has been built,
+// sorted alphabetically. Used for the "sell" command autocomplete.
+func builtBuildingKeys(state game.GameState) []string {
+	var keys []string
+	for key, bs := range state.Buildings {
+		if bs.Count > 0 {
+			keys = append(keys, key)
+		}
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 // workerBuildingKeys returns all unlocked building keys that accept workers
