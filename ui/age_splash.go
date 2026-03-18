@@ -15,13 +15,13 @@ import (
 // ShowAgeSplash is the simplified variant of ShowAgeSplashFull for callers that
 // don't have an AgeAdvanceSummary or EpochEventRecord available.
 // It auto-dismisses after 20 seconds or on any keypress.
-func ShowAgeSplash(app *tview.Application, pages *tview.Pages, oldAge, newAge string) {
-	ShowAgeSplashFull(app, pages, oldAge, newAge, game.AgeAdvanceSummary{}, false, game.EpochEventRecord{})
+func ShowAgeSplash(om *OverlayManager, oldAge, newAge string) {
+	ShowAgeSplashFull(om, oldAge, newAge, game.AgeAdvanceSummary{}, false, game.EpochEventRecord{})
 }
 
 // ShowAgeSplashFull is the full variant of ShowAgeSplash that also displays the
 // transformation summary and optional epoch event reveal.
-func ShowAgeSplashFull(app *tview.Application, pages *tview.Pages, oldAge, newAge string,
+func ShowAgeSplashFull(om *OverlayManager, oldAge, newAge string,
 	summary game.AgeAdvanceSummary, epochChanged bool, epochEvent game.EpochEventRecord) {
 	ages := config.AgeByKey()
 	newDef := ages[newAge]
@@ -141,9 +141,9 @@ func ShowAgeSplashFull(app *tview.Application, pages *tview.Pages, oldAge, newAg
 	fmt.Fprintf(&sb, "\n[gray]Press any key to continue[-]")
 	titleTV.SetText(sb.String())
 
-	// Layout: text-only flex
+	// Layout: text-only flex with focusable=true so the overlay itself receives input
 	overlay := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(titleTV, 0, 1, false)
+		AddItem(titleTV, 0, 1, true)
 
 	// dismissed guards against double-dismiss (both the timer goroutine and a
 	// keypress can fire simultaneously; we only want to remove the page once).
@@ -153,29 +153,28 @@ func ShowAgeSplashFull(app *tview.Application, pages *tview.Pages, oldAge, newAg
 			return
 		}
 		dismissed = true
-		pages.RemovePage("age_splash")
-		pages.SwitchToPage("dashboard")
+		om.Hide()
 	}
 
-	// SetInputCapture on titleTV (the focused child) so keypresses actually reach
-	// the capture handler. QueueUpdateDraw is required because pages.RemovePage
-	// modifies the layout and must run on the main goroutine.
-	titleTV.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		app.QueueUpdateDraw(func() {
-			dismiss()
-		})
+	// SetInputCapture on the overlay Flex so all keypresses trigger dismiss.
+	overlay.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		dismiss()
 		return nil
 	})
 
 	// Auto-dismiss after 20 seconds
 	go func() {
 		time.Sleep(20 * time.Second)
-		app.QueueUpdateDraw(func() {
+		om.app.QueueUpdateDraw(func() {
 			dismiss()
 		})
 	}()
 
-	pages.AddPage("age_splash", overlay, true, true)
-	pages.SwitchToPage("age_splash")
-	app.SetFocus(titleTV)
+	// Remove any currently active overlay first, then add the splash
+	if om.active != "" {
+		om.pages.RemovePage(om.active)
+	}
+	om.pages.AddPage("age_splash", overlay, true, true)
+	om.active = "age_splash"
+	om.app.SetFocus(overlay)
 }

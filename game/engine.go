@@ -881,8 +881,11 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	ge.applyAgeUnlocks(newAge)
 	ge.Stats.RecordAge(newAge)
 
-	// Reduce all resources to 10% on age transition
-	for _, r := range ge.Resources.resources {
+	// Reduce all resources to 10% on age transition (faith is excluded — it's cumulative)
+	for key, r := range ge.Resources.resources {
+		if key == "faith" {
+			continue
+		}
 		r.Amount *= 0.10
 	}
 	ge.addLog("info", "Age transition: resources reduced to 10%")
