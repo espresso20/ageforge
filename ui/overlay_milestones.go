@@ -11,7 +11,7 @@ import (
 // milestonesProvider generates the milestones overlay text from the current game state.
 // This is lifted from StatsTab.refreshMilestones — identical logic, returning a string
 // instead of calling SetText on a TextView.
-func milestonesProvider(state game.GameState) string {
+func milestonesProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 	ms := state.Milestones
 

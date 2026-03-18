@@ -10,7 +10,7 @@ import (
 
 // militaryProvider generates the military overlay text from the current game state.
 // It mirrors the logic from MilitaryTab.Refresh — same data, formatted as plain text.
-func militaryProvider(state game.GameState) string {
+func militaryProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 	mil := state.Military
 

@@ -8,11 +8,11 @@ import (
 )
 
 // historyProvider is the OverlayProvider for the history overlay.
-func historyProvider(state game.GameState) string {
-	return renderHistoryOverlay(state)
+func historyProvider(state game.GameState, w int) string {
+	return renderHistoryOverlay(state, w)
 }
 
-func renderHistoryOverlay(state game.GameState) string {
+func renderHistoryOverlay(state game.GameState, w int) string {
 	if state.History == nil || len(state.History.Samples) < 2 {
 		return "\n[gray] No history yet — play for a while and check back.[-]\n"
 	}
@@ -30,7 +30,11 @@ func renderHistoryOverlay(state game.GameState) string {
 		markerNames = append(markerNames, m.AgeName)
 	}
 
-	const graphW = 58 // braille chars wide
+	// 85% overlay, minus y-axis label (8 chars), border/padding (6 chars)
+	graphW := int(float64(w)*0.85) - 14
+	if graphW < 20 {
+		graphW = 20
+	}
 	const graphH = 4  // rows tall per graph
 
 	ageCols := AgeMarkerCols(markerTicks, firstTick, lastTick, graphW)

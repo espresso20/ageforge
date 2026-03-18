@@ -10,7 +10,7 @@ import (
 
 // wondersProvider generates the wonders overlay text from the current game state.
 // Text-only — no pixel art images. Shows wonder name, age, description, effects, and build status.
-func wondersProvider(state game.GameState) string {
+func wondersProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 
 	wonders := getWonderList()

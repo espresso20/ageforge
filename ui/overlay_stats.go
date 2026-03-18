@@ -11,7 +11,7 @@ import (
 
 // statsProvider generates the stats overlay text from the current game state.
 // Covers: game statistics, active epoch events, and prestige upgrades/points.
-func statsProvider(state game.GameState) string {
+func statsProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 
 	// ─── Statistics ───
