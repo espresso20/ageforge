@@ -82,6 +82,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return CommandResult{OverlayName: "stats"}
 	case "wonders":
 		return CommandResult{OverlayName: "wonders"}
+	case "workers":
+		return CommandResult{OverlayName: "workers"}
 	case "logs":
 		return CommandResult{OverlayName: "logs"}
 	case "epoch":
