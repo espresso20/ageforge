@@ -447,7 +447,7 @@ func (d *Dashboard) refresh() {
 			epochEvent = state.EpochEventHistory[len(state.EpochEventHistory)-1]
 		}
 
-		ShowAgeSplashFull(d.app, d.pages, oldAge, newAge, summary, epochChanged, epochEvent)
+		ShowAgeSplashFull(d.overlayMgr, oldAge, newAge, summary, epochChanged, epochEvent)
 	}
 
 	state := d.engine.GetState()
