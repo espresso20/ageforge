@@ -38,7 +38,8 @@ type Dashboard struct {
 	economyTab *EconomyTab
 
 	// Sidebar
-	sidebar *tview.TextView
+	sidebar       *tview.TextView
+	workerMiniTV  *tview.TextView
 
 	// Shared UI
 	logTV    *tview.TextView
@@ -300,10 +301,18 @@ func (d *Dashboard) build() {
 	// Inject log panel into the economy tab's left column (below Under Construction)
 	d.economyTab.AddToLeftColumn(d.logTV, 0, 1)
 
-	// Main horizontal: economy (permanent, full height) + sidebar (full height)
+	// Mini worker summary box — sits below the sidebar in the right column
+	d.workerMiniTV = tview.NewTextView().SetDynamicColors(true)
+	d.workerMiniTV.SetBorder(true).SetTitle(" Workers ").SetTitleColor(ColorVillager)
+
+	rightCol := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(d.sidebar, 0, 1, false).
+		AddItem(d.workerMiniTV, 8, 0, false)
+
+	// Main horizontal: economy (permanent, full height) + right column (sidebar + worker mini)
 	mainHoriz := tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(d.economyTab.Root(), 0, 1, false).
-		AddItem(d.sidebar, 22, 0, false)
+		AddItem(rightCol, 22, 0, false)
 
 	// Content area is just mainHoriz — no bottom strip
 	d.contentArea = mainHoriz
@@ -471,6 +480,26 @@ func (d *Dashboard) refresh() {
 	// Update overlay content and sidebar highlight
 	d.overlayMgr.Refresh(state)
 	d.updateSidebar(d.overlayMgr.ActiveName())
+	d.refreshWorkerMini(state)
+}
+
+func (d *Dashboard) refreshWorkerMini(state game.GameState) {
+	w := state.Workers
+	food, hasFoodRS := state.Resources["food"]
+	var sb strings.Builder
+	fmt.Fprintf(&sb, "[yellow]%d[white]/[green]%d[-]  [gray]Idle:[white] %d[-]\n", w.TotalPop, w.MaxPop, w.TotalIdle)
+	fmt.Fprintf(&sb, "[gray]House left:[white] %d[-]\n", w.MaxPop-w.TotalPop)
+	fmt.Fprintf(&sb, "[gray]Drain:[red] %.2f/t[-]\n", w.FoodDrain)
+	if hasFoodRS {
+		netColor := "green"
+		prefix := "+"
+		if food.Rate < 0 {
+			netColor = "red"
+			prefix = ""
+		}
+		fmt.Fprintf(&sb, "[gray]Net:[%s] %s%.2f/t[-]\n", netColor, prefix, food.Rate)
+	}
+	d.workerMiniTV.SetText(sb.String())
 }
 
 func (d *Dashboard) refreshStatus(state game.GameState) {
