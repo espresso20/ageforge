@@ -160,7 +160,9 @@ func ageEra(ageKey string) int {
 
 func classifyTerrain(seed uint64, tx, ty, mapW, mapH int) terrainKind {
 	nearEdge := tx < 4 || ty < 4 || tx >= mapW-4 || ty >= mapH-4
-	h := hashTile(seed, tx, ty)
+	// Hash at region level so adjacent cells form coherent terrain patches
+	const regionSize = 6
+	h := hashTile(seed, tx/regionSize, ty/regionSize)
 	slot := h % 100
 
 	// Ocean: near edge always, or slot 71-74 elsewhere
