@@ -293,9 +293,9 @@ func v3BiomeTile(biome v3Biome, river bool, era int) v3TileStyle {
 	if space {
 		switch biome {
 		case biomeOcean:
-			return v3TileStyle{'~', tcell.NewHexColor(0x101020), tcell.NewHexColor(0x050510)}
+			return v3TileStyle{' ', tcell.NewHexColor(0x050510), tcell.NewHexColor(0x050510)}
 		case biomeCoast:
-			return v3TileStyle{'~', tcell.NewHexColor(0x181828), tcell.NewHexColor(0x080818)}
+			return v3TileStyle{' ', tcell.NewHexColor(0x080818), tcell.NewHexColor(0x080818)}
 		case biomeMountains:
 			return v3TileStyle{'▲', tcell.NewHexColor(0x505060), tcell.NewHexColor(0x202030)}
 		default:
@@ -317,9 +317,9 @@ func v3BiomeTile(biome v3Biome, river bool, era int) v3TileStyle {
 
 	switch biome {
 	case biomeOcean:
-		return v3TileStyle{'~', dim(0x1a4a8a), dim(0x0a2a5a)}
+		return v3TileStyle{' ', dim(0x0a2a5a), dim(0x0a2a5a)}
 	case biomeCoast:
-		return v3TileStyle{'~', dim(0x3a7aaa), dim(0x1a4a7a)}
+		return v3TileStyle{' ', dim(0x1a4a7a), dim(0x1a4a7a)}
 	case biomePlains:
 		return v3TileStyle{'·', dim(0x7a8a3a), dim(0x8a9a4a)}
 	case biomeGrassland:

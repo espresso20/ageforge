@@ -16,8 +16,13 @@ import (
 // MapV2 renders a procedurally generated terrain map using half-block characters
 // for 2x vertical resolution. Each terminal cell maps to 2 pixel rows via '▄'.
 type MapV2 struct {
-	mu    sync.Mutex
-	state game.GameState
+	mu             sync.Mutex
+	state          game.GameState
+	cachedImg      *image.RGBA
+	cachedW        int
+	cachedH        int
+	cachedBldCount int
+	cachedAge      string
 }
 
 // NewMapV2 creates a new MapV2 instance.
@@ -46,10 +51,29 @@ func (m *MapV2) Build(state game.GameState) tview.Primitive {
 			return x, y, w, h
 		}
 
-		// Each terminal cell = 1 pixel wide, 2 pixels tall (half-block technique)
 		pixW := w
 		pixH := h * 2
-		img := generateMapV2Image(s, pixW, pixH)
+
+		// Count built buildings for cache invalidation
+		bldCount := 0
+		for _, bs := range s.Buildings {
+			if bs.Count > 0 {
+				bldCount++
+			}
+		}
+
+		m.mu.Lock()
+		needRegen := m.cachedImg == nil || m.cachedW != pixW || m.cachedH != pixH ||
+			m.cachedBldCount != bldCount || m.cachedAge != s.Age
+		if needRegen {
+			m.cachedImg = generateMapV2Image(s, pixW, pixH)
+			m.cachedW, m.cachedH = pixW, pixH
+			m.cachedBldCount = bldCount
+			m.cachedAge = s.Age
+		}
+		img := m.cachedImg
+		m.mu.Unlock()
+
 		renderHalfBlock(screen, img, x, y, w, h)
 		return x, y, w, h
 	})
@@ -353,25 +377,51 @@ func drawV2Buildings(img *image.RGBA, state game.GameState, pal V2Palette, era, 
 	if bSize > 6 {
 		bSize = 6
 	}
-	spacing := bSize * 3
+	spacing := bSize + 3
 
-	slot := 0
-	for _, bs := range state.Buildings {
-		if bs.Count <= 0 {
-			continue
+	// Collect buildings sorted by key for stable placement
+	type bldEntry struct {
+		key    string
+		domain string
+	}
+	var blds []bldEntry
+	for k, bs := range state.Buildings {
+		if bs.Count > 0 {
+			blds = append(blds, bldEntry{k, bs.WorkerDomain})
 		}
-
-		angle := float64(slot) * 0.7 // golden angle approx
-		radius := float64(spacing) + float64(slot/6)*float64(spacing)
-		if radius > float64(cityR) {
-			radius = float64(cityR)
+	}
+	// sort by key for deterministic order
+	for i := 1; i < len(blds); i++ {
+		for j := i; j > 0 && blds[j].key < blds[j-1].key; j-- {
+			blds[j], blds[j-1] = blds[j-1], blds[j]
 		}
+	}
 
-		bx := cx + int(math.Cos(angle)*radius)
-		by := cy + int(math.Sin(angle)*radius)
+	// Outward grid scan: generate positions radiating from center in rings
+	// Ring 0: (0,0), Ring 1: adjacent cells, Ring 2: next layer, etc.
+	gridPositions := make([][2]int, 0, len(blds)+1)
+	for ring := 1; len(gridPositions) < len(blds)+1; ring++ {
+		for dx := -ring; dx <= ring; dx++ {
+			for dy := -ring; dy <= ring; dy++ {
+				adx, ady := dx, dy
+				if adx < 0 { adx = -adx }
+				if ady < 0 { ady = -ady }
+				if adx == ring || ady == ring {
+					gridPositions = append(gridPositions, [2]int{dx, dy})
+				}
+			}
+		}
+	}
 
-		c := domainColorV2(bs.WorkerDomain)
+	for i, bld := range blds {
+		if i >= len(gridPositions) {
+			break
+		}
+		gx, gy := gridPositions[i][0], gridPositions[i][1]
+		bx := cx + gx*spacing
+		by := cy + gy*spacing
 
+		c := domainColorV2(bld.domain)
 		for py := by - bSize/2; py <= by+bSize/2; py++ {
 			for px := bx - bSize/2; px <= bx+bSize/2; px++ {
 				if px >= 0 && px < pixW && py >= 0 && py < pixH {
@@ -379,7 +429,6 @@ func drawV2Buildings(img *image.RGBA, state game.GameState, pal V2Palette, era, 
 				}
 			}
 		}
-		slot++
 	}
 }
 
