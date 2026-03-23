@@ -67,18 +67,19 @@ func buildingsLineageEnergy() []BuildingDef {
 		WorkerDomain: "energy", WorkerCapacity: 9,
 		EpochKey: "electric_era", OutputResource: "electricity",
 	})
-	// tier 4 — modern_age  output=oil + electricity  rate: oil=20 electricity=100
+	// tier 4 — modern_age  output=oil + electricity  rate: oil=20 electricity=250
+	// electricity raised from 100→250 so upgrading from nuclear_reactor (200 elec) never regresses
 	b = append(b, BuildingDef{
 		Name: "Oil Refinery", Key: "oil_refinery", Category: "production",
 		BaseCost:  map[string]float64{"steel": 33e9, "electricity": 12e9, "oil": 2e9},
 		CostScale: 1.35,
 		Effects: []Effect{
 			{Type: "production", Target: "oil", Value: 20},
-			{Type: "production", Target: "electricity", Value: 100},
+			{Type: "production", Target: "electricity", Value: 250},
 		},
 		BuildTicks:  150000,
 		RequiredAge: "modern_age",
-		Description: "Modern oil refinery and power generation. +20 oil, +100 electricity/tick (10 workers).",
+		Description: "Modern oil refinery and power generation. +20 oil, +250 electricity/tick (10 workers).",
 		LineageKey:  "energy", LineageTier: 4,
 		WorkerDomain: "energy", WorkerCapacity: 10,
 		EpochKey: "digital_era", OutputResource: "oil",
@@ -138,15 +139,19 @@ func buildingsLineageEnergy() []BuildingDef {
 		WorkerDomain: "energy", WorkerCapacity: 15,
 		EpochKey: "neon_era", OutputResource: "plasma",
 	})
-	// tier 9 — space_age  output=plasma  rate=40
+	// tier 9 — space_age  output=plasma + electricity  rate: plasma=40, electricity=2500
+	// electricity preserved from fusion_reactor_array (2000) — upgrading must never regress
 	b = append(b, BuildingDef{
 		Name: "Solar Collector Array", Key: "solar_collector_array", Category: "production",
-		BaseCost:    map[string]float64{"titanium": 90e12, "plasma": 45e12, "electricity": 112e12},
-		CostScale:   1.35,
-		Effects:     []Effect{{Type: "production", Target: "plasma", Value: 40}},
+		BaseCost: map[string]float64{"titanium": 90e12, "plasma": 45e12, "electricity": 112e12},
+		CostScale: 1.35,
+		Effects: []Effect{
+			{Type: "production", Target: "plasma", Value: 40},
+			{Type: "production", Target: "electricity", Value: 2500},
+		},
 		BuildTicks:  2000000,
 		RequiredAge: "space_age",
-		Description: "Orbital solar collectors feeding plasma energy. +40 plasma/tick (16 workers).",
+		Description: "Orbital solar collectors feeding plasma energy. +40 plasma, +2500 electricity/tick (16 workers).",
 		LineageKey:  "energy", LineageTier: 9,
 		WorkerDomain: "energy", WorkerCapacity: 16,
 		EpochKey: "neon_era", OutputResource: "plasma",
