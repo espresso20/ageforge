@@ -106,8 +106,6 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.RegisterWidget("mapv1", "Map v1 (Character)", mv1.Build, mv1.Refresh, true)
 	mv2 := NewMapV2()
 	d.overlayMgr.RegisterWidget("mapv2", "Map v2 (Image)", mv2.Build, mv2.Refresh, true)
-	mv3 := NewMapV3()
-	d.overlayMgr.RegisterWidget("mapv3", "Map v3 (Noise Terrain)", mv3.Build, mv3.Refresh, true)
 
 	return d
 }
@@ -380,7 +378,7 @@ func (d *Dashboard) updateSidebar(activeOverlay string) {
 }
 
 func buildSidebarText(active string) string {
-	commands := []string{"milestones", "research", "army", "trade", "stats", "wonders", "workers", "logs", "epoch", "history", "mapv1", "mapv2", "mapv3"}
+	commands := []string{"milestones", "research", "army", "trade", "stats", "wonders", "workers", "logs", "epoch", "history", "mapv1", "mapv2"}
 	var sb strings.Builder
 	sb.WriteString("\n")
 	for _, cmd := range commands {

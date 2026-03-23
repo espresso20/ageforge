@@ -4,6 +4,8 @@ import (
 	"encoding/binary"
 	"fmt"
 	"hash/fnv"
+	"math"
+	"math/rand"
 	"sort"
 	"sync"
 
@@ -12,11 +14,56 @@ import (
 	"github.com/rivo/tview"
 )
 
+// ---------------------------------------------------------------------------
+// Biome types
+// ---------------------------------------------------------------------------
+
+type v1Biome int
+
+const (
+	biomeOcean      v1Biome = iota
+	biomeCoast
+	biomePlains
+	biomeGrassland
+	biomeForest
+	biomeJungle
+	biomeDesert
+	biomeSwamp
+	biomeTundra
+	biomeSnow
+	biomeHills
+	biomeMountains
+	biomeRiver
+)
+
+// v1Cell holds the terrain data for a single map cell.
+type v1Cell struct {
+	biome     v1Biome
+	elevation float64
+	moisture  float64
+	river     bool
+}
+
+// v1TileStyle holds the rendering info for a single cell.
+type v1TileStyle struct {
+	r  rune
+	fg tcell.Color
+	bg tcell.Color
+}
+
+// ---------------------------------------------------------------------------
+// MapV1 struct — v1 API + v3 terrain cache
+// ---------------------------------------------------------------------------
+
 // MapV1 is a character-native Civ-1-style civilization map widget.
-// Each terminal cell is drawn as a terrain tile or building icon using tcell.SetContent.
+// Uses 4-pass FBM terrain generation with Whittaker biomes, rivers, and coast
+// detection. Terrain is cached and only regenerated on resize.
 type MapV1 struct {
-	mu    sync.Mutex
-	state game.GameState
+	mu       sync.Mutex
+	state    game.GameState
+	terrainW int
+	terrainH int
+	terrain  [][]v1Cell
 }
 
 // NewMapV1 creates a new MapV1 instance.
@@ -30,7 +77,7 @@ func (m *MapV1) Refresh(state game.GameState) {
 }
 
 // Build stores initial state and returns a tview.Primitive whose draw function
-// calls drawMapV1 on every render pass.
+// calls renderV1 on every render pass.
 func (m *MapV1) Build(state game.GameState) tview.Primitive {
 	m.mu.Lock()
 	m.state = state
@@ -41,73 +88,14 @@ func (m *MapV1) Build(state game.GameState) tview.Primitive {
 		m.mu.Lock()
 		s := m.state
 		m.mu.Unlock()
-		drawMapV1(screen, s, x, y, w, h)
+		m.renderV1(screen, s, x, y, w, h)
 		return x, y, w, h
 	})
 	return box
 }
 
 // ---------------------------------------------------------------------------
-// Terrain types
-// ---------------------------------------------------------------------------
-
-type terrainKind int
-
-const (
-	terrainGrassland terrainKind = iota
-	terrainPlains
-	terrainForest
-	terrainHills
-	terrainMountains
-	terrainOcean
-	terrainCoast
-	terrainDesert
-	terrainTundra
-	terrainRiver
-)
-
-// tileInfo holds the rune and colors for a single terminal cell.
-type tileInfo struct {
-	r  rune
-	fg tcell.Color
-	bg tcell.Color
-}
-
-// rgb is a convenience wrapper to decompose a 24-bit hex color into NewRGBColor.
-func rgb(hex uint32) tcell.Color {
-	r := int32((hex >> 16) & 0xff)
-	g := int32((hex >> 8) & 0xff)
-	b := int32(hex & 0xff)
-	return tcell.NewRGBColor(r, g, b)
-}
-
-// darkenHex multiplies each RGB channel of a hex color by factor (0.0–1.0) and adds a slight blue tint.
-func darkenHex(hex uint32, factor float64) tcell.Color {
-	r := int32(float64((hex>>16)&0xff) * factor)
-	g := int32(float64((hex>>8)&0xff) * factor)
-	b := int32(float64(hex&0xff)*factor) + 8
-	if r < 0 {
-		r = 0
-	}
-	if g < 0 {
-		g = 0
-	}
-	if b > 255 {
-		b = 255
-	}
-	return tcell.NewRGBColor(r, g, b)
-}
-
-// darken multiplies each RGB channel of a tcell.Color by factor and adds a slight blue tint.
-// It relies on the fact that tcell.NewRGBColor packs as ColorIsRGB|(r<<16|g<<8|b).
-func darken(c tcell.Color, factor float64) tcell.Color {
-	// Extract packed value: strip the ColorIsRGB flag bit (top bits) to get 24-bit RGB.
-	packed := uint32(c) & 0xffffff
-	return darkenHex(packed, factor)
-}
-
-// ---------------------------------------------------------------------------
-// Seed and hash helpers
+// Seed helper
 // ---------------------------------------------------------------------------
 
 func mapV1Seed(_ game.GameState) uint64 {
@@ -116,394 +104,514 @@ func mapV1Seed(_ game.GameState) uint64 {
 	return h.Sum64()
 }
 
-func hashTile(seed uint64, x, y int) uint64 {
-	h := fnv.New64a()
-	var buf [24]byte
-	binary.LittleEndian.PutUint64(buf[0:], seed)
-	binary.LittleEndian.PutUint64(buf[8:], uint64(x))
-	binary.LittleEndian.PutUint64(buf[16:], uint64(y))
-	h.Write(buf[:])
-	return h.Sum64()
-}
-
 // ---------------------------------------------------------------------------
-// Age era mapping
+// Age era and name helpers
 // ---------------------------------------------------------------------------
 
-func ageEra(ageKey string) int {
+func ageEraV1(ageKey string) int {
 	switch ageKey {
 	case "primitive_age", "stone_age":
 		return 0
 	case "bronze_age", "iron_age", "classical_age":
 		return 1
-	case "medieval_age", "renaissance_age":
+	case "medieval_age", "renaissance_age", "colonial_age":
 		return 2
-	case "colonial_age", "industrial_age", "victorian_age":
+	case "industrial_age", "victorian_age", "electric_age":
 		return 3
-	case "electric_age", "atomic_age":
+	case "atomic_age", "modern_age", "information_age":
 		return 4
-	case "modern_age", "information_age":
-		return 5
 	case "digital_age":
-		return 6
+		return 5
 	case "cyberpunk_age", "fusion_age":
+		return 6
+	case "space_age", "interstellar_age":
 		return 7
 	default:
-		// space_age and any later ages
 		return 8
 	}
 }
 
-// ---------------------------------------------------------------------------
-// Terrain tile rendering
-// ---------------------------------------------------------------------------
-
-// v1FBM returns a 0–1 elevation value using 3-octave value noise.
-// Used to shape the island — values below the ocean threshold become sea.
-func v1FBM(x, y int, seed uint64) float64 {
-	n := v1NoiseAt(x, y, seed, 18.0) * 0.55
-	n += v1NoiseAt(x, y, seed+7, 9.0) * 0.30
-	n += v1NoiseAt(x, y, seed+13, 4.5) * 0.15
-	return n
+func v1AgeName(ageKey string) string {
+	names := map[string]string{
+		"primitive_age":    "Primitive Age",
+		"stone_age":        "Stone Age",
+		"bronze_age":       "Bronze Age",
+		"iron_age":         "Iron Age",
+		"classical_age":    "Classical Age",
+		"medieval_age":     "Medieval Age",
+		"renaissance_age":  "Renaissance Age",
+		"colonial_age":     "Colonial Age",
+		"industrial_age":   "Industrial Age",
+		"victorian_age":    "Victorian Age",
+		"electric_age":     "Electric Age",
+		"atomic_age":       "Atomic Age",
+		"modern_age":       "Modern Age",
+		"information_age":  "Information Age",
+		"digital_age":      "Digital Age",
+		"cyberpunk_age":    "Cyberpunk Age",
+		"fusion_age":       "Fusion Age",
+		"space_age":        "Space Age",
+		"interstellar_age": "Interstellar Age",
+		"galactic_age":     "Galactic Age",
+		"quantum_age":      "Quantum Age",
+		"transcendent_age": "Transcendent Age",
+	}
+	if n, ok := names[ageKey]; ok {
+		return n
+	}
+	return ageKey
 }
 
-func v1NoiseAt(x, y int, seed uint64, scale float64) float64 {
-	fx := float64(x) / scale
-	fy := float64(y) / scale
-	x0, y0 := int(fx), int(fy)
-	x1, y1 := x0+1, y0+1
-	tx := fx - float64(x0)
-	ty := fy - float64(y0)
-	tx = tx * tx * (3 - 2*tx)
-	ty = ty * ty * (3 - 2*ty)
-	v00 := v1HashF(x0, y0, seed)
-	v10 := v1HashF(x1, y0, seed)
-	v01 := v1HashF(x0, y1, seed)
-	v11 := v1HashF(x1, y1, seed)
-	return v00*(1-tx)*(1-ty) + v10*tx*(1-ty) + v01*(1-tx)*ty + v11*tx*ty
-}
+// ---------------------------------------------------------------------------
+// Noise functions (from v3)
+// ---------------------------------------------------------------------------
 
 func v1HashF(x, y int, seed uint64) float64 {
 	h := fnv.New64a()
 	var buf [24]byte
 	binary.LittleEndian.PutUint64(buf[0:], seed)
-	binary.LittleEndian.PutUint64(buf[8:], uint64(x+500000))
-	binary.LittleEndian.PutUint64(buf[16:], uint64(y+500000))
+	binary.LittleEndian.PutUint64(buf[8:], uint64(x+100000))
+	binary.LittleEndian.PutUint64(buf[16:], uint64(y+100000))
 	h.Write(buf[:])
-	return float64(h.Sum64()%10000) / 10000.0
+	return float64(h.Sum64()%100000) / 100000.0
 }
 
-func classifyTerrain(seed uint64, tx, ty, mapW, mapH int) terrainKind {
-	// Radial falloff — centre of map is land, edges fade to ocean
-	cx := float64(mapW) / 2
-	cy := float64(mapH) / 2
-	dx := (float64(tx) - cx) / (cx * 0.92)
-	dy := (float64(ty) - cy) / (cy * 0.92)
-	dist := dx*dx + dy*dy // 0 at centre, ~1 at edge
+func v1Lerp(a, b, t float64) float64 { return a + t*(b-a) }
 
-	// FBM elevation with radial island falloff
-	elev := v1FBM(tx, ty, seed) - dist*0.55
+func v1NoiseAt(x, y int, seed uint64, scale float64) float64 {
+	fx := float64(x) / scale
+	fy := float64(y) / scale
+	x0 := int(math.Floor(fx))
+	x1 := x0 + 1
+	y0 := int(math.Floor(fy))
+	y1 := y0 + 1
+	tx := fx - math.Floor(fx)
+	ty := fy - math.Floor(fy)
+	tx = tx * tx * (3 - 2*tx) // smoothstep
+	ty = ty * ty * (3 - 2*ty)
+	return v1Lerp(
+		v1Lerp(v1HashF(x0, y0, seed), v1HashF(x1, y0, seed), tx),
+		v1Lerp(v1HashF(x0, y1, seed), v1HashF(x1, y1, seed), tx),
+		ty,
+	)
+}
 
-	// Hard ocean/coast thresholds
-	if elev < 0.10 {
-		return terrainOcean
-	}
-	if elev < 0.18 {
-		return terrainCoast
-	}
+// v1FBM produces 4-octave fractional Brownian motion noise.
+func v1FBM(x, y int, seed uint64) float64 {
+	v := v1NoiseAt(x, y, seed, 60.0) * 0.50
+	v += v1NoiseAt(x, y, seed+1, 30.0) * 0.25
+	v += v1NoiseAt(x, y, seed+2, 15.0) * 0.15
+	v += v1NoiseAt(x, y, seed+3, 7.0) * 0.10
+	return v // 0–1
+}
 
-	// Terrain type from a separate region-level hash (keeps patches coherent)
-	const regionSize = 6
-	h := hashTile(seed+99, tx/regionSize, ty/regionSize)
-	slot := h % 100
+// ---------------------------------------------------------------------------
+// Terrain generation (4-pass from v3, renamed for v1)
+// ---------------------------------------------------------------------------
 
-	// River: thin band near map vertical centre
-	midY := mapH / 2
-	if (ty == midY || ty == midY+1) && slot >= 85 {
-		return terrainRiver
-	}
+func v1Smoothstep(edge0, edge1, x float64) float64 {
+	t := math.Max(0, math.Min(1, (x-edge0)/(edge1-edge0)))
+	return t * t * (3 - 2*t)
+}
 
-	// Higher elevation → hills/mountains
+func whittakerBiomeV1(elev, moisture float64) v1Biome {
 	switch {
-	case elev > 0.72:
-		return terrainMountains
-	case elev > 0.60:
-		return terrainHills
-	}
-
-	// Low-elevation terrain palette — mostly green land with accents
-	switch {
-	case slot < 40:
-		return terrainGrassland
-	case slot < 62:
-		return terrainPlains
-	case slot < 76:
-		return terrainForest
-	case slot < 86:
-		return terrainGrassland // extra grassland weight
-	case slot < 93:
-		return terrainDesert
+	case elev < 0.15:
+		return biomeOcean
+	case elev < 0.20:
+		return biomeCoast
+	case elev > 0.78:
+		if moisture > 0.5 {
+			return biomeSnow
+		}
+		return biomeMountains
+	case elev > 0.65:
+		if moisture > 0.6 {
+			return biomeForest
+		}
+		return biomeHills
+	case elev > 0.50:
+		if moisture > 0.65 {
+			return biomeForest
+		}
+		if moisture > 0.35 {
+			return biomeGrassland
+		}
+		return biomePlains
+	case elev > 0.35:
+		if moisture > 0.75 {
+			return biomeJungle
+		}
+		if moisture > 0.55 {
+			return biomeGrassland
+		}
+		if moisture > 0.30 {
+			return biomePlains
+		}
+		return biomeDesert
 	default:
-		return terrainTundra
+		if moisture > 0.70 {
+			return biomeSwamp
+		}
+		if moisture > 0.40 {
+			return biomeGrassland
+		}
+		return biomePlains
 	}
 }
 
-func terrainTile(seed uint64, tx, ty, mapW, mapH int) tileInfo {
-	kind := classifyTerrain(seed, tx, ty, mapW, mapH)
-	switch kind {
-	case terrainGrassland:
-		return tileInfo{'·', rgb(0x2a5a1a), rgb(0x3a6b2a)}
-	case terrainPlains:
-		return tileInfo{'·', rgb(0x6a7a2a), rgb(0x7a8a3a)}
-	case terrainForest:
-		return tileInfo{'♣', rgb(0x0e3a08), rgb(0x1e4a10)}
-	case terrainHills:
-		return tileInfo{'n', rgb(0x4a5a20), rgb(0x5a6a30)}
-	case terrainMountains:
-		return tileInfo{'▲', rgb(0x7a6a50), rgb(0x3a2e20)}
-	case terrainOcean:
-		return tileInfo{'~', rgb(0x1a4a8a), rgb(0x0a2a5a)}
-	case terrainCoast:
-		return tileInfo{'~', rgb(0x3a7aaa), rgb(0x1a4a7a)}
-	case terrainDesert:
-		return tileInfo{'·', rgb(0xc0a060), rgb(0xa08040)}
-	case terrainTundra:
-		return tileInfo{'·', rgb(0x809090), rgb(0x607870)}
-	case terrainRiver:
-		// River uses terrain background but river-blue FG
-		base := tileInfo{'~', rgb(0x3a6aff), rgb(0x3a6b2a)}
-		return base
-	default:
-		return tileInfo{'·', rgb(0x2a5a1a), rgb(0x3a6b2a)}
+func carveRiversV1(cells [][]v1Cell, seed uint64, w, h int) {
+	rng := rand.New(rand.NewSource(int64(seed)))
+	numRivers := 3 + rng.Intn(3)
+
+	for r := 0; r < numRivers; r++ {
+		startX := w/5 + rng.Intn(w*3/5)
+		startY := h/5 + rng.Intn(h*3/5)
+		if cells[startY][startX].elevation < 0.55 {
+			continue
+		}
+
+		x, y := startX, startY
+		for steps := 0; steps < w+h; steps++ {
+			if x < 0 || y < 0 || x >= w || y >= h {
+				break
+			}
+			if cells[y][x].biome == biomeOcean || cells[y][x].biome == biomeCoast {
+				break
+			}
+
+			cells[y][x].river = true
+
+			bestX, bestY := x, y
+			bestElev := cells[y][x].elevation
+			for _, d := range [][2]int{{0, 1}, {0, -1}, {1, 0}, {-1, 0}, {1, 1}, {-1, -1}, {1, -1}, {-1, 1}} {
+				nx, ny := x+d[0], y+d[1]
+				if nx < 0 || ny < 0 || nx >= w || ny >= h {
+					continue
+				}
+				if cells[ny][nx].elevation < bestElev {
+					bestElev = cells[ny][nx].elevation
+					bestX, bestY = nx, ny
+				}
+			}
+			if bestX == x && bestY == y {
+				break // local minimum — stop
+			}
+			x, y = bestX, bestY
+		}
 	}
 }
 
-// applyEraPalette adjusts tile colors for eras 6+ and era 8 (space).
-func applyEraPalette(t tileInfo, era int, kind terrainKind) tileInfo {
-	if era < 6 {
-		return t
+func generateV1Terrain(seed uint64, w, h int) [][]v1Cell {
+	cells := make([][]v1Cell, h)
+	for y := range cells {
+		cells[y] = make([]v1Cell, w)
 	}
-	if era == 8 {
-		// Space: dark grey craters for land tiles
-		switch kind {
-		case terrainOcean, terrainCoast, terrainRiver:
-			// keep water tiles but darken
+
+	cx, cy := float64(w)/2, float64(h)/2
+
+	// Pass 1: elevation and moisture maps
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			elev := v1FBM(x, y, seed)
+			moist := v1FBM(x, y, seed+9999)
+
+			// Radial falloff — ocean around edges
+			dx := (float64(x) - cx) / cx
+			dy := (float64(y) - cy) / cy
+			dist := math.Sqrt(dx*dx + dy*dy)
+			falloff := 1.0 - v1Smoothstep(0.55, 0.90, dist)
+			elev = elev * falloff
+
+			cells[y][x] = v1Cell{elevation: elev, moisture: moist}
+		}
+	}
+
+	// Pass 2: biome assignment (Whittaker diagram)
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			c := &cells[y][x]
+			c.biome = whittakerBiomeV1(c.elevation, c.moisture)
+		}
+	}
+
+	// Pass 3: river carving
+	carveRiversV1(cells, seed, w, h)
+
+	// Pass 4: coast detection
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if cells[y][x].biome != biomeOcean {
+				continue
+			}
+			for _, d := range [][2]int{{0, 1}, {0, -1}, {1, 0}, {-1, 0}} {
+				nx, ny := x+d[0], y+d[1]
+				if nx < 0 || ny < 0 || nx >= w || ny >= h {
+					continue
+				}
+				if cells[ny][nx].biome != biomeOcean {
+					cells[y][x].biome = biomeCoast
+					break
+				}
+			}
+		}
+	}
+
+	return cells
+}
+
+// ---------------------------------------------------------------------------
+// Biome tile rendering
+// ---------------------------------------------------------------------------
+
+func v1BiomeTile(biome v1Biome, river bool, era int) v1TileStyle {
+	if river {
+		return v1TileStyle{'~', tcell.NewHexColor(0x3a6aff), tcell.NewHexColor(0x0a1a40)}
+	}
+
+	dark := era >= 6
+	space := era >= 8
+
+	if space {
+		switch biome {
+		case biomeOcean:
+			return v1TileStyle{' ', tcell.NewHexColor(0x050510), tcell.NewHexColor(0x050510)}
+		case biomeCoast:
+			return v1TileStyle{' ', tcell.NewHexColor(0x080818), tcell.NewHexColor(0x080818)}
+		case biomeMountains:
+			return v1TileStyle{'▲', tcell.NewHexColor(0x505060), tcell.NewHexColor(0x202030)}
 		default:
-			return tileInfo{'·', rgb(0x303040), rgb(0x050510)}
+			return v1TileStyle{'·', tcell.NewHexColor(0x202028), tcell.NewHexColor(0x0f0f18)}
 		}
 	}
-	// Eras 6+: darken all bg, add blue tint
-	t.bg = darken(t.bg, 0.7)
-	t.fg = darken(t.fg, 0.7)
-	return t
-}
 
-// ---------------------------------------------------------------------------
-// City / building placement
-// ---------------------------------------------------------------------------
+	dimFactor := 1.0
+	if dark {
+		dimFactor = 0.5
+	}
 
-func cityRadius(buildingCount int) int {
-	switch {
-	case buildingCount < 5:
-		return 1
-	case buildingCount < 15:
-		return 2
-	case buildingCount < 35:
-		return 4
-	case buildingCount < 70:
-		return 6
-	case buildingCount < 140:
-		return 8
+	dim := func(hex uint32) tcell.Color {
+		r := uint8(float64((hex>>16)&0xff) * dimFactor)
+		g := uint8(float64((hex>>8)&0xff) * dimFactor)
+		b := uint8(float64(hex&0xff) * dimFactor)
+		return tcell.NewRGBColor(int32(r), int32(g), int32(b))
+	}
+
+	switch biome {
+	case biomeOcean:
+		// Space char with fg=bg to avoid scan lines
+		return v1TileStyle{' ', dim(0x0a2a5a), dim(0x0a2a5a)}
+	case biomeCoast:
+		// Space char with fg=bg to avoid scan lines
+		return v1TileStyle{' ', dim(0x1a4a7a), dim(0x1a4a7a)}
+	case biomePlains:
+		return v1TileStyle{'·', dim(0x7a8a3a), dim(0x8a9a4a)}
+	case biomeGrassland:
+		return v1TileStyle{'·', dim(0x3a6a2a), dim(0x4a7c3a)}
+	case biomeForest:
+		return v1TileStyle{'♣', dim(0x0e3a08), dim(0x1e4a10)}
+	case biomeJungle:
+		return v1TileStyle{'♣', dim(0x0a3005), dim(0x144008)}
+	case biomeDesert:
+		return v1TileStyle{'·', dim(0xc0a060), dim(0xa08040)}
+	case biomeSwamp:
+		return v1TileStyle{'·', dim(0x405030), dim(0x304020)}
+	case biomeTundra:
+		return v1TileStyle{'·', dim(0x9aaba0), dim(0x607870)}
+	case biomeSnow:
+		return v1TileStyle{'*', dim(0xe0e8ec), dim(0xc0c8cc)}
+	case biomeHills:
+		return v1TileStyle{'n', dim(0x6a7a2a), dim(0x5a6a30)}
+	case biomeMountains:
+		return v1TileStyle{'▲', dim(0x7a6a50), dim(0x3a2e20)}
 	default:
-		return 10
+		return v1TileStyle{'·', dim(0x4a7c3a), dim(0x3a6a2a)}
 	}
 }
 
-func countBuiltBuildings(state game.GameState) int {
-	count := 0
-	for _, bs := range state.Buildings {
-		if bs.Count > 0 {
-			count++
+// ---------------------------------------------------------------------------
+// Building placement — outward grid (from v3)
+// ---------------------------------------------------------------------------
+
+// v1OutwardGrid returns n grid offsets radiating outward from (0,0) in
+// concentric square rings: ring 1 = 8 positions, ring 2 = 16, etc.
+func v1OutwardGrid(n int) [][2]int {
+	positions := make([][2]int, 0, n)
+	for ring := 1; len(positions) < n; ring++ {
+		for dx := -ring; dx <= ring; dx++ {
+			for dy := -ring; dy <= ring; dy++ {
+				adx, ady := dx, dy
+				if adx < 0 {
+					adx = -adx
+				}
+				if ady < 0 {
+					ady = -ady
+				}
+				if adx == ring || ady == ring {
+					positions = append(positions, [2]int{dx, dy})
+				}
+			}
 		}
 	}
-	return count
+	return positions
 }
 
-// domainTile returns the rune and fg color for a building's worker domain.
-func domainTile(bs game.BuildingState) (rune, tcell.Color) {
-	if bs.Category == "wonder" {
-		return '★', rgb(0xffd700)
+// ---------------------------------------------------------------------------
+// Building domain icons (from v1 — better than v3)
+// ---------------------------------------------------------------------------
+
+func v1DomainTile(domain, category string) (rune, tcell.Color) {
+	if category == "wonder" {
+		return '★', tcell.NewHexColor(0xffd700)
 	}
-	switch bs.WorkerDomain {
+	switch domain {
 	case "food":
-		return '⌂', rgb(0xd4a050)
+		return '⌂', tcell.NewHexColor(0xd4a050)
 	case "lumber":
-		return '♣', rgb(0x50a050)
+		return '♣', tcell.NewHexColor(0x50a050)
 	case "masonry":
-		return '▪', rgb(0xa0a0a0)
+		return '▪', tcell.NewHexColor(0xa0a0a0)
 	case "metallurgy":
-		return '⚒', rgb(0xe07030)
+		return '⚒', tcell.NewHexColor(0xe07030)
 	case "energy":
-		return '⚡', rgb(0xf0d020)
+		return '⚡', tcell.NewHexColor(0xf0d020)
 	case "military":
-		return '⚔', rgb(0xe04040)
+		return '⚔', tcell.NewHexColor(0xe04040)
 	case "knowledge":
-		return '◎', rgb(0x60b0f0)
+		return '◎', tcell.NewHexColor(0x60b0f0)
 	case "faith":
-		return '✚', rgb(0xf0f0c0)
+		return '✚', tcell.NewHexColor(0xf0f0c0)
 	case "trade":
-		return '$', rgb(0xf0c040)
+		return '$', tcell.NewHexColor(0xf0c040)
 	case "engineering":
-		return '⚙', rgb(0x40d0d0)
+		return '⚙', tcell.NewHexColor(0x40d0d0)
 	case "hacker":
-		return '#', rgb(0x40f040)
+		return '#', tcell.NewHexColor(0x40f040)
 	case "astronaut":
-		return '◆', rgb(0xf0f0f0)
+		return '◆', tcell.NewHexColor(0xf0f0f0)
 	default:
-		return '▪', rgb(0xa0a0a0)
+		return '▣', tcell.NewHexColor(0xd0d0d0)
 	}
 }
 
-// cityCenterTile returns the rune and style for the city center based on era.
-func cityCenterTile(era int) (rune, tcell.Color, tcell.Color) {
+// ---------------------------------------------------------------------------
+// City center tile (from v3)
+// ---------------------------------------------------------------------------
+
+func v1CenterTile(era int) v1TileStyle {
 	switch {
-	case era <= 1:
-		return '⌂', tcell.ColorWhite, rgb(0x6a4a20)
-	case era <= 3:
-		return '♜', tcell.ColorWhiteSmoke, rgb(0x404040)
-	case era <= 5:
-		return '▣', tcell.ColorAqua, rgb(0x102040)
-	case era <= 7:
-		return '▣', tcell.ColorTeal, rgb(0x050520)
+	case era >= 8:
+		return v1TileStyle{'◈', tcell.ColorWhite, tcell.NewHexColor(0x000010)}
+	case era >= 6:
+		return v1TileStyle{'▣', tcell.ColorAqua, tcell.NewHexColor(0x050520)}
+	case era >= 4:
+		return v1TileStyle{'▣', tcell.ColorSkyblue, tcell.NewHexColor(0x102040)}
+	case era >= 2:
+		return v1TileStyle{'♜', tcell.ColorWhite, tcell.NewHexColor(0x404040)}
 	default:
-		return '◈', tcell.ColorWhiteSmoke, rgb(0x000010)
+		return v1TileStyle{'⌂', tcell.ColorWhite, tcell.NewHexColor(0x6a4a20)}
 	}
 }
 
-// distance returns Chebyshev distance (max of abs dx, abs dy) — square radius.
-func distance(ax, ay, bx, by int) int {
-	dx := ax - bx
-	if dx < 0 {
-		dx = -dx
-	}
-	dy := ay - by
-	if dy < 0 {
-		dy = -dy
-	}
-	if dx > dy {
-		return dx
-	}
-	return dy
-}
-
 // ---------------------------------------------------------------------------
-// Main draw function
+// Main render function
 // ---------------------------------------------------------------------------
 
-func drawMapV1(screen tcell.Screen, state game.GameState, x, y, w, h int) {
-	if w <= 0 || h <= 0 {
+func (m *MapV1) renderV1(screen tcell.Screen, state game.GameState, x, y, w, h int) {
+	if w <= 0 || h <= 1 {
 		return
 	}
 
-	seed := mapV1Seed(state)
-	era := ageEra(state.Age)
-
-	// Collect built buildings sorted by key for deterministic placement
-	type builtBuilding struct {
-		key string
-		bs  game.BuildingState
+	// Regenerate terrain only when dimensions change
+	m.mu.Lock()
+	if m.terrainW != w || m.terrainH != h-1 {
+		seed := mapV1Seed(state)
+		m.terrain = generateV1Terrain(seed, w, h-1)
+		m.terrainW = w
+		m.terrainH = h - 1
 	}
-	var builtList []builtBuilding
+	terrain := m.terrain
+	m.mu.Unlock()
+
+	era := ageEraV1(state.Age)
+	cx, cy := w/2, (h-1)/2
+
+	// Collect built buildings sorted deterministically
+	type bldEntry struct {
+		key      string
+		domain   string
+		category string
+	}
+	var buildings []bldEntry
 	for k, bs := range state.Buildings {
-		if bs.Count > 0 {
-			builtList = append(builtList, builtBuilding{k, bs})
+		if bs.Count <= 0 {
+			continue
 		}
+		buildings = append(buildings, bldEntry{
+			key:      k,
+			domain:   bs.WorkerDomain,
+			category: bs.Category,
+		})
 	}
-	sort.Slice(builtList, func(i, j int) bool {
-		return builtList[i].key < builtList[j].key
-	})
+	sort.Slice(buildings, func(i, j int) bool { return buildings[i].key < buildings[j].key })
 
-	builtCount := len(builtList)
-	radius := cityRadius(builtCount)
-	cx := w / 2
-	cy := h / 2
+	builtCount := len(buildings)
 
-	// Reserve bottom row for status line
-	drawH := h - 1
-	if drawH < 1 {
-		drawH = 1
+	// Build city positions using outward grid scan with spacing=2
+	const v1Spacing = 2
+	cityPositions := make(map[[2]int]bldEntry)
+	gridPos := v1OutwardGrid(len(buildings))
+	for i, bld := range buildings {
+		if i >= len(gridPos) {
+			break
+		}
+		bx := cx + gridPos[i][0]*v1Spacing
+		by := cy + gridPos[i][1]*v1Spacing
+		cityPositions[[2]int{bx, by}] = bld
 	}
 
-	// Draw terrain and city tiles
-	for ty := 0; ty < drawH; ty++ {
+	// Render terrain + buildings
+	for ty := 0; ty < h-1; ty++ {
 		for tx := 0; tx < w; tx++ {
-			screenX := x + tx
-			screenY := y + ty
-
-			dist := distance(tx, ty, cx, cy)
-
-			var r rune
-			var style tcell.Style
+			var tile v1TileStyle
 
 			if tx == cx && ty == cy {
 				// City center
-				cr, cfgColor, cbgColor := cityCenterTile(era)
-				style = tcell.StyleDefault.Foreground(cfgColor).Background(cbgColor)
-				r = cr
-			} else if dist <= radius && len(builtList) > 0 {
-				// Within city radius — potentially a building tile
-				cellHash := hashTile(seed, tx, ty)
-				if cellHash%3 == 0 {
-					b := builtList[cellHash%uint64(len(builtList))]
-					br, bfg := domainTile(b.bs)
-					// Use terrain as background for building tiles
-					terrain := terrainTile(seed, tx, ty, w, drawH)
-					terrain = applyEraPalette(terrain, era, classifyTerrain(seed, tx, ty, w, drawH))
-					style = tcell.StyleDefault.Foreground(bfg).Background(terrain.bg)
-					r = br
-				} else {
-					// Plain terrain within city
-					terrain := terrainTile(seed, tx, ty, w, drawH)
-					terrain = applyEraPalette(terrain, era, classifyTerrain(seed, tx, ty, w, drawH))
-					style = tcell.StyleDefault.Foreground(terrain.fg).Background(terrain.bg)
-					r = terrain.r
+				tile = v1CenterTile(era)
+			} else if b, ok := cityPositions[[2]int{tx, ty}]; ok {
+				// Building icon — use v1 domain runes
+				br, bfg := v1DomainTile(b.domain, b.category)
+				bg := tcell.NewHexColor(0x1a1a1a)
+				if era >= 6 {
+					bg = tcell.NewHexColor(0x050510)
 				}
+				tile = v1TileStyle{br, bfg, bg}
+			} else if ty < len(terrain) && tx < len(terrain[ty]) {
+				cell := terrain[ty][tx]
+				tile = v1BiomeTile(cell.biome, cell.river, era)
 			} else {
-				// Pure terrain
-				terrain := terrainTile(seed, tx, ty, w, drawH)
-				terrain = applyEraPalette(terrain, era, classifyTerrain(seed, tx, ty, w, drawH))
-				style = tcell.StyleDefault.Foreground(terrain.fg).Background(terrain.bg)
-				r = terrain.r
+				tile = v1TileStyle{'·', tcell.ColorGray, tcell.ColorBlack}
 			}
 
-			screen.SetContent(screenX, screenY, r, nil, style)
+			style := tcell.StyleDefault.Background(tile.bg).Foreground(tile.fg)
+			screen.SetContent(x+tx, y+ty, tile.r, nil, style)
 		}
 	}
 
-	// ---------------------------------------------------------------------------
-	// Status line at bottom row
-	// ---------------------------------------------------------------------------
+	// Status bar
 	statusY := y + h - 1
-	statusStyle := tcell.StyleDefault.
-		Foreground(tcell.ColorGold).
-		Background(tcell.ColorDarkSlateGray)
-
 	ageName := state.AgeName
 	if ageName == "" {
-		ageName = state.Age
+		ageName = v1AgeName(state.Age)
 	}
-	statusText := fmt.Sprintf("  Map v1 — %s — %d buildings   %d tile radius   MAPV1",
-		ageName, builtCount, radius)
-
-	// Fill entire row with background first
-	for tx := 0; tx < w; tx++ {
-		screen.SetContent(x+tx, statusY, ' ', nil, statusStyle)
-	}
-	// Write status text
-	for i, ch := range []rune(statusText) {
-		if i >= w {
-			break
+	status := fmt.Sprintf("  Map — %s — %d buildings  [MAPV1]", ageName, builtCount)
+	statusRunes := []rune(status)
+	for i := 0; i < w; i++ {
+		r := ' '
+		if i < len(statusRunes) {
+			r = statusRunes[i]
 		}
-		screen.SetContent(x+i, statusY, ch, nil, statusStyle)
+		style := tcell.StyleDefault.Background(tcell.ColorDarkSlateGray).Foreground(tcell.ColorGold)
+		screen.SetContent(x+i, statusY, r, nil, style)
 	}
 }
