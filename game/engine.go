@@ -972,13 +972,15 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	}
 	summary := AgeAdvanceSummary{OldAge: oldAge, NewAge: newAge}
 	for _, t := range transforms {
-		ge.Buildings.TransformBuilding(t.oldKey, t.newKey, ge.Workers.RenameAssignment)
+		ge.Buildings.SetPendingUpgrade(t.oldKey, t.newKey)
+		ge.Buildings.MarkLegacy(t.oldKey)
 		summary.BuildingsTransformed = append(summary.BuildingsTransformed, BuildingTransform{
 			OldKey: t.oldKey, OldName: t.oldName,
 			NewKey: t.newKey, NewName: t.newName,
 			Count: t.count,
 		})
-		ge.addLog("success", fmt.Sprintf("↑ %s → %s (×%d)", t.oldName, t.newName, t.count))
+		ge.addLog("info", fmt.Sprintf("↑ %s → %s available (×%d) — type: upgrade %s",
+			t.oldName, t.newName, t.count, t.oldKey))
 	}
 	// Mark buildings as legacy if their lineage now has a higher-tier unlocked equivalent.
 	for key, count := range ge.Buildings.counts {
@@ -2576,183 +2578,106 @@ func (ge *GameEngine) SendGift(factionKey string) error {
 	return nil
 }
 
-// UpgradeBuilding upgrades all buildings of fromKey to the next tier.
-// Returns the number upgraded and any error.
-func (ge *GameEngine) UpgradeBuilding(fromKey string) (int, error) {
+// UpgradeBuilding converts count copies of a legacy building to its pending next-tier
+// equivalent, charging the cost delta (new copy cost minus 50% refund on old copy) per unit.
+// Pass all=true or count<=0 to upgrade all available copies.
+func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	upgrades := config.UpgradesFromKey()
-	upg, ok := upgrades[fromKey]
-	if !ok {
-		return 0, fmt.Errorf("no upgrade path for '%s'", fromKey)
+	newKey, hasPending := ge.Buildings.GetPendingUpgrade(key)
+	if !hasPending {
+		return fmt.Errorf("no upgrade available for %s", key)
 	}
 
-	// Check age requirement
-	ageOrder := ge.progress.GetAgeOrder()
-	currentOrder, ok1 := ageOrder[ge.age]
-	requiredOrder, ok2 := ageOrder[upg.MinAge]
-	if !ok1 || !ok2 || currentOrder < requiredOrder {
-		return 0, fmt.Errorf("upgrade requires %s", ge.progress.GetAgeName(upg.MinAge))
+	byKey := config.BuildingByKey()
+	oldDef, hasOld := byKey[key]
+	newDef, hasNew := byKey[newKey]
+	if !hasOld || !hasNew {
+		return fmt.Errorf("building definition not found")
 	}
 
-	// Ensure target building is unlocked
-	if !ge.Buildings.IsUnlocked(upg.To) {
-		ge.Buildings.UnlockBuilding(upg.To)
+	oldCount := ge.Buildings.GetCount(key)
+	if all || count <= 0 {
+		count = oldCount
 	}
-
-	// Get base cost of target building, scaled by upgrade discount
-	toDef, toExists := ge.Buildings.defs[upg.To]
-	if !toExists {
-		return 0, fmt.Errorf("target building '%s' not found", upg.To)
+	if count > oldCount {
+		count = oldCount
 	}
-
-	count := ge.Buildings.counts[fromKey]
 	if count <= 0 {
-		return 0, fmt.Errorf("no %s to upgrade", fromKey)
+		return fmt.Errorf("no %s to upgrade", oldDef.Name)
 	}
 
-	upgraded := 0
-	for i := 0; i < count; i++ {
-		// Check max count on target
-		if toDef.MaxCount > 0 && ge.Buildings.counts[upg.To] >= toDef.MaxCount {
-			break
-		}
-		// Calculate discounted cost
-		cost := make(map[string]float64)
-		for res, base := range toDef.BaseCost {
-			cost[res] = base * upg.CostScale
-		}
-		if !ge.Resources.Pay(cost) {
-			break
-		}
-		ge.Buildings.counts[fromKey]--
-		ge.Buildings.counts[upg.To]++
-		upgraded++
+	cost, ok := ge.Buildings.UpgradeCost(key, newKey, count)
+	if !ok {
+		return fmt.Errorf("could not calculate upgrade cost")
 	}
 
-	if upgraded == 0 {
-		cost := make(map[string]float64)
-		for res, base := range toDef.BaseCost {
-			cost[res] = base * upg.CostScale
-		}
-		return 0, fmt.Errorf("cannot afford upgrade to %s (need: %s)", toDef.Name, formatCost(cost))
-	}
-
-	fromDef := ge.Buildings.defs[fromKey]
-	ge.recalculateRates()
-	ge.addLog("success", fmt.Sprintf("Upgraded %d %s → %s", upgraded, fromDef.Name, toDef.Name))
-	return upgraded, nil
-}
-
-// UpgradeAll upgrades all affordable buildings across all chains.
-// Returns a map of fromKey -> count upgraded.
-func (ge *GameEngine) UpgradeAll() (map[string]int, error) {
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-
-	ageOrder := ge.progress.GetAgeOrder()
-	currentOrder := ageOrder[ge.age]
-	upgrades := config.BuildingUpgrades()
-	result := make(map[string]int)
-
-	for _, upg := range upgrades {
-		requiredOrder, ok := ageOrder[upg.MinAge]
-		if !ok || currentOrder < requiredOrder {
-			continue
-		}
-
-		count := ge.Buildings.counts[upg.From]
-		if count <= 0 {
-			continue
-		}
-
-		toDef, toExists := ge.Buildings.defs[upg.To]
-		if !toExists {
-			continue
-		}
-
-		if !ge.Buildings.IsUnlocked(upg.To) {
-			ge.Buildings.UnlockBuilding(upg.To)
-		}
-
-		for i := 0; i < count; i++ {
-			if toDef.MaxCount > 0 && ge.Buildings.counts[upg.To] >= toDef.MaxCount {
-				break
+	if !ge.Resources.CanAfford(cost) {
+		var needed []string
+		for res, amt := range cost {
+			have := ge.Resources.Get(res)
+			if have < amt {
+				needed = append(needed, fmt.Sprintf("%s %.0f/%.0f", res, have, amt))
 			}
-			cost := make(map[string]float64)
-			for res, base := range toDef.BaseCost {
-				cost[res] = base * upg.CostScale
-			}
-			if !ge.Resources.Pay(cost) {
-				break
-			}
-			ge.Buildings.counts[upg.From]--
-			ge.Buildings.counts[upg.To]++
-			result[upg.From]++
 		}
+		sort.Strings(needed)
+		return fmt.Errorf("insufficient resources: %s", strings.Join(needed, ", "))
 	}
 
-	if len(result) == 0 {
-		return nil, fmt.Errorf("nothing to upgrade (no affordable upgrades available)")
+	// Deduct resources
+	for res, amt := range cost {
+		ge.Resources.Add(res, -amt)
 	}
+
+	// Perform partial transform
+	moved := ge.Buildings.PartialTransform(key, newKey, count, ge.Workers.RenameAssignment)
 
 	ge.recalculateRates()
-	for from, n := range result {
-		fromDef := ge.Buildings.defs[from]
-		upg := config.UpgradesFromKey()[from]
-		toDef := ge.Buildings.defs[upg.To]
-		ge.addLog("success", fmt.Sprintf("Upgraded %d %s → %s", n, fromDef.Name, toDef.Name))
+
+	costStr := formatResourceMap(cost)
+	if costStr == "" {
+		costStr = "free"
 	}
-	return result, nil
+	ge.addLog("success", fmt.Sprintf("Upgraded %d %s → %s (cost: %s)",
+		moved, oldDef.Name, newDef.Name, costStr))
+	return nil
 }
 
-// GetAvailableUpgrades returns upgrade info for display
+// GetAvailableUpgrades returns upgrade info for buildings that have a pending player-driven upgrade.
 func (ge *GameEngine) GetAvailableUpgrades() []UpgradeInfo {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
 
-	ageOrder := ge.progress.GetAgeOrder()
-	currentOrder := ageOrder[ge.age]
-	upgrades := config.BuildingUpgrades()
+	byKey := config.BuildingByKey()
 	var result []UpgradeInfo
 
-	for _, upg := range upgrades {
-		requiredOrder, ok := ageOrder[upg.MinAge]
-		if !ok || currentOrder < requiredOrder {
-			continue
-		}
-
-		count := ge.Buildings.counts[upg.From]
+	for oldKey, newKey := range ge.Buildings.pendingUpgrades {
+		count := ge.Buildings.counts[oldKey]
 		if count <= 0 {
 			continue
 		}
-
-		fromDef := ge.Buildings.defs[upg.From]
-		toDef := ge.Buildings.defs[upg.To]
-		cost := make(map[string]float64)
-		for res, base := range toDef.BaseCost {
-			cost[res] = base * upg.CostScale
+		oldDef, ok1 := byKey[oldKey]
+		newDef, ok2 := byKey[newKey]
+		if !ok1 || !ok2 {
+			continue
 		}
-
-		canAfford := true
-		for res, need := range cost {
-			if ge.Resources.Get(res) < need {
-				canAfford = false
-				break
-			}
+		cost, ok := ge.Buildings.UpgradeCost(oldKey, newKey, count)
+		if !ok {
+			cost = make(map[string]float64)
 		}
-
+		canAfford := ge.Resources.CanAfford(cost)
 		result = append(result, UpgradeInfo{
-			FromKey:   upg.From,
-			ToKey:     upg.To,
-			FromName:  fromDef.Name,
-			ToName:    toDef.Name,
+			FromKey:   oldKey,
+			ToKey:     newKey,
+			FromName:  oldDef.Name,
+			ToName:    newDef.Name,
 			Count:     count,
 			Cost:      cost,
 			CanAfford: canAfford,
 		})
 	}
+	sort.Slice(result, func(i, j int) bool { return result[i].FromKey < result[j].FromKey })
 	return result
 }
 

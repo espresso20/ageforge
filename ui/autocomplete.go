@@ -184,9 +184,10 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 
 	case "upgrade":
 		if len(completed) == 0 {
-			keys := upgradeableBuildingKeys(engine)
-			keys = append(keys, "all")
-			return filterPrefix(keys, partial, prefix)
+			return filterPrefix(upgradeableBuildingKeys(engine), partial, prefix)
+		}
+		if len(completed) == 1 {
+			return filterPrefix([]string{"all"}, partial, prefix)
 		}
 
 	case "speed":
@@ -426,8 +427,7 @@ func availableSpeedOptions(engine *game.GameEngine) []string {
 	return options
 }
 
-// upgradeableBuildingKeys returns the "from" building key for every currently
-// available upgrade. Deduplication is not applied — the engine handles it.
+// upgradeableBuildingKeys returns the building keys that have a pending player-driven upgrade.
 func upgradeableBuildingKeys(engine *game.GameEngine) []string {
 	upgrades := engine.GetAvailableUpgrades()
 	var keys []string

@@ -321,6 +321,15 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 				fmt.Fprintf(&sb, "   [green]Workers:[-] %d / %d %s  %s\n",
 					bs.WorkersAssigned, totalCap, domainLabel, barStr)
 			}
+			// Pending player-driven upgrade indicator
+			if bs.PendingUpgrade != "" {
+				newBS := state.Buildings[bs.PendingUpgrade]
+				newName := newBS.Name
+				if newName == "" {
+					newName = bs.PendingUpgrade
+				}
+				fmt.Fprintf(&sb, "   [gold]↑ Upgrade available → %s  type: upgrade %s[-]\n", newName, key)
+			}
 		}
 		sb.WriteString("\n")
 	}

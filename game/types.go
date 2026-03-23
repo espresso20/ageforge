@@ -136,6 +136,8 @@ type BuildingState struct {
 	WorkersAssigned int // total workers assigned across all instances
 	// Phase 7: lineage legacy flag
 	IsLegacy bool // functional but superseded — can't build more; grayed in UI
+	// Player-driven upgrade: key of next-tier building this can be upgraded to; "" if none
+	PendingUpgrade string
 	// Phase 9: ruins
 	RuinCount int // ruins of this building type (produce at 50%, no workers, can't rebuild)
 }
