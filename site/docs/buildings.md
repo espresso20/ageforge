@@ -1,6 +1,6 @@
 # Buildings
 
-AgeForge uses a **13-lineage system** with 284 total buildings: 241 production buildings, 21 storage buildings, and 22 wonders. Buildings belong to lineages that span the full 22-age arc. When you advance an age, buildings in your current lineage tier automatically transform into the next tier — you keep your count and gain the upgraded building.
+AgeForge uses a **13-lineage system** with 284 total buildings: 241 production buildings, 21 storage buildings, and 22 wonders. Buildings belong to lineages that span the full 22-age arc. When you advance an age, buildings that have a next-tier equivalent are **not** automatically transformed — instead they receive a pending upgrade marker and you upgrade them manually at your chosen pace using the `upgrade` command.
 
 For the full wonder list see [Wonders](wonders.md).
 
@@ -30,6 +30,76 @@ build                    — list all available buildings (with costs and count 
 ```
 
 **`max`** tells the engine to build as many copies as you can afford using the full cumulative cost curve — it stops the moment the next unit would exceed your available resources. It is **not** a flat division of your resources by base cost; each unit is priced correctly at its scaled cost before the decision to continue is made.
+
+## Building Upgrades
+
+When you advance to a new age, buildings that have a next-tier equivalent are **not** automatically transformed. Instead, each such building gets a **pending upgrade** marker and continues producing at its old rate. You choose when to upgrade — building by building, at your own pace.
+
+### The upgrade hint
+
+In the Economy tab building list, upgradeable buildings display a gold hint line:
+
+```
+↑ Upgrade available → Farm   type: upgrade gathering_camp
+```
+
+This tells you exactly what command to run. Until you upgrade, the old building keeps producing normally — there is no production penalty for leaving it pending. The incentive to upgrade is the higher production rate of the new tier.
+
+### Upgrade commands
+
+```
+upgrade <building>         — upgrade ALL copies of that building (default)
+upgrade <building> <n>     — upgrade exactly n copies
+upgrade <building> all     — same as no count argument
+```
+
+There is no `upgrade all` global command — upgrades are per building so you control the order and pacing.
+
+**Examples:**
+```
+upgrade gathering_camp
+upgrade forager_post 3
+upgrade forager_post all
+```
+
+### Upgrade cost formula
+
+Each copy you upgrade costs only the **delta** between the new building's cost and 50% of the old building's sell value:
+
+```
+old_copy_sell  = floor(oldBaseCost × oldCostScale ^ (N−1−i)) × 0.5
+new_copy_cost  = floor(newBaseCost × newCostScale ^ i)
+delta_per_copy = max(0, new_copy_cost − old_copy_sell)
+```
+
+Where `i` is the index of the copy being upgraded (0 = first) and `N` is the total number of old copies. Put simply: **you trade in your old building at 50% value toward the new one.** The net cost is always non-negative (never a free upgrade) but always cheaper than demolishing and rebuilding from scratch — typically 0.5–14% savings.
+
+At high building counts (10+), the old building's sell value may completely cover the new copy's cost for the last few copies, making those final upgrades free. This is intentional — it rewards civilizations that invested heavily in a lineage before advancing.
+
+### Workers and upgrades
+
+- **Full upgrade** (all copies upgraded): workers transfer automatically to the new building. No reassignment needed.
+- **Partial upgrade** (only some copies upgraded): workers remain on the old building. The new copies start with workers assigned from your idle pool if available.
+
+### Legacy buildings (pending upgrade)
+
+Once a building has a pending upgrade available:
+
+- It **continues producing** at its current rate — no penalty
+- You **cannot build more** copies of the old tier (it is greyed out in the build menu)
+- You **can still** `assign`, `unassign`, and `sell` copies of the old tier normally
+- The building counts toward your civilization stats as usual
+
+Do not let pending upgrades accumulate for too long during high-demand periods — upgrading your food lineage first before a resource squeeze is almost always the right call.
+
+### Strategic advice
+
+- **Upgrade high-count buildings early.** The cost formula makes the last few copies cheaper to upgrade than the first, so a civilization with 15 Gathering Camps gets proportionally cheaper upgrades than one with 3. Reward your past investment.
+- **Upgrade before starvation events.** A Farm produces significantly more than a Gathering Camp. If an epoch catastrophe is incoming, having upgraded food buildings gives you a wider safety margin.
+- **You control the order.** You might upgrade your food lineage immediately on age advance and leave military or knowledge buildings pending until you've banked enough resources. There is no time pressure — pending buildings still produce.
+- **Don't sell pending buildings for cash.** The 50% sell refund is already baked into the upgrade delta — you get that value back when you upgrade. Selling instead throws away the upgrade discount.
+
+---
 
 ### Selling Buildings
 
@@ -72,59 +142,17 @@ Most production buildings use `CostScale = 1.15`. Storage buildings use `CostSca
 - 5th: 52 food
 - Building 5 at once: 30+34+39+45+52 = **200 food total** (not 30×5=150)
 
-### Upgrade Command
-
-Some buildings have explicit upgrade paths (distinct from automatic lineage transforms on age advance). These are manual one-time upgrades:
-
-```
-upgrade                  — list all available building upgrades
-upgrade <building_key>   — upgrade all buildings of that type to the next tier
-upgrade all              — upgrade everything affordable across all chains
-```
-
-Upgrades cost a fraction of the target building's base cost (typically **25%**). Workers remain assigned through the upgrade — no reassignment needed.
-
-#### Upgrade Chains
-
-| From | To | Min Age | Cost |
-|------|----|---------|------|
-| `hut` | `house` | Bronze | 25% of House base |
-| `house` | `manor` | Medieval | 25% of Manor base |
-| `manor` | `tenement` | Industrial | 25% of Tenement base |
-| `tenement` | `tower_block` | Modern | 25% of Tower Block base |
-| `tower_block` | `arcology_pod` | Cyberpunk | 25% of Arcology base |
-| `arcology_pod` | `orbital_habitat` | Space | 25% of Orbital Habitat base |
-| `stash` | `storage_pit` | Stone | 25% of Storage Pit base |
-| `storage_pit` | `warehouse` | Bronze | 25% of Warehouse base |
-| `warehouse` | `classical_vault` | Classical | 25% of Classical Vault base |
-| `classical_vault` | `industrial_depot` | Industrial | 25% of Industrial Depot base |
-| `industrial_depot` | `modern_depot` | Modern | 25% of Modern Depot base |
-| `modern_depot` | `info_vault` | Information | 25% of Info Vault base |
-| `info_vault` | `digital_archive` | Digital | 25% of Digital Archive base |
-| `digital_archive` | `cyber_vault` | Cyberpunk | 25% of Cyber Vault base |
-| `cyber_vault` | `fusion_vault` | Fusion | 25% of Fusion Vault base |
-| `fusion_vault` | `orbital_depot` | Space | 25% of Orbital Depot base |
-| `orbital_depot` | `stellar_vault` | Interstellar | 25% of Stellar Vault base |
-| `stellar_vault` | `galactic_vault` | Galactic | 25% of Galactic Vault base |
-| `galactic_vault` | `quantum_vault` | Quantum | 25% of Quantum Vault base |
-| `story_circle` | `scriptorium` | Stone | 25% of Scriptorium base |
-| `scriptorium` | `library` | Bronze | 25% of Library base |
-| `library` | `university` | Medieval | 25% of University base |
-| `gathering_camp` | `farm` | Bronze | 25% of Farm base |
-| `woodcutter_camp` | `lumber_mill` | Bronze | 25% of Lumber Mill base |
-| `stone_pit` | `quarry` | Bronze | 25% of Quarry base |
-
 ---
 
 ## Lineage System
 
 Buildings no longer unlock individually per age. Instead, each lineage starts at a specific age and gains one new tier per age from there. When your civilization enters a new age:
 
-1. All buildings in active lineages that have a next tier **transform** automatically.
-2. The old tier becomes **legacy** — still producing, cannot be built again.
-3. The new tier becomes the buildable version at its upgraded stats.
+1. All buildings in active lineages that have a next tier receive a **pending upgrade** marker.
+2. The old tier becomes **legacy** — still producing at its old rate, cannot be built again.
+3. The new tier becomes available to build (for fresh copies) and to upgrade into (from old copies).
 
-You do not lose progress. A Gathering Camp in the Food lineage may become a Farm, then a Plantation, then an Agri-Complex — your existing count carries forward with full worker assignments intact.
+You do not lose progress or production. A Gathering Camp in the Food lineage may be upgraded to a Farm, then a Plantation, then an Agri-Complex — use `upgrade <building>` at each age transition to convert your existing copies. See the [Building Upgrades](#building-upgrades) section for cost details and strategy.
 
 ---
 
@@ -231,14 +259,16 @@ Consumes raw ore from Geological Extraction and refines it into usable metals:
 
 ## Legacy Buildings
 
-When a lineage tier upgrades, the previous-tier buildings become legacy. Legacy buildings:
+When an age advance gives a lineage tier a pending upgrade, those buildings become legacy. Legacy buildings:
 
-- Continue producing at their normal rate
+- Continue producing at their normal rate (no production loss on advance)
 - Cannot be built again (greyed out in the build menu)
 - Appear with a ☒ indicator in the Economy tab
+- Show a gold `↑ Upgrade available` hint with the target building name
 - Count toward building totals in your civilization stats
+- Can still be assigned workers, unassigned, and sold normally
 
-You never lose production from an age advance. Your 20 Farms become 20 Plantations (or whatever the next tier is) automatically, with workers reassigned to match.
+Your 20 Gathering Camps stay as Gathering Camps — producing at their full rate — until you run `upgrade gathering_camp`. Production only improves once the upgrade is complete, which is the incentive to do it. See [Building Upgrades](#building-upgrades) for the full guide.
 
 ---
 
@@ -272,7 +302,7 @@ Storage buildings form their own lineage and expand your resource cap for **ever
 
 > **Tip:** Stash is hard-capped at 50. Transition to Storage Pit the moment you enter the Stone Age. Storage bottlenecks stop all late-game resource accumulation dead — build storage first when entering every new age.
 
-You can manually upgrade storage buildings between tiers using the `upgrade` command at a 25% cost discount (see upgrade chains above).
+Storage buildings also participate in the upgrade system on age advance — use `upgrade <key>` to convert them to the next tier at the delta cost (see [Building Upgrades](#building-upgrades)).
 
 ---
 

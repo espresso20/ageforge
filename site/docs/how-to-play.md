@@ -153,6 +153,10 @@ Food workers are special — they produce food but all workers across all domain
 | Classical | Agora, Library, Forge, Amphitheater, Aqueduct |
 | Medieval | University, Cathedral, Castle Keep, Great Library |
 
+### Upgrading buildings after an age advance
+
+Buildings are **not** automatically transformed when you advance an age. Instead, they gain a pending upgrade marker and a gold hint appears in the Economy tab showing the target building. Use `upgrade <building>` to convert your existing copies to the new tier — for example, `upgrade gathering_camp` after entering the Stone Age converts your Gathering Camps into Forager Posts. Each upgrade costs only the price difference between old and new (with 50% of the old building's value credited back), so it is always cheaper than demolishing and rebuilding. Upgrade your food and storage lineages first after every advance. See [Buildings](buildings.md#building-upgrades) for the full guide.
+
 ---
 
 ## What are wonders?
