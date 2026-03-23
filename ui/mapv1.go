@@ -365,14 +365,10 @@ func generateV1Terrain(seed uint64, w, h int) [][]v1Cell {
 // ---------------------------------------------------------------------------
 
 func v1BiomeTile(biome v1Biome, river bool, era int) v1TileStyle {
-	if river {
-		return v1TileStyle{'~', tcell.NewHexColor(0x3a6aff), tcell.NewHexColor(0x0a1a40)}
-	}
-
 	dark := era >= 6
-	space := era >= 8
+	spaceEra := era >= 8
 
-	if space {
+	if spaceEra {
 		switch biome {
 		case biomeOcean:
 			return v1TileStyle{' ', tcell.NewHexColor(0x050510), tcell.NewHexColor(0x050510)}
@@ -381,7 +377,7 @@ func v1BiomeTile(biome v1Biome, river bool, era int) v1TileStyle {
 		case biomeMountains:
 			return v1TileStyle{'▲', tcell.NewHexColor(0x505060), tcell.NewHexColor(0x202030)}
 		default:
-			return v1TileStyle{'·', tcell.NewHexColor(0x202028), tcell.NewHexColor(0x0f0f18)}
+			return v1TileStyle{' ', tcell.NewHexColor(0x0f0f18), tcell.NewHexColor(0x0f0f18)}
 		}
 	}
 
@@ -397,35 +393,49 @@ func v1BiomeTile(biome v1Biome, river bool, era int) v1TileStyle {
 		return tcell.NewRGBColor(int32(r), int32(g), int32(b))
 	}
 
+	// River: blend into terrain — blue fg over terrain bg, no dark background
+	if river {
+		var terrainBg tcell.Color
+		switch biome {
+		case biomeGrassland:
+			terrainBg = dim(0x4a7c3a)
+		case biomePlains:
+			terrainBg = dim(0x8a9a4a)
+		default:
+			terrainBg = dim(0x3a6a2a)
+		}
+		return v1TileStyle{'~', dim(0x5a9aff), terrainBg}
+	}
+
 	switch biome {
 	case biomeOcean:
-		// Space char with fg=bg to avoid scan lines
 		return v1TileStyle{' ', dim(0x0a2a5a), dim(0x0a2a5a)}
 	case biomeCoast:
-		// Space char with fg=bg to avoid scan lines
 		return v1TileStyle{' ', dim(0x1a4a7a), dim(0x1a4a7a)}
+	// Flat terrain — space char, solid fill, no scan lines
 	case biomePlains:
-		return v1TileStyle{'·', dim(0x7a8a3a), dim(0x8a9a4a)}
+		return v1TileStyle{' ', dim(0x8a9a4a), dim(0x8a9a4a)}
 	case biomeGrassland:
-		return v1TileStyle{'·', dim(0x3a6a2a), dim(0x4a7c3a)}
-	case biomeForest:
-		return v1TileStyle{'♣', dim(0x0e3a08), dim(0x1e4a10)}
-	case biomeJungle:
-		return v1TileStyle{'♣', dim(0x0a3005), dim(0x144008)}
+		return v1TileStyle{' ', dim(0x4a7c3a), dim(0x4a7c3a)}
 	case biomeDesert:
-		return v1TileStyle{'·', dim(0xc0a060), dim(0xa08040)}
+		return v1TileStyle{' ', dim(0xa08040), dim(0xa08040)}
 	case biomeSwamp:
-		return v1TileStyle{'·', dim(0x405030), dim(0x304020)}
+		return v1TileStyle{' ', dim(0x304020), dim(0x304020)}
 	case biomeTundra:
-		return v1TileStyle{'·', dim(0x9aaba0), dim(0x607870)}
+		return v1TileStyle{' ', dim(0x607870), dim(0x607870)}
+	// Textured terrain — keep distinctive runes but fg close to bg to reduce stripe
+	case biomeForest:
+		return v1TileStyle{'♣', dim(0x1a4a10), dim(0x1e4a10)}
+	case biomeJungle:
+		return v1TileStyle{'♣', dim(0x0e3a08), dim(0x144008)}
 	case biomeSnow:
-		return v1TileStyle{'*', dim(0xe0e8ec), dim(0xc0c8cc)}
+		return v1TileStyle{' ', dim(0xd0d8dc), dim(0xd0d8dc)}
 	case biomeHills:
-		return v1TileStyle{'n', dim(0x6a7a2a), dim(0x5a6a30)}
+		return v1TileStyle{' ', dim(0x5a6a30), dim(0x5a6a30)}
 	case biomeMountains:
-		return v1TileStyle{'▲', dim(0x7a6a50), dim(0x3a2e20)}
+		return v1TileStyle{'▲', dim(0x6a5a40), dim(0x3a2e20)}
 	default:
-		return v1TileStyle{'·', dim(0x4a7c3a), dim(0x3a6a2a)}
+		return v1TileStyle{' ', dim(0x4a7c3a), dim(0x4a7c3a)}
 	}
 }
 
