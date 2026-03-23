@@ -158,55 +158,93 @@ func ageEra(ageKey string) int {
 // Terrain tile rendering
 // ---------------------------------------------------------------------------
 
-func classifyTerrain(seed uint64, tx, ty, mapW, mapH int) terrainKind {
-	nearEdge := tx < 4 || ty < 4 || tx >= mapW-4 || ty >= mapH-4
-	// Hash at region level so adjacent cells form coherent terrain patches
-	const regionSize = 6
-	h := hashTile(seed, tx/regionSize, ty/regionSize)
-	slot := h % 100
+// v1FBM returns a 0–1 elevation value using 3-octave value noise.
+// Used to shape the island — values below the ocean threshold become sea.
+func v1FBM(x, y int, seed uint64) float64 {
+	n := v1NoiseAt(x, y, seed, 18.0) * 0.55
+	n += v1NoiseAt(x, y, seed+7, 9.0) * 0.30
+	n += v1NoiseAt(x, y, seed+13, 4.5) * 0.15
+	return n
+}
 
-	// Ocean: near edge always, or slot 71-74 elsewhere
-	if nearEdge || slot >= 71 && slot <= 74 {
+func v1NoiseAt(x, y int, seed uint64, scale float64) float64 {
+	fx := float64(x) / scale
+	fy := float64(y) / scale
+	x0, y0 := int(fx), int(fy)
+	x1, y1 := x0+1, y0+1
+	tx := fx - float64(x0)
+	ty := fy - float64(y0)
+	tx = tx * tx * (3 - 2*tx)
+	ty = ty * ty * (3 - 2*ty)
+	v00 := v1HashF(x0, y0, seed)
+	v10 := v1HashF(x1, y0, seed)
+	v01 := v1HashF(x0, y1, seed)
+	v11 := v1HashF(x1, y1, seed)
+	return v00*(1-tx)*(1-ty) + v10*tx*(1-ty) + v01*(1-tx)*ty + v11*tx*ty
+}
+
+func v1HashF(x, y int, seed uint64) float64 {
+	h := fnv.New64a()
+	var buf [24]byte
+	binary.LittleEndian.PutUint64(buf[0:], seed)
+	binary.LittleEndian.PutUint64(buf[8:], uint64(x+500000))
+	binary.LittleEndian.PutUint64(buf[16:], uint64(y+500000))
+	h.Write(buf[:])
+	return float64(h.Sum64()%10000) / 10000.0
+}
+
+func classifyTerrain(seed uint64, tx, ty, mapW, mapH int) terrainKind {
+	// Radial falloff — centre of map is land, edges fade to ocean
+	cx := float64(mapW) / 2
+	cy := float64(mapH) / 2
+	dx := (float64(tx) - cx) / (cx * 0.92)
+	dy := (float64(ty) - cy) / (cy * 0.92)
+	dist := dx*dx + dy*dy // 0 at centre, ~1 at edge
+
+	// FBM elevation with radial island falloff
+	elev := v1FBM(tx, ty, seed) - dist*0.55
+
+	// Hard ocean/coast thresholds
+	if elev < 0.10 {
 		return terrainOcean
 	}
-
-	// Tundra: near top/bottom (but not already ocean)
-	if ty < 8 || ty >= mapH-8 {
-		if slot >= 92 {
-			return terrainTundra
-		}
-	}
-
-	// River: thin horizontal band across mid-map
-	midY := mapH / 2
-	if ty == midY || ty == midY+1 {
-		if slot >= 96 {
-			return terrainRiver
-		}
-	}
-
-	switch {
-	case slot <= 34:
-		return terrainGrassland
-	case slot <= 49:
-		return terrainPlains
-	case slot <= 59:
-		return terrainForest
-	case slot <= 66:
-		return terrainHills
-	case slot <= 70:
-		return terrainMountains
-	case slot <= 82:
-		// Would be ocean but we're not near edge and slot >74, so use grassland
-		return terrainGrassland
-	case slot <= 88:
-		return terrainDesert
-	case slot <= 91:
+	if elev < 0.18 {
 		return terrainCoast
-	case slot <= 95:
-		return terrainTundra
-	default:
+	}
+
+	// Terrain type from a separate region-level hash (keeps patches coherent)
+	const regionSize = 6
+	h := hashTile(seed+99, tx/regionSize, ty/regionSize)
+	slot := h % 100
+
+	// River: thin band near map vertical centre
+	midY := mapH / 2
+	if (ty == midY || ty == midY+1) && slot >= 85 {
 		return terrainRiver
+	}
+
+	// Higher elevation → hills/mountains
+	switch {
+	case elev > 0.72:
+		return terrainMountains
+	case elev > 0.60:
+		return terrainHills
+	}
+
+	// Low-elevation terrain palette — mostly green land with accents
+	switch {
+	case slot < 40:
+		return terrainGrassland
+	case slot < 62:
+		return terrainPlains
+	case slot < 76:
+		return terrainForest
+	case slot < 86:
+		return terrainGrassland // extra grassland weight
+	case slot < 93:
+		return terrainDesert
+	default:
+		return terrainTundra
 	}
 }
 
