@@ -35,6 +35,27 @@ func workersProvider(state game.GameState, _ int) string {
 	idle := wt.IdleCount
 	housingLeft := maxPop - total
 
+	// ── Morale ───────────────────────────────────
+	sb.WriteString(workerSection("Morale"))
+	moraleColor := "green"
+	if state.Morale < 0.50 {
+		moraleColor = "red"
+	} else if state.Morale < 0.80 {
+		moraleColor = "yellow"
+	}
+	moraleBar := assignBar(int(state.Morale*20), 20, 20)
+	capStr := ""
+	if state.MoraleCap > 1.0 {
+		capStr = fmt.Sprintf("  [gray]cap: %.2f[-]", state.MoraleCap)
+	}
+	fmt.Fprintf(&sb, "  [white]Morale:[white] [%s]%.0f%%[-]%s  %s\n", moraleColor, state.Morale*100, capStr, moraleBar)
+	if state.Morale < 1.0 {
+		fmt.Fprintf(&sb, "  [%s]⚠ Output penalty active — all worker production ×%.0f%%[-]\n", moraleColor, state.Morale*100)
+	} else {
+		fmt.Fprint(&sb, "  [green]✓ Full output[-]\n")
+	}
+	sb.WriteString("\n")
+
 	// ── Summary ──────────────────────────────────
 	sb.WriteString(workerSection("Summary"))
 	fmt.Fprintf(&sb, "  [white]Pop:[white] [yellow]%d[white] / [green]%d[-]   [white]Idle:[white] [cyan]%d[-]   [white]Housing left:[white] [green]%d[-]\n",
