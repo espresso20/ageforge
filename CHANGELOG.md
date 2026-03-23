@@ -8,6 +8,17 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v3.5.0] — 2026-03-23
+
+### Added
+- player-driven building upgrade system (#24)
+
+### Fixed
+- prevent electricity regression when upgrading energy lineage tiers 4 and 9 (#25)
+- resolve CSP violation on changelog page
+
+---
+
 ## [v3.4.0] — 2026-03-23
 
 ### Fixed
