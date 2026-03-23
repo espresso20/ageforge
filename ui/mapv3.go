@@ -406,6 +406,25 @@ func v3CenterTile(era int) v3TileStyle {
 
 // --- City radius ---
 
+// v3OutwardGrid returns n grid offsets radiating outward from (0,0) in
+// concentric square rings: ring 1 = 8 positions, ring 2 = 16, etc.
+func v3OutwardGrid(n int) [][2]int {
+	positions := make([][2]int, 0, n)
+	for ring := 1; len(positions) < n; ring++ {
+		for dx := -ring; dx <= ring; dx++ {
+			for dy := -ring; dy <= ring; dy++ {
+				adx, ady := dx, dy
+				if adx < 0 { adx = -adx }
+				if ady < 0 { ady = -ady }
+				if adx == ring || ady == ring {
+					positions = append(positions, [2]int{dx, dy})
+				}
+			}
+		}
+	}
+	return positions
+}
+
 func v3CityRadius(buildingCount int) int {
 	switch {
 	case buildingCount < 5:
@@ -513,7 +532,7 @@ func (m *MapV3) renderV3(screen tcell.Screen, state game.GameState, x, y, w, h i
 			builtCount++
 		}
 	}
-	cityR := v3CityRadius(builtCount)
+	_ = v3CityRadius(builtCount) // reserved for future viewport clipping
 
 	// Collect built buildings sorted deterministically
 	type bldEntry struct {
@@ -534,16 +553,17 @@ func (m *MapV3) renderV3(screen tcell.Screen, state game.GameState, x, y, w, h i
 	}
 	sort.Slice(buildings, func(i, j int) bool { return buildings[i].key < buildings[j].key })
 
-	// Build a set of city positions (deterministic golden-angle spiral placement)
+	// Build city positions using outward grid scan (concentric square rings).
+	// spacing=2 so each building gets its own cell with a gap.
+	const v3Spacing = 2
 	cityPositions := make(map[[2]int]bldEntry)
+	gridPos := v3OutwardGrid(len(buildings))
 	for i, bld := range buildings {
-		angle := float64(i) * 2.399 // golden angle in radians
-		radius := float64(3 + (i/8)*3)
-		if radius > float64(cityR) {
-			radius = float64(cityR)
+		if i >= len(gridPos) {
+			break
 		}
-		bx := cx + int(math.Cos(angle)*radius)
-		by := cy + int(math.Sin(angle)*radius)
+		bx := cx + gridPos[i][0]*v3Spacing
+		by := cy + gridPos[i][1]*v3Spacing
 		cityPositions[[2]int{bx, by}] = bld
 	}
 
