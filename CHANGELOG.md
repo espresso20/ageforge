@@ -8,6 +8,14 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v3.4.0] — 2026-03-23
+
+### Fixed
+- changelog page — fetch CHANGELOG.md instead of GitHub Releases API (#23)
+- add morale panel to workers overlay (#22)
+
+---
+
 ## [v3.3.0] — 2026-03-18
 
 ### Added
