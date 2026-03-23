@@ -250,8 +250,7 @@ func cmdHelp(args []string) CommandResult {
   [cyan]rates[-]                       - Show resource rate breakdown
   [cyan]status[-]                      - Show detailed status
   [cyan]upgrade[-]                     - List available building upgrades
-  [cyan]upgrade[-] <building>          - Upgrade all of that building type
-  [cyan]upgrade[-] all                 - Upgrade everything affordable
+  [cyan]upgrade[-] <building> [n|all]  - Upgrade building to next age tier (pays cost delta)
   [cyan]dump[-]                        - Export logs to file for debugging
   [cyan]save[-] [name]                 - Save game (default: autosave)
   [cyan]load[-] [name]                 - Load game (default: autosave)
@@ -274,7 +273,7 @@ func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
 			return CommandResult{Message: "No building upgrades available right now.", Type: "info"}
 		}
 		var lines []string
-		lines = append(lines, "[gold]Available Upgrades (25% of target cost):[-]")
+		lines = append(lines, "[gold]Available Upgrades (cost delta: new copy cost − 50% old refund):[-]")
 		for _, u := range upgrades {
 			affordable := "[red]✗[-]"
 			if u.CanAfford {
@@ -283,34 +282,31 @@ func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
 			lines = append(lines, fmt.Sprintf("  %s [cyan]%s[-] → [cyan]%s[-] (%d available) - Cost: %s",
 				affordable, u.FromKey, u.ToKey, u.Count, FormatCost(u.Cost)))
 		}
-		lines = append(lines, "\n  Type [cyan]upgrade <building>[-] or [cyan]upgrade all[-]")
+		lines = append(lines, "\n  Type [cyan]upgrade <building> [n|all][-]")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
 
-	key := strings.ToLower(args[0])
-	if key == "all" {
-		result, err := engine.UpgradeAll()
-		if err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+	building := strings.ToLower(args[0])
+	all := false
+	count := 0
+	if len(args) >= 2 {
+		if strings.ToLower(args[1]) == "all" {
+			all = true
+		} else {
+			n, err := strconv.Atoi(args[1])
+			if err != nil || n <= 0 {
+				return CommandResult{Message: "Usage: upgrade <building> [count|all]", Type: "error"}
+			}
+			count = n
 		}
-		total := 0
-		for _, n := range result {
-			total += n
-		}
-		return CommandResult{
-			Message: fmt.Sprintf("Upgraded %d buildings total!", total),
-			Type:    "success",
-		}
+	} else {
+		all = true // default: upgrade all
 	}
 
-	n, err := engine.UpgradeBuilding(key)
-	if err != nil {
+	if err := engine.UpgradeBuilding(building, count, all); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
 	}
-	return CommandResult{
-		Message: fmt.Sprintf("Upgraded %d %s!", n, key),
-		Type:    "success",
-	}
+	return CommandResult{Message: "", Type: "success"}
 }
 
 func cmdDump(args []string, engine *game.GameEngine) CommandResult {

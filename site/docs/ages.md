@@ -6,6 +6,31 @@ AgeForge spans 22 ages from primitive survival to transcendence. Each age unlock
 
 Each age unlocks exactly one wonder building. You must **build that wonder** before you can advance to the next age — it is a hard requirement alongside the resource and building thresholds listed below. The age progress bar will show a red `✗ Wonder required: <name>` notice until it is complete. See [Wonders](wonders.md) for build costs and instructions.
 
+## What Happens on Age Advance
+
+When your civilization crosses into a new age:
+
+1. **Resources drop to 10%** of their current amount — bank wisely before the transition.
+2. **Buildings with a next-tier equivalent receive a pending upgrade marker.** They are NOT automatically transformed. Each upgradeable building shows a gold hint in the Economy tab:
+   ```
+   ↑ Upgrade available → Farm   type: upgrade gathering_camp
+   ```
+3. **Production continues at the old rate** until you manually upgrade. There is no production penalty for leaving buildings pending — the incentive to upgrade is the higher output of the new tier.
+4. **New-tier buildings become available** in the build menu immediately — you can start building fresh copies of the new tier right away.
+
+### Upgrading buildings after an advance
+
+Use the `upgrade` command to convert old copies to new ones, paying only the cost delta (new build cost minus 50% of the old building's value):
+
+```
+upgrade gathering_camp       — upgrade all Gathering Camps to Forager Posts
+upgrade gathering_camp 3     — upgrade exactly 3 copies
+```
+
+Workers transfer automatically when all copies of a building are upgraded. For partial upgrades, workers stay on the old building.
+
+See [Buildings — Building Upgrades](buildings.md#building-upgrades) for the full cost formula, strategic timing advice, and worker transfer rules.
+
 ## Epoch Overview
 
 Every 3 ages you cross an **epoch boundary**. Epoch transitions trigger an event roll (see [Epochs](epochs.md)) and may shift your buildings' output resources.

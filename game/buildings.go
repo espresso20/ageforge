@@ -26,6 +26,7 @@ type BuildingManager struct {
 	wonderBanks     map[string]map[string]float64 // wonderKey -> resource -> banked amount
 	legacyBuildings map[string]bool               // buildings superseded by lineage progression; functional but unbuildable
 	ruins           map[string]int                // ruins from Succumb — produce at 50% base rate, no worker scaling
+	pendingUpgrades map[string]string             // oldKey -> newKey: player-driven upgrade awaiting payment
 }
 
 // NewBuildingManager creates a building manager
@@ -37,6 +38,7 @@ func NewBuildingManager() *BuildingManager {
 		wonderBanks:     make(map[string]map[string]float64),
 		legacyBuildings: make(map[string]bool),
 		ruins:           make(map[string]int),
+		pendingUpgrades: make(map[string]string),
 	}
 }
 
@@ -441,6 +443,106 @@ func (bm *BuildingManager) LoadLegacyBuildings(keys []string) {
 	}
 }
 
+// === Player-driven upgrade system ===
+
+// SetPendingUpgrade marks oldKey as having a player-driven upgrade available to newKey.
+// The buildings are not transformed immediately; the player must issue `upgrade <oldKey>`.
+func (bm *BuildingManager) SetPendingUpgrade(oldKey, newKey string) {
+	bm.pendingUpgrades[oldKey] = newKey
+}
+
+// GetPendingUpgrade returns the upgrade target for oldKey, or ("", false) if none.
+func (bm *BuildingManager) GetPendingUpgrade(oldKey string) (string, bool) {
+	v, ok := bm.pendingUpgrades[oldKey]
+	return v, ok
+}
+
+// ClearPendingUpgrade removes the pending upgrade marker for oldKey.
+func (bm *BuildingManager) ClearPendingUpgrade(oldKey string) {
+	delete(bm.pendingUpgrades, oldKey)
+}
+
+// GetAllPendingUpgrades returns a copy of the pending upgrades map (oldKey -> newKey).
+func (bm *BuildingManager) GetAllPendingUpgrades() map[string]string {
+	out := make(map[string]string, len(bm.pendingUpgrades))
+	for k, v := range bm.pendingUpgrades {
+		out[k] = v
+	}
+	return out
+}
+
+// LoadPendingUpgrades restores pending upgrade markers from a save.
+func (bm *BuildingManager) LoadPendingUpgrades(upgrades map[string]string) {
+	for k, v := range upgrades {
+		bm.pendingUpgrades[k] = v
+	}
+}
+
+// UpgradeCost computes the total cost delta to upgrade upgradeCount copies of oldKey to newKey.
+// Cost per copy = max(0, new_copy_cost[res] - old_copy_sell_value[res]) per resource.
+// Old sell value = floor(old_copy_cost * 0.5). New copy cost is at the current new count + i.
+func (bm *BuildingManager) UpgradeCost(oldKey, newKey string, upgradeCount int) (map[string]float64, bool) {
+	oldDef, ok1 := bm.defs[oldKey]
+	newDef, ok2 := bm.defs[newKey]
+	if !ok1 || !ok2 || upgradeCount <= 0 {
+		return nil, false
+	}
+	oldCount := bm.counts[oldKey]
+	newCount := bm.counts[newKey]
+	total := make(map[string]float64)
+	for i := 0; i < upgradeCount; i++ {
+		// Old copy being traded in: remove most expensive first (oldCount-1-i)
+		oldExp := float64(oldCount - 1 - i)
+		if oldExp < 0 {
+			oldExp = 0
+		}
+		// New copy being created: the (newCount+i)th copy
+		newExp := float64(newCount + i)
+		for res, base := range newDef.BaseCost {
+			newCopyCost := math.Floor(base * math.Pow(newDef.CostScale, newExp))
+			// Old sell value for this resource (0 if old building doesn't cost this resource)
+			oldBase := oldDef.BaseCost[res]
+			oldCopyCost := math.Floor(oldBase * math.Pow(oldDef.CostScale, oldExp))
+			oldSellValue := math.Floor(oldCopyCost * 0.5)
+			delta := newCopyCost - oldSellValue
+			if delta < 0 {
+				delta = 0
+			}
+			total[res] += delta
+		}
+	}
+	return total, true
+}
+
+// PartialTransform moves count copies of oldKey to newKey, returning actual moved.
+// If oldKey count reaches 0, the pending upgrade is cleared automatically.
+// If all copies are moved, worker assignments are transferred via renameWorker callback;
+// partial upgrades leave remaining workers on the old key.
+func (bm *BuildingManager) PartialTransform(oldKey, newKey string, count int, renameWorker func(domain, oldKey, newKey string)) int {
+	have := bm.counts[oldKey]
+	if count > have {
+		count = have
+	}
+	if count <= 0 {
+		return 0
+	}
+	bm.counts[oldKey] -= count
+	bm.counts[newKey] += count
+	bm.unlocked[newKey] = true
+	if renameWorker != nil {
+		newDef := bm.defs[newKey]
+		if newDef.WorkerDomain != "" && bm.counts[oldKey] == 0 {
+			// All copies moved — transfer worker assignments
+			renameWorker(newDef.WorkerDomain, oldKey, newKey)
+		}
+		// Partial upgrade: workers stay on old key; player reassigns manually
+	}
+	if bm.counts[oldKey] == 0 {
+		bm.ClearPendingUpgrade(oldKey)
+	}
+	return count
+}
+
 // === Phase 9: Ruins ===
 
 // GenerateRuins converts up to n randomly selected non-wonder building instances
@@ -610,6 +712,10 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 		if bm.legacyBuildings[key] {
 			state.IsLegacy = true
 			state.CanBuild = false
+		}
+		// Player-driven upgrade: populate pending upgrade target if set and building has copies
+		if upgradeTarget, hasPending := bm.pendingUpgrades[key]; hasPending && count > 0 {
+			state.PendingUpgrade = upgradeTarget
 		}
 		out[key] = state
 	}
