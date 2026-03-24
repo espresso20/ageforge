@@ -143,7 +143,7 @@ func buildingCompose(lin, tier, era, variation int) Canvas {
 	var c Canvas
 	pal := EraPalettes[era]
 
-	bodyW := 4 + tier*6/20
+	bodyW := 6 + tier*4/20
 	if bodyW%2 != 0 {
 		bodyW++
 	} // keep even
@@ -159,7 +159,9 @@ func buildingCompose(lin, tier, era, variation int) Canvas {
 	by := 14 - bodyH  // body top y (foundation is 14-15)
 
 	// Foundation
-	c.fillRect(bx-1, 14, bodyW+2, 2, darken(pal.Wall, 0.6))
+	c.fillRect(bx-2, 14, bodyW+4, 2, darken(pal.Wall, 0.6))
+	// ground shadow: full-width dark strip at very bottom
+	c.hline(0, 15, 16, darken(pal.Wall, 0.4))
 
 	// Body walls
 	c.fillRect(bx, by, bodyW, bodyH, pal.Wall)
@@ -182,13 +184,23 @@ func buildingCompose(lin, tier, era, variation int) Canvas {
 
 	// Door: 2 wide, at bottom of body, center
 	dx := bx + bodyW/2 - 1
-	c.fillRect(dx, by+bodyH-2, 2, 2, pal.Door)
+	if pal.Door == 0 {
+		c.fillRect(dx, by+bodyH-2, 2, 2, 0x1a1008)
+	} else {
+		c.fillRect(dx, by+bodyH-2, 2, 2, pal.Door)
+	}
 
 	// Roof — shape varies by lineage group
 	roofTop := by - 1
 	switch {
 	case lin <= 2: // housing, food → pitched roof
-		c.pitchedRoof(8, roofTop-2, roofTop, bodyW+2, pal.Roof)
+		if era == 0 {
+			// primitive: flat thatched roof — no peaked silhouette
+			c.hline(bx-1, roofTop, bodyW+2, pal.Roof)
+			c.hline(bx, roofTop-1, bodyW, darken(pal.Roof, 0.8)) // second layer
+		} else {
+			c.pitchedRoof(8, roofTop-2, roofTop, bodyW+2, pal.Roof)
+		}
 	case lin <= 4: // organic/geological extraction → flat roof with chimney
 		c.hline(bx-1, roofTop, bodyW+2, pal.Roof)
 		cx2 := bx + bodyW - 2 + variation
@@ -253,6 +265,9 @@ func buildingCompose(lin, tier, era, variation int) Canvas {
 		c.set(bx-1, by+bodyH, pal.Glow)
 		c.set(bx+bodyW, by+bodyH, pal.Glow)
 	}
+
+	// Full-width base anchors the building — prevents floating/humanoid look
+	c.hline(0, 15, 16, darken(pal.Wall, 0.35))
 
 	return c
 }
