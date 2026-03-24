@@ -3,7 +3,10 @@ package ui
 import (
 	"image"
 	"image/color"
+	_ "image/png"
 	"math"
+	"os"
+	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
@@ -537,6 +540,61 @@ var v4SpriteWonderPixels  = v4SpriteWonder()
 var v4SpriteStoragePixels = v4SpriteStorage()
 var v4SpriteCityPixels    = v4SpriteCityCenter()
 
+var (
+	v4SpriteCacheMu sync.RWMutex
+	v4SpriteCache   = map[string][16][16]uint32{}
+)
+
+// v4LoadBuildingSprite loads a 16×16 sprite from assets/sprites/buildings/<key>.png.
+// Falls back to domain sprite if file not found. Results are cached.
+func v4LoadBuildingSprite(key, domain string, isWonder, isStorage bool) [16][16]uint32 {
+	v4SpriteCacheMu.RLock()
+	if px, ok := v4SpriteCache[key]; ok {
+		v4SpriteCacheMu.RUnlock()
+		return px
+	}
+	v4SpriteCacheMu.RUnlock()
+
+	// Try loading from disk
+	path := filepath.Join("assets", "sprites", "buildings", key+".png")
+	f, err := os.Open(path)
+	if err == nil {
+		defer f.Close()
+		img, _, err := image.Decode(f)
+		if err == nil {
+			var px [16][16]uint32
+			for row := 0; row < 16; row++ {
+				for col := 0; col < 16; col++ {
+					r, g, b, a := img.At(col, row).RGBA()
+					if a > 0x8000 {
+						px[row][col] = (uint32(r>>8) << 16) | (uint32(g>>8) << 8) | uint32(b>>8)
+					}
+				}
+			}
+			v4SpriteCacheMu.Lock()
+			v4SpriteCache[key] = px
+			v4SpriteCacheMu.Unlock()
+			return px
+		}
+	}
+
+	// Fallback to inline domain sprites
+	var fallback [16][16]uint32
+	if isWonder {
+		fallback = v4SpriteWonderPixels
+	} else if isStorage {
+		fallback = v4SpriteStoragePixels
+	} else if sp, ok := v4DomainSprites[domain]; ok {
+		fallback = sp
+	} else {
+		fallback = v4SpriteCityPixels
+	}
+	v4SpriteCacheMu.Lock()
+	v4SpriteCache[key] = fallback
+	v4SpriteCacheMu.Unlock()
+	return fallback
+}
+
 // ── Sprite renderer ────────────────────────────────────────────────────────
 
 func v4DrawSprite(img *image.RGBA, pixels [16][16]uint32, px, py int) {
@@ -692,8 +750,8 @@ func v4GetBuildings(state game.GameState) []v4Building {
 		}
 		return result[i].key < result[j].key
 	})
-	if len(result) > 64 {
-		result = result[:64]
+	if len(result) > 200 {
+		result = result[:200]
 	}
 	return result
 }
@@ -867,16 +925,7 @@ func v4GenerateImage(state game.GameState, width, height int) *image.RGBA {
 		if r > maxRadius {
 			maxRadius = r
 		}
-		var pixels [16][16]uint32
-		if b.isWonder {
-			pixels = v4SpriteWonderPixels
-		} else if b.isStorage {
-			pixels = v4SpriteStoragePixels
-		} else if sp, ok := v4DomainSprites[b.domain]; ok {
-			pixels = sp
-		} else {
-			pixels = v4SpriteStoragePixels
-		}
+		pixels := v4LoadBuildingSprite(b.key, b.domain, b.isWonder, b.isStorage)
 		positions = append(positions, bldPos{bx, by, pixels})
 	}
 
