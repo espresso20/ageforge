@@ -47,28 +47,28 @@ func v4rgb(hex uint32) color.RGBA {
 }
 
 var v4Palettes = []v4AgePalette{
-	{"primitive_age", v4rgb(0x1a5c0a), v4rgb(0x2d8c1a), v4rgb(0x4ab02a), v4rgb(0x2060c0), v4rgb(0x3da02a), false},
-	{"stone_age", v4rgb(0x5a7a3a), v4rgb(0x7a9a4a), v4rgb(0x9ab85a), v4rgb(0x1a50a0), v4rgb(0x8aaa5a), false},
-	{"bronze_age", v4rgb(0x6a7a2a), v4rgb(0x8a9a3a), v4rgb(0xaaba4a), v4rgb(0x1a50a0), v4rgb(0x9aaa4a), false},
-	{"iron_age", v4rgb(0x4a6a2a), v4rgb(0x6a8a3a), v4rgb(0x8aaa4a), v4rgb(0x1a50a0), v4rgb(0x7a9a4a), false},
-	{"classical_age", v4rgb(0x4a6030), v4rgb(0x6a8040), v4rgb(0x8aa050), v4rgb(0x1a4890), v4rgb(0x7a9050), false},
-	{"medieval_age", v4rgb(0x3a5828), v4rgb(0x5a7838), v4rgb(0x7a9848), v4rgb(0x1a4080), v4rgb(0x6a8848), false},
-	{"renaissance_age", v4rgb(0x384828), v4rgb(0x506838), v4rgb(0x688848), v4rgb(0x1a3870), v4rgb(0x607848), false},
-	{"age_of_sail", v4rgb(0x304020), v4rgb(0x486030), v4rgb(0x607840), v4rgb(0x1a3868), v4rgb(0x587040), false},
-	{"industrial_age", v4rgb(0x404038), v4rgb(0x585850), v4rgb(0x707068), v4rgb(0x183060), v4rgb(0x686860), false},
-	{"gilded_age", v4rgb(0x383830), v4rgb(0x505048), v4rgb(0x686860), v4rgb(0x182858), v4rgb(0x606058), false},
-	{"modern_age", v4rgb(0x282830), v4rgb(0x383840), v4rgb(0x484850), v4rgb(0x182050), v4rgb(0x484855), false},
-	{"atomic_age", v4rgb(0x201820), v4rgb(0x302830), v4rgb(0x403840), v4rgb(0x201848), v4rgb(0x404048), false},
-	{"space_age", v4rgb(0x100820), v4rgb(0x201830), v4rgb(0x302840), v4rgb(0x301060), v4rgb(0x302840), true},
-	{"information_age", v4rgb(0x080818), v4rgb(0x181828), v4rgb(0x282838), v4rgb(0x280a58), v4rgb(0x282838), true},
-	{"cyberpunk_age", v4rgb(0x060610), v4rgb(0x101020), v4rgb(0x1a1a30), v4rgb(0x5010a0), v4rgb(0x1a1a35), true},
-	{"nanotech_age", v4rgb(0x040410), v4rgb(0x0c0c1c), v4rgb(0x14142c), v4rgb(0x4010a0), v4rgb(0x141430), true},
-	{"fusion_age", v4rgb(0x040408), v4rgb(0x080818), v4rgb(0x101024), v4rgb(0x6010c0), v4rgb(0x10102a), true},
-	{"singularity_age", v4rgb(0x020208), v4rgb(0x060614), v4rgb(0x0c0c20), v4rgb(0x7010d0), v4rgb(0x0c0c24), true},
-	{"galactic_age", v4rgb(0x020206), v4rgb(0x040410), v4rgb(0x08081a), v4rgb(0x8010e0), v4rgb(0x08081e), true},
-	{"cosmic_age", v4rgb(0x010106), v4rgb(0x03030e), v4rgb(0x060616), v4rgb(0x9010f0), v4rgb(0x060618), true},
-	{"transcendent_age", v4rgb(0x010104), v4rgb(0x02020a), v4rgb(0x040410), v4rgb(0xa010ff), v4rgb(0x040412), true},
-	{"divine_age", v4rgb(0x010102), v4rgb(0x020208), v4rgb(0x03030c), v4rgb(0xb020ff), v4rgb(0x03030e), true},
+	{"primitive_age", v4rgb(0x1a5c0a), v4rgb(0x2d8c1a), v4rgb(0x4ab02a), v4rgb(0x2060c0), v4rgb(0x8aba40), false},
+	{"stone_age", v4rgb(0x5a7a3a), v4rgb(0x7a9a4a), v4rgb(0x9ab85a), v4rgb(0x1a50a0), v4rgb(0xb8cc70), false},
+	{"bronze_age", v4rgb(0x6a7a2a), v4rgb(0x8a9a3a), v4rgb(0xaaba4a), v4rgb(0x1a50a0), v4rgb(0xc8c860), false},
+	{"iron_age", v4rgb(0x4a6a2a), v4rgb(0x6a8a3a), v4rgb(0x8aaa4a), v4rgb(0x1a50a0), v4rgb(0xb0c860), false},
+	{"classical_age", v4rgb(0x4a6030), v4rgb(0x6a8040), v4rgb(0x8aa050), v4rgb(0x1a4890), v4rgb(0xb0b870), false},
+	{"medieval_age", v4rgb(0x3a5828), v4rgb(0x5a7838), v4rgb(0x7a9848), v4rgb(0x1a4080), v4rgb(0xa8b868), false},
+	{"renaissance_age", v4rgb(0x384828), v4rgb(0x506838), v4rgb(0x688848), v4rgb(0x1a3870), v4rgb(0xa0b060), false},
+	{"age_of_sail", v4rgb(0x304020), v4rgb(0x486030), v4rgb(0x607840), v4rgb(0x1a3868), v4rgb(0x98a858), false},
+	{"industrial_age", v4rgb(0x404038), v4rgb(0x585850), v4rgb(0x707068), v4rgb(0x183060), v4rgb(0x888870), false},
+	{"gilded_age", v4rgb(0x383830), v4rgb(0x505048), v4rgb(0x686860), v4rgb(0x182858), v4rgb(0x808068), false},
+	{"modern_age", v4rgb(0x282830), v4rgb(0x383840), v4rgb(0x484850), v4rgb(0x182050), v4rgb(0x686870), false},
+	{"atomic_age", v4rgb(0x201820), v4rgb(0x302830), v4rgb(0x403840), v4rgb(0x201848), v4rgb(0x605860), false},
+	{"space_age", v4rgb(0x100820), v4rgb(0x201830), v4rgb(0x302840), v4rgb(0x301060), v4rgb(0x504860), true},
+	{"information_age", v4rgb(0x080818), v4rgb(0x181828), v4rgb(0x282838), v4rgb(0x280a58), v4rgb(0x484858), true},
+	{"cyberpunk_age", v4rgb(0x060610), v4rgb(0x101020), v4rgb(0x1a1a30), v4rgb(0x5010a0), v4rgb(0x303050), true},
+	{"nanotech_age", v4rgb(0x040410), v4rgb(0x0c0c1c), v4rgb(0x14142c), v4rgb(0x4010a0), v4rgb(0x282848), true},
+	{"fusion_age", v4rgb(0x040408), v4rgb(0x080818), v4rgb(0x101024), v4rgb(0x6010c0), v4rgb(0x202038), true},
+	{"singularity_age", v4rgb(0x020208), v4rgb(0x060614), v4rgb(0x0c0c20), v4rgb(0x7010d0), v4rgb(0x181830), true},
+	{"galactic_age", v4rgb(0x020206), v4rgb(0x040410), v4rgb(0x08081a), v4rgb(0x8010e0), v4rgb(0x101028), true},
+	{"cosmic_age", v4rgb(0x010106), v4rgb(0x03030e), v4rgb(0x060616), v4rgb(0x9010f0), v4rgb(0x0c0c20), true},
+	{"transcendent_age", v4rgb(0x010104), v4rgb(0x02020a), v4rgb(0x040410), v4rgb(0xa010ff), v4rgb(0x0a0a18), true},
+	{"divine_age", v4rgb(0x010102), v4rgb(0x020208), v4rgb(0x03030c), v4rgb(0xb020ff), v4rgb(0x080810), true},
 }
 
 func v4GetPalette(ageKey string) v4AgePalette {
@@ -751,7 +751,41 @@ func v4DrawSpriteScaled(img *image.RGBA, pixels [16][16]uint32, px, py, spriteSi
 				continue
 			}
 			c := color.RGBA{uint8(v >> 16), uint8(v >> 8), uint8(v), 255}
-			img.SetRGBA(px+dstCol, py+dstRow, c)
+			x, y := px+dstCol, py+dstRow
+			if x >= 0 && x < img.Bounds().Max.X && y >= 0 && y < img.Bounds().Max.Y {
+				img.SetRGBA(x, y, c)
+			}
+		}
+	}
+	// 1px shadow outline below and to the right for depth/contrast
+	shadowClr := color.RGBA{0, 0, 0, 120}
+	for dstRow := 0; dstRow < spriteSize; dstRow++ {
+		for dstCol := 0; dstCol < spriteSize; dstCol++ {
+			srcRow := dstRow * 16 / spriteSize
+			srcCol := dstCol * 16 / spriteSize
+			v := pixels[srcRow][srcCol]
+			if v == 0 {
+				continue
+			}
+			// Check if pixel below is transparent/outside → draw shadow below it
+			belowRow := (dstRow + 1) * 16 / spriteSize
+			belowV := uint32(0)
+			if belowRow < 16 {
+				belowV = pixels[belowRow][srcCol]
+			}
+			if belowV == 0 {
+				x, y := px+dstCol, py+dstRow+1
+				if x >= 0 && x < img.Bounds().Max.X && y >= 0 && y < img.Bounds().Max.Y {
+					existing := img.RGBAAt(x, y)
+					blended := color.RGBA{
+						R: uint8((int(existing.R)*2 + int(shadowClr.R)) / 3),
+						G: uint8((int(existing.G)*2 + int(shadowClr.G)) / 3),
+						B: uint8((int(existing.B)*2 + int(shadowClr.B)) / 3),
+						A: 255,
+					}
+					img.SetRGBA(x, y, blended)
+				}
+			}
 		}
 	}
 }
@@ -956,10 +990,10 @@ func v4Min(a, b int) int {
 type v4TerrainFeature [8][8]uint32
 
 func v4FeatureJungleTree() v4TerrainFeature {
-	G := uint32(0x1a6010)
-	M := uint32(0x2d8c1a)
-	L := uint32(0x4ab02a)
-	T := uint32(0x5a3a20)
+	G := uint32(0x0d3a08)
+	M := uint32(0x1a5c10)
+	L := uint32(0x2d7a1a)
+	T := uint32(0x3d2010)
 	return v4TerrainFeature{
 		{0, 0, 0, M, 0, 0, 0, 0},
 		{0, 0, M, L, M, 0, 0, 0},
@@ -973,9 +1007,9 @@ func v4FeatureJungleTree() v4TerrainFeature {
 }
 
 func v4FeaturePineTree() v4TerrainFeature {
-	D := uint32(0x1a4a10)
-	M := uint32(0x2d6b1a)
-	T := uint32(0x5a3a20)
+	D := uint32(0x0a2a08)
+	M := uint32(0x164810)
+	T := uint32(0x3d2010)
 	return v4TerrainFeature{
 		{0, 0, 0, M, 0, 0, 0, 0},
 		{0, 0, D, M, D, 0, 0, 0},
@@ -989,9 +1023,9 @@ func v4FeaturePineTree() v4TerrainFeature {
 }
 
 func v4FeatureRock() v4TerrainFeature {
-	L := uint32(0xaaaaaa)
-	G := uint32(0x7a7a7a)
-	D := uint32(0x4a4a4a)
+	L := uint32(0xbbbbbb)
+	G := uint32(0x888888)
+	D := uint32(0x444444)
 	return v4TerrainFeature{
 		{0, 0, G, G, G, 0, 0, 0},
 		{0, G, L, L, G, G, 0, 0},
@@ -1102,19 +1136,19 @@ func v4DrawTerrainFeature(img *image.RGBA, feat v4TerrainFeature, px, py int) {
 func v4FeatureSetForEra(era int) (features []v4TerrainFeature, density float64) {
 	switch era {
 	case 0:
-		return []v4TerrainFeature{v4FeatureJungleTree(), v4FeatureRock()}, 0.18
+		return []v4TerrainFeature{v4FeatureJungleTree(), v4FeatureRock()}, 0.45
 	case 1:
-		return []v4TerrainFeature{v4FeaturePineTree(), v4FeatureCropField()}, 0.14
+		return []v4TerrainFeature{v4FeaturePineTree(), v4FeatureCropField()}, 0.38
 	case 2:
-		return []v4TerrainFeature{v4FeatureCropField(), v4FeatureCityBlock()}, 0.12
+		return []v4TerrainFeature{v4FeatureCropField(), v4FeatureCityBlock()}, 0.32
 	case 3:
-		return []v4TerrainFeature{v4FeatureCityBlock(), v4FeatureCityBlock()}, 0.15
+		return []v4TerrainFeature{v4FeatureCityBlock(), v4FeatureCityBlock()}, 0.38
 	case 4:
-		return []v4TerrainFeature{v4FeatureNeonBlock(), v4FeatureCityBlock()}, 0.12
+		return []v4TerrainFeature{v4FeatureNeonBlock(), v4FeatureCityBlock()}, 0.32
 	case 5:
-		return []v4TerrainFeature{v4FeatureEnergyCrystal(), v4FeatureEnergyCrystal()}, 0.10
+		return []v4TerrainFeature{v4FeatureEnergyCrystal(), v4FeatureEnergyCrystal()}, 0.28
 	default:
-		return []v4TerrainFeature{v4FeatureVoidParticle()}, 0.08
+		return []v4TerrainFeature{v4FeatureVoidParticle()}, 0.22
 	}
 }
 
@@ -1223,7 +1257,7 @@ func v4GenerateImage(state game.GameState, width, height int) *image.RGBA {
 					}
 					ddx := gx + 4 - cx
 					ddy := gy + 4 - cy
-					if ddx*ddx+ddy*ddy < 60*60 {
+					if ddx*ddx+ddy*ddy < 40*40 {
 						continue
 					}
 					if gx < width/5+10 {
