@@ -620,6 +620,17 @@ func v4DrawRoad(img *image.RGBA, x0, y0, x1, y1 int, roadClr color.RGBA) {
 	}
 }
 
+// v4BuildingJitter returns a stable small perpendicular offset (-5..+5) for a building key.
+// This breaks the perfectly-straight-line look without being random each frame.
+func v4BuildingJitter(key string) int {
+	h := uint32(2166136261)
+	for i := 0; i < len(key); i++ {
+		h ^= uint32(key[i])
+		h *= 16777619
+	}
+	return int(h%11) - 5 // -5 to +5
+}
+
 // ── Building list ──────────────────────────────────────────────────────────
 
 type v4Building struct {
@@ -667,27 +678,6 @@ func v4GetBuildings(state game.GameState) []v4Building {
 		result = result[:64]
 	}
 	return result
-}
-
-// ── Placement grid ─────────────────────────────────────────────────────────
-
-func v4PlacementSlot(idx int) (dx, dy int) {
-	if idx == 0 {
-		return 0, 0
-	}
-	ring := 1
-	slotBase := 0
-	slotsInRing := 8
-	for idx > slotBase+slotsInRing {
-		slotBase += slotsInRing
-		ring++
-		slotsInRing = ring * 8
-	}
-	posInRing := idx - slotBase - 1
-	radius := float64(ring) * 28.0
-	angle := float64(posInRing) / float64(slotsInRing) * 2 * math.Pi
-	return int(math.Round(radius * math.Cos(angle))),
-		int(math.Round(radius * math.Sin(angle)))
 }
 
 // ── Noise (renamed from v2 to avoid conflicts) ─────────────────────────────
@@ -821,30 +811,71 @@ func v4GenerateImage(state game.GameState, width, height int) *image.RGBA {
 	// 3. River
 	v4DrawRiver(img, pal, seed)
 
-	// 4. Buildings
+	// 4. City roads + buildings
 	buildings := v4GetBuildings(state)
 	cx, cy := width/2, height/2
-
 	roadClr := v4LerpColor(pal.bgMid, pal.bgLight, 0.4)
 
-	for i, b := range buildings {
-		dx, dy := v4PlacementSlot(i + 1)
-		bx, by := cx+dx-8, cy+dy-8
+	if len(buildings) > 0 {
+		// Generate 7 road directions radiating from city center.
+		// Angles are not perfectly even — slight offsets give organic look.
+		// Seeded so the map is always the same for a given save.
+		baseAngles := []float64{0, 48, 93, 145, 198, 252, 310} // degrees
+		numRoads := len(baseAngles)
 
-		v4DrawRoad(img, cx, cy, cx+dx, cy+dy, roadClr)
-		v4DrawClearing(img, cx+dx, cy+dy, pal.clearingColor)
+		// Spacing between buildings along each road (pixels)
+		roadSpacing := 22.0
 
-		var pixels [16][16]uint32
-		if b.isWonder {
-			pixels = v4SpriteWonderPixels
-		} else if b.isStorage {
-			pixels = v4SpriteStoragePixels
-		} else if sp, ok := v4DomainSprites[b.domain]; ok {
-			pixels = sp
-		} else {
-			pixels = v4SpriteStoragePixels
+		// Assign each building to a road slot:
+		//   road index = building index % numRoads
+		//   distance along road = (building index / numRoads + 1) * roadSpacing
+		// This fills road 0 slot 1, road 1 slot 1, ..., road N slot 1,
+		// then road 0 slot 2, road 1 slot 2, etc.
+		// Result: buildings fan out evenly along all roads before any road gets a 2nd building.
+
+		// First, draw all roads to their maximum needed length
+		maxSlot := (len(buildings)-1)/numRoads + 1
+		for _, deg := range baseAngles {
+			rad := deg * math.Pi / 180
+			roadLen := float64(maxSlot+1) * roadSpacing
+			ex := cx + int(math.Round(roadLen*math.Cos(rad)))
+			ey := cy + int(math.Round(roadLen*math.Sin(rad)))
+			v4DrawRoad(img, cx, cy, ex, ey, roadClr)
 		}
-		v4DrawSprite(img, pixels, bx, by)
+
+		// Then place clearings + sprites
+		for i, b := range buildings {
+			roadIdx := i % numRoads
+			slot := i/numRoads + 1 // 1-based distance slot
+
+			deg := baseAngles[roadIdx]
+			// Small stable jitter per building — offset perpendicular to road direction
+			// Use building key hash for stable jitter
+			jitter := v4BuildingJitter(b.key)
+			rad := deg * math.Pi / 180
+			// Perpendicular direction
+			perpRad := rad + math.Pi/2
+
+			dist := float64(slot) * roadSpacing
+			bx := cx + int(math.Round(dist*math.Cos(rad))) + int(math.Round(float64(jitter)*math.Cos(perpRad)))
+			by := cy + int(math.Round(dist*math.Sin(rad))) + int(math.Round(float64(jitter)*math.Sin(perpRad)))
+
+			// Clearing halo
+			v4DrawClearing(img, bx, by, pal.clearingColor)
+
+			// Sprite (centered on bx, by)
+			var pixels [16][16]uint32
+			if b.isWonder {
+				pixels = v4SpriteWonderPixels
+			} else if b.isStorage {
+				pixels = v4SpriteStoragePixels
+			} else if sp, ok := v4DomainSprites[b.domain]; ok {
+				pixels = sp
+			} else {
+				pixels = v4SpriteStoragePixels
+			}
+			v4DrawSprite(img, pixels, bx-8, by-8)
+		}
 	}
 
 	// 5. City center (always at map center, drawn last so it's on top)
