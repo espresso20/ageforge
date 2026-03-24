@@ -36,6 +36,7 @@ var commands = []string{
 	"dump", "exportlogs",
 	"milestones", "ms",
 	"techs", "army", "stats", "wonders", "workers", "logs", "epoch", "history",
+	"map",
 }
 
 // NewAutoCompleter returns an autocomplete function for the command input field.

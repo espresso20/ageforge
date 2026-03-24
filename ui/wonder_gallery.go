@@ -143,7 +143,7 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 
 	var sb strings.Builder
 	if built {
-		fmt.Fprintf(&sb, "[gold::b]★ %s[-]\n", current.name)
+		fmt.Fprintf(&sb, "%s [gold::b]★ %s[-]\n", WonderSpriteIcon(), current.name)
 		fmt.Fprintf(&sb, "[green]BUILT[-] — [gray]%s[-]\n\n", current.ageName)
 	} else {
 		fmt.Fprintf(&sb, "[yellow::b]%s[-]\n", current.name)
