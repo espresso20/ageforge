@@ -30,7 +30,7 @@ func renderCurrentWonderSummary(state game.GameState) string {
 
 	sb.WriteString("[gold]═══ Current Age Wonder ═══[-]\n")
 	if built {
-		fmt.Fprintf(&sb, " [gold]★ %s[-]  [green]BUILT[-]  [gray]%s[-]\n", current.name, current.ageName)
+		fmt.Fprintf(&sb, " %s [gold]★ %s[-]  [green]BUILT[-]  [gray]%s[-]\n", WonderSpriteIcon(), current.name, current.ageName)
 	} else {
 		fmt.Fprintf(&sb, " [yellow]○ %s[-]  [gray]%s — Not yet built[-]\n", current.name, current.ageName)
 	}
@@ -109,7 +109,7 @@ func wondersProvider(state game.GameState, _ int) string {
 		unlocked := hasBs && bs.Unlocked
 
 		if built {
-			fmt.Fprintf(&sb, " [gold]★ %s[-]   [gray]%s[-]\n", w.name, w.ageName)
+			fmt.Fprintf(&sb, " %s [gold]★ %s[-]   [gray]%s[-]\n", WonderSpriteIcon(), w.name, w.ageName)
 			fmt.Fprintf(&sb, "   [green]BUILT[-]\n")
 			if w.def.Description != "" {
 				fmt.Fprintf(&sb, "   [gray]%s[-]\n", w.def.Description)
