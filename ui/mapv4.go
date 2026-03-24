@@ -478,6 +478,146 @@ func v4SpriteCityCenter() [16][16]uint32 {
 	}
 }
 
+// v4PalacePixels returns a 16×16 palace sprite appropriate for the current age era.
+func v4PalacePixels(era int) [16][16]uint32 {
+	// Each era is a distinct palace design drawn inline
+	switch era {
+	case 0: // Primitive: chief's longhouse
+		return [16][16]uint32{
+			{0, 0, 0, 0, 0, 0x5a3a20, 0x5a3a20, 0x5a3a20, 0x5a3a20, 0x5a3a20, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0x5a3a20, 0x8b6a40, 0x8b6a40, 0x8b6a40, 0x8b6a40, 0x8b6a40, 0x5a3a20, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0x5a3a20, 0x8b6a40, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6a40, 0x5a3a20, 0, 0, 0, 0},
+			{0, 0, 0x5a3a20, 0x8b6a40, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6a40, 0x5a3a20, 0, 0, 0, 0},
+			{0, 0x5a3a20, 0x8b6a40, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6a40, 0x5a3a20, 0, 0, 0},
+			{0x5a3a20, 0x8b6a40, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6a40, 0x5a3a20, 0, 0},
+			{0x8b6040, 0xc8a060, 0xc8a060, 0xc8a060, 0x5a3a20, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x5a3a20, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6040, 0, 0},
+			{0x8b6040, 0xc8a060, 0xc8a060, 0xc8a060, 0x5a3a20, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x5a3a20, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6040, 0, 0},
+			{0x8b6040, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x5a3a20, 0x5a3a20, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6040, 0, 0},
+			{0x8b6040, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x5a3a20, 0x5a3a20, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6040, 0, 0},
+			{0x8b6040, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6040, 0, 0},
+			{0x8b6040, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6040, 0, 0},
+			{0x5a3a20, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x5a3a20, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		}
+	case 1: // Classical/Medieval: stone castle
+		return [16][16]uint32{
+			{0, 0, 0, 0, 0, 0xd4a017, 0, 0, 0, 0xd4a017, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0xd4a017, 0xd4a017, 0xd4a017, 0, 0xd4a017, 0xd4a017, 0xd4a017, 0, 0, 0, 0, 0},
+			{0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0, 0},
+			{0, 0x908070, 0xd0c8b0, 0x908070, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0x908070, 0xd0c8b0, 0x908070, 0, 0},
+			{0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xa0c0d0, 0xa0c0d0, 0xd0c8b0, 0xa0c0d0, 0xa0c0d0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0, 0},
+			{0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xa0c0d0, 0xa0c0d0, 0xd0c8b0, 0xa0c0d0, 0xa0c0d0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0, 0},
+			{0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0, 0},
+			{0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd4a017, 0xd4a017, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0, 0},
+			{0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd4a017, 0xd4a017, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0, 0},
+			{0x8b1a1a, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0x8b1a1a, 0},
+			{0x8b1a1a, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0x6b3a1a, 0x6b3a1a, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0x8b1a1a, 0},
+			{0x8b1a1a, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0x6b3a1a, 0x6b3a1a, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0x8b1a1a, 0},
+			{0x8b1a1a, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0x8b1a1a, 0},
+			{0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		}
+	case 2: // Industrial: Victorian town hall with clock tower
+		return [16][16]uint32{
+			{0, 0, 0, 0, 0, 0, 0, 0xc87941, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0x4a3a30, 0x8a6050, 0xc0c0a0, 0x8a6050, 0x4a3a30, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0x8a6050, 0x8a6050, 0xc0c0a0, 0x8a6050, 0x8a6050, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0, 0, 0, 0, 0, 0},
+			{0, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0, 0},
+			{0, 0x8a6050, 0xc0c0a0, 0xc0c0a0, 0x8a6050, 0x8a6050, 0xc0c0a0, 0xc0c0a0, 0xc0c0a0, 0x8a6050, 0x8a6050, 0xc0c0a0, 0xc0c0a0, 0x8a6050, 0, 0},
+			{0, 0x8a6050, 0xc0c0a0, 0xc0c0a0, 0x8a6050, 0x8a6050, 0xc0c0a0, 0xc0c0a0, 0xc0c0a0, 0x8a6050, 0x8a6050, 0xc0c0a0, 0xc0c0a0, 0x8a6050, 0, 0},
+			{0, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0, 0},
+			{0, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x3a2a20, 0x3a2a20, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0, 0},
+			{0, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x3a2a20, 0x3a2a20, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0, 0},
+			{0, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0, 0},
+			{0, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		}
+	case 3: // Modern: glass capitol tower
+		return [16][16]uint32{
+			{0, 0, 0, 0, 0, 0, 0, 0xc0c8d0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0x808890, 0x80c0e0, 0x808890, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0x808890, 0x80c0e0, 0xe0f0ff, 0x80c0e0, 0x808890, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0x808890, 0x80c0e0, 0x80c0e0, 0xe0f0ff, 0x80c0e0, 0x80c0e0, 0x808890, 0, 0, 0, 0, 0},
+			{0, 0, 0x505860, 0x505860, 0x808890, 0x808890, 0x808890, 0x808890, 0x808890, 0x808890, 0x808890, 0x505860, 0x505860, 0, 0, 0},
+			{0, 0x505860, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x808890, 0x808890, 0x808890, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x505860, 0, 0},
+			{0, 0x505860, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x808890, 0x808890, 0x808890, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x505860, 0, 0},
+			{0, 0x505860, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x404850, 0x404850, 0x808890, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x505860, 0, 0},
+			{0, 0x505860, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x404850, 0x404850, 0x808890, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x505860, 0, 0},
+			{0, 0x505860, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x808890, 0x808890, 0x808890, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x505860, 0, 0},
+			{0, 0x505860, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x808890, 0x808890, 0x808890, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x505860, 0, 0},
+			{0, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0, 0},
+			{0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		}
+	case 4: // Digital/Cyber: neon megaplex
+		return [16][16]uint32{
+			{0, 0, 0, 0, 0, 0, 0, 0x40ffff, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0x101020, 0x40c0ff, 0x101020, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0x202030, 0x40c0ff, 0x40ffff, 0x40c0ff, 0x202030, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0x202030, 0x40c0ff, 0x202030, 0x202030, 0x202030, 0x40c0ff, 0x202030, 0, 0, 0, 0, 0},
+			{0, 0, 0x101020, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x101020, 0, 0, 0},
+			{0, 0x101020, 0x202030, 0x40c0ff, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x40c0ff, 0x202030, 0x101020, 0, 0},
+			{0, 0x101020, 0x202030, 0x40c0ff, 0x202030, 0x40c0ff, 0x40c0ff, 0xff40c0, 0x40c0ff, 0x40c0ff, 0x202030, 0x40c0ff, 0x202030, 0x101020, 0, 0},
+			{0, 0x101020, 0x202030, 0x40c0ff, 0x202030, 0x40c0ff, 0x40c0ff, 0xff40c0, 0x40c0ff, 0x40c0ff, 0x202030, 0x40c0ff, 0x202030, 0x101020, 0, 0},
+			{0, 0x101020, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x101020, 0, 0},
+			{0, 0x101020, 0x202030, 0x202030, 0x202030, 0x202030, 0x181828, 0x181828, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x101020, 0, 0},
+			{0, 0x101020, 0x202030, 0x202030, 0x202030, 0x202030, 0x181828, 0x181828, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x101020, 0, 0},
+			{0, 0x101020, 0x40c0ff, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x40c0ff, 0x101020, 0, 0},
+			{0x40c0ff, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x40c0ff, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		}
+	case 5: // Fusion/Space: orbital command spire
+		return [16][16]uint32{
+			{0, 0, 0, 0, 0, 0, 0, 0x80c0ff, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0x4080ff, 0xffe040, 0x4080ff, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0x0a1530, 0x4080ff, 0x80c0ff, 0x4080ff, 0x0a1530, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0x0a1530, 0x4080ff, 0x0a1530, 0x80c0ff, 0x0a1530, 0x4080ff, 0x0a1530, 0, 0, 0, 0, 0},
+			{0, 0, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0x80c0ff, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0, 0, 0},
+			{0, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0x0a1530, 0x80c0ff, 0x0a1530, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0, 0},
+			{0, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0x4080ff, 0x4080ff, 0xffe040, 0x4080ff, 0x4080ff, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0, 0},
+			{0, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0x4080ff, 0x4080ff, 0xffe040, 0x4080ff, 0x4080ff, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0, 0},
+			{0, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0x0a1530, 0x80c0ff, 0x0a1530, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0, 0},
+			{0, 0x0a1530, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0x80c0ff, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0x0a1530, 0, 0},
+			{0, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x80c0ff, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0, 0},
+			{0, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x4080ff, 0x4080ff, 0x4080ff, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0, 0},
+			{0x4080ff, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x4080ff, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		}
+	default: // Era 6: Cosmic — glowing transcendent pillar
+		return [16][16]uint32{
+			{0, 0, 0, 0, 0, 0, 0, 0xff80ff, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0xffd040, 0xff80ff, 0xffd040, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0xc0a0ff, 0xff80ff, 0xffffff, 0xff80ff, 0xc0a0ff, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0xc0a0ff, 0xffd040, 0x080810, 0xffffff, 0x080810, 0xffd040, 0xc0a0ff, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0xc0a0ff, 0x080810, 0x080810, 0x080810, 0xffffff, 0x080810, 0x080810, 0x080810, 0xc0a0ff, 0, 0, 0, 0},
+			{0, 0, 0xc0a0ff, 0x080810, 0x080810, 0xc0a0ff, 0xc0a0ff, 0xffffff, 0xc0a0ff, 0xc0a0ff, 0x080810, 0x080810, 0xc0a0ff, 0, 0, 0},
+			{0, 0xc0a0ff, 0x080810, 0x080810, 0xc0a0ff, 0xffd040, 0xffd040, 0xffffff, 0xffd040, 0xffd040, 0xc0a0ff, 0x080810, 0x080810, 0xc0a0ff, 0, 0},
+			{0, 0xc0a0ff, 0x080810, 0x080810, 0xc0a0ff, 0xffd040, 0xffd040, 0xffffff, 0xffd040, 0xffd040, 0xc0a0ff, 0x080810, 0x080810, 0xc0a0ff, 0, 0},
+			{0, 0, 0xc0a0ff, 0x080810, 0x080810, 0xc0a0ff, 0xc0a0ff, 0xffffff, 0xc0a0ff, 0xc0a0ff, 0x080810, 0x080810, 0xc0a0ff, 0, 0, 0},
+			{0, 0, 0, 0xc0a0ff, 0x080810, 0x080810, 0x080810, 0xffffff, 0x080810, 0x080810, 0x080810, 0xc0a0ff, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0xc0a0ff, 0xffd040, 0x080810, 0xffffff, 0x080810, 0xffd040, 0xc0a0ff, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0xc0a0ff, 0xff80ff, 0xffffff, 0xff80ff, 0xc0a0ff, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0xffd040, 0xffd040, 0xffd040, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		}
+	}
+}
+
 func v4SpriteWonder() [16][16]uint32 {
 	return [16][16]uint32{
 		{0, 0, 0, 0, 0, 0, 0, v4wnG, 0, 0, 0, 0, 0, 0, 0, 0},
@@ -723,6 +863,10 @@ func v4GetBuildings(state game.GameState) []v4Building {
 		if bs.Count == 0 {
 			continue
 		}
+		// Skip hidden/meta buildings that don't make sense as city sprites
+		if key == "stash" || key == "ruins" {
+			continue
+		}
 		isWonder := false
 		isStorage := false
 		if len(key) >= 6 && key[len(key)-6:] == "wonder" {
@@ -741,6 +885,17 @@ func v4GetBuildings(state game.GameState) []v4Building {
 			count:     bs.Count,
 		})
 	}
+	// Count total buildings built across all types
+	totalBuilt := 0
+	for _, bs := range state.Buildings {
+		totalBuilt += bs.Count
+	}
+	// Show 1 sprite per 3 buildings built, minimum 1, max 200
+	maxSprites := totalBuilt/3 + 1
+	if maxSprites > 200 {
+		maxSprites = 200
+	}
+
 	sort.Slice(result, func(i, j int) bool {
 		if result[i].isWonder != result[j].isWonder {
 			return result[i].isWonder
@@ -750,8 +905,8 @@ func v4GetBuildings(state game.GameState) []v4Building {
 		}
 		return result[i].key < result[j].key
 	})
-	if len(result) > 200 {
-		result = result[:200]
+	if len(result) > maxSprites {
+		result = result[:maxSprites]
 	}
 	return result
 }
@@ -806,6 +961,174 @@ func v4Min(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// ── Terrain feature sprites (8×8, 0 = transparent) ─────────────────────────
+
+// v4TerrainFeature is a small pixel art terrain decoration (8×8, 0=transparent)
+type v4TerrainFeature [8][8]uint32
+
+func v4FeatureJungleTree() v4TerrainFeature {
+	G := uint32(0x1a6010)
+	M := uint32(0x2d8c1a)
+	L := uint32(0x4ab02a)
+	T := uint32(0x5a3a20)
+	return v4TerrainFeature{
+		{0, 0, 0, M, 0, 0, 0, 0},
+		{0, 0, M, L, M, 0, 0, 0},
+		{0, M, L, L, L, M, 0, 0},
+		{G, M, L, L, L, M, G, 0},
+		{0, G, M, L, M, G, 0, 0},
+		{0, 0, 0, T, 0, 0, 0, 0},
+		{0, 0, 0, T, 0, 0, 0, 0},
+		{0, 0, T, T, T, 0, 0, 0},
+	}
+}
+
+func v4FeaturePineTree() v4TerrainFeature {
+	D := uint32(0x1a4a10)
+	M := uint32(0x2d6b1a)
+	T := uint32(0x5a3a20)
+	return v4TerrainFeature{
+		{0, 0, 0, M, 0, 0, 0, 0},
+		{0, 0, D, M, D, 0, 0, 0},
+		{0, D, M, M, M, D, 0, 0},
+		{0, 0, D, M, D, 0, 0, 0},
+		{D, M, M, M, M, M, D, 0},
+		{0, 0, 0, T, 0, 0, 0, 0},
+		{0, 0, 0, T, 0, 0, 0, 0},
+		{0, 0, T, T, T, 0, 0, 0},
+	}
+}
+
+func v4FeatureRock() v4TerrainFeature {
+	L := uint32(0xaaaaaa)
+	G := uint32(0x7a7a7a)
+	D := uint32(0x4a4a4a)
+	return v4TerrainFeature{
+		{0, 0, G, G, G, 0, 0, 0},
+		{0, G, L, L, G, G, 0, 0},
+		{G, L, L, G, G, G, G, 0},
+		{G, L, G, G, G, G, G, 0},
+		{G, G, G, G, G, G, D, 0},
+		{0, G, G, G, G, D, 0, 0},
+		{0, 0, D, D, D, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+	}
+}
+
+func v4FeatureCropField() v4TerrainFeature {
+	C := uint32(0xe8c840)
+	Gr := uint32(0x6a8a2a)
+	return v4TerrainFeature{
+		{Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr},
+		{C, 0, C, 0, C, 0, C, 0},
+		{C, C, C, C, C, C, C, C},
+		{Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr},
+		{C, 0, C, 0, C, 0, C, 0},
+		{C, C, C, C, C, C, C, C},
+		{Gr, Gr, Gr, Gr, Gr, Gr, Gr, Gr},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+	}
+}
+
+func v4FeatureCityBlock() v4TerrainFeature {
+	W := uint32(0x808890)
+	Gl := uint32(0x80c0e0)
+	D := uint32(0x404850)
+	return v4TerrainFeature{
+		{D, D, D, D, D, D, D, D},
+		{D, W, Gl, W, Gl, W, Gl, D},
+		{D, W, Gl, W, Gl, W, Gl, D},
+		{D, W, W, W, W, W, W, D},
+		{D, W, Gl, W, Gl, W, Gl, D},
+		{D, W, Gl, W, Gl, W, Gl, D},
+		{D, W, W, W, W, W, W, D},
+		{D, D, D, D, D, D, D, D},
+	}
+}
+
+func v4FeatureNeonBlock() v4TerrainFeature {
+	B := uint32(0x101020)
+	C := uint32(0x40c0ff)
+	P := uint32(0xff40c0)
+	return v4TerrainFeature{
+		{B, C, B, B, B, B, C, B},
+		{C, B, B, B, B, B, B, C},
+		{B, B, P, B, B, P, B, B},
+		{B, B, B, B, B, B, B, B},
+		{B, B, P, B, B, P, B, B},
+		{C, B, B, B, B, B, B, C},
+		{B, C, B, B, B, B, C, B},
+		{B, B, C, C, C, C, B, B},
+	}
+}
+
+func v4FeatureEnergyCrystal() v4TerrainFeature {
+	Gb := uint32(0x4080ff)
+	L := uint32(0x80c0ff)
+	W := uint32(0xffffff)
+	return v4TerrainFeature{
+		{0, 0, 0, W, 0, 0, 0, 0},
+		{0, 0, L, Gb, L, 0, 0, 0},
+		{0, L, Gb, L, Gb, L, 0, 0},
+		{L, Gb, L, W, L, Gb, L, 0},
+		{0, L, Gb, L, Gb, L, 0, 0},
+		{0, 0, L, Gb, L, 0, 0, 0},
+		{0, 0, 0, Gb, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+	}
+}
+
+func v4FeatureVoidParticle() v4TerrainFeature {
+	P := uint32(0xc0a0ff)
+	Gd := uint32(0xffd040)
+	return v4TerrainFeature{
+		{0, 0, 0, P, 0, 0, 0, 0},
+		{0, 0, P, 0, P, 0, 0, 0},
+		{0, P, 0, Gd, 0, P, 0, 0},
+		{P, 0, Gd, 0, Gd, 0, P, 0},
+		{0, P, 0, Gd, 0, P, 0, 0},
+		{0, 0, P, 0, P, 0, 0, 0},
+		{0, 0, 0, P, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0},
+	}
+}
+
+func v4DrawTerrainFeature(img *image.RGBA, feat v4TerrainFeature, px, py int) {
+	for row := 0; row < 8; row++ {
+		for col := 0; col < 8; col++ {
+			v := feat[row][col]
+			if v == 0 {
+				continue
+			}
+			x, y := px+col, py+row
+			if x < 0 || y < 0 || x >= img.Bounds().Max.X || y >= img.Bounds().Max.Y {
+				continue
+			}
+			img.SetRGBA(x, y, color.RGBA{uint8(v >> 16), uint8(v >> 8), uint8(v), 255})
+		}
+	}
+}
+
+// v4FeatureSetForEra returns features to scatter for a given era index and density.
+func v4FeatureSetForEra(era int) (features []v4TerrainFeature, density float64) {
+	switch era {
+	case 0:
+		return []v4TerrainFeature{v4FeatureJungleTree(), v4FeatureRock()}, 0.18
+	case 1:
+		return []v4TerrainFeature{v4FeaturePineTree(), v4FeatureCropField()}, 0.14
+	case 2:
+		return []v4TerrainFeature{v4FeatureCropField(), v4FeatureCityBlock()}, 0.12
+	case 3:
+		return []v4TerrainFeature{v4FeatureCityBlock(), v4FeatureCityBlock()}, 0.15
+	case 4:
+		return []v4TerrainFeature{v4FeatureNeonBlock(), v4FeatureCityBlock()}, 0.12
+	case 5:
+		return []v4TerrainFeature{v4FeatureEnergyCrystal(), v4FeatureEnergyCrystal()}, 0.10
+	default:
+		return []v4TerrainFeature{v4FeatureVoidParticle()}, 0.08
+	}
 }
 
 func v4DrawGridLines(img *image.RGBA, pal v4AgePalette) {
@@ -886,9 +1209,46 @@ func v4GenerateImage(state game.GameState, width, height int) *image.RGBA {
 		}
 	}
 
+	cx, cy := width/2, height/2
+
 	// 2. Grid lines for advanced ages
 	if pal.gridLines {
 		v4DrawGridLines(img, pal)
+	}
+
+	// 2b. Scatter terrain features across the map
+	{
+		era := 0
+		for i, p := range v4Palettes {
+			if p.ageKey == state.Age {
+				era = i * 6 / len(v4Palettes)
+				break
+			}
+		}
+		features, density := v4FeatureSetForEra(era)
+		if len(features) > 0 {
+			step := 24
+			for gy := 0; gy < height-8; gy += step {
+				for gx := 0; gx < width-8; gx += step {
+					n := v4FBM(float64(gx+4), float64(gy+4), seed+99)
+					if n > density {
+						continue
+					}
+					ddx := gx + 4 - cx
+					ddy := gy + 4 - cy
+					if ddx*ddx+ddy*ddy < 60*60 {
+						continue
+					}
+					if gx < width/5+10 {
+						continue
+					}
+					fi := int(v4Hash(seed+77, uint32(gx*1000+gy))) % len(features)
+					jx := int(v4Hash(seed+11, uint32(gx+gy*3))%uint32(step/2)) - step/4
+					jy := int(v4Hash(seed+22, uint32(gx*2+gy))%uint32(step/2)) - step/4
+					v4DrawTerrainFeature(img, features[fi], gx+jx, gy+jy)
+				}
+			}
+		}
 	}
 
 	// 3. River
@@ -896,7 +1256,6 @@ func v4GenerateImage(state game.GameState, width, height int) *image.RGBA {
 
 	// 4. City roads + buildings
 	buildings := v4GetBuildings(state)
-	cx, cy := width/2, height/2
 	roadClr := v4LerpColor(pal.bgMid, pal.bgLight, 0.4)
 
 	baseAngles := []float64{0, 48, 93, 145, 198, 252, 310}
@@ -972,9 +1331,20 @@ func v4GenerateImage(state game.GameState, width, height int) *image.RGBA {
 		v4DrawSpriteScaled(img, pos.pixels, sbx-spriteSize/2, sby-spriteSize/2, spriteSize)
 	}
 
-	// 5. City center (always at map center, drawn last so it's on top)
-	v4DrawClearingR(img, cx, cy, pal.clearingColor, 14)
-	v4DrawSprite(img, v4SpriteCityPixels, cx-8, cy-8)
+	// 5. Palace / city center — always at map center, evolves with age, drawn at 1.5× sprite size
+	palaceSize := int(math.Round(float64(spriteSize) * 1.5))
+	if palaceSize < 8 {
+		palaceSize = 8
+	}
+	palaceEra := 0
+	for i, p := range v4Palettes {
+		if p.ageKey == state.Age {
+			palaceEra = i * 6 / len(v4Palettes) // map palette index to era 0-6
+			break
+		}
+	}
+	v4DrawClearingR(img, cx, cy, pal.clearingColor, palaceSize+6)
+	v4DrawSpriteScaled(img, v4PalacePixels(palaceEra), cx-palaceSize/2, cy-palaceSize/2, palaceSize)
 
 	return img
 }
@@ -1002,6 +1372,11 @@ func (m *MapV4) Build(state game.GameState) tview.Primitive {
 
 		bldCount := v4CountBuildings(st)
 		m.mu.Lock()
+		if m.cachedAge != st.Age {
+			v4SpriteCacheMu.Lock()
+			v4SpriteCache = map[string][16][16]uint32{}
+			v4SpriteCacheMu.Unlock()
+		}
 		needRegen := m.cachedImg == nil || m.cachedW != imgW || m.cachedH != imgH ||
 			m.cachedAge != st.Age || m.cachedBldCount != bldCount
 		if needRegen {
