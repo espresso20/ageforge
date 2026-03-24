@@ -470,7 +470,7 @@ func spriteStorage() [16][16]uint32 {
 
 // ── Sprite table ──────────────────────────────────────────────────────────────
 
-var sprites = []sprite{
+var domainSprites = []sprite{
 	{name: "food", pixels: spriteFood()},
 	{name: "wood", pixels: spriteWood()},
 	{name: "stone", pixels: spriteStone()},
@@ -577,9 +577,9 @@ func main() {
 		os.Exit(1)
 	}
 
-	imgs := make([]*image.NRGBA, len(sprites))
+	imgs := make([]*image.NRGBA, len(domainSprites))
 
-	for i, s := range sprites {
+	for i, s := range domainSprites {
 		img := spriteToImage(s)
 		imgs[i] = img
 		path := fmt.Sprintf("%s/%s.png", outDir, s.name)
@@ -603,10 +603,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Printf("Generated %d sprites → %s/\n", len(sprites), outDir)
-	fmt.Printf("  spritesheet.png  %dx16 px\n", len(sprites)*16)
+	fmt.Printf("Generated %d sprites → %s/\n", len(domainSprites), outDir)
+	fmt.Printf("  spritesheet.png  %dx16 px\n", len(domainSprites)*16)
 	fmt.Printf("  preview.png      scaled 6× grid (%d per row, 96px each)\n", previewPerRow)
-	for _, s := range sprites {
+	for _, s := range domainSprites {
 		fmt.Printf("  %s.png\n", s.name)
 	}
 }

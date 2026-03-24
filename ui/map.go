@@ -3,7 +3,9 @@ package ui
 import (
 	"image"
 	"image/color"
+	_ "image/png"
 	"math"
+	"os"
 	"sort"
 	"strings"
 	"sync"
@@ -683,6 +685,93 @@ var (
 	v4SpriteCache   = map[string][16][16]uint32{}
 )
 
+// v4BgCache caches pre-scaled PNG background pixel rows for each age key.
+// Key format: "<ageKey>:<width>x<height>". Cleared when age changes.
+var (
+	v4BgCacheMu sync.RWMutex
+	v4BgCache   = map[string][]uint32{}
+)
+
+// v4LoadBgPixels loads assets/maps/<ageKey>.png and scales it to w×h using
+// nearest-neighbour resampling. Returns nil if the file doesn't exist or
+// fails to decode. Results are cached; cache is cleared on age transition.
+func v4LoadBgPixels(ageKey string, w, h int) []uint32 {
+	// Build a compact string key that encodes age + dimensions.
+	cacheKey := ageKey + ":" + v4itoa(w) + "x" + v4itoa(h)
+
+	v4BgCacheMu.RLock()
+	if px, ok := v4BgCache[cacheKey]; ok {
+		v4BgCacheMu.RUnlock()
+		return px
+	}
+	v4BgCacheMu.RUnlock()
+
+	path := "assets/maps/" + ageKey + ".png"
+	f, err := os.Open(path)
+	if err != nil {
+		return nil // file not found — fall back to FBM
+	}
+	defer f.Close()
+
+	src, _, err := image.Decode(f)
+	if err != nil {
+		return nil // corrupt / unsupported — fall back to FBM
+	}
+
+	sw := src.Bounds().Dx()
+	sh := src.Bounds().Dy()
+	ox := src.Bounds().Min.X
+	oy := src.Bounds().Min.Y
+
+	// Area-averaging (box filter) downscale: average all source pixels that map
+	// to each destination pixel. Eliminates the aliasing from nearest-neighbour
+	// when downscaling a large PNG to terminal dimensions.
+	px := make([]uint32, w*h)
+	for dy := 0; dy < h; dy++ {
+		sy0 := oy + dy*sh/h
+		sy1 := oy + (dy+1)*sh/h
+		if sy1 <= sy0 {
+			sy1 = sy0 + 1
+		}
+		for dx := 0; dx < w; dx++ {
+			sx0 := ox + dx*sw/w
+			sx1 := ox + (dx+1)*sw/w
+			if sx1 <= sx0 {
+				sx1 = sx0 + 1
+			}
+			var rSum, gSum, bSum, n uint32
+			for sy := sy0; sy < sy1; sy++ {
+				for sx := sx0; sx < sx1; sx++ {
+					r, g, b, _ := src.At(sx, sy).RGBA()
+					rSum += r >> 8
+					gSum += g >> 8
+					bSum += b >> 8
+					n++
+				}
+			}
+			px[dy*w+dx] = ((rSum/n) << 16) | ((gSum/n) << 8) | (bSum / n)
+		}
+	}
+
+	v4BgCacheMu.Lock()
+	v4BgCache[cacheKey] = px
+	v4BgCacheMu.Unlock()
+	return px
+}
+
+// v4itoa converts a non-negative int to its decimal string without fmt.
+func v4itoa(n int) string {
+	if n == 0 {
+		return "0"
+	}
+	buf := make([]byte, 0, 10)
+	for n > 0 {
+		buf = append([]byte{byte('0' + n%10)}, buf...)
+		n /= 10
+	}
+	return string(buf)
+}
+
 // v4BuildingLookup maps building key → [2]int{lineage, tier} for in-memory sprite generation.
 var v4BuildingLookup = func() map[string][2]int {
 	m := make(map[string][2]int, len(sprites.AllBuildings))
@@ -692,7 +781,19 @@ var v4BuildingLookup = func() map[string][2]int {
 	return m
 }()
 
-// v4LoadBuildingSprite returns a 16×16 sprite for a building generated at the current age's era.
+// v4StableHash returns a stable FNV-1a hash for a string, used to pick sprite variations.
+func v4StableHash(s string) uint32 {
+	h := uint32(2166136261)
+	for i := 0; i < len(s); i++ {
+		h ^= uint32(s[i])
+		h *= 16777619
+	}
+	return h
+}
+
+// v4LoadBuildingSprite returns a 16×16 sprite for a building.
+// It first tries to load a pre-rendered PNG from assets/sprites/buildings/<key>_var<N>.png.
+// If the file is not found or cannot be decoded, it falls back to in-memory generation.
 // Results are cached per (key, ageKey) pair so age-advancement triggers fresh generation.
 func v4LoadBuildingSprite(key, domain, ageKey string, isWonder, isStorage bool) [16][16]uint32 {
 	cacheKey := key + ":" + ageKey
@@ -704,6 +805,42 @@ func v4LoadBuildingSprite(key, domain, ageKey string, isWonder, isStorage bool) 
 	v4SpriteCacheMu.RUnlock()
 
 	var px [16][16]uint32
+
+	// Try loading a pre-rendered PNG sprite first.
+	variation := int(v4StableHash(key)) % 3
+	var pngSuffix string
+	switch variation {
+	case 1:
+		pngSuffix = "_v2"
+	case 2:
+		pngSuffix = "_v3"
+	default:
+		pngSuffix = ""
+	}
+	pngPath := "assets/sprites/buildings/" + key + pngSuffix + ".png"
+	if f, err := os.Open(pngPath); err == nil {
+		img, _, decodeErr := image.Decode(f)
+		f.Close()
+		if decodeErr == nil {
+			bounds := img.Bounds()
+			w := bounds.Max.X - bounds.Min.X
+			h := bounds.Max.Y - bounds.Min.Y
+			if w >= 16 && h >= 16 {
+				for row := 0; row < 16; row++ {
+					for col := 0; col < 16; col++ {
+						r, g, b, _ := img.At(bounds.Min.X+col, bounds.Min.Y+row).RGBA()
+						px[row][col] = (uint32(r>>8) << 16) | (uint32(g>>8) << 8) | uint32(b>>8)
+					}
+				}
+				v4SpriteCacheMu.Lock()
+				v4SpriteCache[cacheKey] = px
+				v4SpriteCacheMu.Unlock()
+				return px
+			}
+		}
+	}
+
+	// Fall back to in-memory generation.
 	if lt, ok := v4BuildingLookup[key]; ok {
 		px = sprites.GenerateBuildingSprite(lt[0], lt[1], ageKey, 0)
 	} else if isWonder {
@@ -817,55 +954,176 @@ func v4DrawClearingR(img *image.RGBA, cx, cy int, clr color.RGBA, r int) {
 	}
 }
 
-// ── Road renderer ──────────────────────────────────────────────────────────
+// ── Organic city slot generation ───────────────────────────────────────────
 
-func v4DrawRoad(img *image.RGBA, x0, y0, x1, y1 int, roadClr color.RGBA) {
-	dx := x1 - x0
-	if dx < 0 {
-		dx = -dx
+const (
+	v4SlotSpacing  = 28 // pixels between jittered-grid cells (fallback default)
+	v4JitterAmount = 10 // max random offset per slot in each axis (fallback default)
+	v4MinDist      = 18 // minimum distance between two placed buildings (fallback default)
+	v4CenterRadius = 20 // reserved radius around palace — no buildings placed here
+)
+
+// v4DensityParams holds layout parameters for the city at a given era and growth stage.
+type v4DensityParams struct {
+	slotSpacing int     // pixels between grid slots
+	minDist     int     // minimum pixels between placed sprites
+	jitterAmt   int     // max random offset per slot
+	spriteScale float64 // multiplier on top of auto-zoom scale
+	maxPerType  int     // max sprites per building type
+	maxTotal    int     // hard cap on total sprites
+}
+
+// v4CityDensity returns layout parameters based on era + totalBuilt.
+// Era 0 is a sparse primitive settlement; era 6 is an alien megacity.
+// Within each era, every 20 buildings built tightens spacing by 1px (floor at 60% of base).
+func v4CityDensity(era int, totalBuilt int) v4DensityParams {
+	type eraBase struct {
+		spacing, minDist, jitter int
+		spriteScale              float64
+		maxPerType, maxTotal     int
 	}
-	dy := y1 - y0
-	if dy < 0 {
-		dy = -dy
+	bases := [7]eraBase{
+		{44, 32, 16, 1.0, 6, 60},   // era 0: primitive — sparse village
+		{34, 24, 13, 1.1, 7, 80},   // era 1: classical/medieval — small town
+		{26, 18, 10, 1.2, 8, 100},  // era 2: renaissance/industrial — market town
+		{20, 13, 8, 1.3, 9, 130},   // era 3: modern/atomic — dense city
+		{15, 9, 6, 1.4, 10, 160},   // era 4: space/cyber — megacity
+		{11, 6, 4, 1.5, 12, 200},   // era 5: nanotech/fusion — ultra-dense
+		{7, 3, 2, 1.6, 15, 250},    // era 6: galactic/cosmic/divine — alien megacity
 	}
-	sx := 1
-	if x0 > x1 {
-		sx = -1
+	if era < 0 {
+		era = 0
 	}
-	sy := 1
-	if y0 > y1 {
-		sy = -1
+	if era > 6 {
+		era = 6
 	}
-	err := dx - dy
-	bounds := img.Bounds()
-	for {
-		if x0 >= bounds.Min.X && x0 < bounds.Max.X && y0 >= bounds.Min.Y && y0 < bounds.Max.Y {
-			img.SetRGBA(x0, y0, roadClr)
-		}
-		if x0 == x1 && y0 == y1 {
-			break
-		}
-		e2 := 2 * err
-		if e2 > -dy {
-			err -= dy
-			x0 += sx
-		}
-		if e2 < dx {
-			err += dx
-			y0 += sy
-		}
+	b := bases[era]
+
+	// Within-era growth: every 20 buildings built, tighten spacing by 1px (floor at 60% of base)
+	growthSteps := totalBuilt / 20
+	minSpacing := int(float64(b.spacing) * 0.6)
+	spacing := b.spacing - growthSteps
+	if spacing < minSpacing {
+		spacing = minSpacing
+	}
+
+	minDist := b.minDist - growthSteps/2
+	minMinDist := int(float64(b.minDist) * 0.6)
+	if minDist < minMinDist {
+		minDist = minMinDist
+	}
+
+	return v4DensityParams{
+		slotSpacing: spacing,
+		minDist:     minDist,
+		jitterAmt:   b.jitter,
+		spriteScale: b.spriteScale,
+		maxPerType:  b.maxPerType,
+		maxTotal:    b.maxTotal,
 	}
 }
 
-// v4BuildingJitter returns a stable small perpendicular offset (-5..+5) for a building key.
-// This breaks the perfectly-straight-line look without being random each frame.
-func v4BuildingJitter(key string) int {
-	h := uint32(2166136261)
-	for i := 0; i < len(key); i++ {
-		h ^= uint32(key[i])
-		h *= 16777619
+// v4SlotJitter returns a deterministic jitter offset in [-jitterAmt, +jitterAmt]
+// for a grid cell (gx, gy) and a salt value, using integer hashing.
+func v4SlotJitter(gx, gy, salt int) (jx, jy int) {
+	const jRange = 2*v4JitterAmount + 1
+	hx := gx*73856093 ^ gy*19349663 ^ salt*83492791
+	hy := gx*19349663 ^ gy*73856093 ^ salt*41728397
+	// force positive modulo
+	hxMod := hx % jRange
+	if hxMod < 0 {
+		hxMod += jRange
 	}
-	return int(h%11) - 5 // -5 to +5
+	hyMod := hy % jRange
+	if hyMod < 0 {
+		hyMod += jRange
+	}
+	return hxMod - v4JitterAmount, hyMod - v4JitterAmount
+}
+
+// v4BuildingSlots generates candidate building positions using a jittered grid
+// expanding outward from (cx, cy). Slots are sorted by distance from center
+// (ascending) so buildings fill from center outward.
+// Returns positions as offsets from center (not absolute pixel coords).
+// slotSpacing controls grid cell size; jitterAmt controls max per-cell random offset.
+func v4BuildingSlots(width, height, cx, cy, slotSpacing, jitterAmt int) [][2]int {
+	const gridRange = 10 // -10 to +10 in each axis → 441 cells
+	const seed = 7
+
+	type slot struct {
+		ox, oy int
+		dist2  int
+	}
+	var candidates []slot
+
+	for gy := -gridRange; gy <= gridRange; gy++ {
+		for gx := -gridRange; gx <= gridRange; gx++ {
+			// Skip center — palace lives there
+			if gx == 0 && gy == 0 {
+				continue
+			}
+			worldX := gx * slotSpacing
+			worldY := gy * slotSpacing
+			jx, jy := v4SlotJitter(gx, gy, seed)
+			// Clamp jitter to jitterAmt (v4SlotJitter uses the const, so we rescale)
+			if jitterAmt != v4JitterAmount && v4JitterAmount > 0 {
+				jx = jx * jitterAmt / v4JitterAmount
+				jy = jy * jitterAmt / v4JitterAmount
+			}
+			ox := worldX + jx
+			oy := worldY + jy
+
+			// Skip if too close to palace
+			d2center := ox*ox + oy*oy
+			if d2center < v4CenterRadius*v4CenterRadius {
+				continue
+			}
+
+			// Skip if outside image bounds
+			absX := cx + ox
+			absY := cy + oy
+			if absX < 8 || absX >= width-8 || absY < 8 || absY >= height-8 {
+				continue
+			}
+
+			candidates = append(candidates, slot{ox, oy, d2center})
+		}
+	}
+
+	// Sort by distance from center ascending
+	sort.Slice(candidates, func(i, j int) bool {
+		return candidates[i].dist2 < candidates[j].dist2
+	})
+
+	result := make([][2]int, len(candidates))
+	for i, c := range candidates {
+		result[i] = [2]int{c.ox, c.oy}
+	}
+	return result
+}
+
+// v4AssignSlots picks the first N available slots from the candidate pool,
+// ensuring no two placed buildings are within minDist pixels of each other.
+func v4AssignSlots(slots [][2]int, n, minDist int) [][2]int {
+	var placed [][2]int
+	for _, s := range slots {
+		if len(placed) >= n {
+			break
+		}
+		ok := true
+		for _, p := range placed {
+			dx := s[0] - p[0]
+			dy := s[1] - p[1]
+			if dx*dx+dy*dy < minDist*minDist {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			placed = append(placed, s)
+		}
+	}
+	return placed
 }
 
 // ── Building list ──────────────────────────────────────────────────────────
@@ -878,7 +1136,7 @@ type v4Building struct {
 	count     int
 }
 
-func v4GetBuildings(state game.GameState) []v4Building {
+func v4GetBuildings(state game.GameState, params v4DensityParams) []v4Building {
 	var result []v4Building
 	for key, bs := range state.Buildings {
 		if bs.Count == 0 {
@@ -906,17 +1164,11 @@ func v4GetBuildings(state game.GameState) []v4Building {
 			count:     bs.Count,
 		})
 	}
-	// Count total buildings built across all types
-	totalBuilt := 0
-	for _, bs := range state.Buildings {
-		totalBuilt += bs.Count
-	}
-	// Show 1 sprite per 3 buildings built, minimum 1, max 200
-	maxSprites := totalBuilt/3 + 1
-	if maxSprites > 200 {
-		maxSprites = 200
-	}
-
+	// Expand: one sprite entry per building instance (Count copies per type).
+	// Use density params for per-type and total caps.
+	maxPerType := params.maxPerType
+	maxTotal := params.maxTotal
+	var expanded []v4Building
 	sort.Slice(result, func(i, j int) bool {
 		if result[i].isWonder != result[j].isWonder {
 			return result[i].isWonder
@@ -926,10 +1178,19 @@ func v4GetBuildings(state game.GameState) []v4Building {
 		}
 		return result[i].key < result[j].key
 	})
-	if len(result) > maxSprites {
-		result = result[:maxSprites]
+	for _, b := range result {
+		copies := b.count
+		if copies > maxPerType {
+			copies = maxPerType
+		}
+		for i := 0; i < copies; i++ {
+			expanded = append(expanded, b)
+			if len(expanded) >= maxTotal {
+				return expanded
+			}
+		}
 	}
-	return result
+	return expanded
 }
 
 // ── Noise (renamed from v2 to avoid conflicts) ─────────────────────────────
@@ -1214,19 +1475,34 @@ func v4GenerateImage(state game.GameState, width, height int) *image.RGBA {
 	pal := v4GetPalette(state.Age)
 	seed := uint32(42)
 
-	// 1. FBM terrain background
-	for y := 0; y < height; y++ {
-		for x := 0; x < width; x++ {
-			n := v4FBM(float64(x), float64(y), seed)
-			var c color.RGBA
-			if n < 0.35 {
-				t := n / 0.35
-				c = v4LerpColor(pal.bgDark, pal.bgMid, t)
-			} else {
-				t := (n - 0.35) / 0.65
-				c = v4LerpColor(pal.bgMid, pal.bgLight, t)
+	// 1. Background: PNG image for the age if available, else FBM terrain.
+	bgPixels := v4LoadBgPixels(state.Age, width, height)
+	if bgPixels != nil {
+		for y := 0; y < height; y++ {
+			for x := 0; x < width; x++ {
+				packed := bgPixels[y*width+x]
+				img.SetRGBA(x, y, color.RGBA{
+					R: uint8(packed >> 16),
+					G: uint8(packed >> 8),
+					B: uint8(packed),
+					A: 255,
+				})
 			}
-			img.SetRGBA(x, y, c)
+		}
+	} else {
+		for y := 0; y < height; y++ {
+			for x := 0; x < width; x++ {
+				n := v4FBM(float64(x), float64(y), seed)
+				var c color.RGBA
+				if n < 0.35 {
+					t := n / 0.35
+					c = v4LerpColor(pal.bgDark, pal.bgMid, t)
+				} else {
+					t := (n - 0.35) / 0.65
+					c = v4LerpColor(pal.bgMid, pal.bgLight, t)
+				}
+				img.SetRGBA(x, y, c)
+			}
 		}
 	}
 
@@ -1237,8 +1513,8 @@ func v4GenerateImage(state game.GameState, width, height int) *image.RGBA {
 		v4DrawGridLines(img, pal)
 	}
 
-	// 2b. Scatter terrain features across the map
-	{
+	// 2b. Scatter terrain features across the map (skip when background PNG is loaded)
+	if bgPixels == nil {
 		era := 0
 		for i, p := range v4Palettes {
 			if p.ageKey == state.Age {
@@ -1272,18 +1548,30 @@ func v4GenerateImage(state game.GameState, width, height int) *image.RGBA {
 		}
 	}
 
-	// 3. River
-	v4DrawRiver(img, pal, seed)
+	// 3. River (skip when background PNG is loaded — it already contains a river)
+	if bgPixels == nil {
+		v4DrawRiver(img, pal, seed)
+	}
 
-	// 4. City roads + buildings
-	buildings := v4GetBuildings(state)
-	roadClr := v4LerpColor(pal.bgMid, pal.bgLight, 0.4)
+	// 4. Organic jittered-grid city layout — no road lines
 
-	baseAngles := []float64{0, 48, 93, 145, 198, 252, 310}
-	numRoads := len(baseAngles)
-	roadSpacing := 22.0 // base spacing at scale 1.0
+	// Compute total buildings built for within-era density growth.
+	totalBuilt := 0
+	for _, bs := range state.Buildings {
+		totalBuilt += bs.Count
+	}
+	era := sprites.GetEra(state.Age)
+	density := v4CityDensity(era, totalBuilt)
 
-	// --- Auto-zoom: compute all positions at scale 1.0, find max radius ---
+	buildings := v4GetBuildings(state, density)
+
+	// Generate candidate slots (offsets from center) sorted by distance ascending.
+	allSlots := v4BuildingSlots(width, height, cx, cy, density.slotSpacing, density.jitterAmt)
+
+	// Assign one slot per building, enforcing minimum spacing between placed sprites.
+	assignedOffsets := v4AssignSlots(allSlots, len(buildings), density.minDist)
+
+	// --- Auto-zoom: find max radius among assigned slot offsets ---
 	type bldPos struct {
 		bx, by int
 		pixels [16][16]uint32
@@ -1292,59 +1580,45 @@ func v4GenerateImage(state game.GameState, width, height int) *image.RGBA {
 	maxRadius := 0.0
 
 	for i, b := range buildings {
-		roadIdx := i % numRoads
-		slot := i/numRoads + 1
-		deg := baseAngles[roadIdx]
-		jitter := v4BuildingJitter(b.key)
-		rad := deg * math.Pi / 180
-		perpRad := rad + math.Pi/2
-		dist := float64(slot) * roadSpacing
-		bx := int(math.Round(dist*math.Cos(rad))) + int(math.Round(float64(jitter)*math.Cos(perpRad)))
-		by := int(math.Round(dist*math.Sin(rad))) + int(math.Round(float64(jitter)*math.Sin(perpRad)))
-		r := math.Sqrt(float64(bx*bx + by*by))
+		var ox, oy int
+		if i < len(assignedOffsets) {
+			ox = assignedOffsets[i][0]
+			oy = assignedOffsets[i][1]
+		}
+		r := math.Sqrt(float64(ox*ox + oy*oy))
 		if r > maxRadius {
 			maxRadius = r
 		}
 		pixels := v4LoadBuildingSprite(b.key, b.domain, state.Age, b.isWonder, b.isStorage)
-		positions = append(positions, bldPos{bx, by, pixels})
+		positions = append(positions, bldPos{ox, oy, pixels})
 	}
 
-	// Scale so furthest building sits at 38% of half the shortest dimension,
-	// leaving room for clearings and the city center sprite.
-	// Minimum scale 0.20 (sprites become 3px), maximum 1.0.
-	targetRadius := float64(v4Min(width, height)) * 0.38
-	scale := 1.0
+	// Scale so furthest building sits at 40% of half the shortest dimension.
+	// Clamp between 0.15 and 0.5.
+	targetRadius := float64(v4Min(width, height)) * 0.40
+	scale := 0.8
 	if maxRadius > 0 && len(buildings) > 0 {
-		scale = targetRadius / (maxRadius + roadSpacing) // +spacing for padding
-		if scale > 1.0 {
-			scale = 1.0
+		scale = targetRadius / (maxRadius + float64(v4SlotSpacing)) // padding
+		if scale > 0.8 {
+			scale = 0.8
 		}
-		if scale < 0.20 {
-			scale = 0.20
+		if scale < 0.15 {
+			scale = 0.15
 		}
 	}
-	spriteSize := int(math.Round(16 * scale))
-	if spriteSize < 3 {
-		spriteSize = 3
+	// Sprite size is fixed — decoupled from zoom scale so downscaling positions
+	// never also shrinks sprites below their native 16×16 resolution.
+	// density.spriteScale grows 1.0→1.6 across eras so late-game cities look bigger.
+	spriteSize := int(math.Round(16 * density.spriteScale))
+	if spriteSize < 16 {
+		spriteSize = 16
 	}
-	clearingR := int(math.Round(14 * scale))
+	clearingR := 12 // fixed small clearing halo (reduced from ~14*scale)
 	if clearingR < 4 {
 		clearingR = 4
 	}
 
-	// Draw roads at scaled length
-	if len(buildings) > 0 {
-		maxSlot := (len(buildings)-1)/numRoads + 1
-		for _, deg := range baseAngles {
-			rad := deg * math.Pi / 180
-			roadLen := (float64(maxSlot+1)*roadSpacing + 16) * scale
-			ex := cx + int(math.Round(roadLen*math.Cos(rad)))
-			ey := cy + int(math.Round(roadLen*math.Sin(rad)))
-			v4DrawRoad(img, cx, cy, ex, ey, roadClr)
-		}
-	}
-
-	// Draw clearings + sprites at scaled positions
+	// Draw clearings + sprites at scaled positions (no road lines)
 	for _, pos := range positions {
 		sbx := cx + int(math.Round(float64(pos.bx)*scale))
 		sby := cy + int(math.Round(float64(pos.by)*scale))
@@ -1353,9 +1627,9 @@ func v4GenerateImage(state game.GameState, width, height int) *image.RGBA {
 	}
 
 	// 5. Palace / city center — always at map center, evolves with age, drawn at 1.5× sprite size
-	palaceSize := int(math.Round(float64(spriteSize) * 1.5))
-	if palaceSize < 8 {
-		palaceSize = 8
+	palaceSize := spriteSize
+	if palaceSize < 16 {
+		palaceSize = 16
 	}
 	palaceEra := 0
 	for i, p := range v4Palettes {
@@ -1397,6 +1671,9 @@ func (m *MapV4) Build(state game.GameState) tview.Primitive {
 			v4SpriteCacheMu.Lock()
 			v4SpriteCache = map[string][16][16]uint32{}
 			v4SpriteCacheMu.Unlock()
+			v4BgCacheMu.Lock()
+			v4BgCache = map[string][]uint32{}
+			v4BgCacheMu.Unlock()
 		}
 		needRegen := m.cachedImg == nil || m.cachedW != imgW || m.cachedH != imgH ||
 			m.cachedAge != st.Age || m.cachedBldCount != bldCount
@@ -1414,6 +1691,21 @@ func (m *MapV4) Build(state game.GameState) tview.Primitive {
 		return x, y, width, height
 	})
 	return box
+}
+
+// renderHalfBlock renders img onto screen using half-block characters (▄).
+// Each terminal row represents 2 pixel rows: upper pixel = BG color, lower = FG color.
+func renderHalfBlock(screen tcell.Screen, img *image.RGBA, offX, offY, termW, termH int) {
+	for row := 0; row < termH; row++ {
+		for col := 0; col < termW; col++ {
+			upperC := img.RGBAAt(col, row*2)
+			lowerC := img.RGBAAt(col, row*2+1)
+			bgColor := tcell.NewRGBColor(int32(upperC.R), int32(upperC.G), int32(upperC.B))
+			fgColor := tcell.NewRGBColor(int32(lowerC.R), int32(lowerC.G), int32(lowerC.B))
+			screen.SetContent(offX+col, offY+row, '▄', nil,
+				tcell.StyleDefault.Background(bgColor).Foreground(fgColor))
+		}
+	}
 }
 
 // Refresh updates the stored game state. Safe to call from any goroutine.

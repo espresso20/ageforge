@@ -1,297 +1,209 @@
-# Map Background Image Generation Prompts
+# Map Background Midjourney Prompts
 
-## Technical Requirements
+## Settings Cheat Sheet
 
-- **Image size**: 480×320px (3:2 ratio, will be scaled at runtime)
-- **Style**: Civ 1 / pixel art aesthetic, strict top-down orthographic view
-- **No UI, no characters, no text, no labels, no icons**
-- **Color palette**: Muted and desaturated tones preferred — 16×16 building sprites must remain clearly visible on top of the background
-- **Composition**: The left ~25% of every image should contain a river running roughly north-to-south; the remaining terrain fills the rest of the frame
-- **Foreground objects**: Avoid tall, dominant foreground elements (trees should read as canopy texture, not silhouettes); the map must feel flat and traversable
-- **Pixel density**: Fine detail is acceptable but should resolve into readable texture at 480×320, not noise
-
----
-
-## 1. primitive_age
-
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of a dense primeval jungle, seen from directly overhead as if viewed from a Civilization 1 game screen. Thick canopy of dark greens and mossy browns fills most of the frame, with a shallow winding river cutting through the left quarter. Clearings of bare earth and mud suggest a primitive tribal campsite, no structures visible, no characters, pure terrain texture, 480x320, muted palette.
-
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, primeval jungle, dense canopy, dark green moss brown, winding river left side, muddy clearings, stone age terrain, no characters, no UI, flat perspective, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#2D5A1B`
+- Always use `--ar 3:2 --chaos 55 --style raw --stylize 50`
+- Always append `--no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail`
+- River always occupies leftmost 25% of the image — rest is open terrain
+- Save each output as the filename listed under each age
+- **Altitude**: 80,000 feet — SR-71 Blackbird altitude. Individual trees invisible. Forest = solid pixel color mass. Roads = hairline scratches. Rivers = thin colored lines.
+- **Style**: "pixel art format" at start + "in the old 2000's game view of Civilization 1" before the --no flag — this is what gives the Civ 1 tile aesthetic
 
 ---
 
-## 2. stone_age
+## primitive_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of rocky grey-brown plains dotted with sparse scrub brush and boulders, viewed from a Civilization 1-style overhead perspective. A shallow rocky river runs through the left quarter of the frame. Patches of yellowed grass and exposed stone break up the terrain, conveying a cold, windswept landscape before agriculture, no characters, no UI, muted palette, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, dense primeval jungle region, forest canopy is a solid mass of dark green and olive color with no individual trees visible, river as a thin dark winding line occupying only the leftmost 25% of the image, open muddy clearings as pale brown smudges, pure flat 2D top-down map texture, stylized painterly color washes, dark green and brown color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, rocky plains, grey brown, sparse scrub, boulders, shallow river left side, yellowed grass, exposed stone, cold landscape, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#7A6E55`
+**Dominant hex color:** `#2D5A1B`
+**Output filename:** `assets/maps/primitive_age.png`
 
 ---
 
-## 3. bronze_age
+## stone_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of a dry savanna with a broad fertile river valley cutting through the left quarter, early Bronze Age terrain viewed from directly overhead in Civ 1 style. Sandy tan earth transitions to strips of irrigated green farmland near the river, with sparse acacia-like canopy dots scattered across drier ground. Warm ochre and dusty gold dominate the palette, no characters, no UI, 480x320.
+    overhead map view in pixel art format, from 80,000 feet looking straight down, vast rocky dry plains region, terrain is a flat grey-brown-tan color wash with no individual boulders visible, scattered scrub as faint darker smudges across the ground, river as a thin pale line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, muted grey-brown-tan color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, dry savanna, fertile river valley, sandy tan, ochre gold, irrigated farmland strips, acacia dots, bronze age terrain, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#C49A3C`
+**Dominant hex color:** `#7A6E55`
+**Output filename:** `assets/maps/stone_age.png`
 
 ---
 
-## 4. iron_age
+## bronze_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of mixed deciduous forest and rolling hills, viewed overhead in Civ 1 style, depicting an Iron Age landscape where patches of forest have been cleared for early agriculture. Dark green and amber tree canopy textures alternate with brown cleared-earth rectangles and gentle hill contours. A river runs through the left quarter, no characters, no UI, muted earthy palette, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast dry savanna region, terrain is a warm ochre and golden color wash, farmland strips visible as faint parallel tone bands, no individual trees only scattered dark green smudge clusters, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, warm ochre and dusty gold color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, mixed deciduous forest, rolling hills, dark green amber, cleared land patches, early farmland, iron age terrain, river left side, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#4A7A2E`
+**Dominant hex color:** `#C49A3C`
+**Output filename:** `assets/maps/bronze_age.png`
 
 ---
 
-## 5. classical_age
+## iron_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of a Mediterranean landscape seen from directly overhead in Civ 1 style, with dry golden-brown hills, clusters of dark cypress-like tree dots, and chalky white stone terrain. The left quarter holds a river feeding into hints of a distant coastline at the far right edge. Warm limestone tones and dusty olive greens define the palette, no characters, no UI, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast mixed forest region, terrain is a solid dark green color mass with no individual trees visible, cleared earth patches as pale brown smudges, thin dirt path scratches barely visible, river as a thin dark line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, earthy dark green and brown color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, mediterranean landscape, dry hills, limestone white, olive green, cypress tree dots, coastal hint right edge, river left side, classical age terrain, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#C8B87A`
+**Dominant hex color:** `#4A7A2E`
+**Output filename:** `assets/maps/iron_age.png`
 
 ---
 
-## 6. medieval_age
+## classical_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of a lush European countryside viewed from overhead in Civ 1 style, green patchwork fields separated by hedgerows, forest edges of dark green along the top and right, and a winding river through the left quarter. Soft grey road lines connect cleared farmland areas, conveying a settled agrarian medieval world, no characters, no UI, muted pastoral palette, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast Mediterranean terrain region, terrain is a pale tan and limestone color wash, dark green scrub smudges scattered across warm sandy ground, no individual trees visible, river as a thin blue-grey line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, muted warm tan and sage green color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, european countryside, green patchwork fields, hedgerows, forest edges dark green, grey dirt roads, winding river left side, medieval terrain, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#5C8A3A`
+**Dominant hex color:** `#C8B87A`
+**Output filename:** `assets/maps/classical_age.png`
 
 ---
 
-## 7. renaissance_age
+## medieval_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of cultivated Renaissance-era countryside, overhead Civ 1 perspective, showing geometric field patterns in olive green and tan, gentle hill contours, and thin cobblestone road lines radiating from the center. The left quarter carries the river, now with earthen embankments. Orchards and vineyard rows appear as fine repeating texture dots, no characters, no UI, soft warm palette, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast European countryside region, terrain is a patchwork of rich green field color blocks divided by thin dark hedgerow lines, forest edges as dark green mass on margins, hairline road scratches crossing, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, rich green and brown patchwork color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, cultivated fields, renaissance landscape, olive green tan, geometric fields, cobblestone roads, vineyard rows texture, gentle hills, river left side, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#8A9E52`
+**Dominant hex color:** `#5C8A3A`
+**Output filename:** `assets/maps/medieval_age.png`
 
 ---
 
-## 8. age_of_sail
+## renaissance_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map showing coastal terrain from overhead in Civ 1 style: rocky grey-green cliffs and sandy beaches dominate the right half, while forest and field terrain fills the left and center. Ocean water in muted steel blue is visible along the right edge. The left quarter holds the river widening toward the coast. No ships, no characters, no UI, desaturated coastal palette, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast cultivated farmland region, terrain is geometric strips of yellow-green and tan field color blocks, terrace line scratches visible on hillside areas, hairline pale road scratches crossing the landscape, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, warm yellow-green and tan geometric color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, coastal terrain, rocky cliffs, sandy beaches, steel blue ocean right edge, forest left, river widening, age of sail, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#5E7E8A`
+**Dominant hex color:** `#8A9E52`
+**Output filename:** `assets/maps/renaissance_age.png`
 
 ---
 
-## 9. industrial_age
+## colonial_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of industrial-era outskirts viewed from overhead in Civ 1 style: grey-green smoggy terrain with patches of coal-grey earth, sparse soot-darkened vegetation dots, and early factory district land use visible as dark rectangular ground stains. The river in the left quarter runs murky brown. A yellowish atmospheric haze desaturates the entire palette, no characters, no UI, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast coastal terrain region, terrain is sandy tan color mass with thin darker cliff edge lines along the right, dark teal-blue ocean bleeding into the top-right corner, green coastal scrub as faint color smudge, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, teal blue and sandy brown color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, industrial landscape, grey green smog, coal grey earth, soot darkened vegetation, murky brown river, factory district ground, yellowish haze, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#6B6B52`
+**Dominant hex color:** `#5E7E8A`
+**Output filename:** `assets/maps/colonial_age.png`
 
 ---
 
-## 10. gilded_age
+## industrial_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map depicting Gilded Age terrain overhead in Civ 1 style: manicured park greens and ornamental tree dots contrast with grey industrial ground stains at the edges. Wide cobblestone avenue lines cross the terrain, and the river in the left quarter is flanked by stone embankments. Gold-tinted light gives the palette a warm but gritty quality, no characters, no UI, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast brownfield terrain region, terrain is a grey-brown color wash, coal dust staining as darker smudge patches, hairline rail line scratches crossing the ground, no individual structures visible only tone variation, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, ash grey and dirty brown color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, gilded age, manicured parks, ornamental trees, cobblestone avenues, industrial grey edges, stone embankment river, warm gold tint, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#8A7E45`
+**Dominant hex color:** `#6B6B52`
+**Output filename:** `assets/maps/industrial_age.png`
 
 ---
 
-## 11. modern_age
+## victorian_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of early 20th-century urban sprawl viewed from directly overhead in Civ 1 style: grey concrete and asphalt textures dominate with sparse rectangular green park patches. Road grid lines divide the terrain into city blocks. The river in the left quarter is contained by concrete channel walls, no characters, no UI, desaturated grey-green palette, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast semi-urban terrain region, terrain is a grey cobblestone color mass with small green park color squares, hairline avenue grid scratches barely visible, no individual trees only green smudge patches, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, warm grey-green color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, urban sprawl, concrete asphalt grey, city block grid, sparse park green, concrete river channel left side, modern age terrain, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#7A7A72`
+**Dominant hex color:** `#8A7E45`
+**Output filename:** `assets/maps/victorian_age.png`
 
 ---
 
-## 12. atomic_age
+## electric_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of Cold War-era suburban landscape from overhead in Civ 1 style: geometric grey city blocks with uniform pale-green lawn squares, wide grey arterial road lines, and a concrete-channeled river through the left quarter. The palette is flat and desaturated, cold grey-blue sky tones reflected in the ground, a sterile post-war order, no characters, no UI, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast electrified city region, terrain is a warm amber and grey color mass, hairline telegraph wire grid scratches, early street grid barely visible, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, warm amber and dark grey color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, cold war suburbia, geometric city blocks, pale green lawns, grey arterial roads, concrete river left side, flat desaturated, cold blue grey, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#8A9090`
+**Dominant hex color:** `#8A7A4A`
+**Output filename:** `assets/maps/electric_age.png`
 
 ---
 
-## 13. space_age
+## modern_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of a near-future urban terrain viewed overhead in Civ 1 style: dark grey concrete and tarmac dominate, with large open launch pad aprons visible as flat pale rectangles near the center-right. Sparse orange-lit road markings and runway lines cross the terrain. The river in the left quarter glints with industrial grey, the sky tone is deep blue-black reflecting on ground surfaces, no characters, no UI, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast urban region, terrain is a grey asphalt color mass with hairline street grid scratches, small green park color squares breaking the grey, no individual buildings visible only block-level tone variation, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, concrete grey with muted olive patches color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, near future urban, dark grey concrete, launch pad aprons, runway lines, orange road markings, deep blue-black tone, space age terrain, river left side, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#3A3A4A`
+**Dominant hex color:** `#7A7A72`
+**Output filename:** `assets/maps/modern_age.png`
 
 ---
 
-## 14. information_age
+## atomic_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of a dense glass-and-steel city terrain from overhead in Civ 1 style: dark asphalt blocks with blue-tinted reflective surface patches suggesting glass plazas, pale grey road grids, and small green rooftop garden squares. The river in the left quarter has a polished blue-grey sheen. Cool blue and silver dominate the muted palette, no characters, no UI, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast suburban grid region, terrain is a flat beige-grey color mass with regular hairline road grid scratches, small lawn green color squares, no individual structures visible only uniform tone, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, flat grey-beige color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, glass steel city, dark asphalt, blue tinted reflective surfaces, pale grey road grid, rooftop gardens, blue grey river, silver cool palette, information age, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#4A5E72`
+**Dominant hex color:** `#8A9090`
+**Output filename:** `assets/maps/atomic_age.png`
 
 ---
 
-## 15. cyberpunk_age
+## space_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of a dystopian megacity viewed from overhead in Civ 1 style: near-black asphalt and concrete terrain broken by thin lines of purple and cyan neon spilling from structures onto the ground. Rooftop surfaces show faint luminescent grids. The river in the left quarter glows with a toxic cyan tint. Palette is very dark with controlled neon accent splotches, no characters, no UI, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast near-future infrastructure region, terrain is a very dark charcoal color mass, pale concrete apron rectangles as lighter tone patches, hairline runway and conduit line scratches crossing, no individual structures visible only tone patches, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, very dark charcoal and steel blue color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, cyberpunk megacity, near black asphalt, purple cyan neon lines, luminescent roof grids, toxic cyan river left side, dark palette neon accents, dystopian, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#1A1A2E`
+**Dominant hex color:** `#3A3A4A`
+**Output filename:** `assets/maps/space_age.png`
 
 ---
 
-## 16. nanotech_age
+## information_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of a sterile nanotechnology cityscape from overhead in Civ 1 style: uniform white and pale chrome terrain with subtle hexagonal nano-lattice texture across all surfaces. Barely-visible micro-grid lines divide the landscape into precise zones. The river in the left quarter appears as a smooth white-silver channel. A faint iridescent shimmer suggests active nano-fog, no characters, no UI, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast dense city region, terrain is a cool steel-grey color mass with hairline street grid scratches, small blue-grey tone variation patches, tiny green plaza color squares, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, cool steel and slate color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, nanotech cityscape, sterile white chrome, hexagonal nano lattice texture, micro grid lines, white silver river, iridescent shimmer, nano fog, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#D0D8DC`
+**Dominant hex color:** `#4A5E72`
+**Output filename:** `assets/maps/information_age.png`
 
 ---
 
-## 17. fusion_age
+## cyberpunk_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of a fusion-energy infrastructure landscape viewed overhead in Civ 1 style: dark terrain crossed by glowing amber and pale gold conduit lines representing plasma infrastructure. Energy node pads appear as bright circular patches on otherwise matte grey-black ground. The river in the left quarter glows with warm amber energy reflection. The palette transitions from dark grey to radiant gold, no characters, no UI, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast megacity region at night, terrain is a very dark grey color mass with faint neon purple and cyan color bleed patches, hairline street grid scratches glowing faintly, river as a thin dark line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, very dark grey with neon purple and cyan glow color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, fusion energy landscape, dark terrain, amber gold conduit lines, plasma infrastructure, energy node pads, glowing river left side, dark grey to radiant gold, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#3A2A10`
+**Dominant hex color:** `#1A1A2E`
+**Output filename:** `assets/maps/cyberpunk_age.png`
 
 ---
 
-## 18. singularity_age
+## digital_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of an AI-transformed landscape from directly overhead in Civ 1 style: abstract geometric lattice patterns cover the terrain in cool blue-white light, forming a vast neural network texture on the ground surface. Physical terrain features are dissolving into pure pattern. The river in the left quarter has been abstracted into a flowing lattice of light. Deep indigo and electric white dominate, no characters, no UI, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast sterile infrastructure region, terrain is a clean white and pale silver color mass, hairline hexagonal grid pattern barely visible as faint tone lines, no individual features visible only clinical tone field, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, clean white and pale silver color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, singularity landscape, AI lattice pattern, cool blue white, neural network ground texture, dissolving terrain, light lattice river, deep indigo electric white, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#1E1A3A`
+**Dominant hex color:** `#D0D8DC`
+**Output filename:** `assets/maps/digital_age.png`
 
 ---
 
-## 19. galactic_age
+## fusion_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of a terraformed alien world viewed overhead in Civ 1 style: teal and violet exotic terrain textures replace Earth biomes, with unfamiliar crystal formations reading as canopy dots and bioluminescent ground patches. Distant star fields subtly color the sky tone, reflected in the alien ground. The river in the left quarter flows with a glowing teal-white light. Muted alien color palette, no characters, no UI, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast energy infrastructure region, terrain is a deep blue-black color mass, hairline electric blue glowing conduit line scratches crossing the surface, white glow node dots at intersections, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, deep blue-black with electric blue hairline glow color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, terraformed alien world, teal violet terrain, crystal formations, bioluminescent patches, alien canopy dots, star field sky tone, glowing teal river left side, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#1A3A3A`
+**Dominant hex color:** `#0A1A2A`
+**Output filename:** `assets/maps/fusion_age.png`
 
 ---
 
-## 20. cosmic_age
+## interstellar_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of a cosmic void landscape viewed from overhead in Civ 1 style: near-black terrain dissolving into energy field swirls of deep purple and dark magenta, with faint nebula-texture patches replacing conventional ground. Physical geography is barely present, replaced by flowing energy topography. The river in the left quarter is a ribbon of pure white cosmic energy. Dark void palette with ethereal energy accents, no characters, no UI, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast abstract lattice terrain region, terrain is a near-black color mass, hairline gold and white geometric hexagonal grid lines barely visible as faint scratches, physical geography dissolved into pattern, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, near-black with faint gold line color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, cosmic void landscape, near black, purple dark magenta energy swirls, nebula texture ground, energy topography, white cosmic energy river, void palette ethereal, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#0A0A1A`
+**Dominant hex color:** `#1E1A3A`
+**Output filename:** `assets/maps/interstellar_age.png`
 
 ---
 
-## 21. transcendent_age
+## galactic_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of a nearly non-physical transcendent plane viewed overhead in Civ 1 style: the terrain is pure soft white and gold luminance with ghost impressions of landscape topology, as if reality is becoming transparent. Ethereal light columns read as terrain features. The river in the left quarter is an undulating ribbon of pale gold radiance. The entire image is very bright and washed out, barely retaining a map structure, no characters, no UI, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast alien terraformed world region, terrain is a deep teal and violet color mass, exotic vegetation canopy as solid color zones with no individual plants visible, bioluminescent smudge patches of soft light, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, deep teal and violet color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, transcendent plane, pure white gold luminance, ghost topology, transparent reality, ethereal light columns, pale gold radiance river, bright washed out, barely physical, no characters, no UI, civ1 style, 480x320`
-
-### Dominant Hex Color
-`#F0E8C0`
+**Dominant hex color:** `#1A3A3A`
+**Output filename:** `assets/maps/galactic_age.png`
 
 ---
 
-## 22. divine_age
+## quantum_age
 
-### Midjourney / DALL-E Prompt
-Top-down pixel art map of a realm beyond physical reality viewed overhead in Civ 1 style: blinding white-gold void with dark abyss voids puncturing through, forming an abstract divine terrain of light and nothingness. The ground texture alternates between pure radiant white and absolute black in geometric divine patterns. The river in the left quarter is a seam of blinding gold light cutting through void-black. No conventional terrain, only the contrast of divine light and void, no characters, no UI, 480x320.
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast cosmic energy field surface region, terrain is a deep black color mass with violet and gold energy wisp color patches, faint star field texture bleeding through, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, deep black with violet and gold energy wisp color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
-### Stable Diffusion Tags
-`top-down orthographic map, pixel art, divine realm, white gold void, dark abyss voids, radiant white absolute black, geometric divine pattern, gold light seam river, beyond physical reality, no characters, no UI, civ1 style, 480x320`
+**Dominant hex color:** `#0A0A1A`
+**Output filename:** `assets/maps/quantum_age.png`
 
-### Dominant Hex Color
-`#F8F0D0`
+---
+
+## transcendent_age
+
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast ethereal light field region, terrain is a pale luminance color wash barely physical, faint topology impression lines as soft tone gradients, dissolving into pure light color field, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, white and pale gold and soft violet abstract color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
+
+**Dominant hex color:** `#F0E8C0`
+**Output filename:** `assets/maps/transcendent_age.png`
+

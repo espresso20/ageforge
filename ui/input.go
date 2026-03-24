@@ -94,12 +94,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return CommandResult{OverlayName: "epoch"}
 	case "history":
 		return CommandResult{OverlayName: "history"}
-	case "mapv1":
-		return CommandResult{OverlayName: "mapv1"}
-	case "mapv2":
-		return CommandResult{OverlayName: "mapv2"}
-	case "mapv4":
-		return CommandResult{OverlayName: "mapv4"}
+	case "map":
+		return CommandResult{OverlayName: "map"}
 	case "catastrophe", "cat":
 		return cmdCatastrophe(args, engine)
 	case "dump", "exportlogs":
