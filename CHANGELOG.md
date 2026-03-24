@@ -8,6 +8,13 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v3.6.0] — 2026-03-24
+
+### Added
+- map rendering experiments (mapv1 / mapv2 / mapv3) (#26)
+
+---
+
 ## [v3.5.0] — 2026-03-23
 
 ### Added
