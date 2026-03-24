@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"image"
 	"image/color"
 	_ "image/png"
@@ -10,6 +11,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/sprites"
 	"github.com/gdamore/tcell/v2"
@@ -483,34 +485,27 @@ func v4SpriteCityCenter() [16][16]uint32 {
 func v4PalacePixels(ageKey string) [16][16]uint32 {
 	switch ageKey {
 	case "primitive_age":
-		// Chief's roundhouse — circular brown structure with central fire pit
+		// Chief's roundhouse — circular clay hut with thatched roof and fire pit
 		var c sprites.Canvas
-		c.FillRect(0, 0, 16, 16, 0x202020)   // dark ground
-		c.FillRect(3, 2, 10, 10, 0x8B6914)   // round body (approximated as rect)
-		c.FillRect(4, 1, 8, 1, 0x8B6914)     // top arc
-		c.FillRect(2, 3, 1, 8, 0x8B6914)     // left arc
-		c.FillRect(13, 3, 1, 8, 0x8B6914)    // right arc
-		c.FillRect(4, 12, 8, 1, 0x8B6914)    // bottom arc
-		// Dark border
-		c.FillRect(3, 2, 10, 1, 0x4A3010)
-		c.FillRect(3, 11, 10, 1, 0x4A3010)
-		c.FillRect(3, 2, 1, 10, 0x4A3010)
-		c.FillRect(12, 2, 1, 10, 0x4A3010)
+		c.FillRect(0, 0, 16, 16, 0x3A2E1A) // muddy ground
+		// Circular wall using octagonal approximation
+		c.FillRect(4, 2, 8, 12, 0x7A5A38) // main body
+		c.FillRect(2, 4, 12, 8, 0x7A5A38) // widen middle
+		// Thatched roof (darker brown cone suggestion)
+		c.FillRect(5, 2, 6, 2, 0x5A4020)
+		c.FillRect(4, 3, 8, 2, 0x5A4020)
+		c.Hline(3, 4, 10, 0x6A5030)
+		// Wall shading — right/bottom slightly darker
+		c.Vline(13, 4, 8, 0x5A4228)
+		c.Hline(4, 13, 8, 0x5A4228)
 		// Central fire pit
-		c.Set(7, 6, 0xFF6020)
-		c.Set(8, 6, 0xFF6020)
-		c.Set(7, 7, 0xFF8040)
+		c.Set(7, 7, 0xFF6020)
 		c.Set(8, 7, 0xFF8040)
-		c.Set(8, 5, 0xFF6020)
-		// Door opening on south side
-		c.Set(7, 11, 0x202020)
-		c.Set(8, 11, 0x202020)
-		// Thatch roof pattern
-		c.Hline(4, 3, 8, 0xA07820)
-		c.Hline(4, 5, 8, 0xA07820)
-		c.Hline(4, 9, 8, 0xA07820)
-		// Ground
-		c.FillRect(0, 13, 16, 3, 0x3A2810)
+		c.Set(7, 8, 0xCC4010)
+		c.Set(8, 8, 0xFF6020)
+		// Door gap (south face)
+		c.Set(7, 13, 0x2A1E0A)
+		c.Set(8, 13, 0x2A1E0A)
 		return c.Pixels
 
 	case "stone_age":
@@ -1483,6 +1478,7 @@ const (
 	v4JitterAmount = 10 // max random offset per slot in each axis (fallback default)
 	v4MinDist      = 18 // minimum distance between two placed buildings (fallback default)
 	v4CenterRadius = 20 // reserved radius around palace — no buildings placed here
+	wonderStripH   = 20 // pixel height of the wonder row reserved at the bottom of the map
 )
 
 // v4DensityParams holds layout parameters for the city at a given era and growth stage.
@@ -1601,10 +1597,10 @@ func v4BuildingSlots(width, height, cx, cy, slotSpacing, jitterAmt int) [][2]int
 				continue
 			}
 
-			// Skip if outside image bounds
+			// Skip if outside image bounds (also reserve bottom wonder strip)
 			absX := cx + ox
 			absY := cy + oy
-			if absX < 8 || absX >= width-8 || absY < 8 || absY >= height-8 {
+			if absX < 8 || absX >= width-8 || absY < 8 || absY >= height-wonderStripH-8 {
 				continue
 			}
 
@@ -1670,8 +1666,14 @@ func v4GetBuildings(state game.GameState, params v4DensityParams) []v4Building {
 		}
 		isWonder := false
 		isStorage := false
-		if len(key) >= 6 && key[len(key)-6:] == "wonder" {
+		if def, ok := config.BuildingByKey()[key]; ok && def.Category == "wonder" {
 			isWonder = true
+		} else if len(key) >= 6 && key[len(key)-6:] == "wonder" {
+			isWonder = true
+		}
+		// Wonders are rendered separately in the bottom strip — exclude from city slots.
+		if isWonder {
+			continue
 		}
 		for _, kw := range []string{"storage", "warehouse", "granary", "silo", "vault", "barn", "stockpile", "depot", "repository"} {
 			if strings.Contains(key, kw) {
@@ -2148,15 +2150,92 @@ func v4GenerateImage(state game.GameState, width, height int) *image.RGBA {
 		v4DrawSpriteScaled(img, pos.pixels, sbx-spriteSize/2, sby-spriteSize/2, spriteSize)
 	}
 
-	// 5. Palace / city center — always at map center, evolves with age, drawn at 1.5× sprite size
-	palaceSize := spriteSize
-	if palaceSize < 16 {
-		palaceSize = 16
-	}
-	v4DrawClearingR(img, cx, cy, pal.clearingColor, palaceSize+6)
+	// 5. Palace / city center — fixed 16px, small clearing so it doesn't dominate
+	palaceSize := 16
+	v4DrawClearingR(img, cx, cy, pal.clearingColor, palaceSize+2)
 	v4DrawSpriteScaled(img, v4PalacePixels(state.Age), cx-palaceSize/2, cy-palaceSize/2, palaceSize)
 
+	// 6. Wonder strip — separator line + wonder sprites across the bottom band.
+	v4DrawWonderStrip(img, state, width, height)
+
 	return img
+}
+
+// v4DrawWonderStrip draws a separator line and one 16×16 wonder sprite per built wonder
+// evenly spaced across the bottom wonderStripH pixels of img.
+func v4DrawWonderStrip(img *image.RGBA, state game.GameState, width, height int) {
+	// Separator line at the top of the strip.
+	sepY := height - wonderStripH - 1
+	if sepY >= 0 {
+		sepColor := color.RGBA{0x2a, 0x2a, 0x2a, 0xff}
+		for x := 0; x < width; x++ {
+			img.SetRGBA(x, sepY, sepColor)
+		}
+	}
+
+	// Collect built wonders in stable key order.
+	bldByKey := config.BuildingByKey()
+	type builtWonder struct{ key string }
+	var wonders []builtWonder
+	for key, bs := range state.Buildings {
+		if bs.Count == 0 {
+			continue
+		}
+		if def, ok := bldByKey[key]; ok && def.Category == "wonder" {
+			wonders = append(wonders, builtWonder{key})
+		}
+	}
+	if len(wonders) == 0 {
+		return
+	}
+	sort.Slice(wonders, func(i, j int) bool { return wonders[i].key < wonders[j].key })
+
+	// Render each wonder sprite centred within its horizontal slot.
+	n := len(wonders)
+	xStep := width / n
+	sy := height - wonderStripH + 2 // top-left y for 16×16 sprite
+
+	for i, w := range wonders {
+		sprite := v4LoadBuildingSprite(w.key, "", state.Age, true, false)
+		sx := i*xStep + xStep/2 - 8
+		for py := 0; py < 16; py++ {
+			for px := 0; px < 16; px++ {
+				packed := sprite[py][px]
+				a := uint8(packed >> 24)
+				// Sprites stored without alpha channel use 0 as transparent sentinel.
+				if packed == 0 && a == 0 {
+					continue
+				}
+				r := uint8(packed >> 16)
+				g := uint8(packed >> 8)
+				b := uint8(packed)
+				dx := sx + px
+				dy := sy + py
+				if dx < 0 || dx >= width || dy < 0 || dy >= height {
+					continue
+				}
+				img.SetRGBA(dx, dy, color.RGBA{r, g, b, 255})
+			}
+		}
+	}
+}
+
+// WonderSpriteIcon returns a 2-character tview color-tagged thumbnail for the generic
+// wonder sprite, suitable for prepending to wonder names in overlay text views.
+// Each character is a '▄' half-block: BG = upper sample pixel, FG = lower sample pixel.
+func WonderSpriteIcon() string {
+	px := v4SpriteWonderPixels
+	c := func(row, col int) (r, g, b uint8) {
+		packed := px[row][col]
+		return uint8(packed >> 16), uint8(packed >> 8), uint8(packed)
+	}
+	r1u, g1u, b1u := c(4, 4)
+	r1l, g1l, b1l := c(12, 4)
+	r2u, g2u, b2u := c(4, 12)
+	r2l, g2l, b2l := c(12, 12)
+	ch1 := fmt.Sprintf("[#%02x%02x%02x:#%02x%02x%02x]▄[-:-]", r1l, g1l, b1l, r1u, g1u, b1u)
+	ch2 := fmt.Sprintf("[#%02x%02x%02x:#%02x%02x%02x]▄[-:-]", r2l, g2l, b2l, r2u, g2u, b2u)
+	return ch1 + ch2
 }
 
 // ── Build / Refresh ────────────────────────────────────────────────────────
