@@ -3,15 +3,13 @@ package ui
 import (
 	"image"
 	"image/color"
-	_ "image/png"
 	"math"
-	"os"
-	"path/filepath"
 	"sort"
 	"strings"
 	"sync"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/sprites"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -685,54 +683,43 @@ var (
 	v4SpriteCache   = map[string][16][16]uint32{}
 )
 
-// v4LoadBuildingSprite loads a 16×16 sprite from assets/sprites/buildings/<key>.png.
-// Falls back to domain sprite if file not found. Results are cached.
-func v4LoadBuildingSprite(key, domain string, isWonder, isStorage bool) [16][16]uint32 {
+// v4BuildingLookup maps building key → [2]int{lineage, tier} for in-memory sprite generation.
+var v4BuildingLookup = func() map[string][2]int {
+	m := make(map[string][2]int, len(sprites.AllBuildings))
+	for _, b := range sprites.AllBuildings {
+		m[b.Key] = [2]int{b.Lineage, b.Tier}
+	}
+	return m
+}()
+
+// v4LoadBuildingSprite returns a 16×16 sprite for a building generated at the current age's era.
+// Results are cached per (key, ageKey) pair so age-advancement triggers fresh generation.
+func v4LoadBuildingSprite(key, domain, ageKey string, isWonder, isStorage bool) [16][16]uint32 {
+	cacheKey := key + ":" + ageKey
 	v4SpriteCacheMu.RLock()
-	if px, ok := v4SpriteCache[key]; ok {
+	if px, ok := v4SpriteCache[cacheKey]; ok {
 		v4SpriteCacheMu.RUnlock()
 		return px
 	}
 	v4SpriteCacheMu.RUnlock()
 
-	// Try loading from disk
-	path := filepath.Join("assets", "sprites", "buildings", key+".png")
-	f, err := os.Open(path)
-	if err == nil {
-		defer f.Close()
-		img, _, err := image.Decode(f)
-		if err == nil {
-			var px [16][16]uint32
-			for row := 0; row < 16; row++ {
-				for col := 0; col < 16; col++ {
-					r, g, b, a := img.At(col, row).RGBA()
-					if a > 0x8000 {
-						px[row][col] = (uint32(r>>8) << 16) | (uint32(g>>8) << 8) | uint32(b>>8)
-					}
-				}
-			}
-			v4SpriteCacheMu.Lock()
-			v4SpriteCache[key] = px
-			v4SpriteCacheMu.Unlock()
-			return px
-		}
+	var px [16][16]uint32
+	if lt, ok := v4BuildingLookup[key]; ok {
+		px = sprites.GenerateBuildingSprite(lt[0], lt[1], ageKey, 0)
+	} else if isWonder {
+		px = v4SpriteWonderPixels
+	} else if isStorage {
+		px = v4SpriteStoragePixels
+	} else if sp, ok := v4DomainSprites[domain]; ok {
+		px = sp
+	} else {
+		px = v4SpriteCityPixels
 	}
 
-	// Fallback to inline domain sprites
-	var fallback [16][16]uint32
-	if isWonder {
-		fallback = v4SpriteWonderPixels
-	} else if isStorage {
-		fallback = v4SpriteStoragePixels
-	} else if sp, ok := v4DomainSprites[domain]; ok {
-		fallback = sp
-	} else {
-		fallback = v4SpriteCityPixels
-	}
 	v4SpriteCacheMu.Lock()
-	v4SpriteCache[key] = fallback
+	v4SpriteCache[cacheKey] = px
 	v4SpriteCacheMu.Unlock()
-	return fallback
+	return px
 }
 
 // ── Sprite renderer ────────────────────────────────────────────────────────
@@ -1284,7 +1271,7 @@ func v4GenerateImage(state game.GameState, width, height int) *image.RGBA {
 		if r > maxRadius {
 			maxRadius = r
 		}
-		pixels := v4LoadBuildingSprite(b.key, b.domain, b.isWonder, b.isStorage)
+		pixels := v4LoadBuildingSprite(b.key, b.domain, state.Age, b.isWonder, b.isStorage)
 		positions = append(positions, bldPos{bx, by, pixels})
 	}
 
