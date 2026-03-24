@@ -97,6 +97,21 @@ func (c *Canvas) dome(cx, cy, r int, col uint32) {
 	}
 }
 
+// FillRect is the exported version of fillRect for use outside the package.
+func (c *Canvas) FillRect(x, y, w, h int, col uint32) { c.fillRect(x, y, w, h, col) }
+
+// Set is the exported version of set for use outside the package.
+func (c *Canvas) Set(x, y int, col uint32) { c.set(x, y, col) }
+
+// Hline is the exported version of hline for use outside the package.
+func (c *Canvas) Hline(x, y, w int, col uint32) { c.hline(x, y, w, col) }
+
+// Vline is the exported version of vline for use outside the package.
+func (c *Canvas) Vline(x, y, h int, col uint32) { c.vline(x, y, h, col) }
+
+// Dome is the exported version of dome for use outside the package.
+func (c *Canvas) Dome(cx, cy, r int, col uint32) { c.dome(cx, cy, r, col) }
+
 // darken darkens a color by factor (0.0–1.0).
 func darken(col uint32, factor float64) uint32 {
 	r := uint8(float64(col>>16&0xff) * factor)

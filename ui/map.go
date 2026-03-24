@@ -478,143 +478,665 @@ func v4SpriteCityCenter() [16][16]uint32 {
 	}
 }
 
-// v4PalacePixels returns a 16×16 palace sprite appropriate for the current age era.
-func v4PalacePixels(era int) [16][16]uint32 {
-	// Each era is a distinct palace design drawn inline
-	switch era {
-	case 0: // Primitive: chief's longhouse
-		return [16][16]uint32{
-			{0, 0, 0, 0, 0, 0x5a3a20, 0x5a3a20, 0x5a3a20, 0x5a3a20, 0x5a3a20, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0x5a3a20, 0x8b6a40, 0x8b6a40, 0x8b6a40, 0x8b6a40, 0x8b6a40, 0x5a3a20, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0x5a3a20, 0x8b6a40, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6a40, 0x5a3a20, 0, 0, 0, 0},
-			{0, 0, 0x5a3a20, 0x8b6a40, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6a40, 0x5a3a20, 0, 0, 0, 0},
-			{0, 0x5a3a20, 0x8b6a40, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6a40, 0x5a3a20, 0, 0, 0},
-			{0x5a3a20, 0x8b6a40, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6a40, 0x5a3a20, 0, 0},
-			{0x8b6040, 0xc8a060, 0xc8a060, 0xc8a060, 0x5a3a20, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x5a3a20, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6040, 0, 0},
-			{0x8b6040, 0xc8a060, 0xc8a060, 0xc8a060, 0x5a3a20, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x5a3a20, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6040, 0, 0},
-			{0x8b6040, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x5a3a20, 0x5a3a20, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6040, 0, 0},
-			{0x8b6040, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x5a3a20, 0x5a3a20, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6040, 0, 0},
-			{0x8b6040, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6040, 0, 0},
-			{0x8b6040, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0xc8a060, 0x8b6040, 0, 0},
-			{0x5a3a20, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x8b6040, 0x5a3a20, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+// v4PalacePixels returns a 16×16 palace sprite for the given age key.
+// Each of the 22 ages has a unique design drawn using sprites.Canvas helpers.
+func v4PalacePixels(ageKey string) [16][16]uint32 {
+	switch ageKey {
+	case "primitive_age":
+		// Chief's roundhouse — circular brown structure with central fire pit
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x202020)   // dark ground
+		c.FillRect(3, 2, 10, 10, 0x8B6914)   // round body (approximated as rect)
+		c.FillRect(4, 1, 8, 1, 0x8B6914)     // top arc
+		c.FillRect(2, 3, 1, 8, 0x8B6914)     // left arc
+		c.FillRect(13, 3, 1, 8, 0x8B6914)    // right arc
+		c.FillRect(4, 12, 8, 1, 0x8B6914)    // bottom arc
+		// Dark border
+		c.FillRect(3, 2, 10, 1, 0x4A3010)
+		c.FillRect(3, 11, 10, 1, 0x4A3010)
+		c.FillRect(3, 2, 1, 10, 0x4A3010)
+		c.FillRect(12, 2, 1, 10, 0x4A3010)
+		// Central fire pit
+		c.Set(7, 6, 0xFF6020)
+		c.Set(8, 6, 0xFF6020)
+		c.Set(7, 7, 0xFF8040)
+		c.Set(8, 7, 0xFF8040)
+		c.Set(8, 5, 0xFF6020)
+		// Door opening on south side
+		c.Set(7, 11, 0x202020)
+		c.Set(8, 11, 0x202020)
+		// Thatch roof pattern
+		c.Hline(4, 3, 8, 0xA07820)
+		c.Hline(4, 5, 8, 0xA07820)
+		c.Hline(4, 9, 8, 0xA07820)
+		// Ground
+		c.FillRect(0, 13, 16, 3, 0x3A2810)
+		return c.Pixels
+
+	case "stone_age":
+		// Stone circle — Stonehenge-style ring of standing stones
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x202020)
+		// Ring of standing stones around center (8,8)
+		stones := [][2]int{
+			{8, 1}, {12, 3}, {14, 7}, {13, 12}, {8, 14}, {3, 12}, {2, 7}, {4, 3},
+			{10, 2}, {14, 10}, {6, 14}, {2, 10},
 		}
-	case 1: // Classical/Medieval: stone castle
-		return [16][16]uint32{
-			{0, 0, 0, 0, 0, 0xd4a017, 0, 0, 0, 0xd4a017, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0xd4a017, 0xd4a017, 0xd4a017, 0, 0xd4a017, 0xd4a017, 0xd4a017, 0, 0, 0, 0, 0},
-			{0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0, 0},
-			{0, 0x908070, 0xd0c8b0, 0x908070, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0x908070, 0xd0c8b0, 0x908070, 0, 0},
-			{0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xa0c0d0, 0xa0c0d0, 0xd0c8b0, 0xa0c0d0, 0xa0c0d0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0, 0},
-			{0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xa0c0d0, 0xa0c0d0, 0xd0c8b0, 0xa0c0d0, 0xa0c0d0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0, 0},
-			{0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0, 0},
-			{0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd4a017, 0xd4a017, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0, 0},
-			{0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd4a017, 0xd4a017, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0, 0},
-			{0x8b1a1a, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0x8b1a1a, 0},
-			{0x8b1a1a, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0x6b3a1a, 0x6b3a1a, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0x8b1a1a, 0},
-			{0x8b1a1a, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0x6b3a1a, 0x6b3a1a, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0x8b1a1a, 0},
-			{0x8b1a1a, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0xd0c8b0, 0x8b1a1a, 0},
-			{0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0x908070, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		for _, s := range stones {
+			c.FillRect(s[0]-1, s[1]-1, 2, 3, 0xA09080)
 		}
-	case 2: // Industrial: Victorian town hall with clock tower
-		return [16][16]uint32{
-			{0, 0, 0, 0, 0, 0, 0, 0xc87941, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0x4a3a30, 0x8a6050, 0xc0c0a0, 0x8a6050, 0x4a3a30, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0x8a6050, 0x8a6050, 0xc0c0a0, 0x8a6050, 0x8a6050, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0, 0, 0, 0, 0, 0},
-			{0, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0, 0},
-			{0, 0x8a6050, 0xc0c0a0, 0xc0c0a0, 0x8a6050, 0x8a6050, 0xc0c0a0, 0xc0c0a0, 0xc0c0a0, 0x8a6050, 0x8a6050, 0xc0c0a0, 0xc0c0a0, 0x8a6050, 0, 0},
-			{0, 0x8a6050, 0xc0c0a0, 0xc0c0a0, 0x8a6050, 0x8a6050, 0xc0c0a0, 0xc0c0a0, 0xc0c0a0, 0x8a6050, 0x8a6050, 0xc0c0a0, 0xc0c0a0, 0x8a6050, 0, 0},
-			{0, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0, 0},
-			{0, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x3a2a20, 0x3a2a20, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0, 0},
-			{0, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x3a2a20, 0x3a2a20, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0, 0},
-			{0, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0x8a6050, 0, 0},
-			{0, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0x4a3a30, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		// Central altar stone
+		c.FillRect(6, 6, 4, 4, 0xC0B090)
+		c.Set(7, 7, 0xD8C8A8)
+		c.Set(8, 7, 0xD8C8A8)
+		return c.Pixels
+
+	case "bronze_age":
+		// Step pyramid / ziggurat — 4 concentric squares
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x303020)
+		c.FillRect(1, 8, 14, 7, 0xC8943C)  // base level
+		c.FillRect(3, 6, 10, 5, 0xDBA84A)  // level 2
+		c.FillRect(5, 4, 6, 4, 0xEFBE5A)   // level 3
+		c.FillRect(6, 2, 4, 4, 0xFFD870)   // top level / summit
+		c.Set(7, 1, 0xFFE890)              // capstone
+		c.Set(8, 1, 0xFFE890)
+		// Shadow edges
+		c.Vline(1, 8, 7, 0x906830)
+		c.Vline(14, 8, 7, 0x906830)
+		c.Hline(1, 14, 14, 0x705028)
+		c.Vline(3, 6, 5, 0xAA7830)
+		c.Vline(12, 6, 5, 0xAA7830)
+		c.Vline(5, 4, 4, 0xC09040)
+		c.Vline(10, 4, 4, 0xC09040)
+		return c.Pixels
+
+	case "iron_age":
+		// Hillfort / motte-and-bailey — earthwork ring with keep
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x506030)  // grass
+		// Outer earthwork ring
+		c.FillRect(1, 1, 14, 14, 0x6B5030)
+		c.FillRect(2, 2, 12, 12, 0x8B6B40)  // inner courtyard
+		// Ditch around outer ring
+		c.Hline(1, 1, 14, 0x4A3820)
+		c.Hline(1, 14, 14, 0x4A3820)
+		c.Vline(1, 1, 14, 0x4A3820)
+		c.Vline(14, 1, 14, 0x4A3820)
+		// Inner keep tower
+		c.FillRect(5, 5, 6, 6, 0x505050)
+		c.FillRect(6, 6, 4, 4, 0x686868)
+		// Battlements on keep
+		c.Set(5, 4, 0x505050)
+		c.Set(7, 4, 0x505050)
+		c.Set(9, 4, 0x505050)
+		c.Set(11, 4, 0x505050)
+		// Gate opening south
+		c.FillRect(7, 10, 2, 1, 0x303030)
+		return c.Pixels
+
+	case "classical_age":
+		// Greek/Roman temple — column peristyle with cella
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0xF0ECD8)  // marble floor
+		// Outer colonnade columns
+		for col := 1; col <= 14; col += 2 {
+			c.Set(col, 1, 0xD0C8A8)
+			c.Set(col, 2, 0xD0C8A8)
 		}
-	case 3: // Modern: glass capitol tower
-		return [16][16]uint32{
-			{0, 0, 0, 0, 0, 0, 0, 0xc0c8d0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0x808890, 0x80c0e0, 0x808890, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0x808890, 0x80c0e0, 0xe0f0ff, 0x80c0e0, 0x808890, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0x808890, 0x80c0e0, 0x80c0e0, 0xe0f0ff, 0x80c0e0, 0x80c0e0, 0x808890, 0, 0, 0, 0, 0},
-			{0, 0, 0x505860, 0x505860, 0x808890, 0x808890, 0x808890, 0x808890, 0x808890, 0x808890, 0x808890, 0x505860, 0x505860, 0, 0, 0},
-			{0, 0x505860, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x808890, 0x808890, 0x808890, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x505860, 0, 0},
-			{0, 0x505860, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x808890, 0x808890, 0x808890, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x505860, 0, 0},
-			{0, 0x505860, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x404850, 0x404850, 0x808890, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x505860, 0, 0},
-			{0, 0x505860, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x404850, 0x404850, 0x808890, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x505860, 0, 0},
-			{0, 0x505860, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x808890, 0x808890, 0x808890, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x505860, 0, 0},
-			{0, 0x505860, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x808890, 0x808890, 0x808890, 0x808890, 0x80c0e0, 0x80c0e0, 0x808890, 0x505860, 0, 0},
-			{0, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0x505860, 0, 0},
-			{0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0x404850, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		for col := 1; col <= 14; col += 2 {
+			c.Set(col, 12, 0xD0C8A8)
+			c.Set(col, 13, 0xD0C8A8)
 		}
-	case 4: // Digital/Cyber: neon megaplex
-		return [16][16]uint32{
-			{0, 0, 0, 0, 0, 0, 0, 0x40ffff, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0x101020, 0x40c0ff, 0x101020, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0x202030, 0x40c0ff, 0x40ffff, 0x40c0ff, 0x202030, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0x202030, 0x40c0ff, 0x202030, 0x202030, 0x202030, 0x40c0ff, 0x202030, 0, 0, 0, 0, 0},
-			{0, 0, 0x101020, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x101020, 0, 0, 0},
-			{0, 0x101020, 0x202030, 0x40c0ff, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x40c0ff, 0x202030, 0x101020, 0, 0},
-			{0, 0x101020, 0x202030, 0x40c0ff, 0x202030, 0x40c0ff, 0x40c0ff, 0xff40c0, 0x40c0ff, 0x40c0ff, 0x202030, 0x40c0ff, 0x202030, 0x101020, 0, 0},
-			{0, 0x101020, 0x202030, 0x40c0ff, 0x202030, 0x40c0ff, 0x40c0ff, 0xff40c0, 0x40c0ff, 0x40c0ff, 0x202030, 0x40c0ff, 0x202030, 0x101020, 0, 0},
-			{0, 0x101020, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x101020, 0, 0},
-			{0, 0x101020, 0x202030, 0x202030, 0x202030, 0x202030, 0x181828, 0x181828, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x101020, 0, 0},
-			{0, 0x101020, 0x202030, 0x202030, 0x202030, 0x202030, 0x181828, 0x181828, 0x202030, 0x202030, 0x202030, 0x202030, 0x202030, 0x101020, 0, 0},
-			{0, 0x101020, 0x40c0ff, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x40c0ff, 0x101020, 0, 0},
-			{0x40c0ff, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x101020, 0x40c0ff, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		for row := 1; row <= 13; row += 2 {
+			c.Set(1, row, 0xD0C8A8)
+			c.Set(14, row, 0xD0C8A8)
 		}
-	case 5: // Fusion/Space: orbital command spire
-		return [16][16]uint32{
-			{0, 0, 0, 0, 0, 0, 0, 0x80c0ff, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0x4080ff, 0xffe040, 0x4080ff, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0x0a1530, 0x4080ff, 0x80c0ff, 0x4080ff, 0x0a1530, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0x0a1530, 0x4080ff, 0x0a1530, 0x80c0ff, 0x0a1530, 0x4080ff, 0x0a1530, 0, 0, 0, 0, 0},
-			{0, 0, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0x80c0ff, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0, 0, 0},
-			{0, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0x0a1530, 0x80c0ff, 0x0a1530, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0, 0},
-			{0, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0x4080ff, 0x4080ff, 0xffe040, 0x4080ff, 0x4080ff, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0, 0},
-			{0, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0x4080ff, 0x4080ff, 0xffe040, 0x4080ff, 0x4080ff, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0, 0},
-			{0, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0x0a1530, 0x80c0ff, 0x0a1530, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0, 0},
-			{0, 0x0a1530, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0x80c0ff, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0x0a1530, 0, 0},
-			{0, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x4080ff, 0x0a1530, 0x80c0ff, 0x0a1530, 0x4080ff, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0, 0},
-			{0, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x4080ff, 0x4080ff, 0x4080ff, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0, 0},
-			{0x4080ff, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x0a1530, 0x4080ff, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		// Inner cella
+		c.FillRect(4, 4, 8, 8, 0xE0D8C0)
+		c.Hline(4, 4, 8, 0xB8B098)
+		c.Hline(4, 11, 8, 0xB8B098)
+		c.Vline(4, 4, 8, 0xB8B098)
+		c.Vline(11, 4, 8, 0xB8B098)
+		// Gold roof trim
+		c.Hline(0, 0, 16, 0xD4A820)
+		c.Hline(0, 15, 16, 0xD4A820)
+		// Doorway
+		c.FillRect(7, 9, 2, 3, 0xA09070)
+		return c.Pixels
+
+	case "medieval_age":
+		// Gothic cathedral — cross-shaped floor plan
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x706860)  // stone ground
+		// Cross nave: vertical (north-south)
+		c.FillRect(5, 0, 6, 16, 0xC0B8A0)
+		// Cross transept: horizontal (east-west)
+		c.FillRect(0, 5, 16, 6, 0xC0B8A0)
+		// Corner tower squares
+		c.FillRect(0, 0, 4, 4, 0x908070)
+		c.FillRect(12, 0, 4, 4, 0x908070)
+		c.FillRect(0, 12, 4, 4, 0x908070)
+		c.FillRect(12, 12, 4, 4, 0x908070)
+		// Rose window: gold dot at crossing center
+		c.Set(7, 7, 0xD4A820)
+		c.Set(8, 7, 0xD4A820)
+		c.Set(7, 8, 0xD4A820)
+		c.Set(8, 8, 0xD4A820)
+		// Stone vaulting lines
+		c.Hline(5, 7, 6, 0xA09880)
+		c.Vline(7, 5, 6, 0xA09880)
+		// Tower details
+		c.Set(1, 1, 0xA09880)
+		c.Set(2, 1, 0xA09880)
+		c.Set(13, 1, 0xA09880)
+		c.Set(14, 1, 0xA09880)
+		return c.Pixels
+
+	case "renaissance_age":
+		// Baroque palace — U-shape with inner courtyard and dome
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x90C060)  // garden courtyard
+		// U-shaped palace wings
+		c.FillRect(0, 0, 4, 14, 0xE8D498)   // left wing
+		c.FillRect(12, 0, 4, 14, 0xE8D498)  // right wing
+		c.FillRect(0, 0, 16, 5, 0xE8D498)   // top connecting wing
+		// Central dome at top center
+		c.Dome(7, 4, 3, 0xCCA030)
+		c.Set(7, 1, 0xFFD860)
+		c.Set(8, 1, 0xFFD860)
+		// Windows on wings
+		c.Set(1, 6, 0xC0A870)
+		c.Set(1, 9, 0xC0A870)
+		c.Set(14, 6, 0xC0A870)
+		c.Set(14, 9, 0xC0A870)
+		// Courtyard garden path
+		c.Hline(4, 10, 8, 0xC8B878)
+		c.Vline(7, 5, 9, 0xC8B878)
+		c.Vline(8, 5, 9, 0xC8B878)
+		return c.Pixels
+
+	case "age_of_sail":
+		// Colonial harbour master's hall — brick wings, central clock tower
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x507040)
+		// Main brick building
+		c.FillRect(1, 4, 14, 10, 0xA06840)
+		// White central facade
+		c.FillRect(5, 3, 6, 11, 0xF0E8D0)
+		// Clock tower
+		c.FillRect(6, 0, 4, 5, 0xC89858)
+		c.Set(7, 1, 0xF0F0F0)
+		c.Set(8, 1, 0xF0F0F0)
+		// Columns
+		c.Vline(5, 3, 11, 0xD8C898)
+		c.Vline(10, 3, 11, 0xD8C898)
+		// Windows in wings
+		c.Set(2, 6, 0x80A0B8)
+		c.Set(2, 9, 0x80A0B8)
+		c.Set(13, 6, 0x80A0B8)
+		c.Set(13, 9, 0x80A0B8)
+		// Door
+		c.FillRect(7, 11, 2, 3, 0x603820)
+		// Ground path
+		c.Hline(5, 14, 6, 0xB0A870)
+		return c.Pixels
+
+	case "industrial_age":
+		// Victorian city hall + clock tower
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x484840)
+		// Main brick building
+		c.FillRect(1, 5, 14, 10, 0xA84030)
+		// Central clock tower rising from center
+		c.FillRect(6, 0, 4, 7, 0x806050)
+		// Clock face
+		c.Set(7, 2, 0xF0F0F0)
+		c.Set(8, 2, 0xF0F0F0)
+		c.Set(7, 3, 0xF0F0F0)
+		c.Set(8, 3, 0xF0F0F0)
+		// Windows
+		c.FillRect(2, 7, 2, 3, 0x8090A0)
+		c.FillRect(12, 7, 2, 3, 0x8090A0)
+		c.FillRect(5, 7, 2, 3, 0x8090A0)
+		c.FillRect(9, 7, 2, 3, 0x8090A0)
+		// Smokestack at corner
+		c.FillRect(13, 2, 2, 5, 0x404040)
+		c.Set(13, 1, 0x606060)
+		c.Set(14, 1, 0x606060)
+		// Foundation
+		c.Hline(1, 14, 14, 0x703020)
+		return c.Pixels
+
+	case "gilded_age":
+		// Gilded era grand opera house — ornate symmetrical facade
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x504840)
+		// Main building
+		c.FillRect(1, 4, 14, 11, 0xD4B880)
+		// Grand dome at center
+		c.Dome(7, 5, 4, 0xD4A820)
+		c.Set(7, 1, 0xFFD040)
+		c.Set(8, 1, 0xFFD040)
+		// Colonnade
+		for col := 2; col <= 13; col += 2 {
+			c.Vline(col, 4, 3, 0xC8A870)
 		}
-	default: // Era 6: Cosmic — glowing transcendent pillar
-		return [16][16]uint32{
-			{0, 0, 0, 0, 0, 0, 0, 0xff80ff, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0xffd040, 0xff80ff, 0xffd040, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0xc0a0ff, 0xff80ff, 0xffffff, 0xff80ff, 0xc0a0ff, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0xc0a0ff, 0xffd040, 0x080810, 0xffffff, 0x080810, 0xffd040, 0xc0a0ff, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0xc0a0ff, 0x080810, 0x080810, 0x080810, 0xffffff, 0x080810, 0x080810, 0x080810, 0xc0a0ff, 0, 0, 0, 0},
-			{0, 0, 0xc0a0ff, 0x080810, 0x080810, 0xc0a0ff, 0xc0a0ff, 0xffffff, 0xc0a0ff, 0xc0a0ff, 0x080810, 0x080810, 0xc0a0ff, 0, 0, 0},
-			{0, 0xc0a0ff, 0x080810, 0x080810, 0xc0a0ff, 0xffd040, 0xffd040, 0xffffff, 0xffd040, 0xffd040, 0xc0a0ff, 0x080810, 0x080810, 0xc0a0ff, 0, 0},
-			{0, 0xc0a0ff, 0x080810, 0x080810, 0xc0a0ff, 0xffd040, 0xffd040, 0xffffff, 0xffd040, 0xffd040, 0xc0a0ff, 0x080810, 0x080810, 0xc0a0ff, 0, 0},
-			{0, 0, 0xc0a0ff, 0x080810, 0x080810, 0xc0a0ff, 0xc0a0ff, 0xffffff, 0xc0a0ff, 0xc0a0ff, 0x080810, 0x080810, 0xc0a0ff, 0, 0, 0},
-			{0, 0, 0, 0xc0a0ff, 0x080810, 0x080810, 0x080810, 0xffffff, 0x080810, 0x080810, 0x080810, 0xc0a0ff, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0xc0a0ff, 0xffd040, 0x080810, 0xffffff, 0x080810, 0xffd040, 0xc0a0ff, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0xc0a0ff, 0xff80ff, 0xffffff, 0xff80ff, 0xc0a0ff, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0xffd040, 0xffd040, 0xffd040, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
-			{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		// Arched windows
+		c.Set(3, 8, 0x90C0D8)
+		c.Set(3, 9, 0x90C0D8)
+		c.Set(12, 8, 0x90C0D8)
+		c.Set(12, 9, 0x90C0D8)
+		c.Set(6, 8, 0x90C0D8)
+		c.Set(6, 9, 0x90C0D8)
+		c.Set(9, 8, 0x90C0D8)
+		c.Set(9, 9, 0x90C0D8)
+		// Grand entrance steps
+		c.Hline(5, 14, 6, 0xB89860)
+		c.Hline(6, 15, 4, 0xB89860)
+		return c.Pixels
+
+	case "electric_age":
+		// Art Deco civic tower — stepped pyramid with gold spire
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x303028)
+		// Setback levels (bottom to top, wider to narrower)
+		c.FillRect(1, 12, 14, 3, 0xF0E8C8)
+		c.FillRect(2, 9, 12, 4, 0xE8E0C0)
+		c.FillRect(3, 6, 10, 4, 0xE0D8B8)
+		c.FillRect(4, 3, 8, 4, 0xD8D0B0)
+		c.FillRect(5, 1, 6, 3, 0xD4A020)   // gold upper level
+		c.FillRect(7, 0, 2, 2, 0xFFD040)   // gold spire
+		// Geometric ornament lines
+		c.Hline(1, 11, 14, 0xC8B890)
+		c.Hline(2, 8, 12, 0xC8B890)
+		c.Hline(3, 5, 10, 0xC8B890)
+		c.Hline(4, 2, 8, 0xD4A820)
+		// Vertical ornament
+		c.Vline(1, 12, 3, 0xC0B888)
+		c.Vline(14, 12, 3, 0xC0B888)
+		return c.Pixels
+
+	case "modern_age":
+		// Glass skyscraper complex — dark glass, towers, reflecting pool
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x203038)
+		// Central tall tower
+		c.FillRect(5, 0, 6, 13, 0x304858)
+		// Flanking towers
+		c.FillRect(0, 3, 4, 10, 0x283848)
+		c.FillRect(12, 3, 4, 10, 0x283848)
+		// Blue glass highlight strips on main tower
+		c.Vline(5, 0, 13, 0x60A0C0)
+		c.Vline(10, 0, 13, 0x60A0C0)
+		c.Hline(5, 4, 6, 0x4888A8)
+		c.Hline(5, 8, 6, 0x4888A8)
+		// Glass highlights on side towers
+		c.Vline(0, 3, 10, 0x4880A0)
+		c.Vline(15, 3, 10, 0x4880A0)
+		// Reflecting pool at base
+		c.FillRect(3, 13, 10, 3, 0x4080A0)
+		c.Hline(4, 13, 8, 0x60B0C8)
+		return c.Pixels
+
+	case "atomic_age":
+		// Modernist government building — horizontal slab on piloti
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0xB0A890)  // plaza
+		// Piloti columns
+		for col := 2; col <= 13; col += 3 {
+			c.Vline(col, 8, 4, 0x908878)
 		}
+		// Horizontal slab
+		c.FillRect(0, 4, 16, 5, 0xD0C8B8)
+		// Glass curtain wall strip
+		c.FillRect(0, 5, 16, 3, 0x8090A0)
+		c.Hline(0, 5, 16, 0xA0B0C0)
+		c.Hline(0, 7, 16, 0xA0B0C0)
+		// Vertical mullions
+		for col := 2; col <= 14; col += 2 {
+			c.Vline(col, 5, 3, 0x708090)
+		}
+		// Flat roof
+		c.Hline(0, 4, 16, 0xC0B8A8)
+		// Entry overhang
+		c.FillRect(5, 12, 6, 2, 0xC0B8A8)
+		return c.Pixels
+
+	case "information_age":
+		// Tech campus — campus ring road, central hub, data center blocks
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0xD8D8D0)
+		// Campus ring road
+		c.Hline(1, 2, 14, 0xB0A8A0)
+		c.Hline(1, 13, 14, 0xB0A8A0)
+		c.Vline(1, 2, 12, 0xB0A8A0)
+		c.Vline(14, 2, 12, 0xB0A8A0)
+		// Central hub building
+		c.FillRect(5, 5, 6, 6, 0x6090B0)
+		c.FillRect(6, 6, 4, 4, 0x80B0C8)
+		c.Set(7, 7, 0xC0E0F0)
+		c.Set(8, 7, 0xC0E0F0)
+		// Data center blocks in corners
+		c.FillRect(2, 3, 2, 2, 0x506070)
+		c.FillRect(12, 3, 2, 2, 0x506070)
+		c.FillRect(2, 11, 2, 2, 0x506070)
+		c.FillRect(12, 11, 2, 2, 0x506070)
+		// Roads to hub
+		c.Hline(3, 7, 2, 0xC0B8B0)
+		c.Hline(11, 7, 2, 0xC0B8B0)
+		c.Vline(7, 3, 2, 0xC0B8B0)
+		c.Vline(7, 11, 2, 0xC0B8B0)
+		return c.Pixels
+
+	case "digital_age":
+		// Server farm / data citadel — grid of server blocks with LED strips
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x303038)
+		// Grid of server block rows
+		for row := 1; row <= 13; row += 3 {
+			c.FillRect(1, row, 14, 2, 0x202028)
+			c.Hline(1, row+2, 14, 0x2060FF)  // blue LED strip between rows
+		}
+		// Server rack columns
+		for col := 2; col <= 13; col += 3 {
+			c.Vline(col, 1, 13, 0x282830)
+		}
+		// Central node
+		c.FillRect(6, 6, 4, 4, 0x183048)
+		c.Set(7, 7, 0x40C0FF)
+		c.Set(8, 7, 0x40C0FF)
+		c.Set(7, 8, 0x40C0FF)
+		c.Set(8, 8, 0x40C0FF)
+		// Status LEDs along edge
+		for row := 1; row <= 13; row += 3 {
+			c.Set(1, row, 0x00FF80)
+			c.Set(14, row, 0x00FF80)
+		}
+		return c.Pixels
+
+	case "cyberpunk_age":
+		// Neon megaplex tower — near-black with neon stripes
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x101018)
+		// Central tower block
+		c.FillRect(4, 0, 8, 14, 0x181820)
+		// Neon stripe running up center
+		c.Vline(7, 0, 14, 0xFF2060)
+		c.Vline(8, 0, 14, 0xFF2060)
+		// Neon cyan horizontal bands
+		c.Hline(4, 3, 8, 0x00FFEE)
+		c.Hline(4, 7, 8, 0x00FFEE)
+		c.Hline(4, 11, 8, 0x00FFEE)
+		// Side buildings
+		c.FillRect(0, 3, 3, 10, 0x141420)
+		c.FillRect(13, 3, 3, 10, 0x141420)
+		// Purple glow corner accents
+		c.Set(0, 3, 0x8020FF)
+		c.Set(2, 3, 0x8020FF)
+		c.Set(13, 3, 0x8020FF)
+		c.Set(15, 3, 0x8020FF)
+		c.Set(0, 12, 0x8020FF)
+		c.Set(2, 12, 0x8020FF)
+		c.Set(13, 12, 0x8020FF)
+		c.Set(15, 12, 0x8020FF)
+		// Neon base glow
+		c.Hline(4, 13, 8, 0xFF2060)
+		c.FillRect(2, 14, 12, 2, 0x0A0810)
+		c.Hline(3, 14, 10, 0x8020FF)
+		return c.Pixels
+
+	case "nanotech_age":
+		// Nanotech research nexus — molecular lattice structure
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x080810)
+		// Hexagonal lattice suggestion
+		c.Hline(3, 4, 10, 0x2040A0)
+		c.Hline(3, 8, 10, 0x2040A0)
+		c.Hline(3, 12, 10, 0x2040A0)
+		c.Vline(3, 4, 9, 0x2040A0)
+		c.Vline(8, 4, 9, 0x2040A0)
+		c.Vline(13, 4, 9, 0x2040A0)
+		// Node points
+		for _, pt := range [][2]int{{3, 4}, {8, 4}, {13, 4}, {3, 8}, {8, 8}, {13, 8}, {3, 12}, {8, 12}, {13, 12}} {
+			c.Set(pt[0], pt[1], 0x60C0FF)
+		}
+		// Central research core
+		c.FillRect(5, 5, 6, 6, 0x101830)
+		c.Set(7, 7, 0x80FFFF)
+		c.Set(8, 7, 0x80FFFF)
+		c.Set(7, 8, 0x80FFFF)
+		c.Set(8, 8, 0x80FFFF)
+		// Diagonal struts
+		c.Set(5, 5, 0x4060C0)
+		c.Set(10, 5, 0x4060C0)
+		c.Set(5, 10, 0x4060C0)
+		c.Set(10, 10, 0x4060C0)
+		return c.Pixels
+
+	case "fusion_age":
+		// Fusion reactor command center — circular reactor ring with plasma
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x0A0A20)
+		// Outer reactor housing ring
+		c.Hline(3, 2, 10, 0x2040FF)
+		c.Hline(3, 13, 10, 0x2040FF)
+		c.Vline(2, 3, 10, 0x2040FF)
+		c.Vline(13, 3, 10, 0x2040FF)
+		c.Set(3, 3, 0x2040FF)
+		c.Set(12, 3, 0x2040FF)
+		c.Set(3, 12, 0x2040FF)
+		c.Set(12, 12, 0x2040FF)
+		// Inner reactor ring
+		c.Hline(5, 4, 6, 0x4070FF)
+		c.Hline(5, 11, 6, 0x4070FF)
+		c.Vline(4, 5, 6, 0x4070FF)
+		c.Vline(11, 5, 6, 0x4070FF)
+		// Energy core
+		c.FillRect(6, 6, 4, 4, 0x102040)
+		c.Set(7, 7, 0x80C0FF)
+		c.Set(8, 7, 0x80C0FF)
+		c.Set(7, 8, 0x80C0FF)
+		c.Set(8, 8, 0x80C0FF)
+		// Plasma conduit lines radiating out
+		c.Vline(7, 0, 3, 0x4080FF)
+		c.Vline(8, 0, 3, 0x4080FF)
+		c.Vline(7, 13, 3, 0x4080FF)
+		c.Vline(8, 13, 3, 0x4080FF)
+		c.Hline(0, 7, 3, 0x4080FF)
+		c.Hline(0, 8, 3, 0x4080FF)
+		c.Hline(13, 7, 3, 0x4080FF)
+		c.Hline(13, 8, 3, 0x4080FF)
+		return c.Pixels
+
+	case "space_age":
+		// Launch command complex — launch pad with rocket
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x808080)  // concrete
+		// Launch pad rectangle
+		c.FillRect(4, 8, 8, 6, 0x606060)
+		// Blast deflector at base
+		c.FillRect(3, 12, 10, 2, 0x404040)
+		c.Hline(3, 11, 10, 0x505050)
+		// Rocket silhouette on pad
+		c.FillRect(7, 1, 2, 9, 0xD0D0D0)
+		// Nose cone
+		c.Set(7, 0, 0xE0E0E0)
+		c.Set(8, 0, 0xE0E0E0)
+		// Fins
+		c.Set(5, 8, 0xB0B0B0)
+		c.Set(6, 8, 0xB0B0B0)
+		c.Set(9, 8, 0xB0B0B0)
+		c.Set(10, 8, 0xB0B0B0)
+		// Flame
+		c.Set(7, 10, 0xFF8020)
+		c.Set(8, 10, 0xFF8020)
+		c.Set(7, 11, 0xFF4000)
+		c.Set(8, 11, 0xFF4000)
+		// Service towers
+		c.Vline(2, 3, 10, 0x707070)
+		c.Vline(13, 3, 10, 0x707070)
+		c.Hline(2, 5, 5, 0x707070)
+		c.Hline(9, 5, 5, 0x707070)
+		return c.Pixels
+
+	case "interstellar_age":
+		// Deep space station — ring station with solar panels
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x080808)  // void
+		// Outer ring
+		c.Hline(3, 2, 10, 0x2050A0)
+		c.Hline(3, 13, 10, 0x2050A0)
+		c.Vline(2, 3, 10, 0x2050A0)
+		c.Vline(13, 3, 10, 0x2050A0)
+		c.Set(3, 3, 0x2050A0)
+		c.Set(12, 3, 0x2050A0)
+		c.Set(3, 12, 0x2050A0)
+		c.Set(12, 12, 0x2050A0)
+		// Inner ring
+		c.Hline(5, 4, 6, 0x4080D0)
+		c.Hline(5, 11, 6, 0x4080D0)
+		c.Vline(4, 5, 6, 0x4080D0)
+		c.Vline(11, 5, 6, 0x4080D0)
+		// Hub at center
+		c.FillRect(6, 6, 4, 4, 0x203060)
+		c.Set(7, 7, 0x80C0FF)
+		c.Set(8, 8, 0x80C0FF)
+		// Solar panel arrays extending from ring
+		c.FillRect(0, 6, 2, 4, 0xFFCC00)
+		c.FillRect(14, 6, 2, 4, 0xFFCC00)
+		c.FillRect(6, 0, 4, 2, 0xFFCC00)
+		c.FillRect(6, 14, 4, 2, 0xFFCC00)
+		// Panel dividers
+		c.Vline(1, 6, 4, 0xCC9900)
+		c.Vline(14, 6, 4, 0xCC9900)
+		c.Hline(6, 1, 4, 0xCC9900)
+		c.Hline(6, 14, 4, 0xCC9900)
+		return c.Pixels
+
+	case "galactic_age":
+		// Alien crystalline palace — star pattern of crystal spires
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x050510)
+		// Teal crystal spires in star pattern
+		// Center spire
+		c.Vline(7, 3, 10, 0x20D0A0)
+		c.Vline(8, 3, 10, 0x20D0A0)
+		c.Set(7, 2, 0x40FFC0)
+		c.Set(8, 2, 0x40FFC0)
+		// Cross spires
+		c.Hline(3, 7, 10, 0x20D0A0)
+		c.Hline(3, 8, 10, 0x20D0A0)
+		// Diagonal crystal lines
+		c.Set(4, 4, 0x20D0A0)
+		c.Set(5, 5, 0x20D0A0)
+		c.Set(10, 4, 0x20D0A0)
+		c.Set(11, 5, 0x20D0A0)
+		c.Set(4, 11, 0x20D0A0)
+		c.Set(5, 10, 0x20D0A0)
+		c.Set(10, 11, 0x20D0A0)
+		c.Set(11, 10, 0x20D0A0)
+		// Violet energy core
+		c.FillRect(6, 6, 4, 4, 0x100820)
+		c.Set(7, 7, 0xA020FF)
+		c.Set(8, 7, 0xA020FF)
+		c.Set(7, 8, 0xA020FF)
+		c.Set(8, 8, 0xA020FF)
+		// Bioluminescent accents
+		c.Set(3, 3, 0x40FFA0)
+		c.Set(12, 3, 0x40FFA0)
+		c.Set(3, 12, 0x40FFA0)
+		c.Set(12, 12, 0x40FFA0)
+		return c.Pixels
+
+	case "quantum_age":
+		// Quantum probability nexus — concentric dotted rings, bright core
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x020208)
+		// Outer uncertainty halo — alternating dots
+		outerPts := [][2]int{
+			{7, 0}, {9, 0}, {12, 1}, {14, 3}, {15, 5}, {15, 8}, {15, 11},
+			{14, 13}, {12, 14}, {9, 15}, {7, 15}, {4, 14}, {2, 13}, {1, 11},
+			{0, 8}, {0, 5}, {1, 3}, {4, 1},
+		}
+		for i, pt := range outerPts {
+			if i%2 == 0 {
+				c.Set(pt[0], pt[1], 0x8040FF)
+			} else {
+				c.Set(pt[0], pt[1], 0xFF40C0)
+			}
+		}
+		// Inner halo
+		innerPts := [][2]int{
+			{7, 3}, {9, 3}, {11, 5}, {12, 7}, {12, 9}, {11, 11},
+			{9, 12}, {7, 12}, {5, 11}, {4, 9}, {4, 7}, {5, 5},
+		}
+		for i, pt := range innerPts {
+			if i%2 == 0 {
+				c.Set(pt[0], pt[1], 0xFF40C0)
+			} else {
+				c.Set(pt[0], pt[1], 0x8040FF)
+			}
+		}
+		// Phase lines
+		c.Hline(4, 7, 8, 0x4040A0)
+		c.Vline(7, 4, 8, 0x4040A0)
+		// Quantum core — bright white center
+		c.FillRect(6, 6, 4, 4, 0x080820)
+		c.Set(7, 7, 0xFFFFFF)
+		c.Set(8, 7, 0xFFFFFF)
+		c.Set(7, 8, 0xFFFFFF)
+		c.Set(8, 8, 0xFFFFFF)
+		return c.Pixels
+
+	case "singularity_age":
+		// Singularity convergence point — spiraling light collapse
+		var c sprites.Canvas
+		c.FillRect(0, 0, 16, 16, 0x020206)
+		// Outer spiral suggestion
+		c.Hline(2, 2, 12, 0x6020C0)
+		c.Vline(13, 2, 12, 0x6020C0)
+		c.Hline(2, 13, 12, 0x6020C0)
+		c.Vline(2, 2, 12, 0x6020C0)
+		// Mid ring
+		c.Hline(4, 4, 8, 0x8040E0)
+		c.Vline(11, 4, 8, 0x8040E0)
+		c.Hline(4, 11, 8, 0x8040E0)
+		c.Vline(4, 4, 8, 0x8040E0)
+		// Inner collapse
+		c.FillRect(6, 6, 4, 4, 0x200440)
+		c.Set(7, 7, 0xFFFFFF)
+		c.Set(8, 7, 0xFFFF80)
+		c.Set(7, 8, 0xFFFF80)
+		c.Set(8, 8, 0xFFFFFF)
+		// Radiant beams
+		c.Set(7, 0, 0xC060FF)
+		c.Set(8, 0, 0xC060FF)
+		c.Set(0, 7, 0xC060FF)
+		c.Set(0, 8, 0xC060FF)
+		c.Set(15, 7, 0xC060FF)
+		c.Set(15, 8, 0xC060FF)
+		c.Set(7, 15, 0xC060FF)
+		c.Set(8, 15, 0xC060FF)
+		return c.Pixels
+
+	default:
+		// transcendent_age / divine_age / cosmic_age — transcendent light pillar
+		var c sprites.Canvas
+		// Gold radiance expanding outward
+		c.FillRect(0, 0, 16, 16, 0xE0C0FF)   // pale violet outer glow
+		c.FillRect(2, 2, 12, 12, 0xFFE080)   // gold radiance halo
+		c.FillRect(4, 4, 8, 8, 0xFFF0B0)     // brighter inner halo
+		c.FillRect(5, 0, 6, 16, 0xFFFFFF)    // white light pillar vertical
+		c.FillRect(0, 5, 16, 6, 0xFFFFFF)    // white light pillar horizontal
+		// Intensify center
+		c.FillRect(6, 4, 4, 8, 0xFFFFFF)
+		c.FillRect(4, 6, 8, 4, 0xFFFFFF)
+		c.Set(7, 7, 0xFFFFFF)
+		c.Set(8, 7, 0xFFFFFF)
+		c.Set(7, 8, 0xFFFFFF)
+		c.Set(8, 8, 0xFFFFFF)
+		return c.Pixels
 	}
 }
 
@@ -1631,15 +2153,8 @@ func v4GenerateImage(state game.GameState, width, height int) *image.RGBA {
 	if palaceSize < 16 {
 		palaceSize = 16
 	}
-	palaceEra := 0
-	for i, p := range v4Palettes {
-		if p.ageKey == state.Age {
-			palaceEra = i * 6 / len(v4Palettes) // map palette index to era 0-6
-			break
-		}
-	}
 	v4DrawClearingR(img, cx, cy, pal.clearingColor, palaceSize+6)
-	v4DrawSpriteScaled(img, v4PalacePixels(palaceEra), cx-palaceSize/2, cy-palaceSize/2, palaceSize)
+	v4DrawSpriteScaled(img, v4PalacePixels(state.Age), cx-palaceSize/2, cy-palaceSize/2, palaceSize)
 
 	return img
 }
