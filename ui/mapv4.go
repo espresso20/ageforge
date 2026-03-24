@@ -552,10 +552,28 @@ func v4DrawSprite(img *image.RGBA, pixels [16][16]uint32, px, py int) {
 	}
 }
 
+// v4DrawSpriteScaled draws a 16×16 sprite scaled to spriteSize×spriteSize using nearest-neighbor.
+func v4DrawSpriteScaled(img *image.RGBA, pixels [16][16]uint32, px, py, spriteSize int) {
+	if spriteSize <= 0 {
+		return
+	}
+	for dstRow := 0; dstRow < spriteSize; dstRow++ {
+		for dstCol := 0; dstCol < spriteSize; dstCol++ {
+			srcRow := dstRow * 16 / spriteSize
+			srcCol := dstCol * 16 / spriteSize
+			v := pixels[srcRow][srcCol]
+			if v == 0 {
+				continue
+			}
+			c := color.RGBA{uint8(v >> 16), uint8(v >> 8), uint8(v), 255}
+			img.SetRGBA(px+dstCol, py+dstRow, c)
+		}
+	}
+}
+
 // ── Clearing halo ──────────────────────────────────────────────────────────
 
-func v4DrawClearing(img *image.RGBA, cx, cy int, clr color.RGBA) {
-	r := 14
+func v4DrawClearingR(img *image.RGBA, cx, cy int, clr color.RGBA, r int) {
 	for dy := -r; dy <= r; dy++ {
 		for dx := -r; dx <= r; dx++ {
 			dist := math.Sqrt(float64(dx*dx + dy*dy))
@@ -725,6 +743,13 @@ func v4Min8(a, b int) int {
 	return b
 }
 
+func v4Min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
 func v4DrawGridLines(img *image.RGBA, pal v4AgePalette) {
 	bounds := img.Bounds()
 	gridClr := color.RGBA{
@@ -816,70 +841,90 @@ func v4GenerateImage(state game.GameState, width, height int) *image.RGBA {
 	cx, cy := width/2, height/2
 	roadClr := v4LerpColor(pal.bgMid, pal.bgLight, 0.4)
 
+	baseAngles := []float64{0, 48, 93, 145, 198, 252, 310}
+	numRoads := len(baseAngles)
+	roadSpacing := 22.0 // base spacing at scale 1.0
+
+	// --- Auto-zoom: compute all positions at scale 1.0, find max radius ---
+	type bldPos struct {
+		bx, by int
+		pixels [16][16]uint32
+	}
+	var positions []bldPos
+	maxRadius := 0.0
+
+	for i, b := range buildings {
+		roadIdx := i % numRoads
+		slot := i/numRoads + 1
+		deg := baseAngles[roadIdx]
+		jitter := v4BuildingJitter(b.key)
+		rad := deg * math.Pi / 180
+		perpRad := rad + math.Pi/2
+		dist := float64(slot) * roadSpacing
+		bx := int(math.Round(dist*math.Cos(rad))) + int(math.Round(float64(jitter)*math.Cos(perpRad)))
+		by := int(math.Round(dist*math.Sin(rad))) + int(math.Round(float64(jitter)*math.Sin(perpRad)))
+		r := math.Sqrt(float64(bx*bx + by*by))
+		if r > maxRadius {
+			maxRadius = r
+		}
+		var pixels [16][16]uint32
+		if b.isWonder {
+			pixels = v4SpriteWonderPixels
+		} else if b.isStorage {
+			pixels = v4SpriteStoragePixels
+		} else if sp, ok := v4DomainSprites[b.domain]; ok {
+			pixels = sp
+		} else {
+			pixels = v4SpriteStoragePixels
+		}
+		positions = append(positions, bldPos{bx, by, pixels})
+	}
+
+	// Scale so furthest building sits at 38% of half the shortest dimension,
+	// leaving room for clearings and the city center sprite.
+	// Minimum scale 0.20 (sprites become 3px), maximum 1.0.
+	targetRadius := float64(v4Min(width, height)) * 0.38
+	scale := 1.0
+	if maxRadius > 0 && len(buildings) > 0 {
+		scale = targetRadius / (maxRadius + roadSpacing) // +spacing for padding
+		if scale > 1.0 {
+			scale = 1.0
+		}
+		if scale < 0.20 {
+			scale = 0.20
+		}
+	}
+	spriteSize := int(math.Round(16 * scale))
+	if spriteSize < 3 {
+		spriteSize = 3
+	}
+	clearingR := int(math.Round(14 * scale))
+	if clearingR < 4 {
+		clearingR = 4
+	}
+
+	// Draw roads at scaled length
 	if len(buildings) > 0 {
-		// Generate 7 road directions radiating from city center.
-		// Angles are not perfectly even — slight offsets give organic look.
-		// Seeded so the map is always the same for a given save.
-		baseAngles := []float64{0, 48, 93, 145, 198, 252, 310} // degrees
-		numRoads := len(baseAngles)
-
-		// Spacing between buildings along each road (pixels)
-		roadSpacing := 22.0
-
-		// Assign each building to a road slot:
-		//   road index = building index % numRoads
-		//   distance along road = (building index / numRoads + 1) * roadSpacing
-		// This fills road 0 slot 1, road 1 slot 1, ..., road N slot 1,
-		// then road 0 slot 2, road 1 slot 2, etc.
-		// Result: buildings fan out evenly along all roads before any road gets a 2nd building.
-
-		// First, draw all roads to their maximum needed length
 		maxSlot := (len(buildings)-1)/numRoads + 1
 		for _, deg := range baseAngles {
 			rad := deg * math.Pi / 180
-			roadLen := float64(maxSlot+1) * roadSpacing
+			roadLen := (float64(maxSlot+1)*roadSpacing + 16) * scale
 			ex := cx + int(math.Round(roadLen*math.Cos(rad)))
 			ey := cy + int(math.Round(roadLen*math.Sin(rad)))
 			v4DrawRoad(img, cx, cy, ex, ey, roadClr)
 		}
+	}
 
-		// Then place clearings + sprites
-		for i, b := range buildings {
-			roadIdx := i % numRoads
-			slot := i/numRoads + 1 // 1-based distance slot
-
-			deg := baseAngles[roadIdx]
-			// Small stable jitter per building — offset perpendicular to road direction
-			// Use building key hash for stable jitter
-			jitter := v4BuildingJitter(b.key)
-			rad := deg * math.Pi / 180
-			// Perpendicular direction
-			perpRad := rad + math.Pi/2
-
-			dist := float64(slot) * roadSpacing
-			bx := cx + int(math.Round(dist*math.Cos(rad))) + int(math.Round(float64(jitter)*math.Cos(perpRad)))
-			by := cy + int(math.Round(dist*math.Sin(rad))) + int(math.Round(float64(jitter)*math.Sin(perpRad)))
-
-			// Clearing halo
-			v4DrawClearing(img, bx, by, pal.clearingColor)
-
-			// Sprite (centered on bx, by)
-			var pixels [16][16]uint32
-			if b.isWonder {
-				pixels = v4SpriteWonderPixels
-			} else if b.isStorage {
-				pixels = v4SpriteStoragePixels
-			} else if sp, ok := v4DomainSprites[b.domain]; ok {
-				pixels = sp
-			} else {
-				pixels = v4SpriteStoragePixels
-			}
-			v4DrawSprite(img, pixels, bx-8, by-8)
-		}
+	// Draw clearings + sprites at scaled positions
+	for _, pos := range positions {
+		sbx := cx + int(math.Round(float64(pos.bx)*scale))
+		sby := cy + int(math.Round(float64(pos.by)*scale))
+		v4DrawClearingR(img, sbx, sby, pal.clearingColor, clearingR)
+		v4DrawSpriteScaled(img, pos.pixels, sbx-spriteSize/2, sby-spriteSize/2, spriteSize)
 	}
 
 	// 5. City center (always at map center, drawn last so it's on top)
-	v4DrawClearing(img, cx, cy, pal.clearingColor)
+	v4DrawClearingR(img, cx, cy, pal.clearingColor, 14)
 	v4DrawSprite(img, v4SpriteCityPixels, cx-8, cy-8)
 
 	return img
