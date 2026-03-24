@@ -1,0 +1,913 @@
+package ui
+
+import (
+	"image"
+	"image/color"
+	"math"
+	"sort"
+	"strings"
+	"sync"
+
+	"github.com/espresso20/ageforge/game"
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+)
+
+// MapV4 renders the player's capital city as a progressively growing pixel-art image
+// using 16×16 domain sprites, half-block terminal rendering, and age-shifting terrain.
+type MapV4 struct {
+	mu             sync.Mutex
+	state          game.GameState
+	cachedImg      *image.RGBA
+	cachedW        int
+	cachedH        int
+	cachedAge      string
+	cachedBldCount int
+	cachedEra      int
+}
+
+// NewMapV4 creates a new MapV4 instance.
+func NewMapV4() *MapV4 { return &MapV4{} }
+
+// ── Age palette ────────────────────────────────────────────────────────────
+
+type v4AgePalette struct {
+	ageKey        string
+	bgDark        color.RGBA
+	bgMid         color.RGBA
+	bgLight       color.RGBA
+	riverColor    color.RGBA
+	clearingColor color.RGBA
+	gridLines     bool
+}
+
+func v4rgb(hex uint32) color.RGBA {
+	return color.RGBA{uint8(hex >> 16), uint8(hex >> 8), uint8(hex), 255}
+}
+
+var v4Palettes = []v4AgePalette{
+	{"primitive_age", v4rgb(0x1a5c0a), v4rgb(0x2d8c1a), v4rgb(0x4ab02a), v4rgb(0x2060c0), v4rgb(0x3da02a), false},
+	{"stone_age", v4rgb(0x5a7a3a), v4rgb(0x7a9a4a), v4rgb(0x9ab85a), v4rgb(0x1a50a0), v4rgb(0x8aaa5a), false},
+	{"bronze_age", v4rgb(0x6a7a2a), v4rgb(0x8a9a3a), v4rgb(0xaaba4a), v4rgb(0x1a50a0), v4rgb(0x9aaa4a), false},
+	{"iron_age", v4rgb(0x4a6a2a), v4rgb(0x6a8a3a), v4rgb(0x8aaa4a), v4rgb(0x1a50a0), v4rgb(0x7a9a4a), false},
+	{"classical_age", v4rgb(0x4a6030), v4rgb(0x6a8040), v4rgb(0x8aa050), v4rgb(0x1a4890), v4rgb(0x7a9050), false},
+	{"medieval_age", v4rgb(0x3a5828), v4rgb(0x5a7838), v4rgb(0x7a9848), v4rgb(0x1a4080), v4rgb(0x6a8848), false},
+	{"renaissance_age", v4rgb(0x384828), v4rgb(0x506838), v4rgb(0x688848), v4rgb(0x1a3870), v4rgb(0x607848), false},
+	{"age_of_sail", v4rgb(0x304020), v4rgb(0x486030), v4rgb(0x607840), v4rgb(0x1a3868), v4rgb(0x587040), false},
+	{"industrial_age", v4rgb(0x404038), v4rgb(0x585850), v4rgb(0x707068), v4rgb(0x183060), v4rgb(0x686860), false},
+	{"gilded_age", v4rgb(0x383830), v4rgb(0x505048), v4rgb(0x686860), v4rgb(0x182858), v4rgb(0x606058), false},
+	{"modern_age", v4rgb(0x282830), v4rgb(0x383840), v4rgb(0x484850), v4rgb(0x182050), v4rgb(0x484855), false},
+	{"atomic_age", v4rgb(0x201820), v4rgb(0x302830), v4rgb(0x403840), v4rgb(0x201848), v4rgb(0x404048), false},
+	{"space_age", v4rgb(0x100820), v4rgb(0x201830), v4rgb(0x302840), v4rgb(0x301060), v4rgb(0x302840), true},
+	{"information_age", v4rgb(0x080818), v4rgb(0x181828), v4rgb(0x282838), v4rgb(0x280a58), v4rgb(0x282838), true},
+	{"cyberpunk_age", v4rgb(0x060610), v4rgb(0x101020), v4rgb(0x1a1a30), v4rgb(0x5010a0), v4rgb(0x1a1a35), true},
+	{"nanotech_age", v4rgb(0x040410), v4rgb(0x0c0c1c), v4rgb(0x14142c), v4rgb(0x4010a0), v4rgb(0x141430), true},
+	{"fusion_age", v4rgb(0x040408), v4rgb(0x080818), v4rgb(0x101024), v4rgb(0x6010c0), v4rgb(0x10102a), true},
+	{"singularity_age", v4rgb(0x020208), v4rgb(0x060614), v4rgb(0x0c0c20), v4rgb(0x7010d0), v4rgb(0x0c0c24), true},
+	{"galactic_age", v4rgb(0x020206), v4rgb(0x040410), v4rgb(0x08081a), v4rgb(0x8010e0), v4rgb(0x08081e), true},
+	{"cosmic_age", v4rgb(0x010106), v4rgb(0x03030e), v4rgb(0x060616), v4rgb(0x9010f0), v4rgb(0x060618), true},
+	{"transcendent_age", v4rgb(0x010104), v4rgb(0x02020a), v4rgb(0x040410), v4rgb(0xa010ff), v4rgb(0x040412), true},
+	{"divine_age", v4rgb(0x010102), v4rgb(0x020208), v4rgb(0x03030c), v4rgb(0xb020ff), v4rgb(0x03030e), true},
+}
+
+func v4GetPalette(ageKey string) v4AgePalette {
+	for _, p := range v4Palettes {
+		if p.ageKey == ageKey {
+			return p
+		}
+	}
+	return v4Palettes[0]
+}
+
+// ── Sprite pixel arrays ────────────────────────────────────────────────────
+
+// food color constants
+const (
+	v4fG = 0xe8c840 // grain
+	v4fS = 0x6a4a20 // stem
+	v4fB = 0x4a3010 // base
+)
+
+// wood color constants
+const (
+	v4wD = 0x2d6b1a // dark green
+	v4wM = 0x3d8b2a // mid green
+	v4wT = 0x6b3a1a // trunk
+	v4wR = 0x8b5a2b // root
+)
+
+// stone color constants
+const (
+	v4stL = 0xaaaaaa // light gray
+	v4stG = 0x7a7a7a // mid gray
+	v4stD = 0x4a4a4a // dark gray
+	v4stH = 0xcccccc // highlight
+)
+
+// iron color constants
+const (
+	v4irI = 0x4a4a5a // dark iron
+	v4irL = 0x7a7a8a // light iron
+	v4irS = 0x2a2a3a // shadow
+)
+
+// knowledge color constants
+const (
+	v4kC = 0x8b4513 // brown cover
+	v4kP = 0xf0f0e0 // page
+	v4kL = 0xd0d0c0 // page shadow
+	v4kG = 0xd4a017 // gold spine
+)
+
+// military color constants
+const (
+	v4miS = 0xc0c0c0 // silver sword
+	v4miB = 0x8b1a1a // red shield
+	v4miE = 0xd4a017 // gold emblem
+	v4miW = 0xf0f0f0 // sword edge
+)
+
+// faith color constants
+const (
+	v4faW = 0xd0c8b0 // stone wall
+	v4faD = 0x908070 // dark stone
+	v4faG = 0xd4a017 // gold cross
+	v4faR = 0x8b1a1a // red door
+)
+
+// culture color constants
+const (
+	v4cuH = 0xf5c080 // happy mask
+	v4cuS = 0x8080c0 // sad mask
+	v4cuG = 0xd4a017 // gold trim
+	v4cuK = 0x303030 // dark outline
+)
+
+// trade color constants
+const (
+	v4trG = 0xd4a017 // gold
+	v4trS = 0xc0c0c0 // silver pan
+	v4trC = 0xe8c840 // coin
+	v4trB = 0x6b3a1a // brown post
+)
+
+// energy color constants
+const (
+	v4enY = 0xffe040 // yellow bolt
+	v4enO = 0xff8c00 // orange glow
+	v4enW = 0xffffff // white core
+	v4enG = 0x888888 // gray tower
+)
+
+// metallurgy color constants
+const (
+	v4meG = 0x888888 // gray
+	v4meL = 0xbbbbbb // light
+	v4meD = 0x555555 // dark
+	v4meH = 0xdddddd // highlight
+)
+
+// advanced color constants
+const (
+	v4adC = 0x40c0ff // cyan
+	v4adB = 0x0080c0 // blue
+	v4adW = 0xffffff // white
+	v4adD = 0x004080 // dark blue
+	v4adP = 0x80e0ff // pale
+)
+
+// city_center color constants
+const (
+	v4ccW = 0xd0c8b0 // wall
+	v4ccD = 0x908070 // dark stone
+	v4ccG = 0xd4a017 // gold flag
+	v4ccR = 0x8b1a1a // red flag
+	v4ccB = 0x303030 // battlements
+)
+
+// wonder color constants
+const (
+	v4wnS = 0xc8a840 // sandstone
+	v4wnL = 0xe8c860 // light face
+	v4wnD = 0xa08030 // shadow
+	v4wnG = 0xd4a017 // gold cap
+)
+
+// storage color constants
+const (
+	v4stW  = 0x8b5a2b // wood brown
+	v4stLw = 0xc87941 // light wood
+	v4stR  = 0x8b1a1a // red roof
+	v4stDw = 0x5a3010 // dark wood
+	v4stO  = 0xd4a017 // gold hinge
+)
+
+func v4SpriteFood() [16][16]uint32 {
+	return [16][16]uint32{
+		{0, 0, 0, v4fG, 0, 0, v4fG, 0, 0, v4fG, 0, 0, 0, 0, 0, 0},
+		{0, 0, v4fG, v4fG, v4fG, 0, v4fG, v4fG, 0, v4fG, v4fG, 0, 0, 0, 0, 0},
+		{0, 0, v4fG, v4fG, v4fG, v4fG, v4fG, v4fG, v4fG, v4fG, v4fG, 0, 0, 0, 0, 0},
+		{0, 0, 0, v4fG, v4fG, v4fG, v4fG, v4fG, v4fG, v4fG, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4fG, v4fG, v4fG, v4fG, v4fG, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4fS, 0, v4fS, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4fS, v4fS, v4fS, v4fS, v4fS, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4fS, v4fS, v4fS, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, v4fS, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, v4fS, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, v4fS, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4fS, v4fS, v4fS, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4fS, v4fS, v4fS, v4fS, v4fS, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, v4fB, v4fB, v4fB, v4fB, v4fB, v4fB, v4fB, 0, 0, 0, 0, 0, 0},
+		{0, 0, v4fB, v4fB, v4fB, v4fB, v4fB, v4fB, v4fB, v4fB, v4fB, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	}
+}
+
+func v4SpriteWood() [16][16]uint32 {
+	return [16][16]uint32{
+		{0, 0, 0, 0, 0, 0, 0, v4wM, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, v4wM, v4wM, v4wM, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4wM, v4wM, v4wM, v4wM, v4wM, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4wD, v4wM, v4wM, v4wM, v4wM, v4wM, v4wD, 0, 0, 0, 0, 0},
+		{0, 0, 0, v4wD, v4wD, v4wM, v4wM, v4wM, v4wM, v4wM, v4wD, v4wD, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4wM, v4wM, v4wM, v4wM, v4wM, v4wM, v4wM, v4wM, v4wM, 0, 0, 0},
+		{0, 0, v4wM, v4wM, v4wM, v4wM, v4wM, v4wM, v4wM, v4wM, v4wM, v4wM, v4wM, v4wM, 0, 0},
+		{0, v4wM, v4wM, v4wM, v4wM, v4wD, v4wM, v4wM, v4wM, v4wM, v4wD, v4wM, v4wM, v4wM, v4wM, 0},
+		{v4wM, v4wM, v4wM, v4wM, v4wD, v4wD, v4wM, v4wM, v4wM, v4wM, v4wD, v4wD, v4wM, v4wM, v4wM, v4wM},
+		{0, 0, 0, 0, 0, 0, 0, v4wT, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, v4wT, v4wT, v4wT, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, v4wT, v4wT, v4wT, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4wR, v4wT, v4wT, v4wT, v4wR, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4wR, v4wR, v4wT, v4wT, v4wT, v4wR, v4wR, 0, 0, 0, 0, 0},
+		{0, 0, 0, v4wR, v4wR, v4wR, v4wR, v4wR, v4wR, v4wR, v4wR, v4wR, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	}
+}
+
+func v4SpriteStone() [16][16]uint32 {
+	return [16][16]uint32{
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4stG, v4stG, v4stG, v4stG, v4stG, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4stG, v4stG, v4stH, v4stH, v4stL, v4stG, v4stG, 0, 0, 0, 0, 0},
+		{0, 0, 0, v4stG, v4stG, v4stH, v4stH, v4stL, v4stL, v4stL, v4stG, v4stG, 0, 0, 0, 0},
+		{0, 0, v4stG, v4stG, v4stH, v4stH, v4stL, v4stL, v4stL, v4stL, v4stL, v4stG, v4stG, 0, 0, 0},
+		{0, 0, v4stG, v4stG, v4stH, v4stL, v4stL, v4stG, v4stG, v4stL, v4stL, v4stG, v4stG, 0, 0, 0},
+		{0, 0, v4stG, v4stG, v4stL, v4stL, v4stG, v4stD, v4stD, v4stG, v4stL, v4stG, v4stG, 0, 0, 0},
+		{0, v4stG, v4stG, v4stL, v4stL, v4stG, v4stD, v4stD, v4stD, v4stD, v4stG, v4stL, v4stG, v4stG, 0, 0},
+		{0, v4stG, v4stG, v4stL, v4stG, v4stD, v4stD, v4stD, v4stD, v4stD, v4stD, v4stG, v4stL, v4stG, v4stG, 0},
+		{v4stG, v4stG, v4stL, v4stG, v4stD, v4stD, v4stD, v4stG, v4stG, v4stD, v4stD, v4stD, v4stG, v4stL, v4stG, v4stG},
+		{v4stG, v4stL, v4stG, v4stD, v4stD, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stD, v4stD, v4stG, v4stL, v4stG},
+		{v4stG, v4stG, v4stD, v4stD, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stD, v4stD, v4stG, v4stG},
+		{v4stG, v4stD, v4stD, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stD, v4stD, v4stG},
+		{v4stD, v4stD, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stD, v4stD},
+		{v4stD, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stG, v4stD},
+		{v4stD, v4stD, v4stD, v4stD, v4stD, v4stD, v4stD, v4stD, v4stD, v4stD, v4stD, v4stD, v4stD, v4stD, v4stD, v4stD},
+	}
+}
+
+func v4SpriteIron() [16][16]uint32 {
+	return [16][16]uint32{
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, 0, 0, 0, 0, 0},
+		{0, 0, 0, v4irI, v4irI, v4irL, v4irL, v4irL, v4irL, v4irI, v4irI, v4irI, 0, 0, 0, 0},
+		{0, 0, 0, v4irI, v4irI, v4irL, v4irL, v4irL, v4irL, v4irI, v4irI, v4irI, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4irI, v4irI, v4irI, v4irI, v4irI, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, 0, 0, 0, 0, 0},
+		{0, 0, 0, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, 0, 0, 0, 0},
+		{0, 0, v4irI, v4irI, v4irI, v4irL, v4irL, v4irL, v4irL, v4irI, v4irI, v4irI, v4irI, 0, 0, 0},
+		{0, 0, v4irI, v4irI, v4irL, v4irL, v4irL, v4irL, v4irL, v4irL, v4irI, v4irI, v4irI, 0, 0, 0},
+		{0, 0, v4irI, v4irI, v4irL, v4irL, v4irL, v4irL, v4irL, v4irL, v4irI, v4irI, v4irI, 0, 0, 0},
+		{0, 0, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, 0, 0, 0},
+		{0, 0, 0, v4irS, v4irI, v4irI, 0, 0, 0, v4irI, v4irI, v4irS, 0, 0, 0, 0},
+		{0, 0, v4irS, v4irS, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, v4irS, v4irS, 0, 0, 0},
+		{0, v4irS, v4irS, v4irS, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, v4irI, v4irS, v4irS, v4irS, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	}
+}
+
+func v4SpriteKnowledge() [16][16]uint32 {
+	return [16][16]uint32{
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, v4kC, v4kC, v4kC, v4kC, v4kC, v4kG, v4kC, v4kC, v4kC, v4kC, v4kC, v4kC, 0, 0},
+		{0, v4kC, v4kC, v4kP, v4kP, v4kP, v4kC, v4kG, v4kC, v4kP, v4kP, v4kP, v4kP, v4kC, v4kC, 0},
+		{0, v4kC, v4kP, v4kP, v4kP, v4kP, v4kC, v4kG, v4kC, v4kP, v4kP, v4kP, v4kP, v4kP, v4kC, 0},
+		{0, v4kC, v4kP, v4kP, v4kP, v4kP, v4kC, v4kG, v4kC, v4kP, v4kP, v4kP, v4kP, v4kP, v4kC, 0},
+		{0, v4kC, v4kP, v4kP, v4kL, v4kP, v4kC, v4kG, v4kC, v4kP, v4kP, v4kL, v4kP, v4kP, v4kC, 0},
+		{0, v4kC, v4kP, v4kP, v4kL, v4kP, v4kC, v4kG, v4kC, v4kP, v4kP, v4kL, v4kP, v4kP, v4kC, 0},
+		{0, v4kC, v4kP, v4kP, v4kL, v4kP, v4kC, v4kG, v4kC, v4kP, v4kP, v4kL, v4kP, v4kP, v4kC, 0},
+		{0, v4kC, v4kP, v4kP, v4kL, v4kP, v4kC, v4kG, v4kC, v4kP, v4kP, v4kL, v4kP, v4kP, v4kC, 0},
+		{0, v4kC, v4kP, v4kP, v4kP, v4kP, v4kC, v4kG, v4kC, v4kP, v4kP, v4kP, v4kP, v4kP, v4kC, 0},
+		{0, v4kC, v4kP, v4kP, v4kP, v4kP, v4kC, v4kG, v4kC, v4kP, v4kP, v4kP, v4kP, v4kP, v4kC, 0},
+		{0, v4kC, v4kC, v4kC, v4kC, v4kC, v4kC, v4kG, v4kC, v4kC, v4kC, v4kC, v4kC, v4kC, v4kC, 0},
+		{0, 0, v4kC, v4kC, v4kC, v4kC, v4kC, v4kG, v4kC, v4kC, v4kC, v4kC, v4kC, 0, 0, 0},
+		{0, 0, 0, v4kC, v4kC, v4kC, v4kC, v4kG, v4kC, v4kC, v4kC, v4kC, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, v4kG, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	}
+}
+
+func v4SpriteMilitary() [16][16]uint32 {
+	return [16][16]uint32{
+		{0, 0, 0, 0, 0, 0, 0, v4miW, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, v4miW, v4miS, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4miW, v4miS, v4miS, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, v4miB, v4miB, v4miB, v4miW, v4miS, v4miS, v4miB, v4miB, v4miB, 0, 0, 0, 0, 0},
+		{0, v4miB, v4miB, v4miB, v4miB, v4miB, v4miS, v4miS, v4miB, v4miB, v4miB, v4miB, 0, 0, 0, 0},
+		{0, v4miB, v4miB, v4miB, v4miB, v4miB, v4miS, v4miS, v4miB, v4miB, v4miB, v4miB, 0, 0, 0, 0},
+		{0, v4miB, v4miB, v4miB, v4miB, v4miE, v4miE, v4miE, v4miB, v4miB, v4miB, v4miB, 0, 0, 0, 0},
+		{0, v4miB, v4miB, v4miB, v4miB, v4miE, v4miE, v4miE, v4miB, v4miB, v4miB, v4miB, 0, 0, 0, 0},
+		{0, v4miB, v4miB, v4miB, v4miB, v4miE, v4miE, v4miE, v4miB, v4miB, v4miB, v4miB, 0, 0, 0, 0},
+		{0, v4miB, v4miB, v4miB, v4miB, v4miB, v4miB, v4miB, v4miB, v4miB, v4miB, v4miB, 0, 0, 0, 0},
+		{0, 0, v4miB, v4miB, v4miB, v4miB, v4miB, v4miB, v4miB, v4miB, v4miB, 0, 0, 0, 0, 0},
+		{0, 0, 0, v4miB, v4miB, v4miB, v4miB, v4miB, v4miB, v4miB, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4miB, v4miB, v4miB, v4miB, v4miB, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4miB, v4miB, v4miB, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, v4miB, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	}
+}
+
+func v4SpriteFaith() [16][16]uint32 {
+	return [16][16]uint32{
+		{0, 0, 0, 0, 0, 0, 0, v4faG, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, v4faG, v4faG, v4faG, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4faG, v4faG, v4faG, v4faG, v4faG, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4faW, v4faG, v4faG, v4faG, v4faW, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4faW, v4faW, v4faG, v4faW, v4faG, v4faW, v4faW, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, 0, 0, 0, 0, 0},
+		{0, 0, 0, v4faW, v4faW, v4faD, v4faW, v4faW, v4faW, v4faD, v4faW, v4faW, 0, 0, 0, 0},
+		{0, 0, 0, v4faW, v4faW, v4faD, v4faW, v4faW, v4faW, v4faD, v4faW, v4faW, 0, 0, 0, 0},
+		{0, 0, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, 0, 0, 0},
+		{0, 0, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, 0, 0, 0},
+		{0, 0, v4faW, v4faW, v4faD, v4faW, v4faW, v4faW, v4faW, v4faW, v4faD, v4faW, v4faW, 0, 0, 0},
+		{0, 0, v4faW, v4faW, v4faD, v4faW, v4faW, v4faR, v4faR, v4faW, v4faD, v4faW, v4faW, 0, 0, 0},
+		{0, 0, v4faW, v4faW, v4faW, v4faW, v4faW, v4faR, v4faR, v4faW, v4faW, v4faW, v4faW, 0, 0, 0},
+		{0, 0, v4faW, v4faW, v4faW, v4faW, v4faW, v4faR, v4faR, v4faW, v4faW, v4faW, v4faW, 0, 0, 0},
+		{0, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, 0, 0},
+		{v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW, v4faW},
+	}
+}
+
+func v4SpriteCulture() [16][16]uint32 {
+	return [16][16]uint32{
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, v4cuG, v4cuG, v4cuG, v4cuG, 0, 0, 0, 0, v4cuG, v4cuG, v4cuG, v4cuG, v4cuG, 0, 0},
+		{0, v4cuG, v4cuH, v4cuH, v4cuG, 0, 0, 0, v4cuG, v4cuG, v4cuS, v4cuS, v4cuS, v4cuG, v4cuG, 0},
+		{v4cuG, v4cuH, v4cuH, v4cuH, v4cuH, v4cuG, 0, v4cuG, v4cuS, v4cuS, v4cuS, v4cuS, v4cuS, v4cuS, v4cuG, 0},
+		{v4cuG, v4cuH, v4cuK, 0, v4cuK, v4cuH, v4cuG, v4cuG, v4cuS, v4cuK, 0, 0, v4cuK, v4cuS, v4cuG, 0},
+		{v4cuG, v4cuH, v4cuH, v4cuH, v4cuH, v4cuH, v4cuG, v4cuG, v4cuS, v4cuS, v4cuS, v4cuS, v4cuS, v4cuS, v4cuG, 0},
+		{v4cuG, v4cuH, v4cuK, v4cuK, v4cuK, v4cuH, v4cuG, v4cuG, v4cuS, v4cuK, v4cuK, v4cuK, v4cuS, v4cuS, v4cuG, 0},
+		{v4cuG, v4cuH, v4cuH, v4cuK, v4cuH, v4cuH, v4cuG, v4cuG, v4cuS, v4cuS, v4cuK, v4cuS, v4cuS, v4cuS, v4cuG, 0},
+		{0, v4cuG, v4cuH, v4cuH, v4cuH, v4cuG, 0, v4cuG, v4cuS, v4cuS, v4cuS, v4cuS, v4cuS, v4cuG, v4cuG, 0},
+		{0, 0, v4cuG, v4cuH, v4cuG, 0, 0, 0, v4cuG, v4cuS, v4cuS, v4cuS, v4cuG, v4cuG, 0, 0},
+		{0, 0, v4cuG, v4cuG, v4cuG, 0, 0, 0, 0, v4cuG, v4cuG, v4cuG, v4cuG, 0, 0, 0},
+		{0, 0, 0, v4cuG, 0, 0, 0, 0, 0, 0, v4cuG, 0, 0, 0, 0, 0},
+		{0, 0, v4cuG, v4cuG, v4cuG, v4cuG, v4cuG, v4cuG, v4cuG, v4cuG, v4cuG, v4cuG, 0, 0, 0, 0},
+		{0, 0, 0, v4cuG, v4cuG, v4cuG, v4cuG, v4cuG, v4cuG, v4cuG, v4cuG, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	}
+}
+
+func v4SpriteTrade() [16][16]uint32 {
+	return [16][16]uint32{
+		{0, 0, 0, 0, 0, 0, 0, v4trG, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, v4trG, v4trG, v4trG, v4trG, v4trG, v4trG, v4trG, v4trG, v4trG, v4trG, v4trG, v4trG, v4trG, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, v4trG, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, v4trG, 0, 0, 0, v4trG, v4trG, v4trG, 0, 0, 0, v4trG, 0, 0, 0},
+		{0, v4trG, 0, v4trG, 0, v4trG, 0, v4trG, 0, v4trG, 0, v4trG, 0, v4trG, 0, 0},
+		{v4trG, 0, 0, 0, v4trG, 0, 0, v4trG, 0, 0, v4trG, 0, 0, 0, v4trG, 0},
+		{v4trS, v4trS, v4trS, v4trS, v4trS, v4trS, 0, v4trG, 0, v4trS, v4trS, v4trS, v4trS, v4trS, v4trS, 0},
+		{v4trS, v4trC, v4trC, v4trC, v4trC, v4trS, 0, v4trB, 0, v4trS, v4trC, v4trC, v4trC, v4trC, v4trS, 0},
+		{v4trS, v4trC, v4trC, v4trC, v4trC, v4trS, 0, v4trB, 0, v4trS, v4trC, v4trC, v4trC, v4trC, v4trS, 0},
+		{v4trS, v4trS, v4trS, v4trS, v4trS, v4trS, 0, v4trB, 0, v4trS, v4trS, v4trS, v4trS, v4trS, v4trS, 0},
+		{0, 0, 0, 0, 0, 0, 0, v4trB, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, v4trB, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, v4trB, v4trB, v4trB, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4trB, v4trB, v4trB, v4trB, v4trB, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4trB, v4trB, v4trB, v4trB, v4trB, v4trB, v4trB, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	}
+}
+
+func v4SpriteEnergy() [16][16]uint32 {
+	return [16][16]uint32{
+		{0, 0, 0, 0, 0, 0, v4enW, v4enW, v4enW, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4enW, v4enY, v4enY, v4enO, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4enW, v4enY, v4enY, v4enY, v4enO, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, v4enW, v4enY, v4enY, v4enY, v4enO, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, v4enW, v4enY, v4enY, v4enY, v4enY, v4enY, v4enY, v4enO, 0, 0, 0, 0, 0, 0},
+		{0, v4enW, v4enY, v4enY, v4enY, v4enY, v4enY, v4enY, v4enY, v4enY, v4enO, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4enW, v4enY, v4enY, v4enY, v4enO, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4enW, v4enY, v4enO, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, v4enW, v4enO, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4enW, v4enY, v4enO, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4enW, v4enY, v4enY, v4enY, v4enO, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, v4enG, v4enG, v4enG, v4enG, v4enG, v4enG, v4enG, v4enG, v4enG, v4enG, 0, 0, 0, 0},
+		{0, 0, 0, v4enG, v4enG, 0, 0, 0, 0, v4enG, v4enG, 0, 0, 0, 0, 0},
+		{0, 0, 0, v4enG, v4enG, 0, 0, 0, 0, v4enG, v4enG, 0, 0, 0, 0, 0},
+		{0, 0, v4enG, v4enG, v4enG, v4enG, 0, 0, v4enG, v4enG, v4enG, v4enG, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	}
+}
+
+func v4SpriteMetallurgy() [16][16]uint32 {
+	return [16][16]uint32{
+		{0, 0, 0, 0, 0, v4meD, v4meD, v4meD, v4meD, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4meD, v4meG, v4meG, v4meG, v4meG, v4meD, 0, 0, 0, 0, 0, 0},
+		{0, 0, v4meD, v4meD, v4meG, v4meL, v4meH, v4meL, v4meG, v4meG, v4meD, v4meD, 0, 0, 0, 0},
+		{0, v4meD, v4meG, v4meG, v4meG, v4meH, v4meH, v4meL, v4meG, v4meG, v4meG, v4meG, v4meD, 0, 0, 0},
+		{v4meD, v4meG, v4meG, v4meL, v4meH, v4meH, v4meH, v4meH, v4meH, v4meL, v4meG, v4meG, v4meG, v4meD, 0, 0},
+		{v4meD, v4meG, v4meL, v4meH, v4meH, v4meH, v4meH, v4meH, v4meH, v4meH, v4meL, v4meG, v4meG, v4meD, 0, 0},
+		{v4meD, v4meG, v4meG, v4meH, v4meH, v4meG, v4meG, v4meG, v4meG, v4meH, v4meH, v4meG, v4meG, v4meD, 0, 0},
+		{v4meD, v4meG, v4meL, v4meH, v4meH, v4meG, v4meD, v4meD, v4meG, v4meH, v4meH, v4meL, v4meG, v4meD, 0, 0},
+		{v4meD, v4meG, v4meL, v4meH, v4meH, v4meG, v4meD, v4meD, v4meG, v4meH, v4meH, v4meL, v4meG, v4meD, 0, 0},
+		{v4meD, v4meG, v4meG, v4meH, v4meH, v4meG, v4meG, v4meG, v4meG, v4meH, v4meH, v4meG, v4meG, v4meD, 0, 0},
+		{v4meD, v4meG, v4meL, v4meH, v4meH, v4meH, v4meH, v4meH, v4meH, v4meH, v4meL, v4meG, v4meG, v4meD, 0, 0},
+		{v4meD, v4meG, v4meG, v4meL, v4meH, v4meH, v4meH, v4meH, v4meH, v4meL, v4meG, v4meG, v4meG, v4meD, 0, 0},
+		{0, v4meD, v4meG, v4meG, v4meG, v4meH, v4meH, v4meL, v4meG, v4meG, v4meG, v4meG, v4meD, 0, 0, 0},
+		{0, 0, v4meD, v4meD, v4meG, v4meL, v4meH, v4meL, v4meG, v4meG, v4meD, v4meD, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4meD, v4meG, v4meG, v4meG, v4meG, v4meD, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4meD, v4meD, v4meD, v4meD, 0, 0, 0, 0, 0, 0, 0},
+	}
+}
+
+func v4SpriteAdvanced() [16][16]uint32 {
+	return [16][16]uint32{
+		{0, 0, 0, 0, 0, 0, 0, v4adW, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, v4adW, v4adC, v4adW, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4adW, v4adC, v4adC, v4adC, v4adW, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4adW, v4adP, v4adC, v4adW, v4adC, v4adC, v4adW, 0, 0, 0, 0, 0},
+		{0, 0, 0, v4adW, v4adP, v4adP, v4adC, v4adW, v4adC, v4adC, v4adC, v4adW, 0, 0, 0, 0},
+		{0, 0, v4adW, v4adP, v4adP, v4adB, v4adC, v4adW, v4adC, v4adB, v4adC, v4adC, v4adW, 0, 0, 0},
+		{0, v4adW, v4adP, v4adP, v4adB, v4adB, v4adC, v4adW, v4adC, v4adB, v4adB, v4adC, v4adW, 0, 0, 0},
+		{v4adW, v4adP, v4adP, v4adB, v4adB, v4adD, v4adC, v4adW, v4adC, v4adD, v4adB, v4adB, v4adC, v4adW, 0, 0},
+		{0, v4adW, v4adP, v4adP, v4adB, v4adB, v4adC, v4adW, v4adC, v4adB, v4adB, v4adC, v4adW, 0, 0, 0},
+		{0, 0, v4adW, v4adP, v4adP, v4adB, v4adC, v4adW, v4adC, v4adB, v4adC, v4adW, 0, 0, 0, 0},
+		{0, 0, 0, v4adW, v4adP, v4adP, v4adC, v4adW, v4adC, v4adP, v4adW, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4adW, v4adP, v4adC, v4adW, v4adC, v4adW, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4adW, v4adC, v4adW, v4adC, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, v4adW, v4adC, v4adW, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, v4adW, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	}
+}
+
+func v4SpriteCityCenter() [16][16]uint32 {
+	return [16][16]uint32{
+		{0, 0, 0, v4ccR, v4ccR, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, v4ccG, v4ccR, v4ccR, v4ccG, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, v4ccG, v4ccG, v4ccG, v4ccG, v4ccG, v4ccG, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{v4ccB, v4ccW, v4ccB, v4ccW, v4ccB, v4ccW, v4ccB, v4ccW, v4ccB, v4ccW, v4ccB, v4ccW, v4ccB, v4ccW, v4ccB, v4ccW},
+		{v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW},
+		{v4ccW, v4ccW, v4ccD, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccD, v4ccW, v4ccW, v4ccW, v4ccW},
+		{v4ccW, v4ccW, v4ccD, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccD, v4ccW, v4ccW, v4ccW, v4ccW},
+		{v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW},
+		{v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW},
+		{v4ccW, v4ccW, v4ccD, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccD, v4ccW, v4ccW, v4ccW, v4ccW},
+		{v4ccW, v4ccW, v4ccD, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccD, v4ccW, v4ccW, v4ccW, v4ccW},
+		{v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW},
+		{v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW},
+		{v4ccW, v4ccW, v4ccD, v4ccW, v4ccR, v4ccR, v4ccW, v4ccW, v4ccW, v4ccR, v4ccR, v4ccD, v4ccW, v4ccW, v4ccW, v4ccW},
+		{v4ccW, v4ccW, v4ccD, v4ccW, v4ccR, v4ccR, v4ccW, v4ccW, v4ccW, v4ccR, v4ccR, v4ccD, v4ccW, v4ccW, v4ccW, v4ccW},
+		{v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW, v4ccW},
+	}
+}
+
+func v4SpriteWonder() [16][16]uint32 {
+	return [16][16]uint32{
+		{0, 0, 0, 0, 0, 0, 0, v4wnG, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, v4wnG, v4wnG, v4wnG, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, v4wnL, v4wnS, v4wnD, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, v4wnL, v4wnL, v4wnS, v4wnD, v4wnD, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4wnL, v4wnL, v4wnL, v4wnS, v4wnD, v4wnD, v4wnD, 0, 0, 0, 0, 0},
+		{0, 0, 0, v4wnL, v4wnL, v4wnL, v4wnL, v4wnS, v4wnD, v4wnD, v4wnD, v4wnD, 0, 0, 0, 0},
+		{0, 0, v4wnL, v4wnL, v4wnL, v4wnL, v4wnL, v4wnS, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, 0, 0, 0},
+		{0, v4wnL, v4wnL, v4wnL, v4wnL, v4wnL, v4wnL, v4wnS, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, 0, 0},
+		{v4wnL, v4wnL, v4wnL, v4wnL, v4wnL, v4wnL, v4wnL, v4wnS, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, 0},
+		{v4wnL, v4wnL, v4wnL, v4wnL, v4wnL, v4wnL, v4wnL, v4wnS, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, 0},
+		{v4wnL, v4wnL, v4wnL, v4wnL, v4wnL, v4wnL, v4wnL, v4wnS, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, 0},
+		{v4wnS, v4wnS, v4wnS, v4wnS, v4wnS, v4wnS, v4wnS, v4wnS, v4wnS, v4wnS, v4wnS, v4wnS, v4wnS, v4wnS, v4wnS, 0},
+		{v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, v4wnD, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0},
+	}
+}
+
+func v4SpriteStorage() [16][16]uint32 {
+	return [16][16]uint32{
+		{0, 0, 0, 0, 0, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, 0, 0, 0, 0, 0},
+		{0, 0, 0, 0, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, 0, 0, 0, 0},
+		{0, 0, 0, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, 0, 0, 0},
+		{0, 0, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, 0, 0},
+		{0, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, v4stR, 0},
+		{0, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, 0},
+		{0, v4stW, v4stLw, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stLw, v4stW, v4stW, 0},
+		{0, v4stW, v4stLw, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stLw, v4stW, v4stW, 0},
+		{0, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, 0},
+		{0, v4stW, v4stW, v4stDw, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stDw, v4stW, v4stW, v4stW, 0},
+		{0, v4stW, v4stW, v4stDw, v4stW, v4stO, v4stW, v4stW, v4stO, v4stW, v4stDw, v4stW, v4stW, v4stW, 0, 0},
+		{0, v4stW, v4stW, v4stDw, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stDw, v4stW, v4stW, v4stW, 0, 0},
+		{0, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, 0, 0},
+		{0, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, 0, 0},
+		{0, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, 0, 0},
+		{0, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, v4stW, 0, 0},
+	}
+}
+
+// Domain → sprite mapping
+var v4DomainSprites = map[string][16][16]uint32{
+	"food":       v4SpriteFood(),
+	"wood":       v4SpriteWood(),
+	"stone":      v4SpriteStone(),
+	"iron":       v4SpriteIron(),
+	"knowledge":  v4SpriteKnowledge(),
+	"military":   v4SpriteMilitary(),
+	"faith":      v4SpriteFaith(),
+	"culture":    v4SpriteCulture(),
+	"trade":      v4SpriteTrade(),
+	"energy":     v4SpriteEnergy(),
+	"metallurgy": v4SpriteMetallurgy(),
+	"advanced":   v4SpriteAdvanced(),
+}
+
+var v4SpriteWonderPixels  = v4SpriteWonder()
+var v4SpriteStoragePixels = v4SpriteStorage()
+var v4SpriteCityPixels    = v4SpriteCityCenter()
+
+// ── Sprite renderer ────────────────────────────────────────────────────────
+
+func v4DrawSprite(img *image.RGBA, pixels [16][16]uint32, px, py int) {
+	for row := 0; row < 16; row++ {
+		for col := 0; col < 16; col++ {
+			v := pixels[row][col]
+			if v == 0 {
+				continue
+			}
+			c := color.RGBA{uint8(v >> 16), uint8(v >> 8), uint8(v), 255}
+			img.SetRGBA(px+col, py+row, c)
+		}
+	}
+}
+
+// ── Clearing halo ──────────────────────────────────────────────────────────
+
+func v4DrawClearing(img *image.RGBA, cx, cy int, clr color.RGBA) {
+	r := 14
+	for dy := -r; dy <= r; dy++ {
+		for dx := -r; dx <= r; dx++ {
+			dist := math.Sqrt(float64(dx*dx + dy*dy))
+			if dist > float64(r) {
+				continue
+			}
+			alpha := float64(1.0) - dist/float64(r)
+			alpha = alpha * alpha * 0.6
+			x, y := cx+dx, cy+dy
+			if x < 0 || y < 0 || x >= img.Bounds().Max.X || y >= img.Bounds().Max.Y {
+				continue
+			}
+			base := img.RGBAAt(x, y)
+			blended := color.RGBA{
+				R: uint8(float64(base.R)*(1-alpha) + float64(clr.R)*alpha),
+				G: uint8(float64(base.G)*(1-alpha) + float64(clr.G)*alpha),
+				B: uint8(float64(base.B)*(1-alpha) + float64(clr.B)*alpha),
+				A: 255,
+			}
+			img.SetRGBA(x, y, blended)
+		}
+	}
+}
+
+// ── Road renderer ──────────────────────────────────────────────────────────
+
+func v4DrawRoad(img *image.RGBA, x0, y0, x1, y1 int, roadClr color.RGBA) {
+	dx := x1 - x0
+	if dx < 0 {
+		dx = -dx
+	}
+	dy := y1 - y0
+	if dy < 0 {
+		dy = -dy
+	}
+	sx := 1
+	if x0 > x1 {
+		sx = -1
+	}
+	sy := 1
+	if y0 > y1 {
+		sy = -1
+	}
+	err := dx - dy
+	bounds := img.Bounds()
+	for {
+		if x0 >= bounds.Min.X && x0 < bounds.Max.X && y0 >= bounds.Min.Y && y0 < bounds.Max.Y {
+			img.SetRGBA(x0, y0, roadClr)
+		}
+		if x0 == x1 && y0 == y1 {
+			break
+		}
+		e2 := 2 * err
+		if e2 > -dy {
+			err -= dy
+			x0 += sx
+		}
+		if e2 < dx {
+			err += dx
+			y0 += sy
+		}
+	}
+}
+
+// ── Building list ──────────────────────────────────────────────────────────
+
+type v4Building struct {
+	key       string
+	domain    string
+	isWonder  bool
+	isStorage bool
+	count     int
+}
+
+func v4GetBuildings(state game.GameState) []v4Building {
+	var result []v4Building
+	for key, bs := range state.Buildings {
+		if bs.Count == 0 {
+			continue
+		}
+		isWonder := false
+		isStorage := false
+		if len(key) >= 6 && key[len(key)-6:] == "wonder" {
+			isWonder = true
+		}
+		for _, kw := range []string{"storage", "warehouse", "granary", "silo", "vault", "barn", "stockpile", "depot", "repository"} {
+			if strings.Contains(key, kw) {
+				isStorage = true
+			}
+		}
+		result = append(result, v4Building{
+			key:       key,
+			domain:    bs.WorkerDomain,
+			isWonder:  isWonder,
+			isStorage: isStorage,
+			count:     bs.Count,
+		})
+	}
+	sort.Slice(result, func(i, j int) bool {
+		if result[i].isWonder != result[j].isWonder {
+			return result[i].isWonder
+		}
+		if result[i].domain != result[j].domain {
+			return result[i].domain < result[j].domain
+		}
+		return result[i].key < result[j].key
+	})
+	if len(result) > 64 {
+		result = result[:64]
+	}
+	return result
+}
+
+// ── Placement grid ─────────────────────────────────────────────────────────
+
+func v4PlacementSlot(idx int) (dx, dy int) {
+	if idx == 0 {
+		return 0, 0
+	}
+	ring := 1
+	slotBase := 0
+	slotsInRing := 8
+	for idx > slotBase+slotsInRing {
+		slotBase += slotsInRing
+		ring++
+		slotsInRing = ring * 8
+	}
+	posInRing := idx - slotBase - 1
+	radius := float64(ring) * 28.0
+	angle := float64(posInRing) / float64(slotsInRing) * 2 * math.Pi
+	return int(math.Round(radius * math.Cos(angle))),
+		int(math.Round(radius * math.Sin(angle)))
+}
+
+// ── Noise (renamed from v2 to avoid conflicts) ─────────────────────────────
+
+func v4Hash(x, y uint32) uint32 {
+	h := x*2654435761 ^ y*2246822519
+	h ^= h >> 16
+	h *= 0x45d9f3b
+	h ^= h >> 16
+	return h
+}
+
+func v4Noise(fx, fy float64, seed uint32) float64 {
+	x0 := int(math.Floor(fx))
+	y0 := int(math.Floor(fy))
+	x1 := x0 + 1
+	y1 := y0 + 1
+
+	tx := fx - math.Floor(fx)
+	ty := fy - math.Floor(fy)
+	tx = tx * tx * (3 - 2*tx)
+	ty = ty * ty * (3 - 2*ty)
+
+	v00 := float64(v4Hash(uint32(x0)+seed, uint32(y0)+seed)) / float64(^uint32(0))
+	v10 := float64(v4Hash(uint32(x1)+seed, uint32(y0)+seed)) / float64(^uint32(0))
+	v01 := float64(v4Hash(uint32(x0)+seed, uint32(y1)+seed)) / float64(^uint32(0))
+	v11 := float64(v4Hash(uint32(x1)+seed, uint32(y1)+seed)) / float64(^uint32(0))
+
+	return v00*(1-tx)*(1-ty) + v10*tx*(1-ty) + v01*(1-tx)*ty + v11*tx*ty
+}
+
+func v4FBM(x, y float64, seed uint32) float64 {
+	n := v4Noise(x/40.0, y/40.0, seed) * 0.5
+	n += v4Noise(x/20.0, y/20.0, seed+100) * 0.3
+	n += v4Noise(x/10.0, y/10.0, seed+200) * 0.2
+	return n
+}
+
+// ── Grid lines ─────────────────────────────────────────────────────────────
+
+func v4Min8(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+func v4DrawGridLines(img *image.RGBA, pal v4AgePalette) {
+	bounds := img.Bounds()
+	gridClr := color.RGBA{
+		R: uint8(v4Min8(int(pal.bgMid.R)+20, 255)),
+		G: uint8(v4Min8(int(pal.bgMid.G)+20, 255)),
+		B: uint8(v4Min8(int(pal.bgMid.B)+30, 255)),
+		A: 255,
+	}
+	for x := 0; x < bounds.Max.X; x += 16 {
+		for y := 0; y < bounds.Max.Y; y++ {
+			img.SetRGBA(x, y, gridClr)
+		}
+	}
+	for y := 0; y < bounds.Max.Y; y += 16 {
+		for x := 0; x < bounds.Max.X; x++ {
+			img.SetRGBA(x, y, gridClr)
+		}
+	}
+}
+
+// ── River ──────────────────────────────────────────────────────────────────
+
+func v4DrawRiver(img *image.RGBA, pal v4AgePalette, seed uint32) {
+	bounds := img.Bounds()
+	w, h := bounds.Max.X, bounds.Max.Y
+	riverClr := pal.riverColor
+	x := w / 5
+	for y := 0; y < h; y++ {
+		noise := v4Hash(seed, uint32(y/8)) % 7
+		x += int(noise) - 3
+		if x < 4 {
+			x = 4
+		}
+		if x > w/3 {
+			x = w / 3
+		}
+		for rx := x - 2; rx <= x+2; rx++ {
+			if rx >= 0 && rx < w {
+				img.SetRGBA(rx, y, riverClr)
+			}
+		}
+	}
+}
+
+// ── Color helpers ──────────────────────────────────────────────────────────
+
+func v4LerpColor(a, b color.RGBA, t float64) color.RGBA {
+	return color.RGBA{
+		R: uint8(float64(a.R)*(1-t) + float64(b.R)*t),
+		G: uint8(float64(a.G)*(1-t) + float64(b.G)*t),
+		B: uint8(float64(a.B)*(1-t) + float64(b.B)*t),
+		A: 255,
+	}
+}
+
+// ── Main image generator ───────────────────────────────────────────────────
+
+func v4GenerateImage(state game.GameState, width, height int) *image.RGBA {
+	img := image.NewRGBA(image.Rect(0, 0, width, height))
+	pal := v4GetPalette(state.Age)
+	seed := uint32(42)
+
+	// 1. FBM terrain background
+	for y := 0; y < height; y++ {
+		for x := 0; x < width; x++ {
+			n := v4FBM(float64(x), float64(y), seed)
+			var c color.RGBA
+			if n < 0.35 {
+				t := n / 0.35
+				c = v4LerpColor(pal.bgDark, pal.bgMid, t)
+			} else {
+				t := (n - 0.35) / 0.65
+				c = v4LerpColor(pal.bgMid, pal.bgLight, t)
+			}
+			img.SetRGBA(x, y, c)
+		}
+	}
+
+	// 2. Grid lines for advanced ages
+	if pal.gridLines {
+		v4DrawGridLines(img, pal)
+	}
+
+	// 3. River
+	v4DrawRiver(img, pal, seed)
+
+	// 4. Buildings
+	buildings := v4GetBuildings(state)
+	cx, cy := width/2, height/2
+
+	roadClr := v4LerpColor(pal.bgMid, pal.bgLight, 0.4)
+
+	for i, b := range buildings {
+		dx, dy := v4PlacementSlot(i + 1)
+		bx, by := cx+dx-8, cy+dy-8
+
+		v4DrawRoad(img, cx, cy, cx+dx, cy+dy, roadClr)
+		v4DrawClearing(img, cx+dx, cy+dy, pal.clearingColor)
+
+		var pixels [16][16]uint32
+		if b.isWonder {
+			pixels = v4SpriteWonderPixels
+		} else if b.isStorage {
+			pixels = v4SpriteStoragePixels
+		} else if sp, ok := v4DomainSprites[b.domain]; ok {
+			pixels = sp
+		} else {
+			pixels = v4SpriteStoragePixels
+		}
+		v4DrawSprite(img, pixels, bx, by)
+	}
+
+	// 5. City center (always at map center, drawn last so it's on top)
+	v4DrawClearing(img, cx, cy, pal.clearingColor)
+	v4DrawSprite(img, v4SpriteCityPixels, cx-8, cy-8)
+
+	return img
+}
+
+// ── Build / Refresh ────────────────────────────────────────────────────────
+
+// Build returns a tview.Primitive that renders the city map using half-block characters.
+func (m *MapV4) Build(state game.GameState) tview.Primitive {
+	m.mu.Lock()
+	m.state = state
+	m.mu.Unlock()
+
+	box := tview.NewBox().SetBorder(false)
+	box.SetDrawFunc(func(screen tcell.Screen, x, y, width, height int) (int, int, int, int) {
+		if width <= 0 || height <= 0 {
+			return x, y, width, height
+		}
+
+		m.mu.Lock()
+		st := m.state
+		m.mu.Unlock()
+
+		imgW := width
+		imgH := height * 2
+
+		bldCount := v4CountBuildings(st)
+		m.mu.Lock()
+		needRegen := m.cachedImg == nil || m.cachedW != imgW || m.cachedH != imgH ||
+			m.cachedAge != st.Age || m.cachedBldCount != bldCount
+		if needRegen {
+			m.cachedImg = v4GenerateImage(st, imgW, imgH)
+			m.cachedW = imgW
+			m.cachedH = imgH
+			m.cachedAge = st.Age
+			m.cachedBldCount = bldCount
+		}
+		img := m.cachedImg
+		m.mu.Unlock()
+
+		renderHalfBlock(screen, img, x, y, width, height)
+		return x, y, width, height
+	})
+	return box
+}
+
+// Refresh updates the stored game state. Safe to call from any goroutine.
+func (m *MapV4) Refresh(state game.GameState) {
+	m.mu.Lock()
+	m.state = state
+	m.mu.Unlock()
+}
+
+func v4CountBuildings(state game.GameState) int {
+	n := 0
+	for _, bs := range state.Buildings {
+		if bs.Count > 0 {
+			n++
+		}
+	}
+	return n
+}
