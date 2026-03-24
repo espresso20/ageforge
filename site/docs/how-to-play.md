@@ -42,7 +42,7 @@ Build → Recruit → Assign → Research → Advance → Repeat
 
 ## Navigation
 
-- overlay commands (type `research`, `army`, `trade`, etc.) — open panels
+- overlay commands (type `research`, `army`, `trade`, `map`, etc.) — open panels
 - **PgUp / PgDn** — scroll the active tab
 - **↑ / ↓** — navigate command history
 - **Esc** — save game
@@ -170,3 +170,11 @@ build stonehenge
 ```
 
 Each wonder can only be built once. They appear in the **Wonders** overlay (`wonders`).
+
+---
+
+## City Map
+
+**City Map** (`map`) — A pixel art city rendered on an age-appropriate satellite background. Your palace sits at center and evolves each age; buildings fill the map organically; completed wonders line the bottom edge as a sprite row.
+
+Open it at any time by typing `map` at the prompt.

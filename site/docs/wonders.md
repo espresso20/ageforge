@@ -13,7 +13,13 @@ wonder collect <resource> <amount>   # bank resources
 build <wonder_key>                   # start construction once bank is full
 ```
 
-Progress is shown in the **Wonders** overlay (`wonders`) with per-resource progress bars.
+Progress is shown in the **Wonders** overlay (`wonders`) with per-resource progress bars. Each completed wonder in the overlay now displays a small colour thumbnail — a 2-character half-block pixel art icon sampled from the wonder's sprite — making it easy to visually identify wonders at a glance.
+
+---
+
+## Viewing Wonders on the City Map
+
+Completed wonders appear as a dedicated sprite row along the bottom edge of the City Map (`map` command). Each wonder is rendered as a distinct 16×16 pixel art sprite, evenly spaced across the full map width. As you complete more wonders across ages, the row fills up — by the Transcendent Age you'll have all 22 wonders displayed. Open the City Map at any time with the `map` command to see your wonder collection at a glance alongside your growing city.
 
 ---
 
@@ -24,6 +30,8 @@ Completing a wonder is **required** to advance to the next age. Each age unlocks
 The wonder requirement appears in the **age progress bar** at the top of the screen alongside your other advancement requirements. If the wonder is still missing, you will see a red notice: `✗ Wonder required: <name>`.
 
 If you try to advance before completing your age's wonder, the game will tell you which wonder is blocking and remind you to use `wonder collect` then `build <key>`.
+
+Once completed, the wonder's sprite will appear in the bottom strip of the City Map (`map` command), and the palace sprite at map center also updates to reflect your current age.
 
 ---
 

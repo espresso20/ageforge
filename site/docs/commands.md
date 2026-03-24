@@ -123,7 +123,26 @@ wonder collect stone 500
 build great_monolith
 ```
 
-Wonders are shown in **Wonders** overlay (`wonders`) with progress bars for each required resource.
+Wonders are shown in **Wonders** overlay (`wonders`) with progress bars for each required resource. Each completed wonder now displays a colour sprite thumbnail next to its name in the Wonders overlay. Built wonders also appear as a row of sprites along the bottom strip of the City Map (see [City Map](#city-map) below).
+
+---
+
+## City Map
+
+| Command | Description |
+|---|---|
+| `map` | Open the City Map overlay — shows your civilization rendered as pixel art on an age-appropriate satellite background |
+
+```
+map
+```
+
+The City Map renders your civilization as pixel art buildings packed organically around a central palace, displayed over an AI-generated age-themed satellite background (Civilization 1 style, viewed from 80,000 feet).
+
+- **Palace** — sits at the centre; the sprite changes with each of the 22 ages (roundhouse → pyramid → cathedral → megaplex, etc.)
+- **Buildings** — fill the map organically; packing density increases as you advance through later ages
+- **Wonders** — completed wonders appear as a sprite row along the bottom edge of the map
+- **Background** — each age has a distinct satellite-style backdrop in a Civilization 1 pixel art aesthetic
 
 ---
 
@@ -189,7 +208,7 @@ Type a single letter to jump straight to a tab:
 |---|---|
 | `e` | Economy tab |
 | `r` | Research overlay (`research`) |
-| `m` | Military overlay (`army`) |
+| `m` | City Map overlay |
 | `t` | Trade overlay (`trade`) |
 | `s` | Stats overlay (`stats`) |
 | `w` | Wonders overlay (`wonders`) |

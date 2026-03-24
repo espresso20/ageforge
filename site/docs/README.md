@@ -30,6 +30,7 @@ AgeForge runs entirely in your terminal using a full-screen TUI built with Go + 
 - **15 Trade routes** — across 6 NPC factions
 - **74 Milestones** — in 6 chains with civilization titles
 - **9 Prestige upgrades** — permanent bonuses across resets
+- **City Map** — Live pixel art rendering of your civilization on an age-themed background, with organic city growth and wonder display
 
 ---
 
