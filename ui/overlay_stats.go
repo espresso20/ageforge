@@ -278,27 +278,34 @@ func statsProvider(state game.GameState, _ int) string {
 		attrib["speed_multiplier"].wonders += state.SpeedMultiplier - 1.0
 	}
 
-	// 6. Epoch event permanent bonuses — derive the portion not covered by other
-	//    attribution sources so epoch contributions are shown explicitly.
-	for target, total := range state.PermanentBonuses {
-		if target == "speed_multiplier" {
-			continue // handled separately via SpeedMultiplier
+	// 6. Wonder bonus effects (Type "bonus" — production_all, knowledge_rate, expedition_reward, etc.)
+	// Iterate all built wonders and accumulate their percentage/multiplier bonuses.
+	buildingDefs := config.BaseBuildings()
+	buildingDefsByKey := make(map[string]config.BuildingDef, len(buildingDefs))
+	for _, bd := range buildingDefs {
+		buildingDefsByKey[bd.Key] = bd
+	}
+	for bKey, bState := range state.Buildings {
+		if bState.Count == 0 {
+			continue
 		}
-		ensureTarget(target)
-		a := attrib[target]
-		accounted := a.milestones + a.research + a.prestige + a.legacy
-		epochPortion := total - accounted
-		if epochPortion > 1e-9 {
-			a.epoch += epochPortion
+		def, ok := buildingDefsByKey[bKey]
+		if !ok || def.Category != "wonder" {
+			continue
+		}
+		for _, eff := range def.Effects {
+			if eff.Type == "bonus" {
+				ensureTarget(eff.Target)
+				bonuses[eff.Target].wonders += eff.Value * float64(bState.Count)
+			}
 		}
 	}
 
-	// Collect active targets: any key present in state.PermanentBonuses with
-	// nonzero value, plus speed_multiplier if a wonder bonus is active.
-	activeTargets := make([]string, 0, len(state.PermanentBonuses)+1)
-	seen := map[string]bool{}
-	for target, v := range state.PermanentBonuses {
-		if v > 1e-9 {
+	// Collect targets that have any nonzero contribution
+	activeTargets := make([]string, 0, len(bonuses))
+	for target, bc := range bonuses {
+		total := bc.milestones + bc.research + bc.prestige + bc.legacy + bc.wonders
+		if total > 0 {
 			activeTargets = append(activeTargets, target)
 			seen[target] = true
 		}
@@ -353,8 +360,12 @@ func statsProvider(state game.GameState, _ int) string {
 			if a.epoch > 0 {
 				fmt.Fprintf(&sb, "  [gray]  epoch events   +%.0f%%[-]\n", a.epoch*100)
 			}
-			if a.wonders > 0 {
-				fmt.Fprintf(&sb, "  [gray]  wonders        +%.2g[-]\n", a.wonders)
+			if bc.wonders > 0 {
+				if target == "speed_multiplier" {
+					fmt.Fprintf(&sb, "  [gray]  wonders        +%.1fx[-]\n", bc.wonders)
+				} else {
+					fmt.Fprintf(&sb, "  [gray]  wonders        +%.0f%%[-]\n", bc.wonders*100)
+				}
 			}
 		}
 	}
