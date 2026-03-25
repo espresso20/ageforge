@@ -6,11 +6,11 @@ import (
 	"image/color"
 	_ "image/png"
 	"math"
-	"os"
 	"sort"
 	"strings"
 	"sync"
 
+	gameAssets "github.com/espresso20/ageforge/assets"
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/sprites"
@@ -1223,8 +1223,8 @@ func v4LoadBgPixels(ageKey string, w, h int) []uint32 {
 	}
 	v4BgCacheMu.RUnlock()
 
-	path := "assets/maps/" + ageKey + ".png"
-	f, err := os.Open(path)
+	path := "maps/" + ageKey + ".png"
+	f, err := gameAssets.FS.Open(path)
 	if err != nil {
 		return nil // file not found — fall back to FBM
 	}
@@ -1334,8 +1334,8 @@ func v4LoadBuildingSprite(key, domain, ageKey string, isWonder, isStorage bool) 
 	default:
 		pngSuffix = ""
 	}
-	pngPath := "assets/sprites/buildings/" + key + pngSuffix + ".png"
-	if f, err := os.Open(pngPath); err == nil {
+	pngPath := "sprites/buildings/" + key + pngSuffix + ".png"
+	if f, err := gameAssets.FS.Open(pngPath); err == nil {
 		img, _, decodeErr := image.Decode(f)
 		f.Close()
 		if decodeErr == nil {
