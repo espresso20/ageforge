@@ -639,8 +639,9 @@ func (ge *GameEngine) processEvents() {
 // processExpeditions handles military expedition progress
 func (ge *GameEngine) processExpeditions() {
 	prestigeBonuses := ge.Prestige.GetBonuses()
-	militaryBonus := ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + prestigeBonuses["military_power"]
-	expeditionBonus := ge.Research.GetBonus("expedition_reward") + ge.permanentBonuses["expedition_reward"] + prestigeBonuses["expedition_reward"]
+	wonderBonuses := ge.getWonderBonuses()
+	militaryBonus := ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + prestigeBonuses["military_power"] + wonderBonuses["military_power"]
+	expeditionBonus := ge.Research.GetBonus("expedition_reward") + ge.permanentBonuses["expedition_reward"] + prestigeBonuses["expedition_reward"] + wonderBonuses["expedition_reward"]
 
 	if ge.Military.active != nil {
 		ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", ge.Military.active.Name, ge.Military.active.TicksLeft))
@@ -799,6 +800,13 @@ func (ge *GameEngine) recalculateRates() {
 	}
 	// Add prestige bonuses
 	for k, v := range ge.Prestige.GetBonuses() {
+		permanentBonuses[k] += v
+	}
+	// Add wonder bonus effects (Type "bonus" — multipliers such as production_all,
+	// knowledge_rate, expedition_reward). These are computed dynamically from built
+	// wonders each tick rather than stored in permanentBonuses so that save/load
+	// and prestige resets don't require special migration logic.
+	for k, v := range ge.getWonderBonuses() {
 		permanentBonuses[k] += v
 	}
 
@@ -1402,6 +1410,31 @@ func (ge *GameEngine) reapplyLegacyBonuses() {
 			ge.permanentBonuses[res+"_rate"] += mult
 		}
 	}
+}
+
+// getWonderBonuses returns a map of bonus-type effects from all currently built
+// wonders (those with count > 0). Effects with Type "bonus" represent percentage
+// multipliers (e.g. production_all, knowledge_rate, expedition_reward) rather
+// than flat resource production rates. The returned map is keyed by Target and
+// holds the summed Value across all built wonders.
+// Must be called with the engine lock held.
+func (ge *GameEngine) getWonderBonuses() map[string]float64 {
+	out := make(map[string]float64)
+	for key, count := range ge.Buildings.counts {
+		if count == 0 {
+			continue
+		}
+		def, ok := ge.Buildings.defs[key]
+		if !ok || def.Category != "wonder" {
+			continue
+		}
+		for _, eff := range def.Effects {
+			if eff.Type == "bonus" {
+				out[eff.Target] += eff.Value * float64(count)
+			}
+		}
+	}
+	return out
 }
 
 // Endure executes the Endure consequences for the pending catastrophe:
@@ -2304,8 +2337,9 @@ func (ge *GameEngine) GetState() GameState {
 	soldierCount := ge.Workers.GetDomainCount("military")
 	knowledgeCount := ge.Workers.GetDomainCount("knowledge")
 	prestigeBonuses := ge.Prestige.GetBonuses()
-	militaryBonus := ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + prestigeBonuses["military_power"]
-	expeditionBonus := ge.Research.GetBonus("expedition_reward") + ge.permanentBonuses["expedition_reward"] + prestigeBonuses["expedition_reward"]
+	wonderBonuses := ge.getWonderBonuses()
+	militaryBonus := ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + prestigeBonuses["military_power"] + wonderBonuses["military_power"]
+	expeditionBonus := ge.Research.GetBonus("expedition_reward") + ge.permanentBonuses["expedition_reward"] + prestigeBonuses["expedition_reward"] + wonderBonuses["expedition_reward"]
 
 	// Prestige snapshot with pending points
 	prestigeSnap := ge.Prestige.Snapshot()
