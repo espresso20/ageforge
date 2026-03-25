@@ -1666,10 +1666,16 @@ func v4GetBuildings(state game.GameState, params v4DensityParams) []v4Building {
 		}
 		isWonder := false
 		isStorage := false
-		if def, ok := config.BuildingByKey()[key]; ok && def.Category == "wonder" {
+		def, defOk := config.BuildingByKey()[key]
+		if defOk && def.Category == "wonder" {
 			isWonder = true
 		} else if len(key) >= 6 && key[len(key)-6:] == "wonder" {
 			isWonder = true
+		}
+		// Only render buildings that belong to the current age.
+		// If RequiredAge is empty (untagged building), include it as a fallback.
+		if defOk && def.RequiredAge != "" && def.RequiredAge != state.Age {
+			continue
 		}
 		// Wonders are rendered separately in the bottom strip — exclude from city slots.
 		if isWonder {
