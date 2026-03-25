@@ -642,7 +642,6 @@ func (ge *GameEngine) processExpeditions() {
 	wonderBonuses := ge.getWonderBonuses()
 	militaryBonus := ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + prestigeBonuses["military_power"] + wonderBonuses["military_power"]
 	expeditionBonus := ge.Research.GetBonus("expedition_reward") + ge.permanentBonuses["expedition_reward"] + prestigeBonuses["expedition_reward"] + wonderBonuses["expedition_reward"]
-
 	if ge.Military.active != nil {
 		ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", ge.Military.active.Name, ge.Military.active.TicksLeft))
 	}
@@ -1182,7 +1181,7 @@ func (ge *GameEngine) rollGoodEpochEvent() {
 	}
 	ge.epochEventHistory = append(ge.epochEventHistory, record)
 	ge.Bus.Publish(EventData{
-		Type: EventEpochEventFired,
+		Type:    EventEpochEventFired,
 		Payload: map[string]interface{}{"event_key": ev.Key, "event_name": ev.Name, "event_type": ev.Type},
 	})
 }
@@ -1204,7 +1203,7 @@ func (ge *GameEngine) rollChallengingEpochEvent(epochKey string) {
 	}
 	ge.epochEventHistory = append(ge.epochEventHistory, record)
 	ge.Bus.Publish(EventData{
-		Type: EventEpochEventFired,
+		Type:    EventEpochEventFired,
 		Payload: map[string]interface{}{"event_key": ev.Key, "event_name": ev.Name, "event_type": ev.Type},
 	})
 }
@@ -1848,7 +1847,6 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-
 	if !ge.Workers.IsUnlocked(vType) {
 		return 0, fmt.Errorf("worker type '%s' is not yet unlocked", vType)
 	}
@@ -1873,7 +1871,6 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-
 
 	popCap := ge.Buildings.GetPopCapacity()
 	// Add population capacity from research/milestones/prestige
@@ -2382,12 +2379,12 @@ func (ge *GameEngine) GetState() GameState {
 		NextAgeName:          nextAgeName,
 		NextAgeResReqs:       nextAgeResReqs,
 		NextAgeBldReqs:       nextAgeBldReqs,
-		Resources:      ge.Resources.Snapshot(),
-		Buildings:      ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount),
-		BuildQueue:     queue,
-		Workers:        ge.Workers.Snapshot(popCap),
-		Research:       ge.Research.Snapshot(ge.age, ageOrder),
-		Military:       ge.Military.Snapshot(ge.age, ageOrder, soldierCount, militaryBonus, expeditionBonus),
+		Resources:            ge.Resources.Snapshot(),
+		Buildings:            ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount),
+		BuildQueue:           queue,
+		Workers:              ge.Workers.Snapshot(popCap),
+		Research:             ge.Research.Snapshot(ge.age, ageOrder),
+		Military:             ge.Military.Snapshot(ge.age, ageOrder, soldierCount, militaryBonus, expeditionBonus),
 		Milestones: ge.Milestones.Snapshot(MilestoneSnapshotParams{
 			Tick:            ge.tick,
 			Age:             ge.age,
@@ -2403,37 +2400,43 @@ func (ge *GameEngine) GetState() GameState {
 			ResearchedTechs: ge.getResearchedTechMap(),
 			activeEvents:    ge.Events.GetActive(),
 		}),
-		ActiveEvents:    ge.Events.GetActive(),
-		Prestige:        prestigeSnap,
-		Trade:           ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings),
-		Diplomacy:       ge.Diplomacy.Snapshot(ge.age, ageOrder),
-		Log:             logCopy,
-		Stats:           ge.Stats.Snapshot(),
-		SaveExists:      SaveExists("autosave"),
-		TickSpeedBonus:  ge.tickSpeedBonus,
-		TickIntervalMs:  int(tickInterval.Milliseconds()),
-		SpeedMultiplier: speedMult,
+		ActiveEvents:          ge.Events.GetActive(),
+		Prestige:              prestigeSnap,
+		Trade:                 ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings),
+		Diplomacy:             ge.Diplomacy.Snapshot(ge.age, ageOrder),
+		Log:                   logCopy,
+		Stats:                 ge.Stats.Snapshot(),
+		SaveExists:            SaveExists("autosave"),
+		TickSpeedBonus:        ge.tickSpeedBonus,
+		TickIntervalMs:        int(tickInterval.Milliseconds()),
+		SpeedMultiplier:       speedMult,
 		CheaterBadge:          ge.cheaterBadge,
 		EliteBadge:            ge.eliteBadge,
 		LastAgeAdvanceSummary: ge.lastAgeAdvanceSummary,
 		// Phase 8: epoch fields
-		EpochKey:           ge.currentEpoch,
-		EpochName:          func() string {
-			if ep, ok := config.EpochByKey()[ge.currentEpoch]; ok { return ep.Name }
+		EpochKey: ge.currentEpoch,
+		EpochName: func() string {
+			if ep, ok := config.EpochByKey()[ge.currentEpoch]; ok {
+				return ep.Name
+			}
 			return ""
 		}(),
-		EpochIcon:          func() string {
-			if ep, ok := config.EpochByKey()[ge.currentEpoch]; ok { return ep.Icon }
+		EpochIcon: func() string {
+			if ep, ok := config.EpochByKey()[ge.currentEpoch]; ok {
+				return ep.Icon
+			}
 			return ""
 		}(),
-		EpochColor:         func() string {
-			if ep, ok := config.EpochByKey()[ge.currentEpoch]; ok { return ep.Color }
+		EpochColor: func() string {
+			if ep, ok := config.EpochByKey()[ge.currentEpoch]; ok {
+				return ep.Color
+			}
 			return "white"
 		}(),
 		EpochSurvived:      ge.survivedEpochs[ge.currentEpoch],
 		PendingCatastrophe: ge.pendingCatastrophe,
 		EpochEventHistory:  ge.epochEventHistory,
-		LegacyBonuses:      func() map[string]bool {
+		LegacyBonuses: func() map[string]bool {
 			out := make(map[string]bool, len(ge.legacyBonuses))
 			for k, v := range ge.legacyBonuses {
 				out[k] = v
