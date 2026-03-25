@@ -8,6 +8,13 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v3.6.1] — 2026-03-24
+
+### Fixed
+- embed assets/maps and assets/sprites into binary
+
+---
+
 ## [v3.6.0] — 2026-03-24
 
 ### Added
