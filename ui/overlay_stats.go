@@ -296,22 +296,23 @@ func statsProvider(state game.GameState, _ int) string {
 		for _, eff := range def.Effects {
 			if eff.Type == "bonus" {
 				ensureTarget(eff.Target)
-				bonuses[eff.Target].wonders += eff.Value * float64(bState.Count)
+				attrib[eff.Target].wonders += eff.Value * float64(bState.Count)
 			}
 		}
 	}
 
 	// Collect targets that have any nonzero contribution
-	activeTargets := make([]string, 0, len(bonuses))
-	for target, bc := range bonuses {
+	activeTargets := make([]string, 0, len(attrib))
+	for target, bc := range attrib {
 		total := bc.milestones + bc.research + bc.prestige + bc.legacy + bc.wonders
 		if total > 0 {
 			activeTargets = append(activeTargets, target)
-			seen[target] = true
 		}
 	}
-	if state.SpeedMultiplier > 1.0 && !seen["speed_multiplier"] {
-		activeTargets = append(activeTargets, "speed_multiplier")
+	if state.SpeedMultiplier > 1.0 {
+		if attrib["speed_multiplier"] == nil {
+			activeTargets = append(activeTargets, "speed_multiplier")
+		}
 	}
 
 	if len(activeTargets) == 0 {
@@ -360,11 +361,11 @@ func statsProvider(state game.GameState, _ int) string {
 			if a.epoch > 0 {
 				fmt.Fprintf(&sb, "  [gray]  epoch events   +%.0f%%[-]\n", a.epoch*100)
 			}
-			if bc.wonders > 0 {
+			if a.wonders > 0 {
 				if target == "speed_multiplier" {
-					fmt.Fprintf(&sb, "  [gray]  wonders        +%.1fx[-]\n", bc.wonders)
+					fmt.Fprintf(&sb, "  [gray]  wonders        +%.1fx[-]\n", a.wonders)
 				} else {
-					fmt.Fprintf(&sb, "  [gray]  wonders        +%.0f%%[-]\n", bc.wonders*100)
+					fmt.Fprintf(&sb, "  [gray]  wonders        +%.0f%%[-]\n", a.wonders*100)
 				}
 			}
 		}
