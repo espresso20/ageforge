@@ -184,18 +184,22 @@ func statsProvider(state game.GameState, _ int) string {
 	// ─── Active Multipliers ───
 	sb.WriteString("\n[gold]═══ Active Multipliers ═══[-]\n\n")
 
-	type bonusContrib struct {
+	// Build attribution maps so we can label each bonus by source.
+	// These are re-derived from config definitions purely for display;
+	// the canonical totals always come from state.PermanentBonuses.
+	type bonusAttrib struct {
 		milestones float64
 		research   float64
 		prestige   float64
 		legacy     float64
 		wonders    float64
+		epoch      float64
 	}
-	bonuses := map[string]*bonusContrib{}
+	attrib := map[string]*bonusAttrib{}
 
 	ensureTarget := func(target string) {
-		if bonuses[target] == nil {
-			bonuses[target] = &bonusContrib{}
+		if attrib[target] == nil {
+			attrib[target] = &bonusAttrib{}
 		}
 	}
 
@@ -212,14 +216,12 @@ func statsProvider(state game.GameState, _ int) string {
 		for _, eff := range def.Rewards {
 			if eff.Type == "permanent_bonus" {
 				ensureTarget(eff.Target)
-				bonuses[eff.Target].milestones += eff.Value
+				attrib[eff.Target].milestones += eff.Value
 			}
 		}
 	}
 
-	// 2. Research bonus effects (type "bonus" in tech defs; accumulated in Research.Bonuses)
-	// We re-derive per-target research contributions from the researched tech definitions
-	// so we can attribute them correctly.
+	// 2. Research bonus effects
 	techDefs := config.TechByKey()
 	for techKey, techState := range state.Research.Techs {
 		if !techState.Researched {
@@ -232,7 +234,7 @@ func statsProvider(state game.GameState, _ int) string {
 		for _, eff := range def.Effects {
 			if eff.Type == "bonus" {
 				ensureTarget(eff.Target)
-				bonuses[eff.Target].research += eff.Value
+				attrib[eff.Target].research += eff.Value
 			}
 		}
 	}
@@ -240,7 +242,7 @@ func statsProvider(state game.GameState, _ int) string {
 	// 3. Prestige — passive production_all bonus
 	if state.Prestige.PassiveBonus > 0 {
 		ensureTarget("production_all")
-		bonuses["production_all"].prestige += state.Prestige.PassiveBonus
+		attrib["production_all"].prestige += state.Prestige.PassiveBonus
 	}
 	// Prestige — upgrade rate bonuses
 	prestigeDefs := config.PrestigeUpgradeByKey()
@@ -254,7 +256,7 @@ func statsProvider(state game.GameState, _ int) string {
 		}
 		if def.EffectType == "rate_bonus" {
 			ensureTarget(def.EffectKey)
-			bonuses[def.EffectKey].prestige += def.PerTier * float64(uState.Tier)
+			attrib[def.EffectKey].prestige += def.PerTier * float64(uState.Tier)
 		}
 	}
 
@@ -266,23 +268,43 @@ func statsProvider(state game.GameState, _ int) string {
 		legBonuses := config.LegacyBonusForEpoch(epochKey)
 		for target, mult := range legBonuses {
 			ensureTarget(target)
-			bonuses[target].legacy += mult
+			attrib[target].legacy += mult
 		}
 	}
 
 	// 5. Speed multiplier (from wonders)
 	if state.SpeedMultiplier > 1.0 {
 		ensureTarget("speed_multiplier")
-		bonuses["speed_multiplier"].wonders += state.SpeedMultiplier - 1.0
+		attrib["speed_multiplier"].wonders += state.SpeedMultiplier - 1.0
 	}
 
-	// Collect targets that have any nonzero contribution
-	activeTargets := make([]string, 0, len(bonuses))
-	for target, bc := range bonuses {
-		total := bc.milestones + bc.research + bc.prestige + bc.legacy + bc.wonders
-		if total > 0 {
-			activeTargets = append(activeTargets, target)
+	// 6. Epoch event permanent bonuses — derive the portion not covered by other
+	//    attribution sources so epoch contributions are shown explicitly.
+	for target, total := range state.PermanentBonuses {
+		if target == "speed_multiplier" {
+			continue // handled separately via SpeedMultiplier
 		}
+		ensureTarget(target)
+		a := attrib[target]
+		accounted := a.milestones + a.research + a.prestige + a.legacy
+		epochPortion := total - accounted
+		if epochPortion > 1e-9 {
+			a.epoch += epochPortion
+		}
+	}
+
+	// Collect active targets: any key present in state.PermanentBonuses with
+	// nonzero value, plus speed_multiplier if a wonder bonus is active.
+	activeTargets := make([]string, 0, len(state.PermanentBonuses)+1)
+	seen := map[string]bool{}
+	for target, v := range state.PermanentBonuses {
+		if v > 1e-9 {
+			activeTargets = append(activeTargets, target)
+			seen[target] = true
+		}
+	}
+	if state.SpeedMultiplier > 1.0 && !seen["speed_multiplier"] {
+		activeTargets = append(activeTargets, "speed_multiplier")
 	}
 
 	if len(activeTargets) == 0 {
@@ -300,27 +322,39 @@ func statsProvider(state game.GameState, _ int) string {
 		})
 
 		for _, target := range activeTargets {
-			bc := bonuses[target]
-			total := bc.milestones + bc.research + bc.prestige + bc.legacy + bc.wonders
+			var total float64
+			if target == "speed_multiplier" {
+				total = state.SpeedMultiplier - 1.0
+			} else {
+				total = state.PermanentBonuses[target]
+			}
+			a := attrib[target]
+			if a == nil {
+				a = &bonusAttrib{}
+			}
+
 			if target == "speed_multiplier" {
 				fmt.Fprintf(&sb, "  [cyan]%-20s[-] [yellow]+%.1fx[-]\n", target, total)
 			} else {
 				fmt.Fprintf(&sb, "  [cyan]%-20s[-] [yellow]+%.0f%%[-]\n", target, total*100)
 			}
-			if bc.milestones > 0 {
-				fmt.Fprintf(&sb, "  [gray]  milestones     +%.0f%%[-]\n", bc.milestones*100)
+			if a.milestones > 0 {
+				fmt.Fprintf(&sb, "  [gray]  milestones     +%.0f%%[-]\n", a.milestones*100)
 			}
-			if bc.research > 0 {
-				fmt.Fprintf(&sb, "  [gray]  research       +%.0f%%[-]\n", bc.research*100)
+			if a.research > 0 {
+				fmt.Fprintf(&sb, "  [gray]  research       +%.0f%%[-]\n", a.research*100)
 			}
-			if bc.prestige > 0 {
-				fmt.Fprintf(&sb, "  [gray]  prestige       +%.0f%%[-]\n", bc.prestige*100)
+			if a.prestige > 0 {
+				fmt.Fprintf(&sb, "  [gray]  prestige       +%.0f%%[-]\n", a.prestige*100)
 			}
-			if bc.legacy > 0 {
-				fmt.Fprintf(&sb, "  [gray]  legacy         +%.0f%%[-]\n", bc.legacy*100)
+			if a.legacy > 0 {
+				fmt.Fprintf(&sb, "  [gray]  legacy         +%.0f%%[-]\n", a.legacy*100)
 			}
-			if bc.wonders > 0 {
-				fmt.Fprintf(&sb, "  [gray]  wonders        +%.2g[-]\n", bc.wonders)
+			if a.epoch > 0 {
+				fmt.Fprintf(&sb, "  [gray]  epoch events   +%.0f%%[-]\n", a.epoch*100)
+			}
+			if a.wonders > 0 {
+				fmt.Fprintf(&sb, "  [gray]  wonders        +%.2g[-]\n", a.wonders)
 			}
 		}
 	}

@@ -51,6 +51,10 @@ type GameState struct {
 	// Morale system
 	Morale    float64 // current morale 0.10–cap
 	MoraleCap float64 // current cap (1.0 + 0.05 per wonder)
+	// PermanentBonuses is the authoritative runtime map of all cumulative
+	// permanent bonuses (epoch events, legacy, milestones, etc.).
+	// Populated in GetState(); not stored in save JSON.
+	PermanentBonuses map[string]float64 `json:"-"`
 }
 
 // AgeAdvanceSummary holds data about what changed during an age advance transition.
