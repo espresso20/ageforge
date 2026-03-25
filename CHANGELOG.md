@@ -8,6 +8,17 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v3.6.2] — 2026-03-24
+
+### Fixed
+- expose permanentBonuses in GameState and fix Active Multipliers display (#27)
+- correct energy and metallurgy lineage production rates on upgrade (#28)
+- city map only renders buildings from the current age (#29)
+- unique 16x16 sprites for all 22 age wonders (#30)
+- wonder multiplier bonuses now appear in Active Multipliers (#31)
+
+---
+
 ## [v3.6.1] — 2026-03-24
 
 ### Fixed
