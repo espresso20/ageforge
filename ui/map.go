@@ -2080,11 +2080,11 @@ func v4GetBuildings(state game.GameState, params v4DensityParams) []v4Building {
 		} else if len(key) >= 6 && key[len(key)-6:] == "wonder" {
 			isWonder = true
 		}
-		// Only render buildings that belong to the current age.
-		// If RequiredAge is empty (untagged building), include it as a fallback.
-		if defOk && def.RequiredAge != "" && def.RequiredAge != state.Age {
-			continue
-		}
+		// Show buildings from ALL ages on the map — older buildings are rendered
+		// using the current age's sprite palette so they visually evolve with the
+		// civilisation (e.g. a primitive hut appears as a longhouse in stone age).
+		// Age filtering is intentionally absent here; the Economy tab handles its
+		// own current-age-only filter separately.
 		// Wonders are rendered separately in the bottom strip — exclude from city slots.
 		if isWonder {
 			continue

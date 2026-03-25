@@ -35,7 +35,7 @@ var commands = []string{
 	"wonder",
 	"dump", "exportlogs",
 	"milestones", "ms",
-	"techs", "army", "stats", "wonders", "workers", "logs", "epoch", "history",
+	"techs", "army", "stats", "wonders", "workers", "logs", "epoch", "history", "buildings",
 	"map",
 }
 

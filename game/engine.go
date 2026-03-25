@@ -1708,6 +1708,13 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 	if !ge.Buildings.IsUnlocked(key) {
 		return fmt.Errorf("building '%s' is not yet unlocked", def.Name)
 	}
+	// Age lock: only allow building structures that belong to the current age.
+	// Storage and wonder categories with no RequiredAge (empty string) are exempt.
+	// Wonders always match because their RequiredAge equals the age they unlock in,
+	// and the player can only be in that age when they attempt to build the wonder.
+	if def.RequiredAge != "" && def.RequiredAge != ge.age {
+		return fmt.Errorf("%s belongs to a previous age — use 'upgrade' to advance your buildings", def.Name)
+	}
 	if def.MaxCount > 0 {
 		inQueue := ge.Buildings.GetQueueCount(key, ge.buildQueue)
 		if ge.Buildings.GetCount(key)+inQueue >= def.MaxCount {
@@ -1783,6 +1790,10 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	}
 	if !ge.Buildings.IsUnlocked(key) {
 		return 0, fmt.Errorf("building '%s' is not yet unlocked", def.Name)
+	}
+	// Age lock: only allow building structures that belong to the current age.
+	if def.RequiredAge != "" && def.RequiredAge != ge.age {
+		return 0, fmt.Errorf("%s belongs to a previous age — use 'upgrade' to advance your buildings", def.Name)
 	}
 
 	built := 0
