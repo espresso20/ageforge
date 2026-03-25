@@ -489,6 +489,24 @@ func (ge *GameEngine) LoadGame(filename string) error {
 		ge.Buildings.LoadLegacyBuildings(save.LegacyBuildings)
 	}
 
+	// Reconstruct pending upgrades from legacy buildings.
+	// pendingUpgrades is not persisted to disk; we derive it from the
+	// legacy set + current age so the 'upgrade' command works after a reload.
+	for _, key := range save.LegacyBuildings {
+		if ge.Buildings.GetCount(key) <= 0 {
+			continue
+		}
+		def, ok := ge.Buildings.defs[key]
+		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" {
+			continue
+		}
+		next := config.BuildingNextTierForAge(def.LineageKey, def.LineageTier, save.Age)
+		if next == nil {
+			continue
+		}
+		ge.Buildings.SetPendingUpgrade(key, next.Key)
+	}
+
 	// Restore speed multiplier
 	ge.speedMultiplier = save.SpeedMultiplier
 	if ge.speedMultiplier < 1.0 {
