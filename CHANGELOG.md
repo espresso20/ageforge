@@ -8,6 +8,20 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v3.6.4] — 2026-03-25
+
+### Added
+- add buildings overlay showing full age history
+
+### Fixed
+- reconstruct pending upgrades on load so 'upgrade' works after save/reload
+- correct age advancement requirements to reference current-age buildings
+- city map shows all-age buildings rendered in current age style
+- lock build command to current age only
+- economy tab Buildings panel only shows current age buildings
+
+---
+
 ## [v3.6.3] — 2026-03-24
 
 ### Fixed
