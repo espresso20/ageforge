@@ -13,6 +13,8 @@ func buildingsLineageEnergy() []BuildingDef {
 	// =========================================================================
 
 	// tier 0 — industrial_age  output=coal  rate=10
+	// Resource pivot note: coal_plant (coal) → steam_turbine (electricity+coal bonus)
+	// Validator will show HIGH_BOOST on this transition — intentional cross-resource pivot.
 	b = append(b, BuildingDef{
 		Name: "Coal Plant", Key: "coal_plant", Category: "production",
 		BaseCost:    map[string]float64{"steel": 22e6, "coal": 8e6, "gold": 12e6},
@@ -156,20 +158,28 @@ func buildingsLineageEnergy() []BuildingDef {
 		WorkerDomain: "energy", WorkerCapacity: 16,
 		EpochKey: "neon_era", OutputResource: "plasma",
 	})
-	// tier 10 — interstellar_age  output=plasma  rate=80
+	// tier 10 — interstellar_age  output=plasma  rate=80  (+ electricity continuation)
+	// Resource pivot: plasma remains primary; electricity secondary continues from solar_collector_array
+	// solar_collector_array: plasma:40 + electricity:2500 → pulsar_tap: plasma:80 + electricity:3200
 	b = append(b, BuildingDef{
 		Name: "Pulsar Tap", Key: "pulsar_tap", Category: "production",
-		BaseCost:    map[string]float64{"dark_matter": 110e12, "titanium": 840e12, "plasma": 520e12},
-		CostScale:   1.35,
-		Effects:     []Effect{{Type: "production", Target: "plasma", Value: 80}},
+		BaseCost: map[string]float64{"dark_matter": 110e12, "titanium": 840e12, "plasma": 520e12},
+		CostScale: 1.35,
+		Effects: []Effect{
+			{Type: "production", Target: "plasma", Value: 80},
+			{Type: "production", Target: "electricity", Value: 3200},
+		},
 		BuildTicks:  2500000,
 		RequiredAge: "interstellar_age",
-		Description: "Taps pulsar radiation for plasma energy. +80 plasma/tick (18 workers).",
+		Description: "Taps pulsar radiation for plasma and electricity. +80 plasma, +3200 electricity/tick (18 workers).",
 		LineageKey:  "energy", LineageTier: 10,
 		WorkerDomain: "energy", WorkerCapacity: 18,
 		EpochKey: "cosmic_era", OutputResource: "plasma",
 	})
 	// tier 11 — galactic_age  output=dark_matter  rate=10
+	// Resource pivot: plasma → dark_matter. Validator shows LOW boost — intentional cross-resource pivot.
+	// dark_matter rate of 10 is deliberately low (dark_matter is a tier-7 resource; starts at 1/tick in metallurgy).
+	// quasar_tap → zero_point_generator jumps 5x (dark_matter:10 → quantum_flux:50) — also an intentional pivot.
 	b = append(b, BuildingDef{
 		Name: "Quasar Tap", Key: "quasar_tap", Category: "production",
 		BaseCost:    map[string]float64{"antimatter": 220e12, "dark_matter": 1.1e15, "titanium": 5.5e15},
