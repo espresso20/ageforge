@@ -55,6 +55,8 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		EpochKey: "iron_era", OutputResource: "iron",
 	})
 	// tier 3 — renaissance_age  output=steel  rate=0.50
+	// Resource pivot: iron → steel. Validator shows LOW boost (iron:0.40 → steel:0.50) — intentional.
+	// Steel is a higher-tier resource; the rate reset to 0.50 is correct for the new tier.
 	b = append(b, BuildingDef{
 		Name: "Foundry", Key: "foundry", Category: "production",
 		BaseCost:    map[string]float64{"gold": 650000, "steel": 220000, "coal": 80000},
@@ -133,6 +135,8 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		EpochKey: "electric_era", OutputResource: "steel",
 	})
 	// tier 9 — modern_age  output=titanium  rate=0.50 (reset for new metal)
+	// Resource pivot: steel → titanium. Validator shows 0.03x (steel:16 → titanium:0.50) — intentional.
+	// Titanium is a tier-5 resource; starting rate 0.50 matches the iron/steel pivot pattern.
 	b = append(b, BuildingDef{
 		Name: "Titanium Smelter", Key: "titanium_smelter", Category: "production",
 		BaseCost:    map[string]float64{"steel": 34e9, "electricity": 13e9, "data": 1.2e9},
@@ -172,6 +176,8 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		EpochKey: "digital_era", OutputResource: "titanium",
 	})
 	// tier 12 — cyberpunk_age  output=dark_matter  rate=1.0 (new material)
+	// Resource pivot: titanium → dark_matter. Validator shows 0.50x (titanium:2.0 → dark_matter:1.0) — intentional.
+	// dark_matter is a tier-7 resource; starting at 1.0/tick is correct.
 	b = append(b, BuildingDef{
 		Name: "Dark Matter Refinery", Key: "dark_matter_refinery", Category: "production",
 		BaseCost:    map[string]float64{"data": 220e9, "crypto": 1.15e12, "electricity": 2.3e12},
@@ -211,6 +217,8 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		EpochKey: "neon_era", OutputResource: "dark_matter",
 	})
 	// tier 15 — interstellar_age  output=antimatter  rate=2.0 (new material)
+	// Resource pivot: dark_matter → antimatter. Validator shows 0.50x (dark_matter:4.0 → antimatter:2.0) — intentional.
+	// antimatter is a tier-8 resource; starting at 2.0/tick matches cosmic-era rarity.
 	b = append(b, BuildingDef{
 		Name: "Antimatter Forge", Key: "antimatter_forge", Category: "production",
 		BaseCost:    map[string]float64{"dark_matter": 105e12, "titanium": 820e12, "plasma": 510e12},
@@ -237,6 +245,8 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		EpochKey: "cosmic_era", OutputResource: "antimatter",
 	})
 	// tier 17 — quantum_age  output=quantum_flux  rate=4.0
+	// Resource pivot: antimatter → quantum_flux. Validator shows 1.00x (antimatter:4.0 → quantum_flux:4.0) — intentional.
+	// quantum_flux is the terminal resource; matching antimatter rate is the intended cap.
 	b = append(b, BuildingDef{
 		Name: "Quantum Metal Works", Key: "quantum_metal_works", Category: "production",
 		BaseCost:    map[string]float64{"quantum_flux": 225e12, "antimatter": 67e15, "dark_matter": 57e15},
