@@ -276,6 +276,29 @@ func statsProvider(state game.GameState, _ int) string {
 		bonuses["speed_multiplier"].wonders += state.SpeedMultiplier - 1.0
 	}
 
+	// 6. Wonder bonus effects (Type "bonus" — production_all, knowledge_rate, expedition_reward, etc.)
+	// Iterate all built wonders and accumulate their percentage/multiplier bonuses.
+	buildingDefs := config.BaseBuildings()
+	buildingDefsByKey := make(map[string]config.BuildingDef, len(buildingDefs))
+	for _, bd := range buildingDefs {
+		buildingDefsByKey[bd.Key] = bd
+	}
+	for bKey, bState := range state.Buildings {
+		if bState.Count == 0 {
+			continue
+		}
+		def, ok := buildingDefsByKey[bKey]
+		if !ok || def.Category != "wonder" {
+			continue
+		}
+		for _, eff := range def.Effects {
+			if eff.Type == "bonus" {
+				ensureTarget(eff.Target)
+				bonuses[eff.Target].wonders += eff.Value * float64(bState.Count)
+			}
+		}
+	}
+
 	// Collect targets that have any nonzero contribution
 	activeTargets := make([]string, 0, len(bonuses))
 	for target, bc := range bonuses {
@@ -320,7 +343,11 @@ func statsProvider(state game.GameState, _ int) string {
 				fmt.Fprintf(&sb, "  [gray]  legacy         +%.0f%%[-]\n", bc.legacy*100)
 			}
 			if bc.wonders > 0 {
-				fmt.Fprintf(&sb, "  [gray]  wonders        +%.2g[-]\n", bc.wonders)
+				if target == "speed_multiplier" {
+					fmt.Fprintf(&sb, "  [gray]  wonders        +%.1fx[-]\n", bc.wonders)
+				} else {
+					fmt.Fprintf(&sb, "  [gray]  wonders        +%.0f%%[-]\n", bc.wonders*100)
+				}
 			}
 		}
 	}
