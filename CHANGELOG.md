@@ -8,6 +8,13 @@ All notable changes to AgeForge are documented here.
 
 ---
 
+## [v3.6.3] — 2026-03-24
+
+### Fixed
+- resolve undefined variable compile errors in overlay_stats (#32)
+
+---
+
 ## [v3.6.2] — 2026-03-24
 
 ### Fixed
