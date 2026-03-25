@@ -247,10 +247,10 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 	}
 	ageByKey := config.AgeByKey()
 
-	// Group unlocked buildings by their age key
+	// Group unlocked buildings by their age key — only show current age
 	byAge := make(map[string][]string)
 	for key, bs := range state.Buildings {
-		if bs.Unlocked {
+		if bs.Unlocked && bs.AgeKey == state.Age {
 			byAge[bs.AgeKey] = append(byAge[bs.AgeKey], key)
 		}
 	}
