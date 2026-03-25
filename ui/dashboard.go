@@ -100,6 +100,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.Register("logs", "Logs", logsProvider)
 	d.overlayMgr.Register("epoch", "Epoch", epochProvider)
 	d.overlayMgr.Register("history", "Civilization History", historyProvider)
+	d.overlayMgr.Register("buildings", "Buildings", buildingsProvider)
 
 	mv4 := NewMapV4()
 	d.overlayMgr.RegisterWidget("map", "City Map", mv4.Build, mv4.Refresh, true)
