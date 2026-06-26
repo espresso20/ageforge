@@ -223,7 +223,7 @@ func cmdAdvance(engine *game.GameEngine) CommandResult {
 
 func cmdHelp(args []string) CommandResult {
 	help := `[gold]Commands:[-]
-  [cyan]gather[-] <food|wood|stone> [n] - Hand-gather resources (max 5)
+  [cyan]gather[-] <food|wood|stone> [n] - Hand-gather resources (max 25, until Medieval Age)
   [cyan]build[-] <building> [count|max] - Build structure(s) (default: 1)
   [cyan]sell[-] <building> [count]      - Demolish building(s) and recover 50% of build cost
   [cyan]recruit[-] [count|max]          - Recruit workers from available housing capacity and assign to buildings (default: 1)
@@ -380,9 +380,12 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	}
 }
 
+// gatherMaxYield is the per-use cap on hand-gathered resources.
+const gatherMaxYield = 25.0
+
 func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
-		return CommandResult{Message: "Usage: gather <food|wood|stone> [amount] (max 10)", Type: "error"}
+		return CommandResult{Message: "Usage: gather <food|wood|stone> [amount] (max 25)", Type: "error"}
 	}
 	resource := strings.ToLower(args[0])
 	if resource != "food" && resource != "wood" && resource != "stone" {
@@ -394,8 +397,8 @@ func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 			amount = n
 		}
 	}
-	if amount > 10 {
-		amount = 10
+	if amount > gatherMaxYield {
+		amount = gatherMaxYield
 	}
 	actual, err := engine.GatherResource(resource, amount)
 	if err != nil {

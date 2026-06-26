@@ -1656,10 +1656,39 @@ func (ge *GameEngine) AdvanceAge() error {
 	return nil
 }
 
+// pastMedievalForGather reports whether the given age is strictly later than the
+// Medieval Age in the canonical age order. Used to gate hand-gathering. It is
+// pure (relies only on config.AgeOrder) and acquires no locks, so it is safe to
+// call while the engine write lock is held. Fails safe: if either age key is
+// absent from the order, it returns false (gathering allowed) rather than panic.
+func pastMedievalForGather(age string) bool {
+	order := config.AgeOrder()
+	curIdx, medievalIdx := -1, -1
+	for i, key := range order {
+		switch key {
+		case age:
+			curIdx = i
+		case "medieval_age":
+			medievalIdx = i
+		}
+	}
+	if curIdx == -1 || medievalIdx == -1 {
+		return false
+	}
+	return curIdx > medievalIdx
+}
+
 // GatherResource manually gathers a resource
 func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
+
+	// Hand-gathering is only practical through the Medieval Age. Past it, the
+	// economy is expected to run on buildings and workers. Lock is held here, so
+	// we use the ge.age field and pure config.AgeOrder() — no GetState().
+	if pastMedievalForGather(ge.age) {
+		return 0, fmt.Errorf("gathering by hand is no longer practical past the Medieval Age — your economy runs on buildings and workers now")
+	}
 
 	if !ge.Resources.IsUnlocked(resource) {
 		return 0, fmt.Errorf("resource '%s' is not yet unlocked", resource)

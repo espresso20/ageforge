@@ -55,6 +55,50 @@ func TestEngine_GatherLockedResource(t *testing.T) {
 	}
 }
 
+// Gathering in an early age grants the requested amount (up to the per-use cap).
+func TestEngine_GatherYieldEarlyAge(t *testing.T) {
+	ge := NewGameEngine()
+	ge.age = "stone_age"
+
+	startFood := ge.GetState().Resources["food"].Amount
+
+	if _, err := ge.GatherResource("food", 25); err != nil {
+		t.Fatalf("GatherResource in stone_age failed: %v", err)
+	}
+
+	got := ge.GetState().Resources["food"].Amount
+	if got != startFood+25 {
+		t.Errorf("food after gathering 25 = %v, want %v", got, startFood+25)
+	}
+}
+
+// Past the Medieval Age, gathering returns an error and grants nothing.
+func TestEngine_GatherDisabledPastMedieval(t *testing.T) {
+	ge := NewGameEngine()
+	ge.age = "renaissance_age"
+
+	startFood := ge.GetState().Resources["food"].Amount
+
+	if _, err := ge.GatherResource("food", 25); err == nil {
+		t.Error("GatherResource should fail in renaissance_age (post-medieval)")
+	}
+
+	got := ge.GetState().Resources["food"].Amount
+	if got != startFood {
+		t.Errorf("food should be unchanged after blocked gather: got %v, want %v", got, startFood)
+	}
+}
+
+// The Medieval Age itself is the cutoff inclusive — gathering still works there.
+func TestEngine_GatherAllowedInMedieval(t *testing.T) {
+	ge := NewGameEngine()
+	ge.age = "medieval_age"
+
+	if _, err := ge.GatherResource("food", 10); err != nil {
+		t.Errorf("GatherResource should still work in medieval_age, got: %v", err)
+	}
+}
+
 func TestEngine_BuildBuilding(t *testing.T) {
 	ge := NewGameEngine()
 
