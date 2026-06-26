@@ -1,6 +1,6 @@
 package config
 
-// ResourceDef defines a single game resource. There are 25 resources in total,
+// ResourceDef defines a single game resource. There are 26 resources in total,
 // unlocking progressively through the 22 ages.
 //
 // BaseStorage is the starting storage cap before any storage buildings are built.
@@ -30,6 +30,7 @@ func BaseResources() []ResourceDef {
 		{Name: "Gold", Key: "gold", BaseStorage: 50, Age: "bronze_age", Description: "Currency and trade"},
 		// Iron Age (Iron Era)
 		{Name: "Coal", Key: "coal", BaseStorage: 50, Age: "iron_age", Description: "Fuel for smelting and industry"},
+		{Name: "Soldiers", Key: "soldiers", BaseStorage: 0, Age: "iron_age", Description: "Trained fighting force produced by military buildings; spent launching expeditions"},
 		// Classical Age (Iron Era) — intermediate ore for Geological Extraction lineage
 		{Name: "Marble", Key: "marble", BaseStorage: 30, Age: "classical_age", Description: "Refined stone for monumental construction"},
 		{Name: "Iron Ore", Key: "iron_ore", BaseStorage: 30, Age: "classical_age", Description: "Raw iron ore before smelting — feeds Metallurgy lineage"},

@@ -1,8 +1,17 @@
 package config
 
+import "math"
+
 // buildingsLineageMilitary returns lineages 5-9:
 // knowledge, faith, military, trade, engineering.
 // Merged into newProductionBuildings() via init — see buildings_new_merge.go.
+//
+// Military rework (Stage 1): every military building now also produces and stores
+// the `soldiers` resource. Each building's existing {capacity, military} value is
+// reused as its soldier storage cap, and it produces soldiers at
+// max(0.1, cap/50) per tick (worker-scaled) so a fully-worked building fills its
+// own soldier cap in ~50 ticks. These two effects are appended in a single loop at
+// the bottom of this function so the per-tier caps stay the single source of truth.
 func buildingsLineageMilitary() []BuildingDef {
 	b := []BuildingDef{}
 
@@ -298,6 +307,29 @@ func buildingsLineageMilitary() []BuildingDef {
 		WorkerDomain: "military", WorkerCapacity: 35,
 		EpochKey: "cosmic_era",
 	})
+
+	// Military rework (Stage 1): give every military building soldier storage +
+	// production derived from its existing {capacity, military} value. The cap is
+	// reused verbatim as the soldier storage cap; production = max(0.1, cap/50) so a
+	// fully-worked building fills its own cap in ~50 ticks. Existing effects (the
+	// capacity/military marker, etc.) are preserved.
+	for i := range b {
+		cap := 0.0
+		for _, eff := range b[i].Effects {
+			if eff.Type == "capacity" && eff.Target == "military" {
+				cap = eff.Value
+				break
+			}
+		}
+		if cap <= 0 {
+			continue
+		}
+		prod := math.Max(0.1, cap/50.0)
+		b[i].Effects = append(b[i].Effects,
+			Effect{Type: "storage", Target: "soldiers", Value: cap},
+			Effect{Type: "production", Target: "soldiers", Value: prod},
+		)
+	}
 
 	return b
 }
