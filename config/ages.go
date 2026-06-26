@@ -25,8 +25,14 @@ type AgeDef struct {
 // Ages returns all 22 age definitions in ascending order (Primitive → Transcendent).
 // Callers that need random access should use AgeByKey(). Callers that need the
 // sorted key list should use AgeOrder().
+//
+// All advancement requirements (ResourceReqs/BuildingReqs) are passed through
+// normalizeAgeRequirements before return, so every consumer — AgeByKey, AgeOrder,
+// and game/progress.go's CheckAdvancement (which sources its slice from Ages()) —
+// sees the same normalized values. Ages() rebuilds the slice from inline literals
+// on every call, so normalization operates on fresh maps and cannot compound.
 func Ages() []AgeDef {
-	return []AgeDef{
+	return normalizeAgeRequirements([]AgeDef{
 		// === 0: PRIMITIVE AGE (Stone Era) ===
 		{
 			Name: "Primitive Age", Key: "primitive_age", Order: 0,
@@ -241,7 +247,88 @@ func Ages() []AgeDef {
 			BuildingReqs:    map[string]int{"reality_academy": 500, "reality_forge": 300, "probability_war_room": 200},
 			UnlockBuildings: []string{"singularity_core", "transcendent_nexus", "omniversal_war_council", "omniversal_bazaar", "singularity_engine"},
 		},
+	})
+}
+
+// normalizeAgeRequirements applies the EPIC economy-rebalance sub-ticket 3
+// "moderate requirements bump" to age advancement gates.
+//
+// This is a DELIBERATELY LIGHTER pass than the original ticket's proposed 2–5x
+// across-the-board hike. Sub-tickets 1 (flattened cost curves) and 2 (carryover
+// fixes) already tightened pacing, so a heavy requirements raise on top would risk
+// a grind wall. The bands below are the tuned compromise — bump them here if a
+// later pass wants to push or relax the curve.
+//
+// It operates on the freshly-built slice from Ages() (inline literals → fresh maps
+// every call), so it is naturally idempotent w.r.t. Ages(): nothing compounds.
+// We still defensively copy each req map before mutating, in case a future refactor
+// ever shares map references between AgeDefs.
+//
+// Policy:
+//   - ResourceReqs: every value multiplied by the age's band factor, then rounded to
+//     2 significant figures (reusing roundSignificant from buildings.go) for readability.
+//   - BuildingReqs: for the early/mid ages (stone_age..information_age), raise any count
+//     below buildingReqFloor up to the floor; counts already at/above it are untouched.
+//     This only strengthens the thinnest gates and leaves late ages alone.
+//   - primitive_age has no requirements and is skipped.
+func normalizeAgeRequirements(ages []AgeDef) []AgeDef {
+	// === Resource requirement multipliers, by age key (re-tune here) ===
+	// Early ages get the hardest squeeze; the curve eases as the cost-curve and
+	// carryover fixes do more of the pacing work in later ages.
+	resourceReqMultipliers := map[string]float64{
+		// Early (Stone/Iron eras) — 2.0x
+		"stone_age": 2.0, "bronze_age": 2.0, "iron_age": 2.0,
+		// Mid (classical → renaissance) — 1.75x
+		"classical_age": 1.75, "medieval_age": 1.75, "renaissance_age": 1.75,
+		// Industrializing (colonial → victorian) — 1.5x
+		"colonial_age": 1.5, "industrial_age": 1.5, "victorian_age": 1.5,
+		// Late (electric → transcendent) — 1.25x
+		"electric_age": 1.25, "atomic_age": 1.25, "modern_age": 1.25,
+		"information_age": 1.25, "digital_age": 1.25, "cyberpunk_age": 1.25,
+		"fusion_age": 1.25, "space_age": 1.25, "interstellar_age": 1.25,
+		"galactic_age": 1.25, "quantum_age": 1.25, "transcendent_age": 1.25,
+		// primitive_age intentionally absent (no requirements).
 	}
+
+	// === Building requirement floor (re-tune here) ===
+	// Any BuildingReq below this floor is raised to it, but ONLY for the ages in
+	// buildingFloorAges. This firms up the thinnest gates without touching late ages.
+	const buildingReqFloor = 5
+	buildingFloorAges := map[string]bool{
+		"stone_age": true, "bronze_age": true, "iron_age": true,
+		"classical_age": true, "medieval_age": true, "renaissance_age": true,
+		"colonial_age": true, "industrial_age": true, "victorian_age": true,
+		"electric_age": true, "atomic_age": true, "modern_age": true,
+		"information_age": true,
+		// digital_age onward (and primitive_age) intentionally excluded.
+	}
+
+	for i := range ages {
+		age := &ages[i]
+
+		// Resource requirements: scale + round.
+		if factor, ok := resourceReqMultipliers[age.Key]; ok && len(age.ResourceReqs) > 0 {
+			scaled := make(map[string]float64, len(age.ResourceReqs))
+			for res, amount := range age.ResourceReqs {
+				scaled[res] = roundSignificant(amount*factor, 2)
+			}
+			age.ResourceReqs = scaled
+		}
+
+		// Building requirements: apply the floor for the gated ages.
+		if buildingFloorAges[age.Key] && len(age.BuildingReqs) > 0 {
+			floored := make(map[string]int, len(age.BuildingReqs))
+			for bld, count := range age.BuildingReqs {
+				if count < buildingReqFloor {
+					count = buildingReqFloor
+				}
+				floored[bld] = count
+			}
+			age.BuildingReqs = floored
+		}
+	}
+
+	return ages
 }
 
 // AgeByKey returns a map of key -> AgeDef
