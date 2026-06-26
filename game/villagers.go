@@ -220,16 +220,6 @@ func (vm *WorkerManager) KillWorker(count int) int {
 	return count
 }
 
-// RemoveSoldiers removes workers from the pool (expedition losses).
-// Previously removed from "military" domain; now removes from the single pool.
-func (vm *WorkerManager) RemoveSoldiers(count int) {
-	rt := vm.domains["worker"]
-	rt.count -= count
-	if rt.count < 0 {
-		rt.count = 0
-	}
-}
-
 // AddPctAll adds a percentage of current count to the pool (used by Population Surge event).
 func (vm *WorkerManager) AddPctAll(pct float64) {
 	rt := vm.domains["worker"]
@@ -330,7 +320,6 @@ func (vm *WorkerManager) LoadWorkers(data map[string]WorkerInfo) {
 	}
 	rt.count = totalCount
 }
-
 
 // Snapshot returns worker state for UI consumption.
 // Types map has a single "worker" key.

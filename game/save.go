@@ -448,6 +448,16 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	for _, key := range save.Unlocked.Resources {
 		ge.Resources.UnlockResource(key)
 	}
+	// Reconcile resource unlocks against the loaded age. Old saves predating a
+	// resource's introduction (e.g. the `soldiers` resource added in the military
+	// rework) won't have it in their serialized unlock set even when the player is
+	// already past its unlock age — unlock anything whose unlock-age has been reached.
+	currentOrder := ge.progress.ageIndex[save.Age]
+	for _, def := range config.BaseResources() {
+		if order, ok := ge.progress.ageIndex[def.Age]; ok && order <= currentOrder {
+			ge.Resources.UnlockResource(def.Key)
+		}
+	}
 	for _, key := range save.Unlocked.Buildings {
 		ge.Buildings.UnlockBuilding(key)
 	}

@@ -645,17 +645,13 @@ func (ge *GameEngine) processExpeditions() {
 	if ge.Military.active != nil {
 		ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", ge.Military.active.Name, ge.Military.active.TicksLeft))
 	}
-	rewards, message, soldiersLost := ge.Military.Tick(militaryBonus, expeditionBonus)
+	rewards, message := ge.Military.Tick(militaryBonus, expeditionBonus)
 	if message != "" {
-		ge.addLog("debug", fmt.Sprintf("Expedition resolved (soldiers lost: %d, rewards: %d types)", soldiersLost, len(rewards)))
+		ge.addLog("debug", fmt.Sprintf("Expedition resolved (rewards: %d types)", len(rewards)))
 		ge.addLog("event", message)
 		// Add rewards to resources
 		for res, amount := range rewards {
 			ge.Resources.Add(res, amount)
-		}
-		// Remove lost soldiers
-		if soldiersLost > 0 {
-			ge.Workers.RemoveSoldiers(soldiersLost)
 		}
 	}
 }
@@ -2165,14 +2161,42 @@ func (ge *GameEngine) LaunchExpedition(key string) error {
 	defer ge.mu.Unlock()
 
 	ageOrder := ge.progress.GetAgeOrder()
-	soldierCount := ge.Workers.GetDomainCount("military")
-	militaryBonus := ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + ge.Prestige.GetBonuses()["military_power"]
 
-	if err := ge.Military.LaunchExpedition(key, soldierCount, ge.age, ageOrder, militaryBonus); err != nil {
+	def := ge.Military.ExpeditionDefByKey(key)
+	if def == nil {
+		return fmt.Errorf("unknown expedition: %s", key)
+	}
+
+	// --- Validate everything BEFORE any deduction so a failed launch never
+	// partially charges the player. ---
+
+	// Soldiers resource check (soldiers are now a real resource, not workers).
+	haveSoldiers := int(ge.Resources.Get("soldiers"))
+	if haveSoldiers < def.SoldiersNeeded {
+		return fmt.Errorf("%s needs %d soldiers (have %d)", def.Name, def.SoldiersNeeded, haveSoldiers)
+	}
+
+	// Additional resource cost check.
+	for res, amount := range def.Cost {
+		if ge.Resources.Get(res) < amount {
+			return fmt.Errorf("not enough %s: need %.0f, have %.0f", res, amount, ge.Resources.Get(res))
+		}
+	}
+
+	// Age range + active-expedition validation (does NOT touch resources).
+	if err := ge.Military.LaunchExpedition(key, ge.age, ageOrder); err != nil {
 		return err
 	}
 
-	ge.addLog("debug", fmt.Sprintf("Expedition start: %s (soldiers: %d, bonus: %.1f%%)", ge.Military.active.Name, soldierCount, militaryBonus*100))
+	// --- All checks passed: deduct soldiers + Cost. ---
+	if def.SoldiersNeeded > 0 {
+		ge.Resources.Remove("soldiers", float64(def.SoldiersNeeded))
+	}
+	for res, amount := range def.Cost {
+		ge.Resources.Remove(res, amount)
+	}
+
+	ge.addLog("debug", fmt.Sprintf("Expedition start: %s (soldiers spent: %d)", ge.Military.active.Name, def.SoldiersNeeded))
 	ge.addLog("info", fmt.Sprintf("Expedition launched: %s", ge.Military.active.Name))
 	return nil
 }
@@ -2344,6 +2368,9 @@ func (ge *GameEngine) GetState() GameState {
 	ageOrder := ge.progress.GetAgeOrder()
 	soldierCount := ge.Workers.GetDomainCount("military")
 	knowledgeCount := ge.Workers.GetDomainCount("knowledge")
+	// Soldiers are now a real resource; the military panel reflects the resource
+	// amount, not the derived military-worker count.
+	soldierResource := int(ge.Resources.Get("soldiers"))
 	prestigeBonuses := ge.Prestige.GetBonuses()
 	wonderBonuses := ge.getWonderBonuses()
 	militaryBonus := ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + prestigeBonuses["military_power"] + wonderBonuses["military_power"]
@@ -2395,7 +2422,7 @@ func (ge *GameEngine) GetState() GameState {
 		BuildQueue:           queue,
 		Workers:              ge.Workers.Snapshot(popCap),
 		Research:             ge.Research.Snapshot(ge.age, ageOrder),
-		Military:             ge.Military.Snapshot(ge.age, ageOrder, soldierCount, militaryBonus, expeditionBonus),
+		Military:             ge.Military.Snapshot(ge.age, ageOrder, soldierResource, militaryBonus, expeditionBonus),
 		Milestones: ge.Milestones.Snapshot(MilestoneSnapshotParams{
 			Tick:            ge.tick,
 			Age:             ge.age,

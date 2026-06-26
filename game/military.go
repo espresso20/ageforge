@@ -10,9 +10,11 @@ type ExpeditionDef struct {
 	Name           string
 	Key            string
 	MinAge         string
+	MaxAge         string // empty = no upper bound; expedition is unavailable once past this age
 	SoldiersNeeded int
-	Duration       int     // ticks
-	DifficultyBase float64 // 0.0 - 1.0, higher = harder
+	Duration       int                // ticks
+	DifficultyBase float64            // 0.0 - 1.0, higher = harder
+	Cost           map[string]float64 // resource cost to launch, in addition to soldiers
 	Rewards        map[string]float64
 	Description    string
 }
@@ -26,11 +28,11 @@ type ActiveExpedition struct {
 }
 
 // MilitaryManager handles military expeditions and defense ratings.
-// Only one expedition can be active at a time (active pointer). Soldiers
-// committed to an expedition are removed from the worker pool on completion
-// (win: small chance of 1 loss; loss: 1-2 soldiers lost). The player must
-// have enough workers assigned to military buildings for the `expedition` command
-// to count as "soldiers" — see WorkerManager.GetDomainCount("military").
+// Only one expedition can be active at a time (active pointer). Soldiers are a
+// real resource (config/resources.go): launching an expedition spends
+// SoldiersNeeded of the soldiers resource plus any Cost, validated and deducted
+// by the engine before LaunchExpedition is called. Soldiers are spent at launch
+// (win or lose); success vs failure differs only in reward, not soldier loss.
 type MilitaryManager struct {
 	expeditions    []ExpeditionDef
 	active         *ActiveExpedition
@@ -44,6 +46,15 @@ func NewMilitaryManager() *MilitaryManager {
 	return &MilitaryManager{
 		totalLoot: make(map[string]float64),
 		expeditions: []ExpeditionDef{
+			{
+				Name: "Scout Party", Key: "scout_party",
+				MinAge: "primitive_age", MaxAge: "bronze_age",
+				SoldiersNeeded: 0, Duration: 20,
+				DifficultyBase: 0.2,
+				Cost:           map[string]float64{"food": 30, "wood": 30},
+				Rewards:        map[string]float64{"food": 60, "wood": 60, "stone": 20},
+				Description:    "A small band of foragers scouts nearby territory for resources.",
+			},
 			{
 				Name: "Scout Nearby Ruins", Key: "scout_ruins",
 				MinAge: "bronze_age", SoldiersNeeded: 2, Duration: 10,
@@ -153,19 +164,26 @@ func NewMilitaryManager() *MilitaryManager {
 	}
 }
 
-// LaunchExpedition starts an expedition, consuming soldiers
-func (mm *MilitaryManager) LaunchExpedition(key string, soldierCount int, currentAge string, ageOrder map[string]int, militaryBonus float64) error {
+// ExpeditionDefByKey returns the definition for an expedition key, or nil.
+func (mm *MilitaryManager) ExpeditionDefByKey(key string) *ExpeditionDef {
+	for i := range mm.expeditions {
+		if mm.expeditions[i].Key == key {
+			return &mm.expeditions[i]
+		}
+	}
+	return nil
+}
+
+// LaunchExpedition validates age + active status and sets up the active
+// expedition. Resource costs (soldiers + Cost) are validated and deducted by
+// the engine BEFORE this is called — this method assumes the player can afford
+// the launch and only enforces age range and the single-active-expedition rule.
+func (mm *MilitaryManager) LaunchExpedition(key, currentAge string, ageOrder map[string]int) error {
 	if mm.active != nil {
 		return fmt.Errorf("expedition '%s' already in progress (%d ticks left)", mm.active.Name, mm.active.TicksLeft)
 	}
 
-	var def *ExpeditionDef
-	for i := range mm.expeditions {
-		if mm.expeditions[i].Key == key {
-			def = &mm.expeditions[i]
-			break
-		}
-	}
+	def := mm.ExpeditionDefByKey(key)
 	if def == nil {
 		return fmt.Errorf("unknown expedition: %s", key)
 	}
@@ -173,9 +191,8 @@ func (mm *MilitaryManager) LaunchExpedition(key string, soldierCount int, curren
 	if ageOrder[def.MinAge] > ageOrder[currentAge] {
 		return fmt.Errorf("%s requires %s age", def.Name, def.MinAge)
 	}
-
-	if soldierCount < def.SoldiersNeeded {
-		return fmt.Errorf("%s needs %d soldiers (have: %d)", def.Name, def.SoldiersNeeded, soldierCount)
+	if def.MaxAge != "" && ageOrder[currentAge] > ageOrder[def.MaxAge] {
+		return fmt.Errorf("%s is no longer available past the %s age", def.Name, def.MaxAge)
 	}
 
 	mm.active = &ActiveExpedition{
@@ -187,34 +204,28 @@ func (mm *MilitaryManager) LaunchExpedition(key string, soldierCount int, curren
 	return nil
 }
 
-// Tick advances the active expedition by one tick. Returns non-empty rewards,
-// message, and soldiersLost only on the tick when the expedition resolves.
+// Tick advances the active expedition by one tick. Returns non-empty rewards
+// and a message only on the tick when the expedition resolves.
 //
 // Success probability: successRoll > (DifficultyBase - militaryBonus×0.3).
 // militaryBonus reduces effective difficulty; expeditionBonus scales reward amounts.
-// On success: 1 soldier may be lost with probability difficulty×0.3.
-// On failure: 30% rewards, 1-2 soldiers lost.
-func (mm *MilitaryManager) Tick(militaryBonus, expeditionBonus float64) (rewards map[string]float64, message string, soldiersLost int) {
+// Soldiers are spent at launch (win or lose); success vs failure differs only in
+// reward (full vs 30%), not in any extra soldier loss.
+func (mm *MilitaryManager) Tick(militaryBonus, expeditionBonus float64) (rewards map[string]float64, message string) {
 	if mm.active == nil {
-		return nil, "", 0
+		return nil, ""
 	}
 
 	mm.active.TicksLeft--
 	if mm.active.TicksLeft > 0 {
-		return nil, "", 0
+		return nil, ""
 	}
 
 	// Expedition complete - calculate results
-	var def *ExpeditionDef
-	for i := range mm.expeditions {
-		if mm.expeditions[i].Key == mm.active.Key {
-			def = &mm.expeditions[i]
-			break
-		}
-	}
+	def := mm.ExpeditionDefByKey(mm.active.Key)
 	if def == nil {
 		mm.active = nil
-		return nil, "", 0
+		return nil, ""
 	}
 
 	// Success calculation: military bonus reduces difficulty
@@ -235,12 +246,6 @@ func (mm *MilitaryManager) Tick(militaryBonus, expeditionBonus float64) (rewards
 			mm.totalLoot[res] += rewards[res]
 		}
 		message = fmt.Sprintf("%s succeeded! Gained loot.", def.Name)
-
-		// Small chance to lose soldiers even on success
-		if rand.Float64() < difficulty*0.3 {
-			soldiersLost = 1
-			message += " (1 soldier lost)"
-		}
 	} else {
 		// Partial rewards on failure
 		for res, amount := range def.Rewards {
@@ -248,25 +253,26 @@ func (mm *MilitaryManager) Tick(militaryBonus, expeditionBonus float64) (rewards
 			rewards[res] = partial
 			mm.totalLoot[res] += partial
 		}
-		soldiersLost = 1 + rand.Intn(2)
-		if soldiersLost > mm.active.Soldiers {
-			soldiersLost = mm.active.Soldiers
-		}
-		message = fmt.Sprintf("%s failed! Partial loot recovered. Lost %d soldier(s).", def.Name, soldiersLost)
+		message = fmt.Sprintf("%s failed! Partial loot recovered.", def.Name)
 	}
 
 	mm.completedCount++
 	mm.active = nil
-	return rewards, message, soldiersLost
+	return rewards, message
 }
 
-// GetAvailableExpeditions returns expeditions available for the current age
+// GetAvailableExpeditions returns expeditions available for the current age,
+// respecting both MinAge and MaxAge bounds.
 func (mm *MilitaryManager) GetAvailableExpeditions(currentAge string, ageOrder map[string]int) []ExpeditionDef {
 	var available []ExpeditionDef
 	for _, def := range mm.expeditions {
-		if ageOrder[def.MinAge] <= ageOrder[currentAge] {
-			available = append(available, def)
+		if ageOrder[def.MinAge] > ageOrder[currentAge] {
+			continue
 		}
+		if def.MaxAge != "" && ageOrder[currentAge] > ageOrder[def.MaxAge] {
+			continue
+		}
+		available = append(available, def)
 	}
 	return available
 }
@@ -297,6 +303,7 @@ func (mm *MilitaryManager) Snapshot(currentAge string, ageOrder map[string]int, 
 			SoldiersNeeded: def.SoldiersNeeded,
 			Duration:       def.Duration,
 			Difficulty:     def.DifficultyBase,
+			Cost:           def.Cost,
 			Description:    def.Description,
 			CanLaunch:      soldierCount >= def.SoldiersNeeded && mm.active == nil,
 		})
@@ -308,14 +315,14 @@ func (mm *MilitaryManager) Snapshot(currentAge string, ageOrder map[string]int, 
 	}
 
 	return MilitaryState{
-		SoldierCount:    soldierCount,
-		DefenseRating:   mm.CalculateDefense(soldierCount, militaryBonus),
-		MilitaryBonus:   militaryBonus,
-		ExpeditionBonus: expeditionBonus,
+		SoldierCount:     soldierCount,
+		DefenseRating:    mm.CalculateDefense(soldierCount, militaryBonus),
+		MilitaryBonus:    militaryBonus,
+		ExpeditionBonus:  expeditionBonus,
 		ActiveExpedition: activeExp,
-		Expeditions:     expList,
-		CompletedCount:  mm.completedCount,
-		TotalLoot:       loot,
+		Expeditions:      expList,
+		CompletedCount:   mm.completedCount,
+		TotalLoot:        loot,
 	}
 }
 

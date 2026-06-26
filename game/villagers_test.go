@@ -149,17 +149,6 @@ func TestWorkerManager_GetAssignedCount(t *testing.T) {
 	}
 }
 
-func TestWorkerManager_RemoveSoldiers(t *testing.T) {
-	vm := NewWorkerManager()
-	vm.UnlockType("worker")
-	vm.Recruit("worker", 5, 10)
-
-	vm.RemoveSoldiers(2)
-	if vm.TotalPop() != 3 {
-		t.Errorf("pop after removing 2 soldiers = %v, want 3", vm.TotalPop())
-	}
-}
-
 func TestWorkerManager_SaveLoadRoundTrip(t *testing.T) {
 	vm := NewWorkerManager()
 	vm.UnlockType("worker")
