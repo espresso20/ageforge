@@ -300,8 +300,8 @@ func TestEngine_BuildMultiple(t *testing.T) {
 
 // TestEngine_BuildMultiple_CostScaling verifies that batch builds charge the
 // cumulative cost curve rather than flat base-cost × N.
-// Hut: BaseCost={"wood":15}, CostScale=1.12
-// Building 5 from scratch: each unit costs floor(15 * 1.12^i) for i=0..4.
+// Hut (post cost-curve rebalance): BaseCost={"wood":14}, CostScale=1.13.
+// Building 5 from scratch: each unit costs floor(14 * 1.13^i) for i=0..4.
 // Total wood deducted must equal that sum, not 15*5=75.
 func TestEngine_BuildMultiple_CostScaling(t *testing.T) {
 	ge := NewGameEngine()
@@ -361,7 +361,7 @@ func TestEngine_BuildMultiple_QueueAwareCost(t *testing.T) {
 	if err := ge.BuildBuilding("hut"); err != nil {
 		t.Fatalf("first BuildBuilding failed: %v", err)
 	}
-	// Cost of first unit: floor(15 * 1.12^0) = 15
+	// Cost of first unit: floor(14 * 1.13^0) = 14
 	costFirst := math.Floor(base * math.Pow(scale, 0))
 
 	// Now BuildMultiple 3 more — they should cost at exponents 1, 2, 3.

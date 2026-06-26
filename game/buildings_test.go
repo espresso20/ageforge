@@ -93,10 +93,11 @@ func TestBuildingManager_LoadCounts(t *testing.T) {
 
 // TestBuildingManager_BuildBatchCost_NoBuildingsQueued checks that BuildBatchCost
 // with no prior buildings/queue returns the correct cumulative total for N units.
-// Hut: BaseCost={"wood":15}, CostScale=1.12
-// For 5 huts from scratch: cost_i = floor(15 * 1.12^i), i=0..4
-// = floor(15) + floor(16.8) + floor(18.816) + floor(21.07…) + floor(23.60…)
-// = 15 + 16 + 18 + 21 + 23 = 93
+// Hut (post cost-curve rebalance): BaseCost={"wood":14}, CostScale=1.13.
+// For 5 huts from scratch: cost_i = floor(14 * 1.13^i), i=0..4
+// = 14 + 15 + 17 + 20 + 22 = 88.
+// (Assertion below derives the expected value from the live def, so it stays
+// correct even if these numbers are re-tuned again.)
 func TestBuildingManager_BuildBatchCost_NoBuildingsQueued(t *testing.T) {
 	bm := NewBuildingManager()
 	bm.UnlockBuilding("hut")
