@@ -14,13 +14,15 @@ You're in the **Primitive Age**. The screen shows:
 You have 0 workers and minimal resources. Let's fix that.
 
 ```
-gather wood 10
-gather food 10
+gather wood 25
+gather food 25
 ``` 
 
-Repeat until you have gathered enough wood to build a hut
+Repeat until you have gathered enough wood to build a hut. Each `gather` grants up to **25** of a resource.
 
 *hint* You can use the up arrow to recall previous commands and spam that gathering!
+
+*note* Hand-gathering is an early-game crutch. It works through the **Medieval Age** and is disabled from the **Renaissance Age** onward — by then your buildings and workers should carry the economy.
 
 ---
 
