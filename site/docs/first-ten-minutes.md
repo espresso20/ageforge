@@ -147,9 +147,9 @@ Don't force it — just bank when you have surplus.
 ## Step 9: Check the age bar
 
 The second row always shows what you need for the **next age**. For Stone Age:
-- Food: 8,000
-- Wood: 5,200
-- Knowledge: 1,400
+- Food: 16,000
+- Wood: 10,000
+- Knowledge: 2,800
 - Huts: 20
 - Story Circles: 5
 
