@@ -134,13 +134,13 @@ total cost = sum of floor(BaseCost × CostScale ^ (built + queued + i))
 
 This means bulk-buying is always more expensive per unit than buying one at a time, and queueing buildings increases the price of the next purchase even before construction completes.
 
-Most production buildings use `CostScale = 1.15`. Storage buildings use `CostScale = 1.20`. Costs grow exponentially — plan your resource production before bulk-buying.
+Costs were rebalanced to flatter curves. Production, military, research, and trade buildings use `CostScale = 1.15`. Storage and housing buildings use the gentler `CostScale = 1.13`. Wonders are flat (`CostScale = 1.0`) — every copy costs the same, but they're capped to one each. Costs still grow exponentially for the scaling lineages, so plan your resource production before bulk-buying.
 
-**Example:** Gathering Camp, BaseCost=30 food, CostScale=1.15, none built or queued:
-- 1st: 30 food
-- 2nd: 34 food
-- 5th: 52 food
-- Building 5 at once: 30+34+39+45+52 = **200 food total** (not 30×5=150)
+**Example:** Gathering Camp, BaseCost=16 wood, CostScale=1.15, none built or queued:
+- 1st: 16 wood
+- 2nd: 18 wood
+- 5th: 27 wood
+- Building 5 at once: 16+18+21+24+27 = **106 wood total** (not 16×5=80)
 
 ---
 

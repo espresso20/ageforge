@@ -67,7 +67,7 @@ Opens the army overlay showing current soldier count, defense rating, active exp
 
 Military buildings do two things: they provide **worker slots** (which determines how many soldiers you can have) and they each grant a **+N military capacity** effect. You cannot field more soldiers than your total military capacity allows.
 
-All military buildings belong to the **military lineage** (22 tiers, stone_age through transcendent_age). CostScale is 1.35 — costs compound steeply with each additional copy.
+All military buildings belong to the **military lineage** (22 tiers, stone_age through transcendent_age). CostScale is 1.15 — costs rise gently with each additional copy, so scaling up an army stays affordable.
 
 | Tier | Key | Name | Age Unlocked | Soldier Cap | Worker Slots |
 |------|-----|------|-------------|-------------|--------------|
