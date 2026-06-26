@@ -1,6 +1,6 @@
 # Resources
 
-AgeForge has **25 resources** that unlock progressively as you advance through the 22 ages. Resources accumulate passively based on your buildings and worker assignments. Each resource has a base storage cap that is intentionally small — building storage lineage buildings is required to hold meaningful quantities.
+AgeForge has **26 resources** that unlock progressively as you advance through the 22 ages. Resources accumulate passively based on your buildings and worker assignments. Each resource has a base storage cap that is intentionally small — building storage lineage buildings is required to hold meaningful quantities.
 
 ---
 
@@ -63,6 +63,14 @@ These resources are produced by Geological Extraction buildings and consumed by 
 | Dark Matter | `dark_matter` | Interstellar Age | 20 | Exotic refined matter for warp technology |
 | Antimatter | `antimatter` | Galactic Age | 20 | Annihilation fuel for megastructures |
 | Quantum Flux | `quantum_flux` | Quantum Age | 10 | Unstable quantum energy for reality manipulation |
+
+### Military
+
+| Resource | Key | Unlocks | Base Storage | Notes |
+|----------|-----|---------|--------------|-------|
+| Soldiers | `soldiers` | Iron Age | Sum of military buildings' soldier caps | Produced by military buildings when workers are assigned; spent to launch expeditions |
+
+Soldiers are a true stockpiled resource (the 26th), produced and stored by your military buildings. See [Soldiers](#soldiers) below and [Military & Expeditions](military.md) for the full mechanics.
 
 ---
 
@@ -148,7 +156,7 @@ You must have both the Geological Extraction lineage buildings (to produce ore) 
 
 ## Resource Storage
 
-All 25 resources share storage from the Storage lineage buildings. Each Storage tier raises the cap for every resource simultaneously. The base caps are very small (10–50 units) — you will hit them early.
+The 25 civilian resources share storage from the Storage lineage buildings. Each Storage tier raises the cap for every one of them simultaneously. The base caps are very small (10–50 units) — you will hit them early. (Soldiers are the exception: their cap comes from your military buildings, not the Storage lineage — see [Soldiers](#soldiers).)
 
 **Priority:** Build a new Storage lineage building as your first or second action when entering any new age.
 
@@ -164,3 +172,17 @@ Gold enables trade, diplomacy gifts, and many mid-to-late game building costs.
 - Assign trade-domain workers to Trade lineage buildings (Market, Bank, Stock Exchange, ...)
 - Complete trade routes that export surplus resources
 - Research Currency, Mercantilism, and related technologies
+
+---
+
+## Soldiers
+
+Soldiers are a stockpiled resource — the 26th — that unlocks at the **Iron Age**. Unlike civilian resources, soldiers are both **produced** and **stored** exclusively by your military buildings.
+
+**How soldiers are produced:** Each military building you own (War Camp, Barracks, and successors) produces soldiers every tick when military-domain workers are assigned to it, exactly like food or wood production scales with assigned workers. A fully-staffed military building produces roughly its soldier cap ÷ 50 soldiers per tick (minimum 0.1/tick).
+
+**How soldiers are stored:** Your soldier storage cap is the **sum of every military building's soldier cap**. There is no separate Storage-lineage contribution — building more (and higher-tier) military buildings is the only way to raise the ceiling. A single War Camp caps you at 10 soldiers; a Barracks adds 20; caps double per tier up the military lineage.
+
+**How soldiers are spent:** Launching an [expedition](military.md#expeditions) deducts that expedition's soldier cost from your stockpile at launch — whether the run succeeds or fails. Hostile catastrophe events can also reduce your soldier count.
+
+See [Military & Expeditions](military.md) for production formulas, per-building soldier caps, and the full expedition table.

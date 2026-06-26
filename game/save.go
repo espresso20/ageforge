@@ -321,11 +321,12 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		Workers:   ge.Workers.GetAll(),
 		Unlocked:  ge.getUnlockedState(),
 		Stats: &GameStats{
-			TotalBuilt:     ge.Stats.TotalBuilt,
-			TotalRecruited: ge.Stats.TotalRecruited,
-			TotalGathered:  statsGathered,
-			GameStarted:    ge.Stats.GameStarted,
-			AgesReached:    agesReached,
+			TotalBuilt:      ge.Stats.TotalBuilt,
+			TotalRecruited:  ge.Stats.TotalRecruited,
+			TotalGathered:   statsGathered,
+			GameStarted:     ge.Stats.GameStarted,
+			AgesReached:     agesReached,
+			SoldiersTrained: ge.Stats.SoldiersTrained,
 		},
 		BuildQueue: queue,
 		Research: ResearchSave{
@@ -435,11 +436,12 @@ func (ge *GameEngine) LoadGame(filename string) error {
 		ages := make([]string, len(save.Stats.AgesReached))
 		copy(ages, save.Stats.AgesReached)
 		ge.Stats = &GameStats{
-			TotalBuilt:     save.Stats.TotalBuilt,
-			TotalRecruited: save.Stats.TotalRecruited,
-			TotalGathered:  gathered,
-			GameStarted:    save.Stats.GameStarted,
-			AgesReached:    ages,
+			TotalBuilt:      save.Stats.TotalBuilt,
+			TotalRecruited:  save.Stats.TotalRecruited,
+			TotalGathered:   gathered,
+			GameStarted:     save.Stats.GameStarted,
+			AgesReached:     ages,
+			SoldiersTrained: save.Stats.SoldiersTrained,
 		}
 	}
 	ge.buildQueue = save.BuildQueue

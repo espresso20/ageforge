@@ -458,8 +458,17 @@ func (ge *GameEngine) doTick() {
 	// Apply building production
 	ge.recalculateRates()
 
+	// Snapshot the soldiers amount before rates are applied so we can credit
+	// only the soldiers actually trained this tick (post-storage-clamp delta).
+	soldiersBefore := ge.Resources.Get("soldiers")
+
 	// Apply resource rates (production - consumption)
 	ge.Resources.ApplyRates()
+
+	// Credit the lifetime soldiers-trained counter with the post-clamp delta.
+	// Soldiers discarded at the storage cap don't count; the helper floors at 0
+	// so a net drain never reduces the lifetime total.
+	ge.Stats.RecordSoldiersTrained(ge.Resources.Get("soldiers") - soldiersBefore)
 
 	// Log net food rate and capped resources every 10 ticks
 	if ge.tick%10 == 0 {
@@ -681,8 +690,9 @@ func (ge *GameEngine) checkMilestones() {
 		researchedTechs[key] = true
 	}
 
-	// Count soldiers and knowledge workers
-	soldierCount := ge.Workers.GetDomainCount("military")
+	// Soldier milestones key off cumulative lifetime soldiers trained, not the
+	// live military-worker count. Knowledge workers are still a live domain count.
+	soldiersTrained := int(ge.Stats.SoldiersTrained)
 	knowledgeCount := ge.Workers.GetDomainCount("knowledge")
 
 	// Count wonders
@@ -700,7 +710,7 @@ func (ge *GameEngine) checkMilestones() {
 		ge.Research.ResearchedCount(),
 		ge.Stats.TotalBuilt,
 		researchedTechs,
-		soldierCount,
+		soldiersTrained,
 		wonderCount,
 		knowledgeCount,
 	)
@@ -2366,10 +2376,10 @@ func (ge *GameEngine) GetState() GameState {
 	}
 
 	ageOrder := ge.progress.GetAgeOrder()
-	soldierCount := ge.Workers.GetDomainCount("military")
 	knowledgeCount := ge.Workers.GetDomainCount("knowledge")
 	// Soldiers are now a real resource; the military panel reflects the resource
-	// amount, not the derived military-worker count.
+	// amount, not the derived military-worker count. The soldier milestones key
+	// off the cumulative lifetime trained count instead (ge.Stats.SoldiersTrained).
 	soldierResource := int(ge.Resources.Get("soldiers"))
 	prestigeBonuses := ge.Prestige.GetBonuses()
 	wonderBonuses := ge.getWonderBonuses()
@@ -2422,7 +2432,7 @@ func (ge *GameEngine) GetState() GameState {
 		BuildQueue:           queue,
 		Workers:              ge.Workers.Snapshot(popCap),
 		Research:             ge.Research.Snapshot(ge.age, ageOrder),
-		Military:             ge.Military.Snapshot(ge.age, ageOrder, soldierResource, militaryBonus, expeditionBonus),
+		Military:             ge.Military.Snapshot(ge.age, ageOrder, soldierResource, int(ge.Resources.GetStorage("soldiers")), ge.Resources.GetRate("soldiers"), ge.Resources.GetAll(), militaryBonus, expeditionBonus),
 		Milestones: ge.Milestones.Snapshot(MilestoneSnapshotParams{
 			Tick:            ge.tick,
 			Age:             ge.age,
@@ -2432,7 +2442,8 @@ func (ge *GameEngine) GetState() GameState {
 			Population:      ge.Workers.TotalPop(),
 			TechCount:       ge.Research.ResearchedCount(),
 			TotalBuilt:      ge.Stats.TotalBuilt,
-			SoldierCount:    soldierCount,
+			SoldierCount:    soldierResource,
+			SoldiersTrained: int(ge.Stats.SoldiersTrained),
 			WonderCount:     ge.countWonders(),
 			KnowledgeCount:  knowledgeCount,
 			ResearchedTechs: ge.getResearchedTechMap(),

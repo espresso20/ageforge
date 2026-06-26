@@ -59,7 +59,7 @@ func (mm *MilestoneManager) CheckMilestones(
 	techCount int,
 	totalBuilt int,
 	researchedTechs map[string]bool,
-	soldierCount int,
+	soldiersTrained int,
 	wonderCount int,
 	knowledgeCount int,
 ) []config.MilestoneDef {
@@ -70,7 +70,7 @@ func (mm *MilestoneManager) CheckMilestones(
 			continue
 		}
 
-		if mm.checkMilestone(def, tick, age, ageOrder, resources, buildings, population, techCount, totalBuilt, researchedTechs, soldierCount, wonderCount, knowledgeCount) {
+		if mm.checkMilestone(def, tick, age, ageOrder, resources, buildings, population, techCount, totalBuilt, researchedTechs, soldiersTrained, wonderCount, knowledgeCount) {
 			mm.completed[def.Key] = true
 			completed = append(completed, def)
 		}
@@ -90,7 +90,7 @@ func (mm *MilestoneManager) checkMilestone(
 	techCount int,
 	totalBuilt int,
 	researchedTechs map[string]bool,
-	soldierCount int,
+	soldiersTrained int,
 	wonderCount int,
 	knowledgeCount int,
 ) bool {
@@ -156,23 +156,23 @@ func (mm *MilestoneManager) checkMilestone(
 			return false
 		}
 	case "first_soldiers":
-		if soldierCount < 5 {
+		if soldiersTrained < 5 {
 			return false
 		}
 	case "standing_army":
-		if soldierCount < 100 {
+		if soldiersTrained < 100 {
 			return false
 		}
 	case "war_machine":
-		if soldierCount < 250 {
+		if soldiersTrained < 250 {
 			return false
 		}
 	case "iron_legion":
-		if soldierCount < 500 {
+		if soldiersTrained < 500 {
 			return false
 		}
 	case "military_superpower":
-		if soldierCount < 2000 {
+		if soldiersTrained < 2000 {
 			return false
 		}
 	case "wonder_builder":
@@ -387,38 +387,38 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 		})
 	case "first_soldiers":
 		progress = append(progress, MilestoneProgress{
-			Label:   "Soldiers",
-			Current: float64(params.SoldierCount),
+			Label:   "Soldiers trained",
+			Current: float64(params.SoldiersTrained),
 			Target:  5,
-			Met:     params.SoldierCount >= 5,
+			Met:     params.SoldiersTrained >= 5,
 		})
 	case "standing_army":
 		progress = append(progress, MilestoneProgress{
-			Label:   "Soldiers",
-			Current: float64(params.SoldierCount),
+			Label:   "Soldiers trained",
+			Current: float64(params.SoldiersTrained),
 			Target:  100,
-			Met:     params.SoldierCount >= 100,
+			Met:     params.SoldiersTrained >= 100,
 		})
 	case "war_machine":
 		progress = append(progress, MilestoneProgress{
-			Label:   "Soldiers",
-			Current: float64(params.SoldierCount),
+			Label:   "Soldiers trained",
+			Current: float64(params.SoldiersTrained),
 			Target:  250,
-			Met:     params.SoldierCount >= 250,
+			Met:     params.SoldiersTrained >= 250,
 		})
 	case "iron_legion":
 		progress = append(progress, MilestoneProgress{
-			Label:   "Soldiers",
-			Current: float64(params.SoldierCount),
+			Label:   "Soldiers trained",
+			Current: float64(params.SoldiersTrained),
 			Target:  500,
-			Met:     params.SoldierCount >= 500,
+			Met:     params.SoldiersTrained >= 500,
 		})
 	case "military_superpower":
 		progress = append(progress, MilestoneProgress{
-			Label:   "Soldiers",
-			Current: float64(params.SoldierCount),
+			Label:   "Soldiers trained",
+			Current: float64(params.SoldiersTrained),
 			Target:  2000,
-			Met:     params.SoldierCount >= 2000,
+			Met:     params.SoldiersTrained >= 2000,
 		})
 	case "wonder_builder":
 		progress = append(progress, MilestoneProgress{

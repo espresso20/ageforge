@@ -218,7 +218,13 @@ type TechState struct {
 
 // MilitaryState represents military system state for UI
 type MilitaryState struct {
-	SoldierCount     int
+	// SoldierCount is the current soldiers resource amount.
+	SoldierCount int
+	// SoldierCap is the soldiers resource storage cap (sum of built military
+	// buildings' storage effects). SoldierRate is the per-tick soldiers
+	// production rate (net). Both are populated from the soldiers resource.
+	SoldierCap       int
+	SoldierRate      float64
 	DefenseRating    float64
 	MilitaryBonus    float64
 	ExpeditionBonus  float64
@@ -245,6 +251,10 @@ type ExpeditionInfo struct {
 	Cost           map[string]float64
 	Description    string
 	CanLaunch      bool
+	// LaunchBlockReason is a short, player-facing explanation of why the
+	// expedition can't be launched right now (e.g. "need 3 soldiers",
+	// "need 30 food"). Empty when CanLaunch is true.
+	LaunchBlockReason string
 }
 
 // === Milestone Types ===
@@ -302,7 +312,8 @@ type MilestoneSnapshotParams struct {
 	Population      int
 	TechCount       int
 	TotalBuilt      int
-	SoldierCount    int
+	SoldierCount    int // soldiers resource amount (live); used by non-milestone consumers
+	SoldiersTrained int // cumulative lifetime soldiers trained; drives soldier milestones
 	WonderCount     int
 	KnowledgeCount  int
 	ResearchedTechs map[string]bool

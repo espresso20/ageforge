@@ -23,10 +23,10 @@ AgeForge runs entirely in your terminal using a full-screen TUI built with Go + 
 ## At a glance
 
 - **22 Ages** — Primitive → Transcendent
-- **25 Resources** — from Wood and Stone to Quantum Energy
+- **26 Resources** — from Wood and Stone to Quantum Energy (including Soldiers)
 - **284 Buildings** — 241 production + 21 storage + 22 wonders
 - **52 Technologies** — prerequisite chains, age-gated
-- **15 Expeditions** — risk/reward military system
+- **16 Expeditions** — risk/reward military system
 - **15 Trade routes** — across 6 NPC factions
 - **74 Milestones** — in 6 chains with civilization titles
 - **9 Prestige upgrades** — permanent bonuses across resets

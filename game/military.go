@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"math/rand"
+	"sort"
 )
 
 // ExpeditionDef defines an available expedition
@@ -277,14 +278,50 @@ func (mm *MilitaryManager) GetAvailableExpeditions(currentAge string, ageOrder m
 	return available
 }
 
+// launchability reports whether an expedition can be launched right now and, if
+// not, a short player-facing reason. It mirrors the engine's LaunchExpedition
+// validation order: single-active rule, then soldiers, then each Cost resource.
+// soldierCount is the current soldiers amount; resources is the live resource
+// map (nil → Cost treated as unaffordable).
+func (mm *MilitaryManager) launchability(def ExpeditionDef, soldierCount int, resources map[string]float64) (bool, string) {
+	if mm.active != nil {
+		return false, "expedition already in progress"
+	}
+	if soldierCount < def.SoldiersNeeded {
+		return false, fmt.Sprintf("need %d soldiers", def.SoldiersNeeded)
+	}
+	// Check Cost resources in a stable (sorted) order so the surfaced reason is
+	// deterministic regardless of map iteration order.
+	keys := make([]string, 0, len(def.Cost))
+	for res := range def.Cost {
+		keys = append(keys, res)
+	}
+	sort.Strings(keys)
+	for _, res := range keys {
+		amount := def.Cost[res]
+		if resources[res] < amount {
+			return false, fmt.Sprintf("need %.0f %s", amount, res)
+		}
+	}
+	return true, ""
+}
+
 // CalculateDefense calculates defense rating from soldiers and bonuses
 func (mm *MilitaryManager) CalculateDefense(soldierCount int, militaryBonus float64) float64 {
 	base := float64(soldierCount) * 2.0
 	return base * (1.0 + militaryBonus)
 }
 
-// Snapshot returns military state for UI
-func (mm *MilitaryManager) Snapshot(currentAge string, ageOrder map[string]int, soldierCount int, militaryBonus, expeditionBonus float64) MilitaryState {
+// Snapshot returns military state for UI.
+//
+// soldierCount is the current soldiers resource amount; soldierCap and
+// soldierRate are that resource's storage cap and per-tick production rate.
+// currentResources is the live resource map (from the engine, which owns
+// ResourceManager) used to decide whether each expedition's Cost is affordable —
+// CanLaunch requires soldiers, not-active, AND every Cost resource covered.
+// currentResources may be nil, in which case Cost affordability is treated as
+// unmet (defensive; the engine always passes a real map).
+func (mm *MilitaryManager) Snapshot(currentAge string, ageOrder map[string]int, soldierCount, soldierCap int, soldierRate float64, currentResources map[string]float64, militaryBonus, expeditionBonus float64) MilitaryState {
 	var activeExp *ExpeditionSnapshot
 	if mm.active != nil {
 		activeExp = &ExpeditionSnapshot{
@@ -297,15 +334,17 @@ func (mm *MilitaryManager) Snapshot(currentAge string, ageOrder map[string]int, 
 	available := mm.GetAvailableExpeditions(currentAge, ageOrder)
 	var expList []ExpeditionInfo
 	for _, def := range available {
+		canLaunch, reason := mm.launchability(def, soldierCount, currentResources)
 		expList = append(expList, ExpeditionInfo{
-			Name:           def.Name,
-			Key:            def.Key,
-			SoldiersNeeded: def.SoldiersNeeded,
-			Duration:       def.Duration,
-			Difficulty:     def.DifficultyBase,
-			Cost:           def.Cost,
-			Description:    def.Description,
-			CanLaunch:      soldierCount >= def.SoldiersNeeded && mm.active == nil,
+			Name:              def.Name,
+			Key:               def.Key,
+			SoldiersNeeded:    def.SoldiersNeeded,
+			Duration:          def.Duration,
+			Difficulty:        def.DifficultyBase,
+			Cost:              def.Cost,
+			Description:       def.Description,
+			CanLaunch:         canLaunch,
+			LaunchBlockReason: reason,
 		})
 	}
 
@@ -316,6 +355,8 @@ func (mm *MilitaryManager) Snapshot(currentAge string, ageOrder map[string]int, 
 
 	return MilitaryState{
 		SoldierCount:     soldierCount,
+		SoldierCap:       soldierCap,
+		SoldierRate:      soldierRate,
 		DefenseRating:    mm.CalculateDefense(soldierCount, militaryBonus),
 		MilitaryBonus:    militaryBonus,
 		ExpeditionBonus:  expeditionBonus,

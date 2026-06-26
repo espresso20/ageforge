@@ -8,12 +8,12 @@ The military system is one of AgeForge's primary engines of wealth. Soldiers def
 
 The military system does four things:
 
-- **Expeditions** — send soldiers out for timed missions that return resources, gold, and knowledge on success.
+- **Expeditions** — spend stockpiled soldiers on timed missions that return resources, gold, and knowledge on success.
 - **Defense rating** — a passive stat derived from soldier count and military bonuses that reduces damage from hostile epoch events.
 - **Milestones** — five military milestones grant permanent `military_power` bonuses and chain into a title reward.
 - **Prestige** — prestige upgrades `military_power` and `expedition_loot` carry over through resets, compounding across runs.
 
-Soldiers are workers from the **military domain**. They are recruited the same way as any worker, then assigned to military buildings. The military domain unlocks at **Iron Age** — you cannot assign workers to military buildings before then.
+**Soldiers are a resource** (the 26th), not a worker domain count. They are *produced and stored by your military buildings*: assign military-domain workers to a War Camp or Barracks and it generates the `soldiers` resource every tick, the same way a Farm generates food. The military domain — and the soldiers resource — unlock at the **Iron Age**. Before then, use the `scout_party` expedition (see [§4](#4-expeditions)) to scout for resources without any soldiers at all.
 
 ---
 
@@ -21,37 +21,38 @@ Soldiers are workers from the **military domain**. They are recruited the same w
 
 ### What soldiers are
 
-Soldiers are workers assigned to military-domain buildings. Your soldier count equals the number of workers the game reports under `WorkerManager.GetDomainCount("military")`. They consume food every tick at the current military worker class food cost (base **2.0/tick** at Iron Age, scaling by ×1.5 per tier as you advance through ages).
+Soldiers are a stockpiled **resource** (`soldiers`), unlocked at the **Iron Age**. You don't count heads in a worker pool — you bank soldiers the way you bank food or wood, then spend them launching expeditions.
 
-### Recruiting
+- **Production:** Military buildings produce soldiers every tick when military-domain workers are assigned to them. Production is worker-scaled — a fully-staffed military building produces roughly its **soldier cap ÷ 50** soldiers per tick (minimum 0.1/tick). Assign more military workers, build more military buildings → soldiers accrue faster.
+- **Storage:** Your soldier cap equals the **sum of every military building's soldier cap**. Building or upgrading military buildings is the *only* way to raise the ceiling — the Storage lineage does not hold soldiers.
+- **Spending:** Expeditions deduct their soldier cost from your stockpile at launch (see [§4](#4-expeditions)).
+
+### Producing soldiers
+
+The soldiers resource is produced by the military workers you staff into military buildings. The workflow:
 
 ```
-recruit [count|max]
+recruit [count|max]     # recruit generic workers from housing capacity
+assign war_camp 5       # staff them into a military building → it starts producing soldiers
+assign barracks all     # fill a building to capacity for maximum soldier output
 ```
 
 - `recruit 5` — recruits 5 new generic workers from available housing capacity.
 - `recruit max` — fills every available housing slot instantly.
-- Workers remain generic until assigned to a building; assignment to a military building makes them soldiers.
+- Workers remain generic until assigned to a building. Assigning them to a military building turns them into military-class workers, who consume food and produce the `soldiers` resource each tick.
 
-After recruiting, assign them:
+### Food drain (military workers)
 
-```
-assign war_camp 5
-assign barracks all
-```
-
-### Food drain
-
-Military workers eat at the base rate for their current class. At **Iron Age** that is 2.0 food/tick per soldier. The rate scales geometrically (×1.5 per tier) as you advance through ages. A large standing army in the late game has a meaningful food cost — plan your food production accordingly before enlisting.
+The military *workers* who produce soldiers eat food at the base rate for their current class — **2.0 food/tick** each at Iron Age, scaling geometrically (×1.5 per tier) as you advance through ages. The soldiers resource itself has no upkeep once produced; only the workforce generating it costs food. A large soldier-producing operation in the late game has a meaningful food cost, so plan your food production accordingly before staffing up.
 
 ### Losing soldiers
 
-Soldiers can be lost in two ways:
+Soldiers leave your stockpile in two ways:
 
-- **Expedition failure** — a failed expedition costs 1–2 soldiers (random). Even a success has a small chance of 1 soldier lost (probability: `difficulty × 0.3`).
-- **Catastrophe events** — certain epoch events that destroy buildings can also reduce your workforce.
+- **Expedition launch** — every expedition spends its soldier cost up front, deducted whether the run later succeeds or fails. (The `scout_party` expedition costs **0** soldiers — see [§4](#4-expeditions).)
+- **Catastrophe events** — certain hostile epoch events can drain stored soldiers along with other losses.
 
-Soldiers who die are simply removed from the worker pool. They do not need to be "buried" or replaced automatically — you recruit replacements manually.
+Spent or lost soldiers are simply removed from the stockpile. To replenish, keep military workers assigned to your military buildings so production continues.
 
 ### Viewing your army
 
@@ -65,9 +66,11 @@ Opens the army overlay showing current soldier count, defense rating, active exp
 
 ## 3. Military Buildings
 
-Military buildings do two things: they provide **worker slots** (which determines how many soldiers you can have) and they each grant a **+N military capacity** effect. You cannot field more soldiers than your total military capacity allows.
+Military buildings do three things: they provide **worker slots** for military-domain workers, they **produce the soldiers resource** every tick while staffed, and their per-instance **soldier cap** sets how many soldiers you can store. Your total soldier storage is the sum of all your military buildings' soldier caps — you cannot bank more soldiers than that combined cap allows.
 
 All military buildings belong to the **military lineage** (22 tiers, stone_age through transcendent_age). CostScale is 1.35 — costs compound steeply with each additional copy.
+
+**Soldier production per building:** A fully-staffed military building produces about **its soldier cap ÷ 50 per tick** (minimum 0.1/tick). A staffed Barracks (cap 20) yields ~0.4 soldiers/tick; a Castle Keep (cap 320) yields ~6.4/tick. Production scales with worker assignment exactly like every other domain — see [§5](#5-military-domain-workers).
 
 | Tier | Key | Name | Age Unlocked | Soldier Cap | Worker Slots |
 |------|-----|------|-------------|-------------|--------------|
@@ -94,7 +97,7 @@ All military buildings belong to the **military lineage** (22 tiers, stone_age t
 | 20 | `probability_war_room` | Probability War Room | Quantum Age | +10,485,760 | 30 |
 | 21 | `omniversal_war_council` | Omniversal War Council | Transcendent Age | +20,971,520 | 35 |
 
-**Building for capacity:** The soldier cap from a building applies per instance. Two Barracks = 40 military capacity total. Stack them to increase your army ceiling before attempting high-soldier expeditions.
+**Building for capacity and output:** The soldier cap applies per instance — two Barracks = 40 soldier storage total *and* doubled soldier production when both are staffed. Stack military buildings to raise both your soldier ceiling and your soldiers-per-tick rate before attempting high-soldier expeditions.
 
 ---
 
@@ -102,7 +105,14 @@ All military buildings belong to the **military lineage** (22 tiers, stone_age t
 
 ### What expeditions are
 
-Expeditions are timed missions that consume no resources to launch (only soldier presence is required). After a set number of ticks, they resolve — either succeeding for full loot or failing for partial loot plus soldier losses. Only **one expedition can be active at a time**.
+Expeditions are timed missions that **spend the soldiers resource** to launch. The soldier cost (and any additional resource `Cost`, such as the food/wood for `scout_party`) is deducted from your stockpiles the moment you launch — there's no refund. After a set number of ticks, the expedition resolves. **Success and failure differ only in the size of the reward, not the cost:** the soldiers are spent either way. A successful run pays full loot; a failed run pays a reduced amount. Only **one expedition can be active at a time**.
+
+### Cost, gating, and rewards
+
+- **Soldier cost** — spent from the `soldiers` resource at launch. You cannot launch an expedition you can't afford. The `scout_party` is the exception: it costs **0 soldiers**, only food and wood.
+- **Resource `Cost`** — some expeditions also charge resources up front (e.g. `scout_party` costs 30 food + 30 wood). Deducted at launch alongside the soldier cost.
+- **Age gating** — every expedition has a `MinAge`. Some now also have a `MaxAge` and disappear once you advance past it. `scout_party` is gated to primitive → bronze ages (it vanishes at Iron Age, when real soldiers become available).
+- **Reward** — paid on resolution: full amount on success, reduced amount on failure. The soldier and resource costs are *not* part of the reward calculation; they're already gone.
 
 ### Commands
 
@@ -127,31 +137,40 @@ success = rand() > difficulty
 
 A higher `militaryBonus` reduces the effective difficulty. With zero bonus, a 0.8-difficulty expedition succeeds only ~20% of the time. With a +2.0 military bonus, effective difficulty is clamped to 0.05, giving ~95% success.
 
-**On success:** Full rewards × (1 + expeditionBonus). Small chance of 1 soldier lost: `rand() < difficulty × 0.3`.
+The soldier (and resource) cost is already spent at launch, so the outcome only scales the **reward**:
 
-**On failure:** 30% of rewards awarded. 1–2 soldiers lost (random, capped at expedition's soldier count).
+**On success:** Full rewards × (1 + expeditionBonus).
+
+**On failure:** A reduced fraction of the rewards is awarded. No additional soldiers are deducted on failure — the launch cost is the entire cost, win or lose.
 
 ### Full expedition table
 
-| Key | Name | Min Age | Soldiers | Duration | Difficulty | Rewards on Success |
-|-----|------|---------|----------|----------|------------|-------------------|
-| `scout_ruins` | Scout Nearby Ruins | Bronze Age | 2 | 10t | 0.20 | 30 food, 20 wood, 15 stone |
-| `raid_bandits` | Raid Bandit Camp | Bronze Age | 5 | 15t | 0.40 | 30 gold, 15 iron, 20 food |
-| `trade_escort` | Trade Escort | Iron Age | 3 | 12t | 0.30 | 50 gold, 10 knowledge |
-| `conquer_territory` | Conquer Territory | Iron Age | 10 | 25t | 0.60 | 80 gold, 40 iron, 50 food |
-| `siege_castle` | Siege Enemy Castle | Medieval Age | 15 | 30t | 0.70 | 150 gold, 30 steel, 20 faith |
-| `naval_expedition` | Naval Expedition | Renaissance Age | 10 | 35t | 0.50 | 200 gold, 30 culture, 40 knowledge |
-| `colonial_campaign` | Colonial Campaign | Industrial Age | 20 | 40t | 0.60 | 300 gold, 50 oil, 40 steel |
-| `world_domination` | World Domination | Modern Age | 50 | 60t | 0.80 | 1,000 gold, 200 electricity, 500 knowledge |
-| `cyber_raid` | Cyber Raid | Information Age | 30 | 45t | 0.60 | 200 data, 50 crypto, 500 gold |
-| `neon_heist` | Neon Heist | Cyberpunk Age | 25 | 35t | 0.55 | 100 crypto, 150 data, 800 gold |
-| `fusion_assault` | Fusion Plant Assault | Fusion Age | 35 | 40t | 0.65 | 120 plasma, 500 electricity, 50 uranium |
-| `orbital_strike` | Orbital Strike | Space Age | 40 | 50t | 0.70 | 100 titanium, 80 plasma, 300 knowledge |
-| `warp_invasion` | Warp Invasion | Interstellar Age | 60 | 65t | 0.75 | 50 dark matter, 200 titanium, 2,000 gold |
-| `galactic_conquest` | Galactic Conquest | Galactic Age | 80 | 80t | 0.80 | 30 antimatter, 100 dark matter, 5,000 gold |
-| `quantum_incursion` | Quantum Incursion | Quantum Age | 100 | 90t | 0.85 | 20 quantum flux, 50 antimatter, 5,000 knowledge |
+The **Soldier Cost** column is now spent from the `soldiers` resource at launch (not a soldier headcount requirement). Some expeditions also charge a resource `Cost` up front — noted in the table.
 
-**Tip:** `scout_ruins` and `trade_escort` are the workhorses of early play — low difficulty, short duration, and they can be chained rapidly for consistent loot.
+| Key | Name | Min Age | Soldier Cost | Resource Cost | Duration | Difficulty | Rewards on Success |
+|-----|------|---------|--------------|---------------|----------|------------|-------------------|
+| `scout_party` | Scout Party | Primitive Age (max Bronze Age) | 0 | 30 food, 30 wood | 20t | — | 60 food, 60 wood, 20 stone |
+| `scout_ruins` | Scout Nearby Ruins | Bronze Age | 2 | — | 10t | 0.20 | 30 food, 20 wood, 15 stone |
+| `raid_bandits` | Raid Bandit Camp | Bronze Age | 5 | — | 15t | 0.40 | 30 gold, 15 iron, 20 food |
+| `trade_escort` | Trade Escort | Iron Age | 3 | — | 12t | 0.30 | 50 gold, 10 knowledge |
+| `conquer_territory` | Conquer Territory | Iron Age | 10 | — | 25t | 0.60 | 80 gold, 40 iron, 50 food |
+| `siege_castle` | Siege Enemy Castle | Medieval Age | 15 | — | 30t | 0.70 | 150 gold, 30 steel, 20 faith |
+| `naval_expedition` | Naval Expedition | Renaissance Age | 10 | — | 35t | 0.50 | 200 gold, 30 culture, 40 knowledge |
+| `colonial_campaign` | Colonial Campaign | Industrial Age | 20 | — | 40t | 0.60 | 300 gold, 50 oil, 40 steel |
+| `world_domination` | World Domination | Modern Age | 50 | — | 60t | 0.80 | 1,000 gold, 200 electricity, 500 knowledge |
+| `cyber_raid` | Cyber Raid | Information Age | 30 | — | 45t | 0.60 | 200 data, 50 crypto, 500 gold |
+| `neon_heist` | Neon Heist | Cyberpunk Age | 25 | — | 35t | 0.55 | 100 crypto, 150 data, 800 gold |
+| `fusion_assault` | Fusion Plant Assault | Fusion Age | 35 | — | 40t | 0.65 | 120 plasma, 500 electricity, 50 uranium |
+| `orbital_strike` | Orbital Strike | Space Age | 40 | — | 50t | 0.70 | 100 titanium, 80 plasma, 300 knowledge |
+| `warp_invasion` | Warp Invasion | Interstellar Age | 60 | — | 65t | 0.75 | 50 dark matter, 200 titanium, 2,000 gold |
+| `galactic_conquest` | Galactic Conquest | Galactic Age | 80 | — | 80t | 0.80 | 30 antimatter, 100 dark matter, 5,000 gold |
+| `quantum_incursion` | Quantum Incursion | Quantum Age | 100 | — | 90t | 0.85 | 20 quantum flux, 50 antimatter, 5,000 knowledge |
+
+That's **16 expeditions** in total.
+
+**`scout_party` — the pre-iron expedition.** Before the Iron Age there is no military worker domain and no `soldiers` resource, so the soldier-driven expeditions above aren't available. `scout_party` fills that gap: *"A small band of foragers scouts nearby territory for resources."* It costs **30 food + 30 wood**, needs **0 soldiers**, runs ~20 ticks, and rewards roughly **60 food / 60 wood / 20 stone** — a net resource gain that's worth running on repeat through the Primitive, Stone, and Bronze ages. It has a `MaxAge` of Bronze Age and disappears once you reach the Iron Age and graduate to soldier-backed expeditions.
+
+**Tip:** `scout_ruins` and `trade_escort` are the workhorses of early *soldier* play — low difficulty, short duration, and they can be chained rapidly for consistent loot.
 
 ---
 
@@ -241,9 +260,10 @@ The five military milestones form a chain. Completing the full chain grants a pe
 
 ### Early game (Iron Age to Classical Age)
 
-- Build a **War Camp** in the Stone Age even though soldiers aren't possible yet — it prepares your capacity.
-- Your first soldiers become available in **Iron Age** via the Hunting Lodge. Train 5 quickly to land `first_soldiers` for the free +0.05 bonus.
-- `trade_escort` (3 soldiers, Iron Age) is your best early expedition — low soldiers needed, fast duration (12t), reasonable gold reward.
+- Before Iron Age, run `scout_party` on repeat — 0 soldiers, just 30 food + 30 wood for a ~60 food / 60 wood / 20 stone payout. It's free resource throughput while you wait for the military domain.
+- Build a **War Camp** in the Stone Age even though soldiers aren't possible yet — it prepares your soldier storage and starts producing the moment the domain unlocks.
+- Your first soldiers become available in **Iron Age** via the Hunting Lodge. Stockpile 5 quickly to land `first_soldiers` for the free +0.05 bonus.
+- `trade_escort` (spends 3 soldiers, Iron Age) is your best early soldier expedition — cheap, fast duration (12t), reasonable gold reward.
 - Keep food workers prioritised. Military workers eat 2.0 food/tick each at this stage — a 10-soldier army demands 20 food/tick just to sustain itself.
 
 ### Mid game (Classical to Industrial Age)
@@ -255,7 +275,7 @@ The five military milestones form a chain. Completing the full chain grants a pe
 
 ### Late game (Modern Age onward)
 
-- `world_domination` requires 50 soldiers but pays 1,000 gold — worth the queue for gold-hungry ages.
+- `world_domination` spends 50 soldiers but pays 1,000 gold — worth the queue for gold-hungry ages once your soldier production can refill the cost.
 - `cyber_raid` and `neon_heist` are the best value in the digital/cyberpunk range. `neon_heist` (0.55 difficulty) is easier than `cyber_raid` (0.60) for comparable loot.
 - Buy `expedition_loot` prestige upgrades across resets — at tier 5 (+25% rewards) stacked with research bonuses, expedition returns scale dramatically.
 - The `military_superpower` milestone (+0.15 bonus) combined with late-game research can push effective difficulty on most expeditions to the 0.05 floor.
@@ -285,7 +305,7 @@ Maintaining a large standing army has a second cost beyond food: **morale drain*
 
 Morale is a multiplier on all worker output (floor 0.10). Sustained morale drain from an oversized army gradually suppresses production across every domain — food, knowledge, trade, everything — creating a feedback loop where the army's food cost becomes even harder to cover as food workers produce less.
 
-**Recommended target: keep military workers below 25–28% of total population.** This provides a comfortable buffer against the threshold even if population fluctuates from worker loss events. If you need a large army for a high-soldier expedition, build it temporarily, run the expedition, then unassign excess soldiers back to civilian buildings.
+**Recommended target: keep military workers below 25–28% of total population.** This provides a comfortable buffer against the threshold even if population fluctuates from worker loss events. If you need a large soldier stockpile for an expensive expedition, staff your military buildings heavily to bank soldiers quickly, then unassign the excess military workers back to civilian buildings once you've launched — the stored soldiers remain, but the morale and food drain from the idle workforce goes away.
 
 Large armies require strong food production and a robust civilian workforce to offset the morale penalty. If you see morale trending downward and your military ratio is over 30%, unassign some soldiers or recruit more civilians before the drain compounds further.
 
@@ -297,7 +317,7 @@ Large armies require strong food production and a robust civilian workforce to o
 
 **Don't launch high-difficulty expeditions without military power.** `siege_castle` (0.70) and `world_domination` (0.80) fail frequently with zero bonus. Research a few military techs first and watch the success probability change.
 
-**Expedition failure isn't free.** A failed run returns only 30% of rewards and costs you 1–2 soldiers. At 2.0 food/tick per soldier, a dead soldier is a food drain removed — but replacing them costs recruit time and building capacity.
+**Expedition failure still costs the launch.** The soldiers (and any resource cost) are spent the moment you launch — failure doesn't refund them, it only shrinks the reward. Don't launch a high-difficulty run unless you can afford to lose the soldier cost for a reduced payout.
 
 **Workers must be assigned to built buildings.** The game blocks assignment if the building count is zero. Build the structure before trying to assign soldiers to it.
 

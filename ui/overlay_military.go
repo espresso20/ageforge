@@ -16,7 +16,8 @@ func militaryProvider(state game.GameState, _ int) string {
 
 	// === Military Overview ===
 	fmt.Fprintf(&sb, " [gold]═══ Military Overview ═══[-]\n\n")
-	fmt.Fprintf(&sb, " [gold]Soldiers:[-]  %d\n", mil.SoldierCount)
+	fmt.Fprintf(&sb, " [gold]Soldiers:[-]  %d / %d\n", mil.SoldierCount, mil.SoldierCap)
+	fmt.Fprintf(&sb, " [gold]Training:[-]  %s/tick\n", FormatRate(mil.SoldierRate))
 	fmt.Fprintf(&sb, " [gold]Defense:[-]   %.1f\n", mil.DefenseRating)
 
 	if mil.MilitaryBonus > 0 {
@@ -84,13 +85,14 @@ func militaryProvider(state game.GameState, _ int) string {
 			fmt.Fprintf(&sb, "   [gray]%s[-]\n", exp.Description)
 			fmt.Fprintf(&sb, "   Soldiers: %d  Duration: %d ticks  Difficulty: [%s]%.0f%%[-]\n",
 				exp.SoldiersNeeded, exp.Duration, diffColor, exp.Difficulty*100)
+			if cost := formatExpeditionCost(exp.Cost); cost != "" {
+				fmt.Fprintf(&sb, "   Cost: %s\n", cost)
+			}
 
 			if exp.CanLaunch {
 				fmt.Fprintf(&sb, "   [green]expedition %s[-]\n", exp.Key)
-			} else if mil.ActiveExpedition != nil {
-				sb.WriteString("   [gray]expedition in progress[-]\n")
 			} else {
-				fmt.Fprintf(&sb, "   [red]need %d soldiers[-]\n", exp.SoldiersNeeded)
+				fmt.Fprintf(&sb, "   [red]%s[-]\n", exp.LaunchBlockReason)
 			}
 			sb.WriteString("\n")
 		}
@@ -117,4 +119,23 @@ func militaryProvider(state game.GameState, _ int) string {
 	sb.WriteString("\n [gray]Commands: expedition <key>[-]\n")
 
 	return sb.String()
+}
+
+// formatExpeditionCost renders an expedition's resource cost in a readable,
+// player-facing form (e.g. "30 food, 30 wood"), with keys sorted for stable
+// output. Returns "" for a free (empty) cost so callers can omit the line.
+func formatExpeditionCost(cost map[string]float64) string {
+	if len(cost) == 0 {
+		return ""
+	}
+	keys := make([]string, 0, len(cost))
+	for k := range cost {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	parts := make([]string, 0, len(keys))
+	for _, k := range keys {
+		parts = append(parts, fmt.Sprintf("%.0f %s", cost[k], k))
+	}
+	return strings.Join(parts, ", ")
 }
