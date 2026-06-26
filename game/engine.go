@@ -938,11 +938,27 @@ func (ge *GameEngine) getAllResearchProductionEffects() []config.Effect {
 	return effects
 }
 
+// Age-transition resource carryover tuning (EPIC: age-pacing economy rebalance).
+// See advanceAge for the model: each resource is capped to ~a handful of the
+// cheapest new-age building rather than a flat percentage of the prior hoard.
+const (
+	// carryoverStarterBuildings caps a carried-over resource to roughly this many
+	// of the cheapest new-age building that uses it — a small head start.
+	carryoverStarterBuildings = 8
+	// carryoverResidualPct is the fallback fraction kept for resources that no
+	// new-age (non-wonder) building uses as a build cost. Kept at the legacy 10%
+	// because this branch mostly catches food (the worker-sustain resource) —
+	// cutting it harder risks a starvation spiral right at the age transition,
+	// and the mass-buy problem this rebalance fixes lives entirely in the
+	// build-cost cap above.
+	carryoverResidualPct = 0.10
+)
+
 // advanceAge advances to newAge and applies all transition consequences:
 //   - Building lineage transformation (old tier → new tier per lineage definition)
 //   - Legacy flags for any lower-tier buildings that now have an unlocked replacement
 //   - Age-gated unlock application (resources, buildings, workers)
-//   - Resource reduction to 10% of current amounts (intended economic reset)
+//   - Resource carryover capped to ~a handful of new-age starter buildings
 //   - Epoch detection and epoch event roll if the new age crosses an epoch boundary
 //
 // Caller must hold the write lock.
@@ -1013,14 +1029,30 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	ge.applyAgeUnlocks(newAge)
 	ge.Stats.RecordAge(newAge)
 
-	// Reduce all resources to 10% on age transition (faith is excluded — it's cumulative)
+	// note: Age-transition carryover model (EPIC: age-pacing economy rebalance).
+	// The old flat-10% reduction still left a huge stockpile (10% of a hoard is
+	// plenty to mass-buy a new age's buildings). Instead we cap each resource to
+	// ~carryoverStarterBuildings of the CHEAPEST new-age building that uses it —
+	// a small head start, not a fresh stockpile. Resources no new-age building
+	// uses fall back to a small residual percentage. Players who didn't over-
+	// accumulate keep what they had (amount below the cap is untouched).
+	// Faith is excluded — it's cumulative.
+	entryCosts := config.AgeEntryCosts(newAge)
 	for key, r := range ge.Resources.resources {
 		if key == "faith" {
 			continue
 		}
-		r.Amount *= 0.10
+		if entry, ok := entryCosts[key]; ok && entry > 0 {
+			capAmt := carryoverStarterBuildings * entry
+			if r.Amount > capAmt {
+				r.Amount = capAmt
+			}
+			// else: kept as-is — they didn't over-accumulate this resource.
+		} else {
+			r.Amount *= carryoverResidualPct
+		}
 	}
-	ge.addLog("info", "Age transition: resources reduced to 10%")
+	ge.addLog("info", "Age transition: resources reduced to a starter head start")
 
 	oldName := ge.progress.GetAgeName(oldAge)
 	newName := ge.progress.GetAgeName(newAge)

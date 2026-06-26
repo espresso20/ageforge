@@ -301,7 +301,7 @@ The passphrase is stored as a SHA256 hash in `game/devmode.go` — never plain t
 
 **New tech** — add a `TechDef` to `config/techs.go` with `Age` (gate), `Cost` (knowledge), `Prerequisites`, and `Effects`. Effect types: `"production"` (flat per-tick) or `"bonus"` (multiplier, e.g. `"gold_rate"`, `"tick_speed"`).
 
-**New age** — add an `AgeDef` to `config/ages.go` with `ResourceReqs`, `BuildingReqs`, `UnlockResources`, `UnlockBuildings`, `UnlockVillagers`. Add a matching age milestone in `config/milestones.go` with `Category: "ages"` and `MinAge` set. Resources drop to 10% on age transition.
+**New age** — add an `AgeDef` to `config/ages.go` with `ResourceReqs`, `BuildingReqs`, `UnlockResources`, `UnlockBuildings`, `UnlockVillagers`. Add a matching age milestone in `config/milestones.go` with `Category: "ages"` and `MinAge` set. On age transition, each resource is capped to ~`carryoverStarterBuildings` (8) of the cheapest new-age building that uses it (via `config.AgeEntryCosts`); resources no new-age building uses as a build cost keep `carryoverResidualPct` (10%, e.g. food — avoids a starvation spiral at the transition); amounts already below the cap are preserved; faith is exempt (cumulative). See `advanceAge` in `game/engine.go`.
 
 **New milestone** — add a `MilestoneDef` to `config/milestones.go`. Set `Hidden: true` if it should only appear when progress > 50%. To include it in a chain, add its key to the chain's `MilestoneKeys` in `MilestoneChains()`. Chain completion auto-grants a title + speed boost.
 

@@ -890,6 +890,28 @@ func BuildingByKey() map[string]BuildingDef {
 	return m
 }
 
+// AgeEntryCosts returns, for each resource, the cheapest base cost of that
+// resource among the buildings that become available in the given age
+// (RequiredAge == ageKey), excluding wonders. Used to scale age-transition
+// carryover to "a handful of starter buildings." Pure function — no locks.
+func AgeEntryCosts(ageKey string) map[string]float64 {
+	out := make(map[string]float64)
+	for _, b := range BaseBuildings() {
+		if b.RequiredAge != ageKey || b.Category == "wonder" {
+			continue
+		}
+		for res, amt := range b.BaseCost {
+			if amt <= 0 {
+				continue
+			}
+			if cur, ok := out[res]; !ok || amt < cur {
+				out[res] = amt
+			}
+		}
+	}
+	return out
+}
+
 // BuildingNextTierForAge returns the next-tier BuildingDef in a lineage for the given new age.
 // Returns nil if no building at tier+1 with RequiredAge == newAgeKey exists in that lineage.
 // Used by the age-transition transformation pass to find what each building evolves into.
