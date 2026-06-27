@@ -226,6 +226,9 @@ const (
 	moraleMaxBonus = 0.20   // max production bonus at moraleCap()
 	moraleMinMult  = 0.50   // production multiplier at the 0.10 morale floor
 	moraleDrift    = 0.0008 // per-tick gentle pull back toward moraleNeutral
+
+	faithMoraleFactor = 0.0002 // morale lift per faith/tick produced
+	faithMoraleCap    = 0.0040 // max per-tick morale lift from faith rate (saturates ~20 faith/tick; bounds late-game firehose)
 )
 
 // moraleMultiplier converts the current morale into a production multiplier
@@ -339,6 +342,17 @@ func (ge *GameEngine) updateMoraleTick() {
 	}
 	if moraleFromBuildings != 0 {
 		ge.applyMorale(moraleFromBuildings)
+	}
+
+	// Faith-rate morale lift: an active faith economy keeps spirits up. Scales with
+	// faith PRODUCTION rate (not hoarded stock), capped per tick so a late-game
+	// faith firehose can't peg morale in one step. Tunable via the consts above.
+	faithRate := 0.0
+	if fr, ok := ge.Resources.resources["faith"]; ok {
+		faithRate = fr.Rate
+	}
+	if faithRate > 0 {
+		ge.applyMorale(math.Min(faithRate*faithMoraleFactor, faithMoraleCap))
 	}
 
 	// Drift gently toward neutral. A stable, fed, non-over-militarized civ with

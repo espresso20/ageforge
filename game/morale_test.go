@@ -183,6 +183,63 @@ func TestMorale_NoMoraleBuildingsNoLift(t *testing.T) {
 }
 
 // ---------------------------------------------------------------------------
+// Faith-rate morale lift
+// ---------------------------------------------------------------------------
+
+func TestMorale_FaithRateRaisesMorale(t *testing.T) {
+	ge := NewGameEngine()
+	ge.morale = moraleNeutral
+
+	// A positive faith production rate must out-pull the per-tick drift over a
+	// few ticks (5 × faithMoraleFactor = 0.001/tick of lift vs 0.0008 drift).
+	ge.mu.Lock()
+	ge.Resources.resources["faith"].Rate = 5.0
+	ge.mu.Unlock()
+
+	start := ge.morale
+	tickMoraleN(ge, 20)
+	if ge.morale <= start {
+		t.Errorf("faith Rate 5.0 over 20 ticks: morale %.6f did not rise above start %.6f", ge.morale, start)
+	}
+}
+
+func TestMorale_NoFaithRateNoLift(t *testing.T) {
+	// Default faith Rate is 0 on a fresh engine → no lift, morale holds at neutral.
+	ge := NewGameEngine()
+	if r := ge.Resources.resources["faith"]; r != nil && r.Rate != 0 {
+		t.Fatalf("precondition: fresh engine faith Rate = %.6f, want 0", r.Rate)
+	}
+	ge.morale = moraleNeutral
+	tickMoraleN(ge, 50)
+	if ge.morale > moraleNeutral+1e-6 {
+		t.Errorf("zero faith Rate raised morale to %.6f, want ≤ neutral", ge.morale)
+	}
+}
+
+func TestMorale_FaithRateContributionCapped(t *testing.T) {
+	ge := NewGameEngine()
+	ge.morale = moraleNeutral
+
+	// An enormous faith Rate must not lift morale proportionally: the per-tick
+	// contribution is bounded by faithMoraleCap. We compare against neutral and
+	// add back the per-tick drift (which pulls neutral → neutral, i.e. nothing
+	// here since we start exactly at neutral) so the delta is purely the lift.
+	ge.mu.Lock()
+	ge.Resources.resources["faith"].Rate = 10000
+	ge.mu.Unlock()
+
+	start := ge.morale
+	tickMoraleN(ge, 1)
+	delta := ge.morale - start
+	if delta > faithMoraleCap+moraleEps {
+		t.Errorf("single-tick faith lift = %.9f, want ≤ faithMoraleCap %.9f (cap must bound it)", delta, faithMoraleCap)
+	}
+	if delta <= 0 {
+		t.Errorf("single-tick faith lift = %.9f, want a positive (capped) lift", delta)
+	}
+}
+
+// ---------------------------------------------------------------------------
 // Production baseline preserved at neutral morale
 // ---------------------------------------------------------------------------
 
