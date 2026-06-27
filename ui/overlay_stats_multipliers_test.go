@@ -212,6 +212,41 @@ func TestRenderActiveMultipliers_CapacityTargetsExcluded(t *testing.T) {
 	}
 }
 
+// TestStatsProvider_ActiveEventEffects proves the stats overlay now renders
+// each active event's ongoing effects beneath it, color-coded by sign: a
+// negative production effect gets a [red] "food" line, a positive one [green].
+func TestStatsProvider_ActiveEventEffects(t *testing.T) {
+	state := game.GameState{
+		SpeedMultiplier: 1.0,
+		ActiveEvents: []game.ActiveEventState{
+			{
+				Name:      "Famine",
+				Key:       "famine",
+				TicksLeft: 8,
+				Effects: []game.EventEffectInfo{
+					{Type: "production", Target: "food", Value: -3.0},
+				},
+			},
+			{
+				Name:      "Gold Rush",
+				Key:       "gold_rush",
+				TicksLeft: 12,
+				Effects: []game.EventEffectInfo{
+					{Type: "production", Target: "gold", Value: 1.0},
+				},
+			},
+		},
+	}
+	out := statsProvider(state, 0)
+
+	if !strings.Contains(out, "[red]    food -3.0/t[-]") {
+		t.Errorf("negative production effect should render red-tagged:\n%s", out)
+	}
+	if !strings.Contains(out, "[green]    gold +1.0/t[-]") {
+		t.Errorf("positive production effect should render green-tagged:\n%s", out)
+	}
+}
+
 // TestIsPanelMultiplier covers the rate/flat classification directly.
 func TestIsPanelMultiplier(t *testing.T) {
 	rate := []string{

@@ -114,6 +114,20 @@ func statsProvider(state game.GameState, _ int) string {
 	} else {
 		for _, evt := range state.ActiveEvents {
 			fmt.Fprintf(&sb, " [yellow]⚡[-] [yellow]%s[-] (%d ticks left)\n", evt.Name, evt.TicksLeft)
+			for _, eff := range evt.Effects {
+				color := "green"
+				if eff.Value < 0 {
+					color = "red"
+				}
+				switch eff.Type {
+				case "production":
+					fmt.Fprintf(&sb, " [%s]    %s %+.1f/t[-]\n", color, eff.Target, eff.Value)
+				case "production_all":
+					fmt.Fprintf(&sb, " [%s]    all production %+.0f%%[-]\n", color, eff.Value*100)
+				case "tick_speed":
+					fmt.Fprintf(&sb, " [%s]    tick speed %+.0f%%[-]\n", color, eff.Value*100)
+				}
+			}
 		}
 	}
 

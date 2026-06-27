@@ -257,10 +257,25 @@ func (em *EventManager) Modifiers() []Modifier {
 func (em *EventManager) GetActive() []ActiveEventState {
 	var out []ActiveEventState
 	for _, ae := range em.active {
+		// Surface only ongoing-rate effects. Instant/one-shot types
+		// ("instant_resource", "steal_resource", "worker_loss") fired once at
+		// trigger and are not ongoing, so they don't belong in the panel.
+		var effects []EventEffectInfo
+		for _, eff := range ae.Effects {
+			switch eff.Type {
+			case "production", "production_all", "tick_speed":
+				effects = append(effects, EventEffectInfo{
+					Type:   eff.Type,
+					Target: eff.Target,
+					Value:  eff.Value,
+				})
+			}
+		}
 		out = append(out, ActiveEventState{
 			Name:      ae.Name,
 			Key:       ae.Key,
 			TicksLeft: ae.TicksLeft,
+			Effects:   effects,
 		})
 	}
 	return out

@@ -357,11 +357,19 @@ type PrestigeUpgradeState struct {
 
 // === Event Types ===
 
+// EventEffectInfo is one ongoing effect of an active event, for UI display.
+type EventEffectInfo struct {
+	Type   string  // config.Effect.Type: "production" | "production_all" | "tick_speed"
+	Target string  // resource key for "production"; empty/"" for the global ones
+	Value  float64 // per-tick delta for "production"; fraction for "production_all"/"tick_speed"
+}
+
 // ActiveEventState represents an active timed event for UI
 type ActiveEventState struct {
 	Name      string
 	Key       string
 	TicksLeft int
+	Effects   []EventEffectInfo
 }
 
 // === Trade Types ===
