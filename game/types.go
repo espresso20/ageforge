@@ -51,10 +51,10 @@ type GameState struct {
 	// Morale system
 	Morale    float64 // current morale 0.10–cap
 	MoraleCap float64 // current cap (1.0 + 0.05 per wonder)
-	// MoraleMultiplier is the production multiplier the banded morale curve
-	// currently yields (moraleMultiplier()). 1.0 across the neutral band, up to
-	// 1.0+moraleMaxBonus in the high band, down to moraleMinMult in the low band.
-	// Exposed so the UI renders the banded model without re-deriving the formula.
+	// MoraleMultiplier is the production multiplier the continuous morale curve
+	// currently yields (moraleMultiplier()). Exactly 1.0 at the 0.50 pivot, up to
+	// 1.0+moraleMaxBonus at the cap, down to moraleMinMult at the 0.10 floor.
+	// Exposed so the UI renders the model without re-deriving the formula.
 	MoraleMultiplier float64
 	// PermanentBonuses is the authoritative runtime map of all cumulative
 	// permanent bonuses (epoch events, legacy, milestones, etc.).

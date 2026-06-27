@@ -189,64 +189,60 @@ func (ge *GameEngine) applyMorale(delta float64) {
 	ge.clampMorale()
 }
 
-// Morale tuning constants. Morale is a managed two-way dial: a neutral band in
-// the middle leaves production untouched (preserving the historic economy
-// baseline), a high band you must EARN grants up to +moraleMaxBonus, and a low
-// band you must AVOID drags production down to moraleMinMult.
+// Morale tuning constants. Morale is a managed two-way dial on a continuous
+// curve pivoted at moraleNeutral: at the pivot production is untouched
+// (preserving the historic economy baseline), above it the bonus you must EARN
+// ramps up to +moraleMaxBonus at the cap, and below it the penalty you must
+// AVOID ramps down to moraleMinMult at the 0.10 floor.
 const (
-	moraleNeutral     = 0.50   // starting/settling point; neutral-band centre
-	moraleNeutralLow  = 0.25   // below this, production penalty ramps in
-	moraleNeutralHigh = 0.75   // above this, production bonus ramps in
-	moraleMaxBonus    = 0.20   // max production bonus at moraleCap()
-	moraleMinMult     = 0.50   // production multiplier at the 0.10 morale floor
-	moraleDrift       = 0.0008 // per-tick gentle pull back toward moraleNeutral
+	moraleNeutral  = 0.50   // starting/settling point; continuous-curve pivot
+	moraleMaxBonus = 0.20   // max production bonus at moraleCap()
+	moraleMinMult  = 0.50   // production multiplier at the 0.10 morale floor
+	moraleDrift    = 0.0008 // per-tick gentle pull back toward moraleNeutral
 )
 
-// moraleMultiplier converts the current morale into a production multiplier.
+// moraleMultiplier converts the current morale into a production multiplier
+// using a CONTINUOUS curve pivoted at the neutral point (moraleNeutral = 0.50):
 //
-//   - Neutral band [moraleNeutralLow, moraleNeutralHigh]  → exactly 1.0
-//   - High band (morale > moraleNeutralHigh)              → 1.0 .. 1.0+moraleMaxBonus,
-//     ramping linearly up to moraleCap()
-//   - Low band (morale < moraleNeutralLow)                → moraleMinMult .. 1.0,
-//     ramping linearly down to the 0.10 floor
+//   - At 0.50 the multiplier is exactly 1.0 (economy baseline preserved).
+//   - Above 0.50 it ramps linearly to 1.0+moraleMaxBonus at moraleCap().
+//   - Below 0.50 it ramps linearly down to moraleMinMult at the 0.10 floor.
 //
-// At neutral morale (moraleNeutral = 0.50) this returns exactly 1.0, so the
-// economy baseline is unchanged from before the morale-as-managed-resource
-// rework.
+// There is no neutral dead zone any more: any deviation from 0.50 produces a
+// small, honest effect that grows with distance. Near the pivot the effect is
+// tiny (e.g. 52% -> ~+0.8%); at the extremes it reaches the tuned endpoints
+// (+20% at cap, x0.50 at the floor). The downside ramps steeper than the
+// upside because the 0.10 floor is closer to the pivot than the cap is.
 func (ge *GameEngine) moraleMultiplier() float64 {
+	const moraleFloor = 0.10
 	m := ge.morale
 
-	// Neutral band — no production effect.
-	if m >= moraleNeutralLow && m <= moraleNeutralHigh {
-		return 1.0
-	}
-
-	// High band — ramp from 1.0 (at moraleNeutralHigh) to 1.0+moraleMaxBonus (at cap).
-	if m > moraleNeutralHigh {
+	if m > moraleNeutral {
 		cap := ge.moraleCap()
-		span := cap - moraleNeutralHigh
+		span := cap - moraleNeutral
 		if span <= 0 {
-			// Cap at/below the neutral-high edge (shouldn't happen: cap ≥ 1.0).
 			return 1.0
 		}
-		frac := (m - moraleNeutralHigh) / span
+		frac := (m - moraleNeutral) / span
 		if frac > 1.0 {
 			frac = 1.0
 		}
 		return 1.0 + frac*moraleMaxBonus
 	}
 
-	// Low band — ramp from 1.0 (at moraleNeutralLow) down to moraleMinMult (at 0.10).
-	const moraleFloor = 0.10
-	span := moraleNeutralLow - moraleFloor
-	if span <= 0 {
-		return moraleMinMult
+	if m < moraleNeutral {
+		span := moraleNeutral - moraleFloor
+		if span <= 0 {
+			return moraleMinMult
+		}
+		frac := (moraleNeutral - m) / span
+		if frac > 1.0 {
+			frac = 1.0
+		}
+		return 1.0 - frac*(1.0-moraleMinMult)
 	}
-	frac := (moraleNeutralLow - m) / span
-	if frac > 1.0 {
-		frac = 1.0
-	}
-	return 1.0 - frac*(1.0-moraleMinMult)
+
+	return 1.0 // exactly neutral
 }
 
 // updateMoraleTick applies per-tick morale changes: starvation penalty,
@@ -656,6 +652,7 @@ func (ge *GameEngine) doTick() {
 			Faith:      faith,
 			ProdAll:    ge.permanentBonuses["production_all"],
 			TickSpeed:  ge.tickSpeedBonus,
+			Morale:     ge.morale,
 			AgeOrder:   ageOrder,
 		})
 	}

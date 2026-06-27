@@ -12,6 +12,7 @@ type HistorySample struct {
 	Faith      float64 `json:"faith"`
 	ProdAll    float64 `json:"prod_all"`
 	TickSpeed  float64 `json:"tick_speed"`
+	Morale     float64 `json:"morale"`
 	AgeOrder   int     `json:"age_order"`
 }
 

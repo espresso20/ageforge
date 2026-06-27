@@ -35,7 +35,7 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 	if graphW < 20 {
 		graphW = 20
 	}
-	const graphH = 4  // rows tall per graph
+	const graphH = 4 // rows tall per graph
 
 	ageCols := AgeMarkerCols(markerTicks, firstTick, lastTick, graphW)
 
@@ -52,6 +52,7 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 		{"Food Rate", "[green]", func(s game.HistorySample) float64 { return s.FoodRate }, "/tick", true},
 		{"Knowledge", "[yellow]", func(s game.HistorySample) float64 { return s.KnowRate }, "/tick", true},
 		{"Faith", "[#cc88ff]", func(s game.HistorySample) float64 { return s.Faith }, "", false},
+		{"Morale", "[#ff66cc]", func(s game.HistorySample) float64 { return s.Morale * 100 }, "%", false},
 		{"Prod Bonus", "[orange]", func(s game.HistorySample) float64 { return s.ProdAll * 100 }, "%", false},
 		{"Tick Speed", "[gray]", func(s game.HistorySample) float64 { return s.TickSpeed }, "x", false},
 	}

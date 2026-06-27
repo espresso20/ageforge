@@ -8,18 +8,25 @@ import (
 const moraleEps = 1e-9
 
 // ---------------------------------------------------------------------------
-// moraleMultiplier — banded production curve
+// moraleMultiplier — continuous production curve pivoted at 0.50
 // ---------------------------------------------------------------------------
 
-func TestMorale_MultiplierNeutralBandIsOne(t *testing.T) {
-	ge := NewGameEngine()
-	// Across the whole neutral band the multiplier must be exactly 1.0 so the
-	// historic economy baseline is preserved.
-	for _, m := range []float64{moraleNeutralLow, 0.30, moraleNeutral, 0.60, moraleNeutralHigh} {
-		ge.morale = m
-		if got := ge.moraleMultiplier(); math.Abs(got-1.0) > moraleEps {
-			t.Errorf("moraleMultiplier(%.3f) = %.6f, want 1.0", m, got)
-		}
+func TestMorale_MultiplierNeutralOnlyAtPivot(t *testing.T) {
+	ge := NewGameEngine() // fresh: cap = 1.0, no wonders
+	// Exactly at the pivot → 1.0 (baseline preserved).
+	ge.morale = moraleNeutral
+	if got := ge.moraleMultiplier(); math.Abs(got-1.0) > moraleEps {
+		t.Errorf("moraleMultiplier(%.2f) = %.6f, want exactly 1.0", moraleNeutral, got)
+	}
+	// Just above 50% → a small bonus (the old dead zone is gone).
+	ge.morale = 0.52
+	if got := ge.moraleMultiplier(); !(got > 1.0) {
+		t.Errorf("moraleMultiplier(0.52) = %.6f, want > 1.0 (no neutral dead zone)", got)
+	}
+	// Just below 50% → a small penalty.
+	ge.morale = 0.48
+	if got := ge.moraleMultiplier(); !(got < 1.0) {
+		t.Errorf("moraleMultiplier(0.48) = %.6f, want < 1.0 (no neutral dead zone)", got)
 	}
 }
 
@@ -32,28 +39,20 @@ func TestMorale_MultiplierBaselineAtNeutral(t *testing.T) {
 	}
 }
 
-func TestMorale_MultiplierHighBandRampsToMaxBonus(t *testing.T) {
+func TestMorale_MultiplierRampsToMaxBonusAtCap(t *testing.T) {
 	ge := NewGameEngine()
-	// No wonders → cap is 1.0, which equals the high-band ceiling. At cap the
-	// multiplier is the full bonus.
+	// Fresh engine: cap = 1.0. At cap → full bonus.
 	cap := ge.moraleCap()
-	if math.Abs(cap-1.0) > moraleEps {
-		t.Fatalf("precondition: fresh engine moraleCap = %.3f, want 1.0", cap)
-	}
 	ge.morale = cap
 	want := 1.0 + moraleMaxBonus
 	if got := ge.moraleMultiplier(); math.Abs(got-want) > moraleEps {
 		t.Errorf("moraleMultiplier(cap=%.3f) = %.6f, want %.6f", cap, got, want)
 	}
-
-	// Midway between neutral-high and cap → half the bonus. Give the engine a
-	// wonder so the high band has width to ramp across.
+	// Midway between pivot (0.50) and cap → half the bonus. Add a wonder so the
+	// upper half-range has width.
 	ge.Buildings.counts["sacred_grove"] = 1 // a wonder → cap = 1.05
 	cap = ge.moraleCap()
-	if cap <= moraleNeutralHigh {
-		t.Fatalf("precondition: cap %.3f must exceed neutralHigh %.3f", cap, moraleNeutralHigh)
-	}
-	mid := moraleNeutralHigh + (cap-moraleNeutralHigh)/2
+	mid := moraleNeutral + (cap-moraleNeutral)/2
 	ge.morale = mid
 	want = 1.0 + 0.5*moraleMaxBonus
 	if got := ge.moraleMultiplier(); math.Abs(got-want) > 1e-6 {
@@ -61,20 +60,18 @@ func TestMorale_MultiplierHighBandRampsToMaxBonus(t *testing.T) {
 	}
 }
 
-func TestMorale_MultiplierLowBandRampsToMinMult(t *testing.T) {
+func TestMorale_MultiplierRampsToMinMultAtFloor(t *testing.T) {
 	ge := NewGameEngine()
-	// At the 0.10 floor the multiplier is moraleMinMult.
+	// At the 0.10 floor → moraleMinMult.
 	ge.morale = 0.10
 	if got := ge.moraleMultiplier(); math.Abs(got-moraleMinMult) > moraleEps {
 		t.Errorf("moraleMultiplier(0.10) = %.6f, want %.6f", got, moraleMinMult)
 	}
-
-	// Halfway between the floor (0.10) and neutral-low (0.25) → half the penalty.
-	mid := 0.10 + (moraleNeutralLow-0.10)/2
-	ge.morale = mid
+	// Midway between pivot (0.50) and floor (0.10) = 0.30 → half the penalty.
+	ge.morale = 0.30
 	want := 1.0 - 0.5*(1.0-moraleMinMult)
 	if got := ge.moraleMultiplier(); math.Abs(got-want) > 1e-6 {
-		t.Errorf("moraleMultiplier(%.4f) = %.6f, want %.6f", mid, got, want)
+		t.Errorf("moraleMultiplier(0.30) = %.6f, want %.6f", got, want)
 	}
 }
 
