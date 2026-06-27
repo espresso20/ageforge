@@ -22,8 +22,8 @@ var eliteMessages = []string{
 
 // CreateSplashPage creates the main menu splash screen.
 func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string) tview.Primitive {
-	saveExists := game.SaveExists("autosave")
-	_, eliteBadge := game.PeekSaveBadges("autosave")
+	saveExists := game.SaveExists(game.AutosaveName)
+	_, eliteBadge := game.PeekSaveBadges(game.AutosaveName)
 	prestigeLevel := engine.Prestige.GetLevel()
 
 	// Animated starfield + title canvas (takes the upper portion of the screen)
@@ -43,22 +43,18 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	mainList.SetSelectedTextColor(tcell.ColorBlack)
 	mainList.ShowSecondaryText(false)
 
-	loadLabel := "  ⚔  Load Game"
-	if !saveExists {
-		loadLabel = "  ⚔  Load Game  [no save]"
-	}
-	mainList.AddItem(loadLabel, "", 'l', func() {
-		nav(func() {
-			if saveExists {
-				if err := engine.LoadGame("autosave"); err != nil {
-					engine.AddLog("error", fmt.Sprintf("Load failed: %v", err))
-				} else {
-					engine.AddLog("success", "Game loaded!")
-				}
-			}
-			pages.SwitchToPage("dashboard")
-			go engine.Start()
-		})
+	// The Load Game browser lists every save (player-named + autosave) and handles
+	// its own empty state, so the menu item is always enabled — gating it on the
+	// autosave alone would hide the browser even when player-named saves exist.
+	mainList.AddItem("  ⚔  Load Game", "", 'l', func() {
+		// Build the page fresh each time so the save list is always current,
+		// then add + focus it (mirrors the modal add/remove lifecycle). We do NOT
+		// halt the canvas here: the browser is an opaque full-screen page, so the
+		// animation runs harmlessly underneath and is still live when the player
+		// returns via Back (no need to rebuild the splash).
+		page := CreateLoadGamePage(app, pages, engine)
+		pages.AddPage(loadGamePage, page, true, true)
+		app.SetFocus(page)
 	})
 	mainList.AddItem("  ✦  New Game", "", 'n', func() {
 		nav(func() {
