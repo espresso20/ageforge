@@ -198,7 +198,7 @@ Voluntary catastrophes let you force an epoch event outside the normal roll. Use
 | `saves` | List all save files |
 | `Esc` | Quick-save (autosave slot) |
 | `dump` | Export logs to a file for debugging |
-| `help` | Show a quick command summary |
+| `help` | Open the Help panel — full command reference and list of available panels |
 
 Save files live in `./data/saves/*.json`, relative to the directory you launch the game from. The `save <name>` and `load <name>` commands above work with the same files as the **Load Game** browser below.
 
