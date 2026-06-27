@@ -123,6 +123,8 @@ Effect: production_all -10% for 216 ticks
 
 This is separate from the building loss. Even buildings that survived are producing at 90% for the reconstruction period, and this now applies in full — negative production modifiers are floored so production can't drop below 10% of base, but a single −10% debuff lands cleanly off the top regardless of what other bonuses you hold. Plan for both effects simultaneously.
 
+This flooring applies to **all** rate pools, not just `production_all`: negative per-resource rate modifiers (e.g. `food_rate`) and negative gather-rate modifiers now apply the same way, each clamped to no lower than 10% of the base they act on. A future debuff or negative milestone targeting a single resource (or worker gather output) reduces that rate as designed instead of being silently ignored — and it appears in the Active Multipliers panel alongside the positive bonuses.
+
 **Recovery checklist after Endure:**
 1. Check which buildings were destroyed (the log lists every lost building by name)
 2. Rebuild the most impactful lost buildings first (usually food and worker capacity)

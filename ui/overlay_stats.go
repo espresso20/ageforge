@@ -367,6 +367,8 @@ func multiplierSourceLabel(src string) string {
 		return "Morale"
 	case "event":
 		return "Event"
+	case "diplomacy":
+		return "Diplomacy"
 	}
 	return capitalize(src)
 }
