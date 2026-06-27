@@ -546,22 +546,23 @@ func cmdStatus(engine *game.GameEngine) CommandResult {
 }
 
 func cmdSave(args []string, engine *game.GameEngine) CommandResult {
-	// With a name: write that slot and make it the active one for future bare
-	// saves. Without: reuse the active slot (last named/loaded save, else autosave).
-	var name string
-	explicit := len(args) > 0
-	if explicit {
-		name = args[0]
-	} else {
-		name = engine.ActiveSaveName()
+	// With a name: branch a new save off the current run (BranchSave switches the
+	// active slot + sets the parent, so autosave follows the branch). Without a
+	// name: overwrite the active slot. The dashboard UI intercepts a bare `save`
+	// to pop the Overwrite/Branch modal, but this path stays sane for tests and
+	// other callers.
+	if len(args) > 0 {
+		name := args[0]
+		if err := engine.BranchSave(name); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Branched a new save '%s' — autosave now follows it", name), Type: "info"}
 	}
-	if err := engine.SaveGame(name); err != nil {
+	active := engine.ActiveSaveName()
+	if err := engine.SaveGame(active); err != nil {
 		return CommandResult{Message: fmt.Sprintf("Save failed: %v", err), Type: "error"}
 	}
-	if explicit {
-		engine.SetActiveSaveName(name)
-	}
-	return CommandResult{Message: fmt.Sprintf("Game saved as '%s'", name), Type: "info"}
+	return CommandResult{Message: fmt.Sprintf("Saved to '%s'", active), Type: "info"}
 }
 
 func cmdLoad(args []string, engine *game.GameEngine) CommandResult {

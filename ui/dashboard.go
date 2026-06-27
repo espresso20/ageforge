@@ -251,6 +251,10 @@ func (d *Dashboard) build() {
 				}
 				return
 			}
+			if strings.ToLower(cmd) == "save" { // bare save — no name
+				d.showSaveChoiceModal()
+				return
+			}
 			result := HandleCommand(text, d.engine)
 			if result.OverlayName != "" {
 				state := d.engine.GetState()

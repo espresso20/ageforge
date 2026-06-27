@@ -20,14 +20,15 @@ Save files are written to `./data/saves/*.json`, relative to the directory you l
 
 | Command | Description |
 |---|---|
-| `save [name]` | Save to a named slot. With no name, writes to the active save slot (see below) |
+| `save` | Opens an **Overwrite / Branch** prompt for your current run (see below) |
+| `save <name>` | **Branches** a new save with that name off your current run; autosave then follows it |
 | `load [name]` | Load a named save |
 | `saves` (or `save list`) | List all save files |
 | `Esc` | Quick-save to your current (active) save |
 
 ```
-save hero
-save
+save           # prompt: Overwrite this run, or Branch a new save?
+save hero      # branch a new save named "hero" off the current run
 load hero
 saves
 ```
@@ -36,12 +37,25 @@ saves
 
 ## Active save slot
 
-The game remembers the last slot you explicitly `save`d to or `load`ed. A bare `save` (no name) re-writes **that** slot — it is not a generic dump.
+The game remembers the last slot you explicitly saved to or `load`ed — your **active** save.
 
-- Until you've named a save or loaded one this session, a bare `save` defaults to the `autosave` slot.
-- Once you `save hero` or `load hero`, a bare `save` thereafter targets `hero`.
+- Until you've named a save or loaded one this session, the active slot defaults to `autosave`.
+- Once you branch to `hero` or `load hero`, the active slot is `hero` and autosave follows it.
 
 The periodic autosave and `Esc` quick-save both write to your **active** save, continuously overwriting it. Your current game *is* the autosave — there's no separate slot quietly shadowing it.
+
+---
+
+## Branching your save
+
+A bare `save` opens a prompt with two choices:
+
+- **Overwrite** — write your current run to the active slot now (the same thing autosave and `Esc` do, on demand).
+- **Branch new** — fork a brand-new save. You're given a generated name (editable; **Tab** rolls a fresh one, **Enter** confirms). The new save's *parent* is the save you branched from, and **autosave switches to follow the new branch** — so the old save is left frozen exactly at the branch point.
+
+`save <name>` skips the prompt and branches straight to that name.
+
+This is the way to preserve a moment without stopping play: branch before a prestige, a risky catastrophe, or any decision you might want to revisit. Your old save stays as it was; you keep playing on the new branch. Branched saves are ordinary files — they appear in the `saves` list and the Load Game browser alongside everything else. (The save names must be valid and unique; branching to a name that's already taken is rejected.)
 
 ---
 
@@ -88,6 +102,6 @@ Saves are signed. If a save file is edited outside the game, the integrity check
 
 ## Tips
 
-- **Name your important saves.** A bare `save` targets your active slot, but giving milestones their own names (`save iron_age_start`) keeps them out of harm's way.
-- **Duplicate before risky moves.** Press `c` in the Load Game browser to clone a save before a prestige, catastrophe, or any decision you might want to undo.
+- **Branch at milestones.** `save iron_age_start` forks a new save at that moment and moves autosave onto it, freezing the old run where it was — your snapshot can't be overwritten.
+- **Duplicate before risky moves.** Press `c` in the Load Game browser to clone a save before a prestige, catastrophe, or any decision you might want to undo. (Branching does much the same, but keeps you playing on the new copy rather than the old one.)
 - **Your active save is overwritten constantly.** Autosave keeps your current game up to date — but that means it's not a snapshot. To keep a run exactly as it is right now, duplicate it (`c`) or save it under a new name before risky moves.
