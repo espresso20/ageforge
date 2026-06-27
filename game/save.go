@@ -955,7 +955,69 @@ func RenameSave(oldName, newName string) error {
 	if err := os.Rename(srcPath, dstPath); err != nil {
 		return fmt.Errorf("failed to rename save: %w", err)
 	}
+
+	// Re-parent any children so the lineage survives the rename. Best-effort:
+	// a child that fails to rewrite simply stays detached (the prior behavior),
+	// so we don't fail the rename — the file move already succeeded. The listing
+	// runs AFTER the rename, so the renamed save now shows up as dst; skip it.
+	if details, err := ListSaveDetails(); err == nil {
+		for _, info := range details {
+			if info.Corrupt || info.Name == dst {
+				continue
+			}
+			if info.ParentName == src {
+				_ = reparentSaveFile(info.Name, dst)
+			}
+		}
+	}
 	return nil
+}
+
+// reparentSaveFile rewrites the ParentName of an existing save to newParent and
+// re-signs it. The signature covers ParentName, so it must be recomputed or the
+// save would load flagged as modified. A save that is currently MODIFIED
+// (signature invalid) is left untouched — we must not silently launder a
+// tampered save's badge. A valid elite proof is preserved by recomputing it
+// from the new signature. Best-effort: returns an error only on I/O/parse
+// failure the caller may choose to ignore.
+func reparentSaveFile(name, newParent string) error {
+	path := savePath(name)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return err
+	}
+	var gs GameSave
+	if err := json.Unmarshal(data, &gs); err != nil {
+		return err // corrupt → skip upstream
+	}
+	sigValid, eliteValid := verifySave(&gs)
+	if !sigValid {
+		return nil // modified save — leave it (and its badge) alone
+	}
+	if gs.ParentName == newParent {
+		return nil // nothing to do
+	}
+	gs.ParentName = newParent
+	sig := signSave(gs, saveHMACKey)
+	gs.Signature = sig
+	if eliteValid {
+		mac := hmac.New(sha256.New, []byte(forgeMasterKey))
+		mac.Write([]byte(sig))
+		gs.Proof = hex.EncodeToString(mac.Sum(nil))
+	} else {
+		gs.Proof = ""
+	}
+	out, err := json.MarshalIndent(gs, "", "  ")
+	if err != nil {
+		return err
+	}
+	// Atomic write into the file's own directory (matches SaveGame's pattern and
+	// keeps a legacy-dir save in its dir).
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, out, 0644); err != nil {
+		return err
+	}
+	return os.Rename(tmp, path)
 }
 
 // DuplicateSave copies a save to a new name and returns the new base name. The

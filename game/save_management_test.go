@@ -555,6 +555,105 @@ func TestLegacySaveHasNoParentName(t *testing.T) {
 	}
 }
 
+// writeSignedSaveWithParent creates a real, signed, loadable save under name with
+// the given ParentName, via the engine's SaveGame path (so verifySave passes), and
+// registers cleanup. Same-package access lets us set the unexported parent field
+// directly, matching TestParentNameRoundTrips.
+func writeSignedSaveWithParent(t *testing.T, name, parent string) {
+	t.Helper()
+	ge := NewGameEngine()
+	ge.activeParentName = parent
+	if err := ge.SaveGame(name); err != nil {
+		t.Fatalf("SaveGame(%q) failed: %v", name, err)
+	}
+	t.Cleanup(func() { _ = os.Remove(savePath(name)) })
+}
+
+// readSaveFromDisk reads and JSON-parses a save by name for assertions.
+func readSaveFromDisk(t *testing.T, name string) GameSave {
+	t.Helper()
+	data, err := os.ReadFile(savePath(name))
+	if err != nil {
+		t.Fatalf("read save %q: %v", name, err)
+	}
+	var gs GameSave
+	if err := json.Unmarshal(data, &gs); err != nil {
+		t.Fatalf("unmarshal save %q: %v", name, err)
+	}
+	return gs
+}
+
+func TestRenameSaveReparentsChildren(t *testing.T) {
+	writeSignedSaveWithParent(t, "Parent", "")          // root
+	writeSignedSaveWithParent(t, "Child", "Parent")     // child of Parent
+	writeSignedSaveWithParent(t, "Grandchild", "Child") // child of Child
+	t.Cleanup(func() { _ = os.Remove(savePath("NewParent")) })
+
+	if err := RenameSave("Parent", "NewParent"); err != nil {
+		t.Fatalf("RenameSave(Parent, NewParent) failed: %v", err)
+	}
+
+	// File move happened.
+	if SaveExists("Parent") {
+		t.Errorf("old save \"Parent\" still exists after rename")
+	}
+	if !SaveExists("NewParent") {
+		t.Fatalf("renamed save \"NewParent\" missing")
+	}
+
+	// Child re-parented to the new name...
+	child := readSaveFromDisk(t, "Child")
+	if child.ParentName != "NewParent" {
+		t.Errorf("Child.ParentName = %q, want \"NewParent\"", child.ParentName)
+	}
+	// ...and still verifies (re-sign worked → NOT flagged modified).
+	if sigValid, _ := verifySave(&child); !sigValid {
+		t.Errorf("Child failed signature verification after reparent — re-sign broken")
+	}
+
+	// Grandchild's parent ("Child") is untouched — only direct children move.
+	grand := readSaveFromDisk(t, "Grandchild")
+	if grand.ParentName != "Child" {
+		t.Errorf("Grandchild.ParentName = %q, want \"Child\" (unaffected)", grand.ParentName)
+	}
+}
+
+func TestRenameSaveDoesNotLaunderModifiedChild(t *testing.T) {
+	writeSignedSaveWithParent(t, "Parent", "")      // root
+	writeSignedSaveWithParent(t, "Child", "Parent") // child of Parent
+	t.Cleanup(func() { _ = os.Remove(savePath("NewParent")) })
+
+	// Tamper the child: bump a signed field but keep the stored signature, so the
+	// file still parses as JSON yet fails verifySave (modified).
+	child := readSaveFromDisk(t, "Child")
+	child.Tick += 1000 // mutate a payload field WITHOUT re-signing
+	tampered, err := json.Marshal(child)
+	if err != nil {
+		t.Fatalf("marshal tampered child: %v", err)
+	}
+	if err := os.WriteFile(savePath("Child"), tampered, 0644); err != nil {
+		t.Fatalf("write tampered child: %v", err)
+	}
+	// Sanity: the tampered child must already read as modified.
+	if sigValid, _ := verifySave(&child); sigValid {
+		t.Fatalf("test setup failed — tampered child still verifies")
+	}
+
+	if err := RenameSave("Parent", "NewParent"); err != nil {
+		t.Fatalf("RenameSave(Parent, NewParent) failed: %v", err)
+	}
+
+	after := readSaveFromDisk(t, "Child")
+	// ParentName left untouched — we don't rewrite a modified save.
+	if after.ParentName != "Parent" {
+		t.Errorf("modified Child.ParentName = %q, want unchanged \"Parent\"", after.ParentName)
+	}
+	// Still detected as modified — no laundering of the badge.
+	if sigValid, _ := verifySave(&after); sigValid {
+		t.Errorf("modified Child now verifies after rename — badge was laundered")
+	}
+}
+
 func TestListSaveDetailsFlagsCorrupt(t *testing.T) {
 	// Ensure the dir exists, then drop a non-JSON .json file into it.
 	good := "test_corrupt_neighbor"

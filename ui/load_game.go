@@ -284,10 +284,10 @@ func (b *loadGameBrowser) doDelete() {
 // retry. On success the dialog closes, the list refreshes, and the renamed item
 // stays selected.
 //
-// note: lineage is keyed by ParentName, so renaming a save detaches its children
-// — their stored ParentName still points at the old name, so they become orphans
-// (promoted to roots) in the tree. Acceptable for now; a future ticket can
-// re-parent children on rename.
+// note: lineage is keyed by ParentName. RenameSave re-parents the children to the
+// new name (and re-signs them), so the lineage follows the rename instead of
+// detaching. We mirror that into the engine's in-memory active pointers below so
+// the running session's next autosave doesn't re-orphan anything.
 func (b *loadGameBrowser) doRename() {
 	s, ok := b.selected()
 	if !ok {
@@ -321,6 +321,15 @@ func (b *loadGameBrowser) doRename() {
 			errTV.SetText(fmt.Sprintf("[red]%v[-]", err))
 			b.app.SetFocus(input)
 			return
+		}
+		// Keep the running session's lineage pointers consistent: if the renamed
+		// save IS the active slot, point autosave at the new name; if it was this
+		// run's parent, follow it so the next autosave doesn't re-orphan us.
+		if b.engine.ActiveSaveName() == s.Name {
+			b.engine.SetActiveSaveName(newName)
+		}
+		if b.engine.ActiveParentName() == s.Name {
+			b.engine.SetActiveParentName(newName)
 		}
 		b.pages.RemovePage(page)
 		b.app.SetFocus(b.list)
