@@ -52,7 +52,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 		// halt the canvas here: the browser is an opaque full-screen page, so the
 		// animation runs harmlessly underneath and is still live when the player
 		// returns via Back (no need to rebuild the splash).
-		page := CreateLoadGamePage(app, pages, engine)
+		page := CreateLoadGamePage(app, pages, engine, "splash", true)
 		pages.AddPage(loadGamePage, page, true, true)
 		app.SetFocus(page)
 	})

@@ -59,3 +59,74 @@ func TestCmdSaveBranches(t *testing.T) {
 		t.Errorf("bare save changed active slot to %q, want %q", engine.ActiveSaveName(), child)
 	}
 }
+
+// TestCmdLoadNoArgsDoesNotLoad verifies a bare `load` no longer silently loads
+// the "autosave" slot. Instead it returns an informational usage message and
+// leaves the engine's active save untouched — the dashboard intercepts the bare
+// command to open the browser, so this fallback must never load a slot by
+// surprise.
+func TestCmdLoadNoArgsDoesNotLoad(t *testing.T) {
+	name := "Cmd Load Current"
+	t.Cleanup(func() {
+		_ = game.DeleteSave(name)
+	})
+
+	engine := game.NewGameEngine()
+	if err := engine.StartNewNamedGame(name); err != nil {
+		t.Fatalf("StartNewNamedGame(%q) failed: %v", name, err)
+	}
+	wantActive := engine.ActiveSaveName()
+
+	res := cmdLoad(nil, engine)
+	if res.Type != "info" {
+		t.Errorf("bare cmdLoad type = %q, want %q", res.Type, "info")
+	}
+	if !strings.Contains(res.Message, "load <name>") {
+		t.Errorf("bare cmdLoad message = %q, want it to mention the 'load <name>' usage", res.Message)
+	}
+	if strings.HasPrefix(res.Message, "Game loaded") {
+		t.Errorf("bare cmdLoad returned a success-style message %q; it must not load a slot", res.Message)
+	}
+	// The active slot must be unchanged — no load happened.
+	if got := engine.ActiveSaveName(); got != wantActive {
+		t.Errorf("bare cmdLoad changed active slot to %q, want %q (unchanged)", got, wantActive)
+	}
+}
+
+// TestCmdLoadWithNameLoads verifies that `load <name>` still loads the named
+// save directly through the engine.
+func TestCmdLoadWithNameLoads(t *testing.T) {
+	current := "Cmd Load Running"
+	target := "Cmd Load Target"
+	t.Cleanup(func() {
+		_ = game.DeleteSave(current)
+		_ = game.DeleteSave(target)
+	})
+
+	engine := game.NewGameEngine()
+	if err := engine.StartNewNamedGame(current); err != nil {
+		t.Fatalf("StartNewNamedGame(%q) failed: %v", current, err)
+	}
+	// Branch a second save so there is a distinct slot to load.
+	if res := cmdSave([]string{target}, engine); res.Type == "error" {
+		t.Fatalf("cmdSave(%q) returned error: %s", target, res.Message)
+	}
+	// Switch the active slot back so loading the target is an observable change.
+	if res := cmdLoad([]string{current}, engine); res.Type == "error" {
+		t.Fatalf("cmdLoad(%q) returned error: %s", current, res.Message)
+	}
+	if engine.ActiveSaveName() != current {
+		t.Fatalf("after load %q, ActiveSaveName() = %q, want %q", current, engine.ActiveSaveName(), current)
+	}
+
+	res := cmdLoad([]string{target}, engine)
+	if res.Type == "error" {
+		t.Fatalf("cmdLoad(%q) returned error: %s", target, res.Message)
+	}
+	if !strings.Contains(res.Message, target) {
+		t.Errorf("cmdLoad(%q) message = %q, want it to name the loaded save", target, res.Message)
+	}
+	if engine.ActiveSaveName() != target {
+		t.Errorf("after load %q, ActiveSaveName() = %q, want %q", target, engine.ActiveSaveName(), target)
+	}
+}

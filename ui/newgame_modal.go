@@ -83,25 +83,30 @@ func showSaveNameModal(app *tview.Application, pages *tview.Pages, title, pageNa
 		}
 	})
 
+	// Opaque spacers between the fields. tview only clears cells a primitive
+	// actually draws, so transparent spacers would let the page beneath (the
+	// dashboard, for a Branch save) bleed through; an explicit background paints
+	// them.
+	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(tcell.ColorBlack) }
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(input, 1, 0, true).
-		AddItem(tview.NewBox(), 1, 0, false).
+		AddItem(spacer(), 1, 0, false).
 		AddItem(errTV, 1, 0, false).
-		AddItem(tview.NewBox(), 1, 0, false).
+		AddItem(spacer(), 1, 0, false).
 		AddItem(hintTV, 1, 0, false)
 	inner.SetBorder(true).
 		SetTitle(title).
 		SetTitleColor(tcell.ColorGold).
 		SetBorderColor(tcell.ColorGold)
-	// Paint the box opaque so the page beneath (the dashboard, for a Branch
-	// save) doesn't bleed through the modal's empty rows — matches the
-	// dev-unlock / rename modals. Without this, tview leaves unwritten cells
-	// transparent and the layer below shows through.
 	inner.SetBackgroundColor(tcell.ColorBlack)
 
 	// Esc cancels; Tab rerolls a fresh suggestion. Enter is handled by the field's
 	// DoneFunc above so plain typing keys still reach the input.
-	modal := centeredModal(inner, 60, 9)
+	//
+	// Height is sized to the exact content (5 rows + 2 border = 7). An oversized
+	// box would leave unallocated interior rows that no primitive paints, and
+	// those rows would show the dashboard through them.
+	modal := centeredModal(inner, 60, 7)
 	modal.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
 		switch ev.Key() {
 		case tcell.KeyEsc:

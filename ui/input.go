@@ -566,10 +566,13 @@ func cmdSave(args []string, engine *game.GameEngine) CommandResult {
 }
 
 func cmdLoad(args []string, engine *game.GameEngine) CommandResult {
-	name := "autosave"
-	if len(args) > 0 {
-		name = args[0]
+	// No name: do NOT silently load autosave. Guide the player to the browser.
+	// The dashboard intercepts a bare `load` to open the Load Game tree; this
+	// fallback keeps other callers (and tests) from loading a slot by surprise.
+	if len(args) == 0 {
+		return CommandResult{Message: "Type 'load <name>' to load a specific save, or open Load Game from the menu (or press Esc) to browse your save tree.", Type: "info"}
 	}
+	name := args[0]
 	if err := engine.LoadGame(name); err != nil {
 		return CommandResult{Message: fmt.Sprintf("Load failed: %v", err), Type: "error"}
 	}
