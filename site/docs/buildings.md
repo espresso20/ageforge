@@ -192,6 +192,8 @@ Every building's power is defined by one or more `Effect` entries. Understanding
 | `instant_resource` | Immediately adds `Value` of `Target` resource. Used by milestone rewards only. |
 | `permanent_bonus` | Persistent multiplier on `Target` rate. Used by milestone rewards only. |
 
+Beyond these effect types, the **Faith (worship) lineage** — shrines, temples, and their later-age tiers — and the **Culture/Arts lineage** (culture and entertainment buildings) now also **restore civilization morale each tick simply by existing** — no workers required. That makes them the primary lever for pushing morale into its production-bonus band, where it multiplies all worker output. See [Morale](morale.md).
+
 ### Worker Scaling Formula
 
 Production buildings with a worker domain use:
@@ -360,6 +362,8 @@ Workers are recruited with `recruit [count|max]` and assigned with `assign <buil
 ## Culture Buildings (Lineage 10)
 
 Culture buildings have no worker domain. They automatically produce culture each tick based on their base rate, regardless of worker assignment. They also contribute to your culture storage cap. Build them to accumulate culture passively and unlock culture threshold bonuses.
+
+In addition to culture, these buildings now also help **restore morale each tick** (see [Morale](morale.md)), so they pull double duty — culture for epoch outcomes and morale for a production bonus.
 
 Culture bonuses gate certain epoch event outcomes and diploma actions — a civilization rich in culture weathers epoch transitions more gracefully.
 

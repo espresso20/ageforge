@@ -294,20 +294,22 @@ Each soldier eats at the current military class food cost (2.0/tick at Iron Age,
 
 ### Morale and Military Ratio
 
-Maintaining a large standing army has a second cost beyond food: **morale drain**. If military workers exceed **30% of your total population**, morale decays at −0.003/tick for every 10% over the threshold:
+Maintaining a large standing army has a second cost beyond food: **morale**. If military workers exceed **30% of your total population**, morale drains every tick — and the **further over the threshold you are, the faster it drains**:
 
-| Military ratio | Overage | Morale drain/tick |
-|---------------|---------|------------------|
-| 30% (at threshold) | 0% | 0 |
-| 40% | +10% | −0.003/tick |
-| 50% | +20% | −0.006/tick |
-| 60% | +30% | −0.009/tick |
+| Military ratio | Overage | Morale drain |
+|---------------|---------|--------------|
+| 30% (at threshold) | 0% | — (none) |
+| 40% | +10% | mild |
+| 50% | +20% | moderate |
+| 60% | +30% | steep |
 
-Morale is a multiplier on all worker output (floor 0.10). Sustained morale drain from an oversized army gradually suppresses production across every domain — food, knowledge, trade, everything — creating a feedback loop where the army's food cost becomes even harder to cover as food workers produce less.
+Morale is a civilization-wide percentage that multiplies **all** worker-driven output. It sits in three bands: in the **neutral band (25–75%)** it has no effect, but **below 25%** it penalises production — ramping down toward **×0.50 at the 10% floor**. So letting an oversized army drag morale into the low band suppresses every domain at once — food, knowledge, trade, everything — creating a feedback loop where the army's food cost gets harder to cover as your food workers produce less. **Above 75%**, morale instead *boosts* output up to **+20%** near the cap, so a lean military leaves headroom to push morale into the bonus band rather than spending it fighting an over-large army.
 
-**Recommended target: keep military workers below 25–28% of total population.** This provides a comfortable buffer against the threshold even if population fluctuates from worker loss events. If you need a large soldier stockpile for an expensive expedition, staff your military buildings heavily to bank soldiers quickly, then unassign the excess military workers back to civilian buildings once you've launched — the stored soldiers remain, but the morale and food drain from the idle workforce goes away.
+**Recommended target: keep military workers below 25–28% of total population.** This provides a comfortable buffer against the threshold even if population fluctuates from worker loss events. If you need a large soldier stockpile for an expensive expedition, staff your military buildings heavily to bank soldiers quickly, then unassign the excess military workers back to civilian buildings once you've launched — the stored soldiers remain, and the morale and food drain from the idle workforce goes away.
 
-Large armies require strong food production and a robust civilian workforce to offset the morale penalty. If you see morale trending downward and your military ratio is over 30%, unassign some soldiers or recruit more civilians before the drain compounds further.
+Recovery is automatic: morale **drifts back toward 50% neutral** each tick once you shed the excess military, so the low-band penalty self-heals as soon as the ratio is fixed — you don't have to do anything beyond getting back under the threshold. If you see morale trending downward and your military ratio is over 30%, unassign some soldiers or recruit more civilians to halt the drain.
+
+See [Morale](morale.md) for the full banded system.
 
 ---
 
