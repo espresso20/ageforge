@@ -66,6 +66,17 @@ func CreateLoadGamePage(app *tview.Application, pages *tview.Pages, engine *game
 		b.updateDetail(index)
 	})
 
+	// ── Key / legend ─────────────────────────────────────────────────────────
+	// Static box explaining the row symbols. Colours match the row tags exactly
+	// (gold for ★/⭐, red for ⚠). Never changes, so no refresh wiring.
+	legend := tview.NewTextView().
+		SetDynamicColors(true).
+		SetText(legendText())
+	legend.SetBorder(true).
+		SetBorderColor(tcell.ColorGold).
+		SetTitle(" Key ").
+		SetTitleColor(tcell.ColorGold)
+
 	// ── Detail pane ──────────────────────────────────────────────────────────
 	b.detail = tview.NewTextView().
 		SetDynamicColors(true).
@@ -86,6 +97,7 @@ func CreateLoadGamePage(app *tview.Application, pages *tview.Pages, engine *game
 		AddItem(title, 1, 0, false).
 		AddItem(b.subtitle, 1, 0, false).
 		AddItem(b.list, 0, 1, true).     // weighted — takes remaining space
+		AddItem(legend, 6, 0, false).    // 4 content lines + border
 		AddItem(b.detail, 10, 0, false). // fits 6 content lines + optional badge + border
 		AddItem(footer, 1, 0, false)
 
@@ -412,6 +424,18 @@ func footerBar() string {
 		footerButton("C", "Duplicate"),
 		footerButton("Esc", "Back"),
 	}, "  ") + "  "
+}
+
+// legendText returns the static Key-box markup: one row symbol per line with a
+// short explanation. Colours match the row tags exactly (gold for ★/⭐, red for
+// ⚠) so the box reads as a direct legend for what's shown in the list.
+func legendText() string {
+	return strings.Join([]string{
+		"[gold]★ auto[-]      automatic save slot (overwritten on autosave)",
+		"[gold]⭐ elite[-]     an elite save",
+		"[red]⚠ modified[-]  save file edited outside the game",
+		"[red]⚠ corrupt[-]   file could not be read — cannot be loaded",
+	}, "\n")
 }
 
 func rowTag(s game.SaveInfo) string {

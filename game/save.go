@@ -586,6 +586,12 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// Apply offline progress for time since save
 	ge.applyOfflineProgress(time.Since(save.Timestamp))
 
+	// Load succeeded: this is now the active slot a bare `save` writes to. We're
+	// still under the write lock (ge.mu.Lock at the top of this function), so set
+	// the field DIRECTLY — calling SetActiveSaveName would re-acquire the lock and
+	// deadlock.
+	ge.activeSaveName = filename
+
 	return nil
 }
 

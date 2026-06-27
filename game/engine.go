@@ -101,6 +101,11 @@ type GameEngine struct {
 	cheaterBadge bool
 	eliteBadge   bool
 
+	// activeSaveName is the slot a bare `save` writes to: the last name explicitly
+	// saved or loaded this session. Empty until set; ActiveSaveName falls back to
+	// AutosaveName. The periodic autosave does NOT touch this — it's a separate net.
+	activeSaveName string
+
 	// Phase 7: result of the most recent age advance transformation pass
 	lastAgeAdvanceSummary AgeAdvanceSummary
 
@@ -551,6 +556,25 @@ func (ge *GameEngine) GetMaxSpeed() float64 {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
 	return ge.MaxSpeedForAge()
+}
+
+// ActiveSaveName is the slot a bare `save` writes to: the last name explicitly
+// saved or loaded this session, defaulting to AutosaveName until one is set.
+func (ge *GameEngine) ActiveSaveName() string {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	if ge.activeSaveName == "" {
+		return AutosaveName
+	}
+	return ge.activeSaveName
+}
+
+// SetActiveSaveName records the slot a bare `save` should target. Call it after a
+// successful explicit `save <name>`; LoadGame sets it directly under its own lock.
+func (ge *GameEngine) SetActiveSaveName(name string) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.activeSaveName = name
 }
 
 // Stop halts the game tick loop. Safe to call multiple times; subsequent

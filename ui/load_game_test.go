@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -69,6 +70,31 @@ func TestRowTagPrecedence(t *testing.T) {
 	plain := game.SaveInfo{Name: "hero"}
 	if got := rowTag(plain); got != "" {
 		t.Errorf("rowTag(plain) = %q, want empty", got)
+	}
+}
+
+func TestLegendTextCoversSymbolsWithMatchingColors(t *testing.T) {
+	legend := legendText()
+	// Every row symbol the browser can show must be explained in the Key box.
+	for _, sym := range []string{"★ auto", "⭐ elite", "⚠ modified", "⚠ corrupt"} {
+		if !strings.Contains(legend, sym) {
+			t.Errorf("legendText() missing symbol %q\n%s", sym, legend)
+		}
+	}
+	// Colours must match the row tags exactly: gold for ★/⭐, red for ⚠.
+	for _, goldTag := range []string{"[gold]★ auto[-]", "[gold]⭐ elite[-]"} {
+		if !strings.Contains(legend, goldTag) {
+			t.Errorf("legendText() missing gold-tagged %q\n%s", goldTag, legend)
+		}
+	}
+	for _, redTag := range []string{"[red]⚠ modified[-]", "[red]⚠ corrupt[-]"} {
+		if !strings.Contains(legend, redTag) {
+			t.Errorf("legendText() missing red-tagged %q\n%s", redTag, legend)
+		}
+	}
+	// Four symbols → four content lines (sizing assumes this for the height-6 box).
+	if lines := strings.Count(legend, "\n") + 1; lines != 4 {
+		t.Errorf("legendText() has %d lines, want 4", lines)
 	}
 }
 
