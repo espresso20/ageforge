@@ -202,6 +202,8 @@ Voluntary catastrophes let you force an epoch event outside the normal roll. Use
 
 Save files live in `./data/saves/*.json`, relative to the directory you launch the game from. The `save <name>` and `load <name>` commands above work with the same files as the **Load Game** browser below.
 
+A bare `save` (no name) re-saves to your most recent named or loaded save — it stays on the autosave slot only until you've explicitly `save <name>`d or loaded a named save this session. The periodic autosave always writes to the autosave slot regardless and never changes which slot a bare `save` targets.
+
 ---
 
 ## Saving & Loading
@@ -223,7 +225,7 @@ Highlighting a save updates a **detail pane** on the side with everything you ne
 | `c` | Duplicate the highlighted save (creates `<name>-copy`) |
 | `Esc` | Return to the main menu |
 
-**Row tags:**
+**Row tags:** these symbols are also explained on-screen in a bordered **Key** box between the save list and the detail pane, so you don't have to leave the browser to look them up.
 
 | Tag | Meaning |
 |---|---|

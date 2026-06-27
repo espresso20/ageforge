@@ -546,12 +546,20 @@ func cmdStatus(engine *game.GameEngine) CommandResult {
 }
 
 func cmdSave(args []string, engine *game.GameEngine) CommandResult {
-	name := "autosave"
-	if len(args) > 0 {
+	// With a name: write that slot and make it the active one for future bare
+	// saves. Without: reuse the active slot (last named/loaded save, else autosave).
+	var name string
+	explicit := len(args) > 0
+	if explicit {
 		name = args[0]
+	} else {
+		name = engine.ActiveSaveName()
 	}
 	if err := engine.SaveGame(name); err != nil {
 		return CommandResult{Message: fmt.Sprintf("Save failed: %v", err), Type: "error"}
+	}
+	if explicit {
+		engine.SetActiveSaveName(name)
 	}
 	return CommandResult{Message: fmt.Sprintf("Game saved as '%s'", name), Type: "info"}
 }

@@ -362,6 +362,45 @@ func TestListSaveDetailsRichFields(t *testing.T) {
 	}
 }
 
+func TestActiveSaveNameDefaultsAndSetter(t *testing.T) {
+	// A fresh engine has never saved or loaded → bare `save` targets the autosave.
+	ge := NewGameEngine()
+	if got := ge.ActiveSaveName(); got != AutosaveName {
+		t.Errorf("fresh ActiveSaveName() = %q, want %q", got, AutosaveName)
+	}
+	// An explicit `save <name>` records the slot for future bare saves.
+	ge.SetActiveSaveName("test")
+	if got := ge.ActiveSaveName(); got != "test" {
+		t.Errorf("after SetActiveSaveName(\"test\"), ActiveSaveName() = %q, want \"test\"", got)
+	}
+}
+
+func TestLoadGameSetsActiveSaveName(t *testing.T) {
+	name := "test_active_load"
+	ge := writeTestSave(t, name) // writes name.json, registers cleanup
+
+	// A different engine that loads the slot should adopt it as its active name,
+	// so a subsequent bare `save` overwrites the loaded slot rather than autosave.
+	other := NewGameEngine()
+	if got := other.ActiveSaveName(); got != AutosaveName {
+		t.Fatalf("pre-load ActiveSaveName() = %q, want %q", got, AutosaveName)
+	}
+	if err := other.LoadGame(name); err != nil {
+		t.Fatalf("LoadGame(%q) failed: %v", name, err)
+	}
+	if got := other.ActiveSaveName(); got != name {
+		t.Errorf("after LoadGame(%q), ActiveSaveName() = %q, want %q", name, got, name)
+	}
+
+	// A failed load must NOT change the active slot.
+	if err := ge.LoadGame("test_active_load_missing"); err == nil {
+		t.Fatal("LoadGame on missing file = nil error, want error")
+	}
+	if got := ge.ActiveSaveName(); got != AutosaveName {
+		t.Errorf("after failed LoadGame, ActiveSaveName() = %q, want %q (unchanged)", got, AutosaveName)
+	}
+}
+
 func TestListSaveDetailsFlagsCorrupt(t *testing.T) {
 	// Ensure the dir exists, then drop a non-JSON .json file into it.
 	good := "test_corrupt_neighbor"
