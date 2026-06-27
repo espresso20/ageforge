@@ -459,6 +459,67 @@ func TestStartNewNamedGame(t *testing.T) {
 	}
 }
 
+func TestBranchSave(t *testing.T) {
+	parent := "Branch Parent"
+	child := "Branch Child"
+	t.Cleanup(func() {
+		_ = os.Remove(savePath(parent))
+		_ = os.Remove(savePath(child))
+	})
+
+	ge := NewGameEngine()
+	if err := ge.StartNewNamedGame(parent); err != nil {
+		t.Fatalf("StartNewNamedGame(%q) failed: %v", parent, err)
+	}
+
+	// Capture the parent file's bytes so we can prove branching leaves it untouched.
+	parentBytesBefore, err := os.ReadFile(savePath(parent))
+	if err != nil {
+		t.Fatalf("read parent save: %v", err)
+	}
+
+	if err := ge.BranchSave(child); err != nil {
+		t.Fatalf("BranchSave(%q) failed: %v", child, err)
+	}
+
+	// The branch becomes the active slot with the parent recorded as its lineage.
+	if got := ge.ActiveSaveName(); got != child {
+		t.Errorf("ActiveSaveName() = %q, want %q", got, child)
+	}
+	if got := ge.ActiveParentName(); got != parent {
+		t.Errorf("ActiveParentName() = %q, want %q", got, parent)
+	}
+
+	// The child file exists and loads back with its parent recorded.
+	if !SaveExists(child) {
+		t.Fatalf("child save %q not found after BranchSave", child)
+	}
+	loaded := NewGameEngine()
+	if err := loaded.LoadGame(child); err != nil {
+		t.Fatalf("LoadGame(%q) failed: %v", child, err)
+	}
+	if got := loaded.ActiveParentName(); got != parent {
+		t.Errorf("after load, child ActiveParentName() = %q, want %q", got, parent)
+	}
+
+	// The parent save still exists, byte-identical (frozen at the branch point).
+	if !SaveExists(parent) {
+		t.Fatalf("parent save %q vanished after BranchSave", parent)
+	}
+	parentBytesAfter, err := os.ReadFile(savePath(parent))
+	if err != nil {
+		t.Fatalf("re-read parent save: %v", err)
+	}
+	if string(parentBytesBefore) != string(parentBytesAfter) {
+		t.Errorf("parent save bytes changed after BranchSave; want unchanged")
+	}
+
+	// Branching to the same name again is rejected (already exists).
+	if err := ge.BranchSave(child); err == nil {
+		t.Errorf("BranchSave(%q) twice = nil error, want already-exists error", child)
+	}
+}
+
 func TestActiveParentNameSetter(t *testing.T) {
 	// A fresh engine is a lineage root → empty parent.
 	ge := NewGameEngine()

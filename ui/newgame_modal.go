@@ -13,15 +13,24 @@ import (
 // newGameNamePage is the unique page name for the New Game name-entry modal.
 const newGameNamePage = "newgame_name"
 
-// showNewGameNameModal pops a centered, bordered prompt asking the player to name
-// their civilization. The input is pre-filled with a procedural suggestion that
-// Tab rerolls. Enter validates the name with the same rule the rename/save paths
-// use (game.ValidateSaveName) and, on success, removes the page and calls
-// onConfirm with the cleaned name. Esc cancels: it removes the page and restores
-// focus to the splash menu without resetting or starting a game.
+// showNewGameNameModal pops the New Game name prompt. It is a thin wrapper over
+// showSaveNameModal so the splash menu keeps its existing behavior unchanged.
 //
 // restoreFocus is the splash menu primitive to refocus on cancel.
 func showNewGameNameModal(app *tview.Application, pages *tview.Pages, restoreFocus tview.Primitive, onConfirm func(name string)) {
+	showSaveNameModal(app, pages, " Name Your Civilization ", newGameNamePage, restoreFocus, onConfirm)
+}
+
+// showSaveNameModal pops a centered, bordered name-entry prompt. The input is
+// pre-filled with a procedural suggestion (game.GenerateSaveName) that Tab
+// rerolls. Enter validates the name with the same rule the rename/save paths use
+// (game.ValidateSaveName) and, on success, removes the page and calls onConfirm
+// with the cleaned name. Esc cancels: it removes the page and restores focus to
+// focusReturn without invoking onConfirm.
+//
+// title customizes the heading; pageName must be distinct per caller so two
+// concurrent modals (e.g. New Game vs. Branch) can't collide on the page stack.
+func showSaveNameModal(app *tview.Application, pages *tview.Pages, title, pageName string, focusReturn tview.Primitive, onConfirm func(name string)) {
 	errTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
@@ -34,15 +43,14 @@ func showNewGameNameModal(app *tview.Application, pages *tview.Pages, restoreFoc
 	hintTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[#8b949e]Enter: begin  ·  Tab: reroll name  ·  Esc: cancel[-]")
+		SetText("[#8b949e]Enter: confirm  ·  Tab: reroll name  ·  Esc: cancel[-]")
 
-	// close removes the modal page and restores focus to the splash menu. Used on
-	// both cancel (Esc) and on a successful confirm (the page is gone before the
-	// game starts in either path).
+	// closeAndRestore removes the modal page and restores focus to focusReturn.
+	// Used on cancel (Esc).
 	closeAndRestore := func() {
-		pages.RemovePage(newGameNamePage)
-		if restoreFocus != nil {
-			app.SetFocus(restoreFocus)
+		pages.RemovePage(pageName)
+		if focusReturn != nil {
+			app.SetFocus(focusReturn)
 		}
 	}
 
@@ -58,7 +66,7 @@ func showNewGameNameModal(app *tview.Application, pages *tview.Pages, restoreFoc
 			app.SetFocus(input)
 			return
 		}
-		pages.RemovePage(newGameNamePage)
+		pages.RemovePage(pageName)
 		onConfirm(name)
 	}
 
@@ -82,7 +90,7 @@ func showNewGameNameModal(app *tview.Application, pages *tview.Pages, restoreFoc
 		AddItem(tview.NewBox(), 1, 0, false).
 		AddItem(hintTV, 1, 0, false)
 	inner.SetBorder(true).
-		SetTitle(" Name Your Civilization ").
+		SetTitle(title).
 		SetTitleColor(tcell.ColorGold).
 		SetBorderColor(tcell.ColorGold)
 
@@ -101,6 +109,6 @@ func showNewGameNameModal(app *tview.Application, pages *tview.Pages, restoreFoc
 		return ev
 	})
 
-	pages.AddPage(newGameNamePage, modal, true, true)
+	pages.AddPage(pageName, modal, true, true)
 	app.SetFocus(input)
 }

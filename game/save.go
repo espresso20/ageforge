@@ -397,6 +397,24 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 	}
 }
 
+// BranchSave forks the current run into a NEW save named newName: its parent is
+// the current active save, and it becomes the active save (so autosave follows
+// the branch from here). Rejects an invalid or already-existing name. The old
+// (parent) save is left untouched on disk, frozen at the branch point.
+func (ge *GameEngine) BranchSave(newName string) error {
+	clean, err := ValidateSaveName(newName)
+	if err != nil {
+		return err
+	}
+	if SaveExists(clean) {
+		return fmt.Errorf("a save named %q already exists — pick another name", clean)
+	}
+	parent := ge.ActiveSaveName()
+	ge.SetActiveParentName(parent)
+	ge.SetActiveSaveName(clean)
+	return ge.SaveGame(clean)
+}
+
 // LoadGame reads a save file, verifies its integrity, and restores all engine
 // state under the write lock. File I/O is done outside the lock to avoid
 // blocking doTick for the duration of a slow disk read.
