@@ -36,7 +36,7 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 
 	switch cmd {
 	case "help", "h", "?":
-		return cmdHelp(args)
+		return CommandResult{OverlayName: "help"}
 	case "gather", "g":
 		return cmdGather(args, engine)
 	case "build", "b":
@@ -219,54 +219,6 @@ func cmdAdvance(engine *game.GameEngine) CommandResult {
 		Message: fmt.Sprintf("Your civilization enters the [gold]%s[-]!", state.AgeName),
 		Type:    "success",
 	}
-}
-
-func cmdHelp(args []string) CommandResult {
-	help := `[gold]Commands:[-]
-  [cyan]gather[-] <food|wood|stone> [n] - Hand-gather resources (max 25, until Medieval Age)
-  [cyan]build[-] <building> [count|max] - Build structure(s) (default: 1)
-  [cyan]sell[-] <building> [count]      - Demolish building(s) and recover 50% of build cost
-  [cyan]recruit[-] [count|max]          - Recruit workers from available housing capacity and assign to buildings (default: 1)
-  [cyan]assign[-] <building> [n|all]   - Assign workers to a building
-  [cyan]unassign[-] <building> [n|all] - Unassign workers from a building
-  [cyan]dismiss[-] <building> [n|all]  - Fire workers from a building (removes from pool)
-  [cyan]advance[-]                     - Advance to the next age (when ready)
-  [cyan]research[-] <tech_key>         - Research a technology
-  [cyan]research[-] cancel             - Cancel current research
-  [cyan]research[-] list               - List available techs
-  [cyan]expedition[-] <key>            - Launch a military expedition
-  [cyan]expedition[-] list             - List available expeditions
-  [cyan]trade[-] <from> <to> <amount>  - Exchange resources
-  [cyan]trade[-] list                  - Show exchange rates
-  [cyan]trade[-] route list            - List trade routes
-  [cyan]trade[-] route start <key>     - Start a trade route
-  [cyan]trade[-] route stop <key>      - Stop a trade route
-  [cyan]diplomacy[-]                   - Show faction status
-  [cyan]diplomacy[-] ally <faction>    - Ally with faction (costs gold)
-  [cyan]diplomacy[-] rival <faction>   - Declare rivalry
-  [cyan]diplomacy[-] embargo <faction> - Embargo faction
-  [cyan]diplomacy[-] gift <faction>    - Send gift (+15 opinion)
-  [cyan]diplomacy[-] neutral <faction> - Reset to neutral
-  [cyan]prestige[-]                    - View prestige status
-  [cyan]prestige[-] confirm yes        - Reset game with prestige bonus
-  [cyan]prestige[-] shop               - View prestige upgrades
-  [cyan]prestige[-] buy <key>          - Buy a prestige upgrade
-  [cyan]rates[-]                       - Show resource rate breakdown
-  [cyan]status[-]                      - Show detailed status
-  [cyan]upgrade[-]                     - List available building upgrades
-  [cyan]upgrade[-] <building> [n|all]  - Upgrade building to next age tier (pays cost delta)
-  [cyan]dump[-]                        - Export logs to file for debugging
-  [cyan]save[-] [name]                 - Save game (default: autosave)
-  [cyan]load[-] [name]                 - Load game (default: autosave)
-  [cyan]saves[-]                       - List all save files
-  [cyan]wonder[-]                      - Show current wonder bank status
-  [cyan]wonder collect[-] <res> <amt|all> - Bank resources into current wonder
-  [cyan]speed[-] [1.0|1.5|2.0|...]     - Set game speed (unlocks per wonder built)
-  [cyan]catastrophe invoke[-]           - Voluntarily trigger the epoch catastrophe
-  [cyan]help[-]                        - Show this help
-
-[gold]Shortcuts:[-] g=gather, b=build, r=recruit, a=assign, u=unassign, s=status, res=research, exp=expedition, t=trade, dip=diplomacy`
-	return CommandResult{Message: help, Type: "info"}
 }
 
 func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {

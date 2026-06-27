@@ -42,7 +42,8 @@ Build → Recruit → Assign → Research → Advance → Repeat
 
 ## Navigation
 
-- overlay commands (type `research`, `army`, `trade`, `map`, etc.) — open panels
+- overlay commands (type `research`, `army`, `trade`, `map`, `help`, etc.) — open panels
+- `help` opens the Help panel: a full command reference plus the list of every panel you can open
 - **PgUp / PgDn** — scroll the active tab
 - **↑ / ↓** — navigate command history
 - **Esc** — save game
