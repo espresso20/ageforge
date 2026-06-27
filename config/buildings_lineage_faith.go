@@ -14,9 +14,11 @@ func buildingsLineageFaith() []BuildingDef {
 	// tier 0 — primitive_age  rate=0.002
 	b = append(b, BuildingDef{
 		Name: "Shrine", Key: "shrine", Category: "research",
-		BaseCost:    map[string]float64{"wood": 20},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "faith", Value: 0.002}},
+		BaseCost:  map[string]float64{"wood": 20},
+		CostScale: 1.30,
+		// Stage 1 proof-of-plumbing: small flat morale lift. Stage 2 will broaden
+		// morale effects to the full era-appropriate set; keep this value modest.
+		Effects:     []Effect{{Type: "production", Target: "faith", Value: 0.002}, {Type: "morale", Value: 0.0006}},
 		BuildTicks:  80,
 		RequiredAge: "primitive_age",
 		Description: "A small spirit shrine. +0.002 faith/tick (2 workers).",
@@ -53,9 +55,11 @@ func buildingsLineageFaith() []BuildingDef {
 	// tier 3 — iron_age  rate=0.016
 	b = append(b, BuildingDef{
 		Name: "Temple", Key: "temple", Category: "research",
-		BaseCost:    map[string]float64{"stone": 5000, "gold": 2000, "iron": 1000},
-		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "faith", Value: 0.016}},
+		BaseCost:  map[string]float64{"stone": 5000, "gold": 2000, "iron": 1000},
+		CostScale: 1.30,
+		// Stage 1 proof-of-plumbing: small flat morale lift (see shrine). Stage 2
+		// broadens this to the full set; keep the value modest for now.
+		Effects:     []Effect{{Type: "production", Target: "faith", Value: 0.016}, {Type: "morale", Value: 0.0006}},
 		BuildTicks:  300,
 		RequiredAge: "iron_age",
 		Description: "A formal temple for organised worship. +0.016 faith/tick (3 workers).",
