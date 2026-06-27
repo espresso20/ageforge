@@ -321,11 +321,12 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		Workers:   ge.Workers.GetAll(),
 		Unlocked:  ge.getUnlockedState(),
 		Stats: &GameStats{
-			TotalBuilt:     ge.Stats.TotalBuilt,
-			TotalRecruited: ge.Stats.TotalRecruited,
-			TotalGathered:  statsGathered,
-			GameStarted:    ge.Stats.GameStarted,
-			AgesReached:    agesReached,
+			TotalBuilt:      ge.Stats.TotalBuilt,
+			TotalRecruited:  ge.Stats.TotalRecruited,
+			TotalGathered:   statsGathered,
+			GameStarted:     ge.Stats.GameStarted,
+			AgesReached:     agesReached,
+			SoldiersTrained: ge.Stats.SoldiersTrained,
 		},
 		BuildQueue: queue,
 		Research: ResearchSave{
@@ -435,11 +436,12 @@ func (ge *GameEngine) LoadGame(filename string) error {
 		ages := make([]string, len(save.Stats.AgesReached))
 		copy(ages, save.Stats.AgesReached)
 		ge.Stats = &GameStats{
-			TotalBuilt:     save.Stats.TotalBuilt,
-			TotalRecruited: save.Stats.TotalRecruited,
-			TotalGathered:  gathered,
-			GameStarted:    save.Stats.GameStarted,
-			AgesReached:    ages,
+			TotalBuilt:      save.Stats.TotalBuilt,
+			TotalRecruited:  save.Stats.TotalRecruited,
+			TotalGathered:   gathered,
+			GameStarted:     save.Stats.GameStarted,
+			AgesReached:     ages,
+			SoldiersTrained: save.Stats.SoldiersTrained,
 		}
 	}
 	ge.buildQueue = save.BuildQueue
@@ -447,6 +449,16 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// Restore unlocks
 	for _, key := range save.Unlocked.Resources {
 		ge.Resources.UnlockResource(key)
+	}
+	// Reconcile resource unlocks against the loaded age. Old saves predating a
+	// resource's introduction (e.g. the `soldiers` resource added in the military
+	// rework) won't have it in their serialized unlock set even when the player is
+	// already past its unlock age — unlock anything whose unlock-age has been reached.
+	currentOrder := ge.progress.ageIndex[save.Age]
+	for _, def := range config.BaseResources() {
+		if order, ok := ge.progress.ageIndex[def.Age]; ok && order <= currentOrder {
+			ge.Resources.UnlockResource(def.Key)
+		}
 	}
 	for _, key := range save.Unlocked.Buildings {
 		ge.Buildings.UnlockBuilding(key)

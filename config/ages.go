@@ -70,7 +70,7 @@ func Ages() []AgeDef {
 			ResourceReqs:    map[string]float64{"food": 40000, "wood": 20000, "stone": 8000, "iron": 4000, "knowledge": 10000},
 			BuildingReqs:    map[string]int{"lumber_mill": 8, "quarry": 8, "scriptorium": 3},
 			UnlockBuildings: []string{"townhouse", "granary", "field_works", "timber_yard", "marble_quarry", "agora", "temple", "hunting_lodge", "legion_fort", "trading_post", "ironworks", "smelter", "colosseum"},
-			UnlockResources: []string{"marble", "iron_ore"},
+			UnlockResources: []string{"marble", "iron_ore", "soldiers"},
 		},
 		// === 4: CLASSICAL AGE (Iron Era) ===
 		{

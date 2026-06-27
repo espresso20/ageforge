@@ -153,7 +153,7 @@ Unassigned workers return to the idle pool immediately and can be reassigned els
 **When to unassign:**
 
 - Reassigning workers from low-priority buildings to new higher-tier ones after an age advance
-- Freeing workers to send on expeditions (expedition losses come from the pool)
+- Pulling military workers off military buildings once you've banked enough soldiers — expeditions spend the `soldiers` resource, not workers, so idle military workers are pure food/morale drain
 
 ---
 
@@ -477,7 +477,7 @@ Once food is stable, assign some workers to `story_circle` (knowledge) to begin 
 ### Mid game (Bronze / Iron Age)
 
 - Assign workers to lumber and masonry buildings as soon as they are built — stone and wood extraction gate most building costs
-- Unlock the military domain (Iron Age) by building `war_camp`; assign soldiers for expedition access
+- Unlock the military domain (Iron Age) by building `war_camp`, then staff it with military workers — it produces the `soldiers` resource you spend on expeditions
 - Knowledge workers in libraries become critical — `scholars_haven` milestone requires 20 knowledge workers assigned to libraries
 
 ### Late game

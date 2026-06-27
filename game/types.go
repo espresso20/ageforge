@@ -4,48 +4,48 @@ import "time"
 
 // GameState is a read-only snapshot of the entire game state for UI consumption
 type GameState struct {
-	Tick           int
-	Age            string
-	AgeName        string
-	AgeReady            bool   // requirements met — player can type 'advance' to proceed
+	Tick                 int
+	Age                  string
+	AgeName              string
+	AgeReady             bool   // requirements met — player can type 'advance' to proceed
 	CurrentAgeWonderKey  string // wonder key required before advancing; "" if none or already built
 	CurrentAgeWonderName string // display name of that wonder
-	NextAge        string
-	NextAgeName    string
-	NextAgeResReqs map[string]float64
-	NextAgeBldReqs map[string]int
-	Resources      map[string]ResourceState
-	Buildings      map[string]BuildingState
-	BuildQueue     []BuildQueueSnapshot
-	Workers        WorkerState
-	Research       ResearchState
-	Military       MilitaryState
-	Milestones     MilestoneState
-	ActiveEvents   []ActiveEventState
-	Prestige       PrestigeState
-	Trade          TradeState
-	Diplomacy      DiplomacyState
-	Log            []LogEntry
-	Stats          StatsSnapshot
-	SaveExists     bool
-	TickSpeedBonus   float64
-	TickIntervalMs   int
-	SpeedMultiplier  float64
-	CheaterBadge   bool
-	EliteBadge     bool
+	NextAge              string
+	NextAgeName          string
+	NextAgeResReqs       map[string]float64
+	NextAgeBldReqs       map[string]int
+	Resources            map[string]ResourceState
+	Buildings            map[string]BuildingState
+	BuildQueue           []BuildQueueSnapshot
+	Workers              WorkerState
+	Research             ResearchState
+	Military             MilitaryState
+	Milestones           MilestoneState
+	ActiveEvents         []ActiveEventState
+	Prestige             PrestigeState
+	Trade                TradeState
+	Diplomacy            DiplomacyState
+	Log                  []LogEntry
+	Stats                StatsSnapshot
+	SaveExists           bool
+	TickSpeedBonus       float64
+	TickIntervalMs       int
+	SpeedMultiplier      float64
+	CheaterBadge         bool
+	EliteBadge           bool
 	// Phase 7: result of the last age advance transformation pass
 	LastAgeAdvanceSummary AgeAdvanceSummary
 	// Phase 8: epoch system
-	EpochKey          string
-	EpochName         string
-	EpochIcon         string
-	EpochColor        string // tview color tag
+	EpochKey           string
+	EpochName          string
+	EpochIcon          string
+	EpochColor         string // tview color tag
 	EpochSurvived      bool   // player endured a catastrophe this epoch
 	PendingCatastrophe string // epoch key if catastrophe modal should show; "" otherwise
 	EpochEventHistory  []EpochEventRecord
 	// Phase 9: civilization history + legacy bonuses
-	LegacyBonuses      map[string]bool  // epochKey -> true if succumb legacy bonus is active
-	CatastropheHistory []string         // narrative log entries
+	LegacyBonuses      map[string]bool // epochKey -> true if succumb legacy bonus is active
+	CatastropheHistory []string        // narrative log entries
 	// History overlay
 	History *HistoryCollector
 	// Morale system
@@ -218,7 +218,13 @@ type TechState struct {
 
 // MilitaryState represents military system state for UI
 type MilitaryState struct {
-	SoldierCount     int
+	// SoldierCount is the current soldiers resource amount.
+	SoldierCount int
+	// SoldierCap is the soldiers resource storage cap (sum of built military
+	// buildings' storage effects). SoldierRate is the per-tick soldiers
+	// production rate (net). Both are populated from the soldiers resource.
+	SoldierCap       int
+	SoldierRate      float64
 	DefenseRating    float64
 	MilitaryBonus    float64
 	ExpeditionBonus  float64
@@ -242,8 +248,13 @@ type ExpeditionInfo struct {
 	SoldiersNeeded int
 	Duration       int
 	Difficulty     float64
+	Cost           map[string]float64
 	Description    string
 	CanLaunch      bool
+	// LaunchBlockReason is a short, player-facing explanation of why the
+	// expedition can't be launched right now (e.g. "need 3 soldiers",
+	// "need 30 food"). Empty when CanLaunch is true.
+	LaunchBlockReason string
 }
 
 // === Milestone Types ===
@@ -301,7 +312,8 @@ type MilestoneSnapshotParams struct {
 	Population      int
 	TechCount       int
 	TotalBuilt      int
-	SoldierCount    int
+	SoldierCount    int // soldiers resource amount (live); used by non-milestone consumers
+	SoldiersTrained int // cumulative lifetime soldiers trained; drives soldier milestones
 	WonderCount     int
 	KnowledgeCount  int
 	ResearchedTechs map[string]bool
@@ -312,13 +324,13 @@ type MilestoneSnapshotParams struct {
 
 // PrestigeState represents the prestige system state for UI
 type PrestigeState struct {
-	Level        int
-	TotalEarned  int
-	Available    int
-	Upgrades     map[string]PrestigeUpgradeState
-	PendingPoints int  // points you'd get if you prestige now
-	CanPrestige  bool
-	PassiveBonus float64 // current production_all bonus
+	Level         int
+	TotalEarned   int
+	Available     int
+	Upgrades      map[string]PrestigeUpgradeState
+	PendingPoints int // points you'd get if you prestige now
+	CanPrestige   bool
+	PassiveBonus  float64 // current production_all bonus
 }
 
 // PrestigeUpgradeState represents one prestige upgrade for UI

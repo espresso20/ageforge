@@ -79,16 +79,18 @@ Tech keys are shown in the **Research** overlay (`research`) (dim grey when lock
 
 | Command | Description |
 |---|---|
-| `expedition <key>` | Launch a military expedition |
+| `expedition list` | List expeditions available in your current age (shorthand: `exp list`) |
+| `expedition <key>` | Launch an expedition — spends its soldier cost (shorthand: `exp <key>`) |
 | `speed [multiplier]` | Set game speed (1.0, 1.5, 2.0 … +0.5 per wonder built) |
 
 ```
-expedition small_raid
-expedition ruins_delve
+expedition list
+expedition scout_party
+expedition scout_ruins
 speed 1.5
 ```
 
-Only one expedition can be active at a time. Check **Military** overlay (`army`) for available expeditions and soldier requirements.
+Expeditions **spend the `soldiers` resource** at launch (and sometimes a resource cost too) — the cost is deducted whether the run succeeds or fails; only the reward differs. Before the Iron Age, `scout_party` costs 0 soldiers (just food + wood). Only one expedition can be active at a time. Check the **Military** overlay (`army`) for available expeditions and their soldier costs.
 
 ---
 

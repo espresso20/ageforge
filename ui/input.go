@@ -886,8 +886,15 @@ func cmdExpeditionList(engine *game.GameEngine) CommandResult {
 		if exp.CanLaunch {
 			canStr = "[green]✓[-]"
 		}
-		lines = append(lines, fmt.Sprintf("  %s [cyan]%s[-] - %s (%d soldiers, %d ticks)",
-			canStr, exp.Key, exp.Name, exp.SoldiersNeeded, exp.Duration))
+		reqs := fmt.Sprintf("%d soldiers, %d ticks", exp.SoldiersNeeded, exp.Duration)
+		if cost := formatExpeditionCost(exp.Cost); cost != "" {
+			reqs = fmt.Sprintf("%d soldiers, %s, %d ticks", exp.SoldiersNeeded, cost, exp.Duration)
+		}
+		line := fmt.Sprintf("  %s [cyan]%s[-] - %s (%s)", canStr, exp.Key, exp.Name, reqs)
+		if !exp.CanLaunch && exp.LaunchBlockReason != "" {
+			line += fmt.Sprintf(" [red]— %s[-]", exp.LaunchBlockReason)
+		}
+		lines = append(lines, line)
 	}
 
 	if state.Military.ActiveExpedition != nil {

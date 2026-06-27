@@ -61,6 +61,15 @@ func (rm *ResourceManager) GetStorage(key string) float64 {
 	return 0
 }
 
+// GetRate returns the current per-tick rate (production − consumption) for a
+// resource, or 0 if it doesn't exist.
+func (rm *ResourceManager) GetRate(key string) float64 {
+	if r, ok := rm.resources[key]; ok {
+		return r.Rate
+	}
+	return 0
+}
+
 // Add adds an amount to a resource, respecting storage limits
 func (rm *ResourceManager) Add(key string, amount float64) float64 {
 	r, ok := rm.resources[key]
