@@ -170,6 +170,38 @@ func TestAddAll(t *testing.T) {
 	}
 }
 
+// TestAll_RoundTrips verifies All() is the inverse of AddAll: flattening a
+// resolver and rebuilding from the dump reproduces every Total. This is the
+// path GetState → GameState.Modifiers → UI relies on.
+func TestAll_RoundTrips(t *testing.T) {
+	src := []Modifier{
+		{Source: "research", Target: "production_all", Op: OpAdd, Value: 0.10},
+		{Source: "morale", Target: "production_all", Op: OpMul, Value: 1.18},
+		{Source: "prestige", Target: "tick_speed", Op: OpAdd, Value: 0.05},
+		{Source: "event:peace", Target: "tick_speed", Op: OpAdd, Value: 0.01},
+	}
+	orig := NewResolver()
+	orig.AddAll(src)
+
+	flat := orig.All()
+	if len(flat) != len(src) {
+		t.Fatalf("All() len = %d, want %d", len(flat), len(src))
+	}
+
+	rebuilt := NewResolver()
+	rebuilt.AddAll(flat)
+	for _, target := range orig.Targets() {
+		if a, b := orig.Total(target), rebuilt.Total(target); !floatEq(a, b) {
+			t.Errorf("Total(%q): orig %v != rebuilt %v", target, a, b)
+		}
+	}
+
+	// Empty resolver yields a non-nil, zero-length slice (safe for AddAll).
+	if got := NewResolver().All(); got == nil || len(got) != 0 {
+		t.Errorf("empty All() = %v, want non-nil empty slice", got)
+	}
+}
+
 // TestAddTotal_SumsOpAddIgnoresOpMul verifies AddTotal pools only OpAdd values
 // and never folds in an OpMul factor, and that an unknown target is 0.
 func TestAddTotal_SumsOpAddIgnoresOpMul(t *testing.T) {

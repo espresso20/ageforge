@@ -2733,6 +2733,12 @@ func (ge *GameEngine) GetState() GameState {
 			}
 			return out
 		}(),
+		// Snapshot the resolver's aggregated modifiers for the UI's Active
+		// Multipliers panel. buildResolver reads only already-held state and
+		// pure config.*, so it's safe under the RLock held here (it never
+		// re-acquires a lock). All() returns a fresh copy — no shared mutable
+		// state escapes.
+		Modifiers: ge.buildResolver().All(),
 	}
 }
 

@@ -60,6 +60,13 @@ type GameState struct {
 	// permanent bonuses (epoch events, legacy, milestones, etc.).
 	// Populated in GetState(); not stored in save JSON.
 	PermanentBonuses map[string]float64 `json:"-"`
+	// Modifiers is a flat snapshot of every modifier the engine's resolver
+	// aggregated this tick (research, prestige, wonders, permanent, morale,
+	// active events). The UI rebuilds a Resolver from it (NewResolver +
+	// AddAll) to render the Active Multipliers panel — same source of truth
+	// the engine uses for its rates, so the panel can never drift from the
+	// math. Populated in GetState(); not stored in save JSON.
+	Modifiers []Modifier `json:"-"`
 }
 
 // AgeAdvanceSummary holds data about what changed during an age advance transition.

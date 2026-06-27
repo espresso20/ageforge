@@ -114,6 +114,20 @@ func (r *Resolver) Breakdown(target string) []Modifier {
 	return out
 }
 
+// All returns a flat copy of every modifier the resolver holds, across all
+// targets, in target-sorted order (and insertion order within a target). It is
+// the natural inverse of AddAll: snapshot a resolver's contents out, hand them
+// across a boundary (e.g. into a GameState for the UI), and rebuild an
+// equivalent resolver with NewResolver + AddAll. The returned slice is a copy,
+// so mutating it cannot corrupt the resolver.
+func (r *Resolver) All() []Modifier {
+	out := make([]Modifier, 0)
+	for _, target := range r.Targets() {
+		out = append(out, r.mods[target]...)
+	}
+	return out
+}
+
 // Targets returns the sorted, de-duplicated list of targets that currently have
 // at least one modifier. Handy for UI that wants to enumerate every multiplier
 // bucket. (Map keys are inherently unique, so this is sorted-only; the "deduped"
