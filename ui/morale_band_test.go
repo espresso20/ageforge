@@ -81,3 +81,30 @@ func TestRoundHalf(t *testing.T) {
 		}
 	}
 }
+
+func TestAbsFloat(t *testing.T) {
+	cases := []struct {
+		in   float64
+		want float64
+	}{
+		{1.5, 1.5},
+		{-1.5, 1.5},
+		{0.0, 0.0},
+		{-0.0, 0.0},
+	}
+	for _, c := range cases {
+		if got := absFloat(c.in); got != c.want {
+			t.Errorf("absFloat(%v) = %v, want %v", c.in, got, c.want)
+		}
+	}
+
+	// Guard the epsilon used by the Active Multipliers "is morale active" check:
+	// a neutral 1.0 multiplier must read as inactive, a +18% one as active.
+	const eps = 0.0005
+	if absFloat(1.0-1.0) > eps {
+		t.Error("neutral multiplier (1.0) should be treated as inactive")
+	}
+	if !(absFloat(1.18-1.0) > eps) {
+		t.Error("bonus multiplier (1.18) should be treated as active")
+	}
+}

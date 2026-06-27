@@ -315,7 +315,13 @@ func statsProvider(state game.GameState, _ int) string {
 		}
 	}
 
-	if len(activeTargets) == 0 {
+	// Morale is an all-production multiplier when it's off neutral (1.0). It's
+	// not attributed by source like the others — it's a single banded factor —
+	// so it's rendered as a standalone line but must still count toward "is
+	// anything active" so the empty branch below doesn't fire on morale alone.
+	moraleActive := absFloat(state.MoraleMultiplier-1.0) > 0.0005
+
+	if len(activeTargets) == 0 && !moraleActive {
 		sb.WriteString(" [gray]No active multipliers[-]\n")
 	} else {
 		// Sort: production_all first, then alphabetical
@@ -328,6 +334,21 @@ func statsProvider(state game.GameState, _ int) string {
 			}
 			return activeTargets[i] < activeTargets[j]
 		})
+
+		// Morale is an all-production factor — group it with the all-production
+		// entries at the top. Sign drives the colour (green bonus / red penalty);
+		// reuse computeMoraleBand so this matches the workers panel exactly.
+		if moraleActive {
+			band := computeMoraleBand(state.Morale, state.MoraleMultiplier)
+			moraleColor := "green"
+			sign := "+"
+			if band.DeltaPct < 0 {
+				moraleColor = "red"
+				sign = "" // %d already carries the minus sign for negatives
+			}
+			fmt.Fprintf(&sb, "  [cyan]%-20s[-] [%s]%s%d%%[-]  [gray](all production)[-]\n",
+				"Morale", moraleColor, sign, band.DeltaPct)
+		}
 
 		for _, target := range activeTargets {
 			var total float64
@@ -372,4 +393,13 @@ func statsProvider(state game.GameState, _ int) string {
 	}
 
 	return sb.String()
+}
+
+// absFloat is a tiny abs helper for epsilon comparisons (avoids importing math
+// for a single call site).
+func absFloat(f float64) float64 {
+	if f < 0 {
+		return -f
+	}
+	return f
 }
