@@ -195,7 +195,8 @@ Voluntary catastrophes let you force an epoch event outside the normal roll. Use
 |---|---|
 | `save` | Open an **Overwrite / Branch** prompt for your current run |
 | `save <name>` | **Branch** a new save with that name off your current run (autosave then follows it) |
-| `load [name]` | Load a saved game |
+| `load` | Open the **Load Game** browser (your save tree) to pick which save/branch to load |
+| `load <name>` | Load that save directly |
 | `saves` | List all save files |
 | `Esc` | Quick-save to your active save |
 | `dump` | Export logs to a file for debugging |
@@ -204,6 +205,8 @@ Voluntary catastrophes let you force an epoch event outside the normal roll. Use
 Save files live in `./data/saves/*.json`, relative to the directory you launch the game from. The `save <name>` and `load <name>` commands above work with the same files as the **Load Game** browser below.
 
 A bare `save` (no name) opens a prompt: **Overwrite** writes your current run to its **active** save right now, while **Branch new** forks a fresh save (suggested name, editable) whose parent is your current save and then moves autosave onto the new branch — leaving the old save frozen at the branch point. `save <name>` branches straight to that name. The active save is the one you most recently named or loaded (a new game has you name it up front); the periodic autosave and `Esc` continuously overwrite it, so your current game is always kept current on disk. See [Saving & Loading](saving-and-loading.md) for the full model.
+
+A bare `load` (no name) opens the **Load Game** browser so you can pick which save/branch to load from your save tree — it never assumes a slot. You can open it mid-game; `Esc` returns you to your current run without loading anything. `load <name>` skips the browser and loads that save directly.
 
 See [Saving & Loading](saving-and-loading.md) for the full save system.
 

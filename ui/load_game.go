@@ -31,6 +31,13 @@ type loadGameBrowser struct {
 	subtitle *tview.TextView
 
 	saves []game.SaveInfo // current rows, sorted most-recent first
+
+	// backPage is the page to return to on Back/Esc (e.g. "splash" from the menu,
+	// "dashboard" when opened mid-game). startOnLoad gates engine.Start() after a
+	// successful load: true from the splash (first start), false mid-game (the
+	// engine is already running — a second Start() would double-run the ticker).
+	backPage    string
+	startOnLoad bool
 }
 
 // CreateLoadGamePage builds the full-screen Load Game browser and returns its
@@ -38,11 +45,17 @@ type loadGameBrowser struct {
 // and sets focus to the returned primitive's list — call SetFocus on the value
 // returned by FocusTarget, or just rely on AddPage's focus when it is the only
 // page shown. The screen is self-contained: all key handling lives on the list.
-func CreateLoadGamePage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine) tview.Primitive {
+//
+// backPage names the page to return to on Back/Esc; startOnLoad decides whether
+// a successful load should start the engine (true from the splash for the first
+// start, false mid-game where the engine is already running).
+func CreateLoadGamePage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, backPage string, startOnLoad bool) tview.Primitive {
 	b := &loadGameBrowser{
-		app:    app,
-		pages:  pages,
-		engine: engine,
+		app:         app,
+		pages:       pages,
+		engine:      engine,
+		backPage:    backPage,
+		startOnLoad: startOnLoad,
 	}
 
 	// ── Title ────────────────────────────────────────────────────────────────
@@ -220,10 +233,11 @@ func (b *loadGameBrowser) handleKey(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }
 
-// back removes the load_game page and returns to the splash.
+// back removes the load_game page and returns to the page it was opened from
+// (splash from the menu, dashboard when opened mid-game).
 func (b *loadGameBrowser) back() {
 	b.pages.RemovePage(loadGamePage)
-	b.pages.SwitchToPage("splash")
+	b.pages.SwitchToPage(b.backPage)
 }
 
 // doLoad loads the selected save and transitions to the dashboard. Corrupt saves
@@ -243,10 +257,14 @@ func (b *loadGameBrowser) doLoad() {
 		return
 	}
 	b.engine.AddLog("success", "Game loaded!")
-	// Mirror splash.go's post-load transition exactly.
 	b.pages.RemovePage(loadGamePage)
 	b.pages.SwitchToPage("dashboard")
-	go b.engine.Start()
+	// From the splash this performs the first engine start; mid-game the engine is
+	// already running (LoadGame swapped state under the lock and the live ticker
+	// picks it up), so a second Start() would double-run the ticker.
+	if b.startOnLoad {
+		go b.engine.Start()
+	}
 }
 
 // doDelete shows a red confirm modal, then deletes on confirm and refreshes.

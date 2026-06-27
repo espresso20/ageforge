@@ -22,16 +22,20 @@ Save files are written to `./data/saves/*.json`, relative to the directory you l
 |---|---|
 | `save` | Opens an **Overwrite / Branch** prompt for your current run (see below) |
 | `save <name>` | **Branches** a new save with that name off your current run; autosave then follows it |
-| `load [name]` | Load a named save |
+| `load` | Opens the **Load Game** browser (your lineage tree) to pick which save/branch to load |
+| `load <name>` | Loads that named save directly |
 | `saves` (or `save list`) | List all save files |
 | `Esc` | Quick-save to your current (active) save |
 
 ```
 save           # prompt: Overwrite this run, or Branch a new save?
 save hero      # branch a new save named "hero" off the current run
-load hero
+load           # open the Load Game browser to pick a save/branch
+load hero      # load the save named "hero" directly
 saves
 ```
+
+A bare `load` (no name) **opens the Load Game browser** — the lineage tree of every save — so you choose which save/branch to load instead of having a slot picked for you. You can open it mid-game; pressing `Esc` in the browser returns you to your current run without loading anything. `load <name>` skips the browser and loads that save directly.
 
 ---
 
@@ -67,7 +71,7 @@ The game autosaves periodically and whenever you press `Esc`, writing to your **
 
 ## The Load Game browser
 
-From the main menu, choosing **Load Game** opens a save browser that lists every save in `./data/saves/`. Highlighting a save updates a **detail pane** showing everything you need to size up that save before loading it: its age and epoch, population, buildings, wonders, milestones, techs, soldiers, prestige, [morale](morale.md), a ⚠ warning if a catastrophe is pending, the exact save time, and — for branched saves — a **Branched from** line naming the save it forked off.
+Choosing **Load Game** from the main menu — or typing a bare `load` mid-game — opens a save browser that lists every save in `./data/saves/`. Highlighting a save updates a **detail pane** showing everything you need to size up that save before loading it: its age and epoch, population, buildings, wonders, milestones, techs, soldiers, prestige, [morale](morale.md), a ⚠ warning if a catastrophe is pending, the exact save time, and — for branched saves — a **Branched from** line naming the save it forked off. Opened mid-game, `Esc` returns you to your current run without loading anything.
 
 **The lineage tree.** Saves aren't shown as a flat list — they're arranged as a **lineage tree**. When you [branch](saving-and-loading.md#branching-your-save) a new save off your current run, it appears **indented beneath its parent** with tree connectors (`├─`, `└─`), so you can see at a glance which saves descend from which. Top-level roots (saves you started fresh, plus any orphans) are ordered most-recent first, and each parent's children are likewise ordered most-recent first.
 
@@ -84,7 +88,7 @@ If a save's parent has been **deleted or renamed**, the child can no longer poin
 | `d` | Delete the highlighted save (asks you to confirm first) |
 | `r` | Rename the highlighted save |
 | `c` | Duplicate the highlighted save |
-| `Esc` | Return to the main menu |
+| `Esc` | Return to where you opened it from — the main menu, or your current run if opened mid-game |
 
 ---
 

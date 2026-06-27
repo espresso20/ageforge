@@ -255,6 +255,12 @@ func (d *Dashboard) build() {
 				d.showSaveChoiceModal()
 				return
 			}
+			if strings.ToLower(cmd) == "load" { // bare load — open the browser instead of assuming a slot
+				page := CreateLoadGamePage(d.app, d.pages, d.engine, "dashboard", false)
+				d.pages.AddPage(loadGamePage, page, true, true)
+				d.app.SetFocus(page)
+				return
+			}
 			result := HandleCommand(text, d.engine)
 			if result.OverlayName != "" {
 				state := d.engine.GetState()
