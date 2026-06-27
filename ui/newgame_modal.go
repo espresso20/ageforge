@@ -93,10 +93,15 @@ func showSaveNameModal(app *tview.Application, pages *tview.Pages, title, pageNa
 		SetTitle(title).
 		SetTitleColor(tcell.ColorGold).
 		SetBorderColor(tcell.ColorGold)
+	// Paint the box opaque so the page beneath (the dashboard, for a Branch
+	// save) doesn't bleed through the modal's empty rows — matches the
+	// dev-unlock / rename modals. Without this, tview leaves unwritten cells
+	// transparent and the layer below shows through.
+	inner.SetBackgroundColor(tcell.ColorBlack)
 
 	// Esc cancels; Tab rerolls a fresh suggestion. Enter is handled by the field's
 	// DoneFunc above so plain typing keys still reach the input.
-	modal := centeredModal(inner, 50, 9)
+	modal := centeredModal(inner, 60, 9)
 	modal.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
 		switch ev.Key() {
 		case tcell.KeyEsc:
