@@ -205,17 +205,29 @@ func renderActiveMultipliers(state game.GameState) string {
 
 	wrote := false
 	for _, target := range r.Targets() {
-		total := r.Total(target)
-		if absFloat(total-1.0) <= multEpsilon {
-			continue // no net effect — skip
+		if !isPanelMultiplier(target) {
+			continue // capacity/flat value (population, all, bare storage key) — not a rate multiplier
 		}
+		// Build the per-source breakdown FIRST. We render a target if ANY source
+		// contributes beyond epsilon — even when those sources net to ×1.0 — so an
+		// opposing +10%/-10% pair stays visible instead of silently collapsing.
 		breakdown := summarizeBreakdown(r.Breakdown(target))
 		if breakdown == "" {
-			continue // every contribution was a no-op
+			continue // genuinely empty — every contribution was a no-op
 		}
-		pct := (total - 1.0) * 100
-		fmt.Fprintf(&sb, "  [cyan]%-20s[-] [yellow]%+.0f%%[-]   [gray]%s[-]\n",
-			multiplierTargetLabel(target), pct, breakdown)
+		total := r.Total(target)
+		netPct := (total - 1.0) * 100
+		// Headline color by net sign: green bonus, red penalty, white if the row
+		// only renders because opposing sources cancel out.
+		headColor := "white"
+		switch {
+		case netPct > 0.5:
+			headColor = "green"
+		case netPct < -0.5:
+			headColor = "red"
+		}
+		fmt.Fprintf(&sb, "  [cyan]%-20s[-] [%s]%+.0f%%[-]   %s\n",
+			multiplierTargetLabel(target), headColor, netPct, breakdown)
 		wrote = true
 	}
 
@@ -233,9 +245,24 @@ func renderActiveMultipliers(state game.GameState) string {
 	return sb.String()
 }
 
-// multEpsilon is the tolerance below which a target's Total is treated as a
-// no-op (×1.0) and omitted from the panel.
+// multEpsilon is the tolerance below which a single source's contribution is
+// treated as a no-op and dropped from a target's per-source breakdown. (A
+// target row itself is no longer omitted on net ≈ 1.0 — opposing sources must
+// stay visible — so this guards fragment-level noise only.)
 const multEpsilon = 0.0005
+
+// isPanelMultiplier reports whether a resolver target is a genuine rate
+// multiplier that belongs in the Active Multipliers panel. Capacity/flat values
+// — population, "all", and bare-resource storage keys like "food"/"culture" —
+// are NOT rate multipliers and must not render as percentages here.
+func isPanelMultiplier(target string) bool {
+	switch target {
+	case "production_all", "gather_rate", "tick_speed", "military_power",
+		"expedition_reward", "research_speed", "build_cost":
+		return true
+	}
+	return strings.HasSuffix(target, "_rate")
+}
 
 // summarizeBreakdown collapses a target's per-modifier contributions into a
 // compact, source-labelled string like
@@ -286,7 +313,12 @@ func summarizeBreakdown(mods []game.Modifier) string {
 			if absFloat(a.mulProd-1.0) <= multEpsilon {
 				continue // ×1.00 — no-op
 			}
-			parts = append(parts, fmt.Sprintf("%s ×%.2f", label, a.mulProd))
+			// Color by sign: a multiplier above 1.0 is a bonus, below is a penalty.
+			color := "green"
+			if a.mulProd < 1.0 {
+				color = "red"
+			}
+			parts = append(parts, fmt.Sprintf("[%s]%s ×%.2f[-]", color, label, a.mulProd))
 			continue
 		}
 		// Additive (the common case). Fold any stray OpMul into the percent so
@@ -295,9 +327,14 @@ func summarizeBreakdown(mods []game.Modifier) string {
 		if absFloat(eff) <= multEpsilon {
 			continue // +0% — no-op
 		}
-		parts = append(parts, fmt.Sprintf("%s %+.0f%%", label, eff*100))
+		// Color by sign: positive contribution is a bonus, negative a penalty.
+		color := "green"
+		if eff < 0 {
+			color = "red"
+		}
+		parts = append(parts, fmt.Sprintf("[%s]%s %+.0f%%[-]", color, label, eff*100))
 	}
-	return strings.Join(parts, " · ")
+	return strings.Join(parts, " [gray]·[-] ")
 }
 
 // multiplierTargetLabel maps a resolver target id to a friendly panel label.
