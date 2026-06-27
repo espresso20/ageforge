@@ -73,7 +73,7 @@ From the main menu, choosing **Load Game** opens a save browser that lists every
 
 A **● active** marker shows which save your game is currently autosaving into — the save the periodic autosave and `Esc` quick-save follow.
 
-If a save's parent has been **deleted or renamed**, the child can no longer point at it, so it becomes an **orphan** and is promoted to the top level of the tree (its detail pane marks the lost parent as *detached*). Renaming a save likewise detaches its own children, since they still reference the old name.
+If a save's parent has been **deleted**, the child can no longer point at it, so it becomes an **orphan** and is promoted to the top level of the tree (its detail pane marks the lost parent as *detached*). **Renaming** a save, by contrast, **keeps its children attached** — they're automatically re-parented to the new name (and re-signed, so they don't load flagged as modified), so the lineage follows the rename intact. Children that are themselves flagged as *modified* are left untouched, so renaming never launders a tampered save's badge.
 
 **Keys inside the browser:**
 
