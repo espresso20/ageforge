@@ -216,6 +216,11 @@ func savePath(filename string) string {
 	return primary // default to canonical for new saves
 }
 
+// AutosaveName is the reserved base-name of the automatic save file. The engine
+// writes to it on its autosave cadence; the UI uses it to flag the autosave row
+// in the Load Game browser so it can't be confused with a player-named save.
+const AutosaveName = "autosave"
+
 // SaveGame serialises current engine state to filename.json in the save directory.
 // The save is written atomically (temp file + rename) to prevent corruption if
 // the process is killed mid-write. The payload is HMAC-signed before writing.
