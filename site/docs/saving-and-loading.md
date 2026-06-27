@@ -67,7 +67,13 @@ The game autosaves periodically and whenever you press `Esc`, writing to your **
 
 ## The Load Game browser
 
-From the main menu, choosing **Load Game** opens a save browser that lists every save in `./data/saves/`, most-recent first. Highlighting a save updates a **detail pane** showing everything you need to size up that save before loading it: its age and epoch, population, buildings, wonders, milestones, techs, soldiers, prestige, [morale](morale.md), a ⚠ warning if a catastrophe is pending, and the exact save time.
+From the main menu, choosing **Load Game** opens a save browser that lists every save in `./data/saves/`. Highlighting a save updates a **detail pane** showing everything you need to size up that save before loading it: its age and epoch, population, buildings, wonders, milestones, techs, soldiers, prestige, [morale](morale.md), a ⚠ warning if a catastrophe is pending, the exact save time, and — for branched saves — a **Branched from** line naming the save it forked off.
+
+**The lineage tree.** Saves aren't shown as a flat list — they're arranged as a **lineage tree**. When you [branch](saving-and-loading.md#branching-your-save) a new save off your current run, it appears **indented beneath its parent** with tree connectors (`├─`, `└─`), so you can see at a glance which saves descend from which. Top-level roots (saves you started fresh, plus any orphans) are ordered most-recent first, and each parent's children are likewise ordered most-recent first.
+
+A **● active** marker shows which save your game is currently autosaving into — the save the periodic autosave and `Esc` quick-save follow.
+
+If a save's parent has been **deleted or renamed**, the child can no longer point at it, so it becomes an **orphan** and is promoted to the top level of the tree (its detail pane marks the lost parent as *detached*). Renaming a save likewise detaches its own children, since they still reference the old name.
 
 **Keys inside the browser:**
 
@@ -89,6 +95,7 @@ Saves can carry a row tag in the list, explained on-screen in a bordered **Key**
 | Tag | Meaning |
 |---|---|
 | ★ auto | The automatic save slot |
+| ● active | The save your game is autosaving into (the active slot the autosave follows) |
 | ⚠ modified | The save file was edited outside the game (integrity check failed) |
 | ⚠ corrupt | The file could not be read. It is still listed but dimmed, and cannot be loaded |
 

@@ -95,15 +95,15 @@ func TestLegendTextCoversSymbolsWithMatchingColors(t *testing.T) {
 	if strings.Contains(legend, "elite") {
 		t.Errorf("legendText() leaks the elite easter egg\n%s", legend)
 	}
-	// Three symbols → three content lines (sizing assumes this for the height-5 box).
-	if lines := strings.Count(legend, "\n") + 1; lines != 3 {
-		t.Errorf("legendText() has %d lines, want 3", lines)
+	// Four symbols → four content lines (sizing assumes this for the height-6 box).
+	if lines := strings.Count(legend, "\n") + 1; lines != 4 {
+		t.Errorf("legendText() has %d lines, want 4", lines)
 	}
 }
 
 func TestDetailTextCorrupt(t *testing.T) {
 	s := game.SaveInfo{Name: "broken", Corrupt: true, Timestamp: time.Now()}
-	got := detailText(s)
+	got := detailText(s, false)
 	if want := "Corrupt save"; !contains(got, want) {
 		t.Errorf("detailText(corrupt) = %q, should mention %q", got, want)
 	}
@@ -129,7 +129,7 @@ func TestDetailTextPopulated(t *testing.T) {
 		MilestonesDone:     7,
 		MilestonesTotal:    33,
 	}
-	got := detailText(s)
+	got := detailText(s, false)
 
 	// Every stat label and the title must render.
 	for _, want := range []string{
@@ -155,7 +155,7 @@ func TestDetailTextOmitsEmptyTitleAndCatastrophe(t *testing.T) {
 		// No Title, no PendingCatastrophe, no MilestonesTotal.
 		MilestonesDone: 1,
 	}
-	got := detailText(s)
+	got := detailText(s, false)
 
 	// Empty title → no quoted segment leaking through.
 	if contains(got, "\"\"") {
