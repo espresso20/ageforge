@@ -106,6 +106,10 @@ type GameEngine struct {
 	// AutosaveName. The periodic autosave does NOT touch this — it's a separate net.
 	activeSaveName string
 
+	// activeParentName tracks the parent of the current save in the save-lineage
+	// tree (Phase 1: plumbed but always "" — branching populates it in Phase 2).
+	activeParentName string
+
 	// Phase 7: result of the most recent age advance transformation pass
 	lastAgeAdvanceSummary AgeAdvanceSummary
 

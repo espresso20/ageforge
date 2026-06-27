@@ -72,8 +72,13 @@ type GameSave struct {
 	// Integrity fields
 	CheaterBadge bool   `json:"cheater_badge,omitempty"`
 	EliteBadge   bool   `json:"elite_badge,omitempty"`
-	Signature    string `json:"_sig,omitempty"`
-	Proof        string `json:"_proof,omitempty"`
+	// ParentName records the save this one branched from, for the save-lineage
+	// tree (Phase 1: plumbed through but always "" — branching lands in Phase 2).
+	// Legacy saves lack the field → "" → a root. omitempty keeps current saves
+	// byte-identical when empty.
+	ParentName string `json:"parent_name,omitempty"`
+	Signature  string `json:"_sig,omitempty"`
+	Proof      string `json:"_proof,omitempty"`
 }
 
 // signSave returns the HMAC-SHA256 hex of the save payload.
@@ -378,6 +383,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		LegacyBuildings:    ge.Buildings.GetLegacyBuildings(),
 		CheaterBadge:       ge.cheaterBadge,
 		EliteBadge:         ge.eliteBadge,
+		ParentName:         ge.activeParentName,
 		CurrentEpoch:       ge.currentEpoch,
 		EpochEventFired:    copyBoolMap(ge.epochEventFired),
 		SurvivedEpochs:     copyBoolMap(ge.survivedEpochs),
@@ -591,6 +597,8 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// the field DIRECTLY — calling SetActiveSaveName would re-acquire the lock and
 	// deadlock.
 	ge.activeSaveName = filename
+	// Adopt the loaded save's lineage parent (empty for legacy/root saves).
+	ge.activeParentName = save.ParentName
 
 	return nil
 }
@@ -670,6 +678,9 @@ type SaveInfo struct {
 	PendingCatastrophe string // pending_catastrophe → catastrophe display name ("" if none)
 	MilestonesDone     int    // count of completed milestones
 	MilestonesTotal    int    // total milestones defined in config (0 if unavailable)
+	// ParentName is the lineage parent of this save ("" for a root). Surfaced
+	// here so Phase 3 can assemble the save-tree without re-reading files.
+	ParentName string
 	// Corrupt is set when the file could not be read or JSON-parsed. The entry
 	// is still returned (Name + mtime Timestamp) so the UI can show it as
 	// greyed/unloadable rather than silently dropping it.
@@ -723,8 +734,9 @@ func ListSaveDetails() ([]SaveInfo, error) {
 			Research           struct {
 				Researched []string `json:"researched"`
 			} `json:"research"`
-			CheaterBadge bool `json:"cheater_badge"`
-			EliteBadge   bool `json:"elite_badge"`
+			CheaterBadge bool   `json:"cheater_badge"`
+			EliteBadge   bool   `json:"elite_badge"`
+			ParentName   string `json:"parent_name"`
 		}
 		if err := json.Unmarshal(data, &header); err != nil {
 			saves = append(saves, corruptInfo(name, e))
@@ -769,6 +781,7 @@ func ListSaveDetails() ([]SaveInfo, error) {
 			PendingCatastrophe: catastropheDisplayName(header.PendingCatastrophe),
 			MilestonesDone:     len(header.Milestones),
 			MilestonesTotal:    len(config.Milestones()),
+			ParentName:         header.ParentName,
 		})
 	}
 	return saves, nil
