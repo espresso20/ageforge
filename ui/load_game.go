@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"sort"
 	"strings"
 	"time"
 
@@ -97,7 +96,7 @@ func CreateLoadGamePage(app *tview.Application, pages *tview.Pages, engine *game
 		AddItem(title, 1, 0, false).
 		AddItem(b.subtitle, 1, 0, false).
 		AddItem(b.list, 0, 1, true).     // weighted — takes remaining space
-		AddItem(legend, 5, 0, false).    // 3 content lines + border
+		AddItem(legend, 6, 0, false).    // 4 content lines + border
 		AddItem(b.detail, 10, 0, false). // fits 6 content lines + optional badge + border
 		AddItem(footer, 1, 0, false)
 
@@ -122,23 +121,28 @@ func (b *loadGameBrowser) refresh(wantIdx int) {
 		return
 	}
 
-	// Sort most-recent first by Timestamp.
-	sort.SliceStable(saves, func(i, j int) bool {
-		return saves[i].Timestamp.After(saves[j].Timestamp)
-	})
-	b.saves = saves
+	// Arrange the flat listing into a depth-first lineage forest. The rows carry
+	// their tree-connector prefixes; b.saves stays 1:1 with rendered rows in this
+	// same order so every handler still maps row i → b.saves[i].
+	rows := buildSaveTree(saves)
+	b.saves = make([]game.SaveInfo, len(rows))
+	for i, r := range rows {
+		b.saves[i] = r.Info
+	}
 
 	b.subtitle.SetText(fmt.Sprintf("[#8b949e]%s — %s[-]", savesDirLabel(), pluralSaves(len(saves))))
 
 	b.list.Clear()
-	if len(saves) == 0 {
+	if len(rows) == 0 {
 		// Empty state — the action keys become no-ops (handleKey guards on len).
 		b.detail.SetText("[#8b949e]No saved games found in " + savesDir() + ".\n\nStart a new game to create one.[-]")
 		return
 	}
 
-	for _, s := range saves {
-		b.list.AddItem(rowLabel(s), "", 0, nil)
+	// The active save is the one the autosave currently follows; mark its row.
+	activeName := b.engine.ActiveSaveName()
+	for _, r := range rows {
+		b.list.AddItem(rowLabel(r.Info, r.Prefix, r.Info.Name == activeName), "", 0, nil)
 	}
 
 	// Restore a sensible selection (clamp to range).
@@ -160,7 +164,21 @@ func (b *loadGameBrowser) updateDetail(index int) {
 	if index < 0 || index >= len(b.saves) {
 		return
 	}
-	b.detail.SetText(detailText(b.saves[index]))
+	b.detail.SetText(detailText(b.saves[index], b.parentPresent(b.saves[index])))
+}
+
+// parentPresent reports whether s names a lineage parent that is itself among
+// the loaded saves (so the detail pane can mark a missing parent "detached").
+func (b *loadGameBrowser) parentPresent(s game.SaveInfo) bool {
+	if s.ParentName == "" || s.ParentName == s.Name {
+		return false
+	}
+	for _, other := range b.saves {
+		if other.Name == s.ParentName {
+			return true
+		}
+	}
+	return false
 }
 
 // selected returns the currently selected SaveInfo and true, or a zero value and
@@ -216,12 +234,12 @@ func (b *loadGameBrowser) doLoad() {
 		return
 	}
 	if s.Corrupt {
-		b.detail.SetText(detailText(s) + "\n\n[red]Can't load a corrupt save.[-]")
+		b.detail.SetText(detailText(s, b.parentPresent(s)) + "\n\n[red]Can't load a corrupt save.[-]")
 		return
 	}
 	if err := b.engine.LoadGame(s.Name); err != nil {
 		b.engine.AddLog("error", fmt.Sprintf("Load failed: %v", err))
-		b.detail.SetText(detailText(s) + fmt.Sprintf("\n\n[red]Load failed: %v[-]", err))
+		b.detail.SetText(detailText(s, b.parentPresent(s)) + fmt.Sprintf("\n\n[red]Load failed: %v[-]", err))
 		return
 	}
 	b.engine.AddLog("success", "Game loaded!")
@@ -265,6 +283,11 @@ func (b *loadGameBrowser) doDelete() {
 // RenameSave (collision/invalid) surface inline in the dialog and let the player
 // retry. On success the dialog closes, the list refreshes, and the renamed item
 // stays selected.
+//
+// note: lineage is keyed by ParentName, so renaming a save detaches its children
+// — their stored ParentName still points at the old name, so they become orphans
+// (promoted to roots) in the tree. Acceptable for now; a future ticket can
+// re-parent children on rename.
 func (b *loadGameBrowser) doRename() {
 	s, ok := b.selected()
 	if !ok {
@@ -391,18 +414,26 @@ func (b *loadGameBrowser) selectByName(name string) {
 
 // ── Pure helpers (formatting) ───────────────────────────────────────────────
 
-// rowLabel renders one list row: name, age, relative time, and a trailing tag.
-// Corrupt rows are dimmed grey.
-func rowLabel(s game.SaveInfo) string {
+// rowLabel renders one list row: an optional tree-connector prefix, the name,
+// age, relative time, and trailing tags. Corrupt rows are dimmed grey. When
+// active is true (the save the autosave follows) a distinct aqua "● active" tag
+// is appended, separate from the gold ★ auto tag.
+func rowLabel(s game.SaveInfo, prefix string, active bool) string {
 	if s.Corrupt {
-		return fmt.Sprintf("[gray]%s   —   %s   ⚠ corrupt[-]", s.Name, relativeTime(s.Timestamp))
+		return fmt.Sprintf("[gray]%s%s   —   %s   ⚠ corrupt[-]", prefix, s.Name, relativeTime(s.Timestamp))
 	}
 	age := ageDisplay(s.Age)
 	tag := rowTag(s)
+	if active {
+		if tag != "" {
+			tag += " "
+		}
+		tag += "[aqua]● active[-]"
+	}
 	if tag != "" {
 		tag = "   " + tag
 	}
-	return fmt.Sprintf("%s   [#8b949e]%s   %s[-]%s", s.Name, age, relativeTime(s.Timestamp), tag)
+	return fmt.Sprintf("%s%s   [#8b949e]%s   %s[-]%s", prefix, s.Name, age, relativeTime(s.Timestamp), tag)
 }
 
 // rowTag returns the trailing status tag for a (non-corrupt) save row, or "".
@@ -432,6 +463,7 @@ func footerBar() string {
 func legendText() string {
 	return strings.Join([]string{
 		"[gold]★ auto[-]      automatic save slot (overwritten on autosave)",
+		"[aqua]● active[-]    the save your game is autosaving into",
 		"[red]⚠ modified[-]  save file edited outside the game",
 		"[red]⚠ corrupt[-]   file could not be read — cannot be loaded",
 	}, "\n")
@@ -457,7 +489,7 @@ const detailSep = " [gold]·[-] "
 // block (identity, population/structures, progress, prestige/morale, an optional
 // catastrophe warning, and save metadata); corrupt saves show only the
 // unloadable notice + file time.
-func detailText(s game.SaveInfo) string {
+func detailText(s game.SaveInfo, parentPresent bool) string {
 	if s.Corrupt {
 		return fmt.Sprintf(
 			"[red]⚠ Corrupt save — cannot be loaded[-]\n[#8b949e]File time: %s[-]",
@@ -514,6 +546,16 @@ func detailText(s game.SaveInfo) string {
 		"[#8b949e]Saved[-] %s [gold]·[-] [#8b949e]%s ticks[-]",
 		s.Timestamp.Format("Jan 2, 2006 3:04 PM"), commafy(s.Tick),
 	))
+
+	// Line 7 — lineage. Shown only for branched saves. A parent that is no longer
+	// present (deleted/renamed) is marked "(detached)" rather than implying a link.
+	if s.ParentName != "" && s.ParentName != s.Name {
+		if parentPresent {
+			lines = append(lines, fmt.Sprintf("[#8b949e]Branched from: %s[-]", s.ParentName))
+		} else {
+			lines = append(lines, fmt.Sprintf("[#8b949e]Branched from: %s (detached)[-]", s.ParentName))
+		}
+	}
 
 	out := strings.Join(lines, "\n")
 	if badges := detailBadges(s); badges != "" {
