@@ -79,7 +79,7 @@ func CreateLoadGamePage(app *tview.Application, pages *tview.Pages, engine *game
 	footer := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[#8b949e][↑↓] Navigate   [Enter] Load   [d] Delete   [r] Rename   [c] Duplicate   [Esc] Back[-]")
+		SetText(footerBar())
 
 	// ── Layout ───────────────────────────────────────────────────────────────
 	b.root = tview.NewFlex().SetDirection(tview.FlexRow).
@@ -395,6 +395,25 @@ func rowLabel(s game.SaveInfo) string {
 
 // rowTag returns the trailing status tag for a (non-corrupt) save row, or "".
 // Precedence: autosave first, then modified, then elite.
+// footerButton renders one keycap-style action button: the hotkey on a gold
+// cap fused to its label on a dark chip — e.g. a gold "Enter" beside "Load".
+func footerButton(key, label string) string {
+	return fmt.Sprintf("[black:gold:b] %s [white:#30363d:b] %s [-:-:-]", key, label)
+}
+
+// footerBar is the Load Game action bar: a keycap button per action so the
+// player can see at a glance which key triggers what.
+func footerBar() string {
+	return "  " + strings.Join([]string{
+		footerButton("↑↓", "Navigate"),
+		footerButton("Enter", "Load"),
+		footerButton("D", "Delete"),
+		footerButton("R", "Rename"),
+		footerButton("C", "Duplicate"),
+		footerButton("Esc", "Back"),
+	}, "  ") + "  "
+}
+
 func rowTag(s game.SaveInfo) string {
 	if s.Name == game.AutosaveName {
 		return "[gold]★ auto[-]"

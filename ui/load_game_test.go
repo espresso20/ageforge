@@ -88,3 +88,30 @@ func contains(s, sub string) bool {
 	}
 	return false
 }
+
+func TestFooterBarShowsHotkeyButtons(t *testing.T) {
+	bar := footerBar()
+	// Every action label must be present.
+	for _, label := range []string{"Navigate", "Load", "Delete", "Rename", "Duplicate", "Back"} {
+		if !contains(bar, label) {
+			t.Errorf("footerBar() missing action label %q", label)
+		}
+	}
+	// Every hotkey must render as a keycap (between the gold cap tag and the label tag).
+	for _, cap := range []string{"] ↑↓ [", "] Enter [", "] D [", "] R [", "] C [", "] Esc ["} {
+		if !contains(bar, cap) {
+			t.Errorf("footerBar() missing keycap %q", cap)
+		}
+	}
+	// Buttons must be styled with a real color tag, not plain text.
+	if !contains(bar, "[black:gold:b]") {
+		t.Errorf("footerBar() should style keycaps with a color tag, got %q", bar)
+	}
+	// Regression guard: the old footer used bare [Enter]/[d]/[r]/[c]/[Esc], which
+	// tview parses as color tags and SWALLOWS — the hotkeys vanished on screen.
+	for _, naked := range []string{"[Enter]", "[Esc]", "[d]", "[r]", "[c]"} {
+		if contains(bar, naked) {
+			t.Errorf("footerBar() contains swallowable tag %q — keys will vanish in tview", naked)
+		}
+	}
+}
