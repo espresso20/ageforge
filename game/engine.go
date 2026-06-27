@@ -1474,6 +1474,69 @@ func (ge *GameEngine) getWonderBonuses() map[string]float64 {
 	return out
 }
 
+// --- Modifier emitters (Phase 2 of the multiplier-resolver refactor) ---
+//
+// These build the parallel []Modifier view of the same bonus sources that
+// recalculateRates / recalculateTickSpeed read directly today. They are pure
+// reads of already-held engine state plus pure config.* lookups, so they are
+// safe to call under the engine write lock (no GetState / lock-acquiring calls).
+// This phase only feeds the golden test; runtime rate math is unchanged.
+
+// wonderModifiers emits OpAdd Modifiers from built-wonder "bonus" effects,
+// attributed to Source "wonders". Mirrors getWonderBonuses (count-scaled),
+// collapsed to one modifier per target.
+func (ge *GameEngine) wonderModifiers() []Modifier {
+	bonuses := ge.getWonderBonuses()
+	out := make([]Modifier, 0, len(bonuses))
+	for t, v := range bonuses {
+		out = append(out, Modifier{Source: "wonders", Target: t, Op: OpAdd, Value: v})
+	}
+	return out
+}
+
+// permanentModifiers emits OpAdd Modifiers from ge.permanentBonuses (milestones,
+// legacy, epoch-permanent — already merged into that map), attributed to Source
+// "permanent". One modifier per (target, value) entry.
+func (ge *GameEngine) permanentModifiers() []Modifier {
+	out := make([]Modifier, 0, len(ge.permanentBonuses))
+	for t, v := range ge.permanentBonuses {
+		out = append(out, Modifier{Source: "permanent", Target: t, Op: OpAdd, Value: v})
+	}
+	return out
+}
+
+// eventModifiers emits OpAdd Modifiers from currently active events for the
+// multiplier buckets the engine reads (production_all, tick_speed). Source is
+// "event:<name>" per active event. Delegates to EventManager.Modifiers.
+func (ge *GameEngine) eventModifiers() []Modifier {
+	return ge.Events.Modifiers()
+}
+
+// moraleModifiers contributes the morale factor as a single OpMul on
+// "production_all". This reproduces the engine's `rate × morale × (1 + Σ
+// production_all adds)` because Resolver.Total(production_all) evaluates to
+// (1 + Σ OpAdd) × Π OpMul = (1 + adds) × morale. The raw ge.morale field is the
+// multiplier (not a separate moraleMultiplier method — none exists).
+func (ge *GameEngine) moraleModifiers() []Modifier {
+	return []Modifier{{Source: "morale", Target: "production_all", Op: OpMul, Value: ge.morale}}
+}
+
+// buildResolver constructs a fresh Resolver from every bonus source and returns
+// it. Pull model: a NEW resolver is built each call so nothing mutable is shared
+// across goroutines. Lock safety: only call from a context that already holds the
+// engine write lock (e.g. the recalc path); every source emitter reads
+// already-held state or pure config.* and never re-acquires a lock.
+func (ge *GameEngine) buildResolver() *Resolver {
+	r := NewResolver()
+	r.AddAll(ge.Research.Modifiers())
+	r.AddAll(ge.Prestige.Modifiers())
+	r.AddAll(ge.wonderModifiers())
+	r.AddAll(ge.permanentModifiers())
+	r.AddAll(ge.eventModifiers())
+	r.AddAll(ge.moraleModifiers())
+	return r
+}
+
 // Endure executes the Endure consequences for the pending catastrophe:
 //   - 20% of buildings randomly destroyed
 //   - All resources drop to 15% of current stored amount
