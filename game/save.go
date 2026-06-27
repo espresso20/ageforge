@@ -651,6 +651,19 @@ type SaveInfo struct {
 	Morale        float64
 	Modified      bool // save's cheater_badge flag (HMAC mismatch on a prior load)
 	Elite         bool // save's elite_badge flag
+	// Rich detail-pane metadata (all derived from the save header; zero on a
+	// corrupt save).
+	Title              string // current_title — the civ's earned title (may be "")
+	Epoch              string // current_epoch, mapped to its display name
+	Population         int    // sum of worker Count across all domains (assigned + idle)
+	Buildings          int    // total building instances built
+	Wonders            int    // built buildings whose Category == "wonder"
+	Techs              int    // number of researched techs
+	Soldiers           int    // resources["soldiers"], truncated to int
+	PrestigeTotal      int    // prestige.total_earned (lifetime prestige points)
+	PendingCatastrophe string // pending_catastrophe → catastrophe display name ("" if none)
+	MilestonesDone     int    // count of completed milestones
+	MilestonesTotal    int    // total milestones defined in config (0 if unavailable)
 	// Corrupt is set when the file could not be read or JSON-parsed. The entry
 	// is still returned (Name + mtime Timestamp) so the UI can show it as
 	// greyed/unloadable rather than silently dropping it.
@@ -684,15 +697,26 @@ func ListSaveDetails() ([]SaveInfo, error) {
 			continue
 		}
 		// Parse only the subset of fields the detail pane needs. The json tags
-		// here must match GameSave / PrestigeSave above.
+		// here must match GameSave / PrestigeSave / ResearchSave / WorkerInfo above.
 		var header struct {
 			Timestamp time.Time `json:"timestamp"`
 			Tick      int       `json:"tick"`
 			Age       string    `json:"age"`
 			Morale    float64   `json:"morale"`
 			Prestige  struct {
-				Level int `json:"level"`
+				Level       int `json:"level"`
+				TotalEarned int `json:"total_earned"`
 			} `json:"prestige"`
+			CurrentTitle       string                `json:"current_title"`
+			CurrentEpoch       string                `json:"current_epoch"`
+			PendingCatastrophe string                `json:"pending_catastrophe"`
+			Milestones         []string              `json:"milestones"`
+			Resources          map[string]float64    `json:"resources"`
+			Buildings          map[string]int        `json:"buildings"`
+			Workers            map[string]WorkerInfo `json:"workers"`
+			Research           struct {
+				Researched []string `json:"researched"`
+			} `json:"research"`
 			CheaterBadge bool `json:"cheater_badge"`
 			EliteBadge   bool `json:"elite_badge"`
 		}
@@ -700,18 +724,71 @@ func ListSaveDetails() ([]SaveInfo, error) {
 			saves = append(saves, corruptInfo(name, e))
 			continue
 		}
+
+		// Derive aggregates. Ranges over nil maps are no-ops, so a save missing
+		// any of these sections simply yields zero — no panic.
+		population := 0
+		for _, w := range header.Workers {
+			population += w.Count
+		}
+		buildings, wonders := 0, 0
+		buildingDefs := config.BuildingByKey()
+		for key, count := range header.Buildings {
+			if count <= 0 {
+				continue
+			}
+			buildings += count
+			if def, ok := buildingDefs[key]; ok && def.Category == "wonder" {
+				wonders += count
+			}
+		}
+
 		saves = append(saves, SaveInfo{
-			Name:          name,
-			Timestamp:     header.Timestamp,
-			Age:           header.Age,
-			Tick:          header.Tick,
-			PrestigeLevel: header.Prestige.Level,
-			Morale:        header.Morale,
-			Modified:      header.CheaterBadge,
-			Elite:         header.EliteBadge,
+			Name:               name,
+			Timestamp:          header.Timestamp,
+			Age:                header.Age,
+			Tick:               header.Tick,
+			PrestigeLevel:      header.Prestige.Level,
+			Morale:             header.Morale,
+			Modified:           header.CheaterBadge,
+			Elite:              header.EliteBadge,
+			Title:              header.CurrentTitle,
+			Epoch:              epochDisplayName(header.CurrentEpoch),
+			Population:         population,
+			Buildings:          buildings,
+			Wonders:            wonders,
+			Techs:              len(header.Research.Researched),
+			Soldiers:           int(header.Resources["soldiers"]),
+			PrestigeTotal:      header.Prestige.TotalEarned,
+			PendingCatastrophe: catastropheDisplayName(header.PendingCatastrophe),
+			MilestonesDone:     len(header.Milestones),
+			MilestonesTotal:    len(config.Milestones()),
 		})
 	}
 	return saves, nil
+}
+
+// epochDisplayName maps an epoch key to its display name via config, falling
+// back to the raw key. An empty key stays empty.
+func epochDisplayName(key string) string {
+	if key == "" {
+		return ""
+	}
+	if def, ok := config.EpochByKey()[key]; ok && def.Name != "" {
+		return def.Name
+	}
+	return key
+}
+
+// catastropheDisplayName maps a pending-catastrophe key (an epoch key — see
+// GameState.PendingCatastrophe) to the catastrophe's display name. An empty key
+// stays empty so the UI can omit the warning line.
+func catastropheDisplayName(epochKey string) string {
+	if epochKey == "" {
+		return ""
+	}
+	name, _ := config.CatastropheInfo(epochKey)
+	return name
 }
 
 // corruptInfo builds a SaveInfo for an unreadable/unparseable save, falling back

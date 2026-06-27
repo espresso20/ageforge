@@ -80,6 +80,72 @@ func TestDetailTextCorrupt(t *testing.T) {
 	}
 }
 
+func TestDetailTextPopulated(t *testing.T) {
+	s := game.SaveInfo{
+		Name:               "hero",
+		Timestamp:          time.Now(),
+		Age:                "iron_age",
+		Tick:               4242,
+		PrestigeLevel:      2,
+		PrestigeTotal:      1500,
+		Morale:             0.75,
+		Title:              "The Eternal",
+		Epoch:              "Iron Era",
+		Population:         10,
+		Buildings:          120,
+		Wonders:            3,
+		Techs:              4,
+		Soldiers:           137,
+		PendingCatastrophe: "The Great Plague",
+		MilestonesDone:     7,
+		MilestonesTotal:    33,
+	}
+	got := detailText(s)
+
+	// Every stat label and the title must render.
+	for _, want := range []string{
+		"The Eternal", "Iron Era",
+		"Population", "Buildings", "Wonders",
+		"Milestones", "7/33", "Techs", "Soldiers",
+		"Prestige", "Lv 2", "1,500 pts", "Morale", "75%",
+		"Pending", "The Great Plague",
+	} {
+		if !contains(got, want) {
+			t.Errorf("detailText(populated) missing %q\ngot: %q", want, got)
+		}
+	}
+}
+
+func TestDetailTextOmitsEmptyTitleAndCatastrophe(t *testing.T) {
+	s := game.SaveInfo{
+		Name:       "hero",
+		Timestamp:  time.Now(),
+		Age:        "stone_age",
+		Population: 5,
+		Buildings:  3,
+		// No Title, no PendingCatastrophe, no MilestonesTotal.
+		MilestonesDone: 1,
+	}
+	got := detailText(s)
+
+	// Empty title → no quoted segment leaking through.
+	if contains(got, "\"\"") {
+		t.Errorf("detailText with empty Title rendered empty quotes\ngot: %q", got)
+	}
+	// No looming catastrophe → the whole warning line is omitted.
+	if contains(got, "Pending") {
+		t.Errorf("detailText with empty PendingCatastrophe still shows a Pending line\ngot: %q", got)
+	}
+	// With no total known, Milestones shows a bare count (no slash).
+	if contains(got, "Milestones") && contains(got, "1/") {
+		t.Errorf("detailText showed Milestones with a total when none was set\ngot: %q", got)
+	}
+	// The age must still anchor line 1.
+	if !contains(got, ageDisplay("stone_age")) {
+		t.Errorf("detailText missing the age display for an untitled save\ngot: %q", got)
+	}
+}
+
 func contains(s, sub string) bool {
 	for i := 0; i+len(sub) <= len(s); i++ {
 		if s[i:i+len(sub)] == sub {

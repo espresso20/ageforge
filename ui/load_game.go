@@ -85,8 +85,8 @@ func CreateLoadGamePage(app *tview.Application, pages *tview.Pages, engine *game
 	b.root = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(title, 1, 0, false).
 		AddItem(b.subtitle, 1, 0, false).
-		AddItem(b.list, 0, 1, true). // weighted — takes remaining space
-		AddItem(b.detail, 8, 0, false).
+		AddItem(b.list, 0, 1, true).     // weighted — takes remaining space
+		AddItem(b.detail, 10, 0, false). // fits 6 content lines + optional badge + border
 		AddItem(footer, 1, 0, false)
 
 	b.list.SetInputCapture(b.handleKey)
@@ -427,8 +427,13 @@ func rowTag(s game.SaveInfo) string {
 	return ""
 }
 
-// detailText renders the detail pane for a save. Healthy saves show the full
-// stat block; corrupt saves show only the unloadable notice + file time.
+// detailSep is the gold middle-dot separator between detail-pane segments.
+const detailSep = " [gold]·[-] "
+
+// detailText renders the detail pane for a save. Healthy saves show a rich stat
+// block (identity, population/structures, progress, prestige/morale, an optional
+// catastrophe warning, and save metadata); corrupt saves show only the
+// unloadable notice + file time.
 func detailText(s game.SaveInfo) string {
 	if s.Corrupt {
 		return fmt.Sprintf(
@@ -437,18 +442,61 @@ func detailText(s game.SaveInfo) string {
 		)
 	}
 
-	var sb strings.Builder
-	fmt.Fprintf(&sb, "[white]%s[-]\n", s.Name)
-	fmt.Fprintf(&sb, "[#8b949e]Age:[-] %s   ", ageDisplay(s.Age))
-	fmt.Fprintf(&sb, "[#8b949e]Progress:[-] %s ticks   ", commafy(s.Tick))
-	fmt.Fprintf(&sb, "[#8b949e]Prestige:[-] %d\n", s.PrestigeLevel)
-	fmt.Fprintf(&sb, "[#8b949e]Morale:[-] %.0f%%   ", s.Morale*100)
-	fmt.Fprintf(&sb, "[#8b949e]Saved:[-] %s", s.Timestamp.Format("Jan 2, 2006 3:04 PM"))
+	var lines []string
 
-	if badges := detailBadges(s); badges != "" {
-		fmt.Fprintf(&sb, "\n%s", badges)
+	// Line 1 — identity: "Title" · Age · Epoch. Drop the quoted title when empty
+	// so the line starts cleanly with the Age (no empty quotes).
+	var id []string
+	if s.Title != "" {
+		id = append(id, fmt.Sprintf("[gold]\"%s\"[-]", s.Title))
 	}
-	return sb.String()
+	id = append(id, fmt.Sprintf("[white]%s[-]", ageDisplay(s.Age)))
+	if s.Epoch != "" {
+		id = append(id, fmt.Sprintf("[#8b949e]%s[-]", s.Epoch))
+	}
+	lines = append(lines, strings.Join(id, detailSep))
+
+	// Line 2 — civilisation footprint.
+	lines = append(lines, strings.Join([]string{
+		fmt.Sprintf("[#8b949e]Population[-] [white]%s[-]", commafy(s.Population)),
+		fmt.Sprintf("[#8b949e]Buildings[-] [white]%s[-]", commafy(s.Buildings)),
+		fmt.Sprintf("[#8b949e]Wonders[-] [white]%s[-]", commafy(s.Wonders)),
+	}, detailSep))
+
+	// Line 3 — progress markers. Milestones show "done/total" only when the total
+	// is known (config accessor available).
+	milestones := commafy(s.MilestonesDone)
+	if s.MilestonesTotal > 0 {
+		milestones = fmt.Sprintf("%s/%s", commafy(s.MilestonesDone), commafy(s.MilestonesTotal))
+	}
+	lines = append(lines, strings.Join([]string{
+		fmt.Sprintf("[#8b949e]Milestones[-] [white]%s[-]", milestones),
+		fmt.Sprintf("[#8b949e]Techs[-] [white]%s[-]", commafy(s.Techs)),
+		fmt.Sprintf("[#8b949e]Soldiers[-] [white]%s[-]", commafy(s.Soldiers)),
+	}, detailSep))
+
+	// Line 4 — prestige + morale.
+	lines = append(lines, strings.Join([]string{
+		fmt.Sprintf("[#8b949e]Prestige[-] [white]Lv %s[-] [#8b949e](%s pts)[-]", commafy(s.PrestigeLevel), commafy(s.PrestigeTotal)),
+		fmt.Sprintf("[#8b949e]Morale[-] [white]%.0f%%[-]", s.Morale*100),
+	}, detailSep))
+
+	// Line 5 — looming catastrophe warning (omitted entirely when none pending).
+	if s.PendingCatastrophe != "" {
+		lines = append(lines, fmt.Sprintf("[red]⚠ Pending: %s[-]", s.PendingCatastrophe))
+	}
+
+	// Line 6 — save metadata.
+	lines = append(lines, fmt.Sprintf(
+		"[#8b949e]Saved[-] %s [gold]·[-] [#8b949e]%s ticks[-]",
+		s.Timestamp.Format("Jan 2, 2006 3:04 PM"), commafy(s.Tick),
+	))
+
+	out := strings.Join(lines, "\n")
+	if badges := detailBadges(s); badges != "" {
+		out += "\n" + badges
+	}
+	return out
 }
 
 // detailBadges returns the badge line for the detail pane, or "".

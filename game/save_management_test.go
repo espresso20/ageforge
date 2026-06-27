@@ -1,11 +1,46 @@
 package game
 
 import (
+	"encoding/json"
 	"os"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
+
+	"github.com/espresso20/ageforge/config"
 )
+
+// writeRawSave marshals a GameSave and writes it (unsigned) to the save path for
+// name, overwriting any existing file. ListSaveDetails reads JSON only and never
+// verifies signatures, so an unsigned hand-built save is a valid parse fixture.
+func writeRawSave(t *testing.T, name string, save GameSave) {
+	t.Helper()
+	data, err := json.Marshal(save)
+	if err != nil {
+		t.Fatalf("marshal raw save: %v", err)
+	}
+	if err := os.WriteFile(savePath(name), data, 0644); err != nil {
+		t.Fatalf("write raw save %q: %v", name, err)
+	}
+}
+
+// findDetail runs ListSaveDetails and returns the entry for name, failing if it
+// is absent.
+func findDetail(t *testing.T, name string) SaveInfo {
+	t.Helper()
+	details, err := ListSaveDetails()
+	if err != nil {
+		t.Fatalf("ListSaveDetails failed: %v", err)
+	}
+	for i := range details {
+		if details[i].Name == name {
+			return details[i]
+		}
+	}
+	t.Fatalf("save %q not present in ListSaveDetails output", name)
+	return SaveInfo{}
+}
 
 // writeTestSave creates a real, signed, loadable save under the given base name
 // via the engine, and registers cleanup to remove it (and any "-copy" variants a
@@ -230,6 +265,103 @@ func TestListSaveDetailsPopulatesFields(t *testing.T) {
 	}
 }
 
+// pickBuildingKeys returns a real wonder key and a real non-wonder building key
+// from config, so the rich-fields test stays valid as the building set evolves.
+func pickBuildingKeys(t *testing.T) (wonder, other string) {
+	t.Helper()
+	for k, d := range config.BuildingByKey() {
+		if d.Category == "wonder" && wonder == "" {
+			wonder = k
+		}
+		if d.Category != "wonder" && other == "" {
+			other = k
+		}
+	}
+	if wonder == "" || other == "" {
+		t.Fatalf("could not find a wonder (%q) and non-wonder (%q) building in config", wonder, other)
+	}
+	return wonder, other
+}
+
+// TestListSaveDetailsRichFields writes a real save, then rewrites it with a
+// hand-built header carrying buildings/workers/resources/title/epoch/prestige so
+// the derivation + parse logic in ListSaveDetails is exercised directly. The save
+// is rewritten unsigned, which is fine: ListSaveDetails never verifies signatures.
+func TestListSaveDetailsRichFields(t *testing.T) {
+	name := "test_rich_details"
+	writeTestSave(t, name) // ensures the dir exists and registers cleanup
+
+	wonderKey, prodKey := pickBuildingKeys(t)
+
+	// 5 production + 1 wonder = 6 building instances (the count-0 key is excluded
+	// from both totals). 4 + 6 = 10 workers.
+	save := GameSave{
+		Timestamp:          time.Now(),
+		Tick:               4242,
+		Age:                "iron_age",
+		Morale:             0.75,
+		CurrentTitle:       "The Eternal",
+		CurrentEpoch:       "iron_era",
+		PendingCatastrophe: "iron_era", // pending_catastrophe holds an epoch key
+		Milestones:         []string{"m1", "m2", "m3"},
+		Resources:          map[string]float64{"soldiers": 137.9, "wood": 50},
+		Buildings:          map[string]int{prodKey: 5, wonderKey: 1, "ghost_key_zero": 0},
+		Workers: map[string]WorkerInfo{
+			"food":     {Count: 4},
+			"military": {Count: 6},
+		},
+		Research: ResearchSave{Researched: []string{"t1", "t2", "t3", "t4"}},
+		Prestige: PrestigeSave{Level: 2, TotalEarned: 1500},
+	}
+
+	writeRawSave(t, name, save)
+
+	found := findDetail(t, name)
+	if found.Corrupt {
+		t.Fatalf("rich save %q flagged Corrupt", name)
+	}
+	if found.Title != "The Eternal" {
+		t.Errorf("Title = %q, want %q", found.Title, "The Eternal")
+	}
+	// Epoch should be the display name, not the raw key.
+	if found.Epoch == "" || found.Epoch == "iron_era" {
+		t.Errorf("Epoch = %q, want a display name resolved from %q", found.Epoch, "iron_era")
+	}
+	if found.Population != 10 {
+		t.Errorf("Population = %d, want 10 (4 food + 6 military)", found.Population)
+	}
+	if found.Buildings != 6 { // 5 prod + 1 wonder; the count-0 key is excluded
+		t.Errorf("Buildings = %d, want 6", found.Buildings)
+	}
+	if found.Wonders != 1 {
+		t.Errorf("Wonders = %d, want 1", found.Wonders)
+	}
+	if found.Techs != 4 {
+		t.Errorf("Techs = %d, want 4", found.Techs)
+	}
+	if found.Soldiers != 137 { // int() truncation of 137.9
+		t.Errorf("Soldiers = %d, want 137", found.Soldiers)
+	}
+	if found.PrestigeLevel != 2 {
+		t.Errorf("PrestigeLevel = %d, want 2", found.PrestigeLevel)
+	}
+	if found.PrestigeTotal != 1500 {
+		t.Errorf("PrestigeTotal = %d, want 1500", found.PrestigeTotal)
+	}
+	if found.MilestonesDone != 3 {
+		t.Errorf("MilestonesDone = %d, want 3", found.MilestonesDone)
+	}
+	if found.MilestonesTotal != len(config.Milestones()) {
+		t.Errorf("MilestonesTotal = %d, want %d", found.MilestonesTotal, len(config.Milestones()))
+	}
+	if found.PendingCatastrophe == "" || found.PendingCatastrophe == "iron_era" {
+		t.Errorf("PendingCatastrophe = %q, want a catastrophe display name resolved from %q", found.PendingCatastrophe, "iron_era")
+	}
+	if found.Tick != 4242 {
+		t.Errorf("Tick = %d, want 4242", found.Tick)
+	}
+}
+
 func TestListSaveDetailsFlagsCorrupt(t *testing.T) {
 	// Ensure the dir exists, then drop a non-JSON .json file into it.
 	good := "test_corrupt_neighbor"
@@ -265,6 +397,14 @@ func TestListSaveDetailsFlagsCorrupt(t *testing.T) {
 	}
 	if corrupt.Timestamp.IsZero() {
 		t.Errorf("corrupt save Timestamp is zero, want file mtime fallback")
+	}
+	// New rich fields must all default to zero on a corrupt save (no panic, no
+	// partial parse leaking through).
+	if corrupt.Title != "" || corrupt.Epoch != "" || corrupt.PendingCatastrophe != "" ||
+		corrupt.Population != 0 || corrupt.Buildings != 0 || corrupt.Wonders != 0 ||
+		corrupt.Techs != 0 || corrupt.Soldiers != 0 || corrupt.PrestigeTotal != 0 ||
+		corrupt.MilestonesDone != 0 || corrupt.MilestonesTotal != 0 {
+		t.Errorf("corrupt save has non-zero rich fields: %+v", *corrupt)
 	}
 	// The healthy neighbour must still be listed and parsed fine — one bad file
 	// must not poison the rest.
