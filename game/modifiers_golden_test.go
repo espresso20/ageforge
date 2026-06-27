@@ -216,6 +216,42 @@ func TestResolverGolden_NegativeProdAll(t *testing.T) {
 	assertResolverGolden(t, ge, "wood", true)
 }
 
+// TestResolverGolden_NegativeResRate is the Part D anti-tautology fixture for the
+// per-resource pool: a negative <res>_rate additive (here permanent food_rate
+// -0.20) must now apply. Before the gate→floor change, recalculateRates ran
+// `if bonus > 0 { rate *= 1+bonus }`, which SILENTLY DROPPED any negative pool —
+// the panel showed the debuff but the rate was untouched. expectedResRate models
+// the floored form max(productionFloor, 1+add); for -0.20 that is 0.80 (floor not
+// binding), so the resolver Total and the engine factor agree at ×0.80. If the
+// gate ever creeps back the expected side would still want 0.80 while a re-gated
+// engine would apply 1.0, and this assertion would catch the divergence.
+func TestResolverGolden_NegativeResRate(t *testing.T) {
+	ge := NewGameEngine()
+	ge.permanentBonuses["food_rate"] = -0.20
+
+	// Sanity: the additive pool is exactly -0.20 and the floored factor is 0.80
+	// (well above productionFloor), so the debuff lands — it is not swallowed.
+	if got, want := ge.buildResolver().Total("food_rate"), 0.80; math.Abs(got-want) > goldenEps {
+		t.Fatalf("negative food_rate: resolver Total=%.12f want %.12f (debuff must apply)", got, want)
+	}
+	assertResolverGolden(t, ge, "food", false)
+}
+
+// TestResolverGolden_NegativeGatherRate is the Part D anti-tautology fixture for
+// the gather pool: a negative gather_rate additive (permanent -0.30) must now
+// reduce worker output. Same story as the per-resource case — the old
+// `if gatherBonus > 0` gate dropped negatives. expectedGatherRate models
+// max(productionFloor, 1-0.30) = 0.70, so resolver Total and engine agree at ×0.70.
+func TestResolverGolden_NegativeGatherRate(t *testing.T) {
+	ge := NewGameEngine()
+	ge.permanentBonuses["gather_rate"] = -0.30
+
+	if got, want := ge.buildResolver().Total("gather_rate"), 0.70; math.Abs(got-want) > goldenEps {
+		t.Fatalf("negative gather_rate: resolver Total=%.12f want %.12f (debuff must apply)", got, want)
+	}
+	assertResolverGolden(t, ge, "", true)
+}
+
 func TestResolverGolden_ActiveEventTickSpeed(t *testing.T) {
 	ge := NewGameEngine()
 	ge.Events.InjectEvent(ActiveEvent{

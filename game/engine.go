@@ -1677,6 +1677,23 @@ func (ge *GameEngine) moraleModifiers() []Modifier {
 	return []Modifier{{Source: "morale", Target: "production_all", Op: OpMul, Value: ge.moraleMultiplier()}}
 }
 
+// diplomacyModifiers emits the allied-faction trade bonus as an OpMul on each
+// affected <resource>_rate so it surfaces in the Active Multipliers panel. The
+// engine still APPLIES the bonus directly in recalculateRates (the additive
+// pool uses AddTotal, which ignores OpMul, so there is no double-count); this
+// Modifier is the panel's view of that same GetTradeBonus value — they cannot
+// drift because both read GetTradeBonus. Must read only already-held state.
+func (ge *GameEngine) diplomacyModifiers() []Modifier {
+	out := make([]Modifier, 0, len(ge.Resources.defs))
+	for _, def := range ge.Resources.defs {
+		b := ge.Diplomacy.GetTradeBonus(def.Key)
+		if b != 0 {
+			out = append(out, Modifier{Source: "diplomacy", Target: def.Key + "_rate", Op: OpMul, Value: 1.0 + b})
+		}
+	}
+	return out
+}
+
 // buildResolver constructs a fresh Resolver from every bonus source and returns
 // it. Pull model: a NEW resolver is built each call so nothing mutable is shared
 // across goroutines. Lock safety: only call from a context that already holds the
@@ -1690,6 +1707,7 @@ func (ge *GameEngine) buildResolver() *Resolver {
 	r.AddAll(ge.permanentModifiers())
 	r.AddAll(ge.eventModifiers())
 	r.AddAll(ge.moraleModifiers())
+	r.AddAll(ge.diplomacyModifiers())
 	return r
 }
 
