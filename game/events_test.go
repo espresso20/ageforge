@@ -44,6 +44,41 @@ func TestEventManager_InjectEvent(t *testing.T) {
 	}
 }
 
+// TestGetActive_SurfacesOngoingEffects proves the view struct now carries each
+// active event's ongoing-rate effects (production / production_all / tick_speed)
+// and drops instant/one-shot types that already fired at trigger.
+func TestGetActive_SurfacesOngoingEffects(t *testing.T) {
+	em := NewEventManager()
+	em.InjectEvent(ActiveEvent{
+		Key:       "famine",
+		Name:      "Famine",
+		TicksLeft: 8,
+		Effects: []config.Effect{
+			{Type: "production", Target: "food", Value: -3.0},
+			{Type: "instant_resource", Target: "wood", Value: 100.0}, // one-shot, must be dropped
+		},
+	})
+
+	active := em.GetActive()
+	if len(active) != 1 {
+		t.Fatalf("expected 1 active event, got %d", len(active))
+	}
+	got := active[0]
+
+	if len(got.Effects) != 1 {
+		t.Fatalf("expected 1 ongoing effect (instant dropped), got %d: %+v", len(got.Effects), got.Effects)
+	}
+	eff := got.Effects[0]
+	if eff.Type != "production" || eff.Target != "food" || eff.Value != -3.0 {
+		t.Errorf("ongoing effect = %+v, want {production food -3.0}", eff)
+	}
+	for _, e := range got.Effects {
+		if e.Type == "instant_resource" {
+			t.Errorf("instant_resource effect must NOT be surfaced in the view: %+v", e)
+		}
+	}
+}
+
 func TestEventManager_InjectedEventExpires(t *testing.T) {
 	em := NewEventManager()
 	em.InjectEvent(ActiveEvent{
