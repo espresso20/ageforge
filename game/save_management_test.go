@@ -401,6 +401,54 @@ func TestLoadGameSetsActiveSaveName(t *testing.T) {
 	}
 }
 
+func TestParentNameRoundTrips(t *testing.T) {
+	name := "test_lineage_child"
+	ge := NewGameEngine()
+	t.Cleanup(func() { _ = os.Remove(savePath(name)) })
+
+	// Same-package test → set the unexported field directly (no setter needed).
+	ge.activeParentName = "RootGame"
+	if err := ge.SaveGame(name); err != nil {
+		t.Fatalf("SaveGame(%q) failed: %v", name, err)
+	}
+
+	// A fresh engine loading the child must adopt the persisted parent.
+	loaded := NewGameEngine()
+	if err := loaded.LoadGame(name); err != nil {
+		t.Fatalf("LoadGame(%q) failed: %v", name, err)
+	}
+	if loaded.activeParentName != "RootGame" {
+		t.Errorf("activeParentName after load = %q, want %q", loaded.activeParentName, "RootGame")
+	}
+
+	// ListSaveDetails must surface the same parent for Phase 3's tree.
+	if got := findDetail(t, name).ParentName; got != "RootGame" {
+		t.Errorf("SaveInfo.ParentName = %q, want %q", got, "RootGame")
+	}
+}
+
+func TestLegacySaveHasNoParentName(t *testing.T) {
+	// A legacy-style save written without parent_name must load as a root ("").
+	name := "test_lineage_legacy"
+	writeTestSave(t, name) // ensures the dir exists + registers cleanup
+	writeRawSave(t, name, GameSave{
+		Timestamp: time.Now(),
+		Age:       "stone_age",
+		// ParentName intentionally omitted (zero value, omitempty drops it).
+	})
+
+	loaded := NewGameEngine()
+	if err := loaded.LoadGame(name); err != nil {
+		t.Fatalf("LoadGame(%q) failed: %v", name, err)
+	}
+	if loaded.activeParentName != "" {
+		t.Errorf("legacy save loaded with activeParentName = %q, want \"\"", loaded.activeParentName)
+	}
+	if got := findDetail(t, name).ParentName; got != "" {
+		t.Errorf("legacy SaveInfo.ParentName = %q, want \"\"", got)
+	}
+}
+
 func TestListSaveDetailsFlagsCorrupt(t *testing.T) {
 	// Ensure the dir exists, then drop a non-JSON .json file into it.
 	good := "test_corrupt_neighbor"
