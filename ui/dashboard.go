@@ -38,23 +38,23 @@ type Dashboard struct {
 	economyTab *EconomyTab
 
 	// Sidebar
-	sidebar       *tview.TextView
-	workerMiniTV  *tview.TextView
+	sidebar      *tview.TextView
+	workerMiniTV *tview.TextView
 
 	// Shared UI
-	logTV    *tview.TextView
-	statusTV *tview.TextView
-	ageTV      *tview.TextView
-	inputField *tview.InputField
+	logTV               *tview.TextView
+	statusTV            *tview.TextView
+	ageTV               *tview.TextView
+	inputField          *tview.InputField
 	lastAge             string
 	pendingAgeSplash    string // set by bus handler, consumed by refresh()
 	pendingEpochChanged bool   // whether the pending age advance also crossed an epoch boundary
 	toastMgr            *ToastManager
-	toastTV     *tview.TextView
-	contentArea *tview.Flex
+	toastTV             *tview.TextView
+	contentArea         *tview.Flex
 
 	// Shame badge — set once on first load when CheaterBadge is true
-	cheaterTV       *tview.TextView
+	cheaterTV        *tview.TextView
 	activeShameBadge string
 
 	// catModalShown tracks the pending catastrophe key we have already shown a modal for,
@@ -79,10 +79,10 @@ type Dashboard struct {
 // NewDashboard creates the gameplay dashboard
 func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.Pages) *Dashboard {
 	d := &Dashboard{
-		app:    app,
-		engine: engine,
-		pages:  pages,
-		stopCh: make(chan struct{}),
+		app:     app,
+		engine:  engine,
+		pages:   pages,
+		stopCh:  make(chan struct{}),
 		histIdx: -1,
 	}
 	d.build()
@@ -101,6 +101,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.Register("epoch", "Epoch", epochProvider)
 	d.overlayMgr.Register("history", "Civilization History", historyProvider)
 	d.overlayMgr.Register("buildings", "Buildings", buildingsProvider)
+	d.overlayMgr.Register("help", "Help", helpProvider)
 
 	mv4 := NewMapV4()
 	d.overlayMgr.RegisterWidget("map", "City Map", mv4.Build, mv4.Refresh, true)
@@ -376,7 +377,7 @@ func (d *Dashboard) updateSidebar(activeOverlay string) {
 }
 
 func buildSidebarText(active string) string {
-	commands := []string{"milestones", "research", "army", "trade", "stats", "wonders", "workers", "logs", "epoch", "history", "map"}
+	commands := []string{"milestones", "research", "army", "trade", "stats", "wonders", "workers", "logs", "epoch", "history", "map", "help"}
 	var sb strings.Builder
 	sb.WriteString("\n")
 	for _, cmd := range commands {
@@ -644,7 +645,6 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 	d.logTV.ScrollToEnd()
 }
 
-
 // showDevUnlockModal opens an unlabelled passphrase input modal.
 // No hint text is shown — the existence of this modal is not advertised.
 func (d *Dashboard) showDevUnlockModal() {
@@ -695,4 +695,3 @@ func (d *Dashboard) showDevUnlockModal() {
 	d.pages.AddPage(devUnlockPage, centered, true, true)
 	d.app.SetFocus(field)
 }
-

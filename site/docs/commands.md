@@ -198,7 +198,7 @@ Voluntary catastrophes let you force an epoch event outside the normal roll. Use
 | `saves` | List all save files |
 | `Esc` | Quick-save (autosave slot) |
 | `dump` | Export logs to a file for debugging |
-| `help` | Show a quick command summary |
+| `help` | Open the Help panel — full command reference and list of available panels |
 
 ---
 

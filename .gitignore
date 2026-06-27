@@ -28,8 +28,9 @@ go.work
 *.swp
 *.swo
 
-# Ignore game saves
+# Ignore game saves and runtime logs
 data/saves/
+data/logs/
 
 # Build output
 dist/
