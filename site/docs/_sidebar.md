@@ -8,6 +8,7 @@
 - **Gameplay**
   - [How to Play](how-to-play.md)
   - [All Commands](commands.md)
+  - [Saving & Loading](saving-and-loading.md)
   - [Resources](resources.md)
   - [Workers](villagers.md)
 
