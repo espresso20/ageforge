@@ -75,26 +75,29 @@ func TestRowTagPrecedence(t *testing.T) {
 
 func TestLegendTextCoversSymbolsWithMatchingColors(t *testing.T) {
 	legend := legendText()
-	// Every row symbol the browser can show must be explained in the Key box.
-	for _, sym := range []string{"★ auto", "⭐ elite", "⚠ modified", "⚠ corrupt"} {
+	// Every player-facing row symbol must be explained in the Key box.
+	for _, sym := range []string{"★ auto", "⚠ modified", "⚠ corrupt"} {
 		if !strings.Contains(legend, sym) {
 			t.Errorf("legendText() missing symbol %q\n%s", sym, legend)
 		}
 	}
-	// Colours must match the row tags exactly: gold for ★/⭐, red for ⚠.
-	for _, goldTag := range []string{"[gold]★ auto[-]", "[gold]⭐ elite[-]"} {
-		if !strings.Contains(legend, goldTag) {
-			t.Errorf("legendText() missing gold-tagged %q\n%s", goldTag, legend)
-		}
+	// Colours must match the row tags exactly: gold for ★, red for ⚠.
+	if goldTag := "[gold]★ auto[-]"; !strings.Contains(legend, goldTag) {
+		t.Errorf("legendText() missing gold-tagged %q\n%s", goldTag, legend)
 	}
 	for _, redTag := range []string{"[red]⚠ modified[-]", "[red]⚠ corrupt[-]"} {
 		if !strings.Contains(legend, redTag) {
 			t.Errorf("legendText() missing red-tagged %q\n%s", redTag, legend)
 		}
 	}
-	// Four symbols → four content lines (sizing assumes this for the height-6 box).
-	if lines := strings.Count(legend, "\n") + 1; lines != 4 {
-		t.Errorf("legendText() has %d lines, want 4", lines)
+	// The elite easter-egg badge must NOT be advertised in the legend, even
+	// though a real elite save still renders its ⭐ row tag.
+	if strings.Contains(legend, "elite") {
+		t.Errorf("legendText() leaks the elite easter egg\n%s", legend)
+	}
+	// Three symbols → three content lines (sizing assumes this for the height-5 box).
+	if lines := strings.Count(legend, "\n") + 1; lines != 3 {
+		t.Errorf("legendText() has %d lines, want 3", lines)
 	}
 }
 

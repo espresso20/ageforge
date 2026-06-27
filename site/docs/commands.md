@@ -204,6 +204,8 @@ Save files live in `./data/saves/*.json`, relative to the directory you launch t
 
 A bare `save` (no name) re-saves to your most recent named or loaded save — it stays on the autosave slot only until you've explicitly `save <name>`d or loaded a named save this session. The periodic autosave always writes to the autosave slot regardless and never changes which slot a bare `save` targets.
 
+See [Saving & Loading](saving-and-loading.md) for the full save system.
+
 ---
 
 ## Saving & Loading
@@ -230,7 +232,6 @@ Highlighting a save updates a **detail pane** on the side with everything you ne
 | Tag | Meaning |
 |---|---|
 | ★ auto | The autosave slot |
-| ⭐ elite | An elite save |
 | ⚠ modified | The save file was edited outside the game (cheater badge) |
 | ⚠ corrupt | The file could not be read. It is still listed but dimmed, and cannot be loaded |
 
