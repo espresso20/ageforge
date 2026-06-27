@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/espresso20/ageforge/config"
@@ -633,14 +634,28 @@ func ListSaves() ([]string, error) {
 	return saves, nil
 }
 
-// SaveInfo holds metadata about a save file
+// SaveInfo holds metadata about a save file, parsed from the save's JSON
+// header without loading the full engine state. Fields beyond Name/Timestamp/Age
+// drive the Load Game browser's detail pane.
 type SaveInfo struct {
-	Name      string
-	Timestamp time.Time
-	Age       string
+	Name          string
+	Timestamp     time.Time
+	Age           string
+	Tick          int
+	PrestigeLevel int
+	Morale        float64
+	Modified      bool // save's cheater_badge flag (HMAC mismatch on a prior load)
+	Elite         bool // save's elite_badge flag
+	// Corrupt is set when the file could not be read or JSON-parsed. The entry
+	// is still returned (Name + mtime Timestamp) so the UI can show it as
+	// greyed/unloadable rather than silently dropping it.
+	Corrupt bool
 }
 
-// ListSaveDetails returns metadata for each save file
+// ListSaveDetails returns metadata for each save file. A file that fails to read
+// or parse is not skipped: it is returned with Corrupt=true, its Name, and a
+// Timestamp taken from the file's mtime, so a single bad file never breaks the
+// listing for the rest.
 func ListSaveDetails() ([]SaveInfo, error) {
 	dir := saveDirectory()
 	entries, err := os.ReadDir(dir)
@@ -657,24 +672,51 @@ func ListSaveDetails() ([]SaveInfo, error) {
 		}
 		name := e.Name()[:len(e.Name())-5]
 		path := filepath.Join(dir, e.Name())
-		data, err := os.ReadFile(path)
-		if err != nil {
+
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			saves = append(saves, corruptInfo(name, e))
 			continue
 		}
+		// Parse only the subset of fields the detail pane needs. The json tags
+		// here must match GameSave / PrestigeSave above.
 		var header struct {
 			Timestamp time.Time `json:"timestamp"`
+			Tick      int       `json:"tick"`
 			Age       string    `json:"age"`
+			Morale    float64   `json:"morale"`
+			Prestige  struct {
+				Level int `json:"level"`
+			} `json:"prestige"`
+			CheaterBadge bool `json:"cheater_badge"`
+			EliteBadge   bool `json:"elite_badge"`
 		}
 		if err := json.Unmarshal(data, &header); err != nil {
+			saves = append(saves, corruptInfo(name, e))
 			continue
 		}
 		saves = append(saves, SaveInfo{
-			Name:      name,
-			Timestamp: header.Timestamp,
-			Age:       header.Age,
+			Name:          name,
+			Timestamp:     header.Timestamp,
+			Age:           header.Age,
+			Tick:          header.Tick,
+			PrestigeLevel: header.Prestige.Level,
+			Morale:        header.Morale,
+			Modified:      header.CheaterBadge,
+			Elite:         header.EliteBadge,
 		})
 	}
 	return saves, nil
+}
+
+// corruptInfo builds a SaveInfo for an unreadable/unparseable save, falling back
+// to the file's mtime for the Timestamp so the UI still has something to sort on.
+func corruptInfo(name string, e os.DirEntry) SaveInfo {
+	info := SaveInfo{Name: name, Corrupt: true}
+	if fi, err := e.Info(); err == nil {
+		info.Timestamp = fi.ModTime()
+	}
+	return info
 }
 
 // WipeAllSaves deletes all save files
@@ -699,4 +741,134 @@ func WipeAllSaves() error {
 func SaveExists(filename string) bool {
 	_, err := os.Stat(savePath(filename))
 	return err == nil
+}
+
+// maxSaveNameLen bounds save base-names. Generous for player-chosen names while
+// keeping us clear of filesystem path limits.
+const maxSaveNameLen = 64
+
+// sanitizeSaveName validates a save base-name that may originate from user input
+// (e.g. the rename dialog) and returns the cleaned name. A trailing ".json" the
+// user may have typed is stripped first. It REJECTS names that are empty/
+// whitespace-only, contain a path separator ('/' or '\'), contain "..", begin
+// with a dot, contain a null byte, or exceed maxSaveNameLen — anything that could
+// escape the saves directory or produce a hidden/awkward file. The returned name
+// is safe to join onto the saves directory.
+func sanitizeSaveName(name string) (string, error) {
+	// Strip a trailing .json the user may have included.
+	if ext := filepath.Ext(name); ext == ".json" {
+		name = name[:len(name)-len(ext)]
+	}
+	name = strings.TrimSpace(name)
+
+	if name == "" {
+		return "", fmt.Errorf("save name cannot be empty")
+	}
+	if len(name) > maxSaveNameLen {
+		return "", fmt.Errorf("save name too long (max %d characters)", maxSaveNameLen)
+	}
+	if strings.ContainsRune(name, 0) {
+		return "", fmt.Errorf("save name contains an invalid character")
+	}
+	if strings.ContainsAny(name, `/\`) {
+		return "", fmt.Errorf("save name cannot contain path separators")
+	}
+	if strings.Contains(name, "..") {
+		return "", fmt.Errorf("save name cannot contain '..'")
+	}
+	if strings.HasPrefix(name, ".") {
+		return "", fmt.Errorf("save name cannot start with a dot")
+	}
+	return name, nil
+}
+
+// DeleteSave removes a save file. The name is sanitized first so a crafted value
+// cannot escape the saves directory. Returns a clear error if the file is absent.
+func DeleteSave(filename string) error {
+	name, err := sanitizeSaveName(filename)
+	if err != nil {
+		return err
+	}
+	if !SaveExists(name) {
+		return fmt.Errorf("save %q does not exist", name)
+	}
+	if err := os.Remove(savePath(name)); err != nil {
+		return fmt.Errorf("failed to delete save: %w", err)
+	}
+	return nil
+}
+
+// RenameSave renames a save file from oldName to newName. Both names are
+// sanitized. Errors if the source does not exist, if newName collides with an
+// existing save, or if either name is invalid. Because only the filename changes
+// (not the bytes), the save's HMAC signature stays valid.
+func RenameSave(oldName, newName string) error {
+	src, err := sanitizeSaveName(oldName)
+	if err != nil {
+		return fmt.Errorf("invalid source name: %w", err)
+	}
+	dst, err := sanitizeSaveName(newName)
+	if err != nil {
+		return fmt.Errorf("invalid new name: %w", err)
+	}
+	if !SaveExists(src) {
+		return fmt.Errorf("save %q does not exist", src)
+	}
+	if src == dst {
+		return fmt.Errorf("new name is the same as the current name")
+	}
+	if SaveExists(dst) {
+		return fmt.Errorf("a save named %q already exists", dst)
+	}
+	srcPath := savePath(src)
+	// Write the renamed file into the same directory the source lives in so a
+	// save in the legacy CWD location isn't orphaned by a canonical-dir write.
+	dstPath := filepath.Join(filepath.Dir(srcPath), dst+".json")
+	if err := os.Rename(srcPath, dstPath); err != nil {
+		return fmt.Errorf("failed to rename save: %w", err)
+	}
+	return nil
+}
+
+// DuplicateSave copies a save to a new name and returns the new base name. The
+// new name is "<filename>-copy", or "<filename>-copy-2", "-copy-3", ... if a
+// prior copy already exists. Bytes are copied verbatim, so the HMAC signature
+// remains valid on the duplicate.
+func DuplicateSave(filename string) (string, error) {
+	src, err := sanitizeSaveName(filename)
+	if err != nil {
+		return "", err
+	}
+	if !SaveExists(src) {
+		return "", fmt.Errorf("save %q does not exist", src)
+	}
+
+	// Find the first free "-copy" variant. The base + suffix must still satisfy
+	// the sanitizer (length bound in particular), so validate before using it.
+	dst := src + "-copy"
+	for n := 2; SaveExists(dst); n++ {
+		dst = fmt.Sprintf("%s-copy-%d", src, n)
+	}
+	if _, err := sanitizeSaveName(dst); err != nil {
+		return "", fmt.Errorf("cannot build a valid copy name: %w", err)
+	}
+
+	srcPath := savePath(src)
+	data, err := os.ReadFile(srcPath)
+	if err != nil {
+		return "", fmt.Errorf("failed to read save: %w", err)
+	}
+	// Place the copy alongside the source (canonical or legacy dir) for the same
+	// reason as RenameSave. Write atomically (temp + rename).
+	dir := filepath.Dir(srcPath)
+	dstPath := filepath.Join(dir, dst+".json")
+	tmpPath := dstPath + ".tmp"
+	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
+		return "", fmt.Errorf("failed to write copy: %w", err)
+	}
+	if err := os.Rename(tmpPath, dstPath); err != nil {
+		os.Remove(tmpPath)
+		return "", fmt.Errorf("failed to finalize copy: %w", err)
+	}
+	return dst, nil
 }
