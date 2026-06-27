@@ -1,5 +1,7 @@
 package config
 
+import "math"
+
 // Effect represents a single game effect applied by a building, tech, or milestone.
 // The semantics of Value depend on Type:
 //   - "production":     +Value of Target resource per tick
@@ -783,6 +785,74 @@ func buildingMeta() map[string]buildingMetaEntry {
 // Production/housing/military/research buildings come from NewProductionBuildings() (Phase 10
 // lineage redesign). Storage buildings and wonders come from baseBuildingsRaw(), enriched
 // with lineage metadata from buildingMeta().
+// roundSignificant rounds v to `sig` significant figures for readability
+// (e.g. 46.3→46, 644→640, 6420→6400, 90150→90000). A positive value is never
+// rounded down to 0 — it floors at 1 so a real cost never becomes free.
+func roundSignificant(v float64, sig int) float64 {
+	if v <= 0 {
+		return v
+	}
+	d := math.Ceil(math.Log10(v))
+	power := float64(sig) - d
+	mag := math.Pow(10, power)
+	rounded := math.Round(v*mag) / mag
+	if rounded < 1 {
+		return 1
+	}
+	return rounded
+}
+
+// normalizeCostCurves rewrites every building's cost curve as part of the
+// economy rebalance (sub-ticket 1: flatten cost curves).
+//
+// Why: the old curves trivialized copy #1 (some bases were tiny relative to the
+// steep CostScale) and then exploded in the late copies, making mid/late builds
+// either free or impossibly expensive. We pivot around the 10th copy so the
+// mid-game cost of a building is preserved while de-trivializing copy #1 and
+// removing the late explosion.
+//
+// The 10th copy of a building costs base*scale^9. Holding base*scale^9 constant
+// while changing scale to a flatter value requires multiplying base by
+// (oldScale/newScale)^9. We apply that, then round the new base to 2 significant
+// figures for readability.
+//
+// Wonders (CostScale 1.0, MaxCount 1) are intentionally left untouched.
+//
+// This operates on the freshly-constructed defs handed to it each call, reading
+// each def's literal CostScale as the "old" value, so it is idempotent with
+// respect to BaseBuildings() (which rebuilds from literals every call). The
+// BaseCost maps are fresh per-call literals from the lineage constructors, so
+// in-place mutation here cannot alias another copy.
+func normalizeCostCurves(defs []BuildingDef) []BuildingDef {
+	// --- Policy constants (re-tune here) ---
+	const (
+		pivotCopy    = 10   // copy whose cost we hold constant across the rewrite
+		scaleDefault = 1.15 // new CostScale for production/research/military/etc.
+		scaleInfra   = 1.13 // new CostScale for storage + housing (infrastructure)
+	)
+	const exponent = pivotCopy - 1 // base*scale^exponent is the pivot cost
+
+	for i := range defs {
+		d := &defs[i]
+		if d.Category == "wonder" {
+			continue // flat-cost, single-instance — leave completely unchanged
+		}
+
+		newScale := scaleDefault
+		if d.Category == "storage" || d.Category == "housing" {
+			newScale = scaleInfra
+		}
+
+		// Multiplier that preserves the pivot (10th) copy cost.
+		m := math.Pow(d.CostScale/newScale, float64(exponent))
+		for res := range d.BaseCost {
+			d.BaseCost[res] = roundSignificant(d.BaseCost[res]*m, 2)
+		}
+		d.CostScale = newScale
+	}
+	return defs
+}
+
 func BaseBuildings() []BuildingDef {
 	// Start with the new 13-lineage production buildings (all metadata inline).
 	result := NewProductionBuildings()
@@ -803,7 +873,9 @@ func BaseBuildings() []BuildingDef {
 		}
 		result = append(result, b)
 	}
-	return result
+	// Normalize cost curves at the single chokepoint so every consumer
+	// (BuildingByKey, the engine, the audit tool) inherits flattened values.
+	return normalizeCostCurves(result)
 }
 
 // BuildingByKey returns a map of building key → BuildingDef, sourced from BaseBuildings().
@@ -816,6 +888,28 @@ func BuildingByKey() map[string]BuildingDef {
 		m[b.Key] = b
 	}
 	return m
+}
+
+// AgeEntryCosts returns, for each resource, the cheapest base cost of that
+// resource among the buildings that become available in the given age
+// (RequiredAge == ageKey), excluding wonders. Used to scale age-transition
+// carryover to "a handful of starter buildings." Pure function — no locks.
+func AgeEntryCosts(ageKey string) map[string]float64 {
+	out := make(map[string]float64)
+	for _, b := range BaseBuildings() {
+		if b.RequiredAge != ageKey || b.Category == "wonder" {
+			continue
+		}
+		for res, amt := range b.BaseCost {
+			if amt <= 0 {
+				continue
+			}
+			if cur, ok := out[res]; !ok || amt < cur {
+				out[res] = amt
+			}
+		}
+	}
+	return out
 }
 
 // BuildingNextTierForAge returns the next-tier BuildingDef in a lineage for the given new age.

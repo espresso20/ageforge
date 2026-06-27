@@ -68,7 +68,7 @@ Opens the army overlay showing current soldier count, defense rating, active exp
 
 Military buildings do three things: they provide **worker slots** for military-domain workers, they **produce the soldiers resource** every tick while staffed, and their per-instance **soldier cap** sets how many soldiers you can store. Your total soldier storage is the sum of all your military buildings' soldier caps — you cannot bank more soldiers than that combined cap allows.
 
-All military buildings belong to the **military lineage** (22 tiers, stone_age through transcendent_age). CostScale is 1.35 — costs compound steeply with each additional copy.
+All military buildings belong to the **military lineage** (22 tiers, stone_age through transcendent_age). CostScale is 1.15 — costs rise gently with each additional copy, so scaling up an army stays affordable.
 
 **Soldier production per building:** A fully-staffed military building produces about **its soldier cap ÷ 50 per tick** (minimum 0.1/tick). A staffed Barracks (cap 20) yields ~0.4 soldiers/tick; a Castle Keep (cap 320) yields ~6.4/tick. Production scales with worker assignment exactly like every other domain — see [§5](#5-military-domain-workers).
 
