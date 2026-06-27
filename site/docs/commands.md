@@ -210,7 +210,7 @@ Save files live in `./data/saves/*.json`, relative to the directory you launch t
 
 From the main menu, choosing **Load Game** opens a save browser that lists every save in `./data/saves/` (most-recent first). Load Game is always available — if you have no saves yet, the browser shows a "No saved games found — start a new game" message instead of an empty list.
 
-Highlighting a save updates a **detail pane** on the side with everything you need to size up that save before loading it: its earned title, age and epoch, civilization scale (population, buildings, wonders, milestones, techs, soldiers), prestige level and points, morale, a ⚠ warning if a catastrophe is pending, and the exact save time.
+Highlighting a save updates a **detail pane** on the side with everything you need to size up that save before loading it: its earned title, age and epoch, civilization scale (population, buildings, wonders, milestones, techs, soldiers), prestige level and points, [morale](morale.md), a ⚠ warning if a catastrophe is pending, and the exact save time.
 
 **Keys inside the browser:**
 

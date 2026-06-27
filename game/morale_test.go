@@ -171,16 +171,17 @@ func TestMorale_BuildingsRaiseMorale(t *testing.T) {
 }
 
 func TestMorale_NoMoraleBuildingsNoLift(t *testing.T) {
-	// A faith building WITHOUT a morale effect must not lift morale (only shrine
-	// and temple carry it in Stage 1). Altar is faith-only.
+	// A building WITHOUT a morale effect must not lift morale. After Stage 2A every
+	// faith and culture_arts building carries one, so pick a pure resource producer:
+	// gathering_camp (food lineage) has no morale effect.
 	ge := NewGameEngine()
 	ge.mu.Lock()
-	ge.Buildings.counts["altar"] = 10
+	ge.Buildings.counts["gathering_camp"] = 10
 	ge.mu.Unlock()
 	ge.morale = moraleNeutral
 	tickMoraleN(ge, 50)
 	if ge.morale > moraleNeutral+1e-6 {
-		t.Errorf("altars (no morale effect) raised morale to %.6f, want ≤ neutral", ge.morale)
+		t.Errorf("gathering_camps (no morale effect) raised morale to %.6f, want ≤ neutral", ge.morale)
 	}
 }
 

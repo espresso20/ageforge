@@ -332,13 +332,13 @@ Once completed, the wonder's sprite will appear in the bottom strip of the City 
 
 ## Wonders and Morale
 
-Every wonder you build raises your **morale cap** by +0.05. Morale is a multiplier on all worker output (default cap: 1.0, floor: 0.10). With the base cap at 1.0, wonders are the only way to push production above that ceiling.
+Every wonder you build raises your **morale cap** by +5%. Morale is a civilization-wide multiplier on all worker output; it starts at 50% neutral, only produces a bonus once it climbs above 75%, and reaches up to **+20%** to all production as it approaches the cap. The base cap (0 wonders) is **100%**, and each wonder lifts that ceiling — so a higher cap means a higher reachable bonus.
 
-- 5 wonders built → morale cap 1.25 (workers can reach 125% output)
-- 10 wonders built → morale cap 1.50
-- 22 wonders built → morale cap **2.10** (workers can produce at over double their base rate)
+- 5 wonders built → morale cap **125%**
+- 10 wonders built → morale cap **150%**
+- 22 wonders built → morale cap **210%**
 
-This makes wonders a long-term morale investment as much as a direct bonus source. Full-completion runs — building all 22 wonders across a run — unlock the maximum 2.10 morale cap, which stacks on top of all other production multipliers. The combined effect of a full wonder set alongside food surplus ticks and age advance morale boosts can push worker output dramatically above what building counts alone suggest.
+These figures are the morale **ceiling** — how high the morale percentage can climb — not a direct output multiplier. The production bonus from the high band still tops out at +20% as morale nears that ceiling; a higher cap doesn't raise the +20% bonus, but it makes the high-band bonus zone larger and easier to sit in. Morale starts at 50% neutral and must be raised into the high band with worship and culture buildings — wonders simply set how high it can go. Full-completion runs (all 22 wonders) unlock the maximum 210% morale ceiling.
 
 ---
 
@@ -349,4 +349,4 @@ This makes wonders a long-term morale investment as much as a direct bonus sourc
 - **Grand Lighthouse** + Rocketry tech + prestige `expedition_loot` = absurd expedition loot multipliers
 - Build wonders as early as possible in each age — the speed boost fires when construction completes and helps you hit the next age faster
 - **Crystal Palace** (+15% all production) at the Industrial Age is often the single biggest inflection point in the game
-- Each wonder also raises the morale cap by +0.05 — prioritising wonder completion pays dividends in both direct bonuses and morale headroom
+- Each wonder also raises the morale cap by +5% (100% base → 210% with all 22) — prioritising wonder completion pays dividends in both direct bonuses and morale headroom. See [Morale](morale.md)

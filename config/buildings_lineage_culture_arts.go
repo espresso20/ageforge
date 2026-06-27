@@ -12,6 +12,9 @@ func buildingsLineageCultureArts() []BuildingDef {
 	// CostScale: 1.30  Category: "production"
 	// =========================================================================
 
+	// Stage 2A: entertainment venues also lift morale, on the same gentle
+	// ~0.0005·1.15^tier ramp as the faith worship buildings. Modest by design.
+
 	// tier 0 — classical_age  rate=0.5  cap=+500
 	b = append(b, BuildingDef{
 		Name: "Amphitheater", Key: "amphitheater", Category: "production",
@@ -20,6 +23,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 0.5},
 			{Type: "storage", Target: "culture", Value: 500},
+			{Type: "morale", Value: 0.0005},
 		},
 		BuildTicks:  3000,
 		RequiredAge: "classical_age",
@@ -35,6 +39,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 1.0},
 			{Type: "storage", Target: "culture", Value: 1000},
+			{Type: "morale", Value: 0.0006},
 		},
 		BuildTicks:  6000,
 		RequiredAge: "medieval_age",
@@ -50,6 +55,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 2.0},
 			{Type: "storage", Target: "culture", Value: 2500},
+			{Type: "morale", Value: 0.0007},
 		},
 		BuildTicks:  12000,
 		RequiredAge: "renaissance_age",
@@ -65,6 +71,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 4.0},
 			{Type: "storage", Target: "culture", Value: 5000},
+			{Type: "morale", Value: 0.0008},
 		},
 		BuildTicks:  18000,
 		RequiredAge: "colonial_age",
@@ -80,6 +87,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 8.0},
 			{Type: "storage", Target: "culture", Value: 10000},
+			{Type: "morale", Value: 0.0009},
 		},
 		BuildTicks:  25000,
 		RequiredAge: "industrial_age",
@@ -95,6 +103,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 15},
 			{Type: "storage", Target: "culture", Value: 25000},
+			{Type: "morale", Value: 0.0010},
 		},
 		BuildTicks:  50000,
 		RequiredAge: "victorian_age",
@@ -110,6 +119,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 30},
 			{Type: "storage", Target: "culture", Value: 50000},
+			{Type: "morale", Value: 0.0012},
 		},
 		BuildTicks:  75000,
 		RequiredAge: "electric_age",
@@ -125,6 +135,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 60},
 			{Type: "storage", Target: "culture", Value: 100000},
+			{Type: "morale", Value: 0.0013},
 		},
 		BuildTicks:  100000,
 		RequiredAge: "atomic_age",
@@ -140,6 +151,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 120},
 			{Type: "storage", Target: "culture", Value: 250000},
+			{Type: "morale", Value: 0.0015},
 		},
 		BuildTicks:  150000,
 		RequiredAge: "modern_age",
@@ -155,6 +167,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 250},
 			{Type: "storage", Target: "culture", Value: 500000},
+			{Type: "morale", Value: 0.0018},
 		},
 		BuildTicks:  300000,
 		RequiredAge: "information_age",
@@ -170,6 +183,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 500},
 			{Type: "storage", Target: "culture", Value: 1000000},
+			{Type: "morale", Value: 0.0020},
 		},
 		BuildTicks:  500000,
 		RequiredAge: "digital_age",
@@ -185,6 +199,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 1000},
 			{Type: "storage", Target: "culture", Value: 2500000},
+			{Type: "morale", Value: 0.0023},
 		},
 		BuildTicks:  1000000,
 		RequiredAge: "cyberpunk_age",
@@ -200,6 +215,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 2000},
 			{Type: "storage", Target: "culture", Value: 5000000},
+			{Type: "morale", Value: 0.0027},
 		},
 		BuildTicks:  1500000,
 		RequiredAge: "fusion_age",
@@ -215,6 +231,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 4000},
 			{Type: "storage", Target: "culture", Value: 10000000},
+			{Type: "morale", Value: 0.0031},
 		},
 		BuildTicks:  2000000,
 		RequiredAge: "space_age",
@@ -230,6 +247,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 8000},
 			{Type: "storage", Target: "culture", Value: 25000000},
+			{Type: "morale", Value: 0.0035},
 		},
 		BuildTicks:  2500000,
 		RequiredAge: "interstellar_age",
@@ -245,6 +263,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 16000},
 			{Type: "storage", Target: "culture", Value: 50000000},
+			{Type: "morale", Value: 0.0041},
 		},
 		BuildTicks:  3000000,
 		RequiredAge: "galactic_age",
@@ -260,6 +279,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		Effects: []Effect{
 			{Type: "production", Target: "culture", Value: 32000},
 			{Type: "storage", Target: "culture", Value: 100000000},
+			{Type: "morale", Value: 0.0047},
 		},
 		BuildTicks:  5000000,
 		RequiredAge: "quantum_age",

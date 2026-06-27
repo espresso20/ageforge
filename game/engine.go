@@ -2660,6 +2660,7 @@ func (ge *GameEngine) GetState() GameState {
 		History:            ge.History,
 		Morale:             ge.morale,
 		MoraleCap:          ge.moraleCap(),
+		MoraleMultiplier:   ge.moraleMultiplier(),
 		PermanentBonuses: func() map[string]float64 {
 			out := make(map[string]float64, len(ge.permanentBonuses))
 			for k, v := range ge.permanentBonuses {

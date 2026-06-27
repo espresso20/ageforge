@@ -192,21 +192,20 @@ This is intentional Malthusian gameplay — overpopulating without food infrastr
 
 ## Morale
 
-Morale is an engine-level multiplier (0.10–cap) that scales all worker-driven building output.
+Morale is a percentage multiplier on all worker-driven building output. It **starts at 50%** (neutral), bottoms out at a **10% floor**, and is capped at **100% + 5% per wonder** built.
 
 ```
-output = base_rate × building_count × (0.20 + 0.80 × assigned / capacity) × morale
+output = base_rate × building_count × (0.20 + 0.80 × assigned / capacity) × morale_multiplier
 ```
 
-- Default: **1.0** (no penalty). Floor: **0.10**.
-- Morale rises from food surplus, age advances, and good events.
-- Morale falls from starvation, too many idle workers (>50% of pop), over-militarisation (>30% military workers), and bad events.
-- Each wonder built raises the **cap** by +0.05, letting morale exceed 1.0 for a production bonus.
-- After Prestige, morale starts at 0.70; after Succumb, at 0.50.
+It is a two-way dial: below **25%** it penalises production (ramping down to **×0.50** at the floor), **25–75%** has no effect, and above **75%** it rewards production (ramping up to **+20%**). Morale drifts back toward 50% each tick, so the bonus must be sustained.
 
-The Worker panel always shows the current morale bar. The status bar also displays morale %. A warning fires in the log when morale drops below 40%.
+- **Rises from:** worship and culture (morale-restoring) buildings, good events, age advances
+- **Falls from:** starvation, over-militarisation (military > 30% of pop), too many idle workers (> 50% of pop), bad events and catastrophes
 
-For full details see [Workers & Domains](workers-and-domains.md#morale).
+Morale shows as a colored bar in the Workers panel and the villager sidebar.
+
+See [Morale](morale.md) for the full details.
 
 ---
 

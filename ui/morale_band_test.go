@@ -1,0 +1,83 @@
+package ui
+
+import (
+	"strings"
+	"testing"
+)
+
+func TestComputeMoraleBand_Bonus(t *testing.T) {
+	// High band: morale 0.88, multiplier 1.18 → green, "+18%".
+	b := computeMoraleBand(0.88, 1.18)
+	if !b.Bonus || b.Penalty {
+		t.Fatalf("expected bonus band, got %+v", b)
+	}
+	if b.Color != "green" {
+		t.Errorf("bonus color = %q, want green", b.Color)
+	}
+	if b.DeltaPct != 18 {
+		t.Errorf("bonus delta = %d, want 18", b.DeltaPct)
+	}
+	if !strings.Contains(b.Status, "88%") || !strings.Contains(b.Status, "+18%") {
+		t.Errorf("bonus status = %q, want it to mention 88%% and +18%%", b.Status)
+	}
+	if strings.Contains(strings.ToLower(b.Status), "penalty") {
+		t.Errorf("bonus status should not mention penalty: %q", b.Status)
+	}
+}
+
+func TestComputeMoraleBand_Neutral(t *testing.T) {
+	// Neutral band: multiplier exactly 1.0 → neutral color, "steady", no penalty.
+	b := computeMoraleBand(0.52, 1.0)
+	if b.Bonus || b.Penalty {
+		t.Fatalf("expected neutral band, got %+v", b)
+	}
+	if b.Color != "white" {
+		t.Errorf("neutral color = %q, want white", b.Color)
+	}
+	if b.DeltaPct != 0 {
+		t.Errorf("neutral delta = %d, want 0", b.DeltaPct)
+	}
+	if !strings.Contains(b.Status, "52%") || !strings.Contains(b.Status, "steady") {
+		t.Errorf("neutral status = %q, want it to mention 52%% and steady", b.Status)
+	}
+	if strings.Contains(strings.ToLower(b.Status), "penalty") {
+		t.Errorf("neutral status should not mention penalty: %q", b.Status)
+	}
+}
+
+func TestComputeMoraleBand_Penalty(t *testing.T) {
+	// Low band: morale 0.20, multiplier 0.66 → red, "−34%".
+	b := computeMoraleBand(0.20, 0.66)
+	if b.Bonus || !b.Penalty {
+		t.Fatalf("expected penalty band, got %+v", b)
+	}
+	if b.Color != "red" {
+		t.Errorf("penalty color = %q, want red", b.Color)
+	}
+	if b.DeltaPct != -34 {
+		t.Errorf("penalty delta = %d, want -34", b.DeltaPct)
+	}
+	if !strings.Contains(b.Status, "20%") || !strings.Contains(b.Status, "-34%") {
+		t.Errorf("penalty status = %q, want it to mention 20%% and -34%%", b.Status)
+	}
+}
+
+func TestRoundHalf(t *testing.T) {
+	cases := []struct {
+		in   float64
+		want float64
+	}{
+		{17.4, 17},
+		{17.6, 18},
+		{-33.6, -34},
+		{-33.4, -33},
+		{0.0, 0},
+		{0.5, 1},
+		{-0.5, -1},
+	}
+	for _, c := range cases {
+		if got := roundHalf(c.in); got != c.want {
+			t.Errorf("roundHalf(%v) = %v, want %v", c.in, got, c.want)
+		}
+	}
+}
