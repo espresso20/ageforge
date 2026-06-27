@@ -193,16 +193,16 @@ Voluntary catastrophes let you force an epoch event outside the normal roll. Use
 
 | Command | Description |
 |---|---|
-| `save [name]` | Save the game (optional name; defaults to autosave) |
+| `save [name]` | Save the game (optional name; with no name, writes to your active save) |
 | `load [name]` | Load a saved game |
 | `saves` | List all save files |
-| `Esc` | Quick-save (autosave slot) |
+| `Esc` | Quick-save to your active save |
 | `dump` | Export logs to a file for debugging |
 | `help` | Open the Help panel — full command reference and list of available panels |
 
 Save files live in `./data/saves/*.json`, relative to the directory you launch the game from. The `save <name>` and `load <name>` commands above work with the same files as the **Load Game** browser below.
 
-A bare `save` (no name) re-saves to your most recent named or loaded save — it stays on the autosave slot only until you've explicitly `save <name>`d or loaded a named save this session. The periodic autosave always writes to the autosave slot regardless and never changes which slot a bare `save` targets.
+A bare `save` (no name) re-saves to your **active** save — the one you most recently named or loaded (a new game has you name it up front). The periodic autosave and `Esc` write to that same active save, continuously overwriting it, so your current game is always kept current on disk. See [Saving & Loading](saving-and-loading.md) for the full model.
 
 See [Saving & Loading](saving-and-loading.md) for the full save system.
 

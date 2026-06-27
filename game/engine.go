@@ -423,9 +423,11 @@ func (ge *GameEngine) Start() {
 		case <-timer.C:
 			ge.safeTick()
 
-			// Periodic autosave (outside the tick lock)
+			// Periodic autosave (outside the tick lock) → overwrite the active save
+			// slot, not a fixed "autosave" file. ActiveSaveName takes its own RLock;
+			// safe here because we are outside the tick write lock.
 			if time.Since(lastAutosave) >= AutosaveInterval {
-				if err := ge.SaveGame("autosave"); err != nil {
+				if err := ge.SaveGame(ge.ActiveSaveName()); err != nil {
 					ge.mu.Lock()
 					ge.addLog("warning", fmt.Sprintf("Autosave failed: %v", err))
 					ge.mu.Unlock()
@@ -579,6 +581,32 @@ func (ge *GameEngine) SetActiveSaveName(name string) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	ge.activeSaveName = name
+}
+
+// ActiveParentName is the lineage parent of the current save ("" for a root).
+func (ge *GameEngine) ActiveParentName() string {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	return ge.activeParentName
+}
+
+// SetActiveParentName records the lineage parent of the current save.
+func (ge *GameEngine) SetActiveParentName(name string) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.activeParentName = name
+}
+
+// StartNewNamedGame resets to a fresh game, makes `name` the active root save,
+// and writes the initial save file. It does NOT start the ticker — the caller
+// starts it. Returns the SaveGame error if any.
+func (ge *GameEngine) StartNewNamedGame(name string) error {
+	ge.Reset()
+	// Set names AFTER Reset so it can't clobber them (Reset leaves them alone, but
+	// the ordering keeps that guarantee local to this call).
+	ge.SetActiveSaveName(name)
+	ge.SetActiveParentName("") // root of a new lineage
+	return ge.SaveGame(name)
 }
 
 // Stop halts the game tick loop. Safe to call multiple times; subsequent

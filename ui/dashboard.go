@@ -239,7 +239,7 @@ func (d *Dashboard) build() {
 				d.cmdHistory = append(d.cmdHistory, cmd)
 			}
 			if strings.ToLower(cmd) == "quit" {
-				d.engine.SaveGame("autosave")
+				d.engine.SaveGame(d.engine.ActiveSaveName())
 				d.app.Stop()
 				return
 			}
@@ -345,7 +345,7 @@ func (d *Dashboard) build() {
 				d.overlayMgr.Hide()
 				return nil
 			}
-			d.engine.SaveGame("autosave")
+			d.engine.SaveGame(d.engine.ActiveSaveName())
 			d.engine.Stop()
 			d.pages.SwitchToPage("splash")
 			return nil

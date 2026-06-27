@@ -4,6 +4,12 @@ AgeForge keeps your civilization safe with named saves, a continuous autosave, a
 
 ---
 
+## Starting a new game
+
+When you choose **New Game**, you're prompted to name your civilization — pre-filled with a randomly generated name. Press **Enter** to accept it, type your own, or press **Tab** to roll a fresh suggestion. That name becomes your active save, and the game autosaves into it from there.
+
+---
+
 ## Where saves live
 
 Save files are written to `./data/saves/*.json`, relative to the directory you launch the game from. One file per save. The `save`/`load` commands and the **Load Game** browser all read and write the same files, so a save made one way shows up the other.
@@ -17,7 +23,7 @@ Save files are written to `./data/saves/*.json`, relative to the directory you l
 | `save [name]` | Save to a named slot. With no name, writes to the active save slot (see below) |
 | `load [name]` | Load a named save |
 | `saves` (or `save list`) | List all save files |
-| `Esc` | Quick-save to the `autosave` slot |
+| `Esc` | Quick-save to your current (active) save |
 
 ```
 save hero
@@ -35,13 +41,13 @@ The game remembers the last slot you explicitly `save`d to or `load`ed. A bare `
 - Until you've named a save or loaded one this session, a bare `save` defaults to the `autosave` slot.
 - Once you `save hero` or `load hero`, a bare `save` thereafter targets `hero`.
 
-The periodic autosave (and `Esc`) always writes to its own separate `autosave` slot, regardless of which slot a bare `save` targets. A background save will never clobber your named file.
+The periodic autosave and `Esc` quick-save both write to your **active** save, continuously overwriting it. Your current game *is* the autosave — there's no separate slot quietly shadowing it.
 
 ---
 
 ## Autosave
 
-The game autosaves periodically and whenever you press `Esc`, always to the `autosave` slot. Treat it as a safety net rather than your primary save — name the runs you care about so a routine autosave can't overwrite them.
+The game autosaves periodically and whenever you press `Esc`, writing to your **active** save — so your current game is always kept up to date on disk. To preserve a specific point you don't want overwritten, save it under a new name (or duplicate it with `c` in the Load Game browser).
 
 ---
 
@@ -84,4 +90,4 @@ Saves are signed. If a save file is edited outside the game, the integrity check
 
 - **Name your important saves.** A bare `save` targets your active slot, but giving milestones their own names (`save iron_age_start`) keeps them out of harm's way.
 - **Duplicate before risky moves.** Press `c` in the Load Game browser to clone a save before a prestige, catastrophe, or any decision you might want to undo.
-- **Autosave is your safety net, not your archive.** It's there if the game closes unexpectedly — but it gets overwritten constantly, so don't rely on it for runs you want to keep.
+- **Your active save is overwritten constantly.** Autosave keeps your current game up to date — but that means it's not a snapshot. To keep a run exactly as it is right now, duplicate it (`c`) or save it under a new name before risky moves.

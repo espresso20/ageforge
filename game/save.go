@@ -883,6 +883,15 @@ func sanitizeSaveName(name string) (string, error) {
 	return name, nil
 }
 
+// ValidateSaveName is the exported entry point to the same validation the rename
+// and save paths use: it strips a trailing ".json", trims whitespace, and rejects
+// names that are empty, too long, contain a null byte / path separator / "..", or
+// begin with a dot. It returns the cleaned, filesystem-safe name. UI code (e.g. the
+// New Game name prompt) calls this so the rule lives in exactly one place.
+func ValidateSaveName(name string) (string, error) {
+	return sanitizeSaveName(name)
+}
+
 // DeleteSave removes a save file. The name is sanitized first so a crafted value
 // cannot escape the saves directory. Returns a clear error if the file is absent.
 func DeleteSave(filename string) error {
