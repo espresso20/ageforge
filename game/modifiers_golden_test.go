@@ -23,20 +23,26 @@ import (
 const goldenEps = 1e-9
 
 // expectedProductionAll re-derives the net multiplicative factor the engine
-// applies to a positive building production rate, the way recalculateRates does:
+// applies to a positive building production rate, the way recalculateRates does
+// AFTER Fix B (ungated + floored):
 //
 //	prodAllAdd = research[production_all] + permanent[production_all]
 //	           + prestige[production_all] + wonders[production_all]
 //	           + Σ active-event production_all effects
-//	factor     = moraleMultiplier() × (prodAllAdd > 0 ? (1 + prodAllAdd) : 1)
+//	factor     = moraleMultiplier() × max(productionFloor, 1 + prodAllAdd)
 //
 // The morale factor is moraleMultiplier(), applied unconditionally to the
 // building rate (recalculateRates hoists it as `mMult := ge.moraleMultiplier()`,
 // then `rate × mMult`). It is NOT the raw ge.morale field: post-rework morale is
-// a managed resource (neutral 0.50) whose production effect is a continuous curve
+// a managed resource (neutral 0.50) whose production effect is a CONTINUOUS curve
 // pivoted at 0.50 — exactly 1.0 at the pivot, ramping to +20% at the cap above
-// and toward ×0.5 at the 0.10 floor below. The production_all additive multiply
-// is still gated on prodAllAdd > 0.
+// and toward ×0.5 at the 0.10 floor below.
+//
+// Fix B removed the old `prodAllAdd > 0` gate: a negative additive bonus (e.g.
+// the Reconstruction Effort catastrophe's -0.10) now applies. The productionFloor
+// floor only binds when 1+add < 0.10; for every fixture here it does not, so this
+// expected factor equals the resolver's UNfloored Total (1+add)×morale — the
+// resolver carries the additive pool and morale, the floor is engine-side only.
 func expectedProductionAll(ge *GameEngine) float64 {
 	research := ge.Research.GetBonuses()
 	prestige := ge.Prestige.GetBonuses()
@@ -50,20 +56,19 @@ func expectedProductionAll(ge *GameEngine) float64 {
 		}
 	}
 
-	factor := ge.moraleMultiplier()
-	if add > 0 {
-		factor *= 1.0 + add
-	}
-	return factor
+	return ge.moraleMultiplier() * math.Max(productionFloor, 1.0+add)
 }
 
-// expectedResRate re-derives the per-resource rate multiplier:
+// expectedResRate re-derives the per-resource rate multiplier (Fix B: ungated +
+// floored):
 //
 //	add    = research[<res>_rate] + permanent[<res>_rate] + prestige[<res>_rate] + wonders[<res>_rate]
-//	factor = add > 0 ? (1 + add) : 1
+//	factor = max(productionFloor, 1 + add)
 //
 // (permanentBonuses already absorbs milestone/legacy/epoch; prestige and wonders
-// are merged into the same effective per-resource pool in recalculateRates.)
+// are merged into the same effective per-resource pool in recalculateRates.) As
+// with production_all the floor only binds when 1+add < 0.10; fixtures here are
+// non-binding, so this equals the resolver's unfloored Total.
 func expectedResRate(ge *GameEngine, res string) float64 {
 	key := res + "_rate"
 	research := ge.Research.GetBonuses()
@@ -71,13 +76,10 @@ func expectedResRate(ge *GameEngine, res string) float64 {
 	wonders := ge.getWonderBonuses()
 
 	add := research[key] + ge.permanentBonuses[key] + prestige[key] + wonders[key]
-	if add > 0 {
-		return 1.0 + add
-	}
-	return 1.0
+	return math.Max(productionFloor, 1.0+add)
 }
 
-// expectedGatherRate re-derives the gather_rate multiplier the same way.
+// expectedGatherRate re-derives the gather_rate multiplier the same way (Fix B).
 func expectedGatherRate(ge *GameEngine) float64 {
 	research := ge.Research.GetBonuses()
 	prestige := ge.Prestige.GetBonuses()
@@ -85,10 +87,7 @@ func expectedGatherRate(ge *GameEngine) float64 {
 
 	add := research["gather_rate"] + ge.permanentBonuses["gather_rate"] +
 		prestige["gather_rate"] + wonders["gather_rate"]
-	if add > 0 {
-		return 1.0 + add
-	}
-	return 1.0
+	return math.Max(productionFloor, 1.0+add)
 }
 
 // expectedTickSpeed re-derives the (1 + Σ tick_speed) factor recalculateTickSpeed
@@ -112,7 +111,10 @@ func expectedTickSpeed(ge *GameEngine) float64 {
 // the independently-derived expected value. Note: production_all is the special
 // case — the resolver's Total folds the OpMul morale factor in, so it equals the
 // engine's net (moraleMultiplier() × prodall) factor, which is what we compare
-// against. The other targets are gated-additive on both sides.
+// against. Post-Fix-B the expected helpers are ungated + floored (max(0.10, 1+Σ));
+// the resolver's Total is unfloored (1+Σ)[×morale], so the two agree exactly for
+// every non-floor-binding fixture in this file (all of them — including the new
+// negative production_all case, where 1-0.10 = 0.90 > 0.10).
 func assertResolverGolden(t *testing.T, ge *GameEngine, resCheck string, gather bool) {
 	t.Helper()
 	r := ge.buildResolver()
@@ -187,6 +189,31 @@ func TestResolverGolden_ActiveEventProdAll(t *testing.T) {
 		Effects:   []config.Effect{{Type: "production_all", Value: 0.50}},
 	})
 	assertResolverGolden(t, ge, "stone", true)
+}
+
+// TestResolverGolden_NegativeProdAll is the Fix B fixture: a Reconstruction-like
+// catastrophe debuff (active event with production_all -0.10) must actually apply
+// now that the >0 gate is gone. Morale is pinned neutral (×1.0), so both the
+// engine's now-ungated factor and the resolver's Total are exactly ×0.90 — the
+// debuff lands. Pre-Fix-B the gate would have made expectedProductionAll return
+// 1.0 (swallowing the debuff) and this assertion would have FAILED, which is the
+// point: it pins the new behavior.
+func TestResolverGolden_NegativeProdAll(t *testing.T) {
+	ge := NewGameEngine()
+	ge.morale = moraleNeutral // 0.50 → moraleMultiplier() == 1.0, isolates the debuff
+	ge.Events.InjectEvent(ActiveEvent{
+		Key:       "endure_reconstruction",
+		Name:      "Reconstruction Effort",
+		TicksLeft: 216,
+		Effects:   []config.Effect{{Type: "production_all", Value: -0.10}},
+	})
+
+	// Sanity: the factor must be exactly 0.90 (1 - 0.10), and the floor must NOT
+	// bind (0.90 > productionFloor). If this drifts to 1.0 the gate has crept back.
+	if got, want := ge.buildResolver().Total("production_all"), 0.90; math.Abs(got-want) > goldenEps {
+		t.Fatalf("negative production_all: resolver Total=%.12f want %.12f (debuff must apply)", got, want)
+	}
+	assertResolverGolden(t, ge, "wood", true)
 }
 
 func TestResolverGolden_ActiveEventTickSpeed(t *testing.T) {

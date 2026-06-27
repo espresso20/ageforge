@@ -467,7 +467,7 @@ Only one tech reduces build cost:
 |---|---|
 | Civil Engineering | −5% |
 
-Small but permanent; useful when you're building dozens of structures.
+This reduction is live: it multiplies your cumulative build cost by `(1 + Σ build_cost)` (floored at 10% of base) alongside the build-cost milestone rewards, and the saving is reflected in the cost the build menu shows. Small but permanent, it stacks with those milestones toward the current ceiling of roughly −24%, so it's worth taking when you're building dozens of structures. See [Buildings](buildings.md#build-cost-reductions).
 
 ---
 

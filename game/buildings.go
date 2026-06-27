@@ -27,6 +27,15 @@ type BuildingManager struct {
 	legacyBuildings map[string]bool               // buildings superseded by lineage progression; functional but unbuildable
 	ruins           map[string]int                // ruins from Succumb — produce at 50% base rate, no worker scaling
 	pendingUpgrades map[string]string             // oldKey -> newKey: player-driven upgrade awaiting payment
+
+	// costMult is the global build-cost multiplier applied to every computed
+	// building cost (GetCost / BuildBatchCost / UpgradeCost new-copy side). It is
+	// the resolver's build_cost additive pool folded into a factor by the engine:
+	// costMult = clamp(1 + Σ build_cost, 0.10, 1.0). Default 1.0 (no effect) so a
+	// bare BuildingManager with no engine behaves exactly as before. The engine
+	// refreshes it each recalc via SetCostMultiplier so the charged cost and the
+	// displayed cost are computed from the SAME factor and can never disagree.
+	costMult float64
 }
 
 // NewBuildingManager creates a building manager
@@ -39,7 +48,19 @@ func NewBuildingManager() *BuildingManager {
 		legacyBuildings: make(map[string]bool),
 		ruins:           make(map[string]int),
 		pendingUpgrades: make(map[string]string),
+		costMult:        1.0,
 	}
+}
+
+// SetCostMultiplier sets the global build-cost factor applied to all computed
+// costs. The engine derives it from the resolver's build_cost pool each recalc.
+// A non-positive value is ignored (defends GetCost against divide-by-nothing /
+// zero-cost edge cases); the floor/cap clamp is the engine's responsibility.
+func (bm *BuildingManager) SetCostMultiplier(m float64) {
+	if m <= 0 {
+		return
+	}
+	bm.costMult = m
 }
 
 // UnlockBuilding makes a building available
@@ -139,7 +160,9 @@ func (bm *BuildingManager) BuildBatchCost(key string, n int, queue []BuildQueueI
 	for i := 0; i < n; i++ {
 		exp := float64(built + queued + i)
 		for resource, base := range def.BaseCost {
-			total[resource] += math.Floor(base * math.Pow(def.CostScale, exp))
+			// Per-copy floor (matching GetCost) so a batch of n equals the sum of
+			// n single buys — charge and display agree whichever path is used.
+			total[resource] += applyCostMult(base*math.Pow(def.CostScale, exp), bm.costMult)
 		}
 	}
 	return total, true
@@ -194,9 +217,25 @@ func (bm *BuildingManager) GetCost(key string) map[string]float64 {
 	count := bm.counts[key]
 	cost := make(map[string]float64)
 	for res, base := range def.BaseCost {
-		cost[res] = math.Floor(base * math.Pow(def.CostScale, float64(count)))
+		cost[res] = applyCostMult(base*math.Pow(def.CostScale, float64(count)), bm.costMult)
 	}
 	return cost
+}
+
+// applyCostMult folds the global build-cost factor into a single resource's raw
+// curve cost, then floors. A positive raw cost never drops below 1 even after a
+// deep discount — you can always be charged something for a building that costs
+// anything. mult is expected pre-clamped (engine: [0.10, 1.0]); a non-positive
+// mult is treated as a no-op so a misconfigured caller can't zero out costs.
+func applyCostMult(raw, mult float64) float64 {
+	if mult <= 0 {
+		mult = 1.0
+	}
+	c := math.Floor(raw * mult)
+	if raw > 0 && c < 1 {
+		c = 1
+	}
+	return c
 }
 
 // Build constructs a building. Returns false if can't afford or not unlocked.
@@ -499,8 +538,11 @@ func (bm *BuildingManager) UpgradeCost(oldKey, newKey string, upgradeCount int) 
 		// New copy being created: the (newCount+i)th copy
 		newExp := float64(newCount + i)
 		for res, base := range newDef.BaseCost {
-			newCopyCost := math.Floor(base * math.Pow(newDef.CostScale, newExp))
-			// Old sell value for this resource (0 if old building doesn't cost this resource)
+			// New copy gets the build_cost discount (you're paying to build it).
+			newCopyCost := applyCostMult(base*math.Pow(newDef.CostScale, newExp), bm.costMult)
+			// Old sell value for this resource (0 if old building doesn't cost this
+			// resource). Refund is NOT discounted — it reflects what was paid, not
+			// the current build_cost reductions.
 			oldBase := oldDef.BaseCost[res]
 			oldCopyCost := math.Floor(oldBase * math.Pow(oldDef.CostScale, oldExp))
 			oldSellValue := math.Floor(oldCopyCost * 0.5)
