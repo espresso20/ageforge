@@ -11,6 +11,8 @@ import "math"
 //   - "unlock":         unlocks the Target building/resource key
 //   - "instant_resource": immediately add Value of Target resource (milestone reward only)
 //   - "permanent_bonus": persistent multiplier on Target rate (milestone reward only)
+//   - "morale":          +Value to the civilization's morale per tick while the
+//     building stands (FLAT, not worker-scaled; no Target)
 type Effect struct {
 	Type   string  // see above for valid types
 	Target string  // resource key, building key, or special target (e.g. "all", "production_all")
@@ -25,9 +27,9 @@ type Effect struct {
 type BuildingDef struct {
 	Name         string
 	Key          string
-	Category     string // "production", "housing", "research", "military", "storage", "wonder"
+	Category     string             // "production", "housing", "research", "military", "storage", "wonder"
 	BaseCost     map[string]float64 // resource costs for the first instance
-	CostScale    float64 // exponential scale per additional instance; 1.0 = flat cost
+	CostScale    float64            // exponential scale per additional instance; 1.0 = flat cost
 	Effects      []Effect
 	BuildTicks   int    // construction time in game ticks; 0 = instant (legacy only)
 	RequiredAge  string // minimum age key the player must be in to build
@@ -50,9 +52,10 @@ type BuildingDef struct {
 // accessed via NewProductionBuildings() and should not be added here.
 //
 // Cost progression guideline per age:
-//   Primitive 30–100 → Stone 200–1k → Bronze 1.5k–5k → Iron 8k–25k →
-//   Classical 40k–120k → Medieval 200k–600k → Renaissance 1M–3M →
-//   Colonial 5M–15M → Industrial 25M–75M → Victorian 125M–375M → ...
+//
+//	Primitive 30–100 → Stone 200–1k → Bronze 1.5k–5k → Iron 8k–25k →
+//	Classical 40k–120k → Medieval 200k–600k → Renaissance 1M–3M →
+//	Colonial 5M–15M → Industrial 25M–75M → Victorian 125M–375M → ...
 func baseBuildingsRaw() []BuildingDef {
 	return []BuildingDef{
 		// ===== PRIMITIVE AGE (costs: 30-100) =====

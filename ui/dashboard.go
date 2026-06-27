@@ -538,13 +538,17 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		}
 		epochStr = fmt.Sprintf("  [%s]%s %s%s[-]", state.EpochColor, state.EpochIcon, state.EpochName, survivedMark)
 	}
-	moraleColor := "green"
-	if state.Morale < 0.50 {
-		moraleColor = "red"
-	} else if state.Morale < 0.80 {
-		moraleColor = "yellow"
+	// Colour morale by the banded production multiplier, not the raw percent:
+	// green = bonus (mult>1.0), white = neutral (==1.0), red = penalty (<1.0).
+	// computeMoraleBand is the shared source of truth (same as the workers panel).
+	mBand := computeMoraleBand(state.Morale, state.MoraleMultiplier)
+	moraleDelta := ""
+	if mBand.Bonus {
+		moraleDelta = fmt.Sprintf(" [%s]+%d%%[-]", mBand.Color, mBand.DeltaPct)
+	} else if mBand.Penalty {
+		moraleDelta = fmt.Sprintf(" [%s]%d%%[-]", mBand.Color, mBand.DeltaPct) // DeltaPct already signed
 	}
-	moraleStr := fmt.Sprintf("  Morale: [%s]%.0f%%[-]", moraleColor, state.Morale*100)
+	moraleStr := fmt.Sprintf("  Morale: [%s]%.0f%%[-]%s", mBand.Color, state.Morale*100, moraleDelta)
 	d.statusTV.SetText(fmt.Sprintf(
 		"[gold]%s[-]%s%s%s  Tick: %d%s%s%s  |  Pop: %d/%d%s  |  [gray]type panel name to open  ESC=close/menu[-]",
 		state.AgeName, prestigeStr, titleStr, epochStr, state.Tick, nextAgeStr, speedStr, devStr,

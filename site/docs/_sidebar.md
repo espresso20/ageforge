@@ -22,6 +22,7 @@
   - [Events](events.md)
   - [Catastrophe System](catastrophe.md)
   - [Faith](faith.md)
+  - [Morale](morale.md)
   - [Knowledge](knowledge.md)
   - [Workers & Domains (Reference)](workers-and-domains.md)
 

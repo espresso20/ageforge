@@ -633,6 +633,11 @@ func TestConfig_EffectTargetsValid(t *testing.T) {
 
 	for _, bld := range BaseBuildings() {
 		for _, eff := range bld.Effects {
+			// "morale" effects act on the civilization's morale dial directly —
+			// they carry no resource Target, so skip target validation.
+			if eff.Type == "morale" {
+				continue
+			}
 			if _, ok := resourceKeys[eff.Target]; !ok && !isSpecialTarget(eff.Target) {
 				t.Errorf("\n"+
 					"  Bad effect target in building definition\n"+

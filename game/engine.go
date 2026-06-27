@@ -93,8 +93,9 @@ type GameEngine struct {
 	// History collector — periodic metric samples for the history overlay.
 	History *HistoryCollector
 
-	// Morale system
-	morale          float64 // 0.10–moraleCap(); default 1.0
+	// Morale system — a managed two-way dial. Range [0.10, moraleCap()];
+	// starts at moraleNeutral (0.50). Drives production via moraleMultiplier().
+	morale          float64 // 0.10–moraleCap(); starts at moraleNeutral (0.50)
 	lowMoraleWarned bool    // true after morale warning fired; reset when morale rises above 0.40
 }
 
@@ -125,7 +126,7 @@ func NewGameEngine() *GameEngine {
 		progress:         NewProgressManager(),
 		permanentBonuses: make(map[string]float64),
 		speedMultiplier:  1.0,
-		morale:           1.0,
+		morale:           moraleNeutral,
 		stopCh:           make(chan struct{}),
 		currentEpoch:     config.EpochForAge("primitive_age"),
 		epochEventFired:  make(map[string]bool),
@@ -188,9 +189,70 @@ func (ge *GameEngine) applyMorale(delta float64) {
 	ge.clampMorale()
 }
 
-// updateMoraleTick applies per-tick morale changes based on food rate,
-// military ratio, idle workers, and passive recovery.
-// Must be called with the write lock held (inside doTick).
+// Morale tuning constants. Morale is a managed two-way dial: a neutral band in
+// the middle leaves production untouched (preserving the historic economy
+// baseline), a high band you must EARN grants up to +moraleMaxBonus, and a low
+// band you must AVOID drags production down to moraleMinMult.
+const (
+	moraleNeutral     = 0.50   // starting/settling point; neutral-band centre
+	moraleNeutralLow  = 0.25   // below this, production penalty ramps in
+	moraleNeutralHigh = 0.75   // above this, production bonus ramps in
+	moraleMaxBonus    = 0.20   // max production bonus at moraleCap()
+	moraleMinMult     = 0.50   // production multiplier at the 0.10 morale floor
+	moraleDrift       = 0.0008 // per-tick gentle pull back toward moraleNeutral
+)
+
+// moraleMultiplier converts the current morale into a production multiplier.
+//
+//   - Neutral band [moraleNeutralLow, moraleNeutralHigh]  → exactly 1.0
+//   - High band (morale > moraleNeutralHigh)              → 1.0 .. 1.0+moraleMaxBonus,
+//     ramping linearly up to moraleCap()
+//   - Low band (morale < moraleNeutralLow)                → moraleMinMult .. 1.0,
+//     ramping linearly down to the 0.10 floor
+//
+// At neutral morale (moraleNeutral = 0.50) this returns exactly 1.0, so the
+// economy baseline is unchanged from before the morale-as-managed-resource
+// rework.
+func (ge *GameEngine) moraleMultiplier() float64 {
+	m := ge.morale
+
+	// Neutral band — no production effect.
+	if m >= moraleNeutralLow && m <= moraleNeutralHigh {
+		return 1.0
+	}
+
+	// High band — ramp from 1.0 (at moraleNeutralHigh) to 1.0+moraleMaxBonus (at cap).
+	if m > moraleNeutralHigh {
+		cap := ge.moraleCap()
+		span := cap - moraleNeutralHigh
+		if span <= 0 {
+			// Cap at/below the neutral-high edge (shouldn't happen: cap ≥ 1.0).
+			return 1.0
+		}
+		frac := (m - moraleNeutralHigh) / span
+		if frac > 1.0 {
+			frac = 1.0
+		}
+		return 1.0 + frac*moraleMaxBonus
+	}
+
+	// Low band — ramp from 1.0 (at moraleNeutralLow) down to moraleMinMult (at 0.10).
+	const moraleFloor = 0.10
+	span := moraleNeutralLow - moraleFloor
+	if span <= 0 {
+		return moraleMinMult
+	}
+	frac := (moraleNeutralLow - m) / span
+	if frac > 1.0 {
+		frac = 1.0
+	}
+	return 1.0 - frac*(1.0-moraleMinMult)
+}
+
+// updateMoraleTick applies per-tick morale changes: starvation penalty,
+// over-militarization drain, idle-worker drain, morale-building contribution,
+// and a gentle drift back toward neutral. Must be called with the write lock
+// held (inside doTick).
 func (ge *GameEngine) updateMoraleTick() {
 	foodRate := 0.0
 	if fr, ok := ge.Resources.resources["food"]; ok {
@@ -198,10 +260,10 @@ func (ge *GameEngine) updateMoraleTick() {
 	}
 	totalPop := ge.Workers.TotalPop()
 
-	// Food surplus/deficit
-	if foodRate > 0 {
-		ge.applyMorale(0.002)
-	} else if foodRate < 0 && ge.Resources.Get("food") <= 0 {
+	// Food deficit penalty. (No generic food-surplus boost any more — being fed
+	// is the baseline, not a reward. High morale must be EARNED via buildings
+	// and events; this only punishes outright starvation.)
+	if foodRate < 0 && ge.Resources.Get("food") <= 0 {
 		ge.applyMorale(-0.005)
 	}
 
@@ -232,9 +294,47 @@ func (ge *GameEngine) updateMoraleTick() {
 		}
 	}
 
-	// Passive recovery if morale < cap and no active food deficit
-	if ge.morale < ge.moraleCap() && foodRate >= 0 {
-		ge.applyMorale(0.001)
+	// Morale-building contribution: each BUILT building with a "morale" effect
+	// lifts spirits by existing (FLAT — not worker-scaled). Sum across all built
+	// buildings and apply once. Read straight from the building manager's counts
+	// and defs (lock-free; we already hold the engine write lock — do NOT call
+	// GetState()).
+	moraleFromBuildings := 0.0
+	for key, count := range ge.Buildings.counts {
+		if count == 0 {
+			continue
+		}
+		def, ok := ge.Buildings.defs[key]
+		if !ok {
+			continue
+		}
+		for _, eff := range def.Effects {
+			if eff.Type == "morale" {
+				moraleFromBuildings += eff.Value * float64(count)
+			}
+		}
+	}
+	if moraleFromBuildings != 0 {
+		ge.applyMorale(moraleFromBuildings)
+	}
+
+	// Drift gently toward neutral. A stable, fed, non-over-militarized civ with
+	// no morale buildings settles at moraleNeutral (~0.50). This makes neutral
+	// the resting state: you must keep earning to hold the high-morale bonus,
+	// and recover deliberately to escape the low-morale penalty. Move by at most
+	// the remaining distance so drift never overshoots/oscillates past neutral.
+	if ge.morale > moraleNeutral {
+		step := moraleDrift
+		if step > ge.morale-moraleNeutral {
+			step = ge.morale - moraleNeutral
+		}
+		ge.applyMorale(-step)
+	} else if ge.morale < moraleNeutral {
+		step := moraleDrift
+		if step > moraleNeutral-ge.morale {
+			step = moraleNeutral - ge.morale
+		}
+		ge.applyMorale(step)
 	}
 
 	// Low morale warning (fires once, resets when morale recovers above 0.40)
@@ -778,9 +878,12 @@ func (ge *GameEngine) recalculateRates() {
 	}
 
 	// Building production — worker fill ratio applied per building type
-	// rate = base × count × (0.20 + 0.80 × assigned/totalCapacity) × morale
+	// rate = base × count × (0.20 + 0.80 × assigned/totalCapacity) × moraleMultiplier
+	// moraleMultiplier() is a banded curve: 1.0 across the neutral band, up to
+	// 1.0+moraleMaxBonus when morale is high, down to moraleMinMult when low.
+	mMult := ge.moraleMultiplier()
 	for res, rate := range ge.Buildings.WorkerScaledProduction(ge.Workers.GetAssignedCount) {
-		moraleRate := rate * ge.morale
+		moraleRate := rate * mMult
 		r := ge.Resources.resources[res]
 		if r != nil {
 			r.Rate += moraleRate
@@ -2399,7 +2502,7 @@ func (ge *GameEngine) Reset() {
 	ge.epochEventHistory = nil
 	ge.legacyBonuses = make(map[string]bool)
 	ge.catastropheHistory = nil
-	ge.morale = 1.0
+	ge.morale = moraleNeutral
 	ge.lowMoraleWarned = false
 
 	ge.addLog("event", "Game wiped! Starting fresh.")
@@ -2557,6 +2660,7 @@ func (ge *GameEngine) GetState() GameState {
 		History:            ge.History,
 		Morale:             ge.morale,
 		MoraleCap:          ge.moraleCap(),
+		MoraleMultiplier:   ge.moraleMultiplier(),
 		PermanentBonuses: func() map[string]float64 {
 			out := make(map[string]float64, len(ge.permanentBonuses))
 			for k, v := range ge.permanentBonuses {

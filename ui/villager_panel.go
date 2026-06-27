@@ -40,6 +40,7 @@ func (vp *WorkerPanel) UpdateState(state game.GameState) {
 	h ^= uint64(state.Workers.TotalPop+1) * 31
 	h ^= uint64(state.Workers.FoodDrain*1000) * 37
 	h ^= uint64(state.Morale*1000) * 41
+	h ^= uint64(state.MoraleMultiplier*1000) * 43
 	wt := state.Workers.Types["worker"]
 	h ^= uint64(wt.Count+1) * 7
 	h ^= uint64(wt.IdleCount+1) * 3
@@ -80,6 +81,61 @@ type buildingRow struct {
 	Capacity        int
 }
 
+// moraleBand describes how to render the banded morale state for the UI.
+// It is derived purely from the live morale fraction and the production
+// multiplier the engine's banded curve produced (state.MoraleMultiplier),
+// so the UI never re-derives the band formula itself.
+type moraleBand struct {
+	Color    string // tview color for morale text + bar fill
+	Status   string // short player-facing status line, e.g. "production +18%"
+	Bonus    bool   // multiplier > 1.0 (high band)
+	Penalty  bool   // multiplier < 1.0 (low band)
+	DeltaPct int    // signed production delta in percent, rounded
+}
+
+// computeMoraleBand turns morale% + multiplier into colours and copy.
+//   - mult > 1.0 → green "▲ … production +N%"
+//   - mult == 1.0 → neutral "… steady" (no penalty text)
+//   - mult < 1.0 → red "▼ … production −N%"
+//
+// moralePct is the raw morale fraction (e.g. 0.52); mult is state.MoraleMultiplier.
+func computeMoraleBand(moralePct, mult float64) moraleBand {
+	// Round the production delta off the multiplier, not the raw morale.
+	delta := int(roundHalf((mult - 1.0) * 100))
+	switch {
+	case mult > 1.0:
+		return moraleBand{
+			Color:    "green",
+			Status:   fmt.Sprintf("▲ Morale %.0f%% — production +%d%%", moralePct*100, delta),
+			Bonus:    true,
+			DeltaPct: delta,
+		}
+	case mult < 1.0:
+		// delta is negative here; %d already carries the minus sign.
+		return moraleBand{
+			Color:    "red",
+			Status:   fmt.Sprintf("▼ Morale %.0f%% — production %d%%", moralePct*100, delta),
+			Penalty:  true,
+			DeltaPct: delta,
+		}
+	default:
+		return moraleBand{
+			Color:    "white",
+			Status:   fmt.Sprintf("Morale %.0f%% — steady", moralePct*100),
+			DeltaPct: 0,
+		}
+	}
+}
+
+// roundHalf rounds to nearest, halves away from zero (math.Round semantics
+// without pulling math in for a single call site at -0.0 edge cases).
+func roundHalf(f float64) float64 {
+	if f < 0 {
+		return float64(int(f - 0.5))
+	}
+	return float64(int(f + 0.5))
+}
+
 func renderVillagerPanel(tv *tview.TextView, state *game.GameState) {
 	var sb strings.Builder
 
@@ -88,20 +144,16 @@ func renderVillagerPanel(tv *tview.TextView, state *game.GameState) {
 	maxPop := state.Workers.MaxPop
 	foodDrain := state.Workers.FoodDrain
 
-	// Morale bar (always shown)
-	moraleColor := "green"
-	if state.Morale < 0.50 {
-		moraleColor = "red"
-	} else if state.Morale < 0.80 {
-		moraleColor = "yellow"
-	}
-	moraleBar := assignBar(int(state.Morale*20), 20, 20)
+	// Morale bar (always shown) — recoloured by band (green high / neutral mid /
+	// red low) off the engine's banded multiplier, not the old 0.50/0.80 cutoffs.
+	band := computeMoraleBand(state.Morale, state.MoraleMultiplier)
+	moraleBar := moraleBandBar(int(state.Morale*20), 20, 20, band.Color)
 	capStr := ""
 	if state.MoraleCap > 1.0 {
 		capStr = fmt.Sprintf(" [gray](cap: %.2f)[-]", state.MoraleCap)
 	}
 	fmt.Fprintf(&sb, "[white]Morale:[white] [%s]%.0f%%[-]%s  %s\n\n",
-		moraleColor, state.Morale*100, capStr, moraleBar)
+		band.Color, state.Morale*100, capStr, moraleBar)
 
 	if !wt.Unlocked || total == 0 {
 		fmt.Fprintf(&sb, "[white]Workers  [yellow]0[white] / [green]%d[white]\n\n", maxPop)
@@ -115,10 +167,10 @@ func renderVillagerPanel(tv *tview.TextView, state *game.GameState) {
 	fmt.Fprintf(&sb, "[white]Workers  [yellow]%d[white] / [green]%d[white]   Idle: [cyan]%d[white]   Food: [red]%.2f/tick[white]\n\n",
 		total, maxPop, idle, foodDrain)
 
-	// Morale warning in summary section
-	if state.Morale < 1.0 {
-		fmt.Fprintf(&sb, "  [yellow]⚠ Morale [%s]%.0f%%[-][yellow] — output penalty active[-]\n\n",
-			moraleColor, state.Morale*100)
+	// Morale band line in summary section — bonus (green), steady (neutral), or
+	// penalty (red). No "penalty" text unless we're actually in the low band.
+	if band.Bonus || band.Penalty {
+		fmt.Fprintf(&sb, "  [%s]%s[-]\n\n", band.Color, band.Status)
 	}
 
 	// Build domain groups from buildings with assigned workers.
@@ -193,6 +245,22 @@ func renderVillagerPanel(tv *tview.TextView, state *game.GameState) {
 	tv.SetText(sb.String())
 }
 
+// moraleBandBar renders a width-w bar whose fill uses the given tview color
+// name (the morale band colour) rather than the fixed assignment fill colour.
+func moraleBandBar(filled, total, w int, fillColor string) string {
+	if total <= 0 {
+		return "[" + BarEmptyColor + "]" + strings.Repeat("░", w) + "[-]"
+	}
+	f := (filled * w) / total
+	if f > w {
+		f = w
+	}
+	if f < 0 {
+		f = 0
+	}
+	return "[" + fillColor + "]" + strings.Repeat("█", f) + "[" + BarEmptyColor + "]" + strings.Repeat("░", w-f) + "[-]"
+}
+
 // assignBar renders a small tview-colored progress bar of width w.
 func assignBar(filled, total, w int) string {
 	if total <= 0 {
@@ -207,4 +275,3 @@ func assignBar(filled, total, w int) string {
 	}
 	return "[" + BarFillColor + "]" + strings.Repeat("█", f) + "[" + BarEmptyColor + "]" + strings.Repeat("░", w-f) + "[-]"
 }
-

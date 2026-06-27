@@ -128,9 +128,11 @@ These stack on top of your purchased upgrade bonuses. A prestige level 5 player 
 
 ### Morale on Prestige
 
-Morale resets to **0.70** on prestige — not the default 1.0 of a completely fresh run, but not the punishing 0.50 of a Succumb reset either. The 0.70 floor represents institutional memory: your rebuilt civilization begins slightly behind peak output but recovers faster than one starting from scratch.
+On prestige, morale returns to the **50% neutral baseline**, exactly like a fresh civilization. There is no special "institutional memory" floor — a rebuilt civilization starts at neutral, the same as one starting from scratch.
 
-In practice this means prestige runs begin at roughly 70% worker efficiency and must recover to 1.0 (or higher, with wonders built) through food surplus ticks (+0.002/tick), passive recovery (+0.001/tick), and age advances (+0.08 each). With ruins producing from tick 1 and starting food/wood prestige bonuses, keeping food in surplus from the first few ticks is usually straightforward — morale will tick back toward 1.0 within a few dozen ticks if food stays positive.
+Because morale only penalises output below 25% and only rewards it above 75%, starting at 50% means a prestige run begins with **no production penalty and no bonus**. Morale also drifts gently back toward 50% on its own, so you never have to claw out of a hole. To earn the high-band bonus (up to +20%), you raise morale the normal way — worship and culture buildings, good events, and age advances — once your new civilization is re-established.
+
+See [Morale](morale.md) for how the bands work.
 
 ### Culture on Prestige
 

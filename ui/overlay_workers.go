@@ -36,23 +36,23 @@ func workersProvider(state game.GameState, _ int) string {
 	housingLeft := maxPop - total
 
 	// ── Morale ───────────────────────────────────
+	// Banded model: bar + status recolour by band (green high / neutral mid /
+	// red low) off state.MoraleMultiplier — no "penalty" copy in the neutral band.
 	sb.WriteString(workerSection("Morale"))
-	moraleColor := "green"
-	if state.Morale < 0.50 {
-		moraleColor = "red"
-	} else if state.Morale < 0.80 {
-		moraleColor = "yellow"
-	}
-	moraleBar := assignBar(int(state.Morale*20), 20, 20)
+	band := computeMoraleBand(state.Morale, state.MoraleMultiplier)
+	moraleBar := moraleBandBar(int(state.Morale*20), 20, 20, band.Color)
 	capStr := ""
 	if state.MoraleCap > 1.0 {
 		capStr = fmt.Sprintf("  [gray]cap: %.2f[-]", state.MoraleCap)
 	}
-	fmt.Fprintf(&sb, "  [white]Morale:[white] [%s]%.0f%%[-]%s  %s\n", moraleColor, state.Morale*100, capStr, moraleBar)
-	if state.Morale < 1.0 {
-		fmt.Fprintf(&sb, "  [%s]⚠ Output penalty active — all worker production ×%.0f%%[-]\n", moraleColor, state.Morale*100)
-	} else {
-		fmt.Fprint(&sb, "  [green]✓ Full output[-]\n")
+	fmt.Fprintf(&sb, "  [white]Morale:[white] [%s]%.0f%%[-]%s  %s\n", band.Color, state.Morale*100, capStr, moraleBar)
+	switch {
+	case band.Bonus:
+		fmt.Fprintf(&sb, "  [green]%s[-]\n", band.Status)
+	case band.Penalty:
+		fmt.Fprintf(&sb, "  [red]%s[-]\n", band.Status)
+	default:
+		fmt.Fprintf(&sb, "  [white]%s[-]\n", band.Status)
 	}
 	sb.WriteString("\n")
 
@@ -95,8 +95,8 @@ func workersProvider(state game.GameState, _ int) string {
 	totalSlots := 0
 	filledSlots := 0
 	type openSlot struct {
-		Name  string
-		Open  int
+		Name string
+		Open int
 	}
 	var openSlots []openSlot
 
