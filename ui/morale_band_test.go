@@ -26,8 +26,9 @@ func TestComputeMoraleBand_Bonus(t *testing.T) {
 }
 
 func TestComputeMoraleBand_Neutral(t *testing.T) {
-	// Neutral band: multiplier exactly 1.0 → neutral color, "steady", no penalty.
-	b := computeMoraleBand(0.52, 1.0)
+	// Only an exact-1.0 multiplier is neutral now, which the continuous curve
+	// produces solely at the 0.50 pivot → neutral color, "steady", no penalty.
+	b := computeMoraleBand(0.50, 1.0)
 	if b.Bonus || b.Penalty {
 		t.Fatalf("expected neutral band, got %+v", b)
 	}
@@ -37,11 +38,30 @@ func TestComputeMoraleBand_Neutral(t *testing.T) {
 	if b.DeltaPct != 0 {
 		t.Errorf("neutral delta = %d, want 0", b.DeltaPct)
 	}
-	if !strings.Contains(b.Status, "52%") || !strings.Contains(b.Status, "steady") {
-		t.Errorf("neutral status = %q, want it to mention 52%% and steady", b.Status)
+	if !strings.Contains(b.Status, "50%") || !strings.Contains(b.Status, "steady") {
+		t.Errorf("neutral status = %q, want it to mention 50%% and steady", b.Status)
 	}
 	if strings.Contains(strings.ToLower(b.Status), "penalty") {
 		t.Errorf("neutral status should not mention penalty: %q", b.Status)
+	}
+}
+
+func TestComputeMoraleBand_NearPivotHonest(t *testing.T) {
+	// A real bonus that rounds to 0% must read "+<1%", not a dishonest "+0%".
+	b := computeMoraleBand(0.51, 1.004)
+	if !b.Bonus || b.Penalty {
+		t.Fatalf("expected bonus band just above pivot, got %+v", b)
+	}
+	if !strings.Contains(b.Status, "+<1%") {
+		t.Errorf("near-pivot bonus status = %q, want it to contain +<1%%", b.Status)
+	}
+	// A real penalty that rounds to 0% must read "-<1%".
+	b = computeMoraleBand(0.49, 0.996)
+	if b.Bonus || !b.Penalty {
+		t.Fatalf("expected penalty band just below pivot, got %+v", b)
+	}
+	if !strings.Contains(b.Status, "-<1%") {
+		t.Errorf("near-pivot penalty status = %q, want it to contain -<1%%", b.Status)
 	}
 }
 

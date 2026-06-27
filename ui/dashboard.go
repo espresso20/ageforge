@@ -538,15 +538,13 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		}
 		epochStr = fmt.Sprintf("  [%s]%s %s%s[-]", state.EpochColor, state.EpochIcon, state.EpochName, survivedMark)
 	}
-	// Colour morale by the banded production multiplier, not the raw percent:
+	// Colour morale by the continuous production multiplier, not the raw percent:
 	// green = bonus (mult>1.0), white = neutral (==1.0), red = penalty (<1.0).
 	// computeMoraleBand is the shared source of truth (same as the workers panel).
 	mBand := computeMoraleBand(state.Morale, state.MoraleMultiplier)
 	moraleDelta := ""
-	if mBand.Bonus {
-		moraleDelta = fmt.Sprintf(" [%s]+%d%%[-]", mBand.Color, mBand.DeltaPct)
-	} else if mBand.Penalty {
-		moraleDelta = fmt.Sprintf(" [%s]%d%%[-]", mBand.Color, mBand.DeltaPct) // DeltaPct already signed
+	if mBand.DeltaLabel != "" {
+		moraleDelta = fmt.Sprintf(" [%s]%s[-]", mBand.Color, mBand.DeltaLabel)
 	}
 	moraleStr := fmt.Sprintf("  Morale: [%s]%.0f%%[-]%s", mBand.Color, state.Morale*100, moraleDelta)
 	d.statusTV.SetText(fmt.Sprintf(

@@ -29,19 +29,21 @@ So a civilization with 4 wonders built can push morale as high as **120%**, whil
 
 ---
 
-## The Three Bands
+## The Production Curve
 
-Morale is centred on 50%. What it does depends on which band it sits in:
+Morale's effect on production is a **continuous curve pivoted at 50%** — there is no neutral "dead zone". The multiplier moves the moment morale leaves 50%:
 
-| Band | Morale Range | Effect on All Production |
-|------|--------------|--------------------------|
-| **Low** | below 25% | **Penalty** — ramps down to **×0.50** (half production) at the 10% floor |
-| **Neutral** | 25% – 75% | **No effect** — production runs at its normal rate |
-| **High** | above 75% | **Bonus** — ramps up to **+20%** as morale approaches the cap |
+| Morale | Effect on All Production |
+|--------|--------------------------|
+| **At the 10% floor** | **×0.50** — half production (the worst case) |
+| **Below 50%** | **Penalty** — ramps linearly from ×0.50 (at the floor) up to ×1.00 (at 50%) |
+| **Exactly 50%** | **×1.00** — production runs at its normal baseline |
+| **Above 50%** | **Bonus** — ramps linearly from ×1.00 (at 50%) up to **+20%** (at the morale cap) |
+| **At the cap** | **+20%** — the full bonus (the best case) |
 
-The effect scales **smoothly** within the high and low bands — it is not a flat step. Just above 75% the bonus is tiny; the full +20% is only reached as morale nears its cap. Likewise, just below 25% the penalty is mild; the full ×0.50 only applies at the 10% floor.
+The effect scales **smoothly and continuously**. Just off 50% it is tiny — at 52% the bonus is well under +1% — and it grows with distance, reaching the tuned endpoints only at the extremes (+20% at the cap, ×0.50 at the 10% floor).
 
-The neutral band is wide on purpose. Normal play sits comfortably inside 25%–75% with no morale effect at all — you only feel morale once you actively push it high or let it collapse.
+The two sides are **not symmetric**: the 10% floor is closer to 50% than the cap is, so the downside ramp is **steeper than the upside**. A morale crash costs you more per point than an equally-distant high earns — a collapse hurts more than a peak helps. There is no longer any range where morale "does nothing"; staying near 50% simply keeps the effect small.
 
 ---
 
@@ -91,13 +93,13 @@ Stack enough of them and their per-tick lift outpaces the drift-to-neutral, park
 - **Stats panel** (`stats`) — when morale is off-neutral it appears under **Active Multipliers** in the **All Production** breakdown as a `Morale ×N.NN` factor, shown alongside your research, wonder, prestige, and active-event bonuses on that line. Entries are colour-coded: a **green** headline (and fragment) is a net bonus, a **red** one a penalty, and a **white** headline marks a line that only shows because opposing sources cancel out. Each contributing source is listed and coloured individually, so a penalty (e.g. a famine event) is never hidden by a bonus on the same line. The panel lists **rate multipliers only** — capacity and storage bonuses (population cap, resource caps) are shown elsewhere, since they aren't rate multipliers.
 - **Load Game browser** — each save's detail pane shows its morale, so you can size up a civilization before loading it.
 
-The bar is **green when morale is boosting production** (high band), **neutral in the middle**, and **red when it is penalising production** (low band).
+The bar is **green when morale is above 50%** (boosting production), **neutral exactly at 50%**, and **red when it is below 50%** (penalising production).
 
 ---
 
 ## Managing Morale — Strategy
 
-1. **Ignore it until you want the bonus.** Normal play sits in the neutral band. There is no penalty for being at 50%, so early on, spend your effort elsewhere.
+1. **50% is the safe baseline.** At exactly 50% there is no bonus and no penalty, so early on you can leave morale alone and spend your effort elsewhere. Just remember the curve is live the moment morale drifts off 50% — small at first, larger the further it goes.
 2. **Keep food positive.** Starvation is the most common cause of a morale slide into the penalty band. Fix the food deficit and the drift heals the rest.
 3. **Don't over-militarise.** Keep military workers comfortably under 30% of population — past that, morale drains faster the more lopsided your army gets. (See [Military](military.md).)
 4. **Don't park idle workers.** More than half your population sitting idle drains morale on top of wasting their food. Assign them or `dismiss` them.

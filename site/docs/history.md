@@ -6,7 +6,7 @@ The Civilization History overlay gives you a live graphical view of how your civ
 
 ## What it shows
 
-Six metrics are tracked and graphed continuously:
+Seven metrics are tracked and graphed continuously:
 
 | Metric | What it measures |
 |---|---|
@@ -14,6 +14,7 @@ Six metrics are tracked and graphed continuously:
 | **Food Rate** | Net food per tick (positive = surplus, negative = deficit) |
 | **Knowledge Rate** | Knowledge production per tick |
 | **Faith** | Total faith accumulated |
+| **Morale** | Civilization morale as a percentage (the production multiplier's input) |
 | **Prod Bonus** | Your current `production_all` permanent bonus percentage |
 | **Tick Speed** | Current tick speed multiplier |
 
@@ -33,7 +34,7 @@ Population     ↑ 163workers  min:10.0    max:198.0
 ```
 
 - **Y-axis labels** on the left show max, midpoint, and min values for the visible window
-- **`│` vertical markers** show where age advances occurred — all 6 graphs share the same markers so you can see how each metric responded to an age transition
+- **`│` vertical markers** show where age advances occurred — all 7 graphs share the same markers so you can see how each metric responded to an age transition
 - **X-axis** represents cumulative ticks from oldest to newest sample (left = oldest, right = now)
 
 ---
@@ -54,4 +55,4 @@ Population     ↑ 163workers  min:10.0    max:198.0
 - **Food Rate dipping below zero** shows up clearly as the line crossing the midpoint — useful for catching worker starvation before it becomes critical
 - **Prod Bonus flat-lining** means no new milestones or prestige upgrades have fired recently
 - **Tick Speed** shows the effect of wonders — each wonder built adds a visible step up in the graph
-- Scroll up/down in the overlay with arrow keys if all 6 graphs don't fit on screen
+- Scroll up/down in the overlay with arrow keys if all 7 graphs don't fit on screen
