@@ -4,6 +4,8 @@ import (
 	"math"
 	"reflect"
 	"testing"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // floatEq compares with a small epsilon for cases where binary floating point
@@ -165,5 +167,105 @@ func TestAddAll(t *testing.T) {
 	}
 	if got := r.Total("tick_speed"); !floatEq(got, 1.5) {
 		t.Fatalf("AddAll tick_speed total = %v, want 1.5", got)
+	}
+}
+
+// TestAll_RoundTrips verifies All() is the inverse of AddAll: flattening a
+// resolver and rebuilding from the dump reproduces every Total. This is the
+// path GetState → GameState.Modifiers → UI relies on.
+func TestAll_RoundTrips(t *testing.T) {
+	src := []Modifier{
+		{Source: "research", Target: "production_all", Op: OpAdd, Value: 0.10},
+		{Source: "morale", Target: "production_all", Op: OpMul, Value: 1.18},
+		{Source: "prestige", Target: "tick_speed", Op: OpAdd, Value: 0.05},
+		{Source: "event:peace", Target: "tick_speed", Op: OpAdd, Value: 0.01},
+	}
+	orig := NewResolver()
+	orig.AddAll(src)
+
+	flat := orig.All()
+	if len(flat) != len(src) {
+		t.Fatalf("All() len = %d, want %d", len(flat), len(src))
+	}
+
+	rebuilt := NewResolver()
+	rebuilt.AddAll(flat)
+	for _, target := range orig.Targets() {
+		if a, b := orig.Total(target), rebuilt.Total(target); !floatEq(a, b) {
+			t.Errorf("Total(%q): orig %v != rebuilt %v", target, a, b)
+		}
+	}
+
+	// Empty resolver yields a non-nil, zero-length slice (safe for AddAll).
+	if got := NewResolver().All(); got == nil || len(got) != 0 {
+		t.Errorf("empty All() = %v, want non-nil empty slice", got)
+	}
+}
+
+// TestAddTotal_SumsOpAddIgnoresOpMul verifies AddTotal pools only OpAdd values
+// and never folds in an OpMul factor, and that an unknown target is 0.
+func TestAddTotal_SumsOpAddIgnoresOpMul(t *testing.T) {
+	r := NewResolver()
+	r.Add(Modifier{Source: "research", Target: "production_all", Op: OpAdd, Value: 0.25})
+	r.Add(Modifier{Source: "prestige", Target: "production_all", Op: OpAdd, Value: 0.10})
+	r.Add(Modifier{Source: "morale", Target: "production_all", Op: OpMul, Value: 1.18})
+	r.Add(Modifier{Source: "wonders", Target: "gold_rate", Op: OpAdd, Value: 0.40})
+
+	if got, want := r.AddTotal("production_all"), 0.35; math.Abs(got-want) > 1e-9 {
+		t.Errorf("production_all AddTotal = %.12f, want %.12f (OpMul must be ignored)", got, want)
+	}
+	if got, want := r.AddTotal("gold_rate"), 0.40; math.Abs(got-want) > 1e-9 {
+		t.Errorf("gold_rate AddTotal = %.12f, want %.12f", got, want)
+	}
+	if got := r.AddTotal("nonexistent_target"); got != 0 {
+		t.Errorf("unknown target AddTotal = %.12f, want 0", got)
+	}
+}
+
+// TestAddTotal_EqualsOldHandSum proves the resolver's additive pool is value-
+// identical to the OLD scattered hand-sum recalculateRates/recalculateTickSpeed
+// used: research[t] + permanent[t] + prestige[t] + wonders[t] + Σ active-event[t].
+// A representative state contributes to production_all (research+prestige+wonder+
+// event) and a <res>_rate (research+permanent+wonder), so an equal result means
+// the Phase-3 swap is a faithful drop-in.
+func TestAddTotal_EqualsOldHandSum(t *testing.T) {
+	ge := NewGameEngine()
+	ge.Research.bonuses["production_all"] = 0.10
+	ge.Research.bonuses["iron_rate"] = 0.20
+	ge.Prestige.level = 3 // passive +6% production_all
+	addWonder(ge, "test_addtotal_prodall", "production_all", 0.15, 1)
+	addWonder(ge, "test_addtotal_iron", "iron_rate", 0.10, 1)
+	ge.permanentBonuses["iron_rate"] = 0.07
+	ge.Events.InjectEvent(ActiveEvent{
+		Key:       "boom",
+		Name:      "Economic Boom",
+		TicksLeft: 40,
+		Effects:   []config.Effect{{Type: "production_all", Value: 0.20}},
+	})
+
+	r := ge.buildResolver()
+
+	// OLD hand-sum for production_all: research + (perm+prestige+wonders) + Σ events.
+	research := ge.Research.GetBonuses()
+	prestige := ge.Prestige.GetBonuses()
+	wonders := ge.getWonderBonuses()
+
+	oldProdAll := research["production_all"] + ge.permanentBonuses["production_all"] +
+		prestige["production_all"] + wonders["production_all"]
+	for _, eff := range ge.Events.GetActiveEffects() {
+		if eff.Type == "production_all" {
+			oldProdAll += eff.Value
+		}
+	}
+	if got := r.AddTotal("production_all"); math.Abs(got-oldProdAll) > 1e-9 {
+		t.Errorf("production_all: AddTotal=%.12f old hand-sum=%.12f", got, oldProdAll)
+	}
+
+	// OLD hand-sum for iron_rate: research + (perm+prestige+wonders). Events emit
+	// nothing for <res>_rate, so there is no event term here.
+	oldIron := research["iron_rate"] + ge.permanentBonuses["iron_rate"] +
+		prestige["iron_rate"] + wonders["iron_rate"]
+	if got := r.AddTotal("iron_rate"); math.Abs(got-oldIron) > 1e-9 {
+		t.Errorf("iron_rate: AddTotal=%.12f old hand-sum=%.12f", got, oldIron)
 	}
 }

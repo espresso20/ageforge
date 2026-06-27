@@ -444,15 +444,11 @@ func (ge *GameEngine) getTickInterval() time.Duration {
 // The result is cached in ge.tickSpeedBonus; getTickInterval reads it.
 func (ge *GameEngine) recalculateTickSpeed() {
 	oldBonus := ge.tickSpeedBonus
-	bonus := ge.Research.GetBonus("tick_speed") +
-		ge.permanentBonuses["tick_speed"] +
-		ge.Prestige.GetBonuses()["tick_speed"]
-	// Add active event tick_speed effects (e.g., milestone chain boosts)
-	for _, eff := range ge.Events.GetActiveEffects() {
-		if eff.Type == "tick_speed" {
-			bonus += eff.Value
-		}
-	}
+	// tick_speed additive pool from the resolver (research + permanent + prestige
+	// + active-event tick_speed). buildResolver reads only write-lock-held state
+	// + pure config; recalculateTickSpeed runs under the write lock. UNgated, as
+	// before — the (1 + bonus) below applies regardless of sign.
+	bonus := ge.buildResolver().AddTotal("tick_speed")
 	ge.tickSpeedBonus = bonus
 
 	if bonus != oldBonus {
@@ -918,14 +914,16 @@ func (ge *GameEngine) recalculateRates() {
 		permanentBonuses[k] += v
 	}
 
+	// Additive bonus pools now come from the resolver — the single source of
+	// truth shared with Breakdown/UI. buildResolver reads only already-held
+	// state + pure config, so it is lock-safe on this write-locked recalc path.
+	// Application logic below (the >0 gates, morale via mMult) is unchanged:
+	// Phase 3 only moves WHERE the additive sums come from.
+	r := ge.buildResolver()
+
 	// Apply production_all bonus (multiplier on all positive rates)
-	// Accumulated from: research bonuses, permanent bonuses, prestige, and active event effects
-	prodAllBonus := researchBonuses["production_all"] + permanentBonuses["production_all"]
-	for _, eff := range ge.Events.GetActiveEffects() {
-		if eff.Type == "production_all" {
-			prodAllBonus += eff.Value
-		}
-	}
+	// Pool: research + permanent + prestige + wonders + active-event production_all.
+	prodAllBonus := r.AddTotal("production_all")
 	if prodAllBonus > 0 {
 		for _, def := range ge.Resources.defs {
 			r := ge.Resources.resources[def.Key]
@@ -939,7 +937,7 @@ func (ge *GameEngine) recalculateRates() {
 	// Includes legacy bonuses (stored in permanentBonuses["wood"] etc. after reapplyLegacyBonuses)
 	for _, def := range ge.Resources.defs {
 		bonusKey := def.Key + "_rate"
-		bonus := researchBonuses[bonusKey] + permanentBonuses[bonusKey]
+		bonus := r.AddTotal(bonusKey)
 		if bonus > 0 {
 			r := ge.Resources.resources[def.Key]
 			if r != nil && r.Rate > 0 {
@@ -949,7 +947,7 @@ func (ge *GameEngine) recalculateRates() {
 	}
 
 	// Apply gather_rate bonus to worker-generated rates
-	gatherBonus := researchBonuses["gather_rate"] + permanentBonuses["gather_rate"]
+	gatherBonus := r.AddTotal("gather_rate")
 	if gatherBonus > 0 {
 		// Already applied via multiplier above
 		// This is additive on base worker rates — re-add the bonus portion
@@ -2735,6 +2733,12 @@ func (ge *GameEngine) GetState() GameState {
 			}
 			return out
 		}(),
+		// Snapshot the resolver's aggregated modifiers for the UI's Active
+		// Multipliers panel. buildResolver reads only already-held state and
+		// pure config.*, so it's safe under the RLock held here (it never
+		// re-acquires a lock). All() returns a fresh copy — no shared mutable
+		// state escapes.
+		Modifiers: ge.buildResolver().All(),
 	}
 }
 

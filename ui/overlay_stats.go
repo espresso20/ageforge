@@ -183,216 +183,155 @@ func statsProvider(state game.GameState, _ int) string {
 
 	// ─── Active Multipliers ───
 	sb.WriteString("\n[gold]═══ Active Multipliers ═══[-]\n\n")
-
-	// Build attribution maps so we can label each bonus by source.
-	// These are re-derived from config definitions purely for display;
-	// the canonical totals always come from state.PermanentBonuses.
-	type bonusAttrib struct {
-		milestones float64
-		research   float64
-		prestige   float64
-		legacy     float64
-		wonders    float64
-		epoch      float64
-	}
-	attrib := map[string]*bonusAttrib{}
-
-	ensureTarget := func(target string) {
-		if attrib[target] == nil {
-			attrib[target] = &bonusAttrib{}
-		}
-	}
-
-	// 1. Milestone permanent_bonus effects
-	msDefs := config.MilestoneByKey()
-	for msKey, msInfo := range state.Milestones.Milestones {
-		if !msInfo.Completed {
-			continue
-		}
-		def, ok := msDefs[msKey]
-		if !ok {
-			continue
-		}
-		for _, eff := range def.Rewards {
-			if eff.Type == "permanent_bonus" {
-				ensureTarget(eff.Target)
-				attrib[eff.Target].milestones += eff.Value
-			}
-		}
-	}
-
-	// 2. Research bonus effects
-	techDefs := config.TechByKey()
-	for techKey, techState := range state.Research.Techs {
-		if !techState.Researched {
-			continue
-		}
-		def, ok := techDefs[techKey]
-		if !ok {
-			continue
-		}
-		for _, eff := range def.Effects {
-			if eff.Type == "bonus" {
-				ensureTarget(eff.Target)
-				attrib[eff.Target].research += eff.Value
-			}
-		}
-	}
-
-	// 3. Prestige — passive production_all bonus
-	if state.Prestige.PassiveBonus > 0 {
-		ensureTarget("production_all")
-		attrib["production_all"].prestige += state.Prestige.PassiveBonus
-	}
-	// Prestige — upgrade rate bonuses
-	prestigeDefs := config.PrestigeUpgradeByKey()
-	for key, uState := range state.Prestige.Upgrades {
-		if uState.Tier <= 0 {
-			continue
-		}
-		def, ok := prestigeDefs[key]
-		if !ok {
-			continue
-		}
-		if def.EffectType == "rate_bonus" {
-			ensureTarget(def.EffectKey)
-			attrib[def.EffectKey].prestige += def.PerTier * float64(uState.Tier)
-		}
-	}
-
-	// 4. Legacy bonuses
-	for epochKey, active := range state.LegacyBonuses {
-		if !active {
-			continue
-		}
-		legBonuses := config.LegacyBonusForEpoch(epochKey)
-		for target, mult := range legBonuses {
-			ensureTarget(target)
-			attrib[target].legacy += mult
-		}
-	}
-
-	// 5. Speed multiplier (from wonders)
-	if state.SpeedMultiplier > 1.0 {
-		ensureTarget("speed_multiplier")
-		attrib["speed_multiplier"].wonders += state.SpeedMultiplier - 1.0
-	}
-
-	// 6. Wonder bonus effects (Type "bonus" — production_all, knowledge_rate, expedition_reward, etc.)
-	// Iterate all built wonders and accumulate their percentage/multiplier bonuses.
-	buildingDefs := config.BaseBuildings()
-	buildingDefsByKey := make(map[string]config.BuildingDef, len(buildingDefs))
-	for _, bd := range buildingDefs {
-		buildingDefsByKey[bd.Key] = bd
-	}
-	for bKey, bState := range state.Buildings {
-		if bState.Count == 0 {
-			continue
-		}
-		def, ok := buildingDefsByKey[bKey]
-		if !ok || def.Category != "wonder" {
-			continue
-		}
-		for _, eff := range def.Effects {
-			if eff.Type == "bonus" {
-				ensureTarget(eff.Target)
-				attrib[eff.Target].wonders += eff.Value * float64(bState.Count)
-			}
-		}
-	}
-
-	// Collect targets that have any nonzero contribution
-	activeTargets := make([]string, 0, len(attrib))
-	for target, bc := range attrib {
-		total := bc.milestones + bc.research + bc.prestige + bc.legacy + bc.wonders
-		if total > 0 {
-			activeTargets = append(activeTargets, target)
-		}
-	}
-	if state.SpeedMultiplier > 1.0 {
-		if attrib["speed_multiplier"] == nil {
-			activeTargets = append(activeTargets, "speed_multiplier")
-		}
-	}
-
-	// Morale is an all-production multiplier when it's off neutral (1.0). It's
-	// not attributed by source like the others — it's a single banded factor —
-	// so it's rendered as a standalone line but must still count toward "is
-	// anything active" so the empty branch below doesn't fire on morale alone.
-	moraleActive := absFloat(state.MoraleMultiplier-1.0) > 0.0005
-
-	if len(activeTargets) == 0 && !moraleActive {
-		sb.WriteString(" [gray]No active multipliers[-]\n")
-	} else {
-		// Sort: production_all first, then alphabetical
-		sort.Slice(activeTargets, func(i, j int) bool {
-			if activeTargets[i] == "production_all" {
-				return true
-			}
-			if activeTargets[j] == "production_all" {
-				return false
-			}
-			return activeTargets[i] < activeTargets[j]
-		})
-
-		// Morale is an all-production factor — group it with the all-production
-		// entries at the top. Sign drives the colour (green bonus / red penalty);
-		// reuse computeMoraleBand so this matches the workers panel exactly.
-		if moraleActive {
-			band := computeMoraleBand(state.Morale, state.MoraleMultiplier)
-			moraleColor := "green"
-			sign := "+"
-			if band.DeltaPct < 0 {
-				moraleColor = "red"
-				sign = "" // %d already carries the minus sign for negatives
-			}
-			fmt.Fprintf(&sb, "  [cyan]%-20s[-] [%s]%s%d%%[-]  [gray](all production)[-]\n",
-				"Morale", moraleColor, sign, band.DeltaPct)
-		}
-
-		for _, target := range activeTargets {
-			var total float64
-			if target == "speed_multiplier" {
-				total = state.SpeedMultiplier - 1.0
-			} else {
-				total = state.PermanentBonuses[target]
-			}
-			a := attrib[target]
-			if a == nil {
-				a = &bonusAttrib{}
-			}
-
-			if target == "speed_multiplier" {
-				fmt.Fprintf(&sb, "  [cyan]%-20s[-] [yellow]+%.1fx[-]\n", target, total)
-			} else {
-				fmt.Fprintf(&sb, "  [cyan]%-20s[-] [yellow]+%.0f%%[-]\n", target, total*100)
-			}
-			if a.milestones > 0 {
-				fmt.Fprintf(&sb, "  [gray]  milestones     +%.0f%%[-]\n", a.milestones*100)
-			}
-			if a.research > 0 {
-				fmt.Fprintf(&sb, "  [gray]  research       +%.0f%%[-]\n", a.research*100)
-			}
-			if a.prestige > 0 {
-				fmt.Fprintf(&sb, "  [gray]  prestige       +%.0f%%[-]\n", a.prestige*100)
-			}
-			if a.legacy > 0 {
-				fmt.Fprintf(&sb, "  [gray]  legacy         +%.0f%%[-]\n", a.legacy*100)
-			}
-			if a.epoch > 0 {
-				fmt.Fprintf(&sb, "  [gray]  epoch events   +%.0f%%[-]\n", a.epoch*100)
-			}
-			if a.wonders > 0 {
-				if target == "speed_multiplier" {
-					fmt.Fprintf(&sb, "  [gray]  wonders        +%.1fx[-]\n", a.wonders)
-				} else {
-					fmt.Fprintf(&sb, "  [gray]  wonders        +%.0f%%[-]\n", a.wonders*100)
-				}
-			}
-		}
-	}
+	sb.WriteString(renderActiveMultipliers(state))
 
 	return sb.String()
+}
+
+// renderActiveMultipliers renders the Active Multipliers section from the
+// resolver snapshot carried on the state (state.Modifiers), the single source
+// of truth the engine also uses to compute its rates. We rebuild a Resolver
+// here rather than re-deriving bonuses from config: Total drives each headline,
+// Breakdown drives the per-source attribution, and the two can never disagree
+// because they read the same contributions.
+//
+// SpeedMultiplier is intentionally NOT a resolver modifier — it's a wonder-gate
+// concept layered on top of tick speed — so it gets its own line, as before.
+func renderActiveMultipliers(state game.GameState) string {
+	var sb strings.Builder
+
+	r := game.NewResolver()
+	r.AddAll(state.Modifiers) // nil/empty slice is fine — yields no targets
+
+	wrote := false
+	for _, target := range r.Targets() {
+		total := r.Total(target)
+		if absFloat(total-1.0) <= multEpsilon {
+			continue // no net effect — skip
+		}
+		breakdown := summarizeBreakdown(r.Breakdown(target))
+		if breakdown == "" {
+			continue // every contribution was a no-op
+		}
+		pct := (total - 1.0) * 100
+		fmt.Fprintf(&sb, "  [cyan]%-20s[-] [yellow]%+.0f%%[-]   [gray]%s[-]\n",
+			multiplierTargetLabel(target), pct, breakdown)
+		wrote = true
+	}
+
+	// SpeedMultiplier: a wonder gate, not a resolver modifier. Render it on its
+	// own line so it stays visible.
+	if state.SpeedMultiplier > 1.0 {
+		fmt.Fprintf(&sb, "  [cyan]%-20s[-] [yellow]×%.2f[-]   [gray]wonders[-]\n",
+			"Game Speed", state.SpeedMultiplier)
+		wrote = true
+	}
+
+	if !wrote {
+		return " [gray]No active multipliers[-]\n"
+	}
+	return sb.String()
+}
+
+// multEpsilon is the tolerance below which a target's Total is treated as a
+// no-op (×1.0) and omitted from the panel.
+const multEpsilon = 0.0005
+
+// summarizeBreakdown collapses a target's per-modifier contributions into a
+// compact, source-labelled string like
+// "Morale ×1.18 · Research +10% · Wonders +5%". Modifiers from the same source
+// are merged (additive points summed, multipliers producted) so a source shows
+// once. No-op contributions (OpAdd 0, OpMul 1) are dropped. Returns "" if every
+// contribution is a no-op.
+func summarizeBreakdown(mods []game.Modifier) string {
+	type agg struct {
+		addSum  float64
+		mulProd float64
+		hasMul  bool
+		order   int
+	}
+	bySource := map[string]*agg{}
+	order := 0
+	for _, m := range mods {
+		a := bySource[m.Source]
+		if a == nil {
+			a = &agg{mulProd: 1.0, order: order}
+			bySource[m.Source] = a
+			order++
+		}
+		if m.Op == game.OpMul {
+			a.mulProd *= m.Value
+			a.hasMul = true
+		} else {
+			a.addSum += m.Value
+		}
+	}
+
+	// Stable order: first-seen (matches resolver insertion order).
+	sources := make([]string, 0, len(bySource))
+	for src := range bySource {
+		sources = append(sources, src)
+	}
+	sort.Slice(sources, func(i, j int) bool {
+		return bySource[sources[i]].order < bySource[sources[j]].order
+	})
+
+	parts := make([]string, 0, len(sources))
+	for _, src := range sources {
+		a := bySource[src]
+		label := multiplierSourceLabel(src)
+		// Prefer a multiplicative display only when the source contributed a
+		// genuine OpMul (e.g. morale ×1.18) and no additive points alongside.
+		if a.hasMul && absFloat(a.addSum) <= multEpsilon {
+			if absFloat(a.mulProd-1.0) <= multEpsilon {
+				continue // ×1.00 — no-op
+			}
+			parts = append(parts, fmt.Sprintf("%s ×%.2f", label, a.mulProd))
+			continue
+		}
+		// Additive (the common case). Fold any stray OpMul into the percent so
+		// nothing is silently dropped.
+		eff := (1+a.addSum)*a.mulProd - 1.0
+		if absFloat(eff) <= multEpsilon {
+			continue // +0% — no-op
+		}
+		parts = append(parts, fmt.Sprintf("%s %+.0f%%", label, eff*100))
+	}
+	return strings.Join(parts, " · ")
+}
+
+// multiplierTargetLabel maps a resolver target id to a friendly panel label.
+// Reuses formatBonusName (overlay_research.go) which already handles
+// production_all, gather_rate, <res>_rate, military_power, etc.
+func multiplierTargetLabel(target string) string {
+	switch target {
+	case "tick_speed":
+		return "Tick Speed"
+	}
+	return formatBonusName(target)
+}
+
+// multiplierSourceLabel maps a modifier Source id to a friendly label.
+// Known sources are title-cased; "event:<name>" becomes "Event: <name>".
+func multiplierSourceLabel(src string) string {
+	if name, ok := strings.CutPrefix(src, "event:"); ok {
+		return "Event: " + name
+	}
+	switch src {
+	case "research":
+		return "Research"
+	case "prestige":
+		return "Prestige"
+	case "wonders":
+		return "Wonders"
+	case "permanent":
+		return "Permanent"
+	case "morale":
+		return "Morale"
+	case "event":
+		return "Event"
+	}
+	return capitalize(src)
 }
 
 // absFloat is a tiny abs helper for epsilon comparisons (avoids importing math

@@ -87,6 +87,21 @@ func (r *Resolver) Total(target string) float64 {
 	return (1 + addSum) * mulProd
 }
 
+// AddTotal returns the additive bonus pool for target: the sum of every OpAdd
+// Value, ignoring OpMul factors entirely. This is the raw Σ that Total turns
+// into a (1 + Σ) factor — engine code that historically hand-summed these
+// additive contributions reads it here instead, so the pool has a single
+// source of truth. An empty or unknown target returns 0.
+func (r *Resolver) AddTotal(target string) float64 {
+	sum := 0.0
+	for _, m := range r.mods[target] {
+		if m.Op == OpAdd {
+			sum += m.Value
+		}
+	}
+	return sum
+}
+
 // Breakdown returns the modifiers contributing to target, in insertion order.
 //
 // The returned slice is a copy, so mutating it (or its backing array) cannot
@@ -96,6 +111,20 @@ func (r *Resolver) Breakdown(target string) []Modifier {
 	src := r.mods[target]
 	out := make([]Modifier, len(src))
 	copy(out, src)
+	return out
+}
+
+// All returns a flat copy of every modifier the resolver holds, across all
+// targets, in target-sorted order (and insertion order within a target). It is
+// the natural inverse of AddAll: snapshot a resolver's contents out, hand them
+// across a boundary (e.g. into a GameState for the UI), and rebuild an
+// equivalent resolver with NewResolver + AddAll. The returned slice is a copy,
+// so mutating it cannot corrupt the resolver.
+func (r *Resolver) All() []Modifier {
+	out := make([]Modifier, 0)
+	for _, target := range r.Targets() {
+		out = append(out, r.mods[target]...)
+	}
 	return out
 }
 
