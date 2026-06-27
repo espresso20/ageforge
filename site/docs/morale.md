@@ -88,7 +88,7 @@ Stack enough of them and their per-tick lift outpaces the drift-to-neutral, park
 - **Workers panel** (`workers`) — a coloured morale bar.
 - **Villager sidebar** — the same coloured bar, always visible at a glance.
 - **Status bar** — the headline `Morale: NN%`, coloured by band, with a `+NN%` / `-NN%` tag when it is actively boosting or penalising production.
-- **Stats panel** (`stats`) — when morale is off-neutral it appears under **Active Multipliers** in the **All Production** breakdown as a `Morale ×N.NN` factor, shown alongside your research, wonder, prestige, and active-event bonuses on that line.
+- **Stats panel** (`stats`) — when morale is off-neutral it appears under **Active Multipliers** in the **All Production** breakdown as a `Morale ×N.NN` factor, shown alongside your research, wonder, prestige, and active-event bonuses on that line. Entries are colour-coded: a **green** headline (and fragment) is a net bonus, a **red** one a penalty, and a **white** headline marks a line that only shows because opposing sources cancel out. Each contributing source is listed and coloured individually, so a penalty (e.g. a famine event) is never hidden by a bonus on the same line. The panel lists **rate multipliers only** — capacity and storage bonuses (population cap, resource caps) are shown elsewhere, since they aren't rate multipliers.
 - **Load Game browser** — each save's detail pane shows its morale, so you can size up a civilization before loading it.
 
 The bar is **green when morale is boosting production** (high band), **neutral in the middle**, and **red when it is penalising production** (low band).

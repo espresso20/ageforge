@@ -47,7 +47,8 @@ func TestSummarizeBreakdown_AdditiveAndMul(t *testing.T) {
 		{Source: "morale", Target: "production_all", Op: game.OpMul, Value: 1.18},
 	}
 	got := summarizeBreakdown(mods)
-	want := "Research +10% · Wonders +5% · Morale ×1.18"
+	// Each fragment is wrapped in its own sign-colored tag; positives are green.
+	want := "[green]Research +10%[-] [gray]·[-] [green]Wonders +5%[-] [gray]·[-] [green]Morale ×1.18[-]"
 	if got != want {
 		t.Errorf("summarizeBreakdown = %q, want %q", got, want)
 	}
@@ -59,8 +60,8 @@ func TestSummarizeBreakdown_MergesSameSource(t *testing.T) {
 		{Source: "research", Target: "food_rate", Op: game.OpAdd, Value: 0.12},
 		{Source: "research", Target: "food_rate", Op: game.OpAdd, Value: 0.08},
 	}
-	if got := summarizeBreakdown(mods); got != "Research +20%" {
-		t.Errorf("summarizeBreakdown = %q, want %q", got, "Research +20%")
+	if got := summarizeBreakdown(mods); got != "[green]Research +20%[-]" {
+		t.Errorf("summarizeBreakdown = %q, want %q", got, "[green]Research +20%[-]")
 	}
 }
 
@@ -134,5 +135,98 @@ func TestRenderActiveMultipliers_NoopTargetsHidden(t *testing.T) {
 	out := renderActiveMultipliers(state)
 	if !strings.Contains(out, "No active multipliers") {
 		t.Errorf("no-op target should be hidden, got:\n%s", out)
+	}
+}
+
+// TestRenderActiveMultipliers_SignColors proves each contributing source is
+// colored by its own sign: a positive source gets [green], a negative [red].
+func TestRenderActiveMultipliers_SignColors(t *testing.T) {
+	state := game.GameState{
+		SpeedMultiplier: 1.0,
+		Modifiers: []game.Modifier{
+			{Source: "research", Target: "production_all", Op: game.OpAdd, Value: 0.20},
+			{Source: "event:Famine", Target: "production_all", Op: game.OpAdd, Value: -0.05},
+		},
+	}
+	out := renderActiveMultipliers(state)
+	if !strings.Contains(out, "[green]Research +20%[-]") {
+		t.Errorf("positive source should be green-tagged:\n%s", out)
+	}
+	if !strings.Contains(out, "[red]Event: Famine -5%[-]") {
+		t.Errorf("negative source should be red-tagged:\n%s", out)
+	}
+	// Net +15% → green headline.
+	if !strings.Contains(out, "[green]+15%[-]") {
+		t.Errorf("net-positive headline should be green:\n%s", out)
+	}
+}
+
+// TestRenderActiveMultipliers_OpposingSourcesStillRender guards the net-zero
+// collapse fix: a target whose sources cancel to ×1.0 must STILL render, with
+// both the positive and negative fragments visible.
+func TestRenderActiveMultipliers_OpposingSourcesStillRender(t *testing.T) {
+	state := game.GameState{
+		SpeedMultiplier: 1.0,
+		Modifiers: []game.Modifier{
+			{Source: "research", Target: "gather_rate", Op: game.OpAdd, Value: 0.10},
+			{Source: "event:Drought", Target: "gather_rate", Op: game.OpAdd, Value: -0.10},
+		},
+	}
+	out := renderActiveMultipliers(state)
+	if strings.Contains(out, "No active multipliers") {
+		t.Fatalf("opposing sources netting to ~1.0 must still render a line:\n%s", out)
+	}
+	if !strings.Contains(out, "[green]Research +10%[-]") {
+		t.Errorf("positive fragment missing from net-zero row:\n%s", out)
+	}
+	if !strings.Contains(out, "[red]Event: Drought -10%[-]") {
+		t.Errorf("negative fragment missing from net-zero row:\n%s", out)
+	}
+	// Net ~0% → white headline (neither bonus nor penalty).
+	if !strings.Contains(out, "[white]") {
+		t.Errorf("net-zero headline should be white:\n%s", out)
+	}
+}
+
+// TestRenderActiveMultipliers_CapacityTargetsExcluded guards the
+// isPanelMultiplier filter: flat/capacity targets (population, "all", bare
+// storage keys) are not rate multipliers and must not appear here as percents.
+func TestRenderActiveMultipliers_CapacityTargetsExcluded(t *testing.T) {
+	state := game.GameState{
+		SpeedMultiplier: 1.0,
+		Modifiers: []game.Modifier{
+			{Source: "prestige", Target: "population", Op: game.OpAdd, Value: 2.0},
+			{Source: "wonders", Target: "all", Op: game.OpAdd, Value: 20.0},
+			{Source: "research", Target: "food", Op: game.OpAdd, Value: 0.50},
+		},
+	}
+	out := renderActiveMultipliers(state)
+	if strings.Contains(out, "Population") {
+		t.Errorf("population (capacity) must not render in the multiplier panel:\n%s", out)
+	}
+	if strings.Contains(out, "All ") || strings.Contains(out, "+2000%") {
+		t.Errorf("\"all\" (flat) must not render as a percentage:\n%s", out)
+	}
+	if !strings.Contains(out, "No active multipliers") {
+		t.Errorf("only capacity/flat targets present — panel should be empty:\n%s", out)
+	}
+}
+
+// TestIsPanelMultiplier covers the rate/flat classification directly.
+func TestIsPanelMultiplier(t *testing.T) {
+	rate := []string{
+		"production_all", "gather_rate", "tick_speed", "military_power",
+		"expedition_reward", "research_speed", "build_cost", "food_rate", "iron_rate",
+	}
+	for _, tgt := range rate {
+		if !isPanelMultiplier(tgt) {
+			t.Errorf("isPanelMultiplier(%q) = false, want true", tgt)
+		}
+	}
+	flat := []string{"population", "all", "food", "culture", "data"}
+	for _, tgt := range flat {
+		if isPanelMultiplier(tgt) {
+			t.Errorf("isPanelMultiplier(%q) = true, want false", tgt)
+		}
 	}
 }
