@@ -200,6 +200,38 @@ Voluntary catastrophes let you force an epoch event outside the normal roll. Use
 | `dump` | Export logs to a file for debugging |
 | `help` | Show a quick command summary |
 
+Save files live in `./data/saves/*.json`, relative to the directory you launch the game from. The `save <name>` and `load <name>` commands above work with the same files as the **Load Game** browser below.
+
+---
+
+## Saving & Loading
+
+### The Load Game browser
+
+From the main menu, choosing **Load Game** opens a save browser that lists every save in `./data/saves/` (most-recent first). Load Game is always available — if you have no saves yet, the browser shows a "No saved games found — start a new game" message instead of an empty list.
+
+Highlighting a save updates a **detail pane** on the side, showing that save's age, progress (tick count), prestige level, morale, and exact save time.
+
+**Keys inside the browser:**
+
+| Key | Action |
+|---|---|
+| `↑` / `↓` | Move the highlight between saves |
+| `Enter` | Load the highlighted save |
+| `d` | Delete the highlighted save (asks you to confirm first) |
+| `r` | Rename the highlighted save (type a new name; names that collide with an existing save or contain path characters are rejected) |
+| `c` | Duplicate the highlighted save (creates `<name>-copy`) |
+| `Esc` | Return to the main menu |
+
+**Row tags:**
+
+| Tag | Meaning |
+|---|---|
+| ★ auto | The autosave slot |
+| ⭐ elite | An elite save |
+| ⚠ modified | The save file was edited outside the game (cheater badge) |
+| ⚠ corrupt | The file could not be read. It is still listed but dimmed, and cannot be loaded |
+
 ---
 
 ## Tab shortcuts
