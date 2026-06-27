@@ -334,7 +334,7 @@ minimum: 200ms
 ### Resource Rates (per tick, in order)
 
 1. Base: building production + villager gathering + research effects + event effects
-2. `production_all` multiplier on all positive rates
+2. `production_all` multiplier — `× (1 + Σ production_all)`, applied via the resolver. The sum may be **negative** (e.g. the catastrophe Reconstruction Effort −10% debuff); a former `>0` gate that silently dropped negative pools is gone, so debuffs now apply. Result is floored at 10% of base so production can't be driven below it.
 3. Per-resource multiplier (e.g. `gold_rate` bonus)
 4. Gather rate bonus: additive on villager rates
 5. Diplomacy trade bonuses: multiplicative on positive rates
@@ -343,10 +343,11 @@ minimum: 200ms
 ### Building Costs
 
 ```
-cost = floor(base_cost × cost_scale ^ current_count)
+cost = floor(base_cost × cost_scale ^ current_count) × (1 + Σ build_cost)
 ```
 Example: Hut — 30 wood, scale 1.3: 1st=30, 2nd=39, 3rd=50, 4th=66...
-Upgrades cost `target_base_cost × 0.25` (75% discount).
+
+`build_cost` modifiers are now consumed by `GetCost()`: build-cost-reducing milestone rewards and the Civil Engineering tech (each −3% to −5%) sum into `Σ build_cost` and multiply the scaled cost, floored at 10% of base. Previously these were defined but applied nowhere — `GetCost()` is the consumer the resolver migration wired in (see `design-and-architecture/multiplier-system.md` bug #2). Both the displayed and charged cost reflect the reduction.
 
 ### Food Economy
 

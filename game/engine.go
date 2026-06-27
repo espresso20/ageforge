@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"math"
 	"math/rand"
 	"sort"
 	"strings"
@@ -19,7 +20,33 @@ const (
 	// It prevents the tick loop from spinning faster than the UI can render.
 	MinTickInterval = 200 * time.Millisecond
 	MaxLogSize      = 500
+
+	// productionFloor caps how far a NEGATIVE additive production bonus can drag a
+	// rate down. The additive pools (production_all, <res>_rate, gather_rate) are
+	// applied as rate *= max(productionFloor, 1+Σ), so a -10% catastrophe debuff
+	// (e.g. Reconstruction Effort) actually lands, but stacked penalties can never
+	// push production below 10% of its pre-bonus value or flip it negative.
+	productionFloor = 0.10
+
+	// buildCostFloor / buildCostCap clamp the build-cost factor the engine derives
+	// from the resolver's build_cost pool. build_cost values are negative cost
+	// reductions; the factor is clamp(1+Σ, floor, cap). The 0.10 floor means costs
+	// can never drop below 10% of base no matter how many reductions stack; the
+	// 1.0 cap means a (hypothetical) positive build_cost can't RAISE costs.
+	buildCostFloor = 0.10
+	buildCostCap   = 1.0
 )
+
+// clamp constrains v to [lo, hi].
+func clamp(v, lo, hi float64) float64 {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
+}
 
 // GameEngine is the central coordinator for all game systems. All subsystems
 // are accessed through their manager fields rather than as globals, so multiple
@@ -456,9 +483,16 @@ func (ge *GameEngine) recalculateTickSpeed() {
 		if mult < 1.0 {
 			mult = 1.0
 		}
-		interval := time.Duration(float64(BaseTickInterval) / ((1.0 + bonus) * mult))
-		if interval < MinTickInterval {
-			interval = MinTickInterval
+		// Mirror getTickInterval's guard: a denominator ≤ 0 (tick_speed ≤ -1.0)
+		// would yield a +Inf/garbage duration in the debug log. The real interval
+		// the loop uses comes from getTickInterval, which guards identically.
+		denom := (1.0 + bonus) * mult
+		interval := MinTickInterval
+		if denom > 0 {
+			interval = time.Duration(float64(BaseTickInterval) / denom)
+			if interval < MinTickInterval {
+				interval = MinTickInterval
+			}
 		}
 		ge.addLog("debug", fmt.Sprintf("Tick speed: +%.0f%% (interval: %dms)", bonus*100, interval.Milliseconds()))
 	}
@@ -921,40 +955,60 @@ func (ge *GameEngine) recalculateRates() {
 	// Phase 3 only moves WHERE the additive sums come from.
 	r := ge.buildResolver()
 
-	// Apply production_all bonus (multiplier on all positive rates)
+	// Build-cost factor (Fix A): fold the resolver's build_cost additive pool
+	// (negative reductions from milestones + a research tech) into a single
+	// multiplier and hand it to the BuildingManager. costMult = clamp(1 + Σ
+	// build_cost, 0.10, 1.0). GetCost/BuildBatchCost/UpgradeCost all read it, so
+	// the charged cost and the displayed cost are computed from the SAME factor.
+	costMult := clamp(1.0+r.AddTotal("build_cost"), buildCostFloor, buildCostCap)
+	ge.Buildings.SetCostMultiplier(costMult)
+
+	// Apply production_all bonus (multiplier on all positive rates).
 	// Pool: research + permanent + prestige + wonders + active-event production_all.
+	// Fix B: UNgated with a floor. Previously gated `if prodAllBonus > 0`, which
+	// silently swallowed negative additive bonuses (e.g. the Reconstruction Effort
+	// catastrophe's -0.10 production_all) whenever the player lacked ≥10% positive
+	// bonuses. Now always applied as ×max(productionFloor, 1+Σ), so the debuff
+	// lands but production can't drop below 10% of its pre-bonus value.
 	prodAllBonus := r.AddTotal("production_all")
-	if prodAllBonus > 0 {
+	prodAllFactor := math.Max(productionFloor, 1.0+prodAllBonus)
+	if prodAllFactor != 1.0 {
 		for _, def := range ge.Resources.defs {
 			r := ge.Resources.resources[def.Key]
 			if r != nil && r.Rate > 0 {
-				r.Rate *= (1.0 + prodAllBonus)
+				r.Rate *= prodAllFactor
 			}
 		}
 	}
 
-	// Apply per-resource rate bonuses (e.g., "gold_rate", "iron_rate")
-	// Includes legacy bonuses (stored in permanentBonuses["wood"] etc. after reapplyLegacyBonuses)
+	// Apply per-resource rate bonuses (e.g., "gold_rate", "iron_rate").
+	// Includes legacy bonuses (stored in permanentBonuses["wood"] etc. after
+	// reapplyLegacyBonuses). Fix B: same ungated+floored treatment as above.
 	for _, def := range ge.Resources.defs {
 		bonusKey := def.Key + "_rate"
 		bonus := r.AddTotal(bonusKey)
-		if bonus > 0 {
+		factor := math.Max(productionFloor, 1.0+bonus)
+		if factor != 1.0 {
 			r := ge.Resources.resources[def.Key]
 			if r != nil && r.Rate > 0 {
-				r.Rate *= (1.0 + bonus)
+				r.Rate *= factor
 			}
 		}
 	}
 
-	// Apply gather_rate bonus to worker-generated rates
+	// Apply gather_rate bonus to worker-generated rates. This is ADDITIVE on the
+	// base worker rates — re-add the bonus portion (the production_all multiply
+	// above has already touched these rates, so we add the gather delta on top of
+	// the base). Fix B: ungated with the same floor. A negative gather_rate now
+	// reduces worker output, but the floored factor max(productionFloor, 1+Σ)
+	// means the effective worker contribution can't drop below 10% of base.
 	gatherBonus := r.AddTotal("gather_rate")
-	if gatherBonus > 0 {
-		// Already applied via multiplier above
-		// This is additive on base worker rates — re-add the bonus portion
+	gatherDelta := math.Max(productionFloor, 1.0+gatherBonus) - 1.0
+	if gatherDelta != 0 {
 		for res, rate := range ge.Workers.GetProductionRates() {
 			r := ge.Resources.resources[res]
 			if r != nil {
-				r.Rate += rate * gatherBonus
+				r.Rate += rate * gatherDelta
 			}
 		}
 	}

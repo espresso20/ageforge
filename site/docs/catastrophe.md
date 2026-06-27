@@ -48,7 +48,7 @@ Pay a cost and keep your civilization intact.
 - **Production debuff −10% for 216 ticks** — a timed `Reconstruction Effort` event applies −10% to all production for the recovery period
 - **Survived marker** recorded in your civilization history for that epoch
 
-Endure is painful but survivable. A well-developed civilization with many buildings loses only a fraction of its output — the production penalty is temporary, buildings grow back, and workers can be re-recruited.
+Endure is painful but survivable, but it is no longer cheap on production. The −10% reconstruction debuff genuinely applies for its full 216-tick window: **every** building — even the ones that survived — produces at 90% until the timer expires. (Earlier builds effectively ignored this penalty unless you happened to hold enough positive production bonuses to offset it; it now bites as designed.) Budget for the building loss, the worker loss, *and* a flat −10% on everything for the reconstruction period. The hit is temporary — buildings grow back, workers can be re-recruited, and the debuff expires on its own — but a large civilization should plan around running below capacity for the full window rather than assuming the penalty is negligible.
 
 **Morale impact:** Enduring also costs morale on top of the building destruction — a hit that drags the civilization-wide morale percentage down. If morale was already low heading into a catastrophe, this can push it into the low band (toward the 10% floor), where worker output is penalised and recovery slows. Once you stabilise, morale drifts back toward the 50% neutral baseline on its own; prioritise food surplus after Enduring to speed that recovery.
 
@@ -121,7 +121,7 @@ After destruction, the production debuff event (`endure_reconstruction`) is inje
 Effect: production_all -10% for 216 ticks
 ```
 
-This is separate from the building loss. Even buildings that survived are producing at 90% for the reconstruction period. Plan for both effects simultaneously.
+This is separate from the building loss. Even buildings that survived are producing at 90% for the reconstruction period, and this now applies in full — negative production modifiers are floored so production can't drop below 10% of base, but a single −10% debuff lands cleanly off the top regardless of what other bonuses you hold. Plan for both effects simultaneously.
 
 **Recovery checklist after Endure:**
 1. Check which buildings were destroyed (the log lists every lost building by name)

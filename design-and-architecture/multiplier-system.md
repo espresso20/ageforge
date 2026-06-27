@@ -1,6 +1,23 @@
 # Multiplier / Bonus System — Investigation & Proposed Redesign
 
-**Status:** Investigation / design proposal (no implementation yet)
+**Status:** **IMPLEMENTED.** The unified Modifier Resolver shipped — phases 1–5 of the
+migration below have landed:
+
+1. resolver core (`game/modifiers.go`) with unit tests for the `Total` combination math;
+2. sources emit `Modifiers()` mapped to canonical targets, gated by a golden equality test;
+3. `recalculateRates` consumes the resolver, with additive pools fed via `AddTotal`;
+4. the UI renders from `Breakdown` (the hand-maintained re-aggregation and dead `epoch` field deleted);
+5. the latent bugs are fixed.
+
+Both HIGH bugs are resolved — active (timed) event bonuses are now visible in the Active
+Multipliers panel (#1), and `build_cost` is finally consumed by `GetCost()` (#2). The related
+negative-debuff bug — the `>0` gate that silently swallowed the catastrophe Reconstruction
+Effort −10% production debuff — is also fixed: negative production modifiers now apply (floored
+so production can't drop below 10% of base). Phase 6 (wiki/docs) is this update.
+
+The design content below is preserved for reference; it now describes the system as built rather
+than as proposed.
+
 **Author:** espresso + Claude
 **Trello:** Refactor — "INVESTIGATION: unified multiplier registry/resolver" (`hJPR8YJX`)
 
@@ -83,17 +100,24 @@ Drift / mismatches:
 
 ## 3. Bug catalog (the "how broken is it" payload)
 
-| # | Severity | Bug | Evidence |
-|---|----------|-----|----------|
-| 1 | **HIGH** | Active (timed) event bonuses **apply but are invisible** in Active Multipliers. They hit production in `recalculateRates` but the UI reads only `state.PermanentBonuses`. Player sees "+20%" in the log; the panel shows 0%. | engine.go `recalculateRates` (production_all incl. active events) vs overlay_stats.go reading `state.PermanentBonuses[target]` |
-| 2 | **HIGH** | `build_cost` bonus target is **defined but never consumed** — `GetCost()` applies no bonuses. Any prestige upgrade targeting `build_cost` does nothing. | config prestige `build_cost` effects; `buildings.go GetCost()` has no bonus lookup |
-| 3 | MED | `bonusAttrib.epoch` field is declared and checked in the UI but **never populated** — epoch permanent bonuses are misattributed (shown as 0 from "epoch"). | overlay_stats.go declares/checks `a.epoch`, nothing increments it |
-| 4 | MED | Morale multiplier is applied **outside** all bonus tracking, with a fragile order-of-operations dependency (`× morale` then `× (1+production_all)`). Not in any breakdown. | engine.go morale applied first, production_all second |
-| 5 | MED | Active-event `tick_speed` boosts (milestone chains) apply but have **no UI attribution** path. | tick speed recalculated from active events; no UI breakdown |
-| 6 | LOW | Split-brain epoch application: some epoch events write `permanentBonuses` directly, others use `InjectEvent` timed effects — same source, two paths. | applyGoodEpochEvent: direct write vs InjectEvent |
+> **All resolved.** Every entry below was fixed by the resolver migration (phases 1–5).
+> The table is retained as a record of what was wrong and how the resolver addressed it.
 
-Items 1 and 2 are genuine, shippable bugs. The rest are attribution/consistency
-debt that guarantees more bugs as sources are added.
+| # | Severity | Status | Bug | Evidence |
+|---|----------|--------|-----|----------|
+| 1 | **HIGH** | ✅ Fixed | Active (timed) event bonuses **applied but were invisible** in Active Multipliers. They hit production in `recalculateRates` but the UI read only `state.PermanentBonuses`. Player saw "+20%" in the log; the panel showed 0%. Now events emit `Modifier`s and the panel renders from `Breakdown`, so they appear. | engine.go `recalculateRates` (production_all incl. active events) vs overlay_stats.go reading `state.PermanentBonuses[target]` |
+| 2 | **HIGH** | ✅ Fixed | `build_cost` bonus target was **defined but never consumed** — `GetCost()` applied no bonuses, so the 5 milestone rewards and 1 tech granting build-cost reductions did nothing. Now `GetCost()` multiplies by `(1 + Σ build_cost)`, floored at 10% of base; the reductions (currently ~−24% stacked) apply to both the displayed and charged cost. | config prestige/milestone/tech `build_cost` effects; `buildings.go GetCost()` had no bonus lookup |
+| 3 | MED | ✅ Fixed | `bonusAttrib.epoch` field was declared and checked in the UI but **never populated** — epoch permanent bonuses were misattributed. The hand-maintained field is deleted; epoch modifiers carry `Source:"epoch:..."` and `Breakdown` attributes them. | overlay_stats.go declared/checked `a.epoch`, nothing incremented it |
+| 4 | MED | ✅ Fixed | Morale multiplier was applied **outside** all bonus tracking, with a fragile order-of-operations dependency. It is now an `OpMul` modifier on `production.all`; combination order is defined once in `Total`. | engine.go morale applied first, production_all second |
+| 5 | MED | ✅ Fixed | Active-event `tick_speed` boosts (milestone chains) applied but had **no UI attribution** path. The same `Breakdown` mechanism now covers `tick_speed`. | tick speed recalculated from active events; no UI breakdown |
+| 6 | LOW | ✅ Fixed | Split-brain epoch application: some epoch events wrote `permanentBonuses` directly, others used `InjectEvent` timed effects. Both now surface as modifiers through one display path. | applyGoodEpochEvent: direct write vs InjectEvent |
+
+A seventh, related defect surfaced and was fixed in the same effort: a `>0` gate on the
+production-bonus pool silently swallowed **negative** `production_all` modifiers, so the
+catastrophe "Reconstruction Effort" −10% debuff only had an effect if the player happened to
+hold ≥10% of positive production bonuses to offset. The gate is gone — negative production
+modifiers now apply, floored so production can't drop below 10% of base — so enduring a
+catastrophe genuinely costs −10% production for its 216-tick window, as designed.
 
 ---
 

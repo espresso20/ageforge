@@ -76,6 +76,8 @@ If no chain is completed, fallback titles apply:
 | Grand Architect *(hidden)* | Build 1,000 structures | -5% build cost, +5% production |
 | Wonder Collector *(hidden)* | Construct 3 Wonders | +10% all production |
 
+The `-5% build cost` rewards here (Master Builder, Grand Architect) are functional, not flavor: they reduce the actual cumulative cost of every building you queue, and the saving shows up in the cost the build menu displays. Stacked with the other build-cost rewards across the game (and the Civil Engineering tech), the reductions currently reach roughly −24%, floored at 10% of base. See [Buildings](buildings.md#build-cost-reductions).
+
 **Chain reward:** Title: "The Architects" · Speed boost ×1.5 for 90 ticks
 
 ---
