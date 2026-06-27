@@ -42,7 +42,7 @@ While those build (8 ticks each), watch the build queue progress bar in the Econ
 
 ## Step 2: Build a stash
 
-Your food and wood caps are tiny (50 each). Storage fills fast and wastes production. Each stash gives **+300 storage** and you can build up to 30 before they're capped out.
+Your food and wood caps are tiny (50 each). Storage fills fast and wastes production. Your first stash costs **35 wood** — gather to that and build it early to break the cap. Each stash gives **+300 storage** and you can build up to 50 before they're capped out.
 
 ```
 build stash

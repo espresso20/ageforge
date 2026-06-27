@@ -58,7 +58,12 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== PRIMITIVE AGE (costs: 30-100) =====
 		{
 			Name: "Stash", Key: "stash", Category: "storage",
-			BaseCost:    map[string]float64{"wood": 50},
+			// note: the first copy MUST stay affordable within wood's 50 base storage
+			// cap — stash is the only building that raises that cap, so a first-copy
+			// cost above 50 is an unbuildable deadlock. normalizeCostCurves multiplies
+			// this base by ~1.17 (storage 1.15->1.13, pivot@10), so keep the raw base
+			// well under ~42. 30 -> ~35 normalized, a comfortable margin under 50.
+			BaseCost:    map[string]float64{"wood": 30},
 			CostScale:   1.15,
 			MaxCount:    50,
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 300}},
