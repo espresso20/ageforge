@@ -128,6 +128,18 @@ func (pm *PrestigeManager) GetBonuses() map[string]float64 {
 	return bonuses
 }
 
+// Modifiers emits one OpAdd Modifier per (target, value) returned by GetBonuses,
+// attributed to Source "prestige". Targets match the engine's current strings
+// (e.g. "production_all", "tick_speed", "<res>_rate") — no renaming.
+func (pm *PrestigeManager) Modifiers() []Modifier {
+	bonuses := pm.GetBonuses()
+	out := make([]Modifier, 0, len(bonuses))
+	for t, v := range bonuses {
+		out = append(out, Modifier{Source: "prestige", Target: t, Op: OpAdd, Value: v})
+	}
+	return out
+}
+
 // GetStartingResources returns bonus starting resources from prestige upgrades
 func (pm *PrestigeManager) GetStartingResources() map[string]float64 {
 	resources := make(map[string]float64)

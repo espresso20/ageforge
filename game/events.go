@@ -229,6 +229,30 @@ func (em *EventManager) GetActiveEffects() []config.Effect {
 	return effects
 }
 
+// Modifiers emits OpAdd Modifiers for the multiplier-bucket effects carried by
+// currently active events, attributed to Source "event:<name>". The engine reads
+// these by effect Type (it accumulates eff.Value into the "production_all" and
+// "tick_speed" buckets based on eff.Type, not eff.Target), so the Modifier Target
+// is the effect Type. Only the bucket types that feed recalculateRates /
+// recalculateTickSpeed today are emitted; per-resource "production" effects are
+// flat additions handled elsewhere and are not multiplier modifiers.
+func (em *EventManager) Modifiers() []Modifier {
+	var out []Modifier
+	for _, ae := range em.active {
+		src := "event:" + ae.Name
+		if ae.Name == "" {
+			src = "event"
+		}
+		for _, eff := range ae.Effects {
+			switch eff.Type {
+			case "production_all", "tick_speed":
+				out = append(out, Modifier{Source: src, Target: eff.Type, Op: OpAdd, Value: eff.Value})
+			}
+		}
+	}
+	return out
+}
+
 // GetActive returns active events for UI display
 func (em *EventManager) GetActive() []ActiveEventState {
 	var out []ActiveEventState

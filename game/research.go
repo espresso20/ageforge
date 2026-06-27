@@ -188,6 +188,19 @@ func (rm *ResearchManager) GetBonuses() map[string]float64 {
 	return out
 }
 
+// Modifiers emits one OpAdd Modifier per (target, value) in the research bonus
+// map, attributed to Source "research". The targets are the same strings the
+// engine reads today (e.g. "production_all", "<res>_rate", "gather_rate",
+// "tick_speed") — no renaming. Per-tech attribution is deferred; the summed
+// per-target view is golden-equal to the current scattered math.
+func (rm *ResearchManager) Modifiers() []Modifier {
+	out := make([]Modifier, 0, len(rm.bonuses))
+	for t, v := range rm.bonuses {
+		out = append(out, Modifier{Source: "research", Target: t, Op: OpAdd, Value: v})
+	}
+	return out
+}
+
 // Snapshot returns research state for UI
 func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) ResearchState {
 	techs := make(map[string]TechState)
