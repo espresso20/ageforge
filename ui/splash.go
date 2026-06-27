@@ -57,10 +57,14 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 		app.SetFocus(page)
 	})
 	mainList.AddItem("  ✦  New Game", "", 'n', func() {
-		nav(func() {
-			engine.Reset()
-			pages.SwitchToPage("dashboard")
-			go engine.Start()
+		// Prompt for a civilization name first; only start the game on confirm.
+		// Cancel returns to the splash with the canvas still animating.
+		showNewGameNameModal(app, pages, mainList, func(name string) {
+			nav(func() {
+				engine.StartNewNamedGame(name)
+				pages.SwitchToPage("dashboard")
+				go engine.Start()
+			})
 		})
 	})
 	mainList.AddItem("  ✗  Quit", "", 'q', func() {

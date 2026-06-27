@@ -427,6 +427,51 @@ func TestParentNameRoundTrips(t *testing.T) {
 	}
 }
 
+func TestStartNewNamedGame(t *testing.T) {
+	name := "Test Realm"
+	t.Cleanup(func() { _ = os.Remove(savePath(name)) })
+
+	ge := NewGameEngine()
+	if err := ge.StartNewNamedGame(name); err != nil {
+		t.Fatalf("StartNewNamedGame(%q) failed: %v", name, err)
+	}
+
+	if got := ge.ActiveSaveName(); got != name {
+		t.Errorf("ActiveSaveName() = %q, want %q", got, name)
+	}
+	if got := ge.ActiveParentName(); got != "" {
+		t.Errorf("ActiveParentName() = %q, want \"\" (root)", got)
+	}
+	if !SaveExists(name) {
+		t.Fatalf("save %q not found after StartNewNamedGame", name)
+	}
+
+	// The written file must load back into a fresh engine as that named root save.
+	loaded := NewGameEngine()
+	if err := loaded.LoadGame(name); err != nil {
+		t.Fatalf("LoadGame(%q) failed: %v", name, err)
+	}
+	if got := loaded.ActiveSaveName(); got != name {
+		t.Errorf("after load, ActiveSaveName() = %q, want %q", got, name)
+	}
+	if got := loaded.ActiveParentName(); got != "" {
+		t.Errorf("after load, ActiveParentName() = %q, want \"\" (root)", got)
+	}
+}
+
+func TestActiveParentNameSetter(t *testing.T) {
+	// A fresh engine is a lineage root → empty parent.
+	ge := NewGameEngine()
+	if got := ge.ActiveParentName(); got != "" {
+		t.Errorf("fresh ActiveParentName() = %q, want \"\"", got)
+	}
+	// Setter/getter round-trip.
+	ge.SetActiveParentName("Ancestor Realm")
+	if got := ge.ActiveParentName(); got != "Ancestor Realm" {
+		t.Errorf("after SetActiveParentName, ActiveParentName() = %q, want %q", got, "Ancestor Realm")
+	}
+}
+
 func TestLegacySaveHasNoParentName(t *testing.T) {
 	// A legacy-style save written without parent_name must load as a root ("").
 	name := "test_lineage_legacy"
