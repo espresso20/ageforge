@@ -1616,12 +1616,16 @@ func (ge *GameEngine) eventModifiers() []Modifier {
 }
 
 // moraleModifiers contributes the morale factor as a single OpMul on
-// "production_all". This reproduces the engine's `rate × morale × (1 + Σ
-// production_all adds)` because Resolver.Total(production_all) evaluates to
-// (1 + Σ OpAdd) × Π OpMul = (1 + adds) × morale. The raw ge.morale field is the
-// multiplier (not a separate moraleMultiplier method — none exists).
+// "production_all". This reproduces the engine's `rate × moraleMultiplier() ×
+// (1 + Σ production_all adds)` because Resolver.Total(production_all) evaluates
+// to (1 + Σ OpAdd) × Π OpMul = (1 + adds) × moraleMultiplier().
+//
+// The multiplier is the BANDED curve moraleMultiplier(), not the raw ge.morale
+// field: recalculateRates applies `rate × moraleMultiplier()` (1.0 across the
+// neutral band, bonus above, penalty below), so the modifier must emit the same
+// banded factor to stay equal to the live math.
 func (ge *GameEngine) moraleModifiers() []Modifier {
-	return []Modifier{{Source: "morale", Target: "production_all", Op: OpMul, Value: ge.morale}}
+	return []Modifier{{Source: "morale", Target: "production_all", Op: OpMul, Value: ge.moraleMultiplier()}}
 }
 
 // buildResolver constructs a fresh Resolver from every bonus source and returns

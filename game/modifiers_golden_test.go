@@ -16,9 +16,9 @@ import (
 // Modifier code. It independently re-derives the multiplier the engine applies
 // today, reading the same source getters the engine reads (Research.GetBonuses,
 // Prestige.GetBonuses, getWonderBonuses, permanentBonuses, Events.GetActiveEffects,
-// ge.morale) and applying the same fixed formula + gates. So an equal result
-// means two genuinely different code paths agree — not a tautology. If the
-// resolver and the live math diverge, this test fails. That is its whole job.
+// moraleMultiplier) and applying the same fixed formula + gates. So an equal
+// result means two genuinely different code paths agree — not a tautology. If
+// the resolver and the live math diverge, this test fails. That is its whole job.
 
 const goldenEps = 1e-9
 
@@ -28,10 +28,15 @@ const goldenEps = 1e-9
 //	prodAllAdd = research[production_all] + permanent[production_all]
 //	           + prestige[production_all] + wonders[production_all]
 //	           + Σ active-event production_all effects
-//	factor     = morale × (prodAllAdd > 0 ? (1 + prodAllAdd) : 1)
+//	factor     = moraleMultiplier() × (prodAllAdd > 0 ? (1 + prodAllAdd) : 1)
 //
-// Morale is applied unconditionally to the building rate (line ~783); the
-// production_all multiply is gated on prodAllAdd > 0 (line ~826).
+// The morale factor is the BANDED multiplier moraleMultiplier(), applied
+// unconditionally to the building rate (recalculateRates hoists it as
+// `mMult := ge.moraleMultiplier()`, then `rate × mMult`). It is NOT the raw
+// ge.morale field: post-rework morale is a managed resource (neutral 0.50)
+// whose production effect is the banded curve — 1.0 across [0.25,0.75], a bonus
+// to +20% above, a penalty toward ×0.5 below. The production_all additive
+// multiply is still gated on prodAllAdd > 0.
 func expectedProductionAll(ge *GameEngine) float64 {
 	research := ge.Research.GetBonuses()
 	prestige := ge.Prestige.GetBonuses()
@@ -45,7 +50,7 @@ func expectedProductionAll(ge *GameEngine) float64 {
 		}
 	}
 
-	factor := ge.morale
+	factor := ge.moraleMultiplier()
 	if add > 0 {
 		factor *= 1.0 + add
 	}
@@ -106,8 +111,8 @@ func expectedTickSpeed(ge *GameEngine) float64 {
 // assertResolverGolden checks every target the resolver should reproduce against
 // the independently-derived expected value. Note: production_all is the special
 // case — the resolver's Total folds the OpMul morale factor in, so it equals the
-// engine's net (morale × prodall) factor, which is what we compare against. The
-// other targets are gated-additive on both sides.
+// engine's net (moraleMultiplier() × prodall) factor, which is what we compare
+// against. The other targets are gated-additive on both sides.
 func assertResolverGolden(t *testing.T, ge *GameEngine, resCheck string, gather bool) {
 	t.Helper()
 	r := ge.buildResolver()
@@ -201,21 +206,27 @@ func TestResolverGolden_ActiveEventTickSpeed(t *testing.T) {
 func TestResolverGolden_MoraleHigh(t *testing.T) {
 	ge := NewGameEngine()
 	ge.Research.bonuses["production_all"] = 0.20
-	ge.morale = 1.18 // high band; production_all Total must include ×1.18
+	// High band: morale > moraleNeutralHigh (0.75) → moraleMultiplier ramps the
+	// bonus in. At cap 1.0 this saturates to ×1.20; production_all Total must
+	// include the banded bonus factor, not the raw 0.90 morale field.
+	ge.morale = 0.90
 	assertResolverGolden(t, ge, "wood", true)
 }
 
 func TestResolverGolden_MoraleNeutral(t *testing.T) {
 	ge := NewGameEngine()
 	ge.Research.bonuses["production_all"] = 0.20
-	ge.morale = 1.0
+	// Neutral band [0.25, 0.75] → moraleMultiplier exactly 1.0.
+	ge.morale = moraleNeutral // 0.50
 	assertResolverGolden(t, ge, "wood", true)
 }
 
 func TestResolverGolden_MoraleLow(t *testing.T) {
 	ge := NewGameEngine()
 	ge.Research.bonuses["production_all"] = 0.20
-	ge.morale = 0.35 // low band; production_all Total must drop to morale×(1+adds)
+	// Low band: morale < moraleNeutralLow (0.25) → moraleMultiplier penalty.
+	// production_all Total must drop to moraleMultiplier()×(1+adds), well below 1.
+	ge.morale = 0.15
 	assertResolverGolden(t, ge, "wood", true)
 }
 
@@ -244,7 +255,7 @@ func TestResolverGolden_AllSourcesStacked(t *testing.T) {
 			{Type: "tick_speed", Value: 0.15},
 		},
 	})
-	ge.morale = 1.12
+	ge.morale = 0.85 // high band → moraleMultiplier applies a banded bonus
 	assertResolverGolden(t, ge, "iron", true)
 }
 
@@ -256,10 +267,10 @@ func TestResolverGolden_AllSourcesStacked(t *testing.T) {
 func TestResolverGolden_IsRealCheck(t *testing.T) {
 	ge := NewGameEngine()
 	ge.Research.bonuses["production_all"] = 0.25
-	ge.morale = 1.10
+	ge.morale = 0.90 // high band → moraleMultiplier() saturates to ×1.20 at cap 1.0
 
 	got := ge.buildResolver().Total("production_all")
-	correct := expectedProductionAll(ge) // 1.10 × 1.25 = 1.375
+	correct := expectedProductionAll(ge) // moraleMultiplier() × 1.25 = 1.20 × 1.25 = 1.50
 	wrong := correct + 0.5
 
 	if math.Abs(got-correct) > goldenEps {
