@@ -6,7 +6,8 @@ Faith is a resource that accumulates from Faith lineage buildings and faith-doma
 
 ## Why Faith Matters
 
-1. **Epoch Roll Odds** — The only mechanical effect of faith. Faith % directly determines your chances of getting a good (vs bad) event at each epoch transition.
+1. **Epoch Roll Odds** — Faith % directly determines your chances of getting a good (vs bad) event at each epoch transition.
+2. **Worker Morale** — Producing faith now also lifts worker [morale](morale.md). An active faith economy keeps spirits up: a small morale lift each tick scales with your faith **production rate** (faith/tick), not your stored faith. The per-tick lift is **capped**, so even a late-game faith firehose can't peg morale in one step — but a steady faith income is a passive, ongoing morale source on top of the epoch odds.
 
 ---
 

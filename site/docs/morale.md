@@ -63,6 +63,7 @@ In short: neutral is the resting state. You have to spend effort to live above i
 | Source | Effect |
 |--------|--------|
 | **Morale-restoring buildings** | The main lever. Worship buildings (shrines, temples, and their later-age equivalents) and culture/entertainment buildings lift morale **each tick just by existing** — no workers required. |
+| **Faith production rate** | An active faith economy keeps spirits up. A small morale lift scales with your **faith produced per tick** (your faith *rate*, not your stored faith), so the more faith you are actively generating, the higher it nudges morale. The per-tick lift is **capped**, so a late-game faith firehose can't peg morale in a single step. |
 | **Good events** | A favourable event lifts morale. |
 | **Advancing to a new age** | Reaching a new age gives a one-time morale boost. |
 
