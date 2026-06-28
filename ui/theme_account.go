@@ -33,6 +33,16 @@ const themeUnavailableMsg = "that theme isn't unlocked yet"
 // until an account exists to own the unlock. Since every theme shipped today is
 // Accessible or Forge, this returns true for all of them now.
 func themeAvailable(acct *game.Account, t theme.Theme) bool {
+	// Dev affordance: with the developer console active (Ctrl+K passphrase),
+	// every theme is unlocked for preview — the picker drops the 🔒, `theme
+	// <key>` accepts any theme, and nothing is written to the account's unlock
+	// set. It self-kills the moment dev mode is off (gating returns), matching
+	// /god's spirit. Active-theme persistence still applies; if a dev-previewed
+	// flavor theme is left active and dev mode is later off, applyAccountTheme
+	// falls back to Forge (it's no longer available) — by design.
+	if game.DevModeActive {
+		return true
+	}
 	if t.Accessible || t.Key == theme.DefaultKey {
 		return true
 	}

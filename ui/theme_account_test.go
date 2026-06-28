@@ -182,3 +182,29 @@ func TestThemeAvailableGate(t *testing.T) {
 		t.Error("a flavor theme should be available once the account unlocks it")
 	}
 }
+
+// TestThemeAvailableGate_DevBypass verifies the developer-console affordance:
+// while game.DevModeActive is set, every theme is available (for preview),
+// including a locked flavor theme on an account that has not unlocked it; and
+// the bypass disappears the moment dev mode is off.
+func TestThemeAvailableGate_DevBypass(t *testing.T) {
+	prev := game.DevModeActive
+	t.Cleanup(func() { game.DevModeActive = prev })
+
+	locked := theme.Theme{Key: "fake_locked_flavor", Name: "Fake", Accessible: false}
+
+	game.DevModeActive = false
+	if themeAvailable(nil, locked) {
+		t.Fatal("precondition: locked theme must be gated when dev mode is off")
+	}
+
+	game.DevModeActive = true
+	if !themeAvailable(nil, locked) {
+		t.Error("dev mode should unlock every theme for preview, even accountless")
+	}
+
+	game.DevModeActive = false
+	if themeAvailable(nil, locked) {
+		t.Error("the dev bypass must vanish once dev mode is off")
+	}
+}
