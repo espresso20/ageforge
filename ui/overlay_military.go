@@ -68,34 +68,11 @@ func militaryProvider(state game.GameState, _ int) string {
 		sb.WriteString(" [gray]Reach Bronze Age and recruit soldiers[-]\n")
 		sb.WriteString(" [gray]to unlock expeditions.[-]\n")
 	} else {
-		for _, exp := range mil.Expeditions {
-			statusIcon := "[red]▸[-]"
-			if exp.CanLaunch {
-				statusIcon = "[green]▸[-]"
-			}
-
-			diffColor := "green"
-			if exp.Difficulty > 0.5 {
-				diffColor = "red"
-			} else if exp.Difficulty > 0.3 {
-				diffColor = "yellow"
-			}
-
-			fmt.Fprintf(&sb, " %s [cyan]%s[-]\n", statusIcon, exp.Name)
-			fmt.Fprintf(&sb, "   [gray]%s[-]\n", exp.Description)
-			fmt.Fprintf(&sb, "   Soldiers: %d  Duration: %d ticks  Difficulty: [%s]%.0f%%[-]\n",
-				exp.SoldiersNeeded, exp.Duration, diffColor, exp.Difficulty*100)
-			if cost := formatExpeditionCost(exp.Cost); cost != "" {
-				fmt.Fprintf(&sb, "   Cost: %s\n", cost)
-			}
-
-			if exp.CanLaunch {
-				fmt.Fprintf(&sb, "   [green]expedition %s[-]\n", exp.Key)
-			} else {
-				fmt.Fprintf(&sb, "   [red]%s[-]\n", exp.LaunchBlockReason)
-			}
-			sb.WriteString("\n")
-		}
+		// Group available expeditions by category: Scouting first (resource cost,
+		// no soldiers, available early), then Military Campaigns (cost soldiers).
+		// A subsection header is omitted when it has no available entries.
+		writeExpeditionGroup(&sb, "Scouting", mil.Expeditions, game.ExpeditionScouting)
+		writeExpeditionGroup(&sb, "Military Campaigns", mil.Expeditions, game.ExpeditionMilitary)
 	}
 
 	// === Loot History ===
@@ -119,6 +96,49 @@ func militaryProvider(state game.GameState, _ int) string {
 	sb.WriteString("\n [gray]Commands: expedition <key>[-]\n")
 
 	return sb.String()
+}
+
+// writeExpeditionGroup renders the subset of exps matching category under a
+// labeled header (e.g. "Scouting"). If no expedition matches, nothing is
+// written — the header is omitted for empty subsections.
+func writeExpeditionGroup(sb *strings.Builder, label string, exps []game.ExpeditionInfo, category string) {
+	first := true
+	for _, exp := range exps {
+		if exp.Category != category {
+			continue
+		}
+		if first {
+			fmt.Fprintf(sb, " [yellow]── %s ──[-]\n\n", label)
+			first = false
+		}
+
+		statusIcon := "[red]▸[-]"
+		if exp.CanLaunch {
+			statusIcon = "[green]▸[-]"
+		}
+
+		diffColor := "green"
+		if exp.Difficulty > 0.5 {
+			diffColor = "red"
+		} else if exp.Difficulty > 0.3 {
+			diffColor = "yellow"
+		}
+
+		fmt.Fprintf(sb, " %s [cyan]%s[-]\n", statusIcon, exp.Name)
+		fmt.Fprintf(sb, "   [gray]%s[-]\n", exp.Description)
+		fmt.Fprintf(sb, "   Soldiers: %d  Duration: %d ticks  Difficulty: [%s]%.0f%%[-]\n",
+			exp.SoldiersNeeded, exp.Duration, diffColor, exp.Difficulty*100)
+		if cost := formatExpeditionCost(exp.Cost); cost != "" {
+			fmt.Fprintf(sb, "   Cost: %s\n", cost)
+		}
+
+		if exp.CanLaunch {
+			fmt.Fprintf(sb, "   [green]expedition %s[-]\n", exp.Key)
+		} else {
+			fmt.Fprintf(sb, "   [red]%s[-]\n", exp.LaunchBlockReason)
+		}
+		sb.WriteString("\n")
+	}
 }
 
 // formatExpeditionCost renders an expedition's resource cost in a readable,

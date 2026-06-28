@@ -90,7 +90,7 @@ expedition scout_ruins
 speed 1.5
 ```
 
-Expeditions **spend the `soldiers` resource** at launch (and sometimes a resource cost too) — the cost is deducted whether the run succeeds or fails; only the reward differs. Before the Iron Age, `scout_party` costs 0 soldiers (just food + wood). Only one expedition can be active at a time. Check the **Military** overlay (`army`) for available expeditions and their soldier costs.
+Expeditions come in two kinds. **Scouting** expeditions (`scout_party`, `scout_ruins`, `naval_expedition`) cost only resources — **0 soldiers** — and are available early, before the `soldiers` resource exists at the Iron Age. **Military campaigns** (everything else) **spend the `soldiers` resource** at launch, plus any resource cost. Either way the cost is deducted whether the run succeeds or fails; only the reward differs, and only one expedition can be active at a time. The **Military** overlay (`army`) groups available expeditions under **Scouting** and **Military Campaigns** headers (display grouping only — the commands above are unchanged).
 
 ---
 
