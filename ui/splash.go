@@ -76,7 +76,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	mainList.AddItem("  ◈  Themes", "", 't', func() {
 		// Opaque full-screen picker, same lifecycle as Load Game — the canvas runs
 		// underneath and is still live when the player returns via Enter/Esc.
-		page := CreateThemePickerPage(app, pages, "splash")
+		page := CreateThemePickerPage(app, pages, engine, "splash")
 		pages.AddPage(themePickerPage, page, true, true)
 		app.SetFocus(page)
 	})
@@ -296,6 +296,10 @@ func showAccountWipeTypeGate(app *tview.Application, pages *tview.Pages, engine 
 				return
 			}
 			engine.SetAccount(newAcct)
+			// A wiped→recreated account starts on its own theme (ActiveTheme "" →
+			// Forge) rather than inheriting the previous account's theme (theming.md
+			// §6). The active theme is process-global, so reset it explicitly here.
+			applyAccountTheme(engine)
 		})
 	}
 

@@ -224,6 +224,19 @@ type UnlockedState struct {
 // runs outside tests.
 var dataDirOverride string
 
+// SetDataDirForTest points the data root (saves/account) at dir and returns a
+// restore func, so tests in OTHER packages (e.g. ui) can isolate the data root the
+// way in-package tests do via dataDirOverride directly. Pass "" to clear. This is a
+// test-only seam — production never calls it; it is exported solely to cross the
+// package boundary. The active theme persists into account.json under this root, so
+// a ui test that exercises SetActiveTheme must call this to avoid clobbering a real
+// ./data/account.json. Usage: defer game.SetDataDirForTest(t.TempDir())().
+func SetDataDirForTest(dir string) (restore func()) {
+	prior := dataDirOverride
+	dataDirOverride = dir
+	return func() { dataDirOverride = prior }
+}
+
 // dataDirectory returns the canonical data root: data/ next to the binary, resolved
 // via os.Executable + EvalSymlinks. Falls back to a CWD-relative "data" if the
 // binary path cannot be determined. Saves, accounts, and (eventually) logs share

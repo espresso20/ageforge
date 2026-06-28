@@ -38,6 +38,14 @@ func NewApp(engine *game.GameEngine, version string) *App {
 }
 
 func (a *App) setup() {
+	// Apply the account's persisted active theme (theming.md §6) before any widget
+	// is built, so the splash and every theme.Track closure in the page constructors
+	// below render in the chosen theme on the very first Draw. applyAccountTheme is
+	// fully defensive: no engine/account, an empty stored key, or an unknown/locked
+	// one all fall back to the default (Forge). NewApp already pinned Forge as a
+	// floor; this layers the account's choice on top once the engine is in place.
+	applyAccountTheme(a.engine)
+
 	a.dashboard = NewDashboard(a.tviewApp, a.engine, a.pages)
 
 	splash := CreateSplashPage(a.tviewApp, a.pages, a.engine, a.version)
@@ -61,6 +69,10 @@ func (a *App) setup() {
 				return
 			}
 			a.engine.SetAccount(newAcct)
+			// A brand-new account starts on its own theme (ActiveTheme "" → Forge)
+			// rather than inheriting whatever was previewed before it was installed
+			// (theming.md §6). Re-resolve from the freshly-wired account.
+			applyAccountTheme(a.engine)
 		})
 	}
 }

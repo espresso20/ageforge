@@ -29,7 +29,7 @@ func TestCmdThemeListShowsAllThemes(t *testing.T) {
 		t.Fatalf("setup SetActive(%q) failed: %v", theme.DefaultKey, err)
 	}
 
-	res := cmdTheme([]string{"list"})
+	res := cmdTheme([]string{"list"}, nil)
 	if res.Type == "error" {
 		t.Fatalf("theme list returned an error: %q", res.Message)
 	}
@@ -51,7 +51,7 @@ func TestCmdThemeListShowsAllThemes(t *testing.T) {
 func TestCmdThemeBareIsInfoNotError(t *testing.T) {
 	// Bare `theme` (no args) directs the player rather than erroring — the
 	// interactive picker is opened by the dashboard intercept, not this path.
-	res := cmdTheme(nil)
+	res := cmdTheme(nil, nil)
 	if res.Type == "error" {
 		t.Errorf("bare theme should not be an error, got %q: %q", res.Type, res.Message)
 	}
@@ -65,7 +65,7 @@ func TestCmdThemeValidKeySwitchesActive(t *testing.T) {
 		t.Fatalf("test precondition: theme %q not registered", target)
 	}
 
-	res := cmdTheme([]string{target})
+	res := cmdTheme([]string{target}, nil)
 	if res.Type != "success" {
 		t.Errorf("theme %s should succeed, got %q: %q", target, res.Type, res.Message)
 	}
@@ -83,7 +83,7 @@ func TestCmdThemeBadKeyIsErrorAndDoesNotSwitch(t *testing.T) {
 	}
 	before := theme.Active().Key
 
-	res := cmdTheme([]string{"no_such_theme_xyz"})
+	res := cmdTheme([]string{"no_such_theme_xyz"}, nil)
 	if res.Type != "error" {
 		t.Errorf("unknown theme should be an error, got %q: %q", res.Type, res.Message)
 	}
@@ -155,18 +155,24 @@ func TestThemeDetailShowsAccessibleNoteAndGlyphs(t *testing.T) {
 
 func TestThemeRowLabelMarksActive(t *testing.T) {
 	forge, _ := theme.ByKey("forge")
-	// Marked when it's the active (open-time) theme.
-	if got := themeRowLabel(forge, "forge"); !strings.Contains(got, "current") {
+	// Marked when it's the active (open-time) theme. All shipped themes are
+	// available today, so pass available=true.
+	if got := themeRowLabel(forge, "forge", true); !strings.Contains(got, "current") {
 		t.Errorf("themeRowLabel for active theme should mark (current)\ngot: %q", got)
 	}
 	// Not marked when a different theme is active.
-	if got := themeRowLabel(forge, "high_contrast"); strings.Contains(got, "current") {
+	if got := themeRowLabel(forge, "high_contrast", true); strings.Contains(got, "current") {
 		t.Errorf("themeRowLabel for non-active theme should not mark current\ngot: %q", got)
 	}
 	// Accessible themes carry the accessible tag.
 	deut, _ := theme.ByKey("deuteranopia")
-	if got := themeRowLabel(deut, "forge"); !strings.Contains(got, "accessible") {
+	if got := themeRowLabel(deut, "forge", true); !strings.Contains(got, "accessible") {
 		t.Errorf("themeRowLabel for accessible theme should tag it\ngot: %q", got)
+	}
+	// An unavailable theme carries the locked marker (Phase-3 path; simulated here
+	// by passing available=false).
+	if got := themeRowLabel(forge, "forge", false); !strings.Contains(got, "locked") {
+		t.Errorf("themeRowLabel for unavailable theme should mark it locked\ngot: %q", got)
 	}
 }
 
@@ -180,7 +186,8 @@ func TestCreateThemePickerPageRegisters(t *testing.T) {
 	app := tview.NewApplication()
 	pages := tview.NewPages()
 
-	page := CreateThemePickerPage(app, pages, "splash")
+	// nil engine → accountless picker (construction must not require an account).
+	page := CreateThemePickerPage(app, pages, nil, "splash")
 	if page == nil {
 		t.Fatal("CreateThemePickerPage returned nil")
 	}

@@ -251,7 +251,7 @@ Color is never the only signal. Alongside the default **Forge** look, three acce
 - **Deuteranopia-safe** and **Protanopia-safe** — for red-green color vision deficiency. Because AgeForge normally uses **green for gains and red for losses**, these themes drop that pairing entirely: gains are **blue**, losses are **orange** (the standard colorblind-safe opposition), and `▲`/`▼` glyphs mark the sign by **shape as well as color** so the direction reads even if the hues don't.
 - **High Contrast** — maximum legibility on near-black, for low-vision players and high-glare terminals. It also keeps the blue/orange + `▲`/`▼` encoding, so it's colorblind-safe too.
 
-Your theme choice applies immediately. (Theme preferences persist per session for now; account-wide persistence lands in a later update.)
+Your theme choice applies immediately and **persists per account** — it is saved with your account (in `account.json`), not with any individual game save, so it carries across every save and every new game, and loading an old save never changes your theme. Switching via the picker (`Enter`) or with `theme <key>` both stick; cancelling the picker with `Esc` reverts and saves nothing.
 
 ---
 

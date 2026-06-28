@@ -118,7 +118,7 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 	case "account", "acct":
 		return cmdAccount(args, engine)
 	case "theme":
-		return cmdTheme(args)
+		return cmdTheme(args, engine)
 	default:
 		return CommandResult{
 			Message: fmt.Sprintf("Unknown command: %s. Type 'help' for commands.", cmd),
@@ -702,6 +702,11 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
 		engine.SetAccount(restored)
+		// Re-resolve the active theme against the now-installed account so the UI
+		// doesn't keep the prior account's theme after an identity swap (theming.md
+		// §6). A recovery code carries identity only, so a fresh restore resolves to
+		// Forge; a restore of an account with a stored theme honors it.
+		applyAccountTheme(engine)
 		return CommandResult{
 			Message: fmt.Sprintf("Identity restored: %s", shortAccountID(restored.AccountID)),
 			Type:    "success",
@@ -854,7 +859,12 @@ func cmdSaveList() CommandResult {
 //
 // theme.SetActive applies the name-remap + restyle; the dashboard redraws on its
 // next tick, so the switch shows up live without an explicit Draw here.
-func cmdTheme(args []string) CommandResult {
+//
+// engine bridges to the account layer (theming.md §6): on a successful switch we
+// persist the new active theme account-wide so a CLI switch survives saves, and the
+// theme is gated through themeAvailable so locked flavor themes (Phase 3) refuse.
+// engine/Account() are nil-guarded — the game must run accountless.
+func cmdTheme(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
 		return CommandResult{
 			Message: "Usage: theme list | theme <key>. Type `theme` from the menu (or open it) for the live picker.",
@@ -873,11 +883,31 @@ func cmdTheme(args []string) CommandResult {
 			Type:    "error",
 		}
 	}
+	// Unlock gate (theming.md §4/§5): refuse a known-but-locked theme. No theme is
+	// locked today (all shipped themes are Accessible/Forge); this is the Phase-3 seam.
+	if !themeAvailable(themeAccount(engine), t) {
+		return CommandResult{Message: themeUnavailableMsg, Type: "error"}
+	}
 	if err := theme.SetActive(t.Key); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
 	}
 	theme.Restyle()
+	// Persist account-wide so a CLI switch survives saves (theming.md §6). Nil-guarded;
+	// the Save error is non-fatal — the theme is already applied, so we report success
+	// regardless rather than rolling back a working visual change over a write hiccup.
+	if acct := themeAccount(engine); acct != nil {
+		_ = acct.SetActiveTheme(t.Key)
+	}
 	return CommandResult{Message: fmt.Sprintf("Theme set: %s", t.Name), Type: "success"}
+}
+
+// themeAccount returns engine's account, or nil when accountless. Mirrors the
+// picker's account() guard so the command + picker share one nil-safe accessor.
+func themeAccount(engine *game.GameEngine) *game.Account {
+	if engine == nil {
+		return nil
+	}
+	return engine.Account()
 }
 
 // cmdThemeList renders the `theme list` output: one line per theme with its name,

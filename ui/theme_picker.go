@@ -7,6 +7,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
+	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -39,6 +40,12 @@ type themePicker struct {
 	app   *tview.Application
 	pages *tview.Pages
 
+	// engine is the bridge to the account layer (theming.md §6). It may be nil
+	// (accountless play / tests); every account touch nil-guards both the engine
+	// and engine.Account(). It also drives the unlock gate (themeAvailable) so
+	// Phase-3 locked flavor themes can't be previewed/confirmed.
+	engine *game.GameEngine
+
 	root   *tview.Flex
 	list   *tview.List
 	detail *tview.TextView
@@ -65,10 +72,15 @@ type themePicker struct {
 // Esc can revert it; Enter keeps the previewed theme.
 //
 // returnPage names the page to return to on confirm (Enter) or cancel (Esc).
-func CreateThemePickerPage(app *tview.Application, pages *tview.Pages, returnPage string) tview.Primitive {
+//
+// engine bridges to the account layer for persistence + unlock gating (theming.md
+// §6); it may be nil for accountless play/tests, in which case confirm simply
+// doesn't persist and every theme in the always-available set stays selectable.
+func CreateThemePickerPage(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, returnPage string) tview.Primitive {
 	p := &themePicker{
 		app:         app,
 		pages:       pages,
+		engine:      engine,
 		returnPage:  returnPage,
 		themes:      theme.All(),
 		originalKey: theme.Active().Key,
@@ -96,7 +108,7 @@ func CreateThemePickerPage(app *tview.Application, pages *tview.Pages, returnPag
 	})
 	p.list.ShowSecondaryText(false)
 	for _, th := range p.themes {
-		p.list.AddItem(themeRowLabel(th, p.originalKey), "", 0, nil)
+		p.list.AddItem(themeRowLabel(th, p.originalKey, themeAvailable(p.account(), th)), "", 0, nil)
 	}
 
 	// ── Detail pane ──────────────────────────────────────────────────────────
@@ -196,13 +208,41 @@ func (p *themePicker) handleKey(event *tcell.EventKey) *tcell.EventKey {
 	return event
 }
 
-// confirm keeps the currently-previewed theme (it is already applied) and returns
-// to the page the picker was opened from.
+// account returns the picker's account, or nil when accountless. Centralizes the
+// engine→account nil-guarding the persist/gate paths share.
+func (p *themePicker) account() *game.Account {
+	if p.engine == nil {
+		return nil
+	}
+	return p.engine.Account()
+}
+
+// confirm keeps the currently-previewed theme and persists it account-wide
+// (theming.md §6). The previewed theme is already applied process-locally via the
+// live preview; here we make it durable.
+//
+// Unlock gate (theming.md §4/§5): if the highlighted theme isn't available to this
+// account (a locked flavor theme — impossible today since all shipped themes are
+// Accessible/Forge), confirming it would be wrong, so we revert to the open-time
+// theme instead of keeping/persisting the locked preview. Preview-on-highlight is
+// still allowed to show it; only Enter is gated.
 func (p *themePicker) confirm() {
-	// Phase 2 seam: persist the chosen theme account-wide here. The theme is
-	// already applied process-locally via the live preview; Phase 2 drops in:
-	//   account.SetActiveTheme(theme.Active().Key)
-	// (account-wide persistence is out of scope for Phase 1c — see theming.md §6).
+	idx := p.list.GetCurrentItem()
+	if idx >= 0 && idx < len(p.themes) {
+		th := p.themes[idx]
+		if !themeAvailable(p.account(), th) {
+			// Locked: don't keep the preview. Fall back to the open-time theme and
+			// don't persist. (No theme is locked today; this is the Phase-3 path.)
+			p.cancel()
+			return
+		}
+		// Persist the chosen theme account-wide. Nil-guarded for accountless play;
+		// the Save error is non-fatal (theme is a preference, not empire state) so we
+		// keep the applied theme regardless and let the account layer log/return it.
+		if acct := p.account(); acct != nil {
+			_ = acct.SetActiveTheme(theme.Active().Key)
+		}
+	}
 	p.close()
 }
 
@@ -228,16 +268,24 @@ func (p *themePicker) close() {
 // ── Pure helpers (formatting) ───────────────────────────────────────────────
 
 // themeRowLabel renders one list row: the theme name, a "(current)" marker on the
-// theme that was active when the picker opened, and an accessible tag if so. The
+// theme that was active when the picker opened, an accessible tag if so, and a
+// "locked" marker when the theme isn't available to this account. The current
 // marker tracks the open-time active theme (not the live preview) so the row stays
 // stable as the player arrows through previews.
-func themeRowLabel(t theme.Theme, activeKey string) string {
+//
+// available routes through themeAvailable (theming.md §4/§5): locked flavor themes
+// still LIST (and can preview on highlight) but are visually marked and refused on
+// confirm. No theme is locked today, so this renders the plain row for all of them.
+func themeRowLabel(t theme.Theme, activeKey string, available bool) string {
 	label := t.Name
 	if t.Key == activeKey {
 		label = "[gold]● " + t.Name + " (current)[-]"
 	}
 	if t.Accessible {
 		label += "   [cyan]accessible[-]"
+	}
+	if !available {
+		label += "   [gray]🔒 locked[-]"
 	}
 	return label
 }
