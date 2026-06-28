@@ -443,6 +443,19 @@ func (ge *GameEngine) Start() {
 					ge.addLog("debug", "Autosave complete")
 					ge.mu.Unlock()
 				}
+
+				// Account lifetime-stats flush (Phase 6): persist any pending
+				// RecordPrestige/RecordAgeReached deltas. MUST be here, outside the
+				// tick write lock — Save does file I/O. Use the locking accessor, not
+				// ge.account directly, since we're outside ge.mu. No-op when not dirty.
+				if acct := ge.Account(); acct != nil {
+					if err := acct.FlushIfDirty(); err != nil {
+						ge.mu.Lock()
+						ge.addLog("warning", fmt.Sprintf("Account flush failed: %v", err))
+						ge.mu.Unlock()
+					}
+				}
+
 				lastAutosave = time.Now()
 			}
 
@@ -653,6 +666,12 @@ func (ge *GameEngine) Stop() {
 		ge.running = false
 		ge.mu.Unlock()
 		close(ge.stopCh)
+		// Flush any pending account lifetime stats on a clean exit so a prestige/age-up
+		// since the last autosave isn't lost (Phase 6). Outside ge.mu — Save does I/O —
+		// and via the locking accessor. No-op when not dirty.
+		if acct := ge.Account(); acct != nil {
+			_ = acct.FlushIfDirty()
+		}
 	})
 }
 
@@ -1294,6 +1313,15 @@ func (ge *GameEngine) advanceAge(newAge string) {
 
 	ge.applyAgeUnlocks(newAge)
 	ge.Stats.RecordAge(newAge)
+
+	// Account lifetime stat (Phase 6): record the highest age reached IN-MEMORY only.
+	// advanceAge holds ge.mu, so RecordAgeReached must not do I/O or re-enter the
+	// engine; the persisting flush runs later in the autosave block (outside ge.mu).
+	// Order comes from the pure config age table (no locks) — the account stays
+	// config-free and ranks ages by this int rather than re-deriving order itself.
+	if ge.account != nil {
+		ge.account.RecordAgeReached(newAge, config.AgeByKey()[newAge].Order)
+	}
 
 	// note: Age-transition carryover model (EPIC: age-pacing economy rebalance).
 	// The old flat-10% reduction still left a huge stockpile (10% of a hoard is
@@ -2691,6 +2719,13 @@ func (ge *GameEngine) DoPrestige() error {
 	}
 	ge.addLog("info", "Type [cyan]help[-] to get started again.")
 
+	// Account lifetime stat (Phase 6): record the prestige IN-MEMORY only — we hold
+	// ge.mu here, so RecordPrestige must not do I/O or re-enter the engine. The write
+	// is deferred to FlushIfDirty in the autosave block (outside ge.mu).
+	if ge.account != nil {
+		ge.account.RecordPrestige()
+	}
+
 	return nil
 }
 
@@ -2916,6 +2951,23 @@ func (ge *GameEngine) GetState() GameState {
 		// re-acquires a lock). All() returns a fresh copy — no shared mutable
 		// state escapes.
 		Modifiers: ge.buildResolver().All(),
+		// Account lifetime stats (Phase 6). We hold ge.mu.RLock here; LifetimeStats
+		// takes the account's OWN mutex (a.mu) — consistent lock order ge.mu → a.mu,
+		// and the Record* writers never hold a.mu while touching ge.mu, so no deadlock.
+		// nil when no account is wired (e.g. headless tests without SetAccount).
+		AccountStats: func() *AccountStatsView {
+			if ge.account == nil {
+				return nil
+			}
+			s, ach := ge.account.LifetimeStats()
+			return &AccountStatsView{
+				TotalPrestiges:       s.TotalPrestiges,
+				HighestAge:           s.HighestAge,
+				CivilizationsStarted: s.CivilizationsStarted,
+				SavesCompleted:       s.SavesCompleted,
+				Achievements:         ach,
+			}
+		}(),
 	}
 }
 

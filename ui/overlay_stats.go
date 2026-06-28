@@ -40,6 +40,41 @@ func statsProvider(state game.GameState, _ int) string {
 		fmt.Fprintf(&sb, "   %-12s %s\n", k, FormatNumber(s.TotalGathered[k]))
 	}
 
+	// ─── Lifetime (Account) ───
+	// Cross-save aggregates persisted on the account (accounts.md §3.3, Phase 6),
+	// distinct from the per-save Statistics above. Renders "—" gracefully when no
+	// account is wired (AccountStats nil) so the overlay never blanks out.
+	sb.WriteString("\n [yellow]── Lifetime (Account) ──[-]\n")
+	if state.AccountStats == nil {
+		sb.WriteString(" [gray]No account loaded[-]\n")
+	} else {
+		as := state.AccountStats
+		fmt.Fprintf(&sb, " [gold]Total Prestiges:[-]   %d\n", as.TotalPrestiges)
+
+		highestAge := "—"
+		if as.HighestAge != "" {
+			highestAge = as.HighestAge
+			if def, ok := config.AgeByKey()[as.HighestAge]; ok {
+				highestAge = def.Name
+			}
+		}
+		fmt.Fprintf(&sb, " [gold]Highest Age Ever:[-]  %s\n", highestAge)
+
+		sb.WriteString(" [gold]Achievements:[-]\n")
+		if len(as.Achievements) == 0 {
+			sb.WriteString("   [gray]None unlocked yet[-]\n")
+		} else {
+			names := make([]string, 0, len(as.Achievements))
+			for _, key := range as.Achievements {
+				names = append(names, game.AchievementName(key))
+			}
+			sort.Strings(names)
+			for _, name := range names {
+				fmt.Fprintf(&sb, "   [green]★[-] %s\n", name)
+			}
+		}
+	}
+
 	// Epoch & Legacy section
 	sb.WriteString("\n [yellow]── Epoch & Legacy ──[-]\n")
 

@@ -67,6 +67,24 @@ type GameState struct {
 	// the engine uses for its rates, so the panel can never drift from the
 	// math. Populated in GetState(); not stored in save JSON.
 	Modifiers []Modifier `json:"-"`
+	// AccountStats carries the account-wide LIFETIME (cross-save) stats and
+	// achievements for the Stats overlay (accounts.md §3.3, Phase 6). nil when
+	// no account is wired (e.g. tests that build an engine without SetAccount).
+	// Distinct from Stats above, which is the per-save ge.Stats snapshot.
+	// Populated in GetState() from ge.account.LifetimeStats(); not in save JSON.
+	AccountStats *AccountStatsView `json:"-"`
+}
+
+// AccountStatsView is the read-only UI projection of the account's lifetime stats
+// and achievements (accounts.md §3.3 / Phase 6). It is a copy — the account never
+// hands the UI its mutable backing slices. Achievements holds unlocked keys; the UI
+// resolves human names via game.AchievementName.
+type AccountStatsView struct {
+	TotalPrestiges       int
+	HighestAge           string
+	CivilizationsStarted int
+	SavesCompleted       int
+	Achievements         []string
 }
 
 // AgeAdvanceSummary holds data about what changed during an age advance transition.
