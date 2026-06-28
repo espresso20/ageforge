@@ -211,9 +211,10 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 		return filterPrefix(saveNames(), partial, prefix)
 
 	case "account", "acct":
-		// Only subcommand is "recover"; recover's <code> arg isn't enumerable.
+		// Subcommands: recover (code arg not enumerable), export/import (path args
+		// not enumerable here).
 		if len(completed) == 0 {
-			return filterPrefix([]string{"recover"}, partial, prefix)
+			return filterPrefix([]string{"recover", "export", "import"}, partial, prefix)
 		}
 
 	case "catastrophe", "cat":

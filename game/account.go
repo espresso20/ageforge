@@ -515,3 +515,162 @@ func ImportRecoveryCode(code string) (*Account, error) {
 	}
 	return acct, nil
 }
+
+// --- Progress export / import (DATA backup, accounts.md §3.6 / §8 / §9 Phase 5) ---
+//
+// Distinct from the recovery code: the recovery code carries IDENTITY only (account
+// id), while an export carries PROGRESS only (unlocks, lifetime stats, achievements,
+// prefs) and NO identity. With no server, DATA cannot be reconstituted from nothing,
+// so export is the explicit one-action backup of earned progress (accounts.md §3.6).
+//
+// DEVIATION from accounts.md §8: the doc sketches a package-level `ImportProgress(blob,
+// merge)`. We implement ImportProgress as a METHOD on the live *Account instead. The
+// engine holds this exact pointer (SetAccount, Phase 2), so mutating in place + Save
+// makes engine.Account() reflect the import immediately, with no re-wiring. A package
+// function would mint a new Account the engine never sees. The export side matches the
+// doc's `(a *Account) ExportProgress()` signature as written.
+
+// progressExport is the self-describing on-disk shape of an export blob: a format
+// version, the DATA fields ONLY (no AccountID / identity), and an HMAC signature over
+// the sig-zeroed payload (same scheme as Account.Save — reuse, don't reinvent). The
+// stats/achievements fields ride along now so Phase 6 data exports without a format bump.
+type progressExport struct {
+	Version      int            `json:"version"`
+	Unlocks      AccountUnlocks `json:"unlocks,omitempty"`
+	Stats        AccountStats   `json:"stats,omitempty"`
+	Achievements []string       `json:"achievements,omitempty"`
+	Prefs        AccountPrefs   `json:"prefs,omitempty"`
+	Signature    string         `json:"_sig,omitempty"`
+}
+
+// signProgressExport returns the HMAC-SHA256 hex of the export payload with Signature
+// zeroed, under saveHMACKey — identical construction to signAccount/signSave.
+func signProgressExport(p *progressExport) string {
+	payload := progressExport{
+		Version:      p.Version,
+		Unlocks:      p.Unlocks,
+		Stats:        p.Stats,
+		Achievements: p.Achievements,
+		Prefs:        p.Prefs,
+		// Signature deliberately zero.
+	}
+	data, _ := json.Marshal(&payload)
+	return hmacSign(data, saveHMACKey)
+}
+
+// ExportProgress builds a signed export blob carrying this account's DATA only —
+// unlocks, lifetime stats, achievements, prefs — and NOT its identity (accounts.md
+// §3.6). It signs the blob with the shared HMAC helper (same zero-sig-then-marshal
+// pattern as Save) and returns pretty JSON bytes the caller writes to a file/clipboard.
+func (a *Account) ExportProgress() ([]byte, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	exp := progressExport{
+		Version:      accountSchemaVersion,
+		Unlocks:      a.Unlocks,
+		Stats:        a.Stats,
+		Achievements: a.Achievements,
+		Prefs:        a.Prefs,
+	}
+	exp.Signature = signProgressExport(&exp)
+
+	data, err := json.MarshalIndent(&exp, "", "  ")
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal progress export: %w", err)
+	}
+	return data, nil
+}
+
+// ImportProgress unmarshals and verifies a progress export blob, then folds its DATA
+// into the live account and persists it (accounts.md §3.6). It NEVER touches identity
+// (AccountID/DisplayName/Created) — that is the recovery code's job.
+//
+// The signature is verified first: a recomputed HMAC over the sig-zeroed payload must
+// match the blob's _sig, otherwise the blob is corrupt or tampered and we return an
+// error WITHOUT mutating the account — we never import data that failed integrity.
+//
+// merge == true (the safe default): UNION the data into the current account —
+//   - unlocked themes: union (never drop a theme the local account already has; add
+//     any the blob carries) — so import(merge) restores wiped unlocks AND does not drop
+//     newer local unlocks the backup predates.
+//   - achievements: union.
+//   - lifetime stats: take the MAX per numeric stat (lifetime bests never regress);
+//     HighestAge keeps the local value unless empty, then adopts the blob's.
+//   - active theme: keep the local one if set, else adopt the blob's.
+//
+// merge == false: REPLACE the DATA fields wholesale with the blob's.
+//
+// Either way it Saves through the normal signed atomic path. Because the engine holds
+// this exact *Account, the import is visible via engine.Account() immediately.
+func (a *Account) ImportProgress(blob []byte, merge bool) error {
+	var exp progressExport
+	if err := json.Unmarshal(blob, &exp); err != nil {
+		return fmt.Errorf("invalid or corrupt progress export: %w", err)
+	}
+	// Verify integrity BEFORE mutating anything. An unsigned blob is rejected here
+	// (unlike account.json's benign-unsigned-legacy rule): an export is always written
+	// signed by ExportProgress, so a missing/empty sig means it was not produced by us.
+	if !hmac.Equal([]byte(exp.Signature), []byte(signProgressExport(&exp))) {
+		return fmt.Errorf("invalid or corrupt progress export (signature mismatch)")
+	}
+
+	a.mu.Lock()
+	defer a.mu.Unlock()
+
+	if !merge {
+		// Wholesale replace of the DATA fields; identity is left untouched.
+		a.Unlocks = exp.Unlocks
+		a.Stats = exp.Stats
+		a.Achievements = append([]string(nil), exp.Achievements...)
+		a.Prefs = exp.Prefs
+		return a.Save()
+	}
+
+	// Merge: union themes (preserve local, add blob's).
+	a.Unlocks.Themes = unionStrings(a.Unlocks.Themes, exp.Unlocks.Themes)
+	// Union achievements.
+	a.Achievements = unionStrings(a.Achievements, exp.Achievements)
+	// Max each numeric lifetime stat — bests don't regress.
+	a.Stats.TotalPrestiges = maxInt(a.Stats.TotalPrestiges, exp.Stats.TotalPrestiges)
+	a.Stats.CivilizationsStarted = maxInt(a.Stats.CivilizationsStarted, exp.Stats.CivilizationsStarted)
+	a.Stats.SavesCompleted = maxInt(a.Stats.SavesCompleted, exp.Stats.SavesCompleted)
+	// HighestAge is a key, not a number: keep local unless empty, then adopt blob's.
+	if a.Stats.HighestAge == "" {
+		a.Stats.HighestAge = exp.Stats.HighestAge
+	}
+	// Active theme: keep local if set, else adopt the blob's.
+	if a.Prefs.ActiveTheme == "" {
+		a.Prefs.ActiveTheme = exp.Prefs.ActiveTheme
+	}
+	return a.Save()
+}
+
+// unionStrings returns the set union of a and b in a fresh slice, preserving a's order
+// then appending any of b not already present. Used to merge themes/achievements so an
+// import never drops an entry either side already holds.
+func unionStrings(a, b []string) []string {
+	seen := make(map[string]bool, len(a)+len(b))
+	out := make([]string, 0, len(a)+len(b))
+	for _, s := range a {
+		if !seen[s] {
+			seen[s] = true
+			out = append(out, s)
+		}
+	}
+	for _, s := range b {
+		if !seen[s] {
+			seen[s] = true
+			out = append(out, s)
+		}
+	}
+	return out
+}
+
+// maxInt returns the larger of a and b.
+func maxInt(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}

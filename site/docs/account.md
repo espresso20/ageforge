@@ -17,7 +17,7 @@ The account holds two distinct things:
 | **Identity** | A stable account ID, and optionally a display name |
 | **Data** | Your earned meta-progression — theme unlocks, lifetime stats, achievements |
 
-The split matters, because the two halves are recovered very differently (see below). The **data** side is still being built out — lifetime stats and unlocks are tracked, but exporting and importing your progress between machines is **coming in a later update**.
+The split matters, because the two halves are recovered very differently (see below). The recovery code carries your **identity**; the **data** is backed up separately with **progress export** (see [Backing up your progress](#backing-up-your-progress)).
 
 ---
 
@@ -55,7 +55,61 @@ This is the part to read carefully.
 
 The recovery code restores your **identity** across machines and reinstalls. It does **not** restore your earned progress, because that progress is separate **data** — and the code is small precisely because it carries identity, not data.
 
-To carry your progress between machines you'll back it up via **progress export**, which is **coming in a later update**. Until then, progress lives only in `./data/` on the machine that earned it.
+To carry your progress between machines, back it up via **progress export** — see the next section.
+
+---
+
+## Backing up your progress
+
+Your account has **two backups, and they do different jobs**:
+
+| Backup | What it carries | How to keep it |
+|---|---|---|
+| **Recovery code** | Identity only (your account ID) | Write down the short `AGEF-…` string |
+| **Progress export** | Data only (theme unlocks, lifetime stats, achievements, prefs) | Save the export file somewhere safe |
+
+They are deliberately separate. The code is small because it carries identity, not data; the export grows with your progress because it carries your earned data, not identity. Neither one replaces the other — a full transfer to a new machine uses **both**.
+
+### Exporting
+
+Run:
+
+```
+account export
+```
+
+This writes a signed `account-export.json` next to your account file (under `./data/`). To choose your own location, pass a path:
+
+```
+account export /path/to/my-ageforge-backup.json
+```
+
+Export after any big unlock. It's a one-shot snapshot — it does **not** auto-update as you keep playing, so re-export when you've earned something you'd hate to lose.
+
+### Importing
+
+On the same or a new machine, restore from a backup file:
+
+```
+account import /path/to/my-ageforge-backup.json
+```
+
+By default this **merges** the backup into your current account, which is the safe choice:
+
+- **Theme unlocks** are unioned — importing an old backup never *removes* a theme you've unlocked since.
+- **Achievements** are unioned.
+- **Lifetime stats** take the higher of the two values, so your bests never regress.
+- **Active theme** keeps your current choice if you have one, otherwise adopts the backup's.
+
+To overwrite your current progress wholesale with the backup instead, add `replace`:
+
+```
+account import /path/to/my-ageforge-backup.json replace
+```
+
+If the file is missing or has been tampered with, the import is rejected with a clear error and your account is left unchanged — corrupt data never gets imported.
+
+> **No server, so no magic.** Progress recovery only works if you exported it first. The recovery code resurrects who you are; the export resurrects what you've done. If a machine's `./data/` is gone and you never exported, that progress is gone too — there's no cloud copy to pull back.
 
 ---
 
