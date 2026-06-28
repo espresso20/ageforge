@@ -8,7 +8,7 @@ The military system is one of AgeForge's primary engines of wealth. Soldiers def
 
 The military system does four things:
 
-- **Expeditions** — spend stockpiled soldiers on timed missions that return resources, gold, and knowledge on success.
+- **Campaigns** — spend stockpiled soldiers on timed military missions that return resources, gold, and knowledge on success (waged with `campaign <key>`). Soldier-free **scouting expeditions** (`expedition <key>`) cover the same ground without troops — see [§4](#4-expeditions).
 - **Defense rating** — a passive stat derived from soldier count and military bonuses that reduces damage from hostile epoch events.
 - **Milestones** — five military milestones grant permanent `military_power` bonuses and chain into a title reward.
 - **Prestige** — prestige upgrades `military_power` and `expedition_loot` carry over through resets, compounding across runs.
@@ -26,11 +26,11 @@ Expeditions come in **two kinds**:
 
 ### What soldiers are
 
-Soldiers are a stockpiled **resource** (`soldiers`), unlocked at the **Iron Age**. You don't count heads in a worker pool — you bank soldiers the way you bank food or wood, then spend them launching expeditions.
+Soldiers are a stockpiled **resource** (`soldiers`), unlocked at the **Iron Age**. You don't count heads in a worker pool — you bank soldiers the way you bank food or wood, then spend them waging campaigns.
 
 - **Production:** Military buildings produce soldiers every tick when military-domain workers are assigned to them. Production is worker-scaled — a fully-staffed military building produces roughly its **soldier cap ÷ 50** soldiers per tick (minimum 0.1/tick). Assign more military workers, build more military buildings → soldiers accrue faster.
 - **Storage:** Your soldier cap equals the **sum of every military building's soldier cap**. Building or upgrading military buildings is the *only* way to raise the ceiling — the Storage lineage does not hold soldiers.
-- **Spending:** Expeditions deduct their soldier cost from your stockpile at launch (see [§4](#4-expeditions)).
+- **Spending:** Military campaigns deduct their soldier cost from your stockpile at launch (see [§4](#4-expeditions)).
 
 ### Producing soldiers
 
@@ -65,7 +65,7 @@ Spent or lost soldiers are simply removed from the stockpile. To replenish, keep
 army
 ```
 
-Opens the army overlay showing current soldier count, defense rating, active expeditions (a scouting and a military expedition can run concurrently, one of each kind), and completed expedition count.
+Opens the **Army** panel showing current soldier count, defense rating, the active military **campaign** (if any), and completed campaign count. The active scouting expedition lives in the separate **Expeditions** panel (`expedition`) — one scouting expedition and one military campaign can run concurrently, one of each category.
 
 ---
 
@@ -115,7 +115,7 @@ Expeditions are timed missions launched from your stockpiles. They come in **two
 - **Scouting** (`scout_party`, `scout_ruins`, `naval_expedition`) — cost only a resource `Cost`, **0 soldiers**. These are available early, before the `soldiers` resource exists at the Iron Age.
 - **Military campaigns** (everything else — 13 of them) — **spend the soldiers resource** to launch, plus any additional resource `Cost`.
 
-Whatever the kind, the cost is deducted from your stockpiles the moment you launch — there's no refund. After a set number of ticks, the expedition resolves. **Success and failure differ only in the size of the reward, not the cost:** the soldiers and/or resources are spent either way. A successful run pays full loot; a failed run pays a reduced amount. **One expedition of each kind can be active at a time:** a scouting expedition and a military campaign can run concurrently, but you can't launch a second of the same kind while one is still in progress.
+Whatever the kind, the cost is deducted from your stockpiles the moment you launch — there's no refund. After a set number of ticks, the mission resolves. **Success and failure differ only in the size of the reward, not the cost:** the soldiers and/or resources are spent either way. A successful run pays full loot; a failed run pays a reduced amount. **One mission of each category can be active at a time:** a scouting expedition and a military campaign can run concurrently, but you can't launch a second of the same category while one is still in progress.
 
 ### Cost, gating, and rewards
 
@@ -126,16 +126,23 @@ Whatever the kind, the cost is deducted from your stockpiles the moment you laun
 
 ### Commands
 
+Scouting and military missions live on two separate command surfaces:
+
 ```
-expedition list         # Show all expeditions available in your current age
-expedition <key>        # Launch an expedition (e.g., expedition scout_ruins)
+expedition list         # Show scouting expeditions available in your current age
+expedition <key>        # Send a scouting expedition (e.g., expedition scout_ruins) — costs resources, never soldiers
 exp list                # Shorthand
 exp <key>               # Shorthand
+
+campaign list           # Show military campaigns available in your current age
+campaign <key>          # Wage a military campaign (e.g., campaign raid_bandits) — spends soldiers
 ```
 
-Keys with underscores can be typed with spaces and are joined: `expedition scout ruins` is equivalent to `expedition scout_ruins`.
+`expedition` with no args opens the **Expeditions** panel; `campaign` (or `campaign list`) lists the available campaigns; `army` opens the **Army** panel. Keys with underscores can be typed with spaces and are joined: `expedition scout ruins` is equivalent to `expedition scout_ruins`.
 
-The **Military** overlay (`army`) groups the expeditions available in your current age into two subsections — **Scouting** and **Military Campaigns** — so you can see at a glance which ones need soldiers and which are resource-only. This is a display grouping; the commands are unchanged (`expedition list`, `expedition <key>`).
+The two surfaces are kept distinct, and the game cross-redirects if you mix them up: running a military key through `expedition` (e.g. `expedition raid_bandits`) is refused with a note to use `campaign <key>` instead, and running a scouting key through `campaign` redirects you to `expedition <key>`.
+
+The **Expeditions** panel (`expedition`) lists only the **scouting** expeditions available in your current age — the resource-only missions. The **Army** panel (`army`) lists only the **military campaigns** — the ones that spend soldiers — alongside your soldier count and defense rating. So you can see at a glance which missions are which: scouting on the Expeditions panel, campaigns on the Army panel.
 
 ### Success probability formula
 
@@ -157,7 +164,7 @@ The soldier (and resource) cost is already spent at launch, so the outcome only 
 
 ### Full expedition table
 
-The **Soldier Cost** column is spent from the `soldiers` resource at launch (not a soldier headcount requirement). The three **scouting** expeditions (`scout_party`, `scout_ruins`, `naval_expedition`) show **0** in that column and instead charge a resource `Cost`; the **military campaigns** spend soldiers plus any resource `Cost`. Both are noted in the table.
+This is a reference table of **all** missions, scouting and campaigns alike. The three **scouting** expeditions (`scout_party`, `scout_ruins`, `naval_expedition`) are launched with `expedition <key>`; every other mission is a **campaign**, launched with `campaign <key>`. The **Soldier Cost** column is spent from the `soldiers` resource at launch (not a soldier headcount requirement). The scouting rows show **0** in that column and instead charge a resource `Cost`; the campaigns spend soldiers plus any resource `Cost`.
 
 | Key | Name | Min Age | Soldier Cost | Resource Cost | Duration | Difficulty | Rewards on Success |
 |-----|------|---------|--------------|---------------|----------|------------|-------------------|
@@ -178,11 +185,11 @@ The **Soldier Cost** column is spent from the `soldiers` resource at launch (not
 | `galactic_conquest` | Galactic Conquest | Galactic Age | 80 | — | 80t | 0.80 | 30 antimatter, 100 dark matter, 5,000 gold |
 | `quantum_incursion` | Quantum Incursion | Quantum Age | 100 | — | 90t | 0.85 | 20 quantum flux, 50 antimatter, 5,000 knowledge |
 
-That's **16 expeditions** in total.
+That's **16 missions** in total — 3 scouting expeditions and 13 military campaigns.
 
 **Scouting — the soldier-free expeditions.** Before the Iron Age there is no military worker domain and no `soldiers` resource, so the military campaigns aren't available. The **scouting** expeditions fill that gap — `scout_party` (primitive → bronze) and then `scout_ruins` (bronze age) are available without soldiers, charging only resources. `scout_party`: *"A small band of foragers scouts nearby territory for resources."* It costs **30 food + 30 wood**, needs **0 soldiers**, runs ~20 ticks, and rewards roughly **60 food / 60 wood / 20 stone** — a net resource gain worth running on repeat through the Primitive, Stone, and Bronze ages. It has a `MaxAge` of Bronze Age and disappears once you reach the Iron Age. `scout_ruins` (Bronze Age, 0 soldiers, 40 food + 30 wood) carries scouting forward, and `naval_expedition` (Renaissance Age, 0 soldiers, 150 food + 100 wood) is the late scouting option.
 
-**Tip:** `trade_escort` (Iron Age, 3 soldiers, 12t, 0.30 difficulty) is the workhorse of early *soldier* play — cheap, short, and chainable for consistent gold. For soldier-free resource throughput, chain the scouting expeditions (`scout_party`, then `scout_ruins`) — low difficulty, short duration, and no soldiers required.
+**Tip:** `campaign trade_escort` (Iron Age, 3 soldiers, 12t, 0.30 difficulty) is the workhorse of early *soldier* play — cheap, short, and chainable for consistent gold. For soldier-free resource throughput, chain the scouting expeditions (`expedition scout_party`, then `expedition scout_ruins`) — low difficulty, short duration, and no soldiers required.
 
 ---
 
@@ -272,23 +279,23 @@ The five military milestones form a chain. Completing the full chain grants a pe
 
 ### Early game (Iron Age to Classical Age)
 
-- Before Iron Age, run `scout_party` on repeat — 0 soldiers, just 30 food + 30 wood for a ~60 food / 60 wood / 20 stone payout. It's free resource throughput while you wait for the military domain.
+- Before Iron Age, run `expedition scout_party` on repeat — 0 soldiers, just 30 food + 30 wood for a ~60 food / 60 wood / 20 stone payout. It's free resource throughput while you wait for the military domain.
 - Build a **War Camp** in the Stone Age even though soldiers aren't possible yet — it prepares your soldier storage and starts producing the moment the domain unlocks.
 - Your first soldiers become available in **Iron Age** via the Hunting Lodge. Stockpile 5 quickly to land `first_soldiers` for the free +0.05 bonus.
-- `trade_escort` (spends 3 soldiers, Iron Age) is your best early soldier expedition — cheap, fast duration (12t), reasonable gold reward.
+- `campaign trade_escort` (spends 3 soldiers, Iron Age) is your best early campaign — cheap, fast duration (12t), reasonable gold reward.
 - Keep food workers prioritised. Military workers eat 2.0 food/tick each at this stage — a 10-soldier army demands 20 food/tick just to sustain itself.
 
 ### Mid game (Classical to Industrial Age)
 
 - Push `iron_legion` (300 soldiers + 5 Barracks) — the +0.10 bonus noticeably improves expedition success on harder missions.
-- `conquer_territory` (10 soldiers, 25t, 0.60 difficulty) is the best soldier-spend bang-for-tick in this range. `naval_expedition` is now a **scouting** option — 0 soldiers, just 150 food + 100 wood (Renaissance Age, 35t, 0.50 difficulty) — so you can run it without dipping into your soldier stockpile.
+- `campaign conquer_territory` (10 soldiers, 25t, 0.60 difficulty) is the best soldier-spend bang-for-tick in this range. `expedition naval_expedition` is a **scouting** option — 0 soldiers, just 150 food + 100 wood (Renaissance Age, 35t, 0.50 difficulty) — so you can run it without dipping into your soldier stockpile.
 - Build **Legion Forts** and **Military Academies** to raise your soldier ceiling. The capacity doubling per tier means each new building unlocks dramatically more troops.
 - Research military-flavored techs as they appear — even +0.2 military_power makes a visible difference against 0.6-difficulty expeditions.
 
 ### Late game (Modern Age onward)
 
-- `world_domination` spends 50 soldiers but pays 1,000 gold — worth the queue for gold-hungry ages once your soldier production can refill the cost.
-- `cyber_raid` and `neon_heist` are the best value in the digital/cyberpunk range. `neon_heist` (0.55 difficulty) is easier than `cyber_raid` (0.60) for comparable loot.
+- `campaign world_domination` spends 50 soldiers but pays 1,000 gold — worth the queue for gold-hungry ages once your soldier production can refill the cost.
+- `campaign cyber_raid` and `campaign neon_heist` are the best value in the digital/cyberpunk range. `neon_heist` (0.55 difficulty) is easier than `cyber_raid` (0.60) for comparable loot.
 - Buy `expedition_loot` prestige upgrades across resets — at tier 5 (+25% rewards) stacked with research bonuses, expedition returns scale dramatically.
 - The `military_superpower` milestone (+0.15 bonus) combined with late-game research can push effective difficulty on most expeditions to the 0.05 floor.
 
@@ -329,7 +336,7 @@ See [Morale](morale.md) for the full banded system.
 
 **Don't recruit past your food income.** A food deficit stalls all production (workers can't work when starving). Calculate the drain before `recruit max`.
 
-**Don't launch high-difficulty expeditions without military power.** `siege_castle` (0.70) and `world_domination` (0.80) fail frequently with zero bonus. Research a few military techs first and watch the success probability change.
+**Don't wage high-difficulty campaigns without military power.** `campaign siege_castle` (0.70) and `campaign world_domination` (0.80) fail frequently with zero bonus. Research a few military techs first and watch the success probability change.
 
 **Expedition failure still costs the launch.** The soldiers (and any resource cost) are spent the moment you launch — failure doesn't refund them, it only shrinks the reward. Don't launch a high-difficulty run unless you can afford to lose the soldier cost for a reduced payout.
 
