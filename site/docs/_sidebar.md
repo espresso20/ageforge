@@ -9,6 +9,7 @@
   - [How to Play](how-to-play.md)
   - [All Commands](commands.md)
   - [Saving & Loading](saving-and-loading.md)
+  - [Account & Recovery](account.md)
   - [Resources](resources.md)
   - [Workers](villagers.md)
 

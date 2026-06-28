@@ -113,6 +113,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdSave(args, engine)
 	case "load":
 		return cmdLoad(args, engine)
+	case "account", "acct":
+		return cmdAccount(args, engine)
 	default:
 		return CommandResult{
 			Message: fmt.Sprintf("Unknown command: %s. Type 'help' for commands.", cmd),
@@ -545,6 +547,93 @@ func cmdStatus(engine *game.GameEngine) CommandResult {
 	}
 
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
+
+// shortAccountID returns a human-friendly short form of a 32-char hex account ID:
+// the first 8 hex chars (enough to recognize an account at a glance). Falls back to
+// the whole string when it's shorter than 8 chars.
+func shortAccountID(id string) string {
+	if len(id) > 8 {
+		return id[:8]
+	}
+	return id
+}
+
+// cmdAccount handles the `account` command family (accounts.md §9 Phase 4):
+//
+//   account                 → show the short ID + recovery code + honest "identity,
+//                             not progress" copy.
+//   account recover <code>  → re-create the local identity from a recovery code.
+//                             Guarded: if the current account already holds unlocks,
+//                             require `account recover <code> confirm` to overwrite.
+//
+// It talks to engine.Account()/SetAccount() directly — no GameState snapshot needed.
+func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
+	acct := engine.Account()
+
+	if len(args) == 0 {
+		if acct == nil {
+			return CommandResult{
+				Message: "Accounts are unavailable (no account is loaded).",
+				Type:    "warning",
+			}
+		}
+		var lines []string
+		lines = append(lines, fmt.Sprintf("[gold]Account:[-] %s", shortAccountID(acct.AccountID)))
+		lines = append(lines, fmt.Sprintf("[gold]Recovery code:[-] %s", acct.RecoveryCode()))
+		lines = append(lines, "")
+		lines = append(lines, "This code restores your IDENTITY (your account ID) across machines and")
+		lines = append(lines, "reinstalls — NOT your earned progress. Unlocks and stats are separate and")
+		lines = append(lines, "are not carried by this code (progress export is coming in a later update).")
+		lines = append(lines, "Write the code down to keep your identity. It is not a password: it proves")
+		lines = append(lines, "nothing secret, only which account you are.")
+		lines = append(lines, "")
+		lines = append(lines, "Restore on another machine with:  account recover <code>")
+		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	}
+
+	sub := strings.ToLower(args[0])
+	switch sub {
+	case "recover":
+		if len(args) < 2 {
+			return CommandResult{
+				Message: "Usage: account recover <code>",
+				Type:    "error",
+			}
+		}
+		code := args[1]
+		confirmed := len(args) >= 3 && strings.EqualFold(args[2], "confirm")
+
+		// Overwrite guard: if the CURRENT account already has earned progress (unlocked
+		// themes), recovering would replace the local identity and the code does NOT
+		// carry that progress. Require an explicit confirm token before proceeding.
+		if acct != nil && len(acct.UnlockedThemes()) > 0 && !confirmed {
+			var lines []string
+			lines = append(lines, "[red]Warning:[-] this account has unlocked progress on this machine.")
+			lines = append(lines, "Recovering will REPLACE the current local identity. The recovery code")
+			lines = append(lines, "carries identity only — your unlocks/stats are NOT carried by it and")
+			lines = append(lines, "would no longer be attached to this identity (export your progress first;")
+			lines = append(lines, "progress export is coming in a later update).")
+			lines = append(lines, "")
+			lines = append(lines, fmt.Sprintf("To proceed anyway:  account recover %s confirm", code))
+			return CommandResult{Message: strings.Join(lines, "\n"), Type: "warning"}
+		}
+
+		restored, err := game.ImportRecoveryCode(code)
+		if err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		engine.SetAccount(restored)
+		return CommandResult{
+			Message: fmt.Sprintf("Identity restored: %s", shortAccountID(restored.AccountID)),
+			Type:    "success",
+		}
+	default:
+		return CommandResult{
+			Message: "Usage: account  |  account recover <code>",
+			Type:    "error",
+		}
+	}
 }
 
 func cmdSave(args []string, engine *game.GameEngine) CommandResult {

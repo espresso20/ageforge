@@ -33,6 +33,7 @@ var commands = []string{
 	"prestige",
 	"upgrade",
 	"advance", "rates", "speed", "save", "saves", "load",
+	"account",
 	"wonder",
 	"dump", "exportlogs",
 	"milestones", "ms",
@@ -208,6 +209,12 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 
 	case "load":
 		return filterPrefix(saveNames(), partial, prefix)
+
+	case "account", "acct":
+		// Only subcommand is "recover"; recover's <code> arg isn't enumerable.
+		if len(completed) == 0 {
+			return filterPrefix([]string{"recover"}, partial, prefix)
+		}
 
 	case "catastrophe", "cat":
 		return filterPrefix([]string{"invoke"}, partial, prefix)

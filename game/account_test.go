@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -240,5 +241,177 @@ func TestLoadOrCreateCorruptBacksUpAndRecreates(t *testing.T) {
 	// And the live file must parse + verify again.
 	if _, err := os.Stat(path); err != nil {
 		t.Errorf("fresh account.json not written after corrupt recovery: %v", err)
+	}
+}
+
+// --- Phase 4: recovery code (accounts.md §3.5 / §8 / §9) ---
+
+// TestRecoveryCodeRoundTrip covers the core contract: a.RecoveryCode() →
+// ImportRecoveryCode(thatCode) yields an account with the SAME AccountID.
+func TestRecoveryCodeRoundTrip(t *testing.T) {
+	isolateAccountDir(t)
+
+	orig, err := LoadOrCreate()
+	if err != nil {
+		t.Fatalf("LoadOrCreate: %v", err)
+	}
+	code := orig.RecoveryCode()
+
+	restored, err := ImportRecoveryCode(code)
+	if err != nil {
+		t.Fatalf("ImportRecoveryCode(%q): %v", code, err)
+	}
+	if restored.AccountID != orig.AccountID {
+		t.Errorf("round-trip ID mismatch: %q != %q", restored.AccountID, orig.AccountID)
+	}
+}
+
+// TestRecoveryCodeFormat checks the produced shape: AGEF- prefix, all uppercase,
+// dash-grouped in 4-char groups, and that it decodes back to the same ID.
+func TestRecoveryCodeFormat(t *testing.T) {
+	isolateAccountDir(t)
+
+	acct, err := LoadOrCreate()
+	if err != nil {
+		t.Fatalf("LoadOrCreate: %v", err)
+	}
+	code := acct.RecoveryCode()
+
+	if !strings.HasPrefix(code, "AGEF-") {
+		t.Errorf("code %q missing AGEF- prefix", code)
+	}
+	if code != strings.ToUpper(code) {
+		t.Errorf("code %q is not uppercase", code)
+	}
+	// Each dash-separated group after the prefix is at most 4 chars (4s with a
+	// trailing partial group).
+	groups := strings.Split(code, "-")
+	if groups[0] != "AGEF" {
+		t.Errorf("first group = %q, want AGEF", groups[0])
+	}
+	for _, g := range groups[1:] {
+		if len(g) == 0 || len(g) > 4 {
+			t.Errorf("group %q has invalid length %d (want 1..4)", g, len(g))
+		}
+	}
+	// Must still decode back to the same ID.
+	restored, err := ImportRecoveryCode(code)
+	if err != nil {
+		t.Fatalf("ImportRecoveryCode(%q): %v", code, err)
+	}
+	if restored.AccountID != acct.AccountID {
+		t.Errorf("decoded ID mismatch: %q != %q", restored.AccountID, acct.AccountID)
+	}
+}
+
+// TestRecoveryCodeTypoGuard flips a single payload character in a valid code and
+// asserts ImportRecoveryCode rejects it with a checksum error (not a silent wrong ID).
+func TestRecoveryCodeTypoGuard(t *testing.T) {
+	isolateAccountDir(t)
+
+	acct, err := LoadOrCreate()
+	if err != nil {
+		t.Fatalf("LoadOrCreate: %v", err)
+	}
+	code := acct.RecoveryCode()
+
+	// Flip an early body character (a high-order payload bit, well inside the real
+	// 144-bit payload — not the trailing padding bits) to a different valid Crockford
+	// symbol. Mutating real ID/checksum bits must trip the checksum guard.
+	b := []byte(code)
+	// Index 5 is the first body char after the "AGEF-" prefix (indices 0..4).
+	idx := 5
+	orig := b[idx]
+	repl := byte('Z')
+	if orig == repl {
+		repl = '2'
+	}
+	b[idx] = repl
+	typo := string(b)
+	if typo == code {
+		t.Fatal("typo mutation did not change the code")
+	}
+
+	if _, err := ImportRecoveryCode(typo); err == nil {
+		t.Errorf("typo'd code %q imported without error (typo guard failed)", typo)
+	} else if !strings.Contains(err.Error(), "checksum") {
+		t.Errorf("typo'd code error = %q, want a checksum error", err.Error())
+	}
+}
+
+// TestImportRecoveryCodeWritesSignedEmptyAccount confirms the imported account is
+// written as a valid signed account.json with EMPTY data (identity only).
+func TestImportRecoveryCodeWritesSignedEmptyAccount(t *testing.T) {
+	isolateAccountDir(t)
+
+	orig, err := LoadOrCreate()
+	if err != nil {
+		t.Fatalf("LoadOrCreate: %v", err)
+	}
+	code := orig.RecoveryCode()
+
+	restored, err := ImportRecoveryCode(code)
+	if err != nil {
+		t.Fatalf("ImportRecoveryCode: %v", err)
+	}
+	// Signed in-memory (no tamper), and EMPTY data — identity only.
+	if !verifyAccount(restored) {
+		t.Error("imported account fails signature verification")
+	}
+	if restored.Tampered {
+		t.Error("imported account flagged Tampered")
+	}
+	if len(restored.Unlocks.Themes) != 0 || restored.Stats.TotalPrestiges != 0 ||
+		len(restored.Achievements) != 0 || restored.Prefs.ActiveTheme != "" {
+		t.Errorf("imported account carried DATA, want empty: unlocks=%v stats=%+v ach=%v prefs=%+v",
+			restored.Unlocks.Themes, restored.Stats, restored.Achievements, restored.Prefs)
+	}
+
+	// And the on-disk file must reload, verify, and be untampered.
+	reloaded, err := LoadOrCreate()
+	if err != nil {
+		t.Fatalf("LoadOrCreate (reload after import): %v", err)
+	}
+	if reloaded.AccountID != orig.AccountID {
+		t.Errorf("reloaded ID = %q, want %q", reloaded.AccountID, orig.AccountID)
+	}
+	if reloaded.Tampered {
+		t.Error("reloaded imported account flagged Tampered (signed Save failed)")
+	}
+	if !verifyAccount(reloaded) {
+		t.Error("reloaded imported account fails signature verification")
+	}
+}
+
+// TestImportRecoveryCodeLenient covers Crockford's lenient decode: lowercase, with
+// spaces, and I-vs-1 substituted variants of a valid code all import to the same ID.
+func TestImportRecoveryCodeLenient(t *testing.T) {
+	isolateAccountDir(t)
+
+	acct, err := LoadOrCreate()
+	if err != nil {
+		t.Fatalf("LoadOrCreate: %v", err)
+	}
+	code := acct.RecoveryCode()
+	want := acct.AccountID
+
+	variants := map[string]string{
+		"lowercase":      strings.ToLower(code),
+		"with-spaces":    strings.ReplaceAll(code, "-", " "),
+		"no-dashes":      strings.ReplaceAll(code, "-", ""),
+		"i-for-1":        strings.ReplaceAll(code, "1", "I"),
+		"l-for-1":        strings.ReplaceAll(code, "1", "L"),
+		"o-for-0":        strings.ReplaceAll(code, "0", "O"),
+		"surround-space": "  " + code + "  ",
+	}
+	for name, v := range variants {
+		got, err := ImportRecoveryCode(v)
+		if err != nil {
+			t.Errorf("%s: ImportRecoveryCode(%q): %v", name, v, err)
+			continue
+		}
+		if got.AccountID != want {
+			t.Errorf("%s: ID = %q, want %q", name, got.AccountID, want)
+		}
 	}
 }
