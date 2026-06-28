@@ -9,17 +9,18 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // wonderProgressBar returns a simple fill bar with colored segments.
-// Filled portion uses BarFillColor (purple), empty portion uses BarEmptyColor (dark gray).
+// Filled portion uses BarFillColor (Accent role), empty uses BarEmptyColor (Dim role).
 func wonderProgressBar(pct float64, width int) string {
 	filled := int(pct * float64(width))
 	if filled > width {
 		filled = width
 	}
 	empty := width - filled
-	return "[" + BarFillColor + "]" + strings.Repeat("█", filled) + "[" + BarEmptyColor + "]" + strings.Repeat("░", empty) + "[-]"
+	return BarFillColor() + strings.Repeat("█", filled) + BarEmptyColor() + strings.Repeat("░", empty) + "[-]"
 }
 
 // wonderInfo holds config + state for a wonder
@@ -66,7 +67,8 @@ type WonderPanel struct {
 func NewWonderPanel() *WonderPanel {
 	wp := &WonderPanel{}
 	wp.root = tview.NewFlex().SetDirection(tview.FlexColumn)
-	wp.root.SetBorder(true).SetTitle(" Wonder ").SetTitleColor(ColorTitle)
+	wp.root.SetBorder(true).SetTitle(" Wonder ")
+	theme.Track(func() { wp.root.SetTitleColor(theme.Color(theme.RoleAccent)) })
 	return wp
 }
 

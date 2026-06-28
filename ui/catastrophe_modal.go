@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/theme"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -51,8 +52,8 @@ func (d *Dashboard) showCatastropheModal(epochKey string) {
 			}
 			d.closeCatastropheModal()
 		})
-	btnEndure.SetBackgroundColor(tcell.ColorDarkRed)
-	btnEndure.SetLabelColor(tcell.ColorWhite)
+	btnEndure.SetBackgroundColor(theme.Color(theme.RoleNegative))
+	btnEndure.SetLabelColor(theme.Color(theme.RoleText))
 
 	btnSuccumb := tview.NewButton("[SUCCUMB]").
 		SetSelectedFunc(func() {
@@ -61,8 +62,8 @@ func (d *Dashboard) showCatastropheModal(epochKey string) {
 			}
 			d.closeCatastropheModal()
 		})
-	btnSuccumb.SetBackgroundColor(tcell.ColorDarkRed)
-	btnSuccumb.SetLabelColor(tcell.ColorYellow)
+	btnSuccumb.SetBackgroundColor(theme.Color(theme.RoleNegative))
+	btnSuccumb.SetLabelColor(theme.Color(theme.RoleHighlight))
 
 	btnDefer := tview.NewButton("[Defer — Decide Later]").
 		SetSelectedFunc(func() {
@@ -88,8 +89,8 @@ func (d *Dashboard) showCatastropheModal(epochKey string) {
 		AddItem(btnRow, 1, 0, true)
 	inner.SetBorder(true).
 		SetTitle(fmt.Sprintf(" ☄ %s Catastrophe ", ep.Name)).
-		SetTitleColor(tcell.ColorRed).
-		SetBorderColor(tcell.ColorDarkRed)
+		SetTitleColor(theme.Color(theme.RoleNegative)).
+		SetBorderColor(theme.Color(theme.RoleNegative))
 
 	// --- centered overlay ---
 	modal := tview.NewFlex().

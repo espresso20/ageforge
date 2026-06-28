@@ -12,6 +12,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // shameMessages are randomly chosen at session start when the cheater badge is active.
@@ -118,14 +119,16 @@ func (d *Dashboard) build() {
 	d.sidebar = tview.NewTextView().
 		SetDynamicColors(true).
 		SetText(buildSidebarText(""))
-	d.sidebar.SetBorder(true).SetTitle(" Panels ").SetTitleColor(tcell.ColorGold)
+	d.sidebar.SetBorder(true).SetTitle(" Panels ")
+	theme.Track(func() { d.sidebar.SetTitleColor(theme.Color(theme.RoleAccent)) })
 
 	// Log panel
 	d.logTV = tview.NewTextView().
 		SetDynamicColors(true).
 		SetScrollable(true).
 		SetMaxLines(100)
-	d.logTV.SetBorder(true).SetTitle(" Log ").SetTitleColor(ColorDim)
+	d.logTV.SetBorder(true).SetTitle(" Log ")
+	theme.Track(func() { d.logTV.SetTitleColor(theme.Color(theme.RoleDim)) })
 
 	// Shame badge bar (1 fixed line; text only shown when CheaterBadge is true)
 	d.cheaterTV = tview.NewTextView().
@@ -210,9 +213,11 @@ func (d *Dashboard) build() {
 	// Command input
 	d.inputField = tview.NewInputField().
 		SetLabel("> ").
-		SetFieldWidth(0).
-		SetFieldBackgroundColor(tcell.ColorDefault).
-		SetLabelColor(ColorAccent)
+		SetFieldWidth(0)
+	theme.Track(func() {
+		d.inputField.SetFieldBackgroundColor(theme.Color(theme.RoleBackground)).
+			SetLabelColor(theme.Color(theme.RoleLabel))
+	})
 
 	// Wire up autocomplete
 	d.inputField.SetAutocompleteFunc(NewAutoCompleter(d.engine))
@@ -320,7 +325,8 @@ func (d *Dashboard) build() {
 
 	// Mini worker summary box — sits below the sidebar in the right column
 	d.workerMiniTV = tview.NewTextView().SetDynamicColors(true)
-	d.workerMiniTV.SetBorder(true).SetTitle(" Workers ").SetTitleColor(ColorVillager)
+	d.workerMiniTV.SetBorder(true).SetTitle(" Workers ")
+	theme.Track(func() { d.workerMiniTV.SetTitleColor(theme.Color(theme.RoleAccent)) })
 
 	rightCol := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(d.sidebar, 0, 1, false).
@@ -676,12 +682,14 @@ func (d *Dashboard) showDevUnlockModal() {
 	}
 
 	const devUnlockPage = "__dev_unlock__"
+	// Transient dev-unlock modal: rebuilt each open and removed on close, so it
+	// construction-reads theme.Color without enrolling in Track (theming.md §3.3).
 	field := tview.NewInputField().
 		SetLabel("").
 		SetFieldWidth(40).
 		SetMaskCharacter('·').
-		SetFieldBackgroundColor(tcell.ColorBlack).
-		SetFieldTextColor(tcell.ColorWhite)
+		SetFieldBackgroundColor(theme.Color(theme.RoleBackground)).
+		SetFieldTextColor(theme.Color(theme.RoleText))
 
 	field.SetDoneFunc(func(key tcell.Key) {
 		if key == tcell.KeyEscape {
@@ -704,8 +712,8 @@ func (d *Dashboard) showDevUnlockModal() {
 	box := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(field, 1, 0, true)
 	box.SetBorder(true).
-		SetBorderColor(tcell.ColorDarkGray).
-		SetBackgroundColor(tcell.ColorBlack)
+		SetBorderColor(theme.Color(theme.RoleDim)).
+		SetBackgroundColor(theme.Color(theme.RoleBackground))
 
 	centered := tview.NewFlex().
 		AddItem(nil, 0, 1, false).

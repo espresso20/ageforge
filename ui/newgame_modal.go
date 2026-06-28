@@ -8,6 +8,7 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // newGameNamePage is the unique page name for the New Game name-entry modal.
@@ -68,7 +69,7 @@ func showAccountNameConfirmModal(app *tview.Application, pages *tview.Pages, nam
 		})
 	// Opaque background so the modal doesn't bleed the page beneath it, matching the
 	// other button-modals (and the earlier modal-opacity fix).
-	modal.SetBackgroundColor(tcell.ColorBlack)
+	modal.SetBackgroundColor(theme.Color(theme.RoleBackground))
 
 	pages.AddPage(accountNameConfirmPage, modal, true, true)
 	app.SetFocus(modal)
@@ -120,8 +121,8 @@ func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pa
 		SetFieldWidth(40).
 		// Dark slate field with white text — tview's default light field
 		// background renders the white name near-invisible on the dark modal.
-		SetFieldBackgroundColor(tcell.NewRGBColor(48, 54, 61)).
-		SetFieldTextColor(tcell.ColorWhite)
+		SetFieldBackgroundColor(theme.Color(theme.RoleSelection)).
+		SetFieldTextColor(theme.Color(theme.RoleText))
 
 	escHint := "Esc: cancel"
 	if escAccepts {
@@ -130,7 +131,7 @@ func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pa
 	hintTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[#8b949e]Enter: confirm  ·  Tab: reroll name  ·  " + escHint + "[-]")
+		SetText("[gray]Enter: confirm  ·  Tab: reroll name  ·  " + escHint + "[-]")
 
 	// closeAndRestore removes the modal page and restores focus to focusReturn.
 	// Used on cancel (Esc).
@@ -174,7 +175,7 @@ func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pa
 	// actually draws, so transparent spacers would let the page beneath (the
 	// dashboard, for a Branch save) bleed through; an explicit background paints
 	// them.
-	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(tcell.ColorBlack) }
+	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(theme.Color(theme.RoleBackground)) }
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(input, 1, 0, true).
 		AddItem(spacer(), 1, 0, false).
@@ -183,9 +184,9 @@ func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pa
 		AddItem(hintTV, 1, 0, false)
 	inner.SetBorder(true).
 		SetTitle(title).
-		SetTitleColor(tcell.ColorGold).
-		SetBorderColor(tcell.ColorGold)
-	inner.SetBackgroundColor(tcell.ColorBlack)
+		SetTitleColor(theme.Color(theme.RoleAccent)).
+		SetBorderColor(theme.Color(theme.RoleAccent))
+	inner.SetBackgroundColor(theme.Color(theme.RoleBackground))
 
 	// Esc cancels; Tab rerolls a fresh suggestion. Enter is handled by the field's
 	// DoneFunc above so plain typing keys still reach the input.

@@ -4,6 +4,7 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // App manages the tview application and page routing
@@ -17,6 +18,15 @@ type App struct {
 
 // NewApp creates the UI application
 func NewApp(engine *game.GameEngine, version string) *App {
+	// Assert the active theme before any widget is built so the name-remap and
+	// tview.Styles chrome defaults are in place for the first Draw, and every
+	// theme.Track closure in setup() applies against a known palette. The theme
+	// package init() already seeds Forge defensively; this makes the boot explicit
+	// and survives a future import reshuffle. Phase 2 swaps DefaultKey for the
+	// account's stored active theme (theming.md §6). Ignoring the error is fine —
+	// DefaultKey is a registered built-in.
+	_ = theme.SetActive(theme.DefaultKey)
+
 	a := &App{
 		tviewApp: tview.NewApplication(),
 		pages:    tview.NewPages(),
