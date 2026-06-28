@@ -258,7 +258,7 @@ func showAccountWipeTypeGate(app *tview.Application, pages *tview.Pages, engine 
 	// confirm proceeds only on an EXACT match. A non-match stays put with an error.
 	confirm := func() {
 		if strings.TrimSpace(input.GetText()) != expectedName {
-			errTV.SetText("[red]Name doesn't match — account NOT wiped.[-]")
+			errTV.SetText("[yellow]Name doesn't match — account NOT wiped.[-]")
 			app.SetFocus(input)
 			return
 		}
@@ -290,7 +290,14 @@ func showAccountWipeTypeGate(app *tview.Application, pages *tview.Pages, engine 
 		}
 	})
 
-	// Opaque spacers so nothing bleeds through the modal interior.
+	// Paint every interior primitive dark-red so the modal reads as one solid
+	// danger panel, not alternating dark/red bands. The input keeps its slate
+	// field bar (set above) for legibility; only its surrounding box goes red.
+	promptTV.SetBackgroundColor(tcell.ColorDarkRed)
+	errTV.SetBackgroundColor(tcell.ColorDarkRed)
+	hintTV.SetBackgroundColor(tcell.ColorDarkRed)
+	input.SetBackgroundColor(tcell.ColorDarkRed)
+	// Spacers match so the gaps between rows are the same dark-red.
 	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(tcell.ColorDarkRed) }
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(promptTV, 2, 0, false).
@@ -306,8 +313,9 @@ func showAccountWipeTypeGate(app *tview.Application, pages *tview.Pages, engine 
 		SetBorderColor(tcell.ColorWhite)
 	inner.SetBackgroundColor(tcell.ColorDarkRed)
 
-	// Height = 7 content rows + 2 border = 9.
-	modal := centeredModal(inner, 60, 9)
+	// Width fits the longest warning line ("…It CANNOT be undone."); height =
+	// 7 content rows + 2 border = 9.
+	modal := centeredModal(inner, 68, 9)
 	modal.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
 		if ev.Key() == tcell.KeyEsc {
 			abort()
