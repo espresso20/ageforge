@@ -129,6 +129,13 @@ type GameEngine struct {
 	// History collector — periodic metric samples for the history overlay.
 	History *HistoryCollector
 
+	// account is the per-player identity + meta-progression record, loaded once at
+	// boot (accounts.md §2/§8) and held here so the UI/dashboard — already sharing
+	// this engine — can reach it via Account(). It is player-level, NOT per-save, so
+	// Reset() must NOT clear it (a new game keeps the same player). May be nil if
+	// LoadOrCreate failed at boot — account state is non-critical, the game runs anyway.
+	account *Account
+
 	// Morale system — a managed two-way dial. Range [0.10, moraleCap()];
 	// starts at moraleNeutral (0.50). Drives production via moraleMultiplier().
 	morale          float64 // 0.10–moraleCap(); starts at moraleNeutral (0.50)
@@ -595,6 +602,35 @@ func (ge *GameEngine) SetActiveParentName(name string) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	ge.activeParentName = name
+}
+
+// SetAccount installs the per-player account, loaded once at boot. May be nil.
+// The account is player-level state and survives Reset (new game / succumb), so it
+// is set here rather than in NewGameEngine or Reset (accounts.md §6).
+func (ge *GameEngine) SetAccount(a *Account) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.account = a
+}
+
+// Account returns the per-player account, or nil if none was loaded at boot.
+// Future phases (unlocks, themes, lifetime stats) read it through here.
+func (ge *GameEngine) Account() *Account {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	return ge.account
+}
+
+// AccountID returns the current account's ID, or "" if no account is held. Used by
+// buildSaveSnapshot to lazy-stamp the save's account_id on the next write — the
+// stamp rides the normal SaveGame path so _sig re-signs over it (accounts.md §6).
+func (ge *GameEngine) AccountID() string {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	if ge.account == nil {
+		return ""
+	}
+	return ge.account.AccountID
 }
 
 // StartNewNamedGame resets to a fresh game, makes `name` the active root save,

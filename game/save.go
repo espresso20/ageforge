@@ -77,8 +77,15 @@ type GameSave struct {
 	// Legacy saves lack the field → "" → a root. omitempty keeps current saves
 	// byte-identical when empty.
 	ParentName string `json:"parent_name,omitempty"`
-	Signature  string `json:"_sig,omitempty"`
-	Proof      string `json:"_proof,omitempty"`
+	// AccountID attributes this save to a player account (accounts.md §5/§6). It is
+	// additive and optional: empty on legacy/no-account saves, where omitempty keeps
+	// the bytes identical. It is lazy-stamped — a save gains it the NEXT time it is
+	// written through SaveGame, which re-signs _sig over the new payload (the §3.5
+	// invariant: stamp only via SaveGame, never an in-place JSON edit). On load it is
+	// informational only and does NOT switch the active account (set once at boot).
+	AccountID string `json:"account_id,omitempty"`
+	Signature string `json:"_sig,omitempty"`
+	Proof     string `json:"_proof,omitempty"`
 }
 
 // hmacSign returns the HMAC-SHA256 of payload under key, hex-encoded. This is the
@@ -434,7 +441,21 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		CatastropheHistory: append([]string(nil), ge.catastropheHistory...),
 		Morale:             ge.morale,
 		History:            ge.History,
+		AccountID:          ge.accountIDLocked(),
 	}
+}
+
+// accountIDLocked returns the held account's ID, or "" if no account is set. It
+// reads ge.account directly — buildSaveSnapshot already holds the lock, so it must
+// NOT call the lock-acquiring AccountID() accessor (sync.RWMutex is not reentrant
+// and a waiting writer could deadlock). Including this in the snapshot is the entire
+// lazy-stamp mechanism: SaveGame signs the snapshot, so the account_id is covered by
+// _sig automatically — no separate migration pass (accounts.md §6 invariant).
+func (ge *GameEngine) accountIDLocked() string {
+	if ge.account == nil {
+		return ""
+	}
+	return ge.account.AccountID
 }
 
 // BranchSave forks the current run into a NEW save named newName: its parent is
