@@ -65,7 +65,7 @@ Spent or lost soldiers are simply removed from the stockpile. To replenish, keep
 army
 ```
 
-Opens the army overlay showing current soldier count, defense rating, active expedition (if any), and completed expedition count.
+Opens the army overlay showing current soldier count, defense rating, active expeditions (a scouting and a military expedition can run concurrently, one of each kind), and completed expedition count.
 
 ---
 
@@ -115,7 +115,7 @@ Expeditions are timed missions launched from your stockpiles. They come in **two
 - **Scouting** (`scout_party`, `scout_ruins`, `naval_expedition`) — cost only a resource `Cost`, **0 soldiers**. These are available early, before the `soldiers` resource exists at the Iron Age.
 - **Military campaigns** (everything else — 13 of them) — **spend the soldiers resource** to launch, plus any additional resource `Cost`.
 
-Whatever the kind, the cost is deducted from your stockpiles the moment you launch — there's no refund. After a set number of ticks, the expedition resolves. **Success and failure differ only in the size of the reward, not the cost:** the soldiers and/or resources are spent either way. A successful run pays full loot; a failed run pays a reduced amount. Only **one expedition can be active at a time**.
+Whatever the kind, the cost is deducted from your stockpiles the moment you launch — there's no refund. After a set number of ticks, the expedition resolves. **Success and failure differ only in the size of the reward, not the cost:** the soldiers and/or resources are spent either way. A successful run pays full loot; a failed run pays a reduced amount. **One expedition of each kind can be active at a time:** a scouting expedition and a military campaign can run concurrently, but you can't launch a second of the same kind while one is still in progress.
 
 ### Cost, gating, and rewards
 

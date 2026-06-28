@@ -169,9 +169,18 @@ type ResearchSave struct {
 	TotalTicks  int      `json:"total_ticks"`
 }
 
-// MilitarySave holds military state for save
+// MilitarySave holds military state for save.
+//
+// ActiveScout / ActiveMilitary are the per-category active expeditions (Phase 2a:
+// a scouting and a military expedition can run concurrently). ActiveExpedition is
+// the deprecated single-active field from pre-2a saves, kept read-only for
+// migration — on load it is routed to the correct category slot by its def's
+// Category (see migrateLegacyActive). It is never written by new saves.
 type MilitarySave struct {
-	ActiveExpedition *ActiveExpedition  `json:"active_expedition"`
+	ActiveScout    *ActiveExpedition `json:"active_scout,omitempty"`
+	ActiveMilitary *ActiveExpedition `json:"active_military,omitempty"`
+	// Deprecated: pre-Phase-2a single-active field, read-only for migration.
+	ActiveExpedition *ActiveExpedition  `json:"active_expedition,omitempty"`
 	CompletedCount   int                `json:"completed_count"`
 	TotalLoot        map[string]float64 `json:"total_loot"`
 }
@@ -286,6 +295,9 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		totalLoot[k] = v
 	}
 
+	// Per-category active expeditions (Phase 2a: scouting + military concurrent).
+	activeScout, activeMilitary := ge.Military.GetActiveForSave()
+
 	// Deep copy prestige upgrades
 	upgrades := make(map[string]int, len(ge.Prestige.upgrades))
 	for k, v := range ge.Prestige.upgrades {
@@ -347,9 +359,10 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			TotalTicks:  ge.Research.totalTicks,
 		},
 		Military: MilitarySave{
-			ActiveExpedition: ge.Military.GetActiveForSave(),
-			CompletedCount:   ge.Military.completedCount,
-			TotalLoot:        totalLoot,
+			ActiveScout:    activeScout,
+			ActiveMilitary: activeMilitary,
+			CompletedCount: ge.Military.completedCount,
+			TotalLoot:      totalLoot,
 		},
 		Events: EventSave{
 			LastFired:     ge.Events.GetLastFired(),
@@ -499,7 +512,8 @@ func (ge *GameEngine) LoadGame(filename string) error {
 
 	// Restore Phase 3 systems
 	ge.Research.LoadState(save.Research.Researched, save.Research.CurrentTech, save.Research.TicksLeft, save.Research.TotalTicks)
-	ge.Military.LoadState(save.Military.ActiveExpedition, save.Military.CompletedCount, save.Military.TotalLoot)
+	scoutActive, militaryActive := ge.Military.migrateActives(save.Military)
+	ge.Military.LoadState(scoutActive, militaryActive, save.Military.CompletedCount, save.Military.TotalLoot)
 	ge.Events.LoadState(save.Events.LastFired, save.Events.Active, save.Events.NextEventTick, save.Events.GoodStreak, save.Events.BadStreak)
 	ge.Milestones.LoadState(save.Milestones, save.ChainsCompleted, save.CurrentTitle)
 	// Reconstruct chains and title for old saves that don't have them

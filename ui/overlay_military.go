@@ -49,15 +49,14 @@ func militaryProvider(state game.GameState, _ int) string {
 		}
 	}
 
-	// === Active Expedition ===
-	sb.WriteString("\n [gold]═══ Active Expedition ═══[-]\n\n")
-	if mil.ActiveExpedition != nil {
-		exp := mil.ActiveExpedition
-		fmt.Fprintf(&sb, " [yellow]Name:[-]     %s\n", exp.Name)
-		fmt.Fprintf(&sb, " [yellow]Soldiers:[-] %d deployed\n", exp.Soldiers)
-		fmt.Fprintf(&sb, " [yellow]Remaining:[-] %d ticks\n", exp.TicksLeft)
+	// === Active Expeditions ===
+	// A scouting and a military expedition can run concurrently (one per kind).
+	sb.WriteString("\n [gold]═══ Active Expeditions ═══[-]\n\n")
+	if mil.ActiveScout == nil && mil.ActiveMilitary == nil {
+		sb.WriteString(" [gray]No active expeditions[-]\n")
 	} else {
-		sb.WriteString(" [gray]No active expedition[-]\n")
+		writeActiveExpedition(&sb, "Scouting", mil.ActiveScout)
+		writeActiveExpedition(&sb, "Military", mil.ActiveMilitary)
 	}
 	fmt.Fprintf(&sb, "\n [gray]Completed: %d expedition(s)[-]\n", mil.CompletedCount)
 
@@ -96,6 +95,20 @@ func militaryProvider(state game.GameState, _ int) string {
 	sb.WriteString("\n [gray]Commands: expedition <key>[-]\n")
 
 	return sb.String()
+}
+
+// writeActiveExpedition renders one active expedition under a kind label
+// (e.g. "Scouting"). Nothing is written when exp is nil, so the section only
+// lists kinds that are actually running.
+func writeActiveExpedition(sb *strings.Builder, label string, exp *game.ExpeditionSnapshot) {
+	if exp == nil {
+		return
+	}
+	fmt.Fprintf(sb, " [yellow]%s:[-] %s", label, exp.Name)
+	if exp.Soldiers > 0 {
+		fmt.Fprintf(sb, " — %d deployed", exp.Soldiers)
+	}
+	fmt.Fprintf(sb, " (%d ticks left)\n", exp.TicksLeft)
 }
 
 // writeExpeditionGroup renders the subset of exps matching category under a

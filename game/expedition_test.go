@@ -85,7 +85,7 @@ func TestLaunchExpedition_InsufficientSoldiers_NoDeduction(t *testing.T) {
 	if got := ge.Resources.Get("soldiers"); got != 4 {
 		t.Errorf("soldiers after failed launch = %v, want 4 (unchanged)", got)
 	}
-	if ge.Military.active != nil {
+	if ge.Military.HasActive() {
 		t.Errorf("expedition should not be active after a failed launch")
 	}
 }
@@ -111,7 +111,7 @@ func TestLaunchExpedition_InsufficientCost_NoDeduction(t *testing.T) {
 	if wood := ge.Resources.Get("wood"); wood != 10 {
 		t.Errorf("wood after failed launch = %v, want 10 (unchanged)", wood)
 	}
-	if ge.Military.active != nil {
+	if ge.Military.HasActive() {
 		t.Errorf("expedition should not be active after a failed launch")
 	}
 }
@@ -144,7 +144,7 @@ func TestScoutParty_LaunchableInStoneAge_RejectedPastBronze(t *testing.T) {
 	if food := ge2.Resources.Get("food"); food != 100 {
 		t.Errorf("food after rejected past-MaxAge launch = %v, want 100 (unchanged)", food)
 	}
-	if ge2.Military.active != nil {
+	if ge2.Military.HasActive() {
 		t.Errorf("expedition should not be active after a rejected launch")
 	}
 }
@@ -168,13 +168,13 @@ func TestExpedition_ResolvesWithoutWorkerLoss(t *testing.T) {
 	}
 
 	// Drive the expedition to resolution.
-	for i := 0; i < 40 && ge.Military.active != nil; i++ {
+	for i := 0; i < 40 && ge.Military.HasActive(); i++ {
 		ge.mu.Lock()
 		ge.processExpeditions()
 		ge.mu.Unlock()
 	}
 
-	if ge.Military.active != nil {
+	if ge.Military.HasActive() {
 		t.Fatalf("expedition did not resolve within tick budget")
 	}
 	if popAfter := ge.Workers.TotalPop(); popAfter != popBefore {
