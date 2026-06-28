@@ -243,7 +243,10 @@ func showAccountWipeTypeGate(app *tview.Application, pages *tview.Pages, engine 
 	promptTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[white]Type your account name to confirm:[-]\n[#f0a0a0]This permanently deletes your account. It CANNOT be undone.[-]")
+		SetText(fmt.Sprintf(
+			"[white]Type this name exactly to confirm:[-]\n[yellow::b]%s[-]\n[#f0a0a0]This permanently deletes your account. It CANNOT be undone.[-]",
+			expectedName,
+		))
 
 	hintTV := tview.NewTextView().
 		SetDynamicColors(true).
@@ -300,7 +303,7 @@ func showAccountWipeTypeGate(app *tview.Application, pages *tview.Pages, engine 
 	// Spacers match so the gaps between rows are the same dark-red.
 	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(tcell.ColorDarkRed) }
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(promptTV, 2, 0, false).
+		AddItem(promptTV, 3, 0, false).
 		AddItem(spacer(), 1, 0, false).
 		AddItem(input, 1, 0, true).
 		AddItem(spacer(), 1, 0, false).
@@ -313,9 +316,10 @@ func showAccountWipeTypeGate(app *tview.Application, pages *tview.Pages, engine 
 		SetBorderColor(tcell.ColorWhite)
 	inner.SetBackgroundColor(tcell.ColorDarkRed)
 
-	// Width fits the longest warning line ("…It CANNOT be undone."); height =
-	// 7 content rows + 2 border = 9.
-	modal := centeredModal(inner, 68, 9)
+	// Width fits the longest warning line ("…It CANNOT be undone."). Height
+	// covers 9 content rows (3 prompt + 3 spacers + input + err + hint) + 2
+	// border, sized generously so the hint never clips; any slack is uniform red.
+	modal := centeredModal(inner, 68, 11)
 	modal.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
 		if ev.Key() == tcell.KeyEsc {
 			abort()
