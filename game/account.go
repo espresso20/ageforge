@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 	"sync"
 	"time"
 )
@@ -323,4 +324,194 @@ func (a *Account) SetActiveTheme(key string) error {
 	defer a.mu.Unlock()
 	a.Prefs.ActiveTheme = key
 	return a.Save()
+}
+
+// --- Recovery code (identity backup, accounts.md §3.5 / §8 / §9 Phase 4) ---
+//
+// The recovery code encodes IDENTITY ONLY — the 16-byte account_id plus a 2-byte
+// checksum — into a short, dash-grouped, uppercase, Crockford-base32 string with an
+// `AGEF-` prefix (e.g. AGEF-7Q2K-9X4M-ZJ31-...). It restores who you are across
+// machines/reinstalls; it does NOT restore earned progress (unlocks/stats) — that is
+// DATA, backed up separately via export/import (Phase 5). The code is a convenience
+// identifier, not a credential (accounts.md §3.5): the checksum guards against TYPOS,
+// not forgery, and account state is cosmetic, not security-critical.
+
+// recoveryCodePrefix is the human-readable namespace stamped on every recovery code.
+const recoveryCodePrefix = "AGEF"
+
+// crockfordAlphabet is the Crockford base32 symbol set: 0-9 then A-Z excluding the
+// ambiguous I, L, O, U. Index = 5-bit value; the string is the canonical encoder.
+const crockfordAlphabet = "0123456789ABCDEFGHJKMNPQRSTVWXYZ"
+
+// crc16CCITT computes the CRC-16/CCITT-FALSE checksum of data: 16-bit, polynomial
+// 0x1021, init 0xFFFF, no reflection, no final XOR. It is a small, standard,
+// dependency-free typo guard for the recovery code (accounts.md §3.5).
+func crc16CCITT(data []byte) uint16 {
+	crc := uint16(0xFFFF)
+	for _, b := range data {
+		crc ^= uint16(b) << 8
+		for i := 0; i < 8; i++ {
+			if crc&0x8000 != 0 {
+				crc = (crc << 1) ^ 0x1021
+			} else {
+				crc <<= 1
+			}
+		}
+	}
+	return crc
+}
+
+// crockfordEncode encodes data as an uppercase Crockford base32 string (no padding).
+// Bits are packed MSB-first; a trailing partial group is left-padded with zero bits,
+// matching crockfordDecode's symmetric unpacking.
+func crockfordEncode(data []byte) string {
+	if len(data) == 0 {
+		return ""
+	}
+	var out []byte
+	var buf uint32
+	bits := 0
+	for _, b := range data {
+		buf = (buf << 8) | uint32(b)
+		bits += 8
+		for bits >= 5 {
+			bits -= 5
+			out = append(out, crockfordAlphabet[(buf>>uint(bits))&0x1F])
+		}
+	}
+	if bits > 0 {
+		out = append(out, crockfordAlphabet[(buf<<uint(5-bits))&0x1F])
+	}
+	return string(out)
+}
+
+// crockfordDecodeChar maps a single character to its 5-bit value using Crockford's
+// lenient rules: case-insensitive, with I/L→1, O→0, U→V (per the Crockford spec, U is
+// treated as V to absorb a common transcription slip). Returns (value, ok).
+func crockfordDecodeChar(c byte) (byte, bool) {
+	switch {
+	case c >= 'a' && c <= 'z':
+		c -= 'a' - 'A' // normalize to upper
+	}
+	switch c {
+	case 'O':
+		c = '0'
+	case 'I', 'L':
+		c = '1'
+	case 'U':
+		c = 'V'
+	}
+	for i := 0; i < len(crockfordAlphabet); i++ {
+		if crockfordAlphabet[i] == c {
+			return byte(i), true
+		}
+	}
+	return 0, false
+}
+
+// crockfordDecode decodes a Crockford base32 string (already stripped of the prefix,
+// dashes, and spaces) back to bytes. byteLen is the expected decoded length; any
+// trailing partial-group bits beyond byteLen*8 are discarded (they are the encoder's
+// zero padding). Returns an error on an unknown symbol or insufficient input.
+func crockfordDecode(s string, byteLen int) ([]byte, error) {
+	out := make([]byte, 0, byteLen)
+	var buf uint32
+	bits := 0
+	for i := 0; i < len(s); i++ {
+		v, ok := crockfordDecodeChar(s[i])
+		if !ok {
+			return nil, fmt.Errorf("invalid recovery code (bad character %q)", string(s[i]))
+		}
+		buf = (buf << 5) | uint32(v)
+		bits += 5
+		if bits >= 8 {
+			bits -= 8
+			out = append(out, byte((buf>>uint(bits))&0xFF))
+		}
+	}
+	if len(out) < byteLen {
+		return nil, fmt.Errorf("invalid recovery code (too short)")
+	}
+	return out[:byteLen], nil
+}
+
+// groupBy4 inserts a dash after every 4 characters, leaving any trailing partial
+// group as-is (e.g. 29 chars → 7 groups of 4 + 1). Matches the doc's example shape.
+func groupBy4(s string) string {
+	var b strings.Builder
+	for i := 0; i < len(s); i++ {
+		if i > 0 && i%4 == 0 {
+			b.WriteByte('-')
+		}
+		b.WriteByte(s[i])
+	}
+	return b.String()
+}
+
+// RecoveryCode returns this account's identity-recovery code (accounts.md §3.5/§8):
+// the 16 raw account-id bytes plus a 2-byte CRC-16 checksum, Crockford-base32 encoded,
+// uppercased, dash-grouped in 4s, with the AGEF- prefix. Identity only — never progress.
+func (a *Account) RecoveryCode() string {
+	a.mu.Lock()
+	id := a.AccountID
+	a.mu.Unlock()
+
+	idBytes, err := hex.DecodeString(id)
+	if err != nil || len(idBytes) != 16 {
+		// An account ID that isn't 16 hex bytes can't form a code; return the prefix
+		// only rather than panic. LoadOrCreate always produces a valid 16-byte ID.
+		return recoveryCodePrefix + "-"
+	}
+	sum := crc16CCITT(idBytes)
+	payload := make([]byte, 0, 18)
+	payload = append(payload, idBytes...)
+	payload = append(payload, byte(sum>>8), byte(sum&0xFF))
+	body := groupBy4(crockfordEncode(payload))
+	return recoveryCodePrefix + "-" + body
+}
+
+// ImportRecoveryCode decodes a recovery code, verifies its checksum, and writes a
+// FRESH signed account.json carrying the recovered account ID with EMPTY data —
+// identity only, never restoring unlocks/stats (accounts.md §3.5/§8). It reuses the
+// normal signed atomic Save path; it never hand-rolls a second integrity scheme.
+//
+// Input is normalized leniently: uppercased, the AGEF- prefix stripped, dashes and
+// spaces removed, and ambiguous Crockford characters mapped (I/L→1, O→0, U→V). A
+// checksum mismatch returns a clear typo-guard error rather than silently minting a
+// wrong account.
+func ImportRecoveryCode(code string) (*Account, error) {
+	// Normalize: drop spaces, uppercase, strip the AGEF- prefix, strip dashes.
+	norm := strings.ToUpper(strings.TrimSpace(code))
+	norm = strings.ReplaceAll(norm, " ", "")
+	norm = strings.ReplaceAll(norm, "-", "")
+	if p := strings.ToUpper(recoveryCodePrefix); strings.HasPrefix(norm, p) {
+		norm = norm[len(p):]
+	}
+	if norm == "" {
+		return nil, fmt.Errorf("invalid recovery code (empty)")
+	}
+
+	payload, err := crockfordDecode(norm, 18)
+	if err != nil {
+		return nil, err
+	}
+	idBytes := payload[:16]
+	gotSum := uint16(payload[16])<<8 | uint16(payload[17])
+	if gotSum != crc16CCITT(idBytes) {
+		return nil, fmt.Errorf("invalid recovery code (checksum failed)")
+	}
+
+	now := time.Now()
+	acct := &Account{
+		Version:   accountSchemaVersion,
+		AccountID: hex.EncodeToString(idBytes),
+		Created:   now,
+		LastSeen:  now,
+		// EMPTY data: identity only. Unlocks/Stats/Achievements/Prefs stay zero —
+		// progress is carried by export/import (Phase 5), not the recovery code.
+	}
+	if err := acct.Save(); err != nil {
+		return nil, err
+	}
+	return acct, nil
 }
