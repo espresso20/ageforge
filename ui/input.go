@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -588,12 +589,83 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		lines = append(lines, "Write the code down to keep your identity. It is not a password: it proves")
 		lines = append(lines, "nothing secret, only which account you are.")
 		lines = append(lines, "")
-		lines = append(lines, "Restore on another machine with:  account recover <code>")
+		lines = append(lines, "Restore identity on another machine with:  account recover <code>")
+		lines = append(lines, "")
+		lines = append(lines, "[gold]Progress (unlocks, stats):[-] backed up SEPARATELY from the code above.")
+		lines = append(lines, "  account export [path]          → write a progress backup file")
+		lines = append(lines, "  account import <path> [replace] → restore progress (merges by default)")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
 
 	sub := strings.ToLower(args[0])
 	switch sub {
+	case "export":
+		if acct == nil {
+			return CommandResult{
+				Message: "Accounts are unavailable (no account is loaded).",
+				Type:    "warning",
+			}
+		}
+		blob, err := acct.ExportProgress()
+		if err != nil {
+			return CommandResult{Message: fmt.Sprintf("Export failed: %v", err), Type: "error"}
+		}
+		// Resolve the destination: explicit path arg, or the default account-export.json
+		// in the same data dir as account.json (so it sits beside the live account).
+		var path string
+		if len(args) >= 2 && args[1] != "" {
+			path = args[1]
+		} else {
+			path = filepath.Join(game.DataDir(), "account-export.json")
+		}
+		if dir := filepath.Dir(path); dir != "" {
+			if err := os.MkdirAll(dir, 0755); err != nil {
+				return CommandResult{Message: fmt.Sprintf("Export failed: %v", err), Type: "error"}
+			}
+		}
+		if err := os.WriteFile(path, blob, 0644); err != nil {
+			return CommandResult{Message: fmt.Sprintf("Export failed: %v", err), Type: "error"}
+		}
+		var lines []string
+		lines = append(lines, fmt.Sprintf("[gold]Progress exported:[-] %s", path))
+		lines = append(lines, "This file is your PROGRESS backup (unlocks, stats, achievements). Keep it")
+		lines = append(lines, "safe — it is separate from your recovery code, which carries only identity.")
+		lines = append(lines, "Restore it with:  account import "+path)
+		return CommandResult{Message: strings.Join(lines, "\n"), Type: "success"}
+
+	case "import":
+		if acct == nil {
+			return CommandResult{
+				Message: "Accounts are unavailable (no account is loaded).",
+				Type:    "warning",
+			}
+		}
+		if len(args) < 2 {
+			return CommandResult{
+				Message: "Usage: account import <path> [replace]",
+				Type:    "error",
+			}
+		}
+		path := args[1]
+		// merge by default; the `replace` token switches to wholesale replacement.
+		merge := !(len(args) >= 3 && strings.EqualFold(args[2], "replace"))
+		blob, err := os.ReadFile(path)
+		if err != nil {
+			return CommandResult{Message: fmt.Sprintf("Import failed: cannot read %s: %v", path, err), Type: "error"}
+		}
+		if err := acct.ImportProgress(blob, merge); err != nil {
+			return CommandResult{Message: fmt.Sprintf("Import failed: %v", err), Type: "error"}
+		}
+		mode := "merged"
+		if !merge {
+			mode = "replaced"
+		}
+		themeCount := len(acct.UnlockedThemes())
+		return CommandResult{
+			Message: fmt.Sprintf("Imported progress (%s) — %d theme(s) unlocked.", mode, themeCount),
+			Type:    "success",
+		}
+
 	case "recover":
 		if len(args) < 2 {
 			return CommandResult{
@@ -630,7 +702,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		}
 	default:
 		return CommandResult{
-			Message: "Usage: account  |  account recover <code>",
+			Message: "Usage: account  |  account recover <code>  |  account export [path]  |  account import <path> [replace]",
 			Type:    "error",
 		}
 	}

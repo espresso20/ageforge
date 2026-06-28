@@ -249,6 +249,14 @@ func saveDirectory() string {
 	return filepath.Join(dataDirectory(), "saves")
 }
 
+// DataDir returns the canonical data directory (next to the binary, or "data" as a
+// fallback / the test override). Exported so the UI resolves account/export paths
+// through the SAME helper saves and the account file use — keeping the default
+// progress-export location consistent with where account.json lives.
+func DataDir() string {
+	return dataDirectory()
+}
+
 // savePath returns the full path for a named save file.
 // It checks the canonical (binary-relative) location first, then falls back to
 // the legacy CWD-relative location so saves from older versions are still found.
