@@ -12,6 +12,8 @@ import (
 	"strings"
 	"sync"
 	"time"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // accountSchemaVersion is the on-disk schema version of account.json. Bumped only
@@ -82,6 +84,14 @@ type Account struct {
 	// changing LoadOrCreate's signature. json:"-" keeps it off disk; it is false for
 	// any account loaded from an existing file.
 	FreshlyCreated bool `json:"-"`
+
+	// dirty is the in-memory, non-persisted write-debounce flag for the lifetime-stats
+	// hooks (accounts.md §8 "debounce writes"). RecordPrestige/RecordAgeReached mutate
+	// the in-memory stats and set dirty=true WITHOUT touching the disk — they run under
+	// the engine write lock (advanceAge/DoPrestige) where file I/O is forbidden. The
+	// engine's periodic autosave block (outside ge.mu) calls FlushIfDirty, which Saves
+	// once if dirty and clears the flag. json:"-" keeps it off disk and out of the sig.
+	dirty bool `json:"-"`
 
 	// mu guards the unlock/prefs reads and writes (and the Save inside the mutating
 	// methods): the account is read from the UI goroutine (HasTheme/ActiveTheme/
@@ -673,4 +683,180 @@ func maxInt(a, b int) int {
 		return a
 	}
 	return b
+}
+
+// --- Lifetime stats + achievements (accounts.md §3.3 / §8 / §9 Phase 6) ---
+//
+// Lifetime stats are CROSS-SAVE aggregates living on the ACCOUNT — distinct from the
+// per-save ge.Stats system, which resets on every new game/prestige. Achievements are
+// one-time, account-wide unlock keys appended on first satisfaction and never removed.
+//
+// LOCKING DISCIPLINE (the load-bearing constraint, accounts.md §8 + project rule):
+// the engine calls RecordPrestige/RecordAgeReached from UNDER the engine write lock
+// (ge.mu — advanceAge and DoPrestige both hold it). Those methods therefore MUST be
+// in-memory only: they take the account's OWN mutex (a.mu, fully independent of ge.mu),
+// do NO file I/O, and NEVER call back into ge.* (AddLog/GetState/…), or the non-reentrant
+// ge.mu would deadlock. The actual Save happens later via FlushIfDirty, called from the
+// engine's periodic-autosave block which runs OUTSIDE ge.mu (accounts.md §8 write cadence).
+
+// accountAchievement is one entry in the in-file achievement table: a stable unlock key
+// plus a human-readable name and a predicate over the lifetime stats. The predicate is
+// pure (no locks, no I/O) and is evaluated by recordEvaluateLocked while a.mu is held.
+type accountAchievement struct {
+	Key  string
+	Name string
+	// met reports whether the given stats satisfy this achievement. ageOrder is the
+	// order of the age that triggered the current evaluation (-1 when the trigger was
+	// a prestige, not an age-up), so age achievements can key off the just-reached age.
+	met func(s AccountStats, ageOrder int) bool
+}
+
+// achievementAge* are the age Order thresholds the age achievements fire at, named so
+// the table reads as intent rather than magic numbers (config/ages.go: Order is 0-indexed;
+// iron_age = 3, modern_age = 12). Kept here, not imported from config, to keep the table
+// dependency-free and the predicate pure.
+const (
+	achievementOrderIron   = 3  // iron_age
+	achievementOrderModern = 12 // modern_age
+)
+
+// accountAchievements is the small, sensible achievement set for Phase 6. Two prestige
+// tiers and two age milestones — enough to prove the wiring without a sprawling table.
+// New entries are purely additive (the key is the only persisted artifact).
+var accountAchievements = []accountAchievement{
+	{Key: "first_prestige", Name: "First Prestige", met: func(s AccountStats, _ int) bool {
+		return s.TotalPrestiges >= 1
+	}},
+	{Key: "prestige_x10", Name: "Serial Reincarnator", met: func(s AccountStats, _ int) bool {
+		return s.TotalPrestiges >= 10
+	}},
+	// Age achievements: the trigger's ageOrder must be at/above the threshold. We gate on
+	// the live trigger order (not HighestAge) so a single RecordAgeReached call evaluates
+	// only the age just reached; HighestAge has already been updated to that age by then,
+	// so a later re-eval would still hold, but the trigger gate keeps each unlock crisp.
+	{Key: "reached_iron", Name: "Age of Iron", met: func(_ AccountStats, ageOrder int) bool {
+		return ageOrder >= achievementOrderIron
+	}},
+	{Key: "reached_modern", Name: "Into the Modern Age", met: func(_ AccountStats, ageOrder int) bool {
+		return ageOrder >= achievementOrderModern
+	}},
+}
+
+// AchievementName returns the human-readable name for an achievement key, or the key
+// itself if it is unknown (so the UI degrades gracefully on a future/renamed key).
+func AchievementName(key string) string {
+	for _, a := range accountAchievements {
+		if a.Key == key {
+			return a.Name
+		}
+	}
+	return key
+}
+
+// recordEvaluateLocked evaluates the achievement table against the current stats and
+// appends any newly-satisfied keys to a.Achievements (deduped). Callers MUST hold a.mu.
+// ageOrder is the order of the age that triggered this evaluation, or -1 for a prestige
+// trigger. It performs NO Save — the caller sets a.dirty and the flush persists later.
+func (a *Account) recordEvaluateLocked(ageOrder int) {
+	for _, def := range accountAchievements {
+		if a.hasAchievementLocked(def.Key) {
+			continue
+		}
+		if def.met(a.Stats, ageOrder) {
+			a.Achievements = append(a.Achievements, def.Key)
+		}
+	}
+}
+
+// hasAchievementLocked reports whether key is already unlocked. Callers must hold a.mu.
+func (a *Account) hasAchievementLocked(key string) bool {
+	for _, k := range a.Achievements {
+		if k == key {
+			return true
+		}
+	}
+	return false
+}
+
+// RecordPrestige increments the lifetime prestige count, evaluates prestige achievements,
+// and marks the account dirty for the next flush (accounts.md §8). It is IN-MEMORY ONLY:
+// it takes a.mu, performs no file I/O, and never calls back into the engine — so it is
+// safe to call from DoPrestige while the engine write lock is held. The write is deferred
+// to FlushIfDirty (engine autosave block, outside ge.mu).
+func (a *Account) RecordPrestige() {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.Stats.TotalPrestiges++
+	a.recordEvaluateLocked(-1) // -1: prestige trigger, not an age-up
+	a.dirty = true
+}
+
+// RecordAgeReached records that the account's player has reached the given age, lifting
+// HighestAge only when ageOrder exceeds the order of the currently-stored highest age (so
+// a lower age never regresses the lifetime best), then evaluates age achievements and marks
+// the account dirty (accounts.md §8). IN-MEMORY ONLY (same discipline as RecordPrestige).
+//
+// DEVIATION from accounts.md §8: the doc sketches RecordAgeReached(ageKey) with no order.
+// The account stores only the highest age KEY (AccountStats.HighestAge, accounts.md §3.3),
+// and a bare key can't be ranked without consulting the age table — which would couple the
+// account to config and re-derive order on every call. We take ageOrder explicitly from the
+// engine (which already knows it) so the comparison is a cheap int compare and the account
+// stays config-free. The stored highest order is derived from HighestAge on demand via
+// highestOrderLocked, so it needs no extra persisted field.
+func (a *Account) RecordAgeReached(ageKey string, ageOrder int) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if ageOrder > a.highestOrderLocked() {
+		a.Stats.HighestAge = ageKey
+	}
+	a.recordEvaluateLocked(ageOrder)
+	a.dirty = true
+}
+
+// highestOrderLocked returns the Order of the currently-stored HighestAge, or -1 if none
+// is set (or the stored key is unknown — treated as "below everything" so any real age
+// wins). Callers must hold a.mu. It consults the pure config age table (no locks).
+func (a *Account) highestOrderLocked() int {
+	if a.Stats.HighestAge == "" {
+		return -1
+	}
+	if def, ok := config.AgeByKey()[a.Stats.HighestAge]; ok {
+		return def.Order
+	}
+	return -1
+}
+
+// FlushIfDirty persists the account once if the in-memory stats/achievements have changed
+// since the last write, then clears the dirty flag (accounts.md §8 write cadence). It is the
+// ONLY place lifetime-stat changes touch the disk, and it MUST be called from OUTSIDE the
+// engine write lock (the autosave block / clean-exit path) — never from a Record* call site.
+//
+// Self-deadlock avoidance: Save() does NOT acquire a.mu itself (the theme mutators call
+// a.Save() while already holding a.mu, by design). So FlushIfDirty can hold a.mu across the
+// Save() call without re-entering the same non-reentrant mutex. If dirty is false it is a
+// pure no-op (no Save, no error). On a Save error the dirty flag is left SET so the next
+// flush retries rather than silently dropping the unsaved progress.
+func (a *Account) FlushIfDirty() error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if !a.dirty {
+		return nil
+	}
+	if err := a.Save(); err != nil {
+		return err // keep dirty set: retry on the next flush
+	}
+	a.dirty = false
+	return nil
+}
+
+// LifetimeStats returns a lock-guarded COPY of the account's lifetime stats and unlocked
+// achievement keys, for the UI snapshot (GetState). It never exposes the account's backing
+// slice — the returned achievements slice is freshly allocated — so a snapshot consumer can
+// neither mutate account state nor race the Record* writers.
+func (a *Account) LifetimeStats() (AccountStats, []string) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	ach := make([]string, len(a.Achievements))
+	copy(ach, a.Achievements)
+	return a.Stats, ach
 }

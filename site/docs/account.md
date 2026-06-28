@@ -59,6 +59,30 @@ To carry your progress between machines, back it up via **progress export** — 
 
 ---
 
+## Lifetime stats & achievements
+
+Some progress is **account-wide and cross-save** — it accumulates across *every* game you play and *every* prestige, not just your current run. This lives on your account, separate from the per-save Statistics that reset when you start over or prestige.
+
+| Lifetime stat | What it tracks |
+|---|---|
+| **Total Prestiges** | Every prestige you've ever completed, across all games |
+| **Highest Age Ever** | The furthest age any of your civilizations has reached — it only ever goes *up* |
+
+**Achievements** are one-time, account-wide badges. Once unlocked, they stay unlocked — they ride with your account and travel in a progress export. The current set:
+
+| Achievement | Unlocks when |
+|---|---|
+| **First Prestige** | You complete your first prestige |
+| **Serial Reincarnator** | You reach 10 lifetime prestiges |
+| **Age of Iron** | Any civilization reaches the Iron Age |
+| **Into the Modern Age** | Any civilization reaches the Modern Age |
+
+**Where to see them:** open the **Stats** overlay. Below the per-run Statistics there's a **Lifetime (Account)** section showing your total prestiges, highest age ever reached, and the achievements you've unlocked. (Reaching a milestone is recorded silently — there's no pop-up; check the Stats overlay to see what's unlocked.)
+
+These stats update the moment you prestige or advance into a new age, and are saved to your account alongside the next autosave (and on a clean exit), so a fresh prestige is never lost.
+
+---
+
 ## Backing up your progress
 
 Your account has **two backups, and they do different jobs**:
