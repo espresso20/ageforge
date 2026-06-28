@@ -3,7 +3,9 @@ package ui
 import (
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/theme"
@@ -194,5 +196,91 @@ func TestCreateThemePickerPageRegisters(t *testing.T) {
 	pages.AddPage(themePickerPage, page, true, true)
 	if !pages.HasPage(themePickerPage) {
 		t.Errorf("picker page %q not registered after AddPage", themePickerPage)
+	}
+}
+
+// TestThemePicker_NoDeadlockOnNavigate is the regression guard for Trello TCGiSWYX:
+// the live-preview SetChangedFunc must NOT call QueueUpdateDraw, which deadlocks the
+// whole app when run from the main goroutine — the freeze-on-arrow the player hit.
+// The pre-fix unit tests used an un-run app, so they never exercised live
+// navigation; this one runs a real tview event loop on a SimulationScreen, injects a
+// Down arrow (firing the live preview), waits for the preview to actually land, then
+// probes loop liveness with a QueueUpdateDraw from a non-main goroutine — which times
+// out (and fails the test) if the picker has wedged the loop.
+//
+// Scope is the arrow/SetChangedFunc path only: cancel() carries the identical
+// no-QueueUpdateDraw fix, but driving Esc through a simulated loop proved
+// order-dependent (focus/timing), and an order-dependent test is worse than none.
+func TestThemePicker_NoDeadlockOnNavigate(t *testing.T) {
+	restoreForge(t)
+
+	app := tview.NewApplication()
+	app.SetScreen(tcell.NewSimulationScreen("")) // app.Run() Inits it.
+
+	pages := tview.NewPages()
+	pages.AddPage("home", tview.NewBox(), true, false)
+	picker := CreateThemePickerPage(app, pages, nil, "home") // nil engine: accountless is fine
+	pages.AddPage(themePickerPage, picker, true, true)
+	app.SetRoot(pages, true)
+
+	runErr := make(chan error, 1)
+	go func() { runErr <- app.Run() }()
+	defer func() {
+		app.Stop()
+		// Best-effort drain. If the loop is wedged (the very bug under test), Stop()
+		// can't unblock it and Run() never returns — so don't hang teardown on it, or
+		// a correct t.Fatal detection turns into a slow test-timeout kill.
+		select {
+		case <-runErr:
+		case <-time.After(2 * time.Second):
+		}
+	}()
+
+	// alive reports whether the event loop can still process an update within d. Run
+	// from this (non-main) goroutine, QueueUpdateDraw blocks until the loop drains it
+	// — so a loop wedged on a main-goroutine QueueUpdateDraw (the TCGiSWYX bug) makes
+	// this time out. The probe goroutine is allowed to leak on failure (it can't be
+	// unblocked); the test fails via the timeout, which is the point.
+	alive := func(d time.Duration) bool {
+		done := make(chan struct{})
+		go func() { app.QueueUpdateDraw(func() {}); close(done) }()
+		select {
+		case <-done:
+			return true
+		case <-time.After(d):
+			return false
+		}
+	}
+	// waitTheme polls the (mutex-guarded) active theme until want(key) holds or d
+	// elapses, returning the last-seen key. We wait for an injected key's EFFECT to
+	// land before probing liveness, so the liveness check isn't racing the key
+	// handler (and so the buggy path fails fast on the alive() timeout rather than on
+	// channel-ordering luck).
+	waitTheme := func(want func(string) bool, d time.Duration) string {
+		deadline := time.Now().Add(d)
+		for {
+			k := theme.Active().Key
+			if want(k) || time.Now().After(deadline) {
+				return k
+			}
+			time.Sleep(5 * time.Millisecond)
+		}
+	}
+
+	if !alive(3 * time.Second) {
+		t.Fatal("event loop never became responsive")
+	}
+
+	// Down fires the live-preview SetChangedFunc — the primary deadlock site.
+	// applyAndDetail (which moves the active theme off the opening Forge row) runs
+	// BEFORE the buggy QueueUpdateDraw, so the theme change lands even on the broken
+	// code; we wait for it (proving we reached SetChangedFunc), THEN probe liveness —
+	// which is where the bug strands the loop.
+	app.QueueEvent(tcell.NewEventKey(tcell.KeyDown, 0, tcell.ModNone))
+	if k := waitTheme(func(s string) bool { return s != "forge" }, 3*time.Second); k == "forge" {
+		t.Fatal("preview never applied after Down — test did not reach SetChangedFunc")
+	}
+	if !alive(3 * time.Second) {
+		t.Fatal("event loop deadlocked in live preview (Trello TCGiSWYX regression)")
 	}
 }
