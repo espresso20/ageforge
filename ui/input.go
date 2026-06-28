@@ -872,7 +872,7 @@ func cmdTheme(args []string, engine *game.GameEngine) CommandResult {
 		}
 	}
 	if strings.ToLower(args[0]) == "list" {
-		return cmdThemeList()
+		return cmdThemeList(themeAccount(engine))
 	}
 
 	key := strings.ToLower(args[0])
@@ -911,8 +911,15 @@ func themeAccount(engine *game.GameEngine) *game.Account {
 }
 
 // cmdThemeList renders the `theme list` output: one line per theme with its name,
-// key, an active marker, and an "accessible" note.
-func cmdThemeList() CommandResult {
+// key, an active marker, and a status note. Unlocked themes show "(accessible)" when
+// applicable; a LOCKED flavor theme shows "🔒 <unlock hint>" instead, so the player
+// sees exactly how to earn it (theming.md §5/§7), e.g. "monochrome  🔒 Reach the
+// Information Age".
+//
+// acct may be nil (accountless play / tests): with no account only the always-
+// available set (Accessible + Forge) is unlocked, so the flavor themes correctly
+// render as locked with their hints.
+func cmdThemeList(acct *game.Account) CommandResult {
 	activeKey := theme.Active().Key
 	var lines []string
 	lines = append(lines, "[gold]Themes:[-]")
@@ -922,7 +929,15 @@ func cmdThemeList() CommandResult {
 			marker = "[gold]●[-] "
 		}
 		note := ""
-		if t.Accessible {
+		switch {
+		case !themeAvailable(acct, t):
+			// Locked flavor theme: show the unlock condition rather than nothing.
+			hint := t.UnlockHint
+			if hint == "" {
+				hint = "unlock via a milestone"
+			}
+			note = fmt.Sprintf("  [red]🔒[-] [gray]%s[-]", hint)
+		case t.Accessible:
 			note = "  [cyan](accessible)[-]"
 		}
 		lines = append(lines, fmt.Sprintf("%s[white]%-18s[-] [gray]%s[-]%s",

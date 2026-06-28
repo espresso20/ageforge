@@ -186,7 +186,7 @@ func (p *themePicker) applyAndDetail(index int) {
 	// restyle registry; the caller owns any redraw.
 	_ = theme.SetActive(th.Key)
 	theme.Restyle()
-	p.detail.SetText(themeDetailText(th))
+	p.detail.SetText(themeDetailText(th, themeAvailable(p.account(), th)))
 }
 
 // handleKey routes the picker's action keys. tview.List handles ↑/↓ natively; we
@@ -293,7 +293,12 @@ func themeRowLabel(t theme.Theme, activeKey string, available bool) string {
 // themeDetailText renders the detail pane for a theme: name, blurb, an accessible
 // note (with the gain/loss glyphs so the redundant ± encoding is visible), and the
 // palette swatch rows.
-func themeDetailText(t theme.Theme) string {
+//
+// available reports whether this theme is unlocked for the current account
+// (themeAvailable). A LOCKED theme shows a "🔒 Locked — <UnlockHint>" line above the
+// swatches (theming.md §7); the swatches still render as a preview of what the player
+// will get, so the locked theme is enticing rather than blank.
+func themeDetailText(t theme.Theme, available bool) string {
 	var lines []string
 	lines = append(lines, fmt.Sprintf("[gold]%s[-]", t.Name))
 	if t.Blurb != "" {
@@ -307,6 +312,17 @@ func themeDetailText(t theme.Theme) string {
 			note += fmt.Sprintf(" [gray](gain %s / loss %s)[-]", t.GainGlyph, t.LossGlyph)
 		}
 		lines = append(lines, note)
+	}
+	if !available {
+		// Locked flavor theme: surface the unlock condition. Fall back to a generic
+		// line if the theme somehow has no hint (the registry-consistency test makes
+		// that impossible for gated themes, but the detail pane shouldn't render an
+		// empty "Locked —" tail if it ever happens).
+		hint := t.UnlockHint
+		if hint == "" {
+			hint = "unlock via a milestone"
+		}
+		lines = append(lines, fmt.Sprintf("[red]🔒 Locked[-] [gray]— %s[-]", hint))
 	}
 	lines = append(lines, "") // blank spacer before the swatch block
 	lines = append(lines, themeSwatches(t))

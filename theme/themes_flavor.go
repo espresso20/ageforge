@@ -40,6 +40,11 @@ var Parchment = Theme{
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
+	// Unlock: the Renaissance-age milestone ("Enlightened" — advance to the
+	// Renaissance Age). Parchment is the manuscript/illuminated-page look, so the
+	// age of letters and printing is its thematic home (config/milestones.go).
+	UnlockMilestone: "enlightened",
+	UnlockHint:      "Reach the Renaissance Age",
 }
 
 // Bronze is a warm metallic look: copper/bronze accent, amber highlight, olive
@@ -62,6 +67,10 @@ var Bronze = Theme{
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
+	// Unlock: the Bronze-age milestone ("Bronze Age Pioneer"). The earliest gated
+	// theme — burnished metal for the age that first worked it (config/milestones.go).
+	UnlockMilestone: "bronze_pioneer",
+	UnlockHint:      "Reach the Bronze Age",
 }
 
 // Cyberpunk is neon on near-black: hot magenta accent, neon-cyan highlight, neon
@@ -85,6 +94,11 @@ var Cyberpunk = Theme{
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
+	// Unlock: the Cyberpunk-age milestone ("cyberpunk_milestone" — advance to the
+	// Cyberpunk Age). The on-the-nose mapping the spec calls out; the theme riffs on
+	// the cyberpunk_age palette (config/milestones.go).
+	UnlockMilestone: "cyberpunk_milestone",
+	UnlockHint:      "Reach the Cyberpunk Age",
 }
 
 // Monochrome is a stylistic greyscale terminal: a single hue's shades. Accent and
@@ -110,6 +124,11 @@ var Monochrome = Theme{
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
+	// Unlock: the Information-age milestone ("Information Pioneer"). The spec's worked
+	// example ("monochrome 🔒 Reach the Information Age") — the retro terminal look
+	// for the age that made the terminal ubiquitous (config/milestones.go).
+	UnlockMilestone: "information_pioneer",
+	UnlockHint:      "Reach the Information Age",
 }
 
 // Cosmic is deep-space: a dark indigo/violet background, starlight text, and
@@ -133,6 +152,11 @@ var Cosmic = Theme{
 	},
 	GainGlyph: flavorGainGlyph,
 	LossGlyph: flavorLossGlyph,
+	// Unlock: the Galactic-age milestone ("Galactic Emperor"). Deep-space indigo for
+	// the age of galactic empire; riffs on the galactic_age palette
+	// (config/milestones.go).
+	UnlockMilestone: "galactic_emperor",
+	UnlockHint:      "Reach the Galactic Age",
 }
 
 func init() {

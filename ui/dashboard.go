@@ -74,17 +74,32 @@ type Dashboard struct {
 	overlayMgr *OverlayManager
 	lastState  *game.GameState
 
+	// Milestone-gated theme unlocks (theming.md §5; see theme_unlock.go). Both fields
+	// are owned by the UI goroutine — touched only from refresh(), which runs inside
+	// QueueUpdateDraw and never under the engine lock, so account.UnlockTheme's Save
+	// is safe here.
+	//
+	// themeProcessedKeys de-dupes: each completed milestone/chain key is handled once
+	// per process, so we don't re-ask UnlockedBy / UnlockTheme every tick.
+	//
+	// themeSyncDone is false until the first refresh has processed the load's already-
+	// completed milestones; that first pass unlocks their themes SILENTLY (retroactive
+	// grants), and only unlocks during live play afterward fire the toast.
+	themeProcessedKeys map[string]bool
+	themeSyncDone      bool
+
 	stopCh chan struct{}
 }
 
 // NewDashboard creates the gameplay dashboard
 func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.Pages) *Dashboard {
 	d := &Dashboard{
-		app:     app,
-		engine:  engine,
-		pages:   pages,
-		stopCh:  make(chan struct{}),
-		histIdx: -1,
+		app:                app,
+		engine:             engine,
+		pages:              pages,
+		stopCh:             make(chan struct{}),
+		histIdx:            -1,
+		themeProcessedKeys: make(map[string]bool),
 	}
 	d.build()
 	d.overlayMgr = NewOverlayManager(d.pages, d.app, func() {
@@ -477,6 +492,11 @@ func (d *Dashboard) refresh() {
 	state := d.engine.GetState()
 	d.lastState = &state
 
+	// Milestone-gated theme unlocks (theming.md §5). Runs here, in the UI goroutine,
+	// because account.UnlockTheme persists (file I/O) and must not run under the
+	// engine lock / in a Bus handler. GetState() above already released the lock.
+	d.processThemeUnlocks(state)
+
 	// Phase 9: catastrophe modal — show once per new pending catastrophe; Defer hides it
 	if state.PendingCatastrophe == "" {
 		d.catModalShown = "" // reset so next catastrophe will show fresh
@@ -510,6 +530,44 @@ func (d *Dashboard) refresh() {
 	d.overlayMgr.Refresh(state)
 	d.updateSidebar(d.overlayMgr.ActiveName())
 	d.refreshWorkerMini(state)
+}
+
+// processThemeUnlocks grants milestone-gated themes for newly-completed milestones/
+// chains (theming.md §5), toasting only genuinely-new unlocks during live play.
+//
+// Locking: this is called from refresh() (inside QueueUpdateDraw, on the tview
+// goroutine), which does NOT hold the engine lock — it operates on the GetState()
+// snapshot. So the account Save inside UnlockTheme is safe here; doing this in a Bus
+// handler or under ge.mu would deadlock (CLAUDE.md Bus rule).
+//
+// First-sync handling: the first call processes the load's already-completed
+// milestones with themeSyncDone==false, so evaluateThemeUnlock unlocks their themes
+// SILENTLY (no toast spam for retroactive grants). Subsequent calls run with
+// themeSyncDone==true, so a milestone completed during play toasts once. Each
+// completed key is recorded in themeProcessedKeys so it's evaluated only once per
+// process (idempotent regardless, since UnlockTheme is a no-op once owned).
+func (d *Dashboard) processThemeUnlocks(state game.GameState) {
+	var acct *game.Account
+	if d.engine != nil {
+		acct = d.engine.Account()
+	}
+	firstSync := !d.themeSyncDone
+
+	for _, key := range completedUnlockKeys(state.Milestones) {
+		if d.themeProcessedKeys[key] {
+			continue // already handled this process
+		}
+		d.themeProcessedKeys[key] = true
+		res := evaluateThemeUnlock(acct, key, firstSync)
+		if res.Toast {
+			// AddLog takes the engine lock internally, but we don't hold it here, so
+			// this is safe (it's a plain method call, not a Bus subscriber).
+			d.engine.AddLog("success", themeUnlockToast(res.ThemeName))
+		}
+	}
+
+	// Mark first-sync complete after the first pass so live-play unlocks toast.
+	d.themeSyncDone = true
 }
 
 func (d *Dashboard) refreshWorkerMini(state game.GameState) {
