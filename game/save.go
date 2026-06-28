@@ -81,6 +81,17 @@ type GameSave struct {
 	Proof      string `json:"_proof,omitempty"`
 }
 
+// hmacSign returns the HMAC-SHA256 of payload under key, hex-encoded. This is the
+// shared integrity-signing core used by both saves (signSave) and the account file
+// (Account.Save) — one construction, reused, per the accounts.md "reuse, don't
+// reinvent" rule. The key is always saveHMACKey in practice; it stays a parameter
+// so signSave's existing signature is unchanged.
+func hmacSign(payload []byte, key string) string {
+	mac := hmac.New(sha256.New, []byte(key))
+	mac.Write(payload)
+	return hex.EncodeToString(mac.Sum(nil))
+}
+
 // signSave returns the HMAC-SHA256 hex of the save payload.
 // Signature and Proof are zeroed before marshalling so the signature covers
 // the game data only, not a prior signature value.
@@ -88,9 +99,7 @@ func signSave(gs GameSave, key string) string {
 	gs.Signature = ""
 	gs.Proof = ""
 	data, _ := json.Marshal(gs)
-	mac := hmac.New(sha256.New, []byte(key))
-	mac.Write(data)
-	return hex.EncodeToString(mac.Sum(nil))
+	return hmacSign(data, key)
 }
 
 // verifySave checks the save's HMAC signature and optional elite proof.
@@ -201,18 +210,36 @@ type UnlockedState struct {
 	Workers   []string `json:"workers"`
 }
 
-// saveDirectory returns the canonical save directory: data/saves/ next to the binary.
-// Falls back to a CWD-relative path if the binary path cannot be determined.
-func saveDirectory() string {
+// dataDirOverride, when non-empty, forces dataDirectory to return it verbatim.
+// It exists solely so tests can isolate the data root (saves/account) into a temp
+// directory without touching a real ./data. Production code never sets it; it is
+// empty by default, so the binary-relative resolution below is the only path that
+// runs outside tests.
+var dataDirOverride string
+
+// dataDirectory returns the canonical data root: data/ next to the binary, resolved
+// via os.Executable + EvalSymlinks. Falls back to a CWD-relative "data" if the
+// binary path cannot be determined. Saves, accounts, and (eventually) logs share
+// this one root and one fallback rule (accounts.md §3.1).
+func dataDirectory() string {
+	if dataDirOverride != "" {
+		return dataDirOverride
+	}
 	exe, err := os.Executable()
 	if err != nil {
-		return "data/saves"
+		return "data"
 	}
 	exe, err = filepath.EvalSymlinks(exe)
 	if err != nil {
-		return "data/saves"
+		return "data"
 	}
-	return filepath.Join(filepath.Dir(exe), "data", "saves")
+	return filepath.Join(filepath.Dir(exe), "data")
+}
+
+// saveDirectory returns the canonical save directory: data/saves/ next to the binary.
+// Falls back to a CWD-relative path if the binary path cannot be determined.
+func saveDirectory() string {
+	return filepath.Join(dataDirectory(), "saves")
 }
 
 // savePath returns the full path for a named save file.
