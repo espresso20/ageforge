@@ -845,7 +845,36 @@ func cmdExpeditionList(engine *game.GameEngine) CommandResult {
 	var lines []string
 	lines = append(lines, "[gold]Available Expeditions:[-]")
 
-	for _, exp := range state.Military.Expeditions {
+	// Group by category: Scouting first, then Military Campaigns. Headers are
+	// omitted for empty subsections.
+	appendExpeditionGroup(&lines, "Scouting", state.Military.Expeditions, game.ExpeditionScouting)
+	appendExpeditionGroup(&lines, "Military Campaigns", state.Military.Expeditions, game.ExpeditionMilitary)
+
+	if state.Military.ActiveExpedition != nil {
+		lines = append(lines, fmt.Sprintf("\n[yellow]Active: %s (%d ticks left)[-]",
+			state.Military.ActiveExpedition.Name, state.Military.ActiveExpedition.TicksLeft))
+	}
+
+	if len(state.Military.Expeditions) == 0 {
+		lines = append(lines, "  [gray]No expeditions available yet[-]")
+	}
+
+	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
+
+// appendExpeditionGroup appends the subset of exps matching category to lines,
+// under a labeled header (e.g. "Scouting"). The header is omitted when no
+// expedition matches, so empty subsections produce no output.
+func appendExpeditionGroup(lines *[]string, label string, exps []game.ExpeditionInfo, category string) {
+	first := true
+	for _, exp := range exps {
+		if exp.Category != category {
+			continue
+		}
+		if first {
+			*lines = append(*lines, fmt.Sprintf("[yellow]%s:[-]", label))
+			first = false
+		}
 		canStr := "[red]✗[-]"
 		if exp.CanLaunch {
 			canStr = "[green]✓[-]"
@@ -858,19 +887,8 @@ func cmdExpeditionList(engine *game.GameEngine) CommandResult {
 		if !exp.CanLaunch && exp.LaunchBlockReason != "" {
 			line += fmt.Sprintf(" [red]— %s[-]", exp.LaunchBlockReason)
 		}
-		lines = append(lines, line)
+		*lines = append(*lines, line)
 	}
-
-	if state.Military.ActiveExpedition != nil {
-		lines = append(lines, fmt.Sprintf("\n[yellow]Active: %s (%d ticks left)[-]",
-			state.Military.ActiveExpedition.Name, state.Military.ActiveExpedition.TicksLeft))
-	}
-
-	if len(state.Military.Expeditions) == 0 {
-		lines = append(lines, "  [gray]No expeditions available yet[-]")
-	}
-
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
 
 func cmdTrade(args []string, engine *game.GameEngine) CommandResult {

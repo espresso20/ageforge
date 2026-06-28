@@ -6,10 +6,19 @@ import (
 	"sort"
 )
 
+// Expedition categories. Scouting expeditions cost only resources (no soldiers)
+// and are playable before the soldiers resource exists (pre-iron_age). Military
+// expeditions cost soldiers (plus any Cost).
+const (
+	ExpeditionScouting = "scouting"
+	ExpeditionMilitary = "military"
+)
+
 // ExpeditionDef defines an available expedition
 type ExpeditionDef struct {
 	Name           string
 	Key            string
+	Category       string // ExpeditionScouting or ExpeditionMilitary
 	MinAge         string
 	MaxAge         string // empty = no upper bound; expedition is unavailable once past this age
 	SoldiersNeeded int
@@ -49,7 +58,8 @@ func NewMilitaryManager() *MilitaryManager {
 		expeditions: []ExpeditionDef{
 			{
 				Name: "Scout Party", Key: "scout_party",
-				MinAge: "primitive_age", MaxAge: "bronze_age",
+				Category: ExpeditionScouting,
+				MinAge:   "primitive_age", MaxAge: "bronze_age",
 				SoldiersNeeded: 0, Duration: 20,
 				DifficultyBase: 0.2,
 				Cost:           map[string]float64{"food": 30, "wood": 30},
@@ -58,105 +68,122 @@ func NewMilitaryManager() *MilitaryManager {
 			},
 			{
 				Name: "Scout Nearby Ruins", Key: "scout_ruins",
-				MinAge: "bronze_age", SoldiersNeeded: 2, Duration: 10,
+				Category: ExpeditionScouting,
+				MinAge:   "bronze_age", SoldiersNeeded: 0, Duration: 10,
 				DifficultyBase: 0.2,
+				Cost:           map[string]float64{"food": 40, "wood": 30},
 				Rewards:        map[string]float64{"food": 30, "wood": 20, "stone": 15},
 				Description:    "Send scouts to explore nearby ruins for resources.",
 			},
 			{
 				Name: "Raid Bandit Camp", Key: "raid_bandits",
-				MinAge: "bronze_age", SoldiersNeeded: 5, Duration: 15,
+				Category: ExpeditionMilitary,
+				MinAge:   "bronze_age", SoldiersNeeded: 5, Duration: 15,
 				DifficultyBase: 0.4,
 				Rewards:        map[string]float64{"gold": 30, "iron": 15, "food": 20},
 				Description:    "Attack a bandit encampment and seize their loot.",
 			},
 			{
 				Name: "Trade Escort", Key: "trade_escort",
-				MinAge: "iron_age", SoldiersNeeded: 3, Duration: 12,
+				Category: ExpeditionMilitary,
+				MinAge:   "iron_age", SoldiersNeeded: 3, Duration: 12,
 				DifficultyBase: 0.3,
 				Rewards:        map[string]float64{"gold": 50, "knowledge": 10},
 				Description:    "Escort merchants on a dangerous trade route.",
 			},
 			{
 				Name: "Conquer Territory", Key: "conquer_territory",
-				MinAge: "iron_age", SoldiersNeeded: 10, Duration: 25,
+				Category: ExpeditionMilitary,
+				MinAge:   "iron_age", SoldiersNeeded: 10, Duration: 25,
 				DifficultyBase: 0.6,
 				Rewards:        map[string]float64{"gold": 80, "iron": 40, "food": 50},
 				Description:    "Conquer a neighboring territory for its resources.",
 			},
 			{
 				Name: "Siege Enemy Castle", Key: "siege_castle",
-				MinAge: "medieval_age", SoldiersNeeded: 15, Duration: 30,
+				Category: ExpeditionMilitary,
+				MinAge:   "medieval_age", SoldiersNeeded: 15, Duration: 30,
 				DifficultyBase: 0.7,
 				Rewards:        map[string]float64{"gold": 150, "steel": 30, "faith": 20},
 				Description:    "Lay siege to an enemy stronghold.",
 			},
 			{
 				Name: "Naval Expedition", Key: "naval_expedition",
-				MinAge: "renaissance_age", SoldiersNeeded: 10, Duration: 35,
+				Category: ExpeditionScouting,
+				MinAge:   "renaissance_age", SoldiersNeeded: 0, Duration: 35,
 				DifficultyBase: 0.5,
+				Cost:           map[string]float64{"food": 150, "wood": 100},
 				Rewards:        map[string]float64{"gold": 200, "culture": 30, "knowledge": 40},
 				Description:    "Explore distant lands by sea.",
 			},
 			{
 				Name: "Colonial Campaign", Key: "colonial_campaign",
-				MinAge: "industrial_age", SoldiersNeeded: 20, Duration: 40,
+				Category: ExpeditionMilitary,
+				MinAge:   "industrial_age", SoldiersNeeded: 20, Duration: 40,
 				DifficultyBase: 0.6,
 				Rewards:        map[string]float64{"gold": 300, "oil": 50, "steel": 40},
 				Description:    "Establish colonial presence in new territories.",
 			},
 			{
 				Name: "World Domination", Key: "world_domination",
-				MinAge: "modern_age", SoldiersNeeded: 50, Duration: 60,
+				Category: ExpeditionMilitary,
+				MinAge:   "modern_age", SoldiersNeeded: 50, Duration: 60,
 				DifficultyBase: 0.8,
 				Rewards:        map[string]float64{"gold": 1000, "electricity": 200, "knowledge": 500},
 				Description:    "Launch a global military campaign for world domination.",
 			},
 			{
 				Name: "Cyber Raid", Key: "cyber_raid",
-				MinAge: "information_age", SoldiersNeeded: 30, Duration: 45,
+				Category: ExpeditionMilitary,
+				MinAge:   "information_age", SoldiersNeeded: 30, Duration: 45,
 				DifficultyBase: 0.6,
 				Rewards:        map[string]float64{"data": 200, "crypto": 50, "gold": 500},
 				Description:    "Hack into enemy networks and steal digital assets.",
 			},
 			{
 				Name: "Neon Heist", Key: "neon_heist",
-				MinAge: "cyberpunk_age", SoldiersNeeded: 25, Duration: 35,
+				Category: ExpeditionMilitary,
+				MinAge:   "cyberpunk_age", SoldiersNeeded: 25, Duration: 35,
 				DifficultyBase: 0.55,
 				Rewards:        map[string]float64{"crypto": 100, "data": 150, "gold": 800},
 				Description:    "Pull off a daring heist in the neon-lit underworld.",
 			},
 			{
 				Name: "Fusion Plant Assault", Key: "fusion_assault",
-				MinAge: "fusion_age", SoldiersNeeded: 35, Duration: 40,
+				Category: ExpeditionMilitary,
+				MinAge:   "fusion_age", SoldiersNeeded: 35, Duration: 40,
 				DifficultyBase: 0.65,
 				Rewards:        map[string]float64{"plasma": 120, "electricity": 500, "uranium": 50},
 				Description:    "Capture a rival's fusion power facility.",
 			},
 			{
 				Name: "Orbital Strike", Key: "orbital_strike",
-				MinAge: "space_age", SoldiersNeeded: 40, Duration: 50,
+				Category: ExpeditionMilitary,
+				MinAge:   "space_age", SoldiersNeeded: 40, Duration: 50,
 				DifficultyBase: 0.7,
 				Rewards:        map[string]float64{"titanium": 100, "plasma": 80, "knowledge": 300},
 				Description:    "Deploy orbital weapons platform against hostile targets.",
 			},
 			{
 				Name: "Warp Invasion", Key: "warp_invasion",
-				MinAge: "interstellar_age", SoldiersNeeded: 60, Duration: 65,
+				Category: ExpeditionMilitary,
+				MinAge:   "interstellar_age", SoldiersNeeded: 60, Duration: 65,
 				DifficultyBase: 0.75,
 				Rewards:        map[string]float64{"dark_matter": 50, "titanium": 200, "gold": 2000},
 				Description:    "Invade a neighboring star system through warp gates.",
 			},
 			{
 				Name: "Galactic Conquest", Key: "galactic_conquest",
-				MinAge: "galactic_age", SoldiersNeeded: 80, Duration: 80,
+				Category: ExpeditionMilitary,
+				MinAge:   "galactic_age", SoldiersNeeded: 80, Duration: 80,
 				DifficultyBase: 0.8,
 				Rewards:        map[string]float64{"antimatter": 30, "dark_matter": 100, "gold": 5000},
 				Description:    "Conquer an entire galactic sector.",
 			},
 			{
 				Name: "Quantum Incursion", Key: "quantum_incursion",
-				MinAge: "quantum_age", SoldiersNeeded: 100, Duration: 90,
+				Category: ExpeditionMilitary,
+				MinAge:   "quantum_age", SoldiersNeeded: 100, Duration: 90,
 				DifficultyBase: 0.85,
 				Rewards:        map[string]float64{"quantum_flux": 20, "antimatter": 50, "knowledge": 5000},
 				Description:    "Launch an incursion across quantum realities.",
@@ -278,6 +305,18 @@ func (mm *MilitaryManager) GetAvailableExpeditions(currentAge string, ageOrder m
 	return available
 }
 
+// GetAvailableExpeditionsByCategory is GetAvailableExpeditions filtered to one
+// Category (ExpeditionScouting or ExpeditionMilitary).
+func (mm *MilitaryManager) GetAvailableExpeditionsByCategory(category, currentAge string, ageOrder map[string]int) []ExpeditionDef {
+	var filtered []ExpeditionDef
+	for _, def := range mm.GetAvailableExpeditions(currentAge, ageOrder) {
+		if def.Category == category {
+			filtered = append(filtered, def)
+		}
+	}
+	return filtered
+}
+
 // launchability reports whether an expedition can be launched right now and, if
 // not, a short player-facing reason. It mirrors the engine's LaunchExpedition
 // validation order: single-active rule, then soldiers, then each Cost resource.
@@ -338,6 +377,7 @@ func (mm *MilitaryManager) Snapshot(currentAge string, ageOrder map[string]int, 
 		expList = append(expList, ExpeditionInfo{
 			Name:              def.Name,
 			Key:               def.Key,
+			Category:          def.Category,
 			SoldiersNeeded:    def.SoldiersNeeded,
 			Duration:          def.Duration,
 			Difficulty:        def.DifficultyBase,

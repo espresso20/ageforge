@@ -257,6 +257,7 @@ type ExpeditionSnapshot struct {
 type ExpeditionInfo struct {
 	Name           string
 	Key            string
+	Category       string // "scouting" or "military"
 	SoldiersNeeded int
 	Duration       int
 	Difficulty     float64

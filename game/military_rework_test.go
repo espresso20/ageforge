@@ -233,3 +233,93 @@ func TestCanLaunch_RespectsCost(t *testing.T) {
 		t.Fatalf("scout_party not present in available expeditions with resources")
 	}
 }
+
+// === Scouting / Army split (Phase 1) ===
+
+// TestExpeditionCategory_AllValid verifies every expedition is classified as one
+// of the two known categories — no blanks or typos that would drop it from both
+// grouped subsections.
+func TestExpeditionCategory_AllValid(t *testing.T) {
+	mm := NewMilitaryManager()
+	for _, def := range mm.expeditions {
+		switch def.Category {
+		case ExpeditionScouting, ExpeditionMilitary:
+			// ok
+		default:
+			t.Errorf("expedition %q has invalid Category %q (want %q or %q)",
+				def.Key, def.Category, ExpeditionScouting, ExpeditionMilitary)
+		}
+	}
+}
+
+// TestScoutingExpeditions_SoldierFree verifies all scouting expeditions cost zero
+// soldiers — scouting must be playable before the soldiers resource exists
+// (pre-iron_age).
+func TestScoutingExpeditions_SoldierFree(t *testing.T) {
+	mm := NewMilitaryManager()
+	scoutCount := 0
+	for _, def := range mm.expeditions {
+		if def.Category != ExpeditionScouting {
+			continue
+		}
+		scoutCount++
+		if def.SoldiersNeeded != 0 {
+			t.Errorf("scouting expedition %q has SoldiersNeeded=%d, want 0",
+				def.Key, def.SoldiersNeeded)
+		}
+	}
+	if scoutCount != 3 {
+		t.Errorf("expected 3 scouting expeditions, found %d", scoutCount)
+	}
+}
+
+// TestScoutRuins_LaunchableWithZeroSoldiers guards the Phase 1 bug fix:
+// scout_ruins previously needed 2 (nonexistent, pre-iron_age) soldiers and so was
+// never launchable. It must now be launchable with zero soldiers given enough
+// resources for its Cost.
+func TestScoutRuins_LaunchableWithZeroSoldiers(t *testing.T) {
+	mm := NewMilitaryManager()
+	def := mm.ExpeditionDefByKey("scout_ruins")
+	if def == nil {
+		t.Fatal("scout_ruins not found")
+	}
+	if def.SoldiersNeeded != 0 {
+		t.Fatalf("scout_ruins SoldiersNeeded=%d, want 0", def.SoldiersNeeded)
+	}
+
+	// Resources covering its Cost, zero soldiers.
+	resources := map[string]float64{"food": 100, "wood": 100}
+	ok, reason := mm.launchability(*def, 0, resources)
+	if !ok {
+		t.Errorf("scout_ruins not launchable with 0 soldiers + sufficient resources: %q", reason)
+	}
+
+	// It should also be available in bronze_age (its MinAge).
+	available := mm.GetAvailableExpeditionsByCategory(ExpeditionScouting, "bronze_age", fullAgeOrder())
+	foundRuins := false
+	for _, d := range available {
+		if d.Key == "scout_ruins" {
+			foundRuins = true
+		}
+	}
+	if !foundRuins {
+		t.Error("scout_ruins not present among available scouting expeditions in bronze_age")
+	}
+}
+
+// TestMilitaryExpeditions_RequireSoldiers verifies at least one military
+// expedition still costs soldiers (the classification didn't accidentally zero
+// everyone out).
+func TestMilitaryExpeditions_RequireSoldiers(t *testing.T) {
+	mm := NewMilitaryManager()
+	found := false
+	for _, def := range mm.expeditions {
+		if def.Category == ExpeditionMilitary && def.SoldiersNeeded > 0 {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("no military expedition requires soldiers — classification likely broken")
+	}
+}
