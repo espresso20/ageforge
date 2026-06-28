@@ -8,6 +8,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
+	"sync"
 	"time"
 )
 
@@ -79,6 +81,15 @@ type Account struct {
 	// changing LoadOrCreate's signature. json:"-" keeps it off disk; it is false for
 	// any account loaded from an existing file.
 	FreshlyCreated bool `json:"-"`
+
+	// mu guards the unlock/prefs reads and writes (and the Save inside the mutating
+	// methods): the account is read from the UI goroutine (HasTheme/ActiveTheme/
+	// UnlockedThemes) while another goroutine writes (UnlockTheme/SetActiveTheme).
+	// This is the account's OWN lock over the account's OWN file — fully independent
+	// of the engine's ge.mu, so there is no engine-deadlock risk. It has no json tag
+	// and is never serialized; a sync.Mutex zero value marshals fine, so signing and
+	// round-trip are unaffected (signAccount marshals the struct verbatim).
+	mu sync.Mutex
 }
 
 // newAccountID returns a fresh, stable account ID: 16 random bytes from crypto/rand,
@@ -126,10 +137,27 @@ func accountPath() string {
 // signAccount returns the HMAC-SHA256 hex of the account payload with Signature
 // zeroed, so the signature covers the data only — identical construction to
 // signSave, sharing the hmacSign helper (accounts.md §3.4).
-func signAccount(a Account) string {
-	a.Signature = ""
-	a.Tampered = false // json:"-" already excludes it, but keep the payload pristine
-	data, _ := json.Marshal(a)
+//
+// It takes a pointer (not a value) so the sync.Mutex field is never copied — a
+// value copy would trip go vet's copylocks. The signed bytes are unchanged from a
+// value-based marshal: json.Marshal already ignores unexported fields (mu) and the
+// json:"-" Tampered/FreshlyCreated fields, and we build the payload from a
+// freshly-constructed struct literal that copies only the serializable fields,
+// with Signature/Tampered zeroed — so the signature covers exactly the on-disk data.
+func signAccount(a *Account) string {
+	payload := Account{
+		Version:      a.Version,
+		AccountID:    a.AccountID,
+		DisplayName:  a.DisplayName,
+		Created:      a.Created,
+		LastSeen:     a.LastSeen,
+		Unlocks:      a.Unlocks,
+		Stats:        a.Stats,
+		Achievements: a.Achievements,
+		Prefs:        a.Prefs,
+		// Signature deliberately zero; Tampered/FreshlyCreated/mu are json:"-"/unexported.
+	}
+	data, _ := json.Marshal(&payload)
 	return hmacSign(data, saveHMACKey)
 }
 
@@ -140,7 +168,7 @@ func verifyAccount(a *Account) bool {
 	if a.Signature == "" {
 		return true
 	}
-	return hmac.Equal([]byte(a.Signature), []byte(signAccount(*a)))
+	return hmac.Equal([]byte(a.Signature), []byte(signAccount(a)))
 }
 
 // Save signs the account with the shared HMAC helper and writes it atomically
@@ -152,7 +180,7 @@ func (a *Account) Save() error {
 		return fmt.Errorf("failed to create data directory: %w", err)
 	}
 
-	a.Signature = signAccount(*a)
+	a.Signature = signAccount(a)
 	data, err := json.MarshalIndent(a, "", "  ")
 	if err != nil {
 		return fmt.Errorf("failed to marshal account: %w", err)
@@ -227,4 +255,72 @@ func LoadOrCreate() (*Account, error) {
 		acct.Tampered = true
 	}
 	return &acct, nil
+}
+
+// --- Unlock API (accounts.md §8; theming.md §5 is the first caller) ---
+//
+// The account is key-agnostic: it stores and reports unlocked-theme keys and the
+// active-theme key without judging which are valid or always-unlocked. Theming
+// owns that policy (the always-unlocked accessibility + Forge set, and unknown-key
+// fallback). Accounts is the persisted store underneath it.
+
+// HasTheme reports whether key is in the account's unlocked-theme set.
+func (a *Account) HasTheme(key string) bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.hasThemeLocked(key)
+}
+
+// hasThemeLocked is the lock-free core of HasTheme. Callers must hold a.mu.
+func (a *Account) hasThemeLocked(key string) bool {
+	for _, k := range a.Unlocks.Themes {
+		if k == key {
+			return true
+		}
+	}
+	return false
+}
+
+// UnlockTheme records key as an unlocked theme and persists the account. If the
+// theme was already unlocked it is a no-op: (false, nil) with no write. Otherwise
+// it appends the key (deduped via the membership check), persists via Save, and
+// returns (true, <Save error>) — newly is true even if the subsequent Save fails,
+// since the in-memory set did change. theming.md fires the unlock toast only on
+// newly==true, so replayed milestone checks never re-toast an owned theme.
+func (a *Account) UnlockTheme(key string) (newly bool, err error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.hasThemeLocked(key) {
+		return false, nil
+	}
+	a.Unlocks.Themes = append(a.Unlocks.Themes, key)
+	return true, a.Save()
+}
+
+// UnlockedThemes returns the unlocked-theme keys in deterministic (sorted) order.
+// It returns a fresh copy, so callers can't mutate the account's backing slice.
+func (a *Account) UnlockedThemes() []string {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	out := make([]string, len(a.Unlocks.Themes))
+	copy(out, a.Unlocks.Themes)
+	sort.Strings(out)
+	return out
+}
+
+// ActiveTheme returns the persisted active-theme key, or "" if none is set.
+func (a *Account) ActiveTheme() string {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.Prefs.ActiveTheme
+}
+
+// SetActiveTheme persists key as the active theme and returns the Save error.
+// It does NOT validate that key is unlocked — accounts is key-agnostic and theming
+// owns validity + the always-unlocked policy. The only error path is the Save error.
+func (a *Account) SetActiveTheme(key string) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.Prefs.ActiveTheme = key
+	return a.Save()
 }
