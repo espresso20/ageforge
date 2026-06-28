@@ -177,7 +177,7 @@ func (b *loadGameBrowser) updateDetail(index int) {
 	if index < 0 || index >= len(b.saves) {
 		return
 	}
-	b.detail.SetText(detailText(b.saves[index], b.parentPresent(b.saves[index])))
+	b.detail.SetText(detailText(b.saves[index], b.parentPresent(b.saves[index]), b.engine.AccountID()))
 }
 
 // parentPresent reports whether s names a lineage parent that is itself among
@@ -248,12 +248,12 @@ func (b *loadGameBrowser) doLoad() {
 		return
 	}
 	if s.Corrupt {
-		b.detail.SetText(detailText(s, b.parentPresent(s)) + "\n\n[red]Can't load a corrupt save.[-]")
+		b.detail.SetText(detailText(s, b.parentPresent(s), b.engine.AccountID()) + "\n\n[red]Can't load a corrupt save.[-]")
 		return
 	}
 	if err := b.engine.LoadGame(s.Name); err != nil {
 		b.engine.AddLog("error", fmt.Sprintf("Load failed: %v", err))
-		b.detail.SetText(detailText(s, b.parentPresent(s)) + fmt.Sprintf("\n\n[red]Load failed: %v[-]", err))
+		b.detail.SetText(detailText(s, b.parentPresent(s), b.engine.AccountID()) + fmt.Sprintf("\n\n[red]Load failed: %v[-]", err))
 		return
 	}
 	b.engine.AddLog("success", "Game loaded!")
@@ -516,7 +516,7 @@ const detailSep = " [gold]·[-] "
 // block (identity, population/structures, progress, prestige/morale, an optional
 // catastrophe warning, and save metadata); corrupt saves show only the
 // unloadable notice + file time.
-func detailText(s game.SaveInfo, parentPresent bool) string {
+func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) string {
 	if s.Corrupt {
 		return fmt.Sprintf(
 			"[red]⚠ Corrupt save — cannot be loaded[-]\n[#8b949e]File time: %s[-]",
@@ -562,6 +562,18 @@ func detailText(s game.SaveInfo, parentPresent bool) string {
 		fmt.Sprintf("[#8b949e]Prestige[-] [white]Lv %s[-] [#8b949e](%s pts)[-]", commafy(s.PrestigeLevel), commafy(s.PrestigeTotal)),
 		fmt.Sprintf("[#8b949e]Morale[-] [white]%.0f%%[-]", s.Morale*100),
 	}, detailSep))
+
+	// Line 4b — account attribution. Pre-account/legacy saves show a dash; saves
+	// from the current account are tagged "(this account)", everything else
+	// "(another account)". Only the short id prefix is shown — never the full id.
+	switch {
+	case s.AccountID == "":
+		lines = append(lines, "[#8b949e]Account:[-] [#8b949e]— (pre-account save)[-]")
+	case s.AccountID == currentAccountID && currentAccountID != "":
+		lines = append(lines, fmt.Sprintf("[#8b949e]Account:[-] [white]%s[-] [#8b949e](this account)[-]", shortAccountID(s.AccountID)))
+	default:
+		lines = append(lines, fmt.Sprintf("[#8b949e]Account:[-] [white]%s[-] [yellow](another account)[-]", shortAccountID(s.AccountID)))
+	}
 
 	// Line 5 — looming catastrophe warning (omitted entirely when none pending).
 	if s.PendingCatastrophe != "" {
