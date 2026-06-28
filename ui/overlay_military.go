@@ -14,8 +14,8 @@ func militaryProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 	mil := state.Military
 
-	// === Military Overview ===
-	fmt.Fprintf(&sb, " [gold]═══ Military Overview ═══[-]\n\n")
+	// === Army Overview ===
+	fmt.Fprintf(&sb, " [gold]═══ Army Overview ═══[-]\n\n")
 	fmt.Fprintf(&sb, " [gold]Soldiers:[-]  %d / %d\n", mil.SoldierCount, mil.SoldierCap)
 	fmt.Fprintf(&sb, " [gold]Training:[-]  %s/tick\n", FormatRate(mil.SoldierRate))
 	fmt.Fprintf(&sb, " [gold]Defense:[-]   %.1f\n", mil.DefenseRating)
@@ -49,29 +49,26 @@ func militaryProvider(state game.GameState, _ int) string {
 		}
 	}
 
-	// === Active Expeditions ===
-	// A scouting and a military expedition can run concurrently (one per kind).
-	sb.WriteString("\n [gold]═══ Active Expeditions ═══[-]\n\n")
-	if mil.ActiveScout == nil && mil.ActiveMilitary == nil {
-		sb.WriteString(" [gray]No active expeditions[-]\n")
+	// === Active Campaign ===
+	// Only the military campaign lives here; the active scout shows in the
+	// Expeditions panel (the two run concurrently, one per category).
+	sb.WriteString("\n [gold]═══ Active Campaign ═══[-]\n\n")
+	if mil.ActiveMilitary == nil {
+		sb.WriteString(" [gray]No active campaign[-]\n")
 	} else {
-		writeActiveExpedition(&sb, "Scouting", mil.ActiveScout)
-		writeActiveExpedition(&sb, "Military", mil.ActiveMilitary)
+		writeActiveExpedition(&sb, "Campaign", mil.ActiveMilitary)
 	}
 	fmt.Fprintf(&sb, "\n [gray]Completed: %d expedition(s)[-]\n", mil.CompletedCount)
 
-	// === Available Expeditions ===
-	sb.WriteString("\n [gold]═══ Available Expeditions ═══[-]\n\n")
-	if len(mil.Expeditions) == 0 {
-		sb.WriteString(" [gray]No expeditions available yet[-]\n")
+	// === Campaigns ===
+	// The Army panel lists only military campaigns (they cost soldiers).
+	sb.WriteString("\n [gold]═══ Campaigns ═══[-]\n\n")
+	if !hasCategory(mil.Expeditions, game.ExpeditionMilitary) {
+		sb.WriteString(" [gray]No campaigns available yet[-]\n")
 		sb.WriteString(" [gray]Reach Bronze Age and recruit soldiers[-]\n")
-		sb.WriteString(" [gray]to unlock expeditions.[-]\n")
+		sb.WriteString(" [gray]to unlock campaigns.[-]\n")
 	} else {
-		// Group available expeditions by category: Scouting first (resource cost,
-		// no soldiers, available early), then Military Campaigns (cost soldiers).
-		// A subsection header is omitted when it has no available entries.
-		writeExpeditionGroup(&sb, "Scouting", mil.Expeditions, game.ExpeditionScouting)
-		writeExpeditionGroup(&sb, "Military Campaigns", mil.Expeditions, game.ExpeditionMilitary)
+		writeExpeditionGroup(&sb, "Campaigns", mil.Expeditions, game.ExpeditionMilitary)
 	}
 
 	// === Loot History ===
@@ -92,7 +89,7 @@ func militaryProvider(state game.GameState, _ int) string {
 		}
 	}
 
-	sb.WriteString("\n [gray]Commands: expedition <key>[-]\n")
+	sb.WriteString("\n [gray]Commands: campaign <key>[-]\n")
 
 	return sb.String()
 }
@@ -145,8 +142,14 @@ func writeExpeditionGroup(sb *strings.Builder, label string, exps []game.Expedit
 			fmt.Fprintf(sb, "   Cost: %s\n", cost)
 		}
 
+		// Launch hint uses the command that owns this category: scouting →
+		// `expedition`, military → `campaign`.
+		launchCmd := "expedition"
+		if exp.Category == game.ExpeditionMilitary {
+			launchCmd = "campaign"
+		}
 		if exp.CanLaunch {
-			fmt.Fprintf(sb, "   [green]expedition %s[-]\n", exp.Key)
+			fmt.Fprintf(sb, "   [green]%s %s[-]\n", launchCmd, exp.Key)
 		} else {
 			fmt.Fprintf(sb, "   [red]%s[-]\n", exp.LaunchBlockReason)
 		}

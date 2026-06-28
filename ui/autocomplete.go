@@ -24,6 +24,7 @@ var commands = []string{
 	"sell",
 	"research", "res",
 	"expedition", "exp",
+	"campaign",
 	"trade", "t",
 	"diplomacy", "dip",
 	"catastrophe", "cat",
@@ -134,7 +135,12 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 		return filterPrefix(keys, partial, prefix)
 
 	case "expedition", "exp":
-		keys := availableExpeditionKeys(state)
+		keys := expeditionKeysByCategory(state, game.ExpeditionScouting)
+		keys = append(keys, "list")
+		return filterPrefix(keys, partial, prefix)
+
+	case "campaign":
+		keys := expeditionKeysByCategory(state, game.ExpeditionMilitary)
 		keys = append(keys, "list")
 		return filterPrefix(keys, partial, prefix)
 
@@ -356,13 +362,16 @@ func availableTechKeys(state game.GameState) []string {
 	return keys
 }
 
-// availableExpeditionKeys returns all expedition keys visible in the military state.
-// Unlike tech/building keys, this includes both launchable and locked expeditions —
-// the engine enforces eligibility on launch.
-func availableExpeditionKeys(state game.GameState) []string {
+// expeditionKeysByCategory returns the visible expedition keys for a single
+// category (game.ExpeditionScouting or game.ExpeditionMilitary), sorted. Used so
+// `expedition <key>` completes to scouting keys and `campaign <key>` to military
+// keys. This includes locked entries — the engine enforces eligibility on launch.
+func expeditionKeysByCategory(state game.GameState, category string) []string {
 	var keys []string
 	for _, exp := range state.Military.Expeditions {
-		keys = append(keys, exp.Key)
+		if exp.Category == category {
+			keys = append(keys, exp.Key)
+		}
 	}
 	sort.Strings(keys)
 	return keys

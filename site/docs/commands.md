@@ -75,22 +75,32 @@ Tech keys are shown in the **Research** overlay (`research`) (dim grey when lock
 
 ---
 
-## Military
+## Expeditions & Army
 
 | Command | Description |
 |---|---|
-| `expedition list` | List expeditions available in your current age (shorthand: `exp list`) |
-| `expedition <key>` | Launch an expedition — spends its soldier cost (shorthand: `exp <key>`) |
+| `expedition` | Open the **Expeditions** panel — scouting missions (shorthand: `exp`) |
+| `expedition list` | List scouting expeditions available in your current age (shorthand: `exp list`) |
+| `expedition <key>` | Send a scouting expedition — costs resources, never soldiers (e.g. `expedition scout_ruins`; shorthand: `exp <key>`) |
+| `army` | Open the **Army** panel — soldier overview and military campaigns |
+| `campaign list` | List military campaigns available in your current age (`campaign` alone does the same) |
+| `campaign <key>` | Wage a military campaign — spends soldiers, plus any resource cost (e.g. `campaign raid_bandits`) |
 | `speed [multiplier]` | Set game speed (1.0, 1.5, 2.0 … +0.5 per wonder built) |
 
 ```
+expedition
 expedition list
 expedition scout_party
 expedition scout_ruins
+army
+campaign list
+campaign raid_bandits
 speed 1.5
 ```
 
-Expeditions come in two kinds. **Scouting** expeditions (`scout_party`, `scout_ruins`, `naval_expedition`) cost only resources — **0 soldiers** — and are available early, before the `soldiers` resource exists at the Iron Age. **Military campaigns** (everything else) **spend the `soldiers` resource** at launch, plus any resource cost. Either way the cost is deducted whether the run succeeds or fails; only the reward differs, and only one expedition can be active at a time. The **Military** overlay (`army`) groups available expeditions under **Scouting** and **Military Campaigns** headers (display grouping only — the commands above are unchanged).
+Timed missions come in two kinds, split across two panels. **Scouting** expeditions (`scout_party`, `scout_ruins`, `naval_expedition`) cost only resources — **0 soldiers** — and are available early, before the `soldiers` resource exists at the Iron Age. You go on these with `expedition <key>` from the **Expeditions** panel. **Military campaigns** (everything else) **spend the `soldiers` resource** at launch, plus any resource cost. You wage these with `campaign <key>` from the **Army** panel. Either way the cost is deducted whether the run succeeds or fails; only the reward differs. One scouting expedition **and** one military campaign can run at the same time (one of each category), but not two of the same category.
+
+Keys with underscores can be typed with spaces: `expedition scout ruins` is equivalent to `expedition scout_ruins`. If you run a campaign key through `expedition` the game refuses and points you to `campaign <key>`; likewise running a scouting key through `campaign` redirects you to `expedition <key>`.
 
 ---
 

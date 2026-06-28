@@ -60,6 +60,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdResearch(args, engine)
 	case "expedition", "exp":
 		return cmdExpedition(args, engine)
+	case "campaign":
+		return cmdCampaign(args, engine)
 	case "trade", "t":
 		return cmdTrade(args, engine)
 	case "diplomacy", "dip":
@@ -718,22 +720,73 @@ func cmdResearchList(engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
 
+// cmdExpedition handles the `expedition`/`exp` command — the civilian SCOUTING
+// surface. No args opens the Expeditions panel; "list" prints the scouting list;
+// a key launches a scouting expedition. Military keys are redirected to the
+// `campaign` command rather than launched here.
 func cmdExpedition(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
-		return cmdExpeditionList(engine)
+		return CommandResult{OverlayName: "expedition"}
 	}
 	subcmd := strings.ToLower(args[0])
 	if subcmd == "list" {
-		return cmdExpeditionList(engine)
+		return cmdScoutingList(engine)
 	}
 
-	// Launch expedition
 	expKey := strings.Join(args, "_")
+
+	// Reject military keys here — they belong to `campaign`.
+	if def := engine.Military.ExpeditionDefByKey(expKey); def != nil && def.Category != game.ExpeditionScouting {
+		return CommandResult{
+			Message: fmt.Sprintf("%s is a military campaign — wage it with 'campaign %s'.", def.Name, expKey),
+			Type:    "info",
+		}
+	}
+
 	if err := engine.LaunchExpedition(expKey); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
 	}
+	name := expKey
+	if def := engine.Military.ExpeditionDefByKey(expKey); def != nil {
+		name = def.Name
+	}
 	return CommandResult{
-		Message: fmt.Sprintf("Expedition launched: %s!", expKey),
+		Message: fmt.Sprintf("Expedition launched: %s!", name),
+		Type:    "success",
+	}
+}
+
+// cmdCampaign handles the `campaign` command — the MILITARY surface. No args or
+// "list" prints the campaign list; a key wages a military campaign (costs
+// soldiers). Scouting keys are redirected to the `expedition` command.
+func cmdCampaign(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) < 1 {
+		return cmdCampaignList(engine)
+	}
+	subcmd := strings.ToLower(args[0])
+	if subcmd == "list" {
+		return cmdCampaignList(engine)
+	}
+
+	expKey := strings.Join(args, "_")
+
+	// Reject scouting keys here — they belong to `expedition`.
+	if def := engine.Military.ExpeditionDefByKey(expKey); def != nil && def.Category != game.ExpeditionMilitary {
+		return CommandResult{
+			Message: fmt.Sprintf("%s is a scouting expedition — send it with 'expedition %s'.", def.Name, expKey),
+			Type:    "info",
+		}
+	}
+
+	if err := engine.LaunchExpedition(expKey); err != nil {
+		return CommandResult{Message: err.Error(), Type: "error"}
+	}
+	name := expKey
+	if def := engine.Military.ExpeditionDefByKey(expKey); def != nil {
+		name = def.Name
+	}
+	return CommandResult{
+		Message: fmt.Sprintf("Campaign launched: %s!", name),
 		Type:    "success",
 	}
 }
@@ -840,31 +893,56 @@ func cmdPrestigeShop(engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
 
-func cmdExpeditionList(engine *game.GameEngine) CommandResult {
+// cmdScoutingList prints only the available SCOUTING expeditions, with the
+// active scout (if any) as a footer. This backs `expedition list`.
+func cmdScoutingList(engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	var lines []string
 	lines = append(lines, "[gold]Available Expeditions:[-]")
 
-	// Group by category: Scouting first, then Military Campaigns. Headers are
-	// omitted for empty subsections.
 	appendExpeditionGroup(&lines, "Scouting", state.Military.Expeditions, game.ExpeditionScouting)
-	appendExpeditionGroup(&lines, "Military Campaigns", state.Military.Expeditions, game.ExpeditionMilitary)
 
-	// A scouting and a military expedition can run concurrently (one per kind).
 	if state.Military.ActiveScout != nil {
-		lines = append(lines, fmt.Sprintf("\n[yellow]Active scouting: %s (%d ticks left)[-]",
+		lines = append(lines, fmt.Sprintf("\n[yellow]Active expedition: %s (%d ticks left)[-]",
 			state.Military.ActiveScout.Name, state.Military.ActiveScout.TicksLeft))
 	}
-	if state.Military.ActiveMilitary != nil {
-		lines = append(lines, fmt.Sprintf("\n[yellow]Active military: %s (%d ticks left)[-]",
-			state.Military.ActiveMilitary.Name, state.Military.ActiveMilitary.TicksLeft))
-	}
 
-	if len(state.Military.Expeditions) == 0 {
+	if !hasCategory(state.Military.Expeditions, game.ExpeditionScouting) {
 		lines = append(lines, "  [gray]No expeditions available yet[-]")
 	}
 
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
+
+// cmdCampaignList prints only the available MILITARY campaigns, with the active
+// campaign (if any) as a footer. This backs `campaign` and `campaign list`.
+func cmdCampaignList(engine *game.GameEngine) CommandResult {
+	state := engine.GetState()
+	var lines []string
+	lines = append(lines, "[gold]Available Campaigns:[-]")
+
+	appendExpeditionGroup(&lines, "Campaigns", state.Military.Expeditions, game.ExpeditionMilitary)
+
+	if state.Military.ActiveMilitary != nil {
+		lines = append(lines, fmt.Sprintf("\n[yellow]Active campaign: %s (%d ticks left)[-]",
+			state.Military.ActiveMilitary.Name, state.Military.ActiveMilitary.TicksLeft))
+	}
+
+	if !hasCategory(state.Military.Expeditions, game.ExpeditionMilitary) {
+		lines = append(lines, "  [gray]No campaigns available yet[-]")
+	}
+
+	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
+
+// hasCategory reports whether any expedition in exps matches the given category.
+func hasCategory(exps []game.ExpeditionInfo, category string) bool {
+	for _, exp := range exps {
+		if exp.Category == category {
+			return true
+		}
+	}
+	return false
 }
 
 // appendExpeditionGroup appends the subset of exps matching category to lines,
@@ -884,10 +962,17 @@ func appendExpeditionGroup(lines *[]string, label string, exps []game.Expedition
 		if exp.CanLaunch {
 			canStr = "[green]✓[-]"
 		}
-		reqs := fmt.Sprintf("%d soldiers, %d ticks", exp.SoldiersNeeded, exp.Duration)
-		if cost := formatExpeditionCost(exp.Cost); cost != "" {
-			reqs = fmt.Sprintf("%d soldiers, %s, %d ticks", exp.SoldiersNeeded, cost, exp.Duration)
+		// Soldier-free scouting expeditions omit the soldier prefix; military
+		// campaigns lead with their soldier requirement.
+		var reqParts []string
+		if exp.SoldiersNeeded > 0 {
+			reqParts = append(reqParts, fmt.Sprintf("%d soldiers", exp.SoldiersNeeded))
 		}
+		if cost := formatExpeditionCost(exp.Cost); cost != "" {
+			reqParts = append(reqParts, cost)
+		}
+		reqParts = append(reqParts, fmt.Sprintf("%d ticks", exp.Duration))
+		reqs := strings.Join(reqParts, ", ")
 		line := fmt.Sprintf("  %s [cyan]%s[-] - %s (%s)", canStr, exp.Key, exp.Name, reqs)
 		if !exp.CanLaunch && exp.LaunchBlockReason != "" {
 			line += fmt.Sprintf(" [red]— %s[-]", exp.LaunchBlockReason)

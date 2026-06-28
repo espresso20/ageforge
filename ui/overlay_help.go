@@ -26,12 +26,16 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("  [cyan]unassign[-] <building> [n|all]   - Unassign workers from a building\n")
 	sb.WriteString("  [cyan]dismiss[-] <building> [n|all]    - Fire workers from a building (removes from pool)\n")
 
-	sb.WriteString("\n[gold]═══ Research & Military ═══[-]\n")
+	sb.WriteString("\n[gold]═══ Research, Expeditions & Army ═══[-]\n")
 	sb.WriteString("  [cyan]research[-] <tech_key>          - Research a technology\n")
 	sb.WriteString("  [cyan]research[-] cancel             - Cancel current research\n")
 	sb.WriteString("  [cyan]research[-] list               - List available techs\n")
-	sb.WriteString("  [cyan]expedition[-] <key>            - Launch a military expedition\n")
+	sb.WriteString("  [cyan]expedition[-]                  - Open the Expeditions (scouting) panel\n")
+	sb.WriteString("  [cyan]expedition[-] <key>            - Send a scouting expedition (costs resources)\n")
 	sb.WriteString("  [cyan]expedition[-] list             - List available expeditions\n")
+	sb.WriteString("  [cyan]army[-]                        - Open the Army (military) panel\n")
+	sb.WriteString("  [cyan]campaign[-] <key>             - Wage a military campaign (costs soldiers)\n")
+	sb.WriteString("  [cyan]campaign[-] list              - List available campaigns\n")
 
 	sb.WriteString("\n[gold]═══ Trade & Diplomacy ═══[-]\n")
 	sb.WriteString("  [cyan]trade[-] <from> <to> <amount>  - Exchange resources\n")
@@ -70,7 +74,8 @@ func helpProvider(_ game.GameState, _ int) string {
 	for _, p := range []struct{ cmd, desc string }{
 		{"milestones", "Milestone goals & rewards"},
 		{"research", "Technology tree & progress"},
-		{"army", "Military overview & expeditions"},
+		{"expedition", "Scouting expeditions (resource cost)"},
+		{"army", "Army overview & military campaigns"},
 		{"trade", "Exchange rates & trade routes"},
 		{"stats", "Empire statistics"},
 		{"wonders", "Wonder bank & built wonders"},
