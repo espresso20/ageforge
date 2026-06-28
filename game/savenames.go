@@ -37,6 +37,28 @@ func cleanSaveName(s string) string {
 	return strings.Join(strings.Fields(s), " ")
 }
 
+// maybeThe returns "The " roughly half the time and "" the rest, so any
+// template that opens with it also produces a bare "<Adj> <Noun>" form. This
+// keeps the leading-article share from dominating the distribution.
+// cleanSaveName trims, so a leading "" collapses cleanly.
+func maybeThe() string {
+	if rand.Intn(2) == 0 {
+		return "The "
+	}
+	return ""
+}
+
+// polityPrefixes are varied "<X> of" phrasings for the "of" templates, so no
+// single connective (the old hardcoded "Grand Duchy of") dominates. All entries
+// are filesystem-safe: letters and single spaces only, no punctuation.
+var polityPrefixes = []string{
+	"Grand Duchy of", "Republic of", "Free State of", "League of",
+	"Order of", "Dominion of", "Confederacy of", "Principality of",
+	"Commonwealth of", "Sovereign State of", "United Provinces of",
+	"Most Serene Republic of", "Protectorate of", "Assembly of",
+	"Realm of", "Council of",
+}
+
 // --- EPIC: grand, dominion-flavoured. "The <Adj> <Noun>" / "<Root> <Suffix>".
 
 var epicAdjectives = []string{
@@ -153,10 +175,19 @@ var epicSuffixes = []string{
 }
 
 func generateEpicName() string {
-	if rand.Intn(2) == 0 {
-		return "The " + pick(epicAdjectives) + " " + pick(epicNouns)
+	switch rand.Intn(5) {
+	case 0:
+		return maybeThe() + pick(epicAdjectives) + " " + pick(epicNouns)
+	case 1:
+		return pick(epicPlaceRoots) + " " + pick(epicSuffixes)
+	case 2:
+		return pick(epicAdjectives) + " " + pick(epicPlaceRoots)
+	case 3:
+		return pick(epicNouns) + " of " + pick(epicPlaceRoots)
+	default:
+		// e.g. "Dominion of Ironhold"
+		return pick(polityPrefixes) + " " + pick(epicPlaceRoots)
 	}
-	return pick(epicPlaceRoots) + " " + pick(epicSuffixes)
 }
 
 // --- MYTHIC: coined ancient-sounding names. No apostrophes (filesystem-safe).
@@ -285,9 +316,9 @@ func generateMythicName() string {
 		// Two coined words: <Root> <Root+suffix>
 		return pick(mythicRoots) + " " + pick(mythicRoots) + pick(mythicSuffixes)
 	default:
-		// "The <Adj> <EpochNoun>" / "<Adj> <Root>"
+		// "[The] <Adj> <EpochNoun>" / "<Adj> <Root>"
 		if rand.Intn(2) == 0 {
-			return "The " + pick(mythicAdjectives) + " " + pick(mythicEpochNouns)
+			return maybeThe() + pick(mythicAdjectives) + " " + pick(mythicEpochNouns)
 		}
 		return pick(mythicAdjectives) + " " + pick(mythicRoots)
 	}
@@ -395,13 +426,18 @@ var whimsicalOfThings = []string{
 }
 
 func generateWhimsicalName() string {
-	switch rand.Intn(3) {
+	switch rand.Intn(5) {
 	case 0:
 		return pick(whimsicalWholeNames)
 	case 1:
-		return "The " + pick(whimsicalAdjectives) + " " + pick(whimsicalNouns)
+		return maybeThe() + pick(whimsicalAdjectives) + " " + pick(whimsicalNouns)
+	case 2:
+		// "Grand Duchy of" is now 1 of ~16 polity prefixes, not the only one.
+		return pick(polityPrefixes) + " " + pick(whimsicalOfThings)
+	case 3:
+		return pick(whimsicalWholeNames) + " " + pick(whimsicalNouns)
 	default:
-		return "Grand Duchy of " + pick(whimsicalOfThings)
+		return pick(whimsicalAdjectives) + " " + pick(whimsicalWholeNames)
 	}
 }
 
