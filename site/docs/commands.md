@@ -238,34 +238,23 @@ See [Saving & Loading](saving-and-loading.md) for the full save system.
 
 ## Themes
 
-AgeForge's interface colors are driven by a small set of swappable themes. Open the picker with the **Themes** entry on the main menu, or type `theme` from the in-game prompt.
+AgeForge's interface colors are driven by a set of swappable themes. Open the picker with the **Themes** entry on the main menu, or type `theme` from the in-game prompt.
 
-- `theme` opens the picker: a list of themes on the left, a detail pane on the right showing each theme's blurb and a row of **palette swatches** (Background, Text, Accent, Positive, Negative, Highlight, Dim, Selection). Highlighting a theme with `↑`/`↓` **previews it live** — the whole UI retints instantly so you can judge it in place. `Enter` keeps the highlighted theme; `Esc` cancels and reverts to whatever you had before. A **locked** flavor theme shows a `🔒 Locked — <how to unlock>` line above its swatches (you can still preview it, but `Enter` won't switch to one you haven't earned).
-- `theme list` prints every theme with its name and key, marks the active one, notes which are accessible, and shows the `🔒` unlock condition for any **locked** flavor theme (e.g. `monochrome  🔒 Reach the Information Age`).
-- `theme <key>` switches straight to a theme by key (e.g. `theme deuteranopia`). An unknown key lists the valid ones; a locked key tells you it isn't unlocked yet.
-
-### Accessibility
-
-Color is never the only signal. Alongside the default **Forge** look, three accessibility themes ship **unlocked from the start**:
-
-- **Deuteranopia-safe** and **Protanopia-safe** — for red-green color vision deficiency. Because AgeForge normally uses **green for gains and red for losses**, these themes drop that pairing entirely: gains are **blue**, losses are **orange** (the standard colorblind-safe opposition), and `▲`/`▼` glyphs mark the sign by **shape as well as color** so the direction reads even if the hues don't.
-- **High Contrast** — maximum legibility on near-black, for low-vision players and high-glare terminals. It also keeps the blue/orange + `▲`/`▼` encoding, so it's colorblind-safe too.
-
-### Flavor themes & unlocks
-
-Beyond Forge and the accessibility set, AgeForge ships **flavor themes** — purely cosmetic looks (Parchment, Bronze, Cyberpunk, Monochrome, Cosmic) — that you **unlock by reaching milestones**. Each is tied to an age milestone:
-
-| Theme | Unlocks when you… |
+| Command | Description |
 |---|---|
-| **Bronze** | Reach the Bronze Age |
-| **Parchment** | Reach the Renaissance Age |
-| **Monochrome** | Reach the Information Age |
-| **Cyberpunk** | Reach the Cyberpunk Age |
-| **Cosmic** | Reach the Galactic Age |
+| `theme` | Open the **Themes** picker — browse palettes with live preview (`↑`/`↓` previews, `Enter` keeps, `Esc` reverts) |
+| `theme list` | List every theme by name and key, marking the active one and the lock status of any theme you haven't unlocked |
+| `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`) |
 
-When you hit the milestone, the theme unlocks and a log line tells you (`🎨 New theme unlocked: …`). Unlocks are **account-wide and permanent**: earn a theme on one empire and it's yours on every save and every future new game — exactly like your accessibility themes. Until then the theme is **locked**: the picker and `theme list` still show it (with its unlock condition) and let you preview it, but you can't make it your active theme until you've earned it.
+```
+theme
+theme list
+theme high_contrast
+```
 
-Your theme choice applies immediately and **persists per account** — it is saved with your account (in `account.json`), not with any individual game save, so it carries across every save and every new game, and loading an old save never changes your theme. Switching via the picker (`Enter`) or with `theme <key>` both stick; cancelling the picker with `Esc` reverts and saves nothing.
+Your theme choice **persists per account** (saved in `account.json`, not in any game save), so it carries across every save and new game. There are 9 themes — the default **Forge** look, three always-unlocked **accessibility** themes (colorblind-safe + high-contrast), and five **flavor** themes you unlock by reaching later ages.
+
+See [Themes & Accessibility](themes.md) for the full list and unlock conditions.
 
 ---
 

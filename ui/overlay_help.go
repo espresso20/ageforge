@@ -63,6 +63,9 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("  [cyan]rates[-]                       - Show resource rate breakdown\n")
 	sb.WriteString("  [cyan]status[-]                      - Show detailed status\n")
 	sb.WriteString("  [cyan]speed[-] [1.0|1.5|2.0|...]     - Set game speed (unlocks per wonder built)\n")
+	sb.WriteString("  [cyan]theme[-]                       - Open the theme picker (palettes + accessibility)\n")
+	sb.WriteString("  [cyan]theme[-] list                  - List themes with unlock status\n")
+	sb.WriteString("  [cyan]theme[-] <key>                 - Switch to a theme by key\n")
 	sb.WriteString("  [cyan]save[-] [name]                 - Save game (default: autosave)\n")
 	sb.WriteString("  [cyan]load[-] [name]                 - Load game (default: autosave)\n")
 	sb.WriteString("  [cyan]saves[-]                       - List all save files\n")
@@ -85,6 +88,7 @@ func helpProvider(_ game.GameState, _ int) string {
 		{"history", "Civilization history timeline"},
 		{"buildings", "Built structures by lineage"},
 		{"map", "City map view"},
+		{"theme", "Theme picker — palettes & accessibility"},
 		{"help", "This Help panel"},
 	} {
 		sb.WriteString("  [cyan]" + padRight(p.cmd, 12) + "[-] — " + p.desc + "\n")
