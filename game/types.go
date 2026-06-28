@@ -80,6 +80,7 @@ type GameState struct {
 // hands the UI its mutable backing slices. Achievements holds unlocked keys; the UI
 // resolves human names via game.AchievementName.
 type AccountStatsView struct {
+	DisplayName          string
 	TotalPrestiges       int
 	HighestAge           string
 	CivilizationsStarted int

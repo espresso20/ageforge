@@ -3,6 +3,7 @@ package game
 import (
 	"crypto/hmac"
 	"crypto/rand"
+	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
@@ -127,6 +128,113 @@ func newAccount() (*Account, error) {
 		Created:   now,
 		LastSeen:  now,
 	}, nil
+}
+
+// normalizeAccountName canonicalizes a name for ID derivation: trimmed, lowercased,
+// and with any internal whitespace run collapsed to a single space. So "  Bob   the
+// Builder " and "bob the builder" normalize identically and therefore derive the same
+// account ID. It is the identity key — re-entering the same name on a fresh machine
+// regenerates the same ID (name-based recovery). DisplayName keeps the ORIGINAL trimmed
+// casing; this normalized form never leaves the derivation.
+func normalizeAccountName(name string) string {
+	return strings.Join(strings.Fields(strings.ToLower(name)), " ")
+}
+
+// accountIDFromName derives the 32-char hex account ID from a name:
+// hex(sha256(normalize(name))[:16]). Deterministic — the same name always yields the
+// same ID — and it keeps the existing 16-byte / 32-hex-char ID format intact, so the
+// recovery code and save attribution keep working unchanged. The leading 16 bytes of
+// the SHA-256 digest are ample collision resistance for a local-only cosmetic identity.
+func accountIDFromName(name string) string {
+	sum := sha256.Sum256([]byte(normalizeAccountName(name)))
+	return hex.EncodeToString(sum[:16])
+}
+
+// Established reports whether this account has been named (DisplayName set). An account
+// loaded from disk with no display name (e.g. a legacy random-id dev account) is NOT
+// established, so boot/UI code can prompt the player to name it on first run.
+func (a *Account) Established() bool {
+	return a.DisplayName != ""
+}
+
+// LoadAccount loads an EXISTING account.json without ever creating one — the read-only
+// counterpart to LoadOrCreate, used by the name-first boot flow (the UI mints the account
+// after prompting for a name). Behavior by file state:
+//
+//   - Absent: return (nil, false, nil) — no file, nothing to load. The caller prompts.
+//   - Present + parses + signature valid (or unsigned/legacy): return (acct, true, nil).
+//   - Present + parses + signature INVALID: return (acct, true, nil) with Tampered=true —
+//     a cosmetic flag, not a lockout. The file is NOT deleted.
+//   - Present but UNPARSEABLE: back the bad file up to account.json.corrupt and return
+//     (nil, false, nil) — there is no salvageable account, so the caller prompts fresh.
+//
+// It never writes on the happy/tampered paths; the only disk mutation is the .corrupt
+// rename for an unparseable file (mirrors LoadOrCreate's corrupt handling, minus the
+// create).
+func LoadAccount() (*Account, bool, error) {
+	path := accountPath()
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, false, nil
+		}
+		return nil, false, fmt.Errorf("failed to read account: %w", err)
+	}
+
+	var acct Account
+	if err := json.Unmarshal(data, &acct); err != nil {
+		// Corrupt / unparseable → back it up and report "not found" so the caller
+		// prompts for a fresh name (accounts.md §7).
+		backup := path + ".corrupt"
+		if renameErr := os.Rename(path, backup); renameErr != nil {
+			return nil, false, fmt.Errorf("account file is corrupt and could not be backed up: %w", renameErr)
+		}
+		return nil, false, nil
+	}
+
+	if !verifyAccount(&acct) {
+		// Signature present but mismatched → tampered. Flag it, still load it.
+		acct.Tampered = true
+	}
+	return &acct, true, nil
+}
+
+// CreateNamedAccount mints a signed account whose identity is derived from name:
+// AccountID = accountIDFromName(name), DisplayName = the trimmed ORIGINAL name (display
+// keeps casing/whitespace; the ID does not). Re-entering the same name reproduces the
+// same ID — that IS the cross-machine recovery story (accounts.md §3.5).
+//
+// MIGRATION: if an account file already exists (e.g. a legacy random-id dev account from
+// the old LoadOrCreate auto-create), its DATA — unlocks, lifetime stats, achievements,
+// prefs — is carried over into the new named account so earned progress is not lost when
+// the identity is re-keyed to the name. Identity fields (the old random ID, Created) are
+// replaced; the new named identity wins. A corrupt/unparseable existing file is ignored
+// (LoadAccount backs it up) and the named account starts with empty data.
+func CreateNamedAccount(name string) (*Account, error) {
+	trimmed := strings.TrimSpace(name)
+	now := time.Now()
+	acct := &Account{
+		Version:        accountSchemaVersion,
+		AccountID:      accountIDFromName(trimmed),
+		DisplayName:    trimmed,
+		Created:        now,
+		LastSeen:       now,
+		FreshlyCreated: true,
+	}
+
+	// Carry over DATA from any pre-existing account so unlocks/stats survive the
+	// identity re-key. found=false (absent or corrupt) → start clean.
+	if prior, found, err := LoadAccount(); err == nil && found && prior != nil {
+		acct.Unlocks = prior.Unlocks
+		acct.Stats = prior.Stats
+		acct.Achievements = append([]string(nil), prior.Achievements...)
+		acct.Prefs = prior.Prefs
+	}
+
+	if err := acct.Save(); err != nil {
+		return nil, err
+	}
+	return acct, nil
 }
 
 // accountPath resolves the full path to account.json, mirroring savePath's
@@ -847,6 +955,16 @@ func (a *Account) FlushIfDirty() error {
 	}
 	a.dirty = false
 	return nil
+}
+
+// Name returns the account's display name under a.mu, for the lock-safe UI snapshot
+// (GetState). DisplayName is chosen-once identity and never mutated by the Record*
+// writers, but reading it under a.mu keeps the snapshot consistent with the rest of
+// LifetimeStats and free of any data-race tooling complaint.
+func (a *Account) Name() string {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.DisplayName
 }
 
 // LifetimeStats returns a lock-guarded COPY of the account's lifetime stats and unlocked

@@ -42,3 +42,6 @@ releases/
 # Claude Code session files
 .claude/
 spritegen
+data/account.json
+data/account-export.json
+data/*.corrupt

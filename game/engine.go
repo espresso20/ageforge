@@ -2961,6 +2961,7 @@ func (ge *GameEngine) GetState() GameState {
 			}
 			s, ach := ge.account.LifetimeStats()
 			return &AccountStatsView{
+				DisplayName:          ge.account.Name(),
 				TotalPrestiges:       s.TotalPrestiges,
 				HighestAge:           s.HighestAge,
 				CivilizationsStarted: s.CivilizationsStarted,
