@@ -38,7 +38,11 @@ func showSaveNameModal(app *tview.Application, pages *tview.Pages, title, pageNa
 	input := tview.NewInputField().
 		SetLabel("Name: ").
 		SetText(game.GenerateSaveName()).
-		SetFieldWidth(40)
+		SetFieldWidth(40).
+		// Dark slate field with white text — tview's default light field
+		// background renders the white name near-invisible on the dark modal.
+		SetFieldBackgroundColor(tcell.NewRGBColor(48, 54, 61)).
+		SetFieldTextColor(tcell.ColorWhite)
 
 	hintTV := tview.NewTextView().
 		SetDynamicColors(true).
