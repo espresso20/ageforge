@@ -38,14 +38,17 @@ type ActiveExpedition struct {
 }
 
 // MilitaryManager handles military expeditions and defense ratings.
-// Only one expedition can be active at a time (active pointer). Soldiers are a
-// real resource (config/resources.go): launching an expedition spends
-// SoldiersNeeded of the soldiers resource plus any Cost, validated and deducted
-// by the engine before LaunchExpedition is called. Soldiers are spent at launch
-// (win or lose); success vs failure differs only in reward, not soldier loss.
+//
+// One expedition per CATEGORY can be active at a time: a scouting expedition and
+// a military expedition may run concurrently. activeByCat is keyed by
+// ExpeditionScouting / ExpeditionMilitary. Soldiers are a real resource
+// (config/resources.go): launching an expedition spends SoldiersNeeded of the
+// soldiers resource plus any Cost, validated and deducted by the engine before
+// LaunchExpedition is called. Soldiers are spent at launch (win or lose);
+// success vs failure differs only in reward, not soldier loss.
 type MilitaryManager struct {
 	expeditions    []ExpeditionDef
-	active         *ActiveExpedition
+	activeByCat    map[string]*ActiveExpedition
 	completedCount int
 	totalLoot      map[string]float64
 	defenseRating  float64
@@ -54,7 +57,8 @@ type MilitaryManager struct {
 // NewMilitaryManager creates a military manager
 func NewMilitaryManager() *MilitaryManager {
 	return &MilitaryManager{
-		totalLoot: make(map[string]float64),
+		totalLoot:   make(map[string]float64),
+		activeByCat: make(map[string]*ActiveExpedition),
 		expeditions: []ExpeditionDef{
 			{
 				Name: "Scout Party", Key: "scout_party",
@@ -202,18 +206,20 @@ func (mm *MilitaryManager) ExpeditionDefByKey(key string) *ExpeditionDef {
 	return nil
 }
 
-// LaunchExpedition validates age + active status and sets up the active
-// expedition. Resource costs (soldiers + Cost) are validated and deducted by
-// the engine BEFORE this is called — this method assumes the player can afford
-// the launch and only enforces age range and the single-active-expedition rule.
+// LaunchExpedition validates age + per-category active status and sets up the
+// active expedition for its category. Resource costs (soldiers + Cost) are
+// validated and deducted by the engine BEFORE this is called — this method
+// assumes the player can afford the launch and only enforces age range and the
+// one-active-per-category rule (a scouting and a military expedition may run
+// concurrently, but not two of the same category).
 func (mm *MilitaryManager) LaunchExpedition(key, currentAge string, ageOrder map[string]int) error {
-	if mm.active != nil {
-		return fmt.Errorf("expedition '%s' already in progress (%d ticks left)", mm.active.Name, mm.active.TicksLeft)
-	}
-
 	def := mm.ExpeditionDefByKey(key)
 	if def == nil {
 		return fmt.Errorf("unknown expedition: %s", key)
+	}
+
+	if existing := mm.activeByCat[def.Category]; existing != nil {
+		return fmt.Errorf("a %s expedition is already in progress (%d ticks left)", categoryLabel(def.Category), existing.TicksLeft)
 	}
 
 	if ageOrder[def.MinAge] > ageOrder[currentAge] {
@@ -223,7 +229,7 @@ func (mm *MilitaryManager) LaunchExpedition(key, currentAge string, ageOrder map
 		return fmt.Errorf("%s is no longer available past the %s age", def.Name, def.MaxAge)
 	}
 
-	mm.active = &ActiveExpedition{
+	mm.activeByCat[def.Category] = &ActiveExpedition{
 		Key:       key,
 		Name:      def.Name,
 		Soldiers:  def.SoldiersNeeded,
@@ -232,28 +238,81 @@ func (mm *MilitaryManager) LaunchExpedition(key, currentAge string, ageOrder map
 	return nil
 }
 
-// Tick advances the active expedition by one tick. Returns non-empty rewards
-// and a message only on the tick when the expedition resolves.
+// categoryLabel returns a short player-facing word for an expedition category.
+func categoryLabel(category string) string {
+	switch category {
+	case ExpeditionScouting:
+		return "scouting"
+	case ExpeditionMilitary:
+		return "military"
+	default:
+		return category
+	}
+}
+
+// ActiveByCategory returns the active expedition for a category, or nil. Used by
+// the engine/tests; the returned pointer is the live manager state.
+func (mm *MilitaryManager) ActiveByCategory(category string) *ActiveExpedition {
+	return mm.activeByCat[category]
+}
+
+// HasActive reports whether any expedition (any category) is currently running.
+func (mm *MilitaryManager) HasActive() bool {
+	for _, exp := range mm.activeByCat {
+		if exp != nil {
+			return true
+		}
+	}
+	return false
+}
+
+// ExpeditionResult holds the rewards + player-facing message for one expedition
+// that resolved this tick.
+type ExpeditionResult struct {
+	Rewards map[string]float64
+	Message string
+}
+
+// Tick advances every active expedition (one per category) by one tick and
+// returns a result for each that resolved this tick. Categories tick down and
+// complete independently — a scouting and a military expedition resolve on their
+// own schedules.
 //
-// Success probability: successRoll > (DifficultyBase - militaryBonus×0.3).
+// Success probability per expedition: successRoll > (DifficultyBase - militaryBonus×0.3).
 // militaryBonus reduces effective difficulty; expeditionBonus scales reward amounts.
 // Soldiers are spent at launch (win or lose); success vs failure differs only in
 // reward (full vs 30%), not in any extra soldier loss.
-func (mm *MilitaryManager) Tick(militaryBonus, expeditionBonus float64) (rewards map[string]float64, message string) {
-	if mm.active == nil {
-		return nil, ""
+func (mm *MilitaryManager) Tick(militaryBonus, expeditionBonus float64) []ExpeditionResult {
+	// Iterate categories in a stable order so resolution logs/results are
+	// deterministic regardless of map iteration order.
+	cats := []string{ExpeditionScouting, ExpeditionMilitary}
+	var results []ExpeditionResult
+	for _, cat := range cats {
+		if res, ok := mm.tickCategory(cat, militaryBonus, expeditionBonus); ok {
+			results = append(results, res)
+		}
+	}
+	return results
+}
+
+// tickCategory advances one category's active expedition. ok is true only on the
+// tick the expedition resolves (carrying its rewards + message).
+func (mm *MilitaryManager) tickCategory(category string, militaryBonus, expeditionBonus float64) (ExpeditionResult, bool) {
+	active := mm.activeByCat[category]
+	if active == nil {
+		return ExpeditionResult{}, false
 	}
 
-	mm.active.TicksLeft--
-	if mm.active.TicksLeft > 0 {
-		return nil, ""
+	active.TicksLeft--
+	if active.TicksLeft > 0 {
+		return ExpeditionResult{}, false
 	}
 
 	// Expedition complete - calculate results
-	def := mm.ExpeditionDefByKey(mm.active.Key)
+	def := mm.ExpeditionDefByKey(active.Key)
 	if def == nil {
-		mm.active = nil
-		return nil, ""
+		mm.activeByCat[category] = nil
+		return ExpeditionResult{}, false
 	}
 
 	// Success calculation: military bonus reduces difficulty
@@ -265,7 +324,8 @@ func (mm *MilitaryManager) Tick(militaryBonus, expeditionBonus float64) (rewards
 	successRoll := rand.Float64()
 	success := successRoll > difficulty
 
-	rewards = make(map[string]float64)
+	rewards := make(map[string]float64)
+	var message string
 	if success {
 		// Apply expedition reward bonus
 		rewardMult := 1.0 + expeditionBonus
@@ -285,8 +345,8 @@ func (mm *MilitaryManager) Tick(militaryBonus, expeditionBonus float64) (rewards
 	}
 
 	mm.completedCount++
-	mm.active = nil
-	return rewards, message
+	mm.activeByCat[category] = nil
+	return ExpeditionResult{Rewards: rewards, Message: message}, true
 }
 
 // GetAvailableExpeditions returns expeditions available for the current age,
@@ -323,8 +383,8 @@ func (mm *MilitaryManager) GetAvailableExpeditionsByCategory(category, currentAg
 // soldierCount is the current soldiers amount; resources is the live resource
 // map (nil → Cost treated as unaffordable).
 func (mm *MilitaryManager) launchability(def ExpeditionDef, soldierCount int, resources map[string]float64) (bool, string) {
-	if mm.active != nil {
-		return false, "expedition already in progress"
+	if mm.activeByCat[def.Category] != nil {
+		return false, fmt.Sprintf("a %s expedition is already in progress", categoryLabel(def.Category))
 	}
 	if soldierCount < def.SoldiersNeeded {
 		return false, fmt.Sprintf("need %d soldiers", def.SoldiersNeeded)
@@ -361,14 +421,8 @@ func (mm *MilitaryManager) CalculateDefense(soldierCount int, militaryBonus floa
 // currentResources may be nil, in which case Cost affordability is treated as
 // unmet (defensive; the engine always passes a real map).
 func (mm *MilitaryManager) Snapshot(currentAge string, ageOrder map[string]int, soldierCount, soldierCap int, soldierRate float64, currentResources map[string]float64, militaryBonus, expeditionBonus float64) MilitaryState {
-	var activeExp *ExpeditionSnapshot
-	if mm.active != nil {
-		activeExp = &ExpeditionSnapshot{
-			Name:      mm.active.Name,
-			Soldiers:  mm.active.Soldiers,
-			TicksLeft: mm.active.TicksLeft,
-		}
-	}
+	activeScout := snapshotActive(mm.activeByCat[ExpeditionScouting])
+	activeMilitary := snapshotActive(mm.activeByCat[ExpeditionMilitary])
 
 	available := mm.GetAvailableExpeditions(currentAge, ageOrder)
 	var expList []ExpeditionInfo
@@ -398,29 +452,75 @@ func (mm *MilitaryManager) Snapshot(currentAge string, ageOrder map[string]int, 
 		SoldierCap:       soldierCap,
 		SoldierRate:      soldierRate,
 		DefenseRating:    mm.CalculateDefense(soldierCount, militaryBonus),
-		MilitaryBonus:    militaryBonus,
-		ExpeditionBonus:  expeditionBonus,
-		ActiveExpedition: activeExp,
-		Expeditions:      expList,
-		CompletedCount:   mm.completedCount,
-		TotalLoot:        loot,
+		MilitaryBonus:   militaryBonus,
+		ExpeditionBonus: expeditionBonus,
+		ActiveScout:     activeScout,
+		ActiveMilitary:  activeMilitary,
+		Expeditions:     expList,
+		CompletedCount:  mm.completedCount,
+		TotalLoot:       loot,
 	}
 }
 
-// LoadState restores military state from save
-func (mm *MilitaryManager) LoadState(active *ActiveExpedition, completedCount int, totalLoot map[string]float64) {
-	mm.active = active
+// snapshotActive converts a live ActiveExpedition into a UI snapshot, or nil.
+func snapshotActive(active *ActiveExpedition) *ExpeditionSnapshot {
+	if active == nil {
+		return nil
+	}
+	return &ExpeditionSnapshot{
+		Name:      active.Name,
+		Soldiers:  active.Soldiers,
+		TicksLeft: active.TicksLeft,
+	}
+}
+
+// LoadState restores military state from save. scout and military are the
+// per-category active expeditions (either may be nil). Legacy single-active
+// saves are migrated by the caller (see save.go) before reaching this point.
+func (mm *MilitaryManager) LoadState(scout, military *ActiveExpedition, completedCount int, totalLoot map[string]float64) {
+	if mm.activeByCat == nil {
+		mm.activeByCat = make(map[string]*ActiveExpedition)
+	}
+	mm.activeByCat[ExpeditionScouting] = scout
+	mm.activeByCat[ExpeditionMilitary] = military
 	mm.completedCount = completedCount
 	if totalLoot != nil {
 		mm.totalLoot = totalLoot
 	}
 }
 
-// GetActiveForSave returns active expedition for saving
-func (mm *MilitaryManager) GetActiveForSave() *ActiveExpedition {
-	if mm.active == nil {
+// GetActiveForSave returns deep copies of the active scouting and military
+// expeditions for saving. Either may be nil.
+func (mm *MilitaryManager) GetActiveForSave() (scout, military *ActiveExpedition) {
+	return copyActive(mm.activeByCat[ExpeditionScouting]), copyActive(mm.activeByCat[ExpeditionMilitary])
+}
+
+// copyActive returns a deep copy of an ActiveExpedition, or nil.
+func copyActive(active *ActiveExpedition) *ActiveExpedition {
+	if active == nil {
 		return nil
 	}
-	copy := *mm.active
-	return &copy
+	c := *active
+	return &c
+}
+
+// migrateActives resolves the per-category active expeditions from a MilitarySave,
+// migrating pre-Phase-2a saves. If the new ActiveScout/ActiveMilitary fields are
+// present they win. Otherwise a legacy single-active ActiveExpedition is routed to
+// the scout or military slot by its def's Category (unknown keys default to the
+// military slot, matching pre-2a semantics where expeditions were "military").
+func (mm *MilitaryManager) migrateActives(save MilitarySave) (scout, military *ActiveExpedition) {
+	scout = save.ActiveScout
+	military = save.ActiveMilitary
+	if scout != nil || military != nil {
+		return scout, military
+	}
+	if save.ActiveExpedition == nil {
+		return nil, nil
+	}
+	legacy := save.ActiveExpedition
+	if def := mm.ExpeditionDefByKey(legacy.Key); def != nil && def.Category == ExpeditionScouting {
+		return legacy, nil
+	}
+	return nil, legacy
 }

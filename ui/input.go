@@ -850,9 +850,14 @@ func cmdExpeditionList(engine *game.GameEngine) CommandResult {
 	appendExpeditionGroup(&lines, "Scouting", state.Military.Expeditions, game.ExpeditionScouting)
 	appendExpeditionGroup(&lines, "Military Campaigns", state.Military.Expeditions, game.ExpeditionMilitary)
 
-	if state.Military.ActiveExpedition != nil {
-		lines = append(lines, fmt.Sprintf("\n[yellow]Active: %s (%d ticks left)[-]",
-			state.Military.ActiveExpedition.Name, state.Military.ActiveExpedition.TicksLeft))
+	// A scouting and a military expedition can run concurrently (one per kind).
+	if state.Military.ActiveScout != nil {
+		lines = append(lines, fmt.Sprintf("\n[yellow]Active scouting: %s (%d ticks left)[-]",
+			state.Military.ActiveScout.Name, state.Military.ActiveScout.TicksLeft))
+	}
+	if state.Military.ActiveMilitary != nil {
+		lines = append(lines, fmt.Sprintf("\n[yellow]Active military: %s (%d ticks left)[-]",
+			state.Military.ActiveMilitary.Name, state.Military.ActiveMilitary.TicksLeft))
 	}
 
 	if len(state.Military.Expeditions) == 0 {

@@ -237,13 +237,17 @@ type MilitaryState struct {
 	// production rate (net). Both are populated from the soldiers resource.
 	SoldierCap       int
 	SoldierRate      float64
-	DefenseRating    float64
-	MilitaryBonus    float64
-	ExpeditionBonus  float64
-	ActiveExpedition *ExpeditionSnapshot
-	Expeditions      []ExpeditionInfo
-	CompletedCount   int
-	TotalLoot        map[string]float64
+	DefenseRating   float64
+	MilitaryBonus   float64
+	ExpeditionBonus float64
+	// ActiveScout / ActiveMilitary are the per-category active expeditions. A
+	// scouting and a military expedition can run concurrently, so either, both,
+	// or neither may be non-nil.
+	ActiveScout    *ExpeditionSnapshot
+	ActiveMilitary *ExpeditionSnapshot
+	Expeditions    []ExpeditionInfo
+	CompletedCount int
+	TotalLoot      map[string]float64
 }
 
 // ExpeditionSnapshot represents an active expedition for UI

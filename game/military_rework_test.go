@@ -323,3 +323,184 @@ func TestMilitaryExpeditions_RequireSoldiers(t *testing.T) {
 		t.Error("no military expedition requires soldiers — classification likely broken")
 	}
 }
+
+// === Scouting / Army split (Phase 2a): concurrent per-category actives ===
+
+// TestConcurrentExpeditions_ScoutAndMilitary verifies a scouting expedition and
+// a military expedition can be active simultaneously (one per category).
+func TestConcurrentExpeditions_ScoutAndMilitary(t *testing.T) {
+	ge := NewGameEngine()
+	setAge(ge, "bronze_age")
+	setResource(ge, "food", 200)
+	setResource(ge, "wood", 200)
+	setSoldiers(ge, 20)
+
+	// scout_party is scouting (food+wood, no soldiers); raid_bandits is military
+	// (5 soldiers). Both available in bronze_age.
+	if err := ge.LaunchExpedition("scout_party"); err != nil {
+		t.Fatalf("LaunchExpedition(scout_party) error: %v", err)
+	}
+	if err := ge.LaunchExpedition("raid_bandits"); err != nil {
+		t.Fatalf("LaunchExpedition(raid_bandits) error: %v", err)
+	}
+
+	if ge.Military.ActiveByCategory(ExpeditionScouting) == nil {
+		t.Error("scouting slot empty after launching scout_party")
+	}
+	if ge.Military.ActiveByCategory(ExpeditionMilitary) == nil {
+		t.Error("military slot empty after launching raid_bandits")
+	}
+
+	// Snapshot should surface both as active.
+	state := ge.GetState()
+	if state.Military.ActiveScout == nil {
+		t.Error("Snapshot ActiveScout nil, want scout_party active")
+	}
+	if state.Military.ActiveMilitary == nil {
+		t.Error("Snapshot ActiveMilitary nil, want raid_bandits active")
+	}
+}
+
+// TestPerCategorySingleActive verifies a second expedition of the SAME category
+// is rejected while one is running, but the OTHER category is still launchable.
+func TestPerCategorySingleActive(t *testing.T) {
+	ge := NewGameEngine()
+	setAge(ge, "bronze_age")
+	setResource(ge, "food", 500)
+	setResource(ge, "wood", 500)
+	setSoldiers(ge, 50)
+
+	// Launch a scouting expedition. A second scouting one must be rejected, but a
+	// military one is allowed.
+	if err := ge.LaunchExpedition("scout_party"); err != nil {
+		t.Fatalf("LaunchExpedition(scout_party) error: %v", err)
+	}
+	if err := ge.LaunchExpedition("scout_party"); err == nil {
+		t.Error("launching a second scouting expedition should be rejected")
+	}
+	if err := ge.LaunchExpedition("raid_bandits"); err != nil {
+		t.Fatalf("military expedition should be launchable alongside scouting: %v", err)
+	}
+	// Now the military slot is occupied: a second military one must be rejected.
+	if err := ge.LaunchExpedition("raid_bandits"); err == nil {
+		t.Error("launching a second military expedition should be rejected")
+	}
+}
+
+// TestExpeditionsTickIndependently verifies both active expeditions tick down and
+// complete on their own schedules.
+func TestExpeditionsTickIndependently(t *testing.T) {
+	ge := NewGameEngine()
+	setAge(ge, "bronze_age")
+	setResource(ge, "food", 200)
+	setResource(ge, "wood", 200)
+	setSoldiers(ge, 20)
+
+	// scout_party Duration=20; raid_bandits Duration=15. The military one should
+	// finish first while the scouting one is still running.
+	if err := ge.LaunchExpedition("scout_party"); err != nil {
+		t.Fatalf("LaunchExpedition(scout_party) error: %v", err)
+	}
+	if err := ge.LaunchExpedition("raid_bandits"); err != nil {
+		t.Fatalf("LaunchExpedition(raid_bandits) error: %v", err)
+	}
+
+	// Tick 15 times: military (15) resolves, scouting (20) still has 5 left.
+	for i := 0; i < 15; i++ {
+		ge.mu.Lock()
+		ge.processExpeditions()
+		ge.mu.Unlock()
+	}
+	if ge.Military.ActiveByCategory(ExpeditionMilitary) != nil {
+		t.Error("military expedition (Duration 15) should have resolved after 15 ticks")
+	}
+	if ge.Military.ActiveByCategory(ExpeditionScouting) == nil {
+		t.Error("scouting expedition (Duration 20) should still be running after 15 ticks")
+	}
+
+	// 5 more ticks: scouting resolves too.
+	for i := 0; i < 5; i++ {
+		ge.mu.Lock()
+		ge.processExpeditions()
+		ge.mu.Unlock()
+	}
+	if ge.Military.ActiveByCategory(ExpeditionScouting) != nil {
+		t.Error("scouting expedition should have resolved after 20 ticks total")
+	}
+	if ge.Military.HasActive() {
+		t.Error("no expedition should remain active after both resolved")
+	}
+}
+
+// TestConcurrentExpeditions_SaveRoundTrip verifies both active expeditions
+// survive GetActiveForSave + LoadState.
+func TestConcurrentExpeditions_SaveRoundTrip(t *testing.T) {
+	ge := NewGameEngine()
+	setAge(ge, "bronze_age")
+	setResource(ge, "food", 200)
+	setResource(ge, "wood", 200)
+	setSoldiers(ge, 20)
+
+	if err := ge.LaunchExpedition("scout_party"); err != nil {
+		t.Fatalf("LaunchExpedition(scout_party) error: %v", err)
+	}
+	if err := ge.LaunchExpedition("raid_bandits"); err != nil {
+		t.Fatalf("LaunchExpedition(raid_bandits) error: %v", err)
+	}
+
+	scout, military := ge.Military.GetActiveForSave()
+	if scout == nil || scout.Key != "scout_party" {
+		t.Fatalf("GetActiveForSave scout = %+v, want scout_party", scout)
+	}
+	if military == nil || military.Key != "raid_bandits" {
+		t.Fatalf("GetActiveForSave military = %+v, want raid_bandits", military)
+	}
+
+	// Restore into a fresh manager and confirm both slots come back.
+	mm := NewMilitaryManager()
+	mm.LoadState(scout, military, 0, nil)
+	if got := mm.ActiveByCategory(ExpeditionScouting); got == nil || got.Key != "scout_party" {
+		t.Errorf("after LoadState scouting slot = %+v, want scout_party", got)
+	}
+	if got := mm.ActiveByCategory(ExpeditionMilitary); got == nil || got.Key != "raid_bandits" {
+		t.Errorf("after LoadState military slot = %+v, want raid_bandits", got)
+	}
+}
+
+// TestLegacyActiveExpedition_MigratesByCategory verifies a pre-Phase-2a save with
+// only the deprecated ActiveExpedition field is routed to the correct slot by the
+// expedition's Category.
+func TestLegacyActiveExpedition_MigratesByCategory(t *testing.T) {
+	mm := NewMilitaryManager()
+
+	// Legacy military key → military slot.
+	milSave := MilitarySave{ActiveExpedition: &ActiveExpedition{Key: "raid_bandits", Name: "Raid Bandit Camp", Soldiers: 5, TicksLeft: 7}}
+	scout, military := mm.migrateActives(milSave)
+	if scout != nil {
+		t.Errorf("legacy military expedition leaked into scouting slot: %+v", scout)
+	}
+	if military == nil || military.Key != "raid_bandits" {
+		t.Errorf("legacy military expedition not routed to military slot: %+v", military)
+	}
+
+	// Legacy scouting key → scouting slot.
+	scoutSave := MilitarySave{ActiveExpedition: &ActiveExpedition{Key: "scout_party", Name: "Scout Party", Soldiers: 0, TicksLeft: 11}}
+	scout, military = mm.migrateActives(scoutSave)
+	if military != nil {
+		t.Errorf("legacy scouting expedition leaked into military slot: %+v", military)
+	}
+	if scout == nil || scout.Key != "scout_party" {
+		t.Errorf("legacy scouting expedition not routed to scouting slot: %+v", scout)
+	}
+
+	// New fields present → legacy ignored.
+	bothSave := MilitarySave{
+		ActiveScout:      &ActiveExpedition{Key: "scout_party", TicksLeft: 3},
+		ActiveMilitary:   &ActiveExpedition{Key: "raid_bandits", TicksLeft: 4},
+		ActiveExpedition: &ActiveExpedition{Key: "conquer_territory", TicksLeft: 99},
+	}
+	scout, military = mm.migrateActives(bothSave)
+	if scout == nil || scout.Key != "scout_party" || military == nil || military.Key != "raid_bandits" {
+		t.Errorf("new fields should win over legacy: scout=%+v military=%+v", scout, military)
+	}
+}

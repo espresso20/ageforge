@@ -848,16 +848,18 @@ func (ge *GameEngine) processExpeditions() {
 	wonderBonuses := ge.getWonderBonuses()
 	militaryBonus := ge.Research.GetBonus("military_power") + ge.permanentBonuses["military_power"] + prestigeBonuses["military_power"] + wonderBonuses["military_power"]
 	expeditionBonus := ge.Research.GetBonus("expedition_reward") + ge.permanentBonuses["expedition_reward"] + prestigeBonuses["expedition_reward"] + wonderBonuses["expedition_reward"]
-	if ge.Military.active != nil {
-		ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", ge.Military.active.Name, ge.Military.active.TicksLeft))
+	for _, cat := range []string{ExpeditionScouting, ExpeditionMilitary} {
+		if active := ge.Military.ActiveByCategory(cat); active != nil {
+			ge.addLog("debug", fmt.Sprintf("Expedition: %s %d ticks left", active.Name, active.TicksLeft))
+		}
 	}
-	rewards, message := ge.Military.Tick(militaryBonus, expeditionBonus)
-	if message != "" {
-		ge.addLog("debug", fmt.Sprintf("Expedition resolved (rewards: %d types)", len(rewards)))
-		ge.addLog("event", message)
+	// Tick all active expeditions (one per category); each may resolve this tick.
+	for _, res := range ge.Military.Tick(militaryBonus, expeditionBonus) {
+		ge.addLog("debug", fmt.Sprintf("Expedition resolved (rewards: %d types)", len(res.Rewards)))
+		ge.addLog("event", res.Message)
 		// Add rewards to resources
-		for res, amount := range rewards {
-			ge.Resources.Add(res, amount)
+		for resource, amount := range res.Rewards {
+			ge.Resources.Add(resource, amount)
 		}
 	}
 }
@@ -2574,8 +2576,8 @@ func (ge *GameEngine) LaunchExpedition(key string) error {
 		ge.Resources.Remove(res, amount)
 	}
 
-	ge.addLog("debug", fmt.Sprintf("Expedition start: %s (soldiers spent: %d)", ge.Military.active.Name, def.SoldiersNeeded))
-	ge.addLog("info", fmt.Sprintf("Expedition launched: %s", ge.Military.active.Name))
+	ge.addLog("debug", fmt.Sprintf("Expedition start: %s (soldiers spent: %d)", def.Name, def.SoldiersNeeded))
+	ge.addLog("info", fmt.Sprintf("Expedition launched: %s", def.Name))
 	return nil
 }
 
