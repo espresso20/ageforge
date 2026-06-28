@@ -244,6 +244,58 @@ func TestLoadOrCreateCorruptBacksUpAndRecreates(t *testing.T) {
 	}
 }
 
+// TestWipeAccount covers the destructive wipe: an established account is created,
+// confirmed present, then WipeAccount() must delete the file so a subsequent
+// LoadAccount reports found=false; the corrupt-backup sibling is also removed; and
+// wiping with no file present is a clean no-op (no error).
+func TestWipeAccount(t *testing.T) {
+	isolateAccountDir(t)
+
+	// Create a named account and confirm the file exists.
+	acct, err := CreateNamedAccount("Adam")
+	if err != nil {
+		t.Fatalf("CreateNamedAccount: %v", err)
+	}
+	if acct.DisplayName != "Adam" {
+		t.Fatalf("DisplayName = %q, want Adam", acct.DisplayName)
+	}
+	path := accountFilePath()
+	if _, err := os.Stat(path); err != nil {
+		t.Fatalf("account.json not written: %v", err)
+	}
+
+	// Seed a corrupt-backup sibling to prove WipeAccount sweeps it too.
+	backup := path + ".corrupt"
+	if err := os.WriteFile(backup, []byte("garbage"), 0644); err != nil {
+		t.Fatalf("seed .corrupt backup: %v", err)
+	}
+
+	// Wipe: file and its .corrupt sibling must be gone, with no error.
+	if err := WipeAccount(); err != nil {
+		t.Fatalf("WipeAccount: %v", err)
+	}
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Errorf("account.json still present after wipe (stat err = %v)", err)
+	}
+	if _, err := os.Stat(backup); !os.IsNotExist(err) {
+		t.Errorf("account.json.corrupt still present after wipe (stat err = %v)", err)
+	}
+
+	// A subsequent LoadAccount must report found=false (nothing to load).
+	loaded, found, err := LoadAccount()
+	if err != nil {
+		t.Fatalf("LoadAccount after wipe: %v", err)
+	}
+	if found || loaded != nil {
+		t.Errorf("LoadAccount after wipe = (%v, found=%v), want (nil, false)", loaded, found)
+	}
+
+	// Wiping again (no file present) is a clean no-op.
+	if err := WipeAccount(); err != nil {
+		t.Errorf("WipeAccount on missing file returned error: %v", err)
+	}
+}
+
 // --- Phase 4: recovery code (accounts.md §3.5 / §8 / §9) ---
 
 // TestRecoveryCodeRoundTrip covers the core contract: a.RecoveryCode() →

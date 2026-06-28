@@ -179,6 +179,32 @@ The guard exists because the code does **not** carry your unlocks. Recovering po
 
 ---
 
+## Wiping your account
+
+If you want a genuine clean slate — a brand-new identity with none of your old unlocks, stats, or achievements — you can **wipe your account**.
+
+**Wipe Account** lives on the **main menu** (the splash screen — press **Esc** from in-game to get there). It is deliberately *not* a typed command: deleting your account is permanent, so it sits behind a two-step gate.
+
+1. **Confirm the stakes.** A red warning explains exactly what's about to happen.
+2. **Type your account name.** You must type your account's display name *exactly* — an exact match is the only thing that proceeds. Anything else (or pressing Esc) aborts with no changes.
+
+On confirmation, the wipe **permanently deletes**:
+
+- your **identity** (the account name and derived ID),
+- your **theme unlocks**,
+- your **lifetime stats**, and
+- your **achievements**.
+
+**This cannot be undone** — there is no server backup. Once you've named a fresh account, the old identity is only recoverable if you wrote down its [recovery code](#the-recovery-code) beforehand, and its earned progress only if you'd [exported it](#backing-up-your-progress) first.
+
+> **Your game saves are NOT affected.** Wiping your account is completely separate from **Wipe Save** (which deletes your save files under `./data/saves/`). A wipe touches only `./data/account.json` — your civilizations under `./data/saves/` and any progress export file you've made are left untouched.
+
+Immediately after a wipe, the game re-runs the **first-run name prompt** so you **start over** by naming a fresh account — exactly like launching the game for the very first time.
+
+> Typing `account wipe` at the `>` prompt won't perform the wipe — it just points you at the menu, because the destructive action only happens behind the type-your-name confirm.
+
+---
+
 ## The honest truth
 
 With no server, **identity recovery is a short code you write down** — that's the whole trick. But **progress recovery requires you to have exported it first.** We can't make data appear from nothing: if a machine's `./data/` is gone and the progress was never backed up, there's no server holding a copy to pull it back from. The recovery code resurrects who you are, not what you've done.

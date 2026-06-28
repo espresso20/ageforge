@@ -594,6 +594,9 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		lines = append(lines, "[gold]Progress (unlocks, stats):[-] backed up SEPARATELY from the code above.")
 		lines = append(lines, "  account export [path]          → write a progress backup file")
 		lines = append(lines, "  account import <path> [replace] → restore progress (merges by default)")
+		lines = append(lines, "")
+		lines = append(lines, "[red]Wipe Account[-] (permanently delete identity + unlocks + stats) lives on")
+		lines = append(lines, "the main menu, behind a type-your-name confirm. Press Esc to reach the menu.")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
 
@@ -700,9 +703,18 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 			Message: fmt.Sprintf("Identity restored: %s", shortAccountID(restored.AccountID)),
 			Type:    "success",
 		}
+
+	case "wipe":
+		// The destructive wipe lives behind the splash's type-your-name modal gate —
+		// we deliberately do NOT wipe from a bare command. Direct the player there.
+		return CommandResult{
+			Message: "Wiping your account is permanent and lives on the main menu (press Esc to reach it, then 'Wipe Account'). It deletes your identity, theme unlocks, lifetime stats, and achievements — your game saves are NOT affected.",
+			Type:    "warning",
+		}
+
 	default:
 		return CommandResult{
-			Message: "Usage: account  |  account recover <code>  |  account export [path]  |  account import <path> [replace]",
+			Message: "Usage: account  |  account recover <code>  |  account export [path]  |  account import <path> [replace]  |  account wipe",
 			Type:    "error",
 		}
 	}

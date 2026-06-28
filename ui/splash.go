@@ -3,6 +3,7 @@ package ui
 import (
 	"fmt"
 	"math/rand"
+	"strings"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -74,6 +75,9 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	mainList.AddItem("  ✗  Wipe Save", "", 'x', func() {
 		showWipeConfirmation(app, pages, engine, canvas.halt, currentVersion)
 	})
+	mainList.AddItem("  ✗  Wipe Account", "", 'a', func() {
+		showAccountWipeConfirmation(app, pages, engine, currentVersion)
+	})
 	mainList.AddItem("  ↑  Check for Update", "", 'u', func() {
 		showUpdateCheck(app, pages, currentVersion)
 	})
@@ -122,7 +126,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 		menuPanel.AddItem(eliteBadgeTV, 1, 0, false)
 	}
 	menuPanel.
-		AddItem(mainList, 8, 0, true).
+		AddItem(mainList, 9, 0, true).
 		AddItem(versionTV, 1, 0, false).
 		AddItem(footerTV, 1, 0, false)
 	menuPanel.
@@ -140,9 +144,9 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	// ── Outer layout ─────────────────────────────────────────────────────────
 	// Canvas fills top space; compact menu anchored at bottom.
 	// Elite badge adds 1 extra line to the menu panel height.
-	menuHeight := 12
+	menuHeight := 13
 	if eliteBadge {
-		menuHeight = 13
+		menuHeight = 14
 	}
 	outer := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(canvas, 0, 1, false).
@@ -171,6 +175,149 @@ func showWipeConfirmation(app *tview.Application, pages *tview.Pages, engine *ga
 		})
 	modal.SetBackgroundColor(tcell.ColorDarkRed)
 	pages.AddPage("wipe_confirm", modal, true, true)
+}
+
+// Page names for the two-step account-wipe flow. Distinct from "wipe_confirm"
+// (the save wipe) so the two destructive flows never collide on the page stack.
+const (
+	accountWipeConfirmPage = "account_wipe_confirm"
+	accountWipeTypePage    = "account_wipe_type"
+)
+
+// showAccountWipeConfirmation runs the two-step gate for permanently deleting the
+// player's account (identity + theme unlocks + lifetime stats + achievements). It is
+// the account analogue of showWipeConfirmation but with a far stronger second gate:
+// a type-your-exact-name confirm, since the wipe is irreversible and re-derivable only
+// by re-naming.
+//
+//   STEP 1 — a dark-red yes/no modal making the stakes plain (and reassuring the
+//            player their game saves are untouched).
+//   STEP 2 — a type-to-confirm gate: only an EXACT match of the account's DisplayName
+//            proceeds. On match it calls game.WipeAccount(), clears the engine account,
+//            and immediately re-runs the first-run name flow so the player starts over
+//            with a fresh, freshly-named account.
+//
+// At the splash an established account always exists (app.setup's first-run prompt
+// guarantees it), so engine.Account() is non-nil here.
+func showAccountWipeConfirmation(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, currentVersion string) {
+	acct := engine.Account()
+	if acct == nil {
+		// Defensive: no account to wipe. Nothing to do.
+		return
+	}
+	name := acct.Name()
+
+	// STEP 1 — the are-you-sure gate.
+	step1 := tview.NewModal().
+		SetText(fmt.Sprintf(
+			"⚠  WIPE ACCOUNT  ⚠\n\nThis permanently deletes your account \"%s\":\nall theme unlocks, lifetime stats, and achievements.\n\nThis CANNOT be undone. Your game saves are NOT affected.",
+			name,
+		)).
+		AddButtons([]string{"Keep my account", "Wipe it"}).
+		SetDoneFunc(func(_ int, label string) {
+			pages.RemovePage(accountWipeConfirmPage)
+			if label == "Wipe it" {
+				showAccountWipeTypeGate(app, pages, engine, name, currentVersion)
+			}
+		})
+	step1.SetBackgroundColor(tcell.ColorDarkRed)
+	pages.AddPage(accountWipeConfirmPage, step1, true, true)
+}
+
+// showAccountWipeTypeGate is STEP 2: the type-your-exact-name confirm. Only an exact
+// match of expectedName proceeds; any other input shows an inline "name doesn't match"
+// error and stays. Esc / Cancel aborts with no wipe. On an exact match it wipes, clears
+// the engine account, removes the wipe pages, and re-runs the first-run name flow.
+func showAccountWipeTypeGate(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, expectedName, currentVersion string) {
+	errTV := tview.NewTextView().
+		SetDynamicColors(true).
+		SetTextAlign(tview.AlignCenter)
+
+	input := tview.NewInputField().
+		SetLabel("Account name: ").
+		SetFieldWidth(40).
+		// Dark slate field so white text stays legible on the dark-red modal.
+		SetFieldBackgroundColor(tcell.NewRGBColor(48, 54, 61)).
+		SetFieldTextColor(tcell.ColorWhite)
+
+	promptTV := tview.NewTextView().
+		SetDynamicColors(true).
+		SetTextAlign(tview.AlignCenter).
+		SetText("[white]Type your account name to confirm:[-]\n[#f0a0a0]This permanently deletes your account. It CANNOT be undone.[-]")
+
+	hintTV := tview.NewTextView().
+		SetDynamicColors(true).
+		SetTextAlign(tview.AlignCenter).
+		SetText("[#f0a0a0]Enter: confirm  ·  Esc: cancel[-]")
+
+	// abort removes the type gate and returns to the splash without wiping.
+	abort := func() {
+		pages.RemovePage(accountWipeTypePage)
+	}
+
+	// confirm proceeds only on an EXACT match. A non-match stays put with an error.
+	confirm := func() {
+		if strings.TrimSpace(input.GetText()) != expectedName {
+			errTV.SetText("[red]Name doesn't match — account NOT wiped.[-]")
+			app.SetFocus(input)
+			return
+		}
+		// Exact match → wipe, detach, and re-run the first-run name flow so the
+		// player starts over (mirrors app.setup's name modal → CreateNamedAccount →
+		// SetAccount wiring). We rebuild the splash up front so there is a primitive
+		// to restore focus to behind the name modal.
+		_ = game.WipeAccount()
+		engine.SetAccount(nil)
+		pages.RemovePage(accountWipeTypePage)
+
+		newSplash := CreateSplashPage(app, pages, engine, currentVersion)
+		pages.AddPage("splash", newSplash, true, true)
+
+		showAccountNameModal(app, pages, newSplash, func(name string) {
+			newAcct, err := game.CreateNamedAccount(name)
+			if err != nil {
+				// Account is non-critical: on the rare Save failure fall through to
+				// the splash accountless rather than block the player.
+				return
+			}
+			engine.SetAccount(newAcct)
+		})
+	}
+
+	input.SetDoneFunc(func(key tcell.Key) {
+		if key == tcell.KeyEnter {
+			confirm()
+		}
+	})
+
+	// Opaque spacers so nothing bleeds through the modal interior.
+	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(tcell.ColorDarkRed) }
+	inner := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(promptTV, 2, 0, false).
+		AddItem(spacer(), 1, 0, false).
+		AddItem(input, 1, 0, true).
+		AddItem(spacer(), 1, 0, false).
+		AddItem(errTV, 1, 0, false).
+		AddItem(spacer(), 1, 0, false).
+		AddItem(hintTV, 1, 0, false)
+	inner.SetBorder(true).
+		SetTitle(" Confirm Account Wipe ").
+		SetTitleColor(tcell.ColorWhite).
+		SetBorderColor(tcell.ColorWhite)
+	inner.SetBackgroundColor(tcell.ColorDarkRed)
+
+	// Height = 7 content rows + 2 border = 9.
+	modal := centeredModal(inner, 60, 9)
+	modal.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
+		if ev.Key() == tcell.KeyEsc {
+			abort()
+			return nil
+		}
+		return ev
+	})
+
+	pages.AddPage(accountWipeTypePage, modal, true, true)
+	app.SetFocus(input)
 }
 
 // ── Update flow ───────────────────────────────────────────────────────────────

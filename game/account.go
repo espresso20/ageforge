@@ -253,6 +253,26 @@ func accountPath() string {
 	return primary // default to canonical for new writes
 }
 
+// WipeAccount permanently deletes the account file (account.json) and its
+// corrupt-backup sibling (account.json.corrupt) if present, so the next boot starts
+// from a clean slate and re-prompts for a name. It is the account analogue of
+// WipeAllSaves — destructive and irreversible (no server backup).
+//
+// SCOPE: it removes ONLY the account identity + meta-progression file(s). It NEVER
+// touches data/saves (game saves are separate and survive a wipe) nor any progress
+// export file (account-export.json) — those are independent backups the player may
+// have deliberately created. A missing file is not an error: os.Remove's
+// "not exist" is ignored so wiping twice (or with no account) is a clean no-op.
+func WipeAccount() error {
+	path := accountPath()
+	for _, p := range []string{path, path + ".corrupt"} {
+		if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("failed to wipe account file %s: %w", p, err)
+		}
+	}
+	return nil
+}
+
 // signAccount returns the HMAC-SHA256 hex of the account payload with Signature
 // zeroed, so the signature covers the data only — identical construction to
 // signSave, sharing the hmacSign helper (accounts.md §3.4).
