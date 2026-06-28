@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // CommandResult is the return value of HandleCommand. The caller (Dashboard)
@@ -116,6 +117,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdLoad(args, engine)
 	case "account", "acct":
 		return cmdAccount(args, engine)
+	case "theme":
+		return cmdTheme(args)
 	default:
 		return CommandResult{
 			Message: fmt.Sprintf("Unknown command: %s. Type 'help' for commands.", cmd),
@@ -839,6 +842,75 @@ func cmdSaveList() CommandResult {
 			s.Name, s.Timestamp.Format("2006-01-02 15:04:05"), age))
 	}
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
+
+// cmdTheme handles the `theme` command's text paths:
+//   - `theme`        → directs the player to the picker (the interactive picker
+//     page is opened by the dashboard intercept; this fallback covers the
+//     command-table path and tests, which can't open an interactive page).
+//   - `theme list`   → lists every theme (name, key, active marker, accessible note).
+//   - `theme <key>`  → switches directly to a theme by key if it exists, else an
+//     error listing the valid keys.
+//
+// theme.SetActive applies the name-remap + restyle; the dashboard redraws on its
+// next tick, so the switch shows up live without an explicit Draw here.
+func cmdTheme(args []string) CommandResult {
+	if len(args) == 0 {
+		return CommandResult{
+			Message: "Usage: theme list | theme <key>. Type `theme` from the menu (or open it) for the live picker.",
+			Type:    "info",
+		}
+	}
+	if strings.ToLower(args[0]) == "list" {
+		return cmdThemeList()
+	}
+
+	key := strings.ToLower(args[0])
+	t, ok := theme.ByKey(key)
+	if !ok {
+		return CommandResult{
+			Message: fmt.Sprintf("Unknown theme: %s. Valid: %s", key, strings.Join(themeKeys(), ", ")),
+			Type:    "error",
+		}
+	}
+	if err := theme.SetActive(t.Key); err != nil {
+		return CommandResult{Message: err.Error(), Type: "error"}
+	}
+	theme.Restyle()
+	return CommandResult{Message: fmt.Sprintf("Theme set: %s", t.Name), Type: "success"}
+}
+
+// cmdThemeList renders the `theme list` output: one line per theme with its name,
+// key, an active marker, and an "accessible" note.
+func cmdThemeList() CommandResult {
+	activeKey := theme.Active().Key
+	var lines []string
+	lines = append(lines, "[gold]Themes:[-]")
+	for _, t := range theme.All() {
+		marker := "  "
+		if t.Key == activeKey {
+			marker = "[gold]●[-] "
+		}
+		note := ""
+		if t.Accessible {
+			note = "  [cyan](accessible)[-]"
+		}
+		lines = append(lines, fmt.Sprintf("%s[white]%-18s[-] [gray]%s[-]%s",
+			marker, t.Name, t.Key, note))
+	}
+	lines = append(lines, "[gray]Use `theme <key>` to switch.[-]")
+	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
+
+// themeKeys returns every registered theme key in display order, for usage/error
+// messages and autocomplete.
+func themeKeys() []string {
+	all := theme.All()
+	keys := make([]string, 0, len(all))
+	for _, t := range all {
+		keys = append(keys, t.Key)
+	}
+	return keys
 }
 
 func cmdResearch(args []string, engine *game.GameEngine) CommandResult {

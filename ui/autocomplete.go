@@ -34,6 +34,7 @@ var commands = []string{
 	"upgrade",
 	"advance", "rates", "speed", "save", "saves", "load",
 	"account",
+	"theme",
 	"wonder",
 	"dump", "exportlogs",
 	"milestones", "ms",
@@ -209,6 +210,13 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 
 	case "load":
 		return filterPrefix(saveNames(), partial, prefix)
+
+	case "theme":
+		// "theme list" plus a key per registered theme. Only the first arg is
+		// completable; `theme <key>` takes no further args.
+		if len(completed) == 0 {
+			return filterPrefix(append([]string{"list"}, themeKeys()...), partial, prefix)
+		}
 
 	case "account", "acct":
 		// Subcommands: recover (code arg not enumerable), export/import (path args

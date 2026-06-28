@@ -214,6 +214,9 @@ Voluntary catastrophes let you force an epoch event outside the normal roll. Use
 | `account export [path]` | Write a signed **progress** backup (unlocks, stats, achievements) to a file (default `data/account-export.json`) |
 | `account import <path> [replace]` | Restore a progress backup file — **merges** by default; add `replace` to overwrite wholesale |
 | `account wipe` | Points you to the main-menu **Wipe Account** action — the actual (permanent) wipe lives behind a type-your-name confirm, not this command |
+| `theme` | Open the **Themes** picker — browse palettes with live preview (also on the main menu) |
+| `theme list` | List every theme by name and key, marking the active one and noting which are accessible |
+| `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`) |
 | `dump` | Export logs to a file for debugging |
 | `help` | Open the Help panel — full command reference and list of available panels |
 
@@ -230,6 +233,25 @@ A bare `save` (no name) opens a prompt: **Overwrite** writes your current run to
 A bare `load` (no name) opens the **Load Game** browser so you can pick which save/branch to load from your save tree — it never assumes a slot. You can open it mid-game; `Esc` returns you to your current run without loading anything. `load <name>` skips the browser and loads that save directly.
 
 See [Saving & Loading](saving-and-loading.md) for the full save system.
+
+---
+
+## Themes
+
+AgeForge's interface colors are driven by a small set of swappable themes. Open the picker with the **Themes** entry on the main menu, or type `theme` from the in-game prompt.
+
+- `theme` opens the picker: a list of themes on the left, a detail pane on the right showing each theme's blurb and a row of **palette swatches** (Background, Text, Accent, Positive, Negative, Highlight, Dim, Selection). Highlighting a theme with `↑`/`↓` **previews it live** — the whole UI retints instantly so you can judge it in place. `Enter` keeps the highlighted theme; `Esc` cancels and reverts to whatever you had before.
+- `theme list` prints every theme with its name and key, marks the active one, and notes which are accessible.
+- `theme <key>` switches straight to a theme by key (e.g. `theme deuteranopia`). An unknown key lists the valid ones.
+
+### Accessibility
+
+Color is never the only signal. Alongside the default **Forge** look, three accessibility themes ship **unlocked from the start**:
+
+- **Deuteranopia-safe** and **Protanopia-safe** — for red-green color vision deficiency. Because AgeForge normally uses **green for gains and red for losses**, these themes drop that pairing entirely: gains are **blue**, losses are **orange** (the standard colorblind-safe opposition), and `▲`/`▼` glyphs mark the sign by **shape as well as color** so the direction reads even if the hues don't.
+- **High Contrast** — maximum legibility on near-black, for low-vision players and high-glare terminals. It also keeps the blue/orange + `▲`/`▼` encoding, so it's colorblind-safe too.
+
+Your theme choice applies immediately. (Theme preferences persist per session for now; account-wide persistence lands in a later update.)
 
 ---
 

@@ -94,7 +94,7 @@ Stack enough of them and their per-tick lift outpaces the drift-to-neutral, park
 - **Stats panel** (`stats`) — when morale is off-neutral it appears under **Active Multipliers** in the **All Production** breakdown as a `Morale ×N.NN` factor, shown alongside your research, wonder, prestige, and active-event bonuses on that line. Entries are colour-coded: a **green** headline (and fragment) is a net bonus, a **red** one a penalty, and a **white** headline marks a line that only shows because opposing sources cancel out. Each contributing source is listed and coloured individually, so a penalty (e.g. a famine event) is never hidden by a bonus on the same line. The panel lists **rate multipliers only** — capacity and storage bonuses (population cap, resource caps) are shown elsewhere, since they aren't rate multipliers.
 - **Load Game browser** — each save's detail pane shows its morale, so you can size up a civilization before loading it.
 
-The bar is **green when morale is above 50%** (boosting production), **neutral exactly at 50%**, and **red when it is below 50%** (penalising production).
+The bar is **green when morale is above 50%** (boosting production), **neutral exactly at 50%**, and **red when it is below 50%** (penalising production). On the colorblind-safe and high-contrast [themes](commands.md#themes) the boost/penalty colors become blue/orange instead of green/red.
 
 ---
 

@@ -74,7 +74,7 @@ Workers are recruited from available housing capacity. No domain argument — wo
 
 **`max` behaviour:** attempts to fill all remaining housing slots (up to population cap). It does not check your food income — you can recruit more workers than your food supports, putting you into a deficit.
 
-**Viewing workers:** type `workers` for the full three-panel overlay (summary, slot utilization, domain breakdown), or press `e` for the Economy tab. The `workers` overlay shows net food/tick color-coded green/red, a break-even or starvation warning, and per-building fill bars. A worker mini-box is always visible in the sidebar showing pop/idle/housing/drain/net at a glance.
+**Viewing workers:** type `workers` for the full three-panel overlay (summary, slot utilization, domain breakdown), or press `e` for the Economy tab. The `workers` overlay shows net food/tick color-coded green/red (blue/orange on the accessible [themes](commands.md#themes)), a break-even or starvation warning, and per-building fill bars. A worker mini-box is always visible in the sidebar showing pop/idle/housing/drain/net at a glance.
 
 ---
 

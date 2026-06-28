@@ -267,6 +267,12 @@ func (d *Dashboard) build() {
 				d.app.SetFocus(page)
 				return
 			}
+			if strings.ToLower(cmd) == "theme" { // bare theme — open the live picker (theme list / theme <key> fall through)
+				page := CreateThemePickerPage(d.app, d.pages, "dashboard")
+				d.pages.AddPage(themePickerPage, page, true, true)
+				d.app.SetFocus(page)
+				return
+			}
 			result := HandleCommand(text, d.engine)
 			if result.OverlayName != "" {
 				state := d.engine.GetState()

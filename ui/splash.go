@@ -73,6 +73,13 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 			})
 		})
 	})
+	mainList.AddItem("  ◈  Themes", "", 't', func() {
+		// Opaque full-screen picker, same lifecycle as Load Game — the canvas runs
+		// underneath and is still live when the player returns via Enter/Esc.
+		page := CreateThemePickerPage(app, pages, "splash")
+		pages.AddPage(themePickerPage, page, true, true)
+		app.SetFocus(page)
+	})
 	mainList.AddItem("  ✗  Quit", "", 'q', func() {
 		canvas.halt()
 		app.Stop()

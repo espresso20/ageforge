@@ -59,7 +59,7 @@ At 1x speed (default 2 seconds per tick):
 
 Use the `logs` command (or press `L`) to open the Logs overlay and see your full event history. Events appear as log entries with their effect description and duration. When a timed event ends, the "ended" entry shows accumulated losses in yellow — useful for assessing actual damage.
 
-The **Stats overlay** lists every currently active timed event under "Active Events" with its ticks remaining. Beneath each event, its ongoing per-tick or percentage effect is now shown explicitly and color-coded — **green** for a bonus, **red** for a penalty — so you can see at a glance exactly what each active event is doing to your economy (e.g. a Famine shows `food -3.0/t` in red; a production-boost event shows `all production +10%` in green). Instant one-shot effects (resource grants, theft) are not listed here since they already fired at trigger.
+The **Stats overlay** lists every currently active timed event under "Active Events" with its ticks remaining. Beneath each event, its ongoing per-tick or percentage effect is now shown explicitly and color-coded — **green** for a bonus, **red** for a penalty — so you can see at a glance exactly what each active event is doing to your economy (e.g. a Famine shows `food -3.0/t` in red; a production-boost event shows `all production +10%` in green). (On the colorblind-safe and high-contrast [themes](commands.md#themes), bonuses show **blue** and penalties **orange**, with `▲`/`▼` glyphs marking the sign.) Instant one-shot effects (resource grants, theft) are not listed here since they already fired at trigger.
 
 ---
 
