@@ -36,6 +36,23 @@ func (a *App) setup() {
 	a.pages.AddPage("dashboard", a.dashboard.Root(), true, false)
 
 	a.tviewApp.SetRoot(a.pages, true)
+
+	// First run: if no established (named) account is wired, prompt for the account
+	// name as the very first thing the player sees — over the splash menu. The name
+	// derives the identity (game.CreateNamedAccount); the modal's Esc-accepts policy
+	// guarantees we always come away with an account. Once confirmed, install it and
+	// reveal the splash beneath.
+	if acct := a.engine.Account(); acct == nil || !acct.Established() {
+		showAccountNameModal(a.tviewApp, a.pages, splash, func(name string) {
+			newAcct, err := game.CreateNamedAccount(name)
+			if err != nil {
+				// Account is non-critical; on the rare Save failure, fall through to
+				// the splash accountless rather than block play.
+				return
+			}
+			a.engine.SetAccount(newAcct)
+		})
+	}
 }
 
 // Run starts the tview application (blocks until exit)

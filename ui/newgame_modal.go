@@ -13,6 +13,18 @@ import (
 // newGameNamePage is the unique page name for the New Game name-entry modal.
 const newGameNamePage = "newgame_name"
 
+// accountNamePage is the unique page name for the first-run account-name modal.
+const accountNamePage = "account_name"
+
+// showAccountNameModal pops the first-run "name your account" prompt over the splash.
+// It reuses showSaveNameModalOpts with the account variant's Esc policy (Esc accepts the
+// current/generated value — naming can't be cancelled into an accountless state), so the
+// first run ALWAYS yields a named account. onConfirm receives the cleaned name; the caller
+// derives the identity via game.CreateNamedAccount and installs it on the engine.
+func showAccountNameModal(app *tview.Application, pages *tview.Pages, restoreFocus tview.Primitive, onConfirm func(name string)) {
+	showSaveNameModalOpts(app, pages, " Name Your AgeForge Account ", accountNamePage, restoreFocus, onConfirm, true)
+}
+
 // showNewGameNameModal pops the New Game name prompt. It is a thin wrapper over
 // showSaveNameModal so the splash menu keeps its existing behavior unchanged.
 //
@@ -31,6 +43,16 @@ func showNewGameNameModal(app *tview.Application, pages *tview.Pages, restoreFoc
 // title customizes the heading; pageName must be distinct per caller so two
 // concurrent modals (e.g. New Game vs. Branch) can't collide on the page stack.
 func showSaveNameModal(app *tview.Application, pages *tview.Pages, title, pageName string, focusReturn tview.Primitive, onConfirm func(name string)) {
+	showSaveNameModalOpts(app, pages, title, pageName, focusReturn, onConfirm, false)
+}
+
+// showSaveNameModalOpts is showSaveNameModal with an explicit Esc policy. When
+// escAccepts is false (the default for New Game / Branch), Esc cancels — removing
+// the page and restoring focus without calling onConfirm. When escAccepts is true
+// (first-run account naming), Esc instead ACCEPTS the current/generated value: the
+// account naming step must always produce an account, so it cannot be cancelled into
+// an accountless state. The hint line adjusts to match.
+func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pageName string, focusReturn tview.Primitive, onConfirm func(name string), escAccepts bool) {
 	errTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
@@ -44,10 +66,14 @@ func showSaveNameModal(app *tview.Application, pages *tview.Pages, title, pageNa
 		SetFieldBackgroundColor(tcell.NewRGBColor(48, 54, 61)).
 		SetFieldTextColor(tcell.ColorWhite)
 
+	escHint := "Esc: cancel"
+	if escAccepts {
+		escHint = "Esc: accept"
+	}
 	hintTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[#8b949e]Enter: confirm  ·  Tab: reroll name  ·  Esc: cancel[-]")
+		SetText("[#8b949e]Enter: confirm  ·  Tab: reroll name  ·  " + escHint + "[-]")
 
 	// closeAndRestore removes the modal page and restores focus to focusReturn.
 	// Used on cancel (Esc).
@@ -114,7 +140,13 @@ func showSaveNameModal(app *tview.Application, pages *tview.Pages, title, pageNa
 	modal.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
 		switch ev.Key() {
 		case tcell.KeyEsc:
-			closeAndRestore()
+			if escAccepts {
+				// First-run account naming can't be cancelled into a no-account state:
+				// Esc accepts the current/generated value via the normal submit path.
+				submit()
+			} else {
+				closeAndRestore()
+			}
 			return nil
 		case tcell.KeyTab, tcell.KeyBacktab:
 			reroll()

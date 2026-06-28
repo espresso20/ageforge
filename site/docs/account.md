@@ -8,16 +8,20 @@ This page explains what an account is, what the recovery code does (and, just as
 
 ## Your account
 
-Your account is created **automatically on first run** and stored at `./data/account.json`. There's no signup, no prompt, and it never blocks you from playing — it's just there the first time you launch the game. One account per machine, or more precisely one per data directory.
+The **first time you launch the game**, AgeForge asks you to **name your account**. The prompt comes up before the main menu, pre-filled with a suggested empire-style name you can keep, edit, or reroll. Whatever you settle on becomes your account's display name — and, just as importantly, your **identity**. The account is then stored at `./data/account.json`. One account per machine, or more precisely one per data directory.
+
+> **Your name *is* your identity.** The account ID is **derived from your name** — specifically `sha256(normalize(name))`, taking the first 16 bytes as a 32-character hex ID. "Normalize" means the name is lowercased, trimmed, and internal spacing collapsed before hashing, so `Imperium`, `imperium`, and the same name with stray surrounding spaces all derive the *same* ID. The display name keeps your original casing. Because the ID is name-derived, **re-entering the exact same name on a new machine regenerates the exact same account ID** — that's the simplest way to restore your identity (see [Restoring on a new machine](#restoring-on-a-new-machine)).
 
 The account holds two distinct things:
 
 | Part | What it is |
 |---|---|
-| **Identity** | A stable account ID, and optionally a display name |
+| **Identity** | Your chosen name and the account ID derived from it |
 | **Data** | Your earned meta-progression — theme unlocks, lifetime stats, achievements |
 
-The split matters, because the two halves are recovered very differently (see below). The recovery code carries your **identity**; the **data** is backed up separately with **progress export** (see [Backing up your progress](#backing-up-your-progress)).
+The split matters, because the two halves are recovered very differently (see below). Your **identity** is carried by either your account name *or* the recovery code (both point at the same ID); the **data** is backed up separately with **progress export** (see [Backing up your progress](#backing-up-your-progress)).
+
+> **Naming is chosen-once.** Because the ID is derived from the name, picking a *different* name later mints a *different* identity — it does not rename the account in place. There's no in-game rename for this reason. Choose a name you're happy to keep.
 
 ---
 
@@ -139,7 +143,15 @@ If the file is missing or has been tampered with, the import is rejected with a 
 
 ## Restoring on a new machine
 
-On the new machine (or after a reinstall), run:
+There are **two ways** to restore your identity, because your identity has two equivalent forms — your name and your recovery code both resolve to the same account ID.
+
+### The simplest way: re-enter your name
+
+On a fresh machine, the first-run prompt asks you to name your account. **Type the exact same name you used before** and you'll regenerate the exact same account ID — no code required. (Remember normalization: casing and surrounding spaces don't matter, but a *meaningfully* different name is a different identity.) This restores **identity only**, not your earned progress — for that you still need a progress export.
+
+### The precise way: recover from a code
+
+Alternatively, on the new machine (or after a reinstall), run:
 
 ```
 account recover AGEF-7Q2K-9X4M-ZJ31-…

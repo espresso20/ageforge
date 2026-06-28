@@ -19,20 +19,14 @@ func main() {
 	// Create game engine
 	engine := game.NewGameEngine()
 
-	// Load (or first-run create) the per-player account and hand it to the engine, so
-	// the UI/dashboard — which share this engine — can reach it via engine.Account()
-	// in later phases (accounts.md §6). The account is non-critical: if loading fails,
-	// log to stderr and run without one rather than blocking play.
-	acct, err := game.LoadOrCreate()
-	if err != nil {
-		fmt.Fprintf(os.Stderr, "Warning: could not load account, continuing without one: %v\n", err)
-	} else if acct != nil {
+	// Load an EXISTING, established account and hand it to the engine so the UI/dashboard
+	// — which share this engine — can reach it via engine.Account() (accounts.md §6). We
+	// no longer auto-create here: on first run (no file, or a legacy unnamed account) the
+	// engine is left accountless and the UI prompts the player to name their account, which
+	// derives the identity (game.CreateNamedAccount). Loading is non-critical: ignore errors
+	// and run accountless rather than block play.
+	if acct, found, _ := game.LoadAccount(); found && acct.Established() {
 		engine.SetAccount(acct)
-		if acct.FreshlyCreated {
-			// Non-blocking first-run notice: surfaces in the in-game log, never gates
-			// play (accounts.md §6). Player-facing, no jargon.
-			engine.AddLog("info", "Welcome! A local account was created on this machine to track your unlocks across all your games.")
-		}
 	}
 
 	// Create UI

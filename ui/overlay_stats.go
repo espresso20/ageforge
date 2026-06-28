@@ -49,6 +49,9 @@ func statsProvider(state game.GameState, _ int) string {
 		sb.WriteString(" [gray]No account loaded[-]\n")
 	} else {
 		as := state.AccountStats
+		if as.DisplayName != "" {
+			fmt.Fprintf(&sb, " [#8b949e]Account:[-] [white]%s[-]\n", as.DisplayName)
+		}
 		fmt.Fprintf(&sb, " [gold]Total Prestiges:[-]   %d\n", as.TotalPrestiges)
 
 		highestAge := "—"

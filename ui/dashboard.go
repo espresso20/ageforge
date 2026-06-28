@@ -558,9 +558,19 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		moraleDelta = fmt.Sprintf(" [%s]%s[-]", mBand.Color, mBand.DeltaLabel)
 	}
 	moraleStr := fmt.Sprintf("  Morale: [%s]%.0f%%[-]%s", mBand.Color, state.Morale*100, moraleDelta)
+	// Leading account-name segment, when an account is wired. Truncate a long name so
+	// the status line stays readable on narrow terminals.
+	acctStr := ""
+	if state.AccountStats != nil && state.AccountStats.DisplayName != "" {
+		name := state.AccountStats.DisplayName
+		if len(name) > 20 {
+			name = name[:19] + "…"
+		}
+		acctStr = fmt.Sprintf("[gold]%s[-] · ", name)
+	}
 	d.statusTV.SetText(fmt.Sprintf(
-		"[gold]%s[-]%s%s%s  Tick: %d%s%s%s  |  Pop: %d/%d%s  |  [gray]type panel name to open  ESC=close/menu[-]",
-		state.AgeName, prestigeStr, titleStr, epochStr, state.Tick, nextAgeStr, speedStr, devStr,
+		"%s[gold]%s[-]%s%s%s  Tick: %d%s%s%s  |  Pop: %d/%d%s  |  [gray]type panel name to open  ESC=close/menu[-]",
+		acctStr, state.AgeName, prestigeStr, titleStr, epochStr, state.Tick, nextAgeStr, speedStr, devStr,
 		state.Workers.TotalPop, state.Workers.MaxPop, moraleStr,
 	))
 }
