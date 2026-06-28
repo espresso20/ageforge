@@ -72,6 +72,13 @@ type Account struct {
 	// file's signature does not match (accounts.md §3.4). It mirrors the save
 	// CheaterBadge: signalling, not a lockout. json:"-" keeps it off disk.
 	Tampered bool `json:"-"`
+
+	// FreshlyCreated is the in-memory, non-persisted signal that LoadOrCreate just
+	// minted this account on its fresh-create path (no file existed). Boot code reads
+	// it to surface a one-time, non-blocking first-run notice (accounts.md §6) without
+	// changing LoadOrCreate's signature. json:"-" keeps it off disk; it is false for
+	// any account loaded from an existing file.
+	FreshlyCreated bool `json:"-"`
 }
 
 // newAccountID returns a fresh, stable account ID: 16 random bytes from crypto/rand,
@@ -189,6 +196,10 @@ func LoadOrCreate() (*Account, error) {
 			if err := acct.Save(); err != nil {
 				return nil, err
 			}
+			// First genuine run: no file existed. Flag it so boot code can surface a
+			// one-time non-blocking notice (accounts.md §6). The corrupt-recovery path
+			// below is NOT a first run — it leaves FreshlyCreated false.
+			acct.FreshlyCreated = true
 			return acct, nil
 		}
 		return nil, fmt.Errorf("failed to read account: %w", err)
