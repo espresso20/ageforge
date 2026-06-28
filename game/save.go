@@ -769,6 +769,9 @@ type SaveInfo struct {
 	// ParentName is the lineage parent of this save ("" for a root). Surfaced
 	// here so Phase 3 can assemble the save-tree without re-reading files.
 	ParentName string
+	// AccountID attributes the save to a player account ("" = pre-account /
+	// legacy save). Display-only — drives the detail pane's account line.
+	AccountID string
 	// Corrupt is set when the file could not be read or JSON-parsed. The entry
 	// is still returned (Name + mtime Timestamp) so the UI can show it as
 	// greyed/unloadable rather than silently dropping it.
@@ -825,6 +828,7 @@ func ListSaveDetails() ([]SaveInfo, error) {
 			CheaterBadge bool   `json:"cheater_badge"`
 			EliteBadge   bool   `json:"elite_badge"`
 			ParentName   string `json:"parent_name"`
+			AccountID    string `json:"account_id"`
 		}
 		if err := json.Unmarshal(data, &header); err != nil {
 			saves = append(saves, corruptInfo(name, e))
@@ -870,6 +874,7 @@ func ListSaveDetails() ([]SaveInfo, error) {
 			MilestonesDone:     len(header.Milestones),
 			MilestonesTotal:    len(config.Milestones()),
 			ParentName:         header.ParentName,
+			AccountID:          header.AccountID,
 		})
 	}
 	return saves, nil

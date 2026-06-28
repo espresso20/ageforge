@@ -103,7 +103,7 @@ func TestLegendTextCoversSymbolsWithMatchingColors(t *testing.T) {
 
 func TestDetailTextCorrupt(t *testing.T) {
 	s := game.SaveInfo{Name: "broken", Corrupt: true, Timestamp: time.Now()}
-	got := detailText(s, false)
+	got := detailText(s, false, "")
 	if want := "Corrupt save"; !contains(got, want) {
 		t.Errorf("detailText(corrupt) = %q, should mention %q", got, want)
 	}
@@ -129,7 +129,7 @@ func TestDetailTextPopulated(t *testing.T) {
 		MilestonesDone:     7,
 		MilestonesTotal:    33,
 	}
-	got := detailText(s, false)
+	got := detailText(s, false, "")
 
 	// Every stat label and the title must render.
 	for _, want := range []string{
@@ -155,7 +155,7 @@ func TestDetailTextOmitsEmptyTitleAndCatastrophe(t *testing.T) {
 		// No Title, no PendingCatastrophe, no MilestonesTotal.
 		MilestonesDone: 1,
 	}
-	got := detailText(s, false)
+	got := detailText(s, false, "")
 
 	// Empty title → no quoted segment leaking through.
 	if contains(got, "\"\"") {
@@ -172,6 +172,36 @@ func TestDetailTextOmitsEmptyTitleAndCatastrophe(t *testing.T) {
 	// The age must still anchor line 1.
 	if !contains(got, ageDisplay("stone_age")) {
 		t.Errorf("detailText missing the age display for an untitled save\ngot: %q", got)
+	}
+}
+
+func TestDetailTextAccountAttribution(t *testing.T) {
+	const current = "abcdef0123456789abcdef0123456789"
+
+	// Save belongs to the current account → "this account".
+	mine := game.SaveInfo{Name: "mine", Age: "iron_age", AccountID: current}
+	if got := detailText(mine, false, current); !contains(got, "this account") {
+		t.Errorf("detailText(own save) should say 'this account'\ngot: %q", got)
+	}
+
+	// Save from a different non-empty account → "another account" + short prefix.
+	const other = "9999888877776666555544443333222"
+	theirs := game.SaveInfo{Name: "theirs", Age: "iron_age", AccountID: other}
+	got := detailText(theirs, false, current)
+	if !contains(got, "another account") {
+		t.Errorf("detailText(other save) should say 'another account'\ngot: %q", got)
+	}
+	if !contains(got, other[:8]) {
+		t.Errorf("detailText(other save) should show the short id prefix %q\ngot: %q", other[:8], got)
+	}
+	if contains(got, other) {
+		t.Errorf("detailText must never show the full account id\ngot: %q", got)
+	}
+
+	// Pre-account / legacy save → "pre-account".
+	legacy := game.SaveInfo{Name: "legacy", Age: "iron_age", AccountID: ""}
+	if got := detailText(legacy, false, current); !contains(got, "pre-account") {
+		t.Errorf("detailText(legacy save) should say 'pre-account'\ngot: %q", got)
 	}
 }
 
