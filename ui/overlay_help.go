@@ -13,7 +13,7 @@ func helpProvider(_ game.GameState, _ int) string {
 	var sb strings.Builder
 
 	sb.WriteString("[gold]═══ Actions ═══[-]\n")
-	sb.WriteString("  [cyan]gather[-] <food|wood|stone> [n] - Hand-gather resources (max 25, until Medieval Age)\n")
+	sb.WriteString("  [cyan]gather[-] <food|wood|stone> [n] - Hand-gather resources (max 10, until Medieval Age)\n")
 	sb.WriteString("  [cyan]build[-] <building> [count|max] - Build structure(s) (default: 1)\n")
 	sb.WriteString("  [cyan]sell[-] <building> [count]      - Demolish building(s), recover 50% of build cost\n")
 	sb.WriteString("  [cyan]advance[-]                       - Advance to the next age (when ready)\n")

@@ -213,6 +213,7 @@ Voluntary catastrophes let you force an epoch event outside the normal roll. Use
 | `account recover <code>` | Restore your identity from a recovery code on a new machine/reinstall |
 | `account export [path]` | Write a signed **progress** backup (unlocks, stats, achievements) to a file (default `data/account-export.json`) |
 | `account import <path> [replace]` | Restore a progress backup file — **merges** by default; add `replace` to overwrite wholesale |
+| `account wipe` | Points you to the main-menu **Wipe Account** action — the actual (permanent) wipe lives behind a type-your-name confirm, not this command |
 | `dump` | Export logs to a file for debugging |
 | `help` | Open the Help panel — full command reference and list of available panels |
 
@@ -221,6 +222,8 @@ Save files live in `./data/saves/*.json`, relative to the directory you launch t
 `account` (no arguments) prints your account's short ID and its **recovery code** — a short `AGEF-…` string that restores your **identity** (your account ID) across machines and reinstalls. The code restores **identity only, not earned progress** (theme unlocks and lifetime stats are separate — back those up with `account export`). Write the code down to keep your identity; it is a convenience identifier, not a password. To restore on another machine, run `account recover <code>`. If the local account already has unlocked progress, recovery asks you to confirm with `account recover <code> confirm` first, since recovering replaces the local identity and the code does not carry your unlocks.
 
 Your **progress** (theme unlocks, lifetime stats, achievements, prefs) is backed up separately from the recovery code. `account export` writes a signed `account-export.json` (or a path you give it); `account import <path>` restores it. Import **merges** by default — unioning unlocks and achievements and taking the higher of each lifetime stat, so re-importing an old backup never drops something you've earned since — or add `replace` to overwrite your progress wholesale. A missing or tampered file is rejected and your account is left unchanged. With no server, progress recovery only works if you exported it first. See [Account & Recovery](account.md) for the full model.
+
+**Wiping your account** is permanent and deletes your identity, theme unlocks, lifetime stats, and achievements — it does **not** touch your game saves. Because it's irreversible, it lives on the **main menu** (Esc to reach it) behind a type-your-account-name confirm, not as a plain command; typing `account wipe` just points you there. After a wipe you start over by naming a fresh account. See [Account & Recovery](account.md#wiping-your-account).
 
 A bare `save` (no name) opens a prompt: **Overwrite** writes your current run to its **active** save right now, while **Branch new** forks a fresh save (suggested name, editable) whose parent is your current save and then moves autosave onto the new branch — leaving the old save frozen at the branch point. `save <name>` branches straight to that name. The active save is the one you most recently named or loaded (a new game has you name it up front); the periodic autosave and `Esc` continuously overwrite it, so your current game is always kept current on disk. See [Saving & Loading](saving-and-loading.md) for the full model.
 
