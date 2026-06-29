@@ -442,6 +442,32 @@ func TestConfig_TradeKeysExist(t *testing.T) {
 					faction.Key, faction.Name, faction.Specialty, hintFromMap(faction.Specialty, resourceKeys))
 			}
 		}
+		// Every civilization must declare a valid personality and a non-empty backstory.
+		if !ValidPersonalities[faction.Personality] {
+			t.Errorf("\n"+
+				"  Bad personality in civilization definition\n"+
+				"  File:     config/trade.go (BaseFactions)\n"+
+				"  Civ:      %q (%s)\n"+
+				"  Field:    Personality\n"+
+				"  Got:      %q  <-- must be aggressive|peaceful|mercantile|isolationist\n",
+				faction.Key, faction.Name, faction.Personality)
+		}
+		if faction.Backstory == "" {
+			t.Errorf("\n"+
+				"  Missing backstory in civilization definition\n"+
+				"  File:     config/trade.go (BaseFactions)\n"+
+				"  Civ:      %q (%s)\n"+
+				"  Field:    Backstory must be non-empty (shown on first contact)\n",
+				faction.Key, faction.Name)
+		}
+		if faction.Strength < 1 || faction.Strength > 5 {
+			t.Errorf("\n"+
+				"  Bad strength in civilization definition\n"+
+				"  File:     config/trade.go (BaseFactions)\n"+
+				"  Civ:      %q (%s)\n"+
+				"  Field:    Strength = %d  <-- must be 1..5\n",
+				faction.Key, faction.Name, faction.Strength)
+		}
 	}
 }
 

@@ -449,13 +449,19 @@ type DiplomacyState struct {
 	Factions map[string]FactionInfo
 }
 
-// FactionInfo represents an NPC faction for UI
+// FactionInfo represents an NPC civilization for UI
 type FactionInfo struct {
-	Name       string
-	Discovered bool
-	Opinion    int
-	Status     string
-	Specialty  string
-	TradeBonus float64
-	TradeCount int
+	Name        string
+	Discovered  bool
+	Opinion     int
+	Status      string
+	Specialty   string
+	TradeBonus  float64
+	TradeCount  int
+	Personality string // "aggressive" | "peaceful" | "mercantile" | "isolationist"
+	Backstory   string // flavour shown in the overlay once discovered
+	AtWar       bool   // true while this civ is waging war on the player
+	LentWorkers int    // workers currently on loan from this civ (0 if none)
+	LentReturn  int    // ticks until lent workers return (0 = none / permanent)
+	LentPerm    bool   // lent workers are permanent (opinion was > 80 at lend time)
 }

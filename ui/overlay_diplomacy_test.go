@@ -66,6 +66,55 @@ func TestDiplomacyProvider_EmptyState(t *testing.T) {
 	}
 }
 
+// TestDiplomacyProvider_RendersExpandedCivData renders a snapshot exercising the
+// new civilization fields — personality, backstory, war banner, and lent-worker
+// status — across the full roster and confirms the panel includes them without
+// panicking.
+func TestDiplomacyProvider_RendersExpandedCivData(t *testing.T) {
+	defs := config.BaseFactions()
+	factions := make(map[string]game.FactionInfo)
+	for i, def := range defs {
+		info := game.FactionInfo{
+			Name:        def.Name,
+			Specialty:   def.Specialty,
+			Personality: def.Personality,
+			Backstory:   def.Backstory,
+			Discovered:  true,
+			Opinion:     20,
+			Status:      "neutral",
+		}
+		switch i % 3 {
+		case 0:
+			info.AtWar = true
+			info.Opinion = -90
+			info.Status = "embargo"
+		case 1:
+			info.LentWorkers = 5
+			info.LentPerm = true
+			info.Status = "allied"
+			info.Opinion = 85
+		}
+		factions[def.Key] = info
+	}
+
+	out := diplomacyProvider(game.GameState{Diplomacy: game.DiplomacyState{Factions: factions}}, 80)
+	if out == "" {
+		t.Fatal("diplomacyProvider returned empty output for expanded roster")
+	}
+	// Personality labels, a war banner, and lent-worker status should all surface.
+	for _, want := range []string{"AT WAR", "on loan", "tribute"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("expanded overlay missing expected token %q", want)
+		}
+	}
+	// Each civ's personality string should render somewhere.
+	for _, def := range defs {
+		if !strings.Contains(out, def.Personality) {
+			t.Errorf("overlay missing personality %q for civ %q", def.Personality, def.Name)
+		}
+	}
+}
+
 // TestDiplomacyThreshold covers the distance-to-next-tier indicator branches.
 func TestDiplomacyThreshold(t *testing.T) {
 	cases := []struct {

@@ -1,6 +1,6 @@
 # Trade & Diplomacy
 
-Two interlocking systems power your economy beyond raw production: **resource exchange** (on-demand swaps) and **trade routes** (passive per-tick income). Layered on top, the **diplomacy** system lets you court six NPC factions — allied factions amplify your trade route yields, making the two systems deeply synergistic.
+Two interlocking systems power your economy beyond raw production: **resource exchange** (on-demand swaps) and **trade routes** (passive per-tick income). Layered on top, the **diplomacy** system lets you encounter an **11-civilization roster** of NPC powers — allied civilizations amplify your trade route yields, peaceful ones lend you workers, and provoked ones can declare war. The systems are deeply synergistic.
 
 ---
 
@@ -108,22 +108,52 @@ There is no cap on how many routes can run simultaneously — stack them all.
 
 ---
 
-## Diplomacy
+## Diplomacy — Civilization Encounters
 
-Six NPC factions exist in the game world. Each has an **opinion score** (-100 to +100) and a **diplomatic status**. Status determines whether you benefit from, are ignored by, or are penalised by that faction.
+The game world holds an **11-civilization roster**. You meet them through **first-contact events** as you advance: the founding civilizations appear in the early epochs, with more discovered each era. Each civ has an **opinion score** (-100 to +100), a **diplomatic status**, a **personality**, and a **backstory**. Status determines whether you benefit from, are ignored by, or are penalised by that civ; personality drives how its opinion drifts and whether it lends workers or goes to war.
 
 ### Commands
 
 ```
 diplomacy                       # opens the Diplomacy overlay
-diplomacy ally <faction_key>
-diplomacy rival <faction_key>
-diplomacy embargo <faction_key>
-diplomacy gift <faction_key>
-diplomacy neutral <faction_key>
+diplomacy ally <civ_key>
+diplomacy rival <civ_key>
+diplomacy embargo <civ_key>
+diplomacy gift <civ_key>
+diplomacy neutral <civ_key>
+diplomacy tribute <civ_key>     # sue for peace with a civ at war
+diplomacy raid <civ_key>        # raid their trade route (provocation — tanks opinion)
 ```
 
-`diplomacy` (or `dip`) with no arguments opens the **Diplomacy overlay** — a full-screen panel listing all six factions with opinion bars, color-coded status, the active trade-rate bonus per faction, a threshold indicator (e.g. *+8 to friendly*, *ally-eligible — 500g*), and the commands available for each. `diplomacy <action> <faction_key>` still performs the action directly.
+`diplomacy` (or `dip`) with no arguments opens the **Diplomacy overlay** — a full-screen panel listing every civilization with its personality, a backstory snippet, opinion bars, color-coded status, the active trade-rate bonus, a threshold indicator (e.g. *+8 to friendly*, *ally-eligible — 500g*), war banners, and lent-worker status. `diplomacy <action> <civ_key>` still performs the action directly.
+
+### Personalities
+
+Every civilization has one of four personalities that shapes its passive opinion drift and its behaviour toward you:
+
+| Personality | Opinion drift | Behaviour |
+|---|---|---|
+| **peaceful** | trends **up** over time | Lends you workers when standing is high (see Worker Lending) |
+| **aggressive** | trends **down** over time | Provocable into **war** when deeply hostile |
+| **mercantile** | rises when you **trade**, cools when you don't | Trade-focused; reward active trade routes |
+| **isolationist** | trends toward **neutral** (0) | Slow to befriend, slow to anger |
+
+Drift is gradual (±1 on a periodic cadence) and clamped to the -100..+100 range. It runs alongside the existing rival/embargo decay and the natural drift toward zero.
+
+### Worker Lending
+
+Peaceful civilizations with healthy opinion (40+) occasionally **lend you workers** via an event — a backstory-flavoured *"+N workers from the &lt;civ&gt;"* message. Lent workers join your pool immediately (they may temporarily exceed your population cap) and stay for a fixed window before returning home. If the lending civ's opinion is **above 80**, the loan is **permanent** — the workers choose to stay. Loans are tracked per-civ and surface in the overlay as *↳ N workers on loan*.
+
+### War & Peace
+
+A civilization declares **war** only when **both** conditions are met: its opinion is **below -75** *and* a **provocation threshold** is crossed. Provocations are tracked per-civ — **raiding their trade route** (`diplomacy raid`) counts as one, and **embargoing them** counts as one. Two provocations (e.g. a raid + an embargo, or two embargoes) while deeply hostile trips the war. Anger alone never starts a war, and provocations while on good terms don't either.
+
+While at war, the civ launches periodic **raid events** that drain resources — severity scales with the civ's **strength** (1-5). War is purely event-driven; there is no tactical combat.
+
+To make **peace**, you have two options:
+
+1. **Tribute** — `diplomacy tribute <civ>` pays gold + culture (scaled to the civ's strength) to end the war immediately and restore a wary truce.
+2. **Wait them out** — a war auto-ends after a stretch of provocation-free ticks. Stop poking them and the war burns out on its own.
 
 The shorthand `dip` works in place of `diplomacy` everywhere.
 
@@ -173,31 +203,48 @@ Bonuses from multiple allied factions stack additively if they share a specialty
 
 The allied trade bonus also surfaces in the **Active Multipliers** panel (Stats overlay) as a `Diplomacy` line on the affected resource's rate, so you can see at a glance which of your production rates an alliance is amplifying. The number shown is the same `1 + trade_bonus` factor described above — the panel and the applied bonus read from the same source, so they can't drift.
 
-| Faction | Specialty | Allied Bonus |
+| Civilization | Specialty | Allied Bonus |
 |---|---|---|
+| Riverlands Tribes | food | +15% |
+| Ironhold Clans | iron | +20% |
 | Merchant Guild | gold | +20% |
 | Artisan League | culture | +15% |
+| Atomic Directorate | steel | +20% |
 | Tech Consortium | data | +20% |
 | Shadow Syndicate | crypto | +25% |
+| Plasma Nomads | plasma | +22% |
 | Stellar Federation | dark\_matter | +20% |
+| Void Reavers | antimatter | +28% |
 | Quantum Collective | quantum\_flux | +30% |
 
-### Faction Discovery
+### First Contact & Discovery
 
-Factions are **auto-discovered** when you reach their minimum age — no manual action required. A log message announces each discovery. Until a faction is discovered, you cannot interact with them.
+Civilizations are discovered through **first-contact events** when you reach their minimum age — no manual action required. A flavour log message introduces each one's name, personality, and backstory. Until a civilization is discovered, it shows in the overlay as a locked teaser (*??? — reach the X Age*) and you cannot interact with it. The founding civs (Riverlands Tribes, Ironhold Clans) appear in the early epochs; more are encountered every era through the Cosmic Era.
 
 ---
 
-## Full Faction Reference
+## Full Civilization Reference
 
-| Key | Name | Discovered At | Specialty | Allied Bonus | Notes |
-|---|---|---|---|---|---|
-| `merchant_guild` | Merchant Guild | Colonial Age | gold | +20% gold imports | First faction you'll meet. Most gold routes benefit immediately. |
-| `artisan_league` | Artisan League | Industrial Age | culture | +15% culture imports | Silk Road + allied = potent culture engine. |
-| `tech_consortium` | Tech Consortium | Information Age | data | +20% data imports | Pairs with Data Trade route for amplified gold conversion. |
-| `shadow_syndicate` | Shadow Syndicate | Cyberpunk Age | crypto | +25% crypto imports | Highest early-late bonus. Crypto Market is already the best gold-per-tick route — this makes it obscene. |
-| `stellar_federation` | Stellar Federation | Space Age | dark\_matter | +20% dark matter imports | Warp Commerce becomes a dark matter spigot with this allied. |
-| `quantum_collective` | Quantum Collective | Quantum Age | quantum\_flux | +30% quantum flux imports | Largest single bonus in the game. Quantum Trade + allied = effectively unlimited gold. |
+| Key | Name | Discovered At | Personality | Strength | Specialty | Allied Bonus |
+|---|---|---|---|---|---|---|
+| `riverlands_tribes` | Riverlands Tribes | Bronze Age | peaceful | 1 | food | +15% food imports |
+| `ironhold_clans` | Ironhold Clans | Medieval Age | aggressive | 3 | iron | +20% iron imports |
+| `merchant_guild` | Merchant Guild | Colonial Age | mercantile | 2 | gold | +20% gold imports |
+| `artisan_league` | Artisan League | Industrial Age | peaceful | 1 | culture | +15% culture imports |
+| `atomic_directorate` | Atomic Directorate | Atomic Age | isolationist | 4 | steel | +20% steel imports |
+| `tech_consortium` | Tech Consortium | Information Age | mercantile | 2 | data | +20% data imports |
+| `shadow_syndicate` | Shadow Syndicate | Cyberpunk Age | aggressive | 3 | crypto | +25% crypto imports |
+| `plasma_nomads` | Plasma Nomads | Fusion Age | peaceful | 2 | plasma | +22% plasma imports |
+| `stellar_federation` | Stellar Federation | Space Age | isolationist | 4 | dark\_matter | +20% dark matter imports |
+| `void_reavers` | Void Reavers | Galactic Age | aggressive | 5 | antimatter | +28% antimatter imports |
+| `quantum_collective` | Quantum Collective | Quantum Age | isolationist | 5 | quantum\_flux | +30% quantum flux imports |
+
+**Notable behaviours:**
+
+- **Riverlands Tribes / Plasma Nomads / Artisan League** (peaceful) are your worker-lending civs — keep their opinion high (80+ for permanent loans).
+- **Ironhold Clans / Shadow Syndicate / Void Reavers** (aggressive) drift hostile and will declare war if you provoke them while deeply disliked. The Void Reavers (strength 5) raid hardest.
+- **Atomic Directorate / Stellar Federation / Quantum Collective** (isolationist) sit near neutral — hard to befriend, hard to anger.
+- **Merchant Guild / Tech Consortium** (mercantile) warm up the more trade routes you run.
 
 ---
 
@@ -233,7 +280,7 @@ The loop is self-reinforcing. Don't think of routes and diplomacy as separate sy
 
 ### End-game State
 
-With all 15 routes active and all 6 factions allied, gold income from routes alone becomes enormous. At that point, resource exchange becomes redundant for most pairs — use it only for exotic resource-to-resource conversions that no route covers.
+With all 15 routes active and your discovered civilizations allied, gold income from routes alone becomes enormous. At that point, resource exchange becomes redundant for most pairs — use it only for exotic resource-to-resource conversions that no route covers.
 
 ---
 

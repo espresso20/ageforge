@@ -1610,8 +1610,28 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 		}
 		return CommandResult{Message: fmt.Sprintf("Reset %s to neutral", factionKey), Type: "info"}
 
+	case "tribute":
+		if len(args) < 2 {
+			return CommandResult{Message: "Usage: diplomacy tribute <civ_key>", Type: "error"}
+		}
+		factionKey := strings.Join(args[1:], "_")
+		if err := engine.SendTribute(factionKey); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Tribute paid to %s — peace restored.", factionKey), Type: "success"}
+
+	case "raid":
+		if len(args) < 2 {
+			return CommandResult{Message: "Usage: diplomacy raid <civ_key>", Type: "error"}
+		}
+		factionKey := strings.Join(args[1:], "_")
+		if err := engine.RaidCivRoute(factionKey); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Raided %s's trade route.", factionKey), Type: "warning"}
+
 	default:
-		return CommandResult{Message: "Usage: diplomacy [ally|rival|embargo|gift|neutral] <faction_key>", Type: "error"}
+		return CommandResult{Message: "Usage: diplomacy [ally|rival|embargo|gift|neutral|tribute|raid] <civ_key>", Type: "error"}
 	}
 }
 

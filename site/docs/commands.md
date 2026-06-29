@@ -110,12 +110,14 @@ Keys with underscores can be typed with spaces: `expedition scout ruins` is equi
 |---|---|
 | `trade start <key>` | Activate a trade route |
 | `trade stop <key>` | Cancel an active trade route |
-| `diplomacy` (or `dip`) | Open the **Diplomacy** overlay (all six factions, opinion, status, bonuses, thresholds) |
-| `diplomacy ally <faction>` | Ally with a faction (opinion ≥ 50, costs 500 gold) |
-| `diplomacy rival <faction>` | Declare a rivalry |
-| `diplomacy embargo <faction>` | Embargo a faction |
-| `diplomacy gift <faction>` | Send a gift to improve faction opinion (+15, costs 200 gold) |
-| `diplomacy neutral <faction>` | Reset a faction to neutral |
+| `diplomacy` (or `dip`) | Open the **Diplomacy** overlay (full 11-civ roster: personality, backstory, opinion, status, bonuses, war + lent-worker state) |
+| `diplomacy ally <civ>` | Ally with a civilization (opinion ≥ 50, costs 500 gold) |
+| `diplomacy rival <civ>` | Declare a rivalry |
+| `diplomacy embargo <civ>` | Embargo a civilization (counts as a war provocation) |
+| `diplomacy gift <civ>` | Send a gift to improve opinion (+15, costs 200 gold) |
+| `diplomacy neutral <civ>` | Reset a civilization to neutral |
+| `diplomacy tribute <civ>` | Sue for peace with a civilization at war (pays gold + culture, scaled to its strength) |
+| `diplomacy raid <civ>` | Raid a civilization's trade route (-20 opinion; a war provocation) |
 
 ```
 trade start coastal_market
@@ -123,6 +125,7 @@ trade stop coastal_market
 diplomacy                  # opens the Diplomacy overlay
 diplomacy gift merchant_guild
 diplomacy ally merchant_guild
+diplomacy tribute ironhold_clans   # end a war you'd rather not fight
 ```
 
 Active trade routes run for a fixed duration. Check the **Trade** overlay (`trade`) for rates, and the **Diplomacy** overlay (`diplomacy` / `dip`) for faction standings. Bare `diplomacy` opens the overlay; add an action (`ally`/`rival`/`embargo`/`gift`/`neutral`) to act on a faction directly. Build and staff an **Embassy** (Colonial Age) or **Grand Embassy** (Industrial Age) to passively raise opinion with your non-hostile factions — see the [Trade & Diplomacy](trade.md#embassy-buildings) wiki page.
