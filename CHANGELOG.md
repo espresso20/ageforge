@@ -21,6 +21,7 @@ All notable changes to AgeForge are documented here.
 - Flattened building cost curves and raised age-advancement requirements.
 - Capped age-transition carryover to a starter head-start.
 - `gather` yield raised 10 → 25 and disabled past the Medieval age.
+- Milestone chains rebalanced: completion speed-boosts normalized across all six chains (Military was 18× weaker than Settlement — now in line); the Trade chain expanded 3 → 5 milestones; and Military/Trade/Scholar capstones now pay out broad `production_all` instead of domain-only bonuses, so finishing any chain helps your whole economy.
 
 ### Fixed
 - Theme picker no longer deadlocks the app on arrow/Esc.

@@ -1,6 +1,6 @@
 # Milestones & Chains
 
-74 milestones are grouped into 6 chains. Completing all milestones in a chain grants your civilization a **title** and a **temporary speed boost**. Some milestones are hidden until you make progress toward them.
+76 milestones are grouped into 6 chains. Completing all milestones in a chain grants your civilization a **title** and a **temporary speed boost**. Some milestones are hidden until you make progress toward them.
 
 ---
 
@@ -12,9 +12,9 @@ When a chain is completed, its title overrides any count-based fallback:
 |---|---|---|
 | Settlement | "The Founders" | +3.0× for 180 ticks |
 | Scholar | "The Enlightened" | +3.0× for 180 ticks |
-| Builder | "The Architects" | +1.5× for 90 ticks |
-| Military | "The Conquerors" | +0.5× for 60 ticks |
-| Trade | "The Merchants" | +1.0× for 90 ticks |
+| Builder | "The Architects" | +2.5× for 150 ticks |
+| Military | "The Conquerors" | +2.5× for 150 ticks |
+| Trade | "The Merchants" | +2.5× for 150 ticks |
 | Ancient Ages | "The Ancients" | +2.5× for 150 ticks |
 
 If no chain is completed, fallback titles apply:
@@ -37,11 +37,11 @@ If no chain is completed, fallback titles apply:
 | Milestone | Condition | Reward |
 |---|---|---|
 | First Shelter | Build 1 Hut | +10 food |
-| Small Village | Population: 200 | +50 wood |
-| Bustling Town | Population: 5,000 | +0.05 food rate |
-| Growing City | Population: 50,000 | +0.10 food rate |
-| Metropolis *(hidden)* | Population: 1,000,000 | +10% all production |
-| Megalopolis *(hidden)* | Population: 50,000,000 | +20% all production |
+| Small Village | Population: 5,000 | +50 wood |
+| Bustling Town | Population: 50,000 | +5% food rate |
+| Growing City | Population: 500,000 (Bronze Age) | +10% food rate |
+| Metropolis *(hidden)* | Population: 10,000,000 (Iron Age) | +10% all production |
+| Megalopolis *(hidden)* | Population: 1,000,000,000 (Classical Age) | +20% all production |
 
 **Chain reward:** Title: "The Founders" · Speed boost ×3.0 for 180 ticks
 
@@ -53,12 +53,12 @@ If no chain is completed, fallback titles apply:
 
 | Milestone | Condition | Reward |
 |---|---|---|
-| Knowledge Seeker | Accumulate 200 knowledge | +0.05 knowledge rate |
+| Knowledge Seeker | Accumulate 10,000 knowledge | +5% knowledge rate |
 | First Research | Complete 1 technology | +50 knowledge |
-| Tech Pioneer | Complete 8 technologies | +0.05 research speed |
-| Scholar's Haven | Build 3 Libraries + 50 knowledge workers | +0.10 knowledge rate |
-| Renaissance Mind *(hidden)* | Complete 20 technologies | +0.10 research speed |
-| Tech Master *(hidden)* | Complete 30 technologies | +0.10 research speed |
+| Tech Pioneer | Complete 15 technologies | +5% research speed |
+| Scholar's Haven | Build 3 Libraries + 50 knowledge workers | +10% knowledge rate |
+| Renaissance Mind *(hidden)* | Complete 42 technologies | +10% research speed |
+| Tech Master *(hidden)* | Complete 50 technologies | +10% research speed, +5% all production |
 
 **Chain reward:** Title: "The Enlightened" · Speed boost ×3.0 for 180 ticks
 
@@ -70,15 +70,15 @@ If no chain is completed, fallback titles apply:
 
 | Milestone | Condition | Reward |
 |---|---|---|
-| Stone Mason | Build 5 Stone Pits | +0.10 stone rate |
-| Master Builder | Build 500 total structures | -5% build cost |
+| Stone Mason | Build 50 Stone Pits | +10% stone rate |
+| Master Builder | Build 5,000 total structures | -5% build cost |
 | Wonder Builder *(hidden)* | Complete 1 wonder | +5% all production |
-| Grand Architect *(hidden)* | Build 1,000 structures | -5% build cost, +5% production |
-| Wonder Collector *(hidden)* | Construct 3 Wonders | +10% all production |
+| Grand Architect *(hidden)* | Build 20,000 structures (Medieval Age) | -5% build cost, +5% all production |
+| Wonder Collector *(hidden)* | Construct 8 Wonders (Colonial Age) | +10% all production |
 
 The `-5% build cost` rewards here (Master Builder, Grand Architect) are functional, not flavor: they reduce the actual cumulative cost of every building you queue, and the saving shows up in the cost the build menu displays. Stacked with the other build-cost rewards across the game (and the Civil Engineering tech), the reductions currently reach roughly −24%, floored at 10% of base. See [Buildings](buildings.md#build-cost-reductions).
 
-**Chain reward:** Title: "The Architects" · Speed boost ×1.5 for 90 ticks
+**Chain reward:** Title: "The Architects" · Speed boost ×2.5 for 150 ticks
 
 ---
 
@@ -88,13 +88,15 @@ The `-5% build cost` rewards here (Master Builder, Grand Architect) are function
 
 | Milestone | Condition | Reward |
 |---|---|---|
-| First Soldiers | Train 5 soldiers | +5% military power |
+| First Soldiers | Train 5 soldiers (Iron Age) | +5% military power |
 | War Machine | Train 250 soldiers | +10% military power |
-| Iron Legion *(hidden)* | 500 soldiers + 10 Barracks | +10% military power |
-| Fortress State *(hidden)* | 20 Castle Keeps | +10% military power |
-| Military Superpower *(hidden)* | 2,000 soldiers | +15% military power |
+| Iron Legion *(hidden)* | 500 soldiers + 10 Barracks (Classical Age) | +5% all production |
+| Fortress State *(hidden)* | 20 Castle Keeps (Medieval Age) | +10% military power, +5% all production |
+| Military Superpower *(hidden)* | 2,000 soldiers (Industrial Age) | +15% all production |
 
-**Chain reward:** Title: "The Conquerors" · Speed boost ×0.5 for 60 ticks
+**Chain reward:** Title: "The Conquerors" · Speed boost ×2.5 for 150 ticks
+
+The late tiers now pay out broad `all production` rather than `military power` only, so finishing the Military chain accelerates your whole economy — not just expeditions and combat.
 
 > **Note:** Standing Army (100 soldiers + 10 Barracks, Classical Age) is a standalone military milestone and not part of the chain.
 
@@ -106,11 +108,15 @@ The `-5% build cost` rewards here (Master Builder, Grand Architect) are function
 
 | Milestone | Condition | Reward |
 |---|---|---|
-| First Market | Build 1 Market | +25 gold |
-| Merchant Guild | Build 5 Markets | +5% gold rate |
-| Trade Empire *(hidden)* | 3 Trading Posts + Merchant Quarter | +10% gold rate |
+| First Market | Build 1 Market (Bronze Age) | +25 gold |
+| Merchant Guild | Operate 8 Markets (Iron Age) | +5% gold rate |
+| Caravan Network | Operate 5 Trading Posts (Classical Age) | +10% gold rate |
+| Merchant Princes *(hidden)* | 12 Trading Posts + 4 Merchant Quarters (Medieval Age) | +5% all production |
+| Trade Empire *(hidden)* | 30 Trading Posts + 12 Merchant Quarters (Renaissance Age) | +10% all production |
 
-**Chain reward:** Title: "The Merchants" · Speed boost ×1.0 for 90 ticks
+**Chain reward:** Title: "The Merchants" · Speed boost ×2.5 for 150 ticks
+
+The Trade chain expanded from 3 to 5 milestones, and its two capstones now grant broad `all production` instead of `gold rate` only — completing it lifts every resource, not just your coffers.
 
 ---
 
@@ -123,8 +129,8 @@ The `-5% build cost` rewards here (Master Builder, Grand Architect) are function
 | Bronze Age Pioneer | Bronze Age | +30 iron, +30 gold |
 | Iron Forged | Iron Age | +40 coal, +10% iron rate |
 | Classical Scholar | Classical Age | +150 knowledge, +10% knowledge rate |
-| Medieval Lord | Medieval Age | — |
-| Enlightened | Renaissance Age | — |
+| Medieval Lord | Medieval Age | +50 faith, +25 steel |
+| Enlightened | Renaissance Age | +75 culture, +15% knowledge rate |
 
 **Chain reward:** Title: "The Ancients" · Speed boost ×2.5 for 150 ticks
 
@@ -136,21 +142,21 @@ The `-5% build cost` rewards here (Master Builder, Grand Architect) are function
 
 | Milestone | Age required | Reward |
 |---|---|---|
-| Colonial Power *(hidden)* | Colonial Age | — |
-| Industrial Revolution *(hidden)* | Industrial Age | — |
-| Victorian Innovation *(hidden)* | Victorian Age | — |
-| Electric Dawn *(hidden)* | Electric Age | — |
-| Atomic Pioneer *(hidden)* | Atomic Age | — |
-| Modern Era *(hidden)* | Modern Age | — |
-| Information Pioneer *(hidden)* | Information Age | — |
-| Digital Native *(hidden)* | Digital Age | — |
-| Cyberpunk *(hidden)* | Cyberpunk Age | — |
-| Fusion Pioneer *(hidden)* | Fusion Age | — |
-| Space Explorer *(hidden)* | Space Age | — |
-| Star Voyager *(hidden)* | Interstellar Age | — |
-| Galactic Emperor *(hidden)* | Galactic Age | — |
-| Quantum Master *(hidden)* | Quantum Age | — |
-| Transcended *(hidden)* | Transcendent Age | — |
+| Colonial Power *(hidden)* | Colonial Age | +15% gold rate, +10% expedition reward |
+| Industrial Revolution *(hidden)* | Industrial Age | +15% all production |
+| Victorian Innovation *(hidden)* | Victorian Age | +10% all production |
+| Electric Dawn *(hidden)* | Electric Age | +15% all production |
+| Atomic Pioneer *(hidden)* | Atomic Age | +15% all production |
+| Modern Era *(hidden)* | Modern Age | +20% all production |
+| Information Pioneer *(hidden)* | Information Age | +20% knowledge rate |
+| Digital Native *(hidden)* | Digital Age | +20% all production |
+| Cyberpunk *(hidden)* | Cyberpunk Age | +15% gather rate |
+| Fusion Pioneer *(hidden)* | Fusion Age | +20% all production |
+| Space Explorer *(hidden)* | Space Age | +20% all production, +20% expedition reward |
+| Star Voyager *(hidden)* | Interstellar Age | +20% all production |
+| Galactic Emperor *(hidden)* | Galactic Age | +20% all production |
+| Quantum Master *(hidden)* | Quantum Age | +20% all production |
+| Transcended *(hidden)* | Transcendent Age | +50% all production |
 
 ---
 
@@ -174,10 +180,10 @@ Additional milestones outside the main chains cover faith, trade, epoch longevit
 
 ## Tips
 
-- **Prioritise Scholar and Settlement chains** — their speed boosts are enormous (+3.0× for 3 minutes) and the milestones align naturally with good play
+- **Scholar and Settlement chains** carry the biggest boosts (+3.0× for 3 minutes), but every chain is now worth finishing — Builder, Military, Trade, and Ancient Ages all grant +2.5× for 150 ticks
 - **Hidden milestones** appear in the Milestones panel once you have >50% progress toward them or have completed the preceding age
 - Chain speed boosts stack with milestone bonuses and prestige upgrades — when multiple boosts fire at once, the multiplication is dramatic
-- The **Trade Chain** is new — build Markets early to unlock it alongside the Builder chain for efficient mid-game momentum
+- The **Military, Trade, and Scholar** capstones now pay out broad `all production` bonuses, so completing any chain helps your whole economy — not just its own domain
 
 ---
 

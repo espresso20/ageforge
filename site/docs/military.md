@@ -10,7 +10,7 @@ The military system does four things:
 
 - **Campaigns** — spend stockpiled soldiers on timed military missions that return resources, gold, and knowledge on success (waged with `campaign <key>`). Soldier-free **scouting expeditions** (`expedition <key>`) cover the same ground without troops — see [§4](#4-expeditions).
 - **Defense rating** — a passive stat derived from soldier count and military bonuses that reduces damage from hostile epoch events.
-- **Milestones** — five military milestones grant permanent `military_power` bonuses and chain into a title reward.
+- **Milestones** — five military milestones chain into a title reward; the early tiers grant permanent `military_power`, while the late tiers now pay out broad `all production`.
 - **Prestige** — prestige upgrades `military_power` and `expedition_loot` carry over through resets, compounding across runs.
 
 **Soldiers are a resource** (the 26th), not a worker domain count. They are *produced and stored by your military buildings*: assign military-domain workers to a War Camp or Barracks and it generates the `soldiers` resource every tick, the same way a Farm generates food. The military domain — and the soldiers resource — unlock at the **Iron Age**. Before then, the **scouting** expeditions (see [§4](#4-expeditions)) let you explore for resources without any soldiers at all.
@@ -248,7 +248,7 @@ Sources, stacked additively:
 | Source | How to get it | Bonus per step |
 |--------|-------------|---------------|
 | **Research techs** | Various military-flavored techs grant `military_power` bonus | +0.2 to +1.5 per tech |
-| **Permanent bonuses** (milestones) | Complete military milestones | +0.05 to +0.15 each |
+| **Permanent bonuses** (milestones) | Complete military milestones | +0.05 to +0.10 each (`military_power`) |
 | **Prestige upgrade** | `prestige buy military_power` (5 tiers, 2/3/5/8/10 pts each) | +5% per tier |
 
 There is no hard cap on `military_power`, but effective expedition difficulty is floored at **0.05** (5% chance of failure minimum), so stacking beyond ~2.5–3.0 bonus yields diminishing returns against failure rates.
@@ -259,15 +259,15 @@ The `expedition_reward` bonus (from research, prestige `expedition_loot`, and ce
 
 ## 7. Military Milestones
 
-The five military milestones form a chain. Completing the full chain grants a permanent title and a cumulative **+0.50 military_power** bonus.
+The five military milestones form a chain. Completing the full chain grants a permanent title plus, cumulatively, **+0.25 military_power** and **+0.25 production_all** — the late tiers now broaden into all-production bonuses so the chain lifts your whole economy, not just combat.
 
 | Key | Name | Requirement | Age Gate | Reward |
 |-----|------|-------------|----------|--------|
 | `first_soldiers` | First Soldiers | 5 soldiers | Iron Age | +0.05 military_power |
 | `war_machine` | War Machine | 250 soldiers | Iron Age | +0.10 military_power |
-| `iron_legion` | Iron Legion | 500 soldiers + 10 Barracks | Classical Age | +0.10 military_power |
-| `fortress_state` | Fortress State | 20 Castle Keeps | Medieval Age | +0.10 military_power |
-| `military_superpower` | Military Superpower | 2,000 soldiers | Industrial Age | +0.15 military_power |
+| `iron_legion` | Iron Legion | 500 soldiers + 10 Barracks | Classical Age | +0.05 production_all |
+| `fortress_state` | Fortress State | 20 Castle Keeps | Medieval Age | +0.10 military_power, +0.05 production_all |
+| `military_superpower` | Military Superpower | 2,000 soldiers | Industrial Age | +0.15 production_all |
 
 `iron_legion`, `fortress_state`, and `military_superpower` are **hidden** until their prerequisites are visible (progress > 50% or you're in the preceding age). Don't be surprised when they appear mid-game.
 

@@ -470,7 +470,7 @@ Once food is stable, assign some workers to `story_circle` (knowledge) to begin 
 
 - Assign workers to lumber and masonry buildings as soon as they are built — stone and wood extraction gate most building costs
 - Unlock the military domain (Iron Age) by building `war_camp`, then staff it with military workers — it produces the `soldiers` resource you spend on expeditions
-- Knowledge workers in libraries become critical — `scholars_haven` milestone requires 20 knowledge workers assigned to libraries
+- Knowledge workers in libraries become critical — `scholars_haven` milestone requires 50 knowledge workers assigned to libraries
 
 ### Late game
 
