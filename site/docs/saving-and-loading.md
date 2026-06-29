@@ -12,7 +12,11 @@ When you choose **New Game**, you're prompted to name your civilization — pre-
 
 ## Where saves live
 
-Save files are written to `./data/saves/*.json`, relative to the directory you launch the game from. One file per save. The `save`/`load` commands and the **Load Game** browser all read and write the same files, so a save made one way shows up the other.
+Save files are written to **your active account's** saves folder — `data/accounts/<account_id>/saves/*.json`, relative to the directory you launch the game from. One file per save. The `save`/`load` commands and the **Load Game** browser all read and write the same files, so a save made one way shows up the other.
+
+Saves are **per-account**: each account keeps its own `saves/` folder, so switching accounts changes which saves you see, and one account's saves never mix with another's. See [Account & Recovery](account.md) for how accounts and their slots are laid out.
+
+> **Upgrading from an older version?** Earlier builds kept a single flat `data/saves/` folder. On first launch the game **migrates that layout automatically and non-destructively** — your existing saves move into your account's `data/accounts/<id>/saves/` slot, and **nothing is deleted**. You don't have to do anything.
 
 ---
 
@@ -71,7 +75,7 @@ The game autosaves periodically and whenever you press `Esc`, writing to your **
 
 ## The Load Game browser
 
-Choosing **Load Game** from the main menu — or typing a bare `load` mid-game — opens a save browser that lists every save in `./data/saves/`. Highlighting a save updates a **detail pane** showing everything you need to size up that save before loading it: its age and epoch, population, buildings, wonders, milestones, techs, soldiers, prestige, [morale](morale.md), its account attribution (*this account* / *another account* / *pre-account*), a ⚠ warning if a catastrophe is pending, the exact save time, and — for branched saves — a **Branched from** line naming the save it forked off. Opened mid-game, `Esc` returns you to your current run without loading anything.
+Choosing **Load Game** from the main menu — or typing a bare `load` mid-game — opens a save browser that lists every save belonging to your **active account** (under `data/accounts/<id>/saves/`). Highlighting a save updates a **detail pane** showing everything you need to size up that save before loading it: its age and epoch, population, buildings, wonders, milestones, techs, soldiers, prestige, [morale](morale.md), its account attribution (*this account* / *another account* / *pre-account*), a ⚠ warning if a catastrophe is pending, the exact save time, and — for branched saves — a **Branched from** line naming the save it forked off. Opened mid-game, `Esc` returns you to your current run without loading anything.
 
 **The lineage tree.** Saves aren't shown as a flat list — they're arranged as a **lineage tree**. When you [branch](saving-and-loading.md#branching-your-save) a new save off your current run, it appears **indented beneath its parent** with tree connectors (`├─`, `└─`), so you can see at a glance which saves descend from which. Top-level roots (saves you started fresh, plus any orphans) are ordered most-recent first, and each parent's children are likewise ordered most-recent first.
 
