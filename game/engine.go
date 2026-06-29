@@ -181,16 +181,9 @@ func NewGameEngine() *GameEngine {
 	// Give starting resources — enough for first hut + a little food
 	ge.Resources.Add("food", 25)
 	ge.Resources.Add("wood", 50)
-	// Startup tutorial
+	// Startup flavor — the step-by-step onboarding now lives in the Buildings panel
+	// (main-screen polish part 1), so the log stays clean for live events.
 	ge.addLog("event", "Welcome to AgeForge! You have nothing but your hands.")
-	ge.addLog("info", "[gold]Getting Started:[-]")
-	ge.addLog("info", "  1. [cyan]gather wood 5[-] — collect wood by hand")
-	ge.addLog("info", "  2. [cyan]gather food[-] — forage for food")
-	ge.addLog("info", "  3. [cyan]build hut[-] — build shelter (costs 10 wood)")
-	ge.addLog("info", "  4. [cyan]recruit worker[-] — recruit your first worker")
-	ge.addLog("event", "★ Wonder available: Sacred Grove — build it to unlock +0.5x speed!")
-	ge.addLog("info", "  5. Later: [cyan]assign food gathering_camp 3[-] — assign workers to buildings!")
-	ge.addLog("info", "  Type [cyan]help[-] for all commands.")
 	// Subscribe to age advances to record markers in history.
 	// IMPORTANT: Bus handlers run under the engine write lock — do NOT call GetState().
 	ge.Bus.Subscribe(EventAgeAdvanced, func(e EventData) {
