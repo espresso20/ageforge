@@ -220,6 +220,17 @@ func (vm *WorkerManager) KillWorker(count int) int {
 	return count
 }
 
+// AddLentWorkers adds workers lent by an allied civilization directly to the
+// pool, deliberately bypassing the population cap (lent workers are on loan and
+// may temporarily exceed your normal capacity). They arrive idle/unassigned;
+// returning them later is done via KillWorker, which reconciles assignments.
+func (vm *WorkerManager) AddLentWorkers(count int) {
+	if count <= 0 {
+		return
+	}
+	vm.domains["worker"].count += count
+}
+
 // AddPctAll adds a percentage of current count to the pool (used by Population Surge event).
 func (vm *WorkerManager) AddPctAll(pct float64) {
 	rt := vm.domains["worker"]

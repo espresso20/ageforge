@@ -172,7 +172,8 @@ type TradeSave struct {
 
 // DiplomacySave holds diplomacy state for save
 type DiplomacySave struct {
-	Factions map[string]FactionStateSave `json:"factions"`
+	Factions    map[string]FactionStateSave `json:"factions"`
+	LentWorkers []LentWorkerBatch           `json:"lent_workers,omitempty"`
 }
 
 // PrestigeSave holds prestige state for save
@@ -471,7 +472,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			TotalExported:  tradeExported,
 		},
 		Diplomacy: DiplomacySave{
-			Factions: ge.Diplomacy.GetFactionsForSave(),
+			Factions:    ge.Diplomacy.GetFactionsForSave(),
+			LentWorkers: ge.Diplomacy.GetLentBatchesForSave(),
 		},
 		SpeedMultiplier:    ge.speedMultiplier,
 		WonderBanks:        ge.Buildings.GetWonderBanks(),
@@ -630,8 +632,10 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// Restore trade
 	ge.Trade.LoadState(save.Trade.ActiveRoutes, save.Trade.SupplyPressure, save.Trade.TotalExchanged, save.Trade.TotalImported, save.Trade.TotalExported)
 
-	// Restore diplomacy
-	ge.Diplomacy.LoadState(save.Diplomacy.Factions)
+	// Restore diplomacy. Lent-worker batches are restored for tracking only —
+	// those workers were already counted into the saved worker pool when first
+	// lent, so we must NOT re-add them here (that would double-count on every load).
+	ge.Diplomacy.LoadState(save.Diplomacy.Factions, save.Diplomacy.LentWorkers)
 
 	// Restore wonder banks
 	if save.WonderBanks != nil {

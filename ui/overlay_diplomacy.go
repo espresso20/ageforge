@@ -37,8 +37,9 @@ func diplomacyProvider(state game.GameState, _ int) string {
 	ages := config.AgeByKey()
 
 	for _, def := range config.BaseFactions() {
-		// Name + specialty resource header line.
-		fmt.Fprintf(&sb, " [cyan]%s[-]  [gray](%s)[-]\n", def.Name, def.Specialty)
+		// Name + personality + specialty resource header line.
+		fmt.Fprintf(&sb, " [cyan]%s[-]  [%s]%s[-]  [gray](%s)[-]\n",
+			def.Name, personalityColor(def.Personality), def.Personality, def.Specialty)
 
 		f, ok := factions[def.Key]
 		if !ok || !f.Discovered {
@@ -49,6 +50,16 @@ func diplomacyProvider(state game.GameState, _ int) string {
 			}
 			fmt.Fprintf(&sb, "   [gray]??? [Undiscovered — reach %s][-]\n\n", ageName)
 			continue
+		}
+
+		// Backstory snippet (truncated to keep the panel tidy).
+		if def.Backstory != "" {
+			fmt.Fprintf(&sb, "   [gray]%s[-]\n", truncate(def.Backstory, 88))
+		}
+
+		// War banner takes precedence — it's the headline state when active.
+		if f.AtWar {
+			sb.WriteString("   [red]⚔ AT WAR — raids incoming. 'diplomacy tribute " + def.Key + "' to sue for peace.[-]\n")
 		}
 
 		// Opinion bar across the -100..100 range. Clamp first to stay panic-free.
@@ -100,18 +111,60 @@ func diplomacyProvider(state game.GameState, _ int) string {
 		// Threshold indicator — distance to the next status tier.
 		fmt.Fprintf(&sb, "   %s\n", diplomacyThreshold(f.Status, f.Opinion))
 
+		// Lent-worker status, if this civ has workers on loan with you.
+		if f.LentWorkers > 0 {
+			if f.LentPerm {
+				fmt.Fprintf(&sb, "   [green]↳ %d workers on loan (permanent)[-]\n", f.LentWorkers)
+			} else {
+				fmt.Fprintf(&sb, "   [green]↳ %d workers on loan (temporary)[-]\n", f.LentWorkers)
+			}
+		}
+
 		// Action hint: the diplomacy commands available given current status.
-		if f.Status == "allied" {
+		switch {
+		case f.AtWar:
+			fmt.Fprintf(&sb, "   [gray]diplomacy tribute %s (sue for peace) · or wait them out[-]\n\n", def.Key)
+		case f.Status == "allied":
 			fmt.Fprintf(&sb, "   [gray]diplomacy rival/embargo/neutral %s[-]\n\n", def.Key)
-		} else {
+		default:
 			fmt.Fprintf(&sb, "   [gray]diplomacy gift %s (200g, +15) · ally/rival/embargo/neutral %s[-]\n\n",
 				def.Key, def.Key)
 		}
 	}
 
-	sb.WriteString(" [gray]Commands: diplomacy ally/rival/embargo/gift/neutral <faction>[-]\n")
+	sb.WriteString(" [gray]Commands: diplomacy ally/rival/embargo/gift/neutral/tribute/raid <civ>[-]\n")
 
 	return sb.String()
+}
+
+// personalityColor maps a civilization personality to a tview color for the
+// overlay header. Unknown personalities render gray (panic-safe default).
+func personalityColor(personality string) string {
+	switch personality {
+	case "aggressive":
+		return "red"
+	case "peaceful":
+		return "green"
+	case "mercantile":
+		return "yellow"
+	case "isolationist":
+		return "lightblue"
+	default:
+		return "gray"
+	}
+}
+
+// truncate shortens s to at most max runes, appending an ellipsis when cut.
+// Operates on runes so multibyte backstory text is never split mid-character.
+func truncate(s string, max int) string {
+	r := []rune(s)
+	if len(r) <= max {
+		return s
+	}
+	if max <= 1 {
+		return string(r[:max])
+	}
+	return string(r[:max-1]) + "…"
 }
 
 // diplomacyThreshold renders the distance-to-next-tier indicator for a faction

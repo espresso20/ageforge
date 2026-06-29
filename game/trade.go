@@ -148,6 +148,13 @@ func (tm *TradeManager) StopRoute(key string) error {
 	return nil
 }
 
+// ActiveRouteCount returns the number of currently-active trade routes. Used by
+// the diplomacy system to drive mercantile-civ opinion drift. Must be called
+// under the engine write lock (same as the rest of the manager).
+func (tm *TradeManager) ActiveRouteCount() int {
+	return len(tm.activeRoutes)
+}
+
 // Tick processes trade routes and decays supply pressure
 func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingManager, diplomacy *DiplomacyManager) []string {
 	var messages []string

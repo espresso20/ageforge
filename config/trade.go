@@ -25,16 +25,37 @@ type TradeRouteDef struct {
 	Description string
 }
 
-// FactionDef defines an NPC diplomatic faction. Factions become discoverable
-// after the player reaches MinAge. When allied, trade involving the faction's
-// Specialty resource gets a TradeBonus multiplier.
+// FactionDef defines an NPC diplomatic civilization. Civilizations become
+// discoverable through age/epoch-gated first-contact events once the player
+// reaches MinAge. When allied, trade involving the civ's Specialty resource
+// gets a TradeBonus multiplier.
+//
+// Personality shapes passive opinion drift and worker-lending / war behaviour:
+//   - "aggressive":    opinion trends down over time; provocable into war
+//   - "peaceful":      opinion trends up; lends you workers when standing is high
+//   - "mercantile":    opinion responds to your trade activity; trade-focused
+//   - "isolationist":  opinion stays near neutral; slow to befriend or anger
+//
+// Backstory is flavour shown on first contact and in the diplomacy overlay.
 type FactionDef struct {
 	Name        string
 	Key         string
-	MinAge      string  // age at which this faction is first discoverable
-	Specialty   string  // resource key the faction specialises in (used for TradeBonus)
+	MinAge      string  // age at which this civ is first discoverable (first-contact gate)
+	Specialty   string  // resource key the civ specialises in (used for TradeBonus)
 	TradeBonus  float64 // fractional bonus (0.20 = +20%) applied to specialty-resource trades when allied
+	Personality string  // "aggressive" | "peaceful" | "mercantile" | "isolationist"
+	Strength    int     // 1-5; scales war raid severity (higher = harsher raids)
+	Backstory   string  // flavour shown on first contact and in the overlay
 	Description string
+}
+
+// ValidPersonalities is the closed set of civilization personalities. Used by
+// config validation and the diplomacy drift/war logic.
+var ValidPersonalities = map[string]bool{
+	"aggressive":   true,
+	"peaceful":     true,
+	"mercantile":   true,
+	"isolationist": true,
 }
 
 // BaseExchangeRates returns all exchange rate definitions
@@ -233,37 +254,97 @@ func TradeRouteByKey() map[string]TradeRouteDef {
 	return out
 }
 
-// BaseFactions returns all NPC faction definitions
+// BaseFactions returns all NPC civilization definitions. The roster of 11 civs
+// spans all 7 epochs: the two founding civs are discoverable in the early eras,
+// with more civilizations encountered each epoch as the player advances.
+//
+// The original 6 factions are preserved (merchant_guild, artisan_league,
+// tech_consortium, shadow_syndicate, stellar_federation, quantum_collective)
+// and are now the backbone of the roster, each given a personality + backstory.
 func BaseFactions() []FactionDef {
 	return []FactionDef{
+		// --- Stone Era (founding civ) ---
+		{
+			Name: "Riverlands Tribes", Key: "riverlands_tribes",
+			MinAge: "bronze_age", Specialty: "food", TradeBonus: 0.15,
+			Personality: "peaceful", Strength: 1,
+			Backstory:   "Fisherfolk and farmers of the great delta, generous with grain and slow to anger. They remember every neighbour who once shared a harvest.",
+			Description: "Settled farming clans who prize hospitality above all.",
+		},
+		// --- Iron Era (founding civ) ---
+		{
+			Name: "Ironhold Clans", Key: "ironhold_clans",
+			MinAge: "medieval_age", Specialty: "iron", TradeBonus: 0.20,
+			Personality: "aggressive", Strength: 3,
+			Backstory:   "Mountain smiths and raiders who measure honour in steel. They respect strength and despise weakness — cross them and the war-horns sound.",
+			Description: "Warlike highland clans forged around the anvil.",
+		},
+		// --- Steel Era ---
 		{
 			Name: "Merchant Guild", Key: "merchant_guild",
 			MinAge: "colonial_age", Specialty: "gold", TradeBonus: 0.20,
+			Personality: "mercantile", Strength: 2,
+			Backstory:   "A continent-spanning cartel of traders and financiers whose loyalty follows the ledger. Trade with them often and their coffers open to you.",
 			Description: "A powerful guild of traders and financiers.",
 		},
 		{
 			Name: "Artisan League", Key: "artisan_league",
 			MinAge: "industrial_age", Specialty: "culture", TradeBonus: 0.15,
+			Personality: "peaceful", Strength: 1,
+			Backstory:   "Master craftspeople and cultural preservationists who lend their guild-hands to allies they admire, asking only that beauty be protected.",
 			Description: "Master craftspeople and cultural preservationists.",
 		},
+		// --- Electric Era ---
+		{
+			Name: "Atomic Directorate", Key: "atomic_directorate",
+			MinAge: "atomic_age", Specialty: "steel", TradeBonus: 0.20,
+			Personality: "isolationist", Strength: 4,
+			Backstory:   "A secretive technocracy behind sealed borders, hoarding reactor science. They neither court nor provoke — they simply endure, watchful.",
+			Description: "An insular technocracy guarding the secrets of the atom.",
+		},
+		// --- Digital Era ---
 		{
 			Name: "Tech Consortium", Key: "tech_consortium",
 			MinAge: "information_age", Specialty: "data", TradeBonus: 0.20,
+			Personality: "mercantile", Strength: 2,
+			Backstory:   "A coalition of technology firms that trades in information itself. Data is their currency and your trade volume buys their goodwill.",
 			Description: "A coalition of technology companies and innovators.",
 		},
+		// --- Neon Era ---
 		{
 			Name: "Shadow Syndicate", Key: "shadow_syndicate",
 			MinAge: "cyberpunk_age", Specialty: "crypto", TradeBonus: 0.25,
+			Personality: "aggressive", Strength: 3,
+			Backstory:   "An underground network dealing in digital currencies and quieter goods. They lend muscle to friends and unleash data-raids on enemies.",
 			Description: "An underground network dealing in digital currencies.",
+		},
+		{
+			Name: "Plasma Nomads", Key: "plasma_nomads",
+			MinAge: "fusion_age", Specialty: "plasma", TradeBonus: 0.22,
+			Personality: "peaceful", Strength: 2,
+			Backstory:   "Wandering fusion-ship caravans with no homeworld and no grudges. To those who welcome them they gift willing crews and bright plasma.",
+			Description: "Stateless caravans drifting between the inner worlds.",
 		},
 		{
 			Name: "Stellar Federation", Key: "stellar_federation",
 			MinAge: "space_age", Specialty: "dark_matter", TradeBonus: 0.20,
+			Personality: "isolationist", Strength: 4,
+			Backstory:   "An interstellar alliance of spacefaring civilizations bound by strict non-interference. Hard to befriend, harder still to anger.",
 			Description: "An interstellar alliance of spacefaring civilizations.",
+		},
+		// --- Cosmic Era ---
+		{
+			Name: "Void Reavers", Key: "void_reavers",
+			MinAge: "galactic_age", Specialty: "antimatter", TradeBonus: 0.28,
+			Personality: "aggressive", Strength: 5,
+			Backstory:   "Antimatter corsairs who strip dead stars and weaker empires alike. They take what they want — only overwhelming respect keeps their fleets at bay.",
+			Description: "Antimatter corsairs feared across the galactic rim.",
 		},
 		{
 			Name: "Quantum Collective", Key: "quantum_collective",
 			MinAge: "quantum_age", Specialty: "quantum_flux", TradeBonus: 0.30,
+			Personality: "isolationist", Strength: 5,
+			Backstory:   "Beings who exist across multiple dimensions, perceiving your civilization as a curiosity. Indifferent by nature — but their favour bends reality.",
 			Description: "Beings who exist across multiple dimensions.",
 		},
 	}

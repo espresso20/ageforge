@@ -35,6 +35,11 @@ const (
 	festivalMinCost       = 2000.0
 	festivalCostFraction  = 0.05 // of culture storage cap
 
+	// lendEventDisplayTicks is how long the cosmetic "Workers on Loan" / "Under
+	// Raid" timed events stay in the active-events panel. They carry no effects —
+	// the actual worker/resource changes are applied immediately in processDiplomacy.
+	lendEventDisplayTicks = 30
+
 	// buildCostFloor / buildCostCap clamp the build-cost factor the engine derives
 	// from the resolver's build_cost pool. build_cost values are negative cost
 	// reductions; the factor is clamp(1+Σ, floor, cap). The 0.10 floor means costs
@@ -1038,9 +1043,37 @@ func (ge *GameEngine) processTrade() {
 // processDiplomacy handles diplomacy ticks
 func (ge *GameEngine) processDiplomacy() {
 	ageOrder := ge.progress.GetAgeOrder()
-	messages := ge.Diplomacy.Tick(ge.age, ageOrder, ge.tick)
+	// Mercantile civs warm to trade activity: treat any active trade route as
+	// "traded recently" this window. TradeManager.RecordTrade already runs in
+	// the same lock, so reading the active count here is safe.
+	tradedRecently := ge.Trade.ActiveRouteCount() > 0
+	messages := ge.Diplomacy.Tick(ge.age, ageOrder, ge.tick, tradedRecently)
 	for _, msg := range messages {
 		ge.addLog("event", msg)
+	}
+
+	// Apply queued worker-lending side effects to the worker pool.
+	for _, req := range ge.Diplomacy.TakePendingLends() {
+		ge.Workers.AddLentWorkers(req.Count)
+		// Surface as a timed event so it shows in the active-events panel too.
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "worker_lending",
+			Name:      "Workers on Loan",
+			TicksLeft: lendEventDisplayTicks,
+		})
+	}
+	// Return lent workers whose loans expired (remove from the pool).
+	for _, n := range ge.Diplomacy.TakePendingReturns() {
+		ge.Workers.KillWorker(n)
+	}
+	// Apply war raids (resource losses).
+	for _, raid := range ge.Diplomacy.TakePendingRaids() {
+		ge.Resources.Remove(raid.Resource, raid.Amount)
+		ge.Events.InjectEvent(ActiveEvent{
+			Key:       "war_raid",
+			Name:      "Under Raid",
+			TicksLeft: lendEventDisplayTicks,
+		})
 	}
 
 	// Embassies passively generate opinion toward non-hostile factions.
@@ -3574,6 +3607,50 @@ func (ge *GameEngine) SendGift(factionKey string) error {
 	}
 	ge.Resources.Remove("gold", cost)
 	ge.addLog("info", fmt.Sprintf("Sent gift to %s (+15 opinion)", factionKey))
+	return nil
+}
+
+// SendTribute pays gold + culture to a civilization at war to sue for peace.
+// Cost scales with the civ's strength; the war ends immediately on success.
+func (ge *GameEngine) SendTribute(factionKey string) error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	gold := ge.Resources.Get("gold")
+	culture := ge.Resources.Get("culture")
+	goldCost, cultureCost, err := ge.Diplomacy.SendTribute(factionKey, gold, culture)
+	if err != nil {
+		return err
+	}
+	ge.Resources.Remove("gold", goldCost)
+	ge.Resources.Remove("culture", cultureCost)
+	name := factionKey
+	if def, ok := config.FactionByKey()[factionKey]; ok {
+		name = def.Name
+	}
+	ge.addLog("success", fmt.Sprintf("Tribute paid to %s (%.0f gold, %.0f culture) — the war is over.", name, goldCost, cultureCost))
+	return nil
+}
+
+// RaidCivRoute raids a discovered civilization's trade route — a provocation
+// that tanks opinion and may trigger war if standing is already hostile.
+func (ge *GameEngine) RaidCivRoute(factionKey string) error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	started, err := ge.Diplomacy.RaidTradeRoute(factionKey, ge.tick)
+	if err != nil {
+		return err
+	}
+	name := factionKey
+	if def, ok := config.FactionByKey()[factionKey]; ok {
+		name = def.Name
+	}
+	if started {
+		ge.addLog("warning", fmt.Sprintf("You raided the %s's trade route — they have declared WAR!", name))
+	} else {
+		ge.addLog("warning", fmt.Sprintf("You raided the %s's trade route (-20 opinion).", name))
+	}
 	return nil
 }
 

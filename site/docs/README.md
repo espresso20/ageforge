@@ -28,7 +28,7 @@ AgeForge runs entirely in your terminal using a full-screen TUI built with Go + 
 - **284 Buildings** — 241 production + 21 storage + 22 wonders
 - **52 Technologies** — prerequisite chains, age-gated
 - **16 Expeditions** — risk/reward military system
-- **15 Trade routes** — across 6 NPC factions
+- **15 Trade routes** — alongside an 11-civilization diplomacy roster
 - **74 Milestones** — in 6 chains with civilization titles
 - **9 Prestige upgrades** — permanent bonuses across resets
 - **City Map** — Live pixel art rendering of your civilization on an age-themed background, with organic city growth and wonder display
