@@ -338,6 +338,9 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 				fmt.Fprintf(&sb, "   Cost: %s\n", FormatCost(bs.NextCost))
 			}
 			fmt.Fprintf(&sb, "   [gray]%s[-]\n", bs.Description)
+			if bs.Flavor != "" {
+				fmt.Fprintf(&sb, "   [gray::i]%s[-:-:-]\n", bs.Flavor)
+			}
 			if bs.WorkerCapacity > 0 {
 				totalCap := bs.Count * bs.WorkerCapacity
 				bar := workerAssignBar(bs.WorkersAssigned, totalCap)

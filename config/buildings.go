@@ -36,6 +36,10 @@ type BuildingDef struct {
 	RequiredTech string // tech key that must be researched first; "" = no requirement
 	MaxCount     int    // maximum instances allowed; 0 = unlimited
 	Description  string
+	// Flavor is optional, purely-cosmetic personality text rendered as a dim line
+	// beneath the functional Description. Never holds load-bearing info (costs,
+	// rates, worker counts) — it is additive humor only and is safe to be empty.
+	Flavor string
 	// Lineage / economy metadata (added in Phase 5+)
 	LineageKey     string // which of the 13 production lineages (e.g. "food", "metallurgy", "wonder")
 	LineageTier    int    // 0-indexed position within the lineage; higher tier = later age
@@ -937,6 +941,11 @@ func BaseBuildings() []BuildingDef {
 		}
 		result = append(result, b)
 	}
+	// Attach cosmetic Flavor text at the single chokepoint so every consumer
+	// (BuildingByKey, the engine, the UI overlays) sees it without each lineage
+	// file having to carry the strings inline. Flavor is purely additive humor;
+	// see building_flavor.go. Functional Description is never modified here.
+	applyBuildingFlavor(result)
 	// Normalize cost curves at the single chokepoint so every consumer
 	// (BuildingByKey, the engine, the audit tool) inherits flattened values.
 	return normalizeCostCurves(result)

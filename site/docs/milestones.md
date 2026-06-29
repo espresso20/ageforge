@@ -2,6 +2,8 @@
 
 76 milestones are grouped into 6 chains. Completing all milestones in a chain grants your civilization a **title** and a **temporary speed boost**. Some milestones are hidden until you make progress toward them.
 
+> When a milestone or chain completes, the log shows the achievement, its reward, and a short cosmetic **flavor quip** on a dim line below ("You built a Wonder. Your neighbors are impressed. One is drafting a strongly worded letter."). The quip is purely for character — the reward text above it is the part that matters.
+
 ---
 
 ## Civilization titles

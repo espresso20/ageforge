@@ -122,6 +122,9 @@ func buildingsProvider(state game.GameState, _ int) string {
 			if bs.Description != "" {
 				fmt.Fprintf(&sb, "   [gray]%s[-]\n", bs.Description)
 			}
+			if bs.Flavor != "" {
+				fmt.Fprintf(&sb, "   [gray::i]%s[-:-:-]\n", bs.Flavor)
+			}
 		}
 		sb.WriteString("\n")
 	}
