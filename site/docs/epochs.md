@@ -45,6 +45,24 @@ Dark matter and antimatter at scales that make earlier resources feel quaint. Th
 
 ---
 
+## Age Awakenings (One Per Epoch)
+
+Each epoch has a single **Awakening** — a deterministic, one-time production boost that fires the first time you enter that epoch's signature age, marking its arrival. These are distinct from the gambled epoch-event roll documented below: an awakening always fires and is always positive (the roll can come up bad), but the boost is temporary and decays. An awakening fires at most once per prestige run and resets on prestige so the next run can earn it again.
+
+| Epoch | Awakening | Triggers On | Effect |
+|-------|-----------|-------------|--------|
+| ◈ Stone Era | Pottery Mastery | Stone Age | +1 food/tick, +0.5 stone/tick for ~8 min |
+| ⚔ Iron Era | Discovery of Metallurgy | Iron Age | +2 iron/tick for ~16 min |
+| ⚙ Steel Era | Steam Breakthrough | Industrial Age | +25% all production for ~6.5 min |
+| ⚡ Electric Era | Electrification | Victorian Age | +2 electricity/tick, +10% all production for ~10 min |
+| ▣ Digital Era | Information Age Dawns | Modern Age | +2 data/tick, +1 knowledge/tick for ~10 min |
+| ◉ Neon Era | Cybernetic Awakening | Cyberpunk Age | +20% all production for ~8 min |
+| ✦ Cosmic Era | First Contact Signal | Interstellar Age | +1.5 dark matter/tick, +10% all production for ~13 min |
+
+See [Events](events.md#age-awakenings) for full flavor, exact durations, and how awakenings surface in the active-events panel.
+
+---
+
 ## How Epoch Events Work
 
 ### The Roll

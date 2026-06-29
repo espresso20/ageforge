@@ -146,6 +146,40 @@ For the full list of epoch-exclusive events including effects, durations, and st
 
 ---
 
+## Age Awakenings
+
+Awakenings are one-time, per-epoch milestones that fire the first time you enter an epoch's signature age — seven epochs, seven awakenings. Unlike the gambled epoch transition events (a faith/culture roll that can come up good or bad), an awakening is **deterministic**: it always fires, always grants a modest thematic production boost, and never carries a downside. The boost is **temporary** — delivered through the same active-event mechanism as any timed event, it decays after its listed duration. Each awakening fires at most once per prestige run; the fired set persists across save/load (a reload won't re-fire one you've already earned) and clears on prestige/reset, so the next run can earn them all again.
+
+| Epoch | Trigger Age | Awakening | Temporary Effect | Duration |
+|-------|-------------|-----------|------------------|----------|
+| Stone Era ◈ | Stone Age | Pottery Mastery | +1.0 food/tick, +0.5 stone/tick | 250 ticks (~8 min) |
+| Iron Era ⚔ | Iron Age | Discovery of Metallurgy | +2.0 iron/tick | 500 ticks (~16 min) |
+| Steel Era ⚙ | Industrial Age | Steam Breakthrough | +25% to all production | 200 ticks (~6.5 min) |
+| Electric Era ⚡ | Victorian Age | Electrification | +2.0 electricity/tick, +10% all production | 300 ticks (~10 min) |
+| Digital Era ▣ | Modern Age | Information Age Dawns | +2.0 data/tick, +1.0 knowledge/tick | 300 ticks (~10 min) |
+| Neon Era ◉ | Cyberpunk Age | Cybernetic Awakening | +20% to all production | 250 ticks (~8 min) |
+| Cosmic Era ✦ | Interstellar Age | First Contact Signal | +1.5 dark matter/tick, +10% all production | 400 ticks (~13 min) |
+
+Awakenings appear in the active-events panel like any timed event and tick down over their duration, so you can see exactly how long the boost has left.
+
+### Awakening Flavor
+
+**Pottery Mastery** — "Clay yields to patient hands. Sealed vessels hold the harvest through the lean months — and the surplus, for once, keeps."
+
+**Discovery of Metallurgy** — "The forge runs hotter than any fire before it. Ore that once defied you now bleeds into ingots — and the smiths cannot smelt fast enough."
+
+**Steam Breakthrough** — "Pressure, piston, purpose. The first engine coughs, catches, and roars — and every workshop in the land suddenly works twice as hard."
+
+**Electrification** — "Night surrenders. The grid hums to life, lamps bloom across the skyline, and machines that never sleep take up the long shift."
+
+**Information Age Dawns** — "Knowledge stops being scarce. The networks wake, the archives open, and insight compounds faster than anyone can read it."
+
+**Cybernetic Awakening** — "Flesh and circuit reach an accord. Augmented crews never tire, never blink — and the city's output climbs to a neon-lit fever pitch."
+
+**First Contact Signal** — "A pattern threads through the static — too regular to be noise, too strange to be us. Whatever sent it, your engineers cannot stop listening."
+
+---
+
 ## Managing Events
 
 ### Viewing Your Event Log
