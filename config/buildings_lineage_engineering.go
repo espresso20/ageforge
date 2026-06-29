@@ -176,7 +176,7 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 12 — digital_age  output=electricity  rate=409.60
 	b = append(b, BuildingDef{
 		Name: "Neural Grid", Key: "neural_grid", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 480e9, "data": 60e9, "steel": 700e9},
+		BaseCost:    map[string]float64{"electricity": 480e9, "data": 60e9, "steel": 700e9, "nanobots": 3500},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "production", Target: "electricity", Value: 409.60}},
 		BuildTicks:  3600,
@@ -189,7 +189,7 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 13 — cyberpunk_age  output=plasma+electricity  rate: plasma=819.20, electricity=500
 	b = append(b, BuildingDef{
 		Name: "Augmentation Foundry", Key: "augmentation_foundry", Category: "production",
-		BaseCost:  map[string]float64{"data": 230e9, "crypto": 1.2e12, "electricity": 2.4e12},
+		BaseCost:  map[string]float64{"data": 230e9, "crypto": 1.2e12, "electricity": 2.4e12, "nanobots": 38000},
 		CostScale: 1.35,
 		Effects: []Effect{
 			{Type: "production", Target: "plasma", Value: 819.20},

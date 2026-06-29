@@ -16,6 +16,7 @@ All notable changes to AgeForge are documented here.
 - **Expeditions and Army, split** — scouting Expeditions and military Campaigns are now separate systems; soldiers are a real produced/stored resource, with concurrent per-category expedition slots.
 - **Help panel** — `help` opens a panel instead of dumping inline text.
 - **Main-screen UI overhaul** — a framed command bar, a scannable ✓/✗ age-progress strip, a cleaner log, lifted secondary-text contrast, an early-game onboarding panel, and rebalanced panel widths.
+- Nanobots are a real resource now — a Modern-age producer building (Nano Foundry, +80 nanobots/tick), 3 nanobot techs (Nanofabrication cuts build costs −8%, Medical Nanobots boosts population and food, Self-Replication ramps nanobot output), and several digital/cyberpunk buildings now cost nanobots to construct.
 
 ### Balance
 - Flattened building cost curves and raised age-advancement requirements.

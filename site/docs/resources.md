@@ -40,7 +40,7 @@ These resources are produced by Geological Extraction buildings and consumed by 
 | Iron Ore | `iron_ore` | Iron Age | 30 | Raw ore before smelting — feeds Metallurgy lineage |
 | Titanium Ore | `titanium_ore` | Modern Age | 20 | Raw titanium ore — refines into titanium via Metallurgy |
 | Dark Matter Crystals | `dark_matter_crystals` | Cyberpunk Age | 10 | Crystallised dark matter — refines into dark matter |
-| Nanobots | `nanobots` | Modern Age | 20 | Microscopic machines from Organic Extraction in Digital Era+ |
+| Nanobots | `nanobots` | Modern Age | 20 | Microscopic machines. Built by the **Nano Foundry** (Modern Age) and Organic Extraction from Digital Era+; consumed as a build material by several digital/cyberpunk buildings |
 
 ### Industrial Resources
 

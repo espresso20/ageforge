@@ -231,6 +231,7 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 | `electricity_tech` | Electricity | 800,000 kp | 18,000 | `nuclear_fission` | +50% all production, +5.0 electricity/tick |
 | `computers` | Computers | 1,000,000 kp | 20,000 | `electricity_tech` | +80% knowledge rate |
 | `satellite_tech` | Satellite Technology | 1,200,000 kp | 19,000 | `rocketry`, `electricity_tech` | +1.0 data/tick, +60% knowledge rate |
+| `nanofabrication` | Nanofabrication | 1,100,000 kp | 19,000 | `computers` | −8% build cost |
 
 ---
 
@@ -241,6 +242,7 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 | `internet` | Internet | 2,000,000 kp | 26,000 | `computers`, `satellite_tech` | +3.0 data/tick, +120% knowledge rate |
 | `cybersecurity` | Cybersecurity | 1,800,000 kp | 24,000 | `computers` | +100% military power, +5,000 data storage |
 | `social_media` | Social Media | 1,500,000 kp | 23,000 | `internet` | +5.0 culture/tick, +5.0 gold/tick |
+| `medical_nanobots` | Medical Nanobots | 1,700,000 kp | 24,000 | `nanofabrication` | +10 population cap, +8.0 food/tick |
 
 ---
 
@@ -250,6 +252,7 @@ Prerequisites are listed using tech keys. "—" means no prerequisite.
 |---|---|---|---|---|---|
 | `machine_learning` | Machine Learning | 3,500,000 kp | 34,000 | `internet`, `cybersecurity` | +5.0 data/tick, +50% all production |
 | `cloud_computing` | Cloud Computing | 3,000,000 kp | 32,000 | `internet` | +8.0 data/tick, +10,000 all storage |
+| `self_replication` | Self-Replication | 3,200,000 kp | 33,000 | `medical_nanobots`, `machine_learning` | +200 nanobots/tick |
 
 ---
 
@@ -461,13 +464,14 @@ These add a flat amount to all resource storage caps (or, for Banking, just gold
 
 ### `build_cost` — Construction Cost Reduction
 
-Only one tech reduces build cost:
+Two techs reduce build cost:
 
 | Tech | Bonus |
 |---|---|
 | Civil Engineering | −5% |
+| Nanofabrication | −8% |
 
-This reduction is live: it multiplies your cumulative build cost by `(1 + Σ build_cost)` (floored at 10% of base) alongside the build-cost milestone rewards, and the saving is reflected in the cost the build menu shows. Small but permanent, it stacks with those milestones toward the current ceiling of roughly −24%, so it's worth taking when you're building dozens of structures. See [Buildings](buildings.md#build-cost-reductions).
+This reduction is live: it multiplies your cumulative build cost by `(1 + Σ build_cost)` (floored at 10% of base) alongside the build-cost milestone rewards, and the saving is reflected in the cost the build menu shows. Small but permanent, it stacks with those milestones toward the current ceiling of roughly −32%, so it's worth taking when you're building dozens of structures. See [Buildings](buildings.md#build-cost-reductions).
 
 ---
 

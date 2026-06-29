@@ -287,5 +287,26 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 		EpochKey: "cosmic_era", OutputResource: "quantum_flux",
 	})
 
+	// =========================================================================
+	// NANOBOT PRODUCER (standalone — not part of the lineage tier chain).
+	// Nanobots unlock as a resource in the Modern Age, but the lineage's first
+	// nanobot output (Bio Fabrication Lab) doesn't arrive until the Digital Age,
+	// two ages later. This dedicated foundry closes that gap so nanobots have a
+	// real production path the moment they're unlocked. No LineageKey/OutputResource
+	// so it is never remapped on age transition — it always makes nanobots.
+	// Costed to the Modern tier (cf. power_grid_hub); engineering domain workers.
+	// =========================================================================
+	b = append(b, BuildingDef{
+		Name: "Nano Foundry", Key: "nano_foundry", Category: "production",
+		BaseCost:     map[string]float64{"steel": 40e9, "electricity": 16e9, "data": 2e9},
+		CostScale:    1.35,
+		Effects:      []Effect{{Type: "production", Target: "nanobots", Value: 80.0}},
+		BuildTicks:   3600,
+		RequiredAge:  "modern_age",
+		Description:  "Molecular assembly line printing self-organising nanobots. +80.00 nanobots/tick (12 workers).",
+		WorkerDomain: "engineering", WorkerCapacity: 12,
+		EpochKey: "digital_era",
+	})
+
 	return b
 }
