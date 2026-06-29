@@ -323,6 +323,15 @@ func accountIDFromName(name string) string {
 	return hex.EncodeToString(sum[:16])
 }
 
+// AccountIDForName is the exported name→id derivation, so UI/command paths can resolve a typed
+// account name to its slot id WITHOUT duplicating the hashing rule (e.g. `account switch <name>`
+// checks whether accountDir(AccountIDForName(name)) holds an account). It is deterministic and
+// side-effect-free — a pure function of the (normalized) name, never touching disk or the active
+// account.
+func AccountIDForName(name string) string {
+	return accountIDFromName(name)
+}
+
 // Established reports whether this account has been named (DisplayName set). An account
 // loaded from disk with no display name (e.g. a legacy random-id dev account) is NOT
 // established, so boot/UI code can prompt the player to name it on first run.
@@ -686,6 +695,91 @@ func WipeAccount() error {
 	}
 	setActiveAccountID("")
 	return nil
+}
+
+// ExportAccountByID exports the progress blob for the account in slot id WITHOUT touching the
+// active account (Phase D). It is the by-id sibling of (a *Account) ExportProgress, used by the
+// Accounts panel to back up the SELECTED account (which may not be the live one). It loads the
+// slot read-only via loadAccountFromSlot (no setActiveAccountID, no pointer write) and serializes
+// it; ExportProgress only READS the loaded account, so the active account is never disturbed.
+//
+// Errors when the slot has no loadable account.json ("no such account: <id>"). A tampered-but-
+// parseable slot still exports (Tampered is cosmetic; the blob re-signs on its own scheme).
+func ExportAccountByID(id string) ([]byte, error) {
+	acct, found, err := loadAccountFromSlot(id)
+	if err != nil {
+		return nil, err
+	}
+	if !found || acct == nil {
+		return nil, fmt.Errorf("no such account: %s", id)
+	}
+	return acct.ExportProgress()
+}
+
+// RecoveryCodeForID returns the recovery code for the account in slot id WITHOUT touching the
+// active account (Phase D). The code is a pure function of the account ID (RecoveryCode derives
+// it from AccountID alone), so loading the slot read-only is sufficient — and confirms the slot
+// actually exists, so the panel can't surface a code for a non-existent account. Errors with
+// "no such account: <id>" when the slot has no loadable account.json.
+func RecoveryCodeForID(id string) (string, error) {
+	acct, found, err := loadAccountFromSlot(id)
+	if err != nil {
+		return "", err
+	}
+	if !found || acct == nil {
+		return "", fmt.Errorf("no such account: %s", id)
+	}
+	return acct.RecoveryCode(), nil
+}
+
+// AccountExportPath returns the default on-disk export path for the account in slot id:
+// <root>/accounts/<id>/account-<id8>-export.json. It is a pure path helper (no I/O) used by the
+// Accounts panel so the by-id export of the SELECTED account lands inside that account's own
+// slot — never in the ACTIVE account's DataDir(), which would be wrong for a non-active
+// selection. The blob carries the full id regardless; the filename short-id is just a
+// human-friendly disambiguator when several exports share a directory.
+func AccountExportPath(id string) string {
+	return filepath.Join(accountDir(id), fmt.Sprintf("account-%s-export.json", shortID(id)))
+}
+
+// WipeAccountByID permanently deletes the slot for account id — <root>/accounts/<id>/ and
+// everything under it (Phase D). It is the by-id sibling of WipeAccount (which targets the
+// ACTIVE slot): the Accounts panel uses it to wipe the SELECTED account, which may not be the
+// live one. OTHER slots are always spared (os.RemoveAll(accountDir(id)) touches only that one
+// directory), and any user export file outside the slots is untouched.
+//
+// Guard: an empty id is refused (a no-op error), since accountDir("") collapses to the shared
+// <root>/accounts root — removing it would nuke EVERY account. When id IS the active account,
+// it also clears the active-account pointer + resets the in-memory active id (mirroring
+// WipeAccount), so the next boot starts clean and the UI re-prompts. Wiping a non-active slot
+// leaves the active pointer alone.
+func WipeAccountByID(id string) error {
+	if id == "" {
+		// Never remove accountDir("") — that is the shared <root>/accounts root, not a slot.
+		return fmt.Errorf("cannot wipe account: empty id")
+	}
+	if err := os.RemoveAll(accountDir(id)); err != nil {
+		return fmt.Errorf("failed to wipe account slot %s: %w", accountDir(id), err)
+	}
+	// If we just wiped the ACTIVE slot, clear the pointer + in-memory id so nothing stale is
+	// resolved next boot (a non-active wipe must leave the active account untouched).
+	if id == getActiveAccountID() {
+		if err := os.Remove(activeAccountPointerPath()); err != nil && !os.IsNotExist(err) {
+			return fmt.Errorf("failed to clear active-account pointer: %w", err)
+		}
+		setActiveAccountID("")
+	}
+	return nil
+}
+
+// shortID returns the first 8 chars of an account id (enough to recognize a slot at a glance),
+// or the whole string when shorter. The package-level twin of the UI's shortAccountID, kept here
+// so AccountExportPath can name files without reaching across into the ui package.
+func shortID(id string) string {
+	if len(id) > 8 {
+		return id[:8]
+	}
+	return id
 }
 
 // signAccount returns the HMAC-SHA256 hex of the account payload with Signature

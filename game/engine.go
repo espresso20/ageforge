@@ -693,6 +693,37 @@ func (ge *GameEngine) CreateAccount(name string) (*Account, error) {
 	return acct, nil
 }
 
+// ExportAccountByID exports the progress blob for the account in slot id (Phase D). Plain
+// passthrough to game.ExportAccountByID: it reads the named slot WITHOUT touching ge.account or
+// the active pointer, so the Accounts panel can back up a non-active selection safely. No ge.mu
+// — file I/O over the slots, no engine state touched.
+func (ge *GameEngine) ExportAccountByID(id string) ([]byte, error) {
+	return ExportAccountByID(id)
+}
+
+// RecoveryCodeForID returns the recovery code for the account in slot id (Phase D). Plain
+// passthrough to game.RecoveryCodeForID — read-only, no active-account or engine-state mutation.
+func (ge *GameEngine) RecoveryCodeForID(id string) (string, error) {
+	return RecoveryCodeForID(id)
+}
+
+// WipeAccountByID deletes the slot for account id (Phase D). It is the by-id sibling of the
+// active-only WipeAccount, used by the Accounts panel to wipe the SELECTED account. game.
+// WipeAccountByID removes only that slot and, if id was the active account, clears the active
+// pointer + in-memory id. When the wiped id matches ge's current account we also detach
+// ge.account (under the write lock) so the UI re-prompts/refreshes rather than holding a
+// now-orphaned account whose slot is gone. A non-active wipe leaves ge.account alone.
+func (ge *GameEngine) WipeAccountByID(id string) error {
+	wasActive := ge.AccountID() == id && id != ""
+	if err := WipeAccountByID(id); err != nil {
+		return err
+	}
+	if wasActive {
+		ge.SetAccount(nil)
+	}
+	return nil
+}
+
 // StartNewNamedGame resets to a fresh game, makes `name` the active root save,
 // and writes the initial save file. It does NOT start the ticker — the caller
 // starts it. Returns the SaveGame error if any.

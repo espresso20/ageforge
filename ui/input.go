@@ -565,11 +565,11 @@ func shortAccountID(id string) string {
 
 // cmdAccount handles the `account` command family (accounts.md §9 Phase 4):
 //
-//   account                 → show the short ID + recovery code + honest "identity,
-//                             not progress" copy.
-//   account recover <code>  → re-create the local identity from a recovery code.
-//                             Guarded: if the current account already holds unlocks,
-//                             require `account recover <code> confirm` to overwrite.
+//	account                 → show the short ID + recovery code + honest "identity,
+//	                          not progress" copy.
+//	account recover <code>  → re-create the local identity from a recovery code.
+//	                          Guarded: if the current account already holds unlocks,
+//	                          require `account recover <code> confirm` to overwrite.
 //
 // It talks to engine.Account()/SetAccount() directly — no GameState snapshot needed.
 func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
@@ -583,28 +583,86 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 			}
 		}
 		var lines []string
-		lines = append(lines, fmt.Sprintf("[gold]Account:[-] %s", shortAccountID(acct.AccountID)))
+		lines = append(lines, fmt.Sprintf("[gold]Account:[-] %s  (%s)", acct.Name(), shortAccountID(acct.AccountID)))
 		lines = append(lines, fmt.Sprintf("[gold]Recovery code:[-] %s", acct.RecoveryCode()))
 		lines = append(lines, "")
 		lines = append(lines, "This code restores your IDENTITY (your account ID) across machines and")
-		lines = append(lines, "reinstalls — NOT your earned progress. Unlocks and stats are separate and")
-		lines = append(lines, "are not carried by this code (progress export is coming in a later update).")
-		lines = append(lines, "Write the code down to keep your identity. It is not a password: it proves")
-		lines = append(lines, "nothing secret, only which account you are.")
+		lines = append(lines, "reinstalls — NOT your earned progress. It is not a password: it proves")
+		lines = append(lines, "nothing secret, only which account you are. Write it down.")
 		lines = append(lines, "")
 		lines = append(lines, "Restore identity on another machine with:  account recover <code>")
 		lines = append(lines, "")
-		lines = append(lines, "[gold]Progress (unlocks, stats):[-] backed up SEPARATELY from the code above.")
-		lines = append(lines, "  account export [path]          → write a progress backup file")
-		lines = append(lines, "  account import <path> [replace] → restore progress (merges by default)")
+		lines = append(lines, "[gold]Progress (unlocks, stats, achievements)[-] is backed up SEPARATELY as a")
+		lines = append(lines, "per-account file. Export and import both work now and are multi-account —")
+		lines = append(lines, "each account is its own slot; an import adds/restores that account alongside")
+		lines = append(lines, "your others. Switch between accounts in the [gold]Accounts[-] panel on the main menu.")
+		lines = append(lines, "  account list                    → list your local accounts")
+		lines = append(lines, "  account switch <name>           → switch to an existing local account")
+		lines = append(lines, "  account export [path]           → write this account's progress backup")
+		lines = append(lines, "  account import <path> [replace] → restore an account from a backup (merges by default)")
 		lines = append(lines, "")
-		lines = append(lines, "[red]Wipe Account[-] (permanently delete identity + unlocks + stats) lives on")
-		lines = append(lines, "the main menu, behind a type-your-name confirm. Press Esc to reach the menu.")
+		lines = append(lines, "[red]Wipe Account[-] (permanently delete an account's identity + unlocks + stats)")
+		lines = append(lines, "lives in the [gold]Accounts[-] panel on the main menu, behind a type-your-name confirm.")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
 
 	sub := strings.ToLower(args[0])
 	switch sub {
+	case "list":
+		// List every local account slot: name, short id, an active marker, and highest age.
+		summaries := engine.ListAccounts()
+		if len(summaries) == 0 {
+			return CommandResult{Message: "No local accounts found.", Type: "info"}
+		}
+		var lines []string
+		lines = append(lines, "[gold]Local accounts:[-]")
+		for _, s := range summaries {
+			marker := "  "
+			if s.Active {
+				marker = "[aqua]●[-] "
+			}
+			name := s.DisplayName
+			if strings.TrimSpace(name) == "" {
+				name = "(unnamed)"
+			}
+			age := s.HighestAge
+			if age == "" {
+				age = "—"
+			}
+			tampered := ""
+			if s.Tampered {
+				tampered = "  [red]⚠ modified[-]"
+			}
+			lines = append(lines, fmt.Sprintf("%s%s  [gray](%s)[-]  [gray]age:[-] %s%s",
+				marker, name, shortAccountID(s.AccountID), age, tampered))
+		}
+		lines = append(lines, "")
+		lines = append(lines, "Switch with:  account switch <name>   (or use the Accounts panel on the main menu)")
+		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+
+	case "switch":
+		if len(args) < 2 {
+			return CommandResult{Message: "Usage: account switch <name>", Type: "error"}
+		}
+		// Resolve name→id via the shared derivation, then switch only if that slot exists.
+		// A non-existent slot errors with guidance rather than minting an empty account
+		// (use the Accounts panel — or `account import` — to create/restore one).
+		name := strings.Join(args[1:], " ")
+		id := game.AccountIDForName(name)
+		if err := engine.SwitchAccount(id); err != nil {
+			return CommandResult{
+				Message: fmt.Sprintf("No account named %q — create it from the Accounts panel on the main menu.", strings.TrimSpace(name)),
+				Type:    "error",
+			}
+		}
+		// Re-resolve the active theme against the now-active account so the UI doesn't keep
+		// the prior account's theme after the swap (theming.md §6).
+		applyAccountTheme(engine)
+		return CommandResult{
+			Message: fmt.Sprintf("Now playing as %s (%s).", strings.TrimSpace(name), shortAccountID(id)),
+			Type:    "success",
+		}
+
 	case "export":
 		if acct == nil {
 			return CommandResult{
@@ -703,8 +761,8 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 			lines = append(lines, "[red]Warning:[-] this account has unlocked progress on this machine.")
 			lines = append(lines, "Recovering will REPLACE the current local identity. The recovery code")
 			lines = append(lines, "carries identity only — your unlocks/stats are NOT carried by it and")
-			lines = append(lines, "would no longer be attached to this identity (export your progress first;")
-			lines = append(lines, "progress export is coming in a later update).")
+			lines = append(lines, "would no longer be attached to this identity. Export your progress first")
+			lines = append(lines, "with `account export` (it writes a backup you can import later).")
 			lines = append(lines, "")
 			lines = append(lines, fmt.Sprintf("To proceed anyway:  account recover %s confirm", code))
 			return CommandResult{Message: strings.Join(lines, "\n"), Type: "warning"}
@@ -726,16 +784,16 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		}
 
 	case "wipe":
-		// The destructive wipe lives behind the splash's type-your-name modal gate —
-		// we deliberately do NOT wipe from a bare command. Direct the player there.
+		// The destructive wipe lives behind the Accounts panel's type-your-name gate — we
+		// deliberately do NOT wipe from a bare command. Direct the player there.
 		return CommandResult{
-			Message: "Wiping your account is permanent and lives on the main menu (press Esc to reach it, then 'Wipe Account'). It deletes your identity, theme unlocks, lifetime stats, and achievements — your game saves are NOT affected.",
+			Message: "Wiping an account is permanent and lives in the Accounts panel on the main menu (press Esc to reach it, then 'Accounts', then 'w' on the account). It deletes that account's identity, theme unlocks, lifetime stats, and achievements — game saves are NOT affected.",
 			Type:    "warning",
 		}
 
 	default:
 		return CommandResult{
-			Message: "Usage: account  |  account recover <code>  |  account export [path]  |  account import <path> [replace]  |  account wipe",
+			Message: "Usage: account  |  account list  |  account switch <name>  |  account recover <code>  |  account export [path]  |  account import <path> [replace]  |  account wipe",
 			Type:    "error",
 		}
 	}
