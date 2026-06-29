@@ -84,6 +84,14 @@ A route **auto-suspends** if its required building is demolished while it's runn
 
 If a route fires but you don't have enough export resources, it silently skips that cycle (no penalty) and tries again next cycle. Keep your export stockpiles healthy.
 
+### Trade Disruption (War & Embargo)
+
+Conflict has a price. If you are **at war** with a civilization, or you have placed it under **embargo**, every route whose **imports** include that civ's **specialty resource** is **disrupted**: it earns nothing and consumes nothing while the conflict lasts. The route isn't stopped — its timer keeps running — so it **resumes automatically** the moment peace returns (end the war via tribute or wait it out; lift the embargo with `diplomacy neutral`).
+
+Disrupted routes are flagged in the Trade overlay with a red ✖ and a "DISRUPTED — shipments blockaded" note naming the affected resource, and a banner at the top of the routes panel lists every blockaded resource. You'll also see a log line each time a disrupted route would have fired.
+
+This reuses the existing diplomacy war/embargo state — there's no separate disruption mechanic to track. The practical lesson: before you embargo or provoke the **gold** specialist (Merchant Guild) or the **culture** specialist (Artisan League), check which of your routes import those goods.
+
 There is no cap on how many routes can run simultaneously — stack them all.
 
 ### Full Trade Routes Reference
@@ -94,8 +102,14 @@ There is no cap on how many routes can run simultaneously — stack them all.
 | `stone_trade` | Stone Trade | Iron | Market ×2 | 15 wood | 12 stone | 12 |
 | `gold_caravan` | Gold Caravan | Classical | Market ×3 | 50 stone | 5 gold | 15 |
 | `silk_road` | Silk Road | Medieval | Market ×2 | 30 gold | 80 culture | 20 |
+| `mercantile_convoy` | Mercantile Convoy | Renaissance | Exchange ×1 | 300 stone + 200 wood | 90 gold | 16 |
 | `spice_trade` | Spice Trade | Colonial | Port ×1 | 100 gold | 200 food + 50 culture | 18 |
 | `colonial_exports` | Colonial Exports | Colonial | Port ×2 | 500 food | 150 gold | 15 |
+| `triangular_trade` | Triangular Trade | Colonial | Harbor ×1 | 400 food + 60 gold | 120 culture + 80 knowledge | 18 |
+| `tea_clippers` | Tea Clippers | Colonial | Harbor ×2 | 250 gold | 600 food + 90 culture | 20 |
+| `coal_barges` | Coal Barges | Industrial | Harbor ×2 | 300 coal | 220 gold + 150 iron | 14 |
+| `cotton_exchange` | Cotton Exchange | Industrial | Seaport ×1 | 400 gold | 200 culture + 150 knowledge | 16 |
+| `steamship_line` | Steamship Line | Industrial | Seaport ×2 | 250 steel + 200 coal | 900 gold | 18 |
 | `rail_freight` | Rail Freight | Industrial | Steam Works ×1 | 200 iron | 100 gold + 50 coal | 12 |
 | `oil_pipeline` | Oil Pipeline | Victorian | Oil Derrick ×2 | 100 oil | 300 gold | 15 |
 | `power_exchange` | Power Exchange | Electric | Power Station ×1 | 500 electricity | 200 gold | 10 |
@@ -105,6 +119,43 @@ There is no cap on how many routes can run simultaneously — stack them all.
 | `warp_commerce` | Warp Commerce | Space | Warp Drive Plant ×1 | 500 gold | 200 dark matter | 15 |
 | `stellar_exchange` | Stellar Exchange | Galactic | Galactic Trade Hub ×1 | 100 dark matter | 2,000 gold | 20 |
 | `quantum_trade` | Quantum Trade | Quantum | Reality Processor ×1 | 50 quantum flux | 5,000 gold | 10 |
+
+---
+
+## Harbour Lineage — Trade-Route Income
+
+Markets and banks (the **trade** lineage) make gold directly. **Harbours** are different: they make your **trade routes** more profitable. Each built harbour adds a flat percentage bonus to the **imports of every active route**, stacking additively across tiers and instances. They also produce a little gold themselves, so an idle harbour still earns its keep.
+
+The bonus stacks with allied-civ trade bonuses: a route importing a specialty resource you're allied for, run through a fleet of harbours, pays out `base × (1 + harbour_bonus + ally_bonus)`.
+
+| Tier | Key | Name | Min Age | Route Income Bonus | Workers |
+|---|---|---|---|---|---|
+| 0 | `harbor` | Harbor | Colonial | +5% | 4 |
+| 1 | `harbor_authority` | Harbor Authority | Industrial | +10% | 5 |
+| 2 | `seaport` | Seaport | Modern | +15% | 6 |
+| 3 | `container_terminal` | Container Terminal | Information | +20% | 8 |
+| 4 | `logistics_hub` | Logistics Hub | Digital | +25% | 10 |
+
+Harbours use the **trade** worker domain — the same recruits that staff markets and embassies — so a big harbour fleet competes with your markets for hands. Several Colonial-era routes (`triangular_trade`, `tea_clippers`, `coal_barges`) require harbours rather than ports, giving the colonial→industrial economy something fresh to build toward.
+
+---
+
+## Black Market
+
+Once you reach the **Colonial Age**, smuggling networks open up. The black market is a **high-risk, high-reward culture sink**: you spend a lump of **culture** on a deal that *might* pay out a large haul of a resource of your choice — or vanish with your culture and deliver nothing.
+
+```text
+blackmarket              # show cost, odds, and cooldown
+blackmarket <resource>   # run a deal for the chosen resource
+trade black <resource>   # the same thing, via the trade command
+```
+
+- **Cost:** `max(5,000, 10% of your culture storage cap)` culture per deal, scaling with your progression.
+- **Odds:** a **55% chance** of a payout. On a win you receive the chosen resource worth **2.5×** the culture stake (valued via that resource's gold exchange rate). On a loss the culture is simply gone.
+- **Cooldown:** ~240 ticks (about 8 minutes) between deals, so it can't be spammed.
+- **Always-spent:** the culture is consumed up front, win or lose — that's the gamble.
+
+It's a way to convert a culture surplus into a swing of whatever resource you're short on, if you're willing to ride the variance.
 
 ---
 

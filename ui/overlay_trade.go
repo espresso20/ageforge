@@ -68,14 +68,30 @@ func tradeProvider(state game.GameState, _ int) string {
 	// === Trade Routes ===
 	sb.WriteString("\n [gold]═══ Trade Routes ═══[-]\n\n")
 
+	// Disruption banner: war/embargo blockades suspend any route importing the
+	// listed resources until the conflict ends.
+	if len(trade.DisruptedResources) > 0 {
+		fmt.Fprintf(&sb, " [red]⚠ Trade disrupted by hostile powers:[-] %s\n",
+			strings.Join(trade.DisruptedResources, ", "))
+		sb.WriteString(" [gray]Routes importing these are suspended until peace (end the war/embargo).[-]\n\n")
+	}
+
 	if len(trade.ActiveRoutes) > 0 {
 		sb.WriteString(" [gold]Active Routes:[-]\n\n")
 		for _, route := range trade.ActiveRoutes {
-			fmt.Fprintf(&sb, " [green]▸[-] [cyan]%s[-]\n", route.Name)
+			marker := "[green]▸[-]"
+			if route.Disrupted {
+				marker = "[red]✖[-]"
+			}
+			fmt.Fprintf(&sb, " %s [cyan]%s[-]\n", marker, route.Name)
 			fmt.Fprintf(&sb, "   Export: %s\n", formatResMap(route.Export))
 			fmt.Fprintf(&sb, "   Import: %s\n", formatResMap(route.Import))
-			fmt.Fprintf(&sb, "   %d ticks remaining  [gray](%d cycles done)[-]\n\n",
-				route.TicksLeft, route.CyclesDone)
+			if route.Disrupted {
+				fmt.Fprintf(&sb, "   [red]DISRUPTED — %s shipments blockaded[-]\n\n", route.DisruptedBy)
+			} else {
+				fmt.Fprintf(&sb, "   %d ticks remaining  [gray](%d cycles done)[-]\n\n",
+					route.TicksLeft, route.CyclesDone)
+			}
 		}
 	}
 

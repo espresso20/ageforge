@@ -1,6 +1,6 @@
 # Buildings
 
-AgeForge uses a **13-lineage system** with 284 total buildings: 241 production buildings, 21 storage buildings, and 22 wonders. Buildings belong to lineages that span the full 22-age arc. When you advance an age, buildings that have a next-tier equivalent are **not** automatically transformed — instead they receive a pending upgrade marker and you upgrade them manually at your chosen pace using the `upgrade` command.
+AgeForge uses a **14-lineage system** with 300 total buildings spanning production lineages, storage, wonders, and cultural monuments. Buildings belong to lineages that span the full 22-age arc. When you advance an age, buildings that have a next-tier equivalent are **not** automatically transformed — instead they receive a pending upgrade marker and you upgrade them manually at your chosen pace using the `upgrade` command.
 
 For the full wonder list see [Wonders](wonders.md).
 
@@ -160,7 +160,7 @@ You do not lose progress or production. A Gathering Camp in the Food lineage may
 
 ---
 
-## The 13 Production Lineages
+## The 14 Production Lineages
 
 | # | Lineage | Domain | Primary Output | Tiers | First Building | Final Building |
 |---|---------|--------|----------------|-------|----------------|----------------|
@@ -177,8 +177,9 @@ You do not lose progress or production. A Gathering Camp in the Food lineage may
 | 11 | Metallurgy | metallurgy | iron → steel → titanium → dark matter → antimatter → quantum flux | 18 | Smelter | Quantum Metal Works |
 | 12 | Energy | energy | coal → electricity → plasma → dark matter → quantum flux | 13 | Coal Plant | Zero Point Generator |
 | 13 | Hacker/Digital | hacker | data | 8 | Server Farm | Reality Processor |
+| 14 | Harbour | trade | gold (+trade-route income) | 5 | Harbor | Logistics Hub |
 
-> Lineages 8–13 start in later ages (Bronze, Iron, Victorian, Information) so they have fewer tiers. The Housing and Culture lineages have no worker domain — they produce passively without worker assignment.
+> Lineages 8–14 start in later ages (Bronze, Iron, Victorian, Information, Colonial) so they have fewer tiers. The Housing and Culture lineages have no worker domain — they produce passively without worker assignment. The **Harbour** lineage is special: beyond producing gold, each harbour adds a percentage bonus to the income of *every* active trade route — see [Trade & Diplomacy](trade.md#harbour-lineage-trade-route-income).
 
 ---
 

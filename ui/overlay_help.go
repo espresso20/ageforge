@@ -43,6 +43,7 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("  [cyan]trade[-] route list            - List trade routes\n")
 	sb.WriteString("  [cyan]trade[-] route start <key>     - Start a trade route\n")
 	sb.WriteString("  [cyan]trade[-] route stop <key>      - Stop a trade route\n")
+	sb.WriteString("  [cyan]blackmarket[-] [resource]      - High-risk culture gamble for a resource haul (colonial+)\n")
 	sb.WriteString("  [cyan]diplomacy[-]                   - Open the Diplomacy overlay (factions, opinion, status)\n")
 	sb.WriteString("  [cyan]diplomacy[-] ally <faction>    - Ally with faction (costs gold)\n")
 	sb.WriteString("  [cyan]diplomacy[-] rival <faction>   - Declare rivalry\n")

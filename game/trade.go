@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"sort"
 
 	"github.com/espresso20/ageforge/config"
 )
@@ -36,6 +37,31 @@ type ActiveRoute struct {
 	Key        string
 	TicksLeft  int
 	CyclesDone int
+	// Disrupted is transient runtime state (recomputed every tick from diplomacy
+	// war/embargo) — not persisted. True when the route's imports are blockaded.
+	Disrupted bool `json:"-"`
+}
+
+// routeDisruptedBy returns the first imported resource of def that appears in the
+// disrupted set (resources blockaded by war/embargo), or "" if the route is
+// clear. A non-empty return means the route is currently disrupted.
+func (tm *TradeManager) routeDisruptedBy(def config.TradeRouteDef, disrupted map[string]bool) string {
+	if len(disrupted) == 0 {
+		return ""
+	}
+	// Deterministic: check imports in sorted key order so the reported resource
+	// is stable across runs (Go map iteration is randomised).
+	keys := make([]string, 0, len(def.Import))
+	for res := range def.Import {
+		keys = append(keys, res)
+	}
+	sort.Strings(keys)
+	for _, res := range keys {
+		if disrupted[res] {
+			return res
+		}
+	}
+	return ""
 }
 
 // NewTradeManager creates a new trade manager
@@ -155,11 +181,24 @@ func (tm *TradeManager) ActiveRouteCount() int {
 	return len(tm.activeRoutes)
 }
 
-// Tick processes trade routes and decays supply pressure
-func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingManager, diplomacy *DiplomacyManager) []string {
+// Tick processes trade routes and decays supply pressure.
+//
+// harborBonus is the additive trade-route income multiplier from built harbour
+// buildings (e.g. 0.15 = +15%); the engine computes it from the harbor lineage
+// and passes it in. Disrupted routes (those importing a resource a hostile civ
+// specialises in — see DiplomacyManager.DisruptedResources) are skipped for the
+// cycle with a log line.
+func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingManager, diplomacy *DiplomacyManager, harborBonus float64) []string {
 	var messages []string
 
 	routes := config.TradeRouteByKey()
+
+	// Resources currently blockaded by war/embargo. A route whose imports touch
+	// any of these is disrupted (income blocked) until the conflict ends.
+	var disrupted map[string]bool
+	if diplomacy != nil {
+		disrupted = diplomacy.DisruptedResources()
+	}
 
 	// Process active trade routes
 	for key, route := range tm.activeRoutes {
@@ -172,6 +211,20 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 		if buildings.GetCount(def.RequiredBld) < def.MinCount {
 			messages = append(messages, fmt.Sprintf("Trade route %s stopped: not enough %s", def.Name, def.RequiredBld))
 			delete(tm.activeRoutes, key)
+			continue
+		}
+
+		// Disruption: if any imported resource is blockaded, the route is dead
+		// in the water this cycle — no export consumed, no income, timer still
+		// ticks so it resumes automatically once peace returns.
+		blockedRes := tm.routeDisruptedBy(def, disrupted)
+		route.Disrupted = blockedRes != ""
+		if route.Disrupted {
+			route.TicksLeft--
+			if route.TicksLeft <= 0 {
+				messages = append(messages, fmt.Sprintf("Trade route %s disrupted: %s shipments are blockaded by hostile powers.", def.Name, blockedRes))
+				route.TicksLeft = def.TicksPerRun
+			}
 			continue
 		}
 
@@ -193,11 +246,11 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 					tm.totalExported[res] += amount
 				}
 
-				// Add imports (with diplomacy bonus)
+				// Add imports (with diplomacy ally bonus + harbour bonus)
 				for res, amount := range def.Import {
-					bonus := 0.0
+					bonus := harborBonus
 					if diplomacy != nil {
-						bonus = diplomacy.GetTradeBonus(res)
+						bonus += diplomacy.GetTradeBonus(res)
 					}
 					actual := amount * (1.0 + bonus)
 					resources.Add(res, actual)
@@ -230,8 +283,10 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 	return messages
 }
 
-// Snapshot returns the trade state for UI consumption
-func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings *BuildingManager) TradeState {
+// Snapshot returns the trade state for UI consumption. disrupted is the set of
+// resources currently blockaded by war/embargo (from DiplomacyManager); routes
+// importing one are flagged Disrupted so the overlay can warn the player.
+func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings *BuildingManager, disrupted map[string]bool) TradeState {
 	rates := config.ExchangeRateByKey()
 	allRoutes := config.TradeRouteByKey()
 
@@ -254,17 +309,27 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 
 	// Active routes
 	var activeRoutes []ActiveRouteInfo
+	var disruptedResources []string
+	seenDisrupt := make(map[string]bool)
 	for key, route := range tm.activeRoutes {
 		def := allRoutes[key]
+		blockedBy := tm.routeDisruptedBy(def, disrupted)
 		activeRoutes = append(activeRoutes, ActiveRouteInfo{
-			Name:       def.Name,
-			Key:        key,
-			TicksLeft:  route.TicksLeft,
-			CyclesDone: route.CyclesDone,
-			Export:     def.Export,
-			Import:     def.Import,
+			Name:        def.Name,
+			Key:         key,
+			TicksLeft:   route.TicksLeft,
+			CyclesDone:  route.CyclesDone,
+			Export:      def.Export,
+			Import:      def.Import,
+			Disrupted:   blockedBy != "",
+			DisruptedBy: blockedBy,
 		})
+		if blockedBy != "" && !seenDisrupt[blockedBy] {
+			seenDisrupt[blockedBy] = true
+			disruptedResources = append(disruptedResources, blockedBy)
+		}
 	}
+	sort.Strings(disruptedResources)
 
 	// Available routes
 	var availableRoutes []TradeRouteInfo
@@ -299,11 +364,12 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 	}
 
 	return TradeState{
-		ExchangeRates:   exchangeRates,
-		ActiveRoutes:    activeRoutes,
-		AvailableRoutes: availableRoutes,
-		TotalExchanged:  totalExchanged,
-		TotalImported:   totalImported,
+		ExchangeRates:      exchangeRates,
+		ActiveRoutes:       activeRoutes,
+		AvailableRoutes:    availableRoutes,
+		TotalExchanged:     totalExchanged,
+		TotalImported:      totalImported,
+		DisruptedResources: disruptedResources,
 	}
 }
 
