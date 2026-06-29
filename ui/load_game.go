@@ -10,6 +10,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // loadGamePage is the page name under which the Load Game browser is registered
@@ -71,8 +72,12 @@ func CreateLoadGamePage(app *tview.Application, pages *tview.Pages, engine *game
 	// ── Save list ────────────────────────────────────────────────────────────
 	b.list = tview.NewList()
 	b.list.SetBorder(false)
-	b.list.SetSelectedBackgroundColor(tcell.ColorGold)
-	b.list.SetSelectedTextColor(tcell.ColorBlack)
+	// Selection backs light text, so it uses the Selection role (dark slate under
+	// Forge), not Accent — white-on-gold is unreadable (theme/themes_forge.go).
+	theme.Track(func() {
+		b.list.SetSelectedBackgroundColor(theme.Color(theme.RoleSelection)).
+			SetSelectedTextColor(theme.Color(theme.RoleText))
+	})
 	b.list.ShowSecondaryText(false)
 	b.list.SetChangedFunc(func(index int, _ string, _ string, _ rune) {
 		b.updateDetail(index)
@@ -85,18 +90,22 @@ func CreateLoadGamePage(app *tview.Application, pages *tview.Pages, engine *game
 		SetDynamicColors(true).
 		SetText(legendText())
 	legend.SetBorder(true).
-		SetBorderColor(tcell.ColorGold).
-		SetTitle(" Key ").
-		SetTitleColor(tcell.ColorGold)
+		SetTitle(" Key ")
+	theme.Track(func() {
+		legend.SetBorderColor(theme.Color(theme.RoleAccent)).
+			SetTitleColor(theme.Color(theme.RoleAccent))
+	})
 
 	// ── Detail pane ──────────────────────────────────────────────────────────
 	b.detail = tview.NewTextView().
 		SetDynamicColors(true).
 		SetWrap(true)
 	b.detail.SetBorder(true).
-		SetBorderColor(tcell.ColorGold).
-		SetTitle(" Details ").
-		SetTitleColor(tcell.ColorGold)
+		SetTitle(" Details ")
+	theme.Track(func() {
+		b.detail.SetBorderColor(theme.Color(theme.RoleAccent)).
+			SetTitleColor(theme.Color(theme.RoleAccent))
+	})
 
 	// ── Footer ───────────────────────────────────────────────────────────────
 	footer := tview.NewTextView().
@@ -129,7 +138,7 @@ func (b *loadGameBrowser) refresh(wantIdx int) {
 		// Surface it in the detail pane rather than crashing, and show an empty list.
 		b.saves = nil
 		b.list.Clear()
-		b.subtitle.SetText("[#8b949e]" + savesDirLabel() + " — could not read saves[-]")
+		b.subtitle.SetText("[gray]" + savesDirLabel() + " — could not read saves[-]")
 		b.detail.SetText(fmt.Sprintf("[red]Could not read saves: %v[-]", err))
 		return
 	}
@@ -143,12 +152,12 @@ func (b *loadGameBrowser) refresh(wantIdx int) {
 		b.saves[i] = r.Info
 	}
 
-	b.subtitle.SetText(fmt.Sprintf("[#8b949e]%s — %s[-]", savesDirLabel(), pluralSaves(len(saves))))
+	b.subtitle.SetText(fmt.Sprintf("[gray]%s — %s[-]", savesDirLabel(), pluralSaves(len(saves))))
 
 	b.list.Clear()
 	if len(rows) == 0 {
 		// Empty state — the action keys become no-ops (handleKey guards on len).
-		b.detail.SetText("[#8b949e]No saved games found in " + savesDir() + ".\n\nStart a new game to create one.[-]")
+		b.detail.SetText("[gray]No saved games found in " + savesDir() + ".\n\nStart a new game to create one.[-]")
 		return
 	}
 
@@ -293,7 +302,9 @@ func (b *loadGameBrowser) doDelete() {
 			// Keep the selection near where it was; clamp happens in refresh.
 			b.refresh(curIdx)
 		})
-	modal.SetBackgroundColor(tcell.ColorDarkRed)
+	// Transient confirm modal (rebuilt per delete): construction-read the danger
+	// background from the Negative role so it tints with the theme.
+	modal.SetBackgroundColor(theme.Color(theme.RoleNegative))
 	b.pages.AddPage(page, modal, true, true)
 }
 
@@ -357,8 +368,8 @@ func (b *loadGameBrowser) doRename() {
 	}
 
 	okBtn := tview.NewButton("[ OK ]").SetSelectedFunc(submit)
-	okBtn.SetBackgroundColor(tcell.ColorGold)
-	okBtn.SetLabelColor(tcell.ColorBlack)
+	okBtn.SetBackgroundColor(theme.Color(theme.RoleAccent))
+	okBtn.SetLabelColor(theme.Color(theme.RoleBackground))
 	cancelBtn := tview.NewButton("[ Cancel ]").SetSelectedFunc(close)
 
 	// Enter in the input field submits.
@@ -383,8 +394,8 @@ func (b *loadGameBrowser) doRename() {
 		AddItem(btnRow, 1, 0, false)
 	inner.SetBorder(true).
 		SetTitle(" Rename Save ").
-		SetTitleColor(tcell.ColorGold).
-		SetBorderColor(tcell.ColorGold)
+		SetTitleColor(theme.Color(theme.RoleAccent)).
+		SetBorderColor(theme.Color(theme.RoleAccent))
 
 	// Tab cycles input → OK → Cancel; Esc cancels from anywhere on the modal.
 	focusOrder := []tview.Primitive{input, okBtn, cancelBtn}
@@ -460,7 +471,7 @@ func rowLabel(s game.SaveInfo, prefix string, active bool) string {
 	if tag != "" {
 		tag = "   " + tag
 	}
-	return fmt.Sprintf("%s%s   [#8b949e]%s   %s[-]%s", prefix, s.Name, age, relativeTime(s.Timestamp), tag)
+	return fmt.Sprintf("%s%s   [gray]%s   %s[-]%s", prefix, s.Name, age, relativeTime(s.Timestamp), tag)
 }
 
 // rowTag returns the trailing status tag for a (non-corrupt) save row, or "".
@@ -519,7 +530,7 @@ const detailSep = " [gold]·[-] "
 func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) string {
 	if s.Corrupt {
 		return fmt.Sprintf(
-			"[red]⚠ Corrupt save — cannot be loaded[-]\n[#8b949e]File time: %s[-]",
+			"[red]⚠ Corrupt save — cannot be loaded[-]\n[gray]File time: %s[-]",
 			s.Timestamp.Format("Jan 2, 2006 3:04 PM"),
 		)
 	}
@@ -534,15 +545,15 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 	}
 	id = append(id, fmt.Sprintf("[white]%s[-]", ageDisplay(s.Age)))
 	if s.Epoch != "" {
-		id = append(id, fmt.Sprintf("[#8b949e]%s[-]", s.Epoch))
+		id = append(id, fmt.Sprintf("[gray]%s[-]", s.Epoch))
 	}
 	lines = append(lines, strings.Join(id, detailSep))
 
 	// Line 2 — civilisation footprint.
 	lines = append(lines, strings.Join([]string{
-		fmt.Sprintf("[#8b949e]Population[-] [white]%s[-]", commafy(s.Population)),
-		fmt.Sprintf("[#8b949e]Buildings[-] [white]%s[-]", commafy(s.Buildings)),
-		fmt.Sprintf("[#8b949e]Wonders[-] [white]%s[-]", commafy(s.Wonders)),
+		fmt.Sprintf("[gray]Population[-] [white]%s[-]", commafy(s.Population)),
+		fmt.Sprintf("[gray]Buildings[-] [white]%s[-]", commafy(s.Buildings)),
+		fmt.Sprintf("[gray]Wonders[-] [white]%s[-]", commafy(s.Wonders)),
 	}, detailSep))
 
 	// Line 3 — progress markers. Milestones show "done/total" only when the total
@@ -552,15 +563,15 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 		milestones = fmt.Sprintf("%s/%s", commafy(s.MilestonesDone), commafy(s.MilestonesTotal))
 	}
 	lines = append(lines, strings.Join([]string{
-		fmt.Sprintf("[#8b949e]Milestones[-] [white]%s[-]", milestones),
-		fmt.Sprintf("[#8b949e]Techs[-] [white]%s[-]", commafy(s.Techs)),
-		fmt.Sprintf("[#8b949e]Soldiers[-] [white]%s[-]", commafy(s.Soldiers)),
+		fmt.Sprintf("[gray]Milestones[-] [white]%s[-]", milestones),
+		fmt.Sprintf("[gray]Techs[-] [white]%s[-]", commafy(s.Techs)),
+		fmt.Sprintf("[gray]Soldiers[-] [white]%s[-]", commafy(s.Soldiers)),
 	}, detailSep))
 
 	// Line 4 — prestige + morale.
 	lines = append(lines, strings.Join([]string{
-		fmt.Sprintf("[#8b949e]Prestige[-] [white]Lv %s[-] [#8b949e](%s pts)[-]", commafy(s.PrestigeLevel), commafy(s.PrestigeTotal)),
-		fmt.Sprintf("[#8b949e]Morale[-] [white]%.0f%%[-]", s.Morale*100),
+		fmt.Sprintf("[gray]Prestige[-] [white]Lv %s[-] [gray](%s pts)[-]", commafy(s.PrestigeLevel), commafy(s.PrestigeTotal)),
+		fmt.Sprintf("[gray]Morale[-] [white]%.0f%%[-]", s.Morale*100),
 	}, detailSep))
 
 	// Line 4b — account attribution. Pre-account/legacy saves show a dash; saves
@@ -568,11 +579,11 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 	// "(another account)". Only the short id prefix is shown — never the full id.
 	switch {
 	case s.AccountID == "":
-		lines = append(lines, "[#8b949e]Account:[-] [#8b949e]— (pre-account save)[-]")
+		lines = append(lines, "[gray]Account:[-] [gray]— (pre-account save)[-]")
 	case s.AccountID == currentAccountID && currentAccountID != "":
-		lines = append(lines, fmt.Sprintf("[#8b949e]Account:[-] [white]%s[-] [#8b949e](this account)[-]", shortAccountID(s.AccountID)))
+		lines = append(lines, fmt.Sprintf("[gray]Account:[-] [white]%s[-] [gray](this account)[-]", shortAccountID(s.AccountID)))
 	default:
-		lines = append(lines, fmt.Sprintf("[#8b949e]Account:[-] [white]%s[-] [yellow](another account)[-]", shortAccountID(s.AccountID)))
+		lines = append(lines, fmt.Sprintf("[gray]Account:[-] [white]%s[-] [yellow](another account)[-]", shortAccountID(s.AccountID)))
 	}
 
 	// Line 5 — looming catastrophe warning (omitted entirely when none pending).
@@ -582,7 +593,7 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 
 	// Line 6 — save metadata.
 	lines = append(lines, fmt.Sprintf(
-		"[#8b949e]Saved[-] %s [gold]·[-] [#8b949e]%s ticks[-]",
+		"[gray]Saved[-] %s [gold]·[-] [gray]%s ticks[-]",
 		s.Timestamp.Format("Jan 2, 2006 3:04 PM"), commafy(s.Tick),
 	))
 
@@ -590,9 +601,9 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 	// present (deleted/renamed) is marked "(detached)" rather than implying a link.
 	if s.ParentName != "" && s.ParentName != s.Name {
 		if parentPresent {
-			lines = append(lines, fmt.Sprintf("[#8b949e]Branched from: %s[-]", s.ParentName))
+			lines = append(lines, fmt.Sprintf("[gray]Branched from: %s[-]", s.ParentName))
 		} else {
-			lines = append(lines, fmt.Sprintf("[#8b949e]Branched from: %s (detached)[-]", s.ParentName))
+			lines = append(lines, fmt.Sprintf("[gray]Branched from: %s (detached)[-]", s.ParentName))
 		}
 	}
 

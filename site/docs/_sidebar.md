@@ -10,6 +10,7 @@
   - [All Commands](commands.md)
   - [Saving & Loading](saving-and-loading.md)
   - [Account & Recovery](account.md)
+  - [Themes & Accessibility](themes.md)
   - [Resources](resources.md)
   - [Workers](villagers.md)
 

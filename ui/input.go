@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // CommandResult is the return value of HandleCommand. The caller (Dashboard)
@@ -116,6 +117,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdLoad(args, engine)
 	case "account", "acct":
 		return cmdAccount(args, engine)
+	case "theme":
+		return cmdTheme(args, engine)
 	default:
 		return CommandResult{
 			Message: fmt.Sprintf("Unknown command: %s. Type 'help' for commands.", cmd),
@@ -699,6 +702,11 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
 		engine.SetAccount(restored)
+		// Re-resolve the active theme against the now-installed account so the UI
+		// doesn't keep the prior account's theme after an identity swap (theming.md
+		// §6). A recovery code carries identity only, so a fresh restore resolves to
+		// Forge; a restore of an account with a stored theme honors it.
+		applyAccountTheme(engine)
 		return CommandResult{
 			Message: fmt.Sprintf("Identity restored: %s", shortAccountID(restored.AccountID)),
 			Type:    "success",
@@ -839,6 +847,115 @@ func cmdSaveList() CommandResult {
 			s.Name, s.Timestamp.Format("2006-01-02 15:04:05"), age))
 	}
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
+
+// cmdTheme handles the `theme` command's text paths:
+//   - `theme`        → directs the player to the picker (the interactive picker
+//     page is opened by the dashboard intercept; this fallback covers the
+//     command-table path and tests, which can't open an interactive page).
+//   - `theme list`   → lists every theme (name, key, active marker, accessible note).
+//   - `theme <key>`  → switches directly to a theme by key if it exists, else an
+//     error listing the valid keys.
+//
+// theme.SetActive applies the name-remap + restyle; the dashboard redraws on its
+// next tick, so the switch shows up live without an explicit Draw here.
+//
+// engine bridges to the account layer (theming.md §6): on a successful switch we
+// persist the new active theme account-wide so a CLI switch survives saves, and the
+// theme is gated through themeAvailable so locked flavor themes (Phase 3) refuse.
+// engine/Account() are nil-guarded — the game must run accountless.
+func cmdTheme(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 {
+		return CommandResult{
+			Message: "Usage: theme list | theme <key>. Type `theme` from the menu (or open it) for the live picker.",
+			Type:    "info",
+		}
+	}
+	if strings.ToLower(args[0]) == "list" {
+		return cmdThemeList(themeAccount(engine))
+	}
+
+	key := strings.ToLower(args[0])
+	t, ok := theme.ByKey(key)
+	if !ok {
+		return CommandResult{
+			Message: fmt.Sprintf("Unknown theme: %s. Valid: %s", key, strings.Join(themeKeys(), ", ")),
+			Type:    "error",
+		}
+	}
+	// Unlock gate (theming.md §4/§5): refuse a known-but-locked theme. No theme is
+	// locked today (all shipped themes are Accessible/Forge); this is the Phase-3 seam.
+	if !themeAvailable(themeAccount(engine), t) {
+		return CommandResult{Message: themeUnavailableMsg, Type: "error"}
+	}
+	if err := theme.SetActive(t.Key); err != nil {
+		return CommandResult{Message: err.Error(), Type: "error"}
+	}
+	theme.Restyle()
+	// Persist account-wide so a CLI switch survives saves (theming.md §6). Nil-guarded;
+	// the Save error is non-fatal — the theme is already applied, so we report success
+	// regardless rather than rolling back a working visual change over a write hiccup.
+	if acct := themeAccount(engine); acct != nil {
+		_ = acct.SetActiveTheme(t.Key)
+	}
+	return CommandResult{Message: fmt.Sprintf("Theme set: %s", t.Name), Type: "success"}
+}
+
+// themeAccount returns engine's account, or nil when accountless. Mirrors the
+// picker's account() guard so the command + picker share one nil-safe accessor.
+func themeAccount(engine *game.GameEngine) *game.Account {
+	if engine == nil {
+		return nil
+	}
+	return engine.Account()
+}
+
+// cmdThemeList renders the `theme list` output: one line per theme with its name,
+// key, an active marker, and a status note. Unlocked themes show "(accessible)" when
+// applicable; a LOCKED flavor theme shows "🔒 <unlock hint>" instead, so the player
+// sees exactly how to earn it (theming.md §5/§7), e.g. "monochrome  🔒 Reach the
+// Information Age".
+//
+// acct may be nil (accountless play / tests): with no account only the always-
+// available set (Accessible + Forge) is unlocked, so the flavor themes correctly
+// render as locked with their hints.
+func cmdThemeList(acct *game.Account) CommandResult {
+	activeKey := theme.Active().Key
+	var lines []string
+	lines = append(lines, "[gold]Themes:[-]")
+	for _, t := range theme.All() {
+		marker := "  "
+		if t.Key == activeKey {
+			marker = "[gold]●[-] "
+		}
+		note := ""
+		switch {
+		case !themeAvailable(acct, t):
+			// Locked flavor theme: show the unlock condition rather than nothing.
+			hint := t.UnlockHint
+			if hint == "" {
+				hint = "unlock via a milestone"
+			}
+			note = fmt.Sprintf("  [red]🔒[-] [gray]%s[-]", hint)
+		case t.Accessible:
+			note = "  [cyan](accessible)[-]"
+		}
+		lines = append(lines, fmt.Sprintf("%s[white]%-18s[-] [gray]%s[-]%s",
+			marker, t.Name, t.Key, note))
+	}
+	lines = append(lines, "[gray]Use `theme <key>` to switch.[-]")
+	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
+
+// themeKeys returns every registered theme key in display order, for usage/error
+// messages and autocomplete.
+func themeKeys() []string {
+	all := theme.All()
+	keys := make([]string, 0, len(all))
+	for _, t := range all {
+		keys = append(keys, t.Key)
+	}
+	return keys
 }
 
 func cmdResearch(args []string, engine *game.GameEngine) CommandResult {

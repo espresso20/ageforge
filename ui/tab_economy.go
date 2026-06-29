@@ -10,6 +10,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // cultureThresholds defines the culture breakpoints at which rewards unlock.
@@ -34,11 +35,11 @@ var cultureThresholdLabels = []string{
 }
 
 // cultureProgressBar returns a 10-char wide bar using ▓/░ characters.
-// Filled portion uses BarFillColor (purple), empty portion uses BarEmptyColor (dark gray).
+// Filled portion uses BarFillColor (Accent role), empty uses BarEmptyColor (Dim role).
 func cultureProgressBar(current, max float64) string {
 	const width = 10
 	if max <= 0 {
-		return "[" + BarEmptyColor + "]" + strings.Repeat("░", width) + "[-]"
+		return BarEmptyColor() + strings.Repeat("░", width) + "[-]"
 	}
 	ratio := current / max
 	if ratio > 1 {
@@ -49,7 +50,7 @@ func cultureProgressBar(current, max float64) string {
 	}
 	filled := int(ratio * float64(width))
 	empty := width - filled
-	return "[" + BarFillColor + "]" + strings.Repeat("▓", filled) + "[" + BarEmptyColor + "]" + strings.Repeat("░", empty) + "[-]"
+	return BarFillColor() + strings.Repeat("▓", filled) + BarEmptyColor() + strings.Repeat("░", empty) + "[-]"
 }
 
 // formatCultureRow builds the culture resource row string.
@@ -152,13 +153,20 @@ func NewEconomyTab() *EconomyTab {
 	t := &EconomyTab{}
 
 	t.resourceTV = tview.NewTextView().SetDynamicColors(true)
-	t.resourceTV.SetBorder(true).SetTitle(" Resources ").SetTitleColor(ColorResource)
+	t.resourceTV.SetBorder(true).SetTitle(" Resources ")
 
 	t.buildingTV = tview.NewTextView().SetDynamicColors(true).SetScrollable(true)
-	t.buildingTV.SetBorder(true).SetTitle(" Buildings ").SetTitleColor(ColorBuilding)
+	t.buildingTV.SetBorder(true).SetTitle(" Buildings ")
 
 	t.constructionTV = tview.NewTextView().SetDynamicColors(true)
-	t.constructionTV.SetBorder(true).SetTitle(" Under Construction ").SetTitleColor(ColorBuilding)
+	t.constructionTV.SetBorder(true).SetTitle(" Under Construction ")
+
+	// Persistent tab chrome: enroll titles so a live theme switch restyles them.
+	theme.Track(func() {
+		t.resourceTV.SetTitleColor(theme.Color(theme.RoleLabel))
+		t.buildingTV.SetTitleColor(theme.Color(theme.RoleHighlight))
+		t.constructionTV.SetTitleColor(theme.Color(theme.RoleHighlight))
+	})
 
 	// Left: resources (tall) + under construction (compact), Right: buildings
 	t.leftCol = tview.NewFlex().SetDirection(tview.FlexRow).
@@ -365,11 +373,11 @@ var domainToLabel = map[string]string{
 }
 
 // workerAssignBar returns a 10-char ▓/░ bar for assigned/capacity.
-// Filled portion uses BarFillColor (purple), empty portion uses BarEmptyColor (dark gray).
+// Filled portion uses BarFillColor (Accent role), empty uses BarEmptyColor (Dim role).
 func workerAssignBar(assigned, capacity int) string {
 	const width = 10
 	if capacity <= 0 {
-		return "[" + BarEmptyColor + "]" + strings.Repeat("░", width) + "[-]"
+		return BarEmptyColor() + strings.Repeat("░", width) + "[-]"
 	}
 	ratio := float64(assigned) / float64(capacity)
 	if ratio > 1 {
@@ -380,7 +388,7 @@ func workerAssignBar(assigned, capacity int) string {
 	}
 	filled := int(ratio * float64(width))
 	empty := width - filled
-	return "[" + BarFillColor + "]" + strings.Repeat("▓", filled) + "[" + BarEmptyColor + "]" + strings.Repeat("░", empty) + "[-]"
+	return BarFillColor() + strings.Repeat("▓", filled) + BarEmptyColor() + strings.Repeat("░", empty) + "[-]"
 }
 
 // resourceBar returns a width-char bar using █/░ characters with color based on fill level.
@@ -468,7 +476,7 @@ func (t *EconomyTab) refreshUnderConstruction(state game.GameState) {
 					filled = barWidth
 				}
 			}
-			bar := "[" + BarFillColor + "]" + strings.Repeat("█", filled) + "[" + BarEmptyColor + "]" + strings.Repeat("░", barWidth-filled) + "[-]"
+			bar := BarFillColor() + strings.Repeat("█", filled) + BarEmptyColor() + strings.Repeat("░", barWidth-filled) + "[-]"
 			fmt.Fprintf(&sb, " [yellow]%-22s[-] %s [gray]%d ticks[-]\n", label, bar, g.minTicks)
 		}
 	}

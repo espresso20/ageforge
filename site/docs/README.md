@@ -13,6 +13,7 @@ AgeForge runs entirely in your terminal using a full-screen TUI built with Go + 
 | [Installation](getting-started.md) | Download and run in 3 steps |
 | [How to Play](how-to-play.md) | Core gameplay loop explained |
 | [All Commands](commands.md) | Full command reference |
+| [Themes & Accessibility](themes.md) | Palettes, colorblind-safe + high-contrast themes |
 | [The 22 Ages](ages.md) | Every age, its requirements, and unlocks |
 | [Buildings](buildings.md) | All 284 buildings including wonders |
 | [Technologies](technologies.md) | All 52 techs with effects |

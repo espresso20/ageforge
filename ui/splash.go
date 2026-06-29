@@ -9,6 +9,7 @@ import (
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // eliteMessages are shown on the splash to players who have achieved the elite badge.
@@ -40,8 +41,12 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	// ── Single action list ───────────────────────────────────────────────────
 	mainList := tview.NewList()
 	mainList.SetBorder(false)
-	mainList.SetSelectedBackgroundColor(tcell.ColorGold)
-	mainList.SetSelectedTextColor(tcell.ColorBlack)
+	// Selection backs light text → Selection role (dark slate under Forge), not the
+	// gold Accent (white-on-gold is unreadable; see theme/themes_forge.go).
+	theme.Track(func() {
+		mainList.SetSelectedBackgroundColor(theme.Color(theme.RoleSelection)).
+			SetSelectedTextColor(theme.Color(theme.RoleText))
+	})
 	mainList.ShowSecondaryText(false)
 
 	// The Load Game browser lists every save (player-named + autosave) and handles
@@ -67,6 +72,13 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 				go engine.Start()
 			})
 		})
+	})
+	mainList.AddItem("  ◈  Themes", "", 't', func() {
+		// Opaque full-screen picker, same lifecycle as Load Game — the canvas runs
+		// underneath and is still live when the player returns via Enter/Esc.
+		page := CreateThemePickerPage(app, pages, engine, "splash")
+		pages.AddPage(themePickerPage, page, true, true)
+		app.SetFocus(page)
 	})
 	mainList.AddItem("  ✗  Quit", "", 'q', func() {
 		canvas.halt()
@@ -113,7 +125,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	footerTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[#8b949e]Arrow keys · Enter[-]")
+		SetText("[gray]Arrow keys · Enter[-]")
 
 	// ── Menu panel ────────────────────────────────────────────────────────────
 	menuPanel := tview.NewFlex().SetDirection(tview.FlexRow)
@@ -129,11 +141,11 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 		AddItem(mainList, 9, 0, true).
 		AddItem(versionTV, 1, 0, false).
 		AddItem(footerTV, 1, 0, false)
-	menuPanel.
-		SetBorder(true).
-		SetBorderColor(tcell.ColorGold).
-		SetTitle(" AgeForge ").
-		SetTitleColor(tcell.ColorGold)
+	menuPanel.SetBorder(true).SetTitle(" AgeForge ")
+	theme.Track(func() {
+		menuPanel.SetBorderColor(theme.Color(theme.RoleAccent)).
+			SetTitleColor(theme.Color(theme.RoleAccent))
+	})
 
 	// Centre the menu horizontally (fixed width)
 	menuRow := tview.NewFlex().SetDirection(tview.FlexColumn).
@@ -173,7 +185,7 @@ func showWipeConfirmation(app *tview.Application, pages *tview.Pages, engine *ga
 				pages.AddPage("splash", newSplash, true, true)
 			}
 		})
-	modal.SetBackgroundColor(tcell.ColorDarkRed)
+	modal.SetBackgroundColor(theme.Color(theme.RoleNegative))
 	pages.AddPage("wipe_confirm", modal, true, true)
 }
 
@@ -220,7 +232,7 @@ func showAccountWipeConfirmation(app *tview.Application, pages *tview.Pages, eng
 				showAccountWipeTypeGate(app, pages, engine, name, currentVersion)
 			}
 		})
-	step1.SetBackgroundColor(tcell.ColorDarkRed)
+	step1.SetBackgroundColor(theme.Color(theme.RoleNegative))
 	pages.AddPage(accountWipeConfirmPage, step1, true, true)
 }
 
@@ -237,21 +249,21 @@ func showAccountWipeTypeGate(app *tview.Application, pages *tview.Pages, engine 
 		SetLabel("Account name: ").
 		SetFieldWidth(40).
 		// Dark slate field so white text stays legible on the dark-red modal.
-		SetFieldBackgroundColor(tcell.NewRGBColor(48, 54, 61)).
-		SetFieldTextColor(tcell.ColorWhite)
+		SetFieldBackgroundColor(theme.Color(theme.RoleSelection)).
+		SetFieldTextColor(theme.Color(theme.RoleText))
 
 	promptTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(fmt.Sprintf(
-			"[white]Type this name exactly to confirm:[-]\n[yellow::b]%s[-]\n[#f0a0a0]This permanently deletes your account. It CANNOT be undone.[-]",
+			"[white]Type this name exactly to confirm:[-]\n[yellow::b]%s[-]\n[red]This permanently deletes your account. It CANNOT be undone.[-]",
 			expectedName,
 		))
 
 	hintTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[#f0a0a0]Enter: confirm  ·  Esc: cancel[-]")
+		SetText("[red]Enter: confirm  ·  Esc: cancel[-]")
 
 	// abort removes the type gate and returns to the splash without wiping.
 	abort := func() {
@@ -284,6 +296,10 @@ func showAccountWipeTypeGate(app *tview.Application, pages *tview.Pages, engine 
 				return
 			}
 			engine.SetAccount(newAcct)
+			// A wiped→recreated account starts on its own theme (ActiveTheme "" →
+			// Forge) rather than inheriting the previous account's theme (theming.md
+			// §6). The active theme is process-global, so reset it explicitly here.
+			applyAccountTheme(engine)
 		})
 	}
 
@@ -296,12 +312,12 @@ func showAccountWipeTypeGate(app *tview.Application, pages *tview.Pages, engine 
 	// Paint every interior primitive dark-red so the modal reads as one solid
 	// danger panel, not alternating dark/red bands. The input keeps its slate
 	// field bar (set above) for legibility; only its surrounding box goes red.
-	promptTV.SetBackgroundColor(tcell.ColorDarkRed)
-	errTV.SetBackgroundColor(tcell.ColorDarkRed)
-	hintTV.SetBackgroundColor(tcell.ColorDarkRed)
-	input.SetBackgroundColor(tcell.ColorDarkRed)
+	promptTV.SetBackgroundColor(theme.Color(theme.RoleNegative))
+	errTV.SetBackgroundColor(theme.Color(theme.RoleNegative))
+	hintTV.SetBackgroundColor(theme.Color(theme.RoleNegative))
+	input.SetBackgroundColor(theme.Color(theme.RoleNegative))
 	// Spacers match so the gaps between rows are the same dark-red.
-	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(tcell.ColorDarkRed) }
+	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(theme.Color(theme.RoleNegative)) }
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(promptTV, 3, 0, false).
 		AddItem(spacer(), 1, 0, false).
@@ -312,9 +328,9 @@ func showAccountWipeTypeGate(app *tview.Application, pages *tview.Pages, engine 
 		AddItem(hintTV, 1, 0, false)
 	inner.SetBorder(true).
 		SetTitle(" Confirm Account Wipe ").
-		SetTitleColor(tcell.ColorWhite).
-		SetBorderColor(tcell.ColorWhite)
-	inner.SetBackgroundColor(tcell.ColorDarkRed)
+		SetTitleColor(theme.Color(theme.RoleText)).
+		SetBorderColor(theme.Color(theme.RoleText))
+	inner.SetBackgroundColor(theme.Color(theme.RoleNegative))
 
 	// Width fits the longest warning line ("…It CANNOT be undone."). Height
 	// covers 9 content rows (3 prompt + 3 spacers + input + err + hint) + 2

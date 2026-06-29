@@ -2,6 +2,7 @@ package ui
 
 import (
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/theme"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 )
@@ -70,10 +71,14 @@ func (om *OverlayManager) Register(name, title string, provide OverlayProvider) 
 		SetScrollable(true).
 		SetWrap(true)
 	tv.SetBorder(true).
-		SetBorderColor(tcell.ColorGold).
-		SetTitle(" " + title + " — ESC to close ").
-		SetTitleColor(tcell.ColorGold).
-		SetBackgroundColor(tcell.ColorBlack)
+		SetTitle(" " + title + " — ESC to close ")
+	// Persistent overlay chrome (built once, reused on every Show): enroll so a live
+	// theme switch restyles the border/title/background.
+	theme.Track(func() {
+		tv.SetBorderColor(theme.Color(theme.RoleAccent)).
+			SetTitleColor(theme.Color(theme.RoleAccent)).
+			SetBackgroundColor(theme.Color(theme.RoleBackground))
+	})
 	tv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
 			om.Hide()
@@ -130,11 +135,13 @@ func (om *OverlayManager) buildWidgetRoot(we *widgetEntry, prim tview.Primitive)
 	// Use tview.Frame to add the gold border and title around any arbitrary primitive.
 	frame := tview.NewFrame(prim).
 		SetBorders(0, 0, 0, 0, 0, 0)
+	// Rebuilt per Show, so construction-read theme.Color (no Track needed): a later
+	// theme switch re-runs buildWidgetRoot on next open.
 	frame.SetBorder(true).
-		SetBorderColor(tcell.ColorGold).
+		SetBorderColor(theme.Color(theme.RoleAccent)).
 		SetTitle(" " + we.title + " — ESC to close ").
-		SetTitleColor(tcell.ColorGold).
-		SetBackgroundColor(tcell.ColorBlack)
+		SetTitleColor(theme.Color(theme.RoleAccent)).
+		SetBackgroundColor(theme.Color(theme.RoleBackground))
 	frame.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
 			om.Hide()

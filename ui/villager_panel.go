@@ -9,6 +9,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // WorkerPanel shows a compact workers summary grouped by building domain.
@@ -23,7 +24,8 @@ func NewWorkerPanel() *WorkerPanel {
 	vp.root = tview.NewTextView().
 		SetDynamicColors(true).
 		SetScrollable(true)
-	vp.root.SetBorder(true).SetTitle(" Workers ").SetTitleColor(ColorVillager)
+	vp.root.SetBorder(true).SetTitle(" Workers ")
+	theme.Track(func() { vp.root.SetTitleColor(theme.Color(theme.RoleAccent)) })
 	return vp
 }
 
@@ -264,7 +266,7 @@ func renderVillagerPanel(tv *tview.TextView, state *game.GameState) {
 // name (the morale band colour) rather than the fixed assignment fill colour.
 func moraleBandBar(filled, total, w int, fillColor string) string {
 	if total <= 0 {
-		return "[" + BarEmptyColor + "]" + strings.Repeat("░", w) + "[-]"
+		return BarEmptyColor() + strings.Repeat("░", w) + "[-]"
 	}
 	f := (filled * w) / total
 	if f > w {
@@ -273,13 +275,13 @@ func moraleBandBar(filled, total, w int, fillColor string) string {
 	if f < 0 {
 		f = 0
 	}
-	return "[" + fillColor + "]" + strings.Repeat("█", f) + "[" + BarEmptyColor + "]" + strings.Repeat("░", w-f) + "[-]"
+	return "[" + fillColor + "]" + strings.Repeat("█", f) + BarEmptyColor() + strings.Repeat("░", w-f) + "[-]"
 }
 
 // assignBar renders a small tview-colored progress bar of width w.
 func assignBar(filled, total, w int) string {
 	if total <= 0 {
-		return "[" + BarEmptyColor + "]" + strings.Repeat("░", w) + "[-]"
+		return BarEmptyColor() + strings.Repeat("░", w) + "[-]"
 	}
 	f := (filled * w) / total
 	if f > w {
@@ -288,5 +290,5 @@ func assignBar(filled, total, w int) string {
 	if f < 0 {
 		f = 0
 	}
-	return "[" + BarFillColor + "]" + strings.Repeat("█", f) + "[" + BarEmptyColor + "]" + strings.Repeat("░", w-f) + "[-]"
+	return BarFillColor() + strings.Repeat("█", f) + BarEmptyColor() + strings.Repeat("░", w-f) + "[-]"
 }

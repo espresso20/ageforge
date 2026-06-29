@@ -214,6 +214,9 @@ Voluntary catastrophes let you force an epoch event outside the normal roll. Use
 | `account export [path]` | Write a signed **progress** backup (unlocks, stats, achievements) to a file (default `data/account-export.json`) |
 | `account import <path> [replace]` | Restore a progress backup file — **merges** by default; add `replace` to overwrite wholesale |
 | `account wipe` | Points you to the main-menu **Wipe Account** action — the actual (permanent) wipe lives behind a type-your-name confirm, not this command |
+| `theme` | Open the **Themes** picker — browse palettes with live preview (also on the main menu) |
+| `theme list` | List every theme by name and key, marking the active one and noting which are accessible |
+| `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`) |
 | `dump` | Export logs to a file for debugging |
 | `help` | Open the Help panel — full command reference and list of available panels |
 
@@ -230,6 +233,28 @@ A bare `save` (no name) opens a prompt: **Overwrite** writes your current run to
 A bare `load` (no name) opens the **Load Game** browser so you can pick which save/branch to load from your save tree — it never assumes a slot. You can open it mid-game; `Esc` returns you to your current run without loading anything. `load <name>` skips the browser and loads that save directly.
 
 See [Saving & Loading](saving-and-loading.md) for the full save system.
+
+---
+
+## Themes
+
+AgeForge's interface colors are driven by a set of swappable themes. Open the picker with the **Themes** entry on the main menu, or type `theme` from the in-game prompt.
+
+| Command | Description |
+|---|---|
+| `theme` | Open the **Themes** picker — browse palettes with live preview (`↑`/`↓` previews, `Enter` keeps, `Esc` reverts) |
+| `theme list` | List every theme by name and key, marking the active one and the lock status of any theme you haven't unlocked |
+| `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`) |
+
+```
+theme
+theme list
+theme high_contrast
+```
+
+Your theme choice **persists per account** (saved in `account.json`, not in any game save), so it carries across every save and new game. There are 9 themes — the default **Forge** look, three always-unlocked **accessibility** themes (colorblind-safe + high-contrast), and five **flavor** themes you unlock by reaching later ages.
+
+See [Themes & Accessibility](themes.md) for the full list and unlock conditions.
 
 ---
 
