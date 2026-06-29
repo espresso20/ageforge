@@ -341,8 +341,9 @@ func (d *Dashboard) build() {
 		}
 	})
 
-	// Inject log panel into the economy tab's left column (below Under Construction)
-	d.economyTab.AddToLeftColumn(d.logTV, 0, 1)
+	// Inject log panel into the economy tab's left column (below Under Construction).
+	// Weight 2 (vs resources 3 / construction 1) gives the log more headspace.
+	d.economyTab.AddToLeftColumn(d.logTV, 0, 2)
 
 	// Mini worker summary box — sits below the sidebar in the right column
 	d.workerMiniTV = tview.NewTextView().SetDynamicColors(true)

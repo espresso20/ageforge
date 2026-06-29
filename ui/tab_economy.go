@@ -168,9 +168,11 @@ func NewEconomyTab() *EconomyTab {
 		t.constructionTV.SetTitleColor(theme.Color(theme.RoleHighlight))
 	})
 
-	// Left: resources (tall) + under construction (compact), Right: buildings
+	// Left: resources + under construction (compact); the log is injected below
+	// (Dashboard.AddToLeftColumn). Column weights resolve to 3:1:2
+	// resources:construction:log — trimmed resources to give the log more headspace.
 	t.leftCol = tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(t.resourceTV, 0, 4, false).
+		AddItem(t.resourceTV, 0, 3, false).
 		AddItem(t.constructionTV, 0, 1, false)
 
 	t.root = tview.NewFlex().SetDirection(tview.FlexColumn).
