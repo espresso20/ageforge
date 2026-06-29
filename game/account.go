@@ -678,6 +678,11 @@ func CreateAccount(name string) (*Account, error) {
 // player may have deliberately created. With no active account (empty id) it is a clean
 // no-op: it never falls back to removing the shared <root>/accounts root. Wiping twice (or
 // with nothing active) is a clean no-op — os.RemoveAll on a missing path is not an error.
+//
+// BACKUP: it delegates to WipeAccountByID(activeID), which snapshots the slot into
+// <root>/backups/ BEFORE removing it (the wipe is permanent, so we leave a recoverable copy).
+// The backup path is discarded here — the active-wipe callers don't surface it — and a backup
+// failure never blocks the wipe (only the wipe's own error is returned).
 func WipeAccount() error {
 	id := getActiveAccountID()
 	if id == "" {
@@ -685,16 +690,8 @@ func WipeAccount() error {
 		// <root>/accounts root, never a single account's slot.
 		return nil
 	}
-	if err := os.RemoveAll(accountDir(id)); err != nil {
-		return fmt.Errorf("failed to wipe account slot %s: %w", accountDir(id), err)
-	}
-	// Clear the active pointer so no stale slot is resolved next boot, and reset the
-	// in-memory active id.
-	if err := os.Remove(activeAccountPointerPath()); err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("failed to clear active-account pointer: %w", err)
-	}
-	setActiveAccountID("")
-	return nil
+	_, err := WipeAccountByID(id)
+	return err
 }
 
 // ExportAccountByID exports the progress blob for the account in slot id WITHOUT touching the
@@ -753,23 +750,37 @@ func AccountExportPath(id string) string {
 // it also clears the active-account pointer + resets the in-memory active id (mirroring
 // WipeAccount), so the next boot starts clean and the UI re-prompts. Wiping a non-active slot
 // leaves the active pointer alone.
-func WipeAccountByID(id string) error {
+//
+// BACKUP (best-effort, BEFORE removal): the wipe is permanent, so we snapshot the slot into
+// <root>/backups/ first via BackupAccount and RETURN that path so the UI can tell the player
+// where the recoverable copy landed. A backup failure does NOT block the wipe — the player
+// explicitly confirmed — it just yields backupPath="" (the backup error is intentionally not
+// fatal; only the wipe's own error is returned). Because the backups live OUTSIDE the slot
+// (<root>/backups, not <root>/accounts/<id>), the os.RemoveAll below never deletes the snapshot
+// it just took.
+func WipeAccountByID(id string) (backupPath string, err error) {
 	if id == "" {
 		// Never remove accountDir("") — that is the shared <root>/accounts root, not a slot.
-		return fmt.Errorf("cannot wipe account: empty id")
+		return "", fmt.Errorf("cannot wipe account: empty id")
 	}
-	if err := os.RemoveAll(accountDir(id)); err != nil {
-		return fmt.Errorf("failed to wipe account slot %s: %w", accountDir(id), err)
+	// Snapshot first. Best-effort: a backup error is swallowed (backupPath stays "") so the
+	// player's confirmed wipe still proceeds; the snapshot lives outside the slot, so it
+	// survives the removal below.
+	if path, backupErr := BackupAccount(id); backupErr == nil {
+		backupPath = path
+	}
+	if rmErr := os.RemoveAll(accountDir(id)); rmErr != nil {
+		return backupPath, fmt.Errorf("failed to wipe account slot %s: %w", accountDir(id), rmErr)
 	}
 	// If we just wiped the ACTIVE slot, clear the pointer + in-memory id so nothing stale is
 	// resolved next boot (a non-active wipe must leave the active account untouched).
 	if id == getActiveAccountID() {
-		if err := os.Remove(activeAccountPointerPath()); err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("failed to clear active-account pointer: %w", err)
+		if rmErr := os.Remove(activeAccountPointerPath()); rmErr != nil && !os.IsNotExist(rmErr) {
+			return backupPath, fmt.Errorf("failed to clear active-account pointer: %w", rmErr)
 		}
 		setActiveAccountID("")
 	}
-	return nil
+	return backupPath, nil
 }
 
 // shortID returns the first 8 chars of an account id (enough to recognize a slot at a glance),

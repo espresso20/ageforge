@@ -709,19 +709,22 @@ func (ge *GameEngine) RecoveryCodeForID(id string) (string, error) {
 
 // WipeAccountByID deletes the slot for account id (Phase D). It is the by-id sibling of the
 // active-only WipeAccount, used by the Accounts panel to wipe the SELECTED account. game.
-// WipeAccountByID removes only that slot and, if id was the active account, clears the active
-// pointer + in-memory id. When the wiped id matches ge's current account we also detach
-// ge.account (under the write lock) so the UI re-prompts/refreshes rather than holding a
-// now-orphaned account whose slot is gone. A non-active wipe leaves ge.account alone.
-func (ge *GameEngine) WipeAccountByID(id string) error {
+// WipeAccountByID snapshots the slot into <root>/backups/ BEFORE removal and returns that
+// backupPath (empty if the backup failed — the wipe still proceeds), removes only that slot,
+// and, if id was the active account, clears the active pointer + in-memory id. When the wiped
+// id matches ge's current account we also detach ge.account (under the write lock) so the UI
+// re-prompts/refreshes rather than holding a now-orphaned account whose slot is gone. A
+// non-active wipe leaves ge.account alone.
+func (ge *GameEngine) WipeAccountByID(id string) (string, error) {
 	wasActive := ge.AccountID() == id && id != ""
-	if err := WipeAccountByID(id); err != nil {
-		return err
+	backupPath, err := WipeAccountByID(id)
+	if err != nil {
+		return backupPath, err
 	}
 	if wasActive {
 		ge.SetAccount(nil)
 	}
-	return nil
+	return backupPath, nil
 }
 
 // StartNewNamedGame resets to a fresh game, makes `name` the active root save,

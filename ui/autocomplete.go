@@ -222,7 +222,7 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 		// Subcommands. `switch <name>` completes to the local account display names; the
 		// rest take args that aren't enumerable here (recover code, export/import paths).
 		if len(completed) == 0 {
-			return filterPrefix([]string{"list", "switch", "recover", "export", "import"}, partial, prefix)
+			return filterPrefix([]string{"list", "switch", "recover", "export", "backup", "import"}, partial, prefix)
 		}
 		if strings.ToLower(completed[0]) == "switch" {
 			return filterPrefix(localAccountNames(engine), partial, prefix)

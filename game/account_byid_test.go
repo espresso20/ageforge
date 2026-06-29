@@ -135,7 +135,7 @@ func TestWipeAccountByIDRemovesNonActiveSlotOnly(t *testing.T) {
 	}
 
 	// Wipe the NON-active slot A.
-	if err := WipeAccountByID(aID); err != nil {
+	if _, err := WipeAccountByID(aID); err != nil {
 		t.Fatalf("WipeAccountByID(A): %v", err)
 	}
 
@@ -174,7 +174,7 @@ func TestWipeAccountByIDActiveClearsPointer(t *testing.T) {
 	}
 	activeID := active.AccountID
 
-	if err := WipeAccountByID(activeID); err != nil {
+	if _, err := WipeAccountByID(activeID); err != nil {
 		t.Fatalf("WipeAccountByID(active): %v", err)
 	}
 
@@ -207,7 +207,7 @@ func TestWipeAccountByIDEmptyIDIsRefused(t *testing.T) {
 		t.Fatalf("CreateAccount: %v", err)
 	}
 
-	if err := WipeAccountByID(""); err == nil {
+	if _, err := WipeAccountByID(""); err == nil {
 		t.Fatal("WipeAccountByID(\"\") should error, not silently nuke the accounts root")
 	}
 

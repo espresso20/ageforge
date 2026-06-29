@@ -207,6 +207,9 @@ func (p *accountsPanel) handleKey(event *tcell.EventKey) *tcell.EventKey {
 		case 'e', 'E':
 			p.doExport()
 			return nil
+		case 'b', 'B':
+			p.doBackup()
+			return nil
 		case 'i', 'I':
 			p.doImport()
 			return nil
@@ -298,11 +301,38 @@ func (p *accountsPanel) doExport() {
 		p.showMessage("Export Failed", fmt.Sprintf("[red]%v[-]", err))
 		return
 	}
+	// Also take a FULL slot snapshot (account.json + saves/) alongside the progress blob. A
+	// backup failure doesn't fail the export — we just omit the line. Read by id, so the active
+	// account is untouched.
+	backupLine := ""
+	if backupPath, bErr := p.engine.BackupAccount(s.AccountID); bErr == nil {
+		backupLine = fmt.Sprintf("\n\n[gold]Full backup (account.json + saves):[-]\n%s", backupPath)
+	}
 	msg := fmt.Sprintf(
-		"[gold]Backed up %s[-]\n\n%s\n\nThis file carries this account's progress (unlocks, stats,\nachievements). Restore it with Import (i) on any machine.",
-		displayNameOr(s), path,
+		"[gold]Backed up %s[-]\n\n%s\n\nThis file carries this account's progress (unlocks, stats,\nachievements). Restore it with Import (i) on any machine.%s",
+		displayNameOr(s), path, backupLine,
 	)
 	p.showMessage("Account Exported", msg)
+}
+
+// doBackup takes a FULL snapshot of the SELECTED account's slot (account.json + saves/) into
+// <root>/backups/ and shows the path. Read by id, so the active account is never touched. This
+// is the standalone counterpart to the implicit backups that fire on export and wipe.
+func (p *accountsPanel) doBackup() {
+	s, ok := p.selected()
+	if !ok {
+		return
+	}
+	backupPath, err := p.engine.BackupAccount(s.AccountID)
+	if err != nil {
+		p.showMessage("Backup Failed", fmt.Sprintf("[red]%v[-]", err))
+		return
+	}
+	msg := fmt.Sprintf(
+		"[gold]Backed up %s[-]\n\n%s\n\nThis is a FULL snapshot: account.json plus every save in this\naccount's slot. Restore by copying the folder's contents back\ninto data/accounts/<id>/. Only the 10 most recent are kept.",
+		displayNameOr(s), backupPath,
+	)
+	p.showMessage("Account Backed Up", msg)
 }
 
 // doImport opens a path-entry modal (defaulting to the selected account's export path), reads
@@ -470,7 +500,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(fmt.Sprintf(
-			"[white]Type this name exactly to confirm:[-]\n[yellow::b]%s[-]\n[red]This permanently deletes the account. It CANNOT be undone.[-]",
+			"[white]Type this name exactly to confirm:[-]\n[yellow::b]%s[-]\n[red]This permanently deletes the account.[-]\n[gray]A full backup is saved to data/backups/ first, so a copy is recoverable.[-]",
 			expectedName,
 		))
 
@@ -490,13 +520,14 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 			p.app.SetFocus(input)
 			return
 		}
-		if err := p.engine.WipeAccountByID(id); err != nil {
+		backupPath, err := p.engine.WipeAccountByID(id)
+		if err != nil {
 			errTV.SetText(fmt.Sprintf("[red]Wipe failed: %v[-]", err))
 			p.app.SetFocus(input)
 			return
 		}
 		p.pages.RemovePage(accountsWipeTypeGate)
-		p.resolveAfterWipe(wasActive)
+		p.resolveAfterWipe(wasActive, backupPath)
 	}
 
 	input.SetDoneFunc(func(key tcell.Key) {
@@ -512,7 +543,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 	input.SetBackgroundColor(theme.Color(theme.RoleNegative))
 	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(theme.Color(theme.RoleNegative)) }
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(promptTV, 3, 0, false).
+		AddItem(promptTV, 4, 0, false).
 		AddItem(spacer(), 1, 0, false).
 		AddItem(input, 1, 0, true).
 		AddItem(spacer(), 1, 0, false).
@@ -525,7 +556,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 		SetBorderColor(theme.Color(theme.RoleText))
 	inner.SetBackgroundColor(theme.Color(theme.RoleNegative))
 
-	modal := centeredModal(inner, 68, 11)
+	modal := centeredModal(inner, 72, 13)
 	modal.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
 		if ev.Key() == tcell.KeyEsc {
 			abort()
@@ -541,8 +572,10 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 // resolveAfterWipe handles the post-wipe state. The engine cleared ge.account if the wiped slot
 // was active (so Account() is nil now). If NO accounts remain, route to the first-run name flow
 // so the player mints a fresh account. Otherwise: when the active account was wiped, re-theme to
-// the default (the live account is gone); always refresh the list.
-func (p *accountsPanel) resolveAfterWipe(wasActive bool) {
+// the default (the live account is gone); always refresh the list. backupPath is the snapshot
+// the wipe took before deletion (empty if the backup failed) — surfaced so the player knows a
+// recoverable copy survives the wipe.
+func (p *accountsPanel) resolveAfterWipe(wasActive bool, backupPath string) {
 	remaining := p.engine.ListAccounts()
 	if len(remaining) == 0 {
 		// Nothing left — mint a new account via the first-run name flow (mirrors splash's
@@ -565,7 +598,11 @@ func (p *accountsPanel) resolveAfterWipe(wasActive bool) {
 	}
 	p.refresh(0)
 	p.app.SetFocus(p.list)
-	p.status.SetText("[gray]Account wiped.[-]")
+	if backupPath != "" {
+		p.status.SetText(fmt.Sprintf("[gray]Account wiped — backup saved to %s[-]", backupPath))
+	} else {
+		p.status.SetText("[gray]Account wiped.[-]")
+	}
 }
 
 // showMessage pops a simple OK modal with a title + body. Opaque background so nothing bleeds.
@@ -672,6 +709,7 @@ func accountsFooterBar() string {
 		footerButton("Enter", "Switch"),
 		footerButton("n", "New"),
 		footerButton("e", "Export"),
+		footerButton("b", "Backup"),
 		footerButton("i", "Import"),
 		footerButton("r", "Recovery"),
 		footerButton("w", "Wipe"),

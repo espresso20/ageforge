@@ -599,6 +599,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		lines = append(lines, "  account list                    → list your local accounts")
 		lines = append(lines, "  account switch <name>           → switch to an existing local account")
 		lines = append(lines, "  account export [path]           → write this account's progress backup")
+		lines = append(lines, "  account backup                  → full snapshot (account.json + saves) to data/backups/")
 		lines = append(lines, "  account import <path> [replace] → restore an account from a backup (merges by default)")
 		lines = append(lines, "")
 		lines = append(lines, "[red]Wipe Account[-] (permanently delete an account's identity + unlocks + stats)")
@@ -696,6 +697,29 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		lines = append(lines, "This file is your PROGRESS backup (unlocks, stats, achievements). Keep it")
 		lines = append(lines, "safe — it is separate from your recovery code, which carries only identity.")
 		lines = append(lines, "Restore it with:  account import "+path)
+		// Also take a FULL slot snapshot (account.json + saves/). A backup failure must not fail
+		// the export — append a soft note instead.
+		if backupPath, bErr := engine.BackupAccount(acct.AccountID); bErr == nil {
+			lines = append(lines, "")
+			lines = append(lines, fmt.Sprintf("[gold]Full backup (account.json + saves):[-] %s", backupPath))
+		}
+		return CommandResult{Message: strings.Join(lines, "\n"), Type: "success"}
+
+	case "backup":
+		// A FULL snapshot of the ACTIVE account's slot (account.json + saves/) into
+		// <root>/backups/. Distinct from export, which serializes only meta-progression.
+		if acct == nil {
+			return CommandResult{Message: "No account to back up.", Type: "warning"}
+		}
+		backupPath, err := engine.BackupAccount(acct.AccountID)
+		if err != nil {
+			return CommandResult{Message: fmt.Sprintf("Backup failed: %v", err), Type: "error"}
+		}
+		var lines []string
+		lines = append(lines, fmt.Sprintf("[gold]Full backup saved:[-] %s", backupPath))
+		lines = append(lines, "A complete snapshot of this account: account.json plus every save in")
+		lines = append(lines, "its slot. Restore by copying the folder's contents back into")
+		lines = append(lines, "data/accounts/<id>/. Only the 10 most recent backups per account are kept.")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "success"}
 
 	case "import":
@@ -793,7 +817,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 
 	default:
 		return CommandResult{
-			Message: "Usage: account  |  account list  |  account switch <name>  |  account recover <code>  |  account export [path]  |  account import <path> [replace]  |  account wipe",
+			Message: "Usage: account  |  account list  |  account switch <name>  |  account recover <code>  |  account export [path]  |  account backup  |  account import <path> [replace]  |  account wipe",
 			Type:    "error",
 		}
 	}

@@ -66,6 +66,7 @@ From the panel:
 | `Enter` | **Switch** to the highlighted account (it becomes active; its saves load in the Load Game browser) |
 | `n` | **New account** — name and create a fresh account alongside your existing ones |
 | `e` | **Export** the highlighted account to a signed backup file |
+| `b` | **Backup** the highlighted account — a full snapshot of its slot (`account.json` + `saves/`) to `data/backups/` (see [Backups](#backups)) |
 | `i` | **Import** an account from a backup file |
 | `r` | Show a **recovery code** for restoring an identity (see [The recovery code](#the-recovery-code)) |
 | `w` | **Wipe** the highlighted account (permanent — behind a type-the-name confirm) |
@@ -131,6 +132,36 @@ account import /path/to/my-ageforge-backup.json replace
 If the file is missing or has been tampered with, the import is rejected with a clear error and your accounts are left unchanged — corrupt data never gets imported.
 
 > **No server, so no magic.** Progress recovery only works if you exported it first. If a machine's `./data/` is gone and you never exported, that account's earned progress is gone too — there's no cloud copy to pull back.
+
+---
+
+## Backups
+
+A **backup** is a full on-disk snapshot of an account's slot: a copy of its `account.json` **plus a recursive copy of that slot's `saves/` folder**. It's a heavier, more complete thing than an [export](#exporting--importing-accounts) — an export serializes only the account's meta-progression (unlocks, lifetime stats, achievements, prefs) into a single blob and carries **no saves**, whereas a backup captures the whole slot, your games included.
+
+Backups happen on **three triggers**:
+
+- **Before any wipe.** Both the Accounts-panel wipe (the type-the-name confirm) and the active-account wipe snapshot the slot first, so a wipe always leaves a recoverable copy behind. (The wipe still proceeds even if the backup somehow fails.)
+- **On export.** `account export` and the panel's Export (`e`) take a full backup right after writing the export blob, and report its path.
+- **On demand.** Run `account backup` to snapshot the **active** account, or press `b` in the **Accounts** panel to snapshot the **highlighted** one.
+
+Backups live **under the data root**, alongside (not inside) `data/accounts/`:
+
+```
+data/
+└── backups/
+    └── <name>-<id8>-<timestamp>/
+        ├── account.json
+        └── saves/
+```
+
+`<name>` is the filesystem-safe display name, `<id8>` is the first 8 characters of the account ID, and `<timestamp>` is `YYYYMMDD-HHMMSS`. Because backups sit outside `data/accounts/`, **wiping an account's slot never deletes its backups.**
+
+> **Retention: the last 10 per account.** After each new backup, older backups for *that* account are pruned automatically — only the **10 most recent** are kept. Other accounts' backups are never touched.
+
+### Restoring from a backup
+
+There's no restore command — a backup is just files, so you put them back by hand. Copy the contents of a backup folder — its `account.json` and its `saves/` — back into that account's slot at `data/accounts/<id>/`. The `<id8>` in the backup folder name is the short prefix of the full `<id>`; the full ID is the slot directory name under `data/accounts/`.
 
 ---
 
