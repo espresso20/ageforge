@@ -138,7 +138,7 @@ Costs were rebalanced to flatter curves. Production, military, research, and tra
 
 ### Build-cost reductions
 
-A handful of **milestone rewards** (Master Builder, Grand Architect, and others) and one **research tech** (Civil Engineering) grant build-cost reductions of −3% to −5% each. These now apply to your cumulative scaled cost: the cost above is multiplied by `(1 + Σ build_cost)`, floored so the cost never drops below 10% of base. Stacked, the currently available reductions reach roughly **−24%**. The discount is reflected in the cost the build menu shows you and in what you're actually charged — there's no hidden mismatch between display and charge. You don't need to do anything to opt in; earning the milestone or completing the tech is enough.
+A handful of **milestone rewards** (Master Builder, Grand Architect, and others) and two **research techs** (Civil Engineering −5%, Nanofabrication −8%) grant build-cost reductions of −3% to −8% each. These now apply to your cumulative scaled cost: the cost above is multiplied by `(1 + Σ build_cost)`, floored so the cost never drops below 10% of base. Stacked, the currently available reductions reach roughly **−32%**. The discount is reflected in the cost the build menu shows you and in what you're actually charged — there's no hidden mismatch between display and charge. You don't need to do anything to opt in; earning the milestone or completing the tech is enough.
 
 **Example:** Gathering Camp, BaseCost=16 wood, CostScale=1.15, none built or queued:
 - 1st: 16 wood
@@ -225,6 +225,8 @@ Several lineages change what resource they produce as you advance through epochs
 | Electric Era | oil |
 | Digital Era+ | nanobots |
 | Neon / Cosmic Era | quantum flux |
+
+**Nano Foundry** (Modern Age) is a standalone nanobot producer outside the lineage chain — it gives nanobots a production path as soon as they unlock, two ages before the lineage's own Bio Fabrication Lab. Built by `engineering` workers; +80 nanobots/tick.
 
 ### Geological Extraction (Lineage 4)
 

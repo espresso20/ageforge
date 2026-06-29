@@ -165,7 +165,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// tier 11 — digital_age  output=titanium  rate=2.0
 	b = append(b, BuildingDef{
 		Name: "Nano Alloy Plant", Key: "nano_alloy_plant", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 460e9, "data": 57e9, "steel": 670e9},
+		BaseCost:    map[string]float64{"electricity": 460e9, "data": 57e9, "steel": 670e9, "nanobots": 4000},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "production", Target: "titanium", Value: 2.0}},
 		BuildTicks:  30000,

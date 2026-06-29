@@ -102,7 +102,7 @@ func buildingsLineageEnergy() []BuildingDef {
 	// tier 6 — digital_age  output=electricity  rate=800
 	b = append(b, BuildingDef{
 		Name: "Quantum Battery Array", Key: "quantum_battery_array", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 490e9, "data": 62e9, "steel": 720e9},
+		BaseCost:    map[string]float64{"electricity": 490e9, "data": 62e9, "steel": 720e9, "nanobots": 3200},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "production", Target: "electricity", Value: 800}},
 		BuildTicks:  500000,
@@ -115,7 +115,7 @@ func buildingsLineageEnergy() []BuildingDef {
 	// tier 7 — cyberpunk_age  output=electricity  rate=1600
 	b = append(b, BuildingDef{
 		Name: "Dark Energy Tap", Key: "dark_energy_tap", Category: "production",
-		BaseCost:    map[string]float64{"data": 240e9, "crypto": 1.25e12, "electricity": 2.5e12},
+		BaseCost:    map[string]float64{"data": 240e9, "crypto": 1.25e12, "electricity": 2.5e12, "nanobots": 36000},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "production", Target: "electricity", Value: 1600}},
 		BuildTicks:  1000000,

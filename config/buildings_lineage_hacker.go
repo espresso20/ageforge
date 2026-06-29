@@ -27,7 +27,7 @@ func buildingsLineageHacker() []BuildingDef {
 	// tier 1 — digital_age  rate=4.0
 	b = append(b, BuildingDef{
 		Name: "Data Center", Key: "data_center", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 470e9, "data": 58e9, "steel": 685e9},
+		BaseCost:    map[string]float64{"electricity": 470e9, "data": 58e9, "steel": 685e9, "nanobots": 3000},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "production", Target: "data", Value: 4.0}},
 		BuildTicks:  500000,
@@ -40,7 +40,7 @@ func buildingsLineageHacker() []BuildingDef {
 	// tier 2 — cyberpunk_age  rate=8.0
 	b = append(b, BuildingDef{
 		Name: "Cyber Hub", Key: "cyber_hub", Category: "production",
-		BaseCost:    map[string]float64{"data": 225e9, "crypto": 1.18e12, "electricity": 2.35e12},
+		BaseCost:    map[string]float64{"data": 225e9, "crypto": 1.18e12, "electricity": 2.35e12, "nanobots": 35000},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "production", Target: "data", Value: 8.0}},
 		BuildTicks:  1000000,

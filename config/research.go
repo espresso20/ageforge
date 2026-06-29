@@ -499,6 +499,15 @@ func Technologies() []TechDef {
 				{Type: "bonus", Target: "knowledge_rate", Value: 0.6},
 			},
 		},
+		{
+			Name: "Nanofabrication", Key: "nanofabrication",
+			Age: "modern_age", Cost: 1100000, ResearchTicks: 19000,
+			Prerequisites: []string{"computers"},
+			Description:   "Nanobot swarms assemble structures atom-by-atom, cutting construction costs.",
+			Effects: []Effect{
+				{Type: "bonus", Target: "build_cost", Value: -0.08},
+			},
+		},
 
 		// === INFORMATION AGE === (~1.5 hr each)
 		{
@@ -531,6 +540,21 @@ func Technologies() []TechDef {
 				{Type: "production", Target: "gold", Value: 5.0},
 			},
 		},
+		{
+			// note: the original spec wanted this to cut worker FOOD COST, but the
+			// food drain (wc.FoodCost * count in game/villagers.go) has no bonus hook
+			// and threading one through WorkerManager isn't a "tiny" engine change.
+			// Substituted a supported, clearly-beneficial effect instead: nanobots
+			// keep the population healthier (bigger pop cap) and better fed (+food).
+			Name: "Medical Nanobots", Key: "medical_nanobots",
+			Age: "information_age", Cost: 1700000, ResearchTicks: 24000,
+			Prerequisites: []string{"nanofabrication"},
+			Description:   "Bloodstream nanobots heal and sustain workers — larger, better-fed population.",
+			Effects: []Effect{
+				{Type: "capacity", Target: "population", Value: 10},
+				{Type: "production", Target: "food", Value: 8.0},
+			},
+		},
 
 		// === DIGITAL AGE === (~1.8 hr each)
 		{
@@ -551,6 +575,15 @@ func Technologies() []TechDef {
 			Effects: []Effect{
 				{Type: "production", Target: "data", Value: 8.0},
 				{Type: "storage", Target: "all", Value: 10000},
+			},
+		},
+		{
+			Name: "Self-Replication", Key: "self_replication",
+			Age: "digital_age", Cost: 3200000, ResearchTicks: 33000,
+			Prerequisites: []string{"medical_nanobots", "machine_learning"},
+			Description:   "Nanobots that build copies of themselves — runaway nanobot output.",
+			Effects: []Effect{
+				{Type: "production", Target: "nanobots", Value: 200.0},
 			},
 		},
 

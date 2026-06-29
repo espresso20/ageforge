@@ -157,7 +157,7 @@ func Ages() []AgeDef {
 			Description:     "Technology and innovation define the era.",
 			ResourceReqs:    map[string]float64{"electricity": 26250000, "uranium": 5500000, "steel": 378125000},
 			BuildingReqs:    map[string]int{"nuclear_reactor": 30, "bunker_complex": 30, "research_campus": 15},
-			UnlockBuildings: []string{"tower_block", "modern_depot", "agri_complex", "oil_platform", "titanium_mine", "think_tank", "meditation_center", "special_ops_hq", "investment_firm", "power_grid_hub", "titanium_smelter", "oil_refinery", "tv_studio", "space_program"},
+			UnlockBuildings: []string{"tower_block", "modern_depot", "agri_complex", "oil_platform", "titanium_mine", "think_tank", "meditation_center", "special_ops_hq", "investment_firm", "power_grid_hub", "titanium_smelter", "oil_refinery", "tv_studio", "space_program", "nano_foundry"},
 			UnlockResources: []string{"data", "nanobots"},
 		},
 		// === 13: INFORMATION AGE (Digital Era) ===
