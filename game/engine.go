@@ -646,6 +646,42 @@ func (ge *GameEngine) AccountID() string {
 	return ge.account.AccountID
 }
 
+// ListAccounts enumerates the available account slots for the start-screen picker
+// (Phase B). It is a plain passthrough to the read-only game.ListAccounts(): no engine
+// lock is taken — it touches no engine state, only the account files under the data root.
+// (It is start-screen plumbing, never called from a Bus handler / under ge.mu, so the
+// Bus file-I/O rule isn't in play.)
+func (ge *GameEngine) ListAccounts() []AccountSummary {
+	return ListAccounts()
+}
+
+// SwitchAccount makes account id active and installs it as ge.account (Phase B). It is a
+// start-screen operation: game.SwitchAccount repoints the active pointer + loads the slot,
+// then on success SetAccount swaps the live account under the write lock. It does NOT reset
+// running game state (the UI handles re-theming and any new-game flow). On error ge.account
+// is left as-is.
+func (ge *GameEngine) SwitchAccount(id string) error {
+	acct, err := SwitchAccount(id)
+	if err != nil {
+		return err
+	}
+	ge.SetAccount(acct)
+	return nil
+}
+
+// CreateAccount creates (or, for an existing same-name slot, opens) a name-derived account
+// and installs it as ge.account (Phase B). It is the no-carry-over create: a brand-new
+// account starts empty (see game.CreateAccount). Like SwitchAccount it is a start-screen
+// operation — SetAccount swaps the live account under the write lock; no running-game reset.
+func (ge *GameEngine) CreateAccount(name string) (*Account, error) {
+	acct, err := CreateAccount(name)
+	if err != nil {
+		return nil, err
+	}
+	ge.SetAccount(acct)
+	return acct, nil
+}
+
 // StartNewNamedGame resets to a fresh game, makes `name` the active root save,
 // and writes the initial save file. It does NOT start the ticker — the caller
 // starts it. Returns the SaveGame error if any.

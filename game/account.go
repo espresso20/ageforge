@@ -451,6 +451,211 @@ func accountPath() string {
 	return filepath.Join(dataDirectory(), accountFileName)
 }
 
+// --- Multi-account API (Phase B: enumerate / switch / create) ---
+//
+// Phase A laid the account-scoped layout (<root>/active-account pointer +
+// <root>/accounts/<id>/{account.json,saves/}); Phase B is the read/select API over it.
+// It is start-screen plumbing ONLY — no UI, no running-game reset, no copy/export
+// changes. The engine wrappers (engine.go) keep ge.account in sync after a switch/create;
+// switching never touches game state.
+
+// AccountSummary is a read-only, lock-free snapshot of one account slot for the
+// account-picker UI (Phase B). It carries identity + the headline meta-progression a
+// chooser needs, plus the integrity (Tampered) and selection (Active) flags. It is built
+// from a slot's loaded account.json and never holds the live *Account, so a consumer can
+// neither mutate account state nor race a writer.
+type AccountSummary struct {
+	AccountID      string    `json:"account_id"`
+	DisplayName    string    `json:"display_name"`
+	HighestAge     string    `json:"highest_age"`
+	TotalPrestiges int       `json:"total_prestiges"`
+	Achievements   int       `json:"achievements"`
+	LastSeen       time.Time `json:"last_seen"`
+	Active         bool      `json:"active"`
+	Tampered       bool      `json:"tampered"`
+}
+
+// loadAccountFromSlot reads + verifies the account.json in a SPECIFIC slot by id, WITHOUT
+// touching the process-global active account. It is the lock-free, side-effect-free core
+// the enumeration (ListAccounts) and the switch/open paths share, so neither has to fall
+// back to the global-mutating LoadAccount() to read a non-active slot.
+//
+// It does NOT call migrateLegacyAccountIfNeeded, readActivePointer, or setActiveAccountID
+// — the slot path is built directly from id (accountDir(id)/account.json), so reading slot
+// B can never repoint the active account at B. Behavior by file state mirrors LoadAccount's
+// READ contract, minus any disk mutation:
+//
+//   - Absent: (nil, false, nil) — no account in that slot.
+//   - Present + parses + signature valid (or unsigned/legacy): (acct, true, nil).
+//   - Present + parses + signature INVALID: (acct, true, nil) with Tampered=true — the
+//     cosmetic flag, honestly surfaced; the file is NOT touched.
+//   - Present but UNPARSEABLE: (nil, false, nil). UNLIKE LoadAccount it does NOT rename the
+//     bad file to .corrupt — enumeration is strictly read-only and must not mutate the disk
+//     just by listing; the slot simply doesn't appear.
+func loadAccountFromSlot(id string) (*Account, bool, error) {
+	path := filepath.Join(accountDir(id), accountFileName)
+	data, err := os.ReadFile(path)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, false, nil
+		}
+		return nil, false, fmt.Errorf("failed to read account slot %s: %w", id, err)
+	}
+	var acct Account
+	if err := json.Unmarshal(data, &acct); err != nil {
+		// Unparseable → not a salvageable account. Read-only: do not back it up here.
+		return nil, false, nil
+	}
+	if !verifyAccount(&acct) {
+		acct.Tampered = true
+	}
+	return &acct, true, nil
+}
+
+// ListAccounts enumerates every account slot under <root>/accounts/ into read-only
+// summaries for the picker (Phase B). It is purely read-only and NEVER returns an error: a
+// missing accounts/ dir (fresh install / pre-first-account) yields an empty slice, and any
+// unreadable/unparseable slot is simply skipped.
+//
+// CRITICAL — it MUST NOT mutate the active account. It reads each slot directly via
+// loadAccountFromSlot(id) (which keys off the slot id, not activeAccountID, and calls no
+// setActiveAccountID), so listing can never repoint the active account. As belt-and-braces
+// it also snapshots getActiveAccountID() up front and asserts nothing changed (the
+// loadAccountFromSlot path makes that a guarantee, but the snapshot documents the invariant
+// and guards against a future change to the load path).
+//
+// Each summary's Active is true only for the slot whose id == the (snapshotted) active id.
+// A tampered-but-parseable slot appears with Tampered=true (integrity is surfaced, not
+// hidden). Results are sorted Active-first, then DisplayName ascending, then AccountID — a
+// stable order for the chooser.
+func ListAccounts() []AccountSummary {
+	active := getActiveAccountID()
+
+	accountsRoot := filepath.Join(rootDataDir(), accountsDirName)
+	entries, err := os.ReadDir(accountsRoot)
+	if err != nil {
+		// Missing accounts/ (or unreadable root) → no accounts yet. Never an error.
+		return nil
+	}
+
+	var summaries []AccountSummary
+	for _, e := range entries {
+		if !e.IsDir() {
+			continue // only <id>/ slots; ignore stray files
+		}
+		id := e.Name()
+		acct, found, loadErr := loadAccountFromSlot(id)
+		if loadErr != nil || !found || acct == nil {
+			continue // no valid account.json in this slot → skip it
+		}
+		summaries = append(summaries, AccountSummary{
+			AccountID:      acct.AccountID,
+			DisplayName:    acct.DisplayName,
+			HighestAge:     acct.Stats.HighestAge,
+			TotalPrestiges: acct.Stats.TotalPrestiges,
+			Achievements:   len(acct.Achievements),
+			LastSeen:       acct.LastSeen,
+			Active:         acct.AccountID == active,
+			Tampered:       acct.Tampered,
+		})
+	}
+
+	sort.Slice(summaries, func(i, j int) bool {
+		if summaries[i].Active != summaries[j].Active {
+			return summaries[i].Active // active sorts first
+		}
+		if summaries[i].DisplayName != summaries[j].DisplayName {
+			return summaries[i].DisplayName < summaries[j].DisplayName
+		}
+		return summaries[i].AccountID < summaries[j].AccountID
+	})
+
+	// Invariant guard: enumeration must leave the active account untouched. The
+	// loadAccountFromSlot path never calls setActiveAccountID, so this always holds; the
+	// assignment is a no-op that documents (and future-proofs) the contract.
+	setActiveAccountID(active)
+	return summaries
+}
+
+// SwitchAccount makes the account in slot id the active one and returns it (Phase B). It is
+// a start-screen operation: it repoints the active account (in-memory + persisted pointer)
+// and loads that slot, but does NOT reset or otherwise touch running game state — the
+// engine wrapper swaps ge.account; the running game (if any) is the caller's concern.
+//
+// It verifies accountDir(id)/account.json exists first, erroring with "no such account" if
+// not (and leaving the active account unchanged). On success it sets the in-memory active
+// id AND persists the pointer, so subsequent Save()/SaveGame() auto-scope to the new slot
+// via dataDirectory() and the next boot resolves to it. Tamper/verify behavior is preserved
+// (the returned account carries Tampered=true if its signature is stale).
+func SwitchAccount(id string) (*Account, error) {
+	acct, found, err := loadAccountFromSlot(id)
+	if err != nil {
+		return nil, err
+	}
+	if !found || acct == nil {
+		return nil, fmt.Errorf("no such account: %s", id)
+	}
+	// Commit the switch only after the slot is confirmed loadable, so a failed switch
+	// leaves the active account unchanged.
+	setActiveAccountID(id)
+	if err := writeActivePointer(id); err != nil {
+		return nil, err
+	}
+	return acct, nil
+}
+
+// CreateAccount creates (or opens) the account whose identity is derived from name and
+// makes it active (Phase B). It is deliberately DISTINCT from CreateNamedAccount: this path
+// has NO CARRY-OVER. A brand-new account starts EMPTY — it never copies the currently-active
+// account's unlocks/stats/achievements/prefs. (CreateNamedAccount keeps its carry-over for
+// the first-run name-derivation flow, where re-keying a legacy random-id account to a name
+// must preserve earned progress; it is left untouched.)
+//
+// Identity is name-derived (accountIDFromName), so the same name always maps to the same
+// slot. Behavior by slot state:
+//
+//   - Slot already exists (this name maps to an existing account): do NOT clobber it. Open
+//     it via SwitchAccount(id) and return it. "Create with an existing name" == "open that
+//     account" — same name is the same identity, and wiping it would be data loss.
+//   - Slot absent: mint a FRESH EMPTY established account (DisplayName=name, the name-derived
+//     id, zero Unlocks/Stats/Achievements, default Prefs), set it active, MkdirAll its slot,
+//     Save it in, and persist the active pointer. No prior account's DATA rides along.
+func CreateAccount(name string) (*Account, error) {
+	trimmed := strings.TrimSpace(name)
+	id := accountIDFromName(trimmed)
+
+	// Same-name → open the existing account rather than overwrite it. Slot existence is
+	// keyed on its account.json, so a bare/empty slot dir doesn't count as "exists".
+	if _, err := os.Stat(filepath.Join(accountDir(id), accountFileName)); err == nil {
+		return SwitchAccount(id)
+	} else if !os.IsNotExist(err) {
+		return nil, fmt.Errorf("failed to stat account slot %s: %w", id, err)
+	}
+
+	// Fresh, EMPTY established account — no carry-over. DATA fields stay zero.
+	now := time.Now()
+	acct := &Account{
+		Version:        accountSchemaVersion,
+		AccountID:      id,
+		DisplayName:    trimmed,
+		Created:        now,
+		LastSeen:       now,
+		FreshlyCreated: true,
+	}
+	// Make it active BEFORE Save so the scoped Save lands at <root>/accounts/<id>/account.json.
+	setActiveAccountID(id)
+	if err := os.MkdirAll(accountDir(id), 0755); err != nil {
+		return nil, fmt.Errorf("failed to create account slot: %w", err)
+	}
+	if err := acct.Save(); err != nil {
+		return nil, err
+	}
+	if err := writeActivePointer(id); err != nil {
+		return nil, err
+	}
+	return acct, nil
+}
+
 // WipeAccount permanently deletes the ACTIVE account's slot —
 // <root>/accounts/<activeID>/ and everything under it (account.json, its .corrupt
 // sibling, and the slot's own saves/) — then clears the active-account pointer and the
