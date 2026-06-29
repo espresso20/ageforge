@@ -115,7 +115,7 @@ Six NPC factions exist in the game world. Each has an **opinion score** (-100 to
 ### Commands
 
 ```
-diplomacy
+diplomacy                       # opens the Diplomacy overlay
 diplomacy ally <faction_key>
 diplomacy rival <faction_key>
 diplomacy embargo <faction_key>
@@ -123,7 +123,7 @@ diplomacy gift <faction_key>
 diplomacy neutral <faction_key>
 ```
 
-`diplomacy` with no arguments opens the faction status overlay.
+`diplomacy` (or `dip`) with no arguments opens the **Diplomacy overlay** — a full-screen panel listing all six factions with opinion bars, color-coded status, the active trade-rate bonus per faction, a threshold indicator (e.g. *+8 to friendly*, *ally-eligible — 500g*), and the commands available for each. `diplomacy <action> <faction_key>` still performs the action directly.
 
 The shorthand `dip` works in place of `diplomacy` everywhere.
 
@@ -143,11 +143,23 @@ The shorthand `dip` works in place of `diplomacy` everywhere.
 
 ### Raising Opinion
 
-Two passive paths, one active:
+Three passive paths, one active:
 
 1. **Trade routes:** Every completed trade route cycle calls `RecordTrade()`, which gives **+1 opinion to every discovered faction** simultaneously. Run more routes and they all climb together — passively.
-2. **Gifting:** `diplomacy gift <faction_key>` costs 200 gold and gives **+15 opinion** to that faction. If opinion hits 25+, status auto-upgrades from neutral to friendly. Stack gifts to push a stubborn faction over 50 and then `diplomacy ally` them.
-3. **Status transitions:** Once a faction is friendly (opinion ≥ 25), you can push to 50+ and spend 500 gold to ally. Going back to neutral is free (`diplomacy neutral`) but doesn't recover the 500 gold.
+2. **Embassies:** Staffed Embassy and Grand Embassy buildings passively generate opinion every tick, spread across your non-hostile factions (see **Embassy Buildings** below).
+3. **Gifting:** `diplomacy gift <faction_key>` costs 200 gold and gives **+15 opinion** to that faction. If opinion hits 25+, status auto-upgrades from neutral to friendly. Stack gifts to push a stubborn faction over 50 and then `diplomacy ally` them.
+4. **Status transitions:** Once a faction is friendly (opinion ≥ 25), you can push to 50+ and spend 500 gold to ally. Going back to neutral is free (`diplomacy neutral`) but doesn't recover the 500 gold.
+
+### Embassy Buildings
+
+Two diplomacy buildings turn your workforce into a steady source of opinion. Assign workers to an embassy and, each tick, it raises opinion with every **non-hostile** faction (neutral, friendly, or allied — rivals and embargoed factions get nothing). Output scales with the worker fill ratio using the same `0.20 + 0.80 × fill` curve as production buildings, so a fully-staffed embassy runs at full rate while an empty one still trickles. Opinion is capped at +100 per faction.
+
+| Building | Unlocks | Cost | Workers | Opinion Rate |
+|---|---|---|---|---|
+| **Embassy** | Colonial Age | gold + iron | 5 (trade domain) | +0.05 opinion / worker / tick |
+| **Grand Embassy** | Industrial Age | gold + steel | 8 (trade domain) | +0.10 opinion / worker / tick (2× the Embassy) |
+
+Embassies use the **trade** worker domain (the same Colonial Merchant / Industrialist classes that staff markets), so embassy and market workers draw from the same pool — staffing one means fewer hands for the other. Because the per-tick gain is split across all discovered non-hostile factions, embassies are most effective once several factions are in play (Industrial Age onward).
 
 ### Allied Bonuses
 

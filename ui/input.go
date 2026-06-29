@@ -67,6 +67,9 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 	case "trade", "t":
 		return cmdTrade(args, engine)
 	case "diplomacy", "dip":
+		if len(args) == 0 {
+			return CommandResult{OverlayName: "diplomacy"}
+		}
 		return cmdDiplomacy(args, engine)
 	case "wonder":
 		return cmdWonder(args, engine)

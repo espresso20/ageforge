@@ -110,15 +110,22 @@ Keys with underscores can be typed with spaces: `expedition scout ruins` is equi
 |---|---|
 | `trade start <key>` | Activate a trade route |
 | `trade stop <key>` | Cancel an active trade route |
-| `diplomacy gift <faction>` | Send a gift to improve faction opinion |
+| `diplomacy` (or `dip`) | Open the **Diplomacy** overlay (all six factions, opinion, status, bonuses, thresholds) |
+| `diplomacy ally <faction>` | Ally with a faction (opinion ≥ 50, costs 500 gold) |
+| `diplomacy rival <faction>` | Declare a rivalry |
+| `diplomacy embargo <faction>` | Embargo a faction |
+| `diplomacy gift <faction>` | Send a gift to improve faction opinion (+15, costs 200 gold) |
+| `diplomacy neutral <faction>` | Reset a faction to neutral |
 
 ```
 trade start coastal_market
 trade stop coastal_market
-diplomacy gift forest_clan
+diplomacy                  # opens the Diplomacy overlay
+diplomacy gift merchant_guild
+diplomacy ally merchant_guild
 ```
 
-Active trade routes run for a fixed duration. Check **Trade** overlay (`trade`) for rates and faction standings.
+Active trade routes run for a fixed duration. Check the **Trade** overlay (`trade`) for rates, and the **Diplomacy** overlay (`diplomacy` / `dip`) for faction standings. Bare `diplomacy` opens the overlay; add an action (`ally`/`rival`/`embargo`/`gift`/`neutral`) to act on a faction directly. Build and staff an **Embassy** (Colonial Age) or **Grand Embassy** (Industrial Age) to passively raise opinion with your non-hostile factions — see the [Trade & Diplomacy](trade.md#embassy-buildings) wiki page.
 
 ---
 

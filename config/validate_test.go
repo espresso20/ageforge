@@ -721,6 +721,7 @@ func isSpecialTarget(target string) bool {
 		"plasma_rate": true, "titanium_rate": true, "dark_matter_rate": true,
 		"antimatter_rate": true, "quantum_flux_rate": true,
 		"culture_rate": true, "faith_rate": true,
+		"opinion": true,
 	}
 	return specials[target]
 }

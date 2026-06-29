@@ -644,6 +644,31 @@ func baseBuildingsRaw() []BuildingDef {
 			BuildTicks:  8675309,
 			Description: "The final wonder. +200% all production, +20 quantum flux/tick. Unlocks +0.5x speed.",
 		},
+		// Diplomacy — produce opinion (not a resource), so they live here in the
+		// admin/storage slice rather than a lineage file. NO Type:"production"
+		// effect (that would pollute the resource-rate map in WorkerScaledProduction).
+		{
+			Name: "Embassy", Key: "embassy", Category: "diplomacy",
+			BaseCost:     map[string]float64{"gold": 8e6, "iron": 4e6},
+			CostScale:    1.40,
+			Effects:      []Effect{{Type: "opinion", Target: "opinion", Value: 0.05}},
+			BuildTicks:   3600,
+			RequiredAge:  "colonial_age",
+			Description:  "A diplomatic embassy. Assigned workers passively raise opinion with non-hostile factions (+0.05 opinion/worker/tick, 5 workers).",
+			WorkerDomain: "trade", WorkerCapacity: 5,
+			EpochKey: "steel_era",
+		},
+		{
+			Name: "Grand Embassy", Key: "grand_embassy", Category: "diplomacy",
+			BaseCost:     map[string]float64{"gold": 30e6, "steel": 15e6},
+			CostScale:    1.40,
+			Effects:      []Effect{{Type: "opinion", Target: "opinion", Value: 0.10}},
+			BuildTicks:   3600,
+			RequiredAge:  "industrial_age",
+			Description:  "A grand diplomatic complex. Twice the embassy's opinion rate (+0.10 opinion/worker/tick, 8 workers).",
+			WorkerDomain: "trade", WorkerCapacity: 8,
+			EpochKey: "steel_era",
+		},
 	}
 }
 
@@ -899,7 +924,7 @@ func BaseBuildings() []BuildingDef {
 	// Append storage and wonder buildings from legacy definitions, enriched with meta.
 	meta := buildingMeta()
 	for _, b := range baseBuildingsRaw() {
-		if b.Category != "storage" && b.Category != "wonder" {
+		if b.Category != "storage" && b.Category != "wonder" && b.Category != "diplomacy" {
 			continue // production buildings are now in NewProductionBuildings()
 		}
 		if m, ok := meta[b.Key]; ok {
