@@ -174,6 +174,15 @@ func migrateLegacyAccountIfNeeded() error {
 		return fmt.Errorf("failed to create account slot during migration: %w", err)
 	}
 
+	// One-time pre-migration snapshot: with migration now confirmed (parseable id, accounts/
+	// absent) but BEFORE the first os.Rename, copy the flat data/ aside so the player's
+	// original state is recoverable. BEST-EFFORT — a snapshot failure must NOT abort the
+	// migration: the renames below are atomic and corruption-safe on their own, so this is
+	// belt-and-braces reassurance, and bricking startup over a failed bonus backup would be
+	// strictly worse than skipping it. We capture the path/err locally; the game package has no
+	// logger, so a failure is simply not propagated.
+	_, _ = snapshotPreMigration()
+
 	// Move saves/ FIRST (see doc above): a failure here leaves account.json at the root,
 	// so the trigger still fires next boot and we retry cleanly.
 	legacySaves := filepath.Join(root, "saves")

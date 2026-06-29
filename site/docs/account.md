@@ -25,7 +25,7 @@ The `data/active-account` pointer records which account is current. Each `data/a
 
 ### Upgrading from an older version
 
-If you're coming from an older build that kept a single account at the top level (a flat `data/account.json` with saves in `data/saves/`), the game **migrates you automatically on first launch** — and **non-destructively**. Your existing account and its saves are moved into their own `data/accounts/<id>/` slot, that account is set as active, and **nothing is deleted**. You don't have to do anything; your civilizations and unlocks come across intact.
+If you're coming from an older build that kept a single account at the top level (a flat `data/account.json` with saves in `data/saves/`), the game **migrates you automatically on first launch** — and **non-destructively**. Your existing account and its saves are moved into their own `data/accounts/<id>/` slot, that account is set as active, and **nothing is deleted**. You don't have to do anything; your civilizations and unlocks come across intact. As a one-time safety net, the game also snapshots your old flat data into `data/backups/pre-migration-<timestamp>/` just before the move, so your original state stays recoverable if you ever need it.
 
 ---
 

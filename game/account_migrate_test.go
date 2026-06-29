@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 )
@@ -110,6 +111,87 @@ func TestMigrateLegacyMovesAccountAndSaves(t *testing.T) {
 	}
 	if !SaveExists("old_run") {
 		t.Error("SaveExists(old_run) = false after migration; scoped save not discoverable")
+	}
+}
+
+// findPreMigrationSnapshot returns the single pre-migration-* dir under <root>/backups/,
+// failing the test if zero or more than one exists. The dir name carries a runtime timestamp,
+// so the test cannot predict it — it scans by the stable "pre-migration-" prefix instead.
+func findPreMigrationSnapshot(t *testing.T, root string) string {
+	t.Helper()
+	backupsRoot := filepath.Join(root, backupsDirName)
+	entries, err := os.ReadDir(backupsRoot)
+	if err != nil {
+		t.Fatalf("read backups root for pre-migration snapshot: %v", err)
+	}
+	var found []string
+	for _, e := range entries {
+		if e.IsDir() && strings.HasPrefix(e.Name(), "pre-migration-") {
+			found = append(found, filepath.Join(backupsRoot, e.Name()))
+		}
+	}
+	if len(found) != 1 {
+		t.Fatalf("expected exactly one pre-migration snapshot dir, found %d: %v", len(found), found)
+	}
+	return found[0]
+}
+
+// TestMigrateLegacyTakesPreMigrationSnapshot covers the one-time safety net: the legacy flat
+// data (account.json + saves/ + a stray account-export.json) is COPIED into
+// <root>/backups/pre-migration-<ts>/ BEFORE the migration relocates anything, AND the migration
+// still completes (slot account.json present, flat one gone, active pointer written). The
+// snapshot must NOT contain the reserved accounts/ or backups/ trees.
+func TestMigrateLegacyTakesPreMigrationSnapshot(t *testing.T) {
+	root := isolateAccountDir(t)
+
+	id := seedLegacyFlatAccount(t, root)
+	seedLegacySave(t, root, "old_run")
+
+	// A stray top-level file (a user-made export) must be captured by the snapshot too — it is
+	// part of the flat data/ that is about to be relocated.
+	const exportContents = "stray-export-bytes"
+	if err := os.WriteFile(filepath.Join(root, "account-export.json"), []byte(exportContents), 0644); err != nil {
+		t.Fatalf("seed stray account-export.json: %v", err)
+	}
+
+	if err := migrateLegacyAccountIfNeeded(); err != nil {
+		t.Fatalf("migrateLegacyAccountIfNeeded: %v", err)
+	}
+
+	// --- The pre-migration snapshot exists and captured the pre-migration state. ---
+	snap := findPreMigrationSnapshot(t, root)
+
+	if _, err := os.Stat(filepath.Join(snap, accountFileName)); err != nil {
+		t.Errorf("snapshot missing account.json: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(snap, "saves", "old_run.json")); err != nil {
+		t.Errorf("snapshot missing saves/old_run.json: %v", err)
+	}
+	gotExport, err := os.ReadFile(filepath.Join(snap, "account-export.json"))
+	if err != nil {
+		t.Errorf("snapshot missing stray account-export.json: %v", err)
+	} else if string(gotExport) != exportContents {
+		t.Errorf("snapshot account-export.json = %q, want %q", gotExport, exportContents)
+	}
+	// The snapshot must not have recursed into backups/ or pulled in the (absent) accounts/.
+	if _, err := os.Stat(filepath.Join(snap, backupsDirName)); !os.IsNotExist(err) {
+		t.Errorf("snapshot recursed into backups/ (stat err = %v)", err)
+	}
+	if _, err := os.Stat(filepath.Join(snap, accountsDirName)); !os.IsNotExist(err) {
+		t.Errorf("snapshot captured an accounts/ dir (stat err = %v)", err)
+	}
+
+	// --- The migration still completed despite (alongside) the snapshot. ---
+	if _, err := os.Stat(filepath.Join(root, accountsDirName, id, accountFileName)); err != nil {
+		t.Errorf("account.json not in slot after migration: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(root, accountFileName)); !os.IsNotExist(err) {
+		t.Errorf("flat account.json still present after migration (stat err = %v)", err)
+	}
+	if got, err := readActivePointer(); err != nil {
+		t.Fatalf("readActivePointer: %v", err)
+	} else if got != id {
+		t.Errorf("active pointer = %q, want migrated id %q", got, id)
 	}
 }
 

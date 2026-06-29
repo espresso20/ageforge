@@ -114,6 +114,84 @@ func BackupAccount(id string) (string, error) {
 	return dst, nil
 }
 
+// snapshotPreMigration takes a one-time, full COPY of the CURRENT flat data ROOT into a fresh
+// dir <root>/backups/pre-migration-<YYYYMMDD-HHMMSS>/, returning its absolute path. It is the
+// pre-Phase-A safety net: migrateLegacyAccountIfNeeded calls it right before it relocates the
+// flat layout (account.json + saves/) into a slot, so the player's original on-disk state is
+// recoverable even though the migration itself only os.Renames (atomic, non-destructive).
+//
+// It copies every TOP-LEVEL entry under the root EXCEPT "backups" and "accounts": "backups" is
+// skipped so the walk never recurses into the snapshot target it is creating, and "accounts" is
+// skipped because at pre-migration time it does not exist yet (the migration trigger requires
+// its absence) — guarding the name keeps the snapshot honest if that ever changes. Everything
+// else is captured: account.json, the saves/ tree, and any stray files (e.g. a user-made
+// account-export.json) — i.e. the whole flat data/ that is about to move.
+//
+// It mirrors BackupAccount's timestamp discipline (backupTimestampLayout + a nanosecond suffix
+// on a same-second collision) so two runs can never clobber one another. A missing or empty
+// root is not an error — there is simply nothing to snapshot — so it returns ("", nil).
+//
+// Like BackupAccount it MUST NOT mutate the active account: it is pure file I/O keyed off the
+// root, touching no pointer and calling no setActiveAccountID.
+func snapshotPreMigration() (string, error) {
+	root := rootDataDir()
+	entries, err := os.ReadDir(root)
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil // no data root yet — nothing to snapshot
+		}
+		return "", fmt.Errorf("failed to read data root for pre-migration snapshot: %w", err)
+	}
+
+	// Gather the top-level entries to snapshot, skipping the two reserved names. Doing this
+	// first lets us bail out (empty root, or only reserved entries) without creating an empty
+	// snapshot dir.
+	type rootEntry struct {
+		name  string
+		isDir bool
+	}
+	var toCopy []rootEntry
+	for _, e := range entries {
+		name := e.Name()
+		if name == backupsDirName || name == accountsDirName {
+			continue // never recurse into the snapshot target; accounts/ shouldn't exist yet
+		}
+		toCopy = append(toCopy, rootEntry{name: name, isDir: e.IsDir()})
+	}
+	if len(toCopy) == 0 {
+		return "", nil // empty (or only reserved entries) — nothing to snapshot
+	}
+
+	backupsRoot := filepath.Join(root, backupsDirName)
+	if err := os.MkdirAll(backupsRoot, 0755); err != nil {
+		return "", fmt.Errorf("failed to create backups root: %w", err)
+	}
+
+	// Build the dest dir, disambiguating a same-second collision with nanoseconds so two
+	// pre-migration snapshots taken inside one second never clobber each other.
+	now := time.Now()
+	dst := filepath.Join(backupsRoot, "pre-migration-"+now.Format(backupTimestampLayout))
+	if _, err := os.Stat(dst); err == nil {
+		dst = filepath.Join(backupsRoot, fmt.Sprintf("pre-migration-%s-%09d", now.Format(backupTimestampLayout), now.Nanosecond()))
+	}
+	if err := os.MkdirAll(dst, 0755); err != nil {
+		return "", fmt.Errorf("failed to create pre-migration snapshot dir: %w", err)
+	}
+
+	for _, e := range toCopy {
+		src := filepath.Join(root, e.name)
+		target := filepath.Join(dst, e.name)
+		if e.isDir {
+			if err := copyDir(src, target); err != nil {
+				return "", fmt.Errorf("failed to snapshot %q before migration: %w", e.name, err)
+			}
+		} else if err := copyFile(src, target); err != nil {
+			return "", fmt.Errorf("failed to snapshot %q before migration: %w", e.name, err)
+		}
+	}
+	return dst, nil
+}
+
 // BackupAccount is the engine passthrough to the package-level game.BackupAccount: a full
 // on-disk snapshot of the slot for account id. No ge.mu and no engine state touched — it is
 // pure file I/O over the slots and the active account is never disturbed.
