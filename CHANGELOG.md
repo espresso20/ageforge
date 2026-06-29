@@ -6,6 +6,31 @@ All notable changes to AgeForge are documented here.
 
 ## [Unreleased]
 
+### Added
+- **Theme system** — nine switchable themes with a live picker (preview + palette swatches) and a `theme` command. Forge (default) plus three accessibility themes — Deuteranopia-safe, Protanopia-safe, High Contrast — unlocked from the start; five flavor themes (Parchment, Bronze, Cyberpunk, Monochrome, Cosmic) unlocked by reaching milestones. Active theme and unlocks persist per account.
+- **Multiple accounts** — each account gets its own data slot (`data/accounts/<id>/`), with a one-time, non-destructive migration of existing data. A start-screen Accounts panel lists every account and lets you switch, create, export, import, back up, recover, and wipe. Name-derived identity with `AGEF-` recovery codes; signed, ID-bound export/import that lands in its own slot and can't clobber another account; lifetime stats and achievements.
+- **Account backups** — a full-slot snapshot (account.json + saves) is taken before a wipe, on export, and on demand (`account backup` or the panel), keeping the newest ten; plus a one-time pre-migration snapshot of the old data layout.
+- **Save lineage and Load Game browser** — procedurally-named saves you can branch into new lines, shown as a lineage tree; the browser adds delete / rename / duplicate, richer save metadata, and account attribution.
+- **Multiplier resolver** — a single engine resolver that every bonus source emits into; the Active Multipliers panel renders from its breakdown, color-coded by sign with every contributing source shown.
+- **Morale rework** — morale is now a managed two-way resource with restoring buildings, a continuous curve, a history graph, and banded displays; faith production rate lifts morale.
+- **Expeditions and Army, split** — scouting Expeditions and military Campaigns are now separate systems; soldiers are a real produced/stored resource, with concurrent per-category expedition slots.
+- **Help panel** — `help` opens a panel instead of dumping inline text.
+- **Main-screen UI overhaul** — a framed command bar, a scannable ✓/✗ age-progress strip, a cleaner log, lifted secondary-text contrast, an early-game onboarding panel, and rebalanced panel widths.
+
+### Balance
+- Flattened building cost curves and raised age-advancement requirements.
+- Capped age-transition carryover to a starter head-start.
+- `gather` yield raised 10 → 25 and disabled past the Medieval age.
+
+### Fixed
+- Theme picker no longer deadlocks the app on arrow/Esc.
+- Procedural save names: flattened the distribution (no more "Grand Duchy" clustering) and added ~10× more names across every bank.
+- Account Wipe modal shows the exact name to type and has a cleaner confirm UI.
+- Save-name modal: readable input contrast, opaque background, sized to content.
+- Load Game: bare `load` opens the browser; renaming re-parents child saves; footer hotkeys render as keycaps.
+- Modifiers: negative production debuffs apply correctly and build-cost modifiers are wired in.
+- Stash is buildable again (its first-copy cost had exceeded the base wood cap).
+
 ---
 
 ## [v3.6.4] — 2026-03-25
