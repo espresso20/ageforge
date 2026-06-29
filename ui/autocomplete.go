@@ -219,10 +219,13 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 		}
 
 	case "account", "acct":
-		// Subcommands: recover (code arg not enumerable), export/import (path args
-		// not enumerable here).
+		// Subcommands. `switch <name>` completes to the local account display names; the
+		// rest take args that aren't enumerable here (recover code, export/import paths).
 		if len(completed) == 0 {
-			return filterPrefix([]string{"recover", "export", "import"}, partial, prefix)
+			return filterPrefix([]string{"list", "switch", "recover", "export", "backup", "import"}, partial, prefix)
+		}
+		if strings.ToLower(completed[0]) == "switch" {
+			return filterPrefix(localAccountNames(engine), partial, prefix)
 		}
 
 	case "catastrophe", "cat":
@@ -470,4 +473,18 @@ func saveNames() []string {
 		return nil
 	}
 	return saves
+}
+
+// localAccountNames returns the display names of every local account slot, for
+// `account switch <name>` completion. Unnamed slots are skipped (they can't be switched to by
+// name). Read-only — ListAccounts never mutates the active account.
+func localAccountNames(engine *game.GameEngine) []string {
+	var names []string
+	for _, s := range engine.ListAccounts() {
+		if strings.TrimSpace(s.DisplayName) != "" {
+			names = append(names, s.DisplayName)
+		}
+	}
+	sort.Strings(names)
+	return names
 }

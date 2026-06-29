@@ -72,6 +72,17 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("  [cyan]dump[-]                        - Export logs to file for debugging\n")
 	sb.WriteString("  [cyan]help[-]                        - Open this Help panel\n")
 
+	sb.WriteString("\n[gold]═══ Accounts ═══[-]\n")
+	sb.WriteString("[gray]Each account is its own slot. Switch/new/wipe live in the Accounts panel (main menu).[-]\n")
+	sb.WriteString("  [cyan]account[-]                     - Show this account's ID, recovery code & backup help\n")
+	sb.WriteString("  [cyan]account[-] list                - List your local accounts\n")
+	sb.WriteString("  [cyan]account[-] switch <name>       - Switch to an existing local account\n")
+	sb.WriteString("  [cyan]account[-] export [path]       - Back up this account's progress to a file\n")
+	sb.WriteString("  [cyan]account[-] backup              - Full snapshot (account.json + saves) to data/backups/\n")
+	sb.WriteString("  [cyan]account[-] import <path>       - Restore an account from a backup file\n")
+	sb.WriteString("  [cyan]account[-] recover <code>      - Restore your identity from a recovery code\n")
+	sb.WriteString("[gray]Wiping or exporting an account also auto-creates a full backup first (last 10 kept).[-]\n")
+
 	sb.WriteString("\n[gold]═══ Panels ═══[-]\n")
 	sb.WriteString("[gray]Type the command to open the panel.[-]\n")
 	for _, p := range []struct{ cmd, desc string }{
@@ -93,6 +104,7 @@ func helpProvider(_ game.GameState, _ int) string {
 	} {
 		sb.WriteString("  [cyan]" + padRight(p.cmd, 12) + "[-] — " + p.desc + "\n")
 	}
+	sb.WriteString("  [cyan]" + padRight("Accounts", 12) + "[-] — Switch/create/back-up accounts [gray](main-menu panel, not a command)[-]\n")
 
 	sb.WriteString("\n[gold]═══ Shortcuts ═══[-]\n")
 	sb.WriteString("[gray]g=gather, b=build, r=recruit, a=assign, u=unassign, s=status, res=research, exp=expedition, t=trade, dip=diplomacy[-]\n")

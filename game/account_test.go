@@ -3,34 +3,44 @@ package game
 import (
 	"encoding/json"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
 
-// isolateAccountDir points the data root at an isolated temp directory for the
-// duration of the test, so we never read or clobber a real ./data/account.json.
+// isolateAccountDir points the data ROOT at an isolated temp directory for the
+// duration of the test, so we never read or clobber a real ./data tree.
 //
 // It sets the package-level dataDirOverride test seam (see save.go) to a fresh
-// t.TempDir() and restores the prior value on cleanup. With the override set,
-// dataDirectory() — and therefore accountPath(), Save(), and LoadOrCreate() —
-// resolve entirely inside the temp dir, deterministically and without depending on
-// CWD or the test binary's location. Go runs tests in a package sequentially unless
-// t.Parallel() is called (none here do), so the shared override is safe.
+// t.TempDir() — which rootDataDir() returns verbatim — and restores the prior value on
+// cleanup. With the override set, the active-account pointer (<root>/active-account) and
+// every account slot (<root>/accounts/<id>/) resolve entirely inside the temp dir,
+// deterministically and without depending on CWD or the test binary's location.
+//
+// It ALSO resets the process-global activeAccountID to "" for the test and restores the
+// prior value on cleanup. The active id is package-global (Phase A account-scoping), so
+// without this reset one test's active account would leak into the next and scope its
+// reads/writes to a stale slot. Go runs tests in a package sequentially unless t.Parallel()
+// is called (none here do), so the shared override + reset are safe.
 func isolateAccountDir(t *testing.T) string {
 	t.Helper()
-	prior := dataDirOverride
+	priorDir := dataDirOverride
+	priorID := getActiveAccountID()
 	tmp := t.TempDir()
 	dataDirOverride = tmp
+	setActiveAccountID("")
 	t.Cleanup(func() {
-		dataDirOverride = prior
+		dataDirOverride = priorDir
+		setActiveAccountID(priorID)
 	})
 	return tmp
 }
 
-// accountFilePath returns the account.json path inside the isolated data root.
+// accountFilePath returns the account.json path for the ACTIVE account's slot inside the
+// isolated data root: <root>/accounts/<activeID>/account.json. It resolves through the same
+// scoped accountPath() the production code uses, so a test that creates/loads an account
+// then checks accountFilePath() sees the file where it was actually written.
 func accountFilePath() string {
-	return filepath.Join(dataDirOverride, accountFileName)
+	return accountPath()
 }
 
 // TestLoadOrCreateCreatesAndSigns covers the absent-file path: a fresh account is

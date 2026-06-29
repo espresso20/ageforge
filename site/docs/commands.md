@@ -209,24 +209,31 @@ Voluntary catastrophes let you force an epoch event outside the normal roll. Use
 | `load <name>` | Load that save directly |
 | `saves` | List all save files |
 | `Esc` | Quick-save to your active save |
-| `account` | Show your account's short ID and **recovery code** (restores identity, not progress) |
+| `account` | Show the active account's short ID and **recovery code** (restores identity, not progress) |
+| `account list` | List the local accounts on this machine, marking the active one |
+| `account switch <name>` | Switch to a local account by its name (changes which account's saves you see) |
 | `account recover <code>` | Restore your identity from a recovery code on a new machine/reinstall |
-| `account export [path]` | Write a signed **progress** backup (unlocks, stats, achievements) to a file (default `data/account-export.json`) |
-| `account import <path> [replace]` | Restore a progress backup file — **merges** by default; add `replace` to overwrite wholesale |
-| `account wipe` | Points you to the main-menu **Wipe Account** action — the actual (permanent) wipe lives behind a type-your-name confirm, not this command |
+| `account export [path]` | Write a signed, **ID-bound** account backup (unlocks, stats, achievements, prefs). Default `account-<id8>-export.json` inside that account's slot, or a path you give |
+| `account import <path> [replace]` | Bring a backup into **its own account slot** (keyed by the embedded ID — creates it or **merges**; add `replace` to overwrite that account wholesale). Switches to it |
+| `account backup` | Full snapshot of the active account (`account.json` + saves) saved to `data/backups/<name>-<id8>-<timestamp>/`. The Accounts panel's `b` action does the same for the highlighted account |
+| `account wipe` | Points you to the **Accounts** panel's **Wipe Account** action — the actual (permanent) wipe lives there behind a type-the-name confirm, not this command |
 | `theme` | Open the **Themes** picker — browse palettes with live preview (also on the main menu) |
 | `theme list` | List every theme by name and key, marking the active one and noting which are accessible |
 | `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`) |
 | `dump` | Export logs to a file for debugging |
 | `help` | Open the Help panel — full command reference and list of available panels |
 
-Save files live in `./data/saves/*.json`, relative to the directory you launch the game from. The `save <name>` and `load <name>` commands above work with the same files as the **Load Game** browser below.
+Save files live under your **active account's** slot — `data/accounts/<id>/saves/*.json`, relative to the directory you launch the game from (saves are per-account). The `save <name>` and `load <name>` commands above work with the same files as the **Load Game** browser below. See [Saving & Loading](saving-and-loading.md) and [Account & Recovery](account.md).
 
 `account` (no arguments) prints your account's short ID and its **recovery code** — a short `AGEF-…` string that restores your **identity** (your account ID) across machines and reinstalls. The code restores **identity only, not earned progress** (theme unlocks and lifetime stats are separate — back those up with `account export`). Write the code down to keep your identity; it is a convenience identifier, not a password. To restore on another machine, run `account recover <code>`. If the local account already has unlocked progress, recovery asks you to confirm with `account recover <code> confirm` first, since recovering replaces the local identity and the code does not carry your unlocks.
 
-Your **progress** (theme unlocks, lifetime stats, achievements, prefs) is backed up separately from the recovery code. `account export` writes a signed `account-export.json` (or a path you give it); `account import <path>` restores it. Import **merges** by default — unioning unlocks and achievements and taking the higher of each lifetime stat, so re-importing an old backup never drops something you've earned since — or add `replace` to overwrite your progress wholesale. A missing or tampered file is rejected and your account is left unchanged. With no server, progress recovery only works if you exported it first. See [Account & Recovery](account.md) for the full model.
+The game keeps **multiple local accounts**, one active at a time; the **Accounts** entry on the main menu lists them and is where you switch between them, create new ones, and back them up. `account list` prints the same list from the prompt, and `account switch <name>` makes a different account active — changing which account's saves you see.
 
-**Wiping your account** is permanent and deletes your identity, theme unlocks, lifetime stats, and achievements — it does **not** touch your game saves. Because it's irreversible, it lives on the **main menu** (Esc to reach it) behind a type-your-account-name confirm, not as a plain command; typing `account wipe` just points you there. After a wipe you start over by naming a fresh account. See [Account & Recovery](account.md#wiping-your-account).
+Each account's **progress** (theme unlocks, lifetime stats, achievements, prefs) is backed up separately from the recovery code. `account export` writes a signed backup that is **bound to its account ID** (default `account-<id8>-export.json` inside that account's slot, or a path you give it); `account import <path>` brings one back. Import is keyed by the **account ID embedded in the backup** and always lands in **that account's own slot** — it **creates** that account if it doesn't exist locally, or **merges** into it if it does (unioning unlocks and achievements and taking the higher of each lifetime stat, so re-importing an old backup never drops something you've earned since), and then switches to it. Add `replace` to overwrite that account wholesale. Because it's keyed by the embedded ID, importing **can't clobber a different account** — at worst it updates the one the backup belongs to. A missing or tampered file is rejected and your accounts are left unchanged. With no server, progress recovery only works if you exported it first. See [Account & Recovery](account.md) for the full model.
+
+Separately from the export blob, a **backup** is a full on-disk snapshot of an account's slot — its `account.json` **plus a recursive copy of its `saves/`** — written to `data/backups/<name>-<id8>-<timestamp>/`. `account backup` snapshots the active account (the Accounts panel's `b` does the same for the highlighted one), and **wiping or exporting an account auto-creates a full backup first**, so a wipe always leaves a recoverable copy. Only the **last 10 backups per account** are kept; older ones are pruned automatically. To restore, copy a backup folder's `account.json` and `saves/` back into `data/accounts/<id>/`. See [Backups](account.md#backups).
+
+**Wiping an account** is permanent and deletes that account's identity, theme unlocks, lifetime stats, and achievements — it does **not** touch your game saves. Because it's irreversible, it lives in the **Accounts** panel (`w` on the highlighted account) behind a type-the-account-name confirm, not as a plain command; typing `account wipe` just points you there. See [Account & Recovery](account.md#wiping-an-account).
 
 A bare `save` (no name) opens a prompt: **Overwrite** writes your current run to its **active** save right now, while **Branch new** forks a fresh save (suggested name, editable) whose parent is your current save and then moves autosave onto the new branch — leaving the old save frozen at the branch point. `save <name>` branches straight to that name. The active save is the one you most recently named or loaded (a new game has you name it up front); the periodic autosave and `Esc` continuously overwrite it, so your current game is always kept current on disk. See [Saving & Loading](saving-and-loading.md) for the full model.
 
@@ -262,7 +269,7 @@ See [Themes & Accessibility](themes.md) for the full list and unlock conditions.
 
 ### The Load Game browser
 
-From the main menu, choosing **Load Game** opens a save browser that lists every save in `./data/saves/` (most-recent first). Load Game is always available — if you have no saves yet, the browser shows a "No saved games found — start a new game" message instead of an empty list.
+From the main menu, choosing **Load Game** opens a save browser that lists every save belonging to your **active account** — under `data/accounts/<id>/saves/` (most-recent first). Load Game is always available — if you have no saves yet, the browser shows a "No saved games found — start a new game" message instead of an empty list.
 
 Highlighting a save updates a **detail pane** on the side with everything you need to size up that save before loading it: its earned title, age and epoch, civilization scale (population, buildings, wonders, milestones, techs, soldiers), prestige level and points, [morale](morale.md), a ⚠ warning if a catastrophe is pending, and the exact save time.
 

@@ -565,11 +565,11 @@ func shortAccountID(id string) string {
 
 // cmdAccount handles the `account` command family (accounts.md §9 Phase 4):
 //
-//   account                 → show the short ID + recovery code + honest "identity,
-//                             not progress" copy.
-//   account recover <code>  → re-create the local identity from a recovery code.
-//                             Guarded: if the current account already holds unlocks,
-//                             require `account recover <code> confirm` to overwrite.
+//	account                 → show the short ID + recovery code + honest "identity,
+//	                          not progress" copy.
+//	account recover <code>  → re-create the local identity from a recovery code.
+//	                          Guarded: if the current account already holds unlocks,
+//	                          require `account recover <code> confirm` to overwrite.
 //
 // It talks to engine.Account()/SetAccount() directly — no GameState snapshot needed.
 func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
@@ -583,28 +583,87 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 			}
 		}
 		var lines []string
-		lines = append(lines, fmt.Sprintf("[gold]Account:[-] %s", shortAccountID(acct.AccountID)))
+		lines = append(lines, fmt.Sprintf("[gold]Account:[-] %s  (%s)", acct.Name(), shortAccountID(acct.AccountID)))
 		lines = append(lines, fmt.Sprintf("[gold]Recovery code:[-] %s", acct.RecoveryCode()))
 		lines = append(lines, "")
 		lines = append(lines, "This code restores your IDENTITY (your account ID) across machines and")
-		lines = append(lines, "reinstalls — NOT your earned progress. Unlocks and stats are separate and")
-		lines = append(lines, "are not carried by this code (progress export is coming in a later update).")
-		lines = append(lines, "Write the code down to keep your identity. It is not a password: it proves")
-		lines = append(lines, "nothing secret, only which account you are.")
+		lines = append(lines, "reinstalls — NOT your earned progress. It is not a password: it proves")
+		lines = append(lines, "nothing secret, only which account you are. Write it down.")
 		lines = append(lines, "")
 		lines = append(lines, "Restore identity on another machine with:  account recover <code>")
 		lines = append(lines, "")
-		lines = append(lines, "[gold]Progress (unlocks, stats):[-] backed up SEPARATELY from the code above.")
-		lines = append(lines, "  account export [path]          → write a progress backup file")
-		lines = append(lines, "  account import <path> [replace] → restore progress (merges by default)")
+		lines = append(lines, "[gold]Progress (unlocks, stats, achievements)[-] is backed up SEPARATELY as a")
+		lines = append(lines, "per-account file. Export and import both work now and are multi-account —")
+		lines = append(lines, "each account is its own slot; an import adds/restores that account alongside")
+		lines = append(lines, "your others. Switch between accounts in the [gold]Accounts[-] panel on the main menu.")
+		lines = append(lines, "  account list                    → list your local accounts")
+		lines = append(lines, "  account switch <name>           → switch to an existing local account")
+		lines = append(lines, "  account export [path]           → write this account's progress backup")
+		lines = append(lines, "  account backup                  → full snapshot (account.json + saves) to data/backups/")
+		lines = append(lines, "  account import <path> [replace] → restore an account from a backup (merges by default)")
 		lines = append(lines, "")
-		lines = append(lines, "[red]Wipe Account[-] (permanently delete identity + unlocks + stats) lives on")
-		lines = append(lines, "the main menu, behind a type-your-name confirm. Press Esc to reach the menu.")
+		lines = append(lines, "[red]Wipe Account[-] (permanently delete an account's identity + unlocks + stats)")
+		lines = append(lines, "lives in the [gold]Accounts[-] panel on the main menu, behind a type-your-name confirm.")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
 
 	sub := strings.ToLower(args[0])
 	switch sub {
+	case "list":
+		// List every local account slot: name, short id, an active marker, and highest age.
+		summaries := engine.ListAccounts()
+		if len(summaries) == 0 {
+			return CommandResult{Message: "No local accounts found.", Type: "info"}
+		}
+		var lines []string
+		lines = append(lines, "[gold]Local accounts:[-]")
+		for _, s := range summaries {
+			marker := "  "
+			if s.Active {
+				marker = "[aqua]●[-] "
+			}
+			name := s.DisplayName
+			if strings.TrimSpace(name) == "" {
+				name = "(unnamed)"
+			}
+			age := s.HighestAge
+			if age == "" {
+				age = "—"
+			}
+			tampered := ""
+			if s.Tampered {
+				tampered = "  [red]⚠ modified[-]"
+			}
+			lines = append(lines, fmt.Sprintf("%s%s  [gray](%s)[-]  [gray]age:[-] %s%s",
+				marker, name, shortAccountID(s.AccountID), age, tampered))
+		}
+		lines = append(lines, "")
+		lines = append(lines, "Switch with:  account switch <name>   (or use the Accounts panel on the main menu)")
+		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+
+	case "switch":
+		if len(args) < 2 {
+			return CommandResult{Message: "Usage: account switch <name>", Type: "error"}
+		}
+		// Resolve name→id via the shared derivation, then switch only if that slot exists.
+		// A non-existent slot errors with guidance rather than minting an empty account
+		// (use the Accounts panel — or `account import` — to create/restore one).
+		name := strings.Join(args[1:], " ")
+		id := game.AccountIDForName(name)
+		if err := engine.SwitchAccount(id); err != nil {
+			return CommandResult{
+				Message: fmt.Sprintf("No account named %q — create it from the Accounts panel on the main menu.", strings.TrimSpace(name)),
+				Type:    "error",
+			}
+		}
+		// Re-resolve the active theme against the now-active account so the UI doesn't keep
+		// the prior account's theme after the swap (theming.md §6).
+		applyAccountTheme(engine)
+		return CommandResult{
+			Message: fmt.Sprintf("Now playing as %s (%s).", strings.TrimSpace(name), shortAccountID(id)),
+			Type:    "success",
+		}
+
 	case "export":
 		if acct == nil {
 			return CommandResult{
@@ -616,13 +675,14 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		if err != nil {
 			return CommandResult{Message: fmt.Sprintf("Export failed: %v", err), Type: "error"}
 		}
-		// Resolve the destination: explicit path arg, or the default account-export.json
-		// in the same data dir as account.json (so it sits beside the live account).
+		// Resolve the destination: explicit path arg, or a default that names the account so
+		// multiple accounts' exports don't collide in a shared directory. The blob carries the
+		// id regardless; the filename is just a convenience. Defaults beside the live account.
 		var path string
 		if len(args) >= 2 && args[1] != "" {
 			path = args[1]
 		} else {
-			path = filepath.Join(game.DataDir(), "account-export.json")
+			path = filepath.Join(game.DataDir(), fmt.Sprintf("account-%s-export.json", shortAccountID(acct.AccountID)))
 		}
 		if dir := filepath.Dir(path); dir != "" {
 			if err := os.MkdirAll(dir, 0755); err != nil {
@@ -637,6 +697,29 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		lines = append(lines, "This file is your PROGRESS backup (unlocks, stats, achievements). Keep it")
 		lines = append(lines, "safe — it is separate from your recovery code, which carries only identity.")
 		lines = append(lines, "Restore it with:  account import "+path)
+		// Also take a FULL slot snapshot (account.json + saves/). A backup failure must not fail
+		// the export — append a soft note instead.
+		if backupPath, bErr := engine.BackupAccount(acct.AccountID); bErr == nil {
+			lines = append(lines, "")
+			lines = append(lines, fmt.Sprintf("[gold]Full backup (account.json + saves):[-] %s", backupPath))
+		}
+		return CommandResult{Message: strings.Join(lines, "\n"), Type: "success"}
+
+	case "backup":
+		// A FULL snapshot of the ACTIVE account's slot (account.json + saves/) into
+		// <root>/backups/. Distinct from export, which serializes only meta-progression.
+		if acct == nil {
+			return CommandResult{Message: "No account to back up.", Type: "warning"}
+		}
+		backupPath, err := engine.BackupAccount(acct.AccountID)
+		if err != nil {
+			return CommandResult{Message: fmt.Sprintf("Backup failed: %v", err), Type: "error"}
+		}
+		var lines []string
+		lines = append(lines, fmt.Sprintf("[gold]Full backup saved:[-] %s", backupPath))
+		lines = append(lines, "A complete snapshot of this account: account.json plus every save in")
+		lines = append(lines, "its slot. Restore by copying the folder's contents back into")
+		lines = append(lines, "data/accounts/<id>/. Only the 10 most recent backups per account are kept.")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "success"}
 
 	case "import":
@@ -659,17 +742,29 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		if err != nil {
 			return CommandResult{Message: fmt.Sprintf("Import failed: cannot read %s: %v", path, err), Type: "error"}
 		}
-		if err := acct.ImportProgress(blob, merge); err != nil {
+		// An export is a single-account backup: it lands in its OWN account's slot (keyed by
+		// the blob's account id), not the active account. Restoring a backup means making that
+		// account current, so switch to it on success.
+		imported, err := engine.ImportAccountExport(blob, merge)
+		if err != nil {
 			return CommandResult{Message: fmt.Sprintf("Import failed: %v", err), Type: "error"}
+		}
+		if err := engine.SwitchAccount(imported.AccountID); err != nil {
+			return CommandResult{Message: fmt.Sprintf("Imported, but could not switch to the account: %v", err), Type: "error"}
 		}
 		mode := "merged"
 		if !merge {
 			mode = "replaced"
 		}
-		themeCount := len(acct.UnlockedThemes())
+		name := imported.DisplayName
+		if name == "" {
+			name = "(unnamed)"
+		}
+		themeCount := len(imported.UnlockedThemes())
 		return CommandResult{
-			Message: fmt.Sprintf("Imported progress (%s) — %d theme(s) unlocked.", mode, themeCount),
-			Type:    "success",
+			Message: fmt.Sprintf("Imported account %q (%s) — now active — %d theme(s) unlocked, progress %s.",
+				name, shortAccountID(imported.AccountID), themeCount, mode),
+			Type: "success",
 		}
 
 	case "recover":
@@ -690,8 +785,8 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 			lines = append(lines, "[red]Warning:[-] this account has unlocked progress on this machine.")
 			lines = append(lines, "Recovering will REPLACE the current local identity. The recovery code")
 			lines = append(lines, "carries identity only — your unlocks/stats are NOT carried by it and")
-			lines = append(lines, "would no longer be attached to this identity (export your progress first;")
-			lines = append(lines, "progress export is coming in a later update).")
+			lines = append(lines, "would no longer be attached to this identity. Export your progress first")
+			lines = append(lines, "with `account export` (it writes a backup you can import later).")
 			lines = append(lines, "")
 			lines = append(lines, fmt.Sprintf("To proceed anyway:  account recover %s confirm", code))
 			return CommandResult{Message: strings.Join(lines, "\n"), Type: "warning"}
@@ -713,16 +808,16 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		}
 
 	case "wipe":
-		// The destructive wipe lives behind the splash's type-your-name modal gate —
-		// we deliberately do NOT wipe from a bare command. Direct the player there.
+		// The destructive wipe lives behind the Accounts panel's type-your-name gate — we
+		// deliberately do NOT wipe from a bare command. Direct the player there.
 		return CommandResult{
-			Message: "Wiping your account is permanent and lives on the main menu (press Esc to reach it, then 'Wipe Account'). It deletes your identity, theme unlocks, lifetime stats, and achievements — your game saves are NOT affected.",
+			Message: "Wiping an account is permanent and lives in the Accounts panel on the main menu (press Esc to reach it, then 'Accounts', then 'w' on the account). It deletes that account's identity, theme unlocks, lifetime stats, and achievements — game saves are NOT affected.",
 			Type:    "warning",
 		}
 
 	default:
 		return CommandResult{
-			Message: "Usage: account  |  account recover <code>  |  account export [path]  |  account import <path> [replace]  |  account wipe",
+			Message: "Usage: account  |  account list  |  account switch <name>  |  account recover <code>  |  account export [path]  |  account backup  |  account import <path> [replace]  |  account wipe",
 			Type:    "error",
 		}
 	}

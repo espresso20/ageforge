@@ -646,6 +646,87 @@ func (ge *GameEngine) AccountID() string {
 	return ge.account.AccountID
 }
 
+// ListAccounts enumerates the available account slots for the start-screen picker
+// (Phase B). It is a plain passthrough to the read-only game.ListAccounts(): no engine
+// lock is taken — it touches no engine state, only the account files under the data root.
+// (It is start-screen plumbing, never called from a Bus handler / under ge.mu, so the
+// Bus file-I/O rule isn't in play.)
+func (ge *GameEngine) ListAccounts() []AccountSummary {
+	return ListAccounts()
+}
+
+// SwitchAccount makes account id active and installs it as ge.account (Phase B). It is a
+// start-screen operation: game.SwitchAccount repoints the active pointer + loads the slot,
+// then on success SetAccount swaps the live account under the write lock. It does NOT reset
+// running game state (the UI handles re-theming and any new-game flow). On error ge.account
+// is left as-is.
+func (ge *GameEngine) SwitchAccount(id string) error {
+	acct, err := SwitchAccount(id)
+	if err != nil {
+		return err
+	}
+	ge.SetAccount(acct)
+	return nil
+}
+
+// ImportAccountExport restores a single-account backup blob into the account's OWN slot
+// (Phase C) and returns the imported account. It is a thin passthrough to
+// game.ImportAccountExport: that function resolves the blob's target slot by its AccountID,
+// creates-or-merges the data there, and DELIBERATELY does not change the active account — so
+// importing account B's backup never disturbs the live account A. No ge.mu is taken: the work
+// is file I/O over the account slots, and it touches no engine state (it does NOT auto-install
+// the result as ge.account). The caller decides whether to SwitchAccount to the imported id.
+func (ge *GameEngine) ImportAccountExport(blob []byte, merge bool) (*Account, error) {
+	return ImportAccountExport(blob, merge)
+}
+
+// CreateAccount creates (or, for an existing same-name slot, opens) a name-derived account
+// and installs it as ge.account (Phase B). It is the no-carry-over create: a brand-new
+// account starts empty (see game.CreateAccount). Like SwitchAccount it is a start-screen
+// operation — SetAccount swaps the live account under the write lock; no running-game reset.
+func (ge *GameEngine) CreateAccount(name string) (*Account, error) {
+	acct, err := CreateAccount(name)
+	if err != nil {
+		return nil, err
+	}
+	ge.SetAccount(acct)
+	return acct, nil
+}
+
+// ExportAccountByID exports the progress blob for the account in slot id (Phase D). Plain
+// passthrough to game.ExportAccountByID: it reads the named slot WITHOUT touching ge.account or
+// the active pointer, so the Accounts panel can back up a non-active selection safely. No ge.mu
+// — file I/O over the slots, no engine state touched.
+func (ge *GameEngine) ExportAccountByID(id string) ([]byte, error) {
+	return ExportAccountByID(id)
+}
+
+// RecoveryCodeForID returns the recovery code for the account in slot id (Phase D). Plain
+// passthrough to game.RecoveryCodeForID — read-only, no active-account or engine-state mutation.
+func (ge *GameEngine) RecoveryCodeForID(id string) (string, error) {
+	return RecoveryCodeForID(id)
+}
+
+// WipeAccountByID deletes the slot for account id (Phase D). It is the by-id sibling of the
+// active-only WipeAccount, used by the Accounts panel to wipe the SELECTED account. game.
+// WipeAccountByID snapshots the slot into <root>/backups/ BEFORE removal and returns that
+// backupPath (empty if the backup failed — the wipe still proceeds), removes only that slot,
+// and, if id was the active account, clears the active pointer + in-memory id. When the wiped
+// id matches ge's current account we also detach ge.account (under the write lock) so the UI
+// re-prompts/refreshes rather than holding a now-orphaned account whose slot is gone. A
+// non-active wipe leaves ge.account alone.
+func (ge *GameEngine) WipeAccountByID(id string) (string, error) {
+	wasActive := ge.AccountID() == id && id != ""
+	backupPath, err := WipeAccountByID(id)
+	if err != nil {
+		return backupPath, err
+	}
+	if wasActive {
+		ge.SetAccount(nil)
+	}
+	return backupPath, nil
+}
+
 // StartNewNamedGame resets to a fresh game, makes `name` the active root save,
 // and writes the initial save file. It does NOT start the ticker — the caller
 // starts it. Returns the SaveGame error if any.
