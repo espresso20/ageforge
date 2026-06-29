@@ -227,11 +227,15 @@ func (d *Dashboard) build() {
 
 	// Command input
 	d.inputField = tview.NewInputField().
-		SetLabel("> ").
+		SetLabel("❯ ").
 		SetFieldWidth(0)
+	d.inputField.SetBorder(true).SetTitle(" Command ")
 	theme.Track(func() {
 		d.inputField.SetFieldBackgroundColor(theme.Color(theme.RoleBackground)).
-			SetLabelColor(theme.Color(theme.RoleLabel))
+			SetLabelColor(theme.Color(theme.RoleHighlight))
+		// Frame the command bar so it reads as a first-class element, not an afterthought.
+		d.inputField.SetBorderColor(theme.Color(theme.RoleAccent)).
+			SetTitleColor(theme.Color(theme.RoleAccent))
 	})
 
 	// Wire up autocomplete
@@ -369,7 +373,7 @@ func (d *Dashboard) build() {
 		AddItem(d.toastTV, 1, 0, false).
 		AddItem(d.ageTV, 2, 0, false).
 		AddItem(d.contentArea, 0, 1, false).
-		AddItem(d.inputField, 1, 0, true)
+		AddItem(d.inputField, 3, 0, true) // 3 rows: 1 content + 2 border
 
 	// Global key handling
 	d.root.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -667,12 +671,12 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 		if rs, ok := state.Resources[key]; ok {
 			current = rs.Amount
 		}
-		color := "red"
+		// ✓ when met / ✗ when not — readable at a glance, no micro-bar noise.
+		mark, color := "✗", "red"
 		if current >= req {
-			color = "green"
+			mark, color = "✓", "green"
 		}
-		bar := ProgressBar(current, req, 8)
-		fmt.Fprintf(&sb, "[%s]%s:%.0f/%.0f %s[-]  ", color, key, current, req, bar)
+		fmt.Fprintf(&sb, "[%s]%s[-] %s %s/%s  ", color, mark, key, FormatNumber(current), FormatNumber(req))
 	}
 
 	// Building requirements
@@ -681,26 +685,23 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 		bldKeys = append(bldKeys, k)
 	}
 	sort.Strings(bldKeys)
-	if len(bldKeys) > 0 {
-		sb.WriteString(" ")
-		for _, key := range bldKeys {
-			req := state.NextAgeBldReqs[key]
-			current := 0
-			if bs, ok := state.Buildings[key]; ok {
-				current = bs.Count
-			}
-			color := "red"
-			if current >= req {
-				color = "green"
-			}
-			bar := ProgressBar(float64(current), float64(req), 8)
-			fmt.Fprintf(&sb, "[%s]%s:%d/%d %s[-]  ", color, key, current, req, bar)
+	for _, key := range bldKeys {
+		req := state.NextAgeBldReqs[key]
+		current := 0
+		if bs, ok := state.Buildings[key]; ok {
+			current = bs.Count
 		}
+		mark, color := "✗", "red"
+		if current >= req {
+			mark, color = "✓", "green"
+		}
+		fmt.Fprintf(&sb, "[%s]%s[-] %s %d/%d  ", color, mark, key, current, req)
 	}
 
-	// Wonder gate: show if current age wonder must still be completed
+	// Wonder gate: show if current age wonder must still be completed.
+	// CurrentAgeWonderKey is cleared once the wonder is built, so its presence == not yet built.
 	if state.CurrentAgeWonderKey != "" {
-		fmt.Fprintf(&sb, "[red]✗ Wonder required: %s[-]  ", state.CurrentAgeWonderName)
+		fmt.Fprintf(&sb, "[red]✗ Wonder: %s[-]  ", state.CurrentAgeWonderName)
 	}
 
 	d.ageTV.SetText(sb.String())
@@ -719,6 +720,9 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 	if len(visible) > 20 {
 		start = len(visible) - 20
 	}
+	// Tick stamp rendered in the theme's Dim (brighter post part-1) so it recedes
+	// without going illegible; message color keys off entry type for scannability.
+	dim := theme.Tag(theme.RoleDim)
 	for _, entry := range visible[start:] {
 		color := "white"
 		switch entry.Type {
@@ -733,7 +737,7 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 		case "info":
 			color = "cyan"
 		}
-		fmt.Fprintf(&sb, "[gray]T%d[-] [%s]%s[-]\n", entry.Tick, color, entry.Message)
+		fmt.Fprintf(&sb, "%sT%d[-] [%s]%s[-]\n", dim, entry.Tick, color, entry.Message)
 	}
 	d.logTV.SetText(sb.String())
 	d.logTV.ScrollToEnd()

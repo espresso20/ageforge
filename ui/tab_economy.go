@@ -13,6 +13,24 @@ import (
 	"github.com/espresso20/ageforge/theme"
 )
 
+// earlyGameAges lists the age keys during which the "Getting Started" onboarding
+// block renders in the Buildings panel. Re-homed here out of the startup log so the
+// otherwise-empty early-game panel does useful work; it auto-retires once the
+// player advances past these ages. Tunable: trim to just {"primitive_age"} for a
+// shorter intro, or extend it if later ages still warrant hand-holding.
+var earlyGameAges = []string{"primitive_age", "stone_age"}
+
+// isEarlyGame reports whether the given age key is one of the early-game ages that
+// should show the onboarding block.
+func isEarlyGame(ageKey string) bool {
+	for _, k := range earlyGameAges {
+		if k == ageKey {
+			return true
+		}
+	}
+	return false
+}
+
 // cultureThresholds defines the culture breakpoints at which rewards unlock.
 // The bar displayed in the economy tab measures progress towards the next threshold.
 var cultureThresholds = []float64{
@@ -147,16 +165,17 @@ type EconomyTab struct {
 
 // NewEconomyTab constructs the economy tab widget tree. The left column stacks
 // resources / construction at a 3:1 height ratio (the Dashboard injects the log
-// below at weight 2 → 3:1:2). The building panel takes a 4:5 column ratio against
-// the left column — the left is kept a bit wider so the resource rows and log
-// text don't wrap.
+// below at weight 2 → 3:1:2). The building panel takes a 1:1 column ratio against
+// the left column (50:50) — narrowed from the old 4:5 so the building panel is
+// tighter (descriptions word-wrap cleanly) and the left column (resources /
+// construction / log) gets more room, improving log readability.
 func NewEconomyTab() *EconomyTab {
 	t := &EconomyTab{}
 
 	t.resourceTV = tview.NewTextView().SetDynamicColors(true)
 	t.resourceTV.SetBorder(true).SetTitle(" Resources ")
 
-	t.buildingTV = tview.NewTextView().SetDynamicColors(true).SetScrollable(true)
+	t.buildingTV = tview.NewTextView().SetDynamicColors(true).SetScrollable(true).SetWordWrap(true)
 	t.buildingTV.SetBorder(true).SetTitle(" Buildings ")
 
 	t.constructionTV = tview.NewTextView().SetDynamicColors(true)
@@ -177,8 +196,8 @@ func NewEconomyTab() *EconomyTab {
 		AddItem(t.constructionTV, 0, 1, false)
 
 	t.root = tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(t.leftCol, 0, 4, false).
-		AddItem(t.buildingTV, 0, 5, false)
+		AddItem(t.leftCol, 0, 1, false).
+		AddItem(t.buildingTV, 0, 1, false)
 
 	return t
 }
@@ -348,6 +367,22 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 	if sb.Len() == 0 {
 		sb.WriteString(" [gray]No buildings unlocked yet[-]")
 	}
+
+	// Early-game onboarding: fill the otherwise-empty lower Buildings space with a
+	// first-steps guide (re-homed out of the startup log). Auto-retires once the
+	// player advances past the early ages. Colors are deliberately legible — gold
+	// header + cyan command names + white prose — not muddy gray.
+	if isEarlyGame(state.Age) {
+		sb.WriteString("\n [gold]─── Getting Started ───[-]\n")
+		sb.WriteString(" [white]New here? Walk the first steps:[-]\n")
+		sb.WriteString(" [white]1.[-] [cyan]gather wood 5[-] [white]/[-] [cyan]gather food[-] — collect by hand\n")
+		sb.WriteString(" [white]2.[-] [cyan]build hut[-] — shelter; raises your population cap\n")
+		sb.WriteString(" [white]3.[-] [cyan]recruit worker[-] — bring in your first worker\n")
+		sb.WriteString(" [white]4.[-] [cyan]assign gathering_camp 3[-] — put workers to work\n")
+		sb.WriteString(" [white]5.[-] [cyan]build[-] the age's [gold]wonder[-] — unlocks a speed bonus\n")
+		sb.WriteString(" [white]Type[-] [cyan]help[-] [white]for all commands.[-]\n")
+	}
+
 	t.buildingTV.SetText(sb.String())
 }
 
