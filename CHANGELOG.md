@@ -21,6 +21,7 @@ All notable changes to AgeForge are documented here.
 - Flattened building cost curves and raised age-advancement requirements.
 - Capped age-transition carryover to a starter head-start.
 - `gather` yield raised 10 → 25 and disabled past the Medieval age.
+- Storage lineage: every tier stays affordable to its build cap — the cost of copy N never outruns the storage those copies provide (the old stash-deadlock class of bug, lineage-wide). Storage buildings cap at 25 copies (stash 50), and several under-provisioned vault caps were raised. Guarded by a regression test.
 - Milestone chains rebalanced: completion speed-boosts normalized across all six chains (Military was 18× weaker than Settlement — now in line); the Trade chain expanded 3 → 5 milestones; and Military/Trade/Scholar capstones now pay out broad `production_all` instead of domain-only bonuses, so finishing any chain helps your whole economy.
 
 ### Fixed

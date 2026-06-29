@@ -78,12 +78,16 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== STONE AGE (costs: 200-1000) =====
 		{
 			Name: "Storage Pit", Key: "storage_pit", Category: "storage",
+			// note: cap raised 500->600 so the first (most expensive) copy stays
+			// affordable within the storage it provides; MaxCount caps the stack
+			// before the flattened 1.13 curve outruns the cap. See storage_cost_curve_test.go.
 			BaseCost:    map[string]float64{"wood": 300, "stone": 200},
 			CostScale:   1.2,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 500}},
+			MaxCount:    25,
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 600}},
 			BuildTicks:  60,
 			RequiredAge: "stone_age",
-			Description: "A hole in the ground to stash things. +500 storage.",
+			Description: "A hole in the ground to stash things. +600 storage.",
 		},
 
 		// ===== BRONZE AGE (costs: 1500-5000) =====
@@ -91,10 +95,11 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Warehouse", Key: "warehouse", Category: "storage",
 			BaseCost:    map[string]float64{"wood": 2000, "stone": 1500, "iron": 300},
 			CostScale:   1.2,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 3000}},
+			MaxCount:    25,
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 4000}},
 			BuildTicks:  80,
 			RequiredAge: "bronze_age",
-			Description: "Proper storage building. +3000 storage.",
+			Description: "Proper storage building. +4000 storage.",
 		},
 
 		// ===== IRON AGE (costs: 8k-25k) =====
@@ -102,10 +107,11 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Granary", Key: "granary", Category: "storage",
 			BaseCost:    map[string]float64{"wood": 8000, "stone": 6000},
 			CostScale:   1.2,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 12000}},
+			MaxCount:    25,
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 15000}},
 			BuildTicks:  120,
 			RequiredAge: "iron_age",
-			Description: "Organized supply storage. +12000 storage.",
+			Description: "Organized supply storage. +15000 storage.",
 		},
 
 		// ===== CLASSICAL AGE (costs: 40k-120k) =====
@@ -113,21 +119,26 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Classical Vault", Key: "classical_vault", Category: "storage",
 			BaseCost:    map[string]float64{"stone": 50000, "iron": 12000, "gold": 10000},
 			CostScale:   1.2,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 25000}},
+			MaxCount:    25,
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 100000}},
 			BuildTicks:  150,
 			RequiredAge: "classical_age",
-			Description: "Stone vault for valuables. +25000 storage.",
+			Description: "Stone vault for valuables. +100000 storage.",
 		},
 
 		// ===== MEDIEVAL AGE (costs: 200k-600k) =====
 		{
 			Name: "Keep", Key: "keep", Category: "storage",
+			// note: cap was badly under-provisioned (60k vs a ~340k normalized stone
+			// cost) — copy #1 cost ~5.7x the storage it gave. Raised to 400k so the
+			// keep delivers storage worthy of its (unchanged) high price.
 			BaseCost:    map[string]float64{"stone": 200000, "iron": 60000, "gold": 40000},
 			CostScale:   1.2,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 60000}},
+			MaxCount:    25,
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 400000}},
 			BuildTicks:  200,
 			RequiredAge: "medieval_age",
-			Description: "Fortified storehouse. +60000 storage.",
+			Description: "Fortified storehouse. +400000 storage.",
 		},
 
 		// ===== RENAISSANCE AGE (costs: 1M-3M) =====
@@ -135,6 +146,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Renaissance Vault", Key: "renaissance_vault", Category: "storage",
 			BaseCost:    map[string]float64{"stone": 250000, "gold": 150000, "iron": 60000},
 			CostScale:   1.2,
+			MaxCount:    25,
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 500000}},
 			BuildTicks:  250,
 			RequiredAge: "renaissance_age",
@@ -146,6 +158,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Colonial Warehouse", Key: "colonial_warehouse", Category: "storage",
 			BaseCost:    map[string]float64{"wood": 1.5e6, "stone": 1e6, "gold": 600000},
 			CostScale:   1.2,
+			MaxCount:    25,
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 10e6}},
 			BuildTicks:  300,
 			RequiredAge: "colonial_age",
@@ -157,6 +170,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Industrial Depot", Key: "industrial_depot", Category: "storage",
 			BaseCost:    map[string]float64{"steel": 15e6, "iron": 20e6, "coal": 10e6},
 			CostScale:   1.2,
+			MaxCount:    25,
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 50e6}},
 			BuildTicks:  400,
 			RequiredAge: "industrial_age",
@@ -168,6 +182,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Victorian Vault", Key: "victorian_vault", Category: "storage",
 			BaseCost:    map[string]float64{"steel": 125e6, "gold": 100e6, "iron": 75e6},
 			CostScale:   1.2,
+			MaxCount:    25,
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 350e6}},
 			BuildTicks:  500,
 			RequiredAge: "victorian_age",
@@ -179,6 +194,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Electric Warehouse", Key: "electric_warehouse", Category: "storage",
 			BaseCost:    map[string]float64{"steel": 750e6, "electricity": 125e6, "iron": 500e6},
 			CostScale:   1.2,
+			MaxCount:    25,
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 3.5e9}},
 			BuildTicks:  600,
 			RequiredAge: "electric_age",
@@ -188,12 +204,16 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== ATOMIC AGE (costs: 3B-10B) =====
 		{
 			Name: "Atomic Vault", Key: "atomic_vault", Category: "storage",
+			// note: 1.25 scale inflated the normalized stone cost to ~19B vs a 15B cap,
+			// so copy #1 walled immediately. Cap raised to 20B (still cheaper per-copy
+			// than its cost is high). MaxCount caps the stack under the flattened curve.
 			BaseCost:    map[string]float64{"steel": 5e9, "stone": 7.5e9, "iron": 3e9},
 			CostScale:   1.25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 15e9}},
+			MaxCount:    25,
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 20e9}},
 			BuildTicks:  700,
 			RequiredAge: "atomic_age",
-			Description: "Radiation-shielded storage. +15B storage.",
+			Description: "Radiation-shielded storage. +20B storage.",
 		},
 
 		// ===== MODERN AGE (costs: 15B-50B) =====
@@ -201,10 +221,11 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Modern Depot", Key: "modern_depot", Category: "storage",
 			BaseCost:    map[string]float64{"steel": 35e9, "gold": 25e9, "electricity": 8e9},
 			CostScale:   1.25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 45e9}},
+			MaxCount:    25,
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 90e9}},
 			BuildTicks:  800,
 			RequiredAge: "modern_age",
-			Description: "Automated logistics center. +45B storage.",
+			Description: "Automated logistics center. +90B storage.",
 		},
 
 		// ===== INFORMATION AGE (costs: 75B-250B) =====
@@ -212,10 +233,11 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Info Vault", Key: "info_vault", Category: "storage",
 			BaseCost:    map[string]float64{"steel": 100e9, "electricity": 40e9, "data": 625e6},
 			CostScale:   1.25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 250e9}},
+			MaxCount:    25,
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 260e9}},
 			BuildTicks:  900,
 			RequiredAge: "information_age",
-			Description: "Digital-physical storage hybrid. +250B storage.",
+			Description: "Digital-physical storage hybrid. +260B storage.",
 		},
 
 		// ===== DIGITAL AGE (costs: 400B-1.2T) =====
@@ -223,6 +245,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Digital Archive", Key: "digital_archive", Category: "storage",
 			BaseCost:    map[string]float64{"steel": 500e9, "data": 10e9, "electricity": 150e9},
 			CostScale:   1.25,
+			MaxCount:    25,
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 1.5e12}},
 			BuildTicks:  1000,
 			RequiredAge: "digital_age",
@@ -234,10 +257,11 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Cyber Vault", Key: "cyber_vault", Category: "storage",
 			BaseCost:    map[string]float64{"steel": 3e12, "data": 60e9, "crypto": 10e9},
 			CostScale:   1.25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 5e12}},
+			MaxCount:    25,
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 8e12}},
 			BuildTicks:  1400,
 			RequiredAge: "cyberpunk_age",
-			Description: "Encrypted digital vault. +5T storage.",
+			Description: "Encrypted digital vault. +8T storage.",
 		},
 
 		// ===== FUSION AGE (costs: 10T-30T) =====
@@ -245,6 +269,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Fusion Vault", Key: "fusion_vault", Category: "storage",
 			BaseCost:    map[string]float64{"steel": 10e12, "plasma": 500e9, "electricity": 5e12},
 			CostScale:   1.25,
+			MaxCount:    25,
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 30e12}},
 			BuildTicks:  2000,
 			RequiredAge: "fusion_age",
@@ -256,6 +281,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Orbital Depot", Key: "orbital_depot", Category: "storage",
 			BaseCost:    map[string]float64{"steel": 50e12, "plasma": 6e12, "electricity": 30e12},
 			CostScale:   1.3,
+			MaxCount:    25,
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 200e12}},
 			BuildTicks:  4000,
 			RequiredAge: "space_age",
@@ -267,6 +293,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Stellar Vault", Key: "stellar_vault", Category: "storage",
 			BaseCost:    map[string]float64{"titanium": 60e12, "plasma": 50e12, "electricity": 80e12},
 			CostScale:   1.3,
+			MaxCount:    25,
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 500e12}},
 			BuildTicks:  6000,
 			RequiredAge: "interstellar_age",
@@ -278,6 +305,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Name: "Galactic Vault", Key: "galactic_vault", Category: "storage",
 			BaseCost:    map[string]float64{"dark_matter": 100e12, "titanium": 500e12, "plasma": 200e12},
 			CostScale:   1.3,
+			MaxCount:    25,
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 2e15}},
 			BuildTicks:  10000,
 			RequiredAge: "galactic_age",
@@ -287,12 +315,15 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== QUANTUM AGE (costs: 6Q-20Q) =====
 		{
 			Name: "Quantum Vault", Key: "quantum_vault", Category: "storage",
+			// note: the steepest raw scale (1.35) inflated the normalized dark_matter
+			// cost to ~9.9Q vs a 5Q cap — copy #1 walled. Cap raised to 10Q to match.
 			BaseCost:    map[string]float64{"antimatter": 1e15, "dark_matter": 2e15, "titanium": 500e12},
 			CostScale:   1.35,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 5e15}},
+			MaxCount:    25,
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 10e15}},
 			BuildTicks:  12000,
 			RequiredAge: "quantum_age",
-			Description: "Stores matter in quantum superposition. +5Q storage.",
+			Description: "Stores matter in quantum superposition. +10Q storage.",
 		},
 
 		// ===== TRANSCENDENT AGE =====
