@@ -160,6 +160,7 @@ type BuildingState struct {
 	Name        string
 	Category    string
 	Description string
+	Flavor      string // cosmetic personality line; mirrors BuildingDef.Flavor, may be empty
 	Unlocked    bool
 	AgeKey      string // age this building first becomes available
 	// Cost for next building

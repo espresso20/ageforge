@@ -23,19 +23,67 @@ func ShowAgeSplash(om *OverlayManager, oldAge, newAge string) {
 // transformation summary and optional epoch event reveal.
 func ShowAgeSplashFull(om *OverlayManager, oldAge, newAge string,
 	summary game.AgeAdvanceSummary, epochChanged bool, epochEvent game.EpochEventRecord) {
-	ages := config.AgeByKey()
-	newDef := ages[newAge]
-
 	// Age title overlay
 	titleTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
+
+	titleTV.SetText(buildAgeSplashText(newAge, summary, epochChanged, epochEvent))
+
+	// Layout: text-only flex with focusable=true so the overlay itself receives input
+	overlay := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(titleTV, 0, 1, true)
+
+	// dismissed guards against double-dismiss (both the timer goroutine and a
+	// keypress can fire simultaneously; we only want to remove the page once).
+	dismissed := false
+	dismiss := func() {
+		if dismissed {
+			return
+		}
+		dismissed = true
+		om.Hide()
+	}
+
+	// SetInputCapture on the overlay Flex so all keypresses trigger dismiss.
+	overlay.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		dismiss()
+		return nil
+	})
+
+	// Auto-dismiss after 20 seconds
+	go func() {
+		time.Sleep(20 * time.Second)
+		om.app.QueueUpdateDraw(func() {
+			dismiss()
+		})
+	}()
+
+	// Remove any currently active overlay first, then add the splash
+	if om.active != "" {
+		om.pages.RemovePage(om.active)
+	}
+	om.pages.AddPage("age_splash", overlay, true, true)
+	om.active = "age_splash"
+	om.app.SetFocus(overlay)
+}
+
+// buildAgeSplashText assembles the full splash body string for an age advance.
+// It is split out from ShowAgeSplashFull so it can be unit-tested without a live
+// tview app. Pure function: same inputs → same string, no side effects.
+func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
+	epochChanged bool, epochEvent game.EpochEventRecord) string {
+	ages := config.AgeByKey()
+	newDef := ages[newAge]
 
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "\n\n")
 	fmt.Fprintf(&sb, "[gold]══════════════════════════════════[-]\n")
 	fmt.Fprintf(&sb, "[gold::b]★  %s  ★[-]\n", strings.ToUpper(newDef.Name))
 	fmt.Fprintf(&sb, "[white]\"%s\"[-]\n", newDef.Description)
+	if newDef.Quip != "" {
+		fmt.Fprintf(&sb, "[gray::i]%s[-:-:-]\n", newDef.Quip)
+	}
 	fmt.Fprintf(&sb, "[gold]══════════════════════════════════[-]\n")
 	fmt.Fprintf(&sb, "\n")
 
@@ -139,42 +187,5 @@ func ShowAgeSplashFull(om *OverlayManager, oldAge, newAge string,
 	}
 
 	fmt.Fprintf(&sb, "\n[gray]Press any key to continue[-]")
-	titleTV.SetText(sb.String())
-
-	// Layout: text-only flex with focusable=true so the overlay itself receives input
-	overlay := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(titleTV, 0, 1, true)
-
-	// dismissed guards against double-dismiss (both the timer goroutine and a
-	// keypress can fire simultaneously; we only want to remove the page once).
-	dismissed := false
-	dismiss := func() {
-		if dismissed {
-			return
-		}
-		dismissed = true
-		om.Hide()
-	}
-
-	// SetInputCapture on the overlay Flex so all keypresses trigger dismiss.
-	overlay.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		dismiss()
-		return nil
-	})
-
-	// Auto-dismiss after 20 seconds
-	go func() {
-		time.Sleep(20 * time.Second)
-		om.app.QueueUpdateDraw(func() {
-			dismiss()
-		})
-	}()
-
-	// Remove any currently active overlay first, then add the splash
-	if om.active != "" {
-		om.pages.RemovePage(om.active)
-	}
-	om.pages.AddPage("age_splash", overlay, true, true)
-	om.active = "age_splash"
-	om.app.SetFocus(overlay)
+	return sb.String()
 }

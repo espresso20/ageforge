@@ -728,6 +728,7 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 			Name:        def.Name,
 			Category:    def.Category,
 			Description: def.Description,
+			Flavor:      def.Flavor,
 			Unlocked:    bm.unlocked[key],
 			AgeKey:      def.RequiredAge,
 			NextCost:    cost,
@@ -777,6 +778,7 @@ func (bm *BuildingManager) Snapshot(resources *ResourceManager, queue []BuildQue
 				Name:        def.Name,
 				Category:    def.Category,
 				Description: def.Description,
+				Flavor:      def.Flavor,
 				Unlocked:    true,
 				AgeKey:      def.RequiredAge,
 			}
