@@ -58,6 +58,7 @@ type GameSave struct {
 	// Phase 8: epoch system
 	CurrentEpoch       string             `json:"current_epoch,omitempty"`
 	EpochEventFired    map[string]bool    `json:"epoch_event_fired,omitempty"`
+	AwakeningsFired    map[string]bool    `json:"awakenings_fired,omitempty"`
 	SurvivedEpochs     map[string]bool    `json:"survived_epochs,omitempty"`
 	PendingCatastrophe string             `json:"pending_catastrophe,omitempty"`
 	EpochEventHistory  []EpochEventRecord `json:"epoch_event_history,omitempty"`
@@ -475,6 +476,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		ParentName:         ge.activeParentName,
 		CurrentEpoch:       ge.currentEpoch,
 		EpochEventFired:    copyBoolMap(ge.epochEventFired),
+		AwakeningsFired:    copyBoolMap(ge.awakeningsFired),
 		SurvivedEpochs:     copyBoolMap(ge.survivedEpochs),
 		PendingCatastrophe: ge.pendingCatastrophe,
 		EpochEventHistory:  append([]EpochEventRecord(nil), ge.epochEventHistory...),
@@ -673,6 +675,11 @@ func (ge *GameEngine) LoadGame(filename string) error {
 		ge.epochEventFired = save.EpochEventFired
 	} else {
 		ge.epochEventFired = make(map[string]bool)
+	}
+	if save.AwakeningsFired != nil {
+		ge.awakeningsFired = save.AwakeningsFired
+	} else {
+		ge.awakeningsFired = make(map[string]bool)
 	}
 	if save.SurvivedEpochs != nil {
 		ge.survivedEpochs = save.SurvivedEpochs

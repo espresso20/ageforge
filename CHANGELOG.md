@@ -18,6 +18,7 @@ All notable changes to AgeForge are documented here.
 - **Main-screen UI overhaul** — a framed command bar, a scannable ✓/✗ age-progress strip, a cleaner log, lifted secondary-text contrast, an early-game onboarding panel, and rebalanced panel widths.
 - Nanobots are a real resource now — a Modern-age producer building (Nano Foundry, +80 nanobots/tick), 3 nanobot techs (Nanofabrication cuts build costs −8%, Medical Nanobots boosts population and food, Self-Replication ramps nanobot output), and several digital/cyberpunk buildings now cost nanobots to construct.
 - Culture has sinks now — Cultural Monuments (spend culture for a permanent production bonus) and a `festival` command (spend a lump of culture for a temporary multi-resource buff); prestige gates remain the primary long-term sink.
+- **Age Awakenings** — a one-time deterministic boost fires the first time you enter each epoch's signature age (7 epochs, 7 awakenings): Pottery Mastery, Discovery of Metallurgy, Steam Breakthrough, Electrification, Information Age Dawns, Cybernetic Awakening, and First Contact Signal. Each grants a modest temporary production bonus, fires at most once per prestige run, persists across save/load, and resets on prestige so the next run can earn them again.
 
 ### Balance
 - Flattened building cost curves and raised age-advancement requirements.

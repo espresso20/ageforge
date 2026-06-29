@@ -127,6 +127,10 @@ type GameEngine struct {
 	survivedEpochs     map[string]bool // epochs where player chose Endure
 	pendingCatastrophe string          // epoch key when catastrophe modal should show; "" otherwise
 	epochEventHistory  []EpochEventRecord
+	// awakeningsFired tracks which one-time Age Awakenings have fired this run, so each
+	// fires at most once per prestige cycle and a save/reload does not re-fire. Keyed by
+	// AwakeningDef.Key. Cleared on prestige/reset alongside epochEventFired.
+	awakeningsFired map[string]bool
 
 	// Phase 9: catastrophe system — these fields intentionally survive Succumb and Prestige
 	// resets so that legacy bonuses and civilization history accumulate across multiple runs.
@@ -184,6 +188,7 @@ func NewGameEngine() *GameEngine {
 		stopCh:           make(chan struct{}),
 		currentEpoch:     config.EpochForAge("primitive_age"),
 		epochEventFired:  make(map[string]bool),
+		awakeningsFired:  make(map[string]bool),
 		survivedEpochs:   make(map[string]bool),
 		legacyBonuses:    make(map[string]bool),
 		History:          NewHistoryCollector(),
@@ -1459,6 +1464,11 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// Phase 8: detect epoch transition and roll epoch event
 	ge.detectEpochTransition(newAge)
 
+	// Age Awakening: one-time epoch awakening on first entry to its trigger age.
+	// Fires after the epoch roll so the awakening's deterministic boost lands on top
+	// of any epoch-event flavor, and logs as the pivotal "this is a new era" beat.
+	ge.fireAwakening(newAge)
+
 	// Age advancement celebration morale boost
 	ge.applyMorale(0.08)
 }
@@ -1499,6 +1509,47 @@ func (ge *GameEngine) detectEpochTransition(newAge string) {
 		},
 	})
 	ge.rollEpochEvent(newEpoch)
+}
+
+// fireAwakening fires the one-time Age Awakening for newAge, if one triggers on that
+// age and it has not already fired this run. An awakening is deterministic (always
+// grants its modest thematic boost, no downside) and one-time per prestige cycle:
+// the awakeningsFired set guards against double-fire on re-entry or save/reload.
+//
+// The boost is delivered through the existing ActiveEvent / InjectEvent mechanism so
+// it decays after Duration ticks and surfaces in the active-events panel like any
+// other timed event. Must be called under the engine write lock (advanceAge holds it);
+// it touches no lock-acquiring methods and is safe in that path.
+func (ge *GameEngine) fireAwakening(newAge string) {
+	def, ok := config.AwakeningForAge(newAge)
+	if !ok {
+		return // no awakening triggers on this age
+	}
+	if ge.awakeningsFired[def.Key] {
+		return // already fired this run
+	}
+	ge.awakeningsFired[def.Key] = true
+
+	ge.Events.InjectEvent(ActiveEvent{
+		Key:       def.Key,
+		Name:      def.Name,
+		TicksLeft: def.Duration,
+		Effects:   def.Effects,
+	})
+
+	ep := config.EpochByKey()[def.EpochKey]
+	// One log line per awakening — the pivotal "new era" beat. Coloured by the epoch
+	// so the awakening visually belongs to the era it ushers in.
+	ge.addLog("event", fmt.Sprintf("[%s]✦ Awakening: %s — %s[-]", ep.Color, def.Name, def.FlavorText))
+
+	ge.Bus.Publish(EventData{
+		Type: EventAwakeningFired,
+		Payload: map[string]interface{}{
+			"awakening_key":  def.Key,
+			"awakening_name": def.Name,
+			"epoch_key":      def.EpochKey,
+		},
+	})
 }
 
 // rollEpochEvent performs the epoch transition event roll.
@@ -2133,6 +2184,7 @@ func (ge *GameEngine) Succumb() error {
 	ge.starvationTicks = 0
 	ge.currentEpoch = config.EpochForAge("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
+	ge.awakeningsFired = make(map[string]bool)
 	ge.survivedEpochs = make(map[string]bool)
 	ge.pendingCatastrophe = ""
 	ge.morale = 0.50
@@ -2844,6 +2896,7 @@ func (ge *GameEngine) DoPrestige() error {
 	ge.log = nil
 	ge.currentEpoch = config.EpochForAge("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
+	ge.awakeningsFired = make(map[string]bool)
 	ge.survivedEpochs = make(map[string]bool)
 	ge.pendingCatastrophe = ""
 	ge.epochEventHistory = nil
@@ -2932,6 +2985,7 @@ func (ge *GameEngine) Reset() {
 	ge.eliteBadge = false
 	ge.currentEpoch = config.EpochForAge("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
+	ge.awakeningsFired = make(map[string]bool)
 	ge.survivedEpochs = make(map[string]bool)
 	ge.pendingCatastrophe = ""
 	ge.epochEventHistory = nil

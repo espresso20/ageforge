@@ -15,6 +15,7 @@ const (
 	EventChainCompleted      = "chain_completed"
 	EventEpochAdvanced       = "epoch_advanced"
 	EventEpochEventFired     = "epoch_event_fired"
+	EventAwakeningFired      = "awakening_fired"
 )
 
 // EventData carries data for an event
