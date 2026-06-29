@@ -25,6 +25,178 @@ const accountSchemaVersion = 1
 // v1 resolves a single account.json — no multi-profile layout yet (accounts.md §3.1).
 const accountFileName = "account.json"
 
+// accountsDirName is the subdirectory under the data ROOT that holds the per-account
+// slots: <root>/accounts/<account_id>/. Each slot carries that account's account.json
+// and its own saves/ tree. The flat legacy layout (account.json + saves/ directly under
+// the root) is migrated into a slot on first boot by migrateLegacyAccountIfNeeded.
+const accountsDirName = "accounts"
+
+// activePointerFileName is the base name of the active-account pointer file under the
+// data ROOT: <root>/active-account. It holds the 32-hex account ID whose slot is the
+// live one — the single source of truth for "which account is active" across boots.
+const activePointerFileName = "active-account"
+
+// activeAccountID is the process-global ID of the account whose scoped slot is live.
+// dataDirectory() (the SCOPED dir) resolves through it, so account.json + saves land in
+// <root>/accounts/<activeAccountID>/. It is "" before any account is named/loaded (the
+// brief first-run window) — see dataDirectory() for the empty-id behavior. Guarded by
+// activeAccountMu so the boot goroutine and the UI never race the pointer.
+var activeAccountID string
+
+// activeAccountMu guards activeAccountID. It is a distinct, lightweight lock with no
+// relation to the engine's ge.mu or an Account's a.mu — it only serializes reads/writes
+// of the process-global active-account pointer.
+var activeAccountMu sync.Mutex
+
+// getActiveAccountID returns the currently-active account ID under the pointer lock.
+func getActiveAccountID() string {
+	activeAccountMu.Lock()
+	defer activeAccountMu.Unlock()
+	return activeAccountID
+}
+
+// setActiveAccountID sets the in-memory active-account ID under the pointer lock. It does
+// NOT persist — callers that want the choice to survive a restart also call writeActivePointer.
+func setActiveAccountID(id string) {
+	activeAccountMu.Lock()
+	defer activeAccountMu.Unlock()
+	activeAccountID = id
+}
+
+// accountDir returns the on-disk slot directory for the account with the given ID:
+// <root>/accounts/<id>/. An empty id collapses to <root>/accounts (filepath.Join drops
+// the empty segment) — the brief pre-naming window, where nothing named is written yet.
+func accountDir(id string) string {
+	return filepath.Join(rootDataDir(), accountsDirName, id)
+}
+
+// dataDirectory is the SCOPED data dir: the active account's slot,
+// <root>/accounts/<activeID>/. accountPath() and the saves dir resolve through it, so
+// account.json and saves land inside the active account's slot (Phase A account-scoping).
+//
+// When no account is active yet (empty id, the first-run window before a name is chosen),
+// it collapses to <root>/accounts. That is harmless: nothing writes a *named* artifact in
+// that window — LoadOrCreate returns a fresh unestablished account WITHOUT persisting it,
+// and the create/migrate paths always have a real id before they MkdirAll/Save. So no file
+// is ever created under an empty-id slot.
+func dataDirectory() string {
+	return accountDir(getActiveAccountID())
+}
+
+// activeAccountPointerPath returns the path of the active-account pointer under the ROOT:
+// <root>/active-account. It deliberately uses rootDataDir() (NOT the scoped dataDirectory)
+// — the pointer names which slot is active and therefore lives one level above the slots.
+func activeAccountPointerPath() string {
+	return filepath.Join(rootDataDir(), activePointerFileName)
+}
+
+// readActivePointer reads the active-account ID from <root>/active-account, trimming
+// surrounding whitespace/newline. A missing pointer returns ("", nil): no active account
+// has been persisted yet (fresh install / post-wipe), which is a normal state, not an
+// error. Any other read error is surfaced.
+func readActivePointer() (string, error) {
+	data, err := os.ReadFile(activeAccountPointerPath())
+	if err != nil {
+		if os.IsNotExist(err) {
+			return "", nil
+		}
+		return "", fmt.Errorf("failed to read active-account pointer: %w", err)
+	}
+	return strings.TrimSpace(string(data)), nil
+}
+
+// writeActivePointer persists id as the active account in <root>/active-account, creating
+// the root if needed and writing atomically (temp file + rename) so a crash mid-write can
+// never leave a half-written pointer. It mirrors Save()/SaveGame()'s write discipline.
+func writeActivePointer(id string) error {
+	root := rootDataDir()
+	if err := os.MkdirAll(root, 0755); err != nil {
+		return fmt.Errorf("failed to create data root: %w", err)
+	}
+	path := activeAccountPointerPath()
+	tmp := path + ".tmp"
+	if err := os.WriteFile(tmp, []byte(id), 0644); err != nil {
+		return fmt.Errorf("failed to write active-account pointer: %w", err)
+	}
+	if err := os.Rename(tmp, path); err != nil {
+		return fmt.Errorf("failed to finalize active-account pointer: %w", err)
+	}
+	return nil
+}
+
+// migrateLegacyAccountIfNeeded moves a pre-Phase-A FLAT layout (account.json + saves/
+// directly under the data ROOT) into the new account-scoped slot, non-destructively
+// (accounts.md Phase A). It is called at the top of LoadOrCreate/LoadAccount, BEFORE the
+// active account is resolved, so the pointer it writes is in place for that resolution.
+//
+// TRIGGER (idempotent): it runs ONLY when <root>/account.json exists AND <root>/accounts
+// does NOT yet exist. Once the accounts/ tree exists the layout is already migrated (or
+// born scoped), so a second call is a clean no-op — safe to call on every boot.
+//
+// STEPS: read the legacy account.json to learn its AccountID → mkdir -p the slot →
+// MOVE (os.Rename) the legacy saves/ into the slot FIRST, then MOVE account.json → write
+// the active pointer. Renames are atomic and never delete data. Saves move BEFORE
+// account.json so that if the saves rename fails the legacy account.json is still in place
+// at the root and the trigger condition (no accounts/ dir) still holds, leaving the tree in
+// a clean, re-migratable state. account-export.json (a user-created backup) is left alone.
+func migrateLegacyAccountIfNeeded() error {
+	root := rootDataDir()
+	legacyAccount := filepath.Join(root, accountFileName)
+	accountsRoot := filepath.Join(root, accountsDirName)
+
+	// Trigger only when the flat account.json exists and we have NOT migrated yet.
+	if _, err := os.Stat(legacyAccount); err != nil {
+		return nil // no legacy account (absent) — nothing to migrate
+	}
+	if _, err := os.Stat(accountsRoot); err == nil {
+		return nil // accounts/ already exists — already migrated (idempotent no-op)
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("failed to stat accounts dir during migration: %w", err)
+	}
+
+	// Learn the legacy account's ID so we name its slot correctly. A corrupt/unparseable
+	// legacy file has no usable ID — leave it untouched (LoadOrCreate's corrupt path backs
+	// it up later) rather than inventing a slot name.
+	data, err := os.ReadFile(legacyAccount)
+	if err != nil {
+		return fmt.Errorf("failed to read legacy account during migration: %w", err)
+	}
+	var acct Account
+	if err := json.Unmarshal(data, &acct); err != nil {
+		return nil // unparseable legacy file — not a migration case; downstream handles it
+	}
+	if acct.AccountID == "" {
+		return nil // no ID to key a slot on — leave the flat file for downstream handling
+	}
+
+	slot := accountDir(acct.AccountID)
+	if err := os.MkdirAll(slot, 0755); err != nil {
+		return fmt.Errorf("failed to create account slot during migration: %w", err)
+	}
+
+	// Move saves/ FIRST (see doc above): a failure here leaves account.json at the root,
+	// so the trigger still fires next boot and we retry cleanly.
+	legacySaves := filepath.Join(root, "saves")
+	if _, err := os.Stat(legacySaves); err == nil {
+		if err := os.Rename(legacySaves, filepath.Join(slot, "saves")); err != nil {
+			return fmt.Errorf("failed to migrate saves into account slot: %w", err)
+		}
+	} else if !os.IsNotExist(err) {
+		return fmt.Errorf("failed to stat legacy saves during migration: %w", err)
+	}
+
+	// Move account.json into the slot.
+	if err := os.Rename(legacyAccount, filepath.Join(slot, accountFileName)); err != nil {
+		return fmt.Errorf("failed to migrate account.json into account slot: %w", err)
+	}
+
+	// Record the migrated account as active so the next resolution finds it.
+	if err := writeActivePointer(acct.AccountID); err != nil {
+		return fmt.Errorf("failed to write active pointer during migration: %w", err)
+	}
+	return nil
+}
+
 // AccountUnlocks holds account-wide cosmetic unlocks (DATA, accounts.md §3.3).
 // Phase 1 only round-trips these; the unlock API lands in Phase 3.
 type AccountUnlocks struct {
@@ -46,9 +218,10 @@ type AccountPrefs struct {
 	ActiveTheme string `json:"active_theme,omitempty"`
 }
 
-// Account is the per-player identity + meta-progression record, persisted to
-// data/account.json. It is the single source of truth for identity (account ID,
-// display name) and DATA (unlocks, lifetime stats, achievements, prefs).
+// Account is the per-player identity + meta-progression record, persisted to the active
+// account's slot at <root>/accounts/<account_id>/account.json (Phase A account-scoping;
+// pre-Phase-A it was the flat <root>/account.json). It is the single source of truth for
+// identity (account ID, display name) and DATA (unlocks, lifetime stats, achievements, prefs).
 //
 // Integrity mirrors saves: Signature is the HMAC-SHA256 of the payload (with
 // Signature zeroed) under saveHMACKey. A tampered file still loads — Tampered is
@@ -172,6 +345,19 @@ func (a *Account) Established() bool {
 // rename for an unparseable file (mirrors LoadOrCreate's corrupt handling, minus the
 // create).
 func LoadAccount() (*Account, bool, error) {
+	// Same resolution as LoadOrCreate, minus the create: migrate a legacy flat layout,
+	// then scope to the active account from the persisted pointer.
+	if err := migrateLegacyAccountIfNeeded(); err != nil {
+		return nil, false, err
+	}
+	id, err := readActivePointer()
+	if err != nil {
+		return nil, false, err
+	}
+	if id != "" {
+		setActiveAccountID(id)
+	}
+
 	path := accountPath()
 	data, err := os.ReadFile(path)
 	if err != nil {
@@ -196,6 +382,8 @@ func LoadAccount() (*Account, bool, error) {
 		// Signature present but mismatched → tampered. Flag it, still load it.
 		acct.Tampered = true
 	}
+	// Confirm the loaded account as active (the loaded id is authoritative over the pointer).
+	setActiveAccountID(acct.AccountID)
 	return &acct, true, nil
 }
 
@@ -210,6 +398,12 @@ func LoadAccount() (*Account, bool, error) {
 // the identity is re-keyed to the name. Identity fields (the old random ID, Created) are
 // replaced; the new named identity wins. A corrupt/unparseable existing file is ignored
 // (LoadAccount backs it up) and the named account starts with empty data.
+//
+// SCOPING (Phase A): the new account is keyed to the name-derived id. Carry-over reads the
+// CURRENTLY-active account FIRST (before the id switch), then the active id is repointed to
+// the new name-derived id, its slot is created, the account is Saved into that slot, and the
+// active pointer is persisted so the next boot resolves to it. The save mutex discipline is
+// preserved — Save() takes no account mutex.
 func CreateNamedAccount(name string) (*Account, error) {
 	trimmed := strings.TrimSpace(name)
 	now := time.Now()
@@ -222,8 +416,9 @@ func CreateNamedAccount(name string) (*Account, error) {
 		FreshlyCreated: true,
 	}
 
-	// Carry over DATA from any pre-existing account so unlocks/stats survive the
-	// identity re-key. found=false (absent or corrupt) → start clean.
+	// Carry over DATA from any pre-existing (currently-active) account so unlocks/stats
+	// survive the identity re-key. Read this BEFORE switching the active id below, so it
+	// resolves the prior slot. found=false (absent or corrupt) → start clean.
 	if prior, found, err := LoadAccount(); err == nil && found && prior != nil {
 		acct.Unlocks = prior.Unlocks
 		acct.Stats = prior.Stats
@@ -231,45 +426,60 @@ func CreateNamedAccount(name string) (*Account, error) {
 		acct.Prefs = prior.Prefs
 	}
 
+	// Switch the active account to the new name-derived id, then create its slot so the
+	// scoped Save lands at <root>/accounts/<id>/account.json.
+	setActiveAccountID(acct.AccountID)
+	if err := os.MkdirAll(accountDir(acct.AccountID), 0755); err != nil {
+		return nil, fmt.Errorf("failed to create account slot: %w", err)
+	}
 	if err := acct.Save(); err != nil {
+		return nil, err
+	}
+	if err := writeActivePointer(acct.AccountID); err != nil {
 		return nil, err
 	}
 	return acct, nil
 }
 
-// accountPath resolves the full path to account.json, mirroring savePath's
-// resolution: prefer the binary-relative data/account.json; if that is absent,
-// fall back to a CWD-relative data/account.json (legacy/dev-run); default to the
-// binary-relative path for new writes (accounts.md §3.1).
+// accountPath resolves the full path to the ACTIVE account's account.json:
+// <root>/accounts/<activeID>/account.json. It resolves purely through the SCOPED
+// dataDirectory() (Phase A account-scoping) — the pre-scoping binary/CWD-relative
+// fallbacks are gone, since the flat legacy <root>/account.json is relocated into a slot
+// by migrateLegacyAccountIfNeeded before any account read, so there is no flat file left
+// to fall back to.
 func accountPath() string {
-	primary := filepath.Join(dataDirectory(), accountFileName)
-	if _, err := os.Stat(primary); err == nil {
-		return primary
-	}
-	legacy := filepath.Join("data", accountFileName)
-	if _, err := os.Stat(legacy); err == nil {
-		return legacy
-	}
-	return primary // default to canonical for new writes
+	return filepath.Join(dataDirectory(), accountFileName)
 }
 
-// WipeAccount permanently deletes the account file (account.json) and its
-// corrupt-backup sibling (account.json.corrupt) if present, so the next boot starts
-// from a clean slate and re-prompts for a name. It is the account analogue of
-// WipeAllSaves — destructive and irreversible (no server backup).
+// WipeAccount permanently deletes the ACTIVE account's slot —
+// <root>/accounts/<activeID>/ and everything under it (account.json, its .corrupt
+// sibling, and the slot's own saves/) — then clears the active-account pointer and the
+// in-memory active id, so the next boot starts from a clean slate and re-prompts for a
+// name. It is the account analogue of WipeAllSaves — destructive and irreversible (no
+// server backup).
 //
-// SCOPE: it removes ONLY the account identity + meta-progression file(s). It NEVER
-// touches data/saves (game saves are separate and survive a wipe) nor any progress
-// export file (account-export.json) — those are independent backups the player may
-// have deliberately created. A missing file is not an error: os.Remove's
-// "not exist" is ignored so wiping twice (or with no account) is a clean no-op.
+// SCOPE (Phase A): it removes only the ACTIVE account's slot. OTHER accounts' slots under
+// <root>/accounts/ are spared, and any user progress-export file (account-export.json,
+// which lives outside the slots) is never touched — those are independent backups the
+// player may have deliberately created. With no active account (empty id) it is a clean
+// no-op: it never falls back to removing the shared <root>/accounts root. Wiping twice (or
+// with nothing active) is a clean no-op — os.RemoveAll on a missing path is not an error.
 func WipeAccount() error {
-	path := accountPath()
-	for _, p := range []string{path, path + ".corrupt"} {
-		if err := os.Remove(p); err != nil && !os.IsNotExist(err) {
-			return fmt.Errorf("failed to wipe account file %s: %w", p, err)
-		}
+	id := getActiveAccountID()
+	if id == "" {
+		// Nothing active to wipe. Do NOT remove accountDir("") — that is the shared
+		// <root>/accounts root, never a single account's slot.
+		return nil
 	}
+	if err := os.RemoveAll(accountDir(id)); err != nil {
+		return fmt.Errorf("failed to wipe account slot %s: %w", accountDir(id), err)
+	}
+	// Clear the active pointer so no stale slot is resolved next boot, and reset the
+	// in-memory active id.
+	if err := os.Remove(activeAccountPointerPath()); err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to clear active-account pointer: %w", err)
+	}
+	setActiveAccountID("")
 	return nil
 }
 
@@ -338,8 +548,9 @@ func (a *Account) Save() error {
 	return nil
 }
 
-// LoadOrCreate resolves data/account.json and returns the live Account, creating
-// one transparently when needed (accounts.md §6/§7). Behavior by file state:
+// LoadOrCreate resolves the active account (migrating a legacy flat layout, then reading
+// the active-account pointer) and returns the live Account, creating one transparently when
+// the active slot has none (accounts.md §6/§7). Behavior by file state:
 //
 //   - Absent: generate a fresh account (new ID, Created=now), Save it, return it.
 //   - Present + parses + signature valid (or unsigned/legacy): return it.
@@ -352,29 +563,42 @@ func (a *Account) Save() error {
 // wiring); LoadOrCreate's contract here is read-or-create, leaving the on-disk
 // file untouched on the valid/tampered paths.
 func LoadOrCreate() (*Account, error) {
+	// Relocate any pre-Phase-A flat layout into a slot before resolving the active
+	// account, so the pointer it writes is honored by the resolution below.
+	if err := migrateLegacyAccountIfNeeded(); err != nil {
+		return nil, err
+	}
+
+	// Resolve the active account from the persisted pointer. With an id set, scope the
+	// reads to that slot so accountPath() resolves to <root>/accounts/<id>/account.json.
+	id, err := readActivePointer()
+	if err != nil {
+		return nil, err
+	}
+	if id != "" {
+		setActiveAccountID(id)
+	}
+
 	path := accountPath()
 	data, err := os.ReadFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
-			acct, err := newAccount()
-			if err != nil {
-				return nil, err
-			}
-			if err := acct.Save(); err != nil {
-				return nil, err
-			}
-			// First genuine run: no file existed. Flag it so boot code can surface a
-			// one-time non-blocking notice (accounts.md §6). The corrupt-recovery path
-			// below is NOT a first run — it leaves FreshlyCreated false.
-			acct.FreshlyCreated = true
-			return acct, nil
+			// No account in the active slot → mint, sign, and persist a fresh one
+			// (accounts.md §6/§7). It becomes the active account: set the in-memory id,
+			// Save into its now-resolved slot, then persist the pointer so the next boot
+			// finds it. First genuine run → FreshlyCreated=true.
+			return createFreshActive(true)
 		}
 		return nil, fmt.Errorf("failed to read account: %w", err)
 	}
 
 	var acct Account
 	if err := json.Unmarshal(data, &acct); err != nil {
-		// Corrupt / unparseable → back it up, then start fresh (accounts.md §7).
+		// Corrupt / unparseable → back it up to <slot>/account.json.corrupt, then mint a
+		// fresh account and Save it back into the SAME active slot (accounts.md §7). The
+		// active id (and thus the pointer + slot path) is unchanged, so the fresh
+		// account.json lands beside its .corrupt sibling. The corrupt-recovery path is NOT
+		// a first run → FreshlyCreated stays false.
 		backup := path + ".corrupt"
 		if renameErr := os.Rename(path, backup); renameErr != nil {
 			return nil, fmt.Errorf("account file is corrupt and could not be backed up: %w", renameErr)
@@ -393,7 +617,31 @@ func LoadOrCreate() (*Account, error) {
 		// Signature present but mismatched → tampered. Flag it, still load it.
 		acct.Tampered = true
 	}
+	// Established account loaded from its slot — confirm it as the active account.
+	setActiveAccountID(acct.AccountID)
 	return &acct, nil
+}
+
+// createFreshActive mints a fresh random-id account, makes it the active account, and
+// persists it into its own scoped slot plus the active pointer. It is the scoped
+// equivalent of the pre-Phase-A "absent file → create + Save" path: with a real id set as
+// active BEFORE Save, accountPath() resolves to <root>/accounts/<id>/account.json (never an
+// empty-id slot), and writeActivePointer records the choice for the next boot. The returned
+// account is flagged FreshlyCreated so boot code can surface the one-time first-run notice.
+func createFreshActive(freshlyCreated bool) (*Account, error) {
+	acct, err := newAccount()
+	if err != nil {
+		return nil, err
+	}
+	setActiveAccountID(acct.AccountID)
+	if err := acct.Save(); err != nil {
+		return nil, err
+	}
+	if err := writeActivePointer(acct.AccountID); err != nil {
+		return nil, err
+	}
+	acct.FreshlyCreated = freshlyCreated
+	return acct, nil
 }
 
 // --- Unlock API (accounts.md §8; theming.md §5 is the first caller) ---

@@ -224,24 +224,40 @@ type UnlockedState struct {
 // runs outside tests.
 var dataDirOverride string
 
-// SetDataDirForTest points the data root (saves/account) at dir and returns a
-// restore func, so tests in OTHER packages (e.g. ui) can isolate the data root the
-// way in-package tests do via dataDirOverride directly. Pass "" to clear. This is a
-// test-only seam — production never calls it; it is exported solely to cross the
-// package boundary. The active theme persists into account.json under this root, so
-// a ui test that exercises SetActiveTheme must call this to avoid clobbering a real
-// ./data/account.json. Usage: defer game.SetDataDirForTest(t.TempDir())().
+// SetDataDirForTest points the data ROOT (saves/account/pointer) at dir and returns a
+// restore func, so tests in OTHER packages (e.g. ui) can isolate the data root the way
+// in-package tests do via dataDirOverride directly. Pass "" to clear. This is a test-only
+// seam — production never calls it; it is exported solely to cross the package boundary.
+// The active theme persists into the active account's account.json under this root, so a ui
+// test that exercises SetActiveTheme must call this to avoid clobbering a real ./data tree.
+// Usage: defer game.SetDataDirForTest(t.TempDir())().
+//
+// It ALSO snapshots and restores the process-global active-account id (Phase A
+// account-scoping): an account created during the test would otherwise leave the active id
+// pointing into the now-removed temp dir for whatever test runs next. Restoring it on
+// cleanup keeps the seam symmetric with the in-package isolateAccountDir helper and the
+// suite order-independent.
 func SetDataDirForTest(dir string) (restore func()) {
-	prior := dataDirOverride
+	priorDir := dataDirOverride
+	priorID := getActiveAccountID()
 	dataDirOverride = dir
-	return func() { dataDirOverride = prior }
+	setActiveAccountID("")
+	return func() {
+		dataDirOverride = priorDir
+		setActiveAccountID(priorID)
+	}
 }
 
-// dataDirectory returns the canonical data root: data/ next to the binary, resolved
-// via os.Executable + EvalSymlinks. Falls back to a CWD-relative "data" if the
-// binary path cannot be determined. Saves, accounts, and (eventually) logs share
-// this one root and one fallback rule (accounts.md §3.1).
-func dataDirectory() string {
+// rootDataDir returns the data ROOT: data/ next to the binary, resolved via
+// os.Executable + EvalSymlinks. Falls back to a CWD-relative "data" if the binary path
+// cannot be determined, or to the test override (dataDirOverride) when set. This is the
+// top of the tree — the active-account pointer (<root>/active-account) and the per-account
+// slots (<root>/accounts/<id>/) live directly under it (accounts.md §3.1).
+//
+// It is distinct from dataDirectory() (defined in account.go), which is the per-account
+// SCOPED dir resolving to <root>/accounts/<activeID>/. Account.json and saves resolve
+// through the scoped dir; the pointer and the migration resolve through this root.
+func rootDataDir() string {
 	if dataDirOverride != "" {
 		return dataDirOverride
 	}
@@ -256,16 +272,21 @@ func dataDirectory() string {
 	return filepath.Join(filepath.Dir(exe), "data")
 }
 
-// saveDirectory returns the canonical save directory: data/saves/ next to the binary.
-// Falls back to a CWD-relative path if the binary path cannot be determined.
+// saveDirectory returns the ACTIVE account's save directory:
+// <root>/accounts/<activeID>/saves/. It resolves through the SCOPED dataDirectory(), so
+// saves belong to the active account (accounts.md §3.1, Phase A account-scoping). When no
+// account is active yet (empty id), the scoped dir collapses to <root>/accounts and saves
+// land in <root>/accounts/saves — a benign shared location for the brief pre-naming window.
 func saveDirectory() string {
 	return filepath.Join(dataDirectory(), "saves")
 }
 
-// DataDir returns the canonical data directory (next to the binary, or "data" as a
-// fallback / the test override). Exported so the UI resolves account/export paths
-// through the SAME helper saves and the account file use — keeping the default
-// progress-export location consistent with where account.json lives.
+// DataDir returns the ACTIVE account's scoped data directory
+// (<root>/accounts/<activeID>/), or its empty-id collapse (<root>/accounts) before an
+// account is active. Exported so the UI resolves account/export paths through the SAME
+// scoped helper saves and the account file use — so a progress export defaults next to
+// the active account's account.json, not at the shared root (accounts.md §3.6). The
+// signature is unchanged; only the resolution moved under the active-account slot.
 func DataDir() string {
 	return dataDirectory()
 }
