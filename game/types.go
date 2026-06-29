@@ -409,6 +409,9 @@ type TradeState struct {
 	AvailableRoutes []TradeRouteInfo
 	TotalExchanged  map[string]float64
 	TotalImported   map[string]float64
+	// DisruptedResources lists resources currently blockaded by war/embargo; any
+	// active route importing one is suspended until the conflict ends.
+	DisruptedResources []string
 }
 
 // ExchangeRateInfo represents a single exchange rate for UI
@@ -422,12 +425,14 @@ type ExchangeRateInfo struct {
 
 // ActiveRouteInfo represents an active trade route for UI
 type ActiveRouteInfo struct {
-	Name       string
-	Key        string
-	TicksLeft  int
-	CyclesDone int
-	Export     map[string]float64
-	Import     map[string]float64
+	Name        string
+	Key         string
+	TicksLeft   int
+	CyclesDone  int
+	Export      map[string]float64
+	Import      map[string]float64
+	Disrupted   bool   // true when blockaded by war/embargo (income suspended)
+	DisruptedBy string // the imported resource that is blockaded (if Disrupted)
 }
 
 // TradeRouteInfo represents an available trade route for UI

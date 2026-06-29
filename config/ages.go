@@ -109,7 +109,7 @@ func Ages() []AgeDef {
 			Description:     "Exploration and trade span the globe.",
 			ResourceReqs:    map[string]float64{"gold": 470000, "knowledge": 625000, "steel": 76500, "culture": 200000},
 			BuildingReqs:    map[string]int{"exchange": 5, "university": 3, "art_studio": 5},
-			UnlockBuildings: []string{"settlement_block", "colonial_warehouse", "plantation", "coal_works", "deep_iron_mine", "natural_philosophy_hall", "mission", "fort", "port", "dockyard", "iron_works", "concert_hall", "embassy", "grand_lighthouse"},
+			UnlockBuildings: []string{"settlement_block", "colonial_warehouse", "plantation", "coal_works", "deep_iron_mine", "natural_philosophy_hall", "mission", "fort", "port", "harbor", "dockyard", "iron_works", "concert_hall", "embassy", "grand_lighthouse"},
 		},
 		// === 8: INDUSTRIAL AGE (Steel Era) ===
 		{
@@ -118,7 +118,7 @@ func Ages() []AgeDef {
 			Description:     "Machines revolutionize production.",
 			ResourceReqs:    map[string]float64{"steel": 310000, "gold": 2500000, "knowledge": 2000000},
 			BuildingReqs:    map[string]int{"plantation": 5, "port": 8, "market_garden": 5},
-			UnlockBuildings: []string{"tenement", "industrial_depot", "agricultural_works", "steam_coal_plant", "steam_mine", "research_institute", "church", "military_base", "stock_exchange", "iron_works_complex", "steel_mill", "coal_plant", "opera_house", "grand_embassy", "crystal_palace", "eternal_library_monument"},
+			UnlockBuildings: []string{"tenement", "industrial_depot", "agricultural_works", "steam_coal_plant", "steam_mine", "research_institute", "church", "military_base", "stock_exchange", "harbor_authority", "iron_works_complex", "steel_mill", "coal_plant", "opera_house", "grand_embassy", "crystal_palace", "eternal_library_monument"},
 			UnlockResources: []string{"oil"},
 		},
 		// === 9: VICTORIAN AGE (Electric Era) ===
@@ -157,7 +157,7 @@ func Ages() []AgeDef {
 			Description:     "Technology and innovation define the era.",
 			ResourceReqs:    map[string]float64{"electricity": 26250000, "uranium": 5500000, "steel": 378125000},
 			BuildingReqs:    map[string]int{"nuclear_reactor": 30, "bunker_complex": 30, "research_campus": 15},
-			UnlockBuildings: []string{"tower_block", "modern_depot", "agri_complex", "oil_platform", "titanium_mine", "think_tank", "meditation_center", "special_ops_hq", "investment_firm", "power_grid_hub", "titanium_smelter", "oil_refinery", "tv_studio", "space_program", "nano_foundry"},
+			UnlockBuildings: []string{"tower_block", "modern_depot", "agri_complex", "oil_platform", "titanium_mine", "think_tank", "meditation_center", "special_ops_hq", "investment_firm", "seaport", "power_grid_hub", "titanium_smelter", "oil_refinery", "tv_studio", "space_program", "nano_foundry"},
 			UnlockResources: []string{"data", "nanobots"},
 		},
 		// === 13: INFORMATION AGE (Digital Era) ===
@@ -167,7 +167,7 @@ func Ages() []AgeDef {
 			Description:     "The Internet connects the world.",
 			ResourceReqs:    map[string]float64{"electricity": 531250000, "data": 55000000, "gold": 1000000000},
 			BuildingReqs:    map[string]int{"think_tank": 50, "tower_block": 30, "oil_refinery": 60},
-			UnlockBuildings: []string{"smart_complex", "info_vault", "smart_farm", "smart_refinery", "precision_mine", "innovation_hub", "digital_temple", "cyber_command", "venture_hub", "smart_grid_node", "aerospace_foundry", "smart_energy_grid", "server_farm", "media_center", "global_network"},
+			UnlockBuildings: []string{"smart_complex", "info_vault", "smart_farm", "smart_refinery", "precision_mine", "innovation_hub", "digital_temple", "cyber_command", "venture_hub", "container_terminal", "smart_grid_node", "aerospace_foundry", "smart_energy_grid", "server_farm", "media_center", "global_network"},
 		},
 		// === 14: DIGITAL AGE (Digital Era) ===
 		{
@@ -176,7 +176,7 @@ func Ages() []AgeDef {
 			Description:     "Full digitization of civilization.",
 			ResourceReqs:    map[string]float64{"data": 2500000000, "electricity": 15625000000},
 			BuildingReqs:    map[string]int{"server_farm": 30, "media_center": 80, "innovation_hub": 30},
-			UnlockBuildings: []string{"megaplex", "digital_archive", "nano_farm", "bio_fabrication_lab", "nano_drill_complex", "ai_research_lab", "cyber_shrine", "drone_warfare_center", "crypto_exchange", "neural_grid", "nano_alloy_plant", "quantum_battery_array", "data_center", "vr_studio", "world_simulation"},
+			UnlockBuildings: []string{"megaplex", "digital_archive", "nano_farm", "bio_fabrication_lab", "nano_drill_complex", "ai_research_lab", "cyber_shrine", "drone_warfare_center", "crypto_exchange", "logistics_hub", "neural_grid", "nano_alloy_plant", "quantum_battery_array", "data_center", "vr_studio", "world_simulation"},
 		},
 		// === 15: CYBERPUNK AGE (Neon Era) ===
 		{

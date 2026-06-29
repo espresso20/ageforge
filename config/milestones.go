@@ -103,7 +103,7 @@ func MilestoneChains() []MilestoneChainDef {
 			Category: "trade",
 			MilestoneKeys: []string{
 				"first_market", "merchant_guild", "caravan_network",
-				"merchant_princes", "trade_empire",
+				"merchant_princes", "trade_empire", "maritime_empire",
 			},
 			Title:         "The Merchants",
 			BoostValue:    2.5,
@@ -637,6 +637,21 @@ func Milestones() []MilestoneDef {
 			MinBuildings: map[string]int{"trading_post": 30, "merchant_quarter": 12},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.10},
+			},
+		},
+		// maritime_empire: Trade Chain capstone (5→6) — rewards the harbour
+		// lineage. 5 harbours + 5 ports + 2 seaports; gated at modern_age because
+		// seaport (tier 2 harbour) only unlocks then. Broad production_all payout
+		// to match the rest of the late chain.
+		{
+			Name: "Maritime Empire", Key: "maritime_empire",
+			Description:  "Build 5 Harbours, 5 Ports, and 2 Seaports.",
+			Category:     "trade", Hidden: true,
+			MinAge:       "modern_age",
+			MinBuildings: map[string]int{"harbor": 5, "port": 5, "seaport": 2},
+			Rewards: []Effect{
+				{Type: "permanent_bonus", Target: "production_all", Value: 0.10},
+				{Type: "permanent_bonus", Target: "gold_rate", Value: 0.10},
 			},
 		},
 		// guildhall_master — 10 guildhalls; renaissance age

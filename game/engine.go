@@ -35,6 +35,17 @@ const (
 	festivalMinCost       = 2000.0
 	festivalCostFraction  = 0.05 // of culture storage cap
 
+	// Black market (culture sink, high-risk/high-reward) tuning. The player
+	// spends a lump of culture for a gamble: on a win the imported resource is
+	// paid out at blackMarketWinMult × the stake's gold-value; on a loss the
+	// culture is simply gone. Gated behind colonial age + a cooldown.
+	blackMarketCostFraction  = 0.10           // of culture storage cap, per deal
+	blackMarketMinCost       = 5000.0         // floor so it's meaningful early
+	blackMarketWinChance     = 0.55           // probability of a payout
+	blackMarketWinMult       = 2.5            // payout = stake_gold_value × this on a win
+	blackMarketCooldownTicks = 240            // ~8 minutes between deals
+	blackMarketMinAge        = "colonial_age" // smuggling networks open in the colonial era
+
 	// lendEventDisplayTicks is how long the cosmetic "Workers on Loan" / "Under
 	// Raid" timed events stay in the active-events panel. They carry no effects —
 	// the actual worker/resource changes are applied immediately in processDiplomacy.
@@ -178,6 +189,16 @@ type GameEngine struct {
 	// festivalReadyTick is the earliest game tick a new festival may be held
 	// (cooldown anti-spam for the `festival` culture sink). 0 = ready now.
 	festivalReadyTick int
+
+	// blackMarketReadyTick is the earliest tick a black-market deal may run
+	// (cooldown anti-spam). 0 = ready now. Transient: not persisted, so a reload
+	// simply makes the deal available again — acceptable for a flavour sink.
+	blackMarketReadyTick int
+
+	// blackMarketRand is the RNG seam for the black-market win/lose roll; nil
+	// means use the package default rand. Tests inject a seeded *rand.Rand so the
+	// risk/reward outcome is deterministic.
+	blackMarketRand *rand.Rand
 }
 
 // BuildQueueItem represents a building under construction
@@ -1034,10 +1055,34 @@ func (ge *GameEngine) processExpeditions() {
 
 // processTrade handles trade route ticks
 func (ge *GameEngine) processTrade() {
-	messages := ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy)
+	messages := ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, ge.harborRouteBonus())
 	for _, msg := range messages {
 		ge.addLog("warning", msg)
 	}
+}
+
+// harborRouteBonus sums the "trade_route_income" effect across all built harbour
+// buildings (each tier adds a flat fractional bonus per instance). The result is
+// an additive multiplier applied to every active trade route's imports. Pure
+// read of held state + config — safe under the engine write lock.
+func (ge *GameEngine) harborRouteBonus() float64 {
+	bonus := 0.0
+	defs := config.BuildingByKey()
+	for key, count := range ge.Buildings.counts {
+		if count == 0 {
+			continue
+		}
+		def, ok := defs[key]
+		if !ok {
+			continue
+		}
+		for _, eff := range def.Effects {
+			if eff.Type == "trade_route_income" {
+				bonus += eff.Value * float64(count)
+			}
+		}
+	}
+	return bonus
 }
 
 // processDiplomacy handles diplomacy ticks
@@ -2032,6 +2077,122 @@ func (ge *GameEngine) DoFestival() error {
 	ge.addLog("success", fmt.Sprintf("Held a cultural festival — spent %.0f culture for +%.0f%% production (%d ticks).",
 		cost, festivalBuffPercent*100, festivalBuffTicks))
 	return nil
+}
+
+// bmRandFloat returns a [0,1) float from the black-market RNG seam, or the
+// package default if no seam is set. Lets tests force a win or a loss.
+func (ge *GameEngine) bmRandFloat() float64 {
+	if ge.blackMarketRand != nil {
+		return ge.blackMarketRand.Float64()
+	}
+	return rand.Float64()
+}
+
+// blackMarketCost returns the culture cost of one black-market deal at the
+// current progression: max(blackMarketMinCost, fraction × culture storage cap).
+func (ge *GameEngine) blackMarketCost() float64 {
+	cost := ge.Resources.GetStorage("culture") * blackMarketCostFraction
+	if cost < blackMarketMinCost {
+		cost = blackMarketMinCost
+	}
+	return cost
+}
+
+// blackMarketReward computes the resource payout for a winning deal on the given
+// resource. The culture stake is treated as its own gold-value; the win pays
+// blackMarketWinMult × that, converted into the chosen resource via its
+// "<res>:gold" exchange rate (so a unit of a "more valuable" resource pays out
+// fewer units). Gold pays out directly. Returns 0 if the resource has no defined
+// gold valuation (and thus can't be a black-market target).
+func (ge *GameEngine) blackMarketReward(resource string, stake float64) float64 {
+	goldValue := stake * blackMarketWinMult
+	if resource == "gold" {
+		return goldValue
+	}
+	rates := config.ExchangeRateByKey()
+	def, ok := rates[resource+":gold"]
+	if !ok || def.BaseRate <= 0 {
+		return 0
+	}
+	return goldValue / def.BaseRate
+}
+
+// BlackMarketStatus is the snapshot the `blackmarket` command renders.
+type BlackMarketStatus struct {
+	Available     bool    // true when the colonial-age gate is met
+	Cost          float64 // culture required per deal right now
+	Culture       float64 // player's current culture
+	WinChance     float64 // probability of a payout (0..1)
+	WinMult       float64 // payout multiplier on a win
+	CooldownTicks int     // cooldown imposed after a deal
+	CooldownLeft  int     // ticks remaining on the current cooldown (0 if ready)
+	Ready         bool    // true when off cooldown AND gate met
+}
+
+// BlackMarketStatus returns the live cost, odds, and cooldown for the
+// `blackmarket` command UI. Read-only.
+func (ge *GameEngine) BlackMarketStatus() BlackMarketStatus {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+
+	available := ge.progress.GetAgeOrder()[blackMarketMinAge] <= ge.progress.GetAgeOrder()[ge.age]
+	cd := ge.blackMarketReadyTick - ge.tick
+	if cd < 0 {
+		cd = 0
+	}
+	return BlackMarketStatus{
+		Available:     available,
+		Cost:          ge.blackMarketCost(),
+		Culture:       ge.Resources.Get("culture"),
+		WinChance:     blackMarketWinChance,
+		WinMult:       blackMarketWinMult,
+		CooldownTicks: blackMarketCooldownTicks,
+		CooldownLeft:  cd,
+		Ready:         cd == 0 && available,
+	}
+}
+
+// DoBlackMarket runs one high-risk/high-reward black-market deal for the given
+// resource: it spends a lump of culture (always consumed) and rolls; on a win it
+// pays out blackMarketWinMult × the stake's gold-value in the chosen resource, on
+// a loss the smugglers vanish with the culture and nothing comes back. Gated by
+// the colonial-age unlock and a cooldown. Returns (won, gain, error).
+func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	ageOrder := ge.progress.GetAgeOrder()
+	if ageOrder[blackMarketMinAge] > ageOrder[ge.age] {
+		return false, 0, fmt.Errorf("the black market opens in the %s", blackMarketMinAge)
+	}
+	if ge.tick < ge.blackMarketReadyTick {
+		return false, 0, fmt.Errorf("the black market is lying low (%d ticks remaining)", ge.blackMarketReadyTick-ge.tick)
+	}
+	// Validate the requested payout resource is something we can value in gold.
+	if _, ok := config.ResourceByKey()[resource]; !ok {
+		return false, 0, fmt.Errorf("unknown resource: %s", resource)
+	}
+	cost := ge.blackMarketCost()
+	have := ge.Resources.Get("culture")
+	if have < cost {
+		return false, 0, fmt.Errorf("not enough culture for a black-market deal: need %.0f, have %.0f", cost, have)
+	}
+	reward := ge.blackMarketReward(resource, cost)
+	if reward <= 0 {
+		return false, 0, fmt.Errorf("%s can't be fenced on the black market", resource)
+	}
+
+	// Culture is spent up front regardless of outcome — that's the risk.
+	ge.Resources.Remove("culture", cost)
+	ge.blackMarketReadyTick = ge.tick + blackMarketCooldownTicks
+
+	if ge.bmRandFloat() < blackMarketWinChance {
+		ge.Resources.Add(resource, reward)
+		ge.addLog("success", fmt.Sprintf("Black-market deal paid off — %.0f culture bought %.1f %s.", cost, reward, resource))
+		return true, reward, nil
+	}
+	ge.addLog("warning", fmt.Sprintf("Black-market deal went bad — %.0f culture vanished with the smugglers.", cost))
+	return false, 0, nil
 }
 
 // getWonderBonuses returns a map of bonus-type effects from all currently built
@@ -3363,7 +3524,7 @@ func (ge *GameEngine) GetState() GameState {
 		}),
 		ActiveEvents:          ge.Events.GetActive(),
 		Prestige:              prestigeSnap,
-		Trade:                 ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings),
+		Trade:                 ge.Trade.Snapshot(ge.age, ageOrder, ge.Buildings, ge.Diplomacy.DisruptedResources()),
 		Diplomacy:             ge.Diplomacy.Snapshot(ge.age, ageOrder),
 		Log:                   logCopy,
 		Stats:                 ge.Stats.Snapshot(),

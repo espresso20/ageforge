@@ -32,6 +32,7 @@ var commands = []string{
 	"help", "h",
 	"prestige",
 	"festival",
+	"blackmarket", "bm",
 	"upgrade",
 	"advance", "rates", "speed", "save", "saves", "load",
 	"account",
@@ -166,12 +167,22 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 			return filterPrefix([]string{"yes"}, partial, prefix)
 		}
 
+	case "blackmarket", "bm":
+		if len(completed) == 0 {
+			return filterPrefix(unlockedResourceKeys(state), partial, prefix)
+		}
+
 	case "trade", "t":
 		if len(completed) == 0 {
-			// First arg: "list", "route", or resource name for exchange
+			// First arg: "list", "route", "black", or resource name for exchange
 			keys := unlockedResourceKeys(state)
-			keys = append(keys, "list", "route")
+			keys = append(keys, "list", "route", "black")
 			return filterPrefix(keys, partial, prefix)
+		}
+		if strings.ToLower(completed[0]) == "black" {
+			if len(completed) == 1 {
+				return filterPrefix(unlockedResourceKeys(state), partial, prefix)
+			}
 		}
 		if strings.ToLower(completed[0]) == "route" {
 			if len(completed) == 1 {

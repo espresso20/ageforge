@@ -268,14 +268,15 @@ func TestMilestoneChain_CompletionBoosts(t *testing.T) {
 	}
 }
 
-// TestTradeChain_Structure verifies the Trade chain was expanded from 3 to 5
-// milestones in the correct order, and that the two new milestones exist, are
-// categorized as trade, and map back to trade_chain.
+// TestTradeChain_Structure verifies the Trade chain was expanded from 3 to 6
+// milestones in the correct order (the Trade Expansion added maritime_empire as
+// the capstone), and that the new milestones exist, are categorized as trade,
+// and map back to trade_chain.
 func TestTradeChain_Structure(t *testing.T) {
 	chain := config.MilestoneChainByKey()["trade_chain"]
 	wantKeys := []string{
 		"first_market", "merchant_guild", "caravan_network",
-		"merchant_princes", "trade_empire",
+		"merchant_princes", "trade_empire", "maritime_empire",
 	}
 	if len(chain.MilestoneKeys) != len(wantKeys) {
 		t.Fatalf("trade_chain has %d milestones, want %d", len(chain.MilestoneKeys), len(wantKeys))
@@ -287,7 +288,7 @@ func TestTradeChain_Structure(t *testing.T) {
 	}
 
 	byKey := config.MilestoneByKey()
-	for _, k := range []string{"caravan_network", "merchant_princes"} {
+	for _, k := range []string{"caravan_network", "merchant_princes", "maritime_empire"} {
 		def, ok := byKey[k]
 		if !ok {
 			t.Errorf("new trade milestone %q not found in Milestones()", k)

@@ -110,6 +110,9 @@ Keys with underscores can be typed with spaces: `expedition scout ruins` is equi
 |---|---|
 | `trade start <key>` | Activate a trade route |
 | `trade stop <key>` | Cancel an active trade route |
+| `blackmarket` (or `bm`) | Show black-market status — culture cost, payout odds, and cooldown (Colonial Age+) |
+| `blackmarket <resource>` | Run a high-risk culture deal for a chance at a big haul of the chosen resource |
+| `trade black <resource>` | Alias for `blackmarket <resource>` |
 | `diplomacy` (or `dip`) | Open the **Diplomacy** overlay (full 11-civ roster: personality, backstory, opinion, status, bonuses, war + lent-worker state) |
 | `diplomacy ally <civ>` | Ally with a civilization (opinion ≥ 50, costs 500 gold) |
 | `diplomacy rival <civ>` | Declare a rivalry |
@@ -128,7 +131,7 @@ diplomacy ally merchant_guild
 diplomacy tribute ironhold_clans   # end a war you'd rather not fight
 ```
 
-Active trade routes run for a fixed duration. Check the **Trade** overlay (`trade`) for rates, and the **Diplomacy** overlay (`diplomacy` / `dip`) for faction standings. Bare `diplomacy` opens the overlay; add an action (`ally`/`rival`/`embargo`/`gift`/`neutral`) to act on a faction directly. Build and staff an **Embassy** (Colonial Age) or **Grand Embassy** (Industrial Age) to passively raise opinion with your non-hostile factions — see the [Trade & Diplomacy](trade.md#embassy-buildings) wiki page.
+Active trade routes run for a fixed duration. Routes whose imports include a resource specialised in by a civilization you're **at war with or have embargoed** are **disrupted** (no income) until the conflict ends — see [Trade Disruption](trade.md#trade-disruption-war-embargo). **Harbours** (`harbor` → `logistics_hub`) boost the income of every active route. Check the **Trade** overlay (`trade`) for rates, and the **Diplomacy** overlay (`diplomacy` / `dip`) for faction standings. Bare `diplomacy` opens the overlay; add an action (`ally`/`rival`/`embargo`/`gift`/`neutral`) to act on a faction directly. Build and staff an **Embassy** (Colonial Age) or **Grand Embassy** (Industrial Age) to passively raise opinion with your non-hostile factions — see the [Trade & Diplomacy](trade.md#embassy-buildings) wiki page.
 
 ---
 

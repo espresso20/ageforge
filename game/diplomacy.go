@@ -422,6 +422,34 @@ func (dm *DiplomacyManager) GetTradeBonus(resourceKey string) float64 {
 	return bonus
 }
 
+// DisruptedResources returns the set of specialty resources currently under
+// trade disruption: a resource is disrupted if any discovered civ that
+// specialises in it is AtWar with the player OR has been put under embargo.
+// The trade system uses this to block income on routes that import a disrupted
+// resource (see TradeManager.Tick). Reuses the existing war/embargo state — no
+// parallel disruption flag. Must be called under the engine write lock.
+//
+// The bool value is true when the cause is an active war (harsher framing in the
+// log) and false when it is "only" an embargo; callers may ignore it.
+func (dm *DiplomacyManager) DisruptedResources() map[string]bool {
+	out := make(map[string]bool)
+	defs := config.FactionByKey()
+	for key, fs := range dm.factions {
+		if !fs.Discovered {
+			continue
+		}
+		if !fs.AtWar && fs.Status != "embargo" {
+			continue
+		}
+		def, ok := defs[key]
+		if !ok || def.Specialty == "" {
+			continue
+		}
+		out[def.Specialty] = true
+	}
+	return out
+}
+
 // Tick processes diplomacy each game tick. It discovers new civs (returning
 // first-contact messages), applies personality drift and natural decay, runs
 // the worker-lending lifecycle, drives war raids, and auto-ends stale wars.

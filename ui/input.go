@@ -77,6 +77,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdPrestige(args, engine)
 	case "festival":
 		return cmdFestival(args, engine)
+	case "blackmarket", "bm":
+		return cmdBlackMarket(args, engine)
 	case "rates":
 		return cmdRates(engine)
 	case "speed":
@@ -1249,6 +1251,56 @@ func cmdFestivalStatus(engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
 
+// cmdBlackMarket handles the `blackmarket` / `trade black` command. Bare form
+// shows the status panel (cost, odds, cooldown). `blackmarket <resource>` spends
+// a lump of culture on a high-risk/high-reward deal that may pay out a large
+// amount of the chosen resource — or vanish with the culture.
+func cmdBlackMarket(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 {
+		return cmdBlackMarketStatus(engine)
+	}
+	resource := strings.ToLower(args[0])
+
+	won, gain, err := engine.DoBlackMarket(resource)
+	if err != nil {
+		return CommandResult{Message: err.Error(), Type: "error"}
+	}
+	if won {
+		return CommandResult{
+			Message: fmt.Sprintf("[green]The deal paid off![-] Smugglers delivered %.1f %s.", gain, resource),
+			Type:    "success",
+		}
+	}
+	return CommandResult{
+		Message: fmt.Sprintf("[red]The deal went bad.[-] The culture is gone and no %s arrived.", resource),
+		Type:    "warning",
+	}
+}
+
+// cmdBlackMarketStatus renders the bare `blackmarket` status panel.
+func cmdBlackMarketStatus(engine *game.GameEngine) CommandResult {
+	st := engine.BlackMarketStatus()
+	var lines []string
+	lines = append(lines, "[gold]Black Market[-]")
+	if !st.Available {
+		lines = append(lines, "  [gray]Smuggling networks open in the Colonial Age.[-]")
+		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+	}
+	lines = append(lines, "  Spend culture on a high-risk smuggling deal for a chance at a big resource haul.")
+	lines = append(lines, fmt.Sprintf("  Cost: [cyan]%.0f culture[-] per deal  (you have %.0f)", st.Cost, st.Culture))
+	lines = append(lines, fmt.Sprintf("  Odds: [green]%.0f%%[-] payout at [green]%.1fx[-] value, else the culture is lost.", st.WinChance*100, st.WinMult))
+	if st.Ready {
+		if st.Culture >= st.Cost {
+			lines = append(lines, "  Status: [green]ready[-] — type [cyan]blackmarket <resource>[-] (e.g. blackmarket gold).")
+		} else {
+			lines = append(lines, "  Status: [yellow]not enough culture yet.[-]")
+		}
+	} else {
+		lines = append(lines, fmt.Sprintf("  Status: [yellow]lying low[-] — %d ticks until the next deal.", st.CooldownLeft))
+	}
+	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
+}
+
 func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
 		return cmdPrestigeStatus(engine)
@@ -1450,6 +1502,10 @@ func cmdTrade(args []string, engine *game.GameEngine) CommandResult {
 	}
 	if subcmd == "route" {
 		return cmdTradeRoute(args[1:], engine)
+	}
+	if subcmd == "black" {
+		// `trade black [resource]` is an alias for the black-market command.
+		return cmdBlackMarket(args[1:], engine)
 	}
 
 	// Exchange: trade <from> <to> <amount>

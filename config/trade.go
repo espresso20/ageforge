@@ -170,6 +170,58 @@ func BaseTradeRoutes() []TradeRouteDef {
 			Import:       map[string]float64{"gold": 150},
 			Description:  "Export food supplies to colonial settlements.",
 		},
+		// --- Colonial → Industrial gap fillers (Trade Expansion) ---
+		// This band was thin (only spice_trade + colonial_exports). These six
+		// routes give the renaissance→industrial player something to do with
+		// surplus stone/iron/coal/knowledge and a reason to build harbours.
+		{
+			Name: "Mercantile Convoy", Key: "mercantile_convoy",
+			MinAge: "renaissance_age", RequiredBld: "exchange", MinCount: 1,
+			TicksPerRun: 16,
+			Export:       map[string]float64{"stone": 300, "wood": 200},
+			Import:       map[string]float64{"gold": 90},
+			Description:  "Run armed convoys of bulk goods between city-states for coin.",
+		},
+		{
+			Name: "Triangular Trade", Key: "triangular_trade",
+			MinAge: "colonial_age", RequiredBld: "harbor", MinCount: 1,
+			TicksPerRun: 18,
+			Export:       map[string]float64{"food": 400, "gold": 60},
+			Import:       map[string]float64{"culture": 120, "knowledge": 80},
+			Description:  "A three-way colonial exchange of provisions, coin, and ideas.",
+		},
+		{
+			Name: "Tea Clippers", Key: "tea_clippers",
+			MinAge: "colonial_age", RequiredBld: "harbor", MinCount: 2,
+			TicksPerRun: 20,
+			Export:       map[string]float64{"gold": 250},
+			Import:       map[string]float64{"food": 600, "culture": 90},
+			Description:  "Fast clipper ships race exotic goods home from distant ports.",
+		},
+		{
+			Name: "Coal Barges", Key: "coal_barges",
+			MinAge: "industrial_age", RequiredBld: "harbor", MinCount: 2,
+			TicksPerRun: 14,
+			Export:       map[string]float64{"coal": 300},
+			Import:       map[string]float64{"gold": 220, "iron": 150},
+			Description:  "Barge coal downriver to foundries in exchange for gold and pig iron.",
+		},
+		{
+			Name: "Cotton Exchange", Key: "cotton_exchange",
+			MinAge: "industrial_age", RequiredBld: "seaport", MinCount: 1,
+			TicksPerRun: 16,
+			Export:       map[string]float64{"gold": 400},
+			Import:       map[string]float64{"culture": 200, "knowledge": 150},
+			Description:  "Trade raw materials through the great industrial cotton exchange.",
+		},
+		{
+			Name: "Steamship Line", Key: "steamship_line",
+			MinAge: "industrial_age", RequiredBld: "seaport", MinCount: 2,
+			TicksPerRun: 18,
+			Export:       map[string]float64{"steel": 250, "coal": 200},
+			Import:       map[string]float64{"gold": 900},
+			Description:  "A transoceanic steamship line hauling steel and fuel for heavy coin.",
+		},
 		{
 			Name: "Rail Freight", Key: "rail_freight",
 			MinAge: "industrial_age", RequiredBld: "steam_works", MinCount: 1,

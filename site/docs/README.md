@@ -15,7 +15,7 @@ AgeForge runs entirely in your terminal using a full-screen TUI built with Go + 
 | [All Commands](commands.md) | Full command reference |
 | [Themes & Accessibility](themes.md) | Palettes, colorblind-safe + high-contrast themes |
 | [The 22 Ages](ages.md) | Every age, its requirements, and unlocks |
-| [Buildings](buildings.md) | All 284 buildings including wonders |
+| [Buildings](buildings.md) | All 300 buildings including wonders |
 | [Technologies](technologies.md) | All 52 techs with effects |
 | [Prestige System](prestige.md) | Permanent upgrades across resets |
 
@@ -25,7 +25,7 @@ AgeForge runs entirely in your terminal using a full-screen TUI built with Go + 
 
 - **22 Ages** — Primitive → Transcendent
 - **26 Resources** — from Wood and Stone to Quantum Energy (including Soldiers)
-- **284 Buildings** — 241 production + 21 storage + 22 wonders
+- **300 Buildings** — a 14-lineage production system plus storage and wonders
 - **52 Technologies** — prerequisite chains, age-gated
 - **16 Expeditions** — risk/reward military system
 - **15 Trade routes** — alongside an 11-civilization diplomacy roster

@@ -19,6 +19,7 @@ package config
 // 11. metallurgy       — 18 tiers (iron → quantum)
 // 12. energy           — 13 tiers (industrial → quantum)
 // 13. hacker           — 8 tiers (information → quantum)
+// 14. harbor           — 5 tiers (colonial → digital); boosts trade-route income
 func NewProductionBuildings() []BuildingDef {
 	out := buildingsLineageFood()
 	out = append(out, buildingsLineageGeologicalExtraction()...)
@@ -33,6 +34,7 @@ func NewProductionBuildings() []BuildingDef {
 	out = append(out, buildingsLineageMetallurgy()...)
 	out = append(out, buildingsLineageEnergy()...)
 	out = append(out, buildingsLineageHacker()...)
+	out = append(out, buildingsLineageHarbor()...)
 	// Cultural Monuments — culture sink; a permanent production bonus per build.
 	out = append(out, buildingsMonuments()...)
 	return out
