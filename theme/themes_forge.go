@@ -9,7 +9,7 @@ import "github.com/gdamore/tcell/v2"
 //
 // Role → color rationale:
 //   - Accent  gold (#FFD700)  — titles, borders, brand
-//   - Dim     #8b949e         — the existing dim-hint gray
+//   - Dim     #a8b3c0         — secondary text/hints; lifted from old #8b949e, legible but still SECONDARY to Text
 //   - Label   cyan (#39C5CF)  — field labels/values (slightly deepened from pure
 //                               cyan so it clears AA on the dark bg with margin)
 //   - Positive green (#3FB950) — gains
@@ -29,7 +29,7 @@ var Forge = Theme{
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0x0d, 0x11, 0x17),
 		RoleText:       tcell.NewRGBColor(0xff, 0xff, 0xff),
-		RoleDim:        tcell.NewRGBColor(0x8b, 0x94, 0x9e),
+		RoleDim:        tcell.NewRGBColor(0xa8, 0xb3, 0xc0),
 		RoleLabel:      tcell.NewRGBColor(0x39, 0xc5, 0xcf),
 		RoleAccent:     tcell.NewRGBColor(0xff, 0xd7, 0x00),
 		RoleHighlight:  tcell.NewRGBColor(0xf2, 0xcc, 0x60),
