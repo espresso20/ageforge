@@ -669,6 +669,17 @@ func (ge *GameEngine) SwitchAccount(id string) error {
 	return nil
 }
 
+// ImportAccountExport restores a single-account backup blob into the account's OWN slot
+// (Phase C) and returns the imported account. It is a thin passthrough to
+// game.ImportAccountExport: that function resolves the blob's target slot by its AccountID,
+// creates-or-merges the data there, and DELIBERATELY does not change the active account — so
+// importing account B's backup never disturbs the live account A. No ge.mu is taken: the work
+// is file I/O over the account slots, and it touches no engine state (it does NOT auto-install
+// the result as ge.account). The caller decides whether to SwitchAccount to the imported id.
+func (ge *GameEngine) ImportAccountExport(blob []byte, merge bool) (*Account, error) {
+	return ImportAccountExport(blob, merge)
+}
+
 // CreateAccount creates (or, for an existing same-name slot, opens) a name-derived account
 // and installs it as ge.account (Phase B). It is the no-carry-over create: a brand-new
 // account starts empty (see game.CreateAccount). Like SwitchAccount it is a start-screen

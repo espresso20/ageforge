@@ -1107,26 +1107,33 @@ func ImportRecoveryCode(code string) (*Account, error) {
 	return acct, nil
 }
 
-// --- Progress export / import (DATA backup, accounts.md §3.6 / §8 / §9 Phase 5) ---
+// --- Progress export / import (single-account backup, accounts.md §3.6 / §8 / §9 Phase 5/C) ---
 //
-// Distinct from the recovery code: the recovery code carries IDENTITY only (account
-// id), while an export carries PROGRESS only (unlocks, lifetime stats, achievements,
-// prefs) and NO identity. With no server, DATA cannot be reconstituted from nothing,
-// so export is the explicit one-action backup of earned progress (accounts.md §3.6).
+// Distinct from the recovery code: the recovery code carries IDENTITY only (account id),
+// while an export is a full single-account BACKUP — identity (AccountID + DisplayName) AND
+// progress (unlocks, lifetime stats, achievements, prefs). With no server, DATA cannot be
+// reconstituted from nothing, so export is the explicit one-action backup (accounts.md §3.6).
 //
-// DEVIATION from accounts.md §8: the doc sketches a package-level `ImportProgress(blob,
-// merge)`. We implement ImportProgress as a METHOD on the live *Account instead. The
-// engine holds this exact pointer (SetAccount, Phase 2), so mutating in place + Save
-// makes engine.Account() reflect the import immediately, with no re-wiring. A package
-// function would mint a new Account the engine never sees. The export side matches the
-// doc's `(a *Account) ExportProgress()` signature as written.
+// Phase C re-homes import: the old `(a *Account) ImportProgress` folded a blob into whatever
+// account was live, which silently cross-contaminated accounts (importing B's backup while A
+// was active wrote B's data into A). Import is now the package function ImportAccountExport,
+// which resolves the blob's OWN slot by its AccountID and lands the data THERE — creating the
+// slot if absent, merging/replacing if present — without disturbing the active account. The
+// caller decides whether to switch to the restored account afterward.
 
 // progressExport is the self-describing on-disk shape of an export blob: a format
-// version, the DATA fields ONLY (no AccountID / identity), and an HMAC signature over
-// the sig-zeroed payload (same scheme as Account.Save — reuse, don't reinvent). The
-// stats/achievements fields ride along now so Phase 6 data exports without a format bump.
+// version, the owning account's IDENTITY (AccountID + DisplayName), the DATA fields
+// (unlocks, lifetime stats, achievements, prefs), and an HMAC signature over the
+// sig-zeroed payload (same scheme as Account.Save — reuse, don't reinvent).
+//
+// Phase C binds the export to its account: AccountID/DisplayName ride along so an
+// export is a full single-account BACKUP (identity + progress), and import lands the
+// blob in that account's OWN slot rather than folding into whoever happens to be active.
+// The stats/achievements fields ride along so Phase 6 data exports without a format bump.
 type progressExport struct {
 	Version      int            `json:"version"`
+	AccountID    string         `json:"account_id,omitempty"`
+	DisplayName  string         `json:"display_name,omitempty"`
 	Unlocks      AccountUnlocks `json:"unlocks,omitempty"`
 	Stats        AccountStats   `json:"stats,omitempty"`
 	Achievements []string       `json:"achievements,omitempty"`
@@ -1135,10 +1142,14 @@ type progressExport struct {
 }
 
 // signProgressExport returns the HMAC-SHA256 hex of the export payload with Signature
-// zeroed, under saveHMACKey — identical construction to signAccount/signSave.
+// zeroed, under saveHMACKey — identical construction to signAccount/signSave. The
+// signature COVERS AccountID + DisplayName, so an export cannot be re-attributed to a
+// different account without breaking the sig.
 func signProgressExport(p *progressExport) string {
 	payload := progressExport{
 		Version:      p.Version,
+		AccountID:    p.AccountID,
+		DisplayName:  p.DisplayName,
 		Unlocks:      p.Unlocks,
 		Stats:        p.Stats,
 		Achievements: p.Achievements,
@@ -1149,16 +1160,20 @@ func signProgressExport(p *progressExport) string {
 	return hmacSign(data, saveHMACKey)
 }
 
-// ExportProgress builds a signed export blob carrying this account's DATA only —
-// unlocks, lifetime stats, achievements, prefs — and NOT its identity (accounts.md
-// §3.6). It signs the blob with the shared HMAC helper (same zero-sig-then-marshal
-// pattern as Save) and returns pretty JSON bytes the caller writes to a file/clipboard.
+// ExportProgress builds a signed export blob — a full single-account BACKUP carrying this
+// account's IDENTITY (AccountID + DisplayName) AND its DATA (unlocks, lifetime stats,
+// achievements, prefs) (accounts.md §3.6, Phase C). It signs the blob with the shared HMAC
+// helper (same zero-sig-then-marshal pattern as Save) and returns pretty JSON bytes the
+// caller writes to a file/clipboard. Because the blob carries its account id, import can
+// land it back in that account's OWN slot regardless of which account is active.
 func (a *Account) ExportProgress() ([]byte, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 
 	exp := progressExport{
 		Version:      accountSchemaVersion,
+		AccountID:    a.AccountID,
+		DisplayName:  a.DisplayName,
 		Unlocks:      a.Unlocks,
 		Stats:        a.Stats,
 		Achievements: a.Achievements,
@@ -1173,68 +1188,106 @@ func (a *Account) ExportProgress() ([]byte, error) {
 	return data, nil
 }
 
-// ImportProgress unmarshals and verifies a progress export blob, then folds its DATA
-// into the live account and persists it (accounts.md §3.6). It NEVER touches identity
-// (AccountID/DisplayName/Created) — that is the recovery code's job.
+// ImportAccountExport unmarshals and verifies a single-account export blob, then lands it
+// in the account's OWN slot — the slot named by the blob's AccountID, NOT whatever account
+// is currently active (accounts.md §3.6, Phase C). It returns the imported *Account.
 //
-// The signature is verified first: a recomputed HMAC over the sig-zeroed payload must
-// match the blob's _sig, otherwise the blob is corrupt or tampered and we return an
-// error WITHOUT mutating the account — we never import data that failed integrity.
+// INTEGRITY (first, before any disk mutation): the blob is unmarshalled and its signature
+// recomputed over the sig-zeroed payload; a mismatch (or a missing/empty sig — exports are
+// always written signed by ExportProgress) is rejected with the same wording as before, and
+// nothing is written. A blob whose AccountID is empty after unmarshal is an old/foreign
+// export with no slot to target; it is rejected with a clear "missing account id" error.
 //
-// merge == true (the safe default): UNION the data into the current account —
-//   - unlocked themes: union (never drop a theme the local account already has; add
-//     any the blob carries) — so import(merge) restores wiped unlocks AND does not drop
-//     newer local unlocks the backup predates.
-//   - achievements: union.
-//   - lifetime stats: take the MAX per numeric stat (lifetime bests never regress);
-//     HighestAge keeps the local value unless empty, then adopts the blob's.
-//   - active theme: keep the local one if set, else adopt the blob's.
+// TARGET SLOT (resolved by the blob's AccountID via loadAccountFromSlot, which reads a slot
+// WITHOUT touching the active global):
 //
-// merge == false: REPLACE the DATA fields wholesale with the blob's.
+//   - Slot EXISTS: apply the merge/replace policy onto THAT slot's account and Save it back
+//     into its own slot. merge == true (the safe default) UNIONs themes + achievements, takes
+//     the MAX per numeric lifetime stat (bests never regress), keeps the slot's local
+//     HighestAge/ActiveTheme unless empty (then adopts the blob's). merge == false REPLACEs the
+//     DATA fields wholesale. Identity (AccountID/DisplayName/Created) is left as the slot's.
+//   - Slot ABSENT: mint a fresh established account carrying the blob's identity
+//     (AccountID + DisplayName) and the blob's DATA verbatim, MkdirAll its slot, and Save it in.
+//     merge vs replace is moot for a brand-new slot — there is no local data to fold into.
 //
-// Either way it Saves through the normal signed atomic path. Because the engine holds
-// this exact *Account, the import is visible via engine.Account() immediately.
-func (a *Account) ImportProgress(blob []byte, merge bool) error {
+// ACTIVE-ID DISCIPLINE: Save resolves its path through the scoped dataDirectory(), so to write
+// the TARGET slot we briefly point activeAccountID at the blob's id around the Save — then
+// RESTORE the prior active id before returning. ImportAccountExport therefore never leaks a
+// switch: with account A active, importing B's backup leaves A active (the caller switches if
+// it wants). The active pointer file is NOT rewritten here; only the in-memory global is moved
+// and restored.
+func ImportAccountExport(blob []byte, merge bool) (*Account, error) {
 	var exp progressExport
 	if err := json.Unmarshal(blob, &exp); err != nil {
-		return fmt.Errorf("invalid or corrupt progress export: %w", err)
+		return nil, fmt.Errorf("invalid or corrupt progress export: %w", err)
 	}
-	// Verify integrity BEFORE mutating anything. An unsigned blob is rejected here
-	// (unlike account.json's benign-unsigned-legacy rule): an export is always written
-	// signed by ExportProgress, so a missing/empty sig means it was not produced by us.
+	// Verify integrity BEFORE touching the disk. An unsigned blob is rejected (an export is
+	// always signed by ExportProgress; a missing sig means it was not produced by us).
 	if !hmac.Equal([]byte(exp.Signature), []byte(signProgressExport(&exp))) {
-		return fmt.Errorf("invalid or corrupt progress export (signature mismatch)")
+		return nil, fmt.Errorf("invalid or corrupt progress export (signature mismatch)")
+	}
+	if exp.AccountID == "" {
+		return nil, fmt.Errorf("export is missing its account id (incompatible/old export)")
 	}
 
-	a.mu.Lock()
-	defer a.mu.Unlock()
-
-	if !merge {
-		// Wholesale replace of the DATA fields; identity is left untouched.
-		a.Unlocks = exp.Unlocks
-		a.Stats = exp.Stats
-		a.Achievements = append([]string(nil), exp.Achievements...)
-		a.Prefs = exp.Prefs
-		return a.Save()
+	// Resolve the blob's OWN slot without disturbing the active account.
+	target, found, err := loadAccountFromSlot(exp.AccountID)
+	if err != nil {
+		return nil, err
 	}
 
-	// Merge: union themes (preserve local, add blob's).
-	a.Unlocks.Themes = unionStrings(a.Unlocks.Themes, exp.Unlocks.Themes)
-	// Union achievements.
-	a.Achievements = unionStrings(a.Achievements, exp.Achievements)
-	// Max each numeric lifetime stat — bests don't regress.
-	a.Stats.TotalPrestiges = maxInt(a.Stats.TotalPrestiges, exp.Stats.TotalPrestiges)
-	a.Stats.CivilizationsStarted = maxInt(a.Stats.CivilizationsStarted, exp.Stats.CivilizationsStarted)
-	a.Stats.SavesCompleted = maxInt(a.Stats.SavesCompleted, exp.Stats.SavesCompleted)
-	// HighestAge is a key, not a number: keep local unless empty, then adopt blob's.
-	if a.Stats.HighestAge == "" {
-		a.Stats.HighestAge = exp.Stats.HighestAge
+	if !found || target == nil {
+		// No slot yet — mint one carrying the blob's identity + DATA verbatim. merge is moot.
+		now := time.Now()
+		target = &Account{
+			Version:      accountSchemaVersion,
+			AccountID:    exp.AccountID,
+			DisplayName:  exp.DisplayName,
+			Created:      now,
+			LastSeen:     now,
+			Unlocks:      exp.Unlocks,
+			Stats:        exp.Stats,
+			Achievements: append([]string(nil), exp.Achievements...),
+			Prefs:        exp.Prefs,
+		}
+		if err := os.MkdirAll(accountDir(exp.AccountID), 0755); err != nil {
+			return nil, fmt.Errorf("failed to create account slot %s: %w", exp.AccountID, err)
+		}
+	} else if !merge {
+		// Existing slot, wholesale replace of the DATA fields; the slot's identity stays.
+		target.Unlocks = exp.Unlocks
+		target.Stats = exp.Stats
+		target.Achievements = append([]string(nil), exp.Achievements...)
+		target.Prefs = exp.Prefs
+	} else {
+		// Existing slot, merge: union themes (preserve local, add blob's).
+		target.Unlocks.Themes = unionStrings(target.Unlocks.Themes, exp.Unlocks.Themes)
+		// Union achievements.
+		target.Achievements = unionStrings(target.Achievements, exp.Achievements)
+		// Max each numeric lifetime stat — bests don't regress.
+		target.Stats.TotalPrestiges = maxInt(target.Stats.TotalPrestiges, exp.Stats.TotalPrestiges)
+		target.Stats.CivilizationsStarted = maxInt(target.Stats.CivilizationsStarted, exp.Stats.CivilizationsStarted)
+		target.Stats.SavesCompleted = maxInt(target.Stats.SavesCompleted, exp.Stats.SavesCompleted)
+		// HighestAge is a key, not a number: keep local unless empty, then adopt blob's.
+		if target.Stats.HighestAge == "" {
+			target.Stats.HighestAge = exp.Stats.HighestAge
+		}
+		// Active theme: keep local if set, else adopt the blob's.
+		if target.Prefs.ActiveTheme == "" {
+			target.Prefs.ActiveTheme = exp.Prefs.ActiveTheme
+		}
 	}
-	// Active theme: keep local if set, else adopt the blob's.
-	if a.Prefs.ActiveTheme == "" {
-		a.Prefs.ActiveTheme = exp.Prefs.ActiveTheme
+
+	// Save resolves through the scoped dataDirectory(), so point the active id at the target
+	// slot for the duration of the write, then RESTORE it — import must not leak a switch.
+	prior := getActiveAccountID()
+	setActiveAccountID(exp.AccountID)
+	saveErr := target.Save()
+	setActiveAccountID(prior)
+	if saveErr != nil {
+		return nil, saveErr
 	}
-	return a.Save()
+	return target, nil
 }
 
 // unionStrings returns the set union of a and b in a fresh slice, preserving a's order

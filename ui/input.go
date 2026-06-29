@@ -616,13 +616,14 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		if err != nil {
 			return CommandResult{Message: fmt.Sprintf("Export failed: %v", err), Type: "error"}
 		}
-		// Resolve the destination: explicit path arg, or the default account-export.json
-		// in the same data dir as account.json (so it sits beside the live account).
+		// Resolve the destination: explicit path arg, or a default that names the account so
+		// multiple accounts' exports don't collide in a shared directory. The blob carries the
+		// id regardless; the filename is just a convenience. Defaults beside the live account.
 		var path string
 		if len(args) >= 2 && args[1] != "" {
 			path = args[1]
 		} else {
-			path = filepath.Join(game.DataDir(), "account-export.json")
+			path = filepath.Join(game.DataDir(), fmt.Sprintf("account-%s-export.json", shortAccountID(acct.AccountID)))
 		}
 		if dir := filepath.Dir(path); dir != "" {
 			if err := os.MkdirAll(dir, 0755); err != nil {
@@ -659,17 +660,29 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		if err != nil {
 			return CommandResult{Message: fmt.Sprintf("Import failed: cannot read %s: %v", path, err), Type: "error"}
 		}
-		if err := acct.ImportProgress(blob, merge); err != nil {
+		// An export is a single-account backup: it lands in its OWN account's slot (keyed by
+		// the blob's account id), not the active account. Restoring a backup means making that
+		// account current, so switch to it on success.
+		imported, err := engine.ImportAccountExport(blob, merge)
+		if err != nil {
 			return CommandResult{Message: fmt.Sprintf("Import failed: %v", err), Type: "error"}
+		}
+		if err := engine.SwitchAccount(imported.AccountID); err != nil {
+			return CommandResult{Message: fmt.Sprintf("Imported, but could not switch to the account: %v", err), Type: "error"}
 		}
 		mode := "merged"
 		if !merge {
 			mode = "replaced"
 		}
-		themeCount := len(acct.UnlockedThemes())
+		name := imported.DisplayName
+		if name == "" {
+			name = "(unnamed)"
+		}
+		themeCount := len(imported.UnlockedThemes())
 		return CommandResult{
-			Message: fmt.Sprintf("Imported progress (%s) — %d theme(s) unlocked.", mode, themeCount),
-			Type:    "success",
+			Message: fmt.Sprintf("Imported account %q (%s) — now active — %d theme(s) unlocked, progress %s.",
+				name, shortAccountID(imported.AccountID), themeCount, mode),
+			Type: "success",
 		}
 
 	case "recover":
