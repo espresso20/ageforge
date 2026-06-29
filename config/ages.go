@@ -79,7 +79,7 @@ func Ages() []AgeDef {
 			Description:     "Great empires are built and philosophy flourishes.",
 			ResourceReqs:    map[string]float64{"stone": 75000, "iron": 15000, "gold": 8000, "knowledge": 20000},
 			BuildingReqs:    map[string]int{"barracks": 15, "agora": 8, "market": 5},
-			UnlockBuildings: []string{"villa", "classical_vault", "estate_farm", "wood_workshop", "marble_works", "library", "oracle_house", "military_academy", "merchant_quarter", "aqueduct", "forge", "amphitheater", "parthenon"},
+			UnlockBuildings: []string{"villa", "classical_vault", "estate_farm", "wood_workshop", "marble_works", "library", "oracle_house", "military_academy", "merchant_quarter", "aqueduct", "forge", "amphitheater", "parthenon", "cultural_obelisk"},
 			UnlockResources: []string{"culture"},
 		},
 		// === 5: MEDIEVAL AGE (Iron Era) ===
@@ -89,7 +89,7 @@ func Ages() []AgeDef {
 			Description:     "Kingdoms rise and feudalism takes hold.",
 			ResourceReqs:    map[string]float64{"stone": 125000, "iron": 30000, "gold": 20000, "knowledge": 50000},
 			BuildingReqs:    map[string]int{"merchant_quarter": 3, "library": 20, "barracks": 30},
-			UnlockBuildings: []string{"manor", "keep", "demesne", "sawmill", "stonemasons_guild", "monastery_library", "cathedral", "castle_keep", "guildhall", "workshop", "ironmonger", "great_hall", "great_library"},
+			UnlockBuildings: []string{"manor", "keep", "demesne", "sawmill", "stonemasons_guild", "monastery_library", "cathedral", "castle_keep", "guildhall", "workshop", "ironmonger", "great_hall", "great_library", "grand_amphitheatre_monument"},
 			UnlockResources: []string{"steel"},
 		},
 		// === 6: RENAISSANCE AGE (Steel Era) ===
@@ -118,7 +118,7 @@ func Ages() []AgeDef {
 			Description:     "Machines revolutionize production.",
 			ResourceReqs:    map[string]float64{"steel": 310000, "gold": 2500000, "knowledge": 2000000},
 			BuildingReqs:    map[string]int{"plantation": 5, "port": 8, "market_garden": 5},
-			UnlockBuildings: []string{"tenement", "industrial_depot", "agricultural_works", "steam_coal_plant", "steam_mine", "research_institute", "church", "military_base", "stock_exchange", "iron_works_complex", "steel_mill", "coal_plant", "opera_house", "crystal_palace"},
+			UnlockBuildings: []string{"tenement", "industrial_depot", "agricultural_works", "steam_coal_plant", "steam_mine", "research_institute", "church", "military_base", "stock_exchange", "iron_works_complex", "steel_mill", "coal_plant", "opera_house", "crystal_palace", "eternal_library_monument"},
 			UnlockResources: []string{"oil"},
 		},
 		// === 9: VICTORIAN AGE (Electric Era) ===
@@ -147,7 +147,7 @@ func Ages() []AgeDef {
 			Description:     "Nuclear power unleashes terrifying potential.",
 			ResourceReqs:    map[string]float64{"steel": 85625000, "electricity": 9250000, "oil": 6125000},
 			BuildingReqs:    map[string]int{"electric_arc_furnace": 20, "steam_works": 20, "physics_laboratory": 15},
-			UnlockBuildings: []string{"housing_project", "atomic_vault", "agricultural_complex", "petroleum_refinery", "uranium_processing_works", "research_campus", "spiritual_center", "bunker_complex", "corporate_hq", "nuclear_plant", "advanced_alloy_plant", "nuclear_reactor", "cinema", "particle_accelerator"},
+			UnlockBuildings: []string{"housing_project", "atomic_vault", "agricultural_complex", "petroleum_refinery", "uranium_processing_works", "research_campus", "spiritual_center", "bunker_complex", "corporate_hq", "nuclear_plant", "advanced_alloy_plant", "nuclear_reactor", "cinema", "particle_accelerator", "monument_of_ages"},
 			UnlockResources: []string{"uranium"},
 		},
 		// === 12: MODERN AGE (Digital Era) ===

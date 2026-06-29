@@ -118,7 +118,7 @@ Your faith level as a **percentage of your storage cap** determines epoch event 
 
 ## Culture
 
-Culture **accumulates permanently** rather than draining. Your culture storage cap grows as you build Culture/Arts lineage buildings. Once accumulated culture passes a threshold, the bonus is permanent — it does not require maintaining a balance.
+Culture grows as you build Culture/Arts lineage buildings. Passing a threshold grants a permanent knowledge bonus — once reached, it does not require maintaining a balance.
 
 | Threshold | Bonus |
 |-----------|-------|
@@ -132,6 +132,23 @@ Culture **accumulates permanently** rather than draining. Your culture storage c
 **On prestige:** Culture is reduced to 20% of its current value. Bonuses from thresholds you already passed remain permanently — only the current culture total is cut.
 
 Culture buildings (Lineage 10: Amphitheater → ...) auto-produce culture without requiring worker assignment. Build them passively while focusing workers on higher-priority domains.
+
+### Culture sinks
+
+Beyond the prestige/threshold gates, culture now has two ways to spend the surplus that used to sit idle:
+
+**Cultural Monuments** — four one-off structures (Category: monument, MaxCount 1 each) built with the normal `build <key>` command. Each costs a large lump of culture (plus other materials) and grants a small **permanent** `production_all` bonus on construction.
+
+| Monument | Age | Culture Cost | Permanent Bonus |
+|----------|-----|--------------|-----------------|
+| Cultural Obelisk | Classical | 2,500 | +1% all production |
+| Grand Amphitheatre | Medieval | 25,000 | +2% all production |
+| Eternal Library | Industrial | 500,000 | +3% all production |
+| Monument of Ages | Modern | 25,000,000 | +5% all production |
+
+**`festival` command** — spend a scaling lump of culture (`max(2,000, 5% of your culture cap)`) for **+20% to all production for 150 ticks**, on a **300-tick cooldown**. See [Commands](commands.md).
+
+**Prestige gates remain the primary long-term culture sink** — monuments and festivals are supplementary ways to spend surplus culture, not a replacement for it.
 
 ---
 

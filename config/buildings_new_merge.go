@@ -33,5 +33,7 @@ func NewProductionBuildings() []BuildingDef {
 	out = append(out, buildingsLineageMetallurgy()...)
 	out = append(out, buildingsLineageEnergy()...)
 	out = append(out, buildingsLineageHacker()...)
+	// Cultural Monuments — culture sink; a permanent production bonus per build.
+	out = append(out, buildingsMonuments()...)
 	return out
 }

@@ -177,6 +177,17 @@ Available upgrades and costs are shown in **Stats** overlay (`stats`).
 
 ---
 
+## Festival
+
+| Command | Description |
+|---|---|
+| `festival` | Show festival status — culture cost, current culture, and the buff it grants |
+| `festival confirm yes` | Hold a cultural festival now — spends culture for a temporary production boost |
+
+Spend a lump of **culture** (max(2,000, 5% of your culture storage cap)) for **+20% to all production for 150 ticks** (~5 minutes). There's a **300-tick cooldown** (~10 minutes) between festivals, so it stays a rare, deliberate boost rather than a per-tick reflex. This is one of the culture sinks — see [Resources](resources.md#culture). Prestige gates remain the primary long-term culture sink.
+
+---
+
 ## Civilization History
 
 | Command | Description |
