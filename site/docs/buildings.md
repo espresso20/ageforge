@@ -282,29 +282,31 @@ Your 20 Gathering Camps stay as Gathering Camps — producing at their full rate
 
 Storage buildings form their own lineage and expand your resource cap for **every** resource simultaneously. Unlike production buildings, storage buildings require no workers — just build them and the caps go up.
 
-| Building | Age | Effect |
-|----------|-----|--------|
-| Stash | Primitive | +300 all storage (hard-capped at 50) |
-| Storage Pit | Stone | +500 all storage |
-| Warehouse | Bronze | +3,000 all storage |
-| Granary | Iron | +12,000 all storage |
-| Classical Vault | Classical | +25,000 all storage |
-| Keep | Medieval | +60,000 all storage |
-| Renaissance Vault | Renaissance | +500,000 all storage |
-| Colonial Warehouse | Colonial | +10M all storage |
-| Industrial Depot | Industrial | +50M all storage |
-| Victorian Vault | Victorian | +350M all storage |
-| Electric Warehouse | Electric | +3.5B all storage |
-| Atomic Vault | Atomic | +15B all storage |
-| Modern Depot | Modern | +45B all storage |
-| Info Vault | Information | +250B all storage |
-| Digital Archive | Digital | +1.5T all storage |
-| Cyber Vault | Cyberpunk | +5T all storage |
-| Fusion Vault | Fusion | +30T all storage |
-| Orbital Depot | Space | +200T all storage |
-| Stellar Vault | Interstellar | +500T all storage |
-| Galactic Vault | Galactic | +2Q all storage |
-| Quantum Vault | Quantum | +5Q all storage |
+Every storage building is **capped at 25 copies** (Stash at 50). The cap exists by design: each tier's storage-per-copy is at least its dominant build cost, so a full stack always provides more cap than it costs and a storage building never becomes an unaffordable wall — but the flattened cost curve would eventually outrun even that, so the stack is bounded just below where it would. Advance to the next tier instead of over-stacking.
+
+| Building | Age | Effect | Max |
+|----------|-----|--------|-----|
+| Stash | Primitive | +300 all storage | 50 |
+| Storage Pit | Stone | +600 all storage | 25 |
+| Warehouse | Bronze | +4,000 all storage | 25 |
+| Granary | Iron | +15,000 all storage | 25 |
+| Classical Vault | Classical | +100,000 all storage | 25 |
+| Keep | Medieval | +400,000 all storage | 25 |
+| Renaissance Vault | Renaissance | +500,000 all storage | 25 |
+| Colonial Warehouse | Colonial | +10M all storage | 25 |
+| Industrial Depot | Industrial | +50M all storage | 25 |
+| Victorian Vault | Victorian | +350M all storage | 25 |
+| Electric Warehouse | Electric | +3.5B all storage | 25 |
+| Atomic Vault | Atomic | +20B all storage | 25 |
+| Modern Depot | Modern | +90B all storage | 25 |
+| Info Vault | Information | +260B all storage | 25 |
+| Digital Archive | Digital | +1.5T all storage | 25 |
+| Cyber Vault | Cyberpunk | +8T all storage | 25 |
+| Fusion Vault | Fusion | +30T all storage | 25 |
+| Orbital Depot | Space | +200T all storage | 25 |
+| Stellar Vault | Interstellar | +500T all storage | 25 |
+| Galactic Vault | Galactic | +2Q all storage | 25 |
+| Quantum Vault | Quantum | +10Q all storage | 25 |
 
 > **Tip:** Stash is hard-capped at 50. Transition to Storage Pit the moment you enter the Stone Age. Storage bottlenecks stop all late-game resource accumulation dead — build storage first when entering every new age.
 
