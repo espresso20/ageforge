@@ -24,6 +24,10 @@ type FactionState struct {
 	Opinion    int    // -100 to 100
 	Status     string // "neutral", "friendly", "allied", "rival", "embargo"
 	TradeCount int
+
+	// OpinionAccum is a transient sub-1.0/tick accumulator (e.g. embassy
+	// trickle). Not persisted — it spills into Opinion as it crosses 1.0.
+	OpinionAccum float64
 }
 
 // NewDiplomacyManager creates a new diplomacy manager
@@ -31,6 +35,49 @@ func NewDiplomacyManager() *DiplomacyManager {
 	return &DiplomacyManager{
 		factions: make(map[string]*FactionState),
 	}
+}
+
+// AddPassiveOpinion distributes a total opinion-per-tick amount across all
+// discovered factions that are NOT rival/embargo (i.e. neutral/friendly/allied —
+// coherent with embassy diplomacy raising standing with non-hostile powers).
+// Fractional amounts accumulate per faction and spill into the integer Opinion
+// once they cross 1.0. Opinion is capped at +100. Returns the number of factions
+// that received opinion (0 if none eligible).
+func (dm *DiplomacyManager) AddPassiveOpinion(totalPerTick float64) int {
+	if totalPerTick <= 0 {
+		return 0
+	}
+	// Count eligible factions first.
+	eligible := 0
+	for _, fs := range dm.factions {
+		if fs.Discovered && fs.Status != "rival" && fs.Status != "embargo" {
+			eligible++
+		}
+	}
+	if eligible == 0 {
+		return 0
+	}
+	per := totalPerTick / float64(eligible)
+	for _, fs := range dm.factions {
+		if !fs.Discovered || fs.Status == "rival" || fs.Status == "embargo" {
+			continue
+		}
+		if fs.Opinion >= 100 {
+			fs.OpinionAccum = 0
+			continue
+		}
+		fs.OpinionAccum += per
+		if fs.OpinionAccum >= 1.0 {
+			whole := int(fs.OpinionAccum)
+			fs.Opinion += whole
+			fs.OpinionAccum -= float64(whole)
+			if fs.Opinion > 100 {
+				fs.Opinion = 100
+				fs.OpinionAccum = 0
+			}
+		}
+	}
+	return eligible
 }
 
 // DiscoverFactions auto-discovers factions when reaching their MinAge

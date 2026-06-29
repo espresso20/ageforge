@@ -43,7 +43,7 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("  [cyan]trade[-] route list            - List trade routes\n")
 	sb.WriteString("  [cyan]trade[-] route start <key>     - Start a trade route\n")
 	sb.WriteString("  [cyan]trade[-] route stop <key>      - Stop a trade route\n")
-	sb.WriteString("  [cyan]diplomacy[-]                   - Show faction status\n")
+	sb.WriteString("  [cyan]diplomacy[-]                   - Open the Diplomacy overlay (factions, opinion, status)\n")
 	sb.WriteString("  [cyan]diplomacy[-] ally <faction>    - Ally with faction (costs gold)\n")
 	sb.WriteString("  [cyan]diplomacy[-] rival <faction>   - Declare rivalry\n")
 	sb.WriteString("  [cyan]diplomacy[-] embargo <faction> - Embargo faction\n")
@@ -93,6 +93,7 @@ func helpProvider(_ game.GameState, _ int) string {
 		{"expedition", "Scouting expeditions (resource cost)"},
 		{"army", "Army overview & military campaigns"},
 		{"trade", "Exchange rates & trade routes"},
+		{"diplomacy", "Factions, opinion & status"},
 		{"stats", "Empire statistics"},
 		{"wonders", "Wonder bank & built wonders"},
 		{"workers", "Worker domains & assignments"},

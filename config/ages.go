@@ -109,7 +109,7 @@ func Ages() []AgeDef {
 			Description:     "Exploration and trade span the globe.",
 			ResourceReqs:    map[string]float64{"gold": 470000, "knowledge": 625000, "steel": 76500, "culture": 200000},
 			BuildingReqs:    map[string]int{"exchange": 5, "university": 3, "art_studio": 5},
-			UnlockBuildings: []string{"settlement_block", "colonial_warehouse", "plantation", "coal_works", "deep_iron_mine", "natural_philosophy_hall", "mission", "fort", "port", "dockyard", "iron_works", "concert_hall", "grand_lighthouse"},
+			UnlockBuildings: []string{"settlement_block", "colonial_warehouse", "plantation", "coal_works", "deep_iron_mine", "natural_philosophy_hall", "mission", "fort", "port", "dockyard", "iron_works", "concert_hall", "embassy", "grand_lighthouse"},
 		},
 		// === 8: INDUSTRIAL AGE (Steel Era) ===
 		{
@@ -118,7 +118,7 @@ func Ages() []AgeDef {
 			Description:     "Machines revolutionize production.",
 			ResourceReqs:    map[string]float64{"steel": 310000, "gold": 2500000, "knowledge": 2000000},
 			BuildingReqs:    map[string]int{"plantation": 5, "port": 8, "market_garden": 5},
-			UnlockBuildings: []string{"tenement", "industrial_depot", "agricultural_works", "steam_coal_plant", "steam_mine", "research_institute", "church", "military_base", "stock_exchange", "iron_works_complex", "steel_mill", "coal_plant", "opera_house", "crystal_palace", "eternal_library_monument"},
+			UnlockBuildings: []string{"tenement", "industrial_depot", "agricultural_works", "steam_coal_plant", "steam_mine", "research_institute", "church", "military_base", "stock_exchange", "iron_works_complex", "steel_mill", "coal_plant", "opera_house", "grand_embassy", "crystal_palace", "eternal_library_monument"},
 			UnlockResources: []string{"oil"},
 		},
 		// === 9: VICTORIAN AGE (Electric Era) ===

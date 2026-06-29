@@ -1042,6 +1042,43 @@ func (ge *GameEngine) processDiplomacy() {
 	for _, msg := range messages {
 		ge.addLog("event", msg)
 	}
+
+	// Embassies passively generate opinion toward non-hostile factions.
+	// Total/tick = Σ over embassy-type buildings of:
+	//   perWorkerRate × workerCapacity × count × (0.20 + 0.80 × assigned/totalCap)
+	// mirroring the production worker-fill curve so a staffed embassy outperforms
+	// an empty one. perWorkerRate comes from the building's "opinion" effect.
+	totalOpinion := 0.0
+	for _, key := range []string{"embassy", "grand_embassy"} {
+		count := ge.Buildings.GetCount(key)
+		if count == 0 {
+			continue
+		}
+		def, ok := config.BuildingByKey()[key]
+		if !ok {
+			continue
+		}
+		var perWorker float64
+		for _, eff := range def.Effects {
+			if eff.Type == "opinion" {
+				perWorker = eff.Value
+				break
+			}
+		}
+		if perWorker <= 0 || def.WorkerCapacity <= 0 {
+			continue
+		}
+		assigned := ge.Workers.GetAssignedCount("worker", key)
+		totalCap := float64(count * def.WorkerCapacity)
+		fill := float64(assigned) / totalCap
+		if fill > 1.0 {
+			fill = 1.0
+		}
+		totalOpinion += perWorker * float64(def.WorkerCapacity) * float64(count) * (0.20 + 0.80*fill)
+	}
+	if totalOpinion > 0 {
+		ge.Diplomacy.AddPassiveOpinion(totalOpinion)
+	}
 }
 
 // checkMilestones checks for newly completed milestones and chains

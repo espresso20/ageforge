@@ -117,6 +117,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.Register("army", "Army", militaryProvider)
 	d.overlayMgr.Register("expedition", "Expeditions", expeditionsProvider)
 	d.overlayMgr.Register("trade", "Trade", tradeProvider)
+	d.overlayMgr.Register("diplomacy", "Diplomacy", diplomacyProvider)
 	d.overlayMgr.Register("stats", "Statistics", statsProvider)
 	d.overlayMgr.Register("wonders", "Wonders", wondersProvider)
 	d.overlayMgr.Register("workers", "Workers", workersProvider)
