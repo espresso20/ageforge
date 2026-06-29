@@ -880,6 +880,9 @@ func (ge *GameEngine) doTick() {
 		ge.starvationTicks++
 		if ge.starvationTicks == 1 {
 			ge.addLog("warning", "⚠ Your people are starving! Food has run out.")
+			if q := config.PickLogFlavor(config.LogFlavorStarvation); q != "" {
+				ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+			}
 		}
 		if ge.starvationTicks%5 == 0 && ge.Workers.TotalPop() > 0 {
 			killed := ge.Workers.KillWorker(1)
@@ -890,6 +893,9 @@ func (ge *GameEngine) doTick() {
 	} else if ge.starvationTicks > 0 {
 		ge.starvationTicks = 0
 		ge.addLog("info", "✓ Food supply restored — starvation ended.")
+		if q := config.PickLogFlavor(config.LogFlavorStarvationEnded); q != "" {
+			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+		}
 	}
 
 	// Morale tick — must run after recalculateRates() so foodRate is current
@@ -958,6 +964,12 @@ func (ge *GameEngine) processResearch() {
 		def := config.TechByKey()[completed]
 		ge.addLog("debug", fmt.Sprintf("Research complete: %s", def.Name))
 		ge.addLog("success", fmt.Sprintf("Research complete: %s!", def.Name))
+		// Cosmetic flavour on roughly half of breakthroughs (varies, never spams).
+		if rand.Intn(2) == 0 {
+			if q := config.PickLogFlavor(config.LogFlavorResearchDone); q != "" {
+				ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+			}
+		}
 		ge.Bus.Publish(EventData{
 			Type:    EventResearchDone,
 			Payload: map[string]interface{}{"tech": completed},
@@ -1195,6 +1207,10 @@ func (ge *GameEngine) checkMilestones() {
 	for _, ms := range completed {
 		rewardText := formatMilestoneRewards(ms.Rewards)
 		ge.addLog("success", fmt.Sprintf("Milestone achieved: %s!", ms.Name))
+		// Cosmetic flavour quip on its own dim line (never replaces the reward text).
+		if ms.Flavor != "" {
+			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", ms.Flavor))
+		}
 		// Apply rewards
 		for _, eff := range ms.Rewards {
 			switch eff.Type {
@@ -1211,6 +1227,7 @@ func (ge *GameEngine) checkMilestones() {
 				"name":        ms.Name,
 				"key":         ms.Key,
 				"reward_text": rewardText,
+				"flavor":      ms.Flavor,
 			},
 		})
 	}
@@ -1219,6 +1236,10 @@ func (ge *GameEngine) checkMilestones() {
 	newChains := ge.Milestones.CheckChains()
 	for _, chain := range newChains {
 		ge.addLog("success", fmt.Sprintf("Chain complete: %s! Title: %s", chain.Name, chain.Title))
+		// Cosmetic flavour quip on its own dim line (never replaces the title/boost).
+		if chain.Flavor != "" {
+			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", chain.Flavor))
+		}
 		// Inject speed boost event
 		ge.Events.InjectEvent(ActiveEvent{
 			Key:       chain.Key + "_boost",
@@ -1232,9 +1253,10 @@ func (ge *GameEngine) checkMilestones() {
 		ge.Bus.Publish(EventData{
 			Type: EventChainCompleted,
 			Payload: map[string]interface{}{
-				"name":  chain.Name,
-				"key":   chain.Key,
-				"title": chain.Title,
+				"name":   chain.Name,
+				"key":    chain.Key,
+				"title":  chain.Title,
+				"flavor": chain.Flavor,
 			},
 		})
 	}
@@ -1577,6 +1599,11 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	ge.addLog("debug", fmt.Sprintf("Age advance: %s → %s (unlocks: %d buildings, %d resources, %d workers)",
 		oldAge, newAge, len(unlocks.UnlockBuildings), len(unlocks.UnlockResources), len(unlocks.UnlockVillagers)))
 	ge.addLog("success", fmt.Sprintf("Advanced from %s to %s!", oldName, newName))
+	// Cosmetic flavour echo in the log (distinct from the age splash quip — see ui/age_splash.go).
+	// Age transitions are rare, so it fires every time.
+	if q := config.PickLogFlavor(config.LogFlavorAgeAdvance); q != "" {
+		ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+	}
 
 	// Notify player about the wonder available in this age
 	for _, bKey := range unlocks.UnlockBuildings {
@@ -2365,6 +2392,10 @@ func (ge *GameEngine) Endure() error {
 	ge.addLog("warning", "  25% of workers lost.")
 	ge.addLog("info", "  Timed: production -10% for 216 ticks (reconstruction period).")
 	ge.addLog("success", fmt.Sprintf("  ✦ Survived marker earned for %s badge.", config.EpochByKey()[epochKey].Name))
+	// Cosmetic flavour — a wry beat after surviving the catastrophe.
+	if q := config.PickLogFlavor(config.LogFlavorCatastropheSurvived); q != "" {
+		ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+	}
 
 	// Civilization history entry
 	histEntry := fmt.Sprintf("Tick %d — Endured %s (%s). %d buildings lost.", ge.tick, catName, config.EpochByKey()[epochKey].Name, destroyCount)
@@ -2491,6 +2522,13 @@ func (ge *GameEngine) processBuildQueue() {
 			def := ge.Buildings.defs[item.BuildingKey]
 			ge.addLog("debug", fmt.Sprintf("Build complete: %s (count now %d)", def.Name, ge.Buildings.GetCount(item.BuildingKey)))
 			ge.addLog("success", fmt.Sprintf("%s completed! (#%d)", def.Name, ge.Buildings.GetCount(item.BuildingKey)))
+			// Cosmetic flavour — present but not stale: ~1 in 3 completions get a quip,
+			// so a long build queue stays lively without turning into wallpaper.
+			if rand.Intn(3) == 0 {
+				if q := config.PickLogFlavor(config.LogFlavorBuildingComplete); q != "" {
+					ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+				}
+			}
 			ge.Stats.RecordBuild()
 			ge.Bus.Publish(EventData{
 				Type:    EventBuildingBuilt,
