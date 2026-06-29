@@ -145,10 +145,11 @@ type EconomyTab struct {
 	constructionTV *tview.TextView
 }
 
-// NewEconomyTab constructs the economy tab widget tree. The left column uses a
-// 4:1 height ratio between resources and the construction queue so the queue
-// stays compact. The right building panel uses a 2:3 column ratio against the
-// left so the building list gets more horizontal space.
+// NewEconomyTab constructs the economy tab widget tree. The left column stacks
+// resources / construction at a 3:1 height ratio (the Dashboard injects the log
+// below at weight 2 → 3:1:2). The building panel takes a 4:5 column ratio against
+// the left column — the left is kept a bit wider so the resource rows and log
+// text don't wrap.
 func NewEconomyTab() *EconomyTab {
 	t := &EconomyTab{}
 
@@ -176,8 +177,8 @@ func NewEconomyTab() *EconomyTab {
 		AddItem(t.constructionTV, 0, 1, false)
 
 	t.root = tview.NewFlex().SetDirection(tview.FlexColumn).
-		AddItem(t.leftCol, 0, 2, false).
-		AddItem(t.buildingTV, 0, 3, false)
+		AddItem(t.leftCol, 0, 4, false).
+		AddItem(t.buildingTV, 0, 5, false)
 
 	return t
 }
