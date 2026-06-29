@@ -574,6 +574,12 @@ You can't control exactly which 3 techs get selected, but you can influence the 
 
 Any tech currently in progress that gets completed by Grand Discovery is handled cleanly — the in-progress slot clears automatically.
 
+### The Ancient Civilization Memory
+
+A second way to skip the research grind exists, but only at the very start of a fresh prestige run. While you are still in the Primitive or Stone age, an **ancient cache** has a ~40% chance (once per run) to offer one age-appropriate technology you haven't researched. Accepting it researches that tech immediately — **free of prerequisites, the age gate, and knowledge cost** — but at **half research speed** (2× the normal tick count). The reachable tier scales with prestige level (one extra age of reach per two levels), so a high-prestige run can pull in a tech from an age it hasn't reached yet.
+
+Unlike Grand Discovery, this is a prestige-run mechanic and never fires on your first-ever run (it requires prestige level ≥ 1). See [Prestige](prestige.md#ancient-civilization-memory) for full conditions.
+
 ### Late-Game Knowledge Scaling
 
 Knowledge costs scale steeply: from 800 kp (Primitive) to 500,000,000 kp (Transcendent). In the Space and Interstellar ages, individual techs cost tens of millions of kp. Focus your knowledge lineage build and max out all knowledge-rate techs before reaching those ages or the wait becomes prohibitive.
@@ -596,4 +602,4 @@ Knowledge costs scale steeply: from 800 kp (Primitive) to 500,000,000 kp (Transc
 
 ---
 
-*See also: [Epochs](epochs.md) for how Grand Discovery and the Dark Age event fire — [Prestige](prestige.md) for the Research Speed upgrade — [Buildings](buildings.md) for knowledge lineage construction.*
+*See also: [Epochs](epochs.md) for how Grand Discovery and the Dark Age event fire — [Prestige](prestige.md) for the Research Speed upgrade and the Ancient Civilization Memory — [Buildings](buildings.md) for knowledge lineage construction.*

@@ -132,6 +132,24 @@ type GameEngine struct {
 	// AwakeningDef.Key. Cleared on prestige/reset alongside epochEventFired.
 	awakeningsFired map[string]bool
 
+	// Ancient Civilization Memory (Trello yn98pTQw): occasionally, early in a NEW
+	// prestige run, the player discovers a cache holding a memory of their now-extinct
+	// previous civilisation — an offer of one random tech, free of prerequisites but
+	// at half research speed. One per run.
+	//
+	//   ancientMemoryUsed — set true the moment the cache is OFFERED (not just on
+	//     accept), so declining still consumes the run's single chance and a save/reload
+	//     cannot re-roll it. Reset on DoPrestige/Succumb/Reset so the next run can roll.
+	//   pendingMemoryTech — the offered tech key while the accept/decline modal is up;
+	//     "" otherwise. Surfaced to the UI via GameState.PendingMemoryTech. Transient
+	//     (not persisted): a save taken mid-offer simply re-presents nothing; the run's
+	//     chance is already spent via ancientMemoryUsed.
+	//   memoryRand — RNG seam for the trigger roll + tech pick; nil means use the
+	//     package default rand. Tests inject a seeded *rand.Rand for determinism.
+	ancientMemoryUsed bool
+	pendingMemoryTech string
+	memoryRand        *rand.Rand
+
 	// Phase 9: catastrophe system — these fields intentionally survive Succumb and Prestige
 	// resets so that legacy bonuses and civilization history accumulate across multiple runs.
 	legacyBonuses      map[string]bool // epochKey -> true if succumb legacy bonus active
@@ -2189,6 +2207,9 @@ func (ge *GameEngine) Succumb() error {
 	ge.pendingCatastrophe = ""
 	ge.morale = 0.50
 	ge.lowMoraleWarned = false
+	// Fresh run after the fall: eligible to roll a new Ancient Memory.
+	ge.ancientMemoryUsed = false
+	ge.pendingMemoryTech = ""
 
 	// Restore persistent cross-run state
 	ge.Prestige = savedPrestige
@@ -2221,6 +2242,10 @@ func (ge *GameEngine) Succumb() error {
 		ge.addLog("info", fmt.Sprintf("%d ruin type(s) from the fallen civilization carry forward.", len(savedRuins)))
 	}
 	ge.addLog("info", "Type [cyan]help[-] to rebuild.")
+
+	// Roll for an Ancient Memory cache (only when this account has prestiged before;
+	// a first-ever Succumb with no prestige history offers nothing — see the gate).
+	ge.maybeOfferAncientMemory()
 
 	return nil
 }
@@ -2809,6 +2834,160 @@ func (ge *GameEngine) CancelResearch() error {
 	return nil
 }
 
+// ===== Ancient Civilization Memory (Trello yn98pTQw) =====
+
+const (
+	// ancientMemoryChance is the probability the cache appears at the start of a
+	// qualifying new prestige run. Occasional by design — not every run.
+	ancientMemoryChance = 0.40
+	// ancientMemoryFlavor is shown in the offer modal and the log.
+	ancientMemoryFlavor = "You have discovered an old cache. It appears to contain memories of a now-extinct civilization."
+)
+
+// ancientMemoryAges is the set of (early) ages in which a cache can surface. The
+// design fires it early in a fresh run, before the player has rebuilt past it.
+var ancientMemoryAges = map[string]bool{
+	"primitive_age": true,
+	"stone_age":     true,
+}
+
+// memRandFloat returns a [0,1) float from the injected seam, or the package
+// default rand if no seam is set. Lets tests force/suppress the roll.
+func (ge *GameEngine) memRandFloat() float64 {
+	if ge.memoryRand != nil {
+		return ge.memoryRand.Float64()
+	}
+	return rand.Float64()
+}
+
+// memRandIntn returns a non-negative int in [0,n) from the injected seam (or the
+// package default). n must be > 0.
+func (ge *GameEngine) memRandIntn(n int) int {
+	if ge.memoryRand != nil {
+		return ge.memoryRand.Intn(n)
+	}
+	return rand.Intn(n)
+}
+
+// maybeOfferAncientMemory rolls for, and possibly offers, an Ancient Memory cache.
+// MUST be called with ge.mu held (it is invoked from the tail of DoPrestige and
+// Succumb, which already hold the write lock) — it does not lock and must not call
+// any lock-acquiring method.
+//
+// Gating (all must hold):
+//   - prestige level >= 1 — there is no "previous civilization" on the first-ever
+//     run, so the very first run never offers a cache.
+//   - current age is primitive or stone (early in the run).
+//   - this run has not already used its memory (ancientMemoryUsed false).
+//   - the probability roll succeeds.
+//
+// On success it picks a candidate tech and sets pendingMemoryTech (the UI pops the
+// accept/decline modal) AND marks ancientMemoryUsed — set on OFFER, so declining
+// still spends the run's single chance and a save/reload can't re-roll it.
+func (ge *GameEngine) maybeOfferAncientMemory() {
+	if ge.ancientMemoryUsed {
+		return
+	}
+	if ge.Prestige.GetLevel() < 1 {
+		return // first-ever run: no extinct civilization to remember
+	}
+	if !ancientMemoryAges[ge.age] {
+		return
+	}
+	if ge.memRandFloat() >= ancientMemoryChance {
+		return // the cache stays buried this run
+	}
+
+	ageOrder := ge.progress.GetAgeOrder()
+	techKey := ge.selectMemoryTech(ge.age, ageOrder, ge.Prestige.GetLevel())
+	if techKey == "" {
+		return // nothing valid to offer (e.g. everything already researched)
+	}
+
+	// Consume the run's chance on offer (no save-scum re-rolls), then present it.
+	ge.ancientMemoryUsed = true
+	ge.pendingMemoryTech = techKey
+	def := config.TechByKey()[techKey]
+	ge.addLog("event", fmt.Sprintf("✦ %s A memory of [cyan]%s[-] stirs — research it free of prerequisites, but at half speed.", ancientMemoryFlavor, def.Name))
+}
+
+// selectMemoryTech picks a random tech appropriate to the current age, with the
+// reachable tier gated by prestige level: low prestige offers a near-current-age
+// tech; higher prestige can reach a higher age's tech (one extra age of reach per
+// two prestige levels). Returns "" if no eligible, unresearched tech exists.
+//
+// Pure aside from the RNG seam — safe to call under ge.mu.
+func (ge *GameEngine) selectMemoryTech(currentAge string, ageOrder map[string]int, prestigeLevel int) string {
+	currentOrder, ok := ageOrder[currentAge]
+	if !ok {
+		return ""
+	}
+	// Reach: current age plus one age per two prestige levels.
+	maxOrder := currentOrder + prestigeLevel/2
+
+	var candidates []string
+	for _, t := range config.Technologies() {
+		o, ok := ageOrder[t.Age]
+		if !ok {
+			continue
+		}
+		if o < currentOrder || o > maxOrder {
+			continue
+		}
+		if ge.Research.IsResearched(t.Key) {
+			continue
+		}
+		if t.Key == ge.Research.currentTech {
+			continue // don't offer what's already in progress
+		}
+		candidates = append(candidates, t.Key)
+	}
+	if len(candidates) == 0 {
+		return ""
+	}
+	return candidates[ge.memRandIntn(len(candidates))]
+}
+
+// AcceptAncientMemory accepts the pending Ancient Memory offer: it begins
+// researching the offered tech, bypassing prerequisites/age/cost, at 50% speed.
+// Called from the UI (modal callback) on the UI goroutine — takes the write lock.
+func (ge *GameEngine) AcceptAncientMemory() error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	if ge.pendingMemoryTech == "" {
+		return fmt.Errorf("no ancient memory to accept")
+	}
+	techKey := ge.pendingMemoryTech
+	ge.pendingMemoryTech = ""
+
+	// Same combined research_speed sources a normal research gets; the memory
+	// penalty (2x ticks) is applied on top inside StartMemoryResearch.
+	combinedResearchSpeed := ge.Research.GetBonus("research_speed") +
+		ge.permanentBonuses["research_speed"] +
+		ge.Prestige.GetBonuses()["research_speed"]
+	if err := ge.Research.StartMemoryResearch(techKey, combinedResearchSpeed); err != nil {
+		return err
+	}
+	def := config.TechByKey()[techKey]
+	ge.addLog("success", fmt.Sprintf("Recovered the memory of %s — researching at half speed (%d ticks).", def.Name, ge.Research.totalTicks))
+	return nil
+}
+
+// DeclineAncientMemory dismisses the pending offer without effect. The cache is
+// already consumed for this run (ancientMemoryUsed was set on offer), so declining
+// does not refund the chance. Called from the UI (modal callback).
+func (ge *GameEngine) DeclineAncientMemory() {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	if ge.pendingMemoryTech == "" {
+		return
+	}
+	ge.pendingMemoryTech = ""
+	ge.addLog("info", "You leave the ancient cache sealed. Its memories crumble to dust.")
+}
+
 // LaunchExpedition starts a military expedition
 func (ge *GameEngine) LaunchExpedition(key string) error {
 	ge.mu.Lock()
@@ -2902,6 +3081,9 @@ func (ge *GameEngine) DoPrestige() error {
 	ge.epochEventHistory = nil
 	ge.morale = 0.70
 	ge.lowMoraleWarned = false
+	// Fresh run: this prestige cycle may roll a new Ancient Memory.
+	ge.ancientMemoryUsed = false
+	ge.pendingMemoryTech = ""
 
 	// Restore cross-run state
 	ge.Buildings.LoadRuins(savedRuins)
@@ -2936,6 +3118,10 @@ func (ge *GameEngine) DoPrestige() error {
 	if ge.account != nil {
 		ge.account.RecordPrestige()
 	}
+
+	// Roll for an Ancient Memory cache — prestige level is now >= 1, the age is
+	// primitive, and the flag was just cleared above, so this fresh run is eligible.
+	ge.maybeOfferAncientMemory()
 
 	return nil
 }
@@ -2993,6 +3179,9 @@ func (ge *GameEngine) Reset() {
 	ge.catastropheHistory = nil
 	ge.morale = moraleNeutral
 	ge.lowMoraleWarned = false
+	// Full wipe: no previous civilization, so no cache. Clear the run flag.
+	ge.ancientMemoryUsed = false
+	ge.pendingMemoryTech = ""
 
 	ge.addLog("event", "Game wiped! Starting fresh.")
 	ge.addLog("info", "Type [cyan]help[-] for commands.")
@@ -3135,9 +3324,11 @@ func (ge *GameEngine) GetState() GameState {
 			}
 			return "white"
 		}(),
-		EpochSurvived:      ge.survivedEpochs[ge.currentEpoch],
-		PendingCatastrophe: ge.pendingCatastrophe,
-		EpochEventHistory:  ge.epochEventHistory,
+		EpochSurvived:         ge.survivedEpochs[ge.currentEpoch],
+		PendingCatastrophe:    ge.pendingCatastrophe,
+		PendingMemoryTech:     ge.pendingMemoryTech,
+		PendingMemoryTechName: config.TechByKey()[ge.pendingMemoryTech].Name,
+		EpochEventHistory:     ge.epochEventHistory,
 		LegacyBonuses: func() map[string]bool {
 			out := make(map[string]bool, len(ge.legacyBonuses))
 			for k, v := range ge.legacyBonuses {

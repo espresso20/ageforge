@@ -176,6 +176,46 @@ See [Catastrophe](catastrophe.md) for how ruins are generated.
 
 ---
 
+## Ancient Civilization Memory
+
+Early in a fresh prestige run, you may stumble on a relic of the civilization you just sacrificed — an **ancient cache** that remembers something your predecessor knew. Accepting it lets you skip the normal research grind for a single technology, at the cost of a slow rebuild.
+
+> You have discovered an old cache. It appears to contain memories of a now-extinct civilization.
+
+When the cache surfaces, you get an **Accept / Decline** modal offering one technology appropriate to your current age.
+
+- **Accept** — the offered tech is researched immediately, **free of prerequisites**, bypassing the normal age gate and knowledge cost. The catch: it completes at **half research speed** (2× the normal tick count). Skipping the prerequisite chain is paid for in slow recall.
+- **Decline** — the cache crumbles to dust. Nothing happens.
+
+Either way, the run's single cache chance is spent the moment the cache is offered.
+
+### When It Fires
+
+| Condition | Requirement |
+| --------- | ----------- |
+| Timing | **Early** in a new run — while you are still in the **Primitive** or **Stone** age |
+| Probability | **~40%** chance, rolled at most **once per prestige run** |
+| Prestige level | **Level ≥ 1** — the very first-ever run has no predecessor to remember, so the cache never appears |
+| Already known | Never offers a technology you have already researched |
+
+### One Memory Per Run
+
+There is exactly **one** cache chance per run, and the "used" flag is set the instant the cache is offered — **not** when you accept. Consequences:
+
+- **Declining does not let you re-roll.** The chance is consumed whether you accept or decline.
+- **Saving and reloading does not re-roll it.** The used flag persists in your save.
+- The flag **resets on the next prestige, Succumb, or reset**, so every new run gets a fresh chance to roll.
+
+### Tech Tier Scales With Prestige Level
+
+Which technology the cache can offer scales with your **prestige level**. Low prestige surfaces a near-current-age tech; higher prestige reaches deeper memories — **one extra age of reach per two prestige levels**. A high-prestige player can be offered a tech from an age they haven't yet reached this run, jump-starting their tech path well ahead of the normal curve.
+
+The half-speed penalty still applies no matter how advanced the offered tech is, so an out-of-age tech accepted from the cache takes a while to settle in — but it arrives without any of the prerequisites or knowledge cost it would normally demand.
+
+See [Technologies](technologies.md) for the full tech tree and the other free-research path (Grand Discovery).
+
+---
+
 ## Recommended Upgrade Priorities
 
 ### First prestige (4–8 points)

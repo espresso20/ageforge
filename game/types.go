@@ -42,7 +42,11 @@ type GameState struct {
 	EpochColor         string // tview color tag
 	EpochSurvived      bool   // player endured a catastrophe this epoch
 	PendingCatastrophe string // epoch key if catastrophe modal should show; "" otherwise
-	EpochEventHistory  []EpochEventRecord
+	// Ancient Memory (Trello yn98pTQw): tech key of a pending cache offer that the UI
+	// should pop an accept/decline modal for; "" when there is no pending offer.
+	PendingMemoryTech     string
+	PendingMemoryTechName string // resolved display name of PendingMemoryTech ("" if none)
+	EpochEventHistory     []EpochEventRecord
 	// Phase 9: civilization history + legacy bonuses
 	LegacyBonuses      map[string]bool // epochKey -> true if succumb legacy bonus is active
 	CatastropheHistory []string        // narrative log entries

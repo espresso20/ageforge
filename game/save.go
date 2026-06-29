@@ -59,6 +59,11 @@ type GameSave struct {
 	CurrentEpoch       string             `json:"current_epoch,omitempty"`
 	EpochEventFired    map[string]bool    `json:"epoch_event_fired,omitempty"`
 	AwakeningsFired    map[string]bool    `json:"awakenings_fired,omitempty"`
+	// AncientMemoryUsed: true once this run has offered its single Ancient Memory cache
+	// (set on offer, not accept). Persisted so a reload cannot re-roll the cache. The
+	// in-progress memory research itself rides along in ResearchSave (its doubled tick
+	// count is already baked into TicksLeft/TotalTicks), so no extra research field.
+	AncientMemoryUsed  bool               `json:"ancient_memory_used,omitempty"`
 	SurvivedEpochs     map[string]bool    `json:"survived_epochs,omitempty"`
 	PendingCatastrophe string             `json:"pending_catastrophe,omitempty"`
 	EpochEventHistory  []EpochEventRecord `json:"epoch_event_history,omitempty"`
@@ -477,6 +482,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		CurrentEpoch:       ge.currentEpoch,
 		EpochEventFired:    copyBoolMap(ge.epochEventFired),
 		AwakeningsFired:    copyBoolMap(ge.awakeningsFired),
+		AncientMemoryUsed:  ge.ancientMemoryUsed,
 		SurvivedEpochs:     copyBoolMap(ge.survivedEpochs),
 		PendingCatastrophe: ge.pendingCatastrophe,
 		EpochEventHistory:  append([]EpochEventRecord(nil), ge.epochEventHistory...),
@@ -681,6 +687,12 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	} else {
 		ge.awakeningsFired = make(map[string]bool)
 	}
+	// Ancient Memory: restore the one-per-run flag (old saves default false — they
+	// predate the feature, so the run has not used its memory). The pending offer is
+	// transient and never restored: any doubled-tick research already in flight rides
+	// in ResearchSave, so we don't re-pop the modal.
+	ge.ancientMemoryUsed = save.AncientMemoryUsed
+	ge.pendingMemoryTech = ""
 	if save.SurvivedEpochs != nil {
 		ge.survivedEpochs = save.SurvivedEpochs
 	} else {
