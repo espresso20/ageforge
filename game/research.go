@@ -84,6 +84,51 @@ func (rm *ResearchManager) StartResearchWithSpeed(key string, currentAge string,
 	return nil
 }
 
+// memoryResearchSlowdown is the tick multiplier applied to an Ancient Memory
+// tech: the cache recalls a half-forgotten technology, so it researches at 50%
+// speed (double the tick count). See StartMemoryResearch.
+const memoryResearchSlowdown = 2.0
+
+// StartMemoryResearch begins researching a technology recovered from an Ancient
+// Memory cache (see GameEngine.AcceptAncientMemory). Unlike StartResearchWithSpeed
+// it deliberately BYPASSES the prerequisite chain, the age gate, and the knowledge
+// cost — the cache hands you the tech "free" of those gates. The tradeoff is speed:
+// the tick count is doubled (50% rate). Because the slowdown is baked into ticksLeft
+// /totalTicks here, it persists through save/load with no extra research-save field.
+//
+// It still refuses if the tech is unknown, already researched, or another research
+// is in progress (one slot, same as normal research).
+func (rm *ResearchManager) StartMemoryResearch(key string, speedBonus float64) error {
+	def, ok := rm.defs[key]
+	if !ok {
+		return fmt.Errorf("unknown technology: %s", key)
+	}
+	if rm.researched[key] {
+		return fmt.Errorf("%s is already researched", def.Name)
+	}
+	if rm.currentTech != "" {
+		currentDef := rm.defs[rm.currentTech]
+		return fmt.Errorf("already researching %s (%d ticks left)", currentDef.Name, rm.ticksLeft)
+	}
+	// NOTE: age gate, prerequisite loop, and knowledge cost check are intentionally
+	// omitted — that is the whole point of an Ancient Memory.
+
+	rm.currentTech = key
+	ticks := def.ResearchTicks
+	// Apply the same combined research speed bonus a normal research gets...
+	if speedBonus > 0 {
+		ticks = int(float64(ticks) * (1.0 - speedBonus))
+	}
+	// ...then halve the rate (double the ticks) for the memory penalty.
+	ticks = int(float64(ticks) * memoryResearchSlowdown)
+	if ticks < 1 {
+		ticks = 1
+	}
+	rm.ticksLeft = ticks
+	rm.totalTicks = ticks
+	return nil
+}
+
 // Tick processes one tick of research. Returns completed tech key or empty string.
 func (rm *ResearchManager) Tick() string {
 	if rm.currentTech == "" {

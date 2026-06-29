@@ -62,6 +62,8 @@ Two epoch events directly affect knowledge:
 
 The Dark Age is the most punishing event for knowledge-heavy civilizations. Maintaining high faith reduces the probability of all bad epoch events, including Dark Age. See [Faith](faith.md) and [Epochs](epochs.md).
 
+There is also a prestige-run path to free research: early in a new run (Primitive or Stone age), the **Ancient Civilization Memory** cache can offer a single tech researched free of prerequisites and knowledge cost — at half speed. See [Prestige](prestige.md#ancient-civilization-memory).
+
 ---
 
 ## Ancient Knowledge (Epoch Succumb Reward)

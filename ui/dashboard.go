@@ -63,6 +63,12 @@ type Dashboard struct {
 	// Reset to "" when PendingCatastrophe clears (player chose Endure or Succumb).
 	catModalShown string
 
+	// memoryModalShown guards the Ancient Memory offer modal the same way catModalShown
+	// guards the catastrophe modal: it holds the offered tech key once shown so a Defer
+	// (here: closing without choosing) doesn't re-pop it every refresh. Reset to "" when
+	// PendingMemoryTech clears (accept/decline both clear it engine-side).
+	memoryModalShown string
+
 	// Command history is session-only (never persisted to disk). The slice is
 	// append-only and capped at 50 entries. histIdx == -1 means not in history
 	// navigation mode. histDraft stores whatever was in the input field before
@@ -508,6 +514,14 @@ func (d *Dashboard) refresh() {
 	} else if d.catModalShown == "" {
 		d.catModalShown = state.PendingCatastrophe
 		d.showCatastropheModal(state.PendingCatastrophe)
+	}
+
+	// Ancient Memory offer modal — same single-show pattern as the catastrophe modal.
+	if state.PendingMemoryTech == "" {
+		d.memoryModalShown = "" // reset so a future run's cache can show fresh
+	} else if d.memoryModalShown == "" {
+		d.memoryModalShown = state.PendingMemoryTech
+		d.showAncientMemoryModal(state.PendingMemoryTech, state.PendingMemoryTechName)
 	}
 
 	// Shame badge — pick once per session, never change after that
