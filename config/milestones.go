@@ -82,8 +82,8 @@ func MilestoneChains() []MilestoneChainDef {
 				"grand_architect", "wonder_collector",
 			},
 			Title:         "The Architects",
-			BoostValue:    1.5,
-			BoostDuration: 90,
+			BoostValue:    2.5,
+			BoostDuration: 150,
 		},
 		{
 			Name:     "Military Chain",
@@ -94,19 +94,20 @@ func MilestoneChains() []MilestoneChainDef {
 				"fortress_state", "military_superpower",
 			},
 			Title:         "The Conquerors",
-			BoostValue:    0.5,
-			BoostDuration: 60,
+			BoostValue:    2.5,
+			BoostDuration: 150,
 		},
 		{
 			Name:     "Trade Chain",
 			Key:      "trade_chain",
 			Category: "trade",
 			MilestoneKeys: []string{
-				"first_market", "merchant_guild", "trade_empire",
+				"first_market", "merchant_guild", "caravan_network",
+				"merchant_princes", "trade_empire",
 			},
 			Title:         "The Merchants",
-			BoostValue:    1.0,
-			BoostDuration: 90,
+			BoostValue:    2.5,
+			BoostDuration: 150,
 		},
 		{
 			Name:     "Ancient Ages Chain",
@@ -480,7 +481,8 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "knowledge_rate", Value: 0.15},
 			},
 		},
-		// tech_master: raised to 50 techs; industrial age gated
+		// tech_master: raised to 50 techs; industrial age gated.
+		// Capstone broadened — keeps research_speed, adds a touch of production_all.
 		{
 			Name: "Tech Master", Key: "tech_master",
 			Description: "Research 50 technologies.",
@@ -488,7 +490,8 @@ func Milestones() []MilestoneDef {
 			MinAge:       "industrial_age",
 			MinTechCount: 50,
 			Rewards: []Effect{
-				{Type: "permanent_bonus", Target: "research_speed", Value: 0.15},
+				{Type: "permanent_bonus", Target: "research_speed", Value: 0.10},
+				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
 			},
 		},
 		// NEW: tech_ascendant — all 52 techs; quantum age gated
@@ -538,7 +541,8 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "military_power", Value: 0.05},
 			},
 		},
-		// iron_legion: raised to 500 soldiers + 10 barracks; classical age
+		// iron_legion: 500 soldiers + 10 barracks; classical age.
+		// Broadened to production_all so the chain helps the whole economy.
 		{
 			Name: "Iron Legion", Key: "iron_legion",
 			Description:  "Train 500 soldiers and build 10 Barracks.",
@@ -546,10 +550,11 @@ func Milestones() []MilestoneDef {
 			MinAge:       "classical_age",
 			MinBuildings: map[string]int{"barracks": 10},
 			Rewards: []Effect{
-				{Type: "permanent_bonus", Target: "military_power", Value: 0.10},
+				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
 			},
 		},
-		// fortress_state: raised to 20 castle keeps; medieval age
+		// fortress_state: 20 castle keeps; medieval age. Dual payout —
+		// keeps a military_power bonus but adds broad production_all.
 		{
 			Name: "Fortress State", Key: "fortress_state",
 			Description:  "Build 20 Castle Keeps.",
@@ -558,16 +563,18 @@ func Milestones() []MilestoneDef {
 			MinBuildings: map[string]int{"castle_keep": 20},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "military_power", Value: 0.10},
+				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
 			},
 		},
-		// military_superpower: raised to 2,000 soldiers; industrial age
+		// military_superpower: 2,000 soldiers; industrial age.
+		// Capstone broadened to production_all (was military_power).
 		{
 			Name: "Military Superpower", Key: "military_superpower",
 			Description: "Field 2,000 soldiers.",
 			Category:    "military", Hidden: true,
 			MinAge:      "industrial_age",
 			Rewards: []Effect{
-				{Type: "permanent_bonus", Target: "military_power", Value: 0.15},
+				{Type: "permanent_bonus", Target: "production_all", Value: 0.15},
 			},
 		},
 
@@ -597,15 +604,39 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "gold_rate", Value: 0.05},
 			},
 		},
-		// trade_empire: raised to 20 trading posts + 8 merchant quarters; medieval age
+		// caravan_network: 5 trading posts; classical age (trading_post unlocks iron age)
 		{
-			Name: "Trade Empire", Key: "trade_empire",
-			Description:  "Build 20 Trading Posts and 8 Merchant Quarters.",
-			Category:     "trade", Hidden: true,
-			MinAge:       "medieval_age",
-			MinBuildings: map[string]int{"trading_post": 20, "merchant_quarter": 8},
+			Name: "Caravan Network", Key: "caravan_network",
+			Description:  "Operate 5 Trading Posts.",
+			Category:     "trade",
+			MinAge:       "classical_age",
+			MinBuildings: map[string]int{"trading_post": 5},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "gold_rate", Value: 0.10},
+			},
+		},
+		// merchant_princes: 12 trading posts + 4 merchant quarters; medieval age.
+		// Broadened to production_all so the mid-chain payout helps the whole economy.
+		{
+			Name: "Merchant Princes", Key: "merchant_princes",
+			Description:  "Build 12 Trading Posts and 4 Merchant Quarters.",
+			Category:     "trade", Hidden: true,
+			MinAge:       "medieval_age",
+			MinBuildings: map[string]int{"trading_post": 12, "merchant_quarter": 4},
+			Rewards: []Effect{
+				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
+			},
+		},
+		// trade_empire: capstone scaled to 30 trading posts + 12 merchant quarters;
+		// renaissance age. Broadened to production_all (was gold_rate).
+		{
+			Name: "Trade Empire", Key: "trade_empire",
+			Description:  "Build 30 Trading Posts and 12 Merchant Quarters.",
+			Category:     "trade", Hidden: true,
+			MinAge:       "renaissance_age",
+			MinBuildings: map[string]int{"trading_post": 30, "merchant_quarter": 12},
+			Rewards: []Effect{
+				{Type: "permanent_bonus", Target: "production_all", Value: 0.10},
 			},
 		},
 		// guildhall_master — 10 guildhalls; renaissance age
