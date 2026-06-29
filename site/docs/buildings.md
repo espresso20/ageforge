@@ -316,6 +316,21 @@ Storage buildings also participate in the upgrade system on age advance — use 
 
 ---
 
+## Cultural Monuments (4)
+
+Cultural Monuments are one-off structures (Category: `monument`, capped at one copy each) that exist to turn surplus **culture** into a permanent payoff. Each costs a large lump of culture (plus other age-appropriate materials) and grants a permanent `production_all` bonus on construction. Unlike wonders, they need no resource banking — build them with the normal `build <key>` command.
+
+| Monument | Age | Culture Cost | Permanent Bonus |
+|----------|-----|--------------|-----------------|
+| Cultural Obelisk | Classical | 2,500 | +1% all production |
+| Grand Amphitheatre | Medieval | 25,000 | +2% all production |
+| Eternal Library | Industrial | 500,000 | +3% all production |
+| Monument of Ages | Modern | 25,000,000 | +5% all production |
+
+Monuments are one of the two culture sinks (the other is the `festival` command); prestige gates remain the primary long-term sink. See [Culture](resources.md#culture).
+
+---
+
 ## Wonders (22)
 
 Wonders are unique one-of-a-kind buildings — you can only build each wonder once. They require resource banking before construction can begin:

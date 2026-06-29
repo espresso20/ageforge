@@ -57,6 +57,8 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("  [cyan]prestige[-] confirm yes            - Reset game with prestige bonus\n")
 	sb.WriteString("  [cyan]prestige[-] shop                   - View prestige upgrades\n")
 	sb.WriteString("  [cyan]prestige[-] buy <key>              - Buy a prestige upgrade\n")
+	sb.WriteString("  [cyan]festival[-]                        - Spend culture for a temporary production boost\n")
+	sb.WriteString("  [cyan]festival confirm yes[-]            - Hold the festival now\n")
 	sb.WriteString("  [cyan]catastrophe invoke[-]              - Voluntarily trigger the epoch catastrophe\n")
 
 	sb.WriteString("\n[gold]═══ Game ═══[-]\n")

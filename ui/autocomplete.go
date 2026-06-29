@@ -31,6 +31,7 @@ var commands = []string{
 	"status", "s",
 	"help", "h",
 	"prestige",
+	"festival",
 	"upgrade",
 	"advance", "rates", "speed", "save", "saves", "load",
 	"account",
@@ -152,6 +153,14 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 		}
 		if strings.ToLower(completed[0]) == "buy" {
 			return filterPrefix(prestigeUpgradeKeys(state), partial, prefix)
+		}
+		if strings.ToLower(completed[0]) == "confirm" {
+			return filterPrefix([]string{"yes"}, partial, prefix)
+		}
+
+	case "festival":
+		if len(completed) == 0 {
+			return filterPrefix([]string{"confirm"}, partial, prefix)
 		}
 		if strings.ToLower(completed[0]) == "confirm" {
 			return filterPrefix([]string{"yes"}, partial, prefix)

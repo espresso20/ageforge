@@ -28,6 +28,13 @@ const (
 	// push production below 10% of its pre-bonus value or flip it negative.
 	productionFloor = 0.10
 
+	// Festival (culture sink) tuning.
+	festivalBuffPercent   = 0.20 // +20% production_all while active
+	festivalBuffTicks     = 150  // ~5 minutes at 2s/tick
+	festivalCooldownTicks = 300  // ~10 minutes between festivals
+	festivalMinCost       = 2000.0
+	festivalCostFraction  = 0.05 // of culture storage cap
+
 	// buildCostFloor / buildCostCap clamp the build-cost factor the engine derives
 	// from the resolver's build_cost pool. build_cost values are negative cost
 	// reductions; the factor is clamp(1+Σ, floor, cap). The 0.10 floor means costs
@@ -140,6 +147,10 @@ type GameEngine struct {
 	// starts at moraleNeutral (0.50). Drives production via moraleMultiplier().
 	morale          float64 // 0.10–moraleCap(); starts at moraleNeutral (0.50)
 	lowMoraleWarned bool    // true after morale warning fired; reset when morale rises above 0.40
+
+	// festivalReadyTick is the earliest game tick a new festival may be held
+	// (cooldown anti-spam for the `festival` culture sink). 0 = ready now.
+	festivalReadyTick int
 }
 
 // BuildQueueItem represents a building under construction
@@ -1811,11 +1822,84 @@ func (ge *GameEngine) reapplyLegacyBonuses() {
 	}
 }
 
+// FestivalStatus is the snapshot the `festival` command renders: the live cost,
+// the player's current culture, the buff parameters, and cooldown state.
+type FestivalStatus struct {
+	Cost          float64 // culture required to hold a festival right now
+	Culture       float64 // player's current culture
+	BuffPercent   float64 // production_all bonus the festival grants (e.g. 0.20)
+	BuffTicks     int     // how long the buff lasts
+	CooldownTicks int     // cooldown imposed after a festival
+	CooldownLeft  int     // ticks remaining on the current cooldown (0 if ready)
+	Ready         bool    // true when not on cooldown
+}
+
+// festivalCost returns the culture cost of a festival at the current progression:
+// max(festivalMinCost, festivalCostFraction × culture storage cap). It scales with
+// the player's culture cap so it stays a meaningful drain into the late game.
+func (ge *GameEngine) festivalCost() float64 {
+	cultureCap := ge.Resources.GetStorage("culture")
+	cost := cultureCap * festivalCostFraction
+	if cost < festivalMinCost {
+		cost = festivalMinCost
+	}
+	return cost
+}
+
+// FestivalStatus returns the live festival cost, the player's culture, the buff
+// parameters, and cooldown state for the `festival` command UI. Read-only.
+func (ge *GameEngine) FestivalStatus() FestivalStatus {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	cd := ge.festivalReadyTick - ge.tick
+	if cd < 0 {
+		cd = 0
+	}
+	return FestivalStatus{
+		Cost:          ge.festivalCost(),
+		Culture:       ge.Resources.Get("culture"),
+		BuffPercent:   festivalBuffPercent,
+		BuffTicks:     festivalBuffTicks,
+		CooldownTicks: festivalCooldownTicks,
+		CooldownLeft:  cd,
+		Ready:         cd == 0,
+	}
+}
+
+// DoFestival spends a lump of culture to inject a temporary empire-wide
+// production buff (+festivalBuffPercent production_all for festivalBuffTicks).
+// It is gated by a cooldown so it can't be spammed every tick. This is the
+// repeatable, player-initiated culture sink; prestige gates remain primary.
+func (ge *GameEngine) DoFestival() error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+
+	if ge.tick < ge.festivalReadyTick {
+		return fmt.Errorf("festival is on cooldown (%d ticks remaining)", ge.festivalReadyTick-ge.tick)
+	}
+	cost := ge.festivalCost()
+	have := ge.Resources.Get("culture")
+	if have < cost {
+		return fmt.Errorf("not enough culture for a festival: need %.0f, have %.0f", cost, have)
+	}
+	ge.Resources.Remove("culture", cost)
+	ge.Events.InjectEvent(ActiveEvent{
+		Key:       "cultural_festival",
+		Name:      "Cultural Festival",
+		TicksLeft: festivalBuffTicks,
+		Effects:   []config.Effect{{Type: "production_all", Value: festivalBuffPercent}},
+	})
+	ge.festivalReadyTick = ge.tick + festivalCooldownTicks
+	ge.addLog("success", fmt.Sprintf("Held a cultural festival — spent %.0f culture for +%.0f%% production (%d ticks).",
+		cost, festivalBuffPercent*100, festivalBuffTicks))
+	return nil
+}
+
 // getWonderBonuses returns a map of bonus-type effects from all currently built
-// wonders (those with count > 0). Effects with Type "bonus" represent percentage
-// multipliers (e.g. production_all, knowledge_rate, expedition_reward) rather
-// than flat resource production rates. The returned map is keyed by Target and
-// holds the summed Value across all built wonders.
+// wonders and cultural monuments (those with count > 0). Effects with Type "bonus"
+// represent percentage multipliers (e.g. production_all, knowledge_rate,
+// expedition_reward) rather than flat resource production rates. The returned map
+// is keyed by Target and holds the summed Value across all built wonders and monuments.
 // Must be called with the engine lock held.
 func (ge *GameEngine) getWonderBonuses() map[string]float64 {
 	out := make(map[string]float64)
@@ -1824,7 +1908,7 @@ func (ge *GameEngine) getWonderBonuses() map[string]float64 {
 			continue
 		}
 		def, ok := ge.Buildings.defs[key]
-		if !ok || def.Category != "wonder" {
+		if !ok || (def.Category != "wonder" && def.Category != "monument") {
 			continue
 		}
 		for _, eff := range def.Effects {

@@ -72,6 +72,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdWonder(args, engine)
 	case "prestige":
 		return cmdPrestige(args, engine)
+	case "festival":
+		return cmdFestival(args, engine)
 	case "rates":
 		return cmdRates(engine)
 	case "speed":
@@ -1174,6 +1176,74 @@ func cmdCampaign(args []string, engine *game.GameEngine) CommandResult {
 		Message: fmt.Sprintf("Campaign launched: %s!", name),
 		Type:    "success",
 	}
+}
+
+// cmdFestival handles the `festival` culture-sink command. Bare `festival`
+// shows status (cost, cooldown, what it does). `festival confirm yes` spends a
+// lump of culture to inject a temporary empire-wide production buff. Mirrors the
+// prestige confirm UX so the muscle memory carries over.
+func cmdFestival(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 {
+		return cmdFestivalStatus(engine)
+	}
+	subcmd := strings.ToLower(args[0])
+
+	switch subcmd {
+	case "confirm":
+		if len(args) >= 2 && strings.ToLower(args[1]) == "yes" {
+			if err := engine.DoFestival(); err != nil {
+				return CommandResult{Message: err.Error(), Type: "error"}
+			}
+			st := engine.FestivalStatus()
+			return CommandResult{
+				Message: fmt.Sprintf("Festival underway! Spent %.0f culture. +%.0f%% to all production for %d ticks.",
+					st.Cost, st.BuffPercent*100, st.BuffTicks),
+				Type: "success",
+			}
+		}
+		// Show the confirm prompt with the live cost.
+		st := engine.FestivalStatus()
+		if !st.Ready {
+			return CommandResult{
+				Message: fmt.Sprintf("[yellow]Festival on cooldown[-] — %d ticks until the next one can be held.", st.CooldownLeft),
+				Type:    "warning",
+			}
+		}
+		var lines []string
+		lines = append(lines, "[gold]Hold a Cultural Festival?[-]")
+		lines = append(lines, fmt.Sprintf("  Cost: [cyan]%.0f culture[-] (you have %.0f)", st.Cost, st.Culture))
+		lines = append(lines, fmt.Sprintf("  Effect: [green]+%.0f%%[-] to all production for [cyan]%d[-] ticks.", st.BuffPercent*100, st.BuffTicks))
+		lines = append(lines, fmt.Sprintf("  Cooldown afterward: [cyan]%d[-] ticks.", st.CooldownTicks))
+		if st.Culture < st.Cost {
+			lines = append(lines, "")
+			lines = append(lines, "  [red]Not enough culture.[-]")
+		}
+		lines = append(lines, "")
+		lines = append(lines, "  Type [cyan]festival confirm yes[-] to celebrate.")
+		return CommandResult{Message: strings.Join(lines, "\n"), Type: "warning"}
+	default:
+		return CommandResult{Message: "Usage: festival [confirm yes]", Type: "error"}
+	}
+}
+
+// cmdFestivalStatus renders the bare `festival` status panel.
+func cmdFestivalStatus(engine *game.GameEngine) CommandResult {
+	st := engine.FestivalStatus()
+	var lines []string
+	lines = append(lines, "[gold]Cultural Festival[-]")
+	lines = append(lines, "  Spend a lump of culture for a temporary empire-wide production boost.")
+	lines = append(lines, fmt.Sprintf("  Cost: [cyan]%.0f culture[-]  (you have %.0f)", st.Cost, st.Culture))
+	lines = append(lines, fmt.Sprintf("  Effect: [green]+%.0f%%[-] to all production for [cyan]%d[-] ticks.", st.BuffPercent*100, st.BuffTicks))
+	if st.Ready {
+		if st.Culture >= st.Cost {
+			lines = append(lines, "  Status: [green]ready[-] — type [cyan]festival confirm yes[-].")
+		} else {
+			lines = append(lines, "  Status: [yellow]not enough culture yet.[-]")
+		}
+	} else {
+		lines = append(lines, fmt.Sprintf("  Status: [yellow]on cooldown[-] — %d ticks remaining.", st.CooldownLeft))
+	}
+	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
 
 func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
