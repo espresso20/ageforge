@@ -24,6 +24,7 @@ import (
 	"image"
 	"sync"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/gdamore/tcell/v2"
@@ -111,8 +112,9 @@ func (c *CityMap) imageFor(width, height int) *image.RGBA {
 }
 
 // renderImage composites the full map: procedural theme-tinted terrain, then the
-// palace + building markers on top. It reads the active theme via the palette
-// helpers, so the output reflects whatever theme is active at call time.
+// road network and the 2.5D building volumes on top (P2). It reads the active
+// theme via the palette helpers, so the output reflects whatever theme is active
+// at call time, and dispatches the per-age layout strategy by the state's age.
 func renderImage(state game.GameState, w, h int) *image.RGBA {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 
@@ -121,9 +123,11 @@ func renderImage(state game.GameState, w, h int) *image.RGBA {
 
 	drawTerrain(img, pal, seed)
 
-	keys := builtBuildingKeys(state)
-	markers := layoutMarkers(w, h, keys)
-	drawMarkers(img, pal, markers)
+	// Resolve the lineage/category table once (pure data, no locks) and hand it
+	// to the structure layer, which groups buildings into districts, runs the era
+	// strategy, draws roads, then the 2.5D volumes.
+	byKey := config.BuildingByKey()
+	drawStructures(img, pal, state, byKey)
 
 	return img
 }

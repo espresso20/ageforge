@@ -33,7 +33,7 @@ All notable changes to AgeForge are documented here.
 - Milestone chains rebalanced: completion speed-boosts normalized across all six chains (Military was 18× weaker than Settlement — now in line); the Trade chain expanded 3 → 6 milestones (5 via the milestone revamp, then a sixth — Maritime Empire — with the Trade System Expansion); and Military/Trade/Scholar capstones now pay out broad `production_all` instead of domain-only bonuses, so finishing any chain helps your whole economy.
 
 ### Changed
-- Map: began a full rewrite (`ui/citymap`) — a theme-aware procedural terrain renderer replaces MapV4; dropped 54MB of embedded photo/sprite assets. (P1 foundation; layout/roads/2.5D buildings + systems-weave follow.)
+- Map: full rewrite in progress (`ui/citymap`) — a theme-aware procedural terrain renderer replaces MapV4; dropped 54MB of embedded photo/sprite assets. P2 adds the structure that makes the map mean something: per-age layout strategies (organic scatter → hub-and-spoke → castle + quarters → zoned grid → city blocks → campus clusters → orbital rings), theme-tinted roads under the buildings, and 2.5D building volumes (lit roof + shaded wall + drop shadow) colored per production lineage. Your actual buildings now cluster into lineage districts whose silhouette evolves by age. (P1 foundation + P2 structure done; systems-weave follows in P3.)
 
 ### Fixed
 - Theme picker no longer deadlocks the app on arrow/Esc.
