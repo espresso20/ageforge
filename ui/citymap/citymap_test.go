@@ -58,7 +58,7 @@ func TestRenderImageNoPanic(t *testing.T) {
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
 			const w, h = 80, 48
-			img := renderImage(sampleState(tc.age, tc.built), w, h)
+			img, _ := renderImage(sampleState(tc.age, tc.built), w, h)
 			if img == nil {
 				t.Fatal("renderImage returned nil")
 			}
@@ -84,12 +84,12 @@ func TestThemeAwareTerrainDiffers(t *testing.T) {
 	if err := theme.SetActive("forge"); err != nil {
 		t.Fatalf("SetActive(forge): %v", err)
 	}
-	imgForge := renderImage(state, 80, 48)
+	imgForge, _ := renderImage(state, 80, 48)
 
 	if err := theme.SetActive("high_contrast"); err != nil {
 		t.Fatalf("SetActive(high_contrast): %v", err)
 	}
-	imgHC := renderImage(state, 80, 48)
+	imgHC, _ := renderImage(state, 80, 48)
 
 	// Restore the default so other tests in the package start from forge.
 	_ = theme.SetActive("forge")
@@ -109,16 +109,16 @@ func TestCacheKeyIncludesTheme(t *testing.T) {
 	if err := theme.SetActive("forge"); err != nil {
 		t.Fatalf("SetActive(forge): %v", err)
 	}
-	first := cm.imageFor(80, 48)
+	first, _ := cm.imageFor(80, 48)
 	// A second call under the same theme/size/state must hit the cache (same pointer).
-	if again := cm.imageFor(80, 48); again != first {
+	if again, _ := cm.imageFor(80, 48); again != first {
 		t.Fatal("imageFor regenerated despite identical cache key (cache not working)")
 	}
 
 	if err := theme.SetActive("high_contrast"); err != nil {
 		t.Fatalf("SetActive(high_contrast): %v", err)
 	}
-	switched := cm.imageFor(80, 48)
+	switched, _ := cm.imageFor(80, 48)
 	_ = theme.SetActive("forge")
 
 	if switched == first {

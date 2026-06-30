@@ -39,8 +39,13 @@ type CityMap struct {
 	mu    sync.Mutex
 	state game.GameState
 
-	// Cache of the last rendered image, plus the key that produced it.
+	// Cache of the last rendered image AND its text-overlay plan, plus the key that
+	// produced them. The plan is cached alongside the image because it shares the
+	// same invalidation key (geometry depends on age/size/buildings, not the theme);
+	// the overlay's COLORS are resolved live at draw time so a theme switch still
+	// retints the text without a re-layout.
 	cachedImg      *image.RGBA
+	cachedPlan     overlayPlan
 	cachedW        int
 	cachedH        int
 	cachedAge      string
@@ -64,8 +69,13 @@ func (c *CityMap) Build(state game.GameState) tview.Primitive {
 			return x, y, width, height
 		}
 
-		img := c.imageFor(width, height)
+		img, plan := c.imageFor(width, height)
 		streamHalfBlocks(screen, img, x, y, width, height)
+		// P3 hybrid model: after the soft half-block terrain/structure is laid down,
+		// stamp the crisp text overlay (district labels, civ-edge markers, trade-lane
+		// tags, title) on top — overwriting '▄' cells with theme-colored characters.
+		// Colors resolve live here, so a theme switch retints the text too.
+		stampOverlay(screen, plan, x, y, width, height)
 		return x, y, width, height
 	})
 	return box
@@ -79,11 +89,11 @@ func (c *CityMap) Refresh(state game.GameState) {
 	c.mu.Unlock()
 }
 
-// imageFor returns the rendered image for a (width,height) terminal area,
-// regenerating it only when the cache key changes. width/height are in terminal
-// cells; the image is (width × height*2) pixels because each cell is one
-// half-block (two stacked pixels).
-func (c *CityMap) imageFor(width, height int) *image.RGBA {
+// imageFor returns the rendered image AND its text-overlay plan for a
+// (width,height) terminal area, regenerating them only when the cache key changes.
+// width/height are in terminal cells; the image is (width × height*2) pixels because
+// each cell is one half-block (two stacked pixels). The plan is in cell space.
+func (c *CityMap) imageFor(width, height int) (*image.RGBA, overlayPlan) {
 	imgW := width
 	imgH := height * 2
 
@@ -98,38 +108,63 @@ func (c *CityMap) imageFor(width, height int) *image.RGBA {
 		c.cachedW == imgW && c.cachedH == imgH &&
 		c.cachedAge == st.Age && c.cachedBld == bld &&
 		c.cachedThemeKey == themeKey {
-		return c.cachedImg
+		return c.cachedImg, c.cachedPlan
 	}
 
-	img := renderImage(st, imgW, imgH)
+	img, plan := renderImage(st, imgW, imgH)
 	c.cachedImg = img
+	c.cachedPlan = plan
 	c.cachedW = imgW
 	c.cachedH = imgH
 	c.cachedAge = st.Age
 	c.cachedBld = bld
 	c.cachedThemeKey = themeKey
-	return img
+	return img, plan
 }
 
-// renderImage composites the full map: procedural theme-tinted terrain, then the
-// road network and the 2.5D building volumes on top (P2). It reads the active
-// theme via the palette helpers, so the output reflects whatever theme is active
-// at call time, and dispatches the per-age layout strategy by the state's age.
-func renderImage(state game.GameState, w, h int) *image.RGBA {
+// renderImage composites the full map and returns both the pixel image and the
+// cell-space text-overlay plan. The pixel layers, in order:
+//
+//	terrain      — procedural, theme-tinted half-block fill (P1).
+//	era flourish — a faint, age-keyed margin treatment (P3: starfield/neon/smoke).
+//	roads        — the era's road network (P2).
+//	2.5D volumes — the player's buildings as lit-roof/shaded-wall volumes (P2).
+//	trade lanes  — dashed connectors to the border for active routes (P3).
+//
+// The overlay plan (district labels, civ-edge markers, trade tags, title) is then
+// computed from the same geometry so its labels land exactly on the pixels. It reads
+// the active theme via the palette helpers, so the output reflects whatever theme is
+// active at call time, and dispatches the per-age strategy by the state's age.
+func renderImage(state game.GameState, w, h int) (*image.RGBA, overlayPlan) {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	if w <= 0 || h <= 0 {
+		return img, overlayPlan{}
+	}
 
 	seed, hueShift := ageInfo(state.Age)
 	pal := buildPalette(hueShift)
+	e := eraForAge(state.Age)
 
 	drawTerrain(img, pal, seed)
+	// P3 per-age flourish: a light, era-keyed margin treatment (starfield speckle in
+	// orbital ages, neon edge-tint in campus/cyber ages, smoke wisps over industrial)
+	// painted over the terrain but under the structure so it stays ambient.
+	drawEraFlourish(img, pal, e, seed)
 
-	// Resolve the lineage/category table once (pure data, no locks) and hand it
-	// to the structure layer, which groups buildings into districts, runs the era
-	// strategy, draws roads, then the 2.5D volumes.
+	// Resolve the lineage/category table once (pure data, no locks) and hand it to
+	// the structure layer, which groups buildings into districts, runs the era
+	// strategy, draws roads, then the 2.5D volumes, returning the geometry anchors.
 	byKey := config.BuildingByKey()
-	drawStructures(img, pal, state, byKey)
+	geo := drawStructures(img, pal, state, byKey)
 
-	return img
+	// P3 trade weave: dashed lanes from the palace out to the border for each active
+	// route; the returned border endpoints feed the overlay's lane tags.
+	geo.tradeEnds = drawTradeLanes(img, pal, state, geo.palaceX, geo.palaceY)
+
+	// P3 text overlay plan (cell space): width=cols, rows=h/2 (two px per cell row).
+	plan := buildOverlayPlan(state, w, h/2, geo)
+
+	return img, plan
 }
 
 // streamHalfBlocks writes img to the screen using '▄' half-block characters.

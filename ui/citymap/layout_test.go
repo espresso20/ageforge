@@ -305,7 +305,7 @@ func TestRenderImageAllEras(t *testing.T) {
 	const w, h = 100, 60
 	for _, tc := range oneAgePerEra {
 		t.Run(tc.name, func(t *testing.T) {
-			img := renderImage(sampleState(tc.age, sampleBuilt()), w, h)
+			img, _ := renderImage(sampleState(tc.age, sampleBuilt()), w, h)
 			if img == nil {
 				t.Fatal("renderImage returned nil")
 			}

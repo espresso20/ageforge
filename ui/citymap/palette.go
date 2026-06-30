@@ -81,6 +81,12 @@ type terrainPalette struct {
 	// Road color: a desaturated path tone derived from RoleDim pulled toward
 	// RoleText, so roads sit visibly above the terrain but below the buildings.
 	road color.RGBA
+
+	// Trade-lane color: a bright positive/highlight tint for the dashed connector
+	// lines from the city to the civ-edge markers, so a lane reads as a live trade
+	// route, distinct from the quieter solid roads. Pulled from RolePositive so it
+	// retints with the theme.
+	tradeLane color.RGBA
 }
 
 // rotateHue rotates a color around the HSL hue wheel by deg degrees, preserving
@@ -190,6 +196,7 @@ func buildPalette(ageShift float64) terrainPalette {
 	text := rgba(theme.Color(theme.RoleText))
 	accent := rgba(theme.Color(theme.RoleAccent))
 	highlight := rgba(theme.Color(theme.RoleHighlight))
+	positive := rgba(theme.Color(theme.RolePositive))
 
 	// A blue anchor for water, kept muted so light themes don't get a cartoon sea.
 	blue := color.RGBA{R: 0x20, G: 0x4a, B: 0x86, A: 0xff}
@@ -210,6 +217,10 @@ func buildPalette(ageShift float64) terrainPalette {
 	// than the lit building roofs that sit on top of them.
 	road := blend(dim, text, 0.33)
 
+	// Trade lane: the positive role brightened a touch so the dashed lanes pop above
+	// the terrain and read as live routes, clearly distinct from the muted roads.
+	tradeLane := brighten(positive, 0.12)
+
 	p := terrainPalette{
 		deepWater:    deep,
 		shallowWater: shallow,
@@ -221,6 +232,7 @@ func buildPalette(ageShift float64) terrainPalette {
 		building:     highlight,
 		shadow:       blend(dim, bg, 0.35),
 		road:         road,
+		tradeLane:    tradeLane,
 	}
 
 	// Faint per-age feel on the terrain bands only (markers keep pure role color

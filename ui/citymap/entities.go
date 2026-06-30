@@ -42,10 +42,13 @@ func builtBuildingKeys(state game.GameState) (keys []string, counts map[string]i
 	return keys, counts
 }
 
-// drawStructures is the P2 entry point: it resolves districts, runs the era
-// strategy, draws roads under the buildings, then draws each 2.5D volume. byKey is
-// the config lineage/category table (passed in so the render path builds it once).
-func drawStructures(img *image.RGBA, pal terrainPalette, state game.GameState, byKey map[string]config.BuildingDef) {
+// drawStructures is the P2/P3 structure entry point: it resolves districts, runs
+// the era strategy, draws roads under the buildings, then draws each 2.5D volume.
+// byKey is the config lineage/category table (passed in so the render path builds it
+// once). It returns the layoutGeometry — the palace pixel plus per-district
+// centroids — so the P3 overlay pass can stamp district labels exactly where the
+// volumes landed. (Trade-lane endpoints are filled in later by the trade pass.)
+func drawStructures(img *image.RGBA, pal terrainPalette, state game.GameState, byKey map[string]config.BuildingDef) layoutGeometry {
 	b := img.Bounds()
 	w, h := b.Dx(), b.Dy()
 
@@ -66,6 +69,58 @@ func drawStructures(img *image.RGBA, pal terrainPalette, state game.GameState, b
 	drawPlacementsByTier(img, pal, res.placements, impNormal)
 	drawPlacementsByTier(img, pal, res.placements, impWonder)
 	drawPlacementsByTier(img, pal, res.placements, impPalace)
+
+	return geometryFor(w, h, districts, res.placements)
+}
+
+// geometryFor extracts the overlay anchors from a completed layout: the palace
+// center and one centroid per district worth labeling. A district's centroid is the
+// mean of its representative volumes; districts are matched to their placements by
+// color (lineageColor gives each district a distinct color, which scatterDistrict
+// copies into every placement), excluding the palace tier. Only districts with
+// enough buildings to warrant a banner (reps >= 2, or a wonder/monument) are kept,
+// so a single hut doesn't get a label.
+func geometryFor(w, h int, districts []district, placements []placement) layoutGeometry {
+	geo := layoutGeometry{palaceX: w / 2, palaceY: h / 2}
+
+	// Recover the palace center from its placement (every strategy centers it, but
+	// read it back rather than assume, in case a strategy ever offsets it).
+	for _, p := range placements {
+		if p.tier == impPalace {
+			geo.palaceX, geo.palaceY = p.cx, p.cy
+			break
+		}
+	}
+
+	for _, d := range districts {
+		// Worth a banner? Skip thin districts to keep the map from over-labeling.
+		worth := d.reps >= 2 || d.category == "wonder" || d.category == "monument" || d.category == "diplomacy"
+		if !worth {
+			continue
+		}
+		var sx, sy, n int
+		for _, p := range placements {
+			if p.tier == impPalace {
+				continue
+			}
+			if p.col == d.col {
+				sx += p.cx
+				sy += p.cy
+				n++
+			}
+		}
+		if n == 0 {
+			continue
+		}
+		geo.districts = append(geo.districts, districtCentroid{
+			px:         sx / n,
+			py:         sy / n,
+			lineageKey: d.lineageKey,
+			category:   d.category,
+			count:      d.count,
+		})
+	}
+	return geo
 }
 
 // drawPlacementsByTier draws only the placements at the given tier.
