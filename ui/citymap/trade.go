@@ -16,19 +16,23 @@ import (
 // file returns the border endpoints so the overlay can tag them.
 //
 // Geometry plumbing also lives here: layoutGeometry is the small bundle of
-// cell/pixel anchors (district centroids, palace, trade ends) that the structure
-// and trade passes hand to the overlay so every label lands exactly where the
-// pixels did.
+// cell/pixel anchors (per-building label anchors, palace, trade ends) that the
+// structure and trade passes hand to the overlay so every label lands exactly where
+// the pixels did.
 
-// districtCentroid is a labeled district's anchor in PIXEL space, plus the data the
-// overlay needs to name it: its lineage/category (the label text + color are derived
-// from these at draw time via lineageLabel/lineageColor, so the label retints with
-// the theme) and raw building count (used to prioritize labels when space is tight).
-type districtCentroid struct {
+// buildingLabel is one built building's marker anchor in PIXEL space, plus the data
+// the overlay needs to name it: the building's config Name (the label text), its
+// lineage/category (the label COLOR is derived from these via lineageColor at draw
+// time, so the label retints with the theme and matches its volume), and tier/size
+// (used to prioritize labels per lineage cluster when space is tight — the most
+// prominent building in a cluster is labeled first).
+type buildingLabel struct {
 	px, py     int
+	name       string
 	lineageKey string
 	category   string
-	count      int
+	tier       int
+	size       int
 }
 
 // tradeEnd is one active trade lane's border endpoint in PIXEL space, with the
@@ -43,7 +47,7 @@ type tradeEnd struct {
 // halves the y to land on cells. palaceX/Y is the palace center.
 type layoutGeometry struct {
 	palaceX, palaceY int
-	districts        []districtCentroid
+	buildings        []buildingLabel
 	tradeEnds        []tradeEnd
 }
 

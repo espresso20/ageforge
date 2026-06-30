@@ -10,10 +10,12 @@ import (
 )
 
 // entities.go places the structures on top of the terrain. P2 upgrades P1's flat
-// markers to a real structure layer: buildings are grouped into lineage districts
-// (layout.go), arranged by the era's placement strategy, connected by roads, and
-// drawn as small 2.5D volumes (lit roof + shaded wall + drop shadow) colored per
-// lineage (palette.go). Roads draw under the buildings and over the terrain.
+// markers to a real structure layer: every distinct built building type becomes its
+// own 2.5D volume, clustered with its lineage-mates (layout.go) and arranged by the
+// era's placement strategy, connected by roads. Volumes are drawn as a lit roof +
+// shaded wall + drop shadow colored per lineage (palette.go) so a lineage reads as a
+// same-colored neighborhood. Roads draw under the buildings and over the terrain.
+// The overlay then names each volume with the building's own config Name.
 
 // builtBuildingCount counts distinct building types with Count > 0.
 func builtBuildingCount(state game.GameState) int {
@@ -42,12 +44,13 @@ func builtBuildingKeys(state game.GameState) (keys []string, counts map[string]i
 	return keys, counts
 }
 
-// drawStructures is the P2/P3 structure entry point: it resolves districts, runs
-// the era strategy, draws roads under the buildings, then draws each 2.5D volume.
-// byKey is the config lineage/category table (passed in so the render path builds it
-// once). It returns the layoutGeometry — the palace pixel plus per-district
-// centroids — so the P3 overlay pass can stamp district labels exactly where the
-// volumes landed. (Trade-lane endpoints are filled in later by the trade pass.)
+// drawStructures is the P2/P3 structure entry point: it groups the built buildings
+// into lineage districts (one buildingItem per distinct built type), runs the era
+// strategy, draws roads under the buildings, then draws each 2.5D volume. byKey is
+// the config lineage/category/name table (passed in so the render path builds it
+// once). It returns the layoutGeometry — the palace pixel plus one label anchor per
+// building — so the P3 overlay pass can stamp each building's NAME exactly where its
+// volume landed. (Trade-lane endpoints are filled in later by the trade pass.)
 func drawStructures(img *image.RGBA, pal terrainPalette, state game.GameState, byKey map[string]config.BuildingDef) layoutGeometry {
 	b := img.Bounds()
 	w, h := b.Dx(), b.Dy()
@@ -74,50 +77,35 @@ func drawStructures(img *image.RGBA, pal terrainPalette, state game.GameState, b
 }
 
 // geometryFor extracts the overlay anchors from a completed layout: the palace
-// center and one centroid per district worth labeling. A district's centroid is the
-// mean of its representative volumes; districts are matched to their placements by
-// color (lineageColor gives each district a distinct color, which scatterDistrict
-// copies into every placement), excluding the palace tier. Only districts with
-// enough buildings to warrant a banner (reps >= 2, or a wonder/monument) are kept,
-// so a single hut doesn't get a label.
-func geometryFor(w, h int, districts []district, placements []placement) layoutGeometry {
+// center plus one label anchor per BUILDING (every non-palace placement). Each
+// placement already carries its building identity (name + lineage/category + tier +
+// size), so the anchor is just the marker pixel plus that identity — the overlay
+// names every marker with its own building Name and colors the label by lineage.
+// No filtering happens here: all markers get an anchor; the overlay is what
+// collision-limits the labels (and still guarantees the prominent building per
+// cluster). The districts arg is unused now that identity rides on the placement,
+// but kept so the structure entry point's signature is stable for tests.
+func geometryFor(w, h int, _ []district, placements []placement) layoutGeometry {
 	geo := layoutGeometry{palaceX: w / 2, palaceY: h / 2}
 
-	// Recover the palace center from its placement (every strategy centers it, but
-	// read it back rather than assume, in case a strategy ever offsets it).
 	for _, p := range placements {
 		if p.tier == impPalace {
+			// Recover the palace center from its placement (every strategy centers it,
+			// but read it back rather than assume, in case a strategy offsets it).
 			geo.palaceX, geo.palaceY = p.cx, p.cy
-			break
-		}
-	}
-
-	for _, d := range districts {
-		// Worth a banner? Skip thin districts to keep the map from over-labeling.
-		worth := d.reps >= 2 || d.category == "wonder" || d.category == "monument" || d.category == "diplomacy"
-		if !worth {
 			continue
 		}
-		var sx, sy, n int
-		for _, p := range placements {
-			if p.tier == impPalace {
-				continue
-			}
-			if p.col == d.col {
-				sx += p.cx
-				sy += p.cy
-				n++
-			}
+		if p.name == "" {
+			continue // a non-building volume (none today) — nothing to label
 		}
-		if n == 0 {
-			continue
-		}
-		geo.districts = append(geo.districts, districtCentroid{
-			px:         sx / n,
-			py:         sy / n,
-			lineageKey: d.lineageKey,
-			category:   d.category,
-			count:      d.count,
+		geo.buildings = append(geo.buildings, buildingLabel{
+			px:         p.cx,
+			py:         p.cy,
+			name:       p.name,
+			lineageKey: p.lineageKey,
+			category:   p.category,
+			tier:       p.ltier,
+			size:       p.size,
 		})
 	}
 	return geo

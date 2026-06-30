@@ -173,7 +173,7 @@ Each wonder can only be built once. They appear in the **Wonders** overlay (`won
 
 ## City Map
 
-**City Map** (`map`) — A theme-aware, procedurally generated rendering of your capital. The terrain is generated live and tinted entirely from your active colour theme, so switching themes retints the whole map. Your palace sits at the centre; your buildings cluster into lineage-coloured districts connected by roads, and the city's whole silhouette evolves as you advance through the ages.
+**City Map** (`map`) — A theme-aware, procedurally generated rendering of your capital. The terrain is generated live and tinted entirely from your active colour theme, so switching themes retints the whole map. Your palace sits at the centre; each building you've built appears as its own named marker, clustered with its lineage-mates and coloured by lineage, all connected by roads — and the city's whole silhouette evolves as you advance through the ages.
 
 The map's structure changes by era — from a clustered organic village (Primitive/Stone), to roads radiating from the palace (Bronze/Iron/Classical), a walled castle with quarters (Medieval/Renaissance), a zoned road grid (Colonial/Industrial/Victorian), regular city blocks (Electric/Atomic/Modern), campus clusters (Information/Digital/Cyberpunk/Fusion), and finally concentric orbital rings (Space/Galactic/Quantum and beyond). Buildings are drawn as small 2.5D volumes (a lit roof, a shaded wall, and a drop shadow) so the city reads as dimensional, and each production lineage gets its own distinct colour.
 

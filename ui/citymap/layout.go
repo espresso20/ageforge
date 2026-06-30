@@ -84,12 +84,26 @@ const (
 )
 
 // placement is a single 2.5D building volume to draw: a pixel center, a footprint
-// half-size (0 → 1px, 1 → 3×3, …), the lineage/category color, and its tier.
+// half-size (0 → 1px, 1 → 3×3, …), the lineage/category color, and its tier. It
+// also carries the building's identity (key/name/lineage/category/tier) so the
+// overlay pass can name the marker with the building's own config.BuildingDef.Name
+// — one named marker per built building type — rather than a lineage banner. The
+// palace placement leaves the identity fields zero (it is labeled "Capital").
 type placement struct {
 	cx, cy int
 	size   int
 	col    color.RGBA
 	tier   importance
+
+	// Building identity (empty for the palace). The label text is name; the label
+	// color is derived from lineageKey/category via lineageColor at draw time so it
+	// retints with the theme. ltier (LineageTier) + size prioritize labels when space
+	// is tight (higher tier / bigger volume gets its name first per cluster).
+	key        string
+	name       string
+	lineageKey string
+	category   string
+	ltier      int
 }
 
 // roadSeg is a straight road drawn between two pixel endpoints (Bresenham).
@@ -97,15 +111,29 @@ type roadSeg struct {
 	x0, y0, x1, y1 int
 }
 
-// district is one lineage's buildings collapsed into the few representative
-// volumes we actually draw (see representativeCount). count is the raw total of
-// all instances in the lineage, used to scale volume sizes and the density tail.
+// buildingItem is one distinct BUILT building type (Count > 0) the map draws as
+// its own marker. It carries everything a placement needs to render + be named:
+// the config key, the human Name, the lineage/category (for color + clustering),
+// the instance count (nudges volume size), and the LineageTier (label priority).
+type buildingItem struct {
+	key      string
+	name     string
+	category string
+	count    int
+	tier     int // LineageTier — higher = more advanced; used to rank labels
+}
+
+// district is one lineage's (or special category's) buildings, grouped together so
+// they cluster + share a color on the map. Each member of buildings draws as its
+// OWN marker (one per distinct built type) within the district's region; the
+// district itself contributes the shared lineage color (col) and the placement
+// region the era strategy assigns it. lineageKey/category identify the group; col
+// is the lineage color every member volume uses.
 type district struct {
 	lineageKey string
 	category   string
 	col        color.RGBA
-	reps       int // how many volumes to draw for this district
-	count      int // raw total instances across the lineage
+	buildings  []buildingItem
 }
 
 // buildingMeta resolves a building key to its lineage key and category via the
@@ -121,21 +149,18 @@ func buildingMeta(byKey map[string]config.BuildingDef, key string) (lineageKey, 
 }
 
 // builtDistricts groups the player's built buildings by lineage into districts,
-// sorted for determinism. Each district's draw count is capped to a handful of
-// representative volumes regardless of raw instance count, so a 200-building
-// lineage shows as a dense cluster of a few volumes rather than 200 dots.
-// Storage/wonder/diplomacy/monument are their own (category-keyed) districts so
-// they read distinctly. keys must be sorted; counts maps key→instance count.
+// sorted for determinism. Crucially this no longer collapses a lineage to a few
+// representatives: EVERY distinct built building type (Count > 0) becomes its own
+// buildingItem inside its lineage's district, so the map draws one named marker per
+// type. Same-lineage buildings land in the same district (so they cluster + share
+// a color); storage/wonder/diplomacy/monument group by category so they read as a
+// distinct neighborhood. keys must be sorted; counts maps key→instance count;
+// byKey supplies each building's Name + LineageTier (pure data, no locks).
 func builtDistricts(byKey map[string]config.BuildingDef, keys []string, counts map[string]int) []district {
 	// Aggregate by a grouping key: production lineages group by lineageKey; the
 	// special categories group by category so e.g. all wonders cluster together.
-	type agg struct {
-		lineageKey string
-		category   string
-		count      int
-	}
-	groups := map[string]*agg{}
-	order := make([]string, 0) // preserve first-seen order for stable output
+	groups := map[string]*district{}
+	order := make([]string, 0) // preserve first-seen order before the stable sort
 	for _, k := range keys {
 		lineage, category, _ := buildingMeta(byKey, k)
 		gkey := lineage
@@ -146,54 +171,43 @@ func builtDistricts(byKey map[string]config.BuildingDef, keys []string, counts m
 		if gkey == "" {
 			gkey = "misc"
 		}
-		a := groups[gkey]
-		if a == nil {
-			a = &agg{lineageKey: lineage, category: category}
-			groups[gkey] = a
+		d := groups[gkey]
+		if d == nil {
+			d = &district{
+				lineageKey: lineage,
+				category:   category,
+				col:        lineageColor(lineage, category),
+			}
+			groups[gkey] = d
 			order = append(order, gkey)
 		}
-		a.count += counts[k]
+		def := byKey[k]
+		name := def.Name
+		if name == "" {
+			name = titleCaseKey(k) // unknown/test key: a sensible label rather than blank
+		}
+		d.buildings = append(d.buildings, buildingItem{
+			key:      k,
+			name:     name,
+			category: category,
+			count:    counts[k],
+			tier:     def.LineageTier,
+		})
 	}
 	sort.Strings(order)
 
 	out := make([]district, 0, len(order))
 	for _, g := range order {
-		a := groups[g]
-		out = append(out, district{
-			lineageKey: a.lineageKey,
-			category:   a.category,
-			col:        lineageColor(a.lineageKey, a.category),
-			reps:       representativeCount(a.count),
-			count:      a.count,
-		})
+		out = append(out, *groups[g])
 	}
 	return out
 }
 
-// representativeCount maps a lineage's raw instance total to the number of 2.5D
-// volumes we actually draw for it. We never draw one-dot-per-count; instead a
-// district shows 1–5 representative volumes and leans on size + a density tail to
-// convey scale. Keeps a sprawling empire legible.
-func representativeCount(count int) int {
-	switch {
-	case count <= 0:
-		return 0
-	case count == 1:
-		return 1
-	case count <= 3:
-		return 2
-	case count <= 8:
-		return 3
-	case count <= 20:
-		return 4
-	default:
-		return 5
-	}
-}
-
-// volumeSize scales a single representative volume by the district's raw count so
-// bigger lineages read as bulkier. Subtle by design: 0 → 1px up to 2 → 5×5.
-func volumeSize(count int) int {
+// buildingVolumeSize scales a single building's 2.5D volume by its own instance
+// count so a building you've stamped many times reads bulkier than a lone one —
+// exactly one marker per type either way, the count only nudges the footprint.
+// Subtle by design: 0 → 1px up to 2 → 5×5.
+func buildingVolumeSize(count int) int {
 	switch {
 	case count <= 2:
 		return 0
@@ -295,28 +309,32 @@ func palacePlacement(w, h int, pal terrainPalette) placement {
 	return placement{cx: w / 2, cy: h / 2, size: size, col: pal.palace, tier: impPalace}
 }
 
-// scatterDistrict drops a district's representative volumes around an anchor with
-// a little jitter, each sized by the district count and clipped inside a margin.
-// Wonders/monuments are tiered up so they render larger and on top.
-func scatterDistrict(d district, ax, ay, spread, w, h int, r *rng) []placement {
-	out := make([]placement, 0, d.reps)
-	base := volumeSize(d.count)
+// buildingPlacement builds the placement for one building of a district at a given
+// pixel, copying the lineage color + the building's identity (so the overlay can
+// name the marker) and sizing the volume by the building's own instance count.
+// Wonders/monuments tier up so they render larger and on top.
+func buildingPlacement(d district, bi buildingItem, px, py int) placement {
 	tier := impNormal
-	if d.category == "wonder" || d.category == "monument" {
+	if bi.category == "wonder" || bi.category == "monument" {
 		// Showpiece sizing is applied uniformly in drawVolume by tier, so only the
 		// tier is set here — keeps wonder size consistent across every strategy.
 		tier = impWonder
 	}
-	for i := 0; i < d.reps; i++ {
+	return placement{
+		cx: px, cy: py, size: buildingVolumeSize(bi.count), col: d.col, tier: tier,
+		key: bi.key, name: bi.name, lineageKey: d.lineageKey, category: bi.category, ltier: bi.tier,
+	}
+}
+
+// scatterDistrict drops one volume per building in the district around an anchor
+// with a little jitter, each sized by that building's own count and clipped inside
+// a margin, so a lineage reads as a small neighborhood of its individual buildings.
+func scatterDistrict(d district, ax, ay, spread, w, h int, r *rng) []placement {
+	out := make([]placement, 0, len(d.buildings))
+	for _, bi := range d.buildings {
 		px := clampInt(ax+r.span(spread), 2, w-3)
 		py := clampInt(ay+r.span(spread), 2, h-3)
-		sz := base
-		// First rep of the district is the "anchor" building, drawn full size;
-		// trailing reps shrink by one to suggest the long tail of the district.
-		if i > 0 && sz > 0 {
-			sz--
-		}
-		out = append(out, placement{cx: px, cy: py, size: sz, col: d.col, tier: tier})
+		out = append(out, buildingPlacement(d, bi, px, py))
 	}
 	return out
 }
@@ -382,20 +400,14 @@ func layoutHubSpoke(w, h int, districts []district, pal terrainPalette, r *rng) 
 		ex := clampInt(cx+int(math.Cos(ang)*maxR), 2, w-3)
 		ey := clampInt(cy+int(math.Sin(ang)*maxR), 2, h-3)
 		res.roads = append(res.roads, roadSeg{cx, cy, ex, ey})
-		// String the district's volumes down the spoke at increasing radius.
-		for j := 0; j < d.reps; j++ {
-			t := 0.4 + 0.55*float64(j)/math.Max(1, float64(d.reps))
+		// String the district's buildings down the spoke at increasing radius — one
+		// marker per building, packed along the road so the lineage reads as a street.
+		nb := len(d.buildings)
+		for j, bi := range d.buildings {
+			t := 0.4 + 0.55*float64(j)/math.Max(1, float64(nb))
 			px := clampInt(cx+int(math.Cos(ang)*maxR*t)+r.span(1), 2, w-3)
 			py := clampInt(cy+int(math.Sin(ang)*maxR*t)+r.span(1), 2, h-3)
-			sz := volumeSize(d.count)
-			if j > 0 && sz > 0 {
-				sz--
-			}
-			tier := impNormal
-			if d.category == "wonder" || d.category == "monument" {
-				tier = impWonder
-			}
-			res.placements = append(res.placements, placement{cx: px, cy: py, size: sz, col: d.col, tier: tier})
+			res.placements = append(res.placements, buildingPlacement(d, bi, px, py))
 		}
 	}
 	return res
@@ -566,20 +578,16 @@ func layoutCampus(w, h int, districts []district, pal terrainPalette, r *rng) la
 		podX := clampInt(cx+int(math.Cos(ang)*maxR), 4, w-5)
 		podY := clampInt(cy+int(math.Sin(ang)*maxR), 4, h-5)
 		res.roads = append(res.roads, roadSeg{cx, cy, podX, podY})
-		// Pack the pod: tight hex-ish offsets around the pod center.
+		// Pack the pod: tight hex-ish offsets around the pod center, one slot per
+		// building. If a lineage has more buildings than base slots, stack further
+		// rows (every building still gets its own marker — never capped).
 		offsets := [][2]int{{0, 0}, {2, 0}, {-2, 0}, {1, 2}, {-1, 2}}
-		for j := 0; j < d.reps && j < len(offsets); j++ {
-			px := clampInt(podX+offsets[j][0], 2, w-3)
-			py := clampInt(podY+offsets[j][1], 2, h-3)
-			sz := volumeSize(d.count)
-			if j > 0 && sz > 0 {
-				sz--
-			}
-			tier := impNormal
-			if d.category == "wonder" || d.category == "monument" {
-				tier = impWonder
-			}
-			res.placements = append(res.placements, placement{cx: px, cy: py, size: sz, col: d.col, tier: tier})
+		for j, bi := range d.buildings {
+			off := offsets[j%len(offsets)]
+			extraRow := (j / len(offsets)) * 2 // push overflow buildings down a band
+			px := clampInt(podX+off[0], 2, w-3)
+			py := clampInt(podY+off[1]+extraRow, 2, h-3)
+			res.placements = append(res.placements, buildingPlacement(d, bi, px, py))
 		}
 	}
 	return res
@@ -642,19 +650,13 @@ func layoutOrbital(w, h int, districts []district, pal terrainPalette, r *rng) l
 		ri := i % rings
 		rad := ringRadius(ri)
 		baseAng := 2 * math.Pi * float64(i) / math.Max(1, float64(n))
-		for j := 0; j < d.reps; j++ {
+		// One marker per building, fanned along the ring arc so the lineage occupies
+		// a contiguous slice of its ring.
+		for j, bi := range d.buildings {
 			ang := baseAng + float64(j)*0.18
 			px := clampInt(cx+int(math.Cos(ang)*rad)+r.span(1), 2, w-3)
 			py := clampInt(cy+int(math.Sin(ang)*rad)+r.span(1), 2, h-3)
-			sz := volumeSize(d.count)
-			if j > 0 && sz > 0 {
-				sz--
-			}
-			tier := impNormal
-			if d.category == "wonder" || d.category == "monument" {
-				tier = impWonder
-			}
-			res.placements = append(res.placements, placement{cx: px, cy: py, size: sz, col: d.col, tier: tier})
+			res.placements = append(res.placements, buildingPlacement(d, bi, px, py))
 		}
 	}
 	return res

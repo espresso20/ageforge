@@ -5,6 +5,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/gdamore/tcell/v2"
@@ -211,86 +212,131 @@ func TestCivMarkersStatusColorsNoOverlap(t *testing.T) {
 	}
 }
 
-// TestDistrictLabelsRenderAndSkipCollisions builds a populated layout and asserts
-// district banners are planned, none collide on a cell, and a thin (single-building)
-// district is not labeled while a fat one is.
-func TestDistrictLabelsRenderAndSkipCollisions(t *testing.T) {
+// TestBuildingLabelsRenderAndSkipCollisions builds a populated per-building layout
+// and asserts: a label is planned per building (named as the building itself), none
+// collide on a cell, labels are lineage-colored, and when several buildings of the
+// SAME lineage are jammed onto one spot the collision pruning still lets the most
+// prominent (highest LineageTier) of that cluster survive — every lineage cluster
+// keeps at least its headline building's name.
+func TestBuildingLabelsRenderAndSkipCollisions(t *testing.T) {
 	_ = theme.SetActive("forge")
 	const cols, rows = 90, 50
 
-	// Force several districts onto nearly the same centroid to provoke the collision
-	// path, plus distinct ones, plus a thin one that should be skipped by geometryFor.
+	// A food cluster of SEVEN buildings stacked on one spot — more than the collision
+	// spread can place, so some MUST be pruned. The highest-tier one (Granary Hall,
+	// tier 5) must win its label (headline-per-cluster). Plus two distinct buildings
+	// far away that should always get labeled.
 	geo := layoutGeometry{
 		palaceX: cols / 2, palaceY: rows,
-		districts: []districtCentroid{
-			{px: 20, py: 20, lineageKey: "food", category: "production", count: 12},
-			{px: 21, py: 20, lineageKey: "metallurgy", category: "production", count: 8}, // near food → collision nudge
-			{px: 20, py: 21, lineageKey: "military", category: "production", count: 6},   // also near → may skip
-			{px: 70, py: 30, lineageKey: "knowledge", category: "production", count: 4},  // distinct
-			{px: 50, py: 44, lineageKey: "trade", category: "production", count: 20},     // distinct
+		buildings: []buildingLabel{
+			{px: 20, py: 20, name: "Gathering Camp", lineageKey: "food", category: "production", tier: 0, size: 1},
+			{px: 21, py: 20, name: "Farm", lineageKey: "food", category: "production", tier: 2, size: 1},
+			{px: 19, py: 20, name: "Orchard", lineageKey: "food", category: "production", tier: 1, size: 1},
+			{px: 22, py: 20, name: "Pasture", lineageKey: "food", category: "production", tier: 3, size: 1},
+			{px: 18, py: 20, name: "Fishery", lineageKey: "food", category: "production", tier: 1, size: 1},
+			{px: 23, py: 20, name: "Vineyard", lineageKey: "food", category: "production", tier: 2, size: 1},
+			{px: 20, py: 21, name: "Granary Hall", lineageKey: "food", category: "production", tier: 5, size: 2}, // headline of food
+			{px: 70, py: 30, name: "Library", lineageKey: "knowledge", category: "research", tier: 4, size: 1},   // distinct
+			{px: 50, py: 44, name: "Market", lineageKey: "trade", category: "production", tier: 3, size: 2},      // distinct
 		},
 	}
 	plan := buildOverlayPlan(sampleState("industrial_age", nil), cols, rows, geo)
 
 	seen := map[[2]int]string{}
-	districtLabels := 0
+	buildingLabels := 0
+	names := map[string]bool{}
 	for _, lb := range plan.labels {
-		if lb.kind != labelDistrict {
+		if lb.kind != labelBuilding {
 			continue
 		}
-		districtLabels++
+		buildingLabels++
+		names[lb.text] = true
 		k := [2]int{lb.cx, lb.cy}
 		if prev, ok := seen[k]; ok {
-			t.Fatalf("district labels collide at cell %v: %q and %q", k, prev, lb.text)
+			t.Fatalf("building labels collide at cell %v: %q and %q", k, prev, lb.text)
 		}
 		seen[k] = lb.text
 		if lb.text == "" {
-			t.Fatal("empty district label text")
+			t.Fatal("empty building label text")
 		}
-		// District labels must use the lineage color source (so they retint per
-		// district, matching the volumes).
+		// Building labels must use the lineage color source (so they retint per
+		// lineage, matching the volumes).
 		if !lb.lineageColored {
-			t.Fatalf("district label %q not lineage-colored", lb.text)
+			t.Fatalf("building label %q not lineage-colored", lb.text)
 		}
 	}
-	if districtLabels == 0 {
-		t.Fatal("no district labels planned for a populated geometry")
+	if buildingLabels == 0 {
+		t.Fatal("no building labels planned for a populated geometry")
 	}
-	// The distinct districts (knowledge, trade) should always get labels; with five
-	// districts and collisions, at least the two distinct + one of the clustered
-	// should survive.
-	if districtLabels < 3 {
-		t.Fatalf("expected >=3 surviving district labels, got %d (collision pruning too aggressive)", districtLabels)
+	// The two distinct buildings (Library, Market) should always get labels.
+	if !names["Library"] || !names["Market"] {
+		t.Fatalf("distinct buildings not labeled: have %v", names)
+	}
+	// The food cluster's headline (highest tier = Granary Hall) must survive the
+	// collision pruning — a lineage cluster is never left entirely unnamed, because
+	// the headline pass claims its cell before the cluster's siblings.
+	if !names["Granary Hall"] {
+		t.Fatalf("food cluster lost its headline building label; have %v", names)
+	}
+	// Seven food buildings jammed on one band exceed the collision spread, so some
+	// MUST be pruned — not all nine buildings can be labeled.
+	if buildingLabels >= 9 {
+		t.Fatalf("expected collision pruning to drop jammed labels, got %d of 9", buildingLabels)
 	}
 }
 
-// TestGeometryForSkipsThinDistricts verifies geometryFor only emits centroids for
-// districts worth a banner (reps >= 2 or special), not for a lone building.
-func TestGeometryForSkipsThinDistricts(t *testing.T) {
+// TestGeometryForEmitsPerBuildingAnchors verifies geometryFor returns one label
+// anchor PER BUILDING (every non-palace placement, by its own config Name/lineage/
+// tier/size), excludes the palace, and even a lone single-instance building still
+// gets an anchor — the per-building model labels every built type, no thin-district
+// skip. Identity rides on the placement, so the districts arg is irrelevant here.
+func TestGeometryForEmitsPerBuildingAnchors(t *testing.T) {
 	_ = theme.SetActive("forge")
-	// hut alone (1 instance) → reps 1 → no banner; gathering_camp x12 → reps 4 → banner.
-	thin := district{lineageKey: "housing", category: "housing", col: lineageColor("housing", "housing"), reps: representativeCount(1), count: 1}
-	fat := district{lineageKey: "food", category: "production", col: lineageColor("food", "production"), reps: representativeCount(12), count: 12}
 	placements := []placement{
-		{cx: 40, cy: 40, size: 2, col: buildPalette(0).palace, tier: impPalace},
-		{cx: 10, cy: 10, size: 0, col: thin.col, tier: impNormal},
-		{cx: 60, cy: 30, size: 1, col: fat.col, tier: impNormal},
-		{cx: 62, cy: 31, size: 1, col: fat.col, tier: impNormal},
+		{cx: 40, cy: 40, size: 2, col: buildPalette(0).palace, tier: impPalace}, // palace: no name → excluded
+		// A lone housing building (one instance) — must STILL get an anchor.
+		{cx: 10, cy: 10, size: 0, col: lineageColor("housing", "housing"), tier: impNormal,
+			key: "hut", name: "Hut", lineageKey: "housing", category: "housing", ltier: 0},
+		// Two food buildings (same lineage) — both get their own anchor.
+		{cx: 60, cy: 30, size: 1, col: lineageColor("food", "production"), tier: impNormal,
+			key: "gathering_camp", name: "Gathering Camp", lineageKey: "food", category: "production", ltier: 0},
+		{cx: 62, cy: 31, size: 0, col: lineageColor("food", "production"), tier: impNormal,
+			key: "forager_post", name: "Forager Post", lineageKey: "food", category: "production", ltier: 1},
 	}
-	geo := geometryFor(80, 80, []district{thin, fat}, placements)
-	for _, c := range geo.districts {
-		if c.lineageKey == "housing" {
-			t.Fatal("thin housing district should not get a centroid/banner")
+	geo := geometryFor(80, 80, nil, placements)
+
+	if len(geo.buildings) != 3 {
+		t.Fatalf("want 3 building anchors (palace excluded), got %d", len(geo.buildings))
+	}
+	byName := map[string]buildingLabel{}
+	for _, b := range geo.buildings {
+		if b.name == "" {
+			t.Fatal("building anchor has empty name")
 		}
+		byName[b.name] = b
 	}
-	foundFood := false
-	for _, c := range geo.districts {
-		if c.lineageKey == "food" {
-			foundFood = true
-		}
+	// The lone single-instance Hut must be present (no thin-skip in the per-building model).
+	hut, ok := byName["Hut"]
+	if !ok {
+		t.Fatal("lone Hut should still get a per-building anchor")
 	}
-	if !foundFood {
-		t.Fatal("fat food district should get a centroid/banner")
+	if hut.lineageKey != "housing" || hut.px != 10 || hut.py != 10 {
+		t.Fatalf("Hut anchor wrong: %+v", hut)
+	}
+	// Both same-lineage food buildings present, each named as itself.
+	if _, ok := byName["Gathering Camp"]; !ok {
+		t.Fatal("Gathering Camp anchor missing")
+	}
+	fp, ok := byName["Forager Post"]
+	if !ok {
+		t.Fatal("Forager Post anchor missing")
+	}
+	if fp.lineageKey != "food" || fp.tier != 1 {
+		t.Fatalf("Forager Post anchor lost identity: %+v", fp)
+	}
+	// The palace contributed no building anchor and set the palace center.
+	if geo.palaceX != 40 || geo.palaceY != 40 {
+		t.Fatalf("palace center = (%d,%d), want (40,40)", geo.palaceX, geo.palaceY)
 	}
 }
 
@@ -449,14 +495,22 @@ func TestFullRenderOverlayAcrossAges(t *testing.T) {
 			if len(plan.labels) == 0 {
 				t.Fatal("overlay plan empty for a fully populated state")
 			}
-			// Must contain at least one civ marker and the title.
-			var civs, titles int
+			// Must contain at least one civ marker, the title, and per-building labels
+			// named from config (the headline of each lineage cluster survives).
+			var civs, titles, bldgs int
+			labelNames := map[string]bool{}
 			for _, lb := range plan.labels {
 				switch lb.kind {
 				case labelCiv:
 					civs++
 				case labelTitle:
 					titles++
+				case labelBuilding:
+					bldgs++
+					labelNames[lb.text] = true
+					if !lb.lineageColored {
+						t.Fatalf("building label %q not lineage-colored", lb.text)
+					}
 				}
 			}
 			if civs == 0 {
@@ -464,6 +518,32 @@ func TestFullRenderOverlayAcrossAges(t *testing.T) {
 			}
 			if titles != 1 {
 				t.Fatalf("want exactly 1 title, got %d", titles)
+			}
+			if bldgs == 0 {
+				t.Fatal("no per-building labels in a populated render")
+			}
+			// Every building label must be a real config building Name (its own name,
+			// not a lineage/resource banner). Build the valid-name set from the same
+			// keys sampleBuilt declares.
+			byKey := config.BuildingByKey()
+			validName := map[string]bool{}
+			for k := range sampleBuilt() {
+				if n := byKey[k].Name; n != "" {
+					validName[n] = true
+				}
+			}
+			for name := range labelNames {
+				if !validName[name] {
+					t.Fatalf("building label %q is not a config building name (lineage banner leaked?)", name)
+				}
+			}
+			// Per-building labels must actually render end-to-end across every era. The
+			// densest strategy (city blocks) prunes the most, but several distinct
+			// building names always survive — the exact survivors depend on placement,
+			// so assert a robust lower bound, not a specific set. (The headline-per-
+			// cluster ordering is asserted directly in TestBuildingLabelsRenderAndSkipCollisions.)
+			if bldgs < 3 {
+				t.Fatalf("only %d building labels survived; per-building labeling too sparse", bldgs)
 			}
 
 			scr := newSimScreen(t, cols, rows)

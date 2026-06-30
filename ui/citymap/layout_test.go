@@ -103,6 +103,42 @@ func TestLayoutStrategiesInBoundsAndRoads(t *testing.T) {
 			if !foundPalace {
 				t.Fatal("no palace placement")
 			}
+
+			// Per-building model: exactly one marker per distinct built building type
+			// (no lineage aggregation, no representative cap). sampleBuilt has 7 keys →
+			// 7 non-palace volumes, each carrying its own building identity. Same-lineage
+			// buildings must share the lineage color (the storage pair granary+stash).
+			nonPalace := 0
+			seenKeys := map[string]bool{}
+			colByLineage := map[string]color.RGBA{}
+			for _, p := range res.placements {
+				if p.tier == impPalace {
+					continue
+				}
+				nonPalace++
+				if p.key == "" || p.name == "" {
+					t.Fatalf("building placement missing identity: %+v", p)
+				}
+				if seenKeys[p.key] {
+					t.Fatalf("building %q drew more than one marker (should be 1 per type)", p.key)
+				}
+				seenKeys[p.key] = true
+				if prev, ok := colByLineage[p.lineageKey]; ok {
+					if prev != p.col {
+						t.Fatalf("lineage %q has inconsistent colors %v vs %v", p.lineageKey, prev, p.col)
+					}
+				} else {
+					colByLineage[p.lineageKey] = p.col
+				}
+			}
+			if want := len(sampleBuilt()); nonPalace != want {
+				t.Fatalf("got %d building markers, want one per built type (%d)", nonPalace, want)
+			}
+			// The granary+stash storage pair must have clustered into the same color.
+			if !seenKeys["granary"] || !seenKeys["stash"] {
+				t.Fatal("storage buildings missing from placements")
+			}
+
 			// Road endpoints must be in-bounds too (Bresenham clips, but the segment
 			// data itself should be sane).
 			for _, s := range res.roads {
@@ -143,6 +179,64 @@ func TestLayoutDeterministic(t *testing.T) {
 		if a.roads[i] != b.roads[i] {
 			t.Fatalf("road %d differs across builds", i)
 		}
+	}
+}
+
+// TestBuiltDistrictsPerBuilding verifies the per-building grouping: every distinct
+// built type becomes exactly one buildingItem (named from config), buildings of the
+// same lineage/category cluster into one district sharing a color, and the lone
+// granary+stash storage pair lands together as two items in one storage district.
+func TestBuiltDistrictsPerBuilding(t *testing.T) {
+	_ = theme.SetActive("forge")
+	byKey := config.BuildingByKey()
+	built := sampleBuilt() // 7 distinct keys across 6 groups (food, metallurgy, military, knowledge, housing, storage×2)
+	keys := sortedKeys(built)
+	districts := builtDistricts(byKey, keys, built)
+
+	// Every distinct built key appears exactly once as a buildingItem, named as itself.
+	seen := map[string]string{} // key → name seen
+	totalItems := 0
+	var storage *district
+	for i := range districts {
+		d := &districts[i]
+		if len(d.buildings) == 0 {
+			t.Fatalf("district %q has no buildings", d.lineageKey)
+		}
+		// All buildings in a district share the district's (lineage) color.
+		for _, bi := range d.buildings {
+			totalItems++
+			if prev, dup := seen[bi.key]; dup {
+				t.Fatalf("building %q grouped twice (also as %q)", bi.key, prev)
+			}
+			seen[bi.key] = bi.name
+			if bi.name == "" {
+				t.Fatalf("building %q has empty name", bi.key)
+			}
+			if want := byKey[bi.key].Name; bi.name != want {
+				t.Fatalf("building %q name = %q, want config Name %q", bi.key, bi.name, want)
+			}
+		}
+		if d.category == "storage" {
+			storage = d
+		}
+	}
+	if totalItems != len(built) {
+		t.Fatalf("got %d building items, want one per built type (%d)", totalItems, len(built))
+	}
+	// Real config names came through.
+	if seen["gathering_camp"] != "Gathering Camp" || seen["forge"] != "Forge" {
+		t.Fatalf("config names not used: %v", seen)
+	}
+	// The storage pair clustered into ONE district holding both, same color.
+	if storage == nil {
+		t.Fatal("no storage district")
+	}
+	if len(storage.buildings) != 2 {
+		t.Fatalf("storage district has %d buildings, want 2 (granary+stash)", len(storage.buildings))
+	}
+	want := lineageColor("storage", "storage")
+	if storage.col != want {
+		t.Fatalf("storage district color = %v, want %v", storage.col, want)
 	}
 }
 

@@ -25,7 +25,8 @@ import (
 // This file owns the systems-weave from the design doc's D3:
 //   - civ edge-markers — the discovered diplomacy civs as a relationship-colored
 //     ring around the border (drawn as text here; "your neighbors").
-//   - district labels — each lineage district named at its centroid.
+//   - building labels — each built building named (its own config Name) at its
+//     marker, colored by lineage, collision-limited so the map stays legible.
 //   - title — "Empire — <Age>" in a corner.
 //   - the trade-route border labels (the lanes themselves are pixels, drawn into
 //     the image in entities.go; the little end labels are text, planned here).
@@ -35,7 +36,7 @@ import (
 type labelKind int
 
 const (
-	labelDistrict labelKind = iota
+	labelBuilding labelKind = iota
 	labelCiv
 	labelTitle
 	labelTrade
@@ -46,8 +47,8 @@ const (
 // grid. cx/cy are CELL coordinates (not pixels). The color is resolved at DRAW time
 // (so the overlay retints on a theme switch) from one of two sources: normally
 // theme.Color(role); but if lineageColored is set, from lineageColor(lineageKey,
-// category) — the same hue-rotated theme color the district's volume uses, so a
-// district's banner matches its buildings and still retints. bright nudges the
+// category) — the same hue-rotated theme color the building's volume uses, so a
+// building's name label matches its volume and still retints. bright nudges the
 // resolved color toward white (the at-war civ marker). align controls anchoring so
 // edge labels on the right border don't spill off-screen.
 type overlayLabel struct {
@@ -104,9 +105,10 @@ func buildOverlayPlan(state game.GameState, cols, rows int, geo layoutGeometry) 
 	// a 2D grid alloc per frame. Districts and civs both consult it.
 	occupied := map[int]bool{}
 
-	// 1) District labels at their centroids — only districts with enough buildings
-	//    to warrant a name, skipping any that would collide.
-	plan.addDistrictLabels(geo, cols, rows, occupied)
+	// 1) Building labels at each marker — every built building named with its own
+	//    config Name, colored by lineage, collision-limited but guaranteeing the
+	//    most prominent building of each lineage cluster gets labeled first.
+	plan.addBuildingLabels(geo, cols, rows, occupied)
 
 	// 2) The capital label sits just under the palace.
 	plan.addCapitalLabel(geo, cols, rows, occupied)
@@ -123,43 +125,97 @@ func buildOverlayPlan(state game.GameState, cols, rows int, geo layoutGeometry) 
 	return plan
 }
 
-// addDistrictLabels names each district at the cell above its centroid. It labels
-// only districts the geometry deemed worth naming (enough reps), truncates the name
-// to fit, and skips a label whose row is already taken on the center band so two
-// district names never stack on the same row illegibly.
-func (p *overlayPlan) addDistrictLabels(geo layoutGeometry, cols, rows int, occupied map[int]bool) {
-	// Sort by descending building count so when space is tight the bigger districts
-	// win their labels (centroids are pre-sorted by lineage key otherwise).
-	cents := make([]districtCentroid, len(geo.districts))
-	copy(cents, geo.districts)
-	sort.SliceStable(cents, func(i, j int) bool { return cents[i].count > cents[j].count })
+// addBuildingLabels names each built building at the cell above its marker, using
+// the building's own config Name, colored by its lineage (so the label matches its
+// volume and retints with the theme). All markers are already drawn; only the labels
+// are collision-limited here. Density handling: when many building types exist the
+// center band fills up, so we (1) order the most PROMINENT building of each lineage
+// cluster first — by tier, then volume size — so every cluster lands at least its
+// headline building's name before any cluster gets a second, then (2) fill the
+// remaining non-colliding labels. A label whose center-band row is taken nudges up a
+// row, and is skipped (not overprinted) if that's taken too.
+func (p *overlayPlan) addBuildingLabels(geo layoutGeometry, cols, rows int, occupied map[int]bool) {
+	if len(geo.buildings) == 0 {
+		return
+	}
+
+	// prominence ranks a building for labeling priority: higher LineageTier wins,
+	// then a bigger volume, then name for a stable tiebreak. More prominent → labeled
+	// sooner, so it survives when the band is crowded.
+	moreProminent := func(a, b buildingLabel) bool {
+		if a.tier != b.tier {
+			return a.tier > b.tier
+		}
+		if a.size != b.size {
+			return a.size > b.size
+		}
+		return a.name < b.name
+	}
+
+	// Per lineage cluster, find the index of its most prominent building. That one is
+	// labeled in the FIRST pass so no cluster is left nameless when space runs out.
+	headline := map[string]int{} // lineageKey → index into geo.buildings of its headline
+	for i, b := range geo.buildings {
+		if j, ok := headline[b.lineageKey]; !ok || moreProminent(b, geo.buildings[j]) {
+			headline[b.lineageKey] = i
+		}
+	}
+
+	// Order the labels: headline-of-each-cluster first (most prominent clusters lead),
+	// then everything else by prominence. Stable + deterministic.
+	order := make([]int, 0, len(geo.buildings))
+	isHead := make([]bool, len(geo.buildings))
+	for _, idx := range headline {
+		isHead[idx] = true
+	}
+	heads := make([]int, 0, len(headline))
+	rest := make([]int, 0, len(geo.buildings))
+	for i := range geo.buildings {
+		if isHead[i] {
+			heads = append(heads, i)
+		} else {
+			rest = append(rest, i)
+		}
+	}
+	byProminence := func(s []int) {
+		sort.SliceStable(s, func(a, b int) bool { return moreProminent(geo.buildings[s[a]], geo.buildings[s[b]]) })
+	}
+	byProminence(heads)
+	byProminence(rest)
+	order = append(order, heads...)
+	order = append(order, rest...)
 
 	const sideCenter = 0
-	for _, c := range cents {
-		name := lineageLabel(c.lineageKey, c.category)
-		if name == "" {
+	for _, idx := range order {
+		c := geo.buildings[idx]
+		if c.name == "" {
 			continue
 		}
-		row := clampInt(pxToCellY(c.py)-1, 0, rows-1) // a cell above the cluster
-		// Center the label on the centroid column, clamped so it stays on-screen.
+		baseRow := clampInt(pxToCellY(c.py)-1, 0, rows-1) // a cell above the marker
+		// Center the label on the marker column, clamped so it stays on-screen.
 		col := clampInt(pxToCellX(c.px), 0, cols-1)
-		// Collision: if this row (center band) is taken near this column, nudge up a
-		// row; if that's taken too, skip the label rather than overprint.
-		key := packCell(sideCenter, row)
-		if occupied[key] {
-			row = clampInt(row-1, 0, rows-1)
-			key = packCell(sideCenter, row)
-			if occupied[key] {
-				continue
+		// Collision: the base row is one above the marker; if it's taken on the center
+		// band, try a small spread of nearby rows (above first, then below) before
+		// giving up — so a crowded cluster (dense block grid) keeps more of its labels.
+		// The headline pass runs first, so a cluster's headline gets first claim.
+		row := -1
+		for _, dr := range []int{0, -1, 1, -2, 2} {
+			cand := clampInt(baseRow+dr, 0, rows-1)
+			if !occupied[packCell(sideCenter, cand)] {
+				row = cand
+				break
 			}
 		}
-		occupied[key] = true
-		name = truncLabel(name, maxLabelLen(col, cols, alignCenter))
+		if row < 0 {
+			continue // no free row nearby — skip rather than overprint
+		}
+		occupied[packCell(sideCenter, row)] = true
+		name := truncLabel(c.name, maxLabelLen(col, cols, alignCenter))
 		if name == "" {
 			continue
 		}
 		p.labels = append(p.labels, overlayLabel{
-			cx: col, cy: row, text: name, kind: labelDistrict, align: alignCenter,
+			cx: col, cy: row, text: name, kind: labelBuilding, align: alignCenter,
 			lineageColored: true, lineageKey: c.lineageKey, category: c.category,
 		})
 	}
@@ -513,56 +569,11 @@ func truncLabel(s string, max int) string {
 // named counterpart to pxToCellY for symmetry and to localize the assumption.
 func pxToCellX(px int) int { return px }
 
-// lineageLabel maps a lineage/category key to a short, human label for a district
-// banner. citymap owns its own presentation vocabulary (config has no display-name
-// table for lineages), so this is the single source for the on-map names. Unknown
-// lineages fall back to a title-cased key so a new lineage still labels sensibly.
-func lineageLabel(lineageKey, category string) string {
-	switch category {
-	case "wonder":
-		return "Wonders"
-	case "monument":
-		return "Monuments"
-	case "storage":
-		return "Storage"
-	case "diplomacy":
-		return "Embassy"
-	}
-	if n, ok := lineageLabels[lineageKey]; ok {
-		return n
-	}
-	return titleCaseKey(lineageKey)
-}
-
-// lineageLabels is the on-map district name for each production lineage. These
-// deliberately use the game's own domain/resource terms (the words the player sees
-// in the economy, worker, and resource panels) rather than invented flavor — a
-// "Faith" district reads as your shrines/temples, not a mystery "Temple". Where a
-// lineage's raw output resource would collide with another's (engineering &
-// metallurgy both → iron; harbor & trade both → gold) we use the distinct lineage
-// name. Kept terse so the banner fits a cluster; mirrors lineageRoleBase
-// (palette.go) one-for-one — adding a lineage there should add a label here.
-var lineageLabels = map[string]string{
-	"food":                  "Food",
-	"organic_extraction":    "Wood",
-	"geological_extraction": "Stone",
-	"metallurgy":            "Metallurgy",
-	"energy":                "Energy",
-	"engineering":           "Engineering",
-	"knowledge":             "Knowledge",
-	"faith":                 "Faith",
-	"culture_arts":          "Culture",
-	"military":              "Military",
-	"harbor":                "Harbor",
-	"trade":                 "Trade",
-	"hacker":                "Cyber",
-	"astronaut":             "Spaceport",
-	"housing":               "Housing",
-}
-
-// titleCaseKey turns a snake_case lineage key into a spaced, title-cased label as a
-// fallback for any lineage missing from lineageLabels. e.g. "deep_mining" → "Deep
-// Mining". Pure ASCII handling — lineage keys are snake_case ASCII.
+// titleCaseKey turns a snake_case building/lineage key into a spaced, title-cased
+// label. It is the fallback name for a built building whose config def carries no
+// Name (test stubs, or a future building added without a Name) so a marker still
+// gets a sensible label rather than a blank. e.g. "deep_mining" → "Deep Mining".
+// Pure ASCII handling — keys are snake_case ASCII.
 func titleCaseKey(key string) string {
 	if key == "" {
 		return ""

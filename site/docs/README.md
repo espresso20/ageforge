@@ -31,7 +31,7 @@ AgeForge runs entirely in your terminal using a full-screen TUI built with Go + 
 - **15 Trade routes** — alongside an 11-civilization diplomacy roster
 - **74 Milestones** — in 6 chains with civilization titles
 - **9 Prestige upgrades** — permanent bonuses across resets
-- **City Map** — Theme-aware procedural rendering of your capital, with per-age layouts, roads, and 2.5D lineage-coloured districts that retint live with your theme
+- **City Map** — Theme-aware procedural rendering of your capital, with per-age layouts, roads, and your actual buildings drawn as named, lineage-coloured 2.5D markers that retint live with your theme
 
 ---
 

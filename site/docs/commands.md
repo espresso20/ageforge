@@ -148,7 +148,7 @@ wonder collect stone 500
 build great_monolith
 ```
 
-Wonders are shown in **Wonders** overlay (`wonders`) with progress bars for each required resource. Each completed wonder now displays a colour sprite thumbnail next to its name in the Wonders overlay. Completed wonders also appear on the City Map, drawn as the largest, gold-coloured structures among your districts (see [City Map](#city-map) below).
+Wonders are shown in **Wonders** overlay (`wonders`) with progress bars for each required resource. Each completed wonder now displays a colour sprite thumbnail next to its name in the Wonders overlay. Completed wonders also appear on the City Map, drawn as the largest, gold-coloured structures among your buildings (see [City Map](#city-map) below).
 
 ---
 
@@ -156,17 +156,17 @@ Wonders are shown in **Wonders** overlay (`wonders`) with progress bars for each
 
 | Command | Description |
 |---|---|
-| `map` | Open the City Map overlay — a theme-aware procedural rendering of your capital, with per-age layouts, roads, and lineage-coloured districts |
+| `map` | Open the City Map overlay — a theme-aware procedural rendering of your capital, with per-age layouts, roads, and your actual buildings drawn as lineage-coloured markers |
 
 ```
 map
 ```
 
-The City Map renders your civilization as a procedurally generated capital. The terrain is generated live and tinted entirely from your **active colour theme**, so switching themes retints the whole map instantly — nothing else in the genre does this. Your buildings cluster into **lineage districts** connected by **roads**, and the city's whole silhouette evolves by age.
+The City Map renders your civilization as a procedurally generated capital. The terrain is generated live and tinted entirely from your **active colour theme**, so switching themes retints the whole map instantly — nothing else in the genre does this. The map shows **your actual buildings** — one named marker per built building type — clustered by **lineage** and connected by **roads**, and the city's whole silhouette evolves by age.
 
 - **Palace** — sits at the centre of every layout and is drawn as the largest structure.
 - **Per-age layout** — the city's plan changes by era: clustered **organic scatter** with footpaths (Primitive/Stone) → **hub-and-spoke** roads radiating from the palace (Bronze/Iron/Classical) → a **castle with a wall ring and four quarters** (Medieval/Renaissance) → a **zoned road grid** splitting production from residential (Colonial/Industrial/Victorian) → regular **city blocks** divided by avenues (Electric/Atomic/Modern) → **campus clusters** linked by paths (Information/Digital/Cyberpunk/Fusion) → concentric **orbital rings** around a hub (Space/Galactic/Quantum and beyond).
-- **Buildings** — drawn as small **2.5D volumes** (a lit roof, a shaded wall, and a drop shadow) so they lift off the terrain. Each of the 13 production lineages gets its own distinct colour (derived from your theme), so districts read at a glance; wonders are gold, storage is muted. A large lineage shows as a dense cluster of representative volumes rather than one dot per building, so the map stays legible as your empire grows.
+- **Buildings** — every distinct building you've built (a Shrine, a Gathering Camp, a Story Circle) appears as its **own** small **2.5D volume** (a lit roof, a shaded wall, and a drop shadow) so it lifts off the terrain, and is **labelled with its own name**. Buildings of the same lineage cluster together and share that lineage's colour (each of the 13 production lineages gets its own distinct, theme-derived hue), so a domain reads as a same-coloured neighbourhood at a glance; wonders are gold, storage is muted. As your empire grows and names would collide, labels are thinned to keep the map legible — each lineage cluster's most prominent building is named first.
 
 ---
 
