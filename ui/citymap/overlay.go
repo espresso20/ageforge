@@ -110,8 +110,8 @@ func buildOverlayPlan(state game.GameState, cols, rows int, geo layoutGeometry) 
 	//    most prominent building of each lineage cluster gets labeled first.
 	plan.addBuildingLabels(geo, cols, rows, occupied)
 
-	// 2) The capital label sits just under the palace.
-	plan.addCapitalLabel(geo, cols, rows, occupied)
+	// 2) The City Center label sits just under the central marker.
+	plan.addCityCenterLabel(geo, cols, rows, occupied)
 
 	// 3) Civ edge-markers — the discovered diplomacy ring around the border.
 	plan.addCivMarkers(state, cols, rows, occupied)
@@ -221,13 +221,15 @@ func (p *overlayPlan) addBuildingLabels(geo layoutGeometry, cols, rows int, occu
 	}
 }
 
-// addCapitalLabel stamps "Capital" just beneath the palace, in the accent role.
-func (p *overlayPlan) addCapitalLabel(geo layoutGeometry, cols, rows int, occupied map[int]bool) {
+// addCityCenterLabel stamps "City Center" just beneath the central marker, in the
+// accent role. This is a city view, so the central marker reads as the city's heart
+// rather than an imperial capital — same prominent marker, clearer label.
+func (p *overlayPlan) addCityCenterLabel(geo layoutGeometry, cols, rows int, occupied map[int]bool) {
 	row := clampInt(pxToCellY(geo.palaceY)+2, 0, rows-1)
 	col := clampInt(pxToCellX(geo.palaceX), 0, cols-1)
 	occupied[packCell(0, row)] = true
 	p.labels = append(p.labels, overlayLabel{
-		cx: col, cy: row, text: "Capital", role: theme.RoleAccent, kind: labelCapital, align: alignCenter,
+		cx: col, cy: row, text: "City Center", role: theme.RoleAccent, kind: labelCapital, align: alignCenter,
 	})
 }
 

@@ -88,7 +88,7 @@ const (
 // also carries the building's identity (key/name/lineage/category/tier) so the
 // overlay pass can name the marker with the building's own config.BuildingDef.Name
 // — one named marker per built building type — rather than a lineage banner. The
-// palace placement leaves the identity fields zero (it is labeled "Capital").
+// palace placement leaves the identity fields zero (it is labeled "City Center").
 type placement struct {
 	cx, cy int
 	size   int

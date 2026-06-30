@@ -73,6 +73,19 @@ type terrainPalette struct {
 	highland     color.RGBA
 	peak         color.RGBA
 
+	// Biome fills (P4 biome generator). Each is blended from theme roles toward a
+	// biome-characteristic hue so the whole biome map still retints on a theme
+	// switch. The elevation bands above are retained for the flourishes (smoke/
+	// starfields key off peak/highland/shadow); the biome fills drive the terrain.
+	bDeepWater    color.RGBA
+	bShallowWater color.RGBA
+	bSand         color.RGBA
+	bGrass        color.RGBA
+	bForest       color.RGBA
+	bRock         color.RGBA
+	bMountain     color.RGBA
+	bSnow         color.RGBA
+
 	// Structure / marker colors.
 	palace   color.RGBA
 	building color.RGBA
@@ -212,6 +225,30 @@ func buildPalette(ageShift float64) terrainPalette {
 	shallow := blend(blend(bg, blue, 0.45), dim, 0.10)
 	deep := blend(blend(bg, blue, 0.62), dim, 0.30)
 
+	// ---- Biome fills (P4) -------------------------------------------------------
+	// Each biome is a theme role pulled toward a biome-characteristic hue, so the
+	// whole biome map retints with the theme but still reads as land/water/forest/
+	// rock/snow/sand. The hues are muted anchors blended at modest strength so light
+	// themes don't get a cartoon palette.
+	green := color.RGBA{R: 0x35, G: 0x7d, B: 0x3a, A: 0xff}      // foliage anchor
+	sandAnchor := color.RGBA{R: 0xcf, G: 0xb8, B: 0x82, A: 0xff} // warm light sand
+
+	// Water reuses the elevation water tones (already blue-anchored + dim-deepened).
+	bDeepWater := deep
+	bShallowWater := shallow
+	// Sand/beach: a warm light land tone — background lifted toward text, then warmed.
+	bSand := blend(blend(bg, text, 0.30), sandAnchor, 0.40)
+	// Grassland: a lighter land tone with a gentle green cast.
+	bGrass := blend(blend(land, text, 0.12), green, 0.18)
+	// Forest: background grounded toward dim, then pushed green — the darkest land.
+	bForest := blend(blend(bg, dim, 0.30), green, 0.34)
+	// Hills / rock: midland pulled toward a dim gray.
+	bRock := blend(mid, dim, 0.30)
+	// Mountain: high ground deepened toward dim gray (bare stone).
+	bMountain := blend(high, dim, 0.40)
+	// Snow / peak: pushed toward the bright text role with a touch of accent sparkle.
+	bSnow := blend(blend(high, text, 0.62), accent, 0.08)
+
 	// Road: a desaturated path tone. Start from RoleDim and pull a third of the
 	// way toward RoleText so paths read clearly above the land but stay quieter
 	// than the lit building roofs that sit on top of them.
@@ -228,15 +265,26 @@ func buildPalette(ageShift float64) terrainPalette {
 		midland:      mid,
 		highland:     high,
 		peak:         peak,
-		palace:       accent,
-		building:     highlight,
-		shadow:       blend(dim, bg, 0.35),
-		road:         road,
-		tradeLane:    tradeLane,
+
+		bDeepWater:    bDeepWater,
+		bShallowWater: bShallowWater,
+		bSand:         bSand,
+		bGrass:        bGrass,
+		bForest:       bForest,
+		bRock:         bRock,
+		bMountain:     bMountain,
+		bSnow:         bSnow,
+
+		palace:    accent,
+		building:  highlight,
+		shadow:    blend(dim, bg, 0.35),
+		road:      road,
+		tradeLane: tradeLane,
 	}
 
-	// Faint per-age feel on the terrain bands only (markers keep pure role color
-	// so they stay legible across ages).
+	// Faint per-age feel on the terrain fills only (markers keep pure role color so
+	// they stay legible across ages). Both the legacy elevation bands and the biome
+	// fills are shifted, so the per-age progression rides on top of the biome map.
 	if ageShift != 0 {
 		p.deepWater = shiftHue(p.deepWater, ageShift)
 		p.shallowWater = shiftHue(p.shallowWater, ageShift)
@@ -244,6 +292,15 @@ func buildPalette(ageShift float64) terrainPalette {
 		p.midland = shiftHue(p.midland, ageShift)
 		p.highland = shiftHue(p.highland, ageShift)
 		p.peak = shiftHue(p.peak, ageShift)
+
+		p.bDeepWater = shiftHue(p.bDeepWater, ageShift)
+		p.bShallowWater = shiftHue(p.bShallowWater, ageShift)
+		p.bSand = shiftHue(p.bSand, ageShift)
+		p.bGrass = shiftHue(p.bGrass, ageShift)
+		p.bForest = shiftHue(p.bForest, ageShift)
+		p.bRock = shiftHue(p.bRock, ageShift)
+		p.bMountain = shiftHue(p.bMountain, ageShift)
+		p.bSnow = shiftHue(p.bSnow, ageShift)
 	}
 	return p
 }

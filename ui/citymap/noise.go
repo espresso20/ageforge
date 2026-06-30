@@ -47,10 +47,19 @@ func valueNoise(fx, fy float64, seed uint32) float64 {
 
 // fbm sums a few octaves of value noise into a soft elevation field in [0,1].
 // Lower frequencies dominate so the terrain reads as broad landmasses with
-// gentle detail rather than static.
+// gentle detail rather than static. It is the elevation field's entry point and
+// fixes the base frequency the terrain has always used.
 func fbm(x, y float64, seed uint32) float64 {
+	return fbmFreq(x, y, seed, 1.0/38.0)
+}
+
+// fbmFreq is fbm with an explicit base frequency, so a second independent field
+// (the biome moisture field) can sample the same noise at a different scale — a
+// broader, lower frequency reads as large damp/dry regions rather than tracking
+// the elevation contours. Same 4-octave shape, same [0,1] output.
+func fbmFreq(x, y float64, seed uint32, baseFreq float64) float64 {
 	var sum, amp, norm float64
-	freq := 1.0 / 38.0
+	freq := baseFreq
 	amp = 0.5
 	for octave := 0; octave < 4; octave++ {
 		sum += valueNoise(x*freq, y*freq, seed+uint32(octave)*1013) * amp
@@ -62,4 +71,12 @@ func fbm(x, y float64, seed uint32) float64 {
 		return 0
 	}
 	return sum / norm
+}
+
+// moistureSeed derives a well-separated, independent seed for the moisture field
+// from the elevation seed, so moisture and elevation are uncorrelated (a wet
+// lowland and a wet peak are both possible). Deterministic per render.
+func moistureSeed(elevSeed uint32) uint32 {
+	h := hash2(elevSeed, 0x9e3779b9, 0x517cc1b7)
+	return h | 1
 }

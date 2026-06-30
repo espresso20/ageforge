@@ -51,7 +51,7 @@ func builtBuildingKeys(state game.GameState) (keys []string, counts map[string]i
 // once). It returns the layoutGeometry — the palace pixel plus one label anchor per
 // building — so the P3 overlay pass can stamp each building's NAME exactly where its
 // volume landed. (Trade-lane endpoints are filled in later by the trade pass.)
-func drawStructures(img *image.RGBA, pal terrainPalette, state game.GameState, byKey map[string]config.BuildingDef) layoutGeometry {
+func drawStructures(img *image.RGBA, pal terrainPalette, state game.GameState, byKey map[string]config.BuildingDef, field *terrainField, terrainSeed uint32) layoutGeometry {
 	b := img.Bounds()
 	w, h := b.Dx(), b.Dy()
 
@@ -62,9 +62,20 @@ func drawStructures(img *image.RGBA, pal terrainPalette, state game.GameState, b
 	seed := layoutSeed(state.Age, keys)
 	res := buildLayout(e, w, h, districts, pal, seed)
 
-	// Roads first (under the buildings, over the terrain).
+	// Terrain-aware pass: the biome field (built once in renderImage from the terrain
+	// seed, so it matches the painted terrain exactly) drives both the placement nudge
+	// — buildings + City Center moved off water/mountain — and the road cost grid, so
+	// roads route around obstacles. The cost-grid jitter is keyed off the terrain seed
+	// so a given city always routes identically.
+	res.placements = nudgePlacements(res.placements, field)
+	grid := buildCostGrid(field, terrainSeed)
+
+	// Roads first (under the buildings, over the terrain). Each layout road segment
+	// is re-routed by A* on the biome cost grid so it bends AROUND lakes and peaks
+	// and gently meanders; if a route is impossible (endpoint walled off by water)
+	// we fall back to the straight Bresenham segment so the road layer is never blank.
 	for _, rseg := range res.roads {
-		drawRoad(img, rseg, pal.road)
+		drawTerrainRoad(img, grid, rseg, pal.road)
 	}
 
 	// Buildings: draw normal tier first, then wonders, then the palace, so the
@@ -74,6 +85,56 @@ func drawStructures(img *image.RGBA, pal terrainPalette, state game.GameState, b
 	drawPlacementsByTier(img, pal, res.placements, impPalace)
 
 	return geometryFor(w, h, districts, res.placements)
+}
+
+// nudgePlacements moves any placement whose center lands on an impassable cell
+// (water/mountain) to the nearest passable cell via a spiral/ring search, so every
+// building volume — and the City Center — sits on land. The per-era strategy and
+// lineage clustering are otherwise untouched: only drowned/cliffed slots move, and
+// only as far as the nearest open ground, so a district stays where the strategy
+// put it. Returns the adjusted slice (placements are value types).
+func nudgePlacements(ps []placement, f *terrainField) []placement {
+	if f == nil || len(f.passable) == 0 {
+		return ps
+	}
+	for i := range ps {
+		if f.passableAt(ps[i].cx, ps[i].cy) {
+			continue
+		}
+		if nx, ny, ok := nearestPassablePx(f, ps[i].cx, ps[i].cy); ok {
+			ps[i].cx, ps[i].cy = nx, ny
+		}
+	}
+	return ps
+}
+
+// nearestPassablePx ring-searches outward from (x,y) for the closest passable
+// pixel, returning it. Bounded by the canvas span; returns ok=false only if no
+// passable pixel exists at all (a fully-flooded canvas, which never happens with
+// the real terrain). The search walks ring perimeters so the FIRST hit is the
+// nearest, giving the smallest possible nudge.
+func nearestPassablePx(f *terrainField, x, y int) (int, int, bool) {
+	if f.passableAt(x, y) {
+		return x, y, true
+	}
+	maxR := f.w
+	if f.h > maxR {
+		maxR = f.h
+	}
+	for r := 1; r <= maxR; r++ {
+		for dy := -r; dy <= r; dy++ {
+			for dx := -r; dx <= r; dx++ {
+				if absInt(dx) != r && absInt(dy) != r {
+					continue // ring perimeter only — nearest-first
+				}
+				ax, ay := x+dx, y+dy
+				if f.passableAt(ax, ay) {
+					return ax, ay, true
+				}
+			}
+		}
+	}
+	return x, y, false
 }
 
 // geometryFor extracts the overlay anchors from a completed layout: the palace
@@ -216,6 +277,35 @@ func drawRoad(img *image.RGBA, s roadSeg, c color.RGBA) {
 			err += dx
 			y0 += sy
 		}
+	}
+}
+
+// drawTerrainRoad routes one layout road segment around the terrain and draws it.
+// It asks the cost grid for an A* route between the segment endpoints; on success it
+// smooths the polyline (so the coarse-grid staircase reads as a meandering curve)
+// and rasterizes it as a connected road. If A* finds no route (an endpoint walled
+// off by water/mountain), it falls back to the straight Bresenham segment so the
+// road layer is never blank — the road still tries to exist even when boxed in.
+func drawTerrainRoad(img *image.RGBA, grid *pfCostGrid, s roadSeg, c color.RGBA) {
+	if grid != nil {
+		if pts, ok := grid.findPath(s.x0, s.y0, s.x1, s.y1); ok && len(pts) >= 2 {
+			drawPolyline(img, smoothPath(pts), c)
+			return
+		}
+	}
+	// Fallback: straight line (still better than nothing; A* only fails when a route
+	// genuinely can't reach the goal across open water).
+	drawRoad(img, s, c)
+}
+
+// drawPolyline rasterizes a road through a sequence of pixel waypoints, drawing a
+// single-pixel Bresenham segment between each consecutive pair so the path is one
+// continuous line. Single-pixel matches the weight of the old straight roads (the
+// look is unchanged — only the route now bends around terrain); the smoothing pass
+// upstream is what turns the coarse A* node steps into a meander.
+func drawPolyline(img *image.RGBA, pts [][2]int, c color.RGBA) {
+	for i := 0; i+1 < len(pts); i++ {
+		drawRoad(img, roadSeg{pts[i][0], pts[i][1], pts[i+1][0], pts[i+1][1]}, c)
 	}
 }
 

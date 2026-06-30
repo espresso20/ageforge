@@ -145,7 +145,12 @@ func renderImage(state game.GameState, w, h int) (*image.RGBA, overlayPlan) {
 	pal := buildPalette(hueShift)
 	e := eraForAge(state.Age)
 
-	drawTerrain(img, pal, seed)
+	// Build the biome + passability field once, then paint the terrain from it. The
+	// same field is handed to the structure layer so roads + placement reason over
+	// exactly the biomes that were drawn (no second FBM sweep, no drift between the
+	// painted water and the water the pathfinder avoids).
+	field := newTerrainField(w, h, seed)
+	drawTerrainField(img, pal, field)
 	// P3 per-age flourish: a light, era-keyed margin treatment (starfield speckle in
 	// orbital ages, neon edge-tint in campus/cyber ages, smoke wisps over industrial)
 	// painted over the terrain but under the structure so it stays ambient.
@@ -153,9 +158,10 @@ func renderImage(state game.GameState, w, h int) (*image.RGBA, overlayPlan) {
 
 	// Resolve the lineage/category table once (pure data, no locks) and hand it to
 	// the structure layer, which groups buildings into districts, runs the era
-	// strategy, draws roads, then the 2.5D volumes, returning the geometry anchors.
+	// strategy, draws terrain-aware roads, then the 2.5D volumes, returning the
+	// geometry anchors.
 	byKey := config.BuildingByKey()
-	geo := drawStructures(img, pal, state, byKey)
+	geo := drawStructures(img, pal, state, byKey, field, seed)
 
 	// P3 trade weave: dashed lanes from the palace out to the border for each active
 	// route; the returned border endpoints feed the overlay's lane tags.
