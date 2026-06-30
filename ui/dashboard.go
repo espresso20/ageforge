@@ -13,6 +13,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/ui/citymap"
 )
 
 // shameMessages are randomly chosen at session start when the cheater badge is active.
@@ -127,8 +128,8 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.Register("buildings", "Buildings", buildingsProvider)
 	d.overlayMgr.Register("help", "Help", helpProvider)
 
-	mv4 := NewMapV4()
-	d.overlayMgr.RegisterWidget("map", "City Map", mv4.Build, mv4.Refresh, true)
+	cm := citymap.NewCityMap()
+	d.overlayMgr.RegisterWidget("map", "City Map", cm.Build, cm.Refresh, true)
 
 	return d
 }
@@ -202,6 +203,7 @@ func (d *Dashboard) build() {
 	d.engine.Bus.Subscribe(game.EventMilestoneCompleted, func(e game.EventData) {
 		name, _ := e.Payload["name"].(string)
 		rewardText, _ := e.Payload["reward_text"].(string)
+		// note: flavor quip rides in the log line, not the height-1 toast — see engine.checkMilestones.
 		msg := fmt.Sprintf("Milestone: %s!", name)
 		if rewardText != "" {
 			msg += " " + rewardText

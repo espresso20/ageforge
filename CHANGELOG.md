@@ -32,6 +32,9 @@ All notable changes to AgeForge are documented here.
 - Storage lineage: every tier stays affordable to its build cap — the cost of copy N never outruns the storage those copies provide (the old stash-deadlock class of bug, lineage-wide). Storage buildings cap at 25 copies (stash 50), and several under-provisioned vault caps were raised. Guarded by a regression test.
 - Milestone chains rebalanced: completion speed-boosts normalized across all six chains (Military was 18× weaker than Settlement — now in line); the Trade chain expanded 3 → 6 milestones (5 via the milestone revamp, then a sixth — Maritime Empire — with the Trade System Expansion); and Military/Trade/Scholar capstones now pay out broad `production_all` instead of domain-only bonuses, so finishing any chain helps your whole economy.
 
+### Changed
+- Map: began a full rewrite (`ui/citymap`) — a theme-aware procedural terrain renderer replaces MapV4; dropped 54MB of embedded photo/sprite assets. (P1 foundation; layout/roads/2.5D buildings + systems-weave follow.)
+
 ### Fixed
 - Theme picker no longer deadlocks the app on arrow/Esc.
 - Procedural save names: flattened the distribution (no more "Grand Duchy" clustering) and added ~10× more names across every bank.
