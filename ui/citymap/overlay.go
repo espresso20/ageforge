@@ -524,7 +524,7 @@ func lineageLabel(lineageKey, category string) string {
 	case "monument":
 		return "Monuments"
 	case "storage":
-		return "Stores"
+		return "Storage"
 	case "diplomacy":
 		return "Embassy"
 	}
@@ -534,22 +534,27 @@ func lineageLabel(lineageKey, category string) string {
 	return titleCaseKey(lineageKey)
 }
 
-// lineageLabels is the on-map display name for each production lineage. Kept terse
-// so the banner fits a cluster; mirrors the lineages in lineageRoleBase (palette.go)
-// one-for-one. Adding a lineage there should add a label here.
+// lineageLabels is the on-map district name for each production lineage. These
+// deliberately use the game's own domain/resource terms (the words the player sees
+// in the economy, worker, and resource panels) rather than invented flavor — a
+// "Faith" district reads as your shrines/temples, not a mystery "Temple". Where a
+// lineage's raw output resource would collide with another's (engineering &
+// metallurgy both → iron; harbor & trade both → gold) we use the distinct lineage
+// name. Kept terse so the banner fits a cluster; mirrors lineageRoleBase
+// (palette.go) one-for-one — adding a lineage there should add a label here.
 var lineageLabels = map[string]string{
 	"food":                  "Food",
-	"organic_extraction":    "Forestry",
-	"geological_extraction": "Mining",
-	"metallurgy":            "Metalworks",
+	"organic_extraction":    "Wood",
+	"geological_extraction": "Stone",
+	"metallurgy":            "Metallurgy",
 	"energy":                "Energy",
-	"engineering":           "Industry",
-	"knowledge":             "Academy",
-	"faith":                 "Temple",
-	"culture_arts":          "Arts",
+	"engineering":           "Engineering",
+	"knowledge":             "Knowledge",
+	"faith":                 "Faith",
+	"culture_arts":          "Culture",
 	"military":              "Military",
 	"harbor":                "Harbor",
-	"trade":                 "Market",
+	"trade":                 "Trade",
 	"hacker":                "Cyber",
 	"astronaut":             "Spaceport",
 	"housing":               "Housing",
