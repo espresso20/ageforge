@@ -440,9 +440,13 @@ func TestWonderAnchoredGrowth(t *testing.T) {
 		}
 	}
 	meanNearest := sumNearest / float64(len(fab))
-	// Clustering: on average a fabric lot hugs SOME anchor much more closely than the
-	// town's overall radius — i.e. it grows around the anchors, not scattered.
-	if meanNearest > maxFromCore*0.6 {
+	// Clustering: on average a fabric lot hugs SOME anchor more closely than the town's
+	// overall radius — i.e. it grows around the anchors, not scattered. The ratio ceiling is
+	// 0.72 (was 0.6 before playtest polish FIX 3): the BIGGER plaza (plazaRadius 2.2 → 3.0)
+	// deliberately clears more open ground around each anchor, so the surviving fabric hugs the
+	// plaza RIM rather than the anchor CENTER and its mean distance-to-anchor rises accordingly.
+	// It still clusters (well under the town radius); it just breathes at a comfortable remove.
+	if meanNearest > maxFromCore*0.72 {
 		t.Fatalf("fabric mean distance-to-nearest-anchor %.1f is not small vs town radius %.1f — buildings do not cluster around the anchors", meanNearest, maxFromCore)
 	}
 
@@ -578,7 +582,9 @@ func TestGreeneryInTown(t *testing.T) {
 	for _, lt := range plan.lots {
 		var budget float64
 		switch lt.kind {
-		case tdGarden, tdSquare, tdProp:
+		case tdGarden, tdSquare, tdProp, tdPond:
+			// Ponds (FIX 4) are placed like gardens — woven into the town, so they share the
+			// in-town budget (not the wider grove budget).
 			budget = inTownBudget
 		case tdTree:
 			budget = groveBudget
@@ -1277,5 +1283,309 @@ func TestLandmarkLabelsNoStack(t *testing.T) {
 			}
 			seen[cell] = li
 		}
+	}
+}
+
+// segSegMinDist returns the minimum distance between two city-space segments p0→p1 and
+// q0→q1 (the smallest of the four endpoint-to-opposite-segment projections — exact for
+// non-crossing segments, and 0-ish when they cross). Used by the connectivity test to
+// decide whether two lane segments touch/join.
+func segSegMinDist(p0, p1, q0, q1 tdPoint) float64 {
+	c := []float64{
+		distToSegSq(p0.x, p0.y, q0, q1),
+		distToSegSq(p1.x, p1.y, q0, q1),
+		distToSegSq(q0.x, q0.y, p0, p1),
+		distToSegSq(q1.x, q1.y, p0, p1),
+	}
+	d := math.Inf(1)
+	for _, v := range c {
+		if v < d {
+			d = v
+		}
+	}
+	return math.Sqrt(d)
+}
+
+// TestRoadNetworkConnected locks playtest polish FIX 2: the lane network is ONE CONNECTED
+// graph radiating from the central crossroads — every lane segment is reachable from every
+// other (no isolated floating segments, the regression this work removes). The old model
+// SPLIT each cross-street with a gap where it met a main, leaving the halves stranded; the
+// cross-streets now run CONTINUOUSLY through the main they cross, and connectors reach the
+// core, so the whole network links up.
+//
+// We build a graph over every street segment, join two segments when they touch within a
+// tolerance, and assert a single connected component AND that the component contains a
+// segment at the central crossroads (so "connected" means "connected to the heart", not a
+// stranded ring). The tolerance (5.0 city units) is deliberately generous for the winding
+// polylines yet still catches the regression: measured, the OLD split-halves network breaks
+// into 5+ components at this tolerance while the connected network is exactly 1.
+func TestRoadNetworkConnected(t *testing.T) {
+	_ = theme.SetActive("forge")
+	// Generous "these lanes meet" tolerance — larger than a lane's full width (~2·laneHalf)
+	// so winding polylines that cross still register as joined, but tight enough that the old
+	// disconnected floating halves would NOT all link (verified: old → 5+ components here).
+	const tol = 5.0
+	seeds := []string{"Aldermoor", "Bexley", "Corveil", "Duskwind", "Emberton"}
+	counts := []map[string]int{
+		{"hut": 8, "gathering_camp": 4},
+		{"hut": 16, "gathering_camp": 10, "stone_camp": 6, "forge": 6},
+		{"hut": 30, "gathering_camp": 20, "forge": 12, "barracks": 8, "colosseum": 1, "stonehenge": 1},
+		{"hut": 60, "gathering_camp": 45, "forge": 28, "barracks": 18, "colosseum": 1},
+	}
+	type seg struct{ a, b tdPoint }
+	for _, name := range seeds {
+		for _, m := range counts {
+			plan := tdPlanFor(namedState("primitive_age", name, m))
+			var segs []seg
+			for _, s := range plan.streets {
+				for i := 0; i+1 < len(s.pts); i++ {
+					segs = append(segs, seg{s.pts[i], s.pts[i+1]})
+				}
+			}
+			n := len(segs)
+			if n < 2 {
+				t.Fatalf("seed %q counts %v: only %d lane segments — expected a real network", name, m, n)
+			}
+			// Union-find: join segments that touch within tol.
+			parent := make([]int, n)
+			for i := range parent {
+				parent[i] = i
+			}
+			var find func(int) int
+			find = func(x int) int {
+				for parent[x] != x {
+					parent[x] = parent[parent[x]]
+					x = parent[x]
+				}
+				return x
+			}
+			for i := 0; i < n; i++ {
+				for j := i + 1; j < n; j++ {
+					if segSegMinDist(segs[i].a, segs[i].b, segs[j].a, segs[j].b) <= tol {
+						parent[find(i)] = find(j)
+					}
+				}
+			}
+			roots := map[int]bool{}
+			for i := 0; i < n; i++ {
+				roots[find(i)] = true
+			}
+			if len(roots) != 1 {
+				// Report component sizes for a helpful failure.
+				sizes := map[int]int{}
+				for i := 0; i < n; i++ {
+					sizes[find(i)]++
+				}
+				t.Fatalf("seed %q counts %v: lane network has %d disconnected components (want 1) — some lanes are isolated floating segments: sizes=%v",
+					name, m, len(roots), sizes)
+			}
+			// The single component must include a segment AT the central crossroads (reachable
+			// FROM the core), so the network is anchored to the heart, not a stranded ring.
+			nearCore := false
+			for _, s := range segs {
+				if segSegMinDist(s.a, s.b, tdPoint{plan.cx, plan.cy}, tdPoint{plan.cx, plan.cy}) <= tol {
+					nearCore = true
+					break
+				}
+			}
+			if !nearCore {
+				t.Fatalf("seed %q counts %v: no lane segment lies at the central crossroads — the connected network is not anchored to the core", name, m)
+			}
+		}
+	}
+}
+
+// groundVariance renders the ground of a fresh canvas with drawGround and returns the mean
+// per-channel variance of the ground pixels (a robust proxy for texture "busyness": a flat
+// wash → ~0, a noisy speckle → high). Used by the quieter-ground test.
+func groundVariance(img *image.RGBA, w, h int) float64 {
+	var sumR, sumG, sumB, sumR2, sumG2, sumB2, n float64
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			off := img.PixOffset(x, y)
+			r, g, b := float64(img.Pix[off]), float64(img.Pix[off+1]), float64(img.Pix[off+2])
+			sumR += r
+			sumG += g
+			sumB += b
+			sumR2 += r * r
+			sumG2 += g * g
+			sumB2 += b * b
+			n++
+		}
+	}
+	if n == 0 {
+		return 0
+	}
+	varOf := func(s, s2 float64) float64 { return s2/n - (s/n)*(s/n) }
+	return (varOf(sumR, sumR2) + varOf(sumG, sumG2) + varOf(sumB, sumB2)) / 3
+}
+
+// TestQuieterGround locks playtest polish FIX 1: the ground texture is a CALM, subtle base
+// now — far lower contrast/variance than the old busy speckle so the city reads cleanly
+// against it. We render the ground twice: once with the live drawGround (quiet), and once
+// with a scratch replica of the OLD formula (22% of pixels, up to 0.60 toward alt). The new
+// ground's pixel variance must be MEANINGFULLY lower than the old — a robust ratio check,
+// not a brittle exact value — while still carrying SOME grain (not a dead-flat wash).
+func TestQuieterGround(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 120, 80
+	const seed uint32 = 0xC0FFEE99
+	style := tdStyleForEra(eraOrganic)
+	pal := newTdPal()
+
+	// New (quiet) ground.
+	imgNew := image.NewRGBA(image.Rect(0, 0, w, h))
+	drawGround(imgNew, style, pal, seed, w, h)
+	newVar := groundVariance(imgNew, w, h)
+
+	// Scratch replica of the OLD, busy formula (pre-FIX-1): threshold 0.22, amplitude 0.60.
+	base := style.groundBase(pal)
+	alt := style.groundAlt(pal)
+	imgOld := image.NewRGBA(image.Rect(0, 0, w, h))
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			n := texHash(uint32(x), uint32(y), seed)
+			tt := 0.0
+			if n < 0.22 {
+				tt = 0.5 + 0.5*n/0.22
+			}
+			imgOld.SetRGBA(x, y, blend(base, alt, tt*0.60))
+		}
+	}
+	oldVar := groundVariance(imgOld, w, h)
+
+	if oldVar <= 0 {
+		t.Skip("degenerate old-ground variance (base≈alt under this theme) — nothing to compare")
+	}
+	// The new ground must be substantially calmer — well under HALF the old variance. Robust
+	// ratio, so a future retint that changes the absolute tones can't make this brittle.
+	if newVar >= oldVar*0.5 {
+		t.Fatalf("ground texture not meaningfully quieter: newVar=%.3f is not < 0.5×oldVar (%.3f) — the dirt still competes with the city", newVar, oldVar)
+	}
+	// But it must not be a dead-flat wash — a faint grain remains (some pixels still take a
+	// touch of alt), so the ground still reads as textured earth, just calmly.
+	if newVar <= 0 {
+		t.Fatalf("ground is dead flat (variance %.4f) — FIX 1 should QUIET the texture, not remove it", newVar)
+	}
+}
+
+// TestBiggerPlazaClearRadius locks playtest polish FIX 3: the cleared plaza around a wonder
+// anchor is BIGGER now (more breathing room), and it stays strictly building-free. It
+// asserts (1) the configured plaza radius exceeds the old 2.2×roofSize baseline, and (2) no
+// fabric lot sits inside ANY wonder anchor's (bigger) plaza — the center reads open and the
+// centerpiece is never crowded.
+func TestBiggerPlazaClearRadius(t *testing.T) {
+	_ = theme.SetActive("forge")
+
+	// (1) The plaza radius is meaningfully bigger than the pre-FIX-3 baseline (2.2×roofSize).
+	const oldPlazaRadius = 2.2
+	if defaultTdConfig.plazaRadius <= oldPlazaRadius {
+		t.Fatalf("plazaRadius %.2f is not bigger than the old %.2f — FIX 3 must widen the plaza for more breathing room",
+			defaultTdConfig.plazaRadius, oldPlazaRadius)
+	}
+	plazaR := defaultTdConfig.plazaRadius * defaultTdConfig.roofSize
+
+	// (2) Across seeds, no fabric lot sits inside any wonder plaza (the bigger clear ring is
+	// honoured — the center stays open and the wonder uncrowded).
+	seeds := []string{"Aldermoor", "Corveil", "Emberton"}
+	for _, name := range seeds {
+		plan := tdPlanFor(namedState("primitive_age", name, map[string]int{
+			"hut": 40, "gathering_camp": 30, "forge": 20, "barracks": 12, "colosseum": 1, "stonehenge": 1,
+		}))
+		nWonder := 0
+		for _, a := range plan.anchors {
+			if a.wonder {
+				nWonder++
+			}
+		}
+		if nWonder < 1 {
+			t.Fatalf("seed %q: expected ≥1 wonder anchor to test the plaza clear", name)
+		}
+		for _, lt := range fabricLots(plan) {
+			for _, a := range plan.anchors {
+				if !a.wonder {
+					continue
+				}
+				if d := math.Hypot(lt.x-a.cx, lt.y-a.cy); d < plazaR {
+					t.Fatalf("seed %q: fabric lot at (%.1f,%.1f) sits inside the bigger wonder plaza (dist %.2f < plazaR %.2f) — the center is not clear",
+						name, lt.x, lt.y, d, plazaR)
+				}
+			}
+		}
+	}
+}
+
+// TestPondsInTown locks playtest polish FIX 4: a FEW BUILT decorative ponds are mixed
+// IN-TOWN among the greenery (seeded, deterministic), and the pond water tone actually
+// PAINTS on the rendered image. It asserts (1) pond lots exist and are a small count (a few,
+// not a lake district), (2) every pond sits within the town footprint (in-town, not scattered
+// across the empty map), and (3) the water tone paints a meaningful number of pixels in the
+// final render — the pond reads as a made water feature.
+func TestPondsInTown(t *testing.T) {
+	if err := theme.SetActive("forge"); err != nil {
+		t.Fatalf("SetActive(forge): %v", err)
+	}
+	const w, h = 140, 90
+	state := sampleState("primitive_age", map[string]int{"hut": 24, "gathering_camp": 16, "stone_camp": 8, "forge": 8})
+	plan := tdPlanFor(state)
+
+	// (1) Ponds exist and are FEW (a rare accent, never many).
+	ponds := 0
+	for _, lt := range plan.lots {
+		if lt.kind == tdPond {
+			ponds++
+		}
+	}
+	if ponds < 1 {
+		t.Fatal("no pond lots placed — the built decorative ponds (FIX 4) are missing")
+	}
+	if ponds > 8 {
+		t.Fatalf("%d ponds — FIX 4 wants only a FEW ponds mixed in-town, not a lake district", ponds)
+	}
+
+	// (2) Every pond is IN-TOWN: within the built-up footprint (placed like a garden, not
+	// scattered across the empty map). Use the same in-town budget the greenery test uses.
+	rad := tdFootprintRadius(&plan)
+	if rad <= 0 {
+		t.Fatal("degenerate footprint radius")
+	}
+	inTownBudget := rad*0.95 + defaultTdConfig.roofSize
+	for _, lt := range plan.lots {
+		if lt.kind != tdPond {
+			continue
+		}
+		if d := math.Hypot(lt.x-plan.cx, lt.y-plan.cy); d > inTownBudget {
+			t.Fatalf("pond at distance %.1f exceeds the in-town budget %.1f (town radius %.1f) — ponds must be woven into the town, not scattered",
+				d, inTownBudget, rad)
+		}
+	}
+
+	// (3) The pond water tone must be a DISTINCT tone (not the ground/garden) AND actually
+	// paint pixels in the final render.
+	style := tdStyleForEra(eraOrganic)
+	pal := newTdPal()
+	water := tdPondColor(style, pal)
+	ground := style.groundBase(pal)
+	garden := style.gardenCol(pal)
+	if colorClose(water, ground, 10) {
+		t.Fatalf("pond water tone %v ≈ ground tone %v — a pond must read as a distinct made water feature", water, ground)
+	}
+	if colorClose(water, garden, 10) {
+		t.Fatalf("pond water tone %v ≈ garden tone %v — a pond must read as water, not greenery", water, garden)
+	}
+	img, _ := renderImage(state, w, h)
+	waterPix := 0
+	for i := 0; i+3 < len(img.Pix); i += 4 {
+		if img.Pix[i+3] == 0 {
+			continue
+		}
+		got := color.RGBA{R: img.Pix[i], G: img.Pix[i+1], B: img.Pix[i+2], A: 0xff}
+		// Match the pond body or its lighter shallows rim (brighten 0.18).
+		if colorClose(got, water, 8) || colorClose(got, brighten(water, 0.18), 8) {
+			waterPix++
+		}
+	}
+	if waterPix < 4 {
+		t.Fatalf("only %d pond-water pixels in the final image — the ponds are not painting as water", waterPix)
 	}
 }

@@ -87,6 +87,14 @@ type tdEraStyle struct {
 	treeCol   func(tdPal) color.RGBA
 	propCol   func(tdPal) color.RGBA
 
+	// pondCol is the BUILT decorative-pond water tone (playtest polish FIX 4). A pond is a
+	// small MADE water feature dug into the town fabric (a garden-family ornament), NOT
+	// natural terrain water — the citymap has no biome/ocean (locked #2). The recipe pulls
+	// the theme background toward a muted blue/teal water anchor so it retints on a theme
+	// switch and stays in-family; nil → tdPondColor derives a safe fallback. Drawn as a
+	// small blue blob with a lighter rim by drawPond.
+	pondCol func(tdPal) color.RGBA
+
 	// pavedCol is the TOWN-SQUARE paved-stone ground tone (playtest FIX: dress the
 	// wonder/center plaza as a made surface, not bare dirt). Distinct from the
 	// era-tinted dirt — a lighter/greyer packed-or-paved tint derived from the ground
@@ -207,6 +215,14 @@ var organicVillageStyle = tdEraStyle{
 		return blend(blend(p.bg, p.text, 0.20), earthAnchor, 0.35)
 	},
 
+	// Decorative-pond water (playtest polish FIX 4): a BUILT little pool, so a muted
+	// blue/teal — the theme background grounded a touch toward dim, then pulled toward the
+	// water anchor. Kept in-family (blended, never raw) so it reads as a small dug pond in
+	// the village greenery rather than a cartoon puddle, and retints with the theme.
+	pondCol: func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.18), waterAnchor, 0.55)
+	},
+
 	// Town-square paving: packed pale stone. Start from the dirt square tone, then lift
 	// it toward the theme's light neutral (RoleText) and pull the last touch toward a
 	// grey stone anchor so it reads LIGHTER + GREYER than the surrounding trodden dirt —
@@ -254,6 +270,10 @@ var (
 	// grey so a plaza reads as a made surface, lighter/greyer than the dirt, blended
 	// against theme roles (never used raw) so it retints and stays in-family.
 	stoneAnchor = color.RGBA{R: 0xa8, G: 0xa0, B: 0x92, A: 0xff} // packed pale stone
+	// waterAnchor is the muted blue-teal anchor for BUILT decorative ponds (playtest polish
+	// FIX 4) — a calm pool blue, never used raw: blended against theme roles so a pond
+	// retints and stays in-family with the village palette rather than reading as cartoon water.
+	waterAnchor = color.RGBA{R: 0x36, G: 0x6b, B: 0x8f, A: 0xff} // muted pond blue-teal
 )
 
 // tdStyleForEra returns the tuned preset for an era band, or defaultTdStyle for the
@@ -395,6 +415,7 @@ const (
 	tdSquare                  // a paved open square
 	tdTree                    // a tree / dot cluster
 	tdProp                    // a well / stall / statue prop
+	tdPond                    // a BUILT decorative pond (small made water feature, FIX 4)
 	tdWall                    // a wall segment
 	tdGate                    // a gate in the wall ring
 
@@ -464,6 +485,13 @@ type topPlan struct {
 	// read the growth skeleton.
 	anchors []tdAnchor
 	lots    []tdLot
+	// junctions are the lane-network JUNCTION points (playtest polish FIX 2: connected
+	// roads): the count-INDEPENDENT lattice of crossings where the cross-streets meet main
+	// A, plus the central crossroads. The fabric CLEARS a small radius around each so no
+	// building sits on a junction, and the connectivity test reads them as the graph's known
+	// crossings. Derived from the fixed mains geometry + config (tdJunctionLattice), never
+	// from the building count, so clearing a lot near one preserves stable-incremental.
+	junctions []tdPoint
 	// center is the civic heart in city space (the City Center anchor + wonder seat).
 	cx, cy float64
 	// heroLabel is the promoted hero's identity when the civ has no civic building
@@ -639,7 +667,14 @@ var defaultTdConfig = tdConfig{
 	laneMargin:     0.9,
 	minGap:         1.1,
 	laneStartClear: 0.9,
-	plazaRadius:    2.2,
+	// plazaRadius: the clear-ground ring around a WONDER anchor, in units of roofSize
+	// (playtest polish FIX 3: MORE breathing room). Bumped 2.2 → 3.0 so the city center +
+	// wonders read OPEN and prominent — the fabric hugs the anchor from a comfortable
+	// distance instead of crowding its apron. The paved town square fills this radius
+	// (tdPlaceSquares), so a wider plaza is a wider, more deliberate square; the wonder roof
+	// (tdWonderScale, ~2.6× → half-extent 1.3× roofSize) stays far inside it so a generous
+	// paved ring always shows. insideWonderPlaza drops any fabric lot that lands inside it.
+	plazaRadius: 3.0,
 	// Compact + bounded: a small base disc that grows only ~sqrt with the count, so a big
 	// village densifies its street network WITHIN a slowly-expanding footprint instead of
 	// throwing longer radial arms. Tuned so the primitive village stays airy but readable.
@@ -759,6 +794,23 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 	spanSlots := tdFrontageSpanSlots(blds)
 	plan.streets = tdOrganicStreets(plan.anchors, plan.cx, plan.cy, cfg, style, r)
 	plan.streets = tdGrowNetwork(plan.streets, plan.anchors, plan.cx, plan.cy, spanSlots, style, cfg, seed)
+
+	// Junction lattice (playtest polish FIX 2: connected roads). The cross-streets now RUN
+	// THROUGH main B (continuous, joined at each crossing), so the fabric must CLEAR those
+	// crossings so no building sits on a junction. The lattice is centered on main B's actual
+	// centerline (its midpoint) and steps along main B's axis (dirB = lane 1) by the same
+	// street spacing tdCrossStreet uses, so each lattice point lands EXACTLY where a cross-
+	// street crosses main B. It is count-independent (derived from the fixed mains geometry +
+	// config), so the clearing stays stable-incremental. The crossings land on main B, leaving
+	// main A (the near-1:1 low band) untouched.
+	if len(plan.streets) > 1 {
+		mb := plan.streets[1]
+		dirB := unitDir(mb)
+		mbMid := tdPolyMidpoint(mb) // main B's actual centerline center (offset off-core)
+		perp := cfg.laneHalf + cfg.roofSize/2 + cfg.laneMargin
+		streetGap := 2*perp + cfg.roofSize + cfg.minGap // same spacing tdGrowNetwork uses
+		plan.junctions = tdJunctionLattice(mbMid, dirB, streetGap, cfg)
+	}
 
 	// (d) populate — the INTERMIXED, LANE-LINING fabric (FIX 2). Every non-wonder building
 	// emits count-scaled roof lots that LINE ALONGSIDE the lanes (offset perpendicular to
@@ -982,6 +1034,11 @@ func tdPopulateIntermixed(plan *topPlan, blds []builtBuilding, heroKey string, c
 	front := buildFrontage(plan.streets, cfg.laneStartClear*cfg.roofSize)
 	plazaR := cfg.plazaRadius * cfg.roofSize
 	halfStep := tdFabricStep(cfg) / 2
+	// Junction clear radius (playtest polish FIX 2): drop any lot that would sit on a lane
+	// crossing so the connected roads read as OPEN junctions. Sized to just clear the one roof
+	// that would straddle a crossing (a roof sits ~perp off its own centerline) without eating
+	// its along-lane neighbours (which sit ~2·halfStep away). Count-independent lattice → stable.
+	junctionClear := cfg.laneHalf + cfg.roofSize/2 + cfg.laneMargin + cfg.minGap
 
 	// The fabric types, in the stable sorted-gather order, each with a stable roof/size.
 	type fabType struct {
@@ -1065,6 +1122,16 @@ func tdPopulateIntermixed(plan *topPlan, blds []builtBuilding, heroKey string, c
 			if insideWonderPlaza(x, y, plan.anchors, plazaR) {
 				continue
 			}
+			// Clear the lane junctions (playtest polish FIX 2): no building sits on a crossing, so
+			// the connected roads read as open junctions. The crossings land on main B, so this
+			// clears main B's row (lane 1) AND the cross-streets' rows (lane ≥ 2) at each junction
+			// column, but LEAVES main A (lane 0) intact — main A holds the near-1:1 low band and
+			// carries no crossings, so its exact count is preserved. Position-based over the count-
+			// INDEPENDENT lattice → stable-incremental: the same at every building count, so a later
+			// cross-street can never retroactively drop an existing lot (upper-clearing would → unstable).
+			if lane > 0 && insideJunction(x, y, plan.junctions, junctionClear) {
+				continue
+			}
 			// Cross-lane overlap guard (playtest FIX 2, stable): drop this lot if it falls too
 			// close to a LOWER-INDEX lane's centerline — i.e. where its lane converges with or
 			// crosses an earlier lane, only the higher-index lane's row is cleared, so two
@@ -1073,9 +1140,10 @@ func tdPopulateIntermixed(plan *topPlan, blds []builtBuilding, heroKey string, c
 			// any other lot — so it preserves EXACT stable-incremental placement (a sibling's
 			// count can't change which lower lanes exist, hence can't change this decision),
 			// which a lot-vs-lot skip could not (see tdEnforceMinGap). The MAINS are lanes 0,1
-			// (always present), and the compact grid's cross-streets are SPLIT clear of the mains
-			// (tdCrossStreet), so a main's own row is never buried by a later cross-street — the
-			// asymmetry (lower-only) can't leave a main lot stranded on a road.
+			// (always present); the compact grid's cross-streets now RUN THROUGH main B at cleared
+			// junctions (tdCrossStreet + the junction lattice clears main B's row there), so a main's
+			// own row is never buried at a crossing, and the lower-only asymmetry here can't leave a
+			// main lot stranded on a road.
 			if lane > 0 && nearLowerLane(x, y, plan.streets, lane, perp+2*half+cfg.minGap) {
 				continue
 			}
@@ -1181,16 +1249,18 @@ func tdMainHalfSpan(cfg tdConfig) float64 {
 	return span
 }
 
-// tdGrowNetwork densifies the lane network into a COMPACT, BOUNDED set of rows (playtest FIX:
-// replaces the radial-spoke tdExtendLanes that flung buildings outward into a pinwheel). Off the
-// two crossing MAINS it appends CROSS-STREETS that all run PARALLEL to one main (dirB), each
-// offset perpendicular by a multiple of a street spacing (alternating sign in growing offset
-// bands) and SPLIT clear of the other main. Because every added lane is parallel, NONE of them
-// cross each other, and each is split around the one main it would meet — so the ONLY street
-// crossing anywhere is the two mains at the cleared central square. That is what keeps the fabric
-// OFF the road (near-zero lots on a crossing lane) while still reading as a bounded village of
-// streets flanking a crossroads, not a starburst. Every cross-street is a chord of a compact,
-// BAND-bounded disc, so the footprint grows only slowly with the street count.
+// tdGrowNetwork densifies the lane network into a COMPACT, BOUNDED, CONNECTED set of rows (playtest
+// FIX: replaces the radial-spoke tdExtendLanes that flung buildings outward into a pinwheel; polish
+// FIX 2: the rows now JOIN the mains instead of floating). Off the two crossing MAINS it appends
+// CROSS-STREETS that all run PARALLEL to main A (dirA), each offset perpendicular by a multiple of a
+// street spacing (alternating sign in growing offset bands) and running CONTINUOUSLY THROUGH main B
+// where they cross it — so every cross-street is LINKED into the network at a T/X junction on main B,
+// and the whole graph is one connected fabric radiating from the central crossroads (not a set of
+// disconnected floating segments). The parallels never cross EACH OTHER (same direction), so the only
+// crossings are the mains at the center + each cross-street meeting main B; buildings are kept off
+// those junctions by the count-independent junction lattice (see tdJunctionLattice). Every cross-
+// street is a chord of a compact, BAND-bounded disc, so the footprint grows only slowly with the
+// street count and stays a bounded village of streets flanking a crossroads, not a starburst.
 //
 // Growth is DENSER, NOT LONGER: adding buildings appends more parallel rows within a slowly-
 // expanding, bounded footprint — never longer radial arms.
@@ -1249,31 +1319,41 @@ func tdGrowNetwork(streets []tdStreet, anchors []tdAnchor, cx, cy float64, spanS
 	return streets
 }
 
-// tdCrossStreet builds one CROSS-STREET of the loose grid as TWO half-lanes straddling the main
-// it crosses — a lane PARALLEL to one main, offset perpendicular by a whole number of streetGap
-// BANDS, SPLIT with a clear gap where it meets the other main so the main's own building row is
-// never buried at the junction (which the lower-only overlap guard could not clear stably). The
-// family, offset band and sign are a pure function of the street index i (and seed); each half is
-// a CHORD of a band-sized disc that just contains the band's offset — so inner bands are near-
+// tdCrossStreet builds one CROSS-STREET of the loose grid as ONE CONTINUOUS lane that CROSSES
+// main A — a lane PARALLEL to main B, offset along main A by a whole number of streetGap BANDS,
+// running the FULL chord THROUGH the main-A centerline so the street actually JOINS the network
+// at that junction (playtest polish FIX 2: CONNECTED roads — no more split-short floating halves).
+// The family, offset band and sign are a pure function of the street index i (and seed); the lane
+// is a CHORD of a band-sized disc that just contains the band's offset — so inner bands are near-
 // full-length streets and each outer band extends the footprint by exactly one gap: the grid
 // DENSIFIES within a compact, roughly-round footprint that grows only one band at a time (never a
 // radial arm). Geometry depends only on the band (i.e. i), so appending streets never moves an
 // existing lane (stable-incremental). Returns ok=false past the compact ceiling (the town is full).
+//
+// Buildings are kept OFF the resulting T/X junction by the count-INDEPENDENT junction lattice
+// (tdJunctionLattice + insideJunction), which clears a small radius around every main-A crossing
+// symmetrically — including main A's OWN row, which the lower-only overlap guard could not clear
+// stably. That is what lets the cross-streets reach and touch the mains (a connected graph) while
+// still keeping the junction cells clear and the placement stable-incremental.
 func tdCrossStreet(cx, cy float64, dirA, dirB tdPoint, streetGap float64, i int, style tdEraStyle, cfg tdConfig, seed uint32) ([]tdStreet, bool) {
 	// ONE family of parallels: every cross-street runs PARALLEL to main B (dirB), offset along main
-	// A by ±band·gap. Parallels never cross each other (same direction, different offset), and each
-	// is SPLIT clear of main A where it would meet it — so the ONLY street crossing anywhere is the
-	// two mains meeting at the cleared central square. That is what keeps the fabric OFF the road
-	// (near-zero lots on a crossing lane) while still reading as a bounded village of streets rather
-	// than a starburst. The band grows every OTHER street and the sign alternates, so offsets march
-	// +1,-1,+2,-2,… out from the spine — a symmetric, compact set of rows flanking the crossroads.
+	// A by ±band·gap. Parallels never cross each other (same direction, different offset); each
+	// CROSSES main A once, at the junction lattice point cleared of buildings — so the streets form
+	// one CONNECTED network radiating from the central crossroads (mains 0,1) rather than a set of
+	// disconnected floating segments. The band grows every OTHER street and the sign alternates, so
+	// offsets march +1,-1,+2,-2,… out from the spine — a symmetric, compact set of rows flanking
+	// the crossroads, each linked into the graph where it meets the main.
 	band := i/2 + 1 // 1,1,2,2,3,3,…: the |offset| in street-gap units (never 0 = the main)
 	sign := 1.0
 	if i%2 == 1 {
 		sign = -1.0
 	}
 	off := sign * float64(band) * streetGap
-	run, offAxis := dirB, dirA
+	// Cross-streets run PARALLEL to main A and cross main B (run=dirA, offAxis=dirB), so their
+	// junctions land on main B — NOT on main A, which carries the near-1:1 low band (tdMainHalfSpan
+	// sizes main A to hold it). Keeping the crossings off main A is what lets the low-band count stay
+	// EXACT while the network is still fully connected (the cross-streets join the mains at main B).
+	run, offAxis := dirA, dirB
 	// The footprint disc that must contain this band: the mains' half-span, extended just enough
 	// to hold this band's offset (so the town grows one gap per band, staying roughly round and
 	// compact — never flung out). Count-independent (a function of the band only).
@@ -1288,27 +1368,79 @@ func tdCrossStreet(cx, cy float64, dirA, dirB tdPoint, streetGap float64, i int,
 	if math.Abs(off) >= discR-cfg.roofSize {
 		return nil, false
 	}
-	// The lane is a chord of that disc at perpendicular distance |off|: half-length sqrt(R²−off²).
-	// It crosses the OTHER main at its MIDPOINT (mx,my = core + off·offAxis lies on that main), so
-	// split it there, leaving a clear gap so the main's building row shows through the junction.
+	// The lane is a chord of that disc at perpendicular distance |off|: half-length sqrt(R²−off²),
+	// centered on (mx,my) = core + off·offAxis, which lies ON main A. Drawn as ONE continuous lane
+	// from −half to +half along run THROUGH (mx,my), so it reaches and crosses the main (connected),
+	// leaving no gap. Too short to bother → drop.
 	half := math.Sqrt(discR*discR - off*off)
-	mx, my := cx+offAxis.x*off, cy+offAxis.y*off
-	gapClear := cfg.laneHalf + cfg.roofSize/2 + cfg.laneMargin + cfg.minGap // = perp + minGap
-	out := make([]tdStreet, 0, 2)
-	// Two halves: [+gapClear, +half] and [-half, -gapClear] along run. Drop a half too short to line.
-	for _, sgn := range []float64{1, -1} {
-		p0 := tdPoint{mx + run.x*sgn*gapClear, my + run.y*sgn*gapClear}
-		p1 := tdPoint{mx + run.x*sgn*half, my + run.y*sgn*half}
-		if math.Hypot(p1.x-p0.x, p1.y-p0.y) < cfg.roofSize*2 {
-			continue
-		}
-		sr := newRNG(hash2(uint32(i)*263+uint32(sgn+2)*97+7, 0x5b0c, seed) | 1)
-		out = append(out, windingLane(p0, p1, style.streetJitter, style.laneWidth, sr))
-	}
-	if len(out) == 0 {
+	if 2*half < cfg.roofSize*2 {
 		return nil, false
 	}
-	return out, true
+	mx, my := cx+offAxis.x*off, cy+offAxis.y*off
+	p0 := tdPoint{mx - run.x*half, my - run.y*half}
+	p1 := tdPoint{mx + run.x*half, my + run.y*half}
+	sr := newRNG(hash2(uint32(i)*263+7, 0x5b0c, seed) | 1)
+	return []tdStreet{windingLane(p0, p1, style.streetJitter, style.laneWidth, sr)}, true
+}
+
+// tdJunctionLattice returns the count-INDEPENDENT set of CROSS-STREET junctions (playtest polish
+// FIX 2): every point where a cross-street band crosses main B — origin ± runDir·(band·streetGap)
+// for band = 1,2,… out to the compact ceiling, where origin is main B's centerline midpoint and
+// runDir is main B's axis. It enumerates ALL bands the compact bound permits, NOT just the cross-
+// streets that currently exist, so the lattice is a pure function of the fixed mains geometry +
+// config and NOTHING count-dependent. That matters for stability: a cross-street appears only when
+// the town is big enough, but by clearing its crossing column UP FRONT (before the street exists),
+// a later cross-street can never retroactively bury a main-B lot that used to sit there — the
+// keep/drop stays a pure function of position, so placement is stable-incremental. The regular
+// pre-cleared gaps on main B are exactly where cross-streets land; in a grown town every gap is a
+// real junction. The CENTRAL crossroads (mains 0,1) is deliberately EXCLUDED — it is handled by the
+// lower-only overlap guard (nearLowerLane), so a wonderless village keeps a FILLED heart (no plaza
+// clear) rather than a punched-out center.
+func tdJunctionLattice(origin tdPoint, runDir tdPoint, streetGap float64, cfg tdConfig) []tdPoint {
+	if streetGap <= 0 {
+		return nil
+	}
+	var out []tdPoint
+	ceil := cfg.townBaseRadius + cfg.townGrowth*7 // the same hard compact bound tdCrossStreet uses
+	for band := 1; ; band++ {
+		off := float64(band) * streetGap
+		if off >= ceil-cfg.roofSize {
+			break
+		}
+		out = append(out,
+			tdPoint{origin.x + runDir.x*off, origin.y + runDir.y*off},
+			tdPoint{origin.x - runDir.x*off, origin.y - runDir.y*off},
+		)
+	}
+	return out
+}
+
+// tdPolyMidpoint returns the midpoint of a polyline's first and last points — the center of a
+// (nearly-straight) main lane. Used to anchor the junction lattice on main B's actual centerline
+// (which sits a touch off-core), so each lattice point lands exactly where a cross-street crosses.
+func tdPolyMidpoint(s tdStreet) tdPoint {
+	if len(s.pts) == 0 {
+		return tdPoint{}
+	}
+	a, b := s.pts[0], s.pts[len(s.pts)-1]
+	return tdPoint{(a.x + b.x) / 2, (a.y + b.y) / 2}
+}
+
+// insideJunction reports whether (x,y) lies within clearR of any lane junction. Used by the
+// lane-lining placement to keep the junction cells building-free so the connected roads read as
+// open crossings, not buried ones. Pure over the (count-independent) lattice → stable.
+func insideJunction(x, y float64, junctions []tdPoint, clearR float64) bool {
+	if clearR <= 0 {
+		return false
+	}
+	r2 := clearR * clearR
+	for _, j := range junctions {
+		dx, dy := x-j.x, y-j.y
+		if dx*dx+dy*dy < r2 {
+			return true
+		}
+	}
+	return false
 }
 
 // unitDir returns the unit direction of a street from its first point to its last (the overall
@@ -1627,22 +1759,23 @@ func tdOrganicStreets(anchors []tdAnchor, cx, cy float64, cfg tdConfig, style td
 	streets = append(streets, windingLane(c0, c1, style.streetJitter, style.laneWidth, r))
 
 	// Anchor connectors: only for a wonder anchor that sits FAR from the crossing mains, a single
-	// short lane from the anchor toward the core weaves it into the grid so it isn't stranded.
+	// short lane from the anchor to the CORE weaves it into the network so it isn't stranded.
 	// Anchors close to the mains (the common case — anchorSpread is kept well inside the town)
 	// already sit on the grid and get NO connector, so we don't pile crossing lanes into the
 	// compact fabric (which would drop/bury the rows). Consecutive anchors are NOT chained, for
 	// the same reason. These come AFTER the mains so the mains stay lanes 0,1 (clean low band).
+	//
+	// The connector reaches the CORE (the central crossroads), not a point short of it (playtest
+	// polish FIX 2: CONNECTED roads — a connector that stopped short was a floating stub). The
+	// central junction is cleared of buildings by the lattice, so joining there buries nothing.
 	_ = core
 	connectThresh := cfg.roofSize * 4
-	stopR := cfg.plazaRadius * cfg.roofSize
 	for _, a := range anchors {
 		d := math.Hypot(a.cx-cx, a.cy-cy)
 		if d < connectThresh {
 			continue // already on/near the crossroads — no extra lane needed
 		}
-		// Stop the connector short of the core so it doesn't pile a junction on the crossroads.
-		ux, uy := (cx-a.cx)/d, (cy-a.cy)/d
-		streets = append(streets, windingLane(tdPoint{a.cx, a.cy}, tdPoint{cx - ux*stopR, cy - uy*stopR}, style.streetJitter, style.laneWidth, r))
+		streets = append(streets, windingLane(tdPoint{a.cx, a.cy}, tdPoint{cx, cy}, style.streetJitter, style.laneWidth, r))
 	}
 	return streets
 }
@@ -1735,6 +1868,20 @@ func tdAddFiller(plan *topPlan, style tdEraStyle, cfg tdConfig, r *rng) {
 	for i := 0; i < gardens; i++ {
 		x, y := tdDiskPoint(plan.cx, plan.cy, innerRad, r)
 		plan.lots = append(plan.lots, tdLot{x: x, y: y, w: cfg.roofSize * 1.3, h: cfg.roofSize * 1.1, kind: tdGarden})
+	}
+	// Ponds (playtest polish FIX 4): a FEW BUILT decorative pools mixed IN-TOWN among the
+	// gardens/greenery — a made water feature, not scattered natural water. Count is small
+	// and sub-linear (a village gets 1–3, a big town a couple more) so ponds stay a rare
+	// accent, never a lake district. Placed like gardens: seeded points within the built-up
+	// disk (innerRad), so they read as part of the town fabric. Kept a touch smaller than a
+	// garden so a pond nestles among the greenery rather than dominating it.
+	ponds := 1 + int(dens*math.Sqrt(float64(roofN))*0.18)
+	if ponds > 5 {
+		ponds = 5 // a few, never many
+	}
+	for i := 0; i < ponds; i++ {
+		x, y := tdDiskPoint(plan.cx, plan.cy, innerRad, r)
+		plan.lots = append(plan.lots, tdLot{x: x, y: y, w: cfg.roofSize * 1.1, h: cfg.roofSize * 0.9, kind: tdPond})
 	}
 	// Street trees: small dot clusters sprinkled INSIDE the town (not a scatter past it).
 	for i := 0; i < trees; i++ {
@@ -2009,6 +2156,7 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 	gardenCol := style.gardenCol(pal)
 	squareCol := style.squareCol(pal)
 	pavedCol := tdPavedColor(style, pal)
+	pondCol := tdPondColor(style, pal)
 	for _, lt := range plan.lots {
 		switch lt.kind {
 		case tdGarden:
@@ -2020,6 +2168,9 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 		case tdPlaza:
 			cx, cy := xf.px(lt.x, lt.y)
 			drawPlaza(img, cx, cy, xf.ext(lt.w/2), xf.ext(lt.h/2), pavedCol)
+		case tdPond:
+			// BUILT decorative pond (FIX 4): a small water blob woven into the greenery.
+			drawPond(img, xf, lt, pondCol)
 		}
 	}
 
@@ -2083,6 +2234,15 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 // texture: each pixel picks base or a slightly-varied alt tone from a cheap hash of
 // its coordinates, so the dirt reads as textured earth rather than a flat wash. No
 // water, no biome — a neutral era-tinted ground (locked #2).
+//
+// CALM GROUND (playtest polish FIX 1): the texture is a WHISPER now, not a busy
+// speckle. The old cut speckled ~22% of pixels and blended up to 0.6 of the way to
+// the (noticeably different) alt tone, so the dirt fizzed and competed with the city
+// — you couldn't cleanly SEE the village against it. Two dials pull the contrast
+// down hard: (1) far fewer pixels are touched (groundTexFrac), and (2) the max blend
+// toward alt is a small fraction (groundTexAmp) so even a touched pixel barely
+// shifts. The result is a subtle-but-present dirt base that lets buildings + roads
+// stand out. Still fully theme-derived (base/alt are style recipes) and seeded.
 func drawGround(img *image.RGBA, style tdEraStyle, pal tdPal, seed uint32, w, h int) {
 	base := style.groundBase(pal)
 	alt := style.groundAlt(pal)
@@ -2094,17 +2254,29 @@ func drawGround(img *image.RGBA, style tdEraStyle, pal tdPal, seed uint32, w, h 
 			if px >= b.Max.X || py >= b.Max.Y {
 				continue
 			}
-			// Cheap 2D value hash → [0,1); a fraction of pixels take the alt tone, and a
-			// touch of that blend varies, so the texture is grainy but subtle.
+			// Cheap 2D value hash → [0,1); only a small fraction of pixels take any alt
+			// tint at all, and that tint tops out at a low amplitude, so the texture is a
+			// faint grain rather than a busy speckle that competes with the fabric.
 			n := texHash(uint32(x), uint32(y), seed)
 			t := 0.0
-			if n < 0.22 {
-				t = 0.5 + 0.5*n/0.22 // 0.5..1.0 toward alt on the speckled pixels
+			if n < groundTexFrac {
+				t = 0.5 + 0.5*n/groundTexFrac // 0.5..1.0 within the touched band
 			}
-			img.SetRGBA(px, py, blend(base, alt, t*0.6))
+			img.SetRGBA(px, py, blend(base, alt, t*groundTexAmp))
 		}
 	}
 }
+
+// Ground-texture calm dials (playtest polish FIX 1). Lowering EITHER quiets the dirt;
+// together they drop the ground variance/contrast well below the old busy speckle so
+// the village reads cleanly against a subtle base. groundTexFrac is the fraction of
+// pixels that take ANY alt tint (was 0.22); groundTexAmp caps how far a touched pixel
+// blends toward the alt tone (was 0.60). Kept as named consts so the quieter-ground
+// test can reason about the reduction and a future era can retune without a magic number.
+const (
+	groundTexFrac = 0.12
+	groundTexAmp  = 0.20
+)
 
 // texHash is a tiny deterministic 2D value hash returning a float in [0,1). Used for
 // the ground texture speckle — cheap, seeded, and stable frame-to-frame.
@@ -2178,6 +2350,18 @@ func tdPavedColor(style tdEraStyle, pal tdPal) color.RGBA {
 	return blend(style.squareCol(pal), pal.text, 0.30)
 }
 
+// tdPondColor resolves the BUILT-pond water tone for a style (playtest polish FIX 4). It
+// uses the preset's pondCol recipe when set; otherwise it derives a safe fallback (the
+// theme background pulled toward the muted water anchor) so an era whose preset predates
+// the field still paints a pond. Pure theme read → retints on a theme switch like every
+// other tone. This is decorative BUILT water, never natural terrain water.
+func tdPondColor(style tdEraStyle, pal tdPal) color.RGBA {
+	if style.pondCol != nil {
+		return style.pondCol(pal)
+	}
+	return blend(blend(pal.bg, pal.dim, 0.18), waterAnchor, 0.55)
+}
+
 // drawPlaza paints the paved town-square ground as a rounded apron: a filled ellipse in
 // the paving tone with a faintly darker rim so the made surface reads with a soft edge
 // against the surrounding dirt, rather than a hard rectangle. Drawn under the wonder/
@@ -2239,6 +2423,37 @@ func drawSquareProp(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle,
 		fillRectC(img, cx, cy, rad, rad, cloth)
 		drawHSpan(img, cx-rad, cx+rad, cy-rad, brighten(cloth, 0.16))
 	}
+}
+
+// drawPond paints a BUILT decorative pond as a small water blob (playtest polish FIX 4):
+// a filled blue/teal ellipse in the water tone with a subtle LIGHTER RIM one band in from
+// the edge (a shallow shore / lit shallows) and a faintly darker deep center, so the pool
+// reads as a made little pond from above rather than a flat dot. Kept small — a village
+// ornament among the greenery, never a lake. All radii floored so it paints at village
+// scale. This is decorative BUILT water; the citymap has no natural terrain water.
+func drawPond(img *image.RGBA, xf tdTransform, lt tdLot, water color.RGBA) {
+	cx, cy := xf.px(lt.x, lt.y)
+	hw := xf.ext(lt.w / 2)
+	hh := xf.ext(lt.h / 2)
+	if hw < 1 {
+		hw = 1
+	}
+	if hh < 1 {
+		hh = 1
+	}
+	// The water body.
+	forEllipse(cx, cy, hw, hh, func(x, y int) { setPixel(img, x, y, water) })
+	// A lighter shallows rim just inside the edge so the pool reads with a soft shore.
+	rim := brighten(water, 0.18)
+	forEllipse(cx, cy, hw, hh, func(x, y int) {
+		fx := float64(x-cx) / float64(hw)
+		fy := float64(y-cy) / float64(hh)
+		if fx*fx+fy*fy >= 0.6 { // outer band only
+			setPixel(img, x, y, rim)
+		}
+	})
+	// A slightly deeper center pip for a hint of depth.
+	setPixel(img, cx, cy, darken(water, 0.15))
 }
 
 // drawTree paints a tree as a small dark-green dot cluster (a filled blob with a
