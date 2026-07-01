@@ -559,7 +559,24 @@ type tdConfig struct {
 	// plazaRadius is the clear ground kept around a WONDER anchor (in units of roofSize) so the
 	// city fabric never buries the centerpiece (the playtest complaint). Roofs whose block
 	// perimeter would land inside a wonder's plaza are dropped; the paved town square fills it.
+	// This is the ROOMY plaza of the RADIAL/planned forms (a monument/forum-planned town's
+	// identity); the ORGANIC form overrides it with a much smaller one-ward plaza (organicPlazaRadius)
+	// so a rambling village never carves a dominant central void (the wagon-wheel signature).
 	plazaRadius float64
+
+	// organicPlazaRadius is the ORGANIC form's plaza clear-radius (in units of roofSize) — a MODEST,
+	// one-ward-sized clearing (map-overhaul-citymap de-radialization). The organic village must NOT
+	// clear a big central ring: buildings fill right up to near the center and the wonder/center gets
+	// only a small dressed square, so the Voronoi mesh reads as a rambling web, not a hub-and-ring
+	// wheel. Resolved per-form by tdPlazaRadius; every non-organic form keeps the roomy plazaRadius.
+	organicPlazaRadius float64
+
+	// organicEdgeAmp is how far (fraction of townR) the ORGANIC town outline is bitten INWARD by a
+	// smooth, seeded, angle-varying perturbation (tdOrganicRadiusAt) so the silhouette is a rambling
+	// BLOB, not a clean radial disc. INWARD-ONLY (never past townR) so every ward seed stays inside
+	// the bounded footprint (the compact/anti-pinwheel guarantees hold). 0 → a plain circular disc
+	// (what every non-organic form uses, unchanged).
+	organicEdgeAmp float64
 
 	// --- Voronoi block model (map-overhaul-citymap) --------------------------------
 	// The town is a COMPACT, BOUNDED disc whose radius grows only ~SQRT with the fabric count —
@@ -589,6 +606,15 @@ type tdConfig struct {
 	seedBase   int
 	seedGrowth float64
 	seedMax    int
+
+	// organicSeedGrowth / organicSeedMax OVERRIDE seedGrowth / seedMax for the ORGANIC form
+	// (map-overhaul-citymap de-radialization). A rambling MESH village needs MANY small wards: with
+	// only ~8 wards a disc's Voronoi is inescapably a center-cell + a ring of neighbours whose
+	// boundaries radiate as spokes (a wagon wheel), no matter how the seeds are scattered. Far more,
+	// finer wards make the partition read as an irregular WEB with loops. Set well above the planned
+	// forms' counts; other forms keep the coarser seedGrowth/seedMax (their look is unchanged).
+	organicSeedGrowth float64
+	organicSeedMax    int
 	// lloydPasses is how many Lloyd relaxation iterations even the block sizes (each seed → its
 	// region centroid). A few passes is plenty; more just converges to a hex lattice.
 	lloydPasses int
@@ -606,8 +632,17 @@ var defaultTdConfig = tdConfig{
 	// plazaRadius: the clear-ground ring around a WONDER anchor, in units of roofSize (playtest
 	// polish FIX 3: roomy). The paved town square fills this radius (tdPlaceSquares), so a wider
 	// plaza is a wider, more deliberate square; the wonder roof (tdWonderScale) stays far inside
-	// it so a generous paved ring always shows.
+	// it so a generous paved ring always shows. This is the RADIAL/planned-form plaza; ORGANIC
+	// overrides it (organicPlazaRadius) so a village never carves a dominant central void.
 	plazaRadius: 3.0,
+	// organicPlazaRadius: the ORGANIC form's MODEST one-ward plaza (map-overhaul-citymap). Kept just
+	// large enough that the grandest wonder roof (half = 2.6·roofSize/2 = 1.3·roofSize) still shows a
+	// thin paved ring + its ringed props, but small enough that the fabric fills close to center and
+	// the mesh never reads as a hub-and-ring wheel. Much smaller than the roomy radial 3.0.
+	organicPlazaRadius: 2.0,
+	// organicEdgeAmp: bite the organic outline inward by up to ~14% of townR at some angles so the
+	// village silhouette rambles like a blob rather than a clean radial disc. Inward-only → bounded.
+	organicEdgeAmp: 0.14,
 	// Compact + bounded: a small base disc that grows only ~sqrt with the count.
 	townBaseRadius: 16,
 	townGrowth:     3.4,
@@ -617,10 +652,14 @@ var defaultTdConfig = tdConfig{
 	streetBand: 2.1,
 	blockInset: 1.0,
 	// Banded block count: 2 wards at the smallest, +~0.85·√n, capped at 22 wards for a metropolis.
-	seedBase:    2,
-	seedGrowth:  0.85,
-	seedMax:     22,
-	lloydPasses: 3,
+	seedBase:   2,
+	seedGrowth: 0.85,
+	seedMax:    22,
+	// ORGANIC needs a much FINER ward mesh (many small blocks) so the street web reads as an
+	// irregular loop network, not 8 pie-slice spokes around a hub. ~3× the growth and a higher cap.
+	organicSeedGrowth: 2.6,
+	organicSeedMax:    48,
+	lloydPasses:       3,
 	// anchorSpread kept well inside tdTownRadius so wonders sit central and the town hugs them.
 	anchorSpread: 9,
 }
@@ -779,6 +818,55 @@ func tdTownRadius(n int, cfg tdConfig) float64 {
 		r = cfg.townBaseRadius
 	}
 	return r
+}
+
+// tdPlazaRadius resolves the clear-plaza radius (city units) around a WONDER / center anchor for a
+// given town FORM (map-overhaul-citymap de-radialization). The RADIAL and other planned forms keep
+// the ROOMY cfg.plazaRadius (a monument/forum-planned town's identity); the ORGANIC form gets a MUCH
+// smaller one-ward plaza (cfg.organicPlazaRadius) so a rambling village never clears a dominant
+// central ring — the wonder/center keeps a small dressed square + a prominent roof, and the fabric
+// fills close to the heart. A missing organic value falls back to the roomy radius (safe). Pure.
+func tdPlazaRadius(form tdTownForm, cfg tdConfig) float64 {
+	if form == formOrganic && cfg.organicPlazaRadius > 0 {
+		return cfg.organicPlazaRadius * cfg.roofSize
+	}
+	return cfg.plazaRadius * cfg.roofSize
+}
+
+// tdOrganicRadiusAt returns the ORGANIC town's in-disc radius at a given angle (city units): the
+// base townR bitten INWARD by a smooth, seeded, angle-varying perturbation so the silhouette is an
+// irregular BLOB, not a clean radial circle (map-overhaul-citymap FIX 4 — irregular outline). The
+// perturbation is a sum of a few sine harmonics with seeded phases (deterministic per city), always
+// SUBTRACTIVE (radius ∈ [~0.72,1.0]·townR) so no ward ever sits past the bounded footprint — the
+// compact / anti-pinwheel guarantees and the seed-in-disc bound all still hold. Non-organic forms
+// never call this (they keep the plain circle), so their shapes/tests are unchanged. Pure + bounded.
+func tdOrganicRadiusAt(angle, townR float64, seed uint32) float64 {
+	// Two seeded phases so two organic towns bite their outline differently, but a given town's is
+	// fixed across ages (seed is age-independent).
+	p1 := float64(hash2(0xED9E, 0x01, seed)) / float64(^uint32(0)) * 2 * math.Pi
+	p2 := float64(hash2(0xED9E, 0x02, seed)) / float64(^uint32(0)) * 2 * math.Pi
+	// Low harmonics → smooth lobes (no thin slivers that could pinch the street web). Range of the
+	// combined wave is [-1,1]; map to a purely inward bite in [0, organicEdgeAmp].
+	w := 0.6*math.Sin(3*angle+p1) + 0.4*math.Sin(5*angle+p2)
+	bite := defaultTdConfig.organicEdgeAmp * (0.5 - 0.5*w) // 0 (no bite) .. organicEdgeAmp (deepest)
+	r := townR * (1 - bite)
+	if min := 0.72 * townR; r < min {
+		r = min
+	}
+	return r
+}
+
+// tdInTown reports whether a city-space point lies inside the town footprint for a given FORM.
+// ORGANIC uses the irregular blob outline (tdOrganicRadiusAt); every other form uses the plain
+// circular disc of radius townR (unchanged). Shared by the raster partition and Lloyd relaxation so
+// the town shape is consistent everywhere. Pure.
+func tdInTown(x, y, townR float64, form tdTownForm, seed uint32) bool {
+	d2 := x*x + y*y
+	if form != formOrganic {
+		return d2 <= townR*townR
+	}
+	rr := tdOrganicRadiusAt(math.Atan2(y, x), townR, seed)
+	return d2 <= rr*rr
 }
 
 // ---- growth anchors (wonder-anchored, central) ------------------------------
@@ -995,44 +1083,79 @@ func (f blockField) cellCenter(gx, gy int) tdPoint {
 }
 
 // tdBlockSeedCount is the BANDED block-seed count (the stability tradeoff, see the file
-// header): B = seedBase + round(seedGrowth·√n), a step function of the roof count so the block
+// header): B = seedBase + round(growth·√n), a step function of the roof count so the block
 // structure is stable within a size band and only re-forms at a band boundary. Plus one seat
-// per plaza anchor (each wonder / the center gets its own central region). Capped at seedMax
-// so a metropolis stays a legible ward count.
-func tdBlockSeedCount(nRoofs, nAnchors int, cfg tdConfig) int {
+// per plaza anchor (each wonder / the center gets its own central region). Capped at a max
+// so a metropolis stays a legible ward count. The ORGANIC form uses a FINER growth + higher cap
+// (organicSeedGrowth / organicSeedMax) so its mesh has many small wards (no pie-slice wheel);
+// every other form keeps the coarser seedGrowth / seedMax.
+func tdBlockSeedCount(nRoofs, nAnchors int, form tdTownForm, cfg tdConfig) int {
+	growth, seedMax := cfg.seedGrowth, cfg.seedMax
+	if form == formOrganic && cfg.organicSeedGrowth > 0 {
+		growth = cfg.organicSeedGrowth
+		if cfg.organicSeedMax > 0 {
+			seedMax = cfg.organicSeedMax
+		}
+	}
 	// Band the count so the ward count re-forms only at band boundaries, in lockstep with the
 	// banded town radius — the whole block field is a step function of the count.
 	nb := tdCountBand(nRoofs)
-	b := cfg.seedBase + int(cfg.seedGrowth*math.Sqrt(float64(nb))+0.5)
+	b := cfg.seedBase + int(growth*math.Sqrt(float64(nb))+0.5)
 	if b < cfg.seedBase {
 		b = cfg.seedBase
 	}
-	if b > cfg.seedMax {
-		b = cfg.seedMax
+	if b > seedMax {
+		b = seedMax
 	}
 	// Guarantee at least one region per plaza anchor plus a couple of building wards, so a
 	// wonder-heavy small civ still has interior blocks to fill.
 	if min := nAnchors + 2; b < min {
 		b = min
 	}
-	if b > cfg.seedMax+nAnchors {
-		b = cfg.seedMax + nAnchors
+	if b > seedMax+nAnchors {
+		b = seedMax + nAnchors
 	}
 	return b
 }
 
-// tdScatterSeedsFor places B block seeds in the town area for a given town FORM, DETERMINISTICALLY
-// from citySeed (map-overhaul-citymap V3-A). Every form pins the first len(anchors) seeds to the
-// plaza anchors (so each wonder / the center owns a central region and the streets always reach
-// the core), then scatters need = B - len(anchors) FREE seeds by the form's own strategy. The seed
-// COUNT is the same regardless of form (it is the banded tdBlockSeedCount), so banded stability is
-// unaffected; only the arrangement differs. Every form's free seeds land inside the town disc so
-// the raster partition stays one connected boundary web (streets-connected holds by construction).
-// Pure function of (form, seed, B, anchors).
-func tdScatterSeedsFor(form tdTownForm, townR float64, anchors []tdAnchor, B int, cfg tdConfig, seed uint32) []tdPoint {
-	seeds := make([]tdPoint, 0, B)
+// tdPinnedCount returns how many of a town's anchors are PINNED as fixed Voronoi seeds through the
+// scatter + Lloyd relaxation (map-overhaul-citymap de-radialization). Pinned anchors own a fixed
+// central region so the streets always reach them and a WONDER ward stays put.
+//
+// Every non-organic form pins ALL its anchors (including the wonderless city-center) — the RADIAL
+// form WANTS that pinned center as a hub with a ring road (its identity). The ORGANIC form pins only
+// its WONDER anchors: a wonderless village's bare center anchor is NOT seeded at dead-center, because
+// a lone seed nailed to the middle owns a round central region whose boundaries to every neighbour
+// RADIATE outward as spokes — a wagon wheel — no matter how the rest is scattered. Dropping that pin
+// lets the organic blue-noise seeds cover the center as ORDINARY mesh wards (none exactly central),
+// so the street web through the middle is an irregular MESH with loops, not a hub-and-spoke. The
+// logical town center (plan.cx,cy) is unchanged — only the block SEED at the origin goes away.
+func tdPinnedCount(form tdTownForm, anchors []tdAnchor) int {
+	if form != formOrganic {
+		return len(anchors)
+	}
+	n := 0
 	for _, a := range anchors {
-		seeds = append(seeds, tdPoint{a.cx, a.cy})
+		if a.wonder {
+			n++
+		}
+	}
+	return n
+}
+
+// tdScatterSeedsFor places B block seeds in the town area for a given town FORM, DETERMINISTICALLY
+// from citySeed (map-overhaul-citymap V3-A). It pins the first tdPinnedCount(form,anchors) seeds to
+// the anchors that own a fixed central region (so each wonder / a planned-form center owns a region
+// and the streets reach it), then scatters the remaining FREE seeds by the form's own strategy. The
+// seed COUNT is the same regardless of form (it is the banded tdBlockSeedCount), so banded stability
+// is unaffected; only the arrangement + which anchors pin differs. Every form's free seeds land
+// inside the town so the raster partition stays one connected boundary web (streets-connected holds
+// by construction). Pure function of (form, seed, B, anchors).
+func tdScatterSeedsFor(form tdTownForm, townR float64, anchors []tdAnchor, B int, cfg tdConfig, seed uint32) []tdPoint {
+	nPinned := tdPinnedCount(form, anchors)
+	seeds := make([]tdPoint, 0, B)
+	for i := 0; i < nPinned && i < len(anchors); i++ {
+		seeds = append(seeds, tdPoint{anchors[i].cx, anchors[i].cy})
 	}
 	need := B - len(seeds)
 	if need <= 0 {
@@ -1075,33 +1198,55 @@ func tdScatterRadial(seeds []tdPoint, townR float64, need int, cfg tdConfig, see
 
 // tdScatterOrganic is the POISSON-DISK / jittered-random scatter — the formOrganic strategy and
 // the DEFAULT for primitive villages (map-overhaul-citymap). It drops free seeds at seeded RANDOM
-// positions in the disc (uniform by area: radius ∝ √u, angle uniform) with a blue-noise REJECT
-// pass — a candidate is rejected if it lands within minDist of an already-placed seed — so the
-// wards come out irregular and RAMBLING with organic streets and NO radial bias and NO ring/spokes
-// (this is what kills the wheel). minDist is derived from the disc area / seed count so the town
-// still fills evenly. Determinism + a fixed seed COUNT: if the reject budget can't place all `need`
-// seeds (dense packing is unlucky), the shortfall is filled by RELAXING the spacing (the tail
-// candidates are accepted regardless), so exactly `need` free seeds always land and the banded
-// stability tradeoff is preserved. Pure over (seed, need); bounded attempt loop → panic-safe.
+// positions UNIFORMLY over the WHOLE town blob INCLUDING THE CENTER (uniform by area: radius ∝ √u,
+// angle uniform) with a blue-noise REJECT pass — a candidate is rejected only if it lands within
+// minDist of another FREE seed — so the wards come out irregular and RAMBLING with organic streets
+// and NO radial bias and NO forced ring/spokes.
+//
+// DE-RADIALIZATION (map-overhaul-citymap): the reject pass DELIBERATELY IGNORES the pinned anchor
+// seeds (indices < nPinned). The old scatter repelled free seeds away from the pinned center anchor,
+// carving a central ANNULUS/VOID with the seeds ringed around the middle — which made the Voronoi
+// boundaries radiate as spokes (a wagon wheel). Ignoring the anchors lets free seeds pack right up to
+// and AROUND the center, so the center is just more mesh (many small wards near the heart), never a
+// lone hub encircled by a ring. Candidates are also clamped to the ORGANIC BLOB outline
+// (tdOrganicRadiusAt) so the silhouette rambles, not a clean disc.
+//
+// Determinism + a fixed seed COUNT: if the reject budget can't place all `need` seeds (dense packing
+// is unlucky), the shortfall is filled by RELAXING the spacing (tail candidates accepted regardless),
+// so exactly `need` free seeds always land and the banded stability tradeoff is preserved. Pure over
+// (seed, need); bounded attempt loop → panic-safe.
 func tdScatterOrganic(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
-	rr := 0.94 * townR // free seeds stay just inside the rim
+	nPinned := len(seeds) // the anchor seeds already appended by tdScatterSeedsFor
+	rr := 0.94 * townR    // free seeds stay just inside the (blob) rim
 	// Target spacing from area: minDist ≈ 0.7·√(discArea / seeds). The 0.7 leaves the reject pass
 	// room to actually place the target count before it must relax.
 	area := math.Pi * rr * rr
 	minDist := 0.7 * math.Sqrt(area/float64(need+len(seeds)))
 	minD2 := minDist * minDist
 	r := newRNG(hash2(0x0B10, uint32(need), seed) | 1)
+	// sample draws one uniform-in-blob candidate: uniform by area, then clamped to the organic blob
+	// outline so a candidate never lands past the rambling edge.
+	sample := func() tdPoint {
+		rad := rr * math.Sqrt(r.f01())
+		ang := r.f01() * 2 * math.Pi
+		x, y := math.Cos(ang)*rad, math.Sin(ang)*rad
+		if edge := 0.94 * tdOrganicRadiusAt(ang, townR, seed); rad > edge {
+			s := edge / rad
+			x *= s
+			y *= s
+		}
+		return tdPoint{x, y}
+	}
 	placed := 0
 	// A generous, BOUNDED attempt budget: up to 40 candidates per needed seed.
 	maxAttempts := (need + 1) * 40
 	for attempts := 0; placed < need && attempts < maxAttempts; attempts++ {
-		// Uniform-in-disc: radius ∝ √u so area is even (no center clumping bias).
-		rad := rr * math.Sqrt(r.f01())
-		ang := r.f01() * 2 * math.Pi
-		p := tdPoint{math.Cos(ang) * rad, math.Sin(ang) * rad}
+		p := sample()
 		ok := true
-		for _, s := range seeds {
-			dx, dy := p.x-s.x, p.y-s.y
+		// Repel against the already-placed FREE seeds only (skip the pinned anchors, so the center
+		// fills instead of ringing around the anchor).
+		for si := nPinned; si < len(seeds); si++ {
+			dx, dy := p.x-seeds[si].x, p.y-seeds[si].y
 			if dx*dx+dy*dy < minD2 {
 				ok = false
 				break
@@ -1115,9 +1260,7 @@ func tdScatterOrganic(seeds []tdPoint, townR float64, need int, cfg tdConfig, se
 	// Relax to guarantee exactly `need` free seeds (fixed count → stable banding). Any remaining
 	// slots take unrejected uniform samples; they may sit a touch closer, which Lloyd then evens.
 	for placed < need {
-		rad := rr * math.Sqrt(r.f01())
-		ang := r.f01() * 2 * math.Pi
-		seeds = append(seeds, tdPoint{math.Cos(ang) * rad, math.Sin(ang) * rad})
+		seeds = append(seeds, sample())
 		placed++
 	}
 	return seeds
@@ -1251,36 +1394,46 @@ func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, form tdTow
 	// Seeds: B block centers, first len(anchors) pinned to the plaza anchors, the free seeds
 	// scattered by the town's FORM (organic / radial / grid / ribbon). Only the arrangement varies
 	// by form; the COUNT is the banded tdBlockSeedCount, so banded stability is unaffected.
-	B := tdBlockSeedCount(nRoofs, len(anchors), cfg)
+	B := tdBlockSeedCount(nRoofs, len(anchors), form, cfg)
 	seeds := tdScatterSeedsFor(form, townR, anchors, B, cfg, seed)
 	// Lloyd relaxation: a few passes move each seed toward its region's centroid for even,
 	// organic block sizes. The PINNED anchor seeds are held fixed (their central regions must
 	// stay put); only the free building-ward seeds relax.
-	nPinned := len(anchors)
-	seeds = tdLloyd(seeds, nPinned, gridN, cfg.cellSize, f.origin, townR, cfg.lloydPasses)
+	//
+	// Pinned anchor seeds are held fixed through relaxation so the streets reach the central plaza
+	// and WONDER wards stay put. tdPinnedCount decides how many: every planned form pins all its
+	// anchors (the RADIAL hub-and-ring center is its identity), but the ORGANIC form does NOT pin a
+	// wonderless center — a lone dead-center seed is the wagon-wheel HUB whose region boundaries
+	// radiate as spokes. Without that pin, organic's blue-noise seeds cover the center as ordinary
+	// mesh wards, so the middle is an irregular web with loops, not a hub with spokes.
+	nPinned := tdPinnedCount(form, anchors)
+	seeds = tdLloyd(seeds, nPinned, gridN, cfg.cellSize, f.origin, townR, form, seed, cfg.lloydPasses)
 	f.seeds = seeds
 	// A seed's region is a reserved PLAZA (building-free) ONLY when its anchor seats a WONDER —
 	// the wonder occupies a whole central region kept clear + dressed as a square. The wonderless
 	// town-center anchor's seed is a NORMAL building ward (its modest square is a small paved lot
 	// at the seed, with the fabric filling the ward around it), so a hut village keeps a FILLED
 	// heart and gets full block capacity for the near-1:1 low band.
+	// Mark plaza (building-free) seeds by WONDER anchor directly — decoupled from nPinned, which for
+	// organic no longer equals the anchor count (a wonderless center relaxes but is never a plaza).
 	f.plazaSeed = make([]bool, len(seeds))
-	for i := 0; i < nPinned && i < len(seeds) && i < len(anchors); i++ {
+	for i := 0; i < len(anchors) && i < len(seeds); i++ {
 		if anchors[i].wonder {
 			f.plazaSeed[i] = true
 		}
 	}
 
-	// Raster partition: nearest seed per in-disc cell.
+	// Raster partition: nearest seed per in-town cell. The town footprint is the plain circular disc
+	// for every form EXCEPT organic, which uses the irregular BLOB outline (tdInTown) so the
+	// silhouette rambles rather than reading as a clean radial disc.
 	f.nearest = make([]int, gridN*gridN)
 	f.street = make([]bool, gridN*gridN)
-	r2 := townR * townR
 	for gy := 0; gy < gridN; gy++ {
 		for gx := 0; gx < gridN; gx++ {
 			c := gy*gridN + gx
 			p := f.cellCenter(gx, gy)
-			if p.x*p.x+p.y*p.y > r2 {
-				f.nearest[c] = -1 // outside the disc → not town
+			if !tdInTown(p.x, p.y, townR, form, seed) {
+				f.nearest[c] = -1 // outside the town → not built
 				continue
 			}
 			best, second := math.Inf(1), math.Inf(1)
@@ -1331,15 +1484,16 @@ func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, form tdTow
 }
 
 // tdLloyd runs `passes` Lloyd relaxation iterations over the seeds: each pass RASTER-partitions
-// the disc by nearest seed and moves every FREE seed (index >= nPinned) to the centroid of its
+// the town by nearest seed and moves every FREE seed (index >= nPinned) to the centroid of its
 // region; pinned seeds (the plaza anchors) stay fixed. Evens out the block sizes into an
-// organic, roughly-even field. Pure + deterministic; a seed that loses its whole region (rare)
-// keeps its position. Panic-safe: bounded loops, guarded division.
-func tdLloyd(seeds []tdPoint, nPinned, gridN int, cellSize, origin, townR float64, passes int) []tdPoint {
+// organic, roughly-even field. The town footprint matches the raster partition's — the plain disc
+// for every form except organic, which uses the irregular BLOB outline (tdInTown) — so relaxed
+// centroids stay inside the same rambling town shape. Pure + deterministic; a seed that loses its
+// whole region (rare) keeps its position. Panic-safe: bounded loops, guarded division.
+func tdLloyd(seeds []tdPoint, nPinned, gridN int, cellSize, origin, townR float64, form tdTownForm, seed uint32, passes int) []tdPoint {
 	if len(seeds) == 0 || gridN < 3 || passes <= 0 {
 		return seeds
 	}
-	r2 := townR * townR
 	cur := make([]tdPoint, len(seeds))
 	copy(cur, seeds)
 	for pass := 0; pass < passes; pass++ {
@@ -1350,7 +1504,7 @@ func tdLloyd(seeds []tdPoint, nPinned, gridN int, cellSize, origin, townR float6
 			for gx := 0; gx < gridN; gx++ {
 				px := origin + float64(gx)*cellSize
 				py := origin + float64(gy)*cellSize
-				if px*px+py*py > r2 {
+				if !tdInTown(px, py, townR, form, seed) {
 					continue
 				}
 				best := math.Inf(1)
@@ -1482,7 +1636,7 @@ func tdPopulateBlocks(plan *topPlan, field blockField, blds []builtBuilding, her
 		}
 	}
 
-	plazaR := cfg.plazaRadius * cfg.roofSize
+	plazaR := tdPlazaRadius(plan.form, cfg)   // form-aware: organic keeps a small one-ward plaza
 	cursor := make([]int, len(slotsPerBlock)) // next free slot per block
 	placed := make([]tdLot, 0, len(queue))
 
@@ -1815,7 +1969,7 @@ func tdPlaceSquares(plan *topPlan, style tdEraStyle, cfg tdConfig, seed uint32) 
 		return
 	}
 	props := tdSquarePropsFor(style)
-	plazaR := cfg.plazaRadius * cfg.roofSize
+	plazaR := tdPlazaRadius(plan.form, cfg) // form-aware: organic keeps a small one-ward plaza
 	for i, a := range plan.anchors {
 		if a.wonder {
 			roofHalf := cfg.roofSize * tdWonderScale(i) / 2
@@ -1832,8 +1986,14 @@ func tdPlaceSquares(plan *topPlan, style tdEraStyle, cfg tdConfig, seed uint32) 
 			tdRingProps(plan, a.cx, a.cy, ringR, props.wonder, uint32(i), seed)
 		} else {
 			// Wonderless center: a MODEST square (small paved patch + a couple of props), kept
-			// small so a tiny village keeps a filled heart, not a donut.
+			// small so a tiny village keeps a FILLED heart, not a donut. For the ORGANIC form this
+			// is doubly important — the paved patch must be genuinely small (~one roof) so buildings
+			// sit close to the true center and the village never reads as a ring around a void; cap
+			// it at a small absolute size on top of the plaza-relative shrink.
 			smallR := plazaR * 0.55
+			if cap := cfg.roofSize * 1.4; plan.form == formOrganic && smallR > cap {
+				smallR = cap
+			}
 			plan.lots = append(plan.lots, tdLot{
 				x: a.cx, y: a.cy, w: smallR * 2, h: smallR * 2, kind: tdPlaza,
 			})

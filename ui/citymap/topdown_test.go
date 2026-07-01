@@ -422,8 +422,6 @@ func TestIntermixedBlockPlacement(t *testing.T) {
 func TestWonderAnchoredGrowth(t *testing.T) {
 	_ = theme.SetActive("forge")
 
-	plazaR := defaultTdConfig.plazaRadius * defaultTdConfig.roofSize
-
 	// Anchor count scales with wonders: 0 → 1 (city center), 1 → 1 (the wonder), 3 → 3.
 	wonderAnchors := func(m map[string]int) (nWonder, nAnchor int) {
 		plan := tdPlanFor(sampleState("primitive_age", m))
@@ -450,6 +448,9 @@ func TestWonderAnchoredGrowth(t *testing.T) {
 	plan := tdPlanFor(sampleState("primitive_age", map[string]int{
 		"hut": 40, "gathering_camp": 30, "forge": 20, "barracks": 12, "colosseum": 1, "stonehenge": 1,
 	}))
+	// Form-aware plaza radius: a primitive town is organic/ribbon, so clear-radius follows its form
+	// (organic gets the modest ring, not the roomy radial one). Read it from the generated plan.
+	plazaR := tdPlazaRadius(plan.form, defaultTdConfig)
 	var wonderAnchorPts []tdAnchor
 	for _, a := range plan.anchors {
 		if a.wonder {
@@ -762,8 +763,8 @@ func TestTownSquareDressing(t *testing.T) {
 	}
 
 	// A paved plaza lot per wonder anchor, and ≥1 prop near each, none overlapping the
-	// wonder roof.
-	plazaR := defaultTdConfig.plazaRadius * defaultTdConfig.roofSize
+	// wonder roof. Form-aware plaza radius (a primitive town is organic → the modest ring).
+	plazaR := tdPlazaRadius(plan.form, defaultTdConfig)
 	wonderAnchorN := 0
 	for i, a := range plan.anchors {
 		if !a.wonder {
@@ -1451,29 +1452,53 @@ func TestQuieterGround(t *testing.T) {
 	}
 }
 
-// TestBiggerPlazaClearRadius locks playtest polish FIX 3: the cleared plaza around a wonder
-// anchor is BIGGER now (more breathing room), and it stays strictly building-free. It
-// asserts (1) the configured plaza radius exceeds the old 2.2×roofSize baseline, and (2) no
-// fabric lot sits inside ANY wonder anchor's (bigger) plaza — the center reads open and the
-// centerpiece is never crowded.
+// TestBiggerPlazaClearRadius locks playtest polish FIX 3 UNDER the form-aware plaza
+// (map-overhaul-citymap): the ROOMY plaza is now the RADIAL/planned form's identity (a
+// monument/forum-planned town's generous forecourt), while the ORGANIC village gets a MODEST
+// one-ward plaza so it never carves a dominant central void (the wagon-wheel signature). It asserts
+// (1) the roomy radial plaza radius still exceeds the old 2.2×roofSize baseline (FIX 3's breathing
+// room is retained where it belongs); (2) each form clears fabric out to ITS OWN plaza radius (a
+// RADIAL wonder town honours the roomy ring; an ORGANIC wonder town honours the small ring); and (3)
+// the organic plaza is STRICTLY SMALLER than the roomy radial one (organic is de-radialized).
 func TestBiggerPlazaClearRadius(t *testing.T) {
 	_ = theme.SetActive("forge")
 
-	// (1) The plaza radius is meaningfully bigger than the pre-FIX-3 baseline (2.2×roofSize).
+	// (1) The roomy (radial/planned) plaza radius is meaningfully bigger than the pre-FIX-3 baseline.
 	const oldPlazaRadius = 2.2
 	if defaultTdConfig.plazaRadius <= oldPlazaRadius {
-		t.Fatalf("plazaRadius %.2f is not bigger than the old %.2f — FIX 3 must widen the plaza for more breathing room",
+		t.Fatalf("plazaRadius %.2f is not bigger than the old %.2f — FIX 3's roomy plaza (now the radial form's) must keep its breathing room",
 			defaultTdConfig.plazaRadius, oldPlazaRadius)
 	}
-	plazaR := defaultTdConfig.plazaRadius * defaultTdConfig.roofSize
+	roomyR := tdPlazaRadius(formRadial, defaultTdConfig)
+	organicR := tdPlazaRadius(formOrganic, defaultTdConfig)
 
-	// (2) Across seeds, no fabric lot sits inside any wonder plaza (the bigger clear ring is
-	// honoured — the center stays open and the wonder uncrowded).
-	seeds := []string{"Aldermoor", "Corveil", "Emberton"}
-	for _, name := range seeds {
-		plan := tdPlanFor(namedState("primitive_age", name, map[string]int{
-			"hut": 40, "gathering_camp": 30, "forge": 20, "barracks": 12, "colosseum": 1, "stonehenge": 1,
-		}))
+	// (3) The organic plaza is strictly smaller than the roomy radial one — the de-radialization.
+	if organicR >= roomyR {
+		t.Fatalf("organic plaza radius %.2f is not smaller than the roomy radial %.2f — organic must get a MODEST plaza, not a dominant central void", organicR, roomyR)
+	}
+
+	wonderBlds := map[string]int{
+		"hut": 40, "gathering_camp": 30, "forge": 20, "barracks": 12, "colosseum": 1, "stonehenge": 1,
+	}
+	// For each form, no fabric lot may sit inside that form's OWN wonder-plaza radius. Assert on a
+	// RADIAL town (roomy ring honoured) and an ORGANIC town (small ring honoured).
+	check := func(ageKey string, era era, form tdTownForm, plazaR float64) {
+		// Find a display name whose seed rolls the target form for this era.
+		name := ""
+		for i := 0; i < 8000; i++ {
+			cand := "Plaza" + formName(form) + strconv.Itoa(i)
+			if tdPickTownForm(citySeed(cand), era) == form {
+				name = cand
+				break
+			}
+		}
+		if name == "" {
+			t.Fatalf("could not find a seed that rolls form %s at era %d", formName(form), era)
+		}
+		plan := tdPlanFor(namedState(ageKey, name, wonderBlds))
+		if plan.form != form {
+			t.Fatalf("form %s: generated plan rolled %s instead", formName(form), formName(plan.form))
+		}
 		nWonder := 0
 		for _, a := range plan.anchors {
 			if a.wonder {
@@ -1481,7 +1506,7 @@ func TestBiggerPlazaClearRadius(t *testing.T) {
 			}
 		}
 		if nWonder < 1 {
-			t.Fatalf("seed %q: expected ≥1 wonder anchor to test the plaza clear", name)
+			t.Fatalf("form %s seed %q: expected ≥1 wonder anchor to test the plaza clear", formName(form), name)
 		}
 		for _, lt := range fabricLots(plan) {
 			for _, a := range plan.anchors {
@@ -1489,12 +1514,14 @@ func TestBiggerPlazaClearRadius(t *testing.T) {
 					continue
 				}
 				if d := math.Hypot(lt.x-a.cx, lt.y-a.cy); d < plazaR {
-					t.Fatalf("seed %q: fabric lot at (%.1f,%.1f) sits inside the bigger wonder plaza (dist %.2f < plazaR %.2f) — the center is not clear",
-						name, lt.x, lt.y, d, plazaR)
+					t.Fatalf("form %s seed %q: fabric lot at (%.1f,%.1f) sits inside the wonder plaza (dist %.2f < plazaR %.2f) — the center is not clear",
+						formName(form), name, lt.x, lt.y, d, plazaR)
 				}
 			}
 		}
 	}
+	check("bronze_age", eraHubSpoke, formRadial, roomyR)      // roomy ring cleared
+	check("primitive_age", eraOrganic, formOrganic, organicR) // small ring cleared
 }
 
 // TestPondsInTown locks playtest polish FIX 4: a FEW BUILT decorative ponds are mixed
@@ -1589,41 +1616,77 @@ func formName(f tdTownForm) string {
 	return "?"
 }
 
-// wardSeedRadialCorr is the robust ANTI-WHEEL metric: the Pearson correlation between a ward seed's
-// INDEX and its RADIUS from the core, over plan.wardSeeds (the pinned center at the origin is
-// skipped). A RADIAL "wagon wheel" scatters its free seeds on a golden-angle SPIRAL — radius climbs
-// monotonically with index — so this correlation is high (~0.8–1.0). ORGANIC (blue-noise) and
-// RIBBON (linear) seeds have no radial ordering, so it sits near 0. This survives Lloyd relaxation
-// (which evens angular gaps but keeps the spiral's centers-out ordering), so it tells an organic
-// town from a wheel on the REAL generated plan. Returns 0 for a degenerate (<3-seed) field.
-func wardSeedRadialCorr(plan topPlan) float64 {
-	var idx, rad []float64
-	i := 0.0
-	for _, s := range plan.wardSeeds {
-		if math.Hypot(s.x-plan.cx, s.y-plan.cy) < 1e-9 {
-			continue // skip the pinned center seed
+// centralVoidRadius is the ANTI-WHEEL metric that actually CATCHES the plaza-hub wheel
+// (map-overhaul-citymap): the radius of the largest FABRIC-FREE disc centred on the town core — i.e.
+// the min over fabric roof lots (wonders excluded) of (dist(lot,center) − roofHalf), floored at 0.
+//
+// This is the metric the OLD ward-seed radial-ordering correlation MISSED. The wheel the playtest
+// caught is a central plaza VOID with the streets spoking outward: the pinned centre owns a big
+// cleared region and the fabric RINGS it. That geometry has a LARGE central void. The de-radialized
+// organic mesh fills right up to near the centre, so its central void is SMALL (≤ ~one ward radius).
+// Unlike the correlation — which measures seed ORDERING and, at the ~8 seeds a small disc yields, is
+// dominated by sampling noise (it can read HIGH for a genuinely blue-noise field) — the central-void
+// radius reads the ACTUAL building geometry, so it FAILS on a hub-with-plaza wheel and PASSES on the
+// mesh (proven in both directions by TestPrimitiveIsOrganicNotAWheel). Empty fabric → 0.
+func centralVoidRadius(plan topPlan) float64 {
+	best := math.Inf(1)
+	for _, lt := range plan.lots {
+		if lt.kind != tdRoof || lt.roof == roofWonder {
+			continue
 		}
-		idx = append(idx, i)
-		rad = append(rad, math.Hypot(s.x-plan.cx, s.y-plan.cy))
-		i++
+		d := math.Hypot(lt.x-plan.cx, lt.y-plan.cy) - math.Max(lt.w, lt.h)/2
+		if d < best {
+			best = d
+		}
 	}
-	n := float64(len(idx))
-	if n < 3 {
+	if math.IsInf(best, 1) || best < 0 {
 		return 0
 	}
-	var sx, sy, sxy, sx2, sy2 float64
-	for k := range idx {
-		sx += idx[k]
-		sy += rad[k]
-		sxy += idx[k] * rad[k]
-		sx2 += idx[k] * idx[k]
-		sy2 += rad[k] * rad[k]
-	}
-	den := math.Sqrt((n*sx2 - sx*sx) * (n*sy2 - sy*sy))
-	if den == 0 {
+	return best
+}
+
+// enclosedWardCount is the MESH-LOOPS anti-wheel metric (map-overhaul-citymap): the number of wards
+// (nearest-seed regions) that are FULLY ENCLOSED — none of their interior cells touches the town rim
+// (an off-town neighbour). An enclosed ward is a face of the street web bounded on ALL sides by
+// streets/other wards, i.e. a LOOP in the street network. A rambling MESH has MANY such enclosed
+// faces; a hub-and-ring-with-spokes WHEEL has FEW (a lone central hub cell, everything else fanned
+// out to the rim). So a high enclosed count PASSES the mesh and a low one FAILS the wheel — a genuine
+// topology signal, not a seed-count proxy. Reads a raw blockField (streets/interiors), 4-neighbour.
+func enclosedWardCount(f blockField) int {
+	if f.gridN < 3 {
 		return 0
 	}
-	return (n*sxy - sx*sy) / den
+	gN := f.gridN
+	touchesRim := make([]bool, len(f.seeds))
+	hasCells := make([]bool, len(f.seeds))
+	for gy := 0; gy < gN; gy++ {
+		for gx := 0; gx < gN; gx++ {
+			c := gy*gN + gx
+			si := f.nearest[c]
+			if si < 0 || f.street[c] {
+				continue
+			}
+			hasCells[si] = true
+			for _, d := range [][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+				nx, ny := gx+d[0], gy+d[1]
+				if nx < 0 || nx >= gN || ny < 0 || ny >= gN {
+					touchesRim[si] = true
+					break
+				}
+				if f.nearest[ny*gN+nx] < 0 {
+					touchesRim[si] = true
+					break
+				}
+			}
+		}
+	}
+	n := 0
+	for si := range f.seeds {
+		if hasCells[si] && !touchesRim[si] {
+			n++
+		}
+	}
+	return n
 }
 
 // TestTownFormDeterministicAndVaried locks the two core properties of tdPickTownForm: it is a pure
@@ -1674,17 +1737,29 @@ func TestTownFormDeterministicAndVaried(t *testing.T) {
 	}
 }
 
-// TestPrimitiveIsOrganicNotAWheel locks the headline requirement: PRIMITIVE villages RAMBLE
-// organically and are NEVER radial wheels. Two parts:
+// TestPrimitiveIsOrganicNotAWheel locks the HEADLINE requirement: PRIMITIVE villages RAMBLE as an
+// irregular MESH and are NEVER plaza-hub wagon-wheels. The old proxy (ward-seed radial-ordering
+// correlation) MISSED the wheel — it measures seed ORDERING, which a blue-noise field can pass while
+// the town still reads as a hub-with-spokes; at the ~8 seeds a small disc yields it is mostly
+// sampling noise. This test replaces it with two metrics that read the ACTUAL wheel geometry and,
+// CRUCIALLY, are proven to FAIL on a hub-with-plaza wheel and PASS on the new organic mesh (both
+// directions, so neither can be a vacuous proxy):
 //
-//	(A) Over many citySeeds, the PRIMITIVE band rolls ORGANIC-dominant and NEVER radial or grid
-//	    (villages aren't planned) — and the fixed anonymous village seed (the default city) is
-//	    organic, not a wheel.
-//	(B) A generated ORGANIC town has NO radial-spoke / central-ring concentration: its ward-seed
-//	    radial ordering (wardSeedRadialCorr) is LOW, whereas a forced RADIAL town's is HIGH — a
-//	    robust anti-wheel assertion (the metric genuinely bites; it is not vacuously true).
+//	metric 1 — CENTRAL-VOID radius (end-to-end): the fabric-free radius at the town centre. The
+//	    wheel has a big central plaza void (fabric rings it); the mesh fills near the centre → small.
+//	metric 2 — ENCLOSED WARDS (field topology): faces of the street web bounded on all sides =
+//	    LOOPS. The mesh has many; the hub-and-ring-with-spokes wheel has few.
+//
+// Parts:
+//
+//	(A) the PRIMITIVE band rolls ORGANIC-dominant, NEVER radial/grid, and the default city is organic;
+//	(B) BOTH metrics separate the NEW organic mesh (pass) from a hub-plaza WHEEL (fail), end-to-end
+//	    and at field level, with a wide margin — plus the wheel is shown to FAIL the very same
+//	    thresholds the organic town passes (the fail-on-old / pass-on-new proof).
 func TestPrimitiveIsOrganicNotAWheel(t *testing.T) {
 	_ = theme.SetActive("forge")
+	cfg := defaultTdConfig
+	rs := cfg.roofSize
 
 	// (A) Distribution over many seeds at the primitive (organic) band.
 	var cnt [4]int
@@ -1706,47 +1781,74 @@ func TestPrimitiveIsOrganicNotAWheel(t *testing.T) {
 		t.Fatalf("the default (anonymous) primitive village rolled %s, want organic — the current village must ramble, not read as a wheel", formName(got))
 	}
 
-	// (B) Anti-wheel on the REAL generated plan: an organic town's ward seeds are NOT radially
-	// ordered; a radial town's are. Average over several seeds/counts so the assertion is robust to
-	// a single unlucky field.
-	organicCorr := 0.0
-	radialCorr := 0.0
-	ns := 0
-	cfg := defaultTdConfig
-	anchors := []tdAnchor{{cx: 0, cy: 0}} // wonderless: a single pinned center (the village heart)
+	// Thresholds sit in the wide gap the probes measured: organic central void ≤ ~2.1·rs, wheel
+	// ≥ ~4.4·rs; organic enclosed wards ≥ 6, wheel ≤ 5. Placed with margin so neither is brittle.
+	const (
+		maxOrganicVoid = 3.0 // ·roofSize — organic must fill close to centre (≤ ~one ward radius)
+		minWheelVoid   = 3.0 // ·roofSize — a real wheel's central plaza void exceeds this
+		minOrganicMesh = 6   // enclosed street-web loops — the mesh has many
+		maxWheelMesh   = 5   // a hub+ring+spokes wheel has at most this few
+	)
+
+	// (B1) FIELD-LEVEL mesh-loops, over several seeds/counts: organic ≥ minOrganicMesh, and a forced
+	// RADIAL wheel field ≤ maxWheelMesh (the metric BITES — it would flag a wheel).
+	anchors := []tdAnchor{{cx: 0, cy: 0}} // wonderless: the village heart
 	for _, nm := range []string{"", "Aldermoor", "Corveil", "Duskwind", "Emberton", "Faelin", "Gorse", "Hale"} {
 		seed := citySeed(nm)
-		for _, nRoofs := range []int{60, 120, 200} {
+		for _, nRoofs := range []int{40, 80, 140, 200} {
 			townR := tdTownRadius(nRoofs, cfg)
 			org := tdBuildBlockField(townR, anchors, nRoofs, formOrganic, cfg, seed)
 			rad := tdBuildBlockField(townR, anchors, nRoofs, formRadial, cfg, seed)
-			organicCorr += wardSeedRadialCorr(topPlan{wardSeeds: org.seeds})
-			radialCorr += wardSeedRadialCorr(topPlan{wardSeeds: rad.seeds})
-			ns++
+			if e := enclosedWardCount(org); e < minOrganicMesh {
+				t.Fatalf("organic field (seed %q, n=%d) has only %d enclosed wards (< %d) — the street web is not a mesh with loops", nm, nRoofs, e, minOrganicMesh)
+			}
+			// fail-on-old: the RADIAL wheel must FAIL the organic mesh bar (few loops).
+			if e := enclosedWardCount(rad); e > maxWheelMesh {
+				t.Fatalf("radial WHEEL field (seed %q, n=%d) has %d enclosed wards (> %d) — the mesh metric does NOT bite; it would pass a wheel", nm, nRoofs, e, maxWheelMesh)
+			}
 		}
 	}
-	organicCorr /= float64(ns)
-	radialCorr /= float64(ns)
-	// The organic town must be clearly NON-radial, and the radial town clearly radial — a wide,
-	// robust margin so this isn't brittle to Lloyd tuning.
-	if organicCorr > 0.35 {
-		t.Fatalf("organic ward seeds are radially ordered (corr %.3f) — the organic town is reading as a wheel", organicCorr)
-	}
-	if radialCorr < 0.6 {
-		t.Fatalf("radial ward seeds are NOT radially ordered (corr %.3f) — the anti-wheel metric does not bite; the test would pass a wheel", radialCorr)
-	}
-	if radialCorr-organicCorr < 0.4 {
-		t.Fatalf("organic (%.3f) and radial (%.3f) ward-seed orderings are too close — organic is not provably distinct from a wheel", organicCorr, radialCorr)
+
+	// (B2) END-TO-END central-void, on the REAL pipeline: the ORGANIC default-style village fills its
+	// centre (void small) while a genuine hub-plaza WHEEL (a RADIAL town WITH a wonder seat → a
+	// cleared central plaza the fabric rings) has a LARGE central void. Proven both ways with the SAME
+	// threshold so the metric can't be vacuous.
+	organicBlds := map[string]int{"hut": 40, "gathering_camp": 24, "stone_camp": 12, "forge": 10}
+	for _, nm := range []string{"", "Aldermoor", "Duskwind", "Emberton", "Gorse", "Hale"} {
+		plan := tdPlanFor(namedState("primitive_age", nm, organicBlds))
+		if plan.form != formOrganic {
+			continue // a ribbon roll is fine here; we assert on the organic ones
+		}
+		if v := centralVoidRadius(plan) / rs; v > maxOrganicVoid {
+			t.Fatalf("organic village (seed %q) has a central void of %.2f·roofSize (> %.1f) — buildings do not fill near the centre; it reads as a wheel", nm, v, maxOrganicVoid)
+		}
+		if len(plan.wardSeeds) < minOrganicMesh {
+			t.Fatalf("organic village (seed %q) has only %d wards — too coarse to be a mesh", nm, len(plan.wardSeeds))
+		}
 	}
 
-	// The organic default village, generated end-to-end, is also non-radial (belt-and-braces on the
-	// real tdPlanFor path, not just the raw field).
-	plan := tdPlanFor(sampleState("primitive_age", map[string]int{"hut": 40, "gathering_camp": 24, "stone_camp": 12, "forge": 10}))
-	if plan.form != formOrganic {
-		t.Fatalf("the default primitive plan is %s, want organic", formName(plan.form))
+	// The genuine WHEEL: a RADIAL-form town WITH a wonder at the centre → a reserved, cleared central
+	// plaza that the fabric rings. Find a bronze-age (hub-spoke) seed that rolls radial. Its central
+	// void must EXCEED the same threshold the organic town stayed under — fail-on-old / pass-on-new.
+	wheelBlds := map[string]int{"hut": 40, "gathering_camp": 24, "forge": 10, "colosseum": 1}
+	wheelChecked := 0
+	for i := 0; i < 20000 && wheelChecked < 4; i++ {
+		cand := "Wheel" + strconv.Itoa(i)
+		if tdPickTownForm(citySeed(cand), eraHubSpoke) != formRadial {
+			continue
+		}
+		plan := tdPlanFor(namedState("bronze_age", cand, wheelBlds))
+		if plan.form != formRadial {
+			continue
+		}
+		wheelChecked++
+		v := centralVoidRadius(plan) / rs
+		if v < minWheelVoid {
+			t.Fatalf("the hub-plaza WHEEL (seed %q) has a central void of only %.2f·roofSize (< %.1f) — the central-void metric does NOT bite; it would pass a wheel as if it were a mesh", cand, v, minWheelVoid)
+		}
 	}
-	if c := wardSeedRadialCorr(plan); c > 0.4 {
-		t.Fatalf("the default organic village plan has radially-ordered wards (corr %.3f) — it still reads as a wheel", c)
+	if wheelChecked == 0 {
+		t.Fatal("could not construct a radial wheel town to prove the metric fails on a wheel")
 	}
 }
 
