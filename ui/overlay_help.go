@@ -102,7 +102,8 @@ func helpProvider(_ game.GameState, _ int) string {
 		{"epoch", "Epoch progress & catastrophe"},
 		{"history", "Civilization history timeline"},
 		{"buildings", "Built structures by lineage"},
-		{"map", "City map view"},
+		{"citymap", "Your settlement map (alias: map)"},
+		{"worldmap", "Known world — your civ & the diplomacy civs"},
 		{"theme", "Theme picker — palettes & accessibility"},
 		{"help", "This Help panel"},
 	} {

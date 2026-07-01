@@ -466,6 +466,7 @@ type FactionInfo struct {
 	TradeCount  int
 	Personality string // "aggressive" | "peaceful" | "mercantile" | "isolationist"
 	Backstory   string // flavour shown in the overlay once discovered
+	Strength    int    // civ power rating 1-5 (from FactionDef) — drives worldmap dot size
 	AtWar       bool   // true while this civ is waging war on the player
 	LentWorkers int    // workers currently on loan from this civ (0 if none)
 	LentReturn  int    // ticks until lent workers return (0 = none / permanent)

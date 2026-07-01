@@ -42,7 +42,7 @@ Build → Recruit → Assign → Research → Advance → Repeat
 
 ## Navigation
 
-- overlay commands (type `research`, `army`, `trade`, `map`, `help`, etc.) — open panels
+- overlay commands (type `research`, `army`, `trade`, `citymap`, `worldmap`, `help`, etc.) — open panels
 - `help` opens the Help panel: a full command reference plus the list of every panel you can open
 - **PgUp / PgDn** — scroll the active tab
 - **↑ / ↓** — navigate command history
@@ -171,10 +171,12 @@ Each wonder can only be built once. They appear in the **Wonders** overlay (`won
 
 ---
 
-## City Map
+## Maps
 
-**City Map** (`map`) — A theme-aware, procedurally generated rendering of your city. The terrain is a live **biome map** — deep and shallow water, beaches, grassland, forest, hills, mountains and snowy peaks, generated from two independent noise fields and tinted entirely from your active colour theme, so switching themes retints the whole map. The **City Center** sits at the heart of the map; each building you've built appears as its own named marker, clustered with its lineage-mates and coloured by lineage. **Roads bend around lakes and mountains** and gently meander to reach the City Center instead of cutting straight through the water, and buildings always sit on passable land — and the city's whole silhouette evolves as you advance through the ages.
+There are two map views: a close-up of your own settlement and a zoomed-out view of the wider world. Both are theme-aware and retint live when you switch themes.
+
+**City Map** (`citymap`, or `map`) — A theme-aware, procedurally generated rendering of your city. The terrain is a live **biome map** — deep and shallow water, beaches, grassland, forest, hills, mountains and snowy peaks, generated from two independent noise fields and tinted entirely from your active colour theme, so switching themes retints the whole map. The **City Center** sits at the heart of the map; each building you've built appears as its own named marker, clustered with its lineage-mates and coloured by lineage. **Roads bend around lakes and mountains** and gently meander to reach the City Center instead of cutting straight through the water, and buildings always sit on passable land — and the city's whole silhouette evolves as you advance through the ages.
 
 The map's structure changes by era — from a clustered organic village (Primitive/Stone), to roads radiating from the palace (Bronze/Iron/Classical), a walled castle with quarters (Medieval/Renaissance), a zoned road grid (Colonial/Industrial/Victorian), regular city blocks (Electric/Atomic/Modern), campus clusters (Information/Digital/Cyberpunk/Fusion), and finally concentric orbital rings (Space/Galactic/Quantum and beyond). Buildings are drawn as small 2.5D volumes (a lit roof, a shaded wall, and a drop shadow) so the city reads as dimensional, and each production lineage gets its own distinct colour.
 
-Open it at any time by typing `map` at the prompt.
+**World Map** (`worldmap`) — Zooms out to the **Known World**. The backdrop is a procedural, **Game-of-Life-style field of anonymous settlements** — sparse, clustered specks of varying sizes in a dim land tone over a muted terrain wash — that **grows with your progress**: a lonely frontier early on, a dense world of large settlements late. Your own civilization is a single prominent accent-coloured dot at the centre, labelled with your civ name (or *Your Empire* if you haven't named your account). Every civilization you've **discovered** appears as its own dot ringed around you, **sized by its standing** and **coloured by your relationship** — allies green, friendly cyan, rivals/embargo red, neutral dim; a civ **at war** with you burns bright red with a **⚔** mark. Undiscovered civs stay hidden. Open either map at any time by typing `citymap` or `worldmap` at the prompt.
