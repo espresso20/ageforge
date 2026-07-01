@@ -60,126 +60,137 @@ func TestEraForAgeCoversAllAges(t *testing.T) {
 	}
 }
 
-// TestLayoutStrategiesInBoundsAndRoads verifies that every era's strategy returns
-// placements strictly inside the canvas and a non-empty road network for a real
-// building set. This is the core "the map means something" guarantee.
-func TestLayoutStrategiesInBoundsAndRoads(t *testing.T) {
+// TestCityPlanInBoundsAndPopulated verifies that every era band synthesizes a plan
+// whose streets AND lots stay inside the canvas and that a real building set produces
+// a non-empty, labeled fabric. This is the core "the city means something" guarantee
+// under the count-driven synthesizer (citygen.go), superseding the old per-strategy
+// bounds/road check.
+func TestCityPlanInBoundsAndPopulated(t *testing.T) {
 	if err := theme.SetActive("forge"); err != nil {
 		t.Fatalf("SetActive(forge): %v", err)
 	}
 	const w, h = 80, 96 // 80 cols × 48 rows × 2 px
 	byKey := config.BuildingByKey()
-	pal := buildPalette(0)
 
 	for _, tc := range oneAgePerEra {
 		t.Run(tc.name, func(t *testing.T) {
+			st := sampleState(tc.age, sampleBuilt())
 			keys := sortedKeys(sampleBuilt())
-			districts := builtDistricts(byKey, keys, sampleBuilt())
-			if len(districts) == 0 {
-				t.Fatal("expected non-empty districts for the sample building set")
-			}
 			seed := layoutSeed(tc.age, keys)
-			res := buildLayout(tc.era, w, h, districts, pal, seed)
+			// No terrain field here — exercise the pure street/block/populate geometry.
+			plan := generateCityPlan(st, byKey, nil, tc.era, seed, w, h)
 
-			if len(res.placements) == 0 {
-				t.Fatal("no placements produced")
+			if len(plan.streets) == 0 {
+				t.Fatal("no streets produced — city would be illegible")
 			}
-			if len(res.roads) == 0 {
-				t.Fatal("no roads produced — layout would be illegible")
-			}
-			// The palace must be present and centered.
-			foundPalace := false
-			for _, p := range res.placements {
-				if p.tier == impPalace {
-					foundPalace = true
-					if p.cx != w/2 || p.cy != h/2 {
-						t.Fatalf("palace at (%d,%d), want center (%d,%d)", p.cx, p.cy, w/2, h/2)
-					}
-				}
-				if p.cx < 0 || p.cx >= w || p.cy < 0 || p.cy >= h {
-					t.Fatalf("placement out of bounds: (%d,%d) in %dx%d", p.cx, p.cy, w, h)
-				}
-			}
-			if !foundPalace {
-				t.Fatal("no palace placement")
+			if len(plan.lots) == 0 {
+				t.Fatal("no lots produced — nothing to render")
 			}
 
-			// Per-building model: exactly one marker per distinct built building type
-			// (no lineage aggregation, no representative cap). sampleBuilt has 7 keys →
-			// 7 non-palace volumes, each carrying its own building identity. Same-lineage
-			// buildings must share the lineage color (the storage pair granary+stash).
-			nonPalace := 0
-			seenKeys := map[string]bool{}
-			colByLineage := map[string]color.RGBA{}
-			for _, p := range res.placements {
-				if p.tier == impPalace {
-					continue
-				}
-				nonPalace++
-				if p.key == "" || p.name == "" {
-					t.Fatalf("building placement missing identity: %+v", p)
-				}
-				if seenKeys[p.key] {
-					t.Fatalf("building %q drew more than one marker (should be 1 per type)", p.key)
-				}
-				seenKeys[p.key] = true
-				if prev, ok := colByLineage[p.lineageKey]; ok {
-					if prev != p.col {
-						t.Fatalf("lineage %q has inconsistent colors %v vs %v", p.lineageKey, prev, p.col)
+			// Street waypoints in-bounds.
+			for _, s := range plan.streets {
+				for _, p := range s.pts {
+					if p.x < 0 || p.x >= w || p.y < 0 || p.y >= h {
+						t.Fatalf("street point out of bounds: (%d,%d) in %dx%d", p.x, p.y, w, h)
 					}
-				} else {
-					colByLineage[p.lineageKey] = p.col
 				}
 			}
-			if want := len(sampleBuilt()); nonPalace != want {
-				t.Fatalf("got %d building markers, want one per built type (%d)", nonPalace, want)
-			}
-			// The granary+stash storage pair must have clustered into the same color.
-			if !seenKeys["granary"] || !seenKeys["stash"] {
-				t.Fatal("storage buildings missing from placements")
+			// Lot origins in-bounds.
+			for _, lt := range plan.lots {
+				if lt.x < 0 || lt.x >= w || lt.y < 0 || lt.y >= h {
+					t.Fatalf("lot origin out of bounds: (%d,%d) in %dx%d", lt.x, lt.y, w, h)
+				}
 			}
 
-			// Road endpoints must be in-bounds too (Bresenham clips, but the segment
-			// data itself should be sane).
-			for _, s := range res.roads {
-				for _, pt := range [][2]int{{s.x0, s.y0}, {s.x1, s.y1}} {
-					if pt[0] < 0 || pt[0] >= w || pt[1] < 0 || pt[1] >= h {
-						t.Fatalf("road endpoint out of bounds: (%d,%d) in %dx%d", pt[0], pt[1], w, h)
+			// Every distinct built type that classifies as a landmark must contribute
+			// exactly one labeled landmark lot (the hero the city grows around). The
+			// sample set's landmarks are library (knowledge) + the storage pair.
+			labels := map[string]bool{}
+			for _, lt := range plan.lots {
+				if lt.kind == lotLandmark {
+					if lt.label == "" {
+						t.Fatalf("landmark lot missing label: %+v", lt)
 					}
+					if labels[lt.label] {
+						t.Fatalf("landmark %q drew more than one hero lot", lt.label)
+					}
+					labels[lt.label] = true
 				}
+			}
+			if !labels["Library"] {
+				t.Fatalf("expected the Library landmark to be labeled; have %v", labels)
+			}
+
+			// Count-driven: the 12-instance gathering_camp (production) must yield more
+			// than one workshop lot, and the 5-instance hut (residential) more than one
+			// house lot — the population tracks counts, not a single marker per type.
+			houses, workshops := 0, 0
+			for _, lt := range plan.lots {
+				switch lt.kind {
+				case lotHouse:
+					houses++
+				case lotWorkshop:
+					workshops++
+				}
+			}
+			if houses < 2 {
+				t.Fatalf("expected multiple house lots from a 5-hut village, got %d", houses)
+			}
+			if workshops < 2 {
+				t.Fatalf("expected multiple workshop lots from 12 gathering camps, got %d", workshops)
 			}
 		})
 	}
 }
 
-// TestLayoutDeterministic confirms the layout is stable frame-to-frame: the same
-// (age, building set) yields identical placements and roads on repeated builds.
-func TestLayoutDeterministic(t *testing.T) {
+// TestCityPlanDeterministic confirms synthesis is stable frame-to-frame: the same
+// (state, era, seed, size) yields an identical plan on repeated builds.
+func TestCityPlanDeterministic(t *testing.T) {
 	_ = theme.SetActive("forge")
 	const w, h = 80, 96
 	byKey := config.BuildingByKey()
-	pal := buildPalette(0)
+	st := sampleState("bronze_age", sampleBuilt())
 	keys := sortedKeys(sampleBuilt())
-	districts := builtDistricts(byKey, keys, sampleBuilt())
 	seed := layoutSeed("bronze_age", keys)
 
-	a := buildLayout(eraHubSpoke, w, h, districts, pal, seed)
-	b := buildLayout(eraHubSpoke, w, h, districts, pal, seed)
+	a := generateCityPlan(st, byKey, nil, eraHubSpoke, seed, w, h)
+	b := generateCityPlan(st, byKey, nil, eraHubSpoke, seed, w, h)
 
-	if len(a.placements) != len(b.placements) || len(a.roads) != len(b.roads) {
-		t.Fatalf("nondeterministic counts: a=(%d,%d) b=(%d,%d)",
-			len(a.placements), len(a.roads), len(b.placements), len(b.roads))
+	if !cityPlansEqual(a, b) {
+		t.Fatal("synthesis is nondeterministic for a fixed seed")
 	}
-	for i := range a.placements {
-		if a.placements[i] != b.placements[i] {
-			t.Fatalf("placement %d differs across builds: %+v vs %+v", i, a.placements[i], b.placements[i])
+}
+
+// cityPlansEqual reports whether two plans are structurally identical (same streets,
+// blocks, and lots in the same order). Used by the determinism test.
+func cityPlansEqual(a, b cityPlan) bool {
+	if len(a.streets) != len(b.streets) || len(a.blocks) != len(b.blocks) || len(a.lots) != len(b.lots) {
+		return false
+	}
+	for i := range a.streets {
+		if a.streets[i].width != b.streets[i].width || a.streets[i].paved != b.streets[i].paved {
+			return false
+		}
+		if len(a.streets[i].pts) != len(b.streets[i].pts) {
+			return false
+		}
+		for j := range a.streets[i].pts {
+			if a.streets[i].pts[j] != b.streets[i].pts[j] {
+				return false
+			}
 		}
 	}
-	for i := range a.roads {
-		if a.roads[i] != b.roads[i] {
-			t.Fatalf("road %d differs across builds", i)
+	for i := range a.blocks {
+		if a.blocks[i] != b.blocks[i] {
+			return false
 		}
 	}
+	for i := range a.lots {
+		if a.lots[i] != b.lots[i] {
+			return false
+		}
+	}
+	return true
 }
 
 // TestBuiltDistrictsPerBuilding verifies the per-building grouping: every distinct

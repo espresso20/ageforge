@@ -44,52 +44,143 @@ func builtBuildingKeys(state game.GameState) (keys []string, counts map[string]i
 	return keys, counts
 }
 
-// drawStructures is the P2/P3 structure entry point: it groups the built buildings
-// into lineage districts (one buildingItem per distinct built type), runs the era
-// strategy, draws roads under the buildings, then draws each 2.5D volume. byKey is
-// the config lineage/category/name table (passed in so the render path builds it
-// once). It returns the layoutGeometry — the palace pixel plus one label anchor per
-// building — so the P3 overlay pass can stamp each building's NAME exactly where its
-// volume landed. (Trade-lane endpoints are filled in later by the trade pass.)
+// drawStructures is the structure entry point. As of citymap v2 (count-driven city
+// synthesis — see design-and-architecture/city-synthesis.md and citygen.go) it no
+// longer runs the old per-era placement STRATEGIES; instead it synthesizes a whole
+// cityPlan (streets + blocks + count-scaled lots) for the current age's era, paints
+// it, and reads back the landmark lots as the layoutGeometry. byKey is the config
+// lineage/category/name table (passed in so the render path builds it once). The
+// returned geometry — the city center plus one label anchor per named landmark
+// building — feeds the overlay pass unchanged, so the named hero buildings (Shrine,
+// Gathering Camp, …) stay labeled exactly as before, now embedded in the fabric.
 func drawStructures(img *image.RGBA, pal terrainPalette, state game.GameState, byKey map[string]config.BuildingDef, field *terrainField, terrainSeed uint32) layoutGeometry {
 	b := img.Bounds()
 	w, h := b.Dx(), b.Dy()
 
-	keys, counts := builtBuildingKeys(state)
-	districts := builtDistricts(byKey, keys, counts)
-
 	e := eraForAge(state.Age)
+	// Seed the synthesis off the age + built set (stable while the empire is fixed).
+	keys, _ := builtBuildingKeys(state)
 	seed := layoutSeed(state.Age, keys)
-	res := buildLayout(e, w, h, districts, pal, seed)
 
-	// Terrain-aware pass: the biome field (built once in renderImage from the terrain
-	// seed, so it matches the painted terrain exactly) drives both the placement nudge
-	// — buildings + City Center moved off water/mountain — and the road cost grid, so
-	// roads route around obstacles. The cost-grid jitter is keyed off the terrain seed
-	// so a given city always routes identically.
-	res.placements = nudgePlacements(res.placements, field)
-	grid := buildCostGrid(field, terrainSeed)
+	// Synthesize the plan (pure, deterministic). It routes streets around water using
+	// the same terrain field the terrain layer painted, so streets and land agree.
+	plan := generateCityPlan(state, byKey, field, e, seed, w, h)
+	return drawCityPlan(img, pal, plan, w, h)
+}
 
-	// Roads first (under the buildings, over the terrain). Rather than route N
-	// independent radial paths from every building to the City Center — which bundled
-	// into a parallel tangle at the hub — we build ONE shared road network: a minimum-
-	// spanning-tree over {City Center + all building centers}, routed edge-by-edge on
-	// the biome cost grid so each road bends AROUND lakes and peaks. Because nodes join
-	// their nearest tree neighbour, roads merge into shared trunks and branch cleanly
-	// instead of doubling up into the center. A* handles terrain; the straight-line
-	// fallback inside buildRoadNetwork only triggers when an endpoint is truly boxed in.
-	center, blds := roadNodes(res.placements)
-	for _, rseg := range buildRoadNetwork(grid, center, blds) {
-		drawRoad(img, rseg, pal.road)
+// drawCityPlan paints a synthesized cityPlan in bottom-up order and returns the
+// overlay geometry. Paint order (city-synthesis.md §Rendering):
+//
+//	streets        — the paved network (road tone, wider for avenues).
+//	block interior — gardens (dim green) and plazas (stone tone).
+//	building lots  — houses / workshops (small volumes) and landmarks (larger),
+//	                 each per-domain colored via lineageColor; walls/towers as blocks.
+//
+// The geometry it returns sets palaceX/Y to the city center (so the "City Center"
+// label lands at the plaza/heart) and one buildingLabel per landmark lot, carrying
+// the building's Name + lineage so the overlay names + colors it exactly as before.
+func drawCityPlan(img *image.RGBA, pal terrainPalette, plan cityPlan, w, h int) layoutGeometry {
+	// 1) Streets under everything else.
+	for _, s := range plan.streets {
+		drawStreet(img, pal, s)
 	}
 
-	// Buildings: draw normal tier first, then wonders, then the palace, so the
-	// important volumes sit on top where placements overlap.
-	drawPlacementsByTier(img, pal, res.placements, impNormal)
-	drawPlacementsByTier(img, pal, res.placements, impWonder)
-	drawPlacementsByTier(img, pal, res.placements, impPalace)
+	// 2) Block interiors: gardens + plazas. These are open-parcel lots, painted before
+	//    the building volumes so a house/workshop sits on top of its garden/plaza.
+	gardenCol := darken(pal.bGrass, 0.15) // a dim, grounded green for parks/patches
+	plazaCol := blend(pal.bSand, pal.road, 0.35)
+	for _, lt := range plan.lots {
+		switch lt.kind {
+		case lotGarden:
+			fillRect(img, lt.x, lt.y, lt.w, lt.h, gardenCol)
+		case lotPlaza:
+			fillRect(img, lt.x, lt.y, lt.w, lt.h, plazaCol)
+		}
+	}
 
-	return geometryFor(w, h, districts, res.placements)
+	// 3) Building volumes + extras. Houses/workshops first, then landmarks on top so a
+	//    hero volume is never buried under an adjacent house.
+	geo := layoutGeometry{palaceX: clampInt(w/2, 0, maxInt(w-1, 0)), palaceY: clampInt(h/2, 0, maxInt(h-1, 0))}
+	for _, lt := range plan.lots {
+		switch lt.kind {
+		case lotHouse, lotWorkshop:
+			drawVolume(img, pal, lotVolume(lt))
+		case lotWall:
+			drawBlock(img, lt.x, lt.y, lt.w, pal.road)
+		case lotTower:
+			drawVolume(img, pal, placement{cx: lt.x, cy: lt.y, size: 2, col: pal.palace, tier: impNormal})
+		}
+	}
+	for _, lt := range plan.lots {
+		if lt.kind != lotLandmark {
+			continue
+		}
+		p := lotVolume(lt)
+		drawVolume(img, pal, p)
+		geo.buildings = append(geo.buildings, buildingLabel{
+			px: lt.x, py: lt.y, name: lt.label,
+			lineageKey: lt.domain, category: lt.category, tier: lt.tier, size: p.size,
+		})
+	}
+	return geo
+}
+
+// lotVolume converts a building lot into the placement the shared drawVolume paints:
+// the lineage color from its domain/category (so it retints with the theme and
+// matches its label), a footprint half-size from the lot's kind/dimensions, and the
+// impNormal tier (landmark prominence comes from its larger footprint, not a tier
+// bump, so the palace/wonder size nudges in drawVolume don't double-inflate it).
+func lotVolume(lt lot) placement {
+	col := lineageColor(lt.domain, lt.category)
+	size := 0
+	switch lt.kind {
+	case lotWorkshop:
+		size = 1
+	case lotLandmark:
+		size = clampInt(maxInt(lt.w, lt.h), 1, 3)
+	}
+	return placement{cx: lt.x, cy: lt.y, size: size, col: col, tier: impNormal}
+}
+
+// fillRect fills the pixel rectangle (x,y,w,h) with color c, clipped to the image.
+// Used for the flat open-parcel lots (gardens, plazas) that are areas, not volumes.
+func fillRect(img *image.RGBA, x, y, w, h int, c color.RGBA) {
+	b := img.Bounds()
+	for yy := y; yy < y+h; yy++ {
+		if yy < b.Min.Y || yy >= b.Max.Y {
+			continue
+		}
+		for xx := x; xx < x+w; xx++ {
+			if xx < b.Min.X || xx >= b.Max.X {
+				continue
+			}
+			img.SetRGBA(xx, yy, c)
+		}
+	}
+}
+
+// drawStreet rasterizes one street polyline as a road. width 0 draws a single-pixel
+// line (village dirt paths, alleys); width>=1 draws a thicker band by stroking a few
+// parallel offsets so avenues read wider than lanes. Paved avenues are tinted a hair
+// brighter than the base road tone so the hierarchy is legible.
+func drawStreet(img *image.RGBA, pal terrainPalette, s street) {
+	if len(s.pts) < 2 {
+		return
+	}
+	col := pal.road
+	if s.paved {
+		col = brighten(pal.road, 0.12)
+	}
+	for i := 0; i+1 < len(s.pts); i++ {
+		a, b := s.pts[i], s.pts[i+1]
+		drawRoad(img, roadSeg{a.x, a.y, b.x, b.y}, col)
+		// Thicken by stroking vertical + horizontal neighbours for each extra width
+		// step, so the band stays connected around bends without a full polygon fill.
+		for wstep := 1; wstep <= s.width; wstep++ {
+			drawRoad(img, roadSeg{a.x + wstep, a.y, b.x + wstep, b.y}, col)
+			drawRoad(img, roadSeg{a.x, a.y + wstep, b.x, b.y + wstep}, col)
+		}
+	}
 }
 
 // nudgePlacements moves any placement whose center lands on an impassable cell
