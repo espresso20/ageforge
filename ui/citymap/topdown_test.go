@@ -1571,3 +1571,351 @@ func TestPondsInTown(t *testing.T) {
 		t.Fatalf("only %d pond-water pixels in the final image — the ponds are not painting as water", waterPix)
 	}
 }
+
+// ---- town-form archetypes (map-overhaul-citymap V3-A) -----------------------
+
+// formName is a readable label for a town form, for test failure messages.
+func formName(f tdTownForm) string {
+	switch f {
+	case formOrganic:
+		return "organic"
+	case formRadial:
+		return "radial"
+	case formGrid:
+		return "grid"
+	case formRibbon:
+		return "ribbon"
+	}
+	return "?"
+}
+
+// wardSeedRadialCorr is the robust ANTI-WHEEL metric: the Pearson correlation between a ward seed's
+// INDEX and its RADIUS from the core, over plan.wardSeeds (the pinned center at the origin is
+// skipped). A RADIAL "wagon wheel" scatters its free seeds on a golden-angle SPIRAL — radius climbs
+// monotonically with index — so this correlation is high (~0.8–1.0). ORGANIC (blue-noise) and
+// RIBBON (linear) seeds have no radial ordering, so it sits near 0. This survives Lloyd relaxation
+// (which evens angular gaps but keeps the spiral's centers-out ordering), so it tells an organic
+// town from a wheel on the REAL generated plan. Returns 0 for a degenerate (<3-seed) field.
+func wardSeedRadialCorr(plan topPlan) float64 {
+	var idx, rad []float64
+	i := 0.0
+	for _, s := range plan.wardSeeds {
+		if math.Hypot(s.x-plan.cx, s.y-plan.cy) < 1e-9 {
+			continue // skip the pinned center seed
+		}
+		idx = append(idx, i)
+		rad = append(rad, math.Hypot(s.x-plan.cx, s.y-plan.cy))
+		i++
+	}
+	n := float64(len(idx))
+	if n < 3 {
+		return 0
+	}
+	var sx, sy, sxy, sx2, sy2 float64
+	for k := range idx {
+		sx += idx[k]
+		sy += rad[k]
+		sxy += idx[k] * rad[k]
+		sx2 += idx[k] * idx[k]
+		sy2 += rad[k] * rad[k]
+	}
+	den := math.Sqrt((n*sx2 - sx*sx) * (n*sy2 - sy*sy))
+	if den == 0 {
+		return 0
+	}
+	return (n*sxy - sx*sy) / den
+}
+
+// TestTownFormDeterministicAndVaried locks the two core properties of tdPickTownForm: it is a pure
+// function of (citySeed, era) — the SAME inputs always yield the SAME form — and across a sample of
+// citySeeds the chosen forms VARY (a band is not collapsed to a single form). Determinism is what
+// makes a civ's town shape stable across ages/frames; variety is the whole point (no two towns
+// alike).
+func TestTownFormDeterministicAndVaried(t *testing.T) {
+	// (1) DETERMINISM: repeated picks for the same (seed, era) are identical, for several eras.
+	eras := []era{eraOrganic, eraHubSpoke, eraCastle, eraZonedGrid, eraCityBlocks, eraCampus, eraOrbital}
+	for _, e := range eras {
+		for i := 0; i < 200; i++ {
+			s := citySeed("Town" + strconv.Itoa(i))
+			a := tdPickTownForm(s, e)
+			b := tdPickTownForm(s, e)
+			if a != b {
+				t.Fatalf("tdPickTownForm not deterministic for seed %#x era %d: %s vs %s", s, e, formName(a), formName(b))
+			}
+		}
+	}
+
+	// (2) VARIETY: over a sample of citySeeds, a band that allows >1 form actually PRODUCES >1 form
+	// (different seeds → different towns). Test on eras whose weights permit several forms.
+	for _, e := range []era{eraHubSpoke, eraCastle, eraZonedGrid, eraCityBlocks} {
+		seen := map[tdTownForm]int{}
+		for i := 0; i < 400; i++ {
+			seen[tdPickTownForm(citySeed("Varyville"+strconv.Itoa(i)), e)]++
+		}
+		if len(seen) < 2 {
+			t.Fatalf("era %d produced only %d distinct form(s) over 400 seeds (%v) — towns are not varied", e, len(seen), seen)
+		}
+	}
+
+	// (3) The SAME civ name over different eras generally re-skins its form (the roll is
+	// era-weighted, not a single global choice) — assert at least the distribution differs by
+	// confirming a name that is organic in primitive can be a different form in a grid-heavy era
+	// somewhere in the sample (proves era actually feeds the pick).
+	eraSpanChanged := false
+	for i := 0; i < 200; i++ {
+		s := citySeed("Spanner" + strconv.Itoa(i))
+		if tdPickTownForm(s, eraOrganic) != tdPickTownForm(s, eraCityBlocks) {
+			eraSpanChanged = true
+			break
+		}
+	}
+	if !eraSpanChanged {
+		t.Fatal("no civ changed form between the organic and city-blocks bands — era is not influencing the pick")
+	}
+}
+
+// TestPrimitiveIsOrganicNotAWheel locks the headline requirement: PRIMITIVE villages RAMBLE
+// organically and are NEVER radial wheels. Two parts:
+//
+//	(A) Over many citySeeds, the PRIMITIVE band rolls ORGANIC-dominant and NEVER radial or grid
+//	    (villages aren't planned) — and the fixed anonymous village seed (the default city) is
+//	    organic, not a wheel.
+//	(B) A generated ORGANIC town has NO radial-spoke / central-ring concentration: its ward-seed
+//	    radial ordering (wardSeedRadialCorr) is LOW, whereas a forced RADIAL town's is HIGH — a
+//	    robust anti-wheel assertion (the metric genuinely bites; it is not vacuously true).
+func TestPrimitiveIsOrganicNotAWheel(t *testing.T) {
+	_ = theme.SetActive("forge")
+
+	// (A) Distribution over many seeds at the primitive (organic) band.
+	var cnt [4]int
+	for i := 0; i < 2000; i++ {
+		f := tdPickTownForm(citySeed("Hamlet"+strconv.Itoa(i)), eraOrganic)
+		cnt[f]++
+	}
+	if cnt[formRadial] != 0 || cnt[formGrid] != 0 {
+		t.Fatalf("primitive rolled radial=%d grid=%d — villages must NEVER be planned wheels/grids", cnt[formRadial], cnt[formGrid])
+	}
+	if frac := float64(cnt[formOrganic]) / 2000.0; frac < 0.5 {
+		t.Fatalf("primitive is only %.0f%% organic — villages must be ORGANIC-dominant", frac*100)
+	}
+	if cnt[formRibbon] == 0 {
+		t.Fatal("primitive never rolled ribbon — the occasional grew-along-a-trail village should still appear")
+	}
+	// The fixed anonymous (default) village seed must be organic — the CURRENT village is not a wheel.
+	if got := tdPickTownForm(citySeed(""), eraOrganic); got != formOrganic {
+		t.Fatalf("the default (anonymous) primitive village rolled %s, want organic — the current village must ramble, not read as a wheel", formName(got))
+	}
+
+	// (B) Anti-wheel on the REAL generated plan: an organic town's ward seeds are NOT radially
+	// ordered; a radial town's are. Average over several seeds/counts so the assertion is robust to
+	// a single unlucky field.
+	organicCorr := 0.0
+	radialCorr := 0.0
+	ns := 0
+	cfg := defaultTdConfig
+	anchors := []tdAnchor{{cx: 0, cy: 0}} // wonderless: a single pinned center (the village heart)
+	for _, nm := range []string{"", "Aldermoor", "Corveil", "Duskwind", "Emberton", "Faelin", "Gorse", "Hale"} {
+		seed := citySeed(nm)
+		for _, nRoofs := range []int{60, 120, 200} {
+			townR := tdTownRadius(nRoofs, cfg)
+			org := tdBuildBlockField(townR, anchors, nRoofs, formOrganic, cfg, seed)
+			rad := tdBuildBlockField(townR, anchors, nRoofs, formRadial, cfg, seed)
+			organicCorr += wardSeedRadialCorr(topPlan{wardSeeds: org.seeds})
+			radialCorr += wardSeedRadialCorr(topPlan{wardSeeds: rad.seeds})
+			ns++
+		}
+	}
+	organicCorr /= float64(ns)
+	radialCorr /= float64(ns)
+	// The organic town must be clearly NON-radial, and the radial town clearly radial — a wide,
+	// robust margin so this isn't brittle to Lloyd tuning.
+	if organicCorr > 0.35 {
+		t.Fatalf("organic ward seeds are radially ordered (corr %.3f) — the organic town is reading as a wheel", organicCorr)
+	}
+	if radialCorr < 0.6 {
+		t.Fatalf("radial ward seeds are NOT radially ordered (corr %.3f) — the anti-wheel metric does not bite; the test would pass a wheel", radialCorr)
+	}
+	if radialCorr-organicCorr < 0.4 {
+		t.Fatalf("organic (%.3f) and radial (%.3f) ward-seed orderings are too close — organic is not provably distinct from a wheel", organicCorr, radialCorr)
+	}
+
+	// The organic default village, generated end-to-end, is also non-radial (belt-and-braces on the
+	// real tdPlanFor path, not just the raw field).
+	plan := tdPlanFor(sampleState("primitive_age", map[string]int{"hut": 40, "gathering_camp": 24, "stone_camp": 12, "forge": 10}))
+	if plan.form != formOrganic {
+		t.Fatalf("the default primitive plan is %s, want organic", formName(plan.form))
+	}
+	if c := wardSeedRadialCorr(plan); c > 0.4 {
+		t.Fatalf("the default organic village plan has radially-ordered wards (corr %.3f) — it still reads as a wheel", c)
+	}
+}
+
+// unionCount union-finds the given street cells by grid adjacency (8-neighbours on the raster:
+// centers within ~1.5 cell sizes join) and returns the number of connected components. Shared by
+// the per-form connectivity assertion. Mirrors TestStreetsConnected's union-find.
+func unionCount(cells []tdPoint, cellSize float64) int {
+	n := len(cells)
+	if n == 0 {
+		return 0
+	}
+	adj2 := (cellSize * 1.5) * (cellSize * 1.5)
+	parent := make([]int, n)
+	for i := range parent {
+		parent[i] = i
+	}
+	var find func(int) int
+	find = func(x int) int {
+		for parent[x] != x {
+			parent[x] = parent[parent[x]]
+			x = parent[x]
+		}
+		return x
+	}
+	for i := 0; i < n; i++ {
+		for j := i + 1; j < n; j++ {
+			dx := cells[i].x - cells[j].x
+			dy := cells[i].y - cells[j].y
+			if dx*dx+dy*dy <= adj2 {
+				parent[find(i)] = find(j)
+			}
+		}
+	}
+	roots := map[int]bool{}
+	for i := 0; i < n; i++ {
+		roots[find(i)] = true
+	}
+	return len(roots)
+}
+
+// TestEachTownFormWellFormed locks that ALL FOUR forms feed the SAME ward machinery and each yields
+// a WELL-FORMED town: (1) the block-gap street network is ONE connected component reaching the core
+// (streets = ward boundaries, connected by construction), (2) the field has both street cells AND
+// interior block cells (the wards exist and are inset from the gaps), and (3) the town is
+// COMPACT/BOUNDED (every ward seed sits within the town disc). Then, end-to-end via the real
+// pipeline, each form places a real settlement with NO roof overlap and ~0 roofs on street cells
+// (buildings sit inside their wards). This is what proves the new forms didn't break connectivity,
+// no-overlap, or boundedness that the radial-only model guaranteed.
+func TestEachTownFormWellFormed(t *testing.T) {
+	_ = theme.SetActive("forge")
+	cfg := defaultTdConfig
+
+	// (1)-(3): FIELD-level checks for each form, forced directly (no era-style confound). Wonderless
+	// single-center anchor + a substantial ward count so the network is real.
+	anchors := []tdAnchor{{cx: 0, cy: 0}}
+	for _, form := range []tdTownForm{formOrganic, formRadial, formGrid, formRibbon} {
+		for _, nm := range []string{"Aldermoor", "Bexley", "Corveil", "Duskwind"} {
+			seed := citySeed(nm)
+			nRoofs := 140
+			townR := tdTownRadius(nRoofs, cfg)
+			field := tdBuildBlockField(townR, anchors, nRoofs, form, cfg, seed)
+
+			// Street network exists, is ONE component, and reaches the core (the central plaza's
+			// ward boundary is central).
+			if len(field.streetCells) < 8 {
+				t.Fatalf("form %s seed %q: only %d street cells — no real block-gap network", formName(form), nm, len(field.streetCells))
+			}
+			if comps := unionCount(field.streetCells, field.cellSize); comps != 1 {
+				t.Fatalf("form %s seed %q: street network has %d components, want 1 (streets must be one connected web)", formName(form), nm, comps)
+			}
+			nearCore := false
+			for _, p := range field.streetCells {
+				if math.Hypot(p.x, p.y) <= townR*0.45 {
+					nearCore = true
+					break
+				}
+			}
+			if !nearCore {
+				t.Fatalf("form %s seed %q: no street cell near the core — the network does not reach the central plaza", formName(form), nm)
+			}
+
+			// Wards exist: at least a few blocks carry interior cells (the buildings' frontage).
+			blocksWithCells := 0
+			for _, cells := range field.blockCells {
+				if len(cells) > 0 {
+					blocksWithCells++
+				}
+			}
+			if blocksWithCells < 2 {
+				t.Fatalf("form %s seed %q: only %d blocks have interior cells — no wards to fill", formName(form), nm, blocksWithCells)
+			}
+
+			// COMPACT/BOUNDED: every ward seed sits inside the town disc (a small epsilon for the
+			// clamp). No form flings a ward outside the bounded footprint.
+			for _, s := range field.seeds {
+				if d := math.Hypot(s.x, s.y); d > townR+cfg.cellSize {
+					t.Fatalf("form %s seed %q: a ward seed sits %.1f from core, past townR %.1f — not bounded/compact", formName(form), nm, d, townR)
+				}
+			}
+		}
+	}
+
+	// End-to-end per form via the REAL pipeline (picker + populate + wonders + min-gap guard): pick a
+	// (name, age) that rolls each target form, then assert no roof overlap and roofs-in-wards.
+	type formCase struct {
+		form   tdTownForm
+		ageKey string
+		era    era
+	}
+	// One representative age per era band we use. tdPickTownForm(seed, era) selects the form.
+	cases := []formCase{
+		{formOrganic, "primitive_age", eraOrganic},
+		{formRibbon, "primitive_age", eraOrganic},
+		{formRadial, "bronze_age", eraHubSpoke},
+		{formGrid, "electric_age", eraCityBlocks},
+	}
+	blds := map[string]int{"hut": 26, "gathering_camp": 18, "stone_camp": 10, "forge": 10, "barracks": 6}
+	for _, fc := range cases {
+		// Find a display name whose seed rolls the desired form for this era.
+		name := ""
+		for i := 0; i < 5000; i++ {
+			cand := "Form" + strconv.Itoa(i)
+			if tdPickTownForm(citySeed(cand), fc.era) == fc.form {
+				name = cand
+				break
+			}
+		}
+		if name == "" {
+			t.Fatalf("could not find a seed that rolls form %s at era %d — form unreachable", formName(fc.form), fc.era)
+		}
+		plan := tdPlanFor(namedState(fc.ageKey, name, blds))
+		if plan.form != fc.form {
+			t.Fatalf("form %s: generated plan rolled %s instead (seed/era wiring mismatch)", formName(fc.form), formName(plan.form))
+		}
+
+		lots := allRoofLots(plan)
+		if len(lots) < 10 {
+			t.Fatalf("form %s (seed %q age %s): only %d roof lots — expected a real settlement", formName(fc.form), name, fc.ageKey, len(lots))
+		}
+		// NO roof overlap: no two roofs may touch (edge separation > a small floor).
+		const floor = 0.2
+		for i := range lots {
+			for k := 0; k < i; k++ {
+				d := math.Hypot(lots[i].x-lots[k].x, lots[i].y-lots[k].y)
+				sep := d - roofHalfExtent(lots[i]) - roofHalfExtent(lots[k])
+				if sep < floor {
+					t.Fatalf("form %s (seed %q): roofs overlap — lot %d (%s) and lot %d (%s) edge sep %.2f < %.2f",
+						formName(fc.form), name, i, lots[i].domain, k, lots[k].domain, sep, floor)
+				}
+			}
+		}
+		// Buildings sit IN WARDS: ~0 fabric roofs land on a street cell (inset from the gaps).
+		fab := fabricLots(plan)
+		onStreet := 0
+		for _, lt := range fab {
+			if onStreetCell(plan, lt.x, lt.y) {
+				onStreet++
+			}
+		}
+		if len(fab) > 0 {
+			if frac := float64(onStreet) / float64(len(fab)); frac > 0.05 {
+				t.Fatalf("form %s (seed %q): %.0f%% of roofs sit ON a street cell — buildings must be inset inside their wards", formName(fc.form), name, frac*100)
+			}
+		}
+		// COMPACT: no fabric roof past the bounded town radius (anti-pinwheel holds for every form).
+		for _, lt := range fab {
+			if d := math.Hypot(lt.x-plan.cx, lt.y-plan.cy); d > plan.townR*1.05 {
+				t.Fatalf("form %s (seed %q): a roof sits %.1f from core, past townR %.1f — not compact/bounded", formName(fc.form), name, d, plan.townR)
+			}
+		}
+	}
+}

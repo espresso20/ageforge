@@ -468,6 +468,16 @@ type topPlan struct {
 	// townR is the bounded town-disc radius (tdTownRadius) used to size the raster and bound
 	// the fill-frame fit even before any roof exists.
 	townR float64
+	// form is the town-form archetype (organic / radial / grid / ribbon) picked for this civ+era
+	// (tdPickTownForm). It selects the block-seed scatter strategy so no two towns read alike and
+	// primitive villages ramble organically rather than all reading as radial wheels. Kept on the
+	// plan so tests + future dressing can read which form a town took.
+	form tdTownForm
+	// wardSeeds are the relaxed Voronoi ward centers (the block-field seeds after Lloyd), in city
+	// space, kept for tests + future ward-level dressing. The RADIAL form's wards spiral centers-out
+	// (a strong seed-index↔radius correlation — the wagon-wheel signature); ORGANIC/RIBBON wards do
+	// not (blue-noise / linear), which is how the anti-wheel test tells an organic town from a wheel.
+	wardSeeds []tdPoint
 	// anchors are the central growth seats: the built wonders (each in a central region) plus,
 	// for a wonderless village, one town-center anchor. Kept on the plan so the square dressing
 	// + tests can read the growth skeleton.
@@ -632,6 +642,127 @@ func tdCountBand(n int) int {
 	return int(edge*edge + 0.5)
 }
 
+// ---- town-form archetypes (map-overhaul-citymap V3-A) -----------------------
+//
+// The Voronoi ward machinery is one pipeline, but the SEED DISTRIBUTION it starts from decides
+// what KIND of town emerges — so no two towns read alike and, crucially, not every town is a
+// radial "wagon wheel". A town's FORM is picked once (deterministic, era-weighted) and selects
+// one of four seed-scatter strategies; everything downstream (Lloyd relaxation, the raster
+// nearest-seed partition, streets = ward boundaries, buildings fill wards) is IDENTICAL across
+// forms. Only tdScatterSeedsFor + a couple of per-form constraints differ.
+//
+//	formOrganic — POISSON-DISK / jittered-random scatter in the disc, NO radial bias and NO forced
+//	    ring/spokes: rambling irregular wards, organic streets. This is what a village looks like
+//	    and it is what kills the wheel (the old default). PRIMITIVE/stone lands here overwhelmingly.
+//	formRadial  — the ORIGINAL golden-angle phyllotaxis + pinned center: phyllotaxis seeds put the
+//	    Voronoi boundaries on radial "spokes" and the pinned-center region reads as a hub with a
+//	    ring road around it — the wagon wheel. Now ONE option among four, era-weighted toward the
+//	    ages that were actually planned around a monument/forum (ancient, medieval), NEVER primitive.
+//	formGrid    — seeds on a JITTERED GRID over the disc: rectangular-ish wards, orthogonal-ish
+//	    streets — a planned/surveyed town. Weighted toward colonial→modern.
+//	formRibbon  — the town ELONGATED along an axis with seeds strung along that axis (a main road)
+//	    plus lateral spread: a linear town strung along a road. A pinch of every band, dominant
+//	    nowhere; the occasional primitive village that grew along a river/trail.
+type tdTownForm int
+
+const (
+	formOrganic tdTownForm = iota
+	formRadial
+	formGrid
+	formRibbon
+)
+
+// tdFormWeights is a small per-band weighting over the four forms (organic, radial, grid, ribbon),
+// consumed as a discrete distribution by tdPickTownForm. A zero weight forbids a form for that
+// band (e.g. primitive villages are NEVER radial or grid — they ramble, they are not planned).
+// These are the V3-A defaults and are deliberately TUNABLE later (V3-B/C dials each band); the
+// only hard contract V3-A tests lock is that PRIMITIVE is organic-dominant and never a wheel.
+type tdFormWeights [4]float64
+
+// tdBandFormWeights returns the form distribution for an era band (map-overhaul-citymap):
+//
+//	organic  (primitive, stone)      — ORGANIC-dominant, a little RIBBON, NEVER radial/grid.
+//	hub-spoke(bronze, iron, class.)  — ancient: organic + radial (monument-planned cores appear).
+//	castle   (medieval, renaissance) — radial + organic + some grid (market-square towns).
+//	zoned    (colonial→victorian)    — GRID-heavy, some organic/ribbon (surveyed colonial towns).
+//	blocks   (electric→modern)       — GRID-dominant (the planned modern city).
+//	campus   (information→fusion)    — grid / organic mix (megablocks + arcology sprawl).
+//	orbital  (space→transcendent)    — organic / grid (radial arcs read as neither wheel nor grid).
+//
+// Weights are relative (they need not sum to 1). Order: [organic, radial, grid, ribbon].
+func tdBandFormWeights(e era) tdFormWeights {
+	switch e {
+	case eraOrganic:
+		// Villages ramble; they are not planned. Organic dominates, ribbon is the rare
+		// grew-along-a-trail village, and radial/grid are FORBIDDEN (0) so a primitive town can
+		// never roll a wheel or a survey grid.
+		return tdFormWeights{0.80, 0, 0, 0.20}
+	case eraHubSpoke:
+		// Ancient: the first monument/forum cores appear, so radial enters — but the countryside
+		// is still mostly organic. A little ribbon; no formal grid yet.
+		return tdFormWeights{0.50, 0.35, 0, 0.15}
+	case eraCastle:
+		// Medieval/renaissance: radial market-square towns + organic old quarters, the first
+		// planned grids (bastides), a little ribbon.
+		return tdFormWeights{0.32, 0.38, 0.18, 0.12}
+	case eraZonedGrid:
+		// Colonial→victorian: the surveyed grid takes over; organic survives in old cores, ribbon
+		// along the rail/canal, radial is now the exception.
+		return tdFormWeights{0.18, 0.10, 0.55, 0.17}
+	case eraCityBlocks:
+		// Electric→modern: the planned grid dominates the metropolis; a little organic/ribbon.
+		return tdFormWeights{0.14, 0.06, 0.64, 0.16}
+	case eraCampus:
+		// Information→fusion: megablock grid + arcology organic sprawl, ribbon corridors.
+		return tdFormWeights{0.30, 0.06, 0.50, 0.14}
+	case eraOrbital:
+		// Space→transcendent: organic habs + modular grid; the ring/arc look reads as neither a
+		// wagon wheel nor a survey grid, so radial stays low.
+		return tdFormWeights{0.44, 0.08, 0.40, 0.08}
+	default:
+		return tdFormWeights{0.80, 0, 0, 0.20}
+	}
+}
+
+// tdPickTownForm chooses a town's FORM deterministically from (citySeed, era). It is a pure
+// function — the SAME (seed, era) always yields the SAME form — and it is ERA-WEIGHTED via
+// tdBandFormWeights, so different citySeeds fan out across the era-appropriate forms (no two towns
+// need look alike) while PRIMITIVE reliably lands organic (never a wheel). A degenerate all-zero
+// or negative weight vector falls back to organic. The seed is hashed with a distinct salt so the
+// form roll is independent of the seed's other uses (anchor phase, jitter, scatter phase).
+func tdPickTownForm(seed uint32, e era) tdTownForm {
+	w := tdBandFormWeights(e)
+	total := 0.0
+	for _, x := range w {
+		if x > 0 {
+			total += x
+		}
+	}
+	if total <= 0 {
+		return formOrganic
+	}
+	// A stable [0,total) roll from a salted hash of the seed — independent of the phyllotaxis/
+	// jitter hashes so changing one never shifts the form.
+	roll := float64(hash2(0xF0F0, 0x0F0F, seed^0x7f4a7c15)) / float64(^uint32(0)) * total
+	acc := 0.0
+	for i, x := range w {
+		if x <= 0 {
+			continue
+		}
+		acc += x
+		if roll < acc {
+			return tdTownForm(i)
+		}
+	}
+	// Float slop guard: return the last positive-weight form.
+	for i := len(w) - 1; i >= 0; i-- {
+		if w[i] > 0 {
+			return tdTownForm(i)
+		}
+	}
+	return formOrganic
+}
+
 // tdTownRadius is the BOUNDED town-disc radius model (city units) for a settlement of `n` fabric
 // roof-lots (map-overhaul-citymap; playtest FIX: no pinwheel): townBaseRadius + townGrowth·√n
 // over the BANDED count — it grows only ~SQRT with the count, so the footprint saturates, and it
@@ -779,14 +910,18 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 		heroKey = production[best].key
 	}
 
-	// (c) blocks — build the Voronoi block field: town disc → seeds → Lloyd → raster partition →
-	// street cells + block interiors. Central region(s) are reserved as the plaza (wonders +
-	// the wonderless center anchor). The whole field is a pure function of (seed, roof count).
+	// (c) blocks — build the Voronoi block field: town disc → seeds (scattered by the town FORM) →
+	// Lloyd → raster partition → street cells + block interiors. Central region(s) are reserved as
+	// the plaza (wonders + the wonderless center anchor). The whole field is a pure function of
+	// (seed, roof count, form). The FORM is picked once, deterministically + era-weighted, so towns
+	// vary per city+era and primitive villages ramble organically instead of all reading as wheels.
+	plan.form = tdPickTownForm(seed, eraForAge(state.Age))
 	totalRoofs := tdTotalFabricRoofs(blds)
 	plan.townR = tdTownRadius(totalRoofs, cfg)
-	field := tdBuildBlockField(plan.townR, plan.anchors, totalRoofs, cfg, seed)
+	field := tdBuildBlockField(plan.townR, plan.anchors, totalRoofs, plan.form, cfg, seed)
 	plan.streetCells = field.streetCells
 	plan.cellSize = field.cellSize
+	plan.wardSeeds = field.seeds
 
 	// (d) populate — distribute all non-wonder buildings across the block interiors, filling
 	// each block's perimeter facing the surrounding streets, intermixing types across blocks,
@@ -886,20 +1021,45 @@ func tdBlockSeedCount(nRoofs, nAnchors int, cfg tdConfig) int {
 	return b
 }
 
-// tdScatterSeeds places B block seeds in the town disc, DETERMINISTICALLY from citySeed. The
-// first nAnchors seeds are pinned to the plaza anchors (so each wonder / the center owns a
-// central region); the rest fill the disc on a golden-angle phyllotaxis spiral (an even,
-// index-stable spread) with a seeded phase. Pure function of (seed, B, anchors).
-func tdScatterSeeds(townR float64, anchors []tdAnchor, B int, cfg tdConfig, seed uint32) []tdPoint {
+// tdScatterSeedsFor places B block seeds in the town area for a given town FORM, DETERMINISTICALLY
+// from citySeed (map-overhaul-citymap V3-A). Every form pins the first len(anchors) seeds to the
+// plaza anchors (so each wonder / the center owns a central region and the streets always reach
+// the core), then scatters need = B - len(anchors) FREE seeds by the form's own strategy. The seed
+// COUNT is the same regardless of form (it is the banded tdBlockSeedCount), so banded stability is
+// unaffected; only the arrangement differs. Every form's free seeds land inside the town disc so
+// the raster partition stays one connected boundary web (streets-connected holds by construction).
+// Pure function of (form, seed, B, anchors).
+func tdScatterSeedsFor(form tdTownForm, townR float64, anchors []tdAnchor, B int, cfg tdConfig, seed uint32) []tdPoint {
 	seeds := make([]tdPoint, 0, B)
 	for _, a := range anchors {
 		seeds = append(seeds, tdPoint{a.cx, a.cy})
 	}
+	need := B - len(seeds)
+	if need <= 0 {
+		return seeds
+	}
+	switch form {
+	case formRadial:
+		return tdScatterRadial(seeds, townR, need, cfg, seed)
+	case formGrid:
+		return tdScatterGrid(seeds, townR, need, cfg, seed)
+	case formRibbon:
+		return tdScatterRibbon(seeds, townR, need, cfg, seed)
+	default: // formOrganic
+		return tdScatterOrganic(seeds, townR, need, cfg, seed)
+	}
+}
+
+// tdScatterRadial is the ORIGINAL golden-angle phyllotaxis scatter — now the formRadial strategy
+// ONLY (map-overhaul-citymap). Free seeds fill the disc on a golden-angle spiral: this is exactly
+// what puts the Voronoi ward BOUNDARIES on radial spokes and, with the pinned-center region acting
+// as a hub, reads as a wagon wheel with a ring road. That look is intentional for the radial form
+// (a monument/forum-planned town) but is no longer the default for every town. `seeds` already
+// holds the pinned anchors; this appends the free seeds. Pure over (seed, need).
+func tdScatterRadial(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
 	phase := float64(hash2(0x5eed, 0x1a, seed)) / float64(^uint32(0)) * 2 * math.Pi
 	// The spiral fills up to ~0.92·townR so the outermost blocks sit inside the disc rim (a
-	// ring of ground/greenery hugs the edge). Scatter the remaining B-len(anchors) seeds.
-	need := B - len(seeds)
-	// Index the spiral so seed k lands at radius ∝ sqrt((k+0.5)/need): centers-out, even area.
+	// ring of ground/greenery hugs the edge).
 	for k := 0; k < need; k++ {
 		frac := (float64(k) + 0.5) / float64(maxInt(need, 1))
 		r := 0.92 * townR * math.Sqrt(frac)
@@ -913,12 +1073,161 @@ func tdScatterSeeds(townR float64, anchors []tdAnchor, B int, cfg tdConfig, seed
 	return seeds
 }
 
+// tdScatterOrganic is the POISSON-DISK / jittered-random scatter — the formOrganic strategy and
+// the DEFAULT for primitive villages (map-overhaul-citymap). It drops free seeds at seeded RANDOM
+// positions in the disc (uniform by area: radius ∝ √u, angle uniform) with a blue-noise REJECT
+// pass — a candidate is rejected if it lands within minDist of an already-placed seed — so the
+// wards come out irregular and RAMBLING with organic streets and NO radial bias and NO ring/spokes
+// (this is what kills the wheel). minDist is derived from the disc area / seed count so the town
+// still fills evenly. Determinism + a fixed seed COUNT: if the reject budget can't place all `need`
+// seeds (dense packing is unlucky), the shortfall is filled by RELAXING the spacing (the tail
+// candidates are accepted regardless), so exactly `need` free seeds always land and the banded
+// stability tradeoff is preserved. Pure over (seed, need); bounded attempt loop → panic-safe.
+func tdScatterOrganic(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+	rr := 0.94 * townR // free seeds stay just inside the rim
+	// Target spacing from area: minDist ≈ 0.7·√(discArea / seeds). The 0.7 leaves the reject pass
+	// room to actually place the target count before it must relax.
+	area := math.Pi * rr * rr
+	minDist := 0.7 * math.Sqrt(area/float64(need+len(seeds)))
+	minD2 := minDist * minDist
+	r := newRNG(hash2(0x0B10, uint32(need), seed) | 1)
+	placed := 0
+	// A generous, BOUNDED attempt budget: up to 40 candidates per needed seed.
+	maxAttempts := (need + 1) * 40
+	for attempts := 0; placed < need && attempts < maxAttempts; attempts++ {
+		// Uniform-in-disc: radius ∝ √u so area is even (no center clumping bias).
+		rad := rr * math.Sqrt(r.f01())
+		ang := r.f01() * 2 * math.Pi
+		p := tdPoint{math.Cos(ang) * rad, math.Sin(ang) * rad}
+		ok := true
+		for _, s := range seeds {
+			dx, dy := p.x-s.x, p.y-s.y
+			if dx*dx+dy*dy < minD2 {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			seeds = append(seeds, p)
+			placed++
+		}
+	}
+	// Relax to guarantee exactly `need` free seeds (fixed count → stable banding). Any remaining
+	// slots take unrejected uniform samples; they may sit a touch closer, which Lloyd then evens.
+	for placed < need {
+		rad := rr * math.Sqrt(r.f01())
+		ang := r.f01() * 2 * math.Pi
+		seeds = append(seeds, tdPoint{math.Cos(ang) * rad, math.Sin(ang) * rad})
+		placed++
+	}
+	return seeds
+}
+
+// tdScatterGrid is the JITTERED-GRID scatter — the formGrid strategy (map-overhaul-citymap). It
+// lays free seeds on a square lattice across the town's bounding square, keeps the ones inside the
+// disc, and JITTERS each off its lattice node by a fraction of the cell — yielding rectangular-ish
+// wards and orthogonal-ish streets (a surveyed/planned town), NOT a wheel. The lattice is sized so
+// it yields at least `need` in-disc nodes; nodes are taken CENTERS-OUT (nearest the core first) so
+// a partial fill stays central and the count is stable. A seeded phase rotates/offsets the whole
+// lattice so two grid towns aren't identical. If the disc is somehow too small to host `need`
+// nodes, the shortfall falls through to an organic top-up so exactly `need` free seeds land. Pure
+// over (seed, need); bounded → panic-safe.
+func tdScatterGrid(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+	rr := 0.92 * townR
+	// Choose a cell size so ~need nodes fall inside the disc: discArea ≈ need·cell² → cell ≈
+	// √(π·rr² / need). A mild 1.08 loosening keeps a few spare nodes for the centers-out trim.
+	cell := 1.08 * math.Sqrt(math.Pi*rr*rr/float64(need))
+	if cell < 1e-3 {
+		cell = 1e-3
+	}
+	// A seeded sub-cell phase offset so the grid origin (and thus the whole lattice) shifts per
+	// city; kept within one cell so the lattice still spans the disc.
+	phx := (float64(hash2(0x671D, 0x11, seed))/float64(^uint32(0)) - 0.5) * cell
+	phy := (float64(hash2(0x671D, 0x12, seed))/float64(^uint32(0)) - 0.5) * cell
+	// Enumerate lattice nodes across the bounding square, keep the in-disc ones with jitter, and
+	// order them by distance from the core so a trim to `need` keeps the central lattice.
+	type gnode struct {
+		p  tdPoint
+		d2 float64
+	}
+	var nodes []gnode
+	half := int(math.Ceil(rr/cell)) + 1
+	if half > 64 { // panic-safety cap on the lattice extent
+		half = 64
+	}
+	r := newRNG(hash2(0x6D17, uint32(need), seed) | 1)
+	jit := cell * 0.30 // jitter amplitude — enough to look natural, not enough to cross a lane
+	for gy := -half; gy <= half; gy++ {
+		for gx := -half; gx <= half; gx++ {
+			nx := float64(gx)*cell + phx
+			ny := float64(gy)*cell + phy
+			// Jitter each node deterministically (hash keyed by lattice coords, stable per city).
+			jx := (float64(hash2(uint32(gx*2+1000), uint32(gy*2+1000), seed))/float64(^uint32(0)) - 0.5) * 2 * jit
+			jy := (float64(hash2(uint32(gx*2+2000), uint32(gy*2+2000), seed))/float64(^uint32(0)) - 0.5) * 2 * jit
+			px, py := nx+jx, ny+jy
+			d2 := px*px + py*py
+			if d2 > rr*rr {
+				continue
+			}
+			nodes = append(nodes, gnode{p: tdPoint{px, py}, d2: d2})
+		}
+	}
+	sort.SliceStable(nodes, func(a, b int) bool { return nodes[a].d2 < nodes[b].d2 })
+	for i := 0; i < need && i < len(nodes); i++ {
+		seeds = append(seeds, nodes[i].p)
+	}
+	// Top up (rare: only if the disc couldn't host `need` in-disc nodes) so the free-seed count
+	// stays exactly `need` and banded stability is preserved.
+	for placed := minInt(need, len(nodes)); placed < need; placed++ {
+		rad := rr * math.Sqrt(r.f01())
+		ang := r.f01() * 2 * math.Pi
+		seeds = append(seeds, tdPoint{math.Cos(ang) * rad, math.Sin(ang) * rad})
+	}
+	return seeds
+}
+
+// tdScatterRibbon is the ELONGATED-AXIS scatter — the formRibbon strategy (map-overhaul-citymap).
+// The town is stretched along a seeded axis (a main road): free seeds are strung ALONG that axis
+// across the disc with only a small LATERAL spread, so the Voronoi wards line up as a linear town
+// strung along a road, NOT a wheel. Position-along-axis is spread evenly (index-stable, centers-
+// out) with a little seeded wobble; the lateral offset is a small seeded fraction of the disc so
+// the ribbon has width without becoming a blob. Every seed is clamped inside the disc so the raster
+// stays connected. The pinned center anchor sits on the axis. Pure over (seed, need).
+func tdScatterRibbon(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+	// Axis direction: a seeded angle, so different ribbon towns run different ways.
+	axis := float64(hash2(0x21B0, 0x33, seed)) / float64(^uint32(0)) * 2 * math.Pi
+	ax, ay := math.Cos(axis), math.Sin(axis)
+	// Perpendicular (lateral) direction.
+	px, py := -ay, ax
+	alongMax := 0.90 * townR // reach most of the disc along the road
+	latMax := 0.28 * townR   // a modest lateral spread → a road, not a blob
+	r := newRNG(hash2(0x21B1, uint32(need), seed) | 1)
+	for k := 0; k < need; k++ {
+		// Even, centers-out spacing along the axis in [-alongMax, alongMax], with a small wobble.
+		frac := (float64(k)+0.5)/float64(need)*2 - 1 // -1..1
+		wobble := (r.f01() - 0.5) * (2 * alongMax / float64(need)) * 0.8
+		along := frac*alongMax + wobble
+		lat := (r.f01()*2 - 1) * latMax
+		x := ax*along + px*lat
+		y := ay*along + py*lat
+		// Clamp inside the disc so the raster partition stays whole (streets connected).
+		if d := math.Hypot(x, y); d > 0.95*townR {
+			s := 0.95 * townR / d
+			x *= s
+			y *= s
+		}
+		seeds = append(seeds, tdPoint{x, y})
+	}
+	return seeds
+}
+
 // tdBuildBlockField builds the whole Voronoi block field: it sizes the raster to the town disc,
-// scatters + Lloyd-relaxes the block seeds, RASTER-partitions the disc by nearest seed, then
-// derives the street (boundary) cells and per-block interior cell lists. Central seeds (the
-// plaza anchors) are flagged so their regions stay OPEN. Pure + deterministic; panic-safe
-// (the grid is capped and every loop is bounded).
-func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, cfg tdConfig, seed uint32) blockField {
+// scatters the block seeds by the town FORM (organic / radial / grid / ribbon), Lloyd-relaxes
+// them, RASTER-partitions the disc by nearest seed, then derives the street (boundary) cells and
+// per-block interior cell lists. Central seeds (the plaza anchors) are flagged so their regions
+// stay OPEN and stay pinned through relaxation. Pure + deterministic; panic-safe (the grid is
+// capped and every loop is bounded).
+func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, form tdTownForm, cfg tdConfig, seed uint32) blockField {
 	f := blockField{townR: townR, cellSize: cfg.cellSize}
 	if townR <= 0 || cfg.cellSize <= 0 {
 		return f
@@ -939,9 +1248,11 @@ func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, cfg tdConf
 	half := float64(gridN-1) / 2
 	f.origin = -half * cfg.cellSize // cell (0,0) center is the disc's lower-left
 
-	// Seeds: B block centers, first len(anchors) pinned to the plaza anchors.
+	// Seeds: B block centers, first len(anchors) pinned to the plaza anchors, the free seeds
+	// scattered by the town's FORM (organic / radial / grid / ribbon). Only the arrangement varies
+	// by form; the COUNT is the banded tdBlockSeedCount, so banded stability is unaffected.
 	B := tdBlockSeedCount(nRoofs, len(anchors), cfg)
-	seeds := tdScatterSeeds(townR, anchors, B, cfg, seed)
+	seeds := tdScatterSeedsFor(form, townR, anchors, B, cfg, seed)
 	// Lloyd relaxation: a few passes move each seed toward its region's centroid for even,
 	// organic block sizes. The PINNED anchor seeds are held fixed (their central regions must
 	// stay put); only the free building-ward seeds relax.

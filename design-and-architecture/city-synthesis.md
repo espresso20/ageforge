@@ -135,6 +135,36 @@ governs; the older wording is kept for history.
    fill progressively so most roofs hold their place). SUPERSEDES revision #1's lane-grown
    placement — the intermix + wonder-anchor + town-square intent carries over into wards.
 
+6. **Towns come in FOUR FORMS, picked per city + era — the radial wheel is one option, not the
+   default** (was: every town's block seeds scattered by golden-angle phyllotaxis + a pinned center,
+   so EVERY town read as a radial "wagon wheel"). The Voronoi ward machinery is unchanged (raster
+   nearest-seed → streets = ward boundaries → buildings fill wards); only the block-SEED
+   DISTRIBUTION (plus a couple of per-form constraints) varies by `tdTownForm`:
+   - **`formOrganic`** — POISSON-DISK / jittered-random scatter in the town disc, NO radial bias and
+     NO forced ring/spokes → rambling irregular wards + organic streets. This is what kills the
+     wheel and is the DEFAULT for primitive villages.
+   - **`formRadial`** — the ORIGINAL golden-angle phyllotaxis + pinned center: the phyllotaxis seeds
+     put the ward boundaries on radial spokes and the pinned-center region reads as a hub with a
+     ring road — the wagon wheel. Now ONE option, era-weighted toward the ages actually planned
+     around a monument/forum (ancient, medieval), NEVER primitive. The forced central ring + radial
+     spokes are the RADIAL FORM'S OWN CONSTRAINT now, not the engine default — the other three forms
+     do NOT force a ring; their streets emerge purely from the ward boundaries.
+   - **`formGrid`** — seeds on a JITTERED GRID over the disc → rectangular-ish wards, orthogonal-ish
+     streets (a surveyed/planned town). Weighted toward colonial→modern.
+   - **`formRibbon`** — the town ELONGATED along a seeded axis with seeds strung along that axis (a
+     main road) plus a small lateral spread → a linear town strung along a road. A pinch of every
+     band.
+   Lloyd relaxation runs on all four; the wonder/center anchors stay pinned in every form (so the
+   streets always reach the central plaza and the wonder wards stay put). `tdPickTownForm(citySeed,
+   era)` is deterministic + weighted by `tdBandFormWeights(era)`: primitive/stone is
+   ORGANIC-dominant with occasional ribbon and 0 weight on radial/grid (villages ramble, they are
+   not planned) — so the current village (a fixed `citySeed`) reliably rolls ORGANIC, not a wheel;
+   ancient leans organic+radial; medieval radial+organic+grid; colonial/industrial/victorian +
+   modern grid-heavy→grid-dominant; campus grid/organic; orbital organic/grid. Different citySeeds →
+   different forms → no two towns identical. Per-band weights are tunable later (V3-B/C). The
+   anti-wheel property is robust-tested via the ward-seed radial ordering (a radial town's ward
+   seeds spiral centers-out — a strong seed-index↔radius correlation; organic/ribbon do not).
+
 ## Architecture
 
 ### Deterministic persistent layout
