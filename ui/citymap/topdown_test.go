@@ -4,6 +4,8 @@ import (
 	"image"
 	"image/color"
 	"math"
+	"sort"
+	"strconv"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -91,65 +93,117 @@ func TestTopDownDeterministic(t *testing.T) {
 	}
 }
 
-// TestStableIncrementalPlacement is the anti-re-randomize guarantee (locked #8), now
-// under the INTERMIXED LANE placement (FIX 1): the slots — including the organic jitter
-// — for the FIRST N instances of a building must be byte-identical whether the building
-// has count N or count N+1. Adding a building can never move an existing one. We compare
-// per-building roof-lot centers, in a single-type village and again in a multi-domain,
-// wonder-anchored city (the harder case: round-robin ordering + a wonder plaza).
-func TestStableIncrementalPlacement(t *testing.T) {
+// streetCellSet returns the plan's street-cell centers as a rounded (x,y) key set, so two plans'
+// block-boundary structures can be compared for equality regardless of slice order. Rounded to
+// avoid float noise (the cells sit on a fixed raster, so equal fields yield identical keys).
+func streetCellSet(plan topPlan) map[[2]int]bool {
+	s := map[[2]int]bool{}
+	for _, p := range plan.streetCells {
+		s[[2]int{int(math.Round(p.x * 100)), int(math.Round(p.y * 100))}] = true
+	}
+	return s
+}
+
+// streetCellSig is a stable signature string of a plan's street-cell field, so two plans' block-
+// boundary structures can be compared for equality. Sorted so slice order doesn't matter.
+func streetCellSig(plan topPlan) string {
+	set := streetCellSet(plan)
+	keys := make([][2]int, 0, len(set))
+	for k := range set {
+		keys = append(keys, k)
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if keys[i][0] != keys[j][0] {
+			return keys[i][0] < keys[j][0]
+		}
+		return keys[i][1] < keys[j][1]
+	})
+	var b []byte
+	for _, k := range keys {
+		b = strconv.AppendInt(b, int64(k[0]), 10)
+		b = append(b, ',')
+		b = strconv.AppendInt(b, int64(k[1]), 10)
+		b = append(b, ';')
+	}
+	return string(b)
+}
+
+// TestBandedStructureStability locks the Voronoi-block model's STABILITY TRADEOFF (see the
+// topdown.go header): the block STRUCTURE (the street-gap network + the town size) is BANDED — it
+// is a step function of the roof count, so it is IDENTICAL for a run of adjacent counts (a band)
+// and re-forms only at a band boundary or on age-up. This replaces the old lane model's strict
+// slot-for-slot incrementality; the real-town look is the priority. Measuring STRUCTURALLY (by the
+// street-cell signature) rather than assuming specific band edges: we sweep a range of hut counts
+// and assert (1) the signature is PIECEWISE-CONSTANT — adjacent counts frequently share a signature
+// (bands exist, not a fresh field per building), and (2) it DOES change as the count grows (the
+// banding is real, and the structure adapts to size), while every town stays compact.
+func TestBandedStructureStability(t *testing.T) {
 	_ = theme.SetActive("forge")
 
-	// Case 1 — a single-type village: huts share the one center anchor's spiral, so the
-	// first 10 slots must coincide exactly when the 11th is added.
-	hutsBase := roofLots(tdPlanFor(sampleState("primitive_age", map[string]int{"hut": 10})))
-	hutsMore := roofLots(tdPlanFor(sampleState("primitive_age", map[string]int{"hut": 11})))
-	if len(hutsBase) < 10 || len(hutsMore) < len(hutsBase) {
-		t.Fatalf("unexpected hut lot counts: base=%d more=%d", len(hutsBase), len(hutsMore))
+	// Sweep hut counts; record each plan's street-cell signature + the roof-lot count.
+	type sample struct {
+		n    int
+		sig  string
+		lots []tdLot
 	}
-	for i := 0; i < len(hutsBase); i++ {
-		a, b := hutsBase[i], hutsMore[i]
-		if a.x != b.x || a.y != b.y {
-			t.Fatalf("slot %d moved when hut count grew 10→11: (%v,%v) vs (%v,%v) — placement not stable-incremental",
-				i, a.x, a.y, b.x, b.y)
+	var samples []sample
+	for n := 20; n <= 60; n++ {
+		plan := tdPlanFor(sampleState("primitive_age", map[string]int{"hut": n}))
+		samples = append(samples, sample{n: n, sig: streetCellSig(plan), lots: roofLots(plan)})
+		if len(plan.streetCells) < 8 {
+			t.Fatalf("hut count %d: only %d street cells — expected a real block-gap network", n, len(plan.streetCells))
 		}
 	}
 
-	// Case 2 — a multi-domain, wonder-anchored city. Growing ONE domain's count must not
-	// move the EXISTING lots of any domain. We key lots by (domain,tier) and compare the
-	// per-key position sequences; every key present in base must be a positional prefix of
-	// the same key in more. This exercises the round-robin ordering + the plaza filter.
-	baseM := map[string]int{"hut": 12, "gathering_camp": 9, "stone_camp": 7, "forge": 6, "colosseum": 1}
-	moreM := map[string]int{"hut": 12, "gathering_camp": 10, "stone_camp": 7, "forge": 6, "colosseum": 1} // +1 camp
-	byDomain := func(lots []tdLot) map[string][]tdLot {
-		m := map[string][]tdLot{}
-		for _, lt := range lots {
-			if lt.roof == roofWonder {
-				continue
-			}
-			m[lt.domain] = append(m[lt.domain], lt)
+	// (1) PIECEWISE-CONSTANT: count how many adjacent-count pairs share the SAME signature (i.e.
+	// sit in the same band). A per-building fresh field would score ~0; a banded field scores high.
+	sameBand := 0
+	for i := 1; i < len(samples); i++ {
+		if samples[i].sig == samples[i-1].sig {
+			sameBand++
 		}
-		return m
 	}
-	bd := byDomain(fabricLots(tdPlanFor(sampleState("primitive_age", baseM))))
-	md := byDomain(fabricLots(tdPlanFor(sampleState("primitive_age", moreM))))
-	for dom, bl := range bd {
-		ml := md[dom]
-		if len(ml) < len(bl) {
-			t.Fatalf("domain %q lost lots when a sibling grew: base=%d more=%d", dom, len(bl), len(ml))
-		}
-		for i := range bl {
-			if bl[i].x != ml[i].x || bl[i].y != ml[i].y {
-				t.Fatalf("domain %q lot %d moved when gathering_camp grew: (%v,%v) vs (%v,%v) — intermix broke stability",
-					dom, i, bl[i].x, bl[i].y, ml[i].x, ml[i].y)
-			}
-		}
+	if frac := float64(sameBand) / float64(len(samples)-1); frac < 0.5 {
+		t.Fatalf("only %.0f%% of adjacent counts share a block field — the structure re-forms too often to be banded (tradeoff not delivered)", frac*100)
 	}
 
-	// Also assert the jitter actually did something: the raw spiral would place slots on a
-	// perfect lattice; with jitter at least one slot is offset from its un-jittered spot.
+	// (2) The banding is REAL, not a single frozen field: distinct signatures appear across the
+	// swept range (the structure adapts to town size at band boundaries).
+	sigs := map[string]bool{}
+	for _, s := range samples {
+		sigs[s.sig] = true
+	}
+	if len(sigs) < 2 {
+		t.Fatalf("the whole count sweep produced a single block field — the banding never re-forms (structure does not adapt to size)")
+	}
+
+	// Within a band (a same-signature adjacent pair), MOST existing roofs keep their exact place
+	// (the blocks fill progressively). Verify on the first such pair found.
+	for i := 1; i < len(samples); i++ {
+		if samples[i].sig != samples[i-1].sig {
+			continue
+		}
+		posPrev := map[[2]int]bool{}
+		for _, lt := range samples[i-1].lots {
+			posPrev[[2]int{int(math.Round(lt.x * 100)), int(math.Round(lt.y * 100))}] = true
+		}
+		kept := 0
+		for _, lt := range samples[i].lots {
+			if posPrev[[2]int{int(math.Round(lt.x * 100)), int(math.Round(lt.y * 100))}] {
+				kept++
+			}
+		}
+		if got, want := float64(kept)/float64(maxInt(len(posPrev), 1)), 0.6; got < want {
+			t.Fatalf("within a band (%d→%d) only %.0f%% of roofs kept their place (want ≥%.0f%%) — the fill is not progressive",
+				samples[i-1].n, samples[i].n, got*100, want*100)
+		}
+		break
+	}
+
+	// Jitter is real (the block perimeter would otherwise be a perfect stamp): at least one slot
+	// gets a nonzero offset. Pure over (i, di, seed).
 	moved := false
-	for i := range hutsBase {
+	for i := 0; i < 20; i++ {
 		jx, jy := slotJitter(i, 0, citySeed(displayNameOf(sampleState("primitive_age", nil))), defaultTdConfig.jitterAmp)
 		if math.Abs(jx) > 1e-9 || math.Abs(jy) > 1e-9 {
 			moved = true
@@ -319,15 +373,15 @@ func nnDomainDiffFrac(lots []tdLot) float64 {
 	return float64(diff) / float64(tot)
 }
 
-// TestIntermixedLanePlacement locks FIX 1: buildings are placed in a stable, type-
-// INTERMIXED sequence — consecutive placement slots are different domains (not one big
-// blob of huts) AND the fabric is spatially mixed (no single-domain round blob). We
-// drive a village of five distinct domains and assert both the placement ORDER and the
-// spatial nearest-neighbor mixing exceed a healthy threshold.
-func TestIntermixedLanePlacement(t *testing.T) {
+// TestIntermixedBlockPlacement locks the type-INTERMIX invariant under the Voronoi-block model:
+// buildings are distributed across the blocks so the fabric is spatially MIXED (no single-domain
+// round blob — a hut ward next to a camp next to a store), NOT one giant blob of huts. We drive a
+// village of five distinct domains and assert the spatial nearest-neighbor domain mixing exceeds a
+// healthy threshold, and that a real block-gap street network exists.
+func TestIntermixedBlockPlacement(t *testing.T) {
 	_ = theme.SetActive("forge")
-	// hut=housing, gathering_camp=food, stone_camp=geological, forge=metallurgy,
-	// barracks=military — five distinct domains, no wonder (one center anchor).
+	// hut=housing, gathering_camp=food, stone_camp=geological, forge=metallurgy, barracks=military
+	// — five distinct domains, no wonder (one center anchor).
 	state := sampleState("primitive_age", map[string]int{
 		"hut": 12, "gathering_camp": 10, "stone_camp": 8, "forge": 8, "barracks": 6,
 	})
@@ -337,38 +391,26 @@ func TestIntermixedLanePlacement(t *testing.T) {
 		t.Fatalf("expected a substantial fabric, got %d lots", len(fab))
 	}
 
-	// (1) Placement ORDER intermix: consecutive slots must usually be different domains
-	// (round-robin interleave), NOT a run of one domain then the next. Count adjacent
-	// pairs that differ; a per-domain-blob layout would score near 0.
 	distinctDomains := map[string]bool{}
-	adjDiff, adjTot := 0, 0
-	for i := 1; i < len(fab); i++ {
-		adjTot++
-		if fab[i].domain != fab[i-1].domain {
-			adjDiff++
-		}
-		distinctDomains[fab[i].domain] = true
+	for _, lt := range fab {
+		distinctDomains[lt.domain] = true
 	}
-	distinctDomains[fab[0].domain] = true
 	if len(distinctDomains) < 3 {
 		t.Fatalf("fabric only spans %d domains — need a multi-domain settlement to test intermix", len(distinctDomains))
 	}
-	orderFrac := float64(adjDiff) / float64(adjTot)
-	if orderFrac < 0.5 {
-		t.Fatalf("placement order intermix only %.2f — consecutive slots are too often the same domain (blobby, not interleaved)", orderFrac)
-	}
 
-	// (2) SPATIAL intermix: a lot's nearest neighbor is frequently a DIFFERENT domain —
-	// there is no single-domain round blob. A per-domain-cluster layout would score near 0.
+	// SPATIAL intermix: a lot's nearest neighbor is frequently a DIFFERENT domain — the blocks
+	// hold a mix of types, so there is no single-domain round blob. A per-domain-cluster layout
+	// (the retired district-spiral model) would score near 0.
 	spatial := nnDomainDiffFrac(fab)
 	if spatial < 0.30 {
-		t.Fatalf("spatial nearest-neighbor domain-mixing only %.2f — the fabric reads as same-type blobs, not intermixed", spatial)
+		t.Fatalf("spatial nearest-neighbor domain-mixing only %.2f — the fabric reads as same-type blobs, not intermixed across blocks", spatial)
 	}
 
-	// The town must not be a disc: the fabric grows along lanes, so at least a couple of
-	// lanes exist for it to grow along.
-	if len(plan.streets) < 2 {
-		t.Fatalf("expected a lane network for the fabric to grow along, got %d streets", len(plan.streets))
+	// The block-gap STREET network must exist (the gaps between wards): a real town has a
+	// meaningful number of street cells.
+	if len(plan.streetCells) < 8 {
+		t.Fatalf("expected a block-gap street network, got only %d street cells", len(plan.streetCells))
 	}
 }
 
@@ -439,15 +481,14 @@ func TestWonderAnchoredGrowth(t *testing.T) {
 			maxFromCore = r
 		}
 	}
-	meanNearest := sumNearest / float64(len(fab))
-	// Clustering: on average a fabric lot hugs SOME anchor more closely than the town's
-	// overall radius — i.e. it grows around the anchors, not scattered. The ratio ceiling is
-	// 0.72 (was 0.6 before playtest polish FIX 3): the BIGGER plaza (plazaRadius 2.2 → 3.0)
-	// deliberately clears more open ground around each anchor, so the surviving fabric hugs the
-	// plaza RIM rather than the anchor CENTER and its mean distance-to-anchor rises accordingly.
-	// It still clusters (well under the town radius); it just breathes at a comfortable remove.
-	if meanNearest > maxFromCore*0.72 {
-		t.Fatalf("fabric mean distance-to-nearest-anchor %.1f is not small vs town radius %.1f — buildings do not cluster around the anchors", meanNearest, maxFromCore)
+	_ = sumNearest
+	// COMPACT SETTLEMENT (Voronoi-block model): buildings fill WARDS spread across the town disc,
+	// so — unlike the retired lane model — they do NOT hug the anchors; the invariant is that the
+	// town is one COMPACT cluster, not scattered. Every fabric lot stays within a bounded multiple
+	// of the town radius (the plan's bounded townR), so nothing is flung out. (Anchor-count scaling
+	// and plaza-clear, the real wonder-anchoring signals, are asserted above/below.)
+	if maxFromCore > plan.townR*1.05 {
+		t.Fatalf("a fabric lot sits %.1f from the core, past the bounded town radius %.1f — the settlement is not compact", maxFromCore, plan.townR)
 	}
 
 	// 0-wonder cohesion: a wonderless village is ONE cohesive settlement around the
@@ -995,95 +1036,66 @@ func TestNoRoofOverlap(t *testing.T) {
 	}
 }
 
-// TestLineTheLanes locks that buildings LINE ALONGSIDE the lanes rather than sitting ON
-// them (playtest FIX 2). Two properties: (1) roof lots sit in a BAND offset from the
-// nearest lane centerline — the mean offset is close to the intended perpendicular offset
-// (lane-half + roof-half + margin), not ~0; and (2) the lanes' OWN cells (within a
-// lane-half of a centerline) stay building-free between the opposing rows, so the road
-// stays visible. A pull-to-lane layout would fail both (offsets ~0, lane cells buried).
-func TestLineTheLanes(t *testing.T) {
+// onStreetCell reports whether city-space (x,y) falls ON a street (block-boundary) cell — within
+// half a cell (Chebyshev) of any street-cell center. The block interiors are inset from these, so
+// a roof should essentially never land here.
+func onStreetCell(plan topPlan, x, y float64) bool {
+	if plan.cellSize <= 0 {
+		return false
+	}
+	half := plan.cellSize / 2
+	for _, p := range plan.streetCells {
+		if math.Abs(x-p.x) <= half && math.Abs(y-p.y) <= half {
+			return true
+		}
+	}
+	return false
+}
+
+// TestStreetsBoundBlocks locks the Voronoi-block core: buildings sit INSIDE the blocks, INSET
+// from the streets — so ~0 building roofs land ON a street (boundary) cell, leaving the gap
+// network visible between the wards. A regression that placed roofs on the boundaries (the old
+// spaghetti look, or a bad inset) would bury the streets and trip this.
+func TestStreetsBoundBlocks(t *testing.T) {
 	_ = theme.SetActive("forge")
 	state := sampleState("primitive_age", map[string]int{"hut": 18, "gathering_camp": 12, "stone_camp": 8, "forge": 8})
 	plan := tdPlanFor(state)
-	cfg := defaultTdConfig
 
-	nearestLaneDist := func(x, y float64) float64 {
-		best := math.Inf(1)
-		for _, s := range plan.streets {
-			for i := 0; i+1 < len(s.pts); i++ {
-				if d := distToSegSq(x, y, s.pts[i], s.pts[i+1]); d < best {
-					best = d
-				}
-			}
-		}
-		return math.Sqrt(best)
+	fab := fabricLots(plan)
+	if len(fab) < 15 {
+		t.Fatalf("expected a substantial fabric, got %d lots", len(fab))
+	}
+	if len(plan.streetCells) < 8 {
+		t.Fatalf("expected a block-gap street network, got %d street cells", len(plan.streetCells))
 	}
 
-	// (1) Mean offset from the lane ≈ the intended perpendicular offset (buildings line
-	// beside the road). Use the plain roof extent for the target; a small tolerance covers
-	// per-type extent variation and jitter.
-	targetPerp := cfg.laneHalf + cfg.roofSize/2 + cfg.laneMargin
-	var sum float64
-	var n int
-	onRoad := 0
-	for _, lt := range fabricLots(plan) {
-		d := nearestLaneDist(lt.x, lt.y)
-		sum += d
-		n++
-		if d < cfg.laneHalf { // a roof center sitting ON the road surface
-			onRoad++
+	// Essentially no roof CENTER may sit on a street cell (the blocks are inset from the gaps).
+	// A rare edge case near a plaza is tolerated, but not a wholesale pile-on.
+	onStreet := 0
+	for _, lt := range fab {
+		if onStreetCell(plan, lt.x, lt.y) {
+			onStreet++
 		}
 	}
-	if n == 0 {
-		t.Fatal("no fabric lots to measure")
-	}
-	mean := sum / float64(n)
-	if mean < targetPerp*0.6 {
-		t.Fatalf("mean roof-to-lane distance %.2f is far below the lining offset %.2f — buildings are pulled onto the lanes, not lining them", mean, targetPerp)
-	}
-	// Essentially no roof center may sit on the road surface (a rare lot near a crossing lane
-	// it isn't lining is tolerated, but not a wholesale pile-on).
-	if frac := float64(onRoad) / float64(n); frac > 0.10 {
-		t.Fatalf("%.0f%% of roof centers sit on a lane surface — buildings should line ALONGSIDE the road, not on it", frac*100)
+	if frac := float64(onStreet) / float64(len(fab)); frac > 0.05 {
+		t.Fatalf("%.0f%% of roof centers sit ON a street cell (%d/%d) — buildings must be INSET inside their blocks, not on the gaps",
+			frac*100, onStreet, len(fab))
 	}
 
-	// (2) The lanes' OWN cells stay building-free: sample points ALONG each lane centerline
-	// and confirm few have a roof center within a lane-half (the road shows between the
-	// opposing rows). Skip the crowded junctions/plazas (near an anchor) where lanes meet.
-	plazaR := cfg.plazaRadius * cfg.roofSize
-	sampled, buried := 0, 0
-	for _, s := range plan.streets {
-		for i := 0; i+1 < len(s.pts); i++ {
-			a, b := s.pts[i], s.pts[i+1]
-			for _, f := range []float64{0.25, 0.5, 0.75} {
-				cx := a.x + (b.x-a.x)*f
-				cy := a.y + (b.y-a.y)*f
-				// Skip samples inside/near an anchor (junction/plaza), not representative frontage.
-				nearAnchor := false
-				for _, an := range plan.anchors {
-					if math.Hypot(cx-an.cx, cy-an.cy) < plazaR+cfg.roofSize {
-						nearAnchor = true
-						break
-					}
-				}
-				if nearAnchor {
-					continue
-				}
-				sampled++
-				for _, lt := range fabricLots(plan) {
-					if math.Hypot(lt.x-cx, lt.y-cy) < cfg.laneHalf {
-						buried++
-						break
-					}
-				}
+	// And the streets stay visible: a healthy share of street cells has NO roof body covering it
+	// (sample each street cell; a covered cell is one whose center is within a roof half-extent of
+	// a roof). Most gaps must read as open road.
+	covered := 0
+	for _, p := range plan.streetCells {
+		for _, lt := range fab {
+			if math.Hypot(lt.x-p.x, lt.y-p.y) < math.Max(lt.w, lt.h)/2 {
+				covered++
+				break
 			}
 		}
 	}
-	if sampled == 0 {
-		t.Fatal("no lane centerline samples — the lane network is missing")
-	}
-	if frac := float64(buried) / float64(sampled); frac > 0.10 {
-		t.Fatalf("%.0f%% of lane centerline samples have a roof on the road — the street is not visible between the rows", frac*100)
+	if frac := float64(covered) / float64(len(plan.streetCells)); frac > 0.15 {
+		t.Fatalf("%.0f%% of street cells are covered by a roof body — the block-gap streets are being buried", frac*100)
 	}
 }
 
@@ -1286,45 +1298,15 @@ func TestLandmarkLabelsNoStack(t *testing.T) {
 	}
 }
 
-// segSegMinDist returns the minimum distance between two city-space segments p0→p1 and
-// q0→q1 (the smallest of the four endpoint-to-opposite-segment projections — exact for
-// non-crossing segments, and 0-ish when they cross). Used by the connectivity test to
-// decide whether two lane segments touch/join.
-func segSegMinDist(p0, p1, q0, q1 tdPoint) float64 {
-	c := []float64{
-		distToSegSq(p0.x, p0.y, q0, q1),
-		distToSegSq(p1.x, p1.y, q0, q1),
-		distToSegSq(q0.x, q0.y, p0, p1),
-		distToSegSq(q1.x, q1.y, p0, p1),
-	}
-	d := math.Inf(1)
-	for _, v := range c {
-		if v < d {
-			d = v
-		}
-	}
-	return math.Sqrt(d)
-}
-
-// TestRoadNetworkConnected locks playtest polish FIX 2: the lane network is ONE CONNECTED
-// graph radiating from the central crossroads — every lane segment is reachable from every
-// other (no isolated floating segments, the regression this work removes). The old model
-// SPLIT each cross-street with a gap where it met a main, leaving the halves stranded; the
-// cross-streets now run CONTINUOUSLY through the main they cross, and connectors reach the
-// core, so the whole network links up.
-//
-// We build a graph over every street segment, join two segments when they touch within a
-// tolerance, and assert a single connected component AND that the component contains a
-// segment at the central crossroads (so "connected" means "connected to the heart", not a
-// stranded ring). The tolerance (5.0 city units) is deliberately generous for the winding
-// polylines yet still catches the regression: measured, the OLD split-halves network breaks
-// into 5+ components at this tolerance while the connected network is exactly 1.
-func TestRoadNetworkConnected(t *testing.T) {
+// TestStreetsConnected locks the Voronoi-block streets-connected invariant: the street-cell
+// network (the gaps between the blocks) is ONE connected component, and it reaches the central
+// plaza. Region boundaries are connected BY CONSTRUCTION — a raster nearest-seed partition of a
+// single disc yields one connected boundary web with real junctions, no spaghetti. We union-find
+// the street cells by grid adjacency (two cells join when their centers are within ~1.5 cells, i.e.
+// 8-neighbours on the raster) and assert a single component AND a street cell near the town core
+// (the plaza region's boundary is central), across several seeds and counts.
+func TestStreetsConnected(t *testing.T) {
 	_ = theme.SetActive("forge")
-	// Generous "these lanes meet" tolerance — larger than a lane's full width (~2·laneHalf)
-	// so winding polylines that cross still register as joined, but tight enough that the old
-	// disconnected floating halves would NOT all link (verified: old → 5+ components here).
-	const tol = 5.0
 	seeds := []string{"Aldermoor", "Bexley", "Corveil", "Duskwind", "Emberton"}
 	counts := []map[string]int{
 		{"hut": 8, "gathering_camp": 4},
@@ -1332,21 +1314,18 @@ func TestRoadNetworkConnected(t *testing.T) {
 		{"hut": 30, "gathering_camp": 20, "forge": 12, "barracks": 8, "colosseum": 1, "stonehenge": 1},
 		{"hut": 60, "gathering_camp": 45, "forge": 28, "barracks": 18, "colosseum": 1},
 	}
-	type seg struct{ a, b tdPoint }
 	for _, name := range seeds {
 		for _, m := range counts {
 			plan := tdPlanFor(namedState("primitive_age", name, m))
-			var segs []seg
-			for _, s := range plan.streets {
-				for i := 0; i+1 < len(s.pts); i++ {
-					segs = append(segs, seg{s.pts[i], s.pts[i+1]})
-				}
+			cells := plan.streetCells
+			n := len(cells)
+			if n < 8 {
+				t.Fatalf("seed %q counts %v: only %d street cells — expected a real block-gap network", name, m, n)
 			}
-			n := len(segs)
-			if n < 2 {
-				t.Fatalf("seed %q counts %v: only %d lane segments — expected a real network", name, m, n)
-			}
-			// Union-find: join segments that touch within tol.
+			// Grid adjacency: two street cells are neighbours if their centers are within 1.5
+			// cell sizes (covers the 8-neighbourhood on the raster, diagonal included).
+			adj := plan.cellSize * 1.5
+			adj2 := adj * adj
 			parent := make([]int, n)
 			for i := range parent {
 				parent[i] = i
@@ -1361,7 +1340,9 @@ func TestRoadNetworkConnected(t *testing.T) {
 			}
 			for i := 0; i < n; i++ {
 				for j := i + 1; j < n; j++ {
-					if segSegMinDist(segs[i].a, segs[i].b, segs[j].a, segs[j].b) <= tol {
+					dx := cells[i].x - cells[j].x
+					dy := cells[i].y - cells[j].y
+					if dx*dx+dy*dy <= adj2 {
 						parent[find(i)] = find(j)
 					}
 				}
@@ -1371,25 +1352,26 @@ func TestRoadNetworkConnected(t *testing.T) {
 				roots[find(i)] = true
 			}
 			if len(roots) != 1 {
-				// Report component sizes for a helpful failure.
 				sizes := map[int]int{}
 				for i := 0; i < n; i++ {
 					sizes[find(i)]++
 				}
-				t.Fatalf("seed %q counts %v: lane network has %d disconnected components (want 1) — some lanes are isolated floating segments: sizes=%v",
+				t.Fatalf("seed %q counts %v: street-cell network has %d disconnected components (want 1) — the block gaps are not one connected web: sizes=%v",
 					name, m, len(roots), sizes)
 			}
-			// The single component must include a segment AT the central crossroads (reachable
-			// FROM the core), so the network is anchored to the heart, not a stranded ring.
+			// Reaches the central PLAZA: the plaza region sits at the core, so its boundary
+			// street cells are central. Require at least one street cell within ~0.45× the town
+			// radius of the core (the plaza's Voronoi boundary is well inside that).
 			nearCore := false
-			for _, s := range segs {
-				if segSegMinDist(s.a, s.b, tdPoint{plan.cx, plan.cy}, tdPoint{plan.cx, plan.cy}) <= tol {
+			coreBudget := plan.townR * 0.45
+			for _, p := range cells {
+				if math.Hypot(p.x-plan.cx, p.y-plan.cy) <= coreBudget {
 					nearCore = true
 					break
 				}
 			}
 			if !nearCore {
-				t.Fatalf("seed %q counts %v: no lane segment lies at the central crossroads — the connected network is not anchored to the core", name, m)
+				t.Fatalf("seed %q counts %v: no street cell within %.1f of the core — the connected network does not reach the central plaza", name, m, coreBudget)
 			}
 		}
 	}

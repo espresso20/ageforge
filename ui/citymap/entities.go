@@ -100,8 +100,7 @@ func drawHSpan(img *image.RGBA, x0, x1, y int, c color.RGBA) {
 
 // drawRoad rasterizes a road segment onto img with Bresenham's line algorithm,
 // painting each pixel the (theme-derived) color. Clean single-pixel lines. Shared
-// by the top-down street/lane rasterizer (topdown.go's drawTdStreet + drawLineC)
-// and the worldmap.
+// by the top-down atlas line helper (topdown.go's drawLineC) and the worldmap.
 func drawRoad(img *image.RGBA, s roadSeg, c color.RGBA) {
 	b := img.Bounds()
 	x0, y0, x1, y1 := s.x0, s.y0, s.x1, s.y1
