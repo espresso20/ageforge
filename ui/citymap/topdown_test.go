@@ -1378,6 +1378,166 @@ func TestStreetsConnected(t *testing.T) {
 	}
 }
 
+// inTownCellCount counts the raster cells the block field assigned to some ward (nearest >= 0) —
+// i.e. every cell inside the town footprint. The STREET FRACTION is streetCells/inTownCells.
+func inTownCellCount(f blockField) int {
+	n := 0
+	for _, s := range f.nearest {
+		if s >= 0 {
+			n++
+		}
+	}
+	return n
+}
+
+// TestStreetsAreThinLanes locks map-overhaul-citymap FIX 1: the block-boundary streets are THIN
+// village LANES, not the wide avenues that dominated the image before. The robust, non-brittle
+// metric is the STREET-CELL FRACTION — the share of in-town raster cells classified as street. A
+// wide-band web (the old streetBand 2.1 → ~2-cell boundaries) claims ~0.24 of the town; the
+// narrowed band (~1 cell) claims meaningfully less, so the wards hold the town and the white
+// recedes. We assert the fraction across several seeds AND counts stays under a ceiling the OLD
+// wide streets would blow past, and — separately — that the streets are still PRESENT (a real web,
+// not erased). Two guards so a regression in EITHER direction (streets swell back / streets vanish)
+// trips it.
+func TestStreetsAreThinLanes(t *testing.T) {
+	_ = theme.SetActive("forge")
+	cfg := defaultTdConfig
+
+	// Config-level relationship: the classification band is ~one cell (thin), NOT ~two cells (wide).
+	// This is the knob FIX 1 turns; lock it so a future edit can't silently widen the lanes back.
+	if cfg.streetBand > cfg.cellSize*1.25 {
+		t.Fatalf("streetBand %.2f is > 1.25×cellSize %.2f — the boundary web is ~2 cells wide again (wide avenues, not thin lanes)", cfg.streetBand, cfg.cellSize)
+	}
+
+	anchors := []tdAnchor{{cx: 0, cy: 0}} // wonderless village heart
+	// The old wide streets sat at ~0.24 of the town; the new thin lanes sit ~0.19. A 0.22 ceiling
+	// sits in that gap with margin — new passes, old fails — and is robust across seeds/counts.
+	const maxStreetFrac = 0.22
+	worst := 0.0
+	for _, nm := range []string{"", "Aldermoor", "Corveil", "Duskwind", "Emberton", "Gorse"} {
+		seed := citySeed(nm)
+		for _, nRoofs := range []int{40, 90, 160} {
+			townR := tdTownRadius(nRoofs, cfg)
+			f := tdBuildBlockField(townR, anchors, nRoofs, formOrganic, cfg, seed)
+			town := inTownCellCount(f)
+			if town == 0 {
+				t.Fatalf("seed %q n=%d: empty town footprint", nm, nRoofs)
+			}
+			frac := float64(len(f.streetCells)) / float64(town)
+			if frac > worst {
+				worst = frac
+			}
+			if frac > maxStreetFrac {
+				t.Fatalf("seed %q n=%d: streets are %.1f%% of the town (> %.0f%%) — the boundary web is too WIDE (FIX 1 wants thin lanes)", nm, nRoofs, frac*100, maxStreetFrac*100)
+			}
+			// Still a real web: streets must not vanish (that would break streets-connected too, but
+			// assert it here so a "thin" regression that erases them is caught by THIS test's intent).
+			if frac < 0.05 || len(f.streetCells) < 8 {
+				t.Fatalf("seed %q n=%d: only %.1f%% street cells (%d) — the lanes have been thinned into nonexistence", nm, nRoofs, frac*100, len(f.streetCells))
+			}
+		}
+	}
+	// Sanity: the worst-case fraction we saw is comfortably under the old wide-street regime, proving
+	// the reduction is real and not a threshold that barely clears.
+	if worst >= maxStreetFrac {
+		t.Fatalf("worst street fraction %.3f reached the ceiling — no real headroom", worst)
+	}
+}
+
+// outlineStats samples tdOrganicRadiusAt over the whole compass and returns the min/max radius
+// ratio (a low ratio = a real waist/cove) and the stddev/mean (overall irregularity). A perfect
+// circle scores min/max=1, std/mean=0; the timid first cut scored ~0.86 / ~0.038 (barely a wobble).
+func outlineStats(seed uint32, townR float64) (minMax, stdOverMean float64) {
+	const N = 720
+	rmin, rmax := math.Inf(1), math.Inf(-1)
+	sum, sum2 := 0.0, 0.0
+	for i := 0; i < N; i++ {
+		a := 2 * math.Pi * float64(i) / float64(N)
+		r := tdOrganicRadiusAt(a, townR, seed)
+		if r < rmin {
+			rmin = r
+		}
+		if r > rmax {
+			rmax = r
+		}
+		sum += r
+		sum2 += r * r
+	}
+	mean := sum / N
+	varr := sum2/N - mean*mean
+	if varr < 0 {
+		varr = 0
+	}
+	return rmin / rmax, math.Sqrt(varr) / mean
+}
+
+// TestOrganicOutlineIrregular locks map-overhaul-citymap FIX 2: the organic town silhouette is a
+// genuinely RAGGED, NON-CIRCULAR blob — not the timid near-circle the first cut produced (and not,
+// obviously, a clean disc). Three properties, each read straight off tdOrganicRadiusAt so the test
+// measures the actual outline geometry:
+//
+//	(1) A real WAIST: the min/max radius ratio is well below 1 (a circle is 1; the old wobble was
+//	    ~0.86). We require < 0.80 — the narrowest point is ≥20% inside the widest, an unmistakable cove.
+//	(2) Real IRREGULARITY: the radius stddev/mean is well above the old ~0.038 timid value. We require
+//	    > 0.06 — roughly double, i.e. the rim genuinely rambles.
+//	(3) VARIETY per seed: different citySeeds give different silhouettes. The old version fed the same
+//	    two harmonics every time, so every town's std/mean was an IDENTICAL 0.0384 — a dead giveaway
+//	    the shape didn't vary. We sample several seeds and require their std/mean values to actually
+//	    SPREAD (max−min above a margin), proving the shape (not just the rotation) differs by seed.
+//
+// Bounds/connectivity are NOT re-tested here (TestStreetsConnected / TestNotAPinwheelCompact /
+// TestEachTownFormWellFormed cover that the ragged outline stays bounded + one connected web); this
+// test's job is purely that the outline is IRREGULAR and SEED-VARIED.
+func TestOrganicOutlineIrregular(t *testing.T) {
+	cfg := defaultTdConfig
+	townR := tdTownRadius(120, cfg)
+
+	// tdOrganicRadiusAt must never exceed townR (subtractive-only → bounded) and never go non-positive
+	// (the floor keeps the domain star-shaped → connected). Check the invariants directly.
+	for _, nm := range []string{"", "Aldermoor", "Corveil", "Duskwind"} {
+		seed := citySeed(nm)
+		for i := 0; i < 720; i++ {
+			a := 2 * math.Pi * float64(i) / 720
+			r := tdOrganicRadiusAt(a, townR, seed)
+			if r > townR+1e-6 {
+				t.Fatalf("seed %q: outline radius %.3f exceeds townR %.3f — not bounded (a ward could sit outside the footprint)", nm, r, townR)
+			}
+			if r <= 0 {
+				t.Fatalf("seed %q: outline radius %.3f ≤ 0 — the footprint is no longer star-shaped/connected", nm, r)
+			}
+		}
+	}
+
+	// (1)+(2): every seed's outline is a ragged blob (real waist + real irregularity).
+	var soms []float64
+	for _, nm := range []string{"", "Aldermoor", "Corveil", "Duskwind", "Emberton", "Gorse", "Hale", "Faelin"} {
+		seed := citySeed(nm)
+		mm, som := outlineStats(seed, townR)
+		soms = append(soms, som)
+		if mm >= 0.80 {
+			t.Fatalf("seed %q: outline min/max radius ratio %.3f ≥ 0.80 — the silhouette reads as a circle, not a ragged blob with bays", nm, mm)
+		}
+		if som <= 0.06 {
+			t.Fatalf("seed %q: outline stddev/mean %.4f ≤ 0.06 — barely a wobble (the timid near-circle), not a genuinely irregular outline", nm, som)
+		}
+	}
+
+	// (3): the shape VARIES by seed — the std/mean values must spread, not collapse to one constant
+	// (the old code's tell was an identical 0.0384 for every seed).
+	lo, hi := math.Inf(1), math.Inf(-1)
+	for _, s := range soms {
+		if s < lo {
+			lo = s
+		}
+		if s > hi {
+			hi = s
+		}
+	}
+	if hi-lo < 0.02 {
+		t.Fatalf("outline irregularity barely varies across seeds (std/mean spread %.4f over [%.4f,%.4f]) — different towns should have different silhouettes, not one shared shape", hi-lo, lo, hi)
+	}
+}
+
 // groundVariance renders the ground of a fresh canvas with drawGround and returns the mean
 // per-channel variance of the ground pixels (a robust proxy for texture "busyness": a flat
 // wash → ~0, a noisy speckle → high). Used by the quieter-ground test.

@@ -575,8 +575,18 @@ type tdConfig struct {
 	// smooth, seeded, angle-varying perturbation (tdOrganicRadiusAt) so the silhouette is a rambling
 	// BLOB, not a clean radial disc. INWARD-ONLY (never past townR) so every ward seed stays inside
 	// the bounded footprint (the compact/anti-pinwheel guarantees hold). 0 → a plain circular disc
-	// (what every non-organic form uses, unchanged).
+	// (what every non-organic form uses, unchanged). This is the DEEPEST bite of the LOW-frequency
+	// lobe terms (the big bays/peninsulas that make the shape unmistakably non-circular); the
+	// higher harmonics ride on a fraction of it (organicEdgeRipple) for finer wobble.
 	organicEdgeAmp float64
+
+	// organicEdgeFloor is the MINIMUM organic outline radius as a fraction of townR
+	// (map-overhaul-citymap FIX 2 — ragged outline): the deepest a bay may pinch INWARD. Kept well
+	// above 0 so the town stays a STAR-SHAPED domain about the core (every ray from the center is
+	// ≥ this fraction of townR) → the footprint is always simply-connected, so no bay can ever carve
+	// a detached island and the street web stays ONE component (streets-connected holds). Lower →
+	// deeper, more dramatic pinches. 0 → fall back to a safe default.
+	organicEdgeFloor float64
 
 	// --- Voronoi block model (map-overhaul-citymap) --------------------------------
 	// The town is a COMPACT, BOUNDED disc whose radius grows only ~SQRT with the fabric count —
@@ -640,24 +650,41 @@ var defaultTdConfig = tdConfig{
 	// thin paved ring + its ringed props, but small enough that the fabric fills close to center and
 	// the mesh never reads as a hub-and-ring wheel. Much smaller than the roomy radial 3.0.
 	organicPlazaRadius: 2.0,
-	// organicEdgeAmp: bite the organic outline inward by up to ~14% of townR at some angles so the
-	// village silhouette rambles like a blob rather than a clean radial disc. Inward-only → bounded.
-	organicEdgeAmp: 0.14,
+	// organicEdgeAmp: bite the organic outline INWARD by a big, seeded, LOW-frequency amount (up to
+	// ~40% of townR at the deepest bay) so the village silhouette is an unmistakably IRREGULAR blob
+	// with real bays/peninsulas — NOT the timid near-circle the first cut produced. Inward-only, and
+	// the outline is floored (organicEdgeFloor) so the bite can pinch deep without ever splitting the
+	// town. Different seeds get different lobe amplitudes+phases → different silhouettes.
+	organicEdgeAmp: 0.40,
+	// organicEdgeFloor: a bay may pinch in to ~52% of townR at the deepest — dramatic enough to read
+	// as a genuine cove/waist, but the outline stays STAR-SHAPED about the core (min ray > 0), so the
+	// footprint is always one connected blob (no detached islands; streets stay one component).
+	organicEdgeFloor: 0.52,
 	// Compact + bounded: a small base disc that grows only ~sqrt with the count.
 	townBaseRadius: 16,
 	townGrowth:     3.4,
-	// Raster: cell ~1.3 city units so street gaps render ~1–3px after fill-frame; band ~1.6
-	// cells so a boundary is a thin-but-bold connected gap; inset keeps roofs off the gap.
+	// Raster: cell ~1.3 city units so street gaps render ~1–3px after fill-frame. streetBand is the
+	// boundary-classification width (map-overhaul-citymap FIX 1 — NARROWER roads): cut from the old
+	// 2.1 down to ~cellSize so a block boundary is a SOLID ~1-cell web instead of a ~2-cell one — a
+	// THIN village LANE, not a wide avenue. This near-halves the street-cell FRACTION (streets stop
+	// dominating; the wards hold far more of the town). It is deliberately kept a hair ABOVE cellSize
+	// (1.35 > 1.3) rather than pushed thinner: below ~cellSize the raster can't guarantee a contiguous
+	// boundary (a Voronoi edge crosses cells at an angle, and a sub-cell band leaves gaps), which
+	// fragments the street web into disconnected pieces — so ~1 cell is the thin-but-CONNECTED floor.
+	// The drawn width is trimmed further in drawStreetCells so the lanes read even thinner on screen.
 	cellSize:   1.3,
-	streetBand: 2.1,
+	streetBand: 1.35,
 	blockInset: 1.0,
 	// Banded block count: 2 wards at the smallest, +~0.85·√n, capped at 22 wards for a metropolis.
 	seedBase:   2,
 	seedGrowth: 0.85,
 	seedMax:    22,
 	// ORGANIC needs a much FINER ward mesh (many small blocks) so the street web reads as an
-	// irregular loop network, not 8 pie-slice spokes around a hub. ~3× the growth and a higher cap.
-	organicSeedGrowth: 2.6,
+	// irregular loop network, not 8 pie-slice spokes around a hub. Bumped 2.6→3.0 alongside the
+	// RAGGED outline (map-overhaul-citymap FIX 2): the deeper bays clip a couple of would-be-interior
+	// wards into rim-touching ones at small towns, so a slightly finer mesh keeps enough ENCLOSED
+	// faces (loops) for the anti-wheel guarantee to hold with margin even at the smallest villages.
+	organicSeedGrowth: 3.0,
 	organicSeedMax:    48,
 	lloydPasses:       3,
 	// anchorSpread kept well inside tdTownRadius so wonders sit central and the town hugs them.
@@ -834,24 +861,65 @@ func tdPlazaRadius(form tdTownForm, cfg tdConfig) float64 {
 }
 
 // tdOrganicRadiusAt returns the ORGANIC town's in-disc radius at a given angle (city units): the
-// base townR bitten INWARD by a smooth, seeded, angle-varying perturbation so the silhouette is an
-// irregular BLOB, not a clean radial circle (map-overhaul-citymap FIX 4 — irregular outline). The
-// perturbation is a sum of a few sine harmonics with seeded phases (deterministic per city), always
-// SUBTRACTIVE (radius ∈ [~0.72,1.0]·townR) so no ward ever sits past the bounded footprint — the
-// compact / anti-pinwheel guarantees and the seed-in-disc bound all still hold. Non-organic forms
-// never call this (they keep the plain circle), so their shapes/tests are unchanged. Pure + bounded.
+// base townR bitten INWARD by a smooth, seeded, angle-varying perturbation so the silhouette is a
+// genuinely IRREGULAR blob with real bays and peninsulas — NOT a clean radial circle, and NOT the
+// timid near-circle the first cut produced (map-overhaul-citymap FIX 2 — ragged outline).
+//
+// Shape recipe (deterministic per city; the seed is age-independent so a civ's silhouette is stable
+// across ages):
+//   - A few LOW-frequency lobes (1θ, 2θ, 3θ) dominate → a couple of big bays/peninsulas, the thing
+//     that makes the outline unmistakably non-circular. Each lobe gets its OWN seeded phase AND a
+//     seeded amplitude weight, so two towns differ in SHAPE, not just rotation (the old version fed
+//     the same two frequencies every time, so every silhouette had identical variance).
+//   - A little higher-frequency RIPPLE (5θ, 7θ) at a fraction of the amplitude adds fine coastline
+//     wobble on top of the big lobes.
+//
+// The perturbation is always SUBTRACTIVE and normalized so the deepest possible bite is
+// organicEdgeAmp: radius ∈ [organicEdgeFloor, 1.0]·townR. Never exceeds townR, so no ward sits past
+// the bounded footprint (the compact / anti-pinwheel guarantees + the seed-in-disc bound all hold).
+// The floor keeps the footprint STAR-SHAPED about the core (every ray ≥ floor·townR > 0) → always
+// simply-connected, so a deep bay can never carve a detached island (streets stay ONE component).
+// Non-organic forms never call this (they keep the plain circle). Pure + bounded.
 func tdOrganicRadiusAt(angle, townR float64, seed uint32) float64 {
-	// Two seeded phases so two organic towns bite their outline differently, but a given town's is
-	// fixed across ages (seed is age-independent).
-	p1 := float64(hash2(0xED9E, 0x01, seed)) / float64(^uint32(0)) * 2 * math.Pi
-	p2 := float64(hash2(0xED9E, 0x02, seed)) / float64(^uint32(0)) * 2 * math.Pi
-	// Low harmonics → smooth lobes (no thin slivers that could pinch the street web). Range of the
-	// combined wave is [-1,1]; map to a purely inward bite in [0, organicEdgeAmp].
-	w := 0.6*math.Sin(3*angle+p1) + 0.4*math.Sin(5*angle+p2)
-	bite := defaultTdConfig.organicEdgeAmp * (0.5 - 0.5*w) // 0 (no bite) .. organicEdgeAmp (deepest)
+	// Per-seed phase for each harmonic.
+	ph := func(k uint32) float64 {
+		return float64(hash2(0xED9E, k, seed)) / float64(^uint32(0)) * 2 * math.Pi
+	}
+	// Per-seed amplitude weight in [0.35,1] for a harmonic, so different towns emphasise different
+	// lobes (one town a big single bay, another a three-lobed clover) rather than all sharing one
+	// envelope. Keyed off a distinct salt from the phase so amplitude and phase vary independently.
+	amp := func(k uint32) float64 {
+		return 0.35 + 0.65*float64(hash2(0xA33A, k, seed))/float64(^uint32(0))
+	}
+	// LOW-frequency lobes (the big bays) carry most of the weight; the higher ripple rides on a
+	// fraction. Weights are relative; the whole wave is renormalized to [-1,1] below so the bite
+	// depth is controlled purely by organicEdgeAmp regardless of the weight mix.
+	w := amp(1)*math.Sin(1*angle+ph(1)) +
+		amp(2)*math.Sin(2*angle+ph(2)) +
+		amp(3)*0.85*math.Sin(3*angle+ph(3)) +
+		amp(5)*0.35*math.Sin(5*angle+ph(5)) +
+		amp(7)*0.22*math.Sin(7*angle+ph(7))
+	// Normalize by a TYPICAL peak (~2× the RMS of the summed sines), NOT their theoretical all-aligned
+	// maximum — dividing by the worst case would make the outline barely swing because five sines
+	// almost never peak together (that was the too-timid first cut). Normalizing by the typical peak
+	// gives most of the rim a strong swing; the rare angle where the low lobes DO align saturates the
+	// bite to the floor and reads as a dramatic cove. wn is clamped to [-1,1] so a saturated bite is
+	// exactly organicEdgeAmp deep (never past townR).
+	const norm = 1.9
+	wn := w / norm
+	if wn > 1 {
+		wn = 1
+	} else if wn < -1 {
+		wn = -1
+	}
+	bite := defaultTdConfig.organicEdgeAmp * (0.5 - 0.5*wn) // 0 (no bite) .. organicEdgeAmp (deepest)
 	r := townR * (1 - bite)
-	if min := 0.72 * townR; r < min {
-		r = min
+	floor := defaultTdConfig.organicEdgeFloor
+	if floor <= 0 {
+		floor = 0.55
+	}
+	if minR := floor * townR; r < minR {
+		r = minR
 	}
 	return r
 }
@@ -2570,16 +2638,22 @@ func drawStreetCells(img *image.RGBA, xf tdTransform, plan topPlan, surface, edg
 	if len(plan.streetCells) == 0 || plan.cellSize <= 0 {
 		return
 	}
-	// A street cell covers cellSize×cellSize in city space; render it a touch larger than the
-	// half-cell so adjacent cells' squares overlap into one continuous gap (no seams). The edge
-	// is a slightly larger square drawn FIRST so the surface overpaints its interior, leaving
-	// only a thin darker rim on the true boundary of the network.
+	// A street cell covers cellSize×cellSize in city space; render it a hair larger than the
+	// half-cell so adjacent cells' squares still meet into one continuous gap (no seams), but NOT so
+	// much that the overlap fattens the thin lane back into a wide band (map-overhaul-citymap FIX 1 —
+	// NARROWER roads). The old 1.15× overlap + an always-additive +1 edge padded every lane wider than
+	// its cells; a ~1.05× cover keeps the web continuous while the streets stay thin. The edge is a
+	// 1px-larger square drawn FIRST so the surface overpaints its interior, leaving only a thin darker
+	// rim; at a floored 1px surface the edge is capped so it can't dominate a village-scale lane.
 	half := plan.cellSize / 2
-	surfHalf := xf.ext(half * 1.15)
+	surfHalf := xf.ext(half * 1.05)
 	if surfHalf < 1 {
 		surfHalf = 1
 	}
-	edgeHalf := surfHalf + 1
+	edgeHalf := surfHalf
+	if surfHalf >= 2 {
+		edgeHalf = surfHalf + 1 // a crisp shoulder only once the lane is wide enough to carry one
+	}
 	for _, p := range plan.streetCells {
 		cx, cy := xf.px(p.x, p.y)
 		fillRectC(img, cx, cy, edgeHalf, edgeHalf, edge)
