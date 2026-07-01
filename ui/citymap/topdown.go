@@ -59,12 +59,14 @@ type tdEraStyle struct {
 	laneWidth     int     // half-thickness of a lane in px (0 → 1px, 1 → 3px band)
 	streetJitter  float64 // lane meander amount (0 straight … 1 very wavy) — organic only
 
-	// Roof material: base + ridge accent recipes, blended per building with a subtle
+	// Roof material: base + shaded-slope recipes, blended per building with a subtle
 	// lineage tint so a temple reads different from a hut without leaving the era mood.
-	roofBase  func(tdPal) color.RGBA // dominant roof fill (e.g. thatch brown)
-	roofRidge func(tdPal) color.RGBA // ridge / texture highlight
-	roofDark  func(tdPal) color.RGBA // shaded slope
-	lineageMix float64               // how much lineage tint bleeds into the roof (~0.15–0.25)
+	// The ridge/crown highlight is NOT a preset recipe — roofColorsFor derives it as a
+	// fixed lighten of base so it can never resolve to a saturated accent (the yellow-
+	// dot regression). Only the base material + the shaded slope are era recipes.
+	roofBase   func(tdPal) color.RGBA // dominant roof fill (e.g. thatch brown)
+	roofDark   func(tdPal) color.RGBA // shaded slope
+	lineageMix float64                // how much lineage tint bleeds into the roof (~0.15–0.25)
 
 	// Ground: base fill + a slightly-varied texture tone, both era-tinted.
 	groundBase func(tdPal) color.RGBA
@@ -133,9 +135,6 @@ var organicVillageStyle = tdEraStyle{
 	roofBase: func(p tdPal) color.RGBA {
 		// warm brown thatch: background lifted toward text, warmed toward an earth anchor.
 		return blend(blend(p.bg, p.text, 0.34), earthAnchor, 0.42)
-	},
-	roofRidge: func(p tdPal) color.RGBA {
-		return brighten(blend(blend(p.bg, p.text, 0.34), earthAnchor, 0.42), 0.20)
 	},
 	roofDark: func(p tdPal) color.RGBA {
 		return darken(blend(blend(p.bg, p.text, 0.34), earthAnchor, 0.42), 0.30)
@@ -274,17 +273,53 @@ type roofColors struct {
 // the lineage tint into it by the style's lineageMix. So every roof stays in the era
 // mood (thatch brown) while a temple leans faith-violet, a forge leans forge-orange,
 // etc. — the "subtle lineage tint" of locked #6.
+//
+// CRITICAL (yellow-dot regression guard): the ridge/highlight tone is derived from
+// the roof BASE (a lighter shade of the same material), NEVER from an accent/highlight
+// theme role. An earlier cut painted the ridge from style.roofRidge, whose recipe in
+// some themes pulled RoleAccent/RoleHighlight (bright yellow) and stamped it at each
+// roof's crown → the "bright yellow center-dot" playtest bug. Ridge is now a fixed
+// lighten of base so a roof crown can only ever read as a lit patch of its own thatch.
+// dark stays the era shaded-slope recipe (a darken of the same family, still safe).
 func roofColorsFor(style tdEraStyle, pal tdPal, domain, category string) roofColors {
 	base := style.roofBase(pal)
-	ridge := style.roofRidge(pal)
 	dark := style.roofDark(pal)
 	if style.lineageMix > 0 {
-		tint := lineageColor(domain, category)
-		base = blend(base, tint, style.lineageMix)
-		ridge = blend(ridge, tint, style.lineageMix*0.7)
-		dark = blend(dark, tint, style.lineageMix)
+		// Desaturate the lineage color before bleeding it in. The raw role colors for
+		// faith (violet), wonders (gold), culture (magenta) are highly saturated; blended
+		// straight they poster-paint a temple's ridge into a neon cross. Pulling the tint
+		// most of the way to a same-lightness gray keeps the HUE cue ("a temple leans
+		// violet") while staying an earthy, muted thatch — the "subtle lineage tint" of
+		// locked #6.
+		tint := mutedTint(lineageColor(domain, category))
+		base = clampRoofSat(blend(base, tint, style.lineageMix))
+		dark = clampRoofSat(blend(dark, tint, style.lineageMix))
 	}
+	// Ridge = a lighter shade of the (already lineage-tinted, saturation-capped) base.
+	// Base-derived by construction, so it can never be a saturated accent no matter the
+	// theme/recipe, and the cap keeps even a civic roof's crown earthy, not neon.
+	ridge := clampRoofSat(brighten(base, 0.14))
 	return roofColors{base: base, ridge: ridge, dark: dark}
+}
+
+// mutedTint desaturates a lineage color toward a gray of the same lightness, so the
+// subtle roof tint nudges hue without going neon. Keeps ~35% of the original chroma.
+func mutedTint(c color.RGBA) color.RGBA {
+	h, s, l := rgbToHSL(c)
+	return hslToRGB(h, s*0.35, l)
+}
+
+// clampRoofSat caps a roof tone's saturation so no roof — even a violet-faith temple or
+// a gold-wonder — can read as a saturated poster-paint token. A hard ceiling on chroma
+// guarantees the whole atlas stays in the earthy thatch family (the locked "muted &
+// natural saturation" of #6), which is also what keeps the ridge safely off any accent.
+func clampRoofSat(c color.RGBA) color.RGBA {
+	const maxSat = 0.35
+	h, s, l := rgbToHSL(c)
+	if s > maxSat {
+		s = maxSat
+	}
+	return hslToRGB(h, s, l)
 }
 
 // ---- city-space plan model --------------------------------------------------
@@ -441,19 +476,51 @@ func spiralSlot(i int, spacing, phase float64) (dx, dy float64) {
 	return math.Cos(a) * r, math.Sin(a) * r
 }
 
+// slotJitter returns a small ORGANIC offset for the i-th slot of district di, breaking
+// up the visible golden-angle diamond-lattice so the hamlet reads natural rather than
+// crystalline. CRITICAL: the offset is a PURE FUNCTION of (i, di, seed) via a hash —
+// it does NOT draw from the threaded rng — so slot i's jitter is identical whether it
+// is the last building placed at count N or an interior one at count N+1. That is what
+// keeps placement stable-incremental (locked #8) even with jitter: adding a building
+// can never move an existing one. amp is the max wander in city units (~a fraction of
+// slot spacing) so buildings still pack close, just off the perfect lattice.
+func slotJitter(i, di int, seed uint32, amp float64) (dx, dy float64) {
+	if amp <= 0 {
+		return 0, 0
+	}
+	h1 := hash2(uint32(i)*2+1, uint32(di)*131+7, seed^0x9e3779b9)
+	h2 := hash2(uint32(i)*2+2, uint32(di)*131+11, seed^0x85ebca6b)
+	// Map each hash to [-1,1).
+	jx := float64(h1)/float64(^uint32(0))*2 - 1
+	jy := float64(h2)/float64(^uint32(0))*2 - 1
+	return jx * amp, jy * amp
+}
+
 // tdConfig holds the fixed generator constants (city-space units). City space is an
 // abstract plane; the fill-frame transform later maps the plan's bounding box onto
 // the canvas, so these are relative sizes, not pixels.
 type tdConfig struct {
-	districtRadius float64 // how far district centers sit from the core
-	slotSpacing    float64 // golden-spiral spacing between instances
+	districtRadius float64 // how far district centers sit from the core (large city)
+	slotSpacing    float64 // golden-spiral spacing between instances (tight hamlet)
 	roofSize       float64 // base roof extent in city units
+	jitterAmp      float64 // organic per-slot wander (city units) breaking the lattice
+
+	// clusterThreshold: below this many total roof lots the settlement stays a SINGLE
+	// cohesive cluster (districts pull in to a tight core radius); at/above it the loose
+	// multi-district ring emerges (locked #11, but a village is one hamlet — locked spec
+	// + playtest). tightRadiusScale is how far the sub-clusters sit from the core while
+	// the settlement is small — small enough that they blur into one town, not spokes.
+	clusterThreshold int
+	tightRadiusScale float64
 }
 
 var defaultTdConfig = tdConfig{
-	districtRadius: 22,
-	slotSpacing:    3.2,
-	roofSize:       3.0,
+	districtRadius:   22,
+	slotSpacing:      2.4,
+	roofSize:         3.2,
+	jitterAmp:        0.8,
+	clusterThreshold: 35,
+	tightRadiusScale: 0.20,
 }
 
 // generateTopPlan synthesizes the whole top-down city plan in CITY SPACE, purely and
@@ -479,16 +546,36 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 	// tier/count/role per distinct built type). Sorted, so placement order is stable.
 	blds := gatherBuildings(state, byKey)
 
+	// Total roof lots (excluding the centerpiece wonder) drives the settlement mode: a
+	// small settlement is ONE tight hamlet, a large one spreads into the loose district
+	// ring. Computed up front from the same tdRoofCount the populate loop uses, so the
+	// threshold decision is exact.
+	totalRoofs := 0
+	for _, b := range blds {
+		if b.category == "wonder" || b.category == "monument" {
+			continue
+		}
+		totalRoofs += tdRoofCount(b.count, b.role)
+	}
+	// Below the threshold: pull the district centers WAY in so the whole thing reads as
+	// one cohesive cluster around the core (a hamlet), not spokes to distant clumps
+	// (FIX 2 / playtest). At/above it: the full loose multi-district ring (locked #11).
+	radiusScale := 1.0
+	if totalRoofs < cfg.clusterThreshold {
+		radiusScale = cfg.tightRadiusScale
+	}
+
 	// (b) districts — five loose clusters seeded around the core at STABLE angles. A
 	// stable per-seed phase rotates the whole ring so two civs differ, but a given civ
-	// is fixed across ages (seed is age-independent). Clusters may overlap (blur).
+	// is fixed across ages (seed is age-independent). Clusters may overlap (blur). While
+	// the settlement is small, radiusScale collapses the ring toward the core.
 	kinds := []tdDistrictKind{distResidential, distProduction, distCivic, distMarket, distGarrison}
 	ringPhase := r.f01() * 2 * math.Pi
 	dmap := make(map[tdDistrictKind]int, len(kinds)) // kind → index into plan.districts
 	for i, k := range kinds {
 		ang := ringPhase + 2*math.Pi*float64(i)/float64(len(kinds))
 		// Civic sits nearest the core (its hero anchors the center); the rest ring out.
-		dr := cfg.districtRadius
+		dr := cfg.districtRadius * radiusScale
 		if k == distCivic {
 			dr *= 0.35
 		}
@@ -572,10 +659,14 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 			sz *= 1.15
 		}
 		for j := 0; j < n; j++ {
-			dx, dy := spiralSlot(d.placed, cfg.slotSpacing, phase)
+			slot := d.placed
+			dx, dy := spiralSlot(slot, cfg.slotSpacing, phase)
+			// Organic wander: a pure function of (slot, di, seed), so it never moves an
+			// existing building when a later one is added (stable-incremental, locked #8).
+			jx, jy := slotJitter(slot, di, seed, cfg.jitterAmp)
 			d.placed++
 			lot := tdLot{
-				x: d.cx + dx, y: d.cy + dy,
+				x: d.cx + dx + jx, y: d.cy + dy + jy,
 				w: sz, h: sz, kind: tdRoof,
 				domain: b.domain, category: b.category, tier: b.tier, roof: rt,
 			}
@@ -725,14 +816,15 @@ func windingLane(a, b tdPoint, jitter float64, width int, r *rng) tdStreet {
 
 // ---- filler (balanced living city) ------------------------------------------
 
-// tdAddFiller scatters balanced living-city filler into the gaps: green gardens,
-// paved squares near the civic core, tree dot-clusters, and small props (wells/
-// stalls). Density is deliberately balanced (locked #12) — alive but never burying
-// the buildings — and fully seeded so it's deterministic. Everything is placed in
-// city space around the built-up footprint derived from the roof lots.
+// tdAddFiller lays balanced living-city greenery into the town, then a few deliberate
+// groves just outside its edge (FIX 3 / playtest). The old cut scattered trees across
+// the whole empty canvas; this keeps ALL in-town greenery (gardens, squares, props, and
+// street trees) strictly within the built-up footprint, and adds a SMALL number (2–4)
+// of grove clusters hugging the town edge for a wooded fringe. Density is balanced
+// (locked #12) — alive, not burying the buildings — and fully seeded so it's stable.
 func tdAddFiller(plan *topPlan, style tdEraStyle, cfg tdConfig, r *rng) {
-	// Derive the footprint radius from the roof lots so filler stays within/around the
-	// built-up area (not scattered across empty space).
+	// The built-up footprint: its center (the roof centroid, ~the core) and radius. All
+	// in-town filler stays inside this disk; groves sit just past its edge.
 	rad := tdFootprintRadius(plan)
 	if rad < cfg.roofSize {
 		rad = cfg.roofSize * 2
@@ -752,11 +844,15 @@ func tdAddFiller(plan *topPlan, style tdEraStyle, cfg tdConfig, r *rng) {
 		dens = 1
 	}
 	// Counts scale with the number of roofs but stay balanced (sub-linear) so the
-	// filler seasons the city rather than swamping it.
-	gardens := int(dens * math.Sqrt(float64(roofN)) * 1.2)
-	trees := int(dens * math.Sqrt(float64(roofN)) * 1.6)
+	// filler seasons the town rather than swamping it.
+	gardens := int(dens * math.Sqrt(float64(roofN)) * 1.1)
+	trees := int(dens * math.Sqrt(float64(roofN)) * 1.2)
 	props := int(dens * math.Sqrt(float64(roofN)) * 0.7)
 	squares := 1 + int(dens*math.Sqrt(float64(roofN))*0.3)
+
+	// innerRad keeps filler off the very rim so it reads as woven THROUGH the town, not
+	// ringing it. Groves live outside; everything below stays within innerRad.
+	innerRad := rad * 0.9
 
 	// A paved square (or two) hugging the civic core.
 	for i := 0; i < squares; i++ {
@@ -767,20 +863,46 @@ func tdAddFiller(plan *topPlan, style tdEraStyle, cfg tdConfig, r *rng) {
 			w: cfg.roofSize * 1.6, h: cfg.roofSize * 1.6, kind: tdSquare,
 		})
 	}
-	// Gardens: green plots scattered through the built-up disk.
+	// Gardens: green plots woven through the built-up disk (in-town only).
 	for i := 0; i < gardens; i++ {
-		x, y := tdDiskPoint(plan.cx, plan.cy, rad, r)
+		x, y := tdDiskPoint(plan.cx, plan.cy, innerRad, r)
 		plan.lots = append(plan.lots, tdLot{x: x, y: y, w: cfg.roofSize * 1.3, h: cfg.roofSize * 1.1, kind: tdGarden})
 	}
-	// Trees: small dot clusters, biased to the outer ring (a village edge of woods).
+	// Street trees: small dot clusters sprinkled INSIDE the town (not a scatter past it).
 	for i := 0; i < trees; i++ {
-		x, y := tdRingPoint(plan.cx, plan.cy, rad*0.55, rad*1.05, r)
+		x, y := tdDiskPoint(plan.cx, plan.cy, innerRad, r)
 		plan.lots = append(plan.lots, tdLot{x: x, y: y, w: cfg.roofSize * 0.7, h: cfg.roofSize * 0.7, kind: tdTree})
 	}
 	// Props: wells/stalls, sprinkled inside the built-up area.
 	for i := 0; i < props; i++ {
-		x, y := tdDiskPoint(plan.cx, plan.cy, rad*0.85, r)
+		x, y := tdDiskPoint(plan.cx, plan.cy, innerRad, r)
 		plan.lots = append(plan.lots, tdLot{x: x, y: y, w: cfg.roofSize * 0.5, h: cfg.roofSize * 0.5, kind: tdProp})
+	}
+
+	// Groves: 2–4 deliberate stands of trees JUST OUTSIDE the town edge, each a tight
+	// knot of a few tree lots so it reads as a copse, not stray dots. Placement is
+	// seeded at spread angles so the groves ring the town loosely without scattering.
+	groveCount := 2 + int(r.f01()*3) // 2..4
+	if groveCount > 4 {
+		groveCount = 4
+	}
+	groveBase := r.f01() * 2 * math.Pi
+	for g := 0; g < groveCount; g++ {
+		// Spread the groves around the compass with a little seeded wobble.
+		ang := groveBase + 2*math.Pi*float64(g)/float64(groveCount) + (r.f01()-0.5)*0.6
+		gr := rad * (1.05 + 0.08*r.f01()) // hugging just past the town edge
+		gx := plan.cx + math.Cos(ang)*gr
+		gy := plan.cy + math.Sin(ang)*gr
+		// A copse: a few trees clustered tightly around (gx,gy).
+		trunks := 3 + int(r.f01()*3) // 3..5
+		for t := 0; t < trunks; t++ {
+			ox := (r.f01()*2 - 1) * cfg.roofSize * 0.9
+			oy := (r.f01()*2 - 1) * cfg.roofSize * 0.9
+			plan.lots = append(plan.lots, tdLot{
+				x: gx + ox, y: gy + oy,
+				w: cfg.roofSize * 0.8, h: cfg.roofSize * 0.8, kind: tdTree,
+			})
+		}
 	}
 }
 
@@ -800,17 +922,43 @@ func tdFootprintRadius(plan *topPlan) float64 {
 	return max
 }
 
+// tdRoofBBox returns the bounding box (minX,minY,maxX,maxY) of all roof lots including
+// their extent. Used by tests to assert the town sits within the frame with margin and
+// that greenery lands within/near the town footprint. Empty roof set → a zero box at
+// the core.
+func tdRoofBBox(plan *topPlan) (minX, minY, maxX, maxY float64) {
+	minX, minY = math.Inf(1), math.Inf(1)
+	maxX, maxY = math.Inf(-1), math.Inf(-1)
+	any := false
+	for _, lt := range plan.lots {
+		if lt.kind != tdRoof {
+			continue
+		}
+		any = true
+		ex := math.Max(lt.w, lt.h) / 2
+		if lt.x-ex < minX {
+			minX = lt.x - ex
+		}
+		if lt.y-ex < minY {
+			minY = lt.y - ex
+		}
+		if lt.x+ex > maxX {
+			maxX = lt.x + ex
+		}
+		if lt.y+ex > maxY {
+			maxY = lt.y + ex
+		}
+	}
+	if !any {
+		return plan.cx, plan.cy, plan.cx, plan.cy
+	}
+	return minX, minY, maxX, maxY
+}
+
 // tdDiskPoint returns a seeded point uniformly-ish within radius rad of (cx,cy).
 func tdDiskPoint(cx, cy, rad float64, r *rng) (float64, float64) {
 	ang := r.f01() * 2 * math.Pi
 	rr := rad * math.Sqrt(r.f01())
-	return cx + math.Cos(ang)*rr, cy + math.Sin(ang)*rr
-}
-
-// tdRingPoint returns a seeded point in the annulus [r0,r1] around (cx,cy).
-func tdRingPoint(cx, cy, r0, r1 float64, r *rng) (float64, float64) {
-	ang := r.f01() * 2 * math.Pi
-	rr := r0 + (r1-r0)*r.f01()
 	return cx + math.Cos(ang)*rr, cy + math.Sin(ang)*rr
 }
 
@@ -852,11 +1000,14 @@ type tdTransform struct {
 	roofFloorPx  float64 // minimum roof extent in px (legibility floor, locked #3)
 }
 
-// computeTransform derives the fill-frame transform. It takes the bounding box of all
-// lots (roofs + filler + streets), leaves a margin, and scales so the box fills the
-// canvas. Roofs shrink as the city densifies (more lots → larger box → smaller
-// scale) but a min roof-size FLOOR keeps them legible. Panic-safe: a degenerate
-// (empty / zero-extent) box yields a centered identity-ish transform.
+// computeTransform derives the fill-frame transform. It fits the BUILT city — the roof
+// lots, the streets, and the core — leaving a small padding, and scales so that box
+// fills the canvas. Filler/greenery is deliberately EXCLUDED from the fit: a couple of
+// edge groves must not zoom the whole town out (that left the roofs tiny with a sea of
+// empty ground in the playtest). Greenery lands within the town or just past its edge,
+// clipping cleanly at the margin. Roofs shrink as the city densifies (more roofs →
+// larger box → smaller scale) but a min roof-size FLOOR keeps them legible. Panic-safe:
+// a degenerate (empty / zero-extent) box yields a centered identity-ish transform.
 func computeTransform(plan *topPlan, w, h int) tdTransform {
 	minX, minY := math.Inf(1), math.Inf(1)
 	maxX, maxY := math.Inf(-1), math.Inf(-1)
@@ -874,9 +1025,15 @@ func computeTransform(plan *topPlan, w, h int) tdTransform {
 			maxY = y + ext
 		}
 	}
+	roofN := 0
 	for _, lt := range plan.lots {
+		if lt.kind != tdRoof {
+			continue // greenery/props are seasoning; don't let them drive the fill-frame
+		}
+		roofN++
 		acc(lt.x, lt.y, math.Max(lt.w, lt.h)/2)
 	}
+	// Streets are part of the built fabric; include them so lanes stay on-frame.
 	for _, s := range plan.streets {
 		for _, p := range s.pts {
 			acc(p.x, p.y, 0)
@@ -884,6 +1041,18 @@ func computeTransform(plan *topPlan, w, h int) tdTransform {
 	}
 	// Always include the core so an empty plan still centers sensibly.
 	acc(plan.cx, plan.cy, 1)
+	// Padding around the built box so the town breathes AND the near-edge groves (which
+	// sit ~1.05–1.13× the town radius past the core) land inside the frame margin rather
+	// than being flung off-canvas. ~15% covers the grove ring while still leaving the
+	// roofs large (locked #4 framing: breathing room at village scale, not fill-to-edge).
+	if roofN > 0 && maxX > minX && maxY > minY {
+		padX := (maxX - minX) * 0.15
+		padY := (maxY - minY) * 0.15
+		minX -= padX
+		minY -= padY
+		maxX += padX
+		maxY += padY
+	}
 
 	if math.IsInf(minX, 1) || maxX <= minX || maxY <= minY {
 		// Degenerate: center a unit box.
@@ -1102,8 +1271,11 @@ func drawTree(img *image.RGBA, xf tdTransform, lt tdLot, c color.RGBA) {
 
 // drawRoof renders one building lot as a TOP-DOWN roof filling its lot: a soft SE
 // drop-shadow first (subtle depth, NOT isometric walls — locked #6), then the roof
-// shape with a ridge/texture highlight. Material comes from the era style; a subtle
-// lineage tint differentiates types. Dispatches on the lot's roofType archetype.
+// shape read straight from above (Stardew / top-down-village style). Material comes
+// from the era style; a subtle lineage tint differentiates types. EVERY tone is
+// base/dark/ridge from roofColorsFor — ridge is a base-derived lighten, so NO
+// saturated theme accent ever lands on a roof (the yellow-dot fix). Dispatches on the
+// lot's roofType archetype.
 func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal tdPal) {
 	cx, cy := xf.px(lt.x, lt.y)
 	hw := xf.ext(lt.w / 2)
@@ -1116,20 +1288,21 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 	}
 	rc := roofColorsFor(style, pal, lt.domain, lt.category)
 
-	// SE drop-shadow: the roof footprint, offset down-right by ~1px (scaled a touch for
-	// big roofs), painted UNDER the roof. Soft = the theme shadow tone, not black.
-	sh := 1 + hw/6
+	// SE drop-shadow: the roof footprint, offset down-right by ~1px (subtle, scaled a
+	// hair for big roofs), painted UNDER the roof. Soft = the theme shadow tone blended
+	// into the ground, not a hard black slab — a hint of height without isometric walls.
+	sh := 1 + hw/8
 	drawShadow(img, cx+sh, cy+sh, hw, hh, lt.roof, pal.shadow)
 
 	switch lt.roof {
 	case roofHut:
 		drawRoofHut(img, cx, cy, hw, hh, rc)
 	case roofRidge:
-		drawRoofRidge(img, cx, cy, hw, hh, rc, false)
+		drawRoofRidge(img, cx, cy, hw, hh, rc)
 	case roofLong:
-		drawRoofRidge(img, cx, cy, hw, hh, rc, true)
+		drawRoofRidge(img, cx, cy, hw, hh, rc)
 	case roofTemple:
-		drawRoofTemple(img, cx, cy, hw, hh, rc, pal)
+		drawRoofTemple(img, cx, cy, hw, hh, rc)
 	case roofCamp:
 		drawRoofCamp(img, cx, cy, hw, hh, rc)
 	case roofStash:
@@ -1137,18 +1310,19 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 	case roofFlat:
 		drawRoofFlat(img, cx, cy, hw, hh, rc)
 	case roofWonder:
-		drawRoofWonder(img, cx, cy, hw, hh, rc, pal)
+		drawRoofWonder(img, cx, cy, hw, hh, rc)
 	default:
-		drawRoofRidge(img, cx, cy, hw, hh, rc, false)
+		drawRoofRidge(img, cx, cy, hw, hh, rc)
 	}
 }
 
 // drawShadow paints a soft SE drop-shadow matching the roof's rough silhouette. It
 // blends the shadow tone into whatever is beneath (so it darkens the ground, not
-// paints a hard slab), giving a subtle hint of height.
+// paints a hard slab), giving a subtle hint of height. Kept faint (~0.28) so it reads
+// as depth, not an outline.
 func drawShadow(img *image.RGBA, cx, cy, hw, hh int, rt roofType, shadow color.RGBA) {
 	blendFn := func(x, y int) {
-		blendPixel(img, x, y, shadow, 0.35)
+		blendPixel(img, x, y, shadow, 0.28)
 	}
 	switch rt {
 	case roofHut, roofWonder:
@@ -1158,46 +1332,67 @@ func drawShadow(img *image.RGBA, cx, cy, hw, hh int, rt roofType, shadow color.R
 	}
 }
 
-// drawRoofHut: a small round/oval thatch roof with faint radial streaks from the
-// apex — the primitive dwelling read from above (locked §roof atlas).
+// drawRoofHut: a small ROUND thatch roof seen from straight above — a solid thatch disc
+// with soft top-down SHADING (lit toward the NW crown, shaded toward the SE eave) so it
+// reads as a domed thatch cap, not a target or a pinwheel. No concentric rings, no
+// radial spokes (both read as abstract tokens at this scale). It must read round, NOT a
+// 4-point diamond: at tiny radii forEllipse degenerates to a plus, so the footprint is
+// floored to a minimum radius (see hutRadius) before filling.
 func drawRoofHut(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
-	forEllipse(cx, cy, hw, hh, func(x, y int) { img.SetRGBA(x, y, rc.base) })
-	// Radial thatch streaks: a few darker spokes from center to rim.
-	const spokes = 6
-	for i := 0; i < spokes; i++ {
-		ang := 2 * math.Pi * float64(i) / spokes
-		ex := cx + int(math.Cos(ang)*float64(hw))
-		ey := cy + int(math.Sin(ang)*float64(hh))
-		drawLineC(img, cx, cy, ex, ey, rc.dark)
-	}
-	// A bright apex pip so the cone reads as a peak.
-	img.SetRGBA(cx, cy, rc.ridge)
+	rw, rh := hutRadius(hw), hutRadius(hh)
+	shade := blend(rc.base, rc.dark, 0.5)
+	forEllipse(cx, cy, rw, rh, func(x, y int) {
+		// Radial position: shade grows toward the SE eave, base holds toward the NW crown.
+		fx := float64(x-cx) / float64(rw)
+		fy := float64(y-cy) / float64(rh)
+		d := (fx + fy) // -2..2, negative = NW (lit), positive = SE (shaded)
+		switch {
+		case d > 0.55:
+			img.SetRGBA(x, y, shade)
+		case d < -0.55:
+			img.SetRGBA(x, y, rc.ridge) // lit crown side
+		default:
+			img.SetRGBA(x, y, rc.base)
+		}
+	})
 }
 
-// drawRoofRidge: a rectangular pitched roof — a center ridge line with two shaded
-// slopes falling to the eaves. long=true elongates it (longhouse / rowhouse).
-func drawRoofRidge(img *image.RGBA, cx, cy, hw, hh int, rc roofColors, long bool) {
-	// Fill the rectangle with the two slopes: rows above the ridge lean light, below
-	// lean dark, so the pitch reads. The ridge runs along the long axis.
-	horizontalRidge := hw >= hh // ridge along the wider axis
+// hutRadius floors a hut half-extent so a hut never collapses into a plus/diamond at
+// small sizes (forEllipse includes only the cardinal cells at radius 1). Minimum 2 so
+// the smallest hut is still an unmistakable little round roof.
+func hutRadius(half int) int {
+	if half < 2 {
+		return 2
+	}
+	return half
+}
+
+// drawRoofRidge: a rectangular PITCHED roof read from above — a filled rectangle split
+// by a center ridge line running the long axis, with the two slopes shaded slightly
+// differently (the ridge-ward light side = base, the far side = dark) so the pitch
+// reads. Serves both the house/longhouse (roofLong is just a wider lot) and the flat/
+// default fallback. The ridge line is base-derived (rc.ridge), one shade lighter.
+func drawRoofRidge(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	horizontalRidge := hw >= hh // ridge runs along the wider axis
 	forRect(cx, cy, hw, hh, func(x, y int) {
 		var slope color.RGBA
 		if horizontalRidge {
-			if y < cy {
-				slope = brighten(rc.base, 0.05)
+			// Upper slope catches light (base), lower slope falls into shade (dark).
+			if y <= cy {
+				slope = rc.base
 			} else {
 				slope = rc.dark
 			}
 		} else {
-			if x < cx {
-				slope = brighten(rc.base, 0.05)
+			if x <= cx {
+				slope = rc.base
 			} else {
 				slope = rc.dark
 			}
 		}
 		img.SetRGBA(x, y, slope)
 	})
-	// The ridge highlight down the center of the long axis.
+	// The ridge line down the center of the long axis: one shade lighter than base.
 	if horizontalRidge {
 		drawHSpan(img, cx-hw, cx+hw, cy, rc.ridge)
 	} else {
@@ -1207,48 +1402,52 @@ func drawRoofRidge(img *image.RGBA, cx, cy, hw, hh int, rc roofColors, long bool
 	}
 }
 
-// drawRoofTemple: a larger ornate symmetric roof (a stepped/tiered look) with a
-// bright finial at the apex — the shrine/temple hero read (faith/knowledge/culture).
-func drawRoofTemple(img *image.RGBA, cx, cy, hw, hh int, rc roofColors, pal tdPal) {
-	// Base tier: full footprint.
-	forRect(cx, cy, hw, hh, func(x, y int) { img.SetRGBA(x, y, rc.base) })
-	// Inner tier: a brighter concentric rectangle for the ornate stepped look.
-	ihw := maxInt(hw*2/3, 1)
-	ihh := maxInt(hh*2/3, 1)
-	forRect(cx, cy, ihw, ihh, func(x, y int) { img.SetRGBA(x, y, brighten(rc.base, 0.12)) })
-	// A cross ridge (both axes) so it reads symmetric + civic.
+// drawRoofTemple: the larger, grandest small building — an ornate symmetric tiered
+// roof read from above. A full base footprint, a lighter stepped inner tier, and a
+// small subtle central peak, all base-derived (no accent finial — that was the yellow
+// dot). Cross ridges on both axes make it read symmetric and civic.
+func drawRoofTemple(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	// Base tier: full footprint in the shaded tone so the brighter inner tiers step up.
+	forRect(cx, cy, hw, hh, func(x, y int) { img.SetRGBA(x, y, rc.dark) })
+	// Middle tier: the base material, stepped in.
+	mhw := maxInt(hw*2/3, 1)
+	mhh := maxInt(hh*2/3, 1)
+	forRect(cx, cy, mhw, mhh, func(x, y int) { img.SetRGBA(x, y, rc.base) })
+	// A small central peak: the lighter base-derived ridge tone (grandest, but in-family).
+	phw := maxInt(hw/3, 1)
+	phh := maxInt(hh/3, 1)
+	forRect(cx, cy, phw, phh, func(x, y int) { img.SetRGBA(x, y, rc.ridge) })
+	// Cross ridges (both axes) so it reads symmetric.
 	drawHSpan(img, cx-hw, cx+hw, cy, rc.ridge)
 	for y := cy - hh; y <= cy+hh; y++ {
 		img.SetRGBA(cx, y, rc.ridge)
 	}
-	// Finial: a bright accent pip at the apex (theme accent so it pops as sacred).
-	img.SetRGBA(cx, cy, brighten(pal.accent, 0.10))
 }
 
-// drawRoofCamp: an open-frame / lean-to / tent — the gathering/forager/war camp. A
-// triangular tent silhouette (a ridge with one open side) rather than a full roof, so
-// it reads as a temporary structure among the solid dwellings.
+// drawRoofCamp: an OPEN lean-to / A-frame — the gathering/forager/war camp, drawn so
+// it reads as a temporary open structure, clearly NOT a solid house. Only the top
+// (north) half of the lot is roofed (a lean-to whose slope faces the viewer), with the
+// open front left as ground: two ridge poles frame the pitch and the roof plane tapers
+// from a full-width ridge at the back to nothing at the open front.
 func drawRoofCamp(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
-	// A tent: a filled triangle peaking at the top center, widening to the base — drawn
-	// as rows whose width grows toward the bottom. Open frame = leave the base row lit.
-	for dy := -hh; dy <= hh; dy++ {
-		// Fraction from apex(0) to base(1).
-		f := float64(dy+hh) / float64(2*hh+1)
-		rowHW := int(float64(hw) * f)
-		col := rc.base
-		if dy < 0 {
-			col = brighten(rc.base, 0.05)
-		}
+	// Lean-to roof plane: full width at the back edge (cy-hh), tapering to the mid-line.
+	for dy := -hh; dy <= 0; dy++ {
+		// f: 0 at the back ridge, 1 at the open mid-line front.
+		f := float64(dy+hh) / float64(hh+1)
+		rowHW := int(float64(hw) * (1 - f*0.15)) // barely tapers — a broad slope
+		// Slope shading: lighter toward the back ridge, darker toward the eave.
+		col := blend(rc.base, rc.dark, f*0.6)
 		drawHSpan(img, cx-rowHW, cx+rowHW, cy+dy, col)
 	}
-	// The two tent poles / ridge as darker edges, and a bright apex.
-	drawLineC(img, cx, cy-hh, cx-hw, cy+hh, rc.dark)
-	drawLineC(img, cx, cy-hh, cx+hw, cy+hh, rc.dark)
-	img.SetRGBA(cx, cy-hh, rc.ridge)
+	// The two frame poles as darker edges, and the back ridge as the lighter crown line.
+	drawLineC(img, cx-hw, cy-hh, cx-hw, cy, rc.dark)
+	drawLineC(img, cx+hw, cy-hh, cx+hw, cy, rc.dark)
+	drawHSpan(img, cx-hw, cx+hw, cy-hh, rc.ridge)
 }
 
-// drawRoofStash: a small square store hut — a compact filled square with a plank
-// highlight, quieter than a dwelling (storage lineage).
+// drawRoofStash: a small, low, plain square roof — the storage store-hut, quieter than
+// a dwelling. A compact filled square (the shaded tone so it sits low) with a single
+// base-derived plank highlight across the top edge.
 func drawRoofStash(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 	// Keep it small + squat: clamp to a tight square.
 	s := minInt(hw, hh)
@@ -1256,38 +1455,39 @@ func drawRoofStash(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 		s = 1
 	}
 	forRect(cx, cy, s, s, func(x, y int) { img.SetRGBA(x, y, rc.dark) })
-	// A single plank highlight across the top.
+	// One plank highlight across the top (base-derived).
 	drawHSpan(img, cx-s, cx+s, cy-s, rc.ridge)
 }
 
-// drawRoofFlat: a low flat structure — a flat slab with a thin rim, for the stone
-// works. Reads distinctly from a pitched dwelling (no ridge).
+// drawRoofFlat: a low flat structure — a flat slab with a thin darker rim, for the
+// stone works. Reads distinctly from a pitched dwelling (no ridge line).
 func drawRoofFlat(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 	forRect(cx, cy, hw, hh, func(x, y int) { img.SetRGBA(x, y, rc.base) })
 	// A darker rim around the slab so it reads as a low walled platform.
 	forRectOutline(cx, cy, hw, hh, func(x, y int) { img.SetRGBA(x, y, rc.dark) })
 }
 
-// drawRoofWonder: the DOMINANT central complex — a large ornate multi-part roof
-// (locked #13). A big footprint with concentric ornate tiers, cross ridges, and an
-// accent finial: unmistakably the grandest thing on the map.
-func drawRoofWonder(img *image.RGBA, cx, cy, hw, hh int, rc roofColors, pal tdPal) {
-	// Outer ornate ring (ellipse) for a grand base.
+// drawRoofWonder: the DOMINANT central complex — a large ornate multi-part roof read
+// from above (locked #13). A grand elliptical base, a stepped square inner hall, and a
+// bright base-derived top tier + cross ridges: unmistakably the grandest thing on the
+// map, and STILL in the roof material family (no accent — the crown is a base-derived
+// lighten, not a saturated finial).
+func drawRoofWonder(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	// Grand elliptical base.
 	forEllipse(cx, cy, hw, hh, func(x, y int) { img.SetRGBA(x, y, rc.base) })
-	// A square inner hall.
+	// A square inner hall, stepped in and shaded a touch for the tier.
 	ihw := maxInt(hw*2/3, 1)
 	ihh := maxInt(hh*2/3, 1)
-	forRect(cx, cy, ihw, ihh, func(x, y int) { img.SetRGBA(x, y, brighten(rc.base, 0.10)) })
-	// A smaller top tier.
+	forRect(cx, cy, ihw, ihh, func(x, y int) { img.SetRGBA(x, y, blend(rc.base, rc.dark, 0.25)) })
+	// A smaller bright top tier — base-derived ridge tone (the grand crown, in-family).
 	thw := maxInt(hw/3, 1)
 	thh := maxInt(hh/3, 1)
-	forRect(cx, cy, thw, thh, func(x, y int) { img.SetRGBA(x, y, brighten(pal.accent, 0.05)) })
-	// Cross ridges + finial.
+	forRect(cx, cy, thw, thh, func(x, y int) { img.SetRGBA(x, y, rc.ridge) })
+	// Cross ridges across the whole footprint so the complex reads ornate + symmetric.
 	drawHSpan(img, cx-hw, cx+hw, cy, rc.ridge)
 	for y := cy - hh; y <= cy+hh; y++ {
 		img.SetRGBA(cx, y, rc.ridge)
 	}
-	img.SetRGBA(cx, cy, brighten(pal.accent, 0.25))
 }
 
 // ---- pixel primitives (top-down) --------------------------------------------
