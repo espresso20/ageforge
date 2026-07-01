@@ -200,6 +200,101 @@ func TestDrawTerrainRoadAvoidsWaterPixels(t *testing.T) {
 	}
 }
 
+// TestRoadNetworkConnectsAllAcrossWater proves the shared road network: given a City
+// Center and buildings on BOTH sides of a full-height water wall (with top/bottom gaps),
+// buildRoadNetwork must (1) return a non-empty set of segments, (2) place no segment
+// pixel on a water cell (routes go around), and (3) connect every node into one network
+// — each node pixel appears as an endpoint of at least one routed edge (smoothPath pins
+// the edge endpoints to the node coords), and the endpoint graph is a single component.
+func TestRoadNetworkConnectsAllAcrossWater(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := buildPalette(0)
+	const w, h = 90, 60
+	f := blockedStripField(w, h, 40, 50)
+	for x := 40; x <= 50; x++ {
+		for _, y := range []int{0, 1, h - 2, h - 1} {
+			idx := y*w + x
+			f.biomes[idx] = biomeGrass
+			f.passable[idx] = true
+		}
+	}
+	grid := buildCostGrid(f, 5)
+
+	center := [2]int{20, h / 2}
+	buildings := [][2]int{
+		{10, 10},     // left side
+		{15, h - 10}, // left side
+		{75, 12},     // right side (across the wall)
+		{80, h - 12}, // right side (across the wall)
+	}
+	segs := buildRoadNetwork(grid, center, buildings)
+	if len(segs) == 0 {
+		t.Fatal("buildRoadNetwork produced no segments for a 5-node network")
+	}
+
+	// (2) Rasterize and assert nothing lands on water.
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	for _, s := range segs {
+		drawRoad(img, s, pal.road)
+	}
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if img.RGBAAt(x, y) == pal.road && !f.passableAt(x, y) {
+				t.Fatalf("network road pixel on a water cell at (%d,%d)", x, y)
+			}
+		}
+	}
+
+	// (3) Every node must be touched by the network, and the network must be one
+	// connected component. Build an adjacency over segment endpoints (union-find) and
+	// assert all node pixels share a root.
+	uf := map[[2]int]*[2]int{}
+	var find func(p [2]int) [2]int
+	find = func(p [2]int) [2]int {
+		r, ok := uf[p]
+		if !ok {
+			uf[p] = &p
+			return p
+		}
+		if *r == p {
+			return p
+		}
+		root := find(*r)
+		*r = root
+		return root
+	}
+	union := func(a, b [2]int) {
+		ra, rb := find(a), find(b)
+		if ra != rb {
+			*uf[ra] = rb
+		}
+	}
+	for _, s := range segs {
+		union([2]int{s.x0, s.y0}, [2]int{s.x1, s.y1})
+	}
+	// A* pins each routed edge to NODE CENTERS (the cost grid is downsampled), so compare
+	// connectivity at the node-center a raw pixel maps to — that is the network's true
+	// contract, not the exact input pixel.
+	snap := func(p [2]int) [2]int {
+		nx, ny := grid.pxToNode(p[0], p[1])
+		cx, cy := grid.nodePx(nx, ny)
+		return [2]int{cx, cy}
+	}
+	nodes := append([][2]int{center}, buildings...)
+	for _, raw := range nodes {
+		n := snap(raw)
+		if _, ok := uf[n]; !ok {
+			t.Fatalf("node %v (snapped %v) is not an endpoint of any road segment — not connected", raw, n)
+		}
+	}
+	root0 := find(snap(nodes[0]))
+	for _, raw := range nodes[1:] {
+		if find(snap(raw)) != root0 {
+			t.Fatalf("node %v not in the same connected component as the City Center", raw)
+		}
+	}
+}
+
 // TestFindPathFallsBackWhenBoxedIn verifies the unreachable case: a building fully
 // enclosed by deep water (no open ring around it) yields no A* path, so the caller
 // can fall back to a direct line. We box a single open cell inside a water moat and

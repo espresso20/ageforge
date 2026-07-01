@@ -162,12 +162,13 @@ func civSignature(state game.GameState) uint64 {
 // cell-space overlay plan. Layers, in order:
 //
 //	wash      — a muted terrain/ocean field (reused fbm) so the canvas isn't flat black,
-//	            kept dim so the settlement dots read clearly over it.
-//	backdrop  — the procedural Game-of-Life settlement field: sparse, clustered dots of
-//	            varied sizes in a dim land tone; density + sizes scale with progress.
+//	            kept dim so the settlement marks read clearly over it.
+//	backdrop  — the sparse procedural settlement field: a scatter of small, dim distant
+//	            marks in a dim land tone; count scales modestly with progress.
 //	your civ  — one prominent accent dot at a stable spot (center).
 //	civ dots  — each discovered diplomacy civ, ringed around your civ deterministically,
-//	            sized by a strength proxy, colored by relationship, at-war marked.
+//	            sized by a strength proxy, colored by its own faction hue with a standing
+//	            ring, and — at war — a hot-red override + ⚔ mark.
 //
 // The overlay plan (your-civ label, civ labels, title) is then computed from the same
 // geometry so labels land on the dots. Pure: reads the snapshot + config-by-key only.
@@ -294,17 +295,16 @@ func drawWorldWash(img *image.RGBA, pal terrainPalette, seed uint32) {
 
 // ---- backdrop: Game-of-Life settlement field --------------------------------
 
-// drawSettlementField paints the procedural backdrop: a sparse, clustered field of
-// anonymous "settlement" dots of varied sizes — the wider world reading like a Conway/
-// Game-of-Life cell field. Construction:
+// drawSettlementField paints the procedural backdrop: a SPARSE scatter of small, dim
+// "settlement" marks — the wider world reading as a few far-off settlements in a big dark
+// world, not a snowstorm of noise. Construction:
 //
-//  1. seed a coarse boolean grid with a deterministic noise + density threshold (density
-//     scales up with progress: an early world is sparse, a late world dense),
-//  2. run a couple of Conway generations so the live cells CLUSTER and gain organic
-//     shape rather than reading as uniform static,
-//  3. render each surviving cell as a dot whose RADIUS scales with both progress AND the
-//     cell's local neighbour count (denser clusters → bigger settlements), in a DIM land
-//     tone (RoleDim pulled a touch toward the land) so it's unmistakably background.
+//  1. build a sparse boolean grid via settlementGrid (a low density threshold that climbs
+//     only modestly with progress, then one de-clumping pass — see settlementGrid),
+//  2. render each live cell as a SMALL mark (mostly a single pixel; a stable minority a
+//     touch wider), drawn wider-than-tall via fillDotAspect so it reads round on the 1×2
+//     half-block canvas instead of a fat cross, in a DIM land tone (RoleDim pulled a
+//     touch toward the land) so it's unmistakably background behind the bright civ dots.
 //
 // Deterministic from seed+progress; theme-aware (the dim tone is a live theme role).
 // Returns an (empty) worldGeometry the caller fills with the foreground dots — kept as
@@ -335,49 +335,56 @@ func drawSettlementField(img *image.RGBA, pal terrainPalette, seed uint32, progr
 	dim := rgba(theme.Color(theme.RoleDim))
 	landDim := blend(dim, pal.bGrass, 0.30)
 
-	// Render each live cell as a dot. Radius scales with progress and the local cluster
-	// density: an isolated cell is a single pixel; a dense cluster center is a few px.
+	// Render each live cell as a SMALL, dim mark — a distant settlement, not a blob. Most
+	// are a single pixel; a stable minority get a 2-wide × 0-tall (i.e. 3px across, 1px
+	// tall) speck so the field has a little variety without any cell reading as a fat
+	// cross. Marks are drawn WIDER than tall on purpose: the half-block canvas is 1px wide
+	// × 2px tall per cell, so an equal-radius dot would stretch vertically into a "+"; a
+	// horizontal bias renders round-ish. Dim land tone keeps them clearly in the backdrop.
 	for gy := 0; gy < gh; gy++ {
 		for gx := 0; gx < gw; gx++ {
 			if !grid[gy*gw+gx] {
 				continue
 			}
-			n := settlementNeighbours(grid, gw, gh, gx, gy)
-			// Base radius grows with progress (0px..~1px); cluster bonus adds up to ~2px
-			// for the densest centers. So late, clustered worlds get the big settlements.
-			r := int(math.Round(progress*1.4)) + n/3
-			if r < 0 {
-				r = 0
-			}
-			if r > 3 {
-				r = 3
-			}
 			cx := gx*settlementCellPx + settlementCellPx/2
 			cy := gy*settlementCellPx + settlementCellPx/2
-			// Vary the per-dot brightness slightly by a stable hash so the field doesn't
-			// look stamped — still all in the dim land family.
+			// Stable per-cell hash drives both a slight brightness jitter (so the field
+			// isn't stamped-uniform) and the occasional wider speck.
 			j := hashUnit(uint32(gx), uint32(gy), settlementSeed(seed)^0x5bd1e995)
-			tone := blend(landDim, darken(landDim, 0.18), j)
-			fillDot(img, cx, cy, r, tone)
+			tone := blend(landDim, darken(landDim, 0.22), j)
+			// ~30% of settlements are a touch wider (still 1px tall); the rest single dots.
+			// A faint extra size lift at high progress reads as "more established" worlds
+			// without ever becoming a cross.
+			rx := 0
+			if j > 0.70 || (progress > 0.6 && j > 0.45) {
+				rx = 1
+			}
+			fillDotAspect(img, cx, cy, rx, 0, tone)
 		}
 	}
 	return worldGeometry{}
 }
 
-// settlementCellPx is the pixel span of one backdrop cell. ~3px keeps the field sparse
-// with room between settlements.
-const settlementCellPx = 3
+// settlementCellPx is the pixel span of one backdrop cell. Widened from 3→6 so the
+// coarse grid has FEWER cells (a quarter as many) and the settlements read as a sparse
+// scatter of distant marks with dark space between them, not a dense field of noise.
+const settlementCellPx = 6
 
 // settlementSeed derives the backdrop's grid seed from the age seed with a 32-bit
 // golden-ratio salt (the age seed is uint32, so no 64-bit constant). Stable per render.
 func settlementSeed(ageSeed uint32) uint32 { return ageSeed ^ 0x9e3779b9 }
 
-// settlementGrid builds the Game-of-Life cell field for a gw×gh coarse grid at a given
-// progress: seed every cell live with a probability that climbs with progress (~12% at
-// progress 0 → ~38% at progress 1), then run a few Conway B3/S23 generations so the
-// live cells cluster into organic clumps rather than uniform speckle. Pure +
-// deterministic from (seed, progress). Extracted from the draw path so a test can count
-// live cells across progress levels without rasterizing through the wash.
+// settlementGrid builds the backdrop settlement field for a gw×gh coarse grid at a given
+// progress. The earlier version seeded a dense field (12–38%) and ran Conway B3/S23
+// generations, which over-clustered into a solid snowstorm of noise. We now use a SPARSE
+// Poisson-ish scatter: each cell is live with a low probability that climbs only modestly
+// with progress (~4% at progress 0 → ~15% at progress 1), sampled from a spatially
+// uncorrelated hash so the live cells land as scattered distant settlements rather than a
+// packed field. A single de-clumping pass then clears any cell with 3+ live Moore
+// neighbours, so the rare coincidental clusters break apart and the field stays "a few
+// far-off settlements in a big dark world." Pure + deterministic from (seed, progress);
+// density is monotonic in progress. Extracted from the draw path so a test can count live
+// cells across progress levels without rasterizing through the wash.
 func settlementGrid(seed uint32, gw, gh int, progress float64) []bool {
 	if gw <= 0 || gh <= 0 {
 		return nil
@@ -388,7 +395,9 @@ func settlementGrid(seed uint32, gw, gh int, progress float64) []bool {
 	if progress > 1 {
 		progress = 1
 	}
-	seedDensity := 0.12 + 0.26*progress
+	// Sparse base density: a low floor plus a gentle progress ramp. Kept well under the
+	// old 12–38% so early game reads as a handful of settlements, late game as a few dozen.
+	seedDensity := 0.04 + 0.11*progress
 	gseed := settlementSeed(seed)
 
 	grid := make([]bool, gw*gh)
@@ -399,20 +408,19 @@ func settlementGrid(seed uint32, gw, gh int, progress float64) []bool {
 			}
 		}
 	}
-	// Two Conway generations: enough to break the uniform speckle and grow recognizable
-	// clusters without collapsing the whole field.
-	for gen := 0; gen < 2; gen++ {
-		next := make([]bool, gw*gh)
-		for gy := 0; gy < gh; gy++ {
-			for gx := 0; gx < gw; gx++ {
-				n := settlementNeighbours(grid, gw, gh, gx, gy)
-				alive := grid[gy*gw+gx]
-				next[gy*gw+gx] = (alive && (n == 2 || n == 3)) || (!alive && n == 3)
+	// One light de-clumping pass: drop any live cell hemmed in by 3+ live neighbours so
+	// coincidental clusters thin out to a scatter (the opposite of Conway growth). This
+	// preserves the sparse, isolated look while still scaling count with progress.
+	next := make([]bool, gw*gh)
+	copy(next, grid)
+	for gy := 0; gy < gh; gy++ {
+		for gx := 0; gx < gw; gx++ {
+			if grid[gy*gw+gx] && settlementNeighbours(grid, gw, gh, gx, gy) >= 3 {
+				next[gy*gw+gx] = false
 			}
 		}
-		grid = next
 	}
-	return grid
+	return next
 }
 
 // settlementNeighbours counts the live Moore-neighbours of cell (gx,gy) in a gw×gh grid
@@ -458,25 +466,30 @@ func drawYourCiv(img *image.RGBA, pal terrainPalette, w, h int) worldDot {
 	cx, cy := w/2, h/2
 	accent := rgba(theme.Color(theme.RoleAccent))
 
-	// Radius scales gently with canvas size so it stays prominent on big and small maps,
-	// clamped to a sensible band. Always at least 2px so it dominates the 0–3px backdrop.
-	r := clampInt((w+h)/40, 2, 6)
+	// Size scales gently with canvas so your seat stays prominent on big and small maps,
+	// clamped to a sensible band and aspect-corrected (wider than tall) so it reads as a
+	// round accent mark on the 1×2 half-block canvas rather than a fat cross. It stays the
+	// biggest, brightest dot so it dominates the sparse backdrop and the neighbor dots.
+	rx := clampInt((w+h)/28, 3, 7)
+	ry := rx/2 + 1
 
 	// Halo: a dim accent ring a little wider than the dot, so your capital glows.
 	halo := blend(rgba(theme.Color(theme.RoleBackground)), accent, 0.35)
-	fillDot(img, cx, cy, r+2, halo)
+	fillDotAspect(img, cx, cy, rx+2, ry+1, halo)
 	// Body: bright accent, brightened a touch at the very center for a lit core.
-	fillDot(img, cx, cy, r, accent)
-	fillDot(img, cx, cy, r/2, brighten(accent, 0.30))
+	fillDotAspect(img, cx, cy, rx, ry, accent)
+	fillDotAspect(img, cx, cy, rx/2, ry/2, brighten(accent, 0.30))
 
-	return worldDot{cx: cx, cy: cy, radius: r + 2, role: theme.RoleAccent}
+	return worldDot{cx: cx, cy: cy, radius: ry + 1, role: theme.RoleAccent}
 }
 
 // ---- foreground: diplomacy civs ---------------------------------------------
 
-// worldCiv is a discovered civ resolved for the world view: a display name, a status
-// role, the at-war flag, and a size bucket (0..3) derived from a strength proxy.
+// worldCiv is a discovered civ resolved for the world view: its faction KEY (drives the
+// stable per-faction color), a display name, a relationship role (drives the label + the
+// standing ring), the at-war flag, and a size bucket (0..3) derived from strength.
 type worldCiv struct {
+	key        string
 	name       string
 	role       theme.Role
 	atWar      bool
@@ -503,6 +516,7 @@ func worldCivs(state game.GameState) []worldCiv {
 	for _, k := range keys {
 		f := facs[k]
 		out = append(out, worldCiv{
+			key:        k,
 			name:       f.Name,
 			role:       civWorldRole(f),
 			atWar:      f.AtWar,
@@ -510,6 +524,23 @@ func worldCivs(state game.GameState) []worldCiv {
 		})
 	}
 	return out
+}
+
+// factionColor returns a stable, distinct color for a discovered civ derived from its
+// faction KEY — the same idea the city map's lineageColor uses for districts: hash the
+// key to a hue and rotate a live theme role base by it, so every faction gets its own
+// recognizable hue AND the whole set retints when the theme changes. RoleLabel is the
+// base (a mid-chroma role that rotates cleanly across the wheel). This is the civ's
+// IDENTITY color; relationship (ally/rival/at-war) is layered on top as a ring / hot
+// override at draw time, so you can read both "who" and "how they feel" at a glance.
+func factionColor(key string) color.RGBA {
+	var hsh uint32 = 2166136261
+	for i := 0; i < len(key); i++ {
+		hsh ^= uint32(key[i])
+		hsh *= 16777619
+	}
+	deg := float64(hsh % 360)
+	return rotateHue(rgba(theme.Color(theme.RoleLabel)), deg)
 }
 
 // civStrengthBucket derives a 0..3 dot-size bucket from the civ's real Strength — the
@@ -536,10 +567,20 @@ func civWorldRole(f game.FactionInfo) theme.Role { return civStatusRole(f) }
 
 // drawWorldCivs places each discovered civ as a dot ringed around your civ at a stable,
 // deterministic angle + radius (seeded so the same neighbor always sits in the same
-// place), sized by its strength bucket, colored by relationship, and — when at war —
-// brightened with a hot core so it stands out as a threat. Every civ dot is kept
-// BRIGHTER than the dim backdrop so neighbors read as foreground. Returns the placed
-// dots so the overlay can label each. Pure + theme-aware.
+// place). Each dot carries TWO channels of meaning:
+//
+//	identity  — the body is the faction's own stable color (factionColor, hashed from the
+//	            key so every civ is a distinct, theme-retinting hue you can tell apart).
+//	standing  — layered on top: an ally gets a bright Positive ring, a (non-war) rival a
+//	            Negative ring, and an AT-WAR civ overrides the body entirely with a hot
+//	            bright red + a white-hot core so a threat pops instantly (the ⚔ mark rides
+//	            on its label).
+//
+// Dots are drawn WIDER than tall (fillDotAspect) so they read round on the half-block
+// canvas instead of as a cross, and clearly LARGER + brighter than the now-sparse, dim
+// backdrop so neighbors unmistakably read as foreground actors. The label role stays the
+// relationship role so the overlay colors names by standing. Returns the placed dots.
+// Pure + theme-aware.
 func drawWorldCivs(img *image.RGBA, pal terrainPalette, state game.GameState, seed uint32, yourX, yourY int) []worldDot {
 	civs := worldCivs(state)
 	if len(civs) == 0 {
@@ -554,6 +595,8 @@ func drawWorldCivs(img *image.RGBA, pal terrainPalette, state game.GameState, se
 	baseRX := float64(w) * 0.34
 	baseRY := float64(h) * 0.34
 
+	hotRed := brighten(rgba(theme.Color(theme.RoleNegative)), 0.20) // at-war override body
+
 	out := make([]worldDot, 0, len(civs))
 	for i, c := range civs {
 		// Deterministic angle: spread civs around the circle by index, jittered by a
@@ -566,31 +609,50 @@ func drawWorldCivs(img *image.RGBA, pal terrainPalette, state game.GameState, se
 		px := float64(yourX) + math.Cos(ang)*baseRX*rj
 		py := float64(yourY) + math.Sin(ang)*baseRY*rj
 
-		// Dot radius from the strength bucket: bucket 0→2px .. bucket 3→5px. Always ≥2 so
-		// neighbors out-mass the 0–3px backdrop and read as foreground actors.
-		r := 2 + c.sizeBucket
-		cx := clampInt(int(math.Round(px)), r, w-1-r)
-		cy := clampInt(int(math.Round(py)), r, h-1-r)
-		if w-1-r < r || h-1-r < r {
+		// Dot size from the strength bucket, bumped so even the smallest neighbor clearly
+		// out-masses the 0–1px backdrop. x/y radii are aspect-corrected: wider than tall so
+		// the mark reads round on the 1×2 half-block canvas rather than as a vertical cross.
+		rx := 3 + c.sizeBucket // 3px .. 6px across
+		ry := 1 + c.sizeBucket/2
+		if ry < 1 {
+			ry = 1
+		}
+		inset := rx
+		if ry > inset {
+			inset = ry
+		}
+		cx := clampInt(int(math.Round(px)), inset, w-1-inset)
+		cy := clampInt(int(math.Round(py)), inset, h-1-inset)
+		if w-1-inset < inset || h-1-inset < inset {
 			// Canvas too small to inset; fall back to a clamped center-ish spot.
 			cx = clampInt(int(math.Round(px)), 0, w-1)
 			cy = clampInt(int(math.Round(py)), 0, h-1)
 		}
 
-		base := rgba(theme.Color(c.role))
-		// Lift every neighbor above the dim backdrop: a faint background-blended halo,
-		// then the body. At-war civs get a hot, brightened core so a threat pops.
-		halo := blend(rgba(theme.Color(theme.RoleBackground)), base, 0.30)
-		fillDot(img, cx, cy, r+1, halo)
+		ident := factionColor(c.key) // the civ's own identity hue
+		standing := rgba(theme.Color(c.role))
+
+		// Standing ring: a slightly larger disc of the relationship color under the body,
+		// so an ally/rival reads its standing as a colored halo around its identity hue.
+		// (Neutral/friendly rings are quiet — Dim/Label — so they don't shout.)
+		ringCol := blend(rgba(theme.Color(theme.RoleBackground)), standing, 0.55)
+		fillDotAspect(img, cx, cy, rx+1, ry+1, ringCol)
+
 		if c.atWar {
-			fillDot(img, cx, cy, r, brighten(base, 0.25))
-			fillDot(img, cx, cy, r/2, brighten(base, 0.55)) // white-hot core
+			// War overrides identity: a hot bright-red body with a white-hot core, the loud
+			// threat read. The ring underneath is already Negative (civStatusRole), so the
+			// whole dot glows red.
+			fillDotAspect(img, cx, cy, rx, ry, hotRed)
+			fillDotAspect(img, cx, cy, rx/2, ry/2, brighten(hotRed, 0.45))
 		} else {
-			fillDot(img, cx, cy, r, base)
+			// Peace: the faction's own color, brightened a touch at the core for a lit
+			// center so it sits clearly above the dim backdrop.
+			fillDotAspect(img, cx, cy, rx, ry, brighten(ident, 0.10))
+			fillDotAspect(img, cx, cy, rx/2, ry/2, brighten(ident, 0.35))
 		}
 
 		out = append(out, worldDot{
-			cx: cx, cy: cy, radius: r + 1,
+			cx: cx, cy: cy, radius: ry + 1,
 			name: c.name, role: c.role, atWar: c.atWar,
 		})
 	}
@@ -598,6 +660,48 @@ func drawWorldCivs(img *image.RGBA, pal terrainPalette, state game.GameState, se
 }
 
 // ---- dot primitive ----------------------------------------------------------
+
+// fillDotAspect paints a filled ellipse with independent x/y pixel radii centered at
+// (cx,cy), clipped to the image bounds. rx==ry==0 paints a single pixel. This is the
+// aspect-correcting primitive the world map uses: the half-block canvas is 1px wide × 2px
+// TALL per cell, so an equal-radius disc looks like a vertical "+"; passing rx≥ry (wider
+// than tall) renders a mark that reads round-ish on screen. Used by the backdrop and the
+// foreground civ dots so nothing renders as a fat cross.
+func fillDotAspect(img *image.RGBA, cx, cy, rx, ry int, col color.RGBA) {
+	b := img.Bounds()
+	if rx <= 0 && ry <= 0 {
+		if cx >= b.Min.X && cx < b.Max.X && cy >= b.Min.Y && cy < b.Max.Y {
+			img.SetRGBA(cx, cy, col)
+		}
+		return
+	}
+	if rx < 0 {
+		rx = 0
+	}
+	if ry < 0 {
+		ry = 0
+	}
+	for dy := -ry; dy <= ry; dy++ {
+		for dx := -rx; dx <= rx; dx++ {
+			// Normalized ellipse test; guard the degenerate 0-radius axis (treat as a line).
+			var ex, ey float64
+			if rx > 0 {
+				ex = float64(dx) / float64(rx)
+			}
+			if ry > 0 {
+				ey = float64(dy) / float64(ry)
+			}
+			if ex*ex+ey*ey > 1.0 {
+				continue
+			}
+			x, y := cx+dx, cy+dy
+			if x < b.Min.X || x >= b.Max.X || y < b.Min.Y || y >= b.Max.Y {
+				continue
+			}
+			img.SetRGBA(x, y, col)
+		}
+	}
+}
 
 // fillDot paints a filled disc of radius r (pixels) centered at (cx,cy) into img with
 // color col, clipped to the image bounds. r==0 paints a single pixel. Shared by the

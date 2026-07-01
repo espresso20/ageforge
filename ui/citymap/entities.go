@@ -70,12 +70,17 @@ func drawStructures(img *image.RGBA, pal terrainPalette, state game.GameState, b
 	res.placements = nudgePlacements(res.placements, field)
 	grid := buildCostGrid(field, terrainSeed)
 
-	// Roads first (under the buildings, over the terrain). Each layout road segment
-	// is re-routed by A* on the biome cost grid so it bends AROUND lakes and peaks
-	// and gently meanders; if a route is impossible (endpoint walled off by water)
-	// we fall back to the straight Bresenham segment so the road layer is never blank.
-	for _, rseg := range res.roads {
-		drawTerrainRoad(img, grid, rseg, pal.road)
+	// Roads first (under the buildings, over the terrain). Rather than route N
+	// independent radial paths from every building to the City Center — which bundled
+	// into a parallel tangle at the hub — we build ONE shared road network: a minimum-
+	// spanning-tree over {City Center + all building centers}, routed edge-by-edge on
+	// the biome cost grid so each road bends AROUND lakes and peaks. Because nodes join
+	// their nearest tree neighbour, roads merge into shared trunks and branch cleanly
+	// instead of doubling up into the center. A* handles terrain; the straight-line
+	// fallback inside buildRoadNetwork only triggers when an endpoint is truly boxed in.
+	center, blds := roadNodes(res.placements)
+	for _, rseg := range buildRoadNetwork(grid, center, blds) {
+		drawRoad(img, rseg, pal.road)
 	}
 
 	// Buildings: draw normal tier first, then wonders, then the palace, so the
@@ -135,6 +140,36 @@ func nearestPassablePx(f *terrainField, x, y int) (int, int, bool) {
 		}
 	}
 	return x, y, false
+}
+
+// roadNodes extracts the road-network nodes from the completed placements: the City
+// Center (palace tier) as the network root, and every building volume center as a leaf.
+// These feed buildRoadNetwork's MST so roads connect the whole settlement into one
+// shared network. The center defaults to the canvas-implied center only if no palace
+// placement exists (defensive — every strategy emits one). Duplicate building centers
+// are collapsed so two co-located volumes don't add a zero-length edge.
+func roadNodes(placements []placement) (center [2]int, buildings [][2]int) {
+	haveCenter := false
+	seen := map[[2]int]bool{}
+	for _, p := range placements {
+		if p.tier == impPalace {
+			center = [2]int{p.cx, p.cy}
+			haveCenter = true
+			continue
+		}
+		pt := [2]int{p.cx, p.cy}
+		if seen[pt] {
+			continue
+		}
+		seen[pt] = true
+		buildings = append(buildings, pt)
+	}
+	if !haveCenter && len(buildings) > 0 {
+		// No palace placement (unexpected): anchor the network at the first building so
+		// the MST still has a root and roads still connect.
+		center = buildings[0]
+	}
+	return center, buildings
 }
 
 // geometryFor extracts the overlay anchors from a completed layout: the palace
@@ -289,7 +324,7 @@ func drawRoad(img *image.RGBA, s roadSeg, c color.RGBA) {
 func drawTerrainRoad(img *image.RGBA, grid *pfCostGrid, s roadSeg, c color.RGBA) {
 	if grid != nil {
 		if pts, ok := grid.findPath(s.x0, s.y0, s.x1, s.y1); ok && len(pts) >= 2 {
-			drawPolyline(img, smoothPath(pts), c)
+			drawPolyline(img, smoothPath(pts, grid), c)
 			return
 		}
 	}

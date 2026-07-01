@@ -1,6 +1,7 @@
 package citymap
 
 import (
+	"image/color"
 	"testing"
 
 	"github.com/espresso20/ageforge/game"
@@ -98,8 +99,8 @@ func TestWorldRenderNoPanic(t *testing.T) {
 	}
 }
 
-// TestWorldRenderTinyCanvas exercises degenerate sizes (the Conway grid + ring math have
-// guards for canvases too small to inset); must not panic and must size correctly.
+// TestWorldRenderTinyCanvas exercises degenerate sizes (the settlement grid + ring math
+// have guards for canvases too small to inset); must not panic and must size correctly.
 func TestWorldRenderTinyCanvas(t *testing.T) {
 	_ = theme.SetActive("forge")
 	facs := map[string]game.FactionInfo{
@@ -281,6 +282,81 @@ func TestWorldBackdropScalesWithProgress(t *testing.T) {
 	hi := countLiveCells(settlementGrid(seed, gw, gh, 1.0))
 	if hi <= lo {
 		t.Fatalf("expected progress=1 backdrop (%d cells) denser than progress=0 (%d cells)", hi, lo)
+	}
+
+	// Backdrop is now SPARSE, not a snowstorm. Pin the absolute density to the new, much
+	// lower band so a regression that re-densifies the field (the old 12–38% Conway
+	// snowstorm) is caught. On a gw*gh grid, progress-0 must fill well under ~8% of cells
+	// and even a maxed-out world must stay under ~20% — a scatter of distant settlements,
+	// not a packed field. (Old behavior seeded ~12% at progress 0 and clustered UP.)
+	total := gw * gh
+	if frac := float64(lo) / float64(total); frac > 0.08 {
+		t.Fatalf("progress=0 backdrop too dense: %d/%d = %.3f, want < 0.08 (sparse scatter)", lo, total, frac)
+	}
+	if frac := float64(hi) / float64(total); frac > 0.20 {
+		t.Fatalf("progress=1 backdrop too dense: %d/%d = %.3f, want < 0.20 (no snowstorm)", hi, total, frac)
+	}
+}
+
+// TestWorldFactionColorDistinctAndRetints proves each discovered civ gets its OWN stable
+// identity color derived from its faction key (so factions are distinguishable at a
+// glance), and that the color retints on a theme switch (it is a rotation of a live theme
+// role, not a baked constant) — mirroring how the city map colors lineages.
+func TestWorldFactionColorDistinctAndRetints(t *testing.T) {
+	_ = theme.SetActive("forge")
+	rome := factionColor("rome")
+	egypt := factionColor("egypt")
+	carthage := factionColor("carthage")
+	// Distinct keys → distinct hues (not all collapsed to one role color).
+	if rome == egypt || rome == carthage || egypt == carthage {
+		t.Fatalf("faction colors not distinct: rome=%v egypt=%v carthage=%v", rome, egypt, carthage)
+	}
+	// Same key → stable color across calls.
+	if factionColor("rome") != rome {
+		t.Fatal("factionColor is not deterministic for a fixed key")
+	}
+	// Retints with the theme: the same key resolves to a different color under a different
+	// theme (the RoleLabel base changed).
+	_ = theme.SetActive("high_contrast")
+	romeHC := factionColor("rome")
+	_ = theme.SetActive("forge")
+	if romeHC == rome {
+		t.Fatalf("faction color identical across themes (%v) — not theme-aware", rome)
+	}
+}
+
+// TestWorldAtWarDotOverride proves the AT-WAR dot override actually paints: rendering a
+// world with an at-war civ puts the hot-red override color (brighten(RoleNegative,0.20))
+// into the image, whereas the same world with that civ at peace does not. This guards the
+// draw-time threat cue that sits on top of the per-faction identity color.
+func TestWorldAtWarDotOverride(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 100, 60
+	hotRed := brighten(rgba(theme.Color(theme.RoleNegative)), 0.20)
+
+	warFacs := map[string]game.FactionInfo{
+		"carthage": {Name: "Carthage", Discovered: true, Status: "rival", Opinion: -50, AtWar: true, Strength: 3},
+	}
+	peaceFacs := map[string]game.FactionInfo{
+		"carthage": {Name: "Carthage", Discovered: true, Status: "neutral", Opinion: 0, AtWar: false, Strength: 3},
+	}
+	countColor := func(facs map[string]game.FactionInfo, target color.RGBA) int {
+		img, _ := renderWorldImage(worldState("classical_age", map[string]int{"forge": 2}, "Sparta", facs), w, h)
+		n := 0
+		for y := 0; y < h; y++ {
+			for x := 0; x < w; x++ {
+				if img.RGBAAt(x, y) == target {
+					n++
+				}
+			}
+		}
+		return n
+	}
+	if got := countColor(warFacs, hotRed); got == 0 {
+		t.Fatal("at-war civ did not paint the hot-red override anywhere in the image")
+	}
+	if got := countColor(peaceFacs, hotRed); got != 0 {
+		t.Fatalf("peaceful civ painted the at-war hot-red override %d times — override leaked", got)
 	}
 }
 
