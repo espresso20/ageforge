@@ -115,6 +115,26 @@ governs; the older wording is kept for history.
    change) and later-era presets are progressively TIGHTER so V3-B/C cities + the
    metropolis pack denser. Framework groundwork; per-era-band values are tuned in V3-B+.
 
+5. **Streets are the GAPS BETWEEN VORONOI BLOCKS/WARDS** (was: lanes drawn first, buildings
+   lined alongside — which read as parallel "spaghetti sticks" and looked fake). The whole
+   lane machinery is retired. New model (the Watabou Medieval Fantasy City Generator
+   approach): scatter `B` block SEEDS in the compact bounded town disc (golden-angle,
+   deterministic from `citySeed`, count-scaled + capped, wonder/center anchors pinned),
+   run a few LLOYD RELAXATION passes for even organic wards, then a RASTER nearest-seed
+   partition assigns town cells to seeds. STREETS = the region BOUNDARIES (cells where
+   √2nd − √nearest < band), painted in the packed-earth tone — one connected junctioned web
+   BY CONSTRUCTION (cannot spaghetti). BLOCKS = region interiors; buildings FILL each ward
+   perimeter-first FACING the streets, types intermixed across wards, no overlap, count-
+   driven. Wonders reserve an open central ward (the dressed plaza/square); a wonderless
+   village keeps a normal center ward with a modest square. Gardens/ponds/props fill
+   leftover deep-interior cells. Guarantees: streets one connected component reaching the
+   plaza; ~0 roofs on street cells; compact/bounded (anti-pinwheel, ≥9/12 sectors);
+   deterministic. STABILITY tradeoff: strict slot-for-slot incrementality becomes BANDED
+   structure stability (`tdCountBand` snaps count to a √-space band; the block field is
+   identical within a band, re-forms only at a band boundary / age-up; within a band blocks
+   fill progressively so most roofs hold their place). SUPERSEDES revision #1's lane-grown
+   placement — the intermix + wonder-anchor + town-square intent carries over into wards.
+
 ## Architecture
 
 ### Deterministic persistent layout
