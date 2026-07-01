@@ -1,94 +1,152 @@
-# Count-Driven City Synthesis (Citymap v2)
+# Citymap v3 — Top-Down Pixel-Art Living City (LOCKED SPEC)
 
-Supersedes the "one named marker per built type + MST road" citymap with a
-procedurally-synthesized top-down city whose **form and density derive from the
-player's actual building COUNTS and current AGE**.
+Supersedes the Phase-A isometric / terrain-gated model after playtest. The
+citymap is **NOT** a world/planet geo map and **NOT** isometric blocks planted on
+terrain. It is a **top-down pixel-art city** — you look straight down at ROOFS,
+streets, gardens and squares, like a top-down village/city game (Stardew,
+top-down Zelda). It grows and restyles as the player's civ grows.
 
-Primitive/Stone = a small organic village of huts + dirt paths. Each later era
-band grows denser and more structured — wider streets, gridded blocks, alleys,
-gardens/parks, plazas, walls: ancient Mesopotamia → medieval → colonial/Victorian
-→ modern → cyber → orbital. The **named landmark buildings** (Shrine, Gathering
-Camp, …) remain as labeled hero structures embedded in the fabric — the city
-grows around them.
+Every decision below is LOCKED from a design pass. Do NOT re-assume — if
+something here is silent, ask, don't guess.
 
-## Model (new: citygen.go)
+## Locked decisions
+1. **View**: top-down, roofs-from-above. No isometric walls/sides (subtle shadow
+   only). No world terrain, oceans, or continents on the city view.
+2. **Ground**: neutral, ERA-TINTED — base color/texture shifts per era mood:
+   earthy (primitive/ancient) → stone (medieval/renaissance) → concrete/asphalt
+   (industrial/modern) → dark neon-grid (cyber) → pale metallic (space). No
+   natural water. ALL greenery is BUILT (gardens/parks/squares/street-trees).
+3. **Scale**: FILL-FRAME, densifying. The whole city always fits the ~200×100px
+   canvas; more buildings → denser fabric + finer streets. Late age = packed
+   metropolis. Auto-fit, no pan/zoom.
+4. **Count fidelity**: NEAR 1:1 at low counts (24 huts ≈ 24 hut-roofs),
+   SUB-LINEAR at high counts (hundreds → dense but legible, not N identical
+   clones).
+5. **Buildings**: each built type drawn as count-scaled TOP-DOWN ROOF sprites —
+   query building counts → math → that many roofs of that type.
+6. **Roof art**: age-realistic MATERIAL (thatch → clay tile → slate → flat modern
+   → neon/metal) + a SUBTLE lineage tint so a temple reads different from a
+   workshop. Soft drop-shadow (SE) for a hint of height. Muted & natural
+   saturation, within the active theme.
+7. **Labels**: KEY LANDMARKS ONLY (city center, wonders, a promoted hero when the
+   civ has no civic building yet). Everything else unlabeled — read by roof
+   shape/color.
+8. **Layout**: PERSISTENT, grows in place. One deterministic layout per civ
+   (stable seed). New buildings SLOT INTO the existing layout without moving the
+   old ones (stable incremental placement — instance #N keeps its slot as #N+1 is
+   added). The relative layout is stable; the fill-frame scale re-fits as it grows.
+   Re-skins to the era on age-up; bones persist.
+9. **City edge**: WALLS WHERE THEY FIT — walls+gates ring the built-up area in
+   walled eras (ancient, medieval/renaissance); open ragged sprawl for industrial+.
+10. **Streets**: ORGANIC → GRID → AVENUES. Winding dirt lanes (village) →
+    tightening grid (classical/medieval) → wide boulevards + superblocks
+    (modern/cyber). Per era.
+11. **Growth**: MULTIPLE DISTRICTS but LOOSE — buildings gravitate toward
+    same-kind clusters (residential / production / civic / market / garrison)
+    that BLUR into each other, not hard-edged zones.
+12. **Detail**: BALANCED living-city filler — gardens, squares, trees, wells,
+    stalls, statues: alive and lived-in but never burying the buildings.
+13. **Wonders**: DOMINANT CENTERPIECE — a large, ornate, unmistakable complex
+    anchoring the city center, clearly the grandest thing on the map.
+14. **Age-up**: GRADUAL RE-SKIN — roofs/streets/ground restyle to the new era;
+    layout/bones persist.
+15. **Minimap**: full `citymap` panel only for now (no dashboard minimap yet).
 
-`cityPlan` — the render-ready output of the generator:
-- `streets []street` — polylines with a width class (avenue/street/alley) + a
-  paved color role. Terrain-routed: never cross water/mountain (reuse pathfind).
-- `blocks  []block`  — parcels bounded by streets (rect for grid eras, loose
-  hulls for organic).
-- `lots    []lot`    — placed structures filling the blocks.
+Cross-cutting: theme-aware (retint on theme switch), panic-safe, exact output
+size, deterministic from the civ seed.
 
-`lot`:
-- rect `(x,y,w,h)`, `kind` (house | workshop | garden | plaza | wall | tower |
-  landmark), `domain` (drives lineage color), `tier` (age tier → style),
-  `label` ("" except for landmark lots, which carry the building name).
+## Architecture
 
-## Pipeline (per render — pure, deterministic from seed)
+### Deterministic persistent layout
+- `citySeed` = stable per civ (hash of display name / account), AGE-INDEPENDENT —
+  the bones don't move across ages.
+- Placement is a STABLE SEQUENCE: each building instance takes the next slot from
+  a seeded space-filling sequence (golden-angle spiral / seeded Poisson) anchored
+  on its district cluster, in a fixed deterministic order. Adding the 25th hut
+  must NOT move the first 24.
+- Fill-frame: compute the built-up footprint from total count (sqrt), then scale
+  the whole plan to fill the canvas (roofs shrink as the city grows, staying
+  legible). Relative positions stable; absolute scale re-fits.
 
-1. **gather**: built buildings → per type `{key, domain, category, tier, count}`;
-   classify residential / production / civic-landmark / storage / wonder.
-2. **size**: `cityScale = f(totalBuildings, era)` with sqrt/log scaling so large
-   late-game counts still fit the canvas; sets city radius / block count /
-   street density. Counts are REPRESENTATIVE, not 1:1 (12 huts → a house
-   cluster, 400 buildings → a metropolis, both legible).
-3. **streets**: the era street-pattern generator emits the network — organic
-   walk | radial spokes | orthogonal grid | superblock grid | campus links |
-   orbital rings — at `eraStyle` widths, terrain-routed around water.
-4. **blocks**: derive parcels between streets.
-5. **populate (COUNT-DRIVEN)**: distribute lots into blocks —
-   - residential/housing counts → house lots (N scaled by count; style per era:
-     hut → mudbrick → timber → rowhouse → tower → arcology),
-   - production counts → workshop/factory lots in the production zone (era-zoned),
-   - civic/faith/knowledge/wonder → landmark lots at prominent anchors
-     (plaza / center / keep); these carry the label,
-   - leftover block area → garden/park lots (`gardenRatio` grows with era),
-   - era extras: walls + keep (medieval), formal parks (Victorian), plazas (civic).
-6. **terrain-gate**: every lot on passable land; streets route around water
-   (reuse terrainField + pathfind).
+### cityPlan (reuse + extend the Phase-A skeleton)
+- `streets []street{pts, width, class(lane|street|avenue)}` — laid by the era
+  street generator (NO terrain routing; no water).
+- `districts []district{kind, center, members…}` — loose clusters.
+- `lots []lot{x,y,w,h, kind, domain, tier, roofType, label}` where kind ∈
+  {house, workshop, civic, market, garrison, landmark, wonder, garden, square,
+  tree, prop, wall, gate}.
+- ground = era-tinted fill (+ subtle texture).
 
-## eraStyle presets (per era band — one struct drives everything)
+### Pipeline (pure, deterministic)
+1. gather built buildings → {key, domain, category, tier, count}; classify into
+   district kinds.
+2. size → target footprint from sqrt(total); fill-frame scale factor.
+3. districts → seed loose district cluster centers (stable).
+4. streets → era pattern (organic / grid / avenue) linking district centers + core.
+5. populate (count-driven, near-1:1-low): each type emits count-scaled roof lots
+   into its district cluster via the STABLE sequence; wonders → central dominant
+   complex; leftover space → gardens/squares/trees/props at balanced density.
+6. walls → if the era has walls, ring the built-up area with wall + gates.
+7. (no terrain gate — neutral ground.)
 
-| era (age band)                       | street pattern      | main/alley w | garden | extras                    | house    |
-|--------------------------------------|---------------------|--------------|--------|---------------------------|----------|
-| organic (primitive, stone)           | random walk         | 1 / 0        | patches| —                         | hut      |
-| ancient (bronze, iron, classical)    | radial + coarse grid| 2 / 1        | courts | central plaza / ziggurat  | mudbrick |
-| castle (medieval, renaissance)       | winding + quarters  | 2 / 1        | kitchen| walls + keep, market sq   | timber   |
-| zonedgrid (colonial, industrial, victorian) | strict zoned grid | 3 / 1  | formal | prod-left / res-right     | rowhouse |
-| cityblocks (electric, atomic, modern)| superblock grid     | 4 / 2        | parks  | civic center              | tower    |
-| campus (information, digital, cyberpunk, fusion) | hex campus + links | 2 / 1 | green | neon accents          | arcology |
-| orbital (space, interstellar, galactic, quantum) | concentric rings | 2 / 1 | dome parks | central hub          | dome     |
+### Rendering (top-down)
+era-tinted ground (+texture) → streets (paved per class + era material) →
+district ground accents (plaza stone, garden green) → ROOF SPRITES per lot
+(top-down roof atlas: shape by roofType, material by era, subtle lineage tint,
+soft SE drop-shadow; draw back-to-front so shadows layer) → props/trees →
+walls/gates → landmark labels (overlay: city center, wonders, promoted hero).
+Every color via theme roles; panic-safe; exact size.
 
-(Era bands = the existing `eraForAge` index buckets in layout.go.)
+### Top-down roof atlas (drawn top-down, filling the lot, ridge/texture hint + SE shadow)
+- hut: small round/oval thatch roof, radial streaks.
+- house: rectangle pitched roof — center ridge, two shaded slopes.
+- rowhouse/longhouse: elongated ridge roof.
+- temple/shrine: larger ornate symmetric roof + finial.
+- market: open awning grid / stalls.
+- workshop/factory: flat/low roof + chimney dots.
+- tower/keep: small footprint, longer shadow, crenellation dots.
+- civic/library: broad roof + rooftop detail.
+- dome/observatory: circular roof + highlight.
+- skyscraper: small footprint, LONG shadow, rooftop AC/helipad dots.
+- arcology/cyber: angular neon-edged roof.
+- wonder: large multi-part ornate complex (centerpiece).
+Material palette by era (thatch/wood → clay tile → slate/lead → asphalt/steel →
+glass/neon), muted, theme-derived; lineage tint blended ~15–25%.
 
-## Rendering
-
-terrain → streets (paved role, width) → block interiors (garden green / plaza
-tone) → lots (2.5D volume via drawVolume; per-kind palette) → landmark labels
-(existing overlay label pipeline). Theme-aware (every color via a theme role),
-panic-safe, correct output size.
+### Era style presets (per eraForAge band)
+| era band                         | ground        | streets              | walls          | roof material  | house    | wonder        |
+|----------------------------------|---------------|----------------------|----------------|----------------|----------|---------------|
+| organic (primitive, stone)       | earthy dirt+grass | winding dirt lanes | none           | thatch/wood    | hut      | (rare)        |
+| ancient (bronze, iron, classical)| packed earth/stone | radial + coarse grid | mudbrick+gates | clay tile      | mudbrick | ziggurat      |
+| castle (medieval, renaissance)   | cobble/stone  | winding + market sq  | stone+towers+gate | slate/tile  | timber   | cathedral     |
+| industrial (colonial, industrial, victorian) | cobble→asphalt | strict grid | none (open)  | slate→tin      | rowhouse | expo hall     |
+| modern (electric, atomic, modern)| asphalt       | wide avenues + superblocks | none     | flat modern    | tower    | skyscraper    |
+| cyber (information, digital, cyberpunk, fusion) | dark neon-grid | boulevards + megablocks | none | neon/glass  | arcology | megastructure |
+| space (space, interstellar, galactic, quantum) | pale metallic | ring/spoke arcs | dome ring    | metal/glass    | dome     | central spire |
 
 ## Phasing
+- **V3-A (first cut, review)**: the whole top-down ENGINE (era-tinted ground,
+  streets, stable persistent placement, fill-frame, top-down roof atlas w/ shadow,
+  loose districts, balanced filler, landmark labels) + the PRIMITIVE/STONE village
+  fully tuned. Other eras use a reasonable default preset. Drop world terrain +
+  isometric volumes from the citymap render path. Tests.
+- **V3-B**: ancient (mudbrick walls+gates, clay roofs, radial-grid, ziggurat) +
+  castle (stone walls+towers, market square, cathedral).
+- **V3-C**: industrial + modern (grid → avenues, rowhouse → tower, no walls).
+- **V3-D**: cyber + space (neon / dome) + wonder-centerpiece polish + per-age props.
+- **V3-E**: density / filler tuning + review refinements.
 
-- **A**: framework (cityPlan / eraStyle / pipeline / count-driven populate) +
-  `organic` village + `ancient` gridded city. Other eras fall back to a sane
-  default preset. Route the render through the new generator (supersede the old
-  per-era layout strategies). Tests.
-- **B**: castle + zonedgrid + cityblocks.
-- **C**: campus + orbital + per-category building sprites + wonder scaling.
-- **D**: gardens/parks/alleys polish, density tuning, review refinements.
+## Keep / drop
+- KEEP: the cityPlan/eraStyle skeleton, count-scaling math, gatherBuildings +
+  classify, the overlay label pipeline, theme-awareness, half-block render,
+  panic-safety, correct-size.
+- DROP from the CITYMAP path only: world terrain background, terrain-routed A*
+  streets, isometric drawVolume, land-gating.
+- The WORLDMAP keeps its terrain (approved, separate) — terrain.go stays; only the
+  citymap stops calling it.
 
-## Keep
-
-- Named landmarks (one labeled hero per built type) — now embedded in the fabric.
-- Terrain + land-gating + pathfind road/street routing.
-- Theme-awareness, half-block render, correct-size, panic-safety.
-
-## Worldmap faction cities (already working)
-
-`DiplomacyManager.DiscoverFactions` reveals a civ at its `MinAge`; `worldCivs`
-filters to `Discovered` and labels each dot with `FactionInfo.Name`;
-`civSignature` re-renders on discovery. Future enhancement (optional, ties to
-Trello NbT9WbNB / SGMjUNnd): give each faction a distinct generated **capital
-city name** rather than reusing the faction name.
+## Worldmap (approved, unchanged by this work)
+"World map and its generator? much better." Faction cities already name on
+discovery (`worldCivs` → `FactionInfo.Name`, gated on `Discovered`). Future
+optional flavor (Trello NbT9WbNB / SGMjUNnd): distinct generated capital-city
+names per faction.

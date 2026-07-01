@@ -495,14 +495,13 @@ func TestFullRenderOverlayAcrossAges(t *testing.T) {
 			if len(plan.labels) == 0 {
 				t.Fatal("overlay plan empty for a fully populated state")
 			}
-			// Must contain at least one civ marker, the title, and per-building labels
-			// named from config (the headline of each lineage cluster survives).
-			var civs, titles, bldgs int
+			// The top-down citymap overlay is landmark-only (locked #7): the title and
+			// the labeled landmark roofs (hero + wonder), named from config. Diplomacy
+			// civs now live on the worldmap, so the citymap carries no civ markers.
+			var titles, bldgs int
 			labelNames := map[string]bool{}
 			for _, lb := range plan.labels {
 				switch lb.kind {
-				case labelCiv:
-					civs++
 				case labelTitle:
 					titles++
 				case labelBuilding:
@@ -513,14 +512,11 @@ func TestFullRenderOverlayAcrossAges(t *testing.T) {
 					}
 				}
 			}
-			if civs == 0 {
-				t.Fatal("no civ markers in a discovered-roster render")
-			}
 			if titles != 1 {
 				t.Fatalf("want exactly 1 title, got %d", titles)
 			}
 			if bldgs == 0 {
-				t.Fatal("no per-building labels in a populated render")
+				t.Fatal("no landmark building labels in a populated render")
 			}
 			// Every building label must be a real config building Name (its own name,
 			// not a lineage/resource banner). Build the valid-name set from the same
@@ -537,14 +533,9 @@ func TestFullRenderOverlayAcrossAges(t *testing.T) {
 					t.Fatalf("building label %q is not a config building name (lineage banner leaked?)", name)
 				}
 			}
-			// Per-building labels must actually render end-to-end across every era. The
-			// densest strategy (city blocks) prunes the most, but several distinct
-			// building names always survive — the exact survivors depend on placement,
-			// so assert a robust lower bound, not a specific set. (The headline-per-
-			// cluster ordering is asserted directly in TestBuildingLabelsRenderAndSkipCollisions.)
-			if bldgs < 3 {
-				t.Fatalf("only %d building labels survived; per-building labeling too sparse", bldgs)
-			}
+			// Landmark-only labeling is sparse by design (locked #7); the bldgs == 0
+			// guard above already asserts the hero/wonder label survives end-to-end.
+			// No per-cluster lower bound applies to the top-down city anymore.
 
 			scr := newSimScreen(t, cols, rows)
 			stampHalfThenOverlay(t, scr, img, plan, cols, rows)

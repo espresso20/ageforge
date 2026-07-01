@@ -24,7 +24,6 @@ import (
 	"image"
 	"sync"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/gdamore/tcell/v2"
@@ -122,53 +121,42 @@ func (c *CityMap) imageFor(width, height int) (*image.RGBA, overlayPlan) {
 	return img, plan
 }
 
-// renderImage composites the full map and returns both the pixel image and the
-// cell-space text-overlay plan. The pixel layers, in order:
+// renderImage composites the full TOP-DOWN city (citymap v3, LOCKED spec
+// design-and-architecture/city-synthesis.md) and returns both the pixel image and the
+// cell-space text-overlay plan. The pixel layers, in order (city-synthesis.md
+// §Rendering, top-down):
 //
-//	terrain      — procedural, theme-tinted half-block fill (P1).
-//	era flourish — a faint, age-keyed margin treatment (P3: starfield/neon/smoke).
-//	roads        — the era's road network (P2).
-//	2.5D volumes — the player's buildings as lit-roof/shaded-wall volumes (P2).
-//	trade lanes  — dashed connectors to the border for active routes (P3).
+//	era-tinted ground — a neutral, theme-tinted earth fill + subtle texture (no water).
+//	streets           — winding dirt lanes (organic village pattern).
+//	ground accents    — gardens / squares painted under the roofs.
+//	roof sprites      — the top-down roof atlas, drawn back-to-front so SE shadows layer.
+//	filler            — trees / props at a balanced living-city density.
+//	walls / gates     — a wall ring IF the era has walls (primitive: none).
 //
-// The overlay plan (district labels, civ-edge markers, trade tags, title) is then
-// computed from the same geometry so its labels land exactly on the pixels. It reads
-// the active theme via the palette helpers, so the output reflects whatever theme is
-// active at call time, and dispatches the per-age strategy by the state's age.
+// The overlay plan is KEY LANDMARKS ONLY (city center, wonder, promoted hero) + the
+// corner title, computed from the same geometry so labels land on the pixels. It
+// reads the active theme via the palette helpers, so the output retints on a theme
+// switch, and re-skins to the era via the state's age.
+//
+// This is the citymap render path ONLY: the worldmap (worldmap.go) is untouched. The
+// citymap deliberately STOPS calling terrain, the isometric drawVolume, and
+// land-gating — the ground is a neutral era tint and every green thing is BUILT.
 func renderImage(state game.GameState, w, h int) (*image.RGBA, overlayPlan) {
 	img := image.NewRGBA(image.Rect(0, 0, w, h))
 	if w <= 0 || h <= 0 {
 		return img, overlayPlan{}
 	}
 
-	seed, hueShift := ageInfo(state.Age)
-	pal := buildPalette(hueShift)
-	e := eraForAge(state.Age)
+	// citySeed is stable per civ and AGE-INDEPENDENT (locked #8): the bones don't move
+	// across ages, only the era re-skin changes. Derived from the display name the same
+	// way the world seed is, with a distinct salt.
+	seed := citySeed(displayNameOf(state))
 
-	// Build the biome + passability field once, then paint the terrain from it. The
-	// same field is handed to the structure layer so roads + placement reason over
-	// exactly the biomes that were drawn (no second FBM sweep, no drift between the
-	// painted water and the water the pathfinder avoids).
-	field := newTerrainField(w, h, seed)
-	drawTerrainField(img, pal, field)
-	// P3 per-age flourish: a light, era-keyed margin treatment (starfield speckle in
-	// orbital ages, neon edge-tint in campus/cyber ages, smoke wisps over industrial)
-	// painted over the terrain but under the structure so it stays ambient.
-	drawEraFlourish(img, pal, e, seed)
+	// Paint the whole top-down city and get the landmark geometry back.
+	geo := renderTopDown(img, state, w, h, seed)
 
-	// Resolve the lineage/category table once (pure data, no locks) and hand it to
-	// the structure layer, which groups buildings into districts, runs the era
-	// strategy, draws terrain-aware roads, then the 2.5D volumes, returning the
-	// geometry anchors.
-	byKey := config.BuildingByKey()
-	geo := drawStructures(img, pal, state, byKey, field, seed)
-
-	// P3 trade weave: dashed lanes from the palace out to the border for each active
-	// route; the returned border endpoints feed the overlay's lane tags.
-	geo.tradeEnds = drawTradeLanes(img, pal, state, geo.palaceX, geo.palaceY)
-
-	// P3 text overlay plan (cell space): width=cols, rows=h/2 (two px per cell row).
-	plan := buildOverlayPlan(state, w, h/2, geo)
+	// Landmark-only text overlay plan (cell space): width=cols, rows=h/2 (two px/row).
+	plan := buildLandmarkOverlay(state, w, h/2, geo)
 
 	return img, plan
 }
