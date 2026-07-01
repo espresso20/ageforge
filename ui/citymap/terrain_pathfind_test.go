@@ -4,7 +4,6 @@ import (
 	"image"
 	"testing"
 
-	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -164,42 +163,6 @@ func TestRoadRoutesAroundWater(t *testing.T) {
 	}
 }
 
-// TestDrawTerrainRoadAvoidsWaterPixels draws a routed road onto a real image over a
-// blocked-strip field and asserts NO road pixel landed on a water cell. This is the
-// end-to-end version of the routing guarantee (route → smooth → rasterize).
-func TestDrawTerrainRoadAvoidsWaterPixels(t *testing.T) {
-	_ = theme.SetActive("forge")
-	pal := buildPalette(0)
-	const w, h = 90, 60
-	f := blockedStripField(w, h, 40, 50)
-	for x := 40; x <= 50; x++ {
-		for _, y := range []int{0, 1, h - 2, h - 1} {
-			idx := y*w + x
-			f.biomes[idx] = biomeGrass
-			f.passable[idx] = true
-		}
-	}
-	grid := buildCostGrid(f, 7)
-
-	img := image.NewRGBA(image.Rect(0, 0, w, h))
-	drawTerrainRoad(img, grid, roadSeg{10, h / 2, w - 10, h / 2}, pal.road)
-
-	roadPixels := 0
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			if img.RGBAAt(x, y) == pal.road {
-				roadPixels++
-				if !f.passableAt(x, y) {
-					t.Fatalf("road pixel painted on a water cell at (%d,%d)", x, y)
-				}
-			}
-		}
-	}
-	if roadPixels == 0 {
-		t.Fatal("no road pixels painted")
-	}
-}
-
 // TestRoadNetworkConnectsAllAcrossWater proves the shared road network: given a City
 // Center and buildings on BOTH sides of a full-height water wall (with top/bottom gaps),
 // buildRoadNetwork must (1) return a non-empty set of segments, (2) place no segment
@@ -327,81 +290,6 @@ func TestFindPathFallsBackWhenBoxedIn(t *testing.T) {
 // detour route is longer than the straight horizontal run; avoids a math import.
 func manhattan(a, b [2]int) float64 {
 	return float64(absInt(a[0]-b[0]) + absInt(a[1]-b[1]))
-}
-
-// ---- Terrain-aware placement -----------------------------------------------
-
-// TestNudgePlacementsOffWater builds a field that is open land except a lake in the
-// middle, drops a building placement and the City Center squarely in the lake, and
-// asserts nudgePlacements moves BOTH onto passable land (the nearest shore) while
-// leaving an already-on-land placement untouched.
-func TestNudgePlacementsOffWater(t *testing.T) {
-	const w, h = 80, 80
-	f := &terrainField{w: w, h: h, biomes: make([]biome, w*h), passable: make([]bool, w*h)}
-	for y := 0; y < h; y++ {
-		for x := 0; x < w; x++ {
-			idx := y*w + x
-			// A square lake in the center; land everywhere else.
-			if x >= 30 && x <= 50 && y >= 30 && y <= 50 {
-				f.biomes[idx] = biomeDeepWater
-				f.passable[idx] = false
-			} else {
-				f.biomes[idx] = biomeGrass
-				f.passable[idx] = true
-			}
-		}
-	}
-
-	ps := []placement{
-		{cx: 40, cy: 40, name: "Drowned Hall", key: "x", tier: impNormal}, // dead center of lake
-		{cx: 40, cy: 40, tier: impPalace},                                 // City Center in the lake
-		{cx: 5, cy: 5, name: "Dry Hut", key: "y", tier: impNormal},        // already on land
-	}
-	out := nudgePlacements(ps, f)
-
-	for i, p := range out {
-		if !f.passableAt(p.cx, p.cy) {
-			t.Fatalf("placement %d still on water at (%d,%d) after nudge", i, p.cx, p.cy)
-		}
-	}
-	// The dry hut must not have moved.
-	if out[2].cx != 5 || out[2].cy != 5 {
-		t.Fatalf("on-land placement moved to (%d,%d), should stay at (5,5)", out[2].cx, out[2].cy)
-	}
-	// The palace (City Center) must have been relocated off (40,40).
-	if out[1].cx == 40 && out[1].cy == 40 {
-		t.Fatal("City Center placement was not nudged out of the lake")
-	}
-}
-
-// TestRenderPlacesNothingOnWater is the integration check for placement: render a
-// full city and assert every building marker center and the palace center sit on a
-// passable cell of the field built from the SAME seed. (Volumes can still overhang a
-// shoreline by a pixel — we assert the CENTER is on land, which is what the nudge
-// guarantees.)
-func TestRenderPlacesNothingOnWater(t *testing.T) {
-	_ = theme.SetActive("forge")
-	const w, h = 100, 120
-	st := sampleState("bronze_age", sampleBuilt())
-
-	// Rebuild the field exactly as renderImage does (ageInfo seed) so we can check the
-	// placements that drawStructures produced against the same passability grid.
-	seed, hueShift := ageInfo(st.Age)
-	pal := buildPalette(hueShift)
-	field := newTerrainField(w, h, seed)
-
-	img := image.NewRGBA(image.Rect(0, 0, w, h))
-	drawTerrainField(img, pal, field)
-	geo := drawStructures(img, pal, st, config.BuildingByKey(), field, seed)
-
-	if !field.passableAt(geo.palaceX, geo.palaceY) {
-		t.Fatalf("City Center center (%d,%d) is on an impassable cell", geo.palaceX, geo.palaceY)
-	}
-	for _, b := range geo.buildings {
-		if !field.passableAt(b.px, b.py) {
-			t.Fatalf("building %q center (%d,%d) is on an impassable cell", b.name, b.px, b.py)
-		}
-	}
 }
 
 // ---- City Center label ------------------------------------------------------

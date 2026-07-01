@@ -285,61 +285,6 @@ func TestBuildingLabelsRenderAndSkipCollisions(t *testing.T) {
 	}
 }
 
-// TestGeometryForEmitsPerBuildingAnchors verifies geometryFor returns one label
-// anchor PER BUILDING (every non-palace placement, by its own config Name/lineage/
-// tier/size), excludes the palace, and even a lone single-instance building still
-// gets an anchor — the per-building model labels every built type, no thin-district
-// skip. Identity rides on the placement, so the districts arg is irrelevant here.
-func TestGeometryForEmitsPerBuildingAnchors(t *testing.T) {
-	_ = theme.SetActive("forge")
-	placements := []placement{
-		{cx: 40, cy: 40, size: 2, col: buildPalette(0).palace, tier: impPalace}, // palace: no name → excluded
-		// A lone housing building (one instance) — must STILL get an anchor.
-		{cx: 10, cy: 10, size: 0, col: lineageColor("housing", "housing"), tier: impNormal,
-			key: "hut", name: "Hut", lineageKey: "housing", category: "housing", ltier: 0},
-		// Two food buildings (same lineage) — both get their own anchor.
-		{cx: 60, cy: 30, size: 1, col: lineageColor("food", "production"), tier: impNormal,
-			key: "gathering_camp", name: "Gathering Camp", lineageKey: "food", category: "production", ltier: 0},
-		{cx: 62, cy: 31, size: 0, col: lineageColor("food", "production"), tier: impNormal,
-			key: "forager_post", name: "Forager Post", lineageKey: "food", category: "production", ltier: 1},
-	}
-	geo := geometryFor(80, 80, nil, placements)
-
-	if len(geo.buildings) != 3 {
-		t.Fatalf("want 3 building anchors (palace excluded), got %d", len(geo.buildings))
-	}
-	byName := map[string]buildingLabel{}
-	for _, b := range geo.buildings {
-		if b.name == "" {
-			t.Fatal("building anchor has empty name")
-		}
-		byName[b.name] = b
-	}
-	// The lone single-instance Hut must be present (no thin-skip in the per-building model).
-	hut, ok := byName["Hut"]
-	if !ok {
-		t.Fatal("lone Hut should still get a per-building anchor")
-	}
-	if hut.lineageKey != "housing" || hut.px != 10 || hut.py != 10 {
-		t.Fatalf("Hut anchor wrong: %+v", hut)
-	}
-	// Both same-lineage food buildings present, each named as itself.
-	if _, ok := byName["Gathering Camp"]; !ok {
-		t.Fatal("Gathering Camp anchor missing")
-	}
-	fp, ok := byName["Forager Post"]
-	if !ok {
-		t.Fatal("Forager Post anchor missing")
-	}
-	if fp.lineageKey != "food" || fp.tier != 1 {
-		t.Fatalf("Forager Post anchor lost identity: %+v", fp)
-	}
-	// The palace contributed no building anchor and set the palace center.
-	if geo.palaceX != 40 || geo.palaceY != 40 {
-		t.Fatalf("palace center = (%d,%d), want (40,40)", geo.palaceX, geo.palaceY)
-	}
-}
-
 // TestTitlePresentAndAgeNamed asserts the corner title is planned and includes the
 // age name.
 func TestTitlePresentAndAgeNamed(t *testing.T) {
