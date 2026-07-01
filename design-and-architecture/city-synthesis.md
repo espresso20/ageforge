@@ -55,6 +55,48 @@ something here is silent, ask, don't guess.
 Cross-cutting: theme-aware (retint on theme switch), panic-safe, exact output
 size, deterministic from the civ seed.
 
+## Revisions (playtest)
+
+A playtest design pass REVISES three of the decisions above. Where this section
+conflicts with the older text (locked #11 Growth, #13 Wonders, #7 Labels), THIS
+governs; the older wording is kept for history.
+
+1. **Growth is wonder-anchored, lane-grown, and type-INTERMIXED** (was: hard/loose
+   per-domain district clusters). There are no per-domain round-cluster spirals.
+   Instead: lanes are laid first (winding, seeded, deterministic) between/around the
+   growth anchors, then ALL buildings are placed in one stable sequence of slots that
+   INTERLEAVES the per-type queues (round-robin) so consecutive slots are different
+   domains — a hut next to a camp next to a store, not one blob of huts — and each
+   slot is pulled toward its nearest lane so the fabric grows ALONG the streets and
+   the town OUTLINE follows the lanes (not a disc). Applies at all scales; the city
+   still reads as one cohesive settlement. Stable-incremental is preserved: a lot's
+   (anchor, spiral-index, jitter) is a pure function of (building type, instance index,
+   seed) — never of another type's count or a shared cursor — so adding a building
+   never moves an existing one. `districtKindFor` + the `tdDistrict` cluster model are
+   retired; `topPlan.anchors` replaces `topPlan.districts`.
+
+2. **Wonders are the CENTRAL growth-anchors the town hugs, with a clear plaza, scaling
+   with count** (was: a single dominant centerpiece dropped dead-center). Anchors = the
+   built WONDERS (each seats one); a wonderless village has a single city-center anchor.
+   N wonders spread as a stable, seeded set of anchor points (golden-angle phyllotaxis,
+   spread ∝ √N — a few sit close, many fan out across the map). The lanes wind between
+   the anchors and the intermixed fabric grows around/between them. Each wonder sits AT
+   its anchor drawn prominent (dominant roof), with a small CLEAR PLAZA of open ground
+   immediately around it: the fabric spiral for a wonder anchor floors its radius just
+   past the plaza so the town HUGS the wonder, and any stray lot inside the plaza is
+   dropped — the centerpiece is never buried (the playtest complaint). Wonders are
+   central anchors, NOT exiled to the outskirts. Scales sanely 0 → 1 → many anchors.
+
+3. **Labels are SOFT PILL BANNERS** (was: text stamped straight over the pixel field,
+   reading as a harsh line on the roofs). Each label sits on a muted background tone —
+   the theme background lifted a touch toward the text tone + a whisper of the label's
+   role hue (a dim, gentle contrast, NOT a solid-black box) — with thin rounded
+   side-cap glyphs (`▏`/`▕`) one cell out on each side, so it reads as a little pill
+   floating just above the building. The text stays crisp in its role color on the same
+   columns as before; the banner backs it for legibility over any roof/terrain. Both
+   the banner tone and the text color resolve live from the active theme (retint on
+   switch). Shared by the citymap AND the worldmap overlays (consistent).
+
 ## Architecture
 
 ### Deterministic persistent layout

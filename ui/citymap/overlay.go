@@ -392,6 +392,16 @@ func (p *overlayPlan) addTitle(state game.GameState, cols, rows int) {
 // text. It is panic-safe and clips every glyph to the box bounds — nothing is drawn
 // outside [offX,offX+cols) × [offY,offY+rows). This runs in the Build draw-closure
 // AFTER streamHalfBlocks, overwriting the '▄' cells with crisp characters.
+//
+// Each label sits on a SOFT PILL BANNER (playtest FIX 3): a MUTED background tone
+// (the theme background pushed a touch dark + a whisper of the label's role hue — a
+// dim, gentle contrast, NOT a solid-black box) painted behind the text, with thin
+// rounded side-cap glyphs one cell out on each side so the banner reads as a little
+// pill floating just above the roof. The banner backs every text cell so the label
+// stays legible over any roof/terrain, and both the banner tone and the text color are
+// resolved LIVE from the active theme, so a theme switch retints the whole banner. The
+// TEXT glyphs land on exactly the same columns as before (the banner only widens the
+// BACKGROUND), so label geometry is unchanged. Shared with the worldmap overlay.
 func stampOverlay(screen tcell.Screen, plan overlayPlan, offX, offY, cols, rows int) {
 	if screen == nil || cols <= 0 || rows <= 0 {
 		return
@@ -412,10 +422,16 @@ func stampOverlay(screen tcell.Screen, plan overlayPlan, offX, offY, cols, rows 
 		if lb.bright {
 			base = brightenTcell(base, 0.35)
 		}
-		style := tcell.StyleDefault.Foreground(base)
+		// The muted pill background: theme bg pushed dark + a whisper of the label's own
+		// hue, so the banner sits quietly under the text without a harsh solid box.
+		bannerBg := labelBannerBg(base)
+		textStyle := tcell.StyleDefault.Foreground(base).Background(bannerBg)
 		if lb.kind == labelTitle || lb.kind == labelCapital {
-			style = style.Bold(true)
+			textStyle = textStyle.Bold(true)
 		}
+		// The side caps read as the pill's rounded ends: a thin eighth-block bar in a
+		// dim tone over the banner bg.
+		capStyle := tcell.StyleDefault.Foreground(labelBannerCap(base)).Background(bannerBg)
 
 		runes := []rune(lb.text)
 		// Compute the starting column from the alignment.
@@ -430,14 +446,60 @@ func stampOverlay(screen tcell.Screen, plan overlayPlan, offX, offY, cols, rows 
 		if row < 0 || row >= rows {
 			continue
 		}
-		for i, r := range runes {
-			col := startCol + i
+		set := func(col int, r rune, st tcell.Style) {
 			if col < 0 || col >= cols {
-				continue // clip per-glyph so a long label degrades gracefully at edges
+				return // clip per-glyph so a long label degrades gracefully at edges
 			}
-			screen.SetContent(offX+col, offY+row, r, nil, style)
+			screen.SetContent(offX+col, offY+row, r, nil, st)
 		}
+		// Left rounded cap one cell before the text.
+		set(startCol-1, '▏', capStyle)
+		// The text cells, on their original columns, over the banner background.
+		for i, r := range runes {
+			set(startCol+i, r, textStyle)
+		}
+		// Right rounded cap one cell after the text.
+		set(startCol+len(runes), '▕', capStyle)
 	}
+}
+
+// labelBannerBg builds the SOFT PILL banner background for a label (FIX 3): the theme
+// background pushed a touch toward RoleDim (so it reads as a dim, recessed banner, not
+// a solid black slab) with a WHISPER of the label's own text color mixed in, so the
+// pill subtly picks up the role hue while staying muted and legible under the glyph. It
+// is resolved live from the active theme, so a theme switch retints the banner. The
+// result is deliberately close to — but distinct from — the background: gentle contrast.
+func labelBannerBg(text tcell.Color) tcell.Color {
+	bg := theme.Color(theme.RoleBackground)
+	txt := theme.Color(theme.RoleText)
+	// Background lifted a TOUCH toward the theme text tone so the banner reads as a soft,
+	// slightly-raised pill over any roof/terrain (bg itself can be pure black), then a
+	// whisper of the label's own hue so the pill hints at its role without shouting. Both
+	// blends are gentle, so the banner stays close to the background — muted, not a solid
+	// slab, and nowhere near the bright accent.
+	base := blendTcell(bg, txt, 0.14)
+	return blendTcell(base, text, 0.16)
+}
+
+// labelBannerCap is the dim tone for the pill's rounded side caps — the banner bg lifted
+// gently toward the text color so the caps read as a soft edge, not a hard border.
+func labelBannerCap(text tcell.Color) tcell.Color {
+	return blendTcell(labelBannerBg(text), text, 0.25)
+}
+
+// blendTcell linearly mixes tcell color a toward b by t in [0,1], staying in tcell RGB
+// space so the overlay's banner math doesn't round-trip through image/color.
+func blendTcell(a, b tcell.Color, t float64) tcell.Color {
+	if t <= 0 {
+		return a
+	}
+	if t >= 1 {
+		return b
+	}
+	ar, ag, ab := a.RGB()
+	br, bg, bb := b.RGB()
+	lerp := func(x, y int32) int32 { return x + int32(float64(y-x)*t) }
+	return tcell.NewRGBColor(lerp(ar, br), lerp(ag, bg), lerp(ab, bb))
 }
 
 // tcellFromRGBA converts an image/color.RGBA to a true-RGB tcell.Color, so the

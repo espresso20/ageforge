@@ -91,42 +91,66 @@ func TestTopDownDeterministic(t *testing.T) {
 	}
 }
 
-// TestStableIncrementalPlacement is the anti-re-randomize guarantee (locked #8): the
-// spiral slots — including the organic jitter — for the FIRST N instances of a building
-// must be byte-identical whether the building has count N or count N+1. Adding a
-// building can never move an existing one. We compare per-building roof-lot centers.
+// TestStableIncrementalPlacement is the anti-re-randomize guarantee (locked #8), now
+// under the INTERMIXED LANE placement (FIX 1): the slots — including the organic jitter
+// — for the FIRST N instances of a building must be byte-identical whether the building
+// has count N or count N+1. Adding a building can never move an existing one. We compare
+// per-building roof-lot centers, in a single-type village and again in a multi-domain,
+// wonder-anchored city (the harder case: round-robin ordering + a wonder plaza).
 func TestStableIncrementalPlacement(t *testing.T) {
 	_ = theme.SetActive("forge")
 
-	// Use a housing building (huts) so all its lots share one district and one spiral.
-	base := sampleState("primitive_age", map[string]int{"hut": 10})
-	more := sampleState("primitive_age", map[string]int{"hut": 11})
-
-	// Isolate the hut lots (roofHut / roofLong come only from housing). Both plans place
-	// huts in the same district spiral, so the first 10 slots must coincide exactly.
-	hutsBase := roofLots(tdPlanFor(base))
-	hutsMore := roofLots(tdPlanFor(more))
-
+	// Case 1 — a single-type village: huts share the one center anchor's spiral, so the
+	// first 10 slots must coincide exactly when the 11th is added.
+	hutsBase := roofLots(tdPlanFor(sampleState("primitive_age", map[string]int{"hut": 10})))
+	hutsMore := roofLots(tdPlanFor(sampleState("primitive_age", map[string]int{"hut": 11})))
 	if len(hutsBase) < 10 || len(hutsMore) < len(hutsBase) {
 		t.Fatalf("unexpected hut lot counts: base=%d more=%d", len(hutsBase), len(hutsMore))
 	}
-	// The first len(hutsBase) lots must be positionally identical (the spiral is a stable
-	// sequence and the jitter is a pure function of the slot index, not of the total).
 	for i := 0; i < len(hutsBase); i++ {
 		a, b := hutsBase[i], hutsMore[i]
 		if a.x != b.x || a.y != b.y {
-			t.Fatalf("slot %d moved when count grew 10→11: (%v,%v) vs (%v,%v) — placement not stable-incremental",
+			t.Fatalf("slot %d moved when hut count grew 10→11: (%v,%v) vs (%v,%v) — placement not stable-incremental",
 				i, a.x, a.y, b.x, b.y)
 		}
 	}
 
-	// Also assert the jitter actually did something: the raw spiral would put slot 0 at
-	// exactly the district center; with jitter the set of centers must not be a perfect
-	// lattice. Sanity: at least one lot is offset from its un-jittered spiral position.
+	// Case 2 — a multi-domain, wonder-anchored city. Growing ONE domain's count must not
+	// move the EXISTING lots of any domain. We key lots by (domain,tier) and compare the
+	// per-key position sequences; every key present in base must be a positional prefix of
+	// the same key in more. This exercises the round-robin ordering + the plaza filter.
+	baseM := map[string]int{"hut": 12, "gathering_camp": 9, "stone_camp": 7, "forge": 6, "colosseum": 1}
+	moreM := map[string]int{"hut": 12, "gathering_camp": 10, "stone_camp": 7, "forge": 6, "colosseum": 1} // +1 camp
+	byDomain := func(lots []tdLot) map[string][]tdLot {
+		m := map[string][]tdLot{}
+		for _, lt := range lots {
+			if lt.roof == roofWonder {
+				continue
+			}
+			m[lt.domain] = append(m[lt.domain], lt)
+		}
+		return m
+	}
+	bd := byDomain(fabricLots(tdPlanFor(sampleState("primitive_age", baseM))))
+	md := byDomain(fabricLots(tdPlanFor(sampleState("primitive_age", moreM))))
+	for dom, bl := range bd {
+		ml := md[dom]
+		if len(ml) < len(bl) {
+			t.Fatalf("domain %q lost lots when a sibling grew: base=%d more=%d", dom, len(bl), len(ml))
+		}
+		for i := range bl {
+			if bl[i].x != ml[i].x || bl[i].y != ml[i].y {
+				t.Fatalf("domain %q lot %d moved when gathering_camp grew: (%v,%v) vs (%v,%v) — intermix broke stability",
+					dom, i, bl[i].x, bl[i].y, ml[i].x, ml[i].y)
+			}
+		}
+	}
+
+	// Also assert the jitter actually did something: the raw spiral would place slots on a
+	// perfect lattice; with jitter at least one slot is offset from its un-jittered spot.
 	moved := false
-	for i, lt := range hutsBase {
-		jx, jy := slotJitter(i, 0, citySeed(displayNameOf(base)), defaultTdConfig.jitterAmp)
-		_ = lt
+	for i := range hutsBase {
+		jx, jy := slotJitter(i, 0, citySeed(displayNameOf(sampleState("primitive_age", nil))), defaultTdConfig.jitterAmp)
 		if math.Abs(jx) > 1e-9 || math.Abs(jy) > 1e-9 {
 			moved = true
 			break
@@ -251,37 +275,189 @@ func TestFillFrameInBounds(t *testing.T) {
 	}
 }
 
-// TestTightSettlementBelowThreshold locks FIX 2: a small settlement is ONE cohesive
-// cluster around the core (district centers pulled in), while a large one spreads into
-// the loose ring. We compare the spread of district centers below vs above the count
-// threshold.
-func TestTightSettlementBelowThreshold(t *testing.T) {
-	_ = theme.SetActive("forge")
+// fabricLots returns the non-wonder roof lots (the intermixed settlement fabric), in
+// placement (slice) order. Wonders are excluded — they are anchors/centerpieces, not
+// fabric — so the intermix + clustering checks measure the town, not the showpieces.
+func fabricLots(plan topPlan) []tdLot {
+	out := make([]tdLot, 0, len(plan.lots))
+	for _, lt := range plan.lots {
+		if lt.kind == tdRoof && lt.roof != roofWonder {
+			out = append(out, lt)
+		}
+	}
+	return out
+}
 
-	districtSpread := func(plan topPlan) float64 {
-		max := 0.0
-		for _, d := range plan.districts {
-			r := math.Hypot(d.cx-plan.cx, d.cy-plan.cy)
-			if r > max {
-				max = r
+// nnDomainDiffFrac returns the fraction of lots whose NEAREST neighbor is a DIFFERENT
+// domain. Near 0 means same-domain blobs (each lot is surrounded by its own kind); a
+// healthy fraction means the domains are spatially intermixed (FIX 1). O(n²) but the
+// test sets are small.
+func nnDomainDiffFrac(lots []tdLot) float64 {
+	if len(lots) < 2 {
+		return 0
+	}
+	diff, tot := 0, 0
+	for i := range lots {
+		best := math.Inf(1)
+		bj := -1
+		for j := range lots {
+			if i == j {
+				continue
+			}
+			d := math.Hypot(lots[i].x-lots[j].x, lots[i].y-lots[j].y)
+			if d < best {
+				best, bj = d, j
 			}
 		}
-		return max
+		if bj >= 0 {
+			tot++
+			if lots[bj].domain != lots[i].domain {
+				diff++
+			}
+		}
+	}
+	return float64(diff) / float64(tot)
+}
+
+// TestIntermixedLanePlacement locks FIX 1: buildings are placed in a stable, type-
+// INTERMIXED sequence — consecutive placement slots are different domains (not one big
+// blob of huts) AND the fabric is spatially mixed (no single-domain round blob). We
+// drive a village of five distinct domains and assert both the placement ORDER and the
+// spatial nearest-neighbor mixing exceed a healthy threshold.
+func TestIntermixedLanePlacement(t *testing.T) {
+	_ = theme.SetActive("forge")
+	// hut=housing, gathering_camp=food, stone_camp=geological, forge=metallurgy,
+	// barracks=military — five distinct domains, no wonder (one center anchor).
+	state := sampleState("primitive_age", map[string]int{
+		"hut": 12, "gathering_camp": 10, "stone_camp": 8, "forge": 8, "barracks": 6,
+	})
+	plan := tdPlanFor(state)
+	fab := fabricLots(plan)
+	if len(fab) < 20 {
+		t.Fatalf("expected a substantial fabric, got %d lots", len(fab))
 	}
 
-	small := tdPlanFor(sampleState("primitive_age", map[string]int{"hut": 6, "gathering_camp": 3}))
-	large := tdPlanFor(sampleState("primitive_age", map[string]int{"hut": 60, "gathering_camp": 40, "forge": 30, "barracks": 20}))
-
-	smallSpread := districtSpread(small)
-	largeSpread := districtSpread(large)
-
-	// The tight hamlet's districts must sit far closer to the core than the sprawled
-	// city's — a real, large ratio, not a marginal one.
-	if smallSpread >= largeSpread {
-		t.Fatalf("small settlement district spread %.1f >= large %.1f — village did not stay tight", smallSpread, largeSpread)
+	// (1) Placement ORDER intermix: consecutive slots must usually be different domains
+	// (round-robin interleave), NOT a run of one domain then the next. Count adjacent
+	// pairs that differ; a per-domain-blob layout would score near 0.
+	distinctDomains := map[string]bool{}
+	adjDiff, adjTot := 0, 0
+	for i := 1; i < len(fab); i++ {
+		adjTot++
+		if fab[i].domain != fab[i-1].domain {
+			adjDiff++
+		}
+		distinctDomains[fab[i].domain] = true
 	}
-	if largeSpread < smallSpread*2 {
-		t.Fatalf("expected the large city to spread its districts much wider than the hamlet: small=%.1f large=%.1f", smallSpread, largeSpread)
+	distinctDomains[fab[0].domain] = true
+	if len(distinctDomains) < 3 {
+		t.Fatalf("fabric only spans %d domains — need a multi-domain settlement to test intermix", len(distinctDomains))
+	}
+	orderFrac := float64(adjDiff) / float64(adjTot)
+	if orderFrac < 0.5 {
+		t.Fatalf("placement order intermix only %.2f — consecutive slots are too often the same domain (blobby, not interleaved)", orderFrac)
+	}
+
+	// (2) SPATIAL intermix: a lot's nearest neighbor is frequently a DIFFERENT domain —
+	// there is no single-domain round blob. A per-domain-cluster layout would score near 0.
+	spatial := nnDomainDiffFrac(fab)
+	if spatial < 0.30 {
+		t.Fatalf("spatial nearest-neighbor domain-mixing only %.2f — the fabric reads as same-type blobs, not intermixed", spatial)
+	}
+
+	// The town must not be a disc: the fabric grows along lanes, so at least a couple of
+	// lanes exist for it to grow along.
+	if len(plan.streets) < 2 {
+		t.Fatalf("expected a lane network for the fabric to grow along, got %d streets", len(plan.streets))
+	}
+}
+
+// TestWonderAnchoredGrowth locks FIX 2: wonders are the CENTRAL growth anchors the
+// settlement hugs, each with a CLEAR PLAZA, scaling with the wonder count. With ≥1
+// wonder the fabric clusters AROUND the anchor(s) and no fabric lot sits inside a
+// wonder's plaza; with 0 wonders the village is one cohesive settlement around the
+// center; and the anchor set scales 0→1→several as wonders are built.
+func TestWonderAnchoredGrowth(t *testing.T) {
+	_ = theme.SetActive("forge")
+
+	plazaR := defaultTdConfig.plazaRadius * defaultTdConfig.roofSize
+
+	// Anchor count scales with wonders: 0 → 1 (city center), 1 → 1 (the wonder), 3 → 3.
+	wonderAnchors := func(m map[string]int) (nWonder, nAnchor int) {
+		plan := tdPlanFor(sampleState("primitive_age", m))
+		for _, a := range plan.anchors {
+			if a.wonder {
+				nWonder++
+			}
+		}
+		return nWonder, len(plan.anchors)
+	}
+	if nw, na := wonderAnchors(map[string]int{"hut": 10, "gathering_camp": 6}); nw != 0 || na != 1 {
+		t.Fatalf("0-wonder village: got %d wonder-anchors / %d anchors, want 0 / 1 (single center anchor)", nw, na)
+	}
+	if nw, na := wonderAnchors(map[string]int{"hut": 12, "gathering_camp": 8, "colosseum": 1}); nw != 1 || na != 1 {
+		t.Fatalf("1-wonder city: got %d wonder-anchors / %d anchors, want 1 / 1", nw, na)
+	}
+	if nw, na := wonderAnchors(map[string]int{"hut": 30, "gathering_camp": 20, "forge": 12, "sacred_grove": 1, "stonehenge": 1, "colosseum": 1}); nw != 3 || na != 3 {
+		t.Fatalf("3-wonder city: got %d wonder-anchors / %d anchors, want 3 / 3 (anchors scale with wonders)", nw, na)
+	}
+
+	// CLEAR PLAZA + clustering with ≥1 wonder: no fabric lot may sit inside any wonder
+	// anchor's plaza radius, and the fabric must hug the anchors (its mean distance to
+	// the NEAREST anchor is small relative to the town's overall extent).
+	plan := tdPlanFor(sampleState("primitive_age", map[string]int{
+		"hut": 40, "gathering_camp": 30, "forge": 20, "barracks": 12, "colosseum": 1, "stonehenge": 1,
+	}))
+	var wonderAnchorPts []tdAnchor
+	for _, a := range plan.anchors {
+		if a.wonder {
+			wonderAnchorPts = append(wonderAnchorPts, a)
+		}
+	}
+	if len(wonderAnchorPts) < 2 {
+		t.Fatalf("expected ≥2 wonder anchors, got %d", len(wonderAnchorPts))
+	}
+	fab := fabricLots(plan)
+	if len(fab) < 20 {
+		t.Fatalf("expected a substantial fabric, got %d lots", len(fab))
+	}
+	var sumNearest, maxFromCore float64
+	for _, lt := range fab {
+		// Plaza: strictly outside every wonder's clear ring.
+		nearestAnchor := math.Inf(1)
+		for _, a := range plan.anchors {
+			d := math.Hypot(lt.x-a.cx, lt.y-a.cy)
+			if a.wonder && d < plazaR {
+				t.Fatalf("fabric lot at (%.1f,%.1f) sits inside a wonder plaza (dist %.2f < plazaR %.2f) — the centerpiece is buried", lt.x, lt.y, d, plazaR)
+			}
+			if d < nearestAnchor {
+				nearestAnchor = d
+			}
+		}
+		sumNearest += nearestAnchor
+		if r := math.Hypot(lt.x-plan.cx, lt.y-plan.cy); r > maxFromCore {
+			maxFromCore = r
+		}
+	}
+	meanNearest := sumNearest / float64(len(fab))
+	// Clustering: on average a fabric lot hugs SOME anchor much more closely than the
+	// town's overall radius — i.e. it grows around the anchors, not scattered.
+	if meanNearest > maxFromCore*0.6 {
+		t.Fatalf("fabric mean distance-to-nearest-anchor %.1f is not small vs town radius %.1f — buildings do not cluster around the anchors", meanNearest, maxFromCore)
+	}
+
+	// 0-wonder cohesion: a wonderless village is ONE cohesive settlement around the
+	// center — every fabric lot is within a bounded radius of the single center anchor.
+	vplan := tdPlanFor(sampleState("primitive_age", map[string]int{"hut": 16, "gathering_camp": 10, "stone_camp": 6}))
+	if len(vplan.anchors) != 1 || vplan.anchors[0].wonder {
+		t.Fatalf("wonderless village should have exactly one non-wonder center anchor, got %d anchors", len(vplan.anchors))
+	}
+	vfab := fabricLots(vplan)
+	rad := tdFootprintRadius(&vplan)
+	for _, lt := range vfab {
+		if d := math.Hypot(lt.x-vplan.cx, lt.y-vplan.cy); d > rad+0.01 {
+			t.Fatalf("wonderless village lot at distance %.1f exceeds its footprint radius %.1f — not one cohesive settlement", d, rad)
+		}
 	}
 }
 

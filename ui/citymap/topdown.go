@@ -16,10 +16,11 @@ import (
 // isometric citymap with a TOP-DOWN pixel-art living city: you look straight down
 // at roofs, dirt lanes, gardens and squares, and the fabric grows and re-skins as
 // the civ grows. This file owns the whole V3-A path — era-tinted ground, stable
-// persistent placement (golden-angle spirals per district), fill-frame scaling,
-// the top-down roof atlas with SE drop-shadows, loose districts, organic streets,
-// balanced living-city filler, the walls capability (off in primitive), the wonder
-// centerpiece, and landmark-only labels.
+// persistent placement (a WONDER-ANCHORED, lane-grown, type-INTERMIXED fabric — see
+// city-synthesis.md §Revisions (playtest)), fill-frame scaling, the top-down roof atlas
+// with SE drop-shadows, organic streets between the anchors, balanced living-city
+// filler, the walls capability (off in primitive), the wonder anchors with their clear
+// plazas, and landmark-only labels.
 //
 // SCOPE: this is the citymap render path ONLY. The worldmap (worldmap.go +
 // terrain.go's world funcs) is approved and untouched — the citymap simply stops
@@ -355,25 +356,18 @@ type tdLot struct {
 	prom     float64 // prominence (for landmark z-order + label priority)
 }
 
-// tdDistrictKind is a loose district cluster (locked #11): buildings gravitate to
-// same-kind clusters that BLUR into each other, not hard zones.
-type tdDistrictKind int
-
-const (
-	distResidential tdDistrictKind = iota
-	distProduction
-	distCivic
-	distMarket
-	distGarrison
-)
-
-// tdDistrict is one loose cluster: a center in city space and the running count of
-// instances placed into it (drives the golden-angle spiral radius). Center angles
-// are stable per seed so the district map doesn't rearrange across renders/ages.
-type tdDistrict struct {
-	kind    tdDistrictKind
-	cx, cy  float64
-	placed  int // how many roof lots have been slotted here (spiral index cursor)
+// tdAnchor is one GROWTH ANCHOR the settlement grows around (playtest revision, FIX
+// 2). Anchors are the built WONDERS (each wonder seats one anchor); a civ with zero
+// wonders has a single anchor at the city center. The lanes wind between the anchors
+// and the intermixed roof fabric grows around each. `wonder` flags an anchor that
+// seats a wonder (gets a clear plaza + the centerpiece roof); the bare city-center
+// anchor of a wonderless village does NOT clear a plaza (a tiny village must not be
+// hollowed out). Positions are a stable function of (index, seed) — age-independent —
+// so the anchor field never rearranges across renders/ages.
+type tdAnchor struct {
+	cx, cy float64
+	wonder bool          // seats a wonder → plaza-cleared centerpiece
+	bld    builtBuilding // the wonder building this anchor seats (wonder anchors only)
 }
 
 // tdStreet is one lane polyline in city space, with a width class.
@@ -390,9 +384,13 @@ type tdPoint struct{ x, y float64 }
 // into canvas pixels. Keeping the plan in city space is what makes fill-frame work:
 // the same relative layout re-fits to any canvas / density.
 type topPlan struct {
-	streets   []tdStreet
-	districts []tdDistrict
-	lots      []tdLot
+	streets []tdStreet
+	// anchors are the wonder-anchored growth seats (FIX 2): the lanes wind between
+	// them and the intermixed fabric grows around each. A wonderless village has a
+	// single city-center anchor. Kept on the plan so the street generator + tests can
+	// read the growth skeleton.
+	anchors []tdAnchor
+	lots    []tdLot
 	// center is the civic heart in city space (the City Center anchor + wonder seat).
 	cx, cy float64
 	// heroLabel is the promoted hero's identity when the civ has no civic building
@@ -432,52 +430,61 @@ func displayNameOf(state game.GameState) string {
 	return ""
 }
 
-// ---- district classification ------------------------------------------------
+// ---- growth anchors (wonder-anchored, playtest FIX 2) -----------------------
+//
+// The settlement grows around ANCHORS, not hard per-domain districts. Anchors are the
+// built WONDERS (each seats one), spread as a stable, seeded set across the settlement
+// area; a wonderless village has a single city-center anchor. More wonders → more
+// anchors, wider spread. See tdAnchorPoints.
 
-// districtKindFor sorts a building into a loose district by its category/domain
-// (locked #11): housing→residential, faith/knowledge/culture + research/wonder→civic,
-// military→garrison, storage/trade/harbor→market, everything else→production.
-func districtKindFor(domain, category string) tdDistrictKind {
-	switch category {
-	case "housing":
-		return distResidential
-	case "research", "wonder", "monument", "diplomacy":
-		return distCivic
-	case "military":
-		return distGarrison
-	case "storage":
-		return distMarket
+// tdAnchorPoints places nWonders growth-anchor centers in city space, spread stably
+// and deterministically around the core so more wonders push the town wider (FIX 2).
+// nWonders==0 yields exactly one anchor AT the core (a cohesive wonderless village).
+// For N≥1 the anchors sit on a golden-angle phyllotaxis disc whose radius grows with
+// sqrt of the anchor index and an overall spread that grows with sqrt(N): a few
+// wonders sit close, many fan out across the whole map. Anchor i's offset is a pure
+// function of (i, seed) — NOT of N — so adding a wonder never moves the anchors placed
+// before it (the same stable-incremental discipline the fabric uses).
+func tdAnchorPoints(cx, cy float64, nWonders int, seed uint32, cfg tdConfig) []tdPoint {
+	if nWonders <= 0 {
+		return []tdPoint{{cx, cy}}
 	}
-	switch domain {
-	case "faith", "knowledge", "culture_arts":
-		return distCivic
-	case "military":
-		return distGarrison
-	case "storage", "trade", "harbor":
-		return distMarket
+	// A stable per-seed phase so two civs' anchor rings differ, but a given civ's is
+	// fixed across ages (seed is age-independent).
+	phase := float64(hash2(0xA9C, 0x37, seed)) / float64(^uint32(0)) * 2 * math.Pi
+	// Spread grows with the count so a metropolis of wonders occupies more ground while
+	// a lone wonder stays central. sqrt keeps it sub-linear (fill-frame re-fits anyway).
+	spread := cfg.anchorSpread * math.Sqrt(float64(nWonders))
+	out := make([]tdPoint, 0, nWonders)
+	for i := 0; i < nWonders; i++ {
+		if i == 0 {
+			// The first (grandest) wonder crowns the center.
+			out = append(out, tdPoint{cx, cy})
+			continue
+		}
+		// Phyllotaxis: radius ∝ sqrt(i), angle = i*goldenAngle + phase — a low-overlap,
+		// index-stable spread. Normalize the radius by sqrt(nWonders) so the outermost
+		// anchor lands ~spread from the core regardless of count.
+		r := spread * math.Sqrt(float64(i)) / math.Sqrt(float64(maxInt(nWonders-1, 1)))
+		a := float64(i)*goldenAngle + phase
+		out = append(out, tdPoint{cx + math.Cos(a)*r, cy + math.Sin(a)*r})
 	}
-	return distProduction
+	return out
 }
 
 // ---- generate (pure, deterministic, stable-incremental) ---------------------
 
-// goldenAngle is the golden angle in radians (~137.5°). Placing instance i at angle
+// goldenAngle is the golden angle in radians (~137.5°). Placing slot i at angle
 // i*goldenAngle with radius ∝ sqrt(i) fills a disk with a stable, low-overlap
-// phyllotaxis spiral: every instance has a FIXED slot index, so adding the (N+1)th
-// building never moves the first N (locked #8, the anti-re-randomize guarantee).
+// phyllotaxis spiral: every slot has a FIXED index, so adding a later slot never moves
+// an earlier one (locked #8, the anti-re-randomize guarantee). The intermixed lane
+// placement (FIX 1) grows each anchor's fabric on this spiral — interleaving the
+// per-type queues into it so consecutive slots are DIFFERENT domains — then pulls each
+// slot toward the nearest lane so the fabric grows along the streets.
 const goldenAngle = 2.399963229728653 // math.Pi * (3 - sqrt(5))
 
-// spiralSlot returns the city-space offset for the i-th instance in a district's
-// golden-angle spiral: angle = i*goldenAngle (+ a stable per-district phase), radius
-// = spacing*sqrt(i). Deterministic and index-stable — the whole point of the spiral.
-func spiralSlot(i int, spacing, phase float64) (dx, dy float64) {
-	r := spacing * math.Sqrt(float64(i))
-	a := float64(i)*goldenAngle + phase
-	return math.Cos(a) * r, math.Sin(a) * r
-}
-
-// slotJitter returns a small ORGANIC offset for the i-th slot of district di, breaking
-// up the visible golden-angle diamond-lattice so the hamlet reads natural rather than
+// slotJitter returns a small ORGANIC offset for slot i within anchor group di, breaking
+// up the visible golden-angle diamond-lattice so the fabric reads natural rather than
 // crystalline. CRITICAL: the offset is a PURE FUNCTION of (i, di, seed) via a hash —
 // it does NOT draw from the threaded rng — so slot i's jitter is identical whether it
 // is the last building placed at count N or an interior one at count N+1. That is what
@@ -500,38 +507,43 @@ func slotJitter(i, di int, seed uint32, amp float64) (dx, dy float64) {
 // abstract plane; the fill-frame transform later maps the plan's bounding box onto
 // the canvas, so these are relative sizes, not pixels.
 type tdConfig struct {
-	districtRadius float64 // how far district centers sit from the core (large city)
-	slotSpacing    float64 // golden-spiral spacing between instances (tight hamlet)
-	roofSize       float64 // base roof extent in city units
-	jitterAmp      float64 // organic per-slot wander (city units) breaking the lattice
+	anchorSpread float64 // how far the outermost wonder-anchor sits from the core (FIX 2)
+	slotSpacing  float64 // golden-spiral spacing between instances (tight fabric)
+	roofSize     float64 // base roof extent in city units
+	jitterAmp    float64 // organic per-slot wander (city units) breaking the lattice
 
-	// clusterThreshold: below this many total roof lots the settlement stays a SINGLE
-	// cohesive cluster (districts pull in to a tight core radius); at/above it the loose
-	// multi-district ring emerges (locked #11, but a village is one hamlet — locked spec
-	// + playtest). tightRadiusScale is how far the sub-clusters sit from the core while
-	// the settlement is small — small enough that they blur into one town, not spokes.
-	clusterThreshold int
-	tightRadiusScale float64
+	// laneBias is how hard each roof slot is pulled toward its nearest lane (0 = free
+	// spiral, 1 = snapped onto the lane) so the intermixed fabric grows ALONG the
+	// streets and the town OUTLINE follows the lanes rather than reading as a disc.
+	laneBias float64
+	// plazaRadius is the clear ground kept immediately around a WONDER anchor (in units
+	// of roofSize) so the city fabric never buries the centerpiece (the playtest
+	// complaint). Non-wonder roof lots landing inside a wonder's plaza are dropped.
+	plazaRadius float64
 }
 
 var defaultTdConfig = tdConfig{
-	districtRadius:   22,
-	slotSpacing:      2.4,
-	roofSize:         3.2,
-	jitterAmp:        0.8,
-	clusterThreshold: 35,
-	tightRadiusScale: 0.20,
+	anchorSpread: 20,
+	slotSpacing:  2.4,
+	roofSize:     3.2,
+	jitterAmp:    0.8,
+	laneBias:     0.35,
+	plazaRadius:  2.2,
 }
 
 // generateTopPlan synthesizes the whole top-down city plan in CITY SPACE, purely and
-// deterministically from seed. Pipeline (city-synthesis.md §Pipeline, top-down):
+// deterministically from seed. Pipeline (city-synthesis.md §Pipeline + §Revisions
+// (playtest), top-down):
 //
 //	(a) gather   — built buildings → per-type domain/category/tier/count/role.
-//	(b) districts — seed loose cluster centers at stable angles around the core.
-//	(c) populate — each building emits count-scaled roof lots into its district via
-//	    the STABLE golden-angle spiral, in a fixed order; wonders → central complex;
-//	    the civic hero (or a promoted production hero) is labeled.
-//	(d) streets  — winding dirt lanes linking each district center to the core.
+//	(b) anchors  — the built WONDERS become the growth anchors (FIX 2); a wonderless
+//	    village has a single city-center anchor. More wonders → more, wider anchors.
+//	(c) lanes    — winding lanes wind between/around the anchors (laid FIRST so the
+//	    fabric can grow along them and the town outline follows the streets).
+//	(d) populate — ALL buildings placed in one stable, type-INTERMIXED sequence of
+//	    slots along the lane network around the nearest anchor (FIX 1): consecutive
+//	    slots are different domains (no round same-type blob). Each wonder sits AT its
+//	    anchor with a clear plaza. Stable-incremental: slot i is a pure fn of (i, seed).
 //	(e) filler   — balanced gardens / squares / trees / props in the gaps.
 //	(f) walls    — a wall+gate ring IF the era has walls (primitive: none).
 //
@@ -546,60 +558,38 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 	// tier/count/role per distinct built type). Sorted, so placement order is stable.
 	blds := gatherBuildings(state, byKey)
 
-	// Total roof lots (excluding the centerpiece wonder) drives the settlement mode: a
-	// small settlement is ONE tight hamlet, a large one spreads into the loose district
-	// ring. Computed up front from the same tdRoofCount the populate loop uses, so the
-	// threshold decision is exact.
-	totalRoofs := 0
+	// Split the gathered buildings into the WONDERS (the growth anchors + centerpieces)
+	// and the rest (the intermixed fabric). Wonders are sorted by prominence so the
+	// grandest seats the center anchor.
+	var wonders []builtBuilding
 	for _, b := range blds {
 		if b.category == "wonder" || b.category == "monument" {
-			continue
+			wonders = append(wonders, b)
 		}
-		totalRoofs += tdRoofCount(b.count, b.role)
 	}
-	// Below the threshold: pull the district centers WAY in so the whole thing reads as
-	// one cohesive cluster around the core (a hamlet), not spokes to distant clumps
-	// (FIX 2 / playtest). At/above it: the full loose multi-district ring (locked #11).
-	radiusScale := 1.0
-	if totalRoofs < cfg.clusterThreshold {
-		radiusScale = cfg.tightRadiusScale
+	sort.SliceStable(wonders, func(i, j int) bool { return moreProminentBld(wonders[i], wonders[j]) })
+
+	// (b) anchors — seat one growth anchor per built wonder (FIX 2), spread stably around
+	// the core so more wonders push the town wider. Zero wonders → a single city-center
+	// anchor (a cohesive wonderless village). The grandest wonder crowns anchor 0 (the
+	// center); the rest fan out on the seeded phyllotaxis disc.
+	anchorPts := tdAnchorPoints(plan.cx, plan.cy, len(wonders), seed, cfg)
+	plan.anchors = make([]tdAnchor, len(anchorPts))
+	for i, p := range anchorPts {
+		a := tdAnchor{cx: p.x, cy: p.y}
+		if i < len(wonders) {
+			a.wonder = true
+			a.bld = wonders[i]
+		}
+		plan.anchors[i] = a
 	}
 
-	// (b) districts — five loose clusters seeded around the core at STABLE angles. A
-	// stable per-seed phase rotates the whole ring so two civs differ, but a given civ
-	// is fixed across ages (seed is age-independent). Clusters may overlap (blur). While
-	// the settlement is small, radiusScale collapses the ring toward the core.
-	kinds := []tdDistrictKind{distResidential, distProduction, distCivic, distMarket, distGarrison}
-	ringPhase := r.f01() * 2 * math.Pi
-	dmap := make(map[tdDistrictKind]int, len(kinds)) // kind → index into plan.districts
-	for i, k := range kinds {
-		ang := ringPhase + 2*math.Pi*float64(i)/float64(len(kinds))
-		// Civic sits nearest the core (its hero anchors the center); the rest ring out.
-		dr := cfg.districtRadius * radiusScale
-		if k == distCivic {
-			dr *= 0.35
-		}
-		// A small stable jitter so the ring isn't a perfect pentagon.
-		jr := dr * (0.85 + 0.30*r.f01())
-		plan.districts = append(plan.districts, tdDistrict{
-			kind: k,
-			cx:   math.Cos(ang) * jr,
-			cy:   math.Sin(ang) * jr,
-		})
-		dmap[k] = i
-	}
-
-	// Split gathered buildings by role for hero promotion + wonder handling.
+	// Hero promotion (locked #7): the single most prominent LANDMARK is the labeled
+	// civic hero. With no civic building AND no wonder, promote the most prominent
+	// PRODUCTION building so the city still has exactly one labeled landmark.
 	var landmarks, production []builtBuilding
-	var wonder *builtBuilding
-	for i := range blds {
-		b := blds[i]
+	for _, b := range blds {
 		if b.category == "wonder" || b.category == "monument" {
-			// Keep the highest-tier wonder as THE centerpiece (locked #13).
-			if wonder == nil || b.tier > wonder.tier || (b.tier == wonder.tier && b.count > wonder.count) {
-				w := b
-				wonder = &w
-			}
 			continue
 		}
 		if b.role == roleLandmark {
@@ -608,11 +598,6 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 			production = append(production, b)
 		}
 	}
-
-	// The single most prominent LANDMARK is the labeled civic hero at the center. If
-	// the civ has no civic building at all (a village of only huts + camps), promote
-	// its most prominent PRODUCTION building to the hero so the city still has exactly
-	// one labeled landmark (locked #7). This mirrors the old promote-a-hero rule.
 	heroKey := ""
 	if len(landmarks) > 0 {
 		best := 0
@@ -622,7 +607,7 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 			}
 		}
 		heroKey = landmarks[best].key
-	} else if wonder == nil && len(production) > 0 {
+	} else if len(wonders) == 0 && len(production) > 0 {
 		best := 0
 		for i := 1; i < len(production); i++ {
 			if moreProminentBld(production[i], production[best]) {
@@ -637,65 +622,25 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 		heroKey = production[best].key
 	}
 
-	// (c) populate — each building emits count-scaled roof lots into its district via
-	// the stable golden-angle spiral. The spiral index is per-district and advances in
-	// a fixed order (sorted gather, then per-building loop), so slot N is stable.
-	for _, b := range blds {
-		if (b.category == "wonder" || b.category == "monument") && wonder != nil && b.key == wonder.key {
-			continue // the centerpiece is placed separately, dead-center
-		}
-		n := tdRoofCount(b.count, b.role)
-		if n <= 0 {
-			continue
-		}
-		dk := districtKindFor(b.domain, b.category)
-		di := dmap[dk]
-		d := &plan.districts[di]
-		rt := getRoofType(b.domain, b.category, b.tier)
-		// A stable per-district phase so different districts' spirals don't align.
-		phase := float64(di) * 1.7
-		sz := cfg.roofSize
-		if rt == roofLong {
-			sz *= 1.15
-		}
-		for j := 0; j < n; j++ {
-			slot := d.placed
-			dx, dy := spiralSlot(slot, cfg.slotSpacing, phase)
-			// Organic wander: a pure function of (slot, di, seed), so it never moves an
-			// existing building when a later one is added (stable-incremental, locked #8).
-			jx, jy := slotJitter(slot, di, seed, cfg.jitterAmp)
-			d.placed++
-			lot := tdLot{
-				x: d.cx + dx + jx, y: d.cy + dy + jy,
-				w: sz, h: sz, kind: tdRoof,
-				domain: b.domain, category: b.category, tier: b.tier, roof: rt,
-			}
-			// Longhouses/rowhouses are elongated.
-			if rt == roofLong {
-				lot.w = sz * 1.8
-			}
-			// Label the civic hero on its first (innermost) instance only.
-			if b.key == heroKey && j == 0 && !plan.hasHero {
-				lot.label = b.name
-				lot.prom = prominenceOf(b)
-			}
-			plan.lots = append(plan.lots, lot)
-		}
-	}
+	// (c) lanes — laid FIRST so the fabric grows along them and the outline follows the
+	// streets (FIX 1). Winding lanes wind between the anchors + a couple of cross paths.
+	plan.streets = tdOrganicStreets(plan.anchors, plan.cx, plan.cy, style, r)
 
-	// Wonder centerpiece: a dominant, ornate complex dead-center (locked #13). Placed
-	// last in the roof list order-wise but drawn back-to-front by y, so it crowns.
-	if wonder != nil {
-		plan.lots = append(plan.lots, tdLot{
-			x: plan.cx, y: plan.cy, w: cfg.roofSize * 3.0, h: cfg.roofSize * 3.0,
-			kind: tdRoof, domain: wonder.domain, category: wonder.category, tier: wonder.tier,
-			roof: roofWonder, label: wonder.name, prom: 1000,
-		})
-	}
+	// (d) populate — the INTERMIXED lane-grown fabric (FIX 1). Every non-wonder building
+	// emits count-scaled roof lots, and the per-type queues are INTERLEAVED into one
+	// stable sequence per anchor so consecutive slots are different domains (a hut next
+	// to a camp next to a store, not one big blob of huts). Each type is assigned to an
+	// anchor (round-robin, deterministic) and grows a golden-angle spiral around it,
+	// pulled toward the nearest lane. Stability (locked #8): a type's j-th lot position
+	// is a pure function of (typePhase, j, seed) — NOT of any other type's count or of a
+	// shared global cursor — so adding a building never moves an existing one, yet the
+	// per-type phases stagger the shared spiral so different types interleave along it.
+	tdPopulateIntermixed(&plan, blds, heroKey, cfg, seed)
 
-	// (d) streets — winding dirt lanes from each district center to the core, plus a
-	// couple of meandering cross paths, all in city space (no terrain routing).
-	plan.streets = tdOrganicStreets(plan, style, r)
+	// Wonder centerpieces (FIX 2): each wonder sits AT its anchor as a dominant, ornate
+	// complex with a CLEAR PLAZA around it (any fabric lot inside the plaza was dropped
+	// in tdPopulateIntermixed), so the city hugs the wonder without ever burying it.
+	tdPlaceWonders(&plan, cfg)
 
 	// (e) filler — balanced gardens / squares / trees / props in the gaps.
 	tdAddFiller(&plan, style, cfg, r)
@@ -707,6 +652,252 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 	}
 
 	return plan
+}
+
+// ---- intermixed lane-grown placement (FIX 1) --------------------------------
+
+// tdLotSpec is one pending fabric roof — the building identity for a single instance,
+// plus its stable anchor binding, before it is emitted. Built per-type, then ROUND-ROBIN
+// emitted across types into one intermixed slice (FIX 1). di + phase01 make the lot's
+// position a pure function of (type, j) so it never moves when a sibling grows.
+type tdLotSpec struct {
+	b       builtBuilding
+	j       int // this building's instance index (0-based)
+	roof    roofType
+	sz      float64
+	di      int     // the anchor this type is bound to (typeIdx % numAnchors)
+	phase01 float64 // stable per-type phase into the anchor's spiral (hash of the key)
+	label   bool    // the civic hero's headline instance
+}
+
+// tdPopulateIntermixed lays the whole non-wonder fabric as a stable, type-INTERMIXED,
+// lane-grown settlement (FIX 1). It (1) builds a per-type queue of instance specs — each
+// type bound to ONE anchor (typeIdx % A) with a STABLE per-type phase (hash of its key)
+// into that anchor's golden-angle spiral — then (2) ROUND-ROBIN emits the queues (one
+// instance per type per round, in the stable sorted-gather order) so CONSECUTIVE slots
+// in plan.lots are different domains (a hut next to a camp next to a store, not a blob of
+// huts). A type's j-th instance takes spiral index round(stride*(phase+j)); since the
+// phases differ per type, different types INTERLEAVE around the shared anchor spiral, so
+// the fabric is intermixed spatially too. Each slot is pulled toward its nearest lane so
+// the fabric grows ALONG the streets and the outline follows them. Lots inside a WONDER
+// anchor's clear plaza are dropped so the centerpiece is never buried (FIX 2).
+//
+// Stability (locked #8): a lot's anchor and spiral index — hence its position and jitter
+// — are a pure function of (building type, instance index, seed), NEVER of another type's
+// count, the emit order, or the threaded rng. So growing any building's count only
+// APPENDS its new instances and can never move an existing lot. (The round-robin emit
+// only interleaves the slice; it does not feed into any position.)
+func tdPopulateIntermixed(plan *topPlan, blds []builtBuilding, heroKey string, cfg tdConfig, seed uint32) {
+	if len(plan.anchors) == 0 {
+		return
+	}
+	plazaR := cfg.plazaRadius * cfg.roofSize
+	nAnchors := len(plan.anchors)
+	// spiralStride > 1 spaces one type's own instances apart in its anchor's spiral so
+	// OTHER types' phased slots fall between them — the spatial interleave. A small
+	// integer near the number of types sharing an anchor, so a run of distinct types
+	// fills roughly one lap before a type places its next instance.
+	const spiralStride = 3.0
+
+	// (1) Per-type queues of instance specs, in the stable sorted-gather order. Each type
+	// is bound to ONE anchor (typeIdx % A) and given a STABLE fractional phase (hash of
+	// its key) into that anchor's spiral index space. CRUCIAL for stability (locked #8):
+	// a lot's (anchor, spiral-index) is a pure function of (type, j) — never of any other
+	// type's count or a shared global cursor — so a sibling growing can never move it. The
+	// per-type phase differs by type, so different types INTERLEAVE around the anchor.
+	queues := make([][]tdLotSpec, 0, len(blds))
+	typeIdx := 0
+	for _, b := range blds {
+		if b.category == "wonder" || b.category == "monument" {
+			continue // wonders are anchors/centerpieces, not fabric
+		}
+		n := tdRoofCount(b.count, b.role)
+		if n <= 0 {
+			continue
+		}
+		rt := getRoofType(b.domain, b.category, b.tier)
+		sz := cfg.roofSize
+		if rt == roofLong {
+			sz *= 1.15
+		}
+		di := typeIdx % nAnchors
+		typeIdx++
+		phase01 := float64(hash2(fnvKey(b.key), 0x5bd1e995, seed)) / float64(^uint32(0))
+		q := make([]tdLotSpec, n)
+		for j := 0; j < n; j++ {
+			q[j] = tdLotSpec{b: b, j: j, roof: rt, sz: sz, di: di, phase01: phase01,
+				label: b.key == heroKey && j == 0 && !plan.hasHero}
+		}
+		queues = append(queues, q)
+	}
+	if len(queues) == 0 {
+		return
+	}
+
+	// (2) ROUND-ROBIN emit: one instance per type per round, cycling types in the fixed
+	// queue order, so CONSECUTIVE slots in plan.lots are different domains (a hut, a camp,
+	// a store — not a blob of huts). The emit ORDER does not affect positions (those are
+	// pure fns of (type, j) computed below), it only interleaves the slice so the fabric
+	// reads intermixed both spatially and in placement order.
+	for round := 0; ; round++ {
+		placed := false
+		for _, q := range queues {
+			if round >= len(q) {
+				continue
+			}
+			placed = true
+			spec := q[round]
+			anc := plan.anchors[spec.di]
+			// The type's j-th instance takes spiral index round(stride*(phase+j)): a pure
+			// function of (type, j), so it is fixed no matter what any sibling's count is.
+			m := int(spiralStride*(spec.phase01+float64(spec.j)) + 0.5)
+			// Grow on the anchor's spiral; a stable per-anchor angular phase so anchors'
+			// spirals don't all align. A WONDER anchor floors the spiral radius just past its
+			// clear plaza so the fabric HUGS the plaza edge (the town hugs the wonder) instead
+			// of spawning inside it and being culled — which would leave a big empty gap
+			// around a centered wonder.
+			anchorPhase := float64(spec.di) * 1.7
+			rad := cfg.slotSpacing * math.Sqrt(float64(m))
+			if anc.wonder {
+				rad += plazaR + cfg.roofSize
+			}
+			ang := float64(m)*goldenAngle + anchorPhase
+			dx, dy := math.Cos(ang)*rad, math.Sin(ang)*rad
+			jx, jy := slotJitter(m, spec.di, seed, cfg.jitterAmp)
+			x := anc.cx + dx + jx
+			y := anc.cy + dy + jy
+			// Pull toward the nearest lane so the fabric grows ALONG the streets and the
+			// outline follows the lanes, not a disc. Pure over the fixed lane polylines.
+			x, y = pullToLane(x, y, plan.streets, cfg.laneBias)
+			// Drop lots inside a wonder's clear plaza (FIX 2). Position-based, so the same
+			// lot is dropped at any count — the surviving sequence stays stable-incremental.
+			if insideWonderPlaza(x, y, plan.anchors, plazaR) {
+				continue
+			}
+			lot := tdLot{
+				x: x, y: y, w: spec.sz, h: spec.sz, kind: tdRoof,
+				domain: spec.b.domain, category: spec.b.category, tier: spec.b.tier, roof: spec.roof,
+			}
+			if spec.roof == roofLong {
+				lot.w = spec.sz * 1.8 // longhouses/rowhouses are elongated
+			}
+			if spec.label {
+				lot.label = spec.b.name
+				lot.prom = prominenceOf(spec.b)
+			}
+			plan.lots = append(plan.lots, lot)
+		}
+		if !placed {
+			break
+		}
+	}
+}
+
+// fnvKey is the FNV-1a hash of a building key, used to derive a stable per-type spiral
+// phase so different types interleave around a shared anchor (FIX 1).
+func fnvKey(key string) uint32 {
+	var h uint32 = 2166136261
+	for i := 0; i < len(key); i++ {
+		h ^= uint32(key[i])
+		h *= 16777619
+	}
+	return h
+}
+
+// pullToLane blends a point toward the nearest point on the lane network by bias in
+// [0,1] (0 = unchanged, 1 = snapped onto the lane). This is what makes the intermixed
+// fabric grow ALONG the streets so the town outline follows the lanes rather than
+// reading as a round disc. Pure over the fixed lane polylines → stable-incremental. If
+// there are no lanes it returns the point unchanged.
+func pullToLane(x, y float64, streets []tdStreet, bias float64) (float64, float64) {
+	if bias <= 0 || len(streets) == 0 {
+		return x, y
+	}
+	nx, ny, ok := nearestOnStreets(x, y, streets)
+	if !ok {
+		return x, y
+	}
+	return x + (nx-x)*bias, y + (ny-y)*bias
+}
+
+// nearestOnStreets returns the closest point on any lane polyline to (x,y).
+func nearestOnStreets(x, y float64, streets []tdStreet) (float64, float64, bool) {
+	best := math.Inf(1)
+	var bx, by float64
+	found := false
+	for _, s := range streets {
+		for i := 0; i+1 < len(s.pts); i++ {
+			px, py, d := nearestOnSeg(x, y, s.pts[i], s.pts[i+1])
+			if d < best {
+				best, bx, by, found = d, px, py, true
+			}
+		}
+	}
+	return bx, by, found
+}
+
+// nearestOnSeg returns the closest point on segment a→b to p, and the squared distance.
+func nearestOnSeg(px, py float64, a, b tdPoint) (float64, float64, float64) {
+	dx, dy := b.x-a.x, b.y-a.y
+	l2 := dx*dx + dy*dy
+	if l2 < 1e-9 {
+		ex, ey := px-a.x, py-a.y
+		return a.x, a.y, ex*ex + ey*ey
+	}
+	t := ((px-a.x)*dx + (py-a.y)*dy) / l2
+	if t < 0 {
+		t = 0
+	} else if t > 1 {
+		t = 1
+	}
+	cx, cy := a.x+t*dx, a.y+t*dy
+	ex, ey := px-cx, py-cy
+	return cx, cy, ex*ex + ey*ey
+}
+
+// insideWonderPlaza reports whether (x,y) falls within the clear plaza radius of any
+// WONDER anchor (FIX 2). The bare city-center anchor of a wonderless village is NOT a
+// wonder anchor, so a tiny village keeps a filled center — only a real wonder clears a
+// plaza around itself.
+func insideWonderPlaza(x, y float64, anchors []tdAnchor, plazaR float64) bool {
+	if plazaR <= 0 {
+		return false
+	}
+	for _, a := range anchors {
+		if !a.wonder {
+			continue
+		}
+		if math.Hypot(x-a.cx, y-a.cy) < plazaR {
+			return true
+		}
+	}
+	return false
+}
+
+// tdPlaceWonders drops each wonder's dominant, ornate centerpiece roof AT its anchor
+// (locked #13, FIX 2). The grandest wonder crowns the center anchor; the rest sit at
+// their spread anchors. Each is labeled and drawn prominent; the clear plaza around it
+// was already carved by tdPopulateIntermixed, so the fabric never buries it. Only the
+// grandest wonder carries the "City Center" hero label priority via its prominence.
+func tdPlaceWonders(plan *topPlan, cfg tdConfig) {
+	for i, a := range plan.anchors {
+		if !a.wonder {
+			continue
+		}
+		// The grandest wonder (anchor 0) is the largest; the rest are a touch smaller so
+		// the center reads as the primary showpiece.
+		scale := 3.0
+		prom := 1000.0
+		if i > 0 {
+			scale = 2.4
+			prom = 800
+		}
+		plan.lots = append(plan.lots, tdLot{
+			x: a.cx, y: a.cy, w: cfg.roofSize * scale, h: cfg.roofSize * scale,
+			kind: tdRoof, domain: a.bld.domain, category: a.bld.category, tier: a.bld.tier,
+			roof: roofWonder, label: a.bld.name, prom: prom,
+		})
+	}
 }
 
 // moreProminentBld ranks two buildings for hero selection: higher tier, then higher
@@ -757,24 +948,43 @@ func tdRoofCount(count int, role cityRole) int {
 
 // ---- streets (organic, city space) ------------------------------------------
 
-// tdOrganicStreets grows the village lane network in city space: a winding dirt lane
-// from each district center back to the core, plus a couple of meandering cross
-// paths between adjacent districts. Purely jittered polylines — NO terrain routing,
-// no water (locked #10, V3-A organic). The generator is shaped so grid/avenue
+// tdOrganicStreets grows the lane network the settlement grows ALONG (FIX 1), winding
+// BETWEEN and AROUND the growth anchors (FIX 2). It lays a winding lane from each anchor
+// back to the core (spokes so every anchor is reached), plus a chain of lanes linking
+// consecutive anchors (so the anchors are woven together, not isolated spokes), plus —
+// for a wonderless single-anchor village — a couple of short radial stub lanes so the
+// lone hamlet still has streets to grow along. Purely jittered polylines: NO terrain
+// routing, no water (locked #10, V3-A organic). The generator is shaped so grid/avenue
 // patterns can slot in later; only organic is tuned now.
-func tdOrganicStreets(plan topPlan, style tdEraStyle, r *rng) []tdStreet {
-	streets := make([]tdStreet, 0, len(plan.districts)+2)
-	core := tdPoint{plan.cx, plan.cy}
-	for _, d := range plan.districts {
-		streets = append(streets, windingLane(tdPoint{d.cx, d.cy}, core, style.streetJitter, style.laneWidth, r))
+func tdOrganicStreets(anchors []tdAnchor, cx, cy float64, style tdEraStyle, r *rng) []tdStreet {
+	core := tdPoint{cx, cy}
+	streets := make([]tdStreet, 0, len(anchors)*2+2)
+
+	// Spokes: a winding lane from each anchor to the core. (For the single center anchor
+	// this is a zero-length no-op, handled by the stub lanes below.)
+	for _, a := range anchors {
+		if math.Hypot(a.cx-cx, a.cy-cy) < 1e-6 {
+			continue
+		}
+		streets = append(streets, windingLane(tdPoint{a.cx, a.cy}, core, style.streetJitter, style.laneWidth, r))
 	}
-	// A couple of cross paths linking consecutive district centers so the village reads
-	// as connected lanes, not just spokes. Bounded so it stays a village, not a grid.
-	n := len(plan.districts)
-	for i := 0; i < n && i < 3; i++ {
-		a := plan.districts[i]
-		b := plan.districts[(i+1)%n]
+	// Chain: link consecutive anchors so they read as one woven settlement.
+	for i := 0; i+1 < len(anchors); i++ {
+		a, b := anchors[i], anchors[i+1]
 		streets = append(streets, windingLane(tdPoint{a.cx, a.cy}, tdPoint{b.cx, b.cy}, style.streetJitter, style.laneWidth, r))
+	}
+	// Stub lanes: a lone hamlet (single center anchor, no chain/spokes) still needs a few
+	// streets to grow ALONG so it doesn't collapse to a disc. Grow 3 short radial lanes
+	// from the core at seeded angles. Also give a little extra structure to any tiny town.
+	if len(streets) == 0 {
+		phase := r.f01() * 2 * math.Pi
+		const stubs = 3
+		stubLen := defaultTdConfig.anchorSpread * 0.6
+		for i := 0; i < stubs; i++ {
+			ang := phase + 2*math.Pi*float64(i)/float64(stubs)
+			end := tdPoint{cx + math.Cos(ang)*stubLen, cy + math.Sin(ang)*stubLen}
+			streets = append(streets, windingLane(core, end, style.streetJitter, style.laneWidth, r))
+		}
 	}
 	return streets
 }

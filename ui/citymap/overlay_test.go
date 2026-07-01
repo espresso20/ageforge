@@ -554,3 +554,68 @@ func TestOverlayRetintsOnThemeSwitch(t *testing.T) {
 		t.Fatalf("hc title fg (%d,%d,%d) != hc accent (%d,%d,%d)", hr, hg, hb, ar, ag, ab)
 	}
 }
+
+// TestLabelPillBanner locks FIX 3: labels sit on a SOFT PILL BANNER — a muted background
+// tone blended toward the theme background (NOT a solid-black box, NOT the accent), with
+// the text still crisp in its role color, and the banner retints on a theme switch. We
+// stamp a real plan and inspect a title cell's drawn background.
+func TestLabelPillBanner(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const cols, rows = 60, 20
+	st := sampleState("iron_age", sampleBuilt())
+	st.AgeName = "Iron Age"
+	st.AccountStats = &game.AccountStatsView{DisplayName: "Bannertown"}
+	_, plan := renderImage(st, cols, rows*2)
+
+	stampAndReadTitle := func() (fg, bg tcell.Color, rune0 rune) {
+		scr := newSimScreen(t, cols, rows)
+		stampOverlay(scr, plan, 0, 0, cols, rows)
+		scr.Show()
+		cells, gotW, _ := scr.GetContents()
+		cell := cells[0*gotW+1] // title starts at cell (1,0)
+		f, b, _ := cell.Style.Decompose()
+		var r rune
+		if len(cell.Runes) == 1 {
+			r = cell.Runes[0]
+		}
+		return f, b, r
+	}
+
+	fg, bg, r0 := stampAndReadTitle()
+
+	// The text glyph is still crisp (a real title rune, not the untouched field).
+	if r0 == 0 || r0 == '▄' {
+		t.Fatalf("title glyph not crisp over the banner: %q", string(r0))
+	}
+	// Foreground still the accent role (the pill did not recolor the text).
+	ar, ag, ab := theme.Color(theme.RoleAccent).RGB()
+	if fr, fgc, fb := fg.RGB(); fr != ar || fgc != ag || fb != ab {
+		t.Fatalf("title fg (%d,%d,%d) != accent (%d,%d,%d) — the banner recolored the text", fr, fgc, fb, ar, ag, ab)
+	}
+
+	// The banner background is a MUTED tone: NOT pure black (not a solid-box slab) and NOT
+	// the accent color (it's a dim, recessed banner, not a bright fill).
+	br, bgc, bb := bg.RGB()
+	if br == 0 && bgc == 0 && bb == 0 {
+		t.Fatal("label banner background is pure black — a harsh solid box, not a muted pill")
+	}
+	if br == ar && bgc == ag && bb == ab {
+		t.Fatal("label banner background equals the accent — the banner must be a muted tone, not the accent")
+	}
+	// And it is close to the theme background (blended toward it, gentle contrast).
+	kr, kg, kb := theme.Color(theme.RoleBackground).RGB()
+	near := func(a, b int32) bool { d := a - b; return d < 90 && d > -90 }
+	if !near(br, kr) || !near(bgc, kg) || !near(bb, kb) {
+		t.Fatalf("banner bg (%d,%d,%d) is not near the theme background (%d,%d,%d) — not a muted, background-blended pill", br, bgc, bb, kr, kg, kb)
+	}
+
+	// Theme-aware: switching the theme retints the banner background.
+	if err := theme.SetActive("high_contrast"); err != nil {
+		t.Fatalf("SetActive(high_contrast): %v", err)
+	}
+	_, bg2, _ := stampAndReadTitle()
+	_ = theme.SetActive("forge")
+	if br2, bg2c, bb2 := bg2.RGB(); br2 == br && bg2c == bgc && bb2 == bb {
+		t.Fatalf("banner bg identical across themes (%d,%d,%d) — the pill is not theme-aware", br, bgc, bb)
+	}
+}
