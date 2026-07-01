@@ -927,3 +927,198 @@ func TestTopDownPanicSafeExactSize(t *testing.T) {
 		}
 	}
 }
+
+// namedState is sampleState with a distinct display name, so tests can vary the city SEED
+// (the seed is a hash of the display name) across otherwise-identical building sets.
+func namedState(ageKey, name string, blds map[string]int) game.GameState {
+	st := sampleState(ageKey, blds)
+	st.AccountStats = &game.AccountStatsView{DisplayName: name}
+	return st
+}
+
+// allRoofLots returns every roof lot (fabric AND wonders), for the no-overlap sweep.
+func allRoofLots(plan topPlan) []tdLot {
+	out := make([]tdLot, 0, len(plan.lots))
+	for _, lt := range plan.lots {
+		if lt.kind == tdRoof {
+			out = append(out, lt)
+		}
+	}
+	return out
+}
+
+// roofHalfExtent is a lot's collision half-size (the roof atlas fills the lot; the
+// elongated longhouse's wider axis dominates).
+func roofHalfExtent(lt tdLot) float64 { return math.Max(lt.w, lt.h) / 2 }
+
+// TestNoRoofOverlap locks the playtest FIX 2 core guarantee: buildings LINE the lanes with
+// NO overlaps. Across several building counts AND several city seeds, no two roof lots may
+// sit closer than the min gap — their edge-to-edge separation must stay positive (never
+// touching). This is what the lane-lining placement + the cross-lane overlap guard buy us
+// over the old pull-to-lane model, which squished centers onto the lanes.
+func TestNoRoofOverlap(t *testing.T) {
+	_ = theme.SetActive("forge")
+	// The min separation the guard aims to preserve. We assert lots never touch (sep > 0);
+	// a small positive floor guards against a borderline near-miss reading as "fine".
+	const floor = 0.2
+	seeds := []string{"Aldermoor", "Bexley", "Corveil", "Duskwind", "Emberton"}
+	counts := []map[string]int{
+		{"hut": 8, "gathering_camp": 4},
+		{"hut": 16, "gathering_camp": 10, "stone_camp": 6, "forge": 6},
+		{"hut": 30, "gathering_camp": 20, "forge": 12, "barracks": 8, "colosseum": 1, "stonehenge": 1},
+		{"hut": 60, "gathering_camp": 45, "forge": 28, "barracks": 18, "colosseum": 1},
+	}
+	for _, name := range seeds {
+		for _, m := range counts {
+			plan := tdPlanFor(namedState("primitive_age", name, m))
+			lots := allRoofLots(plan)
+			if len(lots) < 5 {
+				t.Fatalf("seed %q counts %v: only %d roof lots — expected a real settlement", name, m, len(lots))
+			}
+			for i := range lots {
+				for k := 0; k < i; k++ {
+					d := math.Hypot(lots[i].x-lots[k].x, lots[i].y-lots[k].y)
+					sep := d - roofHalfExtent(lots[i]) - roofHalfExtent(lots[k])
+					if sep < floor {
+						t.Fatalf("seed %q counts %v: roof lots overlap/touch — lot %d (%s) at (%.1f,%.1f) and lot %d (%s) at (%.1f,%.1f) have edge separation %.2f < %.2f",
+							name, m, i, lots[i].domain, lots[i].x, lots[i].y, k, lots[k].domain, lots[k].x, lots[k].y, sep, floor)
+					}
+				}
+			}
+		}
+	}
+}
+
+// TestLineTheLanes locks that buildings LINE ALONGSIDE the lanes rather than sitting ON
+// them (playtest FIX 2). Two properties: (1) roof lots sit in a BAND offset from the
+// nearest lane centerline — the mean offset is close to the intended perpendicular offset
+// (lane-half + roof-half + margin), not ~0; and (2) the lanes' OWN cells (within a
+// lane-half of a centerline) stay building-free between the opposing rows, so the road
+// stays visible. A pull-to-lane layout would fail both (offsets ~0, lane cells buried).
+func TestLineTheLanes(t *testing.T) {
+	_ = theme.SetActive("forge")
+	state := sampleState("primitive_age", map[string]int{"hut": 18, "gathering_camp": 12, "stone_camp": 8, "forge": 8})
+	plan := tdPlanFor(state)
+	cfg := defaultTdConfig
+
+	nearestLaneDist := func(x, y float64) float64 {
+		best := math.Inf(1)
+		for _, s := range plan.streets {
+			for i := 0; i+1 < len(s.pts); i++ {
+				if d := distToSegSq(x, y, s.pts[i], s.pts[i+1]); d < best {
+					best = d
+				}
+			}
+		}
+		return math.Sqrt(best)
+	}
+
+	// (1) Mean offset from the lane ≈ the intended perpendicular offset (buildings line
+	// beside the road). Use the plain roof extent for the target; a small tolerance covers
+	// per-type extent variation and jitter.
+	targetPerp := cfg.laneHalf + cfg.roofSize/2 + cfg.laneMargin
+	var sum float64
+	var n int
+	onRoad := 0
+	for _, lt := range fabricLots(plan) {
+		d := nearestLaneDist(lt.x, lt.y)
+		sum += d
+		n++
+		if d < cfg.laneHalf { // a roof center sitting ON the road surface
+			onRoad++
+		}
+	}
+	if n == 0 {
+		t.Fatal("no fabric lots to measure")
+	}
+	mean := sum / float64(n)
+	if mean < targetPerp*0.6 {
+		t.Fatalf("mean roof-to-lane distance %.2f is far below the lining offset %.2f — buildings are pulled onto the lanes, not lining them", mean, targetPerp)
+	}
+	// Essentially no roof center may sit on the road surface (a rare lot near a crossing lane
+	// it isn't lining is tolerated, but not a wholesale pile-on).
+	if frac := float64(onRoad) / float64(n); frac > 0.10 {
+		t.Fatalf("%.0f%% of roof centers sit on a lane surface — buildings should line ALONGSIDE the road, not on it", frac*100)
+	}
+
+	// (2) The lanes' OWN cells stay building-free: sample points ALONG each lane centerline
+	// and confirm few have a roof center within a lane-half (the road shows between the
+	// opposing rows). Skip the crowded junctions/plazas (near an anchor) where lanes meet.
+	plazaR := cfg.plazaRadius * cfg.roofSize
+	sampled, buried := 0, 0
+	for _, s := range plan.streets {
+		for i := 0; i+1 < len(s.pts); i++ {
+			a, b := s.pts[i], s.pts[i+1]
+			for _, f := range []float64{0.25, 0.5, 0.75} {
+				cx := a.x + (b.x-a.x)*f
+				cy := a.y + (b.y-a.y)*f
+				// Skip samples inside/near an anchor (junction/plaza), not representative frontage.
+				nearAnchor := false
+				for _, an := range plan.anchors {
+					if math.Hypot(cx-an.cx, cy-an.cy) < plazaR+cfg.roofSize {
+						nearAnchor = true
+						break
+					}
+				}
+				if nearAnchor {
+					continue
+				}
+				sampled++
+				for _, lt := range fabricLots(plan) {
+					if math.Hypot(lt.x-cx, lt.y-cy) < cfg.laneHalf {
+						buried++
+						break
+					}
+				}
+			}
+		}
+	}
+	if sampled == 0 {
+		t.Fatal("no lane centerline samples — the lane network is missing")
+	}
+	if frac := float64(buried) / float64(sampled); frac > 0.10 {
+		t.Fatalf("%.0f%% of lane centerline samples have a roof on the road — the street is not visible between the rows", frac*100)
+	}
+}
+
+// TestStreetsVisible locks playtest FIX 1: BOLD packed-earth roads are actually PRESENT in
+// the final rendered image and are NOT fully covered by the roofs. It renders a real
+// village and counts pixels matching the packed-earth lane surface/edge tones — there must
+// be a meaningful number, proving the streets read as a strong visual element beneath and
+// between the lane-lining buildings.
+func TestStreetsVisible(t *testing.T) {
+	if err := theme.SetActive("forge"); err != nil {
+		t.Fatalf("SetActive(forge): %v", err)
+	}
+	const w, h = 140, 90
+	state := sampleState("primitive_age", map[string]int{"hut": 20, "gathering_camp": 12, "stone_camp": 8, "forge": 8})
+	img, _ := renderImage(state, w, h)
+
+	style := tdStyleForEra(eraOrganic)
+	pal := newTdPal()
+	surface := style.streetCol(pal)
+	edge := tdStreetEdgeColor(style, pal)
+	ground := style.groundBase(pal)
+
+	// The packed-earth surface must be a DISTINCT, higher-contrast tone vs the dirt ground
+	// (FIX 1: the streets must actually READ). Assert real separation, not a near-match.
+	if colorClose(surface, ground, 12) {
+		t.Fatalf("packed-earth street tone %v ≈ ground tone %v — the road has no contrast against the dirt", surface, ground)
+	}
+
+	packed := 0
+	for i := 0; i+3 < len(img.Pix); i += 4 {
+		if img.Pix[i+3] == 0 {
+			continue
+		}
+		got := color.RGBA{R: img.Pix[i], G: img.Pix[i+1], B: img.Pix[i+2], A: 0xff}
+		if colorClose(got, surface, 6) || colorClose(got, edge, 6) {
+			packed++
+		}
+	}
+	// A real lane network at this size paints well over a hundred packed-earth pixels; require
+	// a solid floor so a regression that buries or thins the roads trips the test.
+	if packed < 40 {
+		t.Fatalf("only %d packed-earth road pixels in the final image — the streets are not visible (buried by roofs or too thin)", packed)
+	}
+}

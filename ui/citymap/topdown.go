@@ -75,6 +75,12 @@ type tdEraStyle struct {
 	// Street surface color.
 	streetCol func(tdPal) color.RGBA
 
+	// streetEdge is the crisp darker edge stroked one cell out from the packed-earth
+	// lane band (playtest FIX 1: BOLD packed-earth roads). A subtle darken of the lane
+	// surface so the trodden path reads with a defined shoulder against the dirt ground,
+	// without a hard black outline. Theme-derived like streetCol; nil → derived fallback.
+	streetEdge func(tdPal) color.RGBA
+
 	// Living-city filler accents.
 	gardenCol func(tdPal) color.RGBA
 	squareCol func(tdPal) color.RGBA
@@ -141,8 +147,15 @@ func newTdPal() tdPal {
 var organicVillageStyle = tdEraStyle{
 	name:          "organic",
 	streetPattern: tdOrganic,
-	laneWidth:     0, // dirt paths are thin
-	streetJitter:  0.9,
+	// BOLD packed-earth main ways (playtest FIX 1): the village lanes are a STRONG visual
+	// element, not a thin scratch. laneWidth 1 strokes a ~2–3px band (drawTdStreet centers
+	// the band, so half-width 1 → 3px). Era-scalable: later eras can widen for boulevards.
+	laneWidth: 1,
+	// streetJitter: a GENTLE wind — the lanes still meander like footpaths (organic), but
+	// not so sharply that offsetting the lane-lining rows (FIX 2) compresses same-side
+	// neighbours into each other on tight inside bends. Was 0.9 (very wavy) under the old
+	// pull-to-lane model where nothing lined the lane; lining needs gentler curves.
+	streetJitter: 0.35,
 
 	// Thatch/wood browns, anchored to a warm earthen hue but pulled from theme roles
 	// (RoleText carries the warm neutral in these themes; RoleDim grounds it) so a
@@ -164,8 +177,21 @@ var organicVillageStyle = tdEraStyle{
 		return blend(blend(p.bg, p.dim, 0.22), grassAnchor, 0.18)
 	},
 	streetCol: func(p tdPal) color.RGBA {
-		// packed dirt lane: dirt anchor darkened a touch so it reads as trodden earth.
-		return darken(blend(blend(p.bg, p.dim, 0.30), dirtAnchor, 0.50), 0.10)
+		// BOLD packed-earth lane (playtest FIX 1): a WORN, TRODDEN TAN that reads clearly
+		// LIGHTER than the era-tinted dirt ground so the streets actually stand out. Start
+		// from the dirt anchor, then lift toward the theme's light neutral (RoleText) and a
+		// touch toward the pale stone anchor for a bleached, packed-trail cast. The old
+		// recipe DARKENED the dirt (near-invisible against the ground); this inverts that to
+		// a high-contrast lighter path, still earthy + fully theme-derived (retints).
+		packed := blend(blend(p.bg, p.dim, 0.28), dirtAnchor, 0.42)
+		return blend(blend(packed, p.text, 0.42), stoneAnchor, 0.22)
+	},
+	streetEdge: func(p tdPal) color.RGBA {
+		// Crisp shoulder: the packed-earth surface darkened a touch so the trodden band has a
+		// defined edge against the dirt, without a hard black outline.
+		packed := blend(blend(p.bg, p.dim, 0.28), dirtAnchor, 0.42)
+		surface := blend(blend(packed, p.text, 0.42), stoneAnchor, 0.22)
+		return darken(surface, 0.22)
 	},
 
 	gardenCol: func(p tdPal) color.RGBA {
@@ -521,23 +547,23 @@ func tdAnchorPoints(cx, cy float64, nWonders int, seed uint32, cfg tdConfig) []t
 
 // ---- generate (pure, deterministic, stable-incremental) ---------------------
 
-// goldenAngle is the golden angle in radians (~137.5°). Placing slot i at angle
-// i*goldenAngle with radius ∝ sqrt(i) fills a disk with a stable, low-overlap
-// phyllotaxis spiral: every slot has a FIXED index, so adding a later slot never moves
-// an earlier one (locked #8, the anti-re-randomize guarantee). The intermixed lane
-// placement (FIX 1) grows each anchor's fabric on this spiral — interleaving the
-// per-type queues into it so consecutive slots are DIFFERENT domains — then pulls each
-// slot toward the nearest lane so the fabric grows along the streets.
+// goldenAngle is the golden angle in radians (~137.5°). Placing item i at angle
+// i*goldenAngle with radius ∝ sqrt(i) gives a stable, low-overlap phyllotaxis SPREAD:
+// every item has a FIXED index, so adding a later one never moves an earlier one (locked
+// #8, the anti-re-randomize guarantee). Used for the WONDER ANCHOR spread (tdAnchorPoints)
+// and the low-overlap angular sweep of the extension SPOKES (tdExtendLanes). The building
+// fabric itself is no longer a spiral — it LINES the lanes (FIX 2, tdPopulateIntermixed).
 const goldenAngle = 2.399963229728653 // math.Pi * (3 - sqrt(5))
 
-// slotJitter returns a small ORGANIC offset for slot i within anchor group di, breaking
-// up the visible golden-angle diamond-lattice so the fabric reads natural rather than
-// crystalline. CRITICAL: the offset is a PURE FUNCTION of (i, di, seed) via a hash —
-// it does NOT draw from the threaded rng — so slot i's jitter is identical whether it
-// is the last building placed at count N or an interior one at count N+1. That is what
-// keeps placement stable-incremental (locked #8) even with jitter: adding a building
-// can never move an existing one. amp is the max wander in city units (~a fraction of
-// slot spacing) so buildings still pack close, just off the perfect lattice.
+// slotJitter returns a small ORGANIC offset for a lane-lining slot (keyed by slot index i
+// and a group id di), breaking up the perfectly-regular row so the fabric reads natural
+// rather than mechanical. CRITICAL: the offset is a PURE FUNCTION of (i, di, seed) via a
+// hash — it does NOT draw from the threaded rng — so a slot's jitter is identical whether
+// it is the last building placed at count N or an interior one at count N+1. That is what
+// keeps placement stable-incremental (locked #8) even with jitter: adding a building can
+// never move an existing one. amp is the max wander in city units; the lane-lining caller
+// clamps it further (longitudinally, and outward-only perpendicular) so jitter can never
+// push a roof onto the road or into a neighbour.
 func slotJitter(i, di int, seed uint32, amp float64) (dx, dy float64) {
 	if amp <= 0 {
 		return 0, 0
@@ -559,10 +585,28 @@ type tdConfig struct {
 	roofSize     float64 // base roof extent in city units
 	jitterAmp    float64 // organic per-slot wander (city units) breaking the lattice
 
-	// laneBias is how hard each roof slot is pulled toward its nearest lane (0 = free
-	// spiral, 1 = snapped onto the lane) so the intermixed fabric grows ALONG the
-	// streets and the town OUTLINE follows the lanes rather than reading as a disc.
-	laneBias float64
+	// --- line-the-lanes placement (playtest FIX 2) ---------------------------------
+	// The old pull-to-lane (laneBias) yanked building CENTERS onto the lanes, so the
+	// fabric squished onto the road and the streets were invisible. It is replaced by
+	// LINING: each roof sits ALONGSIDE a lane, offset perpendicular to the centerline so
+	// the road stays visible between two opposing rows of buildings.
+	//
+	// laneHalf is the lane's half-width in city units (the road's own footprint). A lot's
+	// perpendicular offset from the centerline is laneHalf + its own half-extent +
+	// laneMargin, so it never sits on the road. Scaled to the era street width so bolder
+	// eras keep their frontage clear of the wider road.
+	laneHalf float64
+	// laneMargin is the small clear gap between the road edge and the building face.
+	laneMargin float64
+	// minGap is the minimum clear space kept between ANY two roof lots (never touching).
+	// The along-lane step is (roof extent + minGap), so same-side neighbours can't overlap.
+	minGap float64
+	// laneStartClear is how far along a lane (from its anchor/junction end) the first lot
+	// sits, in units of roofSize — it keeps the crowded lane JUNCTIONS (where spokes meet
+	// the core and each other) building-free so distinct lanes have diverged before the
+	// fabric starts lining them (structural cross-lane no-overlap) and the road reads
+	// radiating out of the plaza.
+	laneStartClear float64
 	// plazaRadius is the clear ground kept immediately around a WONDER anchor (in units
 	// of roofSize) so the city fabric never buries the centerpiece (the playtest
 	// complaint). Non-wonder roof lots landing inside a wonder's plaza are dropped.
@@ -570,12 +614,15 @@ type tdConfig struct {
 }
 
 var defaultTdConfig = tdConfig{
-	anchorSpread: 20,
-	slotSpacing:  2.4,
-	roofSize:     3.2,
-	jitterAmp:    0.8,
-	laneBias:     0.35,
-	plazaRadius:  2.2,
+	anchorSpread:   20,
+	slotSpacing:    2.4,
+	roofSize:       3.2,
+	jitterAmp:      0.8,
+	laneHalf:       1.4,
+	laneMargin:     0.9,
+	minGap:         1.1,
+	laneStartClear: 0.9,
+	plazaRadius:    2.2,
 }
 
 // generateTopPlan synthesizes the whole top-down city plan in CITY SPACE, purely and
@@ -675,25 +722,37 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 		heroKey = production[best].key
 	}
 
-	// (c) lanes — laid FIRST so the fabric grows along them and the outline follows the
-	// streets (FIX 1). Winding lanes wind between the anchors + a couple of cross paths.
+	// (c) lanes — laid FIRST so the fabric LINES them and the outline follows the streets
+	// (FIX 2). Winding lanes wind between the anchors + a couple of cross paths. Then the
+	// network is EXTENDED deterministically to give enough street FRONTAGE for the whole
+	// count to line without bunching (more/longer lanes as the town grows) — append-only so
+	// existing lanes (and the lots already lining them) never move.
 	plan.streets = tdOrganicStreets(plan.anchors, plan.cx, plan.cy, style, r)
+	plan.streets = tdExtendLanes(plan.streets, plan.anchors, tdTotalFabricSlots(blds), style, cfg, seed)
 
-	// (d) populate — the INTERMIXED lane-grown fabric (FIX 1). Every non-wonder building
-	// emits count-scaled roof lots, and the per-type queues are INTERLEAVED into one
-	// stable sequence per anchor so consecutive slots are different domains (a hut next
-	// to a camp next to a store, not one big blob of huts). Each type is assigned to an
-	// anchor (round-robin, deterministic) and grows a golden-angle spiral around it,
-	// pulled toward the nearest lane. Stability (locked #8): a type's j-th lot position
-	// is a pure function of (typePhase, j, seed) — NOT of any other type's count or of a
-	// shared global cursor — so adding a building never moves an existing one, yet the
-	// per-type phases stagger the shared spiral so different types interleave along it.
+	// (d) populate — the INTERMIXED, LANE-LINING fabric (FIX 2). Every non-wonder building
+	// emits count-scaled roof lots that LINE ALONGSIDE the lanes (offset perpendicular to
+	// the centerline, alternating sides so buildings flank a visible road), interleaved so
+	// consecutive slots are different domains (a hut next to a camp next to a store, not a
+	// blob of huts). Stability (locked #8): a lot's (lane, along-position, side, jitter) is
+	// a pure function of (building type, instance index, seed) via a unique global frontage
+	// slot — NOT of any other type's count or a shared cursor — so adding a building only
+	// APPENDS and never moves an existing lot.
 	tdPopulateIntermixed(&plan, blds, heroKey, cfg, seed)
 
 	// Wonder centerpieces (FIX 2): each wonder sits AT its anchor as a dominant, ornate
 	// complex with a CLEAR PLAZA around it (any fabric lot inside the plaza was dropped
 	// in tdPopulateIntermixed), so the city hugs the wonder without ever burying it.
 	tdPlaceWonders(&plan, cfg)
+
+	// Final deterministic overlap guard: no two roof lots may sit closer than minGap. It
+	// SKIPS (never nudges) a colliding fabric lot, yielding ONLY to the fixed wonder roofs
+	// and to earlier SAME-DOMAIN lots — both count-stable — so a surviving lot keeps its
+	// exact placed position (stable-incremental preserved). Cross-domain overlaps are
+	// already prevented structurally (unique frontage slots + the cross-lane guard), so this
+	// is a defensive net, not a mover. Runs AFTER the wonders exist so it can guard against
+	// them.
+	tdEnforceMinGap(&plan, cfg)
 
 	// Town squares (playtest FIX): dress each cleared plaza (wonders + the wonderless
 	// city-center) as a paved town square with a few seeded era props ringed around the
@@ -712,59 +771,173 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 	return plan
 }
 
-// ---- intermixed lane-grown placement (FIX 1) --------------------------------
+// ---- line-the-lanes placement (playtest FIX 2) ------------------------------
+//
+// Buildings LINE the lanes instead of being pulled onto them. Each lot sits ALONGSIDE a
+// lane, offset perpendicular to the centerline so the road stays visible between two
+// opposing rows. The whole lane network is flattened into ONE arc-length "frontage"
+// line; each building instance is assigned a UNIQUE global frontage slot so no two lots
+// ever coincide (structural no-overlap) and the assignment is a pure function of (type,
+// instance index, seed) so it is exactly stable-incremental.
 
-// tdLotSpec is one pending fabric roof — the building identity for a single instance,
-// plus its stable anchor binding, before it is emitted. Built per-type, then ROUND-ROBIN
-// emitted across types into one intermixed slice (FIX 1). di + phase01 make the lot's
-// position a pure function of (type, j) so it never moves when a sibling grows.
-type tdLotSpec struct {
-	b       builtBuilding
-	j       int // this building's instance index (0-based)
-	roof    roofType
-	sz      float64
-	di      int     // the anchor this type is bound to (typeIdx % numAnchors)
-	phase01 float64 // stable per-type phase into the anchor's spiral (hash of the key)
-	label   bool    // the civic hero's headline instance
+// tdFrontage is the lane network flattened into a single arc-length parameterisation.
+// segs are the ordered city-space segments (concatenated across all lanes, contiguous in
+// arc space: each seg's start = the running total before it), and total is the whole
+// network's lineable length. lineAt(s) returns the point and the unit PERPENDICULAR at
+// arc distance s. Space between lanes is NOT bridged — a lot never straddles two lanes.
+type tdFrontage struct {
+	segs  []tdFrontSeg
+	total float64
 }
 
-// tdPopulateIntermixed lays the whole non-wonder fabric as a stable, type-INTERMIXED,
-// lane-grown settlement (FIX 1). It (1) builds a per-type queue of instance specs — each
-// type bound to ONE anchor (typeIdx % A) with a STABLE per-type phase (hash of its key)
-// into that anchor's golden-angle spiral — then (2) ROUND-ROBIN emits the queues (one
-// instance per type per round, in the stable sorted-gather order) so CONSECUTIVE slots
-// in plan.lots are different domains (a hut next to a camp next to a store, not a blob of
-// huts). A type's j-th instance takes spiral index round(stride*(phase+j)); since the
-// phases differ per type, different types INTERLEAVE around the shared anchor spiral, so
-// the fabric is intermixed spatially too. Each slot is pulled toward its nearest lane so
-// the fabric grows ALONG the streets and the outline follows them. Lots inside a WONDER
-// anchor's clear plaza are dropped so the centerpiece is never buried (FIX 2).
+type tdFrontSeg struct {
+	a, b  tdPoint
+	len   float64
+	perpX float64 // unit perpendicular to the segment (points to the +side)
+	perpY float64
+	start float64 // cumulative arc length at a
+	lane  int     // index of the source lane in streets (for the cross-lane overlap guard)
+}
+
+// buildFrontage concatenates every lane segment into one arc line. laneStartClear trims
+// the crowded ends of each lane (near anchors/junctions) so the fabric only lines the
+// diverged interiors — that keeps distinct lanes apart where buildings sit (structural
+// cross-lane no-overlap) and leaves the junctions/plazas as clear road. Deterministic:
+// depends only on the (already-stable) lane polylines and the config.
+func buildFrontage(streets []tdStreet, startClear float64) tdFrontage {
+	var f tdFrontage
+	for laneIdx, s := range streets {
+		if len(s.pts) < 2 {
+			continue
+		}
+		// Whole-lane length, to trim startClear off EACH end.
+		laneLen := 0.0
+		for i := 0; i+1 < len(s.pts); i++ {
+			laneLen += math.Hypot(s.pts[i+1].x-s.pts[i].x, s.pts[i+1].y-s.pts[i].y)
+		}
+		if laneLen <= 2*startClear+1e-6 {
+			continue // too short to line once its ends are cleared
+		}
+		walked := 0.0
+		for i := 0; i+1 < len(s.pts); i++ {
+			a, b := s.pts[i], s.pts[i+1]
+			segLen := math.Hypot(b.x-a.x, b.y-a.y)
+			if segLen < 1e-6 {
+				continue
+			}
+			// Clip this segment to the [startClear, laneLen-startClear] interior of the lane.
+			lo := math.Max(0, startClear-walked)
+			hi := math.Min(segLen, laneLen-startClear-walked)
+			walked += segLen
+			if hi-lo < 1e-6 {
+				continue
+			}
+			ux, uy := (b.x-a.x)/segLen, (b.y-a.y)/segLen
+			ca := tdPoint{a.x + ux*lo, a.y + uy*lo}
+			cb := tdPoint{a.x + ux*hi, a.y + uy*hi}
+			clen := hi - lo
+			f.segs = append(f.segs, tdFrontSeg{
+				a: ca, b: cb, len: clen,
+				perpX: -uy, perpY: ux, // unit perpendicular
+				start: f.total,
+				lane:  laneIdx,
+			})
+			f.total += clen
+		}
+	}
+	return f
+}
+
+// lineAt returns the point at arc distance s along the frontage, the unit perpendicular
+// there, and the source LANE index (for the cross-lane overlap guard). ok is false if s is
+// past the end (caller drops the lot). Pure over the fixed segments.
+func (f tdFrontage) lineAt(s float64) (x, y, perpX, perpY float64, lane int, ok bool) {
+	if len(f.segs) == 0 || s < 0 || s > f.total+1e-6 {
+		return 0, 0, 0, 0, 0, false
+	}
+	// Linear scan (segment counts are small at village scale); could binary-search later.
+	for _, sg := range f.segs {
+		if s <= sg.start+sg.len+1e-9 {
+			t := s - sg.start
+			if t < 0 {
+				t = 0
+			}
+			if t > sg.len {
+				t = sg.len
+			}
+			ux := sg.b.x - sg.a.x
+			uy := sg.b.y - sg.a.y
+			l := math.Hypot(ux, uy)
+			if l > 1e-9 {
+				ux, uy = ux/l, uy/l
+			}
+			return sg.a.x + ux*t, sg.a.y + uy*t, sg.perpX, sg.perpY, sg.lane, true
+		}
+	}
+	return 0, 0, 0, 0, 0, false
+}
+
+// tdTotalFabricSlots counts the total lane FRONTAGE SLOTS the fabric will consume — the
+// sum over non-wonder types of their roof-lot counts. Used to size the lane network
+// (tdExtendLanes) so there is enough street to line without bunching. Pure over blds.
+func tdTotalFabricSlots(blds []builtBuilding) int {
+	total := 0
+	for _, b := range blds {
+		if b.category == "wonder" || b.category == "monument" {
+			continue
+		}
+		total += tdRoofCount(b.count, b.role)
+	}
+	return total
+}
+
+// tdFabricStep is the along-lane advance PER SLOT. Sides alternate every slot, so the two
+// opposing rows each advance by 2 half-steps (= 2*tdFabricStep) between their own
+// consecutive lots — i.e. same-side neighbours are 2*step apart along the lane. Sized
+// generously from the roof extent + the min gap (padded for the widest roof, the elongated
+// longhouse at 1.8×, PLUS extra headroom so that even where a winding lane BENDS — which
+// compresses the spacing of the perpendicular-offset row on the inside of the curve — a
+// same-side pair still never touches). The generous step is also what keeps the village
+// AIRY (buildings loosely spaced along the streets, road clearly visible between rows).
+func tdFabricStep(cfg tdConfig) float64 {
+	// 2.4× the roof size gives loose, airy rows AND enough same-side headroom (same-side
+	// neighbours sit 2 steps apart) to absorb both the per-slot jitter and the mild spacing
+	// compression on the inside of a winding lane's bends, so a same-side pair never touches.
+	return cfg.roofSize*2.0 + cfg.minGap
+}
+
+// tdPopulateIntermixed LINES the whole non-wonder fabric alongside the lanes (playtest FIX
+// 2). It assigns every building instance a UNIQUE GLOBAL FRONTAGE SLOT via round-robin
+// over the sorted-gather types: type rank r (0-based) instance j → slot = r + j*T (T =
+// number of fabric types). Consecutive global slots are consecutive types, so the fabric
+// is intermixed in BOTH placement order and space; and the slot→frontage map is a pure
+// function of (type, j) — never of any other type's count or a shared cursor — so slot
+// r+j*T never moves when a sibling grows: exact stable-incremental (locked #8). Growing a
+// type only appends higher slots; a brand-new building TYPE is a layout event (as it
+// already was under the old anchor-index scheme).
 //
-// Stability (locked #8): a lot's anchor and spiral index — hence its position and jitter
-// — are a pure function of (building type, instance index, seed), NEVER of another type's
-// count, the emit order, or the threaded rng. So growing any building's count only
-// APPENDS its new instances and can never move an existing lot. (The round-robin emit
-// only interleaves the slice; it does not feed into any position.)
+// Each slot maps to arc distance s = halfStep*slot along the frontage; the lot is offset
+// PERPENDICULAR by (laneHalf + its half-extent + laneMargin) on the slot's side (parity),
+// so it lines ALONGSIDE the road with the road cells free between opposing rows. A small
+// bounded jitter keeps it organic without ever reaching the road or a neighbour. Lots
+// past the frontage end, or inside a wonder plaza, are dropped (position-based → stable).
 func tdPopulateIntermixed(plan *topPlan, blds []builtBuilding, heroKey string, cfg tdConfig, seed uint32) {
 	if len(plan.anchors) == 0 {
 		return
 	}
+	front := buildFrontage(plan.streets, cfg.laneStartClear*cfg.roofSize)
 	plazaR := cfg.plazaRadius * cfg.roofSize
-	nAnchors := len(plan.anchors)
-	// spiralStride > 1 spaces one type's own instances apart in its anchor's spiral so
-	// OTHER types' phased slots fall between them — the spatial interleave. A small
-	// integer near the number of types sharing an anchor, so a run of distinct types
-	// fills roughly one lap before a type places its next instance.
-	const spiralStride = 3.0
+	halfStep := tdFabricStep(cfg) / 2
 
-	// (1) Per-type queues of instance specs, in the stable sorted-gather order. Each type
-	// is bound to ONE anchor (typeIdx % A) and given a STABLE fractional phase (hash of
-	// its key) into that anchor's spiral index space. CRUCIAL for stability (locked #8):
-	// a lot's (anchor, spiral-index) is a pure function of (type, j) — never of any other
-	// type's count or a shared global cursor — so a sibling growing can never move it. The
-	// per-type phase differs by type, so different types INTERLEAVE around the anchor.
-	queues := make([][]tdLotSpec, 0, len(blds))
-	typeIdx := 0
+	// The fabric types, in the stable sorted-gather order, each with a stable roof/size.
+	type fabType struct {
+		b     builtBuilding
+		roof  roofType
+		sz    float64
+		n     int
+		label bool
+	}
+	var types []fabType
 	for _, b := range blds {
 		if b.category == "wonder" || b.category == "monument" {
 			continue // wonders are anchors/centerpieces, not fabric
@@ -778,129 +951,129 @@ func tdPopulateIntermixed(plan *topPlan, blds []builtBuilding, heroKey string, c
 		if rt == roofLong {
 			sz *= 1.15
 		}
-		di := typeIdx % nAnchors
-		typeIdx++
-		phase01 := float64(hash2(fnvKey(b.key), 0x5bd1e995, seed)) / float64(^uint32(0))
-		q := make([]tdLotSpec, n)
-		for j := 0; j < n; j++ {
-			q[j] = tdLotSpec{b: b, j: j, roof: rt, sz: sz, di: di, phase01: phase01,
-				label: b.key == heroKey && j == 0 && !plan.hasHero}
-		}
-		queues = append(queues, q)
+		types = append(types, fabType{b: b, roof: rt, sz: sz, n: n,
+			label: b.key == heroKey && !plan.hasHero})
 	}
-	if len(queues) == 0 {
+	T := len(types)
+	if T == 0 {
 		return
 	}
 
-	// (2) ROUND-ROBIN emit: one instance per type per round, cycling types in the fixed
-	// queue order, so CONSECUTIVE slots in plan.lots are different domains (a hut, a camp,
-	// a store — not a blob of huts). The emit ORDER does not affect positions (those are
-	// pure fns of (type, j) computed below), it only interleaves the slice so the fabric
-	// reads intermixed both spatially and in placement order.
-	for round := 0; ; round++ {
-		placed := false
-		for _, q := range queues {
-			if round >= len(q) {
+	// Max instance count over all types → how many rounds of the round-robin to run.
+	maxN := 0
+	for _, ft := range types {
+		if ft.n > maxN {
+			maxN = ft.n
+		}
+	}
+
+	// ROUND-ROBIN over rounds j=0..maxN-1, types r=0..T-1: slot = r + j*T. This both
+	// interleaves plan.lots (consecutive slots = consecutive domains) and gives each lot a
+	// unique global slot whose frontage position is a pure fn of (type, j).
+	for j := 0; j < maxN; j++ {
+		for r := 0; r < T; r++ {
+			ft := types[r]
+			if j >= ft.n {
 				continue
 			}
-			placed = true
-			spec := q[round]
-			anc := plan.anchors[spec.di]
-			// The type's j-th instance takes spiral index round(stride*(phase+j)): a pure
-			// function of (type, j), so it is fixed no matter what any sibling's count is.
-			m := int(spiralStride*(spec.phase01+float64(spec.j)) + 0.5)
-			// Grow on the anchor's spiral; a stable per-anchor angular phase so anchors'
-			// spirals don't all align. A WONDER anchor floors the spiral radius just past its
-			// clear plaza so the fabric HUGS the plaza edge (the town hugs the wonder) instead
-			// of spawning inside it and being culled — which would leave a big empty gap
-			// around a centered wonder.
-			anchorPhase := float64(spec.di) * 1.7
-			rad := cfg.slotSpacing * math.Sqrt(float64(m))
-			if anc.wonder {
-				rad += plazaR + cfg.roofSize
+			slot := r + j*T
+			side := 1.0
+			if slot%2 == 1 {
+				side = -1.0
 			}
-			ang := float64(m)*goldenAngle + anchorPhase
-			dx, dy := math.Cos(ang)*rad, math.Sin(ang)*rad
-			jx, jy := slotJitter(m, spec.di, seed, cfg.jitterAmp)
-			x := anc.cx + dx + jx
-			y := anc.cy + dy + jy
-			// Pull toward the nearest lane so the fabric grows ALONG the streets and the
-			// outline follows the lanes, not a disc. Pure over the fixed lane polylines.
-			x, y = pullToLane(x, y, plan.streets, cfg.laneBias)
-			// Drop lots inside a wonder's clear plaza (FIX 2). Position-based, so the same
-			// lot is dropped at any count — the surviving sequence stays stable-incremental.
+			s := halfStep * float64(slot)
+			x0, y0, perpX, perpY, lane, ok := front.lineAt(s)
+			if !ok {
+				continue // ran past the available frontage (extension sizes to avoid this)
+			}
+			half := ft.sz / 2
+			if ft.roof == roofLong {
+				half = ft.sz * 1.8 / 2
+			}
+			perp := cfg.laneHalf + half + cfg.laneMargin
+			// Bounded ORGANIC jitter (never enough to overlap). Longitudinal wander is capped
+			// so that even if two same-side neighbours BOTH wander toward each other (they sit
+			// 2 half-steps apart) they still keep the min gap — with extra safety headroom to
+			// also absorb the mild spacing compression on the inside of a lane's bends. The
+			// perpendicular wander only pushes the lot FURTHER from the road (outward), so a
+			// roof can never creep onto the lane. Pure fn of (slot, seed) → stable.
+			halfStepLocal := tdFabricStep(cfg) / 2
+			jlMax := (halfStepLocal - half - cfg.minGap/2) * 0.55
+			if jlMax < 0 {
+				jlMax = 0
+			}
+			jl, jp := slotJitter(slot, 0, seed, cfg.jitterAmp)
+			jl = clampAbs(jl, jlMax)
+			jp = math.Abs(jp) * 0.35 // outward only, gentle
+			ux, uy := perpY, -perpX  // unit tangent (perp rotated back)
+			x := x0 + perpX*side*(perp+jp) + ux*jl
+			y := y0 + perpY*side*(perp+jp) + uy*jl
 			if insideWonderPlaza(x, y, plan.anchors, plazaR) {
 				continue
 			}
+			// Cross-lane overlap guard (playtest FIX 2, stable): drop this lot if it falls too
+			// close to a LOWER-INDEX lane's centerline — i.e. where its lane converges with or
+			// crosses an earlier lane, only the higher-index lane's row is cleared, so two
+			// lanes' opposing rows never collide at a junction. This is a pure function of the
+			// lot's position and the (append-only, count-stable) lower-index lanes — NEVER of
+			// any other lot — so it preserves EXACT stable-incremental placement (a sibling's
+			// count can't change which lower lanes exist, hence can't change this decision),
+			// which a lot-vs-lot skip could not (see tdEnforceMinGap).
+			if lane > 0 && nearLowerLane(x, y, plan.streets, lane, perp+2*half+cfg.minGap) {
+				continue
+			}
 			lot := tdLot{
-				x: x, y: y, w: spec.sz, h: spec.sz, kind: tdRoof,
-				domain: spec.b.domain, category: spec.b.category, tier: spec.b.tier, roof: spec.roof,
+				x: x, y: y, w: ft.sz, h: ft.sz, kind: tdRoof,
+				domain: ft.b.domain, category: ft.b.category, tier: ft.b.tier, roof: ft.roof,
 			}
-			if spec.roof == roofLong {
-				lot.w = spec.sz * 1.8 // longhouses/rowhouses are elongated
+			if ft.roof == roofLong {
+				lot.w = ft.sz * 1.8 // longhouses/rowhouses are elongated
 			}
-			if spec.label {
-				lot.label = spec.b.name
-				lot.prom = prominenceOf(spec.b)
+			if ft.label && j == 0 {
+				lot.label = ft.b.name
+				lot.prom = prominenceOf(ft.b)
 			}
 			plan.lots = append(plan.lots, lot)
 		}
-		if !placed {
-			break
-		}
 	}
 }
 
-// fnvKey is the FNV-1a hash of a building key, used to derive a stable per-type spiral
-// phase so different types interleave around a shared anchor (FIX 1).
-func fnvKey(key string) uint32 {
-	var h uint32 = 2166136261
-	for i := 0; i < len(key); i++ {
-		h ^= uint32(key[i])
-		h *= 16777619
+// clampAbs clamps v to [-m, m].
+func clampAbs(v, m float64) float64 {
+	if v > m {
+		return m
 	}
-	return h
+	if v < -m {
+		return -m
+	}
+	return v
 }
 
-// pullToLane blends a point toward the nearest point on the lane network by bias in
-// [0,1] (0 = unchanged, 1 = snapped onto the lane). This is what makes the intermixed
-// fabric grow ALONG the streets so the town outline follows the lanes rather than
-// reading as a round disc. Pure over the fixed lane polylines → stable-incremental. If
-// there are no lanes it returns the point unchanged.
-func pullToLane(x, y float64, streets []tdStreet, bias float64) (float64, float64) {
-	if bias <= 0 || len(streets) == 0 {
-		return x, y
-	}
-	nx, ny, ok := nearestOnStreets(x, y, streets)
-	if !ok {
-		return x, y
-	}
-	return x + (nx-x)*bias, y + (ny-y)*bias
-}
-
-// nearestOnStreets returns the closest point on any lane polyline to (x,y).
-func nearestOnStreets(x, y float64, streets []tdStreet) (float64, float64, bool) {
-	best := math.Inf(1)
-	var bx, by float64
-	found := false
-	for _, s := range streets {
+// nearLowerLane reports whether (x,y) lies within dist of the centerline of any lane with
+// index < uptoLane. Used by the lane-lining placement to clear the higher-index lane's row
+// where it converges with an earlier lane (the cross-lane overlap guard). Only lower-index
+// lanes are consulted, and those are append-only/count-stable, so the result is a pure
+// function of position + fixed geometry → the placement stays stable-incremental.
+func nearLowerLane(x, y float64, streets []tdStreet, uptoLane int, dist float64) bool {
+	d2 := dist * dist
+	for li := 0; li < uptoLane && li < len(streets); li++ {
+		s := streets[li]
 		for i := 0; i+1 < len(s.pts); i++ {
-			px, py, d := nearestOnSeg(x, y, s.pts[i], s.pts[i+1])
-			if d < best {
-				best, bx, by, found = d, px, py, true
+			if distToSegSq(x, y, s.pts[i], s.pts[i+1]) < d2 {
+				return true
 			}
 		}
 	}
-	return bx, by, found
+	return false
 }
 
-// nearestOnSeg returns the closest point on segment a→b to p, and the squared distance.
-func nearestOnSeg(px, py float64, a, b tdPoint) (float64, float64, float64) {
+// distToSegSq is the squared distance from p to segment a→b.
+func distToSegSq(px, py float64, a, b tdPoint) float64 {
 	dx, dy := b.x-a.x, b.y-a.y
 	l2 := dx*dx + dy*dy
 	if l2 < 1e-9 {
 		ex, ey := px-a.x, py-a.y
-		return a.x, a.y, ex*ex + ey*ey
+		return ex*ex + ey*ey
 	}
 	t := ((px-a.x)*dx + (py-a.y)*dy) / l2
 	if t < 0 {
@@ -910,7 +1083,124 @@ func nearestOnSeg(px, py float64, a, b tdPoint) (float64, float64, float64) {
 	}
 	cx, cy := a.x+t*dx, a.y+t*dy
 	ex, ey := px-cx, py-cy
-	return cx, cy, ex*ex + ey*ey
+	return ex*ex + ey*ey
+}
+
+// tdExtendLanes grows the lane network (append-only) until it has enough FRONTAGE for
+// `slots` lane-lining lots, so the village stays AIRY as counts rise — buildings get more
+// street to LINE rather than bunching (playtest FIX 2). Extra spokes fan OUTWARD from each
+// anchor, but their INNER ends ride a RING around the anchor (radius grows with the spoke
+// index) rather than all piling at the core: so a spoke's lineable stretch sits in its own
+// outer angular sector, well clear of its neighbours, and the network expands OUTWARD as
+// the count climbs (the town spreads, it does not cram). Golden-angle headings keep the
+// sectors low-overlap. Each spoke's origin/heading/length is a pure function of (anchor,
+// spoke index, seed) and is appended AFTER the base set, so existing lanes — and the lots
+// already lining them — never move as the count (hence spoke count) grows.
+func tdExtendLanes(streets []tdStreet, anchors []tdAnchor, slots int, style tdEraStyle, cfg tdConfig, seed uint32) []tdStreet {
+	if slots <= 0 || len(anchors) == 0 {
+		return streets
+	}
+	need := tdFabricStep(cfg) * 0.5 * float64(slots) // halfStep per slot
+	need *= 1.5                                       // headroom: junction trims + a margin so lots don't reach the very end
+	frontageLen := func(ss []tdStreet) float64 {
+		return buildFrontage(ss, cfg.laneStartClear*cfg.roofSize).total
+	}
+	// A stable per-anchor angular phase so anchors' spoke fans differ but are fixed per seed.
+	phaseFor := func(ai int) float64 {
+		return float64(hash2(uint32(ai)*2+1, 0x5eed, seed)) / float64(^uint32(0)) * 2 * math.Pi
+	}
+	plazaR := cfg.plazaRadius * cfg.roofSize
+	// The footprint each spoke's inner end needs on the ring so inner ends don't crowd.
+	ringSpacing := cfg.roofSize*2 + cfg.minGap
+	guard := 0
+	k := 0
+	for frontageLen(streets) < need && guard < 400 {
+		ai := guard % len(anchors)
+		if ai == 0 {
+			k++ // one more spoke per anchor each full sweep
+		}
+		guard++
+		a := anchors[ai]
+		ang := phaseFor(ai) + float64(k)*goldenAngle
+		// Inner-end radius grows with the spoke index so origins ride an expanding ring (never
+		// piling at the core). Floored past the plaza for a wonder anchor so its square stays
+		// open and the road radiates out of it.
+		ringR := ringSpacing * (1.0 + 0.6*float64(k))
+		if a.wonder && ringR < plazaR+cfg.roofSize {
+			ringR = plazaR + cfg.roofSize
+		}
+		// Spoke length grows slightly with the index so outer spokes reach further into open
+		// ground (more frontage where there is room).
+		ln := cfg.anchorSpread * (0.7 + 0.12*float64(k%5))
+		sx := a.cx + math.Cos(ang)*ringR
+		sy := a.cy + math.Sin(ang)*ringR
+		end := tdPoint{a.cx + math.Cos(ang)*(ringR+ln), a.cy + math.Sin(ang)*(ringR+ln)}
+		// A per-spoke rng so the meander is deterministic per (anchor, spoke) — a fresh stream
+		// keyed on the spoke index, NOT shared with the threaded street rng.
+		sr := newRNG(hash2(uint32(ai)*97+uint32(k)*131+7, 0x5b0c, seed) | 1)
+		streets = append(streets, windingLane(tdPoint{sx, sy}, end, style.streetJitter, style.laneWidth, sr))
+	}
+	return streets
+}
+
+// tdEnforceMinGap is the final deterministic overlap guard (playtest FIX 2): no two roof
+// lots may sit closer than the min gap. It SKIPS (never nudges) a colliding lot, and a lot
+// only ever yields to lots that are guaranteed present regardless of any OTHER type's
+// count — its own SAME-DOMAIN earlier lots and the fixed WONDER roofs — so a surviving
+// lot keeps its exact placed position and the survivor set stays a stable per-domain
+// prefix (locked #8). Cross-domain overlaps are prevented structurally by the unique
+// global frontage slots + cleared junctions, so this pass has nothing cross-domain to do
+// in a well-formed plan; it is a safety net for degenerate geometry, not a mover.
+func tdEnforceMinGap(plan *topPlan, cfg tdConfig) {
+	gap := cfg.minGap
+	if gap <= 0 {
+		return
+	}
+	overlaps := func(a, b tdLot) bool {
+		ah := math.Max(a.w, a.h) / 2
+		bh := math.Max(b.w, b.h) / 2
+		return math.Hypot(a.x-b.x, a.y-b.y) < ah+bh+gap
+	}
+	// Pre-pass: the wonder roofs are the FIXED obstacles (their positions are a function of
+	// (anchor, seed), independent of any building count), so gather them first and check
+	// every fabric lot against them regardless of slice order.
+	var wonders []tdLot
+	for _, lt := range plan.lots {
+		if lt.kind == tdRoof && lt.roof == roofWonder {
+			wonders = append(wonders, lt)
+		}
+	}
+	kept := make([]tdLot, 0, len(plan.lots))
+	byDom := map[string][]tdLot{} // per-domain already-kept fabric lots (stable same-domain check)
+	for _, lt := range plan.lots {
+		if lt.kind != tdRoof || lt.roof == roofWonder {
+			kept = append(kept, lt) // non-roofs and the wonders themselves always stay
+			continue
+		}
+		skip := false
+		// Yield only to the fixed wonders and to earlier SAME-DOMAIN lots — both count-stable,
+		// so a sibling domain growing can never change this lot's keep decision.
+		for _, w := range wonders {
+			if overlaps(lt, w) {
+				skip = true
+				break
+			}
+		}
+		if !skip {
+			for _, s := range byDom[lt.domain] {
+				if overlaps(lt, s) {
+					skip = true
+					break
+				}
+			}
+		}
+		if skip {
+			continue
+		}
+		byDom[lt.domain] = append(byDom[lt.domain], lt)
+		kept = append(kept, lt)
+	}
+	plan.lots = kept
 }
 
 // insideWonderPlaza reports whether (x,y) falls within the clear plaza radius of any
@@ -932,6 +1222,19 @@ func insideWonderPlaza(x, y float64, anchors []tdAnchor, plazaR float64) bool {
 	return false
 }
 
+// tdWonderScale is the wonder roof extent as a multiple of roofSize, by anchor index: the
+// grandest wonder (anchor 0) is the largest, the rest a touch smaller so the centre reads
+// as the primary showpiece. Kept well UNDER the plaza radius (plazaRadius 2.2) so a paved
+// ring always shows around the roof inside its cleared plaza, even after fill-frame shrinks
+// the city at high building counts (the town-square-dressing invariant). Single source of
+// truth shared by tdPlaceWonders (the roof) and tdPlaceSquares (the prop ring + apron).
+func tdWonderScale(anchorIdx int) float64 {
+	if anchorIdx == 0 {
+		return 2.6
+	}
+	return 2.2
+}
+
 // tdPlaceWonders drops each wonder's dominant, ornate centerpiece roof AT its anchor
 // (locked #13, FIX 2). The grandest wonder crowns the center anchor; the rest sit at
 // their spread anchors. Each is labeled and drawn prominent; the clear plaza around it
@@ -944,10 +1247,9 @@ func tdPlaceWonders(plan *topPlan, cfg tdConfig) {
 		}
 		// The grandest wonder (anchor 0) is the largest; the rest are a touch smaller so
 		// the center reads as the primary showpiece.
-		scale := 3.0
+		scale := tdWonderScale(i)
 		prom := 1000.0
 		if i > 0 {
-			scale = 2.4
 			prom = 800
 		}
 		plan.lots = append(plan.lots, tdLot{
@@ -1004,15 +1306,13 @@ func tdPlaceSquares(plan *topPlan, style tdEraStyle, cfg tdConfig, seed uint32) 
 	plazaR := cfg.plazaRadius * cfg.roofSize
 	for i, a := range plan.anchors {
 		if a.wonder {
-			// The wonder roof half-extent (matches tdPlaceWonders: scale 3.0 grandest,
-			// else 2.4). Props ring OUTSIDE this so the centerpiece is never covered.
-			scale := 3.0
-			if i > 0 {
-				scale = 2.4
-			}
-			roofHalf := cfg.roofSize * scale / 2
+			// The wonder roof half-extent (matches tdPlaceWonders via tdWonderScale). Props
+			// ring OUTSIDE this so the centerpiece is never covered.
+			roofHalf := cfg.roofSize * tdWonderScale(i) / 2
 			// Paved plaza patch: fills the whole cleared plaza radius (a square lot whose
-			// half-extent is the plaza radius) so the open center reads as a made surface.
+			// half-extent is the plaza radius) so the open center reads as a made surface. The
+			// wonder roof (see tdWonderScale) is kept clear of the plaza RIM so a paved ring
+			// always shows around it even after fill-frame shrinks the plaza at high counts.
 			plan.lots = append(plan.lots, tdLot{
 				x: a.cx, y: a.cy, w: plazaR * 2, h: plazaR * 2, kind: tdPlaza,
 			})
@@ -1136,18 +1436,28 @@ func tdOrganicStreets(anchors []tdAnchor, cx, cy float64, style tdEraStyle, r *r
 		a, b := anchors[i], anchors[i+1]
 		streets = append(streets, windingLane(tdPoint{a.cx, a.cy}, tdPoint{b.cx, b.cy}, style.streetJitter, style.laneWidth, r))
 	}
-	// Stub lanes: a lone hamlet (single center anchor, no chain/spokes) still needs a few
-	// streets to grow ALONG so it doesn't collapse to a disc. Grow 3 short radial lanes
-	// from the core at seeded angles. Also give a little extra structure to any tiny town.
+	// Stub lanes: a lone hamlet (single center anchor, no chain/spokes) still needs streets
+	// to LINE (FIX 2) so it doesn't collapse to a disc. Lane 0 is a long, gently-winding
+	// SPINE THROUGH the core — a single non-self-crossing polyline, so the LOW-count fabric
+	// (which fills the frontage spine-first) lines it with zero crossings and lands near-1:1.
+	// A couple of shorter cross spokes fan off at spread angles for structure; higher counts
+	// get more frontage from tdExtendLanes. The spine passes through the core, so it also
+	// gives both directions from the heart.
 	if len(streets) == 0 {
 		phase := r.f01() * 2 * math.Pi
-		const stubs = 3
-		stubLen := defaultTdConfig.anchorSpread * 0.6
-		for i := 0; i < stubs; i++ {
-			ang := phase + 2*math.Pi*float64(i)/float64(stubs)
-			end := tdPoint{cx + math.Cos(ang)*stubLen, cy + math.Sin(ang)*stubLen}
-			streets = append(streets, windingLane(core, end, style.streetJitter, style.laneWidth, r))
-		}
+		spineLen := defaultTdConfig.anchorSpread * 1.25
+		// Spine THROUGH the core: from one side to the other, so it's one long clean lane the
+		// low-count fabric fills first with zero crossings. A second cross spine through the
+		// core at a wide angle gives the heart a crossroads without crowding (it meets the
+		// first only at the trimmed core). Higher counts get clean ring-origin spokes from
+		// tdExtendLanes, so no lane needs to start piled at the centre.
+		s0 := tdPoint{cx - math.Cos(phase)*spineLen, cy - math.Sin(phase)*spineLen}
+		s1 := tdPoint{cx + math.Cos(phase)*spineLen, cy + math.Sin(phase)*spineLen}
+		streets = append(streets, windingLane(s0, s1, style.streetJitter, style.laneWidth, r))
+		ang2 := phase + math.Pi/2
+		c0 := tdPoint{cx - math.Cos(ang2)*spineLen, cy - math.Sin(ang2)*spineLen}
+		c1 := tdPoint{cx + math.Cos(ang2)*spineLen, cy + math.Sin(ang2)*spineLen}
+		streets = append(streets, windingLane(c0, c1, style.streetJitter, style.laneWidth, r))
 	}
 	return streets
 }
@@ -1500,10 +1810,12 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 	plan := generateTopPlan(state, config.BuildingByKey(), style, seed)
 	xf := computeTransform(&plan, w, h)
 
-	// Streets (dirt lanes) under the fabric.
+	// Streets (BOLD packed-earth lanes, FIX 1) under the fabric — a strong visual element
+	// that stays visible because the roofs LINE alongside the lanes (FIX 2), not on top.
 	streetCol := style.streetCol(pal)
+	streetEdge := tdStreetEdgeColor(style, pal)
 	for _, s := range plan.streets {
-		drawTdStreet(img, xf, s, streetCol)
+		drawTdStreet(img, xf, s, streetCol, streetEdge)
 	}
 
 	// Ground accents: gardens, squares, and the TOWN-SQUARE paved plazas painted before
@@ -1618,23 +1930,54 @@ func texHash(x, y, seed uint32) float64 {
 	return float64(h&0xffffff) / float64(0x1000000)
 }
 
-// drawTdStreet rasterizes a city-space lane polyline into pixels as a dirt path.
-// width 0 draws a single-pixel line; width>=1 strokes a thicker band. The polyline
-// is mapped through the fill-frame transform first, then drawn with the shared
-// Bresenham road rasterizer (reused; no terrain routing involved).
-func drawTdStreet(img *image.RGBA, xf tdTransform, s tdStreet, c color.RGBA) {
+// drawTdStreet rasterizes a city-space lane polyline into pixels as a BOLD packed-earth
+// path (playtest FIX 1). The band is CENTERED on the centerline and stroked PERPENDICULAR
+// to each segment so it reads as an even, deliberate road of half-width s.width (width 0 →
+// 1px; width 1 → ~3px), with a crisp darker EDGE one cell further out for a defined
+// shoulder. The polyline is mapped through the fill-frame transform first, then drawn with
+// the shared Bresenham rasterizer (reused; no terrain routing involved). Lanes draw UNDER
+// the roofs but stay visible because the fabric now LINES alongside them, not on top.
+func drawTdStreet(img *image.RGBA, xf tdTransform, s tdStreet, surface, edge color.RGBA) {
 	if len(s.pts) < 2 {
 		return
 	}
 	for i := 0; i+1 < len(s.pts); i++ {
 		ax, ay := xf.px(s.pts[i].x, s.pts[i].y)
 		bx, by := xf.px(s.pts[i+1].x, s.pts[i+1].y)
-		drawRoad(img, roadSeg{ax, ay, bx, by}, c)
-		for wstep := 1; wstep <= s.width; wstep++ {
-			drawRoad(img, roadSeg{ax + wstep, ay, bx + wstep, by}, c)
-			drawRoad(img, roadSeg{ax, ay + wstep, bx, by + wstep}, c)
+		// Perpendicular unit vector in pixel space, for a centered band (offset both ways).
+		dx, dy := float64(bx-ax), float64(by-ay)
+		l := math.Hypot(dx, dy)
+		var pxu, pyu float64
+		if l > 1e-6 {
+			pxu, pyu = -dy/l, dx/l
+		}
+		off := func(k int) (int, int, int, int) {
+			ox := int(math.Round(pxu * float64(k)))
+			oy := int(math.Round(pyu * float64(k)))
+			return ax + ox, ay + oy, bx + ox, by + oy
+		}
+		// Darker shoulder one cell PAST the band on each side (drawn first, so the surface
+		// overpaints any overlap and the edge only shows on the true rim).
+		for _, k := range []int{s.width + 1, -(s.width + 1)} {
+			x0, y0, x1, y1 := off(k)
+			drawRoad(img, roadSeg{x0, y0, x1, y1}, edge)
+		}
+		// The packed-earth surface band, centered: k in [-width, width].
+		for k := -s.width; k <= s.width; k++ {
+			x0, y0, x1, y1 := off(k)
+			drawRoad(img, roadSeg{x0, y0, x1, y1}, surface)
 		}
 	}
+}
+
+// tdStreetEdgeColor resolves the lane shoulder tone for a style: the preset's streetEdge
+// recipe when set, else a derived fallback (the surface darkened) so an era whose preset
+// predates the field still gets a crisp edge. Pure theme read → retints on a switch.
+func tdStreetEdgeColor(style tdEraStyle, pal tdPal) color.RGBA {
+	if style.streetEdge != nil {
+		return style.streetEdge(pal)
+	}
+	return darken(style.streetCol(pal), 0.22)
 }
 
 // ---- town-square paving + props (playtest FIX) ------------------------------
