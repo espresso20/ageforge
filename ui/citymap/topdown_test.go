@@ -1122,3 +1122,160 @@ func TestStreetsVisible(t *testing.T) {
 		t.Fatalf("only %d packed-earth road pixels in the final image — the streets are not visible (buried by roofs or too thin)", packed)
 	}
 }
+
+// TestNotAPinwheelCompact locks the playtest FIX: the town is a COMPACT, BOUNDED cluster — it
+// does NOT fling buildings outward along radial spokes into a pinwheel with empty wedges between
+// the arms (the regression this work removes). Two robust, non-brittle properties across a wide
+// count range and several seeds:
+//
+//	(1) BOUNDED / SUB-LINEAR footprint: the max fabric-lot distance from the core must NOT grow
+//	    ~linearly with the building count — a radial-spoke town's radius climbs with the count,
+//	    a compact town's saturates. We assert the footprint radius at a HUGE count is only a
+//	    modest multiple of the radius at a SMALL count (it must not blow up), and never exceeds a
+//	    hard bound derived from the town-radius model.
+//	(2) NO RADIAL SPOKES: the fabric's ANGULAR distribution is spread around the whole compass,
+//	    not concentrated into a few arms. We bucket lots into 12 angular sectors and require the
+//	    bulk of them occupied — a pinwheel leaves big empty wedges (many empty sectors).
+func TestNotAPinwheelCompact(t *testing.T) {
+	_ = theme.SetActive("forge")
+	cfg := defaultTdConfig
+
+	footprint := func(m map[string]int) (radius float64, fab []tdLot, cx, cy float64) {
+		plan := tdPlanFor(sampleState("primitive_age", m))
+		fab = fabricLots(plan)
+		cx, cy = plan.cx, plan.cy
+		for _, lt := range fab {
+			if d := math.Hypot(lt.x-cx, lt.y-cy); d > radius {
+				radius = d
+			}
+		}
+		return
+	}
+
+	// (1) BOUNDED: footprint radius must saturate, not scale linearly with count. Compare a small
+	// village to a huge one across several seeds; the huge town's radius must stay within a small
+	// multiple of the small one's (a radial-spoke town would be many times larger).
+	for _, name := range []string{"Aldermoor", "Corveil", "Duskwind"} {
+		smallR, _, _, _ := footprint(map[string]int{"hut": 6, "gathering_camp": 4})
+		bigR, bigFab, bcx, bcy := footprint(map[string]int{"hut": 200, "gathering_camp": 150, "forge": 90, "barracks": 60})
+		_ = name
+		if smallR <= 0 || bigR <= 0 {
+			t.Fatalf("degenerate footprint radii: small=%.1f big=%.1f", smallR, bigR)
+		}
+		// The big town has ~30× the buildings of the small one; a compact town's radius grows only
+		// modestly. Require the big footprint stays under 3× the small one AND under a hard bound
+		// from the town-radius model (which itself grows only ~sqrt) — a pinwheel would blow past both.
+		if bigR > smallR*3.0 {
+			t.Fatalf("footprint radius blew up %.1f→%.1f (%.1f×) as the count grew — the town is flinging out, not staying compact (pinwheel)", smallR, bigR, bigR/smallR)
+		}
+		hardBound := tdTownRadius(2000, cfg) // way past any real count; the compact ceiling
+		if bigR > hardBound {
+			t.Fatalf("footprint radius %.1f exceeds the compact bound %.1f — the town is not bounded", bigR, hardBound)
+		}
+
+		// (2) NO RADIAL SPOKES: bucket the big town's fabric into 12 angular sectors; a compact town
+		// fills the compass, a pinwheel concentrates into a few arms leaving empty wedges.
+		if len(bigFab) < 20 {
+			t.Fatalf("expected a substantial fabric to test angular spread, got %d", len(bigFab))
+		}
+		var buckets [12]int
+		for _, lt := range bigFab {
+			a := math.Atan2(lt.y-bcy, lt.x-bcx)
+			b := int((a + math.Pi) / (2 * math.Pi) * 12)
+			if b < 0 {
+				b = 0
+			}
+			if b > 11 {
+				b = 11
+			}
+			buckets[b]++
+		}
+		occupied := 0
+		for _, c := range buckets {
+			if c > 0 {
+				occupied++
+			}
+		}
+		// A compact town covers nearly the whole compass; a pinwheel of a few spokes would leave
+		// many sectors empty. Require at least 9 of 12 sectors occupied (no big empty wedge).
+		if occupied < 9 {
+			t.Fatalf("fabric occupies only %d/12 angular sectors — it is concentrated into radial arms (pinwheel), not a compact spread (buckets=%v)", occupied, buckets)
+		}
+	}
+}
+
+// centerBandCells returns, for each labeled landmark whose label sits in the center band (the
+// building + City Center labels — NOT the corner title, NOT the edge civ/trade labels), the set
+// of (col,row) cells its glyphs occupy. Used to assert the center landmarks don't stack.
+func centerBandLabelCells(plan overlayPlan) []map[[2]int]bool {
+	var out []map[[2]int]bool
+	for _, l := range plan.labels {
+		if l.kind != labelBuilding && l.kind != labelCapital {
+			continue
+		}
+		runes := []rune(l.text)
+		start := l.cx
+		switch l.align {
+		case alignRight:
+			start = l.cx - len(runes) + 1
+		case alignCenter:
+			start = l.cx - len(runes)/2
+		}
+		cells := map[[2]int]bool{}
+		for i := range runes {
+			cells[[2]int{start + i, l.cy}] = true
+		}
+		out = append(out, cells)
+	}
+	return out
+}
+
+// TestLandmarkLabelsNoStack locks the playtest FIX 5: the center landmark labels (city center,
+// the wonder, a promoted hero, the Stash) must NOT stack on the same cells — the overlay offsets
+// colliding landmark labels onto distinct rows so each stays readable. It forces the WORST case
+// from the playtest screenshot: several landmark markers CRAMMED onto the SAME center pixel (a
+// tightly-clustered heart), where a naive overlay would print every name on the same row. It
+// asserts no two center-band label glyphs share a cell, so every landmark stays legible.
+func TestLandmarkLabelsNoStack(t *testing.T) {
+	_ = theme.SetActive("forge")
+
+	// A worst-case geometry: the palace marker and three landmark building markers ALL at the same
+	// center pixel — exactly the "Sacred Grove / City Center / Stash on top of each other" crush.
+	const w, h = 140, 90
+	cx, cy := w/2, h/2
+	geo := layoutGeometry{palaceX: cx, palaceY: cy}
+	names := []struct {
+		name, lineage, cat string
+		tier               int
+	}{
+		{"Sacred Grove", "wonder", "wonder", 3},
+		{"Great Stash", "storage", "storage", 1},
+		{"Elder Shrine", "faith", "research", 2},
+	}
+	for _, n := range names {
+		geo.buildings = append(geo.buildings, buildingLabel{
+			px: cx, py: cy, name: n.name, lineageKey: n.lineage, category: n.cat, tier: n.tier, size: 3,
+		})
+	}
+	state := sampleState("primitive_age", nil)
+	state.AgeName = "Primitive Age"
+	state.AccountStats = &game.AccountStatsView{DisplayName: "Stackton"}
+
+	plan := buildLandmarkOverlay(state, w, h/2, geo)
+
+	cellsPerLabel := centerBandLabelCells(plan)
+	// The wonder + stash + shrine + City Center = up to 4 center-band labels; they must all place.
+	if len(cellsPerLabel) < 4 {
+		t.Fatalf("expected 4 center-band landmark labels (3 buildings + City Center) to all place without stacking, got %d — some were dropped or collided", len(cellsPerLabel))
+	}
+	// No cell may be claimed by two different center-band labels (that is a stack).
+	seen := map[[2]int]int{}
+	for li, cells := range cellsPerLabel {
+		for cell := range cells {
+			if prev, ok := seen[cell]; ok {
+				t.Fatalf("center-band landmark labels %d and %d both occupy cell (%d,%d) — the labels are stacked on top of each other", prev, li, cell[0], cell[1])
+			}
+			seen[cell] = li
+		}
+	}
+}

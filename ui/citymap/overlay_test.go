@@ -272,17 +272,17 @@ func TestBuildingLabelsRenderAndSkipCollisions(t *testing.T) {
 	if !names["Library"] || !names["Market"] {
 		t.Fatalf("distinct buildings not labeled: have %v", names)
 	}
-	// The food cluster's headline (highest tier = Granary Hall) must survive the
-	// collision pruning — a lineage cluster is never left entirely unnamed, because
-	// the headline pass claims its cell before the cluster's siblings.
+	// The food cluster's headline (highest tier = Granary Hall) must survive — a lineage cluster
+	// is never left entirely unnamed, because the headline pass claims its cell before siblings.
 	if !names["Granary Hall"] {
 		t.Fatalf("food cluster lost its headline building label; have %v", names)
 	}
-	// Seven food buildings jammed on one band exceed the collision spread, so some
-	// MUST be pruned — not all nine buildings can be labeled.
-	if buildingLabels >= 9 {
-		t.Fatalf("expected collision pruning to drop jammed labels, got %d of 9", buildingLabels)
-	}
+	// The center-band collision is now CELL-ACCURATE (playtest FIX 5: labels reserve only the
+	// cells their glyphs occupy, over a wider row spread), so jammed-but-distinct labels are
+	// PACKED onto free cells instead of being pruned wholesale. The hard guarantee is the one
+	// asserted above — no two labels share a cell (the `seen` map), the headline survives, and the
+	// distinct buildings are labeled — NOT a specific pruned-label count (the old proxy, which the
+	// better packing makes obsolete: a jammed cluster may now keep all its labels if none overlaps).
 }
 
 // TestTitlePresentAndAgeNamed asserts the corner title is planned and includes the

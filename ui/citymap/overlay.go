@@ -185,7 +185,6 @@ func (p *overlayPlan) addBuildingLabels(geo layoutGeometry, cols, rows int, occu
 	order = append(order, heads...)
 	order = append(order, rest...)
 
-	const sideCenter = 0
 	for _, idx := range order {
 		c := geo.buildings[idx]
 		if c.name == "" {
@@ -194,25 +193,18 @@ func (p *overlayPlan) addBuildingLabels(geo layoutGeometry, cols, rows int, occu
 		baseRow := clampInt(pxToCellY(c.py)-1, 0, rows-1) // a cell above the marker
 		// Center the label on the marker column, clamped so it stays on-screen.
 		col := clampInt(pxToCellX(c.px), 0, cols-1)
-		// Collision: the base row is one above the marker; if it's taken on the center
-		// band, try a small spread of nearby rows (above first, then below) before
-		// giving up — so a crowded cluster (dense block grid) keeps more of its labels.
-		// The headline pass runs first, so a cluster's headline gets first claim.
-		row := -1
-		for _, dr := range []int{0, -1, 1, -2, 2} {
-			cand := clampInt(baseRow+dr, 0, rows-1)
-			if !occupied[packCell(sideCenter, cand)] {
-				row = cand
-				break
-			}
-		}
-		if row < 0 {
-			continue // no free row nearby — skip rather than overprint
-		}
-		occupied[packCell(sideCenter, row)] = true
 		name := truncLabel(c.name, maxLabelLen(col, cols, alignCenter))
 		if name == "" {
 			continue
+		}
+		// Reserve a nearby row whose actual CELL SPAN is free (playtest FIX: landmark labels
+		// stacking on the center). The center-band collision is now cell-accurate — two labels
+		// only conflict where their glyph cells actually overlap — so clustered landmarks (the
+		// wonder + a promoted hero + the Stash) get spread onto distinct, readable rows instead
+		// of printing on top of each other.
+		row := reserveCenterLabel(occupied, col, len(name), baseRow, rows, alignCenter)
+		if row < 0 {
+			continue // no free row nearby — skip rather than overprint
 		}
 		p.labels = append(p.labels, overlayLabel{
 			cx: col, cy: row, text: name, kind: labelBuilding, align: alignCenter,
@@ -221,16 +213,82 @@ func (p *overlayPlan) addBuildingLabels(geo layoutGeometry, cols, rows int, occu
 	}
 }
 
-// addCityCenterLabel stamps "City Center" just beneath the central marker, in the
-// accent role. This is a city view, so the central marker reads as the city's heart
-// rather than an imperial capital — same prominent marker, clearer label.
+// addCityCenterLabel stamps "City Center" beneath the central marker, in the accent role. It is
+// COLLISION-AWARE (playtest FIX: it used to stamp unconditionally and could land on a landmark
+// label): it reserves a free nearby row via the same cell-accurate center-band bookkeeping the
+// building labels use, so "City Center" never stacks on the wonder / hero / Stash labels.
 func (p *overlayPlan) addCityCenterLabel(geo layoutGeometry, cols, rows int, occupied map[int]bool) {
-	row := clampInt(pxToCellY(geo.palaceY)+2, 0, rows-1)
 	col := clampInt(pxToCellX(geo.palaceX), 0, cols-1)
-	occupied[packCell(0, row)] = true
+	baseRow := clampInt(pxToCellY(geo.palaceY)+2, 0, rows-1)
+	const text = "City Center"
+	name := truncLabel(text, maxLabelLen(col, cols, alignCenter))
+	if name == "" {
+		return
+	}
+	// Prefer BELOW the marker (positive dr first) so the City Center label sits under the heart,
+	// but fall back to any free nearby row rather than overprinting a landmark label.
+	row := reserveCenterLabel(occupied, col, len(name), baseRow, rows, alignCenter)
+	if row < 0 {
+		return
+	}
 	p.labels = append(p.labels, overlayLabel{
-		cx: col, cy: row, text: "City Center", role: theme.RoleAccent, kind: labelCapital, align: alignCenter,
+		cx: col, cy: row, text: name, role: theme.RoleAccent, kind: labelCapital, align: alignCenter,
 	})
+}
+
+// reserveCenterLabel finds a nearby center-band row where a label of width `w` centered on `col`
+// does not overlap any already-reserved center-band cell, then marks that label's cell span
+// occupied and returns the row (or -1 if no nearby row is free). It scans the base row first,
+// then alternating rows outward, so a crowded center spreads its labels onto distinct rows. The
+// occupancy is CELL-ACCURATE (keyed per (col,row)) so two labels far apart on the same row can
+// coexist while two that would overlap are separated — the fix for landmark labels stacking.
+func reserveCenterLabel(occupied map[int]bool, col, w, baseRow, rows int, al alignment) int {
+	if w < 1 {
+		w = 1
+	}
+	// Cell span [start,end] the label's glyphs occupy for the given alignment.
+	span := func() (int, int) {
+		switch al {
+		case alignRight:
+			return col - w + 1, col
+		case alignCenter:
+			return col - w/2, col - w/2 + w - 1
+		default:
+			return col, col + w - 1
+		}
+	}
+	start, end := span()
+	free := func(row int) bool {
+		for cc := start; cc <= end; cc++ {
+			if occupied[packCenterCell(cc, row)] {
+				return false
+			}
+		}
+		return true
+	}
+	// Search rows: base, then ±1, ±2, ±3, ±4 — a wider spread than before so a dense clump of
+	// central landmarks all find a clear row.
+	for _, dr := range []int{0, 1, -1, 2, -2, 3, -3, 4, -4} {
+		cand := baseRow + dr
+		if cand < 0 || cand >= rows {
+			continue
+		}
+		if free(cand) {
+			for cc := start; cc <= end; cc++ {
+				occupied[packCenterCell(cc, cand)] = true
+			}
+			return cand
+		}
+	}
+	return -1
+}
+
+// packCenterCell packs a center-band (col,row) into the shared collision map's key space. The
+// center band uses side id 0; encoding the COLUMN into the high bits (offset so it never aliases
+// the plain packCell(0,row) keys used by other bands) makes the center-band occupancy cell-
+// accurate while the civ/trade side bands keep their cheap row-only keys.
+func packCenterCell(col, row int) int {
+	return (1 << 40) | (col&0xfffff)<<20 | (row & 0xfffff)
 }
 
 // civMarker is a discovered civ resolved to a display name + a status role + flags.
