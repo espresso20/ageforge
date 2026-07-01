@@ -81,11 +81,25 @@ type tdEraStyle struct {
 	treeCol   func(tdPal) color.RGBA
 	propCol   func(tdPal) color.RGBA
 
+	// pavedCol is the TOWN-SQUARE paved-stone ground tone (playtest FIX: dress the
+	// wonder/center plaza as a made surface, not bare dirt). Distinct from the
+	// era-tinted dirt — a lighter/greyer packed-or-paved tint derived from the ground
+	// family so the square reads as a deliberate paved surface, and retints on a theme
+	// switch like every other recipe. Drawn under the wonder roof + props.
+	pavedCol func(tdPal) color.RGBA
+
 	// Walls capability (locked #9). Primitive sets false; walls arrive in V3-B.
 	hasWalls bool
 	wallCol  func(tdPal) color.RGBA
 
 	fillerDensity float64 // balanced living-city filler amount (locked #12)
+
+	// slotSpacing is the per-era golden-spiral spacing between building instances (the
+	// PACK-DENSITY knob, playtest FIX 2 groundwork). PRIMITIVE stays AIRY (the current
+	// value); later-era presets set it progressively TIGHTER so V3-B/C cities and the
+	// metropolis pack denser. 0 → fall back to defaultTdConfig.slotSpacing so an untuned
+	// era still renders. Routed into tdConfig.slotSpacing by generateTopPlan.
+	slotSpacing float64
 }
 
 // tdPal is the small set of resolved theme colors the style recipes draw from. Built
@@ -167,12 +181,24 @@ var organicVillageStyle = tdEraStyle{
 		return blend(blend(p.bg, p.text, 0.20), earthAnchor, 0.35)
 	},
 
+	// Town-square paving: packed pale stone. Start from the dirt square tone, then lift
+	// it toward the theme's light neutral (RoleText) and pull the last touch toward a
+	// grey stone anchor so it reads LIGHTER + GREYER than the surrounding trodden dirt —
+	// a deliberately made surface, still earthy/village in mood, still theme-derived.
+	pavedCol: func(p tdPal) color.RGBA {
+		earthy := blend(blend(p.bg, p.dim, 0.34), dirtAnchor, 0.30)
+		return blend(blend(earthy, p.text, 0.30), stoneAnchor, 0.32)
+	},
+
 	hasWalls: false, // primitive: no walls (locked — walls arrive in V3-B)
 	wallCol: func(p tdPal) color.RGBA {
 		return blend(blend(p.bg, p.dim, 0.40), dirtAnchor, 0.35)
 	},
 
 	fillerDensity: 1.0,
+	// PRIMITIVE stays AIRY: this is the current defaultTdConfig.slotSpacing value, so the
+	// primitive village look does NOT change. Later eras tighten it (see defaultTdStyle).
+	slotSpacing: 2.4,
 }
 
 // defaultTdStyle is the reasonable fallback for every non-primitive era until
@@ -184,6 +210,11 @@ var defaultTdStyle = func() tdEraStyle {
 	s := organicVillageStyle
 	s.name = "default"
 	s.streetPattern = tdOrganic
+	// PER-ERA DENSITY (playtest FIX 2 groundwork): later eras pack TIGHTER than the airy
+	// primitive village so V3-B/C cities + the metropolis read denser. This is framework
+	// only — the primitive preset keeps its airy 2.4; every not-yet-tuned era renders on
+	// this default at a tighter slot spacing. V3-B/C/D can dial each era band's own value.
+	s.slotSpacing = 1.7
 	return s
 }()
 
@@ -193,6 +224,10 @@ var (
 	earthAnchor = color.RGBA{R: 0x8a, G: 0x63, B: 0x3a, A: 0xff} // thatch/wood brown
 	dirtAnchor  = color.RGBA{R: 0x7c, G: 0x66, B: 0x46, A: 0xff} // packed dirt
 	grassAnchor = color.RGBA{R: 0x4f, G: 0x6f, B: 0x33, A: 0xff} // built greenery
+	// stoneAnchor is the pale packed-stone anchor for TOWN-SQUARE paving — a light warm
+	// grey so a plaza reads as a made surface, lighter/greyer than the dirt, blended
+	// against theme roles (never used raw) so it retints and stays in-family.
+	stoneAnchor = color.RGBA{R: 0xa8, G: 0xa0, B: 0x92, A: 0xff} // packed pale stone
 )
 
 // tdStyleForEra returns the tuned preset for an era band, or defaultTdStyle for the
@@ -336,6 +371,18 @@ const (
 	tdProp                    // a well / stall / statue prop
 	tdWall                    // a wall segment
 	tdGate                    // a gate in the wall ring
+
+	// Town-square lots (playtest FIX: the wonder/center plaza is DRESSED as a town square,
+	// not left as bare dirt). tdPlaza is the paved-stone ground patch under the wonder/
+	// center roof + props; the tdProp* kinds are the deliberate, seeded, era-appropriate
+	// props arranged AROUND (never overlapping) the roof. Kept as distinct kinds so each
+	// prop gets its own small top-down draw routine and later eras can swap the set
+	// (fountain/statue/benches) without disturbing the primitive one.
+	tdPlaza       // paved-stone town-square ground (drawn under the wonder/center roof)
+	tdPropWell    // a stone well head (ring + dark shaft)
+	tdPropFirepit // a firepit / hearth (dark ring + ember center)
+	tdPropStones  // standing stones / a totem (a couple of upright dabs)
+	tdPropStall   // a market stall (awning patch)
 )
 
 // tdLot is one placed thing, in CITY SPACE (pre-fill-frame). x,y is the lot center
@@ -551,6 +598,12 @@ var defaultTdConfig = tdConfig{
 // to bound wall geometry loosely; the fill-frame transform is computed at render.
 func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, style tdEraStyle, seed uint32) topPlan {
 	cfg := defaultTdConfig
+	// Route the PER-ERA DENSITY knob (playtest FIX 2 groundwork): the era preset owns the
+	// slot spacing so later eras pack tighter than the airy primitive village. 0 → keep the
+	// config default (an untuned era still renders). Primitive maps to 2.4 (unchanged look).
+	if style.slotSpacing > 0 {
+		cfg.slotSpacing = style.slotSpacing
+	}
 	plan := topPlan{cx: 0, cy: 0}
 	r := newRNG(seed)
 
@@ -641,6 +694,11 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 	// complex with a CLEAR PLAZA around it (any fabric lot inside the plaza was dropped
 	// in tdPopulateIntermixed), so the city hugs the wonder without ever burying it.
 	tdPlaceWonders(&plan, cfg)
+
+	// Town squares (playtest FIX): dress each cleared plaza (wonders + the wonderless
+	// city-center) as a paved town square with a few seeded era props ringed around the
+	// roof, so the open center reads as intentional rather than a bare-dirt donut.
+	tdPlaceSquares(&plan, style, cfg, seed)
 
 	// (e) filler — balanced gardens / squares / trees / props in the gaps.
 	tdAddFiller(&plan, style, cfg, r)
@@ -896,6 +954,111 @@ func tdPlaceWonders(plan *topPlan, cfg tdConfig) {
 			x: a.cx, y: a.cy, w: cfg.roofSize * scale, h: cfg.roofSize * scale,
 			kind: tdRoof, domain: a.bld.domain, category: a.bld.category, tier: a.bld.tier,
 			roof: roofWonder, label: a.bld.name, prom: prom,
+		})
+	}
+}
+
+// ---- town square (playtest FIX: dress the cleared plaza) --------------------
+//
+// The wonder-anchored primitive village reads as a ring around an EMPTY plaza (a
+// donut). Rather than SHRINK the open center, we DRESS it: each plaza-clearing anchor
+// (the wonders + the wonderless city-center) gets a deliberate TOWN SQUARE — a paved-
+// stone ground patch under the roof plus a few seeded, era-appropriate props arranged
+// AROUND (never overlapping) the roof. The openness stays; it now reads as intentional.
+
+// tdSquareProps is one era's town-square prop palette: the prop-lot kinds a wonder
+// square is dressed with (full set) and the modest kinds a wonderless center gets (a
+// couple). Kept as a per-era value so LATER eras can swap the set (fountain/statue/
+// benches) by adding a case in tdSquarePropsFor — only the PRIMITIVE set is tuned now.
+type tdSquareProps struct {
+	wonder []tdLotKind // props ringed around a wonder centerpiece (the full square)
+	center []tdLotKind // props for a wonderless city-center's modest square
+}
+
+// tdSquarePropsFor returns the town-square prop palette for an era. PRIMITIVE (organic):
+// a well, a firepit, standing stones/totem, and a market stall around a wonder; a well +
+// firepit for a bare center. Every other era falls back to the primitive set until
+// V3-B/C/D tunes its own (fountains, statues, benches) — framework groundwork only.
+func tdSquarePropsFor(style tdEraStyle) tdSquareProps {
+	// Only the organic/primitive set is tuned; the default preset reuses it for now.
+	return tdSquareProps{
+		wonder: []tdLotKind{tdPropWell, tdPropFirepit, tdPropStones, tdPropStall},
+		center: []tdLotKind{tdPropWell, tdPropFirepit},
+	}
+}
+
+// tdPlaceSquares dresses every plaza-clearing anchor as a town square (playtest FIX).
+// For each WONDER anchor it lays a paved-stone plaza patch (filling the cleared plaza
+// radius, drawn under the wonder roof) and rings a few era props AROUND the wonder roof
+// — seeded, deterministic, arranged on a circle strictly OUTSIDE the roof footprint and
+// inside the plaza so none overlaps the centerpiece. The wonderless city-center anchor
+// (which does NOT clear a big plaza) gets a MODEST square — a small paved patch + a
+// well/firepit — so the heart still reads as a gathering place without hollowing a hut
+// village into a donut. Pure + seeded → stable-incremental (positions are a function of
+// (anchor index, seed), never of any building count).
+func tdPlaceSquares(plan *topPlan, style tdEraStyle, cfg tdConfig, seed uint32) {
+	if len(plan.anchors) == 0 {
+		return
+	}
+	props := tdSquarePropsFor(style)
+	plazaR := cfg.plazaRadius * cfg.roofSize
+	for i, a := range plan.anchors {
+		if a.wonder {
+			// The wonder roof half-extent (matches tdPlaceWonders: scale 3.0 grandest,
+			// else 2.4). Props ring OUTSIDE this so the centerpiece is never covered.
+			scale := 3.0
+			if i > 0 {
+				scale = 2.4
+			}
+			roofHalf := cfg.roofSize * scale / 2
+			// Paved plaza patch: fills the whole cleared plaza radius (a square lot whose
+			// half-extent is the plaza radius) so the open center reads as a made surface.
+			plan.lots = append(plan.lots, tdLot{
+				x: a.cx, y: a.cy, w: plazaR * 2, h: plazaR * 2, kind: tdPlaza,
+			})
+			// Ring the props around the roof, on a circle between the roof edge and the
+			// plaza rim. A stable per-anchor angular phase so squares don't all align.
+			ringR := (roofHalf + plazaR) / 2
+			if ringR < roofHalf+cfg.roofSize*0.6 {
+				ringR = roofHalf + cfg.roofSize*0.6 // keep clear of the roof even if the band is tight
+			}
+			tdRingProps(plan, a.cx, a.cy, ringR, props.wonder, uint32(i), seed)
+		} else {
+			// Wonderless center: a MODEST square (small paved patch + a couple of props),
+			// kept small so a tiny village keeps a filled heart, not a donut.
+			smallR := plazaR * 0.55
+			plan.lots = append(plan.lots, tdLot{
+				x: a.cx, y: a.cy, w: smallR * 2, h: smallR * 2, kind: tdPlaza,
+			})
+			// A well + firepit tucked just off-center, inside the small patch.
+			tdRingProps(plan, a.cx, a.cy, smallR*0.55, props.center, uint32(i), seed)
+		}
+	}
+}
+
+// tdRingProps places one lot per prop kind evenly around a circle of radius ringR about
+// (cx,cy), with a small seeded angular phase (from anchor index di) so different squares
+// aren't rotationally identical. Each prop lot is small (well under the roof size) so it
+// reads as a dab of detail, not a structure. Deterministic: positions are a pure
+// function of (di, seed, prop index) — no threaded rng — so the square is stable-
+// incremental like the rest of the plan.
+func tdRingProps(plan *topPlan, cx, cy, ringR float64, kinds []tdLotKind, di, seed uint32) {
+	n := len(kinds)
+	if n == 0 || ringR <= 0 {
+		return
+	}
+	phase := float64(hash2(di*131+5, 0x50a2, seed)) / float64(^uint32(0)) * 2 * math.Pi
+	for k, kind := range kinds {
+		ang := phase + 2*math.Pi*float64(k)/float64(n)
+		// A whisper of per-prop radial jitter (seeded) so the ring isn't a perfect stamp.
+		rj := (float64(hash2(di*131+uint32(k)+17, 0x9e37, seed))/float64(^uint32(0)) - 0.5) * ringR * 0.12
+		rr := ringR + rj
+		plan.lots = append(plan.lots, tdLot{
+			x:    cx + math.Cos(ang)*rr,
+			y:    cy + math.Sin(ang)*rr,
+			w:    defaultTdConfig.roofSize * 0.55,
+			h:    defaultTdConfig.roofSize * 0.55,
+			kind: kind,
 		})
 	}
 }
@@ -1343,9 +1506,12 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 		drawTdStreet(img, xf, s, streetCol)
 	}
 
-	// Ground accents: gardens + squares painted before roofs so a roof sits on top.
+	// Ground accents: gardens, squares, and the TOWN-SQUARE paved plazas painted before
+	// roofs so a roof sits on top. The plaza is drawn as a rounded paved apron under the
+	// wonder/center roof (a made surface, distinct from the era-tinted dirt).
 	gardenCol := style.gardenCol(pal)
 	squareCol := style.squareCol(pal)
+	pavedCol := tdPavedColor(style, pal)
 	for _, lt := range plan.lots {
 		switch lt.kind {
 		case tdGarden:
@@ -1354,6 +1520,9 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 		case tdSquare:
 			cx, cy := xf.px(lt.x, lt.y)
 			fillRectC(img, cx, cy, xf.ext(lt.w/2), xf.ext(lt.h/2), squareCol)
+		case tdPlaza:
+			cx, cy := xf.px(lt.x, lt.y)
+			drawPlaza(img, cx, cy, xf.ext(lt.w/2), xf.ext(lt.h/2), pavedCol)
 		}
 	}
 
@@ -1377,6 +1546,8 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 	}
 
 	// Trees + props on top of the ground fabric (small, so they read among the roofs).
+	// The typed town-square props (well / firepit / standing stones / stall) dispatch to
+	// their own small draw routines; the generic tdProp filler stays a quiet dab.
 	treeCol := style.treeCol(pal)
 	propCol := style.propCol(pal)
 	for _, lt := range plan.lots {
@@ -1386,6 +1557,8 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 		case tdProp:
 			cx, cy := xf.px(lt.x, lt.y)
 			drawBlock(img, cx, cy, 0, propCol)
+		case tdPropWell, tdPropFirepit, tdPropStones, tdPropStall:
+			drawSquareProp(img, xf, lt, style, pal)
 		}
 	}
 
@@ -1461,6 +1634,82 @@ func drawTdStreet(img *image.RGBA, xf tdTransform, s tdStreet, c color.RGBA) {
 			drawRoad(img, roadSeg{ax + wstep, ay, bx + wstep, by}, c)
 			drawRoad(img, roadSeg{ax, ay + wstep, bx, by + wstep}, c)
 		}
+	}
+}
+
+// ---- town-square paving + props (playtest FIX) ------------------------------
+
+// tdPavedColor resolves the town-square paving tone for a style. It uses the preset's
+// pavedCol recipe when set; otherwise it derives a safe fallback (the square tone lifted
+// toward the light neutral) so an era whose preset predates this field still paves. Pure
+// theme read → retints on a theme switch like every other tone.
+func tdPavedColor(style tdEraStyle, pal tdPal) color.RGBA {
+	if style.pavedCol != nil {
+		return style.pavedCol(pal)
+	}
+	return blend(style.squareCol(pal), pal.text, 0.30)
+}
+
+// drawPlaza paints the paved town-square ground as a rounded apron: a filled ellipse in
+// the paving tone with a faintly darker rim so the made surface reads with a soft edge
+// against the surrounding dirt, rather than a hard rectangle. Drawn under the wonder/
+// center roof + props. Half-extents are floored so a small center square still shows.
+func drawPlaza(img *image.RGBA, cx, cy, hw, hh int, paved color.RGBA) {
+	if hw < 1 {
+		hw = 1
+	}
+	if hh < 1 {
+		hh = 1
+	}
+	forEllipse(cx, cy, hw, hh, func(x, y int) { setPixel(img, x, y, paved) })
+	// A whisper-darker rim so the paved apron reads as an edged surface, not a flat wash.
+	rim := darken(paved, 0.12)
+	forEllipse(cx, cy, hw, hh, func(x, y int) {
+		fx := float64(x-cx) / float64(hw)
+		fy := float64(y-cy) / float64(hh)
+		if fx*fx+fy*fy >= 0.72 { // outer ring band only
+			setPixel(img, x, y, rim)
+		}
+	})
+}
+
+// drawSquareProp renders one town-square prop as a small top-down dab, dispatched by its
+// lot kind. Tones come from the era style (the paving + prop recipes) so props retint
+// with the theme and stay in the era mood. Kept tiny — a well/firepit/totem/stall reads
+// as a detail dressing the square, never competing with the wonder roof. All radii are
+// floored so a prop paints at least a couple of pixels even at village scale.
+func drawSquareProp(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal tdPal) {
+	cx, cy := xf.px(lt.x, lt.y)
+	rad := xf.ext(math.Max(lt.w, lt.h) / 2)
+	if rad < 1 {
+		rad = 1
+	}
+	paved := tdPavedColor(style, pal)
+	prop := style.propCol(pal)
+	switch lt.kind {
+	case tdPropWell:
+		// Stone well head: a pale stone ring (paving-toned) with a dark shaft mouth.
+		fillDisc(img, cx, cy, rad, brighten(paved, 0.10))
+		setPixel(img, cx, cy, darken(prop, 0.55)) // the dark shaft
+	case tdPropFirepit:
+		// Firepit: a charred dark ring with a warm ember center.
+		fillDisc(img, cx, cy, rad, darken(prop, 0.45))
+		ember := brighten(blend(prop, color.RGBA{R: 0xc8, G: 0x5a, B: 0x1e, A: 0xff}, 0.6), 0.10)
+		setPixel(img, cx, cy, ember)
+	case tdPropStones:
+		// Standing stones / totem: two or three upright dabs in the prop (stone) tone, so
+		// it reads as a little megalith cluster rather than a single block.
+		stone := blend(prop, paved, 0.35)
+		drawBlock(img, cx-rad, cy, 0, stone)
+		drawBlock(img, cx, cy-rad, 0, brighten(stone, 0.10))
+		drawBlock(img, cx+rad, cy, 0, darken(stone, 0.10))
+		setPixel(img, cx, cy, stone)
+	case tdPropStall:
+		// Market stall: a small awning patch — a filled square in a warm cloth tone with a
+		// lighter top edge (the sunlit awning ridge).
+		cloth := blend(prop, pal.text, 0.20)
+		fillRectC(img, cx, cy, rad, rad, cloth)
+		drawHSpan(img, cx-rad, cx+rad, cy-rad, brighten(cloth, 0.16))
 	}
 }
 

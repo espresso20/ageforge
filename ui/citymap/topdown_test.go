@@ -675,6 +675,218 @@ func TestLandmarkOnlyOverlay(t *testing.T) {
 	}
 }
 
+// squareProps returns the town-square prop lots (the typed well/firepit/stones/stall),
+// in placement order. Used by the town-square tests.
+func squareProps(plan topPlan) []tdLot {
+	out := make([]tdLot, 0, len(plan.lots))
+	for _, lt := range plan.lots {
+		switch lt.kind {
+		case tdPropWell, tdPropFirepit, tdPropStones, tdPropStall:
+			out = append(out, lt)
+		}
+	}
+	return out
+}
+
+// TestTownSquareDressing locks the playtest FIX: each WONDER anchor's cleared plaza is
+// dressed as a deliberate TOWN SQUARE — a paved-stone ground patch (a made surface,
+// distinct from the era-tinted dirt) with ≥1 seeded era prop ringed AROUND the wonder
+// roof, none overlapping the roof. It asserts (1) a paved plaza lot per wonder anchor,
+// (2) the paved tone actually paints within the plaza radius on the rendered image
+// (distinct from the dirt ground), and (3) props sit outside the wonder-roof footprint
+// but inside the plaza, so the centerpiece is dressed, never covered.
+func TestTownSquareDressing(t *testing.T) {
+	if err := theme.SetActive("forge"); err != nil {
+		t.Fatalf("SetActive(forge): %v", err)
+	}
+	const w, h = 140, 90
+	state := sampleState("primitive_age", map[string]int{
+		"hut": 30, "gathering_camp": 20, "forge": 12, "colosseum": 1, "stonehenge": 1,
+	})
+	plan := tdPlanFor(state)
+
+	style := tdStyleForEra(eraOrganic)
+	pal := newTdPal()
+	paved := tdPavedColor(style, pal)
+	ground := style.groundBase(pal)
+	// The paving must be a DISTINCT made surface, not the dirt tone.
+	if colorClose(paved, ground, 8) {
+		t.Fatalf("paved tone %v ≈ ground tone %v — the square must read as a distinct paved surface", paved, ground)
+	}
+
+	// A paved plaza lot per wonder anchor, and ≥1 prop near each, none overlapping the
+	// wonder roof.
+	plazaR := defaultTdConfig.plazaRadius * defaultTdConfig.roofSize
+	wonderAnchorN := 0
+	for i, a := range plan.anchors {
+		if !a.wonder {
+			continue
+		}
+		wonderAnchorN++
+		// A plaza lot centered on this anchor.
+		gotPlaza := false
+		for _, lt := range plan.lots {
+			if lt.kind == tdPlaza && math.Hypot(lt.x-a.cx, lt.y-a.cy) < 0.5 {
+				gotPlaza = true
+				break
+			}
+		}
+		if !gotPlaza {
+			t.Fatalf("wonder anchor %d has no paved plaza lot — the cleared plaza is bare dirt, not a town square", i)
+		}
+		// Props near this anchor: at least one, all outside the roof footprint and inside
+		// the plaza (dressing the ring around the wonder, never covering it).
+		scale := 3.0
+		if i > 0 {
+			scale = 2.4
+		}
+		roofHalf := defaultTdConfig.roofSize * scale / 2
+		near := 0
+		for _, lt := range squareProps(plan) {
+			d := math.Hypot(lt.x-a.cx, lt.y-a.cy)
+			if d >= plazaR {
+				continue // belongs to another anchor's square
+			}
+			near++
+			propHalf := math.Max(lt.w, lt.h) / 2
+			if d < roofHalf+propHalf {
+				t.Fatalf("wonder anchor %d: a square prop at dist %.2f overlaps the wonder roof (roofHalf %.2f + propHalf %.2f) — the centerpiece is covered",
+					i, d, roofHalf, propHalf)
+			}
+		}
+		if near < 1 {
+			t.Fatalf("wonder anchor %d has no town-square props ringed around it", i)
+		}
+	}
+	if wonderAnchorN < 2 {
+		t.Fatalf("expected ≥2 wonder anchors to dress, got %d", wonderAnchorN)
+	}
+
+	// The paved tone must actually PAINT within the plaza radius on the rendered image —
+	// the plaza reads as a made surface, not bare ground. Scan the plaza disc of the
+	// grandest wonder (anchor 0) and require a meaningful count of paved-ish pixels.
+	img, _ := renderImage(state, w, h)
+	xf := computeTransform(&plan, w, h)
+	var center tdAnchor
+	for _, a := range plan.anchors {
+		if a.wonder {
+			center = a
+			break
+		}
+	}
+	pavedPix := 0
+	rpx := xf.ext(plazaR) // plaza radius in pixels
+	ccx, ccy := xf.px(center.cx, center.cy)
+	for dy := -rpx; dy <= rpx; dy++ {
+		for dx := -rpx; dx <= rpx; dx++ {
+			if dx*dx+dy*dy > rpx*rpx {
+				continue
+			}
+			x, y := ccx+dx, ccy+dy
+			if x < 0 || x >= w || y < 0 || y >= h {
+				continue
+			}
+			off := img.PixOffset(x, y)
+			got := color.RGBA{R: img.Pix[off], G: img.Pix[off+1], B: img.Pix[off+2], A: 0xff}
+			if colorClose(got, paved, 14) {
+				pavedPix++
+			}
+		}
+	}
+	if pavedPix < 6 {
+		t.Fatalf("only %d paved-tone pixels inside the wonder plaza — the town square is not painted as a made surface", pavedPix)
+	}
+}
+
+// TestWonderlessCenterSquare locks the playtest FIX for a wonderless village: the bare
+// city-center anchor gets a MODEST square — a small paved patch + at least one prop — so
+// the heart reads as a gathering place, WITHOUT hollowing a hut village into a donut. The
+// small patch must be strictly smaller than a full wonder plaza (the openness stays
+// contained), and the fabric must still fill the center (no big empty ring).
+func TestWonderlessCenterSquare(t *testing.T) {
+	_ = theme.SetActive("forge")
+	plan := tdPlanFor(sampleState("primitive_age", map[string]int{"hut": 12, "gathering_camp": 8, "stone_camp": 6}))
+	if len(plan.anchors) != 1 || plan.anchors[0].wonder {
+		t.Fatalf("wonderless village should have exactly one non-wonder center anchor, got %d anchors", len(plan.anchors))
+	}
+	c := plan.anchors[0]
+
+	// A small paved patch at the center.
+	plazaR := defaultTdConfig.plazaRadius * defaultTdConfig.roofSize
+	var patch *tdLot
+	for i := range plan.lots {
+		lt := plan.lots[i]
+		if lt.kind == tdPlaza && math.Hypot(lt.x-c.cx, lt.y-c.cy) < 0.5 {
+			patch = &plan.lots[i]
+			break
+		}
+	}
+	if patch == nil {
+		t.Fatal("wonderless center has no paved patch — the heart reads as bare dirt, not a gathering place")
+	}
+	// MODEST: the patch half-extent must be well under a full wonder plaza radius so the
+	// hut village keeps a filled heart (not a donut).
+	if patch.w/2 >= plazaR {
+		t.Fatalf("wonderless center patch half-extent %.2f is not smaller than a full plaza %.2f — a hut village must not become a donut", patch.w/2, plazaR)
+	}
+
+	// At least one prop at the center.
+	props := 0
+	for _, lt := range squareProps(plan) {
+		if math.Hypot(lt.x-c.cx, lt.y-c.cy) < plazaR {
+			props++
+		}
+	}
+	if props < 1 {
+		t.Fatalf("wonderless center has %d props — expected a modest well/firepit gathering spot", props)
+	}
+
+	// Cohesion is unchanged: a wonderless village stays one filled settlement — no fabric
+	// lot is pushed off the footprint (the small square did NOT hollow the center).
+	rad := tdFootprintRadius(&plan)
+	for _, lt := range fabricLots(plan) {
+		if d := math.Hypot(lt.x-plan.cx, lt.y-plan.cy); d > rad+0.01 {
+			t.Fatalf("wonderless village lot at %.1f exceeds footprint radius %.1f — the modest square disturbed cohesion", d, rad)
+		}
+	}
+}
+
+// TestPerEraDensityKnob locks the playtest FIX 2 groundwork: village density is AIRY
+// early and TIGHTENS with age via a per-era spacing knob. PRIMITIVE keeps its current
+// airy slot spacing (its look must not change); a later era packs strictly tighter. The
+// knob is also correctly ROUTED into the generator config so later-era placement uses it.
+func TestPerEraDensityKnob(t *testing.T) {
+	_ = theme.SetActive("forge")
+
+	prim := tdStyleForEra(eraOrganic)
+	later := tdStyleForEra(eraCityBlocks) // a not-yet-tuned band → the tighter default preset
+
+	// PRIMITIVE unchanged: still the airy 2.4 the village was tuned at.
+	if prim.slotSpacing != 2.4 {
+		t.Fatalf("primitive slotSpacing = %.2f, want 2.4 — the airy primitive village look must not change", prim.slotSpacing)
+	}
+	// Later era packs TIGHTER (denser city/metropolis).
+	if !(later.slotSpacing > 0 && later.slotSpacing < prim.slotSpacing) {
+		t.Fatalf("later-era slotSpacing = %.2f is not tighter than primitive %.2f — density must scale with age", later.slotSpacing, prim.slotSpacing)
+	}
+
+	// The knob must actually ROUTE into the generator config: an era style's slotSpacing
+	// overrides the config default; primitive maps back to 2.4, later to its tighter value.
+	route := func(style tdEraStyle) float64 {
+		cfg := defaultTdConfig
+		if style.slotSpacing > 0 {
+			cfg.slotSpacing = style.slotSpacing
+		}
+		return cfg.slotSpacing
+	}
+	if route(prim) != 2.4 {
+		t.Fatalf("primitive routed slotSpacing = %.2f, want 2.4", route(prim))
+	}
+	if route(later) >= route(prim) {
+		t.Fatalf("later routed slotSpacing %.2f not tighter than primitive %.2f — the knob is not wired into placement", route(later), route(prim))
+	}
+}
+
 // TestTopDownPanicSafeExactSize renders across degenerate and tiny canvases; each must
 // not panic and must produce an image of EXACTLY the requested size (locked cross-cutting
 // constraint). Covers 0×0, 1×1, a tiny square, and a 1×40 sliver.

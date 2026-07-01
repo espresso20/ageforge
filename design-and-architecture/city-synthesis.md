@@ -97,6 +97,24 @@ governs; the older wording is kept for history.
    the banner tone and the text color resolve live from the active theme (retint on
    switch). Shared by the citymap AND the worldmap overlays (consistent).
 
+4. **The wonder/center plaza is DRESSED as a TOWN SQUARE, and density is AIRY early and
+   tightens with age** (playtest: the wonder-anchored primitive village read as a ring
+   around an EMPTY plaza — a donut). The open center is NOT shrunk; it is made
+   intentional. Each plaza-clearing anchor (the wonders + the wonderless city-center) now
+   renders a deliberate town square: a PAVED-STONE ground patch (a lighter/greyer packed-
+   or-paved tone derived from the ground family, distinct from the era-tinted dirt, drawn
+   under the roof + props, theme-derived so it retints) plus a few DETERMINISTIC, seeded,
+   ERA-APPROPRIATE PROPS ringed AROUND (never overlapping) the roof — the primitive set is
+   a well, a firepit, standing stones/totem, and a market stall; later eras swap in
+   fountains/statues/benches via `tdSquarePropsFor` (only primitive is tuned now). The
+   wonder roof stays prominent at the anchor; the square dresses the ring around it. A
+   wonderless village gets a MODEST square (a small paved patch + a well/firepit) so the
+   heart reads as a gathering place without hollowing a hut village into a donut.
+   Separately, village density is a PER-ERA knob (`tdEraStyle.slotSpacing`, routed into
+   `tdConfig.slotSpacing`): PRIMITIVE stays AIRY (unchanged spacing — its look must not
+   change) and later-era presets are progressively TIGHTER so V3-B/C cities + the
+   metropolis pack denser. Framework groundwork; per-era-band values are tuned in V3-B+.
+
 ## Architecture
 
 ### Deterministic persistent layout
