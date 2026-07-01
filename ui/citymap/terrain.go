@@ -255,3 +255,78 @@ func drawTerrain(img *image.RGBA, p terrainPalette, seed uint32) {
 	f := newTerrainField(b.Dx(), b.Dy(), seed)
 	drawTerrainField(img, p, f)
 }
+
+// ---- World-scale field (worldmap.go) ----------------------------------------
+//
+// The world map needs the SAME biome vocabulary as the city map — so it retints on
+// theme switch and shares classifyBiome/passableBiome/biomeColor — but sampled so it
+// reads as CONTINENTS + OCEANS rather than city-block lakes. Two differences from the
+// city field: (1) a much lower base frequency (larger feature scale) so a handful of
+// big landmasses and open seas span the canvas instead of many small ponds; (2) a mild
+// sea-level bias that lifts the land fraction to a target (~55–60%) so there's ample
+// room for settlements while still leaving real oceans. It reuses classifyBiome +
+// passableBiome verbatim — no biome enum is duplicated — so land/water/coast semantics
+// stay identical to the city map, and passability threads straight into dot placement.
+
+// worldElevScale is the base FBM frequency for the world elevation field. Far lower
+// than the city map's 1/38 so features are ~3× wider — a few big continents/seas across
+// the canvas, not a noise wash. worldMoistScale is broader still so damp/dry regions
+// don't merely trace the coastlines.
+const (
+	worldElevScale  = 1.0 / 104.0
+	worldMoistScale = 1.0 / 150.0
+	// worldSeaLift raises the whole elevation field a touch before classification so the
+	// land fraction lands near worldLandTarget. Small, so oceans still read as open water.
+	worldSeaLift    = 0.055
+	worldLandTarget = 0.58 // ~58% land, ~42% ocean — room for settlements, real seas.
+)
+
+// newWorldTerrainField builds a terrainField at WORLD scale: continents + oceans, not
+// city lakes. It samples the shared FBM at a low frequency (big features), lifts the
+// elevation slightly toward land so ~worldLandTarget of the canvas is passable, then
+// classifies each pixel with the SAME classifyBiome/passableBiome the city map uses.
+// Pure + deterministic from seed; the seed must be stable per account (see
+// worldTerrainSeed) so the continents don't rearrange across ages. Panic-safe on tiny/
+// zero canvases (returns an empty field whose at/passableAt guards cover all queries).
+func newWorldTerrainField(w, h int, seed uint32) *terrainField {
+	f := &terrainField{w: w, h: h}
+	if w <= 0 || h <= 0 {
+		return f
+	}
+	mSeed := moistureSeed(seed)
+	f.biomes = make([]biome, w*h)
+	f.passable = make([]bool, w*h)
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			// Low-frequency elevation → big landmasses; lift toward land, clamp to [0,1].
+			e := fbmFreq(float64(x), float64(y), seed, worldElevScale) + worldSeaLift
+			if e > 1 {
+				e = 1
+			}
+			m := fbmFreq(float64(x), float64(y), mSeed, worldMoistScale)
+			b := classifyBiome(e, m)
+			idx := y*w + x
+			f.biomes[idx] = b
+			f.passable[idx] = passableBiome(b)
+		}
+	}
+	return f
+}
+
+// worldTerrainSeed derives a STABLE-per-account world seed from the player's display
+// name, so a given player's continents are fixed and — crucially — independent of age/
+// progress (aging up must not rearrange the land). FNV-1a over the name, salted so it
+// doesn't collide with the age seeds used elsewhere. An empty/anonymous name falls back
+// to a fixed non-zero seed so the anonymous world is still stable and non-degenerate.
+func worldTerrainSeed(displayName string) uint32 {
+	if displayName == "" {
+		return 0x6b8a9f01 // stable anonymous world
+	}
+	var h uint32 = 2166136261
+	for i := 0; i < len(displayName); i++ {
+		h ^= uint32(displayName[i])
+		h *= 16777619
+	}
+	h ^= 0x7f4a7c15 // salt: keep world seeds off the age-seed lattice
+	return h | 1
+}

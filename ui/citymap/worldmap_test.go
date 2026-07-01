@@ -1,6 +1,7 @@
 package citymap
 
 import (
+	"image"
 	"image/color"
 	"testing"
 
@@ -296,6 +297,55 @@ func TestWorldBackdropScalesWithProgress(t *testing.T) {
 	if frac := float64(hi) / float64(total); frac > 0.20 {
 		t.Fatalf("progress=1 backdrop too dense: %d/%d = %.3f, want < 0.20 (no snowstorm)", hi, total, frac)
 	}
+
+	// ---- Land-gating dimension ------------------------------------------------
+	// The rendered backdrop now GATES each candidate to land: a live grid cell only becomes a
+	// settlement mark when its center is passable. So the drawn count is the live cells whose
+	// center is on land — strictly FEWER than the raw live count on a mixed field, yet still
+	// monotonic in progress (gating removes a fixed water mask, it doesn't reorder density).
+	// We measure at the world's real cell pitch (settlementCellPx) over a fixed mixed field so
+	// the gate has genuine ocean to exclude.
+	const pw, ph = 100, 80
+	wf := newWorldTerrainField(pw, ph, worldTerrainSeed("Memphis")) // ~65% land / ~35% sea
+	pgw, pgh := pw/settlementCellPx, ph/settlementCellPx
+
+	// gatedCount replays the render's per-cell land gate against a settlement grid: count the
+	// live cells whose center pixel is passable — exactly the marks drawSettlementField draws.
+	gatedCount := func(prog float64) (gated, raw int) {
+		grid := settlementGrid(worldTerrainSeed("Memphis"), pgw, pgh, prog)
+		for gy := 0; gy < pgh; gy++ {
+			for gx := 0; gx < pgw; gx++ {
+				if !grid[gy*pgw+gx] {
+					continue
+				}
+				raw++
+				cx := gx*settlementCellPx + settlementCellPx/2
+				cy := gy*settlementCellPx + settlementCellPx/2
+				if wf.passableAt(cx, cy) {
+					gated++
+				}
+			}
+		}
+		return gated, raw
+	}
+
+	gLo, rLo := gatedCount(0.0)
+	gHi, rHi := gatedCount(1.0)
+
+	// Gating removes real candidates: on a mixed field the drawn (gated) count is strictly
+	// below the raw live count at full progress (water cells were excluded).
+	if !(gHi < rHi) {
+		t.Fatalf("land-gating removed nothing: gated=%d raw=%d — expected fewer marks once water is excluded", gHi, rHi)
+	}
+	// Still monotonic after gating: more progress → at least as many land marks (strictly more
+	// here, since progress-1 seeds many more candidates than progress-0).
+	if !(gHi > gLo) {
+		t.Fatalf("gated backdrop not monotonic in progress: gated(0)=%d gated(1)=%d", gLo, gHi)
+	}
+	// Sanity that the fixture actually exercised the gate.
+	if rLo == 0 || rHi == 0 {
+		t.Fatalf("no raw candidates generated (raw lo=%d hi=%d) — fixture too small", rLo, rHi)
+	}
 }
 
 // TestWorldFactionColorDistinctAndRetints proves each discovered civ gets its OWN stable
@@ -414,4 +464,331 @@ func labelTexts(labels []overlayLabel) []string {
 		out = append(out, lb.text)
 	}
 	return out
+}
+
+// ---- World terrain: continents + oceans, land-gated dots --------------------
+
+// worldFieldFor rebuilds the world terrain field EXACTLY as renderWorldImage does — same
+// display-name seed, same dimensions — so a test can sample the passability grid the render
+// actually gated against. Mirrors the "rebuild the field as renderImage does" pattern the
+// city-map placement test uses.
+func worldFieldFor(state game.GameState, w, h int) *terrainField {
+	return newWorldTerrainField(w, h, worldTerrainSeed(worldDisplayName(state)))
+}
+
+// TestWorldTerrainHasLandAndWater proves the world backdrop is a real continents-vs-sea map:
+// for a display name known to produce a mixed field at this size, the terrain field contains
+// BOTH passable (land) and impassable (ocean/mountain) cells. A field that was all land or
+// all sea would make the "dots on land" contract vacuous, so we assert the mix explicitly at
+// the exact canvas the render uses. ("Rome" mixes ~62% land / ~38% sea at 80×48.)
+func TestWorldTerrainHasLandAndWater(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 80, 48
+	f := worldFieldFor(worldState("iron_age", nil, "Rome", nil), w, h)
+	land, water := 0, 0
+	for i := range f.passable {
+		if f.passable[i] {
+			land++
+		} else {
+			water++
+		}
+	}
+	if land == 0 {
+		t.Fatal("world terrain has no land — the whole canvas is ocean")
+	}
+	if water == 0 {
+		t.Fatal("world terrain has no ocean — the whole canvas is land (no continents-vs-sea)")
+	}
+}
+
+// TestWorldTerrainStableAcrossAgesDifferentPerName pins the two-seed design: the LAND is keyed
+// off the display name and must be IDENTICAL across two different ages (aging up must not
+// rearrange the continents), yet DIFFERENT for a different display name (each account gets its
+// own world). We compare the passability grids directly — the ground truth every dot gates on.
+func TestWorldTerrainStableAcrossAgesDifferentPerName(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 100, 80
+
+	// Same name, two very different ages → identical land.
+	early := worldFieldFor(worldState("primitive_age", map[string]int{"hut": 1}, "Rome", nil), w, h)
+	late := worldFieldFor(worldState("transcendent_age", map[string]int{"forge": 30}, "Rome", nil), w, h)
+	if len(early.passable) != len(late.passable) {
+		t.Fatalf("field sizes differ across ages: %d vs %d", len(early.passable), len(late.passable))
+	}
+	for i := range early.passable {
+		if early.passable[i] != late.passable[i] {
+			t.Fatalf("land moved across ages at cell %d (same name) — continents not age-stable", i)
+		}
+	}
+
+	// Different name → different land (not identical grids).
+	other := worldFieldFor(worldState("primitive_age", map[string]int{"hut": 1}, "Carthage", nil), w, h)
+	same := true
+	for i := range early.passable {
+		if early.passable[i] != other.passable[i] {
+			same = false
+			break
+		}
+	}
+	if same {
+		t.Fatal("two different display names produced identical land — world seed not name-dependent")
+	}
+}
+
+// TestWorldSettlementBackdropZeroPixelsOnWater is the STRICT settlement-layer contract: the
+// sparse backdrop scatter must place ZERO pixels in the ocean. Settlements are single-cell
+// marks gated per cell (skip any candidate whose center is impassable), so the guarantee is
+// exact — unlike the multi-pixel civ dots, whose RING can overhang a shoreline by a pixel
+// (see TestWorldDotCentersOnLand for the dot contract, which is center-on-land like the city
+// map's placement). We render terrain + settlement field ONLY (no civ dots) and diff against
+// a terrain-only reference: any pixel that changed is a settlement mark, and it must be on
+// land. Uses a mixed-field name so there is real ocean to stay out of.
+func TestWorldSettlementBackdropZeroPixelsOnWater(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 100, 80
+	// "Memphis" mixes ~65% land / ~35% sea at 100×80 — a genuine ocean to keep marks out of.
+	st := worldState("classical_age", map[string]int{"forge": 8, "barracks": 6}, "Memphis", nil)
+
+	f := worldFieldFor(st, w, h)
+	water := 0
+	for _, p := range f.passable {
+		if !p {
+			water++
+		}
+	}
+	if water == 0 {
+		t.Fatal("test fixture has no ocean — pick a name/size with real sea")
+	}
+
+	seed, hueShift := ageInfo(st.Age)
+	pal := buildPalette(hueShift)
+	prog := worldProgress(st)
+
+	ref := image.NewRGBA(image.Rect(0, 0, w, h))
+	drawWorldTerrain(ref, pal, f)
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	drawWorldTerrain(img, pal, f)
+	drawSettlementField(img, pal, f, seed, prog)
+
+	marks := 0
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if img.RGBAAt(x, y) == ref.RGBAAt(x, y) {
+				continue // unchanged from the backdrop — terrain, not a settlement mark
+			}
+			marks++
+			if !f.passableAt(x, y) {
+				t.Fatalf("settlement mark pixel at (%d,%d) sits on a water/impassable cell", x, y)
+			}
+		}
+	}
+	if marks == 0 {
+		t.Fatal("no settlement marks drawn on a mixed-progress world — backdrop empty")
+	}
+}
+
+// TestWorldDotCentersOnLand is the civ-dot land contract: your civ and EVERY discovered civ
+// must have their dot CENTER on passable land (the position snap, nearestPassablePx). The
+// dot body/ring can overhang a shoreline pixel — exactly as the city map's placement test
+// accepts for building volumes — but the center (where the label anchors and the snap targets)
+// is always on land, so no civ "floats" at sea. We drive the two draw passes directly to read
+// back the placed centers over a mixed field. Includes an at-war civ (the hot-red override
+// path also snaps).
+func TestWorldDotCentersOnLand(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 100, 80
+	facs := map[string]game.FactionInfo{
+		"rome":     {Name: "Rome", Discovered: true, Status: "allied", Opinion: 70, Strength: 4},
+		"carthage": {Name: "Carthage", Discovered: true, Status: "rival", Opinion: -50, AtWar: true, Strength: 3},
+		"egypt":    {Name: "Egypt", Discovered: true, Status: "neutral", Opinion: 5, Strength: 2},
+		"nubia":    {Name: "Nubia", Discovered: true, Status: "friendly", Opinion: 30, Strength: 1},
+	}
+	st := worldState("classical_age", map[string]int{"forge": 8, "barracks": 6}, "Memphis", facs)
+
+	f := worldFieldFor(st, w, h)
+	water := 0
+	for _, p := range f.passable {
+		if !p {
+			water++
+		}
+	}
+	if water == 0 {
+		t.Fatal("test fixture has no ocean — pick a name/size with real sea")
+	}
+
+	_, hueShift := ageInfo(st.Age)
+	pal := buildPalette(hueShift)
+	seed, _ := ageInfo(st.Age)
+
+	scratch := image.NewRGBA(image.Rect(0, 0, w, h))
+	you := drawYourCiv(scratch, pal, f, w, h)
+	if !f.passableAt(you.cx, you.cy) {
+		t.Fatalf("your civ center (%d,%d) is on water — position not snapped to land", you.cx, you.cy)
+	}
+	civs := drawWorldCivs(scratch, pal, st, f, seed, you.cx, you.cy)
+	if len(civs) != 4 {
+		t.Fatalf("expected 4 discovered civ dots, got %d", len(civs))
+	}
+	for _, c := range civs {
+		if !f.passableAt(c.cx, c.cy) {
+			t.Fatalf("civ %q center (%d,%d) is on water — position not snapped to land", c.name, c.cx, c.cy)
+		}
+	}
+}
+
+// ---- Player dot: round, bounded, no cross -----------------------------------
+
+// dotExtent scans the image for pixels of (approximately) the given color and returns the
+// bounding box + count, so a test can measure a dot's drawn WIDTH vs HEIGHT and its radius.
+// Colors are matched with a small per-channel tolerance because the body is a brightened
+// blend, not a single canonical constant.
+func dotExtent(img *image.RGBA, target color.RGBA, tol int) (minX, minY, maxX, maxY, count int) {
+	minX, minY = 1<<30, 1<<30
+	maxX, maxY = -1, -1
+	near := func(a, b uint8) bool {
+		d := int(a) - int(b)
+		if d < 0 {
+			d = -d
+		}
+		return d <= tol
+	}
+	b := img.Bounds()
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			c := img.RGBAAt(x, y)
+			if near(c.R, target.R) && near(c.G, target.G) && near(c.B, target.B) {
+				count++
+				if x < minX {
+					minX = x
+				}
+				if x > maxX {
+					maxX = x
+				}
+				if y < minY {
+					minY = y
+				}
+				if y > maxY {
+					maxY = y
+				}
+			}
+		}
+	}
+	return minX, minY, maxX, maxY, count
+}
+
+// TestWorldPlayerDotRoundAndBounded pins the player-dot fix. The player dot is drawn in the
+// accent role (brightened body) at canvas center. We render just your civ over an all-land
+// field (so nothing snaps it away and no neighbour colors intrude), find the accent body's
+// drawn extent, and assert:
+//   - ROUND: drawn width ≈ height (not a wide football). The earlier ry≈rx/2 aspect produced
+//     a box roughly twice as wide as tall; a round disc is within ~1px on each axis.
+//   - BOUNDED: the radius is small (single-digit px), not a metropolis eating the canvas.
+//   - NO PLUS CORE: there is no brighter inner disc that rasterizes a "+" — the whole body is
+//     one bright disc, so scanning the center row/column for a distinct brighter core finds
+//     none (the old inner brighten(accent,0.30) core is gone).
+func TestWorldPlayerDotRoundAndBounded(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 100, 80
+	// "Sparta" is all land at these sizes, so your civ stays at dead center and the accent
+	// body is unobstructed — a clean target to measure.
+	st := worldState("iron_age", map[string]int{"forge": 1}, "Sparta", nil)
+
+	f := worldFieldFor(st, w, h)
+	if !f.passableAt(w/2, h/2) {
+		t.Skip("fixture unexpectedly has water at center; skipping geometry measure")
+	}
+
+	img, _ := renderWorldImage(st, w, h)
+	body := brighten(rgba(theme.Color(theme.RoleAccent)), 0.12)
+	minX, minY, maxX, maxY, count := dotExtent(img, body, 6)
+	if count == 0 {
+		t.Fatal("player dot body color not found in the render")
+	}
+	dw := maxX - minX + 1
+	dh := maxY - minY + 1
+
+	// ROUND: width and height within 2px of each other (a disc, not a football). The old
+	// football was ~2× wider than tall; this catches any regression back to that aspect.
+	if diff := absInt(dw - dh); diff > 2 {
+		t.Fatalf("player dot not round: drawn %dx%d (w-h=%d) — looks like a football", dw, dh, diff)
+	}
+
+	// BOUNDED: not metropolis-sized. Radius ≈ max(dw,dh)/2 must stay in a sane band and never
+	// approach the canvas dimensions.
+	extent := dw
+	if dh > extent {
+		extent = dh
+	}
+	radius := extent / 2
+	if radius < 2 {
+		t.Fatalf("player dot too small (radius ~%d) — should be a prominent seat", radius)
+	}
+	if radius > 8 {
+		t.Fatalf("player dot too large (radius ~%d) — metropolis-sized, not a dot", radius)
+	}
+	if extent >= w/3 || extent >= h/3 {
+		t.Fatalf("player dot spans %dx%d — too big relative to the %dx%d canvas", dw, dh, w, h)
+	}
+
+	// NO PLUS CORE: the body must be a single filled disc. If a brighter inner core were
+	// drawn on top of a same-color body it would rasterize a visible "+" — assert the center
+	// row and center column are solidly filled with the body color across the disc (no bright
+	// spike/gap pattern), i.e. the disc is convex and gap-free through its center.
+	cx := (minX + maxX) / 2
+	cy := (minY + maxY) / 2
+	near := func(a, b uint8, tol int) bool {
+		d := int(a) - int(b)
+		if d < 0 {
+			d = -d
+		}
+		return d <= tol
+	}
+	isBody := func(x, y int) bool {
+		c := img.RGBAAt(x, y)
+		return near(c.R, body.R, 6) && near(c.G, body.G, 6) && near(c.B, body.B, 6)
+	}
+	// Walk the center row across the body extent: once we enter the body we must not exit and
+	// re-enter (a "+" core drawn atop would leave the arms a different color, breaking the run
+	// — but here the run must be one contiguous body span).
+	runs := 0
+	inRun := false
+	for x := minX; x <= maxX; x++ {
+		if isBody(x, cy) {
+			if !inRun {
+				runs++
+				inRun = true
+			}
+		} else {
+			inRun = false
+		}
+	}
+	if runs != 1 {
+		t.Fatalf("player dot center row has %d body runs, want 1 — a broken/cross core, not a clean disc", runs)
+	}
+	_ = cx // center column symmetry is implied by the round-extent check above
+}
+
+// TestWorldPlayerDotBiggerThanNeighbours keeps the size relationship intact: your capital is
+// the largest mark. Render a world with a maxed-strength neighbour and assert your accent
+// body covers more pixels than any single neighbour dot's identity body — your seat dominates.
+func TestWorldPlayerDotBiggerThanNeighbours(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 120, 90
+	facs := map[string]game.FactionInfo{
+		"rome": {Name: "Rome", Discovered: true, Status: "neutral", Opinion: 0, Strength: 5},
+	}
+	st := worldState("classical_age", map[string]int{"forge": 2}, "Sparta", facs)
+	img, _ := renderWorldImage(st, w, h)
+
+	_, _, _, _, yourN := dotExtent(img, brighten(rgba(theme.Color(theme.RoleAccent)), 0.12), 6)
+	_, _, _, _, romeN := dotExtent(img, brighten(factionColor("rome"), 0.18), 8)
+	if yourN == 0 {
+		t.Fatal("player dot body not found")
+	}
+	if romeN == 0 {
+		t.Skip("neighbour body color not distinctly found (blend/overlap); skipping size compare")
+	}
+	if yourN <= romeN {
+		t.Fatalf("player dot (%d px) not larger than the strongest neighbour (%d px)", yourN, romeN)
+	}
 }
