@@ -120,7 +120,42 @@ type tdEraStyle struct {
 	// metropolis pack denser. 0 → fall back to defaultTdConfig.slotSpacing. Routed into
 	// tdConfig.slotSpacing by generateTopPlan.
 	slotSpacing float64
+
+	// houseProfile is the per-era ROOF SHAPE dialect (V3-B). The roof ATLAS (getRoofType) still
+	// picks the archetype (hut / ridge / long / …) from the building's domain+tier — that is
+	// era-independent — but the SILHOUETTE of a dwelling reads differently per era: a primitive
+	// thatch hut is rounded and domed, an ancient mudbrick house is FLATTER and BLOCKIER, a
+	// medieval house is STEEPER-pitched timber. drawRoof consults the profile to nudge the roof
+	// proportions/shading so the same archetype reads era-appropriate. profileThatch is the
+	// unchanged primitive/default look. Zero value == profileThatch (safe default).
+	houseProfile roofProfile
+
+	// wallProfile is the per-era WALL DIALECT (V3-B, locked #9). Ancient = a plain MUDBRICK
+	// curtain (tan, thin, no towers); medieval = a STONE curtain (grey, thicker) studded with
+	// periodic TOWERS + a gatehouse. tdAddWalls reads it to decide the wall thickness, whether to
+	// emit towers, and the gate structure. Only meaningful when hasWalls is true.
+	wallProfile wallProfile
 }
+
+// roofProfile is the per-era dwelling-roof dialect (V3-B). It shifts the ROOF SILHOUETTE of the
+// house/hut archetypes without changing which archetype getRoofType assigns.
+type roofProfile int
+
+const (
+	profileThatch   roofProfile = iota // primitive/default: rounded domed thatch, standard pitch
+	profileMudbrick                    // ancient: flatter, blockier flat-topped mud roofs
+	profileTimber                      // medieval: steeper, sharper pitched timber roofs
+)
+
+// wallProfile is the per-era wall dialect (V3-B, locked #9): mudbrick curtain vs stone curtain +
+// towers + gatehouse. Consumed by tdAddWalls.
+type wallProfile int
+
+const (
+	wallNone     wallProfile = iota // no wall (primitive, industrial+)
+	wallMudbrick                    // ancient: thin tan curtain, gate gaps, no towers
+	wallStone                       // medieval: thicker grey curtain, towers, a gatehouse
+)
 
 // tdPal is the small set of resolved theme colors the style recipes draw from. Built once
 // per frame from the active theme, so a theme switch re-resolves every recipe.
@@ -250,6 +285,119 @@ var defaultTdStyle = func() tdEraStyle {
 	return s
 }()
 
+// ancientCityStyle is the tuned ANCIENT preset (bronze / iron / classical — eraHubSpoke; locked
+// era table row "ancient"): CLAY-TILE roofs (warm terracotta/tan), a PACKED-EARTH / PALE-STONE
+// ground, MUDBRICK houses (flatter/blockier), and — the V3-B centrepiece — a MUDBRICK wall+gate
+// ring around the built-up area. It starts from the default (so it keeps the tuned ground
+// texture / pond / filler behaviour) and overrides only the era MOOD recipes; every tone stays a
+// theme-role recipe so the whole city retints on a theme switch.
+var ancientCityStyle = func() tdEraStyle {
+	s := defaultTdStyle
+	s.name = "ancient"
+
+	// Clay tile: a warm terracotta fill. Background lifted toward text (a warm neutral in these
+	// themes), then pulled firmly toward the clay anchor so a roof reads as fired tile, not thatch.
+	s.roofBase = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.text, 0.30), clayAnchor, 0.52)
+	}
+	s.roofDark = func(p tdPal) color.RGBA {
+		return darken(blend(blend(p.bg, p.text, 0.30), clayAnchor, 0.52), 0.28)
+	}
+	s.lineageMix = 0.16 // keep the subtle lineage tint; the sat cap still guards the no-accent rule
+
+	// Ground: packed earth / pale stone — drier and paler than the primitive dirt+grass. Base
+	// pulled toward the mudbrick tan; alt a touch toward pale stone for a quiet dusty variation.
+	s.groundBase = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.26), mudbrickAnchor, 0.34)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.22), stoneAnchor, 0.24)
+	}
+	// Streets: worn pale-stone/earth lanes — the packed-earth surface leaning a shade greyer than
+	// the primitive tan so the gaps read against the drier ancient ground.
+	s.streetCol = func(p tdPal) color.RGBA {
+		packed := blend(blend(p.bg, p.dim, 0.26), mudbrickAnchor, 0.42)
+		return blend(blend(packed, p.text, 0.36), stoneAnchor, 0.30)
+	}
+	s.streetEdge = func(p tdPal) color.RGBA {
+		packed := blend(blend(p.bg, p.dim, 0.26), mudbrickAnchor, 0.42)
+		surface := blend(blend(packed, p.text, 0.36), stoneAnchor, 0.30)
+		return darken(surface, 0.20)
+	}
+	// Town-square paving: pale dressed stone, lighter/greyer than the ancient ground.
+	s.pavedCol = func(p tdPal) color.RGBA {
+		earthy := blend(blend(p.bg, p.dim, 0.30), mudbrickAnchor, 0.30)
+		return blend(blend(earthy, p.text, 0.34), stoneAnchor, 0.40)
+	}
+
+	// Walls ON (locked #9): a MUDBRICK curtain — the mudbrick tan grounded a touch so it reads as
+	// a sun-baked earthen rampart, not a roof.
+	s.hasWalls = true
+	s.wallProfile = wallMudbrick
+	s.wallCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.30), mudbrickAnchor, 0.50)
+	}
+
+	s.houseProfile = profileMudbrick
+	s.slotSpacing = 1.9 // a shade tighter than primitive (2.4), looser than the medieval city
+	return s
+}()
+
+// medievalCityStyle is the tuned MEDIEVAL preset (medieval / renaissance — eraCastle; locked era
+// table row "castle"): SLATE/TILE roofs (grey / dark blue-grey), a COBBLE / STONE-GREY ground,
+// TIMBER houses (steeper pitched), and a STONE wall+towers+gatehouse ring. Same construction as
+// the ancient preset (copy the default, override the mood recipes, keep theme-derived tones).
+var medievalCityStyle = func() tdEraStyle {
+	s := defaultTdStyle
+	s.name = "medieval"
+
+	// Slate: a cool dark blue-grey. Background grounded toward dim (so it reads darker/cooler than
+	// the warm eras), then pulled to the slate anchor.
+	s.roofBase = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.22), slateAnchor, 0.56)
+	}
+	s.roofDark = func(p tdPal) color.RGBA {
+		return darken(blend(blend(p.bg, p.dim, 0.22), slateAnchor, 0.56), 0.30)
+	}
+	s.lineageMix = 0.14 // a whisper of lineage tint over the cool slate; sat cap still guards it
+
+	// Ground: cobble / stone grey — cool and neutral, the era mood stepping off the warm earth.
+	s.groundBase = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.30), cobbleAnchor, 0.34)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.24), graniteAnchor, 0.22)
+	}
+	// Streets: paved cobble lanes — the cobble ground lifted toward the light neutral + a touch of
+	// masonry grey so the gaps read as trodden paving between the wards.
+	s.streetCol = func(p tdPal) color.RGBA {
+		packed := blend(blend(p.bg, p.dim, 0.30), cobbleAnchor, 0.42)
+		return blend(blend(packed, p.text, 0.34), graniteAnchor, 0.30)
+	}
+	s.streetEdge = func(p tdPal) color.RGBA {
+		packed := blend(blend(p.bg, p.dim, 0.30), cobbleAnchor, 0.42)
+		surface := blend(blend(packed, p.text, 0.34), graniteAnchor, 0.30)
+		return darken(surface, 0.22)
+	}
+	// Town-square paving: dressed flagstone, a lighter cool grey than the cobble ground.
+	s.pavedCol = func(p tdPal) color.RGBA {
+		stony := blend(blend(p.bg, p.dim, 0.30), cobbleAnchor, 0.34)
+		return blend(blend(stony, p.text, 0.36), graniteAnchor, 0.42)
+	}
+
+	// Walls ON (locked #9): a STONE curtain (+ towers + a gatehouse, emitted by tdAddWalls) — the
+	// masonry-grey granite anchor grounded so it reads as cut stone.
+	s.hasWalls = true
+	s.wallProfile = wallStone
+	s.wallCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.34), graniteAnchor, 0.52)
+	}
+
+	s.houseProfile = profileTimber
+	s.slotSpacing = 1.7 // the tuned tighter default — a walled medieval town packs denser
+	return s
+}()
+
 // Muted hue anchors for the earthy village mood. Blended at modest strength against theme
 // roles so a light or dark theme still gets an in-family, non-cartoon palette.
 var (
@@ -264,15 +412,29 @@ var (
 	// FIX 4) — a calm pool blue, never used raw: blended against theme roles so a pond
 	// retints and stays in-family with the village palette rather than reading as cartoon water.
 	waterAnchor = color.RGBA{R: 0x36, G: 0x6b, B: 0x8f, A: 0xff} // muted pond blue-teal
+
+	// V3-B era-material anchors (ancient + medieval). Like the earthy anchors above, these are
+	// NEVER used raw — every recipe blends them against theme roles at a modest strength so a
+	// dark or light theme still yields an in-family, muted tone that retints on a theme switch.
+	clayAnchor     = color.RGBA{R: 0xb0, G: 0x6a, B: 0x42, A: 0xff} // warm terracotta clay tile (ancient roofs)
+	mudbrickAnchor = color.RGBA{R: 0xa8, G: 0x8b, B: 0x63, A: 0xff} // sun-baked tan mudbrick (ancient ground + walls)
+	slateAnchor    = color.RGBA{R: 0x4a, G: 0x52, B: 0x5e, A: 0xff} // dark blue-grey slate (medieval roofs)
+	cobbleAnchor   = color.RGBA{R: 0x77, G: 0x74, B: 0x70, A: 0xff} // cool cobble/stone grey (medieval ground)
+	graniteAnchor  = color.RGBA{R: 0x82, G: 0x84, B: 0x88, A: 0xff} // masonry grey (medieval stone walls + towers)
 )
 
-// tdStyleForEra returns the tuned preset for an era band, or defaultTdStyle for the bands
-// V3-A leaves on the fallback. Organic (primitive, stone) is the only tuned band in V3-A;
-// every other band renders a legible default city.
+// tdStyleForEra returns the tuned preset for an era band, or defaultTdStyle for the bands not yet
+// specialised. Tuned so far: ORGANIC (primitive/stone — V3-A), ANCIENT (bronze/iron/classical —
+// V3-B) and MEDIEVAL (medieval/renaissance — V3-B). The remaining bands (industrial+ / modern /
+// cyber / space) render a legible default city until V3-C/D tunes them.
 func tdStyleForEra(e era) tdEraStyle {
 	switch e {
 	case eraOrganic:
 		return organicVillageStyle
+	case eraHubSpoke:
+		return ancientCityStyle // V3-B: clay roofs, packed-earth ground, mudbrick walls+gates
+	case eraCastle:
+		return medievalCityStyle // V3-B: slate roofs, cobble ground, stone walls+towers+gatehouse
 	default:
 		return defaultTdStyle
 	}
@@ -417,6 +579,16 @@ const (
 	tdPropFirepit // a firepit / hearth (dark ring + ember center)
 	tdPropStones  // standing stones / a totem (a couple of upright dabs)
 	tdPropStall   // a market stall (awning patch)
+
+	// V3-B era square props. Ancient set: altar / columns / braziers (+ well). Medieval set:
+	// market stalls / fountain / cross-or-gallows (+ well). Each has its own small top-down draw
+	// routine (drawSquareProp), so per-era squares read distinct without disturbing the primitive
+	// set. Placed by tdRingProps exactly like the primitive props (deterministic ring, no overlap).
+	tdPropAltar    // ancient: a low stone altar (a flat slab + a small offering dab)
+	tdPropColumns  // ancient: a row of columns / colonnade (a few upright pale dabs)
+	tdPropBrazier  // ancient: a fire brazier on a stand (a bright ember over a dark base)
+	tdPropFountain // medieval: a stone fountain (a paved ring + a water center)
+	tdPropCross    // medieval: a market cross / gallows (an upright post with a crossbar)
 )
 
 // tdLot is one placed thing, in CITY SPACE (pre-fill-frame). x,y is the lot center in city
@@ -1100,9 +1272,10 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 	// (f) filler — balanced gardens / ponds / trees / props in the leftover in-town space.
 	tdAddFiller(&plan, field, style, cfg, seed)
 
-	// (g) walls — a wall+gate ring IF the era has walls. Primitive: none.
+	// (g) walls — a wall+gate ring IF the era has walls (ancient mudbrick, medieval stone+towers).
+	// Primitive + industrial-and-later: none (open sprawl).
 	if style.hasWalls {
-		tdAddWalls(&plan, seed)
+		tdAddWalls(&plan, style, seed)
 	}
 
 	return plan
@@ -2015,13 +2188,33 @@ type tdSquareProps struct {
 	center []tdLotKind // props for a wonderless city-center's modest square
 }
 
-// tdSquarePropsFor returns the town-square prop palette for an era. PRIMITIVE (organic): a well,
-// a firepit, standing stones/totem, and a market stall around a wonder; a well + firepit for a
-// bare center. Every other era falls back to the primitive set until V3-B/C/D tunes its own.
+// tdSquarePropsFor returns the town-square prop palette for an era, keyed off the style's house
+// profile (the era discriminator V3-B threads everywhere):
+//   - PRIMITIVE/default (profileThatch): a well, a firepit, standing stones/totem, and a market
+//     stall around a wonder; a well + firepit for a bare center.
+//   - ANCIENT (profileMudbrick): an ALTAR, COLUMNS, BRAZIERS + a well around a wonder (a temple
+//     forecourt); a well + altar for a bare center.
+//   - MEDIEVAL (profileTimber): MARKET STALLS, a FOUNTAIN, a well + a market CROSS/gallows around a
+//     wonder (a market square); a well + fountain for a bare center.
+//
+// Every set keeps the deterministic ring placement + no-overlap-with-roof (tdRingProps).
 func tdSquarePropsFor(style tdEraStyle) tdSquareProps {
-	return tdSquareProps{
-		wonder: []tdLotKind{tdPropWell, tdPropFirepit, tdPropStones, tdPropStall},
-		center: []tdLotKind{tdPropWell, tdPropFirepit},
+	switch style.houseProfile {
+	case profileMudbrick: // ancient
+		return tdSquareProps{
+			wonder: []tdLotKind{tdPropAltar, tdPropColumns, tdPropBrazier, tdPropWell},
+			center: []tdLotKind{tdPropWell, tdPropAltar},
+		}
+	case profileTimber: // medieval
+		return tdSquareProps{
+			wonder: []tdLotKind{tdPropStall, tdPropFountain, tdPropWell, tdPropCross},
+			center: []tdLotKind{tdPropWell, tdPropFountain},
+		}
+	default: // primitive / not-yet-tuned
+		return tdSquareProps{
+			wonder: []tdLotKind{tdPropWell, tdPropFirepit, tdPropStones, tdPropStall},
+			center: []tdLotKind{tdPropWell, tdPropFirepit},
+		}
 	}
 }
 
@@ -2334,30 +2527,221 @@ func tdRoofBBox(plan *topPlan) (minX, minY, maxX, maxY float64) {
 	return minX, minY, maxX, maxY
 }
 
-// ---- walls (capability; primitive off) --------------------------------------
+// ---- walls (locked #9; ancient mudbrick + medieval stone) -------------------
 
-// tdAddWalls rings the built-up area with a wall + a few gates in city space (locked #9). V3-A
-// wires the capability but PRIMITIVE keeps hasWalls=false, so this only runs for a (future) era
-// that flips the flag — the code path is complete + tested.
-func tdAddWalls(plan *topPlan, seed uint32) {
-	rad := tdFootprintRadius(plan) * 1.15
-	if rad <= 0 {
+// tdWallExtra is one non-segment wall feature (a TOWER or a GATEHOUSE), carried as its own lot so
+// the renderer can draw it prominently. Towers/gatehouses are only emitted for the STONE wall
+// (medieval); the mudbrick wall (ancient) is a plain curtain.
+const (
+	tdWallTower     tdLotKind = iota + 100 // a wall tower (stone wall only): a fat masonry block
+	tdWallGatehouse                        // a gatehouse flanking a stone-wall gate: two towers + lintel
+)
+
+// tdWallRadiusAt is the wall RING radius at a given angle (city units). The wall follows the
+// (ragged) town OUTLINE just OUTSIDE the outermost ward: for the ORGANIC form it rides the
+// irregular blob outline (tdOrganicRadiusAt) so the rampart is ragged like the town it encloses;
+// every other form uses a plain circle. Sized from the built-up footprint (so buildings stay
+// INSIDE) but capped to the town disc so the ring never leaves the bounded canvas. Pure.
+func tdWallRadiusAt(angle, footR, townR float64, form tdTownForm, seed uint32) float64 {
+	// Ring the built-up edge with a small margin so the outermost roofs sit inside the wall.
+	r := footR * 1.12
+	// Follow the ragged outline for the ORGANIC form: modulate the footprint ring by the town's
+	// own outline profile at this angle (tdOrganicRadiusAt/townR ∈ [floor,1]), so the rampart bites
+	// inward on the town's bays and bulges on its peninsulas — a ragged wall around a ragged town.
+	if form == formOrganic && townR > 0 {
+		shape := tdOrganicRadiusAt(angle, townR, seed) / townR // 0..1 outline profile at this angle
+		r = footR * (1.04 + 0.16*shape)
+	}
+	// Keep the ring inside the bounded town disc (+ a hair) so the wall never flies off-canvas.
+	if lim := townR * 1.14; r > lim {
+		r = lim
+	}
+	return r
+}
+
+// tdAddWalls rings the built-up area with a WALL + GATES that follow the (ragged) town outline
+// just outside the outermost wards (locked #9, V3-B). It is DETERMINISTIC (seeded), BOUNDED (the
+// ring is capped to the town disc), and preserves STREET CONNECTIVITY: the wall is a ring of
+// segment lots with GAPS where the town's main/longest streets reach the rim — a small gate
+// structure sits at each gap and the street EXITS through it. The street-cell network itself is
+// never touched (the connectivity guarantee of the Voronoi model holds); the wall only rings it.
+//
+// Two dialects by wall profile:
+//   - wallMudbrick (ancient): a thin tan curtain, four gates, no towers.
+//   - wallStone (medieval): a thicker grey curtain, periodic TOWERS, and a GATEHOUSE at the main
+//     gate (the longest street's exit).
+func tdAddWalls(plan *topPlan, style tdEraStyle, seed uint32) {
+	footR := tdFootprintRadius(plan)
+	if footR <= 0 {
 		return
 	}
-	const segs = 24
-	gateEvery := segs / 4 // four gates, roughly cardinal
+	form := plan.form
+	townR := plan.townR
+	prof := style.wallProfile
+	if prof == wallNone {
+		prof = wallMudbrick // hasWalls set but no profile → a plain curtain (safe default)
+	}
+
+	// GATES follow the STREETS: a street must be able to exit the town, so a gate opens where a
+	// main street reaches the wall ring. Rank the town's exit directions by how far their street
+	// cells reach from the core (the longest radial streets are the main roads), dedupe by angle,
+	// and open a gate at each. This guarantees every gate sits on a real street so connectivity
+	// through the wall is preserved by construction. Fall back to cardinal gates if (degenerate) no
+	// street reaches the rim.
+	gateAngles := tdGateAngles(plan, footR, prof, seed)
+
+	// Segment the ring finely so the curtain reads continuous. A segment whose angle falls within a
+	// gate's arc is DROPPED (the gap) and replaced by the gate structure; the rest are wall.
+	const segs = 48
 	r := newRNG(hash2(0x3a11, uint32(len(plan.lots)), seed) | 1)
 	phase := r.f01() * 2 * math.Pi
+	// Wall thickness (city units): mudbrick ~thin, stone ~a hair thicker.
+	segHalf := 0.85
+	if prof == wallStone {
+		segHalf = 1.05
+	}
+	// Gate half-arc: the angular gap a gate opens in the ring (wide enough for a street to pass).
+	gateArc := 0.16 // radians each side of the gate center
+	// Tower cadence (stone only): a tower every few segments around the ring.
+	const towerEvery = 6
+
+	inGate := func(ang float64) (center float64, isGate bool) {
+		for _, ga := range gateAngles {
+			d := angDiff(ang, ga)
+			if d < gateArc {
+				return ga, true
+			}
+		}
+		return 0, false
+	}
+
 	for i := 0; i < segs; i++ {
 		ang := phase + 2*math.Pi*float64(i)/float64(segs)
+		rad := tdWallRadiusAt(ang, footR, townR, form, seed)
+		if _, isGate := inGate(ang); isGate {
+			continue // leave a GAP in the curtain here — the gate structure is placed below
+		}
 		x := plan.cx + math.Cos(ang)*rad
 		y := plan.cy + math.Sin(ang)*rad
-		kind := tdWall
-		if i%gateEvery == 0 {
-			kind = tdGate
+		plan.lots = append(plan.lots, tdLot{x: x, y: y, w: segHalf * 2, h: segHalf * 2, kind: tdWall})
+		// Stone walls carry periodic towers between the gates.
+		if prof == wallStone && i%towerEvery == 0 {
+			plan.lots = append(plan.lots, tdLot{x: x, y: y, w: segHalf * 3.0, h: segHalf * 3.0, kind: tdWallTower})
 		}
-		plan.lots = append(plan.lots, tdLot{x: x, y: y, w: 1.4, h: 1.4, kind: kind})
 	}
+
+	// Gate structures: a small gate block AT each gate gap so the opening reads as a real gate the
+	// street passes through, not just a missing wall segment. The FIRST gate (the longest street,
+	// the main road) gets a GATEHOUSE on a stone wall — flanking towers + a lintel across the gap.
+	for gi, ga := range gateAngles {
+		rad := tdWallRadiusAt(ga, footR, townR, form, seed)
+		gx := plan.cx + math.Cos(ga)*rad
+		gy := plan.cy + math.Sin(ga)*rad
+		plan.lots = append(plan.lots, tdLot{x: gx, y: gy, w: segHalf * 2, h: segHalf * 2, kind: tdGate})
+		if prof == wallStone {
+			// Flanking gate towers just to either side of the opening (tangent to the ring).
+			tangent := ga + math.Pi/2
+			off := (gateArc + 0.05) * rad
+			for _, s := range []float64{-1, 1} {
+				fx := gx + math.Cos(tangent)*off*s
+				fy := gy + math.Sin(tangent)*off*s
+				k := tdWallTower
+				if gi == 0 {
+					k = tdWallGatehouse // the main gate is a full gatehouse
+				}
+				plan.lots = append(plan.lots, tdLot{x: fx, y: fy, w: segHalf * 3.0, h: segHalf * 3.0, kind: k})
+			}
+		}
+	}
+}
+
+// tdGateAngles picks the wall's gate directions from the town's MAIN STREETS so a gate always
+// opens where a street reaches the rim (streets exit through gates → connectivity preserved). It
+// buckets the street cells by angle around the core, takes the angle of the FARTHEST-reaching cell
+// in each occupied bucket (the streets that actually run out to the wall), sorts those exit
+// directions by reach (longest = the main road first), dedupes near-duplicate angles, and returns
+// the top few. A stone wall gets 4 gates, a mudbrick wall 4 as well (a modest ancient town). If no
+// street reaches near the rim (degenerate/tiny), it falls back to seeded ~cardinal gates so the
+// ring is never gate-less. Deterministic (pure over the plan + seed).
+func tdGateAngles(plan *topPlan, footR float64, prof wallProfile, seed uint32) []float64 {
+	want := 4
+	type exit struct {
+		ang   float64
+		reach float64
+	}
+	const buckets = 16
+	best := make([]exit, buckets)
+	for i := range best {
+		best[i].reach = -1
+	}
+	for _, p := range plan.streetCells {
+		dx, dy := p.x-plan.cx, p.y-plan.cy
+		reach := math.Hypot(dx, dy)
+		// Only streets that run OUT toward the wall are exit candidates (near the built-up rim).
+		if reach < footR*0.6 {
+			continue
+		}
+		a := math.Atan2(dy, dx)
+		b := int((a + math.Pi) / (2 * math.Pi) * buckets)
+		if b < 0 {
+			b = 0
+		}
+		if b >= buckets {
+			b = buckets - 1
+		}
+		if reach > best[b].reach {
+			best[b] = exit{ang: a, reach: reach}
+		}
+	}
+	var exits []exit
+	for _, e := range best {
+		if e.reach > 0 {
+			exits = append(exits, e)
+		}
+	}
+	// Longest-reaching exits first (the main roads); stable tiebreak by angle.
+	sort.SliceStable(exits, func(i, j int) bool {
+		if exits[i].reach != exits[j].reach {
+			return exits[i].reach > exits[j].reach
+		}
+		return exits[i].ang < exits[j].ang
+	})
+	// Dedupe gates that sit too close together (keep them spread around the ring).
+	var out []float64
+	for _, e := range exits {
+		ok := true
+		for _, g := range out {
+			if angDiff(e.ang, g) < 0.5 {
+				ok = false
+				break
+			}
+		}
+		if ok {
+			out = append(out, e.ang)
+		}
+		if len(out) >= want {
+			break
+		}
+	}
+	// Fallback: no street reached the rim (tiny/degenerate town) → seeded ~cardinal gates so the
+	// ring still opens and a street (which always reaches the rim in a real town) can exit.
+	if len(out) == 0 {
+		r := newRNG(hash2(0x6a7e, uint32(len(plan.streetCells)), seed) | 1)
+		ph := r.f01() * 2 * math.Pi
+		for i := 0; i < want; i++ {
+			out = append(out, ph+2*math.Pi*float64(i)/float64(want))
+		}
+	}
+	return out
+}
+
+// angDiff is the smallest absolute angular distance between two angles (radians), in [0,π].
+func angDiff(a, b float64) float64 {
+	d := math.Mod(math.Abs(a-b), 2*math.Pi)
+	if d > math.Pi {
+		d = 2*math.Pi - d
+	}
+	return d
 }
 
 // ---- fill-frame transform ---------------------------------------------------
@@ -2408,6 +2792,15 @@ func computeTransform(plan *topPlan, w, h int) tdTransform {
 	// on-frame (and a plaza-only / tiny town still fits its streets).
 	for _, p := range plan.streetCells {
 		acc(p.x, p.y, plan.cellSize/2)
+	}
+	// Walls / gates / towers / gatehouses ring the built-up edge just outside the roofs (V3-B). Fit
+	// them too so the whole enceinte stays BOUNDED on-canvas (locked #9: the wall inside the canvas)
+	// rather than being flung off the frame edge.
+	for _, lt := range plan.lots {
+		switch lt.kind {
+		case tdWall, tdGate, tdWallTower, tdWallGatehouse:
+			acc(lt.x, lt.y, math.Max(lt.w, lt.h)/2)
+		}
 	}
 	// Always include the core so an empty plan still centers sensibly.
 	acc(plan.cx, plan.cy, 1)
@@ -2555,23 +2948,41 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 		case tdProp:
 			cx, cy := xf.px(lt.x, lt.y)
 			drawBlock(img, cx, cy, 0, propCol)
-		case tdPropWell, tdPropFirepit, tdPropStones, tdPropStall:
+		case tdPropWell, tdPropFirepit, tdPropStones, tdPropStall,
+			tdPropAltar, tdPropColumns, tdPropBrazier, tdPropFountain, tdPropCross:
 			drawSquareProp(img, xf, lt, style, pal)
 		}
 	}
 
-	// Walls + gates last among pixels (if any) so the ring crowns the built-up edge.
+	// Walls + gates + towers last among pixels (if any) so the ring crowns the built-up edge.
+	// Towers/gatehouses draw AFTER the curtain so they sit proud of it. Every tone is the era wall
+	// recipe (theme-derived → retints); the gate reads lighter (an opening) and the tower darker +
+	// larger (a solid mass) so the ring reads as a real fortification, not a dotted circle.
 	if style.hasWalls {
 		wallCol := style.wallCol(pal)
-		gateCol := brighten(wallCol, 0.25)
+		gateCol := brighten(wallCol, 0.28)
+		towerCol := darken(wallCol, 0.14)
+		towerCap := brighten(wallCol, 0.10)
 		for _, lt := range plan.lots {
-			switch lt.kind {
-			case tdWall:
+			if lt.kind == tdWall {
 				cx, cy := xf.px(lt.x, lt.y)
 				drawBlock(img, cx, cy, xf.ext(lt.w/2), wallCol)
+			}
+		}
+		for _, lt := range plan.lots {
+			switch lt.kind {
 			case tdGate:
 				cx, cy := xf.px(lt.x, lt.y)
 				drawBlock(img, cx, cy, xf.ext(lt.w/2), gateCol)
+			case tdWallTower, tdWallGatehouse:
+				cx, cy := xf.px(lt.x, lt.y)
+				rad := xf.ext(lt.w / 2)
+				fillDisc(img, cx, cy, rad, towerCol) // a fat masonry drum
+				setPixel(img, cx, cy, towerCap)      // a lit crenellation cap
+				if lt.kind == tdWallGatehouse {
+					// A gatehouse reads a touch taller: a second ring of cap dabs (crenellations).
+					forRectOutline(cx, cy, rad, rad, func(x, y int) { setPixel(img, x, y, towerCap) })
+				}
 			}
 		}
 	}
@@ -2748,6 +3159,37 @@ func drawSquareProp(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle,
 		cloth := blend(prop, pal.text, 0.20)
 		fillRectC(img, cx, cy, rad, rad, cloth)
 		drawHSpan(img, cx-rad, cx+rad, cy-rad, brighten(cloth, 0.16))
+	case tdPropAltar:
+		// A low stone altar: a flat pale slab with a small dark offering dab on top.
+		stone := blend(prop, paved, 0.45)
+		fillRectC(img, cx, cy, rad, maxInt(rad-1, 0), brighten(stone, 0.08))
+		setPixel(img, cx, cy, darken(prop, 0.4))
+	case tdPropColumns:
+		// A colonnade: a short row of upright pale column dabs.
+		col := brighten(blend(prop, paved, 0.5), 0.10)
+		for _, dx := range []int{-rad, 0, rad} {
+			drawBlock(img, cx+dx, cy, 0, col)
+			setPixel(img, cx+dx, cy-1, brighten(col, 0.12)) // a lit capital
+		}
+	case tdPropBrazier:
+		// A fire brazier: a dark stand under a bright ember.
+		fillDisc(img, cx, cy, rad, darken(prop, 0.5))
+		ember := brighten(blend(prop, color.RGBA{R: 0xd0, G: 0x6a, B: 0x24, A: 0xff}, 0.7), 0.12)
+		setPixel(img, cx, cy, ember)
+		setPixel(img, cx, cy-1, ember)
+	case tdPropFountain:
+		// A stone fountain: a paved ring with a water-tone center.
+		fillDisc(img, cx, cy, rad, brighten(paved, 0.08))
+		water := blend(pal.bg, waterAnchor, 0.55)
+		setPixel(img, cx, cy, water)
+		setPixel(img, cx, cy-1, brighten(water, 0.14))
+	case tdPropCross:
+		// A market cross / gallows: an upright post with a crossbar.
+		post := blend(prop, paved, 0.30)
+		for dy := -rad; dy <= rad; dy++ {
+			setPixel(img, cx, cy+dy, post)
+		}
+		drawHSpan(img, cx-rad, cx+rad, cy-rad+1, post)
 	}
 }
 
@@ -2815,11 +3257,15 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 
 	switch lt.roof {
 	case roofHut:
-		drawRoofHut(img, cx, cy, hw, hh, rc)
-	case roofRidge:
-		drawRoofRidge(img, cx, cy, hw, hh, rc)
-	case roofLong:
-		drawRoofRidge(img, cx, cy, hw, hh, rc)
+		// A hut is a dwelling: read its era silhouette. Mudbrick huts are flat-topped blocks;
+		// primitive/timber keep the rounded domed thatch cap.
+		if style.houseProfile == profileMudbrick {
+			drawRoofMudbrick(img, cx, cy, hw, hh, rc)
+		} else {
+			drawRoofHut(img, cx, cy, hw, hh, rc)
+		}
+	case roofRidge, roofLong:
+		drawRoofHouse(img, cx, cy, hw, hh, rc, style.houseProfile)
 	case roofTemple:
 		drawRoofTemple(img, cx, cy, hw, hh, rc)
 	case roofCamp:
@@ -2829,9 +3275,18 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 	case roofFlat:
 		drawRoofFlat(img, cx, cy, hw, hh, rc)
 	case roofWonder:
-		drawRoofWonder(img, cx, cy, hw, hh, rc)
+		// The era WONDER silhouette (locked #13, V3-B): ancient = a stepped ZIGGURAT, medieval =
+		// a CATHEDRAL/KEEP with a spire; every other era keeps the ornate default complex.
+		switch style.houseProfile {
+		case profileMudbrick:
+			drawRoofZiggurat(img, cx, cy, hw, hh, rc)
+		case profileTimber:
+			drawRoofCathedral(img, cx, cy, hw, hh, rc)
+		default:
+			drawRoofWonder(img, cx, cy, hw, hh, rc)
+		}
 	default:
-		drawRoofRidge(img, cx, cy, hw, hh, rc)
+		drawRoofHouse(img, cx, cy, hw, hh, rc, style.houseProfile)
 	}
 }
 
@@ -2914,6 +3369,85 @@ func drawRoofRidge(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 	}
 }
 
+// drawRoofHouse renders a rectangular DWELLING roof in the era dialect (V3-B). It shares the
+// pitched-rectangle base with drawRoofRidge (both slopes shaded off the ridge) but nudges the
+// silhouette per profile so the same archetype reads era-appropriate:
+//   - profileThatch  (primitive/default): the plain two-slope ridge, unchanged.
+//   - profileMudbrick (ancient): a FLATTER, BLOCKIER roof — a broad flat inner deck with only a
+//     thin shaded eave, so it reads as a low mud/adobe roof, not a steep pitch.
+//   - profileTimber  (medieval): a STEEPER pitch — a narrow, sharply-shaded ridge with the slopes
+//     darkening fast toward the eaves, so it reads as a tall timber-framed gable.
+func drawRoofHouse(img *image.RGBA, cx, cy, hw, hh int, rc roofColors, prof roofProfile) {
+	switch prof {
+	case profileMudbrick:
+		drawRoofMudbrick(img, cx, cy, hw, hh, rc)
+	case profileTimber:
+		drawRoofTimber(img, cx, cy, hw, hh, rc)
+	default:
+		drawRoofRidge(img, cx, cy, hw, hh, rc)
+	}
+}
+
+// drawRoofMudbrick: the ANCIENT dwelling — a FLAT-TOPPED, blocky mud/adobe roof read from above.
+// A full base rectangle in the shaded tone, a broad flat inner DECK in the lit base tone (most of
+// the roof), and only a thin darker rim as the parapet/eave — no pitched ridge line, so it reads
+// low and blocky, distinct from a pitched house. Serves the ancient hut too (a mud house has no
+// dome). Base-derived tones only (no accent).
+func drawRoofMudbrick(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	forRect(cx, cy, hw, hh, func(x, y int) { img.SetRGBA(x, y, rc.dark) }) // parapet/eave shadow
+	dhw := maxInt(hw-1, 0)
+	dhh := maxInt(hh-1, 0)
+	forRect(cx, cy, dhw, dhh, func(x, y int) { img.SetRGBA(x, y, rc.base) }) // broad flat deck
+	// A faint lit corner (NW) hint so the flat deck isn't a dead slab, kept base-derived.
+	lhw := maxInt(hw/2, 0)
+	lhh := maxInt(hh/2, 0)
+	forRect(cx-hw+lhw/2+1, cy-hh+lhh/2+1, maxInt(lhw/2, 0), maxInt(lhh/2, 0), func(x, y int) {
+		img.SetRGBA(x, y, rc.ridge)
+	})
+}
+
+// drawRoofTimber: the MEDIEVAL dwelling — a STEEP pitched timber roof read from above. Like the
+// ridge roof but the pitch reads sharper: the two slopes darken fast away from a NARROW bright
+// ridge (a tall gable throws a hard light/shade split), so it reads as a steep timber roof rather
+// than the ancient flat deck or the primitive gentle pitch. Ridge is base-derived (rc.ridge).
+func drawRoofTimber(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	horizontalRidge := hw >= hh
+	forRect(cx, cy, hw, hh, func(x, y int) {
+		// Distance from the ridge line as a fraction of the half-span across the pitch; the slope
+		// darkens with that distance so the pitch reads STEEP (fast falloff), and the two sides
+		// split light (north/west lit, south/east shaded).
+		var frac float64
+		var lit bool
+		if horizontalRidge {
+			if hh > 0 {
+				frac = float64(absInt(y-cy)) / float64(hh)
+			}
+			lit = y <= cy
+		} else {
+			if hw > 0 {
+				frac = float64(absInt(x-cx)) / float64(hw)
+			}
+			lit = x <= cx
+		}
+		slope := rc.base
+		if lit {
+			// Lit side: base near the ridge, easing toward dark at the eave (a steep, fast falloff).
+			slope = blend(rc.base, rc.dark, frac*0.55)
+		} else {
+			// Shaded side: already dark near the ridge, fully dark at the eave.
+			slope = blend(blend(rc.base, rc.dark, 0.5), rc.dark, frac*0.7)
+		}
+		img.SetRGBA(x, y, slope)
+	})
+	if horizontalRidge {
+		drawHSpan(img, cx-hw, cx+hw, cy, rc.ridge)
+	} else {
+		for y := cy - hh; y <= cy+hh; y++ {
+			img.SetRGBA(cx, y, rc.ridge)
+		}
+	}
+}
+
 // drawRoofTemple: the larger, grandest small building — an ornate symmetric tiered roof read
 // from above. A full base footprint, a lighter stepped inner tier, and a small subtle central
 // peak, all base-derived (no accent finial — that was the yellow dot). Cross ridges on both axes
@@ -2982,6 +3516,85 @@ func drawRoofWonder(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 	for y := cy - hh; y <= cy+hh; y++ {
 		img.SetRGBA(cx, y, rc.ridge)
 	}
+}
+
+// drawRoofZiggurat: the ANCIENT wonder (locked #13, V3-B) — a stepped pyramid temple read from
+// above as a set of CONCENTRIC SQUARE TIERS shrinking toward a bright central shrine, so it reads
+// as a ziggurat's terraces (Ur / Mesopotamian temple-mount) rather than the rounded default
+// complex. Each tier is a shade lighter than the one below (terraces catching light as they rise);
+// the top is the base-derived ridge tone (no accent — the sat cap keeps even a gold-lineage wonder
+// an earthy clay). A cross axis on the base grounds it as a symmetric monument.
+func drawRoofZiggurat(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	const tiers = 4
+	for t := 0; t < tiers; t++ {
+		f := float64(t) / float64(tiers) // 0 (base) .. →1 (top)
+		thw := maxInt(int(float64(hw)*(1-f)), 1)
+		thh := maxInt(int(float64(hh)*(1-f)), 1)
+		// Lower tiers dark, rising tiers lighten toward the base tone; the top tier is the ridge.
+		col := blend(rc.dark, rc.base, f/(1-1.0/tiers))
+		if t == tiers-1 {
+			col = rc.ridge
+		}
+		forRect(cx, cy, thw, thh, func(x, y int) { img.SetRGBA(x, y, col) })
+		// A thin darker step edge on each tier's south+east so the terraces read as raised steps.
+		drawHSpan(img, cx-thw, cx+thw, cy+thh, darken(col, 0.18))
+		for y := cy - thh; y <= cy+thh; y++ {
+			img.SetRGBA(cx+thw, y, darken(col, 0.18))
+		}
+	}
+	// Symmetric cross axes across the base tier ground it as a monument.
+	drawHSpan(img, cx-hw, cx+hw, cy, blend(rc.base, rc.ridge, 0.4))
+}
+
+// drawRoofCathedral: the MEDIEVAL wonder (locked #13, V3-B) — a tall CATHEDRAL / KEEP read from
+// above: a long cruciform nave (a broad body with a shorter transept crossing it) topped by a
+// central SPIRE dab, so it reads as a great church/keep rather than the rounded default complex.
+// All tones base/dark/ridge-derived (no accent — the spire is a base-derived lighten, not a
+// saturated finial). The cross-plan + spire make it unmistakably a cathedral from above.
+func drawRoofCathedral(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	// The NAVE: a long body along the wider axis. The TRANSEPT: a shorter arm across it. Together a
+	// cross plan. Slate slopes shade off each ridge.
+	horizontal := hw >= hh
+	naveHW, naveHH := hw, maxInt(hh*3/5, 1)
+	tranHW, tranHH := maxInt(hw*3/5, 1), hh
+	if !horizontal {
+		naveHW, naveHH = maxInt(hw*3/5, 1), hh
+		tranHW, tranHH = hw, maxInt(hh*3/5, 1)
+	}
+	// Nave body (pitched: lit north/west, shaded south/east).
+	forRect(cx, cy, naveHW, naveHH, func(x, y int) {
+		lit := y <= cy
+		if !horizontal {
+			lit = x <= cx
+		}
+		if lit {
+			img.SetRGBA(x, y, rc.base)
+		} else {
+			img.SetRGBA(x, y, rc.dark)
+		}
+	})
+	// Transept arm.
+	forRect(cx, cy, tranHW, tranHH, func(x, y int) {
+		lit := x <= cx
+		if !horizontal {
+			lit = y <= cy
+		}
+		if lit {
+			img.SetRGBA(x, y, rc.base)
+		} else {
+			img.SetRGBA(x, y, rc.dark)
+		}
+	})
+	// Ridge lines along both arms.
+	drawHSpan(img, cx-naveHW, cx+naveHW, cy, rc.ridge)
+	for y := cy - tranHH; y <= cy+tranHH; y++ {
+		img.SetRGBA(cx, y, rc.ridge)
+	}
+	// Central SPIRE: a small bright base-derived dab at the crossing (a steeple seen from above).
+	shw := maxInt(hw/5, 1)
+	shh := maxInt(hh/5, 1)
+	forRect(cx, cy, shw, shh, func(x, y int) { img.SetRGBA(x, y, rc.ridge) })
+	setPixel(img, cx, cy, brighten(rc.ridge, 0.12))
 }
 
 // ---- pixel primitives (top-down) --------------------------------------------

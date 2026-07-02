@@ -2181,3 +2181,387 @@ func TestEachTownFormWellFormed(t *testing.T) {
 		}
 	}
 }
+
+// ---- V3-B: ancient + medieval styling ---------------------------------------
+//
+// V3-B fills in the ANCIENT (bronze/iron/classical — eraHubSpoke) and MEDIEVAL (medieval/
+// renaissance — eraCastle) bands using the existing frameworks (era styles, roof materials,
+// ground tints, square props, town-form weights, wall flag). These tests lock the era distinctness
+// + the big new WALLS+GATES piece, while the shared invariants above (streets-connected, no-overlap,
+// compact, determinism, quiet ground, etc.) continue to cover all bands.
+
+// wallLotsOf / gateLotsOf / towerLotsOf return the wall-ring lots of a plan by kind.
+func wallLotsOf(plan topPlan) []tdLot {
+	var out []tdLot
+	for _, lt := range plan.lots {
+		if lt.kind == tdWall {
+			out = append(out, lt)
+		}
+	}
+	return out
+}
+func gateLotsOf(plan topPlan) []tdLot {
+	var out []tdLot
+	for _, lt := range plan.lots {
+		if lt.kind == tdGate {
+			out = append(out, lt)
+		}
+	}
+	return out
+}
+func towerLotsOf(plan topPlan) []tdLot {
+	var out []tdLot
+	for _, lt := range plan.lots {
+		if lt.kind == tdWallTower || lt.kind == tdWallGatehouse {
+			out = append(out, lt)
+		}
+	}
+	return out
+}
+
+// TestV3BErasDistinctFromPrimitive locks that ANCIENT and MEDIEVAL read visibly different from the
+// PRIMITIVE village: the roof MATERIAL tone differs (clay/slate vs thatch) and the GROUND tone
+// differs (packed-earth/cobble vs earthy dirt+grass), and the two eras differ from EACH OTHER. All
+// tones are theme-derived, so we resolve them from the same palette and require a meaningful color
+// distance — a regression that left an era on the default (thatch) palette would trip this.
+func TestV3BErasDistinctFromPrimitive(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+
+	prim := tdStyleForEra(eraOrganic)
+	ancient := tdStyleForEra(eraHubSpoke)
+	medieval := tdStyleForEra(eraCastle)
+
+	// Roof base material must differ from thatch for both, and from each other.
+	pr := prim.roofBase(pal)
+	ar := ancient.roofBase(pal)
+	mr := medieval.roofBase(pal)
+	if colorClose(ar, pr, 16) {
+		t.Fatalf("ancient roof %v ≈ primitive thatch %v — clay tile must read as a distinct material", ar, pr)
+	}
+	if colorClose(mr, pr, 16) {
+		t.Fatalf("medieval roof %v ≈ primitive thatch %v — slate must read as a distinct material", mr, pr)
+	}
+	if colorClose(ar, mr, 16) {
+		t.Fatalf("ancient clay %v ≈ medieval slate %v — the two eras' roofs must read distinct", ar, mr)
+	}
+
+	// Ground tone must differ from the primitive dirt for both, and from each other.
+	pg := prim.groundBase(pal)
+	ag := ancient.groundBase(pal)
+	mg := medieval.groundBase(pal)
+	if colorClose(ag, pg, 10) {
+		t.Fatalf("ancient ground %v ≈ primitive ground %v — packed earth/pale stone must differ", ag, pg)
+	}
+	if colorClose(mg, pg, 10) {
+		t.Fatalf("medieval ground %v ≈ primitive ground %v — cobble/stone grey must differ", mg, pg)
+	}
+	if colorClose(ag, mg, 10) {
+		t.Fatalf("ancient ground %v ≈ medieval ground %v — the two eras' ground must read distinct", ag, mg)
+	}
+
+	// End-to-end: the rendered images of the same civ at each era must differ (materials + ground +
+	// walls all in play). Distinct ages, same buildings + seed.
+	blds := map[string]int{"hut": 24, "gathering_camp": 16, "forge": 8}
+	imgP, _ := renderImage(namedState("primitive_age", "Aldermoor", blds), 120, 72)
+	imgA, _ := renderImage(namedState("bronze_age", "Aldermoor", blds), 120, 72)
+	imgM, _ := renderImage(namedState("medieval_age", "Aldermoor", blds), 120, 72)
+	if !imagesDiffer(imgP, imgA) {
+		t.Fatal("primitive and ancient render identically — the era re-skin is not applied")
+	}
+	if !imagesDiffer(imgP, imgM) {
+		t.Fatal("primitive and medieval render identically — the era re-skin is not applied")
+	}
+	if !imagesDiffer(imgA, imgM) {
+		t.Fatal("ancient and medieval render identically — the two eras are not distinct")
+	}
+}
+
+// TestV3BWallsPresentWithGates is the CENTREPIECE lock (locked #9): ancient + medieval TOWNS are
+// ringed with a WALL that has GATES, the buildings stay INSIDE the wall, and the ring FOLLOWS the
+// built-up outline just outside the outermost wards. Crucially it verifies STREET CONNECTIVITY is
+// preserved THROUGH the wall: the street-cell web is still ONE connected component (the wall never
+// touches the street cells), the wall is NOT a closed ring (it has gate GAPS), and a street REACHES
+// each gate (a street exits the town through the gate). Runs across both bands, several seeds/forms.
+func TestV3BWallsPresentWithGates(t *testing.T) {
+	_ = theme.SetActive("forge")
+	type bandCase struct {
+		name       string
+		ageKey     string
+		wantTowers bool // stone walls carry towers + a gatehouse; mudbrick does not
+	}
+	bands := []bandCase{
+		{"ancient", "bronze_age", false},
+		{"medieval", "medieval_age", true},
+	}
+	names := []string{"Aldermoor", "Bexley", "Corveil", "Duskwind", "Emberton"}
+	blds := map[string]int{"hut": 30, "gathering_camp": 20, "forge": 14, "barracks": 8, "colosseum": 1, "stonehenge": 1}
+
+	for _, bc := range bands {
+		for _, nm := range names {
+			plan := tdPlanFor(namedState(bc.ageKey, nm, blds))
+
+			walls := wallLotsOf(plan)
+			gates := gateLotsOf(plan)
+			if len(walls) < 12 {
+				t.Fatalf("%s seed %q: only %d wall segments — no real curtain wall", bc.name, nm, len(walls))
+			}
+			if len(gates) < 2 {
+				t.Fatalf("%s seed %q: only %d gates — a walled town must have gates the streets exit through", bc.name, nm, len(gates))
+			}
+			if bc.wantTowers {
+				if len(towerLotsOf(plan)) < 3 {
+					t.Fatalf("%s seed %q: stone wall has %d towers/gatehouse — a medieval wall must be studded with towers", bc.name, nm, len(towerLotsOf(plan)))
+				}
+			}
+
+			// (1) The wall RINGS the built area: every wall segment sits OUTSIDE the footprint
+			// radius (buildings inside), and inside the bounded town disc (never off-canvas).
+			footR := tdFootprintRadius(&plan)
+			for _, w := range walls {
+				d := math.Hypot(w.x-plan.cx, w.y-plan.cy)
+				if d < footR*0.98 {
+					t.Fatalf("%s seed %q: a wall segment sits at %.1f, inside the footprint %.1f — the wall must ring OUTSIDE the built area", bc.name, nm, d, footR)
+				}
+				if d > plan.townR*1.25 {
+					t.Fatalf("%s seed %q: a wall segment sits at %.1f, past the bounded disc %.1f — the wall is not bounded", bc.name, nm, d, plan.townR)
+				}
+			}
+
+			// (2) Buildings stay INSIDE the wall: every roof lot's distance from core is below the
+			// minimum wall radius (no roof pokes through the curtain). Use the min wall radius as the
+			// inner bound the fabric must respect.
+			minWallR := math.Inf(1)
+			for _, w := range walls {
+				if d := math.Hypot(w.x-plan.cx, w.y-plan.cy); d < minWallR {
+					minWallR = d
+				}
+			}
+			for _, lt := range allRoofLots(plan) {
+				if d := math.Hypot(lt.x-plan.cx, lt.y-plan.cy) + roofHalfExtent(lt); d > minWallR+0.5 {
+					// A roof may sit near the ragged wall's nearest bite, but not beyond the whole
+					// ring's max; assert against the MAX wall radius so a ragged inner bite doesn't
+					// false-trip while a genuine escapee (past the whole ring) does.
+					maxWallR := 0.0
+					for _, w := range walls {
+						if dd := math.Hypot(w.x-plan.cx, w.y-plan.cy); dd > maxWallR {
+							maxWallR = dd
+						}
+					}
+					if d > maxWallR+0.5 {
+						t.Fatalf("%s seed %q: a roof reaches %.1f from core, past the wall ring (max %.1f) — buildings must stay inside the wall", bc.name, nm, d, maxWallR)
+					}
+				}
+			}
+
+			// (3) STREET CONNECTIVITY through the wall is intact. The street-cell web is untouched by
+			// the wall, so it is still ONE connected component.
+			if comps := unionCount(plan.streetCells, plan.cellSize); comps != 1 {
+				t.Fatalf("%s seed %q: street web has %d components — the wall must not sever street connectivity", bc.name, nm, comps)
+			}
+
+			// (4) The wall is NOT a closed ring — it has GATE GAPS. Bucket the wall segments by angle
+			// into 24 sectors; a closed ring fills nearly all sectors, but the gate gaps must leave
+			// some EMPTY sectors (the openings). Require at least 2 empty sectors (≥2 gate gaps).
+			const sect = 24
+			var filled [sect]bool
+			for _, w := range walls {
+				a := math.Atan2(w.y-plan.cy, w.x-plan.cx)
+				b := int((a + math.Pi) / (2 * math.Pi) * sect)
+				if b < 0 {
+					b = 0
+				}
+				if b >= sect {
+					b = sect - 1
+				}
+				filled[b] = true
+			}
+			empty := 0
+			for _, f := range filled {
+				if !f {
+					empty++
+				}
+			}
+			if empty < 2 {
+				t.Fatalf("%s seed %q: wall fills %d/%d angular sectors with only %d gaps — the curtain has no gate openings (a closed ring)", bc.name, nm, sect-empty, sect, empty)
+			}
+
+			// (5) A STREET REACHES EACH GATE (the gate opens where a street exits). For every gate,
+			// require a street cell near the gate's angle out toward the rim — so a road actually
+			// passes through the opening (connectivity THROUGH the wall, not a decorative gap).
+			for _, g := range gates {
+				gAng := math.Atan2(g.y-plan.cy, g.x-plan.cx)
+				reached := false
+				for _, p := range plan.streetCells {
+					pAng := math.Atan2(p.y-plan.cy, p.x-plan.cx)
+					pR := math.Hypot(p.x-plan.cx, p.y-plan.cy)
+					// Near the gate's direction AND running out toward the wall (a road heading out).
+					if angDiff(gAng, pAng) < 0.35 && pR > footR*0.55 {
+						reached = true
+						break
+					}
+				}
+				if !reached {
+					t.Fatalf("%s seed %q: gate at angle %.2f has no street running out to it — the gate must sit on a street the town exits through", bc.name, nm, gAng)
+				}
+			}
+		}
+	}
+}
+
+// TestV3BEraSquarePropsDiffer locks that the central-square dressing SWAPS per era (task item 5):
+// the ancient set (altar / columns / braziers / well) and the medieval set (market stalls /
+// fountain / well / cross-or-gallows) are DISTINCT from the primitive set (well / firepit / stones
+// / stall) and from EACH OTHER. It checks the palette (tdSquarePropsFor) and that the era-specific
+// prop lots actually PLACE in a real plan.
+func TestV3BEraSquarePropsDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+
+	kindSet := func(kinds []tdLotKind) map[tdLotKind]bool {
+		m := map[tdLotKind]bool{}
+		for _, k := range kinds {
+			m[k] = true
+		}
+		return m
+	}
+	prim := tdSquarePropsFor(tdStyleForEra(eraOrganic))
+	ancient := tdSquarePropsFor(tdStyleForEra(eraHubSpoke))
+	medieval := tdSquarePropsFor(tdStyleForEra(eraCastle))
+
+	pW, aW, mW := kindSet(prim.wonder), kindSet(ancient.wonder), kindSet(medieval.wonder)
+	// Ancient must contain its signature props and NOT be the primitive set.
+	if !aW[tdPropAltar] || !aW[tdPropColumns] || !aW[tdPropBrazier] {
+		t.Fatalf("ancient square props %v missing altar/columns/braziers", ancient.wonder)
+	}
+	if !mW[tdPropStall] || !mW[tdPropFountain] || !mW[tdPropCross] {
+		t.Fatalf("medieval square props %v missing stalls/fountain/cross", medieval.wonder)
+	}
+	sameSet := func(a, b map[tdLotKind]bool) bool {
+		if len(a) != len(b) {
+			return false
+		}
+		for k := range a {
+			if !b[k] {
+				return false
+			}
+		}
+		return true
+	}
+	if sameSet(aW, pW) {
+		t.Fatal("ancient square props equal the primitive set — the dressing must swap per era")
+	}
+	if sameSet(mW, pW) {
+		t.Fatal("medieval square props equal the primitive set — the dressing must swap per era")
+	}
+	if sameSet(aW, mW) {
+		t.Fatal("ancient and medieval square props are identical — each era needs its own set")
+	}
+
+	// End-to-end: an ancient wonder town PLACES ancient props (and no primitive-only stones/firepit);
+	// a medieval one PLACES medieval props (fountain/cross). Deterministic ring placement holds.
+	blds := map[string]int{"hut": 26, "gathering_camp": 16, "forge": 10, "colosseum": 1, "stonehenge": 1}
+	countKinds := func(plan topPlan) map[tdLotKind]int {
+		m := map[tdLotKind]int{}
+		for _, lt := range plan.lots {
+			m[lt.kind]++
+		}
+		return m
+	}
+	ap := countKinds(tdPlanFor(namedState("bronze_age", "Aldermoor", blds)))
+	if ap[tdPropAltar]+ap[tdPropColumns]+ap[tdPropBrazier] == 0 {
+		t.Fatal("ancient wonder town placed no ancient square props (altar/columns/brazier)")
+	}
+	if ap[tdPropFirepit] != 0 || ap[tdPropStones] != 0 {
+		t.Fatalf("ancient wonder town placed primitive-only props (firepit=%d stones=%d)", ap[tdPropFirepit], ap[tdPropStones])
+	}
+	mp := countKinds(tdPlanFor(namedState("medieval_age", "Duskwind", blds)))
+	if mp[tdPropFountain]+mp[tdPropCross] == 0 {
+		t.Fatal("medieval wonder town placed no medieval square props (fountain/cross)")
+	}
+	if mp[tdPropFirepit] != 0 || mp[tdPropStones] != 0 {
+		t.Fatalf("medieval wonder town placed primitive-only props (firepit=%d stones=%d)", mp[tdPropFirepit], mp[tdPropStones])
+	}
+}
+
+// TestV3BEraWonderDiffers locks that the era WONDER silhouette swaps (task item 6): ancient reads
+// as a ZIGGURAT, medieval as a CATHEDRAL, both distinct from the primitive/default wonder. The
+// archetype stays roofWonder (so placement/labels are unchanged); the DRAW differs by era profile.
+// We assert (a) the era profiles are set, and (b) drawing the same wonder footprint under each era
+// paints a DIFFERENT pixel field (the shapes actually differ).
+func TestV3BEraWonderDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+
+	if tdStyleForEra(eraHubSpoke).houseProfile != profileMudbrick {
+		t.Fatal("ancient era must use the mudbrick profile (drives the ziggurat wonder + flat houses)")
+	}
+	if tdStyleForEra(eraCastle).houseProfile != profileTimber {
+		t.Fatal("medieval era must use the timber profile (drives the cathedral wonder + steep houses)")
+	}
+
+	// Draw the same wonder lot under each era into its own image; the pixel fields must differ.
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	prim := drawWonderImg(tdStyleForEra(eraOrganic))
+	ancient := drawWonderImg(tdStyleForEra(eraHubSpoke))
+	medieval := drawWonderImg(tdStyleForEra(eraCastle))
+	if !imagesDiffer(prim, ancient) {
+		t.Fatal("ancient wonder draws identically to the primitive wonder — the ziggurat silhouette is not applied")
+	}
+	if !imagesDiffer(prim, medieval) {
+		t.Fatal("medieval wonder draws identically to the primitive wonder — the cathedral silhouette is not applied")
+	}
+	if !imagesDiffer(ancient, medieval) {
+		t.Fatal("ancient ziggurat and medieval cathedral draw identically — the two wonders must differ")
+	}
+}
+
+// TestV3BWallsBoundedAndOpenErasHaveNone locks two guarantees: (1) walled-era wall lots map
+// IN-BOUNDS on real + tiny canvases (bounded, panic-safe); and (2) the OPEN eras (industrial+ /
+// modern / cyber / space) and the primitive village have NO walls (locked #9: industrial+ stays
+// open sprawl; primitive never walled).
+func TestV3BWallsBoundedAndOpenErasHaveNone(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+
+	// (1) Walled eras: every wall/gate/tower lot maps in-bounds through the fill-frame transform on a
+	// normal canvas AND a tiny one (bounded + panic-safe).
+	for _, ageKey := range []string{"bronze_age", "medieval_age"} {
+		for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+			plan := tdPlanFor(namedState(ageKey, "Aldermoor", blds))
+			xf := computeTransform(&plan, sz.w, sz.h)
+			for _, lt := range plan.lots {
+				switch lt.kind {
+				case tdWall, tdGate, tdWallTower, tdWallGatehouse:
+					px, py := xf.px(lt.x, lt.y)
+					if px < -2 || px > sz.w+2 || py < -2 || py > sz.h+2 {
+						t.Fatalf("%s %dx%d: wall lot maps to (%d,%d) far off-canvas — the ring is not bounded to the frame", ageKey, sz.w, sz.h, px, py)
+					}
+				}
+			}
+		}
+	}
+
+	// (2) The primitive village + the open eras have NO wall lots.
+	openStyles := []struct {
+		name   string
+		ageKey string
+	}{
+		{"primitive", "primitive_age"},
+		{"industrial", "industrial_age"},
+		{"modern", "modern_age"},
+		{"digital", "digital_age"},
+		{"galactic", "galactic_age"},
+	}
+	for _, os := range openStyles {
+		plan := tdPlanFor(namedState(os.ageKey, "Aldermoor", blds))
+		if n := len(wallLotsOf(plan)) + len(gateLotsOf(plan)) + len(towerLotsOf(plan)); n != 0 {
+			t.Fatalf("%s (%s) has %d wall lots — this era must be OPEN (no walls)", os.name, os.ageKey, n)
+		}
+	}
+}
