@@ -114,6 +114,26 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("\n[gold]═══ Shortcuts ═══[-]\n")
 	sb.WriteString("[gray]g=gather, b=build, r=recruit, a=assign, u=unassign, s=status, res=research, exp=expedition, t=trade, dip=diplomacy[-]\n")
 
+	// Developer Console — only listed when dev mode is active (Ctrl+K passphrase).
+	// Hidden entirely otherwise so the reference stays clean for normal play.
+	if game.DevModeActive {
+		sb.WriteString("\n[gold]═══ Developer Console ═══[-]\n")
+		sb.WriteString("[gray]DEV mode active — type these in the [-][cyan]>[-][gray] prompt:[-]\n")
+		for _, d := range []struct{ cmd, desc string }{
+			{"/god", "Toggle godmode — free costs, instant builds"},
+			{"/fill", "Fill all resources to their storage cap"},
+			{"/give <resource> <amount>", "Add an amount of a resource"},
+			{"/build <building_key>", "Instantly place one building"},
+			{"/techs", "Unlock all techs up to the current age"},
+			{"/age <age_key>", "Jump to any age"},
+			{"/ages", "List all age keys"},
+			{"/prestige <level 0-9>", "Set prestige level"},
+			{"/speed <multiplier>", "Set the tick-speed multiplier"},
+		} {
+			sb.WriteString("  [cyan]" + padRight(d.cmd, 28) + "[-] — " + d.desc + "\n")
+		}
+	}
+
 	return sb.String()
 }
 
