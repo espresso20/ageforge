@@ -107,8 +107,13 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return CommandResult{OverlayName: "history"}
 	case "buildings":
 		return CommandResult{OverlayName: "buildings"}
+	case "citymap":
+		return CommandResult{OverlayName: "citymap"}
 	case "map":
+		// Alias for the city view — preserves existing muscle memory.
 		return CommandResult{OverlayName: "map"}
+	case "worldmap":
+		return CommandResult{OverlayName: "worldmap"}
 	case "catastrophe", "cat":
 		return cmdCatastrophe(args, engine)
 	case "dump", "exportlogs":

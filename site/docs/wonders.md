@@ -19,7 +19,7 @@ Progress is shown in the **Wonders** overlay (`wonders`) with per-resource progr
 
 ## Viewing Wonders on the City Map
 
-Completed wonders appear as a dedicated sprite row along the bottom edge of the City Map (`map` command). Each wonder is rendered as a distinct 16×16 pixel art sprite, evenly spaced across the full map width. As you complete more wonders across ages, the row fills up — by the Transcendent Age you'll have all 22 wonders displayed. Open the City Map at any time with the `map` command to see your wonder collection at a glance alongside your growing city.
+Completed wonders appear on the City Map (`map` command) as their own named, gold-tinted markers — one per wonder you've built — placed among your other buildings on the age-appropriate city layout. As you complete more across the ages, more appear. Open the City Map any time with `map` to see your wonders amid your growing settlement; the whole map (terrain, districts, and labels) also retints with your active theme.
 
 ---
 
@@ -31,7 +31,7 @@ The wonder requirement appears in the **age progress bar** at the top of the scr
 
 If you try to advance before completing your age's wonder, the game will tell you which wonder is blocking and remind you to use `wonder collect` then `build <key>`.
 
-Once completed, the wonder's sprite will appear in the bottom strip of the City Map (`map` command), and the palace sprite at map center also updates to reflect your current age.
+Once completed, the wonder appears as a named gold marker on the City Map (`map` command), and the city's layout, terrain, and styling shift to reflect your current age.
 
 ---
 

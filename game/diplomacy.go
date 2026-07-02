@@ -660,6 +660,7 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 			TradeBonus:  def.TradeBonus,
 			Personality: def.Personality,
 			Backstory:   def.Backstory,
+			Strength:    def.Strength,
 		}
 		if exists && fs.Discovered {
 			info.Discovered = true

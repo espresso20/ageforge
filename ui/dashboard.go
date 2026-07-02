@@ -13,6 +13,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/ui/citymap"
 )
 
 // shameMessages are randomly chosen at session start when the cheater badge is active.
@@ -127,8 +128,17 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.Register("buildings", "Buildings", buildingsProvider)
 	d.overlayMgr.Register("help", "Help", helpProvider)
 
-	mv4 := NewMapV4()
-	d.overlayMgr.RegisterWidget("map", "City Map", mv4.Build, mv4.Refresh, true)
+	// Two map views. The city view is the player's own settlement; it registers under
+	// its new primary key "citymap" AND keeps "map" working as an alias (same instance,
+	// so the two keys share one cache) so existing muscle memory isn't broken.
+	cm := citymap.NewCityMap()
+	d.overlayMgr.RegisterWidget("citymap", "City Map", cm.Build, cm.Refresh, true)
+	d.overlayMgr.RegisterWidget("map", "City Map", cm.Build, cm.Refresh, true)
+
+	// The world view: a Game-of-Life-style field of settlements with your civ and the
+	// discovered diplomacy civs called out as labeled, relationship-colored dots.
+	wm := citymap.NewWorldMap()
+	d.overlayMgr.RegisterWidget("worldmap", "World Map", wm.Build, wm.Refresh, true)
 
 	return d
 }
@@ -202,6 +212,7 @@ func (d *Dashboard) build() {
 	d.engine.Bus.Subscribe(game.EventMilestoneCompleted, func(e game.EventData) {
 		name, _ := e.Payload["name"].(string)
 		rewardText, _ := e.Payload["reward_text"].(string)
+		// note: flavor quip rides in the log line, not the height-1 toast — see engine.checkMilestones.
 		msg := fmt.Sprintf("Milestone: %s!", name)
 		if rewardText != "" {
 			msg += " " + rewardText
@@ -427,7 +438,7 @@ func (d *Dashboard) updateSidebar(activeOverlay string) {
 }
 
 func buildSidebarText(active string) string {
-	commands := []string{"milestones", "research", "expedition", "army", "trade", "stats", "wonders", "workers", "logs", "epoch", "history", "map", "help"}
+	commands := []string{"milestones", "research", "expedition", "army", "trade", "stats", "wonders", "workers", "logs", "epoch", "history", "citymap", "worldmap", "help"}
 	var sb strings.Builder
 	sb.WriteString("\n")
 	for _, cmd := range commands {
