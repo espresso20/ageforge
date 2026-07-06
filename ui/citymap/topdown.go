@@ -440,6 +440,50 @@ func tdStyleForEra(e era) tdEraStyle {
 	}
 }
 
+// ageStyles maps each age key to its citymap style preset. Per-age keying (replacing the old
+// 7-band era grouping for STYLE selection) lets each age's look diverge independently in a later
+// phase. Today every age maps to the exact same preset the old era-band lookup produced, so the
+// render is unchanged. The era enum still drives town-form weights, flourishes, and tests — only
+// the style pick moved to per-age keying.
+var ageStyles = map[string]tdEraStyle{
+	// organic — primitive/stone (V3-A)
+	"primitive_age": organicVillageStyle,
+	"stone_age":     organicVillageStyle,
+	// ancient — bronze/iron/classical (V3-B)
+	"bronze_age":    ancientCityStyle,
+	"iron_age":      ancientCityStyle,
+	"classical_age": ancientCityStyle,
+	// medieval — medieval/renaissance (V3-B)
+	"medieval_age":    medievalCityStyle,
+	"renaissance_age": medievalCityStyle,
+	// default — every not-yet-tuned age renders the legible default city
+	"colonial_age":     defaultTdStyle,
+	"industrial_age":   defaultTdStyle,
+	"victorian_age":    defaultTdStyle,
+	"electric_age":     defaultTdStyle,
+	"atomic_age":       defaultTdStyle,
+	"modern_age":       defaultTdStyle,
+	"information_age":  defaultTdStyle,
+	"digital_age":      defaultTdStyle,
+	"cyberpunk_age":    defaultTdStyle,
+	"fusion_age":       defaultTdStyle,
+	"space_age":        defaultTdStyle,
+	"interstellar_age": defaultTdStyle,
+	"galactic_age":     defaultTdStyle,
+	"quantum_age":      defaultTdStyle,
+	"transcendent_age": defaultTdStyle,
+}
+
+// styleForAge returns the citymap style preset for an age key, falling back to the organic village
+// style for unknown ages (matching the old eraForAge default, which returned eraOrganic for age
+// keys not found in the canonical order).
+func styleForAge(ageKey string) tdEraStyle {
+	if s, ok := ageStyles[ageKey]; ok {
+		return s
+	}
+	return organicVillageStyle
+}
+
 // ---- roof atlas -------------------------------------------------------------
 
 // roofType is a top-down roof archetype. Each renders as a filled roof shape that FILLS its
@@ -2879,8 +2923,7 @@ func (t tdTransform) ext(cityExt float64) int {
 // Pure, panic-safe, exact output size. Every color is theme-derived (retints on a theme
 // switch). NO terrain, NO biome, NO water — the ground is a neutral era tint.
 func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32) layoutGeometry {
-	e := eraForAge(state.Age)
-	style := tdStyleForEra(e)
+	style := styleForAge(state.Age)
 	pal := newTdPal()
 
 	// Ground first — a full era-tinted fill with subtle seeded texture noise.
