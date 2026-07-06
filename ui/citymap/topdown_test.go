@@ -2693,3 +2693,212 @@ func TestDumpStoneEpochPNGs(t *testing.T) {
 		t.Logf("wrote %s", path)
 	}
 }
+
+// tdPlanForAge builds the top-down plan using the REAL per-age style (styleForAge), not the stale
+// era-band tdStyleForEra path tdPlanFor uses — so Phase 1b-i/ii per-age presets (stone, iron,
+// classical) are actually exercised. Mirrors renderTopDown's style + seed derivation.
+func tdPlanForAge(state game.GameState) topPlan {
+	style := styleForAge(state.Age)
+	seed := citySeed(displayNameOf(state))
+	return generateTopPlan(state, config.BuildingByKey(), style, seed)
+}
+
+// TestIronClassicalStylesWired locks Phase 1b-ii style wiring: iron keeps the ancient ziggurat +
+// mudbrick houses but gains a TIMBER palisade wall; classical gets a TEMPLE wonder, STONE walls, and
+// the white-stone house profile. The behaviour-preserving foundation (bronze) stays ancient.
+func TestIronClassicalStylesWired(t *testing.T) {
+	iron := styleForAge("iron_age")
+	if iron.wonderMotif != wonderZiggurat {
+		t.Fatalf("iron wonderMotif = %v, want wonderZiggurat (iron is still an ancient civ)", iron.wonderMotif)
+	}
+	if iron.wallProfile != wallTimber {
+		t.Fatalf("iron wallProfile = %v, want wallTimber (a brown palisade)", iron.wallProfile)
+	}
+	if iron.houseProfile != profileMudbrick {
+		t.Fatalf("iron houseProfile = %v, want profileMudbrick (unchanged from ancient)", iron.houseProfile)
+	}
+	if !iron.hasWalls {
+		t.Fatal("iron must have walls (a timber palisade)")
+	}
+
+	cl := styleForAge("classical_age")
+	if cl.wonderMotif != wonderTemple {
+		t.Fatalf("classical wonderMotif = %v, want wonderTemple", cl.wonderMotif)
+	}
+	if cl.wallProfile != wallStone {
+		t.Fatalf("classical wallProfile = %v, want wallStone", cl.wallProfile)
+	}
+	if cl.houseProfile != profileStoneClassical {
+		t.Fatalf("classical houseProfile = %v, want profileStoneClassical", cl.houseProfile)
+	}
+
+	// Bronze foundation unchanged: still ancient (ziggurat + mudbrick wall + mudbrick houses).
+	bz := styleForAge("bronze_age")
+	if bz.wonderMotif != wonderZiggurat || bz.wallProfile != wallMudbrick || bz.houseProfile != profileMudbrick {
+		t.Fatalf("bronze changed: motif=%v wall=%v house=%v — bronze must stay ancient", bz.wonderMotif, bz.wallProfile, bz.houseProfile)
+	}
+}
+
+// TestIronCityDiffersFromBronze locks that IRON reads apart from BRONZE at the CITY level. Both share
+// the ziggurat wonder (so the wonder sprite alone is identical) — the distinction is the timber wall +
+// cooler roof/ground tint, which must change the rendered city pixels.
+func TestIronCityDiffersFromBronze(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	bronze, _ := renderImage(namedState("bronze_age", "Aldermoor", blds), 120, 72)
+	iron, _ := renderImage(namedState("iron_age", "Aldermoor", blds), 120, 72)
+	if !imagesDiffer(bronze, iron) {
+		t.Fatal("iron city renders identically to bronze — the timber wall + cooler tint are not applied")
+	}
+}
+
+// TestV3BiiWondersDiffer locks that the classical TEMPLE wonder reads apart from the medieval
+// CATHEDRAL and the iron/bronze ZIGGURAT (the temple silhouette is actually applied).
+func TestV3BiiWondersDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	classical := drawWonderImg(styleForAge("classical_age"))
+	medieval := drawWonderImg(styleForAge("medieval_age"))
+	iron := drawWonderImg(styleForAge("iron_age"))
+	if !imagesDiffer(classical, medieval) {
+		t.Fatal("classical temple draws identically to the medieval cathedral — the temple silhouette is not applied")
+	}
+	if !imagesDiffer(classical, iron) {
+		t.Fatal("classical temple draws identically to the iron ziggurat — the two wonders must differ")
+	}
+}
+
+// TestIronTimberWallLotsBounded locks that an iron town emits wallTimber wall + gate lots that map
+// in-bounds on real + tiny canvases (bounded, panic-safe), and has NO stone towers/gatehouse.
+func TestIronTimberWallLotsBounded(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+		plan := tdPlanForAge(namedState("iron_age", "Aldermoor", blds))
+		if len(wallLotsOf(plan)) < 12 {
+			t.Fatalf("iron %dx%d: only %d wall segments — no real palisade", sz.w, sz.h, len(wallLotsOf(plan)))
+		}
+		if len(gateLotsOf(plan)) < 2 {
+			t.Fatalf("iron %dx%d: only %d gates — the palisade needs gates the streets exit through", sz.w, sz.h, len(gateLotsOf(plan)))
+		}
+		if n := len(towerLotsOf(plan)); n != 0 {
+			t.Fatalf("iron has %d stone towers/gatehouse — a timber palisade must have none", n)
+		}
+		xf := computeTransform(&plan, sz.w, sz.h)
+		for _, lt := range plan.lots {
+			switch lt.kind {
+			case tdWall, tdGate:
+				px, py := xf.px(lt.x, lt.y)
+				if px < -2 || px > sz.w+2 || py < -2 || py > sz.h+2 {
+					t.Fatalf("iron %dx%d: wall lot maps to (%d,%d) off-canvas — the ring is not bounded", sz.w, sz.h, px, py)
+				}
+			}
+		}
+	}
+}
+
+// TestClassicalStoneWallLots locks that a classical town gets a proper STONE wall — segments, gates,
+// AND towers/gatehouse (classical cities have real fortifications).
+func TestClassicalStoneWallLots(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	plan := tdPlanForAge(namedState("classical_age", "Aldermoor", blds))
+	if len(wallLotsOf(plan)) < 12 {
+		t.Fatalf("classical: only %d wall segments — no real curtain wall", len(wallLotsOf(plan)))
+	}
+	if len(gateLotsOf(plan)) < 2 {
+		t.Fatalf("classical: only %d gates", len(gateLotsOf(plan)))
+	}
+	if n := len(towerLotsOf(plan)); n < 3 {
+		t.Fatalf("classical stone wall has %d towers/gatehouse — a stone wall must be studded with towers", n)
+	}
+}
+
+// TestClassicalSquarePropsColumnsForward locks that classical squares are dressed columns-forward
+// (a Greco-Roman forum) and NOT the ancient altar/brazier set.
+func TestClassicalSquarePropsColumnsForward(t *testing.T) {
+	kindSet := func(kinds []tdLotKind) map[tdLotKind]bool {
+		m := map[tdLotKind]bool{}
+		for _, k := range kinds {
+			m[k] = true
+		}
+		return m
+	}
+	cl := tdSquarePropsFor(styleForAge("classical_age"))
+	w := kindSet(cl.wonder)
+	if !w[tdPropColumns] || !w[tdPropAltar] || !w[tdPropWell] {
+		t.Fatalf("classical wonder props %v missing columns/altar/well", cl.wonder)
+	}
+	if w[tdPropBrazier] {
+		t.Fatalf("classical wonder props %v must not carry the ancient brazier", cl.wonder)
+	}
+	c := kindSet(cl.center)
+	if !c[tdPropColumns] {
+		t.Fatalf("classical center props %v missing columns", cl.center)
+	}
+}
+
+// TestV3BiiSpritesPanicSafe locks that the two new sprites (temple wonder + classical house) are
+// panic-safe + in-bounds on a tiny footprint and a normal one (every write is clamped).
+func TestV3BiiSpritesPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	rcTemple := roofColorsFor(styleForAge("classical_age"), pal, "wonder", "wonder")
+	rcHouse := roofColorsFor(styleForAge("classical_age"), pal, "housing", "production")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}} {
+			drawRoofTempleWonder(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rcTemple)
+			drawRoofTempleWonder(img, 1, 1, hwhh.hw, hwhh.hh, rcTemple) // hard against the NW corner
+			drawRoofStoneClassical(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rcHouse)
+			drawRoofStoneClassical(img, 1, 1, hwhh.hw, hwhh.hh, rcHouse)
+		}
+	}
+}
+
+// TestDumpIronEpochPNGs renders bronze / iron / classical / medieval with a FIXED display name +
+// identical building set INCLUDING a wonder so the ziggurat/temple/cathedral centerpieces render, so
+// a reviewer can compare the ancient-band ages + medieval side by side. Opt-in: skipped unless
+// CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpIronEpochPNGs
+func TestDumpIronEpochPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Identical building set (with a wonder so the centerpiece renders) + a FIXED display name → the
+	// citySeed is fixed, so only the era re-skin differs across the four dumps.
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"bronze_age", "1b_ii_bronze.png"},
+		{"iron_age", "1b_ii_iron.png"},
+		{"classical_age", "1b_ii_classical.png"},
+		{"medieval_age", "1b_ii_medieval.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}

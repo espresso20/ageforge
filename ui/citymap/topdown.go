@@ -149,9 +149,10 @@ type tdEraStyle struct {
 type roofProfile int
 
 const (
-	profileThatch   roofProfile = iota // primitive/default: rounded domed thatch, standard pitch
-	profileMudbrick                    // ancient: flatter, blockier flat-topped mud roofs
-	profileTimber                      // medieval: steeper, sharper pitched timber roofs
+	profileThatch         roofProfile = iota // primitive/default: rounded domed thatch, standard pitch
+	profileMudbrick                          // ancient: flatter, blockier flat-topped mud roofs
+	profileTimber                            // medieval: steeper, sharper pitched timber roofs
+	profileStoneClassical                    // classical: pale white-stone body under a terracotta cap, with column fluting
 )
 
 // wallProfile is the per-era wall dialect (V3-B, locked #9): mudbrick curtain vs stone curtain +
@@ -160,8 +161,9 @@ type wallProfile int
 
 const (
 	wallNone     wallProfile = iota // no wall (primitive, industrial+)
-	wallMudbrick                    // ancient: thin tan curtain, gate gaps, no towers
-	wallStone                       // medieval: thicker grey curtain, towers, a gatehouse
+	wallMudbrick                    // ancient/bronze: thin tan curtain, gate gaps, no towers
+	wallStone                       // medieval/classical: thicker grey curtain, towers, a gatehouse
+	wallTimber                      // iron: medium brown timber palisade, gate gaps, no stone towers
 )
 
 // wonderMotif is the centerpiece silhouette drawn for a city's dominant wonder, decoupled from
@@ -174,6 +176,7 @@ const (
 	wonderZiggurat                     // ancient stepped pyramid (drawRoofZiggurat)
 	wonderCathedral                    // medieval cruciform + spire (drawRoofCathedral)
 	wonderMegalith                     // stone-age standing-stone circle (drawRoofMegalith)
+	wonderTemple                       // classical columned temple + pediment (drawRoofTempleWonder)
 )
 
 // tdPal is the small set of resolved theme colors the style recipes draw from. Built once
@@ -363,6 +366,117 @@ var ancientCityStyle = func() tdEraStyle {
 	return s
 }()
 
+// ironCityStyle is the tuned IRON preset (Phase 1b-ii). It is an ANCIENT city that has learned to
+// work metal: same clay-tile roofs, mudbrick houses + packed-earth ground + ziggurat wonder as
+// bronze — but grimmer. The roofs read COOLER/GREYER (iron accents in the fired clay), the ground a
+// shade more WORKED (cooler, greyer than bronze's warm tan), and the wall is a brown TIMBER PALISADE
+// (wallTimber) instead of bronze's tan mudbrick curtain. Built from ancientCityStyle so it keeps the
+// hub-spoke form + ziggurat; every tone stays a theme-role recipe so the whole city retints.
+var ironCityStyle = func() tdEraStyle {
+	s := ancientCityStyle
+	s.name = "iron"
+
+	// Clay tile with IRON ACCENTS: start from the same warm clay fill as bronze, then pull it toward
+	// the cool iron-grey so the roof reads as fired tile darkened by metalwork — clearly cooler +
+	// grimmer than bronze's warm terracotta. roofDark leans harder into iron-grey for a cold shade.
+	s.roofBase = func(p tdPal) color.RGBA {
+		clay := blend(blend(p.bg, p.text, 0.30), clayAnchor, 0.48)
+		return blend(clay, ironAnchor, 0.24)
+	}
+	s.roofDark = func(p tdPal) color.RGBA {
+		clay := blend(blend(p.bg, p.text, 0.30), clayAnchor, 0.48)
+		cool := blend(clay, ironAnchor, 0.42)
+		return darken(cool, 0.26)
+	}
+	s.lineageMix = 0.14
+
+	// Ground: packed earth, but cooler + greyer than bronze's warm tan — a worked iron-working town.
+	// Same mudbrick base, then pulled toward iron-grey so the floor reads dustier/greyer.
+	s.groundBase = func(p tdPal) color.RGBA {
+		earthy := blend(blend(p.bg, p.dim, 0.26), mudbrickAnchor, 0.30)
+		return blend(earthy, ironAnchor, 0.16)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.22), ironAnchor, 0.22)
+	}
+
+	// Wall: a brown TIMBER PALISADE (wallTimber) — the timber-brown anchor grounded so it reads as a
+	// log stockade, not a tan mud rampart. Medium thickness (set in tdAddWalls), no stone towers.
+	s.hasWalls = true
+	s.wallProfile = wallTimber
+	s.wallCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.28), timberAnchor, 0.52)
+	}
+
+	s.houseProfile = profileMudbrick // unchanged from ancient — the wall + cooler roofs carry iron
+	s.wonderMotif = wonderZiggurat   // iron is still an ancient civ: keep the ziggurat
+	s.slotSpacing = 1.9
+	return s
+}()
+
+// classicalCityStyle is the tuned CLASSICAL preset (Phase 1b-ii) — a Greco-Roman city: WHITE-STONE
+// houses under TERRACOTTA roofs with column fluting (profileStoneClassical), a pale MARBLE-PAVED
+// ground (lighter + cleaner than packed earth), proper grey STONE walls + towers + gatehouse
+// (wallStone), and a columned TEMPLE-with-pediment wonder (wonderTemple, the Parthenon read). Built
+// from ancientCityStyle for the hub-spoke ancient form, then re-skinned light + civic. Reads clearly
+// apart from medieval: classical is LIGHT + WARM (white body, terracotta, columns) where medieval is
+// COOL GREY (slate, cobble, gabled timber).
+var classicalCityStyle = func() tdEraStyle {
+	s := ancientCityStyle
+	s.name = "classical"
+
+	// Roof material: the classical HOUSE draws a two-tone (white-stone body + terracotta cap) inside
+	// drawRoofStoneClassical, so roofBase here is the pale WHITE-STONE body tone (the terracotta cap
+	// is derived from clayAnchor inside the sprite). Non-house roofs (temple/flat/etc.) then read as
+	// pale civic stone, which suits the classical mood.
+	s.roofBase = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.text, 0.34), marbleAnchor, 0.52)
+	}
+	s.roofDark = func(p tdPal) color.RGBA {
+		return darken(blend(blend(p.bg, p.text, 0.34), marbleAnchor, 0.52), 0.24)
+	}
+	s.lineageMix = 0.12 // whisper of lineage tint over the pale stone; sat cap guards it
+
+	// Ground: pale marble-paved civic stone — lighter + cleaner than the ancient packed earth. Blend
+	// the marble anchor strongly and lift toward the light neutral so a classical city reads as
+	// dressed stone underfoot, not dirt.
+	s.groundBase = func(p tdPal) color.RGBA {
+		pale := blend(blend(p.bg, p.dim, 0.20), marbleAnchor, 0.44)
+		return blend(pale, p.text, 0.16)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.18), stoneAnchor, 0.34)
+	}
+	// Streets: pale flagstone lanes, cleaner + lighter than the ancient earth streets.
+	s.streetCol = func(p tdPal) color.RGBA {
+		paved := blend(blend(p.bg, p.dim, 0.20), marbleAnchor, 0.40)
+		return blend(blend(paved, p.text, 0.30), stoneAnchor, 0.24)
+	}
+	s.streetEdge = func(p tdPal) color.RGBA {
+		paved := blend(blend(p.bg, p.dim, 0.20), marbleAnchor, 0.40)
+		surface := blend(blend(paved, p.text, 0.30), stoneAnchor, 0.24)
+		return darken(surface, 0.20)
+	}
+	// Town-square paving: bright dressed marble, the lightest surface in the city.
+	s.pavedCol = func(p tdPal) color.RGBA {
+		pale := blend(blend(p.bg, p.dim, 0.16), marbleAnchor, 0.46)
+		return blend(pale, p.text, 0.28)
+	}
+
+	// Wall: proper grey STONE curtain + towers + gatehouse (wallStone) — the masonry-grey granite
+	// anchor grounded so it reads as cut stone.
+	s.hasWalls = true
+	s.wallProfile = wallStone
+	s.wallCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.30), graniteAnchor, 0.50)
+	}
+
+	s.houseProfile = profileStoneClassical // white-stone body + terracotta cap + column fluting
+	s.wonderMotif = wonderTemple           // classical centrepiece: a columned temple + pediment
+	s.slotSpacing = 1.85
+	return s
+}()
+
 // medievalCityStyle is the tuned MEDIEVAL preset (medieval / renaissance — eraCastle; locked era
 // table row "castle"): SLATE/TILE roofs (grey / dark blue-grey), a COBBLE / STONE-GREY ground,
 // TIMBER houses (steeper pitched), and a STONE wall+towers+gatehouse ring. Same construction as
@@ -485,6 +599,12 @@ var (
 	slateAnchor    = color.RGBA{R: 0x4a, G: 0x52, B: 0x5e, A: 0xff} // dark blue-grey slate (medieval roofs)
 	cobbleAnchor   = color.RGBA{R: 0x77, G: 0x74, B: 0x70, A: 0xff} // cool cobble/stone grey (medieval ground)
 	graniteAnchor  = color.RGBA{R: 0x82, G: 0x84, B: 0x88, A: 0xff} // masonry grey (medieval stone walls + towers)
+
+	// V3-B Phase 1b-ii anchors (iron + classical). Same discipline — never used raw, always blended
+	// against theme roles + the era material so a light/dark theme retints them.
+	ironAnchor   = color.RGBA{R: 0x51, G: 0x55, B: 0x59, A: 0xff} // cool iron-grey (iron roof accents / worked ground)
+	timberAnchor = color.RGBA{R: 0x6e, G: 0x4c, B: 0x2f, A: 0xff} // dark palisade brown (iron timber wall)
+	marbleAnchor = color.RGBA{R: 0xcf, G: 0xc9, B: 0xbc, A: 0xff} // pale warm white-stone / marble (classical houses + ground)
 )
 
 // tdStyleForEra returns the tuned preset for an era band, or defaultTdStyle for the bands not yet
@@ -513,10 +633,10 @@ var ageStyles = map[string]tdEraStyle{
 	// organic — primitive/stone (V3-A; stone split off with its own rockier ground + megalith, 1b-i)
 	"primitive_age": organicVillageStyle,
 	"stone_age":     stoneAgeStyle,
-	// ancient — bronze/iron/classical (V3-B)
+	// ancient — bronze/iron/classical (V3-B; iron + classical split off with their own looks, 1b-ii)
 	"bronze_age":    ancientCityStyle,
-	"iron_age":      ancientCityStyle,
-	"classical_age": ancientCityStyle,
+	"iron_age":      ironCityStyle,
+	"classical_age": classicalCityStyle,
 	// medieval — medieval/renaissance (V3-B)
 	"medieval_age":    medievalCityStyle,
 	"renaissance_age": medievalCityStyle,
@@ -2334,10 +2454,15 @@ func tdSquarePropsFor(style tdEraStyle) tdSquareProps {
 		}
 	}
 	switch style.houseProfile {
-	case profileMudbrick: // ancient
+	case profileMudbrick: // ancient (bronze / iron)
 		return tdSquareProps{
 			wonder: []tdLotKind{tdPropAltar, tdPropColumns, tdPropBrazier, tdPropWell},
 			center: []tdLotKind{tdPropWell, tdPropAltar},
+		}
+	case profileStoneClassical: // classical: columns-forward (a Greco-Roman forum)
+		return tdSquareProps{
+			wonder: []tdLotKind{tdPropColumns, tdPropAltar, tdPropWell},
+			center: []tdLotKind{tdPropColumns, tdPropWell},
 		}
 	case profileTimber: // medieval
 		return tdSquareProps{
@@ -2769,9 +2894,12 @@ func tdAddWalls(plan *topPlan, style tdEraStyle, seed uint32) {
 	const segs = 48
 	r := newRNG(hash2(0x3a11, uint32(len(plan.lots)), seed) | 1)
 	phase := r.f01() * 2 * math.Pi
-	// Wall thickness (city units): mudbrick ~thin, stone ~a hair thicker.
+	// Wall thickness (city units): mudbrick ~thin, timber ~medium, stone ~a hair thicker.
 	segHalf := 0.85
-	if prof == wallStone {
+	switch prof {
+	case wallTimber:
+		segHalf = 0.95 // between mudbrick (0.85) and stone (1.05) — a stout log palisade
+	case wallStone:
 		segHalf = 1.05
 	}
 	// Gate half-arc: the angular gap a gate opens in the ring (wide enough for a street to pass).
@@ -3136,10 +3264,19 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 		gateCol := brighten(wallCol, 0.28)
 		towerCol := darken(wallCol, 0.14)
 		towerCap := brighten(wallCol, 0.10)
+		// Timber palisade (iron): a darker vertical post streak down the middle of each segment so the
+		// brown curtain reads as upright logs, not a smooth rampart. Cheap + bounds-checked.
+		postCol := darken(wallCol, 0.22)
 		for _, lt := range plan.lots {
 			if lt.kind == tdWall {
 				cx, cy := xf.px(lt.x, lt.y)
-				drawBlock(img, cx, cy, xf.ext(lt.w/2), wallCol)
+				rad := xf.ext(lt.w / 2)
+				drawBlock(img, cx, cy, rad, wallCol)
+				if style.wallProfile == wallTimber {
+					for dy := -rad; dy <= rad; dy++ {
+						setPixel(img, cx, cy+dy, postCol) // a central log seam
+					}
+				}
 			}
 		}
 		for _, lt := range plan.lots {
@@ -3448,10 +3585,13 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 	switch lt.roof {
 	case roofHut:
 		// A hut is a dwelling: read its era silhouette. Mudbrick huts are flat-topped blocks;
-		// primitive/timber keep the rounded domed thatch cap.
-		if style.houseProfile == profileMudbrick {
+		// classical huts are white-stone blocks; primitive/timber keep the rounded domed thatch cap.
+		switch style.houseProfile {
+		case profileMudbrick:
 			drawRoofMudbrick(img, cx, cy, hw, hh, rc)
-		} else {
+		case profileStoneClassical:
+			drawRoofStoneClassical(img, cx, cy, hw, hh, rc)
+		default:
 			drawRoofHut(img, cx, cy, hw, hh, rc)
 		}
 	case roofRidge, roofLong:
@@ -3476,6 +3616,8 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 			drawRoofCathedral(img, cx, cy, hw, hh, rc)
 		case wonderMegalith:
 			drawRoofMegalith(img, cx, cy, hw, hh, rc)
+		case wonderTemple:
+			drawRoofTempleWonder(img, cx, cy, hw, hh, rc)
 		default:
 			drawRoofWonder(img, cx, cy, hw, hh, rc)
 		}
@@ -3577,6 +3719,8 @@ func drawRoofHouse(img *image.RGBA, cx, cy, hw, hh int, rc roofColors, prof roof
 		drawRoofMudbrick(img, cx, cy, hw, hh, rc)
 	case profileTimber:
 		drawRoofTimber(img, cx, cy, hw, hh, rc)
+	case profileStoneClassical:
+		drawRoofStoneClassical(img, cx, cy, hw, hh, rc)
 	default:
 		drawRoofRidge(img, cx, cy, hw, hh, rc)
 	}
@@ -3638,6 +3782,39 @@ func drawRoofTimber(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 	} else {
 		for y := cy - hh; y <= cy+hh; y++ {
 			img.SetRGBA(cx, y, rc.ridge)
+		}
+	}
+}
+
+// drawRoofStoneClassical: the CLASSICAL dwelling (Phase 1b-ii) — a pale WHITE-STONE house body under
+// a TERRACOTTA roof cap, with faint vertical COLUMN FLUTING on the front. Modeled on the blocky
+// mudbrick roof (a flat-topped stone block) but two-tone: the body is the passed rc (which the
+// classical style sets to a pale marble tone) and the roof cap is a warm terracotta band derived
+// from clayAnchor blended with rc so it retints with the theme. The fluting is a few dim vertical
+// seams down the lit body, a whisper of column texture. Base-derived tones only (no accent).
+func drawRoofStoneClassical(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	// White-stone body: the full footprint in the pale base, a thin shaded eave rim.
+	forRect(cx, cy, hw, hh, func(x, y int) { img.SetRGBA(x, y, rc.dark) }) // eave shadow rim
+	dhw := maxInt(hw-1, 0)
+	dhh := maxInt(hh-1, 0)
+	forRect(cx, cy, dhw, dhh, func(x, y int) { img.SetRGBA(x, y, rc.base) }) // pale stone body
+
+	// Terracotta roof cap: a warm reddish clay band across the TOP (north) portion of the block, so
+	// the dwelling reads as a tiled roof over a white-stone house. Derived from clayAnchor blended
+	// with the body so it stays in-family + retints.
+	terra := blend(rc.base, clayAnchor, 0.62)
+	terraDark := darken(terra, 0.24)
+	capHH := maxInt(hh/2, 0)
+	forRect(cx, cy-hh+capHH/2+1, dhw, maxInt(capHH/2, 0), func(x, y int) { img.SetRGBA(x, y, terra) })
+	drawHSpan(img, cx-dhw, cx+dhw, cy-hh+1, terraDark) // a darker ridge line at the roof's top edge
+
+	// Column fluting: a few dim vertical seams down the lower (front) half of the pale body, a hint
+	// of a colonnade facade. Kept faint (a shade darker than the body) so it textures, not stripes.
+	flute := darken(rc.base, 0.12)
+	step := maxInt(hw/2, 1)
+	for fx := cx - hw + 1; fx <= cx+hw-1; fx += step {
+		for y := cy; y <= cy+dhh; y++ {
+			setPixel(img, fx, y, flute)
 		}
 	}
 }
@@ -3867,6 +4044,73 @@ func drawUpright(img *image.RGBA, cx, cy, size int, stone, lit, dark color.RGBA)
 		setPixel(img, cx+d, cy+size, dark) // shadowed base edge
 	}
 	setPixel(img, cx-size, cy-size, brighten(lit, 0.10))
+}
+
+// drawRoofTempleWonder: the CLASSICAL wonder (Phase 1b-ii) — a Greco-Roman TEMPLE read from above: a
+// pale STONE platform (stylobate), a COLONNADE of vertical pale columns ringing the perimeter, and a
+// warm TERRACOTTA gabled roof over the inner cella crowned by a peaked RIDGE (the pediment read).
+// Modeled on drawRoofCathedral's structure (a filled body + a crowning line) but produces
+// colonnade + pediment, not cruciform + spire, so it reads unmistakably as the Parthenon. Stone tones
+// blend marbleAnchor + the roof clay from clayAnchor against the passed rc so it retints with theme.
+// Bounds-checked (setPixel/forRect/drawHSpan), panic-safe at any footprint.
+func drawRoofTempleWonder(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	// Pale stone tones for the platform + columns; a warm terracotta for the pedimented roof.
+	stone := blend(rc.base, marbleAnchor, 0.55)
+	stoneLit := brighten(stone, 0.14)
+	stoneDark := blend(rc.dark, marbleAnchor, 0.35)
+	terra := blend(rc.base, clayAnchor, 0.60)
+	terraRidge := brighten(terra, 0.14)
+
+	// STYLOBATE: the full stone platform (a stepped base), a lighter inner deck so the steps read.
+	forRect(cx, cy, hw, hh, func(x, y int) { img.SetRGBA(x, y, stoneDark) })
+	forRect(cx, cy, maxInt(hw-1, 0), maxInt(hh-1, 0), func(x, y int) { img.SetRGBA(x, y, stone) })
+
+	// CELLA + TERRACOTTA ROOF: the inner temple body along the wider axis under a warm tiled roof,
+	// with a peaked ridge line (the pediment). The roof covers the inner ~55% so the colonnade shows
+	// around it.
+	horizontal := hw >= hh
+	rhw, rhh := maxInt(hw*11/20, 1), maxInt(hh*11/20, 1)
+	forRect(cx, cy, rhw, rhh, func(x, y int) {
+		// Gable shading: lit north/west of the ridge, shaded south/east, so the pediment reads pitched.
+		lit := y <= cy
+		if !horizontal {
+			lit = x <= cx
+		}
+		if lit {
+			img.SetRGBA(x, y, terra)
+		} else {
+			img.SetRGBA(x, y, darken(terra, 0.20))
+		}
+	})
+	// Pediment ridge along the temple's long axis.
+	if horizontal {
+		drawHSpan(img, cx-rhw, cx+rhw, cy, terraRidge)
+	} else {
+		for y := cy - rhh; y <= cy+rhh; y++ {
+			setPixel(img, cx, y, terraRidge)
+		}
+	}
+
+	// COLONNADE: a ring of vertical pale column dabs around the perimeter of the platform, standing
+	// proud of the roof so the temple reads as columned. Deterministic spacing; bounds-checked.
+	colStep := maxInt((hw+hh)/6, 2)
+	// Top + bottom rows of columns (the long colonnades).
+	for x := cx - hw + 1; x <= cx+hw-1; x += colStep {
+		drawTempleColumn(img, x, cy-hh+1, stoneLit, stoneDark)
+		drawTempleColumn(img, x, cy+hh-1, stoneLit, stoneDark)
+	}
+	// Left + right rows (the end colonnades).
+	for y := cy - hh + 1; y <= cy+hh-1; y += colStep {
+		drawTempleColumn(img, cx-hw+1, y, stoneLit, stoneDark)
+		drawTempleColumn(img, cx+hw-1, y, stoneLit, stoneDark)
+	}
+}
+
+// drawTempleColumn paints one temple column from above: a small lit stone dab over a darker base
+// shadow, so the colonnade reads as upright columns. Bounds-checked via setPixel.
+func drawTempleColumn(img *image.RGBA, cx, cy int, lit, dark color.RGBA) {
+	setPixel(img, cx, cy+1, dark) // base shadow
+	setPixel(img, cx, cy, lit)    // lit column shaft
 }
 
 // ---- pixel primitives (top-down) --------------------------------------------
