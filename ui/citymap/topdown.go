@@ -135,6 +135,13 @@ type tdEraStyle struct {
 	// periodic TOWERS + a gatehouse. tdAddWalls reads it to decide the wall thickness, whether to
 	// emit towers, and the gate structure. Only meaningful when hasWalls is true.
 	wallProfile wallProfile
+
+	// wonderMotif is the per-era CENTERPIECE silhouette drawn for a city's dominant wonder,
+	// decoupled from houseProfile (Phase 1b-i) so an age can pair (e.g.) thatch houses with a
+	// megalith monument, or white-stone houses with a temple. drawRoof consults this — not the
+	// house profile — to pick the wonder sprite. Zero value == wonderGeneric (the grand default
+	// hall), so an untuned era keeps its current wonder.
+	wonderMotif wonderMotif
 }
 
 // roofProfile is the per-era dwelling-roof dialect (V3-B). It shifts the ROOF SILHOUETTE of the
@@ -155,6 +162,18 @@ const (
 	wallNone     wallProfile = iota // no wall (primitive, industrial+)
 	wallMudbrick                    // ancient: thin tan curtain, gate gaps, no towers
 	wallStone                       // medieval: thicker grey curtain, towers, a gatehouse
+)
+
+// wonderMotif is the centerpiece silhouette drawn for a city's dominant wonder, decoupled from
+// houseProfile (Phase 1b-i) so an age can pair (e.g.) thatch houses with a megalith monument, or
+// white-stone houses with a temple. drawRoof switches on this to pick the wonder sprite.
+type wonderMotif int
+
+const (
+	wonderGeneric   wonderMotif = iota // grand generic hall (drawRoofWonder)
+	wonderZiggurat                     // ancient stepped pyramid (drawRoofZiggurat)
+	wonderCathedral                    // medieval cruciform + spire (drawRoofCathedral)
+	wonderMegalith                     // stone-age standing-stone circle (drawRoofMegalith)
 )
 
 // tdPal is the small set of resolved theme colors the style recipes draw from. Built once
@@ -339,7 +358,8 @@ var ancientCityStyle = func() tdEraStyle {
 	}
 
 	s.houseProfile = profileMudbrick
-	s.slotSpacing = 1.9 // a shade tighter than primitive (2.4), looser than the medieval city
+	s.wonderMotif = wonderZiggurat // ancient centrepiece: a stepped ziggurat
+	s.slotSpacing = 1.9            // a shade tighter than primitive (2.4), looser than the medieval city
 	return s
 }()
 
@@ -394,7 +414,51 @@ var medievalCityStyle = func() tdEraStyle {
 	}
 
 	s.houseProfile = profileTimber
-	s.slotSpacing = 1.7 // the tuned tighter default — a walled medieval town packs denser
+	s.wonderMotif = wonderCathedral // medieval centrepiece: a cruciform cathedral + spire
+	s.slotSpacing = 1.7             // the tuned tighter default — a walled medieval town packs denser
+	return s
+}()
+
+// stoneAgeStyle is the tuned STONE preset (Phase 1b-i), split off organicVillageStyle so the stone
+// age reads distinct from primitive. Dwellings stay THATCH (stone-age huts are still thatch, so
+// houseProfile is unchanged) and there are still NO walls — the difference is a ROCKIER, cooler,
+// more EXPOSED-STONE ground (a highland settlement, not a green village) and a MEGALITH centrepiece
+// (a standing-stone circle) instead of the generic hall. Every tone stays a theme-role recipe so
+// the whole city retints on a theme switch.
+var stoneAgeStyle = func() tdEraStyle {
+	s := organicVillageStyle
+	s.name = "stone"
+
+	// Ground: a clearly ROCKY GREY-BROWN highland floor — visibly cooler + more mineral than the
+	// primitive earthy/green village. Where primitive leans dirt+grass, stone pulls its base toward
+	// packed dirt then GREYS it HARD with the stone + granite anchors (exposed rock, little loam);
+	// the alt tone drops primitive's grass cast entirely for a stronger granite fleck, so the
+	// texture reads as scattered stone rather than turf. Pushed further (Phase 1b-i pass 2) so the
+	// age reads distinct at thumbnail scale. Muted-natural, still theme-derived.
+	s.groundBase = func(p tdPal) color.RGBA {
+		earthy := blend(blend(p.bg, p.dim, 0.32), dirtAnchor, 0.22)
+		rocky := blend(earthy, stoneAnchor, 0.44)
+		return blend(rocky, graniteAnchor, 0.22)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.28), graniteAnchor, 0.46)
+	}
+	// Green filler (gardens/trees) leans GREYER + sparser for the exposed highland: pull the garden
+	// green toward the stone family so the few remaining green patches read muted, not lush.
+	s.gardenCol = func(p tdPal) color.RGBA {
+		green := blend(blend(p.bg, p.dim, 0.20), grassAnchor, 0.34)
+		return blend(green, graniteAnchor, 0.22)
+	}
+	s.treeCol = func(p tdPal) color.RGBA {
+		green := darken(blend(blend(p.bg, p.dim, 0.30), grassAnchor, 0.46), 0.10)
+		return blend(green, graniteAnchor, 0.18)
+	}
+
+	s.houseProfile = profileThatch // stone-age dwellings are still thatch (unchanged from primitive)
+	s.wallProfile = wallNone
+	s.hasWalls = false
+	s.wonderMotif = wonderMegalith // stone centrepiece: a standing-stone circle
+	s.slotSpacing = 2.2            // a touch tighter than primitive's airy 2.4, still open highland
 	return s
 }()
 
@@ -446,9 +510,9 @@ func tdStyleForEra(e era) tdEraStyle {
 // render is unchanged. The era enum still drives town-form weights, flourishes, and tests — only
 // the style pick moved to per-age keying.
 var ageStyles = map[string]tdEraStyle{
-	// organic — primitive/stone (V3-A)
+	// organic — primitive/stone (V3-A; stone split off with its own rockier ground + megalith, 1b-i)
 	"primitive_age": organicVillageStyle,
-	"stone_age":     organicVillageStyle,
+	"stone_age":     stoneAgeStyle,
 	// ancient — bronze/iron/classical (V3-B)
 	"bronze_age":    ancientCityStyle,
 	"iron_age":      ancientCityStyle,
@@ -618,11 +682,12 @@ const (
 	// AROUND (never overlapping) the roof. Kept as distinct kinds so each prop gets its own
 	// small top-down draw routine and later eras can swap the set (fountain/statue/benches)
 	// without disturbing the primitive one.
-	tdPlaza       // paved-stone town-square ground (drawn under the wonder/center roof)
-	tdPropWell    // a stone well head (ring + dark shaft)
-	tdPropFirepit // a firepit / hearth (dark ring + ember center)
-	tdPropStones  // standing stones / a totem (a couple of upright dabs)
-	tdPropStall   // a market stall (awning patch)
+	tdPlaza        // paved-stone town-square ground (drawn under the wonder/center roof)
+	tdPropWell     // a stone well head (ring + dark shaft)
+	tdPropFirepit  // a firepit / hearth (dark ring + ember center)
+	tdPropStones   // standing stones / a totem (a couple of upright dabs)
+	tdPropStall    // a market stall (awning patch)
+	tdPropMegalith // stone-age: a single tall standing stone (a vertical grey slab + ground shadow)
 
 	// V3-B era square props. Ancient set: altar / columns / braziers (+ well). Medieval set:
 	// market stalls / fountain / cross-or-gallows (+ well). Each has its own small top-down draw
@@ -1305,7 +1370,7 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 	// (never nudges) a colliding fabric lot, yielding to the fixed wonder roofs and to earlier
 	// lots, so a surviving lot keeps its exact placed position. Runs AFTER the wonders exist so
 	// it can guard against them.
-	tdPlaceWonders(&plan, cfg)
+	tdPlaceWonders(&plan, style, cfg)
 	tdEnforceMinGap(&plan, cfg)
 
 	// (e) town squares — dress each plaza region (wonders + the wonderless center) as a paved
@@ -2198,9 +2263,23 @@ func tdWonderScale(anchorIdx int) float64 {
 // spread central anchors. Each is labeled and drawn prominent; its plaza region was kept OPEN by
 // the block field (a plaza seed holds no building cells), so the fabric never buries it. Only
 // the grandest wonder carries the "City Center" hero label priority via its prominence.
-func tdPlaceWonders(plan *topPlan, cfg tdConfig) {
+func tdPlaceWonders(plan *topPlan, style tdEraStyle, cfg tdConfig) {
 	for i, a := range plan.anchors {
 		if !a.wonder {
+			// A city with NO built wonder normally leaves its center a modest dressed square. But an
+			// era whose IDENTITY is a monument (stone → a megalith circle, Phase 1b-i) must show that
+			// centerpiece anyway, so the age reads distinct even when the civ has built no wonder.
+			// Draw an UNLABELLED megalith monument roof at the center anchor, sized modestly so it sits
+			// inside the small central square without needing a reserved plaza region. It reads through
+			// the roofWonder → wonderMegalith dispatch exactly like a built wonder's centerpiece would.
+			if i == 0 && style.wonderMotif == wonderMegalith {
+				mScale := tdWonderScale(0) * 0.62 // modest — fits the wonderless center square
+				plan.lots = append(plan.lots, tdLot{
+					x: a.cx, y: a.cy, w: cfg.roofSize * mScale, h: cfg.roofSize * mScale,
+					kind: tdRoof, domain: "monument", category: "monument",
+					roof: roofWonder, prom: 600, // prominent but below a true labeled wonder
+				})
+			}
 			continue
 		}
 		scale := tdWonderScale(i)
@@ -2234,6 +2313,9 @@ type tdSquareProps struct {
 
 // tdSquarePropsFor returns the town-square prop palette for an era, keyed off the style's house
 // profile (the era discriminator V3-B threads everywhere):
+//   - STONE (wonderMegalith): MEGALITHS + standing stones, a well + firepit around a wonder (a
+//     stone-circle forecourt); a megalith + well for a bare center. Checked FIRST off wonderMotif
+//     because stone shares profileThatch with primitive — the motif is what distinguishes them.
 //   - PRIMITIVE/default (profileThatch): a well, a firepit, standing stones/totem, and a market
 //     stall around a wonder; a well + firepit for a bare center.
 //   - ANCIENT (profileMudbrick): an ALTAR, COLUMNS, BRAZIERS + a well around a wonder (a temple
@@ -2243,6 +2325,14 @@ type tdSquareProps struct {
 //
 // Every set keeps the deterministic ring placement + no-overlap-with-roof (tdRingProps).
 func tdSquarePropsFor(style tdEraStyle) tdSquareProps {
+	// Stone shares profileThatch with primitive, so it can't be told apart by the house profile;
+	// its megalith motif is the discriminator. Dress its square with standing stones (Phase 1b-i).
+	if style.wonderMotif == wonderMegalith {
+		return tdSquareProps{
+			wonder: []tdLotKind{tdPropMegalith, tdPropStones, tdPropWell, tdPropFirepit},
+			center: []tdLotKind{tdPropMegalith, tdPropWell},
+		}
+	}
 	switch style.houseProfile {
 	case profileMudbrick: // ancient
 		return tdSquareProps{
@@ -2299,10 +2389,21 @@ func tdPlaceSquares(plan *topPlan, style tdEraStyle, cfg tdConfig, seed uint32) 
 			if cap := cfg.roofSize * 1.4; plan.form == formOrganic && smallR > cap {
 				smallR = cap
 			}
+			ringR := smallR * 0.55
+			if i == 0 && style.wonderMotif == wonderMegalith {
+				// A megalith monument now occupies this center (tdPlaceWonders). Grow the plaza + push
+				// the prop ring OUTSIDE the monument footprint so the standing-stone dabs frame it
+				// rather than overlapping the circle.
+				monHalf := cfg.roofSize * tdWonderScale(0) * 0.62 / 2
+				if want := monHalf + cfg.roofSize*0.9; smallR < want {
+					smallR = want
+				}
+				ringR = monHalf + cfg.roofSize*0.7
+			}
 			plan.lots = append(plan.lots, tdLot{
 				x: a.cx, y: a.cy, w: smallR * 2, h: smallR * 2, kind: tdPlaza,
 			})
-			tdRingProps(plan, a.cx, a.cy, smallR*0.55, props.center, uint32(i), seed)
+			tdRingProps(plan, a.cx, a.cy, ringR, props.center, uint32(i), seed)
 		}
 	}
 }
@@ -2433,9 +2534,15 @@ func tdAddFiller(plan *topPlan, field blockField, style tdEraStyle, cfg tdConfig
 	}
 
 	// Counts scale with the number of roofs but stay balanced (sub-linear) so the filler seasons
-	// the town rather than swamping it.
-	gardens := int(dens * math.Sqrt(float64(roofN)) * 1.0)
-	trees := int(dens * math.Sqrt(float64(roofN)) * 0.9)
+	// the town rather than swamping it. STONE (wonderMegalith) is an EXPOSED HIGHLAND — thin out the
+	// green (fewer gardens + trees) so it reads as rocky ground, not a wooded village; keep some so
+	// it isn't barren.
+	greenScale := 1.0
+	if style.wonderMotif == wonderMegalith {
+		greenScale = 0.5
+	}
+	gardens := int(dens * math.Sqrt(float64(roofN)) * 1.0 * greenScale)
+	trees := int(dens * math.Sqrt(float64(roofN)) * 0.9 * greenScale)
 	props := int(dens * math.Sqrt(float64(roofN)) * 0.6)
 	ponds := 1 + int(dens*math.Sqrt(float64(roofN))*0.18)
 	if ponds > 5 {
@@ -2488,6 +2595,26 @@ func tdAddFiller(plan *topPlan, field blockField, style tdEraStyle, cfg tdConfig
 		plan.lots = append(plan.lots, tdLot{x: p.x, y: p.y, w: cfg.roofSize * 0.5, h: cfg.roofSize * 0.5, kind: tdProp})
 	}
 
+	// Scattered STANDING STONES (stone age, Phase 1b-i): a handful of megalith dabs dotted through
+	// the settlement (not only the central circle) so the megalithic theme reads across the whole
+	// town at thumbnail scale. Deterministic (same seeded pick-without-replacement), a bit larger
+	// than a plain prop so they stand out, but capped at 2–4 so they season rather than swamp.
+	if style.wonderMotif == wonderMegalith {
+		nStones := 2 + int(r.f01()*3) // 2..4
+		if nStones > 4 {
+			nStones = 4
+		}
+		for i := 0; i < nStones; i++ {
+			p, ok := pick()
+			if !ok {
+				break
+			}
+			plan.lots = append(plan.lots, tdLot{
+				x: p.x, y: p.y, w: cfg.roofSize * 0.7, h: cfg.roofSize * 0.7, kind: tdPropMegalith,
+			})
+		}
+	}
+
 	// A paved square (or two) hugging a random near-core block, for a lived-in market patch.
 	squares := 1 + int(dens*math.Sqrt(float64(roofN))*0.25)
 	for i := 0; i < squares; i++ {
@@ -2504,6 +2631,9 @@ func tdAddFiller(plan *topPlan, field blockField, style tdEraStyle, cfg tdConfig
 	groveCount := 2 + int(r.f01()*3) // 2..4
 	if groveCount > 4 {
 		groveCount = 4
+	}
+	if style.wonderMotif == wonderMegalith {
+		groveCount = 1 + int(r.f01()*2) // 1..2 — a sparse, exposed highland, not a wooded village
 	}
 	groveBase := r.f01() * 2 * math.Pi
 	for g := 0; g < groveCount; g++ {
@@ -3198,6 +3328,23 @@ func drawSquareProp(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle,
 		drawBlock(img, cx, cy-rad, 0, brighten(stone, 0.10))
 		drawBlock(img, cx+rad, cy, 0, darken(stone, 0.10))
 		setPixel(img, cx, cy, stone)
+	case tdPropMegalith:
+		// A single TALL standing stone: a vertical grey slab, wider at the base, with a soft ground
+		// shadow — clearly larger/taller than the 3-dab tdPropStones. Grey stone tones blended with
+		// propCol/pavedCol like the neighbouring props, so it retints with the theme.
+		stone := blend(blend(prop, paved, 0.4), graniteAnchor, 0.35)
+		shadow := darken(stone, 0.45)
+		// Ground shadow: a low dark ellipse at the base (south of the slab).
+		forEllipse(cx, cy+rad, maxInt(rad, 1), maxInt(rad/2, 1), func(x, y int) { blendPixel(img, x, y, shadow, 0.35) })
+		// The slab: a tall vertical rect (taller than wide), a touch wider at the base.
+		fillRectC(img, cx, cy, maxInt(rad/2, 0), rad, stone)
+		fillRectC(img, cx, cy+rad, maxInt(rad, 1), 0, blend(stone, shadow, 0.4)) // splayed base
+		// Lit NW face + shaded SE edge for upright volume; a bright crown dab on top.
+		for dy := -rad; dy <= rad; dy++ {
+			setPixel(img, cx-maxInt(rad/2, 0), cy+dy, brighten(stone, 0.12))
+			setPixel(img, cx+maxInt(rad/2, 0), cy+dy, darken(stone, 0.15))
+		}
+		setPixel(img, cx, cy-rad, brighten(stone, 0.16))
 	case tdPropStall:
 		cloth := blend(prop, pal.text, 0.20)
 		fillRectC(img, cx, cy, rad, rad, cloth)
@@ -3318,13 +3465,17 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 	case roofFlat:
 		drawRoofFlat(img, cx, cy, hw, hh, rc)
 	case roofWonder:
-		// The era WONDER silhouette (locked #13, V3-B): ancient = a stepped ZIGGURAT, medieval =
-		// a CATHEDRAL/KEEP with a spire; every other era keeps the ornate default complex.
-		switch style.houseProfile {
-		case profileMudbrick:
+		// The era WONDER silhouette (locked #13, V3-B), now keyed off the dedicated wonderMotif
+		// field (Phase 1b-i) rather than the house profile — so an age can pair thatch houses with
+		// a megalith monument. Ancient = a stepped ZIGGURAT, medieval = a CATHEDRAL/KEEP with a
+		// spire, stone = a MEGALITH stone circle; every other era keeps the ornate default complex.
+		switch style.wonderMotif {
+		case wonderZiggurat:
 			drawRoofZiggurat(img, cx, cy, hw, hh, rc)
-		case profileTimber:
+		case wonderCathedral:
 			drawRoofCathedral(img, cx, cy, hw, hh, rc)
+		case wonderMegalith:
+			drawRoofMegalith(img, cx, cy, hw, hh, rc)
 		default:
 			drawRoofWonder(img, cx, cy, hw, hh, rc)
 		}
@@ -3638,6 +3789,84 @@ func drawRoofCathedral(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 	shh := maxInt(hh/5, 1)
 	forRect(cx, cy, shw, shh, func(x, y int) { img.SetRGBA(x, y, rc.ridge) })
 	setPixel(img, cx, cy, brighten(rc.ridge, 0.12))
+}
+
+// drawRoofMegalith: the STONE-AGE wonder (Phase 1b-i) — a megalithic monument read from above as a
+// rough RING of upright standing stones around the footprint, a couple of lintel-topped TRILITHON
+// pairs (a cap stone bridging two uprights, for the Stonehenge read), and a low central ALTAR/hearth
+// stone. The grey stone palette is graniteAnchor/stoneAnchor BLENDED with the passed roof color set
+// (like the ziggurat pulls its terraces from rc) so the monument retints on a theme switch and stays
+// in-family with the era mood rather than reading as raw grey. Deterministic + bounds-checked (every
+// write goes through setPixel/drawBlock/fillDisc), so it is panic-safe at any footprint.
+func drawRoofMegalith(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	// Stone tones: the grey anchors pulled toward the (already theme/lineage-tinted, sat-capped)
+	// roof base + shaded slope, so the megalith reads grey-stone yet retints with the theme. Kept
+	// PALE so the standing stones read with strong contrast against the dark mound below.
+	stone := brighten(blend(rc.base, blend(graniteAnchor, stoneAnchor, 0.5), 0.62), 0.10)
+	stoneLit := brighten(stone, 0.16) // NW-lit crown of an upright
+	stoneDark := blend(rc.dark, graniteAnchor, 0.45)
+	lintel := blend(stone, stoneLit, 0.5) // cap stones a touch lighter so the trilithons read
+
+	// MASS FIRST: a filled earthen mound + a paved inner ring, so the monument has the SOLID visual
+	// weight of the ziggurat/cathedral (it fills its footprint) instead of reading as scattered dots.
+	// Kept DARK so the pale standing stones on top read with strong contrast (the circle must show).
+	mound := darken(blend(blend(rc.dark, stoneDark, 0.5), earthAnchor, 0.20), 0.24) // a low dark turf/earth platform
+	forEllipse(cx, cy, hw, hh, func(x, y int) { img.SetRGBA(x, y, mound) })
+	inner := blend(mound, stone, 0.24) // a paved henge ditch/bank one band in, still darker than a stone
+	forEllipse(cx, cy, maxInt(hw*3/4, 1), maxInt(hh*3/4, 1), func(x, y int) { img.SetRGBA(x, y, inner) })
+
+	// Standing-stone size scales with the footprint but is floored so a stone always reads as a slab
+	// (not a single dot) even on a modest monument.
+	sw := maxInt((hw+hh)/6, 1) // stone half-width (drawBlock size)
+	// Perimeter ring of 8 upright slabs, at a radius just inside the footprint so they sit on the
+	// monument's rim (not spilling past it). Deterministic angles; every stone bounds-checked.
+	const uprights = 8
+	rx := float64(hw) * 0.80
+	ry := float64(hh) * 0.80
+	for i := 0; i < uprights; i++ {
+		ang := 2 * math.Pi * float64(i) / float64(uprights)
+		sx := cx + int(math.Round(math.Cos(ang)*rx))
+		sy := cy + int(math.Round(math.Sin(ang)*ry))
+		drawUpright(img, sx, sy, sw, stone, stoneLit, stoneDark)
+	}
+	// Two TRILITHON pairs (lintel-topped uprights) on the east + west flanks: two close uprights
+	// bridged by a horizontal cap stone, so the monument reads as Stonehenge, not just a dot ring.
+	tw := maxInt(hw/2, 1)
+	gap := maxInt(sw+1, 2)
+	for _, sign := range []int{-1, 1} {
+		bx := cx + sign*tw
+		by := cy
+		// Two uprights straddling the flank point.
+		drawUpright(img, bx, by-gap, sw, stone, stoneLit, stoneDark)
+		drawUpright(img, bx, by+gap, sw, stone, stoneLit, stoneDark)
+		// The cap stone bridging them (a bold vertical bar of lintel tone spanning the pair).
+		for dy := -gap; dy <= gap; dy++ {
+			for dx := -1; dx <= 1; dx++ {
+				setPixel(img, bx+dx, by+dy, lintel)
+			}
+		}
+		setPixel(img, bx, by, brighten(lintel, 0.12))
+	}
+	// Central ALTAR / hearth stone: a bold flat slab with a darker core, anchoring the ring's heart.
+	ahw := maxInt(hw/3, 1)
+	ahh := maxInt(hh/4, 1)
+	fillRectC(img, cx, cy, ahw, ahh, blend(stone, stoneDark, 0.30))
+	fillRectC(img, cx, cy, maxInt(ahw/2, 0), maxInt(ahh/2, 0), darken(stoneDark, 0.10))
+}
+
+// drawUpright paints one megalith standing stone from above: a small grey block, lit on the NW
+// crown and shadowed on the SE base, with a soft ground shadow so it reads as an upright slab, not a
+// flat dab. Bounds-checked via setPixel/drawBlock. size is the block half-extent (>=1).
+func drawUpright(img *image.RGBA, cx, cy, size int, stone, lit, dark color.RGBA) {
+	// Soft ground shadow one row south so the slab reads as standing, not painted flat.
+	drawBlock(img, cx+1, cy+size+1, maxInt(size-1, 0), dark)
+	drawBlock(img, cx, cy, size, stone)
+	// Lit NW crown + shaded SE base edge for a hint of upright volume.
+	for d := -size; d <= size; d++ {
+		setPixel(img, cx+d, cy-size, lit)  // lit top edge
+		setPixel(img, cx+d, cy+size, dark) // shadowed base edge
+	}
+	setPixel(img, cx-size, cy-size, brighten(lit, 0.10))
 }
 
 // ---- pixel primitives (top-down) --------------------------------------------

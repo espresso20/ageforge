@@ -3,7 +3,9 @@ package citymap
 import (
 	"image"
 	"image/color"
+	"image/png"
 	"math"
+	"os"
 	"sort"
 	"strconv"
 	"testing"
@@ -2563,5 +2565,131 @@ func TestV3BWallsBoundedAndOpenErasHaveNone(t *testing.T) {
 		if n := len(wallLotsOf(plan)) + len(gateLotsOf(plan)) + len(towerLotsOf(plan)); n != 0 {
 			t.Fatalf("%s (%s) has %d wall lots — this era must be OPEN (no walls)", os.name, os.ageKey, n)
 		}
+	}
+}
+
+// TestStoneAgeStyleAndWonderMotifRefactor locks Phase 1b-i: the STONE age gets its own style
+// (megalith wonder, thatch houses still) and the wonder-motif field refactor preserved the
+// ancient/medieval wonder mapping (they read off wonderMotif now, not houseProfile).
+func TestStoneAgeStyleAndWonderMotifRefactor(t *testing.T) {
+	if got := styleForAge("stone_age").wonderMotif; got != wonderMegalith {
+		t.Fatalf("stone_age wonderMotif = %v, want wonderMegalith", got)
+	}
+	if got := styleForAge("stone_age").houseProfile; got != profileThatch {
+		t.Fatalf("stone_age houseProfile = %v, want profileThatch (stone dwellings stay thatch)", got)
+	}
+	// Behaviour-preserving refactor: ancient/medieval wonders now key off wonderMotif and must map
+	// to the same sprites they did off houseProfile.
+	if got := styleForAge("bronze_age").wonderMotif; got != wonderZiggurat {
+		t.Fatalf("bronze_age wonderMotif = %v, want wonderZiggurat", got)
+	}
+	if got := styleForAge("medieval_age").wonderMotif; got != wonderCathedral {
+		t.Fatalf("medieval_age wonderMotif = %v, want wonderCathedral", got)
+	}
+}
+
+// TestStoneMegalithWonderDiffers locks that the stone-age MEGALITH wonder draws differently from
+// the primitive generic hall AND from the bronze ziggurat (the megalith sprite is actually applied).
+func TestStoneMegalithWonderDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	prim := drawWonderImg(styleForAge("primitive_age"))
+	stone := drawWonderImg(styleForAge("stone_age"))
+	bronze := drawWonderImg(styleForAge("bronze_age"))
+	if !imagesDiffer(prim, stone) {
+		t.Fatal("stone megalith wonder draws identically to the primitive hall — the megalith silhouette is not applied")
+	}
+	if !imagesDiffer(stone, bronze) {
+		t.Fatal("stone megalith wonder draws identically to the bronze ziggurat — the two wonders must differ")
+	}
+}
+
+// TestStoneSquarePropsIncludeMegalith locks that stone's town-square prop palette carries the
+// megalith prop and primitive's does NOT (the stone square dresses distinct from primitive).
+func TestStoneSquarePropsIncludeMegalith(t *testing.T) {
+	kindSet := func(kinds []tdLotKind) map[tdLotKind]bool {
+		m := map[tdLotKind]bool{}
+		for _, k := range kinds {
+			m[k] = true
+		}
+		return m
+	}
+	stone := tdSquarePropsFor(styleForAge("stone_age"))
+	prim := tdSquarePropsFor(styleForAge("primitive_age"))
+	sW := kindSet(stone.wonder)
+	pW := kindSet(prim.wonder)
+	if !sW[tdPropMegalith] {
+		t.Fatalf("stone square props %v missing tdPropMegalith", stone.wonder)
+	}
+	if pW[tdPropMegalith] {
+		t.Fatalf("primitive square props %v must NOT include tdPropMegalith", prim.wonder)
+	}
+	sC := kindSet(stone.center)
+	if !sC[tdPropMegalith] {
+		t.Fatalf("stone center props %v missing tdPropMegalith", stone.center)
+	}
+}
+
+// TestDrawRoofMegalithPanicSafe locks that the megalith sprite is panic-safe + in-bounds on a tiny
+// footprint and a normal one (every write is clamped).
+func TestDrawRoofMegalithPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("stone_age")
+	for _, tc := range []struct{ w, h, hw, hh int }{
+		{9, 9, 2, 2},     // tiny footprint centered near an edge-ish spot
+		{40, 40, 12, 10}, // normal footprint
+	} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		// Should not panic even if the center + extents push writes past the image edges.
+		drawRoofMegalith(img, tc.w/2, tc.h/2, tc.hw, tc.hh, rc)
+		drawRoofMegalith(img, 1, 1, tc.hw, tc.hh, rc) // hard against the NW corner
+	}
+}
+
+// TestDumpStoneEpochPNGs renders a representative city for primitive / stone / bronze with a FIXED
+// seed and identical building counts, and writes PNGs for human eyeballing. Not an assertion test —
+// it exists so a reviewer can compare the three ages side by side. Opt-in: skipped unless
+// CITYMAP_PNG_DUMP is set to an output directory, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpStoneEpochPNGs
+func TestDumpStoneEpochPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Identical building set (with a wonder so the centerpiece renders) and a FIXED display name →
+	// the citySeed is fixed, so only the era re-skin differs across the three dumps.
+	blds := map[string]int{"hut": 26, "gathering_camp": 16, "forge": 10, "stonehenge": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"primitive_age", "1b_i_primitive.png"},
+		{"stone_age", "1b_i_stone.png"},
+		{"bronze_age", "1b_i_bronze.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
 	}
 }
