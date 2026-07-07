@@ -2179,6 +2179,15 @@ func tdCountBand(n int) int {
 //	formRibbon  — the town ELONGATED along an axis with seeds strung along that axis (a main road)
 //	    plus lateral spread: a linear town strung along a road. A pinch of every band, dominant
 //	    nowhere; the occasional primitive village that grew along a river/trail.
+//	formCrescent   — garden-suburb CURVED streets: seeds strung along several CONCENTRIC ARCS at a
+//	    lower density with deliberate green GAPS (garden squares). Long sweeping terraces, not a wheel
+//	    and not a full ring. The Victorian garden suburb.
+//	formBoulevard  — an orthogonal GRID CUT by 2-4 grand DIAGONAL avenues: seeds laid on a lattice
+//	    with a band cleared along each diagonal so the Voronoi streets include long diagonal
+//	    boulevards slicing the blocks. The Haussmann/electric-city plan.
+//	formCoreSuburb — a dense downtown CORE ringed by sparse loopy SUBURBS: most seeds packed tightly
+//	    inside an inner radius, the rest spread thin (large wards) in the outer ring. The atomic-age
+//	    metropolis-with-sprawl.
 type tdTownForm int
 
 const (
@@ -2186,45 +2195,55 @@ const (
 	formRadial
 	formGrid
 	formRibbon
+	formCrescent
+	formBoulevard
+	formCoreSuburb
+	// tdFormCount is a sentinel = one past the last real form; loop [0,tdFormCount) to iterate
+	// forms in a FIXED, deterministic order (never `range` a tdFormWeights map).
+	tdFormCount
 )
 
-// tdFormWeights is a small per-AGE weighting over the four forms (organic, radial, grid, ribbon),
-// consumed as a discrete distribution by tdPickTownForm. A zero weight forbids a form for that
-// age (e.g. primitive villages are NEVER radial or grid — they ramble, they are not planned).
+// tdFormWeights is a per-AGE weighting over the town forms (form → relative weight), consumed as a
+// discrete distribution by tdPickTownForm. A form ABSENT from the map (or with a ≤0 weight) is
+// forbidden for that age (e.g. primitive villages are NEVER radial or grid — they ramble, they are
+// not planned). Modelled as a MAP (not a fixed vector) so bespoke forms — crescent, boulevard,
+// core+suburb, and whatever lands next — can be added without every table entry growing a slot.
 // These are deliberately TUNABLE; the only hard contract the tests lock is that PRIMITIVE is
-// organic-dominant and never a wheel/grid (its radial+grid weights stay 0).
-type tdFormWeights [4]float64
+// organic-dominant and never a wheel/grid (it never lists radial or grid). Consumers MUST iterate
+// forms in a FIXED order (loop the enum 0..N and look each up) — ranging a Go map is randomized and
+// would break the determinism tdPickTownForm guarantees.
+type tdFormWeights map[tdTownForm]float64
 
 // tdAgeForms is the PER-AGE form distribution table (map-overhaul-citymap Phase 2a). Each of the 22
 // ages gets its OWN characteristic town form (the dominant weight), replacing the coarse per-ERA
 // band table so a city's whole gestalt reads distinctly age to age while still fanning out a little
-// across citySeeds. Order per entry: [organic, radial, grid, ribbon]. Weights are relative (they
-// need not sum to 1). This slice uses ONLY the existing four forms; bespoke new geometries land in
-// later slices. LOCKED INVARIANT: primitive_age keeps radial==0 && grid==0 — villages never plan a
-// wheel or a survey grid.
+// across citySeeds. Each entry maps form→relative weight (absent form = forbidden); weights are
+// relative (they need not sum to 1). Bespoke new geometries (crescent/boulevard/coreSuburb) land on
+// the ELECTRIC epoch here; every other age keeps its original weights unchanged. LOCKED INVARIANT:
+// primitive_age lists neither radial nor grid — villages never plan a wheel or a survey grid.
 var tdAgeForms = map[string]tdFormWeights{
-	"primitive_age":    {0.85, 0, 0, 0.15},    // organic (invariant: no wheel/grid)
-	"stone_age":        {0.85, 0, 0, 0.15},    // organic
-	"bronze_age":       {0.30, 0.60, 0, 0.10}, // radial — first monument/forum cores
-	"iron_age":         {0.30, 0.60, 0, 0.10}, // radial
-	"classical_age":    {0.10, 0.25, 0.60, 0.05},
-	"medieval_age":     {0.45, 0.40, 0.05, 0.10},
-	"renaissance_age":  {0.15, 0.65, 0.10, 0.10},
-	"colonial_age":     {0.15, 0.05, 0.70, 0.10},
-	"industrial_age":   {0.10, 0.0, 0.75, 0.15},
-	"victorian_age":    {0.45, 0.05, 0.20, 0.30},
-	"electric_age":     {0.10, 0.05, 0.75, 0.10},
-	"atomic_age":       {0.20, 0.05, 0.65, 0.10},
-	"modern_age":       {0.05, 0.05, 0.85, 0.05}, // grid — the planned metropolis
-	"information_age":  {0.30, 0.05, 0.60, 0.05},
-	"digital_age":      {0.05, 0.05, 0.85, 0.05},
-	"cyberpunk_age":    {0.05, 0.05, 0.85, 0.05},
-	"fusion_age":       {0.20, 0.35, 0.40, 0.05},
-	"space_age":        {0.15, 0.10, 0.70, 0.05},
-	"interstellar_age": {0.55, 0.10, 0.30, 0.05},
-	"galactic_age":     {0.15, 0.70, 0.10, 0.05}, // radial — the galactic wheel
-	"quantum_age":      {0.10, 0.10, 0.75, 0.05},
-	"transcendent_age": {0.20, 0.65, 0.05, 0.10},
+	"primitive_age":    {formOrganic: 0.85, formRibbon: 0.15},                   // organic (invariant: no wheel/grid)
+	"stone_age":        {formOrganic: 0.85, formRibbon: 0.15},                   // organic
+	"bronze_age":       {formOrganic: 0.30, formRadial: 0.60, formRibbon: 0.10}, // radial — first monument/forum cores
+	"iron_age":         {formOrganic: 0.30, formRadial: 0.60, formRibbon: 0.10}, // radial
+	"classical_age":    {formOrganic: 0.10, formRadial: 0.25, formGrid: 0.60, formRibbon: 0.05},
+	"medieval_age":     {formOrganic: 0.45, formRadial: 0.40, formGrid: 0.05, formRibbon: 0.10},
+	"renaissance_age":  {formOrganic: 0.15, formRadial: 0.65, formGrid: 0.10, formRibbon: 0.10},
+	"colonial_age":     {formOrganic: 0.15, formRadial: 0.05, formGrid: 0.70, formRibbon: 0.10},
+	"industrial_age":   {formOrganic: 0.10, formGrid: 0.75, formRibbon: 0.15},
+	"victorian_age":    {formCrescent: 0.85, formOrganic: 0.15},                                 // crescent — garden-suburb curves
+	"electric_age":     {formBoulevard: 0.85, formGrid: 0.15},                                   // boulevard — grid cut by grand diagonals
+	"atomic_age":       {formCoreSuburb: 0.85, formGrid: 0.15},                                  // core+suburb — dense downtown, loose sprawl
+	"modern_age":       {formOrganic: 0.05, formRadial: 0.05, formGrid: 0.85, formRibbon: 0.05}, // grid — the planned metropolis
+	"information_age":  {formOrganic: 0.30, formRadial: 0.05, formGrid: 0.60, formRibbon: 0.05},
+	"digital_age":      {formOrganic: 0.05, formRadial: 0.05, formGrid: 0.85, formRibbon: 0.05},
+	"cyberpunk_age":    {formOrganic: 0.05, formRadial: 0.05, formGrid: 0.85, formRibbon: 0.05},
+	"fusion_age":       {formOrganic: 0.20, formRadial: 0.35, formGrid: 0.40, formRibbon: 0.05},
+	"space_age":        {formOrganic: 0.15, formRadial: 0.10, formGrid: 0.70, formRibbon: 0.05},
+	"interstellar_age": {formOrganic: 0.55, formRadial: 0.10, formGrid: 0.30, formRibbon: 0.05},
+	"galactic_age":     {formOrganic: 0.15, formRadial: 0.70, formGrid: 0.10, formRibbon: 0.05}, // radial — the galactic wheel
+	"quantum_age":      {formOrganic: 0.10, formRadial: 0.10, formGrid: 0.75, formRibbon: 0.05},
+	"transcendent_age": {formOrganic: 0.20, formRadial: 0.65, formGrid: 0.05, formRibbon: 0.10},
 }
 
 // tdAgeFormWeights returns the form distribution for an age key (map-overhaul-citymap Phase 2a).
@@ -2234,7 +2253,7 @@ func tdAgeFormWeights(ageKey string) tdFormWeights {
 	if w, ok := tdAgeForms[ageKey]; ok {
 		return w
 	}
-	return tdFormWeights{0.80, 0, 0, 0.20}
+	return tdFormWeights{formOrganic: 0.80, formRibbon: 0.20}
 }
 
 // tdPickTownForm chooses a town's FORM deterministically from (citySeed, ageKey). It is a pure
@@ -2246,9 +2265,11 @@ func tdAgeFormWeights(ageKey string) tdFormWeights {
 // phase, jitter, scatter phase).
 func tdPickTownForm(seed uint32, ageKey string) tdTownForm {
 	w := tdAgeFormWeights(ageKey)
+	// CRITICAL: iterate forms in a FIXED enum order (0..tdFormCount), looking each up in the weight
+	// map — NEVER `range` the map, whose order Go randomizes (that would break determinism).
 	total := 0.0
-	for _, x := range w {
-		if x > 0 {
+	for f := formOrganic; f < tdFormCount; f++ {
+		if x := w[f]; x > 0 {
 			total += x
 		}
 	}
@@ -2259,19 +2280,20 @@ func tdPickTownForm(seed uint32, ageKey string) tdTownForm {
 	// jitter hashes so changing one never shifts the form.
 	roll := float64(hash2(0xF0F0, 0x0F0F, seed^0x7f4a7c15)) / float64(^uint32(0)) * total
 	acc := 0.0
-	for i, x := range w {
+	for f := formOrganic; f < tdFormCount; f++ {
+		x := w[f]
 		if x <= 0 {
 			continue
 		}
 		acc += x
 		if roll < acc {
-			return tdTownForm(i)
+			return f
 		}
 	}
-	// Float slop guard: return the last positive-weight form.
-	for i := len(w) - 1; i >= 0; i-- {
-		if w[i] > 0 {
-			return tdTownForm(i)
+	// Float slop guard: return the last positive-weight form (walk the enum in reverse).
+	for f := tdFormCount - 1; f >= formOrganic; f-- {
+		if w[f] > 0 {
+			return f
 		}
 	}
 	return formOrganic
@@ -2685,6 +2707,12 @@ func tdScatterSeedsFor(form tdTownForm, townR float64, anchors []tdAnchor, B int
 		return tdScatterGrid(seeds, townR, need, cfg, seed)
 	case formRibbon:
 		return tdScatterRibbon(seeds, townR, need, cfg, seed)
+	case formCrescent:
+		return tdScatterCrescent(seeds, townR, need, cfg, seed)
+	case formBoulevard:
+		return tdScatterBoulevard(seeds, townR, need, cfg, seed)
+	case formCoreSuburb:
+		return tdScatterCoreSuburb(seeds, townR, need, cfg, seed)
 	default: // formOrganic
 		return tdScatterOrganic(seeds, townR, need, cfg, seed)
 	}
@@ -2877,6 +2905,314 @@ func tdScatterRibbon(seeds []tdPoint, townR float64, need int, cfg tdConfig, see
 			y *= s
 		}
 		seeds = append(seeds, tdPoint{x, y})
+	}
+	return seeds
+}
+
+// tdScatterCrescent is the GARDEN-SUBURB curved-street scatter — the formCrescent strategy
+// (map-overhaul-citymap Phase 2a). Free seeds are strung along several CONCENTRIC ARCS (crescents)
+// at increasing radii: the Voronoi ward boundaries then follow those sweeping curves, so the town
+// reads as long CURVED terraces — a genteel Victorian garden suburb — rather than a grid or a wheel.
+// Two things make it a crescent and NOT a ring/wheel: (1) each arc spans only a partial sweep
+// (~0.62 turn), never the full circle, and (2) each arc DELIBERATELY skips 2-3 segments, leaving
+// seed-free GAPS that the raster paints as green GARDEN SQUARES. Effective density is a touch lower
+// than the grid (the seeds spread along long curves), so wards come out as sweeping terraces with
+// leafy gaps between them.
+//
+// Determinism + a fixed free-seed COUNT: exactly `need` free seeds are placed (banded stability is
+// preserved). Seeds are apportioned across arcs proportionally to each arc's radius (outer crescents
+// are longer, so they carry more terraces); the arc a given index lands on and its along-arc position
+// are index-stable, with a small seeded angular wobble. `seeds` already holds the pinned anchors;
+// this appends the free seeds inside ~0.92·townR so a ground rim shows. Pure over (seed, need);
+// bounded → panic-safe.
+func tdScatterCrescent(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+	rr := 0.90 * townR
+	// Arc count grows gently with the seed budget: a hamlet gets 2-3 crescents, a city ~6.
+	nArc := 2 + int(math.Sqrt(float64(need))/2.2)
+	if nArc < 2 {
+		nArc = 2
+	}
+	if nArc > 7 {
+		nArc = 7
+	}
+	// A seeded base phase so two crescent towns don't sweep identically, and a seeded per-arc sweep
+	// centre. Each arc spans ~0.62 of a full turn (a crescent, never a closed ring).
+	basePhase := float64(hash2(0xC2E5, 0x01, seed)) / float64(^uint32(0)) * 2 * math.Pi
+	const sweep = 0.62 * 2 * math.Pi
+	r := newRNG(hash2(0xC2E5, uint32(need), seed) | 1)
+	// Radius of arc a: from an inner crescent (leaving the pinned centre a plaza) out to the rim.
+	arcRadius := func(a int) float64 {
+		if nArc <= 1 {
+			return 0.55 * rr
+		}
+		t := float64(a) / float64(nArc-1) // 0..1
+		return rr * (0.28 + 0.72*t)
+	}
+	// Weight each arc by its radius (arc length ∝ radius) so outer crescents host more terraces.
+	weights := make([]float64, nArc)
+	wsum := 0.0
+	for a := 0; a < nArc; a++ {
+		weights[a] = arcRadius(a)
+		wsum += weights[a]
+	}
+	// Apportion `need` seeds to arcs by weight (largest-remainder so the total is exactly `need`).
+	perArc := make([]int, nArc)
+	placedTot := 0
+	for a := 0; a < nArc; a++ {
+		perArc[a] = int(float64(need) * weights[a] / wsum)
+		placedTot += perArc[a]
+	}
+	for a := 0; placedTot < need; a = (a + 1) % nArc { // hand out the rounding remainder
+		perArc[a]++
+		placedTot++
+	}
+	for a := 0; a < nArc; a++ {
+		cnt := perArc[a]
+		if cnt <= 0 {
+			continue
+		}
+		rad := arcRadius(a)
+		// The arc's own centre angle is offset per arc so the crescents fan (not stacked spokes).
+		arcCentre := basePhase + float64(a)*2.399963 // golden-ish per-arc rotation
+		start := arcCentre - sweep/2
+		// Two garden-square GAPS per arc: skip a contiguous fraction of the along-arc positions.
+		// gapA/gapB are seeded fractional positions in [0,1); a seed whose position falls within
+		// a gap window is pulled to the nearest non-gap slot's angle (so the count stays exact but
+		// the seeds pile just outside the gap — leaving the gap seed-free as a garden square).
+		gapHalf := 0.09 // half-width of each gap, as a fraction of the sweep
+		gapA := 0.18 + 0.10*r.f01()
+		gapB := 0.66 + 0.10*r.f01()
+		inGap := func(t float64) bool {
+			return math.Abs(t-gapA) < gapHalf || math.Abs(t-gapB) < gapHalf
+		}
+		for k := 0; k < cnt; k++ {
+			// Even along-arc position in [0,1], nudged off the gaps.
+			t := (float64(k) + 0.5) / float64(cnt)
+			if inGap(t) {
+				// Push to just past the nearer gap edge so the gap itself stays clear.
+				if math.Abs(t-gapA) < gapHalf {
+					if t < gapA {
+						t = gapA - gapHalf
+					} else {
+						t = gapA + gapHalf
+					}
+				} else {
+					if t < gapB {
+						t = gapB - gapHalf
+					} else {
+						t = gapB + gapHalf
+					}
+				}
+			}
+			ang := start + t*sweep
+			// A small seeded angular + radial wobble so the terrace isn't a mechanical arc.
+			ang += (r.f01() - 0.5) * (sweep / float64(cnt)) * 0.5
+			rw := rad * (1 + (r.f01()-0.5)*0.06)
+			x, y := math.Cos(ang)*rw, math.Sin(ang)*rw
+			if d := math.Hypot(x, y); d > rr {
+				s := rr / d
+				x *= s
+				y *= s
+			}
+			seeds = append(seeds, tdPoint{x, y})
+		}
+	}
+	return seeds
+}
+
+// tdScatterBoulevard is the GRID-CUT-BY-GRAND-DIAGONALS scatter — the formBoulevard strategy
+// (map-overhaul-citymap Phase 2a). It starts from a regular in-disc GRID of seeds (like
+// tdScatterGrid: orthogonal-ish wards) and then CARVES 2-4 straight DIAGONAL corridors across the
+// town by removing every seed within a narrow band of each diagonal line. Those cleared bands become
+// long DIAGONAL AVENUES in the Voronoi street web, slicing the orthogonal blocks at an angle — the
+// Haussmann/electric-city boulevard plan. Removed seeds are TOPPED UP (pushed just aside, off the
+// avenue) so the free-seed count stays exactly `need` and banded stability holds.
+//
+// The diagonals run through/near the centre at seeded angles in the ~30-60° band (never axis-aligned,
+// so they read as diagonals cutting the grid, not just extra grid streets). Deterministic; the grid
+// build is shared logic with tdScatterGrid. Pure over (seed, need); bounded → panic-safe.
+func tdScatterBoulevard(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+	rr := 0.92 * townR
+	// Same cell sizing as the grid form so the orthogonal fabric matches a plain grid town.
+	cell := 1.08 * math.Sqrt(math.Pi*rr*rr/float64(need))
+	if cell < 1e-3 {
+		cell = 1e-3
+	}
+	phx := (float64(hash2(0xB0DE, 0x11, seed))/float64(^uint32(0)) - 0.5) * cell
+	phy := (float64(hash2(0xB0DE, 0x12, seed))/float64(^uint32(0)) - 0.5) * cell
+	// 2-4 grand diagonals, each a line through a point near centre at a seeded angle in the 30-60°
+	// band (mirrored to the other diagonal quadrant too). A seed within `avenueHalf` of ANY diagonal
+	// line is removed to clear the avenue.
+	nDiag := 2 + int(hash2(0xB0DE, 0x20, seed)%3) // 2..4
+	type diagLine struct {
+		nx, ny float64 // unit normal of the line
+		c      float64 // line: nx*x + ny*y = c  (offset from origin)
+	}
+	diags := make([]diagLine, 0, nDiag)
+	for d := 0; d < nDiag; d++ {
+		// Angle in [30°,60°], alternating sign so avenues cross like an X, plus a seeded jitter.
+		base := math.Pi/6 + (math.Pi/6)*float64(hash2(0xB0DE, uint32(0x30+d), seed))/float64(^uint32(0))
+		if d%2 == 1 {
+			base = math.Pi - base // mirror into the other diagonal direction
+		}
+		ax, ay := math.Cos(base), math.Sin(base) // avenue direction
+		nx, ny := -ay, ax                        // its normal
+		// Offset the line off dead-centre by a seeded fraction of the radius so avenues don't all
+		// cross at one point (a small spread of parallel-ish grand avenues).
+		off := (float64(hash2(0xB0DE, uint32(0x40+d), seed))/float64(^uint32(0)) - 0.5) * 0.5 * rr
+		diags = append(diags, diagLine{nx: nx, ny: ny, c: off})
+	}
+	avenueHalf := 0.55 * cell // clear a band ~one cell wide → a real avenue gap
+	onAvenue := func(x, y float64) bool {
+		for _, dl := range diags {
+			if math.Abs(dl.nx*x+dl.ny*y-dl.c) < avenueHalf {
+				return true
+			}
+		}
+		return false
+	}
+	// Build the in-disc jittered grid, dropping nodes that fall on an avenue; order centres-out.
+	type gnode struct {
+		p  tdPoint
+		d2 float64
+	}
+	var nodes []gnode
+	half := int(math.Ceil(rr/cell)) + 1
+	if half > 64 {
+		half = 64
+	}
+	rng := newRNG(hash2(0xB0DF, uint32(need), seed) | 1)
+	jit := cell * 0.22 // a touch less jitter than the plain grid so avenues read cleanly
+	for gy := -half; gy <= half; gy++ {
+		for gx := -half; gx <= half; gx++ {
+			nx := float64(gx)*cell + phx
+			ny := float64(gy)*cell + phy
+			jx := (float64(hash2(uint32(gx*2+1000), uint32(gy*2+1000), seed))/float64(^uint32(0)) - 0.5) * 2 * jit
+			jy := (float64(hash2(uint32(gx*2+2000), uint32(gy*2+2000), seed))/float64(^uint32(0)) - 0.5) * 2 * jit
+			px, py := nx+jx, ny+jy
+			d2 := px*px + py*py
+			if d2 > rr*rr {
+				continue
+			}
+			if onAvenue(px, py) {
+				continue // this node is in an avenue → leave it clear
+			}
+			nodes = append(nodes, gnode{p: tdPoint{px, py}, d2: d2})
+		}
+	}
+	sort.SliceStable(nodes, func(a, b int) bool { return nodes[a].d2 < nodes[b].d2 })
+	for i := 0; i < need && i < len(nodes); i++ {
+		seeds = append(seeds, nodes[i].p)
+	}
+	// Top up if we're short (avenues removed some, or a small disc): drop the extras just OFF the
+	// avenues (uniform reject) so the count is exactly `need` without refilling the boulevards.
+	for placed := minInt(need, len(nodes)); placed < need; placed++ {
+		var p tdPoint
+		for tries := 0; tries < 24; tries++ {
+			rad := rr * math.Sqrt(rng.f01())
+			ang := rng.f01() * 2 * math.Pi
+			cx, cy := math.Cos(ang)*rad, math.Sin(ang)*rad
+			p = tdPoint{cx, cy}
+			if !onAvenue(cx, cy) {
+				break
+			}
+		}
+		seeds = append(seeds, p)
+	}
+	return seeds
+}
+
+// tdScatterCoreSuburb is the DENSE-CORE / SPARSE-SUBURB scatter — the formCoreSuburb strategy
+// (map-overhaul-citymap Phase 2a). It splits the free seeds into a packed downtown CORE and a thin
+// suburban RING: ~65% of seeds are dropped DENSELY (tight blue-noise spacing) inside an inner core
+// radius (~0.42·townR), and the remaining ~35% SPARSELY (large spacing, aggressive reject) across
+// the outer ring out to the rim. The raster then reads as a compact packed downtown of small wards
+// encircled by big loose low-density suburban blocks — the atomic-age metropolis with sprawl.
+//
+// Both passes place a fixed number so the total free-seed count is exactly `need` (banded stability
+// holds); a relax tail guarantees the count even under unlucky packing. `seeds` already holds the
+// pinned anchors. Pure over (seed, need); bounded attempt budgets → panic-safe.
+func tdScatterCoreSuburb(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+	nPinned := len(seeds) // anchors already appended
+	coreR := 0.42 * townR
+	ringOuter := 0.92 * townR // leave a ground rim
+	nCore := (need * 65) / 100
+	if nCore < 1 && need > 0 {
+		nCore = 1 // at least seed the downtown
+	}
+	nRing := need - nCore
+	rng := newRNG(hash2(0xC03E, uint32(need), seed) | 1)
+
+	// firstFree indexes the first FREE seed so the reject passes ignore the pinned anchors (the core
+	// packs right up to and around the centre, no ring-around-the-anchor void).
+	firstFree := nPinned
+
+	// --- dense CORE: tight blue-noise inside coreR ---
+	if nCore > 0 {
+		area := math.Pi * coreR * coreR
+		minDist := 0.62 * math.Sqrt(area/float64(nCore)) // tight packing
+		minD2 := minDist * minDist
+		placed := 0
+		maxAtt := (nCore + 1) * 40
+		for att := 0; placed < nCore && att < maxAtt; att++ {
+			rad := coreR * math.Sqrt(rng.f01())
+			ang := rng.f01() * 2 * math.Pi
+			p := tdPoint{math.Cos(ang) * rad, math.Sin(ang) * rad}
+			ok := true
+			for si := firstFree; si < len(seeds); si++ {
+				dx, dy := p.x-seeds[si].x, p.y-seeds[si].y
+				if dx*dx+dy*dy < minD2 {
+					ok = false
+					break
+				}
+			}
+			if ok {
+				seeds = append(seeds, p)
+				placed++
+			}
+		}
+		for ; placed < nCore; placed++ { // relax tail → exact count
+			rad := coreR * math.Sqrt(rng.f01())
+			ang := rng.f01() * 2 * math.Pi
+			seeds = append(seeds, tdPoint{math.Cos(ang) * rad, math.Sin(ang) * rad})
+		}
+	}
+
+	// --- sparse SUBURB: large-spacing blue-noise in the annulus (coreR, ringOuter) ---
+	if nRing > 0 {
+		annArea := math.Pi * (ringOuter*ringOuter - coreR*coreR)
+		// Deliberately LOOSE: bigger spacing target than an even fill → big suburban wards.
+		minDist := 1.15 * math.Sqrt(annArea/float64(nRing))
+		minD2 := minDist * minDist
+		placed := 0
+		maxAtt := (nRing + 1) * 40
+		for att := 0; placed < nRing && att < maxAtt; att++ {
+			// Uniform by area in the annulus: r = √(core² + u·(outer²−core²)).
+			u := rng.f01()
+			rad := math.Sqrt(coreR*coreR + u*(ringOuter*ringOuter-coreR*coreR))
+			ang := rng.f01() * 2 * math.Pi
+			p := tdPoint{math.Cos(ang) * rad, math.Sin(ang) * rad}
+			ok := true
+			// Reject against the SUBURB seeds only (indices from the start of the ring pass), so the
+			// sparse spacing is enforced among suburbs without being blocked by the dense core.
+			for si := firstFree + nCore; si < len(seeds); si++ {
+				dx, dy := p.x-seeds[si].x, p.y-seeds[si].y
+				if dx*dx+dy*dy < minD2 {
+					ok = false
+					break
+				}
+			}
+			if ok {
+				seeds = append(seeds, p)
+				placed++
+			}
+		}
+		for ; placed < nRing; placed++ { // relax tail → exact count
+			u := rng.f01()
+			rad := math.Sqrt(coreR*coreR + u*(ringOuter*ringOuter-coreR*coreR))
+			ang := rng.f01() * 2 * math.Pi
+			seeds = append(seeds, tdPoint{math.Cos(ang) * rad, math.Sin(ang) * rad})
+		}
 	}
 	return seeds
 }

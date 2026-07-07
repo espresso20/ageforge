@@ -1774,6 +1774,12 @@ func formName(f tdTownForm) string {
 		return "grid"
 	case formRibbon:
 		return "ribbon"
+	case formCrescent:
+		return "crescent"
+	case formBoulevard:
+		return "boulevard"
+	case formCoreSuburb:
+		return "coreSuburb"
 	}
 	return "?"
 }
@@ -2120,7 +2126,7 @@ func TestEachTownFormWellFormed(t *testing.T) {
 	// (1)-(3): FIELD-level checks for each form, forced directly (no era-style confound). Wonderless
 	// single-center anchor + a substantial ward count so the network is real.
 	anchors := []tdAnchor{{cx: 0, cy: 0}}
-	for _, form := range []tdTownForm{formOrganic, formRadial, formGrid, formRibbon} {
+	for _, form := range []tdTownForm{formOrganic, formRadial, formGrid, formRibbon, formCrescent, formBoulevard, formCoreSuburb} {
 		for _, nm := range []string{"Aldermoor", "Bexley", "Corveil", "Duskwind"} {
 			seed := citySeed(nm)
 			nRoofs := 140
@@ -2178,7 +2184,10 @@ func TestEachTownFormWellFormed(t *testing.T) {
 		{formOrganic, "primitive_age"},
 		{formRibbon, "primitive_age"},
 		{formRadial, "bronze_age"},
-		{formGrid, "electric_age"},
+		{formGrid, "atomic_age"},        // grid is the minority form at atomic (still reachable)
+		{formCrescent, "victorian_age"}, // 2a: garden-suburb crescents
+		{formBoulevard, "electric_age"}, // 2a: grid cut by grand diagonals
+		{formCoreSuburb, "atomic_age"},  // 2a: dense core + sparse suburb
 	}
 	blds := map[string]int{"hut": 26, "gathering_camp": 18, "stone_camp": 10, "forge": 10, "barracks": 6}
 	for _, fc := range cases {
@@ -2232,6 +2241,95 @@ func TestEachTownFormWellFormed(t *testing.T) {
 		for _, lt := range fab {
 			if d := math.Hypot(lt.x-plan.cx, lt.y-plan.cy); d > plan.townR*1.05 {
 				t.Fatalf("form %s (seed %q): a roof sits %.1f from core, past townR %.1f — not compact/bounded", formName(fc.form), name, d, plan.townR)
+			}
+		}
+	}
+}
+
+// ---- 2a: electric-epoch bespoke forms (crescent / boulevard / core+suburb) ---
+
+// TestElectricEpochFormDominance locks that the three ELECTRIC-epoch ages each read as their OWN
+// bespoke town form for a comfortable majority of citySeeds (map-overhaul-citymap Phase 2a):
+// victorian → CRESCENT (garden-suburb curves), electric → BOULEVARD (grid cut by grand diagonals),
+// atomic → CORE+SUBURB (dense downtown, loose sprawl). Same seed+age must always yield the same
+// form (determinism). Weights are ≥0.85 dominant, so >0.5 of seeds on the bespoke form is a safe,
+// non-brittle floor; the 0.15 residual still lets a minority fan out (organic/grid).
+func TestElectricEpochFormDominance(t *testing.T) {
+	cases := []struct {
+		ageKey string
+		want   tdTownForm
+	}{
+		{"victorian_age", formCrescent},
+		{"electric_age", formBoulevard},
+		{"atomic_age", formCoreSuburb},
+	}
+	const n = 2000
+	for _, c := range cases {
+		hits := 0
+		for i := 0; i < n; i++ {
+			if tdPickTownForm(citySeed("Elec"+c.ageKey+strconv.Itoa(i)), c.ageKey) == c.want {
+				hits++
+			}
+		}
+		if frac := float64(hits) / float64(n); frac < 0.5 {
+			t.Fatalf("age %s rolled its bespoke form %s only %.0f%% of the time — the age does not read characteristically", c.ageKey, formName(c.want), frac*100)
+		}
+		// DETERMINISM: same seed+age → same form.
+		for i := 0; i < 100; i++ {
+			s := citySeed("ElecDet" + strconv.Itoa(i))
+			if a, b := tdPickTownForm(s, c.ageKey), tdPickTownForm(s, c.ageKey); a != b {
+				t.Fatalf("tdPickTownForm not deterministic for seed %#x age %s: %s vs %s", s, c.ageKey, formName(a), formName(b))
+			}
+		}
+	}
+}
+
+// TestNewScatterFormsContract locks the low-level CONTRACT of the three new scatter strategies:
+// each appends EXACTLY `need` free seeds to the pinned prefix it is handed (so the banded seed
+// count — hence banded town stability — is preserved), every seed sits INSIDE the town disc
+// (|x|,|y| ≤ townR), and the function is PANIC-SAFE on degenerate budgets (need = 0, 1, 2) and
+// deterministic (same seed → identical output). This is the per-form analogue of the guarantees
+// the grid/organic scatters already make.
+func TestNewScatterFormsContract(t *testing.T) {
+	cfg := defaultTdConfig
+	const townR = 40.0
+	scatters := map[string]func([]tdPoint, float64, int, tdConfig, uint32) []tdPoint{
+		"crescent":   tdScatterCrescent,
+		"boulevard":  tdScatterBoulevard,
+		"coreSuburb": tdScatterCoreSuburb,
+	}
+	needs := []int{0, 1, 2, 3, 8, 27, 140}
+	names := []string{"Aldermoor", "Bexley", "Corveil", "Duskwind"}
+	for label, fn := range scatters {
+		for _, need := range needs {
+			for _, nm := range names {
+				seed := citySeed(nm)
+				// One pinned center anchor at the origin (as tdScatterSeedsFor supplies).
+				pinned := []tdPoint{{0, 0}}
+				got := fn(append([]tdPoint(nil), pinned...), townR, need, cfg, seed)
+				// EXACT count: pinned prefix + exactly `need` free seeds.
+				if want := len(pinned) + need; len(got) != want {
+					t.Fatalf("%s need=%d seed %q: got %d seeds, want %d (pinned+need)", label, need, nm, len(got), want)
+				}
+				// BOUNDS: every seed inside the town disc (small epsilon for the clamp).
+				for i, p := range got {
+					if math.Abs(p.x) > townR+1e-6 || math.Abs(p.y) > townR+1e-6 {
+						t.Fatalf("%s need=%d seed %q: seed %d at (%.2f,%.2f) is outside townR=%.1f", label, need, nm, i, p.x, p.y, townR)
+					}
+					if d := math.Hypot(p.x, p.y); d > townR+1e-6 {
+						t.Fatalf("%s need=%d seed %q: seed %d radius %.2f > townR=%.1f", label, need, nm, i, d, townR)
+					}
+				}
+				// DETERMINISM: identical output for identical inputs.
+				got2 := fn(append([]tdPoint(nil), pinned...), townR, need, cfg, seed)
+				if len(got) != len(got2) {
+					t.Fatalf("%s need=%d seed %q: non-deterministic length %d vs %d", label, need, nm, len(got), len(got2))
+				}
+				for i := range got {
+					if got[i] != got2[i] {
+						t.Fatalf("%s need=%d seed %q: non-deterministic seed %d: %+v vs %+v", label, need, nm, i, got[i], got2[i])
+					}
+				}
 			}
 		}
 	}
@@ -4420,6 +4518,46 @@ func TestDump2aFormPNGs(t *testing.T) {
 	}
 	for _, d := range dumps {
 		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s (form=%s)", path, formName(tdPickTownForm(citySeed("Aldermoor"), d.ageKey)))
+	}
+}
+
+// TestDump2a1FormPNGs renders the three ELECTRIC-epoch ages — victorian (CRESCENT garden-suburb),
+// electric (BOULEVARD grid-cut-by-diagonals), atomic (CORE+SUBURB) — with a FIXED display name +
+// identical building set so a reviewer can eyeball that each now reads as its OWN street layout
+// rather than a generic grid (map-overhaul-citymap Phase 2a). Opt-in: skipped unless
+// CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDump2a1FormPNGs
+func TestDump2a1FormPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump the electric-epoch bespoke-form PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Dense city on a large canvas so the STREET FABRIC (not the wonder plaza) fills the frame and
+	// the form is legible for review — 160x100 is too coarse to read the geometry.
+	blds := map[string]int{"hut": 140, "gathering_camp": 70, "forge": 34, "barracks": 22, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"victorian_age", "2a1_victorian.png"},
+		{"electric_age", "2a1_electric.png"},
+		{"atomic_age", "2a1_atomic.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 440, 300)
 		path := dir + "/" + d.file
 		f, err := os.Create(path)
 		if err != nil {
