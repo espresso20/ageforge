@@ -154,6 +154,7 @@ const (
 	profileTimber                            // medieval: steeper, sharper pitched timber roofs
 	profileStoneClassical                    // classical: pale white-stone body under a terracotta cap, with column fluting
 	profileRowhouse                          // colonial/industrial: a TERRACE of 3–5 narrow attached units under small pitched roofs
+	profileModernFlat                        // electric/atomic: a FLAT-topped modern block (flat roof slab + thin parapet rim + a rooftop vent) — the groundwork for skyscrapers
 )
 
 // wallProfile is the per-era wall dialect (V3-B, locked #9): mudbrick curtain vs stone curtain +
@@ -182,6 +183,7 @@ const (
 	wonderKeep                         // iron-age fortified keep + watchtower (drawRoofKeep)
 	wonderDome                         // renaissance great domed rotunda + lantern (drawRoofDome)
 	wonderFactory                      // industrial great factory hall + smokestacks + soot (drawRoofFactory)
+	wonderTower                        // electric/atomic art-deco SETBACK tower — concentric flat rectilinear tiers to a central mast (drawRoofTower)
 )
 
 // tdPal is the small set of resolved theme colors the style recipes draw from. Built once
@@ -750,6 +752,202 @@ var industrialCityStyle = func() tdEraStyle {
 	return s
 }()
 
+// victorianCityStyle is the tuned VICTORIAN preset (V3-B ELECTRIC epoch). A genteel BROWNSTONE city:
+// terraced ROWHOUSES (profileRowhouse, reused from colonial/industrial) under warm dark-CHOCOLATE
+// brownstone roofs — deeper + browner than the colonial fired-brick and cleaner than the grimy
+// industrial tin — over STONE-PAVED streets, dressed with GASLIT PARKS (green squares ringed with
+// warm gas-lamps). NO walls (the industrial city already tore them down; the age of open boulevards).
+// The centrepiece is the grand generic hall (wonderGeneric) read as a Victorian TERMINAL/MUSEUM — no
+// bespoke wonder. Built from colonialCityStyle (which already gives the rowhouse profile + tuned
+// filler), then re-skinned brownstone + stone-paved + park-green; every tone stays a theme-role recipe
+// so the whole city retints on a theme switch. Reads clearly apart from colonial (brownstone + stone
+// pavers + parks + NO wall vs warm brick + dirt lanes + a timber palisade) AND from industrial
+// (genteel brownstone + parks vs grimy tin + soot + smokestacks) AND from the default village.
+var victorianCityStyle = func() tdEraStyle {
+	s := colonialCityStyle
+	s.name = "victorian"
+
+	// Roof material: warm dark CHOCOLATE brownstone — deeper + browner than the colonial fired brick.
+	// Background lifted toward text, then pulled firmly to the brownstone anchor so a rowhouse reads as
+	// dressed chocolate stone, not red brick or grey tin.
+	s.roofBase = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.text, 0.26), brownstoneAnchor, 0.58)
+	}
+	s.roofDark = func(p tdPal) color.RGBA {
+		return darken(blend(blend(p.bg, p.text, 0.26), brownstoneAnchor, 0.58), 0.30)
+	}
+	s.lineageMix = 0.13 // a whisper of lineage tint over the brownstone; the sat cap still guards it
+
+	// Ground: dressed STONE paving underfoot — cooler + greyer than the colonial packed dirt, a genteel
+	// paved city floor. Base grounded toward the pale stone anchor with a whisper of the brownstone warmth.
+	s.groundBase = func(p tdPal) color.RGBA {
+		stony := blend(blend(p.bg, p.dim, 0.26), stoneAnchor, 0.40)
+		return blend(stony, brownstoneAnchor, 0.08)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.22), graniteAnchor, 0.26)
+	}
+	// Streets: STONE-PAVED lanes — the stony ground lifted toward the light neutral + a touch of granite
+	// so the gaps read as dressed-stone paving between the terraces, not dirt.
+	s.streetCol = func(p tdPal) color.RGBA {
+		paved := blend(blend(p.bg, p.dim, 0.26), stoneAnchor, 0.44)
+		return blend(blend(paved, p.text, 0.34), graniteAnchor, 0.22)
+	}
+	s.streetEdge = func(p tdPal) color.RGBA {
+		paved := blend(blend(p.bg, p.dim, 0.26), stoneAnchor, 0.44)
+		surface := blend(blend(paved, p.text, 0.34), graniteAnchor, 0.22)
+		return darken(surface, 0.20)
+	}
+	// Town-square paving: the brightest dressed stone in the city — a genteel civic plaza.
+	s.pavedCol = func(p tdPal) color.RGBA {
+		pale := blend(blend(p.bg, p.dim, 0.22), stoneAnchor, 0.48)
+		return blend(pale, p.text, 0.26)
+	}
+
+	// Gaslit PARKS: manicured greenery — a touch lusher + tidier than the frontier colonial kitchen plots
+	// (a genteel park square, not a working yard), still theme-derived so it retints.
+	s.gardenCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, grassAnchor, 0.48), p.dim, 0.06)
+	}
+	s.treeCol = func(p tdPal) color.RGBA {
+		return darken(blend(blend(p.bg, p.dim, 0.24), grassAnchor, 0.52), 0.08)
+	}
+
+	// NO walls — the age of open boulevards (industrial already tore the ring down).
+	s.hasWalls = false
+	s.wallProfile = wallNone
+
+	s.houseProfile = profileRowhouse // terraced brownstone rowhouses
+	s.wonderMotif = wonderGeneric    // victorian centrepiece: the grand generic hall read as a terminal/museum
+	s.slotSpacing = 1.5              // a dense, genteel city — tighter than colonial (1.6), packed terraces
+	return s
+}()
+
+// electricCityStyle is the tuned ELECTRIC preset (V3-B ELECTRIC epoch). A pale ART-DECO CONCRETE city:
+// FLAT-topped modern blocks (profileModernFlat — the groundwork for skyscrapers) in warm pale concrete,
+// WIDE dressed-concrete AVENUES, a subtle WARM electric-light accent (the first electric glow — kept
+// muted), and — the epoch's first tall centrepiece — an ART-DECO SETBACK TOWER (wonderTower). NO walls
+// (the age of open avenues). Built from defaultTdStyle so it keeps the tuned ground texture / pond /
+// filler behaviour, then re-skinned pale deco concrete; every tone stays a theme-role recipe so the whole
+// city retints on a theme switch. Reads clearly apart from the WARMER, ORNATE, DENSER victorian
+// (brownstone rowhouses + gaslit parks) and from the default village — electric is cleaner + paler +
+// flat-roofed with a stepped tower.
+var electricCityStyle = func() tdEraStyle {
+	s := defaultTdStyle
+	s.name = "electric"
+
+	// Roof material: pale ART-DECO CONCRETE with a subtle WARM electric-light lift — the first electric
+	// glow, kept muted (a whisper of the warm gaslight anchor over the concrete) so a flat block reads as
+	// warm pale deco stone catching a little artificial light, never a saturated accent.
+	s.roofBase = func(p tdPal) color.RGBA {
+		concrete := blend(blend(p.bg, p.text, 0.34), concreteAnchor, 0.54)
+		return blend(concrete, gasGlowAnchor, 0.06) // muted warm electric lift
+	}
+	s.roofDark = func(p tdPal) color.RGBA {
+		concrete := blend(blend(p.bg, p.text, 0.34), concreteAnchor, 0.54)
+		return darken(concrete, 0.24)
+	}
+	s.lineageMix = 0.12 // a whisper of lineage tint over the concrete; the sat cap still guards it
+
+	// Ground: pale dressed CONCRETE — a clean warm-grey deco plaza floor, lighter + warmer than the cool
+	// industrial soot. Base grounded toward the concrete anchor, lifted a touch to the light neutral.
+	s.groundBase = func(p tdPal) color.RGBA {
+		pale := blend(blend(p.bg, p.dim, 0.22), concreteAnchor, 0.46)
+		return blend(pale, p.text, 0.14)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.18), stoneAnchor, 0.30)
+	}
+	// Streets: WIDE dressed-concrete AVENUES — the concrete ground lifted toward the light neutral so the
+	// gaps read as broad pale boulevards, with a faint warm electric cast.
+	s.streetCol = func(p tdPal) color.RGBA {
+		paved := blend(blend(p.bg, p.dim, 0.22), concreteAnchor, 0.44)
+		lit := blend(blend(paved, p.text, 0.32), stoneAnchor, 0.16)
+		return blend(lit, gasGlowAnchor, 0.05) // muted warm avenue glow
+	}
+	s.streetEdge = func(p tdPal) color.RGBA {
+		paved := blend(blend(p.bg, p.dim, 0.22), concreteAnchor, 0.44)
+		surface := blend(blend(paved, p.text, 0.32), stoneAnchor, 0.16)
+		return darken(surface, 0.20)
+	}
+	// Town-square paving: the brightest dressed concrete in the city — a grand deco forecourt.
+	s.pavedCol = func(p tdPal) color.RGBA {
+		pale := blend(blend(p.bg, p.dim, 0.16), concreteAnchor, 0.50)
+		return blend(pale, p.text, 0.28)
+	}
+
+	// NO walls — the age of open avenues.
+	s.hasWalls = false
+	s.wallProfile = wallNone
+
+	s.houseProfile = profileModernFlat // flat-topped deco blocks
+	s.wonderMotif = wonderTower        // electric centrepiece: an art-deco setback tower
+	s.slotSpacing = 1.5                // a dense modern downtown — packed flat blocks along wide avenues
+	return s
+}()
+
+// atomicCityStyle is the tuned ATOMIC preset (V3-B ELECTRIC epoch). A clean MIDCENTURY CONCRETE + STEEL
+// city: FLAT-topped modern blocks (profileModernFlat, reused from electric) in COOL PALE PASTEL concrete
+// with a steel-grey cast, over clean pale streets, crowned by a midcentury SETBACK TOWER (wonderTower,
+// reused from electric). NO walls. A touch AIRIER than electric (a suburb-and-downtown feel — a true
+// zoned split is deferred FORM work; approximated here with medium density). Built from electricCityStyle
+// (which already gives the flat-block profile + tower + no walls), then shifted COOLER + cleaner +
+// PASTEL and airier. Reads clearly apart from electric: electric is WARMER + ornate deco + DENSER;
+// atomic is COOLER + clean pastel midcentury + AIRIER. Also apart from the default village. Every tone
+// stays a theme-role recipe so the whole city retints on a theme switch.
+var atomicCityStyle = func() tdEraStyle {
+	s := electricCityStyle
+	s.name = "atomic"
+
+	// Roof material: COOL PALE PASTEL concrete with a steel-grey cast — cleaner + cooler than electric's
+	// warm deco concrete (no warm electric lift; a faint mint-pastel cast instead), so a flat block reads
+	// as crisp midcentury concrete-and-steel.
+	s.roofBase = func(p tdPal) color.RGBA {
+		concrete := blend(blend(p.bg, p.text, 0.34), blend(concreteAnchor, steelAnchor, 0.45), 0.54)
+		return blend(concrete, pastelAnchor, 0.14) // cool pale pastel cast
+	}
+	s.roofDark = func(p tdPal) color.RGBA {
+		concrete := blend(blend(p.bg, p.text, 0.34), blend(concreteAnchor, steelAnchor, 0.45), 0.54)
+		return darken(blend(concrete, steelAnchor, 0.16), 0.22)
+	}
+	s.lineageMix = 0.11 // a whisper of lineage tint over the cool concrete; the sat cap still guards it
+
+	// Ground: cool pale PASTEL concrete — cleaner + cooler + airier than electric's warm deco floor. Base
+	// grounded toward a cool concrete/steel mix, lifted to the light neutral with a faint pastel cast.
+	s.groundBase = func(p tdPal) color.RGBA {
+		pale := blend(blend(p.bg, p.dim, 0.20), blend(concreteAnchor, steelAnchor, 0.45), 0.44)
+		return blend(blend(pale, p.text, 0.16), pastelAnchor, 0.12)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.16), steelAnchor, 0.30)
+	}
+	// Streets: clean pale midcentury boulevards — the cool concrete lifted toward the light neutral, no
+	// warm electric cast (that's electric's tell), a touch cooler + cleaner.
+	s.streetCol = func(p tdPal) color.RGBA {
+		paved := blend(blend(p.bg, p.dim, 0.20), blend(concreteAnchor, steelAnchor, 0.45), 0.42)
+		return blend(blend(paved, p.text, 0.34), pastelAnchor, 0.12)
+	}
+	s.streetEdge = func(p tdPal) color.RGBA {
+		paved := blend(blend(p.bg, p.dim, 0.20), blend(concreteAnchor, steelAnchor, 0.45), 0.42)
+		surface := blend(blend(paved, p.text, 0.34), pastelAnchor, 0.12)
+		return darken(surface, 0.20)
+	}
+	// Town-square paving: the brightest clean pale concrete in the city — a midcentury civic plaza.
+	s.pavedCol = func(p tdPal) color.RGBA {
+		pale := blend(blend(p.bg, p.dim, 0.14), blend(concreteAnchor, steelAnchor, 0.45), 0.48)
+		return blend(blend(pale, p.text, 0.30), pastelAnchor, 0.10)
+	}
+
+	// NO walls — inherited from electric, restated for clarity.
+	s.hasWalls = false
+	s.wallProfile = wallNone
+
+	s.houseProfile = profileModernFlat // flat-topped midcentury blocks
+	s.wonderMotif = wonderTower        // atomic centrepiece: a midcentury setback tower
+	s.slotSpacing = 1.7                // AIRIER than electric (1.5) — a suburb-and-downtown feel, medium density
+	return s
+}()
+
 // stoneAgeStyle is the tuned STONE preset (Phase 1b-i), split off organicVillageStyle so the stone
 // age reads distinct from primitive. Dwellings stay THATCH (stone-age huts are still thatch, so
 // houseProfile is unchanged) and there are still NO walls — the difference is a ROCKIER, cooler,
@@ -833,6 +1031,14 @@ var (
 	brickRedAnchor = color.RGBA{R: 0x9c, G: 0x50, B: 0x3a, A: 0xff} // warm fired brick-red (colonial roofs + industrial house walls) — earthier + redder than clay
 	tinAnchor      = color.RGBA{R: 0x8c, G: 0x92, B: 0x96, A: 0xff} // dull corrugated grey tin/zinc (industrial house roofs)
 	sootAnchor     = color.RGBA{R: 0x3a, G: 0x37, B: 0x33, A: 0xff} // grimy dark soot/coal (industrial ground + smokestacks + smoke)
+
+	// V3-B ELECTRIC-epoch anchors (victorian / electric / atomic). Same discipline — never used raw,
+	// always blended against theme roles + neighbouring tones so a light/dark theme retints them.
+	brownstoneAnchor = color.RGBA{R: 0x6b, G: 0x45, B: 0x2f, A: 0xff} // warm dark chocolate brownstone (victorian rowhouse roofs) — deeper + browner than colonial brick-red
+	gasGlowAnchor    = color.RGBA{R: 0xd8, G: 0xa8, B: 0x54, A: 0xff} // warm amber gaslight glow (victorian gas-lamp dab) — a soft flame-gold, blended so it never poster-paints
+	concreteAnchor   = color.RGBA{R: 0xbf, G: 0xba, B: 0xb0, A: 0xff} // pale warm art-deco concrete/stone (electric flat roofs + avenues) — lighter + warmer than cool tin
+	steelAnchor      = color.RGBA{R: 0x9a, G: 0xa1, B: 0xa8, A: 0xff} // cool clean steel-grey (atomic midcentury frames + accents) — cooler + bluer than concrete
+	pastelAnchor     = color.RGBA{R: 0xcf, G: 0xd6, B: 0xd4, A: 0xff} // cool pale mint-pastel (atomic midcentury ground/roof cast) — airy, faintly green-blue
 )
 
 // tdStyleForEra returns the tuned preset for an era band, or defaultTdStyle for the bands not yet
@@ -869,11 +1075,12 @@ var ageStyles = map[string]tdEraStyle{
 	"medieval_age":    medievalCityStyle,
 	"renaissance_age": renaissanceCityStyle,
 	// default — every not-yet-tuned age renders the legible default city
-	"colonial_age":     colonialCityStyle,
-	"industrial_age":   industrialCityStyle,
-	"victorian_age":    defaultTdStyle,
-	"electric_age":     defaultTdStyle,
-	"atomic_age":       defaultTdStyle,
+	"colonial_age":   colonialCityStyle,
+	"industrial_age": industrialCityStyle,
+	// ELECTRIC epoch — victorian/electric/atomic (V3-B; distinct brownstone / art-deco / midcentury looks)
+	"victorian_age":    victorianCityStyle,
+	"electric_age":     electricCityStyle,
+	"atomic_age":       atomicCityStyle,
 	"modern_age":       defaultTdStyle,
 	"information_age":  defaultTdStyle,
 	"digital_age":      defaultTdStyle,
@@ -1047,6 +1254,7 @@ const (
 	tdPropFountain   // medieval: a stone fountain (a paved ring + a water center)
 	tdPropCross      // medieval: a market cross / gallows (an upright post with a crossbar)
 	tdPropSmokestack // industrial: a tall dark factory chimney + a soot dab on top (taller than other props)
+	tdPropGasLamp    // victorian: a short lamp-post with a warm amber gaslight glow (a genteel park lamp)
 )
 
 // tdLot is one placed thing, in CITY SPACE (pre-fill-frame). x,y is the lot center in city
@@ -2691,6 +2899,16 @@ func tdSquarePropsFor(style tdEraStyle) tdSquareProps {
 			center: []tdLotKind{tdPropSmokestack, tdPropWell},
 		}
 	}
+	// Victorian shares BOTH profileRowhouse (colonial/industrial) AND wonderGeneric (colonial), so neither
+	// discriminator tells it apart — its style NAME is the tag. Dress its square as a GASLIT PARK: gas-lamps
+	// ringing a genteel forecourt (a fountain + a lamp for the modest centre), so the square reads Victorian,
+	// not the colonial frontier green.
+	if style.name == "victorian" {
+		return tdSquareProps{
+			wonder: []tdLotKind{tdPropGasLamp, tdPropFountain, tdPropGasLamp, tdPropStall},
+			center: []tdLotKind{tdPropGasLamp, tdPropFountain},
+		}
+	}
 	switch style.houseProfile {
 	case profileMudbrick: // ancient (bronze / iron)
 		return tdSquareProps{
@@ -2994,6 +3212,40 @@ func tdAddFiller(plan *topPlan, field blockField, style tdEraStyle, cfg tdConfig
 			}
 			plan.lots = append(plan.lots, tdLot{
 				x: p.x, y: p.y, w: cfg.roofSize * 0.6, h: cfg.roofSize * 0.6, kind: tdPropSmokestack,
+			})
+		}
+	}
+
+	// Scattered GASLIT PARKS (victorian, ELECTRIC epoch): a handful of gas-lamps + a couple of extra green
+	// park patches dotted through the city (not only the central square) so the genteel gaslit-boulevard
+	// theme reads across the whole town at thumbnail scale. Same deterministic seeded pick-without-replacement
+	// + small cap as the stone/megalith + industrial/smokestack scatters, gated on the style NAME so only
+	// victorian towns get them (victorian shares its motif + profile with colonial/industrial).
+	if style.name == "victorian" {
+		nLamps := 3 + int(r.f01()*3) // 3..5 — enough to season the boulevards
+		if nLamps > 5 {
+			nLamps = 5
+		}
+		for i := 0; i < nLamps; i++ {
+			p, ok := pick()
+			if !ok {
+				break
+			}
+			plan.lots = append(plan.lots, tdLot{
+				x: p.x, y: p.y, w: cfg.roofSize * 0.5, h: cfg.roofSize * 0.5, kind: tdPropGasLamp,
+			})
+		}
+		nParks := 1 + int(r.f01()*2) // 1..2 small green park patches
+		if nParks > 2 {
+			nParks = 2
+		}
+		for i := 0; i < nParks; i++ {
+			p, ok := pick()
+			if !ok {
+				break
+			}
+			plan.lots = append(plan.lots, tdLot{
+				x: p.x, y: p.y, w: cfg.roofSize * 1.1, h: cfg.roofSize * 1.1, kind: tdGarden,
 			})
 		}
 	}
@@ -3528,7 +3780,7 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 			drawBlock(img, cx, cy, 0, propCol)
 		case tdPropWell, tdPropFirepit, tdPropStones, tdPropStall,
 			tdPropAltar, tdPropColumns, tdPropBrazier, tdPropFountain, tdPropCross,
-			tdPropSmokestack:
+			tdPropSmokestack, tdPropGasLamp:
 			drawSquareProp(img, xf, lt, style, pal)
 		}
 	}
@@ -3825,6 +4077,23 @@ func drawSquareProp(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle,
 		puffR := maxInt(rad/2, 1)
 		forEllipse(cx+puffR, cy-tall-puffR/2, puffR, puffR, func(x, y int) { blendPixel(img, x, y, soot, 0.55) })
 		setPixel(img, cx, cy-tall, brighten(stack, 0.12)) // lit chimney lip
+	case tdPropGasLamp:
+		// A genteel VICTORIAN gas-lamp: a short dark iron lamp-post (a thin vertical stem, taller than a
+		// plain prop but well short of a smokestack) capped by a warm amber GLOW dab — a soft flame-gold
+		// halo, blended (never raw) so it reads as gaslight, not a saturated accent. Dark iron tones pulled
+		// toward propCol/pavedCol like the neighbours, so it retints with the theme. Bounds-safe: setPixel /
+		// blendPixel / forEllipse only.
+		post := darken(blend(prop, paved, 0.20), 0.30) // dark iron stem
+		tall := rad + rad/2                            // a short post — above props, below smokestacks
+		// The stem: a thin vertical column from base (cy+rad) up to the lamp head (cy-tall).
+		for dy := -tall; dy <= rad; dy++ {
+			setPixel(img, cx, cy+dy, post)
+		}
+		// The glow: a small warm amber halo at the lamp head, a soft lit core over a dimmer ring.
+		glow := blend(brighten(prop, 0.10), gasGlowAnchor, 0.60)
+		glowR := maxInt(rad/2, 1)
+		forEllipse(cx, cy-tall, glowR, glowR, func(x, y int) { blendPixel(img, x, y, glow, 0.55) })
+		setPixel(img, cx, cy-tall, brighten(glow, 0.18)) // bright flame core
 	}
 }
 
@@ -3901,6 +4170,8 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 			drawRoofStoneClassical(img, cx, cy, hw, hh, rc)
 		case profileRowhouse:
 			drawRoofRowhouse(img, cx, cy, hw, hh, rc)
+		case profileModernFlat:
+			drawRoofModernFlat(img, cx, cy, hw, hh, rc)
 		default:
 			drawRoofHut(img, cx, cy, hw, hh, rc)
 		}
@@ -3934,6 +4205,8 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 			drawRoofDome(img, cx, cy, hw, hh, rc)
 		case wonderFactory:
 			drawRoofFactory(img, cx, cy, hw, hh, rc)
+		case wonderTower:
+			drawRoofTower(img, cx, cy, hw, hh, rc)
 		default:
 			drawRoofWonder(img, cx, cy, hw, hh, rc)
 		}
@@ -4039,6 +4312,8 @@ func drawRoofHouse(img *image.RGBA, cx, cy, hw, hh int, rc roofColors, prof roof
 		drawRoofStoneClassical(img, cx, cy, hw, hh, rc)
 	case profileRowhouse:
 		drawRoofRowhouse(img, cx, cy, hw, hh, rc)
+	case profileModernFlat:
+		drawRoofModernFlat(img, cx, cy, hw, hh, rc)
 	default:
 		drawRoofRidge(img, cx, cy, hw, hh, rc)
 	}
@@ -4212,6 +4487,39 @@ func drawRoofRowhouse(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 			}
 		}
 	}
+}
+
+// drawRoofModernFlat: the ELECTRIC/ATOMIC dwelling (V3-B ELECTRIC epoch) — a FLAT-topped modern block
+// read from above: a flat roof SLAB filling the footprint, a thin darker PARAPET rim around the edge (a
+// raised roof-wall), a subtle lit NW edge for a clean modern sheen, and a small central rooftop VENT /
+// detail (an AC / stair-head dab). Reads as a flat-roofed mid-rise, NOT a pitched house — the groundwork
+// for later skyscrapers. Base/dark/ridge-derived tones only (no accent), so it retints with the era
+// material (warm concrete for electric, cool pastel steel for atomic). Bounds-safe: every write goes
+// through forRect+setPixel / forRectOutline+setPixel / drawHSpan (all clipped), so it never panics.
+func drawRoofModernFlat(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	// The flat roof slab: the full footprint in the base tone, lit a touch on the N/W so the block reads
+	// as a clean modern deck rather than a dead slab.
+	forRect(cx, cy, hw, hh, func(x, y int) {
+		if x <= cx && y <= cy {
+			setPixel(img, x, y, brighten(rc.base, 0.06)) // lit NW quadrant
+		} else {
+			setPixel(img, x, y, rc.base)
+		}
+	})
+	// Thin darker PARAPET rim around the edge (a raised roof-wall), with a brighter N/W lip for the
+	// modern lit edge.
+	forRectOutline(cx, cy, hw, hh, func(x, y int) { setPixel(img, x, y, rc.dark) })
+	drawHSpan(img, cx-hw, cx+hw, cy-hh, rc.ridge) // bright parapet lip along the north edge
+	for y := cy - hh; y <= cy+hh; y++ {
+		setPixel(img, cx-hw, y, rc.ridge) // and down the west edge
+	}
+	// Central rooftop VENT / detail: a small dark square (an AC unit / stair-head), a touch off-centre so
+	// the deck doesn't read perfectly symmetric.
+	vhw := maxInt(hw/3, 0)
+	vhh := maxInt(hh/3, 0)
+	vent := darken(rc.dark, 0.14)
+	forRect(cx, cy, vhw, vhh, func(x, y int) { setPixel(img, x, y, vent) })
+	setPixel(img, cx-vhw, cy-vhh, brighten(rc.base, 0.10)) // a lit NW corner on the vent housing
 }
 
 // drawRoofTemple: the larger, grandest small building — an ornate symmetric tiered roof read
@@ -4516,6 +4824,61 @@ func drawRoofFactory(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 		forEllipse(sx+puffR, topY-puffR, puffR, puffR, func(x, y int) { blendPixel(img, x, y, smoke, 0.55) })
 		setPixel(img, sx, topY, brighten(stack, 0.10)) // a lit chimney lip
 	}
+}
+
+// drawRoofTower: the ELECTRIC/ATOMIC wonder (V3-B ELECTRIC epoch) — an ART-DECO SETBACK tower read from
+// above as a set of CONCENTRIC FLAT RECTILINEAR TIERS stepping in toward a small central SPIRE / MAST.
+// Like the ziggurat it steps, but the read is deliberately CLEANER + FLATTER + PALER: crisp square
+// setbacks in pale CONCRETE (not earthen terraces), each tier LIGHTER as it rises (a tower catching more
+// light up top), with a thin dark shadow lip on each tier's south+east so the setbacks read as sheer
+// drops — a strong sense of HEIGHT. A central mast/finial dab crowns it. Reads clearly apart from the
+// earthen-stepped ziggurat, the round dome, the blocky keep+tower, the colonnade temple, and the factory
+// hall+chimneys. Concrete/steel (concreteAnchor / steelAnchor) are BLENDED with the passed roof colors so
+// the tower retints on a theme switch and stays in the era mood. Bounds-safe: every write goes through
+// fillRectC / forRect+setPixel / drawHSpan / setPixel (all clipped), so it never panics at any footprint.
+func drawRoofTower(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	// Pale concrete + cool steel tones pulled toward the (already theme/lineage-tinted) roof colors.
+	concrete := blend(rc.base, blend(concreteAnchor, steelAnchor, 0.30), 0.52) // pale deco concrete face
+	concreteDark := blend(rc.dark, steelAnchor, 0.34)                          // shaded setback edge
+	crown := brighten(concrete, 0.18)                                          // the bright top tier / mast catching light
+
+	// An extra deep shadow lip UNDER the tower base (south-east) sells the height — a taller mass throws a
+	// longer shadow than the pitched houses around it. Blended into the ground, so it darkens rather than
+	// paints a slab.
+	baseShadow := darken(concreteDark, 0.30)
+	for dy := 1; dy <= maxInt(hh/3, 1); dy++ {
+		drawHSpan(img, cx-hw+dy, cx+hw+dy, cy+hh+dy, baseShadow)
+	}
+
+	// CONCENTRIC FLAT SETBACK TIERS: crisp square tiers shrinking toward the crown, each a shade LIGHTER as
+	// it rises. A thin darker step lip on each tier's south+east edge makes the setbacks read as sheer drops.
+	const tiers = 4
+	for t := 0; t < tiers; t++ {
+		f := float64(t) / float64(tiers) // 0 (base) .. →1 (top)
+		thw := maxInt(int(float64(hw)*(1-f)), 1)
+		thh := maxInt(int(float64(hh)*(1-f)), 1)
+		// Rising tiers lighten from the shaded concrete toward the bright crown.
+		col := blend(concreteDark, concrete, f/(1-1.0/tiers))
+		if t == tiers-1 {
+			col = crown
+		}
+		fillRectC(img, cx, cy, thw, thh, col)
+		// Sheer-drop step lip on the south + east faces of each tier.
+		drawHSpan(img, cx-thw, cx+thw, cy+thh, darken(col, 0.22))
+		for y := cy - thh; y <= cy+thh; y++ {
+			setPixel(img, cx+thw, y, darken(col, 0.22))
+		}
+		// A crisp lit NW corner on each tier for the clean deco sheen.
+		setPixel(img, cx-thw, cy-thh, brighten(col, 0.14))
+	}
+
+	// CENTRAL SPIRE / MAST: a small bright vertical finial at the very crown — the deco tower's mast.
+	mastH := maxInt(minInt(hw, hh)/2, 1)
+	for dy := -mastH; dy <= 0; dy++ {
+		setPixel(img, cx, cy+dy, crown)
+	}
+	setPixel(img, cx, cy-mastH, brighten(crown, 0.16)) // a lit mast tip
+	setPixel(img, cx, cy, crown)
 }
 
 // drawRoofCathedral: the MEDIEVAL wonder (locked #13, V3-B) — a tall CATHEDRAL / KEEP read from

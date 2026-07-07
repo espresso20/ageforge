@@ -3248,6 +3248,205 @@ func TestDumpColonialIndustrialPNGs(t *testing.T) {
 	}
 }
 
+// TestElectricEpochStylesWired locks the ELECTRIC-epoch style wiring (V3-B): VICTORIAN gets brownstone
+// ROWHOUSES, NO walls, and the grand GENERIC hall wonder (a terminal/museum); ELECTRIC gets FLAT modern
+// blocks (profileModernFlat), NO walls, and the setback TOWER wonder; ATOMIC gets FLAT modern blocks too,
+// NO walls, and a TOWER wonder, but AIRIER (looser slotSpacing) than the denser electric downtown. None
+// of the three still maps to the default village preset.
+func TestElectricEpochStylesWired(t *testing.T) {
+	vic := styleForAge("victorian_age")
+	if vic.houseProfile != profileRowhouse {
+		t.Fatalf("victorian houseProfile = %v, want profileRowhouse (brownstone terraces)", vic.houseProfile)
+	}
+	if vic.wonderMotif != wonderGeneric {
+		t.Fatalf("victorian wonderMotif = %v, want wonderGeneric (the terminal/museum — no bespoke wonder)", vic.wonderMotif)
+	}
+	if vic.hasWalls {
+		t.Fatal("victorian must be OPEN (no walls — the age of open boulevards)")
+	}
+
+	ele := styleForAge("electric_age")
+	if ele.houseProfile != profileModernFlat {
+		t.Fatalf("electric houseProfile = %v, want profileModernFlat (flat deco blocks)", ele.houseProfile)
+	}
+	if ele.wonderMotif != wonderTower {
+		t.Fatalf("electric wonderMotif = %v, want wonderTower (art-deco setback tower)", ele.wonderMotif)
+	}
+	if ele.hasWalls {
+		t.Fatal("electric must be OPEN (no walls)")
+	}
+
+	atm := styleForAge("atomic_age")
+	if atm.houseProfile != profileModernFlat {
+		t.Fatalf("atomic houseProfile = %v, want profileModernFlat (flat midcentury blocks)", atm.houseProfile)
+	}
+	if atm.wonderMotif != wonderTower {
+		t.Fatalf("atomic wonderMotif = %v, want wonderTower (midcentury setback tower)", atm.wonderMotif)
+	}
+	if atm.hasWalls {
+		t.Fatal("atomic must be OPEN (no walls)")
+	}
+	// Atomic should be AIRIER than electric (a suburb-and-downtown feel vs a packed deco downtown).
+	if !(atm.slotSpacing > ele.slotSpacing) {
+		t.Fatalf("atomic slotSpacing (%.2f) should be airier/looser than electric (%.2f)", atm.slotSpacing, ele.slotSpacing)
+	}
+	// None of the three may still resolve to the default village preset name.
+	if vic.name == defaultTdStyle.name || ele.name == defaultTdStyle.name || atm.name == defaultTdStyle.name {
+		t.Fatalf("an electric-epoch age still on the default preset: victorian=%q electric=%q atomic=%q", vic.name, ele.name, atm.name)
+	}
+}
+
+// TestElectricTowerWonderDiffers locks that the electric/atomic TOWER reads apart from the renaissance
+// DOME, the industrial FACTORY, the ancient ZIGGURAT, and the iron KEEP — the tower silhouette must
+// actually be applied, not shared with any neighbouring wonder.
+func TestElectricTowerWonderDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	tower := drawWonderImg(styleForAge("electric_age"))
+	dome := drawWonderImg(styleForAge("renaissance_age"))
+	factory := drawWonderImg(styleForAge("industrial_age"))
+	ziggurat := drawWonderImg(styleForAge("bronze_age"))
+	keep := drawWonderImg(styleForAge("iron_age"))
+	if !imagesDiffer(tower, dome) {
+		t.Fatal("electric tower draws identically to the renaissance dome — the tower silhouette is not applied")
+	}
+	if !imagesDiffer(tower, factory) {
+		t.Fatal("electric tower draws identically to the industrial factory — the two wonders must differ")
+	}
+	if !imagesDiffer(tower, ziggurat) {
+		t.Fatal("electric tower draws identically to the ancient ziggurat — the two wonders must differ")
+	}
+	if !imagesDiffer(tower, keep) {
+		t.Fatal("electric tower draws identically to the iron keep — the two wonders must differ")
+	}
+}
+
+// TestElectricEpochCitiesDiffer locks the CITY-level reads: victorian differs from colonial (both use
+// rowhouses — brownstone-vs-brick + stone-pavers-vs-dirt + parks-vs-palisade must diverge), electric
+// differs from atomic (warmer ornate dense deco vs cooler clean airy pastel midcentury), and all three
+// differ from the old default village (modern_age still uses default) — the re-skins are actually applied.
+func TestElectricEpochCitiesDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	vic, _ := renderImage(namedState("victorian_age", "Aldermoor", blds), 120, 72)
+	col, _ := renderImage(namedState("colonial_age", "Aldermoor", blds), 120, 72)
+	ele, _ := renderImage(namedState("electric_age", "Aldermoor", blds), 120, 72)
+	atm, _ := renderImage(namedState("atomic_age", "Aldermoor", blds), 120, 72)
+	def, _ := renderImage(namedState("modern_age", "Aldermoor", blds), 120, 72) // modern still uses defaultTdStyle
+	if !imagesDiffer(vic, col) {
+		t.Fatal("victorian city renders identically to colonial — the brownstone re-skin is not distinct from brick")
+	}
+	if !imagesDiffer(ele, atm) {
+		t.Fatal("electric city renders identically to atomic — the warm-deco vs cool-midcentury re-skins are not distinct")
+	}
+	if !imagesDiffer(vic, def) {
+		t.Fatal("victorian city renders identically to the default village (modern) — the victorian re-skin is not applied")
+	}
+	if !imagesDiffer(ele, def) {
+		t.Fatal("electric city renders identically to the default village (modern) — the electric re-skin is not applied")
+	}
+	if !imagesDiffer(atm, def) {
+		t.Fatal("atomic city renders identically to the default village (modern) — the atomic re-skin is not applied")
+	}
+}
+
+// TestDrawRoofModernFlatPanicSafe locks that the FLAT modern-block dwelling sprite is panic-safe +
+// in-bounds on a tiny footprint, a normal one, and hard against the NW corner (every write is clamped).
+func TestDrawRoofModernFlatPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("electric_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "housing", "production")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofModernFlat(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofModernFlat(img, 1, 1, hwhh.hw, hwhh.hh, rc) // hard against the NW corner
+		}
+	}
+}
+
+// TestDrawRoofTowerPanicSafe locks that the ART-DECO SETBACK TOWER wonder sprite (tiers + a mast + an
+// extended base shadow that clips BELOW/around the footprint) is panic-safe + in-bounds on tiny / normal
+// / NW-corner cases (every write is clamped).
+func TestDrawRoofTowerPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("electric_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}} {
+			drawRoofTower(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofTower(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner (shadow drifts down-right)
+			drawRoofTower(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner (shadow clips off-canvas)
+		}
+	}
+}
+
+// TestElectricEpochOpenNoWallLots locks that VICTORIAN, ELECTRIC, and ATOMIC are all OPEN ages: each
+// emits ZERO wall / gate / tower / bastion lots (unwalled), on real + tiny canvases.
+func TestElectricEpochOpenNoWallLots(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	ages := []string{"victorian_age", "electric_age", "atomic_age"}
+	for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+		for _, ageKey := range ages {
+			p := tdPlanForAge(namedState(ageKey, "Aldermoor", blds))
+			if n := len(wallLotsOf(p)) + len(gateLotsOf(p)) + len(towerLotsOf(p)) + len(bastionLotsOf(p)); n != 0 {
+				t.Fatalf("%s %dx%d has %d wall lots — this age must be OPEN (no walls)", ageKey, sz.w, sz.h, n)
+			}
+		}
+	}
+}
+
+// TestDumpElectricEpochPNGs renders industrial / victorian / electric / atomic with a FIXED display name +
+// identical building set INCLUDING a wonder so the factory/terminal/tower centerpieces render, so a
+// reviewer can compare the ELECTRIC-epoch band (against the industrial neighbour) side by side. Opt-in:
+// skipped unless CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpElectricEpochPNGs
+func TestDumpElectricEpochPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Identical building set (with a wonder so the centerpiece renders) + a FIXED display name → the
+	// citySeed is fixed, so only the era re-skin differs across the four dumps.
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"industrial_age", "1d_industrial.png"},
+		{"victorian_age", "1d_victorian.png"},
+		{"electric_age", "1d_electric.png"},
+		{"atomic_age", "1d_atomic.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
+
 // TestDumpIronEpochPNGs renders bronze / iron / classical / medieval with a FIXED display name +
 // identical building set INCLUDING a wonder so the ziggurat/temple/cathedral centerpieces render, so
 // a reviewer can compare the ancient-band ages + medieval side by side. Opt-in: skipped unless
