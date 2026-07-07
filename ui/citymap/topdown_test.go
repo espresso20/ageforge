@@ -3724,3 +3724,259 @@ func TestDumpDigitalEpochPNGs(t *testing.T) {
 		t.Logf("wrote %s", path)
 	}
 }
+
+// ---- NEON epoch (cyberpunk / fusion / space) --------------------------------
+
+// TestNeonEpochStylesWired locks that the three NEON-epoch ages resolve to their tuned presets with the
+// intended motifs/profiles: cyberpunk reuses the glass-tower + skyscraper silhouette (a DARK neon megatower),
+// fusion carries the FUSION-CORE wonder, and space carries the LAUNCHPAD wonder + the METAL-DOME dwelling —
+// and none of the three is still on the default village preset.
+func TestNeonEpochStylesWired(t *testing.T) {
+	cyb := styleForAge("cyberpunk_age")
+	if cyb.houseProfile != profileGlassTower {
+		t.Fatalf("cyberpunk houseProfile = %v, want profileGlassTower (dark neon megablocks)", cyb.houseProfile)
+	}
+	if cyb.wonderMotif != wonderSkyscraper {
+		t.Fatalf("cyberpunk wonderMotif = %v, want wonderSkyscraper (dark neon megatower)", cyb.wonderMotif)
+	}
+	if cyb.hasWalls {
+		t.Fatal("cyberpunk must be OPEN (no walls)")
+	}
+
+	fus := styleForAge("fusion_age")
+	if fus.wonderMotif != wonderFusionCore {
+		t.Fatalf("fusion wonderMotif = %v, want wonderFusionCore (glowing reactor)", fus.wonderMotif)
+	}
+	if fus.hasWalls {
+		t.Fatal("fusion must be OPEN (a utopian open city)")
+	}
+
+	spc := styleForAge("space_age")
+	if spc.wonderMotif != wonderLaunchpad {
+		t.Fatalf("space wonderMotif = %v, want wonderLaunchpad (rocket on a pad)", spc.wonderMotif)
+	}
+	if spc.houseProfile != profileMetalDome {
+		t.Fatalf("space houseProfile = %v, want profileMetalDome (colony domes)", spc.houseProfile)
+	}
+	if spc.hasWalls {
+		t.Fatal("space must be OPEN (an open colony)")
+	}
+
+	// None of the three may still resolve to the default village preset name.
+	if cyb.name == defaultTdStyle.name || fus.name == defaultTdStyle.name || spc.name == defaultTdStyle.name {
+		t.Fatalf("a NEON-epoch age still on the default preset: cyberpunk=%q fusion=%q space=%q", cyb.name, fus.name, spc.name)
+	}
+	// cyberpunk is DARKER/DENSER than digital (the first-neon age it descends from).
+	dig := styleForAge("digital_age")
+	if !(cyb.slotSpacing < dig.slotSpacing) {
+		t.Fatalf("cyberpunk slotSpacing (%.2f) should be denser/tighter than digital (%.2f)", cyb.slotSpacing, dig.slotSpacing)
+	}
+}
+
+// TestNeonEpochPropsPresent locks the distinctive prop scatters: a CYBERPUNK town must emit HOLOGRAM props
+// (the night-city projection tell) and a SPACE town must emit ROCKET props (the spaceport tell).
+func TestNeonEpochPropsPresent(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+
+	cp := tdPlanForAge(namedState("cyberpunk_age", "Aldermoor", blds))
+	holo := 0
+	for _, lt := range cp.lots {
+		if lt.kind == tdPropHologram {
+			holo++
+		}
+	}
+	if holo == 0 {
+		t.Fatal("cyberpunk town emitted ZERO hologram props — the night-city scatter is not applied")
+	}
+
+	sp := tdPlanForAge(namedState("space_age", "Aldermoor", blds))
+	rocket := 0
+	for _, lt := range sp.lots {
+		if lt.kind == tdPropRocket {
+			rocket++
+		}
+	}
+	if rocket == 0 {
+		t.Fatal("space town emitted ZERO rocket props — the spaceport scatter is not applied")
+	}
+}
+
+// TestNeonWondersDiffer locks that the two new NEON wonders read apart from their neighbours: the FUSION CORE
+// differs from the skyscraper, the renaissance dome, the deco tower, and the factory; the LAUNCHPAD differs
+// from the fusion core, the skyscraper, and the dome. Each silhouette must actually be applied, not shared.
+func TestNeonWondersDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	fusionCore := drawWonderImg(styleForAge("fusion_age"))
+	launchpad := drawWonderImg(styleForAge("space_age"))
+	skyscraper := drawWonderImg(styleForAge("modern_age"))
+	dome := drawWonderImg(styleForAge("renaissance_age"))
+	tower := drawWonderImg(styleForAge("electric_age"))
+	factory := drawWonderImg(styleForAge("industrial_age"))
+
+	if !imagesDiffer(fusionCore, skyscraper) {
+		t.Fatal("fusion core draws identically to the skyscraper — the reactor silhouette is not applied")
+	}
+	if !imagesDiffer(fusionCore, dome) {
+		t.Fatal("fusion core draws identically to the renaissance dome — the two wonders must differ")
+	}
+	if !imagesDiffer(fusionCore, tower) {
+		t.Fatal("fusion core draws identically to the deco tower — the two wonders must differ")
+	}
+	if !imagesDiffer(fusionCore, factory) {
+		t.Fatal("fusion core draws identically to the factory — the two wonders must differ")
+	}
+	if !imagesDiffer(launchpad, fusionCore) {
+		t.Fatal("launchpad draws identically to the fusion core — the two NEON wonders must differ")
+	}
+	if !imagesDiffer(launchpad, skyscraper) {
+		t.Fatal("launchpad draws identically to the skyscraper — the two wonders must differ")
+	}
+	if !imagesDiffer(launchpad, dome) {
+		t.Fatal("launchpad draws identically to the renaissance dome — the two wonders must differ")
+	}
+}
+
+// TestNeonEpochCitiesDiffer locks the CITY-level reads: cyberpunk (dark neon) differs from fusion (bright
+// white) differs from space (pale metallic), and all three differ from a STILL-DEFAULT placeholder
+// (transcendent_age, still on the village preset — cyberpunk/fusion/space are now restyled).
+func TestNeonEpochCitiesDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	cyb, _ := renderImage(namedState("cyberpunk_age", "Aldermoor", blds), 120, 72)
+	fus, _ := renderImage(namedState("fusion_age", "Aldermoor", blds), 120, 72)
+	spc, _ := renderImage(namedState("space_age", "Aldermoor", blds), 120, 72)
+	def, _ := renderImage(namedState("transcendent_age", "Aldermoor", blds), 120, 72) // still uses defaultTdStyle
+
+	if !imagesDiffer(cyb, fus) {
+		t.Fatal("cyberpunk city renders identically to fusion — the dark-neon vs bright-white re-skin is not distinct")
+	}
+	if !imagesDiffer(fus, spc) {
+		t.Fatal("fusion city renders identically to space — the bright-white vs pale-metallic re-skin is not distinct")
+	}
+	if !imagesDiffer(cyb, spc) {
+		t.Fatal("cyberpunk city renders identically to space — the dark-neon vs pale-metallic re-skin is not distinct")
+	}
+	if !imagesDiffer(cyb, def) {
+		t.Fatal("cyberpunk city renders identically to the default village (transcendent) — the cyberpunk re-skin is not applied")
+	}
+	if !imagesDiffer(fus, def) {
+		t.Fatal("fusion city renders identically to the default village (transcendent) — the fusion re-skin is not applied")
+	}
+	if !imagesDiffer(spc, def) {
+		t.Fatal("space city renders identically to the default village (transcendent) — the space re-skin is not applied")
+	}
+}
+
+// TestDrawRoofFusionCorePanicSafe locks that the FUSION-CORE wonder sprite (concentric glowing discs + a
+// white-hot bloom halo) is panic-safe + in-bounds on tiny / normal / NW + SE corner cases.
+func TestDrawRoofFusionCorePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("fusion_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofFusionCore(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofFusionCore(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofFusionCore(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestDrawRoofLaunchpadPanicSafe locks that the LAUNCHPAD wonder sprite (a pad + a rocket + fins + gantry
+// dabs + a scorch ring) is panic-safe + in-bounds on tiny / normal / NW + SE corner cases.
+func TestDrawRoofLaunchpadPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("space_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {14, 6}} {
+			drawRoofLaunchpad(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofLaunchpad(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofLaunchpad(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestDrawRoofMetalDomePanicSafe locks that the METAL-DOME dwelling sprite (a lit silver disc + a curved NW
+// highlight arc + a rim) is panic-safe + in-bounds on tiny / normal / NW + SE corner cases.
+func TestDrawRoofMetalDomePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("space_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "housing", "production")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {10, 12}, {14, 6}} {
+			drawRoofMetalDome(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofMetalDome(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofMetalDome(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestNeonEpochOpenNoWallLots locks that CYBERPUNK, FUSION, and SPACE are all OPEN ages: each emits ZERO
+// wall / gate / tower / bastion lots (unwalled), on real + tiny canvases.
+func TestNeonEpochOpenNoWallLots(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	ages := []string{"cyberpunk_age", "fusion_age", "space_age"}
+	for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+		for _, ageKey := range ages {
+			p := tdPlanForAge(namedState(ageKey, "Aldermoor", blds))
+			if n := len(wallLotsOf(p)) + len(gateLotsOf(p)) + len(towerLotsOf(p)) + len(bastionLotsOf(p)); n != 0 {
+				t.Fatalf("%s %dx%d has %d wall lots — this age must be OPEN (no walls)", ageKey, sz.w, sz.h, n)
+			}
+		}
+	}
+}
+
+// TestDumpNeonEpochPNGs renders digital / cyberpunk / fusion / space with a FIXED display name + identical
+// building set INCLUDING a wonder so the centerpieces render, so a reviewer can compare the NEON-epoch band
+// (against the digital neighbour it descends from) side by side. Opt-in: skipped unless CITYMAP_PNG_DUMP=<dir>
+// is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpNeonEpochPNGs
+func TestDumpNeonEpochPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"digital_age", "1f_digital.png"},
+		{"cyberpunk_age", "1f_cyberpunk.png"},
+		{"fusion_age", "1f_fusion.png"},
+		{"space_age", "1f_space.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}

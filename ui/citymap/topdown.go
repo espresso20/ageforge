@@ -156,6 +156,7 @@ const (
 	profileRowhouse                          // colonial/industrial: a TERRACE of 3–5 narrow attached units under small pitched roofs
 	profileModernFlat                        // electric/atomic: a FLAT-topped modern block (flat roof slab + thin parapet rim + a rooftop vent) — the groundwork for skyscrapers
 	profileGlassTower                        // modern/information/digital: a TALL glass-and-steel tower from above (cool blue-grey slab + lit window grid + a long height shadow)
+	profileMetalDome                         // space: a small pale METALLIC DOME (a lit silver disc with a curved NW highlight + a rim) — the space-colony habitat dwelling
 )
 
 // wallProfile is the per-era wall dialect (V3-B, locked #9): mudbrick curtain vs stone curtain +
@@ -186,6 +187,8 @@ const (
 	wonderFactory                       // industrial great factory hall + smokestacks + soot (drawRoofFactory)
 	wonderTower                         // electric/atomic art-deco SETBACK tower — concentric flat rectilinear tiers to a central mast (drawRoofTower)
 	wonderSkyscraper                    // modern/information/digital SUPERTALL glass tower — a narrow glass slab + a lit window grid + a mast/antenna + a long height shadow (drawRoofSkyscraper)
+	wonderFusionCore                    // fusion glowing REACTOR — concentric bright cyan rings around a white-hot central core, brightening to a bloom at the very center (drawRoofFusionCore)
+	wonderLaunchpad                     // space ROCKET on a launch pad — a circular pad + a bright central rocket (capsule + fins) + gantry dabs + a scorch ring (drawRoofLaunchpad)
 )
 
 // tdPal is the small set of resolved theme colors the style recipes draw from. Built once
@@ -1120,6 +1123,170 @@ var digitalCityStyle = func() tdEraStyle {
 	return s
 }()
 
+// cyberpunkCityStyle is the tuned CYBERPUNK preset (NEON epoch). The digital age's FIRST neon pushed to
+// its full, unrestrained MAX: a NIGHT CITY of very DARK ground + saturated neon CYAN/MAGENTA drenching the
+// streets, paving, and roof sheen, packed into dense blocky MEGASTRUCTURES (the same profileGlassTower gone
+// darker, at even tighter slotSpacing). The centrepiece stays a dark neon MEGATOWER (wonderSkyscraper),
+// and the square/scatter swap the digital age's restrained neon-signs for translucent floating HOLOGRAMS
+// (tdPropHologram). Built from digitalCityStyle, then darkened HARD + neon pushed from a whisper to a blaze.
+// Reads clearly apart from digital (which is only the first restrained hint): cyberpunk is the full night
+// city — darker ground, brighter neon, denser blocks, holograms instead of signs.
+var cyberpunkCityStyle = func() tdEraStyle {
+	s := digitalCityStyle
+	s.name = "cyberpunk"
+
+	// Roof material: sleek glass gone even DARKER with a much STRONGER neon-cyan sheen — where digital was a
+	// whisper (0.07) of neon over lightly-darkened glass, cyberpunk drops the glass harder and blazes the
+	// neon (0.20), so a megablock reads as dark glass catching a full neon wash.
+	s.roofBase = func(p tdPal) color.RGBA {
+		glass := darken(blend(blend(p.bg, p.text, 0.22), glassAnchor, 0.50), 0.30) // deep dark glass
+		return blend(glass, neonCyanAnchor, 0.20)                                  // full neon sheen
+	}
+	s.roofDark = func(p tdPal) color.RGBA {
+		glass := darken(blend(blend(p.bg, p.text, 0.22), glassAnchor, 0.50), 0.30)
+		return blend(darken(glass, 0.22), neonMagentaAnchor, 0.10) // a magenta bruise in the shade
+	}
+
+	// Ground: a very DARK night-city floor — the digital dark ground pushed much darker with a stronger cool
+	// neon cast, so the whole city sits in a saturated neon night.
+	s.groundBase = func(p tdPal) color.RGBA {
+		dark := darken(blend(blend(p.bg, p.dim, 0.34), dataGreyAnchor, 0.42), 0.36)
+		return blend(dark, neonCyanAnchor, 0.09)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		dark := darken(blend(blend(p.bg, p.dim, 0.30), dataGreyAnchor, 0.40), 0.38)
+		return blend(dark, neonMagentaAnchor, 0.07)
+	}
+	// Streets: dark canyons blazing with neon — the dark ground lifted a touch then drenched in a strong
+	// cyan/magenta neon wash (the full night-city streetglow, no longer restrained).
+	s.streetCol = func(p tdPal) color.RGBA {
+		dark := darken(blend(blend(p.bg, p.dim, 0.34), dataGreyAnchor, 0.44), 0.30)
+		lit := blend(dark, p.text, 0.18)
+		return blend(lit, blend(neonCyanAnchor, neonMagentaAnchor, 0.45), 0.22) // full neon street wash
+	}
+	s.streetEdge = func(p tdPal) color.RGBA {
+		dark := darken(blend(blend(p.bg, p.dim, 0.34), dataGreyAnchor, 0.44), 0.30)
+		return darken(blend(dark, p.text, 0.18), 0.26)
+	}
+	s.pavedCol = func(p tdPal) color.RGBA {
+		dark := darken(blend(blend(p.bg, p.dim, 0.30), dataGreyAnchor, 0.42), 0.26)
+		lit := blend(dark, p.text, 0.22)
+		return blend(lit, neonMagentaAnchor, 0.16) // a magenta plaza glow
+	}
+	// Prop tone blazes neon so the scattered holograms read as bright floating projections.
+	s.propCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.text, 0.34), neonCyanAnchor, 0.24)
+	}
+
+	s.houseProfile = profileGlassTower // dark neon megablocks
+	s.wonderMotif = wonderSkyscraper   // cyberpunk centrepiece: a dark neon megatower
+	s.slotSpacing = 1.35               // even DENSER than digital (1.4) — packed megastructures
+	return s
+}()
+
+// fusionCityStyle is the tuned FUSION preset (NEON epoch) — a deliberate CONTRAST to cyberpunk's dark neon
+// night. A CLEAN, BRIGHT, utopian WHITE city: brilliant white structures (fusionWhiteAnchor) over pale clean
+// paving, lifted with a soft pale CYAN glow (fusionCyanAnchor), spaced AIRY (a wide slotSpacing so the city
+// breathes). The centrepiece is a glowing REACTOR (wonderFusionCore — concentric cyan rings around a
+// white-hot bloom). Built from defaultTdStyle (so it keeps the tuned ground texture / pond / filler
+// behaviour) then re-skinned white-and-cyan. Reads STRONGLY apart from cyberpunk: where cyberpunk is dark +
+// saturated + dense, fusion is bright + white + airy — the two sit at opposite ends of the light scale.
+var fusionCityStyle = func() tdEraStyle {
+	s := defaultTdStyle
+	s.name = "fusion"
+
+	// Roof material: brilliant clean WHITE glass lifted with a pale cyan glow — a utopian white curtain-wall,
+	// far brighter + cooler than any stone/marble, so the buildings read as gleaming fusion-era towers.
+	s.roofBase = func(p tdPal) color.RGBA {
+		white := blend(blend(p.bg, p.text, 0.30), fusionWhiteAnchor, 0.66)
+		return blend(white, fusionCyanAnchor, 0.10) // soft cyan glow lift
+	}
+	s.roofDark = func(p tdPal) color.RGBA {
+		white := blend(blend(p.bg, p.text, 0.30), fusionWhiteAnchor, 0.54)
+		return darken(blend(white, fusionCyanAnchor, 0.10), 0.14) // a gentle, still-pale shade
+	}
+	s.lineageMix = 0.10 // keep the white clean — barely any lineage tint
+
+	// Ground: a pale clean plaza floor — bright and airy, lifted toward white with a faint cyan cast, so the
+	// city sits on gleaming paving rather than dirt.
+	s.groundBase = func(p tdPal) color.RGBA {
+		pale := blend(blend(p.bg, p.text, 0.22), fusionWhiteAnchor, 0.44)
+		return blend(pale, fusionCyanAnchor, 0.06)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.text, 0.18), fusionWhiteAnchor, 0.34)
+	}
+	s.streetCol = func(p tdPal) color.RGBA {
+		pale := blend(blend(p.bg, p.text, 0.26), fusionWhiteAnchor, 0.48)
+		return blend(pale, fusionCyanAnchor, 0.08)
+	}
+	s.streetEdge = func(p tdPal) color.RGBA {
+		pale := blend(blend(p.bg, p.text, 0.26), fusionWhiteAnchor, 0.48)
+		return darken(pale, 0.12)
+	}
+	s.pavedCol = func(p tdPal) color.RGBA {
+		pale := blend(blend(p.bg, p.text, 0.24), fusionWhiteAnchor, 0.52)
+		return blend(pale, fusionCyanAnchor, 0.10)
+	}
+	s.propCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.text, 0.34), fusionCyanAnchor, 0.30)
+	}
+
+	s.houseProfile = profileGlassTower // clean white glass towers
+	s.wonderMotif = wonderFusionCore   // fusion centrepiece: a glowing cyan reactor core
+	s.hasWalls = false                 // a utopian open city
+	s.slotSpacing = 1.6                // AIRY — the minimalist city breathes (wider than digital/cyberpunk)
+	return s
+}()
+
+// spaceCityStyle is the tuned SPACE preset (NEON epoch) — a space-colony read: pale METALLIC SILVER
+// (metalSilverAnchor), a COLDER sheen than fusion's warm white. Where fusion is a bright warm-white utopia,
+// space is cooler, greyer, faintly blue — a habitat of pressurised metal DOMES (profileMetalDome dwellings)
+// under a ROCKET LAUNCHPAD centrepiece (wonderLaunchpad). Built from fusionCityStyle (so it keeps the airy,
+// open, pale layout) then re-skinned toward cold silver metal, with scattered ROCKET dabs (tdPropRocket)
+// seasoning the spaceport. Reads apart from fusion: fusion is warm bright white, space is cold pale silver;
+// apart from cyberpunk: cyberpunk is dark neon, space is pale metallic.
+var spaceCityStyle = func() tdEraStyle {
+	s := fusionCityStyle
+	s.name = "space"
+
+	// Roof material: pale cool SILVER metal — a colder metallic sheen than fusion's white, faintly blue, so
+	// the domes read as pressurised metal habitats rather than white glass.
+	s.roofBase = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.text, 0.28), metalSilverAnchor, 0.62)
+	}
+	s.roofDark = func(p tdPal) color.RGBA {
+		return darken(blend(blend(p.bg, p.text, 0.28), metalSilverAnchor, 0.52), 0.18)
+	}
+
+	// Ground: a cold pale metal deck — the fusion pale floor pulled toward cold silver, so the colony floor
+	// reads as a plated surface, cooler + greyer than fusion's warm-white plaza.
+	s.groundBase = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.20), metalSilverAnchor, 0.44)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.16), metalSilverAnchor, 0.34)
+	}
+	s.streetCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.18), metalSilverAnchor, 0.48)
+	}
+	s.streetEdge = func(p tdPal) color.RGBA {
+		return darken(blend(blend(p.bg, p.dim, 0.18), metalSilverAnchor, 0.48), 0.14)
+	}
+	s.pavedCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.16), metalSilverAnchor, 0.52)
+	}
+	s.propCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.text, 0.30), metalSilverAnchor, 0.44)
+	}
+
+	s.houseProfile = profileMetalDome // space-colony metallic dome dwellings
+	s.wonderMotif = wonderLaunchpad   // space centrepiece: a rocket on a launch pad
+	s.hasWalls = false                // an open colony
+	s.slotSpacing = 1.55              // airy like fusion, a touch tighter
+	return s
+}()
+
 // stoneAgeStyle is the tuned STONE preset (Phase 1b-i), split off organicVillageStyle so the stone
 // age reads distinct from primitive. Dwellings stay THATCH (stone-age huts are still thatch, so
 // houseProfile is unchanged) and there are still NO walls — the difference is a ROCKIER, cooler,
@@ -1221,6 +1388,15 @@ var (
 	dataGreyAnchor    = color.RGBA{R: 0x6b, G: 0x74, B: 0x7e, A: 0xff} // cold server-farm grey (information data-center blocks + colder cast) — bluer + darker than steel
 	neonCyanAnchor    = color.RGBA{R: 0x2f, G: 0xd8, B: 0xd0, A: 0xff} // bright cyan neon (digital first-neon accent) — blended only, never raw
 	neonMagentaAnchor = color.RGBA{R: 0xd8, G: 0x3c, B: 0xa8, A: 0xff} // bright magenta neon (digital first-neon accent) — blended only, never raw
+
+	// NEON-epoch anchors (cyberpunk / fusion / space). Same discipline as every anchor above — NEVER used
+	// raw; every recipe blends them against theme roles + neighbouring tones so a light/dark theme retints
+	// them. The three are chosen to read STRONGLY apart from each other at thumbnail scale: fusion is a
+	// clean bright WHITE, its accent a pale CYAN glow (a utopian minimal city); space is a colder pale
+	// SILVER metal (a colder sheen than fusion's warm white); the neon pair above already carries cyberpunk.
+	fusionWhiteAnchor = color.RGBA{R: 0xf0, G: 0xf4, B: 0xf6, A: 0xff} // brilliant clean white (fusion structures + white-hot cores) — brighter + cooler than any stone/marble
+	fusionCyanAnchor  = color.RGBA{R: 0x6c, G: 0xe8, B: 0xf0, A: 0xff} // bright pale cyan glow (fusion accent rings/sheen) — softer + paler than the harsh neon cyan
+	metalSilverAnchor = color.RGBA{R: 0xc4, G: 0xc9, B: 0xd0, A: 0xff} // pale cool silver metal (space domes + launchpads) — a colder metallic sheen, faintly blue
 )
 
 // tdStyleForEra returns the tuned preset for an era band, or defaultTdStyle for the bands not yet
@@ -1260,15 +1436,16 @@ var ageStyles = map[string]tdEraStyle{
 	"colonial_age":   colonialCityStyle,
 	"industrial_age": industrialCityStyle,
 	// ELECTRIC epoch — victorian/electric/atomic (V3-B; distinct brownstone / art-deco / midcentury looks)
-	"victorian_age":    victorianCityStyle,
-	"electric_age":     electricCityStyle,
-	"atomic_age":       atomicCityStyle,
-	"modern_age":       modernCityStyle,
-	"information_age":  informationCityStyle,
-	"digital_age":      digitalCityStyle,
-	"cyberpunk_age":    defaultTdStyle,
-	"fusion_age":       defaultTdStyle,
-	"space_age":        defaultTdStyle,
+	"victorian_age":   victorianCityStyle,
+	"electric_age":    electricCityStyle,
+	"atomic_age":      atomicCityStyle,
+	"modern_age":      modernCityStyle,
+	"information_age": informationCityStyle,
+	"digital_age":     digitalCityStyle,
+	// NEON epoch — cyberpunk/fusion/space (distinct dark-neon / bright-white / pale-metallic looks)
+	"cyberpunk_age":    cyberpunkCityStyle,
+	"fusion_age":       fusionCityStyle,
+	"space_age":        spaceCityStyle,
 	"interstellar_age": defaultTdStyle,
 	"galactic_age":     defaultTdStyle,
 	"quantum_age":      defaultTdStyle,
@@ -1439,6 +1616,8 @@ const (
 	tdPropGasLamp    // victorian: a short lamp-post with a warm amber gaslight glow (a genteel park lamp)
 	tdPropDataCenter // information: a low WIDE server-farm block (flat cool grey) + a couple of cyan/amber blinking-light dabs
 	tdPropNeonSign   // digital: a small bright NEON sign dab (cyan/magenta) — the epoch's first neon
+	tdPropHologram   // cyberpunk: a bright TRANSLUCENT floating projection — a half-transparent cyan/magenta glowing shape blended over whatever's beneath (a hologram, not a solid)
+	tdPropRocket     // space: a small ROCKET / gantry dab — a bright vertical capsule with a nose + a lit rim beside a thin gantry, seasoning the spaceport
 )
 
 // tdLot is one placed thing, in CITY SPACE (pre-fill-frame). x,y is the lot center in city
@@ -3108,6 +3287,23 @@ func tdSquarePropsFor(style tdEraStyle) tdSquareProps {
 			center: []tdLotKind{tdPropNeonSign, tdPropDataCenter},
 		}
 	}
+	// Cyberpunk shares profileGlassTower + wonderSkyscraper with modern/information/digital, so the style
+	// NAME is the tag. Dress its square with translucent HOLOGRAMS (the full night-city projection plaza).
+	if style.name == "cyberpunk" {
+		return tdSquareProps{
+			wonder: []tdLotKind{tdPropHologram, tdPropNeonSign, tdPropHologram, tdPropWell},
+			center: []tdLotKind{tdPropHologram, tdPropNeonSign},
+		}
+	}
+	// Fusion has its own wonderFusionCore motif, but no dedicated props beyond a clean well — a minimalist
+	// utopian square. Space shares its airy layout but is discriminated by NAME: dress its square with ROCKET
+	// dabs (the spaceport forecourt).
+	if style.name == "space" {
+		return tdSquareProps{
+			wonder: []tdLotKind{tdPropRocket, tdPropWell, tdPropRocket, tdPropStall},
+			center: []tdLotKind{tdPropRocket, tdPropWell},
+		}
+	}
 	switch style.houseProfile {
 	case profileMudbrick: // ancient (bronze / iron)
 		return tdSquareProps{
@@ -3499,6 +3695,45 @@ func tdAddFiller(plan *topPlan, field blockField, style tdEraStyle, cfg tdConfig
 			}
 			plan.lots = append(plan.lots, tdLot{
 				x: p.x, y: p.y, w: cfg.roofSize * 0.6, h: cfg.roofSize * 0.6, kind: tdPropDataCenter,
+			})
+		}
+	}
+
+	// Scattered HOLOGRAMS (cyberpunk, NEON epoch): a handful of translucent floating projections dotted
+	// through the dark night city so the hologram read carries across the whole town at thumbnail scale.
+	// Same deterministic seeded pick-without-replacement + small cap as the neon/data-center scatter, gated on
+	// the style NAME so only cyberpunk towns get them (it shares its motif + profile with modern/digital).
+	if style.name == "cyberpunk" {
+		nHolo := 3 + int(r.f01()*4) // 3..6 — enough to blaze the night city
+		if nHolo > 6 {
+			nHolo = 6
+		}
+		for i := 0; i < nHolo; i++ {
+			p, ok := pick()
+			if !ok {
+				break
+			}
+			plan.lots = append(plan.lots, tdLot{
+				x: p.x, y: p.y, w: cfg.roofSize * 0.55, h: cfg.roofSize * 0.55, kind: tdPropHologram,
+			})
+		}
+	}
+
+	// Scattered ROCKETS (space, NEON epoch): a LIGHT dusting of rocket/gantry dabs across the colony so the
+	// spaceport read carries beyond the central pad. Same seeded pick-without-replacement + a small 1..3 cap,
+	// gated on the style NAME so only space towns get them.
+	if style.name == "space" {
+		nRocket := 1 + int(r.f01()*3) // 1..3 — a light seasoning, not a launch field
+		if nRocket > 3 {
+			nRocket = 3
+		}
+		for i := 0; i < nRocket; i++ {
+			p, ok := pick()
+			if !ok {
+				break
+			}
+			plan.lots = append(plan.lots, tdLot{
+				x: p.x, y: p.y, w: cfg.roofSize * 0.6, h: cfg.roofSize * 0.6, kind: tdPropRocket,
 			})
 		}
 	}
@@ -4033,7 +4268,8 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 			drawBlock(img, cx, cy, 0, propCol)
 		case tdPropWell, tdPropFirepit, tdPropStones, tdPropStall,
 			tdPropAltar, tdPropColumns, tdPropBrazier, tdPropFountain, tdPropCross,
-			tdPropSmokestack, tdPropGasLamp, tdPropDataCenter, tdPropNeonSign:
+			tdPropSmokestack, tdPropGasLamp, tdPropDataCenter, tdPropNeonSign,
+			tdPropHologram, tdPropRocket:
 			drawSquareProp(img, xf, lt, style, pal)
 		}
 	}
@@ -4390,6 +4626,68 @@ func drawSquareProp(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle,
 		glowR := maxInt(rad/2, 1)
 		forEllipse(cx, cy-tall, glowR, glowR, func(x, y int) { blendPixel(img, x, y, glow, 0.60) })
 		setPixel(img, cx, cy-tall, brighten(glow, 0.20)) // bright neon core
+	case tdPropHologram:
+		// A bright TRANSLUCENT floating projection — the cyberpunk hologram. Unlike every other prop this
+		// paints NOTHING solid: it BLENDS a bright cyan-or-magenta glow (~0.5) over whatever's beneath, so the
+		// scene shows THROUGH it (a half-transparent projected shape, not an object). A tall soft column of
+		// light rising off a base, brighter at the hovering head, with a faint emitter dab on the ground. The
+		// hue alternates by pixel parity so a district gets a mix of cyan + magenta holograms. Bounds-safe:
+		// blendPixel / forEllipse only (both clipped).
+		hue := neonCyanAnchor
+		if (cx+cy)&1 == 0 {
+			hue = neonMagentaAnchor
+		}
+		proj := brighten(hue, 0.10)
+		tall := rad + rad/2 // a tall floating projection — above the sign-posts
+		// The soft column of light: a translucent vertical shaft, faint low, brightening as it rises.
+		for dy := -tall; dy <= 0; dy++ {
+			f := float64(-dy) / float64(tall+1) // 0 at the base → 1 at the head
+			blendPixel(img, cx, cy+dy, proj, 0.28+0.22*f)
+			if rad >= 3 { // a little width so it reads as a shape, not a wire
+				blendPixel(img, cx-1, cy+dy, proj, 0.16+0.14*f)
+				blendPixel(img, cx+1, cy+dy, proj, 0.16+0.14*f)
+			}
+		}
+		// The hovering HEAD: a bright translucent bloom where the projection focuses.
+		headR := maxInt(rad/2, 1)
+		forEllipse(cx, cy-tall, headR, headR, func(x, y int) {
+			fx := float64(x-cx) / float64(headR)
+			fy := float64(y-(cy-tall)) / float64(headR)
+			blendPixel(img, x, y, proj, 0.55*(1-0.5*(fx*fx+fy*fy)))
+		})
+		blendPixel(img, cx, cy-tall, brighten(proj, 0.20), 0.7) // the bright focal core
+		// The emitter footprint: a faint ring where the projector sits on the ground.
+		forEllipse(cx, cy, maxInt(rad/2, 1), maxInt(rad/3, 1), func(x, y int) { blendPixel(img, x, y, proj, 0.14) })
+	case tdPropRocket:
+		// A small ROCKET / gantry dab seasoning the spaceport — a bright vertical CAPSULE (a lit metallic body
+		// with a pointed nose + a lit NW rim) standing beside a thin dark GANTRY tower. Metallic silver tones
+		// pulled toward propCol so it retints with the theme; a warm exhaust glow at the base. Bounds-safe:
+		// setPixel / blendPixel / forEllipse only.
+		body := blend(brighten(prop, 0.10), metalSilverAnchor, 0.55) // bright metal capsule
+		bodyLit := brighten(body, 0.16)                              // sunlit NW rim
+		bodyDark := darken(body, 0.18)                               // shaded SE rim
+		gantry := darken(blend(prop, metalSilverAnchor, 0.30), 0.34) // dark lattice tower
+		tall := rad + rad/2                                          // a tall capsule — above props, below smokestacks
+		// Ground shadow + a faint warm exhaust bloom at the base (south of the capsule).
+		forEllipse(cx, cy+rad, maxInt(rad, 1), maxInt(rad/2, 1), func(x, y int) { blendPixel(img, x, y, darken(body, 0.4), 0.30) })
+		blendPixel(img, cx, cy+rad, blend(bodyLit, gasGlowAnchor, 0.6), 0.5) // exhaust glow
+		// The capsule body: a thin bright vertical column from base (cy+rad/2) up toward the nose (cy-tall).
+		for dy := -tall; dy <= rad/2; dy++ {
+			setPixel(img, cx, cy+dy, body)
+			setPixel(img, cx-1, cy+dy, bodyLit)  // lit NW edge
+			setPixel(img, cx+1, cy+dy, bodyDark) // shaded SE edge
+		}
+		// The pointed NOSE: a bright cap converging at the top.
+		setPixel(img, cx, cy-tall, brighten(bodyLit, 0.14))
+		setPixel(img, cx, cy-tall-1, brighten(bodyLit, 0.20))
+		// The GANTRY: a thin dark lattice tower standing just to the west of the rocket.
+		gx := cx - maxInt(rad/2+1, 2)
+		for dy := -tall; dy <= rad; dy++ {
+			setPixel(img, gx, cy+dy, gantry)
+		}
+		for _, dy := range []int{-tall + tall/3, 0, rad / 2} { // a few cross-arms reaching toward the rocket
+			drawHSpan(img, gx, cx-1, cy+dy, gantry)
+		}
 	}
 }
 
@@ -4470,6 +4768,8 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 			drawRoofModernFlat(img, cx, cy, hw, hh, rc)
 		case profileGlassTower:
 			drawRoofGlassTower(img, cx, cy, hw, hh, rc)
+		case profileMetalDome:
+			drawRoofMetalDome(img, cx, cy, hw, hh, rc)
 		default:
 			drawRoofHut(img, cx, cy, hw, hh, rc)
 		}
@@ -4507,6 +4807,10 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 			drawRoofTower(img, cx, cy, hw, hh, rc)
 		case wonderSkyscraper:
 			drawRoofSkyscraper(img, cx, cy, hw, hh, rc)
+		case wonderFusionCore:
+			drawRoofFusionCore(img, cx, cy, hw, hh, rc)
+		case wonderLaunchpad:
+			drawRoofLaunchpad(img, cx, cy, hw, hh, rc)
 		default:
 			drawRoofWonder(img, cx, cy, hw, hh, rc)
 		}
@@ -4616,6 +4920,8 @@ func drawRoofHouse(img *image.RGBA, cx, cy, hw, hh int, rc roofColors, prof roof
 		drawRoofModernFlat(img, cx, cy, hw, hh, rc)
 	case profileGlassTower:
 		drawRoofGlassTower(img, cx, cy, hw, hh, rc)
+	case profileMetalDome:
+		drawRoofMetalDome(img, cx, cy, hw, hh, rc)
 	default:
 		drawRoofRidge(img, cx, cy, hw, hh, rc)
 	}
@@ -5175,6 +5481,176 @@ func drawRoofDome(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 	lhw := maxInt(rad/5, 1)
 	fillRectC(img, cx, cy, lhw, lhw, leadLit)
 	setPixel(img, cx, cy, lantern)
+}
+
+// drawRoofFusionCore: the FUSION wonder (NEON epoch) — a glowing REACTOR seen from above: a set of
+// CONCENTRIC BRIGHT CYAN RINGS brightening inward toward a WHITE-HOT central BLOOM. Unlike the renaissance
+// dome (which is a solid drum + shell + radial/concentric RIBS + a lantern cap) this is a radiant target of
+// GLOWING rings with an incandescent core — no drum, no ribs, no mast — so it reads clearly apart from the
+// dome, the skyscraper slab, the deco tower, and the factory hall. White + cyan (fusionWhiteAnchor /
+// fusionCyanAnchor) are BLENDED with the passed roof colors so it retints on a theme switch. Bounds-safe:
+// every write goes through fillDisc / forEllipse / setPixel / blendPixel (all clipped), so it never panics.
+func drawRoofFusionCore(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	// Clean cyan glow + a white-hot bloom pulled toward the (already theme/lineage-tinted) roof colors, so the
+	// whole reactor retints yet reads as a radiant cyan-and-white core.
+	cyan := blend(rc.base, fusionCyanAnchor, 0.55)    // the glowing ring cyan
+	cyanDim := blend(rc.dark, fusionCyanAnchor, 0.34) // the outer, dimmer ring
+	white := blend(rc.base, fusionWhiteAnchor, 0.70)  // the white-hot inner tone
+	bloom := brighten(white, 0.20)                    // the incandescent center
+
+	rad := maxInt(minInt(hw, hh), 1)
+
+	// A faint containment DECK: a soft dim-cyan disc filling the footprint so the rings sit on a glowing
+	// pad rather than bare ground (lit NW / shaded SE for a shallow bowl).
+	forEllipse(cx, cy, rad, rad, func(x, y int) {
+		if x <= cx || y <= cy {
+			setPixel(img, x, y, blend(cyanDim, white, 0.15))
+		} else {
+			setPixel(img, x, y, cyanDim)
+		}
+	})
+
+	// CONCENTRIC GLOWING RINGS: stepping inward from the rim, each ring a filled disc a shade brighter than
+	// the last, so the reactor reads as a radiant target brightening toward the center. Drawn largest-first
+	// so each smaller, brighter disc overpaints the middle of the previous ring, leaving a bright rim band.
+	for _, step := range []struct {
+		f float64
+		c color.RGBA
+	}{
+		{0.82, cyan},
+		{0.58, blend(cyan, white, 0.40)},
+		{0.34, white},
+	} {
+		rr := maxInt(int(float64(rad)*step.f), 1)
+		fillDisc(img, cx, cy, rr, step.c)
+	}
+
+	// The WHITE-HOT BLOOM: a small incandescent core at the very center, with a soft translucent halo bleeding
+	// out so the center reads as glowing, not a hard dot.
+	coreR := maxInt(rad/4, 1)
+	fillDisc(img, cx, cy, coreR, bloom)
+	haloR := maxInt(rad/2, 1)
+	forEllipse(cx, cy, haloR, haloR, func(x, y int) {
+		fx := float64(x-cx) / float64(haloR)
+		fy := float64(y-cy) / float64(haloR)
+		blendPixel(img, x, y, bloom, 0.45*(1-(fx*fx+fy*fy)))
+	})
+	setPixel(img, cx, cy, brighten(bloom, 0.15)) // the brightest pinpoint
+}
+
+// drawRoofMetalDome: the SPACE dwelling (NEON epoch) — a small pale METALLIC habitat DOME seen from above:
+// a lit silver DISC with a curved NW HIGHLIGHT sweeping across the crown and a darker rim, so it reads as a
+// pressurised metal dome rather than a flat disc. Cooler + greyer than the fusion white. Silver
+// (metalSilverAnchor) is BLENDED with the passed roof colors so it retints on a theme switch. Bounds-safe:
+// forEllipse / setPixel only (both clipped), so it never panics at any footprint.
+func drawRoofMetalDome(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	metal := blend(rc.base, metalSilverAnchor, 0.60)     // the pale silver shell
+	metalLit := brighten(metal, 0.16)                    // the NW-lit crown sweep
+	metalDark := blend(rc.dark, metalSilverAnchor, 0.40) // the shaded SE flank
+	rim := darken(metalDark, 0.16)                       // the dark base rim
+
+	rad := maxInt(minInt(hw, hh), 1)
+
+	// THE DOME DISC: a filled silver disc, lit toward the NW crown and shaded toward the SE flank so it reads
+	// domed (a curved metal shell), not a flat coin.
+	forEllipse(cx, cy, rad, rad, func(x, y int) {
+		fx := float64(x-cx) / float64(rad)
+		fy := float64(y-cy) / float64(rad)
+		d := fx + fy // -2 NW (lit) .. +2 SE (shaded)
+		switch {
+		case d < -0.5:
+			setPixel(img, x, y, metalLit)
+		case d > 0.6:
+			setPixel(img, x, y, metalDark)
+		default:
+			setPixel(img, x, y, metal)
+		}
+	})
+
+	// CURVED NW HIGHLIGHT: a bright specular arc sweeping across the upper-left of the shell (the sun glinting
+	// off curved metal) — a thin crescent one band in from the rim, on the NW side only.
+	hlR := maxInt(rad*7/10, 1)
+	for i := 0; i < 40; i++ {
+		ang := math.Pi + math.Pi*float64(i)/40 // the upper-left arc of the circle (clipped to the NW quadrant below)
+		hx := cx + int(math.Round(math.Cos(ang)*float64(hlR)))
+		hy := cy + int(math.Round(math.Sin(ang)*float64(hlR)))
+		if hx <= cx && hy <= cy { // NW quadrant only
+			setPixel(img, hx, hy, brighten(metalLit, 0.12))
+		}
+	}
+
+	// THE RIM: a darker base ring around the shell so the dome sits on a defined footprint.
+	for i := 0; i < 48; i++ {
+		ang := 2 * math.Pi * float64(i) / 48
+		setPixel(img, cx+int(math.Round(math.Cos(ang)*float64(rad))), cy+int(math.Round(math.Sin(ang)*float64(rad))), rim)
+	}
+	setPixel(img, cx, cy, brighten(metal, 0.10)) // a small lit apex vent
+}
+
+// drawRoofLaunchpad: the SPACE wonder (NEON epoch) — a rocket on a LAUNCH PAD seen from above: a circular
+// PAD, a bright central ROCKET (a lit metallic capsule with a pointed nose + a pair of splayed FINS), a few
+// GANTRY dabs flanking it, and a dark SCORCH RING blasted into the pad around the base. Reads clearly apart
+// from the fusion core (radiant rings), the skyscraper slab, and the dome: this is a pad + a discrete
+// rocket + fins + scorch. Silver + a warm exhaust glow (metalSilverAnchor / gasGlowAnchor) are BLENDED with
+// the passed roof colors so it retints on a theme switch. Bounds-safe: fillDisc / forEllipse / setPixel /
+// drawHSpan / blendPixel only (all clipped), so it never panics.
+func drawRoofLaunchpad(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	pad := blend(rc.base, metalSilverAnchor, 0.42)                    // the pale plated pad
+	padDark := blend(rc.dark, metalSilverAnchor, 0.30)                // shaded pad + rim
+	rocket := blend(brighten(rc.base, 0.10), metalSilverAnchor, 0.58) // bright metal capsule
+	rocketLit := brighten(rocket, 0.16)                               // sunlit NW rim
+	rocketDark := darken(rocket, 0.18)                                // shaded SE rim
+	scorch := darken(padDark, 0.30)                                   // dark blast scorch
+	gantry := darken(pad, 0.34)                                       // dark gantry lattice
+
+	rad := maxInt(minInt(hw, hh), 1)
+
+	// THE PAD: a filled silver disc filling the footprint, lit NW / shaded SE so it reads as a raised plated
+	// apron rather than flat ground.
+	forEllipse(cx, cy, rad, rad, func(x, y int) {
+		if x <= cx || y <= cy {
+			setPixel(img, x, y, pad)
+		} else {
+			setPixel(img, x, y, padDark)
+		}
+	})
+
+	// SCORCH RING: a dark blast ring stamped into the pad around the rocket base (where the exhaust burns).
+	scorchR := maxInt(rad*3/5, 1)
+	for i := 0; i < 56; i++ {
+		ang := 2 * math.Pi * float64(i) / 56
+		setPixel(img, cx+int(math.Round(math.Cos(ang)*float64(scorchR))), cy+int(math.Round(math.Sin(ang)*float64(scorchR))), scorch)
+	}
+
+	// GANTRY dabs: a couple of dark lattice service towers flanking the rocket (W + E of the pad center).
+	for _, dx := range []int{-rad * 3 / 5, rad * 3 / 5} {
+		gx := cx + dx
+		for dy := -rad / 2; dy <= rad/3; dy++ {
+			setPixel(img, gx, cy+dy, gantry)
+		}
+		setPixel(img, gx, cy-rad/2-1, brighten(gantry, 0.14)) // a lit tip light
+	}
+
+	// THE ROCKET: a bright vertical capsule standing at pad center — a lit metal body from the pad up toward a
+	// pointed nose, lit on the NW edge + shaded on the SE edge for round volume.
+	tall := maxInt(rad*4/5, 2) // the capsule rises well above the pad center
+	for dy := -tall; dy <= rad/3; dy++ {
+		setPixel(img, cx, cy+dy, rocket)
+		setPixel(img, cx-1, cy+dy, rocketLit)
+		setPixel(img, cx+1, cy+dy, rocketDark)
+	}
+	// The pointed NOSE converging above the body.
+	setPixel(img, cx, cy-tall, brighten(rocketLit, 0.12))
+	setPixel(img, cx, cy-tall-1, brighten(rocketLit, 0.20))
+	// The splayed FINS: two short diagonal dabs at the base flaring out to the SW + SE.
+	for d := 1; d <= maxInt(rad/3, 1); d++ {
+		setPixel(img, cx-1-d, cy+rad/3+d, rocketDark) // SW fin
+		setPixel(img, cx+1+d, cy+rad/3+d, rocketDark) // SE fin
+	}
+	// A warm EXHAUST glow blooming under the fins at the pad center.
+	forEllipse(cx, cy+rad/3, maxInt(rad/3, 1), maxInt(rad/4, 1), func(x, y int) {
+		blendPixel(img, x, y, blend(rocketLit, gasGlowAnchor, 0.65), 0.45)
+	})
 }
 
 // drawRoofFactory: the INDUSTRIAL wonder (Phase 1b-iii) — a great FACTORY HALL read from above: a big
