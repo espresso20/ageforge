@@ -1601,6 +1601,50 @@ func TestInTownDiscUnchanged(t *testing.T) {
 	}
 }
 
+// TestElectricFootprintShapes locks the Phase 2b-1 electric-epoch silhouettes: victorian SPRAWLS
+// (wide elongated oval), electric is a rounded RECTANGLE, atomic a broad bumpy HALO — each keyed
+// per-age, each extending past the townR disc but bounded by its declared tdShapeMaxReach.
+func TestElectricFootprintShapes(t *testing.T) {
+	if got := tdAgeFootprint("victorian_age"); got != shapeSprawl {
+		t.Fatalf("victorian footprint = %d, want shapeSprawl", got)
+	}
+	if got := tdAgeFootprint("electric_age"); got != shapeRoundRect {
+		t.Fatalf("electric footprint = %d, want shapeRoundRect", got)
+	}
+	if got := tdAgeFootprint("atomic_age"); got != shapeCoreHalo {
+		t.Fatalf("atomic footprint = %d, want shapeCoreHalo", got)
+	}
+	const townR = 40.0
+	seed := citySeed("Aldermoor")
+	minMax := func(shape tdFootprintShape) (mn, mx float64) {
+		mn, mx = math.Inf(1), 0
+		for a := 0; a < 720; a++ {
+			r := tdShapeRadiusAt(shape, float64(a)*math.Pi/360, townR, seed)
+			mn, mx = math.Min(mn, r), math.Max(mx, r)
+		}
+		return
+	}
+	// Sprawl: clearly elongated (wide:narrow > 1.5) and reaches past townR.
+	if mn, mx := minMax(shapeSprawl); mx/mn < 1.5 {
+		t.Fatalf("sprawl elongation %.2f (max %.1f / min %.1f), want >1.5 — victorian must read wide", mx/mn, mx, mn)
+	} else if mx <= townR {
+		t.Fatalf("sprawl max reach %.1f <= townR %.1f — victorian must extend past the disc", mx, townR)
+	}
+	// RoundRect corners + coreHalo suburbs both bulge past townR.
+	if _, rmx := minMax(shapeRoundRect); rmx <= townR {
+		t.Fatalf("roundRect max reach %.1f <= townR — corners must extend past the disc", rmx)
+	}
+	if _, hmx := minMax(shapeCoreHalo); hmx <= townR {
+		t.Fatalf("coreHalo max reach %.1f <= townR — suburbs must bulge past the disc", hmx)
+	}
+	// Every shaped footprint stays within its declared tdShapeMaxReach (walls/fit/tests rely on it).
+	for _, s := range []tdFootprintShape{shapeSprawl, shapeRoundRect, shapeCoreHalo} {
+		if _, smx := minMax(s); smx > townR*tdShapeMaxReach(s) {
+			t.Fatalf("shape %d max reach %.1f exceeds declared bound %.1f — tdShapeMaxReach is unsafe", s, smx, townR*tdShapeMaxReach(s))
+		}
+	}
+}
+
 // groundVariance renders the ground of a fresh canvas with drawGround and returns the mean
 // per-channel variance of the ground pixels (a robust proxy for texture "busyness": a flat
 // wash → ~0, a noisy speckle → high). Used by the quieter-ground test.
@@ -2303,10 +2347,13 @@ func TestEachTownFormWellFormed(t *testing.T) {
 				t.Fatalf("form %s (seed %q): %.0f%% of roofs sit ON a street cell — buildings must be inset inside their wards", formName(fc.form), name, frac*100)
 			}
 		}
-		// COMPACT: no fabric roof past the bounded town radius (anti-pinwheel holds for every form).
+		// COMPACT: no fabric roof past the town's bounded SILHOUETTE. The bound is the footprint
+		// SHAPE's max reach (shaped footprints — sprawl/rect/halo — legitimately extend past townR but
+		// must still be bounded/in-frame), not a fixed disc. Anti-pinwheel holds for every form.
+		bound := plan.townR * tdShapeMaxReach(plan.shape) * 1.06
 		for _, lt := range fab {
-			if d := math.Hypot(lt.x-plan.cx, lt.y-plan.cy); d > plan.townR*1.05 {
-				t.Fatalf("form %s (seed %q): a roof sits %.1f from core, past townR %.1f — not compact/bounded", formName(fc.form), name, d, plan.townR)
+			if d := math.Hypot(lt.x-plan.cx, lt.y-plan.cy); d > bound {
+				t.Fatalf("form %s (seed %q): a roof sits %.1f from core, past the footprint bound %.1f (townR %.1f, shape %d) — not compact/bounded", formName(fc.form), name, d, bound, plan.townR, plan.shape)
 			}
 		}
 	}

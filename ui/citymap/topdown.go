@@ -2343,8 +2343,11 @@ func tdPlazaRadius(form tdTownForm, cfg tdConfig) float64 {
 type tdFootprintShape int
 
 const (
-	shapeDisc tdFootprintShape = iota // a clean circle of radius townR (every non-village age today)
-	shapeBlob                         // the seeded organic wobble (tdOrganicRadiusAt) — village edges
+	shapeDisc      tdFootprintShape = iota // a clean circle of radius townR (every non-village age today)
+	shapeBlob                              // the seeded organic wobble (tdOrganicRadiusAt) — village edges
+	shapeSprawl                            // wide elongated oval + gentle lobes — victorian garden-suburb sprawl
+	shapeRoundRect                         // slightly-elongated rounded rectangle (squircle) — a planned grid city
+	shapeCoreHalo                          // broad bumpy blob — a metropolis with irregular sprawling suburbs
 )
 
 // tdAgeFootprints maps an age key to its footprint SILHOUETTE (map-overhaul-citymap Phase 2b). Only
@@ -2358,6 +2361,9 @@ const (
 var tdAgeFootprints = map[string]tdFootprintShape{
 	"primitive_age": shapeBlob,
 	"stone_age":     shapeBlob,
+	"victorian_age": shapeSprawl,
+	"electric_age":  shapeRoundRect,
+	"atomic_age":    shapeCoreHalo,
 }
 
 // tdAgeFootprint returns the footprint shape for an age key, defaulting to shapeDisc for any age not
@@ -2374,10 +2380,62 @@ func tdAgeFootprint(ageKey string) tdFootprintShape {
 // shapeBlob defers to the existing organic wobble. Shared by the raster clip and the wall ring so the
 // footprint is consistent everywhere. Pure + bounded (≤ townR).
 func tdShapeRadiusAt(shape tdFootprintShape, angle, townR float64, seed uint32) float64 {
-	if shape == shapeBlob {
+	switch shape {
+	case shapeBlob:
 		return tdOrganicRadiusAt(angle, townR, seed)
+	case shapeSprawl:
+		// A WIDE elongated oval (garden-suburb sprawl) with gentle irregular lobes. The long axis is
+		// seeded so towns sprawl in different directions; a:b ≈ 1.8:1, peak reach ~1.5·townR wide.
+		axis := float64(hash2(0x5B1A, 0x01, seed)) / float64(^uint32(0)) * math.Pi
+		phi := angle - axis
+		const a, b = 1.34, 0.74
+		e := (a * b) / math.Hypot(b*math.Cos(phi), a*math.Sin(phi))
+		ph2 := float64(hash2(0x5B1A, 0x02, seed)) / float64(^uint32(0)) * 2 * math.Pi
+		ph3 := float64(hash2(0x5B1A, 0x03, seed)) / float64(^uint32(0)) * 2 * math.Pi
+		lobe := 1 + 0.10*math.Sin(2*angle+ph2) + 0.06*math.Sin(3*angle+ph3)
+		return townR * e * lobe
+	case shapeRoundRect:
+		// A slightly-elongated SUPERELLIPSE (squircle) → a rounded-rectangle outline for a planned city.
+		axis := float64(hash2(0x5B1B, 0x01, seed)) / float64(^uint32(0)) * math.Pi
+		phi := angle - axis
+		const n = 4.0
+		cx := math.Cos(phi) / 1.15
+		cy := math.Sin(phi) / 0.9
+		denom := math.Pow(math.Pow(math.Abs(cx), n)+math.Pow(math.Abs(cy), n), 1.0/n)
+		if denom < 1e-6 {
+			denom = 1e-6
+		}
+		return townR / denom
+	case shapeCoreHalo:
+		// A broad BUMPY blob — a metropolis whose suburbs bulge irregularly past a disc.
+		ph2 := float64(hash2(0x5B1C, 0x02, seed)) / float64(^uint32(0)) * 2 * math.Pi
+		ph3 := float64(hash2(0x5B1C, 0x03, seed)) / float64(^uint32(0)) * 2 * math.Pi
+		ph5 := float64(hash2(0x5B1C, 0x05, seed)) / float64(^uint32(0)) * 2 * math.Pi
+		lobe := 1 + 0.16*math.Sin(2*angle+ph2) + 0.11*math.Sin(3*angle+ph3) + 0.07*math.Sin(5*angle+ph5)
+		if r := townR * 1.08 * lobe; r > 0.7*townR {
+			return r
+		}
+		return 0.7 * townR
+	default: // shapeDisc
+		return townR
 	}
-	return townR
+}
+
+// tdShapeMaxReach is a safe upper bound on tdShapeRadiusAt over all angles/seeds, as a multiple of
+// townR. Used to bound the footprint — walls, frame fit, and the compactness test — for shapes that
+// legitimately extend past the townR disc (sprawl/rect/halo). Disc + blob never exceed townR (the
+// blob only bites inward), so they return 1.
+func tdShapeMaxReach(shape tdFootprintShape) float64 {
+	switch shape {
+	case shapeSprawl:
+		return 1.55 // a·(1+lobe) = 1.34·1.16
+	case shapeRoundRect:
+		return 1.25 // squircle corners under the seeded elongation
+	case shapeCoreHalo:
+		return 1.45 // 1.08·(1+0.16+0.11+0.07)
+	default: // shapeDisc, shapeBlob (inward-only)
+		return 1.0
+	}
 }
 
 // tdOrganicRadiusAt returns the ORGANIC town's in-disc radius at a given angle (city units): the
