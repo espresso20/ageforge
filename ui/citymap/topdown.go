@@ -2188,66 +2188,64 @@ const (
 	formRibbon
 )
 
-// tdFormWeights is a small per-band weighting over the four forms (organic, radial, grid, ribbon),
+// tdFormWeights is a small per-AGE weighting over the four forms (organic, radial, grid, ribbon),
 // consumed as a discrete distribution by tdPickTownForm. A zero weight forbids a form for that
-// band (e.g. primitive villages are NEVER radial or grid — they ramble, they are not planned).
-// These are the V3-A defaults and are deliberately TUNABLE later (V3-B/C dials each band); the
-// only hard contract V3-A tests lock is that PRIMITIVE is organic-dominant and never a wheel.
+// age (e.g. primitive villages are NEVER radial or grid — they ramble, they are not planned).
+// These are deliberately TUNABLE; the only hard contract the tests lock is that PRIMITIVE is
+// organic-dominant and never a wheel/grid (its radial+grid weights stay 0).
 type tdFormWeights [4]float64
 
-// tdBandFormWeights returns the form distribution for an era band (map-overhaul-citymap):
-//
-//	organic  (primitive, stone)      — ORGANIC-dominant, a little RIBBON, NEVER radial/grid.
-//	hub-spoke(bronze, iron, class.)  — ancient: organic + radial (monument-planned cores appear).
-//	castle   (medieval, renaissance) — radial + organic + some grid (market-square towns).
-//	zoned    (colonial→victorian)    — GRID-heavy, some organic/ribbon (surveyed colonial towns).
-//	blocks   (electric→modern)       — GRID-dominant (the planned modern city).
-//	campus   (information→fusion)    — grid / organic mix (megablocks + arcology sprawl).
-//	orbital  (space→transcendent)    — organic / grid (radial arcs read as neither wheel nor grid).
-//
-// Weights are relative (they need not sum to 1). Order: [organic, radial, grid, ribbon].
-func tdBandFormWeights(e era) tdFormWeights {
-	switch e {
-	case eraOrganic:
-		// Villages ramble; they are not planned. Organic dominates, ribbon is the rare
-		// grew-along-a-trail village, and radial/grid are FORBIDDEN (0) so a primitive town can
-		// never roll a wheel or a survey grid.
-		return tdFormWeights{0.80, 0, 0, 0.20}
-	case eraHubSpoke:
-		// Ancient: the first monument/forum cores appear, so radial enters — but the countryside
-		// is still mostly organic. A little ribbon; no formal grid yet.
-		return tdFormWeights{0.50, 0.35, 0, 0.15}
-	case eraCastle:
-		// Medieval/renaissance: radial market-square towns + organic old quarters, the first
-		// planned grids (bastides), a little ribbon.
-		return tdFormWeights{0.32, 0.38, 0.18, 0.12}
-	case eraZonedGrid:
-		// Colonial→victorian: the surveyed grid takes over; organic survives in old cores, ribbon
-		// along the rail/canal, radial is now the exception.
-		return tdFormWeights{0.18, 0.10, 0.55, 0.17}
-	case eraCityBlocks:
-		// Electric→modern: the planned grid dominates the metropolis; a little organic/ribbon.
-		return tdFormWeights{0.14, 0.06, 0.64, 0.16}
-	case eraCampus:
-		// Information→fusion: megablock grid + arcology organic sprawl, ribbon corridors.
-		return tdFormWeights{0.30, 0.06, 0.50, 0.14}
-	case eraOrbital:
-		// Space→transcendent: organic habs + modular grid; the ring/arc look reads as neither a
-		// wagon wheel nor a survey grid, so radial stays low.
-		return tdFormWeights{0.44, 0.08, 0.40, 0.08}
-	default:
-		return tdFormWeights{0.80, 0, 0, 0.20}
-	}
+// tdAgeForms is the PER-AGE form distribution table (map-overhaul-citymap Phase 2a). Each of the 22
+// ages gets its OWN characteristic town form (the dominant weight), replacing the coarse per-ERA
+// band table so a city's whole gestalt reads distinctly age to age while still fanning out a little
+// across citySeeds. Order per entry: [organic, radial, grid, ribbon]. Weights are relative (they
+// need not sum to 1). This slice uses ONLY the existing four forms; bespoke new geometries land in
+// later slices. LOCKED INVARIANT: primitive_age keeps radial==0 && grid==0 — villages never plan a
+// wheel or a survey grid.
+var tdAgeForms = map[string]tdFormWeights{
+	"primitive_age":    {0.85, 0, 0, 0.15},    // organic (invariant: no wheel/grid)
+	"stone_age":        {0.85, 0, 0, 0.15},    // organic
+	"bronze_age":       {0.30, 0.60, 0, 0.10}, // radial — first monument/forum cores
+	"iron_age":         {0.30, 0.60, 0, 0.10}, // radial
+	"classical_age":    {0.10, 0.25, 0.60, 0.05},
+	"medieval_age":     {0.45, 0.40, 0.05, 0.10},
+	"renaissance_age":  {0.15, 0.65, 0.10, 0.10},
+	"colonial_age":     {0.15, 0.05, 0.70, 0.10},
+	"industrial_age":   {0.10, 0.0, 0.75, 0.15},
+	"victorian_age":    {0.45, 0.05, 0.20, 0.30},
+	"electric_age":     {0.10, 0.05, 0.75, 0.10},
+	"atomic_age":       {0.20, 0.05, 0.65, 0.10},
+	"modern_age":       {0.05, 0.05, 0.85, 0.05}, // grid — the planned metropolis
+	"information_age":  {0.30, 0.05, 0.60, 0.05},
+	"digital_age":      {0.05, 0.05, 0.85, 0.05},
+	"cyberpunk_age":    {0.05, 0.05, 0.85, 0.05},
+	"fusion_age":       {0.20, 0.35, 0.40, 0.05},
+	"space_age":        {0.15, 0.10, 0.70, 0.05},
+	"interstellar_age": {0.55, 0.10, 0.30, 0.05},
+	"galactic_age":     {0.15, 0.70, 0.10, 0.05}, // radial — the galactic wheel
+	"quantum_age":      {0.10, 0.10, 0.75, 0.05},
+	"transcendent_age": {0.20, 0.65, 0.05, 0.10},
 }
 
-// tdPickTownForm chooses a town's FORM deterministically from (citySeed, era). It is a pure
-// function — the SAME (seed, era) always yields the SAME form — and it is ERA-WEIGHTED via
-// tdBandFormWeights, so different citySeeds fan out across the era-appropriate forms (no two towns
-// need look alike) while PRIMITIVE reliably lands organic (never a wheel). A degenerate all-zero
-// or negative weight vector falls back to organic. The seed is hashed with a distinct salt so the
-// form roll is independent of the seed's other uses (anchor phase, jitter, scatter phase).
-func tdPickTownForm(seed uint32, e era) tdTownForm {
-	w := tdBandFormWeights(e)
+// tdAgeFormWeights returns the form distribution for an age key (map-overhaul-citymap Phase 2a).
+// Unknown/empty keys fall back to an organic-dominant blend so a mis-keyed age still renders a
+// sensible rambling town rather than a degenerate one.
+func tdAgeFormWeights(ageKey string) tdFormWeights {
+	if w, ok := tdAgeForms[ageKey]; ok {
+		return w
+	}
+	return tdFormWeights{0.80, 0, 0, 0.20}
+}
+
+// tdPickTownForm chooses a town's FORM deterministically from (citySeed, ageKey). It is a pure
+// function — the SAME (seed, ageKey) always yields the SAME form — and it is AGE-WEIGHTED via
+// tdAgeFormWeights, so different citySeeds fan out across the age-appropriate forms (no two towns
+// need look alike) while each age reads characteristically (and PRIMITIVE reliably lands organic,
+// never a wheel). A degenerate all-zero or negative weight vector falls back to organic. The seed
+// is hashed with a distinct salt so the form roll is independent of the seed's other uses (anchor
+// phase, jitter, scatter phase).
+func tdPickTownForm(seed uint32, ageKey string) tdTownForm {
+	w := tdAgeFormWeights(ageKey)
 	total := 0.0
 	for _, x := range w {
 		if x > 0 {
@@ -2519,9 +2517,9 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 	// (c) blocks — build the Voronoi block field: town disc → seeds (scattered by the town FORM) →
 	// Lloyd → raster partition → street cells + block interiors. Central region(s) are reserved as
 	// the plaza (wonders + the wonderless center anchor). The whole field is a pure function of
-	// (seed, roof count, form). The FORM is picked once, deterministically + era-weighted, so towns
-	// vary per city+era and primitive villages ramble organically instead of all reading as wheels.
-	plan.form = tdPickTownForm(seed, eraForAge(state.Age))
+	// (seed, roof count, form). The FORM is picked once, deterministically + AGE-weighted, so towns
+	// vary per city+age and primitive villages ramble organically instead of all reading as wheels.
+	plan.form = tdPickTownForm(seed, state.Age)
 	totalRoofs := tdTotalFabricRoofs(blds)
 	plan.townR = tdTownRadius(totalRoofs, cfg)
 	field := tdBuildBlockField(plan.townR, plan.anchors, totalRoofs, plan.form, cfg, seed)

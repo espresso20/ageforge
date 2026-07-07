@@ -1644,18 +1644,18 @@ func TestBiggerPlazaClearRadius(t *testing.T) {
 	}
 	// For each form, no fabric lot may sit inside that form's OWN wonder-plaza radius. Assert on a
 	// RADIAL town (roomy ring honoured) and an ORGANIC town (small ring honoured).
-	check := func(ageKey string, era era, form tdTownForm, plazaR float64) {
-		// Find a display name whose seed rolls the target form for this era.
+	check := func(ageKey string, form tdTownForm, plazaR float64) {
+		// Find a display name whose seed rolls the target form for this age.
 		name := ""
 		for i := 0; i < 8000; i++ {
 			cand := "Plaza" + formName(form) + strconv.Itoa(i)
-			if tdPickTownForm(citySeed(cand), era) == form {
+			if tdPickTownForm(citySeed(cand), ageKey) == form {
 				name = cand
 				break
 			}
 		}
 		if name == "" {
-			t.Fatalf("could not find a seed that rolls form %s at era %d", formName(form), era)
+			t.Fatalf("could not find a seed that rolls form %s at age %s", formName(form), ageKey)
 		}
 		plan := tdPlanFor(namedState(ageKey, name, wonderBlds))
 		if plan.form != form {
@@ -1682,8 +1682,8 @@ func TestBiggerPlazaClearRadius(t *testing.T) {
 			}
 		}
 	}
-	check("bronze_age", eraHubSpoke, formRadial, roomyR)      // roomy ring cleared
-	check("primitive_age", eraOrganic, formOrganic, organicR) // small ring cleared
+	check("bronze_age", formRadial, roomyR)       // roomy ring cleared
+	check("primitive_age", formOrganic, organicR) // small ring cleared
 }
 
 // TestPondsInTown locks playtest polish FIX 4: a FEW BUILT decorative ponds are mixed
@@ -1852,50 +1852,98 @@ func enclosedWardCount(f blockField) int {
 }
 
 // TestTownFormDeterministicAndVaried locks the two core properties of tdPickTownForm: it is a pure
-// function of (citySeed, era) — the SAME inputs always yield the SAME form — and across a sample of
-// citySeeds the chosen forms VARY (a band is not collapsed to a single form). Determinism is what
-// makes a civ's town shape stable across ages/frames; variety is the whole point (no two towns
-// alike).
+// function of (citySeed, ageKey) — the SAME inputs always yield the SAME form — and across a sample
+// of citySeeds the chosen forms VARY (an age is not collapsed to a single form). Determinism is what
+// makes a civ's town shape stable across frames; variety is the whole point (no two towns alike).
 func TestTownFormDeterministicAndVaried(t *testing.T) {
-	// (1) DETERMINISM: repeated picks for the same (seed, era) are identical, for several eras.
-	eras := []era{eraOrganic, eraHubSpoke, eraCastle, eraZonedGrid, eraCityBlocks, eraCampus, eraOrbital}
-	for _, e := range eras {
+	// (1) DETERMINISM: repeated picks for the same (seed, age) are identical, for several ages.
+	ages := []string{"primitive_age", "bronze_age", "medieval_age", "colonial_age", "modern_age", "fusion_age", "galactic_age"}
+	for _, ageKey := range ages {
 		for i := 0; i < 200; i++ {
 			s := citySeed("Town" + strconv.Itoa(i))
-			a := tdPickTownForm(s, e)
-			b := tdPickTownForm(s, e)
+			a := tdPickTownForm(s, ageKey)
+			b := tdPickTownForm(s, ageKey)
 			if a != b {
-				t.Fatalf("tdPickTownForm not deterministic for seed %#x era %d: %s vs %s", s, e, formName(a), formName(b))
+				t.Fatalf("tdPickTownForm not deterministic for seed %#x age %s: %s vs %s", s, ageKey, formName(a), formName(b))
 			}
 		}
 	}
 
-	// (2) VARIETY: over a sample of citySeeds, a band that allows >1 form actually PRODUCES >1 form
-	// (different seeds → different towns). Test on eras whose weights permit several forms.
-	for _, e := range []era{eraHubSpoke, eraCastle, eraZonedGrid, eraCityBlocks} {
+	// (2) VARIETY: over a sample of citySeeds, an age that allows >1 form actually PRODUCES >1 form
+	// (different seeds → different towns). Test on ages whose weights permit several forms.
+	for _, ageKey := range []string{"bronze_age", "medieval_age", "victorian_age", "fusion_age"} {
 		seen := map[tdTownForm]int{}
 		for i := 0; i < 400; i++ {
-			seen[tdPickTownForm(citySeed("Varyville"+strconv.Itoa(i)), e)]++
+			seen[tdPickTownForm(citySeed("Varyville"+strconv.Itoa(i)), ageKey)]++
 		}
 		if len(seen) < 2 {
-			t.Fatalf("era %d produced only %d distinct form(s) over 400 seeds (%v) — towns are not varied", e, len(seen), seen)
+			t.Fatalf("age %s produced only %d distinct form(s) over 400 seeds (%v) — towns are not varied", ageKey, len(seen), seen)
 		}
 	}
 
-	// (3) The SAME civ name over different eras generally re-skins its form (the roll is
-	// era-weighted, not a single global choice) — assert at least the distribution differs by
-	// confirming a name that is organic in primitive can be a different form in a grid-heavy era
-	// somewhere in the sample (proves era actually feeds the pick).
-	eraSpanChanged := false
+	// (3) The SAME civ name over different ages generally re-skins its form (the roll is
+	// age-weighted, not a single global choice) — assert the distribution differs by confirming a
+	// name that is organic in primitive can be a different form in a grid-heavy age somewhere in the
+	// sample (proves the age key actually feeds the pick).
+	ageSpanChanged := false
 	for i := 0; i < 200; i++ {
 		s := citySeed("Spanner" + strconv.Itoa(i))
-		if tdPickTownForm(s, eraOrganic) != tdPickTownForm(s, eraCityBlocks) {
-			eraSpanChanged = true
+		if tdPickTownForm(s, "primitive_age") != tdPickTownForm(s, "modern_age") {
+			ageSpanChanged = true
 			break
 		}
 	}
-	if !eraSpanChanged {
-		t.Fatal("no civ changed form between the organic and city-blocks bands — era is not influencing the pick")
+	if !ageSpanChanged {
+		t.Fatal("no civ changed form between the primitive and modern ages — the age key is not influencing the pick")
+	}
+}
+
+// TestAgeFormDominance locks the Phase-2a per-age scaffold: each age's DOMINANT weight is the form a
+// clear majority of seeds actually roll (so the age reads characteristically), the pick stays
+// deterministic per (seed, age), and an unknown key falls back to organic-dominant. It samples a
+// spread of ages across the timeline — organic (primitive), radial (bronze/galactic), and grid
+// (modern) — proving the table's dominant column drives the render.
+func TestAgeFormDominance(t *testing.T) {
+	// Each age's characteristic (dominant) form. A comfortable majority of seeds must land there;
+	// the residual weights still let a minority fan out to other forms.
+	cases := []struct {
+		ageKey string
+		want   tdTownForm
+	}{
+		{"primitive_age", formOrganic},
+		{"bronze_age", formRadial},
+		{"modern_age", formGrid},
+		{"galactic_age", formRadial},
+	}
+	const n = 2000
+	for _, c := range cases {
+		hits := 0
+		for i := 0; i < n; i++ {
+			if tdPickTownForm(citySeed("Dom"+c.ageKey+strconv.Itoa(i)), c.ageKey) == c.want {
+				hits++
+			}
+		}
+		// Dominant weights here are ≥0.60 (modern/galactic ≥0.70), so >0.5 of seeds landing on the
+		// dominant form is a safe, non-brittle floor.
+		if frac := float64(hits) / float64(n); frac < 0.5 {
+			t.Fatalf("age %s rolled its dominant form %s only %.0f%% of the time — the age does not read characteristically", c.ageKey, formName(c.want), frac*100)
+		}
+	}
+
+	// DETERMINISM (belt-and-braces at the per-age level): same seed+age → same form.
+	for _, c := range cases {
+		for i := 0; i < 100; i++ {
+			s := citySeed("Det" + strconv.Itoa(i))
+			if a, b := tdPickTownForm(s, c.ageKey), tdPickTownForm(s, c.ageKey); a != b {
+				t.Fatalf("tdPickTownForm not deterministic for seed %#x age %s: %s vs %s", s, c.ageKey, formName(a), formName(b))
+			}
+		}
+	}
+
+	// FALLBACK: an unknown age key uses the organic-dominant default (radial+grid forbidden), so a
+	// mis-keyed age still renders a sensible rambling town.
+	if w := tdAgeFormWeights("nonexistent_age"); w[formRadial] != 0 || w[formGrid] != 0 || w[formOrganic] <= w[formRibbon] {
+		t.Fatalf("unknown-key fallback = %v — want organic-dominant with radial/grid forbidden", w)
 	}
 }
 
@@ -1923,10 +1971,16 @@ func TestPrimitiveIsOrganicNotAWheel(t *testing.T) {
 	cfg := defaultTdConfig
 	rs := cfg.roofSize
 
-	// (A) Distribution over many seeds at the primitive (organic) band.
+	// (A) The LOCKED weight-table invariant: primitive's radial + grid weights are exactly 0 so the
+	// picker can never even reach a wheel/grid, regardless of seed.
+	if pw := tdAgeFormWeights("primitive_age"); pw[formRadial] != 0 || pw[formGrid] != 0 {
+		t.Fatalf("tdAgeFormWeights(primitive_age) = %v — radial[%d] and grid[%d] MUST be 0 (villages never plan a wheel/grid)", pw, formRadial, formGrid)
+	}
+
+	// Distribution over many seeds at the primitive age.
 	var cnt [4]int
 	for i := 0; i < 2000; i++ {
-		f := tdPickTownForm(citySeed("Hamlet"+strconv.Itoa(i)), eraOrganic)
+		f := tdPickTownForm(citySeed("Hamlet"+strconv.Itoa(i)), "primitive_age")
 		cnt[f]++
 	}
 	if cnt[formRadial] != 0 || cnt[formGrid] != 0 {
@@ -1939,7 +1993,7 @@ func TestPrimitiveIsOrganicNotAWheel(t *testing.T) {
 		t.Fatal("primitive never rolled ribbon — the occasional grew-along-a-trail village should still appear")
 	}
 	// The fixed anonymous (default) village seed must be organic — the CURRENT village is not a wheel.
-	if got := tdPickTownForm(citySeed(""), eraOrganic); got != formOrganic {
+	if got := tdPickTownForm(citySeed(""), "primitive_age"); got != formOrganic {
 		t.Fatalf("the default (anonymous) primitive village rolled %s, want organic — the current village must ramble, not read as a wheel", formName(got))
 	}
 
@@ -1996,7 +2050,7 @@ func TestPrimitiveIsOrganicNotAWheel(t *testing.T) {
 	wheelChecked := 0
 	for i := 0; i < 20000 && wheelChecked < 4; i++ {
 		cand := "Wheel" + strconv.Itoa(i)
-		if tdPickTownForm(citySeed(cand), eraHubSpoke) != formRadial {
+		if tdPickTownForm(citySeed(cand), "bronze_age") != formRadial {
 			continue
 		}
 		plan := tdPlanFor(namedState("bronze_age", cand, wheelBlds))
@@ -2118,28 +2172,27 @@ func TestEachTownFormWellFormed(t *testing.T) {
 	type formCase struct {
 		form   tdTownForm
 		ageKey string
-		era    era
 	}
-	// One representative age per era band we use. tdPickTownForm(seed, era) selects the form.
+	// One age whose weights make each target form reachable. tdPickTownForm(seed, ageKey) selects it.
 	cases := []formCase{
-		{formOrganic, "primitive_age", eraOrganic},
-		{formRibbon, "primitive_age", eraOrganic},
-		{formRadial, "bronze_age", eraHubSpoke},
-		{formGrid, "electric_age", eraCityBlocks},
+		{formOrganic, "primitive_age"},
+		{formRibbon, "primitive_age"},
+		{formRadial, "bronze_age"},
+		{formGrid, "electric_age"},
 	}
 	blds := map[string]int{"hut": 26, "gathering_camp": 18, "stone_camp": 10, "forge": 10, "barracks": 6}
 	for _, fc := range cases {
-		// Find a display name whose seed rolls the desired form for this era.
+		// Find a display name whose seed rolls the desired form for this age.
 		name := ""
 		for i := 0; i < 5000; i++ {
 			cand := "Form" + strconv.Itoa(i)
-			if tdPickTownForm(citySeed(cand), fc.era) == fc.form {
+			if tdPickTownForm(citySeed(cand), fc.ageKey) == fc.form {
 				name = cand
 				break
 			}
 		}
 		if name == "" {
-			t.Fatalf("could not find a seed that rolls form %s at era %d — form unreachable", formName(fc.form), fc.era)
+			t.Fatalf("could not find a seed that rolls form %s at age %s — form unreachable", formName(fc.form), fc.ageKey)
 		}
 		plan := tdPlanFor(namedState(fc.ageKey, name, blds))
 		if plan.form != fc.form {
@@ -4340,6 +4393,44 @@ func TestDumpCosmicEpochPNGs(t *testing.T) {
 		}
 		f.Close()
 		t.Logf("wrote %s", path)
+	}
+}
+
+// TestDump2aFormPNGs renders four CONTRASTING ages — bronze (radial), colonial (grid), modern (grid),
+// galactic (radial) — with a FIXED display name + identical building set so a reviewer can eyeball
+// that Phase-2a per-age form keying now makes different ages pick different town FORMS. Opt-in:
+// skipped unless CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDump2aFormPNGs
+func TestDump2aFormPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump per-age form-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"bronze_age", "2a0_bronze.png"},
+		{"colonial_age", "2a0_colonial.png"},
+		{"modern_age", "2a0_modern.png"},
+		{"galactic_age", "2a0_galactic.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s (form=%s)", path, formName(tdPickTownForm(citySeed("Aldermoor"), d.ageKey)))
 	}
 }
 
