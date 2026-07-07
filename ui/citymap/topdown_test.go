@@ -3,7 +3,9 @@ package citymap
 import (
 	"image"
 	"image/color"
+	"image/png"
 	"math"
+	"os"
 	"sort"
 	"strconv"
 	"testing"
@@ -2179,5 +2181,2404 @@ func TestEachTownFormWellFormed(t *testing.T) {
 				t.Fatalf("form %s (seed %q): a roof sits %.1f from core, past townR %.1f — not compact/bounded", formName(fc.form), name, d, plan.townR)
 			}
 		}
+	}
+}
+
+// ---- V3-B: ancient + medieval styling ---------------------------------------
+//
+// V3-B fills in the ANCIENT (bronze/iron/classical — eraHubSpoke) and MEDIEVAL (medieval/
+// renaissance — eraCastle) bands using the existing frameworks (era styles, roof materials,
+// ground tints, square props, town-form weights, wall flag). These tests lock the era distinctness
+// + the big new WALLS+GATES piece, while the shared invariants above (streets-connected, no-overlap,
+// compact, determinism, quiet ground, etc.) continue to cover all bands.
+
+// wallLotsOf / gateLotsOf / towerLotsOf return the wall-ring lots of a plan by kind.
+func wallLotsOf(plan topPlan) []tdLot {
+	var out []tdLot
+	for _, lt := range plan.lots {
+		if lt.kind == tdWall {
+			out = append(out, lt)
+		}
+	}
+	return out
+}
+func gateLotsOf(plan topPlan) []tdLot {
+	var out []tdLot
+	for _, lt := range plan.lots {
+		if lt.kind == tdGate {
+			out = append(out, lt)
+		}
+	}
+	return out
+}
+func towerLotsOf(plan topPlan) []tdLot {
+	var out []tdLot
+	for _, lt := range plan.lots {
+		if lt.kind == tdWallTower || lt.kind == tdWallGatehouse {
+			out = append(out, lt)
+		}
+	}
+	return out
+}
+func bastionLotsOf(plan topPlan) []tdLot {
+	var out []tdLot
+	for _, lt := range plan.lots {
+		if lt.kind == tdWallBastion {
+			out = append(out, lt)
+		}
+	}
+	return out
+}
+
+// TestV3BErasDistinctFromPrimitive locks that ANCIENT and MEDIEVAL read visibly different from the
+// PRIMITIVE village: the roof MATERIAL tone differs (clay/slate vs thatch) and the GROUND tone
+// differs (packed-earth/cobble vs earthy dirt+grass), and the two eras differ from EACH OTHER. All
+// tones are theme-derived, so we resolve them from the same palette and require a meaningful color
+// distance — a regression that left an era on the default (thatch) palette would trip this.
+func TestV3BErasDistinctFromPrimitive(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+
+	prim := tdStyleForEra(eraOrganic)
+	ancient := tdStyleForEra(eraHubSpoke)
+	medieval := tdStyleForEra(eraCastle)
+
+	// Roof base material must differ from thatch for both, and from each other.
+	pr := prim.roofBase(pal)
+	ar := ancient.roofBase(pal)
+	mr := medieval.roofBase(pal)
+	if colorClose(ar, pr, 16) {
+		t.Fatalf("ancient roof %v ≈ primitive thatch %v — clay tile must read as a distinct material", ar, pr)
+	}
+	if colorClose(mr, pr, 16) {
+		t.Fatalf("medieval roof %v ≈ primitive thatch %v — slate must read as a distinct material", mr, pr)
+	}
+	if colorClose(ar, mr, 16) {
+		t.Fatalf("ancient clay %v ≈ medieval slate %v — the two eras' roofs must read distinct", ar, mr)
+	}
+
+	// Ground tone must differ from the primitive dirt for both, and from each other.
+	pg := prim.groundBase(pal)
+	ag := ancient.groundBase(pal)
+	mg := medieval.groundBase(pal)
+	if colorClose(ag, pg, 10) {
+		t.Fatalf("ancient ground %v ≈ primitive ground %v — packed earth/pale stone must differ", ag, pg)
+	}
+	if colorClose(mg, pg, 10) {
+		t.Fatalf("medieval ground %v ≈ primitive ground %v — cobble/stone grey must differ", mg, pg)
+	}
+	if colorClose(ag, mg, 10) {
+		t.Fatalf("ancient ground %v ≈ medieval ground %v — the two eras' ground must read distinct", ag, mg)
+	}
+
+	// End-to-end: the rendered images of the same civ at each era must differ (materials + ground +
+	// walls all in play). Distinct ages, same buildings + seed.
+	blds := map[string]int{"hut": 24, "gathering_camp": 16, "forge": 8}
+	imgP, _ := renderImage(namedState("primitive_age", "Aldermoor", blds), 120, 72)
+	imgA, _ := renderImage(namedState("bronze_age", "Aldermoor", blds), 120, 72)
+	imgM, _ := renderImage(namedState("medieval_age", "Aldermoor", blds), 120, 72)
+	if !imagesDiffer(imgP, imgA) {
+		t.Fatal("primitive and ancient render identically — the era re-skin is not applied")
+	}
+	if !imagesDiffer(imgP, imgM) {
+		t.Fatal("primitive and medieval render identically — the era re-skin is not applied")
+	}
+	if !imagesDiffer(imgA, imgM) {
+		t.Fatal("ancient and medieval render identically — the two eras are not distinct")
+	}
+}
+
+// TestV3BWallsPresentWithGates is the CENTREPIECE lock (locked #9): ancient + medieval TOWNS are
+// ringed with a WALL that has GATES, the buildings stay INSIDE the wall, and the ring FOLLOWS the
+// built-up outline just outside the outermost wards. Crucially it verifies STREET CONNECTIVITY is
+// preserved THROUGH the wall: the street-cell web is still ONE connected component (the wall never
+// touches the street cells), the wall is NOT a closed ring (it has gate GAPS), and a street REACHES
+// each gate (a street exits the town through the gate). Runs across both bands, several seeds/forms.
+func TestV3BWallsPresentWithGates(t *testing.T) {
+	_ = theme.SetActive("forge")
+	type bandCase struct {
+		name       string
+		ageKey     string
+		wantTowers bool // stone walls carry towers + a gatehouse; mudbrick does not
+	}
+	bands := []bandCase{
+		{"ancient", "bronze_age", false},
+		{"medieval", "medieval_age", true},
+	}
+	names := []string{"Aldermoor", "Bexley", "Corveil", "Duskwind", "Emberton"}
+	blds := map[string]int{"hut": 30, "gathering_camp": 20, "forge": 14, "barracks": 8, "colosseum": 1, "stonehenge": 1}
+
+	for _, bc := range bands {
+		for _, nm := range names {
+			plan := tdPlanFor(namedState(bc.ageKey, nm, blds))
+
+			walls := wallLotsOf(plan)
+			gates := gateLotsOf(plan)
+			if len(walls) < 12 {
+				t.Fatalf("%s seed %q: only %d wall segments — no real curtain wall", bc.name, nm, len(walls))
+			}
+			if len(gates) < 2 {
+				t.Fatalf("%s seed %q: only %d gates — a walled town must have gates the streets exit through", bc.name, nm, len(gates))
+			}
+			if bc.wantTowers {
+				if len(towerLotsOf(plan)) < 3 {
+					t.Fatalf("%s seed %q: stone wall has %d towers/gatehouse — a medieval wall must be studded with towers", bc.name, nm, len(towerLotsOf(plan)))
+				}
+			}
+
+			// (1) The wall RINGS the built area: every wall segment sits OUTSIDE the footprint
+			// radius (buildings inside), and inside the bounded town disc (never off-canvas).
+			footR := tdFootprintRadius(&plan)
+			for _, w := range walls {
+				d := math.Hypot(w.x-plan.cx, w.y-plan.cy)
+				if d < footR*0.98 {
+					t.Fatalf("%s seed %q: a wall segment sits at %.1f, inside the footprint %.1f — the wall must ring OUTSIDE the built area", bc.name, nm, d, footR)
+				}
+				if d > plan.townR*1.25 {
+					t.Fatalf("%s seed %q: a wall segment sits at %.1f, past the bounded disc %.1f — the wall is not bounded", bc.name, nm, d, plan.townR)
+				}
+			}
+
+			// (2) Buildings stay INSIDE the wall: every roof lot's distance from core is below the
+			// minimum wall radius (no roof pokes through the curtain). Use the min wall radius as the
+			// inner bound the fabric must respect.
+			minWallR := math.Inf(1)
+			for _, w := range walls {
+				if d := math.Hypot(w.x-plan.cx, w.y-plan.cy); d < minWallR {
+					minWallR = d
+				}
+			}
+			for _, lt := range allRoofLots(plan) {
+				if d := math.Hypot(lt.x-plan.cx, lt.y-plan.cy) + roofHalfExtent(lt); d > minWallR+0.5 {
+					// A roof may sit near the ragged wall's nearest bite, but not beyond the whole
+					// ring's max; assert against the MAX wall radius so a ragged inner bite doesn't
+					// false-trip while a genuine escapee (past the whole ring) does.
+					maxWallR := 0.0
+					for _, w := range walls {
+						if dd := math.Hypot(w.x-plan.cx, w.y-plan.cy); dd > maxWallR {
+							maxWallR = dd
+						}
+					}
+					if d > maxWallR+0.5 {
+						t.Fatalf("%s seed %q: a roof reaches %.1f from core, past the wall ring (max %.1f) — buildings must stay inside the wall", bc.name, nm, d, maxWallR)
+					}
+				}
+			}
+
+			// (3) STREET CONNECTIVITY through the wall is intact. The street-cell web is untouched by
+			// the wall, so it is still ONE connected component.
+			if comps := unionCount(plan.streetCells, plan.cellSize); comps != 1 {
+				t.Fatalf("%s seed %q: street web has %d components — the wall must not sever street connectivity", bc.name, nm, comps)
+			}
+
+			// (4) The wall is NOT a closed ring — it has GATE GAPS. Bucket the wall segments by angle
+			// into 24 sectors; a closed ring fills nearly all sectors, but the gate gaps must leave
+			// some EMPTY sectors (the openings). Require at least 2 empty sectors (≥2 gate gaps).
+			const sect = 24
+			var filled [sect]bool
+			for _, w := range walls {
+				a := math.Atan2(w.y-plan.cy, w.x-plan.cx)
+				b := int((a + math.Pi) / (2 * math.Pi) * sect)
+				if b < 0 {
+					b = 0
+				}
+				if b >= sect {
+					b = sect - 1
+				}
+				filled[b] = true
+			}
+			empty := 0
+			for _, f := range filled {
+				if !f {
+					empty++
+				}
+			}
+			if empty < 2 {
+				t.Fatalf("%s seed %q: wall fills %d/%d angular sectors with only %d gaps — the curtain has no gate openings (a closed ring)", bc.name, nm, sect-empty, sect, empty)
+			}
+
+			// (5) A STREET REACHES EACH GATE (the gate opens where a street exits). For every gate,
+			// require a street cell near the gate's angle out toward the rim — so a road actually
+			// passes through the opening (connectivity THROUGH the wall, not a decorative gap).
+			for _, g := range gates {
+				gAng := math.Atan2(g.y-plan.cy, g.x-plan.cx)
+				reached := false
+				for _, p := range plan.streetCells {
+					pAng := math.Atan2(p.y-plan.cy, p.x-plan.cx)
+					pR := math.Hypot(p.x-plan.cx, p.y-plan.cy)
+					// Near the gate's direction AND running out toward the wall (a road heading out).
+					if angDiff(gAng, pAng) < 0.35 && pR > footR*0.55 {
+						reached = true
+						break
+					}
+				}
+				if !reached {
+					t.Fatalf("%s seed %q: gate at angle %.2f has no street running out to it — the gate must sit on a street the town exits through", bc.name, nm, gAng)
+				}
+			}
+		}
+	}
+}
+
+// TestV3BEraSquarePropsDiffer locks that the central-square dressing SWAPS per era (task item 5):
+// the ancient set (altar / columns / braziers / well) and the medieval set (market stalls /
+// fountain / well / cross-or-gallows) are DISTINCT from the primitive set (well / firepit / stones
+// / stall) and from EACH OTHER. It checks the palette (tdSquarePropsFor) and that the era-specific
+// prop lots actually PLACE in a real plan.
+func TestV3BEraSquarePropsDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+
+	kindSet := func(kinds []tdLotKind) map[tdLotKind]bool {
+		m := map[tdLotKind]bool{}
+		for _, k := range kinds {
+			m[k] = true
+		}
+		return m
+	}
+	prim := tdSquarePropsFor(tdStyleForEra(eraOrganic))
+	ancient := tdSquarePropsFor(tdStyleForEra(eraHubSpoke))
+	medieval := tdSquarePropsFor(tdStyleForEra(eraCastle))
+
+	pW, aW, mW := kindSet(prim.wonder), kindSet(ancient.wonder), kindSet(medieval.wonder)
+	// Ancient must contain its signature props and NOT be the primitive set.
+	if !aW[tdPropAltar] || !aW[tdPropColumns] || !aW[tdPropBrazier] {
+		t.Fatalf("ancient square props %v missing altar/columns/braziers", ancient.wonder)
+	}
+	if !mW[tdPropStall] || !mW[tdPropFountain] || !mW[tdPropCross] {
+		t.Fatalf("medieval square props %v missing stalls/fountain/cross", medieval.wonder)
+	}
+	sameSet := func(a, b map[tdLotKind]bool) bool {
+		if len(a) != len(b) {
+			return false
+		}
+		for k := range a {
+			if !b[k] {
+				return false
+			}
+		}
+		return true
+	}
+	if sameSet(aW, pW) {
+		t.Fatal("ancient square props equal the primitive set — the dressing must swap per era")
+	}
+	if sameSet(mW, pW) {
+		t.Fatal("medieval square props equal the primitive set — the dressing must swap per era")
+	}
+	if sameSet(aW, mW) {
+		t.Fatal("ancient and medieval square props are identical — each era needs its own set")
+	}
+
+	// End-to-end: an ancient wonder town PLACES ancient props (and no primitive-only stones/firepit);
+	// a medieval one PLACES medieval props (fountain/cross). Deterministic ring placement holds.
+	blds := map[string]int{"hut": 26, "gathering_camp": 16, "forge": 10, "colosseum": 1, "stonehenge": 1}
+	countKinds := func(plan topPlan) map[tdLotKind]int {
+		m := map[tdLotKind]int{}
+		for _, lt := range plan.lots {
+			m[lt.kind]++
+		}
+		return m
+	}
+	ap := countKinds(tdPlanFor(namedState("bronze_age", "Aldermoor", blds)))
+	if ap[tdPropAltar]+ap[tdPropColumns]+ap[tdPropBrazier] == 0 {
+		t.Fatal("ancient wonder town placed no ancient square props (altar/columns/brazier)")
+	}
+	if ap[tdPropFirepit] != 0 || ap[tdPropStones] != 0 {
+		t.Fatalf("ancient wonder town placed primitive-only props (firepit=%d stones=%d)", ap[tdPropFirepit], ap[tdPropStones])
+	}
+	mp := countKinds(tdPlanFor(namedState("medieval_age", "Duskwind", blds)))
+	if mp[tdPropFountain]+mp[tdPropCross] == 0 {
+		t.Fatal("medieval wonder town placed no medieval square props (fountain/cross)")
+	}
+	if mp[tdPropFirepit] != 0 || mp[tdPropStones] != 0 {
+		t.Fatalf("medieval wonder town placed primitive-only props (firepit=%d stones=%d)", mp[tdPropFirepit], mp[tdPropStones])
+	}
+}
+
+// TestV3BEraWonderDiffers locks that the era WONDER silhouette swaps (task item 6): ancient reads
+// as a ZIGGURAT, medieval as a CATHEDRAL, both distinct from the primitive/default wonder. The
+// archetype stays roofWonder (so placement/labels are unchanged); the DRAW differs by era profile.
+// We assert (a) the era profiles are set, and (b) drawing the same wonder footprint under each era
+// paints a DIFFERENT pixel field (the shapes actually differ).
+func TestV3BEraWonderDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+
+	if tdStyleForEra(eraHubSpoke).houseProfile != profileMudbrick {
+		t.Fatal("ancient era must use the mudbrick profile (drives the ziggurat wonder + flat houses)")
+	}
+	if tdStyleForEra(eraCastle).houseProfile != profileTimber {
+		t.Fatal("medieval era must use the timber profile (drives the cathedral wonder + steep houses)")
+	}
+
+	// Draw the same wonder lot under each era into its own image; the pixel fields must differ.
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	prim := drawWonderImg(tdStyleForEra(eraOrganic))
+	ancient := drawWonderImg(tdStyleForEra(eraHubSpoke))
+	medieval := drawWonderImg(tdStyleForEra(eraCastle))
+	if !imagesDiffer(prim, ancient) {
+		t.Fatal("ancient wonder draws identically to the primitive wonder — the ziggurat silhouette is not applied")
+	}
+	if !imagesDiffer(prim, medieval) {
+		t.Fatal("medieval wonder draws identically to the primitive wonder — the cathedral silhouette is not applied")
+	}
+	if !imagesDiffer(ancient, medieval) {
+		t.Fatal("ancient ziggurat and medieval cathedral draw identically — the two wonders must differ")
+	}
+}
+
+// TestV3BWallsBoundedAndOpenErasHaveNone locks two guarantees: (1) walled-era wall lots map
+// IN-BOUNDS on real + tiny canvases (bounded, panic-safe); and (2) the OPEN eras (industrial+ /
+// modern / cyber / space) and the primitive village have NO walls (locked #9: industrial+ stays
+// open sprawl; primitive never walled).
+func TestV3BWallsBoundedAndOpenErasHaveNone(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+
+	// (1) Walled eras: every wall/gate/tower lot maps in-bounds through the fill-frame transform on a
+	// normal canvas AND a tiny one (bounded + panic-safe).
+	for _, ageKey := range []string{"bronze_age", "medieval_age"} {
+		for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+			plan := tdPlanFor(namedState(ageKey, "Aldermoor", blds))
+			xf := computeTransform(&plan, sz.w, sz.h)
+			for _, lt := range plan.lots {
+				switch lt.kind {
+				case tdWall, tdGate, tdWallTower, tdWallGatehouse:
+					px, py := xf.px(lt.x, lt.y)
+					if px < -2 || px > sz.w+2 || py < -2 || py > sz.h+2 {
+						t.Fatalf("%s %dx%d: wall lot maps to (%d,%d) far off-canvas — the ring is not bounded to the frame", ageKey, sz.w, sz.h, px, py)
+					}
+				}
+			}
+		}
+	}
+
+	// (2) The primitive village + the open eras have NO wall lots.
+	openStyles := []struct {
+		name   string
+		ageKey string
+	}{
+		{"primitive", "primitive_age"},
+		{"industrial", "industrial_age"},
+		{"modern", "modern_age"},
+		{"digital", "digital_age"},
+		{"galactic", "galactic_age"},
+	}
+	for _, os := range openStyles {
+		plan := tdPlanFor(namedState(os.ageKey, "Aldermoor", blds))
+		if n := len(wallLotsOf(plan)) + len(gateLotsOf(plan)) + len(towerLotsOf(plan)); n != 0 {
+			t.Fatalf("%s (%s) has %d wall lots — this era must be OPEN (no walls)", os.name, os.ageKey, n)
+		}
+	}
+}
+
+// TestStoneAgeStyleAndWonderMotifRefactor locks Phase 1b-i: the STONE age gets its own style
+// (megalith wonder, thatch houses still) and the wonder-motif field refactor preserved the
+// ancient/medieval wonder mapping (they read off wonderMotif now, not houseProfile).
+func TestStoneAgeStyleAndWonderMotifRefactor(t *testing.T) {
+	if got := styleForAge("stone_age").wonderMotif; got != wonderMegalith {
+		t.Fatalf("stone_age wonderMotif = %v, want wonderMegalith", got)
+	}
+	if got := styleForAge("stone_age").houseProfile; got != profileThatch {
+		t.Fatalf("stone_age houseProfile = %v, want profileThatch (stone dwellings stay thatch)", got)
+	}
+	// Behaviour-preserving refactor: ancient/medieval wonders now key off wonderMotif and must map
+	// to the same sprites they did off houseProfile.
+	if got := styleForAge("bronze_age").wonderMotif; got != wonderZiggurat {
+		t.Fatalf("bronze_age wonderMotif = %v, want wonderZiggurat", got)
+	}
+	if got := styleForAge("medieval_age").wonderMotif; got != wonderCathedral {
+		t.Fatalf("medieval_age wonderMotif = %v, want wonderCathedral", got)
+	}
+}
+
+// TestStoneMegalithWonderDiffers locks that the stone-age MEGALITH wonder draws differently from
+// the primitive generic hall AND from the bronze ziggurat (the megalith sprite is actually applied).
+func TestStoneMegalithWonderDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	prim := drawWonderImg(styleForAge("primitive_age"))
+	stone := drawWonderImg(styleForAge("stone_age"))
+	bronze := drawWonderImg(styleForAge("bronze_age"))
+	if !imagesDiffer(prim, stone) {
+		t.Fatal("stone megalith wonder draws identically to the primitive hall — the megalith silhouette is not applied")
+	}
+	if !imagesDiffer(stone, bronze) {
+		t.Fatal("stone megalith wonder draws identically to the bronze ziggurat — the two wonders must differ")
+	}
+}
+
+// TestStoneSquarePropsIncludeMegalith locks that stone's town-square prop palette carries the
+// megalith prop and primitive's does NOT (the stone square dresses distinct from primitive).
+func TestStoneSquarePropsIncludeMegalith(t *testing.T) {
+	kindSet := func(kinds []tdLotKind) map[tdLotKind]bool {
+		m := map[tdLotKind]bool{}
+		for _, k := range kinds {
+			m[k] = true
+		}
+		return m
+	}
+	stone := tdSquarePropsFor(styleForAge("stone_age"))
+	prim := tdSquarePropsFor(styleForAge("primitive_age"))
+	sW := kindSet(stone.wonder)
+	pW := kindSet(prim.wonder)
+	if !sW[tdPropMegalith] {
+		t.Fatalf("stone square props %v missing tdPropMegalith", stone.wonder)
+	}
+	if pW[tdPropMegalith] {
+		t.Fatalf("primitive square props %v must NOT include tdPropMegalith", prim.wonder)
+	}
+	sC := kindSet(stone.center)
+	if !sC[tdPropMegalith] {
+		t.Fatalf("stone center props %v missing tdPropMegalith", stone.center)
+	}
+}
+
+// TestDrawRoofMegalithPanicSafe locks that the megalith sprite is panic-safe + in-bounds on a tiny
+// footprint and a normal one (every write is clamped).
+func TestDrawRoofMegalithPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("stone_age")
+	for _, tc := range []struct{ w, h, hw, hh int }{
+		{9, 9, 2, 2},     // tiny footprint centered near an edge-ish spot
+		{40, 40, 12, 10}, // normal footprint
+	} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		// Should not panic even if the center + extents push writes past the image edges.
+		drawRoofMegalith(img, tc.w/2, tc.h/2, tc.hw, tc.hh, rc)
+		drawRoofMegalith(img, 1, 1, tc.hw, tc.hh, rc) // hard against the NW corner
+	}
+}
+
+// TestDrawRoofKeepPanicSafe locks that the iron KEEP sprite is panic-safe + in-bounds on a tiny
+// footprint, a normal horizontal one, and a vertical one (tower seats north), including hard against
+// the NW corner (every write is clamped).
+func TestDrawRoofKeepPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("iron_age")
+	for _, tc := range []struct{ w, h, hw, hh int }{
+		{9, 9, 2, 2},     // tiny footprint
+		{40, 40, 12, 10}, // normal, horizontal (tower seats west)
+		{40, 40, 8, 14},  // normal, vertical (tower seats north)
+	} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		drawRoofKeep(img, tc.w/2, tc.h/2, tc.hw, tc.hh, rc)
+		drawRoofKeep(img, 1, 1, tc.hw, tc.hh, rc) // hard against the NW corner
+	}
+}
+
+// TestDumpStoneEpochPNGs renders a representative city for primitive / stone / bronze with a FIXED
+// seed and identical building counts, and writes PNGs for human eyeballing. Not an assertion test —
+// it exists so a reviewer can compare the three ages side by side. Opt-in: skipped unless
+// CITYMAP_PNG_DUMP is set to an output directory, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpStoneEpochPNGs
+func TestDumpStoneEpochPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Identical building set (with a wonder so the centerpiece renders) and a FIXED display name →
+	// the citySeed is fixed, so only the era re-skin differs across the three dumps.
+	blds := map[string]int{"hut": 26, "gathering_camp": 16, "forge": 10, "stonehenge": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"primitive_age", "1b_i_primitive.png"},
+		{"stone_age", "1b_i_stone.png"},
+		{"bronze_age", "1b_i_bronze.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
+
+// tdPlanForAge builds the top-down plan using the REAL per-age style (styleForAge), not the stale
+// era-band tdStyleForEra path tdPlanFor uses — so Phase 1b-i/ii per-age presets (stone, iron,
+// classical) are actually exercised. Mirrors renderTopDown's style + seed derivation.
+func tdPlanForAge(state game.GameState) topPlan {
+	style := styleForAge(state.Age)
+	seed := citySeed(displayNameOf(state))
+	return generateTopPlan(state, config.BuildingByKey(), style, seed)
+}
+
+// TestIronClassicalStylesWired locks Phase 1b-ii style wiring: iron gets a fortified KEEP wonder +
+// mudbrick houses + a TIMBER palisade wall; classical gets a TEMPLE wonder, STONE walls, and the
+// white-stone house profile. The behaviour-preserving foundation (bronze) stays ancient (ziggurat).
+func TestIronClassicalStylesWired(t *testing.T) {
+	iron := styleForAge("iron_age")
+	if iron.wonderMotif != wonderKeep {
+		t.Fatalf("iron wonderMotif = %v, want wonderKeep (iron gets its own fortified keep)", iron.wonderMotif)
+	}
+	if iron.wallProfile != wallTimber {
+		t.Fatalf("iron wallProfile = %v, want wallTimber (a brown palisade)", iron.wallProfile)
+	}
+	if iron.houseProfile != profileMudbrick {
+		t.Fatalf("iron houseProfile = %v, want profileMudbrick (unchanged from ancient)", iron.houseProfile)
+	}
+	if !iron.hasWalls {
+		t.Fatal("iron must have walls (a timber palisade)")
+	}
+
+	cl := styleForAge("classical_age")
+	if cl.wonderMotif != wonderTemple {
+		t.Fatalf("classical wonderMotif = %v, want wonderTemple", cl.wonderMotif)
+	}
+	if cl.wallProfile != wallStone {
+		t.Fatalf("classical wallProfile = %v, want wallStone", cl.wallProfile)
+	}
+	if cl.houseProfile != profileStoneClassical {
+		t.Fatalf("classical houseProfile = %v, want profileStoneClassical", cl.houseProfile)
+	}
+
+	// Bronze foundation unchanged: still ancient (ziggurat + mudbrick wall + mudbrick houses).
+	bz := styleForAge("bronze_age")
+	if bz.wonderMotif != wonderZiggurat || bz.wallProfile != wallMudbrick || bz.houseProfile != profileMudbrick {
+		t.Fatalf("bronze changed: motif=%v wall=%v house=%v — bronze must stay ancient", bz.wonderMotif, bz.wallProfile, bz.houseProfile)
+	}
+}
+
+// TestIronCityDiffersFromBronze locks that IRON reads apart from BRONZE at the CITY level. Both share
+// the ziggurat wonder (so the wonder sprite alone is identical) — the distinction is the timber wall +
+// cooler roof/ground tint, which must change the rendered city pixels.
+func TestIronCityDiffersFromBronze(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	bronze, _ := renderImage(namedState("bronze_age", "Aldermoor", blds), 120, 72)
+	iron, _ := renderImage(namedState("iron_age", "Aldermoor", blds), 120, 72)
+	if !imagesDiffer(bronze, iron) {
+		t.Fatal("iron city renders identically to bronze — the timber wall + cooler tint are not applied")
+	}
+}
+
+// TestV3BiiWondersDiffer locks that the distinct wonder silhouettes are actually applied: the
+// classical TEMPLE reads apart from the medieval CATHEDRAL, and — the follow-up fix — the iron KEEP
+// reads apart from the bronze ZIGGURAT (iron no longer reuses bronze's centerpiece).
+func TestV3BiiWondersDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	classical := drawWonderImg(styleForAge("classical_age"))
+	medieval := drawWonderImg(styleForAge("medieval_age"))
+	iron := drawWonderImg(styleForAge("iron_age"))
+	bronze := drawWonderImg(styleForAge("bronze_age"))
+	if !imagesDiffer(classical, medieval) {
+		t.Fatal("classical temple draws identically to the medieval cathedral — the temple silhouette is not applied")
+	}
+	if !imagesDiffer(classical, iron) {
+		t.Fatal("classical temple draws identically to the iron keep — the two wonders must differ")
+	}
+	if !imagesDiffer(iron, bronze) {
+		t.Fatal("iron keep draws identically to the bronze ziggurat — iron must have its own centerpiece")
+	}
+}
+
+// TestIronTimberWallLotsBounded locks that an iron town emits wallTimber wall + gate lots that map
+// in-bounds on real + tiny canvases (bounded, panic-safe), and has NO stone towers/gatehouse.
+func TestIronTimberWallLotsBounded(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+		plan := tdPlanForAge(namedState("iron_age", "Aldermoor", blds))
+		if len(wallLotsOf(plan)) < 12 {
+			t.Fatalf("iron %dx%d: only %d wall segments — no real palisade", sz.w, sz.h, len(wallLotsOf(plan)))
+		}
+		if len(gateLotsOf(plan)) < 2 {
+			t.Fatalf("iron %dx%d: only %d gates — the palisade needs gates the streets exit through", sz.w, sz.h, len(gateLotsOf(plan)))
+		}
+		if n := len(towerLotsOf(plan)); n != 0 {
+			t.Fatalf("iron has %d stone towers/gatehouse — a timber palisade must have none", n)
+		}
+		xf := computeTransform(&plan, sz.w, sz.h)
+		for _, lt := range plan.lots {
+			switch lt.kind {
+			case tdWall, tdGate:
+				px, py := xf.px(lt.x, lt.y)
+				if px < -2 || px > sz.w+2 || py < -2 || py > sz.h+2 {
+					t.Fatalf("iron %dx%d: wall lot maps to (%d,%d) off-canvas — the ring is not bounded", sz.w, sz.h, px, py)
+				}
+			}
+		}
+	}
+}
+
+// TestClassicalStoneWallLots locks that a classical town gets a proper STONE wall — segments, gates,
+// AND towers/gatehouse (classical cities have real fortifications).
+func TestClassicalStoneWallLots(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	plan := tdPlanForAge(namedState("classical_age", "Aldermoor", blds))
+	if len(wallLotsOf(plan)) < 12 {
+		t.Fatalf("classical: only %d wall segments — no real curtain wall", len(wallLotsOf(plan)))
+	}
+	if len(gateLotsOf(plan)) < 2 {
+		t.Fatalf("classical: only %d gates", len(gateLotsOf(plan)))
+	}
+	if n := len(towerLotsOf(plan)); n < 3 {
+		t.Fatalf("classical stone wall has %d towers/gatehouse — a stone wall must be studded with towers", n)
+	}
+}
+
+// TestClassicalSquarePropsColumnsForward locks that classical squares are dressed columns-forward
+// (a Greco-Roman forum) and NOT the ancient altar/brazier set.
+func TestClassicalSquarePropsColumnsForward(t *testing.T) {
+	kindSet := func(kinds []tdLotKind) map[tdLotKind]bool {
+		m := map[tdLotKind]bool{}
+		for _, k := range kinds {
+			m[k] = true
+		}
+		return m
+	}
+	cl := tdSquarePropsFor(styleForAge("classical_age"))
+	w := kindSet(cl.wonder)
+	if !w[tdPropColumns] || !w[tdPropAltar] || !w[tdPropWell] {
+		t.Fatalf("classical wonder props %v missing columns/altar/well", cl.wonder)
+	}
+	if w[tdPropBrazier] {
+		t.Fatalf("classical wonder props %v must not carry the ancient brazier", cl.wonder)
+	}
+	c := kindSet(cl.center)
+	if !c[tdPropColumns] {
+		t.Fatalf("classical center props %v missing columns", cl.center)
+	}
+}
+
+// TestV3BiiSpritesPanicSafe locks that the two new sprites (temple wonder + classical house) are
+// panic-safe + in-bounds on a tiny footprint and a normal one (every write is clamped).
+func TestV3BiiSpritesPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	rcTemple := roofColorsFor(styleForAge("classical_age"), pal, "wonder", "wonder")
+	rcHouse := roofColorsFor(styleForAge("classical_age"), pal, "housing", "production")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}} {
+			drawRoofTempleWonder(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rcTemple)
+			drawRoofTempleWonder(img, 1, 1, hwhh.hw, hwhh.hh, rcTemple) // hard against the NW corner
+			drawRoofStoneClassical(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rcHouse)
+			drawRoofStoneClassical(img, 1, 1, hwhh.hw, hwhh.hh, rcHouse)
+		}
+	}
+}
+
+// --- Renaissance (Phase 1b) ---------------------------------------------------
+
+// TestRenaissanceStyleWired locks the renaissance wiring: a DOME wonder, a STAR-FORT wall, walls on,
+// and the cream-stone house profile. Medieval (its old shared preset) is unchanged (cathedral + stone).
+func TestRenaissanceStyleWired(t *testing.T) {
+	ren := styleForAge("renaissance_age")
+	if ren.wonderMotif != wonderDome {
+		t.Fatalf("renaissance wonderMotif = %v, want wonderDome", ren.wonderMotif)
+	}
+	if ren.wallProfile != wallStarFort {
+		t.Fatalf("renaissance wallProfile = %v, want wallStarFort", ren.wallProfile)
+	}
+	if !ren.hasWalls {
+		t.Fatal("renaissance must have walls (a star-fort)")
+	}
+	if ren.houseProfile != profileStoneClassical {
+		t.Fatalf("renaissance houseProfile = %v, want profileStoneClassical (cream ashlar townhouses)", ren.houseProfile)
+	}
+
+	// Medieval, whose preset renaissance used to share, must stay MEDIEVAL (cathedral + stone wall).
+	med := styleForAge("medieval_age")
+	if med.wonderMotif != wonderCathedral || med.wallProfile != wallStone {
+		t.Fatalf("medieval changed: motif=%v wall=%v — medieval must stay cathedral + stone", med.wonderMotif, med.wallProfile)
+	}
+}
+
+// TestRenaissanceWonderDiffers locks that the renaissance DOME reads apart from the medieval CATHEDRAL,
+// the classical TEMPLE, and the iron KEEP — the dome silhouette must actually be applied, not shared.
+func TestRenaissanceWonderDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	ren := drawWonderImg(styleForAge("renaissance_age"))
+	med := drawWonderImg(styleForAge("medieval_age"))
+	classical := drawWonderImg(styleForAge("classical_age"))
+	iron := drawWonderImg(styleForAge("iron_age"))
+	if !imagesDiffer(ren, med) {
+		t.Fatal("renaissance dome draws identically to the medieval cathedral — the dome silhouette is not applied")
+	}
+	if !imagesDiffer(ren, classical) {
+		t.Fatal("renaissance dome draws identically to the classical temple — the two wonders must differ")
+	}
+	if !imagesDiffer(ren, iron) {
+		t.Fatal("renaissance dome draws identically to the iron keep — the two wonders must differ")
+	}
+}
+
+// TestRenaissanceCityDiffersFromMedieval locks that a renaissance city reads apart from a medieval one
+// at the CITY level (cream stone + dome + star-fort vs cool slate + cathedral + stone curtain).
+func TestRenaissanceCityDiffersFromMedieval(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	med, _ := renderImage(namedState("medieval_age", "Aldermoor", blds), 120, 72)
+	ren, _ := renderImage(namedState("renaissance_age", "Aldermoor", blds), 120, 72)
+	if !imagesDiffer(med, ren) {
+		t.Fatal("renaissance city renders identically to medieval — the cream re-skin + dome + star-fort are not applied")
+	}
+}
+
+// TestDrawRoofDomePanicSafe locks that the renaissance DOME sprite is panic-safe + in-bounds on a tiny
+// footprint, a normal one, and hard against the NW corner (every write is clamped).
+func TestDrawRoofDomePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("renaissance_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}} {
+			drawRoofDome(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofDome(img, 1, 1, hwhh.hw, hwhh.hh, rc) // hard against the NW corner
+		}
+	}
+}
+
+// TestRenaissanceStarFortWallLots locks that a renaissance town emits a real STAR-FORT: curtain
+// segments, gates the streets exit through, and periodic ANGULAR BASTION salients — and NO round
+// stone towers/gatehouse. Every wall/gate/bastion lot must map in-bounds on real + tiny canvases.
+func TestRenaissanceStarFortWallLots(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+		plan := tdPlanForAge(namedState("renaissance_age", "Aldermoor", blds))
+		if len(wallLotsOf(plan)) < 12 {
+			t.Fatalf("renaissance %dx%d: only %d wall segments — no real rampart", sz.w, sz.h, len(wallLotsOf(plan)))
+		}
+		if len(gateLotsOf(plan)) < 2 {
+			t.Fatalf("renaissance %dx%d: only %d gates — the star-fort needs gates the streets exit through", sz.w, sz.h, len(gateLotsOf(plan)))
+		}
+		if n := len(bastionLotsOf(plan)); n < 3 {
+			t.Fatalf("renaissance %dx%d: only %d bastions — a star-fort must have angular salients", sz.w, sz.h, n)
+		}
+		if n := len(towerLotsOf(plan)); n != 0 {
+			t.Fatalf("renaissance %dx%d: has %d round stone towers/gatehouse — a star-fort has angular bastions only", sz.w, sz.h, n)
+		}
+		xf := computeTransform(&plan, sz.w, sz.h)
+		for _, lt := range plan.lots {
+			switch lt.kind {
+			case tdWall, tdGate, tdWallBastion:
+				px, py := xf.px(lt.x, lt.y)
+				if px < -3 || px > sz.w+3 || py < -3 || py > sz.h+3 {
+					t.Fatalf("renaissance %dx%d: wall/bastion lot maps to (%d,%d) off-canvas — the star-fort is not bounded", sz.w, sz.h, px, py)
+				}
+			}
+		}
+	}
+}
+
+// TestDumpRenaissancePNGs renders medieval / renaissance / classical with a FIXED display name +
+// identical building set INCLUDING a wonder so the cathedral/dome/temple centerpieces render, so a
+// reviewer can compare the three side by side. Opt-in: skipped unless CITYMAP_PNG_DUMP=<dir> is set:
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpRenaissancePNGs
+func TestDumpRenaissancePNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Identical building set (with a wonder so the centerpiece renders) + a FIXED display name → the
+	// citySeed is fixed, so only the era re-skin differs across the three dumps.
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"medieval_age", "1c_medieval.png"},
+		{"renaissance_age", "1c_renaissance.png"},
+		{"classical_age", "1c_classical.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
+
+// TestColonialIndustrialStylesWired locks Phase 1b-iii style wiring: COLONIAL gets brick ROWHOUSES, a
+// TIMBER palisade wall (walls on), and the grand GENERIC hall wonder (a statehouse); INDUSTRIAL gets
+// brick ROWHOUSES too but under tin roofs, NO walls, and the FACTORY wonder. Neither age still maps to
+// the default village preset.
+func TestColonialIndustrialStylesWired(t *testing.T) {
+	col := styleForAge("colonial_age")
+	if col.houseProfile != profileRowhouse {
+		t.Fatalf("colonial houseProfile = %v, want profileRowhouse (brick terraces)", col.houseProfile)
+	}
+	if col.wallProfile != wallTimber {
+		t.Fatalf("colonial wallProfile = %v, want wallTimber (a palisade fort)", col.wallProfile)
+	}
+	if !col.hasWalls {
+		t.Fatal("colonial must have walls (a timber palisade fort)")
+	}
+	if col.wonderMotif != wonderGeneric {
+		t.Fatalf("colonial wonderMotif = %v, want wonderGeneric (the statehouse — no bespoke wonder)", col.wonderMotif)
+	}
+
+	ind := styleForAge("industrial_age")
+	if ind.houseProfile != profileRowhouse {
+		t.Fatalf("industrial houseProfile = %v, want profileRowhouse (dense brick terraces)", ind.houseProfile)
+	}
+	if ind.wallProfile != wallNone {
+		t.Fatalf("industrial wallProfile = %v, want wallNone (open industry)", ind.wallProfile)
+	}
+	if ind.hasWalls {
+		t.Fatal("industrial must be OPEN (no walls)")
+	}
+	if ind.wonderMotif != wonderFactory {
+		t.Fatalf("industrial wonderMotif = %v, want wonderFactory", ind.wonderMotif)
+	}
+	// Industrial should pack DENSER than colonial (tighter slotSpacing).
+	if !(ind.slotSpacing < col.slotSpacing) {
+		t.Fatalf("industrial slotSpacing (%.2f) should be tighter/denser than colonial (%.2f)", ind.slotSpacing, col.slotSpacing)
+	}
+	// Neither age may still resolve to the default village preset name.
+	if col.name == defaultTdStyle.name || ind.name == defaultTdStyle.name {
+		t.Fatalf("colonial/industrial still on the default preset: colonial=%q industrial=%q", col.name, ind.name)
+	}
+}
+
+// TestIndustrialFactoryWonderDiffers locks that the industrial FACTORY reads apart from the renaissance
+// DOME, the classical TEMPLE, and the medieval CATHEDRAL — the factory silhouette must actually be
+// applied, not shared with any neighbour.
+func TestIndustrialFactoryWonderDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	factory := drawWonderImg(styleForAge("industrial_age"))
+	dome := drawWonderImg(styleForAge("renaissance_age"))
+	temple := drawWonderImg(styleForAge("classical_age"))
+	cathedral := drawWonderImg(styleForAge("medieval_age"))
+	if !imagesDiffer(factory, dome) {
+		t.Fatal("industrial factory draws identically to the renaissance dome — the factory silhouette is not applied")
+	}
+	if !imagesDiffer(factory, temple) {
+		t.Fatal("industrial factory draws identically to the classical temple — the two wonders must differ")
+	}
+	if !imagesDiffer(factory, cathedral) {
+		t.Fatal("industrial factory draws identically to the medieval cathedral — the two wonders must differ")
+	}
+}
+
+// TestColonialIndustrialCitiesDiffer locks the CITY-level reads: a colonial city differs from an
+// industrial one, colonial differs from the old default village (modern_age still uses default), and
+// industrial differs from colonial — the two new re-skins are actually applied and distinct.
+func TestColonialIndustrialCitiesDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	col, _ := renderImage(namedState("colonial_age", "Aldermoor", blds), 120, 72)
+	ind, _ := renderImage(namedState("industrial_age", "Aldermoor", blds), 120, 72)
+	def, _ := renderImage(namedState("modern_age", "Aldermoor", blds), 120, 72) // modern still uses defaultTdStyle
+	if !imagesDiffer(col, ind) {
+		t.Fatal("colonial city renders identically to industrial — the two re-skins are not distinct")
+	}
+	if !imagesDiffer(col, def) {
+		t.Fatal("colonial city renders identically to the default village (modern) — the colonial re-skin is not applied")
+	}
+	if !imagesDiffer(ind, def) {
+		t.Fatal("industrial city renders identically to the default village (modern) — the industrial re-skin is not applied")
+	}
+}
+
+// TestDrawRoofRowhousePanicSafe locks that the ROWHOUSE dwelling sprite is panic-safe + in-bounds on a
+// tiny footprint, a normal one, and hard against the NW corner (every write is clamped).
+func TestDrawRoofRowhousePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("colonial_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "housing", "production")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofRowhouse(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofRowhouse(img, 1, 1, hwhh.hw, hwhh.hh, rc) // hard against the NW corner
+		}
+	}
+}
+
+// TestDrawRoofFactoryPanicSafe locks that the industrial FACTORY wonder sprite (hall + tall smokestacks
+// + smoke that clips ABOVE the footprint) is panic-safe + in-bounds on tiny / normal / NW-corner cases.
+func TestDrawRoofFactoryPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("industrial_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}} {
+			drawRoofFactory(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofFactory(img, 1, 1, hwhh.hw, hwhh.hh, rc)      // NW corner
+			drawRoofFactory(img, tc.w-1, 1, hwhh.hw, hwhh.hh, rc) // NE corner (smoke drifts up-right)
+		}
+	}
+}
+
+// TestColonialIndustrialWallLots locks that COLONIAL emits a real TIMBER PALISADE (curtain segments +
+// gates, but NO round stone towers/gatehouse and NO angular bastions), while INDUSTRIAL is OPEN (zero
+// wall/gate/tower/bastion lots). Bounded on real + tiny canvases.
+func TestColonialIndustrialWallLots(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+		// COLONIAL: a timber palisade — segments + gates, no towers, no bastions.
+		cp := tdPlanForAge(namedState("colonial_age", "Aldermoor", blds))
+		if len(wallLotsOf(cp)) < 12 {
+			t.Fatalf("colonial %dx%d: only %d wall segments — no real palisade", sz.w, sz.h, len(wallLotsOf(cp)))
+		}
+		if len(gateLotsOf(cp)) < 2 {
+			t.Fatalf("colonial %dx%d: only %d gates — the palisade needs gates the streets exit through", sz.w, sz.h, len(gateLotsOf(cp)))
+		}
+		if n := len(towerLotsOf(cp)); n != 0 {
+			t.Fatalf("colonial %dx%d: has %d round stone towers/gatehouse — a timber palisade has none", sz.w, sz.h, n)
+		}
+		if n := len(bastionLotsOf(cp)); n != 0 {
+			t.Fatalf("colonial %dx%d: has %d bastions — a timber palisade is not a star-fort", sz.w, sz.h, n)
+		}
+		xf := computeTransform(&cp, sz.w, sz.h)
+		for _, lt := range cp.lots {
+			switch lt.kind {
+			case tdWall, tdGate:
+				px, py := xf.px(lt.x, lt.y)
+				if px < -3 || px > sz.w+3 || py < -3 || py > sz.h+3 {
+					t.Fatalf("colonial %dx%d: wall/gate lot maps to (%d,%d) off-canvas — the palisade is not bounded", sz.w, sz.h, px, py)
+				}
+			}
+		}
+		// INDUSTRIAL: OPEN — zero wall lots of any kind.
+		ip := tdPlanForAge(namedState("industrial_age", "Aldermoor", blds))
+		if n := len(wallLotsOf(ip)) + len(gateLotsOf(ip)) + len(towerLotsOf(ip)) + len(bastionLotsOf(ip)); n != 0 {
+			t.Fatalf("industrial %dx%d has %d wall lots — this age must be OPEN (no walls)", sz.w, sz.h, n)
+		}
+	}
+}
+
+// TestDumpColonialIndustrialPNGs renders renaissance / colonial / industrial with a FIXED display name +
+// identical building set INCLUDING a wonder so the dome/statehouse/factory centerpieces render, so a
+// reviewer can compare the three side by side. Opt-in: skipped unless CITYMAP_PNG_DUMP=<dir> is set:
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpColonialIndustrialPNGs
+func TestDumpColonialIndustrialPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Identical building set (with a wonder so the centerpiece renders) + a FIXED display name → the
+	// citySeed is fixed, so only the era re-skin differs across the three dumps.
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"renaissance_age", "1c_renaissance2.png"},
+		{"colonial_age", "1c_colonial.png"},
+		{"industrial_age", "1c_industrial.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
+
+// TestElectricEpochStylesWired locks the ELECTRIC-epoch style wiring (V3-B): VICTORIAN gets brownstone
+// ROWHOUSES, NO walls, and the grand GENERIC hall wonder (a terminal/museum); ELECTRIC gets FLAT modern
+// blocks (profileModernFlat), NO walls, and the setback TOWER wonder; ATOMIC gets FLAT modern blocks too,
+// NO walls, but its OWN googie SPACE-NEEDLE wonder (a saucer on a stem, splitting it from electric's deco
+// tower) and AIRIER (looser slotSpacing) than the denser electric downtown. None of the three still maps to
+// the default village preset.
+func TestElectricEpochStylesWired(t *testing.T) {
+	vic := styleForAge("victorian_age")
+	if vic.houseProfile != profileRowhouse {
+		t.Fatalf("victorian houseProfile = %v, want profileRowhouse (brownstone terraces)", vic.houseProfile)
+	}
+	if vic.wonderMotif != wonderGeneric {
+		t.Fatalf("victorian wonderMotif = %v, want wonderGeneric (the terminal/museum — no bespoke wonder)", vic.wonderMotif)
+	}
+	if vic.hasWalls {
+		t.Fatal("victorian must be OPEN (no walls — the age of open boulevards)")
+	}
+
+	ele := styleForAge("electric_age")
+	if ele.houseProfile != profileModernFlat {
+		t.Fatalf("electric houseProfile = %v, want profileModernFlat (flat deco blocks)", ele.houseProfile)
+	}
+	if ele.wonderMotif != wonderTower {
+		t.Fatalf("electric wonderMotif = %v, want wonderTower (art-deco setback tower)", ele.wonderMotif)
+	}
+	if ele.hasWalls {
+		t.Fatal("electric must be OPEN (no walls)")
+	}
+
+	atm := styleForAge("atomic_age")
+	if atm.houseProfile != profileModernFlat {
+		t.Fatalf("atomic houseProfile = %v, want profileModernFlat (flat midcentury blocks)", atm.houseProfile)
+	}
+	if atm.wonderMotif != wonderSpaceNeedle {
+		t.Fatalf("atomic wonderMotif = %v, want wonderSpaceNeedle (googie space-age saucer needle)", atm.wonderMotif)
+	}
+	if atm.hasWalls {
+		t.Fatal("atomic must be OPEN (no walls)")
+	}
+	// Atomic should be AIRIER than electric (a suburb-and-downtown feel vs a packed deco downtown).
+	if !(atm.slotSpacing > ele.slotSpacing) {
+		t.Fatalf("atomic slotSpacing (%.2f) should be airier/looser than electric (%.2f)", atm.slotSpacing, ele.slotSpacing)
+	}
+	// None of the three may still resolve to the default village preset name.
+	if vic.name == defaultTdStyle.name || ele.name == defaultTdStyle.name || atm.name == defaultTdStyle.name {
+		t.Fatalf("an electric-epoch age still on the default preset: victorian=%q electric=%q atomic=%q", vic.name, ele.name, atm.name)
+	}
+}
+
+// TestElectricTowerWonderDiffers locks that the electric/atomic TOWER reads apart from the renaissance
+// DOME, the industrial FACTORY, the ancient ZIGGURAT, and the iron KEEP — the tower silhouette must
+// actually be applied, not shared with any neighbouring wonder.
+func TestElectricTowerWonderDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	tower := drawWonderImg(styleForAge("electric_age"))
+	dome := drawWonderImg(styleForAge("renaissance_age"))
+	factory := drawWonderImg(styleForAge("industrial_age"))
+	ziggurat := drawWonderImg(styleForAge("bronze_age"))
+	keep := drawWonderImg(styleForAge("iron_age"))
+	if !imagesDiffer(tower, dome) {
+		t.Fatal("electric tower draws identically to the renaissance dome — the tower silhouette is not applied")
+	}
+	if !imagesDiffer(tower, factory) {
+		t.Fatal("electric tower draws identically to the industrial factory — the two wonders must differ")
+	}
+	if !imagesDiffer(tower, ziggurat) {
+		t.Fatal("electric tower draws identically to the ancient ziggurat — the two wonders must differ")
+	}
+	if !imagesDiffer(tower, keep) {
+		t.Fatal("electric tower draws identically to the iron keep — the two wonders must differ")
+	}
+}
+
+// TestSpaceNeedleWonderDiffers locks that the ATOMIC space-needle wonder reads apart from the electric deco
+// TOWER (concentric flat squares), the renaissance DOME (a solid hemisphere), and the modern SKYSCRAPER (a
+// slender glass slab) — the space-needle silhouette must actually be applied, not shared with a neighbour.
+func TestSpaceNeedleWonderDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	needle := drawWonderImg(styleForAge("atomic_age"))
+	tower := drawWonderImg(styleForAge("electric_age"))
+	dome := drawWonderImg(styleForAge("renaissance_age"))
+	skyscraper := drawWonderImg(styleForAge("modern_age"))
+	if !imagesDiffer(needle, tower) {
+		t.Fatal("atomic space needle draws identically to the electric deco tower — the needle silhouette is not applied")
+	}
+	if !imagesDiffer(needle, dome) {
+		t.Fatal("atomic space needle draws identically to the renaissance dome — the two wonders must differ")
+	}
+	if !imagesDiffer(needle, skyscraper) {
+		t.Fatal("atomic space needle draws identically to the modern skyscraper — the two wonders must differ")
+	}
+}
+
+// TestElectricEpochCitiesDiffer locks the CITY-level reads: victorian differs from colonial (both use
+// rowhouses — brownstone-vs-brick + stone-pavers-vs-dirt + parks-vs-palisade must diverge), electric
+// differs from atomic (warmer ornate dense deco vs cooler clean airy pastel midcentury), and all three
+// differ from the old default village (modern_age still uses default) — the re-skins are actually applied.
+func TestElectricEpochCitiesDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	vic, _ := renderImage(namedState("victorian_age", "Aldermoor", blds), 120, 72)
+	col, _ := renderImage(namedState("colonial_age", "Aldermoor", blds), 120, 72)
+	ele, _ := renderImage(namedState("electric_age", "Aldermoor", blds), 120, 72)
+	atm, _ := renderImage(namedState("atomic_age", "Aldermoor", blds), 120, 72)
+	def, _ := renderImage(namedState("modern_age", "Aldermoor", blds), 120, 72) // modern still uses defaultTdStyle
+	if !imagesDiffer(vic, col) {
+		t.Fatal("victorian city renders identically to colonial — the brownstone re-skin is not distinct from brick")
+	}
+	if !imagesDiffer(ele, atm) {
+		t.Fatal("electric city renders identically to atomic — the warm-deco vs cool-midcentury re-skins are not distinct")
+	}
+	if !imagesDiffer(vic, def) {
+		t.Fatal("victorian city renders identically to the default village (modern) — the victorian re-skin is not applied")
+	}
+	if !imagesDiffer(ele, def) {
+		t.Fatal("electric city renders identically to the default village (modern) — the electric re-skin is not applied")
+	}
+	if !imagesDiffer(atm, def) {
+		t.Fatal("atomic city renders identically to the default village (modern) — the atomic re-skin is not applied")
+	}
+}
+
+// TestDrawRoofModernFlatPanicSafe locks that the FLAT modern-block dwelling sprite is panic-safe +
+// in-bounds on a tiny footprint, a normal one, and hard against the NW corner (every write is clamped).
+func TestDrawRoofModernFlatPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("electric_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "housing", "production")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofModernFlat(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofModernFlat(img, 1, 1, hwhh.hw, hwhh.hh, rc) // hard against the NW corner
+		}
+	}
+}
+
+// TestDrawRoofTowerPanicSafe locks that the ART-DECO SETBACK TOWER wonder sprite (tiers + a mast + an
+// extended base shadow that clips BELOW/around the footprint) is panic-safe + in-bounds on tiny / normal
+// / NW-corner cases (every write is clamped).
+func TestDrawRoofTowerPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("electric_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}} {
+			drawRoofTower(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofTower(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner (shadow drifts down-right)
+			drawRoofTower(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner (shadow clips off-canvas)
+		}
+	}
+}
+
+// TestDrawRoofSpaceNeedlePanicSafe locks that the ATOMIC space-needle wonder sprite (a stem + a wide saucer
+// disc + a core halo + a mast + a long raking SE shadow that clips beyond the footprint) is panic-safe +
+// in-bounds on tiny / normal / NW + SE corner cases (every write is clamped).
+func TestDrawRoofSpaceNeedlePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("atomic_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofSpaceNeedle(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofSpaceNeedle(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner (mast/saucer clip above)
+			drawRoofSpaceNeedle(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner (shadow clips off-canvas)
+		}
+	}
+}
+
+// TestElectricEpochOpenNoWallLots locks that VICTORIAN, ELECTRIC, and ATOMIC are all OPEN ages: each
+// emits ZERO wall / gate / tower / bastion lots (unwalled), on real + tiny canvases.
+func TestElectricEpochOpenNoWallLots(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	ages := []string{"victorian_age", "electric_age", "atomic_age"}
+	for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+		for _, ageKey := range ages {
+			p := tdPlanForAge(namedState(ageKey, "Aldermoor", blds))
+			if n := len(wallLotsOf(p)) + len(gateLotsOf(p)) + len(towerLotsOf(p)) + len(bastionLotsOf(p)); n != 0 {
+				t.Fatalf("%s %dx%d has %d wall lots — this age must be OPEN (no walls)", ageKey, sz.w, sz.h, n)
+			}
+		}
+	}
+}
+
+// TestDumpElectricEpochPNGs renders industrial / victorian / electric / atomic with a FIXED display name +
+// identical building set INCLUDING a wonder so the factory/terminal/tower centerpieces render, so a
+// reviewer can compare the ELECTRIC-epoch band (against the industrial neighbour) side by side. Opt-in:
+// skipped unless CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpElectricEpochPNGs
+func TestDumpElectricEpochPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Identical building set (with a wonder so the centerpiece renders) + a FIXED display name → the
+	// citySeed is fixed, so only the era re-skin differs across the four dumps.
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"industrial_age", "1d_industrial.png"},
+		{"victorian_age", "1d_victorian.png"},
+		{"electric_age", "1d_electric.png"},
+		{"atomic_age", "1d_atomic.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
+
+// TestDumpIronEpochPNGs renders bronze / iron / classical / medieval with a FIXED display name +
+// identical building set INCLUDING a wonder so the ziggurat/temple/cathedral centerpieces render, so
+// a reviewer can compare the ancient-band ages + medieval side by side. Opt-in: skipped unless
+// CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpIronEpochPNGs
+func TestDumpIronEpochPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Identical building set (with a wonder so the centerpiece renders) + a FIXED display name → the
+	// citySeed is fixed, so only the era re-skin differs across the four dumps.
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"bronze_age", "1b_ii_bronze.png"},
+		{"iron_age", "1b_ii_iron.png"},
+		{"classical_age", "1b_ii_classical.png"},
+		{"medieval_age", "1b_ii_medieval.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
+
+// TestDigitalEpochStylesWired locks V3-C DIGITAL-epoch style wiring: modern, information, and digital all
+// use the GLASS-TOWER house profile and are all OPEN (no walls). Modern + digital carry the SKYSCRAPER wonder;
+// information now carries its own DATA-HUB wonder (a server-farm centrepiece that splits it from modern's
+// glass tower). Information is DENSER than modern; digital carries the epoch's first NEON accents (asserted at
+// the city level in TestDigitalEpochNeonPresent). None may still resolve to the default village preset name.
+func TestDigitalEpochStylesWired(t *testing.T) {
+	mod := styleForAge("modern_age")
+	if mod.houseProfile != profileGlassTower {
+		t.Fatalf("modern houseProfile = %v, want profileGlassTower (glass skyscrapers)", mod.houseProfile)
+	}
+	if mod.wonderMotif != wonderSkyscraper {
+		t.Fatalf("modern wonderMotif = %v, want wonderSkyscraper (supertall glass tower)", mod.wonderMotif)
+	}
+	if mod.hasWalls {
+		t.Fatal("modern must be OPEN (no walls — the age of open glass towers)")
+	}
+
+	inf := styleForAge("information_age")
+	if inf.houseProfile != profileGlassTower {
+		t.Fatalf("information houseProfile = %v, want profileGlassTower", inf.houseProfile)
+	}
+	if inf.wonderMotif != wonderDataHub {
+		t.Fatalf("information wonderMotif = %v, want wonderDataHub (server-farm data hub)", inf.wonderMotif)
+	}
+	if inf.hasWalls {
+		t.Fatal("information must be OPEN (no walls)")
+	}
+
+	dig := styleForAge("digital_age")
+	if dig.houseProfile != profileGlassTower {
+		t.Fatalf("digital houseProfile = %v, want profileGlassTower", dig.houseProfile)
+	}
+	if dig.wonderMotif != wonderSkyscraper {
+		t.Fatalf("digital wonderMotif = %v, want wonderSkyscraper", dig.wonderMotif)
+	}
+	if dig.hasWalls {
+		t.Fatal("digital must be OPEN (no walls)")
+	}
+	// Information should be DENSER than modern (a packed server-city vs a downtown).
+	if !(inf.slotSpacing < mod.slotSpacing) {
+		t.Fatalf("information slotSpacing (%.2f) should be denser/tighter than modern (%.2f)", inf.slotSpacing, mod.slotSpacing)
+	}
+	// None of the three may still resolve to the default village preset name.
+	if mod.name == defaultTdStyle.name || inf.name == defaultTdStyle.name || dig.name == defaultTdStyle.name {
+		t.Fatalf("a digital-epoch age still on the default preset: modern=%q information=%q digital=%q", mod.name, inf.name, dig.name)
+	}
+}
+
+// TestDigitalEpochNeonPresent locks that DIGITAL is the first age with NEON: its style must actually use a
+// neon accent somewhere in its palette (streets/paving carry a cyan/magenta cast that information does NOT),
+// AND a digital town must emit at least one neon-sign prop lot (the first-neon tell).
+func TestDigitalEpochNeonPresent(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	inf := styleForAge("information_age")
+	dig := styleForAge("digital_age")
+	// The neon cast: digital's street + paved tones diverge from information's (a neon cyan/magenta lift).
+	if colorClose(dig.streetCol(pal), inf.streetCol(pal), 1) && colorClose(dig.pavedCol(pal), inf.pavedCol(pal), 1) {
+		t.Fatal("digital streets + paving are identical to information — the first-neon accent is not applied")
+	}
+	// A digital town must scatter neon-sign props (the first-neon tell).
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	p := tdPlanForAge(namedState("digital_age", "Aldermoor", blds))
+	neon := 0
+	for _, lt := range p.lots {
+		if lt.kind == tdPropNeonSign {
+			neon++
+		}
+	}
+	if neon == 0 {
+		t.Fatal("digital town emitted ZERO neon-sign props — the first-neon prop scatter is not applied")
+	}
+}
+
+// TestInformationDataCentersPresent locks that an INFORMATION town scatters DATA-CENTER props (the
+// server-city tell) — the distinctive prop that sets it apart from plain modern glass towers.
+func TestInformationDataCentersPresent(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	p := tdPlanForAge(namedState("information_age", "Aldermoor", blds))
+	dc := 0
+	for _, lt := range p.lots {
+		if lt.kind == tdPropDataCenter {
+			dc++
+		}
+	}
+	if dc == 0 {
+		t.Fatal("information town emitted ZERO data-center props — the server-city scatter is not applied")
+	}
+}
+
+// TestSkyscraperWonderDiffers locks that the SKYSCRAPER wonder reads apart from the deco TOWER, the
+// renaissance DOME, and the industrial FACTORY — the skyscraper silhouette must actually be applied, not
+// shared with any neighbouring wonder.
+func TestSkyscraperWonderDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	skyscraper := drawWonderImg(styleForAge("modern_age"))
+	tower := drawWonderImg(styleForAge("electric_age"))
+	dome := drawWonderImg(styleForAge("renaissance_age"))
+	factory := drawWonderImg(styleForAge("industrial_age"))
+	if !imagesDiffer(skyscraper, tower) {
+		t.Fatal("modern skyscraper draws identically to the deco tower — the skyscraper silhouette is not applied")
+	}
+	if !imagesDiffer(skyscraper, dome) {
+		t.Fatal("modern skyscraper draws identically to the renaissance dome — the two wonders must differ")
+	}
+	if !imagesDiffer(skyscraper, factory) {
+		t.Fatal("modern skyscraper draws identically to the industrial factory — the two wonders must differ")
+	}
+}
+
+// TestDataHubWonderDiffers locks that the INFORMATION data-hub wonder reads apart from the modern SKYSCRAPER
+// (a slender glass slab), the electric deco TOWER (concentric flat squares), and the atomic SPACE NEEDLE (a
+// saucer on a stem) — the data-hub silhouette must actually be applied, not shared with a neighbour.
+func TestDataHubWonderDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	dataHub := drawWonderImg(styleForAge("information_age"))
+	skyscraper := drawWonderImg(styleForAge("modern_age"))
+	tower := drawWonderImg(styleForAge("electric_age"))
+	needle := drawWonderImg(styleForAge("atomic_age"))
+	if !imagesDiffer(dataHub, skyscraper) {
+		t.Fatal("information data hub draws identically to the modern skyscraper — the data-hub silhouette is not applied")
+	}
+	if !imagesDiffer(dataHub, tower) {
+		t.Fatal("information data hub draws identically to the electric deco tower — the two wonders must differ")
+	}
+	if !imagesDiffer(dataHub, needle) {
+		t.Fatal("information data hub draws identically to the atomic space needle — the two wonders must differ")
+	}
+}
+
+// TestDigitalEpochCitiesDiffer locks the CITY-level reads: modern differs from information (clean blue glass
+// vs a denser colder server-city with data centers), information differs from digital (cold grey vs sleek
+// dark + neon), and all three differ from a STILL-DEFAULT placeholder (cyberpunk_age, still on the village
+// preset). cyberpunk is the placeholder because modern is now restyled and is no longer the village.
+func TestDigitalEpochCitiesDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	mod, _ := renderImage(namedState("modern_age", "Aldermoor", blds), 120, 72)
+	inf, _ := renderImage(namedState("information_age", "Aldermoor", blds), 120, 72)
+	dig, _ := renderImage(namedState("digital_age", "Aldermoor", blds), 120, 72)
+	def, _ := renderImage(namedState("cyberpunk_age", "Aldermoor", blds), 120, 72) // cyberpunk still uses defaultTdStyle
+	if !imagesDiffer(mod, inf) {
+		t.Fatal("modern city renders identically to information — the denser+colder+data-center re-skin is not distinct")
+	}
+	if !imagesDiffer(inf, dig) {
+		t.Fatal("information city renders identically to digital — the sleek-dark+neon re-skin is not distinct")
+	}
+	if !imagesDiffer(mod, def) {
+		t.Fatal("modern city renders identically to the default village (cyberpunk) — the modern re-skin is not applied")
+	}
+	if !imagesDiffer(inf, def) {
+		t.Fatal("information city renders identically to the default village (cyberpunk) — the information re-skin is not applied")
+	}
+	if !imagesDiffer(dig, def) {
+		t.Fatal("digital city renders identically to the default village (cyberpunk) — the digital re-skin is not applied")
+	}
+}
+
+// TestPolishPairCitiesDiffer locks the Phase 1i POLISH split at the CITY level: after re-crowning atomic with
+// its own space needle + a cooler/airier palette and information with its own data hub + a colder/denser
+// palette, atomic must read apart from electric, information apart from modern, AND the two cousins (atomic +
+// information) apart from each other — the re-skins are actually applied and each pair now reads distinct.
+func TestPolishPairCitiesDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	ele, _ := renderImage(namedState("electric_age", "Aldermoor", blds), 120, 72)
+	atm, _ := renderImage(namedState("atomic_age", "Aldermoor", blds), 120, 72)
+	mod, _ := renderImage(namedState("modern_age", "Aldermoor", blds), 120, 72)
+	inf, _ := renderImage(namedState("information_age", "Aldermoor", blds), 120, 72)
+	if !imagesDiffer(ele, atm) {
+		t.Fatal("electric city renders identically to atomic — the deco-tower vs space-needle split is not applied")
+	}
+	if !imagesDiffer(mod, inf) {
+		t.Fatal("modern city renders identically to information — the glass-tower vs data-hub split is not applied")
+	}
+	if !imagesDiffer(atm, inf) {
+		t.Fatal("atomic city renders identically to information — the two cousin re-skins are not distinct")
+	}
+}
+
+// TestDumpPolishPairPNGs renders electric / atomic / modern / information with a FIXED display name +
+// identical building set INCLUDING a wonder so the tower / space-needle / skyscraper / data-hub centerpieces
+// render, so a reviewer can compare the two POLISHED cousin pairs (electric↔atomic, modern↔information) side
+// by side. Opt-in: skipped unless CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpPolishPairPNGs
+func TestDumpPolishPairPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Identical building set (with a wonder so the centerpiece renders) + a FIXED display name → the citySeed
+	// is fixed, so only the era re-skin differs across the four dumps.
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"electric_age", "1i_electric.png"},
+		{"atomic_age", "1i_atomic.png"},
+		{"modern_age", "1i_modern.png"},
+		{"information_age", "1i_information.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
+
+// TestDrawRoofGlassTowerPanicSafe locks that the GLASS-TOWER dwelling sprite (a slab + a window grid + an
+// extended SE height shadow that clips beyond the footprint) is panic-safe + in-bounds on a tiny footprint,
+// a normal one, and hard against the NW + SE corners (every write is clamped).
+func TestDrawRoofGlassTowerPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("modern_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "housing", "production")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofGlassTower(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofGlassTower(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofGlassTower(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner (shadow clips off-canvas)
+		}
+	}
+}
+
+// TestDrawRoofSkyscraperPanicSafe locks that the SUPERTALL SKYSCRAPER wonder sprite (a slender slab + a
+// window grid + a mast + a long raking SE shadow beyond the footprint) is panic-safe + in-bounds on tiny /
+// normal / NW + SE corner cases (every write is clamped).
+func TestDrawRoofSkyscraperPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("modern_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {14, 6}} {
+			drawRoofSkyscraper(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofSkyscraper(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner (mast clips above)
+			drawRoofSkyscraper(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner (shadow clips off-canvas)
+		}
+	}
+}
+
+// TestDrawRoofDataHubPanicSafe locks that the INFORMATION data-hub wonder sprite (a wide server-farm base +
+// a cooling-channel grid + a central comms mast with a cross-arm + a scatter of beacon dabs + an SE mast
+// shadow) is panic-safe + in-bounds on tiny / normal / NW + SE corner cases (every write is clamped).
+func TestDrawRoofDataHubPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("information_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {14, 6}} {
+			drawRoofDataHub(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofDataHub(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner (mast clips above)
+			drawRoofDataHub(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner (shadow clips off-canvas)
+		}
+	}
+}
+
+// TestDigitalEpochOpenNoWallLots locks that MODERN, INFORMATION, and DIGITAL are all OPEN ages: each emits
+// ZERO wall / gate / tower / bastion lots (unwalled), on real + tiny canvases.
+func TestDigitalEpochOpenNoWallLots(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	ages := []string{"modern_age", "information_age", "digital_age"}
+	for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+		for _, ageKey := range ages {
+			p := tdPlanForAge(namedState(ageKey, "Aldermoor", blds))
+			if n := len(wallLotsOf(p)) + len(gateLotsOf(p)) + len(towerLotsOf(p)) + len(bastionLotsOf(p)); n != 0 {
+				t.Fatalf("%s %dx%d has %d wall lots — this age must be OPEN (no walls)", ageKey, sz.w, sz.h, n)
+			}
+		}
+	}
+}
+
+// TestDumpDigitalEpochPNGs renders atomic / modern / information / digital with a FIXED display name +
+// identical building set INCLUDING a wonder so the tower/skyscraper centerpieces render, so a reviewer can
+// compare the DIGITAL-epoch band (against the atomic neighbour) side by side. Opt-in: skipped unless
+// CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpDigitalEpochPNGs
+func TestDumpDigitalEpochPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Identical building set (with a wonder so the centerpiece renders) + a FIXED display name → the citySeed
+	// is fixed, so only the era re-skin differs across the four dumps.
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"atomic_age", "1e_atomic.png"},
+		{"modern_age", "1e_modern.png"},
+		{"information_age", "1e_information.png"},
+		{"digital_age", "1e_digital.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
+
+// ---- NEON epoch (cyberpunk / fusion / space) --------------------------------
+
+// TestNeonEpochStylesWired locks that the three NEON-epoch ages resolve to their tuned presets with the
+// intended motifs/profiles: cyberpunk reuses the glass-tower + skyscraper silhouette (a DARK neon megatower),
+// fusion carries the FUSION-CORE wonder, and space carries the LAUNCHPAD wonder + the METAL-DOME dwelling —
+// and none of the three is still on the default village preset.
+func TestNeonEpochStylesWired(t *testing.T) {
+	cyb := styleForAge("cyberpunk_age")
+	if cyb.houseProfile != profileGlassTower {
+		t.Fatalf("cyberpunk houseProfile = %v, want profileGlassTower (dark neon megablocks)", cyb.houseProfile)
+	}
+	if cyb.wonderMotif != wonderSkyscraper {
+		t.Fatalf("cyberpunk wonderMotif = %v, want wonderSkyscraper (dark neon megatower)", cyb.wonderMotif)
+	}
+	if cyb.hasWalls {
+		t.Fatal("cyberpunk must be OPEN (no walls)")
+	}
+
+	fus := styleForAge("fusion_age")
+	if fus.wonderMotif != wonderFusionCore {
+		t.Fatalf("fusion wonderMotif = %v, want wonderFusionCore (glowing reactor)", fus.wonderMotif)
+	}
+	if fus.hasWalls {
+		t.Fatal("fusion must be OPEN (a utopian open city)")
+	}
+
+	spc := styleForAge("space_age")
+	if spc.wonderMotif != wonderLaunchpad {
+		t.Fatalf("space wonderMotif = %v, want wonderLaunchpad (rocket on a pad)", spc.wonderMotif)
+	}
+	if spc.houseProfile != profileMetalDome {
+		t.Fatalf("space houseProfile = %v, want profileMetalDome (colony domes)", spc.houseProfile)
+	}
+	if spc.hasWalls {
+		t.Fatal("space must be OPEN (an open colony)")
+	}
+
+	// None of the three may still resolve to the default village preset name.
+	if cyb.name == defaultTdStyle.name || fus.name == defaultTdStyle.name || spc.name == defaultTdStyle.name {
+		t.Fatalf("a NEON-epoch age still on the default preset: cyberpunk=%q fusion=%q space=%q", cyb.name, fus.name, spc.name)
+	}
+	// cyberpunk is DARKER/DENSER than digital (the first-neon age it descends from).
+	dig := styleForAge("digital_age")
+	if !(cyb.slotSpacing < dig.slotSpacing) {
+		t.Fatalf("cyberpunk slotSpacing (%.2f) should be denser/tighter than digital (%.2f)", cyb.slotSpacing, dig.slotSpacing)
+	}
+}
+
+// TestNeonEpochPropsPresent locks the distinctive prop scatters: a CYBERPUNK town must emit HOLOGRAM props
+// (the night-city projection tell) and a SPACE town must emit ROCKET props (the spaceport tell).
+func TestNeonEpochPropsPresent(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+
+	cp := tdPlanForAge(namedState("cyberpunk_age", "Aldermoor", blds))
+	holo := 0
+	for _, lt := range cp.lots {
+		if lt.kind == tdPropHologram {
+			holo++
+		}
+	}
+	if holo == 0 {
+		t.Fatal("cyberpunk town emitted ZERO hologram props — the night-city scatter is not applied")
+	}
+
+	sp := tdPlanForAge(namedState("space_age", "Aldermoor", blds))
+	rocket := 0
+	for _, lt := range sp.lots {
+		if lt.kind == tdPropRocket {
+			rocket++
+		}
+	}
+	if rocket == 0 {
+		t.Fatal("space town emitted ZERO rocket props — the spaceport scatter is not applied")
+	}
+}
+
+// TestNeonWondersDiffer locks that the two new NEON wonders read apart from their neighbours: the FUSION CORE
+// differs from the skyscraper, the renaissance dome, the deco tower, and the factory; the LAUNCHPAD differs
+// from the fusion core, the skyscraper, and the dome. Each silhouette must actually be applied, not shared.
+func TestNeonWondersDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	fusionCore := drawWonderImg(styleForAge("fusion_age"))
+	launchpad := drawWonderImg(styleForAge("space_age"))
+	skyscraper := drawWonderImg(styleForAge("modern_age"))
+	dome := drawWonderImg(styleForAge("renaissance_age"))
+	tower := drawWonderImg(styleForAge("electric_age"))
+	factory := drawWonderImg(styleForAge("industrial_age"))
+
+	if !imagesDiffer(fusionCore, skyscraper) {
+		t.Fatal("fusion core draws identically to the skyscraper — the reactor silhouette is not applied")
+	}
+	if !imagesDiffer(fusionCore, dome) {
+		t.Fatal("fusion core draws identically to the renaissance dome — the two wonders must differ")
+	}
+	if !imagesDiffer(fusionCore, tower) {
+		t.Fatal("fusion core draws identically to the deco tower — the two wonders must differ")
+	}
+	if !imagesDiffer(fusionCore, factory) {
+		t.Fatal("fusion core draws identically to the factory — the two wonders must differ")
+	}
+	if !imagesDiffer(launchpad, fusionCore) {
+		t.Fatal("launchpad draws identically to the fusion core — the two NEON wonders must differ")
+	}
+	if !imagesDiffer(launchpad, skyscraper) {
+		t.Fatal("launchpad draws identically to the skyscraper — the two wonders must differ")
+	}
+	if !imagesDiffer(launchpad, dome) {
+		t.Fatal("launchpad draws identically to the renaissance dome — the two wonders must differ")
+	}
+}
+
+// TestNeonEpochCitiesDiffer locks the CITY-level reads: cyberpunk (dark neon) differs from fusion (bright
+// white) differs from space (pale metallic), and all three differ from transcendent (now the ETHEREAL-LIGHT
+// finale — since every age is styled, transcendent is used here as a KNOWN-DISTINCT comparison age, no
+// longer a default-village placeholder). A styled neon-epoch city still differs from the styled finale.
+func TestNeonEpochCitiesDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	cyb, _ := renderImage(namedState("cyberpunk_age", "Aldermoor", blds), 120, 72)
+	fus, _ := renderImage(namedState("fusion_age", "Aldermoor", blds), 120, 72)
+	spc, _ := renderImage(namedState("space_age", "Aldermoor", blds), 120, 72)
+	def, _ := renderImage(namedState("transcendent_age", "Aldermoor", blds), 120, 72) // now the styled ethereal finale (a known-distinct age)
+
+	if !imagesDiffer(cyb, fus) {
+		t.Fatal("cyberpunk city renders identically to fusion — the dark-neon vs bright-white re-skin is not distinct")
+	}
+	if !imagesDiffer(fus, spc) {
+		t.Fatal("fusion city renders identically to space — the bright-white vs pale-metallic re-skin is not distinct")
+	}
+	if !imagesDiffer(cyb, spc) {
+		t.Fatal("cyberpunk city renders identically to space — the dark-neon vs pale-metallic re-skin is not distinct")
+	}
+	if !imagesDiffer(cyb, def) {
+		t.Fatal("cyberpunk city renders identically to the transcendent finale — the cyberpunk re-skin is not distinct")
+	}
+	if !imagesDiffer(fus, def) {
+		t.Fatal("fusion city renders identically to the transcendent finale — the fusion re-skin is not distinct")
+	}
+	if !imagesDiffer(spc, def) {
+		t.Fatal("space city renders identically to the transcendent finale — the space re-skin is not distinct")
+	}
+}
+
+// TestDrawRoofFusionCorePanicSafe locks that the FUSION-CORE wonder sprite (concentric glowing discs + a
+// white-hot bloom halo) is panic-safe + in-bounds on tiny / normal / NW + SE corner cases.
+func TestDrawRoofFusionCorePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("fusion_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofFusionCore(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofFusionCore(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofFusionCore(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestDrawRoofLaunchpadPanicSafe locks that the LAUNCHPAD wonder sprite (a pad + a rocket + fins + gantry
+// dabs + a scorch ring) is panic-safe + in-bounds on tiny / normal / NW + SE corner cases.
+func TestDrawRoofLaunchpadPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("space_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {14, 6}} {
+			drawRoofLaunchpad(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofLaunchpad(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofLaunchpad(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestDrawRoofMetalDomePanicSafe locks that the METAL-DOME dwelling sprite (a lit silver disc + a curved NW
+// highlight arc + a rim) is panic-safe + in-bounds on tiny / normal / NW + SE corner cases.
+func TestDrawRoofMetalDomePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("space_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "housing", "production")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {10, 12}, {14, 6}} {
+			drawRoofMetalDome(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofMetalDome(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofMetalDome(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestNeonEpochOpenNoWallLots locks that CYBERPUNK, FUSION, and SPACE are all OPEN ages: each emits ZERO
+// wall / gate / tower / bastion lots (unwalled), on real + tiny canvases.
+func TestNeonEpochOpenNoWallLots(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	ages := []string{"cyberpunk_age", "fusion_age", "space_age"}
+	for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+		for _, ageKey := range ages {
+			p := tdPlanForAge(namedState(ageKey, "Aldermoor", blds))
+			if n := len(wallLotsOf(p)) + len(gateLotsOf(p)) + len(towerLotsOf(p)) + len(bastionLotsOf(p)); n != 0 {
+				t.Fatalf("%s %dx%d has %d wall lots — this age must be OPEN (no walls)", ageKey, sz.w, sz.h, n)
+			}
+		}
+	}
+}
+
+// TestDumpNeonEpochPNGs renders digital / cyberpunk / fusion / space with a FIXED display name + identical
+// building set INCLUDING a wonder so the centerpieces render, so a reviewer can compare the NEON-epoch band
+// (against the digital neighbour it descends from) side by side. Opt-in: skipped unless CITYMAP_PNG_DUMP=<dir>
+// is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpNeonEpochPNGs
+func TestDumpNeonEpochPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"digital_age", "1f_digital.png"},
+		{"cyberpunk_age", "1f_cyberpunk.png"},
+		{"fusion_age", "1f_fusion.png"},
+		{"space_age", "1f_space.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
+
+// TestCosmicEpochStylesWired locks the COSMIC-epoch first pair off their default placeholder:
+// interstellar must use the SPIRE dwelling profile + the SPIRE-ARRAY centrepiece, and galactic must
+// use the RING-HUB centrepiece. Both must be OPEN (no walls) and neither may still resolve to the
+// default village preset name. Galactic must also read as a DENSER metropolis than interstellar.
+func TestCosmicEpochStylesWired(t *testing.T) {
+	_ = theme.SetActive("forge")
+
+	inter := styleForAge("interstellar_age")
+	if inter.wonderMotif != wonderSpireArray {
+		t.Fatalf("interstellar wonderMotif = %v, want wonderSpireArray (spire cluster)", inter.wonderMotif)
+	}
+	if inter.houseProfile != profileSpire {
+		t.Fatalf("interstellar houseProfile = %v, want profileSpire (arcology spires)", inter.houseProfile)
+	}
+	if inter.hasWalls {
+		t.Fatal("interstellar must be OPEN (no walls)")
+	}
+
+	gal := styleForAge("galactic_age")
+	if gal.wonderMotif != wonderRingHub {
+		t.Fatalf("galactic wonderMotif = %v, want wonderRingHub (ring-hub megastation)", gal.wonderMotif)
+	}
+	if gal.hasWalls {
+		t.Fatal("galactic must be OPEN (no walls)")
+	}
+
+	// Neither may still resolve to the default village preset name.
+	if inter.name == defaultTdStyle.name || gal.name == defaultTdStyle.name {
+		t.Fatalf("a COSMIC-epoch age still on the default preset: interstellar=%q galactic=%q", inter.name, gal.name)
+	}
+	// galactic is DENSER than interstellar (the age it descends from).
+	if !(gal.slotSpacing < inter.slotSpacing) {
+		t.Fatalf("galactic slotSpacing (%.2f) should be denser/tighter than interstellar (%.2f)", gal.slotSpacing, inter.slotSpacing)
+	}
+}
+
+// TestCosmicWondersDiffer locks that the two new COSMIC wonders read apart from their neighbours: the
+// SPIRE-ARRAY differs from the launchpad, the dome, and the skyscraper; the RING-HUB differs from the
+// spire-array, the launchpad, the fusion core, and the dome. Each silhouette must actually be applied.
+func TestCosmicWondersDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	spireArray := drawWonderImg(styleForAge("interstellar_age"))
+	ringHub := drawWonderImg(styleForAge("galactic_age"))
+	launchpad := drawWonderImg(styleForAge("space_age"))
+	fusionCore := drawWonderImg(styleForAge("fusion_age"))
+	skyscraper := drawWonderImg(styleForAge("modern_age"))
+	dome := drawWonderImg(styleForAge("renaissance_age"))
+
+	if !imagesDiffer(spireArray, launchpad) {
+		t.Fatal("spire array draws identically to the launchpad — the spire-cluster silhouette is not applied")
+	}
+	if !imagesDiffer(spireArray, dome) {
+		t.Fatal("spire array draws identically to the renaissance dome — the two wonders must differ")
+	}
+	if !imagesDiffer(spireArray, skyscraper) {
+		t.Fatal("spire array draws identically to the skyscraper — the two wonders must differ")
+	}
+	if !imagesDiffer(ringHub, spireArray) {
+		t.Fatal("ring hub draws identically to the spire array — the two COSMIC wonders must differ")
+	}
+	if !imagesDiffer(ringHub, launchpad) {
+		t.Fatal("ring hub draws identically to the launchpad — the two wonders must differ")
+	}
+	if !imagesDiffer(ringHub, fusionCore) {
+		t.Fatal("ring hub draws identically to the fusion core — the two wonders must differ")
+	}
+	if !imagesDiffer(ringHub, dome) {
+		t.Fatal("ring hub draws identically to the renaissance dome — the two wonders must differ")
+	}
+}
+
+// TestCosmicEpochCitiesDiffer locks the CITY-level reads: interstellar (deep-space spires) differs from
+// galactic (ring-hub megastation), and both differ from transcendent (now the ETHEREAL-LIGHT finale — every
+// age is styled, so transcendent serves here as a KNOWN-DISTINCT comparison age, not a default placeholder).
+func TestCosmicEpochCitiesDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	inter, _ := renderImage(namedState("interstellar_age", "Aldermoor", blds), 120, 72)
+	gal, _ := renderImage(namedState("galactic_age", "Aldermoor", blds), 120, 72)
+	def, _ := renderImage(namedState("transcendent_age", "Aldermoor", blds), 120, 72) // now the styled ethereal finale (a known-distinct age)
+
+	if !imagesDiffer(inter, gal) {
+		t.Fatal("interstellar city renders identically to galactic — the spires vs ring-hub re-skin is not distinct")
+	}
+	if !imagesDiffer(inter, def) {
+		t.Fatal("interstellar city renders identically to the transcendent finale — the interstellar re-skin is not distinct")
+	}
+	if !imagesDiffer(gal, def) {
+		t.Fatal("galactic city renders identically to the transcendent finale — the galactic re-skin is not distinct")
+	}
+}
+
+// TestDrawRoofSpirePanicSafe locks that the SPIRE dwelling sprite (a thin tapering needle + a long SE
+// height shadow + a base pad + a lit tip) is panic-safe + in-bounds on tiny / normal / NW + SE corners.
+func TestDrawRoofSpirePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("interstellar_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "housing", "production")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {10, 12}, {14, 6}} {
+			drawRoofSpire(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofSpire(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofSpire(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestDrawRoofSpireArrayPanicSafe locks that the SPIRE-ARRAY wonder sprite (a base apron + a ring of
+// satellite spires around a tallest central one, each with a long SE shadow) is panic-safe + in-bounds on
+// tiny / normal / NW + SE corner cases.
+func TestDrawRoofSpireArrayPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("interstellar_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofSpireArray(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofSpireArray(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofSpireArray(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestDrawRoofRingHubPanicSafe locks that the RING-HUB wonder sprite (a deck + concentric ring outlines +
+// spokes + a glowing hub halo) is panic-safe + in-bounds on tiny / normal / NW + SE corner cases.
+func TestDrawRoofRingHubPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("galactic_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofRingHub(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofRingHub(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofRingHub(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestCosmicEpochOpenNoWallLots locks that INTERSTELLAR and GALACTIC are OPEN ages: each emits ZERO
+// wall / gate / tower / bastion lots (unwalled), on real + tiny canvases.
+func TestCosmicEpochOpenNoWallLots(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	ages := []string{"interstellar_age", "galactic_age"}
+	for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+		for _, ageKey := range ages {
+			p := tdPlanForAge(namedState(ageKey, "Aldermoor", blds))
+			if n := len(wallLotsOf(p)) + len(gateLotsOf(p)) + len(towerLotsOf(p)) + len(bastionLotsOf(p)); n != 0 {
+				t.Fatalf("%s %dx%d has %d wall lots — this age must be OPEN (no walls)", ageKey, sz.w, sz.h, n)
+			}
+		}
+	}
+}
+
+// TestDumpCosmicEpochPNGs renders space / interstellar / galactic with a FIXED display name + identical
+// building set INCLUDING a wonder so the centerpieces render, so a reviewer can compare the COSMIC-epoch
+// first pair (against the space neighbour it descends from) side by side. Opt-in: skipped unless
+// CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpCosmicEpochPNGs
+func TestDumpCosmicEpochPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"space_age", "1g_space.png"},
+		{"interstellar_age", "1g_interstellar.png"},
+		{"galactic_age", "1g_galactic.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
+
+// TestFinalPairWiring locks that the FINAL two ages — quantum + transcendent, completing all 22 — are wired
+// to their own presets + sprites: quantum → the iridescent CRYSTAL-LATTICE wonder + the lattice house
+// profile; transcendent → the ethereal ASCENSION wonder + the ethereal house profile. Both are OPEN (no
+// walls), neither still resolves to the default village preset name, and — since transcendent is now
+// styled — NO age maps to defaultTdStyle any more.
+func TestFinalPairWiring(t *testing.T) {
+	_ = theme.SetActive("forge")
+
+	quantum := styleForAge("quantum_age")
+	if quantum.wonderMotif != wonderCrystalLattice {
+		t.Fatalf("quantum wonderMotif = %v, want wonderCrystalLattice (iridescent lattice mesh)", quantum.wonderMotif)
+	}
+	if quantum.houseProfile != profileLattice {
+		t.Fatalf("quantum houseProfile = %v, want profileLattice (faceted crystal node)", quantum.houseProfile)
+	}
+	if quantum.hasWalls {
+		t.Fatal("quantum must be OPEN (no walls)")
+	}
+
+	trans := styleForAge("transcendent_age")
+	if trans.wonderMotif != wonderAscension {
+		t.Fatalf("transcendent wonderMotif = %v, want wonderAscension (rising light + halos)", trans.wonderMotif)
+	}
+	if trans.houseProfile != profileEthereal {
+		t.Fatalf("transcendent houseProfile = %v, want profileEthereal (soft light-form bloom)", trans.houseProfile)
+	}
+	if trans.hasWalls {
+		t.Fatal("transcendent must be OPEN (no walls)")
+	}
+
+	// Neither may still resolve to the default village preset name.
+	if quantum.name == defaultTdStyle.name || trans.name == defaultTdStyle.name {
+		t.Fatalf("a FINAL-pair age still on the default preset: quantum=%q transcendent=%q", quantum.name, trans.name)
+	}
+	// The whole atlas is now styled: NO age may map to defaultTdStyle (it survives only as a base preset).
+	for ageKey, st := range ageStyles {
+		if st.name == defaultTdStyle.name {
+			t.Fatalf("age %q still maps to the default village preset — every one of the 22 ages must be styled now", ageKey)
+		}
+	}
+}
+
+// TestFinalPairWondersDiffer locks that the two FINAL-pair wonders read apart from their neighbours and each
+// other: the CRYSTAL-LATTICE differs from the ring-hub, the fusion core, the spire-array, and the dome; the
+// ASCENSION differs from the crystal-lattice, the ring-hub, and the fusion core. Each silhouette must
+// actually be applied (not falling through to the generic hall).
+func TestFinalPairWondersDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	crystalLattice := drawWonderImg(styleForAge("quantum_age"))
+	ascension := drawWonderImg(styleForAge("transcendent_age"))
+	ringHub := drawWonderImg(styleForAge("galactic_age"))
+	spireArray := drawWonderImg(styleForAge("interstellar_age"))
+	fusionCore := drawWonderImg(styleForAge("fusion_age"))
+	dome := drawWonderImg(styleForAge("renaissance_age"))
+
+	if !imagesDiffer(crystalLattice, ringHub) {
+		t.Fatal("crystal lattice draws identically to the ring hub — the lattice-mesh silhouette is not applied")
+	}
+	if !imagesDiffer(crystalLattice, fusionCore) {
+		t.Fatal("crystal lattice draws identically to the fusion core — the two wonders must differ")
+	}
+	if !imagesDiffer(crystalLattice, spireArray) {
+		t.Fatal("crystal lattice draws identically to the spire array — the two wonders must differ")
+	}
+	if !imagesDiffer(crystalLattice, dome) {
+		t.Fatal("crystal lattice draws identically to the renaissance dome — the two wonders must differ")
+	}
+	if !imagesDiffer(ascension, crystalLattice) {
+		t.Fatal("ascension draws identically to the crystal lattice — the two FINAL-pair wonders must differ")
+	}
+	if !imagesDiffer(ascension, ringHub) {
+		t.Fatal("ascension draws identically to the ring hub — the two wonders must differ")
+	}
+	if !imagesDiffer(ascension, fusionCore) {
+		t.Fatal("ascension draws identically to the fusion core — the two wonders must differ")
+	}
+}
+
+// TestFinalPairCitiesDiffer locks the CITY-level reads for the final two ages: quantum (dark iridescent
+// crystal) differs from transcendent (bright ethereal light), and each differs from two KNOWN-DISTINCT
+// styled ages — primitive_age and space_age. NOTE (this is the last slice): since transcendent is now
+// styled, there is NO default-village placeholder left to compare against, so we use real styled ages.
+func TestFinalPairCitiesDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	quantum, _ := renderImage(namedState("quantum_age", "Aldermoor", blds), 120, 72)
+	trans, _ := renderImage(namedState("transcendent_age", "Aldermoor", blds), 120, 72)
+	prim, _ := renderImage(namedState("primitive_age", "Aldermoor", blds), 120, 72)
+	space, _ := renderImage(namedState("space_age", "Aldermoor", blds), 120, 72)
+
+	if !imagesDiffer(quantum, trans) {
+		t.Fatal("quantum city renders identically to transcendent — the iridescent-crystal vs ethereal-light re-skin is not distinct")
+	}
+	if !imagesDiffer(quantum, prim) {
+		t.Fatal("quantum city renders identically to the primitive village — the quantum re-skin is not applied")
+	}
+	if !imagesDiffer(quantum, space) {
+		t.Fatal("quantum city renders identically to space — the quantum crystal deck must differ from the space colony")
+	}
+	if !imagesDiffer(trans, prim) {
+		t.Fatal("transcendent city renders identically to the primitive village — the transcendent re-skin is not applied")
+	}
+	if !imagesDiffer(trans, space) {
+		t.Fatal("transcendent city renders identically to space — the ethereal light-field must differ from the space colony")
+	}
+}
+
+// TestDrawRoofLatticePanicSafe locks that the LATTICE dwelling sprite (a faceted iridescent crystal node —
+// four triangular facets in shifting hues + a bright core) is panic-safe + in-bounds on tiny / normal / NW +
+// SE corner cases.
+func TestDrawRoofLatticePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("quantum_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "housing", "production")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {10, 12}, {14, 6}} {
+			drawRoofLattice(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofLattice(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofLattice(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestDrawRoofCrystalLatticePanicSafe locks that the CRYSTAL-LATTICE wonder sprite (a crystalline deck + a
+// diamond grid of glowing nodes joined by iridescent struts + a bright central node) is panic-safe +
+// in-bounds on tiny / normal / NW + SE corner cases.
+func TestDrawRoofCrystalLatticePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("quantum_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofCrystalLattice(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofCrystalLattice(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofCrystalLattice(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestDrawRoofEtherealPanicSafe locks that the ETHEREAL dwelling sprite (a soft translucent radial bloom —
+// pure light, no hard fill) is panic-safe + in-bounds on tiny / normal / NW + SE corner cases.
+func TestDrawRoofEtherealPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("transcendent_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "housing", "production")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {10, 12}, {14, 6}} {
+			drawRoofEthereal(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofEthereal(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofEthereal(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestDrawRoofAscensionPanicSafe locks that the ASCENSION wonder sprite (concentric soft halos + a rising
+// vertical light beam + a pure-white core) is panic-safe + in-bounds on tiny / normal / NW + SE corner
+// cases.
+func TestDrawRoofAscensionPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("transcendent_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofAscension(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofAscension(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofAscension(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestFinalPairOpenNoWallLots locks that QUANTUM and TRANSCENDENT are OPEN ages: each emits ZERO wall / gate
+// / tower / bastion lots (unwalled), on real + tiny canvases.
+func TestFinalPairOpenNoWallLots(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	ages := []string{"quantum_age", "transcendent_age"}
+	for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+		_ = sz
+		for _, ageKey := range ages {
+			p := tdPlanForAge(namedState(ageKey, "Aldermoor", blds))
+			if n := len(wallLotsOf(p)) + len(gateLotsOf(p)) + len(towerLotsOf(p)) + len(bastionLotsOf(p)); n != 0 {
+				t.Fatalf("%s has %d wall lots — this age must be OPEN (no walls)", ageKey, n)
+			}
+		}
+	}
+}
+
+// TestDumpFinalPairPNGs renders galactic / quantum / transcendent with a FIXED display name + identical
+// building set INCLUDING a wonder so the centerpieces render, so a reviewer can compare the FINAL pair
+// (against the galactic neighbour it descends from) side by side. Opt-in: skipped unless CITYMAP_PNG_DUMP=<dir>
+// is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpFinalPairPNGs
+func TestDumpFinalPairPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"galactic_age", "1h_galactic.png"},
+		{"quantum_age", "1h_quantum.png"},
+		{"transcendent_age", "1h_transcendent.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
 	}
 }

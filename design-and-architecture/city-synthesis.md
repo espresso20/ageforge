@@ -165,6 +165,44 @@ governs; the older wording is kept for history.
    anti-wheel property is robust-tested via the ward-seed radial ordering (a radial town's ward
    seeds spiral centers-out — a strong seed-index↔radius correlation; organic/ribbon do not).
 
+7. **ANCIENT + MEDIEVAL are styled (V3-B).** The two walled bands are filled in on the EXISTING
+   frameworks (era styles, roof-material recipes, ground tints, square props, town-form weights,
+   the wall flag) so each reads distinct + era-appropriate; every other era keeps its default.
+   `tdStyleForEra` now returns `ancientCityStyle` (eraHubSpoke) and `medievalCityStyle` (eraCastle).
+   - **Roof materials** (`roofColorsFor` via the preset `roofBase`/`roofDark`): ancient = CLAY TILE
+     (warm terracotta, `clayAnchor`); medieval = SLATE/TILE (cool dark blue-grey, `slateAnchor`).
+     Primitive stays thatch. The subtle lineage tint + the saturation cap (`clampRoofSat`) still
+     hold, so roofs never paint an accent/highlight (the no-yellow-dot guarantee).
+   - **Ground** (`drawGround`): ancient = packed earth / pale stone (`mudbrickAnchor`+`stoneAnchor`);
+     medieval = cobble / stone grey (`cobbleAnchor`+`graniteAnchor`). Still QUIET (same low-contrast
+     texture dials) and theme-derived (retints).
+   - **House style** (per-era `houseProfile` on the style, read by `drawRoof`): ancient = MUDBRICK —
+     flatter, blockier flat-topped roofs (`drawRoofMudbrick`); medieval = TIMBER — steeper pitched
+     gables (`drawRoofTimber`). The roof ATLAS (which archetype) is unchanged; only the silhouette
+     shifts per era.
+   - **Walls + gates + towers (locked #9 — the big new piece).** `hasWalls` is ON for both bands
+     (industrial+ stays open). `tdAddWalls(plan, style, seed)` rings the built-up area with a wall
+     FOLLOWING the (ragged) town outline just outside the outermost wards (`tdWallRadiusAt` — the
+     ORGANIC form rides `tdOrganicRadiusAt` so the rampart is ragged like its town; other forms use
+     a circle). Ancient = MUDBRICK curtain (tan, thin, no towers); medieval = STONE curtain (grey,
+     thicker) studded with periodic TOWERS + a GATEHOUSE at the main gate. GATES are placed by
+     `tdGateAngles` at the angles of the town's FARTHEST-REACHING streets (the main roads), so a
+     gate always opens where a street EXITS — connectivity THROUGH the wall is preserved by
+     construction (the street-cell web is never touched; the wall only rings it, with GAPS at the
+     gates). Deterministic/seeded; the ring is capped to the town disc and the wall lots are
+     included in the fill-frame fit (`computeTransform`) so the whole enceinte stays bounded
+     on-canvas. Buildings stay inside the wall.
+   - **Era square props** (`tdSquarePropsFor`, keyed off `houseProfile`): ancient = altar / columns
+     / braziers / well (a temple forecourt); medieval = market stalls / fountain / well /
+     cross-or-gallows (a market square). Primitive keeps well/firepit/stones/stall. Same
+     deterministic ring placement + no-overlap-with-roof.
+   - **Era wonder** (`drawRoof` on `roofWonder`, by profile): ancient = ZIGGURAT (stepped concentric
+     tiers, `drawRoofZiggurat`); medieval = CATHEDRAL/KEEP (cruciform nave+transept + a central
+     spire, `drawRoofCathedral`). Prominent central complex, in-family muted tones (no accent).
+   - **Town-form weights** (`tdBandFormWeights`, unchanged from V3-A): ancient = organic + radial;
+     medieval = radial + organic + some grid. Confirmed to render well WITHIN the walls (a walled
+     radial and a walled organic town both read as a proper enceinte).
+
 ## Architecture
 
 ### Deterministic persistent layout
@@ -240,8 +278,8 @@ glass/neon), muted, theme-derived; lineage tint blended ~15–25%.
   loose districts, balanced filler, landmark labels) + the PRIMITIVE/STONE village
   fully tuned. Other eras use a reasonable default preset. Drop world terrain +
   isometric volumes from the citymap render path. Tests.
-- **V3-B**: ancient (mudbrick walls+gates, clay roofs, radial-grid, ziggurat) +
-  castle (stone walls+towers, market square, cathedral).
+- **V3-B (DONE)**: ancient (mudbrick walls+gates, clay roofs, radial-grid, ziggurat) +
+  castle (stone walls+towers+gatehouse, market square, cathedral). See §Revisions #7.
 - **V3-C**: industrial + modern (grid → avenues, rowhouse → tower, no walls).
 - **V3-D**: cyber + space (neon / dome) + wonder-centerpiece polish + per-age props.
 - **V3-E**: density / filler tuning + review refinements.

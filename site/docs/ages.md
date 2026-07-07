@@ -1,6 +1,6 @@
 # The 22 Ages
 
-AgeForge spans 22 ages from primitive survival to transcendence. Each age unlocks new buildings, resources, and worker domains. Advancement requires meeting all resource and building requirements **and** completing the age's wonder.
+AgeForge spans 22 ages from primitive survival to transcendence. Each age unlocks new buildings, resources, and worker domains — and gives your settlement a distinct look on the [City Map](city-map.md), which re-skins from thatch huts to neon megablocks as you advance. Advancement requires meeting all resource and building requirements **and** completing the age's wonder.
 
 ## Wonder Requirement
 
