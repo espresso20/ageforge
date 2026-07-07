@@ -177,6 +177,7 @@ const (
 	wonderCathedral                    // medieval cruciform + spire (drawRoofCathedral)
 	wonderMegalith                     // stone-age standing-stone circle (drawRoofMegalith)
 	wonderTemple                       // classical columned temple + pediment (drawRoofTempleWonder)
+	wonderKeep                         // iron-age fortified keep + watchtower (drawRoofKeep)
 )
 
 // tdPal is the small set of resolved theme colors the style recipes draw from. Built once
@@ -366,12 +367,14 @@ var ancientCityStyle = func() tdEraStyle {
 	return s
 }()
 
-// ironCityStyle is the tuned IRON preset (Phase 1b-ii). It is an ANCIENT city that has learned to
-// work metal: same clay-tile roofs, mudbrick houses + packed-earth ground + ziggurat wonder as
-// bronze — but grimmer. The roofs read COOLER/GREYER (iron accents in the fired clay), the ground a
-// shade more WORKED (cooler, greyer than bronze's warm tan), and the wall is a brown TIMBER PALISADE
-// (wallTimber) instead of bronze's tan mudbrick curtain. Built from ancientCityStyle so it keeps the
-// hub-spoke form + ziggurat; every tone stays a theme-role recipe so the whole city retints.
+// ironCityStyle is the tuned IRON preset (Phase 1b-ii, +follow-up). It is an ANCIENT city that has
+// learned to work metal: same mudbrick houses + packed-earth ground as bronze — but grimmer, and
+// with its own monument. The roofs read COOLER/GREYER (iron accents in the fired clay), the ground a
+// shade more WORKED (cooler, greyer than bronze's warm tan), the wall is a brown TIMBER PALISADE
+// (wallTimber) instead of bronze's tan mudbrick curtain, and the centerpiece is a fortified KEEP +
+// watchtower (wonderKeep) instead of bronze's ziggurat — so iron reads clearly apart from bronze.
+// Built from ancientCityStyle for the hub-spoke form; every tone stays a theme-role recipe so the
+// whole city retints.
 var ironCityStyle = func() tdEraStyle {
 	s := ancientCityStyle
 	s.name = "iron"
@@ -381,11 +384,11 @@ var ironCityStyle = func() tdEraStyle {
 	// grimmer than bronze's warm terracotta. roofDark leans harder into iron-grey for a cold shade.
 	s.roofBase = func(p tdPal) color.RGBA {
 		clay := blend(blend(p.bg, p.text, 0.30), clayAnchor, 0.48)
-		return blend(clay, ironAnchor, 0.24)
+		return blend(clay, ironAnchor, 0.32)
 	}
 	s.roofDark = func(p tdPal) color.RGBA {
 		clay := blend(blend(p.bg, p.text, 0.30), clayAnchor, 0.48)
-		cool := blend(clay, ironAnchor, 0.42)
+		cool := blend(clay, ironAnchor, 0.50)
 		return darken(cool, 0.26)
 	}
 	s.lineageMix = 0.14
@@ -409,7 +412,7 @@ var ironCityStyle = func() tdEraStyle {
 	}
 
 	s.houseProfile = profileMudbrick // unchanged from ancient — the wall + cooler roofs carry iron
-	s.wonderMotif = wonderZiggurat   // iron is still an ancient civ: keep the ziggurat
+	s.wonderMotif = wonderKeep       // iron gets its OWN fortified keep + watchtower — distinct from bronze's ziggurat
 	s.slotSpacing = 1.9
 	return s
 }()
@@ -3618,6 +3621,8 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 			drawRoofMegalith(img, cx, cy, hw, hh, rc)
 		case wonderTemple:
 			drawRoofTempleWonder(img, cx, cy, hw, hh, rc)
+		case wonderKeep:
+			drawRoofKeep(img, cx, cy, hw, hh, rc)
 		default:
 			drawRoofWonder(img, cx, cy, hw, hh, rc)
 		}
@@ -3915,6 +3920,70 @@ func drawRoofZiggurat(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 	}
 	// Symmetric cross axes across the base tier ground it as a monument.
 	drawHSpan(img, cx-hw, cx+hw, cy, blend(rc.base, rc.ridge, 0.4))
+}
+
+// drawRoofKeep: the IRON-AGE wonder (Phase 1b-ii follow-up) — a fortified KEEP / great hall read
+// from above so iron stops looking like tinted bronze. A solid blocky stone-and-timber HALL fills
+// the footprint (lit NW, shaded SE), a timber roof-beam runs its long axis, and a taller, brighter
+// square WATCHTOWER rises from one end capped by a dark CRENELLATED battlement, with a small dark
+// gate on the south face. The blocky hall+tower silhouette reads clearly apart from the stepped
+// ziggurat, the colonnade temple, the cruciform cathedral, and the stone-circle megalith. Stone
+// (granite/stone anchors) + timber (timberAnchor) are BLENDED with the passed roof colors, so the
+// keep retints on a theme switch and stays in the era mood. Bounds-safe: every write goes through
+// forRect/fillRectC/setPixel/drawHSpan (all clipped), so it never panics at any footprint.
+func drawRoofKeep(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	// Stone-and-timber palette pulled toward the (already theme/lineage-tinted) roof colors.
+	stone := blend(rc.base, blend(graniteAnchor, stoneAnchor, 0.5), 0.50)
+	stoneLit := brighten(stone, 0.16) // sunlit tower stone
+	stoneDark := blend(rc.dark, graniteAnchor, 0.42)
+	timber := blend(rc.base, timberAnchor, 0.50) // roof beam + gate framing
+	batt := darken(stoneDark, 0.30)              // dark crenellations + gate
+
+	horizontal := hw >= hh
+
+	// THE HALL: a solid blocky body filling the footprint, lit N/W and shaded S/E so it reads as a
+	// raised stone hall rather than a flat slab.
+	forRect(cx, cy, hw, hh, func(x, y int) {
+		if x <= cx || y <= cy { // NW-lit
+			setPixel(img, x, y, stone)
+		} else {
+			setPixel(img, x, y, stoneDark)
+		}
+	})
+	// A timber roof-beam along the hall's long axis.
+	if horizontal {
+		drawHSpan(img, cx-hw, cx+hw, cy, timber)
+	} else {
+		for y := cy - hh; y <= cy+hh; y++ {
+			setPixel(img, cx, y, timber)
+		}
+	}
+
+	// THE WATCHTOWER: a taller, narrower square block seated at ONE END of the hall (west if the
+	// hall runs E-W, north otherwise), drawn brighter so it reads as a raised keep above the hall.
+	var twx, twy, twhw, twhh int
+	if horizontal {
+		twhw, twhh = maxInt(hw/3, 2), maxInt(hh, 2)
+		twx, twy = cx-hw+twhw, cy
+	} else {
+		twhw, twhh = maxInt(hw, 2), maxInt(hh/3, 2)
+		twx, twy = cx, cy-hh+twhh
+	}
+	fillRectC(img, twx, twy, twhw, twhh, stoneLit)
+	// Crenellated battlement: dark notches around the tower rim (alternating pixels).
+	forRectOutline(twx, twy, twhw, twhh, func(x, y int) {
+		if (x+y)&1 == 0 {
+			setPixel(img, x, y, batt)
+		}
+	})
+	setPixel(img, twx, twy, batt) // a dark keep-top / arrow-slit for depth
+
+	// GATE: a small dark doorway on the hall's south face, offset onto the long axis.
+	if horizontal {
+		setPixel(img, cx+hw/3, cy+hh, batt)
+	} else {
+		setPixel(img, cx+hw, cy+hh/3, batt)
+	}
 }
 
 // drawRoofCathedral: the MEDIEVAL wonder (locked #13, V3-B) — a tall CATHEDRAL / KEEP read from

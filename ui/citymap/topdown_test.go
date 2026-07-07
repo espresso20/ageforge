@@ -2655,6 +2655,25 @@ func TestDrawRoofMegalithPanicSafe(t *testing.T) {
 	}
 }
 
+// TestDrawRoofKeepPanicSafe locks that the iron KEEP sprite is panic-safe + in-bounds on a tiny
+// footprint, a normal horizontal one, and a vertical one (tower seats north), including hard against
+// the NW corner (every write is clamped).
+func TestDrawRoofKeepPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("iron_age")
+	for _, tc := range []struct{ w, h, hw, hh int }{
+		{9, 9, 2, 2},     // tiny footprint
+		{40, 40, 12, 10}, // normal, horizontal (tower seats west)
+		{40, 40, 8, 14},  // normal, vertical (tower seats north)
+	} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		drawRoofKeep(img, tc.w/2, tc.h/2, tc.hw, tc.hh, rc)
+		drawRoofKeep(img, 1, 1, tc.hw, tc.hh, rc) // hard against the NW corner
+	}
+}
+
 // TestDumpStoneEpochPNGs renders a representative city for primitive / stone / bronze with a FIXED
 // seed and identical building counts, and writes PNGs for human eyeballing. Not an assertion test —
 // it exists so a reviewer can compare the three ages side by side. Opt-in: skipped unless
@@ -2703,13 +2722,13 @@ func tdPlanForAge(state game.GameState) topPlan {
 	return generateTopPlan(state, config.BuildingByKey(), style, seed)
 }
 
-// TestIronClassicalStylesWired locks Phase 1b-ii style wiring: iron keeps the ancient ziggurat +
-// mudbrick houses but gains a TIMBER palisade wall; classical gets a TEMPLE wonder, STONE walls, and
-// the white-stone house profile. The behaviour-preserving foundation (bronze) stays ancient.
+// TestIronClassicalStylesWired locks Phase 1b-ii style wiring: iron gets a fortified KEEP wonder +
+// mudbrick houses + a TIMBER palisade wall; classical gets a TEMPLE wonder, STONE walls, and the
+// white-stone house profile. The behaviour-preserving foundation (bronze) stays ancient (ziggurat).
 func TestIronClassicalStylesWired(t *testing.T) {
 	iron := styleForAge("iron_age")
-	if iron.wonderMotif != wonderZiggurat {
-		t.Fatalf("iron wonderMotif = %v, want wonderZiggurat (iron is still an ancient civ)", iron.wonderMotif)
+	if iron.wonderMotif != wonderKeep {
+		t.Fatalf("iron wonderMotif = %v, want wonderKeep (iron gets its own fortified keep)", iron.wonderMotif)
 	}
 	if iron.wallProfile != wallTimber {
 		t.Fatalf("iron wallProfile = %v, want wallTimber (a brown palisade)", iron.wallProfile)
@@ -2752,8 +2771,9 @@ func TestIronCityDiffersFromBronze(t *testing.T) {
 	}
 }
 
-// TestV3BiiWondersDiffer locks that the classical TEMPLE wonder reads apart from the medieval
-// CATHEDRAL and the iron/bronze ZIGGURAT (the temple silhouette is actually applied).
+// TestV3BiiWondersDiffer locks that the distinct wonder silhouettes are actually applied: the
+// classical TEMPLE reads apart from the medieval CATHEDRAL, and — the follow-up fix — the iron KEEP
+// reads apart from the bronze ZIGGURAT (iron no longer reuses bronze's centerpiece).
 func TestV3BiiWondersDiffer(t *testing.T) {
 	_ = theme.SetActive("forge")
 	pal := newTdPal()
@@ -2767,11 +2787,15 @@ func TestV3BiiWondersDiffer(t *testing.T) {
 	classical := drawWonderImg(styleForAge("classical_age"))
 	medieval := drawWonderImg(styleForAge("medieval_age"))
 	iron := drawWonderImg(styleForAge("iron_age"))
+	bronze := drawWonderImg(styleForAge("bronze_age"))
 	if !imagesDiffer(classical, medieval) {
 		t.Fatal("classical temple draws identically to the medieval cathedral — the temple silhouette is not applied")
 	}
 	if !imagesDiffer(classical, iron) {
-		t.Fatal("classical temple draws identically to the iron ziggurat — the two wonders must differ")
+		t.Fatal("classical temple draws identically to the iron keep — the two wonders must differ")
+	}
+	if !imagesDiffer(iron, bronze) {
+		t.Fatal("iron keep draws identically to the bronze ziggurat — iron must have its own centerpiece")
 	}
 }
 
