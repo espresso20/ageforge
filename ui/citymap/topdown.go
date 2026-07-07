@@ -1923,6 +1923,11 @@ type topPlan struct {
 	// primitive villages ramble organically rather than all reading as radial wheels. Kept on the
 	// plan so tests + future dressing can read which form a town took.
 	form tdTownForm
+	// shape is the town's footprint SILHOUETTE (disc / organic blob) picked per AGE (tdAgeFootprint),
+	// distinct from form (which arranges the wards INSIDE the outline). It selects the OUTLINE the
+	// raster clips to and the wall ring follows. Kept on the plan so the wall code (tdAddWalls) reads
+	// the same silhouette the block field was clipped to; future per-age silhouettes plug in here.
+	shape tdFootprintShape
 	// wardSeeds are the relaxed Voronoi ward centers (the block-field seeds after Lloyd), in city
 	// space, kept for tests + future ward-level dressing. The RADIAL form's wards spiral centers-out
 	// (a strong seed-index↔radius correlation — the wagon-wheel signature); ORGANIC/RIBBON wards do
@@ -2330,6 +2335,51 @@ func tdPlazaRadius(form tdTownForm, cfg tdConfig) float64 {
 	return cfg.plazaRadius * cfg.roofSize
 }
 
+// tdFootprintShape is the PER-AGE town-silhouette family (map-overhaul-citymap Phase 2b). Distinct
+// from tdTownForm (which selects the block-seed SCATTER strategy — how wards are arranged INSIDE the
+// footprint): the shape selects the OUTLINE the raster clips to. Today only two exist — the plain
+// disc and the ragged organic BLOB (the wobble that gives villages a rambling edge). More silhouettes
+// (sprawl, rounded-rect, ring, …) arrive in the next slice; this type is the seam they plug into.
+type tdFootprintShape int
+
+const (
+	shapeDisc tdFootprintShape = iota // a clean circle of radius townR (every non-village age today)
+	shapeBlob                         // the seeded organic wobble (tdOrganicRadiusAt) — village edges
+)
+
+// tdAgeFootprints maps an age key to its footprint SILHOUETTE (map-overhaul-citymap Phase 2b). Only
+// the two village ages get the ragged blob; every other age is a disc. Ages absent from the map (and
+// the empty/unknown key) default to shapeDisc via tdAgeFootprint.
+//
+// Note: today the blob wobble was applied to ANY city that ROLLED formOrganic (regardless of age).
+// Keying it to the two village ages is the intended per-age behavior — the only visible change is the
+// rare NON-village city that happened to roll organic no longer wobbles (acceptable; it now reads as
+// the clean disc its age otherwise plans).
+var tdAgeFootprints = map[string]tdFootprintShape{
+	"primitive_age": shapeBlob,
+	"stone_age":     shapeBlob,
+}
+
+// tdAgeFootprint returns the footprint shape for an age key, defaulting to shapeDisc for any age not
+// in tdAgeFootprints (including the empty/unknown key). Pure.
+func tdAgeFootprint(ageKey string) tdFootprintShape {
+	if s, ok := tdAgeFootprints[ageKey]; ok {
+		return s
+	}
+	return shapeDisc
+}
+
+// tdShapeRadiusAt is the town OUTLINE radius at a given angle for a footprint shape (city units): the
+// single seam every silhouette funnels through. shapeDisc is the constant townR (a clean circle);
+// shapeBlob defers to the existing organic wobble. Shared by the raster clip and the wall ring so the
+// footprint is consistent everywhere. Pure + bounded (≤ townR).
+func tdShapeRadiusAt(shape tdFootprintShape, angle, townR float64, seed uint32) float64 {
+	if shape == shapeBlob {
+		return tdOrganicRadiusAt(angle, townR, seed)
+	}
+	return townR
+}
+
 // tdOrganicRadiusAt returns the ORGANIC town's in-disc radius at a given angle (city units): the
 // base townR bitten INWARD by a smooth, seeded, angle-varying perturbation so the silhouette is a
 // genuinely IRREGULAR blob with real bays and peninsulas — NOT a clean radial circle, and NOT the
@@ -2394,16 +2444,13 @@ func tdOrganicRadiusAt(angle, townR float64, seed uint32) float64 {
 	return r
 }
 
-// tdInTown reports whether a city-space point lies inside the town footprint for a given FORM.
-// ORGANIC uses the irregular blob outline (tdOrganicRadiusAt); every other form uses the plain
-// circular disc of radius townR (unchanged). Shared by the raster partition and Lloyd relaxation so
-// the town shape is consistent everywhere. Pure.
-func tdInTown(x, y, townR float64, form tdTownForm, seed uint32) bool {
+// tdInTown reports whether a city-space point lies inside the town footprint for a given SHAPE.
+// shapeBlob uses the irregular blob outline (tdOrganicRadiusAt); shapeDisc uses the plain circular
+// disc of radius townR (unchanged). Shared by the raster partition and Lloyd relaxation so the town
+// shape is consistent everywhere. Pure.
+func tdInTown(x, y, townR float64, shape tdFootprintShape, seed uint32) bool {
 	d2 := x*x + y*y
-	if form != formOrganic {
-		return d2 <= townR*townR
-	}
-	rr := tdOrganicRadiusAt(math.Atan2(y, x), townR, seed)
+	rr := tdShapeRadiusAt(shape, math.Atan2(y, x), townR, seed)
 	return d2 <= rr*rr
 }
 
@@ -2542,9 +2589,13 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 	// (seed, roof count, form). The FORM is picked once, deterministically + AGE-weighted, so towns
 	// vary per city+age and primitive villages ramble organically instead of all reading as wheels.
 	plan.form = tdPickTownForm(seed, state.Age)
+	// The footprint SILHOUETTE is keyed to the AGE (villages ramble; every other age is a clean disc),
+	// independently of the ward-scatter FORM above. Kept on the plan so the wall ring follows the same
+	// outline the block field is clipped to.
+	plan.shape = tdAgeFootprint(state.Age)
 	totalRoofs := tdTotalFabricRoofs(blds)
 	plan.townR = tdTownRadius(totalRoofs, cfg)
-	field := tdBuildBlockField(plan.townR, plan.anchors, totalRoofs, plan.form, cfg, seed)
+	field := tdBuildBlockField(plan.townR, plan.anchors, totalRoofs, plan.form, plan.shape, cfg, seed)
 	plan.streetCells = field.streetCells
 	plan.cellSize = field.cellSize
 	plan.wardSeeds = field.seeds
@@ -3221,7 +3272,7 @@ func tdScatterCoreSuburb(seeds []tdPoint, townR float64, need int, cfg tdConfig,
 // per-block interior cell lists. Central seeds (the plaza anchors) are flagged so their regions
 // stay OPEN and stay pinned through relaxation. Pure + deterministic; panic-safe (the grid is
 // capped and every loop is bounded).
-func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, form tdTownForm, cfg tdConfig, seed uint32) blockField {
+func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, form tdTownForm, shape tdFootprintShape, cfg tdConfig, seed uint32) blockField {
 	f := blockField{townR: townR, cellSize: cfg.cellSize}
 	if townR <= 0 || cfg.cellSize <= 0 {
 		return f
@@ -3258,7 +3309,7 @@ func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, form tdTow
 	// radiate as spokes. Without that pin, organic's blue-noise seeds cover the center as ordinary
 	// mesh wards, so the middle is an irregular web with loops, not a hub with spokes.
 	nPinned := tdPinnedCount(form, anchors)
-	seeds = tdLloyd(seeds, nPinned, gridN, cfg.cellSize, f.origin, townR, form, seed, cfg.lloydPasses)
+	seeds = tdLloyd(seeds, nPinned, gridN, cfg.cellSize, f.origin, townR, shape, seed, cfg.lloydPasses)
 	f.seeds = seeds
 	// A seed's region is a reserved PLAZA (building-free) ONLY when its anchor seats a WONDER —
 	// the wonder occupies a whole central region kept clear + dressed as a square. The wonderless
@@ -3275,15 +3326,15 @@ func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, form tdTow
 	}
 
 	// Raster partition: nearest seed per in-town cell. The town footprint is the plain circular disc
-	// for every form EXCEPT organic, which uses the irregular BLOB outline (tdInTown) so the
-	// silhouette rambles rather than reading as a clean radial disc.
+	// for shapeDisc; shapeBlob uses the irregular BLOB outline (tdInTown) so the silhouette rambles
+	// rather than reading as a clean radial disc.
 	f.nearest = make([]int, gridN*gridN)
 	f.street = make([]bool, gridN*gridN)
 	for gy := 0; gy < gridN; gy++ {
 		for gx := 0; gx < gridN; gx++ {
 			c := gy*gridN + gx
 			p := f.cellCenter(gx, gy)
-			if !tdInTown(p.x, p.y, townR, form, seed) {
+			if !tdInTown(p.x, p.y, townR, shape, seed) {
 				f.nearest[c] = -1 // outside the town → not built
 				continue
 			}
@@ -3338,10 +3389,10 @@ func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, form tdTow
 // the town by nearest seed and moves every FREE seed (index >= nPinned) to the centroid of its
 // region; pinned seeds (the plaza anchors) stay fixed. Evens out the block sizes into an
 // organic, roughly-even field. The town footprint matches the raster partition's — the plain disc
-// for every form except organic, which uses the irregular BLOB outline (tdInTown) — so relaxed
-// centroids stay inside the same rambling town shape. Pure + deterministic; a seed that loses its
-// whole region (rare) keeps its position. Panic-safe: bounded loops, guarded division.
-func tdLloyd(seeds []tdPoint, nPinned, gridN int, cellSize, origin, townR float64, form tdTownForm, seed uint32, passes int) []tdPoint {
+// for shapeDisc, the irregular BLOB outline (tdInTown) for shapeBlob — so relaxed centroids stay
+// inside the same rambling town shape. Pure + deterministic; a seed that loses its whole region
+// (rare) keeps its position. Panic-safe: bounded loops, guarded division.
+func tdLloyd(seeds []tdPoint, nPinned, gridN int, cellSize, origin, townR float64, shape tdFootprintShape, seed uint32, passes int) []tdPoint {
 	if len(seeds) == 0 || gridN < 3 || passes <= 0 {
 		return seeds
 	}
@@ -3355,7 +3406,7 @@ func tdLloyd(seeds []tdPoint, nPinned, gridN int, cellSize, origin, townR float6
 			for gx := 0; gx < gridN; gx++ {
 				px := origin + float64(gx)*cellSize
 				py := origin + float64(gy)*cellSize
-				if !tdInTown(px, py, townR, form, seed) {
+				if !tdInTown(px, py, townR, shape, seed) {
 					continue
 				}
 				best := math.Inf(1)
@@ -4437,19 +4488,19 @@ const (
 )
 
 // tdWallRadiusAt is the wall RING radius at a given angle (city units). The wall follows the
-// (ragged) town OUTLINE just OUTSIDE the outermost ward: for the ORGANIC form it rides the
-// irregular blob outline (tdOrganicRadiusAt) so the rampart is ragged like the town it encloses;
-// every other form uses a plain circle. Sized from the built-up footprint (so buildings stay
-// INSIDE) but capped to the town disc so the ring never leaves the bounded canvas. Pure.
-func tdWallRadiusAt(angle, footR, townR float64, form tdTownForm, seed uint32) float64 {
+// (ragged) town OUTLINE just OUTSIDE the outermost ward: for any NON-disc shape it rides the town's
+// outline profile (tdShapeRadiusAt) so the rampart is ragged like the town it encloses; a plain disc
+// uses a plain circle. Sized from the built-up footprint (so buildings stay INSIDE) but capped to the
+// town disc so the ring never leaves the bounded canvas. Pure.
+func tdWallRadiusAt(angle, footR, townR float64, shape tdFootprintShape, seed uint32) float64 {
 	// Ring the built-up edge with a small margin so the outermost roofs sit inside the wall.
 	r := footR * 1.12
-	// Follow the ragged outline for the ORGANIC form: modulate the footprint ring by the town's
-	// own outline profile at this angle (tdOrganicRadiusAt/townR ∈ [floor,1]), so the rampart bites
+	// Follow the ragged outline for any NON-disc shape: modulate the footprint ring by the town's
+	// own outline profile at this angle (tdShapeRadiusAt/townR ∈ [floor,1]), so the rampart bites
 	// inward on the town's bays and bulges on its peninsulas — a ragged wall around a ragged town.
-	if form == formOrganic && townR > 0 {
-		shape := tdOrganicRadiusAt(angle, townR, seed) / townR // 0..1 outline profile at this angle
-		r = footR * (1.04 + 0.16*shape)
+	if shape != shapeDisc && townR > 0 {
+		prof := tdShapeRadiusAt(shape, angle, townR, seed) / townR // 0..1 outline profile at this angle
+		r = footR * (1.04 + 0.16*prof)
 	}
 	// Keep the ring inside the bounded town disc (+ a hair) so the wall never flies off-canvas.
 	if lim := townR * 1.14; r > lim {
@@ -4476,7 +4527,7 @@ func tdAddWalls(plan *topPlan, style tdEraStyle, seed uint32) {
 	if footR <= 0 {
 		return
 	}
-	form := plan.form
+	shape := plan.shape
 	townR := plan.townR
 	prof := style.wallProfile
 	if prof == wallNone {
@@ -4527,7 +4578,7 @@ func tdAddWalls(plan *topPlan, style tdEraStyle, seed uint32) {
 
 	for i := 0; i < segs; i++ {
 		ang := phase + 2*math.Pi*float64(i)/float64(segs)
-		rad := tdWallRadiusAt(ang, footR, townR, form, seed)
+		rad := tdWallRadiusAt(ang, footR, townR, shape, seed)
 		if _, isGate := inGate(ang); isGate {
 			continue // leave a GAP in the curtain here — the gate structure is placed below
 		}
@@ -4554,7 +4605,7 @@ func tdAddWalls(plan *topPlan, style tdEraStyle, seed uint32) {
 	// street passes through, not just a missing wall segment. The FIRST gate (the longest street,
 	// the main road) gets a GATEHOUSE on a stone wall — flanking towers + a lintel across the gap.
 	for gi, ga := range gateAngles {
-		rad := tdWallRadiusAt(ga, footR, townR, form, seed)
+		rad := tdWallRadiusAt(ga, footR, townR, shape, seed)
 		gx := plan.cx + math.Cos(ga)*rad
 		gy := plan.cy + math.Sin(ga)*rad
 		plan.lots = append(plan.lots, tdLot{x: gx, y: gy, w: segHalf * 2, h: segHalf * 2, kind: tdGate})

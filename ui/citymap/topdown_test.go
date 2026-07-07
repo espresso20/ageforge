@@ -1420,7 +1420,7 @@ func TestStreetsAreThinLanes(t *testing.T) {
 		seed := citySeed(nm)
 		for _, nRoofs := range []int{40, 90, 160} {
 			townR := tdTownRadius(nRoofs, cfg)
-			f := tdBuildBlockField(townR, anchors, nRoofs, formOrganic, cfg, seed)
+			f := tdBuildBlockField(townR, anchors, nRoofs, formOrganic, shapeBlob, cfg, seed)
 			town := inTownCellCount(f)
 			if town == 0 {
 				t.Fatalf("seed %q n=%d: empty town footprint", nm, nRoofs)
@@ -1537,6 +1537,67 @@ func TestOrganicOutlineIrregular(t *testing.T) {
 	}
 	if hi-lo < 0.02 {
 		t.Fatalf("outline irregularity barely varies across seeds (std/mean spread %.4f over [%.4f,%.4f]) — different towns should have different silhouettes, not one shared shape", hi-lo, lo, hi)
+	}
+}
+
+// TestFootprintShapeWiring pins the per-age footprint-shape seam (map-overhaul-citymap Phase 2b): the
+// two village ages take the ragged blob, every other age the clean disc, and the shape→radius seam
+// resolves to the constant townR for the disc and exactly the organic wobble for the blob. Pure wiring
+// — no rendering — so it's the behavior-preserving contract the raster/wall paths rely on.
+func TestFootprintShapeWiring(t *testing.T) {
+	// (1) age → shape mapping: villages blob, others disc, unknown/empty disc.
+	if got := tdAgeFootprint("primitive_age"); got != shapeBlob {
+		t.Fatalf("tdAgeFootprint(primitive_age) = %d, want shapeBlob (%d)", got, shapeBlob)
+	}
+	if got := tdAgeFootprint("stone_age"); got != shapeBlob {
+		t.Fatalf("tdAgeFootprint(stone_age) = %d, want shapeBlob (%d)", got, shapeBlob)
+	}
+	if got := tdAgeFootprint("modern_age"); got != shapeDisc {
+		t.Fatalf("tdAgeFootprint(modern_age) = %d, want shapeDisc (%d)", got, shapeDisc)
+	}
+	for _, ak := range []string{"", "nonexistent_age", "bronze_age", "galactic_age"} {
+		if got := tdAgeFootprint(ak); got != shapeDisc {
+			t.Fatalf("tdAgeFootprint(%q) = %d, want shapeDisc (%d) — only the two village ages blob", ak, got, shapeDisc)
+		}
+	}
+
+	// (2) shapeDisc → constant townR at every angle (an exact circle).
+	const townR = 40.0
+	seed := citySeed("Aldermoor")
+	for i := 0; i < 16; i++ {
+		a := 2 * math.Pi * float64(i) / 16
+		if got := tdShapeRadiusAt(shapeDisc, a, townR, seed); got != townR {
+			t.Fatalf("tdShapeRadiusAt(shapeDisc, %.3f) = %.6f, want townR %.1f (disc must be a constant radius)", a, got, townR)
+		}
+	}
+
+	// (3) shapeBlob → EXACTLY the existing organic wobble (the seam must not alter the blob outline).
+	for _, nm := range []string{"", "Aldermoor", "Duskwind", "Gorse"} {
+		s := citySeed(nm)
+		for i := 0; i < 32; i++ {
+			a := 2 * math.Pi * float64(i) / 32
+			want := tdOrganicRadiusAt(a, townR, s)
+			if got := tdShapeRadiusAt(shapeBlob, a, townR, s); got != want {
+				t.Fatalf("seed %q angle %.3f: tdShapeRadiusAt(shapeBlob) = %.6f, want tdOrganicRadiusAt = %.6f", nm, a, got, want)
+			}
+		}
+	}
+}
+
+// TestInTownDiscUnchanged proves the disc footprint is byte-for-byte the old x²+y²≤townR² test — the
+// behavior-preserving guarantee for every non-village age (shapeDisc → townR, so tdInTown reduces to
+// the plain disc membership it had before the shape seam existed).
+func TestInTownDiscUnchanged(t *testing.T) {
+	const townR = 30.0
+	seed := citySeed("Corveil") // seed is irrelevant for the disc; pass a real one to prove it's ignored
+	for gx := -40; gx <= 40; gx += 3 {
+		for gy := -40; gy <= 40; gy += 3 {
+			x, y := float64(gx), float64(gy)
+			want := x*x+y*y <= townR*townR
+			if got := tdInTown(x, y, townR, shapeDisc, seed); got != want {
+				t.Fatalf("tdInTown(%.0f,%.0f, shapeDisc) = %v, want plain-disc %v (x²+y²=%.0f vs townR²=%.0f)", x, y, got, want, x*x+y*y, townR*townR)
+			}
+		}
 	}
 }
 
@@ -2019,8 +2080,8 @@ func TestPrimitiveIsOrganicNotAWheel(t *testing.T) {
 		seed := citySeed(nm)
 		for _, nRoofs := range []int{40, 80, 140, 200} {
 			townR := tdTownRadius(nRoofs, cfg)
-			org := tdBuildBlockField(townR, anchors, nRoofs, formOrganic, cfg, seed)
-			rad := tdBuildBlockField(townR, anchors, nRoofs, formRadial, cfg, seed)
+			org := tdBuildBlockField(townR, anchors, nRoofs, formOrganic, shapeBlob, cfg, seed)
+			rad := tdBuildBlockField(townR, anchors, nRoofs, formRadial, shapeDisc, cfg, seed)
 			if e := enclosedWardCount(org); e < minOrganicMesh {
 				t.Fatalf("organic field (seed %q, n=%d) has only %d enclosed wards (< %d) — the street web is not a mesh with loops", nm, nRoofs, e, minOrganicMesh)
 			}
@@ -2127,11 +2188,16 @@ func TestEachTownFormWellFormed(t *testing.T) {
 	// single-center anchor + a substantial ward count so the network is real.
 	anchors := []tdAnchor{{cx: 0, cy: 0}}
 	for _, form := range []tdTownForm{formOrganic, formRadial, formGrid, formRibbon, formCrescent, formBoulevard, formCoreSuburb} {
+		// Mirror today's outline behaviour: organic clips to the blob, every other form to the disc.
+		shape := shapeDisc
+		if form == formOrganic {
+			shape = shapeBlob
+		}
 		for _, nm := range []string{"Aldermoor", "Bexley", "Corveil", "Duskwind"} {
 			seed := citySeed(nm)
 			nRoofs := 140
 			townR := tdTownRadius(nRoofs, cfg)
-			field := tdBuildBlockField(townR, anchors, nRoofs, form, cfg, seed)
+			field := tdBuildBlockField(townR, anchors, nRoofs, form, shape, cfg, seed)
 
 			// Street network exists, is ONE component, and reaches the core (the central plaza's
 			// ward boundary is central).
@@ -2522,30 +2588,34 @@ func TestV3BWallsPresentWithGates(t *testing.T) {
 				t.Fatalf("%s seed %q: street web has %d components — the wall must not sever street connectivity", bc.name, nm, comps)
 			}
 
-			// (4) The wall is NOT a closed ring — it has GATE GAPS. Bucket the wall segments by angle
-			// into 24 sectors; a closed ring fills nearly all sectors, but the gate gaps must leave
-			// some EMPTY sectors (the openings). Require at least 2 empty sectors (≥2 gate gaps).
-			const sect = 24
-			var filled [sect]bool
-			for _, w := range walls {
-				a := math.Atan2(w.y-plan.cy, w.x-plan.cx)
-				b := int((a + math.Pi) / (2 * math.Pi) * sect)
-				if b < 0 {
-					b = 0
+			// (4) The wall is NOT a closed ring — there is a real GATE GAP at every gate. Assert it at
+			// the GATE ANGLES directly (not a coarse fixed-sector bucket): each gate must sit in an
+			// actual opening in the curtain — no wall SEGMENT within the gate's angular arc. This is
+			// the true "curtain is open here" invariant and is silhouette-robust: a coarse 24-sector
+			// bucket saturates on a SMOOTH disc wall whose gates cluster (a non-village organic-roll now
+			// takes the disc footprint), hiding openings that plainly exist; checking at the gate arc
+			// itself catches a genuinely closed ring while never false-tripping on a dense-but-open one.
+			// The wall segments span gateArc=0.16 rad each side of a gate centre; require the curtain
+			// clear within a slightly tighter arc so a real opening is proven without demanding the
+			// renderer leave the entire 0.16 arc pristine.
+			const gateGapArc = 0.12 // radians each side of a gate that must be free of wall segments
+			openGates := 0
+			for _, g := range gates {
+				gAng := math.Atan2(g.y-plan.cy, g.x-plan.cx)
+				blocked := false
+				for _, w := range walls {
+					wAng := math.Atan2(w.y-plan.cy, w.x-plan.cx)
+					if angDiff(gAng, wAng) < gateGapArc {
+						blocked = true
+						break
+					}
 				}
-				if b >= sect {
-					b = sect - 1
+				if !blocked {
+					openGates++
 				}
-				filled[b] = true
 			}
-			empty := 0
-			for _, f := range filled {
-				if !f {
-					empty++
-				}
-			}
-			if empty < 2 {
-				t.Fatalf("%s seed %q: wall fills %d/%d angular sectors with only %d gaps — the curtain has no gate openings (a closed ring)", bc.name, nm, sect-empty, sect, empty)
+			if openGates < 2 {
+				t.Fatalf("%s seed %q: only %d of %d gates sit in a real curtain gap — the wall is a closed ring, not gated", bc.name, nm, openGates, len(gates))
 			}
 
 			// (5) A STREET REACHES EACH GATE (the gate opens where a street exits). For every gate,
