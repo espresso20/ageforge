@@ -2220,6 +2220,15 @@ func towerLotsOf(plan topPlan) []tdLot {
 	}
 	return out
 }
+func bastionLotsOf(plan topPlan) []tdLot {
+	var out []tdLot
+	for _, lt := range plan.lots {
+		if lt.kind == tdWallBastion {
+			out = append(out, lt)
+		}
+	}
+	return out
+}
 
 // TestV3BErasDistinctFromPrimitive locks that ANCIENT and MEDIEVAL read visibly different from the
 // PRIMITIVE village: the roof MATERIAL tone differs (clay/slate vs thatch) and the GROUND tone
@@ -2884,6 +2893,158 @@ func TestV3BiiSpritesPanicSafe(t *testing.T) {
 			drawRoofStoneClassical(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rcHouse)
 			drawRoofStoneClassical(img, 1, 1, hwhh.hw, hwhh.hh, rcHouse)
 		}
+	}
+}
+
+// --- Renaissance (Phase 1b) ---------------------------------------------------
+
+// TestRenaissanceStyleWired locks the renaissance wiring: a DOME wonder, a STAR-FORT wall, walls on,
+// and the cream-stone house profile. Medieval (its old shared preset) is unchanged (cathedral + stone).
+func TestRenaissanceStyleWired(t *testing.T) {
+	ren := styleForAge("renaissance_age")
+	if ren.wonderMotif != wonderDome {
+		t.Fatalf("renaissance wonderMotif = %v, want wonderDome", ren.wonderMotif)
+	}
+	if ren.wallProfile != wallStarFort {
+		t.Fatalf("renaissance wallProfile = %v, want wallStarFort", ren.wallProfile)
+	}
+	if !ren.hasWalls {
+		t.Fatal("renaissance must have walls (a star-fort)")
+	}
+	if ren.houseProfile != profileStoneClassical {
+		t.Fatalf("renaissance houseProfile = %v, want profileStoneClassical (cream ashlar townhouses)", ren.houseProfile)
+	}
+
+	// Medieval, whose preset renaissance used to share, must stay MEDIEVAL (cathedral + stone wall).
+	med := styleForAge("medieval_age")
+	if med.wonderMotif != wonderCathedral || med.wallProfile != wallStone {
+		t.Fatalf("medieval changed: motif=%v wall=%v — medieval must stay cathedral + stone", med.wonderMotif, med.wallProfile)
+	}
+}
+
+// TestRenaissanceWonderDiffers locks that the renaissance DOME reads apart from the medieval CATHEDRAL,
+// the classical TEMPLE, and the iron KEEP — the dome silhouette must actually be applied, not shared.
+func TestRenaissanceWonderDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	ren := drawWonderImg(styleForAge("renaissance_age"))
+	med := drawWonderImg(styleForAge("medieval_age"))
+	classical := drawWonderImg(styleForAge("classical_age"))
+	iron := drawWonderImg(styleForAge("iron_age"))
+	if !imagesDiffer(ren, med) {
+		t.Fatal("renaissance dome draws identically to the medieval cathedral — the dome silhouette is not applied")
+	}
+	if !imagesDiffer(ren, classical) {
+		t.Fatal("renaissance dome draws identically to the classical temple — the two wonders must differ")
+	}
+	if !imagesDiffer(ren, iron) {
+		t.Fatal("renaissance dome draws identically to the iron keep — the two wonders must differ")
+	}
+}
+
+// TestRenaissanceCityDiffersFromMedieval locks that a renaissance city reads apart from a medieval one
+// at the CITY level (cream stone + dome + star-fort vs cool slate + cathedral + stone curtain).
+func TestRenaissanceCityDiffersFromMedieval(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	med, _ := renderImage(namedState("medieval_age", "Aldermoor", blds), 120, 72)
+	ren, _ := renderImage(namedState("renaissance_age", "Aldermoor", blds), 120, 72)
+	if !imagesDiffer(med, ren) {
+		t.Fatal("renaissance city renders identically to medieval — the cream re-skin + dome + star-fort are not applied")
+	}
+}
+
+// TestDrawRoofDomePanicSafe locks that the renaissance DOME sprite is panic-safe + in-bounds on a tiny
+// footprint, a normal one, and hard against the NW corner (every write is clamped).
+func TestDrawRoofDomePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("renaissance_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}} {
+			drawRoofDome(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofDome(img, 1, 1, hwhh.hw, hwhh.hh, rc) // hard against the NW corner
+		}
+	}
+}
+
+// TestRenaissanceStarFortWallLots locks that a renaissance town emits a real STAR-FORT: curtain
+// segments, gates the streets exit through, and periodic ANGULAR BASTION salients — and NO round
+// stone towers/gatehouse. Every wall/gate/bastion lot must map in-bounds on real + tiny canvases.
+func TestRenaissanceStarFortWallLots(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+		plan := tdPlanForAge(namedState("renaissance_age", "Aldermoor", blds))
+		if len(wallLotsOf(plan)) < 12 {
+			t.Fatalf("renaissance %dx%d: only %d wall segments — no real rampart", sz.w, sz.h, len(wallLotsOf(plan)))
+		}
+		if len(gateLotsOf(plan)) < 2 {
+			t.Fatalf("renaissance %dx%d: only %d gates — the star-fort needs gates the streets exit through", sz.w, sz.h, len(gateLotsOf(plan)))
+		}
+		if n := len(bastionLotsOf(plan)); n < 3 {
+			t.Fatalf("renaissance %dx%d: only %d bastions — a star-fort must have angular salients", sz.w, sz.h, n)
+		}
+		if n := len(towerLotsOf(plan)); n != 0 {
+			t.Fatalf("renaissance %dx%d: has %d round stone towers/gatehouse — a star-fort has angular bastions only", sz.w, sz.h, n)
+		}
+		xf := computeTransform(&plan, sz.w, sz.h)
+		for _, lt := range plan.lots {
+			switch lt.kind {
+			case tdWall, tdGate, tdWallBastion:
+				px, py := xf.px(lt.x, lt.y)
+				if px < -3 || px > sz.w+3 || py < -3 || py > sz.h+3 {
+					t.Fatalf("renaissance %dx%d: wall/bastion lot maps to (%d,%d) off-canvas — the star-fort is not bounded", sz.w, sz.h, px, py)
+				}
+			}
+		}
+	}
+}
+
+// TestDumpRenaissancePNGs renders medieval / renaissance / classical with a FIXED display name +
+// identical building set INCLUDING a wonder so the cathedral/dome/temple centerpieces render, so a
+// reviewer can compare the three side by side. Opt-in: skipped unless CITYMAP_PNG_DUMP=<dir> is set:
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpRenaissancePNGs
+func TestDumpRenaissancePNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Identical building set (with a wonder so the centerpiece renders) + a FIXED display name → the
+	// citySeed is fixed, so only the era re-skin differs across the three dumps.
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"medieval_age", "1c_medieval.png"},
+		{"renaissance_age", "1c_renaissance.png"},
+		{"classical_age", "1c_classical.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
 	}
 }
 

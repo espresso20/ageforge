@@ -164,6 +164,7 @@ const (
 	wallMudbrick                    // ancient/bronze: thin tan curtain, gate gaps, no towers
 	wallStone                       // medieval/classical: thicker grey curtain, towers, a gatehouse
 	wallTimber                      // iron: medium brown timber palisade, gate gaps, no stone towers
+	wallStarFort                    // renaissance: thick earthwork curtain with ANGULAR triangular BASTION salients (no round towers)
 )
 
 // wonderMotif is the centerpiece silhouette drawn for a city's dominant wonder, decoupled from
@@ -178,6 +179,7 @@ const (
 	wonderMegalith                     // stone-age standing-stone circle (drawRoofMegalith)
 	wonderTemple                       // classical columned temple + pediment (drawRoofTempleWonder)
 	wonderKeep                         // iron-age fortified keep + watchtower (drawRoofKeep)
+	wonderDome                         // renaissance great domed rotunda + lantern (drawRoofDome)
 )
 
 // tdPal is the small set of resolved theme colors the style recipes draw from. Built once
@@ -536,6 +538,73 @@ var medievalCityStyle = func() tdEraStyle {
 	return s
 }()
 
+// renaissanceCityStyle is the tuned RENAISSANCE preset (Phase 1b — renaissance split off medieval,
+// which it used to share). A grand ORNATE CREAM-STONE city: pale ivory ashlar houses with lead-grey
+// accents (profileStoneClassical), pale DRESSED-STONE civic paving underfoot, a pale-stone EARTHWORK
+// STAR-FORT wall with ANGULAR triangular BASTIONS (wallStarFort — no round towers), and a great
+// domed rotunda centerpiece (wonderDome, the Florence/St-Peter's read). Built from classicalCityStyle
+// (which already gives the pale-dressed-stone ground + stone walls + white-stone house profile), then
+// re-skinned WARMER + LIGHTER + more monumental. Reads clearly apart from BOTH neighbours: medieval is
+// COOL GREY (slate roofs, cobble, cathedral); classical is PLAIN WHITE (marble, terracotta caps,
+// temple); renaissance is WARM CREAM/IVORY ashlar + a DOME + a STAR-FORT.
+var renaissanceCityStyle = func() tdEraStyle {
+	s := classicalCityStyle
+	s.name = "renaissance"
+
+	// Roof material: pale CREAM/IVORY ashlar — warmer + a touch lighter than classical's cooler marble
+	// white, so a renaissance city reads as dressed golden-cream stone, not grey slate and not plain
+	// marble. The stone-classical house sprite still draws its two-tone body; roofBase is the cream body.
+	s.roofBase = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.text, 0.36), creamStoneAnchor, 0.56)
+	}
+	s.roofDark = func(p tdPal) color.RGBA {
+		return darken(blend(blend(p.bg, p.text, 0.36), creamStoneAnchor, 0.56), 0.22)
+	}
+	s.lineageMix = 0.12 // a whisper of lineage tint over the cream stone; sat cap guards it
+
+	// Ground: pale DRESSED-STONE civic paving — cleaner + creamier than classical's cool marble grey,
+	// a monumental piazza floor. Blend the cream anchor and lift toward the light neutral.
+	s.groundBase = func(p tdPal) color.RGBA {
+		pale := blend(blend(p.bg, p.dim, 0.18), creamStoneAnchor, 0.46)
+		return blend(pale, p.text, 0.18)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.16), stoneAnchor, 0.32)
+	}
+	// Streets: pale flagstone avenues, warm cream and clean.
+	s.streetCol = func(p tdPal) color.RGBA {
+		paved := blend(blend(p.bg, p.dim, 0.18), creamStoneAnchor, 0.42)
+		return blend(blend(paved, p.text, 0.30), stoneAnchor, 0.20)
+	}
+	s.streetEdge = func(p tdPal) color.RGBA {
+		paved := blend(blend(p.bg, p.dim, 0.18), creamStoneAnchor, 0.42)
+		surface := blend(blend(paved, p.text, 0.30), stoneAnchor, 0.20)
+		return darken(surface, 0.20)
+	}
+	// Town-square paving: the brightest dressed cream stone in the city — a grand civic piazza.
+	s.pavedCol = func(p tdPal) color.RGBA {
+		pale := blend(blend(p.bg, p.dim, 0.14), creamStoneAnchor, 0.50)
+		return blend(pale, p.text, 0.30)
+	}
+
+	// Wall: a pale-stone EARTHWORK STAR-FORT (wallStarFort) — a thick low rampart with angular
+	// triangular bastions. A dressed-cream face grounded DARKER + EARTHIER (toward dim + a touch of
+	// earth) so the rampart reads as a RAISED earthwork with strong contrast against the bright cream
+	// piazza floor — not the cool grey masonry of the medieval/classical curtain, and not so pale it
+	// vanishes into the paving.
+	s.hasWalls = true
+	s.wallProfile = wallStarFort
+	s.wallCol = func(p tdPal) color.RGBA {
+		face := blend(blend(p.bg, p.dim, 0.44), creamStoneAnchor, 0.40)
+		return blend(face, earthAnchor, 0.16)
+	}
+
+	s.houseProfile = profileStoneClassical // pale ashlar body + cap + fluting — reads as cream townhouses
+	s.wonderMotif = wonderDome             // renaissance centrepiece: a great domed rotunda + lantern
+	s.slotSpacing = 1.75                   // a packed, monumental civic core
+	return s
+}()
+
 // stoneAgeStyle is the tuned STONE preset (Phase 1b-i), split off organicVillageStyle so the stone
 // age reads distinct from primitive. Dwellings stay THATCH (stone-age huts are still thatch, so
 // houseProfile is unchanged) and there are still NO walls — the difference is a ROCKIER, cooler,
@@ -608,6 +677,11 @@ var (
 	ironAnchor   = color.RGBA{R: 0x51, G: 0x55, B: 0x59, A: 0xff} // cool iron-grey (iron roof accents / worked ground)
 	timberAnchor = color.RGBA{R: 0x6e, G: 0x4c, B: 0x2f, A: 0xff} // dark palisade brown (iron timber wall)
 	marbleAnchor = color.RGBA{R: 0xcf, G: 0xc9, B: 0xbc, A: 0xff} // pale warm white-stone / marble (classical houses + ground)
+
+	// V3-B renaissance anchors (Phase 1b — renaissance split off medieval). Same discipline — never
+	// used raw, always blended against theme roles + the era material so a light/dark theme retints.
+	creamStoneAnchor = color.RGBA{R: 0xe3, G: 0xd8, B: 0xbf, A: 0xff} // warm cream/ivory ashlar (renaissance ornate townhouses + civic paving) — LIGHTER + warmer than marble
+	leadAnchor       = color.RGBA{R: 0x8f, G: 0x93, B: 0x99, A: 0xff} // pale lead-grey (renaissance dome sheathing + stone accents)
 )
 
 // tdStyleForEra returns the tuned preset for an era band, or defaultTdStyle for the bands not yet
@@ -640,9 +714,9 @@ var ageStyles = map[string]tdEraStyle{
 	"bronze_age":    ancientCityStyle,
 	"iron_age":      ironCityStyle,
 	"classical_age": classicalCityStyle,
-	// medieval — medieval/renaissance (V3-B)
+	// medieval — medieval/renaissance (V3-B; renaissance split off with cream stone + dome + star-fort)
 	"medieval_age":    medievalCityStyle,
-	"renaissance_age": medievalCityStyle,
+	"renaissance_age": renaissanceCityStyle,
 	// default — every not-yet-tuned age renders the legible default city
 	"colonial_age":     defaultTdStyle,
 	"industrial_age":   defaultTdStyle,
@@ -2837,6 +2911,7 @@ func tdRoofBBox(plan *topPlan) (minX, minY, maxX, maxY float64) {
 const (
 	tdWallTower     tdLotKind = iota + 100 // a wall tower (stone wall only): a fat masonry block
 	tdWallGatehouse                        // a gatehouse flanking a stone-wall gate: two towers + lintel
+	tdWallBastion                          // an ANGULAR arrowhead bastion salient (renaissance star-fort only): a diamond jut-out, NOT a round drum
 )
 
 // tdWallRadiusAt is the wall RING radius at a given angle (city units). The wall follows the
@@ -2872,6 +2947,8 @@ func tdWallRadiusAt(angle, footR, townR float64, form tdTownForm, seed uint32) f
 //   - wallMudbrick (ancient): a thin tan curtain, four gates, no towers.
 //   - wallStone (medieval): a thicker grey curtain, periodic TOWERS, and a GATEHOUSE at the main
 //     gate (the longest street's exit).
+//   - wallStarFort (renaissance): a thick earthwork rampart with periodic ANGULAR BASTION salients
+//     (arrowhead jut-outs) instead of round towers, and plain gate blocks (no round gatehouse).
 func tdAddWalls(plan *topPlan, style tdEraStyle, seed uint32) {
 	footR := tdFootprintRadius(plan)
 	if footR <= 0 {
@@ -2897,18 +2974,24 @@ func tdAddWalls(plan *topPlan, style tdEraStyle, seed uint32) {
 	const segs = 48
 	r := newRNG(hash2(0x3a11, uint32(len(plan.lots)), seed) | 1)
 	phase := r.f01() * 2 * math.Pi
-	// Wall thickness (city units): mudbrick ~thin, timber ~medium, stone ~a hair thicker.
+	// Wall thickness (city units): mudbrick ~thin, timber ~medium, stone ~a hair thicker, star-fort
+	// ~thickest (a low broad earthwork rampart).
 	segHalf := 0.85
 	switch prof {
 	case wallTimber:
 		segHalf = 0.95 // between mudbrick (0.85) and stone (1.05) — a stout log palisade
 	case wallStone:
 		segHalf = 1.05
+	case wallStarFort:
+		segHalf = 1.10 // a thick low earthwork rampart (renaissance)
 	}
 	// Gate half-arc: the angular gap a gate opens in the ring (wide enough for a street to pass).
 	gateArc := 0.16 // radians each side of the gate center
 	// Tower cadence (stone only): a tower every few segments around the ring.
 	const towerEvery = 6
+	// Bastion cadence (star-fort only): an angular salient every few segments, spaced wider than the
+	// stone towers so the pointed bastions read as distinct star points, not a dense studding.
+	const bastionEvery = 8
 
 	inGate := func(ang float64) (center float64, isGate bool) {
 		for _, ga := range gateAngles {
@@ -2929,9 +3012,19 @@ func tdAddWalls(plan *topPlan, style tdEraStyle, seed uint32) {
 		x := plan.cx + math.Cos(ang)*rad
 		y := plan.cy + math.Sin(ang)*rad
 		plan.lots = append(plan.lots, tdLot{x: x, y: y, w: segHalf * 2, h: segHalf * 2, kind: tdWall})
-		// Stone walls carry periodic towers between the gates.
+		// Stone walls carry periodic ROUND towers between the gates.
 		if prof == wallStone && i%towerEvery == 0 {
 			plan.lots = append(plan.lots, tdLot{x: x, y: y, w: segHalf * 3.0, h: segHalf * 3.0, kind: tdWallTower})
+		}
+		// Star-fort walls carry periodic ANGULAR BASTIONS — arrowhead salients pushed OUTWARD from the
+		// curtain so the trace reads as a pointed-bastion star (never a round tower). Kept off the gate
+		// arcs so a bastion never blocks a gate. Pushed out ~1.5 seg beyond the rampart; the renderer
+		// clamps every pixel, so it stays panic-safe even if a salient reaches the canvas edge.
+		if prof == wallStarFort && i%bastionEvery == 0 {
+			brad := rad + segHalf*1.5
+			bx := plan.cx + math.Cos(ang)*brad
+			by := plan.cy + math.Sin(ang)*brad
+			plan.lots = append(plan.lots, tdLot{x: bx, y: by, w: segHalf * 3.0, h: segHalf * 3.0, kind: tdWallBastion})
 		}
 	}
 
@@ -3103,7 +3196,7 @@ func computeTransform(plan *topPlan, w, h int) tdTransform {
 	// rather than being flung off the frame edge.
 	for _, lt := range plan.lots {
 		switch lt.kind {
-		case tdWall, tdGate, tdWallTower, tdWallGatehouse:
+		case tdWall, tdGate, tdWallTower, tdWallGatehouse, tdWallBastion:
 			acc(lt.x, lt.y, math.Max(lt.w, lt.h)/2)
 		}
 	}
@@ -3296,6 +3389,14 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 					// A gatehouse reads a touch taller: a second ring of cap dabs (crenellations).
 					forRectOutline(cx, cy, rad, rad, func(x, y int) { setPixel(img, x, y, towerCap) })
 				}
+			case tdWallBastion:
+				// A star-fort ANGULAR bastion: an arrowhead salient pointing OUTWARD from the core, never
+				// a round drum. Drawn as a filled DIAMOND whose OUTER vertex is stretched along the radial
+				// (the pointed tip) so it reads as a triangular jut-out. All writes clamp → panic-safe.
+				cx, cy := xf.px(lt.x, lt.y)
+				ccx, ccy := xf.px(plan.cx, plan.cy)
+				rad := xf.ext(lt.w / 2)
+				drawBastion(img, cx, cy, ccx, ccy, rad, towerCol, towerCap)
 			}
 		}
 	}
@@ -3623,6 +3724,8 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 			drawRoofTempleWonder(img, cx, cy, hw, hh, rc)
 		case wonderKeep:
 			drawRoofKeep(img, cx, cy, hw, hh, rc)
+		case wonderDome:
+			drawRoofDome(img, cx, cy, hw, hh, rc)
 		default:
 			drawRoofWonder(img, cx, cy, hw, hh, rc)
 		}
@@ -3986,6 +4089,71 @@ func drawRoofKeep(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 	}
 }
 
+// drawRoofDome: the RENAISSANCE wonder (Phase 1b) — a great DOMED ROTUNDA read from above (the
+// Florence Duomo / St-Peter's read), so renaissance stops looking like a tinted medieval city. A
+// square stone DRUM fills the footprint; a large filled lead-grey/cream DISC (the dome) sits on it,
+// ringed by a couple of darker CONCENTRIC RIBS and eight radial RIB LINES converging on the crown so
+// the curvature reads; a small bright square LANTERN / cupola dab caps the very center. The round
+// domed silhouette reads clearly apart from the stepped ziggurat, the colonnade+pediment temple, the
+// cruciform+spire cathedral, the blocky keep+tower, and the open stone-circle megalith. Lead + stone
+// (leadAnchor / stoneAnchor) are BLENDED with the passed roof colors so the dome retints on a theme
+// switch and stays in the cream era mood. Bounds-safe: every write goes through
+// fillRectC/fillDisc/forEllipse/setPixel (all clipped), so it never panics at any footprint.
+func drawRoofDome(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	// Cream-stone drum + pale lead dome tones pulled toward the (already theme/lineage-tinted) roof
+	// colors, so the whole rotunda retints yet reads as pale lead-and-cream stone.
+	stone := blend(rc.base, blend(creamStoneAnchor, stoneAnchor, 0.4), 0.50) // the square drum below the dome
+	stoneDark := blend(rc.dark, stoneAnchor, 0.40)
+	lead := blend(rc.base, blend(leadAnchor, stoneAnchor, 0.35), 0.55) // the pale lead dome shell
+	leadLit := brighten(lead, 0.16)                                    // NW-lit crown of the dome
+	rib := darken(lead, 0.22)                                          // darker concentric + radial ribs
+	lantern := brighten(leadLit, 0.16)                                 // bright cupola / lantern at the crown
+
+	// THE DRUM: a solid square stone body filling the footprint, lit N/W + shaded S/E so the rotunda
+	// sits on a raised base rather than a flat slab.
+	forRect(cx, cy, hw, hh, func(x, y int) {
+		if x <= cx || y <= cy {
+			setPixel(img, x, y, stone)
+		} else {
+			setPixel(img, x, y, stoneDark)
+		}
+	})
+
+	// THE DOME: a large filled disc centered on the drum, radius the inner ~85% of the smaller extent
+	// so a rim of drum shows around it. Lit NW / shaded SE across the disc for a domed sheen.
+	rad := maxInt(minInt(hw, hh)*17/20, 1)
+	forEllipse(cx, cy, rad, rad, func(x, y int) {
+		if x <= cx || y <= cy {
+			setPixel(img, x, y, lead)
+		} else {
+			setPixel(img, x, y, darken(lead, 0.12))
+		}
+	})
+
+	// CONCENTRIC RIBS: a couple of darker rings stepping in toward the crown so the shell reads curved.
+	// Each ring is stamped as a rim (walk the circle) — a raised concentric rib of the cupola.
+	for _, f := range []float64{0.66, 0.40} {
+		rr := maxInt(int(float64(rad)*f), 1)
+		for i := 0; i < 48; i++ {
+			ang := 2 * math.Pi * float64(i) / 48
+			setPixel(img, cx+int(math.Round(math.Cos(ang)*float64(rr))), cy+int(math.Round(math.Sin(ang)*float64(rr))), rib)
+		}
+	}
+
+	// RADIAL RIBS: eight spokes from the crown out to the dome rim, the ribs of the cupola.
+	for i := 0; i < 8; i++ {
+		ang := 2 * math.Pi * float64(i) / 8
+		for r := 1; r <= rad; r++ {
+			setPixel(img, cx+int(math.Round(math.Cos(ang)*float64(r))), cy+int(math.Round(math.Sin(ang)*float64(r))), rib)
+		}
+	}
+
+	// LANTERN / CUPOLA: a small bright square cap at the very crown, the light-well atop the dome.
+	lhw := maxInt(rad/5, 1)
+	fillRectC(img, cx, cy, lhw, lhw, leadLit)
+	setPixel(img, cx, cy, lantern)
+}
+
 // drawRoofCathedral: the MEDIEVAL wonder (locked #13, V3-B) — a tall CATHEDRAL / KEEP read from
 // above: a long cruciform nave (a broad body with a shorter transept crossing it) topped by a
 // central SPIRE dab, so it reads as a great church/keep rather than the rounded default complex.
@@ -4113,6 +4281,48 @@ func drawUpright(img *image.RGBA, cx, cy, size int, stone, lit, dark color.RGBA)
 		setPixel(img, cx+d, cy+size, dark) // shadowed base edge
 	}
 	setPixel(img, cx-size, cy-size, brighten(lit, 0.10))
+}
+
+// drawBastion paints one ANGULAR star-fort bastion salient from above (renaissance wallStarFort): an
+// arrowhead pointing OUTWARD from the town core (ccx,ccy) — the opposite of a round tower drum. It is a
+// filled DIAMOND (a rotated square: |dx|+|dy| <= rad) whose OUTER vertex along the outward radial is
+// stretched to a sharp tip, so it reads as a triangular pointed bastion. A lit cap dab marks the tip.
+// Every write clamps via setPixel, so it is panic-safe at any position/size (including off-canvas).
+func drawBastion(img *image.RGBA, cx, cy, ccx, ccy, rad int, fill, cap color.RGBA) {
+	if rad < 1 {
+		rad = 1
+	}
+	// Outward radial unit (from core toward the bastion). Degenerate (bastion at the core) → point east.
+	ux, uy := float64(cx-ccx), float64(cy-ccy)
+	n := math.Hypot(ux, uy)
+	if n < 1e-6 {
+		ux, uy, n = 1, 0, 1
+	}
+	ux, uy = ux/n, uy/n
+	tip := int(math.Round(float64(rad) * 1.6)) // how far the pointed tip juts past the diamond body
+	// Filled diamond body: a rotated square (angular, not round) centered on the bastion.
+	for dy := -rad; dy <= rad; dy++ {
+		for dx := -rad; dx <= rad; dx++ {
+			if absInt(dx)+absInt(dy) <= rad {
+				setPixel(img, cx+dx, cy+dy, fill)
+			}
+		}
+	}
+	// The SALIENT TIP: a short filled wedge from the body out along the outward radial, tapering to a
+	// point, so the bastion reads as an arrowhead jutting from the rampart (not a symmetric dot).
+	for r := 0; r <= tip; r++ {
+		f := 1.0 - float64(r)/float64(tip+1) // taper the wedge half-width toward the tip
+		hwid := int(math.Round(float64(rad) * f))
+		bx := cx + int(math.Round(ux*float64(r)))
+		by := cy + int(math.Round(uy*float64(r)))
+		// Lay the wedge cross-section perpendicular to the radial.
+		px, py := -uy, ux // perpendicular unit
+		for w := -hwid; w <= hwid; w++ {
+			setPixel(img, bx+int(math.Round(px*float64(w))), by+int(math.Round(py*float64(w))), fill)
+		}
+	}
+	// A lit cap dab right at the tip so the salient point catches light.
+	setPixel(img, cx+int(math.Round(ux*float64(tip))), cy+int(math.Round(uy*float64(tip))), cap)
 }
 
 // drawRoofTempleWonder: the CLASSICAL wonder (Phase 1b-ii) — a Greco-Roman TEMPLE read from above: a
