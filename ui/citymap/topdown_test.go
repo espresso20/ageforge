@@ -3486,3 +3486,241 @@ func TestDumpIronEpochPNGs(t *testing.T) {
 		t.Logf("wrote %s", path)
 	}
 }
+
+// TestDigitalEpochStylesWired locks V3-C DIGITAL-epoch style wiring: modern, information, and digital all
+// use the GLASS-TOWER house profile + the SKYSCRAPER wonder, and are all OPEN (no walls). Information is
+// DENSER than modern; digital carries the epoch's first NEON accents (asserted at the city level in
+// TestDigitalEpochNeonPresent). None may still resolve to the default village preset name.
+func TestDigitalEpochStylesWired(t *testing.T) {
+	mod := styleForAge("modern_age")
+	if mod.houseProfile != profileGlassTower {
+		t.Fatalf("modern houseProfile = %v, want profileGlassTower (glass skyscrapers)", mod.houseProfile)
+	}
+	if mod.wonderMotif != wonderSkyscraper {
+		t.Fatalf("modern wonderMotif = %v, want wonderSkyscraper (supertall glass tower)", mod.wonderMotif)
+	}
+	if mod.hasWalls {
+		t.Fatal("modern must be OPEN (no walls — the age of open glass towers)")
+	}
+
+	inf := styleForAge("information_age")
+	if inf.houseProfile != profileGlassTower {
+		t.Fatalf("information houseProfile = %v, want profileGlassTower", inf.houseProfile)
+	}
+	if inf.wonderMotif != wonderSkyscraper {
+		t.Fatalf("information wonderMotif = %v, want wonderSkyscraper", inf.wonderMotif)
+	}
+	if inf.hasWalls {
+		t.Fatal("information must be OPEN (no walls)")
+	}
+
+	dig := styleForAge("digital_age")
+	if dig.houseProfile != profileGlassTower {
+		t.Fatalf("digital houseProfile = %v, want profileGlassTower", dig.houseProfile)
+	}
+	if dig.wonderMotif != wonderSkyscraper {
+		t.Fatalf("digital wonderMotif = %v, want wonderSkyscraper", dig.wonderMotif)
+	}
+	if dig.hasWalls {
+		t.Fatal("digital must be OPEN (no walls)")
+	}
+	// Information should be DENSER than modern (a packed server-city vs a downtown).
+	if !(inf.slotSpacing < mod.slotSpacing) {
+		t.Fatalf("information slotSpacing (%.2f) should be denser/tighter than modern (%.2f)", inf.slotSpacing, mod.slotSpacing)
+	}
+	// None of the three may still resolve to the default village preset name.
+	if mod.name == defaultTdStyle.name || inf.name == defaultTdStyle.name || dig.name == defaultTdStyle.name {
+		t.Fatalf("a digital-epoch age still on the default preset: modern=%q information=%q digital=%q", mod.name, inf.name, dig.name)
+	}
+}
+
+// TestDigitalEpochNeonPresent locks that DIGITAL is the first age with NEON: its style must actually use a
+// neon accent somewhere in its palette (streets/paving carry a cyan/magenta cast that information does NOT),
+// AND a digital town must emit at least one neon-sign prop lot (the first-neon tell).
+func TestDigitalEpochNeonPresent(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	inf := styleForAge("information_age")
+	dig := styleForAge("digital_age")
+	// The neon cast: digital's street + paved tones diverge from information's (a neon cyan/magenta lift).
+	if colorClose(dig.streetCol(pal), inf.streetCol(pal), 1) && colorClose(dig.pavedCol(pal), inf.pavedCol(pal), 1) {
+		t.Fatal("digital streets + paving are identical to information — the first-neon accent is not applied")
+	}
+	// A digital town must scatter neon-sign props (the first-neon tell).
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	p := tdPlanForAge(namedState("digital_age", "Aldermoor", blds))
+	neon := 0
+	for _, lt := range p.lots {
+		if lt.kind == tdPropNeonSign {
+			neon++
+		}
+	}
+	if neon == 0 {
+		t.Fatal("digital town emitted ZERO neon-sign props — the first-neon prop scatter is not applied")
+	}
+}
+
+// TestInformationDataCentersPresent locks that an INFORMATION town scatters DATA-CENTER props (the
+// server-city tell) — the distinctive prop that sets it apart from plain modern glass towers.
+func TestInformationDataCentersPresent(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	p := tdPlanForAge(namedState("information_age", "Aldermoor", blds))
+	dc := 0
+	for _, lt := range p.lots {
+		if lt.kind == tdPropDataCenter {
+			dc++
+		}
+	}
+	if dc == 0 {
+		t.Fatal("information town emitted ZERO data-center props — the server-city scatter is not applied")
+	}
+}
+
+// TestSkyscraperWonderDiffers locks that the SKYSCRAPER wonder reads apart from the deco TOWER, the
+// renaissance DOME, and the industrial FACTORY — the skyscraper silhouette must actually be applied, not
+// shared with any neighbouring wonder.
+func TestSkyscraperWonderDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	skyscraper := drawWonderImg(styleForAge("modern_age"))
+	tower := drawWonderImg(styleForAge("electric_age"))
+	dome := drawWonderImg(styleForAge("renaissance_age"))
+	factory := drawWonderImg(styleForAge("industrial_age"))
+	if !imagesDiffer(skyscraper, tower) {
+		t.Fatal("modern skyscraper draws identically to the deco tower — the skyscraper silhouette is not applied")
+	}
+	if !imagesDiffer(skyscraper, dome) {
+		t.Fatal("modern skyscraper draws identically to the renaissance dome — the two wonders must differ")
+	}
+	if !imagesDiffer(skyscraper, factory) {
+		t.Fatal("modern skyscraper draws identically to the industrial factory — the two wonders must differ")
+	}
+}
+
+// TestDigitalEpochCitiesDiffer locks the CITY-level reads: modern differs from information (clean blue glass
+// vs a denser colder server-city with data centers), information differs from digital (cold grey vs sleek
+// dark + neon), and all three differ from a STILL-DEFAULT placeholder (cyberpunk_age, still on the village
+// preset). cyberpunk is the placeholder because modern is now restyled and is no longer the village.
+func TestDigitalEpochCitiesDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	mod, _ := renderImage(namedState("modern_age", "Aldermoor", blds), 120, 72)
+	inf, _ := renderImage(namedState("information_age", "Aldermoor", blds), 120, 72)
+	dig, _ := renderImage(namedState("digital_age", "Aldermoor", blds), 120, 72)
+	def, _ := renderImage(namedState("cyberpunk_age", "Aldermoor", blds), 120, 72) // cyberpunk still uses defaultTdStyle
+	if !imagesDiffer(mod, inf) {
+		t.Fatal("modern city renders identically to information — the denser+colder+data-center re-skin is not distinct")
+	}
+	if !imagesDiffer(inf, dig) {
+		t.Fatal("information city renders identically to digital — the sleek-dark+neon re-skin is not distinct")
+	}
+	if !imagesDiffer(mod, def) {
+		t.Fatal("modern city renders identically to the default village (cyberpunk) — the modern re-skin is not applied")
+	}
+	if !imagesDiffer(inf, def) {
+		t.Fatal("information city renders identically to the default village (cyberpunk) — the information re-skin is not applied")
+	}
+	if !imagesDiffer(dig, def) {
+		t.Fatal("digital city renders identically to the default village (cyberpunk) — the digital re-skin is not applied")
+	}
+}
+
+// TestDrawRoofGlassTowerPanicSafe locks that the GLASS-TOWER dwelling sprite (a slab + a window grid + an
+// extended SE height shadow that clips beyond the footprint) is panic-safe + in-bounds on a tiny footprint,
+// a normal one, and hard against the NW + SE corners (every write is clamped).
+func TestDrawRoofGlassTowerPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("modern_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "housing", "production")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofGlassTower(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofGlassTower(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofGlassTower(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner (shadow clips off-canvas)
+		}
+	}
+}
+
+// TestDrawRoofSkyscraperPanicSafe locks that the SUPERTALL SKYSCRAPER wonder sprite (a slender slab + a
+// window grid + a mast + a long raking SE shadow beyond the footprint) is panic-safe + in-bounds on tiny /
+// normal / NW + SE corner cases (every write is clamped).
+func TestDrawRoofSkyscraperPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("modern_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {14, 6}} {
+			drawRoofSkyscraper(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofSkyscraper(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner (mast clips above)
+			drawRoofSkyscraper(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner (shadow clips off-canvas)
+		}
+	}
+}
+
+// TestDigitalEpochOpenNoWallLots locks that MODERN, INFORMATION, and DIGITAL are all OPEN ages: each emits
+// ZERO wall / gate / tower / bastion lots (unwalled), on real + tiny canvases.
+func TestDigitalEpochOpenNoWallLots(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	ages := []string{"modern_age", "information_age", "digital_age"}
+	for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+		for _, ageKey := range ages {
+			p := tdPlanForAge(namedState(ageKey, "Aldermoor", blds))
+			if n := len(wallLotsOf(p)) + len(gateLotsOf(p)) + len(towerLotsOf(p)) + len(bastionLotsOf(p)); n != 0 {
+				t.Fatalf("%s %dx%d has %d wall lots — this age must be OPEN (no walls)", ageKey, sz.w, sz.h, n)
+			}
+		}
+	}
+}
+
+// TestDumpDigitalEpochPNGs renders atomic / modern / information / digital with a FIXED display name +
+// identical building set INCLUDING a wonder so the tower/skyscraper centerpieces render, so a reviewer can
+// compare the DIGITAL-epoch band (against the atomic neighbour) side by side. Opt-in: skipped unless
+// CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpDigitalEpochPNGs
+func TestDumpDigitalEpochPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Identical building set (with a wonder so the centerpiece renders) + a FIXED display name → the citySeed
+	// is fixed, so only the era re-skin differs across the four dumps.
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"atomic_age", "1e_atomic.png"},
+		{"modern_age", "1e_modern.png"},
+		{"information_age", "1e_information.png"},
+		{"digital_age", "1e_digital.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
