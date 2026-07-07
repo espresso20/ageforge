@@ -157,6 +157,7 @@ const (
 	profileModernFlat                        // electric/atomic: a FLAT-topped modern block (flat roof slab + thin parapet rim + a rooftop vent) — the groundwork for skyscrapers
 	profileGlassTower                        // modern/information/digital: a TALL glass-and-steel tower from above (cool blue-grey slab + lit window grid + a long height shadow)
 	profileMetalDome                         // space: a small pale METALLIC DOME (a lit silver disc with a curved NW highlight + a rim) — the space-colony habitat dwelling
+	profileSpire                             // interstellar: a TALL NARROW tapering metallic SPIRE read from above (a small bright metal core + a long SE height shadow + a lit tip) — the deep-space arcology dwelling
 )
 
 // wallProfile is the per-era wall dialect (V3-B, locked #9): mudbrick curtain vs stone curtain +
@@ -189,6 +190,8 @@ const (
 	wonderSkyscraper                    // modern/information/digital SUPERTALL glass tower — a narrow glass slab + a lit window grid + a mast/antenna + a long height shadow (drawRoofSkyscraper)
 	wonderFusionCore                    // fusion glowing REACTOR — concentric bright cyan rings around a white-hot central core, brightening to a bloom at the very center (drawRoofFusionCore)
 	wonderLaunchpad                     // space ROCKET on a launch pad — a circular pad + a bright central rocket (capsule + fins) + gantry dabs + a scorch ring (drawRoofLaunchpad)
+	wonderSpireArray                    // interstellar SPIRE CLUSTER — a ring of tall metallic spires around a tallest central spire, each throwing a long SE height shadow (drawRoofSpireArray)
+	wonderRingHub                       // galactic RING-HUB megastation — concentric bright metallic orbital RINGS around a glowing central HUB, with faint spokes (drawRoofRingHub)
 )
 
 // tdPal is the small set of resolved theme colors the style recipes draw from. Built once
@@ -1287,6 +1290,95 @@ var spaceCityStyle = func() tdEraStyle {
 	return s
 }()
 
+// interstellarCityStyle is the tuned INTERSTELLAR preset (COSMIC epoch, first age). Built from
+// spaceCityStyle but stepped OFF the pale space colony into DEEPER SPACE: the ground drops from a
+// pale metal deck to a cold STARFIELD-ish deck (pulled hard toward voidAnchor — a dark blue-black
+// void), while the STRUCTURES stay pale metallic silver, so bright arcology metal reads against a
+// dark ground (the opposite contrast of the pale-on-pale space colony). Dwellings become tall
+// tapering SPIRES (profileSpire) instead of low domes, and the centrepiece is a SPIRE CLUSTER
+// (wonderSpireArray). Reads apart from space: space is pale metal on a pale deck, interstellar is
+// pale metal SPIRES on a dark void deck.
+var interstellarCityStyle = func() tdEraStyle {
+	s := spaceCityStyle
+	s.name = "interstellar"
+
+	// Ground: a COLD DEEP-SPACE deck — the space pale floor dropped HARD toward the void so the
+	// colony floor reads as a dark starfield platform, not a lit plaza. Still theme-derived (starts
+	// from bg/dim) then pulled deep with voidAnchor + a faint silver fleck so it isn't a dead black.
+	s.groundBase = func(p tdPal) color.RGBA {
+		deep := blend(blend(p.bg, p.dim, 0.30), voidAnchor, 0.66)
+		return blend(deep, metalSilverAnchor, 0.08)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.24), voidAnchor, 0.58)
+	}
+	s.streetCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.26), voidAnchor, 0.54)
+	}
+	s.streetEdge = func(p tdPal) color.RGBA {
+		return darken(blend(blend(p.bg, p.dim, 0.26), voidAnchor, 0.60), 0.14)
+	}
+	s.pavedCol = func(p tdPal) color.RGBA {
+		// The plaza reads as a lit metal apron floating on the dark deck (brighter than the ground so
+		// the spires sit on a defined platform), still silver-metallic.
+		return blend(blend(p.bg, p.dim, 0.20), metalSilverAnchor, 0.44)
+	}
+	// Faint filler on the void deck leans metallic, not green (there is no soil out here).
+	s.gardenCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.24), voidAnchor, 0.44)
+	}
+	s.treeCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.text, 0.22), metalSilverAnchor, 0.34)
+	}
+
+	s.houseProfile = profileSpire    // deep-space arcology SPIRES (tall, narrow, metallic)
+	s.wonderMotif = wonderSpireArray // interstellar centrepiece: a cluster of spires around a central mast
+	s.hasWalls = false               // still an open colony
+	s.slotSpacing = 1.45             // a touch tighter than space — a denser arcology
+	return s
+}()
+
+// galacticCityStyle is the tuned GALACTIC preset (COSMIC epoch, second age). Built from
+// interstellarCityStyle (so it keeps the deep-space void deck + metallic structures) then pushed to
+// a grander MEGASTRUCTURE feel: the ground brightens a shade toward energetic metal (a lit
+// megastation floor rather than a bare void), dwellings return to grand metallic DOMES
+// (profileMetalDome, denser than interstellar's scattered spires), and the centrepiece is the
+// signature RING-HUB (wonderRingHub — concentric orbital rings around a glowing hub). Reads apart
+// from interstellar: interstellar is scattered spires on a dark deck, galactic is a dense
+// dome-metropolis under a ringworld megastation.
+var galacticCityStyle = func() tdEraStyle {
+	s := interstellarCityStyle
+	s.name = "galactic"
+
+	// Ground: the interstellar void deck lifted a shade toward energetic metal — a lit megastation
+	// floor with a faint cyan-energy cast, so the galactic city reads as a powered megastructure, not
+	// the darker deep-space frontier. Still void-derived (keeps the cosmic family) but brighter.
+	s.groundBase = func(p tdPal) color.RGBA {
+		deep := blend(blend(p.bg, p.dim, 0.28), voidAnchor, 0.52)
+		lit := blend(deep, metalSilverAnchor, 0.22)
+		return blend(lit, energyAnchor, 0.08)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		return blend(blend(blend(p.bg, p.dim, 0.24), voidAnchor, 0.48), metalSilverAnchor, 0.18)
+	}
+	s.streetCol = func(p tdPal) color.RGBA {
+		return blend(blend(blend(p.bg, p.dim, 0.24), voidAnchor, 0.44), metalSilverAnchor, 0.24)
+	}
+	s.streetEdge = func(p tdPal) color.RGBA {
+		return darken(blend(blend(blend(p.bg, p.dim, 0.24), voidAnchor, 0.50), metalSilverAnchor, 0.20), 0.12)
+	}
+	s.pavedCol = func(p tdPal) color.RGBA {
+		// A brighter energetic apron than interstellar — the megastation plaza catches the ring glow.
+		return blend(blend(blend(p.bg, p.dim, 0.18), metalSilverAnchor, 0.46), energyAnchor, 0.10)
+	}
+
+	s.houseProfile = profileMetalDome // galactic dwellings: grand metallic domes (a dense metropolis)
+	s.wonderMotif = wonderRingHub     // galactic centrepiece: the ringworld/megastation ring-hub
+	s.hasWalls = false                // still open
+	s.slotSpacing = 1.30              // denser than interstellar — a grand packed metropolis
+	return s
+}()
+
 // stoneAgeStyle is the tuned STONE preset (Phase 1b-i), split off organicVillageStyle so the stone
 // age reads distinct from primitive. Dwellings stay THATCH (stone-age huts are still thatch, so
 // houseProfile is unchanged) and there are still NO walls — the difference is a ROCKIER, cooler,
@@ -1397,6 +1489,10 @@ var (
 	fusionWhiteAnchor = color.RGBA{R: 0xf0, G: 0xf4, B: 0xf6, A: 0xff} // brilliant clean white (fusion structures + white-hot cores) — brighter + cooler than any stone/marble
 	fusionCyanAnchor  = color.RGBA{R: 0x6c, G: 0xe8, B: 0xf0, A: 0xff} // bright pale cyan glow (fusion accent rings/sheen) — softer + paler than the harsh neon cyan
 	metalSilverAnchor = color.RGBA{R: 0xc4, G: 0xc9, B: 0xd0, A: 0xff} // pale cool silver metal (space domes + launchpads) — a colder metallic sheen, faintly blue
+
+	// COSMIC epoch (interstellar / galactic). Two tones for the deep-space step off the pale space colony:
+	voidAnchor   = color.RGBA{R: 0x14, G: 0x18, B: 0x2a, A: 0xff} // deep starfield blue-black (interstellar ground — a cold void deck, far darker than the space colony's pale plaza)
+	energyAnchor = color.RGBA{R: 0x74, G: 0xe0, B: 0xff, A: 0xff} // bright cyan-white orbital energy (galactic ring-hub core + ring glow) — an energetic megastructure glow, blended never raw
 )
 
 // tdStyleForEra returns the tuned preset for an era band, or defaultTdStyle for the bands not yet
@@ -1443,11 +1539,12 @@ var ageStyles = map[string]tdEraStyle{
 	"information_age": informationCityStyle,
 	"digital_age":     digitalCityStyle,
 	// NEON epoch — cyberpunk/fusion/space (distinct dark-neon / bright-white / pale-metallic looks)
-	"cyberpunk_age":    cyberpunkCityStyle,
-	"fusion_age":       fusionCityStyle,
-	"space_age":        spaceCityStyle,
-	"interstellar_age": defaultTdStyle,
-	"galactic_age":     defaultTdStyle,
+	"cyberpunk_age": cyberpunkCityStyle,
+	"fusion_age":    fusionCityStyle,
+	"space_age":     spaceCityStyle,
+	// COSMIC epoch — interstellar/galactic (distinct deep-space SPIRES / RING-HUB megastation looks)
+	"interstellar_age": interstellarCityStyle,
+	"galactic_age":     galacticCityStyle,
 	"quantum_age":      defaultTdStyle,
 	"transcendent_age": defaultTdStyle,
 }
@@ -4770,6 +4867,8 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 			drawRoofGlassTower(img, cx, cy, hw, hh, rc)
 		case profileMetalDome:
 			drawRoofMetalDome(img, cx, cy, hw, hh, rc)
+		case profileSpire:
+			drawRoofSpire(img, cx, cy, hw, hh, rc)
 		default:
 			drawRoofHut(img, cx, cy, hw, hh, rc)
 		}
@@ -4811,6 +4910,10 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 			drawRoofFusionCore(img, cx, cy, hw, hh, rc)
 		case wonderLaunchpad:
 			drawRoofLaunchpad(img, cx, cy, hw, hh, rc)
+		case wonderSpireArray:
+			drawRoofSpireArray(img, cx, cy, hw, hh, rc)
+		case wonderRingHub:
+			drawRoofRingHub(img, cx, cy, hw, hh, rc)
 		default:
 			drawRoofWonder(img, cx, cy, hw, hh, rc)
 		}
@@ -4922,6 +5025,8 @@ func drawRoofHouse(img *image.RGBA, cx, cy, hw, hh int, rc roofColors, prof roof
 		drawRoofGlassTower(img, cx, cy, hw, hh, rc)
 	case profileMetalDome:
 		drawRoofMetalDome(img, cx, cy, hw, hh, rc)
+	case profileSpire:
+		drawRoofSpire(img, cx, cy, hw, hh, rc)
 	default:
 		drawRoofRidge(img, cx, cy, hw, hh, rc)
 	}
@@ -5585,6 +5690,173 @@ func drawRoofMetalDome(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 		setPixel(img, cx+int(math.Round(math.Cos(ang)*float64(rad))), cy+int(math.Round(math.Sin(ang)*float64(rad))), rim)
 	}
 	setPixel(img, cx, cy, brighten(metal, 0.10)) // a small lit apex vent
+}
+
+// drawRoofSpire: the INTERSTELLAR dwelling (COSMIC epoch) — a TALL NARROW tapering metallic SPIRE read from
+// above. A slender arcology needle throws a long SE height shadow (like the supertall), stands as a thin
+// bright metal shaft tapering to a lit tip, and sits on a small dark metal base pad so it reads as a
+// planted spire rather than a floating sliver. Base-derived silver tones (no accent) so it retints with the
+// roof material.
+func drawRoofSpire(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	metal := blend(rc.base, metalSilverAnchor, 0.58)     // the pale metal shaft
+	metalLit := brighten(metal, 0.18)                    // the sunlit NW edge + tip
+	metalDark := blend(rc.dark, metalSilverAnchor, 0.36) // the shaded SE edge + base
+	base := darken(metalDark, 0.14)                      // the dark planted base pad
+
+	rad := maxInt(minInt(hw, hh), 1)
+
+	// LONG HEIGHT SHADOW: a thin raking SE drop well beyond the footprint — a spire is the tallest thing in
+	// the block, so it throws a long shadow. Blended into the ground so it darkens rather than paints a slab.
+	shadow := darken(metalDark, 0.34)
+	for d := 1; d <= maxInt(hh, 2); d++ {
+		blendPixel(img, cx+d, cy+d, shadow, 0.42)
+		blendPixel(img, cx+d+1, cy+d, shadow, 0.30)
+	}
+
+	// THE BASE PAD: a small dark metal disc under the spire so it reads planted, lit NW / shaded SE.
+	baseR := maxInt(rad/2, 1)
+	forEllipse(cx, cy, baseR, baseR, func(x, y int) {
+		if x <= cx && y <= cy {
+			setPixel(img, x, y, metalDark)
+		} else {
+			setPixel(img, x, y, base)
+		}
+	})
+
+	// THE SHAFT: a thin vertical metal needle rising well above center, lit on the NW edge + shaded on the SE
+	// edge so the narrow tower reads as a round tapering volume, not a flat line. It NARROWS toward the top
+	// (the lit column is a pixel wide near the tip, wider at the base).
+	tall := maxInt(rad*9/5, 3) // the shaft rises well above the base
+	for dy := -tall; dy <= 0; dy++ {
+		frac := float64(-dy) / float64(tall) // 0 at base .. 1 at tip
+		setPixel(img, cx, cy+dy, metal)
+		if frac < 0.7 { // only the lower/mid shaft is wide enough for lit + shaded flanks
+			setPixel(img, cx-1, cy+dy, metalLit)
+			setPixel(img, cx+1, cy+dy, metalDark)
+		}
+	}
+	// THE LIT TIP: a bright pinnacle beacon crowning the spire.
+	setPixel(img, cx, cy-tall, brighten(metalLit, 0.16))
+	setPixel(img, cx, cy-tall-1, brighten(metalLit, 0.24))
+}
+
+// drawRoofSpireArray: the INTERSTELLAR wonder (COSMIC epoch) — a CLUSTER of tall metallic spires: a ring of
+// shorter satellite spires around a single TALLEST central spire, each throwing a long SE height shadow. The
+// centrepiece scale-up of the dwelling spire — a deep-space arcology core. Base-derived silver tones.
+func drawRoofSpireArray(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	pad := blend(rc.base, metalSilverAnchor, 0.40)       // the pale plated base apron
+	padDark := blend(rc.dark, metalSilverAnchor, 0.30)   // shaded apron
+	metal := blend(rc.base, metalSilverAnchor, 0.60)     // the bright spire metal
+	metalLit := brighten(metal, 0.18)                    // sunlit NW edge + tips
+	metalDark := blend(rc.dark, metalSilverAnchor, 0.38) // shaded SE edge
+	shadow := darken(padDark, 0.30)                      // the raking spire shadows
+
+	rad := maxInt(minInt(hw, hh), 1)
+
+	// THE BASE APRON: a filled metal disc filling the footprint, lit NW / shaded SE — the arcology platform
+	// the spires rise from.
+	forEllipse(cx, cy, rad, rad, func(x, y int) {
+		if x <= cx || y <= cy {
+			setPixel(img, x, y, pad)
+		} else {
+			setPixel(img, x, y, padDark)
+		}
+	})
+
+	// spire draws one needle at (sx, sy) rising to height h, with a long SE shadow + lit tip.
+	spire := func(sx, sy, h int) {
+		for d := 1; d <= h*2/3; d++ { // shadow raking SE, proportional to height
+			blendPixel(img, sx+d, sy+d, shadow, 0.40)
+		}
+		for dy := -h; dy <= 0; dy++ {
+			frac := float64(-dy) / float64(maxInt(h, 1))
+			setPixel(img, sx, sy+dy, metal)
+			if frac < 0.7 {
+				setPixel(img, sx-1, sy+dy, metalLit)
+				setPixel(img, sx+1, sy+dy, metalDark)
+			}
+		}
+		setPixel(img, sx, sy-h, brighten(metalLit, 0.16)) // lit tip
+		setPixel(img, sx, sy-h-1, brighten(metalLit, 0.22))
+	}
+
+	// SATELLITE SPIRES: a ring of shorter needles around center, drawn before the central one so the tallest
+	// core overpaints in front. Placed on a circle strictly inside the apron.
+	ringR := maxInt(rad*3/5, 1)
+	satH := maxInt(rad*6/5, 2)
+	for i := 0; i < 5; i++ {
+		ang := 2*math.Pi*float64(i)/5 - math.Pi/2 // start at the top, evenly spaced
+		sx := cx + int(math.Round(math.Cos(ang)*float64(ringR)))
+		sy := cy + int(math.Round(math.Sin(ang)*float64(ringR)))
+		spire(sx, sy, satH)
+	}
+	// THE CENTRAL SPIRE: the tallest needle at the apron center, drawn last (in front).
+	spire(cx, cy, maxInt(rad*2, 3))
+}
+
+// drawRoofRingHub: the GALACTIC wonder (COSMIC epoch) — THE signature ringworld / orbital MEGASTATION read
+// from above: 2–3 concentric bright metallic RING outlines at increasing radii, a glowing energetic central
+// HUB, and faint metallic SPOKES from the hub out to the rings. Reads clearly apart from the launchpad /
+// fusion-core / dome / skyscraper. Metallic silver rings + a cyan-energy hub, all base/theme-derived so the
+// whole megastation retints with the roof material.
+func drawRoofRingHub(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	deck := blend(rc.dark, metalSilverAnchor, 0.24)           // a dim metal deck behind the rings
+	ringMetal := blend(rc.base, metalSilverAnchor, 0.62)      // the bright metal ring bands
+	ringLit := brighten(ringMetal, 0.16)                      // sunlit NW arc of each ring
+	spoke := blend(ringMetal, energyAnchor, 0.30)             // faint energetic spokes
+	hub := blend(rc.base, energyAnchor, 0.55)                 // the glowing energetic hub
+	hubCore := brighten(blend(hub, energyAnchor, 0.40), 0.14) // the bright hub core
+
+	rad := maxInt(minInt(hw, hh), 1)
+
+	// A dim containment DECK filling the footprint so the rings sit on a defined station platform (lit NW /
+	// shaded SE for a shallow dish), not on bare ground.
+	forEllipse(cx, cy, rad, rad, func(x, y int) {
+		if x <= cx || y <= cy {
+			setPixel(img, x, y, brighten(deck, 0.06))
+		} else {
+			setPixel(img, x, y, deck)
+		}
+	})
+
+	// FAINT SPOKES: four thin energetic radials from the hub out toward the outer ring (N/E/S/W), drawn
+	// under the ring bands so the rings overpaint the spoke ends cleanly.
+	outerR := maxInt(rad*9/10, 1)
+	for _, dir := range [][2]int{{0, -1}, {0, 1}, {-1, 0}, {1, 0}} {
+		for d := 1; d <= outerR; d++ {
+			blendPixel(img, cx+dir[0]*d, cy+dir[1]*d, spoke, 0.50)
+		}
+	}
+
+	// CONCENTRIC RING BANDS: three bright metal ring outlines at increasing radii, each a hollow circle
+	// (drawn as a circle outline, NOT a filled disc, so the deck + spokes show through the gaps between
+	// rings). The NW arc of each is lit brighter for a metallic sheen.
+	for _, f := range []float64{0.42, 0.66, 0.90} {
+		rr := maxInt(int(float64(rad)*f), 1)
+		steps := maxInt(rr*6, 24)
+		for i := 0; i < steps; i++ {
+			ang := 2 * math.Pi * float64(i) / float64(steps)
+			rx := cx + int(math.Round(math.Cos(ang)*float64(rr)))
+			ry := cy + int(math.Round(math.Sin(ang)*float64(rr)))
+			c := ringMetal
+			if rx <= cx && ry <= cy { // NW arc catches the light
+				c = ringLit
+			}
+			setPixel(img, rx, ry, c)
+		}
+	}
+
+	// THE GLOWING HUB: a bright energetic core disc at the very center with a soft halo bleeding out, so the
+	// station heart reads as a powered core, not a metal dot.
+	hubR := maxInt(rad/4, 1)
+	fillDisc(img, cx, cy, hubR, hub)
+	haloR := maxInt(rad*2/5, 1)
+	forEllipse(cx, cy, haloR, haloR, func(x, y int) {
+		fx := float64(x-cx) / float64(haloR)
+		fy := float64(y-cy) / float64(haloR)
+		blendPixel(img, x, y, hubCore, 0.45*(1-(fx*fx+fy*fy)))
+	})
+	setPixel(img, cx, cy, brighten(hubCore, 0.16)) // the brightest pinpoint at the hub center
 }
 
 // drawRoofLaunchpad: the SPACE wonder (NEON epoch) — a rocket on a LAUNCH PAD seen from above: a circular

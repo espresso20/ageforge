@@ -3980,3 +3980,208 @@ func TestDumpNeonEpochPNGs(t *testing.T) {
 		t.Logf("wrote %s", path)
 	}
 }
+
+// TestCosmicEpochStylesWired locks the COSMIC-epoch first pair off their default placeholder:
+// interstellar must use the SPIRE dwelling profile + the SPIRE-ARRAY centrepiece, and galactic must
+// use the RING-HUB centrepiece. Both must be OPEN (no walls) and neither may still resolve to the
+// default village preset name. Galactic must also read as a DENSER metropolis than interstellar.
+func TestCosmicEpochStylesWired(t *testing.T) {
+	_ = theme.SetActive("forge")
+
+	inter := styleForAge("interstellar_age")
+	if inter.wonderMotif != wonderSpireArray {
+		t.Fatalf("interstellar wonderMotif = %v, want wonderSpireArray (spire cluster)", inter.wonderMotif)
+	}
+	if inter.houseProfile != profileSpire {
+		t.Fatalf("interstellar houseProfile = %v, want profileSpire (arcology spires)", inter.houseProfile)
+	}
+	if inter.hasWalls {
+		t.Fatal("interstellar must be OPEN (no walls)")
+	}
+
+	gal := styleForAge("galactic_age")
+	if gal.wonderMotif != wonderRingHub {
+		t.Fatalf("galactic wonderMotif = %v, want wonderRingHub (ring-hub megastation)", gal.wonderMotif)
+	}
+	if gal.hasWalls {
+		t.Fatal("galactic must be OPEN (no walls)")
+	}
+
+	// Neither may still resolve to the default village preset name.
+	if inter.name == defaultTdStyle.name || gal.name == defaultTdStyle.name {
+		t.Fatalf("a COSMIC-epoch age still on the default preset: interstellar=%q galactic=%q", inter.name, gal.name)
+	}
+	// galactic is DENSER than interstellar (the age it descends from).
+	if !(gal.slotSpacing < inter.slotSpacing) {
+		t.Fatalf("galactic slotSpacing (%.2f) should be denser/tighter than interstellar (%.2f)", gal.slotSpacing, inter.slotSpacing)
+	}
+}
+
+// TestCosmicWondersDiffer locks that the two new COSMIC wonders read apart from their neighbours: the
+// SPIRE-ARRAY differs from the launchpad, the dome, and the skyscraper; the RING-HUB differs from the
+// spire-array, the launchpad, the fusion core, and the dome. Each silhouette must actually be applied.
+func TestCosmicWondersDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	spireArray := drawWonderImg(styleForAge("interstellar_age"))
+	ringHub := drawWonderImg(styleForAge("galactic_age"))
+	launchpad := drawWonderImg(styleForAge("space_age"))
+	fusionCore := drawWonderImg(styleForAge("fusion_age"))
+	skyscraper := drawWonderImg(styleForAge("modern_age"))
+	dome := drawWonderImg(styleForAge("renaissance_age"))
+
+	if !imagesDiffer(spireArray, launchpad) {
+		t.Fatal("spire array draws identically to the launchpad — the spire-cluster silhouette is not applied")
+	}
+	if !imagesDiffer(spireArray, dome) {
+		t.Fatal("spire array draws identically to the renaissance dome — the two wonders must differ")
+	}
+	if !imagesDiffer(spireArray, skyscraper) {
+		t.Fatal("spire array draws identically to the skyscraper — the two wonders must differ")
+	}
+	if !imagesDiffer(ringHub, spireArray) {
+		t.Fatal("ring hub draws identically to the spire array — the two COSMIC wonders must differ")
+	}
+	if !imagesDiffer(ringHub, launchpad) {
+		t.Fatal("ring hub draws identically to the launchpad — the two wonders must differ")
+	}
+	if !imagesDiffer(ringHub, fusionCore) {
+		t.Fatal("ring hub draws identically to the fusion core — the two wonders must differ")
+	}
+	if !imagesDiffer(ringHub, dome) {
+		t.Fatal("ring hub draws identically to the renaissance dome — the two wonders must differ")
+	}
+}
+
+// TestCosmicEpochCitiesDiffer locks the CITY-level reads: interstellar (deep-space spires) differs from
+// galactic (ring-hub megastation), and both differ from a STILL-DEFAULT placeholder (transcendent_age,
+// still on the village preset — interstellar/galactic are now restyled).
+func TestCosmicEpochCitiesDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	inter, _ := renderImage(namedState("interstellar_age", "Aldermoor", blds), 120, 72)
+	gal, _ := renderImage(namedState("galactic_age", "Aldermoor", blds), 120, 72)
+	def, _ := renderImage(namedState("transcendent_age", "Aldermoor", blds), 120, 72) // still uses defaultTdStyle
+
+	if !imagesDiffer(inter, gal) {
+		t.Fatal("interstellar city renders identically to galactic — the spires vs ring-hub re-skin is not distinct")
+	}
+	if !imagesDiffer(inter, def) {
+		t.Fatal("interstellar city renders identically to the default village (transcendent) — the interstellar re-skin is not applied")
+	}
+	if !imagesDiffer(gal, def) {
+		t.Fatal("galactic city renders identically to the default village (transcendent) — the galactic re-skin is not applied")
+	}
+}
+
+// TestDrawRoofSpirePanicSafe locks that the SPIRE dwelling sprite (a thin tapering needle + a long SE
+// height shadow + a base pad + a lit tip) is panic-safe + in-bounds on tiny / normal / NW + SE corners.
+func TestDrawRoofSpirePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("interstellar_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "housing", "production")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {10, 12}, {14, 6}} {
+			drawRoofSpire(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofSpire(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofSpire(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestDrawRoofSpireArrayPanicSafe locks that the SPIRE-ARRAY wonder sprite (a base apron + a ring of
+// satellite spires around a tallest central one, each with a long SE shadow) is panic-safe + in-bounds on
+// tiny / normal / NW + SE corner cases.
+func TestDrawRoofSpireArrayPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("interstellar_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofSpireArray(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofSpireArray(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofSpireArray(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestDrawRoofRingHubPanicSafe locks that the RING-HUB wonder sprite (a deck + concentric ring outlines +
+// spokes + a glowing hub halo) is panic-safe + in-bounds on tiny / normal / NW + SE corner cases.
+func TestDrawRoofRingHubPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("galactic_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofRingHub(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofRingHub(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofRingHub(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestCosmicEpochOpenNoWallLots locks that INTERSTELLAR and GALACTIC are OPEN ages: each emits ZERO
+// wall / gate / tower / bastion lots (unwalled), on real + tiny canvases.
+func TestCosmicEpochOpenNoWallLots(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	ages := []string{"interstellar_age", "galactic_age"}
+	for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+		for _, ageKey := range ages {
+			p := tdPlanForAge(namedState(ageKey, "Aldermoor", blds))
+			if n := len(wallLotsOf(p)) + len(gateLotsOf(p)) + len(towerLotsOf(p)) + len(bastionLotsOf(p)); n != 0 {
+				t.Fatalf("%s %dx%d has %d wall lots — this age must be OPEN (no walls)", ageKey, sz.w, sz.h, n)
+			}
+		}
+	}
+}
+
+// TestDumpCosmicEpochPNGs renders space / interstellar / galactic with a FIXED display name + identical
+// building set INCLUDING a wonder so the centerpieces render, so a reviewer can compare the COSMIC-epoch
+// first pair (against the space neighbour it descends from) side by side. Opt-in: skipped unless
+// CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpCosmicEpochPNGs
+func TestDumpCosmicEpochPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"space_age", "1g_space.png"},
+		{"interstellar_age", "1g_interstellar.png"},
+		{"galactic_age", "1g_galactic.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
