@@ -3048,6 +3048,206 @@ func TestDumpRenaissancePNGs(t *testing.T) {
 	}
 }
 
+// TestColonialIndustrialStylesWired locks Phase 1b-iii style wiring: COLONIAL gets brick ROWHOUSES, a
+// TIMBER palisade wall (walls on), and the grand GENERIC hall wonder (a statehouse); INDUSTRIAL gets
+// brick ROWHOUSES too but under tin roofs, NO walls, and the FACTORY wonder. Neither age still maps to
+// the default village preset.
+func TestColonialIndustrialStylesWired(t *testing.T) {
+	col := styleForAge("colonial_age")
+	if col.houseProfile != profileRowhouse {
+		t.Fatalf("colonial houseProfile = %v, want profileRowhouse (brick terraces)", col.houseProfile)
+	}
+	if col.wallProfile != wallTimber {
+		t.Fatalf("colonial wallProfile = %v, want wallTimber (a palisade fort)", col.wallProfile)
+	}
+	if !col.hasWalls {
+		t.Fatal("colonial must have walls (a timber palisade fort)")
+	}
+	if col.wonderMotif != wonderGeneric {
+		t.Fatalf("colonial wonderMotif = %v, want wonderGeneric (the statehouse — no bespoke wonder)", col.wonderMotif)
+	}
+
+	ind := styleForAge("industrial_age")
+	if ind.houseProfile != profileRowhouse {
+		t.Fatalf("industrial houseProfile = %v, want profileRowhouse (dense brick terraces)", ind.houseProfile)
+	}
+	if ind.wallProfile != wallNone {
+		t.Fatalf("industrial wallProfile = %v, want wallNone (open industry)", ind.wallProfile)
+	}
+	if ind.hasWalls {
+		t.Fatal("industrial must be OPEN (no walls)")
+	}
+	if ind.wonderMotif != wonderFactory {
+		t.Fatalf("industrial wonderMotif = %v, want wonderFactory", ind.wonderMotif)
+	}
+	// Industrial should pack DENSER than colonial (tighter slotSpacing).
+	if !(ind.slotSpacing < col.slotSpacing) {
+		t.Fatalf("industrial slotSpacing (%.2f) should be tighter/denser than colonial (%.2f)", ind.slotSpacing, col.slotSpacing)
+	}
+	// Neither age may still resolve to the default village preset name.
+	if col.name == defaultTdStyle.name || ind.name == defaultTdStyle.name {
+		t.Fatalf("colonial/industrial still on the default preset: colonial=%q industrial=%q", col.name, ind.name)
+	}
+}
+
+// TestIndustrialFactoryWonderDiffers locks that the industrial FACTORY reads apart from the renaissance
+// DOME, the classical TEMPLE, and the medieval CATHEDRAL — the factory silhouette must actually be
+// applied, not shared with any neighbour.
+func TestIndustrialFactoryWonderDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	factory := drawWonderImg(styleForAge("industrial_age"))
+	dome := drawWonderImg(styleForAge("renaissance_age"))
+	temple := drawWonderImg(styleForAge("classical_age"))
+	cathedral := drawWonderImg(styleForAge("medieval_age"))
+	if !imagesDiffer(factory, dome) {
+		t.Fatal("industrial factory draws identically to the renaissance dome — the factory silhouette is not applied")
+	}
+	if !imagesDiffer(factory, temple) {
+		t.Fatal("industrial factory draws identically to the classical temple — the two wonders must differ")
+	}
+	if !imagesDiffer(factory, cathedral) {
+		t.Fatal("industrial factory draws identically to the medieval cathedral — the two wonders must differ")
+	}
+}
+
+// TestColonialIndustrialCitiesDiffer locks the CITY-level reads: a colonial city differs from an
+// industrial one, colonial differs from the old default village (modern_age still uses default), and
+// industrial differs from colonial — the two new re-skins are actually applied and distinct.
+func TestColonialIndustrialCitiesDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	col, _ := renderImage(namedState("colonial_age", "Aldermoor", blds), 120, 72)
+	ind, _ := renderImage(namedState("industrial_age", "Aldermoor", blds), 120, 72)
+	def, _ := renderImage(namedState("modern_age", "Aldermoor", blds), 120, 72) // modern still uses defaultTdStyle
+	if !imagesDiffer(col, ind) {
+		t.Fatal("colonial city renders identically to industrial — the two re-skins are not distinct")
+	}
+	if !imagesDiffer(col, def) {
+		t.Fatal("colonial city renders identically to the default village (modern) — the colonial re-skin is not applied")
+	}
+	if !imagesDiffer(ind, def) {
+		t.Fatal("industrial city renders identically to the default village (modern) — the industrial re-skin is not applied")
+	}
+}
+
+// TestDrawRoofRowhousePanicSafe locks that the ROWHOUSE dwelling sprite is panic-safe + in-bounds on a
+// tiny footprint, a normal one, and hard against the NW corner (every write is clamped).
+func TestDrawRoofRowhousePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("colonial_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "housing", "production")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofRowhouse(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofRowhouse(img, 1, 1, hwhh.hw, hwhh.hh, rc) // hard against the NW corner
+		}
+	}
+}
+
+// TestDrawRoofFactoryPanicSafe locks that the industrial FACTORY wonder sprite (hall + tall smokestacks
+// + smoke that clips ABOVE the footprint) is panic-safe + in-bounds on tiny / normal / NW-corner cases.
+func TestDrawRoofFactoryPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("industrial_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}} {
+			drawRoofFactory(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofFactory(img, 1, 1, hwhh.hw, hwhh.hh, rc)      // NW corner
+			drawRoofFactory(img, tc.w-1, 1, hwhh.hw, hwhh.hh, rc) // NE corner (smoke drifts up-right)
+		}
+	}
+}
+
+// TestColonialIndustrialWallLots locks that COLONIAL emits a real TIMBER PALISADE (curtain segments +
+// gates, but NO round stone towers/gatehouse and NO angular bastions), while INDUSTRIAL is OPEN (zero
+// wall/gate/tower/bastion lots). Bounded on real + tiny canvases.
+func TestColonialIndustrialWallLots(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+		// COLONIAL: a timber palisade — segments + gates, no towers, no bastions.
+		cp := tdPlanForAge(namedState("colonial_age", "Aldermoor", blds))
+		if len(wallLotsOf(cp)) < 12 {
+			t.Fatalf("colonial %dx%d: only %d wall segments — no real palisade", sz.w, sz.h, len(wallLotsOf(cp)))
+		}
+		if len(gateLotsOf(cp)) < 2 {
+			t.Fatalf("colonial %dx%d: only %d gates — the palisade needs gates the streets exit through", sz.w, sz.h, len(gateLotsOf(cp)))
+		}
+		if n := len(towerLotsOf(cp)); n != 0 {
+			t.Fatalf("colonial %dx%d: has %d round stone towers/gatehouse — a timber palisade has none", sz.w, sz.h, n)
+		}
+		if n := len(bastionLotsOf(cp)); n != 0 {
+			t.Fatalf("colonial %dx%d: has %d bastions — a timber palisade is not a star-fort", sz.w, sz.h, n)
+		}
+		xf := computeTransform(&cp, sz.w, sz.h)
+		for _, lt := range cp.lots {
+			switch lt.kind {
+			case tdWall, tdGate:
+				px, py := xf.px(lt.x, lt.y)
+				if px < -3 || px > sz.w+3 || py < -3 || py > sz.h+3 {
+					t.Fatalf("colonial %dx%d: wall/gate lot maps to (%d,%d) off-canvas — the palisade is not bounded", sz.w, sz.h, px, py)
+				}
+			}
+		}
+		// INDUSTRIAL: OPEN — zero wall lots of any kind.
+		ip := tdPlanForAge(namedState("industrial_age", "Aldermoor", blds))
+		if n := len(wallLotsOf(ip)) + len(gateLotsOf(ip)) + len(towerLotsOf(ip)) + len(bastionLotsOf(ip)); n != 0 {
+			t.Fatalf("industrial %dx%d has %d wall lots — this age must be OPEN (no walls)", sz.w, sz.h, n)
+		}
+	}
+}
+
+// TestDumpColonialIndustrialPNGs renders renaissance / colonial / industrial with a FIXED display name +
+// identical building set INCLUDING a wonder so the dome/statehouse/factory centerpieces render, so a
+// reviewer can compare the three side by side. Opt-in: skipped unless CITYMAP_PNG_DUMP=<dir> is set:
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpColonialIndustrialPNGs
+func TestDumpColonialIndustrialPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Identical building set (with a wonder so the centerpiece renders) + a FIXED display name → the
+	// citySeed is fixed, so only the era re-skin differs across the three dumps.
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"renaissance_age", "1c_renaissance2.png"},
+		{"colonial_age", "1c_colonial.png"},
+		{"industrial_age", "1c_industrial.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
+
 // TestDumpIronEpochPNGs renders bronze / iron / classical / medieval with a FIXED display name +
 // identical building set INCLUDING a wonder so the ziggurat/temple/cathedral centerpieces render, so
 // a reviewer can compare the ancient-band ages + medieval side by side. Opt-in: skipped unless

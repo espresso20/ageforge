@@ -153,6 +153,7 @@ const (
 	profileMudbrick                          // ancient: flatter, blockier flat-topped mud roofs
 	profileTimber                            // medieval: steeper, sharper pitched timber roofs
 	profileStoneClassical                    // classical: pale white-stone body under a terracotta cap, with column fluting
+	profileRowhouse                          // colonial/industrial: a TERRACE of 3–5 narrow attached units under small pitched roofs
 )
 
 // wallProfile is the per-era wall dialect (V3-B, locked #9): mudbrick curtain vs stone curtain +
@@ -180,6 +181,7 @@ const (
 	wonderTemple                       // classical columned temple + pediment (drawRoofTempleWonder)
 	wonderKeep                         // iron-age fortified keep + watchtower (drawRoofKeep)
 	wonderDome                         // renaissance great domed rotunda + lantern (drawRoofDome)
+	wonderFactory                      // industrial great factory hall + smokestacks + soot (drawRoofFactory)
 )
 
 // tdPal is the small set of resolved theme colors the style recipes draw from. Built once
@@ -605,6 +607,149 @@ var renaissanceCityStyle = func() tdEraStyle {
 	return s
 }()
 
+// colonialCityStyle is the tuned COLONIAL preset (Phase 1b-iii). A BRICK-AND-TIMBER frontier town:
+// terraced ROWHOUSES under warm fired-brick roofs (profileRowhouse — a row of narrow attached units,
+// earthier + redder than the ancient clay), packed-DIRT/brick lanes, modest kitchen greenery, and a
+// stout TIMBER PALISADE-FORT (wallTimber, reused from iron — no new wall) ringing the settlement. The
+// centrepiece is the grand generic hall (wonderGeneric) read as a colonial STATEHOUSE — no bespoke
+// wonder. Built from defaultTdStyle so it keeps the tuned ground texture / pond / filler behaviour,
+// then re-skinned warm brick; every tone stays a theme-role recipe so the whole town retints on a
+// theme switch. Reads clearly apart from the pale-stone renaissance city (warm brick + timber vs
+// cream ashlar + star-fort) AND from the not-yet-tuned default village (rowhouses + a wall + brick).
+var colonialCityStyle = func() tdEraStyle {
+	s := defaultTdStyle
+	s.name = "colonial"
+
+	// Brick-red roof: a warm fired-brick fill — a shade EARTHIER + redder than the ancient terracotta
+	// clay. Background lifted toward text, then pulled firmly to the brick anchor so a rowhouse reads
+	// as fired brick, not thatch or pale stone.
+	s.roofBase = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.text, 0.30), brickRedAnchor, 0.54)
+	}
+	s.roofDark = func(p tdPal) color.RGBA {
+		return darken(blend(blend(p.bg, p.text, 0.30), brickRedAnchor, 0.54), 0.28)
+	}
+	s.lineageMix = 0.15 // keep the subtle lineage tint; the sat cap still guards the no-accent rule
+
+	// Ground: packed DIRT / brick — a warm trodden earth, drier than the primitive dirt+grass but not
+	// as pale as the ancient stone. Base pulled toward the dirt anchor with a whisper of brick warmth.
+	s.groundBase = func(p tdPal) color.RGBA {
+		earthy := blend(blend(p.bg, p.dim, 0.28), dirtAnchor, 0.40)
+		return blend(earthy, brickRedAnchor, 0.10)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.24), earthAnchor, 0.26)
+	}
+	// Streets: packed-dirt/brick lanes — the trodden earth leaning a touch redder/warmer than the
+	// ground so the gaps read as brick-edged dirt roads.
+	s.streetCol = func(p tdPal) color.RGBA {
+		packed := blend(blend(p.bg, p.dim, 0.28), dirtAnchor, 0.44)
+		return blend(blend(packed, p.text, 0.28), brickRedAnchor, 0.16)
+	}
+	s.streetEdge = func(p tdPal) color.RGBA {
+		packed := blend(blend(p.bg, p.dim, 0.28), dirtAnchor, 0.44)
+		surface := blend(blend(packed, p.text, 0.28), brickRedAnchor, 0.16)
+		return darken(surface, 0.20)
+	}
+	// Town-square paving: packed brick-earth, a shade lighter + warmer than the lanes.
+	s.pavedCol = func(p tdPal) color.RGBA {
+		earthy := blend(blend(p.bg, p.dim, 0.28), dirtAnchor, 0.36)
+		return blend(blend(earthy, p.text, 0.30), brickRedAnchor, 0.18)
+	}
+
+	// Modest greenery: kitchen plots + street trees a touch drier/duller than the lush primitive green
+	// (a working frontier town, not a garden village), still theme-derived so they retint.
+	s.gardenCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, grassAnchor, 0.40), dirtAnchor, 0.14)
+	}
+	s.treeCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, grassAnchor, 0.46), p.dim, 0.10)
+	}
+
+	// Wall: a stout TIMBER PALISADE-FORT (wallTimber — reused from iron, NOT a new wall) — the
+	// timber-brown anchor grounded so it reads as a log stockade. Medium thickness (set in tdAddWalls),
+	// no stone towers.
+	s.hasWalls = true
+	s.wallProfile = wallTimber
+	s.wallCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.dim, 0.28), timberAnchor, 0.50)
+	}
+
+	s.houseProfile = profileRowhouse // terraced brick rowhouses
+	s.wonderMotif = wonderGeneric    // colonial centrepiece: the grand generic hall read as a statehouse
+	s.slotSpacing = 1.6              // a packed frontier town — tighter than the ancient/medieval city
+	return s
+}()
+
+// industrialCityStyle is the tuned INDUSTRIAL preset (Phase 1b-iii). A grimy RED-BRICK factory town:
+// dense terraced brick rowhouses under dull TIN (corrugated grey metal) roofs (profileRowhouse reused
+// from colonial), a SOOTY darkened/greyed ground (a dark soot tone blended in — clearly dirtier than
+// colonial), NO walls (the age of open industry), and a great FACTORY hall + SMOKESTACKS centrepiece
+// (wonderFactory). Scattered smokestacks dot the skyline (tdAddFiller). Built from defaultTdStyle,
+// then re-skinned grimy + denser. Reads clearly apart from colonial: colonial is warm brick rowhouses
+// + a timber palisade + greenery; industrial is grimier red-brick + tin roofs + smokestacks + a sooty
+// dark ground + NO walls + DENSER.
+var industrialCityStyle = func() tdEraStyle {
+	s := defaultTdStyle
+	s.name = "industrial"
+
+	// Roof material: dull TIN — corrugated grey metal. The industrial HOUSE (profileRowhouse) draws its
+	// brick body internally; roofBase here is the tin roof tone (a cool dull grey), so a rowhouse reads
+	// as red brick under grey tin. Non-house roofs then read as grimy metal, which suits the mood.
+	s.roofBase = func(p tdPal) color.RGBA {
+		tin := blend(blend(p.bg, p.dim, 0.24), tinAnchor, 0.52)
+		return blend(tin, sootAnchor, 0.14) // grimed with soot
+	}
+	s.roofDark = func(p tdPal) color.RGBA {
+		tin := blend(blend(p.bg, p.dim, 0.24), tinAnchor, 0.52)
+		return darken(blend(tin, sootAnchor, 0.20), 0.26)
+	}
+	s.lineageMix = 0.12 // a whisper of lineage tint over the grey tin; sat cap guards it
+
+	// Ground: SOOTY — the packed dirt darkened + greyed with a dark soot tone, clearly grimier than the
+	// warm colonial earth. Base pulled toward dirt then firmly toward soot so the floor reads coal-dusted.
+	s.groundBase = func(p tdPal) color.RGBA {
+		earthy := blend(blend(p.bg, p.dim, 0.30), dirtAnchor, 0.34)
+		return blend(earthy, sootAnchor, 0.34)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		return blend(blend(blend(p.bg, p.dim, 0.26), dirtAnchor, 0.24), sootAnchor, 0.30)
+	}
+	// Streets: grimy soot-dark lanes — the sooty ground lifted a touch toward the neutral so the gaps
+	// read as worked coal-dusted roads, still darker than the colonial dirt streets.
+	s.streetCol = func(p tdPal) color.RGBA {
+		packed := blend(blend(blend(p.bg, p.dim, 0.30), dirtAnchor, 0.36), sootAnchor, 0.30)
+		return blend(packed, p.text, 0.22)
+	}
+	s.streetEdge = func(p tdPal) color.RGBA {
+		packed := blend(blend(blend(p.bg, p.dim, 0.30), dirtAnchor, 0.36), sootAnchor, 0.30)
+		return darken(blend(packed, p.text, 0.22), 0.22)
+	}
+	// Town-square paving: soot-stained flag/brick, a shade lighter than the lanes but still grimy.
+	s.pavedCol = func(p tdPal) color.RGBA {
+		packed := blend(blend(blend(p.bg, p.dim, 0.28), dirtAnchor, 0.30), sootAnchor, 0.28)
+		return blend(packed, p.text, 0.26)
+	}
+
+	// Greenery: sparse + sooty — the little green that survives is dull and coal-dusted, so the town
+	// reads industrial, not garden. Still theme-derived so it retints.
+	s.gardenCol = func(p tdPal) color.RGBA {
+		return blend(blend(blend(p.bg, grassAnchor, 0.34), p.dim, 0.14), sootAnchor, 0.16)
+	}
+	s.treeCol = func(p tdPal) color.RGBA {
+		return blend(blend(blend(p.bg, grassAnchor, 0.38), p.dim, 0.12), sootAnchor, 0.14)
+	}
+
+	// NO walls — the age of open industry (hasWalls false, wallProfile wallNone).
+	s.hasWalls = false
+	s.wallProfile = wallNone
+
+	s.houseProfile = profileRowhouse // dense brick terraces under tin roofs
+	s.wonderMotif = wonderFactory    // industrial centrepiece: a factory hall + smokestacks
+	s.slotSpacing = 1.5              // DENSER than colonial (1.6) — packed industrial terraces
+	return s
+}()
+
 // stoneAgeStyle is the tuned STONE preset (Phase 1b-i), split off organicVillageStyle so the stone
 // age reads distinct from primitive. Dwellings stay THATCH (stone-age huts are still thatch, so
 // houseProfile is unchanged) and there are still NO walls — the difference is a ROCKIER, cooler,
@@ -682,6 +827,12 @@ var (
 	// used raw, always blended against theme roles + the era material so a light/dark theme retints.
 	creamStoneAnchor = color.RGBA{R: 0xe3, G: 0xd8, B: 0xbf, A: 0xff} // warm cream/ivory ashlar (renaissance ornate townhouses + civic paving) — LIGHTER + warmer than marble
 	leadAnchor       = color.RGBA{R: 0x8f, G: 0x93, B: 0x99, A: 0xff} // pale lead-grey (renaissance dome sheathing + stone accents)
+
+	// V3-B colonial + industrial anchors (Phase 1b-iii). Same discipline — never used raw, always
+	// blended against theme roles + neighbouring tones so a light/dark theme retints them.
+	brickRedAnchor = color.RGBA{R: 0x9c, G: 0x50, B: 0x3a, A: 0xff} // warm fired brick-red (colonial roofs + industrial house walls) — earthier + redder than clay
+	tinAnchor      = color.RGBA{R: 0x8c, G: 0x92, B: 0x96, A: 0xff} // dull corrugated grey tin/zinc (industrial house roofs)
+	sootAnchor     = color.RGBA{R: 0x3a, G: 0x37, B: 0x33, A: 0xff} // grimy dark soot/coal (industrial ground + smokestacks + smoke)
 )
 
 // tdStyleForEra returns the tuned preset for an era band, or defaultTdStyle for the bands not yet
@@ -718,8 +869,8 @@ var ageStyles = map[string]tdEraStyle{
 	"medieval_age":    medievalCityStyle,
 	"renaissance_age": renaissanceCityStyle,
 	// default — every not-yet-tuned age renders the legible default city
-	"colonial_age":     defaultTdStyle,
-	"industrial_age":   defaultTdStyle,
+	"colonial_age":     colonialCityStyle,
+	"industrial_age":   industrialCityStyle,
 	"victorian_age":    defaultTdStyle,
 	"electric_age":     defaultTdStyle,
 	"atomic_age":       defaultTdStyle,
@@ -890,11 +1041,12 @@ const (
 	// market stalls / fountain / cross-or-gallows (+ well). Each has its own small top-down draw
 	// routine (drawSquareProp), so per-era squares read distinct without disturbing the primitive
 	// set. Placed by tdRingProps exactly like the primitive props (deterministic ring, no overlap).
-	tdPropAltar    // ancient: a low stone altar (a flat slab + a small offering dab)
-	tdPropColumns  // ancient: a row of columns / colonnade (a few upright pale dabs)
-	tdPropBrazier  // ancient: a fire brazier on a stand (a bright ember over a dark base)
-	tdPropFountain // medieval: a stone fountain (a paved ring + a water center)
-	tdPropCross    // medieval: a market cross / gallows (an upright post with a crossbar)
+	tdPropAltar      // ancient: a low stone altar (a flat slab + a small offering dab)
+	tdPropColumns    // ancient: a row of columns / colonnade (a few upright pale dabs)
+	tdPropBrazier    // ancient: a fire brazier on a stand (a bright ember over a dark base)
+	tdPropFountain   // medieval: a stone fountain (a paved ring + a water center)
+	tdPropCross      // medieval: a market cross / gallows (an upright post with a crossbar)
+	tdPropSmokestack // industrial: a tall dark factory chimney + a soot dab on top (taller than other props)
 )
 
 // tdLot is one placed thing, in CITY SPACE (pre-fill-frame). x,y is the lot center in city
@@ -2530,6 +2682,15 @@ func tdSquarePropsFor(style tdEraStyle) tdSquareProps {
 			center: []tdLotKind{tdPropMegalith, tdPropWell},
 		}
 	}
+	// Industrial shares profileRowhouse with colonial, so it can't be told apart by the house profile;
+	// its factory motif is the discriminator. Dress its square with SMOKESTACKS (Phase 1b-iii) so the
+	// factory forecourt reads industrial, not the colonial statehouse green.
+	if style.wonderMotif == wonderFactory {
+		return tdSquareProps{
+			wonder: []tdLotKind{tdPropSmokestack, tdPropWell, tdPropSmokestack, tdPropStall},
+			center: []tdLotKind{tdPropSmokestack, tdPropWell},
+		}
+	}
 	switch style.houseProfile {
 	case profileMudbrick: // ancient (bronze / iron)
 		return tdSquareProps{
@@ -2813,6 +2974,26 @@ func tdAddFiller(plan *topPlan, field blockField, style tdEraStyle, cfg tdConfig
 			}
 			plan.lots = append(plan.lots, tdLot{
 				x: p.x, y: p.y, w: cfg.roofSize * 0.7, h: cfg.roofSize * 0.7, kind: tdPropMegalith,
+			})
+		}
+	}
+
+	// Scattered SMOKESTACKS (industrial, Phase 1b-iii): a handful of tall-chimney dabs dotted through
+	// the factory town (not only the central works) so the industrial skyline reads across the whole
+	// town at thumbnail scale. Same deterministic seeded pick-without-replacement + 2–4 cap as the
+	// stone-age megalith scatter, gated on the factory motif so only industrial towns get them.
+	if style.wonderMotif == wonderFactory {
+		nStacks := 2 + int(r.f01()*3) // 2..4
+		if nStacks > 4 {
+			nStacks = 4
+		}
+		for i := 0; i < nStacks; i++ {
+			p, ok := pick()
+			if !ok {
+				break
+			}
+			plan.lots = append(plan.lots, tdLot{
+				x: p.x, y: p.y, w: cfg.roofSize * 0.6, h: cfg.roofSize * 0.6, kind: tdPropSmokestack,
 			})
 		}
 	}
@@ -3346,7 +3527,8 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 			cx, cy := xf.px(lt.x, lt.y)
 			drawBlock(img, cx, cy, 0, propCol)
 		case tdPropWell, tdPropFirepit, tdPropStones, tdPropStall,
-			tdPropAltar, tdPropColumns, tdPropBrazier, tdPropFountain, tdPropCross:
+			tdPropAltar, tdPropColumns, tdPropBrazier, tdPropFountain, tdPropCross,
+			tdPropSmokestack:
 			drawSquareProp(img, xf, lt, style, pal)
 		}
 	}
@@ -3621,6 +3803,28 @@ func drawSquareProp(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle,
 			setPixel(img, cx, cy+dy, post)
 		}
 		drawHSpan(img, cx-rad, cx+rad, cy-rad+1, post)
+	case tdPropSmokestack:
+		// A single TALL factory chimney: a dark vertical column rising well ABOVE the other props (a
+		// scatter smokestack seasoning the skyline), with a lit NW rim, a splayed base, and a soft dark
+		// soot dab drifting off its top. Dark soot tones blended with propCol/pavedCol like the
+		// neighbouring props so it retints with the theme.
+		stack := blend(blend(prop, paved, 0.30), sootAnchor, 0.50)
+		stackLit := brighten(stack, 0.16)
+		soot := blend(stack, sootAnchor, 0.40)
+		tall := rad * 2 // taller than a normal prop (which spans ±rad)
+		// Ground shadow at the base (south of the column).
+		forEllipse(cx, cy+rad, maxInt(rad, 1), maxInt(rad/2, 1), func(x, y int) { blendPixel(img, x, y, darken(stack, 0.4), 0.35) })
+		// The column: a thin tall vertical rect from base (cy+rad) up to the top (cy-tall).
+		fillRectC(img, cx, (cy+rad-tall)/2, maxInt(rad/3, 0), (cy+rad+tall)/2, stack)
+		fillRectC(img, cx, cy+rad, maxInt(rad/2, 1), 0, blend(stack, darken(stack, 0.4), 0.4)) // splayed base
+		for dy := -tall; dy <= rad; dy++ {
+			setPixel(img, cx-maxInt(rad/3, 0), cy+dy, stackLit)            // lit NW edge
+			setPixel(img, cx+maxInt(rad/3, 0), cy+dy, darken(stack, 0.16)) // shaded SE edge
+		}
+		// Soot dab drifting off the chimney top.
+		puffR := maxInt(rad/2, 1)
+		forEllipse(cx+puffR, cy-tall-puffR/2, puffR, puffR, func(x, y int) { blendPixel(img, x, y, soot, 0.55) })
+		setPixel(img, cx, cy-tall, brighten(stack, 0.12)) // lit chimney lip
 	}
 }
 
@@ -3695,6 +3899,8 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 			drawRoofMudbrick(img, cx, cy, hw, hh, rc)
 		case profileStoneClassical:
 			drawRoofStoneClassical(img, cx, cy, hw, hh, rc)
+		case profileRowhouse:
+			drawRoofRowhouse(img, cx, cy, hw, hh, rc)
 		default:
 			drawRoofHut(img, cx, cy, hw, hh, rc)
 		}
@@ -3726,6 +3932,8 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 			drawRoofKeep(img, cx, cy, hw, hh, rc)
 		case wonderDome:
 			drawRoofDome(img, cx, cy, hw, hh, rc)
+		case wonderFactory:
+			drawRoofFactory(img, cx, cy, hw, hh, rc)
 		default:
 			drawRoofWonder(img, cx, cy, hw, hh, rc)
 		}
@@ -3829,6 +4037,8 @@ func drawRoofHouse(img *image.RGBA, cx, cy, hw, hh int, rc roofColors, prof roof
 		drawRoofTimber(img, cx, cy, hw, hh, rc)
 	case profileStoneClassical:
 		drawRoofStoneClassical(img, cx, cy, hw, hh, rc)
+	case profileRowhouse:
+		drawRoofRowhouse(img, cx, cy, hw, hh, rc)
 	default:
 		drawRoofRidge(img, cx, cy, hw, hh, rc)
 	}
@@ -3923,6 +4133,83 @@ func drawRoofStoneClassical(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) 
 	for fx := cx - hw + 1; fx <= cx+hw-1; fx += step {
 		for y := cy; y <= cy+dhh; y++ {
 			setPixel(img, fx, y, flute)
+		}
+	}
+}
+
+// drawRoofRowhouse: the COLONIAL/INDUSTRIAL dwelling (Phase 1b-iii) — a TERRACE of narrow attached
+// units read from above, so a house reads as a row of townhouses rather than one block. The footprint
+// is divided along its LONG axis into 3–5 equal narrow units separated by thin dark dividing SEAMS
+// (party walls); each unit is a small PITCHED roof, lit on the north slope + shaded on the south, with
+// a bright ridge line down its spine. Base/dark/ridge-derived tones only (no accent), so it retints
+// with the era material (warm brick for colonial, dull tin for industrial). Bounds-safe: every write
+// goes through forRect/drawHSpan/setPixel (all clipped), so it never panics at any footprint.
+func drawRoofRowhouse(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	seam := darken(rc.dark, 0.30) // dark party-wall seam between attached units
+
+	// Fill the whole terrace first as a pitched block: north slope lit (base), south slope shaded
+	// (dark), so even the smallest footprint reads as a roofed row. The per-unit seams + ridges are
+	// stamped over this.
+	longAxisH := hw >= hh // the row of units runs along the wider axis
+	forRect(cx, cy, hw, hh, func(x, y int) {
+		lit := y <= cy // north slope lit, south slope shaded (a pitched terrace roof)
+		if lit {
+			img.SetRGBA(x, y, rc.base)
+		} else {
+			img.SetRGBA(x, y, rc.dark)
+		}
+	})
+
+	if longAxisH {
+		// Units tile left→right across the width; each is a narrow vertical strip. Pick 3–5 units by
+		// how wide the footprint is (a wider lot = more units), floored so a tiny lot still shows ≥2.
+		fullW := 2*hw + 1
+		units := fullW / 3
+		if units < 2 {
+			units = 2
+		}
+		if units > 5 {
+			units = 5
+		}
+		x0 := cx - hw
+		for u := 0; u <= units; u++ {
+			sx := x0 + u*fullW/units
+			// Dividing seam (party wall) at every internal boundary.
+			if u > 0 && u < units {
+				for y := cy - hh; y <= cy+hh; y++ {
+					setPixel(img, sx, y, seam)
+				}
+			}
+		}
+		// Per-unit ridge: a bright horizontal spine across each unit's own width along the crest (cy).
+		for u := 0; u < units; u++ {
+			ua := x0 + u*fullW/units
+			ub := x0 + (u+1)*fullW/units
+			drawHSpan(img, ua+1, ub-1, cy, rc.ridge)
+		}
+	} else {
+		// Tall lot: units tile top→bottom, each a narrow horizontal strip; ridge runs vertically.
+		fullH := 2*hh + 1
+		units := fullH / 3
+		if units < 2 {
+			units = 2
+		}
+		if units > 5 {
+			units = 5
+		}
+		y0 := cy - hh
+		for u := 0; u <= units; u++ {
+			sy := y0 + u*fullH/units
+			if u > 0 && u < units {
+				drawHSpan(img, cx-hw, cx+hw, sy, seam)
+			}
+		}
+		for u := 0; u < units; u++ {
+			ua := y0 + u*fullH/units
+			ub := y0 + (u+1)*fullH/units
+			for y := ua + 1; y < ub; y++ {
+				setPixel(img, cx, y, rc.ridge)
+			}
 		}
 	}
 }
@@ -4152,6 +4439,83 @@ func drawRoofDome(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 	lhw := maxInt(rad/5, 1)
 	fillRectC(img, cx, cy, lhw, lhw, leadLit)
 	setPixel(img, cx, cy, lantern)
+}
+
+// drawRoofFactory: the INDUSTRIAL wonder (Phase 1b-iii) — a great FACTORY HALL read from above: a big
+// rectangular red-brick/tin hall filling the footprint (a sawtooth roof suggested by parallel ridge
+// lines), with 2–3 tall SMOKESTACKS standing along its NORTH edge — each a dark vertical chimney with
+// a lighter sunlit rim and a soft dark SOOT/smoke puff drifting off its top. The blocky hall + the row
+// of chimneys + smoke reads clearly apart from the stepped ziggurat, the colonnade+pediment temple,
+// the cruciform+spire cathedral, the domed rotunda, the blocky keep+tower, and the open megalith.
+// Brick + tin + soot (brickRedAnchor / tinAnchor / sootAnchor) are BLENDED with the passed roof colors
+// so the factory retints on a theme switch and stays in the grimy era mood. Bounds-safe: every write
+// goes through fillRectC/forRect/drawHSpan/setPixel/blendPixel (all clipped), so it never panics.
+func drawRoofFactory(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	// Brick hall body + dull-tin roof + dark soot tones pulled toward the (already theme/lineage-tinted)
+	// roof colors, so the whole works retints yet reads as a grimy brick-and-tin factory.
+	brick := blend(rc.base, brickRedAnchor, 0.46)                   // the red-brick hall walls
+	tin := blend(rc.base, blend(tinAnchor, sootAnchor, 0.30), 0.50) // dull grey tin roof panels
+	tinLit := brighten(tin, 0.12)                                   // sunlit tin ridge
+	tinDark := blend(rc.dark, sootAnchor, 0.35)                     // shaded tin + eave
+	stack := blend(rc.dark, sootAnchor, 0.55)                       // dark soot chimney
+	stackLit := brighten(stack, 0.18)                               // sunlit NW rim of a stack
+	smoke := blend(rc.dark, sootAnchor, 0.42)                       // soft dark smoke puff
+
+	// THE HALL: a solid brick body filling the footprint, lit N/W + shaded S/E, so the works sit as a
+	// raised mass rather than a flat slab.
+	forRect(cx, cy, hw, hh, func(x, y int) {
+		if x <= cx || y <= cy {
+			setPixel(img, x, y, brick)
+		} else {
+			setPixel(img, x, y, darken(brick, 0.14))
+		}
+	})
+	// TIN ROOF: a broad tin deck over most of the hall (inset a brick rim), then a SAWTOOTH read — a
+	// few parallel bright ridge lines across the deck so it reads as a factory shed roof, not a plain slab.
+	dhw := maxInt(hw-1, 0)
+	dhh := maxInt(hh-1, 0)
+	forRect(cx, cy, dhw, dhh, func(x, y int) {
+		if y <= cy {
+			setPixel(img, x, y, tin)
+		} else {
+			setPixel(img, x, y, tinDark)
+		}
+	})
+	sawEvery := maxInt(hh/2, 2)
+	for y := cy - dhh; y <= cy+dhh; y += sawEvery {
+		drawHSpan(img, cx-dhw, cx+dhw, y, tinLit)
+	}
+
+	// SMOKESTACKS: 2–3 tall chimneys standing along the hall's NORTH edge, spaced across the width. Each
+	// is a short dark vertical column rising from the roofline, with a lit NW rim, and a soft dark soot
+	// puff blended above its top so the skyline reads industrial.
+	stacks := 2
+	if hw >= 8 {
+		stacks = 3
+	}
+	stackHW := maxInt(hw/12, 0) // half-width of a chimney column
+	stackH := maxInt(hh*3/4, 2) // how far a chimney rises above the roofline (tall)
+	topY := cy - hh - stackH    // the chimney top (may clip above the footprint; setPixel clamps)
+	for i := 0; i < stacks; i++ {
+		// Even spread across the north edge, kept inside the hall width.
+		var sx int
+		if stacks == 1 {
+			sx = cx
+		} else {
+			sx = cx - hw + (2*hw)*i/(stacks-1)
+		}
+		// The chimney column: from the north roofline up to topY.
+		fillRectC(img, sx, (cy-hh+topY)/2, stackHW, (cy-hh-topY)/2, stack)
+		// Lit NW rim + shaded SE edge for upright volume.
+		for y := topY; y <= cy-hh; y++ {
+			setPixel(img, sx-stackHW, y, stackLit)
+			setPixel(img, sx+stackHW, y, darken(stack, 0.16))
+		}
+		// SOOT / smoke puff: a soft dark blob drifting up-right off the chimney top.
+		puffR := maxInt(stackHW+1, 1)
+		forEllipse(sx+puffR, topY-puffR, puffR, puffR, func(x, y int) { blendPixel(img, x, y, smoke, 0.55) })
+		setPixel(img, sx, topY, brighten(stack, 0.10)) // a lit chimney lip
+	}
 }
 
 // drawRoofCathedral: the MEDIEVAL wonder (locked #13, V3-B) — a tall CATHEDRAL / KEEP read from
