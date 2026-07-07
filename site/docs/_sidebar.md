@@ -7,6 +7,7 @@
 
 - **Gameplay**
   - [How to Play](how-to-play.md)
+  - [The City Map](city-map.md)
   - [All Commands](commands.md)
   - [Saving & Loading](saving-and-loading.md)
   - [Account & Recovery](account.md)
