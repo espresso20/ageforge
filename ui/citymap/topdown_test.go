@@ -3846,15 +3846,16 @@ func TestNeonWondersDiffer(t *testing.T) {
 }
 
 // TestNeonEpochCitiesDiffer locks the CITY-level reads: cyberpunk (dark neon) differs from fusion (bright
-// white) differs from space (pale metallic), and all three differ from a STILL-DEFAULT placeholder
-// (transcendent_age, still on the village preset — cyberpunk/fusion/space are now restyled).
+// white) differs from space (pale metallic), and all three differ from transcendent (now the ETHEREAL-LIGHT
+// finale — since every age is styled, transcendent is used here as a KNOWN-DISTINCT comparison age, no
+// longer a default-village placeholder). A styled neon-epoch city still differs from the styled finale.
 func TestNeonEpochCitiesDiffer(t *testing.T) {
 	_ = theme.SetActive("forge")
 	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
 	cyb, _ := renderImage(namedState("cyberpunk_age", "Aldermoor", blds), 120, 72)
 	fus, _ := renderImage(namedState("fusion_age", "Aldermoor", blds), 120, 72)
 	spc, _ := renderImage(namedState("space_age", "Aldermoor", blds), 120, 72)
-	def, _ := renderImage(namedState("transcendent_age", "Aldermoor", blds), 120, 72) // still uses defaultTdStyle
+	def, _ := renderImage(namedState("transcendent_age", "Aldermoor", blds), 120, 72) // now the styled ethereal finale (a known-distinct age)
 
 	if !imagesDiffer(cyb, fus) {
 		t.Fatal("cyberpunk city renders identically to fusion — the dark-neon vs bright-white re-skin is not distinct")
@@ -3866,13 +3867,13 @@ func TestNeonEpochCitiesDiffer(t *testing.T) {
 		t.Fatal("cyberpunk city renders identically to space — the dark-neon vs pale-metallic re-skin is not distinct")
 	}
 	if !imagesDiffer(cyb, def) {
-		t.Fatal("cyberpunk city renders identically to the default village (transcendent) — the cyberpunk re-skin is not applied")
+		t.Fatal("cyberpunk city renders identically to the transcendent finale — the cyberpunk re-skin is not distinct")
 	}
 	if !imagesDiffer(fus, def) {
-		t.Fatal("fusion city renders identically to the default village (transcendent) — the fusion re-skin is not applied")
+		t.Fatal("fusion city renders identically to the transcendent finale — the fusion re-skin is not distinct")
 	}
 	if !imagesDiffer(spc, def) {
-		t.Fatal("space city renders identically to the default village (transcendent) — the space re-skin is not applied")
+		t.Fatal("space city renders identically to the transcendent finale — the space re-skin is not distinct")
 	}
 }
 
@@ -4061,23 +4062,23 @@ func TestCosmicWondersDiffer(t *testing.T) {
 }
 
 // TestCosmicEpochCitiesDiffer locks the CITY-level reads: interstellar (deep-space spires) differs from
-// galactic (ring-hub megastation), and both differ from a STILL-DEFAULT placeholder (transcendent_age,
-// still on the village preset — interstellar/galactic are now restyled).
+// galactic (ring-hub megastation), and both differ from transcendent (now the ETHEREAL-LIGHT finale — every
+// age is styled, so transcendent serves here as a KNOWN-DISTINCT comparison age, not a default placeholder).
 func TestCosmicEpochCitiesDiffer(t *testing.T) {
 	_ = theme.SetActive("forge")
 	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
 	inter, _ := renderImage(namedState("interstellar_age", "Aldermoor", blds), 120, 72)
 	gal, _ := renderImage(namedState("galactic_age", "Aldermoor", blds), 120, 72)
-	def, _ := renderImage(namedState("transcendent_age", "Aldermoor", blds), 120, 72) // still uses defaultTdStyle
+	def, _ := renderImage(namedState("transcendent_age", "Aldermoor", blds), 120, 72) // now the styled ethereal finale (a known-distinct age)
 
 	if !imagesDiffer(inter, gal) {
 		t.Fatal("interstellar city renders identically to galactic — the spires vs ring-hub re-skin is not distinct")
 	}
 	if !imagesDiffer(inter, def) {
-		t.Fatal("interstellar city renders identically to the default village (transcendent) — the interstellar re-skin is not applied")
+		t.Fatal("interstellar city renders identically to the transcendent finale — the interstellar re-skin is not distinct")
 	}
 	if !imagesDiffer(gal, def) {
-		t.Fatal("galactic city renders identically to the default village (transcendent) — the galactic re-skin is not applied")
+		t.Fatal("galactic city renders identically to the transcendent finale — the galactic re-skin is not distinct")
 	}
 }
 
@@ -4169,6 +4170,246 @@ func TestDumpCosmicEpochPNGs(t *testing.T) {
 		{"space_age", "1g_space.png"},
 		{"interstellar_age", "1g_interstellar.png"},
 		{"galactic_age", "1g_galactic.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
+
+// TestFinalPairWiring locks that the FINAL two ages — quantum + transcendent, completing all 22 — are wired
+// to their own presets + sprites: quantum → the iridescent CRYSTAL-LATTICE wonder + the lattice house
+// profile; transcendent → the ethereal ASCENSION wonder + the ethereal house profile. Both are OPEN (no
+// walls), neither still resolves to the default village preset name, and — since transcendent is now
+// styled — NO age maps to defaultTdStyle any more.
+func TestFinalPairWiring(t *testing.T) {
+	_ = theme.SetActive("forge")
+
+	quantum := styleForAge("quantum_age")
+	if quantum.wonderMotif != wonderCrystalLattice {
+		t.Fatalf("quantum wonderMotif = %v, want wonderCrystalLattice (iridescent lattice mesh)", quantum.wonderMotif)
+	}
+	if quantum.houseProfile != profileLattice {
+		t.Fatalf("quantum houseProfile = %v, want profileLattice (faceted crystal node)", quantum.houseProfile)
+	}
+	if quantum.hasWalls {
+		t.Fatal("quantum must be OPEN (no walls)")
+	}
+
+	trans := styleForAge("transcendent_age")
+	if trans.wonderMotif != wonderAscension {
+		t.Fatalf("transcendent wonderMotif = %v, want wonderAscension (rising light + halos)", trans.wonderMotif)
+	}
+	if trans.houseProfile != profileEthereal {
+		t.Fatalf("transcendent houseProfile = %v, want profileEthereal (soft light-form bloom)", trans.houseProfile)
+	}
+	if trans.hasWalls {
+		t.Fatal("transcendent must be OPEN (no walls)")
+	}
+
+	// Neither may still resolve to the default village preset name.
+	if quantum.name == defaultTdStyle.name || trans.name == defaultTdStyle.name {
+		t.Fatalf("a FINAL-pair age still on the default preset: quantum=%q transcendent=%q", quantum.name, trans.name)
+	}
+	// The whole atlas is now styled: NO age may map to defaultTdStyle (it survives only as a base preset).
+	for ageKey, st := range ageStyles {
+		if st.name == defaultTdStyle.name {
+			t.Fatalf("age %q still maps to the default village preset — every one of the 22 ages must be styled now", ageKey)
+		}
+	}
+}
+
+// TestFinalPairWondersDiffer locks that the two FINAL-pair wonders read apart from their neighbours and each
+// other: the CRYSTAL-LATTICE differs from the ring-hub, the fusion core, the spire-array, and the dome; the
+// ASCENSION differs from the crystal-lattice, the ring-hub, and the fusion core. Each silhouette must
+// actually be applied (not falling through to the generic hall).
+func TestFinalPairWondersDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	crystalLattice := drawWonderImg(styleForAge("quantum_age"))
+	ascension := drawWonderImg(styleForAge("transcendent_age"))
+	ringHub := drawWonderImg(styleForAge("galactic_age"))
+	spireArray := drawWonderImg(styleForAge("interstellar_age"))
+	fusionCore := drawWonderImg(styleForAge("fusion_age"))
+	dome := drawWonderImg(styleForAge("renaissance_age"))
+
+	if !imagesDiffer(crystalLattice, ringHub) {
+		t.Fatal("crystal lattice draws identically to the ring hub — the lattice-mesh silhouette is not applied")
+	}
+	if !imagesDiffer(crystalLattice, fusionCore) {
+		t.Fatal("crystal lattice draws identically to the fusion core — the two wonders must differ")
+	}
+	if !imagesDiffer(crystalLattice, spireArray) {
+		t.Fatal("crystal lattice draws identically to the spire array — the two wonders must differ")
+	}
+	if !imagesDiffer(crystalLattice, dome) {
+		t.Fatal("crystal lattice draws identically to the renaissance dome — the two wonders must differ")
+	}
+	if !imagesDiffer(ascension, crystalLattice) {
+		t.Fatal("ascension draws identically to the crystal lattice — the two FINAL-pair wonders must differ")
+	}
+	if !imagesDiffer(ascension, ringHub) {
+		t.Fatal("ascension draws identically to the ring hub — the two wonders must differ")
+	}
+	if !imagesDiffer(ascension, fusionCore) {
+		t.Fatal("ascension draws identically to the fusion core — the two wonders must differ")
+	}
+}
+
+// TestFinalPairCitiesDiffer locks the CITY-level reads for the final two ages: quantum (dark iridescent
+// crystal) differs from transcendent (bright ethereal light), and each differs from two KNOWN-DISTINCT
+// styled ages — primitive_age and space_age. NOTE (this is the last slice): since transcendent is now
+// styled, there is NO default-village placeholder left to compare against, so we use real styled ages.
+func TestFinalPairCitiesDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	quantum, _ := renderImage(namedState("quantum_age", "Aldermoor", blds), 120, 72)
+	trans, _ := renderImage(namedState("transcendent_age", "Aldermoor", blds), 120, 72)
+	prim, _ := renderImage(namedState("primitive_age", "Aldermoor", blds), 120, 72)
+	space, _ := renderImage(namedState("space_age", "Aldermoor", blds), 120, 72)
+
+	if !imagesDiffer(quantum, trans) {
+		t.Fatal("quantum city renders identically to transcendent — the iridescent-crystal vs ethereal-light re-skin is not distinct")
+	}
+	if !imagesDiffer(quantum, prim) {
+		t.Fatal("quantum city renders identically to the primitive village — the quantum re-skin is not applied")
+	}
+	if !imagesDiffer(quantum, space) {
+		t.Fatal("quantum city renders identically to space — the quantum crystal deck must differ from the space colony")
+	}
+	if !imagesDiffer(trans, prim) {
+		t.Fatal("transcendent city renders identically to the primitive village — the transcendent re-skin is not applied")
+	}
+	if !imagesDiffer(trans, space) {
+		t.Fatal("transcendent city renders identically to space — the ethereal light-field must differ from the space colony")
+	}
+}
+
+// TestDrawRoofLatticePanicSafe locks that the LATTICE dwelling sprite (a faceted iridescent crystal node —
+// four triangular facets in shifting hues + a bright core) is panic-safe + in-bounds on tiny / normal / NW +
+// SE corner cases.
+func TestDrawRoofLatticePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("quantum_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "housing", "production")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {10, 12}, {14, 6}} {
+			drawRoofLattice(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofLattice(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofLattice(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestDrawRoofCrystalLatticePanicSafe locks that the CRYSTAL-LATTICE wonder sprite (a crystalline deck + a
+// diamond grid of glowing nodes joined by iridescent struts + a bright central node) is panic-safe +
+// in-bounds on tiny / normal / NW + SE corner cases.
+func TestDrawRoofCrystalLatticePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("quantum_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofCrystalLattice(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofCrystalLattice(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofCrystalLattice(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestDrawRoofEtherealPanicSafe locks that the ETHEREAL dwelling sprite (a soft translucent radial bloom —
+// pure light, no hard fill) is panic-safe + in-bounds on tiny / normal / NW + SE corner cases.
+func TestDrawRoofEtherealPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("transcendent_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "housing", "production")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {10, 12}, {14, 6}} {
+			drawRoofEthereal(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofEthereal(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofEthereal(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestDrawRoofAscensionPanicSafe locks that the ASCENSION wonder sprite (concentric soft halos + a rising
+// vertical light beam + a pure-white core) is panic-safe + in-bounds on tiny / normal / NW + SE corner
+// cases.
+func TestDrawRoofAscensionPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("transcendent_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofAscension(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofAscension(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner
+			drawRoofAscension(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner
+		}
+	}
+}
+
+// TestFinalPairOpenNoWallLots locks that QUANTUM and TRANSCENDENT are OPEN ages: each emits ZERO wall / gate
+// / tower / bastion lots (unwalled), on real + tiny canvases.
+func TestFinalPairOpenNoWallLots(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	ages := []string{"quantum_age", "transcendent_age"}
+	for _, sz := range []struct{ w, h int }{{120, 72}, {24, 16}, {8, 8}} {
+		_ = sz
+		for _, ageKey := range ages {
+			p := tdPlanForAge(namedState(ageKey, "Aldermoor", blds))
+			if n := len(wallLotsOf(p)) + len(gateLotsOf(p)) + len(towerLotsOf(p)) + len(bastionLotsOf(p)); n != 0 {
+				t.Fatalf("%s has %d wall lots — this age must be OPEN (no walls)", ageKey, n)
+			}
+		}
+	}
+}
+
+// TestDumpFinalPairPNGs renders galactic / quantum / transcendent with a FIXED display name + identical
+// building set INCLUDING a wonder so the centerpieces render, so a reviewer can compare the FINAL pair
+// (against the galactic neighbour it descends from) side by side. Opt-in: skipped unless CITYMAP_PNG_DUMP=<dir>
+// is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpFinalPairPNGs
+func TestDumpFinalPairPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"galactic_age", "1h_galactic.png"},
+		{"quantum_age", "1h_quantum.png"},
+		{"transcendent_age", "1h_transcendent.png"},
 	}
 	for _, d := range dumps {
 		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)

@@ -158,6 +158,8 @@ const (
 	profileGlassTower                        // modern/information/digital: a TALL glass-and-steel tower from above (cool blue-grey slab + lit window grid + a long height shadow)
 	profileMetalDome                         // space: a small pale METALLIC DOME (a lit silver disc with a curved NW highlight + a rim) — the space-colony habitat dwelling
 	profileSpire                             // interstellar: a TALL NARROW tapering metallic SPIRE read from above (a small bright metal core + a long SE height shadow + a lit tip) — the deep-space arcology dwelling
+	profileLattice                           // quantum: a small faceted CRYSTAL / lattice NODE — a few triangular facets in SHIFTING iridescent hues (cyan/magenta/gold) around a bright core, so the dwelling reads as a glinting gem
+	profileEthereal                          // transcendent: a soft glowing translucent BLOOM instead of a hard roof — a luminous white light-form (a dematerialised dwelling), the ethereal finale
 )
 
 // wallProfile is the per-era wall dialect (V3-B, locked #9): mudbrick curtain vs stone curtain +
@@ -178,20 +180,22 @@ const (
 type wonderMotif int
 
 const (
-	wonderGeneric    wonderMotif = iota // grand generic hall (drawRoofWonder)
-	wonderZiggurat                      // ancient stepped pyramid (drawRoofZiggurat)
-	wonderCathedral                     // medieval cruciform + spire (drawRoofCathedral)
-	wonderMegalith                      // stone-age standing-stone circle (drawRoofMegalith)
-	wonderTemple                        // classical columned temple + pediment (drawRoofTempleWonder)
-	wonderKeep                          // iron-age fortified keep + watchtower (drawRoofKeep)
-	wonderDome                          // renaissance great domed rotunda + lantern (drawRoofDome)
-	wonderFactory                       // industrial great factory hall + smokestacks + soot (drawRoofFactory)
-	wonderTower                         // electric/atomic art-deco SETBACK tower — concentric flat rectilinear tiers to a central mast (drawRoofTower)
-	wonderSkyscraper                    // modern/information/digital SUPERTALL glass tower — a narrow glass slab + a lit window grid + a mast/antenna + a long height shadow (drawRoofSkyscraper)
-	wonderFusionCore                    // fusion glowing REACTOR — concentric bright cyan rings around a white-hot central core, brightening to a bloom at the very center (drawRoofFusionCore)
-	wonderLaunchpad                     // space ROCKET on a launch pad — a circular pad + a bright central rocket (capsule + fins) + gantry dabs + a scorch ring (drawRoofLaunchpad)
-	wonderSpireArray                    // interstellar SPIRE CLUSTER — a ring of tall metallic spires around a tallest central spire, each throwing a long SE height shadow (drawRoofSpireArray)
-	wonderRingHub                       // galactic RING-HUB megastation — concentric bright metallic orbital RINGS around a glowing central HUB, with faint spokes (drawRoofRingHub)
+	wonderGeneric        wonderMotif = iota // grand generic hall (drawRoofWonder)
+	wonderZiggurat                          // ancient stepped pyramid (drawRoofZiggurat)
+	wonderCathedral                         // medieval cruciform + spire (drawRoofCathedral)
+	wonderMegalith                          // stone-age standing-stone circle (drawRoofMegalith)
+	wonderTemple                            // classical columned temple + pediment (drawRoofTempleWonder)
+	wonderKeep                              // iron-age fortified keep + watchtower (drawRoofKeep)
+	wonderDome                              // renaissance great domed rotunda + lantern (drawRoofDome)
+	wonderFactory                           // industrial great factory hall + smokestacks + soot (drawRoofFactory)
+	wonderTower                             // electric/atomic art-deco SETBACK tower — concentric flat rectilinear tiers to a central mast (drawRoofTower)
+	wonderSkyscraper                        // modern/information/digital SUPERTALL glass tower — a narrow glass slab + a lit window grid + a mast/antenna + a long height shadow (drawRoofSkyscraper)
+	wonderFusionCore                        // fusion glowing REACTOR — concentric bright cyan rings around a white-hot central core, brightening to a bloom at the very center (drawRoofFusionCore)
+	wonderLaunchpad                         // space ROCKET on a launch pad — a circular pad + a bright central rocket (capsule + fins) + gantry dabs + a scorch ring (drawRoofLaunchpad)
+	wonderSpireArray                        // interstellar SPIRE CLUSTER — a ring of tall metallic spires around a tallest central spire, each throwing a long SE height shadow (drawRoofSpireArray)
+	wonderRingHub                           // galactic RING-HUB megastation — concentric bright metallic orbital RINGS around a glowing central HUB, with faint spokes (drawRoofRingHub)
+	wonderCrystalLattice                    // quantum CRYSTAL LATTICE — a geometric MESH of glowing nodes joined by thin iridescent lines, hues SHIFTING across the grid, a bright central node (drawRoofCrystalLattice)
+	wonderAscension                         // transcendent ASCENSION OF LIGHT — a bright vertical light PILLAR at center ringed by concentric soft glowing HALOS brightening to a pure-white core, an ethereal gate (drawRoofAscension) — the luminous finale of the whole progression
 )
 
 // tdPal is the small set of resolved theme colors the style recipes draw from. Built once
@@ -1379,6 +1383,116 @@ var galacticCityStyle = func() tdEraStyle {
 	return s
 }()
 
+// quantumCityStyle is the tuned QUANTUM preset (COSMIC epoch, THIRD age — the first of the final pair
+// completing all 22). Built from galacticCityStyle (so it keeps the deep-space void deck) then re-cast as
+// an IRIDESCENT CRYSTALLINE lattice: the ground darkens back toward the void (a black crystal deck) with a
+// faint shifting cyan/magenta sheen, dwellings become faceted crystal NODES (profileLattice — glinting
+// gems in shifting hues), and the centrepiece is a great CRYSTAL LATTICE mesh (wonderCrystalLattice). Reads
+// apart from galactic: galactic is a warm lit dome-metropolis under a metal ring-hub; quantum is a cold
+// black deck of shimmering iridescent crystal. The iridescence lives in the SPRITES (which cycle the three
+// irid anchors by position/facet); the preset ground just sets the dark, faintly-prismatic stage.
+var quantumCityStyle = func() tdEraStyle {
+	s := galacticCityStyle
+	s.name = "quantum"
+
+	// Ground: a COLD BLACK CRYSTAL deck — the galactic lit floor dropped hard back toward the void so the
+	// crystal structures glint against darkness, then given a faint iridescent cyan+magenta prismatic cast
+	// (a shifting sheen on black glass) so the deck itself reads faintly prismatic, not a dead black. Still
+	// void-derived (keeps the cosmic family), theme-derived throughout.
+	s.groundBase = func(p tdPal) color.RGBA {
+		deep := blend(blend(p.bg, p.dim, 0.30), voidAnchor, 0.70)
+		sheen := blend(iridCyanAnchor, iridMagentaAnchor, 0.5)
+		return blend(deep, sheen, 0.07)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		deep := blend(blend(p.bg, p.dim, 0.26), voidAnchor, 0.64)
+		return blend(deep, iridMagentaAnchor, 0.06)
+	}
+	s.streetCol = func(p tdPal) color.RGBA {
+		return blend(blend(blend(p.bg, p.dim, 0.26), voidAnchor, 0.60), iridCyanAnchor, 0.08)
+	}
+	s.streetEdge = func(p tdPal) color.RGBA {
+		return darken(blend(blend(p.bg, p.dim, 0.26), voidAnchor, 0.66), 0.12)
+	}
+	s.pavedCol = func(p tdPal) color.RGBA {
+		// The plaza reads as a faceted iridescent apron catching the crystal light — a shade brighter than
+		// the black deck with a stronger prismatic sheen, so the lattice sits on a defined glinting platform.
+		lit := blend(blend(p.bg, p.dim, 0.22), voidAnchor, 0.48)
+		return blend(lit, blend(iridCyanAnchor, iridGoldAnchor, 0.5), 0.16)
+	}
+	// Faint filler on the crystal deck leans iridescent, not green (no soil out here).
+	s.gardenCol = func(p tdPal) color.RGBA {
+		return blend(blend(blend(p.bg, p.dim, 0.24), voidAnchor, 0.56), iridMagentaAnchor, 0.10)
+	}
+	s.treeCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.text, 0.20), iridCyanAnchor, 0.30)
+	}
+	s.propCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.text, 0.18), blend(iridCyanAnchor, iridMagentaAnchor, 0.5), 0.34)
+	}
+
+	s.houseProfile = profileLattice      // quantum dwellings: faceted iridescent crystal nodes
+	s.wonderMotif = wonderCrystalLattice // quantum centrepiece: a glowing crystal-lattice mesh
+	s.hasWalls = false                   // still open
+	s.slotSpacing = 1.35                 // a touch airier than galactic — crystal spires want breathing room
+	return s
+}()
+
+// transcendentCityStyle is the tuned TRANSCENDENT preset (COSMIC epoch, FINAL age — the 22nd, completing
+// the whole progression). The ETHEREAL finale: built from galacticCityStyle then re-cast as pure LIGHT — a
+// bright, pale, LUMINOUS ground (the only near-white deck in the atlas), dwellings that read as soft
+// translucent light-forms (profileEthereal — a glowing bloom, not a hard roof), and a centrepiece that is
+// an ASCENSION of light (wonderAscension — a rising pillar ringed by soft halos). Reads apart from every
+// prior age, and MOST of all from quantum: quantum is a cold black crystal deck; transcendent is a warm
+// pale luminous field — the brightest, most dematerialised city, the post-physical climax.
+var transcendentCityStyle = func() tdEraStyle {
+	s := galacticCityStyle
+	s.name = "transcendent"
+
+	// Ground: a PALE LUMINOUS FIELD — the deep-space deck lifted all the way UP toward a warm ethereal white,
+	// so the finale reads as a place of light rather than the dark void of every prior cosmic age. Theme-derived
+	// (starts from bg lifted toward text/highlight) then washed with the ether white + a soft gold cast so it
+	// glows warm, not clinical.
+	s.groundBase = func(p tdPal) color.RGBA {
+		lift := blend(blend(p.bg, p.text, 0.34), p.highlight, 0.12)
+		return blend(blend(lift, etherWhiteAnchor, 0.52), etherGoldAnchor, 0.12)
+	}
+	s.groundAlt = func(p tdPal) color.RGBA {
+		lift := blend(blend(p.bg, p.text, 0.30), p.highlight, 0.10)
+		return blend(blend(lift, etherWhiteAnchor, 0.44), etherGoldAnchor, 0.16)
+	}
+	s.streetCol = func(p tdPal) color.RGBA {
+		// The "streets" read as faint luminous seams in the light-field — a shade softer than the ground, still pale.
+		lift := blend(blend(p.bg, p.text, 0.30), p.highlight, 0.10)
+		return blend(lift, etherWhiteAnchor, 0.40)
+	}
+	s.streetEdge = func(p tdPal) color.RGBA {
+		lift := blend(blend(p.bg, p.text, 0.30), p.highlight, 0.10)
+		return darken(blend(lift, etherWhiteAnchor, 0.46), 0.08)
+	}
+	s.pavedCol = func(p tdPal) color.RGBA {
+		// The plaza is the BRIGHTEST patch — a near-pure radiant white apron the ascension rises from.
+		lift := blend(blend(p.bg, p.text, 0.36), p.highlight, 0.16)
+		return blend(blend(lift, etherWhiteAnchor, 0.66), etherGoldAnchor, 0.10)
+	}
+	// Filler on the light-field: soft pale glimmers, warm-white, not green.
+	s.gardenCol = func(p tdPal) color.RGBA {
+		return blend(blend(blend(p.bg, p.text, 0.28), etherWhiteAnchor, 0.40), etherGoldAnchor, 0.18)
+	}
+	s.treeCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.text, 0.30), etherGoldAnchor, 0.30)
+	}
+	s.propCol = func(p tdPal) color.RGBA {
+		return blend(blend(p.bg, p.text, 0.24), blend(etherWhiteAnchor, etherGoldAnchor, 0.4), 0.44)
+	}
+
+	s.houseProfile = profileEthereal // transcendent dwellings: soft translucent light-form blooms
+	s.wonderMotif = wonderAscension  // transcendent centrepiece: a rising ascension of light
+	s.hasWalls = false               // still open
+	s.slotSpacing = 1.40             // airy — light-forms float, not packed
+	return s
+}()
+
 // stoneAgeStyle is the tuned STONE preset (Phase 1b-i), split off organicVillageStyle so the stone
 // age reads distinct from primitive. Dwellings stay THATCH (stone-age huts are still thatch, so
 // houseProfile is unchanged) and there are still NO walls — the difference is a ROCKIER, cooler,
@@ -1493,7 +1607,35 @@ var (
 	// COSMIC epoch (interstellar / galactic). Two tones for the deep-space step off the pale space colony:
 	voidAnchor   = color.RGBA{R: 0x14, G: 0x18, B: 0x2a, A: 0xff} // deep starfield blue-black (interstellar ground — a cold void deck, far darker than the space colony's pale plaza)
 	energyAnchor = color.RGBA{R: 0x74, G: 0xe0, B: 0xff, A: 0xff} // bright cyan-white orbital energy (galactic ring-hub core + ring glow) — an energetic megastructure glow, blended never raw
+
+	// COSMIC epoch, SECOND pair (quantum / transcendent — the FINAL two ages, completing all 22). Same
+	// discipline as every anchor above — NEVER used raw; blended against theme roles + neighbouring tones so
+	// a light/dark theme retints them. QUANTUM is an IRIDESCENT crystalline lattice: three shifting facet
+	// hues (cyan / magenta / gold) cycled by position/parity so the crystal city SHIMMERS rather than sits
+	// one color — on a dark void-derived deck. TRANSCENDENT is ETHEREAL LIGHT: a luminous white + a soft warm
+	// gold, blended translucent so buildings read as dematerialised light-forms on a pale glowing ground —
+	// the brightest age, the post-physical finale.
+	iridCyanAnchor    = color.RGBA{R: 0x46, G: 0xe6, B: 0xe0, A: 0xff} // iridescent facet cyan (quantum crystal — one of three shifting sheen hues)
+	iridMagentaAnchor = color.RGBA{R: 0xd6, G: 0x56, B: 0xe4, A: 0xff} // iridescent facet magenta (quantum crystal — the second shifting sheen hue)
+	iridGoldAnchor    = color.RGBA{R: 0xf0, G: 0xc8, B: 0x54, A: 0xff} // iridescent facet gold (quantum crystal — the third shifting sheen hue, warms the cyan/magenta cycle)
+	etherWhiteAnchor  = color.RGBA{R: 0xf6, G: 0xf8, B: 0xff, A: 0xff} // luminous ethereal white (transcendent light-forms + ground bloom) — the brightest tone in the whole atlas, faintly cool
+	etherGoldAnchor   = color.RGBA{R: 0xf4, G: 0xe2, B: 0xb0, A: 0xff} // soft warm halo gold (transcendent ascension rings + a warm cast on the white) — a gentle radiant warmth, never a saturated yellow
 )
+
+// iridHueFor cycles the three quantum iridescence anchors by an integer index (a ring number, a facet
+// number, or an (x+y) position sum), so a crystalline surface SHIFTS hue across itself — the iridescent
+// sheen. Pure helper (no locks); the anchor it returns is always BLENDED against roof/theme tones by the
+// caller, never stamped raw.
+func iridHueFor(i int) color.RGBA {
+	switch ((i % 3) + 3) % 3 {
+	case 0:
+		return iridCyanAnchor
+	case 1:
+		return iridMagentaAnchor
+	default:
+		return iridGoldAnchor
+	}
+}
 
 // tdStyleForEra returns the tuned preset for an era band, or defaultTdStyle for the bands not yet
 // specialised. Tuned so far: ORGANIC (primitive/stone — V3-A), ANCIENT (bronze/iron/classical —
@@ -1545,8 +1687,11 @@ var ageStyles = map[string]tdEraStyle{
 	// COSMIC epoch — interstellar/galactic (distinct deep-space SPIRES / RING-HUB megastation looks)
 	"interstellar_age": interstellarCityStyle,
 	"galactic_age":     galacticCityStyle,
-	"quantum_age":      defaultTdStyle,
-	"transcendent_age": defaultTdStyle,
+	// COSMIC epoch, FINAL pair — quantum (iridescent crystalline lattice) + transcendent (ethereal light +
+	// ascension). This completes ALL 22 ages: no age maps to defaultTdStyle any more — it survives only as the
+	// base preset other presets build from + the styleForAge fallback base.
+	"quantum_age":      quantumCityStyle,
+	"transcendent_age": transcendentCityStyle,
 }
 
 // styleForAge returns the citymap style preset for an age key, falling back to the organic village
@@ -1715,6 +1860,7 @@ const (
 	tdPropNeonSign   // digital: a small bright NEON sign dab (cyan/magenta) — the epoch's first neon
 	tdPropHologram   // cyberpunk: a bright TRANSLUCENT floating projection — a half-transparent cyan/magenta glowing shape blended over whatever's beneath (a hologram, not a solid)
 	tdPropRocket     // space: a small ROCKET / gantry dab — a bright vertical capsule with a nose + a lit rim beside a thin gantry, seasoning the spaceport
+	tdPropLightMote  // transcendent: a soft floating glowing MOTE — a small translucent warm-white bloom hovering over the light-field (an ethereal spark, blended not solid), seasoning the finale square
 )
 
 // tdLot is one placed thing, in CITY SPACE (pre-fill-frame). x,y is the lot center in city
@@ -3401,6 +3547,24 @@ func tdSquarePropsFor(style tdEraStyle) tdSquareProps {
 			center: []tdLotKind{tdPropRocket, tdPropWell},
 		}
 	}
+	// TRANSCENDENT (the finale) dresses its square with floating ethereal LIGHT MOTES — soft translucent
+	// sparks over the luminous field, so the finale forecourt reads as pure light, not a paved plaza with
+	// hard furniture. Name-gated (the two cosmic-second-pair ages share the profileEthereal/profileLattice
+	// dwellings but want distinct square dressing).
+	if style.name == "transcendent" {
+		return tdSquareProps{
+			wonder: []tdLotKind{tdPropLightMote, tdPropWell, tdPropLightMote, tdPropLightMote},
+			center: []tdLotKind{tdPropLightMote, tdPropWell},
+		}
+	}
+	// QUANTUM dresses its square with the epoch's NEON sign dabs — bright iridescent points that echo the
+	// crystal city's shifting sheen, a spare cold-crystal forecourt (name-gated like transcendent).
+	if style.name == "quantum" {
+		return tdSquareProps{
+			wonder: []tdLotKind{tdPropNeonSign, tdPropWell, tdPropNeonSign, tdPropStall},
+			center: []tdLotKind{tdPropNeonSign, tdPropWell},
+		}
+	}
 	switch style.houseProfile {
 	case profileMudbrick: // ancient (bronze / iron)
 		return tdSquareProps{
@@ -4366,7 +4530,7 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 		case tdPropWell, tdPropFirepit, tdPropStones, tdPropStall,
 			tdPropAltar, tdPropColumns, tdPropBrazier, tdPropFountain, tdPropCross,
 			tdPropSmokestack, tdPropGasLamp, tdPropDataCenter, tdPropNeonSign,
-			tdPropHologram, tdPropRocket:
+			tdPropHologram, tdPropRocket, tdPropLightMote:
 			drawSquareProp(img, xf, lt, style, pal)
 		}
 	}
@@ -4785,6 +4949,27 @@ func drawSquareProp(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle,
 		for _, dy := range []int{-tall + tall/3, 0, rad / 2} { // a few cross-arms reaching toward the rocket
 			drawHSpan(img, gx, cx-1, cy+dy, gantry)
 		}
+	case tdPropLightMote:
+		// A soft floating glowing MOTE seasoning the transcendent light-field — like the hologram it paints
+		// NOTHING solid: it BLENDS a small translucent warm-white bloom over whatever's beneath, hovering a
+		// little above the ground, so it reads as an ethereal spark of light, not an object. A faint radial
+		// falloff + a bright soft core; the ether tones are pulled toward propCol so it retints. Bounds-safe:
+		// blendPixel only.
+		mote := blend(brighten(prop, 0.10), blend(etherWhiteAnchor, etherGoldAnchor, 0.35), 0.7)
+		lift := maxInt(rad/2, 1) // the mote hovers a touch above its ground point
+		mr := maxInt(rad, 1)
+		for dy := -mr; dy <= mr; dy++ {
+			for dx := -mr; dx <= mr; dx++ {
+				fx := float64(dx) / float64(mr)
+				fy := float64(dy) / float64(mr)
+				d2 := fx*fx + fy*fy
+				if d2 > 1.0 {
+					continue
+				}
+				blendPixel(img, cx+dx, cy-lift+dy, mote, 0.50*(1-d2))
+			}
+		}
+		blendPixel(img, cx, cy-lift, brighten(mote, 0.14), 0.8) // the bright soft core
 	}
 }
 
@@ -4869,6 +5054,10 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 			drawRoofMetalDome(img, cx, cy, hw, hh, rc)
 		case profileSpire:
 			drawRoofSpire(img, cx, cy, hw, hh, rc)
+		case profileLattice:
+			drawRoofLattice(img, cx, cy, hw, hh, rc)
+		case profileEthereal:
+			drawRoofEthereal(img, cx, cy, hw, hh, rc)
 		default:
 			drawRoofHut(img, cx, cy, hw, hh, rc)
 		}
@@ -4914,6 +5103,10 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 			drawRoofSpireArray(img, cx, cy, hw, hh, rc)
 		case wonderRingHub:
 			drawRoofRingHub(img, cx, cy, hw, hh, rc)
+		case wonderCrystalLattice:
+			drawRoofCrystalLattice(img, cx, cy, hw, hh, rc)
+		case wonderAscension:
+			drawRoofAscension(img, cx, cy, hw, hh, rc)
 		default:
 			drawRoofWonder(img, cx, cy, hw, hh, rc)
 		}
@@ -5027,6 +5220,10 @@ func drawRoofHouse(img *image.RGBA, cx, cy, hw, hh int, rc roofColors, prof roof
 		drawRoofMetalDome(img, cx, cy, hw, hh, rc)
 	case profileSpire:
 		drawRoofSpire(img, cx, cy, hw, hh, rc)
+	case profileLattice:
+		drawRoofLattice(img, cx, cy, hw, hh, rc)
+	case profileEthereal:
+		drawRoofEthereal(img, cx, cy, hw, hh, rc)
 	default:
 		drawRoofRidge(img, cx, cy, hw, hh, rc)
 	}
@@ -5857,6 +6054,245 @@ func drawRoofRingHub(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 		blendPixel(img, x, y, hubCore, 0.45*(1-(fx*fx+fy*fy)))
 	})
 	setPixel(img, cx, cy, brighten(hubCore, 0.16)) // the brightest pinpoint at the hub center
+}
+
+// drawRoofLattice: the QUANTUM dwelling (COSMIC epoch) — a small faceted CRYSTAL / lattice NODE read from
+// above. Instead of a roof it draws a little geometric GEM: four triangular facets radiating from a bright
+// central core, each facet a DIFFERENT iridescent hue (cyan / magenta / gold, cycled by facet index) so the
+// crystal SHIMMERS rather than sits one color, with a bright glinting core. The iridescent anchors are
+// BLENDED with the passed roof colors so it retints on a theme switch. Bounds-safe: setPixel / blendPixel
+// only (both clipped), so it never panics at any footprint.
+func drawRoofLattice(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	rad := maxInt(minInt(hw, hh), 1)
+
+	// A faint dark facet backing so the gem sits on a defined footprint (a shadowed crystal base), lit NW.
+	base := darken(blend(rc.dark, iridCyanAnchor, 0.20), 0.10)
+	forEllipse(cx, cy, rad, rad, func(x, y int) {
+		if x <= cx && y <= cy {
+			blendPixel(img, x, y, brighten(base, 0.08), 0.9)
+		} else {
+			blendPixel(img, x, y, base, 0.9)
+		}
+	})
+
+	// FOUR TRIANGULAR FACETS: a diamond of four quadrant triangles (N / E / S / W), each filled a different
+	// shifting iridescent hue blended into the roof tone, so adjacent facets read as a faceted, prismatic
+	// crystal catching the light differently on each face. Painted by scanning the footprint and picking the
+	// facet from the pixel's quadrant + parity.
+	for y := cy - rad; y <= cy+rad; y++ {
+		for x := cx - rad; x <= cx+rad; x++ {
+			ddx := x - cx
+			ddy := y - cy
+			// Diamond mask: |dx|+|dy| <= rad → inside the crystal facet body.
+			if absInt(ddx)+absInt(ddy) > rad {
+				continue
+			}
+			// Facet index from quadrant (N=0, E=1, S=2, W=3), nudged by parity so the sheen shifts within a
+			// facet too — the shimmer.
+			var q int
+			switch {
+			case absInt(ddx) >= absInt(ddy) && ddx >= 0:
+				q = 1 // E
+			case absInt(ddx) >= absInt(ddy):
+				q = 3 // W
+			case ddy < 0:
+				q = 0 // N
+			default:
+				q = 2 // S
+			}
+			hue := iridHueFor(q + ((absInt(ddx) + absInt(ddy)) & 1))
+			facet := blend(rc.base, hue, 0.62)
+			if ddx+ddy < 0 { // NW faces catch more light
+				facet = brighten(facet, 0.12)
+			}
+			setPixel(img, x, y, facet)
+		}
+	}
+
+	// The bright glinting CORE + facet ridge lines from the core out to the four points, so the gem reads
+	// cut, not a blob. Core is the brightest pinpoint.
+	core := brighten(blend(rc.base, blend(iridCyanAnchor, iridGoldAnchor, 0.5), 0.5), 0.16)
+	for d := 0; d <= rad; d++ {
+		ridge := brighten(blend(rc.base, iridHueFor(d), 0.5), 0.10)
+		setPixel(img, cx, cy-d, ridge) // N edge
+		setPixel(img, cx, cy+d, ridge) // S edge
+		setPixel(img, cx-d, cy, ridge) // W edge
+		setPixel(img, cx+d, cy, ridge) // E edge
+	}
+	setPixel(img, cx, cy, core)
+	setPixel(img, cx-1, cy-1, brighten(core, 0.10)) // a lit NW glint off the core
+}
+
+// drawRoofCrystalLattice: the QUANTUM wonder (COSMIC epoch) — a large geometric CRYSTAL LATTICE MESH read
+// from above: a grid/web of glowing NODES joined by thin IRIDESCENT lines, the hues SHIFTING across the mesh
+// (cyan → magenta → gold by node position) around a bright CENTRAL node. Unlike the ring-hub (concentric
+// metal rings + a hub) or the fusion core (radiant filled discs) this is an open LATTICE of discrete nodes +
+// connecting struts — no rings, no filled target — so it reads clearly apart from every other wonder. The
+// three iridescent anchors are BLENDED with the passed roof colors so the whole lattice retints on a theme
+// switch. Bounds-safe: fillDisc / setPixel / blendPixel / drawLineC (all clipped), so it never panics.
+func drawRoofCrystalLattice(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	rad := maxInt(minInt(hw, hh), 1)
+
+	// A faint dark crystalline DECK filling the footprint so the mesh sits on a defined black-glass platform
+	// (lit NW / shaded SE for a shallow facet), not on bare ground.
+	deck := darken(blend(rc.dark, iridMagentaAnchor, 0.18), 0.08)
+	forEllipse(cx, cy, rad, rad, func(x, y int) {
+		if x <= cx || y <= cy {
+			blendPixel(img, x, y, brighten(deck, 0.06), 0.85)
+		} else {
+			blendPixel(img, x, y, deck, 0.85)
+		}
+	})
+
+	// LATTICE NODES: a small diamond grid of nodes at lattice coordinates (a 5-node diamond: center + 4 mid +
+	// 4 outer corners), each a little glowing disc whose hue SHIFTS by its lattice index so the mesh cycles
+	// cyan → magenta → gold across itself. Built as offsets in units of the node step.
+	step := maxInt(rad/2, 1)
+	type node struct {
+		dx, dy, idx int
+	}
+	nodes := []node{
+		{0, 0, 0},                                    // center (drawn brightest, last)
+		{0, -1, 1}, {1, 0, 2}, {0, 1, 3}, {-1, 0, 4}, // the four mid nodes (N/E/S/W)
+		{-1, -1, 5}, {1, -1, 6}, {1, 1, 7}, {-1, 1, 8}, // the four diagonal corner nodes
+	}
+
+	// STRUTS FIRST: thin iridescent lines joining each outer/mid node back toward the center + around the ring,
+	// drawn under the nodes so the nodes cap the strut ends cleanly. The strut hue is the blend of its two
+	// endpoints' hues, kept faint (a glowing wire, not a solid bar).
+	nodePx := func(n node) (int, int) { return cx + n.dx*step, cy + n.dy*step }
+	for _, n := range nodes[1:] {
+		nx, ny := nodePx(n)
+		strut := blend(rc.base, iridHueFor(n.idx), 0.44)
+		drawLineC(img, cx, cy, nx, ny, strut) // spoke to center
+	}
+	// Ring struts joining adjacent outer nodes (a woven mesh perimeter).
+	ringOrder := []node{nodes[1], nodes[6], nodes[2], nodes[7], nodes[3], nodes[8], nodes[4], nodes[5]}
+	for i := range ringOrder {
+		ax, ay := nodePx(ringOrder[i])
+		bx, by := nodePx(ringOrder[(i+1)%len(ringOrder)])
+		strut := blend(rc.base, iridHueFor(i), 0.36)
+		drawLineC(img, ax, ay, bx, by, strut)
+	}
+
+	// THE GLOWING NODES: each a small disc a shade brighter than its strut, hue cycling by lattice index, with
+	// a faint halo so it reads as a light-emitting node. Outer/mid nodes first, then the bright central node.
+	nodeR := maxInt(rad/6, 1)
+	for _, n := range nodes[1:] {
+		nx, ny := nodePx(n)
+		glow := brighten(blend(rc.base, iridHueFor(n.idx), 0.6), 0.10)
+		fillDisc(img, nx, ny, nodeR, glow)
+		setPixel(img, nx, ny, brighten(glow, 0.14))
+	}
+	// THE CENTRAL NODE: the brightest, a white-cored iridescent bloom with a soft halo — the lattice heart.
+	centerGlow := brighten(blend(rc.base, blend(iridCyanAnchor, iridMagentaAnchor, 0.5), 0.66), 0.14)
+	fillDisc(img, cx, cy, maxInt(nodeR+1, 1), centerGlow)
+	haloR := maxInt(rad/2, 1)
+	for y := cy - haloR; y <= cy+haloR; y++ {
+		for x := cx - haloR; x <= cx+haloR; x++ {
+			fx := float64(x-cx) / float64(haloR)
+			fy := float64(y-cy) / float64(haloR)
+			if fx*fx+fy*fy <= 1.0 {
+				blendPixel(img, x, y, centerGlow, 0.40*(1-(fx*fx+fy*fy)))
+			}
+		}
+	}
+	setPixel(img, cx, cy, brighten(centerGlow, 0.18)) // the brightest pinpoint at the lattice heart
+}
+
+// drawRoofEthereal: the TRANSCENDENT dwelling (COSMIC epoch, the finale) — a soft glowing translucent BLOOM
+// instead of a hard roof. The dwelling has DEMATERIALISED into light: a luminous white light-form that
+// paints NOTHING solid — it BLENDS a soft warm-white glow over whatever is beneath, brightest at the center
+// and fading to nothing at the rim (a radial falloff), so the ground shows THROUGH it. The ethereal white +
+// a soft gold cast are BLENDED with the roof tone so it retints on a theme switch. Bounds-safe: blendPixel
+// only (clipped), so it never panics at any footprint.
+func drawRoofEthereal(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	rad := maxInt(minInt(hw, hh), 1)
+	glow := blend(blend(rc.base, etherWhiteAnchor, 0.70), etherGoldAnchor, 0.14)
+	core := brighten(glow, 0.14)
+
+	// The SOFT BLOOM: a radial translucent glow, strongest at the center, fading to zero at the rim, so the
+	// light-form reads as a hovering pool of light rather than a solid disc. A gentle NW lift so it isn't flat.
+	for y := cy - rad; y <= cy+rad; y++ {
+		for x := cx - rad; x <= cx+rad; x++ {
+			fx := float64(x-cx) / float64(rad)
+			fy := float64(y-cy) / float64(rad)
+			d2 := fx*fx + fy*fy
+			if d2 > 1.0 {
+				continue
+			}
+			t := 0.62 * (1 - d2) // translucent, brightest at center
+			if fx+fy < 0 {       // NW half a touch brighter — a soft lit crown
+				t += 0.06 * (1 - d2)
+			}
+			blendPixel(img, x, y, glow, t)
+		}
+	}
+	// A bright soft CORE pinpoint — the focus of the light-form (still translucent, not a hard dot).
+	blendPixel(img, cx, cy, core, 0.85)
+	blendPixel(img, cx-1, cy-1, brighten(core, 0.10), 0.55) // a faint NW glint
+}
+
+// drawRoofAscension: the TRANSCENDENT wonder (COSMIC epoch) — the ASCENSION OF LIGHT, the luminous climax of
+// the whole 22-age progression. A bright vertical PILLAR / beam of light rises at center, ringed by
+// concentric soft glowing HALOS radiating outward (translucent blends, brightening inward to a PURE-WHITE
+// core) — an ethereal gate. Unlike the crystal lattice (a hard node mesh), the ring-hub (metal rings), or
+// the fusion core (filled cyan discs), this is a soft translucent WHITE bloom + a rising vertical beam — no
+// hard geometry — so it reads clearly apart from every other wonder as pure light. The ethereal white + soft
+// gold are BLENDED with the roof tone so it retints on a theme switch. Bounds-safe: blendPixel / setPixel /
+// forEllipse only (all clipped), so it never panics.
+func drawRoofAscension(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	rad := maxInt(minInt(hw, hh), 1)
+	halo := blend(blend(rc.base, etherWhiteAnchor, 0.60), etherGoldAnchor, 0.16) // the warm glowing halo
+	white := blend(rc.base, etherWhiteAnchor, 0.82)                              // the near-pure-white inner tone
+	bloom := brighten(white, 0.16)                                               // the incandescent core + beam
+
+	// CONCENTRIC SOFT HALOS: several translucent rings radiating out from the center, each a soft glowing
+	// annulus (a radial falloff peaking at the ring radius), brightening toward the center — an ethereal gate
+	// of light. Drawn as translucent blends so the ground glows through, not a stack of solid discs.
+	for _, f := range []float64{0.92, 0.68, 0.44} {
+		rr := maxInt(int(float64(rad)*f), 1)
+		for y := cy - rr; y <= cy+rr; y++ {
+			for x := cx - rr; x <= cx+rr; x++ {
+				fx := float64(x-cx) / float64(rr)
+				fy := float64(y-cy) / float64(rr)
+				d2 := fx*fx + fy*fy
+				if d2 > 1.0 {
+					continue
+				}
+				// Brighter inner halos; each fades from its center outward.
+				c := blend(halo, white, 1-f)
+				blendPixel(img, x, y, c, 0.34*(1-d2))
+			}
+		}
+	}
+
+	// THE RISING PILLAR / BEAM: a bright vertical column of light rising well above center, brightest at its
+	// base (the source) and fading as it ascends, with a faint width so it reads as a beam, not a wire —
+	// the ascension itself. Translucent so it glows rather than paints a bar.
+	tall := maxInt(rad*9/5, 3)
+	for dy := -tall; dy <= 0; dy++ {
+		frac := float64(-dy) / float64(tall) // 0 at base .. 1 at top
+		t := 0.75 * (1 - 0.7*frac)
+		blendPixel(img, cx, cy+dy, bloom, t)
+		if frac < 0.75 { // a soft flanking glow low + mid, tapering out near the top
+			blendPixel(img, cx-1, cy+dy, white, t*0.55)
+			blendPixel(img, cx+1, cy+dy, white, t*0.55)
+		}
+	}
+
+	// THE PURE-WHITE CORE: a small incandescent gate at center with a soft halo bleeding out, so the source of
+	// the ascension reads as pure light.
+	coreR := maxInt(rad/4, 1)
+	forEllipse(cx, cy, coreR, coreR, func(x, y int) {
+		fx := float64(x-cx) / float64(maxInt(coreR, 1))
+		fy := float64(y-cy) / float64(maxInt(coreR, 1))
+		blendPixel(img, x, y, bloom, 0.85*(1-0.4*(fx*fx+fy*fy)))
+	})
+	// The lit tip crowning the ascending beam + the brightest pinpoint at the gate.
+	setPixel(img, cx, cy-tall, brighten(bloom, 0.10))
+	setPixel(img, cx, cy-tall-1, brighten(bloom, 0.18))
+	blendPixel(img, cx, cy, brighten(bloom, 0.14), 0.9)
 }
 
 // drawRoofLaunchpad: the SPACE wonder (NEON epoch) — a rocket on a LAUNCH PAD seen from above: a circular
