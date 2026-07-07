@@ -2926,36 +2926,49 @@ func tdScatterRibbon(seeds []tdPoint, townR float64, need int, cfg tdConfig, see
 // this appends the free seeds inside ~0.92·townR so a ground rim shows. Pure over (seed, need);
 // bounded → panic-safe.
 func tdScatterCrescent(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
-	rr := 0.90 * townR
-	// Arc count grows gently with the seed budget: a hamlet gets 2-3 crescents, a city ~6.
-	nArc := 2 + int(math.Sqrt(float64(need))/2.2)
-	if nArc < 2 {
-		nArc = 2
+	rr := 0.92 * townR
+	if need <= 0 {
+		return seeds
 	}
-	if nArc > 7 {
-		nArc = 7
+	// GARDEN-SUBURB terraces. The crescents are nested arcs that share a FAR pivot OFF to one side of
+	// town (in the seeded "grain" direction u), so inside the town they read as roughly-parallel SWEEPS
+	// all curving the same way — like Nash terraces / a garden suburb — NOT concentric rings around the
+	// plaza (which read radial). Each terrace's nearest approach to the centre is spread along the grain
+	// so the terraces stack across the whole town.
+	nArc := 2 + int(math.Sqrt(float64(need))/2.0)
+	if nArc < 3 {
+		nArc = 3
 	}
-	// A seeded base phase so two crescent towns don't sweep identically, and a seeded per-arc sweep
-	// centre. Each arc spans ~0.62 of a full turn (a crescent, never a closed ring).
+	if nArc > 8 {
+		nArc = 8
+	}
 	basePhase := float64(hash2(0xC2E5, 0x01, seed)) / float64(^uint32(0)) * 2 * math.Pi
-	const sweep = 0.62 * 2 * math.Pi
+	ux, uy := math.Cos(basePhase), math.Sin(basePhase) // grain direction; the pivot lies this way
+	// A FAR pivot (several town-radii away) so each terrace's arc is nearly straight over the town —
+	// the terraces become gently-curved, near-PARALLEL sweeps (like contour lines / Nash terraces),
+	// not spokes converging on the centre. (A near pivot made terraces cross the centre → radial.)
+	farDist := 4.6 * rr
+	cX, cY := ux*farDist, uy*farDist // shared far pivot of every terrace
 	r := newRNG(hash2(0xC2E5, uint32(need), seed) | 1)
-	// Radius of arc a: from an inner crescent (leaving the pinned centre a plaza) out to the rim.
-	arcRadius := func(a int) float64 {
+	// nearAt(a): where terrace a crosses the grain axis, spread from -0.74rr..+0.74rr through centre.
+	nearAt := func(a int) float64 {
 		if nArc <= 1 {
-			return 0.55 * rr
+			return 0
 		}
-		t := float64(a) / float64(nArc-1) // 0..1
-		return rr * (0.28 + 0.72*t)
+		t := float64(a)/float64(nArc-1)*2 - 1 // -1..1
+		return t * 0.74 * rr
 	}
-	// Weight each arc by its radius (arc length ∝ radius) so outer crescents host more terraces.
+	// Weight middle terraces heavier (they cross more of the town → longer crescents host more homes).
 	weights := make([]float64, nArc)
 	wsum := 0.0
 	for a := 0; a < nArc; a++ {
-		weights[a] = arcRadius(a)
-		wsum += weights[a]
+		w := 1.0 - 0.55*math.Abs(nearAt(a))/rr
+		if w < 0.2 {
+			w = 0.2
+		}
+		weights[a] = w
+		wsum += w
 	}
-	// Apportion `need` seeds to arcs by weight (largest-remainder so the total is exactly `need`).
 	perArc := make([]int, nArc)
 	placedTot := 0
 	for a := 0; a < nArc; a++ {
@@ -2966,50 +2979,35 @@ func tdScatterCrescent(seeds []tdPoint, townR float64, need int, cfg tdConfig, s
 		perArc[a]++
 		placedTot++
 	}
+	baseAng := basePhase + math.Pi // from the far pivot back toward the town: the crescent's mid-sweep
 	for a := 0; a < nArc; a++ {
 		cnt := perArc[a]
 		if cnt <= 0 {
 			continue
 		}
-		rad := arcRadius(a)
-		// The arc's own centre angle is offset per arc so the crescents fan (not stacked spokes).
-		arcCentre := basePhase + float64(a)*2.399963 // golden-ish per-arc rotation
-		start := arcCentre - sweep/2
-		// Two garden-square GAPS per arc: skip a contiguous fraction of the along-arc positions.
-		// gapA/gapB are seeded fractional positions in [0,1); a seed whose position falls within
-		// a gap window is pulled to the nearest non-gap slot's angle (so the count stays exact but
-		// the seeds pile just outside the gap — leaving the gap seed-free as a garden square).
-		gapHalf := 0.09 // half-width of each gap, as a fraction of the sweep
-		gapA := 0.18 + 0.10*r.f01()
-		gapB := 0.66 + 0.10*r.f01()
-		inGap := func(t float64) bool {
-			return math.Abs(t-gapA) < gapHalf || math.Abs(t-gapB) < gapHalf
-		}
+		// Radius so the arc's near point sits at nearAt(a) along the grain (|farDist-R| = |nearAt|).
+		R := farDist - nearAt(a)
+		// With a far pivot, a small angular span already covers the whole town width (arc length ≈
+		// R·span). Keep it wide enough to reach both rims but not so wide the ends curl back.
+		span := 0.46 + 0.22*r.f01()
+		// One seeded garden-square GAP per terrace: a t-window kept seed-free (a leafy square).
+		gap := -0.18 + 0.36*r.f01()
+		const gapHalf = 0.11
 		for k := 0; k < cnt; k++ {
-			// Even along-arc position in [0,1], nudged off the gaps.
-			t := (float64(k) + 0.5) / float64(cnt)
-			if inGap(t) {
-				// Push to just past the nearer gap edge so the gap itself stays clear.
-				if math.Abs(t-gapA) < gapHalf {
-					if t < gapA {
-						t = gapA - gapHalf
-					} else {
-						t = gapA + gapHalf
-					}
+			t := (float64(k)+0.5)/float64(cnt) - 0.5 // -0.5..0.5 along the sweep
+			if math.Abs(t-gap) < gapHalf {           // nudge off the garden square
+				if t < gap {
+					t = gap - gapHalf
 				} else {
-					if t < gapB {
-						t = gapB - gapHalf
-					} else {
-						t = gapB + gapHalf
-					}
+					t = gap + gapHalf
 				}
 			}
-			ang := start + t*sweep
-			// A small seeded angular + radial wobble so the terrace isn't a mechanical arc.
-			ang += (r.f01() - 0.5) * (sweep / float64(cnt)) * 0.5
-			rw := rad * (1 + (r.f01()-0.5)*0.06)
-			x, y := math.Cos(ang)*rw, math.Sin(ang)*rw
-			if d := math.Hypot(x, y); d > rr {
+			ang := baseAng + t*span
+			ang += (r.f01() - 0.5) * (span / float64(cnt)) * 0.6 // gentle wobble, not a mechanical arc
+			rw := R * (1 + (r.f01()-0.5)*0.03)
+			x := cX + math.Cos(ang)*rw
+			y := cY + math.Sin(ang)*rw
+			if d := math.Hypot(x, y); d > rr { // clip stragglers to the rim
 				s := rr / d
 				x *= s
 				y *= s
@@ -3043,7 +3041,7 @@ func tdScatterBoulevard(seeds []tdPoint, townR float64, need int, cfg tdConfig, 
 	// 2-4 grand diagonals, each a line through a point near centre at a seeded angle in the 30-60°
 	// band (mirrored to the other diagonal quadrant too). A seed within `avenueHalf` of ANY diagonal
 	// line is removed to clear the avenue.
-	nDiag := 2 + int(hash2(0xB0DE, 0x20, seed)%3) // 2..4
+	nDiag := 3 + int(hash2(0xB0DE, 0x20, seed)%2) // 3..4 — always a real boulevard system
 	type diagLine struct {
 		nx, ny float64 // unit normal of the line
 		c      float64 // line: nx*x + ny*y = c  (offset from origin)
@@ -3062,7 +3060,7 @@ func tdScatterBoulevard(seeds []tdPoint, townR float64, need int, cfg tdConfig, 
 		off := (float64(hash2(0xB0DE, uint32(0x40+d), seed))/float64(^uint32(0)) - 0.5) * 0.5 * rr
 		diags = append(diags, diagLine{nx: nx, ny: ny, c: off})
 	}
-	avenueHalf := 0.55 * cell // clear a band ~one cell wide → a real avenue gap
+	avenueHalf := 0.62 * cell // clear a band a bit over one cell wide → a clear avenue, grid intact
 	onAvenue := func(x, y float64) bool {
 		for _, dl := range diags {
 			if math.Abs(dl.nx*x+dl.ny*y-dl.c) < avenueHalf {
@@ -3134,9 +3132,9 @@ func tdScatterBoulevard(seeds []tdPoint, townR float64, need int, cfg tdConfig, 
 // pinned anchors. Pure over (seed, need); bounded attempt budgets → panic-safe.
 func tdScatterCoreSuburb(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
 	nPinned := len(seeds) // anchors already appended
-	coreR := 0.42 * townR
+	coreR := 0.38 * townR
 	ringOuter := 0.92 * townR // leave a ground rim
-	nCore := (need * 65) / 100
+	nCore := (need * 72) / 100
 	if nCore < 1 && need > 0 {
 		nCore = 1 // at least seed the downtown
 	}
@@ -3150,7 +3148,7 @@ func tdScatterCoreSuburb(seeds []tdPoint, townR float64, need int, cfg tdConfig,
 	// --- dense CORE: tight blue-noise inside coreR ---
 	if nCore > 0 {
 		area := math.Pi * coreR * coreR
-		minDist := 0.62 * math.Sqrt(area/float64(nCore)) // tight packing
+		minDist := 0.52 * math.Sqrt(area/float64(nCore)) // very tight downtown packing
 		minD2 := minDist * minDist
 		placed := 0
 		maxAtt := (nCore + 1) * 40
@@ -3182,7 +3180,7 @@ func tdScatterCoreSuburb(seeds []tdPoint, townR float64, need int, cfg tdConfig,
 	if nRing > 0 {
 		annArea := math.Pi * (ringOuter*ringOuter - coreR*coreR)
 		// Deliberately LOOSE: bigger spacing target than an even fill → big suburban wards.
-		minDist := 1.15 * math.Sqrt(annArea/float64(nRing))
+		minDist := 1.45 * math.Sqrt(annArea/float64(nRing))
 		minD2 := minDist * minDist
 		placed := 0
 		maxAtt := (nRing + 1) * 40
