@@ -3251,8 +3251,9 @@ func TestDumpColonialIndustrialPNGs(t *testing.T) {
 // TestElectricEpochStylesWired locks the ELECTRIC-epoch style wiring (V3-B): VICTORIAN gets brownstone
 // ROWHOUSES, NO walls, and the grand GENERIC hall wonder (a terminal/museum); ELECTRIC gets FLAT modern
 // blocks (profileModernFlat), NO walls, and the setback TOWER wonder; ATOMIC gets FLAT modern blocks too,
-// NO walls, and a TOWER wonder, but AIRIER (looser slotSpacing) than the denser electric downtown. None
-// of the three still maps to the default village preset.
+// NO walls, but its OWN googie SPACE-NEEDLE wonder (a saucer on a stem, splitting it from electric's deco
+// tower) and AIRIER (looser slotSpacing) than the denser electric downtown. None of the three still maps to
+// the default village preset.
 func TestElectricEpochStylesWired(t *testing.T) {
 	vic := styleForAge("victorian_age")
 	if vic.houseProfile != profileRowhouse {
@@ -3280,8 +3281,8 @@ func TestElectricEpochStylesWired(t *testing.T) {
 	if atm.houseProfile != profileModernFlat {
 		t.Fatalf("atomic houseProfile = %v, want profileModernFlat (flat midcentury blocks)", atm.houseProfile)
 	}
-	if atm.wonderMotif != wonderTower {
-		t.Fatalf("atomic wonderMotif = %v, want wonderTower (midcentury setback tower)", atm.wonderMotif)
+	if atm.wonderMotif != wonderSpaceNeedle {
+		t.Fatalf("atomic wonderMotif = %v, want wonderSpaceNeedle (googie space-age saucer needle)", atm.wonderMotif)
 	}
 	if atm.hasWalls {
 		t.Fatal("atomic must be OPEN (no walls)")
@@ -3325,6 +3326,34 @@ func TestElectricTowerWonderDiffers(t *testing.T) {
 	}
 	if !imagesDiffer(tower, keep) {
 		t.Fatal("electric tower draws identically to the iron keep — the two wonders must differ")
+	}
+}
+
+// TestSpaceNeedleWonderDiffers locks that the ATOMIC space-needle wonder reads apart from the electric deco
+// TOWER (concentric flat squares), the renaissance DOME (a solid hemisphere), and the modern SKYSCRAPER (a
+// slender glass slab) — the space-needle silhouette must actually be applied, not shared with a neighbour.
+func TestSpaceNeedleWonderDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	needle := drawWonderImg(styleForAge("atomic_age"))
+	tower := drawWonderImg(styleForAge("electric_age"))
+	dome := drawWonderImg(styleForAge("renaissance_age"))
+	skyscraper := drawWonderImg(styleForAge("modern_age"))
+	if !imagesDiffer(needle, tower) {
+		t.Fatal("atomic space needle draws identically to the electric deco tower — the needle silhouette is not applied")
+	}
+	if !imagesDiffer(needle, dome) {
+		t.Fatal("atomic space needle draws identically to the renaissance dome — the two wonders must differ")
+	}
+	if !imagesDiffer(needle, skyscraper) {
+		t.Fatal("atomic space needle draws identically to the modern skyscraper — the two wonders must differ")
 	}
 }
 
@@ -3387,6 +3416,24 @@ func TestDrawRoofTowerPanicSafe(t *testing.T) {
 			drawRoofTower(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
 			drawRoofTower(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner (shadow drifts down-right)
 			drawRoofTower(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner (shadow clips off-canvas)
+		}
+	}
+}
+
+// TestDrawRoofSpaceNeedlePanicSafe locks that the ATOMIC space-needle wonder sprite (a stem + a wide saucer
+// disc + a core halo + a mast + a long raking SE shadow that clips beyond the footprint) is panic-safe +
+// in-bounds on tiny / normal / NW + SE corner cases (every write is clamped).
+func TestDrawRoofSpaceNeedlePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("atomic_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {6, 14}} {
+			drawRoofSpaceNeedle(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofSpaceNeedle(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner (mast/saucer clip above)
+			drawRoofSpaceNeedle(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner (shadow clips off-canvas)
 		}
 	}
 }
@@ -3488,9 +3535,10 @@ func TestDumpIronEpochPNGs(t *testing.T) {
 }
 
 // TestDigitalEpochStylesWired locks V3-C DIGITAL-epoch style wiring: modern, information, and digital all
-// use the GLASS-TOWER house profile + the SKYSCRAPER wonder, and are all OPEN (no walls). Information is
-// DENSER than modern; digital carries the epoch's first NEON accents (asserted at the city level in
-// TestDigitalEpochNeonPresent). None may still resolve to the default village preset name.
+// use the GLASS-TOWER house profile and are all OPEN (no walls). Modern + digital carry the SKYSCRAPER wonder;
+// information now carries its own DATA-HUB wonder (a server-farm centrepiece that splits it from modern's
+// glass tower). Information is DENSER than modern; digital carries the epoch's first NEON accents (asserted at
+// the city level in TestDigitalEpochNeonPresent). None may still resolve to the default village preset name.
 func TestDigitalEpochStylesWired(t *testing.T) {
 	mod := styleForAge("modern_age")
 	if mod.houseProfile != profileGlassTower {
@@ -3507,8 +3555,8 @@ func TestDigitalEpochStylesWired(t *testing.T) {
 	if inf.houseProfile != profileGlassTower {
 		t.Fatalf("information houseProfile = %v, want profileGlassTower", inf.houseProfile)
 	}
-	if inf.wonderMotif != wonderSkyscraper {
-		t.Fatalf("information wonderMotif = %v, want wonderSkyscraper", inf.wonderMotif)
+	if inf.wonderMotif != wonderDataHub {
+		t.Fatalf("information wonderMotif = %v, want wonderDataHub (server-farm data hub)", inf.wonderMotif)
 	}
 	if inf.hasWalls {
 		t.Fatal("information must be OPEN (no walls)")
@@ -3605,6 +3653,34 @@ func TestSkyscraperWonderDiffers(t *testing.T) {
 	}
 }
 
+// TestDataHubWonderDiffers locks that the INFORMATION data-hub wonder reads apart from the modern SKYSCRAPER
+// (a slender glass slab), the electric deco TOWER (concentric flat squares), and the atomic SPACE NEEDLE (a
+// saucer on a stem) — the data-hub silhouette must actually be applied, not shared with a neighbour.
+func TestDataHubWonderDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	drawWonderImg := func(style tdEraStyle) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, 40, 40))
+		lt := tdLot{x: 0, y: 0, w: 20, h: 20, kind: tdRoof, roof: roofWonder, domain: "wonder", category: "wonder"}
+		xf := tdTransform{scale: 1, offX: 20, offY: 20, roofFloorPx: 1}
+		drawRoof(img, xf, lt, style, pal)
+		return img
+	}
+	dataHub := drawWonderImg(styleForAge("information_age"))
+	skyscraper := drawWonderImg(styleForAge("modern_age"))
+	tower := drawWonderImg(styleForAge("electric_age"))
+	needle := drawWonderImg(styleForAge("atomic_age"))
+	if !imagesDiffer(dataHub, skyscraper) {
+		t.Fatal("information data hub draws identically to the modern skyscraper — the data-hub silhouette is not applied")
+	}
+	if !imagesDiffer(dataHub, tower) {
+		t.Fatal("information data hub draws identically to the electric deco tower — the two wonders must differ")
+	}
+	if !imagesDiffer(dataHub, needle) {
+		t.Fatal("information data hub draws identically to the atomic space needle — the two wonders must differ")
+	}
+}
+
 // TestDigitalEpochCitiesDiffer locks the CITY-level reads: modern differs from information (clean blue glass
 // vs a denser colder server-city with data centers), information differs from digital (cold grey vs sleek
 // dark + neon), and all three differ from a STILL-DEFAULT placeholder (cyberpunk_age, still on the village
@@ -3630,6 +3706,68 @@ func TestDigitalEpochCitiesDiffer(t *testing.T) {
 	}
 	if !imagesDiffer(dig, def) {
 		t.Fatal("digital city renders identically to the default village (cyberpunk) — the digital re-skin is not applied")
+	}
+}
+
+// TestPolishPairCitiesDiffer locks the Phase 1i POLISH split at the CITY level: after re-crowning atomic with
+// its own space needle + a cooler/airier palette and information with its own data hub + a colder/denser
+// palette, atomic must read apart from electric, information apart from modern, AND the two cousins (atomic +
+// information) apart from each other — the re-skins are actually applied and each pair now reads distinct.
+func TestPolishPairCitiesDiffer(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	ele, _ := renderImage(namedState("electric_age", "Aldermoor", blds), 120, 72)
+	atm, _ := renderImage(namedState("atomic_age", "Aldermoor", blds), 120, 72)
+	mod, _ := renderImage(namedState("modern_age", "Aldermoor", blds), 120, 72)
+	inf, _ := renderImage(namedState("information_age", "Aldermoor", blds), 120, 72)
+	if !imagesDiffer(ele, atm) {
+		t.Fatal("electric city renders identically to atomic — the deco-tower vs space-needle split is not applied")
+	}
+	if !imagesDiffer(mod, inf) {
+		t.Fatal("modern city renders identically to information — the glass-tower vs data-hub split is not applied")
+	}
+	if !imagesDiffer(atm, inf) {
+		t.Fatal("atomic city renders identically to information — the two cousin re-skins are not distinct")
+	}
+}
+
+// TestDumpPolishPairPNGs renders electric / atomic / modern / information with a FIXED display name +
+// identical building set INCLUDING a wonder so the tower / space-needle / skyscraper / data-hub centerpieces
+// render, so a reviewer can compare the two POLISHED cousin pairs (electric↔atomic, modern↔information) side
+// by side. Opt-in: skipped unless CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpPolishPairPNGs
+func TestDumpPolishPairPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Identical building set (with a wonder so the centerpiece renders) + a FIXED display name → the citySeed
+	// is fixed, so only the era re-skin differs across the four dumps.
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"electric_age", "1i_electric.png"},
+		{"atomic_age", "1i_atomic.png"},
+		{"modern_age", "1i_modern.png"},
+		{"information_age", "1i_information.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
 	}
 }
 
@@ -3665,6 +3803,24 @@ func TestDrawRoofSkyscraperPanicSafe(t *testing.T) {
 			drawRoofSkyscraper(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
 			drawRoofSkyscraper(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner (mast clips above)
 			drawRoofSkyscraper(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner (shadow clips off-canvas)
+		}
+	}
+}
+
+// TestDrawRoofDataHubPanicSafe locks that the INFORMATION data-hub wonder sprite (a wide server-farm base +
+// a cooling-channel grid + a central comms mast with a cross-arm + a scatter of beacon dabs + an SE mast
+// shadow) is panic-safe + in-bounds on tiny / normal / NW + SE corner cases (every write is clamped).
+func TestDrawRoofDataHubPanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	pal := newTdPal()
+	style := styleForAge("information_age")
+	for _, tc := range []struct{ w, h int }{{9, 9}, {40, 40}} {
+		img := image.NewRGBA(image.Rect(0, 0, tc.w, tc.h))
+		rc := roofColorsFor(style, pal, "wonder", "wonder")
+		for _, hwhh := range []struct{ hw, hh int }{{2, 2}, {12, 10}, {14, 6}} {
+			drawRoofDataHub(img, tc.w/2, tc.h/2, hwhh.hw, hwhh.hh, rc)
+			drawRoofDataHub(img, 1, 1, hwhh.hw, hwhh.hh, rc)           // NW corner (mast clips above)
+			drawRoofDataHub(img, tc.w-1, tc.h-1, hwhh.hw, hwhh.hh, rc) // SE corner (shadow clips off-canvas)
 		}
 	}
 }

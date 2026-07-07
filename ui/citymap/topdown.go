@@ -188,8 +188,10 @@ const (
 	wonderKeep                              // iron-age fortified keep + watchtower (drawRoofKeep)
 	wonderDome                              // renaissance great domed rotunda + lantern (drawRoofDome)
 	wonderFactory                           // industrial great factory hall + smokestacks + soot (drawRoofFactory)
-	wonderTower                             // electric/atomic art-deco SETBACK tower — concentric flat rectilinear tiers to a central mast (drawRoofTower)
-	wonderSkyscraper                        // modern/information/digital SUPERTALL glass tower — a narrow glass slab + a lit window grid + a mast/antenna + a long height shadow (drawRoofSkyscraper)
+	wonderTower                             // electric art-deco SETBACK tower — concentric flat rectilinear tiers to a central mast (drawRoofTower)
+	wonderSpaceNeedle                       // atomic SPACE-AGE needle — a narrow stem with a wide round SAUCER disc (a lit ring + a bright core) high up + a small mast + a long height shadow (drawRoofSpaceNeedle) — the googie centrepiece that splits atomic from electric's deco tower
+	wonderSkyscraper                        // modern/digital SUPERTALL glass tower — a narrow glass slab + a lit window grid + a mast/antenna + a long height shadow (drawRoofSkyscraper)
+	wonderDataHub                           // information DATA megastructure — a wide low server-farm BASE (cool grey blocks) with a central tall COMMS antenna/lattice mast + a few bright beacon/LED dabs (cyan/amber) (drawRoofDataHub) — the server-city centrepiece that splits information from modern's glass tower
 	wonderFusionCore                        // fusion glowing REACTOR — concentric bright cyan rings around a white-hot central core, brightening to a bloom at the very center (drawRoofFusionCore)
 	wonderLaunchpad                         // space ROCKET on a launch pad — a circular pad + a bright central rocket (capsule + fins) + gantry dabs + a scorch ring (drawRoofLaunchpad)
 	wonderSpireArray                        // interstellar SPIRE CLUSTER — a ring of tall metallic spires around a tallest central spire, each throwing a long SE height shadow (drawRoofSpireArray)
@@ -898,56 +900,57 @@ var electricCityStyle = func() tdEraStyle {
 	return s
 }()
 
-// atomicCityStyle is the tuned ATOMIC preset (V3-B ELECTRIC epoch). A clean MIDCENTURY CONCRETE + STEEL
+// atomicCityStyle is the tuned ATOMIC preset (V3-B ELECTRIC epoch). A clean MIDCENTURY STEEL-AND-GLASS
 // city: FLAT-topped modern blocks (profileModernFlat, reused from electric) in COOL PALE PASTEL concrete
-// with a steel-grey cast, over clean pale streets, crowned by a midcentury SETBACK TOWER (wonderTower,
-// reused from electric). NO walls. A touch AIRIER than electric (a suburb-and-downtown feel — a true
-// zoned split is deferred FORM work; approximated here with medium density). Built from electricCityStyle
-// (which already gives the flat-block profile + tower + no walls), then shifted COOLER + cleaner +
-// PASTEL and airier. Reads clearly apart from electric: electric is WARMER + ornate deco + DENSER;
-// atomic is COOLER + clean pastel midcentury + AIRIER. Also apart from the default village. Every tone
-// stays a theme-role recipe so the whole city retints on a theme switch.
+// pushed hard toward steel, over clean pale streets, crowned by a googie SPACE NEEDLE (wonderSpaceNeedle —
+// a slender stem + a wide flying-saucer disc). NO walls. AIRIER than electric (a suburb-and-downtown feel —
+// a true zoned split is deferred FORM work; approximated here with looser density). Built from
+// electricCityStyle (which gives the flat-block profile + no walls), then shifted markedly COOLER + cleaner +
+// PASTEL and airier and re-crowned with the space needle. Reads clearly apart from electric: electric is
+// WARM + ornate deco + DENSE + a stepped concrete TOWER; atomic is COOL steel-pastel + AIRY + a space-age
+// SAUCER needle. Also apart from the default village. Every tone stays a theme-role recipe so the whole city
+// retints on a theme switch.
 var atomicCityStyle = func() tdEraStyle {
 	s := electricCityStyle
 	s.name = "atomic"
 
-	// Roof material: COOL PALE PASTEL concrete with a steel-grey cast — cleaner + cooler than electric's
-	// warm deco concrete (no warm electric lift; a faint mint-pastel cast instead), so a flat block reads
-	// as crisp midcentury concrete-and-steel.
+	// Roof material: COOL PALE PASTEL concrete pushed hard toward STEEL — cleaner + markedly cooler than
+	// electric's warm deco concrete (no warm electric lift; a stronger steel body + a mint-pastel cast
+	// instead), so a flat block reads as crisp midcentury steel-and-glass, not warm deco stone.
 	s.roofBase = func(p tdPal) color.RGBA {
-		concrete := blend(blend(p.bg, p.text, 0.34), blend(concreteAnchor, steelAnchor, 0.45), 0.54)
-		return blend(concrete, pastelAnchor, 0.14) // cool pale pastel cast
+		concrete := blend(blend(p.bg, p.text, 0.34), blend(concreteAnchor, steelAnchor, 0.62), 0.55)
+		return blend(concrete, pastelAnchor, 0.20) // cool pale pastel cast (stronger than electric)
 	}
 	s.roofDark = func(p tdPal) color.RGBA {
-		concrete := blend(blend(p.bg, p.text, 0.34), blend(concreteAnchor, steelAnchor, 0.45), 0.54)
-		return darken(blend(concrete, steelAnchor, 0.16), 0.22)
+		concrete := blend(blend(p.bg, p.text, 0.34), blend(concreteAnchor, steelAnchor, 0.62), 0.55)
+		return darken(blend(concrete, steelAnchor, 0.24), 0.22)
 	}
-	s.lineageMix = 0.11 // a whisper of lineage tint over the cool concrete; the sat cap still guards it
+	s.lineageMix = 0.10 // an even fainter lineage tint over the cool steel; the sat cap still guards it
 
-	// Ground: cool pale PASTEL concrete — cleaner + cooler + airier than electric's warm deco floor. Base
-	// grounded toward a cool concrete/steel mix, lifted to the light neutral with a faint pastel cast.
+	// Ground: cool pale PASTEL-STEEL concrete — cleaner + cooler + airier than electric's warm deco floor.
+	// Base grounded toward a cool steel-forward concrete mix, lifted to the light neutral with a pastel cast.
 	s.groundBase = func(p tdPal) color.RGBA {
-		pale := blend(blend(p.bg, p.dim, 0.20), blend(concreteAnchor, steelAnchor, 0.45), 0.44)
-		return blend(blend(pale, p.text, 0.16), pastelAnchor, 0.12)
+		pale := blend(blend(p.bg, p.dim, 0.20), blend(concreteAnchor, steelAnchor, 0.60), 0.44)
+		return blend(blend(pale, p.text, 0.16), pastelAnchor, 0.18)
 	}
 	s.groundAlt = func(p tdPal) color.RGBA {
-		return blend(blend(p.bg, p.dim, 0.16), steelAnchor, 0.30)
+		return blend(blend(p.bg, p.dim, 0.16), steelAnchor, 0.38)
 	}
-	// Streets: clean pale midcentury boulevards — the cool concrete lifted toward the light neutral, no
-	// warm electric cast (that's electric's tell), a touch cooler + cleaner.
+	// Streets: clean pale midcentury boulevards — the cool steel-concrete lifted toward the light neutral, no
+	// warm electric cast (that's electric's tell), a touch cooler + cleaner with a stronger pastel wash.
 	s.streetCol = func(p tdPal) color.RGBA {
-		paved := blend(blend(p.bg, p.dim, 0.20), blend(concreteAnchor, steelAnchor, 0.45), 0.42)
-		return blend(blend(paved, p.text, 0.34), pastelAnchor, 0.12)
+		paved := blend(blend(p.bg, p.dim, 0.20), blend(concreteAnchor, steelAnchor, 0.60), 0.42)
+		return blend(blend(paved, p.text, 0.34), pastelAnchor, 0.18)
 	}
 	s.streetEdge = func(p tdPal) color.RGBA {
-		paved := blend(blend(p.bg, p.dim, 0.20), blend(concreteAnchor, steelAnchor, 0.45), 0.42)
-		surface := blend(blend(paved, p.text, 0.34), pastelAnchor, 0.12)
+		paved := blend(blend(p.bg, p.dim, 0.20), blend(concreteAnchor, steelAnchor, 0.60), 0.42)
+		surface := blend(blend(paved, p.text, 0.34), pastelAnchor, 0.18)
 		return darken(surface, 0.20)
 	}
-	// Town-square paving: the brightest clean pale concrete in the city — a midcentury civic plaza.
+	// Town-square paving: the brightest clean pale steel-concrete in the city — a midcentury civic plaza.
 	s.pavedCol = func(p tdPal) color.RGBA {
-		pale := blend(blend(p.bg, p.dim, 0.14), blend(concreteAnchor, steelAnchor, 0.45), 0.48)
-		return blend(blend(pale, p.text, 0.30), pastelAnchor, 0.10)
+		pale := blend(blend(p.bg, p.dim, 0.14), blend(concreteAnchor, steelAnchor, 0.60), 0.48)
+		return blend(blend(pale, p.text, 0.30), pastelAnchor, 0.16)
 	}
 
 	// NO walls — inherited from electric, restated for clarity.
@@ -955,8 +958,8 @@ var atomicCityStyle = func() tdEraStyle {
 	s.wallProfile = wallNone
 
 	s.houseProfile = profileModernFlat // flat-topped midcentury blocks
-	s.wonderMotif = wonderTower        // atomic centrepiece: a midcentury setback tower
-	s.slotSpacing = 1.7                // AIRIER than electric (1.5) — a suburb-and-downtown feel, medium density
+	s.wonderMotif = wonderSpaceNeedle  // atomic centrepiece: a googie space needle (a saucer on a stem)
+	s.slotSpacing = 1.9                // AIRIER than electric (1.5) — a suburb-and-downtown feel, looser than before
 	return s
 }()
 
@@ -1024,50 +1027,53 @@ var modernCityStyle = func() tdEraStyle {
 }()
 
 // informationCityStyle is the tuned INFORMATION preset (V3-C DIGITAL epoch). The modern glass city gone
-// DENSER + COLDER: the same glass SKYSCRAPERS (profileGlassTower) + supertall centrepiece (wonderSkyscraper),
-// but packed tighter (slotSpacing 1.4) with a colder data-grey cast, and dotted with low wide DATA-CENTER
-// blocks (tdPropDataCenter — a server farm with blinking lights). Built from modernCityStyle, then shifted
-// colder + denser. Reads clearly apart from modern: modern is clean blue glass at downtown density;
-// information is a denser, colder server-city with data centers.
+// DENSER + COLDER, and re-crowned as a SERVER-CITY: the same glass SKYSCRAPERS (profileGlassTower) but under
+// a markedly colder data-grey cast, packed tighter (slotSpacing 1.35), dotted with more low wide DATA-CENTER
+// blocks (tdPropDataCenter — server farms with blinking lights), and centred on a bespoke DATA-HUB wonder
+// (wonderDataHub — a wide server-farm base + a comms antenna + cyan/amber beacons) instead of another glass
+// tower. Built from modernCityStyle, then shifted markedly colder + denser + re-crowned. Reads clearly apart
+// from modern: modern is clean BLUE GLASS at downtown density with a glass-tower centrepiece; information is a
+// denser, COLDER data-grey server-city crowned by a data hub.
 var informationCityStyle = func() tdEraStyle {
 	s := modernCityStyle
 	s.name = "information"
 
-	// Roof material: the glass gone COLDER — pulled toward the cold data-grey anchor so the towers read as
-	// a colder server-city curtain-wall, bluer/greyer than the modern glass.
+	// Roof material: the glass gone markedly COLDER — pulled hard toward the cold data-grey anchor so the
+	// towers read as a colder server-city curtain-wall, distinctly bluer/greyer than the modern glass.
 	s.roofBase = func(p tdPal) color.RGBA {
-		glass := blend(blend(p.bg, p.text, 0.30), glassAnchor, 0.54)
-		return blend(glass, dataGreyAnchor, 0.18) // colder data-grey cast
+		glass := blend(blend(p.bg, p.text, 0.30), glassAnchor, 0.52)
+		return blend(glass, dataGreyAnchor, 0.30) // colder data-grey cast (stronger than before)
 	}
 	s.roofDark = func(p tdPal) color.RGBA {
-		glass := blend(blend(p.bg, p.text, 0.30), glassAnchor, 0.54)
-		return darken(blend(glass, dataGreyAnchor, 0.24), 0.24)
+		glass := blend(blend(p.bg, p.text, 0.30), glassAnchor, 0.52)
+		return darken(blend(glass, dataGreyAnchor, 0.38), 0.24)
 	}
 
-	// Ground: a colder data-grey floor — the modern steel plaza pulled toward the cold server-grey anchor.
+	// Ground: a markedly colder data-grey floor — the modern steel plaza pulled hard toward the cold
+	// server-grey anchor.
 	s.groundBase = func(p tdPal) color.RGBA {
-		pale := blend(blend(p.bg, p.dim, 0.24), blend(steelAnchor, dataGreyAnchor, 0.55), 0.46)
-		return blend(pale, p.text, 0.12)
+		pale := blend(blend(p.bg, p.dim, 0.24), blend(steelAnchor, dataGreyAnchor, 0.68), 0.46)
+		return blend(pale, p.text, 0.10)
 	}
 	s.groundAlt = func(p tdPal) color.RGBA {
-		return blend(blend(p.bg, p.dim, 0.20), dataGreyAnchor, 0.36)
+		return blend(blend(p.bg, p.dim, 0.20), dataGreyAnchor, 0.46)
 	}
 	s.streetCol = func(p tdPal) color.RGBA {
-		paved := blend(blend(p.bg, p.dim, 0.24), blend(steelAnchor, dataGreyAnchor, 0.55), 0.44)
-		return blend(paved, p.text, 0.30)
+		paved := blend(blend(p.bg, p.dim, 0.24), blend(steelAnchor, dataGreyAnchor, 0.68), 0.44)
+		return blend(paved, p.text, 0.28)
 	}
 	s.streetEdge = func(p tdPal) color.RGBA {
-		paved := blend(blend(p.bg, p.dim, 0.24), blend(steelAnchor, dataGreyAnchor, 0.55), 0.44)
-		return darken(blend(paved, p.text, 0.30), 0.20)
+		paved := blend(blend(p.bg, p.dim, 0.24), blend(steelAnchor, dataGreyAnchor, 0.68), 0.44)
+		return darken(blend(paved, p.text, 0.28), 0.20)
 	}
 	s.pavedCol = func(p tdPal) color.RGBA {
-		pale := blend(blend(p.bg, p.dim, 0.16), blend(steelAnchor, dataGreyAnchor, 0.55), 0.48)
-		return blend(pale, p.text, 0.28)
+		pale := blend(blend(p.bg, p.dim, 0.16), blend(steelAnchor, dataGreyAnchor, 0.68), 0.48)
+		return blend(pale, p.text, 0.26)
 	}
 
 	s.houseProfile = profileGlassTower // denser glass towers
-	s.wonderMotif = wonderSkyscraper   // information centrepiece: a supertall glass tower
-	s.slotSpacing = 1.4                // DENSER than modern (1.5) — a packed server-city
+	s.wonderMotif = wonderDataHub      // information centrepiece: a data-hub megastructure (server farm + comms mast)
+	s.slotSpacing = 1.35               // DENSER than modern (1.5) — a packed server-city, tighter than before
 	return s
 }()
 
@@ -3515,9 +3521,10 @@ func tdSquarePropsFor(style tdEraStyle) tdSquareProps {
 			center: []tdLotKind{tdPropGasLamp, tdPropFountain},
 		}
 	}
-	// Modern / information / digital all share profileGlassTower + wonderSkyscraper, so neither discriminator
-	// tells them apart — the style NAME is the tag. Information dresses its square with DATA CENTERS (a server
-	// forecourt); digital dresses its square with NEON SIGNS (the first neon plaza). Modern keeps the default.
+	// Modern / information / digital all share the profileGlassTower dwelling (information + digital now carry
+	// bespoke wonder motifs, but the HOUSE profile is shared), so the style NAME is the tag. Information dresses
+	// its square with DATA CENTERS (a server forecourt); digital dresses its square with NEON SIGNS (the first
+	// neon plaza). Modern keeps the default.
 	if style.name == "information" {
 		return tdSquareProps{
 			wonder: []tdLotKind{tdPropDataCenter, tdPropWell, tdPropDataCenter, tdPropStall},
@@ -3906,15 +3913,16 @@ func tdAddFiller(plan *topPlan, field blockField, style tdEraStyle, cfg tdConfig
 		}
 	}
 
-	// Scattered DATA CENTERS (information, DIGITAL epoch): a handful of low wide server-farm blocks dotted
-	// through the city (not only the central square) so the server-city theme reads across the whole town at
-	// thumbnail scale. Same deterministic seeded pick-without-replacement + 2–4 cap as the industrial/smokestack
-	// scatter, gated on the style NAME so only information towns get them (it shares its motif + profile with
-	// modern/digital).
+	// Scattered DATA CENTERS (information, DIGITAL epoch): a generous handful of low wide server-farm blocks
+	// dotted through the city (not only the central square) so the SERVER-CITY theme reads strongly across the
+	// whole town at thumbnail scale. Same deterministic seeded pick-without-replacement as the
+	// industrial/smokestack scatter, but a heavier 3–6 cap (denser than before) so information reads clearly as
+	// a server-city vs plain modern glass. Gated on the style NAME so only information towns get them (it shares
+	// its glass-tower PROFILE with modern/digital, though its wonder motif is now the bespoke data hub).
 	if style.name == "information" {
-		nDC := 2 + int(r.f01()*3) // 2..4
-		if nDC > 4 {
-			nDC = 4
+		nDC := 3 + int(r.f01()*4) // 3..6
+		if nDC > 6 {
+			nDC = 6
 		}
 		for i := 0; i < nDC; i++ {
 			p, ok := pick()
@@ -5093,8 +5101,12 @@ func drawRoof(img *image.RGBA, xf tdTransform, lt tdLot, style tdEraStyle, pal t
 			drawRoofFactory(img, cx, cy, hw, hh, rc)
 		case wonderTower:
 			drawRoofTower(img, cx, cy, hw, hh, rc)
+		case wonderSpaceNeedle:
+			drawRoofSpaceNeedle(img, cx, cy, hw, hh, rc)
 		case wonderSkyscraper:
 			drawRoofSkyscraper(img, cx, cy, hw, hh, rc)
+		case wonderDataHub:
+			drawRoofDataHub(img, cx, cy, hw, hh, rc)
 		case wonderFusionCore:
 			drawRoofFusionCore(img, cx, cy, hw, hh, rc)
 		case wonderLaunchpad:
@@ -5556,6 +5568,99 @@ func drawRoofSkyscraper(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 	}
 	setPixel(img, cx, cy-shh-mastH, brighten(crown, 0.18)) // a bright beacon at the mast tip
 	setPixel(img, cx-shw+1, cy-shh+1, crown)               // a glint on the NW crown
+}
+
+// drawRoofDataHub: the INFORMATION wonder (Phase 1i) — a DATA megastructure read from above. Where the
+// modern wonderSkyscraper is a single slender GLASS slab, this is a WIDE LOW server-farm complex: a broad
+// flat base of cool grey server BLOCKS gridded by dark cooling channels, a central tall COMMS antenna /
+// lattice MAST rising off the core (with a raking SE mast shadow), and a scatter of bright beacon/LED dabs
+// (cyan + amber) blinking across the farm. Reads clearly apart from the slender glass skyscraper (tall + thin
+// + windowed), the deco tower (square tiers), and the space needle (a saucer on a stem). Cold data-grey +
+// cyan/amber beacons are BLENDED with the passed roof colors so it retints on a theme switch. Bounds-safe:
+// every write goes through forRect / drawHSpan / setPixel / blendPixel (all clipped), so it never panics.
+func drawRoofDataHub(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	grey := blend(rc.base, dataGreyAnchor, 0.58)                      // the cold server-block face
+	greyLit := brighten(grey, 0.14)                                   // sunlit NW block edge
+	greyDark := blend(rc.dark, dataGreyAnchor, 0.44)                  // shaded SE block + cooling channels
+	channel := darken(greyDark, 0.22)                                 // dark cooling-channel gaps between blocks
+	mast := blend(rc.dark, dataGreyAnchor, 0.60)                      // the dark comms lattice mast
+	mastLit := brighten(mast, 0.18)                                   // sunlit NW rim of the mast
+	ledCyan := blend(brighten(rc.base, 0.10), fusionCyanAnchor, 0.62) // a cool cyan beacon dab
+	ledAmber := blend(brighten(rc.base, 0.10), gasGlowAnchor, 0.55)   // a warm amber beacon dab
+
+	// THE BASE: a wide low server-farm block filling the footprint, lit N/W + shaded S/E, so the complex sits
+	// as a raised low mass rather than a flat slab.
+	forRect(cx, cy, hw, hh, func(x, y int) {
+		if x <= cx || y <= cy {
+			setPixel(img, x, y, grey)
+		} else {
+			setPixel(img, x, y, greyDark)
+		}
+	})
+
+	// SERVER-BLOCK GRID: a few dark cooling channels running both axes so the base reads as rows of server
+	// racks / cooling aisles, not a plain slab. Vertical aisles every ~third, one horizontal spine.
+	aisleEvery := maxInt(hw/2, 2)
+	for gx := cx - hw + aisleEvery; gx < cx+hw; gx += aisleEvery {
+		for y := cy - hh; y <= cy+hh; y++ {
+			setPixel(img, gx, y, channel)
+		}
+	}
+	rowEvery := maxInt(hh/2, 2)
+	for gy := cy - hh + rowEvery; gy < cy+hh; gy += rowEvery {
+		drawHSpan(img, cx-hw, cx+hw, gy, channel)
+	}
+	// A lit NW parapet edge so the farm's north face catches light.
+	drawHSpan(img, cx-hw, cx+hw, cy-hh, greyLit)
+	for y := cy - hh; y <= cy+hh; y++ {
+		setPixel(img, cx-hw, y, greyLit)
+	}
+
+	// CENTRAL COMMS MAST: a bold dark lattice tower standing at the farm's core — a broad shaded stalk (a
+	// small filled footing block) rising to a thin tall antenna, lit on its NW edge, with a bright beacon tip.
+	footR := maxInt(minInt(hw, hh)/4, 1)
+	forRect(cx, cy, footR, footR, func(x, y int) {
+		if x <= cx {
+			setPixel(img, x, y, mastLit)
+		} else {
+			setPixel(img, x, y, mast)
+		}
+	})
+	mastH := maxInt(minInt(hw, hh)*3/4, 2)
+	for dy := -mastH; dy <= 0; dy++ {
+		setPixel(img, cx, cy+dy, mast)
+		setPixel(img, cx-1, cy+dy, mastLit)
+	}
+	// A short cross-arm high on the mast so it reads as a comms lattice, not a plain pole.
+	armW := maxInt(footR, 1)
+	drawHSpan(img, cx-armW, cx+armW, cy-mastH*2/3, mast)
+	// RAKING SE MAST SHADOW below the base so the tall lattice reads as standing well above the low farm.
+	for dy := 1; dy <= maxInt(hh/2, 1); dy++ {
+		blendPixel(img, cx+dy, cy+hh+dy, channel, 0.5)
+	}
+	setPixel(img, cx, cy-mastH, brighten(ledCyan, 0.16))   // a bright cyan beacon at the mast tip
+	setPixel(img, cx, cy-mastH-1, brighten(ledCyan, 0.24)) // the pinpoint above the tip
+
+	// BEACON / LED DABS: a deterministic scatter of small blinking lights across the farm — cyan + amber
+	// alternating — so the server-city reads as a live data hub, not a dead grey block. Placed on a fixed
+	// lattice of offsets from center (scaled to the footprint), each clamped via blendPixel.
+	leds := []struct {
+		fx, fy float64
+		warm   bool
+	}{
+		{-0.60, -0.55, false}, {0.55, -0.60, true}, {-0.65, 0.45, true},
+		{0.62, 0.50, false}, {-0.30, 0.66, false}, {0.28, -0.30, true},
+	}
+	for _, l := range leds {
+		lx := cx + int(float64(hw)*l.fx)
+		ly := cy + int(float64(hh)*l.fy)
+		c := ledCyan
+		if l.warm {
+			c = ledAmber
+		}
+		blendPixel(img, lx, ly, c, 0.85)
+		blendPixel(img, lx, ly-1, brighten(c, 0.18), 0.6) // a soft glow above each dab
+	}
 }
 
 // drawRoofTemple: the larger, grandest small building — an ornate symmetric tiered roof read
@@ -6491,6 +6596,101 @@ func drawRoofTower(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
 	}
 	setPixel(img, cx, cy-mastH, brighten(crown, 0.16)) // a lit mast tip
 	setPixel(img, cx, cy, crown)
+}
+
+// drawRoofSpaceNeedle: the ATOMIC wonder (Phase 1i) — a googie / SPACE-AGE space needle read from above.
+// Where the deco wonderTower is a WIDE stack of concentric flat concrete squares, this is a slender vertical
+// STEM crowned by a wide round flying-SAUCER disc: a small footing pad at the base, a thin bright stem rising
+// north, a broad steel saucer DISC near the top (a shaded rim, a lit NW arc, a bright energetic core + a soft
+// halo), and a short mast finial above — plus a LONG raking SE height shadow (a lone tall needle throws the
+// map's longest shadow). Reads clearly apart from the deco tower (square tiers), the round renaissance dome
+// (a solid hemisphere), and the glass skyscraper (a slab + window grid). Steel + a cool energetic core are
+// BLENDED with the passed roof colors so it retints on a theme switch. Bounds-safe: every write goes through
+// setPixel / fillDisc / forEllipse / drawHSpan / blendPixel (all clipped), so it never panics at any footprint.
+func drawRoofSpaceNeedle(img *image.RGBA, cx, cy, hw, hh int, rc roofColors) {
+	steel := blend(rc.base, steelAnchor, 0.56)                            // the pale steel needle body / saucer face
+	steelLit := brighten(steel, 0.18)                                     // sunlit NW rim / lit stem edge
+	steelDark := blend(rc.dark, steelAnchor, 0.40)                        // shaded SE rim / footing
+	stem := blend(steel, steelLit, 0.5)                                   // the bright thin stem catching light
+	core := blend(rc.base, blend(pastelAnchor, energyAnchor, 0.45), 0.62) // the cool lit saucer core
+	coreLit := brighten(blend(core, energyAnchor, 0.30), 0.14)            // the bright core pinpoint / ring
+
+	rad := maxInt(minInt(hw, hh), 1)
+
+	// LONG HEIGHT SHADOW: a raking SE drop well beyond the footprint — a lone tall needle casts the longest
+	// shadow on the map. Blended into the ground so it darkens rather than paints a slab.
+	needleShadow := darken(steelDark, 0.34)
+	shR := maxInt(rad/2, 1) // the shadow tracks the saucer's width, not the whole footprint
+	for dy := 1; dy <= maxInt(hh, 2); dy++ {
+		drawHSpan(img, cx-shR+dy, cx+shR+dy, cy+hh+dy, needleShadow)
+	}
+
+	// FOOTING PAD: a small shaded steel disc at the base so the needle plants on a launch pad, not bare ground.
+	padR := maxInt(rad/2, 1)
+	forEllipse(cx, cy+hh-padR, padR, maxInt(padR/2, 1), func(x, y int) {
+		if x <= cx || y <= cy {
+			setPixel(img, x, y, steel)
+		} else {
+			setPixel(img, x, y, steelDark)
+		}
+	})
+
+	// THE STEM: a thin bright vertical shaft rising from the footing up to the saucer height — the needle's
+	// spine, lit on the NW edge + shaded on the SE edge for round volume.
+	saucerCY := cy - hh + maxInt(rad*2/5, 1) // the saucer rides high on the stem (upper third)
+	for y := saucerCY; y <= cy+hh-1; y++ {
+		setPixel(img, cx, y, stem)
+		setPixel(img, cx-1, y, steelLit)
+		setPixel(img, cx+1, y, steelDark)
+	}
+
+	// THE SAUCER DISC: a WIDE round platter near the top — the space-age tell. A flat steel disc (lit NW /
+	// shaded SE), a bright lit RING one band in, then a glowing energetic CORE with a soft halo at the hub.
+	saucerR := maxInt(rad*4/5, 2)     // wide — the widest thing on the needle
+	saucerH := maxInt(saucerR*3/5, 1) // squashed vertically so it reads as a disc seen from above
+	forEllipse(cx, saucerCY, saucerR, saucerH, func(x, y int) {
+		if x <= cx && y <= saucerCY {
+			setPixel(img, x, y, steelLit)
+		} else if x > cx && y > saucerCY {
+			setPixel(img, x, y, steelDark)
+		} else {
+			setPixel(img, x, y, steel)
+		}
+	})
+	// A bright lit RING band just inside the rim (an outline circle so the saucer face shows through inside).
+	ringR := maxInt(saucerR*3/4, 1)
+	ringH := maxInt(saucerH*3/4, 1)
+	forEllipse(cx, saucerCY, ringR, ringH, func(x, y int) {
+		// keep only the ~1px rim band: skip the solid interior
+		fx := float64(x-cx) / float64(maxInt(ringR, 1))
+		fy := float64(y-saucerCY) / float64(maxInt(ringH, 1))
+		if fx*fx+fy*fy < 0.55 {
+			return
+		}
+		c := blend(steel, coreLit, 0.5)
+		if x <= cx && y <= saucerCY {
+			c = coreLit
+		}
+		setPixel(img, x, y, c)
+	})
+	// THE CORE: a bright energetic hub disc at the saucer center with a soft halo bleeding out, so the needle
+	// heart reads as a lit observation pod, not a metal dot.
+	coreR := maxInt(saucerR/3, 1)
+	fillDisc(img, cx, saucerCY, coreR, core)
+	haloR := maxInt(saucerR/2, 1)
+	forEllipse(cx, saucerCY, haloR, haloR, func(x, y int) {
+		fx := float64(x-cx) / float64(haloR)
+		fy := float64(y-saucerCY) / float64(haloR)
+		blendPixel(img, x, y, coreLit, 0.45*(1-(fx*fx+fy*fy)))
+	})
+	setPixel(img, cx, saucerCY, brighten(coreLit, 0.16)) // the brightest pinpoint at the saucer hub
+
+	// MAST FINIAL: a short thin bright spire rising off the saucer crown — the needle's antenna tip.
+	mastH := maxInt(rad/3, 1)
+	for dy := 1; dy <= mastH; dy++ {
+		setPixel(img, cx, saucerCY-saucerH-dy, stem)
+	}
+	setPixel(img, cx, saucerCY-saucerH-mastH, brighten(coreLit, 0.20)) // a lit beacon at the mast tip
 }
 
 // drawRoofCathedral: the MEDIEVAL wonder (locked #13, V3-B) — a tall CATHEDRAL / KEEP read from

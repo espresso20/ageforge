@@ -47,14 +47,14 @@ The tables below group the 22 ages by their **7 epochs**. Each row is a one-line
 |---|---|
 | **Victorian** | Warm brownstone rowhouses on stone pavers, threaded with gas-lit green parks. |
 | **Electric** | Pale art-deco concrete flat blocks along wide avenues, lit by a warm electric glow, topped by a setback tower. |
-| **Atomic** | Cooler pastel midcentury concrete-and-steel — cleaner, airier, suburban. |
+| **Atomic** | Cool, clean space-age midcentury — concrete-and-steel, airier suburbs, crowned by a googie space needle. |
 
 ### ▣ Digital Era
 
 | Age | The look |
 |---|---|
 | **Modern** | Cool blue-grey glass-and-steel skyscrapers along steel avenues. |
-| **Information** | Denser glass towers, colder in tone, studded with low data-center blocks. |
+| **Information** | A colder, denser data-city — glass towers over low server blocks, crowned by a central data hub. |
 | **Digital** | Darker, sleek glass with the first neon — cyan and magenta — bleeding into the streets. |
 
 ### ◉ Neon Era
