@@ -142,6 +142,14 @@ type tdEraStyle struct {
 	// house profile — to pick the wonder sprite. Zero value == wonderGeneric (the grand default
 	// hall), so an untuned era keeps its current wonder.
 	wonderMotif wonderMotif
+
+	// spaceMode flips the whole GROUND read from a town-on-terrain to a station-in-the-void
+	// (Phase 2c). When true, drawGround paints a deep-space VOID + STARFIELD instead of the era
+	// ground tint (drawSpaceBackground), and tdAddFiller SUPPRESSES all greenery — gardens, trees,
+	// groves, and ponds — because a station floating in space has no soil. Only the five
+	// SPACE-AND-ABOVE ages set it (space / interstellar / galactic / quantum / transcendent); every
+	// grounded era keeps the zero value (false) and its dirt/grass/deck ground untouched.
+	spaceMode bool
 }
 
 // roofProfile is the per-era dwelling-roof dialect (V3-B). It shifts the ROOF SILHOUETTE of the
@@ -1297,6 +1305,7 @@ var spaceCityStyle = func() tdEraStyle {
 	s.wonderMotif = wonderLaunchpad   // space centrepiece: a rocket on a launch pad
 	s.hasWalls = false                // an open colony
 	s.slotSpacing = 1.55              // airy like fusion, a touch tighter
+	s.spaceMode = true                // SPACE-AND-ABOVE: void + starfield ground, no greenery (Phase 2c)
 	return s
 }()
 
@@ -1345,6 +1354,7 @@ var interstellarCityStyle = func() tdEraStyle {
 	s.wonderMotif = wonderSpireArray // interstellar centrepiece: a cluster of spires around a central mast
 	s.hasWalls = false               // still an open colony
 	s.slotSpacing = 1.45             // a touch tighter than space — a denser arcology
+	s.spaceMode = true               // deep-space void + starfield ground, no greenery (Phase 2c)
 	return s
 }()
 
@@ -1386,6 +1396,7 @@ var galacticCityStyle = func() tdEraStyle {
 	s.wonderMotif = wonderRingHub     // galactic centrepiece: the ringworld/megastation ring-hub
 	s.hasWalls = false                // still open
 	s.slotSpacing = 1.30              // denser than interstellar — a grand packed metropolis
+	s.spaceMode = true                // deep-space void + starfield ground, no greenery (Phase 2c)
 	return s
 }()
 
@@ -1441,6 +1452,7 @@ var quantumCityStyle = func() tdEraStyle {
 	s.wonderMotif = wonderCrystalLattice // quantum centrepiece: a glowing crystal-lattice mesh
 	s.hasWalls = false                   // still open
 	s.slotSpacing = 1.35                 // a touch airier than galactic — crystal spires want breathing room
+	s.spaceMode = true                   // deep-space void + starfield ground, no greenery (Phase 2c)
 	return s
 }()
 
@@ -1496,6 +1508,10 @@ var transcendentCityStyle = func() tdEraStyle {
 	s.wonderMotif = wonderAscension  // transcendent centrepiece: a rising ascension of light
 	s.hasWalls = false               // still open
 	s.slotSpacing = 1.40             // airy — light-forms float, not packed
+	// spaceMode (Phase 2c): transcendent joins the SPACE-AND-ABOVE set — the whole GROUND becomes the
+	// deep-space void + starfield (drawSpaceBackground), so the luminous ground* recipes above no longer
+	// paint the base fill; the light-forms now read as a station floating in the void, not on a bright field.
+	s.spaceMode = true
 	return s
 }()
 
@@ -4339,6 +4355,16 @@ func tdAddFiller(plan *topPlan, field blockField, style tdEraStyle, cfg tdConfig
 		ponds = 5 // a few, never many
 	}
 
+	// SPACE-AND-ABOVE (Phase 2c): a station in the void has no soil — SUPPRESS all greenery. Gardens,
+	// street trees, edge groves, and decorative ponds are all zeroed for space-mode ages; only the
+	// built structures + props (wells/stalls) and paved squares stay. Grove placement is gated on the
+	// same flag further down.
+	if style.spaceMode {
+		gardens = 0
+		trees = 0
+		ponds = 0
+	}
+
 	r := newRNG(hash2(0xF111, uint32(roofN), seed) | 1)
 	pick := func() (tdPoint, bool) {
 		if len(deep) == 0 {
@@ -4572,6 +4598,9 @@ func tdAddFiller(plan *topPlan, field blockField, style tdEraStyle, cfg tdConfig
 	}
 	if style.wonderMotif == wonderMegalith {
 		groveCount = 1 + int(r.f01()*2) // 1..2 — a sparse, exposed highland, not a wooded village
+	}
+	if style.spaceMode {
+		groveCount = 0 // no forests ring a space station (Phase 2c)
 	}
 	groveBase := r.f01() * 2 * math.Pi
 	for g := 0; g < groveCount; g++ {
@@ -5153,6 +5182,12 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 // the max blend toward alt is a small fraction (groundTexAmp) so even a touched pixel barely
 // shifts. The result is a subtle-but-present dirt base that lets buildings + streets stand out.
 func drawGround(img *image.RGBA, style tdEraStyle, pal tdPal, seed uint32, w, h int) {
+	// SPACE-AND-ABOVE (Phase 2c): the five cosmic ages read as a station floating in the void, not a
+	// town on terrain — swap the ground tint for a deep-space VOID + STARFIELD and return.
+	if style.spaceMode {
+		drawSpaceBackground(img, style, pal, seed, w, h)
+		return
+	}
 	base := style.groundBase(pal)
 	alt := style.groundAlt(pal)
 	b := img.Bounds()
@@ -5181,6 +5216,114 @@ const (
 	groundTexFrac = 0.12
 	groundTexAmp  = 0.20
 )
+
+// drawSpaceBackground paints the SPACE-AND-ABOVE ground (Phase 2c): a deep near-black VOID with a
+// sparse deterministic STARFIELD and a couple of very faint NEBULA washes, so the cosmic ages read
+// as a station/platform floating in space rather than a town on terrain. Called from drawGround when
+// style.spaceMode is set; replaces the ground tint entirely.
+//
+// Every color is theme-derived so it retints on a theme switch: the void starts from the theme
+// background pulled dark toward black; the nebula tints from accent/highlight; the stars brighten
+// toward highlight/white. Deterministic (seeded), panic-safe (clipped setters), exact output size —
+// every pixel is written by the void pass before the stars/nebula stipple over it.
+func drawSpaceBackground(img *image.RGBA, style tdEraStyle, pal tdPal, seed uint32, w, h int) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+	b := img.Bounds()
+
+	// VOID: a deep near-black space fill, theme-derived. Pull the background toward the dim role, then
+	// hard toward black so it reads as a clearly dark void (not the grey deck). A very subtle vertical
+	// gradient (top darkest, bottom lifted a hair toward the void-blue) gives depth while staying calm.
+	voidTop := darken(blend(pal.bg, pal.dim, 0.30), 0.72)
+	voidBot := blend(darken(blend(pal.bg, pal.dim, 0.30), 0.62), voidAnchor, 0.35)
+
+	// NEBULA: 1–2 soft broad washes for depth. Seeded centers; a faint accent/highlight tint blended in
+	// with a smooth falloff. Kept very subtle (peak ~0.12) so it adds atmosphere without muddying the
+	// void. Deterministic per seed.
+	type nebula struct {
+		cx, cy, r float64
+		tint      color.RGBA
+		peak      float64
+	}
+	nebN := 1 + int(hash2(0x4EB0, seed, 0x51)%2) // 1..2
+	nebs := make([]nebula, 0, nebN)
+	for i := 0; i < nebN; i++ {
+		hx := hashUnit(uint32(i)*2+1, 0x1A, seed)
+		hy := hashUnit(uint32(i)*2+2, 0x2B, seed)
+		hr := hashUnit(uint32(i)+7, 0x3C, seed)
+		tintPick := hashUnit(uint32(i)+11, 0x4D, seed)
+		tint := pal.accent
+		if tintPick > 0.5 {
+			tint = pal.highlight
+		}
+		nebs = append(nebs, nebula{
+			cx:   hx * float64(w),
+			cy:   hy * float64(h),
+			r:    (0.35 + 0.25*hr) * float64(w), // broad — a third to half the canvas wide
+			tint: tint,
+			peak: 0.08 + 0.04*tintPick, // ~0.08..0.12
+		})
+	}
+
+	for y := 0; y < h; y++ {
+		py := b.Min.Y + y
+		if py < b.Min.Y || py >= b.Max.Y {
+			continue
+		}
+		vt := float64(y) / float64(h) // 0 (top) .. ~1 (bottom)
+		row := blend(voidTop, voidBot, vt)
+		for x := 0; x < w; x++ {
+			px := b.Min.X + x
+			if px < b.Min.X || px >= b.Max.X {
+				continue
+			}
+			c := row
+			// Faint nebula wash: smooth quadratic falloff from each center, capped subtle.
+			for _, n := range nebs {
+				dx := float64(x) - n.cx
+				dy := float64(y) - n.cy
+				d2 := dx*dx + dy*dy
+				r2 := n.r * n.r
+				if d2 < r2 {
+					f := 1 - d2/r2 // 1 at center → 0 at edge
+					c = blend(c, n.tint, n.peak*f*f)
+				}
+			}
+			// A whisper of per-pixel value noise so the void isn't a dead flat wash (very small).
+			flick := texHash(uint32(x), uint32(y), seed^0x5AC3)
+			if flick > 0.85 {
+				c = brighten(c, 0.02)
+			}
+			img.SetRGBA(px, py, c)
+		}
+	}
+
+	// STARFIELD: scatter sparse deterministic stars over the void. Budget ~ (w*h)/45 candidates; each a
+	// 1px bright dab (blend the local void toward highlight/white by a varied brightness), most faint with
+	// a few bright; ~5% are 2px "bright stars". Tasteful, not a snowstorm. Bounds-checked via setPixel.
+	starWhite := blend(pal.highlight, color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}, 0.55)
+	candidates := (w * h) / 45
+	for i := 0; i < candidates; i++ {
+		si := uint32(i)
+		sx := int(hash2(si, 0xA1, seed) % uint32(w))
+		sy := int(hash2(si, 0xB2, seed) % uint32(h))
+		br := hashUnit(si, 0xC3, seed) // brightness roll
+		// Most stars faint: bias the distribution so only a minority read bright. Skip the very
+		// dimmest rolls entirely so the field stays sparse rather than a uniform haze.
+		if br < 0.45 {
+			continue
+		}
+		amt := 0.35 + 0.65*((br-0.45)/0.55) // 0.35 (faint) .. 1.0 (bright)
+		base := blend(voidTop, starWhite, amt)
+		setPixel(img, b.Min.X+sx, b.Min.Y+sy, base)
+		// A handful (~5%) are 2px bright stars — a small NE dab beside the core.
+		if br > 0.95 {
+			setPixel(img, b.Min.X+sx+1, b.Min.Y+sy, blend(voidTop, starWhite, amt*0.7))
+			setPixel(img, b.Min.X+sx, b.Min.Y+sy-1, blend(voidTop, starWhite, amt*0.7))
+		}
+	}
+}
 
 // texHash is a tiny deterministic 2D value hash returning a float in [0,1). Used for the ground
 // texture speckle — cheap, seeded, and stable frame-to-frame.

@@ -4929,3 +4929,172 @@ func TestDumpFinalPairPNGs(t *testing.T) {
 		t.Logf("wrote %s", path)
 	}
 }
+
+// ---- Phase 2c: space-mode background ----------------------------------------
+
+// meanLuma returns the mean per-pixel luminance (Rec.601) of an RGBA image in [0,255].
+func meanLuma(img *image.RGBA, w, h int) float64 {
+	var sum float64
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			c := img.RGBAAt(x, y)
+			sum += 0.299*float64(c.R) + 0.587*float64(c.G) + 0.114*float64(c.B)
+		}
+	}
+	if w*h == 0 {
+		return 0
+	}
+	return sum / float64(w*h)
+}
+
+// TestSpaceModeFlag locks Phase 2c: the five SPACE-AND-ABOVE ages carry spaceMode=true, and a
+// sampling of grounded ages (primitive, modern, cyberpunk) keep it false. This is the single flag
+// that swaps the whole ground read from town-on-terrain to station-in-the-void.
+func TestSpaceModeFlag(t *testing.T) {
+	_ = theme.SetActive("forge")
+	spaceAges := []string{"space_age", "interstellar_age", "galactic_age", "quantum_age", "transcendent_age"}
+	for _, age := range spaceAges {
+		if !styleForAge(age).spaceMode {
+			t.Fatalf("age %q: spaceMode = false, want true (a station in the void)", age)
+		}
+	}
+	groundedAges := []string{"primitive_age", "modern_age", "cyberpunk_age"}
+	for _, age := range groundedAges {
+		if styleForAge(age).spaceMode {
+			t.Fatalf("age %q: spaceMode = true, want false (a grounded era keeps its terrain)", age)
+		}
+	}
+}
+
+// TestDrawSpaceBackground locks the void+starfield paint: it must be panic-safe, produce a clearly
+// DARK mean pixel (far darker than the same age's OLD ground tint would have been), and contain a
+// handful of bright STAR pixels above a brightness threshold.
+func TestDrawSpaceBackground(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 140, 96
+	const seed uint32 = 0x5AC30000 // deterministic
+	style := styleForAge("space_age")
+	pal := newTdPal()
+
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	// Panic-safety: a bare call must not blow up, and must write every pixel to exact size.
+	drawSpaceBackground(img, style, pal, seed, w, h)
+	if b := img.Bounds(); b.Dx() != w || b.Dy() != h {
+		t.Fatalf("space background wrong size: got %dx%d, want %dx%d", b.Dx(), b.Dy(), w, h)
+	}
+
+	// The void must be clearly DARK. Compare against the OLD space ground tint (a pale metal deck) —
+	// the void's mean luminance must be dramatically lower, proving we replaced the grey deck with a
+	// dark void rather than tinting it.
+	voidLuma := meanLuma(img, w, h)
+	oldGround := style.groundBase(pal) // the pale metal deck this age used before Phase 2c
+	oldLuma := 0.299*float64(oldGround.R) + 0.587*float64(oldGround.G) + 0.114*float64(oldGround.B)
+	if voidLuma > oldLuma*0.5 {
+		t.Fatalf("void not dark enough: mean luma %.1f is not < 0.5×old-ground luma %.1f (still reads as a deck, not a void)", voidLuma, oldLuma)
+	}
+	// And it must genuinely be a dark void in absolute terms, not merely relatively darker.
+	if voidLuma > 60 {
+		t.Fatalf("void mean luma %.1f too bright for deep space (want a calm dark field)", voidLuma)
+	}
+
+	// Starfield: a handful of pixels must be clearly bright (the stars) against the dark void.
+	const starThresh = 150.0
+	bright := 0
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			c := img.RGBAAt(x, y)
+			l := 0.299*float64(c.R) + 0.587*float64(c.G) + 0.114*float64(c.B)
+			if l > starThresh {
+				bright++
+			}
+		}
+	}
+	if bright < 3 {
+		t.Fatalf("starfield too sparse: only %d pixels above brightness %.0f — expected several stars", bright, starThresh)
+	}
+	// But not a snowstorm — stars stay a small fraction of the field.
+	if frac := float64(bright) / float64(w*h); frac > 0.10 {
+		t.Fatalf("starfield too dense: %.1f%% of pixels are bright — a snowstorm, not a tasteful scatter", frac*100)
+	}
+
+	// Determinism: same seed → identical pixels.
+	img2 := image.NewRGBA(image.Rect(0, 0, w, h))
+	drawSpaceBackground(img2, style, pal, seed, w, h)
+	if imagesDiffer(img, img2) {
+		t.Fatal("drawSpaceBackground not deterministic: same seed produced different pixels")
+	}
+
+	// Panic-safety at degenerate sizes.
+	for _, sz := range [][2]int{{0, 0}, {1, 1}, {1, 40}, {40, 1}} {
+		di := image.NewRGBA(image.Rect(0, 0, sz[0], sz[1]))
+		drawSpaceBackground(di, style, pal, seed, sz[0], sz[1]) // must not panic
+	}
+}
+
+// TestSpaceModeSuppressesGreenery locks the greenery suppression: a space-mode town plan emits ZERO
+// tree/garden/pond lots (a station in the void has no soil), while a grounded age still emits
+// greenery. Built structures and props are unaffected.
+func TestSpaceModeSuppressesGreenery(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+
+	// tdPlanForAge uses the PER-AGE style (styleForAge) exactly as the render path does, so the
+	// space-mode flag is live here (tdPlanFor's coarse era table predates per-age styling).
+	spacePlan := tdPlanForAge(namedState("space_age", "Aldermoor", blds))
+	for _, k := range []tdLotKind{tdTree, tdGarden, tdPond} {
+		if got := countKind(spacePlan, k); got != 0 {
+			t.Fatalf("space-mode plan emitted %d lots of kind %d — greenery must be fully suppressed", got, k)
+		}
+	}
+	// The station must still be a real settlement (structures survived the suppression).
+	if roofs := countKind(spacePlan, tdRoof); roofs < 5 {
+		t.Fatalf("space-mode plan has only %d roof lots — suppression should drop greenery, not the town", roofs)
+	}
+
+	// A grounded age with the SAME building set still grows greenery — proves the suppression is
+	// space-mode-specific, not a global regression.
+	groundPlan := tdPlanForAge(namedState("primitive_age", "Aldermoor", blds))
+	green := countKind(groundPlan, tdTree) + countKind(groundPlan, tdGarden)
+	if green == 0 {
+		t.Fatal("grounded age emitted no greenery — the suppression leaked past space-mode")
+	}
+}
+
+// TestDump2cSpaceBackgroundPNGs renders the five SPACE-AND-ABOVE ages at 440x300 with a dense
+// building set (incl. a wonder) so a reviewer can eyeball the void+starfield background. Opt-in:
+// skipped unless CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDump2cSpaceBackgroundPNGs
+func TestDump2cSpaceBackgroundPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Dense set with a wonder so the centerpiece renders; FIXED display name → fixed seed.
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"space_age", "2c_space.png"},
+		{"interstellar_age", "2c_interstellar.png"},
+		{"galactic_age", "2c_galactic.png"},
+		{"quantum_age", "2c_quantum.png"},
+		{"transcendent_age", "2c_transcendent.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 440, 300)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
