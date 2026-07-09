@@ -5054,6 +5054,8 @@ func cosmicSceneFor(ageKey string) (func(img *image.RGBA, state game.GameState, 
 		return drawStarSystemScene, true
 	case "galactic_age":
 		return drawGalaxyScene, true
+	case "quantum_age":
+		return drawCosmicWebScene, true
 	}
 	return nil, false
 }
@@ -6399,6 +6401,340 @@ func drawGalaxyScene(img *image.RGBA, state game.GameState, w, h int, seed uint3
 	setPixel(img, ncx-1, ncy, blend(galaxyCoreHot, galaxyCoreWarm, 0.4))
 	setPixel(img, ncx, ncy+1, blend(galaxyCoreHot, galaxyCoreWarm, 0.4))
 	setPixel(img, ncx, ncy-1, blend(galaxyCoreHot, galaxyCoreWarm, 0.4))
+}
+
+// Cosmic-web palette anchors: at the LARGEST scale the universe is a filamentary web of galaxy
+// CLUSTERS strung on threads of dark matter, with vast empty VOIDS between. The quantum lens tints
+// the whole field with an IRIDESCENT sheen (cyan↔magenta↔gold cycling across position). The three
+// iridescence anchors already exist package-level (iridCyanAnchor / iridMagentaAnchor /
+// iridGoldAnchor); these are the web-specific structural tones. Package-level and deterministic.
+var (
+	webNodeCore = color.RGBA{R: 0xff, G: 0xfb, B: 0xf2, A: 0xff} // brilliant cluster-core dab (near-white, faintly warm)
+	webGalaxy   = color.RGBA{R: 0xe8, G: 0xdc, B: 0xff, A: 0xff} // a single tiny galaxy in a cluster (cool pale)
+	webFarGal   = color.RGBA{R: 0x6c, G: 0x60, B: 0x8c, A: 0xff} // very faint far-background galaxy speck in the void
+)
+
+// webIrid returns the iridescent hue for a point (ux,uy) in unit field coordinates [0,1]. The three
+// quantum anchors (cyan→magenta→gold) are cycled by a smooth diagonal phase across the field so the
+// web's clusters shift hue by position — the crystalline "quantum lens" — while staying crisp (this
+// is a pure color pick, not a blur). Pure helper, no locks.
+func webIrid(ux, uy float64) color.RGBA {
+	// Phase sweeps ~1.3 full cycles across the diagonal so both ends of the field differ in hue.
+	ph := (ux*0.62 + uy*0.38) * 1.3
+	ph -= math.Floor(ph) // wrap into [0,1)
+	seg := ph * 3.0      // 0..3 across the three anchors
+	i := int(seg)
+	f := seg - float64(i)
+	f = f * f * (3 - 2*f) // smoothstep the crossfade so bands don't hard-edge
+	return blend(iridHueFor(i), iridHueFor(i+1), f)
+}
+
+// drawCosmicWebScene renders the QUANTUM-AGE scene: the COSMIC WEB — the largest-scale structure of
+// the universe, one zoom-out beyond the galactic spiral. Bright galaxy CLUSTERS sit as knots on a
+// network of glowing FILAMENTS, separated by dark intergalactic VOIDS, the whole field washed in a
+// shifting IRIDESCENT (quantum) sheen. Like the other cosmic scenes it abandons the city renderer —
+// at this scale a top-down city is meaningless.
+//
+// Structure is built from real geometry, not a vague glow: a handful of seeded ATTRACTOR points pull
+// ~10–24 cluster NODES into groups (so empty voids emerge naturally between them); each node is a
+// tight knot of tiny galaxy dabs around a brilliant core, hued by webIrid at its position. Each node
+// links to its 2–3 NEAREST neighbours with a wavy FILAMENT — a thread of faint dots that brightens
+// toward the endpoints, with a few tiny galaxies strung along it; the filament hue interpolates
+// between its two endpoints' iridescent hues. A very faint large-scale web glow sits UNDER the
+// structure for depth. Node/galaxy counts scale with canvas area and are capped, so a minimap still
+// shows a recognizable (sparser) web. Deterministic and panic-safe throughout (every write clips).
+func drawCosmicWebScene(img *image.RGBA, state game.GameState, w, h int, seed uint32) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+	_ = state // scene depends only on the (name-derived) seed, like the other cosmic scenes
+
+	// BACKDROP: a deep intergalactic VOID — darker/emptier than the galaxy backdrop. Reuse the shared
+	// space background (void + very sparse far-star field) with the quantum style so the void tone
+	// matches the era; the web's own nodes/filaments dominate over it. Then darken it a touch further
+	// so the intergalactic gaps read as truly empty next to the galaxy scene.
+	pal := newTdPal()
+	drawSpaceBackground(img, styleForAge("quantum_age"), pal, seed, w, h)
+
+	b := img.Bounds()
+	minWH := w
+	if h < minWH {
+		minWH = h
+	}
+	fmin := float64(minWH)
+	fw, fh := float64(w), float64(h)
+
+	// Pull the whole void a shade deeper toward black so intergalactic space reads emptier than the
+	// galaxy backdrop. A cheap single pass over the existing pixels (no new gradient).
+	for y := 0; y < h; y++ {
+		py := b.Min.Y + y
+		for x := 0; x < w; x++ {
+			px := b.Min.X + x
+			img.SetRGBA(px, py, darken(img.RGBAAt(px, py), 0.22))
+		}
+	}
+
+	// A few very faint FAR-BACKGROUND galaxies scattered through the void (distinct from the star
+	// field: dim purple-grey specks, occasionally a 2px smudge) — depth cues in the emptiness.
+	farN := (w * h) / 900
+	for i := 0; i < farN; i++ {
+		si := uint32(i) + 1
+		fx := int(hash2(si, 0x7A, seed) % uint32(w))
+		fy := int(hash2(si, 0x8B, seed) % uint32(h))
+		amt := hashUnit(si, 0x9C, seed)
+		if amt < 0.5 {
+			continue // keep them sparse
+		}
+		c := blend(img.RGBAAt(b.Min.X+fx, b.Min.Y+fy), webFarGal, 0.25+0.30*amt)
+		setPixel(img, b.Min.X+fx, b.Min.Y+fy, c)
+		if amt > 0.9 { // rare tiny elongated far-galaxy
+			setPixel(img, b.Min.X+fx+1, b.Min.Y+fy, blend(c, webFarGal, 0.4))
+		}
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// NODES (galaxy clusters): scatter cluster nodes CLUSTERED around a few attractor points so the
+	// dark voids fall out naturally. Node count scales with canvas area, clamped to ~10..24 at the
+	// full dump size (fewer on a minimap). Each node stores its screen position, its iridescent hue,
+	// and a size in galaxy-dabs.
+	// ------------------------------------------------------------------------------------------
+	areaScale := fw * fh / (440.0 * 300.0) // 1.0 at the reference dump size
+	if areaScale > 1.6 {
+		areaScale = 1.6
+	}
+	nNodes := int(14 * areaScale)
+	if nNodes > 24 {
+		nNodes = 24
+	}
+	if nNodes < 5 { // a minimap still shows a recognizable (small) web
+		nNodes = 5
+	}
+	// Attractors: 2..4 pull-points, placed with a margin so clusters sit inside the frame. Nodes are
+	// scattered on a gaussian-ish spread around a randomly chosen attractor → groups + voids.
+	nAttr := 2 + int(hash2(0xCEB, seed, 0x01)%3) // 2..4
+	type pt struct{ x, y float64 }
+	attr := make([]pt, nAttr)
+	for i := 0; i < nAttr; i++ {
+		attr[i] = pt{
+			x: (0.16 + 0.68*hashUnit(uint32(i)+1, 0x11, seed)) * fw,
+			y: (0.16 + 0.68*hashUnit(uint32(i)+1, 0x22, seed)) * fh,
+		}
+	}
+	type node struct {
+		x, y float64
+		hue  color.RGBA
+		size int // galaxy dabs in the knot
+	}
+	nodes := make([]node, 0, nNodes)
+	spread := 0.16 * fmin // cluster tightness around an attractor
+	for i := 0; i < nNodes; i++ {
+		si := uint32(i) + 1
+		a := attr[int(hash2(si, 0x33, seed)%uint32(nAttr))]
+		// Two averaged uniforms → a soft central bump (denser near the attractor); a random angle.
+		rr := (hashUnit(si, 0x44, seed) + hashUnit(si, 0x45, seed)) * 0.5
+		ang := hashUnit(si, 0x55, seed) * 2 * math.Pi
+		x := a.x + math.Cos(ang)*rr*spread
+		y := a.y + math.Sin(ang)*rr*spread*planetAspectY // squash the scatter so clusters read round
+		// Keep inside the frame with a small margin.
+		x = clampF(x, 4, fw-5)
+		y = clampF(y, 4, fh-5)
+		hue := webIrid(x/fw, y/fh)
+		sz := 4 + int(hashUnit(si, 0x66, seed)*6) // 4..9 galaxy dabs
+		nodes = append(nodes, node{x: x, y: y, hue: hue, size: sz})
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// UNDER-GLOW: a very faint large-scale web glow beneath the structure — a soft brightening where
+	// nodes cluster, so the field has depth. Kept low intensity (the crisp nodes/filaments carry the
+	// scene). Accumulated per node with a steep falloff, clipped to a small bounding box each.
+	// ------------------------------------------------------------------------------------------
+	glowR := 0.15 * fmin
+	if glowR >= 2 {
+		radY := glowR * planetAspectY
+		for _, n := range nodes {
+			gTint := blend(n.hue, webNodeCore, 0.25)
+			x0 := int(math.Floor(n.x - glowR))
+			x1 := int(math.Ceil(n.x + glowR))
+			y0 := int(math.Floor(n.y - radY))
+			y1 := int(math.Ceil(n.y + radY))
+			if x0 < b.Min.X {
+				x0 = b.Min.X
+			}
+			if y0 < b.Min.Y {
+				y0 = b.Min.Y
+			}
+			if x1 > b.Max.X {
+				x1 = b.Max.X
+			}
+			if y1 > b.Max.Y {
+				y1 = b.Max.Y
+			}
+			invR := 1.0 / glowR
+			invRadY := 1.0 / radY
+			for py := y0; py < y1; py++ {
+				dyf := (float64(py) - n.y) * invRadY
+				for px := x0; px < x1; px++ {
+					dxf := (float64(px) - n.x) * invR
+					d2 := dxf*dxf + dyf*dyf
+					if d2 > 1.0 {
+						continue
+					}
+					f := 1 - math.Sqrt(d2)
+					f = f * f * f // steep — stays a whisper, not a smudge
+					if f <= 0.003 {
+						continue
+					}
+					setPixel(img, px, py, blend(img.RGBAAt(px, py), gTint, clampF(f*0.11, 0, 1)))
+				}
+			}
+		}
+	}
+
+	// tinyGalaxy stamps a single faint galaxy dab: a 1px core tinted toward the iridescent hue, with
+	// (for the brighter ones) a faint neighbour so a few read as small smudges. Crisp opaque writes.
+	tinyGalaxy := func(px, py int, hue color.RGBA, bright float64) {
+		c := blend(webGalaxy, hue, 0.45)
+		c = blend(c, webNodeCore, 0.25*bright)
+		setPixel(img, px, py, c)
+		if bright > 0.72 {
+			dim := blend(c, pal.bg, 0.5)
+			setPixel(img, px+1, py, dim)
+			setPixel(img, px, py+1, dim)
+		}
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// FILAMENTS: connect each node to its 2..3 NEAREST neighbour nodes with a glowing thread. To
+	// avoid drawing every edge twice, only draw i→j when j>i (the pairing is symmetric anyway). Each
+	// filament is a slightly WAVY line of faint dots (a low-amplitude sine perpendicular to the run),
+	// BRIGHTENING toward the two node endpoints, with a few tiny galaxies strung along it. The dot
+	// hue lerps between the two endpoints' iridescent hues along the run.
+	// ------------------------------------------------------------------------------------------
+	for i := range nodes {
+		ni := nodes[i]
+		// Rank the other nodes by distance to ni; keep the nearest 2..3.
+		type nb struct {
+			j int
+			d float64
+		}
+		cand := make([]nb, 0, len(nodes)-1)
+		for j := range nodes {
+			if j == i {
+				continue
+			}
+			dx := nodes[j].x - ni.x
+			dy := nodes[j].y - ni.y
+			cand = append(cand, nb{j: j, d: dx*dx + dy*dy})
+		}
+		sort.Slice(cand, func(a, b int) bool { return cand[a].d < cand[b].d })
+		links := 2 + int(hash2(uint32(i)+1, seed, 0x77)%2) // 2..3 nearest neighbours
+		if links > len(cand) {
+			links = len(cand)
+		}
+		for c := 0; c < links; c++ {
+			j := cand[c].j
+			if j <= i {
+				continue // draw each undirected edge once
+			}
+			nj := nodes[j]
+			dx := nj.x - ni.x
+			dy := nj.y - ni.y
+			L := math.Hypot(dx, dy)
+			if L < 1 {
+				continue
+			}
+			// Unit direction + a perpendicular for the waviness.
+			ux, uy := dx/L, dy/L
+			perpx, perpy := -uy, ux
+			// Filament seed keys the wave phase/amplitude so each thread wobbles differently.
+			fseed := seed ^ (uint32(i+1) * 0x9E37) ^ (uint32(j+1) * 0x85EB)
+			waveAmp := (0.02 + 0.03*hashUnit(fseed, 0x01, seed)) * fmin // gentle, ~2..5% of the short side
+			waveK := 1.5 + 2.5*hashUnit(fseed, 0x02, seed)              // ~1.5..4 humps along the run
+			wavePh := hashUnit(fseed, 0x03, seed) * 2 * math.Pi
+			// Step ~1px along the run so the thread is continuous but crisp.
+			steps := int(L)
+			if steps < 1 {
+				steps = 1
+			}
+			for s := 0; s <= steps; s++ {
+				t := float64(s) / float64(steps) // 0 at ni → 1 at nj
+				// Waviness: a sine bump that vanishes at both endpoints (so it meets the nodes cleanly).
+				env := math.Sin(t * math.Pi) // 0 at ends, 1 mid
+				off := waveAmp * env * math.Sin(t*waveK*math.Pi+wavePh)
+				fx := ni.x + ux*L*t + perpx*off
+				fy := ni.y + uy*L*t + perpy*off
+				px := int(fx + 0.5)
+				py := int(fy + 0.5)
+				// Brightness: brightens toward BOTH endpoints (a shallow U), dimmest mid-run.
+				edge := 1 - env            // 1 at ends → 0 mid
+				bright := 0.30 + 0.55*edge // ~0.30 mid .. 0.85 near nodes
+				hue := blend(ni.hue, nj.hue, t)
+				thread := blend(pal.bg, hue, 0.35+0.45*edge)
+				thread = blend(thread, webNodeCore, 0.10*bright)
+				// Skip a fraction of mid-run dots so the thread reads as a faint dotted filament, not a
+				// solid bright line — keeps the voids feeling empty and the nodes dominant.
+				if edge < 0.35 && (hashUnit(uint32(s+1), 0x0D, fseed) > 0.6) {
+					continue
+				}
+				setPixel(img, px, py, thread)
+			}
+			// String a few TINY galaxies along the filament (not on the endpoints).
+			galN := 1 + int(hashUnit(fseed, 0x04, seed)*3) // 1..3
+			for g := 0; g < galN; g++ {
+				t := 0.2 + 0.6*hashUnit(uint32(g)+1, 0x05, fseed) // keep off the ends
+				env := math.Sin(t * math.Pi)
+				off := waveAmp * env * math.Sin(t*waveK*math.Pi+wavePh)
+				fx := ni.x + ux*L*t + perpx*off
+				fy := ni.y + uy*L*t + perpy*off
+				hue := blend(ni.hue, nj.hue, t)
+				tinyGalaxy(int(fx+0.5), int(fy+0.5), hue, 0.4+0.4*hashUnit(uint32(g)+1, 0x06, fseed))
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// NODE KNOTS: draw the cluster nodes LAST so their bright cores sit over any filament dots that
+	// pass behind them. Each node is a tight scatter of tiny galaxies around a brilliant core dab,
+	// all in the node's iridescent hue. The core is a small round knot (aspect-squashed so it reads
+	// round in the terminal cell).
+	// ------------------------------------------------------------------------------------------
+	for _, n := range nodes {
+		cx, cy := n.x, n.y
+		knotR := (2.0 + 0.5*float64(n.size)) // scatter radius grows a hair with the cluster size
+		// Tiny galaxies scattered in the knot (gaussian-ish toward the center).
+		for k := 0; k < n.size; k++ {
+			kk := uint32(k)*31 + 1
+			rr := (hashUnit(kk, 0x01, seed) + hashUnit(kk, 0x02, seed)) * 0.5
+			rr = rr * rr * knotR // bias toward the center
+			ang := hashUnit(kk, 0x03, seed) * 2 * math.Pi
+			gx := int(cx + math.Cos(ang)*rr + 0.5)
+			gy := int(cy + math.Sin(ang)*rr*planetAspectY + 0.5) // squash so the knot reads round
+			tinyGalaxy(gx, gy, n.hue, 0.5+0.5*hashUnit(kk, 0x04, seed))
+		}
+		// A small round bright CORE dab (aspect-squashed). A tight filled ellipse: core-white at the
+		// very center fading into the node's iridescent hue at the rim — crisp, no soft halo.
+		coreR := 1.6 + 0.15*float64(n.size)
+		coreRY := coreR * planetAspectY
+		x0 := int(math.Floor(cx - coreR))
+		x1 := int(math.Ceil(cx + coreR))
+		y0 := int(math.Floor(cy - coreRY))
+		y1 := int(math.Ceil(cy + coreRY))
+		invCR := 1.0 / coreR
+		invCRY := 1.0 / math.Max(coreRY, 0.001)
+		for py := y0; py <= y1; py++ {
+			dyf := (float64(py) - cy) * invCRY
+			for px := x0; px <= x1; px++ {
+				dxf := (float64(px) - cx) * invCR
+				d2 := dxf*dxf + dyf*dyf
+				if d2 > 1.0 {
+					continue
+				}
+				f := 1 - d2 // 1 center → 0 rim
+				col := blend(n.hue, webNodeCore, clampF(f*f, 0, 1))
+				setPixel(img, px, py, col)
+			}
+		}
+	}
 }
 
 // bi returns 1 if b else 0 — a tiny helper for offsetting the station's larger footprint.

@@ -4776,27 +4776,18 @@ func TestFinalPairWondersDiffer(t *testing.T) {
 	}
 }
 
-// TestFinalPairCitiesDiffer locks the CITY-level reads for the final two ages: quantum (dark iridescent
-// crystal) differs from transcendent (bright ethereal light), and each differs from two KNOWN-DISTINCT
-// styled ages — primitive_age and space_age. NOTE (this is the last slice): since transcendent is now
-// styled, there is NO default-village placeholder left to compare against, so we use real styled ages.
-func TestFinalPairCitiesDiffer(t *testing.T) {
+// TestTranscendentCityDiffers locks the CITY-level read for transcendent (the last age still rendered
+// as a city — quantum has since become the COSMIC-WEB scene, covered by TestQuantumIsCosmicWebScene &
+// co.): its ethereal-light re-skin differs from two KNOWN-DISTINCT styled ages — primitive_age and
+// space_age. Since transcendent is now styled, there is NO default-village placeholder left to compare
+// against, so we use real styled ages.
+func TestTranscendentCityDiffers(t *testing.T) {
 	_ = theme.SetActive("forge")
 	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
-	quantum, _ := renderImage(namedState("quantum_age", "Aldermoor", blds), 120, 72)
 	trans, _ := renderImage(namedState("transcendent_age", "Aldermoor", blds), 120, 72)
 	prim, _ := renderImage(namedState("primitive_age", "Aldermoor", blds), 120, 72)
 	space, _ := renderImage(namedState("space_age", "Aldermoor", blds), 120, 72)
 
-	if !imagesDiffer(quantum, trans) {
-		t.Fatal("quantum city renders identically to transcendent — the iridescent-crystal vs ethereal-light re-skin is not distinct")
-	}
-	if !imagesDiffer(quantum, prim) {
-		t.Fatal("quantum city renders identically to the primitive village — the quantum re-skin is not applied")
-	}
-	if !imagesDiffer(quantum, space) {
-		t.Fatal("quantum city renders identically to space — the quantum crystal deck must differ from the space colony")
-	}
 	if !imagesDiffer(trans, prim) {
 		t.Fatal("transcendent city renders identically to the primitive village — the transcendent re-skin is not applied")
 	}
@@ -5111,10 +5102,10 @@ func TestSpaceIsPlanetScene(t *testing.T) {
 	if _, ok := cosmicSceneFor("modern_age"); ok {
 		t.Fatal("cosmicSceneFor(modern_age) = true, want false (modern is still a city)")
 	}
-	// interstellar + galactic now have their own scenes too (see their own tests); quantum +
-	// transcendent still fall through to the city renderer until their slices land.
-	if _, ok := cosmicSceneFor("quantum_age"); ok {
-		t.Fatal("cosmicSceneFor(quantum_age) = true, want false (quantum still a city for now)")
+	// interstellar + galactic + quantum now have their own scenes too (see their own tests);
+	// transcendent still falls through to the city renderer until its slice lands.
+	if _, ok := cosmicSceneFor("transcendent_age"); ok {
+		t.Fatal("cosmicSceneFor(transcendent_age) = true, want false (transcendent still a city for now)")
 	}
 }
 
@@ -5455,6 +5446,132 @@ func TestDumpGalacticPNG(t *testing.T) {
 	_ = theme.SetActive("forge")
 	img, _ := renderImage(namedState("galactic_age", "Aldermoor", nil), 440, 300)
 	path := dir + "/2f_galactic.png"
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatalf("create %s: %v", path, err)
+	}
+	if err := png.Encode(f, img); err != nil {
+		f.Close()
+		t.Fatalf("encode %s: %v", path, err)
+	}
+	f.Close()
+	t.Logf("wrote %s", path)
+}
+
+// ---- quantum: cosmic-web cosmic scene (4th cosmic scene) ---------------------
+
+func TestQuantumIsCosmicWebScene(t *testing.T) {
+	if _, ok := cosmicSceneFor("quantum_age"); !ok {
+		t.Fatal("cosmicSceneFor(quantum_age) = false, want true (quantum is the cosmic-web scene)")
+	}
+	// transcendent is still a city until its own slice lands — keep the still-a-city case valid.
+	if _, ok := cosmicSceneFor("transcendent_age"); ok {
+		t.Fatal("cosmicSceneFor(transcendent_age) = true, want false (transcendent is still a city)")
+	}
+}
+
+func TestDrawCosmicWebScenePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	sizes := []struct{ w, h int }{
+		{1, 1}, {8, 8}, {440, 300}, {300, 440}, {512, 96}, {96, 512},
+	}
+	st := sampleState("quantum_age", nil)
+	for _, s := range sizes {
+		img := image.NewRGBA(image.Rect(0, 0, s.w, s.h))
+		drawCosmicWebScene(img, st, s.w, s.h, 0xABCDEF)
+		if got := img.Bounds(); got.Dx() != s.w || got.Dy() != s.h {
+			t.Fatalf("size %dx%d: image = %dx%d, want exact", s.w, s.h, got.Dx(), got.Dy())
+		}
+	}
+}
+
+// meanLuminWhole returns the mean luminance over the entire image — the cosmic web spreads its
+// structure across the field (rather than concentrating it dead-center like the galaxy bulge), so a
+// whole-image mean is the right measure that its nodes/filaments add light over a bare void.
+func meanLuminWhole(img *image.RGBA) float64 {
+	b := img.Bounds()
+	var sum, n float64
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			c := img.RGBAAt(x, y)
+			sum += 0.299*float64(c.R) + 0.587*float64(c.G) + 0.114*float64(c.B)
+			n++
+		}
+	}
+	if n == 0 {
+		return 0
+	}
+	return sum / n
+}
+
+// TestQuantumWebBrighterThanVoidAndDiffers verifies the web reads as luminous STRUCTURE on an empty
+// void — its whole-image mean brightness clearly exceeds a bare-void baseline (the same seeded space
+// background with no web), AND the render DIFFERS from every earlier cosmic scene and from a city age.
+func TestQuantumWebBrighterThanVoidAndDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	web, _ := renderImage(namedState("quantum_age", "Aldermoor", nil), w, h)
+
+	// Bare-void baseline: the same seeded space background the web is painted over, darkened by the
+	// same amount the scene deepens its intergalactic void, but with NO nodes/filaments. This isolates
+	// the light the WEB STRUCTURE adds on top of the actual void the scene uses.
+	seed := citySeed("Aldermoor")
+	base := image.NewRGBA(image.Rect(0, 0, w, h))
+	drawSpaceBackground(base, styleForAge("quantum_age"), newTdPal(), seed, w, h)
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			base.SetRGBA(x, y, darken(base.RGBAAt(x, y), 0.22))
+		}
+	}
+
+	webLum := meanLuminWhole(web)
+	baseLum := meanLuminWhole(base)
+	if webLum <= baseLum {
+		t.Fatalf("cosmic web not brighter than a bare void: web mean lum=%.2f, void mean lum=%.2f", webLum, baseLum)
+	}
+
+	space, _ := renderImage(namedState("space_age", "Aldermoor", nil), w, h)
+	inter, _ := renderImage(namedState("interstellar_age", "Aldermoor", nil), w, h)
+	gal, _ := renderImage(namedState("galactic_age", "Aldermoor", nil), w, h)
+	if !imagesDiffer(web, space) || !imagesDiffer(web, inter) || !imagesDiffer(web, gal) {
+		t.Fatal("quantum web render matches an earlier cosmic scene — the 4th scene did not diverge")
+	}
+	city, _ := renderImage(namedState("fusion_age", "Aldermoor", map[string]int{"hut": 20, "forge": 8, "colosseum": 1}), w, h)
+	if !imagesDiffer(web, city) {
+		t.Fatal("quantum web render is identical to a city (fusion) render")
+	}
+}
+
+func TestQuantumWebNoLandmarkLabels(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	_, plan := renderImage(namedState("quantum_age", "Aldermoor", map[string]int{"hut": 10, "forge": 4, "colosseum": 1}), w, h)
+	if len(plan.labels) != 0 {
+		t.Fatalf("quantum_age overlay has %d labels, want 0 (cosmic scene is label-free)", len(plan.labels))
+	}
+}
+
+func TestQuantumWebDeterministic(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 200, 140
+	st := sampleState("quantum_age", nil)
+	a := image.NewRGBA(image.Rect(0, 0, w, h))
+	b := image.NewRGBA(image.Rect(0, 0, w, h))
+	drawCosmicWebScene(a, st, w, h, 0x1234BEEF)
+	drawCosmicWebScene(b, st, w, h, 0x1234BEEF)
+	if imagesDiffer(a, b) {
+		t.Fatal("cosmic web scene is non-deterministic: same state+seed produced different pixels")
+	}
+}
+
+func TestDumpQuantumPNG(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump the quantum-scene PNG")
+	}
+	_ = theme.SetActive("forge")
+	img, _ := renderImage(namedState("quantum_age", "Aldermoor", nil), 440, 300)
+	path := dir + "/2g_quantum.png"
 	f, err := os.Create(path)
 	if err != nil {
 		t.Fatalf("create %s: %v", path, err)
