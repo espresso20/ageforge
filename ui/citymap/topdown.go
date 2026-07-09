@@ -5056,6 +5056,8 @@ func cosmicSceneFor(ageKey string) (func(img *image.RGBA, state game.GameState, 
 		return drawGalaxyScene, true
 	case "quantum_age":
 		return drawCosmicWebScene, true
+	case "transcendent_age":
+		return drawAscensionScene, true
 	}
 	return nil, false
 }
@@ -6735,6 +6737,336 @@ func drawCosmicWebScene(img *image.RGBA, state game.GameState, w, h int, seed ui
 			}
 		}
 	}
+}
+
+// Ascension-scene palette anchors: the transcendent finale leaves the dark cosmos behind for pure
+// radiant LIGHT. The tones lean on the two ether anchors already in the atlas (etherWhiteAnchor +
+// etherGoldAnchor) — a luminous cool-white and a soft warm halo gold — plus a deep cool field-edge
+// tone so the frame still has depth at the corners (the darkness being left behind). Package-level
+// and deterministic; the iridescent shimmer on the rings/rays reuses webIrid.
+var (
+	ascendCore   = color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff} // white-hot singularity core (pure light)
+	ascendFieldE = color.RGBA{R: 0x18, G: 0x1c, B: 0x2e, A: 0xff} // deep cool field edge (the cosmos being left behind)
+)
+
+// drawAscensionScene renders the TRANSCENDENT-AGE scene — the FINALE of all 22 ages. Unlike the other
+// four cosmic scenes (which sit on a dark void), the transcended civilization has left physical form
+// behind, so the frame transitions FROM the void TO pure radiant LIGHT: a luminous ascension mandala.
+//
+// It is built from CRISP geometry, not a soft blur: (1) a radial FIELD gradient — deep cool void at
+// the corners blooming to radiant warm-white/gold toward the center, with a few faint edge stars
+// dissolving into the light (a nod to the cosmos left behind); (2) a tight white-hot SINGULARITY at
+// center; (3) the MANDALA centerpiece — concentric crisp RINGS (aspect-squashed so they read round in
+// the terminal, see planetAspectY) plus two radiating sets of RAYS/SPOKES in sacred-geometry symmetry;
+// (4) streams of ASCENDING MOTES rising outward along the rays and fading as they go. Rings and rays
+// carry a whisper of iridescent shimmer (webIrid) over the ether white/gold. Everything is seeded,
+// panic-safe (every write clips), exact-size, and degrades gracefully to a smaller recognizable
+// mandala at minimap scale.
+func drawAscensionScene(img *image.RGBA, state game.GameState, w, h int, seed uint32) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+	_ = state // scene depends only on the (name-derived) seed, like the other cosmic scenes
+
+	pal := newTdPal()
+	b := img.Bounds()
+	minWH := w
+	if h < minWH {
+		minWH = h
+	}
+	fmin := float64(minWH)
+
+	// Composition: dead-centered — a mandala is a symmetric ascension, so unlike the off-center galaxy
+	// we center it. The mandala's outer reach is ~0.46 of the short side (before the aspect squash).
+	cx := float64(b.Min.X) + 0.50*float64(w)
+	cy := float64(b.Min.Y) + 0.50*float64(h)
+	R := 0.46 * fmin
+	if R < 1 {
+		R = 1
+	}
+
+	// The two ether tones, nudged a hair by the theme accent so the finale still picks up the era mood
+	// without ceasing to read as radiant white/gold.
+	white := blend(etherWhiteAnchor, pal.highlight, 0.06)
+	gold := blend(etherGoldAnchor, pal.accent, 0.08)
+	warmWhite := blend(white, gold, 0.34) // the dominant field/light tone
+
+	// ------------------------------------------------------------------------------------------
+	// FIELD: a radial gradient painted over EVERY pixel — deep cool void at the corners blooming to a
+	// radiant warm-white/gold toward the center. The radius is aspect-corrected (planetAspectY) so the
+	// bloom is a squashed circle matching the mandala, not a tall egg. A smooth curve keeps it from
+	// muddying: mostly void out past the mandala, ramping up steeply toward the luminous heart.
+	// ------------------------------------------------------------------------------------------
+	fieldR := R * 1.7 // the bloom reaches well past the outer ring, out toward the corners
+	invFieldR := 1.0 / fieldR
+	invFieldRY := 1.0 / (fieldR * planetAspectY)
+	for y := 0; y < h; y++ {
+		py := b.Min.Y + y
+		if py < b.Min.Y || py >= b.Max.Y {
+			continue
+		}
+		dyf := (float64(py) - cy) * invFieldRY
+		for x := 0; x < w; x++ {
+			px := b.Min.X + x
+			if px < b.Min.X || px >= b.Max.X {
+				continue
+			}
+			dxf := (float64(px) - cx) * invFieldR
+			d := math.Sqrt(dxf*dxf + dyf*dyf) // 0 center .. ~1 at fieldR .. more toward corners
+			// Luminance ramp: bright center → dark edge. A cubic-ish falloff keeps a broad dark surround
+			// (the cosmos left behind) and a steep radiant bloom at the heart.
+			t := clampF(1.0-d, 0, 1)
+			lum := t * t * (3 - 2*t) // smoothstep so the transition is buttery, not banded
+			lum = lum * lum          // steepen: darkness dominates the outer field, light the heart
+			c := blend(ascendFieldE, warmWhite, lum)
+			// A whisper of gold toward the center so the bloom warms as it brightens.
+			if lum > 0.25 {
+				c = blend(c, gold, (lum-0.25)*0.22)
+			}
+			// A faint per-pixel shimmer so the field isn't a dead flat wash (very small, seeded).
+			fl := texHash(uint32(x), uint32(y), seed^0x1EAF)
+			if fl > 0.88 {
+				c = brighten(c, 0.02)
+			}
+			img.SetRGBA(px, py, c)
+		}
+	}
+
+	// EDGE STARS: a few faint stars near the corners, dissolving into the light — a last nod to the
+	// void being left behind. Placed only in the dim outer field (where the bloom hasn't washed them
+	// out), fading toward the center. Sparse and seeded.
+	starCount := (w * h) / 120
+	for i := 0; i < starCount; i++ {
+		si := uint32(i) + 1
+		sx := int(hash2(si, 0x71, seed) % uint32(w))
+		sy := int(hash2(si, 0x82, seed) % uint32(h))
+		// Distance from center (aspect-corrected, normalized to fieldR) — keep stars to the dim rim.
+		ddx := (float64(b.Min.X+sx) - cx) * invFieldR
+		ddy := (float64(b.Min.Y+sy) - cy) * invFieldRY
+		dd := math.Sqrt(ddx*ddx + ddy*ddy)
+		if dd < 0.62 { // inside the bloom — the light has dissolved the star; skip
+			continue
+		}
+		br := hashUnit(si, 0x93, seed)
+		if br < 0.45 {
+			continue
+		}
+		amt := (0.30 + 0.55*br) * clampF((dd-0.62)/0.5, 0, 1) // fade in toward the rim
+		cur := img.RGBAAt(b.Min.X+sx, b.Min.Y+sy)
+		setPixel(img, b.Min.X+sx, b.Min.Y+sy, blend(cur, white, clampF(amt, 0, 1)))
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// RAYS / SPOKES: a seeded, symmetric primary set radiating from the core to the outer reach, plus a
+	// finer half-offset secondary set (a star-of-light) for richness. Each ray is a crisp 1px line
+	// walked in r; brightness fades outward and the hue picks up a whisper of iridescent shimmer that
+	// shifts along the ray. Drawn BEFORE the rings so the ring strokes cross cleanly over them.
+	// ------------------------------------------------------------------------------------------
+	nRays := 8 + int(hash2(0x7A5C, seed, 0x11)%9) // 8..16 primary spokes
+	rot := hashUnit(0x7A5C, 0x22, seed) * math.Pi // seeded orientation
+	rayInner := R * 0.14                          // start just outside the singularity
+	rayOuter := R * 1.02                          // reach the outermost ring
+	drawRay := func(ang float64, reach, innerR float64, tint color.RGBA, strength float64) {
+		ca, sa := math.Cos(ang), math.Sin(ang)
+		steps := int(reach - innerR)
+		if steps < 1 {
+			steps = 1
+		}
+		for s := 0; s <= steps; s++ {
+			rr := innerR + (reach-innerR)*float64(s)/float64(steps)
+			fx := cx + ca*rr
+			fy := cy + sa*rr*planetAspectY // squash so the spoke fan reads round in the cell
+			px := int(fx + 0.5)
+			py := int(fy + 0.5)
+			frac := rr / reach                  // 0 inner .. 1 outer
+			fade := (1.0 - frac) * (1.0 - frac) // fade crisply toward the rim
+			// Iridescent shimmer keyed to the on-screen position, kept faint over the ether tint.
+			ux := clampF((fx-float64(b.Min.X))/float64(w), 0, 1)
+			uy := clampF((fy-float64(b.Min.Y))/float64(h), 0, 1)
+			col := blend(tint, webIrid(ux, uy), 0.14)
+			cur := img.RGBAAt(px, py)
+			setPixel(img, px, py, blend(cur, col, clampF(fade*strength, 0, 1)))
+		}
+	}
+	for i := 0; i < nRays; i++ {
+		ang := rot + float64(i)/float64(nRays)*2*math.Pi
+		drawRay(ang, rayOuter, rayInner, white, 0.85)
+		// Secondary half-offset ray: shorter, gold, fainter — the star-of-light between the spokes.
+		mid := rot + (float64(i)+0.5)/float64(nRays)*2*math.Pi
+		drawRay(mid, rayOuter*0.72, rayInner, gold, 0.55)
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// MANDALA RINGS: concentric crisp ring outlines at increasing radii — aspect-squashed circles so
+	// they read round in the terminal. Each ring is a 1px-thick ellipse stroke (a pixel is on the ring
+	// when its normalized radius sits within a thin band around 1.0). Rings alternate white/gold and
+	// carry the same faint iridescent shimmer as the rays. A seeded count scales down gracefully so a
+	// minimap still shows a few concentric rings.
+	// ------------------------------------------------------------------------------------------
+	nRings := 4 + int(hash2(0x7A5C, seed, 0x33)%4) // 4..7 rings
+	// Cap the ring count on tiny canvases so rings don't collapse into each other.
+	if maxRings := int(R / 3); nRings > maxRings {
+		nRings = maxRings
+	}
+	if nRings < 1 {
+		nRings = 1
+	}
+	for k := 0; k < nRings; k++ {
+		// Radii spaced from ~0.24R out to ~1.0R, slightly non-linear so the outer rings breathe apart.
+		fk := float64(k+1) / float64(nRings)
+		ringR := R * (0.22 + 0.80*fk*(0.7+0.3*fk))
+		ringRY := ringR * planetAspectY
+		// Stroke half-thickness in normalized-radius terms: ~1px on-screen regardless of ring size.
+		band := 0.7 / ringR
+		ringTint := white
+		if k%2 == 1 {
+			ringTint = gold
+		}
+		// Outer rings dimmer (fading into the surrounding void); inner rings brighter near the heart.
+		ringStrength := 0.85 * (1.0 - 0.45*fk)
+		x0 := int(math.Floor(cx - ringR - 1))
+		x1 := int(math.Ceil(cx + ringR + 1))
+		y0 := int(math.Floor(cy - ringRY - 1))
+		y1 := int(math.Ceil(cy + ringRY + 1))
+		if x0 < b.Min.X {
+			x0 = b.Min.X
+		}
+		if y0 < b.Min.Y {
+			y0 = b.Min.Y
+		}
+		if x1 > b.Max.X {
+			x1 = b.Max.X
+		}
+		if y1 > b.Max.Y {
+			y1 = b.Max.Y
+		}
+		invRR := 1.0 / ringR
+		invRRY := 1.0 / math.Max(ringRY, 0.001)
+		for py := y0; py < y1; py++ {
+			dyf := (float64(py) - cy) * invRRY
+			for px := x0; px < x1; px++ {
+				dxf := (float64(px) - cx) * invRR
+				d := math.Sqrt(dxf*dxf + dyf*dyf)
+				off := math.Abs(d - 1.0)
+				if off > band {
+					continue
+				}
+				edgeF := 1.0 - off/band // 1 on the ring centerline → 0 at the stroke edge
+				ux := clampF((float64(px)-float64(b.Min.X))/float64(w), 0, 1)
+				uy := clampF((float64(py)-float64(b.Min.Y))/float64(h), 0, 1)
+				col := blend(ringTint, webIrid(ux, uy), 0.16)
+				cur := img.RGBAAt(px, py)
+				setPixel(img, px, py, blend(cur, col, clampF(edgeF*ringStrength, 0, 1)))
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// ASCENDING MOTES: streams of tiny bright light-particles radiating outward from the core along the
+	// rays, fading as they climb — the "ascension." Each primary spoke seeds a short stream of dabs
+	// jittered a hair off the spine; brightness falls with radius. Count scales with canvas area so a
+	// minimap keeps a gentle sprinkle rather than a swarm. Drawn over the rings so the motes twinkle on
+	// top of the mandala.
+	// ------------------------------------------------------------------------------------------
+	areaScale := float64(w*h) / (440.0 * 300.0)
+	if areaScale > 1.6 {
+		areaScale = 1.6
+	}
+	motesPerRay := int(5 + 9*areaScale)
+	if motesPerRay < 3 {
+		motesPerRay = 3
+	}
+	for i := 0; i < nRays; i++ {
+		ang := rot + float64(i)/float64(nRays)*2*math.Pi
+		ca, sa := math.Cos(ang), math.Sin(ang)
+		rayS := seed ^ (uint32(i+1) * 0x9E37)
+		for m := 0; m < motesPerRay; m++ {
+			mk := uint32(m) + 1
+			// Radius along the ray, biased outward a little so the stream reads as rising away from the
+			// core; jittered so motes don't quantize into a dotted line.
+			u := hashUnit(mk, 0xA1, rayS)
+			rr := rayInner + (rayOuter*1.06-rayInner)*u
+			// Small perpendicular jitter (in angle terms) so the stream has a little width.
+			perp := (hashUnit(mk, 0xB2, rayS) - 0.5) * (R * 0.05)
+			pang := ang + math.Pi/2
+			fx := cx + ca*rr + math.Cos(pang)*perp
+			fy := cy + (sa*rr+math.Sin(pang)*perp)*planetAspectY
+			px := int(fx + 0.5)
+			py := int(fy + 0.5)
+			frac := rr / rayOuter
+			fade := clampF((1.0-frac)*(1.0-frac), 0, 1)
+			br := hashUnit(mk, 0xC3, rayS)
+			tint := white
+			if br > 0.6 {
+				tint = blend(white, gold, 0.5)
+			}
+			cur := img.RGBAAt(px, py)
+			setPixel(img, px, py, blend(cur, tint, clampF((0.4+0.6*br)*fade, 0, 1)))
+		}
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// SINGULARITY: a brilliant crisp white-hot core dead center — tight, not a giant blur. A small
+	// filled aspect-squashed ellipse (pure white at the very center fading to gold at its rim) plus a
+	// sharp 4-point light cross so the heart reads as a crisp star of light. Drawn LAST so it sits over
+	// the rays/rings/motes that converge on it.
+	// ------------------------------------------------------------------------------------------
+	coreR := math.Max(2.2, R*0.075)
+	coreRY := coreR * planetAspectY
+	{
+		x0 := int(math.Floor(cx - coreR - 1))
+		x1 := int(math.Ceil(cx + coreR + 1))
+		y0 := int(math.Floor(cy - coreRY - 1))
+		y1 := int(math.Ceil(cy + coreRY + 1))
+		if x0 < b.Min.X {
+			x0 = b.Min.X
+		}
+		if y0 < b.Min.Y {
+			y0 = b.Min.Y
+		}
+		if x1 > b.Max.X {
+			x1 = b.Max.X
+		}
+		if y1 > b.Max.Y {
+			y1 = b.Max.Y
+		}
+		invCR := 1.0 / coreR
+		invCRY := 1.0 / math.Max(coreRY, 0.001)
+		for py := y0; py < y1; py++ {
+			dyf := (float64(py) - cy) * invCRY
+			for px := x0; px < x1; px++ {
+				dxf := (float64(px) - cx) * invCR
+				d2 := dxf*dxf + dyf*dyf
+				if d2 > 1.0 {
+					continue
+				}
+				f := 1 - math.Sqrt(d2) // 1 center → 0 rim
+				col := blend(gold, ascendCore, clampF(f*f, 0, 1)*0.85+f*0.15)
+				setPixel(img, px, py, col)
+			}
+		}
+	}
+	// Sharp light cross: crisp radiant spikes N/S/E/W from the singularity, fading outward — the star
+	// of light at the heart. Length keyed to the core so it stays proportional at any scale.
+	spike := int(coreR*2.6 + 2)
+	for s := 1; s <= spike; s++ {
+		f := 1.0 - float64(s)/float64(spike+1)
+		amt := clampF(f*f, 0, 1)
+		c := blend(gold, ascendCore, amt)
+		icx := int(cx + 0.5)
+		icy := int(cy + 0.5)
+		sy := int(float64(s) * planetAspectY) // squash the vertical arms to match
+		cur := img.RGBAAt(icx+s, icy)
+		setPixel(img, icx+s, icy, blend(cur, c, amt))
+		cur = img.RGBAAt(icx-s, icy)
+		setPixel(img, icx-s, icy, blend(cur, c, amt))
+		cur = img.RGBAAt(icx, icy+sy)
+		setPixel(img, icx, icy+sy, blend(cur, c, amt))
+		cur = img.RGBAAt(icx, icy-sy)
+		setPixel(img, icx, icy-sy, blend(cur, c, amt))
+	}
+	// The very heart: one pure-white pixel so the center is unambiguously the brightest point.
+	setPixel(img, int(cx+0.5), int(cy+0.5), ascendCore)
 }
 
 // bi returns 1 if b else 0 — a tiny helper for offsetting the station's larger footprint.

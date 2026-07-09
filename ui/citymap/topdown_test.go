@@ -4776,12 +4776,12 @@ func TestFinalPairWondersDiffer(t *testing.T) {
 	}
 }
 
-// TestTranscendentCityDiffers locks the CITY-level read for transcendent (the last age still rendered
-// as a city — quantum has since become the COSMIC-WEB scene, covered by TestQuantumIsCosmicWebScene &
-// co.): its ethereal-light re-skin differs from two KNOWN-DISTINCT styled ages — primitive_age and
-// space_age. Since transcendent is now styled, there is NO default-village placeholder left to compare
-// against, so we use real styled ages.
-func TestTranscendentCityDiffers(t *testing.T) {
+// TestTranscendentSceneDiffers locks that the transcendent ASCENSION scene (the finale — now a bespoke
+// cosmic scene via cosmicSceneFor, no longer a city) reads apart from two KNOWN-DISTINCT ages: the
+// primitive village (a city) and the space PLANET scene (another cosmic scene). The ascension leaves
+// the dark void for a radiant light-field, so it must differ from the void-based space scene even at
+// minimap scale.
+func TestTranscendentSceneDiffers(t *testing.T) {
 	_ = theme.SetActive("forge")
 	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
 	trans, _ := renderImage(namedState("transcendent_age", "Aldermoor", blds), 120, 72)
@@ -4789,10 +4789,10 @@ func TestTranscendentCityDiffers(t *testing.T) {
 	space, _ := renderImage(namedState("space_age", "Aldermoor", blds), 120, 72)
 
 	if !imagesDiffer(trans, prim) {
-		t.Fatal("transcendent city renders identically to the primitive village — the transcendent re-skin is not applied")
+		t.Fatal("transcendent renders identically to the primitive village — the ascension scene is not applied")
 	}
 	if !imagesDiffer(trans, space) {
-		t.Fatal("transcendent city renders identically to space — the ethereal light-field must differ from the space colony")
+		t.Fatal("transcendent renders identically to space — the ascension light-field must differ from the planet scene")
 	}
 }
 
@@ -5102,11 +5102,9 @@ func TestSpaceIsPlanetScene(t *testing.T) {
 	if _, ok := cosmicSceneFor("modern_age"); ok {
 		t.Fatal("cosmicSceneFor(modern_age) = true, want false (modern is still a city)")
 	}
-	// interstellar + galactic + quantum now have their own scenes too (see their own tests);
-	// transcendent still falls through to the city renderer until its slice lands.
-	if _, ok := cosmicSceneFor("transcendent_age"); ok {
-		t.Fatal("cosmicSceneFor(transcendent_age) = true, want false (transcendent still a city for now)")
-	}
+	// interstellar + galactic + quantum + transcendent now ALL have their own cosmic scenes (see their
+	// own tests) — every space-and-above age is a scene, so no cosmic age is a city any more. modern_age
+	// (above) is the genuine still-a-city false-case now.
 }
 
 // TestDrawPlanetScenePanicSafe renders the planet scene across degenerate, normal, and non-square
@@ -5464,9 +5462,10 @@ func TestQuantumIsCosmicWebScene(t *testing.T) {
 	if _, ok := cosmicSceneFor("quantum_age"); !ok {
 		t.Fatal("cosmicSceneFor(quantum_age) = false, want true (quantum is the cosmic-web scene)")
 	}
-	// transcendent is still a city until its own slice lands — keep the still-a-city case valid.
-	if _, ok := cosmicSceneFor("transcendent_age"); ok {
-		t.Fatal("cosmicSceneFor(transcendent_age) = true, want false (transcendent is still a city)")
+	// modern_age is a genuine city — the still-a-city false-case (transcendent has since become the
+	// ascension scene, see TestTranscendentIsAscensionScene).
+	if _, ok := cosmicSceneFor("modern_age"); ok {
+		t.Fatal("cosmicSceneFor(modern_age) = true, want false (modern is still a city)")
 	}
 }
 
@@ -5572,6 +5571,114 @@ func TestDumpQuantumPNG(t *testing.T) {
 	_ = theme.SetActive("forge")
 	img, _ := renderImage(namedState("quantum_age", "Aldermoor", nil), 440, 300)
 	path := dir + "/2g_quantum.png"
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatalf("create %s: %v", path, err)
+	}
+	if err := png.Encode(f, img); err != nil {
+		f.Close()
+		t.Fatalf("encode %s: %v", path, err)
+	}
+	f.Close()
+	t.Logf("wrote %s", path)
+}
+
+// ---- transcendent: ethereal ASCENSION scene (5th + FINAL cosmic scene, the finale) --------------
+
+func TestTranscendentIsAscensionScene(t *testing.T) {
+	if _, ok := cosmicSceneFor("transcendent_age"); !ok {
+		t.Fatal("cosmicSceneFor(transcendent_age) = false, want true (transcendent is the ascension scene — the finale)")
+	}
+	// With transcendent now a scene too, ALL five space-and-above ages are scenes and NO cosmic age is a
+	// city. modern_age is a genuine city — the still-a-city false-case.
+	if _, ok := cosmicSceneFor("modern_age"); ok {
+		t.Fatal("cosmicSceneFor(modern_age) = true, want false (modern is still a city)")
+	}
+}
+
+func TestDrawAscensionScenePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	sizes := []struct{ w, h int }{
+		{1, 1}, {8, 8}, {440, 300}, {300, 440}, {512, 96}, {96, 512},
+	}
+	st := sampleState("transcendent_age", nil)
+	for _, s := range sizes {
+		img := image.NewRGBA(image.Rect(0, 0, s.w, s.h))
+		drawAscensionScene(img, st, s.w, s.h, 0xABCDEF)
+		if got := img.Bounds(); got.Dx() != s.w || got.Dy() != s.h {
+			t.Fatalf("size %dx%d: image = %dx%d, want exact", s.w, s.h, got.Dx(), got.Dy())
+		}
+	}
+}
+
+// TestTranscendentAscensionCenterBrighterAndDiffers verifies the ascension reads as a radiant mandala
+// that BLOOMS toward the center: the CENTER region (the singularity + inner rings) is markedly
+// brighter than the MID-EDGE points (the dim outer field, the cosmos being left behind) — center-
+// brighter is the right measure here since, unlike the cosmic web, the finale is center-weighted. It
+// also DIFFERS from every other cosmic scene and from a city age.
+func TestTranscendentAscensionCenterBrighterAndDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	trans, _ := renderImage(namedState("transcendent_age", "Aldermoor", nil), w, h)
+
+	centerLum, _ := meanLuminBlue(trans, w/2, h/2, 12)
+	// Average the four MID-EDGE midpoints (not corners — this is the outer dim field) so a single stray
+	// star can't skew the baseline.
+	var edgeLum float64
+	edges := [][2]int{{w / 2, 6}, {w / 2, h - 7}, {6, h / 2}, {w - 7, h / 2}}
+	for _, e := range edges {
+		l, _ := meanLuminBlue(trans, e[0], e[1], 4)
+		edgeLum += l
+	}
+	edgeLum /= 4
+
+	if centerLum <= edgeLum*1.5 {
+		t.Fatalf("ascension center not markedly brighter than the mid-edges: center lum=%.1f, edge lum=%.1f", centerLum, edgeLum)
+	}
+
+	space, _ := renderImage(namedState("space_age", "Aldermoor", nil), w, h)
+	inter, _ := renderImage(namedState("interstellar_age", "Aldermoor", nil), w, h)
+	gal, _ := renderImage(namedState("galactic_age", "Aldermoor", nil), w, h)
+	quantum, _ := renderImage(namedState("quantum_age", "Aldermoor", nil), w, h)
+	if !imagesDiffer(trans, space) || !imagesDiffer(trans, inter) || !imagesDiffer(trans, gal) || !imagesDiffer(trans, quantum) {
+		t.Fatal("transcendent ascension render matches an earlier cosmic scene — the 5th (final) scene did not diverge")
+	}
+	city, _ := renderImage(namedState("modern_age", "Aldermoor", map[string]int{"hut": 20, "forge": 8, "colosseum": 1}), w, h)
+	if !imagesDiffer(trans, city) {
+		t.Fatal("transcendent ascension render is identical to a city (modern) render")
+	}
+}
+
+func TestTranscendentSceneNoLandmarkLabels(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	_, plan := renderImage(namedState("transcendent_age", "Aldermoor", map[string]int{"hut": 10, "forge": 4, "colosseum": 1}), w, h)
+	if len(plan.labels) != 0 {
+		t.Fatalf("transcendent_age overlay has %d labels, want 0 (cosmic scene is label-free)", len(plan.labels))
+	}
+}
+
+func TestTranscendentAscensionDeterministic(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 200, 140
+	st := sampleState("transcendent_age", nil)
+	a := image.NewRGBA(image.Rect(0, 0, w, h))
+	b := image.NewRGBA(image.Rect(0, 0, w, h))
+	drawAscensionScene(a, st, w, h, 0x1234BEEF)
+	drawAscensionScene(b, st, w, h, 0x1234BEEF)
+	if imagesDiffer(a, b) {
+		t.Fatal("ascension scene is non-deterministic: same state+seed produced different pixels")
+	}
+}
+
+func TestDumpTranscendentPNG(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump the transcendent-scene PNG")
+	}
+	_ = theme.SetActive("forge")
+	img, _ := renderImage(namedState("transcendent_age", "Aldermoor", nil), 440, 300)
+	path := dir + "/2h_transcendent.png"
 	f, err := os.Create(path)
 	if err != nil {
 		t.Fatalf("create %s: %v", path, err)
