@@ -5050,6 +5050,8 @@ func cosmicSceneFor(ageKey string) (func(img *image.RGBA, state game.GameState, 
 	switch ageKey {
 	case "space_age":
 		return drawPlanetScene, true
+	case "interstellar_age":
+		return drawStarSystemScene, true
 	}
 	return nil, false
 }
@@ -5637,6 +5639,451 @@ func drawSatellite(img *image.RGBA, x, y int, core, panel color.RGBA, station bo
 		// Longer wings for the station.
 		setPixel(img, x-2, y, panel)
 		setPixel(img, x+2+bi(station), y, panel)
+	}
+}
+
+// ---------------------------------------------------------------------------------------------
+// INTERSTELLAR scene: the civilization pulled back one more level, from a single planet to its
+// whole STAR SYSTEM — a central sun with orbiting worlds, an asteroid belt, and probes streaking
+// outward toward neighbor stars. The 2nd cosmic scene (after the space-age planet), sharing its
+// craft: crisp per-pixel sphere shading, procedural surfaces, deep-space void, NO soft halos.
+// ---------------------------------------------------------------------------------------------
+
+// starSurfacePalette / planet hues: like the planet scene these read as celestial bodies regardless
+// of theme, so the tones are near-fixed (a faint accent nudge is applied on the ocean world where
+// noted). Kept package-level and deterministic.
+var (
+	starCore = color.RGBA{R: 0xff, G: 0xf6, B: 0xe4, A: 0xff} // white-hot photosphere core
+	starMid  = color.RGBA{R: 0xff, G: 0xd0, B: 0x5a, A: 0xff} // yellow mid-latitudes
+	starLimb = color.RGBA{R: 0xf2, G: 0x8a, B: 0x24, A: 0xff} // orange cooler limb
+	starSpot = color.RGBA{R: 0x9c, G: 0x51, B: 0x14, A: 0xff} // darker sunspot umbra
+
+	// Planet surface anchors (rocky / ocean / mars-like / gas-giant bands).
+	worldRockL = color.RGBA{R: 0x6d, G: 0x6a, B: 0x66, A: 0xff} // grey rock lowland
+	worldRockH = color.RGBA{R: 0x9a, G: 0x96, B: 0x8e, A: 0xff} // lighter cratered upland
+	worldSeaLo = color.RGBA{R: 0x16, G: 0x3a, B: 0x6e, A: 0xff} // deep ocean
+	worldSeaHi = color.RGBA{R: 0x3f, G: 0x8a, B: 0x64, A: 0xff} // green landmass on the ocean world
+	worldRedL  = color.RGBA{R: 0x8f, G: 0x40, B: 0x24, A: 0xff} // mars rust lowland
+	worldRedH  = color.RGBA{R: 0xc2, G: 0x71, B: 0x3e, A: 0xff} // brighter oxide upland
+	worldGasA  = color.RGBA{R: 0xc8, G: 0xa2, B: 0x6a, A: 0xff} // gas-giant warm band
+	worldGasB  = color.RGBA{R: 0x8a, G: 0x67, B: 0x46, A: 0xff} // gas-giant dark band
+	ringColor  = color.RGBA{R: 0xcf, G: 0xc2, B: 0xa4, A: 0xff} // thin planetary ring (icy tan)
+)
+
+// planetKind enumerates the four VARIED interstellar worlds; each shades its surface differently.
+type planetKind int
+
+const (
+	worldRocky planetKind = iota // grey cratered
+	worldOcean                   // blue ocean + green land
+	worldMars                    // red oxide
+	worldGas                     // banded gas giant (latitude bands)
+)
+
+// drawStarSystemScene renders the INTERSTELLAR-AGE scene: a star system — a central sun with a
+// handful of orbiting worlds, an asteroid belt, and outbound probes — floating on the deep-space
+// void+starfield. Like the planet scene it abandons the city renderer entirely; at this scale a
+// top-down city is meaningless. Every round body (the star and each planet) applies planetAspectY
+// so it reads ROUND in the terminal (see the const's note). Seeded and panic-safe throughout.
+func drawStarSystemScene(img *image.RGBA, state game.GameState, w, h int, seed uint32) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+
+	// BACKDROP: the shared void + starfield. Reuse the interstellar style/pal so the void tone
+	// matches the rest of the cosmic-era treatment.
+	pal := newTdPal()
+	drawSpaceBackground(img, styleForAge("interstellar_age"), pal, seed, w, h)
+
+	b := img.Bounds()
+	minWH := w
+	if h < minWH {
+		minWH = h
+	}
+	fmin := float64(minWH)
+
+	// STAR at the system barycenter, nudged a touch up-left of center so the composition isn't dead
+	// centered and the outbound probes have room to streak toward the lower-right frame.
+	scx := float64(b.Min.X) + 0.44*float64(w)
+	scy := float64(b.Min.Y) + 0.48*float64(h)
+	starR := 0.14 * fmin
+	if starR < 1 {
+		starR = 1
+	}
+
+	drawStar(img, scx, scy, starR, pal, seed)
+
+	// PLANETS on elliptical orbits at increasing radii. Deterministic count (3..5) and a fixed roster
+	// of VARIED kinds so every system shows contrast (rocky / ocean / mars / gas giant, cycling). Each
+	// world is a small sphere-shaded globe lit from the star (light points from the world TOWARD the
+	// star). Orbit y is squashed by planetAspectY so the rings read round in the terminal.
+	nPlanets := 3 + int(hash2(0x9142, seed, 0x7B)%3) // 3..5
+	kinds := []planetKind{worldRocky, worldOcean, worldMars, worldGas}
+	// Orbit radii step outward from just beyond the star; the outermost fits inside the short side.
+	orbit0 := starR * 1.9
+	orbitStep := (0.46*fmin - orbit0) / float64(nPlanets)
+	if orbitStep < starR*0.7 {
+		orbitStep = starR * 0.7
+	}
+	// Remember planet orbit radii so the asteroid belt can sit between two of them.
+	orbitRs := make([]float64, nPlanets)
+	for i := 0; i < nPlanets; i++ {
+		si := uint32(i) + 1
+		orbR := orbit0 + orbitStep*float64(i)
+		orbitRs[i] = orbR
+		// Angle around the star; spread deterministically so worlds don't line up.
+		ang := hashUnit(si, 0x2C1F, seed)*2*math.Pi + float64(i)*1.7
+		px := scx + orbR*math.Cos(ang)
+		py := scy + orbR*math.Sin(ang)*planetAspectY // squash the orbit to match the terminal
+
+		// World radius: varies with kind and a seeded jitter; gas giants biggest, rocky smallest. Scale
+		// off the short side so it holds at minimap size.
+		kind := kinds[i%len(kinds)]
+		baseR := 0.032 * fmin
+		switch kind {
+		case worldGas:
+			baseR = 0.055 * fmin
+		case worldOcean:
+			baseR = 0.040 * fmin
+		case worldMars:
+			baseR = 0.036 * fmin
+		}
+		pr := baseR * (0.82 + 0.36*hashUnit(si, 0x3D2E, seed))
+		if pr < 1.2 {
+			pr = 1.2
+		}
+
+		// Light direction for this world points from the world toward the star (screen space; +z toward
+		// the viewer for a little near-face fill). Normalize in the SQUASHED frame so the terminator sits
+		// correctly on the round-in-terminal disc.
+		ldx := scx - px
+		ldy := (scy - py) / planetAspectY // undo the squash so the light vector matches disc coords
+		llen := math.Hypot(ldx, ldy)
+		if llen < 1e-6 {
+			ldx, ldy, llen = 1, 0, 1
+		}
+		lz := 0.45
+		s2 := math.Sqrt(1 - lz*lz)
+		lx := ldx / llen * s2
+		ly := ldy / llen * s2
+
+		// A thin ring on the gas giant (and only there), drawn UNDER the globe's near half is complex;
+		// keep it simple and legible: draw the far ring arc, then the globe, then the near ring arc.
+		hasRing := kind == worldGas && hashUnit(si, 0x5AA1, seed) > 0.35
+		if hasRing {
+			drawPlanetRing(img, px, py, pr, false, seed^si) // far arc (behind the globe)
+		}
+		drawMiniGlobe(img, px, py, pr, kind, lx, ly, lz, pal, seed^(si*0x1111))
+		if hasRing {
+			drawPlanetRing(img, px, py, pr, true, seed^si) // near arc (in front)
+		}
+	}
+
+	// ASTEROID BELT: a faint ring of tiny scattered dots between two adjacent planet orbits (squashed).
+	// Pick a gap in the middle of the system so it sits visually between worlds.
+	if nPlanets >= 2 {
+		gap := nPlanets / 2
+		if gap < 1 {
+			gap = 1
+		}
+		inner := orbitRs[gap-1]
+		outer := orbitRs[gap]
+		drawAsteroidBelt(img, scx, scy, (inner+outer)*0.5, (outer-inner)*0.5, pal, seed)
+	}
+
+	// PROBES/SHIPS: a few bright streaks (a bright head + a short fading tail) heading OUTWARD from the
+	// system toward the frame edges — the interstellar reach. Drawn last so they read as foreground.
+	drawProbes(img, scx, scy, fmin, w, h, pal, seed)
+}
+
+// drawStar paints the central sun: a crisp sphere-shaded photosphere with procedural granulation, a
+// warm white-hot-core → yellow → orange-limb gradient, a few darker sunspots, and a TIGHT bright
+// limb (a 1px corona rim, NO big soft halo). Applies planetAspectY so it reads round in-terminal.
+func drawStar(img *image.RGBA, cx, cy, R float64, pal tdPal, seed uint32) {
+	b := img.Bounds()
+	radY := R * planetAspectY
+	invR := 1.0 / R
+	invRadY := 1.0 / radY
+	x0 := int(math.Floor(cx - R - 2))
+	x1 := int(math.Ceil(cx + R + 2))
+	y0 := int(math.Floor(cy - radY - 2))
+	y1 := int(math.Ceil(cy + radY + 2))
+	if x0 < b.Min.X {
+		x0 = b.Min.X
+	}
+	if y0 < b.Min.Y {
+		y0 = b.Min.Y
+	}
+	if x1 > b.Max.X {
+		x1 = b.Max.X
+	}
+	if y1 > b.Max.Y {
+		y1 = b.Max.Y
+	}
+	// Granulation noise scale — fine convective cells across the surface; scale off R for stability.
+	gScale := 5.0 / R
+	for py := y0; py < y1; py++ {
+		dyf := (float64(py) - cy) * invRadY
+		for px := x0; px < x1; px++ {
+			dxf := (float64(px) - cx) * invR
+			r2 := dxf*dxf + dyf*dyf
+			if r2 > 1.0 {
+				continue
+			}
+			edge := math.Sqrt(r2) // 0 center .. 1 limb
+			// Warm gradient: white-hot core → yellow → orange limb, driven by radius.
+			var base color.RGBA
+			if edge < 0.55 {
+				base = blend(starCore, starMid, edge/0.55)
+			} else {
+				base = blend(starMid, starLimb, (edge-0.55)/0.45)
+			}
+			// Photosphere granulation: two octaves of value-noise brighten/darken the cell texture.
+			gx := (float64(px)-cx)*gScale + 40.0
+			gy := (float64(py)-cy)*gScale + 40.0
+			gn := valueNoise(gx, gy, seed^0x6C0F)*0.6 + valueNoise(gx*2.1+9, gy*2.1+3, seed^0x2D71)*0.4
+			out := base
+			if gn > 0.55 {
+				out = brighten(out, (gn-0.55)*0.9)
+			} else if gn < 0.42 {
+				out = darken(out, (0.42-gn)*0.7)
+			}
+			// SUNSPOTS: a handful of darker umbral patches where a separate low-frequency noise dips very
+			// low; ragged-edged so they don't read as clean circles. Kept off the very limb.
+			if edge < 0.85 {
+				sp := valueNoise(gx*0.6+100, gy*0.6-70, seed^0x51C3)
+				if sp < 0.22 {
+					sf := (0.22 - sp) / 0.22 // 0..1 depth
+					out = blend(out, starSpot, clampF(sf, 0, 1)*0.85)
+				}
+			}
+			// TIGHT bright limb: a 1–2px hot rim right at the edge (no soft outer glow).
+			if edge > 0.90 {
+				rim := (edge - 0.90) / 0.10
+				out = blend(out, blend(starMid, starCore, 0.4), clampF(rim, 0, 1)*0.5)
+			}
+			setPixel(img, px, py, out)
+		}
+	}
+	// A whisper of corona: a single faint 1px rim just OUTSIDE the disc, not a broad halo. Step the
+	// squashed ellipse once at ~1.03R and dab a dim warm point.
+	coron := blend(darken(starLimb, 0.35), pal.bg, 0.35)
+	steps := int(R * 6)
+	if steps < 48 {
+		steps = 48
+	}
+	if steps > 1400 {
+		steps = 1400
+	}
+	for s := 0; s < steps; s++ {
+		t := float64(s) / float64(steps) * 2 * math.Pi
+		ex := R * 1.04 * math.Cos(t)
+		ey := R * 1.04 * math.Sin(t) * planetAspectY
+		setPixel(img, int(cx+ex), int(cy+ey), coron)
+	}
+}
+
+// drawMiniGlobe paints a small sphere-shaded planet at (cx,cy) with pixel radius R, shaded like the
+// planet scene (per-pixel surface normal, soft terminator to a dark night limb) but with a compact
+// per-KIND surface: grey cratered rock, blue/green ocean world, red mars-like, or a banded gas
+// giant (horizontal latitude bands). Lit by (lx,ly,lz). Applies planetAspectY so it reads round in
+// the terminal. This is the interstellar worlds' self-contained globe (kept separate from
+// drawPlanetScene so that scene's byte output — and its tests — stay untouched).
+func drawMiniGlobe(img *image.RGBA, cx, cy, R float64, kind planetKind, lx, ly, lz float64, pal tdPal, seed uint32) {
+	if R < 1 {
+		R = 1
+	}
+	b := img.Bounds()
+	radY := R * planetAspectY
+	invR := 1.0 / R
+	invRadY := 1.0 / radY
+	x0 := int(math.Floor(cx - R - 2))
+	x1 := int(math.Ceil(cx + R + 2))
+	y0 := int(math.Floor(cy - radY - 2))
+	y1 := int(math.Ceil(cy + radY + 2))
+	if x0 < b.Min.X {
+		x0 = b.Min.X
+	}
+	if y0 < b.Min.Y {
+		y0 = b.Min.Y
+	}
+	if x1 > b.Max.X {
+		x1 = b.Max.X
+	}
+	if y1 > b.Max.Y {
+		y1 = b.Max.Y
+	}
+	nScale := 3.4 / R
+	const termSoft = 0.40
+	// The ocean world picks up a faint era-accent nudge, like the planet scene's home world.
+	seaLo := blend(worldSeaLo, pal.accent, 0.10)
+	for py := y0; py < y1; py++ {
+		dyf := (float64(py) - cy) * invRadY
+		for px := x0; px < x1; px++ {
+			dxf := (float64(px) - cx) * invR
+			r2 := dxf*dxf + dyf*dyf
+			if r2 > 1.0 {
+				continue
+			}
+			nz := math.Sqrt(1.0 - r2)
+			nx, ny := dxf, dyf
+			lat := ny
+			sxf := (float64(px)-cx)*nScale + 24.0
+			syf := (float64(py)-cy)*nScale + 24.0
+
+			var albedo color.RGBA
+			switch kind {
+			case worldGas:
+				// Banded gas giant: alternate warm/dark bands by LATITUDE, wobbled by noise so the belts
+				// aren't ruler-straight. No land/sea — just flowing bands.
+				band := math.Sin(lat*7.0 + valueNoise(sxf*0.7, syf*0.7, seed^0x71B3)*2.4)
+				albedo = blend(worldGasB, worldGasA, band*0.5+0.5)
+			case worldOcean:
+				n := valueNoise(sxf, syf, seed^0x9111)*0.65 +
+					valueNoise(sxf*2.03+11, syf*2.03+7, seed^0x5223)*0.35
+				if n+0.08*math.Abs(lat) < 0.52 {
+					albedo = seaLo
+				} else {
+					albedo = worldSeaHi
+				}
+				// Small polar ice.
+				if math.Abs(lat) > 0.80 {
+					albedo = blend(albedo, planetIce, 0.7)
+				}
+			case worldMars:
+				n := valueNoise(sxf, syf, seed^0x9111)*0.6 +
+					valueNoise(sxf*2.1+5, syf*2.1+9, seed^0x5223)*0.4
+				albedo = blend(worldRedL, worldRedH, clampF((n-0.35)/0.4, 0, 1))
+				if math.Abs(lat) > 0.82 {
+					albedo = blend(albedo, planetIce, 0.6) // tiny bright polar cap
+				}
+			default: // worldRocky
+				n := valueNoise(sxf, syf, seed^0x9111)*0.6 +
+					valueNoise(sxf*2.2+3, syf*2.2+6, seed^0x5223)*0.4
+				albedo = blend(worldRockL, worldRockH, clampF((n-0.3)/0.45, 0, 1))
+				// Crater specks: a scatter of tiny dark dots via a high-freq noise dip.
+				if valueNoise(sxf*3.1+60, syf*3.1-20, seed^0x2C7D) < 0.20 {
+					albedo = darken(albedo, 0.30)
+				}
+			}
+
+			// SHADING: soft terminator from the star's light → dark night limb.
+			ndl := nx*lx + ny*ly + nz*lz
+			lit := smoothstepF(-termSoft, termSoft, ndl)
+			shade := 0.05 + 0.95*lit
+			out := scaleRGB(albedo, shade)
+			setPixel(img, px, py, out)
+		}
+	}
+}
+
+// drawPlanetRing paints a thin planetary ring around a globe at (cx,cy) with globe radius R. The
+// ring is an ellipse (major axis ~2.0R, tilted flat) squashed by planetAspectY; `near` selects the
+// front arc (drawn over the globe) vs the far arc (drawn behind). Seeded, panic-safe.
+func drawPlanetRing(img *image.RGBA, cx, cy, R float64, near bool, seed uint32) {
+	ra := R * 2.05
+	rb := ra * 0.34 // flattened, viewed near edge-on
+	steps := int(ra * 3)
+	if steps < 60 {
+		steps = 60
+	}
+	if steps > 1200 {
+		steps = 1200
+	}
+	col := ringColor
+	for s := 0; s < steps; s++ {
+		t := float64(s) / float64(steps) * 2 * math.Pi
+		ey := rb * math.Sin(t)
+		// Front arc = lower half (ey>0), back arc = upper half. Draw only the requested side.
+		if near != (ey > 0) {
+			continue
+		}
+		ex := ra * math.Cos(t)
+		px := int(cx + ex)
+		py := int(cy + ey*planetAspectY)
+		c := col
+		if ey > 0 {
+			c = brighten(col, 0.10)
+		} else {
+			c = darken(col, 0.20)
+		}
+		setPixel(img, px, py, c)
+	}
+}
+
+// drawAsteroidBelt scatters a faint ring of tiny dots around (cx,cy) at mean radius meanR with radial
+// spread half, squashed by planetAspectY. Deterministic count and positions; each dot a dim 1px
+// speck. Panic-safe via setPixel.
+func drawAsteroidBelt(img *image.RGBA, cx, cy, meanR, half float64, pal tdPal, seed uint32) {
+	if meanR <= 0 {
+		return
+	}
+	dot := blend(pal.dim, pal.text, 0.35)
+	n := int(meanR * 2.6)
+	if n < 40 {
+		n = 40
+	}
+	if n > 1200 {
+		n = 1200
+	}
+	for i := 0; i < n; i++ {
+		si := uint32(i) + 1
+		ang := hashUnit(si, 0xA51F, seed) * 2 * math.Pi
+		rr := meanR + (hashUnit(si, 0xB62E, seed)-0.5)*2*half
+		px := cx + rr*math.Cos(ang)
+		py := cy + rr*math.Sin(ang)*planetAspectY
+		// Vary brightness so the belt shimmers rather than reading as a solid line.
+		br := hashUnit(si, 0xC73D, seed)
+		c := dot
+		if br > 0.8 {
+			c = brighten(dot, 0.25)
+		} else if br < 0.35 {
+			c = darken(dot, 0.25)
+		}
+		setPixel(img, int(px), int(py), c)
+	}
+}
+
+// drawProbes paints 2–4 outbound probe streaks: each a bright head with a short fading tail pointing
+// FROM the system OUTWARD toward a frame edge — the interstellar reach. Positions/directions seeded
+// so a system's probes are stable. Panic-safe via setPixel.
+func drawProbes(img *image.RGBA, scx, scy, fmin float64, w, h int, pal tdPal, seed uint32) {
+	head := blend(pal.highlight, color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}, 0.6)
+	nProbes := 2 + int(hash2(0x71B0, seed, 0x2D)%3) // 2..4
+	tailLen := 0.10 * fmin
+	if tailLen < 4 {
+		tailLen = 4
+	}
+	for i := 0; i < nProbes; i++ {
+		si := uint32(i) + 1
+		ang := hashUnit(si, 0xD10F, seed) * 2 * math.Pi
+		dx := math.Cos(ang)
+		dy := math.Sin(ang) * planetAspectY // travel in the squashed frame so it matches orbits
+		dl := math.Hypot(dx, dy)
+		if dl < 1e-6 {
+			continue
+		}
+		dx, dy = dx/dl, dy/dl
+		// Head sits WELL outside the belt, partway toward the edge, so the probe reads as leaving.
+		dist := (0.30 + 0.14*hashUnit(si, 0xE21E, seed)) * fmin
+		hx := scx + dx*dist
+		hy := scy + dy*dist
+		// Bright 2px head.
+		setPixel(img, int(hx), int(hy), head)
+		setPixel(img, int(hx)+1, int(hy), blend(head, pal.highlight, 0.4))
+		setPixel(img, int(hx), int(hy)+1, blend(head, pal.highlight, 0.4))
+		// Fading tail pointing BACK toward the star (i.e., behind the outbound head).
+		steps := int(tailLen)
+		if steps < 3 {
+			steps = 3
+		}
+		for s := 1; s <= steps; s++ {
+			f := float64(s) / float64(steps) // 0 (near head) .. 1 (tail end)
+			tx := hx - dx*float64(s)
+			ty := hy - dy*float64(s)
+			c := blend(head, pal.bg, f) // fade toward the void
+			setPixel(img, int(tx), int(ty), c)
+		}
 	}
 }
 

@@ -5240,3 +5240,133 @@ func TestDumpSpacePlanetPNGs(t *testing.T) {
 		t.Logf("wrote %s", path)
 	}
 }
+
+// ---------------------------------------------------------------------------------------------
+// INTERSTELLAR (star-system) scene — the 2nd cosmic scene. Mirrors the space-age planet-scene
+// tests: dispatch, panic-safety, center-brighter-than-void, divergence from the planet + a city,
+// and a label-free overlay.
+// ---------------------------------------------------------------------------------------------
+
+// TestInterstellarIsStarSystemScene locks the cosmic-scene dispatch for interstellar: it has a
+// bespoke scene (the star system), while a city age (modern) still has none. Divergence from the
+// space-age planet scene is proven separately by the pixel-diff test below.
+func TestInterstellarIsStarSystemScene(t *testing.T) {
+	if _, ok := cosmicSceneFor("interstellar_age"); !ok {
+		t.Fatal("cosmicSceneFor(interstellar_age) = false, want true (interstellar is the star-system scene)")
+	}
+	if _, ok := cosmicSceneFor("space_age"); !ok {
+		t.Fatal("cosmicSceneFor(space_age) = false, want true (baseline)")
+	}
+	if _, ok := cosmicSceneFor("modern_age"); ok {
+		t.Fatal("cosmicSceneFor(modern_age) = true, want false (modern is still a city)")
+	}
+}
+
+// TestDrawStarSystemScenePanicSafe renders the star-system scene across degenerate, normal, and
+// non-square sizes. It must never panic and must produce an image of exactly the requested size.
+func TestDrawStarSystemScenePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	sizes := []struct{ w, h int }{
+		{1, 1}, {8, 8}, {440, 300}, {300, 440}, {512, 96}, {96, 512},
+	}
+	st := sampleState("interstellar_age", nil)
+	for _, s := range sizes {
+		img := image.NewRGBA(image.Rect(0, 0, s.w, s.h))
+		drawStarSystemScene(img, st, s.w, s.h, 0xABCDEF)
+		if got := img.Bounds(); got.Dx() != s.w || got.Dy() != s.h {
+			t.Fatalf("size %dx%d: image = %dx%d, want exact", s.w, s.h, got.Dx(), got.Dy())
+		}
+	}
+}
+
+// TestStarSystemSceneCenterBrighterAndDiffers verifies the interstellar scene reads as a lit star
+// system on a dark void: the CENTER region (the star) is markedly brighter than the CORNERS (empty
+// space), the render DIFFERS from the space-age planet scene, AND it differs from a city age.
+func TestStarSystemSceneCenterBrighterAndDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	inter, _ := renderImage(namedState("interstellar_age", "Aldermoor", nil), w, h)
+
+	// The star sits at ~0.44w, 0.48h (see drawStarSystemScene). Sample there, not dead center.
+	centerLum, _ := meanLuminBlue(inter, w*44/100, h*48/100, 12)
+	var voidLum float64
+	corners := [][2]int{{6, 6}, {w - 7, 6}, {6, h - 7}, {w - 7, h - 7}}
+	for _, c := range corners {
+		l, _ := meanLuminBlue(inter, c[0], c[1], 4)
+		voidLum += l
+	}
+	voidLum /= 4
+	if centerLum <= voidLum*1.5 {
+		t.Fatalf("star center not markedly brighter than void: center lum=%.1f, void lum=%.1f", centerLum, voidLum)
+	}
+
+	// The star system must not look like the planet scene, nor a city.
+	space, _ := renderImage(namedState("space_age", "Aldermoor", nil), w, h)
+	if !imagesDiffer(inter, space) {
+		t.Fatal("interstellar star-system render is identical to the space-age planet render — the 2nd cosmic scene did not diverge")
+	}
+	city, _ := renderImage(namedState("fusion_age", "Aldermoor", map[string]int{"hut": 20, "forge": 8, "colosseum": 1}), w, h)
+	if !imagesDiffer(inter, city) {
+		t.Fatal("interstellar render is identical to fusion_age (city) render — the cosmic scene did not diverge")
+	}
+}
+
+// TestStarSystemSceneNoLandmarkLabels locks that the interstellar cosmic scene stamps NO overlay
+// labels (no city center, no landmark roofs, no title) — same gate the planet scene rides.
+func TestStarSystemSceneNoLandmarkLabels(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	_, plan := renderImage(namedState("interstellar_age", "Aldermoor", map[string]int{"hut": 10, "forge": 4, "colosseum": 1}), w, h)
+	if len(plan.labels) != 0 {
+		t.Fatalf("interstellar_age overlay has %d labels, want 0 (cosmic scene is label-free)", len(plan.labels))
+	}
+}
+
+// TestStarSystemSceneDeterministic locks that the star-system scene is a pure function of its
+// inputs: the same state + seed renders byte-identical.
+func TestStarSystemSceneDeterministic(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 200, 140
+	st := sampleState("interstellar_age", nil)
+	a := image.NewRGBA(image.Rect(0, 0, w, h))
+	b := image.NewRGBA(image.Rect(0, 0, w, h))
+	drawStarSystemScene(a, st, w, h, 0x1234BEEF)
+	drawStarSystemScene(b, st, w, h, 0x1234BEEF)
+	if imagesDiffer(a, b) {
+		t.Fatal("star-system scene is non-deterministic: same state+seed produced different pixels")
+	}
+}
+
+// TestDumpInterstellarPNG dumps the interstellar star-system scene at 440x300 for eyeball review,
+// beside the space-age planet scene so the two cosmic scenes can be compared side by side. Opt-in:
+// skipped unless CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpInterstellarPNG
+func TestDumpInterstellarPNG(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump the interstellar-scene PNG")
+	}
+	_ = theme.SetActive("forge")
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"interstellar_age", "2e_interstellar.png"},
+		{"space_age", "2e_space_planet.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", nil), 440, 300)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
