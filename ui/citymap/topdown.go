@@ -5041,7 +5041,28 @@ func (t tdTransform) ext(cityExt float64) int {
 //
 // Pure, panic-safe, exact output size. Every color is theme-derived (retints on a theme
 // switch). NO terrain, NO biome, NO water — the ground is a neutral era tint.
+// cosmicSceneFor returns the bespoke scene renderer for a cosmic-scale age, if one exists.
+// These ages abandon the city renderer entirely and draw a zoomed-out scene instead: at
+// space-scale and above a top-down "city" is the wrong lens, so we pull the camera back to
+// show the civilization at planetary (and, in later slices, interstellar/galactic) scale.
+// Ages without a bespoke scene fall through to the normal city renderer.
+func cosmicSceneFor(ageKey string) (func(img *image.RGBA, state game.GameState, w, h int, seed uint32), bool) {
+	switch ageKey {
+	case "space_age":
+		return drawPlanetScene, true
+	}
+	return nil, false
+}
+
 func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32) layoutGeometry {
+	// Cosmic-scale ages replace the city entirely with a zoomed-out scene (the home planet from
+	// orbit, a starfield, and so on). Draw it and return an empty geometry so the overlay pass
+	// stamps NO city landmarks/labels over the scene.
+	if scene, ok := cosmicSceneFor(state.Age); ok {
+		scene(img, state, w, h, seed)
+		return layoutGeometry{}
+	}
+
 	style := styleForAge(state.Age)
 	pal := newTdPal()
 
@@ -5322,6 +5343,335 @@ func drawSpaceBackground(img *image.RGBA, style tdEraStyle, pal tdPal, seed uint
 			setPixel(img, b.Min.X+sx+1, b.Min.Y+sy, blend(voidTop, starWhite, amt*0.7))
 			setPixel(img, b.Min.X+sx, b.Min.Y+sy-1, blend(voidTop, starWhite, amt*0.7))
 		}
+	}
+}
+
+// Planet-scene palette anchors: a planet reads BLUE/GREEN/WHITE regardless of theme, so the globe
+// tones are near-fixed (a faint theme-accent nudge is applied where noted, but the world must still
+// read as a world). Kept package-level and deterministic.
+var (
+	planetOcean = color.RGBA{R: 0x1b, G: 0x40, B: 0x78, A: 0xff} // deep ocean blue
+	planetShoal = color.RGBA{R: 0x2c, G: 0x63, B: 0x8f, A: 0xff} // shallow/coastal blue (land–sea seam)
+	planetLandL = color.RGBA{R: 0x4a, G: 0x74, B: 0x3c, A: 0xff} // lowland green
+	planetLandH = color.RGBA{R: 0x7a, G: 0x64, B: 0x3e, A: 0xff} // upland brown (mountains/desert)
+	planetIce   = color.RGBA{R: 0xe8, G: 0xf1, B: 0xf6, A: 0xff} // polar ice / cloud white
+	planetAtmo  = color.RGBA{R: 0x9c, G: 0xd8, B: 0xff, A: 0xff} // bright atmosphere-rim blue
+)
+
+// drawPlanetScene renders the SPACE-AGE scene: the civilization's home planet seen from orbit,
+// ringed by satellites and an orbital station, floating on the void+starfield. It abandons the
+// city renderer entirely — there is no top-down city at this scale.
+//
+// The globe is drawn as a lit SPHERE (not a flat disc): per interior pixel we reconstruct a
+// surface normal from the disc coordinates (nz = sqrt(1 - nx^2 - ny^2)) and shade by a fixed light
+// direction, so the lit hemisphere is bright and the far limb falls through a soft TERMINATOR into
+// a near-black night side. Over that we lay procedural CONTINENTS (two octaves of value-noise,
+// thresholded so land clusters instead of speckling), POLAR ICE CAPS (high-latitude whitening),
+// soft CLOUD bands, and a thin bright ATMOSPHERE rim on the lit limb. Everything is seeded and
+// panic-safe (every write clips via setPixel/clamped math).
+func drawPlanetScene(img *image.RGBA, state game.GameState, w, h int, seed uint32) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+
+	// BACKDROP: the shared void + starfield (deep space, seeded stars). Reuse the space style/pal so
+	// the void tone matches the rest of the cosmic-era treatment.
+	pal := newTdPal()
+	drawSpaceBackground(img, styleForAge("space_age"), pal, seed, w, h)
+
+	b := img.Bounds()
+	minWH := w
+	if h < minWH {
+		minWH = h
+	}
+	fmin := float64(minWH)
+
+	// PLANET geometry: centered a touch off-center so the composition isn't dead-centered, radius a
+	// bit over a quarter of the short side. Clamp radius so a tiny canvas still yields >=1px.
+	cx := float64(b.Min.X) + 0.50*float64(w)
+	cy := float64(b.Min.Y) + 0.52*float64(h)
+	R := 0.28 * fmin
+	if R < 1 {
+		R = 1
+	}
+
+	// LIGHT direction (unit, in screen space with a +z toward the viewer): lit from the upper-left,
+	// tilted slightly toward the camera so a sliver of the near face stays bright. Seed nudges it a
+	// hair so different civs light differently, but it stays an upper-left key light.
+	lang := -2.3 + (hashUnit(0x11, 0x22, seed)-0.5)*0.7 // radians, upper-left-ish
+	lz := 0.55
+	lx := math.Cos(lang) * math.Sqrt(1-lz*lz)
+	ly := math.Sin(lang) * math.Sqrt(1-lz*lz)
+
+	// A faint theme-accent nudge for the ocean so the world picks up a whisper of the era mood
+	// without ceasing to read as blue.
+	ocean := blend(planetOcean, pal.accent, 0.10)
+
+	// Bounding box of the disc, clamped to the image; iterate only there.
+	x0 := int(math.Floor(cx - R - 2))
+	x1 := int(math.Ceil(cx + R + 2))
+	y0 := int(math.Floor(cy - R - 2))
+	y1 := int(math.Ceil(cy + R + 2))
+	if x0 < b.Min.X {
+		x0 = b.Min.X
+	}
+	if y0 < b.Min.Y {
+		y0 = b.Min.Y
+	}
+	if x1 > b.Max.X {
+		x1 = b.Max.X
+	}
+	if y1 > b.Max.Y {
+		y1 = b.Max.Y
+	}
+
+	invR := 1.0 / R
+	// Continent noise scale: features span a good fraction of the globe (land clusters, not confetti).
+	// Scale off the radius so the look is stable across map/minimap sizes.
+	nScale := 3.2 / R
+	// Terminator softness (in dot-product units): wider band → softer day/night transition.
+	const termSoft = 0.42
+
+	for py := y0; py < y1; py++ {
+		dyf := (float64(py) - cy) * invR // -1..1 across the disc vertically
+		for px := x0; px < x1; px++ {
+			dxf := (float64(px) - cx) * invR
+			r2 := dxf*dxf + dyf*dyf
+			if r2 > 1.0 {
+				continue // outside the globe
+			}
+			// Surface normal of the sphere at this pixel (nz toward viewer).
+			nz := math.Sqrt(1.0 - r2)
+			nx, ny := dxf, dyf
+
+			// --- SURFACE ALBEDO: ocean vs. continents -------------------------------------
+			// Sample value-noise in a lightly latitude-warped screen space so land forms clustered
+			// masses. Two octaves via texHash on a coarse lattice with bilinear-ish smoothing.
+			lat := ny // -1 (north) .. 1 (south)
+			sxf := (float64(px)-cx)*nScale + 32.0
+			syf := (float64(py)-cy)*nScale*(1.0+0.25*lat*lat) + 32.0
+			n := valueNoise(sxf, syf, seed^0x9111)*0.65 +
+				valueNoise(sxf*2.03+11.0, syf*2.03+7.0, seed^0x5223)*0.35
+			// Latitude bias: a touch more land in the mid-latitudes, more ocean at the equator, so the
+			// masses don't ring the whole globe uniformly.
+			landScore := n + 0.10*math.Abs(lat) - 0.06
+
+			var albedo color.RGBA
+			switch {
+			case landScore < 0.50:
+				albedo = ocean
+			case landScore < 0.54:
+				albedo = planetShoal // thin coastal seam
+			default:
+				// Land: greener in the lowlands, browner on the "high" (noisier) ground.
+				up := (landScore - 0.54) / 0.46 // 0..~1
+				if up > 1 {
+					up = 1
+				}
+				albedo = blend(planetLandL, planetLandH, up*up)
+			}
+
+			// --- POLAR ICE CAPS: whiten the high-latitude caps (top & bottom of the disc) ---
+			absLat := math.Abs(lat)
+			if absLat > 0.72 {
+				capF := (absLat - 0.72) / 0.28 // 0 at cap edge → 1 at pole
+				if capF > 1 {
+					capF = 1
+				}
+				// Ragged cap edge via noise so it isn't a clean band.
+				capF *= 0.6 + 0.4*valueNoise(sxf*1.7, syf*1.7+50.0, seed^0x3C1D)
+				albedo = blend(albedo, planetIce, clampF(capF, 0, 1)*0.9)
+			}
+
+			// --- CLOUDS: a few faint white bands/wisps over both land and sea ----------------
+			cloudBand := math.Sin(lat*3.0 + 1.2)                            // broad latitude banding
+			cloudTex := valueNoise(sxf*0.9+70.0, syf*0.9-40.0, seed^0x77A5) // wispy modulation
+			cloud := (cloudBand*0.5 + 0.5) * cloudTex                       // 0..1
+			cloud = (cloud - 0.55) / 0.45                                   // threshold → sparse
+			if cloud > 0 {
+				albedo = blend(albedo, planetIce, clampF(cloud, 0, 1)*0.45)
+			}
+
+			// --- SHADING: day/night terminator makes it read as a 3D sphere ------------------
+			// Lambert term, remapped through a soft terminator: full-bright on the lit hemisphere,
+			// fading to near-black on the night limb.
+			ndl := nx*lx + ny*ly + nz*lz                 // -1 (night) .. 1 (noon)
+			lit := smoothstepF(-termSoft, termSoft, ndl) // 0 night .. 1 day
+			// Day side: gentle brighten toward the subsolar point; night side: crush toward black.
+			shade := 0.06 + 0.94*lit // ambient floor so the night side isn't pure black
+			out := scaleRGB(albedo, shade)
+			// A subtle specular sky-glint on the ocean near the subsolar point (only where lit & wet).
+			if albedo == ocean && ndl > 0.86 {
+				out = blend(out, planetAtmo, (ndl-0.86)/0.14*0.35)
+			}
+
+			// --- ATMOSPHERE RIM: a thin bright blue ring just inside the LIT limb -------------
+			// Near the edge (r2 high) AND on the lit side, add a rim glow. Fades quickly inward.
+			edge := math.Sqrt(r2)
+			if edge > 0.90 && lit > 0.15 {
+				rim := (edge - 0.90) / 0.10 // 0..1 across the rim band
+				out = blend(out, planetAtmo, clampF(rim, 0, 1)*0.6*lit)
+			}
+
+			setPixel(img, px, py, out)
+		}
+	}
+
+	// SATELLITES + ORBITS: a few tilted elliptical orbit rings (thin, dim), each carrying a satellite
+	// or two, plus one slightly larger station module. Drawn AFTER the planet so they read as
+	// foreground hardware; seeded so positions are stable per civ.
+	drawOrbitsAndSatellites(img, cx, cy, R, fmin, pal, seed)
+}
+
+// drawOrbitsAndSatellites paints 2–4 faint tilted orbit ellipses around the planet and dabs
+// satellites (a small bright cluster, optionally a tiny solar-panel cross) plus one larger station
+// module onto them. All seeded and panic-safe. cx,cy = planet center (pixel space), R = planet
+// radius, fmin = min(w,h) for scale.
+func drawOrbitsAndSatellites(img *image.RGBA, cx, cy, R, fmin float64, pal tdPal, seed uint32) {
+	orbitCol := blend(pal.dim, pal.highlight, 0.30) // faint, cool ring line
+	satBright := blend(pal.highlight, color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}, 0.5)
+	panelCol := blend(pal.accent, satBright, 0.4)
+
+	nOrbits := 2 + int(hash2(0x0B17, seed, 0x33)%3) // 2..4
+	// Track where satellites will go so we can drop the station on the outermost ring.
+	for oi := 0; oi < nOrbits; oi++ {
+		si := uint32(oi)
+		// Semi-axes: rings sit outside the planet, growing outward; tilt (squash the minor axis) and
+		// a rotation give varied ellipses. Scale off the planet radius so it holds at any size.
+		ra := R * (1.20 + 0.45*float64(oi) + 0.10*hashUnit(si, 0xA1, seed))
+		rb := ra * (0.28 + 0.40*hashUnit(si, 0xB2, seed)) // flattened (viewed near edge-on)
+		rot := hashUnit(si, 0xC3, seed) * math.Pi         // ring plane rotation
+		cosR, sinR := math.Cos(rot), math.Sin(rot)
+
+		// Draw the ring outline by stepping the parametric ellipse. Step count scales with size so a
+		// big canvas gets a smooth ring and a tiny one still closes.
+		steps := int(ra * 2.2)
+		if steps < 40 {
+			steps = 40
+		}
+		if steps > 900 {
+			steps = 900
+		}
+		for s := 0; s < steps; s++ {
+			t := float64(s) / float64(steps) * 2 * math.Pi
+			ex := ra * math.Cos(t)
+			ey := rb * math.Sin(t)
+			// Rotate the ellipse in-plane.
+			rx := ex*cosR - ey*sinR
+			ry := ex*sinR + ey*cosR
+			px := int(cx + rx)
+			py := int(cy + ry)
+			// Only the ring portion in FRONT of the globe (lower half of the tilt) reads a touch
+			// brighter; the far arc is dimmer, hinting the ring passes behind the planet.
+			c := orbitCol
+			if ey > 0 {
+				c = brighten(orbitCol, 0.15)
+			} else {
+				c = darken(orbitCol, 0.20)
+			}
+			setPixel(img, px, py, c)
+		}
+
+		// Place 1–2 satellites on this ring at seeded parameter angles.
+		nSat := 1 + int(hash2(si, seed, 0x5E)%2) // 1..2
+		for k := 0; k < nSat; k++ {
+			kk := uint32(oi*7 + k + 1)
+			t := hashUnit(kk, 0xD4, seed) * 2 * math.Pi
+			ex := ra * math.Cos(t)
+			ey := rb * math.Sin(t)
+			rx := ex*cosR - ey*sinR
+			ry := ex*sinR + ey*cosR
+			sx := int(cx + rx)
+			sy := int(cy + ry)
+			drawSatellite(img, sx, sy, satBright, panelCol, false)
+		}
+	}
+
+	// ONE station module: a slightly larger cluster on the outermost ring at a fixed-ish angle.
+	{
+		oi := nOrbits - 1
+		si := uint32(oi)
+		ra := R * (1.20 + 0.45*float64(oi) + 0.10*hashUnit(si, 0xA1, seed))
+		rb := ra * (0.28 + 0.40*hashUnit(si, 0xB2, seed))
+		rot := hashUnit(si, 0xC3, seed) * math.Pi
+		cosR, sinR := math.Cos(rot), math.Sin(rot)
+		t := hashUnit(0x5747, 0x10, seed) * 2 * math.Pi
+		ex := ra * math.Cos(t)
+		ey := rb * math.Sin(t)
+		rx := ex*cosR - ey*sinR
+		ry := ex*sinR + ey*cosR
+		stx := int(cx + rx)
+		sty := int(cy + ry)
+		drawSatellite(img, stx, sty, satBright, panelCol, true)
+	}
+}
+
+// drawSatellite dabs a single satellite (or, if station, a slightly larger module) at (x,y): a
+// bright core with a tiny cross of solar panels. Panic-safe via setPixel. On a tiny canvas this
+// still leaves at least a recognizable bright dot.
+func drawSatellite(img *image.RGBA, x, y int, core, panel color.RGBA, station bool) {
+	// Bright body.
+	setPixel(img, x, y, core)
+	if station {
+		// A 2px-wide body block for the station.
+		setPixel(img, x+1, y, core)
+		setPixel(img, x, y+1, core)
+		setPixel(img, x+1, y+1, core)
+	}
+	// Solar-panel cross: dabs one cell out on each axis (the "wings").
+	setPixel(img, x-1, y, panel)
+	setPixel(img, x+1+bi(station), y, panel)
+	setPixel(img, x, y-1, panel)
+	setPixel(img, x, y+1+bi(station), panel)
+	if station {
+		// Longer wings for the station.
+		setPixel(img, x-2, y, panel)
+		setPixel(img, x+2+bi(station), y, panel)
+	}
+}
+
+// bi returns 1 if b else 0 — a tiny helper for offsetting the station's larger footprint.
+func bi(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+// clampF clamps v to [lo,hi].
+func clampF(v, lo, hi float64) float64 {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
+}
+
+// smoothstepF returns the smoothstep of x in [edge0,edge1] → [0,1].
+func smoothstepF(edge0, edge1, x float64) float64 {
+	if edge1 <= edge0 {
+		if x < edge0 {
+			return 0
+		}
+		return 1
+	}
+	t := clampF((x-edge0)/(edge1-edge0), 0, 1)
+	return t * t * (3 - 2*t)
+}
+
+// scaleRGB multiplies an RGB color's channels by s (clamped to [0,1] per channel), preserving
+// alpha. Used to darken the planet toward its night side without shifting hue.
+func scaleRGB(c color.RGBA, s float64) color.RGBA {
+	if s < 0 {
+		s = 0
+	}
+	return color.RGBA{
+		R: uint8(clampF(float64(c.R)*s, 0, 255)),
+		G: uint8(clampF(float64(c.G)*s, 0, 255)),
+		B: uint8(clampF(float64(c.B)*s, 0, 255)),
+		A: c.A,
 	}
 }
 
@@ -7726,6 +8076,12 @@ func tdGeometry(plan *topPlan, xf tdTransform, w, h int) layoutGeometry {
 func buildLandmarkOverlay(state game.GameState, cols, rows int, geo layoutGeometry) overlayPlan {
 	var plan overlayPlan
 	if cols <= 0 || rows <= 0 {
+		return plan
+	}
+	// Cosmic-scale ages render a zoomed-out scene, not a city — no city-center marker, no landmark
+	// roofs, and not even the corner title. The overlay stays empty so nothing is stamped over the
+	// planet/starfield.
+	if _, ok := cosmicSceneFor(state.Age); ok {
 		return plan
 	}
 	occupied := map[int]bool{}

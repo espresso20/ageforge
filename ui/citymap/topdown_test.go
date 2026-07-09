@@ -5098,3 +5098,145 @@ func TestDump2cSpaceBackgroundPNGs(t *testing.T) {
 		t.Logf("wrote %s", path)
 	}
 }
+
+// ---- Space Age = cosmic PLANET scene (Phase 2c) -----------------------------
+
+// TestSpaceIsPlanetScene locks the cosmic-scene dispatch: space_age has a bespoke scene
+// renderer; the other cosmic ages (galactic, etc.) and city ages (modern) do NOT yet — they fall
+// through to the normal city renderer. When those later slices land, this test updates with them.
+func TestSpaceIsPlanetScene(t *testing.T) {
+	if _, ok := cosmicSceneFor("space_age"); !ok {
+		t.Fatal("cosmicSceneFor(space_age) = false, want true (space is the planet scene)")
+	}
+	if _, ok := cosmicSceneFor("modern_age"); ok {
+		t.Fatal("cosmicSceneFor(modern_age) = true, want false (modern is still a city)")
+	}
+	if _, ok := cosmicSceneFor("galactic_age"); ok {
+		t.Fatal("cosmicSceneFor(galactic_age) = true, want false (galactic still a city for now)")
+	}
+}
+
+// TestDrawPlanetScenePanicSafe renders the planet scene across degenerate, normal, and non-square
+// sizes. It must never panic and must produce an image of exactly the requested size.
+func TestDrawPlanetScenePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	sizes := []struct{ w, h int }{
+		{1, 1}, {8, 8}, {440, 300}, {300, 440}, {512, 96}, {96, 512},
+	}
+	st := sampleState("space_age", nil)
+	for _, s := range sizes {
+		img := image.NewRGBA(image.Rect(0, 0, s.w, s.h))
+		drawPlanetScene(img, st, s.w, s.h, 0xABCDEF)
+		if got := img.Bounds(); got.Dx() != s.w || got.Dy() != s.h {
+			t.Fatalf("size %dx%d: image = %dx%d, want exact", s.w, s.h, got.Dx(), got.Dy())
+		}
+	}
+}
+
+// meanLuminBlue returns the mean luminance and mean blue channel over a square region centered at
+// (cx,cy) with the given half-extent, clipped to the image.
+func meanLuminBlue(img *image.RGBA, cx, cy, half int) (lum, blue float64) {
+	b := img.Bounds()
+	var n float64
+	for y := cy - half; y <= cy+half; y++ {
+		for x := cx - half; x <= cx+half; x++ {
+			if x < b.Min.X || x >= b.Max.X || y < b.Min.Y || y >= b.Max.Y {
+				continue
+			}
+			c := img.RGBAAt(x, y)
+			lum += 0.299*float64(c.R) + 0.587*float64(c.G) + 0.114*float64(c.B)
+			blue += float64(c.B)
+			n++
+		}
+	}
+	if n == 0 {
+		return 0, 0
+	}
+	return lum / n, blue / n
+}
+
+// TestSpacePlanetSceneCenterBrighterAndDiffers verifies the space scene reads as a lit planet on a
+// dark void: the CENTER region (the globe) is markedly brighter AND bluer than the CORNERS (empty
+// space), and the whole render DIFFERS from a city age's render (fusion is still a city).
+func TestSpacePlanetSceneCenterBrighterAndDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	space, _ := renderImage(namedState("space_age", "Aldermoor", nil), w, h)
+
+	centerLum, centerBlue := meanLuminBlue(space, w/2, h/2, 12)
+	// Average the four corners so a single bright star can't skew the void baseline.
+	var voidLum, voidBlue float64
+	corners := [][2]int{{6, 6}, {w - 7, 6}, {6, h - 7}, {w - 7, h - 7}}
+	for _, c := range corners {
+		l, bl := meanLuminBlue(space, c[0], c[1], 4)
+		voidLum += l
+		voidBlue += bl
+	}
+	voidLum /= 4
+	voidBlue /= 4
+
+	if centerLum <= voidLum*1.5 {
+		t.Fatalf("planet center not markedly brighter than void: center lum=%.1f, void lum=%.1f", centerLum, voidLum)
+	}
+	if centerBlue <= voidBlue {
+		t.Fatalf("planet center not bluer than void: center blue=%.1f, void blue=%.1f", centerBlue, voidBlue)
+	}
+
+	// The space scene must not look like a city — compare against fusion_age (still the city path).
+	fusion, _ := renderImage(namedState("fusion_age", "Aldermoor", map[string]int{"hut": 20, "forge": 8, "colosseum": 1}), w, h)
+	if !imagesDiffer(space, fusion) {
+		t.Fatal("space_age render is identical to fusion_age (city) render — the scene did not diverge")
+	}
+}
+
+// TestSpaceSceneNoLandmarkLabels locks that a cosmic scene stamps NO overlay labels — no city
+// center, no landmark roofs, not even the corner title. A city age, by contrast, yields labels.
+func TestSpaceSceneNoLandmarkLabels(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	_, plan := renderImage(namedState("space_age", "Aldermoor", map[string]int{"hut": 10, "forge": 4, "colosseum": 1}), w, h)
+	if len(plan.labels) != 0 {
+		t.Fatalf("space_age overlay has %d labels, want 0 (cosmic scene is label-free)", len(plan.labels))
+	}
+	// Sanity: the same building set on a CITY age does produce labels, so the empty overlay above is
+	// the cosmic-scene gate at work, not an empty-state artifact.
+	_, cityPlan := renderImage(namedState("fusion_age", "Aldermoor", map[string]int{"hut": 10, "forge": 4, "colosseum": 1}), w, h)
+	if len(cityPlan.labels) == 0 {
+		t.Fatal("fusion_age (city) produced no labels — test baseline is wrong")
+	}
+}
+
+// TestDumpSpacePlanetPNGs dumps the space PLANET scene beside a still-a-city fusion render at
+// 440x300 for eyeball review. Opt-in: skipped unless CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpSpacePlanetPNGs
+func TestDumpSpacePlanetPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump the space-scene comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	cityBlds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		blds   map[string]int
+		file   string
+	}{
+		{"space_age", nil, "2d_space_planet.png"},
+		{"fusion_age", cityBlds, "2d_fusion_city.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", d.blds), 440, 300)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
