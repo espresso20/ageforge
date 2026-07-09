@@ -5052,6 +5052,8 @@ func cosmicSceneFor(ageKey string) (func(img *image.RGBA, state game.GameState, 
 		return drawPlanetScene, true
 	case "interstellar_age":
 		return drawStarSystemScene, true
+	case "galactic_age":
+		return drawGalaxyScene, true
 	}
 	return nil, false
 }
@@ -6085,6 +6087,318 @@ func drawProbes(img *image.RGBA, scx, scy, fmin float64, w, h int, pal tdPal, se
 			setPixel(img, int(tx), int(ty), c)
 		}
 	}
+}
+
+// ---------------------------------------------------------------------------------------------
+// GALACTIC scene: the civilization pulled back one final level, from a single star system to its
+// whole SPIRAL GALAXY — a bright dense core, logarithmic spiral arms of thousands of individual
+// stars, dark dust lanes, and a few HII knots — seen at a tilt on the deep-space void. The 3rd
+// cosmic scene (after the planet and the star system), sharing their craft: DEEPLY procedural,
+// seed-deterministic, panic-safe (every write clipped through setPixel), NO soft blurry smears —
+// the structure is carried by crisp individual star dabs, not a painted blob.
+// ---------------------------------------------------------------------------------------------
+
+// Galaxy palette anchors: a galaxy reads GOLD-CORE / BLUE-WHITE-ARMS regardless of theme (young hot
+// stars populate the arms, an old warm population fills the bulge), so the tones are near-fixed with
+// only a faint era-accent nudge where noted. Package-level and deterministic.
+var (
+	galaxyCoreHot  = color.RGBA{R: 0xff, G: 0xf3, B: 0xd6, A: 0xff} // white-gold core center
+	galaxyCoreWarm = color.RGBA{R: 0xff, G: 0xcf, B: 0x82, A: 0xff} // amber bulge population
+	galaxyArmStar  = color.RGBA{R: 0xdc, G: 0xe8, B: 0xff, A: 0xff} // blue-white young arm star
+	galaxyArmHot   = color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff} // rare bright standout star
+	galaxyDust     = color.RGBA{R: 0x1a, G: 0x12, B: 0x1e, A: 0xff} // dark dust lane (warm-brown black)
+	galaxyHII      = color.RGBA{R: 0xff, G: 0x74, B: 0x9c, A: 0xff} // pink HII / star-forming knot
+)
+
+// drawGalaxyScene renders the GALACTIC-AGE scene: a tilted spiral galaxy floating on the deep-space
+// void+starfield. Like the planet and star-system scenes it abandons the city renderer — at galaxy
+// scale a top-down city is meaningless.
+//
+// Stars are generated in the galaxy's OWN disc plane as (r, θ) polar samples, then mapped to the
+// screen through: an in-plane inclination squash (the artistic tilt → the disc reads as an ellipse),
+// a position-angle rotation, and finally the planetAspectY vertical squash so the whole disc (and the
+// round core) read correctly in the tall terminal cell (see planetAspectY). The CORE is a dense
+// gaussian cloud of warm stars over a faint underlying glow; the ARMS are 2–4 logarithmic spirals
+// (r = a·e^(bθ)) walked in θ with gaussian cross-scatter, populated by blue-white stars; DUST LANES
+// darken a thin band along each arm's inner edge; a few sparse pink HII knots dot the arms. Star
+// count scales with canvas area and is capped, so a minimap still shows a recognizable spiral with
+// fewer dabs. Deterministic and panic-safe throughout.
+func drawGalaxyScene(img *image.RGBA, state game.GameState, w, h int, seed uint32) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+
+	// BACKDROP: the shared void + a sparse far-star field. Reuse the galactic style/pal so the void tone
+	// matches the rest of the cosmic-era treatment. The galaxy's own stars dominate over these.
+	pal := newTdPal()
+	drawSpaceBackground(img, styleForAge("galactic_age"), pal, seed, w, h)
+
+	b := img.Bounds()
+	minWH := w
+	if h < minWH {
+		minWH = h
+	}
+	fmin := float64(minWH)
+
+	// GALAXY geometry: centered a touch off-center so the composition isn't dead-centered. Overall disc
+	// radius ~0.42 of the short side (in the galaxy plane, BEFORE the tilt/aspect squashes).
+	cx := float64(b.Min.X) + 0.50*float64(w)
+	cy := float64(b.Min.Y) + 0.52*float64(h)
+	R := 0.42 * fmin
+	if R < 1 {
+		R = 1
+	}
+
+	// TILT: an artistic inclination squashes the disc's minor axis so we see it at an angle (not face-on,
+	// not edge-on). A seeded position-angle rotates that ellipse so different civs face differently. The
+	// inclination is applied IN-PLANE (before rotation); planetAspectY is applied AFTER (terminal squash).
+	incl := 0.50 + 0.14*hashUnit(0x6A1A, 0x11, seed) // minor-axis fraction ~0.50..0.64 (moderate tilt)
+	rot := hashUnit(0x6A1A, 0x22, seed) * math.Pi    // disc position angle
+	cosR, sinR := math.Cos(rot), math.Sin(rot)
+
+	// project maps a point (gr,gth) in the galaxy DISC plane (polar) to integer screen pixels, applying
+	// the inclination squash, the position-angle rotation, and finally planetAspectY. Returns the pixel
+	// plus the mapped float coords for any caller that wants sub-pixel work. Kept as a closure so the
+	// core, the arms, and the dust all share one identical transform.
+	project := func(gr, gth float64) (int, int) {
+		gx := gr * math.Cos(gth)
+		gy := gr * math.Sin(gth) * incl // inclination: flatten the minor axis in-plane
+		// Position-angle rotation of the (already-inclined) ellipse.
+		rx := gx*cosR - gy*sinR
+		ry := gx*sinR + gy*cosR
+		px := cx + rx
+		py := cy + ry*planetAspectY // terminal squash so the disc/core read round in the cell
+		return int(px), int(py)
+	}
+
+	// dab paints a star: a 1px core plus, for the brighter ones, a small NE/SW cross so a few stars read
+	// as standouts. Alpha-blend-free (opaque write) via setPixel — crisp, no soft halo. size 0 = 1px,
+	// size 1 = a 5px plus, size 2 = a brighter 5px plus with lit neighbours.
+	dab := func(px, py int, c color.RGBA, size int) {
+		setPixel(img, px, py, c)
+		if size >= 1 {
+			dim := blend(c, pal.bg, 0.45)
+			setPixel(img, px+1, py, dim)
+			setPixel(img, px-1, py, dim)
+			setPixel(img, px, py+1, dim)
+			setPixel(img, px, py-1, dim)
+		}
+		if size >= 2 {
+			setPixel(img, px+1, py, blend(c, galaxyArmHot, 0.3))
+			setPixel(img, px-1, py, blend(c, galaxyArmHot, 0.3))
+			setPixel(img, px, py+1, blend(c, galaxyArmHot, 0.3))
+			setPixel(img, px, py-1, blend(c, galaxyArmHot, 0.3))
+			setPixel(img, px+1, py+1, blend(c, pal.bg, 0.5))
+			setPixel(img, px-1, py-1, blend(c, pal.bg, 0.5))
+		}
+	}
+
+	// A faint theme-accent nudge for the arm stars so the galaxy picks up a whisper of the era mood
+	// without ceasing to read as blue-white.
+	armStar := blend(galaxyArmStar, pal.accent, 0.10)
+
+	// ------------------------------------------------------------------------------------------
+	// UNDERGLOW: a very faint radial bulge glow UNDER the core stars — subtle, so the stars carry it
+	// (NOT a solid blur). Painted only within the inner disc, additively toward the warm core, with a
+	// steep falloff. Iterated over the elliptical bounding box of the inner region, clipped.
+	// ------------------------------------------------------------------------------------------
+	glowR := R * 0.34 // the bulge glow reaches ~a third of the disc
+	{
+		radY := glowR * planetAspectY
+		x0 := int(math.Floor(cx - glowR - 2))
+		x1 := int(math.Ceil(cx + glowR + 2))
+		y0 := int(math.Floor(cy - radY - 2))
+		y1 := int(math.Ceil(cy + radY + 2))
+		if x0 < b.Min.X {
+			x0 = b.Min.X
+		}
+		if y0 < b.Min.Y {
+			y0 = b.Min.Y
+		}
+		if x1 > b.Max.X {
+			x1 = b.Max.X
+		}
+		if y1 > b.Max.Y {
+			y1 = b.Max.Y
+		}
+		invGR := 1.0 / glowR
+		invGRadY := 1.0 / radY
+		for py := y0; py < y1; py++ {
+			dyf := (float64(py) - cy) * invGRadY
+			for px := x0; px < x1; px++ {
+				dxf := (float64(px) - cx) * invGR
+				d2 := dxf*dxf + dyf*dyf
+				if d2 > 1.0 {
+					continue
+				}
+				f := 1 - math.Sqrt(d2) // 1 center → 0 edge
+				f = f * f * f          // steep falloff so the glow stays tight to the center
+				if f <= 0.002 {
+					continue
+				}
+				cur := img.RGBAAt(px, py)
+				setPixel(img, px, py, blend(cur, galaxyCoreWarm, clampF(f*0.55, 0, 1)))
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// SPIRAL ARMS + DUST LANES: 2..4 logarithmic-spiral arms, evenly phased. Each arm is walked in θ;
+	// at each step we place a small cluster of stars scattered around the arm centerline with a
+	// gaussian-ish perpendicular jitter (denser on the spine, sparse off it). A thin dust band is
+	// darkened just INSIDE each arm (toward smaller r) for depth. Star budget scales with area, capped.
+	// ------------------------------------------------------------------------------------------
+	nArms := 2 + int(hash2(0x6A1A, seed, 0x33)%3) // 2..4 arms
+	// b (spiral tightness): larger → looser winding. a: base radius so the arm starts just outside the
+	// core. Both seeded a hair so the winding differs per civ.
+	spiralB := 0.24 + 0.10*hashUnit(0x6A1A, 0x44, seed) // pitch
+	spiralA := R * 0.10
+	if spiralA < 0.5 {
+		spiralA = 0.5
+	}
+	// θ sweeps from the core outward until r reaches the disc edge: r = a·e^(b·θ) → θmax = ln(R/a)/b.
+	thetaMax := math.Log(R/spiralA) / spiralB
+	if thetaMax < 0.5 {
+		thetaMax = 0.5
+	}
+	if thetaMax > 7.0 { // ~1.1 turns cap so arms don't over-wind into mush
+		thetaMax = 7.0
+	}
+	// Angular step + per-step star cluster size both scale with canvas area so a minimap stays sparse but
+	// a full render is dense. Total dabs are implicitly capped by the θ range × cluster size × arms.
+	areaScale := float64(w*h) / (440.0 * 300.0) // 1.0 at the reference dump size
+	if areaScale > 1.6 {
+		areaScale = 1.6
+	}
+	dTheta := 0.05 / math.Max(0.35, areaScale) // finer stepping on bigger canvases
+	clusterN := int(3 + 5*areaScale)           // stars scattered per θ step per arm
+	if clusterN < 2 {
+		clusterN = 2
+	}
+	armWidth := R * 0.11 // base perpendicular scatter width (grows slightly with r below)
+
+	for a := 0; a < nArms; a++ {
+		armPhase := float64(a) / float64(nArms) * 2 * math.Pi
+		armSeed := seed ^ (uint32(a+1) * 0x9E37)
+		step := 0
+		for th := 0.15; th < thetaMax; th += dTheta {
+			step++
+			r := spiralA * math.Exp(spiralB*th)
+			if r > R {
+				break
+			}
+			baseTh := th + armPhase
+			// DUST LANE: a thin dark band just inside the arm spine (toward the core), placed a fraction of
+			// the arm width inward. Only from mid-disc outward (the core swamps any inner dust). Sparse dabs
+			// so it threads rather than paints a solid ring.
+			if r > R*0.16 && (step%2 == 0) {
+				dOff := -armWidth * (0.55 + 0.25*hashUnit(uint32(step), 0xD0, armSeed))
+				dr := r + dOff
+				if dr > 0 {
+					// perpendicular offset ≈ tangential displacement / r in angle terms
+					dpx, dpy := project(dr, baseTh)
+					setPixel(img, dpx, dpy, blend(img.RGBAAt(dpx, dpy), galaxyDust, 0.55))
+					setPixel(img, dpx, dpy+1, blend(img.RGBAAt(dpx, dpy+1), galaxyDust, 0.35))
+				}
+			}
+			// Arm width grows a little with radius (arms fan out), then density thins outward.
+			wHere := armWidth * (0.7 + 0.9*(r/R))
+			// Outward density taper: fewer stars far out so the disc fades at the rim.
+			taper := 1.0 - 0.55*(r/R)
+			nHere := int(float64(clusterN) * (0.6 + 0.4*taper))
+			if nHere < 1 {
+				nHere = 1
+			}
+			for k := 0; k < nHere; k++ {
+				kk := uint32(step*31 + k*7 + 1)
+				// Gaussian-ish perpendicular jitter: average two uniforms centered at 0 → a soft triangular
+				// bump (denser on the spine). Convert the linear offset to an angular offset (/r).
+				j1 := hashUnit(kk, 0xA0, armSeed) - 0.5
+				j2 := hashUnit(kk, 0xB0, armSeed) - 0.5
+				perp := (j1 + j2) * wHere // -w..w, peaked at 0
+				// A little jitter along the arm too so steps don't quantize into visible rings.
+				alongJ := (hashUnit(kk, 0xC0, armSeed) - 0.5) * dTheta * 1.4
+				rr := r + perp // perpendicular scatter enters as a radial offset (cross-arm width)
+				if rr <= 0 {
+					continue
+				}
+				px, py := project(rr, baseTh+alongJ)
+				// Star color: bluer on the spine, warming slightly toward the core; brightness varies.
+				spineF := 1.0 - math.Min(1.0, math.Abs(perp)/wHere) // 1 on spine → 0 at edge
+				coreMix := clampF(1.0-r/(R*0.5), 0, 1) * 0.5        // warm the inner arm toward the bulge
+				col := blend(armStar, galaxyCoreWarm, coreMix)
+				br := hashUnit(kk, 0xE0, armSeed)
+				size := 0
+				switch {
+				case br > 0.985: // rare bright standout
+					col = blend(col, galaxyArmHot, 0.7)
+					size = 2
+				case br > 0.90:
+					col = brighten(col, 0.10)
+					size = 1
+				case br < 0.30:
+					// dim field star: pull toward the void so the arm has depth, skip the very dimmest
+					// off-spine so between-arm gaps stay dark.
+					if spineF < 0.35 {
+						continue
+					}
+					col = blend(col, pal.bg, 0.45)
+				}
+				dab(px, py, col, size)
+			}
+			// HII REGION: a rare pink knot on the arm (a tiny crisp cluster, not a glow), sparse.
+			if hashUnit(uint32(step), 0xF0, armSeed) > 0.965 && r > R*0.20 {
+				hpx, hpy := project(r, baseTh)
+				dab(hpx, hpy, galaxyHII, 1)
+				setPixel(img, hpx, hpy, blend(galaxyHII, galaxyArmHot, 0.4))
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// CORE / BULGE: a dense gaussian cloud of WARM stars over the underglow, brightest dead center.
+	// Radial density falls off gaussianly so the bulge is tightly packed at the center and thins into
+	// the arms. Placed LAST so the bright core sits over the arm stars that pass behind it. Count scales
+	// with area and is capped.
+	// ------------------------------------------------------------------------------------------
+	coreR := R * 0.30
+	coreN := int(700 * areaScale)
+	if coreN > 1400 {
+		coreN = 1400
+	}
+	if coreN < 60 {
+		coreN = 60
+	}
+	for i := 0; i < coreN; i++ {
+		si := uint32(i) + 1
+		// Radius: gaussian-ish via averaging two uniforms then squaring → strong central concentration.
+		u1 := hashUnit(si, 0x10, seed^0xC0DE)
+		u2 := hashUnit(si, 0x20, seed^0xC0DE)
+		rr := ((u1 + u2) * 0.5)
+		rr = rr * rr * coreR // bias hard toward the center
+		ang := hashUnit(si, 0x30, seed^0xC0DE) * 2 * math.Pi
+		px, py := project(rr, ang)
+		// Center-weighted color + brightness: white-gold at the very center → amber outward.
+		cf := clampF(1.0-rr/coreR, 0, 1)
+		col := blend(galaxyCoreWarm, galaxyCoreHot, cf*cf)
+		br := hashUnit(si, 0x40, seed^0xC0DE)
+		size := 0
+		if br > 0.97 || rr < coreR*0.10 {
+			size = 1
+			col = brighten(col, 0.06)
+		}
+		if br > 0.995 {
+			size = 2
+		}
+		dab(px, py, col, size)
+	}
+	// A tiny brilliant nucleus dab dead center so the very heart reads hottest.
+	ncx, ncy := project(0, 0)
+	setPixel(img, ncx, ncy, galaxyCoreHot)
+	setPixel(img, ncx+1, ncy, blend(galaxyCoreHot, galaxyCoreWarm, 0.4))
+	setPixel(img, ncx-1, ncy, blend(galaxyCoreHot, galaxyCoreWarm, 0.4))
+	setPixel(img, ncx, ncy+1, blend(galaxyCoreHot, galaxyCoreWarm, 0.4))
+	setPixel(img, ncx, ncy-1, blend(galaxyCoreHot, galaxyCoreWarm, 0.4))
 }
 
 // bi returns 1 if b else 0 — a tiny helper for offsetting the station's larger footprint.

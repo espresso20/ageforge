@@ -5111,8 +5111,10 @@ func TestSpaceIsPlanetScene(t *testing.T) {
 	if _, ok := cosmicSceneFor("modern_age"); ok {
 		t.Fatal("cosmicSceneFor(modern_age) = true, want false (modern is still a city)")
 	}
-	if _, ok := cosmicSceneFor("galactic_age"); ok {
-		t.Fatal("cosmicSceneFor(galactic_age) = true, want false (galactic still a city for now)")
+	// interstellar + galactic now have their own scenes too (see their own tests); quantum +
+	// transcendent still fall through to the city renderer until their slices land.
+	if _, ok := cosmicSceneFor("quantum_age"); ok {
+		t.Fatal("cosmicSceneFor(quantum_age) = true, want false (quantum still a city for now)")
 	}
 }
 
@@ -5369,4 +5371,98 @@ func TestDumpInterstellarPNG(t *testing.T) {
 		f.Close()
 		t.Logf("wrote %s", path)
 	}
+}
+
+// ---- galactic: spiral-galaxy cosmic scene (3rd cosmic scene) -----------------
+
+func TestGalacticIsGalaxyScene(t *testing.T) {
+	if _, ok := cosmicSceneFor("galactic_age"); !ok {
+		t.Fatal("cosmicSceneFor(galactic_age) = false, want true (galactic is the spiral-galaxy scene)")
+	}
+	if _, ok := cosmicSceneFor("modern_age"); ok {
+		t.Fatal("cosmicSceneFor(modern_age) = true, want false (modern is still a city)")
+	}
+}
+
+func TestDrawGalaxyScenePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	sizes := []struct{ w, h int }{
+		{1, 1}, {8, 8}, {440, 300}, {300, 440}, {512, 96}, {96, 512},
+	}
+	st := sampleState("galactic_age", nil)
+	for _, s := range sizes {
+		img := image.NewRGBA(image.Rect(0, 0, s.w, s.h))
+		drawGalaxyScene(img, st, s.w, s.h, 0xABCDEF)
+		if got := img.Bounds(); got.Dx() != s.w || got.Dy() != s.h {
+			t.Fatalf("size %dx%d: image = %dx%d, want exact", s.w, s.h, got.Dx(), got.Dy())
+		}
+	}
+}
+
+func TestGalaxySceneCenterBrighterAndDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	gal, _ := renderImage(namedState("galactic_age", "Aldermoor", nil), w, h)
+	centerLum, _ := meanLuminBlue(gal, w*50/100, h*52/100, 12)
+	var voidLum float64
+	corners := [][2]int{{6, 6}, {w - 7, 6}, {6, h - 7}, {w - 7, h - 7}}
+	for _, c := range corners {
+		l, _ := meanLuminBlue(gal, c[0], c[1], 4)
+		voidLum += l
+	}
+	voidLum /= 4
+	if centerLum <= voidLum*1.5 {
+		t.Fatalf("galaxy core not markedly brighter than void: center lum=%.1f, void lum=%.1f", centerLum, voidLum)
+	}
+	space, _ := renderImage(namedState("space_age", "Aldermoor", nil), w, h)
+	inter, _ := renderImage(namedState("interstellar_age", "Aldermoor", nil), w, h)
+	if !imagesDiffer(gal, space) || !imagesDiffer(gal, inter) {
+		t.Fatal("galactic render matches an earlier cosmic scene — the 3rd scene did not diverge")
+	}
+	city, _ := renderImage(namedState("fusion_age", "Aldermoor", map[string]int{"hut": 20, "forge": 8, "colosseum": 1}), w, h)
+	if !imagesDiffer(gal, city) {
+		t.Fatal("galactic render is identical to a city (fusion) render")
+	}
+}
+
+func TestGalaxySceneNoLandmarkLabels(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	_, plan := renderImage(namedState("galactic_age", "Aldermoor", map[string]int{"hut": 10, "forge": 4, "colosseum": 1}), w, h)
+	if len(plan.labels) != 0 {
+		t.Fatalf("galactic_age overlay has %d labels, want 0 (cosmic scene is label-free)", len(plan.labels))
+	}
+}
+
+func TestGalaxySceneDeterministic(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 200, 140
+	st := sampleState("galactic_age", nil)
+	a := image.NewRGBA(image.Rect(0, 0, w, h))
+	b := image.NewRGBA(image.Rect(0, 0, w, h))
+	drawGalaxyScene(a, st, w, h, 0x1234BEEF)
+	drawGalaxyScene(b, st, w, h, 0x1234BEEF)
+	if imagesDiffer(a, b) {
+		t.Fatal("galaxy scene is non-deterministic: same state+seed produced different pixels")
+	}
+}
+
+func TestDumpGalacticPNG(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump the galactic-scene PNG")
+	}
+	_ = theme.SetActive("forge")
+	img, _ := renderImage(namedState("galactic_age", "Aldermoor", nil), 440, 300)
+	path := dir + "/2f_galactic.png"
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatalf("create %s: %v", path, err)
+	}
+	if err := png.Encode(f, img); err != nil {
+		f.Close()
+		t.Fatalf("encode %s: %v", path, err)
+	}
+	f.Close()
+	t.Logf("wrote %s", path)
 }

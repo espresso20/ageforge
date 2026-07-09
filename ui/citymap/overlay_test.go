@@ -437,6 +437,14 @@ func TestFullRenderOverlayAcrossAges(t *testing.T) {
 					t.Fatalf("pixel %d alpha = %d, want 255", i/4, img.Pix[i])
 				}
 			}
+			// Cosmic-scene ages (space/interstellar/galactic …) abandon the city renderer for a
+			// bespoke scene and are intentionally label-free; skip the city-overlay checks for them.
+			if _, isScene := cosmicSceneFor(tc.age); isScene {
+				if len(plan.labels) != 0 {
+					t.Fatalf("cosmic scene age %s: overlay has %d labels, want 0 (scenes are label-free)", tc.age, len(plan.labels))
+				}
+				return
+			}
 			if len(plan.labels) == 0 {
 				t.Fatal("overlay plan empty for a fully populated state")
 			}
