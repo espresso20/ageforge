@@ -5369,6 +5369,13 @@ var (
 // thresholded so land clusters instead of speckling), POLAR ICE CAPS (high-latitude whitening),
 // soft CLOUD bands, and a thin bright ATMOSPHERE rim on the lit limb. Everything is seeded and
 // panic-safe (every write clips via setPixel/clamped math).
+// planetAspectY squashes the planet + orbits VERTICALLY so they read ROUND in the terminal. The
+// citymap image is cols×rows*2 px, streamed via half-blocks assuming a 1:2 terminal cell; on cells
+// TALLER than that a circle-in-image renders as a tall egg. This factor pre-compensates. Tune it if
+// the planet still looks off: LOWER = shorter/wider, HIGHER (→1.0) = taller. 1.0 = no correction
+// (correct for an exact 1:2 cell).
+const planetAspectY = 0.62
+
 func drawPlanetScene(img *image.RGBA, state game.GameState, w, h int, seed uint32) {
 	if w <= 0 || h <= 0 {
 		return
@@ -5407,11 +5414,13 @@ func drawPlanetScene(img *image.RGBA, state game.GameState, w, h int, seed uint3
 	// without ceasing to read as blue.
 	ocean := blend(planetOcean, pal.accent, 0.10)
 
-	// Bounding box of the disc, clamped to the image; iterate only there.
+	// Vertical radius: squashed so the disc reads round in the terminal (see planetAspectY).
+	radY := R * planetAspectY
+	// Bounding box of the (elliptical) disc, clamped to the image; iterate only there.
 	x0 := int(math.Floor(cx - R - 2))
 	x1 := int(math.Ceil(cx + R + 2))
-	y0 := int(math.Floor(cy - R - 2))
-	y1 := int(math.Ceil(cy + R + 2))
+	y0 := int(math.Floor(cy - radY - 2))
+	y1 := int(math.Ceil(cy + radY + 2))
 	if x0 < b.Min.X {
 		x0 = b.Min.X
 	}
@@ -5426,6 +5435,7 @@ func drawPlanetScene(img *image.RGBA, state game.GameState, w, h int, seed uint3
 	}
 
 	invR := 1.0 / R
+	invRadY := 1.0 / radY // normalize the vertical by the squashed radius so the disc is an ellipse
 	// Continent noise scale: features span a good fraction of the globe (land clusters, not confetti).
 	// Scale off the radius so the look is stable across map/minimap sizes.
 	nScale := 3.2 / R
@@ -5433,7 +5443,7 @@ func drawPlanetScene(img *image.RGBA, state game.GameState, w, h int, seed uint3
 	const termSoft = 0.42
 
 	for py := y0; py < y1; py++ {
-		dyf := (float64(py) - cy) * invR // -1..1 across the disc vertically
+		dyf := (float64(py) - cy) * invRadY // -1..1 across the (squashed) disc vertically
 		for px := x0; px < x1; px++ {
 			dxf := (float64(px) - cx) * invR
 			r2 := dxf*dxf + dyf*dyf
@@ -5560,7 +5570,7 @@ func drawOrbitsAndSatellites(img *image.RGBA, cx, cy, R, fmin float64, pal tdPal
 			rx := ex*cosR - ey*sinR
 			ry := ex*sinR + ey*cosR
 			px := int(cx + rx)
-			py := int(cy + ry)
+			py := int(cy + ry*planetAspectY) // squash vertically to match the planet disc
 			// Only the ring portion in FRONT of the globe (lower half of the tilt) reads a touch
 			// brighter; the far arc is dimmer, hinting the ring passes behind the planet.
 			c := orbitCol
@@ -5582,7 +5592,7 @@ func drawOrbitsAndSatellites(img *image.RGBA, cx, cy, R, fmin float64, pal tdPal
 			rx := ex*cosR - ey*sinR
 			ry := ex*sinR + ey*cosR
 			sx := int(cx + rx)
-			sy := int(cy + ry)
+			sy := int(cy + ry*planetAspectY)
 			drawSatellite(img, sx, sy, satBright, panelCol, false)
 		}
 	}
@@ -5601,7 +5611,7 @@ func drawOrbitsAndSatellites(img *image.RGBA, cx, cy, R, fmin float64, pal tdPal
 		rx := ex*cosR - ey*sinR
 		ry := ex*sinR + ey*cosR
 		stx := int(cx + rx)
-		sty := int(cy + ry)
+		sty := int(cy + ry*planetAspectY)
 		drawSatellite(img, stx, sty, satBright, panelCol, true)
 	}
 }
