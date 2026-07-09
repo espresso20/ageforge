@@ -2438,6 +2438,62 @@ func tdShapeMaxReach(shape tdFootprintShape) float64 {
 	}
 }
 
+// tdShapeAreaFactor is the footprint AREA as a multiple of the unit-townR disc (πtownR²), i.e. the
+// mean of (tdShapeRadiusAt/townR)² over all angles. Grid/lattice scatters use it to enlarge the cell
+// size so a FIXED `need` seeds spread over the larger silhouette (a disc-density lattice would leave
+// a >disc footprint's outer regions sparse). shapeDisc and shapeBlob are ~a disc in area, and sprawl
+// is an ellipse of near-disc area, so all three return 1.0 (disc reduction is then exact). rect/halo
+// bulge past the disc and return their measured factor. Pure.
+func tdShapeAreaFactor(shape tdFootprintShape) float64 {
+	switch shape {
+	case shapeRoundRect:
+		return 1.22
+	case shapeCoreHalo:
+		return 1.19
+	default: // shapeDisc, shapeBlob, shapeSprawl (all ~disc area)
+		return 1.0
+	}
+}
+
+// tdShapeAcceptR is the per-angle placement-acceptance radius for a scatter candidate at (x,y):
+// the footprint radius at that point's angle (tdShapeRadiusAt) scaled by a strategy's own edge
+// INSET (e.g. 0.92 → a ground rim of ground/greenery hugs the outline). A candidate is inside iff
+// hypot(x,y) ≤ this. For shapeDisc, tdShapeRadiusAt returns townR, so this reduces EXACTLY to
+// inset·townR — every scatter strategy's disc behaviour is byte-identical. For sprawl/rect/halo it
+// tracks the real silhouette, so seeds populate the wide/corner regions instead of stopping at a
+// disc that the raster later stretches over. Pure + bounded.
+func tdShapeAcceptR(shape tdFootprintShape, x, y, townR, inset float64, seed uint32) float64 {
+	return inset * tdShapeRadiusAt(shape, math.Atan2(y, x), townR, seed)
+}
+
+// tdSampleInShape draws ONE point uniform-by-area inside the footprint (inset·shape outline): it
+// samples uniform in the bounding disc of radius maxR and rejects candidates outside the per-angle
+// footprint radius, with a bounded reject budget then a relaxed fallback so a point is ALWAYS
+// returned (callers rely on this to hit an exact seed count). It advances the caller's RNG, so it is
+// deterministic. For shapeDisc the accept radius is the constant inset·townR = maxR, so the FIRST
+// candidate always passes and this is exactly `rad = maxR·√u, ang = 2πu` — the original disc top-up.
+func tdSampleInShape(r *rng, shape tdFootprintShape, townR, inset, maxR float64, seed uint32) tdPoint {
+	for tries := 0; tries < 24; tries++ {
+		rad := maxR * math.Sqrt(r.f01())
+		ang := r.f01() * 2 * math.Pi
+		x, y := math.Cos(ang)*rad, math.Sin(ang)*rad
+		if edge := tdShapeAcceptR(shape, x, y, townR, inset, seed); rad <= edge {
+			return tdPoint{x, y}
+		}
+	}
+	// Relaxed fallback: draw once more and clamp onto the outline so we always return an in-shape
+	// point (keeps the caller's count exact even under an unlucky reject streak).
+	rad := maxR * math.Sqrt(r.f01())
+	ang := r.f01() * 2 * math.Pi
+	x, y := math.Cos(ang)*rad, math.Sin(ang)*rad
+	if edge := tdShapeAcceptR(shape, x, y, townR, inset, seed); rad > edge && rad > 0 {
+		s := edge / rad
+		x *= s
+		y *= s
+	}
+	return tdPoint{x, y}
+}
+
 // tdOrganicRadiusAt returns the ORGANIC town's in-disc radius at a given angle (city units): the
 // base townR bitten INWARD by a smooth, seeded, angle-varying perturbation so the silhouette is a
 // genuinely IRREGULAR blob with real bays and peninsulas — NOT a clean radial circle, and NOT the
@@ -2799,7 +2855,7 @@ func tdPinnedCount(form tdTownForm, anchors []tdAnchor) int {
 // is unaffected; only the arrangement + which anchors pin differs. Every form's free seeds land
 // inside the town so the raster partition stays one connected boundary web (streets-connected holds
 // by construction). Pure function of (form, seed, B, anchors).
-func tdScatterSeedsFor(form tdTownForm, townR float64, anchors []tdAnchor, B int, cfg tdConfig, seed uint32) []tdPoint {
+func tdScatterSeedsFor(form tdTownForm, townR float64, anchors []tdAnchor, B int, shape tdFootprintShape, cfg tdConfig, seed uint32) []tdPoint {
 	nPinned := tdPinnedCount(form, anchors)
 	seeds := make([]tdPoint, 0, B)
 	for i := 0; i < nPinned && i < len(anchors); i++ {
@@ -2811,19 +2867,19 @@ func tdScatterSeedsFor(form tdTownForm, townR float64, anchors []tdAnchor, B int
 	}
 	switch form {
 	case formRadial:
-		return tdScatterRadial(seeds, townR, need, cfg, seed)
+		return tdScatterRadial(seeds, townR, need, shape, cfg, seed)
 	case formGrid:
-		return tdScatterGrid(seeds, townR, need, cfg, seed)
+		return tdScatterGrid(seeds, townR, need, shape, cfg, seed)
 	case formRibbon:
-		return tdScatterRibbon(seeds, townR, need, cfg, seed)
+		return tdScatterRibbon(seeds, townR, need, shape, cfg, seed)
 	case formCrescent:
-		return tdScatterCrescent(seeds, townR, need, cfg, seed)
+		return tdScatterCrescent(seeds, townR, need, shape, cfg, seed)
 	case formBoulevard:
-		return tdScatterBoulevard(seeds, townR, need, cfg, seed)
+		return tdScatterBoulevard(seeds, townR, need, shape, cfg, seed)
 	case formCoreSuburb:
-		return tdScatterCoreSuburb(seeds, townR, need, cfg, seed)
+		return tdScatterCoreSuburb(seeds, townR, need, shape, cfg, seed)
 	default: // formOrganic
-		return tdScatterOrganic(seeds, townR, need, cfg, seed)
+		return tdScatterOrganic(seeds, townR, need, shape, cfg, seed)
 	}
 }
 
@@ -2833,18 +2889,20 @@ func tdScatterSeedsFor(form tdTownForm, townR float64, anchors []tdAnchor, B int
 // as a hub, reads as a wagon wheel with a ring road. That look is intentional for the radial form
 // (a monument/forum-planned town) but is no longer the default for every town. `seeds` already
 // holds the pinned anchors; this appends the free seeds. Pure over (seed, need).
-func tdScatterRadial(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+func tdScatterRadial(seeds []tdPoint, townR float64, need int, shape tdFootprintShape, cfg tdConfig, seed uint32) []tdPoint {
 	phase := float64(hash2(0x5eed, 0x1a, seed)) / float64(^uint32(0)) * 2 * math.Pi
-	// The spiral fills up to ~0.92·townR so the outermost blocks sit inside the disc rim (a
-	// ring of ground/greenery hugs the edge).
+	// The spiral fills up to ~0.92 of the footprint radius AT EACH ANGLE so the outermost blocks sit
+	// inside the rim (a ground/greenery ring hugs the silhouette). For shapeDisc the per-angle radius
+	// is the constant townR, so this reduces to 0.92·townR·√frac exactly.
 	for k := 0; k < need; k++ {
 		frac := (float64(k) + 0.5) / float64(maxInt(need, 1))
-		r := 0.92 * townR * math.Sqrt(frac)
+		ang := float64(len(seeds))*goldenAngle + phase
+		reach := tdShapeAcceptR(shape, math.Cos(ang), math.Sin(ang), townR, 0.92, seed)
+		r := reach * math.Sqrt(frac)
 		// Nudge the innermost few outward so they don't collide with the pinned center anchor.
 		if r < cfg.townBaseRadius*0.35 {
 			r = cfg.townBaseRadius*0.35 + r*0.5
 		}
-		ang := float64(len(seeds))*goldenAngle + phase
 		seeds = append(seeds, tdPoint{math.Cos(ang) * r, math.Sin(ang) * r})
 	}
 	return seeds
@@ -2869,22 +2927,26 @@ func tdScatterRadial(seeds []tdPoint, townR float64, need int, cfg tdConfig, see
 // is unlucky), the shortfall is filled by RELAXING the spacing (tail candidates accepted regardless),
 // so exactly `need` free seeds always land and the banded stability tradeoff is preserved. Pure over
 // (seed, need); bounded attempt loop → panic-safe.
-func tdScatterOrganic(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+func tdScatterOrganic(seeds []tdPoint, townR float64, need int, shape tdFootprintShape, cfg tdConfig, seed uint32) []tdPoint {
 	nPinned := len(seeds) // the anchor seeds already appended by tdScatterSeedsFor
-	rr := 0.94 * townR    // free seeds stay just inside the (blob) rim
-	// Target spacing from area: minDist ≈ 0.7·√(discArea / seeds). The 0.7 leaves the reject pass
-	// room to actually place the target count before it must relax.
+	// Sampling extent covers the whole silhouette (maxReach·townR); free seeds then get clamped to the
+	// per-angle footprint radius. For shapeBlob/shapeDisc maxReach is 1 → rr = 0.94·townR as before.
+	rr := 0.94 * townR * tdShapeMaxReach(shape)
+	// Target spacing from area: minDist ≈ 0.7·√(area / seeds). The 0.7 leaves the reject pass room to
+	// actually place the target count before it must relax.
 	area := math.Pi * rr * rr
 	minDist := 0.7 * math.Sqrt(area/float64(need+len(seeds)))
 	minD2 := minDist * minDist
 	r := newRNG(hash2(0x0B10, uint32(need), seed) | 1)
-	// sample draws one uniform-in-blob candidate: uniform by area, then clamped to the organic blob
-	// outline so a candidate never lands past the rambling edge.
+	// sample draws one uniform-in-extent candidate: uniform by area over the bounding disc, then
+	// clamped to the SHAPE outline at that angle so a candidate never lands past the rambling edge.
+	// For shapeBlob the outline is tdOrganicRadiusAt (0.94 inset) exactly as before; for shapeDisc the
+	// clamp radius is the constant 0.94·townR (never trips, since rad ≤ that) → the plain disc fill.
 	sample := func() tdPoint {
 		rad := rr * math.Sqrt(r.f01())
 		ang := r.f01() * 2 * math.Pi
 		x, y := math.Cos(ang)*rad, math.Sin(ang)*rad
-		if edge := 0.94 * tdOrganicRadiusAt(ang, townR, seed); rad > edge {
+		if edge := tdShapeAcceptR(shape, x, y, townR, 0.94, seed); rad > edge {
 			s := edge / rad
 			x *= s
 			y *= s
@@ -2929,26 +2991,31 @@ func tdScatterOrganic(seeds []tdPoint, townR float64, need int, cfg tdConfig, se
 // lattice so two grid towns aren't identical. If the disc is somehow too small to host `need`
 // nodes, the shortfall falls through to an organic top-up so exactly `need` free seeds land. Pure
 // over (seed, need); bounded → panic-safe.
-func tdScatterGrid(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+func tdScatterGrid(seeds []tdPoint, townR float64, need int, shape tdFootprintShape, cfg tdConfig, seed uint32) []tdPoint {
 	rr := 0.92 * townR
-	// Choose a cell size so ~need nodes fall inside the disc: discArea ≈ need·cell² → cell ≈
-	// √(π·rr² / need). A mild 1.08 loosening keeps a few spare nodes for the centers-out trim.
-	cell := 1.08 * math.Sqrt(math.Pi*rr*rr/float64(need))
+	// Choose a cell size so ~need nodes fall inside the FOOTPRINT: footprintArea ≈ need·cell² → cell ≈
+	// √(π·rr²·areaFactor / need). areaFactor enlarges the cell for shapes bigger than a disc (rect/
+	// halo) so a fixed `need` seeds spread across the whole silhouette instead of packing the centre.
+	// A mild 1.08 loosening keeps a few spare nodes for the centers-out trim. For shapeDisc areaFactor
+	// is 1 → identical cell.
+	cell := 1.08 * math.Sqrt(math.Pi*rr*rr*tdShapeAreaFactor(shape)/float64(need))
 	if cell < 1e-3 {
 		cell = 1e-3
 	}
 	// A seeded sub-cell phase offset so the grid origin (and thus the whole lattice) shifts per
-	// city; kept within one cell so the lattice still spans the disc.
+	// city; kept within one cell so the lattice still spans the footprint.
 	phx := (float64(hash2(0x671D, 0x11, seed))/float64(^uint32(0)) - 0.5) * cell
 	phy := (float64(hash2(0x671D, 0x12, seed))/float64(^uint32(0)) - 0.5) * cell
-	// Enumerate lattice nodes across the bounding square, keep the in-disc ones with jitter, and
-	// order them by distance from the core so a trim to `need` keeps the central lattice.
+	// Enumerate lattice nodes across the bounding square (sized to the shape's max reach so corners/
+	// wide regions get nodes), keep the ones INSIDE THE SHAPE with jitter, and order them by distance
+	// from the core so a trim to `need` keeps the central lattice.
+	maxR := rr * tdShapeMaxReach(shape) // outer bound of the lattice box (= rr for a disc)
 	type gnode struct {
 		p  tdPoint
 		d2 float64
 	}
 	var nodes []gnode
-	half := int(math.Ceil(rr/cell)) + 1
+	half := int(math.Ceil(maxR/cell)) + 1
 	if half > 64 { // panic-safety cap on the lattice extent
 		half = 64
 	}
@@ -2963,7 +3030,7 @@ func tdScatterGrid(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed 
 			jy := (float64(hash2(uint32(gx*2+2000), uint32(gy*2+2000), seed))/float64(^uint32(0)) - 0.5) * 2 * jit
 			px, py := nx+jx, ny+jy
 			d2 := px*px + py*py
-			if d2 > rr*rr {
+			if edge := tdShapeAcceptR(shape, px, py, townR, 0.92, seed); d2 > edge*edge {
 				continue
 			}
 			nodes = append(nodes, gnode{p: tdPoint{px, py}, d2: d2})
@@ -2973,12 +3040,11 @@ func tdScatterGrid(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed 
 	for i := 0; i < need && i < len(nodes); i++ {
 		seeds = append(seeds, nodes[i].p)
 	}
-	// Top up (rare: only if the disc couldn't host `need` in-disc nodes) so the free-seed count
-	// stays exactly `need` and banded stability is preserved.
+	// Top up (rare: only if the footprint couldn't host `need` in-shape nodes) so the free-seed count
+	// stays exactly `need` and banded stability is preserved. Sample in the bounding disc, reject
+	// outside the shape (a bounded budget, then a relaxed accept, so the count is always met).
 	for placed := minInt(need, len(nodes)); placed < need; placed++ {
-		rad := rr * math.Sqrt(r.f01())
-		ang := r.f01() * 2 * math.Pi
-		seeds = append(seeds, tdPoint{math.Cos(ang) * rad, math.Sin(ang) * rad})
+		seeds = append(seeds, tdSampleInShape(r, shape, townR, 0.92, maxR, seed))
 	}
 	return seeds
 }
@@ -2990,14 +3056,18 @@ func tdScatterGrid(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed 
 // out) with a little seeded wobble; the lateral offset is a small seeded fraction of the disc so
 // the ribbon has width without becoming a blob. Every seed is clamped inside the disc so the raster
 // stays connected. The pinned center anchor sits on the axis. Pure over (seed, need).
-func tdScatterRibbon(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+func tdScatterRibbon(seeds []tdPoint, townR float64, need int, shape tdFootprintShape, cfg tdConfig, seed uint32) []tdPoint {
 	// Axis direction: a seeded angle, so different ribbon towns run different ways.
 	axis := float64(hash2(0x21B0, 0x33, seed)) / float64(^uint32(0)) * 2 * math.Pi
 	ax, ay := math.Cos(axis), math.Sin(axis)
 	// Perpendicular (lateral) direction.
 	px, py := -ay, ax
-	alongMax := 0.90 * townR // reach most of the disc along the road
-	latMax := 0.28 * townR   // a modest lateral spread → a road, not a blob
+	// Reach along the road follows the footprint radius IN THE AXIS DIRECTION (so a sprawl town's
+	// ribbon runs the full length of its long axis); lateral spread scales the same way. For shapeDisc
+	// the axis radius is townR → alongMax = 0.90·townR, latMax = 0.28·townR, exactly as before.
+	axisReach := tdShapeRadiusAt(shape, axis, townR, seed)
+	alongMax := 0.90 * axisReach // reach most of the footprint along the road
+	latMax := 0.28 * axisReach   // a modest lateral spread → a road, not a blob
 	r := newRNG(hash2(0x21B1, uint32(need), seed) | 1)
 	for k := 0; k < need; k++ {
 		// Even, centers-out spacing along the axis in [-alongMax, alongMax], with a small wobble.
@@ -3007,9 +3077,11 @@ func tdScatterRibbon(seeds []tdPoint, townR float64, need int, cfg tdConfig, see
 		lat := (r.f01()*2 - 1) * latMax
 		x := ax*along + px*lat
 		y := ay*along + py*lat
-		// Clamp inside the disc so the raster partition stays whole (streets connected).
-		if d := math.Hypot(x, y); d > 0.95*townR {
-			s := 0.95 * townR / d
+		// Clamp inside the footprint at this point's angle so the raster partition stays whole (streets
+		// connected). For shapeDisc the bound is the constant 0.95·townR → identical to the old clamp.
+		if edge := tdShapeAcceptR(shape, x, y, townR, 0.95, seed); math.Hypot(x, y) > edge {
+			d := math.Hypot(x, y)
+			s := edge / d
 			x *= s
 			y *= s
 		}
@@ -3034,8 +3106,12 @@ func tdScatterRibbon(seeds []tdPoint, townR float64, need int, cfg tdConfig, see
 // are index-stable, with a small seeded angular wobble. `seeds` already holds the pinned anchors;
 // this appends the free seeds inside ~0.92·townR so a ground rim shows. Pure over (seed, need);
 // bounded → panic-safe.
-func tdScatterCrescent(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+func tdScatterCrescent(seeds []tdPoint, townR float64, need int, shape tdFootprintShape, cfg tdConfig, seed uint32) []tdPoint {
 	rr := 0.92 * townR
+	// The terrace STACK spans the footprint's max reach so a wide silhouette (sprawl) gets terraces
+	// across its whole width; each seed is then clipped to the per-angle outline. For shapeDisc
+	// maxReach is 1 → reachR = rr and every quantity below reduces to the original disc geometry.
+	reachR := rr * tdShapeMaxReach(shape)
 	if need <= 0 {
 		return seeds
 	}
@@ -3056,22 +3132,23 @@ func tdScatterCrescent(seeds []tdPoint, townR float64, need int, cfg tdConfig, s
 	// A FAR pivot (several town-radii away) so each terrace's arc is nearly straight over the town —
 	// the terraces become gently-curved, near-PARALLEL sweeps (like contour lines / Nash terraces),
 	// not spokes converging on the centre. (A near pivot made terraces cross the centre → radial.)
-	farDist := 4.6 * rr
+	farDist := 4.6 * reachR
 	cX, cY := ux*farDist, uy*farDist // shared far pivot of every terrace
 	r := newRNG(hash2(0xC2E5, uint32(need), seed) | 1)
-	// nearAt(a): where terrace a crosses the grain axis, spread from -0.74rr..+0.74rr through centre.
+	// nearAt(a): where terrace a crosses the grain axis, spread from -0.74reachR..+0.74reachR through
+	// centre (so the stack spans the whole silhouette width, not just a disc).
 	nearAt := func(a int) float64 {
 		if nArc <= 1 {
 			return 0
 		}
 		t := float64(a)/float64(nArc-1)*2 - 1 // -1..1
-		return t * 0.74 * rr
+		return t * 0.74 * reachR
 	}
 	// Weight middle terraces heavier (they cross more of the town → longer crescents host more homes).
 	weights := make([]float64, nArc)
 	wsum := 0.0
 	for a := 0; a < nArc; a++ {
-		w := 1.0 - 0.55*math.Abs(nearAt(a))/rr
+		w := 1.0 - 0.55*math.Abs(nearAt(a))/reachR
 		if w < 0.2 {
 			w = 0.2
 		}
@@ -3116,8 +3193,10 @@ func tdScatterCrescent(seeds []tdPoint, townR float64, need int, cfg tdConfig, s
 			rw := R * (1 + (r.f01()-0.5)*0.03)
 			x := cX + math.Cos(ang)*rw
 			y := cY + math.Sin(ang)*rw
-			if d := math.Hypot(x, y); d > rr { // clip stragglers to the rim
-				s := rr / d
+			// Clip stragglers to the footprint outline at their angle (constant rr for shapeDisc).
+			if edge := tdShapeAcceptR(shape, x, y, townR, 0.92, seed); math.Hypot(x, y) > edge {
+				d := math.Hypot(x, y)
+				s := edge / d
 				x *= s
 				y *= s
 			}
@@ -3138,10 +3217,12 @@ func tdScatterCrescent(seeds []tdPoint, townR float64, need int, cfg tdConfig, s
 // The diagonals run through/near the centre at seeded angles in the ~30-60° band (never axis-aligned,
 // so they read as diagonals cutting the grid, not just extra grid streets). Deterministic; the grid
 // build is shared logic with tdScatterGrid. Pure over (seed, need); bounded → panic-safe.
-func tdScatterBoulevard(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+func tdScatterBoulevard(seeds []tdPoint, townR float64, need int, shape tdFootprintShape, cfg tdConfig, seed uint32) []tdPoint {
 	rr := 0.92 * townR
-	// Same cell sizing as the grid form so the orthogonal fabric matches a plain grid town.
-	cell := 1.08 * math.Sqrt(math.Pi*rr*rr/float64(need))
+	reachR := rr * tdShapeMaxReach(shape) // outer extent of the lattice + avenue offsets (= rr for a disc)
+	// Same cell sizing as the grid form so the orthogonal fabric matches a plain grid town; areaFactor
+	// enlarges the cell for >disc shapes so `need` seeds spread across the whole silhouette.
+	cell := 1.08 * math.Sqrt(math.Pi*rr*rr*tdShapeAreaFactor(shape)/float64(need))
 	if cell < 1e-3 {
 		cell = 1e-3
 	}
@@ -3164,9 +3245,9 @@ func tdScatterBoulevard(seeds []tdPoint, townR float64, need int, cfg tdConfig, 
 		}
 		ax, ay := math.Cos(base), math.Sin(base) // avenue direction
 		nx, ny := -ay, ax                        // its normal
-		// Offset the line off dead-centre by a seeded fraction of the radius so avenues don't all
-		// cross at one point (a small spread of parallel-ish grand avenues).
-		off := (float64(hash2(0xB0DE, uint32(0x40+d), seed))/float64(^uint32(0)) - 0.5) * 0.5 * rr
+		// Offset the line off dead-centre by a seeded fraction of the reach so avenues don't all
+		// cross at one point (a small spread of parallel-ish grand avenues that span the silhouette).
+		off := (float64(hash2(0xB0DE, uint32(0x40+d), seed))/float64(^uint32(0)) - 0.5) * 0.5 * reachR
 		diags = append(diags, diagLine{nx: nx, ny: ny, c: off})
 	}
 	avenueHalf := 0.62 * cell // clear a band a bit over one cell wide → a clear avenue, grid intact
@@ -3178,13 +3259,15 @@ func tdScatterBoulevard(seeds []tdPoint, townR float64, need int, cfg tdConfig, 
 		}
 		return false
 	}
-	// Build the in-disc jittered grid, dropping nodes that fall on an avenue; order centres-out.
+	// Build the in-shape jittered grid, dropping nodes that fall on an avenue; order centres-out. The
+	// lattice box reaches the shape's max extent so a >disc footprint's corners get nodes.
+	maxR := rr * tdShapeMaxReach(shape)
 	type gnode struct {
 		p  tdPoint
 		d2 float64
 	}
 	var nodes []gnode
-	half := int(math.Ceil(rr/cell)) + 1
+	half := int(math.Ceil(maxR/cell)) + 1
 	if half > 64 {
 		half = 64
 	}
@@ -3198,8 +3281,8 @@ func tdScatterBoulevard(seeds []tdPoint, townR float64, need int, cfg tdConfig, 
 			jy := (float64(hash2(uint32(gx*2+2000), uint32(gy*2+2000), seed))/float64(^uint32(0)) - 0.5) * 2 * jit
 			px, py := nx+jx, ny+jy
 			d2 := px*px + py*py
-			if d2 > rr*rr {
-				continue
+			if edge := tdShapeAcceptR(shape, px, py, townR, 0.92, seed); d2 > edge*edge {
+				continue // outside the footprint (constant 0.92·townR for shapeDisc)
 			}
 			if onAvenue(px, py) {
 				continue // this node is in an avenue → leave it clear
@@ -3211,17 +3294,23 @@ func tdScatterBoulevard(seeds []tdPoint, townR float64, need int, cfg tdConfig, 
 	for i := 0; i < need && i < len(nodes); i++ {
 		seeds = append(seeds, nodes[i].p)
 	}
-	// Top up if we're short (avenues removed some, or a small disc): drop the extras just OFF the
-	// avenues (uniform reject) so the count is exactly `need` without refilling the boulevards.
+	// Top up if we're short (avenues removed some, or a small footprint): drop the extras just OFF the
+	// avenues AND inside the shape (uniform reject) so the count is exactly `need` without refilling the
+	// boulevards. On an unlucky budget the LAST in-shape candidate is kept (no extra RNG draws), so for
+	// shapeDisc — where every sample is in-shape — this matches the original disc top-up byte-for-byte.
 	for placed := minInt(need, len(nodes)); placed < need; placed++ {
 		var p tdPoint
 		for tries := 0; tries < 24; tries++ {
-			rad := rr * math.Sqrt(rng.f01())
+			rad := maxR * math.Sqrt(rng.f01())
 			ang := rng.f01() * 2 * math.Pi
 			cx, cy := math.Cos(ang)*rad, math.Sin(ang)*rad
-			p = tdPoint{cx, cy}
+			edge := tdShapeAcceptR(shape, cx, cy, townR, 0.92, seed)
+			if rad > edge {
+				continue // outside the footprint — resample (shapeDisc never hits this)
+			}
+			p = tdPoint{cx, cy} // remember the last in-shape candidate
 			if !onAvenue(cx, cy) {
-				break
+				break // off the avenue → take it
 			}
 		}
 		seeds = append(seeds, p)
@@ -3239,10 +3328,11 @@ func tdScatterBoulevard(seeds []tdPoint, townR float64, need int, cfg tdConfig, 
 // Both passes place a fixed number so the total free-seed count is exactly `need` (banded stability
 // holds); a relax tail guarantees the count even under unlucky packing. `seeds` already holds the
 // pinned anchors. Pure over (seed, need); bounded attempt budgets → panic-safe.
-func tdScatterCoreSuburb(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+func tdScatterCoreSuburb(seeds []tdPoint, townR float64, need int, shape tdFootprintShape, cfg tdConfig, seed uint32) []tdPoint {
 	nPinned := len(seeds) // anchors already appended
 	coreR := 0.38 * townR
-	ringOuter := 0.92 * townR // leave a ground rim
+	ringOuter := 0.92 * townR                     // leave a ground rim (the disc-reduction reference radius)
+	ringMax := ringOuter * tdShapeMaxReach(shape) // suburb annulus reaches the silhouette (= ringOuter for a disc)
 	nCore := (need * 72) / 100
 	if nCore < 1 && need > 0 {
 		nCore = 1 // at least seed the downtown
@@ -3285,28 +3375,37 @@ func tdScatterCoreSuburb(seeds []tdPoint, townR float64, need int, cfg tdConfig,
 		}
 	}
 
-	// --- sparse SUBURB: large-spacing blue-noise in the annulus (coreR, ringOuter) ---
+	// --- sparse SUBURB: large-spacing blue-noise in the annulus (coreR, ringMax), clipped to shape ---
 	if nRing > 0 {
-		annArea := math.Pi * (ringOuter*ringOuter - coreR*coreR)
+		// annArea scales with the footprint (areaFactor) so a >disc silhouette (halo) gets even LOOSER
+		// suburban spacing — big low-density wards out to the bulging rim. For shapeDisc: factor 1.
+		annArea := math.Pi * (ringOuter*ringOuter - coreR*coreR) * tdShapeAreaFactor(shape)
 		// Deliberately LOOSE: bigger spacing target than an even fill → big suburban wards.
 		minDist := 1.45 * math.Sqrt(annArea/float64(nRing))
 		minD2 := minDist * minDist
 		placed := 0
 		maxAtt := (nRing + 1) * 40
 		for att := 0; placed < nRing && att < maxAtt; att++ {
-			// Uniform by area in the annulus: r = √(core² + u·(outer²−core²)).
+			// Uniform by area in the annulus out to the SHAPE reach: r = √(core² + u·(ringMax²−core²)),
+			// then reject anything past the per-angle footprint outline. For shapeDisc ringMax = ringOuter
+			// and the outline test is the constant 0.92·townR (never rejects) → identical to the old ring.
 			u := rng.f01()
-			rad := math.Sqrt(coreR*coreR + u*(ringOuter*ringOuter-coreR*coreR))
+			rad := math.Sqrt(coreR*coreR + u*(ringMax*ringMax-coreR*coreR))
 			ang := rng.f01() * 2 * math.Pi
 			p := tdPoint{math.Cos(ang) * rad, math.Sin(ang) * rad}
 			ok := true
+			if edge := tdShapeAcceptR(shape, p.x, p.y, townR, 0.92, seed); rad > edge {
+				ok = false // outside the footprint silhouette
+			}
 			// Reject against the SUBURB seeds only (indices from the start of the ring pass), so the
 			// sparse spacing is enforced among suburbs without being blocked by the dense core.
-			for si := firstFree + nCore; si < len(seeds); si++ {
-				dx, dy := p.x-seeds[si].x, p.y-seeds[si].y
-				if dx*dx+dy*dy < minD2 {
-					ok = false
-					break
+			if ok {
+				for si := firstFree + nCore; si < len(seeds); si++ {
+					dx, dy := p.x-seeds[si].x, p.y-seeds[si].y
+					if dx*dx+dy*dy < minD2 {
+						ok = false
+						break
+					}
 				}
 			}
 			if ok {
@@ -3314,11 +3413,17 @@ func tdScatterCoreSuburb(seeds []tdPoint, townR float64, need int, cfg tdConfig,
 				placed++
 			}
 		}
-		for ; placed < nRing; placed++ { // relax tail → exact count
+		for ; placed < nRing; placed++ { // relax tail → exact count, clamped into the shape
 			u := rng.f01()
-			rad := math.Sqrt(coreR*coreR + u*(ringOuter*ringOuter-coreR*coreR))
+			rad := math.Sqrt(coreR*coreR + u*(ringMax*ringMax-coreR*coreR))
 			ang := rng.f01() * 2 * math.Pi
-			seeds = append(seeds, tdPoint{math.Cos(ang) * rad, math.Sin(ang) * rad})
+			x, y := math.Cos(ang)*rad, math.Sin(ang)*rad
+			if edge := tdShapeAcceptR(shape, x, y, townR, 0.92, seed); rad > edge && rad > 0 {
+				s := edge / rad
+				x *= s
+				y *= s
+			}
+			seeds = append(seeds, tdPoint{x, y})
 		}
 	}
 	return seeds
@@ -3355,7 +3460,7 @@ func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, form tdTow
 	// scattered by the town's FORM (organic / radial / grid / ribbon). Only the arrangement varies
 	// by form; the COUNT is the banded tdBlockSeedCount, so banded stability is unaffected.
 	B := tdBlockSeedCount(nRoofs, len(anchors), form, cfg)
-	seeds := tdScatterSeedsFor(form, townR, anchors, B, cfg, seed)
+	seeds := tdScatterSeedsFor(form, townR, anchors, B, shape, cfg, seed)
 	// Lloyd relaxation: a few passes move each seed toward its region's centroid for even,
 	// organic block sizes. The PINNED anchor seeds are held fixed (their central regions must
 	// stay put); only the free building-ward seeds relax.

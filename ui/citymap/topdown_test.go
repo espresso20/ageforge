@@ -2406,7 +2406,7 @@ func TestElectricEpochFormDominance(t *testing.T) {
 func TestNewScatterFormsContract(t *testing.T) {
 	cfg := defaultTdConfig
 	const townR = 40.0
-	scatters := map[string]func([]tdPoint, float64, int, tdConfig, uint32) []tdPoint{
+	scatters := map[string]func([]tdPoint, float64, int, tdFootprintShape, tdConfig, uint32) []tdPoint{
 		"crescent":   tdScatterCrescent,
 		"boulevard":  tdScatterBoulevard,
 		"coreSuburb": tdScatterCoreSuburb,
@@ -2419,7 +2419,8 @@ func TestNewScatterFormsContract(t *testing.T) {
 				seed := citySeed(nm)
 				// One pinned center anchor at the origin (as tdScatterSeedsFor supplies).
 				pinned := []tdPoint{{0, 0}}
-				got := fn(append([]tdPoint(nil), pinned...), townR, need, cfg, seed)
+				// shapeDisc so the disc-behaviour contract (every seed inside townR) holds exactly.
+				got := fn(append([]tdPoint(nil), pinned...), townR, need, shapeDisc, cfg, seed)
 				// EXACT count: pinned prefix + exactly `need` free seeds.
 				if want := len(pinned) + need; len(got) != want {
 					t.Fatalf("%s need=%d seed %q: got %d seeds, want %d (pinned+need)", label, need, nm, len(got), want)
@@ -2434,7 +2435,7 @@ func TestNewScatterFormsContract(t *testing.T) {
 					}
 				}
 				// DETERMINISM: identical output for identical inputs.
-				got2 := fn(append([]tdPoint(nil), pinned...), townR, need, cfg, seed)
+				got2 := fn(append([]tdPoint(nil), pinned...), townR, need, shapeDisc, cfg, seed)
 				if len(got) != len(got2) {
 					t.Fatalf("%s need=%d seed %q: non-deterministic length %d vs %d", label, need, nm, len(got), len(got2))
 				}
