@@ -199,11 +199,14 @@ func renderWorldImage(state game.GameState, w, h int) (*image.RGBA, overlayPlan)
 	model := buildWorldModel(w, h, worldTerrainSeed(displayName))
 	wf := model.field
 
-	// 1) Neutral atlas terrain: depth-banded ocean + biome-toned land, a crisp coastline
-	//    stroke, thin rivers widening to their mouths, and sparse relief dabs. Muted toward
-	//    the background so the map reads as a dim strategic backdrop the bright civ dots pop
-	//    off of. Theme-aware (all tones are live palette roles). Per-age mediums come later.
-	drawWorldModel(img, pal, model)
+	// 1) Terrain layer, drawn in this AGE'S cartographic MEDIUM (Phase B). mediumForAge maps
+	//    four validation ages to bespoke mediums (charcoal / parchment / satellite / neon) and
+	//    every other age to the neutral atlas — the exact Phase-A look. The medium re-skins the
+	//    LAND (ocean, coast, rivers, relief, chrome); the civ dots + labels below are shared
+	//    across all mediums so the player's markers read the same everywhere. The atlas medium
+	//    still uses `pal` internally, so the default remains theme-aware and hue-shifts per age.
+	med := mediumForAge(state.Age)
+	med.draw(img, model, med)
 
 	// 2) Backdrop: the sparse settlement field — the wider world — gated to land.
 	geo := drawSettlementField(img, pal, wf, seed, prog)
@@ -384,9 +387,9 @@ func drawWorldTerrain(img *image.RGBA, pal terrainPalette, wf *terrainField) {
 	}
 }
 
-// drawWorldModel is the NEUTRAL atlas render of the seeded continent: the clean, readable
-// default the world map draws before any per-age cartographic medium (that's a later
-// phase). It composites, in order:
+// drawWorldModelAtlas is the NEUTRAL atlas render of the seeded continent: the clean,
+// readable DEFAULT medium (mediumForAge falls through to this for every age without a
+// bespoke cartographic medium). It composites, in order:
 //
 //	ocean    — depth-banded blues: the deep basin darkens with distance below sea level,
 //	           the shallow shelf near the coast lightens, so the sea has real bathymetry.
@@ -403,7 +406,12 @@ func drawWorldTerrain(img *image.RGBA, pal terrainPalette, wf *terrainField) {
 // bright civ dots pop off of. Theme-aware: every tone is a live palette role. Panic-safe:
 // an empty model (tiny/zero canvas) has no rivers/relief and a guarded field, so this
 // paints a uniform dim land and returns.
-func drawWorldModel(img *image.RGBA, pal terrainPalette, m *worldModel) {
+//
+// It takes the atlas mediumPalette (built in atlasMedium) so the shared coast/river/relief
+// tones come from one place, but the depth-banding + biome fill read the atlasBiomeTones
+// directly (unchanged from before the medium refactor) so the default look is byte-for-byte
+// what Phase A shipped.
+func drawWorldModelAtlas(img *image.RGBA, pal terrainPalette, m *worldModel, mp mediumPalette) {
 	b := img.Bounds()
 	w, h := b.Dx(), b.Dy()
 	if w <= 0 || h <= 0 || m == nil {
@@ -444,7 +452,7 @@ func drawWorldModel(img *image.RGBA, pal terrainPalette, m *worldModel) {
 	//    is a LIGHTER beach tone (the sand biome color lifted), which reads as a clean bright
 	//    coastline outlining the continent against the dark sea. A land pixel with at least one
 	//    water 4-neighbour is a shore pixel. Second pass so it reads over the base fill.
-	coast := brighten(muted[biomeSand], 0.10)
+	coast := mp.coast // atlasMedium sets this to brighten(muted[biomeSand], 0.10)
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
 			if !isLandPx(m.field, x, y) {
@@ -463,7 +471,7 @@ func drawWorldModel(img *image.RGBA, pal terrainPalette, m *worldModel) {
 	//    bright water blue — the palette's shallow-water tone pushed toward a bright blue —
 	//    so a watercourse reads as a distinct blue thread over the lit land. Width grows with
 	//    the sqrt of accumulated flow (thin at the source, widening toward the sea).
-	riverTone := brighten(blend(pal.bShallowWater, color.RGBA{R: 0x55, G: 0x8f, B: 0xd8, A: 0xff}, 0.55), 0.14)
+	riverTone := mp.river // atlasMedium sets this to the bright-blue shallow-water tone
 	maxFlow := m.maxRiverFlow()
 	for _, r := range m.rivers {
 		drawRiver(img, r, riverTone, maxFlow, m)
