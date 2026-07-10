@@ -189,16 +189,21 @@ func renderWorldImage(state game.GameState, w, h int) (*image.RGBA, overlayPlan)
 	pal := buildPalette(hueShift)
 	prog := worldProgress(state)
 
-	// World terrain field, built ONCE and threaded into every layer below: it paints the
-	// backdrop AND gates/snaps every dot to land. Its seed is the stable-per-account world
-	// seed (display name), NOT the age seed, so the land stays put across ages while the
-	// settlement scatter and civ ring keep moving with progress.
+	// Seeded world MODEL, built ONCE and threaded into every layer below: a real continent
+	// (island-masked heightmap) with coastline, rivers, and relief, plus the per-pixel
+	// biome/passability field that paints the backdrop AND gates/snaps every dot to land.
+	// Its seed is the stable-per-account world seed (display name), NOT the age seed, so the
+	// land stays put across ages while the settlement scatter and civ ring keep moving with
+	// progress. The field seam (wf) is the same *terrainField every consumer already used.
 	displayName := worldDisplayName(state)
-	wf := newWorldTerrainField(w, h, worldTerrainSeed(displayName))
+	model := buildWorldModel(w, h, worldTerrainSeed(displayName))
+	wf := model.field
 
-	// 1) Muted terrain: real continents + oceans, blended hard toward the background so it
-	//    reads as a dim strategic map, not the loud city view. Theme-aware (biome tones).
-	drawWorldTerrain(img, pal, wf)
+	// 1) Neutral atlas terrain: depth-banded ocean + biome-toned land, a crisp coastline
+	//    stroke, thin rivers widening to their mouths, and sparse relief dabs. Muted toward
+	//    the background so the map reads as a dim strategic backdrop the bright civ dots pop
+	//    off of. Theme-aware (all tones are live palette roles). Per-age mediums come later.
+	drawWorldModel(img, pal, model)
 
 	// 2) Backdrop: the sparse settlement field — the wider world — gated to land.
 	geo := drawSettlementField(img, pal, wf, seed, prog)
@@ -295,25 +300,14 @@ type worldGeometry struct {
 // a DIM strategic backdrop the bright civ dots pop off of — i.e. ~30% biome, ~70% bg.
 const worldTerrainMix = 0.70
 
-// drawWorldTerrain paints the world biome field (continents + oceans from
-// newWorldTerrainField) as a MUTED strategic backdrop. Each pixel takes its biome's
-// theme-blended tone (biomeColor — the SAME classifier/palette the city map uses, so the
-// world retints on a theme switch) pulled hard toward RoleBackground: ocean → dim dark
-// blue, land → dim dark green/tan, mountain → dim grey, with the sand/coast biome giving a
-// subtle shore tone so land reads as land. Muted enough that it never competes with the
-// foreground dots. Panic-safe: wf.at() returns grass for any out-of-range/empty query, so a
-// tiny or zero field simply paints a uniform dim land.
-func drawWorldTerrain(img *image.RGBA, pal terrainPalette, wf *terrainField) {
-	b := img.Bounds()
-	w, h := b.Dx(), b.Dy()
-	if w <= 0 || h <= 0 {
-		return
-	}
+// mutedBiomeTones precomputes the MUTED strategic-backdrop tone for every biome once (a
+// lerp per pixel across a full-canvas field is wasteful — there are only biomeCount of
+// them). Each biome takes its theme-blended tone (biomeColor — the SAME classifier/
+// palette the city map uses, so the world retints on a theme switch) pulled hard toward
+// RoleBackground so nothing competes with the foreground dots. Water is pulled a touch
+// LESS toward bg so the sea reads as a distinct dark basin rather than washing into land.
+func mutedBiomeTones(pal terrainPalette) []color.RGBA {
 	bg := rgba(theme.Color(theme.RoleBackground))
-	// Precompute the muted tone per biome once (there are only biomeCount of them) rather
-	// than blending per pixel — the field is full-canvas resolution, so this saves a lot of
-	// lerps on big maps. Water is pulled a touch LESS toward bg than land so the sea still
-	// reads as a distinct dark blue basin rather than washing into the land.
 	muted := make([]color.RGBA, biomeCount)
 	for bi := biome(0); bi < biomeCount; bi++ {
 		mix := worldTerrainMix
@@ -322,6 +316,63 @@ func drawWorldTerrain(img *image.RGBA, pal terrainPalette, wf *terrainField) {
 		}
 		muted[bi] = blend(bg, biomeColor(bi, pal), 1.0-mix)
 	}
+	return muted
+}
+
+// atlasBiomeTones is the neutral render's map palette. The strategic-backdrop muting
+// (blending every biome toward the dark background) greyed the land into an olive mud, so
+// the atlas instead builds VIVID, ZONED, legibly-colored land — grassland green, forest a
+// darker green, beach tan, hills brown-grey, mountains pale grey, peaks near-white — while
+// the sea stays a dark depth-banded blue for strong land/water contrast.
+//
+// It stays THEME-DERIVED: each biome starts from the palette's theme-blended biome color
+// (so a theme switch still retints the whole map) and is pulled toward a canonical map
+// anchor + brightened to a legible level. The anchors are the muted hue targets a paper
+// atlas uses; blending the live biome color toward them keeps the theme's character while
+// guaranteeing the land reads as land, not grey.
+func atlasBiomeTones(pal terrainPalette) []color.RGBA {
+	bg := rgba(theme.Color(theme.RoleBackground))
+	tones := make([]color.RGBA, biomeCount)
+
+	// Canonical map anchors (muted, not cartoon). Land biomes blend toward these so the
+	// zoning is legible regardless of how dark the theme's raw biome tone is.
+	grassA := color.RGBA{R: 0x6f, G: 0x9e, B: 0x54, A: 0xff}  // inviting grassland green
+	forestA := color.RGBA{R: 0x3f, G: 0x6b, B: 0x3c, A: 0xff} // deeper forest green
+	sandA := color.RGBA{R: 0xd7, G: 0xc4, B: 0x8f, A: 0xff}   // warm beach tan
+	hillA := color.RGBA{R: 0x9a, G: 0x8b, B: 0x6d, A: 0xff}   // brown-grey uplands
+	mtnA := color.RGBA{R: 0xa9, G: 0xa4, B: 0x9c, A: 0xff}    // pale rocky grey
+	snowA := color.RGBA{R: 0xe9, G: 0xed, B: 0xf0, A: 0xff}   // snow off-white
+
+	// Blend each theme biome color toward its map anchor. 0.62 keeps a clear majority of
+	// the legible anchor while still letting the theme tint through (retint on switch).
+	const toward = 0.62
+	tones[biomeGrass] = blend(biomeColor(biomeGrass, pal), grassA, toward)
+	tones[biomeForest] = blend(biomeColor(biomeForest, pal), forestA, toward)
+	tones[biomeSand] = blend(biomeColor(biomeSand, pal), sandA, toward)
+	tones[biomeRock] = blend(biomeColor(biomeRock, pal), hillA, toward)
+	tones[biomeMountain] = blend(biomeColor(biomeMountain, pal), mtnA, toward)
+	tones[biomeSnow] = blend(biomeColor(biomeSnow, pal), snowA, toward)
+
+	// Sea: keep it dark and blue (fuller mute toward background) so the vivid continent
+	// pops against a dim basin.
+	tones[biomeDeepWater] = blend(bg, biomeColor(biomeDeepWater, pal), 1.0-(worldTerrainMix-0.08))
+	tones[biomeShallowWater] = blend(bg, biomeColor(biomeShallowWater, pal), 1.0-(worldTerrainMix-0.08))
+	return tones
+}
+
+// drawWorldTerrain paints the world biome field as a MUTED strategic backdrop: each
+// pixel takes its biome's precomputed muted tone (see mutedBiomeTones). This is the
+// BASE fill — the neutral render (drawWorldModel) lays coastline / rivers / relief on
+// top. Retained as its own entry point because a test drives it directly to assert the
+// settlement layer paints zero pixels on water. Panic-safe: wf.at() returns grass for
+// any out-of-range/empty query, so a tiny or zero field simply paints a uniform dim land.
+func drawWorldTerrain(img *image.RGBA, pal terrainPalette, wf *terrainField) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 {
+		return
+	}
+	muted := mutedBiomeTones(pal)
 	for y := 0; y < h; y++ {
 		for x := 0; x < w; x++ {
 			bi := wf.at(x, y)
@@ -329,6 +380,270 @@ func drawWorldTerrain(img *image.RGBA, pal terrainPalette, wf *terrainField) {
 				bi = biomeGrass
 			}
 			img.SetRGBA(b.Min.X+x, b.Min.Y+y, muted[bi])
+		}
+	}
+}
+
+// drawWorldModel is the NEUTRAL atlas render of the seeded continent: the clean, readable
+// default the world map draws before any per-age cartographic medium (that's a later
+// phase). It composites, in order:
+//
+//	ocean    — depth-banded blues: the deep basin darkens with distance below sea level,
+//	           the shallow shelf near the coast lightens, so the sea has real bathymetry.
+//	land     — the biome-toned muted fill (grass/forest/hill/mountain/snow/sand) from the
+//	           shared palette, so the interior reads as terrain and retints on a theme switch.
+//	coastline— a crisp darker stroke exactly along the land/ocean boundary (a land pixel
+//	           with a water 4-neighbour), so the continent has a drawn shore.
+//	rivers   — thin blue-ish polylines along each watercourse, widening toward the mouth
+//	           with accumulated flow, so drainage reads as rivers reaching the sea.
+//	relief   — small mountain (caret), hill (bump), and forest (dab) symbols at the sparse
+//	           relief anchors, readable at half-block scale (highland body + a shadow pixel).
+//
+// Muted toward the background throughout so the atlas stays a dim strategic backdrop the
+// bright civ dots pop off of. Theme-aware: every tone is a live palette role. Panic-safe:
+// an empty model (tiny/zero canvas) has no rivers/relief and a guarded field, so this
+// paints a uniform dim land and returns.
+func drawWorldModel(img *image.RGBA, pal terrainPalette, m *worldModel) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 || m == nil {
+		return
+	}
+	// Atlas tones: a lit, legible, vividly-zoned continent over a dark sea. Land vs water
+	// is the map's primary read, so land must sit clearly above the sea.
+	muted := atlasBiomeTones(pal)
+
+	// 1) Base fill: depth-banded ocean + biome-toned land. For water pixels we shade by
+	//    how far the elevation sits below sea level (deep = darker, shelf = lighter) so the
+	//    sea has bathymetry instead of a flat blue. Land takes its lit atlas biome tone.
+	deepTone := muted[biomeDeepWater]
+	shelfTone := muted[biomeShallowWater]
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			bi := m.field.at(x, y)
+			if bi >= biomeCount {
+				bi = biomeGrass
+			}
+			col := muted[bi]
+			if bi == biomeDeepWater || bi == biomeShallowWater {
+				// Depth 0 at the coast → 1 at the deepest sea. Shade deep→shelf by depth so
+				// the basin darkens away from shore.
+				e := m.elevAtPx(x, y)
+				depth := 0.0
+				if m.seaLevel > 0 {
+					depth = clamp01((m.seaLevel - e) / m.seaLevel)
+				}
+				col = blend(shelfTone, deepTone, depth)
+			}
+			img.SetRGBA(b.Min.X+x, b.Min.Y+y, col)
+		}
+	}
+
+	// 2) Coastline stroke: a crisp SHORE rim where land meets water. The ocean is already
+	//    dark, so a dark stroke would just merge into it (a muddy moat) — instead the shore
+	//    is a LIGHTER beach tone (the sand biome color lifted), which reads as a clean bright
+	//    coastline outlining the continent against the dark sea. A land pixel with at least one
+	//    water 4-neighbour is a shore pixel. Second pass so it reads over the base fill.
+	coast := brighten(muted[biomeSand], 0.10)
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if !isLandPx(m.field, x, y) {
+				continue
+			}
+			if isLandPx(m.field, x-1, y) && isLandPx(m.field, x+1, y) &&
+				isLandPx(m.field, x, y-1) && isLandPx(m.field, x, y+1) {
+				continue // interior land — not a shore pixel
+			}
+			img.SetRGBA(b.Min.X+x, b.Min.Y+y, coast)
+		}
+	}
+
+	// 3) Rivers: thin blue courses widening to the mouth, drawn over the LAND (clipped to
+	//    land so they stop at the coast, not splash into the sea). River tone is a clear,
+	//    bright water blue — the palette's shallow-water tone pushed toward a bright blue —
+	//    so a watercourse reads as a distinct blue thread over the lit land. Width grows with
+	//    the sqrt of accumulated flow (thin at the source, widening toward the sea).
+	riverTone := brighten(blend(pal.bShallowWater, color.RGBA{R: 0x55, G: 0x8f, B: 0xd8, A: 0xff}, 0.55), 0.14)
+	maxFlow := m.maxRiverFlow()
+	for _, r := range m.rivers {
+		drawRiver(img, r, riverTone, maxFlow, m)
+	}
+
+	// 4) Relief symbols: sparse mountain / hill / forest dabs. Highland/peak body with a
+	//    single shadow pixel so each reads as a tiny raised mark at half-block scale.
+	drawRelief(img, pal, muted, m)
+}
+
+// isLandPx reports whether pixel (x,y) is passable land in the field. Out-of-range is
+// treated as WATER (false) so the canvas edge counts as ocean for the coastline test —
+// a continent that runs to the frame edge still gets a shore stroke there.
+func isLandPx(f *terrainField, x, y int) bool {
+	if f == nil || x < 0 || y < 0 || x >= f.w || y >= f.h {
+		return false
+	}
+	return f.passableAt(x, y)
+}
+
+// maxRiverFlow returns the peak accumulated flow across all rivers (drives per-river
+// width normalization). 0 when there are no rivers.
+func (m *worldModel) maxRiverFlow() float64 {
+	mx := 0.0
+	for _, r := range m.rivers {
+		for _, f := range r.flow {
+			if f > mx {
+				mx = f
+			}
+		}
+	}
+	return mx
+}
+
+// drawRiver strokes one watercourse over the LAND: a Bresenham line between each
+// consecutive point, thickened by a radius that grows with accumulated flow (thin at the
+// source, widening toward the mouth). Every stamped pixel is gated to land so the river
+// stops crisply at the coast instead of splashing blue into the sea (which would speckle
+// the ocean). maxFlow normalizes the width so the biggest trunk tops out at ~3px.
+func drawRiver(img *image.RGBA, r river, tone color.RGBA, maxFlow float64, m *worldModel) {
+	if len(r.pts) < 2 {
+		return
+	}
+	if maxFlow < 1 {
+		maxFlow = 1
+	}
+	put := func(x, y int, c color.RGBA) {
+		if isLandPx(m.field, x, y) {
+			setPixel(img, x, y, c)
+		}
+	}
+	for i := 0; i+1 < len(r.pts); i++ {
+		a := r.pts[i]
+		b := r.pts[i+1]
+		// Width from the DOWNSTREAM point's flow so the mouth end of each segment is the
+		// wider one. sqrt so growth tapers; capped at rx=1 (a 3px-wide brush) so even the
+		// trunk stays a thread, not a canal.
+		fl := r.flow[i+1] / maxFlow
+		rad := int(math.Round(math.Sqrt(fl) * 1.4))
+		if rad < 0 {
+			rad = 0
+		}
+		if rad > 1 {
+			rad = 1
+		}
+		strokeThickLineFunc(a.x, a.y, b.x, b.y, rad, tone, put)
+	}
+}
+
+// strokeThickLine draws a Bresenham line from (x0,y0) to (x1,y1), stamping a small
+// aspect-corrected dab of radius r at each step so the line has width. r==0 is a 1px
+// line. The dab is drawn wider than tall (rx≥ry) so it reads round on the 1×2 half-block
+// canvas. Every pixel goes through the put callback, so the caller can clip (e.g. rivers
+// gate to land). r==0 stamps a single pixel per step.
+func strokeThickLineFunc(x0, y0, x1, y1, r int, col color.RGBA, put func(x, y int, c color.RGBA)) {
+	dx := absInt(x1 - x0)
+	dy := -absInt(y1 - y0)
+	sx := 1
+	if x0 > x1 {
+		sx = -1
+	}
+	sy := 1
+	if y0 > y1 {
+		sy = -1
+	}
+	// Dab radii: wider than tall so the stroke reads round on half-blocks.
+	rx, ry := r, r-1
+	if ry < 0 {
+		ry = 0
+	}
+	err := dx + dy
+	for {
+		if r <= 0 {
+			put(x0, y0, col)
+		} else {
+			for ddy := -ry; ddy <= ry; ddy++ {
+				for ddx := -rx; ddx <= rx; ddx++ {
+					var ex, ey float64
+					if rx > 0 {
+						ex = float64(ddx) / float64(rx)
+					}
+					if ry > 0 {
+						ey = float64(ddy) / float64(ry)
+					}
+					if ex*ex+ey*ey > 1.0 {
+						continue
+					}
+					put(x0+ddx, y0+ddy, col)
+				}
+			}
+		}
+		if x0 == x1 && y0 == y1 {
+			break
+		}
+		e2 := 2 * err
+		if e2 >= dy {
+			err += dy
+			x0 += sx
+		}
+		if e2 <= dx {
+			err += dx
+			y0 += sy
+		}
+	}
+}
+
+// drawRelief stamps the sparse relief symbols. Each anchor kind gets a tiny, readable
+// mark at half-block scale:
+//
+//	mountain — a small caret/triangle: a highland/peak-toned apex over a wider base with a
+//	           shadow pixel on the SE flank, so it reads as a raised peak, not a blob.
+//	hill     — a low bump: a short highland dab with a shadow pixel beneath.
+//	forest   — a small forest-toned dab (a couple of pixels) — tree cover, quiet.
+//
+// Tones come from the muted biome palette (so relief retints with the theme and sits in
+// the same muted family as the fill); the shadow is the palette shadow role.
+func drawRelief(img *image.RGBA, pal terrainPalette, muted []color.RGBA, m *worldModel) {
+	if len(m.reliefs) == 0 {
+		return
+	}
+	// Relief tones: lift the muted biome tone a touch so a symbol reads over its own fill,
+	// with a shared shadow for the SE flank that grounds each mark.
+	peakTone := brighten(muted[biomeMountain], 0.14)
+	snowTone := brighten(muted[biomeSnow], 0.10)
+	hillTone := brighten(muted[biomeRock], 0.12)
+	forestTone := brighten(muted[biomeForest], 0.10)
+	shadow := pal.shadow
+
+	// land-clipped stamp: relief symbols spread a pixel or two off their anchor, which can
+	// spill onto an adjacent sea pixel and speckle the ocean. Gate every relief pixel to
+	// land so the sea stays clean.
+	put := func(x, y int, c color.RGBA) {
+		if isLandPx(m.field, x, y) {
+			setPixel(img, x, y, c)
+		}
+	}
+	for _, a := range m.reliefs {
+		switch a.kind {
+		case reliefMountain:
+			// Apex + base + SE shadow → a little peak. Snowy peaks get the brighter cap.
+			apex := peakTone
+			if m.field.at(a.x, a.y) == biomeSnow {
+				apex = snowTone
+			}
+			put(a.x, a.y-1, apex)     // summit
+			put(a.x-1, a.y, apex)     // base left
+			put(a.x, a.y, apex)       // base center
+			put(a.x+1, a.y, apex)     // base right
+			put(a.x+1, a.y+1, shadow) // SE flank shadow
+		case reliefHill:
+			// Low bump: a short cap over a shadowed foot.
+			put(a.x, a.y, hillTone)
+			put(a.x-1, a.y, hillTone)
+			put(a.x+1, a.y, hillTone)
+			put(a.x, a.y+1, shadow)
+		case reliefForest:
+			// A small tree-cover dab — kept quiet (a couple of pixels), no shadow.
+			put(a.x, a.y, forestTone)
+			put(a.x-1, a.y, forestTone)
+			put(a.x, a.y-1, forestTone)
 		}
 	}
 }
@@ -371,11 +686,12 @@ func drawSettlementField(img *image.RGBA, pal terrainPalette, wf *terrainField, 
 	// progress levels without rasterizing through the wash.
 	grid := settlementGrid(seed, gw, gh, progress)
 
-	// Dim land tone for the backdrop dots: RoleDim nudged a touch toward the grass land
-	// so the settlements read as faint inhabited specks, clearly behind the bright
-	// foreground civ dots. Lives in the theme via RoleDim → retints on a switch.
+	// Settlement speck tone: a small DARK mark that reads as a distant town cluster on the
+	// now-vivid land — the grass tone deepened toward the shadow role, so it sits quietly on
+	// the map (clearly behind the bright foreground civ dots) rather than as bright noise.
+	// Lives in the theme (RoleDim/shadow) → retints on a switch.
 	dim := rgba(theme.Color(theme.RoleDim))
-	landDim := blend(dim, pal.bGrass, 0.30)
+	landDim := blend(darken(pal.bGrass, 0.28), dim, 0.35)
 
 	// Render each live cell as a SMALL, dim mark — a distant settlement, not a blob. Most
 	// are a single pixel; a stable minority get a 2-wide × 0-tall (i.e. 3px across, 1px
@@ -446,7 +762,7 @@ func settlementGrid(seed uint32, gw, gh int, progress float64) []bool {
 	}
 	// Sparse base density: a low floor plus a gentle progress ramp. Kept well under the
 	// old 12–38% so early game reads as a handful of settlements, late game as a few dozen.
-	seedDensity := 0.04 + 0.11*progress
+	seedDensity := 0.02 + 0.06*progress
 	gseed := settlementSeed(seed)
 
 	grid := make([]bool, gw*gh)
