@@ -60,15 +60,19 @@ type mediumPalette struct {
 type worldMediumStyle uint8
 
 const (
-	styleAtlas      worldMediumStyle = iota // neutral default: crisp coast, depth-banded sea
-	styleCharcoal                           // near-mono, grainy, jittered chalk coastline
-	styleParchment                          // vellum, wavy ink coast, frame + compass + cartouche
-	styleSatellite                          // photographic, natural land/sea transition, no outline
-	styleNeon                               // black + neon wireframe, holographic grid overlay
-	stylePetroglyph                         // light sandstone rock carving: pecked stipple, carved-groove coast
-	styleClayTablet                         // wet terracotta tablet: pressed-groove coast, wedge stamps
-	styleHide                               // tanned leather with burnt edges: soot + ochre ink
-	styleMosaic                             // Roman tesserae: quantized tile grid + grout, Greek-key border
+	styleAtlas       worldMediumStyle = iota // neutral default: crisp coast, depth-banded sea
+	styleCharcoal                            // near-mono, grainy, jittered chalk coastline
+	styleParchment                           // vellum, wavy ink coast, frame + compass + cartouche
+	styleSatellite                           // photographic, natural land/sea transition, no outline
+	styleNeon                                // black + neon wireframe, holographic grid overlay
+	stylePetroglyph                          // light sandstone rock carving: pecked stipple, carved-groove coast
+	styleClayTablet                          // wet terracotta tablet: pressed-groove coast, wedge stamps
+	styleHide                                // tanned leather with burnt edges: soot + ochre ink
+	styleMosaic                              // Roman tesserae: quantized tile grid + grout, Greek-key border
+	styleCopperplate                         // renaissance engraving: fine ruled sea-hatch, cross-hatched relief, blank land
+	styleNautical                            // colonial sea-chart: rhumb-line net over the water, sounding stipple
+	styleOrdnance                            // Victorian ordnance sheet: brown contour isolines + printed grid on pale paper
+	styleLithograph                          // hand-tinted lithograph: pastel biome washes over fine black outline
 )
 
 // worldMedium is a cartographic medium: how a world is drawn for one era. `palette` is the
@@ -99,6 +103,14 @@ func mediumForAge(ageKey string) worldMedium {
 		return hideMedium()
 	case "classical_age":
 		return mosaicMedium()
+	case "renaissance_age":
+		return copperplateMedium()
+	case "colonial_age":
+		return nauticalMedium()
+	case "industrial_age":
+		return ordnanceMedium()
+	case "victorian_age":
+		return lithographMedium()
 	case "medieval_age":
 		return parchmentMedium()
 	case "modern_age":
@@ -1405,7 +1417,876 @@ func drawMosaic(img *image.RGBA, m *worldModel, med worldMedium) {
 	drawGreekKeyBorder(img, p.coast, p.shadow)
 }
 
+// ---- copperplate: renaissance engraving -------------------------------------
+
+// copperplateMedium is a fine copperplate ENGRAVING (→ renaissance_age). Cream/ivory paper
+// where EVERYTHING is fine engraved LINES (burin strokes), never a solid fill. The SEA is
+// fine RULED horizontal line-shading — dense near the coast, thinning to open paper offshore
+// — so water reads as ruled hatching, not a tint. The LAND is mostly blank ivory paper, with
+// finely CROSS-HATCHED relief only where hills/mountains sit. The coastline is one crisp fine
+// engraved line with a thin band of hatch-shading on the sea side. Rivers are thin single
+// engraved lines. Chrome: an elegant engraved neat-line border (a fine double rule) with small
+// graticule tick marks along the margins. Anchors to cream paper + fine dark-ink line HARD —
+// an engraving is line-shaded and precise, never the solid cream fills + wavy coast of
+// parchment.
+func copperplateMedium() worldMedium {
+	// Fixed engraving identity (theme-independent by design).
+	ivory := color.RGBA{R: 0xef, G: 0xe7, B: 0xd4, A: 0xff} // cream/ivory paper (land + open sea)
+	ivoryLo := color.RGBA{R: 0xe4, G: 0xda, B: 0xc4, A: 0xff}
+	burin := color.RGBA{R: 0x33, G: 0x2a, B: 0x1e, A: 0xff}   // fine dark engraving ink
+	burinLt := color.RGBA{R: 0x6a, G: 0x5c, B: 0x46, A: 0xff} // lighter burin (thin sea rule)
+
+	var mp mediumPalette
+	mp.background = ivory
+	mp.oceanDeep = ivory // sea is paper too — the RULE lines carry the water read, not a fill
+	mp.oceanShelf = ivory
+	mp.coast = burin
+	mp.river = burin
+	mp.relief = burin
+	mp.reliefAlt = burinLt
+	mp.shadow = ivoryLo
+	// Land is blank ivory paper everywhere — relief hatching (not hue) carries the read.
+	for bi := biome(0); bi < biomeCount; bi++ {
+		mp.land[bi] = ivory
+	}
+
+	return worldMedium{name: "copperplate", style: styleCopperplate, palette: mp, draw: drawCopperplate}
+}
+
+// drawCopperplate paints the engraving medium. Technique: the whole sheet starts as blank
+// ivory paper (a faint plate-tone mottle so it isn't sterile); the SEA is ruled with fine
+// horizontal engraved lines every few rows, their darkness keyed to distance-from-coast
+// (approximated by depth) so hatching is dense at the shore and thins to open paper offshore;
+// the LAND stays blank except where relief sits, which gets fine diagonal CROSS-HATCHING; the
+// coastline is one crisp burin line with a thin extra hatch band on the sea side; rivers are
+// thin single engraved lines; and an engraved neat-line border with graticule ticks frames it.
+func drawCopperplate(img *image.RGBA, m *worldModel, med worldMedium) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 || m == nil {
+		return
+	}
+	p := med.palette
+	seed := uint32(0xC09E7)
+
+	// 1) Base: blank ivory paper with a very faint plate-tone mottle (broad low-freq noise) so
+	//    the sheet reads as inked paper, not a flat swatch. Land and sea are both paper here —
+	//    the sea's RULE lines (step 2) are what distinguish water.
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			col := p.background
+			blot := valueNoise(float64(x)*0.05, float64(y)*0.05, seed^0xF0)
+			col = darken(col, 0.02+0.04*blot)
+			setPixel(img, x, y, col)
+		}
+	}
+
+	// 2) Ruled sea-hatch: fine horizontal engraved lines over the WATER, every `spacing` rows.
+	//    A line pixel's ink strength ramps with depth (deep = darker/denser feel) AND we skip the
+	//    line entirely in the deepest open water on alternate bands so hatching THINS offshore and
+	//    packs near the coast — the classic engraved-sea read. Broken slightly by a hash so the
+	//    rule looks bitten by a burin, not laser-straight.
+	const spacing = 3
+	for y := 0; y < h; y++ {
+		if y%spacing != 0 {
+			continue
+		}
+		for x := 0; x < w; x++ {
+			if isLandPx(m.field, x, y) {
+				continue
+			}
+			e := m.elevAtPx(x, y)
+			depth := 0.0
+			if m.seaLevel > 0 {
+				depth = clamp01((m.seaLevel - e) / m.seaLevel)
+			}
+			// Shallow (near coast, depth→0) hatches densely; deep (depth→1) thins: drop every
+			// other band in the deeper half so offshore opens toward blank paper.
+			if depth > 0.45 && (y/spacing)%2 == 1 {
+				continue
+			}
+			if hashUnit(uint32(x), uint32(y), seed^0x51D) < 0.10 {
+				continue // a tiny break so the rule reads engraved
+			}
+			// Line ink: firmer near the coast (shallow), fainter in the deep.
+			ink := blend(p.reliefAlt, p.coast, clamp01(1.0-depth*0.8))
+			setPixel(img, x, y, ink)
+		}
+	}
+
+	// 3) Relief cross-hatching on the LAND: only where hills/mountains sit does the blank paper
+	//    get fine diagonal hatch strokes (two crossing diagonal families for mountains → true
+	//    cross-hatch; one family for hills → single hatch). A small radius around each anchor so
+	//    the shading has area. Gate every stamp to land so hatch never bleeds into the sea.
+	hatchAt := func(cx, cy, rad int, cross bool) {
+		for dy := -rad; dy <= rad; dy++ {
+			for dx := -rad; dx <= rad; dx++ {
+				x, y := cx+dx, cy+dy
+				if !isLandPx(m.field, x, y) {
+					continue
+				}
+				// Diagonal family A: ink where (x+y) lands on a stroke line.
+				a := (x + y) % 3
+				bfam := (x - y) % 3
+				on := a == 0
+				if cross && bfam == 0 {
+					on = true
+				}
+				if !on {
+					continue
+				}
+				setPixel(img, x, y, p.relief)
+			}
+		}
+	}
+	for _, a := range m.reliefs {
+		switch a.kind {
+		case reliefMountain:
+			hatchAt(a.x, a.y, 2, true) // dense cross-hatch
+		case reliefHill:
+			hatchAt(a.x, a.y, 1, false) // light single hatch
+		}
+	}
+
+	// 4) Coastline: one crisp fine burin line at the shore, PLUS a thin one-pixel hatch band on
+	//    the SEAWARD neighbour so the coast reads engraved (line + a whisker of shore-hatch).
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if !isLandPx(m.field, x, y) {
+				continue
+			}
+			if isLandPx(m.field, x-1, y) && isLandPx(m.field, x+1, y) &&
+				isLandPx(m.field, x, y-1) && isLandPx(m.field, x, y+1) {
+				continue
+			}
+			setPixel(img, x, y, p.coast) // the crisp engraved shore
+			for _, nb := range [4][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+				nx, ny := x+nb[0], y+nb[1]
+				if !isLandPx(m.field, nx, ny) {
+					setPixel(img, nx, ny, blend(p.background, p.coast, 0.55)) // thin shore-hatch band
+				}
+			}
+		}
+	}
+
+	// 5) Rivers: thin single engraved lines over the land.
+	putRiver := func(x, y int, c color.RGBA) {
+		if isLandPx(m.field, x, y) {
+			setPixel(img, x, y, c)
+		}
+	}
+	for _, r := range m.rivers {
+		for i := 0; i+1 < len(r.pts); i++ {
+			a, bb := r.pts[i], r.pts[i+1]
+			strokeThickLineFunc(a.x, a.y, bb.x, bb.y, 0, p.river, putRiver)
+		}
+	}
+
+	// 6) Chrome: an engraved neat-line border (fine double rule) with graticule tick marks.
+	drawEngravedNeatline(img, p.coast, p.reliefAlt)
+}
+
+// ---- nautical: colonial sea-chart -------------------------------------------
+
+// nauticalMedium is a NAUTICAL sea-chart where the SEA is the subject (→ colonial_age). Aged
+// tan paper; across the WATER a web of RHUMB LINES (loxodromes) radiates from 2–3 compass-node
+// points and crisscrosses the sea. Near coasts, shoal STIPPLE and small sounding dot-marks
+// (dots, not numbers) speckle the shallows. The LAND interior is left plain/blank tan — not
+// the focus. The coastline is a firm ink line edged with tiny depth ticks. Chrome: a chart-
+// style border. The geometric rhumb-line net over the sea is the signature. Anchors to aged
+// tan + ink-line net HARD.
+func nauticalMedium() worldMedium {
+	// Fixed sea-chart identity (theme-independent by design).
+	tan := color.RGBA{R: 0xd9, G: 0xc6, B: 0x9e, A: 0xff}     // aged tan chart paper (land)
+	tanSea := color.RGBA{R: 0xc7, G: 0xb8, B: 0x97, A: 0xff}  // sea: a shade cooler/greyer tan
+	tanDeep := color.RGBA{R: 0xb6, G: 0xa8, B: 0x8a, A: 0xff} // deeper water tan
+	ink := color.RGBA{R: 0x46, G: 0x37, B: 0x22, A: 0xff}     // firm chart ink (coast, rhumb nodes)
+	rhumb := color.RGBA{R: 0x7d, G: 0x5b, B: 0x38, A: 0xff}   // thin rhumb-line ink (over water)
+	sound := color.RGBA{R: 0x5c, G: 0x49, B: 0x30, A: 0xff}   // sounding dot / shoal stipple
+
+	var mp mediumPalette
+	mp.background = tan
+	mp.oceanDeep = tanDeep
+	mp.oceanShelf = tanSea
+	mp.coast = ink
+	mp.river = blend(ink, tanSea, 0.35)
+	mp.relief = sound    // relief is understated on a sea-chart (soundings matter, not peaks)
+	mp.reliefAlt = rhumb // reuse as the rhumb-line tone
+	mp.shadow = sound
+	// Land is one plain tan — the interior is not the subject; only the sea net + shore read.
+	for bi := biome(0); bi < biomeCount; bi++ {
+		mp.land[bi] = tan
+	}
+
+	return worldMedium{name: "nautical", style: styleNautical, palette: mp, draw: drawNautical}
+}
+
+// drawNautical paints the sea-chart medium. Technique: aged tan paper (sea a shade cooler,
+// faintly depth-banded) with a soft paper mottle; a web of RHUMB LINES drawn from 2–3 seeded
+// compass nodes out along 16 compass bearings, each line stamped ONLY over water (it stops at
+// the coast) so the sea is netted with loxodromes; shoal STIPPLE + small sounding dots speckle
+// the shallow water near the coast; the coastline is a firm ink line with tiny outward depth
+// ticks; the land is left plain; and a chart-style border frames it. The rhumb net is the read.
+func drawNautical(img *image.RGBA, m *worldModel, med worldMedium) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 || m == nil {
+		return
+	}
+	p := med.palette
+	seed := uint32(0x0CEA7)
+
+	// 1) Base: tan paper, sea faintly cooler + depth-banded, with a soft mottle.
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			bi := m.field.at(x, y)
+			if bi >= biomeCount {
+				bi = biomeGrass
+			}
+			var col color.RGBA
+			if bi == biomeDeepWater || bi == biomeShallowWater {
+				e := m.elevAtPx(x, y)
+				depth := 0.0
+				if m.seaLevel > 0 {
+					depth = clamp01((m.seaLevel - e) / m.seaLevel)
+				}
+				col = blend(p.oceanShelf, p.oceanDeep, depth*0.5)
+			} else {
+				col = p.land[bi]
+			}
+			blot := valueNoise(float64(x)*0.06, float64(y)*0.06, seed^0xB1)
+			col = darken(col, 0.03+0.05*blot)
+			setPixel(img, x, y, col)
+		}
+	}
+
+	// 2) Rhumb-line net: 2–3 seeded compass NODES on the water; from each, draw thin lines along
+	//    16 compass bearings clear across the frame — but stamp each line ONLY on water pixels so
+	//    the net covers the sea and stops at every coast. This is the signature: a geometric web
+	//    of loxodromes over the water.
+	putSea := func(x, y int, c color.RGBA) {
+		if x < 0 || y < 0 || x >= w || y >= h {
+			return
+		}
+		if isLandPx(m.field, x, y) {
+			return // rhumb lines live on the water only
+		}
+		setPixel(img, x, y, c)
+	}
+	nNodes := 3
+	if minInt(w, h) < 60 {
+		nNodes = 2 // fewer nodes on a small canvas so the net stays legible
+	}
+	span := w + h // long enough to cross the frame from any interior node
+	for ni := 0; ni < nNodes; ni++ {
+		// Place the node at a seeded position; nudge to a water pixel if it landed on land so its
+		// lines actually seed from the sea (search a small spiral; fall back to the raw point).
+		nx := int(hashUnit(uint32(ni), 0x0DE1, seed) * float64(w))
+		ny := int(hashUnit(uint32(ni), 0x0DE2, seed) * float64(h))
+		if isLandPx(m.field, nx, ny) {
+			for rr := 2; rr <= 12 && isLandPx(m.field, nx, ny); rr += 2 {
+				nx2 := clampInt(nx+int((hashUnit(uint32(ni), uint32(rr), seed)-0.5)*float64(rr)*4), 0, w-1)
+				ny2 := clampInt(ny+int((hashUnit(uint32(rr), uint32(ni), seed)-0.5)*float64(rr)*4), 0, h-1)
+				nx, ny = nx2, ny2
+			}
+		}
+		// A node hub mark (small ink pip) so the net reads as radiating from compass roses.
+		putSea(nx, ny, p.coast)
+		for dir := 0; dir < 16; dir++ {
+			ang := float64(dir) * (math.Pi / 8.0)
+			ex := int(math.Round(math.Cos(ang) * float64(span)))
+			ey := int(math.Round(math.Sin(ang) * float64(span)))
+			strokeThickLineFunc(nx, ny, nx+ex, ny+ey, 0, p.reliefAlt, putSea)
+		}
+	}
+
+	// 3) Shoal stipple + sounding dots: over SHALLOW water bordering land, scatter small dot
+	//    marks (soundings) and a light shoal stipple by a coordinate hash — dots, never numerals.
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if m.field.at(x, y) != biomeShallowWater {
+				continue
+			}
+			nearLand := isLandPx(m.field, x-1, y) || isLandPx(m.field, x+1, y) ||
+				isLandPx(m.field, x, y-1) || isLandPx(m.field, x, y+1) ||
+				isLandPx(m.field, x-2, y) || isLandPx(m.field, x+2, y)
+			g := hashUnit(uint32(x), uint32(y), seed^0x5A0)
+			if nearLand && g > 0.86 {
+				setPixel(img, x, y, p.shadow) // a sounding dot right off the shore
+			} else if g > 0.955 {
+				setPixel(img, x, y, blend(m.paperSample(img, x, y), p.shadow, 0.5)) // sparse shoal fleck
+			}
+		}
+	}
+
+	// 4) Coastline: a firm ink line at the shore with tiny outward depth ticks (one seaward pip
+	//    every few shore pixels) so the coast reads as a charted, sounded shore.
+	tick := 0
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if !isLandPx(m.field, x, y) {
+				continue
+			}
+			if isLandPx(m.field, x-1, y) && isLandPx(m.field, x+1, y) &&
+				isLandPx(m.field, x, y-1) && isLandPx(m.field, x, y+1) {
+				continue
+			}
+			setPixel(img, x, y, p.coast)
+			tick++
+			if tick%4 == 0 {
+				for _, nb := range [4][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+					nx, ny := x+nb[0], y+nb[1]
+					if !isLandPx(m.field, nx, ny) {
+						setPixel(img, nx, ny, p.coast) // a small depth tick reaching into the water
+						break
+					}
+				}
+			}
+		}
+	}
+
+	// 5) Rivers: thin muted ink threads on the (otherwise plain) land — a chart still notes the
+	//    river mouths feeding the coast.
+	putRiver := func(x, y int, c color.RGBA) {
+		if isLandPx(m.field, x, y) {
+			setPixel(img, x, y, c)
+		}
+	}
+	for _, r := range m.rivers {
+		for i := 0; i+1 < len(r.pts); i++ {
+			a, bb := r.pts[i], r.pts[i+1]
+			strokeThickLineFunc(a.x, a.y, bb.x, bb.y, 0, p.river, putRiver)
+		}
+	}
+
+	// 6) Chrome: a chart-style border (a graduated double rule with tick divisions).
+	drawChartBorder(img, p.coast, p.shadow)
+}
+
+// paperSample returns the current pixel color at (x,y) clamped on-canvas — a tiny helper so a
+// medium can blend a mark toward whatever paper/mottle already sits there (keeps sparse marks
+// from looking pasted on a flat swatch).
+func (m *worldModel) paperSample(img *image.RGBA, x, y int) color.RGBA {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 {
+		return color.RGBA{A: 0xff}
+	}
+	return img.RGBAAt(b.Min.X+clampInt(x, 0, w-1), b.Min.Y+clampInt(y, 0, h-1))
+}
+
+// ---- ordnance: Victorian ordnance-survey sheet ------------------------------
+
+// ordnanceMedium is a Victorian ORDNANCE-SURVEY topographic sheet (→ industrial_age). Pale
+// printed off-white/buff paper with a faint pale-green lowland tint. The SIGNATURE is fine
+// brown CONTOUR ISOLINES following elevation (elevation quantized into bands; each band
+// boundary stroked as a thin muted-brown line) PLUS a printed thin black GRID graticule over
+// the whole sheet. Thin blue rivers, small black hachure relief ticks. Chrome: a printed
+// neat-line border with grid ticks. Brown contour isolines + printed grid on drab pale paper
+// is the read — distinct from neon (cyan contours on BLACK) and engraving (hatch, no grid).
+// Anchors to pale buff paper + brown contours + black grid HARD.
+func ordnanceMedium() worldMedium {
+	// Fixed ordnance-sheet identity (theme-independent by design).
+	buff := color.RGBA{R: 0xea, G: 0xe6, B: 0xda, A: 0xff}     // pale printed off-white/buff paper
+	lowGreen := color.RGBA{R: 0xd8, G: 0xdf, B: 0xc4, A: 0xff} // faint pale-green lowland tint
+	upBuff := color.RGBA{R: 0xe3, G: 0xd8, B: 0xc4, A: 0xff}   // slightly warmer buff for uplands
+	contour := color.RGBA{R: 0x9a, G: 0x6b, B: 0x40, A: 0xff}  // muted brown contour ink
+	grid := color.RGBA{R: 0x3a, G: 0x36, B: 0x30, A: 0xff}     // thin printed black grid
+	blue := color.RGBA{R: 0x4c, G: 0x74, B: 0x9a, A: 0xff}     // thin printed river blue
+
+	var mp mediumPalette
+	mp.background = buff
+	mp.oceanDeep = color.RGBA{R: 0xc4, G: 0xd2, B: 0xd6, A: 0xff}  // pale printed water (drab blue-grey)
+	mp.oceanShelf = color.RGBA{R: 0xd4, G: 0xde, B: 0xdf, A: 0xff} // paler shelf
+	mp.coast = grid
+	mp.river = blue
+	mp.relief = grid       // black hachure ticks
+	mp.reliefAlt = contour // brown contour tone
+	mp.shadow = grid
+	// Land tints: lowland faint green, uplands a warmer buff, so the base paper hints at
+	// elevation even before the contour lines are drawn (contours + grid carry the real read).
+	for bi := biome(0); bi < biomeCount; bi++ {
+		mp.land[bi] = buff
+	}
+	mp.land[biomeGrass] = lowGreen
+	mp.land[biomeForest] = blend(lowGreen, contour, 0.12)
+	mp.land[biomeSand] = buff
+	mp.land[biomeRock] = upBuff
+	mp.land[biomeMountain] = blend(upBuff, contour, 0.10)
+	mp.land[biomeSnow] = buff
+
+	return worldMedium{name: "ordnance", style: styleOrdnance, palette: mp, draw: drawOrdnance}
+}
+
+// drawOrdnance paints the ordnance-survey medium. Technique: pale buff/green printed paper
+// (very faint print mottle); fine brown CONTOUR ISOLINES where a pixel's quantized elevation
+// band differs from its +x/+y neighbour's (topographic isolines over the land); a printed thin
+// black GRID graticule every gridStep px across the WHOLE sheet (the km-grid); the coast as a
+// firm printed line; thin printed-blue rivers; small black hachure ticks at relief; and a
+// printed neat-line border with grid ticks. Brown contours + black grid on drab paper is the
+// signature.
+func drawOrdnance(img *image.RGBA, m *worldModel, med worldMedium) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 || m == nil {
+		return
+	}
+	p := med.palette
+	seed := uint32(0x02D5A)
+
+	// 1) Base: pale printed paper — lowland-green / upland-buff tint by biome, sea a drab pale
+	//    blue-grey, with a very faint print mottle so it reads as a printed sheet.
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			bi := m.field.at(x, y)
+			if bi >= biomeCount {
+				bi = biomeGrass
+			}
+			var col color.RGBA
+			if bi == biomeDeepWater || bi == biomeShallowWater {
+				e := m.elevAtPx(x, y)
+				depth := 0.0
+				if m.seaLevel > 0 {
+					depth = clamp01((m.seaLevel - e) / m.seaLevel)
+				}
+				col = blend(p.oceanShelf, p.oceanDeep, depth*0.6)
+			} else {
+				col = p.land[bi]
+			}
+			blot := valueNoise(float64(x)*0.09, float64(y)*0.09, seed^0xF0)
+			col = darken(col, 0.015+0.03*blot)
+			setPixel(img, x, y, col)
+		}
+	}
+
+	// 2) Contour isolines: quantize land elevation into bands; a land pixel whose band differs
+	//    from its +x or +y neighbour sits on a band boundary → stroke it muted brown. This is the
+	//    topographic-contour signature.
+	const bands = 7
+	bandOf := func(x, y int) int {
+		if !isLandPx(m.field, x, y) {
+			return -1
+		}
+		e := m.elevAtPx(x, y)
+		t := (e - m.seaLevel) / (1 - m.seaLevel)
+		if t < 0 {
+			t = 0
+		}
+		if t > 1 {
+			t = 1
+		}
+		return int(t * float64(bands))
+	}
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			bnd := bandOf(x, y)
+			if bnd < 0 {
+				continue
+			}
+			if bandOf(x+1, y) != bnd || bandOf(x, y+1) != bnd {
+				cur := img.RGBAAt(b.Min.X+x, b.Min.Y+y)
+				setPixel(img, x, y, blend(cur, p.reliefAlt, 0.85)) // fine brown contour
+			}
+		}
+	}
+
+	// 3) Printed grid graticule over the WHOLE sheet: thin black lines every gridStep px (the
+	//    km-grid). Kept light (blended) so it's a printed reference, not a heavy overlay.
+	gridStep := 10
+	if minInt(w, h) < 60 {
+		gridStep = 6
+	}
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if x%gridStep == 0 || y%gridStep == 0 {
+				cur := img.RGBAAt(b.Min.X+x, b.Min.Y+y)
+				setPixel(img, x, y, blend(cur, p.shadow, 0.28))
+			}
+		}
+	}
+
+	// 4) Coastline: a firm printed line at the shore (black), so the land/sea edge reads crisp
+	//    over the grid.
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if !isLandPx(m.field, x, y) {
+				continue
+			}
+			if isLandPx(m.field, x-1, y) && isLandPx(m.field, x+1, y) &&
+				isLandPx(m.field, x, y-1) && isLandPx(m.field, x, y+1) {
+				continue
+			}
+			setPixel(img, x, y, p.coast)
+		}
+	}
+
+	// 5) Rivers: thin printed blue, gated to land.
+	putRiver := func(x, y int, c color.RGBA) {
+		if isLandPx(m.field, x, y) {
+			setPixel(img, x, y, c)
+		}
+	}
+	for _, r := range m.rivers {
+		for i := 0; i+1 < len(r.pts); i++ {
+			a, bb := r.pts[i], r.pts[i+1]
+			strokeThickLineFunc(a.x, a.y, bb.x, bb.y, 0, p.river, putRiver)
+		}
+	}
+
+	// 6) Relief: small black hachure ticks — a couple of short downhill strokes at each peak/hill
+	//    (the OS hachure convention), understated over the contours. Gate to land.
+	putR := func(x, y int, c color.RGBA) {
+		if isLandPx(m.field, x, y) {
+			setPixel(img, x, y, c)
+		}
+	}
+	for _, a := range m.reliefs {
+		switch a.kind {
+		case reliefMountain:
+			putR(a.x, a.y, p.relief)
+			putR(a.x-1, a.y+1, p.relief)
+			putR(a.x+1, a.y+1, p.relief)
+		case reliefHill:
+			putR(a.x, a.y, p.relief)
+		}
+	}
+
+	// 7) Chrome: a printed neat-line border with grid ticks (matches the sheet's printed grid).
+	drawOrdnanceBorder(img, p.shadow, gridStep)
+}
+
+// ---- lithograph: Victorian hand-tinted lithograph ---------------------------
+
+// lithographMedium is a hand-TINTED LITHOGRAPH (→ victorian_age). An aged cream base carries a
+// fine black litho OUTLINE (coastline + relief), and the SIGNATURE is soft PASTEL tint washes
+// filling regions by biome — pale desaturated pink / green / yellow / blue — slightly
+// mottled/uneven as if hand-colored, bleeding a hair past the outlines. Small shaded hill
+// glyphs, thin blue rivers. Chrome: a decorative Victorian double-rule border with small corner
+// flourishes. Soft multi-color pastel washes over a fine outline is the read — distinct from
+// parchment's monochrome sepia via the color. Anchors to cream + pastel biome washes + black
+// outline HARD.
+func lithographMedium() worldMedium {
+	// Fixed lithograph identity (theme-independent by design). PASTEL biome washes are the point.
+	cream := color.RGBA{R: 0xf0, G: 0xe9, B: 0xd8, A: 0xff}    // aged cream base
+	litho := color.RGBA{R: 0x2e, G: 0x28, B: 0x22, A: 0xff}    // fine black litho outline
+	seaBlue := color.RGBA{R: 0xb8, G: 0xcd, B: 0xd6, A: 0xff}  // pale desaturated sea blue
+	seaBlueD := color.RGBA{R: 0xa2, G: 0xba, B: 0xc6, A: 0xff} // slightly deeper sea wash
+
+	var mp mediumPalette
+	mp.background = cream
+	mp.oceanDeep = seaBlueD
+	mp.oceanShelf = seaBlue
+	mp.coast = litho
+	mp.river = color.RGBA{R: 0x6f, G: 0x92, B: 0xac, A: 0xff} // soft blue river
+	mp.relief = litho
+	mp.reliefAlt = color.RGBA{R: 0xc9, G: 0xa9, B: 0x86, A: 0xff} // soft tan hill-shade glyph
+	mp.shadow = blend(litho, cream, 0.4)
+	// Pastel biome washes — pale, desaturated, hand-tinted tones. Everything starts near cream
+	// then leans a hair toward its pastel so the color reads soft, never saturated.
+	for bi := biome(0); bi < biomeCount; bi++ {
+		mp.land[bi] = cream
+	}
+	mp.land[biomeGrass] = color.RGBA{R: 0xcf, G: 0xd9, B: 0xb0, A: 0xff}    // pale pastel green
+	mp.land[biomeForest] = color.RGBA{R: 0xb4, G: 0xc7, B: 0x9c, A: 0xff}   // deeper pastel green
+	mp.land[biomeSand] = color.RGBA{R: 0xe8, G: 0xdb, B: 0xac, A: 0xff}     // pale pastel yellow
+	mp.land[biomeRock] = color.RGBA{R: 0xe0, G: 0xc6, B: 0xc0, A: 0xff}     // pale pastel pink
+	mp.land[biomeMountain] = color.RGBA{R: 0xd6, G: 0xba, B: 0xb6, A: 0xff} // deeper pastel pink
+	mp.land[biomeSnow] = color.RGBA{R: 0xef, G: 0xec, B: 0xe6, A: 0xff}     // near-white
+
+	return worldMedium{name: "lithograph", style: styleLithograph, palette: mp, draw: drawLithograph}
+}
+
+// drawLithograph paints the hand-tinted-lithograph medium. Technique: the base is laid as soft
+// PASTEL biome washes (sea a pale blue), each wash slightly mottled by low-freq noise so the
+// color looks hand-brushed; the wash is then BLED a hair past the true biome edge — a land
+// pixel adjacent to a differently-tinted neighbour picks up a touch of that neighbour's wash —
+// so tints bleed like hand-coloring over the plate; a fine black litho OUTLINE strokes the
+// coastline; thin soft-blue rivers; small shaded hill glyphs; and a decorative Victorian
+// double-rule border with corner flourishes frames it. The pastel washes are the signature.
+func drawLithograph(img *image.RGBA, m *worldModel, med worldMedium) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 || m == nil {
+		return
+	}
+	p := med.palette
+	seed := uint32(0x1170A)
+
+	// biomeWash returns the pastel wash tone for a pixel's biome (sea → pale blue, depth-banded).
+	biomeWash := func(x, y int) color.RGBA {
+		bi := m.field.at(x, y)
+		if bi >= biomeCount {
+			bi = biomeGrass
+		}
+		if bi == biomeDeepWater || bi == biomeShallowWater {
+			e := m.elevAtPx(x, y)
+			depth := 0.0
+			if m.seaLevel > 0 {
+				depth = clamp01((m.seaLevel - e) / m.seaLevel)
+			}
+			return blend(p.oceanShelf, p.oceanDeep, depth*0.7)
+		}
+		return p.land[bi]
+	}
+
+	// 1) Base: pastel washes, softly mottled so each color reads hand-brushed (uneven density).
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			col := biomeWash(x, y)
+			// Hand-brushed unevenness: low-freq noise lightens/darkens the wash a hair.
+			n := valueNoise(float64(x)*0.11, float64(y)*0.11, seed^0x77)
+			if n > 0.5 {
+				col = brighten(col, (n-0.5)*0.14)
+			} else {
+				col = darken(col, (0.5-n)*0.12)
+			}
+			setPixel(img, x, y, col)
+		}
+	}
+
+	// 2) Bleed: hand-coloring runs a hair past the outline. A LAND pixel that borders a
+	//    differently-tinted land neighbour picks up a soft touch of that neighbour's wash, so the
+	//    color edges look bled rather than mechanically clipped. Gated to land↔land so the sea
+	//    wash and the coastline stay crisp (the outline in step 3 re-asserts the shore).
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if !isLandPx(m.field, x, y) {
+				continue
+			}
+			here := m.field.at(x, y)
+			for _, nb := range [4][2]int{{1, 0}, {0, 1}} {
+				nx, ny := x+nb[0], y+nb[1]
+				if !isLandPx(m.field, nx, ny) {
+					continue
+				}
+				there := m.field.at(nx, ny)
+				if there == here {
+					continue
+				}
+				// Bleed a little of each side's wash across the shared edge.
+				cur := img.RGBAAt(b.Min.X+x, b.Min.Y+y)
+				setPixel(img, x, y, blend(cur, p.land[there], 0.22))
+				curN := img.RGBAAt(b.Min.X+nx, b.Min.Y+ny)
+				setPixel(img, nx, ny, blend(curN, p.land[here], 0.22))
+			}
+		}
+	}
+
+	// 3) Coastline: a fine black litho outline at the shore (stamped just the shore pixel so the
+	//    outline stays fine, re-asserting a crisp edge over the bled washes).
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if !isLandPx(m.field, x, y) {
+				continue
+			}
+			if isLandPx(m.field, x-1, y) && isLandPx(m.field, x+1, y) &&
+				isLandPx(m.field, x, y-1) && isLandPx(m.field, x, y+1) {
+				continue
+			}
+			setPixel(img, x, y, p.coast)
+		}
+	}
+
+	// 4) Rivers: thin soft-blue threads over the land.
+	putRiver := func(x, y int, c color.RGBA) {
+		if isLandPx(m.field, x, y) {
+			setPixel(img, x, y, c)
+		}
+	}
+	for _, r := range m.rivers {
+		for i := 0; i+1 < len(r.pts); i++ {
+			a, bb := r.pts[i], r.pts[i+1]
+			strokeThickLineFunc(a.x, a.y, bb.x, bb.y, 0, p.river, putRiver)
+		}
+	}
+
+	// 5) Relief: small shaded hill glyphs — a fine black outline peak with a soft tan hill-shade
+	//    body, the hand-tinted-map vocabulary. Hills a small tan mound. Gate to land.
+	putR := func(x, y int, c color.RGBA) {
+		if isLandPx(m.field, x, y) {
+			setPixel(img, x, y, c)
+		}
+	}
+	for _, a := range m.reliefs {
+		switch a.kind {
+		case reliefMountain:
+			putR(a.x, a.y-1, p.relief) // black outline apex
+			putR(a.x-1, a.y, p.relief) // outline flanks
+			putR(a.x+1, a.y, p.relief)
+			putR(a.x, a.y, p.reliefAlt) // tan shaded body
+		case reliefHill:
+			putR(a.x, a.y, p.reliefAlt) // a small tan mound
+			putR(a.x, a.y+1, p.shadow)
+		}
+	}
+
+	// 6) Chrome: a decorative Victorian double-rule border with small corner flourishes.
+	drawVictorianBorder(img, p.coast, p.reliefAlt)
+}
+
 // ---- chrome helpers ---------------------------------------------------------
+
+// drawEngravedNeatline draws the copperplate medium's chrome: a fine engraved neat-line border
+// (a double rule — an outer fine line + an inner fine line a few px in) with small graticule
+// TICK marks stepping along all four margins, in the engraving ink. Precise, thin, no ornament
+// — the plate mark of an engraved map. `ink` is the fine line, `tickCol` the lighter tick.
+func drawEngravedNeatline(img *image.RGBA, ink, tickCol color.RGBA) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w < 8 || h < 8 {
+		return
+	}
+	rect := func(inset int, col color.RGBA) {
+		for x := inset; x < w-inset; x++ {
+			setPixel(img, x, inset, col)
+			setPixel(img, x, h-1-inset, col)
+		}
+		for y := inset; y < h-inset; y++ {
+			setPixel(img, inset, y, col)
+			setPixel(img, w-1-inset, y, col)
+		}
+	}
+	rect(1, ink) // outer fine rule
+	rect(4, ink) // inner fine rule
+	// Graticule ticks: short marks every `step` px in the 3px channel between the two rules,
+	// along all four margins — the engraved minute-marks of a neat-line.
+	step := 8
+	if minInt(w, h) < 60 {
+		step = 5
+	}
+	for x := 4; x < w-4; x += step {
+		setPixel(img, x, 2, tickCol)
+		setPixel(img, x, 3, tickCol)
+		setPixel(img, x, h-3, tickCol)
+		setPixel(img, x, h-4, tickCol)
+	}
+	for y := 4; y < h-4; y += step {
+		setPixel(img, 2, y, tickCol)
+		setPixel(img, 3, y, tickCol)
+		setPixel(img, w-3, y, tickCol)
+		setPixel(img, w-4, y, tickCol)
+	}
+}
+
+// drawChartBorder draws the nautical medium's chrome: a chart-style GRADUATED border — an outer
+// ink rule and an inner ink rule, with the channel between them divided into alternating
+// filled/blank ticks (the graduated-scale margin of a sea-chart). `ink` the rules + fill,
+// `light` the blank-tick backing.
+func drawChartBorder(img *image.RGBA, ink, light color.RGBA) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w < 10 || h < 10 {
+		return
+	}
+	rect := func(inset int, col color.RGBA) {
+		for x := inset; x < w-inset; x++ {
+			setPixel(img, x, inset, col)
+			setPixel(img, x, h-1-inset, col)
+		}
+		for y := inset; y < h-inset; y++ {
+			setPixel(img, inset, y, col)
+			setPixel(img, w-1-inset, y, col)
+		}
+	}
+	rect(0, ink) // outer rule
+	rect(3, ink) // inner rule
+	// Graduated ticks in the 2px channel (rows/cols 1..2): alternate ink/light every 4px so the
+	// margin reads as a graduated scale bar around the whole chart.
+	const grad = 4
+	fill := func(x, y int, on bool) {
+		c := light
+		if on {
+			c = ink
+		}
+		setPixel(img, x, y, c)
+	}
+	for x := 1; x < w-1; x++ {
+		on := (x/grad)%2 == 0
+		fill(x, 1, on)
+		fill(x, h-2, on)
+	}
+	for y := 1; y < h-1; y++ {
+		on := (y/grad)%2 == 0
+		fill(1, y, on)
+		fill(w-2, y, on)
+	}
+}
+
+// drawOrdnanceBorder draws the ordnance medium's chrome: a printed neat-line border (a firm
+// single black rule at the edge) with small grid TICKS stepping inward at the same interval as
+// the sheet's printed grid, so the frame reads as the trimmed margin of a printed OS sheet.
+// `ink` the printed line/ticks, `gridStep` the grid interval to align the ticks to.
+func drawOrdnanceBorder(img *image.RGBA, ink color.RGBA, gridStep int) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w < 8 || h < 8 {
+		return
+	}
+	if gridStep < 2 {
+		gridStep = 2
+	}
+	// Firm printed neat-line at the very edge.
+	for x := 0; x < w; x++ {
+		setPixel(img, x, 0, ink)
+		setPixel(img, x, h-1, ink)
+	}
+	for y := 0; y < h; y++ {
+		setPixel(img, 0, y, ink)
+		setPixel(img, w-1, y, ink)
+	}
+	// Grid ticks: a short inward mark wherever the printed grid meets the margin, so the frame
+	// and the interior grid line up like a real sheet.
+	for x := 0; x < w; x += gridStep {
+		setPixel(img, x, 1, ink)
+		setPixel(img, x, 2, ink)
+		setPixel(img, x, h-2, ink)
+		setPixel(img, x, h-3, ink)
+	}
+	for y := 0; y < h; y += gridStep {
+		setPixel(img, 1, y, ink)
+		setPixel(img, 2, y, ink)
+		setPixel(img, w-2, y, ink)
+		setPixel(img, w-3, y, ink)
+	}
+}
+
+// drawVictorianBorder draws the lithograph medium's chrome: a decorative Victorian DOUBLE-RULE
+// border (a bold outer rule + a fine inner rule) with a small ornamental FLOURISH at each
+// corner — a little stepped bracket of the accent tone — so the frame reads as a decorative
+// tinted-plate border, distinct from parchment's plainer double frame. `ink` the rules,
+// `accent` the corner flourish tone.
+func drawVictorianBorder(img *image.RGBA, ink, accent color.RGBA) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w < 10 || h < 10 {
+		return
+	}
+	rect := func(inset int, col color.RGBA) {
+		for x := inset; x < w-inset; x++ {
+			setPixel(img, x, inset, col)
+			setPixel(img, x, h-1-inset, col)
+		}
+		for y := inset; y < h-inset; y++ {
+			setPixel(img, inset, y, col)
+			setPixel(img, w-1-inset, y, col)
+		}
+	}
+	rect(0, ink) // bold outer rule
+	rect(1, ink) // second row → a bold 2px outer band
+	rect(4, ink) // fine inner rule
+	// Corner flourishes: a small stepped bracket in the accent tone, hugging each corner between
+	// the two rules — a hint of Victorian ornament.
+	flourish := func(cx, cy, sx, sy int) {
+		pts := [][2]int{{2, 2}, {3, 2}, {2, 3}, {3, 3}, {5, 2}, {2, 5}}
+		for _, d := range pts {
+			setPixel(img, cx+sx*d[0], cy+sy*d[1], accent)
+		}
+	}
+	flourish(0, 0, 1, 1)
+	flourish(w-1, 0, -1, 1)
+	flourish(0, h-1, 1, -1)
+	flourish(w-1, h-1, -1, -1)
+}
 
 // drawRoughBorder scratches a broken dark rim `thick` px in from every edge, gated by a
 // hash so ~70% of border pixels are stamped — a hand-drawn stone frame, not a clean rule.

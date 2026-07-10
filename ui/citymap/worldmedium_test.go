@@ -42,11 +42,15 @@ func TestMediumForAgeWiring(t *testing.T) {
 		{"bronze_age", "clay_tablet", styleClayTablet},
 		{"iron_age", "hide", styleHide},
 		{"classical_age", "mosaic", styleMosaic},
+		{"renaissance_age", "copperplate", styleCopperplate},
+		{"colonial_age", "nautical", styleNautical},
+		{"industrial_age", "ordnance", styleOrdnance},
+		{"victorian_age", "lithograph", styleLithograph},
 		{"medieval_age", "parchment", styleParchment},
 		{"modern_age", "satellite", styleSatellite},
 		{"cyberpunk_age", "neon", styleNeon},
 		// A spread of other ages must all be the neutral atlas default.
-		{"industrial_age", "atlas", styleAtlas},
+		{"electric_age", "atlas", styleAtlas},
 		{"digital_age", "atlas", styleAtlas},
 		{"transcendent_age", "atlas", styleAtlas},
 		{"made_up_age", "atlas", styleAtlas}, // unknown ages default too
@@ -73,7 +77,8 @@ func TestMediumRenderSizeAndPanicSafe(t *testing.T) {
 	_ = theme.SetActive("forge")
 	ages := []string{
 		"primitive_age", "stone_age", "bronze_age", "iron_age", "classical_age",
-		"medieval_age", "modern_age", "cyberpunk_age", "industrial_age",
+		"renaissance_age", "colonial_age", "industrial_age", "victorian_age",
+		"medieval_age", "modern_age", "cyberpunk_age", "electric_age",
 	}
 	sizes := []struct{ w, h int }{{0, 0}, {1, 1}, {1, 2}, {3, 5}, {7, 4}, {13, 9}, {40, 26}, {200, 130}}
 	for _, age := range ages {
@@ -117,6 +122,7 @@ func TestMediumRenderDeterministic(t *testing.T) {
 	const w, h = 160, 100
 	for _, age := range []string{
 		"primitive_age", "stone_age", "bronze_age", "iron_age", "classical_age",
+		"renaissance_age", "colonial_age", "industrial_age", "victorian_age",
 		"medieval_age", "modern_age", "cyberpunk_age",
 	} {
 		a, _ := renderWorldImage(mediumWorld(age), w, h)
@@ -140,15 +146,19 @@ func TestMediumsReadDistinct(t *testing.T) {
 	}
 	shots := []shot{}
 	for _, age := range []string{
-		"primitive_age",  // charcoal
-		"stone_age",      // petroglyph
-		"bronze_age",     // clay tablet
-		"iron_age",       // hide
-		"classical_age",  // mosaic
-		"medieval_age",   // parchment
-		"modern_age",     // satellite
-		"cyberpunk_age",  // neon
-		"industrial_age", // atlas (default)
+		"primitive_age",   // charcoal
+		"stone_age",       // petroglyph
+		"bronze_age",      // clay tablet
+		"iron_age",        // hide
+		"classical_age",   // mosaic
+		"renaissance_age", // copperplate
+		"colonial_age",    // nautical
+		"industrial_age",  // ordnance
+		"victorian_age",   // lithograph
+		"medieval_age",    // parchment
+		"modern_age",      // satellite
+		"cyberpunk_age",   // neon
+		"electric_age",    // atlas (default)
 	} {
 		img, _ := renderWorldImage(mediumWorld(age), w, h)
 		shots = append(shots, shot{age, img})
@@ -172,6 +182,7 @@ func TestMediumsDrawTerrainSelfContained(t *testing.T) {
 	m := buildWorldModel(w, h, worldTerrainSeed("Aldermoor"))
 	for _, age := range []string{
 		"primitive_age", "stone_age", "bronze_age", "iron_age", "classical_age",
+		"renaissance_age", "colonial_age", "industrial_age", "victorian_age",
 		"medieval_age", "modern_age", "cyberpunk_age",
 	} {
 		med := mediumForAge(age)
@@ -212,10 +223,14 @@ func TestDumpWorldMediumPNGs(t *testing.T) {
 		{"bronze_age", "wm_B_clay.png"},
 		{"iron_age", "wm_B_hide.png"},
 		{"classical_age", "wm_B_mosaic.png"},
+		{"renaissance_age", "wm_B_copperplate.png"},
+		{"colonial_age", "wm_B_nautical.png"},
+		{"industrial_age", "wm_B_ordnance.png"},
+		{"victorian_age", "wm_B_litho.png"},
 		{"medieval_age", "wm_B_parchment.png"},
 		{"modern_age", "wm_B_satellite.png"},
 		{"cyberpunk_age", "wm_B_neon.png"},
-		{"industrial_age", "wm_B_default.png"},
+		{"electric_age", "wm_B_default.png"},
 	}
 	for _, d := range dumps {
 		st := mediumWorld(d.age)
