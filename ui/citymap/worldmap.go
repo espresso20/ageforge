@@ -186,6 +186,18 @@ func renderWorldImage(state game.GameState, w, h int) (*image.RGBA, overlayPlan)
 	}
 
 	seed, hueShift := ageInfo(state.Age)
+
+	// Cosmic strategic intercept (Phase C): the space-and-beyond ages have no continent — the
+	// World tab shows a STRATEGIC star-map (your empire vs the rival factions) instead. If a
+	// cosmic strategic view owns this age, it paints the ENTIRE frame (field + territory + lanes
+	// + nodes + chrome) and we return with an EMPTY overlay plan — skipping BOTH the medium
+	// terrain draw AND the shared civ-dot/label overlay (the strategic nodes ARE the factions;
+	// drawing dots + labels too would double-render them). Only space_age is wired so far; every
+	// other cosmic age still falls through to the neutral atlas below.
+	if draw, ok := cosmicWorldViewFor(state.Age); ok {
+		draw(img, state, w, h, seed)
+		return img, overlayPlan{}
+	}
 	pal := buildPalette(hueShift)
 	prog := worldProgress(state)
 
