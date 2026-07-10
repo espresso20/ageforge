@@ -49,9 +49,14 @@ func TestMediumForAgeWiring(t *testing.T) {
 		{"medieval_age", "parchment", styleParchment},
 		{"modern_age", "satellite", styleSatellite},
 		{"cyberpunk_age", "neon", styleNeon},
-		// A spread of other ages must all be the neutral atlas default.
-		{"electric_age", "atlas", styleAtlas},
-		{"digital_age", "atlas", styleAtlas},
+		{"electric_age", "blueprint", styleBlueprint},
+		{"atomic_age", "retro_atlas", styleRetroAtlas},
+		{"information_age", "vector", styleVector},
+		{"digital_age", "pixel", stylePixel},
+		{"fusion_age", "hologram", styleHologram},
+		// The remaining ages must all be the neutral atlas default: after B4 only the cosmic
+		// ages still fall through to atlas (a later phase re-skins those).
+		{"space_age", "atlas", styleAtlas},
 		{"transcendent_age", "atlas", styleAtlas},
 		{"made_up_age", "atlas", styleAtlas}, // unknown ages default too
 	}
@@ -78,7 +83,9 @@ func TestMediumRenderSizeAndPanicSafe(t *testing.T) {
 	ages := []string{
 		"primitive_age", "stone_age", "bronze_age", "iron_age", "classical_age",
 		"renaissance_age", "colonial_age", "industrial_age", "victorian_age",
-		"medieval_age", "modern_age", "cyberpunk_age", "electric_age",
+		"medieval_age", "modern_age", "cyberpunk_age",
+		"electric_age", "atomic_age", "information_age", "digital_age", "fusion_age",
+		"space_age", // atlas baseline
 	}
 	sizes := []struct{ w, h int }{{0, 0}, {1, 1}, {1, 2}, {3, 5}, {7, 4}, {13, 9}, {40, 26}, {200, 130}}
 	for _, age := range ages {
@@ -124,6 +131,7 @@ func TestMediumRenderDeterministic(t *testing.T) {
 		"primitive_age", "stone_age", "bronze_age", "iron_age", "classical_age",
 		"renaissance_age", "colonial_age", "industrial_age", "victorian_age",
 		"medieval_age", "modern_age", "cyberpunk_age",
+		"electric_age", "atomic_age", "information_age", "digital_age", "fusion_age",
 	} {
 		a, _ := renderWorldImage(mediumWorld(age), w, h)
 		b, _ := renderWorldImage(mediumWorld(age), w, h)
@@ -158,7 +166,12 @@ func TestMediumsReadDistinct(t *testing.T) {
 		"medieval_age",    // parchment
 		"modern_age",      // satellite
 		"cyberpunk_age",   // neon
-		"electric_age",    // atlas (default)
+		"electric_age",    // blueprint
+		"atomic_age",      // retro atlas
+		"information_age", // vector
+		"digital_age",     // pixel
+		"fusion_age",      // hologram
+		"space_age",       // atlas (default — still atlas after B4)
 	} {
 		img, _ := renderWorldImage(mediumWorld(age), w, h)
 		shots = append(shots, shot{age, img})
@@ -184,6 +197,7 @@ func TestMediumsDrawTerrainSelfContained(t *testing.T) {
 		"primitive_age", "stone_age", "bronze_age", "iron_age", "classical_age",
 		"renaissance_age", "colonial_age", "industrial_age", "victorian_age",
 		"medieval_age", "modern_age", "cyberpunk_age",
+		"electric_age", "atomic_age", "information_age", "digital_age", "fusion_age",
 	} {
 		med := mediumForAge(age)
 		img := image.NewRGBA(image.Rect(0, 0, w, h))
@@ -230,7 +244,12 @@ func TestDumpWorldMediumPNGs(t *testing.T) {
 		{"medieval_age", "wm_B_parchment.png"},
 		{"modern_age", "wm_B_satellite.png"},
 		{"cyberpunk_age", "wm_B_neon.png"},
-		{"electric_age", "wm_B_default.png"},
+		{"electric_age", "wm_B_blueprint.png"},
+		{"atomic_age", "wm_B_retro.png"},
+		{"information_age", "wm_B_vector.png"},
+		{"digital_age", "wm_B_pixel.png"},
+		{"fusion_age", "wm_B_hologram.png"},
+		{"space_age", "wm_B_default.png"}, // still atlas after B4
 	}
 	for _, d := range dumps {
 		st := mediumWorld(d.age)

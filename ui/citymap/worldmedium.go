@@ -73,6 +73,11 @@ const (
 	styleNautical                            // colonial sea-chart: rhumb-line net over the water, sounding stipple
 	styleOrdnance                            // Victorian ordnance sheet: brown contour isolines + printed grid on pale paper
 	styleLithograph                          // hand-tinted lithograph: pastel biome washes over fine black outline
+	styleBlueprint                           // cyanotype blueprint: deep Prussian-blue ground, thin white technical linework
+	styleRetroAtlas                          // 1950s mid-century atlas: flat saturated poster blocks + halftone dots
+	styleVector                              // clean digital vector/GPS map: pale flat land, road-network lines
+	stylePixel                               // chunky 8-bit game map: big pixel blocks, ordered-dither, limited palette
+	styleHologram                            // hard-light hologram: warm gold volumetric height mesh over a teal-indigo field
 )
 
 // worldMedium is a cartographic medium: how a world is drawn for one era. `palette` is the
@@ -117,6 +122,16 @@ func mediumForAge(ageKey string) worldMedium {
 		return satelliteMedium()
 	case "cyberpunk_age":
 		return neonMedium()
+	case "electric_age":
+		return blueprintMedium()
+	case "atomic_age":
+		return retroAtlasMedium()
+	case "information_age":
+		return vectorMedium()
+	case "digital_age":
+		return pixelMedium()
+	case "fusion_age":
+		return hologramMedium()
 	default:
 		return atlasMedium(ageKey)
 	}
@@ -2124,6 +2139,932 @@ func drawLithograph(img *image.RGBA, m *worldModel, med worldMedium) {
 	drawVictorianBorder(img, p.coast, p.reliefAlt)
 }
 
+// ---- blueprint: electric-age cyanotype ---------------------------------------
+
+// blueprintMedium is a cyanotype BLUEPRINT (→ electric_age). The SIGNATURE is a deep saturated
+// PRUSSIAN-BLUE ground across the WHOLE frame (this blue paper IS the identity); everything else
+// is drawn in thin crisp WHITE lines — white coastline, white constant-elevation guide lines
+// (contour isolines), a fine white technical graticule grid, white river lines, small white
+// relief tick symbols, and white register marks. No solid land fills: land is the same blue
+// paper as the sea, distinguished only by the white linework over it. Chrome: a white technical
+// drawing border with corner registration crosses. Distinct from neon (BLACK ground + cyan/
+// magenta) and ordnance (pale paper + brown) via the deep-blue paper + pure white ink. Anchors
+// to Prussian blue + white HARD.
+func blueprintMedium() worldMedium {
+	// Fixed cyanotype identity (theme-independent by design).
+	prussian := color.RGBA{R: 0x0c, G: 0x2e, B: 0x63, A: 0xff}     // deep saturated Prussian-blue ground
+	prussianDeep := color.RGBA{R: 0x07, G: 0x20, B: 0x4c, A: 0xff} // a touch deeper (sea gets this)
+	white := color.RGBA{R: 0xf2, G: 0xf6, B: 0xff, A: 0xff}        // crisp white ink (all linework)
+	whiteDim := color.RGBA{R: 0x9c, G: 0xb6, B: 0xe0, A: 0xff}     // faint white (the fine grid)
+
+	var mp mediumPalette
+	mp.background = prussian
+	mp.oceanDeep = prussianDeep
+	mp.oceanShelf = prussian
+	mp.coast = white
+	mp.river = white
+	mp.relief = white
+	mp.reliefAlt = whiteDim
+	mp.shadow = prussianDeep
+	// Land is the SAME blue paper everywhere — no fills; the white linework carries the whole read.
+	for bi := biome(0); bi < biomeCount; bi++ {
+		mp.land[bi] = prussian
+	}
+
+	return worldMedium{name: "blueprint", style: styleBlueprint, palette: mp, draw: drawBlueprint}
+}
+
+// drawBlueprint paints the cyanotype medium. Technique: flood the WHOLE frame with the deep
+// Prussian-blue paper (sea a shade deeper so there's a whisper of depth, but no fills — land and
+// sea are the same blue); overlay a fine faint-white technical GRATICULE grid across everything;
+// draw white constant-elevation GUIDE LINES (contour isolines) over the land as the drafting
+// substrate; stroke a crisp white COASTLINE; lay white RIVER lines; stamp small white relief
+// TICK symbols; and frame it with a white technical border carrying corner registration crosses.
+// The blue paper + white ink is the read.
+func drawBlueprint(img *image.RGBA, m *worldModel, med worldMedium) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 || m == nil {
+		return
+	}
+	p := med.palette
+
+	// 1) Base: the whole frame is blue drafting paper. Sea a shade deeper (a faint depth band)
+	//    so the water reads a touch recessed; land is the plain paper — no fills at all.
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			bi := m.field.at(x, y)
+			if bi >= biomeCount {
+				bi = biomeGrass
+			}
+			var col color.RGBA
+			if bi == biomeDeepWater || bi == biomeShallowWater {
+				e := m.elevAtPx(x, y)
+				depth := 0.0
+				if m.seaLevel > 0 {
+					depth = clamp01((m.seaLevel - e) / m.seaLevel)
+				}
+				col = blend(p.oceanShelf, p.oceanDeep, depth*0.7)
+			} else {
+				col = p.background // land is the same blue paper
+			}
+			setPixel(img, x, y, col)
+		}
+	}
+
+	// 2) Fine technical graticule over the WHOLE frame: faint white lines every gridStep px so the
+	//    sheet reads as engineering drafting paper (grid over paper, land AND sea). Kept faint
+	//    (blended) so it's a substrate under the crisp linework, not clutter.
+	gridStep := 12
+	if minInt(w, h) < 70 {
+		gridStep = 7
+	}
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if x%gridStep == 0 || y%gridStep == 0 {
+				cur := img.RGBAAt(b.Min.X+x, b.Min.Y+y)
+				setPixel(img, x, y, blend(cur, p.reliefAlt, 0.30))
+			}
+		}
+	}
+
+	// 3) Constant-elevation GUIDE LINES on the land: quantize land elevation into bands; a land
+	//    pixel whose band differs from its +x/+y neighbour sits on a band boundary → stroke it a
+	//    dim white. These are the blueprint's contour guide lines, drawn faint so the crisp
+	//    coastline (step 4) still dominates.
+	const bands = 6
+	guide := blend(p.background, p.coast, 0.55)
+	bandOf := func(x, y int) int {
+		if !isLandPx(m.field, x, y) {
+			return -1
+		}
+		e := m.elevAtPx(x, y)
+		t := (e - m.seaLevel) / (1 - m.seaLevel)
+		if t < 0 {
+			t = 0
+		}
+		if t > 1 {
+			t = 1
+		}
+		return int(t * float64(bands))
+	}
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			bnd := bandOf(x, y)
+			if bnd < 0 {
+				continue
+			}
+			if bandOf(x+1, y) != bnd || bandOf(x, y+1) != bnd {
+				setPixel(img, x, y, guide)
+			}
+		}
+	}
+
+	// 4) Coastline: a crisp WHITE line at the shore (the primary drafted outline), stamped just the
+	//    shore pixel so it stays thin and sharp over the grid + guide lines.
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if !isLandPx(m.field, x, y) {
+				continue
+			}
+			if isLandPx(m.field, x-1, y) && isLandPx(m.field, x+1, y) &&
+				isLandPx(m.field, x, y-1) && isLandPx(m.field, x, y+1) {
+				continue
+			}
+			setPixel(img, x, y, p.coast)
+		}
+	}
+
+	// 5) Rivers: thin white lines over the land (drafted watercourses).
+	putRiver := func(x, y int, c color.RGBA) {
+		if isLandPx(m.field, x, y) {
+			setPixel(img, x, y, c)
+		}
+	}
+	for _, r := range m.rivers {
+		for i := 0; i+1 < len(r.pts); i++ {
+			a, bb := r.pts[i], r.pts[i+1]
+			strokeThickLineFunc(a.x, a.y, bb.x, bb.y, 0, p.river, putRiver)
+		}
+	}
+
+	// 6) Relief: small white TICK symbols — mountains a thin white caret (apex + two flanks, no
+	//    fill), hills a single white tick. A drafted symbol, not a filled peak. Gate to land.
+	putR := func(x, y int, c color.RGBA) {
+		if isLandPx(m.field, x, y) {
+			setPixel(img, x, y, c)
+		}
+	}
+	for _, a := range m.reliefs {
+		switch a.kind {
+		case reliefMountain:
+			putR(a.x, a.y-1, p.relief) // apex
+			putR(a.x-1, a.y, p.relief) // left flank
+			putR(a.x+1, a.y, p.relief) // right flank
+		case reliefHill:
+			putR(a.x, a.y, p.relief) // a single tick
+		}
+	}
+
+	// 7) Chrome: a white technical drawing border with corner registration crosses.
+	drawBlueprintBorder(img, p.coast, p.reliefAlt)
+}
+
+// ---- retro atlas: atomic-age mid-century printed atlas -----------------------
+
+// retroAtlasMedium is a 1950s mid-century printed ATLAS (→ atomic_age). The SIGNATURE is bold
+// FLAT saturated retro-poster colors with a slightly-misregistered offset-print feel: land in
+// flat mustard-yellow / olive / burnt-orange / teal blocks by biome (flat fills, NO gradient), a
+// flat muted-teal sea, bold confident black country-style outlines, a subtle HALFTONE DOT screen
+// over the fills, and thin red/black rivers. Chrome: a clean bold mid-century border with squared
+// corners. Distinct from every other medium via the bold FLAT poster color + halftone dots — no
+// other medium is flat-poster. Anchors to the retro-poster palette HARD.
+func retroAtlasMedium() worldMedium {
+	var mp mediumPalette
+	// Mid-century poster palette — flat, saturated, confident.
+	teal := color.RGBA{R: 0x2f, G: 0x8a, B: 0x86, A: 0xff}     // flat muted-teal sea
+	tealDeep := color.RGBA{R: 0x22, G: 0x6c, B: 0x69, A: 0xff} // a shade deeper teal
+	mp.oceanDeep = tealDeep
+	mp.oceanShelf = teal
+	mp.background = teal
+	mp.land[biomeSand] = color.RGBA{R: 0xe6, G: 0xc8, B: 0x6a, A: 0xff}     // pale mustard
+	mp.land[biomeGrass] = color.RGBA{R: 0xd8, G: 0xa8, B: 0x3e, A: 0xff}    // bold mustard-yellow
+	mp.land[biomeForest] = color.RGBA{R: 0x7f, G: 0x8a, B: 0x3c, A: 0xff}   // flat olive
+	mp.land[biomeRock] = color.RGBA{R: 0xd0, G: 0x7a, B: 0x38, A: 0xff}     // burnt-orange
+	mp.land[biomeMountain] = color.RGBA{R: 0xb5, G: 0x5c, B: 0x2c, A: 0xff} // deeper burnt-orange
+	mp.land[biomeSnow] = color.RGBA{R: 0xec, G: 0xe4, B: 0xcf, A: 0xff}     // flat cream
+	mp.land[biomeDeepWater] = tealDeep
+	mp.land[biomeShallowWater] = teal
+	mp.coast = color.RGBA{R: 0x20, G: 0x1c, B: 0x16, A: 0xff}     // bold black country outline
+	mp.river = color.RGBA{R: 0xc0, G: 0x3a, B: 0x2c, A: 0xff}     // thin poster-red river
+	mp.relief = color.RGBA{R: 0x20, G: 0x1c, B: 0x16, A: 0xff}    // black relief mark
+	mp.reliefAlt = color.RGBA{R: 0xb5, G: 0x5c, B: 0x2c, A: 0xff} // burnt-orange relief accent
+	mp.shadow = color.RGBA{R: 0x20, G: 0x1c, B: 0x16, A: 0xff}    // black (outline/halftone dot)
+	return worldMedium{name: "retro_atlas", style: styleRetroAtlas, palette: mp, draw: drawRetroAtlas}
+}
+
+// drawRetroAtlas paints the mid-century-atlas medium. Technique: lay FLAT poster fills by biome
+// (no per-pixel jitter — the blocks are deliberately flat) with a subtle offset-print
+// MISREGISTRATION (the fill color is sampled from a pixel nudged a hair on one axis, so color
+// edges are slightly offset like cheap offset printing); overlay a subtle HALFTONE DOT screen
+// (small black dots on a fixed lattice, denser over darker fills) so the flats read as printed
+// ink; stroke a BOLD BLACK country-style outline at the coast (2px); lay thin poster-red rivers;
+// stamp simple black relief marks; and frame it with a bold squared mid-century border. The flat
+// poster color + halftone dots is the signature.
+func drawRetroAtlas(img *image.RGBA, m *worldModel, med worldMedium) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 || m == nil {
+		return
+	}
+	p := med.palette
+
+	// fillAt returns the flat poster tone for a pixel's biome (sea → teal, faintly depth-banded so
+	// the two sea tones read, but still flat blocks). No jitter — flatness is the point.
+	fillAt := func(x, y int) color.RGBA {
+		bi := m.field.at(x, y)
+		if bi >= biomeCount {
+			bi = biomeGrass
+		}
+		if bi == biomeDeepWater || bi == biomeShallowWater {
+			e := m.elevAtPx(x, y)
+			if m.seaLevel > 0 && (m.seaLevel-e)/m.seaLevel > 0.55 {
+				return p.oceanDeep
+			}
+			return p.oceanShelf
+		}
+		return p.land[bi]
+	}
+
+	// 1) Base: flat poster fills with a slight offset-print MISREGISTRATION — sample the fill from
+	//    a pixel nudged 1px on x (a second plate slightly off), so color-block edges are offset a
+	//    hair like mid-century offset lithography. Deterministic (pure coordinate shift).
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			sx := clampInt(x+1, 0, w-1) // the "misregistered plate" reads one px over
+			setPixel(img, x, y, fillAt(sx, y))
+		}
+	}
+
+	// 2) Halftone dot screen: a small black dot on a fixed lattice, present more often over DARKER
+	//    fills (so shading reads as dot density), skipped over the palest cream/mustard so bright
+	//    areas stay clean. Deterministic — the dot lattice is a modular pattern, its gate keyed to
+	//    the fill luminance.
+	const cell = 3 // halftone lattice period
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if x%cell != 1 || y%cell != 1 {
+				continue // one candidate dot per lattice cell
+			}
+			cur := img.RGBAAt(b.Min.X+x, b.Min.Y+y)
+			// Luminance of the fill → darker fills get the dot (denser screen), bright fills skip it.
+			lum := (int(cur.R)*30 + int(cur.G)*59 + int(cur.B)*11) / 100
+			if lum > 190 {
+				continue // pale cream/mustard: leave clean
+			}
+			setPixel(img, x, y, blend(cur, p.shadow, 0.30)) // a soft halftone dot
+		}
+	}
+
+	// 3) Coastline: a BOLD black country-style outline at the shore, thickened 1px toward the sea
+	//    so the continent reads with the confident heavy border of a printed atlas.
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if !isLandPx(m.field, x, y) {
+				continue
+			}
+			if isLandPx(m.field, x-1, y) && isLandPx(m.field, x+1, y) &&
+				isLandPx(m.field, x, y-1) && isLandPx(m.field, x, y+1) {
+				continue
+			}
+			setPixel(img, x, y, p.coast)
+			for _, nb := range [4][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+				nx, ny := x+nb[0], y+nb[1]
+				if !isLandPx(m.field, nx, ny) {
+					setPixel(img, nx, ny, p.coast)
+					break
+				}
+			}
+		}
+	}
+
+	// 4) Rivers: thin poster-red threads over the land.
+	putRiver := func(x, y int, c color.RGBA) {
+		if isLandPx(m.field, x, y) {
+			setPixel(img, x, y, c)
+		}
+	}
+	for _, r := range m.rivers {
+		for i := 0; i+1 < len(r.pts); i++ {
+			a, bb := r.pts[i], r.pts[i+1]
+			strokeThickLineFunc(a.x, a.y, bb.x, bb.y, 0, p.river, putRiver)
+		}
+	}
+
+	// 5) Relief: simple bold marks — mountains a small black filled triangle with a burnt-orange
+	//    accent cap, hills a small orange dot. The clean iconography of a printed atlas. Gate to land.
+	putR := func(x, y int, c color.RGBA) {
+		if isLandPx(m.field, x, y) {
+			setPixel(img, x, y, c)
+		}
+	}
+	for _, a := range m.reliefs {
+		switch a.kind {
+		case reliefMountain:
+			putR(a.x, a.y-1, p.reliefAlt) // orange cap
+			putR(a.x-1, a.y, p.relief)    // black base
+			putR(a.x, a.y, p.relief)
+			putR(a.x+1, a.y, p.relief)
+		case reliefHill:
+			putR(a.x, a.y, p.reliefAlt) // a small orange dot
+		}
+	}
+
+	// 6) Chrome: a bold squared mid-century border (a heavy outer band + a thin inner rule).
+	drawMidCenturyBorder(img, p.coast, p.oceanDeep)
+}
+
+// ---- vector: information-age digital map --------------------------------------
+
+// vectorMedium is a clean digital VECTOR / GPS map (→ information_age, think modern web maps).
+// The SIGNATURE is a minimal FLAT pale palette — near-white / pale-grey land, flat pale-blue
+// water, a soft rounded flat look — with a NETWORK of clean thin ROAD lines connecting the relief
+// / settlement anchors (straight/elbowed connectors drawn as a road web over the land), thin blue
+// rivers, and a very faint light reference grid. The coastline is a soft flat edge (no ornate
+// outline). Chrome: minimal — a thin flat margin at most. Distinct via the pale minimal flat
+// vector look + road-network lines; must NOT read as satellite (photographic) or ordnance
+// (contours / heavy grid). Anchors to pale-grey + pale-blue + a road accent HARD.
+func vectorMedium() worldMedium {
+	// Fixed digital-vector identity (theme-independent by design).
+	land := color.RGBA{R: 0xed, G: 0xee, B: 0xf0, A: 0xff}   // near-white pale-grey land
+	landLo := color.RGBA{R: 0xe2, G: 0xe4, B: 0xe7, A: 0xff} // faintly darker land (subtle relief)
+	water := color.RGBA{R: 0xbf, G: 0xd7, B: 0xe8, A: 0xff}  // flat pale-blue water
+	waterD := color.RGBA{R: 0xac, G: 0xc9, B: 0xde, A: 0xff} // a shade deeper water
+	road := color.RGBA{R: 0xe6, G: 0x9a, B: 0x3a, A: 0xff}   // warm road-web accent (amber)
+	coast := color.RGBA{R: 0x9a, G: 0xb4, B: 0xc6, A: 0xff}  // soft flat coast edge (muted blue-grey)
+	river := color.RGBA{R: 0x6f, G: 0xa8, B: 0xcf, A: 0xff}  // clean thin river blue
+	grid := color.RGBA{R: 0xdd, G: 0xdf, B: 0xe2, A: 0xff}   // very faint reference grid
+
+	var mp mediumPalette
+	mp.background = land
+	mp.oceanDeep = waterD
+	mp.oceanShelf = water
+	mp.coast = coast
+	mp.river = river
+	mp.relief = landLo  // relief is understated on a flat vector map
+	mp.reliefAlt = road // reuse as the road-web tone
+	mp.shadow = grid    // reuse as the faint grid tone
+	// Land is a near-uniform pale grey; a couple of biomes lean a hair darker so relief reads
+	// subtly (a vector map hints elevation with a flat tonal step, never a texture).
+	for bi := biome(0); bi < biomeCount; bi++ {
+		mp.land[bi] = land
+	}
+	mp.land[biomeForest] = color.RGBA{R: 0xe0, G: 0xe8, B: 0xdd, A: 0xff} // faint green-grey park
+	mp.land[biomeRock] = landLo
+	mp.land[biomeMountain] = color.RGBA{R: 0xdb, G: 0xdc, B: 0xdf, A: 0xff} // faint grey upland
+	mp.land[biomeSnow] = color.RGBA{R: 0xf6, G: 0xf7, B: 0xf8, A: 0xff}     // near-white
+
+	return worldMedium{name: "vector", style: styleVector, palette: mp, draw: drawVector}
+}
+
+// drawVector paints the digital-vector medium. Technique: flat pale fills (pale-grey land, pale-
+// blue water — NO per-pixel jitter, a clean flat map); a very faint reference GRID; a soft flat
+// COASTLINE edge (a muted blue-grey rim, not an ink stroke); a ROAD NETWORK — clean thin amber
+// connector lines drawn between the relief/settlement anchors (each anchor linked to its nearest
+// couple of neighbours with an L-shaped/elbowed route) so the land reads as a routed web; thin
+// blue rivers; and a minimal thin flat margin. The pale flat look + road web is the read.
+func drawVector(img *image.RGBA, m *worldModel, med worldMedium) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 || m == nil {
+		return
+	}
+	p := med.palette
+
+	// 1) Base: flat pale fills. Sea a flat pale blue (a single faint depth step), land a near-white
+	//    pale grey with the subtle biome tonal steps. No noise — the flatness is the vector look.
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			bi := m.field.at(x, y)
+			if bi >= biomeCount {
+				bi = biomeGrass
+			}
+			var col color.RGBA
+			if bi == biomeDeepWater || bi == biomeShallowWater {
+				e := m.elevAtPx(x, y)
+				if m.seaLevel > 0 && (m.seaLevel-e)/m.seaLevel > 0.55 {
+					col = p.oceanDeep
+				} else {
+					col = p.oceanShelf
+				}
+			} else {
+				col = p.land[bi]
+			}
+			setPixel(img, x, y, col)
+		}
+	}
+
+	// 2) Faint reference grid over the WHOLE frame: very light lines every gridStep px, barely
+	//    there — the subtle graticule of a web map. Blended low so it never competes with the roads.
+	gridStep := 16
+	if minInt(w, h) < 80 {
+		gridStep = 9
+	}
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if x%gridStep == 0 || y%gridStep == 0 {
+				cur := img.RGBAAt(b.Min.X+x, b.Min.Y+y)
+				setPixel(img, x, y, blend(cur, p.shadow, 0.5))
+			}
+		}
+	}
+
+	// 3) Soft coastline: a muted blue-grey flat edge — the shore pixel gets the soft coast tone
+	//    (no bold ink), so land meets water as a clean flat boundary, not a drawn outline.
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if !isLandPx(m.field, x, y) {
+				continue
+			}
+			if isLandPx(m.field, x-1, y) && isLandPx(m.field, x+1, y) &&
+				isLandPx(m.field, x, y-1) && isLandPx(m.field, x, y+1) {
+				continue
+			}
+			setPixel(img, x, y, p.coast)
+		}
+	}
+
+	// 4) Rivers: clean thin blue over the land.
+	putRiver := func(x, y int, c color.RGBA) {
+		if isLandPx(m.field, x, y) {
+			setPixel(img, x, y, c)
+		}
+	}
+	for _, r := range m.rivers {
+		for i := 0; i+1 < len(r.pts); i++ {
+			a, bb := r.pts[i], r.pts[i+1]
+			strokeThickLineFunc(a.x, a.y, bb.x, bb.y, 0, p.river, putRiver)
+		}
+	}
+
+	// 5) ROAD NETWORK: the signature. Connect the relief/settlement anchors with clean thin amber
+	//    routes — for each anchor, link it to its nearest FEW anchors with an L-shaped (elbowed)
+	//    connector, stamping only over LAND so roads stay on the continent and stop at the coast.
+	//    Deterministic: the anchor list is fixed and the neighbour choice is by squared distance.
+	putRoad := func(x, y int, c color.RGBA) {
+		if isLandPx(m.field, x, y) {
+			setPixel(img, x, y, c)
+		}
+	}
+	anchors := m.reliefs
+	if len(anchors) >= 2 {
+		for i := range anchors {
+			ax, ay := anchors[i].x, anchors[i].y
+			// Find this anchor's two nearest neighbours by squared distance (deterministic order).
+			best1, best2 := -1, -1
+			d1, d2 := 1<<30, 1<<30
+			for j := range anchors {
+				if j == i {
+					continue
+				}
+				dx := anchors[j].x - ax
+				dy := anchors[j].y - ay
+				dd := dx*dx + dy*dy
+				if dd < d1 {
+					d2, best2 = d1, best1
+					d1, best1 = dd, j
+				} else if dd < d2 {
+					d2, best2 = dd, j
+				}
+			}
+			// Draw an elbowed route to each chosen neighbour, but only from the lower-index anchor
+			// so each edge is drawn once (avoids double-stamping the same road).
+			link := func(j int) {
+				if j < 0 || j <= i {
+					return
+				}
+				bx, by := anchors[j].x, anchors[j].y
+				// Elbow: horizontal leg then vertical leg (an L) so the web reads as routed streets.
+				strokeThickLineFunc(ax, ay, bx, ay, 0, p.reliefAlt, putRoad)
+				strokeThickLineFunc(bx, ay, bx, by, 0, p.reliefAlt, putRoad)
+			}
+			link(best1)
+			link(best2)
+		}
+	}
+
+	// 6) Relief: understated — a single faint darker pixel at each peak so uplands read as a
+	//    subtle node on the flat map (a vector map doesn't draw mountains loudly). Gate to land.
+	for _, a := range m.reliefs {
+		if !isLandPx(m.field, a.x, a.y) {
+			continue
+		}
+		if a.kind == reliefMountain {
+			setPixel(img, a.x, a.y, p.relief)
+		}
+	}
+
+	// 7) Chrome: minimal — a single thin flat margin rule (the clean edge of a web-map tile).
+	drawThinMargin(img, p.coast)
+}
+
+// ---- pixel: digital-age 8-bit game map ---------------------------------------
+
+// pixelMedium is a chunky 8-BIT / retro-game map (→ digital_age). The SIGNATURE is a render
+// quantized to LARGE ~8px pixel blocks (much bigger than mosaic's ~4px tiles) with NO grout
+// lines, a LIMITED retro-game indexed palette (a handful of bold colors), ORDERED-DITHER (Bayer)
+// gradients between elevation bands, a hard blocky STAIR-STEP coastline, blocky relief sprites,
+// and blocky river runs. Chrome: a chunky pixel border. CRITICAL vs mosaic: NO grout, BIGGER
+// blocks, dithering, and a limited palette (mosaic has thin dark grout + small tiles + a Greek-
+// key border). Anchors to the limited retro palette + big blocks HARD.
+func pixelMedium() worldMedium {
+	var mp mediumPalette
+	// Limited retro-game indexed palette — a handful of bold colors, nothing subtle.
+	mp.oceanDeep = color.RGBA{R: 0x18, G: 0x30, B: 0x78, A: 0xff}  // deep blue
+	mp.oceanShelf = color.RGBA{R: 0x38, G: 0x78, B: 0xc8, A: 0xff} // bright shallow blue
+	mp.background = mp.oceanDeep
+	mp.land[biomeSand] = color.RGBA{R: 0xe8, G: 0xd0, B: 0x88, A: 0xff}     // sand
+	mp.land[biomeGrass] = color.RGBA{R: 0x58, G: 0xb0, B: 0x48, A: 0xff}    // bright grass green
+	mp.land[biomeForest] = color.RGBA{R: 0x28, G: 0x70, B: 0x30, A: 0xff}   // dark forest green
+	mp.land[biomeRock] = color.RGBA{R: 0x98, G: 0x80, B: 0x60, A: 0xff}     // rock brown
+	mp.land[biomeMountain] = color.RGBA{R: 0x80, G: 0x80, B: 0x88, A: 0xff} // grey stone
+	mp.land[biomeSnow] = color.RGBA{R: 0xf0, G: 0xf0, B: 0xf8, A: 0xff}     // white
+	mp.land[biomeDeepWater] = mp.oceanDeep
+	mp.land[biomeShallowWater] = mp.oceanShelf
+	mp.coast = color.RGBA{R: 0xf0, G: 0xe0, B: 0x98, A: 0xff}     // bright sand-edge beach
+	mp.river = color.RGBA{R: 0x48, G: 0x98, B: 0xe0, A: 0xff}     // bright river blue
+	mp.relief = color.RGBA{R: 0x60, G: 0x60, B: 0x68, A: 0xff}    // dark stone sprite
+	mp.reliefAlt = color.RGBA{R: 0xf0, G: 0xf0, B: 0xf8, A: 0xff} // white snow-cap sprite
+	mp.shadow = color.RGBA{R: 0x18, G: 0x20, B: 0x30, A: 0xff}    // near-black border shade
+	return worldMedium{name: "pixel", style: stylePixel, palette: mp, draw: drawPixel}
+}
+
+// drawPixel paints the 8-bit-game medium. Technique: quantize the world into LARGE ~8px blocks
+// (each block classified by the biome at its center, filled edge-to-edge with NO grout so blocks
+// abut); apply an ORDERED-DITHER (4×4 Bayer) between adjacent elevation bands on LAND so height
+// reads as retro-game dithered gradients (a block near a band edge stipples between its band's
+// color and the next); redraw the coast as a hard blocky STAIR-STEP beach (whole shore blocks
+// recolored to the bright beach tone); lay blocky river runs; stamp blocky relief sprites; and
+// frame it with a chunky pixel border. Big blocks + no grout + dithering + limited palette is the
+// read (deliberately unlike mosaic's grouted small tiles).
+func drawPixel(img *image.RGBA, m *worldModel, med worldMedium) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 || m == nil {
+		return
+	}
+	p := med.palette
+	const blk = 8 // big pixel-block size (double mosaic's 4px tile)
+
+	// 4×4 Bayer ordered-dither matrix (thresholds 0..15) — the classic retro dither pattern.
+	bayer := [4][4]int{
+		{0, 8, 2, 10},
+		{12, 4, 14, 6},
+		{3, 11, 1, 9},
+		{15, 7, 13, 5},
+	}
+
+	// blockBiome classifies a block by the biome at its center pixel (clamped on-canvas).
+	blockBiome := func(bx, by int) biome {
+		cx := clampInt(bx+blk/2, 0, w-1)
+		cy := clampInt(by+blk/2, 0, h-1)
+		bi := m.field.at(cx, cy)
+		if bi >= biomeCount {
+			bi = biomeGrass
+		}
+		return bi
+	}
+	blockIsLand := func(bx, by int) bool {
+		cx := clampInt(bx+blk/2, 0, w-1)
+		cy := clampInt(by+blk/2, 0, h-1)
+		return isLandPx(m.field, cx, cy)
+	}
+	// blockElevBand returns a land block's elevation band (0..bands) and the block's fractional
+	// position within the band [0,1) — used to drive the dither toward the NEXT band's color.
+	const bands = 5
+	blockBand := func(bx, by int) (int, float64) {
+		cx := clampInt(bx+blk/2, 0, w-1)
+		cy := clampInt(by+blk/2, 0, h-1)
+		e := m.elevAtPx(cx, cy)
+		t := (e - m.seaLevel) / (1 - m.seaLevel)
+		if t < 0 {
+			t = 0
+		}
+		if t > 1 {
+			t = 1
+		}
+		f := t * float64(bands)
+		bi := int(f)
+		if bi >= bands {
+			bi = bands - 1
+		}
+		return bi, f - float64(bi)
+	}
+
+	// fillBlock paints a whole block edge-to-edge in `col` (NO grout — blocks abut cleanly).
+	fillBlock := func(bx, by int, col color.RGBA) {
+		for yy := by; yy < by+blk && yy < h; yy++ {
+			for xx := bx; xx < bx+blk && xx < w; xx++ {
+				setPixel(img, xx, yy, col)
+			}
+		}
+	}
+	// fillBlockDither paints a block dithering between colA (this band) and colB (next band) using
+	// the Bayer matrix at threshold `frac` — pixels whose Bayer cell is below frac*16 take colB, so
+	// higher blocks within a band stipple more of the next band's color (retro gradient).
+	fillBlockDither := func(bx, by int, colA, colB color.RGBA, frac float64) {
+		thr := int(frac * 16)
+		for yy := by; yy < by+blk && yy < h; yy++ {
+			for xx := bx; xx < bx+blk && xx < w; xx++ {
+				if bayer[yy&3][xx&3] < thr {
+					setPixel(img, xx, yy, colB)
+				} else {
+					setPixel(img, xx, yy, colA)
+				}
+			}
+		}
+	}
+
+	// bandColor maps a land elevation band to a retro palette color (low→grass, up→snow), the
+	// discrete ramp the dither blends between.
+	bandColor := func(band int) color.RGBA {
+		switch band {
+		case 0:
+			return p.land[biomeGrass]
+		case 1:
+			return p.land[biomeForest]
+		case 2:
+			return p.land[biomeRock]
+		case 3:
+			return p.land[biomeMountain]
+		default:
+			return p.land[biomeSnow]
+		}
+	}
+
+	// 1) Lay the base field as BIG blocks. Sea blocks: a flat retro blue (depth → deep/shallow
+	//    index). Land blocks: dither between the block's elevation band color and the next band's,
+	//    so relief reads as ordered-dither gradients. Sand/beach coastal blocks keep the sand tone.
+	for by := 0; by < h; by += blk {
+		for bx := 0; bx < w; bx += blk {
+			bi := blockBiome(bx, by)
+			if bi == biomeDeepWater || bi == biomeShallowWater {
+				cx := clampInt(bx+blk/2, 0, w-1)
+				cy := clampInt(by+blk/2, 0, h-1)
+				e := m.elevAtPx(cx, cy)
+				col := p.oceanShelf
+				if m.seaLevel > 0 && (m.seaLevel-e)/m.seaLevel > 0.5 {
+					col = p.oceanDeep
+				}
+				fillBlock(bx, by, col)
+				continue
+			}
+			if bi == biomeSand {
+				fillBlock(bx, by, p.land[biomeSand]) // flat sand, no dither at the shore
+				continue
+			}
+			band, frac := blockBand(bx, by)
+			colA := bandColor(band)
+			colB := bandColor(clampInt(band+1, 0, bands-1))
+			fillBlockDither(bx, by, colA, colB, frac)
+		}
+	}
+
+	// 2) Blocky STAIR-STEP coastline: recolor every SHORE block (a land block with a water-block
+	//    4-neighbour) to the bright beach tone, so the coast reads as a hard blocky stepped edge —
+	//    the chunky shoreline of a tile-based game (whole blocks, no anti-aliasing).
+	for by := 0; by < h; by += blk {
+		for bx := 0; bx < w; bx += blk {
+			if !blockIsLand(bx, by) {
+				continue
+			}
+			shore := !blockIsLand(bx-blk, by) || !blockIsLand(bx+blk, by) ||
+				!blockIsLand(bx, by-blk) || !blockIsLand(bx, by+blk)
+			if shore {
+				fillBlock(bx, by, p.coast)
+			}
+		}
+	}
+
+	// 3) Rivers: blocky runs — snap each river point to its block and fill it bright blue (gated to
+	//    land blocks so the run stops at the coast).
+	for _, r := range m.rivers {
+		for _, pt := range r.pts {
+			bx := (pt.x / blk) * blk
+			by := (pt.y / blk) * blk
+			if blockIsLand(bx, by) {
+				fillBlock(bx, by, p.river)
+			}
+		}
+	}
+
+	// 4) Relief: blocky sprites — a mountain block gets a dark stone body with a white cap block
+	//    above it (a 2-block sprite), a hill block a single dark stone block. Snapped to blocks,
+	//    gated to land.
+	for _, a := range m.reliefs {
+		bx := (a.x / blk) * blk
+		by := (a.y / blk) * blk
+		if !blockIsLand(bx, by) {
+			continue
+		}
+		switch a.kind {
+		case reliefMountain:
+			fillBlock(bx, by, p.relief)
+			if by-blk >= 0 && blockIsLand(bx, by-blk) {
+				fillBlock(bx, by-blk, p.reliefAlt) // white snow-cap block on top
+			}
+		case reliefHill:
+			fillBlock(bx, by, p.relief)
+		}
+	}
+
+	// 5) Chrome: a chunky pixel border (a thick blocky rim of the near-black shade).
+	drawPixelBorder(img, p.shadow, blk)
+}
+
+// ---- hologram: fusion-age hard-light projection ------------------------------
+
+// hologramMedium is a clean HARD-LIGHT HOLOGRAM projection (→ fusion_age). CRITICAL vs neon: neon
+// is a flat BLACK ground with a hard rectangular CYAN grid + magenta HUD; the hologram is
+// BRIGHTER, WARMER and VOLUMETRIC — a deep TEAL→INDIGO projection field (NOT pure black), the
+// land rendered as a glowing WHITE-GOLD volumetric height mesh that reads as 3D relief (bright
+// warm gold on high ground fading to pale cyan-white at sea level, with soft additive edge glow),
+// fine horizontal SCANLINE shimmer across the whole projection, small floating tick/measure
+// marks, and a bright rim where the projection meets the sea. Warm gold + white + a volumetric 3D
+// feel is the signature. Chrome: soft glowing projector corner brackets (NOT the neon square
+// grid). Anchors to teal-indigo field + warm gold/white mesh HARD.
+func hologramMedium() worldMedium {
+	var mp mediumPalette
+	// Warm-hologram identity: a teal→indigo field (not black), warm gold + cyan-white light.
+	fieldTop := color.RGBA{R: 0x0a, G: 0x2c, B: 0x30, A: 0xff}  // deep teal (near the base of the field)
+	fieldDeep := color.RGBA{R: 0x0e, G: 0x12, B: 0x38, A: 0xff} // indigo (the recessed sea well)
+	gold := color.RGBA{R: 0xff, G: 0xd8, B: 0x7a, A: 0xff}      // warm gold (high ground crest)
+	paleCyan := color.RGBA{R: 0xc8, G: 0xf2, B: 0xf0, A: 0xff}  // pale cyan-white (low ground / sea rim)
+	mp.background = fieldTop
+	mp.oceanDeep = fieldDeep
+	mp.oceanShelf = blend(fieldTop, fieldDeep, 0.5)
+	mp.coast = paleCyan                                        // the bright projection rim at the shore
+	mp.river = color.RGBA{R: 0x7a, G: 0xe4, B: 0xf0, A: 0xff}  // bright cyan data-stream river
+	mp.relief = gold                                           // warm gold crest highlight
+	mp.reliefAlt = paleCyan                                    // pale cyan-white mesh tone
+	mp.shadow = color.RGBA{R: 0x1c, G: 0x4a, B: 0x50, A: 0xff} // teal mesh floor
+	// Land "bed" is the teal field lifted a touch — the glowing gold/white mesh (drawn per
+	// elevation) carries the volumetric read, not a flat land fill.
+	for bi := biome(0); bi < biomeCount; bi++ {
+		mp.land[bi] = blend(fieldTop, mp.shadow, 0.5)
+	}
+
+	return worldMedium{name: "hologram", style: styleHologram, palette: mp, draw: drawHologram}
+}
+
+// drawHologram paints the hard-light-hologram medium. Technique: fill the frame with the deep
+// teal→indigo projection FIELD (sea recessed toward indigo, land lifted toward teal — a warm
+// volumetric well, never black); render the LAND as a glowing height MESH — each land pixel's
+// color interpolates from pale cyan-white at the waterline up to warm GOLD on the highest ground
+// (a true elevation ramp, so the continent reads as a lit 3D relief), brightened additively where
+// elevation is high so crests bloom; draw glowing mesh CONTOUR shells along elevation bands in
+// warm gold/white; put a BRIGHT projection RIM at the coast (a pale-cyan shore glow blooming a
+// pixel into the sea); overlay fine horizontal SCANLINE shimmer across the whole projection;
+// scatter small floating cyan tick/measure marks; lay bright cyan river streams; and frame it
+// with soft glowing projector corner brackets. Warm gold + white volumetric mesh is the read —
+// deliberately unlike neon's flat black + hard cyan grid.
+func drawHologram(img *image.RGBA, m *worldModel, med worldMedium) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 || m == nil {
+		return
+	}
+	p := med.palette
+
+	// elevT returns a land pixel's normalized height in [0,1] (0 at the waterline, 1 at the peak).
+	elevT := func(x, y int) float64 {
+		e := m.elevAtPx(x, y)
+		t := (e - m.seaLevel) / (1 - m.seaLevel)
+		return clamp01(t)
+	}
+
+	// 1) Base: the teal→indigo projection field, and the land as a warm gold↔cyan-white height
+	//    MESH. Sea recesses toward indigo with depth; land ramps pale-cyan (low) → gold (high),
+	//    brightened additively at altitude so crests glow — the volumetric 3D read.
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			bi := m.field.at(x, y)
+			if bi >= biomeCount {
+				bi = biomeGrass
+			}
+			var col color.RGBA
+			if bi == biomeDeepWater || bi == biomeShallowWater {
+				e := m.elevAtPx(x, y)
+				depth := 0.0
+				if m.seaLevel > 0 {
+					depth = clamp01((m.seaLevel - e) / m.seaLevel)
+				}
+				col = blend(p.background, p.oceanDeep, depth) // teal→indigo well
+			} else {
+				t := elevT(x, y)
+				// Height ramp: pale cyan-white at the shore lifting to warm gold at the peak, all
+				// sitting over the teal mesh floor so low land still glows faintly.
+				lit := blend(p.reliefAlt, p.relief, t)  // cyan-white → gold by height
+				col = blend(p.shadow, lit, 0.35+0.55*t) // higher ground reads brighter/warmer
+				if t > 0.5 {
+					col = brighten(col, (t-0.5)*0.5) // additive crest bloom on high ground
+				}
+			}
+			setPixel(img, x, y, col)
+		}
+	}
+
+	// 2) Glowing mesh CONTOUR shells: quantize land elevation into bands; a land pixel on a band
+	//    boundary glows a warm gold/white shell line, so the relief reads as stacked luminous
+	//    height contours (the hologram's volumetric mesh). Brighter on higher shells.
+	const bands = 7
+	bandOf := func(x, y int) int {
+		if !isLandPx(m.field, x, y) {
+			return -1
+		}
+		return int(elevT(x, y) * float64(bands))
+	}
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			bnd := bandOf(x, y)
+			if bnd < 0 {
+				continue
+			}
+			if bandOf(x+1, y) != bnd || bandOf(x, y+1) != bnd {
+				cur := img.RGBAAt(b.Min.X+x, b.Min.Y+y)
+				t := elevT(x, y)
+				shell := blend(p.reliefAlt, p.relief, t) // cyan-white low shells, gold high shells
+				setPixel(img, x, y, blend(cur, shell, 0.55))
+			}
+		}
+	}
+
+	// 3) Bright projection RIM at the coast: shore land pixels flare pale cyan-white, and the bloom
+	//    spills one pixel into the adjacent sea — the luminous edge where the projected landmass
+	//    meets the field.
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			if !isLandPx(m.field, x, y) {
+				continue
+			}
+			shore := !isLandPx(m.field, x-1, y) || !isLandPx(m.field, x+1, y) ||
+				!isLandPx(m.field, x, y-1) || !isLandPx(m.field, x, y+1)
+			if !shore {
+				continue
+			}
+			setPixel(img, x, y, p.coast)
+			bloom := blend(p.oceanDeep, p.coast, 0.5)
+			for _, nb := range [4][2]int{{1, 0}, {-1, 0}, {0, 1}, {0, -1}} {
+				nx, ny := x+nb[0], y+nb[1]
+				if !isLandPx(m.field, nx, ny) {
+					cur := img.RGBAAt(b.Min.X+clampInt(nx, 0, w-1), b.Min.Y+clampInt(ny, 0, h-1))
+					setPixel(img, nx, ny, blend(cur, bloom, 0.5))
+				}
+			}
+		}
+	}
+
+	// 4) Rivers: bright cyan data-streams over the land.
+	putRiver := func(x, y int, c color.RGBA) {
+		if isLandPx(m.field, x, y) {
+			setPixel(img, x, y, c)
+		}
+	}
+	for _, r := range m.rivers {
+		for i := 0; i+1 < len(r.pts); i++ {
+			a, bb := r.pts[i], r.pts[i+1]
+			strokeThickLineFunc(a.x, a.y, bb.x, bb.y, 0, p.river, putRiver)
+		}
+	}
+
+	// 5) Relief: a warm gold crest pip at each peak (a single bright gold point over the mesh) so
+	//    summits punch as glowing nodes; hills a fainter cyan-white pip. Gate to land.
+	putR := func(x, y int, c color.RGBA) {
+		if isLandPx(m.field, x, y) {
+			setPixel(img, x, y, c)
+		}
+	}
+	for _, a := range m.reliefs {
+		switch a.kind {
+		case reliefMountain:
+			putR(a.x, a.y, p.relief)   // gold crest
+			putR(a.x, a.y-1, p.relief) // a taller glow
+		case reliefHill:
+			putR(a.x, a.y, p.reliefAlt) // a cyan-white pip
+		}
+	}
+
+	// 6) Horizontal SCANLINE shimmer across the WHOLE projection: every other row is nudged a hair
+	//    brighter (a faint additive lift), so the field reads as a scanned hard-light hologram
+	//    rather than a solid image. Kept subtle so it shimmers, not stripes.
+	for y := 0; y < h; y += 2 {
+		for x := 0; x < w; x++ {
+			cur := img.RGBAAt(b.Min.X+x, b.Min.Y+y)
+			setPixel(img, x, y, brighten(cur, 0.06))
+		}
+	}
+
+	// 7) Floating tick / measure marks: small cyan-white pips scattered on a sparse deterministic
+	//    lattice over the FIELD (mostly the sea, so they read as projection measure marks around the
+	//    landmass), skipped over land so they don't clutter the mesh.
+	tickStep := 14
+	if minInt(w, h) < 70 {
+		tickStep = 8
+	}
+	for y := tickStep / 2; y < h; y += tickStep {
+		for x := tickStep / 2; x < w; x += tickStep {
+			if isLandPx(m.field, x, y) {
+				continue
+			}
+			cur := img.RGBAAt(b.Min.X+x, b.Min.Y+y)
+			setPixel(img, x, y, blend(cur, p.reliefAlt, 0.6)) // a small floating measure pip
+		}
+	}
+
+	// 8) Chrome: soft glowing projector corner brackets (thin luminous L's, NOT a neon square grid).
+	drawProjectorBrackets(img, p.coast, p.relief)
+}
+
 // ---- chrome helpers ---------------------------------------------------------
 
 // drawEngravedNeatline draws the copperplate medium's chrome: a fine engraved neat-line border
@@ -2642,4 +3583,140 @@ func drawGreekKeyBorder(img *image.RGBA, tile, grout color.RGBA) {
 		drawKeyUnit(x, 1, 1)    // top band, growing downward
 		drawKeyUnit(x, h-4, -1) // bottom band, mirrored upward
 	}
+}
+
+// drawBlueprintBorder draws the blueprint medium's chrome: a thin crisp WHITE technical drawing
+// border (a single outer rule) with a small registration CROSS (a + mark) at each of the four
+// corners — the register marks of a drafting sheet. `ink` is the white line, `dim` the fainter
+// white for the cross centers so they read as alignment targets.
+func drawBlueprintBorder(img *image.RGBA, ink, dim color.RGBA) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w < 8 || h < 8 {
+		return
+	}
+	// A thin white technical rule a couple of px in from the edge.
+	const inset = 2
+	for x := inset; x < w-inset; x++ {
+		setPixel(img, x, inset, ink)
+		setPixel(img, x, h-1-inset, ink)
+	}
+	for y := inset; y < h-inset; y++ {
+		setPixel(img, inset, y, ink)
+		setPixel(img, w-1-inset, y, ink)
+	}
+	// Corner registration crosses: a small + at each corner, inset so the arms read.
+	arm := clampInt(minInt(w, h)/16, 2, 6)
+	cross := func(cx, cy int) {
+		for k := -arm; k <= arm; k++ {
+			setPixel(img, cx+k, cy, ink)
+			setPixel(img, cx, cy+k, ink)
+		}
+		setPixel(img, cx, cy, dim) // faint center so it reads as a target
+	}
+	off := arm + 3
+	cross(off, off)
+	cross(w-1-off, off)
+	cross(off, h-1-off)
+	cross(w-1-off, h-1-off)
+}
+
+// drawMidCenturyBorder draws the retro-atlas medium's chrome: a bold squared mid-century border —
+// a heavy 2px outer BAND in the outline ink plus a thin inner rule a few px in, squared corners
+// (no ornament) — the confident printed frame of a 1950s atlas plate. `ink` the bold band,
+// `accent` the thin inner rule.
+func drawMidCenturyBorder(img *image.RGBA, ink, accent color.RGBA) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w < 10 || h < 10 {
+		return
+	}
+	rect := func(inset int, col color.RGBA) {
+		for x := inset; x < w-inset; x++ {
+			setPixel(img, x, inset, col)
+			setPixel(img, x, h-1-inset, col)
+		}
+		for y := inset; y < h-inset; y++ {
+			setPixel(img, inset, y, col)
+			setPixel(img, w-1-inset, y, col)
+		}
+	}
+	rect(0, ink)    // bold outer band, row 0
+	rect(1, ink)    // bold outer band, row 1 → a heavy 2px frame
+	rect(4, accent) // thin inner rule
+}
+
+// drawThinMargin draws the vector medium's minimal chrome: a single thin flat rule at the very
+// edge in the soft coast tone — the clean trimmed edge of a web-map tile, nothing more.
+func drawThinMargin(img *image.RGBA, col color.RGBA) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w < 4 || h < 4 {
+		return
+	}
+	for x := 0; x < w; x++ {
+		setPixel(img, x, 0, col)
+		setPixel(img, x, h-1, col)
+	}
+	for y := 0; y < h; y++ {
+		setPixel(img, 0, y, col)
+		setPixel(img, w-1, y, col)
+	}
+}
+
+// drawPixelBorder draws the pixel medium's chrome: a chunky blocky rim `blk` px thick in the
+// near-black shade, so the frame reads as the thick pixel border of a tile-based game screen. No
+// anti-aliasing, no ornament — just a fat block edge.
+func drawPixelBorder(img *image.RGBA, col color.RGBA, blk int) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 {
+		return
+	}
+	thick := blk / 2
+	if thick < 1 {
+		thick = 1
+	}
+	if thick > w || thick > h {
+		thick = minInt(w, h)
+	}
+	for t := 0; t < thick; t++ {
+		for x := 0; x < w; x++ {
+			setPixel(img, x, t, col)
+			setPixel(img, x, h-1-t, col)
+		}
+		for y := 0; y < h; y++ {
+			setPixel(img, t, y, col)
+			setPixel(img, w-1-t, y, col)
+		}
+	}
+}
+
+// drawProjectorBrackets draws the hologram medium's chrome: soft glowing projector corner
+// brackets — a thin L in each corner in the bright rim tone, with a faint warm-gold inner echo one
+// px inside each arm so the bracket reads as a soft-edged hard-light projection frame (NOT the
+// neon square grid). `rim` the bright pale-cyan bracket, `glow` the warm gold inner echo.
+func drawProjectorBrackets(img *image.RGBA, rim, glow color.RGBA) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w < 12 || h < 12 {
+		return
+	}
+	arm := clampInt(minInt(w, h)/7, 4, 22)
+	inset := 2
+	corner := func(cx, cy, sx, sy int) {
+		for k := 0; k < arm; k++ {
+			setPixel(img, cx+sx*k, cy, rim)
+			setPixel(img, cx, cy+sy*k, rim)
+			// A faint warm-gold echo one px inside each arm → a soft glowing double edge.
+			cur1 := img.RGBAAt(b.Min.X+clampInt(cx+sx*k, 0, w-1), b.Min.Y+clampInt(cy+sy, 0, h-1))
+			setPixel(img, cx+sx*k, cy+sy, blend(cur1, glow, 0.35))
+			cur2 := img.RGBAAt(b.Min.X+clampInt(cx+sx, 0, w-1), b.Min.Y+clampInt(cy+sy*k, 0, h-1))
+			setPixel(img, cx+sx, cy+sy*k, blend(cur2, glow, 0.35))
+		}
+	}
+	corner(inset, inset, 1, 1)
+	corner(w-1-inset, inset, -1, 1)
+	corner(inset, h-1-inset, 1, -1)
+	corner(w-1-inset, h-1-inset, -1, -1)
 }
