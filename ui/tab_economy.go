@@ -5,6 +5,7 @@ import (
 	"math"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/rivo/tview"
 
@@ -375,7 +376,10 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 	// first-steps guide (re-homed out of the startup log). Auto-retires once the
 	// player advances past the early ages. Colors are deliberately legible — gold
 	// header + cyan command names + white prose — not muddy gray.
-	if isEarlyGame(state.Age) {
+	// Auto-retire the onboarding block once the player is past the early ages OR has
+	// logged 30+ minutes of play. PlayTime is wall-clock (time.Since(GameStarted)),
+	// so it's robust against tick-speed bonuses that a raw tick count would inflate.
+	if isEarlyGame(state.Age) && state.Stats.PlayTime < 30*time.Minute {
 		sb.WriteString("\n [gold]─── Getting Started ───[-]\n")
 		sb.WriteString(" [white]New here? Walk the first steps:[-]\n")
 		sb.WriteString(" [white]1.[-] [cyan]gather wood 5[-] [white]/[-] [cyan]gather food[-] — collect by hand\n")

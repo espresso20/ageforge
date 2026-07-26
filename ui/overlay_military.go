@@ -71,23 +71,8 @@ func militaryProvider(state game.GameState, _ int) string {
 		writeExpeditionGroup(&sb, "Campaigns", mil.Expeditions, game.ExpeditionMilitary)
 	}
 
-	// === Loot History ===
-	sb.WriteString(" [gold]═══ Loot History ═══[-]\n\n")
-	if len(mil.TotalLoot) == 0 {
-		sb.WriteString(" [gray]No loot collected yet[-]\n")
-		sb.WriteString(" [gray]Complete expeditions to earn rewards![-]\n")
-	} else {
-		sb.WriteString(" [gold]Total Loot Collected:[-]\n\n")
-		lootKeys := make([]string, 0, len(mil.TotalLoot))
-		for k := range mil.TotalLoot {
-			lootKeys = append(lootKeys, k)
-		}
-		sort.Strings(lootKeys)
-		for _, key := range lootKeys {
-			amount := mil.TotalLoot[key]
-			fmt.Fprintf(&sb, " %-12s [green]%.0f[-]\n", key, amount)
-		}
-	}
+	// Loot totals now live in the Expeditions panel (see overlay_expeditions.go),
+	// alongside the scouting/loot surface — not here in the Army panel.
 
 	sb.WriteString("\n [gray]Commands: campaign <key>[-]\n")
 

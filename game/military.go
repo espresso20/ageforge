@@ -22,7 +22,12 @@ type ExpeditionDef struct {
 	MinAge         string
 	MaxAge         string // empty = no upper bound; expedition is unavailable once past this age
 	SoldiersNeeded int
-	Duration       int                // ticks
+	Duration       int // legacy fixed duration (ticks); fallback when DurationMin/Max unset
+	// DurationMin/DurationMax bound the randomized active duration rolled at launch,
+	// inclusive. LaunchExpedition rolls a uniform value in [DurationMin, DurationMax]
+	// when DurationMax > DurationMin; otherwise it falls back to the fixed Duration.
+	DurationMin    int
+	DurationMax    int
 	DifficultyBase float64            // 0.0 - 1.0, higher = harder
 	Cost           map[string]float64 // resource cost to launch, in addition to soldiers
 	Rewards        map[string]float64
@@ -65,6 +70,7 @@ func NewMilitaryManager() *MilitaryManager {
 				Category: ExpeditionScouting,
 				MinAge:   "primitive_age", MaxAge: "bronze_age",
 				SoldiersNeeded: 0, Duration: 20,
+				DurationMin: 100, DurationMax: 160,
 				DifficultyBase: 0.2,
 				Cost:           map[string]float64{"food": 30, "wood": 30},
 				Rewards:        map[string]float64{"food": 60, "wood": 60, "stone": 20},
@@ -74,6 +80,7 @@ func NewMilitaryManager() *MilitaryManager {
 				Name: "Scout Nearby Ruins", Key: "scout_ruins",
 				Category: ExpeditionScouting,
 				MinAge:   "bronze_age", SoldiersNeeded: 0, Duration: 10,
+				DurationMin: 60, DurationMax: 100,
 				DifficultyBase: 0.2,
 				Cost:           map[string]float64{"food": 40, "wood": 30},
 				Rewards:        map[string]float64{"food": 30, "wood": 20, "stone": 15},
@@ -83,6 +90,7 @@ func NewMilitaryManager() *MilitaryManager {
 				Name: "Raid Bandit Camp", Key: "raid_bandits",
 				Category: ExpeditionMilitary,
 				MinAge:   "bronze_age", SoldiersNeeded: 5, Duration: 15,
+				DurationMin: 60, DurationMax: 100,
 				DifficultyBase: 0.4,
 				Rewards:        map[string]float64{"gold": 30, "iron": 15, "food": 20},
 				Description:    "Attack a bandit encampment and seize their loot.",
@@ -91,6 +99,7 @@ func NewMilitaryManager() *MilitaryManager {
 				Name: "Trade Escort", Key: "trade_escort",
 				Category: ExpeditionMilitary,
 				MinAge:   "iron_age", SoldiersNeeded: 3, Duration: 12,
+				DurationMin: 60, DurationMax: 100,
 				DifficultyBase: 0.3,
 				Rewards:        map[string]float64{"gold": 50, "knowledge": 10},
 				Description:    "Escort merchants on a dangerous trade route.",
@@ -99,6 +108,7 @@ func NewMilitaryManager() *MilitaryManager {
 				Name: "Conquer Territory", Key: "conquer_territory",
 				Category: ExpeditionMilitary,
 				MinAge:   "iron_age", SoldiersNeeded: 10, Duration: 25,
+				DurationMin: 60, DurationMax: 100,
 				DifficultyBase: 0.6,
 				Rewards:        map[string]float64{"gold": 80, "iron": 40, "food": 50},
 				Description:    "Conquer a neighboring territory for its resources.",
@@ -107,6 +117,7 @@ func NewMilitaryManager() *MilitaryManager {
 				Name: "Siege Enemy Castle", Key: "siege_castle",
 				Category: ExpeditionMilitary,
 				MinAge:   "medieval_age", SoldiersNeeded: 15, Duration: 30,
+				DurationMin: 60, DurationMax: 100,
 				DifficultyBase: 0.7,
 				Rewards:        map[string]float64{"gold": 150, "steel": 30, "faith": 20},
 				Description:    "Lay siege to an enemy stronghold.",
@@ -115,6 +126,7 @@ func NewMilitaryManager() *MilitaryManager {
 				Name: "Naval Expedition", Key: "naval_expedition",
 				Category: ExpeditionScouting,
 				MinAge:   "renaissance_age", SoldiersNeeded: 0, Duration: 35,
+				DurationMin: 60, DurationMax: 100,
 				DifficultyBase: 0.5,
 				Cost:           map[string]float64{"food": 150, "wood": 100},
 				Rewards:        map[string]float64{"gold": 200, "culture": 30, "knowledge": 40},
@@ -124,6 +136,7 @@ func NewMilitaryManager() *MilitaryManager {
 				Name: "Colonial Campaign", Key: "colonial_campaign",
 				Category: ExpeditionMilitary,
 				MinAge:   "industrial_age", SoldiersNeeded: 20, Duration: 40,
+				DurationMin: 60, DurationMax: 100,
 				DifficultyBase: 0.6,
 				Rewards:        map[string]float64{"gold": 300, "oil": 50, "steel": 40},
 				Description:    "Establish colonial presence in new territories.",
@@ -132,6 +145,7 @@ func NewMilitaryManager() *MilitaryManager {
 				Name: "World Domination", Key: "world_domination",
 				Category: ExpeditionMilitary,
 				MinAge:   "modern_age", SoldiersNeeded: 50, Duration: 60,
+				DurationMin: 60, DurationMax: 100,
 				DifficultyBase: 0.8,
 				Rewards:        map[string]float64{"gold": 1000, "electricity": 200, "knowledge": 500},
 				Description:    "Launch a global military campaign for world domination.",
@@ -140,6 +154,7 @@ func NewMilitaryManager() *MilitaryManager {
 				Name: "Cyber Raid", Key: "cyber_raid",
 				Category: ExpeditionMilitary,
 				MinAge:   "information_age", SoldiersNeeded: 30, Duration: 45,
+				DurationMin: 60, DurationMax: 100,
 				DifficultyBase: 0.6,
 				Rewards:        map[string]float64{"data": 200, "crypto": 50, "gold": 500},
 				Description:    "Hack into enemy networks and steal digital assets.",
@@ -148,6 +163,7 @@ func NewMilitaryManager() *MilitaryManager {
 				Name: "Neon Heist", Key: "neon_heist",
 				Category: ExpeditionMilitary,
 				MinAge:   "cyberpunk_age", SoldiersNeeded: 25, Duration: 35,
+				DurationMin: 60, DurationMax: 100,
 				DifficultyBase: 0.55,
 				Rewards:        map[string]float64{"crypto": 100, "data": 150, "gold": 800},
 				Description:    "Pull off a daring heist in the neon-lit underworld.",
@@ -156,6 +172,7 @@ func NewMilitaryManager() *MilitaryManager {
 				Name: "Fusion Plant Assault", Key: "fusion_assault",
 				Category: ExpeditionMilitary,
 				MinAge:   "fusion_age", SoldiersNeeded: 35, Duration: 40,
+				DurationMin: 60, DurationMax: 100,
 				DifficultyBase: 0.65,
 				Rewards:        map[string]float64{"plasma": 120, "electricity": 500, "uranium": 50},
 				Description:    "Capture a rival's fusion power facility.",
@@ -164,6 +181,7 @@ func NewMilitaryManager() *MilitaryManager {
 				Name: "Orbital Strike", Key: "orbital_strike",
 				Category: ExpeditionMilitary,
 				MinAge:   "space_age", SoldiersNeeded: 40, Duration: 50,
+				DurationMin: 60, DurationMax: 100,
 				DifficultyBase: 0.7,
 				Rewards:        map[string]float64{"titanium": 100, "plasma": 80, "knowledge": 300},
 				Description:    "Deploy orbital weapons platform against hostile targets.",
@@ -172,6 +190,7 @@ func NewMilitaryManager() *MilitaryManager {
 				Name: "Warp Invasion", Key: "warp_invasion",
 				Category: ExpeditionMilitary,
 				MinAge:   "interstellar_age", SoldiersNeeded: 60, Duration: 65,
+				DurationMin: 65, DurationMax: 105,
 				DifficultyBase: 0.75,
 				Rewards:        map[string]float64{"dark_matter": 50, "titanium": 200, "gold": 2000},
 				Description:    "Invade a neighboring star system through warp gates.",
@@ -180,6 +199,7 @@ func NewMilitaryManager() *MilitaryManager {
 				Name: "Galactic Conquest", Key: "galactic_conquest",
 				Category: ExpeditionMilitary,
 				MinAge:   "galactic_age", SoldiersNeeded: 80, Duration: 80,
+				DurationMin: 80, DurationMax: 130,
 				DifficultyBase: 0.8,
 				Rewards:        map[string]float64{"antimatter": 30, "dark_matter": 100, "gold": 5000},
 				Description:    "Conquer an entire galactic sector.",
@@ -188,6 +208,7 @@ func NewMilitaryManager() *MilitaryManager {
 				Name: "Quantum Incursion", Key: "quantum_incursion",
 				Category: ExpeditionMilitary,
 				MinAge:   "quantum_age", SoldiersNeeded: 100, Duration: 90,
+				DurationMin: 90, DurationMax: 145,
 				DifficultyBase: 0.85,
 				Rewards:        map[string]float64{"quantum_flux": 20, "antimatter": 50, "knowledge": 5000},
 				Description:    "Launch an incursion across quantum realities.",
@@ -229,11 +250,19 @@ func (mm *MilitaryManager) LaunchExpedition(key, currentAge string, ageOrder map
 		return fmt.Errorf("%s is no longer available past the %s age", def.Name, def.MaxAge)
 	}
 
+	// Roll a randomized active duration in [DurationMin, DurationMax] (inclusive);
+	// legacy/unset defs (DurationMax <= DurationMin) fall back to the fixed Duration
+	// so rand.Intn never receives an arg <= 0.
+	ticks := def.Duration
+	if def.DurationMax > def.DurationMin {
+		ticks = def.DurationMin + rand.Intn(def.DurationMax-def.DurationMin+1)
+	}
+
 	mm.activeByCat[def.Category] = &ActiveExpedition{
 		Key:       key,
 		Name:      def.Name,
 		Soldiers:  def.SoldiersNeeded,
-		TicksLeft: def.Duration,
+		TicksLeft: ticks,
 	}
 	return nil
 }
@@ -448,10 +477,10 @@ func (mm *MilitaryManager) Snapshot(currentAge string, ageOrder map[string]int, 
 	}
 
 	return MilitaryState{
-		SoldierCount:     soldierCount,
-		SoldierCap:       soldierCap,
-		SoldierRate:      soldierRate,
-		DefenseRating:    mm.CalculateDefense(soldierCount, militaryBonus),
+		SoldierCount:    soldierCount,
+		SoldierCap:      soldierCap,
+		SoldierRate:     soldierRate,
+		DefenseRating:   mm.CalculateDefense(soldierCount, militaryBonus),
 		MilitaryBonus:   militaryBonus,
 		ExpeditionBonus: expeditionBonus,
 		ActiveScout:     activeScout,
