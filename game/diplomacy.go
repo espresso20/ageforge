@@ -225,6 +225,18 @@ func (dm *DiplomacyManager) IsDiscovered(key string) bool {
 	return ok && fs.Discovered
 }
 
+// StateOf returns a COPY of a faction's diplomatic state. The bool is false when
+// the faction has never been seeded (undiscovered and untouched); in that case
+// the returned value is a safe neutral default. Used by the encounter engine to
+// shape a boon profile by standing (see factionProfile) without exposing the
+// internal pointer.
+func (dm *DiplomacyManager) StateOf(key string) (FactionState, bool) {
+	if fs, ok := dm.factions[key]; ok && fs != nil {
+		return *fs, true
+	}
+	return FactionState{Status: "neutral"}, false
+}
+
 // clampOpinion keeps a faction's integer opinion within [-100, 100].
 func clampOpinion(fs *FactionState) {
 	if fs.Opinion > opinionMax {

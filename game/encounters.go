@@ -1,14 +1,10 @@
 package game
 
 import (
-	"fmt"
-	"math"
-	"strings"
-
 	"github.com/espresso20/ageforge/config"
 )
 
-// Faction-encounter engine (Phase 1 of the faction-system redesign).
+// Faction-encounter engine (Phase 1 discovery + Phase 2b boon wiring).
 //
 // Expeditions are the primary way you MEET the world's civilizations. When a
 // scouting expedition or military campaign resolves, we roll an "encounter" on
@@ -16,11 +12,12 @@ import (
 //   - DISCOVERS an eligible-but-undiscovered faction (age is a floor; see
 //     DiplomacyManager.DiscoverFaction), firing first contact, OR
 //   - RE-ENCOUNTERS an already-discovered faction,
-// and in both cases grants ONE timed boon — the proof buff. Phase 1 ships a
-// single boon kind (a specialty-production multiplier); rollFactionBuff is the
-// seam Phase 2 turns into a weighted table of many boon kinds.
+// and in both cases grants ONE boon. Phase 1 fired a single hand-rolled
+// specialty buff; Phase 2b routes the reward through the standalone boon engine
+// (see faction_boon.go / package boon) — a VARIED boon drawn off a shared
+// weighted catalog, biased by the faction's character and your standing.
 //
-// All rolls go through ge.rng, so a run's whole encounter/buff stream is
+// All rolls go through ge.rng, so a run's whole encounter/boon stream is
 // reproducible from its persisted seed. Every entry point runs under the engine
 // write lock (called from doTick's processExpeditions), so touching ge.rng /
 // ge.Events / ge.Diplomacy here is lock-safe — no GetState / lock-acquiring calls.
@@ -34,29 +31,14 @@ const (
 	encounterChanceScoutFail       = 0.12
 	encounterChanceMilitarySuccess = 0.15
 	encounterChanceMilitaryFail    = 0.05
-
-	// Proof-buff roll ranges. Magnitude is a fractional production multiplier on the
-	// faction's specialty resource; duration is in ticks. Both rolled on ge.rng.
-	factionBuffPctMin   = 0.08
-	factionBuffPctMax   = 0.20
-	factionBuffTicksMin = 3000
-	factionBuffTicksMax = 6000
 )
-
-// factionEncounterBuff bundles the timed modifier to inject and its player-facing
-// flavour. Structured (rather than injected inline) so Phase 2 can return other
-// buff kinds from rollFactionBuff behind a weighted roll without touching the
-// encounter-resolution flow.
-type factionEncounterBuff struct {
-	event   ActiveEvent // the timed modifier, injected into the event system
-	logLine string      // flavour naming the faction + the boost
-}
 
 // rollExpeditionEncounter is called once per resolved expedition. It rolls the
 // encounter chance for (category, success); on a hit it discovers an eligible
-// faction (preferred) or re-encounters a discovered one, and applies the proof
-// buff. Returns any log lines produced (first-contact + buff flavour); nil when
-// no encounter fires or no faction is eligible yet. Must run under the write lock.
+// faction (preferred) or re-encounters a discovered one, and rolls+applies one
+// boon off the boon engine (see applyFactionBoon). Returns any log lines produced
+// (first-contact + boon flavour); nil when no encounter fires or no faction is
+// eligible yet. Must run under the write lock.
 func (ge *GameEngine) rollExpeditionEncounter(category string, success bool) []string {
 	// Self-heal a missing RNG service rather than ever panicking on a nil source.
 	if ge.rng == nil {
@@ -87,9 +69,14 @@ func (ge *GameEngine) rollExpeditionEncounter(category string, success bool) []s
 		return nil
 	}
 
-	if buff, ok := ge.rollFactionBuff(target); ok {
-		ge.Events.InjectEvent(buff.event)
-		messages = append(messages, buff.logLine)
+	// Roll a boon off the shared boon engine, shaped by the faction's character
+	// and your standing with it. An at-war faction raids rather than gifts, so it
+	// grants no positive boon — skip the roll entirely for it.
+	state, _ := ge.Diplomacy.StateOf(target.Key)
+	if !state.AtWar {
+		if line := ge.applyFactionBoon(target, state); line != "" {
+			messages = append(messages, line)
+		}
 	}
 	return messages
 }
@@ -162,53 +149,11 @@ func factionWeight(d config.FactionDef) int {
 	return d.Strength
 }
 
-// rollFactionBuff produces the proof buff for a faction encounter: "+X% of the
-// faction's specialty resource for N ticks", both rolled on ge.rng. It returns
-// (_, false) when the faction has no specialty to boost.
-//
-// The buff rides the EXISTING timed-modifier machinery: it is an ActiveEvent
-// carrying a "<specialty>_rate" effect. EventManager.Modifiers() emits that as an
-// OpAdd into the resolver's "<resource>_rate" additive pool, which recalculateRates
-// turns into a ×(1 + Σ) multiplier on that resource's rate — the same pool research
-// and allied-faction bonuses already use. Expiry is the event system's own
-// TicksLeft countdown; no parallel bookkeeping.
-//
-// PHASE 2 SEAM: expand this into a weighted roll over several buff kinds (flat
-// resource grants, tick-speed windows, temporary worker loans, ...), scaled by the
-// faction's standing. Phase 1 always returns the specialty-production kind.
-func (ge *GameEngine) rollFactionBuff(def config.FactionDef) (factionEncounterBuff, bool) {
-	if def.Specialty == "" {
-		return factionEncounterBuff{}, false
-	}
-	pct := factionBuffPctMin + ge.rng.Float64()*(factionBuffPctMax-factionBuffPctMin)
-	ticks := factionBuffTicksMin + ge.rng.Intn(factionBuffTicksMax-factionBuffTicksMin+1)
-
-	ev := ActiveEvent{
-		Key:       factionBuffKey(def.Key),
-		Name:      def.Name + " Boon",
-		TicksLeft: ticks,
-		Effects: []config.Effect{{
-			Type:   def.Specialty + "_rate",
-			Target: def.Specialty,
-			Value:  pct,
-		}},
-	}
-	line := fmt.Sprintf("[gold]✦ The %s share their craft[-] — [green]+%d%% %s[-] for %d ticks.",
-		def.Name, int(math.Round(pct*100)), specialtyLabel(def.Specialty), ticks)
-
-	return factionEncounterBuff{event: ev, logLine: line}, true
-}
-
 // factionBuffKey is the ActiveEvent key for a faction's encounter boon. Stable per
 // faction so save/UI can identify it; re-encounters inject a fresh copy (boons
 // stack and each expires on its own timer, matching how the engine's other
-// InjectEvent side-effects behave).
+// InjectEvent side-effects behave). Used by boonApplier when the rolled boon is a
+// timed-effect kind (RateBuff/AllProduction/TickSpeed).
 func factionBuffKey(factionKey string) string {
 	return "faction_boon_" + factionKey
-}
-
-// specialtyLabel prettifies a resource key for flavour text (quantum_flux →
-// "quantum flux").
-func specialtyLabel(resourceKey string) string {
-	return strings.ReplaceAll(resourceKey, "_", " ")
 }

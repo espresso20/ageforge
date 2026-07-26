@@ -3,11 +3,13 @@ package game
 import (
 	"fmt"
 	"math"
+	"math/rand"
 	"os"
 	"sort"
 	"strings"
 	"testing"
 
+	"github.com/espresso20/ageforge/boon"
 	"github.com/espresso20/ageforge/config"
 )
 
@@ -154,44 +156,39 @@ func TestDiscoverFactions_AgeFallbackAndFloor(t *testing.T) {
 	}
 }
 
-// TestEncounter_SpecialtyBuffAppliesAndExpires proves the proof buff rides the
-// existing timed-modifier machinery: it lands in the resolver's "<specialty>_rate"
-// additive pool as a percentage, then is removed once its rolled duration elapses.
-func TestEncounter_SpecialtyBuffAppliesAndExpires(t *testing.T) {
+// TestBoonApplier_InjectsAndExpires proves an encounter's TIMED boon still rides
+// the existing timed-modifier machinery when routed through the game-side
+// boon.Applier: a RateBuff lands in the resolver's "<resource>_rate" additive pool
+// as a percentage, then is removed once its duration elapses. (Phase 1 rolled this
+// buff inline; Phase 2b constructs it in the boon engine and applies it here.)
+func TestBoonApplier_InjectsAndExpires(t *testing.T) {
 	ge := NewGameEngine()
 	setAge(ge, "medieval_age")
 	ge.mu.Lock()
-	ge.SeedRNG(999)
 
-	def := config.FactionByKey()["riverlands_tribes"] // specialty: food
-	ge.Diplomacy.DiscoverFaction(def.Key)
+	const pct = 0.13
+	const dur = 4000
+	// A concrete timed boon, as the boon engine would hand it to Apply.
+	b := boon.Boon{
+		Kind:          boon.RateBuff,
+		Resource:      "food",
+		Magnitude:     pct,
+		DurationTicks: dur,
+		Name:          "Specialty Windfall",
+		Flavor:        "Their artisans share a trade secret — +13% food.",
+	}
+	def := config.FactionByKey()["riverlands_tribes"] // food specialist
+	applier := boonApplier{ge: ge, name: def.Name, key: def.Key}
 
-	buff, ok := ge.rollFactionBuff(def)
-	if !ok {
+	// APPLY through the real game Applier: the resolver's food_rate pool now carries it.
+	line := boon.Apply(b, applier)
+	if line == "" {
 		ge.mu.Unlock()
-		t.Fatal("rollFactionBuff returned false for a faction with a specialty")
+		t.Fatal("boon.Apply returned an empty flavor line")
 	}
-	eff := buff.event.Effects[0]
-	if eff.Type != "food_rate" {
-		ge.mu.Unlock()
-		t.Fatalf("buff effect Type = %q, want food_rate (rides the <resource>_rate pool)", eff.Type)
-	}
-	pct := eff.Value
-	dur := buff.event.TicksLeft
-	if pct < factionBuffPctMin || pct > factionBuffPctMax {
-		ge.mu.Unlock()
-		t.Errorf("rolled magnitude %.4f outside [%.2f, %.2f]", pct, factionBuffPctMin, factionBuffPctMax)
-	}
-	if dur < factionBuffTicksMin || dur > factionBuffTicksMax {
-		ge.mu.Unlock()
-		t.Errorf("rolled duration %d outside [%d, %d]", dur, factionBuffTicksMin, factionBuffTicksMax)
-	}
-
-	// APPLY: inject the boon; the resolver's food_rate additive pool now carries it.
-	ge.Events.InjectEvent(buff.event)
 	if got := ge.buildResolver().AddTotal("food_rate"); math.Abs(got-pct) > 1e-9 {
 		ge.mu.Unlock()
-		t.Fatalf("buff not applied: food_rate pool = %.6f, want %.6f", got, pct)
+		t.Fatalf("boon not applied: food_rate pool = %.6f, want %.6f", got, pct)
 	}
 
 	// Isolate expiry from random events so only the boon drives the pool.
@@ -208,10 +205,143 @@ func TestEncounter_SpecialtyBuffAppliesAndExpires(t *testing.T) {
 	ge.mu.Unlock()
 
 	if math.Abs(stillActive-pct) > 1e-9 {
-		t.Errorf("buff expired early: food_rate pool = %.6f one tick before duration elapsed (want %.6f)", stillActive, pct)
+		t.Errorf("boon expired early: food_rate pool = %.6f one tick before duration elapsed (want %.6f)", stillActive, pct)
 	}
 	if afterExpiry != 0 {
-		t.Errorf("buff did not expire: food_rate pool still %.6f after %d ticks", afterExpiry, dur)
+		t.Errorf("boon did not expire: food_rate pool still %.6f after %d ticks", afterExpiry, dur)
+	}
+}
+
+// neutralState / statusState are FactionState fixtures for profile tests.
+func statusState(status string) FactionState {
+	return FactionState{Discovered: true, Status: status}
+}
+
+// TestFactionProfile_Derivation checks that a faction's DATA + standing map onto
+// the boon-profile knobs the way factionProfile promises: personality leans the
+// per-kind weights, strength scales magnitude, allied standing lifts magnitude AND
+// rarity, and an at-war faction yields no positive boon.
+func TestFactionProfile_Derivation(t *testing.T) {
+	const age = "space_age"
+
+	peaceful := config.FactionByKey()["riverlands_tribes"]      // peaceful, Str 1
+	aggressive := config.FactionByKey()["ironhold_clans"]       // aggressive, Str 3
+	isolationist := config.FactionByKey()["stellar_federation"] // isolationist, Str 4
+
+	pPeace := factionProfile(peaceful, statusState("neutral"), age)
+	pAggr := factionProfile(aggressive, statusState("neutral"), age)
+
+	// Specialty windfall (RateBuff) is always favoured.
+	if pPeace.WeightMult[boon.RateBuff] <= 1.0 || pAggr.WeightMult[boon.RateBuff] <= 1.0 {
+		t.Errorf("RateBuff not up-weighted for both: peaceful=%.2f aggressive=%.2f",
+			pPeace.WeightMult[boon.RateBuff], pAggr.WeightMult[boon.RateBuff])
+	}
+	// Peaceful up-weights the gentle kinds (RateBuff + AllProduction).
+	if pPeace.WeightMult[boon.AllProduction] <= 1.0 {
+		t.Errorf("peaceful did not up-weight AllProduction: %.2f", pPeace.WeightMult[boon.AllProduction])
+	}
+	// Aggressive up-weights TickSpeed + InstantResource ("spoils").
+	if pAggr.WeightMult[boon.TickSpeed] <= 1.0 || pAggr.WeightMult[boon.InstantResource] <= 1.0 {
+		t.Errorf("aggressive did not up-weight spoils: TickSpeed=%.2f InstantResource=%.2f",
+			pAggr.WeightMult[boon.TickSpeed], pAggr.WeightMult[boon.InstantResource])
+	}
+	// Contrast: aggressive favours TickSpeed far more than peaceful does; peaceful
+	// favours the gentle broad buff far more than aggressive does.
+	if pAggr.WeightMult[boon.TickSpeed] <= pPeace.WeightMult[boon.TickSpeed] {
+		t.Errorf("aggressive TickSpeed weight %.2f not > peaceful %.2f",
+			pAggr.WeightMult[boon.TickSpeed], pPeace.WeightMult[boon.TickSpeed])
+	}
+	if pPeace.WeightMult[boon.AllProduction] <= pAggr.WeightMult[boon.AllProduction] {
+		t.Errorf("peaceful AllProduction weight %.2f not > aggressive %.2f",
+			pPeace.WeightMult[boon.AllProduction], pAggr.WeightMult[boon.AllProduction])
+	}
+
+	// Isolationist raises RarityScale so the rare tier surfaces.
+	pIso := factionProfile(isolationist, statusState("neutral"), age)
+	if pIso.RarityScale <= pPeace.RarityScale {
+		t.Errorf("isolationist RarityScale %.2f not > a non-isolationist's %.2f",
+			pIso.RarityScale, pPeace.RarityScale)
+	}
+
+	// Standing: allied raises BOTH MagnitudeScale and RarityScale vs neutral.
+	neutral := factionProfile(peaceful, statusState("neutral"), age)
+	allied := factionProfile(peaceful, statusState("allied"), age)
+	if allied.MagnitudeScale <= neutral.MagnitudeScale {
+		t.Errorf("allied MagnitudeScale %.3f not > neutral %.3f", allied.MagnitudeScale, neutral.MagnitudeScale)
+	}
+	if allied.RarityScale <= neutral.RarityScale {
+		t.Errorf("allied RarityScale %.3f not > neutral %.3f", allied.RarityScale, neutral.RarityScale)
+	}
+
+	// Strength: a Str-5 civ gifts harder than a Str-1 civ (same personality/standing).
+	str1 := factionProfile(config.FactionDef{Personality: "peaceful", Specialty: "food", Strength: 1}, statusState("neutral"), age)
+	str5 := factionProfile(config.FactionDef{Personality: "peaceful", Specialty: "food", Strength: 5}, statusState("neutral"), age)
+	if str5.MagnitudeScale <= str1.MagnitudeScale {
+		t.Errorf("Str-5 MagnitudeScale %.3f not > Str-1 %.3f", str5.MagnitudeScale, str1.MagnitudeScale)
+	}
+
+	// At war: the profile disables every kind, so RollBoon yields the zero Boon.
+	war := factionProfile(peaceful, FactionState{Discovered: true, Status: "neutral", AtWar: true}, age)
+	if b := boon.RollBoon(war, rand.New(rand.NewSource(1))); b != (boon.Boon{}) {
+		t.Errorf("at-war faction yielded a positive boon: %+v", b)
+	}
+}
+
+// captureApplier records the boon side effects it is handed, so a test can assert
+// exactly one effect landed without touching real game state.
+type captureApplier struct {
+	injects  int
+	grants   int
+	loans    int
+	lastName string
+}
+
+func (c *captureApplier) InjectTimedEffects(_ []config.Effect, _ int, name string) {
+	c.injects++
+	c.lastName = name
+}
+func (c *captureApplier) GrantResource(_ string, _ float64) { c.grants++ }
+func (c *captureApplier) GrantTempWorkers(_, _ int)         { c.loans++ }
+
+// TestFactionEncounter_RollsAppliesOneEffect_Deterministic drives the real
+// encounter roll (factionProfile → boon.RollBoon → boon.Apply) against a capturing
+// Applier: a discovered faction produces exactly ONE applied effect, and the same
+// seed reproduces the same boon.
+func TestFactionEncounter_RollsAppliesOneEffect_Deterministic(t *testing.T) {
+	def := config.FactionByKey()["merchant_guild"] // mercantile, Str 2
+
+	roll := func(seed int64) (boon.Boon, *captureApplier) {
+		ge := NewGameEngine()
+		setAge(ge, "space_age")
+		ge.mu.Lock()
+		defer ge.mu.Unlock()
+		ge.SeedRNG(seed)
+		ge.Diplomacy.DiscoverFaction(def.Key)
+		state, _ := ge.Diplomacy.StateOf(def.Key)
+		prof := factionProfile(def, state, ge.age)
+		b := boon.RollBoon(prof, ge.rng)
+		cap := &captureApplier{}
+		boon.Apply(b, cap)
+		return b, cap
+	}
+
+	b1, cap1 := roll(0x5EED)
+	b2, cap2 := roll(0x5EED)
+
+	if b1 == (boon.Boon{}) {
+		t.Fatal("a discovered, non-hostile faction rolled the zero boon")
+	}
+	if b1 != b2 {
+		t.Fatalf("same seed produced different boons:\n b1=%+v\n b2=%+v", b1, b2)
+	}
+	// Exactly one Applier effect landed (each kind maps to one call).
+	total := cap1.injects + cap1.grants + cap1.loans
+	if total != 1 {
+		t.Fatalf("expected exactly one applied effect, got %d (injects=%d grants=%d loans=%d)",
+			total, cap1.injects, cap1.grants, cap1.loans)
+	}
+	if (cap1.injects != cap2.injects) || (cap1.grants != cap2.grants) || (cap1.loans != cap2.loans) {
+		t.Errorf("effect dispatch diverged across identical seeds: %+v vs %+v", cap1, cap2)
 	}
 }
 

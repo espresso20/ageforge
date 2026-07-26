@@ -204,7 +204,7 @@ Every time an expedition resolves — win or lose — the game rolls a chance to
 | Military success | ~15% |
 | Military failure | ~5% |
 
-An encounter can also grant a temporary **boon** — a boost to that civ's **specialty resource**, currently **+8–20% for 3,000–6,000 ticks**, announced with a flavour line (e.g. *"The Ironhold Clans share their forge-craft — +15% iron for 4,200 ticks."*). So expeditions stay worth running even after you've met everyone. See [Trade & Diplomacy](trade.md#diplomacy-civilization-encounters) for the civilization roster and diplomacy mechanics.
+An encounter can also grant a **boon** — and it is now a **varied, rolled reward**, not a fixed specialty buff. The draw comes from a shared catalogue (a timed specialty/production/knowledge windfall, an all-production or tick-speed surge, an instant lump of resources, or temporary workers) and is **weighted by the civilization's character** (personality, its specialty, and its strength) and by **your standing** with it — allied civs give bigger *and* rarer boons; a civ you are at war with raids you instead. It is announced with a flavour line naming the civ and the reward. So expeditions stay worth running even after you've met everyone. See [Trade & Diplomacy](trade.md#diplomacy-civilization-encounters) for the civilization roster and diplomacy mechanics.
 
 ---
 
