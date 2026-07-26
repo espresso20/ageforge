@@ -16,10 +16,11 @@ import (
 // panic-safe / deterministic across sizes, that it does NOT render the terrestrial continent
 // (it's a strategy star-map, not a map), and it carries the opt-in Phase-C PNG dump.
 
-// cosmicWorld builds a space_age fixture with a mixed faction roster: several discovered civs
-// of varying Strength, one at war, one trade partner, plus one undiscovered — so the render
-// exercises nodes + lanes + territory + fog.
-func cosmicWorld() game.GameState {
+// cosmicWorldAge builds a cosmic-age fixture with a mixed faction roster: several discovered civs
+// of varying Strength, one at war, one trade partner, plus one undiscovered — so every wired
+// cosmic view exercises nodes/systems/capitals + lanes/web/seams + territory + fog. The roster is
+// identical across ages (only state.Age differs), so the same seeded world renders three ways.
+func cosmicWorldAge(age string) game.GameState {
 	facs := map[string]game.FactionInfo{
 		"helios":   {Name: "Helios Combine", Discovered: true, Status: "allied", Opinion: 75, Strength: 4, Personality: "peaceful"},
 		"vega":     {Name: "Vega Syndicate", Discovered: true, Status: "friendly", Opinion: 30, Strength: 3, Personality: "mercantile", TradeCount: 6},
@@ -28,19 +29,29 @@ func cosmicWorld() game.GameState {
 		"unknown":  {Name: "Unknown Signal", Discovered: false, Strength: 3},
 	}
 	blds := map[string]int{"orbital_dock": 8, "fusion_plant": 5, "arcology": 3}
-	return worldState("space_age", blds, "Aldermoor", facs)
+	return worldState(age, blds, "Aldermoor", facs)
 }
 
-// TestCosmicWorldViewForDispatch pins the intercept: space_age is owned by the strategic view;
-// terrestrial ages and unknown ages are not (they fall through to the medium path).
+// cosmicWorld is the space_age fixture (kept for the existing space-specific tests).
+func cosmicWorld() game.GameState { return cosmicWorldAge("space_age") }
+
+// cosmicWiredAges lists the ages the Phase-C dispatcher owns — the panic/determinism/not-continent
+// sweeps run every one of them.
+var cosmicWiredAges = []string{"space_age", "interstellar_age", "galactic_age"}
+
+// TestCosmicWorldViewForDispatch pins the intercept: the three wired cosmic ages are owned by a
+// strategic view; terrestrial ages, the still-unwired higher cosmic ages (quantum/transcendent),
+// and unknown ages are not (they fall through to the medium path).
 func TestCosmicWorldViewForDispatch(t *testing.T) {
-	if _, ok := cosmicWorldViewFor("space_age"); !ok {
-		t.Error("cosmicWorldViewFor(space_age) = false, want true")
+	for _, age := range cosmicWiredAges {
+		if _, ok := cosmicWorldViewFor(age); !ok {
+			t.Errorf("cosmicWorldViewFor(%q) = false, want true", age)
+		}
 	}
 	notCosmic := []string{
 		"primitive_age", "modern_age", "cyberpunk_age", "fusion_age",
-		// The four HIGHER cosmic ages are NOT wired yet — they must still fall through.
-		"interstellar_age", "galactic_age", "quantum_age", "transcendent_age",
+		// quantum + transcendent are NOT wired yet — they must still fall through to the atlas.
+		"quantum_age", "transcendent_age",
 		"made_up_age", "",
 	}
 	for _, age := range notCosmic {
@@ -50,32 +61,34 @@ func TestCosmicWorldViewForDispatch(t *testing.T) {
 	}
 }
 
-// TestCosmicRenderPanicSafe drives the space strategic view (via renderWorldImage) across
-// tiny / odd / zero / large canvases with a populated roster. It must never panic and must
-// return an image of the exact requested pixel size.
+// TestCosmicRenderPanicSafe drives EVERY wired cosmic strategic view (via renderWorldImage) across
+// tiny / odd / zero / large canvases with a populated roster. None may panic, and each must return
+// an image of the exact requested pixel size.
 func TestCosmicRenderPanicSafe(t *testing.T) {
 	_ = theme.SetActive("forge")
-	st := cosmicWorld()
 	sizes := []struct{ w, h int }{
 		{0, 0}, {1, 1}, {1, 40}, {40, 1}, {3, 7}, {7, 3},
 		{2, 2}, {13, 9}, {80, 40}, {400, 260}, {123, 57},
 	}
-	for _, sz := range sizes {
-		func() {
-			defer func() {
-				if r := recover(); r != nil {
-					t.Fatalf("renderWorldImage(space_age, %d, %d) panicked: %v", sz.w, sz.h, r)
+	for _, age := range cosmicWiredAges {
+		st := cosmicWorldAge(age)
+		for _, sz := range sizes {
+			func() {
+				defer func() {
+					if r := recover(); r != nil {
+						t.Fatalf("renderWorldImage(%s, %d, %d) panicked: %v", age, sz.w, sz.h, r)
+					}
+				}()
+				img, _ := renderWorldImage(st, sz.w, sz.h)
+				if img == nil {
+					t.Fatalf("renderWorldImage(%s, %d,%d) returned nil", age, sz.w, sz.h)
+				}
+				b := img.Bounds()
+				if b.Dx() != sz.w || b.Dy() != sz.h {
+					t.Errorf("renderWorldImage(%s, %d,%d) image is %dx%d", age, sz.w, sz.h, b.Dx(), b.Dy())
 				}
 			}()
-			img, _ := renderWorldImage(st, sz.w, sz.h)
-			if img == nil {
-				t.Fatalf("renderWorldImage(%d,%d) returned nil", sz.w, sz.h)
-			}
-			b := img.Bounds()
-			if b.Dx() != sz.w || b.Dy() != sz.h {
-				t.Errorf("renderWorldImage(%d,%d) image is %dx%d", sz.w, sz.h, b.Dx(), b.Dy())
-			}
-		}()
+		}
 	}
 }
 
@@ -98,42 +111,85 @@ func TestCosmicEmptyRosterOK(t *testing.T) {
 	}
 }
 
-// TestCosmicDeterministic asserts byte-for-byte stability: the same (state, size, seed) renders
-// identically twice (hash/seed only, no math/rand).
+// TestCosmicDeterministic asserts byte-for-byte stability for every wired cosmic view: the same
+// (state, size, seed) renders identically twice (hash/seed only, no math/rand).
 func TestCosmicDeterministic(t *testing.T) {
 	_ = theme.SetActive("forge")
-	st := cosmicWorld()
 	const w, h = 240, 150
-	a, _ := renderWorldImage(st, w, h)
-	b, _ := renderWorldImage(st, w, h)
-	if !bytes.Equal(a.Pix, b.Pix) {
-		t.Error("space strategic view is not deterministic: two renders differ")
+	for _, age := range cosmicWiredAges {
+		st := cosmicWorldAge(age)
+		a, _ := renderWorldImage(st, w, h)
+		b, _ := renderWorldImage(st, w, h)
+		if !bytes.Equal(a.Pix, b.Pix) {
+			t.Errorf("%s strategic view is not deterministic: two renders differ", age)
+		}
 	}
 }
 
-// TestCosmicNotAContinent is the whole point: the space strategic view must NOT look like the
-// terrestrial atlas/continent render for the same seed. We render the SAME world seed as
-// space_age (strategic) and as a terrestrial age (atlas continent) and assert the pixels
-// differ substantially — the cosmic view is a strategy star-map, not a map of land.
+// TestCosmicNotAContinent is the whole point: every cosmic strategic view must NOT look like the
+// terrestrial atlas/continent render. We render a terrestrial age (atlas continent) and each wired
+// cosmic age off the SAME display name (same world seed family) and assert the pixels differ
+// substantially — the cosmic views are strategy star-maps, not maps of land.
 func TestCosmicNotAContinent(t *testing.T) {
 	_ = theme.SetActive("forge")
 	const w, h = 240, 150
-	// Same display name → same underlying world seed; only the age differs.
+	// A roster with an ally, an at-war rival, and a trade partner so the new views exercise
+	// territory + seams + lanes too. Same display name across ages → same underlying world seed.
 	facs := map[string]game.FactionInfo{
 		"helios": {Name: "Helios", Discovered: true, Status: "allied", Opinion: 70, Strength: 4},
+		"drakon": {Name: "Drakon", Discovered: true, Status: "rival", Opinion: -50, Strength: 5, AtWar: true, Personality: "aggressive"},
+		"vega":   {Name: "Vega", Discovered: true, Status: "friendly", Opinion: 20, Strength: 3, Personality: "mercantile", TradeCount: 4},
 	}
 	blds := map[string]int{"arcology": 4}
-	space := worldState("space_age", blds, "Aldermoor", facs)
 	atlas := worldState("modern_age", blds, "Aldermoor", facs) // satellite/atlas terrestrial render
-
-	sImg, _ := renderWorldImage(space, w, h)
 	aImg, _ := renderWorldImage(atlas, w, h)
-	if bytes.Equal(sImg.Pix, aImg.Pix) {
-		t.Fatal("space strategic view is byte-identical to the terrestrial render")
+
+	for _, age := range cosmicWiredAges {
+		cosmic := worldState(age, blds, "Aldermoor", facs)
+		cImg, _ := renderWorldImage(cosmic, w, h)
+		if bytes.Equal(cImg.Pix, aImg.Pix) {
+			t.Fatalf("%s strategic view is byte-identical to the terrestrial render", age)
+		}
+		if diff := diffFraction(cImg, aImg); diff < 0.5 {
+			t.Errorf("%s view differs from terrestrial render in only %.1f%% of pixels; expected a wholly different image", age, diff*100)
+		}
 	}
-	diff := diffFraction(sImg, aImg)
-	if diff < 0.5 {
-		t.Errorf("space view differs from terrestrial render in only %.1f%% of pixels; expected a wholly different image", diff*100)
+}
+
+// TestCosmicViewsDistinct is the coherent-but-DISTINCT guarantee: for one fixed (state, size,
+// seed), the three cosmic views must not read near-identical. We call each view function directly
+// with the SAME seed (isolating the difference to the rendering, not the per-age seed) and assert
+// every pair differs in a meaningful fraction of pixels — the dominant metaphor (home cluster vs
+// route web vs territorial spiral) has to change the picture, not just the palette.
+func TestCosmicViewsDistinct(t *testing.T) {
+	_ = theme.SetActive("forge")
+	st := cosmicWorld()
+	const w, h = 240, 150
+	const seed uint32 = 0xC0FFEE
+	render := func(fn func(*image.RGBA, game.GameState, int, int, uint32)) *image.RGBA {
+		img := image.NewRGBA(image.Rect(0, 0, w, h))
+		fn(img, st, w, h, seed)
+		return img
+	}
+	space := render(drawSpaceStrategicView)
+	inter := render(interstellarStrategicView)
+	galac := render(galacticStrategicView)
+	pairs := []struct {
+		name string
+		a, b *image.RGBA
+	}{
+		{"space vs interstellar", space, inter},
+		{"space vs galactic", space, galac},
+		{"interstellar vs galactic", inter, galac},
+	}
+	for _, pr := range pairs {
+		if bytes.Equal(pr.a.Pix, pr.b.Pix) {
+			t.Errorf("%s: renders are byte-identical", pr.name)
+			continue
+		}
+		if diff := diffFraction(pr.a, pr.b); diff < 0.10 {
+			t.Errorf("%s: renders differ in only %.1f%% of pixels; the dominant metaphor should make them read distinct", pr.name, diff*100)
+		}
 	}
 }
 
@@ -192,30 +248,36 @@ func TestCosmicLayoutDeterministic(t *testing.T) {
 	}
 }
 
-// TestDumpWorldCosmicPNG writes the Phase-C proof-of-concept PNG. Skipped unless
-// CITYMAP_PNG_DUMP=<dir> is set, e.g.
+// TestDumpWorldCosmicPNG writes the Phase-C proof-of-concept PNGs — one per wired cosmic view.
+// Skipped unless CITYMAP_PNG_DUMP=<dir> is set, e.g.
 //
-//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpWorldCosmicPNG -count=1
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDump -count=1
 func TestDumpWorldCosmicPNG(t *testing.T) {
 	dir := os.Getenv("CITYMAP_PNG_DUMP")
 	if dir == "" {
-		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump the Phase-C cosmic strategic PNG")
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump the Phase-C cosmic strategic PNGs")
 	}
 	_ = theme.SetActive("forge")
-	st := cosmicWorld()
-	// 400×260px: renderWorldImage takes cell dims and doubles height → 400 cols × 130 rows.
-	img, _ := renderWorldImage(st, 400, 260)
-	path := dir + "/wm_C_space.png"
-	f, err := os.Create(path)
-	if err != nil {
-		t.Fatalf("create %s: %v", path, err)
+	dumps := []struct{ age, file string }{
+		{"space_age", "wm_C_space.png"},
+		{"interstellar_age", "wm_C_interstellar.png"},
+		{"galactic_age", "wm_C_galactic.png"},
 	}
-	if err := png.Encode(f, img); err != nil {
+	for _, d := range dumps {
+		st := cosmicWorldAge(d.age)
+		img, _ := renderWorldImage(st, 400, 260)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
 		f.Close()
-		t.Fatalf("encode %s: %v", path, err)
+		t.Logf("wrote %s (%s strategic view)", path, d.age)
 	}
-	f.Close()
-	t.Logf("wrote %s (space_age strategic view)", path)
 }
 
 // ---- small test helpers -----------------------------------------------------
