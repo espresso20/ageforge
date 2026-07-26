@@ -267,10 +267,14 @@ func (mm *MilitaryManager) HasActive() bool {
 }
 
 // ExpeditionResult holds the rewards + player-facing message for one expedition
-// that resolved this tick.
+// that resolved this tick. Category and Success describe HOW it resolved so the
+// engine can weight a faction encounter on resolution (see
+// GameEngine.rollExpeditionEncounter).
 type ExpeditionResult struct {
-	Rewards map[string]float64
-	Message string
+	Rewards  map[string]float64
+	Message  string
+	Category string // ExpeditionScouting or ExpeditionMilitary
+	Success  bool   // true if the expedition succeeded
 }
 
 // Tick advances every active expedition (one per category) by one tick and
@@ -346,7 +350,7 @@ func (mm *MilitaryManager) tickCategory(category string, militaryBonus, expediti
 
 	mm.completedCount++
 	mm.activeByCat[category] = nil
-	return ExpeditionResult{Rewards: rewards, Message: message}, true
+	return ExpeditionResult{Rewards: rewards, Message: message, Category: category, Success: success}, true
 }
 
 // GetAvailableExpeditions returns expeditions available for the current age,
@@ -448,10 +452,10 @@ func (mm *MilitaryManager) Snapshot(currentAge string, ageOrder map[string]int, 
 	}
 
 	return MilitaryState{
-		SoldierCount:     soldierCount,
-		SoldierCap:       soldierCap,
-		SoldierRate:      soldierRate,
-		DefenseRating:    mm.CalculateDefense(soldierCount, militaryBonus),
+		SoldierCount:    soldierCount,
+		SoldierCap:      soldierCap,
+		SoldierRate:     soldierRate,
+		DefenseRating:   mm.CalculateDefense(soldierCount, militaryBonus),
 		MilitaryBonus:   militaryBonus,
 		ExpeditionBonus: expeditionBonus,
 		ActiveScout:     activeScout,

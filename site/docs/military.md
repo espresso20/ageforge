@@ -191,6 +191,21 @@ That's **16 missions** in total — 3 scouting expeditions and 13 military campa
 
 **Tip:** `campaign trade_escort` (Iron Age, 3 soldiers, 12t, 0.30 difficulty) is the workhorse of early *soldier* play — cheap, short, and chainable for consistent gold. For soldier-free resource throughput, chain the scouting expeditions (`expedition scout_party`, then `expedition scout_ruins`) — low difficulty, short duration, and no soldiers required.
 
+### Faction encounters
+
+Every time an expedition resolves — win or lose — the game rolls a chance to **encounter a civilization**. An encounter either makes **first contact** with a new civ you're old enough to meet or **re-encounters** one you already know. This is the main way you discover the diplomacy roster: an age only makes a civ *eligible*; a resolved expedition is what actually turns someone up. (Never run expeditions and a civ is auto-discovered anyway about two ages past its minimum age — the fallback, not the fast path.)
+
+**Scouting** expeditions turn up civilizations far more readily than **military** campaigns, and success beats failure — a failed run can still find someone, just rarely. Roughly:
+
+| Resolution | Encounter chance |
+|---|---|
+| Scouting success | ~35% |
+| Scouting failure | ~12% |
+| Military success | ~15% |
+| Military failure | ~5% |
+
+An encounter can also grant a temporary **boon** — a boost to that civ's **specialty resource**, currently **+8–20% for 3,000–6,000 ticks**, announced with a flavour line (e.g. *"The Ironhold Clans share their forge-craft — +15% iron for 4,200 ticks."*). So expeditions stay worth running even after you've met everyone. See [Trade & Diplomacy](trade.md#diplomacy-civilization-encounters) for the civilization roster and diplomacy mechanics.
+
 ---
 
 ## 5. Military Domain Workers

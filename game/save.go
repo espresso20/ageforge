@@ -30,9 +30,14 @@ const saveHMACKey = "ageforge-v1-save-integrity"
 //   - Proof: HMAC of the Signature using forgeMasterKey. Present only when
 //     the player has the elite badge; verifying this clears the cheater badge.
 type GameSave struct {
-	Timestamp time.Time             `json:"timestamp"`
-	Tick      int                   `json:"tick"`
-	Age       string                `json:"age"`
+	Timestamp time.Time `json:"timestamp"`
+	Tick      int       `json:"tick"`
+	Age       string    `json:"age"`
+	// Seed is the run's master RNG seed (see GameEngine.seed). Persisted so a run's
+	// faction-encounter/buff stream is reproducible from its start. omitempty keeps
+	// legacy saves (which lack it) byte-identical; on load a zero seed means "no seed
+	// persisted" and the freshly-generated one from NewGameEngine is kept.
+	Seed      int64                 `json:"seed,omitempty"`
 	Resources map[string]float64    `json:"resources"`
 	Storage   map[string]float64    `json:"storage"`
 	Buildings map[string]int        `json:"buildings"`
@@ -56,9 +61,9 @@ type GameSave struct {
 	// Phase 7: legacy building keys
 	LegacyBuildings []string `json:"legacy_buildings,omitempty"`
 	// Phase 8: epoch system
-	CurrentEpoch       string             `json:"current_epoch,omitempty"`
-	EpochEventFired    map[string]bool    `json:"epoch_event_fired,omitempty"`
-	AwakeningsFired    map[string]bool    `json:"awakenings_fired,omitempty"`
+	CurrentEpoch    string          `json:"current_epoch,omitempty"`
+	EpochEventFired map[string]bool `json:"epoch_event_fired,omitempty"`
+	AwakeningsFired map[string]bool `json:"awakenings_fired,omitempty"`
 	// AncientMemoryUsed: true once this run has offered its single Ancient Memory cache
 	// (set on offer, not accept). Persisted so a reload cannot re-roll the cache. The
 	// in-progress memory research itself rides along in ResearchSave (its doubled tick
@@ -76,8 +81,8 @@ type GameSave struct {
 	// History overlay samples
 	History *HistoryCollector `json:"history,omitempty"`
 	// Integrity fields
-	CheaterBadge bool   `json:"cheater_badge,omitempty"`
-	EliteBadge   bool   `json:"elite_badge,omitempty"`
+	CheaterBadge bool `json:"cheater_badge,omitempty"`
+	EliteBadge   bool `json:"elite_badge,omitempty"`
 	// ParentName records the save this one branched from, for the save-lineage
 	// tree (Phase 1: plumbed through but always "" — branching lands in Phase 2).
 	// Legacy saves lack the field → "" → a root. omitempty keeps current saves
@@ -421,6 +426,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		Timestamp: time.Now(),
 		Tick:      ge.tick,
 		Age:       ge.age,
+		Seed:      ge.seed,
 		Resources: ge.Resources.GetAll(),
 		Storage:   ge.Resources.GetAllStorage(),
 		Buildings: ge.Buildings.GetAll(),
@@ -563,6 +569,12 @@ func (ge *GameEngine) LoadGame(filename string) error {
 
 	ge.tick = save.Tick
 	ge.age = save.Age
+	// Restore the run's master seed so its encounter/buff stream stays reproducible.
+	// A zero seed means the save predates seed persistence — keep the fresh seed
+	// NewGameEngine already generated rather than pinning the run to 0.
+	if save.Seed != 0 {
+		ge.SeedRNG(save.Seed)
+	}
 	ge.Workers.SetAge(save.Age)
 	ge.Resources.LoadAmounts(save.Resources)
 	if save.Storage != nil {

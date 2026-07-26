@@ -231,11 +231,13 @@ func (em *EventManager) GetActiveEffects() []config.Effect {
 
 // Modifiers emits OpAdd Modifiers for the multiplier-bucket effects carried by
 // currently active events, attributed to Source "event:<name>". The engine reads
-// these by effect Type (it accumulates eff.Value into the "production_all" and
-// "tick_speed" buckets based on eff.Type, not eff.Target), so the Modifier Target
-// is the effect Type. Only the bucket types that feed recalculateRates /
-// recalculateTickSpeed today are emitted; per-resource "production" effects are
-// flat additions handled elsewhere and are not multiplier modifiers.
+// these by effect Type — it accumulates eff.Value into the "production_all",
+// "tick_speed", and per-resource "<res>_rate" additive pools keyed by eff.Type
+// (not eff.Target) — so the Modifier Target is the effect Type. The "<res>_rate"
+// case is what carries a faction-encounter specialty boon (Type "iron_rate", ...)
+// into the resolver's per-resource multiplier pool in recalculateRates. Per-resource
+// "production" effects are flat additions handled elsewhere and are not multiplier
+// modifiers.
 func (em *EventManager) Modifiers() []Modifier {
 	var out []Modifier
 	for _, ae := range em.active {
@@ -244,8 +246,9 @@ func (em *EventManager) Modifiers() []Modifier {
 			src = "event"
 		}
 		for _, eff := range ae.Effects {
-			switch eff.Type {
-			case "production_all", "tick_speed":
+			switch {
+			case eff.Type == "production_all", eff.Type == "tick_speed",
+				strings.HasSuffix(eff.Type, "_rate"):
 				out = append(out, Modifier{Source: src, Target: eff.Type, Op: OpAdd, Value: eff.Value})
 			}
 		}

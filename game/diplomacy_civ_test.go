@@ -8,11 +8,22 @@ import (
 	"github.com/espresso20/ageforge/config"
 )
 
-// discoverAll forces every civ whose MinAge is reachable at the given age to be
-// discovered on the manager, returning the discovered keys. fullAgeOrder is
-// shared with milestones_test.go.
+// discoverAll forces every civ whose MinAge floor is met at the given age to be
+// discovered, via the encounter entry point DiscoverFaction (age is now only a
+// FLOOR — DiscoverFactions alone auto-discovers on the late fallback, so tests that
+// want a fully populated roster drive DiscoverFaction directly). Returns the
+// discovered keys. fullAgeOrder is shared with milestones_test.go.
 func discoverAll(dm *DiplomacyManager, age string) []string {
-	return dm.DiscoverFactions(age, fullAgeOrder())
+	order := fullAgeOrder()
+	var got []string
+	for _, def := range config.BaseFactions() {
+		if order[age] >= order[def.MinAge] {
+			if _, ok := dm.DiscoverFaction(def.Key); ok {
+				got = append(got, def.Key)
+			}
+		}
+	}
+	return got
 }
 
 // --- Part 1: roster ---------------------------------------------------------
@@ -69,9 +80,10 @@ func TestCivRoster_SpansEarlyAndLateEpochs(t *testing.T) {
 
 // --- Part 2: first-contact discovery ---------------------------------------
 
-// TestFirstContact_GatedAndNeutral verifies discovery is age/epoch-gated: at the
-// bronze age only the earliest civ is discovered, and discovery seeds neutral
-// opinion + flips Discovered. A late-epoch civ is NOT discovered early.
+// TestFirstContact_GatedAndNeutral verifies discovery is age-gated by a FLOOR: at
+// the bronze age only the earliest civ is even reachable, and discovering it (via
+// the DiscoverFaction trigger) seeds neutral opinion + flips Discovered. A
+// late-epoch civ is NOT reachable early.
 func TestFirstContact_GatedAndNeutral(t *testing.T) {
 	dm := NewDiplomacyManager()
 	got := discoverAll(dm, "bronze_age")
@@ -98,7 +110,10 @@ func TestFirstContact_GatedAndNeutral(t *testing.T) {
 }
 
 // TestFirstContact_FiresFlavorMessage drives Tick and confirms a first-contact
-// flavour line (with the civ name) is returned on discovery.
+// flavour line (with the civ name) is returned on discovery. At medieval_age the
+// founding civ (riverlands_tribes, MinAge bronze) is >= ageFallbackGap ages past
+// its floor, so the late age fallback in DiscoverFactions discovers it and Tick
+// announces first contact — no expedition required.
 func TestFirstContact_FiresFlavorMessage(t *testing.T) {
 	dm := NewDiplomacyManager()
 	msgs := dm.Tick("medieval_age", fullAgeOrder(), 1, false)

@@ -161,7 +161,7 @@ It's a way to convert a culture surplus into a swing of whatever resource you're
 
 ## Diplomacy — Civilization Encounters
 
-The game world holds an **11-civilization roster**. You meet them through **first-contact events** as you advance: the founding civilizations appear in the early epochs, with more discovered each era. Each civ has an **opinion score** (-100 to +100), a **diplomatic status**, a **personality**, and a **backstory**. Status determines whether you benefit from, are ignored by, or are penalised by that civ; personality drives how its opinion drifts and whether it lends workers or goes to war.
+The game world holds an **11-civilization roster**. You meet them by **running expeditions** — an age only makes a civ *eligible*; it's a resolved **scouting expedition or military campaign** that actually turns someone up, with a generous late fallback so even a player who never explores meets everyone eventually. Each civ has an **opinion score** (-100 to +100), a **diplomatic status**, a **personality**, and a **backstory**. Status determines whether you benefit from, are ignored by, or are penalised by that civ; personality drives how its opinion drifts and whether it lends workers or goes to war.
 
 ### Commands
 
@@ -270,13 +270,21 @@ The allied trade bonus also surfaces in the **Active Multipliers** panel (Stats 
 
 ### First Contact & Discovery
 
-Civilizations are discovered through **first-contact events** when you reach their minimum age — no manual action required. A flavour log message introduces each one's name, personality, and backstory. Until a civilization is discovered, it shows in the overlay as a locked teaser (*??? — reach the X Age*) and you cannot interact with it. The founding civs (Riverlands Tribes, Ironhold Clans) appear in the early epochs; more are encountered every era through the Cosmic Era.
+Discovery follows a **floor + trigger + fallback** model:
+
+- **Age is a floor.** Reaching a civilization's minimum age makes it *eligible* to be met — it does **not** discover it on its own.
+- **Expeditions are the trigger.** Whenever a **scouting expedition** or **military campaign** resolves, the game rolls a chance to **encounter** a civilization. An encounter discovers a new eligible civ (first contact) — or, once you already know everyone within reach, re-encounters a known one. So you find new civilizations by *running expeditions*: scouting turns them up more readily than military campaigns, and success beats failure (see [Military & Expeditions](military.md#faction-encounters) for the odds).
+- **Late fallback.** Never run an expedition and you still meet everyone eventually: about **two ages past** a civ's minimum age it is auto-discovered anyway — just far later than an active explorer would have met it.
+
+A flavour log message introduces each civ's name, personality, and backstory on first contact. Until a civilization is discovered, it shows in the overlay as a locked teaser (*??? — reach the X Age*) and you cannot interact with it. The founding civs (Riverlands Tribes, Ironhold Clans) appear early; the rest are met across the eras through the Cosmic Era.
+
+**Encounter boons.** An encounter — first contact *or* a re-encounter of a civ you already know — can also grant a temporary **boon**: a boost to production of that civilization's **specialty resource**, currently **+8% to +20% for 3,000–6,000 ticks**. A flavour line names the civ and the boost, e.g. *"The Ironhold Clans share their forge-craft — +15% iron for 4,200 ticks."* It's one more reason to keep expeditions running even after you've met everyone — see [Military & Expeditions](military.md#faction-encounters).
 
 ---
 
 ## Full Civilization Reference
 
-| Key | Name | Discovered At | Personality | Strength | Specialty | Allied Bonus |
+| Key | Name | Eligible From | Personality | Strength | Specialty | Allied Bonus |
 |---|---|---|---|---|---|---|
 | `riverlands_tribes` | Riverlands Tribes | Bronze Age | peaceful | 1 | food | +15% food imports |
 | `ironhold_clans` | Ironhold Clans | Medieval Age | aggressive | 3 | iron | +20% iron imports |

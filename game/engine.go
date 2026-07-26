@@ -199,6 +199,17 @@ type GameEngine struct {
 	// means use the package default rand. Tests inject a seeded *rand.Rand so the
 	// risk/reward outcome is deterministic.
 	blackMarketRand *rand.Rand
+
+	// Seeded RNG service — the master source for faction-encounter rolls (and the
+	// home for future seeded systems). `seed` is generated once on new game,
+	// persisted in the save (GameSave.Seed), and restored on load so a run's
+	// encounter/buff stream is reproducible from its start. `rng` is (re)built from
+	// `seed` via SeedRNG. rand.Rand is not safe for concurrent use, but every roll
+	// runs inside doTick's write lock, so no extra synchronisation is needed.
+	// Roll-stream continuity across save/reload is NOT preserved (re-seeding on load
+	// restarts the stream) — only the seed itself round-trips.
+	seed int64
+	rng  *rand.Rand
 }
 
 // BuildQueueItem represents a building under construction
@@ -250,7 +261,32 @@ func NewGameEngine() *GameEngine {
 		ageName, _ := e.Payload["new_age"].(string)
 		ge.History.MarkAge(ge.tick, ageName)
 	})
+	// Generate this run's master seed once. LoadGame overrides it with the saved
+	// seed; Reset re-rolls a fresh one.
+	ge.SeedRNG(newSeed())
 	return ge
+}
+
+// newSeed returns a fresh master seed for a new run.
+func newSeed() int64 { return time.Now().UnixNano() }
+
+// SeedRNG sets the master seed and (re)initialises the seeded RNG service from it.
+// Called once on new game (a fresh seed), on Reset (a new run → new seed), and on
+// load (the saved seed, so the run stays reproducible from its start). Tests call
+// it with a fixed seed for deterministic encounter/buff outcomes. Callers that are
+// already under the engine write lock may call this directly (it only assigns two
+// fields); NewGameEngine/Reset call it while single-threaded or locked.
+func (ge *GameEngine) SeedRNG(seed int64) {
+	ge.seed = seed
+	ge.rng = rand.New(rand.NewSource(seed))
+}
+
+// Seed returns this run's master RNG seed (persisted in the save; surfaced in
+// GameState for reproducibility/debugging).
+func (ge *GameEngine) Seed() int64 {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	return ge.seed
 }
 
 const AutosaveInterval = 60 * time.Second
@@ -1061,6 +1097,11 @@ func (ge *GameEngine) processExpeditions() {
 		// Add rewards to resources
 		for resource, amount := range res.Rewards {
 			ge.Resources.Add(resource, amount)
+		}
+		// A resolved expedition may turn up a civilization: roll a faction encounter
+		// (discovery and/or a specialty-production boon) on the seeded RNG.
+		for _, msg := range ge.rollExpeditionEncounter(res.Category, res.Success) {
+			ge.addLog("event", msg)
 		}
 	}
 }
@@ -3451,6 +3492,8 @@ func (ge *GameEngine) Reset() {
 	// Full wipe: no previous civilization, so no cache. Clear the run flag.
 	ge.ancientMemoryUsed = false
 	ge.pendingMemoryTech = ""
+	// A wiped game is a brand-new run: re-roll the master seed.
+	ge.SeedRNG(newSeed())
 
 	ge.addLog("event", "Game wiped! Starting fresh.")
 	ge.addLog("info", "Type [cyan]help[-] for commands.")
@@ -3572,6 +3615,7 @@ func (ge *GameEngine) GetState() GameState {
 		SpeedMultiplier:       speedMult,
 		CheaterBadge:          ge.cheaterBadge,
 		EliteBadge:            ge.eliteBadge,
+		Seed:                  ge.seed,
 		LastAgeAdvanceSummary: ge.lastAgeAdvanceSummary,
 		// Phase 8: epoch fields
 		EpochKey: ge.currentEpoch,

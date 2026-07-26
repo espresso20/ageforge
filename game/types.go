@@ -33,6 +33,10 @@ type GameState struct {
 	SpeedMultiplier      float64
 	CheaterBadge         bool
 	EliteBadge           bool
+	// Seed is this run's master RNG seed (see GameEngine.seed) — surfaced for
+	// reproducibility/debugging. Persisted via GameSave.Seed, not through this
+	// snapshot.
+	Seed int64
 	// Phase 7: result of the last age advance transformation pass
 	LastAgeAdvanceSummary AgeAdvanceSummary
 	// Phase 8: epoch system
@@ -259,8 +263,8 @@ type MilitaryState struct {
 	// SoldierCap is the soldiers resource storage cap (sum of built military
 	// buildings' storage effects). SoldierRate is the per-tick soldiers
 	// production rate (net). Both are populated from the soldiers resource.
-	SoldierCap       int
-	SoldierRate      float64
+	SoldierCap      int
+	SoldierRate     float64
 	DefenseRating   float64
 	MilitaryBonus   float64
 	ExpeditionBonus float64
