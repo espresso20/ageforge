@@ -533,7 +533,7 @@ The knowledge domain lineage produces all your research fuel. Workers in knowled
 assign <building_key> [count|all]
 ```
 
-Knowledge buildings scale as: `rate = 0.002 × 2^tier`. A fully staffed high-tier knowledge building produces dramatically more per tick than multiple low-tier ones. Prioritise upgrading your knowledge lineage and assigning workers to the highest-tier building you can afford.
+Knowledge buildings scale as: `rate = 0.05 × 2^tier`. A fully staffed high-tier knowledge building produces dramatically more per tick than multiple low-tier ones. Prioritise upgrading your knowledge lineage and assigning workers to the highest-tier building you can afford.
 
 The prestige **Research Speed** upgrade adds +5% per tier to `knowledge_rate` — five tiers gives your knowledge buildings a permanent +25% output multiplier from the very start of each run.
 

@@ -70,13 +70,17 @@ func baseBuildingsRaw() []BuildingDef {
 			// cost above 50 is an unbuildable deadlock. normalizeCostCurves multiplies
 			// this base by ~1.17 (storage 1.15->1.13, pivot@10), so keep the raw base
 			// well under ~42. 30 -> ~35 normalized, a comfortable margin under 50.
-			BaseCost:    map[string]float64{"wood": 30},
-			CostScale:   1.15,
-			MaxCount:    50,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 300}},
+			BaseCost:  map[string]float64{"wood": 30},
+			CostScale: 1.15,
+			MaxCount:  50,
+			// note: +500/copy (not 300) so 50 stashes reach 50+50*500=25,050 food cap,
+			// clearing the 16,000 stone-age gate — 300 topped out at 15,050, a softlock.
+			// ~32 stashes now cover 16k, so the late-copy price spike is felt far less.
+			// See yQw8uK8S + storage_deadlock_test.go.
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 500}},
 			BuildTicks:  10,
 			RequiredAge: "primitive_age",
-			Description: "A hidden pile of supplies. +300 storage.",
+			Description: "A hidden pile of supplies. +500 storage.",
 		},
 
 		// ===== STONE AGE (costs: 200-1000) =====
