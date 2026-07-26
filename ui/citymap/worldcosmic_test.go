@@ -18,8 +18,9 @@ import (
 
 // cosmicWorldAge builds a cosmic-age fixture with a mixed faction roster: several discovered civs
 // of varying Strength, one at war, one trade partner, plus one undiscovered — so every wired
-// cosmic view exercises nodes/systems/capitals + lanes/web/seams + territory + fog. The roster is
-// identical across ages (only state.Age differs), so the same seeded world renders three ways.
+// cosmic view exercises nodes/systems/capitals + lanes/web/seams + territory + clouds + lattice +
+// fog. The roster is identical across ages (only state.Age differs), so the same seeded world
+// renders all five ways.
 func cosmicWorldAge(age string) game.GameState {
 	facs := map[string]game.FactionInfo{
 		"helios":   {Name: "Helios Combine", Discovered: true, Status: "allied", Opinion: 75, Strength: 4, Personality: "peaceful"},
@@ -36,12 +37,14 @@ func cosmicWorldAge(age string) game.GameState {
 func cosmicWorld() game.GameState { return cosmicWorldAge("space_age") }
 
 // cosmicWiredAges lists the ages the Phase-C dispatcher owns — the panic/determinism/not-continent
-// sweeps run every one of them.
-var cosmicWiredAges = []string{"space_age", "interstellar_age", "galactic_age"}
+// sweeps run every one of them. Phase C is complete: all FIVE cosmic ages are wired.
+var cosmicWiredAges = []string{
+	"space_age", "interstellar_age", "galactic_age", "quantum_age", "transcendent_age",
+}
 
-// TestCosmicWorldViewForDispatch pins the intercept: the three wired cosmic ages are owned by a
-// strategic view; terrestrial ages, the still-unwired higher cosmic ages (quantum/transcendent),
-// and unknown ages are not (they fall through to the medium path).
+// TestCosmicWorldViewForDispatch pins the intercept: all five wired cosmic ages are owned by a
+// strategic view; terrestrial ages and unknown ages are not (they fall through to the medium path).
+// Nothing cosmic falls to the atlas any more.
 func TestCosmicWorldViewForDispatch(t *testing.T) {
 	for _, age := range cosmicWiredAges {
 		if _, ok := cosmicWorldViewFor(age); !ok {
@@ -50,8 +53,6 @@ func TestCosmicWorldViewForDispatch(t *testing.T) {
 	}
 	notCosmic := []string{
 		"primitive_age", "modern_age", "cyberpunk_age", "fusion_age",
-		// quantum + transcendent are NOT wired yet — they must still fall through to the atlas.
-		"quantum_age", "transcendent_age",
 		"made_up_age", "",
 	}
 	for _, age := range notCosmic {
@@ -157,10 +158,11 @@ func TestCosmicNotAContinent(t *testing.T) {
 }
 
 // TestCosmicViewsDistinct is the coherent-but-DISTINCT guarantee: for one fixed (state, size,
-// seed), the three cosmic views must not read near-identical. We call each view function directly
+// seed), the FIVE cosmic views must all read distinct pairwise. We call each view function directly
 // with the SAME seed (isolating the difference to the rendering, not the per-age seed) and assert
-// every pair differs in a meaningful fraction of pixels — the dominant metaphor (home cluster vs
-// route web vs territorial spiral) has to change the picture, not just the palette.
+// every one of the 10 pairs differs in a meaningful fraction of pixels — the dominant metaphor
+// (home cluster vs route web vs territorial spiral vs superposition clouds vs luminous lattice) has
+// to change the picture, not just the palette.
 func TestCosmicViewsDistinct(t *testing.T) {
 	_ = theme.SetActive("forge")
 	st := cosmicWorld()
@@ -171,24 +173,27 @@ func TestCosmicViewsDistinct(t *testing.T) {
 		fn(img, st, w, h, seed)
 		return img
 	}
-	space := render(drawSpaceStrategicView)
-	inter := render(interstellarStrategicView)
-	galac := render(galacticStrategicView)
-	pairs := []struct {
+	views := []struct {
 		name string
-		a, b *image.RGBA
+		img  *image.RGBA
 	}{
-		{"space vs interstellar", space, inter},
-		{"space vs galactic", space, galac},
-		{"interstellar vs galactic", inter, galac},
+		{"space", render(drawSpaceStrategicView)},
+		{"interstellar", render(interstellarStrategicView)},
+		{"galactic", render(galacticStrategicView)},
+		{"quantum", render(quantumStrategicView)},
+		{"transcendent", render(transcendentStrategicView)},
 	}
-	for _, pr := range pairs {
-		if bytes.Equal(pr.a.Pix, pr.b.Pix) {
-			t.Errorf("%s: renders are byte-identical", pr.name)
-			continue
-		}
-		if diff := diffFraction(pr.a, pr.b); diff < 0.10 {
-			t.Errorf("%s: renders differ in only %.1f%% of pixels; the dominant metaphor should make them read distinct", pr.name, diff*100)
+	for i := 0; i < len(views); i++ {
+		for j := i + 1; j < len(views); j++ {
+			a, c := views[i], views[j]
+			name := a.name + " vs " + c.name
+			if bytes.Equal(a.img.Pix, c.img.Pix) {
+				t.Errorf("%s: renders are byte-identical", name)
+				continue
+			}
+			if diff := diffFraction(a.img, c.img); diff < 0.10 {
+				t.Errorf("%s: renders differ in only %.1f%% of pixels; the dominant metaphor should make them read distinct", name, diff*100)
+			}
 		}
 	}
 }
@@ -262,6 +267,8 @@ func TestDumpWorldCosmicPNG(t *testing.T) {
 		{"space_age", "wm_C_space.png"},
 		{"interstellar_age", "wm_C_interstellar.png"},
 		{"galactic_age", "wm_C_galactic.png"},
+		{"quantum_age", "wm_C_quantum.png"},
+		{"transcendent_age", "wm_C_transcendent.png"},
 	}
 	for _, d := range dumps {
 		st := cosmicWorldAge(d.age)

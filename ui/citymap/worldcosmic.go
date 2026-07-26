@@ -25,9 +25,9 @@ import (
 // age, that view paints the ENTIRE frame (background + territory + lanes + nodes + chrome)
 // and renderWorldImage returns immediately, skipping BOTH the medium terrain draw AND the
 // shared civ-dot / label overlay (the strategic nodes ARE the factions; drawing dots too
-// would double-render them). This first Phase-C pass wires ONLY space_age as a
-// proof-of-concept; the four higher cosmic ages (interstellar/galactic/quantum/transcendent)
-// still fall through to the neutral atlas until a later phase.
+// would double-render them). Phase C is now COMPLETE: all five cosmic ages
+// (space/interstellar/galactic/quantum/transcendent) own their World tab as a bespoke
+// strategic view — none fall through to the neutral atlas.
 //
 // Determinism + safety, exactly like the mediums: a strategic view is a pure function of
 // (state, size, seed). Faction node placement is seeded off a hash of the faction KEY (never
@@ -40,7 +40,7 @@ import (
 // (func, bool) intercept shape of topdown.go's cosmicSceneFor. The signature matches what
 // renderWorldImage already has in scope: (img, state, w, h in PIXELS, the uint32 age seed).
 //
-// Three cosmic ages are wired, each reframing the SAME empire roster (strategicEmpires) at a
+// All FIVE cosmic ages are wired, each reframing the SAME empire roster (strategicEmpires) at a
 // bigger scale so the set reads coherent-but-distinct:
 //
 //	space_age        — HOME CLUSTER: one dominant command hub + spheres of influence (territory).
@@ -48,11 +48,15 @@ import (
 //	                   is one node in the lattice, not the whole show. Routes are the picture.
 //	galactic_age     — GALACTIC DOMINION: a spiral galaxy carved into territorial SECTORS by owner,
 //	                   capitals seated on the arms. Territory (bold wedges), not routes, is the read.
+//	quantum_age      — SUPERPOSITION: empires as PROBABILITY CLOUDS smeared across ghost branches
+//	                   over a wave-interference field; overlapping clouds paint contested seams.
+//	transcendent_age — ASCENSION LATTICE: a LUMINOUS field (the void is left behind) with a
+//	                   sacred-geometry mandala weaving every empire into one figure of light.
 //
 // The relationship SIGNAL colors (war=red / ally=green / merc=gold / neutral=steel) stay constant
-// across all three via nodeColor/empireRoleFor, so standings read the same everywhere; only the
-// background, dominant metaphor, and chrome vary. quantum_age + transcendent_age are still unwired
-// (they keep falling through to the neutral atlas) — a later batch.
+// across all five via nodeColor/empireRoleFor, so standings read the same everywhere; only the
+// background, dominant metaphor, and chrome vary. None of the cosmic ages fall through to the
+// neutral atlas any more — the World tab is a strategy display from space_age onward.
 func cosmicWorldViewFor(ageKey string) (func(img *image.RGBA, state game.GameState, w, h int, seed uint32), bool) {
 	switch ageKey {
 	case "space_age":
@@ -61,6 +65,10 @@ func cosmicWorldViewFor(ageKey string) (func(img *image.RGBA, state game.GameSta
 		return interstellarStrategicView, true
 	case "galactic_age":
 		return galacticStrategicView, true
+	case "quantum_age":
+		return quantumStrategicView, true
+	case "transcendent_age":
+		return transcendentStrategicView, true
 	}
 	return nil, false
 }
@@ -1445,4 +1453,757 @@ func drawGalacticHUD(img *image.RGBA, home empireNode, p cosmicStratPalette) {
 	ringCol := blend(p.voidDeep, p.chrome, 0.28)
 	rr := float64(minInt(w, h)) * 0.44
 	drawRingEllipseDashed(img, home.cx, home.cy, rr, rr*0.62, ringCol, 3, 4)
+}
+
+// ---- quantum_age strategic view ---------------------------------------------
+
+// quantumHues returns the fixed quantum interference accents — a cool VIOLET, a bright CYAN, and a
+// MAGENTA flank — the palette that sets the quantum view apart from space's plain command cyan and
+// galactic's warm gold. Theme-independent, like the rest of the strategic display.
+func quantumHues() (violet, cyan, magenta color.RGBA) {
+	violet = color.RGBA{R: 0x6a, G: 0x2f, B: 0xc4, A: 0xff}
+	cyan = color.RGBA{R: 0x36, G: 0xcf, B: 0xe8, A: 0xff}
+	magenta = color.RGBA{R: 0xc6, G: 0x4d, B: 0xe0, A: 0xff}
+	return
+}
+
+// quantumStrategicView paints the quantum_age World tab as CONTESTED SUPERPOSITION: the empires
+// are no longer at one definite spot — each exists as a PROBABILITY CLOUD smeared across ghost
+// branches, and wherever two clouds overlap the map lights a contested interference SEAM. Where
+// space_age was one hub, interstellar a route web, and galactic bold territory, this reframes the
+// SAME roster as quantum uncertainty. Layers back-to-front:
+//
+//  1. an INTERFERENCE FIELD — overlapping wave fringes (a double-slit path-difference pattern plus
+//     a third emitter's ripples) in cool violet↔cyan over the void. Reads as an interference
+//     pattern, NOT a starfield — the backdrop alone says "we're in superposition now."
+//  2. PROBABILITY CLOUDS — an additive cloud per empire, tinted by relationship + quantum-cooled,
+//     with faint internal probability fringes, sized by strength. Additive, so overlaps brighten.
+//  3. SUPERPOSITION SEAMS (dominant) — wherever two clouds overlap, a bright interference fringe
+//     packet at the boundary (constructive = near-white cyan); at-war pairs get the red conflict read.
+//  4. SUPERPOSED nodes — each faction a primary marker PLUS 2–3 faint GHOST copies at seeded
+//     probability offsets, tied to the primary by faint interference arcs (smeared across branches).
+//     The home empire is the COHERENT observer — a bright collapsed node with NO ghosts.
+//  5. a quantum HUD — corner brackets + paired fringe ticks down the side rails.
+//
+// LABEL-FREE, deterministic (hash/trig only), panic-safe (all writes bounds-checked; a tiny / odd /
+// zero canvas returns after the field). Empty roster → the lone coherent observer in the fringes.
+func quantumStrategicView(img *image.RGBA, state game.GameState, w, h int, seed uint32) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+	p := cosmicStratPal()
+
+	// 1) Interference field (the hero background — an interference pattern, not a starfield).
+	drawInterferenceField(img, p, seed)
+
+	// Roster once, repositioned into a MID band so probability clouds overlap (the contested read).
+	nodes := quantumSuperposedNodes(state, w, h, seed)
+	if len(nodes) == 0 {
+		return
+	}
+	home := nodes[0]
+
+	// 2) Probability clouds (additive) behind everything, so overlaps brighten as contested space.
+	for _, n := range nodes {
+		drawProbabilityCloud(img, n, p)
+	}
+
+	// 3) Superposition seams (dominant): a bright interference packet on every overlapping pair.
+	drawSuperpositionSeams(img, nodes, p)
+
+	// Undiscovered factions → faint edge fog blips (the void backdrop still carries the fog read).
+	drawUndiscoveredFog(img, state, home, p, seed)
+
+	// 4) Superposed faction nodes (ghosts + arcs + primary), then the coherent observer LAST.
+	for _, n := range nodes {
+		if n.isHome {
+			continue
+		}
+		drawSuperposedNode(img, n, p, seed)
+	}
+	drawObserverNode(img, home, p)
+
+	// 5) Quantum HUD: brackets + paired fringe ticks.
+	drawQuantumHUD(img, p)
+}
+
+// drawInterferenceField paints the quantum backdrop: a deep-void base overlaid with a WAVE
+// INTERFERENCE pattern. Two coherent point sources straddling centre give the classic double-slit
+// hyperbolic fringes (from the path difference d1−d2); a third off-axis emitter adds concentric
+// ripples for a richer moiré. Constructive fringes read bright CYAN, troughs sink to VIOLET/void, so
+// the wash is cool violet↔cyan and unmistakably an interference pattern rather than a scatter of
+// stars. All hash/trig-driven (no math/rand), bounds-checked, panic-safe on any canvas.
+func drawInterferenceField(img *image.RGBA, p cosmicStratPalette, seed uint32) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 {
+		return
+	}
+	const aspect = 0.62
+	violet, cyan, _ := quantumHues()
+	cx := float64(w) / 2
+	cy := float64(h) / 2
+	// Two coherent sources (a double slit) straddling centre, plus a third off-axis emitter — all
+	// seeded so the fringe pattern is stable frame-to-frame.
+	sep := float64(w) * (0.15 + 0.06*hashUnit(seed, 0x5117, 0x1))
+	s1x, s1y := cx-sep, cy
+	s2x, s2y := cx+sep, cy
+	s3x := cx + (hashUnit(seed, 0x5118, 0x2)-0.5)*float64(w)*0.40
+	s3y := cy + (hashUnit(seed, 0x5119, 0x3)-0.5)*float64(h)*0.50
+	// Wavelength scales with the canvas so a handful of fringes span the frame at any size.
+	lambda := float64(minInt(w, h)) / 14.0
+	if lambda < 3 {
+		lambda = 3
+	}
+	k := 2 * math.Pi / lambda
+	dist := func(x, y, sx, sy float64) float64 {
+		dx := x - sx
+		dy := (y - sy) / aspect // undo half-block squash so the ripples read round
+		return math.Sqrt(dx*dx + dy*dy)
+	}
+	for y := 0; y < h; y++ {
+		fy := float64(y)
+		for x := 0; x < w; x++ {
+			fx := float64(x)
+			d1 := dist(fx, fy, s1x, s1y)
+			d2 := dist(fx, fy, s2x, s2y)
+			d3 := dist(fx, fy, s3x, s3y)
+			fr := 0.5 + 0.5*math.Cos(k*(d1-d2))      // double-slit hyperbolic fringes
+			fr3 := 0.5 + 0.5*math.Sin(k*0.5*(d3+d1)) // third emitter's concentric ripples
+			f := clamp01(0.68*fr + 0.32*fr3)
+			col := blend(violet, cyan, f) // cyan crests, violet troughs → cool violet↔cyan wash
+			mix := math.Pow(f, 1.7) * 0.30
+			setPixel(img, x, y, blend(p.voidDeep, col, mix))
+		}
+	}
+}
+
+// quantumSuperposedNodes returns the roster (via strategicEmpires) REPOSITIONED for superposition:
+// the home observer forced to dead-centre (the collapsed state), factions pulled into a MID radial
+// band on a golden-angle sweep so their probability clouds OVERLAP — overlap is the dominant read,
+// and it needs the clouds close enough to intersect. Deterministic.
+func quantumSuperposedNodes(state game.GameState, w, h int, seed uint32) []empireNode {
+	nodes := strategicEmpires(state, w, h, seed)
+	if len(nodes) == 0 {
+		return nodes
+	}
+	nodes[0].cx = clampInt(w/2, 0, w-1)
+	nodes[0].cy = clampInt(h/2, 0, h-1)
+	margin := clampInt(minInt(w, h)/8, 4, 40)
+	maxRX := float64(w)/2 - float64(margin)
+	maxRY := float64(h)/2 - float64(margin)
+	if maxRX < 2 {
+		maxRX = 2
+	}
+	if maxRY < 2 {
+		maxRY = 2
+	}
+	const golden = 2.399963229728653
+	rot := hashUnit(seed, 0x9A17, 0x51) * 2 * math.Pi
+	cx := float64(nodes[0].cx)
+	cy := float64(nodes[0].cy)
+	fi := 0
+	for i := range nodes {
+		if nodes[i].isHome {
+			continue
+		}
+		ks := factionKeySeed(nodes[i].key)
+		ang := float64(fi)*golden + rot
+		// MID band → clouds overlap (contested superposition); seeded jitter keeps them distinct.
+		rr := 0.34 + 0.30*hashUnit(ks, 0x91, seed)
+		px := cx + math.Cos(ang)*maxRX*rr
+		py := cy + math.Sin(ang)*maxRY*rr
+		nodes[i].cx = clampInt(int(math.Round(px)), margin, maxInt(w-1-margin, margin))
+		nodes[i].cy = clampInt(int(math.Round(py)), margin, maxInt(h-1-margin, margin))
+		fi++
+	}
+	return nodes
+}
+
+// quantumCloudRadius is the shared probability-cloud radius for an empire — used BOTH to paint the
+// cloud and to decide when two clouds overlap (so the seam packets land exactly on the intersection).
+// The home observer's cloud is the largest; faction clouds scale with strength. Proportional to the
+// short side so it holds across canvas sizes.
+func quantumCloudRadius(n empireNode, w, h int) float64 {
+	base := float64(minInt(w, h))
+	var r float64
+	if n.isHome {
+		r = base * 0.26
+	} else {
+		r = base * (0.10 + 0.028*float64(n.strength))
+	}
+	if r < 2 {
+		r = 2
+	}
+	return r
+}
+
+// drawProbabilityCloud paints one empire's PROBABILITY CLOUD: an additive radial disc tinted by
+// relationship then quantum-cooled toward cyan, with faint internal concentric FRINGES so it reads
+// as a wavefunction (a smear of possibility), not the crisp sphere of influence of space_age.
+// Additive (blendPixel accumulates), so where two clouds overlap the pixels brighten — contested
+// superposition. Falls smoothly to zero at the rim (controlled, no muddy halo). Bounds-checked.
+func drawProbabilityCloud(img *image.RGBA, n empireNode, p cosmicStratPalette) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 {
+		return
+	}
+	_, cyan, _ := quantumHues()
+	tint := blend(nodeColor(n, p), cyan, 0.16)
+	peak := 0.20
+	if n.isHome {
+		tint = blend(p.homeCore, cyan, 0.10)
+		peak = 0.26
+	}
+	r := quantumCloudRadius(n, w, h)
+	rY := r * 0.62
+	x0 := clampInt(n.cx-int(r)-1, 0, w-1)
+	x1 := clampInt(n.cx+int(r)+1, 0, w-1)
+	y0 := clampInt(n.cy-int(rY)-1, 0, h-1)
+	y1 := clampInt(n.cy+int(rY)+1, 0, h-1)
+	invR := 1.0 / r
+	invRY := 1.0 / rY
+	for y := y0; y <= y1; y++ {
+		dy := float64(y-n.cy) * invRY
+		for x := x0; x <= x1; x++ {
+			dx := float64(x-n.cx) * invR
+			d := dx*dx + dy*dy
+			if d > 1.0 {
+				continue
+			}
+			dd := math.Sqrt(d)
+			fall := math.Pow(1.0-d, 1.25)
+			// Internal probability fringes: concentric density rings so the cloud reads quantum.
+			ripple := 0.62 + 0.38*(0.5+0.5*math.Cos(dd*math.Pi*3.2))
+			blendPixel(img, x, y, tint, peak*fall*ripple)
+		}
+	}
+}
+
+// drawSuperpositionSeams is the DOMINANT quantum read: wherever two probability clouds overlap it
+// stamps a bright interference SEAM — a little packet of parallel fringe strokes on the boundary
+// between the clouds, perpendicular to the line joining them. The centre fringe is near-white cyan
+// (constructive interference); flanks are violet-magenta. An at-war pair paints the seam RED (the
+// conflict read still cuts through). Overlap is tested in aspect-corrected space so it matches the
+// on-screen clouds; the strokes are drawn in screen space. Deterministic, bounds-checked.
+func drawSuperpositionSeams(img *image.RGBA, nodes []empireNode, p cosmicStratPalette) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 || len(nodes) < 2 {
+		return
+	}
+	const aspect = 0.62
+	base := float64(minInt(w, h))
+	_, cyan, magenta := quantumHues()
+	seamHot := brighten(cyan, 0.5) // constructive interference → near-white cyan
+	seamFlank := magenta           // violet-magenta side fringes
+	warHot := brighten(p.war, 0.35)
+	for i := 0; i < len(nodes); i++ {
+		ri := quantumCloudRadius(nodes[i], w, h)
+		for j := i + 1; j < len(nodes); j++ {
+			rj := quantumCloudRadius(nodes[j], w, h)
+			dxs := float64(nodes[j].cx - nodes[i].cx)
+			dys := float64(nodes[j].cy - nodes[i].cy)
+			du := dxs
+			dv := dys / aspect // aspect-corrected separation decides overlap
+			D := math.Sqrt(du*du + dv*dv)
+			overlap := (ri + rj) - D
+			if overlap <= 1 {
+				continue
+			}
+			seg := math.Sqrt(dxs*dxs + dys*dys)
+			if seg < 1 {
+				seg = 1
+			}
+			t := ri / (ri + rj) // seam sits on the cloud boundary, weighted by radius
+			mx := float64(nodes[i].cx) + dxs*t
+			my := float64(nodes[i].cy) + dys*t
+			ax, ay := dxs/seg, dys/seg  // along the axis
+			ux, uy := -dys/seg, dxs/seg // perpendicular (screen space)
+			half := math.Max(2, math.Min(overlap*0.6, base*0.16))
+			hostile := nodes[i].atWar || nodes[j].atWar
+			for s := -1; s <= 1; s++ {
+				pcx := mx + ax*float64(s)*2.2
+				pcy := my + ay*float64(s)*2.2
+				ex0 := int(math.Round(pcx - ux*half))
+				ey0 := int(math.Round(pcy - uy*half))
+				ex1 := int(math.Round(pcx + ux*half))
+				ey1 := int(math.Round(pcy + uy*half))
+				col := seamFlank
+				alpha := 0.42
+				if s == 0 {
+					col, alpha = seamHot, 0.72
+				}
+				if hostile {
+					col, alpha = p.war, 0.5
+					if s == 0 {
+						col, alpha = warHot, 0.78
+					}
+				}
+				strokeSolidFaintLine(img, ex0, ey0, ex1, ey1, col, alpha)
+			}
+		}
+	}
+}
+
+// drawSuperposedNode paints one faction as a SUPERPOSED empire: 2–3 faint GHOST copies at seeded
+// probability offsets (the branches it might occupy), each tied to the primary by a faint dashed
+// interference arc, then the primary "most-probable" marker crisply on top (disc + lit core + ring;
+// at-war gets the broken red alert ring). The ghosts read as a smear of possibility around the real
+// position. Deterministic (seeded off the faction key), bounds-checked.
+func drawSuperposedNode(img *image.RGBA, n empireNode, p cosmicStratPalette, seed uint32) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 {
+		return
+	}
+	_, cyan, _ := quantumHues()
+	col := blend(nodeColor(n, p), cyan, 0.12)
+	ks := factionKeySeed(n.key)
+	r := clampInt(1+n.strength/2, 1, 3)
+	spread := quantumCloudRadius(n, w, h) * 0.42
+	ghosts := 2 + int(hashUnit(ks, 0x6057, seed)*2.0) // 2..3 ghost branches
+	ghostCol := blend(p.voidDeep, col, 0.55)          // a faint, translucent-looking copy
+	arcCol := blend(p.voidDeep, cyan, 0.42)
+	for g := 0; g < ghosts; g++ {
+		ang := hashUnit(ks, uint32(0x100+g), seed) * 2 * math.Pi
+		rad := spread * (0.45 + 0.55*hashUnit(ks, uint32(0x200+g), seed))
+		gx := n.cx + int(math.Round(math.Cos(ang)*rad))
+		gy := n.cy + int(math.Round(math.Sin(ang)*rad*0.62))
+		strokeDashedLine(img, n.cx, n.cy, gx, gy, arcCol, 1, 2) // dashed = uncertain branch
+		fillDot(img, gx, gy, maxInt(1, r-1), ghostCol)
+	}
+	fillDot(img, n.cx, n.cy, r, brighten(col, 0.16))
+	setPixel(img, n.cx, n.cy, brighten(col, 0.5))
+	if n.atWar {
+		drawRingDashed(img, n.cx, n.cy, r+1, p.war, 2, 2)
+	} else {
+		drawRing(img, n.cx, n.cy, r+1, brighten(col, 0.22))
+	}
+}
+
+// drawObserverNode paints the player's seat as the COHERENT OBSERVER: a bright collapsed command
+// node with NO ghosts (the wavefunction has collapsed here) — crisp double coherence rings that read
+// sharp against the smeared faction nodes, so your seat is unmistakably the fixed point of the map.
+func drawObserverNode(img *image.RGBA, home empireNode, p cosmicStratPalette) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	_, cyan, _ := quantumHues()
+	r := clampInt((w+h)/40, 4, 8)
+	fillDot(img, home.cx, home.cy, r, p.home)
+	coreR := clampInt(r/2, 1, 3)
+	fillDot(img, home.cx, home.cy, coreR, p.homeCore)
+	drawRing(img, home.cx, home.cy, r+2, brighten(p.home, 0.22))
+	drawRing(img, home.cx, home.cy, r+4, blend(p.voidDeep, cyan, 0.7))
+}
+
+// drawQuantumHUD lays the quantum HUD: the shared corner brackets plus PAIRED fringe ticks running
+// down the LEFT and RIGHT rails (a double-slit "scale"), tinted cyan/violet — distinct from space's
+// concentric range rings, interstellar's top/bottom waypoint ticks, and galactic's core ring. Crisp,
+// bounds-checked.
+func drawQuantumHUD(img *image.RGBA, p cosmicStratPalette) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w < 12 || h < 12 {
+		return
+	}
+	violet, cyan, _ := quantumHues()
+	drawHUDBrackets(img, p.chrome)
+	tickA := blend(p.voidDeep, cyan, 0.6)
+	tickB := blend(p.voidDeep, violet, 0.55)
+	step := clampInt(h/12, 6, 40)
+	for y := step; y < h-step/2; y += step {
+		setPixel(img, 2, y, tickA)
+		setPixel(img, 3, y, tickB)
+		setPixel(img, w-3, y, tickA)
+		setPixel(img, w-4, y, tickB)
+	}
+}
+
+// ---- transcendent_age strategic view ----------------------------------------
+
+// transcendentHues returns the transcendent light accents — a WARM-WHITE thread, a PALE GOLD, and a
+// soft LAVENDER — the luminous palette that breaks from the four dark cosmic views. Theme-independent.
+func transcendentHues() (warmWhite, paleGold, lavender color.RGBA) {
+	warmWhite = color.RGBA{R: 0xff, G: 0xfa, B: 0xf0, A: 0xff}
+	paleGold = color.RGBA{R: 0xf0, G: 0xe0, B: 0xb8, A: 0xff}
+	lavender = color.RGBA{R: 0xcf, G: 0xc6, B: 0xea, A: 0xff}
+	return
+}
+
+// latticeRotation is the single seeded rotation shared by the ascension lattice AND the node
+// placement, so every empire seats exactly on a lattice spoke vertex (they read as woven-in, not
+// scattered over the geometry). Deterministic.
+func latticeRotation(seed uint32) float64 {
+	return hashUnit(seed, 0x1EA5, 0x3C0) * 2 * math.Pi
+}
+
+// transcendentStrategicView paints the transcendent_age World tab as the CULMINATION — an ASCENSION
+// LATTICE. The four earlier cosmic views all sat in the dark void; this one LEAVES the darkness
+// behind: a luminous radiant field, a sacred-geometry mandala, and every empire woven as a glowing
+// consciousness-node into one figure of light. Unity, not conflict. Layers back-to-front:
+//
+//  1. a LUMINOUS FIELD — a radiant iridescent glow, brightest at centre feathering to soft lavender,
+//     never void. This alone sets it apart from the dark strategic views.
+//  2. an ASCENSION LATTICE (dominant) — concentric light rings + 12 radial spokes + a flower-of-life
+//     ring of interlocking petals, all fine threads of light (the mandala / sacred-geometry read).
+//  3. THREADS OF LIGHT — home→empire spokes plus a closed perimeter thread linking the empires into
+//     ONE figure; relationship still tinges the thread (at-war subdued red) but the whole reads serene.
+//  4. CONSCIOUSNESS NODES woven onto lattice vertices — glowing seats, relationship-coloured but
+//     pulled toward light-gold; the home empire is the radiant ASCENDED CORE at centre (a light burst).
+//  5. a refined luminous FRAME — a thin double border + corner diamonds (no tactical brackets).
+//
+// LABEL-FREE, deterministic (hash/trig only), panic-safe (all writes bounds-checked; a tiny / odd /
+// zero canvas returns after the field). Empty roster → the ascended core alone on the lattice.
+func transcendentStrategicView(img *image.RGBA, state game.GameState, w, h int, seed uint32) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+	p := cosmicStratPal()
+
+	// 1) Luminous field — the void is left behind.
+	drawLuminousField(img, seed)
+
+	// Roster woven onto lattice vertices; home forced to the radiant centre.
+	nodes := transcendentNodes(state, w, h, seed)
+	if len(nodes) == 0 {
+		return
+	}
+	home := nodes[0]
+
+	// 2) Ascension lattice (dominant sacred geometry) under the nodes/threads.
+	drawAscensionLattice(img, seed)
+
+	// 3) Threads of light tie every node into one figure (unity).
+	drawLightThreads(img, nodes, p)
+
+	// 4) Consciousness nodes; the ascended core LAST so the home seat crowns the figure.
+	for _, n := range nodes {
+		if n.isHome {
+			continue
+		}
+		drawConsciousnessNode(img, n, p)
+	}
+	drawAscendedCore(img, home, p, seed)
+
+	// 5) Refined luminous frame + corner glyphs.
+	drawTranscendentFrame(img)
+}
+
+// drawLuminousField paints the transcendent backdrop: a RADIANT iridescent glow that fills the frame
+// with LIGHT (never void). A smooth radial gradient runs warm-white at the centre → pale rose-gold →
+// soft lavender at the rim; two broad low-freq noise fields drift the hue gently toward gold / violet
+// so the glow reads iridescent and alive rather than a flat ramp. Kept mid-luminosity (not blown to
+// pure white) so the fine light lines and glowing nodes still read crisply on top. All hash/trig,
+// bounds-checked, panic-safe.
+func drawLuminousField(img *image.RGBA, seed uint32) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 {
+		return
+	}
+	const aspect = 0.62
+	cx := float64(w) / 2
+	cy := float64(h) / 2
+	maxR := math.Sqrt(cx*cx + (cy/aspect)*(cy/aspect))
+	if maxR < 1 {
+		maxR = 1
+	}
+	center := color.RGBA{R: 0xf2, G: 0xea, B: 0xd6} // bright warm pale — the radiant heart
+	mid := color.RGBA{R: 0xdd, G: 0xd2, B: 0xd4}    // pale rose-gold
+	edge := color.RGBA{R: 0xb6, G: 0xb0, B: 0xcc}   // soft lavender — still LIGHT, never void
+	gold := color.RGBA{R: 0xf0, G: 0xe4, B: 0xc0}
+	violet := color.RGBA{R: 0xd8, G: 0xcc, B: 0xf4}
+	for y := 0; y < h; y++ {
+		dy := (float64(y) - cy) / aspect
+		for x := 0; x < w; x++ {
+			dx := float64(x) - cx
+			dr := clamp01(math.Sqrt(dx*dx+dy*dy) / maxR)
+			var col color.RGBA
+			if dr < 0.5 {
+				col = blend(center, mid, dr/0.5)
+			} else {
+				col = blend(mid, edge, (dr-0.5)/0.5)
+			}
+			ng := valueNoise(float64(x)*0.017+7, float64(y)*0.017+7, seed^0xA51)
+			nv := valueNoise(float64(x)*0.021+40, float64(y)*0.021+40, seed^0x5A9)
+			col = blend(col, gold, 0.10*clamp01(ng))
+			col = blend(col, violet, 0.08*clamp01(nv))
+			setPixel(img, x, y, col)
+		}
+	}
+}
+
+// transcendentNodes returns the roster (via strategicEmpires) REPOSITIONED onto lattice vertices:
+// the home empire pinned to the radiant centre, each faction snapped to the nearest of the 12
+// lattice spokes and seated where that spoke crosses the 0.42 concentric ring — a genuine vertex, so
+// the empires read as woven INTO the sacred geometry. Uses the shared latticeRotation so nodes and
+// lattice agree. Deterministic, clamped inside a frame margin.
+func transcendentNodes(state game.GameState, w, h int, seed uint32) []empireNode {
+	nodes := strategicEmpires(state, w, h, seed)
+	if len(nodes) == 0 {
+		return nodes
+	}
+	nodes[0].cx = clampInt(w/2, 0, w-1)
+	nodes[0].cy = clampInt(h/2, 0, h-1)
+	base := float64(minInt(w, h))
+	cx := float64(w) / 2
+	cy := float64(h) / 2
+	rot := latticeRotation(seed)
+	ringR := base * 0.42
+	margin := clampInt(minInt(w, h)/10, 2, 24)
+	const spokes = 12
+	step := 2 * math.Pi / float64(spokes)
+	fcount := 0
+	for i := range nodes {
+		if !nodes[i].isHome {
+			fcount++
+		}
+	}
+	if fcount < 1 {
+		fcount = 1
+	}
+	fi := 0
+	for i := range nodes {
+		if nodes[i].isHome {
+			continue
+		}
+		raw := float64(fi) / float64(fcount) * 2 * math.Pi
+		ang := math.Round(raw/step)*step + rot // snap to the nearest spoke → a lattice vertex
+		px := cx + math.Cos(ang)*ringR
+		py := cy + math.Sin(ang)*ringR*0.62
+		nodes[i].cx = clampInt(int(math.Round(px)), margin, maxInt(w-1-margin, margin))
+		nodes[i].cy = clampInt(int(math.Round(py)), margin, maxInt(h-1-margin, margin))
+		fi++
+	}
+	return nodes
+}
+
+// drawAscensionLattice draws the DOMINANT sacred geometry as fine threads of light: five concentric
+// rings, twelve radial spokes, and a flower-of-life ring of six interlocking petals (circles whose
+// centres ride the inner ring and whose radius equals that ring, so they overlap into vesica petals).
+// Rings/petals use a soft additive glow-stroke; spokes use faint light lines — crisp and detailed, no
+// muddy blur. Centred on the frame, aspect-squashed so it reads round. Deterministic, bounds-checked.
+func drawAscensionLattice(img *image.RGBA, seed uint32) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 {
+		return
+	}
+	cx := w / 2
+	cy := h / 2
+	base := float64(minInt(w, h))
+	warmWhite, paleGold, _ := transcendentHues()
+	rot := latticeRotation(seed)
+	for _, fr := range []float64{0.12, 0.22, 0.32, 0.42, 0.50} {
+		r := base * fr
+		drawGlowRing(img, cx, cy, r, r*0.62, warmWhite, 0.75)
+	}
+	const spokes = 12
+	Rout := base * 0.50
+	for i := 0; i < spokes; i++ {
+		ang := float64(i)/float64(spokes)*2*math.Pi + rot
+		ex := cx + int(math.Round(math.Cos(ang)*Rout))
+		ey := cy + int(math.Round(math.Sin(ang)*Rout*0.62))
+		strokeSolidFaintLine(img, cx, cy, ex, ey, paleGold, 0.30)
+	}
+	const petals = 6
+	Rp := base * 0.22
+	for i := 0; i < petals; i++ {
+		ang := float64(i)/float64(petals)*2*math.Pi + rot
+		pcx := cx + int(math.Round(math.Cos(ang)*Rp))
+		pcy := cy + int(math.Round(math.Sin(ang)*Rp*0.62))
+		drawGlowRing(img, pcx, pcy, Rp, Rp*0.62, warmWhite, 0.55)
+	}
+}
+
+// drawGlowRing strokes an ellipse ring (radii rx,ry) as a soft additive thread of light — the same
+// angle-walk rasterizer as drawRingEllipseDashed but blended at alpha (a luminous line, not a hard
+// wire), for the transcendent lattice. Step count scales with radius so the ring stays continuous;
+// every stamp is bounds-checked. Deterministic.
+func drawGlowRing(img *image.RGBA, cx, cy int, rx, ry float64, col color.RGBA, alpha float64) {
+	if rx < 1 {
+		rx = 1
+	}
+	if ry < 0.5 {
+		ry = 0.5
+	}
+	steps := int(math.Max(rx, ry) * 6.5)
+	if steps < 16 {
+		steps = 16
+	}
+	for i := 0; i < steps; i++ {
+		ang := float64(i) / float64(steps) * 2 * math.Pi
+		x := cx + int(math.Round(math.Cos(ang)*rx))
+		y := cy + int(math.Round(math.Sin(ang)*ry))
+		blendPixel(img, x, y, col, alpha)
+	}
+}
+
+// drawLightThreads ties the empires into ONE figure with threads of light: a radial thread from the
+// home core to each empire, plus a closed perimeter thread linking the empires in ring order. The
+// relationship still reads (an at-war thread carries a subdued red tinge, an ally a faint green, a
+// merchant a faint gold) but the whole stays serene light-gold — unity, the culmination, not conflict.
+// Faint blended strokes so the lattice shows through. Bounds-checked.
+func drawLightThreads(img *image.RGBA, nodes []empireNode, p cosmicStratPalette) {
+	if len(nodes) < 2 {
+		return
+	}
+	warmWhite, paleGold, _ := transcendentHues()
+	home := nodes[0]
+	var ring []empireNode
+	for _, n := range nodes {
+		if n.isHome {
+			continue
+		}
+		col := warmWhite
+		switch {
+		case n.atWar:
+			col = blend(warmWhite, p.war, 0.4) // subdued red tinge — standing reads, serenely
+		case n.role == empireAlly:
+			col = blend(warmWhite, p.ally, 0.3)
+		case n.role == empireMerc:
+			col = blend(warmWhite, p.merc, 0.3)
+		}
+		strokeSolidFaintLine(img, home.cx, home.cy, n.cx, n.cy, col, 0.34)
+		ring = append(ring, n)
+	}
+	for i := 0; i < len(ring); i++ {
+		a := ring[i]
+		c := ring[(i+1)%len(ring)]
+		strokeSolidFaintLine(img, a.cx, a.cy, c.cx, c.cy, paleGold, 0.22)
+	}
+}
+
+// drawConsciousnessNode paints one faction as an ascended CONSCIOUSNESS node: a controlled luminous
+// glow (small additive halo — no muddy blur), a crisp glowing body, a near-white core, and a fine
+// light ring. The relationship colour is pulled toward light-gold so the whole reads culminating, not
+// embattled — an at-war node keeps a red cast but subdued. Bounds-checked.
+func drawConsciousnessNode(img *image.RGBA, n empireNode, p cosmicStratPalette) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 {
+		return
+	}
+	warmWhite, paleGold, _ := transcendentHues()
+	col := blend(nodeColor(n, p), paleGold, 0.28)
+	r := clampInt(1+n.strength/2, 1, 3)
+	gr := float64(minInt(w, h)) * 0.045
+	if gr < 2 {
+		gr = 2
+	}
+	grY := gr * 0.62
+	x0 := clampInt(n.cx-int(gr)-1, 0, w-1)
+	x1 := clampInt(n.cx+int(gr)+1, 0, w-1)
+	y0 := clampInt(n.cy-int(grY)-1, 0, h-1)
+	y1 := clampInt(n.cy+int(grY)+1, 0, h-1)
+	invR := 1.0 / gr
+	invRY := 1.0 / grY
+	for y := y0; y <= y1; y++ {
+		dy := float64(y-n.cy) * invRY
+		for x := x0; x <= x1; x++ {
+			dx := float64(x-n.cx) * invR
+			d := dx*dx + dy*dy
+			if d > 1.0 {
+				continue
+			}
+			blendPixel(img, x, y, col, 0.20*(1.0-d))
+		}
+	}
+	fillDot(img, n.cx, n.cy, r, brighten(col, 0.18))
+	setPixel(img, n.cx, n.cy, warmWhite)
+	drawRing(img, n.cx, n.cy, r+1, brighten(col, 0.30))
+}
+
+// drawAscendedCore paints the player's seat as the radiant ASCENDED CORE — the culmination centre,
+// brightest of all: a controlled radiant halo, an eight-ray light burst, a luminous gold-white body
+// with a hot near-white core, and two radiant glow rings. Crisp and detailed, the controlled glow
+// never muddying into a smear. Bounds-checked.
+func drawAscendedCore(img *image.RGBA, home empireNode, p cosmicStratPalette, seed uint32) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w <= 0 || h <= 0 {
+		return
+	}
+	warmWhite, paleGold, _ := transcendentHues()
+	gr := float64(minInt(w, h)) * 0.17
+	if gr < 3 {
+		gr = 3
+	}
+	grY := gr * 0.62
+	x0 := clampInt(home.cx-int(gr)-1, 0, w-1)
+	x1 := clampInt(home.cx+int(gr)+1, 0, w-1)
+	y0 := clampInt(home.cy-int(grY)-1, 0, h-1)
+	y1 := clampInt(home.cy+int(grY)+1, 0, h-1)
+	invR := 1.0 / gr
+	invRY := 1.0 / grY
+	for y := y0; y <= y1; y++ {
+		dy := float64(y-home.cy) * invRY
+		for x := x0; x <= x1; x++ {
+			dx := float64(x-home.cx) * invR
+			d := dx*dx + dy*dy
+			if d > 1.0 {
+				continue
+			}
+			blendPixel(img, x, y, warmWhite, 0.22*math.Pow(1.0-d, 1.4))
+		}
+	}
+	r := clampInt((w+h)/24, 8, 14)
+	rot := latticeRotation(seed)
+	for i := 0; i < 8; i++ {
+		ang := float64(i)/8*2*math.Pi + rot
+		ex := home.cx + int(math.Round(math.Cos(ang)*float64(r+5)))
+		ey := home.cy + int(math.Round(math.Sin(ang)*float64(r+5)*0.62))
+		strokeSolidFaintLine(img, home.cx, home.cy, ex, ey, paleGold, 0.30)
+	}
+	// Ascended seat is GOLD-white, not command cyan — you've transcended; the warm core reads as
+	// the culmination centre and sits in the lavender-gold field instead of clashing against it.
+	fillDot(img, home.cx, home.cy, r, blend(paleGold, warmWhite, 0.5))
+	coreR := clampInt(r/2, 2, 4)
+	fillDot(img, home.cx, home.cy, coreR, warmWhite)
+	drawGlowRing(img, home.cx, home.cy, float64(r+2), float64(r+2)*0.62, warmWhite, 0.9)
+	drawGlowRing(img, home.cx, home.cy, float64(r+4), float64(r+4)*0.62, paleGold, 0.6)
+}
+
+// drawTranscendentFrame lays the refined luminous chrome: a thin DOUBLE border (warm-white then a
+// fainter pale-gold inset) plus a small radiant DIAMOND glyph at each corner — deliberately NOT the
+// tactical corner brackets of the dark views, so the frame reads serene and culminating. Blended
+// light lines, bounds-checked.
+func drawTranscendentFrame(img *image.RGBA) {
+	b := img.Bounds()
+	w, h := b.Dx(), b.Dy()
+	if w < 12 || h < 12 {
+		return
+	}
+	warmWhite, paleGold, _ := transcendentHues()
+	borders := []struct {
+		d   int
+		col color.RGBA
+		a   float64
+	}{{2, warmWhite, 0.55}, {4, paleGold, 0.30}}
+	for _, bd := range borders {
+		d := bd.d
+		for x := d; x < w-d; x++ {
+			blendPixel(img, x, d, bd.col, bd.a)
+			blendPixel(img, x, h-1-d, bd.col, bd.a)
+		}
+		for y := d; y < h-d; y++ {
+			blendPixel(img, d, y, bd.col, bd.a)
+			blendPixel(img, w-1-d, y, bd.col, bd.a)
+		}
+	}
+	diamond := func(dcx, dcy int) {
+		for k := 0; k <= 2; k++ {
+			blendPixel(img, dcx+k, dcy+(2-k), warmWhite, 0.7)
+			blendPixel(img, dcx-k, dcy+(2-k), warmWhite, 0.7)
+			blendPixel(img, dcx+k, dcy-(2-k), warmWhite, 0.7)
+			blendPixel(img, dcx-k, dcy-(2-k), warmWhite, 0.7)
+		}
+	}
+	m := clampInt(minInt(w, h)/12, 5, 16)
+	diamond(m, m)
+	diamond(w-1-m, m)
+	diamond(m, h-1-m)
+	diamond(w-1-m, h-1-m)
 }
