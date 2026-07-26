@@ -7,7 +7,7 @@ Open it with `citymap` (or `map`, or the `m` tab shortcut). The **City Map** is 
 - **Panic-safe** — the renderer never crashes the game; a bad draw degrades gracefully instead of taking the tab down.
 - **Gradual** — the city re-skins to the current era as you advance. Nothing snaps; roofs, ground, walls and props restyle age by age while the bones of the city persist.
 
-There is no world terrain here — biomes and neighbours live on the [World Map](commands.md#world-map) (`worldmap`). On the City Map every green thing (gardens, ponds, street-trees) is **built**, not landscape.
+There is no world terrain here — elevation, biomes, coastlines and rivers live on the [World Map](world-map.md) (`worldmap`). On the City Map every green thing (gardens, ponds, street-trees) is **built**, not landscape.
 
 ---
 
