@@ -259,8 +259,8 @@ type MilitaryState struct {
 	// SoldierCap is the soldiers resource storage cap (sum of built military
 	// buildings' storage effects). SoldierRate is the per-tick soldiers
 	// production rate (net). Both are populated from the soldiers resource.
-	SoldierCap       int
-	SoldierRate      float64
+	SoldierCap      int
+	SoldierRate     float64
 	DefenseRating   float64
 	MilitaryBonus   float64
 	ExpeditionBonus float64
@@ -288,10 +288,16 @@ type ExpeditionInfo struct {
 	Category       string // "scouting" or "military"
 	SoldiersNeeded int
 	Duration       int
-	Difficulty     float64
-	Cost           map[string]float64
-	Description    string
-	CanLaunch      bool
+	// DurationMin/DurationMax mirror the ExpeditionDef's randomized active-duration
+	// bounds so the available-expeditions preview can show the rolled range. When
+	// DurationMax <= DurationMin the def is legacy/unset and the preview falls back
+	// to the fixed Duration above.
+	DurationMin int
+	DurationMax int
+	Difficulty  float64
+	Cost        map[string]float64
+	Description string
+	CanLaunch   bool
 	// LaunchBlockReason is a short, player-facing explanation of why the
 	// expedition can't be launched right now (e.g. "need 3 soldiers",
 	// "need 30 food"). Empty when CanLaunch is true.
