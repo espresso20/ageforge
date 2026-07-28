@@ -195,7 +195,7 @@ That's **16 missions** in total — 3 scouting expeditions and 13 military campa
 
 Every time an expedition resolves — win or lose — the game rolls a chance to **encounter a civilization**. An encounter either makes **first contact** with a new civ you're old enough to meet or **re-encounters** one you already know. This is the main way you discover the diplomacy roster: an age only makes a civ *eligible*; a resolved expedition is what actually turns someone up. (Never run expeditions and a civ is auto-discovered anyway about two ages past its minimum age — the fallback, not the fast path.)
 
-**Scouting** expeditions turn up civilizations far more readily than **military** campaigns, and success beats failure — a failed run can still find someone, just rarely. Roughly:
+**Scouting** expeditions turn up civilizations far more readily than **military** campaigns, and success beats failure — a failed run can still find someone, just rarely, and what it brings home is trouble rather than tribute (see *Setbacks* below). Roughly:
 
 | Resolution | Encounter chance |
 |---|---|
@@ -204,7 +204,13 @@ Every time an expedition resolves — win or lose — the game rolls a chance to
 | Military success | ~15% |
 | Military failure | ~5% |
 
-An encounter can also grant a **boon** — and it is now a **varied, rolled reward**, not a fixed specialty buff. The draw comes from a shared catalogue (a timed specialty/production/knowledge windfall, an all-production or tick-speed surge, an instant lump of resources, or temporary workers) and is **weighted by the civilization's character** (personality, its specialty, and its strength) and by **your standing** with it — allied civs give bigger *and* rarer boons; a civ you are at war with raids you instead. It is announced with a flavour line naming the civ and the reward. So expeditions stay worth running even after you've met everyone. See [Trade & Diplomacy](trade.md#diplomacy-civilization-encounters) for the civilization roster and diplomacy mechanics.
+A **successful** expedition's encounter can also grant a **boon** — and it is now a **varied, rolled reward**, not a fixed specialty buff. The draw comes from a shared catalogue (a timed specialty/production/knowledge windfall, an all-production or tick-speed surge, an instant lump of resources, or temporary workers) and is **weighted by the civilization's character** (personality, its specialty, and its strength) and by **your standing** with it — allied civs give bigger *and* rarer boons. Instant gifts also **scale with your age**, so a caravan of supplies still lands with weight in the Quantum Age instead of dwindling into a rounding error. It is announced with a flavour line naming the civ and the reward.
+
+**Boon capacity — you can hold three at a time.** Only *timed* rewards take up one of those three slots; an instant lump of resources is unpacked on arrival and holds nothing. While all three are running, further encounters come back empty — the envoys are thanked, fed, and sent home with their crates unopened — until one expires. Boons are a scarce thing to time, not a stack to grow: chaining expeditions while three buffs are already ticking mostly wastes them, so it pays to space runs out or to bank them for a push.
+
+**Setbacks — encounters can go badly.** Instead of a boon, an encounter yields a **setback** whenever the expedition **failed** or the civ you ran into is one you are **at war** with (both are certain, not chances), and roughly **one in four** encounters that arrive while you're at boon capacity sours instead of merely returning empty-handed. A setback is one of: people lost on the road home (a few workers gone), a share of one resource stockpile spoiled or carried off, a temporary drop in one resource's output, or a realm-wide production dip for a stretch. Severity rises with the civilization's **strength** and falls with your **standing** — a friend's bad news is gentler than an enemy's, and a strong civ you're at war with is the worst of it. Setbacks are bounded the same way boons are: at most three timed ones run at once, and a spoilage never empties a store outright. They sting; they don't end a run.
+
+So expeditions stay worth running even after you've met everyone — but a failed run now costs you something, and a run launched while your boon slots are full mostly doesn't pay. See [Trade & Diplomacy](trade.md#diplomacy-civilization-encounters) for the civilization roster and diplomacy mechanics.
 
 ---
 
