@@ -60,7 +60,47 @@ const (
 	// income. It needs a trade-income modifier the engine does not have yet;
 	// same story as StorageCap — enum reserved, no catalog entry, Apply no-ops.
 	TradeIncome
+
+	// --- Negative-only kinds (the malus catalogue) ---------------------------
+	// The timed kinds above double as maluses simply by carrying a NEGATIVE
+	// Magnitude; the two below have no positive counterpart and exist only on
+	// the malus table.
+
+	// ResourceDrain removes a FRACTION of a resource's current stockpile, and
+	// optionally carries a short production dip alongside it. InstantAmount
+	// holds the drain fraction (0.10 = 10% of current); Magnitude/DurationTicks
+	// hold the optional dip (both zero ⇒ pure drain, no dip).
+	ResourceDrain
+	// WorkerLoss removes N workers outright. InstantAmount holds the count
+	// (rounded on apply); there is no duration — the dead do not come back.
+	WorkerLoss
 )
+
+// Polarity says whether an entry HELPS or HURTS. It is what lets one engine roll
+// both tables: a malus is just a boon with negative sign, drawn off a separate
+// catalog. The zero value is Positive, so every pre-existing Def and Profile
+// keeps its old meaning without touching it.
+type Polarity int
+
+const (
+	// Positive is a boon: the player gains something.
+	Positive Polarity = iota
+	// Negative is a malus: the player loses something (a negative-magnitude
+	// timed effect, a resource drain, or dead workers).
+	Negative
+)
+
+// String returns a stable, flavor-free identifier for a Polarity.
+func (p Polarity) String() string {
+	switch p {
+	case Positive:
+		return "Positive"
+	case Negative:
+		return "Negative"
+	default:
+		return "Polarity(?)"
+	}
+}
 
 // String returns a stable, plain identifier for a Kind. Used for logs and
 // tests; deliberately free of flavor so it is safe to surface anywhere.
@@ -80,6 +120,10 @@ func (k Kind) String() string {
 		return "StorageCap"
 	case TradeIncome:
 		return "TradeIncome"
+	case ResourceDrain:
+		return "ResourceDrain"
+	case WorkerLoss:
+		return "WorkerLoss"
 	default:
 		return "Kind(?)"
 	}
@@ -114,14 +158,19 @@ const (
 //   - InstantResource: InstantAmount (lump) + Resource; DurationTicks is 0.
 //   - TempWorkers: InstantAmount holds the worker COUNT (rounded on apply) and
 //     DurationTicks the loan window; Resource is empty, Magnitude is 0.
+//   - ResourceDrain (malus): InstantAmount holds the drain FRACTION of current
+//     stock + Resource; Magnitude/DurationTicks optionally carry a short
+//     production dip (zero ⇒ no dip).
+//   - WorkerLoss (malus): InstantAmount holds the worker COUNT lost; no duration.
 type Boon struct {
 	Kind          Kind
-	Resource      string  // target resource key, where relevant ("" if none)
-	Magnitude     float64 // fractional buff, e.g. 0.13 = +13% (0 for instant/worker kinds)
-	DurationTicks int     // buff/loan length in ticks; 0 = instant
-	InstantAmount float64 // lump grant (InstantResource) or worker count (TempWorkers)
-	Name          string  // catalog name; used as the injected effect's name
-	Flavor        string  // finished, player-facing flavor line
+	Polarity      Polarity // Positive = boon, Negative = malus (copied from the Def)
+	Resource      string   // target resource key, where relevant ("" if none)
+	Magnitude     float64  // fractional buff, e.g. 0.13 = +13%; NEGATIVE for a malus
+	DurationTicks int      // buff/loan/debuff length in ticks; 0 = instant
+	InstantAmount float64  // lump grant, worker count, or drain fraction (see above)
+	Name          string   // catalog name; used as the injected effect's name
+	Flavor        string   // finished, player-facing flavor line
 }
 
 // Def is a catalog entry: the tunable DATA describing one kind of boon and the
@@ -130,10 +179,17 @@ type Boon struct {
 //
 // Which range fields apply depends on Kind:
 //   - RateBuff / AllProduction / TickSpeed: [MagMin,MagMax] + [DurMin,DurMax].
+//     A malus entry simply uses a NEGATIVE magnitude range (MagMin ≤ MagMax
+//     still holds: e.g. MagMin -0.15, MagMax -0.08).
 //   - InstantResource: [AmountMin,AmountMax]; no duration.
 //   - TempWorkers: [AmountMin,AmountMax] (worker count) + [DurMin,DurMax].
+//   - ResourceDrain: [AmountMin,AmountMax] as a FRACTION of current stock
+//     (0.05 = 5%), plus an OPTIONAL [MagMin,MagMax]+[DurMin,DurMax] production
+//     dip. Leave the mag/dur ranges zero for a pure drain.
+//   - WorkerLoss: [AmountMin,AmountMax] (worker count); no duration.
 type Def struct {
 	Kind      Kind
+	Polarity  Polarity // Positive (default) or Negative; must match the catalog it lives in
 	Name      string
 	MagMin    float64    // magnitude range (percentage buffs)
 	MagMax    float64    //
@@ -155,16 +211,23 @@ type Profile struct {
 	// back to the first age-appropriate resource.
 	Specialty string
 	// Age is the current age key; it bounds the "age-appropriate" resource
-	// pools. Empty/unknown means "everything unlocked" (a permissive default).
+	// pools AND sets the instant-lump age-growth factor (see instantScale).
+	// Empty/unknown means "everything unlocked" at age index 0 — a permissive
+	// pool with the most conservative lump scaling.
 	Age string
+	// Polarity selects WHICH TABLE RollBoon draws from: Positive ⇒ Catalog()
+	// (the boons), Negative ⇒ MalusCatalog() (the setbacks). The zero value is
+	// Positive, so an untouched Profile behaves exactly as it always has.
+	Polarity Polarity
 	// Enabled is a denylist: a Kind rolls UNLESS Enabled[k] == false. A nil map
 	// (the default) leaves every kind live.
 	Enabled map[Kind]bool
 	// WeightMult multiplies a Kind's base weight. Absent/nil ⇒ 1.0.
 	WeightMult map[Kind]float64
-	// MagnitudeScale scales rolled percentage magnitudes (Magnitude field only;
-	// instant lump sizes and worker counts keep their Def ranges in v1). <= 0 is
-	// treated as 1.0.
+	// MagnitudeScale scales rolled percentage magnitudes, the InstantResource
+	// lump (on top of the age-growth factor), and the ResourceDrain fraction.
+	// Worker COUNTS (TempWorkers, WorkerLoss) stay unscaled — they are discrete
+	// and a scaled count is a cliff, not a curve. <= 0 is treated as 1.0.
 	MagnitudeScale float64
 	// RarityScale biases toward rarer entries. Effective weight is
 	// baseWeight^(1/RarityScale): > 1 compresses the weight spread so rare

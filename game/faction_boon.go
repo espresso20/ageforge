@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"math"
+	"strings"
 
 	"github.com/espresso20/ageforge/boon"
 	"github.com/espresso20/ageforge/config"
@@ -61,6 +62,25 @@ const (
 	hostileMagMult    = 0.70
 )
 
+// --- Malus (setback) tuning -------------------------------------------------
+//
+// Maluses invert the standing logic: a gift from a friend is bigger, but a
+// setback from an ENEMY is worse. Strength still scales severity (a mightier
+// civ's ill will bites harder) and the spread is deliberately narrower than the
+// boon spread — a setback should sting, not decide the run.
+const (
+	// Strength → severity. Str1 ≈ ×0.90, Str5 ≈ ×1.10.
+	malusStrengthBase    = 0.85
+	malusStrengthPerUnit = 0.05
+
+	// Standing → severity. Inverted relative to the boon multipliers above.
+	malusAtWarSeverity    = 1.35
+	malusHostileSeverity  = 1.15
+	malusNeutralSeverity  = 1.00
+	malusFriendlySeverity = 0.85
+	malusAlliedSeverity   = 0.75
+)
+
 // factionProfile derives a boon.Profile from a faction's DATA and your standing
 // with it — the seam that lets a faction's identity bias the shared boon catalog
 // without the boon engine ever learning what a faction is.
@@ -74,7 +94,9 @@ const (
 //
 // An at-war faction raids rather than gifts, so its profile DISABLES every kind:
 // RollBoon then returns the zero Boon and no positive reward lands. (The caller
-// also skips the roll for at-war factions; this is belt-and-suspenders.)
+// routes at-war encounters to the MALUS table instead — see rollExpeditionEncounter
+// and factionMalusProfile; this disable is belt-and-suspenders against a caller
+// that forgets.)
 func factionProfile(def config.FactionDef, state FactionState, age string) boon.Profile {
 	prof := boon.DefaultProfile()
 	prof.Specialty = def.Specialty
@@ -152,13 +174,28 @@ type boonApplier struct {
 	ge   *GameEngine
 	name string // faction display name, for the injected event's label
 	key  string // faction key, for a stable ActiveEvent key
+	// malus flips the injected ActiveEvent onto the factionMalusKey namespace.
+	// Boons and setbacks must not share a key prefix: the capacity gate counts
+	// live BOONS, and a setback taking up a boon slot would mean being punished
+	// twice for the same encounter.
+	malus bool
+}
+
+// eventKey is the ActiveEvent key this applier injects under — boon or malus
+// namespace depending on polarity.
+func (a boonApplier) eventKey() string {
+	if a.malus {
+		return factionMalusKey(a.key)
+	}
+	return factionBuffKey(a.key)
 }
 
 // InjectTimedEffects rides the existing timed-modifier machinery: an ActiveEvent
-// carrying the boon's effects, expiring on its own TicksLeft countdown.
+// carrying the boon's effects, expiring on its own TicksLeft countdown. Effect
+// values may be negative — that is how a timed malus lands.
 func (a boonApplier) InjectTimedEffects(effects []config.Effect, ticks int, name string) {
 	a.ge.Events.InjectEvent(ActiveEvent{
-		Key:       factionBuffKey(a.key),
+		Key:       a.eventKey(),
 		Name:      a.name + ": " + name,
 		TicksLeft: ticks,
 		Effects:   effects,
@@ -177,6 +214,36 @@ func (a boonApplier) GrantTempWorkers(count, ticks int) {
 	a.ge.Workers.AddLentWorkers(count)
 }
 
+// DrainResource removes a fraction of the resource's CURRENT stockpile, reusing
+// the same removal path war raids take (ResourceManager.Remove, see the pending
+// raids loop in doTick). The amount is derived from what is actually held and
+// clamped to it, so the stockpile floors at 0 and can never go negative.
+func (a boonApplier) DrainResource(resource string, fraction float64) {
+	if resource == "" || fraction <= 0 {
+		return
+	}
+	if fraction > 1 {
+		fraction = 1
+	}
+	cur := a.ge.Resources.Get(resource)
+	if cur <= 0 {
+		return
+	}
+	lost := math.Min(cur*fraction, cur) // Min guards float rounding at fraction == 1
+	a.ge.Resources.Remove(resource, lost)
+}
+
+// LoseWorkers removes workers via the existing starvation path. KillWorker
+// already clamps the count to the live population and reconciles building
+// assignments downward, so the pool cannot go negative and no building is left
+// claiming workers that no longer exist.
+func (a boonApplier) LoseWorkers(count int) {
+	if count <= 0 {
+		return
+	}
+	a.ge.Workers.KillWorker(count)
+}
+
 // applyFactionBoon rolls ONE boon for a faction encounter through the standalone
 // boon engine and applies it, returning the faction-attributed, player-facing
 // log line. It returns "" when nothing was granted — an empty specialty with no
@@ -192,4 +259,104 @@ func (ge *GameEngine) applyFactionBoon(def config.FactionDef, state FactionState
 	}
 	line := boon.Apply(b, boonApplier{ge: ge, name: def.Name, key: def.Key})
 	return fmt.Sprintf("[gold]✦ %s:[-] %s", def.Name, line)
+}
+
+// factionMalusProfile is factionProfile's negative twin: same seam (a faction's
+// DATA biasing a shared table), opposite sign. Polarity Negative points RollBoon
+// at MalusCatalog(); severity rises with the faction's strength and FALLS with
+// your standing — a friend's bad news is gentler than an enemy's.
+//
+// Deliberately flat on weights: the malus table is small and every entry should
+// stay reachable, so a faction's personality does not reshape it. What a faction
+// IS shows up in the boons it gives; what it costs you shows up here as size.
+func factionMalusProfile(def config.FactionDef, state FactionState, age string) boon.Profile {
+	prof := boon.DefaultProfile()
+	prof.Polarity = boon.Negative
+	prof.Specialty = def.Specialty
+	prof.Age = age
+
+	str := def.Strength
+	if str < 1 {
+		str = 1
+	} else if str > 5 {
+		str = 5
+	}
+	prof.MagnitudeScale = malusStrengthBase + malusStrengthPerUnit*float64(str)
+
+	switch {
+	case state.AtWar:
+		prof.MagnitudeScale *= malusAtWarSeverity
+	case state.Status == "rival", state.Status == "embargo":
+		prof.MagnitudeScale *= malusHostileSeverity
+	case state.Status == "allied":
+		prof.MagnitudeScale *= malusAlliedSeverity
+	case state.Status == "friendly":
+		prof.MagnitudeScale *= malusFriendlySeverity
+	default: // neutral or unknown
+		prof.MagnitudeScale *= malusNeutralSeverity
+	}
+
+	return prof
+}
+
+// applyFactionMalus rolls ONE setback off the malus table and applies it,
+// returning the faction-attributed, player-facing log line ("" if nothing
+// rolled). Same engine, same seeded ge.rng, same Applier — only the table and
+// the event namespace differ.
+//
+// Timed setbacks are capacity-bounded exactly like boons: at
+// maxConcurrentFactionMaluses the timed kinds are disabled for the roll and any
+// production dip riding along on a ResourceDrain is stripped, so a long war
+// cannot bury the active-events panel. The instant half (drain, worker loss)
+// always lands — that is the part that should hurt.
+//
+// Runs under the write lock.
+func (ge *GameEngine) applyFactionMalus(def config.FactionDef, state FactionState) string {
+	prof := factionMalusProfile(def, state, ge.age)
+
+	atCap := ge.activeFactionMalusCount() >= maxConcurrentFactionMaluses
+	if atCap {
+		prof.Enabled = map[boon.Kind]bool{
+			boon.RateBuff:      false,
+			boon.AllProduction: false,
+		}
+	}
+
+	b := boon.RollBoon(prof, ge.rng)
+	if b == (boon.Boon{}) {
+		return ""
+	}
+	if atCap {
+		// Strip the optional dip a ResourceDrain may carry; the drain itself stays.
+		b.Magnitude, b.DurationTicks = 0, 0
+	}
+
+	line := boon.Apply(b, boonApplier{ge: ge, name: def.Name, key: def.Key, malus: true})
+	return fmt.Sprintf("[red]✖ %s:[-] %s", def.Name, line)
+}
+
+// activeFactionBoonCount is the number of live faction BOON events — the value
+// the capacity gate compares against maxConcurrentFactionBoons. Only timed boon
+// kinds inject an event, which is precisely what "holding a foreign favour"
+// means; instant gifts are consumed on arrival and hold no slot.
+func (ge *GameEngine) activeFactionBoonCount() int {
+	return ge.countActiveWithPrefix(factionBuffKeyPrefix)
+}
+
+// activeFactionMalusCount is the same count for live faction SETBACKS.
+func (ge *GameEngine) activeFactionMalusCount() int {
+	return ge.countActiveWithPrefix(factionMalusKeyPrefix)
+}
+
+// countActiveWithPrefix counts active events whose Key carries the given prefix.
+// Reads ge.Events.active directly (same package) — must run under the write lock,
+// like every other encounter-path helper.
+func (ge *GameEngine) countActiveWithPrefix(prefix string) int {
+	n := 0
+	for _, ae := range ge.Events.active {
+		if strings.HasPrefix(ae.Key, prefix) {
+			n++
+		}
+	}
+	return n
 }

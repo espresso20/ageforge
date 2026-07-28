@@ -28,6 +28,21 @@ const (
 	// push production below 10% of its pre-bonus value or flip it negative.
 	productionFloor = 0.10
 
+	// productionCap is the SYMMETRIC ceiling on the same pools. Until it existed
+	// the additive pools were floored but unbounded above: nothing capped how many
+	// stacking timed buffs (faction boons, events, wonders) could pile into
+	// production_all or a "<res>_rate", and a soak measured a x20.3 multiplier on
+	// knowledge_rate. Both pools are now applied as
+	// rate *= clamp(1+Σ, productionFloor, productionCap), so stacked buffs
+	// saturate at x3.0 instead of compounding without limit.
+	//
+	// NOTE: this bounds the applied MULTIPLIER, not the pool sum — the resolver
+	// still reports the raw Σ for the breakdown panel, which is what a player
+	// wants to see ("you are over the cap"). gather_rate keeps its floor-only
+	// treatment: it is an additive re-add on worker output, not a multiplier on a
+	// rate, so the same ceiling does not apply.
+	productionCap = 3.0
+
 	// Festival (culture sink) tuning.
 	festivalBuffPercent   = 0.20 // +20% production_all while active
 	festivalBuffTicks     = 150  // ~5 minutes at 2s/tick
@@ -1378,10 +1393,11 @@ func (ge *GameEngine) recalculateRates() {
 	// Fix B: UNgated with a floor. Previously gated `if prodAllBonus > 0`, which
 	// silently swallowed negative additive bonuses (e.g. the Reconstruction Effort
 	// catastrophe's -0.10 production_all) whenever the player lacked ≥10% positive
-	// bonuses. Now always applied as ×max(productionFloor, 1+Σ), so the debuff
-	// lands but production can't drop below 10% of its pre-bonus value.
+	// bonuses. Now always applied as ×clamp(1+Σ, productionFloor, productionCap),
+	// so the debuff lands but production can neither drop below 10% of its
+	// pre-bonus value nor run away above ×3.0 on stacked buffs.
 	prodAllBonus := r.AddTotal("production_all")
-	prodAllFactor := math.Max(productionFloor, 1.0+prodAllBonus)
+	prodAllFactor := clamp(1.0+prodAllBonus, productionFloor, productionCap)
 	if prodAllFactor != 1.0 {
 		for _, def := range ge.Resources.defs {
 			r := ge.Resources.resources[def.Key]
@@ -1393,11 +1409,13 @@ func (ge *GameEngine) recalculateRates() {
 
 	// Apply per-resource rate bonuses (e.g., "gold_rate", "iron_rate").
 	// Includes legacy bonuses (stored in permanentBonuses["wood"] etc. after
-	// reapplyLegacyBonuses). Fix B: same ungated+floored treatment as above.
+	// reapplyLegacyBonuses). Fix B: same ungated+floored treatment as above, and
+	// the same productionCap ceiling — stacked "<res>_rate" boons were the pool
+	// the soak caught running to ×20.
 	for _, def := range ge.Resources.defs {
 		bonusKey := def.Key + "_rate"
 		bonus := r.AddTotal(bonusKey)
-		factor := math.Max(productionFloor, 1.0+bonus)
+		factor := clamp(1.0+bonus, productionFloor, productionCap)
 		if factor != 1.0 {
 			r := ge.Resources.resources[def.Key]
 			if r != nil && r.Rate > 0 {

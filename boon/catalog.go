@@ -8,6 +8,25 @@ const (
 	weightRare     = 2
 )
 
+// instantGrowthPerAge is the per-age growth factor applied to INSTANT lump
+// grants (Kind InstantResource). A fixed 50–200 crate of goods is a fortune in
+// the primitive age and a rounding error in the quantum age, so the lump is
+// multiplied by instantGrowthPerAge^ageIndex (see Profile.instantScale).
+//
+// Calibration: per-BUILDING production in this game roughly doubles per age
+// (engineering lineage: 0.10 iron/tick at bronze → 26,214 quantum_flux/tick at
+// quantum, ~2.0x per age over 18 ages). 2.2 tracks that curve with a little
+// headroom for growing building counts, so a lump stays worth a broadly
+// constant number of TICKS of production across the whole run. Storage caps
+// grow far faster (~4.5x/age), which is why the lump never threatens to fill
+// a late-game stockpile — it is a gift, not a shortcut.
+const instantGrowthPerAge = 2.2
+
+// maxDrainFraction is the hard ceiling on a ResourceDrain malus after the
+// profile's MagnitudeScale is folded in. A setback empties part of a store,
+// never the whole thing by design.
+const maxDrainFraction = 0.50
+
 // Catalog returns the starting boon table. Everything here is plain, tunable
 // DATA — magnitudes, durations, lump ranges, weights, and flavor pools live in
 // these literals, so balancing is an edit here and nowhere else.
@@ -111,6 +130,88 @@ func Catalog() []Def {
 			Flavors: []string{
 				"{n} skilled hands arrive to lend their labour for {ticks} ticks.",
 				"A work-gang of {n} joins your cause for a season.",
+			},
+		},
+	}
+}
+
+// MalusCatalog returns the SETBACK table — the negative mirror of Catalog().
+// Same engine, same Def shape, same weighted pick; only the sign changes. It is
+// drawn instead of Catalog() when a Profile's Polarity is Negative.
+//
+// Magnitudes here are deliberately modest: a malus should sting for a while, not
+// end a run. The timed entries lean on the engine's existing "<res>_rate" /
+// "production_all" pools with a NEGATIVE value; the drain and worker-loss
+// entries use the two malus-only Kinds and their dedicated Applier methods.
+//
+// Flavor is dry and in-world, matching the boon table. These strings are
+// player-facing production text — keep them that way.
+func MalusCatalog() []Def {
+	return []Def{
+		{
+			Kind:      WorkerLoss,
+			Polarity:  Negative,
+			Name:      "Dysentery",
+			AmountMin: 1, AmountMax: 3,
+			Weight: weightUncommon,
+			Target: TargetNone,
+			Flavors: []string{
+				"The expedition succumbs to dysentery on the road home — {n} do not return.",
+				"Camp fever moves through the returning column; {n} are buried where they fell.",
+				"Bad water at the last ford. {n} of your people are lost to it.",
+			},
+		},
+		{
+			Kind:      ResourceDrain,
+			Polarity:  Negative,
+			Name:      "Spoiled Supplies",
+			AmountMin: 0.05, AmountMax: 0.15,
+			Weight: weightCommon,
+			Target: TargetRandomAge,
+			Flavors: []string{
+				"Damp got into the stores on the journey back — {frac} of your {res} is fit for nothing.",
+				"The {res} was packed badly and travelled worse; {frac} of it is written off.",
+				"Vermin found the {res} stores before your quartermaster did — {frac} gone.",
+			},
+		},
+		{
+			Kind:     RateBuff,
+			Polarity: Negative,
+			Name:     "Cursed Relic",
+			MagMin:   -0.15, MagMax: -0.08,
+			DurMin: 1500, DurMax: 3000,
+			Weight: weightUncommon,
+			Target: TargetRandomAge,
+			Flavors: []string{
+				"They pressed a relic on you as a parting gift. {res} output falls {pct} for {ticks} ticks, and nobody will say why.",
+				"The thing your scouts carried home was not meant to leave its shrine — {res} output drops {pct} for {ticks} ticks.",
+			},
+		},
+		{
+			Kind:     AllProduction,
+			Polarity: Negative,
+			Name:     "Bad Omen",
+			MagMin:   -0.10, MagMax: -0.05,
+			DurMin: 1000, DurMax: 2500,
+			Weight: weightUncommon,
+			Target: TargetNone,
+			Flavors: []string{
+				"Word of the expedition's fate spreads faster than the truth of it — all production falls {pct} for {ticks} ticks.",
+				"The augurs read the returning party's account and go quiet. Production drops {pct} across the realm for {ticks} ticks.",
+			},
+		},
+		{
+			Kind:      ResourceDrain,
+			Polarity:  Negative,
+			Name:      "Lost Scouts",
+			AmountMin: 0.02, AmountMax: 0.06,
+			MagMin: -0.06, MagMax: -0.03,
+			DurMin: 600, DurMax: 1200,
+			Weight: weightCommon,
+			Target: TargetRandomAge,
+			Flavors: []string{
+				"Half the scouting party never came back, and {frac} of the {res} they carried went with them. The rest work {pct} slower for {ticks} ticks.",
+				"You are still waiting on names from the last expedition. {frac} of the {res} is unaccounted for and the realm works {pct} slower for {ticks} ticks.",
 			},
 		},
 	}

@@ -1,6 +1,8 @@
 package game
 
 import (
+	"fmt"
+
 	"github.com/espresso20/ageforge/config"
 )
 
@@ -31,7 +33,43 @@ const (
 	encounterChanceScoutFail       = 0.12
 	encounterChanceMilitarySuccess = 0.15
 	encounterChanceMilitaryFail    = 0.05
+
+	// --- Boon capacity ------------------------------------------------------
+	// maxConcurrentFactionBoons is how many faction boons you may HOLD at once.
+	// Before it existed, encounters injected without limit and a soak measured
+	// 238 concurrent boons stacking a rate pool to x20 — the reward loop had no
+	// shape, just accumulation. Capacity gives it one: boons are a scarce slot
+	// you spend by holding, not a counter you grow. Only TIMED boons occupy a
+	// slot; an instant gift is consumed on arrival.
+	maxConcurrentFactionBoons = 3
+	// maxConcurrentFactionMaluses bounds live setbacks the same way, so a long
+	// war cannot bury the active-events panel. See applyFactionMalus: at this
+	// cap the timed malus kinds are disabled and only instant harm lands.
+	maxConcurrentFactionMaluses = 3
+
+	// --- Malus triggers (all tunable; set a chance to 0 to switch one off) ----
+	// atCapacityMalusChance is the odds that an encounter you have no room for
+	// turns sour instead of merely returning empty-handed. Low by design: the
+	// default at-capacity outcome is nothing, not punishment.
+	atCapacityMalusChance = 0.25
+	// malusChanceOnExpeditionFailure is the odds a FAILED expedition's encounter
+	// yields a setback rather than a gift. A botched run that still stumbles into
+	// a foreign civ brings back trouble, not tribute.
+	malusChanceOnExpeditionFailure = 1.0
+	// malusChanceAtWar is the odds an encounter with a civ you are AT WAR with
+	// yields a setback. War used to be a silent skip — the encounter fired and
+	// nothing happened. Now it bites.
+	malusChanceAtWar = 1.0
 )
+
+// atCapacityFlavors are the in-world lines for an encounter that arrives while
+// your court already holds the maximum number of foreign favours. Player-facing
+// production text: dry, in-world, no winking at the mechanic.
+var atCapacityFlavors = []string{
+	"Your stores are already thick with foreign gifts; the envoys are thanked, fed, and sent home with their crates unopened.",
+	"The ledger of outstanding favours is full. There is nothing they can offer that you are not already owed.",
+	"Your court can carry no more obligations this season — the party returns with courtesies and little else.",
+}
 
 // rollExpeditionEncounter is called once per resolved expedition. It rolls the
 // encounter chance for (category, success); on a hit it discovers an eligible
@@ -69,11 +107,42 @@ func (ge *GameEngine) rollExpeditionEncounter(category string, success bool) []s
 		return nil
 	}
 
-	// Roll a boon off the shared boon engine, shaped by the faction's character
-	// and your standing with it. An at-war faction raids rather than gifts, so it
-	// grants no positive boon — skip the roll entirely for it.
+	// Resolve the outcome. Three things can turn an encounter sour or empty, in
+	// priority order:
+	//
+	//   1. WAR — an at-war civ raids rather than gifts. This used to be a silent
+	//      skip; it now rolls the malus table (the deferred "negative table").
+	//   2. FAILURE — a botched expedition that still met someone brings back
+	//      trouble, not tribute.
+	//   3. CAPACITY — you can only hold maxConcurrentFactionBoons favours at
+	//      once. Over that, no positive boon lands; the party mostly returns
+	//      empty-handed, and occasionally worse.
+	//
+	// Otherwise: a successful expedition, under capacity, gets a boon as before.
 	state, _ := ge.Diplomacy.StateOf(target.Key)
-	if !state.AtWar {
+	switch {
+	case state.AtWar:
+		if ge.rng.Float64() < malusChanceAtWar {
+			if line := ge.applyFactionMalus(target, state); line != "" {
+				messages = append(messages, line)
+			}
+		}
+	case !success:
+		if ge.rng.Float64() < malusChanceOnExpeditionFailure {
+			if line := ge.applyFactionMalus(target, state); line != "" {
+				messages = append(messages, line)
+			}
+		}
+	case ge.activeFactionBoonCount() >= maxConcurrentFactionBoons:
+		if ge.rng.Float64() < atCapacityMalusChance {
+			if line := ge.applyFactionMalus(target, state); line != "" {
+				messages = append(messages, line)
+			}
+		} else {
+			flavor := atCapacityFlavors[ge.rng.Intn(len(atCapacityFlavors))]
+			messages = append(messages, fmt.Sprintf("[gray]✦ %s:[-] %s", target.Name, flavor))
+		}
+	default:
 		if line := ge.applyFactionBoon(target, state); line != "" {
 			messages = append(messages, line)
 		}
@@ -149,11 +218,26 @@ func factionWeight(d config.FactionDef) int {
 	return d.Strength
 }
 
+// Key namespaces for faction-encounter outcomes. Boons and setbacks are kept
+// apart on purpose: activeFactionBoonCount / activeFactionMalusCount count by
+// prefix, so a setback must never be mistaken for a held favour.
+const (
+	factionBuffKeyPrefix  = "faction_boon_"
+	factionMalusKeyPrefix = "faction_malus_"
+)
+
 // factionBuffKey is the ActiveEvent key for a faction's encounter boon. Stable per
-// faction so save/UI can identify it; re-encounters inject a fresh copy (boons
-// stack and each expires on its own timer, matching how the engine's other
-// InjectEvent side-effects behave). Used by boonApplier when the rolled boon is a
+// faction so save/UI can identify it; re-encounters inject a fresh copy (InjectEvent
+// appends rather than replaces, so boons stack and each expires on its own timer).
+// What bounds the stack is no longer expiry alone but maxConcurrentFactionBoons,
+// enforced in rollExpeditionEncounter. Used by boonApplier when the rolled boon is a
 // timed-effect kind (RateBuff/AllProduction/TickSpeed).
 func factionBuffKey(factionKey string) string {
-	return "faction_boon_" + factionKey
+	return factionBuffKeyPrefix + factionKey
+}
+
+// factionMalusKey is the ActiveEvent key for a faction's encounter SETBACK — the
+// negative namespace, bounded by maxConcurrentFactionMaluses.
+func factionMalusKey(factionKey string) string {
+	return factionMalusKeyPrefix + factionKey
 }

@@ -293,6 +293,8 @@ type captureApplier struct {
 	injects  int
 	grants   int
 	loans    int
+	drains   int
+	kills    int
 	lastName string
 }
 
@@ -302,6 +304,8 @@ func (c *captureApplier) InjectTimedEffects(_ []config.Effect, _ int, name strin
 }
 func (c *captureApplier) GrantResource(_ string, _ float64) { c.grants++ }
 func (c *captureApplier) GrantTempWorkers(_, _ int)         { c.loans++ }
+func (c *captureApplier) DrainResource(_ string, _ float64) { c.drains++ }
+func (c *captureApplier) LoseWorkers(_ int)                 { c.kills++ }
 
 // TestFactionEncounter_RollsAppliesOneEffect_Deterministic drives the real
 // encounter roll (factionProfile → boon.RollBoon → boon.Apply) against a capturing

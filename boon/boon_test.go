@@ -47,6 +47,11 @@ type fakeApplier struct {
 		count int
 		ticks int
 	}
+	drained []struct {
+		resource string
+		fraction float64
+	}
+	lost []int
 }
 
 func (f *fakeApplier) InjectTimedEffects(effects []config.Effect, ticks int, name string) {
@@ -69,6 +74,20 @@ func (f *fakeApplier) GrantTempWorkers(count, ticks int) {
 		count int
 		ticks int
 	}{count, ticks})
+}
+
+func (f *fakeApplier) DrainResource(resource string, fraction float64) {
+	f.drained = append(f.drained, struct {
+		resource string
+		fraction float64
+	}{resource, fraction})
+}
+
+func (f *fakeApplier) LoseWorkers(count int) { f.lost = append(f.lost, count) }
+
+// calls is the total number of Applier calls recorded.
+func (f *fakeApplier) calls() int {
+	return len(f.injected) + len(f.granted) + len(f.workers) + len(f.drained) + len(f.lost)
 }
 
 // --- determinism -----------------------------------------------------------
@@ -129,6 +148,10 @@ func TestUpweightedKindDominates(t *testing.T) {
 
 // --- ranges: rolled values respect the Def bounds (× MagnitudeScale) --------
 
+// UPDATED (boon capacity/malus pass): instant lump ranges are no longer raw Def
+// values — they are multiplied by Profile.instantScale() (age growth ×
+// MagnitudeScale), so the expected bounds scale with them. The assertion is
+// otherwise unchanged: rolled values must sit inside the Def range, transformed.
 func TestRolledValuesWithinDefRanges(t *testing.T) {
 	const eps = 1e-9
 	catalog := defsByName()
@@ -138,6 +161,7 @@ func TestRolledValuesWithinDefRanges(t *testing.T) {
 		p.Age = "space_age" // wide resource pool
 		p.Specialty = "iron"
 		p.MagnitudeScale = scale
+		instScale := p.instantScale()
 
 		for i, b := range rollN(p, 123, 3000) {
 			d, ok := catalog[b.Name]
@@ -155,8 +179,11 @@ func TestRolledValuesWithinDefRanges(t *testing.T) {
 					t.Fatalf("%s duration %d outside [%d,%d]", b.Name, b.DurationTicks, d.DurMin, d.DurMax)
 				}
 			case InstantResource:
-				if b.InstantAmount < d.AmountMin-eps || b.InstantAmount > d.AmountMax+eps {
-					t.Fatalf("%s amount %.4f outside [%.2f,%.2f]", b.Name, b.InstantAmount, d.AmountMin, d.AmountMax)
+				lo := d.AmountMin*instScale - eps
+				hi := d.AmountMax*instScale + eps
+				if b.InstantAmount < lo || b.InstantAmount > hi {
+					t.Fatalf("%s amount %.4f outside [%.4f,%.4f] at instant scale %.4f",
+						b.Name, b.InstantAmount, lo, hi, instScale)
 				}
 				if b.DurationTicks != 0 {
 					t.Fatalf("%s is instant but has duration %d", b.Name, b.DurationTicks)
@@ -245,7 +272,7 @@ func TestApplyReservedKindsAreNoOps(t *testing.T) {
 	for _, k := range []Kind{StorageCap, TradeIncome} {
 		f := &fakeApplier{}
 		line := Apply(Boon{Kind: k, Flavor: "reserved"}, f)
-		if len(f.injected)+len(f.granted)+len(f.workers) != 0 {
+		if f.calls() != 0 {
 			t.Fatalf("reserved kind %v triggered an Applier call: %+v", k, f)
 		}
 		if line != "reserved" {
@@ -269,7 +296,7 @@ func TestRollThenApplyEndToEnd(t *testing.T) {
 		if line == "" {
 			t.Fatalf("roll %d applied with empty flavor", i)
 		}
-		calls := len(f.injected) + len(f.granted) + len(f.workers)
+		calls := f.calls()
 		if calls != 1 {
 			t.Fatalf("roll %d (%s) made %d Applier calls, want exactly 1", i, b.Kind, calls)
 		}
