@@ -27,6 +27,29 @@ const instantGrowthPerAge = 2.2
 // never the whole thing by design.
 const maxDrainFraction = 0.50
 
+// --- Duration calibration ----------------------------------------------------
+//
+// Durations are the load-bearing number in this table, because the consumer that
+// draws from it (faction encounters) holds timed boons in a fixed number of
+// SLOTS. Landed-boon throughput is therefore capped at slots/duration, and if
+// that is smaller than the rate encounters arrive, almost every encounter bounces
+// off a full inventory and the reward loop stops rewarding.
+//
+// A measured pass (game/boon_tuning_test.go) caught exactly that: at the original
+// 1500–6000 tick durations a continuously-exploring player landed a boon on 2–3%
+// of encounters and sat at full capacity 97% of the time. Durations were cut ~5x
+// (alongside a ~4x cut to encounter odds and a 3 -> 5 slot bump) to bring offered
+// load back in line with capacity; the same harness now measures a ~60% land rate
+// at ~33% saturation.
+//
+// The rule of thumb if these are ever re-tuned: keep
+//
+//	encounters_per_tick x (timed share ~0.75) x avg_duration  ~=  slots + 1
+//
+// Setback durations are kept at the same ~1/5 scale for a different reason: a
+// timed setback must expire NOTICEABLY sooner than a boon of the same magnitude,
+// or a run of bad luck outlasts every gift that could offset it.
+
 // Catalog returns the starting boon table. Everything here is plain, tunable
 // DATA — magnitudes, durations, lump ranges, weights, and flavor pools live in
 // these literals, so balancing is an edit here and nowhere else.
@@ -41,7 +64,7 @@ func Catalog() []Def {
 			Kind:   RateBuff,
 			Name:   "Specialty Windfall",
 			MagMin: 0.08, MagMax: 0.20,
-			DurMin: 3000, DurMax: 6000,
+			DurMin: 600, DurMax: 1200,
 			Weight: weightCommon,
 			Target: TargetSpecialty,
 			Flavors: []string{
@@ -53,7 +76,7 @@ func Catalog() []Def {
 			Kind:   RateBuff,
 			Name:   "Resource Surge",
 			MagMin: 0.08, MagMax: 0.18,
-			DurMin: 3000, DurMax: 5000,
+			DurMin: 600, DurMax: 1000,
 			Weight: weightCommon,
 			Target: TargetRandomAge,
 			Flavors: []string{
@@ -65,7 +88,7 @@ func Catalog() []Def {
 			Kind:   RateBuff,
 			Name:   "Enlightenment",
 			MagMin: 0.12, MagMax: 0.25,
-			DurMin: 3000, DurMax: 6000,
+			DurMin: 600, DurMax: 1200,
 			Weight:   weightUncommon,
 			Target:   TargetSpecificResource,
 			Resource: "knowledge",
@@ -78,7 +101,7 @@ func Catalog() []Def {
 			Kind:   AllProduction,
 			Name:   "Industrious Spell",
 			MagMin: 0.05, MagMax: 0.12,
-			DurMin: 2000, DurMax: 4000,
+			DurMin: 400, DurMax: 800,
 			Weight: weightUncommon,
 			Target: TargetNone,
 			Flavors: []string{
@@ -90,7 +113,7 @@ func Catalog() []Def {
 			Kind:   TickSpeed,
 			Name:   "Time Dilation",
 			MagMin: 0.08, MagMax: 0.15,
-			DurMin: 1500, DurMax: 3000,
+			DurMin: 300, DurMax: 600,
 			Weight: weightUncommon,
 			Target: TargetNone,
 			Flavors: []string{
@@ -123,7 +146,7 @@ func Catalog() []Def {
 		{
 			Kind:   TempWorkers,
 			Name:   "Extra Hands",
-			DurMin: 2000, DurMax: 4000,
+			DurMin: 400, DurMax: 800,
 			AmountMin: 3, AmountMax: 8,
 			Weight: weightUncommon,
 			Target: TargetNone,
@@ -179,7 +202,7 @@ func MalusCatalog() []Def {
 			Polarity: Negative,
 			Name:     "Cursed Relic",
 			MagMin:   -0.15, MagMax: -0.08,
-			DurMin: 1500, DurMax: 3000,
+			DurMin: 300, DurMax: 600,
 			Weight: weightUncommon,
 			Target: TargetRandomAge,
 			Flavors: []string{
@@ -192,7 +215,7 @@ func MalusCatalog() []Def {
 			Polarity: Negative,
 			Name:     "Bad Omen",
 			MagMin:   -0.10, MagMax: -0.05,
-			DurMin: 1000, DurMax: 2500,
+			DurMin: 200, DurMax: 500,
 			Weight: weightUncommon,
 			Target: TargetNone,
 			Flavors: []string{
@@ -206,7 +229,7 @@ func MalusCatalog() []Def {
 			Name:      "Lost Scouts",
 			AmountMin: 0.02, AmountMax: 0.06,
 			MagMin: -0.06, MagMax: -0.03,
-			DurMin: 600, DurMax: 1200,
+			DurMin: 120, DurMax: 240,
 			Weight: weightCommon,
 			Target: TargetRandomAge,
 			Flavors: []string{

@@ -27,12 +27,21 @@ import (
 const (
 	// Encounter probabilities per resolved expedition. Scouting is the eyes of the
 	// empire, so it meets far more than a war party does; success beats failure but
-	// even a botched run turns up SOMEONE now and then. Tuned, not sacred — Phase 2
-	// may scale these by standing.
-	encounterChanceScoutSuccess    = 0.35
-	encounterChanceScoutFail       = 0.12
-	encounterChanceMilitarySuccess = 0.15
-	encounterChanceMilitaryFail    = 0.05
+	// even a botched run turns up SOMEONE now and then.
+	//
+	// CALIBRATION (measured pass, see game/boon_tuning_test.go). These are rolled
+	// per RESOLVED expedition, and the cheapest scouting run in the game resolves
+	// in 10 ticks — so at the original 0.35/0.12 a player who simply re-launched
+	// it met a foreign civilization every ~25 ticks (~400 per 10k). That is a
+	// firehose against an 11-faction roster, and it drowned the boon inventory:
+	// encounters arrived ~15x faster than boon slots could free, so 97% of them
+	// bounced off a full court. Cut ~4x, a continuous explorer now meets someone
+	// roughly every ~95 ticks (~105 per 10k) — frequent enough to feel alive,
+	// slow enough that the reward actually lands. Tuned, not sacred.
+	encounterChanceScoutSuccess    = 0.09
+	encounterChanceScoutFail       = 0.03
+	encounterChanceMilitarySuccess = 0.04
+	encounterChanceMilitaryFail    = 0.01
 
 	// --- Boon capacity ------------------------------------------------------
 	// maxConcurrentFactionBoons is how many faction boons you may HOLD at once.
@@ -41,7 +50,17 @@ const (
 	// shape, just accumulation. Capacity gives it one: boons are a scarce slot
 	// you spend by holding, not a counter you grow. Only TIMED boons occupy a
 	// slot; an instant gift is consumed on arrival.
-	maxConcurrentFactionBoons = 3
+	//
+	// 3 -> 5 in the measured tuning pass. Capacity sets both how OFTEN an
+	// encounter can pay out (throughput is slots/duration) and how BIG the stacked
+	// buff feels at any moment. At 3 the live-boon count pinned at ~2.9 and the
+	// combined uplift sat around x1.25 — under the x1.2-1.6 band we want while
+	// boons are running. 5 lifts the working average to ~3.8 boons and the uplift
+	// into the band, while the worst realistic same-pool stack (5 allied str-5
+	// Enlightenments at ~0.455 each = ~2.3) still clears productionCap's x3.0
+	// clamp without touching it. Do not raise this further without re-checking
+	// that sum: past ~6 the clamp starts doing the balancing instead of the data.
+	maxConcurrentFactionBoons = 5
 	// maxConcurrentFactionMaluses bounds live setbacks the same way, so a long
 	// war cannot bury the active-events panel. See applyFactionMalus: at this
 	// cap the timed malus kinds are disabled and only instant harm lands.

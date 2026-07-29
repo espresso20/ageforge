@@ -199,18 +199,20 @@ Every time an expedition resolves — win or lose — the game rolls a chance to
 
 | Resolution | Encounter chance |
 |---|---|
-| Scouting success | ~35% |
-| Scouting failure | ~12% |
-| Military success | ~15% |
-| Military failure | ~5% |
+| Scouting success | ~9% |
+| Scouting failure | ~3% |
+| Military success | ~4% |
+| Military failure | ~1% |
+
+These are rolled **per resolved expedition**, and the cheapest scouting run resolves in 10 ticks — so a player who simply keeps relaunching still meets someone every ~95 ticks or so. The odds look small because the expedition loop is fast, not because encounters are rare.
 
 A **successful** expedition's encounter can also grant a **boon** — and it is now a **varied, rolled reward**, not a fixed specialty buff. The draw comes from a shared catalogue (a timed specialty/production/knowledge windfall, an all-production or tick-speed surge, an instant lump of resources, or temporary workers) and is **weighted by the civilization's character** (personality, its specialty, and its strength) and by **your standing** with it — allied civs give bigger *and* rarer boons. Instant gifts also **scale with your age**, so a caravan of supplies still lands with weight in the Quantum Age instead of dwindling into a rounding error. It is announced with a flavour line naming the civ and the reward.
 
-**Boon capacity — you can hold three at a time.** Only *timed* rewards take up one of those three slots; an instant lump of resources is unpacked on arrival and holds nothing. While all three are running, further encounters come back empty — the envoys are thanked, fed, and sent home with their crates unopened — until one expires. Boons are a scarce thing to time, not a stack to grow: chaining expeditions while three buffs are already ticking mostly wastes them, so it pays to space runs out or to bank them for a push.
+**Boon capacity — you can hold five at a time.** Only *timed* rewards take up one of those five slots; an instant lump of resources is unpacked on arrival and holds nothing. While all five are running, further encounters come back empty — the envoys are thanked, fed, and sent home with their crates unopened — until one expires. Timed boons last a few hundred ticks each, so slots turn over steadily: a continuous explorer lands a reward on most encounters and only hits a full court about a third of the time. Chaining expeditions is worth it; it is only the sixth simultaneous buff that goes to waste.
 
-**Setbacks — encounters can go badly.** Instead of a boon, an encounter yields a **setback** whenever the expedition **failed** or the civ you ran into is one you are **at war** with (both are certain, not chances), and roughly **one in four** encounters that arrive while you're at boon capacity sours instead of merely returning empty-handed. A setback is one of: people lost on the road home (a few workers gone), a share of one resource stockpile spoiled or carried off, a temporary drop in one resource's output, or a realm-wide production dip for a stretch. Severity rises with the civilization's **strength** and falls with your **standing** — a friend's bad news is gentler than an enemy's, and a strong civ you're at war with is the worst of it. Setbacks are bounded the same way boons are: at most three timed ones run at once, and a spoilage never empties a store outright. They sting; they don't end a run.
+**Setbacks — encounters can go badly.** Instead of a boon, an encounter yields a **setback** whenever the expedition **failed** or the civ you ran into is one you are **at war** with (both are certain, not chances), and roughly **one in four** encounters that arrive while you're at boon capacity sours instead of merely returning empty-handed. A setback is one of: people lost on the road home (a few workers gone), a share of one resource stockpile spoiled or carried off, a temporary drop in one resource's output, or a realm-wide production dip for a stretch. Severity rises with the civilization's **strength** and falls with your **standing** — a friend's bad news is gentler than an enemy's, and a strong civ you're at war with is the worst of it. Setbacks are bounded the same way boons are, only tighter: at most **three** timed ones run at once (against five boon slots), they expire sooner than a boon of the same size, and a spoilage never empties a store outright. They sting; they don't end a run.
 
-So expeditions stay worth running even after you've met everyone — but a failed run now costs you something, and a run launched while your boon slots are full mostly doesn't pay. See [Trade & Diplomacy](trade.md#diplomacy-civilization-encounters) for the civilization roster and diplomacy mechanics.
+So expeditions stay worth running even after you've met everyone — but a failed run now costs you something, and a run launched while all five boon slots are full mostly doesn't pay. See [Trade & Diplomacy](trade.md#diplomacy-civilization-encounters) for the civilization roster and diplomacy mechanics.
 
 ---
 

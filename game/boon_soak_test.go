@@ -79,9 +79,11 @@ const (
 	maxConcurrentBoons = maxConcurrentFactionBoons + maxConcurrentFactionMaluses + 2
 
 	// maxAdditivePool bounds the raw additive Σ for any production_all or
-	// <res>_rate pool. With at most 3 concurrent boons at the worst-case allied
-	// str-5 magnitude (Enlightenment 0.25 x ~1.82 = 0.455 each) the realistic
-	// worst case is ~1.4. 3.0 mirrors productionCap: past it the engine's clamp
+	// <res>_rate pool. With at most maxConcurrentFactionBoons (5, after the
+	// measured tuning pass) concurrent boons at the worst-case allied str-5
+	// magnitude (Enlightenment 0.25 x ~1.82 = 0.455 each) the realistic worst
+	// case is ~2.3 — still under this ceiling, which is the reason the capacity
+	// bump stopped at 5. 3.0 mirrors productionCap: past it the engine's clamp
 	// is doing all the work, which is exactly the state this test exists to
 	// prevent from creeping back.
 	maxAdditivePool = 3.0
