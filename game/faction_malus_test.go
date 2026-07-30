@@ -18,10 +18,12 @@ import (
 //	"[gold]✦"  a positive boon landed
 //	"[red]✖"   a setback landed
 //	"[gray]✦"  at capacity, nothing happened
+//	"[gray]✖"  at war, contact made, neither side came away with anything
 const (
 	boonLinePrefix     = "[gold]✦"
 	malusLinePrefix    = "[red]✖"
 	capacityLinePrefix = "[gray]✦"
+	standoffLinePrefix = "[gray]✖"
 )
 
 // discoverAllFactions marks every roster faction discovered with the given
@@ -53,7 +55,9 @@ func encounterHarness(t *testing.T, seed int64, status string, atWar bool) *Game
 	return ge
 }
 
-// driveEncounters runs n encounter attempts and tallies the outcome lines.
+// driveEncounters runs n encounter attempts and tallies the outcome lines. The
+// at-war standoff line shares the "nothing happened" tally with the at-capacity
+// line: both mean the encounter fired and the player got neither gift nor grief.
 func driveEncounters(ge *GameEngine, category string, success bool, n int) (boons, maluses, capacity int) {
 	for i := 0; i < n; i++ {
 		for _, msg := range ge.rollExpeditionEncounter(category, success) {
@@ -62,7 +66,7 @@ func driveEncounters(ge *GameEngine, category string, success bool, n int) (boon
 				boons++
 			case strings.HasPrefix(msg, malusLinePrefix):
 				maluses++
-			case strings.HasPrefix(msg, capacityLinePrefix):
+			case strings.HasPrefix(msg, capacityLinePrefix), strings.HasPrefix(msg, standoffLinePrefix):
 				capacity++
 			}
 		}
@@ -131,9 +135,16 @@ func fillBoonCapacity(ge *GameEngine, n int) {
 	}
 }
 
-// TestEncounter_AtCapacityGrantsNoPositiveBoon: once the court is full, a
-// successful encounter returns empty-handed (or worse) — never a gift.
-func TestEncounter_AtCapacityGrantsNoPositiveBoon(t *testing.T) {
+// TestEncounter_AtCapacityRefusesOnlyTimedBoons: once the court is full, a TIMED
+// favour is turned away — empty-handed, or occasionally worse. A gift that
+// occupies no slot (an instant lump of goods, a work-gang) still lands, because
+// capacity is a limit on what you HOLD, not a blanket refusal of everything an
+// envoy might carry.
+//
+// The live-boon count is the load-bearing assertion: the occupying boons never
+// expire here and no timed grant may join them, so any drift means a slotted boon
+// slipped past the gate.
+func TestEncounter_AtCapacityRefusesOnlyTimedBoons(t *testing.T) {
 	ge := encounterHarness(t, 0xCA9, "allied", false)
 	defer ge.mu.Unlock()
 
@@ -144,18 +155,21 @@ func TestEncounter_AtCapacityGrantsNoPositiveBoon(t *testing.T) {
 
 	boons, maluses, capacity := driveEncounters(ge, ExpeditionScouting, true, 2000)
 
-	if boons != 0 {
-		t.Fatalf("at capacity, %d positive boons were still granted", boons)
+	if boons == 0 {
+		t.Fatal("at capacity, not one slot-free gift landed over 2000 encounters — " +
+			"instant grants and worker loans are being refused along with the timed boons")
 	}
 	if capacity == 0 {
-		t.Fatal("at capacity, no empty-handed line was ever logged — the branch is unreachable")
+		t.Fatal("at capacity, no empty-handed line was ever logged — the refusal branch is unreachable")
 	}
 	if maluses == 0 {
 		t.Fatalf("at capacity, atCapacityMalusChance=%.2f never fired over 2000 encounters", atCapacityMalusChance)
 	}
-	// The boons occupying capacity are long-lived, so the count must not have moved.
+	// The boons occupying capacity are long-lived and nothing that landed may take
+	// a slot, so the count must not have moved by even one.
 	if got := ge.activeFactionBoonCount(); got != maxConcurrentFactionBoons {
-		t.Fatalf("live boon count drifted to %d while at capacity %d", got, maxConcurrentFactionBoons)
+		t.Fatalf("live boon count drifted to %d while at capacity %d — a TIMED boon was granted at capacity",
+			got, maxConcurrentFactionBoons)
 	}
 }
 

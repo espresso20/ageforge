@@ -252,13 +252,41 @@ func (a boonApplier) LoseWorkers(count int) {
 // Uses the engine's seeded ge.rng so the whole encounter/boon stream is
 // reproducible from the run's persisted seed. Runs under the write lock.
 func (ge *GameEngine) applyFactionBoon(def config.FactionDef, state FactionState) string {
-	prof := factionProfile(def, state, ge.age)
-	b := boon.RollBoon(prof, ge.rng)
+	return ge.applyRolledFactionBoon(def, ge.rollFactionBoon(def, state))
+}
+
+// rollFactionBoon rolls ONE boon for a faction encounter WITHOUT applying it, so
+// the caller can inspect what came up first. That matters at boon capacity: the
+// gate binds only on the kinds that occupy a slot, so the encounter path has to
+// see the roll before deciding whether to grant it or bounce it (see
+// rollExpeditionEncounter). Returns the zero Boon when nothing rolled.
+func (ge *GameEngine) rollFactionBoon(def config.FactionDef, state FactionState) boon.Boon {
+	return boon.RollBoon(factionProfile(def, state, ge.age), ge.rng)
+}
+
+// applyRolledFactionBoon applies an already-rolled boon and returns its
+// faction-attributed, player-facing line ("" for the zero Boon).
+func (ge *GameEngine) applyRolledFactionBoon(def config.FactionDef, b boon.Boon) string {
 	if b == (boon.Boon{}) {
 		return "" // no kind rolled (e.g. at-war): nothing to apply
 	}
 	line := boon.Apply(b, boonApplier{ge: ge, name: def.Name, key: def.Key})
 	return fmt.Sprintf("[gold]✦ %s:[-] %s", def.Name, line)
+}
+
+// boonHoldsSlot reports whether a POSITIVE boon occupies one of the
+// maxConcurrentFactionBoons slots — i.e. whether applying it injects a timed
+// ActiveEvent under factionBuffKeyPrefix. It must stay in lockstep with what
+// boon.Apply injects for a positive polarity: the three timed kinds do, the
+// instant lump and the work-gang do not (they are consumed on arrival and
+// activeFactionBoonCount never sees them).
+func boonHoldsSlot(b boon.Boon) bool {
+	switch b.Kind {
+	case boon.RateBuff, boon.AllProduction, boon.TickSpeed:
+		return true
+	default:
+		return false
+	}
 }
 
 // factionMalusProfile is factionProfile's negative twin: same seam (a faction's

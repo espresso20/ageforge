@@ -35,20 +35,32 @@ const maxDrainFraction = 0.50
 // that is smaller than the rate encounters arrive, almost every encounter bounces
 // off a full inventory and the reward loop stops rewarding.
 //
-// A measured pass (game/boon_tuning_test.go) caught exactly that: at the original
-// 1500–6000 tick durations a continuously-exploring player landed a boon on 2–3%
-// of encounters and sat at full capacity 97% of the time. Durations were cut ~5x
-// (alongside a ~4x cut to encounter odds and a 3 -> 5 slot bump) to bring offered
-// load back in line with capacity; the same harness now measures a ~60% land rate
-// at ~33% saturation.
+// A measured pass (game/boon_tuning_test.go) reported exactly that — a 2-3% land
+// rate at 97% saturation — and durations were cut ~5x to fix it. That measurement
+// was WRONG: the harness derived its expedition cadence from the legacy
+// ExpeditionDef.Duration field, which the runtime ignores whenever a def carries a
+// [DurationMin, DurationMax] range, so it simulated encounters arriving ~8x faster
+// than the game can produce them. With the instrument fixed, the same catalogue
+// measured the opposite failure: offered load of 0.75 slot-equivalents against 5
+// slots, boons live only 53% of the time, and a combined uplift of x1.16 — under
+// the band. Durations were given back 2.5x of that 5x cut (alongside 2x of the
+// matching 4x cut to encounter odds in game/encounters.go), which lands offered
+// load at ~3.7 of 5 slots: ~3 boons live at a time, ~18% saturation, and a
+// median uplift inside the x1.2-1.6 band.
 //
-// The rule of thumb if these are ever re-tuned: keep
+// The rule of thumb if these are ever re-tuned — offered load in slot-equivalents:
 //
-//	encounters_per_tick x (timed share ~0.75) x avg_duration  ~=  slots + 1
+//	encounters_per_tick x (timed share ~0.70) x avg_duration  ~=  0.75 x slots
 //
-// Setback durations are kept at the same ~1/5 scale for a different reason: a
-// timed setback must expire NOTICEABLY sooner than a boon of the same magnitude,
-// or a run of bad luck outlasts every gift that could offset it.
+// i.e. ~3.7 at today's 5 slots. Below ~0.2 x slots the buffs stop overlapping and
+// exploring feels unrewarded; above ~1.3 x slots more than 40% of timed rolls are
+// refused and the loop starts reading as rejection.
+//
+// Setback durations sit at ~40% of the boon scale (a boon averages ~2000 ticks, a
+// timed setback ~740) for a different reason: a timed setback must expire
+// NOTICEABLY sooner than a boon of the same magnitude, or a run of bad luck
+// outlasts every gift that could offset it. They were scaled by the same 2.5x so
+// that ratio did not drift.
 
 // Catalog returns the starting boon table. Everything here is plain, tunable
 // DATA — magnitudes, durations, lump ranges, weights, and flavor pools live in
@@ -64,7 +76,7 @@ func Catalog() []Def {
 			Kind:   RateBuff,
 			Name:   "Specialty Windfall",
 			MagMin: 0.08, MagMax: 0.20,
-			DurMin: 600, DurMax: 1200,
+			DurMin: 1500, DurMax: 3000,
 			Weight: weightCommon,
 			Target: TargetSpecialty,
 			Flavors: []string{
@@ -76,7 +88,7 @@ func Catalog() []Def {
 			Kind:   RateBuff,
 			Name:   "Resource Surge",
 			MagMin: 0.08, MagMax: 0.18,
-			DurMin: 600, DurMax: 1000,
+			DurMin: 1500, DurMax: 2500,
 			Weight: weightCommon,
 			Target: TargetRandomAge,
 			Flavors: []string{
@@ -88,7 +100,7 @@ func Catalog() []Def {
 			Kind:   RateBuff,
 			Name:   "Enlightenment",
 			MagMin: 0.12, MagMax: 0.25,
-			DurMin: 600, DurMax: 1200,
+			DurMin: 1500, DurMax: 3000,
 			Weight:   weightUncommon,
 			Target:   TargetSpecificResource,
 			Resource: "knowledge",
@@ -101,7 +113,7 @@ func Catalog() []Def {
 			Kind:   AllProduction,
 			Name:   "Industrious Spell",
 			MagMin: 0.05, MagMax: 0.12,
-			DurMin: 400, DurMax: 800,
+			DurMin: 1000, DurMax: 2000,
 			Weight: weightUncommon,
 			Target: TargetNone,
 			Flavors: []string{
@@ -113,7 +125,7 @@ func Catalog() []Def {
 			Kind:   TickSpeed,
 			Name:   "Time Dilation",
 			MagMin: 0.08, MagMax: 0.15,
-			DurMin: 300, DurMax: 600,
+			DurMin: 750, DurMax: 1500,
 			Weight: weightUncommon,
 			Target: TargetNone,
 			Flavors: []string{
@@ -146,7 +158,7 @@ func Catalog() []Def {
 		{
 			Kind:   TempWorkers,
 			Name:   "Extra Hands",
-			DurMin: 400, DurMax: 800,
+			DurMin: 1000, DurMax: 2000,
 			AmountMin: 3, AmountMax: 8,
 			Weight: weightUncommon,
 			Target: TargetNone,
@@ -202,7 +214,7 @@ func MalusCatalog() []Def {
 			Polarity: Negative,
 			Name:     "Cursed Relic",
 			MagMin:   -0.15, MagMax: -0.08,
-			DurMin: 300, DurMax: 600,
+			DurMin: 750, DurMax: 1500,
 			Weight: weightUncommon,
 			Target: TargetRandomAge,
 			Flavors: []string{
@@ -215,7 +227,7 @@ func MalusCatalog() []Def {
 			Polarity: Negative,
 			Name:     "Bad Omen",
 			MagMin:   -0.10, MagMax: -0.05,
-			DurMin: 200, DurMax: 500,
+			DurMin: 500, DurMax: 1250,
 			Weight: weightUncommon,
 			Target: TargetNone,
 			Flavors: []string{
@@ -229,7 +241,7 @@ func MalusCatalog() []Def {
 			Name:      "Lost Scouts",
 			AmountMin: 0.02, AmountMax: 0.06,
 			MagMin: -0.06, MagMax: -0.03,
-			DurMin: 120, DurMax: 240,
+			DurMin: 300, DurMax: 600,
 			Weight: weightCommon,
 			Target: TargetRandomAge,
 			Flavors: []string{

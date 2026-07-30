@@ -53,14 +53,23 @@ const (
 	// soakTicksPerCycle is the driven-tick count per cycle. 3 x 400k = 1.2M ticks
 	// of real expiry bookkeeping and ~240k encounter attempts — the "millions of
 	// ticks / ~500 hours of play" long-run regime. Concurrency saturates within the
-	// first ~6k ticks (the longest boon duration), so the rest re-confirms the
+	// first ~3k ticks (the longest boon duration), so the rest re-confirms the
 	// plateau holds rather than climbing.
 	soakTicksPerCycle = 400_000
-	// soakEncounterEveryTicks mirrors the fastest cadence the expedition system can
-	// actually sustain: two categories (scouting + military), each gating a single
-	// in-flight expedition whose shortest duration is ~10 ticks, so an encounter is
-	// *attempted* roughly every 5 ticks. Each attempt is still gated by the real
-	// per-resolution encounter probability inside rollExpeditionEncounter.
+	// soakEncounterEveryTicks deliberately OVER-drives the encounter path: one
+	// attempt every 5 ticks, against a real game where the shortest scouting run
+	// takes 60-100 ticks and only a fraction of resolutions produce an encounter at
+	// all (see game/boon_tuning_test.go, which measures ~27 encounters per 10k
+	// ticks for a continuous explorer — roughly 70x slower than this).
+	//
+	// That is the point. A soak asks whether the bounds HOLD under load the game
+	// cannot actually generate; it is not a cadence measurement and must not be
+	// read as one. This constant was once justified by a "shortest duration is ~10
+	// ticks" claim taken from the legacy ExpeditionDef.Duration field, which the
+	// runtime ignores — the number was wrong, the pressure it applies is still
+	// valid, so the driver stays and the reasoning is corrected. Each attempt is
+	// still gated by the real per-resolution encounter probability inside
+	// rollExpeditionEncounter.
 	soakEncounterEveryTicks = 5
 
 	// soakSampleEvery / soakRecalcEvery keep the hot loop cheap: bound-check the

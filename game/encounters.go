@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 
+	"github.com/espresso20/ageforge/boon"
 	"github.com/espresso20/ageforge/config"
 )
 
@@ -30,18 +31,25 @@ const (
 	// even a botched run turns up SOMEONE now and then.
 	//
 	// CALIBRATION (measured pass, see game/boon_tuning_test.go). These are rolled
-	// per RESOLVED expedition, and the cheapest scouting run in the game resolves
-	// in 10 ticks — so at the original 0.35/0.12 a player who simply re-launched
-	// it met a foreign civilization every ~25 ticks (~400 per 10k). That is a
-	// firehose against an 11-faction roster, and it drowned the boon inventory:
-	// encounters arrived ~15x faster than boon slots could free, so 97% of them
-	// bounced off a full court. Cut ~4x, a continuous explorer now meets someone
-	// roughly every ~95 ticks (~105 per 10k) — frequent enough to feel alive,
-	// slow enough that the reward actually lands. Tuned, not sacred.
-	encounterChanceScoutSuccess    = 0.09
-	encounterChanceScoutFail       = 0.03
-	encounterChanceMilitarySuccess = 0.04
-	encounterChanceMilitaryFail    = 0.01
+	// per RESOLVED expedition, so the cadence they produce depends entirely on how
+	// long an expedition actually takes. The first tuning pass cut them ~4x from
+	// 0.35/0.12/0.16/0.04 on the belief that the cheapest scouting run resolves in
+	// 10 ticks and a continuous explorer therefore met someone every ~25 ticks.
+	// That number came from the legacy ExpeditionDef.Duration field, which
+	// LaunchExpedition IGNORES whenever a def carries a [DurationMin, DurationMax]
+	// range — the real shortest scouting run is 60-100 ticks. Corrected, the cut
+	// odds produced one meeting per ~750 ticks (13 per 10k): a roster of foreign
+	// civilizations you essentially never met.
+	//
+	// Half that cut is given back here. A continuous explorer now meets someone
+	// roughly every ~375 ticks (~27 per 10k) — frequent enough to feel alive, and
+	// paired with the restored catalogue durations (see boon/catalog.go) it puts
+	// offered load at ~3.7 of the 5 boon slots, so most encounters land. Tuned,
+	// not sacred: the two levers multiply, so move one and re-measure both.
+	encounterChanceScoutSuccess    = 0.18
+	encounterChanceScoutFail       = 0.06
+	encounterChanceMilitarySuccess = 0.08
+	encounterChanceMilitaryFail    = 0.02
 
 	// --- Boon capacity ------------------------------------------------------
 	// maxConcurrentFactionBoons is how many faction boons you may HOLD at once.
@@ -51,15 +59,19 @@ const (
 	// you spend by holding, not a counter you grow. Only TIMED boons occupy a
 	// slot; an instant gift is consumed on arrival.
 	//
-	// 3 -> 5 in the measured tuning pass. Capacity sets both how OFTEN an
-	// encounter can pay out (throughput is slots/duration) and how BIG the stacked
-	// buff feels at any moment. At 3 the live-boon count pinned at ~2.9 and the
-	// combined uplift sat around x1.25 — under the x1.2-1.6 band we want while
-	// boons are running. 5 lifts the working average to ~3.8 boons and the uplift
-	// into the band, while the worst realistic same-pool stack (5 allied str-5
-	// Enlightenments at ~0.455 each = ~2.3) still clears productionCap's x3.0
-	// clamp without touching it. Do not raise this further without re-checking
-	// that sum: past ~6 the clamp starts doing the balancing instead of the data.
+	// 3 -> 5 in the first measured tuning pass, and HELD at 5 through the second
+	// (the one that fixed the harness's cadence bug). Capacity sets both how OFTEN
+	// an encounter can pay out — throughput is slots/duration — and how BIG the
+	// stacked buff feels at any moment. With the corrected cadence, offered load is
+	// ~3.7 slot-equivalents against these 5 slots: ~3 boons live at a time, a
+	// median combined uplift of x1.24-1.32 (inside the x1.2-1.6 band), and full
+	// capacity occupied only 12-18% of the time.
+	//
+	// The reason to stop at 5 is the stacking arithmetic, not the throughput: the
+	// worst realistic same-pool stack (5 allied str-5 Enlightenments at ~0.455
+	// each = ~2.3) still clears productionCap's x3.0 clamp without touching it. Do
+	// not raise this without re-checking that sum — past ~6 the clamp starts doing
+	// the balancing instead of the data. Prefer moving durations or encounter odds.
 	maxConcurrentFactionBoons = 5
 	// maxConcurrentFactionMaluses bounds live setbacks the same way, so a long
 	// war cannot bury the active-events panel. See applyFactionMalus: at this
@@ -77,8 +89,13 @@ const (
 	malusChanceOnExpeditionFailure = 1.0
 	// malusChanceAtWar is the odds an encounter with a civ you are AT WAR with
 	// yields a setback. War used to be a silent skip — the encounter fired and
-	// nothing happened. Now it bites.
-	malusChanceAtWar = 1.0
+	// nothing happened. Now it bites, but not every time: at a certain setback the
+	// measured at-war scenario ran 52% setbacks, double the top of the 10-25% band
+	// we want, because a war makes a large share of your encounters at-war
+	// encounters. At 0.35 a war still reads as dangerous without turning the whole
+	// exploration loop into punishment. A war encounter that does NOT bite yields
+	// nothing at all — there is no gift from a civ you are fighting.
+	malusChanceAtWar = 0.35
 )
 
 // atCapacityFlavors are the in-world lines for an encounter that arrives while
@@ -88,6 +105,19 @@ var atCapacityFlavors = []string{
 	"Your stores are already thick with foreign gifts; the envoys are thanked, fed, and sent home with their crates unopened.",
 	"The ledger of outstanding favours is full. There is nothing they can offer that you are not already owed.",
 	"Your court can carry no more obligations this season — the party returns with courtesies and little else.",
+}
+
+// atWarNoHarmFlavors are the lines for meeting a civilization you are AT WAR with
+// and getting away with it. There is never a gift from an enemy, but war does not
+// bite on every contact either (see malusChanceAtWar), and the encounter must not
+// be SILENT: before the malus table existed, a war encounter fired and produced
+// nothing at all, which read to the player — and to the measurement harness — as
+// if no encounter had happened. A standoff is an outcome and gets a line.
+// Player-facing production text: dry, in-world, no winking at the mechanic.
+var atWarNoHarmFlavors = []string{
+	"Your scouts and theirs see each other across the valley. Both parties withdraw without a word.",
+	"An enemy column shadows the expedition most of a day, then breaks off. Nothing is gained and nothing is lost.",
+	"Contact with the enemy, brief and inconclusive. Your people come home with nothing but the sighting.",
 }
 
 // rollExpeditionEncounter is called once per resolved expedition. It rolls the
@@ -129,13 +159,15 @@ func (ge *GameEngine) rollExpeditionEncounter(category string, success bool) []s
 	// Resolve the outcome. Three things can turn an encounter sour or empty, in
 	// priority order:
 	//
-	//   1. WAR — an at-war civ raids rather than gifts. This used to be a silent
-	//      skip; it now rolls the malus table (the deferred "negative table").
+	//   1. WAR — an at-war civ raids rather than gifts. It rolls the malus table at
+	//      malusChanceAtWar; short of that the contact is a standoff, reported but
+	//      empty. There is no positive boon from an enemy either way.
 	//   2. FAILURE — a botched expedition that still met someone brings back
 	//      trouble, not tribute.
-	//   3. CAPACITY — you can only hold maxConcurrentFactionBoons favours at
-	//      once. Over that, no positive boon lands; the party mostly returns
-	//      empty-handed, and occasionally worse.
+	//   3. CAPACITY — you can only HOLD maxConcurrentFactionBoons timed favours at
+	//      once. Over that a timed boon is refused: the party mostly returns
+	//      empty-handed, and occasionally worse. An instant gift (a lump of goods,
+	//      a work-gang) occupies no slot, so it still lands.
 	//
 	// Otherwise: a successful expedition, under capacity, gets a boon as before.
 	state, _ := ge.Diplomacy.StateOf(target.Key)
@@ -145,6 +177,10 @@ func (ge *GameEngine) rollExpeditionEncounter(category string, success bool) []s
 			if line := ge.applyFactionMalus(target, state); line != "" {
 				messages = append(messages, line)
 			}
+		} else {
+			// No harm done — but no gift either, and not silence.
+			flavor := atWarNoHarmFlavors[ge.rng.Intn(len(atWarNoHarmFlavors))]
+			messages = append(messages, fmt.Sprintf("[gray]✖ %s:[-] %s", target.Name, flavor))
 		}
 	case !success:
 		if ge.rng.Float64() < malusChanceOnExpeditionFailure {
@@ -153,11 +189,23 @@ func (ge *GameEngine) rollExpeditionEncounter(category string, success bool) []s
 			}
 		}
 	case ge.activeFactionBoonCount() >= maxConcurrentFactionBoons:
-		if ge.rng.Float64() < atCapacityMalusChance {
+		// Capacity is a limit on what you can HOLD, so it can only bind on the
+		// boons that are held — the timed kinds, which are exactly the ones
+		// activeFactionBoonCount counts. Roll the gift first: an instant lump or a
+		// work-gang is consumed on arrival, takes no slot, and lands normally even
+		// with a full court. Only a TIMED roll is refused, and only that refusal
+		// can sour into a setback.
+		b := ge.rollFactionBoon(target, state)
+		switch {
+		case b != (boon.Boon{}) && !boonHoldsSlot(b):
+			if line := ge.applyRolledFactionBoon(target, b); line != "" {
+				messages = append(messages, line)
+			}
+		case ge.rng.Float64() < atCapacityMalusChance:
 			if line := ge.applyFactionMalus(target, state); line != "" {
 				messages = append(messages, line)
 			}
-		} else {
+		default:
 			flavor := atCapacityFlavors[ge.rng.Intn(len(atCapacityFlavors))]
 			messages = append(messages, fmt.Sprintf("[gray]✦ %s:[-] %s", target.Name, flavor))
 		}

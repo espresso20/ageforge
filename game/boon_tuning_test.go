@@ -26,7 +26,10 @@ import (
 //   - the real expedition cadence for that age — the SHORTEST available
 //     expedition per category (the spam-optimal choice a continuous explorer
 //     actually makes), re-launched the moment it resolves (or after a gap, for
-//     the casual scenario);
+//     the casual scenario), with each launch's length rolled from the def's
+//     [DurationMin, DurationMax] range exactly as LaunchExpedition rolls it (see
+//     effectiveExpeditionDuration for why the legacy Duration field must not be
+//     used);
 //   - the real success roll (successRoll > DifficultyBase, no military bonus);
 //   - the real encounter path: rollExpeditionEncounter → applyFactionBoon /
 //     applyFactionMalus → boon.RollBoon → boon.Apply → InjectEvent;
@@ -42,11 +45,14 @@ import (
 // boonFlavorSignatures), so it does not rot when flavour text is edited.
 
 const (
-	// tuningTicks is the driven-tick budget per scenario. At the fastest real
-	// cadence this is ~20k expedition resolutions and several thousand
-	// encounters — enough that the outcome split is stable to well under a
-	// percentage point.
-	tuningTicks = 200_000
+	// tuningTicks is the driven-tick budget per scenario. The real cadence is far
+	// slower than this harness once assumed (two categories, each re-launching a
+	// ~60-160 tick expedition, ~13 encounters per 10k ticks), so the budget was
+	// raised 10x when that was fixed: 2M ticks is ~50k expedition resolutions and
+	// a few thousand encounters per scenario — enough that the outcome split is
+	// stable to well under a percentage point and a 1%-of-boons catalog entry is
+	// still counted in the dozens. Costs a few seconds.
+	tuningTicks = 2_000_000
 	// tuningShortTicks is the budget under -short: enough to prove the harness
 	// runs end to end, not enough for stable statistics.
 	tuningShortTicks = 20_000
@@ -109,11 +115,20 @@ func longestLiteralRun(tmpl string) string {
 
 // classifyLine buckets one player-facing encounter line. Returns the bucket and,
 // for boon/setback lines, the catalog entry Name that produced it.
+//
+// "bounce" is the EMPTY-OUTCOME bucket: the encounter happened and the player got
+// nothing. Two paths land there — a full boon inventory turning away a timed gift,
+// and a war contact that did not turn violent.
 func classifyLine(line string, boonSigs, malusSigs map[string]string) (bucket, name string) {
 	if strings.Contains(line, "First contact:") {
 		return "discovery", ""
 	}
 	for _, flavor := range atCapacityFlavors {
+		if strings.Contains(line, flavor) {
+			return "bounce", ""
+		}
+	}
+	for _, flavor := range atWarNoHarmFlavors {
 		if strings.Contains(line, flavor) {
 			return "bounce", ""
 		}
@@ -318,9 +333,12 @@ func meanOfInts(xs []int) float64 {
 
 // --- the driver -------------------------------------------------------------
 
-// expDriver models one expedition category's launch/resolve loop.
+// expDriver models one expedition category's launch/resolve loop, INCLUDING the
+// randomized per-launch duration the real game rolls.
 type expDriver struct {
-	duration   int
+	durMin     int // randomized range low end (0 when the def has no range)
+	durMax     int
+	durFixed   int // legacy fixed Duration; used only when there is no range
 	difficulty float64
 	gap        int
 	ticksLeft  int
@@ -329,11 +347,46 @@ type expDriver struct {
 	live       bool
 }
 
+// effectiveExpeditionDuration is the duration the RUNTIME actually gives a def:
+// the low end of its randomized range, or the legacy fixed Duration when the def
+// carries no range at all.
+//
+// This distinction is load-bearing. LaunchExpedition (game/military.go) ignores
+// the legacy Duration field entirely whenever DurationMax > DurationMin, and most
+// defs now carry a range that bears no relation to their stale fixed value —
+// scout_party still says Duration: 20 next to DurationMin/Max of 100/160. This
+// harness used to pick and time its expeditions off that legacy field, so it
+// simulated a cadence ~6.5x faster than the game can produce and every number it
+// reported about encounter frequency was wrong in the same direction.
+func effectiveExpeditionDuration(d ExpeditionDef) int {
+	if d.DurationMax > d.DurationMin {
+		return d.DurationMin
+	}
+	return d.Duration
+}
+
+// rollDuration draws one launch's active duration with the SAME rule
+// LaunchExpedition uses — a uniform value in [DurationMin, DurationMax] when a
+// range is set, else the legacy fixed Duration — but off the harness's seeded rng
+// so a scenario stays reproducible. Floored at 1 so a def with no usable duration
+// cannot spin the driver.
+func (d *expDriver) rollDuration(rng *rand.Rand) int {
+	ticks := d.durFixed
+	if d.durMax > d.durMin {
+		ticks = d.durMin + rng.Intn(d.durMax-d.durMin+1)
+	}
+	if ticks < 1 {
+		ticks = 1
+	}
+	return ticks
+}
+
 // newExpDriver picks the SHORTEST expedition available in a category at an age —
 // the spam-optimal choice, and therefore the honest worst case for encounter
-// cadence. Returns live=false when the category has nothing available or the
-// scenario disabled it (gap < 0).
-func newExpDriver(ge *GameEngine, category, age string, gap int) expDriver {
+// cadence. "Shortest" is compared on the EFFECTIVE duration (see
+// effectiveExpeditionDuration), not the legacy field. Returns live=false when the
+// category has nothing available or the scenario disabled it (gap < 0).
+func newExpDriver(ge *GameEngine, category, age string, gap int, rng *rand.Rand) expDriver {
 	if gap < 0 {
 		return expDriver{category: category}
 	}
@@ -343,18 +396,21 @@ func newExpDriver(ge *GameEngine, category, age string, gap int) expDriver {
 	}
 	best := defs[0]
 	for _, d := range defs[1:] {
-		if d.Duration < best.Duration {
+		if effectiveExpeditionDuration(d) < effectiveExpeditionDuration(best) {
 			best = d
 		}
 	}
-	return expDriver{
-		duration:   best.Duration,
+	d := expDriver{
+		durMin:     best.DurationMin,
+		durMax:     best.DurationMax,
+		durFixed:   best.Duration,
 		difficulty: best.DifficultyBase,
 		gap:        gap,
-		ticksLeft:  best.Duration,
 		category:   category,
 		live:       true,
 	}
+	d.ticksLeft = d.rollDuration(rng)
+	return d
 }
 
 // step advances one tick. resolved reports whether the expedition finished this
@@ -373,13 +429,13 @@ func (d *expDriver) step(rng *rand.Rand) (resolved, success bool) {
 		diff := math.Max(d.difficulty, 0.05)
 		d.cooldown = d.gap
 		if d.cooldown == 0 {
-			d.ticksLeft = d.duration
+			d.ticksLeft = d.rollDuration(rng)
 		}
 		return true, rng.Float64() > diff
 	}
 	d.cooldown--
 	if d.cooldown <= 0 {
-		d.ticksLeft = d.duration
+		d.ticksLeft = d.rollDuration(rng)
 	}
 	return false, false
 }
@@ -465,10 +521,10 @@ func runTuningScenario(t *testing.T, sc tuningScenario, ticks int, seed int64) *
 
 	order := ge.progress.GetAgeOrder()
 	drivers := []*expDriver{}
-	if d := newExpDriver(ge, ExpeditionScouting, sc.age, sc.scoutGap); d.live {
+	if d := newExpDriver(ge, ExpeditionScouting, sc.age, sc.scoutGap, expRNG); d.live {
 		drivers = append(drivers, &d)
 	}
-	if d := newExpDriver(ge, ExpeditionMilitary, sc.age, sc.milGap); d.live {
+	if d := newExpDriver(ge, ExpeditionMilitary, sc.age, sc.milGap, expRNG); d.live {
 		drivers = append(drivers, &d)
 	}
 
@@ -689,9 +745,59 @@ func TestBoonTuning_HarnessClassifies(t *testing.T) {
 	check(boon.Catalog(), boonSigs, malusSigs, "boon")
 	check(boon.MalusCatalog(), boonSigs, malusSigs, "setback")
 
-	for _, flavor := range atCapacityFlavors {
+	for _, flavor := range append(append([]string{}, atCapacityFlavors...), atWarNoHarmFlavors...) {
 		if bucket, _ := classifyLine(flavor, boonSigs, malusSigs); bucket != "bounce" {
-			t.Errorf("at-capacity flavour classified as %q, want bounce", bucket)
+			t.Errorf("empty-outcome flavour %q classified as %q, want bounce", flavor, bucket)
+		}
+	}
+}
+
+// TestBoonTuning_HarnessUsesRuntimeDurations pins the instrument bug this harness
+// shipped with: it derived its cadence from ExpeditionDef.Duration, the LEGACY
+// fallback field that LaunchExpedition ignores whenever a def carries a
+// [DurationMin, DurationMax] range. Every driver duration must therefore land
+// inside the range the runtime would roll, and the def a driver picks must be the
+// shortest by EFFECTIVE duration — not by the stale fixed value.
+func TestBoonTuning_HarnessUsesRuntimeDurations(t *testing.T) {
+	ge := NewGameEngine()
+	order := ge.progress.GetAgeOrder()
+	rng := rand.New(rand.NewSource(1))
+
+	for _, category := range []string{ExpeditionScouting, ExpeditionMilitary} {
+		for _, age := range config.AgeOrder() {
+			defs := ge.Military.GetAvailableExpeditionsByCategory(category, age, order)
+			if len(defs) == 0 {
+				continue
+			}
+			d := newExpDriver(ge, category, age, 0, rng)
+			if !d.live {
+				t.Fatalf("%s at %s: driver inert despite %d available defs", category, age, len(defs))
+			}
+
+			want := effectiveExpeditionDuration(defs[0])
+			for _, def := range defs[1:] {
+				if e := effectiveExpeditionDuration(def); e < want {
+					want = e
+				}
+			}
+			if got := effectiveExpeditionDuration(ExpeditionDef{
+				Duration: d.durFixed, DurationMin: d.durMin, DurationMax: d.durMax,
+			}); got != want {
+				t.Errorf("%s at %s: driver picked effective duration %d, shortest available is %d",
+					category, age, got, want)
+			}
+
+			// Every rolled launch must fall in the runtime's own range.
+			lo, hi := d.durMin, d.durMax
+			if hi <= lo {
+				lo, hi = d.durFixed, d.durFixed
+			}
+			for i := 0; i < 200; i++ {
+				if ticks := d.rollDuration(rng); ticks < lo || ticks > hi {
+					t.Fatalf("%s at %s: rolled duration %d outside runtime range [%d,%d]",
+						category, age, ticks, lo, hi)
+				}
+			}
 		}
 	}
 }
