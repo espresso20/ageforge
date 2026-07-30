@@ -167,8 +167,10 @@ func TestExpedition_ResolvesWithoutWorkerLoss(t *testing.T) {
 		t.Fatalf("LaunchExpedition error: %v", err)
 	}
 
-	// Drive the expedition to resolution.
-	for i := 0; i < 40 && ge.Military.HasActive(); i++ {
+	// Drive the expedition to resolution. trade_escort's active duration is now
+	// randomized (up to ~100 ticks, Bug RQPHYAHC), so budget generously; the loop
+	// exits as soon as it resolves.
+	for i := 0; i < 200 && ge.Military.HasActive(); i++ {
 		ge.mu.Lock()
 		ge.processExpeditions()
 		ge.mu.Unlock()

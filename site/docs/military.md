@@ -65,7 +65,7 @@ Spent or lost soldiers are simply removed from the stockpile. To replenish, keep
 army
 ```
 
-Opens the **Army** panel showing current soldier count, defense rating, the active military **campaign** (if any), and completed campaign count. The active scouting expedition lives in the separate **Expeditions** panel (`expedition`) — one scouting expedition and one military campaign can run concurrently, one of each category.
+Opens the **Army** panel showing current soldier count, defense rating, the active military **campaign** (if any), and completed campaign count. The active scouting expedition lives in the separate **Expeditions** panel (`expedition`) — one scouting expedition and one military campaign can run concurrently, one of each category. The running **Loot History** (total loot collected) is shown in the Expeditions panel, not here.
 
 ---
 
@@ -115,7 +115,7 @@ Expeditions are timed missions launched from your stockpiles. They come in **two
 - **Scouting** (`scout_party`, `scout_ruins`, `naval_expedition`) — cost only a resource `Cost`, **0 soldiers**. These are available early, before the `soldiers` resource exists at the Iron Age.
 - **Military campaigns** (everything else — 13 of them) — **spend the soldiers resource** to launch, plus any additional resource `Cost`.
 
-Whatever the kind, the cost is deducted from your stockpiles the moment you launch — there's no refund. After a set number of ticks, the mission resolves. **Success and failure differ only in the size of the reward, not the cost:** the soldiers and/or resources are spent either way. A successful run pays full loot; a failed run pays a reduced amount. **One mission of each category can be active at a time:** a scouting expedition and a military campaign can run concurrently, but you can't launch a second of the same category while one is still in progress.
+Whatever the kind, the cost is deducted from your stockpiles the moment you launch — there's no refund. After a number of ticks — **randomized within each mission's own min–max range and rolled at launch** — the mission resolves. **Success and failure differ only in the size of the reward, not the cost:** the soldiers and/or resources are spent either way. A successful run pays full loot; a failed run pays a reduced amount. **One mission of each category can be active at a time:** a scouting expedition and a military campaign can run concurrently, but you can't launch a second of the same category while one is still in progress.
 
 ### Cost, gating, and rewards
 
@@ -142,7 +142,7 @@ campaign <key>          # Wage a military campaign (e.g., campaign raid_bandits)
 
 The two surfaces are kept distinct, and the game cross-redirects if you mix them up: running a military key through `expedition` (e.g. `expedition raid_bandits`) is refused with a note to use `campaign <key>` instead, and running a scouting key through `campaign` redirects you to `expedition <key>`.
 
-The **Expeditions** panel (`expedition`) lists only the **scouting** expeditions available in your current age — the resource-only missions. The **Army** panel (`army`) lists only the **military campaigns** — the ones that spend soldiers — alongside your soldier count and defense rating. So you can see at a glance which missions are which: scouting on the Expeditions panel, campaigns on the Army panel.
+The **Expeditions** panel (`expedition`) lists only the **scouting** expeditions available in your current age — the resource-only missions. The **Army** panel (`army`) lists only the **military campaigns** — the ones that spend soldiers — alongside your soldier count and defense rating. So you can see at a glance which missions are which: scouting on the Expeditions panel, campaigns on the Army panel. The Expeditions panel also carries the **Loot History** — the running total of all loot collected, from expeditions and campaigns alike.
 
 ### Success probability formula
 
@@ -168,28 +168,30 @@ This is a reference table of **all** missions, scouting and campaigns alike. The
 
 | Key | Name | Min Age | Soldier Cost | Resource Cost | Duration | Difficulty | Rewards on Success |
 |-----|------|---------|--------------|---------------|----------|------------|-------------------|
-| `scout_party` | Scout Party | Primitive Age (max Bronze Age) | 0 | 30 food, 30 wood | 20t | — | 60 food, 60 wood, 20 stone |
-| `scout_ruins` | Scout Nearby Ruins | Bronze Age | 0 | 40 food, 30 wood | 10t | 0.20 | 30 food, 20 wood, 15 stone |
-| `raid_bandits` | Raid Bandit Camp | Bronze Age | 5 | — | 15t | 0.40 | 30 gold, 15 iron, 20 food |
-| `trade_escort` | Trade Escort | Iron Age | 3 | — | 12t | 0.30 | 50 gold, 10 knowledge |
-| `conquer_territory` | Conquer Territory | Iron Age | 10 | — | 25t | 0.60 | 80 gold, 40 iron, 50 food |
-| `siege_castle` | Siege Enemy Castle | Medieval Age | 15 | — | 30t | 0.70 | 150 gold, 30 steel, 20 faith |
-| `naval_expedition` | Naval Expedition | Renaissance Age | 0 | 150 food, 100 wood | 35t | 0.50 | 200 gold, 30 culture, 40 knowledge |
-| `colonial_campaign` | Colonial Campaign | Industrial Age | 20 | — | 40t | 0.60 | 300 gold, 50 oil, 40 steel |
-| `world_domination` | World Domination | Modern Age | 50 | — | 60t | 0.80 | 1,000 gold, 200 electricity, 500 knowledge |
-| `cyber_raid` | Cyber Raid | Information Age | 30 | — | 45t | 0.60 | 200 data, 50 crypto, 500 gold |
-| `neon_heist` | Neon Heist | Cyberpunk Age | 25 | — | 35t | 0.55 | 100 crypto, 150 data, 800 gold |
-| `fusion_assault` | Fusion Plant Assault | Fusion Age | 35 | — | 40t | 0.65 | 120 plasma, 500 electricity, 50 uranium |
-| `orbital_strike` | Orbital Strike | Space Age | 40 | — | 50t | 0.70 | 100 titanium, 80 plasma, 300 knowledge |
-| `warp_invasion` | Warp Invasion | Interstellar Age | 60 | — | 65t | 0.75 | 50 dark matter, 200 titanium, 2,000 gold |
-| `galactic_conquest` | Galactic Conquest | Galactic Age | 80 | — | 80t | 0.80 | 30 antimatter, 100 dark matter, 5,000 gold |
-| `quantum_incursion` | Quantum Incursion | Quantum Age | 100 | — | 90t | 0.85 | 20 quantum flux, 50 antimatter, 5,000 knowledge |
+| `scout_party` | Scout Party | Primitive Age (max Bronze Age) | 0 | 30 food, 30 wood | 100–160t | — | 60 food, 60 wood, 20 stone |
+| `scout_ruins` | Scout Nearby Ruins | Bronze Age | 0 | 40 food, 30 wood | 60–100t | 0.20 | 30 food, 20 wood, 15 stone |
+| `raid_bandits` | Raid Bandit Camp | Bronze Age | 5 | — | 60–100t | 0.40 | 30 gold, 15 iron, 20 food |
+| `trade_escort` | Trade Escort | Iron Age | 3 | — | 60–100t | 0.30 | 50 gold, 10 knowledge |
+| `conquer_territory` | Conquer Territory | Iron Age | 10 | — | 60–100t | 0.60 | 80 gold, 40 iron, 50 food |
+| `siege_castle` | Siege Enemy Castle | Medieval Age | 15 | — | 60–100t | 0.70 | 150 gold, 30 steel, 20 faith |
+| `naval_expedition` | Naval Expedition | Renaissance Age | 0 | 150 food, 100 wood | 60–100t | 0.50 | 200 gold, 30 culture, 40 knowledge |
+| `colonial_campaign` | Colonial Campaign | Industrial Age | 20 | — | 60–100t | 0.60 | 300 gold, 50 oil, 40 steel |
+| `world_domination` | World Domination | Modern Age | 50 | — | 60–100t | 0.80 | 1,000 gold, 200 electricity, 500 knowledge |
+| `cyber_raid` | Cyber Raid | Information Age | 30 | — | 60–100t | 0.60 | 200 data, 50 crypto, 500 gold |
+| `neon_heist` | Neon Heist | Cyberpunk Age | 25 | — | 60–100t | 0.55 | 100 crypto, 150 data, 800 gold |
+| `fusion_assault` | Fusion Plant Assault | Fusion Age | 35 | — | 60–100t | 0.65 | 120 plasma, 500 electricity, 50 uranium |
+| `orbital_strike` | Orbital Strike | Space Age | 40 | — | 60–100t | 0.70 | 100 titanium, 80 plasma, 300 knowledge |
+| `warp_invasion` | Warp Invasion | Interstellar Age | 60 | — | 65–105t | 0.75 | 50 dark matter, 200 titanium, 2,000 gold |
+| `galactic_conquest` | Galactic Conquest | Galactic Age | 80 | — | 80–130t | 0.80 | 30 antimatter, 100 dark matter, 5,000 gold |
+| `quantum_incursion` | Quantum Incursion | Quantum Age | 100 | — | 90–145t | 0.85 | 20 quantum flux, 50 antimatter, 5,000 knowledge |
 
 That's **16 missions** in total — 3 scouting expeditions and 13 military campaigns.
 
-**Scouting — the soldier-free expeditions.** Before the Iron Age there is no military worker domain and no `soldiers` resource, so the military campaigns aren't available. The **scouting** expeditions fill that gap — `scout_party` (primitive → bronze) and then `scout_ruins` (bronze age) are available without soldiers, charging only resources. `scout_party`: *"A small band of foragers scouts nearby territory for resources."* It costs **30 food + 30 wood**, needs **0 soldiers**, runs ~20 ticks, and rewards roughly **60 food / 60 wood / 20 stone** — a net resource gain worth running on repeat through the Primitive, Stone, and Bronze ages. It has a `MaxAge` of Bronze Age and disappears once you reach the Iron Age. `scout_ruins` (Bronze Age, 0 soldiers, 40 food + 30 wood) carries scouting forward, and `naval_expedition` (Renaissance Age, 0 soldiers, 150 food + 100 wood) is the late scouting option.
+**Durations are randomized.** The **Duration** column shows each mission's min–max range in ticks. The active time is rolled uniformly within that range at launch, so no mission resolves in under ~60 ticks and scouting parties (`scout_party`) run **~100–160 ticks** — roughly 130 on average. The remaining-time readout counts down the rolled value.
 
-**Tip:** `campaign trade_escort` (Iron Age, 3 soldiers, 12t, 0.30 difficulty) is the workhorse of early *soldier* play — cheap, short, and chainable for consistent gold. For soldier-free resource throughput, chain the scouting expeditions (`expedition scout_party`, then `expedition scout_ruins`) — low difficulty, short duration, and no soldiers required.
+**Scouting — the soldier-free expeditions.** Before the Iron Age there is no military worker domain and no `soldiers` resource, so the military campaigns aren't available. The **scouting** expeditions fill that gap — `scout_party` (primitive → bronze) and then `scout_ruins` (bronze age) are available without soldiers, charging only resources. `scout_party`: *"A small band of foragers scouts nearby territory for resources."* It costs **30 food + 30 wood**, needs **0 soldiers**, runs **~100–160 ticks** (randomized per launch), and rewards roughly **60 food / 60 wood / 20 stone** — a net resource gain worth running on repeat through the Primitive, Stone, and Bronze ages. It has a `MaxAge` of Bronze Age and disappears once you reach the Iron Age. `scout_ruins` (Bronze Age, 0 soldiers, 40 food + 30 wood) carries scouting forward, and `naval_expedition` (Renaissance Age, 0 soldiers, 150 food + 100 wood) is the late scouting option.
+
+**Tip:** `campaign trade_escort` (Iron Age, 3 soldiers, ~60–100t, 0.30 difficulty) is the workhorse of early *soldier* play — cheap and chainable for consistent gold. For soldier-free resource throughput, chain the scouting expeditions (`expedition scout_party`, then `expedition scout_ruins`) — low difficulty and no soldiers required. Durations are randomized (~60–160 ticks depending on the mission), so keep one of each category running rather than counting on a fixed timer.
 
 ### Faction encounters
 
@@ -305,7 +307,7 @@ The five military milestones form a chain. Completing the full chain grants a pe
 - Before Iron Age, run `expedition scout_party` on repeat — 0 soldiers, just 30 food + 30 wood for a ~60 food / 60 wood / 20 stone payout. It's free resource throughput while you wait for the military domain.
 - Build a **War Camp** in the Stone Age even though soldiers aren't possible yet — it prepares your soldier storage and starts producing the moment the domain unlocks.
 - Your first soldiers become available in **Iron Age** via the Hunting Lodge. Stockpile 5 quickly to land `first_soldiers` for the free +0.05 bonus.
-- `campaign trade_escort` (spends 3 soldiers, Iron Age) is your best early campaign — cheap, fast duration (12t), reasonable gold reward.
+- `campaign trade_escort` (spends 3 soldiers, Iron Age) is your best early campaign — cheap, modest duration (~60–100t, randomized), reasonable gold reward.
 - Keep food workers prioritised. Military workers eat 2.0 food/tick each at this stage — a 10-soldier army demands 20 food/tick just to sustain itself.
 
 ### Mid game (Classical to Industrial Age)
@@ -367,6 +369,6 @@ See [Morale](morale.md) for the full banded system.
 
 **Castle Keep timing matters for `fortress_state`.** You need 10 Castle Keeps (Medieval Age). That's a serious stone and iron investment — start queuing them as soon as you hit Medieval. The +0.10 bonus is worth the build cost several times over in improved expedition returns.
 
-**Run expeditions continuously.** There's no cooldown between expeditions beyond the active duration. The moment one resolves, launch the next. Idle military is lost throughput.
+**Run expeditions continuously.** There's no cooldown between expeditions beyond the active duration (now ~60–160 ticks, randomized per launch). The moment one resolves, launch the next. Idle military is lost throughput.
 
 **Prestige compounds military strength.** `military_power` prestige upgrade (5 tiers × 5% = +25%) and `expedition_loot` (5 tiers × 5% = +25%) both persist through resets. Prioritise these in the prestige shop on your second and third runs.

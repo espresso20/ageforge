@@ -9,15 +9,18 @@ func buildingsLineageOrganicExtraction() []BuildingDef {
 
 	// =========================================================================
 	// LINEAGE 3 — ORGANIC EXTRACTION (lineageKey: "organic_extraction", domain: "lumber")
-	// rate = 0.20 * 2^tier  CostScale: 1.30  Category: "production"
+	// rate = 0.20 * 2^tier  CostScale: 1.12 (tier 0), 1.30 (tiers 1+)  Category: "production"
 	// Output transitions: wood(0-5) → coal(6-8) → oil(9-13) → nanobots(14-16) → quantum_flux(17-20)
 	// =========================================================================
 
 	// tier 0 — primitive_age  rate=0.20  output=wood
+	// note: cost matched to gathering_camp's raw inputs (wood:20 @ 1.12) so the two
+	// primitive extractors normalize to the same ~16 wood @ 1.15 — a wood camp must
+	// not cost ~2.9x a gathering camp. See Ety5GDPw.
 	b = append(b, BuildingDef{
 		Name: "Wood Camp", Key: "wood_camp", Category: "production",
-		BaseCost:    map[string]float64{"wood": 15},
-		CostScale:   1.30,
+		BaseCost:    map[string]float64{"wood": 20},
+		CostScale:   1.12,
 		Effects:     []Effect{{Type: "production", Target: "wood", Value: 0.20}},
 		BuildTicks:  20,
 		RequiredAge: "primitive_age",

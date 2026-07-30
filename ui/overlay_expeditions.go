@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
@@ -41,7 +42,27 @@ func expeditionsProvider(state game.GameState, _ int) string {
 		writeExpeditionGroup(&sb, "Scouting", mil.Expeditions, game.ExpeditionScouting)
 	}
 
-	sb.WriteString(" [gray]Commands: expedition <key>[-]\n")
+	// === Loot History ===
+	// Total loot lives with Expeditions (the scouting/loot surface), not the Army
+	// panel — loot accrues from resolving expeditions and campaigns alike.
+	sb.WriteString("\n [gold]═══ Loot History ═══[-]\n\n")
+	if len(mil.TotalLoot) == 0 {
+		sb.WriteString(" [gray]No loot collected yet[-]\n")
+		sb.WriteString(" [gray]Complete expeditions to earn rewards![-]\n")
+	} else {
+		sb.WriteString(" [gold]Total Loot Collected:[-]\n\n")
+		lootKeys := make([]string, 0, len(mil.TotalLoot))
+		for k := range mil.TotalLoot {
+			lootKeys = append(lootKeys, k)
+		}
+		sort.Strings(lootKeys)
+		for _, key := range lootKeys {
+			amount := mil.TotalLoot[key]
+			fmt.Fprintf(&sb, " %-12s [green]%.0f[-]\n", key, amount)
+		}
+	}
+
+	sb.WriteString("\n [gray]Commands: expedition <key>[-]\n")
 
 	return sb.String()
 }
