@@ -165,6 +165,13 @@ type tuningScenario struct {
 	// the next launching. 0 = back-to-back. Negative = that category is unused.
 	scoutGap int
 	milGap   int
+	// autoSocieties / autoWorkers describe an AUTOMATED scenario: a player who
+	// launches nothing by hand and instead has this many Geographic Societies with
+	// this many workers assigned across them (see game/auto_expedition.go).
+	// autoSocieties > 0 makes the scouting driver run on the shipped auto-dispatch
+	// cadence instead of scoutGap, so the tuning constants are what is measured.
+	autoSocieties int
+	autoWorkers   int
 }
 
 func tuningScenarios() []tuningScenario {
@@ -224,6 +231,33 @@ func tuningScenarios() []tuningScenario {
 			standings: midAtWar,
 			scoutGap:  0,
 			milGap:    0,
+		},
+		// F/F2 are the AUTOMATED idler: nothing launched by hand at all, every
+		// expedition dispatched by the Geographic Society. Same age and standings as
+		// B/D/E so they can be read straight off against hands-on and casual play.
+		//
+		// This is the measurement the automation feature has to pass. F must land
+		// BETWEEN D (casual) and B (hands-on), at roughly 50-70% of B's encounter
+		// rate — see TestBoonTuning_AutomationSitsBetweenCasualAndActive, which
+		// asserts it. milGap is -1 on both: automation never touches the military
+		// category, which is a large part of why it stays behind hands-on play.
+		{
+			name:          "F automated idler (atomic, 6 societies fully staffed)",
+			age:           "atomic_age",
+			standings:     mid,
+			scoutGap:      0,
+			milGap:        -1,
+			autoSocieties: 6,
+			autoWorkers:   48,
+		},
+		{
+			name:          "F2 automated idler, part-invested (atomic, 2 societies, half staffed)",
+			age:           "atomic_age",
+			standings:     mid,
+			scoutGap:      0,
+			milGap:        -1,
+			autoSocieties: 2,
+			autoWorkers:   8,
 		},
 	}
 }
@@ -344,6 +378,12 @@ type expDriver struct {
 	cooldown   int
 	category   string
 	live       bool
+	// autoInterval > 0 puts the driver on the Geographic Society's automatic
+	// cadence instead of a fixed gap (see idleGap). lastDur is the duration of the
+	// launch currently in flight, which the automatic cadence needs because its
+	// countdown runs from the LAUNCH, not from the return.
+	autoInterval int
+	lastDur      int
 }
 
 // effectiveExpeditionDuration is the shortest duration the RUNTIME can give a
@@ -404,8 +444,56 @@ func newExpDriver(ge *GameEngine, category, age string, gap int, rng *rand.Rand)
 		category:   category,
 		live:       true,
 	}
-	d.ticksLeft = d.rollDuration(rng)
+	d.relaunch(rng)
 	return d
+}
+
+// newAutoScoutDriver builds the scouting driver for an AUTOMATED scenario. Unlike
+// newExpDriver it does not guess at the cadence or the expedition: it asks the
+// shipped code for both — pickAutoScoutExpedition for which party goes out and
+// autoExpeditionIntervalFor for how often — so what the harness reports is the
+// behaviour of the live tuning constants, not a re-implementation of them.
+// Caller must hold the engine lock.
+func newAutoScoutDriver(ge *GameEngine, rng *rand.Rand) expDriver {
+	def := ge.pickAutoScoutExpedition(ge.progress.GetAgeOrder())
+	if def == nil {
+		return expDriver{category: ExpeditionScouting}
+	}
+	count, fill := ge.autoExpeditionInvestment()
+	interval := autoExpeditionIntervalFor(count, fill)
+	if interval <= 0 {
+		return expDriver{category: ExpeditionScouting}
+	}
+	d := expDriver{
+		durMin:       def.DurationMin,
+		durMax:       def.DurationMax,
+		difficulty:   def.DifficultyBase,
+		category:     ExpeditionScouting,
+		autoInterval: interval,
+		live:         true,
+	}
+	d.relaunch(rng)
+	return d
+}
+
+// relaunch puts a fresh expedition in flight, remembering its rolled duration.
+func (d *expDriver) relaunch(rng *rand.Rand) {
+	d.lastDur = d.rollDuration(rng)
+	d.ticksLeft = d.lastDur
+}
+
+// idleGap is how long the driver waits after a resolution before launching again.
+//
+// Manual play waits the scenario's fixed gap. AUTOMATED play instead reproduces
+// the real dispatcher's cycle of max(interval, duration): the society's countdown
+// runs from the launch and the party can only leave when the single scouting slot
+// is free, so whatever is left of the countdown when the last party comes home is
+// the idle time — and nothing at all if the trip outlasted the countdown.
+func (d *expDriver) idleGap() int {
+	if d.autoInterval > 0 {
+		return d.autoInterval - d.lastDur
+	}
+	return d.gap
 }
 
 // step advances one tick. resolved reports whether the expedition finished this
@@ -422,15 +510,15 @@ func (d *expDriver) step(rng *rand.Rand) (resolved, success bool) {
 		// Same success rule as MilitaryManager.tickCategory with no military
 		// bonus: successRoll > DifficultyBase (floored at 0.05).
 		diff := math.Max(d.difficulty, 0.05)
-		d.cooldown = d.gap
-		if d.cooldown == 0 {
-			d.ticksLeft = d.rollDuration(rng)
+		d.cooldown = d.idleGap()
+		if d.cooldown <= 0 {
+			d.relaunch(rng)
 		}
 		return true, rng.Float64() > diff
 	}
 	d.cooldown--
 	if d.cooldown <= 0 {
-		d.ticksLeft = d.rollDuration(rng)
+		d.relaunch(rng)
 	}
 	return false, false
 }
@@ -495,6 +583,15 @@ func prepareTuningEngine(sc tuningScenario, seed int64) *GameEngine {
 	}
 	ge.Workers.AddLentWorkers(tuningStartPop)
 
+	// Automated scenarios stand up the Geographic Societies and staff them, so the
+	// shipped investment/cadence functions see a real installation to read.
+	if sc.autoSocieties > 0 {
+		ge.Buildings.LoadCounts(map[string]int{autoExpeditionBuildingKey: sc.autoSocieties})
+		if sc.autoWorkers > 0 && !ge.Workers.Assign("worker", autoExpeditionBuildingKey, sc.autoWorkers) {
+			panic("tuning scenario could not staff its Geographic Societies")
+		}
+	}
+
 	return ge
 }
 
@@ -516,7 +613,13 @@ func runTuningScenario(t *testing.T, sc tuningScenario, ticks int, seed int64) *
 
 	order := ge.progress.GetAgeOrder()
 	drivers := []*expDriver{}
-	if d := newExpDriver(ge, ExpeditionScouting, sc.age, sc.scoutGap, expRNG); d.live {
+	if sc.autoSocieties > 0 {
+		// Automated: the scouting driver runs on the shipped dispatch cadence and
+		// the player launches nothing by hand.
+		if d := newAutoScoutDriver(ge, expRNG); d.live {
+			drivers = append(drivers, &d)
+		}
+	} else if d := newExpDriver(ge, ExpeditionScouting, sc.age, sc.scoutGap, expRNG); d.live {
 		drivers = append(drivers, &d)
 	}
 	if d := newExpDriver(ge, ExpeditionMilitary, sc.age, sc.milGap, expRNG); d.live {
@@ -674,14 +777,14 @@ func TestBoonTuning_Scenarios(t *testing.T) {
 	}
 
 	var summary strings.Builder
-	fmt.Fprintf(&summary, "\n%-46s %9s %8s %8s %8s %8s %8s %9s\n",
+	fmt.Fprintf(&summary, "\n%-70s %9s %8s %8s %8s %8s %8s %9s\n",
 		"SCENARIO", "enc/10k", "boon%", "bounce%", "setbk%", "anyboon%", "fullcap%", "uplift~x")
 
 	for i, sc := range tuningScenarios() {
 		stats := runTuningScenario(t, sc, ticks, 0xB00_1234+int64(i))
 		reportTuningStats(t, stats)
 
-		fmt.Fprintf(&summary, "%-46s %9.1f %8.1f %8.1f %8.1f %8.1f %8.1f %9.2f\n",
+		fmt.Fprintf(&summary, "%-70s %9.1f %8.1f %8.1f %8.1f %8.1f %8.1f %9.2f\n",
 			sc.name,
 			stats.per10k(stats.encounters),
 			stats.pctOfEncounters(stats.boons),
@@ -709,6 +812,103 @@ func TestBoonTuning_Scenarios(t *testing.T) {
 	}
 
 	t.Log(summary.String())
+}
+
+// TestBoonTuning_AutomationSitsBetweenCasualAndActive is the GATE on the
+// engagement gradient — the one assertion in this file that is not a loose sanity
+// check.
+//
+// The tuning pass that preceded automation deliberately spread play across a wide
+// band: a player exploring continuously meets someone ~26 times per 10k ticks and
+// holds a boon 97.5% of the time; a player who remembers to send a scout every
+// ~1000 ticks meets someone ~1.4 times and holds a boon 15.8% of the time. The
+// Geographic Society must land BETWEEN those, and at full investment must sit near
+// 50-70% of hands-on play. If automation ever matched back-to-back manual
+// dispatching, playing by hand would be pointless and that whole band would
+// collapse into a single point.
+//
+// The lever is autoExpeditionMinInterval (game/auto_expedition.go). If this test
+// fails, that constant is what to move — up to slow automation down, down to speed
+// it up — and then re-read the table this file prints.
+func TestBoonTuning_AutomationSitsBetweenCasualAndActive(t *testing.T) {
+	if testing.Short() {
+		t.Skip("needs the full tick budget for stable rates")
+	}
+
+	// Same age and standings across all four so the only variable is HOW the
+	// expeditions get dispatched.
+	byName := map[string]*tuningStats{}
+	for i, sc := range tuningScenarios() {
+		switch sc.age {
+		case "atomic_age":
+		default:
+			continue
+		}
+		key := strings.Fields(sc.name)[0]
+		byName[key] = runTuningScenario(t, sc, tuningTicks, 0xB00_1234+int64(i))
+	}
+
+	active, ok := byName["B"]
+	if !ok {
+		t.Fatal("scenario B (hands-on, atomic) is missing — the gate has no reference point")
+	}
+	casual, ok := byName["D"]
+	if !ok {
+		t.Fatal("scenario D (casual, atomic) is missing")
+	}
+	auto, ok := byName["F"]
+	if !ok {
+		t.Fatal("scenario F (automated idler, atomic) is missing")
+	}
+	partial, ok := byName["F2"]
+	if !ok {
+		t.Fatal("scenario F2 (part-invested automation, atomic) is missing")
+	}
+
+	rate := func(s *tuningStats) float64 { return s.per10k(s.encounters) }
+	uptime := func(s *tuningStats) float64 { return s.pctOfTicks(s.ticksAnyBoon) }
+
+	share := rate(auto) / rate(active) * 100
+	t.Logf("\nGRADIENT (atomic age, identical standings)\n"+
+		"  casual  (D)              %6.1f enc/10k   %5.1f%% uptime\n"+
+		"  auto part-invested (F2)  %6.1f enc/10k   %5.1f%% uptime\n"+
+		"  auto FULL (F)            %6.1f enc/10k   %5.1f%% uptime   <- %.1f%% of hands-on\n"+
+		"  hands-on (B)             %6.1f enc/10k   %5.1f%% uptime\n",
+		rate(casual), uptime(casual),
+		rate(partial), uptime(partial),
+		rate(auto), uptime(auto), share,
+		rate(active), uptime(active))
+
+	// --- 1. Full automation lands strictly between casual and hands-on. ---
+	if rate(auto) <= rate(casual) {
+		t.Errorf("full automation (%.1f enc/10k) is no better than casual play (%.1f) — "+
+			"the Geographic Society is not worth building", rate(auto), rate(casual))
+	}
+	if rate(auto) >= rate(active) {
+		t.Errorf("full automation (%.1f enc/10k) matches or beats hands-on play (%.1f) — "+
+			"raise autoExpeditionMinInterval", rate(auto), rate(active))
+	}
+	if uptime(auto) <= uptime(casual) || uptime(auto) >= uptime(active) {
+		t.Errorf("automation boon uptime %.1f%% is outside the casual..hands-on band (%.1f%%..%.1f%%)",
+			uptime(auto), uptime(casual), uptime(active))
+	}
+
+	// --- 2. And it lands in the intended 50-70% window. A little slack either
+	// side: the expedition duration roll and the encounter roll both float. ---
+	const wantLo, wantHi = 48.0, 72.0
+	if share < wantLo || share > wantHi {
+		t.Errorf("full automation runs at %.1f%% of the hands-on encounter rate, want %.0f-%.0f%% — "+
+			"move autoExpeditionMinInterval (currently %d ticks; the share moves inversely with it)",
+			share, wantLo, wantHi, autoExpeditionMinInterval)
+	}
+
+	// --- 3. Investment is a real gradient of its own: a part-invested society is
+	// better than nothing and worse than a full installation. ---
+	if rate(partial) <= rate(casual) || rate(partial) >= rate(auto) {
+		t.Errorf("part-invested automation (%.1f enc/10k) is not between casual (%.1f) and "+
+			"full investment (%.1f) — the count/staffing terms are not doing their job",
+			rate(partial), rate(casual), rate(auto))
+	}
 }
 
 // TestBoonTuning_HarnessClassifies is a fast guard on the measurement machinery

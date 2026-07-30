@@ -135,6 +135,19 @@ type GameEngine struct {
 	// Starvation tracking — counts consecutive ticks with food <= 0 and active drain
 	starvationTicks int
 
+	// Automatic expedition dispatch (see auto_expedition.go).
+	//
+	//   autoExpeditionTicksLeft — countdown to the next automatic scouting dispatch,
+	//     modelled on ActiveRoute.TicksLeft. 0 means a dispatch is DUE and is being
+	//     retried each tick until the scouting slot frees up and the cost is covered.
+	//     Persisted (MilitarySave.AutoExpeditionTicksLeft) so a reload cannot
+	//     save-scum an instant dispatch.
+	//   autoExpeditionStarved — true while a due dispatch is being blocked for want
+	//     of supplies, so the warning is logged once per dry spell instead of every
+	//     tick. Transient: recomputed within a tick of loading.
+	autoExpeditionTicksLeft int
+	autoExpeditionStarved   bool
+
 	// Save integrity badges (set on load, never persisted separately)
 	cheaterBadge bool
 	eliteBadge   bool
@@ -1119,6 +1132,10 @@ func (ge *GameEngine) processExpeditions() {
 			ge.addLog("event", msg)
 		}
 	}
+
+	// The Geographic Society's standing orders. Runs LAST so a party that resolved
+	// above has already freed the scouting slot — see processAutoExpeditions.
+	ge.processAutoExpeditions()
 }
 
 // processTrade handles trade route ticks
@@ -3320,7 +3337,20 @@ func (ge *GameEngine) DeclineAncientMemory() {
 func (ge *GameEngine) LaunchExpedition(key string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
+	return ge.launchExpeditionLocked(key)
+}
 
+// launchExpeditionLocked is the single expedition-launch path: it validates the
+// cost, the age range and the one-active-per-category rule, then deducts soldiers
+// and resources. Callers must already hold the write lock.
+//
+// Both entry points go through here — the player's `expedition` command
+// (LaunchExpedition) and the Geographic Society's automatic dispatch (see
+// auto_expedition.go). An auto-launch is charged and validated identically to a
+// hand-dispatched one; nothing about the resulting expedition is special-cased,
+// so it resolves, rewards and rolls its faction encounter on exactly the same
+// path.
+func (ge *GameEngine) launchExpeditionLocked(key string) error {
 	ageOrder := ge.progress.GetAgeOrder()
 
 	def := ge.Military.ExpeditionDefByKey(key)

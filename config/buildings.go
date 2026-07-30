@@ -652,9 +652,16 @@ func baseBuildingsRaw() []BuildingDef {
 			BuildTicks:  8675309,
 			Description: "The final wonder. +200% all production, +20 quantum flux/tick. Unlocks +0.5x speed.",
 		},
-		// Diplomacy — produce opinion (not a resource), so they live here in the
-		// admin/storage slice rather than a lineage file. NO Type:"production"
-		// effect (that would pollute the resource-rate map in WorkerScaledProduction).
+		// Diplomacy / foreign affairs — these act on the world rather than on a
+		// resource, so they live here in the admin/storage slice rather than a
+		// lineage file (the lineage files are strict one-per-age tier ladders with
+		// a per-tier output formula; a one-off administrative building does not fit
+		// one). NO Type:"production" effect on any of them — that would pollute the
+		// resource-rate map in WorkerScaledProduction.
+		//
+		// NOTE for anyone adding to this slice: BaseBuildings() only admits
+		// Category "storage", "wonder" and "diplomacy" out of baseBuildingsRaw().
+		// Any other Category here is silently dropped.
 		{
 			Name: "Embassy", Key: "embassy", Category: "diplomacy",
 			BaseCost:     map[string]float64{"gold": 8e6, "iron": 4e6},
@@ -675,6 +682,30 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge:  "industrial_age",
 			Description:  "A grand diplomatic complex. Twice the embassy's opinion rate (+0.10 opinion/worker/tick, 8 workers).",
 			WorkerDomain: "trade", WorkerCapacity: 8,
+			EpochKey: "steel_era",
+		},
+		// The Geographic Society is the exploration arm of the foreign service: it
+		// keeps standing survey parties on the books and sends them out on its own
+		// initiative, which is what makes an idle empire keep meeting the world (see
+		// game/auto_expedition.go). Deliberately an INDUSTRIAL-age unlock — the real
+		// geographic societies are a 19th-century institution, the age already
+		// carries the Grand Embassy and the Research Institute, and by then the
+		// player has had eight ages of dispatching parties by hand and earned the
+		// right to delegate it.
+		//
+		// It carries NO Effects entry on purpose. Its behaviour is not a modifier on
+		// anything — the engine keys off the building KEY, exactly as the trade
+		// system keys off "market"/"port" (see game/trade.go). An invented effect
+		// type here would be inert in every consumer and would only have to be
+		// whitelisted in the effect-target validator.
+		{
+			Name: "Geographic Society", Key: "geographic_society", Category: "diplomacy",
+			BaseCost:     map[string]float64{"gold": 15e6, "steel": 8e6, "coal": 3e6},
+			CostScale:    1.35,
+			BuildTicks:   3600,
+			RequiredAge:  "industrial_age",
+			Description:  "A chartered society of surveyors and cartographers. Dispatches scouting expeditions on its own — more societies, and fuller staffing, shorten the wait between parties (8 workers).",
+			WorkerDomain: "military", WorkerCapacity: 8,
 			EpochKey: "steel_era",
 		},
 	}

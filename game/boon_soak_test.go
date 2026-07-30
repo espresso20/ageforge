@@ -64,7 +64,12 @@ const (
 	//
 	// That is the point. A soak asks whether the bounds HOLD under load the game
 	// cannot actually generate; it is not a cadence measurement and must not be
-	// read as one. This constant was once justified by a "shortest duration is ~10
+	// read as one. Automatic dispatch (the Geographic Society, see
+	// game/auto_expedition.go) does raise SUSTAINED encounter pressure — an idler
+	// now keeps a scouting party in the field indefinitely instead of only while
+	// they are at the keyboard — but it does so at one resolution per ~100 ticks and
+	// one encounter per ~640, i.e. ~35x below what this driver already sustains, and
+	// through the same rollExpeditionEncounter gate. The bounds below are unaffected. This constant was once justified by a "shortest duration is ~10
 	// ticks" claim taken from a legacy fixed Duration field on ExpeditionDef, which
 	// the runtime ignored (the field has since been deleted) — the number was wrong,
 	// the pressure it applies is still valid, so the driver stays and the reasoning

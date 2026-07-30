@@ -142,6 +142,22 @@ campaign <key>          # Wage a military campaign (e.g., campaign raid_bandits)
 
 The two surfaces are kept distinct, and the game cross-redirects if you mix them up: running a military key through `expedition` (e.g. `expedition raid_bandits`) is refused with a note to use `campaign <key>` instead, and running a scouting key through `campaign` redirects you to `expedition <key>`.
 
+### Automatic dispatch — the Geographic Society
+
+From the **Industrial Age** you can stop sending every party by hand. The **Geographic Society** is a chartered building of surveyors and cartographers that keeps scouting parties on standing orders and sends them out on its own initiative, for as long as your civilization stands.
+
+How it behaves:
+
+- **Scouting only.** A Society will never wage a military campaign on your behalf. Campaigns remain yours to order.
+- **It uses your one scouting slot, and only when it's free.** Nothing is queued and nothing runs in parallel — if you have a scouting party out, whether you sent it or the Society did, the Society waits. Launching a party by hand always takes priority for as long as it's in the field.
+- **It pays full price.** Every automatic party is charged the same resource cost you'd pay yourself. If your stores can't outfit one, the Society holds the party back, tells you once, and sends it the moment supplies return — it never runs up a debt.
+- **It picks the thrifty option.** Of the scouting missions your age offers, the Society sends the cheapest one it can currently afford. It won't spend your treasury on a grand voyage you didn't authorise.
+- **Its parties are ordinary parties.** They succeed and fail on the same odds, pay the same loot, and roll faction encounters, boons and setbacks exactly like the ones you send. There is nothing second-class about an automatic expedition.
+
+**Investment sets the pace.** A single unstaffed Society is slow — roughly one party every 900 ticks, about what you'd manage by remembering to send one now and then. Staffing it fully cuts that by about a third, and each additional Society you build shortens the wait further, until the pace bottoms out at around **one party every 100 ticks** with six fully-staffed Societies. Building more past that buys nothing but resilience when a party comes home late.
+
+**It is always slower than doing it yourself.** That floor is deliberate. A fully-invested Society keeps you at roughly **60% of the pace of a player who chains expeditions by hand and runs campaigns alongside them** — enough that an idle empire keeps meeting the world and keeps its boons topped up, never enough that sitting at the prompt becomes pointless. Automation is a floor under your exploration, not a replacement for it.
+
 The **Expeditions** panel (`expedition`) lists only the **scouting** expeditions available in your current age — the resource-only missions. The **Army** panel (`army`) lists only the **military campaigns** — the ones that spend soldiers — alongside your soldier count and defense rating. So you can see at a glance which missions are which: scouting on the Expeditions panel, campaigns on the Army panel. The Expeditions panel also carries the **Loot History** — the running total of all loot collected, from expeditions and campaigns alike.
 
 ### Success probability formula
@@ -207,6 +223,8 @@ Every time an expedition resolves — win or lose — the game rolls a chance to
 | Military failure | ~2% |
 
 These are rolled **per resolved expedition**, and expeditions are not quick — the shortest scouting run takes 60-100 ticks, and the length is rolled fresh each launch. A player who keeps a scouting party and a campaign permanently in the field meets someone roughly every **375 ticks**. Encounters are an occasional event, not a stream: the value of chaining expeditions is that the rewards you do get overlap.
+
+From the Industrial Age a fully-invested **Geographic Society** (see [Automatic dispatch](#automatic-dispatch--the-geographic-society)) keeps that stream running while you're away, at roughly **60%** of the hands-on rate — about one meeting every 640 ticks. A single Society is slower again, closer to one every 2,500 ticks. So there are three real tempos: chaining expeditions yourself, letting the Societies work, and doing neither.
 
 A **successful** expedition's encounter can also grant a **boon** — and it is now a **varied, rolled reward**, not a fixed specialty buff. The draw comes from a shared catalogue (a timed specialty/production/knowledge windfall, an all-production or tick-speed surge, an instant lump of resources, or temporary workers) and is **weighted by the civilization's character** (personality, its specialty, and its strength) and by **your standing** with it — allied civs give bigger *and* rarer boons. Instant gifts also **scale with your age**, so a caravan of supplies still lands with weight in the Quantum Age instead of dwindling into a rounding error. It is announced with a flavour line naming the civ and the reward.
 

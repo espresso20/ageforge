@@ -211,6 +211,11 @@ type MilitarySave struct {
 	ActiveExpedition *ActiveExpedition  `json:"active_expedition,omitempty"`
 	CompletedCount   int                `json:"completed_count"`
 	TotalLoot        map[string]float64 `json:"total_loot"`
+	// AutoExpeditionTicksLeft is the Geographic Society's dispatch countdown (see
+	// game/auto_expedition.go). Persisted so a save/reload cannot reset the wait and
+	// hand out a free instant dispatch. Absent in pre-Phase-3 saves, where the zero
+	// value simply means "due now" — a single early party, which is harmless.
+	AutoExpeditionTicksLeft int `json:"auto_expedition_ticks_left,omitempty"`
 }
 
 // EventSave holds event state for save
@@ -452,6 +457,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			ActiveMilitary: activeMilitary,
 			CompletedCount: ge.Military.completedCount,
 			TotalLoot:      totalLoot,
+
+			AutoExpeditionTicksLeft: ge.autoExpeditionTicksLeft,
 		},
 		Events: EventSave{
 			LastFired:     ge.Events.GetLastFired(),
@@ -626,6 +633,8 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.Research.LoadState(save.Research.Researched, save.Research.CurrentTech, save.Research.TicksLeft, save.Research.TotalTicks)
 	scoutActive, militaryActive := ge.Military.migrateActives(save.Military)
 	ge.Military.LoadState(scoutActive, militaryActive, save.Military.CompletedCount, save.Military.TotalLoot)
+	ge.autoExpeditionTicksLeft = save.Military.AutoExpeditionTicksLeft
+	ge.autoExpeditionStarved = false
 	ge.Events.LoadState(save.Events.LastFired, save.Events.Active, save.Events.NextEventTick, save.Events.GoodStreak, save.Events.BadStreak)
 	ge.Milestones.LoadState(save.Milestones, save.ChainsCompleted, save.CurrentTitle)
 	// Reconstruct chains and title for old saves that don't have them

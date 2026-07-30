@@ -102,6 +102,8 @@ Timed missions come in two kinds, split across two panels. **Scouting** expediti
 
 Keys with underscores can be typed with spaces: `expedition scout ruins` is equivalent to `expedition scout_ruins`. If you run a campaign key through `expedition` the game refuses and points you to `campaign <key>`; likewise running a scouting key through `campaign` redirects you to `expedition <key>`.
 
+From the **Industrial Age** you can build a **Geographic Society**, which sends scouting parties out by itself — no command needed. It uses the same single scouting slot and waits whenever you have a party in the field, so dispatching by hand always takes priority. The more Societies you build and staff, the shorter the wait between automatic parties, though it stays slower than sending them yourself. See [Automatic dispatch](military.md#automatic-dispatch--the-geographic-society).
+
 ---
 
 ## Trade
