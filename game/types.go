@@ -291,11 +291,8 @@ type ExpeditionInfo struct {
 	Key            string
 	Category       string // "scouting" or "military"
 	SoldiersNeeded int
-	Duration       int
 	// DurationMin/DurationMax mirror the ExpeditionDef's randomized active-duration
-	// bounds so the available-expeditions preview can show the rolled range. When
-	// DurationMax <= DurationMin the def is legacy/unset and the preview falls back
-	// to the fixed Duration above.
+	// bounds so the available-expeditions preview can show the rolled range.
 	DurationMin int
 	DurationMax int
 	Difficulty  float64

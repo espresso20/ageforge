@@ -35,9 +35,10 @@ const (
 	// long an expedition actually takes. The first tuning pass cut them ~4x from
 	// 0.35/0.12/0.16/0.04 on the belief that the cheapest scouting run resolves in
 	// 10 ticks and a continuous explorer therefore met someone every ~25 ticks.
-	// That number came from the legacy ExpeditionDef.Duration field, which
-	// LaunchExpedition IGNORES whenever a def carries a [DurationMin, DurationMax]
-	// range — the real shortest scouting run is 60-100 ticks. Corrected, the cut
+	// That number came from a legacy fixed Duration field on ExpeditionDef, which
+	// LaunchExpedition IGNORED whenever a def carried a [DurationMin, DurationMax]
+	// range — the real shortest scouting run is 60-100 ticks. The field has since
+	// been deleted; DurationMin/Max are the only source of truth. Corrected, the cut
 	// odds produced one meeting per ~750 ticks (13 per 10k): a roster of foreign
 	// civilizations you essentially never met.
 	//

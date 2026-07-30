@@ -121,12 +121,9 @@ func writeExpeditionGroup(sb *strings.Builder, label string, exps []game.Expedit
 
 		fmt.Fprintf(sb, " %s [cyan]%s[-]\n", statusIcon, exp.Name)
 		fmt.Fprintf(sb, "   [gray]%s[-]\n", exp.Description)
-		// Duration is a rolled range at launch; show "min-max ticks" when the def
-		// defines one, else fall back to the legacy fixed value (never "0-0").
-		durationStr := fmt.Sprintf("%d ticks", exp.Duration)
-		if exp.DurationMax > exp.DurationMin {
-			durationStr = fmt.Sprintf("%d-%d ticks", exp.DurationMin, exp.DurationMax)
-		}
+		// Duration is rolled per launch, so preview the def's range rather than a
+		// single number.
+		durationStr := fmt.Sprintf("%d-%d ticks", exp.DurationMin, exp.DurationMax)
 		fmt.Fprintf(sb, "   Soldiers: %d  Duration: %s  Difficulty: [%s]%.0f%%[-]\n",
 			exp.SoldiersNeeded, durationStr, diffColor, exp.Difficulty*100)
 		if cost := formatExpeditionCost(exp.Cost); cost != "" {

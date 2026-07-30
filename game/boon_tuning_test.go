@@ -28,8 +28,8 @@ import (
 //     actually makes), re-launched the moment it resolves (or after a gap, for
 //     the casual scenario), with each launch's length rolled from the def's
 //     [DurationMin, DurationMax] range exactly as LaunchExpedition rolls it (see
-//     effectiveExpeditionDuration for why the legacy Duration field must not be
-//     used);
+//     effectiveExpeditionDuration for the legacy fixed-Duration field this harness
+//     used to read by mistake, and what it cost);
 //   - the real success roll (successRoll > DifficultyBase, no military bonus);
 //   - the real encounter path: rollExpeditionEncounter → applyFactionBoon /
 //     applyFactionMalus → boon.RollBoon → boon.Apply → InjectEvent;
@@ -336,9 +336,8 @@ func meanOfInts(xs []int) float64 {
 // expDriver models one expedition category's launch/resolve loop, INCLUDING the
 // randomized per-launch duration the real game rolls.
 type expDriver struct {
-	durMin     int // randomized range low end (0 when the def has no range)
+	durMin     int // randomized range low end
 	durMax     int
-	durFixed   int // legacy fixed Duration; used only when there is no range
 	difficulty float64
 	gap        int
 	ticksLeft  int
@@ -347,31 +346,28 @@ type expDriver struct {
 	live       bool
 }
 
-// effectiveExpeditionDuration is the duration the RUNTIME actually gives a def:
-// the low end of its randomized range, or the legacy fixed Duration when the def
-// carries no range at all.
+// effectiveExpeditionDuration is the shortest duration the RUNTIME can give a
+// def: the low end of its randomized [DurationMin, DurationMax] range.
 //
-// This distinction is load-bearing. LaunchExpedition (game/military.go) ignores
-// the legacy Duration field entirely whenever DurationMax > DurationMin, and most
-// defs now carry a range that bears no relation to their stale fixed value —
-// scout_party still says Duration: 20 next to DurationMin/Max of 100/160. This
-// harness used to pick and time its expeditions off that legacy field, so it
-// simulated a cadence ~6.5x faster than the game can produce and every number it
-// reported about encounter frequency was wrong in the same direction.
+// Getting this wrong is how the harness shipped broken. ExpeditionDef used to
+// carry a legacy fixed Duration field alongside the range, and LaunchExpedition
+// ignored it whenever a range was set — but the stale fixed values bore no
+// relation to the ranges (scout_party said Duration: 20 next to DurationMin/Max
+// of 100/160). This harness picked and timed its expeditions off that legacy
+// field, so it simulated a cadence ~6.5x faster than the game can produce and
+// every number it reported about encounter frequency was wrong in the same
+// direction. The field is gone now; the range is the only source of truth.
 func effectiveExpeditionDuration(d ExpeditionDef) int {
-	if d.DurationMax > d.DurationMin {
-		return d.DurationMin
-	}
-	return d.Duration
+	return d.DurationMin
 }
 
 // rollDuration draws one launch's active duration with the SAME rule
-// LaunchExpedition uses — a uniform value in [DurationMin, DurationMax] when a
-// range is set, else the legacy fixed Duration — but off the harness's seeded rng
-// so a scenario stays reproducible. Floored at 1 so a def with no usable duration
-// cannot spin the driver.
+// LaunchExpedition uses — a uniform value in [DurationMin, DurationMax] — but off
+// the harness's seeded rng so a scenario stays reproducible. Mirrors the runtime's
+// guards: a def without a real range pins at its floor, and the result is floored
+// at 1 so a malformed def cannot spin the driver.
 func (d *expDriver) rollDuration(rng *rand.Rand) int {
-	ticks := d.durFixed
+	ticks := d.durMin
 	if d.durMax > d.durMin {
 		ticks = d.durMin + rng.Intn(d.durMax-d.durMin+1)
 	}
@@ -383,8 +379,8 @@ func (d *expDriver) rollDuration(rng *rand.Rand) int {
 
 // newExpDriver picks the SHORTEST expedition available in a category at an age —
 // the spam-optimal choice, and therefore the honest worst case for encounter
-// cadence. "Shortest" is compared on the EFFECTIVE duration (see
-// effectiveExpeditionDuration), not the legacy field. Returns live=false when the
+// cadence. "Shortest" is compared on the EFFECTIVE duration the runtime can
+// produce (see effectiveExpeditionDuration). Returns live=false when the
 // category has nothing available or the scenario disabled it (gap < 0).
 func newExpDriver(ge *GameEngine, category, age string, gap int, rng *rand.Rand) expDriver {
 	if gap < 0 {
@@ -403,7 +399,6 @@ func newExpDriver(ge *GameEngine, category, age string, gap int, rng *rand.Rand)
 	d := expDriver{
 		durMin:     best.DurationMin,
 		durMax:     best.DurationMax,
-		durFixed:   best.Duration,
 		difficulty: best.DifficultyBase,
 		gap:        gap,
 		category:   category,
@@ -753,11 +748,12 @@ func TestBoonTuning_HarnessClassifies(t *testing.T) {
 }
 
 // TestBoonTuning_HarnessUsesRuntimeDurations pins the instrument bug this harness
-// shipped with: it derived its cadence from ExpeditionDef.Duration, the LEGACY
-// fallback field that LaunchExpedition ignores whenever a def carries a
-// [DurationMin, DurationMax] range. Every driver duration must therefore land
+// shipped with: it derived its cadence from a legacy fixed ExpeditionDef.Duration
+// field that LaunchExpedition ignored whenever a def carried a
+// [DurationMin, DurationMax] range. That field has since been deleted, and this
+// test keeps the harness honest without it — every driver duration must land
 // inside the range the runtime would roll, and the def a driver picks must be the
-// shortest by EFFECTIVE duration — not by the stale fixed value.
+// shortest by EFFECTIVE duration.
 func TestBoonTuning_HarnessUsesRuntimeDurations(t *testing.T) {
 	ge := NewGameEngine()
 	order := ge.progress.GetAgeOrder()
@@ -781,16 +777,20 @@ func TestBoonTuning_HarnessUsesRuntimeDurations(t *testing.T) {
 				}
 			}
 			if got := effectiveExpeditionDuration(ExpeditionDef{
-				Duration: d.durFixed, DurationMin: d.durMin, DurationMax: d.durMax,
+				DurationMin: d.durMin, DurationMax: d.durMax,
 			}); got != want {
 				t.Errorf("%s at %s: driver picked effective duration %d, shortest available is %d",
 					category, age, got, want)
 			}
 
-			// Every rolled launch must fall in the runtime's own range.
+			// Every rolled launch must fall in the runtime's own range. A def
+			// without a real range pins every roll at its floor (min 1).
 			lo, hi := d.durMin, d.durMax
 			if hi <= lo {
-				lo, hi = d.durFixed, d.durFixed
+				hi = lo
+			}
+			if lo < 1 {
+				lo, hi = 1, 1
 			}
 			for i := 0; i < 200; i++ {
 				if ticks := d.rollDuration(rng); ticks < lo || ticks > hi {

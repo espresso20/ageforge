@@ -65,9 +65,10 @@ const (
 	// That is the point. A soak asks whether the bounds HOLD under load the game
 	// cannot actually generate; it is not a cadence measurement and must not be
 	// read as one. This constant was once justified by a "shortest duration is ~10
-	// ticks" claim taken from the legacy ExpeditionDef.Duration field, which the
-	// runtime ignores — the number was wrong, the pressure it applies is still
-	// valid, so the driver stays and the reasoning is corrected. Each attempt is
+	// ticks" claim taken from a legacy fixed Duration field on ExpeditionDef, which
+	// the runtime ignored (the field has since been deleted) — the number was wrong,
+	// the pressure it applies is still valid, so the driver stays and the reasoning
+	// is corrected. Each attempt is
 	// still gated by the real per-resolution encounter probability inside
 	// rollExpeditionEncounter.
 	soakEncounterEveryTicks = 5

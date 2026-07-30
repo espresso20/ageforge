@@ -37,10 +37,11 @@ const maxDrainFraction = 0.50
 //
 // A measured pass (game/boon_tuning_test.go) reported exactly that — a 2-3% land
 // rate at 97% saturation — and durations were cut ~5x to fix it. That measurement
-// was WRONG: the harness derived its expedition cadence from the legacy
-// ExpeditionDef.Duration field, which the runtime ignores whenever a def carries a
-// [DurationMin, DurationMax] range, so it simulated encounters arriving ~8x faster
-// than the game can produce them. With the instrument fixed, the same catalogue
+// was WRONG: the harness derived its expedition cadence from a legacy fixed
+// Duration field on ExpeditionDef, which the runtime ignored whenever a def
+// carried a [DurationMin, DurationMax] range, so it simulated encounters arriving
+// ~8x faster than the game can produce them. That field has since been deleted so
+// nothing can read it again. With the instrument fixed, the same catalogue
 // measured the opposite failure: offered load of 0.75 slot-equivalents against 5
 // slots, boons live only 53% of the time, and a combined uplift of x1.16 — under
 // the band. Durations were given back 2.5x of that 5x cut (alongside 2x of the

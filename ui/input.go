@@ -1486,7 +1486,8 @@ func appendExpeditionGroup(lines *[]string, label string, exps []game.Expedition
 		if cost := formatExpeditionCost(exp.Cost); cost != "" {
 			reqParts = append(reqParts, cost)
 		}
-		reqParts = append(reqParts, fmt.Sprintf("%d ticks", exp.Duration))
+		// Duration is rolled per launch, so list the def's range, not one value.
+		reqParts = append(reqParts, fmt.Sprintf("%d-%d ticks", exp.DurationMin, exp.DurationMax))
 		reqs := strings.Join(reqParts, ", ")
 		line := fmt.Sprintf("  %s [cyan]%s[-] - %s (%s)", canStr, exp.Key, exp.Name, reqs)
 		if !exp.CanLaunch && exp.LaunchBlockReason != "" {
