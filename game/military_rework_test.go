@@ -396,8 +396,10 @@ func TestExpeditionsTickIndependently(t *testing.T) {
 	setResource(ge, "wood", 200)
 	setSoldiers(ge, 20)
 
-	// scout_party Duration=20; raid_bandits Duration=15. The military one should
-	// finish first while the scouting one is still running.
+	// Expedition durations are now RANDOMIZED per launch (Bug RQPHYAHC), so we can no
+	// longer key assertions off fixed def durations. Launch both, then pin their
+	// remaining ticks to fixed, distinct values — the point of this test is that the
+	// two categories tick down and resolve INDEPENDENTLY, the shorter one first.
 	if err := ge.LaunchExpedition("scout_party"); err != nil {
 		t.Fatalf("LaunchExpedition(scout_party) error: %v", err)
 	}
@@ -405,27 +407,32 @@ func TestExpeditionsTickIndependently(t *testing.T) {
 		t.Fatalf("LaunchExpedition(raid_bandits) error: %v", err)
 	}
 
-	// Tick 15 times: military (15) resolves, scouting (20) still has 5 left.
-	for i := 0; i < 15; i++ {
+	ge.mu.Lock()
+	ge.Military.ActiveByCategory(ExpeditionMilitary).TicksLeft = 3
+	ge.Military.ActiveByCategory(ExpeditionScouting).TicksLeft = 8
+	ge.mu.Unlock()
+
+	// 3 ticks: the military expedition (3 left) resolves; scouting (8 left) still runs.
+	for i := 0; i < 3; i++ {
 		ge.mu.Lock()
 		ge.processExpeditions()
 		ge.mu.Unlock()
 	}
 	if ge.Military.ActiveByCategory(ExpeditionMilitary) != nil {
-		t.Error("military expedition (Duration 15) should have resolved after 15 ticks")
+		t.Error("military expedition (3 ticks left) should have resolved after 3 ticks")
 	}
 	if ge.Military.ActiveByCategory(ExpeditionScouting) == nil {
-		t.Error("scouting expedition (Duration 20) should still be running after 15 ticks")
+		t.Error("scouting expedition (8 ticks left) should still be running after 3 ticks")
 	}
 
-	// 5 more ticks: scouting resolves too.
+	// 5 more ticks (8 total): scouting resolves too.
 	for i := 0; i < 5; i++ {
 		ge.mu.Lock()
 		ge.processExpeditions()
 		ge.mu.Unlock()
 	}
 	if ge.Military.ActiveByCategory(ExpeditionScouting) != nil {
-		t.Error("scouting expedition should have resolved after 20 ticks total")
+		t.Error("scouting expedition should have resolved after 8 ticks total")
 	}
 	if ge.Military.HasActive() {
 		t.Error("no expedition should remain active after both resolved")
