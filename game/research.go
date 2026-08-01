@@ -284,13 +284,13 @@ func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) 
 	}
 
 	return ResearchState{
-		Techs:            techs,
-		CurrentTech:      rm.currentTech,
-		CurrentTechName:  currentName,
-		TicksLeft:        rm.ticksLeft,
-		TotalTicks:       rm.totalTicks,
-		TotalResearched:  len(rm.researched),
-		Bonuses:          rm.GetBonuses(),
+		Techs:           techs,
+		CurrentTech:     rm.currentTech,
+		CurrentTechName: currentName,
+		TicksLeft:       rm.ticksLeft,
+		TotalTicks:      rm.totalTicks,
+		TotalResearched: len(rm.researched),
+		Bonuses:         rm.GetBonuses(),
 	}
 }
 

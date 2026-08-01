@@ -145,7 +145,7 @@ func buildingsLineageEnergy() []BuildingDef {
 	// electricity preserved from fusion_reactor_array (2000) — upgrading must never regress
 	b = append(b, BuildingDef{
 		Name: "Solar Collector Array", Key: "solar_collector_array", Category: "production",
-		BaseCost: map[string]float64{"titanium": 90e12, "plasma": 45e12, "electricity": 112e12},
+		BaseCost:  map[string]float64{"titanium": 90e12, "plasma": 45e12, "electricity": 112e12},
 		CostScale: 1.35,
 		Effects: []Effect{
 			{Type: "production", Target: "plasma", Value: 40},
@@ -163,7 +163,7 @@ func buildingsLineageEnergy() []BuildingDef {
 	// solar_collector_array: plasma:40 + electricity:2500 → pulsar_tap: plasma:80 + electricity:3200
 	b = append(b, BuildingDef{
 		Name: "Pulsar Tap", Key: "pulsar_tap", Category: "production",
-		BaseCost: map[string]float64{"dark_matter": 110e12, "titanium": 840e12, "plasma": 520e12},
+		BaseCost:  map[string]float64{"dark_matter": 110e12, "titanium": 840e12, "plasma": 520e12},
 		CostScale: 1.35,
 		Effects: []Effect{
 			{Type: "production", Target: "plasma", Value: 80},

@@ -143,11 +143,11 @@ const (
 
 // storage: wooden barn
 const (
-	stW = 0x8b5a2b // wood brown
+	stW  = 0x8b5a2b // wood brown
 	stLw = 0xc87941 // light wood
-	stR = 0x8b1a1a // red roof
+	stR  = 0x8b1a1a // red roof
 	stDw = 0x5a3010 // dark wood
-	stO = 0xd4a017 // gold hinge
+	stO  = 0xd4a017 // gold hinge
 )
 
 // ── Sprite definitions ────────────────────────────────────────────────────────
@@ -525,7 +525,7 @@ func buildSpriteSheet(imgs []*image.NRGBA) *image.NRGBA {
 }
 
 const (
-	previewScale  = 6  // each pixel → 6×6 → 96px per sprite
+	previewScale  = 6 // each pixel → 6×6 → 96px per sprite
 	previewPerRow = 5
 	previewGap    = 4
 	spriteDisplay = 16 * previewScale // 96px

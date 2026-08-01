@@ -4,18 +4,18 @@ import "sync"
 
 // Event types
 const (
-	EventBuildingBuilt  = "building_built"
-	EventWorkerAdded    = "worker_added"
-	EventAgeAdvanced    = "age_advanced"
-	EventResourceDepleted = "resource_depleted"
-	EventResearchDone   = "research_done"
-	EventGameSaved           = "game_saved"
-	EventGameLoaded          = "game_loaded"
-	EventMilestoneCompleted  = "milestone_completed"
-	EventChainCompleted      = "chain_completed"
-	EventEpochAdvanced       = "epoch_advanced"
-	EventEpochEventFired     = "epoch_event_fired"
-	EventAwakeningFired      = "awakening_fired"
+	EventBuildingBuilt      = "building_built"
+	EventWorkerAdded        = "worker_added"
+	EventAgeAdvanced        = "age_advanced"
+	EventResourceDepleted   = "resource_depleted"
+	EventResearchDone       = "research_done"
+	EventGameSaved          = "game_saved"
+	EventGameLoaded         = "game_loaded"
+	EventMilestoneCompleted = "milestone_completed"
+	EventChainCompleted     = "chain_completed"
+	EventEpochAdvanced      = "epoch_advanced"
+	EventEpochEventFired    = "epoch_event_fired"
+	EventAwakeningFired     = "awakening_fired"
 )
 
 // EventData carries data for an event

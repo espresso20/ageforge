@@ -11,7 +11,7 @@ import "github.com/gdamore/tcell/v2"
 //   - Accent  gold (#FFD700)  — titles, borders, brand
 //   - Dim     #a8b3c0         — secondary text/hints; lifted from old #8b949e, legible but still SECONDARY to Text
 //   - Label   cyan (#39C5CF)  — field labels/values (slightly deepened from pure
-//                               cyan so it clears AA on the dark bg with margin)
+//     cyan so it clears AA on the dark bg with margin)
 //   - Positive green (#3FB950) — gains
 //   - Negative red   (#F85149) — losses
 //   - Highlight yellow (#F2CC60)— numbers / attention
