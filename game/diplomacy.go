@@ -663,11 +663,14 @@ func (dm *DiplomacyManager) processWar(tick int) []string {
 				res = "gold"
 			}
 			amount := 50.0 * float64(def.Strength)
-			msg := raidMessage(def, amount, res)
+			// The raid is QUEUED only, not announced here. The engine logs it when
+			// it drains the queue, where it can append a generated flavour line off
+			// ge.rng — see GameEngine.processDiplomacy / raidLogLine. Returning it
+			// from here as well would double-log every raid.
 			dm.pendingRaids = append(dm.pendingRaids, RaidRequest{
-				FactionKey: key, Resource: res, Amount: amount, Message: msg,
+				FactionKey: key, Resource: res, Amount: amount,
+				Message: raidMessage(def, amount, res),
 			})
-			messages = append(messages, msg)
 		}
 	}
 	return messages
@@ -841,8 +844,20 @@ func lendMessage(def config.FactionDef, count int, permanent bool) string {
 		count, def.Name, def.Backstory, tail)
 }
 
-// raidMessage builds the flavour line for a war raid resource loss.
+// raidMessage builds the MECHANICAL line for a war raid resource loss: who, what,
+// how much. It carries no flavour of its own — the engine appends a generated
+// sentence at the point it logs the raid (see GameEngine.raidLogLine), because
+// that is where the seeded rng lives.
+//
+// It used to append def.Backstory, the civ's entire two-sentence introduction, to
+// EVERY raid. Raids fire every raidInterval ticks for the whole war, so a single
+// war reprinted the same paragraph a few hundred times. A backstory is a
+// first-contact line (see firstContactMessage) and nowhere else.
+//
+// The verb is PAST tense on purpose: the roster mixes singular and plural civ
+// names ("Merchant Guild" vs "Void Reavers"), and the old present-tense "The %s
+// raid you" agreed with only half of them.
 func raidMessage(def config.FactionDef, amount float64, resource string) string {
-	return fmt.Sprintf("[red]⚔ The %s raid you — lost %.0f %s.[-] %s",
-		def.Name, amount, resource, def.Backstory)
+	return fmt.Sprintf("[red]⚔ The %s raided you — lost %.0f %s.[-]",
+		def.Name, amount, resource)
 }

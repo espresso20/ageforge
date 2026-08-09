@@ -1127,8 +1127,14 @@ func (ge *GameEngine) processExpeditions() {
 	}
 	// Tick all active expeditions (one per category); each may resolve this tick.
 	for _, res := range ge.Military.Tick(militaryBonus, expeditionBonus) {
-		ge.addLog("debug", fmt.Sprintf("Expedition resolved (rewards: %d types)", len(res.Rewards)))
+		ge.addLog("debug", fmt.Sprintf("Expedition resolved: %s (rewards: %d types)", res.Key, len(res.Rewards)))
 		ge.addLog("event", res.Message)
+		// Cosmetic flavour, generated HERE rather than in MilitaryManager because
+		// this is where the seeded rng lives. It is additive: res.Message above
+		// already carried the mechanical outcome and the loot.
+		if q := ge.expeditionFlavorLine(res); q != "" {
+			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+		}
 		// Add rewards to resources
 		for resource, amount := range res.Rewards {
 			ge.Resources.Add(resource, amount)
@@ -1205,9 +1211,18 @@ func (ge *GameEngine) processDiplomacy() {
 	for _, n := range ge.Diplomacy.TakePendingReturns() {
 		ge.Workers.KillWorker(n)
 	}
-	// Apply war raids (resource losses).
-	for _, raid := range ge.Diplomacy.TakePendingRaids() {
+	// Apply war raids (resource losses) and announce them. The announcement lives
+	// here rather than in DiplomacyManager.Tick because the flavour half is drawn
+	// off ge.rng, which the manager has no access to.
+	//
+	// Sorted by faction key first: pendingRaids is built by walking a MAP, so its
+	// order is randomised, and drawing prose in that order would make which raid
+	// got which sentence unreproducible from the seed.
+	raids := ge.Diplomacy.TakePendingRaids()
+	sort.Slice(raids, func(i, j int) bool { return raids[i].FactionKey < raids[j].FactionKey })
+	for _, raid := range raids {
 		ge.Resources.Remove(raid.Resource, raid.Amount)
+		ge.addLog("event", ge.raidLogLine(raid))
 		ge.Events.InjectEvent(ActiveEvent{
 			Key:       "war_raid",
 			Name:      "Under Raid",

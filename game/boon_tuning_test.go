@@ -6,10 +6,12 @@ import (
 	"math/rand"
 	"sort"
 	"strings"
+	"sync"
 	"testing"
 
 	"github.com/espresso20/ageforge/boon"
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/flavor"
 )
 
 // Measurement harness for the faction-encounter BOON loop.
@@ -113,6 +115,32 @@ func longestLiteralRun(tmpl string) string {
 	return best
 }
 
+// bounceMoments are the flavor Moments the EMPTY-OUTCOME encounter paths draw
+// from (see game/encounters.go): a full court turning away a timed gift, and a
+// war contact that did not turn violent.
+//
+// Both used to be fixed three-line slices this harness iterated by value. They
+// are now GENERATED, which is exactly the change that could have silently killed
+// the measurement: a generated line matches no literal, classifyLine would return
+// "unclassified" for every bounce, and the outcome split would quietly become
+// meaningless. It does not, because package flavor guarantees that every line it
+// produces for a Moment contains one of Signatures(Moment) verbatim — an
+// enumerable set, derived from the catalog at run time exactly like
+// boonFlavorSignatures does for the boon tables. Adding a Moment to the
+// empty-outcome path means adding it HERE.
+var bounceMoments = []flavor.Moment{flavor.EncounterAtCapacity, flavor.EncounterStandoff}
+
+// bounceSignatures returns every literal fragment that marks a line as an
+// empty-outcome bounce. Built once — classifyLine runs a few thousand times per
+// scenario and Signatures allocates and sorts on every call.
+var bounceSignatures = sync.OnceValue(func() []string {
+	var out []string
+	for _, m := range bounceMoments {
+		out = append(out, flavor.Signatures(m)...)
+	}
+	return out
+})
+
 // classifyLine buckets one player-facing encounter line. Returns the bucket and,
 // for boon/setback lines, the catalog entry Name that produced it.
 //
@@ -123,13 +151,8 @@ func classifyLine(line string, boonSigs, malusSigs map[string]string) (bucket, n
 	if strings.Contains(line, "First contact:") {
 		return "discovery", ""
 	}
-	for _, flavor := range atCapacityFlavors {
-		if strings.Contains(line, flavor) {
-			return "bounce", ""
-		}
-	}
-	for _, flavor := range atWarNoHarmFlavors {
-		if strings.Contains(line, flavor) {
+	for _, sig := range bounceSignatures() { //nolint:gocritic // memoized, see bounceSignatures
+		if strings.Contains(line, sig) {
 			return "bounce", ""
 		}
 	}
@@ -940,9 +963,35 @@ func TestBoonTuning_HarnessClassifies(t *testing.T) {
 	check(boon.Catalog(), boonSigs, malusSigs, "boon")
 	check(boon.MalusCatalog(), boonSigs, malusSigs, "setback")
 
-	for _, flavor := range append(append([]string{}, atCapacityFlavors...), atWarNoHarmFlavors...) {
-		if bucket, _ := classifyLine(flavor, boonSigs, malusSigs); bucket != "bounce" {
-			t.Errorf("empty-outcome flavour %q classified as %q, want bounce", flavor, bucket)
+	// The empty-outcome half. These lines are GENERATED now, so the check is no
+	// longer "does this fixed slice classify" but "does a fuzz of real generator
+	// output classify" — which is the property that actually keeps the outcome
+	// split honest. Every line the two bounce Moments can produce must land in the
+	// bounce bucket, and must not collide with a boon/malus signature.
+	ge := NewGameEngine()
+	ge.SeedRNG(20260808)
+	defs := config.BaseFactions()
+	for _, m := range bounceMoments {
+		for _, def := range defs {
+			for i := 0; i < 200; i++ {
+				line := fmt.Sprintf("[gray]✦ %s:[-] %s", def.Name, ge.factionEncounterFlavor(m, def))
+				bucket, _ := classifyLine(line, boonSigs, malusSigs)
+				if bucket != "bounce" {
+					t.Fatalf("%v line %q classified as %q, want bounce — the flavour "+
+						"signature seam is broken and the tuning split is meaningless", m, line, bucket)
+				}
+			}
+		}
+	}
+	// And no generated bounce fragment may be a substring of a boon/malus line,
+	// which would steal a boon out of its own bucket.
+	for _, sig := range bounceSignatures() {
+		for _, d := range append(boon.Catalog(), boon.MalusCatalog()...) {
+			for _, tmpl := range d.Flavors {
+				if strings.Contains(tmpl, sig) {
+					t.Errorf("bounce signature %q appears inside boon template %q", sig, tmpl)
+				}
+			}
 		}
 	}
 }

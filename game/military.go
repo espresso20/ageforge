@@ -307,9 +307,17 @@ func (mm *MilitaryManager) HasActive() bool {
 // that resolved this tick. Category and Success describe HOW it resolved so the
 // engine can weight a faction encounter on resolution (see
 // GameEngine.rollExpeditionEncounter).
+//
+// Key and Name identify WHICH expedition resolved. They exist because the varied
+// flavour line is generated ENGINE-side (MilitaryManager has no rng; ge.rng does,
+// and the prose stream must come off the same seeded source as everything else) —
+// see GameEngine.expeditionFlavorLine. Message stays the mechanical line; flavour
+// rides alongside it, never in place of it.
 type ExpeditionResult struct {
 	Rewards  map[string]float64
 	Message  string
+	Key      string // ExpeditionDef.Key of the expedition that resolved
+	Name     string // ExpeditionDef.Name — a verb-led order title as often as a noun phrase
 	Category string // ExpeditionScouting or ExpeditionMilitary
 	Success  bool   // true if the expedition succeeded
 }
@@ -387,7 +395,14 @@ func (mm *MilitaryManager) tickCategory(category string, militaryBonus, expediti
 
 	mm.completedCount++
 	mm.activeByCat[category] = nil
-	return ExpeditionResult{Rewards: rewards, Message: message, Category: category, Success: success}, true
+	return ExpeditionResult{
+		Rewards:  rewards,
+		Message:  message,
+		Key:      def.Key,
+		Name:     def.Name,
+		Category: category,
+		Success:  success,
+	}, true
 }
 
 // GetAvailableExpeditions returns expeditions available for the current age,
