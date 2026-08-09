@@ -59,16 +59,30 @@ const (
 	needTicks
 )
 
-// era is a coarse technological bucket used to keep anachronisms out of the
-// prose: gate wardens and militia bells belong to the early ages, cargo seals and
-// debriefs to the late ones. Age "" or an unknown age imposes NO era bound, which
-// is the permissive default a zero Request relies on.
+// era is a technological bucket used to keep anachronisms out of the prose: gate
+// wardens and militia bells belong to the feudal ages, cargo seals and telemetry
+// to the cosmic ones. Age "" or an unknown age imposes NO era bound, which is the
+// permissive default a zero Request relies on.
+//
+// Five buckets, not three. Three put the Stone Age and the Colonial Age in the
+// same voice at one end and the Information Age and the Transcendent Age in the
+// same voice at the other, which is how carts and gate wardens ended up narrating
+// orbital strikes. The buckets below each cover a span whose imagery genuinely
+// holds together.
+//
+// Era gating is SEASONING, not the main course. The bulk of every Moment's prose
+// lives in ungated banks that are authored to be genuinely age-agnostic — the
+// standard config/log_flavor.go sets, where "a single line has to land in the
+// Stone Age and the Quantum Age alike". An era bank exists only for the lines
+// whose imagery IS the joke, and those lines never leave their bucket.
 type era int
 
 const (
-	eraEarly      era = iota // primitive_age .. colonial_age
+	eraAncient    era = iota // primitive_age .. classical_age
+	eraFeudal                // medieval_age .. colonial_age
 	eraIndustrial            // industrial_age .. modern_age
-	eraFuture                // information_age .. transcendent_age
+	eraDigital               // information_age .. fusion_age
+	eraCosmic                // space_age .. transcendent_age
 )
 
 // tmpl is one sentence structure.
@@ -241,7 +255,7 @@ func eraOK(t tmpl, e era) bool {
 // and the reason a zero Request can still reach every template.
 func eraOf(age string) (era, bool) {
 	if age == "" {
-		return eraEarly, false
+		return eraAncient, false
 	}
 	idx := -1
 	for i, k := range config.AgeOrder() {
@@ -252,13 +266,17 @@ func eraOf(age string) (era, bool) {
 	}
 	switch {
 	case idx < 0:
-		return eraEarly, false
-	case idx <= 7: // primitive_age .. colonial_age
-		return eraEarly, true
+		return eraAncient, false
+	case idx <= 4: // primitive_age .. classical_age
+		return eraAncient, true
+	case idx <= 7: // medieval_age .. colonial_age
+		return eraFeudal, true
 	case idx <= 12: // industrial_age .. modern_age
 		return eraIndustrial, true
-	default: // information_age .. transcendent_age
-		return eraFuture, true
+	case idx <= 16: // information_age .. fusion_age
+		return eraDigital, true
+	default: // space_age .. transcendent_age
+		return eraCosmic, true
 	}
 }
 

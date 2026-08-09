@@ -7,6 +7,7 @@ import (
 	"math/rand"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"testing"
 
@@ -276,6 +277,35 @@ func TestCapacityFloors(t *testing.T) {
 	if Capacity(MomentUnknown) != 0 {
 		t.Errorf("Capacity(MomentUnknown) = %d, want 0", Capacity(MomentUnknown))
 	}
+
+	// Capacity() sums the whole catalog and so hides an era that has been left
+	// thin — which is exactly how the late ages ended up borrowing the early
+	// ages' imagery. Assert the reachable volume in EVERY bucket separately.
+	const eraFloor = 1000
+	for _, m := range Moments() {
+		for _, bucket := range eraBuckets {
+			got := capacityIn(m, bucket.era)
+			if got < eraFloor {
+				t.Errorf("capacity of %v in the %s era = %d, want >= %d — that bucket "+
+					"needs more authored fragments, not a wider gate", m, bucket.suffix, got, eraFloor)
+			}
+			t.Logf("capacity(%v, %s) = %d", m, bucket.suffix, got)
+		}
+	}
+}
+
+// capacityIn is Capacity() restricted to the templates an age in era e can
+// actually reach: the ungated ones plus that bucket's own. Needs, tone and kind
+// are ignored for the same reason Capacity ignores them — the question is how
+// much prose is AUTHORED for this era, not what one Request would draw from.
+func capacityIn(m Moment, e era) int {
+	total := 0
+	for _, t := range templatesFor(m) {
+		if eraOK(t, e) {
+			total += t.capacity()
+		}
+	}
+	return total
 }
 
 // --- countability ----------------------------------------------------------
@@ -684,6 +714,362 @@ func TestAnchorInvariant(t *testing.T) {
 	}
 }
 
+// --- era bleed -------------------------------------------------------------
+
+// eraMarkers maps an ERA-CODED word to the era buckets it is at home in. A word
+// with more than one home — a ford is as ancient as it is feudal, a road exists
+// in every age that has ground — is only foreign outside all of them.
+//
+// This is the durable half of the anachronism guarantee. The rule it encodes is
+// the one stated at the top of catalog.go: an UNGATED bank fires in every era, so
+// it may contain no marker at all; an era-gated bank may contain only markers at
+// home in its own bucket. That is what stopped "a crowd forms at the gate, mostly
+// to see what is in the carts" from narrating an orbital strike, and it is the
+// only thing that will stop the next one.
+//
+// The list is deliberately conservative: every entry is a concrete, era-diagnostic
+// NOUN, not a vibe. Words that genuinely belong to every age (ledger, record,
+// council, stores, party, tally) are absent on purpose — banning them would push
+// authors away from the age-agnostic vocabulary this package wants most.
+var eraMarkers = map[string][]era{
+	// --- ancient: fires, herds, hides, the elders ---------------------------
+	"elders":     {eraAncient},
+	"spear":      {eraAncient},
+	"spears":     {eraAncient},
+	"herd":       {eraAncient},
+	"herds":      {eraAncient},
+	"hide":       {eraAncient},
+	"hides":      {eraAncient},
+	"hut":        {eraAncient},
+	"huts":       {eraAncient},
+	"drums":      {eraAncient},
+	"watch-fire": {eraAncient},
+	"store-pit":  {eraAncient},
+	"arrow":      {eraAncient, eraFeudal},
+	"spring":     {eraAncient, eraFeudal},
+	"ford":       {eraAncient, eraFeudal},
+
+	// --- feudal: carts, gates, bells, clerks, musters ------------------------
+	"cart":          {eraFeudal},
+	"carts":         {eraFeudal},
+	"gate":          {eraFeudal},
+	"gates":         {eraFeudal},
+	"bell":          {eraFeudal},
+	"bells":         {eraFeudal},
+	"horn":          {eraFeudal},
+	"horns":         {eraFeudal},
+	"militia":       {eraFeudal},
+	"muster":        {eraFeudal},
+	"quartermaster": {eraFeudal},
+	"clerk":         {eraFeudal},
+	"clerks":        {eraFeudal},
+	"banner":        {eraFeudal},
+	"banners":       {eraFeudal},
+	"rider":         {eraFeudal},
+	"riders":        {eraFeudal},
+	"wagon":         {eraFeudal},
+	"wagons":        {eraFeudal},
+	"steward":       {eraFeudal},
+	"stewards":      {eraFeudal},
+	"herald":        {eraFeudal},
+	"heralds":       {eraFeudal},
+	"parchment":     {eraFeudal},
+	"undercroft":    {eraFeudal},
+	"picket":        {eraFeudal},
+	"pickets":       {eraFeudal},
+	"village":       {eraFeudal},
+	"villages":      {eraFeudal},
+	"supper":        {eraFeudal},
+	"storehouse":    {eraFeudal},
+	"wax":           {eraFeudal},
+
+	// --- industrial: depots, sidings, the telegraph --------------------------
+	"telegraph":    {eraIndustrial},
+	"telegraphed":  {eraIndustrial},
+	"telegram":     {eraIndustrial},
+	"depot":        {eraIndustrial},
+	"foreman":      {eraIndustrial},
+	"siding":       {eraIndustrial},
+	"freight":      {eraIndustrial},
+	"lorries":      {eraIndustrial},
+	"telephone":    {eraIndustrial},
+	"platform":     {eraIndustrial},
+	"payroll":      {eraIndustrial},
+	"shareholders": {eraIndustrial},
+	"triplicate":   {eraIndustrial},
+	"annexe":       {eraIndustrial},
+	"warehouse":    {eraIndustrial},
+	"rail":         {eraIndustrial},
+	"train":        {eraIndustrial},
+	"wire":         {eraIndustrial},
+
+	// --- digital: feeds, uplinks, drones, analysts ---------------------------
+	"uplink":       {eraDigital},
+	"drone":        {eraDigital},
+	"drones":       {eraDigital},
+	"feed":         {eraDigital},
+	"analyst":      {eraDigital},
+	"analysts":     {eraDigital},
+	"network":      {eraDigital},
+	"after-action": {eraDigital},
+	"channel":      {eraDigital},
+	"channels":     {eraDigital},
+
+	// --- cosmic: holds, bays, hulls, relays ----------------------------------
+	"hull":         {eraCosmic},
+	"hulls":        {eraCosmic},
+	"bay":          {eraCosmic},
+	"bays":         {eraCosmic},
+	"orbit":        {eraCosmic},
+	"orbital":      {eraCosmic},
+	"transponder":  {eraCosmic},
+	"transponders": {eraCosmic},
+	"vacuum":       {eraCosmic},
+	"bulkhead":     {eraCosmic},
+	"bulkheads":    {eraCosmic},
+	"dock":         {eraCosmic},
+	"relay":        {eraCosmic},
+	"relays":       {eraCosmic},
+	"manifest":     {eraCosmic},
+	"freighter":    {eraCosmic},
+	"reactor":      {eraCosmic},
+	"airlock":      {eraCosmic},
+
+	// --- spans: at home in the ages that have ground, nowhere else -----------
+	"road":    {eraAncient, eraFeudal, eraIndustrial, eraDigital},
+	"valley":  {eraAncient, eraFeudal, eraIndustrial},
+	"column":  {eraAncient, eraFeudal, eraIndustrial},
+	"columns": {eraAncient, eraFeudal, eraIndustrial},
+	"smoke":   {eraAncient, eraFeudal, eraIndustrial},
+	"harvest": {eraAncient, eraFeudal},
+	"yard":    {eraFeudal, eraIndustrial},
+}
+
+// allEras is every bucket, for the "this bank is ungated" case.
+func allEras() []era {
+	out := make([]era, 0, len(eraBuckets))
+	for _, bucket := range eraBuckets {
+		out = append(out, bucket.era)
+	}
+	return out
+}
+
+// eraName gives a bucket a readable name for failure messages.
+func eraName(e era) string {
+	for _, bucket := range eraBuckets {
+		if bucket.era == e {
+			return bucket.suffix
+		}
+	}
+	return "era(?)"
+}
+
+// markerRE builds the word-boundary matcher for one marker.
+func markerRE(word string) *regexp.Regexp {
+	return regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(word) + `\b`)
+}
+
+// atHome reports whether a marker is at home in era e.
+func atHome(homes []era, e era) bool {
+	for _, h := range homes {
+		if h == e {
+			return true
+		}
+	}
+	return false
+}
+
+// banksFiringEras returns, for every bank a template actually draws, the set of
+// eras in which it can fire. A bank referenced by ANY template with no Eras
+// constraint can fire everywhere, which is exactly the case that must be
+// marker-free.
+func banksFiringEras() map[string]map[era]bool {
+	out := map[string]map[era]bool{}
+	for _, m := range Moments() {
+		for _, tpl := range templatesFor(m) {
+			eras := tpl.Eras
+			if len(eras) == 0 {
+				eras = allEras()
+			}
+			for _, p := range tpl.Parts {
+				if p.bank == "" {
+					continue
+				}
+				if out[p.bank] == nil {
+					out[p.bank] = map[era]bool{}
+				}
+				for _, e := range eras {
+					out[p.bank][e] = true
+				}
+			}
+		}
+	}
+	return out
+}
+
+// TestNoEraBleedInBanks is the static half of the guard: a lint over the authored
+// fragments themselves. It catches an anachronism at the exact bank and fragment
+// that carries it, which is a far more useful failure than a fuzzed line.
+func TestNoEraBleedInBanks(t *testing.T) {
+	firing := banksFiringEras()
+	checked := 0
+	for name, eras := range firing {
+		for _, frag := range banks[name] {
+			checked++
+			for word, homes := range eraMarkers {
+				re := markerRE(word)
+				if !re.MatchString(frag) {
+					continue
+				}
+				for e := range eras {
+					if atHome(homes, e) {
+						continue
+					}
+					t.Errorf("era bleed: bank %q can fire in the %s era but fragment %q "+
+						"carries the era-coded word %q — rewrite it age-agnostic, or move it "+
+						"into the matching *_%s bank in catalog_eras.go",
+						name, eraName(e), frag, word, eraName(homes[0]))
+				}
+			}
+		}
+	}
+	t.Logf("checked %d fragments across %d referenced banks against %d era markers",
+		checked, len(firing), len(eraMarkers))
+}
+
+// TestNoEraBleedInOutput is the end-to-end half: generate a few thousand lines per
+// Moment at a representative age in EVERY bucket and assert no line carries a word
+// from a foreign era. This is the test that would have failed on the real space-age
+// output that prompted the fix — carts, gates, valleys and militia narrating an
+// orbital strike.
+//
+// The Subject and the resource label are stripped before scanning, because both
+// reach the output verbatim from the CALLER: "Orbital Strike" is an expedition
+// name, not a fragment this package authored.
+func TestNoEraBleedInOutput(t *testing.T) {
+	ages := []struct {
+		age string
+		era era
+	}{
+		{"primitive_age", eraAncient},
+		{"medieval_age", eraFeudal},
+		{"electric_age", eraIndustrial},
+		{"digital_age", eraDigital},
+		{"galactic_age", eraCosmic},
+	}
+	tones := allTones
+	kinds := []string{"", "scouting", "military", "aggressive", "mercantile"}
+	subjects := []string{"", "Raid Bandit Camp", "Naval Expedition", "Orbital Strike", "Merchant Guild", "Void Reavers"}
+	resources := []string{"", "food", "gold", "soldiers", "quantum_flux"}
+
+	// One alternation per era rather than one regex per marker per line: this
+	// loop scans six figures of prose, and 70-odd separate matches per line puts
+	// the package test suite into the tens of seconds for no extra signal.
+	foreign := map[era]*regexp.Regexp{}
+	for _, bucket := range eraBuckets {
+		var words []string
+		for word, homes := range eraMarkers {
+			if !atHome(homes, bucket.era) {
+				words = append(words, regexp.QuoteMeta(word))
+			}
+		}
+		sort.Strings(words) // stable pattern, so a failure reproduces
+		foreign[bucket.era] = regexp.MustCompile(`(?i)\b(?:` + strings.Join(words, "|") + `)\b`)
+	}
+
+	lines := 0
+	for _, m := range Moments() {
+		for _, a := range ages {
+			rng := rand.New(rand.NewSource(int64(m)*7717 + int64(a.era)))
+			for _, tone := range tones {
+				for _, kind := range kinds {
+					for _, subj := range subjects {
+						for _, key := range resources {
+							for i := 0; i < 8; i++ {
+								req := Request{
+									Moment: m, Tone: tone, Age: a.age, Kind: kind,
+									Subject: subj, Resource: key, Amount: 137,
+								}
+								line := Line(req, rng)
+								lines++
+								// Caller-supplied text is not this package's prose.
+								scan := line
+								if subj != "" {
+									scan = strings.ReplaceAll(scan, subj, " ")
+								}
+								if key != "" {
+									scan = strings.ReplaceAll(scan, resourceLabel(key), " ")
+								}
+								if hit := foreign[a.era].FindString(scan); hit != "" {
+									t.Fatalf("era bleed in %v at %s (%s era): %q contains %q, "+
+										"which is at home in the %s era only", m, a.age,
+										eraName(a.era), line, hit,
+										eraName(eraMarkers[strings.ToLower(hit)][0]))
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	}
+	t.Logf("fuzzed %d lines across %d moments and %d eras with no era bleed", lines, len(Moments()), len(ages))
+}
+
+// TestEveryEraHasItsOwnVoice pins the other side of the fix: it is not enough to
+// scrub the anachronisms out, every bucket must have real authored prose of its
+// own or the late ages just get a blander version of the same pool. Each Moment
+// must reach its era anchors in every bucket, and the per-era eligible pool must
+// stay wide.
+func TestEveryEraHasItsOwnVoice(t *testing.T) {
+	ages := map[era]string{
+		eraAncient:    "stone_age",
+		eraFeudal:     "renaissance_age",
+		eraIndustrial: "atomic_age",
+		eraDigital:    "cyberpunk_age",
+		eraCosmic:     "quantum_age",
+	}
+	for _, m := range Moments() {
+		for _, bucket := range eraBuckets {
+			age := ages[bucket.era]
+			coreBank := ""
+			for _, name := range anchorBanksFor(m) {
+				if strings.HasSuffix(name, "_core_"+bucket.suffix) {
+					coreBank = name
+				}
+			}
+			if coreBank == "" {
+				t.Fatalf("%v has no anchor bank for the %s era", m, bucket.suffix)
+			}
+			if n := len(banks[coreBank]); n < 6 {
+				t.Errorf("%v: era bank %q has only %d fragments; want >= 6 so the %s ages "+
+					"do not fall back on the age-agnostic pool for their whole voice", m, coreBank, n, bucket.suffix)
+			}
+
+			rng := rand.New(rand.NewSource(int64(m)*3313 + int64(bucket.era)))
+			seen := map[string]bool{}
+			hitEra := 0
+			for i := 0; i < 2000; i++ {
+				line := Line(Request{Moment: m, Age: age}, rng)
+				seen[line] = true
+				for _, frag := range banks[coreBank] {
+					if strings.Contains(line, frag) {
+						hitEra++
+						break
+					}
+				}
+			}
+			if hitEra == 0 {
+				t.Errorf("%v: no line in 2000 draws at %s used the %s anchors", m, age, bucket.suffix)
+			}
+			if len(seen) < 200 {
+				t.Errorf("%v at %s: only %d distinct lines in 2000 draws; want >= 200", m, age, len(seen))
+			}
+			t.Logf("%-20v %-11s %4d distinct / 2000, %4d era-anchored", m, bucket.suffix, len(seen), hitEra)
+		}
+	}
+}
+
 // TestSignaturesClassifyEveryLine is the end-to-end version of the anchor
 // contract, and the property game/boon_tuning_test.go depends on: any generated
 // line contains exactly one of its Moment's signatures and none of any other
@@ -771,20 +1157,29 @@ func TestToneAndKindBiasSelection(t *testing.T) {
 		t.Error("the scouting template never fired for Kind=scouting")
 	}
 
-	// Age bounds era-specific fragments: a stone-age success never reaches the
-	// late-era anchors, a transcendent-age one does, and an unset age is
-	// permissive (both are reachable).
+	// Age bounds era-specific fragments: a primitive-age success never reaches
+	// the cosmic anchors (nor a transcendent-age one the ancient anchors), each
+	// reaches its own, and an unset age is permissive (everything is reachable).
 	early := base
 	early.Age = "primitive_age"
-	if reach(early, 3, 3000)["exp_success_late_bare"] {
-		t.Error("a late-era template fired in the primitive age")
+	earlyReach := reach(early, 3, 3000)
+	if earlyReach["exp_success_cosmic_bare"] {
+		t.Error("a cosmic-era template fired in the primitive age")
+	}
+	if !earlyReach["exp_success_ancient_bare"] {
+		t.Error("the ancient-era template never fired in the primitive age")
 	}
 	late := base
 	late.Age = "transcendent_age"
-	if !reach(late, 3, 3000)["exp_success_late_bare"] {
-		t.Error("the late-era template never fired in the transcendent age")
+	lateReach := reach(late, 3, 3000)
+	if !lateReach["exp_success_cosmic_bare"] {
+		t.Error("the cosmic-era template never fired in the transcendent age")
 	}
-	if !reach(base, 3, 3000)["exp_success_late_bare"] {
+	if lateReach["exp_success_ancient_bare"] || lateReach["exp_success_feudal_bare"] {
+		t.Error("an early-era template fired in the transcendent age")
+	}
+	unset := reach(base, 3, 3000)
+	if !unset["exp_success_cosmic_bare"] || !unset["exp_success_ancient_bare"] {
 		t.Error("an unset Age should not exclude era-specific templates")
 	}
 }
@@ -798,14 +1193,20 @@ func TestSampleLines(t *testing.T) {
 		label string
 		req   Request
 	}{
+		// The two ends of the run, same Moment and Tone, so the era voices can be
+		// read against each other. These two used to be the same prose.
+		{"expedition success — PRIMITIVE age", Request{Moment: ExpeditionSuccess, Tone: Triumphant, Age: "primitive_age", Kind: "military", Subject: "Raid Bandit Camp", Resource: "food", Amount: 60}},
+		{"expedition success — COSMIC (galactic age)", Request{Moment: ExpeditionSuccess, Tone: Triumphant, Age: "galactic_age", Kind: "military", Subject: "Galactic Conquest", Resource: "antimatter", Amount: 900}},
 		{"expedition success (military, medieval)", Request{Moment: ExpeditionSuccess, Tone: Triumphant, Age: "medieval_age", Kind: "military", Subject: "Siege Enemy Castle", Resource: "gold", Amount: 340}},
 		{"expedition success (scouting, primitive)", Request{Moment: ExpeditionSuccess, Tone: Wry, Age: "primitive_age", Kind: "scouting", Subject: "Scout Party", Resource: "food", Amount: 60}},
+		{"expedition success (industrial age)", Request{Moment: ExpeditionSuccess, Age: "industrial_age", Kind: "military", Subject: "Colonial Campaign", Resource: "coal", Amount: 220}},
 		{"expedition success (space age)", Request{Moment: ExpeditionSuccess, Tone: Triumphant, Age: "space_age", Kind: "military", Subject: "Orbital Strike", Resource: "titanium", Amount: 900}},
 		{"expedition failure (military, iron)", Request{Moment: ExpeditionFailure, Tone: Grim, Age: "iron_age", Kind: "military", Subject: "Raid Bandit Camp", Resource: "iron", Amount: 30}},
 		{"expedition failure (scouting, modern)", Request{Moment: ExpeditionFailure, Age: "modern_age", Kind: "scouting", Subject: "Scout Nearby Ruins", Resource: "data", Amount: 12}},
 		{"encounter standoff", Request{Moment: EncounterStandoff, Tone: Wry, Age: "medieval_age", Kind: "aggressive", Subject: "Ironhold Clans"}},
 		{"encounter at capacity", Request{Moment: EncounterAtCapacity, Tone: Wry, Age: "classical_age", Kind: "mercantile", Subject: "Merchant Guild"}},
-		{"war raid", Request{Moment: WarRaid, Tone: Grim, Age: "medieval_age", Kind: "aggressive", Subject: "Void Reavers", Resource: "gold"}},
+		{"war raid (medieval)", Request{Moment: WarRaid, Tone: Grim, Age: "medieval_age", Kind: "aggressive", Subject: "Void Reavers", Resource: "gold"}},
+		{"war raid (quantum age)", Request{Moment: WarRaid, Tone: Grim, Age: "quantum_age", Kind: "aggressive", Subject: "Void Reavers", Resource: "antimatter"}},
 		{"zero request (every moment)", Request{}},
 	}
 	for _, s := range samples {

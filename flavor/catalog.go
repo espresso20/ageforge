@@ -2,7 +2,28 @@ package flavor
 
 // catalog.go is the DATA half of this package: the authored fragment banks and
 // the sentence structures that compose them. Everything here is plain data, so
-// widening a Moment's prose is an edit in this file and nowhere else.
+// widening a Moment's prose is an edit in this file (or catalog_eras.go) and
+// nowhere else.
+//
+// # The two kinds of fragment, and why the split matters
+//
+// A fragment is legitimate in exactly one of two ways:
+//
+//  1. AGE-AGNOSTIC. No era-coded physical noun anywhere in it. It has to land in
+//     the Stone Age and the Quantum Age alike, which is the standard
+//     config/log_flavor.go already sets for the fixed pools. People, orders,
+//     records, the return itself, reputation, morale, counting, complaining,
+//     taking credit — all of that is timeless. Carts, gates, bells, militia,
+//     quartermasters, valleys and marching columns are not. These fragments live
+//     in the banks BELOW and fire in every age.
+//
+//  2. ERA-GATED. Vivid, specific, and eligible only inside its era bucket. These
+//     live in catalog_eras.go, are named *_core_<era> / *_tail_c_<era>, and are
+//     only ever referenced by templates carrying a matching Eras constraint.
+//
+// There is no third kind. A cart in an ungated bank is a bug — it is how the
+// space age ended up being narrated by gate wardens — and TestNoEraBleed fails
+// the build for it.
 //
 // # How to read a Moment
 //
@@ -10,7 +31,7 @@ package flavor
 // plus supporting banks:
 //
 //	*_core       ANCHOR. Capitalized, sentence-initial, no terminal punctuation.
-//	*_core_*     ANCHOR variants gated by Kind, Era, or Tone.
+//	*_core_*     ANCHOR variants gated by Kind or Era.
 //	*_lead       Capitalized scene-setter that PRECEDES the core as its own sentence.
 //	*_tail_c     lowercase continuation, joined with ", and " / " — " / "; ".
 //	*_tail_s     Capitalized sentence that FOLLOWS the core.
@@ -45,102 +66,119 @@ package flavor
 // mechanic. Nothing here mentions ticks, rolls, slots, or caps.
 
 // banks holds every authored fragment bank, keyed by the name templates
-// reference. Fragments carry no terminal punctuation; the template supplies it.
-var banks = map[string][]string{
+// reference: the age-agnostic banks in this file plus the era-gated banks in
+// catalog_eras.go. Fragments carry no terminal punctuation; the template
+// supplies it.
+var banks = mergeBanks(neutralBanks, eraBanks)
+
+// mergeBanks folds the bank tables into one map. A key collision is an authoring
+// mistake that would silently discard a whole bank, so it panics at init rather
+// than shipping a half-empty pool.
+func mergeBanks(tables ...map[string][]string) map[string][]string {
+	out := make(map[string][]string)
+	for _, t := range tables {
+		for name, bank := range t {
+			if _, dup := out[name]; dup {
+				panic("flavor: duplicate bank name " + name)
+			}
+			out[name] = bank
+		}
+	}
+	return out
+}
+
+// neutralBanks are the AGE-AGNOSTIC banks. Nothing in here may name a cart, a
+// gate, a bell, a militia, a quartermaster, a valley, a marching column, a
+// harvest, or anything else that pins a sentence to one stretch of history. If a
+// line would read oddly aboard a ship in the Galactic Age, it belongs in
+// catalog_eras.go instead.
+var neutralBanks = map[string][]string{
 
 	// ========================================================================
 	// EXPEDITION SUCCESS
 	// ========================================================================
 
-	// ANCHOR — kind-neutral, early/industrial eras.
+	// ANCHOR — kind-neutral, every age.
 	"exp_success_core": {
 		"The party comes back heavier than it left",
-		"The column straggles in at dusk, loaded and unbothered",
-		"Everything the venture set out for is now sitting in the yard",
-		"The return party is met at the gate by a clerk with a very long list",
+		"Everything the venture set out for is accounted for and put away",
 		"The undertaking closes out in profit, and the record will say so",
 		"The party returns intact, which is more than the last one managed",
 		"Your people come home with full packs and a great deal to say about it",
 		"The venture pays out, to nobody's greater surprise than the people who went",
-		"What came back fills more carts than anyone budgeted for",
-		"The party arrives home on schedule, which the quartermaster finds suspicious",
-		"The work is done and the proof of it is stacked by the gate",
+		"More came back than there was ever any room for",
+		"The party arrives home exactly when it said it would, which is the least believable part",
+		"The work is done and the proof of it is stacked where everyone can walk past it",
 		"The expedition ends the way everyone hoped and nobody expected",
 		"They come back tired, filthy, and entirely unwilling to be modest about it",
 		"The venture concludes well, provided nobody asks about the middle of it",
+		"Everything that went out comes back, and a good deal besides",
+		"The accounting comes out in your favour and stubbornly stays that way",
+		"The return is uneventful, which the people who went will not be mentioning",
 	},
-	// ANCHOR — the same beat in the late ages, where nobody has a gate warden.
-	"exp_success_core_late": {
-		"The team returns on schedule and the manifest checks out",
-		"Everything logged as recoverable was recovered",
-		"The mission closes out clean, which the operations desk finds unnerving",
-		"The crew comes back with full holds and unspent contingency",
-		"The survey pays for itself twice over before the debrief ends",
-		"The return is quiet and the cargo seals are intact",
-		"The expedition files its report early, and nobody has an explanation for that",
-		"What the mission set out to acquire is now on the inventory",
-	},
-	// ANCHOR — scouting only.
+	// ANCHOR — scouting only. Scouts, maps and rumours travel well between ages.
 	"exp_success_core_scout": {
-		"Your scouts return with the map redrawn and their boots ruined",
+		"Your scouts return with the map redrawn and themselves half ruined",
 		"The scouting party comes home early, which is either skill or luck",
 		"The reconnaissance holds up: everything they promised was where they said",
-		"Your scouts walked further than they were ordered to and came back better for it",
-		"The party returns with a map, a rumour, and something heavy in a sack",
+		"Your scouts went further than they were ordered to and came back better for it",
+		"The party returns with a map, a rumour, and something heavy nobody will identify",
 		"The advance party is home, and the far country is a little less far",
 	},
-	// ANCHOR — military only.
+	// ANCHOR — military only. Soldiers, campaigns and spoils likewise.
 	"exp_success_core_war": {
-		"The campaign closes with the banners still up and the ranks mostly full",
-		"The war party returns under its own colours, which is the whole trick",
-		"The column comes home in step, which suggests the fighting went their way",
+		"The campaign closes with the ranks mostly full and the objective taken",
+		"The war party returns under its own command, which is the whole trick",
+		"The force comes home in good order, which suggests the fighting went their way",
 		"The campaign ends decisively enough that nobody argues about the details",
 		"Your soldiers return with spoils, minor wounds, and expanded stories",
-		"The muster returns thinner than it left and considerably richer",
+		"The expedition returns thinner than it left and considerably richer",
 	},
 	"exp_success_lead": {
 		"Word runs ahead of the party by two days, as it always does",
-		"The gate is opened early on the strength of a rumour",
 		"Nobody at home admits to having doubted it",
-		"The bells are rung, briefly, by someone who was not asked to",
-		"A crowd forms at the gate, mostly to see what is in the carts",
-		"The road was long and the return is louder than the departure",
+		"The way out was long and the return is louder than the departure",
 		"The council had already drafted the disappointing announcement",
 		"Somebody has been keeping a tally, and it is a good one",
+		"Nobody at home was expecting them for another week",
+		"The news arrives first, arrives wrong, and is corrected at volume",
+		"There had been a great deal of quiet doubt about this one",
 	},
 	"exp_success_tail_c": {
-		"the quartermaster is already complaining about where to put it",
-		"the storehouse doors are propped open for the afternoon",
+		"the stores are thrown open for the afternoon and stay open",
 		"nobody has yet volunteered to do the counting",
-		"the tally is disputed twice before supper",
+		"the tally is disputed twice before anyone has eaten",
 		"three separate accounts of the journey are already in circulation",
-		"the clerks are told to stop asking where it all came from",
-		"the road home is described as far worse than it was",
+		"everyone is told to stop asking where it all came from",
+		"the way home is described as far worse than it was",
 		"somebody is being carried on shoulders who did very little",
-		"the celebration is scheduled before the inventory is finished",
-		"the ledger is updated with visible satisfaction",
+		"the celebration is scheduled before the counting is finished",
+		"the accounts are updated with visible satisfaction",
 		"the story grows a little in each retelling",
-		"the gate is kept open until the last cart is through",
+		"the estimate is quietly revised upward and nobody objects",
+		"two people are already claiming it was their idea",
 	},
 	"exp_success_tail_s": {
 		"The council will take credit for it within the week",
-		"A feast is proposed and immediately over-budgeted",
-		"The storehouse keeper asks, politely, for a bigger storehouse",
+		"A celebration is proposed and immediately over-budgeted",
+		"Whoever is responsible for the stores asks, politely, for bigger stores",
 		"Two of the party are already volunteering for the next one",
 		"Somebody suggests a monument and somebody else suggests a bath",
 		"The record will be tidied before it is read aloud",
-		"The roads go quiet again by morning",
+		"Everything goes quiet again by morning",
 		"A song about it is begun and, mercifully, abandoned",
 		"The maps are corrected, and the corrections are argued over",
 		"The whole affair is declared to have been the plan all along",
+		"Nobody mentions the part of the plan that did not happen",
 	},
 	"exp_success_tail_triumph": {
-		"The whole valley hears about it by nightfall",
+		"Everyone hears about it, and everyone hears a different version",
 		"It is, by every measure anyone at home is using, a triumph",
 		"Nothing about the day will be understated in the retelling",
-		"The banners come out and stay out",
-		"Even the clerks are cheerful, which is unsettling",
-		"The gate is left open late, on purpose",
+		"The celebrating starts early and declines to stop",
+		"Even the people who keep the accounts are cheerful, which is unsettling",
+		"Nobody is sent to bed at a reasonable hour",
+		"Not one person present is prepared to call it luck",
 	},
 	"exp_success_tail_wry": {
 		"The plan is now described as having been careful",
@@ -152,27 +190,27 @@ var banks = map[string][]string{
 	},
 	"exp_success_subject_c": {
 		"the {subject} order is marked closed",
-		"the ledger entry marked {subject} is ruled off with some ceremony",
-		"what the muster-roll calls {subject} is done with at last",
+		"the record marked {subject} is ruled off with some ceremony",
+		"what the standing order calls {subject} is done with at last",
 		"the {subject} venture goes into the record as a good one",
-		"the clerks file {subject} under matters concluded",
+		"somebody will file {subject} under matters concluded",
 		"the orders read {subject}, and for once the orders were followed",
 		"the {subject} business ends better than it was planned",
 		"the standing order titled {subject} is struck from the board",
 	},
 	"exp_success_res_any": {
-		"the carts are full of {res} and very little else",
-		"there is {res} enough to make the clerks nervous",
+		"the whole return is {res} and very little else",
+		"there is {res} enough to make the people counting it nervous",
 		"most of what came back is {res}",
 	},
 	"exp_success_res_amt": {
-		"the tally comes to {amt_res}, give or take a cart",
-		"the ledger gains a line reading {amt_res}",
+		"the tally comes to {amt_res}, give or take an argument",
+		"the record gains a line reading {amt_res}",
 		"somebody counts {amt_res} and somebody else counts differently",
 	},
 	"exp_success_res_mass": {
-		"{res_haul} is unloaded before the party has finished dismounting",
-		"{res_stores} will hold through the season now",
+		"{res_haul} is unloaded before the party has finished arriving",
+		"{res_stores} will hold for a good while now",
 		"there is {res_haul} to be argued over by morning",
 	},
 
@@ -184,111 +222,102 @@ var banks = map[string][]string{
 		"The party comes back lighter than it left",
 		"The venture ends short of everything it was sent for",
 		"What returns is a fraction of what was promised",
-		"The column comes home the long way, quietly",
 		"The expedition is written up as a partial success by someone generous",
 		"The party returns, and the returning is most of the achievement",
 		"The undertaking fails in the ordinary way: slowly, and then all at once",
 		"They come back with less than they carried out",
 		"The venture goes badly, though not as badly as it could have",
 		"The party is home, the packs are light, and nobody is talking",
-		"The attempt does not survive contact with the country it was sent to",
+		"The attempt does not survive its first contact with the real thing",
 		"The return is early, which is never a good sign",
 		"Something went wrong out there and the accounts of it do not agree",
-		"The expedition ends without ceremony and with fewer carts",
-	},
-	"exp_fail_core_late": {
-		"The mission returns degraded and under-provisioned",
-		"The manifest and the cargo do not agree, and the cargo wins",
-		"The operation is closed out as partially recovered",
-		"The crew comes home with the hull intact and very little in it",
-		"The survey returns early, having found the country uncooperative",
-		"The mission ends inside acceptable losses, by a definition written afterwards",
-		"Half of what was logged outbound is not logged inbound",
-		"The debrief takes longer than the expedition did",
+		"The expedition ends without ceremony and with a great deal less than it was sent for",
+		"Whatever was out there declines to be brought back",
+		"The party comes home and the only thing that arrives intact is the party",
 	},
 	"exp_fail_core_scout": {
 		"Your scouts come back with a shorter map than they left with",
 		"The scouting party loses the trail and, for two days, itself",
 		"The reconnaissance returns with rumours and no confirmations",
-		"Your scouts report that the country is worse than the maps allowed for",
-		"The advance party turns back at a river nobody had drawn",
+		"Your scouts report that everything out there is worse than the maps allowed for",
+		"The advance party turns back at something nobody had thought to draw",
 		"The scouts come home apologetic, which is at least honest",
 	},
 	"exp_fail_core_war": {
-		"The campaign ends with the banners furled early",
+		"The campaign ends early and nobody present calls it a withdrawal",
 		"The war party withdraws in reasonable order, which is the best that can be said",
-		"The column comes home out of step and short of its complement",
-		"The muster returns thinner and no wealthier",
+		"The force comes home out of order and short of its complement",
+		"The expedition returns thinner and no wealthier",
 		"Your soldiers give ground, and then give a great deal of explanation",
 		"The campaign is broken off before it becomes a disaster worth naming",
 	},
 	"exp_fail_lead": {
-		"The gate is opened without any bells at all",
 		"Word arrives ahead of the party and gets quieter as it travels",
 		"The council prepares two announcements and uses the shorter one",
-		"The crowd at the gate thins once the carts are counted",
 		"Nobody at home admits to having predicted this either",
-		"The road home was the hardest part, by every account given",
-		"A clerk is sent to the gate and comes back with very little to write",
-		"The watch reports the party's return without further comment",
+		"The way home was the hardest part, by every account given",
+		"The return is reported without further comment",
+		"There was no announcement prepared for this outcome",
+		"The people who stayed behind can tell from a distance",
+		"Nothing about the return is loud",
 	},
 	"exp_fail_tail_c": {
 		"the tally is finished in under a minute",
-		"the storehouse doors stay shut",
+		"the stores stay shut",
 		"nobody asks for the full account twice",
 		"the map is amended in three places and believed in none",
 		"the blame is distributed evenly and accepted by nobody",
-		"the quartermaster says nothing, loudly",
-		"the road is given more credit for it than the enemy",
+		"the people who keep the accounts say nothing, loudly",
+		"the distance is given more credit for it than the enemy",
 		"the record is written carefully and filed quickly",
 		"the party is fed and not questioned",
 		"the survivors are allowed to keep their version",
 		"somebody proposes a second attempt and is not thanked",
-		"the clerks find room in the ledger for a very small entry",
+		"room is found in the record for a very small entry",
 	},
 	"exp_fail_tail_s": {
-		"The council decides the plan was sound and the country unreasonable",
-		"A shorter route is proposed by someone who has never walked it",
+		"The council decides the plan was sound and everything else unreasonable",
+		"A shorter route is proposed by someone who has never travelled it",
 		"The maps are blamed, and then quietly corrected",
-		"Nobody volunteers for the next one before supper",
+		"Nobody volunteers for the next one for several days",
 		"The whole affair is described, in hindsight, as a reconnaissance",
 		"A report is commissioned and will be read by no one",
-		"The storehouse keeper is relieved on one count and worried on several",
+		"Whoever keeps the stores is relieved on one count and worried on several",
 		"It is agreed the expedition was unlucky rather than badly planned",
 		"The next order is drafted with a great deal more caution",
-		"The roads go quiet and stay that way",
+		"Everything goes quiet and stays that way",
 	},
 	"exp_fail_tail_grim": {
 		"Not everyone who left is accounted for",
 		"The names are read out and the list is longer than the tally",
-		"There are two funerals and no feast",
-		"The road out will be walked more carefully next time, by fewer people",
+		"There are two funerals and no celebration",
+		"The way out will be taken more carefully next time, by fewer people",
 		"Nobody sings anything",
-		"The season turns and the gap in the ranks stays where it is",
+		"Time passes and the gap in the ranks stays where it is",
 	},
 	"exp_fail_subject_c": {
 		"the {subject} order is closed without comment",
-		"the ledger entry marked {subject} is ruled off in a plainer hand",
-		"what the muster-roll calls {subject} is quietly abandoned",
+		"the record marked {subject} is ruled off without ceremony",
+		"what the standing order calls {subject} is quietly abandoned",
 		"the {subject} venture goes into the record as instructive",
-		"the clerks file {subject} under matters best not revisited",
-		"the orders read {subject}, and the country read otherwise",
+		"somebody will file {subject} under matters best not revisited",
+		"the orders read {subject}, and events read otherwise",
 		"the {subject} business ends earlier than it was meant to",
 		"the standing order titled {subject} is struck from the board anyway",
 	},
 	"exp_fail_res_any": {
 		"what {res} came back would not fill a corner",
-		"there is some {res} in the carts and not much else",
-		"the carts hold {res} and a great deal of empty air",
+		"there is some {res} in what returned and not much else",
+		"there is {res} enough to be embarrassing and no more",
 	},
 	"exp_fail_res_amt": {
 		"the tally stops at {amt_res}",
-		"the ledger gains one thin line reading {amt_res}",
+		"the record gains one thin line reading {amt_res}",
 		"somebody counts {amt_res} and then counts it again, hopefully",
 	},
 	"exp_fail_res_mass": {
 		"{res_stores} will not notice the difference",
-		"there is barely {res_haul} to show for the season",
+		"there is barely {res_haul} to show for all of it",
 		"{res_stores} are exactly where they were",
 	},
 
@@ -297,28 +326,31 @@ var banks = map[string][]string{
 	// ========================================================================
 
 	"enc_standoff_core": {
-		"Your scouts and theirs see each other across the valley, and both parties withdraw",
-		"An enemy column shadows the expedition most of a day, then breaks off",
+		"Your scouts and theirs see each other at a distance, and both parties withdraw",
+		"An enemy force shadows the expedition most of a day, then breaks off",
 		"Contact with the enemy, brief and inconclusive",
-		"Two patrols meet at a ford, take each other's measure, and go around",
+		"Two patrols meet by accident, take each other's measure, and go around",
 		"The parties pass within sight and neither commits to anything",
-		"A watch-fire is spotted, answered, and left alone by both sides",
+		"A signal goes up, is answered, and comes to precisely nothing",
 		"There is a long afternoon of looking at one another from a safe distance",
 		"Both sides find the other at the same moment and both decline the invitation",
-		"The enemy pickets are counted from a ridge and then avoided entirely",
-		"Someone shouts across the water and nobody shouts back",
-		"The expedition finds the enemy camp, considers it at length, and walks past",
-		"A scout of theirs and a scout of yours share a road for an hour without agreeing to",
-		"The two columns spend the day marching parallel and pretending not to",
-		"An arrow is loosed by somebody nervous and lands in nothing at all",
+		"The enemy positions are counted from somewhere safe and then avoided entirely",
+		"Someone signals across the gap and nobody signals back",
+		"The expedition finds the enemy at rest, considers it at length, and moves on",
+		"A scout of theirs and a scout of yours share a route for an hour without agreeing to",
+		"The two forces spend the day moving parallel and pretending not to",
+		"Somebody nervous does something regrettable and it comes to nothing at all",
+		"Neither side does the one thing that would have started it",
+		"The two parties spend an hour deciding not to be the one who begins",
 	},
 	"enc_standoff_lead": {
 		"The border country is quiet in the way that means occupied",
-		"There is smoke on the far ridge and it is not yours",
-		"The war has not reached this valley yet, only its scouts",
+		"There is something on the far side of it and it is not yours",
+		"The war has not reached this place yet, only its scouts",
 		"Both sides have business here and neither will say what",
-		"The road is wide enough for two parties who do not wish to meet",
+		"There is room enough here for two parties who do not wish to meet",
 		"Nothing has been agreed since the fighting started, least of all here",
+		"Everyone out here is a long way from anyone who could give an order",
 	},
 	"enc_standoff_tail_c": {
 		"nothing is gained and nothing is lost",
@@ -326,7 +358,7 @@ var banks = map[string][]string{
 		"the sighting is reported and filed",
 		"both accounts of it will be exaggerated later",
 		"the maps gain one small mark and no explanation",
-		"the party keeps walking and does not look back twice",
+		"the party keeps moving and does not look back twice",
 		"everyone involved reports having been perfectly calm",
 		"the encounter costs a day and nothing else",
 		"the incident is entered in the log with admirable brevity",
@@ -335,94 +367,95 @@ var banks = map[string][]string{
 	"enc_standoff_tail_s": {
 		"The war continues elsewhere, on schedule",
 		"Both parties will call it restraint when they report it",
-		"The valley is left to itself again by evening",
+		"The place is left to itself again by evening",
 		"It is not peace, but it will do for the afternoon",
 		"The report is one line long and entirely accurate",
 		"Somebody will be commended for this and it will not be the right person",
-		"The distance between the two columns is never once discussed",
+		"The distance between the two parties is never once discussed",
 		"Nothing about it changes anything, which is rather the point",
 	},
 	"enc_standoff_tail_wry": {
 		"Both sides will describe their own restraint as strategy",
-		"It is the most agreeable thing either army has done all season",
+		"It is the most agreeable thing either army has done all year",
 		"The report writes itself and says nothing",
 		"History will not record it, which is fair",
-		"Everyone goes home to a supper they have earned by walking",
+		"Everyone goes home to a meal they have earned by not fighting",
 		"The war is briefly, accidentally, civil",
 	},
 	"enc_standoff_subject_c": {
 		"the party comes within sight of the {subject} and no closer",
 		"there is no word exchanged with the {subject} at all",
 		"the encounter with the {subject} ends the way it began",
-		"your scouts count the banners of the {subject} and withdraw",
+		"your scouts count the strength of the {subject} and withdraw",
 		"nothing passes between your people and the {subject}",
 		"a message is not sent to the {subject}, on reflection",
 	},
 
 	// ========================================================================
-	// ENCOUNTER — AT CAPACITY (the court cannot hold another favour)
+	// ENCOUNTER — AT CAPACITY (there is no room for another favour)
 	// ========================================================================
 
 	"enc_cap_core": {
-		"Your stores are already thick with foreign gifts, and the envoys are sent home with their crates unopened",
-		"The ledger of outstanding favours is full",
-		"Your court can carry no more obligations this season",
-		"The gifts are admired at the gate and declined at the door",
+		"Your stores are already thick with foreign gifts, and the envoys are sent back with their crates unopened",
+		"The list of outstanding favours will not take another name",
+		"There is no room to carry another obligation this year",
+		"The gifts are admired on arrival and declined immediately afterwards",
 		"There is nowhere left to put a favour, let alone another one",
-		"The steward refuses the crates on the grounds that the last lot are still unpacked",
-		"The envoys are fed, thanked, and walked back to the road",
-		"Your household is already obliged in more directions than it can face",
+		"Whoever keeps the stores refuses the delivery, the last one being still unpacked",
+		"The envoys are fed, thanked, and sent back the way they came",
+		"You are already obliged in more directions than you can comfortably face",
 		"The offer is made handsomely and turned down politely",
-		"Every shelf that matters is spoken for",
+		"Every space that matters is spoken for twice over",
 		"The party returns with courtesies and very little else",
 		"There are too many debts of gratitude outstanding to take on another",
-		"The crates go back down the road under the same wax seals they arrived with",
+		"The gifts go back where they came from with their seals unbroken",
 		"Generosity arrives at a bad moment and is asked to wait",
+		"The generosity is real, the timing is terrible, and the answer is no",
 	},
 	"enc_cap_lead": {
-		"The season has been an unusually friendly one",
+		"It has been an unusually friendly year",
 		"Foreign goodwill has become a storage problem",
-		"The court has spent the year accepting things",
-		"There is a queue of envoys and a shortage of shelves",
-		"The stewards have been keeping count and they are unhappy about it",
+		"You have spent the year accepting things",
+		"There is a queue of envoys and a shortage of room",
+		"Whoever keeps the count has been keeping it, and is unhappy about it",
 		"Nobody planned for this much kindness",
 	},
 	"enc_cap_tail_c": {
 		"the crates are never opened",
-		"the steward is quietly relieved",
+		"the people who would have to store it are quietly relieved",
 		"the envoys take it better than expected",
 		"the courtesies are exchanged at length and mean nothing",
 		"nobody is offended, which takes effort on both sides",
 		"the party comes home with stories instead of goods",
-		"the ledger is closed with some firmness",
-		"the gifts are admired and then reloaded",
-		"the road back is described as pleasant",
+		"the record is closed with some firmness",
+		"the gifts are admired and then loaded straight back up",
+		"the journey back is described as pleasant",
 		"the whole exchange takes an afternoon and produces a receipt",
 	},
 	"enc_cap_tail_s": {
-		"The stewards will remember this the next time they are asked for room",
+		"This will be remembered the next time anyone asks for room",
 		"It is agreed that the timing was nobody's fault",
-		"A larger storehouse is proposed for the fourth time this year",
+		"More storage is proposed for the fourth time this year",
 		"The envoys are invited back at a less crowded moment",
 		"Somebody suggests giving something away and is ignored",
-		"The court's reputation for generosity survives intact",
+		"Your reputation for generosity survives intact",
 		"The matter is recorded as a courtesy call and left there",
 		"Everyone parts on good terms and slightly worse tempers",
 	},
 	"enc_cap_tail_wry": {
 		"Prosperity is turning out to have logistics",
 		"It is a good problem and it is still a problem",
-		"The steward's position is vindicated and nobody enjoys it",
-		"Somewhere a shelf is being built, slowly",
-		"The court is rich in gestures and short of floor",
-		"Being owed too much is a novel complaint",
+		"The cautious position is vindicated and nobody enjoys it",
+		"Somewhere, more room is being made, slowly",
+		"You are rich in gestures and short of floor",
+		"Being owed too much is a novel sort of complaint",
 	},
 	"enc_cap_subject_c": {
 		"the party comes home with the goodwill of the {subject} and nothing heavier",
 		"there is no room left for anything from the {subject}",
-		"your stewards decline the offer from the {subject}, with real regret",
-		"your stewards send word to the {subject} that the timing is poor",
-		"nothing further is taken from the {subject} this season",
+		"your people decline the offer from the {subject}, with real regret",
+		"word is sent to the {subject} that the timing is poor",
+		"nothing further is taken from the {subject} this year",
 		"the arrangement with the {subject} can wait until there is room",
 	},
 
@@ -431,74 +464,76 @@ var banks = map[string][]string{
 	// ========================================================================
 
 	"war_raid_core": {
-		"They came at dawn, took what they came for, and were gone before the horns",
+		"They came at first light, took what they came for, and were gone before anyone was awake",
 		"The raiders were in and out before the watch had finished shouting",
-		"The border villages are counted and one of them is short",
-		"A raiding party crosses at the shallow ford and does not linger",
-		"The attack is over by the time the militia is dressed",
+		"The outlying settlements are counted and one of them is short",
+		"A raiding party crosses where nobody was watching and does not linger",
+		"The attack is over by the time anyone is ready to answer it",
 		"They came for the stores and they knew exactly where the stores were",
 		"The raid is brief, efficient, and infuriatingly well informed",
-		"Smoke goes up on the eastern road and is answered too late",
-		"The column that hit the outer holdings was gone before anyone agreed on its size",
+		"The alarm goes up on the eastern edge and is answered far too late",
+		"The force that hit the outer holdings was gone before anyone agreed on its size",
 		"The watch reports the raid promptly, having watched it",
-		"The gate held, and nothing behind the gate did",
+		"The defences held, and nothing behind the defences did",
 		"They take what they can carry and burn a little of what they cannot",
 		"The raiders leave the way they came, unhurried",
 		"It is over quickly, as these things are",
+		"Whoever planned it worked from a list, and the list was accurate",
+		"The raid is answered promptly by people arriving from much too far away",
 	},
 	"war_raid_lead": {
 		"The war has settled into a rhythm and this is the loud part of it",
 		"There is nothing surprising about it any more, which is its own insult",
 		"The border goes quiet for a stretch, and then it does not",
-		"The outer holdings have learned to keep the carts loaded",
+		"The outer holdings have learned to keep everything packed",
 		"Word of the crossing arrives with the raiders",
-		"It is the season for this and everyone knows it",
-		"The militia was assembled, briefly, and for nothing",
-		"The bells go up along the valley in the wrong order",
+		"This has happened often enough to have a routine",
+		"A defence was assembled, briefly, and for nothing",
+		"The alarm goes up along the frontier in entirely the wrong order",
 	},
 	"war_raid_tail_c": {
-		"the ledger is corrected downward before noon",
+		"the accounts are corrected downward before noon",
 		"the watch is doubled, several hours late",
 		"nobody in the outer holdings is surprised",
-		"the road is repaired and the fence is not",
-		"the militia arrives in time to look at the tracks",
+		"what was broken is counted and none of it is mended",
+		"the response arrives in time to look at where they went",
 		"the accounting is done twice, hopefully",
-		"the stewards ask, again, for a wall",
+		"somebody asks, again, for a wall",
 		"the survivors are unimpressed by the response",
 		"the loss is entered and the entry is not read aloud",
-		"somebody counts the tracks and gives up",
-		"the gate wardens are questioned and have very little to add",
+		"somebody tries to count them and gives up",
+		"the people on watch are questioned and have very little to add",
 		"an inquiry is announced and forgotten by evening",
 	},
 	"war_raid_tail_s": {
 		"The council calls it a probe and moves on",
 		"A stronger wall is proposed and costed and shelved",
 		"The war continues without either side saying much about it",
-		"The outer holdings will want an answer by spring",
+		"The outer holdings will want an answer before long",
 		"Retaliation is discussed at length by people who will not be going",
 		"The border is redrawn on a map and nowhere else",
 		"It will happen again on roughly the same schedule",
 		"The garrison commander writes a very short report",
 		"Nobody is blamed, which surprises the people who were there",
-		"The bells are repaired before the fences are",
+		"The alarms are repaired long before the fences are",
 	},
 	"war_raid_tail_grim": {
 		"The outer holdings bury what they can find",
-		"There is a house on the east road that will not be rebuilt",
+		"There is a house on the eastern edge that will not be rebuilt",
 		"The tally of the missing is kept separately",
-		"Somebody is still walking the fields at dusk, counting",
-		"The bells are not rung again that night",
+		"Somebody is still out there at dusk, counting",
+		"Nothing is sounded again that night",
 		"The war stops being an argument and becomes a fact",
 	},
 	"war_raid_subject_c": {
 		"the raiders wore the colours of the {subject}",
 		"there is no doubt at all that it was the {subject}",
-		"the tracks lead back toward the {subject}",
+		"everything points back toward the {subject}",
 		"the war with the {subject} arrives at the outer holdings",
 		"nothing is sent to the {subject} in reply, yet",
 		"the raid is credited to the {subject} within the hour",
-		"your stewards blame the {subject} and, for once, are right",
-		"a rider is dispatched toward the {subject} and turns back at the border",
+		"everyone blames the {subject} and, for once, is right",
+		"a message is sent toward the {subject} and turns back at the border",
 	},
 	"war_raid_res_any": {
 		"they took {res} and left the rest scattered",
@@ -507,32 +542,85 @@ var banks = map[string][]string{
 		"they knew exactly where to find the {res}",
 	},
 	"war_raid_res_mass": {
-		"{res_stores} are lighter than they were at dawn",
-		"{res_haul} goes over the border in somebody else's carts",
-		"{res_stores} will be short until the season turns",
+		"{res_stores} are lighter than they were at first light",
+		"{res_haul} goes over the border in somebody else's hands",
+		"{res_stores} will be short for a while yet",
 		"they left {res_stores} standing open",
 	},
 }
 
 // --- templates ---------------------------------------------------------------
 
+// eraBucket pairs an era with the suffix its bank names use. The order is fixed
+// so generated template sets are stable, which the determinism contract needs.
+type eraBucket struct {
+	era    era
+	suffix string
+}
+
+var eraBuckets = []eraBucket{
+	{eraAncient, "ancient"},
+	{eraFeudal, "feudal"},
+	{eraIndustrial, "industrial"},
+	{eraDigital, "digital"},
+	{eraCosmic, "cosmic"},
+}
+
+// eraTemplates expands one Moment's era-gated structure set: six shapes per
+// bucket, each anchored on that bucket's core bank. Two are continued by the
+// bucket's OWN tail; the other four pair the era anchor with the Moment's
+// age-agnostic lead and follow-ons, which both widens the cross product and keeps
+// the era voice from tipping over into pastiche.
+//
+// Six shapes is also what puts era-flavoured lines at roughly one in four of a
+// fully-specified request's pool. Fewer and the late ages read as the neutral
+// pool with a coat of paint; many more and every sentence starts shouting about
+// its century.
+//
+// It is a data expansion, not logic — the alternative is a hundred and fifty
+// near-identical literals, which is harder to read and easier to get wrong.
+func eraTemplates(prefix string) []tmpl {
+	out := make([]tmpl, 0, len(eraBuckets)*6)
+	for _, bucket := range eraBuckets {
+		var (
+			core  = prefix + "_core_" + bucket.suffix
+			tailC = prefix + "_tail_c_" + bucket.suffix
+			lead  = prefix + "_lead"
+			nTail = prefix + "_tail_c"
+			tailS = prefix + "_tail_s"
+			id    = prefix + "_" + bucket.suffix
+			eras  = []era{bucket.era}
+		)
+		out = append(out,
+			tmpl{ID: id + "_bare", Eras: eras, Parts: []part{b(core), lit(".")}},
+			tmpl{ID: id + "_and", Eras: eras, Parts: []part{b(core), lit(", and "), b(tailC), lit(".")}},
+			tmpl{ID: id + "_dash", Eras: eras, Parts: []part{b(core), lit(" — "), b(tailC), lit(".")}},
+			tmpl{ID: id + "_then", Eras: eras, Parts: []part{b(core), lit(". "), b(tailS), lit(".")}},
+			tmpl{ID: id + "_semi", Eras: eras, Parts: []part{b(core), lit("; "), b(nTail), lit(".")}},
+			tmpl{ID: id + "_lead", Eras: eras, Parts: []part{b(lead), lit(". "), b(core), lit(".")}},
+		)
+	}
+	return out
+}
+
+// eraCoreBanks names one Moment's per-era anchor banks, for anchorBanksFor.
+func eraCoreBanks(prefix string) []string {
+	out := make([]string, 0, len(eraBuckets))
+	for _, bucket := range eraBuckets {
+		out = append(out, prefix+"_core_"+bucket.suffix)
+	}
+	return out
+}
+
 // expSuccessTemplates is the ExpeditionSuccess structure set.
 func expSuccessTemplates() []tmpl {
-	return []tmpl{
+	return append([]tmpl{
 		{ID: "exp_success_bare", Parts: []part{b("exp_success_core"), lit(".")}},
 		{ID: "exp_success_and", Parts: []part{b("exp_success_core"), lit(", and "), b("exp_success_tail_c"), lit(".")}},
 		{ID: "exp_success_dash", Parts: []part{b("exp_success_core"), lit(" — "), b("exp_success_tail_c"), lit(".")}},
 		{ID: "exp_success_then", Parts: []part{b("exp_success_core"), lit(". "), b("exp_success_tail_s"), lit(".")}},
 		{ID: "exp_success_lead_bare", Parts: []part{b("exp_success_lead"), lit(". "), b("exp_success_core"), lit(".")}},
 		{ID: "exp_success_lead_then", Parts: []part{b("exp_success_lead"), lit(". "), b("exp_success_core"), lit(". "), b("exp_success_tail_s"), lit(".")}},
-
-		// Late-era anchors: same beats, no gate wardens.
-		{ID: "exp_success_late_bare", Parts: []part{b("exp_success_core_late"), lit(".")},
-			Eras: []era{eraFuture}},
-		{ID: "exp_success_late_then", Parts: []part{b("exp_success_core_late"), lit(". "), b("exp_success_tail_s"), lit(".")},
-			Eras: []era{eraFuture}},
-		{ID: "exp_success_late_and", Parts: []part{b("exp_success_core_late"), lit(", and "), b("exp_success_tail_c"), lit(".")},
-			Eras: []era{eraFuture}},
 
 		// Kind-specific anchors.
 		{ID: "exp_success_scout_then", Kinds: []string{"scouting"},
@@ -561,25 +649,18 @@ func expSuccessTemplates() []tmpl {
 			Parts: []part{b("exp_success_core"), lit(", and "), b("exp_success_res_amt"), lit(".")}},
 		{ID: "exp_success_res_mass", Needs: needRes | needMassRes,
 			Parts: []part{b("exp_success_core"), lit(" — "), b("exp_success_res_mass"), lit(".")}},
-	}
+	}, eraTemplates("exp_success")...)
 }
 
 // expFailTemplates is the ExpeditionFailure structure set.
 func expFailTemplates() []tmpl {
-	return []tmpl{
+	return append([]tmpl{
 		{ID: "exp_fail_bare", Parts: []part{b("exp_fail_core"), lit(".")}},
 		{ID: "exp_fail_and", Parts: []part{b("exp_fail_core"), lit(", and "), b("exp_fail_tail_c"), lit(".")}},
 		{ID: "exp_fail_dash", Parts: []part{b("exp_fail_core"), lit(" — "), b("exp_fail_tail_c"), lit(".")}},
 		{ID: "exp_fail_then", Parts: []part{b("exp_fail_core"), lit(". "), b("exp_fail_tail_s"), lit(".")}},
 		{ID: "exp_fail_lead_bare", Parts: []part{b("exp_fail_lead"), lit(". "), b("exp_fail_core"), lit(".")}},
 		{ID: "exp_fail_lead_then", Parts: []part{b("exp_fail_lead"), lit(". "), b("exp_fail_core"), lit(". "), b("exp_fail_tail_s"), lit(".")}},
-
-		{ID: "exp_fail_late_bare", Parts: []part{b("exp_fail_core_late"), lit(".")},
-			Eras: []era{eraFuture}},
-		{ID: "exp_fail_late_then", Parts: []part{b("exp_fail_core_late"), lit(". "), b("exp_fail_tail_s"), lit(".")},
-			Eras: []era{eraFuture}},
-		{ID: "exp_fail_late_and", Parts: []part{b("exp_fail_core_late"), lit(", and "), b("exp_fail_tail_c"), lit(".")},
-			Eras: []era{eraFuture}},
 
 		{ID: "exp_fail_scout_then", Kinds: []string{"scouting"},
 			Parts: []part{b("exp_fail_core_scout"), lit(". "), b("exp_fail_tail_s"), lit(".")}},
@@ -603,12 +684,12 @@ func expFailTemplates() []tmpl {
 			Parts: []part{b("exp_fail_core"), lit(", and "), b("exp_fail_res_amt"), lit(".")}},
 		{ID: "exp_fail_res_mass", Needs: needRes | needMassRes,
 			Parts: []part{b("exp_fail_core"), lit(" — "), b("exp_fail_res_mass"), lit(".")}},
-	}
+	}, eraTemplates("exp_fail")...)
 }
 
 // encStandoffTemplates is the EncounterStandoff structure set.
 func encStandoffTemplates() []tmpl {
-	return []tmpl{
+	return append([]tmpl{
 		{ID: "enc_standoff_bare", Parts: []part{b("enc_standoff_core"), lit(".")}},
 		{ID: "enc_standoff_and", Parts: []part{b("enc_standoff_core"), lit(", and "), b("enc_standoff_tail_c"), lit(".")}},
 		{ID: "enc_standoff_dash", Parts: []part{b("enc_standoff_core"), lit(" — "), b("enc_standoff_tail_c"), lit(".")}},
@@ -623,12 +704,12 @@ func encStandoffTemplates() []tmpl {
 			Parts: []part{b("enc_standoff_core"), lit("; "), b("enc_standoff_subject_c"), lit(".")}},
 		{ID: "enc_standoff_subject_then", Needs: needSubject,
 			Parts: []part{b("enc_standoff_core"), lit("; "), b("enc_standoff_subject_c"), lit(". "), b("enc_standoff_tail_s"), lit(".")}},
-	}
+	}, eraTemplates("enc_standoff")...)
 }
 
 // encCapacityTemplates is the EncounterAtCapacity structure set.
 func encCapacityTemplates() []tmpl {
-	return []tmpl{
+	return append([]tmpl{
 		{ID: "enc_cap_bare", Parts: []part{b("enc_cap_core"), lit(".")}},
 		{ID: "enc_cap_and", Parts: []part{b("enc_cap_core"), lit(", and "), b("enc_cap_tail_c"), lit(".")}},
 		{ID: "enc_cap_dash", Parts: []part{b("enc_cap_core"), lit(" — "), b("enc_cap_tail_c"), lit(".")}},
@@ -643,12 +724,12 @@ func encCapacityTemplates() []tmpl {
 			Parts: []part{b("enc_cap_core"), lit("; "), b("enc_cap_subject_c"), lit(".")}},
 		{ID: "enc_cap_subject_then", Needs: needSubject,
 			Parts: []part{b("enc_cap_core"), lit("; "), b("enc_cap_subject_c"), lit(". "), b("enc_cap_tail_s"), lit(".")}},
-	}
+	}, eraTemplates("enc_cap")...)
 }
 
 // warRaidTemplates is the WarRaid structure set.
 func warRaidTemplates() []tmpl {
-	return []tmpl{
+	return append([]tmpl{
 		{ID: "war_raid_bare", Parts: []part{b("war_raid_core"), lit(".")}},
 		{ID: "war_raid_and", Parts: []part{b("war_raid_core"), lit(", and "), b("war_raid_tail_c"), lit(".")}},
 		{ID: "war_raid_dash", Parts: []part{b("war_raid_core"), lit(" — "), b("war_raid_tail_c"), lit(".")}},
@@ -668,7 +749,7 @@ func warRaidTemplates() []tmpl {
 			Parts: []part{b("war_raid_core"), lit("; "), b("war_raid_res_any"), lit(". "), b("war_raid_tail_s"), lit(".")}},
 		{ID: "war_raid_res_mass", Needs: needRes | needMassRes,
 			Parts: []part{b("war_raid_core"), lit(" — "), b("war_raid_res_mass"), lit(".")}},
-	}
+	}, eraTemplates("war_raid")...)
 }
 
 // templatesFor returns a Moment's template set in a stable order. An unregistered
@@ -696,15 +777,17 @@ func templatesFor(m Moment) []tmpl {
 func anchorBanksFor(m Moment) []string {
 	switch m {
 	case ExpeditionSuccess:
-		return []string{"exp_success_core", "exp_success_core_late", "exp_success_core_scout", "exp_success_core_war"}
+		return append([]string{"exp_success_core", "exp_success_core_scout", "exp_success_core_war"},
+			eraCoreBanks("exp_success")...)
 	case ExpeditionFailure:
-		return []string{"exp_fail_core", "exp_fail_core_late", "exp_fail_core_scout", "exp_fail_core_war"}
+		return append([]string{"exp_fail_core", "exp_fail_core_scout", "exp_fail_core_war"},
+			eraCoreBanks("exp_fail")...)
 	case EncounterStandoff:
-		return []string{"enc_standoff_core"}
+		return append([]string{"enc_standoff_core"}, eraCoreBanks("enc_standoff")...)
 	case EncounterAtCapacity:
-		return []string{"enc_cap_core"}
+		return append([]string{"enc_cap_core"}, eraCoreBanks("enc_cap")...)
 	case WarRaid:
-		return []string{"war_raid_core"}
+		return append([]string{"war_raid_core"}, eraCoreBanks("war_raid")...)
 	default:
 		return nil
 	}
