@@ -68,7 +68,11 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdTrade(args, engine)
 	case "diplomacy", "dip":
 		if len(args) == 0 {
-			return CommandResult{OverlayName: "diplomacy"}
+			// Opens the Factions panel under its PRIMARY overlay name, not under
+			// "diplomacy": the sidebar highlight matches on the name it is handed,
+			// so returning the alias would open the panel without lighting up the
+			// entry the player just navigated to.
+			return CommandResult{OverlayName: "factions"}
 		}
 		return cmdDiplomacy(args, engine)
 	case "wonder":
@@ -87,6 +91,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdUpgrade(args, engine)
 	case "advance":
 		return cmdAdvance(engine)
+	case "factions":
+		return CommandResult{OverlayName: "factions"}
 	case "milestones", "ms":
 		return CommandResult{OverlayName: "milestones"}
 	case "techs":

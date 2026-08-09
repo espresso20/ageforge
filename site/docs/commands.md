@@ -4,6 +4,16 @@ All commands are typed at the `>` prompt at the bottom of the screen. Press `↑
 
 ---
 
+## Timers and durations
+
+Every duration and countdown in the game reads as an approximate wall-clock time rather than a tick count: `~38s`, `~4m 44s`, `~1h 12m`. Durations that are rolled per launch — expedition lengths — read as a range, `~2m – 3m 20s`. Readings carry two units of precision at most.
+
+The `~` is doing real work. A tick is not a fixed amount of real time: `tick_speed` bonuses and the speed multiplier both shorten it, so every reading is computed from your **current** tick rate and moves as that rate does. Finish a tech that grants tick speed and the countdown you were already watching gets shorter.
+
+Balance values are still *defined* in ticks — a tech costs so many ticks of research, an event lasts so many ticks — and this wiki quotes those tick figures where the tick count is the mechanic. The game shows you the wall-clock conversion of them. Raw tick counts survive in exactly one place a player can reach: the `dump` debug export, which prints ticks alongside the wall-clock reading.
+
+---
+
 ## Building
 
 | Command | Description |
@@ -102,7 +112,7 @@ Timed missions come in two kinds, split across two panels. **Scouting** expediti
 
 Keys with underscores can be typed with spaces: `expedition scout ruins` is equivalent to `expedition scout_ruins`. If you run a campaign key through `expedition` the game refuses and points you to `campaign <key>`; likewise running a scouting key through `campaign` redirects you to `expedition <key>`.
 
-From the **Industrial Age** you can build a **Geographic Society**, which sends scouting parties out by itself — no command needed. It uses the same single scouting slot and waits whenever you have a party in the field, so dispatching by hand always takes priority. The more Societies you build and staff, the shorter the wait between automatic parties, though it stays slower than sending them yourself. See [Automatic dispatch](military.md#automatic-dispatch--the-geographic-society).
+From the **Industrial Age** you can build a **Geographic Society**, which sends scouting parties out by itself — no command needed. It uses the same single scouting slot and waits whenever you have a party in the field, so dispatching by hand always takes priority. The more Societies you build and staff, the shorter the wait between automatic parties, though it stays slower than sending them yourself. See [Automatic dispatch](military.md#automatic-dispatch-the-geographic-society).
 
 ---
 
@@ -115,7 +125,8 @@ From the **Industrial Age** you can build a **Geographic Society**, which sends 
 | `blackmarket` (or `bm`) | Show black-market status — culture cost, payout odds, and cooldown (Colonial Age+) |
 | `blackmarket <resource>` | Run a high-risk culture deal for a chance at a big haul of the chosen resource |
 | `trade black <resource>` | Alias for `blackmarket <resource>` |
-| `diplomacy` (or `dip`) | Open the **Diplomacy** overlay (full 11-civ roster: personality, backstory, opinion, status, bonuses, war + lent-worker state) |
+| `factions` | Open the **Factions** panel — live favours and setbacks, Geographic Society status, and the full 11-civ roster (personality, backstory, strength, opinion, status, bonuses, war + lent-worker state) |
+| `diplomacy` (or `dip`) | Opens the same **Factions** panel |
 | `diplomacy ally <civ>` | Ally with a civilization (opinion ≥ 50, costs 500 gold) |
 | `diplomacy rival <civ>` | Declare a rivalry |
 | `diplomacy embargo <civ>` | Embargo a civilization (counts as a war provocation) |
@@ -127,13 +138,14 @@ From the **Industrial Age** you can build a **Geographic Society**, which sends 
 ```
 trade start coastal_market
 trade stop coastal_market
-diplomacy                  # opens the Diplomacy overlay
+factions                   # opens the Factions panel
+diplomacy                  # the same panel, under its older name
 diplomacy gift merchant_guild
 diplomacy ally merchant_guild
 diplomacy tribute ironhold_clans   # end a war you'd rather not fight
 ```
 
-Active trade routes run for a fixed duration. Routes whose imports include a resource specialised in by a civilization you're **at war with or have embargoed** are **disrupted** (no income) until the conflict ends — see [Trade Disruption](trade.md#trade-disruption-war-embargo). **Harbours** (`harbor` → `logistics_hub`) boost the income of every active route. Check the **Trade** overlay (`trade`) for rates, and the **Diplomacy** overlay (`diplomacy` / `dip`) for faction standings. Bare `diplomacy` opens the overlay; add an action (`ally`/`rival`/`embargo`/`gift`/`neutral`) to act on a faction directly. Build and staff an **Embassy** (Colonial Age) or **Grand Embassy** (Industrial Age) to passively raise opinion with your non-hostile factions — see the [Trade & Diplomacy](trade.md#embassy-buildings) wiki page.
+Active trade routes run for a fixed duration. Routes whose imports include a resource specialised in by a civilization you're **at war with or have embargoed** are **disrupted** (no income) until the conflict ends — see [Trade Disruption](trade.md#trade-disruption-war-amp-embargo). **Harbours** (`harbor` → `logistics_hub`) boost the income of every active route. Check the **Trade** overlay (`trade`) for rates, and the **Factions** panel (`factions`, or the older `diplomacy` / `dip`) for live favours, Geographic Society status and civ standings — see [The Factions panel](trade.md#the-factions-panel). Bare `diplomacy` opens that panel; add an action (`ally`/`rival`/`embargo`/`gift`/`neutral`) to act on a faction directly. You meet civilizations by **running scouting expeditions**, not by building anything — but once you have met them, a staffed **Embassy** (Colonial Age) or **Grand Embassy** (Industrial Age) passively raises opinion with your non-hostile factions — see the [Trade & Diplomacy](trade.md#embassy-buildings) wiki page.
 
 ---
 
@@ -265,7 +277,7 @@ Voluntary catastrophes let you force an epoch event outside the normal roll. Use
 | `theme` | Open the **Themes** picker — browse palettes with live preview (also on the main menu) |
 | `theme list` | List every theme by name and key, marking the active one and noting which are accessible |
 | `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`) |
-| `dump` | Export logs to a file for debugging |
+| `dump` | Export logs to a file for debugging — the one player-reachable place that still prints raw tick counts, alongside the wall-clock reading |
 | `help` | Open the Help panel — full command reference and list of available panels |
 
 Save files live under your **active account's** slot — `data/accounts/<id>/saves/*.json`, relative to the directory you launch the game from (saves are per-account). The `save <name>` and `load <name>` commands above work with the same files as the **Load Game** browser below. See [Saving & Loading](saving-and-loading.md) and [Account & Recovery](account.md).

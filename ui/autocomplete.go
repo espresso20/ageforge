@@ -26,7 +26,7 @@ var commands = []string{
 	"expedition", "exp",
 	"campaign",
 	"trade", "t",
-	"diplomacy", "dip",
+	"factions", "diplomacy", "dip",
 	"catastrophe", "cat",
 	"status", "s",
 	"help", "h",

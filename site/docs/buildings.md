@@ -336,9 +336,9 @@ Monuments are one of the two culture sinks (the other is the `festival` command)
 
 Unlocked at the **Industrial Age**, the Geographic Society is the one building that plays part of the game for you. It costs gold, steel and coal, takes **8 workers from the military domain**, and produces no resource at all. What it does instead is **dispatch scouting expeditions on its own**, so an empire left to run keeps exploring — and keeps meeting the world's civilizations, which is where faction boons come from.
 
-You can build as many as you like, and the pace scales with how many you've built and how fully you've staffed them: one unstaffed Society sends a party roughly every 900 ticks, and six fully-staffed ones bottom out at around one every 100. It always dispatches **scouting parties only**, never military campaigns; it never runs two at once or bypasses the single scouting slot; and it pays the full resource cost of every party, skipping the cycle if your stores can't cover it.
+You can build as many as you like, and the pace scales with how many you've built and how fully you've staffed them: one unstaffed Society sends a party roughly every 900 ticks (about **30 minutes** at base tick speed), and six fully-staffed ones bottom out at around one every 100 (about **3m 20s**). Those real-time figures shorten as your tick speed rises; the **Factions** panel shows the countdown to the next dispatch in wall-clock terms. It always dispatches **scouting parties only**, never military campaigns; it never runs two at once or bypasses the single scouting slot; and it pays the full resource cost of every party, skipping the cycle if your stores can't cover it.
 
-It is deliberately **slower than dispatching by hand** — even at full investment it runs at about 60% of the pace of a player chaining expeditions themselves. Treat it as a floor under your exploration rather than a substitute for it. Full details in [Military & Expeditions](military.md#automatic-dispatch--the-geographic-society).
+It is deliberately **slower than dispatching by hand** — even at full investment it runs at about 60% of the pace of a player chaining expeditions themselves. Treat it as a floor under your exploration rather than a substitute for it. Full details in [Military & Expeditions](military.md#automatic-dispatch-the-geographic-society).
 
 ---
 

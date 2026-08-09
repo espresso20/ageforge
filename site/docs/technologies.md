@@ -69,7 +69,7 @@ is equivalent to `research bronze_working`.
 ```
 research list
 ```
-Lists all technologies available in the current age with their status (researched, in progress, available, locked by prerequisite). Also shows the currently active research and ticks remaining.
+Lists all technologies available in the current age with their status (researched, in progress, available, locked by prerequisite). Also shows the currently active research and the approximate wall-clock time left on it (e.g. `~4m 44s`) — see [Timers and durations](commands.md#timers-and-durations).
 
 ---
 

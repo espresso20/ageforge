@@ -118,7 +118,14 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.Register("army", "Army", militaryProvider)
 	d.overlayMgr.Register("expedition", "Expeditions", expeditionsProvider)
 	d.overlayMgr.Register("trade", "Trade", tradeProvider)
-	d.overlayMgr.Register("diplomacy", "Diplomacy", diplomacyProvider)
+	// The Factions panel, under two names pointing at one provider (the
+	// citymap/map precedent below). "factions" is the primary — it is what the
+	// sidebar lists, and the sidebar highlight matches on the registered name, so
+	// the two strings have to agree exactly. Bare `diplomacy` is routed to the
+	// primary name in input.go so it highlights too; "diplomacy" stays registered
+	// so anything holding the old overlay name still resolves.
+	d.overlayMgr.Register("factions", "Factions", factionsProvider)
+	d.overlayMgr.Register("diplomacy", "Factions", factionsProvider)
 	d.overlayMgr.Register("stats", "Statistics", statsProvider)
 	d.overlayMgr.Register("wonders", "Wonders", wondersProvider)
 	d.overlayMgr.Register("workers", "Workers", workersProvider)
@@ -438,7 +445,7 @@ func (d *Dashboard) updateSidebar(activeOverlay string) {
 }
 
 func buildSidebarText(active string) string {
-	commands := []string{"milestones", "research", "expedition", "army", "trade", "stats", "wonders", "workers", "logs", "epoch", "history", "citymap", "worldmap", "help"}
+	commands := []string{"milestones", "research", "expedition", "army", "trade", "factions", "stats", "wonders", "workers", "logs", "epoch", "history", "citymap", "worldmap", "help"}
 	var sb strings.Builder
 	sb.WriteString("\n")
 	for _, cmd := range commands {
