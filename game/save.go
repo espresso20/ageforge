@@ -30,9 +30,14 @@ const saveHMACKey = "ageforge-v1-save-integrity"
 //   - Proof: HMAC of the Signature using forgeMasterKey. Present only when
 //     the player has the elite badge; verifying this clears the cheater badge.
 type GameSave struct {
-	Timestamp time.Time             `json:"timestamp"`
-	Tick      int                   `json:"tick"`
-	Age       string                `json:"age"`
+	Timestamp time.Time `json:"timestamp"`
+	Tick      int       `json:"tick"`
+	Age       string    `json:"age"`
+	// Seed is the run's master RNG seed (see GameEngine.seed). Persisted so a run's
+	// faction-encounter/buff stream is reproducible from its start. omitempty keeps
+	// legacy saves (which lack it) byte-identical; on load a zero seed means "no seed
+	// persisted" and the freshly-generated one from NewGameEngine is kept.
+	Seed      int64                 `json:"seed,omitempty"`
 	Resources map[string]float64    `json:"resources"`
 	Storage   map[string]float64    `json:"storage"`
 	Buildings map[string]int        `json:"buildings"`
@@ -206,6 +211,11 @@ type MilitarySave struct {
 	ActiveExpedition *ActiveExpedition  `json:"active_expedition,omitempty"`
 	CompletedCount   int                `json:"completed_count"`
 	TotalLoot        map[string]float64 `json:"total_loot"`
+	// AutoExpeditionTicksLeft is the Geographic Society's dispatch countdown (see
+	// game/auto_expedition.go). Persisted so a save/reload cannot reset the wait and
+	// hand out a free instant dispatch. Absent in pre-Phase-3 saves, where the zero
+	// value simply means "due now" — a single early party, which is harmless.
+	AutoExpeditionTicksLeft int `json:"auto_expedition_ticks_left,omitempty"`
 }
 
 // EventSave holds event state for save
@@ -421,6 +431,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		Timestamp: time.Now(),
 		Tick:      ge.tick,
 		Age:       ge.age,
+		Seed:      ge.seed,
 		Resources: ge.Resources.GetAll(),
 		Storage:   ge.Resources.GetAllStorage(),
 		Buildings: ge.Buildings.GetAll(),
@@ -446,6 +457,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			ActiveMilitary: activeMilitary,
 			CompletedCount: ge.Military.completedCount,
 			TotalLoot:      totalLoot,
+
+			AutoExpeditionTicksLeft: ge.autoExpeditionTicksLeft,
 		},
 		Events: EventSave{
 			LastFired:     ge.Events.GetLastFired(),
@@ -563,6 +576,12 @@ func (ge *GameEngine) LoadGame(filename string) error {
 
 	ge.tick = save.Tick
 	ge.age = save.Age
+	// Restore the run's master seed so its encounter/buff stream stays reproducible.
+	// A zero seed means the save predates seed persistence — keep the fresh seed
+	// NewGameEngine already generated rather than pinning the run to 0.
+	if save.Seed != 0 {
+		ge.SeedRNG(save.Seed)
+	}
 	ge.Workers.SetAge(save.Age)
 	ge.Resources.LoadAmounts(save.Resources)
 	if save.Storage != nil {
@@ -614,6 +633,8 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.Research.LoadState(save.Research.Researched, save.Research.CurrentTech, save.Research.TicksLeft, save.Research.TotalTicks)
 	scoutActive, militaryActive := ge.Military.migrateActives(save.Military)
 	ge.Military.LoadState(scoutActive, militaryActive, save.Military.CompletedCount, save.Military.TotalLoot)
+	ge.autoExpeditionTicksLeft = save.Military.AutoExpeditionTicksLeft
+	ge.autoExpeditionStarved = false
 	ge.Events.LoadState(save.Events.LastFired, save.Events.Active, save.Events.NextEventTick, save.Events.GoodStreak, save.Events.BadStreak)
 	ge.Milestones.LoadState(save.Milestones, save.ChainsCompleted, save.CurrentTitle)
 	// Reconstruct chains and title for old saves that don't have them

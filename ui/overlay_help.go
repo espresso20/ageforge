@@ -44,7 +44,8 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("  [cyan]trade[-] route start <key>     - Start a trade route\n")
 	sb.WriteString("  [cyan]trade[-] route stop <key>      - Stop a trade route\n")
 	sb.WriteString("  [cyan]blackmarket[-] [resource]      - High-risk culture gamble for a resource haul (colonial+)\n")
-	sb.WriteString("  [cyan]diplomacy[-]                   - Open the Diplomacy overlay (factions, opinion, status)\n")
+	sb.WriteString("  [cyan]factions[-]                    - Open the Factions panel (favours, Society, standings)\n")
+	sb.WriteString("  [cyan]diplomacy[-]                   - Alias for factions (opens the same panel)\n")
 	sb.WriteString("  [cyan]diplomacy[-] ally <faction>    - Ally with faction (costs gold)\n")
 	sb.WriteString("  [cyan]diplomacy[-] rival <faction>   - Declare rivalry\n")
 	sb.WriteString("  [cyan]diplomacy[-] embargo <faction> - Embargo faction\n")
@@ -94,7 +95,7 @@ func helpProvider(_ game.GameState, _ int) string {
 		{"expedition", "Scouting expeditions (resource cost)"},
 		{"army", "Army overview & military campaigns"},
 		{"trade", "Exchange rates & trade routes"},
-		{"diplomacy", "Factions, opinion & status"},
+		{"factions", "Live favours, Geographic Society & standings (alias: diplomacy)"},
 		{"stats", "Empire statistics"},
 		{"wonders", "Wonder bank & built wonders"},
 		{"workers", "Worker domains & assignments"},
@@ -103,7 +104,7 @@ func helpProvider(_ game.GameState, _ int) string {
 		{"history", "Civilization history timeline"},
 		{"buildings", "Built structures by lineage"},
 		{"citymap", "Your settlement map (alias: map)"},
-		{"worldmap", "Known world — your civ & the diplomacy civs"},
+		{"worldmap", "Known world — your civ & the civs you have met"},
 		{"theme", "Theme picker — palettes & accessibility"},
 		{"help", "This Help panel"},
 	} {
@@ -112,7 +113,7 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("  [cyan]" + padRight("Accounts", 12) + "[-] — Switch/create/back-up accounts [gray](main-menu panel, not a command)[-]\n")
 
 	sb.WriteString("\n[gold]═══ Shortcuts ═══[-]\n")
-	sb.WriteString("[gray]g=gather, b=build, r=recruit, a=assign, u=unassign, s=status, res=research, exp=expedition, t=trade, dip=diplomacy[-]\n")
+	sb.WriteString("[gray]g=gather, b=build, r=recruit, a=assign, u=unassign, s=status, res=research, exp=expedition, t=trade, dip=factions[-]\n")
 
 	// Developer Console — only listed when dev mode is active (Ctrl+K passphrase).
 	// Hidden entirely otherwise so the reference stays clean for normal play.

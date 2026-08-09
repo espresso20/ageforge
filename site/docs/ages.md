@@ -198,7 +198,7 @@ Starting age. No requirements.
 | Ports | 8 |
 | Market Gardens | 5 |
 
-**Unlocks:** Tenement, Industrial Depot, Agricultural Works, Steam Coal Plant, Steam Mine, Research Institute, Church, Military Base, Stock Exchange, Iron Works Complex, Steel Mill, Coal Plant, Opera House, Crystal Palace · **Resource:** Oil
+**Unlocks:** Tenement, Industrial Depot, Agricultural Works, Steam Coal Plant, Steam Mine, Research Institute, Church, Military Base, Stock Exchange, Iron Works Complex, Steel Mill, Coal Plant, Opera House, Geographic Society, Crystal Palace · **Resource:** Oil
 
 ---
 

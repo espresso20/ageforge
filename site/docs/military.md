@@ -142,6 +142,24 @@ campaign <key>          # Wage a military campaign (e.g., campaign raid_bandits)
 
 The two surfaces are kept distinct, and the game cross-redirects if you mix them up: running a military key through `expedition` (e.g. `expedition raid_bandits`) is refused with a note to use `campaign <key>` instead, and running a scouting key through `campaign` redirects you to `expedition <key>`.
 
+### Automatic dispatch — the Geographic Society
+
+From the **Industrial Age** you can stop sending every party by hand. The **Geographic Society** is a chartered building of surveyors and cartographers that keeps scouting parties on standing orders and sends them out on its own initiative, for as long as your civilization stands.
+
+How it behaves:
+
+- **Scouting only.** A Society will never wage a military campaign on your behalf. Campaigns remain yours to order.
+- **It uses your one scouting slot, and only when it's free.** Nothing is queued and nothing runs in parallel — if you have a scouting party out, whether you sent it or the Society did, the Society waits. Launching a party by hand always takes priority for as long as it's in the field.
+- **It pays full price.** Every automatic party is charged the same resource cost you'd pay yourself. If your stores can't outfit one, the Society holds the party back, tells you once, and sends it the moment supplies return — it never runs up a debt.
+- **It picks the thrifty option.** Of the scouting missions your age offers, the Society sends the cheapest one it can currently afford. It won't spend your treasury on a grand voyage you didn't authorise.
+- **Its parties are ordinary parties.** They succeed and fail on the same odds, pay the same loot, and roll faction encounters, boons and setbacks exactly like the ones you send. There is nothing second-class about an automatic expedition.
+
+**Investment sets the pace.** A single unstaffed Society is slow — roughly one party every 900 ticks (about **30 minutes** at base tick speed), about what you'd manage by remembering to send one now and then. Staffing it fully cuts that by about a third, and each additional Society you build shortens the wait further, until the pace bottoms out at around **one party every 100 ticks** (about **3m 20s**) with six fully-staffed Societies. Building more past that buys nothing but resilience when a party comes home late.
+
+The cadence is defined in ticks, so those real-time figures are approximate and shrink as your tick speed rises. **Where to watch it:** the **Expeditions** panel (`expedition`) carries a one-line summary — the time until the next party goes out, or a warning that a dispatch is due and your stores are too thin to outfit one. Full status — Societies built, staffing and fill, the effective interval, and a countdown with a progress bar — lives in the **Factions** panel (`factions`), covered in [The Factions panel](trade.md#the-factions-panel). Both read as wall-clock time rather than ticks; see [Timers and durations](commands.md#timers-and-durations).
+
+**It is always slower than doing it yourself.** That floor is deliberate. A fully-invested Society keeps you at roughly **60% of the pace of a player who chains expeditions by hand and runs campaigns alongside them** — enough that an idle empire keeps meeting the world and keeps its boons topped up, never enough that sitting at the prompt becomes pointless. Automation is a floor under your exploration, not a replacement for it.
+
 The **Expeditions** panel (`expedition`) lists only the **scouting** expeditions available in your current age — the resource-only missions. The **Army** panel (`army`) lists only the **military campaigns** — the ones that spend soldiers — alongside your soldier count and defense rating. So you can see at a glance which missions are which: scouting on the Expeditions panel, campaigns on the Army panel. The Expeditions panel also carries the **Loot History** — the running total of all loot collected, from expeditions and campaigns alike.
 
 ### Success probability formula
@@ -192,6 +210,33 @@ That's **16 missions** in total — 3 scouting expeditions and 13 military campa
 **Scouting — the soldier-free expeditions.** Before the Iron Age there is no military worker domain and no `soldiers` resource, so the military campaigns aren't available. The **scouting** expeditions fill that gap — `scout_party` (primitive → bronze) and then `scout_ruins` (bronze age) are available without soldiers, charging only resources. `scout_party`: *"A small band of foragers scouts nearby territory for resources."* It costs **30 food + 30 wood**, needs **0 soldiers**, runs **~100–160 ticks** (randomized per launch), and rewards roughly **60 food / 60 wood / 20 stone** — a net resource gain worth running on repeat through the Primitive, Stone, and Bronze ages. It has a `MaxAge` of Bronze Age and disappears once you reach the Iron Age. `scout_ruins` (Bronze Age, 0 soldiers, 40 food + 30 wood) carries scouting forward, and `naval_expedition` (Renaissance Age, 0 soldiers, 150 food + 100 wood) is the late scouting option.
 
 **Tip:** `campaign trade_escort` (Iron Age, 3 soldiers, ~60–100t, 0.30 difficulty) is the workhorse of early *soldier* play — cheap and chainable for consistent gold. For soldier-free resource throughput, chain the scouting expeditions (`expedition scout_party`, then `expedition scout_ruins`) — low difficulty and no soldiers required. Durations are randomized (~60–160 ticks depending on the mission), so keep one of each category running rather than counting on a fixed timer.
+
+### Faction encounters
+
+Every time an expedition resolves — win or lose — the game rolls a chance to **encounter a civilization**. An encounter either makes **first contact** with a new civ you're old enough to meet or **re-encounters** one you already know. This is the main way you discover the diplomacy roster: an age only makes a civ *eligible*; a resolved expedition is what actually turns someone up. (Never run expeditions and a civ is auto-discovered anyway about two ages past its minimum age — the fallback, not the fast path.)
+
+**Scouting** expeditions turn up civilizations far more readily than **military** campaigns, and success beats failure — a failed run can still find someone, just rarely, and what it brings home is trouble rather than tribute (see *Setbacks* below). Roughly:
+
+| Resolution | Encounter chance |
+|---|---|
+| Scouting success | ~18% |
+| Scouting failure | ~6% |
+| Military success | ~8% |
+| Military failure | ~2% |
+
+These are rolled **per resolved expedition**, and expeditions are not quick — the shortest scouting run takes 60-100 ticks (the Expeditions panel previews this as a range, `~2m – 3m 20s`), and the length is rolled fresh each launch. A player who keeps a scouting party and a campaign permanently in the field meets someone roughly every **375 ticks** (about 12 minutes at base tick speed). Encounters are an occasional event, not a stream: the value of chaining expeditions is that the rewards you do get overlap.
+
+From the Industrial Age a fully-invested **Geographic Society** (see [Automatic dispatch](#automatic-dispatch-the-geographic-society)) keeps that stream running while you're away, at roughly **60%** of the hands-on rate — about one meeting every 640 ticks (roughly 21 minutes at base tick speed). A single Society is slower again, closer to one every 2,500 ticks (roughly 1h 23m). So there are three real tempos: chaining expeditions yourself, letting the Societies work, and doing neither.
+
+A **successful** expedition's encounter can also grant a **boon** — and it is now a **varied, rolled reward**, not a fixed specialty buff. The draw comes from a shared catalogue (a timed specialty/production/knowledge windfall, an all-production or tick-speed surge, an instant lump of resources, or temporary workers) and is **weighted by the civilization's character** (personality, its specialty, and its strength) and by **your standing** with it — allied civs give bigger *and* rarer boons. Instant gifts also **scale with your age**, so a caravan of supplies still lands with weight in the Quantum Age instead of dwindling into a rounding error. It is announced with a flavour line naming the civ and the reward.
+
+**Boon capacity — you can hold five at a time.** Only *timed* rewards take up one of those five slots; a gift that is consumed on arrival holds nothing. That distinction is what capacity actually means: while all five slots are running, a **timed** reward is turned away — the envoys are thanked, fed, and sent home with their crates unopened — but an **instant lump of resources or a work-gang of temporary hands still lands**, because neither needs a slot to sit in. A full court costs you the buffs, never the goods.
+
+Timed boons run **750-3000 ticks** each, so slots turn over on their own while you explore. A continuous explorer lands a reward on **about four encounters in five**, keeps at least one boon running **95%+ of the time**, and sits at a completely full court only **12-18%** of the time. Chaining expeditions is worth it; it is only the sixth simultaneous *timed* buff that goes to waste.
+
+**Setbacks — encounters can go badly.** Instead of a boon, an encounter yields a **setback** whenever the expedition **failed** (every time), when the civ you ran into is one you are **at war** with (about **one in three** such contacts — the rest are a standoff: contact is made, nothing is gained and nothing is lost, and there is never a gift from an enemy), and roughly **one in four** times a *timed* reward is turned away at full boon capacity. A setback is one of: people lost on the road home (a few workers gone), a share of one resource stockpile spoiled or carried off, a temporary drop in one resource's output, or a realm-wide production dip for a stretch. Severity rises with the civilization's **strength** and falls with your **standing** — a friend's bad news is gentler than an enemy's, and a strong civ you're at war with is the worst of it. Setbacks are bounded the same way boons are, only tighter: at most **three** timed ones run at once (against five boon slots), they expire sooner than a boon of the same size, and a spoilage never empties a store outright. They sting; they don't end a run.
+
+So expeditions stay worth running even after you've met everyone — but a failed run costs you something, and a run launched while all five boon slots are full pays in goods rather than in buffs. See [Trade & Diplomacy](trade.md#diplomacy-civilization-encounters) for the civilization roster and diplomacy mechanics.
 
 ---
 

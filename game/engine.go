@@ -28,6 +28,21 @@ const (
 	// push production below 10% of its pre-bonus value or flip it negative.
 	productionFloor = 0.10
 
+	// productionCap is the SYMMETRIC ceiling on the same pools. Until it existed
+	// the additive pools were floored but unbounded above: nothing capped how many
+	// stacking timed buffs (faction boons, events, wonders) could pile into
+	// production_all or a "<res>_rate", and a soak measured a x20.3 multiplier on
+	// knowledge_rate. Both pools are now applied as
+	// rate *= clamp(1+Σ, productionFloor, productionCap), so stacked buffs
+	// saturate at x3.0 instead of compounding without limit.
+	//
+	// NOTE: this bounds the applied MULTIPLIER, not the pool sum — the resolver
+	// still reports the raw Σ for the breakdown panel, which is what a player
+	// wants to see ("you are over the cap"). gather_rate keeps its floor-only
+	// treatment: it is an additive re-add on worker output, not a multiplier on a
+	// rate, so the same ceiling does not apply.
+	productionCap = 3.0
+
 	// Festival (culture sink) tuning.
 	festivalBuffPercent   = 0.20 // +20% production_all while active
 	festivalBuffTicks     = 150  // ~5 minutes at 2s/tick
@@ -120,6 +135,19 @@ type GameEngine struct {
 	// Starvation tracking — counts consecutive ticks with food <= 0 and active drain
 	starvationTicks int
 
+	// Automatic expedition dispatch (see auto_expedition.go).
+	//
+	//   autoExpeditionTicksLeft — countdown to the next automatic scouting dispatch,
+	//     modelled on ActiveRoute.TicksLeft. 0 means a dispatch is DUE and is being
+	//     retried each tick until the scouting slot frees up and the cost is covered.
+	//     Persisted (MilitarySave.AutoExpeditionTicksLeft) so a reload cannot
+	//     save-scum an instant dispatch.
+	//   autoExpeditionStarved — true while a due dispatch is being blocked for want
+	//     of supplies, so the warning is logged once per dry spell instead of every
+	//     tick. Transient: recomputed within a tick of loading.
+	autoExpeditionTicksLeft int
+	autoExpeditionStarved   bool
+
 	// Save integrity badges (set on load, never persisted separately)
 	cheaterBadge bool
 	eliteBadge   bool
@@ -199,6 +227,17 @@ type GameEngine struct {
 	// means use the package default rand. Tests inject a seeded *rand.Rand so the
 	// risk/reward outcome is deterministic.
 	blackMarketRand *rand.Rand
+
+	// Seeded RNG service — the master source for faction-encounter rolls (and the
+	// home for future seeded systems). `seed` is generated once on new game,
+	// persisted in the save (GameSave.Seed), and restored on load so a run's
+	// encounter/buff stream is reproducible from its start. `rng` is (re)built from
+	// `seed` via SeedRNG. rand.Rand is not safe for concurrent use, but every roll
+	// runs inside doTick's write lock, so no extra synchronisation is needed.
+	// Roll-stream continuity across save/reload is NOT preserved (re-seeding on load
+	// restarts the stream) — only the seed itself round-trips.
+	seed int64
+	rng  *rand.Rand
 }
 
 // BuildQueueItem represents a building under construction
@@ -250,7 +289,32 @@ func NewGameEngine() *GameEngine {
 		ageName, _ := e.Payload["new_age"].(string)
 		ge.History.MarkAge(ge.tick, ageName)
 	})
+	// Generate this run's master seed once. LoadGame overrides it with the saved
+	// seed; Reset re-rolls a fresh one.
+	ge.SeedRNG(newSeed())
 	return ge
+}
+
+// newSeed returns a fresh master seed for a new run.
+func newSeed() int64 { return time.Now().UnixNano() }
+
+// SeedRNG sets the master seed and (re)initialises the seeded RNG service from it.
+// Called once on new game (a fresh seed), on Reset (a new run → new seed), and on
+// load (the saved seed, so the run stays reproducible from its start). Tests call
+// it with a fixed seed for deterministic encounter/buff outcomes. Callers that are
+// already under the engine write lock may call this directly (it only assigns two
+// fields); NewGameEngine/Reset call it while single-threaded or locked.
+func (ge *GameEngine) SeedRNG(seed int64) {
+	ge.seed = seed
+	ge.rng = rand.New(rand.NewSource(seed))
+}
+
+// Seed returns this run's master RNG seed (persisted in the save; surfaced in
+// GameState for reproducibility/debugging).
+func (ge *GameEngine) Seed() int64 {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	return ge.seed
 }
 
 const AutosaveInterval = 60 * time.Second
@@ -1062,7 +1126,16 @@ func (ge *GameEngine) processExpeditions() {
 		for resource, amount := range res.Rewards {
 			ge.Resources.Add(resource, amount)
 		}
+		// A resolved expedition may turn up a civilization: roll a faction encounter
+		// (discovery and/or a specialty-production boon) on the seeded RNG.
+		for _, msg := range ge.rollExpeditionEncounter(res.Category, res.Success) {
+			ge.addLog("event", msg)
+		}
 	}
+
+	// The Geographic Society's standing orders. Runs LAST so a party that resolved
+	// above has already freed the scouting slot — see processAutoExpeditions.
+	ge.processAutoExpeditions()
 }
 
 // processTrade handles trade route ticks
@@ -1337,10 +1410,11 @@ func (ge *GameEngine) recalculateRates() {
 	// Fix B: UNgated with a floor. Previously gated `if prodAllBonus > 0`, which
 	// silently swallowed negative additive bonuses (e.g. the Reconstruction Effort
 	// catastrophe's -0.10 production_all) whenever the player lacked ≥10% positive
-	// bonuses. Now always applied as ×max(productionFloor, 1+Σ), so the debuff
-	// lands but production can't drop below 10% of its pre-bonus value.
+	// bonuses. Now always applied as ×clamp(1+Σ, productionFloor, productionCap),
+	// so the debuff lands but production can neither drop below 10% of its
+	// pre-bonus value nor run away above ×3.0 on stacked buffs.
 	prodAllBonus := r.AddTotal("production_all")
-	prodAllFactor := math.Max(productionFloor, 1.0+prodAllBonus)
+	prodAllFactor := clamp(1.0+prodAllBonus, productionFloor, productionCap)
 	if prodAllFactor != 1.0 {
 		for _, def := range ge.Resources.defs {
 			r := ge.Resources.resources[def.Key]
@@ -1352,11 +1426,13 @@ func (ge *GameEngine) recalculateRates() {
 
 	// Apply per-resource rate bonuses (e.g., "gold_rate", "iron_rate").
 	// Includes legacy bonuses (stored in permanentBonuses["wood"] etc. after
-	// reapplyLegacyBonuses). Fix B: same ungated+floored treatment as above.
+	// reapplyLegacyBonuses). Fix B: same ungated+floored treatment as above, and
+	// the same productionCap ceiling — stacked "<res>_rate" boons were the pool
+	// the soak caught running to ×20.
 	for _, def := range ge.Resources.defs {
 		bonusKey := def.Key + "_rate"
 		bonus := r.AddTotal(bonusKey)
-		factor := math.Max(productionFloor, 1.0+bonus)
+		factor := clamp(1.0+bonus, productionFloor, productionCap)
 		if factor != 1.0 {
 			r := ge.Resources.resources[def.Key]
 			if r != nil && r.Rate > 0 {
@@ -3261,7 +3337,20 @@ func (ge *GameEngine) DeclineAncientMemory() {
 func (ge *GameEngine) LaunchExpedition(key string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
+	return ge.launchExpeditionLocked(key)
+}
 
+// launchExpeditionLocked is the single expedition-launch path: it validates the
+// cost, the age range and the one-active-per-category rule, then deducts soldiers
+// and resources. Callers must already hold the write lock.
+//
+// Both entry points go through here — the player's `expedition` command
+// (LaunchExpedition) and the Geographic Society's automatic dispatch (see
+// auto_expedition.go). An auto-launch is charged and validated identically to a
+// hand-dispatched one; nothing about the resulting expedition is special-cased,
+// so it resolves, rewards and rolls its faction encounter on exactly the same
+// path.
+func (ge *GameEngine) launchExpeditionLocked(key string) error {
 	ageOrder := ge.progress.GetAgeOrder()
 
 	def := ge.Military.ExpeditionDefByKey(key)
@@ -3451,6 +3540,8 @@ func (ge *GameEngine) Reset() {
 	// Full wipe: no previous civilization, so no cache. Clear the run flag.
 	ge.ancientMemoryUsed = false
 	ge.pendingMemoryTech = ""
+	// A wiped game is a brand-new run: re-roll the master seed.
+	ge.SeedRNG(newSeed())
 
 	ge.addLog("event", "Game wiped! Starting fresh.")
 	ge.addLog("info", "Type [cyan]help[-] for commands.")
@@ -3516,6 +3607,12 @@ func (ge *GameEngine) GetState() GameState {
 		tickInterval = MinTickInterval
 	}
 
+	// MilitaryManager.Snapshot has no *GameEngine receiver, so it cannot see the
+	// Geographic Society's buildings, workers or dispatch countdown. Build the
+	// snapshot here and graft the automatic-dispatch view on afterwards.
+	militarySnap := ge.Military.Snapshot(ge.age, ageOrder, soldierResource, int(ge.Resources.GetStorage("soldiers")), ge.Resources.GetRate("soldiers"), ge.Resources.GetAll(), militaryBonus, expeditionBonus)
+	militarySnap.AutoExpedition = ge.autoExpeditionSnapshot()
+
 	// Wonder gate: show which wonder must be built before advancing
 	wonderKey := ge.progress.WonderForAge(ge.age)
 	currentAgeWonderKey := ""
@@ -3543,7 +3640,7 @@ func (ge *GameEngine) GetState() GameState {
 		BuildQueue:           queue,
 		Workers:              ge.Workers.Snapshot(popCap),
 		Research:             ge.Research.Snapshot(ge.age, ageOrder),
-		Military:             ge.Military.Snapshot(ge.age, ageOrder, soldierResource, int(ge.Resources.GetStorage("soldiers")), ge.Resources.GetRate("soldiers"), ge.Resources.GetAll(), militaryBonus, expeditionBonus),
+		Military:             militarySnap,
 		Milestones: ge.Milestones.Snapshot(MilestoneSnapshotParams{
 			Tick:            ge.tick,
 			Age:             ge.age,
@@ -3572,6 +3669,7 @@ func (ge *GameEngine) GetState() GameState {
 		SpeedMultiplier:       speedMult,
 		CheaterBadge:          ge.cheaterBadge,
 		EliteBadge:            ge.eliteBadge,
+		Seed:                  ge.seed,
 		LastAgeAdvanceSummary: ge.lastAgeAdvanceSummary,
 		// Phase 8: epoch fields
 		EpochKey: ge.currentEpoch,

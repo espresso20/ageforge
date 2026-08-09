@@ -76,7 +76,7 @@ trade route start <key>
 trade route stop <key>
 ```
 
-- `trade route list` — shows active routes (with ticks left and cycles completed) and available routes (green checkmark if you have the required building, red X if not).
+- `trade route list` — shows active routes (with the approximate wall-clock time left on the cycle and the number of cycles completed) and available routes (green checkmark if you have the required building, red X if not).
 - `trade route start <key>` — activates a route. Fails if the required building isn't built or if you haven't reached the route's minimum age.
 - `trade route stop <key>` — deactivates a route immediately, mid-cycle.
 
@@ -161,12 +161,13 @@ It's a way to convert a culture surplus into a swing of whatever resource you're
 
 ## Diplomacy — Civilization Encounters
 
-The game world holds an **11-civilization roster**. You meet them through **first-contact events** as you advance: the founding civilizations appear in the early epochs, with more discovered each era. Each civ has an **opinion score** (-100 to +100), a **diplomatic status**, a **personality**, and a **backstory**. Status determines whether you benefit from, are ignored by, or are penalised by that civ; personality drives how its opinion drifts and whether it lends workers or goes to war.
+The game world holds an **11-civilization roster**. You meet them by **running expeditions** — an age only makes a civ *eligible*; it's a resolved **scouting expedition or military campaign** that actually turns someone up, with a generous late fallback so even a player who never explores meets everyone eventually. Each civ has an **opinion score** (-100 to +100), a **diplomatic status**, a **personality**, and a **backstory**. Status determines whether you benefit from, are ignored by, or are penalised by that civ; personality drives how its opinion drifts and whether it lends workers or goes to war.
 
 ### Commands
 
 ```
-diplomacy                       # opens the Diplomacy overlay
+factions                        # opens the Factions panel
+diplomacy                       # the same panel, under its older name
 diplomacy ally <civ_key>
 diplomacy rival <civ_key>
 diplomacy embargo <civ_key>
@@ -176,7 +177,19 @@ diplomacy tribute <civ_key>     # sue for peace with a civ at war
 diplomacy raid <civ_key>        # raid their trade route (provocation — tanks opinion)
 ```
 
-`diplomacy` (or `dip`) with no arguments opens the **Diplomacy overlay** — a full-screen panel listing every civilization with its personality, a backstory snippet, opinion bars, color-coded status, the active trade-rate bonus, a threshold indicator (e.g. *+8 to friendly*, *ally-eligible — 500g*), war banners, and lent-worker status. `diplomacy <action> <civ_key>` still performs the action directly.
+### The Factions panel
+
+`factions` opens the **Factions** panel — one screen for everything the other civilizations are doing to you. `diplomacy` and `dip` with no arguments open the same panel under its older name, and `diplomacy <action> <civ_key>` still performs the action directly. It also appears in the sidebar Panels list, in command autocomplete, and in the in-game `help` panel.
+
+The panel reads top to bottom:
+
+- **Header** — the title, plus how many civilizations you have met and how many remain undiscovered.
+- **Live Favours & Setbacks** — every timed faction effect currently running. Encounters hand out timed **favours** (marked `✦`) and, when a run goes badly, timed **setbacks** (marked `⚠`). Each line names the civilization that granted it, the effect, its magnitude (`+13% food`, `+8% all prod`, `+9% tick speed`) and the wall-clock time left on it. The section header carries the occupancy of both capacity pools — `boons 2/5 · setbacks 1/3` — because both are hard caps: **five** concurrent favours and **three** concurrent setbacks (see [First Contact & Discovery](#first-contact-amp-discovery) for what happens when you hit them). Workers on loan from another civ are listed here too; they carry no expiry clock, but they are a live effect all the same.
+- **Geographic Society** — the automation block, in one of three states: **nothing built** (a prompt to build one, Industrial Age); **starved** (a dispatch is due but your stores can't outfit the party); or **running** — the number of Societies, worker staffing with its fill percentage, the effective dispatch interval, and a countdown with a progress bar to the next dispatch. See [Automatic dispatch](military.md#automatic-dispatch-the-geographic-society).
+- **Known Factions** — a detail card per civilization you have met: name, personality, specialty and a **strength rating** drawn as 1–5 stars, the backstory snippet, the opinion bar, color-coded status with the active trade bonus, a threshold indicator (e.g. *+8 to friendly*, *ally-eligible — 500g*), war banner, lent workers, and a line flagging any live favour or setback that civilization is currently applying — so the card and the section at the top of the panel agree without you cross-referencing them.
+- **Not Yet Met** — a compact roster of the civilizations you have not met yet: one line each with the name, strength, the age you must reach, specialty and personality. It draws six rows at most; any remainder collapses into a `… N more` tail.
+
+Every duration on the panel — favour and setback remainders, the Society's interval and countdown — reads as approximate wall-clock time, not ticks. See [Timers and durations](commands.md#timers-and-durations).
 
 ### Personalities
 
@@ -270,13 +283,29 @@ The allied trade bonus also surfaces in the **Active Multipliers** panel (Stats 
 
 ### First Contact & Discovery
 
-Civilizations are discovered through **first-contact events** when you reach their minimum age — no manual action required. A flavour log message introduces each one's name, personality, and backstory. Until a civilization is discovered, it shows in the overlay as a locked teaser (*??? — reach the X Age*) and you cannot interact with it. The founding civs (Riverlands Tribes, Ironhold Clans) appear in the early epochs; more are encountered every era through the Cosmic Era.
+Discovery follows a **floor + trigger + fallback** model:
+
+- **Age is a floor.** Reaching a civilization's minimum age makes it *eligible* to be met — it does **not** discover it on its own.
+- **Expeditions are the trigger.** Whenever a **scouting expedition** or **military campaign** resolves, the game rolls a chance to **encounter** a civilization. An encounter discovers a new eligible civ (first contact) — or, once you already know everyone within reach, re-encounters a known one. So you find new civilizations by *running expeditions*: scouting turns them up more readily than military campaigns, and success beats failure (see [Military & Expeditions](military.md#faction-encounters) for the odds).
+- **Late fallback.** Never run an expedition and you still meet everyone eventually: about **two ages past** a civ's minimum age it is auto-discovered anyway — just far later than an active explorer would have met it.
+
+A flavour log message introduces each civ's name, personality, and backstory on first contact. Until a civilization is discovered, it shows in the overlay as a locked teaser (*??? — reach the X Age*) and you cannot interact with it. The founding civs (Riverlands Tribes, Ironhold Clans) appear early; the rest are met across the eras through the Cosmic Era.
+
+**Encounter boons.** An encounter — first contact *or* a re-encounter of a civ you already know — can also grant a **boon**, and it is no longer a single flat buff. Each encounter now **rolls a varied reward** from a shared catalogue: a timed production or knowledge windfall (including the civ's **specialty resource**), an all-production or tick-speed surge, an instant lump of resources, or a work-gang of temporary hands. The roll is **weighted by the civilization's character** — a peaceful civ leans toward gentle production/knowledge gifts, an aggressive one toward tick-speed and spoils, a mercantile one toward lump-gold caches, an isolationist one toward rare grand hoards — and by **your standing** with them: the friendlier you are, the bigger the boon, and an **allied** civ can hand you the *rare tier* that neutrals never see. Stronger civilizations gift harder. Instant gifts — a supply caravan, a lost vault — additionally **scale with your age**, so a crate of goods that was a fortune in the Bronze Age is a proportionally sized fortune in the Quantum Age rather than a rounding error. A flavour line names the civ and the reward, e.g. *"Ironhold Clans: A lost vault swings open — 900 iron spills into your coffers."*
+
+**Boons are capped at five.** You can hold **five** faction boons at once. Only *timed* rewards occupy a slot — a gift consumed on arrival holds nothing — and the cap therefore only ever turns away the timed kind. While all five slots are full, an encounter that rolls a **timed** reward comes back empty (*"Your stores are already thick with foreign gifts; the envoys are thanked, fed, and sent home with their crates unopened"*), but one that rolls an **instant lump of resources or a work-gang of temporary hands still delivers it** — those need no slot to sit in. A full court costs you buffs, not goods.
+
+Each timed boon runs **750-3000 ticks** (roughly **25 minutes to 1h 40m** at base tick speed — the panel shows the remainder in wall-clock terms), so slots free up steadily on their own: a busy explorer lands a reward on about four encounters in five, has at least one boon running almost all the time, and spends only **12-18%** of it at a completely full court. The cap is there to give the reward loop a shape, not to punish you for exploring.
+
+**Encounters can go badly.** A **setback** rolls in place of a boon whenever the expedition **failed** (every time), on about **one in three** contacts with a civ you are **at war** with, and about **one in four** times a *timed* reward is turned away at full boon capacity. A war contact that doesn't turn violent is a **standoff** — the two parties see each other and withdraw, and you come home with nothing but the sighting. There is never a gift from a civ you are fighting, whichever way the roll goes. Setbacks come off their own table: people lost on the way home (a handful of workers gone to fever or bad water), a share of one resource stockpile spoiled, stolen, or written off, a temporary slump in one resource's output, or a realm-wide production dip while the story of the expedition spreads. Severity scales **up** with the civilization's **strength** and **down** with your **standing** — an ally's bad news is gentler than a rival's, and a war with a strong civ is the worst of it. The damage is bounded: at most three timed setbacks run at a time (against five boon slots), a setback expires sooner than a boon of comparable size, and a spoilage takes part of a store, never the whole thing.
+
+Encounters are one more reason to keep expeditions running even after you've met everyone — with the caveat that a failed run brings back a bill, and a run launched with all five boon slots full brings back goods rather than buffs. See [Military & Expeditions](military.md#faction-encounters).
 
 ---
 
 ## Full Civilization Reference
 
-| Key | Name | Discovered At | Personality | Strength | Specialty | Allied Bonus |
+| Key | Name | Eligible From | Personality | Strength | Specialty | Allied Bonus |
 |---|---|---|---|---|---|---|
 | `riverlands_tribes` | Riverlands Tribes | Bronze Age | peaceful | 1 | food | +15% food imports |
 | `ironhold_clans` | Ironhold Clans | Medieval Age | aggressive | 3 | iron | +20% iron imports |
@@ -331,7 +360,7 @@ The loop is self-reinforcing. Don't think of routes and diplomacy as separate sy
 
 ### End-game State
 
-With all 15 routes active and your discovered civilizations allied, gold income from routes alone becomes enormous. At that point, resource exchange becomes redundant for most pairs — use it only for exotic resource-to-resource conversions that no route covers.
+With all 21 routes active and your discovered civilizations allied, gold income from routes alone becomes enormous. At that point, resource exchange becomes redundant for most pairs — use it only for exotic resource-to-resource conversions that no route covers.
 
 ---
 

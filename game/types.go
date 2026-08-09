@@ -33,6 +33,10 @@ type GameState struct {
 	SpeedMultiplier      float64
 	CheaterBadge         bool
 	EliteBadge           bool
+	// Seed is this run's master RNG seed (see GameEngine.seed) — surfaced for
+	// reproducibility/debugging. Persisted via GameSave.Seed, not through this
+	// snapshot.
+	Seed int64
 	// Phase 7: result of the last age advance transformation pass
 	LastAgeAdvanceSummary AgeAdvanceSummary
 	// Phase 8: epoch system
@@ -272,6 +276,39 @@ type MilitaryState struct {
 	Expeditions    []ExpeditionInfo
 	CompletedCount int
 	TotalLoot      map[string]float64
+	// AutoExpedition is the Geographic Society's standing-orders state. It is
+	// NOT filled by MilitaryManager.Snapshot (which has no engine receiver and
+	// cannot see the buildings or the countdown) — GetState populates it.
+	AutoExpedition AutoExpeditionState
+}
+
+// AutoExpeditionState is the player-facing view of automatic expedition
+// dispatch (game/auto_expedition.go). Before this existed the whole mechanic
+// ran on engine-internal fields, so a built Geographic Society was invisible:
+// nothing in the UI could say it existed, when it would next dispatch, or that
+// it was sitting starved for supplies.
+//
+// Count/Assigned/Capacity are surfaced HERE rather than left to the UI to dig
+// out of state.Buildings on purpose — the building key belongs to
+// auto_expedition.go and must not be hardcoded in a panel.
+type AutoExpeditionState struct {
+	// Active is true when at least one society stands, i.e. automation is on.
+	Active bool
+	// TicksLeft counts down to the next dispatch. 0 means a dispatch is DUE
+	// and is being retried each tick until the scouting slot frees and the
+	// cost is covered.
+	TicksLeft int
+	// Interval is the effective ticks-between-dispatches at the current
+	// investment; 0 when nothing is built.
+	Interval int
+	// Starved is true while a due dispatch is blocked for want of supplies.
+	Starved bool
+	// Count is how many societies are built. Assigned / Capacity are the
+	// workers on them and the total worker capacity across them — together
+	// they are the "fill" that buys cadence.
+	Count    int
+	Assigned int
+	Capacity int
 }
 
 // ExpeditionSnapshot represents an active expedition for UI
@@ -287,11 +324,8 @@ type ExpeditionInfo struct {
 	Key            string
 	Category       string // "scouting" or "military"
 	SoldiersNeeded int
-	Duration       int
 	// DurationMin/DurationMax mirror the ExpeditionDef's randomized active-duration
-	// bounds so the available-expeditions preview can show the rolled range. When
-	// DurationMax <= DurationMin the def is legacy/unset and the preview falls back
-	// to the fixed Duration above.
+	// bounds so the available-expeditions preview can show the rolled range.
 	DurationMin int
 	DurationMax int
 	Difficulty  float64
@@ -394,9 +428,17 @@ type PrestigeUpgradeState struct {
 
 // EventEffectInfo is one ongoing effect of an active event, for UI display.
 type EventEffectInfo struct {
-	Type   string  // config.Effect.Type: "production" | "production_all" | "tick_speed"
-	Target string  // resource key for "production"; empty/"" for the global ones
-	Value  float64 // per-tick delta for "production"; fraction for "production_all"/"tick_speed"
+	// Type is the config.Effect.Type: "production" | "production_all" |
+	// "tick_speed" | "<res>_rate". The "<res>_rate" form is what a faction
+	// specialty boon/setback arrives as (see boon/apply.go) — renderers must
+	// handle the suffix, not just the three fixed names.
+	Type string
+	// Target is the resource key for "production" and "<res>_rate"; empty for
+	// the global types.
+	Target string
+	// Value is a per-tick delta for "production" and a fraction for
+	// "production_all" / "tick_speed" / "<res>_rate".
+	Value float64
 }
 
 // ActiveEventState represents an active timed event for UI

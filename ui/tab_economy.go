@@ -522,7 +522,7 @@ func (t *EconomyTab) refreshUnderConstruction(state game.GameState) {
 				}
 			}
 			bar := BarFillColor() + strings.Repeat("█", filled) + BarEmptyColor() + strings.Repeat("░", barWidth-filled) + "[-]"
-			fmt.Fprintf(&sb, " [yellow]%-22s[-] %s [gray]%d ticks[-]\n", label, bar, g.minTicks)
+			fmt.Fprintf(&sb, " [yellow]%-22s[-] %s [gray]%s left[-]\n", label, bar, formatTicks(g.minTicks, state))
 		}
 	}
 

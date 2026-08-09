@@ -136,6 +136,7 @@ var buildingFlavor = map[string]string{
 	"coal_plant":         "We light the whole city by setting the past on fire.",
 	"opera_house":        "Three hours of magnificent singing in a language no one in the audience speaks.",
 	"grand_embassy":      "Diplomacy at scale — now several wars can be postponed at once.",
+	"geographic_society": "Gentlemen with sextants, funded to go somewhere unmapped and be photographed there.",
 	"crystal_palace":     "An entire building made of glass and confidence, daring the weather to comment.",
 
 	// ===== VICTORIAN AGE — propriety and repression =====

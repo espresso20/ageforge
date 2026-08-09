@@ -71,7 +71,7 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 					flavorStr = evDef.FlavorText
 				}
 				if evDef.Duration > 0 {
-					durationStr = fmt.Sprintf("   %d ticks duration", evDef.Duration)
+					durationStr = fmt.Sprintf("   %s duration", formatTicks(evDef.Duration, state))
 				}
 			}
 			fmt.Fprintf(sb, " Epoch event: [%s]%s[-]%s\n", evColor, currentEvent.EventName, durationStr)

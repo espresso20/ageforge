@@ -25,12 +25,27 @@ func expeditionsProvider(state game.GameState, _ int) string {
 		fmt.Fprintf(&sb, "\n [green]Expedition Bonus: +%.0f%%[-]\n", mil.ExpeditionBonus*100)
 	}
 
+	// Standing orders. This panel is the scouting surface, so it has to say
+	// whether scouting is being done for you — a built Geographic Society was
+	// otherwise invisible here. Full status lives in the Factions panel.
+	if auto := mil.AutoExpedition; auto.Active {
+		switch {
+		case auto.Starved:
+			sb.WriteString("\n [yellow]Geographic Society: dispatch due, stores too thin to outfit a party.[-]\n")
+		default:
+			fmt.Fprintf(&sb, "\n [cyan]Geographic Society:[-] next party dispatches in %s [gray](see 'factions')[-]\n",
+				formatTicks(auto.TicksLeft, state))
+		}
+	} else {
+		sb.WriteString("\n [gray]Build a Geographic Society (Industrial Age) to scout automatically.[-]\n")
+	}
+
 	// === Active Expedition ===
 	sb.WriteString("\n [gold]═══ Active Expedition ═══[-]\n\n")
 	if mil.ActiveScout == nil {
 		sb.WriteString(" [gray]No active expedition[-]\n")
 	} else {
-		writeActiveExpedition(&sb, "Scouting", mil.ActiveScout)
+		writeActiveExpedition(&sb, "Scouting", mil.ActiveScout, state)
 	}
 
 	// === Available Expeditions ===
@@ -39,7 +54,7 @@ func expeditionsProvider(state game.GameState, _ int) string {
 		sb.WriteString(" [gray]No expeditions available yet[-]\n")
 		sb.WriteString(" [gray]Reach Bronze Age to unlock more scouting.[-]\n")
 	} else {
-		writeExpeditionGroup(&sb, "Scouting", mil.Expeditions, game.ExpeditionScouting)
+		writeExpeditionGroup(&sb, "Scouting", mil.Expeditions, game.ExpeditionScouting, state)
 	}
 
 	// === Loot History ===

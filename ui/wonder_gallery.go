@@ -193,7 +193,7 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 				fmt.Fprintf(&sb, "  [gray]wonder collect <res> <amt|all>[-]\n")
 			}
 		}
-		fmt.Fprintf(&sb, "\n[gray]Build ticks: %d[-]\n", current.def.BuildTicks)
+		fmt.Fprintf(&sb, "\n[gray]Build time: %s[-]\n", formatTicks(current.def.BuildTicks, state))
 	}
 
 	// Wonder count / speed

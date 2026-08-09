@@ -59,7 +59,9 @@ func researchProvider(state game.GameState, _ int) string {
 		}
 		bar := ProgressBar(float64(done), float64(total), 30)
 		fmt.Fprintf(&sb, "  [yellow]⟳[-] %s\n", state.Research.CurrentTechName)
-		fmt.Fprintf(&sb, "  %s %d / %d ticks  (%d%%)\n", bar, done, total, pct)
+		// Bar + percentage already state the fraction; spend the remaining slot
+		// on time-to-finish rather than restating it in ticks.
+		fmt.Fprintf(&sb, "  %s %s left  (%d%%)\n", bar, formatTicks(state.Research.TicksLeft, state), pct)
 	} else {
 		sb.WriteString("  [gray]No research in progress — use: research <key>[-]\n")
 	}
@@ -132,8 +134,8 @@ func researchProvider(state game.GameState, _ int) string {
 				affordStr = fmt.Sprintf("  [red](need %.0f more)[-]", need)
 			}
 
-			fmt.Fprintf(&sb, "  [cyan]○[-]  %-24s [gray]%.0f knowledge · %d ticks[-]%s\n",
-				ts.Name, ts.Cost, def.ResearchTicks, affordStr)
+			fmt.Fprintf(&sb, "  [cyan]○[-]  %-24s [gray]%.0f knowledge · %s[-]%s\n",
+				ts.Name, ts.Cost, formatTicks(def.ResearchTicks, state), affordStr)
 
 			if ts.Description != "" {
 				fmt.Fprintf(&sb, "     [gray]%s[-]\n", ts.Description)
@@ -217,7 +219,7 @@ func researchProvider(state game.GameState, _ int) string {
 				fmt.Fprintf(&sb, "  [yellow]⟳[-]  [yellow]%-24s[-]  [gray](in progress)[-]\n", ts.Name)
 
 			} else if ts.Available {
-				fmt.Fprintf(&sb, "  [cyan]○[-]  [cyan]%-24s[-]  [gray]%.0f knowledge — %d ticks[-]", ts.Name, ts.Cost, def.ResearchTicks)
+				fmt.Fprintf(&sb, "  [cyan]○[-]  [cyan]%-24s[-]  [gray]%.0f knowledge — %s[-]", ts.Name, ts.Cost, formatTicks(def.ResearchTicks, state))
 				// Show prereqs if any
 				if len(ts.Prerequisites) > 0 {
 					var prereqNames []string

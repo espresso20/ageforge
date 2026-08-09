@@ -231,11 +231,13 @@ func (em *EventManager) GetActiveEffects() []config.Effect {
 
 // Modifiers emits OpAdd Modifiers for the multiplier-bucket effects carried by
 // currently active events, attributed to Source "event:<name>". The engine reads
-// these by effect Type (it accumulates eff.Value into the "production_all" and
-// "tick_speed" buckets based on eff.Type, not eff.Target), so the Modifier Target
-// is the effect Type. Only the bucket types that feed recalculateRates /
-// recalculateTickSpeed today are emitted; per-resource "production" effects are
-// flat additions handled elsewhere and are not multiplier modifiers.
+// these by effect Type — it accumulates eff.Value into the "production_all",
+// "tick_speed", and per-resource "<res>_rate" additive pools keyed by eff.Type
+// (not eff.Target) — so the Modifier Target is the effect Type. The "<res>_rate"
+// case is what carries a faction-encounter specialty boon (Type "iron_rate", ...)
+// into the resolver's per-resource multiplier pool in recalculateRates. Per-resource
+// "production" effects are flat additions handled elsewhere and are not multiplier
+// modifiers.
 func (em *EventManager) Modifiers() []Modifier {
 	var out []Modifier
 	for _, ae := range em.active {
@@ -244,8 +246,9 @@ func (em *EventManager) Modifiers() []Modifier {
 			src = "event"
 		}
 		for _, eff := range ae.Effects {
-			switch eff.Type {
-			case "production_all", "tick_speed":
+			switch {
+			case eff.Type == "production_all", eff.Type == "tick_speed",
+				strings.HasSuffix(eff.Type, "_rate"):
 				out = append(out, Modifier{Source: src, Target: eff.Type, Op: OpAdd, Value: eff.Value})
 			}
 		}
@@ -260,10 +263,19 @@ func (em *EventManager) GetActive() []ActiveEventState {
 		// Surface only ongoing-rate effects. Instant/one-shot types
 		// ("instant_resource", "steal_resource", "worker_loss") fired once at
 		// trigger and are not ongoing, so they don't belong in the panel.
+		//
+		// The admitted set MUST track Modifiers() above — anything the engine
+		// keeps applying every tick is something the panel has to be able to
+		// show. The "<res>_rate" suffix case is load-bearing: every faction
+		// specialty boon and most setbacks land as a RateBuff, which
+		// boon/apply.go maps to Type "<res>_rate". Matching those types
+		// exactly (as this switch once did) silently dropped every one of
+		// them, so the panel rendered a named event with no magnitude.
 		var effects []EventEffectInfo
 		for _, eff := range ae.Effects {
-			switch eff.Type {
-			case "production", "production_all", "tick_speed":
+			switch {
+			case eff.Type == "production", eff.Type == "production_all",
+				eff.Type == "tick_speed", strings.HasSuffix(eff.Type, "_rate"):
 				effects = append(effects, EventEffectInfo{
 					Type:   eff.Type,
 					Target: eff.Target,

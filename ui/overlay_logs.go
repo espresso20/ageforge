@@ -75,7 +75,7 @@ func logsProvider(state game.GameState, _ int) string {
 	if len(state.ActiveEvents) > 0 {
 		sb.WriteString("\n [gold]Active Events:[-]\n")
 		for _, evt := range state.ActiveEvents {
-			fmt.Fprintf(&sb, "  [yellow]⚡ %s[-] (%d ticks)\n", evt.Name, evt.TicksLeft)
+			fmt.Fprintf(&sb, "  [yellow]⚡ %s[-] (%s left)\n", evt.Name, formatTicks(evt.TicksLeft, state))
 		}
 	}
 
@@ -97,8 +97,10 @@ func logsProvider(state game.GameState, _ int) string {
 		sb.WriteString("\n [gold]Researching:[-]\n")
 		done := state.Research.TotalTicks - state.Research.TicksLeft
 		bar := ProgressBar(float64(done), float64(state.Research.TotalTicks), 10)
-		fmt.Fprintf(&sb, "  [cyan]%s[-] %s (%d/%d ticks)\n",
-			state.Research.CurrentTechName, bar, done, state.Research.TotalTicks)
+		// The bar already carries the fraction, so the number beside it is
+		// better spent on the thing the bar cannot say: how long is left.
+		fmt.Fprintf(&sb, "  [cyan]%s[-] %s (%s left)\n",
+			state.Research.CurrentTechName, bar, formatTicks(state.Research.TicksLeft, state))
 	}
 
 	// Worker assignments (compact)

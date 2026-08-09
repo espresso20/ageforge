@@ -131,7 +131,7 @@ func Ages() []AgeDef {
 			Quip:            "Smoke everywhere, hours endless, output magnificent. Two out of three.",
 			ResourceReqs:    map[string]float64{"steel": 310000, "gold": 2500000, "knowledge": 2000000},
 			BuildingReqs:    map[string]int{"plantation": 5, "port": 8, "market_garden": 5},
-			UnlockBuildings: []string{"tenement", "industrial_depot", "agricultural_works", "steam_coal_plant", "steam_mine", "research_institute", "church", "military_base", "stock_exchange", "harbor_authority", "iron_works_complex", "steel_mill", "coal_plant", "opera_house", "grand_embassy", "crystal_palace", "eternal_library_monument"},
+			UnlockBuildings: []string{"tenement", "industrial_depot", "agricultural_works", "steam_coal_plant", "steam_mine", "research_institute", "church", "military_base", "stock_exchange", "harbor_authority", "iron_works_complex", "steel_mill", "coal_plant", "opera_house", "grand_embassy", "geographic_society", "crystal_palace", "eternal_library_monument"},
 			UnlockResources: []string{"oil"},
 		},
 		// === 9: VICTORIAN AGE (Electric Era) ===

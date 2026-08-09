@@ -147,3 +147,92 @@ func TestEventManager_SaveLoadRoundTrip(t *testing.T) {
 		t.Error("loaded event manager should have save_test active")
 	}
 }
+
+// TestGetActive_SurfacesRateEffects pins the fix for a silent data loss in the
+// UI-facing view: GetActive matched effect types by EXACT name
+// ("production" / "production_all" / "tick_speed"), but the boon engine emits
+// faction specialty buffs and setbacks as "<res>_rate" (boon/apply.go maps a
+// RateBuff on food to Type "food_rate"). Those matched no case, so
+// ActiveEventState.Effects came back EMPTY for the most common boon shape in the
+// game and the panel could only render a name with no magnitude.
+//
+// The admitted set must track Modifiers(): if the engine keeps applying an
+// effect every tick, the player has to be able to see how big it is.
+func TestGetActive_SurfacesRateEffects(t *testing.T) {
+	em := NewEventManager()
+	em.InjectEvent(ActiveEvent{
+		Key:       factionBuffKey("dawnfolk"),
+		Name:      "Dawnfolk Favour",
+		TicksLeft: 120,
+		Effects: []config.Effect{
+			{Type: "food_rate", Target: "food", Value: 0.13},
+			{Type: "instant_resource", Target: "gold", Value: 500}, // one-shot, must stay dropped
+		},
+	})
+
+	active := em.GetActive()
+	if len(active) != 1 {
+		t.Fatalf("got %d active events, want 1", len(active))
+	}
+	effs := active[0].Effects
+	if len(effs) != 1 {
+		t.Fatalf("got %d surfaced effects %+v, want exactly the food_rate one", len(effs), effs)
+	}
+	if effs[0].Type != "food_rate" || effs[0].Target != "food" || effs[0].Value != 0.13 {
+		t.Errorf("surfaced effect = %+v, want {food_rate food 0.13}", effs[0])
+	}
+}
+
+// TestGetActive_RateSetbackKeepsSign proves a NEGATIVE rate effect (a faction
+// setback) survives the filter with its sign intact — the panel colours off the
+// sign, so dropping or flattening it would render a penalty as a gift.
+func TestGetActive_RateSetbackKeepsSign(t *testing.T) {
+	em := NewEventManager()
+	em.InjectEvent(ActiveEvent{
+		Key:       factionMalusKey("dawnfolk"),
+		Name:      "Dawnfolk Reprisal",
+		TicksLeft: 60,
+		Effects: []config.Effect{
+			{Type: "iron_rate", Target: "iron", Value: -0.20},
+		},
+	})
+
+	active := em.GetActive()
+	if len(active) != 1 || len(active[0].Effects) != 1 {
+		t.Fatalf("setback did not surface: %+v", active)
+	}
+	if got := active[0].Effects[0].Value; got != -0.20 {
+		t.Errorf("Value = %v, want -0.20", got)
+	}
+}
+
+// TestGetActive_AdmitsWhatModifiersApplies is the guard that keeps the two
+// filters from drifting apart again: every multiplier-bucket effect the engine
+// keeps applying must be renderable.
+func TestGetActive_AdmitsWhatModifiersApplies(t *testing.T) {
+	em := NewEventManager()
+	em.InjectEvent(ActiveEvent{
+		Key:       "mixed",
+		Name:      "Mixed Bag",
+		TicksLeft: 30,
+		Effects: []config.Effect{
+			{Type: "production_all", Value: 0.10},
+			{Type: "tick_speed", Value: 0.05},
+			{Type: "gold_rate", Target: "gold", Value: 0.25},
+			{Type: "worker_loss", Value: 3}, // one-shot: applied, never ongoing
+		},
+	})
+
+	surfaced := map[string]bool{}
+	for _, eff := range em.GetActive()[0].Effects {
+		surfaced[eff.Type] = true
+	}
+	for _, m := range em.Modifiers() {
+		if !surfaced[m.Target] {
+			t.Errorf("Modifiers() applies %q every tick but GetActive() does not surface it", m.Target)
+		}
+	}
+	if surfaced["worker_loss"] {
+		t.Error("one-shot worker_loss leaked into the ongoing-effects view")
+	}
+}

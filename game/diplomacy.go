@@ -165,16 +165,28 @@ func (dm *DiplomacyManager) passiveEligible(fs *FactionState) bool {
 	return fs.Discovered && fs.Status != "rival" && fs.Status != "embargo" && !fs.AtWar
 }
 
-// DiscoverFactions auto-discovers civilizations when reaching their MinAge.
-// Returns the keys of newly-discovered civs so the caller can fire first-contact
-// flavour events. New civs are seeded at neutral opinion.
+// ageFallbackGap is how many ages past a faction's MinAge the player must reach
+// before that faction is auto-discovered without ever meeting it on an expedition.
+// It is the anti-softlock net: expeditions are the intended discovery TRIGGER (see
+// GameEngine.rollExpeditionEncounter), and MinAge is only a FLOOR — but a player
+// who never runs expeditions still meets every civ eventually, just much later.
+const ageFallbackGap = 2
+
+// DiscoverFactions is the generous age FALLBACK for discovery, not the primary
+// path. It auto-discovers any faction the player has long been eligible to meet
+// (age >= MinAge) but hasn't: the current age is at least ageFallbackGap ages past
+// the faction's MinAge. The primary discovery path is expedition encounters, which
+// call DiscoverFaction directly. Reaching a faction's MinAge no longer discovers it
+// on its own — age is a floor. Returns newly-discovered keys so the caller can fire
+// first-contact flavour. New civs are seeded at neutral opinion.
 func (dm *DiplomacyManager) DiscoverFactions(age string, ageOrder map[string]int) []string {
 	var discovered []string
+	cur := ageOrder[age]
 	for _, def := range config.BaseFactions() {
 		if _, exists := dm.factions[def.Key]; exists {
 			continue
 		}
-		if ageOrder[age] >= ageOrder[def.MinAge] {
+		if cur >= ageOrder[def.MinAge]+ageFallbackGap {
 			dm.factions[def.Key] = &FactionState{
 				Discovered: true,
 				Opinion:    0,
@@ -184,6 +196,45 @@ func (dm *DiplomacyManager) DiscoverFactions(age string, ageOrder map[string]int
 		}
 	}
 	return discovered
+}
+
+// DiscoverFaction discovers a single faction by key — the entry point the encounter
+// engine calls when an expedition turns one up. It seeds neutral/0 state and returns
+// that civ's first-contact flavour line. Returns ("", false) when the key is unknown
+// or the faction is already discovered. Must be called under the engine write lock.
+func (dm *DiplomacyManager) DiscoverFaction(key string) (string, bool) {
+	def, ok := config.FactionByKey()[key]
+	if !ok {
+		return "", false
+	}
+	if fs, exists := dm.factions[key]; exists && fs.Discovered {
+		return "", false
+	}
+	dm.factions[key] = &FactionState{
+		Discovered: true,
+		Opinion:    0,
+		Status:     "neutral",
+	}
+	return firstContactMessage(def), true
+}
+
+// IsDiscovered reports whether a faction has been discovered. Used by the encounter
+// engine to split eligible factions into discovery vs re-encounter candidates.
+func (dm *DiplomacyManager) IsDiscovered(key string) bool {
+	fs, ok := dm.factions[key]
+	return ok && fs.Discovered
+}
+
+// StateOf returns a COPY of a faction's diplomatic state. The bool is false when
+// the faction has never been seeded (undiscovered and untouched); in that case
+// the returned value is a safe neutral default. Used by the encounter engine to
+// shape a boon profile by standing (see factionProfile) without exposing the
+// internal pointer.
+func (dm *DiplomacyManager) StateOf(key string) (FactionState, bool) {
+	if fs, ok := dm.factions[key]; ok && fs != nil {
+		return *fs, true
+	}
+	return FactionState{Status: "neutral"}, false
 }
 
 // clampOpinion keeps a faction's integer opinion within [-100, 100].
@@ -669,7 +720,8 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 			info.TradeCount = fs.TradeCount
 			info.AtWar = fs.AtWar
 		} else if ageOrder[age] >= ageOrder[def.MinAge] {
-			// Should be discovered but isn't yet (will be next tick).
+			// Eligible (age floor met) but not yet met: discovery is triggered by
+			// running expeditions, with a late age fallback (see DiscoverFactions).
 			info.Discovered = false
 		}
 		// Annotate lent-worker status for the overlay.

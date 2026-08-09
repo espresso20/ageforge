@@ -136,7 +136,15 @@ func TestEmbassyOpinionGain_GrandIsDouble(t *testing.T) {
 
 		ge.mu.Lock()
 		// Discover factions for the current age so opinion has somewhere to go.
-		ge.Diplomacy.DiscoverFactions(ge.age, ge.progress.GetAgeOrder())
+		// Discovery is now expedition-triggered (age is only a floor), so drive the
+		// trigger directly for every civ whose floor is met — reproducing the old
+		// at-MinAge roster this test relies on.
+		ageOrder := ge.progress.GetAgeOrder()
+		for _, fdef := range config.BaseFactions() {
+			if ageOrder[ge.age] >= ageOrder[fdef.MinAge] {
+				ge.Diplomacy.DiscoverFaction(fdef.Key)
+			}
+		}
 		// Seed one fully-staffed building of the requested type.
 		def := config.BuildingByKey()[buildingKey]
 		ge.Buildings.counts[buildingKey] = 1

@@ -43,7 +43,7 @@ Start in the Primitive Age with bare hands and 15 food. Gather resources, build 
 ## Features
 
 - **Resource Management**: 25 resources across 22 ages with storage limits and production chains
-- **Building System**: 284 buildings (241 production across 13 lineages + 21 storage + 22 Wonders) with scaling costs and construction queues
+- **Building System**: 301 buildings (251 lineage buildings + 21 storage + 22 Wonders + 4 cultural monuments + 3 administrative) with scaling costs and construction queues
 - **Worker System**: 12 domains (food, faith, knowledge, military, trade, engineering, hacker, astronaut, lumber, masonry, metallurgy, energy) with per-domain class progression and food economy
 - **Tech Tree**: 52 technologies with prerequisites and permanent bonuses
 - **Military**: 15 expeditions with risk/reward and defense ratings

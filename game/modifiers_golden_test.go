@@ -29,7 +29,7 @@ const goldenEps = 1e-9
 //	prodAllAdd = research[production_all] + permanent[production_all]
 //	           + prestige[production_all] + wonders[production_all]
 //	           + Σ active-event production_all effects
-//	factor     = moraleMultiplier() × max(productionFloor, 1 + prodAllAdd)
+//	factor     = moraleMultiplier() × clamp(1 + prodAllAdd, productionFloor, productionCap)
 //
 // The morale factor is moraleMultiplier(), applied unconditionally to the
 // building rate (recalculateRates hoists it as `mMult := ge.moraleMultiplier()`,
@@ -39,10 +39,11 @@ const goldenEps = 1e-9
 // and toward ×0.5 at the 0.10 floor below.
 //
 // Fix B removed the old `prodAllAdd > 0` gate: a negative additive bonus (e.g.
-// the Reconstruction Effort catastrophe's -0.10) now applies. The productionFloor
-// floor only binds when 1+add < 0.10; for every fixture here it does not, so this
-// expected factor equals the resolver's UNfloored Total (1+add)×morale — the
-// resolver carries the additive pool and morale, the floor is engine-side only.
+// the Reconstruction Effort catastrophe's -0.10) now applies. The clamp only
+// binds when 1+add leaves [productionFloor, productionCap]; for every fixture
+// here it does not, so this expected factor equals the resolver's UNclamped
+// Total (1+add)×morale — the resolver carries the additive pool and morale, the
+// clamp is engine-side only.
 func expectedProductionAll(ge *GameEngine) float64 {
 	research := ge.Research.GetBonuses()
 	prestige := ge.Prestige.GetBonuses()
@@ -56,19 +57,19 @@ func expectedProductionAll(ge *GameEngine) float64 {
 		}
 	}
 
-	return ge.moraleMultiplier() * math.Max(productionFloor, 1.0+add)
+	return ge.moraleMultiplier() * clamp(1.0+add, productionFloor, productionCap)
 }
 
 // expectedResRate re-derives the per-resource rate multiplier (Fix B: ungated +
-// floored):
+// floored; boon-capacity pass: also capped):
 //
 //	add    = research[<res>_rate] + permanent[<res>_rate] + prestige[<res>_rate] + wonders[<res>_rate]
-//	factor = max(productionFloor, 1 + add)
+//	factor = clamp(1 + add, productionFloor, productionCap)
 //
 // (permanentBonuses already absorbs milestone/legacy/epoch; prestige and wonders
 // are merged into the same effective per-resource pool in recalculateRates.) As
-// with production_all the floor only binds when 1+add < 0.10; fixtures here are
-// non-binding, so this equals the resolver's unfloored Total.
+// with production_all the clamp only binds outside [0.10, 3.0]; fixtures here are
+// non-binding, so this equals the resolver's unclamped Total.
 func expectedResRate(ge *GameEngine, res string) float64 {
 	key := res + "_rate"
 	research := ge.Research.GetBonuses()
@@ -76,7 +77,7 @@ func expectedResRate(ge *GameEngine, res string) float64 {
 	wonders := ge.getWonderBonuses()
 
 	add := research[key] + ge.permanentBonuses[key] + prestige[key] + wonders[key]
-	return math.Max(productionFloor, 1.0+add)
+	return clamp(1.0+add, productionFloor, productionCap)
 }
 
 // expectedGatherRate re-derives the gather_rate multiplier the same way (Fix B).
