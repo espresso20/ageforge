@@ -229,4 +229,3 @@ func formatEffect(eff config.Effect) string {
 		return fmt.Sprintf("%s %s: %g", eff.Type, eff.Target, eff.Value)
 	}
 }
-

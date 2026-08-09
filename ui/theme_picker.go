@@ -132,7 +132,7 @@ func CreateThemePickerPage(app *tview.Application, pages *tview.Pages, engine *g
 	p.root = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(title, 1, 0, false).
 		AddItem(subtitle, 1, 0, false).
-		AddItem(p.list, 0, 1, true).    // weighted — takes remaining space
+		AddItem(p.list, 0, 1, true).     // weighted — takes remaining space
 		AddItem(p.detail, 13, 0, false). // blurb + accessible note + 8 swatch rows + border
 		AddItem(footer, 1, 0, false)
 

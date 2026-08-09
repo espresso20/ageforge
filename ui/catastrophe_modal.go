@@ -160,4 +160,3 @@ func legacyBonusText(epochKey string) string {
 	}
 	return result
 }
-

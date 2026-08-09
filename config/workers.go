@@ -3,8 +3,10 @@ package config
 // WorkerClassDef defines a single tier of a worker domain, tied to a specific age.
 // Each domain has one class per age it spans (from its start age through quantum_age).
 // Food cost and production multiplier scale geometrically per tier:
-//   FoodCost = baseFoodCost × 1.12^tier
-//   Multiplier = 2.0^tier
+//
+//	FoodCost = baseFoodCost × 1.12^tier
+//	Multiplier = 2.0^tier
+//
 // With 1.12 the tier-20 cost is ~9.6× base (vs 3325× with the old 1.5 multiplier).
 // food domain (base 0.06): tier 0 → 0.060, tier 10 → 0.186, tier 20 → 0.579
 // lumber/masonry/knowledge (base 1.0): tier 0 → 1.000, tier 9 → 2.773, tier 19 → 7.690
@@ -30,18 +32,20 @@ func wc(domain, ageKey, className string, baseFoodCost float64, tier int) Worker
 
 // WorkerClasses returns all worker class definitions across all 12 domains.
 // Domains and their start ages / base food costs:
-//   food        primitive   0.06  — Forager → Quantum Harvester
-//   lumber      stone       1.0   — Gatherer → Cosmic Extractor
-//   masonry     stone       1.0   — Quarryman → Crystal Miner
-//   knowledge   primitive   1.0   — Shaman → Quantum Theorist
-//   faith       medieval    2.0   — Acolyte → Quantum Sage
-//   military    iron        2.0   — Soldier → Quantum Soldier
-//   trade       bronze      1.0   — Peddler → Quantum Dealer
-//   engineering victorian   8.0   — Tinker → Quantum Engineer
-//   metallurgy  iron        2.0   — Smelter → Quantum Smelter
-//   energy      victorian   8.0   — Stoker → Zero-Point Engineer
-//   hacker      information 16.0  — Script Kiddie → Quantum Hacker
-//   astronaut   space       32.0  — Cadet → Quantum Astronaut
+//
+//	food        primitive   0.06  — Forager → Quantum Harvester
+//	lumber      stone       1.0   — Gatherer → Cosmic Extractor
+//	masonry     stone       1.0   — Quarryman → Crystal Miner
+//	knowledge   primitive   1.0   — Shaman → Quantum Theorist
+//	faith       medieval    2.0   — Acolyte → Quantum Sage
+//	military    iron        2.0   — Soldier → Quantum Soldier
+//	trade       bronze      1.0   — Peddler → Quantum Dealer
+//	engineering victorian   8.0   — Tinker → Quantum Engineer
+//	metallurgy  iron        2.0   — Smelter → Quantum Smelter
+//	energy      victorian   8.0   — Stoker → Zero-Point Engineer
+//	hacker      information 16.0  — Script Kiddie → Quantum Hacker
+//	astronaut   space       32.0  — Cadet → Quantum Astronaut
+//
 // Culture has no worker domain — it auto-produces passively.
 func WorkerClasses() []WorkerClassDef {
 	return []WorkerClassDef{
@@ -315,7 +319,7 @@ func WorkerClassByDomainAndAge(domain, ageKey string) (WorkerClassDef, bool) {
 
 	// Fallback: pick the highest-order age entry for this domain that is ≤ current age.
 	ages := AgeByKey()
-	currentOrder := 1<<30 // treat unknown age as very high so all classes qualify
+	currentOrder := 1 << 30 // treat unknown age as very high so all classes qualify
 	if a, ok := ages[ageKey]; ok {
 		currentOrder = a.Order
 	}

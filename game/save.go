@@ -56,9 +56,9 @@ type GameSave struct {
 	// Phase 7: legacy building keys
 	LegacyBuildings []string `json:"legacy_buildings,omitempty"`
 	// Phase 8: epoch system
-	CurrentEpoch       string             `json:"current_epoch,omitempty"`
-	EpochEventFired    map[string]bool    `json:"epoch_event_fired,omitempty"`
-	AwakeningsFired    map[string]bool    `json:"awakenings_fired,omitempty"`
+	CurrentEpoch    string          `json:"current_epoch,omitempty"`
+	EpochEventFired map[string]bool `json:"epoch_event_fired,omitempty"`
+	AwakeningsFired map[string]bool `json:"awakenings_fired,omitempty"`
 	// AncientMemoryUsed: true once this run has offered its single Ancient Memory cache
 	// (set on offer, not accept). Persisted so a reload cannot re-roll the cache. The
 	// in-progress memory research itself rides along in ResearchSave (its doubled tick
@@ -76,8 +76,8 @@ type GameSave struct {
 	// History overlay samples
 	History *HistoryCollector `json:"history,omitempty"`
 	// Integrity fields
-	CheaterBadge bool   `json:"cheater_badge,omitempty"`
-	EliteBadge   bool   `json:"elite_badge,omitempty"`
+	CheaterBadge bool `json:"cheater_badge,omitempty"`
+	EliteBadge   bool `json:"elite_badge,omitempty"`
 	// ParentName records the save this one branched from, for the save-lineage
 	// tree (Phase 1: plumbed through but always "" — branching lands in Phase 2).
 	// Legacy saves lack the field → "" → a root. omitempty keeps current saves

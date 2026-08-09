@@ -22,56 +22,56 @@ func Epochs() []EpochDef {
 	return []EpochDef{
 		{
 			Name: "Stone Era", Key: "stone_era", Order: 0,
-			Ages:            []string{"primitive_age", "stone_age", "bronze_age"},
-			Icon:            "◈", Color: "white",
+			Ages: []string{"primitive_age", "stone_age", "bronze_age"},
+			Icon: "◈", Color: "white",
 			PrimaryResource: "wood", EnergyResource: "food",
 			CatastropheKey: "meteor_impact",
 			Description:    "Humanity's first steps — wood, stone, and fire.",
 		},
 		{
 			Name: "Iron Era", Key: "iron_era", Order: 1,
-			Ages:            []string{"iron_age", "classical_age", "medieval_age"},
-			Icon:            "⚔", Color: "red",
+			Ages: []string{"iron_age", "classical_age", "medieval_age"},
+			Icon: "⚔", Color: "red",
 			PrimaryResource: "iron", EnergyResource: "coal",
 			CatastropheKey: "barbarian_invasion",
 			Description:    "Empires of iron and faith rise and fall.",
 		},
 		{
 			Name: "Steel Era", Key: "steel_era", Order: 2,
-			Ages:            []string{"renaissance_age", "colonial_age", "industrial_age"},
-			Icon:            "⚙", Color: "yellow",
+			Ages: []string{"renaissance_age", "colonial_age", "industrial_age"},
+			Icon: "⚙", Color: "yellow",
 			PrimaryResource: "steel", EnergyResource: "coal",
 			CatastropheKey: "industrial_collapse",
 			Description:    "Steam, steel, and global ambition.",
 		},
 		{
 			Name: "Electric Era", Key: "electric_era", Order: 3,
-			Ages:            []string{"victorian_age", "electric_age", "atomic_age"},
-			Icon:            "⚡", Color: "lightblue",
+			Ages: []string{"victorian_age", "electric_age", "atomic_age"},
+			Icon: "⚡", Color: "lightblue",
 			PrimaryResource: "steel", EnergyResource: "electricity",
 			CatastropheKey: "nuclear_meltdown",
 			Description:    "Electricity and the atom reshape civilization.",
 		},
 		{
 			Name: "Digital Era", Key: "digital_era", Order: 4,
-			Ages:            []string{"modern_age", "information_age", "digital_age"},
-			Icon:            "▣", Color: "blue",
+			Ages: []string{"modern_age", "information_age", "digital_age"},
+			Icon: "▣", Color: "blue",
 			PrimaryResource: "data", EnergyResource: "electricity",
 			CatastropheKey: "digital_collapse",
 			Description:    "Data flows become the rivers of power.",
 		},
 		{
 			Name: "Neon Era", Key: "neon_era", Order: 5,
-			Ages:            []string{"cyberpunk_age", "fusion_age", "space_age"},
-			Icon:            "◉", Color: "cyan",
+			Ages: []string{"cyberpunk_age", "fusion_age", "space_age"},
+			Icon: "◉", Color: "cyan",
 			PrimaryResource: "plasma", EnergyResource: "plasma",
 			CatastropheKey: "solar_event",
 			Description:    "Augmented reality and the conquest of the solar system.",
 		},
 		{
 			Name: "Cosmic Era", Key: "cosmic_era", Order: 6,
-			Ages:            []string{"interstellar_age", "galactic_age", "quantum_age", "transcendent_age"},
-			Icon:            "✦", Color: "magenta",
+			Ages: []string{"interstellar_age", "galactic_age", "quantum_age", "transcendent_age"},
+			Icon: "✦", Color: "magenta",
 			PrimaryResource: "dark_matter", EnergyResource: "antimatter",
 			CatastropheKey: "reality_fracture",
 			Description:    "Between stars and beyond time itself.",
@@ -135,10 +135,11 @@ func CatastropheInfo(epochKey string) (name, flavor string) {
 // the regular random event pool (RandomEvents in events.go).
 //
 // Type values and their selection criteria:
-//   "good_minor"      — always eligible; lower culture gates these out first
-//   "good_major"      — requires medium culture fill %
-//   "good_legendary"  — requires high culture fill % (rare)
-//   "bad_challenging" — bad event; more likely at low culture
+//
+//	"good_minor"      — always eligible; lower culture gates these out first
+//	"good_major"      — requires medium culture fill %
+//	"good_legendary"  — requires high culture fill % (rare)
+//	"bad_challenging" — bad event; more likely at low culture
 //
 // Duration == 0 means the effect is instant (one-time apply); Duration > 0 means
 // the effect persists in ActiveEvents for that many ticks.

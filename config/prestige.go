@@ -5,9 +5,10 @@ package config
 // permanent progression mechanism.
 //
 // EffectType semantics:
-//   "rate_bonus"        — multiplier added to EffectKey rate (PerTier = fractional, e.g. 0.05 = +5%)
-//   "flat_bonus"        — flat value added to EffectKey cap (PerTier = absolute units)
-//   "starting_resource" — added to the player's starting amount of EffectKey resource on reset
+//
+//	"rate_bonus"        — multiplier added to EffectKey rate (PerTier = fractional, e.g. 0.05 = +5%)
+//	"flat_bonus"        — flat value added to EffectKey cap (PerTier = absolute units)
+//	"starting_resource" — added to the player's starting amount of EffectKey resource on reset
 type PrestigeUpgradeDef struct {
 	Key         string
 	Name        string

@@ -205,7 +205,7 @@ func buildingCompose(lin, tier, era, variation int) Canvas {
 		c.hline(bx-1, roofTop, bodyW+2, pal.Roof)
 		cx2 := bx + bodyW - 2 + variation
 		c.vline(cx2, roofTop-3, 3, darken(pal.Roof, 0.8)) // chimney
-		c.hline(cx2-1, roofTop-4, 3, pal.Accent)           // chimney top
+		c.hline(cx2-1, roofTop-4, 3, pal.Accent)          // chimney top
 	case lin <= 6: // knowledge, faith → dome or spire
 		if era >= 4 {
 			c.vline(8, roofTop-4, 4, pal.Accent) // antenna/spire
@@ -339,7 +339,7 @@ func GenerateBuildingSprite(lineage, tier int, ageKey string, variation int) [16
 				bw = 10
 			}
 			cx2 := bx + bw/2
-			by2 := 14 - (3+tier*5/20) - 4
+			by2 := 14 - (3 + tier*5/20) - 4
 			c.set(cx2, by2, pal.Accent)
 			c.set(cx2-1, by2+1, pal.Accent)
 			c.set(cx2, by2+1, pal.Accent)
@@ -387,7 +387,7 @@ func GenerateBuildingSprite(lineage, tier int, ageKey string, variation int) [16
 			bw = 10
 		}
 		by2 := 14 - (3 + tier*5/20)
-		c.set(bx, by2, 0)           // carve arch opening
+		c.set(bx, by2, 0) // carve arch opening
 		c.set(bx+bw-1, by2, 0)
 		c.hline(bx+1, by2-1, bw-2, pal.Accent) // decorative top bar
 
