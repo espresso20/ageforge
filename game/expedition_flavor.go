@@ -18,24 +18,55 @@ import (
 // under the engine write lock and touch only held state plus pure config lookups —
 // no GetState, no lock-acquiring calls.
 
+// flavorStream returns the engine's prose stream, building it on first use.
+//
+// Every generated line in the game goes through this one Stream, which suppresses
+// a sentence it used in the last couple of dozen lines. Package flavor's Generate
+// is memoryless by contract — that is what makes a seeded run reproducible — and
+// a memoryless uniform draw repeats inside a screenful no matter how large the
+// catalog is, so the de-duplication has to live with whoever owns the log. That
+// is here.
+func (ge *GameEngine) flavorStream() *flavor.Stream {
+	if ge.prose == nil {
+		ge.prose = flavor.NewStream()
+	}
+	return ge.prose
+}
+
+// expeditionFlavorOdds is the denominator of the "does this resolution get a
+// quip" roll: roughly one expedition in this many gets a flavour line.
+//
+// Present but not stale, the same policy processBuildQueue applies to building
+// completions — a line under every single resolution stops being a detail and
+// becomes wallpaper, and the eye starts skipping the whole gray column. The
+// encounter and raid lines are NOT gated: those moments are already rare (a few
+// dozen encounters per ten thousand ticks) and a silent war raid reads as a
+// missing log entry rather than as restraint.
+const expeditionFlavorOdds = 3
+
 // expeditionFlavorLine returns the cosmetic line that rides ALONGSIDE a resolved
 // expedition's mechanical message ("<Name> succeeded! Gained loot."). It never
 // carries mechanical information — the functional line is emitted first and
 // separately, exactly as the log-flavour layer does elsewhere.
 //
-// Returns "" if the generator has nothing for the moment (it always does today;
-// the guard is so a future Moment removal degrades to silence, not to a blank
-// log entry).
+// Returns "" when the odds roll declines this resolution, or if the generator has
+// nothing for the moment (the latter guard is so a future Moment removal degrades
+// to silence, not to a blank log entry).
 func (ge *GameEngine) expeditionFlavorLine(res ExpeditionResult) string {
 	if ge.rng == nil {
 		ge.SeedRNG(newSeed())
+	}
+	// Drawn off ge.rng, not package rand, so the prose stream stays reproducible
+	// from the run's persisted seed alongside the encounter and boon streams.
+	if ge.rng.Intn(expeditionFlavorOdds) != 0 {
+		return ""
 	}
 	moment := flavor.ExpeditionSuccess
 	if !res.Success {
 		moment = flavor.ExpeditionFailure
 	}
 	resource, amount := topReward(res.Rewards)
-	return flavor.Line(flavor.Request{
+	return ge.flavorStream().Line(flavor.Request{
 		Moment: moment,
 		Tone:   expeditionTone(res.Category, res.Success),
 		Age:    ge.age,
@@ -95,7 +126,7 @@ func (ge *GameEngine) factionEncounterFlavor(moment flavor.Moment, def config.Fa
 	if ge.rng == nil {
 		ge.SeedRNG(newSeed())
 	}
-	return flavor.Line(flavor.Request{
+	return ge.flavorStream().Line(flavor.Request{
 		Moment: moment,
 		Tone:   factionTone(moment, def.Personality),
 		Age:    ge.age,
@@ -129,7 +160,7 @@ func (ge *GameEngine) raidFlavorLine(raid RaidRequest) string {
 	if !ok {
 		return ""
 	}
-	return flavor.Line(flavor.Request{
+	return ge.flavorStream().Line(flavor.Request{
 		Moment:   flavor.WarRaid,
 		Tone:     factionTone(flavor.WarRaid, def.Personality),
 		Age:      ge.age,

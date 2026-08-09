@@ -3,12 +3,22 @@
 // sentence, so the surfaces that fire hundreds of times per run stop reading like
 // the same string on a loop.
 //
-// It is a HYBRID generator, not a word-salad one. Sentence STRUCTURE is generated
-// (a template is an ordered list of slots); the words that fill the slots are
-// AUTHORED phrases, written to read like prose and composed so the grammar holds
-// however they combine. There is no {adj} {noun} {verb} anywhere in here: a slot
-// draws a written clause, and the template supplies the connective tissue and the
-// punctuation.
+// It is a SELECTION engine, not a composition one, and that distinction is the
+// whole design. The unit of authorship is a finished SENTENCE somebody wrote and
+// read back — a "skeleton" — which may carry at most one slot, and that slot only
+// ever swaps a NOUN PHRASE from a bank of the same tight category. Nothing here
+// joins two independently drawn clauses, because a generator with no semantic
+// model cannot know that "the quartermaster looks at what returned" and "the
+// quartermaster says nothing" are the same person twice. That is not a gap to be
+// filled in later; it is the failure mode this package was rewritten to remove.
+//
+// The number that follows from it: repetition is governed by how many separate
+// things a Moment can SAY, which is DistinctSkeletons, and not by the product of
+// its bank sizes, which is Capacity. Reach for Capacity only when sizing storage.
+//
+// For anything a player reads as a RUN of lines, use a Stream rather than Line —
+// Generate is memoryless, and memoryless uniform sampling repeats inside a
+// screenful no matter how big the catalog gets.
 //
 // Decoupling is the whole point, and it mirrors package boon exactly. This package
 // imports AT MOST config (for the resource vocabulary and the canonical age order)
@@ -26,9 +36,9 @@
 //	line := flavor.Line(flavor.Request{Moment: flavor.ExpeditionSuccess, ...}, ge.rng)
 //
 // Line/Generate are PURE given (req, rng): every random draw comes from the passed
-// *rand.Rand in a FIXED order (template first, then each bank slot left to right),
-// so the same seed reproduces the same prose stream. The package never seeds
-// anything and never touches package-level math/rand.
+// *rand.Rand in a FIXED order (skeleton first, then its slot if it has one), so the
+// same seed reproduces the same prose stream. The package never seeds anything and
+// never touches package-level math/rand.
 //
 // # Output contract
 //
@@ -36,20 +46,27 @@
 // colour tags and prints the mechanical facts. Flavor rides ALONGSIDE mechanics —
 // it never replaces the line that says what actually happened.
 //
+// Output is also ORTHOGONAL to it. The caller has already printed "Scout Party
+// succeeded! Gained loot."; a flavour line that says the venture paid out is
+// padding. These sentences supply a detail instead — what came back, who did not,
+// what broke, what the town did about it.
+//
 // # Voice
 //
-// Dry, occasionally absurdist, in-world. The joke is on the game world, never on
-// the player, and never on the mechanic — nothing in here winks at ticks, rolls,
-// caps, or slots. Matches config/building_flavor.go and config/log_flavor.go.
+// Dry, in-world, concrete, six to fourteen words, and mostly FLAT: roughly one
+// line in five reaches for a joke, because comedy needs a straight man and a pool
+// where every line strains for a wry observation is exhausting. The joke is on the
+// game world, never on the player, and never on the mechanic — nothing in here
+// winks at ticks, rolls, caps, or slots. Matches config/building_flavor.go.
 //
 // # Every Request field is optional
 //
 // A ZERO Request (plus a registered Moment) still produces a grammatical, generic
-// line. Templates declare which Request fields they NEED; a template whose needs
-// are unmet is simply not eligible, and every Moment ships need-free templates.
-// That is also how "0 = omit from the sentence" is enforced for Amount/Count/Ticks:
-// there is no such thing as a rendered "0 food" here, because the templates that
-// mention an amount cannot be picked without one.
+// line. Skeletons declare which Request fields they NEED; one whose needs are unmet
+// is simply not eligible, and every Moment ships need-free sentences. That is also
+// how "0 = omit from the sentence" is enforced for Amount/Count/Ticks: there is no
+// such thing as a rendered "0 food" here, because the sentences that mention an
+// amount cannot be picked without one.
 package flavor
 
 import (
@@ -198,6 +215,86 @@ func Line(req Request, rng *rand.Rand) string {
 	return Generate(req, rng).Text
 }
 
+// --- Stream: the anti-repeat wrapper a real log wants ----------------------
+
+// Stream is a caller-owned Generate that avoids repeating a sentence it used
+// recently. Use it for anything a player reads as a RUN of lines; use Line or
+// Generate directly for one-offs and for tests that need purity.
+//
+// The reason this is a separate type rather than behaviour inside Generate is
+// the determinism contract. Generate is pure given (req, rng) — the same seed
+// reproduces the same prose, which is what lets a run's persisted seed replay its
+// whole log — and recent-history suppression is by definition stateful. So the
+// state lives with the CALLER, which also gets the semantics right: one Stream
+// per log, deduplicating across every Moment that writes into it, rather than a
+// package-global that would couple unrelated callers together.
+//
+// A Stream is deterministic given its own history and the rng, so a seeded replay
+// through the same Stream reproduces exactly. It is not safe for concurrent use;
+// the engine calls it under its write lock.
+//
+// Why it is needed at all, given a catalog of a couple of hundred sentences per
+// Moment: a uniform draw of 30 samples from a pool of N produces about
+// 30·29/(2N) repeated pairs, which is five repeats in thirty lines at N = 81 and
+// still one at N = 400. Repetition inside a screenful is a property of memoryless
+// sampling, not of catalog size, and no amount of extra authoring fixes it.
+type Stream struct {
+	recent []string
+	at     int
+}
+
+const (
+	// streamMemory is how many recent skeletons a Stream will avoid reusing.
+	// Sized to a screenful of log, which is the window a repeat is noticed in.
+	streamMemory = 32
+	// streamRetries is how many times a Stream will redraw before accepting a
+	// repeat. It always accepts eventually, so a narrow eligible pool degrades to
+	// plain Generate instead of looping.
+	streamRetries = 5
+)
+
+// NewStream returns an empty Stream.
+func NewStream() *Stream { return &Stream{recent: make([]string, streamMemory)} }
+
+// Line is Stream.Generate(req, rng).Text.
+func (s *Stream) Line(req Request, rng *rand.Rand) string {
+	return s.Generate(req, rng).Text
+}
+
+// Generate produces one line for req, redrawing up to streamRetries times if the
+// skeleton is one of the last streamMemory used. A nil Stream falls back to the
+// plain generator, so a caller that has not built one still gets prose.
+func (s *Stream) Generate(req Request, rng *rand.Rand) Result {
+	if s == nil {
+		return Generate(req, rng)
+	}
+	if s.recent == nil {
+		s.recent = make([]string, streamMemory)
+	}
+	var res Result
+	for i := 0; i <= streamRetries; i++ {
+		res = Generate(req, rng)
+		if res.Template == "" || !s.seen(res.Template) {
+			break
+		}
+	}
+	if res.Template != "" {
+		s.recent[s.at] = res.Template
+		s.at = (s.at + 1) % len(s.recent)
+	}
+	return res
+}
+
+// seen reports whether id is in the recent ring.
+func (s *Stream) seen(id string) bool {
+	for _, x := range s.recent {
+		if x == id {
+			return true
+		}
+	}
+	return false
+}
+
 // Moments returns the registered Moments in a stable order. Anything not in this
 // slice generates an empty Result.
 func Moments() []Moment {
@@ -210,12 +307,15 @@ func Moments() []Moment {
 	}
 }
 
-// Capacity reports how many DISTINCT lines a Moment can produce across its whole
-// template set: the sum over templates of the product of its slot bank sizes.
+// Capacity reports how many distinct STRINGS a Moment can produce: the sum over
+// skeletons of its slot bank size (1 for a slotless sentence).
 //
-// It ignores Request-dependent eligibility on purpose — it answers "how much prose
-// is authored here", which is the number worth asserting a floor on in a test. The
-// pool a specific Request actually draws from is necessarily smaller.
+// It is kept for compatibility and for rough sizing, and it is NOT the quality
+// bar. It never was a good one: a Moment whose lines all draw a noun from a bank
+// of forty reports a capacity of forty per skeleton while a player sees the same
+// sentence over and over with a different noun in it. Perceived repetition is
+// governed by DistinctSkeletons — how many separate things a Moment can SAY — and
+// that is the number tests assert a floor on.
 //
 // Returns 0 for an unregistered Moment.
 func Capacity(m Moment) int {
@@ -226,14 +326,29 @@ func Capacity(m Moment) int {
 	return total
 }
 
-// Signatures returns the set of authored fragments guaranteed to appear VERBATIM
-// in generated text for a Moment — its "anchor" banks.
+// DistinctSkeletons reports how many separate authored sentences a Moment has.
 //
-// Every template of a Moment is required to draw one slot from an anchor bank
-// (enforced by TestAnchorInvariant), anchor fragments carry no placeholders, and
-// nothing in the render path transforms case or substitutes inside a fragment. So
-// for any generated line L of Moment m, exactly one s in Signatures(m) satisfies
-// strings.Contains(L, s).
+// This is the repetition metric. A skeleton is one sentence a person wrote; a
+// slot inside it swaps a noun, which varies the detail but not the beat, so a
+// Moment with six skeletons and a thousand nouns still reads as six lines on a
+// loop. The floor that matters is per ERA-ELIGIBLE POOL — the sentences an age in
+// one era bucket can actually reach — because that is the pool a real run draws
+// from; see TestSkeletonFloors.
+//
+// Returns 0 for an unregistered Moment.
+func DistinctSkeletons(m Moment) int {
+	return len(templatesFor(m))
+}
+
+// Signatures returns the set of authored fragments guaranteed to appear VERBATIM
+// in generated text for a Moment — one per skeleton.
+//
+// Every skeleton opens with authored literal text, and nothing in the render path
+// transforms case or rewrites the inside of a literal, so a skeleton's leading run
+// (everything before its slot or its first placeholder) reaches the finished line
+// character for character. So for any generated line L of Moment m, exactly one s
+// in Signatures(m) satisfies strings.Contains(L, s) — enforced end to end by
+// TestSignaturesClassifyEveryLine.
 //
 // That is the seam a consumer holding only finished TEXT needs in order to classify
 // it — game/boon_tuning_test.go uses it to keep bucketing encounter outcomes now
@@ -242,10 +357,15 @@ func Capacity(m Moment) int {
 //
 // The returned slice is a fresh copy in a stable (sorted) order.
 func Signatures(m Moment) []string {
-	set := anchorBanksFor(m)
+	seen := map[string]bool{}
 	var out []string
-	for _, name := range set {
-		out = append(out, banks[name]...)
+	for _, t := range templatesFor(m) {
+		s := anchorOf(t)
+		if s == "" || seen[s] {
+			continue
+		}
+		seen[s] = true
+		out = append(out, s)
 	}
 	sort.Strings(out)
 	return out

@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/flavor"
 )
 
 const (
@@ -238,6 +239,13 @@ type GameEngine struct {
 	// restarts the stream) — only the seed itself round-trips.
 	seed int64
 	rng  *rand.Rand
+
+	// prose is the recent-history filter for generated flavour. One Stream for
+	// the whole log, so an expedition line and a raid line cannot repeat each
+	// other's sentence inside a screenful; see expedition_flavor.go. Cosmetic
+	// state only — it is not persisted, and a reload simply starts with an empty
+	// history.
+	prose *flavor.Stream
 }
 
 // BuildQueueItem represents a building under construction
