@@ -154,13 +154,13 @@ Wonders are shown in **Wonders** overlay (`wonders`) with progress bars for each
 
 ## Map Views
 
-There are two map views — a close-up of **your own settlement** and a zoomed-out view of the **wider world**. Both are fully theme-aware and retint live when you switch themes.
+There are two map views — a close-up of **your own settlement** and a zoomed-out view of the **wider world**. The **City Map** is theme-aware and retints live when you switch themes; the **World Map** is drawn in an era-specific **cartographic medium** that evolves as you advance.
 
 | Command | Description |
 |---|---|
 | `citymap` | Open the **City Map** — a theme-aware procedural rendering of your settlement, with per-age layouts, roads, and your actual buildings drawn as lineage-coloured markers |
 | `map` | Alias for `citymap` (kept for muscle memory) |
-| `worldmap` | Open the **World Map** — the Known World: a Game-of-Life field of settlements with your civilization and the diplomacy civs called out as labelled, relationship-coloured dots |
+| `worldmap` | Open the **World Map** — a seeded continent (elevation, biomes, coastlines, rivers) redrawn each age in that era's cartographic medium; beyond the planet it becomes a strategic star-map of your empire and the rival factions |
 
 ```
 citymap
@@ -178,15 +178,11 @@ The City Map (`citymap`, also `map`) renders your civilization as a **top-down p
 
 ### World Map
 
-The World Map (`worldmap`) zooms out from your city to the **Known World**. Its backdrop is a procedural, **Game-of-Life-style field of anonymous settlements** — sparse, clustered cells of varying sizes drawn in a dim land tone, over a muted terrain/ocean wash. The world **grows with your progress**: an early game shows a lonely frontier of a few small specks, while a late, sprawling empire fills the map with a dense, large-settlement world (density and dot size scale with your age and total buildings).
+The World Map (`worldmap`) is a single **seeded world** — one continent with elevation, biomes, coastlines and rivers — that is the **same land every game** on your account. What changes as you advance is the **cartographic medium** it is drawn in: a charcoal cave-sketch in the Primitive Age, inked parchment with a compass rose in the Medieval, a satellite mosaic in the Modern, a neon holo-grid in the Cyberpunk. Ages 1–17 each get their own medium.
 
-On top of that backdrop, the civilizations are called out as bright foreground dots:
+Once you leave the planet (Space onward) the World Map stops being a map of land and becomes a **strategic star-map** — your empire against the rival diplomacy factions competing for control. Standings read the same everywhere through signal colours: **at-war red, ally green, mercantile gold, neutral steel-blue**, with your own seat as the command hub. The five cosmic ages each get their own strategic view, from a home star-cluster up to an ascension lattice.
 
-- **Your civilization** — a single prominent **accent-coloured** dot at the centre of the world, with a glowing halo, labelled with your civ name (your account display name, or *Your Empire* if unnamed).
-- **Diplomacy civs** — every civilization you've **discovered** appears as its own dot ringed around your civ at a stable position, **sized by its standing** and **coloured by your relationship**: allies green, friendly cyan, rivals/embargo red, neutral a dim (but foreground-bright) tone. A civ **at war** with you burns a bright red with a hot core and a **⚔** mark on its label. Undiscovered civs are not shown — the world beyond your knowledge stays blank.
-- **Title** — a corner label reads *Known World — (current age)*.
-
-Everything — backdrop, your-civ dot, the diplomacy dots, and every label — resolves its colour from the active theme at draw time, so switching themes retints the whole world map.
+See **[The World Map](world-map.md)** for the full per-age breakdown.
 
 ---
 

@@ -142,6 +142,14 @@ type tdEraStyle struct {
 	// house profile — to pick the wonder sprite. Zero value == wonderGeneric (the grand default
 	// hall), so an untuned era keeps its current wonder.
 	wonderMotif wonderMotif
+
+	// spaceMode flips the whole GROUND read from a town-on-terrain to a station-in-the-void
+	// (Phase 2c). When true, drawGround paints a deep-space VOID + STARFIELD instead of the era
+	// ground tint (drawSpaceBackground), and tdAddFiller SUPPRESSES all greenery — gardens, trees,
+	// groves, and ponds — because a station floating in space has no soil. Only the five
+	// SPACE-AND-ABOVE ages set it (space / interstellar / galactic / quantum / transcendent); every
+	// grounded era keeps the zero value (false) and its dirt/grass/deck ground untouched.
+	spaceMode bool
 }
 
 // roofProfile is the per-era dwelling-roof dialect (V3-B). It shifts the ROOF SILHOUETTE of the
@@ -1297,6 +1305,7 @@ var spaceCityStyle = func() tdEraStyle {
 	s.wonderMotif = wonderLaunchpad   // space centrepiece: a rocket on a launch pad
 	s.hasWalls = false                // an open colony
 	s.slotSpacing = 1.55              // airy like fusion, a touch tighter
+	s.spaceMode = true                // SPACE-AND-ABOVE: void + starfield ground, no greenery (Phase 2c)
 	return s
 }()
 
@@ -1345,6 +1354,7 @@ var interstellarCityStyle = func() tdEraStyle {
 	s.wonderMotif = wonderSpireArray // interstellar centrepiece: a cluster of spires around a central mast
 	s.hasWalls = false               // still an open colony
 	s.slotSpacing = 1.45             // a touch tighter than space — a denser arcology
+	s.spaceMode = true               // deep-space void + starfield ground, no greenery (Phase 2c)
 	return s
 }()
 
@@ -1386,6 +1396,7 @@ var galacticCityStyle = func() tdEraStyle {
 	s.wonderMotif = wonderRingHub     // galactic centrepiece: the ringworld/megastation ring-hub
 	s.hasWalls = false                // still open
 	s.slotSpacing = 1.30              // denser than interstellar — a grand packed metropolis
+	s.spaceMode = true                // deep-space void + starfield ground, no greenery (Phase 2c)
 	return s
 }()
 
@@ -1441,6 +1452,7 @@ var quantumCityStyle = func() tdEraStyle {
 	s.wonderMotif = wonderCrystalLattice // quantum centrepiece: a glowing crystal-lattice mesh
 	s.hasWalls = false                   // still open
 	s.slotSpacing = 1.35                 // a touch airier than galactic — crystal spires want breathing room
+	s.spaceMode = true                   // deep-space void + starfield ground, no greenery (Phase 2c)
 	return s
 }()
 
@@ -1496,6 +1508,10 @@ var transcendentCityStyle = func() tdEraStyle {
 	s.wonderMotif = wonderAscension  // transcendent centrepiece: a rising ascension of light
 	s.hasWalls = false               // still open
 	s.slotSpacing = 1.40             // airy — light-forms float, not packed
+	// spaceMode (Phase 2c): transcendent joins the SPACE-AND-ABOVE set — the whole GROUND becomes the
+	// deep-space void + starfield (drawSpaceBackground), so the luminous ground* recipes above no longer
+	// paint the base fill; the light-forms now read as a station floating in the void, not on a bright field.
+	s.spaceMode = true
 	return s
 }()
 
@@ -1923,6 +1939,11 @@ type topPlan struct {
 	// primitive villages ramble organically rather than all reading as radial wheels. Kept on the
 	// plan so tests + future dressing can read which form a town took.
 	form tdTownForm
+	// shape is the town's footprint SILHOUETTE (disc / organic blob) picked per AGE (tdAgeFootprint),
+	// distinct from form (which arranges the wards INSIDE the outline). It selects the OUTLINE the
+	// raster clips to and the wall ring follows. Kept on the plan so the wall code (tdAddWalls) reads
+	// the same silhouette the block field was clipped to; future per-age silhouettes plug in here.
+	shape tdFootprintShape
 	// wardSeeds are the relaxed Voronoi ward centers (the block-field seeds after Lloyd), in city
 	// space, kept for tests + future ward-level dressing. The RADIAL form's wards spiral centers-out
 	// (a strong seed-index↔radius correlation — the wagon-wheel signature); ORGANIC/RIBBON wards do
@@ -2179,6 +2200,15 @@ func tdCountBand(n int) int {
 //	formRibbon  — the town ELONGATED along an axis with seeds strung along that axis (a main road)
 //	    plus lateral spread: a linear town strung along a road. A pinch of every band, dominant
 //	    nowhere; the occasional primitive village that grew along a river/trail.
+//	formCrescent   — garden-suburb CURVED streets: seeds strung along several CONCENTRIC ARCS at a
+//	    lower density with deliberate green GAPS (garden squares). Long sweeping terraces, not a wheel
+//	    and not a full ring. The Victorian garden suburb.
+//	formBoulevard  — an orthogonal GRID CUT by 2-4 grand DIAGONAL avenues: seeds laid on a lattice
+//	    with a band cleared along each diagonal so the Voronoi streets include long diagonal
+//	    boulevards slicing the blocks. The Haussmann/electric-city plan.
+//	formCoreSuburb — a dense downtown CORE ringed by sparse loopy SUBURBS: most seeds packed tightly
+//	    inside an inner radius, the rest spread thin (large wards) in the outer ring. The atomic-age
+//	    metropolis-with-sprawl.
 type tdTownForm int
 
 const (
@@ -2186,71 +2216,81 @@ const (
 	formRadial
 	formGrid
 	formRibbon
+	formCrescent
+	formBoulevard
+	formCoreSuburb
+	// tdFormCount is a sentinel = one past the last real form; loop [0,tdFormCount) to iterate
+	// forms in a FIXED, deterministic order (never `range` a tdFormWeights map).
+	tdFormCount
 )
 
-// tdFormWeights is a small per-band weighting over the four forms (organic, radial, grid, ribbon),
-// consumed as a discrete distribution by tdPickTownForm. A zero weight forbids a form for that
-// band (e.g. primitive villages are NEVER radial or grid — they ramble, they are not planned).
-// These are the V3-A defaults and are deliberately TUNABLE later (V3-B/C dials each band); the
-// only hard contract V3-A tests lock is that PRIMITIVE is organic-dominant and never a wheel.
-type tdFormWeights [4]float64
+// tdFormWeights is a per-AGE weighting over the town forms (form → relative weight), consumed as a
+// discrete distribution by tdPickTownForm. A form ABSENT from the map (or with a ≤0 weight) is
+// forbidden for that age (e.g. primitive villages are NEVER radial or grid — they ramble, they are
+// not planned). Modelled as a MAP (not a fixed vector) so bespoke forms — crescent, boulevard,
+// core+suburb, and whatever lands next — can be added without every table entry growing a slot.
+// These are deliberately TUNABLE; the only hard contract the tests lock is that PRIMITIVE is
+// organic-dominant and never a wheel/grid (it never lists radial or grid). Consumers MUST iterate
+// forms in a FIXED order (loop the enum 0..N and look each up) — ranging a Go map is randomized and
+// would break the determinism tdPickTownForm guarantees.
+type tdFormWeights map[tdTownForm]float64
 
-// tdBandFormWeights returns the form distribution for an era band (map-overhaul-citymap):
-//
-//	organic  (primitive, stone)      — ORGANIC-dominant, a little RIBBON, NEVER radial/grid.
-//	hub-spoke(bronze, iron, class.)  — ancient: organic + radial (monument-planned cores appear).
-//	castle   (medieval, renaissance) — radial + organic + some grid (market-square towns).
-//	zoned    (colonial→victorian)    — GRID-heavy, some organic/ribbon (surveyed colonial towns).
-//	blocks   (electric→modern)       — GRID-dominant (the planned modern city).
-//	campus   (information→fusion)    — grid / organic mix (megablocks + arcology sprawl).
-//	orbital  (space→transcendent)    — organic / grid (radial arcs read as neither wheel nor grid).
-//
-// Weights are relative (they need not sum to 1). Order: [organic, radial, grid, ribbon].
-func tdBandFormWeights(e era) tdFormWeights {
-	switch e {
-	case eraOrganic:
-		// Villages ramble; they are not planned. Organic dominates, ribbon is the rare
-		// grew-along-a-trail village, and radial/grid are FORBIDDEN (0) so a primitive town can
-		// never roll a wheel or a survey grid.
-		return tdFormWeights{0.80, 0, 0, 0.20}
-	case eraHubSpoke:
-		// Ancient: the first monument/forum cores appear, so radial enters — but the countryside
-		// is still mostly organic. A little ribbon; no formal grid yet.
-		return tdFormWeights{0.50, 0.35, 0, 0.15}
-	case eraCastle:
-		// Medieval/renaissance: radial market-square towns + organic old quarters, the first
-		// planned grids (bastides), a little ribbon.
-		return tdFormWeights{0.32, 0.38, 0.18, 0.12}
-	case eraZonedGrid:
-		// Colonial→victorian: the surveyed grid takes over; organic survives in old cores, ribbon
-		// along the rail/canal, radial is now the exception.
-		return tdFormWeights{0.18, 0.10, 0.55, 0.17}
-	case eraCityBlocks:
-		// Electric→modern: the planned grid dominates the metropolis; a little organic/ribbon.
-		return tdFormWeights{0.14, 0.06, 0.64, 0.16}
-	case eraCampus:
-		// Information→fusion: megablock grid + arcology organic sprawl, ribbon corridors.
-		return tdFormWeights{0.30, 0.06, 0.50, 0.14}
-	case eraOrbital:
-		// Space→transcendent: organic habs + modular grid; the ring/arc look reads as neither a
-		// wagon wheel nor a survey grid, so radial stays low.
-		return tdFormWeights{0.44, 0.08, 0.40, 0.08}
-	default:
-		return tdFormWeights{0.80, 0, 0, 0.20}
-	}
+// tdAgeForms is the PER-AGE form distribution table (map-overhaul-citymap Phase 2a). Each of the 22
+// ages gets its OWN characteristic town form (the dominant weight), replacing the coarse per-ERA
+// band table so a city's whole gestalt reads distinctly age to age while still fanning out a little
+// across citySeeds. Each entry maps form→relative weight (absent form = forbidden); weights are
+// relative (they need not sum to 1). Bespoke new geometries (crescent/boulevard/coreSuburb) land on
+// the ELECTRIC epoch here; every other age keeps its original weights unchanged. LOCKED INVARIANT:
+// primitive_age lists neither radial nor grid — villages never plan a wheel or a survey grid.
+var tdAgeForms = map[string]tdFormWeights{
+	"primitive_age":    {formOrganic: 0.85, formRibbon: 0.15},                   // organic (invariant: no wheel/grid)
+	"stone_age":        {formOrganic: 0.85, formRibbon: 0.15},                   // organic
+	"bronze_age":       {formOrganic: 0.30, formRadial: 0.60, formRibbon: 0.10}, // radial — first monument/forum cores
+	"iron_age":         {formOrganic: 0.30, formRadial: 0.60, formRibbon: 0.10}, // radial
+	"classical_age":    {formOrganic: 0.10, formRadial: 0.25, formGrid: 0.60, formRibbon: 0.05},
+	"medieval_age":     {formOrganic: 0.45, formRadial: 0.40, formGrid: 0.05, formRibbon: 0.10},
+	"renaissance_age":  {formOrganic: 0.15, formRadial: 0.65, formGrid: 0.10, formRibbon: 0.10},
+	"colonial_age":     {formOrganic: 0.15, formRadial: 0.05, formGrid: 0.70, formRibbon: 0.10},
+	"industrial_age":   {formOrganic: 0.10, formGrid: 0.75, formRibbon: 0.15},
+	"victorian_age":    {formCrescent: 0.85, formOrganic: 0.15},                                 // crescent — garden-suburb curves
+	"electric_age":     {formBoulevard: 0.85, formGrid: 0.15},                                   // boulevard — grid cut by grand diagonals
+	"atomic_age":       {formCoreSuburb: 0.85, formGrid: 0.15},                                  // core+suburb — dense downtown, loose sprawl
+	"modern_age":       {formOrganic: 0.05, formRadial: 0.05, formGrid: 0.85, formRibbon: 0.05}, // grid — the planned metropolis
+	"information_age":  {formOrganic: 0.30, formRadial: 0.05, formGrid: 0.60, formRibbon: 0.05},
+	"digital_age":      {formOrganic: 0.05, formRadial: 0.05, formGrid: 0.85, formRibbon: 0.05},
+	"cyberpunk_age":    {formOrganic: 0.05, formRadial: 0.05, formGrid: 0.85, formRibbon: 0.05},
+	"fusion_age":       {formOrganic: 0.20, formRadial: 0.35, formGrid: 0.40, formRibbon: 0.05},
+	"space_age":        {formOrganic: 0.15, formRadial: 0.10, formGrid: 0.70, formRibbon: 0.05},
+	"interstellar_age": {formOrganic: 0.55, formRadial: 0.10, formGrid: 0.30, formRibbon: 0.05},
+	"galactic_age":     {formOrganic: 0.15, formRadial: 0.70, formGrid: 0.10, formRibbon: 0.05}, // radial — the galactic wheel
+	"quantum_age":      {formOrganic: 0.10, formRadial: 0.10, formGrid: 0.75, formRibbon: 0.05},
+	"transcendent_age": {formOrganic: 0.20, formRadial: 0.65, formGrid: 0.05, formRibbon: 0.10},
 }
 
-// tdPickTownForm chooses a town's FORM deterministically from (citySeed, era). It is a pure
-// function — the SAME (seed, era) always yields the SAME form — and it is ERA-WEIGHTED via
-// tdBandFormWeights, so different citySeeds fan out across the era-appropriate forms (no two towns
-// need look alike) while PRIMITIVE reliably lands organic (never a wheel). A degenerate all-zero
-// or negative weight vector falls back to organic. The seed is hashed with a distinct salt so the
-// form roll is independent of the seed's other uses (anchor phase, jitter, scatter phase).
-func tdPickTownForm(seed uint32, e era) tdTownForm {
-	w := tdBandFormWeights(e)
+// tdAgeFormWeights returns the form distribution for an age key (map-overhaul-citymap Phase 2a).
+// Unknown/empty keys fall back to an organic-dominant blend so a mis-keyed age still renders a
+// sensible rambling town rather than a degenerate one.
+func tdAgeFormWeights(ageKey string) tdFormWeights {
+	if w, ok := tdAgeForms[ageKey]; ok {
+		return w
+	}
+	return tdFormWeights{formOrganic: 0.80, formRibbon: 0.20}
+}
+
+// tdPickTownForm chooses a town's FORM deterministically from (citySeed, ageKey). It is a pure
+// function — the SAME (seed, ageKey) always yields the SAME form — and it is AGE-WEIGHTED via
+// tdAgeFormWeights, so different citySeeds fan out across the age-appropriate forms (no two towns
+// need look alike) while each age reads characteristically (and PRIMITIVE reliably lands organic,
+// never a wheel). A degenerate all-zero or negative weight vector falls back to organic. The seed
+// is hashed with a distinct salt so the form roll is independent of the seed's other uses (anchor
+// phase, jitter, scatter phase).
+func tdPickTownForm(seed uint32, ageKey string) tdTownForm {
+	w := tdAgeFormWeights(ageKey)
+	// CRITICAL: iterate forms in a FIXED enum order (0..tdFormCount), looking each up in the weight
+	// map — NEVER `range` the map, whose order Go randomizes (that would break determinism).
 	total := 0.0
-	for _, x := range w {
-		if x > 0 {
+	for f := formOrganic; f < tdFormCount; f++ {
+		if x := w[f]; x > 0 {
 			total += x
 		}
 	}
@@ -2261,19 +2301,20 @@ func tdPickTownForm(seed uint32, e era) tdTownForm {
 	// jitter hashes so changing one never shifts the form.
 	roll := float64(hash2(0xF0F0, 0x0F0F, seed^0x7f4a7c15)) / float64(^uint32(0)) * total
 	acc := 0.0
-	for i, x := range w {
+	for f := formOrganic; f < tdFormCount; f++ {
+		x := w[f]
 		if x <= 0 {
 			continue
 		}
 		acc += x
 		if roll < acc {
-			return tdTownForm(i)
+			return f
 		}
 	}
-	// Float slop guard: return the last positive-weight form.
-	for i := len(w) - 1; i >= 0; i-- {
-		if w[i] > 0 {
-			return tdTownForm(i)
+	// Float slop guard: return the last positive-weight form (walk the enum in reverse).
+	for f := tdFormCount - 1; f >= formOrganic; f-- {
+		if w[f] > 0 {
+			return f
 		}
 	}
 	return formOrganic
@@ -2308,6 +2349,165 @@ func tdPlazaRadius(form tdTownForm, cfg tdConfig) float64 {
 		return cfg.organicPlazaRadius * cfg.roofSize
 	}
 	return cfg.plazaRadius * cfg.roofSize
+}
+
+// tdFootprintShape is the PER-AGE town-silhouette family (map-overhaul-citymap Phase 2b). Distinct
+// from tdTownForm (which selects the block-seed SCATTER strategy — how wards are arranged INSIDE the
+// footprint): the shape selects the OUTLINE the raster clips to. Today only two exist — the plain
+// disc and the ragged organic BLOB (the wobble that gives villages a rambling edge). More silhouettes
+// (sprawl, rounded-rect, ring, …) arrive in the next slice; this type is the seam they plug into.
+type tdFootprintShape int
+
+const (
+	shapeDisc      tdFootprintShape = iota // a clean circle of radius townR (every non-village age today)
+	shapeBlob                              // the seeded organic wobble (tdOrganicRadiusAt) — village edges
+	shapeSprawl                            // wide elongated oval + gentle lobes — victorian garden-suburb sprawl
+	shapeRoundRect                         // slightly-elongated rounded rectangle (squircle) — a planned grid city
+	shapeCoreHalo                          // broad bumpy blob — a metropolis with irregular sprawling suburbs
+)
+
+// tdAgeFootprints maps an age key to its footprint SILHOUETTE (map-overhaul-citymap Phase 2b). Only
+// the two village ages get the ragged blob; every other age is a disc. Ages absent from the map (and
+// the empty/unknown key) default to shapeDisc via tdAgeFootprint.
+//
+// Note: today the blob wobble was applied to ANY city that ROLLED formOrganic (regardless of age).
+// Keying it to the two village ages is the intended per-age behavior — the only visible change is the
+// rare NON-village city that happened to roll organic no longer wobbles (acceptable; it now reads as
+// the clean disc its age otherwise plans).
+var tdAgeFootprints = map[string]tdFootprintShape{
+	"primitive_age": shapeBlob,
+	"stone_age":     shapeBlob,
+	"victorian_age": shapeSprawl,
+	"electric_age":  shapeRoundRect,
+	"atomic_age":    shapeCoreHalo,
+}
+
+// tdAgeFootprint returns the footprint shape for an age key, defaulting to shapeDisc for any age not
+// in tdAgeFootprints (including the empty/unknown key). Pure.
+func tdAgeFootprint(ageKey string) tdFootprintShape {
+	if s, ok := tdAgeFootprints[ageKey]; ok {
+		return s
+	}
+	return shapeDisc
+}
+
+// tdShapeRadiusAt is the town OUTLINE radius at a given angle for a footprint shape (city units): the
+// single seam every silhouette funnels through. shapeDisc is the constant townR (a clean circle);
+// shapeBlob defers to the existing organic wobble. Shared by the raster clip and the wall ring so the
+// footprint is consistent everywhere. Pure + bounded (≤ townR).
+func tdShapeRadiusAt(shape tdFootprintShape, angle, townR float64, seed uint32) float64 {
+	switch shape {
+	case shapeBlob:
+		return tdOrganicRadiusAt(angle, townR, seed)
+	case shapeSprawl:
+		// A WIDE elongated oval (garden-suburb sprawl) with gentle irregular lobes. The long axis is
+		// seeded so towns sprawl in different directions; a:b ≈ 1.8:1, peak reach ~1.5·townR wide.
+		axis := float64(hash2(0x5B1A, 0x01, seed)) / float64(^uint32(0)) * math.Pi
+		phi := angle - axis
+		const a, b = 1.34, 0.74
+		e := (a * b) / math.Hypot(b*math.Cos(phi), a*math.Sin(phi))
+		ph2 := float64(hash2(0x5B1A, 0x02, seed)) / float64(^uint32(0)) * 2 * math.Pi
+		ph3 := float64(hash2(0x5B1A, 0x03, seed)) / float64(^uint32(0)) * 2 * math.Pi
+		lobe := 1 + 0.10*math.Sin(2*angle+ph2) + 0.06*math.Sin(3*angle+ph3)
+		return townR * e * lobe
+	case shapeRoundRect:
+		// A slightly-elongated SUPERELLIPSE (squircle) → a rounded-rectangle outline for a planned city.
+		axis := float64(hash2(0x5B1B, 0x01, seed)) / float64(^uint32(0)) * math.Pi
+		phi := angle - axis
+		const n = 4.0
+		cx := math.Cos(phi) / 1.15
+		cy := math.Sin(phi) / 0.9
+		denom := math.Pow(math.Pow(math.Abs(cx), n)+math.Pow(math.Abs(cy), n), 1.0/n)
+		if denom < 1e-6 {
+			denom = 1e-6
+		}
+		return townR / denom
+	case shapeCoreHalo:
+		// A broad BUMPY blob — a metropolis whose suburbs bulge irregularly past a disc.
+		ph2 := float64(hash2(0x5B1C, 0x02, seed)) / float64(^uint32(0)) * 2 * math.Pi
+		ph3 := float64(hash2(0x5B1C, 0x03, seed)) / float64(^uint32(0)) * 2 * math.Pi
+		ph5 := float64(hash2(0x5B1C, 0x05, seed)) / float64(^uint32(0)) * 2 * math.Pi
+		lobe := 1 + 0.16*math.Sin(2*angle+ph2) + 0.11*math.Sin(3*angle+ph3) + 0.07*math.Sin(5*angle+ph5)
+		if r := townR * 1.08 * lobe; r > 0.7*townR {
+			return r
+		}
+		return 0.7 * townR
+	default: // shapeDisc
+		return townR
+	}
+}
+
+// tdShapeMaxReach is a safe upper bound on tdShapeRadiusAt over all angles/seeds, as a multiple of
+// townR. Used to bound the footprint — walls, frame fit, and the compactness test — for shapes that
+// legitimately extend past the townR disc (sprawl/rect/halo). Disc + blob never exceed townR (the
+// blob only bites inward), so they return 1.
+func tdShapeMaxReach(shape tdFootprintShape) float64 {
+	switch shape {
+	case shapeSprawl:
+		return 1.55 // a·(1+lobe) = 1.34·1.16
+	case shapeRoundRect:
+		return 1.25 // squircle corners under the seeded elongation
+	case shapeCoreHalo:
+		return 1.45 // 1.08·(1+0.16+0.11+0.07)
+	default: // shapeDisc, shapeBlob (inward-only)
+		return 1.0
+	}
+}
+
+// tdShapeAreaFactor is the footprint AREA as a multiple of the unit-townR disc (πtownR²), i.e. the
+// mean of (tdShapeRadiusAt/townR)² over all angles. Grid/lattice scatters use it to enlarge the cell
+// size so a FIXED `need` seeds spread over the larger silhouette (a disc-density lattice would leave
+// a >disc footprint's outer regions sparse). shapeDisc and shapeBlob are ~a disc in area, and sprawl
+// is an ellipse of near-disc area, so all three return 1.0 (disc reduction is then exact). rect/halo
+// bulge past the disc and return their measured factor. Pure.
+func tdShapeAreaFactor(shape tdFootprintShape) float64 {
+	switch shape {
+	case shapeRoundRect:
+		return 1.22
+	case shapeCoreHalo:
+		return 1.19
+	default: // shapeDisc, shapeBlob, shapeSprawl (all ~disc area)
+		return 1.0
+	}
+}
+
+// tdShapeAcceptR is the per-angle placement-acceptance radius for a scatter candidate at (x,y):
+// the footprint radius at that point's angle (tdShapeRadiusAt) scaled by a strategy's own edge
+// INSET (e.g. 0.92 → a ground rim of ground/greenery hugs the outline). A candidate is inside iff
+// hypot(x,y) ≤ this. For shapeDisc, tdShapeRadiusAt returns townR, so this reduces EXACTLY to
+// inset·townR — every scatter strategy's disc behaviour is byte-identical. For sprawl/rect/halo it
+// tracks the real silhouette, so seeds populate the wide/corner regions instead of stopping at a
+// disc that the raster later stretches over. Pure + bounded.
+func tdShapeAcceptR(shape tdFootprintShape, x, y, townR, inset float64, seed uint32) float64 {
+	return inset * tdShapeRadiusAt(shape, math.Atan2(y, x), townR, seed)
+}
+
+// tdSampleInShape draws ONE point uniform-by-area inside the footprint (inset·shape outline): it
+// samples uniform in the bounding disc of radius maxR and rejects candidates outside the per-angle
+// footprint radius, with a bounded reject budget then a relaxed fallback so a point is ALWAYS
+// returned (callers rely on this to hit an exact seed count). It advances the caller's RNG, so it is
+// deterministic. For shapeDisc the accept radius is the constant inset·townR = maxR, so the FIRST
+// candidate always passes and this is exactly `rad = maxR·√u, ang = 2πu` — the original disc top-up.
+func tdSampleInShape(r *rng, shape tdFootprintShape, townR, inset, maxR float64, seed uint32) tdPoint {
+	for tries := 0; tries < 24; tries++ {
+		rad := maxR * math.Sqrt(r.f01())
+		ang := r.f01() * 2 * math.Pi
+		x, y := math.Cos(ang)*rad, math.Sin(ang)*rad
+		if edge := tdShapeAcceptR(shape, x, y, townR, inset, seed); rad <= edge {
+			return tdPoint{x, y}
+		}
+	}
+	// Relaxed fallback: draw once more and clamp onto the outline so we always return an in-shape
+	// point (keeps the caller's count exact even under an unlucky reject streak).
+	rad := maxR * math.Sqrt(r.f01())
+	ang := r.f01() * 2 * math.Pi
+	x, y := math.Cos(ang)*rad, math.Sin(ang)*rad
+	if edge := tdShapeAcceptR(shape, x, y, townR, inset, seed); rad > edge && rad > 0 {
+		s := edge / rad
+		x *= s
+		y *= s
+	}
+	return tdPoint{x, y}
 }
 
 // tdOrganicRadiusAt returns the ORGANIC town's in-disc radius at a given angle (city units): the
@@ -2374,16 +2574,13 @@ func tdOrganicRadiusAt(angle, townR float64, seed uint32) float64 {
 	return r
 }
 
-// tdInTown reports whether a city-space point lies inside the town footprint for a given FORM.
-// ORGANIC uses the irregular blob outline (tdOrganicRadiusAt); every other form uses the plain
-// circular disc of radius townR (unchanged). Shared by the raster partition and Lloyd relaxation so
-// the town shape is consistent everywhere. Pure.
-func tdInTown(x, y, townR float64, form tdTownForm, seed uint32) bool {
+// tdInTown reports whether a city-space point lies inside the town footprint for a given SHAPE.
+// shapeBlob uses the irregular blob outline (tdOrganicRadiusAt); shapeDisc uses the plain circular
+// disc of radius townR (unchanged). Shared by the raster partition and Lloyd relaxation so the town
+// shape is consistent everywhere. Pure.
+func tdInTown(x, y, townR float64, shape tdFootprintShape, seed uint32) bool {
 	d2 := x*x + y*y
-	if form != formOrganic {
-		return d2 <= townR*townR
-	}
-	rr := tdOrganicRadiusAt(math.Atan2(y, x), townR, seed)
+	rr := tdShapeRadiusAt(shape, math.Atan2(y, x), townR, seed)
 	return d2 <= rr*rr
 }
 
@@ -2519,12 +2716,16 @@ func generateTopPlan(state game.GameState, byKey map[string]config.BuildingDef, 
 	// (c) blocks — build the Voronoi block field: town disc → seeds (scattered by the town FORM) →
 	// Lloyd → raster partition → street cells + block interiors. Central region(s) are reserved as
 	// the plaza (wonders + the wonderless center anchor). The whole field is a pure function of
-	// (seed, roof count, form). The FORM is picked once, deterministically + era-weighted, so towns
-	// vary per city+era and primitive villages ramble organically instead of all reading as wheels.
-	plan.form = tdPickTownForm(seed, eraForAge(state.Age))
+	// (seed, roof count, form). The FORM is picked once, deterministically + AGE-weighted, so towns
+	// vary per city+age and primitive villages ramble organically instead of all reading as wheels.
+	plan.form = tdPickTownForm(seed, state.Age)
+	// The footprint SILHOUETTE is keyed to the AGE (villages ramble; every other age is a clean disc),
+	// independently of the ward-scatter FORM above. Kept on the plan so the wall ring follows the same
+	// outline the block field is clipped to.
+	plan.shape = tdAgeFootprint(state.Age)
 	totalRoofs := tdTotalFabricRoofs(blds)
 	plan.townR = tdTownRadius(totalRoofs, cfg)
-	field := tdBuildBlockField(plan.townR, plan.anchors, totalRoofs, plan.form, cfg, seed)
+	field := tdBuildBlockField(plan.townR, plan.anchors, totalRoofs, plan.form, plan.shape, cfg, seed)
 	plan.streetCells = field.streetCells
 	plan.cellSize = field.cellSize
 	plan.wardSeeds = field.seeds
@@ -2670,7 +2871,7 @@ func tdPinnedCount(form tdTownForm, anchors []tdAnchor) int {
 // is unaffected; only the arrangement + which anchors pin differs. Every form's free seeds land
 // inside the town so the raster partition stays one connected boundary web (streets-connected holds
 // by construction). Pure function of (form, seed, B, anchors).
-func tdScatterSeedsFor(form tdTownForm, townR float64, anchors []tdAnchor, B int, cfg tdConfig, seed uint32) []tdPoint {
+func tdScatterSeedsFor(form tdTownForm, townR float64, anchors []tdAnchor, B int, shape tdFootprintShape, cfg tdConfig, seed uint32) []tdPoint {
 	nPinned := tdPinnedCount(form, anchors)
 	seeds := make([]tdPoint, 0, B)
 	for i := 0; i < nPinned && i < len(anchors); i++ {
@@ -2682,13 +2883,19 @@ func tdScatterSeedsFor(form tdTownForm, townR float64, anchors []tdAnchor, B int
 	}
 	switch form {
 	case formRadial:
-		return tdScatterRadial(seeds, townR, need, cfg, seed)
+		return tdScatterRadial(seeds, townR, need, shape, cfg, seed)
 	case formGrid:
-		return tdScatterGrid(seeds, townR, need, cfg, seed)
+		return tdScatterGrid(seeds, townR, need, shape, cfg, seed)
 	case formRibbon:
-		return tdScatterRibbon(seeds, townR, need, cfg, seed)
+		return tdScatterRibbon(seeds, townR, need, shape, cfg, seed)
+	case formCrescent:
+		return tdScatterCrescent(seeds, townR, need, shape, cfg, seed)
+	case formBoulevard:
+		return tdScatterBoulevard(seeds, townR, need, shape, cfg, seed)
+	case formCoreSuburb:
+		return tdScatterCoreSuburb(seeds, townR, need, shape, cfg, seed)
 	default: // formOrganic
-		return tdScatterOrganic(seeds, townR, need, cfg, seed)
+		return tdScatterOrganic(seeds, townR, need, shape, cfg, seed)
 	}
 }
 
@@ -2698,18 +2905,20 @@ func tdScatterSeedsFor(form tdTownForm, townR float64, anchors []tdAnchor, B int
 // as a hub, reads as a wagon wheel with a ring road. That look is intentional for the radial form
 // (a monument/forum-planned town) but is no longer the default for every town. `seeds` already
 // holds the pinned anchors; this appends the free seeds. Pure over (seed, need).
-func tdScatterRadial(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+func tdScatterRadial(seeds []tdPoint, townR float64, need int, shape tdFootprintShape, cfg tdConfig, seed uint32) []tdPoint {
 	phase := float64(hash2(0x5eed, 0x1a, seed)) / float64(^uint32(0)) * 2 * math.Pi
-	// The spiral fills up to ~0.92·townR so the outermost blocks sit inside the disc rim (a
-	// ring of ground/greenery hugs the edge).
+	// The spiral fills up to ~0.92 of the footprint radius AT EACH ANGLE so the outermost blocks sit
+	// inside the rim (a ground/greenery ring hugs the silhouette). For shapeDisc the per-angle radius
+	// is the constant townR, so this reduces to 0.92·townR·√frac exactly.
 	for k := 0; k < need; k++ {
 		frac := (float64(k) + 0.5) / float64(maxInt(need, 1))
-		r := 0.92 * townR * math.Sqrt(frac)
+		ang := float64(len(seeds))*goldenAngle + phase
+		reach := tdShapeAcceptR(shape, math.Cos(ang), math.Sin(ang), townR, 0.92, seed)
+		r := reach * math.Sqrt(frac)
 		// Nudge the innermost few outward so they don't collide with the pinned center anchor.
 		if r < cfg.townBaseRadius*0.35 {
 			r = cfg.townBaseRadius*0.35 + r*0.5
 		}
-		ang := float64(len(seeds))*goldenAngle + phase
 		seeds = append(seeds, tdPoint{math.Cos(ang) * r, math.Sin(ang) * r})
 	}
 	return seeds
@@ -2734,22 +2943,26 @@ func tdScatterRadial(seeds []tdPoint, townR float64, need int, cfg tdConfig, see
 // is unlucky), the shortfall is filled by RELAXING the spacing (tail candidates accepted regardless),
 // so exactly `need` free seeds always land and the banded stability tradeoff is preserved. Pure over
 // (seed, need); bounded attempt loop → panic-safe.
-func tdScatterOrganic(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+func tdScatterOrganic(seeds []tdPoint, townR float64, need int, shape tdFootprintShape, cfg tdConfig, seed uint32) []tdPoint {
 	nPinned := len(seeds) // the anchor seeds already appended by tdScatterSeedsFor
-	rr := 0.94 * townR    // free seeds stay just inside the (blob) rim
-	// Target spacing from area: minDist ≈ 0.7·√(discArea / seeds). The 0.7 leaves the reject pass
-	// room to actually place the target count before it must relax.
+	// Sampling extent covers the whole silhouette (maxReach·townR); free seeds then get clamped to the
+	// per-angle footprint radius. For shapeBlob/shapeDisc maxReach is 1 → rr = 0.94·townR as before.
+	rr := 0.94 * townR * tdShapeMaxReach(shape)
+	// Target spacing from area: minDist ≈ 0.7·√(area / seeds). The 0.7 leaves the reject pass room to
+	// actually place the target count before it must relax.
 	area := math.Pi * rr * rr
 	minDist := 0.7 * math.Sqrt(area/float64(need+len(seeds)))
 	minD2 := minDist * minDist
 	r := newRNG(hash2(0x0B10, uint32(need), seed) | 1)
-	// sample draws one uniform-in-blob candidate: uniform by area, then clamped to the organic blob
-	// outline so a candidate never lands past the rambling edge.
+	// sample draws one uniform-in-extent candidate: uniform by area over the bounding disc, then
+	// clamped to the SHAPE outline at that angle so a candidate never lands past the rambling edge.
+	// For shapeBlob the outline is tdOrganicRadiusAt (0.94 inset) exactly as before; for shapeDisc the
+	// clamp radius is the constant 0.94·townR (never trips, since rad ≤ that) → the plain disc fill.
 	sample := func() tdPoint {
 		rad := rr * math.Sqrt(r.f01())
 		ang := r.f01() * 2 * math.Pi
 		x, y := math.Cos(ang)*rad, math.Sin(ang)*rad
-		if edge := 0.94 * tdOrganicRadiusAt(ang, townR, seed); rad > edge {
+		if edge := tdShapeAcceptR(shape, x, y, townR, 0.94, seed); rad > edge {
 			s := edge / rad
 			x *= s
 			y *= s
@@ -2794,26 +3007,31 @@ func tdScatterOrganic(seeds []tdPoint, townR float64, need int, cfg tdConfig, se
 // lattice so two grid towns aren't identical. If the disc is somehow too small to host `need`
 // nodes, the shortfall falls through to an organic top-up so exactly `need` free seeds land. Pure
 // over (seed, need); bounded → panic-safe.
-func tdScatterGrid(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+func tdScatterGrid(seeds []tdPoint, townR float64, need int, shape tdFootprintShape, cfg tdConfig, seed uint32) []tdPoint {
 	rr := 0.92 * townR
-	// Choose a cell size so ~need nodes fall inside the disc: discArea ≈ need·cell² → cell ≈
-	// √(π·rr² / need). A mild 1.08 loosening keeps a few spare nodes for the centers-out trim.
-	cell := 1.08 * math.Sqrt(math.Pi*rr*rr/float64(need))
+	// Choose a cell size so ~need nodes fall inside the FOOTPRINT: footprintArea ≈ need·cell² → cell ≈
+	// √(π·rr²·areaFactor / need). areaFactor enlarges the cell for shapes bigger than a disc (rect/
+	// halo) so a fixed `need` seeds spread across the whole silhouette instead of packing the centre.
+	// A mild 1.08 loosening keeps a few spare nodes for the centers-out trim. For shapeDisc areaFactor
+	// is 1 → identical cell.
+	cell := 1.08 * math.Sqrt(math.Pi*rr*rr*tdShapeAreaFactor(shape)/float64(need))
 	if cell < 1e-3 {
 		cell = 1e-3
 	}
 	// A seeded sub-cell phase offset so the grid origin (and thus the whole lattice) shifts per
-	// city; kept within one cell so the lattice still spans the disc.
+	// city; kept within one cell so the lattice still spans the footprint.
 	phx := (float64(hash2(0x671D, 0x11, seed))/float64(^uint32(0)) - 0.5) * cell
 	phy := (float64(hash2(0x671D, 0x12, seed))/float64(^uint32(0)) - 0.5) * cell
-	// Enumerate lattice nodes across the bounding square, keep the in-disc ones with jitter, and
-	// order them by distance from the core so a trim to `need` keeps the central lattice.
+	// Enumerate lattice nodes across the bounding square (sized to the shape's max reach so corners/
+	// wide regions get nodes), keep the ones INSIDE THE SHAPE with jitter, and order them by distance
+	// from the core so a trim to `need` keeps the central lattice.
+	maxR := rr * tdShapeMaxReach(shape) // outer bound of the lattice box (= rr for a disc)
 	type gnode struct {
 		p  tdPoint
 		d2 float64
 	}
 	var nodes []gnode
-	half := int(math.Ceil(rr/cell)) + 1
+	half := int(math.Ceil(maxR/cell)) + 1
 	if half > 64 { // panic-safety cap on the lattice extent
 		half = 64
 	}
@@ -2828,7 +3046,7 @@ func tdScatterGrid(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed 
 			jy := (float64(hash2(uint32(gx*2+2000), uint32(gy*2+2000), seed))/float64(^uint32(0)) - 0.5) * 2 * jit
 			px, py := nx+jx, ny+jy
 			d2 := px*px + py*py
-			if d2 > rr*rr {
+			if edge := tdShapeAcceptR(shape, px, py, townR, 0.92, seed); d2 > edge*edge {
 				continue
 			}
 			nodes = append(nodes, gnode{p: tdPoint{px, py}, d2: d2})
@@ -2838,12 +3056,11 @@ func tdScatterGrid(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed 
 	for i := 0; i < need && i < len(nodes); i++ {
 		seeds = append(seeds, nodes[i].p)
 	}
-	// Top up (rare: only if the disc couldn't host `need` in-disc nodes) so the free-seed count
-	// stays exactly `need` and banded stability is preserved.
+	// Top up (rare: only if the footprint couldn't host `need` in-shape nodes) so the free-seed count
+	// stays exactly `need` and banded stability is preserved. Sample in the bounding disc, reject
+	// outside the shape (a bounded budget, then a relaxed accept, so the count is always met).
 	for placed := minInt(need, len(nodes)); placed < need; placed++ {
-		rad := rr * math.Sqrt(r.f01())
-		ang := r.f01() * 2 * math.Pi
-		seeds = append(seeds, tdPoint{math.Cos(ang) * rad, math.Sin(ang) * rad})
+		seeds = append(seeds, tdSampleInShape(r, shape, townR, 0.92, maxR, seed))
 	}
 	return seeds
 }
@@ -2855,14 +3072,18 @@ func tdScatterGrid(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed 
 // out) with a little seeded wobble; the lateral offset is a small seeded fraction of the disc so
 // the ribbon has width without becoming a blob. Every seed is clamped inside the disc so the raster
 // stays connected. The pinned center anchor sits on the axis. Pure over (seed, need).
-func tdScatterRibbon(seeds []tdPoint, townR float64, need int, cfg tdConfig, seed uint32) []tdPoint {
+func tdScatterRibbon(seeds []tdPoint, townR float64, need int, shape tdFootprintShape, cfg tdConfig, seed uint32) []tdPoint {
 	// Axis direction: a seeded angle, so different ribbon towns run different ways.
 	axis := float64(hash2(0x21B0, 0x33, seed)) / float64(^uint32(0)) * 2 * math.Pi
 	ax, ay := math.Cos(axis), math.Sin(axis)
 	// Perpendicular (lateral) direction.
 	px, py := -ay, ax
-	alongMax := 0.90 * townR // reach most of the disc along the road
-	latMax := 0.28 * townR   // a modest lateral spread → a road, not a blob
+	// Reach along the road follows the footprint radius IN THE AXIS DIRECTION (so a sprawl town's
+	// ribbon runs the full length of its long axis); lateral spread scales the same way. For shapeDisc
+	// the axis radius is townR → alongMax = 0.90·townR, latMax = 0.28·townR, exactly as before.
+	axisReach := tdShapeRadiusAt(shape, axis, townR, seed)
+	alongMax := 0.90 * axisReach // reach most of the footprint along the road
+	latMax := 0.28 * axisReach   // a modest lateral spread → a road, not a blob
 	r := newRNG(hash2(0x21B1, uint32(need), seed) | 1)
 	for k := 0; k < need; k++ {
 		// Even, centers-out spacing along the axis in [-alongMax, alongMax], with a small wobble.
@@ -2872,13 +3093,354 @@ func tdScatterRibbon(seeds []tdPoint, townR float64, need int, cfg tdConfig, see
 		lat := (r.f01()*2 - 1) * latMax
 		x := ax*along + px*lat
 		y := ay*along + py*lat
-		// Clamp inside the disc so the raster partition stays whole (streets connected).
-		if d := math.Hypot(x, y); d > 0.95*townR {
-			s := 0.95 * townR / d
+		// Clamp inside the footprint at this point's angle so the raster partition stays whole (streets
+		// connected). For shapeDisc the bound is the constant 0.95·townR → identical to the old clamp.
+		if edge := tdShapeAcceptR(shape, x, y, townR, 0.95, seed); math.Hypot(x, y) > edge {
+			d := math.Hypot(x, y)
+			s := edge / d
 			x *= s
 			y *= s
 		}
 		seeds = append(seeds, tdPoint{x, y})
+	}
+	return seeds
+}
+
+// tdScatterCrescent is the GARDEN-SUBURB curved-street scatter — the formCrescent strategy
+// (map-overhaul-citymap Phase 2a). Free seeds are strung along several CONCENTRIC ARCS (crescents)
+// at increasing radii: the Voronoi ward boundaries then follow those sweeping curves, so the town
+// reads as long CURVED terraces — a genteel Victorian garden suburb — rather than a grid or a wheel.
+// Two things make it a crescent and NOT a ring/wheel: (1) each arc spans only a partial sweep
+// (~0.62 turn), never the full circle, and (2) each arc DELIBERATELY skips 2-3 segments, leaving
+// seed-free GAPS that the raster paints as green GARDEN SQUARES. Effective density is a touch lower
+// than the grid (the seeds spread along long curves), so wards come out as sweeping terraces with
+// leafy gaps between them.
+//
+// Determinism + a fixed free-seed COUNT: exactly `need` free seeds are placed (banded stability is
+// preserved). Seeds are apportioned across arcs proportionally to each arc's radius (outer crescents
+// are longer, so they carry more terraces); the arc a given index lands on and its along-arc position
+// are index-stable, with a small seeded angular wobble. `seeds` already holds the pinned anchors;
+// this appends the free seeds inside ~0.92·townR so a ground rim shows. Pure over (seed, need);
+// bounded → panic-safe.
+func tdScatterCrescent(seeds []tdPoint, townR float64, need int, shape tdFootprintShape, cfg tdConfig, seed uint32) []tdPoint {
+	rr := 0.92 * townR
+	// The terrace STACK spans the footprint's max reach so a wide silhouette (sprawl) gets terraces
+	// across its whole width; each seed is then clipped to the per-angle outline. For shapeDisc
+	// maxReach is 1 → reachR = rr and every quantity below reduces to the original disc geometry.
+	reachR := rr * tdShapeMaxReach(shape)
+	if need <= 0 {
+		return seeds
+	}
+	// GARDEN-SUBURB terraces. The crescents are nested arcs that share a FAR pivot OFF to one side of
+	// town (in the seeded "grain" direction u), so inside the town they read as roughly-parallel SWEEPS
+	// all curving the same way — like Nash terraces / a garden suburb — NOT concentric rings around the
+	// plaza (which read radial). Each terrace's nearest approach to the centre is spread along the grain
+	// so the terraces stack across the whole town.
+	nArc := 2 + int(math.Sqrt(float64(need))/2.0)
+	if nArc < 3 {
+		nArc = 3
+	}
+	if nArc > 8 {
+		nArc = 8
+	}
+	basePhase := float64(hash2(0xC2E5, 0x01, seed)) / float64(^uint32(0)) * 2 * math.Pi
+	ux, uy := math.Cos(basePhase), math.Sin(basePhase) // grain direction; the pivot lies this way
+	// A FAR pivot (several town-radii away) so each terrace's arc is nearly straight over the town —
+	// the terraces become gently-curved, near-PARALLEL sweeps (like contour lines / Nash terraces),
+	// not spokes converging on the centre. (A near pivot made terraces cross the centre → radial.)
+	farDist := 4.6 * reachR
+	cX, cY := ux*farDist, uy*farDist // shared far pivot of every terrace
+	r := newRNG(hash2(0xC2E5, uint32(need), seed) | 1)
+	// nearAt(a): where terrace a crosses the grain axis, spread from -0.74reachR..+0.74reachR through
+	// centre (so the stack spans the whole silhouette width, not just a disc).
+	nearAt := func(a int) float64 {
+		if nArc <= 1 {
+			return 0
+		}
+		t := float64(a)/float64(nArc-1)*2 - 1 // -1..1
+		return t * 0.74 * reachR
+	}
+	// Weight middle terraces heavier (they cross more of the town → longer crescents host more homes).
+	weights := make([]float64, nArc)
+	wsum := 0.0
+	for a := 0; a < nArc; a++ {
+		w := 1.0 - 0.55*math.Abs(nearAt(a))/reachR
+		if w < 0.2 {
+			w = 0.2
+		}
+		weights[a] = w
+		wsum += w
+	}
+	perArc := make([]int, nArc)
+	placedTot := 0
+	for a := 0; a < nArc; a++ {
+		perArc[a] = int(float64(need) * weights[a] / wsum)
+		placedTot += perArc[a]
+	}
+	for a := 0; placedTot < need; a = (a + 1) % nArc { // hand out the rounding remainder
+		perArc[a]++
+		placedTot++
+	}
+	baseAng := basePhase + math.Pi // from the far pivot back toward the town: the crescent's mid-sweep
+	for a := 0; a < nArc; a++ {
+		cnt := perArc[a]
+		if cnt <= 0 {
+			continue
+		}
+		// Radius so the arc's near point sits at nearAt(a) along the grain (|farDist-R| = |nearAt|).
+		R := farDist - nearAt(a)
+		// With a far pivot, a small angular span already covers the whole town width (arc length ≈
+		// R·span). Keep it wide enough to reach both rims but not so wide the ends curl back.
+		span := 0.46 + 0.22*r.f01()
+		// One seeded garden-square GAP per terrace: a t-window kept seed-free (a leafy square).
+		gap := -0.18 + 0.36*r.f01()
+		const gapHalf = 0.11
+		for k := 0; k < cnt; k++ {
+			t := (float64(k)+0.5)/float64(cnt) - 0.5 // -0.5..0.5 along the sweep
+			if math.Abs(t-gap) < gapHalf {           // nudge off the garden square
+				if t < gap {
+					t = gap - gapHalf
+				} else {
+					t = gap + gapHalf
+				}
+			}
+			ang := baseAng + t*span
+			ang += (r.f01() - 0.5) * (span / float64(cnt)) * 0.6 // gentle wobble, not a mechanical arc
+			rw := R * (1 + (r.f01()-0.5)*0.03)
+			x := cX + math.Cos(ang)*rw
+			y := cY + math.Sin(ang)*rw
+			// Clip stragglers to the footprint outline at their angle (constant rr for shapeDisc).
+			if edge := tdShapeAcceptR(shape, x, y, townR, 0.92, seed); math.Hypot(x, y) > edge {
+				d := math.Hypot(x, y)
+				s := edge / d
+				x *= s
+				y *= s
+			}
+			seeds = append(seeds, tdPoint{x, y})
+		}
+	}
+	return seeds
+}
+
+// tdScatterBoulevard is the GRID-CUT-BY-GRAND-DIAGONALS scatter — the formBoulevard strategy
+// (map-overhaul-citymap Phase 2a). It starts from a regular in-disc GRID of seeds (like
+// tdScatterGrid: orthogonal-ish wards) and then CARVES 2-4 straight DIAGONAL corridors across the
+// town by removing every seed within a narrow band of each diagonal line. Those cleared bands become
+// long DIAGONAL AVENUES in the Voronoi street web, slicing the orthogonal blocks at an angle — the
+// Haussmann/electric-city boulevard plan. Removed seeds are TOPPED UP (pushed just aside, off the
+// avenue) so the free-seed count stays exactly `need` and banded stability holds.
+//
+// The diagonals run through/near the centre at seeded angles in the ~30-60° band (never axis-aligned,
+// so they read as diagonals cutting the grid, not just extra grid streets). Deterministic; the grid
+// build is shared logic with tdScatterGrid. Pure over (seed, need); bounded → panic-safe.
+func tdScatterBoulevard(seeds []tdPoint, townR float64, need int, shape tdFootprintShape, cfg tdConfig, seed uint32) []tdPoint {
+	rr := 0.92 * townR
+	reachR := rr * tdShapeMaxReach(shape) // outer extent of the lattice + avenue offsets (= rr for a disc)
+	// Same cell sizing as the grid form so the orthogonal fabric matches a plain grid town; areaFactor
+	// enlarges the cell for >disc shapes so `need` seeds spread across the whole silhouette.
+	cell := 1.08 * math.Sqrt(math.Pi*rr*rr*tdShapeAreaFactor(shape)/float64(need))
+	if cell < 1e-3 {
+		cell = 1e-3
+	}
+	phx := (float64(hash2(0xB0DE, 0x11, seed))/float64(^uint32(0)) - 0.5) * cell
+	phy := (float64(hash2(0xB0DE, 0x12, seed))/float64(^uint32(0)) - 0.5) * cell
+	// 2-4 grand diagonals, each a line through a point near centre at a seeded angle in the 30-60°
+	// band (mirrored to the other diagonal quadrant too). A seed within `avenueHalf` of ANY diagonal
+	// line is removed to clear the avenue.
+	nDiag := 3 + int(hash2(0xB0DE, 0x20, seed)%2) // 3..4 — always a real boulevard system
+	type diagLine struct {
+		nx, ny float64 // unit normal of the line
+		c      float64 // line: nx*x + ny*y = c  (offset from origin)
+	}
+	diags := make([]diagLine, 0, nDiag)
+	for d := 0; d < nDiag; d++ {
+		// Angle in [30°,60°], alternating sign so avenues cross like an X, plus a seeded jitter.
+		base := math.Pi/6 + (math.Pi/6)*float64(hash2(0xB0DE, uint32(0x30+d), seed))/float64(^uint32(0))
+		if d%2 == 1 {
+			base = math.Pi - base // mirror into the other diagonal direction
+		}
+		ax, ay := math.Cos(base), math.Sin(base) // avenue direction
+		nx, ny := -ay, ax                        // its normal
+		// Offset the line off dead-centre by a seeded fraction of the reach so avenues don't all
+		// cross at one point (a small spread of parallel-ish grand avenues that span the silhouette).
+		off := (float64(hash2(0xB0DE, uint32(0x40+d), seed))/float64(^uint32(0)) - 0.5) * 0.5 * reachR
+		diags = append(diags, diagLine{nx: nx, ny: ny, c: off})
+	}
+	avenueHalf := 0.62 * cell // clear a band a bit over one cell wide → a clear avenue, grid intact
+	onAvenue := func(x, y float64) bool {
+		for _, dl := range diags {
+			if math.Abs(dl.nx*x+dl.ny*y-dl.c) < avenueHalf {
+				return true
+			}
+		}
+		return false
+	}
+	// Build the in-shape jittered grid, dropping nodes that fall on an avenue; order centres-out. The
+	// lattice box reaches the shape's max extent so a >disc footprint's corners get nodes.
+	maxR := rr * tdShapeMaxReach(shape)
+	type gnode struct {
+		p  tdPoint
+		d2 float64
+	}
+	var nodes []gnode
+	half := int(math.Ceil(maxR/cell)) + 1
+	if half > 64 {
+		half = 64
+	}
+	rng := newRNG(hash2(0xB0DF, uint32(need), seed) | 1)
+	jit := cell * 0.22 // a touch less jitter than the plain grid so avenues read cleanly
+	for gy := -half; gy <= half; gy++ {
+		for gx := -half; gx <= half; gx++ {
+			nx := float64(gx)*cell + phx
+			ny := float64(gy)*cell + phy
+			jx := (float64(hash2(uint32(gx*2+1000), uint32(gy*2+1000), seed))/float64(^uint32(0)) - 0.5) * 2 * jit
+			jy := (float64(hash2(uint32(gx*2+2000), uint32(gy*2+2000), seed))/float64(^uint32(0)) - 0.5) * 2 * jit
+			px, py := nx+jx, ny+jy
+			d2 := px*px + py*py
+			if edge := tdShapeAcceptR(shape, px, py, townR, 0.92, seed); d2 > edge*edge {
+				continue // outside the footprint (constant 0.92·townR for shapeDisc)
+			}
+			if onAvenue(px, py) {
+				continue // this node is in an avenue → leave it clear
+			}
+			nodes = append(nodes, gnode{p: tdPoint{px, py}, d2: d2})
+		}
+	}
+	sort.SliceStable(nodes, func(a, b int) bool { return nodes[a].d2 < nodes[b].d2 })
+	for i := 0; i < need && i < len(nodes); i++ {
+		seeds = append(seeds, nodes[i].p)
+	}
+	// Top up if we're short (avenues removed some, or a small footprint): drop the extras just OFF the
+	// avenues AND inside the shape (uniform reject) so the count is exactly `need` without refilling the
+	// boulevards. On an unlucky budget the LAST in-shape candidate is kept (no extra RNG draws), so for
+	// shapeDisc — where every sample is in-shape — this matches the original disc top-up byte-for-byte.
+	for placed := minInt(need, len(nodes)); placed < need; placed++ {
+		var p tdPoint
+		for tries := 0; tries < 24; tries++ {
+			rad := maxR * math.Sqrt(rng.f01())
+			ang := rng.f01() * 2 * math.Pi
+			cx, cy := math.Cos(ang)*rad, math.Sin(ang)*rad
+			edge := tdShapeAcceptR(shape, cx, cy, townR, 0.92, seed)
+			if rad > edge {
+				continue // outside the footprint — resample (shapeDisc never hits this)
+			}
+			p = tdPoint{cx, cy} // remember the last in-shape candidate
+			if !onAvenue(cx, cy) {
+				break // off the avenue → take it
+			}
+		}
+		seeds = append(seeds, p)
+	}
+	return seeds
+}
+
+// tdScatterCoreSuburb is the DENSE-CORE / SPARSE-SUBURB scatter — the formCoreSuburb strategy
+// (map-overhaul-citymap Phase 2a). It splits the free seeds into a packed downtown CORE and a thin
+// suburban RING: ~65% of seeds are dropped DENSELY (tight blue-noise spacing) inside an inner core
+// radius (~0.42·townR), and the remaining ~35% SPARSELY (large spacing, aggressive reject) across
+// the outer ring out to the rim. The raster then reads as a compact packed downtown of small wards
+// encircled by big loose low-density suburban blocks — the atomic-age metropolis with sprawl.
+//
+// Both passes place a fixed number so the total free-seed count is exactly `need` (banded stability
+// holds); a relax tail guarantees the count even under unlucky packing. `seeds` already holds the
+// pinned anchors. Pure over (seed, need); bounded attempt budgets → panic-safe.
+func tdScatterCoreSuburb(seeds []tdPoint, townR float64, need int, shape tdFootprintShape, cfg tdConfig, seed uint32) []tdPoint {
+	nPinned := len(seeds) // anchors already appended
+	coreR := 0.38 * townR
+	ringOuter := 0.92 * townR                     // leave a ground rim (the disc-reduction reference radius)
+	ringMax := ringOuter * tdShapeMaxReach(shape) // suburb annulus reaches the silhouette (= ringOuter for a disc)
+	nCore := (need * 72) / 100
+	if nCore < 1 && need > 0 {
+		nCore = 1 // at least seed the downtown
+	}
+	nRing := need - nCore
+	rng := newRNG(hash2(0xC03E, uint32(need), seed) | 1)
+
+	// firstFree indexes the first FREE seed so the reject passes ignore the pinned anchors (the core
+	// packs right up to and around the centre, no ring-around-the-anchor void).
+	firstFree := nPinned
+
+	// --- dense CORE: tight blue-noise inside coreR ---
+	if nCore > 0 {
+		area := math.Pi * coreR * coreR
+		minDist := 0.52 * math.Sqrt(area/float64(nCore)) // very tight downtown packing
+		minD2 := minDist * minDist
+		placed := 0
+		maxAtt := (nCore + 1) * 40
+		for att := 0; placed < nCore && att < maxAtt; att++ {
+			rad := coreR * math.Sqrt(rng.f01())
+			ang := rng.f01() * 2 * math.Pi
+			p := tdPoint{math.Cos(ang) * rad, math.Sin(ang) * rad}
+			ok := true
+			for si := firstFree; si < len(seeds); si++ {
+				dx, dy := p.x-seeds[si].x, p.y-seeds[si].y
+				if dx*dx+dy*dy < minD2 {
+					ok = false
+					break
+				}
+			}
+			if ok {
+				seeds = append(seeds, p)
+				placed++
+			}
+		}
+		for ; placed < nCore; placed++ { // relax tail → exact count
+			rad := coreR * math.Sqrt(rng.f01())
+			ang := rng.f01() * 2 * math.Pi
+			seeds = append(seeds, tdPoint{math.Cos(ang) * rad, math.Sin(ang) * rad})
+		}
+	}
+
+	// --- sparse SUBURB: large-spacing blue-noise in the annulus (coreR, ringMax), clipped to shape ---
+	if nRing > 0 {
+		// annArea scales with the footprint (areaFactor) so a >disc silhouette (halo) gets even LOOSER
+		// suburban spacing — big low-density wards out to the bulging rim. For shapeDisc: factor 1.
+		annArea := math.Pi * (ringOuter*ringOuter - coreR*coreR) * tdShapeAreaFactor(shape)
+		// Deliberately LOOSE: bigger spacing target than an even fill → big suburban wards.
+		minDist := 1.45 * math.Sqrt(annArea/float64(nRing))
+		minD2 := minDist * minDist
+		placed := 0
+		maxAtt := (nRing + 1) * 40
+		for att := 0; placed < nRing && att < maxAtt; att++ {
+			// Uniform by area in the annulus out to the SHAPE reach: r = √(core² + u·(ringMax²−core²)),
+			// then reject anything past the per-angle footprint outline. For shapeDisc ringMax = ringOuter
+			// and the outline test is the constant 0.92·townR (never rejects) → identical to the old ring.
+			u := rng.f01()
+			rad := math.Sqrt(coreR*coreR + u*(ringMax*ringMax-coreR*coreR))
+			ang := rng.f01() * 2 * math.Pi
+			p := tdPoint{math.Cos(ang) * rad, math.Sin(ang) * rad}
+			ok := true
+			if edge := tdShapeAcceptR(shape, p.x, p.y, townR, 0.92, seed); rad > edge {
+				ok = false // outside the footprint silhouette
+			}
+			// Reject against the SUBURB seeds only (indices from the start of the ring pass), so the
+			// sparse spacing is enforced among suburbs without being blocked by the dense core.
+			if ok {
+				for si := firstFree + nCore; si < len(seeds); si++ {
+					dx, dy := p.x-seeds[si].x, p.y-seeds[si].y
+					if dx*dx+dy*dy < minD2 {
+						ok = false
+						break
+					}
+				}
+			}
+			if ok {
+				seeds = append(seeds, p)
+				placed++
+			}
+		}
+		for ; placed < nRing; placed++ { // relax tail → exact count, clamped into the shape
+			u := rng.f01()
+			rad := math.Sqrt(coreR*coreR + u*(ringMax*ringMax-coreR*coreR))
+			ang := rng.f01() * 2 * math.Pi
+			x, y := math.Cos(ang)*rad, math.Sin(ang)*rad
+			if edge := tdShapeAcceptR(shape, x, y, townR, 0.92, seed); rad > edge && rad > 0 {
+				s := edge / rad
+				x *= s
+				y *= s
+			}
+			seeds = append(seeds, tdPoint{x, y})
+		}
 	}
 	return seeds
 }
@@ -2889,7 +3451,7 @@ func tdScatterRibbon(seeds []tdPoint, townR float64, need int, cfg tdConfig, see
 // per-block interior cell lists. Central seeds (the plaza anchors) are flagged so their regions
 // stay OPEN and stay pinned through relaxation. Pure + deterministic; panic-safe (the grid is
 // capped and every loop is bounded).
-func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, form tdTownForm, cfg tdConfig, seed uint32) blockField {
+func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, form tdTownForm, shape tdFootprintShape, cfg tdConfig, seed uint32) blockField {
 	f := blockField{townR: townR, cellSize: cfg.cellSize}
 	if townR <= 0 || cfg.cellSize <= 0 {
 		return f
@@ -2914,7 +3476,7 @@ func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, form tdTow
 	// scattered by the town's FORM (organic / radial / grid / ribbon). Only the arrangement varies
 	// by form; the COUNT is the banded tdBlockSeedCount, so banded stability is unaffected.
 	B := tdBlockSeedCount(nRoofs, len(anchors), form, cfg)
-	seeds := tdScatterSeedsFor(form, townR, anchors, B, cfg, seed)
+	seeds := tdScatterSeedsFor(form, townR, anchors, B, shape, cfg, seed)
 	// Lloyd relaxation: a few passes move each seed toward its region's centroid for even,
 	// organic block sizes. The PINNED anchor seeds are held fixed (their central regions must
 	// stay put); only the free building-ward seeds relax.
@@ -2926,7 +3488,7 @@ func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, form tdTow
 	// radiate as spokes. Without that pin, organic's blue-noise seeds cover the center as ordinary
 	// mesh wards, so the middle is an irregular web with loops, not a hub with spokes.
 	nPinned := tdPinnedCount(form, anchors)
-	seeds = tdLloyd(seeds, nPinned, gridN, cfg.cellSize, f.origin, townR, form, seed, cfg.lloydPasses)
+	seeds = tdLloyd(seeds, nPinned, gridN, cfg.cellSize, f.origin, townR, shape, seed, cfg.lloydPasses)
 	f.seeds = seeds
 	// A seed's region is a reserved PLAZA (building-free) ONLY when its anchor seats a WONDER —
 	// the wonder occupies a whole central region kept clear + dressed as a square. The wonderless
@@ -2943,15 +3505,15 @@ func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, form tdTow
 	}
 
 	// Raster partition: nearest seed per in-town cell. The town footprint is the plain circular disc
-	// for every form EXCEPT organic, which uses the irregular BLOB outline (tdInTown) so the
-	// silhouette rambles rather than reading as a clean radial disc.
+	// for shapeDisc; shapeBlob uses the irregular BLOB outline (tdInTown) so the silhouette rambles
+	// rather than reading as a clean radial disc.
 	f.nearest = make([]int, gridN*gridN)
 	f.street = make([]bool, gridN*gridN)
 	for gy := 0; gy < gridN; gy++ {
 		for gx := 0; gx < gridN; gx++ {
 			c := gy*gridN + gx
 			p := f.cellCenter(gx, gy)
-			if !tdInTown(p.x, p.y, townR, form, seed) {
+			if !tdInTown(p.x, p.y, townR, shape, seed) {
 				f.nearest[c] = -1 // outside the town → not built
 				continue
 			}
@@ -3006,10 +3568,10 @@ func tdBuildBlockField(townR float64, anchors []tdAnchor, nRoofs int, form tdTow
 // the town by nearest seed and moves every FREE seed (index >= nPinned) to the centroid of its
 // region; pinned seeds (the plaza anchors) stay fixed. Evens out the block sizes into an
 // organic, roughly-even field. The town footprint matches the raster partition's — the plain disc
-// for every form except organic, which uses the irregular BLOB outline (tdInTown) — so relaxed
-// centroids stay inside the same rambling town shape. Pure + deterministic; a seed that loses its
-// whole region (rare) keeps its position. Panic-safe: bounded loops, guarded division.
-func tdLloyd(seeds []tdPoint, nPinned, gridN int, cellSize, origin, townR float64, form tdTownForm, seed uint32, passes int) []tdPoint {
+// for shapeDisc, the irregular BLOB outline (tdInTown) for shapeBlob — so relaxed centroids stay
+// inside the same rambling town shape. Pure + deterministic; a seed that loses its whole region
+// (rare) keeps its position. Panic-safe: bounded loops, guarded division.
+func tdLloyd(seeds []tdPoint, nPinned, gridN int, cellSize, origin, townR float64, shape tdFootprintShape, seed uint32, passes int) []tdPoint {
 	if len(seeds) == 0 || gridN < 3 || passes <= 0 {
 		return seeds
 	}
@@ -3023,7 +3585,7 @@ func tdLloyd(seeds []tdPoint, nPinned, gridN int, cellSize, origin, townR float6
 			for gx := 0; gx < gridN; gx++ {
 				px := origin + float64(gx)*cellSize
 				py := origin + float64(gy)*cellSize
-				if !tdInTown(px, py, townR, form, seed) {
+				if !tdInTown(px, py, townR, shape, seed) {
 					continue
 				}
 				best := math.Inf(1)
@@ -3793,6 +4355,16 @@ func tdAddFiller(plan *topPlan, field blockField, style tdEraStyle, cfg tdConfig
 		ponds = 5 // a few, never many
 	}
 
+	// SPACE-AND-ABOVE (Phase 2c): a station in the void has no soil — SUPPRESS all greenery. Gardens,
+	// street trees, edge groves, and decorative ponds are all zeroed for space-mode ages; only the
+	// built structures + props (wells/stalls) and paved squares stay. Grove placement is gated on the
+	// same flag further down.
+	if style.spaceMode {
+		gardens = 0
+		trees = 0
+		ponds = 0
+	}
+
 	r := newRNG(hash2(0xF111, uint32(roofN), seed) | 1)
 	pick := func() (tdPoint, bool) {
 		if len(deep) == 0 {
@@ -4027,6 +4599,9 @@ func tdAddFiller(plan *topPlan, field blockField, style tdEraStyle, cfg tdConfig
 	if style.wonderMotif == wonderMegalith {
 		groveCount = 1 + int(r.f01()*2) // 1..2 — a sparse, exposed highland, not a wooded village
 	}
+	if style.spaceMode {
+		groveCount = 0 // no forests ring a space station (Phase 2c)
+	}
 	groveBase := r.f01() * 2 * math.Pi
 	for g := 0; g < groveCount; g++ {
 		ang := groveBase + 2*math.Pi*float64(g)/float64(groveCount) + (r.f01()-0.5)*0.6
@@ -4105,19 +4680,19 @@ const (
 )
 
 // tdWallRadiusAt is the wall RING radius at a given angle (city units). The wall follows the
-// (ragged) town OUTLINE just OUTSIDE the outermost ward: for the ORGANIC form it rides the
-// irregular blob outline (tdOrganicRadiusAt) so the rampart is ragged like the town it encloses;
-// every other form uses a plain circle. Sized from the built-up footprint (so buildings stay
-// INSIDE) but capped to the town disc so the ring never leaves the bounded canvas. Pure.
-func tdWallRadiusAt(angle, footR, townR float64, form tdTownForm, seed uint32) float64 {
+// (ragged) town OUTLINE just OUTSIDE the outermost ward: for any NON-disc shape it rides the town's
+// outline profile (tdShapeRadiusAt) so the rampart is ragged like the town it encloses; a plain disc
+// uses a plain circle. Sized from the built-up footprint (so buildings stay INSIDE) but capped to the
+// town disc so the ring never leaves the bounded canvas. Pure.
+func tdWallRadiusAt(angle, footR, townR float64, shape tdFootprintShape, seed uint32) float64 {
 	// Ring the built-up edge with a small margin so the outermost roofs sit inside the wall.
 	r := footR * 1.12
-	// Follow the ragged outline for the ORGANIC form: modulate the footprint ring by the town's
-	// own outline profile at this angle (tdOrganicRadiusAt/townR ∈ [floor,1]), so the rampart bites
+	// Follow the ragged outline for any NON-disc shape: modulate the footprint ring by the town's
+	// own outline profile at this angle (tdShapeRadiusAt/townR ∈ [floor,1]), so the rampart bites
 	// inward on the town's bays and bulges on its peninsulas — a ragged wall around a ragged town.
-	if form == formOrganic && townR > 0 {
-		shape := tdOrganicRadiusAt(angle, townR, seed) / townR // 0..1 outline profile at this angle
-		r = footR * (1.04 + 0.16*shape)
+	if shape != shapeDisc && townR > 0 {
+		prof := tdShapeRadiusAt(shape, angle, townR, seed) / townR // 0..1 outline profile at this angle
+		r = footR * (1.04 + 0.16*prof)
 	}
 	// Keep the ring inside the bounded town disc (+ a hair) so the wall never flies off-canvas.
 	if lim := townR * 1.14; r > lim {
@@ -4144,7 +4719,7 @@ func tdAddWalls(plan *topPlan, style tdEraStyle, seed uint32) {
 	if footR <= 0 {
 		return
 	}
-	form := plan.form
+	shape := plan.shape
 	townR := plan.townR
 	prof := style.wallProfile
 	if prof == wallNone {
@@ -4195,7 +4770,7 @@ func tdAddWalls(plan *topPlan, style tdEraStyle, seed uint32) {
 
 	for i := 0; i < segs; i++ {
 		ang := phase + 2*math.Pi*float64(i)/float64(segs)
-		rad := tdWallRadiusAt(ang, footR, townR, form, seed)
+		rad := tdWallRadiusAt(ang, footR, townR, shape, seed)
 		if _, isGate := inGate(ang); isGate {
 			continue // leave a GAP in the curtain here — the gate structure is placed below
 		}
@@ -4222,7 +4797,7 @@ func tdAddWalls(plan *topPlan, style tdEraStyle, seed uint32) {
 	// street passes through, not just a missing wall segment. The FIRST gate (the longest street,
 	// the main road) gets a GATEHOUSE on a stone wall — flanking towers + a lintel across the gap.
 	for gi, ga := range gateAngles {
-		rad := tdWallRadiusAt(ga, footR, townR, form, seed)
+		rad := tdWallRadiusAt(ga, footR, townR, shape, seed)
 		gx := plan.cx + math.Cos(ga)*rad
 		gy := plan.cy + math.Sin(ga)*rad
 		plan.lots = append(plan.lots, tdLot{x: gx, y: gy, w: segHalf * 2, h: segHalf * 2, kind: tdGate})
@@ -4466,7 +5041,36 @@ func (t tdTransform) ext(cityExt float64) int {
 //
 // Pure, panic-safe, exact output size. Every color is theme-derived (retints on a theme
 // switch). NO terrain, NO biome, NO water — the ground is a neutral era tint.
+// cosmicSceneFor returns the bespoke scene renderer for a cosmic-scale age, if one exists.
+// These ages abandon the city renderer entirely and draw a zoomed-out scene instead: at
+// space-scale and above a top-down "city" is the wrong lens, so we pull the camera back to
+// show the civilization at planetary (and, in later slices, interstellar/galactic) scale.
+// Ages without a bespoke scene fall through to the normal city renderer.
+func cosmicSceneFor(ageKey string) (func(img *image.RGBA, state game.GameState, w, h int, seed uint32), bool) {
+	switch ageKey {
+	case "space_age":
+		return drawPlanetScene, true
+	case "interstellar_age":
+		return drawStarSystemScene, true
+	case "galactic_age":
+		return drawGalaxyScene, true
+	case "quantum_age":
+		return drawCosmicWebScene, true
+	case "transcendent_age":
+		return drawAscensionScene, true
+	}
+	return nil, false
+}
+
 func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32) layoutGeometry {
+	// Cosmic-scale ages replace the city entirely with a zoomed-out scene (the home planet from
+	// orbit, a starfield, and so on). Draw it and return an empty geometry so the overlay pass
+	// stamps NO city landmarks/labels over the scene.
+	if scene, ok := cosmicSceneFor(state.Age); ok {
+		scene(img, state, w, h, seed)
+		return layoutGeometry{}
+	}
+
 	style := styleForAge(state.Age)
 	pal := newTdPal()
 
@@ -4607,6 +5211,12 @@ func renderTopDown(img *image.RGBA, state game.GameState, w, h int, seed uint32)
 // the max blend toward alt is a small fraction (groundTexAmp) so even a touched pixel barely
 // shifts. The result is a subtle-but-present dirt base that lets buildings + streets stand out.
 func drawGround(img *image.RGBA, style tdEraStyle, pal tdPal, seed uint32, w, h int) {
+	// SPACE-AND-ABOVE (Phase 2c): the five cosmic ages read as a station floating in the void, not a
+	// town on terrain — swap the ground tint for a deep-space VOID + STARFIELD and return.
+	if style.spaceMode {
+		drawSpaceBackground(img, style, pal, seed, w, h)
+		return
+	}
 	base := style.groundBase(pal)
 	alt := style.groundAlt(pal)
 	b := img.Bounds()
@@ -4635,6 +5245,1874 @@ const (
 	groundTexFrac = 0.12
 	groundTexAmp  = 0.20
 )
+
+// drawSpaceBackground paints the SPACE-AND-ABOVE ground (Phase 2c): a deep near-black VOID with a
+// sparse deterministic STARFIELD and a couple of very faint NEBULA washes, so the cosmic ages read
+// as a station/platform floating in space rather than a town on terrain. Called from drawGround when
+// style.spaceMode is set; replaces the ground tint entirely.
+//
+// Every color is theme-derived so it retints on a theme switch: the void starts from the theme
+// background pulled dark toward black; the nebula tints from accent/highlight; the stars brighten
+// toward highlight/white. Deterministic (seeded), panic-safe (clipped setters), exact output size —
+// every pixel is written by the void pass before the stars/nebula stipple over it.
+func drawSpaceBackground(img *image.RGBA, style tdEraStyle, pal tdPal, seed uint32, w, h int) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+	b := img.Bounds()
+
+	// VOID: a deep near-black space fill, theme-derived. Pull the background toward the dim role, then
+	// hard toward black so it reads as a clearly dark void (not the grey deck). A very subtle vertical
+	// gradient (top darkest, bottom lifted a hair toward the void-blue) gives depth while staying calm.
+	voidTop := darken(blend(pal.bg, pal.dim, 0.30), 0.72)
+	voidBot := blend(darken(blend(pal.bg, pal.dim, 0.30), 0.62), voidAnchor, 0.35)
+
+	// NEBULA: 1–2 soft broad washes for depth. Seeded centers; a faint accent/highlight tint blended in
+	// with a smooth falloff. Kept very subtle (peak ~0.12) so it adds atmosphere without muddying the
+	// void. Deterministic per seed.
+	type nebula struct {
+		cx, cy, r float64
+		tint      color.RGBA
+		peak      float64
+	}
+	nebN := 1 + int(hash2(0x4EB0, seed, 0x51)%2) // 1..2
+	nebs := make([]nebula, 0, nebN)
+	for i := 0; i < nebN; i++ {
+		hx := hashUnit(uint32(i)*2+1, 0x1A, seed)
+		hy := hashUnit(uint32(i)*2+2, 0x2B, seed)
+		hr := hashUnit(uint32(i)+7, 0x3C, seed)
+		tintPick := hashUnit(uint32(i)+11, 0x4D, seed)
+		tint := pal.accent
+		if tintPick > 0.5 {
+			tint = pal.highlight
+		}
+		nebs = append(nebs, nebula{
+			cx:   hx * float64(w),
+			cy:   hy * float64(h),
+			r:    (0.35 + 0.25*hr) * float64(w), // broad — a third to half the canvas wide
+			tint: tint,
+			peak: 0.08 + 0.04*tintPick, // ~0.08..0.12
+		})
+	}
+
+	for y := 0; y < h; y++ {
+		py := b.Min.Y + y
+		if py < b.Min.Y || py >= b.Max.Y {
+			continue
+		}
+		vt := float64(y) / float64(h) // 0 (top) .. ~1 (bottom)
+		row := blend(voidTop, voidBot, vt)
+		for x := 0; x < w; x++ {
+			px := b.Min.X + x
+			if px < b.Min.X || px >= b.Max.X {
+				continue
+			}
+			c := row
+			// Faint nebula wash: smooth quadratic falloff from each center, capped subtle.
+			for _, n := range nebs {
+				dx := float64(x) - n.cx
+				dy := float64(y) - n.cy
+				d2 := dx*dx + dy*dy
+				r2 := n.r * n.r
+				if d2 < r2 {
+					f := 1 - d2/r2 // 1 at center → 0 at edge
+					c = blend(c, n.tint, n.peak*f*f)
+				}
+			}
+			// A whisper of per-pixel value noise so the void isn't a dead flat wash (very small).
+			flick := texHash(uint32(x), uint32(y), seed^0x5AC3)
+			if flick > 0.85 {
+				c = brighten(c, 0.02)
+			}
+			img.SetRGBA(px, py, c)
+		}
+	}
+
+	// STARFIELD: scatter sparse deterministic stars over the void. Budget ~ (w*h)/45 candidates; each a
+	// 1px bright dab (blend the local void toward highlight/white by a varied brightness), most faint with
+	// a few bright; ~5% are 2px "bright stars". Tasteful, not a snowstorm. Bounds-checked via setPixel.
+	starWhite := blend(pal.highlight, color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}, 0.55)
+	candidates := (w * h) / 45
+	for i := 0; i < candidates; i++ {
+		si := uint32(i)
+		sx := int(hash2(si, 0xA1, seed) % uint32(w))
+		sy := int(hash2(si, 0xB2, seed) % uint32(h))
+		br := hashUnit(si, 0xC3, seed) // brightness roll
+		// Most stars faint: bias the distribution so only a minority read bright. Skip the very
+		// dimmest rolls entirely so the field stays sparse rather than a uniform haze.
+		if br < 0.45 {
+			continue
+		}
+		amt := 0.35 + 0.65*((br-0.45)/0.55) // 0.35 (faint) .. 1.0 (bright)
+		base := blend(voidTop, starWhite, amt)
+		setPixel(img, b.Min.X+sx, b.Min.Y+sy, base)
+		// A handful (~5%) are 2px bright stars — a small NE dab beside the core.
+		if br > 0.95 {
+			setPixel(img, b.Min.X+sx+1, b.Min.Y+sy, blend(voidTop, starWhite, amt*0.7))
+			setPixel(img, b.Min.X+sx, b.Min.Y+sy-1, blend(voidTop, starWhite, amt*0.7))
+		}
+	}
+}
+
+// Planet-scene palette anchors: a planet reads BLUE/GREEN/WHITE regardless of theme, so the globe
+// tones are near-fixed (a faint theme-accent nudge is applied where noted, but the world must still
+// read as a world). Kept package-level and deterministic.
+var (
+	planetOcean = color.RGBA{R: 0x1b, G: 0x40, B: 0x78, A: 0xff} // deep ocean blue
+	planetShoal = color.RGBA{R: 0x2c, G: 0x63, B: 0x8f, A: 0xff} // shallow/coastal blue (land–sea seam)
+	planetLandL = color.RGBA{R: 0x4a, G: 0x74, B: 0x3c, A: 0xff} // lowland green
+	planetLandH = color.RGBA{R: 0x7a, G: 0x64, B: 0x3e, A: 0xff} // upland brown (mountains/desert)
+	planetIce   = color.RGBA{R: 0xe8, G: 0xf1, B: 0xf6, A: 0xff} // polar ice / cloud white
+	planetAtmo  = color.RGBA{R: 0x9c, G: 0xd8, B: 0xff, A: 0xff} // bright atmosphere-rim blue
+)
+
+// drawPlanetScene renders the SPACE-AGE scene: the civilization's home planet seen from orbit,
+// ringed by satellites and an orbital station, floating on the void+starfield. It abandons the
+// city renderer entirely — there is no top-down city at this scale.
+//
+// The globe is drawn as a lit SPHERE (not a flat disc): per interior pixel we reconstruct a
+// surface normal from the disc coordinates (nz = sqrt(1 - nx^2 - ny^2)) and shade by a fixed light
+// direction, so the lit hemisphere is bright and the far limb falls through a soft TERMINATOR into
+// a near-black night side. Over that we lay procedural CONTINENTS (two octaves of value-noise,
+// thresholded so land clusters instead of speckling), POLAR ICE CAPS (high-latitude whitening),
+// soft CLOUD bands, and a thin bright ATMOSPHERE rim on the lit limb. Everything is seeded and
+// panic-safe (every write clips via setPixel/clamped math).
+// planetAspectY squashes the planet + orbits VERTICALLY so they read ROUND in the terminal. The
+// citymap image is cols×rows*2 px, streamed via half-blocks assuming a 1:2 terminal cell; on cells
+// TALLER than that a circle-in-image renders as a tall egg. This factor pre-compensates. Tune it if
+// the planet still looks off: LOWER = shorter/wider, HIGHER (→1.0) = taller. 1.0 = no correction
+// (correct for an exact 1:2 cell).
+const planetAspectY = 0.62
+
+func drawPlanetScene(img *image.RGBA, state game.GameState, w, h int, seed uint32) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+
+	// BACKDROP: the shared void + starfield (deep space, seeded stars). Reuse the space style/pal so
+	// the void tone matches the rest of the cosmic-era treatment.
+	pal := newTdPal()
+	drawSpaceBackground(img, styleForAge("space_age"), pal, seed, w, h)
+
+	b := img.Bounds()
+	minWH := w
+	if h < minWH {
+		minWH = h
+	}
+	fmin := float64(minWH)
+
+	// PLANET geometry: centered a touch off-center so the composition isn't dead-centered, radius a
+	// bit over a quarter of the short side. Clamp radius so a tiny canvas still yields >=1px.
+	cx := float64(b.Min.X) + 0.50*float64(w)
+	cy := float64(b.Min.Y) + 0.52*float64(h)
+	R := 0.28 * fmin
+	if R < 1 {
+		R = 1
+	}
+
+	// LIGHT direction (unit, in screen space with a +z toward the viewer): lit from the upper-left,
+	// tilted slightly toward the camera so a sliver of the near face stays bright. Seed nudges it a
+	// hair so different civs light differently, but it stays an upper-left key light.
+	lang := -2.3 + (hashUnit(0x11, 0x22, seed)-0.5)*0.7 // radians, upper-left-ish
+	lz := 0.55
+	lx := math.Cos(lang) * math.Sqrt(1-lz*lz)
+	ly := math.Sin(lang) * math.Sqrt(1-lz*lz)
+
+	// A faint theme-accent nudge for the ocean so the world picks up a whisper of the era mood
+	// without ceasing to read as blue.
+	ocean := blend(planetOcean, pal.accent, 0.10)
+
+	// Vertical radius: squashed so the disc reads round in the terminal (see planetAspectY).
+	radY := R * planetAspectY
+	// Bounding box of the (elliptical) disc, clamped to the image; iterate only there.
+	x0 := int(math.Floor(cx - R - 2))
+	x1 := int(math.Ceil(cx + R + 2))
+	y0 := int(math.Floor(cy - radY - 2))
+	y1 := int(math.Ceil(cy + radY + 2))
+	if x0 < b.Min.X {
+		x0 = b.Min.X
+	}
+	if y0 < b.Min.Y {
+		y0 = b.Min.Y
+	}
+	if x1 > b.Max.X {
+		x1 = b.Max.X
+	}
+	if y1 > b.Max.Y {
+		y1 = b.Max.Y
+	}
+
+	invR := 1.0 / R
+	invRadY := 1.0 / radY // normalize the vertical by the squashed radius so the disc is an ellipse
+	// Continent noise scale: features span a good fraction of the globe (land clusters, not confetti).
+	// Scale off the radius so the look is stable across map/minimap sizes.
+	nScale := 3.2 / R
+	// Terminator softness (in dot-product units): wider band → softer day/night transition.
+	const termSoft = 0.42
+
+	for py := y0; py < y1; py++ {
+		dyf := (float64(py) - cy) * invRadY // -1..1 across the (squashed) disc vertically
+		for px := x0; px < x1; px++ {
+			dxf := (float64(px) - cx) * invR
+			r2 := dxf*dxf + dyf*dyf
+			if r2 > 1.0 {
+				continue // outside the globe
+			}
+			// Surface normal of the sphere at this pixel (nz toward viewer).
+			nz := math.Sqrt(1.0 - r2)
+			nx, ny := dxf, dyf
+
+			// --- SURFACE ALBEDO: ocean vs. continents -------------------------------------
+			// Sample value-noise in a lightly latitude-warped screen space so land forms clustered
+			// masses. Two octaves via texHash on a coarse lattice with bilinear-ish smoothing.
+			lat := ny // -1 (north) .. 1 (south)
+			sxf := (float64(px)-cx)*nScale + 32.0
+			syf := (float64(py)-cy)*nScale*(1.0+0.25*lat*lat) + 32.0
+			n := valueNoise(sxf, syf, seed^0x9111)*0.65 +
+				valueNoise(sxf*2.03+11.0, syf*2.03+7.0, seed^0x5223)*0.35
+			// Latitude bias: a touch more land in the mid-latitudes, more ocean at the equator, so the
+			// masses don't ring the whole globe uniformly.
+			landScore := n + 0.10*math.Abs(lat) - 0.06
+
+			var albedo color.RGBA
+			switch {
+			case landScore < 0.50:
+				albedo = ocean
+			case landScore < 0.54:
+				albedo = planetShoal // thin coastal seam
+			default:
+				// Land: greener in the lowlands, browner on the "high" (noisier) ground.
+				up := (landScore - 0.54) / 0.46 // 0..~1
+				if up > 1 {
+					up = 1
+				}
+				albedo = blend(planetLandL, planetLandH, up*up)
+			}
+
+			// --- POLAR ICE CAPS: whiten the high-latitude caps (top & bottom of the disc) ---
+			absLat := math.Abs(lat)
+			if absLat > 0.72 {
+				capF := (absLat - 0.72) / 0.28 // 0 at cap edge → 1 at pole
+				if capF > 1 {
+					capF = 1
+				}
+				// Ragged cap edge via noise so it isn't a clean band.
+				capF *= 0.6 + 0.4*valueNoise(sxf*1.7, syf*1.7+50.0, seed^0x3C1D)
+				albedo = blend(albedo, planetIce, clampF(capF, 0, 1)*0.9)
+			}
+
+			// --- CLOUDS: a few faint white bands/wisps over both land and sea ----------------
+			cloudBand := math.Sin(lat*3.0 + 1.2)                            // broad latitude banding
+			cloudTex := valueNoise(sxf*0.9+70.0, syf*0.9-40.0, seed^0x77A5) // wispy modulation
+			cloud := (cloudBand*0.5 + 0.5) * cloudTex                       // 0..1
+			cloud = (cloud - 0.55) / 0.45                                   // threshold → sparse
+			if cloud > 0 {
+				albedo = blend(albedo, planetIce, clampF(cloud, 0, 1)*0.45)
+			}
+
+			// --- SHADING: day/night terminator makes it read as a 3D sphere ------------------
+			// Lambert term, remapped through a soft terminator: full-bright on the lit hemisphere,
+			// fading to near-black on the night limb.
+			ndl := nx*lx + ny*ly + nz*lz                 // -1 (night) .. 1 (noon)
+			lit := smoothstepF(-termSoft, termSoft, ndl) // 0 night .. 1 day
+			// Day side: gentle brighten toward the subsolar point; night side: crush toward black.
+			shade := 0.06 + 0.94*lit // ambient floor so the night side isn't pure black
+			out := scaleRGB(albedo, shade)
+			// A subtle specular sky-glint on the ocean near the subsolar point (only where lit & wet).
+			if albedo == ocean && ndl > 0.86 {
+				out = blend(out, planetAtmo, (ndl-0.86)/0.14*0.35)
+			}
+
+			// --- ATMOSPHERE RIM: a thin bright blue ring just inside the LIT limb -------------
+			// Near the edge (r2 high) AND on the lit side, add a rim glow. Fades quickly inward.
+			edge := math.Sqrt(r2)
+			if edge > 0.90 && lit > 0.15 {
+				rim := (edge - 0.90) / 0.10 // 0..1 across the rim band
+				out = blend(out, planetAtmo, clampF(rim, 0, 1)*0.6*lit)
+			}
+
+			setPixel(img, px, py, out)
+		}
+	}
+
+	// SATELLITES + ORBITS: a few tilted elliptical orbit rings (thin, dim), each carrying a satellite
+	// or two, plus one slightly larger station module. Drawn AFTER the planet so they read as
+	// foreground hardware; seeded so positions are stable per civ.
+	drawOrbitsAndSatellites(img, cx, cy, R, fmin, pal, seed)
+}
+
+// drawOrbitsAndSatellites paints 2–4 faint tilted orbit ellipses around the planet and dabs
+// satellites (a small bright cluster, optionally a tiny solar-panel cross) plus one larger station
+// module onto them. All seeded and panic-safe. cx,cy = planet center (pixel space), R = planet
+// radius, fmin = min(w,h) for scale.
+func drawOrbitsAndSatellites(img *image.RGBA, cx, cy, R, fmin float64, pal tdPal, seed uint32) {
+	orbitCol := blend(pal.dim, pal.highlight, 0.30) // faint, cool ring line
+	satBright := blend(pal.highlight, color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}, 0.5)
+	panelCol := blend(pal.accent, satBright, 0.4)
+
+	nOrbits := 2 + int(hash2(0x0B17, seed, 0x33)%3) // 2..4
+	// Track where satellites will go so we can drop the station on the outermost ring.
+	for oi := 0; oi < nOrbits; oi++ {
+		si := uint32(oi)
+		// Semi-axes: rings sit outside the planet, growing outward; tilt (squash the minor axis) and
+		// a rotation give varied ellipses. Scale off the planet radius so it holds at any size.
+		ra := R * (1.20 + 0.45*float64(oi) + 0.10*hashUnit(si, 0xA1, seed))
+		rb := ra * (0.28 + 0.40*hashUnit(si, 0xB2, seed)) // flattened (viewed near edge-on)
+		rot := hashUnit(si, 0xC3, seed) * math.Pi         // ring plane rotation
+		cosR, sinR := math.Cos(rot), math.Sin(rot)
+
+		// Draw the ring outline by stepping the parametric ellipse. Step count scales with size so a
+		// big canvas gets a smooth ring and a tiny one still closes.
+		steps := int(ra * 2.2)
+		if steps < 40 {
+			steps = 40
+		}
+		if steps > 900 {
+			steps = 900
+		}
+		for s := 0; s < steps; s++ {
+			t := float64(s) / float64(steps) * 2 * math.Pi
+			ex := ra * math.Cos(t)
+			ey := rb * math.Sin(t)
+			// Rotate the ellipse in-plane.
+			rx := ex*cosR - ey*sinR
+			ry := ex*sinR + ey*cosR
+			px := int(cx + rx)
+			py := int(cy + ry*planetAspectY) // squash vertically to match the planet disc
+			// Only the ring portion in FRONT of the globe (lower half of the tilt) reads a touch
+			// brighter; the far arc is dimmer, hinting the ring passes behind the planet.
+			c := orbitCol
+			if ey > 0 {
+				c = brighten(orbitCol, 0.15)
+			} else {
+				c = darken(orbitCol, 0.20)
+			}
+			setPixel(img, px, py, c)
+		}
+
+		// Place 1–2 satellites on this ring at seeded parameter angles.
+		nSat := 1 + int(hash2(si, seed, 0x5E)%2) // 1..2
+		for k := 0; k < nSat; k++ {
+			kk := uint32(oi*7 + k + 1)
+			t := hashUnit(kk, 0xD4, seed) * 2 * math.Pi
+			ex := ra * math.Cos(t)
+			ey := rb * math.Sin(t)
+			rx := ex*cosR - ey*sinR
+			ry := ex*sinR + ey*cosR
+			sx := int(cx + rx)
+			sy := int(cy + ry*planetAspectY)
+			drawSatellite(img, sx, sy, satBright, panelCol, false)
+		}
+	}
+
+	// ONE station module: a slightly larger cluster on the outermost ring at a fixed-ish angle.
+	{
+		oi := nOrbits - 1
+		si := uint32(oi)
+		ra := R * (1.20 + 0.45*float64(oi) + 0.10*hashUnit(si, 0xA1, seed))
+		rb := ra * (0.28 + 0.40*hashUnit(si, 0xB2, seed))
+		rot := hashUnit(si, 0xC3, seed) * math.Pi
+		cosR, sinR := math.Cos(rot), math.Sin(rot)
+		t := hashUnit(0x5747, 0x10, seed) * 2 * math.Pi
+		ex := ra * math.Cos(t)
+		ey := rb * math.Sin(t)
+		rx := ex*cosR - ey*sinR
+		ry := ex*sinR + ey*cosR
+		stx := int(cx + rx)
+		sty := int(cy + ry*planetAspectY)
+		drawSatellite(img, stx, sty, satBright, panelCol, true)
+	}
+}
+
+// drawSatellite dabs a single satellite (or, if station, a slightly larger module) at (x,y): a
+// bright core with a tiny cross of solar panels. Panic-safe via setPixel. On a tiny canvas this
+// still leaves at least a recognizable bright dot.
+func drawSatellite(img *image.RGBA, x, y int, core, panel color.RGBA, station bool) {
+	// Bright body.
+	setPixel(img, x, y, core)
+	if station {
+		// A 2px-wide body block for the station.
+		setPixel(img, x+1, y, core)
+		setPixel(img, x, y+1, core)
+		setPixel(img, x+1, y+1, core)
+	}
+	// Solar-panel cross: dabs one cell out on each axis (the "wings").
+	setPixel(img, x-1, y, panel)
+	setPixel(img, x+1+bi(station), y, panel)
+	setPixel(img, x, y-1, panel)
+	setPixel(img, x, y+1+bi(station), panel)
+	if station {
+		// Longer wings for the station.
+		setPixel(img, x-2, y, panel)
+		setPixel(img, x+2+bi(station), y, panel)
+	}
+}
+
+// ---------------------------------------------------------------------------------------------
+// INTERSTELLAR scene: the civilization pulled back one more level, from a single planet to its
+// whole STAR SYSTEM — a central sun with orbiting worlds, an asteroid belt, and probes streaking
+// outward toward neighbor stars. The 2nd cosmic scene (after the space-age planet), sharing its
+// craft: crisp per-pixel sphere shading, procedural surfaces, deep-space void, NO soft halos.
+// ---------------------------------------------------------------------------------------------
+
+// starSurfacePalette / planet hues: like the planet scene these read as celestial bodies regardless
+// of theme, so the tones are near-fixed (a faint accent nudge is applied on the ocean world where
+// noted). Kept package-level and deterministic.
+var (
+	starCore = color.RGBA{R: 0xff, G: 0xf6, B: 0xe4, A: 0xff} // white-hot photosphere core
+	starMid  = color.RGBA{R: 0xff, G: 0xd0, B: 0x5a, A: 0xff} // yellow mid-latitudes
+	starLimb = color.RGBA{R: 0xf2, G: 0x8a, B: 0x24, A: 0xff} // orange cooler limb
+	starSpot = color.RGBA{R: 0x9c, G: 0x51, B: 0x14, A: 0xff} // darker sunspot umbra
+
+	// Planet surface anchors (rocky / ocean / mars-like / gas-giant bands).
+	worldRockL = color.RGBA{R: 0x6d, G: 0x6a, B: 0x66, A: 0xff} // grey rock lowland
+	worldRockH = color.RGBA{R: 0x9a, G: 0x96, B: 0x8e, A: 0xff} // lighter cratered upland
+	worldSeaLo = color.RGBA{R: 0x16, G: 0x3a, B: 0x6e, A: 0xff} // deep ocean
+	worldSeaHi = color.RGBA{R: 0x3f, G: 0x8a, B: 0x64, A: 0xff} // green landmass on the ocean world
+	worldRedL  = color.RGBA{R: 0x8f, G: 0x40, B: 0x24, A: 0xff} // mars rust lowland
+	worldRedH  = color.RGBA{R: 0xc2, G: 0x71, B: 0x3e, A: 0xff} // brighter oxide upland
+	worldGasA  = color.RGBA{R: 0xc8, G: 0xa2, B: 0x6a, A: 0xff} // gas-giant warm band
+	worldGasB  = color.RGBA{R: 0x8a, G: 0x67, B: 0x46, A: 0xff} // gas-giant dark band
+	ringColor  = color.RGBA{R: 0xcf, G: 0xc2, B: 0xa4, A: 0xff} // thin planetary ring (icy tan)
+)
+
+// planetKind enumerates the four VARIED interstellar worlds; each shades its surface differently.
+type planetKind int
+
+const (
+	worldRocky planetKind = iota // grey cratered
+	worldOcean                   // blue ocean + green land
+	worldMars                    // red oxide
+	worldGas                     // banded gas giant (latitude bands)
+)
+
+// drawStarSystemScene renders the INTERSTELLAR-AGE scene: a star system — a central sun with a
+// handful of orbiting worlds, an asteroid belt, and outbound probes — floating on the deep-space
+// void+starfield. Like the planet scene it abandons the city renderer entirely; at this scale a
+// top-down city is meaningless. Every round body (the star and each planet) applies planetAspectY
+// so it reads ROUND in the terminal (see the const's note). Seeded and panic-safe throughout.
+func drawStarSystemScene(img *image.RGBA, state game.GameState, w, h int, seed uint32) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+
+	// BACKDROP: the shared void + starfield. Reuse the interstellar style/pal so the void tone
+	// matches the rest of the cosmic-era treatment.
+	pal := newTdPal()
+	drawSpaceBackground(img, styleForAge("interstellar_age"), pal, seed, w, h)
+
+	b := img.Bounds()
+	minWH := w
+	if h < minWH {
+		minWH = h
+	}
+	fmin := float64(minWH)
+
+	// STAR at the system barycenter, nudged a touch up-left of center so the composition isn't dead
+	// centered and the outbound probes have room to streak toward the lower-right frame.
+	scx := float64(b.Min.X) + 0.44*float64(w)
+	scy := float64(b.Min.Y) + 0.48*float64(h)
+	starR := 0.14 * fmin
+	if starR < 1 {
+		starR = 1
+	}
+
+	drawStar(img, scx, scy, starR, pal, seed)
+
+	// PLANETS on elliptical orbits at increasing radii. Deterministic count (3..5) and a fixed roster
+	// of VARIED kinds so every system shows contrast (rocky / ocean / mars / gas giant, cycling). Each
+	// world is a small sphere-shaded globe lit from the star (light points from the world TOWARD the
+	// star). Orbit y is squashed by planetAspectY so the rings read round in the terminal.
+	nPlanets := 3 + int(hash2(0x9142, seed, 0x7B)%3) // 3..5
+	kinds := []planetKind{worldRocky, worldOcean, worldMars, worldGas}
+	// Orbit radii step outward from just beyond the star; the outermost fits inside the short side.
+	orbit0 := starR * 1.9
+	orbitStep := (0.46*fmin - orbit0) / float64(nPlanets)
+	if orbitStep < starR*0.7 {
+		orbitStep = starR * 0.7
+	}
+	// Remember planet orbit radii so the asteroid belt can sit between two of them.
+	orbitRs := make([]float64, nPlanets)
+	for i := 0; i < nPlanets; i++ {
+		si := uint32(i) + 1
+		orbR := orbit0 + orbitStep*float64(i)
+		orbitRs[i] = orbR
+		// Angle around the star; spread deterministically so worlds don't line up.
+		ang := hashUnit(si, 0x2C1F, seed)*2*math.Pi + float64(i)*1.7
+		px := scx + orbR*math.Cos(ang)
+		py := scy + orbR*math.Sin(ang)*planetAspectY // squash the orbit to match the terminal
+
+		// World radius: varies with kind and a seeded jitter; gas giants biggest, rocky smallest. Scale
+		// off the short side so it holds at minimap size.
+		kind := kinds[i%len(kinds)]
+		baseR := 0.032 * fmin
+		switch kind {
+		case worldGas:
+			baseR = 0.055 * fmin
+		case worldOcean:
+			baseR = 0.040 * fmin
+		case worldMars:
+			baseR = 0.036 * fmin
+		}
+		pr := baseR * (0.82 + 0.36*hashUnit(si, 0x3D2E, seed))
+		if pr < 1.2 {
+			pr = 1.2
+		}
+
+		// Light direction for this world points from the world toward the star (screen space; +z toward
+		// the viewer for a little near-face fill). Normalize in the SQUASHED frame so the terminator sits
+		// correctly on the round-in-terminal disc.
+		ldx := scx - px
+		ldy := (scy - py) / planetAspectY // undo the squash so the light vector matches disc coords
+		llen := math.Hypot(ldx, ldy)
+		if llen < 1e-6 {
+			ldx, ldy, llen = 1, 0, 1
+		}
+		lz := 0.45
+		s2 := math.Sqrt(1 - lz*lz)
+		lx := ldx / llen * s2
+		ly := ldy / llen * s2
+
+		// A thin ring on the gas giant (and only there), drawn UNDER the globe's near half is complex;
+		// keep it simple and legible: draw the far ring arc, then the globe, then the near ring arc.
+		hasRing := kind == worldGas && hashUnit(si, 0x5AA1, seed) > 0.35
+		if hasRing {
+			drawPlanetRing(img, px, py, pr, false, seed^si) // far arc (behind the globe)
+		}
+		drawMiniGlobe(img, px, py, pr, kind, lx, ly, lz, pal, seed^(si*0x1111))
+		if hasRing {
+			drawPlanetRing(img, px, py, pr, true, seed^si) // near arc (in front)
+		}
+	}
+
+	// ASTEROID BELT: a faint ring of tiny scattered dots between two adjacent planet orbits (squashed).
+	// Pick a gap in the middle of the system so it sits visually between worlds.
+	if nPlanets >= 2 {
+		gap := nPlanets / 2
+		if gap < 1 {
+			gap = 1
+		}
+		inner := orbitRs[gap-1]
+		outer := orbitRs[gap]
+		drawAsteroidBelt(img, scx, scy, (inner+outer)*0.5, (outer-inner)*0.5, pal, seed)
+	}
+
+	// PROBES/SHIPS: a few bright streaks (a bright head + a short fading tail) heading OUTWARD from the
+	// system toward the frame edges — the interstellar reach. Drawn last so they read as foreground.
+	drawProbes(img, scx, scy, fmin, w, h, pal, seed)
+}
+
+// drawStar paints the central sun: a crisp sphere-shaded photosphere with procedural granulation, a
+// warm white-hot-core → yellow → orange-limb gradient, a few darker sunspots, and a TIGHT bright
+// limb (a 1px corona rim, NO big soft halo). Applies planetAspectY so it reads round in-terminal.
+func drawStar(img *image.RGBA, cx, cy, R float64, pal tdPal, seed uint32) {
+	b := img.Bounds()
+	radY := R * planetAspectY
+	invR := 1.0 / R
+	invRadY := 1.0 / radY
+	x0 := int(math.Floor(cx - R - 2))
+	x1 := int(math.Ceil(cx + R + 2))
+	y0 := int(math.Floor(cy - radY - 2))
+	y1 := int(math.Ceil(cy + radY + 2))
+	if x0 < b.Min.X {
+		x0 = b.Min.X
+	}
+	if y0 < b.Min.Y {
+		y0 = b.Min.Y
+	}
+	if x1 > b.Max.X {
+		x1 = b.Max.X
+	}
+	if y1 > b.Max.Y {
+		y1 = b.Max.Y
+	}
+	// Granulation noise scale — fine convective cells across the surface; scale off R for stability.
+	gScale := 5.0 / R
+	for py := y0; py < y1; py++ {
+		dyf := (float64(py) - cy) * invRadY
+		for px := x0; px < x1; px++ {
+			dxf := (float64(px) - cx) * invR
+			r2 := dxf*dxf + dyf*dyf
+			if r2 > 1.0 {
+				continue
+			}
+			edge := math.Sqrt(r2) // 0 center .. 1 limb
+			// Warm gradient: white-hot core → yellow → orange limb, driven by radius.
+			var base color.RGBA
+			if edge < 0.55 {
+				base = blend(starCore, starMid, edge/0.55)
+			} else {
+				base = blend(starMid, starLimb, (edge-0.55)/0.45)
+			}
+			// Photosphere granulation: two octaves of value-noise brighten/darken the cell texture.
+			gx := (float64(px)-cx)*gScale + 40.0
+			gy := (float64(py)-cy)*gScale + 40.0
+			gn := valueNoise(gx, gy, seed^0x6C0F)*0.6 + valueNoise(gx*2.1+9, gy*2.1+3, seed^0x2D71)*0.4
+			out := base
+			if gn > 0.55 {
+				out = brighten(out, (gn-0.55)*0.9)
+			} else if gn < 0.42 {
+				out = darken(out, (0.42-gn)*0.7)
+			}
+			// SUNSPOTS: a handful of darker umbral patches where a separate low-frequency noise dips very
+			// low; ragged-edged so they don't read as clean circles. Kept off the very limb.
+			if edge < 0.85 {
+				sp := valueNoise(gx*0.6+100, gy*0.6-70, seed^0x51C3)
+				if sp < 0.22 {
+					sf := (0.22 - sp) / 0.22 // 0..1 depth
+					out = blend(out, starSpot, clampF(sf, 0, 1)*0.85)
+				}
+			}
+			// TIGHT bright limb: a 1–2px hot rim right at the edge (no soft outer glow).
+			if edge > 0.90 {
+				rim := (edge - 0.90) / 0.10
+				out = blend(out, blend(starMid, starCore, 0.4), clampF(rim, 0, 1)*0.5)
+			}
+			setPixel(img, px, py, out)
+		}
+	}
+	// A whisper of corona: a single faint 1px rim just OUTSIDE the disc, not a broad halo. Step the
+	// squashed ellipse once at ~1.03R and dab a dim warm point.
+	coron := blend(darken(starLimb, 0.35), pal.bg, 0.35)
+	steps := int(R * 6)
+	if steps < 48 {
+		steps = 48
+	}
+	if steps > 1400 {
+		steps = 1400
+	}
+	for s := 0; s < steps; s++ {
+		t := float64(s) / float64(steps) * 2 * math.Pi
+		ex := R * 1.04 * math.Cos(t)
+		ey := R * 1.04 * math.Sin(t) * planetAspectY
+		setPixel(img, int(cx+ex), int(cy+ey), coron)
+	}
+}
+
+// drawMiniGlobe paints a small sphere-shaded planet at (cx,cy) with pixel radius R, shaded like the
+// planet scene (per-pixel surface normal, soft terminator to a dark night limb) but with a compact
+// per-KIND surface: grey cratered rock, blue/green ocean world, red mars-like, or a banded gas
+// giant (horizontal latitude bands). Lit by (lx,ly,lz). Applies planetAspectY so it reads round in
+// the terminal. This is the interstellar worlds' self-contained globe (kept separate from
+// drawPlanetScene so that scene's byte output — and its tests — stay untouched).
+func drawMiniGlobe(img *image.RGBA, cx, cy, R float64, kind planetKind, lx, ly, lz float64, pal tdPal, seed uint32) {
+	if R < 1 {
+		R = 1
+	}
+	b := img.Bounds()
+	radY := R * planetAspectY
+	invR := 1.0 / R
+	invRadY := 1.0 / radY
+	x0 := int(math.Floor(cx - R - 2))
+	x1 := int(math.Ceil(cx + R + 2))
+	y0 := int(math.Floor(cy - radY - 2))
+	y1 := int(math.Ceil(cy + radY + 2))
+	if x0 < b.Min.X {
+		x0 = b.Min.X
+	}
+	if y0 < b.Min.Y {
+		y0 = b.Min.Y
+	}
+	if x1 > b.Max.X {
+		x1 = b.Max.X
+	}
+	if y1 > b.Max.Y {
+		y1 = b.Max.Y
+	}
+	nScale := 3.4 / R
+	const termSoft = 0.40
+	// The ocean world picks up a faint era-accent nudge, like the planet scene's home world.
+	seaLo := blend(worldSeaLo, pal.accent, 0.10)
+	for py := y0; py < y1; py++ {
+		dyf := (float64(py) - cy) * invRadY
+		for px := x0; px < x1; px++ {
+			dxf := (float64(px) - cx) * invR
+			r2 := dxf*dxf + dyf*dyf
+			if r2 > 1.0 {
+				continue
+			}
+			nz := math.Sqrt(1.0 - r2)
+			nx, ny := dxf, dyf
+			lat := ny
+			sxf := (float64(px)-cx)*nScale + 24.0
+			syf := (float64(py)-cy)*nScale + 24.0
+
+			var albedo color.RGBA
+			switch kind {
+			case worldGas:
+				// Banded gas giant: alternate warm/dark bands by LATITUDE, wobbled by noise so the belts
+				// aren't ruler-straight. No land/sea — just flowing bands.
+				band := math.Sin(lat*7.0 + valueNoise(sxf*0.7, syf*0.7, seed^0x71B3)*2.4)
+				albedo = blend(worldGasB, worldGasA, band*0.5+0.5)
+			case worldOcean:
+				n := valueNoise(sxf, syf, seed^0x9111)*0.65 +
+					valueNoise(sxf*2.03+11, syf*2.03+7, seed^0x5223)*0.35
+				if n+0.08*math.Abs(lat) < 0.52 {
+					albedo = seaLo
+				} else {
+					albedo = worldSeaHi
+				}
+				// Small polar ice.
+				if math.Abs(lat) > 0.80 {
+					albedo = blend(albedo, planetIce, 0.7)
+				}
+			case worldMars:
+				n := valueNoise(sxf, syf, seed^0x9111)*0.6 +
+					valueNoise(sxf*2.1+5, syf*2.1+9, seed^0x5223)*0.4
+				albedo = blend(worldRedL, worldRedH, clampF((n-0.35)/0.4, 0, 1))
+				if math.Abs(lat) > 0.82 {
+					albedo = blend(albedo, planetIce, 0.6) // tiny bright polar cap
+				}
+			default: // worldRocky
+				n := valueNoise(sxf, syf, seed^0x9111)*0.6 +
+					valueNoise(sxf*2.2+3, syf*2.2+6, seed^0x5223)*0.4
+				albedo = blend(worldRockL, worldRockH, clampF((n-0.3)/0.45, 0, 1))
+				// Crater specks: a scatter of tiny dark dots via a high-freq noise dip.
+				if valueNoise(sxf*3.1+60, syf*3.1-20, seed^0x2C7D) < 0.20 {
+					albedo = darken(albedo, 0.30)
+				}
+			}
+
+			// SHADING: soft terminator from the star's light → dark night limb.
+			ndl := nx*lx + ny*ly + nz*lz
+			lit := smoothstepF(-termSoft, termSoft, ndl)
+			shade := 0.05 + 0.95*lit
+			out := scaleRGB(albedo, shade)
+			setPixel(img, px, py, out)
+		}
+	}
+}
+
+// drawPlanetRing paints a thin planetary ring around a globe at (cx,cy) with globe radius R. The
+// ring is an ellipse (major axis ~2.0R, tilted flat) squashed by planetAspectY; `near` selects the
+// front arc (drawn over the globe) vs the far arc (drawn behind). Seeded, panic-safe.
+func drawPlanetRing(img *image.RGBA, cx, cy, R float64, near bool, seed uint32) {
+	ra := R * 2.05
+	rb := ra * 0.34 // flattened, viewed near edge-on
+	steps := int(ra * 3)
+	if steps < 60 {
+		steps = 60
+	}
+	if steps > 1200 {
+		steps = 1200
+	}
+	col := ringColor
+	for s := 0; s < steps; s++ {
+		t := float64(s) / float64(steps) * 2 * math.Pi
+		ey := rb * math.Sin(t)
+		// Front arc = lower half (ey>0), back arc = upper half. Draw only the requested side.
+		if near != (ey > 0) {
+			continue
+		}
+		ex := ra * math.Cos(t)
+		px := int(cx + ex)
+		py := int(cy + ey*planetAspectY)
+		c := col
+		if ey > 0 {
+			c = brighten(col, 0.10)
+		} else {
+			c = darken(col, 0.20)
+		}
+		setPixel(img, px, py, c)
+	}
+}
+
+// drawAsteroidBelt scatters a faint ring of tiny dots around (cx,cy) at mean radius meanR with radial
+// spread half, squashed by planetAspectY. Deterministic count and positions; each dot a dim 1px
+// speck. Panic-safe via setPixel.
+func drawAsteroidBelt(img *image.RGBA, cx, cy, meanR, half float64, pal tdPal, seed uint32) {
+	if meanR <= 0 {
+		return
+	}
+	dot := blend(pal.dim, pal.text, 0.35)
+	n := int(meanR * 2.6)
+	if n < 40 {
+		n = 40
+	}
+	if n > 1200 {
+		n = 1200
+	}
+	for i := 0; i < n; i++ {
+		si := uint32(i) + 1
+		ang := hashUnit(si, 0xA51F, seed) * 2 * math.Pi
+		rr := meanR + (hashUnit(si, 0xB62E, seed)-0.5)*2*half
+		px := cx + rr*math.Cos(ang)
+		py := cy + rr*math.Sin(ang)*planetAspectY
+		// Vary brightness so the belt shimmers rather than reading as a solid line.
+		br := hashUnit(si, 0xC73D, seed)
+		c := dot
+		if br > 0.8 {
+			c = brighten(dot, 0.25)
+		} else if br < 0.35 {
+			c = darken(dot, 0.25)
+		}
+		setPixel(img, int(px), int(py), c)
+	}
+}
+
+// drawProbes paints 2–4 outbound probe streaks: each a bright head with a short fading tail pointing
+// FROM the system OUTWARD toward a frame edge — the interstellar reach. Positions/directions seeded
+// so a system's probes are stable. Panic-safe via setPixel.
+func drawProbes(img *image.RGBA, scx, scy, fmin float64, w, h int, pal tdPal, seed uint32) {
+	head := blend(pal.highlight, color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff}, 0.6)
+	nProbes := 2 + int(hash2(0x71B0, seed, 0x2D)%3) // 2..4
+	tailLen := 0.10 * fmin
+	if tailLen < 4 {
+		tailLen = 4
+	}
+	for i := 0; i < nProbes; i++ {
+		si := uint32(i) + 1
+		ang := hashUnit(si, 0xD10F, seed) * 2 * math.Pi
+		dx := math.Cos(ang)
+		dy := math.Sin(ang) * planetAspectY // travel in the squashed frame so it matches orbits
+		dl := math.Hypot(dx, dy)
+		if dl < 1e-6 {
+			continue
+		}
+		dx, dy = dx/dl, dy/dl
+		// Head sits WELL outside the belt, partway toward the edge, so the probe reads as leaving.
+		dist := (0.30 + 0.14*hashUnit(si, 0xE21E, seed)) * fmin
+		hx := scx + dx*dist
+		hy := scy + dy*dist
+		// Bright 2px head.
+		setPixel(img, int(hx), int(hy), head)
+		setPixel(img, int(hx)+1, int(hy), blend(head, pal.highlight, 0.4))
+		setPixel(img, int(hx), int(hy)+1, blend(head, pal.highlight, 0.4))
+		// Fading tail pointing BACK toward the star (i.e., behind the outbound head).
+		steps := int(tailLen)
+		if steps < 3 {
+			steps = 3
+		}
+		for s := 1; s <= steps; s++ {
+			f := float64(s) / float64(steps) // 0 (near head) .. 1 (tail end)
+			tx := hx - dx*float64(s)
+			ty := hy - dy*float64(s)
+			c := blend(head, pal.bg, f) // fade toward the void
+			setPixel(img, int(tx), int(ty), c)
+		}
+	}
+}
+
+// ---------------------------------------------------------------------------------------------
+// GALACTIC scene: the civilization pulled back one final level, from a single star system to its
+// whole SPIRAL GALAXY — a bright dense core, logarithmic spiral arms of thousands of individual
+// stars, dark dust lanes, and a few HII knots — seen at a tilt on the deep-space void. The 3rd
+// cosmic scene (after the planet and the star system), sharing their craft: DEEPLY procedural,
+// seed-deterministic, panic-safe (every write clipped through setPixel), NO soft blurry smears —
+// the structure is carried by crisp individual star dabs, not a painted blob.
+// ---------------------------------------------------------------------------------------------
+
+// Galaxy palette anchors: a galaxy reads GOLD-CORE / BLUE-WHITE-ARMS regardless of theme (young hot
+// stars populate the arms, an old warm population fills the bulge), so the tones are near-fixed with
+// only a faint era-accent nudge where noted. Package-level and deterministic.
+var (
+	galaxyCoreHot  = color.RGBA{R: 0xff, G: 0xf3, B: 0xd6, A: 0xff} // white-gold core center
+	galaxyCoreWarm = color.RGBA{R: 0xff, G: 0xcf, B: 0x82, A: 0xff} // amber bulge population
+	galaxyArmStar  = color.RGBA{R: 0xdc, G: 0xe8, B: 0xff, A: 0xff} // blue-white young arm star
+	galaxyArmHot   = color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff} // rare bright standout star
+	galaxyDust     = color.RGBA{R: 0x1a, G: 0x12, B: 0x1e, A: 0xff} // dark dust lane (warm-brown black)
+	galaxyHII      = color.RGBA{R: 0xff, G: 0x74, B: 0x9c, A: 0xff} // pink HII / star-forming knot
+)
+
+// drawGalaxyScene renders the GALACTIC-AGE scene: a tilted spiral galaxy floating on the deep-space
+// void+starfield. Like the planet and star-system scenes it abandons the city renderer — at galaxy
+// scale a top-down city is meaningless.
+//
+// Stars are generated in the galaxy's OWN disc plane as (r, θ) polar samples, then mapped to the
+// screen through: an in-plane inclination squash (the artistic tilt → the disc reads as an ellipse),
+// a position-angle rotation, and finally the planetAspectY vertical squash so the whole disc (and the
+// round core) read correctly in the tall terminal cell (see planetAspectY). The CORE is a dense
+// gaussian cloud of warm stars over a faint underlying glow; the ARMS are 2–4 logarithmic spirals
+// (r = a·e^(bθ)) walked in θ with gaussian cross-scatter, populated by blue-white stars; DUST LANES
+// darken a thin band along each arm's inner edge; a few sparse pink HII knots dot the arms. Star
+// count scales with canvas area and is capped, so a minimap still shows a recognizable spiral with
+// fewer dabs. Deterministic and panic-safe throughout.
+func drawGalaxyScene(img *image.RGBA, state game.GameState, w, h int, seed uint32) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+
+	// BACKDROP: the shared void + a sparse far-star field. Reuse the galactic style/pal so the void tone
+	// matches the rest of the cosmic-era treatment. The galaxy's own stars dominate over these.
+	pal := newTdPal()
+	drawSpaceBackground(img, styleForAge("galactic_age"), pal, seed, w, h)
+
+	b := img.Bounds()
+	minWH := w
+	if h < minWH {
+		minWH = h
+	}
+	fmin := float64(minWH)
+
+	// GALAXY geometry: centered a touch off-center so the composition isn't dead-centered. Overall disc
+	// radius ~0.42 of the short side (in the galaxy plane, BEFORE the tilt/aspect squashes).
+	cx := float64(b.Min.X) + 0.50*float64(w)
+	cy := float64(b.Min.Y) + 0.52*float64(h)
+	R := 0.42 * fmin
+	if R < 1 {
+		R = 1
+	}
+
+	// TILT: an artistic inclination squashes the disc's minor axis so we see it at an angle (not face-on,
+	// not edge-on). A seeded position-angle rotates that ellipse so different civs face differently. The
+	// inclination is applied IN-PLANE (before rotation); planetAspectY is applied AFTER (terminal squash).
+	incl := 0.50 + 0.14*hashUnit(0x6A1A, 0x11, seed) // minor-axis fraction ~0.50..0.64 (moderate tilt)
+	rot := hashUnit(0x6A1A, 0x22, seed) * math.Pi    // disc position angle
+	cosR, sinR := math.Cos(rot), math.Sin(rot)
+
+	// project maps a point (gr,gth) in the galaxy DISC plane (polar) to integer screen pixels, applying
+	// the inclination squash, the position-angle rotation, and finally planetAspectY. Returns the pixel
+	// plus the mapped float coords for any caller that wants sub-pixel work. Kept as a closure so the
+	// core, the arms, and the dust all share one identical transform.
+	project := func(gr, gth float64) (int, int) {
+		gx := gr * math.Cos(gth)
+		gy := gr * math.Sin(gth) * incl // inclination: flatten the minor axis in-plane
+		// Position-angle rotation of the (already-inclined) ellipse.
+		rx := gx*cosR - gy*sinR
+		ry := gx*sinR + gy*cosR
+		px := cx + rx
+		py := cy + ry*planetAspectY // terminal squash so the disc/core read round in the cell
+		return int(px), int(py)
+	}
+
+	// dab paints a star: a 1px core plus, for the brighter ones, a small NE/SW cross so a few stars read
+	// as standouts. Alpha-blend-free (opaque write) via setPixel — crisp, no soft halo. size 0 = 1px,
+	// size 1 = a 5px plus, size 2 = a brighter 5px plus with lit neighbours.
+	dab := func(px, py int, c color.RGBA, size int) {
+		setPixel(img, px, py, c)
+		if size >= 1 {
+			dim := blend(c, pal.bg, 0.45)
+			setPixel(img, px+1, py, dim)
+			setPixel(img, px-1, py, dim)
+			setPixel(img, px, py+1, dim)
+			setPixel(img, px, py-1, dim)
+		}
+		if size >= 2 {
+			setPixel(img, px+1, py, blend(c, galaxyArmHot, 0.3))
+			setPixel(img, px-1, py, blend(c, galaxyArmHot, 0.3))
+			setPixel(img, px, py+1, blend(c, galaxyArmHot, 0.3))
+			setPixel(img, px, py-1, blend(c, galaxyArmHot, 0.3))
+			setPixel(img, px+1, py+1, blend(c, pal.bg, 0.5))
+			setPixel(img, px-1, py-1, blend(c, pal.bg, 0.5))
+		}
+	}
+
+	// A faint theme-accent nudge for the arm stars so the galaxy picks up a whisper of the era mood
+	// without ceasing to read as blue-white.
+	armStar := blend(galaxyArmStar, pal.accent, 0.10)
+
+	// ------------------------------------------------------------------------------------------
+	// UNDERGLOW: a very faint radial bulge glow UNDER the core stars — subtle, so the stars carry it
+	// (NOT a solid blur). Painted only within the inner disc, additively toward the warm core, with a
+	// steep falloff. Iterated over the elliptical bounding box of the inner region, clipped.
+	// ------------------------------------------------------------------------------------------
+	glowR := R * 0.34 // the bulge glow reaches ~a third of the disc
+	{
+		radY := glowR * planetAspectY
+		x0 := int(math.Floor(cx - glowR - 2))
+		x1 := int(math.Ceil(cx + glowR + 2))
+		y0 := int(math.Floor(cy - radY - 2))
+		y1 := int(math.Ceil(cy + radY + 2))
+		if x0 < b.Min.X {
+			x0 = b.Min.X
+		}
+		if y0 < b.Min.Y {
+			y0 = b.Min.Y
+		}
+		if x1 > b.Max.X {
+			x1 = b.Max.X
+		}
+		if y1 > b.Max.Y {
+			y1 = b.Max.Y
+		}
+		invGR := 1.0 / glowR
+		invGRadY := 1.0 / radY
+		for py := y0; py < y1; py++ {
+			dyf := (float64(py) - cy) * invGRadY
+			for px := x0; px < x1; px++ {
+				dxf := (float64(px) - cx) * invGR
+				d2 := dxf*dxf + dyf*dyf
+				if d2 > 1.0 {
+					continue
+				}
+				f := 1 - math.Sqrt(d2) // 1 center → 0 edge
+				f = f * f * f          // steep falloff so the glow stays tight to the center
+				if f <= 0.002 {
+					continue
+				}
+				cur := img.RGBAAt(px, py)
+				setPixel(img, px, py, blend(cur, galaxyCoreWarm, clampF(f*0.55, 0, 1)))
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// SPIRAL ARMS + DUST LANES: 2..4 logarithmic-spiral arms, evenly phased. Each arm is walked in θ;
+	// at each step we place a small cluster of stars scattered around the arm centerline with a
+	// gaussian-ish perpendicular jitter (denser on the spine, sparse off it). A thin dust band is
+	// darkened just INSIDE each arm (toward smaller r) for depth. Star budget scales with area, capped.
+	// ------------------------------------------------------------------------------------------
+	nArms := 2 + int(hash2(0x6A1A, seed, 0x33)%3) // 2..4 arms
+	// b (spiral tightness): larger → looser winding. a: base radius so the arm starts just outside the
+	// core. Both seeded a hair so the winding differs per civ.
+	spiralB := 0.24 + 0.10*hashUnit(0x6A1A, 0x44, seed) // pitch
+	spiralA := R * 0.10
+	if spiralA < 0.5 {
+		spiralA = 0.5
+	}
+	// θ sweeps from the core outward until r reaches the disc edge: r = a·e^(b·θ) → θmax = ln(R/a)/b.
+	thetaMax := math.Log(R/spiralA) / spiralB
+	if thetaMax < 0.5 {
+		thetaMax = 0.5
+	}
+	if thetaMax > 7.0 { // ~1.1 turns cap so arms don't over-wind into mush
+		thetaMax = 7.0
+	}
+	// Angular step + per-step star cluster size both scale with canvas area so a minimap stays sparse but
+	// a full render is dense. Total dabs are implicitly capped by the θ range × cluster size × arms.
+	areaScale := float64(w*h) / (440.0 * 300.0) // 1.0 at the reference dump size
+	if areaScale > 1.6 {
+		areaScale = 1.6
+	}
+	dTheta := 0.05 / math.Max(0.35, areaScale) // finer stepping on bigger canvases
+	clusterN := int(3 + 5*areaScale)           // stars scattered per θ step per arm
+	if clusterN < 2 {
+		clusterN = 2
+	}
+	armWidth := R * 0.11 // base perpendicular scatter width (grows slightly with r below)
+
+	for a := 0; a < nArms; a++ {
+		armPhase := float64(a) / float64(nArms) * 2 * math.Pi
+		armSeed := seed ^ (uint32(a+1) * 0x9E37)
+		step := 0
+		for th := 0.15; th < thetaMax; th += dTheta {
+			step++
+			r := spiralA * math.Exp(spiralB*th)
+			if r > R {
+				break
+			}
+			baseTh := th + armPhase
+			// DUST LANE: a thin dark band just inside the arm spine (toward the core), placed a fraction of
+			// the arm width inward. Only from mid-disc outward (the core swamps any inner dust). Sparse dabs
+			// so it threads rather than paints a solid ring.
+			if r > R*0.16 && (step%2 == 0) {
+				dOff := -armWidth * (0.55 + 0.25*hashUnit(uint32(step), 0xD0, armSeed))
+				dr := r + dOff
+				if dr > 0 {
+					// perpendicular offset ≈ tangential displacement / r in angle terms
+					dpx, dpy := project(dr, baseTh)
+					setPixel(img, dpx, dpy, blend(img.RGBAAt(dpx, dpy), galaxyDust, 0.55))
+					setPixel(img, dpx, dpy+1, blend(img.RGBAAt(dpx, dpy+1), galaxyDust, 0.35))
+				}
+			}
+			// Arm width grows a little with radius (arms fan out), then density thins outward.
+			wHere := armWidth * (0.7 + 0.9*(r/R))
+			// Outward density taper: fewer stars far out so the disc fades at the rim.
+			taper := 1.0 - 0.55*(r/R)
+			nHere := int(float64(clusterN) * (0.6 + 0.4*taper))
+			if nHere < 1 {
+				nHere = 1
+			}
+			for k := 0; k < nHere; k++ {
+				kk := uint32(step*31 + k*7 + 1)
+				// Gaussian-ish perpendicular jitter: average two uniforms centered at 0 → a soft triangular
+				// bump (denser on the spine). Convert the linear offset to an angular offset (/r).
+				j1 := hashUnit(kk, 0xA0, armSeed) - 0.5
+				j2 := hashUnit(kk, 0xB0, armSeed) - 0.5
+				perp := (j1 + j2) * wHere // -w..w, peaked at 0
+				// A little jitter along the arm too so steps don't quantize into visible rings.
+				alongJ := (hashUnit(kk, 0xC0, armSeed) - 0.5) * dTheta * 1.4
+				rr := r + perp // perpendicular scatter enters as a radial offset (cross-arm width)
+				if rr <= 0 {
+					continue
+				}
+				px, py := project(rr, baseTh+alongJ)
+				// Star color: bluer on the spine, warming slightly toward the core; brightness varies.
+				spineF := 1.0 - math.Min(1.0, math.Abs(perp)/wHere) // 1 on spine → 0 at edge
+				coreMix := clampF(1.0-r/(R*0.5), 0, 1) * 0.5        // warm the inner arm toward the bulge
+				col := blend(armStar, galaxyCoreWarm, coreMix)
+				br := hashUnit(kk, 0xE0, armSeed)
+				size := 0
+				switch {
+				case br > 0.985: // rare bright standout
+					col = blend(col, galaxyArmHot, 0.7)
+					size = 2
+				case br > 0.90:
+					col = brighten(col, 0.10)
+					size = 1
+				case br < 0.30:
+					// dim field star: pull toward the void so the arm has depth, skip the very dimmest
+					// off-spine so between-arm gaps stay dark.
+					if spineF < 0.35 {
+						continue
+					}
+					col = blend(col, pal.bg, 0.45)
+				}
+				dab(px, py, col, size)
+			}
+			// HII REGION: a rare pink knot on the arm (a tiny crisp cluster, not a glow), sparse.
+			if hashUnit(uint32(step), 0xF0, armSeed) > 0.965 && r > R*0.20 {
+				hpx, hpy := project(r, baseTh)
+				dab(hpx, hpy, galaxyHII, 1)
+				setPixel(img, hpx, hpy, blend(galaxyHII, galaxyArmHot, 0.4))
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// CORE / BULGE: a dense gaussian cloud of WARM stars over the underglow, brightest dead center.
+	// Radial density falls off gaussianly so the bulge is tightly packed at the center and thins into
+	// the arms. Placed LAST so the bright core sits over the arm stars that pass behind it. Count scales
+	// with area and is capped.
+	// ------------------------------------------------------------------------------------------
+	coreR := R * 0.30
+	coreN := int(700 * areaScale)
+	if coreN > 1400 {
+		coreN = 1400
+	}
+	if coreN < 60 {
+		coreN = 60
+	}
+	for i := 0; i < coreN; i++ {
+		si := uint32(i) + 1
+		// Radius: gaussian-ish via averaging two uniforms then squaring → strong central concentration.
+		u1 := hashUnit(si, 0x10, seed^0xC0DE)
+		u2 := hashUnit(si, 0x20, seed^0xC0DE)
+		rr := ((u1 + u2) * 0.5)
+		rr = rr * rr * coreR // bias hard toward the center
+		ang := hashUnit(si, 0x30, seed^0xC0DE) * 2 * math.Pi
+		px, py := project(rr, ang)
+		// Center-weighted color + brightness: white-gold at the very center → amber outward.
+		cf := clampF(1.0-rr/coreR, 0, 1)
+		col := blend(galaxyCoreWarm, galaxyCoreHot, cf*cf)
+		br := hashUnit(si, 0x40, seed^0xC0DE)
+		size := 0
+		if br > 0.97 || rr < coreR*0.10 {
+			size = 1
+			col = brighten(col, 0.06)
+		}
+		if br > 0.995 {
+			size = 2
+		}
+		dab(px, py, col, size)
+	}
+	// A tiny brilliant nucleus dab dead center so the very heart reads hottest.
+	ncx, ncy := project(0, 0)
+	setPixel(img, ncx, ncy, galaxyCoreHot)
+	setPixel(img, ncx+1, ncy, blend(galaxyCoreHot, galaxyCoreWarm, 0.4))
+	setPixel(img, ncx-1, ncy, blend(galaxyCoreHot, galaxyCoreWarm, 0.4))
+	setPixel(img, ncx, ncy+1, blend(galaxyCoreHot, galaxyCoreWarm, 0.4))
+	setPixel(img, ncx, ncy-1, blend(galaxyCoreHot, galaxyCoreWarm, 0.4))
+}
+
+// Cosmic-web palette anchors: at the LARGEST scale the universe is a filamentary web of galaxy
+// CLUSTERS strung on threads of dark matter, with vast empty VOIDS between. The quantum lens tints
+// the whole field with an IRIDESCENT sheen (cyan↔magenta↔gold cycling across position). The three
+// iridescence anchors already exist package-level (iridCyanAnchor / iridMagentaAnchor /
+// iridGoldAnchor); these are the web-specific structural tones. Package-level and deterministic.
+var (
+	webNodeCore = color.RGBA{R: 0xff, G: 0xfb, B: 0xf2, A: 0xff} // brilliant cluster-core dab (near-white, faintly warm)
+	webGalaxy   = color.RGBA{R: 0xe8, G: 0xdc, B: 0xff, A: 0xff} // a single tiny galaxy in a cluster (cool pale)
+	webFarGal   = color.RGBA{R: 0x6c, G: 0x60, B: 0x8c, A: 0xff} // very faint far-background galaxy speck in the void
+)
+
+// webIrid returns the iridescent hue for a point (ux,uy) in unit field coordinates [0,1]. The three
+// quantum anchors (cyan→magenta→gold) are cycled by a smooth diagonal phase across the field so the
+// web's clusters shift hue by position — the crystalline "quantum lens" — while staying crisp (this
+// is a pure color pick, not a blur). Pure helper, no locks.
+func webIrid(ux, uy float64) color.RGBA {
+	// Phase sweeps ~1.3 full cycles across the diagonal so both ends of the field differ in hue.
+	ph := (ux*0.62 + uy*0.38) * 1.3
+	ph -= math.Floor(ph) // wrap into [0,1)
+	seg := ph * 3.0      // 0..3 across the three anchors
+	i := int(seg)
+	f := seg - float64(i)
+	f = f * f * (3 - 2*f) // smoothstep the crossfade so bands don't hard-edge
+	return blend(iridHueFor(i), iridHueFor(i+1), f)
+}
+
+// drawCosmicWebScene renders the QUANTUM-AGE scene: the COSMIC WEB — the largest-scale structure of
+// the universe, one zoom-out beyond the galactic spiral. Bright galaxy CLUSTERS sit as knots on a
+// network of glowing FILAMENTS, separated by dark intergalactic VOIDS, the whole field washed in a
+// shifting IRIDESCENT (quantum) sheen. Like the other cosmic scenes it abandons the city renderer —
+// at this scale a top-down city is meaningless.
+//
+// Structure is built from real geometry, not a vague glow: a handful of seeded ATTRACTOR points pull
+// ~10–24 cluster NODES into groups (so empty voids emerge naturally between them); each node is a
+// tight knot of tiny galaxy dabs around a brilliant core, hued by webIrid at its position. Each node
+// links to its 2–3 NEAREST neighbours with a wavy FILAMENT — a thread of faint dots that brightens
+// toward the endpoints, with a few tiny galaxies strung along it; the filament hue interpolates
+// between its two endpoints' iridescent hues. A very faint large-scale web glow sits UNDER the
+// structure for depth. Node/galaxy counts scale with canvas area and are capped, so a minimap still
+// shows a recognizable (sparser) web. Deterministic and panic-safe throughout (every write clips).
+func drawCosmicWebScene(img *image.RGBA, state game.GameState, w, h int, seed uint32) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+	_ = state // scene depends only on the (name-derived) seed, like the other cosmic scenes
+
+	// BACKDROP: a deep intergalactic VOID — darker/emptier than the galaxy backdrop. Reuse the shared
+	// space background (void + very sparse far-star field) with the quantum style so the void tone
+	// matches the era; the web's own nodes/filaments dominate over it. Then darken it a touch further
+	// so the intergalactic gaps read as truly empty next to the galaxy scene.
+	pal := newTdPal()
+	drawSpaceBackground(img, styleForAge("quantum_age"), pal, seed, w, h)
+
+	b := img.Bounds()
+	minWH := w
+	if h < minWH {
+		minWH = h
+	}
+	fmin := float64(minWH)
+	fw, fh := float64(w), float64(h)
+
+	// Pull the whole void a shade deeper toward black so intergalactic space reads emptier than the
+	// galaxy backdrop. A cheap single pass over the existing pixels (no new gradient).
+	for y := 0; y < h; y++ {
+		py := b.Min.Y + y
+		for x := 0; x < w; x++ {
+			px := b.Min.X + x
+			img.SetRGBA(px, py, darken(img.RGBAAt(px, py), 0.22))
+		}
+	}
+
+	// A few very faint FAR-BACKGROUND galaxies scattered through the void (distinct from the star
+	// field: dim purple-grey specks, occasionally a 2px smudge) — depth cues in the emptiness.
+	farN := (w * h) / 900
+	for i := 0; i < farN; i++ {
+		si := uint32(i) + 1
+		fx := int(hash2(si, 0x7A, seed) % uint32(w))
+		fy := int(hash2(si, 0x8B, seed) % uint32(h))
+		amt := hashUnit(si, 0x9C, seed)
+		if amt < 0.5 {
+			continue // keep them sparse
+		}
+		c := blend(img.RGBAAt(b.Min.X+fx, b.Min.Y+fy), webFarGal, 0.25+0.30*amt)
+		setPixel(img, b.Min.X+fx, b.Min.Y+fy, c)
+		if amt > 0.9 { // rare tiny elongated far-galaxy
+			setPixel(img, b.Min.X+fx+1, b.Min.Y+fy, blend(c, webFarGal, 0.4))
+		}
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// NODES (galaxy clusters): scatter cluster nodes CLUSTERED around a few attractor points so the
+	// dark voids fall out naturally. Node count scales with canvas area, clamped to ~10..24 at the
+	// full dump size (fewer on a minimap). Each node stores its screen position, its iridescent hue,
+	// and a size in galaxy-dabs.
+	// ------------------------------------------------------------------------------------------
+	areaScale := fw * fh / (440.0 * 300.0) // 1.0 at the reference dump size
+	if areaScale > 1.6 {
+		areaScale = 1.6
+	}
+	nNodes := int(14 * areaScale)
+	if nNodes > 24 {
+		nNodes = 24
+	}
+	if nNodes < 5 { // a minimap still shows a recognizable (small) web
+		nNodes = 5
+	}
+	// Attractors: 2..4 pull-points, placed with a margin so clusters sit inside the frame. Nodes are
+	// scattered on a gaussian-ish spread around a randomly chosen attractor → groups + voids.
+	nAttr := 2 + int(hash2(0xCEB, seed, 0x01)%3) // 2..4
+	type pt struct{ x, y float64 }
+	attr := make([]pt, nAttr)
+	for i := 0; i < nAttr; i++ {
+		attr[i] = pt{
+			x: (0.16 + 0.68*hashUnit(uint32(i)+1, 0x11, seed)) * fw,
+			y: (0.16 + 0.68*hashUnit(uint32(i)+1, 0x22, seed)) * fh,
+		}
+	}
+	type node struct {
+		x, y float64
+		hue  color.RGBA
+		size int // galaxy dabs in the knot
+	}
+	nodes := make([]node, 0, nNodes)
+	spread := 0.16 * fmin // cluster tightness around an attractor
+	for i := 0; i < nNodes; i++ {
+		si := uint32(i) + 1
+		a := attr[int(hash2(si, 0x33, seed)%uint32(nAttr))]
+		// Two averaged uniforms → a soft central bump (denser near the attractor); a random angle.
+		rr := (hashUnit(si, 0x44, seed) + hashUnit(si, 0x45, seed)) * 0.5
+		ang := hashUnit(si, 0x55, seed) * 2 * math.Pi
+		x := a.x + math.Cos(ang)*rr*spread
+		y := a.y + math.Sin(ang)*rr*spread*planetAspectY // squash the scatter so clusters read round
+		// Keep inside the frame with a small margin.
+		x = clampF(x, 4, fw-5)
+		y = clampF(y, 4, fh-5)
+		hue := webIrid(x/fw, y/fh)
+		sz := 4 + int(hashUnit(si, 0x66, seed)*6) // 4..9 galaxy dabs
+		nodes = append(nodes, node{x: x, y: y, hue: hue, size: sz})
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// UNDER-GLOW: a very faint large-scale web glow beneath the structure — a soft brightening where
+	// nodes cluster, so the field has depth. Kept low intensity (the crisp nodes/filaments carry the
+	// scene). Accumulated per node with a steep falloff, clipped to a small bounding box each.
+	// ------------------------------------------------------------------------------------------
+	glowR := 0.15 * fmin
+	if glowR >= 2 {
+		radY := glowR * planetAspectY
+		for _, n := range nodes {
+			gTint := blend(n.hue, webNodeCore, 0.25)
+			x0 := int(math.Floor(n.x - glowR))
+			x1 := int(math.Ceil(n.x + glowR))
+			y0 := int(math.Floor(n.y - radY))
+			y1 := int(math.Ceil(n.y + radY))
+			if x0 < b.Min.X {
+				x0 = b.Min.X
+			}
+			if y0 < b.Min.Y {
+				y0 = b.Min.Y
+			}
+			if x1 > b.Max.X {
+				x1 = b.Max.X
+			}
+			if y1 > b.Max.Y {
+				y1 = b.Max.Y
+			}
+			invR := 1.0 / glowR
+			invRadY := 1.0 / radY
+			for py := y0; py < y1; py++ {
+				dyf := (float64(py) - n.y) * invRadY
+				for px := x0; px < x1; px++ {
+					dxf := (float64(px) - n.x) * invR
+					d2 := dxf*dxf + dyf*dyf
+					if d2 > 1.0 {
+						continue
+					}
+					f := 1 - math.Sqrt(d2)
+					f = f * f * f // steep — stays a whisper, not a smudge
+					if f <= 0.003 {
+						continue
+					}
+					setPixel(img, px, py, blend(img.RGBAAt(px, py), gTint, clampF(f*0.11, 0, 1)))
+				}
+			}
+		}
+	}
+
+	// tinyGalaxy stamps a single faint galaxy dab: a 1px core tinted toward the iridescent hue, with
+	// (for the brighter ones) a faint neighbour so a few read as small smudges. Crisp opaque writes.
+	tinyGalaxy := func(px, py int, hue color.RGBA, bright float64) {
+		c := blend(webGalaxy, hue, 0.45)
+		c = blend(c, webNodeCore, 0.25*bright)
+		setPixel(img, px, py, c)
+		if bright > 0.72 {
+			dim := blend(c, pal.bg, 0.5)
+			setPixel(img, px+1, py, dim)
+			setPixel(img, px, py+1, dim)
+		}
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// FILAMENTS: connect each node to its 2..3 NEAREST neighbour nodes with a glowing thread. To
+	// avoid drawing every edge twice, only draw i→j when j>i (the pairing is symmetric anyway). Each
+	// filament is a slightly WAVY line of faint dots (a low-amplitude sine perpendicular to the run),
+	// BRIGHTENING toward the two node endpoints, with a few tiny galaxies strung along it. The dot
+	// hue lerps between the two endpoints' iridescent hues along the run.
+	// ------------------------------------------------------------------------------------------
+	for i := range nodes {
+		ni := nodes[i]
+		// Rank the other nodes by distance to ni; keep the nearest 2..3.
+		type nb struct {
+			j int
+			d float64
+		}
+		cand := make([]nb, 0, len(nodes)-1)
+		for j := range nodes {
+			if j == i {
+				continue
+			}
+			dx := nodes[j].x - ni.x
+			dy := nodes[j].y - ni.y
+			cand = append(cand, nb{j: j, d: dx*dx + dy*dy})
+		}
+		sort.Slice(cand, func(a, b int) bool { return cand[a].d < cand[b].d })
+		links := 2 + int(hash2(uint32(i)+1, seed, 0x77)%2) // 2..3 nearest neighbours
+		if links > len(cand) {
+			links = len(cand)
+		}
+		for c := 0; c < links; c++ {
+			j := cand[c].j
+			if j <= i {
+				continue // draw each undirected edge once
+			}
+			nj := nodes[j]
+			dx := nj.x - ni.x
+			dy := nj.y - ni.y
+			L := math.Hypot(dx, dy)
+			if L < 1 {
+				continue
+			}
+			// Unit direction + a perpendicular for the waviness.
+			ux, uy := dx/L, dy/L
+			perpx, perpy := -uy, ux
+			// Filament seed keys the wave phase/amplitude so each thread wobbles differently.
+			fseed := seed ^ (uint32(i+1) * 0x9E37) ^ (uint32(j+1) * 0x85EB)
+			waveAmp := (0.02 + 0.03*hashUnit(fseed, 0x01, seed)) * fmin // gentle, ~2..5% of the short side
+			waveK := 1.5 + 2.5*hashUnit(fseed, 0x02, seed)              // ~1.5..4 humps along the run
+			wavePh := hashUnit(fseed, 0x03, seed) * 2 * math.Pi
+			// Step ~1px along the run so the thread is continuous but crisp.
+			steps := int(L)
+			if steps < 1 {
+				steps = 1
+			}
+			for s := 0; s <= steps; s++ {
+				t := float64(s) / float64(steps) // 0 at ni → 1 at nj
+				// Waviness: a sine bump that vanishes at both endpoints (so it meets the nodes cleanly).
+				env := math.Sin(t * math.Pi) // 0 at ends, 1 mid
+				off := waveAmp * env * math.Sin(t*waveK*math.Pi+wavePh)
+				fx := ni.x + ux*L*t + perpx*off
+				fy := ni.y + uy*L*t + perpy*off
+				px := int(fx + 0.5)
+				py := int(fy + 0.5)
+				// Brightness: brightens toward BOTH endpoints (a shallow U), dimmest mid-run.
+				edge := 1 - env            // 1 at ends → 0 mid
+				bright := 0.30 + 0.55*edge // ~0.30 mid .. 0.85 near nodes
+				hue := blend(ni.hue, nj.hue, t)
+				thread := blend(pal.bg, hue, 0.35+0.45*edge)
+				thread = blend(thread, webNodeCore, 0.10*bright)
+				// Skip a fraction of mid-run dots so the thread reads as a faint dotted filament, not a
+				// solid bright line — keeps the voids feeling empty and the nodes dominant.
+				if edge < 0.35 && (hashUnit(uint32(s+1), 0x0D, fseed) > 0.6) {
+					continue
+				}
+				setPixel(img, px, py, thread)
+			}
+			// String a few TINY galaxies along the filament (not on the endpoints).
+			galN := 1 + int(hashUnit(fseed, 0x04, seed)*3) // 1..3
+			for g := 0; g < galN; g++ {
+				t := 0.2 + 0.6*hashUnit(uint32(g)+1, 0x05, fseed) // keep off the ends
+				env := math.Sin(t * math.Pi)
+				off := waveAmp * env * math.Sin(t*waveK*math.Pi+wavePh)
+				fx := ni.x + ux*L*t + perpx*off
+				fy := ni.y + uy*L*t + perpy*off
+				hue := blend(ni.hue, nj.hue, t)
+				tinyGalaxy(int(fx+0.5), int(fy+0.5), hue, 0.4+0.4*hashUnit(uint32(g)+1, 0x06, fseed))
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// NODE KNOTS: draw the cluster nodes LAST so their bright cores sit over any filament dots that
+	// pass behind them. Each node is a tight scatter of tiny galaxies around a brilliant core dab,
+	// all in the node's iridescent hue. The core is a small round knot (aspect-squashed so it reads
+	// round in the terminal cell).
+	// ------------------------------------------------------------------------------------------
+	for _, n := range nodes {
+		cx, cy := n.x, n.y
+		knotR := (2.0 + 0.5*float64(n.size)) // scatter radius grows a hair with the cluster size
+		// Tiny galaxies scattered in the knot (gaussian-ish toward the center).
+		for k := 0; k < n.size; k++ {
+			kk := uint32(k)*31 + 1
+			rr := (hashUnit(kk, 0x01, seed) + hashUnit(kk, 0x02, seed)) * 0.5
+			rr = rr * rr * knotR // bias toward the center
+			ang := hashUnit(kk, 0x03, seed) * 2 * math.Pi
+			gx := int(cx + math.Cos(ang)*rr + 0.5)
+			gy := int(cy + math.Sin(ang)*rr*planetAspectY + 0.5) // squash so the knot reads round
+			tinyGalaxy(gx, gy, n.hue, 0.5+0.5*hashUnit(kk, 0x04, seed))
+		}
+		// A small round bright CORE dab (aspect-squashed). A tight filled ellipse: core-white at the
+		// very center fading into the node's iridescent hue at the rim — crisp, no soft halo.
+		coreR := 1.6 + 0.15*float64(n.size)
+		coreRY := coreR * planetAspectY
+		x0 := int(math.Floor(cx - coreR))
+		x1 := int(math.Ceil(cx + coreR))
+		y0 := int(math.Floor(cy - coreRY))
+		y1 := int(math.Ceil(cy + coreRY))
+		invCR := 1.0 / coreR
+		invCRY := 1.0 / math.Max(coreRY, 0.001)
+		for py := y0; py <= y1; py++ {
+			dyf := (float64(py) - cy) * invCRY
+			for px := x0; px <= x1; px++ {
+				dxf := (float64(px) - cx) * invCR
+				d2 := dxf*dxf + dyf*dyf
+				if d2 > 1.0 {
+					continue
+				}
+				f := 1 - d2 // 1 center → 0 rim
+				col := blend(n.hue, webNodeCore, clampF(f*f, 0, 1))
+				setPixel(img, px, py, col)
+			}
+		}
+	}
+}
+
+// Ascension-scene palette anchors: the transcendent finale leaves the dark cosmos behind for pure
+// radiant LIGHT. The tones lean on the two ether anchors already in the atlas (etherWhiteAnchor +
+// etherGoldAnchor) — a luminous cool-white and a soft warm halo gold — plus a deep cool field-edge
+// tone so the frame still has depth at the corners (the darkness being left behind). Package-level
+// and deterministic; the iridescent shimmer on the rings/rays reuses webIrid.
+var (
+	ascendCore   = color.RGBA{R: 0xff, G: 0xff, B: 0xff, A: 0xff} // white-hot singularity core (pure light)
+	ascendFieldE = color.RGBA{R: 0x18, G: 0x1c, B: 0x2e, A: 0xff} // deep cool field edge (the cosmos being left behind)
+)
+
+// drawAscensionScene renders the TRANSCENDENT-AGE scene — the FINALE of all 22 ages. Unlike the other
+// four cosmic scenes (which sit on a dark void), the transcended civilization has left physical form
+// behind, so the frame transitions FROM the void TO pure radiant LIGHT: a luminous ascension mandala.
+//
+// It is built from CRISP geometry, not a soft blur: (1) a radial FIELD gradient — deep cool void at
+// the corners blooming to radiant warm-white/gold toward the center, with a few faint edge stars
+// dissolving into the light (a nod to the cosmos left behind); (2) a tight white-hot SINGULARITY at
+// center; (3) the MANDALA centerpiece — concentric crisp RINGS (aspect-squashed so they read round in
+// the terminal, see planetAspectY) plus two radiating sets of RAYS/SPOKES in sacred-geometry symmetry;
+// (4) streams of ASCENDING MOTES rising outward along the rays and fading as they go. Rings and rays
+// carry a whisper of iridescent shimmer (webIrid) over the ether white/gold. Everything is seeded,
+// panic-safe (every write clips), exact-size, and degrades gracefully to a smaller recognizable
+// mandala at minimap scale.
+func drawAscensionScene(img *image.RGBA, state game.GameState, w, h int, seed uint32) {
+	if w <= 0 || h <= 0 {
+		return
+	}
+	_ = state // scene depends only on the (name-derived) seed, like the other cosmic scenes
+
+	pal := newTdPal()
+	b := img.Bounds()
+	minWH := w
+	if h < minWH {
+		minWH = h
+	}
+	fmin := float64(minWH)
+
+	// Composition: dead-centered — a mandala is a symmetric ascension, so unlike the off-center galaxy
+	// we center it. The mandala's outer reach is ~0.46 of the short side (before the aspect squash).
+	cx := float64(b.Min.X) + 0.50*float64(w)
+	cy := float64(b.Min.Y) + 0.50*float64(h)
+	R := 0.46 * fmin
+	if R < 1 {
+		R = 1
+	}
+
+	// The two ether tones, nudged a hair by the theme accent so the finale still picks up the era mood
+	// without ceasing to read as radiant white/gold.
+	white := blend(etherWhiteAnchor, pal.highlight, 0.06)
+	gold := blend(etherGoldAnchor, pal.accent, 0.08)
+	warmWhite := blend(white, gold, 0.34) // the dominant field/light tone
+
+	// ------------------------------------------------------------------------------------------
+	// FIELD: a radial gradient painted over EVERY pixel — deep cool void at the corners blooming to a
+	// radiant warm-white/gold toward the center. The radius is aspect-corrected (planetAspectY) so the
+	// bloom is a squashed circle matching the mandala, not a tall egg. A smooth curve keeps it from
+	// muddying: mostly void out past the mandala, ramping up steeply toward the luminous heart.
+	// ------------------------------------------------------------------------------------------
+	fieldR := R * 1.7 // the bloom reaches well past the outer ring, out toward the corners
+	invFieldR := 1.0 / fieldR
+	invFieldRY := 1.0 / (fieldR * planetAspectY)
+	for y := 0; y < h; y++ {
+		py := b.Min.Y + y
+		if py < b.Min.Y || py >= b.Max.Y {
+			continue
+		}
+		dyf := (float64(py) - cy) * invFieldRY
+		for x := 0; x < w; x++ {
+			px := b.Min.X + x
+			if px < b.Min.X || px >= b.Max.X {
+				continue
+			}
+			dxf := (float64(px) - cx) * invFieldR
+			d := math.Sqrt(dxf*dxf + dyf*dyf) // 0 center .. ~1 at fieldR .. more toward corners
+			// Luminance ramp: bright center → dark edge. A cubic-ish falloff keeps a broad dark surround
+			// (the cosmos left behind) and a steep radiant bloom at the heart.
+			t := clampF(1.0-d, 0, 1)
+			lum := t * t * (3 - 2*t) // smoothstep so the transition is buttery, not banded
+			lum = lum * lum          // steepen: darkness dominates the outer field, light the heart
+			c := blend(ascendFieldE, warmWhite, lum)
+			// A whisper of gold toward the center so the bloom warms as it brightens.
+			if lum > 0.25 {
+				c = blend(c, gold, (lum-0.25)*0.22)
+			}
+			// A faint per-pixel shimmer so the field isn't a dead flat wash (very small, seeded).
+			fl := texHash(uint32(x), uint32(y), seed^0x1EAF)
+			if fl > 0.88 {
+				c = brighten(c, 0.02)
+			}
+			img.SetRGBA(px, py, c)
+		}
+	}
+
+	// EDGE STARS: a few faint stars near the corners, dissolving into the light — a last nod to the
+	// void being left behind. Placed only in the dim outer field (where the bloom hasn't washed them
+	// out), fading toward the center. Sparse and seeded.
+	starCount := (w * h) / 120
+	for i := 0; i < starCount; i++ {
+		si := uint32(i) + 1
+		sx := int(hash2(si, 0x71, seed) % uint32(w))
+		sy := int(hash2(si, 0x82, seed) % uint32(h))
+		// Distance from center (aspect-corrected, normalized to fieldR) — keep stars to the dim rim.
+		ddx := (float64(b.Min.X+sx) - cx) * invFieldR
+		ddy := (float64(b.Min.Y+sy) - cy) * invFieldRY
+		dd := math.Sqrt(ddx*ddx + ddy*ddy)
+		if dd < 0.62 { // inside the bloom — the light has dissolved the star; skip
+			continue
+		}
+		br := hashUnit(si, 0x93, seed)
+		if br < 0.45 {
+			continue
+		}
+		amt := (0.30 + 0.55*br) * clampF((dd-0.62)/0.5, 0, 1) // fade in toward the rim
+		cur := img.RGBAAt(b.Min.X+sx, b.Min.Y+sy)
+		setPixel(img, b.Min.X+sx, b.Min.Y+sy, blend(cur, white, clampF(amt, 0, 1)))
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// RAYS / SPOKES: a seeded, symmetric primary set radiating from the core to the outer reach, plus a
+	// finer half-offset secondary set (a star-of-light) for richness. Each ray is a crisp 1px line
+	// walked in r; brightness fades outward and the hue picks up a whisper of iridescent shimmer that
+	// shifts along the ray. Drawn BEFORE the rings so the ring strokes cross cleanly over them.
+	// ------------------------------------------------------------------------------------------
+	nRays := 8 + int(hash2(0x7A5C, seed, 0x11)%9) // 8..16 primary spokes
+	rot := hashUnit(0x7A5C, 0x22, seed) * math.Pi // seeded orientation
+	rayInner := R * 0.14                          // start just outside the singularity
+	rayOuter := R * 1.02                          // reach the outermost ring
+	drawRay := func(ang float64, reach, innerR float64, tint color.RGBA, strength float64) {
+		ca, sa := math.Cos(ang), math.Sin(ang)
+		steps := int(reach - innerR)
+		if steps < 1 {
+			steps = 1
+		}
+		for s := 0; s <= steps; s++ {
+			rr := innerR + (reach-innerR)*float64(s)/float64(steps)
+			fx := cx + ca*rr
+			fy := cy + sa*rr*planetAspectY // squash so the spoke fan reads round in the cell
+			px := int(fx + 0.5)
+			py := int(fy + 0.5)
+			frac := rr / reach                  // 0 inner .. 1 outer
+			fade := (1.0 - frac) * (1.0 - frac) // fade crisply toward the rim
+			// Iridescent shimmer keyed to the on-screen position, kept faint over the ether tint.
+			ux := clampF((fx-float64(b.Min.X))/float64(w), 0, 1)
+			uy := clampF((fy-float64(b.Min.Y))/float64(h), 0, 1)
+			col := blend(tint, webIrid(ux, uy), 0.14)
+			cur := img.RGBAAt(px, py)
+			setPixel(img, px, py, blend(cur, col, clampF(fade*strength, 0, 1)))
+		}
+	}
+	for i := 0; i < nRays; i++ {
+		ang := rot + float64(i)/float64(nRays)*2*math.Pi
+		drawRay(ang, rayOuter, rayInner, white, 0.85)
+		// Secondary half-offset ray: shorter, gold, fainter — the star-of-light between the spokes.
+		mid := rot + (float64(i)+0.5)/float64(nRays)*2*math.Pi
+		drawRay(mid, rayOuter*0.72, rayInner, gold, 0.55)
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// MANDALA RINGS: concentric crisp ring outlines at increasing radii — aspect-squashed circles so
+	// they read round in the terminal. Each ring is a 1px-thick ellipse stroke (a pixel is on the ring
+	// when its normalized radius sits within a thin band around 1.0). Rings alternate white/gold and
+	// carry the same faint iridescent shimmer as the rays. A seeded count scales down gracefully so a
+	// minimap still shows a few concentric rings.
+	// ------------------------------------------------------------------------------------------
+	nRings := 4 + int(hash2(0x7A5C, seed, 0x33)%4) // 4..7 rings
+	// Cap the ring count on tiny canvases so rings don't collapse into each other.
+	if maxRings := int(R / 3); nRings > maxRings {
+		nRings = maxRings
+	}
+	if nRings < 1 {
+		nRings = 1
+	}
+	for k := 0; k < nRings; k++ {
+		// Radii spaced from ~0.24R out to ~1.0R, slightly non-linear so the outer rings breathe apart.
+		fk := float64(k+1) / float64(nRings)
+		ringR := R * (0.22 + 0.80*fk*(0.7+0.3*fk))
+		ringRY := ringR * planetAspectY
+		// Stroke half-thickness in normalized-radius terms: ~1px on-screen regardless of ring size.
+		band := 0.7 / ringR
+		ringTint := white
+		if k%2 == 1 {
+			ringTint = gold
+		}
+		// Outer rings dimmer (fading into the surrounding void); inner rings brighter near the heart.
+		ringStrength := 0.85 * (1.0 - 0.45*fk)
+		x0 := int(math.Floor(cx - ringR - 1))
+		x1 := int(math.Ceil(cx + ringR + 1))
+		y0 := int(math.Floor(cy - ringRY - 1))
+		y1 := int(math.Ceil(cy + ringRY + 1))
+		if x0 < b.Min.X {
+			x0 = b.Min.X
+		}
+		if y0 < b.Min.Y {
+			y0 = b.Min.Y
+		}
+		if x1 > b.Max.X {
+			x1 = b.Max.X
+		}
+		if y1 > b.Max.Y {
+			y1 = b.Max.Y
+		}
+		invRR := 1.0 / ringR
+		invRRY := 1.0 / math.Max(ringRY, 0.001)
+		for py := y0; py < y1; py++ {
+			dyf := (float64(py) - cy) * invRRY
+			for px := x0; px < x1; px++ {
+				dxf := (float64(px) - cx) * invRR
+				d := math.Sqrt(dxf*dxf + dyf*dyf)
+				off := math.Abs(d - 1.0)
+				if off > band {
+					continue
+				}
+				edgeF := 1.0 - off/band // 1 on the ring centerline → 0 at the stroke edge
+				ux := clampF((float64(px)-float64(b.Min.X))/float64(w), 0, 1)
+				uy := clampF((float64(py)-float64(b.Min.Y))/float64(h), 0, 1)
+				col := blend(ringTint, webIrid(ux, uy), 0.16)
+				cur := img.RGBAAt(px, py)
+				setPixel(img, px, py, blend(cur, col, clampF(edgeF*ringStrength, 0, 1)))
+			}
+		}
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// ASCENDING MOTES: streams of tiny bright light-particles radiating outward from the core along the
+	// rays, fading as they climb — the "ascension." Each primary spoke seeds a short stream of dabs
+	// jittered a hair off the spine; brightness falls with radius. Count scales with canvas area so a
+	// minimap keeps a gentle sprinkle rather than a swarm. Drawn over the rings so the motes twinkle on
+	// top of the mandala.
+	// ------------------------------------------------------------------------------------------
+	areaScale := float64(w*h) / (440.0 * 300.0)
+	if areaScale > 1.6 {
+		areaScale = 1.6
+	}
+	motesPerRay := int(5 + 9*areaScale)
+	if motesPerRay < 3 {
+		motesPerRay = 3
+	}
+	for i := 0; i < nRays; i++ {
+		ang := rot + float64(i)/float64(nRays)*2*math.Pi
+		ca, sa := math.Cos(ang), math.Sin(ang)
+		rayS := seed ^ (uint32(i+1) * 0x9E37)
+		for m := 0; m < motesPerRay; m++ {
+			mk := uint32(m) + 1
+			// Radius along the ray, biased outward a little so the stream reads as rising away from the
+			// core; jittered so motes don't quantize into a dotted line.
+			u := hashUnit(mk, 0xA1, rayS)
+			rr := rayInner + (rayOuter*1.06-rayInner)*u
+			// Small perpendicular jitter (in angle terms) so the stream has a little width.
+			perp := (hashUnit(mk, 0xB2, rayS) - 0.5) * (R * 0.05)
+			pang := ang + math.Pi/2
+			fx := cx + ca*rr + math.Cos(pang)*perp
+			fy := cy + (sa*rr+math.Sin(pang)*perp)*planetAspectY
+			px := int(fx + 0.5)
+			py := int(fy + 0.5)
+			frac := rr / rayOuter
+			fade := clampF((1.0-frac)*(1.0-frac), 0, 1)
+			br := hashUnit(mk, 0xC3, rayS)
+			tint := white
+			if br > 0.6 {
+				tint = blend(white, gold, 0.5)
+			}
+			cur := img.RGBAAt(px, py)
+			setPixel(img, px, py, blend(cur, tint, clampF((0.4+0.6*br)*fade, 0, 1)))
+		}
+	}
+
+	// ------------------------------------------------------------------------------------------
+	// SINGULARITY: a brilliant crisp white-hot core dead center — tight, not a giant blur. A small
+	// filled aspect-squashed ellipse (pure white at the very center fading to gold at its rim) plus a
+	// sharp 4-point light cross so the heart reads as a crisp star of light. Drawn LAST so it sits over
+	// the rays/rings/motes that converge on it.
+	// ------------------------------------------------------------------------------------------
+	coreR := math.Max(2.2, R*0.075)
+	coreRY := coreR * planetAspectY
+	{
+		x0 := int(math.Floor(cx - coreR - 1))
+		x1 := int(math.Ceil(cx + coreR + 1))
+		y0 := int(math.Floor(cy - coreRY - 1))
+		y1 := int(math.Ceil(cy + coreRY + 1))
+		if x0 < b.Min.X {
+			x0 = b.Min.X
+		}
+		if y0 < b.Min.Y {
+			y0 = b.Min.Y
+		}
+		if x1 > b.Max.X {
+			x1 = b.Max.X
+		}
+		if y1 > b.Max.Y {
+			y1 = b.Max.Y
+		}
+		invCR := 1.0 / coreR
+		invCRY := 1.0 / math.Max(coreRY, 0.001)
+		for py := y0; py < y1; py++ {
+			dyf := (float64(py) - cy) * invCRY
+			for px := x0; px < x1; px++ {
+				dxf := (float64(px) - cx) * invCR
+				d2 := dxf*dxf + dyf*dyf
+				if d2 > 1.0 {
+					continue
+				}
+				f := 1 - math.Sqrt(d2) // 1 center → 0 rim
+				col := blend(gold, ascendCore, clampF(f*f, 0, 1)*0.85+f*0.15)
+				setPixel(img, px, py, col)
+			}
+		}
+	}
+	// Sharp light cross: crisp radiant spikes N/S/E/W from the singularity, fading outward — the star
+	// of light at the heart. Length keyed to the core so it stays proportional at any scale.
+	spike := int(coreR*2.6 + 2)
+	for s := 1; s <= spike; s++ {
+		f := 1.0 - float64(s)/float64(spike+1)
+		amt := clampF(f*f, 0, 1)
+		c := blend(gold, ascendCore, amt)
+		icx := int(cx + 0.5)
+		icy := int(cy + 0.5)
+		sy := int(float64(s) * planetAspectY) // squash the vertical arms to match
+		cur := img.RGBAAt(icx+s, icy)
+		setPixel(img, icx+s, icy, blend(cur, c, amt))
+		cur = img.RGBAAt(icx-s, icy)
+		setPixel(img, icx-s, icy, blend(cur, c, amt))
+		cur = img.RGBAAt(icx, icy+sy)
+		setPixel(img, icx, icy+sy, blend(cur, c, amt))
+		cur = img.RGBAAt(icx, icy-sy)
+		setPixel(img, icx, icy-sy, blend(cur, c, amt))
+	}
+	// The very heart: one pure-white pixel so the center is unambiguously the brightest point.
+	setPixel(img, int(cx+0.5), int(cy+0.5), ascendCore)
+}
+
+// bi returns 1 if b else 0 — a tiny helper for offsetting the station's larger footprint.
+func bi(b bool) int {
+	if b {
+		return 1
+	}
+	return 0
+}
+
+// clampF clamps v to [lo,hi].
+func clampF(v, lo, hi float64) float64 {
+	if v < lo {
+		return lo
+	}
+	if v > hi {
+		return hi
+	}
+	return v
+}
+
+// smoothstepF returns the smoothstep of x in [edge0,edge1] → [0,1].
+func smoothstepF(edge0, edge1, x float64) float64 {
+	if edge1 <= edge0 {
+		if x < edge0 {
+			return 0
+		}
+		return 1
+	}
+	t := clampF((x-edge0)/(edge1-edge0), 0, 1)
+	return t * t * (3 - 2*t)
+}
+
+// scaleRGB multiplies an RGB color's channels by s (clamped to [0,1] per channel), preserving
+// alpha. Used to darken the planet toward its night side without shifting hue.
+func scaleRGB(c color.RGBA, s float64) color.RGBA {
+	if s < 0 {
+		s = 0
+	}
+	return color.RGBA{
+		R: uint8(clampF(float64(c.R)*s, 0, 255)),
+		G: uint8(clampF(float64(c.G)*s, 0, 255)),
+		B: uint8(clampF(float64(c.B)*s, 0, 255)),
+		A: c.A,
+	}
+}
 
 // texHash is a tiny deterministic 2D value hash returning a float in [0,1). Used for the ground
 // texture speckle — cheap, seeded, and stable frame-to-frame.
@@ -7037,6 +9515,12 @@ func tdGeometry(plan *topPlan, xf tdTransform, w, h int) layoutGeometry {
 func buildLandmarkOverlay(state game.GameState, cols, rows int, geo layoutGeometry) overlayPlan {
 	var plan overlayPlan
 	if cols <= 0 || rows <= 0 {
+		return plan
+	}
+	// Cosmic-scale ages render a zoomed-out scene, not a city — no city-center marker, no landmark
+	// roofs, and not even the corner title. The overlay stays empty so nothing is stamped over the
+	// planet/starfield.
+	if _, ok := cosmicSceneFor(state.Age); ok {
 		return plan
 	}
 	occupied := map[int]bool{}

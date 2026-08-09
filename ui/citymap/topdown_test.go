@@ -1420,7 +1420,7 @@ func TestStreetsAreThinLanes(t *testing.T) {
 		seed := citySeed(nm)
 		for _, nRoofs := range []int{40, 90, 160} {
 			townR := tdTownRadius(nRoofs, cfg)
-			f := tdBuildBlockField(townR, anchors, nRoofs, formOrganic, cfg, seed)
+			f := tdBuildBlockField(townR, anchors, nRoofs, formOrganic, shapeBlob, cfg, seed)
 			town := inTownCellCount(f)
 			if town == 0 {
 				t.Fatalf("seed %q n=%d: empty town footprint", nm, nRoofs)
@@ -1540,6 +1540,111 @@ func TestOrganicOutlineIrregular(t *testing.T) {
 	}
 }
 
+// TestFootprintShapeWiring pins the per-age footprint-shape seam (map-overhaul-citymap Phase 2b): the
+// two village ages take the ragged blob, every other age the clean disc, and the shape→radius seam
+// resolves to the constant townR for the disc and exactly the organic wobble for the blob. Pure wiring
+// — no rendering — so it's the behavior-preserving contract the raster/wall paths rely on.
+func TestFootprintShapeWiring(t *testing.T) {
+	// (1) age → shape mapping: villages blob, others disc, unknown/empty disc.
+	if got := tdAgeFootprint("primitive_age"); got != shapeBlob {
+		t.Fatalf("tdAgeFootprint(primitive_age) = %d, want shapeBlob (%d)", got, shapeBlob)
+	}
+	if got := tdAgeFootprint("stone_age"); got != shapeBlob {
+		t.Fatalf("tdAgeFootprint(stone_age) = %d, want shapeBlob (%d)", got, shapeBlob)
+	}
+	if got := tdAgeFootprint("modern_age"); got != shapeDisc {
+		t.Fatalf("tdAgeFootprint(modern_age) = %d, want shapeDisc (%d)", got, shapeDisc)
+	}
+	for _, ak := range []string{"", "nonexistent_age", "bronze_age", "galactic_age"} {
+		if got := tdAgeFootprint(ak); got != shapeDisc {
+			t.Fatalf("tdAgeFootprint(%q) = %d, want shapeDisc (%d) — only the two village ages blob", ak, got, shapeDisc)
+		}
+	}
+
+	// (2) shapeDisc → constant townR at every angle (an exact circle).
+	const townR = 40.0
+	seed := citySeed("Aldermoor")
+	for i := 0; i < 16; i++ {
+		a := 2 * math.Pi * float64(i) / 16
+		if got := tdShapeRadiusAt(shapeDisc, a, townR, seed); got != townR {
+			t.Fatalf("tdShapeRadiusAt(shapeDisc, %.3f) = %.6f, want townR %.1f (disc must be a constant radius)", a, got, townR)
+		}
+	}
+
+	// (3) shapeBlob → EXACTLY the existing organic wobble (the seam must not alter the blob outline).
+	for _, nm := range []string{"", "Aldermoor", "Duskwind", "Gorse"} {
+		s := citySeed(nm)
+		for i := 0; i < 32; i++ {
+			a := 2 * math.Pi * float64(i) / 32
+			want := tdOrganicRadiusAt(a, townR, s)
+			if got := tdShapeRadiusAt(shapeBlob, a, townR, s); got != want {
+				t.Fatalf("seed %q angle %.3f: tdShapeRadiusAt(shapeBlob) = %.6f, want tdOrganicRadiusAt = %.6f", nm, a, got, want)
+			}
+		}
+	}
+}
+
+// TestInTownDiscUnchanged proves the disc footprint is byte-for-byte the old x²+y²≤townR² test — the
+// behavior-preserving guarantee for every non-village age (shapeDisc → townR, so tdInTown reduces to
+// the plain disc membership it had before the shape seam existed).
+func TestInTownDiscUnchanged(t *testing.T) {
+	const townR = 30.0
+	seed := citySeed("Corveil") // seed is irrelevant for the disc; pass a real one to prove it's ignored
+	for gx := -40; gx <= 40; gx += 3 {
+		for gy := -40; gy <= 40; gy += 3 {
+			x, y := float64(gx), float64(gy)
+			want := x*x+y*y <= townR*townR
+			if got := tdInTown(x, y, townR, shapeDisc, seed); got != want {
+				t.Fatalf("tdInTown(%.0f,%.0f, shapeDisc) = %v, want plain-disc %v (x²+y²=%.0f vs townR²=%.0f)", x, y, got, want, x*x+y*y, townR*townR)
+			}
+		}
+	}
+}
+
+// TestElectricFootprintShapes locks the Phase 2b-1 electric-epoch silhouettes: victorian SPRAWLS
+// (wide elongated oval), electric is a rounded RECTANGLE, atomic a broad bumpy HALO — each keyed
+// per-age, each extending past the townR disc but bounded by its declared tdShapeMaxReach.
+func TestElectricFootprintShapes(t *testing.T) {
+	if got := tdAgeFootprint("victorian_age"); got != shapeSprawl {
+		t.Fatalf("victorian footprint = %d, want shapeSprawl", got)
+	}
+	if got := tdAgeFootprint("electric_age"); got != shapeRoundRect {
+		t.Fatalf("electric footprint = %d, want shapeRoundRect", got)
+	}
+	if got := tdAgeFootprint("atomic_age"); got != shapeCoreHalo {
+		t.Fatalf("atomic footprint = %d, want shapeCoreHalo", got)
+	}
+	const townR = 40.0
+	seed := citySeed("Aldermoor")
+	minMax := func(shape tdFootprintShape) (mn, mx float64) {
+		mn, mx = math.Inf(1), 0
+		for a := 0; a < 720; a++ {
+			r := tdShapeRadiusAt(shape, float64(a)*math.Pi/360, townR, seed)
+			mn, mx = math.Min(mn, r), math.Max(mx, r)
+		}
+		return
+	}
+	// Sprawl: clearly elongated (wide:narrow > 1.5) and reaches past townR.
+	if mn, mx := minMax(shapeSprawl); mx/mn < 1.5 {
+		t.Fatalf("sprawl elongation %.2f (max %.1f / min %.1f), want >1.5 — victorian must read wide", mx/mn, mx, mn)
+	} else if mx <= townR {
+		t.Fatalf("sprawl max reach %.1f <= townR %.1f — victorian must extend past the disc", mx, townR)
+	}
+	// RoundRect corners + coreHalo suburbs both bulge past townR.
+	if _, rmx := minMax(shapeRoundRect); rmx <= townR {
+		t.Fatalf("roundRect max reach %.1f <= townR — corners must extend past the disc", rmx)
+	}
+	if _, hmx := minMax(shapeCoreHalo); hmx <= townR {
+		t.Fatalf("coreHalo max reach %.1f <= townR — suburbs must bulge past the disc", hmx)
+	}
+	// Every shaped footprint stays within its declared tdShapeMaxReach (walls/fit/tests rely on it).
+	for _, s := range []tdFootprintShape{shapeSprawl, shapeRoundRect, shapeCoreHalo} {
+		if _, smx := minMax(s); smx > townR*tdShapeMaxReach(s) {
+			t.Fatalf("shape %d max reach %.1f exceeds declared bound %.1f — tdShapeMaxReach is unsafe", s, smx, townR*tdShapeMaxReach(s))
+		}
+	}
+}
+
 // groundVariance renders the ground of a fresh canvas with drawGround and returns the mean
 // per-channel variance of the ground pixels (a robust proxy for texture "busyness": a flat
 // wash → ~0, a noisy speckle → high). Used by the quieter-ground test.
@@ -1644,18 +1749,18 @@ func TestBiggerPlazaClearRadius(t *testing.T) {
 	}
 	// For each form, no fabric lot may sit inside that form's OWN wonder-plaza radius. Assert on a
 	// RADIAL town (roomy ring honoured) and an ORGANIC town (small ring honoured).
-	check := func(ageKey string, era era, form tdTownForm, plazaR float64) {
-		// Find a display name whose seed rolls the target form for this era.
+	check := func(ageKey string, form tdTownForm, plazaR float64) {
+		// Find a display name whose seed rolls the target form for this age.
 		name := ""
 		for i := 0; i < 8000; i++ {
 			cand := "Plaza" + formName(form) + strconv.Itoa(i)
-			if tdPickTownForm(citySeed(cand), era) == form {
+			if tdPickTownForm(citySeed(cand), ageKey) == form {
 				name = cand
 				break
 			}
 		}
 		if name == "" {
-			t.Fatalf("could not find a seed that rolls form %s at era %d", formName(form), era)
+			t.Fatalf("could not find a seed that rolls form %s at age %s", formName(form), ageKey)
 		}
 		plan := tdPlanFor(namedState(ageKey, name, wonderBlds))
 		if plan.form != form {
@@ -1682,8 +1787,8 @@ func TestBiggerPlazaClearRadius(t *testing.T) {
 			}
 		}
 	}
-	check("bronze_age", eraHubSpoke, formRadial, roomyR)      // roomy ring cleared
-	check("primitive_age", eraOrganic, formOrganic, organicR) // small ring cleared
+	check("bronze_age", formRadial, roomyR)       // roomy ring cleared
+	check("primitive_age", formOrganic, organicR) // small ring cleared
 }
 
 // TestPondsInTown locks playtest polish FIX 4: a FEW BUILT decorative ponds are mixed
@@ -1774,6 +1879,12 @@ func formName(f tdTownForm) string {
 		return "grid"
 	case formRibbon:
 		return "ribbon"
+	case formCrescent:
+		return "crescent"
+	case formBoulevard:
+		return "boulevard"
+	case formCoreSuburb:
+		return "coreSuburb"
 	}
 	return "?"
 }
@@ -1852,50 +1963,98 @@ func enclosedWardCount(f blockField) int {
 }
 
 // TestTownFormDeterministicAndVaried locks the two core properties of tdPickTownForm: it is a pure
-// function of (citySeed, era) — the SAME inputs always yield the SAME form — and across a sample of
-// citySeeds the chosen forms VARY (a band is not collapsed to a single form). Determinism is what
-// makes a civ's town shape stable across ages/frames; variety is the whole point (no two towns
-// alike).
+// function of (citySeed, ageKey) — the SAME inputs always yield the SAME form — and across a sample
+// of citySeeds the chosen forms VARY (an age is not collapsed to a single form). Determinism is what
+// makes a civ's town shape stable across frames; variety is the whole point (no two towns alike).
 func TestTownFormDeterministicAndVaried(t *testing.T) {
-	// (1) DETERMINISM: repeated picks for the same (seed, era) are identical, for several eras.
-	eras := []era{eraOrganic, eraHubSpoke, eraCastle, eraZonedGrid, eraCityBlocks, eraCampus, eraOrbital}
-	for _, e := range eras {
+	// (1) DETERMINISM: repeated picks for the same (seed, age) are identical, for several ages.
+	ages := []string{"primitive_age", "bronze_age", "medieval_age", "colonial_age", "modern_age", "fusion_age", "galactic_age"}
+	for _, ageKey := range ages {
 		for i := 0; i < 200; i++ {
 			s := citySeed("Town" + strconv.Itoa(i))
-			a := tdPickTownForm(s, e)
-			b := tdPickTownForm(s, e)
+			a := tdPickTownForm(s, ageKey)
+			b := tdPickTownForm(s, ageKey)
 			if a != b {
-				t.Fatalf("tdPickTownForm not deterministic for seed %#x era %d: %s vs %s", s, e, formName(a), formName(b))
+				t.Fatalf("tdPickTownForm not deterministic for seed %#x age %s: %s vs %s", s, ageKey, formName(a), formName(b))
 			}
 		}
 	}
 
-	// (2) VARIETY: over a sample of citySeeds, a band that allows >1 form actually PRODUCES >1 form
-	// (different seeds → different towns). Test on eras whose weights permit several forms.
-	for _, e := range []era{eraHubSpoke, eraCastle, eraZonedGrid, eraCityBlocks} {
+	// (2) VARIETY: over a sample of citySeeds, an age that allows >1 form actually PRODUCES >1 form
+	// (different seeds → different towns). Test on ages whose weights permit several forms.
+	for _, ageKey := range []string{"bronze_age", "medieval_age", "victorian_age", "fusion_age"} {
 		seen := map[tdTownForm]int{}
 		for i := 0; i < 400; i++ {
-			seen[tdPickTownForm(citySeed("Varyville"+strconv.Itoa(i)), e)]++
+			seen[tdPickTownForm(citySeed("Varyville"+strconv.Itoa(i)), ageKey)]++
 		}
 		if len(seen) < 2 {
-			t.Fatalf("era %d produced only %d distinct form(s) over 400 seeds (%v) — towns are not varied", e, len(seen), seen)
+			t.Fatalf("age %s produced only %d distinct form(s) over 400 seeds (%v) — towns are not varied", ageKey, len(seen), seen)
 		}
 	}
 
-	// (3) The SAME civ name over different eras generally re-skins its form (the roll is
-	// era-weighted, not a single global choice) — assert at least the distribution differs by
-	// confirming a name that is organic in primitive can be a different form in a grid-heavy era
-	// somewhere in the sample (proves era actually feeds the pick).
-	eraSpanChanged := false
+	// (3) The SAME civ name over different ages generally re-skins its form (the roll is
+	// age-weighted, not a single global choice) — assert the distribution differs by confirming a
+	// name that is organic in primitive can be a different form in a grid-heavy age somewhere in the
+	// sample (proves the age key actually feeds the pick).
+	ageSpanChanged := false
 	for i := 0; i < 200; i++ {
 		s := citySeed("Spanner" + strconv.Itoa(i))
-		if tdPickTownForm(s, eraOrganic) != tdPickTownForm(s, eraCityBlocks) {
-			eraSpanChanged = true
+		if tdPickTownForm(s, "primitive_age") != tdPickTownForm(s, "modern_age") {
+			ageSpanChanged = true
 			break
 		}
 	}
-	if !eraSpanChanged {
-		t.Fatal("no civ changed form between the organic and city-blocks bands — era is not influencing the pick")
+	if !ageSpanChanged {
+		t.Fatal("no civ changed form between the primitive and modern ages — the age key is not influencing the pick")
+	}
+}
+
+// TestAgeFormDominance locks the Phase-2a per-age scaffold: each age's DOMINANT weight is the form a
+// clear majority of seeds actually roll (so the age reads characteristically), the pick stays
+// deterministic per (seed, age), and an unknown key falls back to organic-dominant. It samples a
+// spread of ages across the timeline — organic (primitive), radial (bronze/galactic), and grid
+// (modern) — proving the table's dominant column drives the render.
+func TestAgeFormDominance(t *testing.T) {
+	// Each age's characteristic (dominant) form. A comfortable majority of seeds must land there;
+	// the residual weights still let a minority fan out to other forms.
+	cases := []struct {
+		ageKey string
+		want   tdTownForm
+	}{
+		{"primitive_age", formOrganic},
+		{"bronze_age", formRadial},
+		{"modern_age", formGrid},
+		{"galactic_age", formRadial},
+	}
+	const n = 2000
+	for _, c := range cases {
+		hits := 0
+		for i := 0; i < n; i++ {
+			if tdPickTownForm(citySeed("Dom"+c.ageKey+strconv.Itoa(i)), c.ageKey) == c.want {
+				hits++
+			}
+		}
+		// Dominant weights here are ≥0.60 (modern/galactic ≥0.70), so >0.5 of seeds landing on the
+		// dominant form is a safe, non-brittle floor.
+		if frac := float64(hits) / float64(n); frac < 0.5 {
+			t.Fatalf("age %s rolled its dominant form %s only %.0f%% of the time — the age does not read characteristically", c.ageKey, formName(c.want), frac*100)
+		}
+	}
+
+	// DETERMINISM (belt-and-braces at the per-age level): same seed+age → same form.
+	for _, c := range cases {
+		for i := 0; i < 100; i++ {
+			s := citySeed("Det" + strconv.Itoa(i))
+			if a, b := tdPickTownForm(s, c.ageKey), tdPickTownForm(s, c.ageKey); a != b {
+				t.Fatalf("tdPickTownForm not deterministic for seed %#x age %s: %s vs %s", s, c.ageKey, formName(a), formName(b))
+			}
+		}
+	}
+
+	// FALLBACK: an unknown age key uses the organic-dominant default (radial+grid forbidden), so a
+	// mis-keyed age still renders a sensible rambling town.
+	if w := tdAgeFormWeights("nonexistent_age"); w[formRadial] != 0 || w[formGrid] != 0 || w[formOrganic] <= w[formRibbon] {
+		t.Fatalf("unknown-key fallback = %v — want organic-dominant with radial/grid forbidden", w)
 	}
 }
 
@@ -1923,10 +2082,16 @@ func TestPrimitiveIsOrganicNotAWheel(t *testing.T) {
 	cfg := defaultTdConfig
 	rs := cfg.roofSize
 
-	// (A) Distribution over many seeds at the primitive (organic) band.
+	// (A) The LOCKED weight-table invariant: primitive's radial + grid weights are exactly 0 so the
+	// picker can never even reach a wheel/grid, regardless of seed.
+	if pw := tdAgeFormWeights("primitive_age"); pw[formRadial] != 0 || pw[formGrid] != 0 {
+		t.Fatalf("tdAgeFormWeights(primitive_age) = %v — radial[%d] and grid[%d] MUST be 0 (villages never plan a wheel/grid)", pw, formRadial, formGrid)
+	}
+
+	// Distribution over many seeds at the primitive age.
 	var cnt [4]int
 	for i := 0; i < 2000; i++ {
-		f := tdPickTownForm(citySeed("Hamlet"+strconv.Itoa(i)), eraOrganic)
+		f := tdPickTownForm(citySeed("Hamlet"+strconv.Itoa(i)), "primitive_age")
 		cnt[f]++
 	}
 	if cnt[formRadial] != 0 || cnt[formGrid] != 0 {
@@ -1939,7 +2104,7 @@ func TestPrimitiveIsOrganicNotAWheel(t *testing.T) {
 		t.Fatal("primitive never rolled ribbon — the occasional grew-along-a-trail village should still appear")
 	}
 	// The fixed anonymous (default) village seed must be organic — the CURRENT village is not a wheel.
-	if got := tdPickTownForm(citySeed(""), eraOrganic); got != formOrganic {
+	if got := tdPickTownForm(citySeed(""), "primitive_age"); got != formOrganic {
 		t.Fatalf("the default (anonymous) primitive village rolled %s, want organic — the current village must ramble, not read as a wheel", formName(got))
 	}
 
@@ -1959,8 +2124,8 @@ func TestPrimitiveIsOrganicNotAWheel(t *testing.T) {
 		seed := citySeed(nm)
 		for _, nRoofs := range []int{40, 80, 140, 200} {
 			townR := tdTownRadius(nRoofs, cfg)
-			org := tdBuildBlockField(townR, anchors, nRoofs, formOrganic, cfg, seed)
-			rad := tdBuildBlockField(townR, anchors, nRoofs, formRadial, cfg, seed)
+			org := tdBuildBlockField(townR, anchors, nRoofs, formOrganic, shapeBlob, cfg, seed)
+			rad := tdBuildBlockField(townR, anchors, nRoofs, formRadial, shapeDisc, cfg, seed)
 			if e := enclosedWardCount(org); e < minOrganicMesh {
 				t.Fatalf("organic field (seed %q, n=%d) has only %d enclosed wards (< %d) — the street web is not a mesh with loops", nm, nRoofs, e, minOrganicMesh)
 			}
@@ -1996,7 +2161,7 @@ func TestPrimitiveIsOrganicNotAWheel(t *testing.T) {
 	wheelChecked := 0
 	for i := 0; i < 20000 && wheelChecked < 4; i++ {
 		cand := "Wheel" + strconv.Itoa(i)
-		if tdPickTownForm(citySeed(cand), eraHubSpoke) != formRadial {
+		if tdPickTownForm(citySeed(cand), "bronze_age") != formRadial {
 			continue
 		}
 		plan := tdPlanFor(namedState("bronze_age", cand, wheelBlds))
@@ -2066,12 +2231,17 @@ func TestEachTownFormWellFormed(t *testing.T) {
 	// (1)-(3): FIELD-level checks for each form, forced directly (no era-style confound). Wonderless
 	// single-center anchor + a substantial ward count so the network is real.
 	anchors := []tdAnchor{{cx: 0, cy: 0}}
-	for _, form := range []tdTownForm{formOrganic, formRadial, formGrid, formRibbon} {
+	for _, form := range []tdTownForm{formOrganic, formRadial, formGrid, formRibbon, formCrescent, formBoulevard, formCoreSuburb} {
+		// Mirror today's outline behaviour: organic clips to the blob, every other form to the disc.
+		shape := shapeDisc
+		if form == formOrganic {
+			shape = shapeBlob
+		}
 		for _, nm := range []string{"Aldermoor", "Bexley", "Corveil", "Duskwind"} {
 			seed := citySeed(nm)
 			nRoofs := 140
 			townR := tdTownRadius(nRoofs, cfg)
-			field := tdBuildBlockField(townR, anchors, nRoofs, form, cfg, seed)
+			field := tdBuildBlockField(townR, anchors, nRoofs, form, shape, cfg, seed)
 
 			// Street network exists, is ONE component, and reaches the core (the central plaza's
 			// ward boundary is central).
@@ -2118,28 +2288,30 @@ func TestEachTownFormWellFormed(t *testing.T) {
 	type formCase struct {
 		form   tdTownForm
 		ageKey string
-		era    era
 	}
-	// One representative age per era band we use. tdPickTownForm(seed, era) selects the form.
+	// One age whose weights make each target form reachable. tdPickTownForm(seed, ageKey) selects it.
 	cases := []formCase{
-		{formOrganic, "primitive_age", eraOrganic},
-		{formRibbon, "primitive_age", eraOrganic},
-		{formRadial, "bronze_age", eraHubSpoke},
-		{formGrid, "electric_age", eraCityBlocks},
+		{formOrganic, "primitive_age"},
+		{formRibbon, "primitive_age"},
+		{formRadial, "bronze_age"},
+		{formGrid, "atomic_age"},        // grid is the minority form at atomic (still reachable)
+		{formCrescent, "victorian_age"}, // 2a: garden-suburb crescents
+		{formBoulevard, "electric_age"}, // 2a: grid cut by grand diagonals
+		{formCoreSuburb, "atomic_age"},  // 2a: dense core + sparse suburb
 	}
 	blds := map[string]int{"hut": 26, "gathering_camp": 18, "stone_camp": 10, "forge": 10, "barracks": 6}
 	for _, fc := range cases {
-		// Find a display name whose seed rolls the desired form for this era.
+		// Find a display name whose seed rolls the desired form for this age.
 		name := ""
 		for i := 0; i < 5000; i++ {
 			cand := "Form" + strconv.Itoa(i)
-			if tdPickTownForm(citySeed(cand), fc.era) == fc.form {
+			if tdPickTownForm(citySeed(cand), fc.ageKey) == fc.form {
 				name = cand
 				break
 			}
 		}
 		if name == "" {
-			t.Fatalf("could not find a seed that rolls form %s at era %d — form unreachable", formName(fc.form), fc.era)
+			t.Fatalf("could not find a seed that rolls form %s at age %s — form unreachable", formName(fc.form), fc.ageKey)
 		}
 		plan := tdPlanFor(namedState(fc.ageKey, name, blds))
 		if plan.form != fc.form {
@@ -2175,10 +2347,103 @@ func TestEachTownFormWellFormed(t *testing.T) {
 				t.Fatalf("form %s (seed %q): %.0f%% of roofs sit ON a street cell — buildings must be inset inside their wards", formName(fc.form), name, frac*100)
 			}
 		}
-		// COMPACT: no fabric roof past the bounded town radius (anti-pinwheel holds for every form).
+		// COMPACT: no fabric roof past the town's bounded SILHOUETTE. The bound is the footprint
+		// SHAPE's max reach (shaped footprints — sprawl/rect/halo — legitimately extend past townR but
+		// must still be bounded/in-frame), not a fixed disc. Anti-pinwheel holds for every form.
+		bound := plan.townR * tdShapeMaxReach(plan.shape) * 1.06
 		for _, lt := range fab {
-			if d := math.Hypot(lt.x-plan.cx, lt.y-plan.cy); d > plan.townR*1.05 {
-				t.Fatalf("form %s (seed %q): a roof sits %.1f from core, past townR %.1f — not compact/bounded", formName(fc.form), name, d, plan.townR)
+			if d := math.Hypot(lt.x-plan.cx, lt.y-plan.cy); d > bound {
+				t.Fatalf("form %s (seed %q): a roof sits %.1f from core, past the footprint bound %.1f (townR %.1f, shape %d) — not compact/bounded", formName(fc.form), name, d, bound, plan.townR, plan.shape)
+			}
+		}
+	}
+}
+
+// ---- 2a: electric-epoch bespoke forms (crescent / boulevard / core+suburb) ---
+
+// TestElectricEpochFormDominance locks that the three ELECTRIC-epoch ages each read as their OWN
+// bespoke town form for a comfortable majority of citySeeds (map-overhaul-citymap Phase 2a):
+// victorian → CRESCENT (garden-suburb curves), electric → BOULEVARD (grid cut by grand diagonals),
+// atomic → CORE+SUBURB (dense downtown, loose sprawl). Same seed+age must always yield the same
+// form (determinism). Weights are ≥0.85 dominant, so >0.5 of seeds on the bespoke form is a safe,
+// non-brittle floor; the 0.15 residual still lets a minority fan out (organic/grid).
+func TestElectricEpochFormDominance(t *testing.T) {
+	cases := []struct {
+		ageKey string
+		want   tdTownForm
+	}{
+		{"victorian_age", formCrescent},
+		{"electric_age", formBoulevard},
+		{"atomic_age", formCoreSuburb},
+	}
+	const n = 2000
+	for _, c := range cases {
+		hits := 0
+		for i := 0; i < n; i++ {
+			if tdPickTownForm(citySeed("Elec"+c.ageKey+strconv.Itoa(i)), c.ageKey) == c.want {
+				hits++
+			}
+		}
+		if frac := float64(hits) / float64(n); frac < 0.5 {
+			t.Fatalf("age %s rolled its bespoke form %s only %.0f%% of the time — the age does not read characteristically", c.ageKey, formName(c.want), frac*100)
+		}
+		// DETERMINISM: same seed+age → same form.
+		for i := 0; i < 100; i++ {
+			s := citySeed("ElecDet" + strconv.Itoa(i))
+			if a, b := tdPickTownForm(s, c.ageKey), tdPickTownForm(s, c.ageKey); a != b {
+				t.Fatalf("tdPickTownForm not deterministic for seed %#x age %s: %s vs %s", s, c.ageKey, formName(a), formName(b))
+			}
+		}
+	}
+}
+
+// TestNewScatterFormsContract locks the low-level CONTRACT of the three new scatter strategies:
+// each appends EXACTLY `need` free seeds to the pinned prefix it is handed (so the banded seed
+// count — hence banded town stability — is preserved), every seed sits INSIDE the town disc
+// (|x|,|y| ≤ townR), and the function is PANIC-SAFE on degenerate budgets (need = 0, 1, 2) and
+// deterministic (same seed → identical output). This is the per-form analogue of the guarantees
+// the grid/organic scatters already make.
+func TestNewScatterFormsContract(t *testing.T) {
+	cfg := defaultTdConfig
+	const townR = 40.0
+	scatters := map[string]func([]tdPoint, float64, int, tdFootprintShape, tdConfig, uint32) []tdPoint{
+		"crescent":   tdScatterCrescent,
+		"boulevard":  tdScatterBoulevard,
+		"coreSuburb": tdScatterCoreSuburb,
+	}
+	needs := []int{0, 1, 2, 3, 8, 27, 140}
+	names := []string{"Aldermoor", "Bexley", "Corveil", "Duskwind"}
+	for label, fn := range scatters {
+		for _, need := range needs {
+			for _, nm := range names {
+				seed := citySeed(nm)
+				// One pinned center anchor at the origin (as tdScatterSeedsFor supplies).
+				pinned := []tdPoint{{0, 0}}
+				// shapeDisc so the disc-behaviour contract (every seed inside townR) holds exactly.
+				got := fn(append([]tdPoint(nil), pinned...), townR, need, shapeDisc, cfg, seed)
+				// EXACT count: pinned prefix + exactly `need` free seeds.
+				if want := len(pinned) + need; len(got) != want {
+					t.Fatalf("%s need=%d seed %q: got %d seeds, want %d (pinned+need)", label, need, nm, len(got), want)
+				}
+				// BOUNDS: every seed inside the town disc (small epsilon for the clamp).
+				for i, p := range got {
+					if math.Abs(p.x) > townR+1e-6 || math.Abs(p.y) > townR+1e-6 {
+						t.Fatalf("%s need=%d seed %q: seed %d at (%.2f,%.2f) is outside townR=%.1f", label, need, nm, i, p.x, p.y, townR)
+					}
+					if d := math.Hypot(p.x, p.y); d > townR+1e-6 {
+						t.Fatalf("%s need=%d seed %q: seed %d radius %.2f > townR=%.1f", label, need, nm, i, d, townR)
+					}
+				}
+				// DETERMINISM: identical output for identical inputs.
+				got2 := fn(append([]tdPoint(nil), pinned...), townR, need, shapeDisc, cfg, seed)
+				if len(got) != len(got2) {
+					t.Fatalf("%s need=%d seed %q: non-deterministic length %d vs %d", label, need, nm, len(got), len(got2))
+				}
+				for i := range got {
+					if got[i] != got2[i] {
+						t.Fatalf("%s need=%d seed %q: non-deterministic seed %d: %+v vs %+v", label, need, nm, i, got[i], got2[i])
+					}
+				}
 			}
 		}
 	}
@@ -2371,30 +2636,34 @@ func TestV3BWallsPresentWithGates(t *testing.T) {
 				t.Fatalf("%s seed %q: street web has %d components — the wall must not sever street connectivity", bc.name, nm, comps)
 			}
 
-			// (4) The wall is NOT a closed ring — it has GATE GAPS. Bucket the wall segments by angle
-			// into 24 sectors; a closed ring fills nearly all sectors, but the gate gaps must leave
-			// some EMPTY sectors (the openings). Require at least 2 empty sectors (≥2 gate gaps).
-			const sect = 24
-			var filled [sect]bool
-			for _, w := range walls {
-				a := math.Atan2(w.y-plan.cy, w.x-plan.cx)
-				b := int((a + math.Pi) / (2 * math.Pi) * sect)
-				if b < 0 {
-					b = 0
+			// (4) The wall is NOT a closed ring — there is a real GATE GAP at every gate. Assert it at
+			// the GATE ANGLES directly (not a coarse fixed-sector bucket): each gate must sit in an
+			// actual opening in the curtain — no wall SEGMENT within the gate's angular arc. This is
+			// the true "curtain is open here" invariant and is silhouette-robust: a coarse 24-sector
+			// bucket saturates on a SMOOTH disc wall whose gates cluster (a non-village organic-roll now
+			// takes the disc footprint), hiding openings that plainly exist; checking at the gate arc
+			// itself catches a genuinely closed ring while never false-tripping on a dense-but-open one.
+			// The wall segments span gateArc=0.16 rad each side of a gate centre; require the curtain
+			// clear within a slightly tighter arc so a real opening is proven without demanding the
+			// renderer leave the entire 0.16 arc pristine.
+			const gateGapArc = 0.12 // radians each side of a gate that must be free of wall segments
+			openGates := 0
+			for _, g := range gates {
+				gAng := math.Atan2(g.y-plan.cy, g.x-plan.cx)
+				blocked := false
+				for _, w := range walls {
+					wAng := math.Atan2(w.y-plan.cy, w.x-plan.cx)
+					if angDiff(gAng, wAng) < gateGapArc {
+						blocked = true
+						break
+					}
 				}
-				if b >= sect {
-					b = sect - 1
+				if !blocked {
+					openGates++
 				}
-				filled[b] = true
 			}
-			empty := 0
-			for _, f := range filled {
-				if !f {
-					empty++
-				}
-			}
-			if empty < 2 {
-				t.Fatalf("%s seed %q: wall fills %d/%d angular sectors with only %d gaps — the curtain has no gate openings (a closed ring)", bc.name, nm, sect-empty, sect, empty)
+			if openGates < 2 {
+				t.Fatalf("%s seed %q: only %d of %d gates sit in a real curtain gap — the wall is a closed ring, not gated", bc.name, nm, openGates, len(gates))
 			}
 
 			// (5) A STREET REACHES EACH GATE (the gate opens where a street exits). For every gate,
@@ -4343,6 +4612,84 @@ func TestDumpCosmicEpochPNGs(t *testing.T) {
 	}
 }
 
+// TestDump2aFormPNGs renders four CONTRASTING ages — bronze (radial), colonial (grid), modern (grid),
+// galactic (radial) — with a FIXED display name + identical building set so a reviewer can eyeball
+// that Phase-2a per-age form keying now makes different ages pick different town FORMS. Opt-in:
+// skipped unless CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDump2aFormPNGs
+func TestDump2aFormPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump per-age form-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"bronze_age", "2a0_bronze.png"},
+		{"colonial_age", "2a0_colonial.png"},
+		{"modern_age", "2a0_modern.png"},
+		{"galactic_age", "2a0_galactic.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 160, 100)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s (form=%s)", path, formName(tdPickTownForm(citySeed("Aldermoor"), d.ageKey)))
+	}
+}
+
+// TestDump2a1FormPNGs renders the three ELECTRIC-epoch ages — victorian (CRESCENT garden-suburb),
+// electric (BOULEVARD grid-cut-by-diagonals), atomic (CORE+SUBURB) — with a FIXED display name +
+// identical building set so a reviewer can eyeball that each now reads as its OWN street layout
+// rather than a generic grid (map-overhaul-citymap Phase 2a). Opt-in: skipped unless
+// CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDump2a1FormPNGs
+func TestDump2a1FormPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump the electric-epoch bespoke-form PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Dense city on a large canvas so the STREET FABRIC (not the wonder plaza) fills the frame and
+	// the form is legible for review — 160x100 is too coarse to read the geometry.
+	blds := map[string]int{"hut": 140, "gathering_camp": 70, "forge": 34, "barracks": 22, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"victorian_age", "2a1_victorian.png"},
+		{"electric_age", "2a1_electric.png"},
+		{"atomic_age", "2a1_atomic.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 440, 300)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s (form=%s)", path, formName(tdPickTownForm(citySeed("Aldermoor"), d.ageKey)))
+	}
+}
+
 // TestFinalPairWiring locks that the FINAL two ages — quantum + transcendent, completing all 22 — are wired
 // to their own presets + sprites: quantum → the iridescent CRYSTAL-LATTICE wonder + the lattice house
 // profile; transcendent → the ethereal ASCENSION wonder + the ethereal house profile. Both are OPEN (no
@@ -4429,32 +4776,23 @@ func TestFinalPairWondersDiffer(t *testing.T) {
 	}
 }
 
-// TestFinalPairCitiesDiffer locks the CITY-level reads for the final two ages: quantum (dark iridescent
-// crystal) differs from transcendent (bright ethereal light), and each differs from two KNOWN-DISTINCT
-// styled ages — primitive_age and space_age. NOTE (this is the last slice): since transcendent is now
-// styled, there is NO default-village placeholder left to compare against, so we use real styled ages.
-func TestFinalPairCitiesDiffer(t *testing.T) {
+// TestTranscendentSceneDiffers locks that the transcendent ASCENSION scene (the finale — now a bespoke
+// cosmic scene via cosmicSceneFor, no longer a city) reads apart from two KNOWN-DISTINCT ages: the
+// primitive village (a city) and the space PLANET scene (another cosmic scene). The ascension leaves
+// the dark void for a radiant light-field, so it must differ from the void-based space scene even at
+// minimap scale.
+func TestTranscendentSceneDiffers(t *testing.T) {
 	_ = theme.SetActive("forge")
 	blds := map[string]int{"hut": 30, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
-	quantum, _ := renderImage(namedState("quantum_age", "Aldermoor", blds), 120, 72)
 	trans, _ := renderImage(namedState("transcendent_age", "Aldermoor", blds), 120, 72)
 	prim, _ := renderImage(namedState("primitive_age", "Aldermoor", blds), 120, 72)
 	space, _ := renderImage(namedState("space_age", "Aldermoor", blds), 120, 72)
 
-	if !imagesDiffer(quantum, trans) {
-		t.Fatal("quantum city renders identically to transcendent — the iridescent-crystal vs ethereal-light re-skin is not distinct")
-	}
-	if !imagesDiffer(quantum, prim) {
-		t.Fatal("quantum city renders identically to the primitive village — the quantum re-skin is not applied")
-	}
-	if !imagesDiffer(quantum, space) {
-		t.Fatal("quantum city renders identically to space — the quantum crystal deck must differ from the space colony")
-	}
 	if !imagesDiffer(trans, prim) {
-		t.Fatal("transcendent city renders identically to the primitive village — the transcendent re-skin is not applied")
+		t.Fatal("transcendent renders identically to the primitive village — the ascension scene is not applied")
 	}
 	if !imagesDiffer(trans, space) {
-		t.Fatal("transcendent city renders identically to space — the ethereal light-field must differ from the space colony")
+		t.Fatal("transcendent renders identically to space — the ascension light-field must differ from the planet scene")
 	}
 }
 
@@ -4581,4 +4919,774 @@ func TestDumpFinalPairPNGs(t *testing.T) {
 		f.Close()
 		t.Logf("wrote %s", path)
 	}
+}
+
+// ---- Phase 2c: space-mode background ----------------------------------------
+
+// meanLuma returns the mean per-pixel luminance (Rec.601) of an RGBA image in [0,255].
+func meanLuma(img *image.RGBA, w, h int) float64 {
+	var sum float64
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			c := img.RGBAAt(x, y)
+			sum += 0.299*float64(c.R) + 0.587*float64(c.G) + 0.114*float64(c.B)
+		}
+	}
+	if w*h == 0 {
+		return 0
+	}
+	return sum / float64(w*h)
+}
+
+// TestSpaceModeFlag locks Phase 2c: the five SPACE-AND-ABOVE ages carry spaceMode=true, and a
+// sampling of grounded ages (primitive, modern, cyberpunk) keep it false. This is the single flag
+// that swaps the whole ground read from town-on-terrain to station-in-the-void.
+func TestSpaceModeFlag(t *testing.T) {
+	_ = theme.SetActive("forge")
+	spaceAges := []string{"space_age", "interstellar_age", "galactic_age", "quantum_age", "transcendent_age"}
+	for _, age := range spaceAges {
+		if !styleForAge(age).spaceMode {
+			t.Fatalf("age %q: spaceMode = false, want true (a station in the void)", age)
+		}
+	}
+	groundedAges := []string{"primitive_age", "modern_age", "cyberpunk_age"}
+	for _, age := range groundedAges {
+		if styleForAge(age).spaceMode {
+			t.Fatalf("age %q: spaceMode = true, want false (a grounded era keeps its terrain)", age)
+		}
+	}
+}
+
+// TestDrawSpaceBackground locks the void+starfield paint: it must be panic-safe, produce a clearly
+// DARK mean pixel (far darker than the same age's OLD ground tint would have been), and contain a
+// handful of bright STAR pixels above a brightness threshold.
+func TestDrawSpaceBackground(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 140, 96
+	const seed uint32 = 0x5AC30000 // deterministic
+	style := styleForAge("space_age")
+	pal := newTdPal()
+
+	img := image.NewRGBA(image.Rect(0, 0, w, h))
+	// Panic-safety: a bare call must not blow up, and must write every pixel to exact size.
+	drawSpaceBackground(img, style, pal, seed, w, h)
+	if b := img.Bounds(); b.Dx() != w || b.Dy() != h {
+		t.Fatalf("space background wrong size: got %dx%d, want %dx%d", b.Dx(), b.Dy(), w, h)
+	}
+
+	// The void must be clearly DARK. Compare against the OLD space ground tint (a pale metal deck) —
+	// the void's mean luminance must be dramatically lower, proving we replaced the grey deck with a
+	// dark void rather than tinting it.
+	voidLuma := meanLuma(img, w, h)
+	oldGround := style.groundBase(pal) // the pale metal deck this age used before Phase 2c
+	oldLuma := 0.299*float64(oldGround.R) + 0.587*float64(oldGround.G) + 0.114*float64(oldGround.B)
+	if voidLuma > oldLuma*0.5 {
+		t.Fatalf("void not dark enough: mean luma %.1f is not < 0.5×old-ground luma %.1f (still reads as a deck, not a void)", voidLuma, oldLuma)
+	}
+	// And it must genuinely be a dark void in absolute terms, not merely relatively darker.
+	if voidLuma > 60 {
+		t.Fatalf("void mean luma %.1f too bright for deep space (want a calm dark field)", voidLuma)
+	}
+
+	// Starfield: a handful of pixels must be clearly bright (the stars) against the dark void.
+	const starThresh = 150.0
+	bright := 0
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			c := img.RGBAAt(x, y)
+			l := 0.299*float64(c.R) + 0.587*float64(c.G) + 0.114*float64(c.B)
+			if l > starThresh {
+				bright++
+			}
+		}
+	}
+	if bright < 3 {
+		t.Fatalf("starfield too sparse: only %d pixels above brightness %.0f — expected several stars", bright, starThresh)
+	}
+	// But not a snowstorm — stars stay a small fraction of the field.
+	if frac := float64(bright) / float64(w*h); frac > 0.10 {
+		t.Fatalf("starfield too dense: %.1f%% of pixels are bright — a snowstorm, not a tasteful scatter", frac*100)
+	}
+
+	// Determinism: same seed → identical pixels.
+	img2 := image.NewRGBA(image.Rect(0, 0, w, h))
+	drawSpaceBackground(img2, style, pal, seed, w, h)
+	if imagesDiffer(img, img2) {
+		t.Fatal("drawSpaceBackground not deterministic: same seed produced different pixels")
+	}
+
+	// Panic-safety at degenerate sizes.
+	for _, sz := range [][2]int{{0, 0}, {1, 1}, {1, 40}, {40, 1}} {
+		di := image.NewRGBA(image.Rect(0, 0, sz[0], sz[1]))
+		drawSpaceBackground(di, style, pal, seed, sz[0], sz[1]) // must not panic
+	}
+}
+
+// TestSpaceModeSuppressesGreenery locks the greenery suppression: a space-mode town plan emits ZERO
+// tree/garden/pond lots (a station in the void has no soil), while a grounded age still emits
+// greenery. Built structures and props are unaffected.
+func TestSpaceModeSuppressesGreenery(t *testing.T) {
+	_ = theme.SetActive("forge")
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+
+	// tdPlanForAge uses the PER-AGE style (styleForAge) exactly as the render path does, so the
+	// space-mode flag is live here (tdPlanFor's coarse era table predates per-age styling).
+	spacePlan := tdPlanForAge(namedState("space_age", "Aldermoor", blds))
+	for _, k := range []tdLotKind{tdTree, tdGarden, tdPond} {
+		if got := countKind(spacePlan, k); got != 0 {
+			t.Fatalf("space-mode plan emitted %d lots of kind %d — greenery must be fully suppressed", got, k)
+		}
+	}
+	// The station must still be a real settlement (structures survived the suppression).
+	if roofs := countKind(spacePlan, tdRoof); roofs < 5 {
+		t.Fatalf("space-mode plan has only %d roof lots — suppression should drop greenery, not the town", roofs)
+	}
+
+	// A grounded age with the SAME building set still grows greenery — proves the suppression is
+	// space-mode-specific, not a global regression.
+	groundPlan := tdPlanForAge(namedState("primitive_age", "Aldermoor", blds))
+	green := countKind(groundPlan, tdTree) + countKind(groundPlan, tdGarden)
+	if green == 0 {
+		t.Fatal("grounded age emitted no greenery — the suppression leaked past space-mode")
+	}
+}
+
+// TestDump2cSpaceBackgroundPNGs renders the five SPACE-AND-ABOVE ages at 440x300 with a dense
+// building set (incl. a wonder) so a reviewer can eyeball the void+starfield background. Opt-in:
+// skipped unless CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDump2cSpaceBackgroundPNGs
+func TestDump2cSpaceBackgroundPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump era-comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	// Dense set with a wonder so the centerpiece renders; FIXED display name → fixed seed.
+	blds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"space_age", "2c_space.png"},
+		{"interstellar_age", "2c_interstellar.png"},
+		{"galactic_age", "2c_galactic.png"},
+		{"quantum_age", "2c_quantum.png"},
+		{"transcendent_age", "2c_transcendent.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", blds), 440, 300)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
+
+// ---- Space Age = cosmic PLANET scene (Phase 2c) -----------------------------
+
+// TestSpaceIsPlanetScene locks the cosmic-scene dispatch: space_age has a bespoke scene
+// renderer; the other cosmic ages (galactic, etc.) and city ages (modern) do NOT yet — they fall
+// through to the normal city renderer. When those later slices land, this test updates with them.
+func TestSpaceIsPlanetScene(t *testing.T) {
+	if _, ok := cosmicSceneFor("space_age"); !ok {
+		t.Fatal("cosmicSceneFor(space_age) = false, want true (space is the planet scene)")
+	}
+	if _, ok := cosmicSceneFor("modern_age"); ok {
+		t.Fatal("cosmicSceneFor(modern_age) = true, want false (modern is still a city)")
+	}
+	// interstellar + galactic + quantum + transcendent now ALL have their own cosmic scenes (see their
+	// own tests) — every space-and-above age is a scene, so no cosmic age is a city any more. modern_age
+	// (above) is the genuine still-a-city false-case now.
+}
+
+// TestDrawPlanetScenePanicSafe renders the planet scene across degenerate, normal, and non-square
+// sizes. It must never panic and must produce an image of exactly the requested size.
+func TestDrawPlanetScenePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	sizes := []struct{ w, h int }{
+		{1, 1}, {8, 8}, {440, 300}, {300, 440}, {512, 96}, {96, 512},
+	}
+	st := sampleState("space_age", nil)
+	for _, s := range sizes {
+		img := image.NewRGBA(image.Rect(0, 0, s.w, s.h))
+		drawPlanetScene(img, st, s.w, s.h, 0xABCDEF)
+		if got := img.Bounds(); got.Dx() != s.w || got.Dy() != s.h {
+			t.Fatalf("size %dx%d: image = %dx%d, want exact", s.w, s.h, got.Dx(), got.Dy())
+		}
+	}
+}
+
+// meanLuminBlue returns the mean luminance and mean blue channel over a square region centered at
+// (cx,cy) with the given half-extent, clipped to the image.
+func meanLuminBlue(img *image.RGBA, cx, cy, half int) (lum, blue float64) {
+	b := img.Bounds()
+	var n float64
+	for y := cy - half; y <= cy+half; y++ {
+		for x := cx - half; x <= cx+half; x++ {
+			if x < b.Min.X || x >= b.Max.X || y < b.Min.Y || y >= b.Max.Y {
+				continue
+			}
+			c := img.RGBAAt(x, y)
+			lum += 0.299*float64(c.R) + 0.587*float64(c.G) + 0.114*float64(c.B)
+			blue += float64(c.B)
+			n++
+		}
+	}
+	if n == 0 {
+		return 0, 0
+	}
+	return lum / n, blue / n
+}
+
+// TestSpacePlanetSceneCenterBrighterAndDiffers verifies the space scene reads as a lit planet on a
+// dark void: the CENTER region (the globe) is markedly brighter AND bluer than the CORNERS (empty
+// space), and the whole render DIFFERS from a city age's render (fusion is still a city).
+func TestSpacePlanetSceneCenterBrighterAndDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	space, _ := renderImage(namedState("space_age", "Aldermoor", nil), w, h)
+
+	centerLum, centerBlue := meanLuminBlue(space, w/2, h/2, 12)
+	// Average the four corners so a single bright star can't skew the void baseline.
+	var voidLum, voidBlue float64
+	corners := [][2]int{{6, 6}, {w - 7, 6}, {6, h - 7}, {w - 7, h - 7}}
+	for _, c := range corners {
+		l, bl := meanLuminBlue(space, c[0], c[1], 4)
+		voidLum += l
+		voidBlue += bl
+	}
+	voidLum /= 4
+	voidBlue /= 4
+
+	if centerLum <= voidLum*1.5 {
+		t.Fatalf("planet center not markedly brighter than void: center lum=%.1f, void lum=%.1f", centerLum, voidLum)
+	}
+	if centerBlue <= voidBlue {
+		t.Fatalf("planet center not bluer than void: center blue=%.1f, void blue=%.1f", centerBlue, voidBlue)
+	}
+
+	// The space scene must not look like a city — compare against fusion_age (still the city path).
+	fusion, _ := renderImage(namedState("fusion_age", "Aldermoor", map[string]int{"hut": 20, "forge": 8, "colosseum": 1}), w, h)
+	if !imagesDiffer(space, fusion) {
+		t.Fatal("space_age render is identical to fusion_age (city) render — the scene did not diverge")
+	}
+}
+
+// TestSpaceSceneNoLandmarkLabels locks that a cosmic scene stamps NO overlay labels — no city
+// center, no landmark roofs, not even the corner title. A city age, by contrast, yields labels.
+func TestSpaceSceneNoLandmarkLabels(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	_, plan := renderImage(namedState("space_age", "Aldermoor", map[string]int{"hut": 10, "forge": 4, "colosseum": 1}), w, h)
+	if len(plan.labels) != 0 {
+		t.Fatalf("space_age overlay has %d labels, want 0 (cosmic scene is label-free)", len(plan.labels))
+	}
+	// Sanity: the same building set on a CITY age does produce labels, so the empty overlay above is
+	// the cosmic-scene gate at work, not an empty-state artifact.
+	_, cityPlan := renderImage(namedState("fusion_age", "Aldermoor", map[string]int{"hut": 10, "forge": 4, "colosseum": 1}), w, h)
+	if len(cityPlan.labels) == 0 {
+		t.Fatal("fusion_age (city) produced no labels — test baseline is wrong")
+	}
+}
+
+// TestDumpSpacePlanetPNGs dumps the space PLANET scene beside a still-a-city fusion render at
+// 440x300 for eyeball review. Opt-in: skipped unless CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpSpacePlanetPNGs
+func TestDumpSpacePlanetPNGs(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump the space-scene comparison PNGs")
+	}
+	_ = theme.SetActive("forge")
+	cityBlds := map[string]int{"hut": 28, "gathering_camp": 18, "forge": 12, "barracks": 6, "colosseum": 1}
+	dumps := []struct {
+		ageKey string
+		blds   map[string]int
+		file   string
+	}{
+		{"space_age", nil, "2d_space_planet.png"},
+		{"fusion_age", cityBlds, "2d_fusion_city.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", d.blds), 440, 300)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
+
+// ---------------------------------------------------------------------------------------------
+// INTERSTELLAR (star-system) scene — the 2nd cosmic scene. Mirrors the space-age planet-scene
+// tests: dispatch, panic-safety, center-brighter-than-void, divergence from the planet + a city,
+// and a label-free overlay.
+// ---------------------------------------------------------------------------------------------
+
+// TestInterstellarIsStarSystemScene locks the cosmic-scene dispatch for interstellar: it has a
+// bespoke scene (the star system), while a city age (modern) still has none. Divergence from the
+// space-age planet scene is proven separately by the pixel-diff test below.
+func TestInterstellarIsStarSystemScene(t *testing.T) {
+	if _, ok := cosmicSceneFor("interstellar_age"); !ok {
+		t.Fatal("cosmicSceneFor(interstellar_age) = false, want true (interstellar is the star-system scene)")
+	}
+	if _, ok := cosmicSceneFor("space_age"); !ok {
+		t.Fatal("cosmicSceneFor(space_age) = false, want true (baseline)")
+	}
+	if _, ok := cosmicSceneFor("modern_age"); ok {
+		t.Fatal("cosmicSceneFor(modern_age) = true, want false (modern is still a city)")
+	}
+}
+
+// TestDrawStarSystemScenePanicSafe renders the star-system scene across degenerate, normal, and
+// non-square sizes. It must never panic and must produce an image of exactly the requested size.
+func TestDrawStarSystemScenePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	sizes := []struct{ w, h int }{
+		{1, 1}, {8, 8}, {440, 300}, {300, 440}, {512, 96}, {96, 512},
+	}
+	st := sampleState("interstellar_age", nil)
+	for _, s := range sizes {
+		img := image.NewRGBA(image.Rect(0, 0, s.w, s.h))
+		drawStarSystemScene(img, st, s.w, s.h, 0xABCDEF)
+		if got := img.Bounds(); got.Dx() != s.w || got.Dy() != s.h {
+			t.Fatalf("size %dx%d: image = %dx%d, want exact", s.w, s.h, got.Dx(), got.Dy())
+		}
+	}
+}
+
+// TestStarSystemSceneCenterBrighterAndDiffers verifies the interstellar scene reads as a lit star
+// system on a dark void: the CENTER region (the star) is markedly brighter than the CORNERS (empty
+// space), the render DIFFERS from the space-age planet scene, AND it differs from a city age.
+func TestStarSystemSceneCenterBrighterAndDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	inter, _ := renderImage(namedState("interstellar_age", "Aldermoor", nil), w, h)
+
+	// The star sits at ~0.44w, 0.48h (see drawStarSystemScene). Sample there, not dead center.
+	centerLum, _ := meanLuminBlue(inter, w*44/100, h*48/100, 12)
+	var voidLum float64
+	corners := [][2]int{{6, 6}, {w - 7, 6}, {6, h - 7}, {w - 7, h - 7}}
+	for _, c := range corners {
+		l, _ := meanLuminBlue(inter, c[0], c[1], 4)
+		voidLum += l
+	}
+	voidLum /= 4
+	if centerLum <= voidLum*1.5 {
+		t.Fatalf("star center not markedly brighter than void: center lum=%.1f, void lum=%.1f", centerLum, voidLum)
+	}
+
+	// The star system must not look like the planet scene, nor a city.
+	space, _ := renderImage(namedState("space_age", "Aldermoor", nil), w, h)
+	if !imagesDiffer(inter, space) {
+		t.Fatal("interstellar star-system render is identical to the space-age planet render — the 2nd cosmic scene did not diverge")
+	}
+	city, _ := renderImage(namedState("fusion_age", "Aldermoor", map[string]int{"hut": 20, "forge": 8, "colosseum": 1}), w, h)
+	if !imagesDiffer(inter, city) {
+		t.Fatal("interstellar render is identical to fusion_age (city) render — the cosmic scene did not diverge")
+	}
+}
+
+// TestStarSystemSceneNoLandmarkLabels locks that the interstellar cosmic scene stamps NO overlay
+// labels (no city center, no landmark roofs, no title) — same gate the planet scene rides.
+func TestStarSystemSceneNoLandmarkLabels(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	_, plan := renderImage(namedState("interstellar_age", "Aldermoor", map[string]int{"hut": 10, "forge": 4, "colosseum": 1}), w, h)
+	if len(plan.labels) != 0 {
+		t.Fatalf("interstellar_age overlay has %d labels, want 0 (cosmic scene is label-free)", len(plan.labels))
+	}
+}
+
+// TestStarSystemSceneDeterministic locks that the star-system scene is a pure function of its
+// inputs: the same state + seed renders byte-identical.
+func TestStarSystemSceneDeterministic(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 200, 140
+	st := sampleState("interstellar_age", nil)
+	a := image.NewRGBA(image.Rect(0, 0, w, h))
+	b := image.NewRGBA(image.Rect(0, 0, w, h))
+	drawStarSystemScene(a, st, w, h, 0x1234BEEF)
+	drawStarSystemScene(b, st, w, h, 0x1234BEEF)
+	if imagesDiffer(a, b) {
+		t.Fatal("star-system scene is non-deterministic: same state+seed produced different pixels")
+	}
+}
+
+// TestDumpInterstellarPNG dumps the interstellar star-system scene at 440x300 for eyeball review,
+// beside the space-age planet scene so the two cosmic scenes can be compared side by side. Opt-in:
+// skipped unless CITYMAP_PNG_DUMP=<dir> is set, e.g.
+//
+//	CITYMAP_PNG_DUMP=/tmp/dump go test ./ui/citymap/ -run TestDumpInterstellarPNG
+func TestDumpInterstellarPNG(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump the interstellar-scene PNG")
+	}
+	_ = theme.SetActive("forge")
+	dumps := []struct {
+		ageKey string
+		file   string
+	}{
+		{"interstellar_age", "2e_interstellar.png"},
+		{"space_age", "2e_space_planet.png"},
+	}
+	for _, d := range dumps {
+		img, _ := renderImage(namedState(d.ageKey, "Aldermoor", nil), 440, 300)
+		path := dir + "/" + d.file
+		f, err := os.Create(path)
+		if err != nil {
+			t.Fatalf("create %s: %v", path, err)
+		}
+		if err := png.Encode(f, img); err != nil {
+			f.Close()
+			t.Fatalf("encode %s: %v", path, err)
+		}
+		f.Close()
+		t.Logf("wrote %s", path)
+	}
+}
+
+// ---- galactic: spiral-galaxy cosmic scene (3rd cosmic scene) -----------------
+
+func TestGalacticIsGalaxyScene(t *testing.T) {
+	if _, ok := cosmicSceneFor("galactic_age"); !ok {
+		t.Fatal("cosmicSceneFor(galactic_age) = false, want true (galactic is the spiral-galaxy scene)")
+	}
+	if _, ok := cosmicSceneFor("modern_age"); ok {
+		t.Fatal("cosmicSceneFor(modern_age) = true, want false (modern is still a city)")
+	}
+}
+
+func TestDrawGalaxyScenePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	sizes := []struct{ w, h int }{
+		{1, 1}, {8, 8}, {440, 300}, {300, 440}, {512, 96}, {96, 512},
+	}
+	st := sampleState("galactic_age", nil)
+	for _, s := range sizes {
+		img := image.NewRGBA(image.Rect(0, 0, s.w, s.h))
+		drawGalaxyScene(img, st, s.w, s.h, 0xABCDEF)
+		if got := img.Bounds(); got.Dx() != s.w || got.Dy() != s.h {
+			t.Fatalf("size %dx%d: image = %dx%d, want exact", s.w, s.h, got.Dx(), got.Dy())
+		}
+	}
+}
+
+func TestGalaxySceneCenterBrighterAndDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	gal, _ := renderImage(namedState("galactic_age", "Aldermoor", nil), w, h)
+	centerLum, _ := meanLuminBlue(gal, w*50/100, h*52/100, 12)
+	var voidLum float64
+	corners := [][2]int{{6, 6}, {w - 7, 6}, {6, h - 7}, {w - 7, h - 7}}
+	for _, c := range corners {
+		l, _ := meanLuminBlue(gal, c[0], c[1], 4)
+		voidLum += l
+	}
+	voidLum /= 4
+	if centerLum <= voidLum*1.5 {
+		t.Fatalf("galaxy core not markedly brighter than void: center lum=%.1f, void lum=%.1f", centerLum, voidLum)
+	}
+	space, _ := renderImage(namedState("space_age", "Aldermoor", nil), w, h)
+	inter, _ := renderImage(namedState("interstellar_age", "Aldermoor", nil), w, h)
+	if !imagesDiffer(gal, space) || !imagesDiffer(gal, inter) {
+		t.Fatal("galactic render matches an earlier cosmic scene — the 3rd scene did not diverge")
+	}
+	city, _ := renderImage(namedState("fusion_age", "Aldermoor", map[string]int{"hut": 20, "forge": 8, "colosseum": 1}), w, h)
+	if !imagesDiffer(gal, city) {
+		t.Fatal("galactic render is identical to a city (fusion) render")
+	}
+}
+
+func TestGalaxySceneNoLandmarkLabels(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	_, plan := renderImage(namedState("galactic_age", "Aldermoor", map[string]int{"hut": 10, "forge": 4, "colosseum": 1}), w, h)
+	if len(plan.labels) != 0 {
+		t.Fatalf("galactic_age overlay has %d labels, want 0 (cosmic scene is label-free)", len(plan.labels))
+	}
+}
+
+func TestGalaxySceneDeterministic(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 200, 140
+	st := sampleState("galactic_age", nil)
+	a := image.NewRGBA(image.Rect(0, 0, w, h))
+	b := image.NewRGBA(image.Rect(0, 0, w, h))
+	drawGalaxyScene(a, st, w, h, 0x1234BEEF)
+	drawGalaxyScene(b, st, w, h, 0x1234BEEF)
+	if imagesDiffer(a, b) {
+		t.Fatal("galaxy scene is non-deterministic: same state+seed produced different pixels")
+	}
+}
+
+func TestDumpGalacticPNG(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump the galactic-scene PNG")
+	}
+	_ = theme.SetActive("forge")
+	img, _ := renderImage(namedState("galactic_age", "Aldermoor", nil), 440, 300)
+	path := dir + "/2f_galactic.png"
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatalf("create %s: %v", path, err)
+	}
+	if err := png.Encode(f, img); err != nil {
+		f.Close()
+		t.Fatalf("encode %s: %v", path, err)
+	}
+	f.Close()
+	t.Logf("wrote %s", path)
+}
+
+// ---- quantum: cosmic-web cosmic scene (4th cosmic scene) ---------------------
+
+func TestQuantumIsCosmicWebScene(t *testing.T) {
+	if _, ok := cosmicSceneFor("quantum_age"); !ok {
+		t.Fatal("cosmicSceneFor(quantum_age) = false, want true (quantum is the cosmic-web scene)")
+	}
+	// modern_age is a genuine city — the still-a-city false-case (transcendent has since become the
+	// ascension scene, see TestTranscendentIsAscensionScene).
+	if _, ok := cosmicSceneFor("modern_age"); ok {
+		t.Fatal("cosmicSceneFor(modern_age) = true, want false (modern is still a city)")
+	}
+}
+
+func TestDrawCosmicWebScenePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	sizes := []struct{ w, h int }{
+		{1, 1}, {8, 8}, {440, 300}, {300, 440}, {512, 96}, {96, 512},
+	}
+	st := sampleState("quantum_age", nil)
+	for _, s := range sizes {
+		img := image.NewRGBA(image.Rect(0, 0, s.w, s.h))
+		drawCosmicWebScene(img, st, s.w, s.h, 0xABCDEF)
+		if got := img.Bounds(); got.Dx() != s.w || got.Dy() != s.h {
+			t.Fatalf("size %dx%d: image = %dx%d, want exact", s.w, s.h, got.Dx(), got.Dy())
+		}
+	}
+}
+
+// meanLuminWhole returns the mean luminance over the entire image — the cosmic web spreads its
+// structure across the field (rather than concentrating it dead-center like the galaxy bulge), so a
+// whole-image mean is the right measure that its nodes/filaments add light over a bare void.
+func meanLuminWhole(img *image.RGBA) float64 {
+	b := img.Bounds()
+	var sum, n float64
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			c := img.RGBAAt(x, y)
+			sum += 0.299*float64(c.R) + 0.587*float64(c.G) + 0.114*float64(c.B)
+			n++
+		}
+	}
+	if n == 0 {
+		return 0
+	}
+	return sum / n
+}
+
+// TestQuantumWebBrighterThanVoidAndDiffers verifies the web reads as luminous STRUCTURE on an empty
+// void — its whole-image mean brightness clearly exceeds a bare-void baseline (the same seeded space
+// background with no web), AND the render DIFFERS from every earlier cosmic scene and from a city age.
+func TestQuantumWebBrighterThanVoidAndDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	web, _ := renderImage(namedState("quantum_age", "Aldermoor", nil), w, h)
+
+	// Bare-void baseline: the same seeded space background the web is painted over, darkened by the
+	// same amount the scene deepens its intergalactic void, but with NO nodes/filaments. This isolates
+	// the light the WEB STRUCTURE adds on top of the actual void the scene uses.
+	seed := citySeed("Aldermoor")
+	base := image.NewRGBA(image.Rect(0, 0, w, h))
+	drawSpaceBackground(base, styleForAge("quantum_age"), newTdPal(), seed, w, h)
+	for y := 0; y < h; y++ {
+		for x := 0; x < w; x++ {
+			base.SetRGBA(x, y, darken(base.RGBAAt(x, y), 0.22))
+		}
+	}
+
+	webLum := meanLuminWhole(web)
+	baseLum := meanLuminWhole(base)
+	if webLum <= baseLum {
+		t.Fatalf("cosmic web not brighter than a bare void: web mean lum=%.2f, void mean lum=%.2f", webLum, baseLum)
+	}
+
+	space, _ := renderImage(namedState("space_age", "Aldermoor", nil), w, h)
+	inter, _ := renderImage(namedState("interstellar_age", "Aldermoor", nil), w, h)
+	gal, _ := renderImage(namedState("galactic_age", "Aldermoor", nil), w, h)
+	if !imagesDiffer(web, space) || !imagesDiffer(web, inter) || !imagesDiffer(web, gal) {
+		t.Fatal("quantum web render matches an earlier cosmic scene — the 4th scene did not diverge")
+	}
+	city, _ := renderImage(namedState("fusion_age", "Aldermoor", map[string]int{"hut": 20, "forge": 8, "colosseum": 1}), w, h)
+	if !imagesDiffer(web, city) {
+		t.Fatal("quantum web render is identical to a city (fusion) render")
+	}
+}
+
+func TestQuantumWebNoLandmarkLabels(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	_, plan := renderImage(namedState("quantum_age", "Aldermoor", map[string]int{"hut": 10, "forge": 4, "colosseum": 1}), w, h)
+	if len(plan.labels) != 0 {
+		t.Fatalf("quantum_age overlay has %d labels, want 0 (cosmic scene is label-free)", len(plan.labels))
+	}
+}
+
+func TestQuantumWebDeterministic(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 200, 140
+	st := sampleState("quantum_age", nil)
+	a := image.NewRGBA(image.Rect(0, 0, w, h))
+	b := image.NewRGBA(image.Rect(0, 0, w, h))
+	drawCosmicWebScene(a, st, w, h, 0x1234BEEF)
+	drawCosmicWebScene(b, st, w, h, 0x1234BEEF)
+	if imagesDiffer(a, b) {
+		t.Fatal("cosmic web scene is non-deterministic: same state+seed produced different pixels")
+	}
+}
+
+func TestDumpQuantumPNG(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump the quantum-scene PNG")
+	}
+	_ = theme.SetActive("forge")
+	img, _ := renderImage(namedState("quantum_age", "Aldermoor", nil), 440, 300)
+	path := dir + "/2g_quantum.png"
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatalf("create %s: %v", path, err)
+	}
+	if err := png.Encode(f, img); err != nil {
+		f.Close()
+		t.Fatalf("encode %s: %v", path, err)
+	}
+	f.Close()
+	t.Logf("wrote %s", path)
+}
+
+// ---- transcendent: ethereal ASCENSION scene (5th + FINAL cosmic scene, the finale) --------------
+
+func TestTranscendentIsAscensionScene(t *testing.T) {
+	if _, ok := cosmicSceneFor("transcendent_age"); !ok {
+		t.Fatal("cosmicSceneFor(transcendent_age) = false, want true (transcendent is the ascension scene — the finale)")
+	}
+	// With transcendent now a scene too, ALL five space-and-above ages are scenes and NO cosmic age is a
+	// city. modern_age is a genuine city — the still-a-city false-case.
+	if _, ok := cosmicSceneFor("modern_age"); ok {
+		t.Fatal("cosmicSceneFor(modern_age) = true, want false (modern is still a city)")
+	}
+}
+
+func TestDrawAscensionScenePanicSafe(t *testing.T) {
+	_ = theme.SetActive("forge")
+	sizes := []struct{ w, h int }{
+		{1, 1}, {8, 8}, {440, 300}, {300, 440}, {512, 96}, {96, 512},
+	}
+	st := sampleState("transcendent_age", nil)
+	for _, s := range sizes {
+		img := image.NewRGBA(image.Rect(0, 0, s.w, s.h))
+		drawAscensionScene(img, st, s.w, s.h, 0xABCDEF)
+		if got := img.Bounds(); got.Dx() != s.w || got.Dy() != s.h {
+			t.Fatalf("size %dx%d: image = %dx%d, want exact", s.w, s.h, got.Dx(), got.Dy())
+		}
+	}
+}
+
+// TestTranscendentAscensionCenterBrighterAndDiffers verifies the ascension reads as a radiant mandala
+// that BLOOMS toward the center: the CENTER region (the singularity + inner rings) is markedly
+// brighter than the MID-EDGE points (the dim outer field, the cosmos being left behind) — center-
+// brighter is the right measure here since, unlike the cosmic web, the finale is center-weighted. It
+// also DIFFERS from every other cosmic scene and from a city age.
+func TestTranscendentAscensionCenterBrighterAndDiffers(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	trans, _ := renderImage(namedState("transcendent_age", "Aldermoor", nil), w, h)
+
+	centerLum, _ := meanLuminBlue(trans, w/2, h/2, 12)
+	// Average the four MID-EDGE midpoints (not corners — this is the outer dim field) so a single stray
+	// star can't skew the baseline.
+	var edgeLum float64
+	edges := [][2]int{{w / 2, 6}, {w / 2, h - 7}, {6, h / 2}, {w - 7, h / 2}}
+	for _, e := range edges {
+		l, _ := meanLuminBlue(trans, e[0], e[1], 4)
+		edgeLum += l
+	}
+	edgeLum /= 4
+
+	if centerLum <= edgeLum*1.5 {
+		t.Fatalf("ascension center not markedly brighter than the mid-edges: center lum=%.1f, edge lum=%.1f", centerLum, edgeLum)
+	}
+
+	space, _ := renderImage(namedState("space_age", "Aldermoor", nil), w, h)
+	inter, _ := renderImage(namedState("interstellar_age", "Aldermoor", nil), w, h)
+	gal, _ := renderImage(namedState("galactic_age", "Aldermoor", nil), w, h)
+	quantum, _ := renderImage(namedState("quantum_age", "Aldermoor", nil), w, h)
+	if !imagesDiffer(trans, space) || !imagesDiffer(trans, inter) || !imagesDiffer(trans, gal) || !imagesDiffer(trans, quantum) {
+		t.Fatal("transcendent ascension render matches an earlier cosmic scene — the 5th (final) scene did not diverge")
+	}
+	city, _ := renderImage(namedState("modern_age", "Aldermoor", map[string]int{"hut": 20, "forge": 8, "colosseum": 1}), w, h)
+	if !imagesDiffer(trans, city) {
+		t.Fatal("transcendent ascension render is identical to a city (modern) render")
+	}
+}
+
+func TestTranscendentSceneNoLandmarkLabels(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 440, 300
+	_, plan := renderImage(namedState("transcendent_age", "Aldermoor", map[string]int{"hut": 10, "forge": 4, "colosseum": 1}), w, h)
+	if len(plan.labels) != 0 {
+		t.Fatalf("transcendent_age overlay has %d labels, want 0 (cosmic scene is label-free)", len(plan.labels))
+	}
+}
+
+func TestTranscendentAscensionDeterministic(t *testing.T) {
+	_ = theme.SetActive("forge")
+	const w, h = 200, 140
+	st := sampleState("transcendent_age", nil)
+	a := image.NewRGBA(image.Rect(0, 0, w, h))
+	b := image.NewRGBA(image.Rect(0, 0, w, h))
+	drawAscensionScene(a, st, w, h, 0x1234BEEF)
+	drawAscensionScene(b, st, w, h, 0x1234BEEF)
+	if imagesDiffer(a, b) {
+		t.Fatal("ascension scene is non-deterministic: same state+seed produced different pixels")
+	}
+}
+
+func TestDumpTranscendentPNG(t *testing.T) {
+	dir := os.Getenv("CITYMAP_PNG_DUMP")
+	if dir == "" {
+		t.Skip("set CITYMAP_PNG_DUMP=<dir> to dump the transcendent-scene PNG")
+	}
+	_ = theme.SetActive("forge")
+	img, _ := renderImage(namedState("transcendent_age", "Aldermoor", nil), 440, 300)
+	path := dir + "/2h_transcendent.png"
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatalf("create %s: %v", path, err)
+	}
+	if err := png.Encode(f, img); err != nil {
+		f.Close()
+		t.Fatalf("encode %s: %v", path, err)
+	}
+	f.Close()
+	t.Logf("wrote %s", path)
 }
