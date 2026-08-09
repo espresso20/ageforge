@@ -148,9 +148,9 @@ func TestEncounter_AtCapacityRefusesOnlyTimedBoons(t *testing.T) {
 	ge := encounterHarness(t, 0xCA9, "allied", false)
 	defer ge.mu.Unlock()
 
-	fillBoonCapacity(ge, maxConcurrentFactionBoons)
-	if got := ge.activeFactionBoonCount(); got != maxConcurrentFactionBoons {
-		t.Fatalf("harness set up %d boons, want %d", got, maxConcurrentFactionBoons)
+	fillBoonCapacity(ge, MaxConcurrentFactionBoons)
+	if got := ge.activeFactionBoonCount(); got != MaxConcurrentFactionBoons {
+		t.Fatalf("harness set up %d boons, want %d", got, MaxConcurrentFactionBoons)
 	}
 
 	boons, maluses, capacity := driveEncounters(ge, ExpeditionScouting, true, 2000)
@@ -167,9 +167,9 @@ func TestEncounter_AtCapacityRefusesOnlyTimedBoons(t *testing.T) {
 	}
 	// The boons occupying capacity are long-lived and nothing that landed may take
 	// a slot, so the count must not have moved by even one.
-	if got := ge.activeFactionBoonCount(); got != maxConcurrentFactionBoons {
+	if got := ge.activeFactionBoonCount(); got != MaxConcurrentFactionBoons {
 		t.Fatalf("live boon count drifted to %d while at capacity %d — a TIMED boon was granted at capacity",
-			got, maxConcurrentFactionBoons)
+			got, MaxConcurrentFactionBoons)
 	}
 }
 
@@ -182,15 +182,15 @@ func TestEncounter_ConcurrentBoonsNeverExceedCapacity(t *testing.T) {
 
 		for i := 0; i < 4000; i++ {
 			ge.rollExpeditionEncounter(ExpeditionScouting, true)
-			if n := ge.activeFactionBoonCount(); n > maxConcurrentFactionBoons {
+			if n := ge.activeFactionBoonCount(); n > MaxConcurrentFactionBoons {
 				ge.mu.Unlock()
 				t.Fatalf("status %s: encounter %d pushed live boons to %d, cap %d",
-					status, i, n, maxConcurrentFactionBoons)
+					status, i, n, MaxConcurrentFactionBoons)
 			}
-			if n := ge.activeFactionMalusCount(); n > maxConcurrentFactionMaluses {
+			if n := ge.activeFactionMalusCount(); n > MaxConcurrentFactionMaluses {
 				ge.mu.Unlock()
 				t.Fatalf("status %s: encounter %d pushed live setbacks to %d, cap %d",
-					status, i, n, maxConcurrentFactionMaluses)
+					status, i, n, MaxConcurrentFactionMaluses)
 			}
 		}
 		ge.mu.Unlock()

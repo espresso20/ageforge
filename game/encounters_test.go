@@ -371,3 +371,49 @@ func TestSeedPersists_RoundTrip(t *testing.T) {
 		t.Errorf("seed did not round-trip: got %d, want %d", got, want)
 	}
 }
+
+// TestFactionKeyFromEventKey covers the parser that lets a panel attribute an
+// ActiveEventState to a faction without hardcoding the key namespaces. The
+// negative cases matter as much as the positive ones: an ordinary event must
+// never be mistaken for a faction's doing, and a boon must never be mistaken for
+// a setback (the two namespaces exist precisely to keep those apart).
+func TestFactionKeyFromEventKey(t *testing.T) {
+	cases := []struct {
+		name       string
+		eventKey   string
+		wantFac    string
+		wantIsBoon bool
+		wantOK     bool
+	}{
+		{"boon round-trips", factionBuffKey("dawnfolk"), "dawnfolk", true, true},
+		{"malus round-trips", factionMalusKey("dawnfolk"), "dawnfolk", false, true},
+		{"faction key may contain underscores", factionBuffKey("river_kingdoms"), "river_kingdoms", true, true},
+		{"ordinary event rejected", "bountiful_harvest", "", false, false},
+		{"milestone injection rejected", "milestone_chain_speed", "", false, false},
+		{"empty key rejected", "", "", false, false},
+		{"bare boon prefix rejected", factionBuffKeyPrefix, "", false, false},
+		{"bare malus prefix rejected", factionMalusKeyPrefix, "", false, false},
+		// The trailing underscore in the prefixes is load-bearing: it stops a key
+		// that merely STARTS like a faction key from being parsed as one.
+		{"near-miss prefix rejected", "faction_boonanza", "", false, false},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			fac, isBoon, ok := FactionKeyFromEventKey(tc.eventKey)
+			if ok != tc.wantOK || fac != tc.wantFac || isBoon != tc.wantIsBoon {
+				t.Errorf("FactionKeyFromEventKey(%q) = (%q, %v, %v), want (%q, %v, %v)",
+					tc.eventKey, fac, isBoon, ok, tc.wantFac, tc.wantIsBoon, tc.wantOK)
+			}
+		})
+	}
+}
+
+// TestFactionCapsExported pins that the capacity caps a panel needs to render
+// "boons 2/5" are actually reachable from outside package game, and are sane.
+func TestFactionCapsExported(t *testing.T) {
+	if MaxConcurrentFactionBoons < 1 || MaxConcurrentFactionMaluses < 1 {
+		t.Fatalf("caps must be positive: boons=%d maluses=%d",
+			MaxConcurrentFactionBoons, MaxConcurrentFactionMaluses)
+	}
+}

@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/espresso20/ageforge/boon"
 	"github.com/espresso20/ageforge/config"
@@ -53,7 +54,7 @@ const (
 	encounterChanceMilitaryFail    = 0.02
 
 	// --- Boon capacity ------------------------------------------------------
-	// maxConcurrentFactionBoons is how many faction boons you may HOLD at once.
+	// MaxConcurrentFactionBoons is how many faction boons you may HOLD at once.
 	// Before it existed, encounters injected without limit and a soak measured
 	// 238 concurrent boons stacking a rate pool to x20 — the reward loop had no
 	// shape, just accumulation. Capacity gives it one: boons are a scarce slot
@@ -73,11 +74,11 @@ const (
 	// each = ~2.3) still clears productionCap's x3.0 clamp without touching it. Do
 	// not raise this without re-checking that sum — past ~6 the clamp starts doing
 	// the balancing instead of the data. Prefer moving durations or encounter odds.
-	maxConcurrentFactionBoons = 5
-	// maxConcurrentFactionMaluses bounds live setbacks the same way, so a long
+	MaxConcurrentFactionBoons = 5
+	// MaxConcurrentFactionMaluses bounds live setbacks the same way, so a long
 	// war cannot bury the active-events panel. See applyFactionMalus: at this
 	// cap the timed malus kinds are disabled and only instant harm lands.
-	maxConcurrentFactionMaluses = 3
+	MaxConcurrentFactionMaluses = 3
 
 	// --- Malus triggers (all tunable; set a chance to 0 to switch one off) ----
 	// atCapacityMalusChance is the odds that an encounter you have no room for
@@ -165,7 +166,7 @@ func (ge *GameEngine) rollExpeditionEncounter(category string, success bool) []s
 	//      empty. There is no positive boon from an enemy either way.
 	//   2. FAILURE — a botched expedition that still met someone brings back
 	//      trouble, not tribute.
-	//   3. CAPACITY — you can only HOLD maxConcurrentFactionBoons timed favours at
+	//   3. CAPACITY — you can only HOLD MaxConcurrentFactionBoons timed favours at
 	//      once. Over that a timed boon is refused: the party mostly returns
 	//      empty-handed, and occasionally worse. An instant gift (a lump of goods,
 	//      a work-gang) occupies no slot, so it still lands.
@@ -189,7 +190,7 @@ func (ge *GameEngine) rollExpeditionEncounter(category string, success bool) []s
 				messages = append(messages, line)
 			}
 		}
-	case ge.activeFactionBoonCount() >= maxConcurrentFactionBoons:
+	case ge.activeFactionBoonCount() >= MaxConcurrentFactionBoons:
 		// Capacity is a limit on what you can HOLD, so it can only bind on the
 		// boons that are held — the timed kinds, which are exactly the ones
 		// activeFactionBoonCount counts. Roll the gift first: an instant lump or a
@@ -297,7 +298,7 @@ const (
 // factionBuffKey is the ActiveEvent key for a faction's encounter boon. Stable per
 // faction so save/UI can identify it; re-encounters inject a fresh copy (InjectEvent
 // appends rather than replaces, so boons stack and each expires on its own timer).
-// What bounds the stack is no longer expiry alone but maxConcurrentFactionBoons,
+// What bounds the stack is no longer expiry alone but MaxConcurrentFactionBoons,
 // enforced in rollExpeditionEncounter. Used by boonApplier when the rolled boon is a
 // timed-effect kind (RateBuff/AllProduction/TickSpeed).
 func factionBuffKey(factionKey string) string {
@@ -305,7 +306,33 @@ func factionBuffKey(factionKey string) string {
 }
 
 // factionMalusKey is the ActiveEvent key for a faction's encounter SETBACK — the
-// negative namespace, bounded by maxConcurrentFactionMaluses.
+// negative namespace, bounded by MaxConcurrentFactionMaluses.
 func factionMalusKey(factionKey string) string {
 	return factionMalusKeyPrefix + factionKey
+}
+
+// FactionKeyFromEventKey is the inverse of factionBuffKey / factionMalusKey: it
+// tells a caller which faction an ActiveEventState came from, and whether the
+// event is a favour or a setback.
+//
+// This exists so the UI can attribute an active event to a faction WITHOUT
+// hardcoding "faction_boon_" / "faction_malus_" — the prefixes are this file's
+// business, and one parser here means one place to change if the namespaces
+// ever move. ok is false for every non-faction event key (ordinary events,
+// milestone injections, an empty key), and also for a bare prefix with no
+// faction after it.
+func FactionKeyFromEventKey(eventKey string) (factionKey string, isBoon bool, ok bool) {
+	switch {
+	case strings.HasPrefix(eventKey, factionBuffKeyPrefix):
+		factionKey = strings.TrimPrefix(eventKey, factionBuffKeyPrefix)
+		isBoon = true
+	case strings.HasPrefix(eventKey, factionMalusKeyPrefix):
+		factionKey = strings.TrimPrefix(eventKey, factionMalusKeyPrefix)
+	default:
+		return "", false, false
+	}
+	if factionKey == "" {
+		return "", false, false
+	}
+	return factionKey, isBoon, true
 }

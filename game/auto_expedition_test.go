@@ -424,3 +424,74 @@ func TestAutoExpedition_PickerIsDeterministicAndCheapest(t *testing.T) {
 		t.Errorf("picker returned %s with an empty treasury", def.Key)
 	}
 }
+
+// TestAutoExpeditionSnapshot proves automatic dispatch is VISIBLE on GameState.
+//
+// The whole mechanic used to live on engine-private fields
+// (autoExpeditionTicksLeft / autoExpeditionStarved) plus a building count the UI
+// was not allowed to look up by key, so a player who built a Geographic Society
+// got no confirmation it existed, no countdown, and no warning when it was
+// sitting starved. AutoExpeditionState is the fix; this is its contract.
+func TestAutoExpeditionSnapshot(t *testing.T) {
+	t.Run("nothing built reads as off", func(t *testing.T) {
+		ge := autoExpeditionTestEngine(t, "industrial_age", 0, 0, 1e9)
+		got := ge.GetState().Military.AutoExpedition
+		if got != (AutoExpeditionState{}) {
+			t.Errorf("no society should snapshot as the zero value, got %+v", got)
+		}
+	})
+
+	t.Run("built and staffed", func(t *testing.T) {
+		// 2 societies x WorkerCapacity 8 = 16 capacity, 8 assigned = 0.5 fill.
+		ge := autoExpeditionTestEngine(t, "industrial_age", 2, 8, 1e9)
+		// One pass so the countdown is primed by a real dispatch rather than
+		// reading back its zero value.
+		if launched, _ := runAutoTicks(ge, 1); launched != 1 {
+			t.Fatalf("expected the due dispatch to launch, got %d", launched)
+		}
+
+		got := ge.GetState().Military.AutoExpedition
+		if !got.Active {
+			t.Error("Active = false with 2 societies standing")
+		}
+		if got.Count != 2 {
+			t.Errorf("Count = %d, want 2", got.Count)
+		}
+		if got.Assigned != 8 {
+			t.Errorf("Assigned = %d, want 8", got.Assigned)
+		}
+		if got.Capacity != 16 {
+			t.Errorf("Capacity = %d, want 16 (2 societies x WorkerCapacity 8)", got.Capacity)
+		}
+		if want := autoExpeditionIntervalFor(2, 0.5); got.Interval != want {
+			t.Errorf("Interval = %d, want %d (the cadence formula at this investment)", got.Interval, want)
+		}
+		if got.TicksLeft <= 0 || got.TicksLeft > got.Interval {
+			t.Errorf("TicksLeft = %d, want a live countdown in (0, %d]", got.TicksLeft, got.Interval)
+		}
+		if got.Starved {
+			t.Error("Starved = true with every resource stocked")
+		}
+	})
+
+	t.Run("starved dispatch is visible", func(t *testing.T) {
+		ge := autoExpeditionTestEngine(t, "industrial_age", 1, 0, 0)
+		if launched, _ := runAutoTicks(ge, 1); launched != 0 {
+			t.Fatalf("nothing is affordable; expected no dispatch, got %d", launched)
+		}
+
+		got := ge.GetState().Military.AutoExpedition
+		if !got.Active {
+			t.Fatal("Active = false with a society standing")
+		}
+		if !got.Starved {
+			t.Errorf("Starved = false with an empty treasury; snapshot %+v", got)
+		}
+		if got.TicksLeft != 0 {
+			t.Errorf("TicksLeft = %d, want 0 — a due dispatch holds at zero and retries", got.TicksLeft)
+		}
+		if got.Assigned != 0 || got.Capacity != 8 {
+			t.Errorf("Assigned/Capacity = %d/%d, want 0/8", got.Assigned, got.Capacity)
+		}
+	})
+}

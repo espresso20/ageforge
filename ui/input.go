@@ -327,7 +327,10 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 		sb.WriteString("  (none)\n")
 	}
 	for _, evt := range state.ActiveEvents {
-		sb.WriteString(fmt.Sprintf("  %s: %d ticks left\n", evt.Name, evt.TicksLeft))
+		// This file is a DEBUG dump read by us, not by players, so it keeps the
+		// raw tick count — with the wall-clock reading alongside it.
+		sb.WriteString(fmt.Sprintf("  %s: %d ticks left (%s)\n",
+			evt.Name, evt.TicksLeft, formatTicks(evt.TicksLeft, state)))
 	}
 	if state.Research.CurrentTech != "" {
 		sb.WriteString(fmt.Sprintf("\n--- Research ---\n  %s: %d/%d ticks\n",
@@ -1106,8 +1109,8 @@ func cmdResearchList(engine *game.GameEngine) CommandResult {
 	}
 
 	if state.Research.CurrentTech != "" {
-		lines = append(lines, fmt.Sprintf("\n[yellow]Currently researching: %s (%d ticks left)[-]",
-			state.Research.CurrentTechName, state.Research.TicksLeft))
+		lines = append(lines, fmt.Sprintf("\n[yellow]Currently researching: %s (%s left)[-]",
+			state.Research.CurrentTechName, formatTicks(state.Research.TicksLeft, state)))
 	}
 
 	if len(lines) == 1 {
@@ -1205,25 +1208,27 @@ func cmdFestival(args []string, engine *game.GameEngine) CommandResult {
 				return CommandResult{Message: err.Error(), Type: "error"}
 			}
 			st := engine.FestivalStatus()
+			state := engine.GetState()
 			return CommandResult{
-				Message: fmt.Sprintf("Festival underway! Spent %.0f culture. +%.0f%% to all production for %d ticks.",
-					st.Cost, st.BuffPercent*100, st.BuffTicks),
+				Message: fmt.Sprintf("Festival underway! Spent %.0f culture. +%.0f%% to all production for %s.",
+					st.Cost, st.BuffPercent*100, formatTicks(st.BuffTicks, state)),
 				Type: "success",
 			}
 		}
 		// Show the confirm prompt with the live cost.
 		st := engine.FestivalStatus()
+		state := engine.GetState()
 		if !st.Ready {
 			return CommandResult{
-				Message: fmt.Sprintf("[yellow]Festival on cooldown[-] — %d ticks until the next one can be held.", st.CooldownLeft),
+				Message: fmt.Sprintf("[yellow]Festival on cooldown[-] — %s until the next one can be held.", formatTicks(st.CooldownLeft, state)),
 				Type:    "warning",
 			}
 		}
 		var lines []string
 		lines = append(lines, "[gold]Hold a Cultural Festival?[-]")
 		lines = append(lines, fmt.Sprintf("  Cost: [cyan]%.0f culture[-] (you have %.0f)", st.Cost, st.Culture))
-		lines = append(lines, fmt.Sprintf("  Effect: [green]+%.0f%%[-] to all production for [cyan]%d[-] ticks.", st.BuffPercent*100, st.BuffTicks))
-		lines = append(lines, fmt.Sprintf("  Cooldown afterward: [cyan]%d[-] ticks.", st.CooldownTicks))
+		lines = append(lines, fmt.Sprintf("  Effect: [green]+%.0f%%[-] to all production for [cyan]%s[-].", st.BuffPercent*100, formatTicks(st.BuffTicks, state)))
+		lines = append(lines, fmt.Sprintf("  Cooldown afterward: [cyan]%s[-].", formatTicks(st.CooldownTicks, state)))
 		if st.Culture < st.Cost {
 			lines = append(lines, "")
 			lines = append(lines, "  [red]Not enough culture.[-]")
@@ -1239,11 +1244,12 @@ func cmdFestival(args []string, engine *game.GameEngine) CommandResult {
 // cmdFestivalStatus renders the bare `festival` status panel.
 func cmdFestivalStatus(engine *game.GameEngine) CommandResult {
 	st := engine.FestivalStatus()
+	state := engine.GetState()
 	var lines []string
 	lines = append(lines, "[gold]Cultural Festival[-]")
 	lines = append(lines, "  Spend a lump of culture for a temporary empire-wide production boost.")
 	lines = append(lines, fmt.Sprintf("  Cost: [cyan]%.0f culture[-]  (you have %.0f)", st.Cost, st.Culture))
-	lines = append(lines, fmt.Sprintf("  Effect: [green]+%.0f%%[-] to all production for [cyan]%d[-] ticks.", st.BuffPercent*100, st.BuffTicks))
+	lines = append(lines, fmt.Sprintf("  Effect: [green]+%.0f%%[-] to all production for [cyan]%s[-].", st.BuffPercent*100, formatTicks(st.BuffTicks, state)))
 	if st.Ready {
 		if st.Culture >= st.Cost {
 			lines = append(lines, "  Status: [green]ready[-] — type [cyan]festival confirm yes[-].")
@@ -1251,7 +1257,7 @@ func cmdFestivalStatus(engine *game.GameEngine) CommandResult {
 			lines = append(lines, "  Status: [yellow]not enough culture yet.[-]")
 		}
 	} else {
-		lines = append(lines, fmt.Sprintf("  Status: [yellow]on cooldown[-] — %d ticks remaining.", st.CooldownLeft))
+		lines = append(lines, fmt.Sprintf("  Status: [yellow]on cooldown[-] — %s remaining.", formatTicks(st.CooldownLeft, state)))
 	}
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
@@ -1301,7 +1307,7 @@ func cmdBlackMarketStatus(engine *game.GameEngine) CommandResult {
 			lines = append(lines, "  Status: [yellow]not enough culture yet.[-]")
 		}
 	} else {
-		lines = append(lines, fmt.Sprintf("  Status: [yellow]lying low[-] — %d ticks until the next deal.", st.CooldownLeft))
+		lines = append(lines, fmt.Sprintf("  Status: [yellow]lying low[-] — %s until the next deal.", formatTicks(st.CooldownLeft, engine.GetState())))
 	}
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
@@ -1415,11 +1421,11 @@ func cmdScoutingList(engine *game.GameEngine) CommandResult {
 	var lines []string
 	lines = append(lines, "[gold]Available Expeditions:[-]")
 
-	appendExpeditionGroup(&lines, "Scouting", state.Military.Expeditions, game.ExpeditionScouting)
+	appendExpeditionGroup(&lines, "Scouting", state.Military.Expeditions, game.ExpeditionScouting, state)
 
 	if state.Military.ActiveScout != nil {
-		lines = append(lines, fmt.Sprintf("\n[yellow]Active expedition: %s (%d ticks left)[-]",
-			state.Military.ActiveScout.Name, state.Military.ActiveScout.TicksLeft))
+		lines = append(lines, fmt.Sprintf("\n[yellow]Active expedition: %s (%s left)[-]",
+			state.Military.ActiveScout.Name, formatTicks(state.Military.ActiveScout.TicksLeft, state)))
 	}
 
 	if !hasCategory(state.Military.Expeditions, game.ExpeditionScouting) {
@@ -1436,11 +1442,11 @@ func cmdCampaignList(engine *game.GameEngine) CommandResult {
 	var lines []string
 	lines = append(lines, "[gold]Available Campaigns:[-]")
 
-	appendExpeditionGroup(&lines, "Campaigns", state.Military.Expeditions, game.ExpeditionMilitary)
+	appendExpeditionGroup(&lines, "Campaigns", state.Military.Expeditions, game.ExpeditionMilitary, state)
 
 	if state.Military.ActiveMilitary != nil {
-		lines = append(lines, fmt.Sprintf("\n[yellow]Active campaign: %s (%d ticks left)[-]",
-			state.Military.ActiveMilitary.Name, state.Military.ActiveMilitary.TicksLeft))
+		lines = append(lines, fmt.Sprintf("\n[yellow]Active campaign: %s (%s left)[-]",
+			state.Military.ActiveMilitary.Name, formatTicks(state.Military.ActiveMilitary.TicksLeft, state)))
 	}
 
 	if !hasCategory(state.Military.Expeditions, game.ExpeditionMilitary) {
@@ -1463,7 +1469,7 @@ func hasCategory(exps []game.ExpeditionInfo, category string) bool {
 // appendExpeditionGroup appends the subset of exps matching category to lines,
 // under a labeled header (e.g. "Scouting"). The header is omitted when no
 // expedition matches, so empty subsections produce no output.
-func appendExpeditionGroup(lines *[]string, label string, exps []game.ExpeditionInfo, category string) {
+func appendExpeditionGroup(lines *[]string, label string, exps []game.ExpeditionInfo, category string, state game.GameState) {
 	first := true
 	for _, exp := range exps {
 		if exp.Category != category {
@@ -1487,7 +1493,7 @@ func appendExpeditionGroup(lines *[]string, label string, exps []game.Expedition
 			reqParts = append(reqParts, cost)
 		}
 		// Duration is rolled per launch, so list the def's range, not one value.
-		reqParts = append(reqParts, fmt.Sprintf("%d-%d ticks", exp.DurationMin, exp.DurationMax))
+		reqParts = append(reqParts, formatTickRange(exp.DurationMin, exp.DurationMax, state))
 		reqs := strings.Join(reqParts, ", ")
 		line := fmt.Sprintf("  %s [cyan]%s[-] - %s (%s)", canStr, exp.Key, exp.Name, reqs)
 		if !exp.CanLaunch && exp.LaunchBlockReason != "" {
@@ -1591,8 +1597,8 @@ func cmdTradeRouteList(engine *game.GameEngine) CommandResult {
 	if len(trade.ActiveRoutes) > 0 {
 		lines = append(lines, "\n[green]Active:[-]")
 		for _, route := range trade.ActiveRoutes {
-			lines = append(lines, fmt.Sprintf("  [cyan]%s[-] (%s) - %d ticks left, %d cycles done",
-				route.Name, route.Key, route.TicksLeft, route.CyclesDone))
+			lines = append(lines, fmt.Sprintf("  [cyan]%s[-] (%s) - %s left, %d cycles done",
+				route.Name, route.Key, formatTicks(route.TicksLeft, state), route.CyclesDone))
 		}
 	}
 

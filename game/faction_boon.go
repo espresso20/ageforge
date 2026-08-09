@@ -275,7 +275,7 @@ func (ge *GameEngine) applyRolledFactionBoon(def config.FactionDef, b boon.Boon)
 }
 
 // boonHoldsSlot reports whether a POSITIVE boon occupies one of the
-// maxConcurrentFactionBoons slots — i.e. whether applying it injects a timed
+// MaxConcurrentFactionBoons slots — i.e. whether applying it injects a timed
 // ActiveEvent under factionBuffKeyPrefix. It must stay in lockstep with what
 // boon.Apply injects for a positive polarity: the three timed kinds do, the
 // instant lump and the work-gang do not (they are consumed on arrival and
@@ -333,7 +333,7 @@ func factionMalusProfile(def config.FactionDef, state FactionState, age string) 
 // the event namespace differ.
 //
 // Timed setbacks are capacity-bounded exactly like boons: at
-// maxConcurrentFactionMaluses the timed kinds are disabled for the roll and any
+// MaxConcurrentFactionMaluses the timed kinds are disabled for the roll and any
 // production dip riding along on a ResourceDrain is stripped, so a long war
 // cannot bury the active-events panel. The instant half (drain, worker loss)
 // always lands — that is the part that should hurt.
@@ -342,7 +342,7 @@ func factionMalusProfile(def config.FactionDef, state FactionState, age string) 
 func (ge *GameEngine) applyFactionMalus(def config.FactionDef, state FactionState) string {
 	prof := factionMalusProfile(def, state, ge.age)
 
-	atCap := ge.activeFactionMalusCount() >= maxConcurrentFactionMaluses
+	atCap := ge.activeFactionMalusCount() >= MaxConcurrentFactionMaluses
 	if atCap {
 		prof.Enabled = map[boon.Kind]bool{
 			boon.RateBuff:      false,
@@ -364,7 +364,7 @@ func (ge *GameEngine) applyFactionMalus(def config.FactionDef, state FactionStat
 }
 
 // activeFactionBoonCount is the number of live faction BOON events — the value
-// the capacity gate compares against maxConcurrentFactionBoons. Only timed boon
+// the capacity gate compares against MaxConcurrentFactionBoons. Only timed boon
 // kinds inject an event, which is precisely what "holding a foreign favour"
 // means; instant gifts are consumed on arrival and hold no slot.
 func (ge *GameEngine) activeFactionBoonCount() int {

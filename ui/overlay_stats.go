@@ -151,19 +151,24 @@ func statsProvider(state game.GameState, _ int) string {
 		sb.WriteString(" [gray]No active events[-]\n")
 	} else {
 		for _, evt := range state.ActiveEvents {
-			fmt.Fprintf(&sb, " [yellow]⚡[-] [yellow]%s[-] (%d ticks left)\n", evt.Name, evt.TicksLeft)
+			fmt.Fprintf(&sb, " [yellow]⚡[-] [yellow]%s[-] (%s left)\n", evt.Name, formatTicks(evt.TicksLeft, state))
 			for _, eff := range evt.Effects {
 				color := "green"
 				if eff.Value < 0 {
 					color = "red"
 				}
-				switch eff.Type {
-				case "production":
+				// The "<res>_rate" case is what a faction specialty boon or
+				// setback arrives as, and it is the common case — without it a
+				// boon renders as a name with no magnitude at all.
+				switch {
+				case eff.Type == "production":
 					fmt.Fprintf(&sb, " [%s]    %s %+.1f/t[-]\n", color, eff.Target, eff.Value)
-				case "production_all":
+				case eff.Type == "production_all":
 					fmt.Fprintf(&sb, " [%s]    all production %+.0f%%[-]\n", color, eff.Value*100)
-				case "tick_speed":
+				case eff.Type == "tick_speed":
 					fmt.Fprintf(&sb, " [%s]    tick speed %+.0f%%[-]\n", color, eff.Value*100)
+				case strings.HasSuffix(eff.Type, "_rate"):
+					fmt.Fprintf(&sb, " [%s]    %s %+.0f%%[-]\n", color, rateEffectLabel(eff), eff.Value*100)
 				}
 			}
 		}
@@ -423,6 +428,17 @@ func multiplierSourceLabel(src string) string {
 		return "Diplomacy"
 	}
 	return capitalize(src)
+}
+
+// rateEffectLabel names the thing a "<res>_rate" active-event effect acts on.
+// Target carries the resource key for the effects boon/apply.go builds, but
+// event defs may leave it empty, so fall back to trimming the type's suffix —
+// "iron_rate" reads as "iron", "gather_rate" as "gather".
+func rateEffectLabel(eff game.EventEffectInfo) string {
+	if eff.Target != "" {
+		return eff.Target
+	}
+	return strings.TrimSuffix(eff.Type, "_rate")
 }
 
 // absFloat is a tiny abs helper for epsilon comparisons (avoids importing math

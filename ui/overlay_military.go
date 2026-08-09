@@ -56,7 +56,7 @@ func militaryProvider(state game.GameState, _ int) string {
 	if mil.ActiveMilitary == nil {
 		sb.WriteString(" [gray]No active campaign[-]\n")
 	} else {
-		writeActiveExpedition(&sb, "Campaign", mil.ActiveMilitary)
+		writeActiveExpedition(&sb, "Campaign", mil.ActiveMilitary, state)
 	}
 	fmt.Fprintf(&sb, "\n [gray]Completed: %d expedition(s)[-]\n", mil.CompletedCount)
 
@@ -68,7 +68,7 @@ func militaryProvider(state game.GameState, _ int) string {
 		sb.WriteString(" [gray]Reach Bronze Age and recruit soldiers[-]\n")
 		sb.WriteString(" [gray]to unlock campaigns.[-]\n")
 	} else {
-		writeExpeditionGroup(&sb, "Campaigns", mil.Expeditions, game.ExpeditionMilitary)
+		writeExpeditionGroup(&sb, "Campaigns", mil.Expeditions, game.ExpeditionMilitary, state)
 	}
 
 	// Loot totals now live in the Expeditions panel (see overlay_expeditions.go),
@@ -82,7 +82,8 @@ func militaryProvider(state game.GameState, _ int) string {
 // writeActiveExpedition renders one active expedition under a kind label
 // (e.g. "Scouting"). Nothing is written when exp is nil, so the section only
 // lists kinds that are actually running.
-func writeActiveExpedition(sb *strings.Builder, label string, exp *game.ExpeditionSnapshot) {
+// (state is threaded through only to convert the countdown to wall-clock.)
+func writeActiveExpedition(sb *strings.Builder, label string, exp *game.ExpeditionSnapshot, state game.GameState) {
 	if exp == nil {
 		return
 	}
@@ -90,13 +91,13 @@ func writeActiveExpedition(sb *strings.Builder, label string, exp *game.Expediti
 	if exp.Soldiers > 0 {
 		fmt.Fprintf(sb, " — %d deployed", exp.Soldiers)
 	}
-	fmt.Fprintf(sb, " (%d ticks left)\n", exp.TicksLeft)
+	fmt.Fprintf(sb, " (%s left)\n", formatTicks(exp.TicksLeft, state))
 }
 
 // writeExpeditionGroup renders the subset of exps matching category under a
 // labeled header (e.g. "Scouting"). If no expedition matches, nothing is
 // written — the header is omitted for empty subsections.
-func writeExpeditionGroup(sb *strings.Builder, label string, exps []game.ExpeditionInfo, category string) {
+func writeExpeditionGroup(sb *strings.Builder, label string, exps []game.ExpeditionInfo, category string, state game.GameState) {
 	first := true
 	for _, exp := range exps {
 		if exp.Category != category {
@@ -123,7 +124,7 @@ func writeExpeditionGroup(sb *strings.Builder, label string, exps []game.Expedit
 		fmt.Fprintf(sb, "   [gray]%s[-]\n", exp.Description)
 		// Duration is rolled per launch, so preview the def's range rather than a
 		// single number.
-		durationStr := fmt.Sprintf("%d-%d ticks", exp.DurationMin, exp.DurationMax)
+		durationStr := formatTickRange(exp.DurationMin, exp.DurationMax, state)
 		fmt.Fprintf(sb, "   Soldiers: %d  Duration: %s  Difficulty: [%s]%.0f%%[-]\n",
 			exp.SoldiersNeeded, durationStr, diffColor, exp.Difficulty*100)
 		if cost := formatExpeditionCost(exp.Cost); cost != "" {

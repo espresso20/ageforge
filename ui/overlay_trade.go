@@ -89,8 +89,8 @@ func tradeProvider(state game.GameState, _ int) string {
 			if route.Disrupted {
 				fmt.Fprintf(&sb, "   [red]DISRUPTED — %s shipments blockaded[-]\n\n", route.DisruptedBy)
 			} else {
-				fmt.Fprintf(&sb, "   %d ticks remaining  [gray](%d cycles done)[-]\n\n",
-					route.TicksLeft, route.CyclesDone)
+				fmt.Fprintf(&sb, "   %s remaining  [gray](%d cycles done)[-]\n\n",
+					formatTicks(route.TicksLeft, state), route.CyclesDone)
 			}
 		}
 	}

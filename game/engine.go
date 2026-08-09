@@ -3607,6 +3607,12 @@ func (ge *GameEngine) GetState() GameState {
 		tickInterval = MinTickInterval
 	}
 
+	// MilitaryManager.Snapshot has no *GameEngine receiver, so it cannot see the
+	// Geographic Society's buildings, workers or dispatch countdown. Build the
+	// snapshot here and graft the automatic-dispatch view on afterwards.
+	militarySnap := ge.Military.Snapshot(ge.age, ageOrder, soldierResource, int(ge.Resources.GetStorage("soldiers")), ge.Resources.GetRate("soldiers"), ge.Resources.GetAll(), militaryBonus, expeditionBonus)
+	militarySnap.AutoExpedition = ge.autoExpeditionSnapshot()
+
 	// Wonder gate: show which wonder must be built before advancing
 	wonderKey := ge.progress.WonderForAge(ge.age)
 	currentAgeWonderKey := ""
@@ -3634,7 +3640,7 @@ func (ge *GameEngine) GetState() GameState {
 		BuildQueue:           queue,
 		Workers:              ge.Workers.Snapshot(popCap),
 		Research:             ge.Research.Snapshot(ge.age, ageOrder),
-		Military:             ge.Military.Snapshot(ge.age, ageOrder, soldierResource, int(ge.Resources.GetStorage("soldiers")), ge.Resources.GetRate("soldiers"), ge.Resources.GetAll(), militaryBonus, expeditionBonus),
+		Military:             militarySnap,
 		Milestones: ge.Milestones.Snapshot(MilestoneSnapshotParams{
 			Tick:            ge.tick,
 			Age:             ge.age,

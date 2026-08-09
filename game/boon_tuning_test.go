@@ -701,7 +701,7 @@ func runTuningScenario(t *testing.T, sc tuningScenario, ticks int, seed int64) *
 
 		if n := ge.activeFactionBoonCount(); n > 0 {
 			stats.ticksAnyBoon++
-			if n >= maxConcurrentFactionBoons {
+			if n >= MaxConcurrentFactionBoons {
 				stats.ticksFullCap++
 			}
 			if tick%tuningSampleEvery == 0 {

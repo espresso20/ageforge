@@ -17,7 +17,7 @@ import (
 // (see faction_boon.go boonApplier.InjectTimedEffects → EventManager.InjectEvent).
 // InjectEvent APPENDS with no dedup by key, so a raw double-inject still STACKS.
 // What bounds the system is no longer expiry alone: rollExpeditionEncounter now
-// gates on maxConcurrentFactionBoons (and maxConcurrentFactionMaluses), so an
+// gates on MaxConcurrentFactionBoons (and MaxConcurrentFactionMaluses), so an
 // encounter arriving at capacity grants nothing positive. On top of that,
 // recalculateRates clamps the applied multiplier to productionCap, so even a
 // pathological pool cannot exceed x3.0. tick_speed keeps its own clamp — the real
@@ -40,7 +40,7 @@ import (
 //   - the same seed + same driven sequence reproduces byte-identical end state.
 //
 // UPDATED (capacity pass): the ceilings below are now backed by REAL production
-// clamps — maxConcurrentFactionBoons / maxConcurrentFactionMaluses in the
+// clamps — MaxConcurrentFactionBoons / MaxConcurrentFactionMaluses in the
 // encounter path and productionCap in recalculateRates. The previous run measured
 // 238 concurrent boons and a x20.3 knowledge_rate multiplier against ceilings of
 // 1024 / 50.0 that existed only to catch a runaway. Those ceilings are now set
@@ -86,15 +86,15 @@ const (
 
 	// --- Invariant ceilings (now BACKED by production clamps) -------------------
 	// Concurrency is gated in rollExpeditionEncounter: a positive boon is refused
-	// at maxConcurrentFactionBoons, a timed setback at maxConcurrentFactionMaluses.
+	// at MaxConcurrentFactionBoons, a timed setback at MaxConcurrentFactionMaluses.
 	// Each encounter injects at most one event and the gate is checked BEFORE
 	// injecting, so the true bound is boons+maluses. The +2 slack absorbs any
 	// non-faction active event the driven path might produce without letting a
 	// regression (removed gate ⇒ hundreds) slip through.
-	maxConcurrentBoons = maxConcurrentFactionBoons + maxConcurrentFactionMaluses + 2
+	maxConcurrentBoons = MaxConcurrentFactionBoons + MaxConcurrentFactionMaluses + 2
 
 	// maxAdditivePool bounds the raw additive Σ for any production_all or
-	// <res>_rate pool. With at most maxConcurrentFactionBoons (5, after the
+	// <res>_rate pool. With at most MaxConcurrentFactionBoons (5, after the
 	// measured tuning pass) concurrent boons at the worst-case allied str-5
 	// magnitude (Enlightenment 0.25 x ~1.82 = 0.455 each) the realistic worst
 	// case is ~2.3 — still under this ceiling, which is the reason the capacity
@@ -190,13 +190,13 @@ func driveCycle(t *testing.T, ge *GameEngine, ticks int, obs *soakObservations) 
 					"(capacity gate breached — rollExpeditionEncounter is granting past the cap)",
 					len(ge.Events.active), maxConcurrentBoons, tick)
 			}
-			if n := ge.activeFactionBoonCount(); n > maxConcurrentFactionBoons {
+			if n := ge.activeFactionBoonCount(); n > MaxConcurrentFactionBoons {
 				t.Fatalf("concurrent faction BOONS = %d exceeds cap %d at tick %d",
-					n, maxConcurrentFactionBoons, tick)
+					n, MaxConcurrentFactionBoons, tick)
 			}
-			if n := ge.activeFactionMalusCount(); n > maxConcurrentFactionMaluses {
+			if n := ge.activeFactionMalusCount(); n > MaxConcurrentFactionMaluses {
 				t.Fatalf("concurrent faction SETBACKS = %d exceeds cap %d at tick %d",
-					n, maxConcurrentFactionMaluses, tick)
+					n, MaxConcurrentFactionMaluses, tick)
 			}
 
 			// Summed additive pools: production_all + every hot <res>_rate. Both
@@ -429,7 +429,7 @@ func TestBoonSoak_Deterministic(t *testing.T) {
 // TestBoon_StackingIsCapacityBounded REPLACES the former
 // TestBoon_StackingIsUnbounded_NoDedup, which asserted (as a passing observation)
 // that nothing bounded boon stacking but expiry. That is no longer the design:
-// rollExpeditionEncounter refuses a positive boon at maxConcurrentFactionBoons.
+// rollExpeditionEncounter refuses a positive boon at MaxConcurrentFactionBoons.
 //
 // The low-level machinery is unchanged and still asserted here — InjectEvent
 // APPENDS, so a raw double-inject really does double the pool; the fix is a gate
@@ -478,9 +478,9 @@ func TestBoon_StackingIsCapacityBounded(t *testing.T) {
 
 	for i := 0; i < 5000; i++ {
 		ge.rollExpeditionEncounter(ExpeditionScouting, true)
-		if n := ge.activeFactionBoonCount(); n > maxConcurrentFactionBoons {
+		if n := ge.activeFactionBoonCount(); n > MaxConcurrentFactionBoons {
 			t.Fatalf("encounter %d pushed concurrent faction boons to %d, cap is %d",
-				i, n, maxConcurrentFactionBoons)
+				i, n, MaxConcurrentFactionBoons)
 		}
 	}
 	if got := ge.activeFactionBoonCount(); got == 0 {

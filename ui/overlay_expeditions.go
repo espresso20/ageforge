@@ -30,7 +30,7 @@ func expeditionsProvider(state game.GameState, _ int) string {
 	if mil.ActiveScout == nil {
 		sb.WriteString(" [gray]No active expedition[-]\n")
 	} else {
-		writeActiveExpedition(&sb, "Scouting", mil.ActiveScout)
+		writeActiveExpedition(&sb, "Scouting", mil.ActiveScout, state)
 	}
 
 	// === Available Expeditions ===
@@ -39,7 +39,7 @@ func expeditionsProvider(state game.GameState, _ int) string {
 		sb.WriteString(" [gray]No expeditions available yet[-]\n")
 		sb.WriteString(" [gray]Reach Bronze Age to unlock more scouting.[-]\n")
 	} else {
-		writeExpeditionGroup(&sb, "Scouting", mil.Expeditions, game.ExpeditionScouting)
+		writeExpeditionGroup(&sb, "Scouting", mil.Expeditions, game.ExpeditionScouting, state)
 	}
 
 	// === Loot History ===

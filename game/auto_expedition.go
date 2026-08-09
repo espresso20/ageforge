@@ -111,6 +111,41 @@ func (ge *GameEngine) autoExpeditionInvestment() (count int, fill float64) {
 	return count, fill
 }
 
+// autoExpeditionSnapshot builds the UI-facing view of automatic dispatch.
+//
+// It lives HERE, beside the fields and the building key it reads, so that
+// GetState — and through it every panel — never has to know
+// autoExpeditionBuildingKey or reach into state.Buildings for it. Before this
+// existed none of automatic dispatch was on GameState at all, which is why a
+// built society was invisible to the player.
+//
+// Caller must hold the engine lock (GetState's read lock suffices): this reads
+// ge.Buildings / ge.Workers / the countdown fields directly and acquires
+// nothing itself.
+func (ge *GameEngine) autoExpeditionSnapshot() AutoExpeditionState {
+	count, fill := ge.autoExpeditionInvestment()
+	if count <= 0 {
+		// Nothing built: automation is off, and a zero value says so without
+		// the UI having to special-case a stale countdown.
+		return AutoExpeditionState{}
+	}
+	capacity := 0
+	// Same reason as autoExpeditionInvestment for reading defs directly rather
+	// than config.BuildingByKey(): that helper rebuilds all 284 defs per call.
+	if def, ok := ge.Buildings.defs[autoExpeditionBuildingKey]; ok && def.WorkerCapacity > 0 {
+		capacity = count * def.WorkerCapacity
+	}
+	return AutoExpeditionState{
+		Active:    true,
+		TicksLeft: ge.autoExpeditionTicksLeft,
+		Interval:  autoExpeditionIntervalFor(count, fill),
+		Starved:   ge.autoExpeditionStarved,
+		Count:     count,
+		Assigned:  ge.Workers.GetAssignedCount("worker", autoExpeditionBuildingKey),
+		Capacity:  capacity,
+	}
+}
+
 // autoExpeditionIntervalFor is the pure cadence formula: ticks between automatic
 // dispatches for a given investment. Returns 0 when nothing is built (automation
 // off). Never returns a value below autoExpeditionMinInterval otherwise, and is
