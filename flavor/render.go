@@ -100,6 +100,13 @@ type tmpl struct {
 	// Eras restricts eligibility to these eras; nil means any era. An unknown or
 	// empty Request.Age also matches everything.
 	Eras []era
+	// Reg, Form and Topic carry the authored sentence's register tags through to
+	// the tests that assert the mix, and Topic through to Stream. They never
+	// affect eligibility — a quota is a property of the CATALOG, not a filter on
+	// a draw; filtering on it would make some sentences unreachable.
+	Reg   register
+	Form  form
+	Topic string
 	// Parts is the ordered slot list.
 	Parts []part
 }
@@ -135,6 +142,7 @@ func Generate(req Request, rng *rand.Rand) Result {
 
 	// Draws 2..n: one authored fragment per bank slot, left to right.
 	var sb strings.Builder
+	var drew string
 	for _, p := range t.Parts {
 		if p.bank == "" {
 			sb.WriteString(p.lit)
@@ -144,13 +152,15 @@ func Generate(req Request, rng *rand.Rand) Result {
 		if len(bank) == 0 {
 			continue // an empty bank is a catalog bug; a test catches it
 		}
-		sb.WriteString(bank[rng.Intn(len(bank))])
+		drew = bank[rng.Intn(len(bank))]
+		sb.WriteString(drew)
 	}
 
 	return Result{
 		Text:     fill(sb.String(), req),
 		Moment:   req.Moment,
 		Template: t.ID,
+		slot:     drew,
 	}
 }
 

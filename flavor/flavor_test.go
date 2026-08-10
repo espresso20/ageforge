@@ -3,10 +3,12 @@ package flavor
 import (
 	"go/parser"
 	"go/token"
+	"math"
 	"math/rand"
 	"os"
 	"regexp"
 	"sort"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -407,8 +409,21 @@ func TestRepetitionInAStream(t *testing.T) {
 				t.Errorf("%v at %s: through a Stream, one skeleton still repeated %d times in %d lines; want <= %d",
 					m, age, streamWorst, draws, maxStreamRepeats)
 			}
-			if len(streamLines) < len(byLine) {
-				t.Errorf("%v at %s: the Stream produced FEWER distinct lines (%d) than the raw generator (%d)",
+			// The Stream must not be WORSE than the raw generator, and the metric
+			// that is held strictly is distinct SKELETONS — how many separate things
+			// were said — because that is what a player perceives as repetition.
+			//
+			// Distinct finished LINES gets a little slack, and the slack is earned:
+			// a Stream also suppresses a repeated noun-phrase DRAW, so when the same
+			// long rope comes up twice in six lines it redraws, and the redraw often
+			// lands on a slotless sentence. That trades a couple of noun variants for
+			// a genuinely wider spread of sentences, which is the better trade.
+			if len(streamSk) < len(bySkeleton) {
+				t.Errorf("%v at %s: the Stream produced FEWER distinct skeletons (%d) than the raw generator (%d)",
+					m, age, len(streamSk), len(bySkeleton))
+			}
+			if len(streamLines)*10 < len(byLine)*9 {
+				t.Errorf("%v at %s: the Stream produced materially fewer distinct lines (%d) than the raw generator (%d)",
 					m, age, len(streamLines), len(byLine))
 			}
 
@@ -457,32 +472,366 @@ func TestSkeletonShape(t *testing.T) {
 	}
 }
 
-// TestSentenceLength is the hard cap. The catalog this replaced averaged 12-25
-// words per line, which is a wall of text in a scrolling log; short lines are
-// the single biggest legibility win available here.
-func TestSentenceLength(t *testing.T) {
-	const (
-		minWords = 4
-		maxWords = 14
-	)
-	longest, longestID, total, n := 0, "", 0, 0
+// --- C1: BURSTINESS, the gate both previous catalogs would have failed ------
+
+// The diagnosis this test exists to encode.
+//
+// Two rewrites of this catalog were rejected as machine-written. The first joined
+// clauses and averaged 12-25 words a line. The second deleted the clause joiner,
+// wrote every line as one authored sentence, and capped length at 14 words: mean
+// 10.3, longest 14. It read exactly as artificial as the first.
+//
+// The shared cause is not word choice. It is BURSTINESS — variance in sentence
+// length. Human prose swings from four words to forty and the swing is purposeful:
+// short at the moment of emphasis, long while a thought is still being qualified.
+// A generator clusters in a narrow band. Both catalogs had a narrow band; the only
+// thing that changed between them was WHERE the band sat. Uniform rhythm is the
+// tell, independently of how good any single line is.
+//
+// So the cap is gone and the distribution is the assertion. A Moment must populate
+// four length bands in roughly the shares below, and the standard deviation of its
+// sentence lengths must clear 7 words. The old catalog scored SD 2.1.
+var lengthBands = []struct {
+	name   string
+	lo, hi int
+	want   float64
+}{
+	{"very short  3-6", 3, 6, 0.20},
+	{"mid         7-16", 7, 16, 0.45},
+	{"long       17-32", 17, 32, 0.25},
+	{"very long  33-45", 33, 45, 0.10},
+}
+
+const (
+	// minSentenceSD is the burstiness floor, in words. Pass 2 scored 2.1.
+	minSentenceSD = 7.0
+	// bandTolerance is how far a band's share may sit from its target, in
+	// percentage points.
+	bandTolerance = 0.07
+	minWords      = 3
+	maxWords      = 45
+)
+
+func TestBurstiness(t *testing.T) {
+	for _, m := range Moments() {
+		tpls := templatesFor(m)
+		lens := make([]int, 0, len(tpls))
+		bands := make([]int, len(lengthBands))
+		for _, tpl := range tpls {
+			w := wordCount(authoredText(tpl))
+			lens = append(lens, w)
+			switch {
+			case w < minWords:
+				t.Errorf("%v: skeleton %q is only %d words — %q", m, tpl.ID, w, authoredText(tpl))
+			case w > maxWords:
+				t.Errorf("%v: skeleton %q is %d words, over the %d ceiling — %q", m, tpl.ID, w, maxWords, authoredText(tpl))
+			}
+			for i, band := range lengthBands {
+				if w >= band.lo && w <= band.hi {
+					bands[i]++
+				}
+			}
+		}
+		n := float64(len(lens))
+		mean, sd := meanSD(lens)
+		if sd < minSentenceSD {
+			t.Errorf("%v: sentence-length SD is %.2f, want >= %.1f — the lines are all the same "+
+				"LENGTH, which is the tell that sank both previous catalogs regardless of how "+
+				"good the individual sentences were", m, sd, minSentenceSD)
+		}
+		for i, band := range lengthBands {
+			got := float64(bands[i]) / n
+			if got < band.want-bandTolerance || got > band.want+bandTolerance {
+				t.Errorf("%v: the %q band holds %.0f%% of skeletons (%d/%d), want %.0f%% ± %.0f — "+
+					"a missing band is a missing rhythm", m, band.name, got*100, bands[i],
+					len(tpls), band.want*100, bandTolerance*100)
+			}
+		}
+		t.Logf("%-20v n=%3d  mean %5.1f  SD %5.2f   %s", m, len(tpls), mean, sd, bandReport(bands, n))
+	}
+}
+
+// meanSD returns the mean and population standard deviation of a length sample.
+func meanSD(xs []int) (float64, float64) {
+	if len(xs) == 0 {
+		return 0, 0
+	}
+	var sum float64
+	for _, x := range xs {
+		sum += float64(x)
+	}
+	mean := sum / float64(len(xs))
+	var ss float64
+	for _, x := range xs {
+		d := float64(x) - mean
+		ss += d * d
+	}
+	return mean, math.Sqrt(ss / float64(len(xs)))
+}
+
+// bandReport renders the band shares for the log line.
+func bandReport(bands []int, n float64) string {
+	var sb strings.Builder
+	for i, band := range lengthBands {
+		if i > 0 {
+			sb.WriteString("  ")
+		}
+		sb.WriteString(band.name)
+		sb.WriteString(" ")
+		sb.WriteString(strconv.Itoa(int(float64(bands[i])/n*100 + 0.5)))
+		sb.WriteString("%")
+	}
+	return sb.String()
+}
+
+// --- C2: the named AI signatures, banned by lint ---------------------------
+
+// TestNoAITells fails on the sentence SHAPES that read as machine-written
+// independently of their content. Every one of them builds to a weighted final
+// clause — the reader is handed a setup and then a verdict — and a catalog
+// saturated with them reads as a catalog of aphorisms rather than as a chronicle.
+//
+// They are hard to see while authoring precisely because they feel like good
+// writing. Pass 2 was full of them and none was noticed until a reviewer read
+// forty lines in a row.
+func TestNoAITells(t *testing.T) {
+	type tell struct {
+		name string
+		re   *regexp.Regexp
+	}
+	tells := []tell{
+		{
+			"two-beat negation parallel (\"X. Y did not.\")",
+			regexp.MustCompile(`(?i)\.\s+[^.]*\b(did not|didn't|does not|doesn't|do not|don't|was not|wasn't|were not|weren't|is not|isn't|are not|aren't|has not|hasn't|have not|haven't|had not|hadn't|will not|won't|would not|wouldn't|could not|couldn't|cannot|can't)\s*$`),
+		},
+		{
+			"false contrast (\"not X, but Y\")",
+			regexp.MustCompile(`(?i)\bnot\b[^.]{0,45}\bbut\b`),
+		},
+		{
+			"false contrast (\"not X — Y\")",
+			regexp.MustCompile(`(?i)\bnot\b[^.]{0,45}—`),
+		},
+		{
+			"appositive negation (\"cut, not broken,\")",
+			regexp.MustCompile(`(?i),\s*not\s+[\w']+\s*,`),
+		},
+		{
+			"withheld payload (\"isn't X, it's Y\")",
+			regexp.MustCompile(`(?i)\b(isn't|is not|it's not|was not|wasn't|were not|weren't)\b[^.]{0,45},\s*(it's|it is|its|that's|that is|they're|they are)\b`),
+		},
+		{
+			"\"not only / not just / so much as\"",
+			regexp.MustCompile(`(?i)\b(not (only|just|merely|simply|so much)|so much as|less a \w+ than)\b`),
+		},
+		{
+			"trailing verdict clause",
+			regexp.MustCompile(`(?i)\b(and that (is|was) that|and there it is|and so it goes|make of that what you will|speaks for itself|says everything|tells you everything|draw your own)\b`),
+		},
+		{
+			"trailing verdict noun (\"which is the whole problem\")",
+			regexp.MustCompile(`(?i),\s*(and that|which)\s+(is|was)\s+(the\s+)?(point|problem|whole|trouble|joke|reason|end|worst|best|lesson|price|cost|shape|size|story)\b`),
+		},
+		{
+			"negation triad used for rhythm",
+			regexp.MustCompile(`(?i)\b(no|nothing|not one|never)\b[^.,]{1,20},\s*(no|nothing|not one|never)\b[^.,]{1,20},\s*(and\s+)?(no|nothing|not one|never)\b`),
+		},
+		{
+			"\"No X. No Y.\" opener",
+			regexp.MustCompile(`(?i)^\s*(no|nothing|never|none)\b[^.]*\.\s*(no|nothing|never|none)\b`),
+		},
+		{
+			"\", and then nothing\"",
+			regexp.MustCompile(`(?i),\s*and then nothing\b`),
+		},
+	}
+
+	emdash, total := 0, 0
+	perMomentDash := map[Moment]int{}
+	perMomentTotal := map[Moment]int{}
 	for _, m := range Moments() {
 		for _, tpl := range templatesFor(m) {
-			w := wordCount(authoredText(tpl))
-			total += w
-			n++
-			if w > longest {
-				longest, longestID = w, tpl.ID
+			text := strings.TrimSpace(authoredText(tpl))
+			total++
+			perMomentTotal[m]++
+			for _, x := range tells {
+				if x.re.MatchString(text) {
+					t.Errorf("%v %s is a %s:\n    %q", m, tpl.ID, x.name, text)
+				}
 			}
-			if w > maxWords {
-				t.Errorf("%v: skeleton %q is %d words; the cap is %d — %q", m, tpl.ID, w, maxWords, authoredText(tpl))
+			if strings.Contains(text, ":") {
+				t.Errorf("%v %s uses a colon, which in this catalog only ever introduced a "+
+					"verdict (\"two ropes and one broken hand: the whole cost\"):\n    %q", m, tpl.ID, text)
 			}
-			if w < minWords {
-				t.Errorf("%v: skeleton %q is only %d words — %q", m, tpl.ID, w, authoredText(tpl))
+			if strings.Contains(text, "—") {
+				emdash++
+				perMomentDash[m]++
+			}
+			// A bare fragment followed by a judgment: "Two dead, and both of them
+			// were careless." The head is too short to be a clause, so the sentence
+			// exists only to deliver its tail.
+			if head, tail, ok := strings.Cut(text, ","); ok {
+				tailStart := strings.ToLower(strings.Fields(strings.TrimSpace(tail) + " x")[0])
+				switch tailStart {
+				case "and", "but", "which", "both", "all", "though", "so":
+					if wordCount(head) <= 3 {
+						t.Errorf("%v %s is a fragment plus a judgment — the opening %q is too "+
+							"short to be a clause, so the line exists only to deliver its "+
+							"verdict:\n    %q", m, tpl.ID, strings.TrimSpace(head), text)
+					}
+				}
 			}
 		}
 	}
-	t.Logf("%d skeletons, mean %.1f words, longest %d (%s)", n, float64(total)/float64(n), longest, longestID)
+
+	const maxDashShare = 0.08
+	if share := float64(emdash) / float64(total); share > maxDashShare {
+		t.Errorf("%d of %d skeletons (%.1f%%) contain an em dash; the cap is %.0f%% — "+
+			"in volume it is a tell on its own", emdash, total, share*100, maxDashShare*100)
+	}
+	for _, m := range Moments() {
+		share := float64(perMomentDash[m]) / float64(perMomentTotal[m])
+		if share > maxDashShare {
+			t.Errorf("%v: %.1f%% of skeletons contain an em dash; the cap is %.0f%%", m, share*100, maxDashShare*100)
+		}
+	}
+	t.Logf("%d skeletons checked against %d tells; %d carry an em dash (%.1f%%)",
+		total, len(tells), emdash, float64(emdash)/float64(total)*100)
+}
+
+// --- C3: register quotas ---------------------------------------------------
+
+// TestRegisterQuotas is the structural answer to single-voice convergence. An LLM
+// told to write good flavour text converges on terse ironic understatement, and no
+// amount of instruction to "vary the tone" survives two hundred lines. So the mix
+// is declared per sentence and asserted here.
+//
+//   - at least 30% rPlain: no irony, no wit, a circumstantial fact and nothing
+//     else. Both previous catalogs had approximately none of this — pass 2 replaced
+//     loud irony with quiet irony rather than with none.
+//   - at least 15% non-narrative: a ledger line, a grumble, an overheard fragment,
+//     a posted notice. Not everything a log says has to be narration.
+//   - at most 20% reaching for a joke.
+func TestRegisterQuotas(t *testing.T) {
+	const (
+		minPlain    = 0.30
+		maxJoke     = 0.20
+		minNonNarr  = 0.15
+		minEachForm = 3
+	)
+	regName := map[register]string{regUnset: "UNSET", rPlain: "plain", rWry: "wry", rJoke: "joke"}
+	formName := map[form]string{fNarr: "narration", fLedger: "ledger", fComplaint: "complaint", fOverheard: "overheard", fNotice: "notice"}
+
+	for _, m := range Moments() {
+		tpls := templatesFor(m)
+		regs := map[register]int{}
+		forms := map[form]int{}
+		for _, tpl := range tpls {
+			if tpl.Reg == regUnset {
+				t.Errorf("%v %s has no register tag — every sentence must declare Reg, so a "+
+					"forgotten tag cannot vote in the quota: %q", m, tpl.ID, authoredText(tpl))
+			}
+			regs[tpl.Reg]++
+			forms[tpl.Form]++
+		}
+		n := float64(len(tpls))
+		plain := float64(regs[rPlain]) / n
+		joke := float64(regs[rJoke]) / n
+		nonNarr := float64(len(tpls)-forms[fNarr]) / n
+
+		if plain < minPlain {
+			t.Errorf("%v: only %.0f%% of skeletons are rPlain, want >= %.0f%% — a catalog where "+
+				"every line has an angle is exhausting and none of the angles land",
+				m, plain*100, minPlain*100)
+		}
+		if joke > maxJoke {
+			t.Errorf("%v: %.0f%% of skeletons reach for a joke, the cap is %.0f%%", m, joke*100, maxJoke*100)
+		}
+		if nonNarr < minNonNarr {
+			t.Errorf("%v: only %.0f%% of skeletons are non-narrative, want >= %.0f%% — add ledger "+
+				"lines, complaints, overheard fragments and notices", m, nonNarr*100, minNonNarr*100)
+		}
+		for _, f := range []form{fLedger, fComplaint, fOverheard, fNotice} {
+			if forms[f] < minEachForm {
+				t.Errorf("%v: only %d %s skeletons; want >= %d so the form is actually reachable",
+					m, forms[f], formName[f], minEachForm)
+			}
+		}
+		t.Logf("%-20v plain %2.0f%%  wry %2.0f%%  joke %2.0f%%   |  narration %2.0f%%  ledger %d  complaint %d  overheard %d  notice %d",
+			m, plain*100, float64(regs[rWry])/n*100, joke*100, float64(forms[fNarr])/n*100,
+			forms[fLedger], forms[fComplaint], forms[fOverheard], forms[fNotice])
+		_ = regName
+	}
+}
+
+// TestTopicVocabulary keeps the Stream's subject-matter suppression honest: every
+// sentence declares what it is ABOUT, from a closed vocabulary, so a typo cannot
+// split one topic into two that never suppress each other.
+func TestTopicVocabulary(t *testing.T) {
+	used := map[string]int{}
+	for _, m := range Moments() {
+		byTopic := map[string]int{}
+		for _, tpl := range templatesFor(m) {
+			switch {
+			case tpl.Topic == "":
+				t.Errorf("%v %s has no Topic — the Stream cannot tell it apart from the line "+
+					"before it: %q", m, tpl.ID, authoredText(tpl))
+			case !knownTopics[tpl.Topic]:
+				t.Errorf("%v %s has topic %q, which is not in knownTopics", m, tpl.ID, tpl.Topic)
+			}
+			byTopic[tpl.Topic]++
+			used[tpl.Topic]++
+		}
+		if len(byTopic) < 14 {
+			t.Errorf("%v spreads over only %d topics; want >= 14 or the topic ring starves", m, len(byTopic))
+		}
+	}
+	for topic := range knownTopics {
+		if used[topic] == 0 {
+			t.Logf("note: topic %q is declared but unused", topic)
+		}
+	}
+}
+
+// TestOpenerVariety catches the other uniformity a length histogram cannot see:
+// forty lines that all begin "Nobody has" read as one voice even when every one of
+// them is a different length.
+func TestOpenerVariety(t *testing.T) {
+	const (
+		maxWordShare   = 0.08
+		maxBigramShare = 0.04
+	)
+	articles := map[string]bool{"the": true, "a": true, "an": true}
+	for _, m := range Moments() {
+		tpls := templatesFor(m)
+		n := float64(len(tpls))
+		words, bigrams := map[string]int{}, map[string]int{}
+		for _, tpl := range tpls {
+			f := strings.Fields(strings.ToLower(strings.Trim(authoredText(tpl), " ")))
+			if len(f) == 0 {
+				continue
+			}
+			words[f[0]]++
+			if len(f) > 1 {
+				bigrams[f[0]+" "+f[1]]++
+			}
+		}
+		for w, c := range words {
+			if articles[w] {
+				continue
+			}
+			if share := float64(c) / n; share > maxWordShare {
+				t.Errorf("%v: %.0f%% of skeletons open with %q (%d of %d); the cap is %.0f%%",
+					m, share*100, w, c, len(tpls), maxWordShare*100)
+			}
+		}
+		for bg, c := range bigrams {
+			if share := float64(c) / n; share > maxBigramShare {
+				t.Errorf("%v: %.0f%% of skeletons open with %q (%d of %d); the cap is %.0f%%",
+					m, share*100, bg, c, len(tpls), maxBigramShare*100)
+			}
+		}
+	}
 }
 
 // TestNoOutcomeRestating enforces the orthogonality rule. The caller prints the
@@ -1345,20 +1694,21 @@ func TestToneAndKindBiasSelection(t *testing.T) {
 // reviewer reads thirty lines in a row and sees whether the catalog holds up.
 // Run with -v.
 //
-// What to look for, in order of severity: a repeated sentence, two clauses
-// stapled together, a line over fourteen words, three wry observations in a row,
-// or a line that just says the thing succeeded again.
+// What to look for, in order of severity: two adjacent lines about the same
+// thing, a run of lines the same LENGTH, a false-contrast construction, three wry
+// observations in a row with no flat line between them, or a line that just says
+// the thing succeeded again.
 func TestReadTheStream(t *testing.T) {
 	streams := []struct {
 		label string
 		n     int
 		req   Request
 	}{
-		{"ExpeditionSuccess — medieval age, military, gold", 30, Request{
+		{"ExpeditionSuccess — medieval age, military, gold", 40, Request{
 			Moment: ExpeditionSuccess, Tone: Triumphant, Age: "medieval_age",
 			Kind: "military", Subject: "Siege Enemy Castle", Resource: "gold", Amount: 340,
 		}},
-		{"ExpeditionFailure — iron age, scouting", 15, Request{
+		{"ExpeditionFailure — iron age, scouting", 20, Request{
 			Moment: ExpeditionFailure, Age: "iron_age", Kind: "scouting",
 			Subject: "Scout Nearby Ruins", Resource: "iron", Amount: 30,
 		}},

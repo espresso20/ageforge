@@ -53,11 +53,21 @@
 //
 // # Voice
 //
-// Dry, in-world, concrete, six to fourteen words, and mostly FLAT: roughly one
-// line in five reaches for a joke, because comedy needs a straight man and a pool
-// where every line strains for a wry observation is exhausting. The joke is on the
-// game world, never on the player, and never on the mechanic — nothing in here
-// winks at ticks, rolls, caps, or slots. Matches config/building_flavor.go.
+// Dry, in-world, concrete, and mostly FLAT: at least three lines in ten carry no
+// irony at all, because comedy needs a straight man and a pool where every line
+// strains for a wry observation is exhausting. The joke is on the game world,
+// never on the player, and never on the mechanic — nothing in here winks at ticks,
+// rolls, caps, or slots. Matches config/building_flavor.go.
+//
+// Sentence LENGTH is deliberately uneven — four words next to thirty-eight — and
+// that unevenness is a hard requirement rather than a stylistic preference. Two
+// earlier versions of this catalog were rejected as machine-written, and the thing
+// they had in common was a narrow band of sentence lengths: one sat at 12-25 words
+// and the other at 6-14, and both read as generated. Uniform rhythm is the tell,
+// independent of how good any individual line is. TestBurstiness asserts the
+// distribution and a standard deviation floor; TestNoAITells bans the
+// false-contrast and withheld-payload shapes; TestRegisterQuotas holds the mix of
+// flat, wry, joking and non-narrative lines.
 //
 // # Every Request field is optional
 //
@@ -72,6 +82,7 @@ package flavor
 import (
 	"math/rand"
 	"sort"
+	"sync"
 )
 
 // Moment enumerates the game situations this package can narrate. The zero value
@@ -207,6 +218,11 @@ type Result struct {
 	Moment Moment
 	// Template is the stable id of the template used. Empty when Text is empty.
 	Template string
+	// slot is the noun phrase drawn into the sentence's slot, if it had one. It is
+	// unexported because it is not part of the contract — it exists so a Stream can
+	// notice that two different sentences two lines apart both mentioned the long
+	// rope, which skeleton identity cannot see.
+	slot string
 }
 
 // Line generates one sentence for req. It is Generate(req, rng).Text — the
@@ -238,23 +254,59 @@ func Line(req Request, rng *rand.Rand) string {
 // 30·29/(2N) repeated pairs, which is five repeats in thirty lines at N = 81 and
 // still one at N = 400. Repetition inside a screenful is a property of memoryless
 // sampling, not of catalog size, and no amount of extra authoring fixes it.
+// A Stream suppresses on TWO axes, because skeleton identity alone missed a real
+// complaint: two ADJACENT lines that were different sentences about the same
+// thing (the dog, twice; the count, twice). Sentences carry a Topic from a closed
+// vocabulary, and a topic that fired in the last few lines is redrawn too. The
+// topic window is deliberately short — a catalog only has thirty topics, so a
+// long one would starve the pool — while the skeleton window stays a screenful.
 type Stream struct {
 	recent []string
 	at     int
+	topics []string
+	tat    int
+	slots  []string
+	sat    int
 }
 
 const (
 	// streamMemory is how many recent skeletons a Stream will avoid reusing.
 	// Sized to a screenful of log, which is the window a repeat is noticed in.
 	streamMemory = 32
+	// topicMemory is how many recent SUBJECTS a Stream will avoid returning to.
+	// Short on purpose: adjacency is what reads badly, and the topic vocabulary
+	// is small enough that a long window would just exhaust it.
+	topicMemory = 4
+	// slotMemory is how many recent NOUN-PHRASE DRAWS a Stream will avoid
+	// repeating, so two different sentences a few lines apart do not both happen
+	// to be about the long rope.
+	slotMemory = 6
 	// streamRetries is how many times a Stream will redraw before accepting a
 	// repeat. It always accepts eventually, so a narrow eligible pool degrades to
 	// plain Generate instead of looping.
-	streamRetries = 5
+	streamRetries = 12
 )
 
 // NewStream returns an empty Stream.
-func NewStream() *Stream { return &Stream{recent: make([]string, streamMemory)} }
+func NewStream() *Stream {
+	return &Stream{
+		recent: make([]string, streamMemory),
+		topics: make([]string, topicMemory),
+		slots:  make([]string, slotMemory),
+	}
+}
+
+// topicIndex maps a skeleton id to its authored Topic. Built once: ids are unique
+// across Moments (TestTemplatesAreWellFormed), so one flat map covers the catalog.
+var topicIndex = sync.OnceValue(func() map[string]string {
+	out := map[string]string{}
+	for _, m := range Moments() {
+		for _, t := range templatesFor(m) {
+			out[t.ID] = t.Topic
+		}
+	}
+	return out
+})
 
 // Line is Stream.Generate(req, rng).Text.
 func (s *Stream) Line(req Request, rng *rand.Rand) string {
@@ -271,24 +323,73 @@ func (s *Stream) Generate(req Request, rng *rand.Rand) Result {
 	if s.recent == nil {
 		s.recent = make([]string, streamMemory)
 	}
+	if s.topics == nil {
+		s.topics = make([]string, topicMemory)
+	}
+	if s.slots == nil {
+		s.slots = make([]string, slotMemory)
+	}
+	topics := topicIndex()
 	var res Result
+	var topic string
 	for i := 0; i <= streamRetries; i++ {
 		res = Generate(req, rng)
-		if res.Template == "" || !s.seen(res.Template) {
+		if res.Template == "" {
+			break
+		}
+		topic = topics[res.Template]
+		if !s.seen(res.Template) && !s.sameTopicRecently(topic) && !s.sameSlotRecently(res.slot) {
 			break
 		}
 	}
 	if res.Template != "" {
 		s.recent[s.at] = res.Template
 		s.at = (s.at + 1) % len(s.recent)
+		if topic != "" {
+			s.topics[s.tat] = topic
+			s.tat = (s.tat + 1) % len(s.topics)
+		}
+		if res.slot != "" {
+			s.slots[s.sat] = res.slot
+			s.sat = (s.sat + 1) % len(s.slots)
+		}
 	}
 	return res
 }
 
-// seen reports whether id is in the recent ring.
+// sameSlotRecently reports whether this noun-phrase draw is in the recent slot
+// ring. A slotless sentence (empty draw) never suppresses.
+func (s *Stream) sameSlotRecently(slot string) bool {
+	if slot == "" {
+		return false
+	}
+	for _, x := range s.slots {
+		if x == slot {
+			return true
+		}
+	}
+	return false
+}
+
+// seen reports whether id is in the recent skeleton ring.
 func (s *Stream) seen(id string) bool {
 	for _, x := range s.recent {
 		if x == id {
+			return true
+		}
+	}
+	return false
+}
+
+// sameTopicRecently reports whether topic is in the recent topic ring. An untagged
+// sentence (empty topic) never suppresses, so a partially tagged catalog degrades
+// to plain skeleton suppression rather than to nothing.
+func (s *Stream) sameTopicRecently(topic string) bool {
+	if topic == "" {
+		return false
+	}
+	for _, x := range s.topics {
+		if x == topic {
 			return true
 		}
 	}

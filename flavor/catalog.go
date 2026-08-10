@@ -6,12 +6,22 @@ package flavor
 //
 // # What an author writes
 //
-// One finished SENTENCE at a time. Six to fourteen words. It may carry at most
-// one slot, and the slot is a noun phrase of a single tight category. It never
-// gets welded to another sentence by the machine — see skeleton.go for why that
-// is a deliberate hole in the model rather than a missing feature.
+// One finished SENTENCE at a time, of whatever length that sentence wants to be —
+// three words or forty. It may carry at most one slot, and the slot is a noun
+// phrase of a single tight category. It never gets welded to another sentence by
+// the machine — see skeleton.go for why that is a deliberate hole in the model
+// rather than a missing feature.
 //
-// # The five rules the prose is held to
+// # The eight rules the prose is held to
+//
+//  0. VARY THE LENGTH, ON PURPOSE. This is the rule two previous versions of this
+//     catalog broke, and it is the one that got them rejected. About one line in
+//     five is three to six words; about one in four runs past seventeen; one in ten
+//     runs past thirty-three and is genuinely subordinated, stacking circumstance
+//     the way a chronicle or a quartermaster's book actually runs. A catalog whose
+//     lines are all the same LENGTH reads as machine-written no matter how well any
+//     one of them is written. TestBurstiness asserts the distribution and a
+//     standard-deviation floor of seven words.
 //
 //  1. ORTHOGONAL TO THE MECHANICS. The line above this one in the log already
 //     says "Scout Party succeeded! Gained loot." The flavour must not say it
@@ -26,15 +36,32 @@ package flavor
 //     abstract crutches — the venture, the undertaking, the party as a bare
 //     subject, the record, the accounting — are banned for the same reason.
 //
-//  3. MOSTLY FLAT. Roughly one line in five reaches for a joke. Comedy needs a
-//     straight man, and a catalog where every line strains for a wry observation
-//     is exhausting and makes none of them land. The majority simply report
-//     something specific and let the world speak.
+//  3. MOSTLY FLAT, AND TAGGED SO. At most one line in five reaches for a joke and
+//     at least three in ten carry no irony whatsoever — a circumstantial fact,
+//     reported and then stopped. Comedy needs a straight man, and a catalog where
+//     every line strains for a wry observation is exhausting and makes none of
+//     them land. Every sentence declares its Reg, so the mix is structural rather
+//     than aspirational (TestRegisterQuotas).
+//
+//  3b. NOT ALL NARRATION. At least one line in seven is a ledger entry, a grumble,
+//     an overheard fragment or a posted notice, declared with Form. A log that is
+//     nothing but narration has one voice, and one voice is the failure mode.
+//
+//  3c. NO FALSE CONTRAST. "X came back. Y did not." / "not X, but Y" / "isn't X,
+//     it's Y" / a fragment followed by a verdict / a trailing "and that is the
+//     whole problem". Every one of these builds to a weighted final clause, they
+//     are a recognised signature of machine prose, and they are banned by lint
+//     (TestNoAITells). They feel like good writing, which is exactly why the last
+//     two versions of this file were saturated with them.
 //
 //  4. VARY THE BEAT. Not every line is about the return. Rotate the subject
 //     matter: what was found, what broke, who did something, what the town did,
 //     what the map says, a rumour, a count, an animal, the weather, a name. A
 //     Moment wants a spread of EVENTS, not a spread of phrasings for one event.
+//     Every sentence declares a Topic from a closed vocabulary, and Stream refuses
+//     a topic it used in the last four lines — because two ADJACENT lines about
+//     the dog read badly even when they are different sentences, and skeleton
+//     identity cannot see that.
 //
 //  5. ERA-APPROPRIATE. Concrete writing is inherently era-bound — that is the
 //     cost of rule 2 and it is worth paying. A sentence naming a physical thing

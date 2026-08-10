@@ -30,6 +30,77 @@ import "strings"
 // occurs in English prose, so it needs no escaping and reads as a gap on the page.
 const slotMark = "~"
 
+// --- register and form: the tags that keep the catalog off one note ----------
+//
+// Two rewrites of this catalog failed the same way. Both were told to write
+// "good flavour text" and both converged on ONE voice — terse ironic
+// understatement — because that is the attractor the instruction lands in. The
+// prose was fine sentence by sentence and unreadable forty lines at a time.
+//
+// The fix is not a better adjective in a doc comment. It is a QUOTA, declared per
+// sentence and asserted in a test, so the mix is structural. Two axes:
+//
+//	register — how much wit the sentence carries. Most of a catalog must be rPlain:
+//	           a flat circumstantial fact, reported without a raised eyebrow. Comedy
+//	           needs a straight man and the straight man is 30% of the roster.
+//	form     — whether the sentence is NARRATION at all. A ledger line, a grumble, a
+//	           fragment of overheard speech and a posted notice are different kinds
+//	           of text, not different phrasings of the same one.
+//
+// register has NO usable zero value on purpose: an author who forgets the tag gets
+// a test failure rather than a silent vote for the quota's cheapest bucket.
+type register int
+
+const (
+	// regUnset is the zero value and is invalid — TestRegisterQuotas rejects it.
+	regUnset register = iota
+	// rPlain carries no irony and no wit. It reports a circumstantial fact and
+	// stops. If a reader could smile at it, it is not rPlain.
+	rPlain
+	// rWry carries a dry angle — the sentence knows something it is not saying —
+	// without reaching for a laugh.
+	rWry
+	// rJoke reaches for a laugh. Capped at one line in five.
+	rJoke
+)
+
+// form is what KIND of text a sentence is. The zero value is narration, which is
+// the safe default: the quota on non-narrative forms is a FLOOR, so a forgotten
+// tag makes the test harder to pass, never easier.
+type form int
+
+const (
+	// fNarr is plain narration: something happened, here it is. The default.
+	fNarr form = iota
+	// fLedger is an inventory line, a tally, a manifest entry, a count.
+	fLedger
+	// fComplaint is somebody grumbling, in their own register.
+	fComplaint
+	// fOverheard is a fragment of speech, a rumour, what is being said.
+	fOverheard
+	// fNotice is administrative: an order, a posted note, a rule, a form.
+	fNotice
+)
+
+// knownTopics is the SUBJECT-MATTER vocabulary. Every skeleton declares one, and
+// Stream suppresses a topic that fired in the last few lines — which is the fix
+// for the residual complaint that two adjacent lines were both about the dog. The
+// recency ring filtered skeleton identity, which cannot see that two different
+// sentences are about the same thing.
+//
+// A closed vocabulary rather than free text, so a typo cannot quietly fragment a
+// topic into two that never suppress each other (TestTopicVocabulary).
+var knownTopics = map[string]bool{
+	"animal": true, "argument": true, "authority": true, "border": true,
+	"building": true, "casualty": true, "count": true, "food": true,
+	"ground": true, "haul": true, "kit": true, "machine": true,
+	"map": true, "message": true, "money": true, "name": true,
+	"noise": true, "paper": true, "people": true, "religion": true,
+	"rumour": true, "sleep": true, "smell": true, "stranger": true,
+	"time": true, "town": true, "trade": true, "weapon": true,
+	"weather": true, "wound": true,
+}
+
 // skel is one authored sentence plus its eligibility rules. Text carries NO
 // terminal full stop — template() supplies it, so a line can never ship without
 // one and an author can never accidentally ship two.
@@ -50,6 +121,14 @@ type skel struct {
 	// Kinds restricts the sentence to these Request.Kind values (lowercased);
 	// nil means any.
 	Kinds []string
+	// Reg is how much wit the sentence carries. REQUIRED — the zero value fails
+	// TestRegisterQuotas, because a forgotten tag must not vote in the quota.
+	Reg register
+	// Form is what kind of text the sentence is. Zero means narration.
+	Form form
+	// Topic is the sentence's subject matter, from knownTopics. Stream uses it to
+	// stop two adjacent lines both being about the dog.
+	Topic string
 }
 
 // template converts an authored sentence into the renderer's template form.
@@ -59,7 +138,10 @@ type skel struct {
 // verbatim, so it is the line's identity for anyone holding only the string
 // (see anchorOf and Signatures).
 func (s skel) template(id string, eras []era) tmpl {
-	t := tmpl{ID: id, Needs: s.Needs, Tones: s.Tones, Kinds: s.Kinds, Eras: eras}
+	t := tmpl{
+		ID: id, Needs: s.Needs, Tones: s.Tones, Kinds: s.Kinds, Eras: eras,
+		Reg: s.Reg, Form: s.Form, Topic: s.Topic,
+	}
 	if s.Slot == "" {
 		t.Parts = []part{lit(s.Text + ".")}
 		return t
