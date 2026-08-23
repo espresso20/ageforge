@@ -1,0 +1,4 @@
+# Puts a Sponsor button on the repo page and in the sidebar.
+# Only list platforms that are actually set up -- an unconfigured one renders
+# as a dead entry.
+buy_me_a_coffee: adamroffler
