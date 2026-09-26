@@ -30,6 +30,14 @@ type reproHarness struct {
 	a      *App
 	sim    tcell.SimulationScreen
 	runErr chan error
+	// built is the high-water building count per key. An endured catastrophe
+	// destroys a random 20% of buildings (Buildings.DestroyRandom, global
+	// rand), and when the dice took a storage building the next age's
+	// requirement no longer fit under the cap: the storage check below failed
+	// roughly one run in four under -race. grantNextAge rebuilds back to this
+	// mark, so the test exercises the modal lifecycle it is about rather than
+	// the catastrophe's dice.
+	built map[string]int
 }
 
 func newReproHarness(t *testing.T) *reproHarness {
@@ -240,6 +248,30 @@ func (h *reproHarness) grantNextAge() bool {
 	if st.NextAge == "" {
 		return false
 	}
+	if h.built == nil {
+		h.built = map[string]int{}
+	}
+	rebuilt := false
+	for key, b := range st.Buildings {
+		for c := b.Count; c < h.built[key]; c++ {
+			h.dev("/build " + key)
+			rebuilt = true
+		}
+	}
+	if rebuilt {
+		// Storage caps are recomputed on the next tick, not on /build.
+		h.waitFor("storage to recover after rebuilding", 10*time.Second, func() bool {
+			s := h.eng.GetState()
+			for res, v := range s.NextAgeResReqs {
+				if rs, ok := s.Resources[res]; ok && rs.Storage < v {
+					return false
+				}
+			}
+			return true
+		})
+		st = h.eng.GetState()
+	}
+	defer h.recordBuilt()
 	for res, v := range st.NextAgeResReqs {
 		if rs, ok := st.Resources[res]; ok && rs.Storage < v {
 			h.t.Fatalf("storage for %s too low: %.0f < %.0f", res, rs.Storage, v)
@@ -257,6 +289,15 @@ func (h *reproHarness) grantNextAge() bool {
 		h.dev("/give " + res + " 1e18")
 	}
 	return true
+}
+
+// recordBuilt raises the building high-water mark to the current counts.
+func (h *reproHarness) recordBuilt() {
+	for key, b := range h.eng.GetState().Buildings {
+		if b.Count > h.built[key] {
+			h.built[key] = b.Count
+		}
+	}
 }
 
 var dismissKeys = []struct {

@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/boon"
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/flavor"
 )
 
 // Faction-encounter engine (Phase 1 discovery + Phase 2b boon wiring).
@@ -100,27 +101,25 @@ const (
 	malusChanceAtWar = 0.35
 )
 
-// atCapacityFlavors are the in-world lines for an encounter that arrives while
-// your court already holds the maximum number of foreign favours. Player-facing
-// production text: dry, in-world, no winking at the mechanic.
-var atCapacityFlavors = []string{
-	"Your stores are already thick with foreign gifts; the envoys are thanked, fed, and sent home with their crates unopened.",
-	"The ledger of outstanding favours is full. There is nothing they can offer that you are not already owed.",
-	"Your court can carry no more obligations this season — the party returns with courtesies and little else.",
-}
-
-// atWarNoHarmFlavors are the lines for meeting a civilization you are AT WAR with
-// and getting away with it. There is never a gift from an enemy, but war does not
-// bite on every contact either (see malusChanceAtWar), and the encounter must not
-// be SILENT: before the malus table existed, a war encounter fired and produced
-// nothing at all, which read to the player — and to the measurement harness — as
-// if no encounter had happened. A standoff is an outcome and gets a line.
-// Player-facing production text: dry, in-world, no winking at the mechanic.
-var atWarNoHarmFlavors = []string{
-	"Your scouts and theirs see each other across the valley. Both parties withdraw without a word.",
-	"An enemy column shadows the expedition most of a day, then breaks off. Nothing is gained and nothing is lost.",
-	"Contact with the enemy, brief and inconclusive. Your people come home with nothing but the sighting.",
-}
+// The two EMPTY-OUTCOME lines — an encounter your court has no room for, and a
+// war contact that did not turn violent — used to be fixed three-line banks here.
+// Both now come off the procedural generator (package flavor) via
+// GameEngine.factionEncounterFlavor, because at ~27 encounters per 10k ticks a
+// three-line bank is the same sentence over and over.
+//
+// The two Moments are flavor.EncounterAtCapacity and flavor.EncounterStandoff.
+//
+// NOTE FOR THE TUNING HARNESS: game/boon_tuning_test.go buckets encounter
+// outcomes by matching the player-facing line. It used to iterate these two
+// slices; it now consults flavor.Signatures(moment), which enumerates the
+// fragments guaranteed to appear verbatim in generated text. If you add a Moment
+// to the empty-outcome path, add it to bounceSignatures there or the harness will
+// silently stop classifying.
+//
+// A standoff must never be SILENT: before the malus table existed a war encounter
+// fired and produced nothing at all, which read to the player — and to the
+// harness — as if no encounter had happened. A standoff is an outcome and gets a
+// line.
 
 // rollExpeditionEncounter is called once per resolved expedition. It rolls the
 // encounter chance for (category, success); on a hit it discovers an eligible
@@ -181,8 +180,8 @@ func (ge *GameEngine) rollExpeditionEncounter(category string, success bool) []s
 			}
 		} else {
 			// No harm done — but no gift either, and not silence.
-			flavor := atWarNoHarmFlavors[ge.rng.Intn(len(atWarNoHarmFlavors))]
-			messages = append(messages, fmt.Sprintf("[gray]✖ %s:[-] %s", target.Name, flavor))
+			line := ge.factionEncounterFlavor(flavor.EncounterStandoff, target)
+			messages = append(messages, fmt.Sprintf("[gray]✖ %s:[-] %s", target.Name, line))
 		}
 	case !success:
 		if ge.rng.Float64() < malusChanceOnExpeditionFailure {
@@ -208,8 +207,8 @@ func (ge *GameEngine) rollExpeditionEncounter(category string, success bool) []s
 				messages = append(messages, line)
 			}
 		default:
-			flavor := atCapacityFlavors[ge.rng.Intn(len(atCapacityFlavors))]
-			messages = append(messages, fmt.Sprintf("[gray]✦ %s:[-] %s", target.Name, flavor))
+			line := ge.factionEncounterFlavor(flavor.EncounterAtCapacity, target)
+			messages = append(messages, fmt.Sprintf("[gray]✦ %s:[-] %s", target.Name, line))
 		}
 	default:
 		if line := ge.applyFactionBoon(target, state); line != "" {
