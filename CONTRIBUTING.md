@@ -6,7 +6,7 @@ AgeForge is a terminal-based idle empire builder written in Go.
 
 ## Requirements
 
-- Go 1.23+
+- Go 1.24+
 
 ```bash
 git clone https://github.com/espresso20/ageforge.git

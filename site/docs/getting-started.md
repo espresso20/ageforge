@@ -46,7 +46,7 @@ Download `ageforge-windows-amd64.exe` from the [GitHub Releases](https://github.
 
 ## Build from Source
 
-Requires **Go 1.22+**.
+Requires **Go 1.24+**.
 
 ```bash
 git clone https://github.com/espresso20/ageforge.git
