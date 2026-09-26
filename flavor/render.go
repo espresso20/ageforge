@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/espresso20/ageforge/config"
 )
@@ -137,10 +138,14 @@ func Generate(req Request, rng *rand.Rand) Result {
 	if len(pool) == 0 {
 		return Result{Moment: req.Moment}
 	}
-	// Draw 1: the structure.
-	t := pool[rng.Intn(len(pool))]
+	// Draw 1: the structure. Draws 2..n happen in render.
+	return render(pool[rng.Intn(len(pool))], req, rng)
+}
 
-	// Draws 2..n: one authored fragment per bank slot, left to right.
+// render fills one chosen template: one authored fragment per bank slot, left to
+// right, then placeholder substitution. Split out of Generate so a Stream's
+// last-resort pick can render a template it chose itself.
+func render(t tmpl, req Request, rng *rand.Rand) Result {
 	var sb strings.Builder
 	var drew string
 	for _, p := range t.Parts {
@@ -267,15 +272,9 @@ func eraOf(age string) (era, bool) {
 	if age == "" {
 		return eraAncient, false
 	}
-	idx := -1
-	for i, k := range config.AgeOrder() {
-		if k == age {
-			idx = i
-			break
-		}
-	}
+	idx, ok := ageIndex()[age]
 	switch {
-	case idx < 0:
+	case !ok:
 		return eraAncient, false
 	case idx <= 4: // primitive_age .. classical_age
 		return eraAncient, true
@@ -289,6 +288,18 @@ func eraOf(age string) (era, bool) {
 		return eraCosmic, true
 	}
 }
+
+// ageIndex maps each config age key to its position in config.AgeOrder(). Built
+// once: AgeOrder rebuilds the whole age table on every call, and eraOf runs on
+// every draw.
+var ageIndex = sync.OnceValue(func() map[string]int {
+	order := config.AgeOrder()
+	out := make(map[string]int, len(order))
+	for i, k := range order {
+		out[k] = i
+	}
+	return out
+})
 
 // fill substitutes the placeholders in an assembled sentence. Every placeholder
 // this package understands is listed here; anything unrecognised is left alone

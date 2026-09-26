@@ -1,5 +1,7 @@
 package flavor
 
+import "sync"
+
 // catalog.go is the REGISTRY half of the data layer: it wires each Moment to its
 // authored sentences and merges the noun banks those sentences draw from. The
 // prose itself lives one file per Moment, next to the banks it uses.
@@ -140,7 +142,27 @@ func mergeBanks(tables ...map[string][]string) map[string][]string {
 
 // templatesFor returns a Moment's skeleton set in a stable order. An unregistered
 // Moment returns nil, which is what makes Generate yield an empty Result for it.
+//
+// The set is built once and shared: callers must treat the returned slice as
+// read-only. Rebuilding every pool on every Generate call was the single largest
+// cost in a draw, and the catalog is immutable after init anyway.
 func templatesFor(m Moment) []tmpl {
+	return templateCache()[m]
+}
+
+// templateCache builds every registered Moment's skeleton set exactly once. A
+// sync.OnceValue rather than an init-time var so the cost is paid on first use,
+// and so concurrent first calls (two engines in one test binary) are race-free.
+var templateCache = sync.OnceValue(func() map[Moment][]tmpl {
+	out := make(map[Moment][]tmpl, len(Moments()))
+	for _, m := range Moments() {
+		out[m] = buildTemplates(m)
+	}
+	return out
+})
+
+// buildTemplates assembles one Moment's skeleton set from its per-era pools.
+func buildTemplates(m Moment) []tmpl {
 	switch m {
 	case ExpeditionSuccess:
 		return expSuccessTemplates()
