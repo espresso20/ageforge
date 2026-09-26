@@ -6,7 +6,7 @@ AgeForge is a terminal-based idle empire builder written in Go.
 
 ## Requirements
 
-- Go 1.23+
+- Go 1.24+
 
 ```bash
 git clone https://github.com/espresso20/ageforge.git
@@ -234,6 +234,8 @@ make test-raw                                          # raw go test -v
 go test ./game/ -run TestEngine_BuildMultiple -v       # single test
 go test ./game/ -v -count=1                            # one package
 ```
+
+CI (`.github/workflows/go.yml`) runs `gofmt -l`, `go vet`, `go build`, a cross-compile of the release targets and `go test -race` on every PR and every push to `master`. Run `gofmt -w .` before pushing.
 
 **Common test patterns:**
 - Tests create isolated managers — no shared state between tests

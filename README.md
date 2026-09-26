@@ -16,7 +16,11 @@
   </a>
   &nbsp;
   <a href="https://golang.org">
-    <img src="https://img.shields.io/badge/Go-1.23-00ADD8?style=for-the-badge&logo=go&logoColor=white&labelColor=1a1a1a" alt="Go 1.23">
+    <img src="https://img.shields.io/badge/Go-1.24-00ADD8?style=for-the-badge&logo=go&logoColor=white&labelColor=1a1a1a" alt="Go 1.24">
+  </a>
+  &nbsp;
+  <a href="https://github.com/espresso20/ageforge/actions/workflows/go.yml">
+    <img src="https://img.shields.io/github/actions/workflow/status/espresso20/ageforge/go.yml?branch=master&style=for-the-badge&label=CI&logo=githubactions&logoColor=white&labelColor=1a1a1a" alt="CI">
   </a>
   &nbsp;
   <a href="https://github.com/espresso20/ageforge/blob/master/LICENSE">
