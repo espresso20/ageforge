@@ -235,7 +235,7 @@ go test ./game/ -run TestEngine_BuildMultiple -v       # single test
 go test ./game/ -v -count=1                            # one package
 ```
 
-CI (`.github/workflows/go.yml`) runs `gofmt -l`, `go vet`, `go build`, `go test` and `go test -race` on every PR and every push to `master`. Run `gofmt -w .` before pushing.
+CI (`.github/workflows/go.yml`) runs `gofmt -l`, `go vet`, `go build`, a cross-compile of the release targets and `go test -race` on every PR and every push to `master`. Run `gofmt -w .` before pushing.
 
 **Common test patterns:**
 - Tests create isolated managers — no shared state between tests

@@ -52,8 +52,13 @@ jobs:
       - name: go build
         run: go build ./...
 
-      - name: go test
-        run: go test ./...
+      # Same targets release.yml ships; linux/amd64 is covered by go build above.
+      - name: cross-compile release targets
+        run: |
+          for target in linux/arm64 darwin/amd64 darwin/arm64 windows/amd64; do
+            echo "building $target"
+            GOOS=${target%/*} GOARCH=${target#*/} go build -o /dev/null .
+          done
 
       - name: go test -race
         run: go test -race ./...
