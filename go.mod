@@ -4,7 +4,7 @@ go 1.24.0
 
 require (
 	github.com/gdamore/tcell/v2 v2.13.10
-	github.com/lucasb-eyer/go-colorful v1.4.0
+	github.com/lucasb-eyer/go-colorful v1.4.1
 	github.com/rivo/tview v0.42.0
 )
 
