@@ -61,7 +61,8 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("  [cyan]prestige[-] buy <key>              - Buy a prestige upgrade\n")
 	sb.WriteString("  [cyan]festival[-]                        - Spend culture for a temporary production boost\n")
 	sb.WriteString("  [cyan]festival confirm yes[-]            - Hold the festival now\n")
-	sb.WriteString("  [cyan]catastrophe invoke[-]              - Voluntarily trigger the epoch catastrophe\n")
+	sb.WriteString("  [cyan]catastrophe[-]                     - Reopen a pending catastrophe choice (or show the odds)\n")
+	sb.WriteString("  [cyan]catastrophe invoke[-]              - Voluntarily trigger this epoch's catastrophe (Iron Era on)\n")
 
 	sb.WriteString("\n[gold]═══ Game ═══[-]\n")
 	sb.WriteString("  [cyan]rates[-]                       - Show resource rate breakdown\n")

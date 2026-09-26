@@ -87,19 +87,15 @@ func statsProvider(state game.GameState, _ int) string {
 	}
 	fmt.Fprintf(&sb, " %-20s [cyan]%s[-]\n", "Current Epoch:", epochDisplay)
 
-	epochsSurvivedCount := len(state.CatastropheHistory)
-	fmt.Fprintf(&sb, " %-20s %d\n", "Epochs Survived:", epochsSurvivedCount)
-
-	succumbedCount := 0
-	for _, active := range state.LegacyBonuses {
-		if active {
-			succumbedCount++
-		}
-	}
-	totalCatastrophes := len(state.CatastropheHistory)
-	enduredCount := totalCatastrophes - succumbedCount
+	// Survived means Endured; both counts come from the civilization log, so a
+	// pending catastrophe is in neither and repeat succumbs all count.
+	fmt.Fprintf(&sb, " %-20s %d\n", "Epochs Survived:", state.CatastrophesEndured)
+	totalCatastrophes := state.CatastrophesEndured + state.CatastrophesSuccumbed
 	fmt.Fprintf(&sb, " %-20s %d  (Endured: %d  Succumbed: %d)\n",
-		"Catastrophes:", totalCatastrophes, enduredCount, succumbedCount)
+		"Catastrophes:", totalCatastrophes, state.CatastrophesEndured, state.CatastrophesSuccumbed)
+	if state.PendingCatastrophe != "" {
+		sb.WriteString(" [red]  One catastrophe pending — type 'catastrophe' to decide[-]\n")
+	}
 
 	// Legacy Bonuses
 	sb.WriteString("\n [gold]Legacy Bonuses:[-]\n")
@@ -426,6 +422,8 @@ func multiplierSourceLabel(src string) string {
 		return "Event"
 	case "diplomacy":
 		return "Diplomacy"
+	case "legacy":
+		return "Legacy"
 	}
 	return capitalize(src)
 }
