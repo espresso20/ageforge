@@ -45,6 +45,7 @@ All notable changes to AgeForge are documented here.
 - Load Game: bare `load` opens the browser; renaming re-parents child saves; footer hotkeys render as keycaps.
 - Modifiers: negative production debuffs apply correctly and build-cost modifiers are wired in.
 - Stash is buildable again (its first-copy cost had exceeded the base wood cap).
+- Tick loop and UI snapshot no longer rebuild the building table (and other config tables) every tick; a late-game tick is ~13x faster.
 
 ---
 

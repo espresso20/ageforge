@@ -30,6 +30,14 @@ type TradeManager struct {
 	totalExchanged map[string]float64
 	totalImported  map[string]float64
 	totalExported  map[string]float64
+
+	// Static config tables, built once at construction so Tick (every engine
+	// tick) and Snapshot (every UI refresh) don't rebuild them per call.
+	// Read-only: never mutate these or the maps inside the defs; Snapshot hands
+	// the UI copies of Export/Import so nothing outside the lock aliases them.
+	rateDefs  map[string]config.ExchangeRateDef
+	routeList []config.TradeRouteDef
+	routeDefs map[string]config.TradeRouteDef
 }
 
 // ActiveRoute represents a running trade route
@@ -66,6 +74,11 @@ func (tm *TradeManager) routeDisruptedBy(def config.TradeRouteDef, disrupted map
 
 // NewTradeManager creates a new trade manager
 func NewTradeManager() *TradeManager {
+	routes := config.BaseTradeRoutes()
+	routeDefs := make(map[string]config.TradeRouteDef, len(routes))
+	for _, def := range routes {
+		routeDefs[def.Key] = def
+	}
 	return &TradeManager{
 		supplyPressure: make(map[string]float64),
 		lastExchange:   make(map[string]int),
@@ -73,12 +86,28 @@ func NewTradeManager() *TradeManager {
 		totalExchanged: make(map[string]float64),
 		totalImported:  make(map[string]float64),
 		totalExported:  make(map[string]float64),
+		rateDefs:       config.ExchangeRateByKey(),
+		routeList:      routes,
+		routeDefs:      routeDefs,
 	}
+}
+
+// copyAmounts returns an independent copy of a resource-amount map so UI
+// snapshots never alias the manager's held config defs.
+func copyAmounts(m map[string]float64) map[string]float64 {
+	if m == nil {
+		return nil
+	}
+	out := make(map[string]float64, len(m))
+	for k, v := range m {
+		out[k] = v
+	}
+	return out
 }
 
 // GetExchangeRate returns the current rate for a resource pair, accounting for supply pressure
 func (tm *TradeManager) GetExchangeRate(from, to string) float64 {
-	rates := config.ExchangeRateByKey()
+	rates := tm.rateDefs
 	key := from + ":" + to
 	def, ok := rates[key]
 	if !ok {
@@ -90,7 +119,7 @@ func (tm *TradeManager) GetExchangeRate(from, to string) float64 {
 
 // Exchange performs an instant resource exchange
 func (tm *TradeManager) Exchange(from, to string, amount float64, resources *ResourceManager, buildings *BuildingManager, tick int) (float64, error) {
-	rates := config.ExchangeRateByKey()
+	rates := tm.rateDefs
 	key := from + ":" + to
 	def, ok := rates[key]
 	if !ok {
@@ -137,7 +166,7 @@ func (tm *TradeManager) Exchange(from, to string, amount float64, resources *Res
 
 // StartRoute activates a trade route
 func (tm *TradeManager) StartRoute(key string, buildings *BuildingManager, age string, ageOrder map[string]int) error {
-	routes := config.TradeRouteByKey()
+	routes := tm.routeDefs
 	def, ok := routes[key]
 	if !ok {
 		return fmt.Errorf("unknown trade route: %s", key)
@@ -191,7 +220,7 @@ func (tm *TradeManager) ActiveRouteCount() int {
 func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingManager, diplomacy *DiplomacyManager, harborBonus float64) []string {
 	var messages []string
 
-	routes := config.TradeRouteByKey()
+	routes := tm.routeDefs
 
 	// Resources currently blockaded by war/embargo. A route whose imports touch
 	// any of these is disrupted (income blocked) until the conflict ends.
@@ -287,8 +316,8 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 // resources currently blockaded by war/embargo (from DiplomacyManager); routes
 // importing one are flagged Disrupted so the overlay can warn the player.
 func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings *BuildingManager, disrupted map[string]bool) TradeState {
-	rates := config.ExchangeRateByKey()
-	allRoutes := config.TradeRouteByKey()
+	rates := tm.rateDefs
+	allRoutes := tm.routeDefs
 
 	// Exchange rates
 	exchangeRates := make(map[string]ExchangeRateInfo)
@@ -319,8 +348,8 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 			Key:         key,
 			TicksLeft:   route.TicksLeft,
 			CyclesDone:  route.CyclesDone,
-			Export:      def.Export,
-			Import:      def.Import,
+			Export:      copyAmounts(def.Export),
+			Import:      copyAmounts(def.Import),
 			Disrupted:   blockedBy != "",
 			DisruptedBy: blockedBy,
 		})
@@ -333,7 +362,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 
 	// Available routes
 	var availableRoutes []TradeRouteInfo
-	for _, def := range config.BaseTradeRoutes() {
+	for _, def := range tm.routeList {
 		if ageOrder[def.MinAge] > ageOrder[age] {
 			continue
 		}
@@ -344,8 +373,8 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 		availableRoutes = append(availableRoutes, TradeRouteInfo{
 			Name:        def.Name,
 			Key:         def.Key,
-			Export:      def.Export,
-			Import:      def.Import,
+			Export:      copyAmounts(def.Export),
+			Import:      copyAmounts(def.Import),
 			CanStart:    canStart,
 			RequiredBld: def.RequiredBld,
 			MinCount:    def.MinCount,

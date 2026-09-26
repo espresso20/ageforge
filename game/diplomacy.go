@@ -59,6 +59,12 @@ type DiplomacyManager struct {
 	pendingLends   []LendRequest
 	pendingReturns []int
 	pendingRaids   []RaidRequest
+
+	// factionList / factionDefs are the static civ roster, built once at
+	// construction so the per-tick paths (Tick, GetTradeBonus via the resolver,
+	// DisruptedResources) don't rebuild config tables every call. Read-only.
+	factionList []config.FactionDef
+	factionDefs map[string]config.FactionDef
 }
 
 // FactionState tracks the relationship with one NPC civilization.
@@ -111,8 +117,15 @@ type RaidRequest struct {
 
 // NewDiplomacyManager creates a new diplomacy manager
 func NewDiplomacyManager() *DiplomacyManager {
+	list := config.BaseFactions()
+	defs := make(map[string]config.FactionDef, len(list))
+	for _, def := range list {
+		defs[def.Key] = def
+	}
 	return &DiplomacyManager{
-		factions: make(map[string]*FactionState),
+		factions:    make(map[string]*FactionState),
+		factionList: list,
+		factionDefs: defs,
 	}
 }
 
@@ -182,7 +195,7 @@ const ageFallbackGap = 2
 func (dm *DiplomacyManager) DiscoverFactions(age string, ageOrder map[string]int) []string {
 	var discovered []string
 	cur := ageOrder[age]
-	for _, def := range config.BaseFactions() {
+	for _, def := range dm.factionList {
 		if _, exists := dm.factions[def.Key]; exists {
 			continue
 		}
@@ -203,7 +216,7 @@ func (dm *DiplomacyManager) DiscoverFactions(age string, ageOrder map[string]int
 // that civ's first-contact flavour line. Returns ("", false) when the key is unknown
 // or the faction is already discovered. Must be called under the engine write lock.
 func (dm *DiplomacyManager) DiscoverFaction(key string) (string, bool) {
-	def, ok := config.FactionByKey()[key]
+	def, ok := dm.factionDefs[key]
 	if !ok {
 		return "", false
 	}
@@ -256,7 +269,7 @@ func clampOpinion(fs *FactionState) {
 //
 // Civs at war never drift upward (they only worsen via raids/war logic).
 func (dm *DiplomacyManager) applyPersonalityDrift(tradedRecently bool) {
-	defs := config.FactionByKey()
+	defs := dm.factionDefs
 	for key, fs := range dm.factions {
 		if !fs.Discovered {
 			continue
@@ -293,7 +306,7 @@ func (dm *DiplomacyManager) applyPersonalityDrift(tradedRecently bool) {
 
 // SetStatus changes diplomatic status with a faction
 func (dm *DiplomacyManager) SetStatus(factionKey, status string, gold float64) (float64, error) {
-	defs := config.FactionByKey()
+	defs := dm.factionDefs
 	def, ok := defs[factionKey]
 	if !ok {
 		return 0, fmt.Errorf("unknown faction: %s", factionKey)
@@ -358,7 +371,7 @@ func (dm *DiplomacyManager) recordProvocation(fs *FactionState, def config.Facti
 // provocation that can trigger war if standing is already hostile. Returns
 // (warStarted, error). Used by the diplomacy command.
 func (dm *DiplomacyManager) RaidTradeRoute(factionKey string, tick int) (bool, error) {
-	defs := config.FactionByKey()
+	defs := dm.factionDefs
 	def, ok := defs[factionKey]
 	if !ok {
 		return false, fmt.Errorf("unknown civilization: %s", factionKey)
@@ -379,7 +392,7 @@ func (dm *DiplomacyManager) RaidTradeRoute(factionKey string, tick int) (bool, e
 // to end the war immediately and restore a small amount of opinion. Returns the
 // (gold, culture) actually spent and an error if conditions aren't met.
 func (dm *DiplomacyManager) SendTribute(factionKey string, gold, culture float64) (float64, float64, error) {
-	defs := config.FactionByKey()
+	defs := dm.factionDefs
 	def, ok := defs[factionKey]
 	if !ok {
 		return 0, 0, fmt.Errorf("unknown civilization: %s", factionKey)
@@ -424,7 +437,7 @@ func (dm *DiplomacyManager) endWar(fs *FactionState) {
 
 // SendGift sends a gift to a faction, increasing opinion
 func (dm *DiplomacyManager) SendGift(factionKey string, gold float64) (float64, error) {
-	defs := config.FactionByKey()
+	defs := dm.factionDefs
 	def, ok := defs[factionKey]
 	if !ok {
 		return 0, fmt.Errorf("unknown faction: %s", factionKey)
@@ -456,7 +469,7 @@ func (dm *DiplomacyManager) SendGift(factionKey string, gold float64) (float64, 
 // GetTradeBonus returns the sum of bonuses from allied factions for a resource.
 // Civs at war never grant a bonus regardless of stored status.
 func (dm *DiplomacyManager) GetTradeBonus(resourceKey string) float64 {
-	defs := config.FactionByKey()
+	defs := dm.factionDefs
 	bonus := 0.0
 	for key, fs := range dm.factions {
 		if fs.Status != "allied" || fs.AtWar {
@@ -484,7 +497,7 @@ func (dm *DiplomacyManager) GetTradeBonus(resourceKey string) float64 {
 // log) and false when it is "only" an embargo; callers may ignore it.
 func (dm *DiplomacyManager) DisruptedResources() map[string]bool {
 	out := make(map[string]bool)
-	defs := config.FactionByKey()
+	defs := dm.factionDefs
 	for key, fs := range dm.factions {
 		if !fs.Discovered {
 			continue
@@ -513,7 +526,7 @@ func (dm *DiplomacyManager) Tick(age string, ageOrder map[string]int, tick int, 
 
 	// Discover new civs and announce first contact.
 	discovered := dm.DiscoverFactions(age, ageOrder)
-	defs := config.FactionByKey()
+	defs := dm.factionDefs
 	for _, key := range discovered {
 		def := defs[key]
 		messages = append(messages, firstContactMessage(def))
@@ -558,7 +571,7 @@ func (dm *DiplomacyManager) Tick(age string, ageOrder map[string]int, tick int, 
 // to lend new workers. Returns log messages for both directions.
 func (dm *DiplomacyManager) processLending(tick int) []string {
 	var messages []string
-	defs := config.FactionByKey()
+	defs := dm.factionDefs
 
 	// Return expired (non-permanent) batches.
 	kept := dm.lentBatches[:0]
@@ -628,7 +641,7 @@ func (dm *DiplomacyManager) hasLentBatch(factionKey string) bool {
 // provocation. Returns log messages; resource losses are queued for the engine.
 func (dm *DiplomacyManager) processWar(tick int) []string {
 	var messages []string
-	defs := config.FactionByKey()
+	defs := dm.factionDefs
 	for key, fs := range dm.factions {
 		if !fs.AtWar {
 			continue
@@ -703,7 +716,7 @@ func (dm *DiplomacyManager) RecordTrade() {
 func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) DiplomacyState {
 	factions := make(map[string]FactionInfo)
 
-	for _, def := range config.BaseFactions() {
+	for _, def := range dm.factionList {
 		fs, exists := dm.factions[def.Key]
 		info := FactionInfo{
 			Name:        def.Name,

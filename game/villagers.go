@@ -27,23 +27,48 @@ type WorkerManager struct {
 	// ageKey is used for WorkerClassDef lookups (food cost per tick, displayed class name).
 	// Update via SetAge on every age advance.
 	ageKey string
+	// buildingDefs is the building table, built once at construction so
+	// GetDomainCount (hit every tick by checkMilestones and every UI refresh by
+	// GetState) doesn't rebuild ~300 normalized defs per call. Read-only.
+	buildingDefs map[string]config.BuildingDef
+
+	// foodClass caches WorkerClassByDomainAndAge("food", ageKey), which rebuilds
+	// and scans the full worker-class table. FoodDrain runs several times per
+	// tick, so the lookup is resolved eagerly whenever ageKey changes (the
+	// constructor and SetAge, both under the engine write lock) and only read
+	// elsewhere — Snapshot runs under GetState's read lock, so no lazy writes.
+	foodClass   config.WorkerClassDef
+	foodClassOK bool
+}
+
+// foodClassFor returns the cached food-domain worker class for the current age.
+func (vm *WorkerManager) foodClassFor() (config.WorkerClassDef, bool) {
+	return vm.foodClass, vm.foodClassOK
+}
+
+// refreshFoodClass re-resolves the cached food worker class for vm.ageKey.
+func (vm *WorkerManager) refreshFoodClass() {
+	vm.foodClass, vm.foodClassOK = config.WorkerClassByDomainAndAge("food", vm.ageKey)
 }
 
 // NewWorkerManager creates a new single-pool worker manager.
 // All workers belong to a single "worker" pool — domain restrictions are removed.
 func NewWorkerManager() *WorkerManager {
 	vm := &WorkerManager{
-		domains:  make(map[string]*domainRuntime),
-		unlocked: make(map[string]bool),
-		ageKey:   "primitive_age",
+		domains:      make(map[string]*domainRuntime),
+		unlocked:     make(map[string]bool),
+		ageKey:       "primitive_age",
+		buildingDefs: config.BuildingByKey(),
 	}
 	vm.domains["worker"] = &domainRuntime{assignments: make(map[string]int)}
+	vm.refreshFoodClass()
 	return vm
 }
 
 // SetAge updates the current age for WorkerClassDef lookups
 func (vm *WorkerManager) SetAge(ageKey string) {
 	vm.ageKey = ageKey
+	vm.refreshFoodClass()
 }
 
 // UnlockType marks workers as recruitable. Always routes to "worker" pool.
@@ -73,7 +98,7 @@ func (vm *WorkerManager) Recruit(_ string, count int, popCap int) bool {
 // The domain argument is ignored — any worker can go to any building with WorkerCapacity > 0.
 func (vm *WorkerManager) Assign(_, buildingKey string, count int) bool {
 	rt := vm.domains["worker"]
-	byKey := config.BuildingByKey()
+	byKey := vm.buildingDefs
 	def, ok := byKey[buildingKey]
 	if !ok || def.WorkerCapacity == 0 {
 		return false
@@ -139,7 +164,7 @@ func (vm *WorkerManager) FoodDrain() float64 {
 	if rt.count == 0 {
 		return 0
 	}
-	cls, ok := config.WorkerClassByDomainAndAge("food", vm.ageKey)
+	cls, ok := vm.foodClassFor()
 	if !ok {
 		return 0.1 * float64(rt.count)
 	}
@@ -167,7 +192,7 @@ func (vm *WorkerManager) RenameAssignment(_, oldKey, newKey string) {
 // This is used for e.g. soldierCount (domain "military") — workers assigned to military buildings.
 func (vm *WorkerManager) GetDomainCount(domain string) int {
 	rt := vm.domains["worker"]
-	byKey := config.BuildingByKey()
+	byKey := vm.buildingDefs
 	total := 0
 	for buildingKey, count := range rt.assignments {
 		if def, ok := byKey[buildingKey]; ok && def.WorkerDomain == domain {
@@ -299,7 +324,7 @@ func (vm *WorkerManager) GetAll() map[string]WorkerInfo {
 			assign[k] = v
 		}
 	}
-	cls, _ := config.WorkerClassByDomainAndAge("food", vm.ageKey)
+	cls, _ := vm.foodClassFor()
 	return map[string]WorkerInfo{
 		"worker": {
 			Count:      rt.count,
@@ -319,7 +344,7 @@ func (vm *WorkerManager) LoadWorkers(data map[string]WorkerInfo) {
 	// Reset before loading to prevent accumulation on repeated loads.
 	rt.assignments = make(map[string]int)
 	rt.count = 0
-	byBuilding := config.BuildingByKey()
+	byBuilding := vm.buildingDefs
 	totalCount := 0
 	for _, info := range data {
 		totalCount += info.Count
@@ -349,7 +374,7 @@ func (vm *WorkerManager) Snapshot(popCap int) WorkerState {
 	className := ""
 	drain := 0.0
 	if vm.ageKey != "" {
-		if wc, ok := config.WorkerClassByDomainAndAge("food", vm.ageKey); ok {
+		if wc, ok := vm.foodClassFor(); ok {
 			className = wc.ClassName
 			drain = wc.FoodCost * float64(rt.count)
 		}

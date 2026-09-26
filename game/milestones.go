@@ -27,6 +27,9 @@ type MilestoneManager struct {
 	// milestoneToChain is a reverse-index built at construction time for O(1)
 	// chain lookup when rendering the milestone list in the UI.
 	milestoneToChain map[string]string // milestone key -> chain key
+	// titles is the count-based fallback title ladder, held so
+	// recalculateTitle (run every tick from checkMilestones) doesn't rebuild it.
+	titles []config.TitleDef
 }
 
 // NewMilestoneManager creates a new milestone manager
@@ -44,6 +47,7 @@ func NewMilestoneManager() *MilestoneManager {
 		chains:           chains,
 		chainsCompleted:  make(map[string]bool),
 		milestoneToChain: m2c,
+		titles:           config.MilestoneTitles(),
 	}
 }
 
@@ -237,7 +241,7 @@ func (mm *MilestoneManager) recalculateTitle() {
 	// Fallback to count-based titles
 	count := len(mm.completed)
 	mm.currentTitle = ""
-	for _, t := range config.MilestoneTitles() {
+	for _, t := range mm.titles {
 		if count >= t.MinMilestones {
 			mm.currentTitle = t.Title
 		}

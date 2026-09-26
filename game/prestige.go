@@ -20,12 +20,25 @@ type PrestigeManager struct {
 	totalEarned int
 	available   int
 	upgrades    map[string]int // upgrade key -> tier purchased (0 = not bought)
+
+	// upgradeList / upgradeDefs are the static shop table, built once so
+	// GetBonuses (hit every tick via the resolver) and Snapshot (every UI
+	// refresh) don't rebuild config per call. Read-only.
+	upgradeList []config.PrestigeUpgradeDef
+	upgradeDefs map[string]config.PrestigeUpgradeDef
 }
 
 // NewPrestigeManager creates a new prestige manager
 func NewPrestigeManager() *PrestigeManager {
+	list := config.PrestigeUpgrades()
+	defs := make(map[string]config.PrestigeUpgradeDef, len(list))
+	for _, def := range list {
+		defs[def.Key] = def
+	}
 	return &PrestigeManager{
-		upgrades: make(map[string]int),
+		upgrades:    make(map[string]int),
+		upgradeList: list,
+		upgradeDefs: defs,
 	}
 }
 
@@ -79,7 +92,7 @@ func (pm *PrestigeManager) Prestige(points int) {
 
 // BuyUpgrade purchases the next tier of an upgrade. Returns error if can't afford or maxed.
 func (pm *PrestigeManager) BuyUpgrade(key string) error {
-	defs := config.PrestigeUpgradeByKey()
+	defs := pm.upgradeDefs
 	def, ok := defs[key]
 	if !ok {
 		return fmt.Errorf("unknown prestige upgrade: %s", key)
@@ -111,7 +124,7 @@ func (pm *PrestigeManager) GetBonuses() map[string]float64 {
 	}
 
 	// Upgrade bonuses (rate and flat bonuses, not starting resources)
-	defs := config.PrestigeUpgradeByKey()
+	defs := pm.upgradeDefs
 	for key, tier := range pm.upgrades {
 		if tier <= 0 {
 			continue
@@ -143,7 +156,7 @@ func (pm *PrestigeManager) Modifiers() []Modifier {
 // GetStartingResources returns bonus starting resources from prestige upgrades
 func (pm *PrestigeManager) GetStartingResources() map[string]float64 {
 	resources := make(map[string]float64)
-	defs := config.PrestigeUpgradeByKey()
+	defs := pm.upgradeDefs
 	for key, tier := range pm.upgrades {
 		if tier <= 0 {
 			continue
@@ -161,10 +174,9 @@ func (pm *PrestigeManager) GetStartingResources() map[string]float64 {
 
 // Snapshot returns a PrestigeState for UI consumption
 func (pm *PrestigeManager) Snapshot() PrestigeState {
-	defs := config.PrestigeUpgradeByKey()
 	upgrades := make(map[string]PrestigeUpgradeState)
 
-	for _, def := range config.PrestigeUpgrades() {
+	for _, def := range pm.upgradeList {
 		tier := pm.upgrades[def.Key]
 		nextCost := 0
 		if tier < def.MaxTier {
@@ -179,8 +191,6 @@ func (pm *PrestigeManager) Snapshot() PrestigeState {
 			Effect:      formatPrestigeEffect(def, tier),
 		}
 	}
-	_ = defs // used via config.PrestigeUpgrades()
-
 	passiveBonus := float64(pm.level) * 0.02
 
 	return PrestigeState{
