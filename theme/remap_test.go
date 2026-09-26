@@ -16,7 +16,7 @@ var sentinel = tcell.NewRGBColor(0x12, 0x34, 0x56)
 func restoreColorNames(t *testing.T) {
 	t.Helper()
 	saved := map[string]tcell.Color{}
-	for _, m := range remappedNames {
+	for _, m := range remappedNames() {
 		saved[m.name] = tcell.ColorNames[m.name]
 	}
 	t.Cleanup(func() {
@@ -98,13 +98,13 @@ func TestApplyRemap_OverwritesFullSet(t *testing.T) {
 	restoreColorNames(t)
 
 	// Poison every owned key first; applyRemap must overwrite all of them.
-	for _, m := range remappedNames {
+	for _, m := range remappedNames() {
 		tcell.ColorNames[m.name] = sentinel
 	}
 
 	applyRemap(Forge)
 
-	for _, m := range remappedNames {
+	for _, m := range remappedNames() {
 		want := Forge.Color(m.role)
 		got := tcell.ColorNames[m.name]
 		if got.Hex() != want.Hex() {
@@ -113,10 +113,15 @@ func TestApplyRemap_OverwritesFullSet(t *testing.T) {
 		}
 	}
 
-	if tview.Styles.BorderColor.Hex() != Forge.Color(RoleAccent).Hex() {
-		t.Errorf("tview.Styles.BorderColor not set to Accent")
+	// Chrome defaults are late-bound sentinels, not concrete colors (screen.go):
+	// they must name the right role and resolve to the active theme's color.
+	if r, ok := RefRole(tview.Styles.BorderColor); !ok || r != RoleBorder {
+		t.Errorf("tview.Styles.BorderColor = %v, want Ref(RoleBorder)", tview.Styles.BorderColor)
 	}
-	if tview.Styles.PrimitiveBackgroundColor.Hex() != Forge.Color(RoleBackground).Hex() {
-		t.Errorf("tview.Styles.PrimitiveBackgroundColor not set to Background")
+	if r, ok := RefRole(tview.Styles.PrimitiveBackgroundColor); !ok || r != RoleBackground {
+		t.Errorf("tview.Styles.PrimitiveBackgroundColor = %v, want Ref(RoleBackground)", tview.Styles.PrimitiveBackgroundColor)
+	}
+	if r, ok := RefRole(tview.Styles.PrimaryTextColor); !ok || r != RoleText {
+		t.Errorf("tview.Styles.PrimaryTextColor = %v, want Ref(RoleText)", tview.Styles.PrimaryTextColor)
 	}
 }

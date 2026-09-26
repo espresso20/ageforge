@@ -1,6 +1,10 @@
 package theme
 
-import "testing"
+import (
+	"testing"
+
+	"github.com/gdamore/tcell/v2"
+)
 
 // TestTrack_AppliesNowAndEnrolls verifies the §3.3 registration discipline: Track
 // runs the closure immediately AND re-runs it on Restyle, in one registration.
@@ -75,12 +79,20 @@ func TestSetActive(t *testing.T) {
 	}
 }
 
-// TestTag emits a hex tag for the active theme's role color.
+// TestTag emits a late-bound NAMED tag for a role (never a frozen hex literal),
+// and that name resolves to the active theme's role color through the remap.
 func TestTag(t *testing.T) {
 	t.Cleanup(func() { _ = SetActive(DefaultKey) })
 	_ = SetActive(DefaultKey)
-	// Forge accent is gold #ffd700.
-	if got, want := Tag(RoleAccent), "[#ffd700]"; got != want {
+	if got, want := Tag(RoleAccent), "[accent]"; got != want {
 		t.Errorf("Tag(RoleAccent) = %q, want %q", got, want)
+	}
+	// Forge accent is gold #ffd700.
+	if got := tcell.GetColor("accent").Hex(); got != 0xffd700 {
+		t.Errorf("GetColor(accent) = %06x under Forge, want ffd700", got)
+	}
+	_ = SetActive("parchment")
+	if got, want := tcell.GetColor("accent").Hex(), Parchment.Color(RoleAccent).Hex(); got != want {
+		t.Errorf("GetColor(accent) = %06x under Parchment, want %06x (tag must retint)", got, want)
 	}
 }

@@ -22,7 +22,7 @@ const (
 // §8) — on a light bg the role colors must be DARK enough to stay legible, so the
 // usual bright accent/positive/negative become deep, saturated versions: forest
 // green gains, wax-red losses, umber labels, sepia accent/highlight.
-var Parchment = Theme{
+var Parchment = define(Theme{
 	Key:        "parchment",
 	Name:       "Parchment",
 	Blurb:      "Ink on warm parchment — the one light-background look.",
@@ -45,11 +45,11 @@ var Parchment = Theme{
 	// age of letters and printing is its thematic home (config/milestones.go).
 	UnlockMilestone: "enlightened",
 	UnlockHint:      "Reach the Renaissance Age",
-}
+})
 
 // Bronze is a warm metallic look: copper/bronze accent, amber highlight, olive
 // gains and burnt-orange losses on a dark warm brown-black background.
-var Bronze = Theme{
+var Bronze = define(Theme{
 	Key:        "bronze",
 	Name:       "Bronze",
 	Blurb:      "Burnished copper and amber over dark, warm metal.",
@@ -71,12 +71,12 @@ var Bronze = Theme{
 	// theme — burnished metal for the age that first worked it (config/milestones.go).
 	UnlockMilestone: "bronze_pioneer",
 	UnlockHint:      "Reach the Bronze Age",
-}
+})
 
 // Cyberpunk is neon on near-black: hot magenta accent, neon-cyan highlight, neon
 // green/pink for ±, over a near-black violet background (riffs on the cyberpunk_age
 // palette, theming.md §4).
-var Cyberpunk = Theme{
+var Cyberpunk = define(Theme{
 	Key:        "cyberpunk",
 	Name:       "Cyberpunk",
 	Blurb:      "Hot magenta and neon cyan over near-black violet.",
@@ -99,14 +99,14 @@ var Cyberpunk = Theme{
 	// the cyberpunk_age palette (config/milestones.go).
 	UnlockMilestone: "cyberpunk_milestone",
 	UnlockHint:      "Reach the Cyberpunk Age",
-}
+})
 
 // Monochrome is a stylistic greyscale terminal: a single hue's shades. Accent and
 // Highlight are bright greys/white; the ± distinction rides on LIGHTNESS (a lighter
 // grey gains, a mid grey loses) rather than hue. It is NOT an accessibility theme —
 // just a clean mono look — so it carries Accessible: false and skips the colorblind
 // guard, but still clears every luminance floor.
-var Monochrome = Theme{
+var Monochrome = define(Theme{
 	Key:        "monochrome",
 	Name:       "Monochrome",
 	Blurb:      "Greyscale terminal — meaning carried by lightness, not hue.",
@@ -129,12 +129,12 @@ var Monochrome = Theme{
 	// for the age that made the terminal ubiquitous (config/milestones.go).
 	UnlockMilestone: "information_pioneer",
 	UnlockHint:      "Reach the Information Age",
-}
+})
 
 // Cosmic is deep-space: a dark indigo/violet background, starlight text, and
 // nebula-pink / cyan accents with aurora-green gains (riffs on galactic_age,
 // theming.md §4).
-var Cosmic = Theme{
+var Cosmic = define(Theme{
 	Key:        "cosmic",
 	Name:       "Cosmic",
 	Blurb:      "Deep indigo with starlight and nebula accents.",
@@ -157,12 +157,12 @@ var Cosmic = Theme{
 	// (config/milestones.go).
 	UnlockMilestone: "galactic_emperor",
 	UnlockHint:      "Reach the Galactic Age",
-}
+})
 
-func init() {
-	register(Parchment)
-	register(Bronze)
-	register(Cyberpunk)
-	register(Monochrome)
-	register(Cosmic)
-}
+var _ = register(
+	Parchment,
+	Bronze,
+	Cyberpunk,
+	Monochrome,
+	Cosmic,
+)

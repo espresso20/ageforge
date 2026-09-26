@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
 	"github.com/espresso20/ageforge/game"
@@ -79,6 +80,20 @@ func (a *App) setup() {
 
 // Run starts the tview application (blocks until exit)
 func (a *App) Run() error {
+	// Every theme paints its own canvas (theming.md §3.7): the terminal screen is
+	// wrapped so theme sentinels in widget chrome and tcell.ColorDefault resolve
+	// to the ACTIVE theme on every cell. Without this, tview.Styles' Ref colors
+	// would reach the terminal unresolved.
+	screen, err := tcell.NewScreen()
+	if err != nil {
+		return err
+	}
+	themed := theme.WrapScreen(screen)
+	if err := themed.Init(); err != nil {
+		return err
+	}
+	a.tviewApp.SetScreen(themed)
+
 	a.dashboard.StartUpdates()
 	defer a.dashboard.StopUpdates()
 	return a.tviewApp.Run()
