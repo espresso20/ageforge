@@ -232,7 +232,7 @@ func driveCycle(t *testing.T, ge *GameEngine, ticks int, obs *soakObservations) 
 			// tick_speed floor: recompute exactly as the engine does and assert the
 			// clamp holds. Stacked TickSpeed boons must only saturate at the floor.
 			ge.recalculateTickSpeed()
-			interval := ge.getTickInterval()
+			interval := ge.tickIntervalLocked() // driveCycle holds the write lock
 			ms := float64(interval.Milliseconds())
 			if ms < obs.minInterval {
 				obs.minInterval = ms

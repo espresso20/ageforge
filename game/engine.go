@@ -598,13 +598,20 @@ func (ge *GameEngine) safeTick() {
 }
 
 // getTickInterval computes the current tick interval from all speed sources.
-// Called by the tick goroutine between ticks — no lock needed because
-// tickSpeedBonus and speedMultiplier are only written under the write lock
-// inside doTick/LoadGame, which runs on the same goroutine before this call.
+// Called by the tick goroutine between ticks, outside the write lock. It takes
+// the read lock because tickSpeedBonus and speedMultiplier are also written from
+// other goroutines (the `speed` command, the /speed dev command, Succumb/Prestige
+// via recalculateTickSpeed), not just inside doTick. Must NOT be called with
+// ge.mu held; use tickIntervalLocked there.
 func (ge *GameEngine) getTickInterval() time.Duration {
-	// tickSpeedBonus and speedMultiplier are only written under the write lock
-	// in doTick/LoadGame, and this is called from the same goroutine after
-	// doTick returns, so a direct read is safe here.
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	return ge.tickIntervalLocked()
+}
+
+// tickIntervalLocked is getTickInterval for callers that already hold ge.mu
+// (read or write).
+func (ge *GameEngine) tickIntervalLocked() time.Duration {
 	bonus := ge.tickSpeedBonus
 	mult := ge.speedMultiplier
 	if mult < 1.0 {
