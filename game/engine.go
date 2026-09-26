@@ -1025,7 +1025,7 @@ func (ge *GameEngine) doTick() {
 func (ge *GameEngine) processResearch() {
 	completed := ge.Research.Tick()
 	if completed != "" {
-		def := config.TechByKey()[completed]
+		def := ge.Research.defs[completed]
 		ge.addLog("debug", fmt.Sprintf("Research complete: %s", def.Name))
 		ge.addLog("success", fmt.Sprintf("Research complete: %s!", def.Name))
 		// Cosmetic flavour on roughly half of breakthroughs (varies, never spams).
@@ -1149,10 +1149,12 @@ func (ge *GameEngine) processTrade() {
 // harborRouteBonus sums the "trade_route_income" effect across all built harbour
 // buildings (each tier adds a flat fractional bonus per instance). The result is
 // an additive multiplier applied to every active trade route's imports. Pure
-// read of held state + config — safe under the engine write lock.
+// read of held state — safe under the engine write lock. Runs every tick, so it
+// reads the BuildingManager's already-built defs; config.BuildingByKey() would
+// rebuild and re-normalize the entire building table on each call.
 func (ge *GameEngine) harborRouteBonus() float64 {
 	bonus := 0.0
-	defs := config.BuildingByKey()
+	defs := ge.Buildings.defs
 	for key, count := range ge.Buildings.counts {
 		if count == 0 {
 			continue
@@ -1217,7 +1219,7 @@ func (ge *GameEngine) processDiplomacy() {
 		if count == 0 {
 			continue
 		}
-		def, ok := config.BuildingByKey()[key]
+		def, ok := ge.Buildings.defs[key] // held defs: this runs every tick
 		if !ok {
 			continue
 		}
@@ -1531,7 +1533,7 @@ func (ge *GameEngine) recalculateRates() {
 // getAllResearchProductionEffects returns production effects from researched techs
 func (ge *GameEngine) getAllResearchProductionEffects() []config.Effect {
 	var effects []config.Effect
-	allTechs := config.TechByKey()
+	allTechs := ge.Research.defs // held defs: recalculateRates runs every tick
 	for _, key := range ge.Research.GetResearched() {
 		if def, ok := allTechs[key]; ok {
 			for _, eff := range def.Effects {
@@ -3556,6 +3558,13 @@ func (ge *GameEngine) GetState() GameState {
 	popCap += int(ge.Research.GetBonus("population") + ge.permanentBonuses["population"] + ge.Prestige.GetBonuses()["population"])
 	nextAge := ge.progress.GetNextAge(ge.age)
 
+	// One epoch lookup per snapshot (was three full table rebuilds).
+	epochDef, epochOK := config.EpochByKey()[ge.currentEpoch]
+	epochColor := "white"
+	if epochOK {
+		epochColor = epochDef.Color
+	}
+
 	logCopy := make([]LogEntry, len(ge.log))
 	copy(logCopy, ge.log)
 
@@ -3672,29 +3681,14 @@ func (ge *GameEngine) GetState() GameState {
 		Seed:                  ge.seed,
 		LastAgeAdvanceSummary: ge.lastAgeAdvanceSummary,
 		// Phase 8: epoch fields
-		EpochKey: ge.currentEpoch,
-		EpochName: func() string {
-			if ep, ok := config.EpochByKey()[ge.currentEpoch]; ok {
-				return ep.Name
-			}
-			return ""
-		}(),
-		EpochIcon: func() string {
-			if ep, ok := config.EpochByKey()[ge.currentEpoch]; ok {
-				return ep.Icon
-			}
-			return ""
-		}(),
-		EpochColor: func() string {
-			if ep, ok := config.EpochByKey()[ge.currentEpoch]; ok {
-				return ep.Color
-			}
-			return "white"
-		}(),
+		EpochKey:              ge.currentEpoch,
+		EpochName:             epochDef.Name,
+		EpochIcon:             epochDef.Icon,
+		EpochColor:            epochColor,
 		EpochSurvived:         ge.survivedEpochs[ge.currentEpoch],
 		PendingCatastrophe:    ge.pendingCatastrophe,
 		PendingMemoryTech:     ge.pendingMemoryTech,
-		PendingMemoryTechName: config.TechByKey()[ge.pendingMemoryTech].Name,
+		PendingMemoryTechName: ge.Research.defs[ge.pendingMemoryTech].Name,
 		EpochEventHistory:     ge.epochEventHistory,
 		LegacyBonuses: func() map[string]bool {
 			out := make(map[string]bool, len(ge.legacyBonuses))
