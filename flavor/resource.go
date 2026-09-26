@@ -72,6 +72,23 @@ var resourceClass = map[string]nounClass{
 	"dark_matter_crystals": countNoun,
 }
 
+// abstractResource lists the resources that are not a physical load. They take
+// the {amt_res} figure frame happily ("120 knowledge") but never the frames that
+// have somebody guard, carry, sweep up or smell the stuff; see needTangible.
+// Unlisted keys are treated as tangible, so a new abstract resource needs an
+// entry here (TestAbstractResourcesAreNeverGoods catches the regression).
+var abstractResource = map[string]bool{
+	"knowledge":   true,
+	"faith":       true,
+	"culture":     true,
+	"electricity": true,
+	"data":        true,
+	"crypto":      true,
+}
+
+// isAbstract reports whether a resource key names something you cannot carry.
+func isAbstract(key string) bool { return abstractResource[key] }
+
 // countSingular holds the SINGULAR label for each count noun, for the "1 X" case.
 // Mass nouns need no entry — they do not inflect.
 var countSingular = map[string]string{

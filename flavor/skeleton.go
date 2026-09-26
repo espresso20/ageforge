@@ -142,6 +142,9 @@ func (s skel) template(id string, eras []era) tmpl {
 		ID: id, Needs: s.Needs, Tones: s.Tones, Kinds: s.Kinds, Eras: eras,
 		Reg: s.Reg, Form: s.Form, Topic: s.Topic,
 	}
+	if namesResourceAsGoods(s.Text) {
+		t.Needs |= needRes | needTangible
+	}
 	if s.Slot == "" {
 		t.Parts = []part{lit(s.Text + ".")}
 		return t
@@ -149,6 +152,15 @@ func (s skel) template(id string, eras []era) tmpl {
 	head, tail, _ := strings.Cut(s.Text, slotMark)
 	t.Parts = []part{lit(head), b(s.Slot), lit(tail + ".")}
 	return t
+}
+
+// namesResourceAsGoods reports whether a sentence uses one of the frames that
+// treat the resource as a physical load: bare {res}, {res_stores}, {res_haul}.
+// {amt_res} alone does not count; "120 knowledge" is a figure, not a sack.
+func namesResourceAsGoods(text string) bool {
+	return strings.Contains(text, "{res}") ||
+		strings.Contains(text, "{res_stores}") ||
+		strings.Contains(text, "{res_haul}")
 }
 
 // pool converts a batch of authored sentences into templates under one era

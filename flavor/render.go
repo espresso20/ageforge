@@ -58,6 +58,13 @@ const (
 	needCount
 	// needTicks requires Request.Ticks >= 1.
 	needTicks
+	// needTangible requires a resource you can carry, guard, stack or smell.
+	// Every skeleton that names a resource as a physical thing ({res},
+	// {res_stores}, {res_haul}) gets it automatically in skel.template, so no
+	// author can forget it; {amt_res} is a figure and works for anything.
+	// Without it the catalog produced "Nobody wants to sit up guarding the
+	// knowledge tonight" and "There is a smell of data on the back stairs".
+	needTangible
 )
 
 // era is a technological bucket used to keep anachronisms out of the prose: gate
@@ -207,6 +214,9 @@ func satisfied(req Request) need {
 		have |= needRes
 		if isMass(req.Resource) {
 			have |= needMassRes
+		}
+		if !isAbstract(req.Resource) {
+			have |= needTangible
 		}
 	}
 	if roundAmount(req.Amount) >= 1 {
