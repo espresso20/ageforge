@@ -641,7 +641,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		for _, s := range summaries {
 			marker := "  "
 			if s.Active {
-				marker = "[aqua]●[-] "
+				marker = "[label]●[-] "
 			}
 			name := s.DisplayName
 			if strings.TrimSpace(name) == "" {

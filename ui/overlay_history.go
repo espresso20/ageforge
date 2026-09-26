@@ -53,7 +53,7 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 		{"Knowledge", "[yellow]", func(s game.HistorySample) float64 { return s.KnowRate }, "/tick", true},
 		{"Faith", "[gold]", func(s game.HistorySample) float64 { return s.Faith }, "", false},
 		{"Morale", "[yellow]", func(s game.HistorySample) float64 { return s.Morale * 100 }, "%", false},
-		{"Prod Bonus", "[orange]", func(s game.HistorySample) float64 { return s.ProdAll * 100 }, "%", false},
+		{"Prod Bonus", "[warning]", func(s game.HistorySample) float64 { return s.ProdAll * 100 }, "%", false},
 		{"Tick Speed", "[gray]", func(s game.HistorySample) float64 { return s.TickSpeed }, "x", false},
 	}
 

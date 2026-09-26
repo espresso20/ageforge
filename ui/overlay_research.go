@@ -45,7 +45,7 @@ func researchProvider(state game.GameState, _ int) string {
 	ages := config.AgeByKey()
 
 	// === Header ===
-	fmt.Fprint(&sb, " [blue]research <key>  ·  research cancel  ·  research list[-]\n")
+	fmt.Fprint(&sb, " [label]research <key>  ·  research cancel  ·  research list[-]\n")
 	fmt.Fprintf(&sb, " [gold]Progress: %d / %d techs researched[-]\n\n", state.Research.TotalResearched, len(state.Research.Techs))
 
 	// === Currently Researching ===

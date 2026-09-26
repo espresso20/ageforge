@@ -297,7 +297,7 @@ func (d *Dashboard) build() {
 			if game.DevModeActive && strings.HasPrefix(cmd, "/") {
 				result := game.DevExecCommand(cmd, d.engine)
 				if result != "" {
-					d.engine.AddLog("info", "[lime]dev → "+result+"[-]")
+					d.engine.AddLog("info", "[positive]dev → "+result+"[-]")
 				}
 				return
 			}
@@ -450,7 +450,7 @@ func buildSidebarText(active string) string {
 	sb.WriteString("\n")
 	for _, cmd := range commands {
 		if cmd == active {
-			sb.WriteString(fmt.Sprintf(" [black:gold] %-10s [-:-]\n", cmd))
+			sb.WriteString(" " + theme.Selected(fmt.Sprintf(" %-10s ", cmd)) + "\n")
 		} else {
 			sb.WriteString(fmt.Sprintf(" [white]%-10s[-]\n", cmd))
 		}
@@ -661,7 +661,7 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		if state.EpochSurvived {
 			survivedMark = " ·Survived"
 		}
-		epochStr = fmt.Sprintf("  [%s]%s %s%s[-]", state.EpochColor, state.EpochIcon, state.EpochName, survivedMark)
+		epochStr = fmt.Sprintf("  %s%s %s%s[-]", theme.NameTag(state.EpochColor), state.EpochIcon, state.EpochName, survivedMark)
 	}
 	// Colour morale by the continuous production multiplier, not the raw percent:
 	// green = bonus (mult>1.0), white = neutral (==1.0), red = penalty (<1.0).
