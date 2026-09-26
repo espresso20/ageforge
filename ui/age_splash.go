@@ -141,6 +141,10 @@ func ShowAgeSplashFull(om *OverlayManager, oldAge, newAge string,
 	fmt.Fprintf(&sb, "\n[gray]Press any key to continue[-]")
 	titleTV.SetText(sb.String())
 
+	// Layout: text-only flex with focusable=true so the overlay itself receives input
+	overlay := tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(titleTV, 0, 1, true)
+
 	// dismissed guards against double-dismiss (both the timer goroutine and a
 	// keypress can fire simultaneously; we only want to remove the page once).
 	dismissed := false
@@ -152,19 +156,15 @@ func ShowAgeSplashFull(om *OverlayManager, oldAge, newAge string,
 		om.Hide()
 	}
 
-	// SetInputCapture on titleTV — tview.SetFocus(flex) delegates focus to the
-	// first focusable child, so the Flex itself never receives key events. The
-	// capture must live on the widget that actually holds focus. This mirrors the
-	// pattern used by Register() in overlay.go which is proven to work.
-	titleTV.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+	// SetInputCapture on the overlay Flex so all keypresses trigger dismiss.
+	// A container's capture fires for keys routed to any focused child, and
+	// keeping titleTV as the focusable item means a Pages re-focus (e.g. when
+	// a page above is removed) lands on titleTV inside this Flex rather than
+	// on a bare primitive with no key handler.
+	overlay.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		dismiss()
 		return nil
 	})
-
-	// Layout: focusable=false on titleTV here because we SetFocus(titleTV) directly
-	// below — no need for Flex to re-delegate.
-	overlay := tview.NewFlex().SetDirection(tview.FlexRow).
-		AddItem(titleTV, 0, 1, false)
 
 	// Auto-dismiss after 20 seconds
 	go func() {
@@ -180,6 +180,5 @@ func ShowAgeSplashFull(om *OverlayManager, oldAge, newAge string,
 	}
 	om.pages.AddPage("age_splash", overlay, true, true)
 	om.active = "age_splash"
-	// Focus titleTV directly — it is the widget that holds the input capture handler.
-	om.app.SetFocus(titleTV)
+	om.app.SetFocus(overlay)
 }
