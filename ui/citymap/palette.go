@@ -1,6 +1,7 @@
 package citymap
 
 import (
+	"image"
 	"image/color"
 	"math"
 
@@ -17,6 +18,116 @@ import (
 func rgba(c tcell.Color) color.RGBA {
 	r, g, b := c.RGB()
 	return color.RGBA{R: uint8(r), G: uint8(g), B: uint8(b), A: 0xff}
+}
+
+// ---- luminance-aware map roles ------------------------------------------------
+//
+// Every map recipe (hundreds of them across topdown/worldmap/worldmedium) was written
+// for a DARK canvas: "lift the ground toward RoleText" means "make it lighter", "push
+// toward RoleDim" means "ground it", markers are bright roles that pop off a dark field.
+// Feed those recipes a light theme's raw roles and every one of them inverts — streets
+// go darker than the ground, lit roofs darken, markers become dark ink on dark terrain.
+//
+// Rather than fork every recipe, map code reads roles through mapColor, which keeps the
+// recipes' polarity contract:
+//
+//   - Dark theme: the theme's own roles, untouched (Forge et al. render byte-for-byte as
+//     before).
+//   - Light theme: a dark-polarity PROXY built from the theme's own hues — its ink as
+//     the canvas, its page as the light pole, its dim lifted to a mid grey, and its
+//     (deliberately dark, text-safe) semantic colors raised to a marker-bright lightness
+//     with hue and saturation kept. The recipes then compose a correct map...
+//
+// ...which the citymap re-keys for the light page with liftForLight: a monotonic
+// lightness lift, so the ordering the recipes encode survives (streets stay lighter
+// than ground, a drop shadow stays darker than what it falls on, a lit roof lighter
+// than its shaded wall) while the whole map moves up into a daylight range that sits
+// naturally inside a light UI. Shadows on the light map therefore darken, never
+// lighten. Space ages (a starfield is dark by nature) keep the dark proxy unlifted.
+
+// mapColor returns the color map derivations should use for role (see above).
+func mapColor(role theme.Role) color.RGBA {
+	if !theme.IsLight() {
+		return rgba(theme.Color(role))
+	}
+	return lightProxy(role)
+}
+
+// markerLightness is the HSL lightness a light theme's semantic role is raised to for
+// use on the (dark-polarity) map canvas — about where Forge's own markers sit.
+const markerLightness = 0.62
+
+// lightProxy builds the dark-polarity stand-in for role under a light theme.
+func lightProxy(role theme.Role) color.RGBA {
+	bg := rgba(theme.Color(theme.RoleBackground))
+	ink := rgba(theme.Color(theme.RoleText))
+	switch role {
+	case theme.RoleBackground, theme.RoleSurface:
+		return blend(ink, bg, 0.07) // the theme's ink, a breath lighter: the dark canvas
+	case theme.RoleText, theme.RoleBright:
+		return bg // the page is the light pole
+	case theme.RoleDim:
+		return blend(rgba(theme.Color(theme.RoleDim)), bg, 0.5) // mid grey, like a dark theme's dim
+	default:
+		h, s, l := rgbToHSL(rgba(theme.Color(role)))
+		if l < markerLightness {
+			l = markerLightness
+		}
+		// Reds and blues carry less luminance at a given HSL lightness; keep climbing
+		// until the marker clears body-text contrast on the proxy canvas.
+		canvas := theme.Mix(theme.Color(theme.RoleText), theme.Color(theme.RoleBackground), 0.07)
+		out := hslToRGB(h, s, l)
+		for l < 0.9 && theme.ContrastRatio(tcellFromRGBA(out), canvas) < 4.5 {
+			l += 0.02
+			out = hslToRGB(h, s, l)
+		}
+		return out
+	}
+}
+
+// Light-lift curve: l' = liftFloor + (1-liftFloor)·l^liftGamma. A concave curve rather
+// than a linear squash: the proxy canvas (l ≈ 0.25) lands on a daylight ground (≈ 0.47)
+// while the dark end keeps most of its spread, so drop shadows and shaded walls still
+// read clearly darker than the ground they fall on, and lit roofs / streets still climb
+// above it. Monotonic, so every "darker than" / "lighter than" the recipes drew survives.
+const (
+	liftFloor = 0.15
+	liftGamma = 0.70
+	liftSat   = 1.25 // lifted colors drift pastel; a touch more chroma keeps biomes legible
+)
+
+// liftForLight re-keys a dark-polarity map render for a light theme: each pixel's HSL
+// lightness goes through the light-lift curve above, hue is kept, saturation nudged up,
+// and the result is pulled a touch toward the theme's page tint so the map reads as part
+// of the same paper. No-op on dark themes.
+func liftForLight(img *image.RGBA) {
+	if img == nil || !theme.IsLight() {
+		return
+	}
+	page := rgba(theme.Color(theme.RoleBackground))
+	cache := make(map[color.RGBA]color.RGBA, 1024)
+	b := img.Bounds()
+	for y := b.Min.Y; y < b.Max.Y; y++ {
+		for x := b.Min.X; x < b.Max.X; x++ {
+			c := img.RGBAAt(x, y)
+			if out, ok := cache[c]; ok {
+				img.SetRGBA(x, y, out)
+				continue
+			}
+			out := liftColor(c, page)
+			cache[c] = out
+			img.SetRGBA(x, y, out)
+		}
+	}
+}
+
+// liftColor applies the light-lift curve to one color (page is the theme's canvas).
+func liftColor(c, page color.RGBA) color.RGBA {
+	h, s, l := rgbToHSL(c)
+	out := hslToRGB(h, math.Min(1, s*liftSat), liftFloor+(1-liftFloor)*math.Pow(l, liftGamma))
+	out = blend(out, page, 0.06)
+	out.A = c.A
+	return out
 }
 
 // blend linearly mixes a toward b by t in [0,1].
@@ -204,12 +315,12 @@ func darken(c color.RGBA, t float64) color.RGBA {
 // Water is RoleBackground/RoleDim blended toward a theme-neutral blue so it
 // stays cohesive with the palette while still reading as water.
 func buildPalette(ageShift float64) terrainPalette {
-	bg := rgba(theme.Color(theme.RoleBackground))
-	dim := rgba(theme.Color(theme.RoleDim))
-	text := rgba(theme.Color(theme.RoleText))
-	accent := rgba(theme.Color(theme.RoleAccent))
-	highlight := rgba(theme.Color(theme.RoleHighlight))
-	positive := rgba(theme.Color(theme.RolePositive))
+	bg := mapColor(theme.RoleBackground)
+	dim := mapColor(theme.RoleDim)
+	text := mapColor(theme.RoleText)
+	accent := mapColor(theme.RoleAccent)
+	highlight := mapColor(theme.RoleHighlight)
+	positive := mapColor(theme.RolePositive)
 
 	// A blue anchor for water, kept muted so light themes don't get a cartoon sea.
 	blue := color.RGBA{R: 0x20, G: 0x4a, B: 0x86, A: 0xff}
@@ -352,16 +463,16 @@ var lineageRoleBase = map[string]struct {
 func lineageColor(lineageKey, category string) color.RGBA {
 	switch category {
 	case "wonder":
-		return rgba(theme.Color(theme.RoleAccent))
+		return mapColor(theme.RoleAccent)
 	case "monument":
-		return brighten(rgba(theme.Color(theme.RoleAccent)), 0.20)
+		return brighten(mapColor(theme.RoleAccent), 0.20)
 	case "storage":
-		return rgba(theme.Color(theme.RoleDim))
+		return mapColor(theme.RoleDim)
 	case "diplomacy":
-		return rotateHue(rgba(theme.Color(theme.RoleNegative)), 40)
+		return rotateHue(mapColor(theme.RoleNegative), 40)
 	}
 	if spec, ok := lineageRoleBase[lineageKey]; ok {
-		base := rgba(theme.Color(spec.role))
+		base := mapColor(spec.role)
 		if spec.rotate == 0 {
 			return base
 		}
@@ -375,5 +486,5 @@ func lineageColor(lineageKey, category string) color.RGBA {
 		hsh *= 16777619
 	}
 	deg := float64(hsh % 360)
-	return rotateHue(rgba(theme.Color(theme.RoleHighlight)), deg)
+	return rotateHue(mapColor(theme.RoleHighlight), deg)
 }

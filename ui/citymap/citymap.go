@@ -155,6 +155,13 @@ func renderImage(state game.GameState, w, h int) (*image.RGBA, overlayPlan) {
 	// Paint the whole top-down city and get the landmark geometry back.
 	geo := renderTopDown(img, state, w, h, seed)
 
+	// Light themes: the recipes above drew a dark-polarity city from the theme's hues
+	// (mapColor); re-key it into a daylight range for the light page. Grounded eras
+	// only — a space-age city sits on a starfield, which stays dark. See palette.go.
+	if !styleForAge(state.Age).spaceMode {
+		liftForLight(img)
+	}
+
 	// Landmark-only text overlay plan (cell space): width=cols, rows=h/2 (two px/row).
 	plan := buildLandmarkOverlay(state, w, h/2, geo)
 
