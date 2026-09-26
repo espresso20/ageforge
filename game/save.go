@@ -72,6 +72,13 @@ type GameSave struct {
 	SurvivedEpochs     map[string]bool    `json:"survived_epochs,omitempty"`
 	PendingCatastrophe string             `json:"pending_catastrophe,omitempty"`
 	EpochEventHistory  []EpochEventRecord `json:"epoch_event_history,omitempty"`
+	// CatastropheFired: epochs that have had their catastrophe this run. Older
+	// saves lack it; restoreCatastropheState rebuilds it.
+	CatastropheFired map[string]bool `json:"catastrophe_fired,omitempty"`
+	// SuccumbResearchDerived marks saves written after the Succumb research
+	// bonus moved out of PermanentBonuses (it is derived from LegacyBonuses).
+	// False on older saves, which get their stored copy stripped on load.
+	SuccumbResearchDerived bool `json:"succumb_research_derived,omitempty"`
 	// Phase 9: catastrophe system (persist across Succumb and Prestige)
 	Ruins              map[string]int  `json:"ruins,omitempty"`
 	LegacyBonuses      map[string]bool `json:"legacy_bonuses,omitempty"`
@@ -488,25 +495,27 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			Factions:    ge.Diplomacy.GetFactionsForSave(),
 			LentWorkers: ge.Diplomacy.GetLentBatchesForSave(),
 		},
-		SpeedMultiplier:    ge.speedMultiplier,
-		WonderBanks:        ge.Buildings.GetWonderBanks(),
-		LegacyBuildings:    ge.Buildings.GetLegacyBuildings(),
-		CheaterBadge:       ge.cheaterBadge,
-		EliteBadge:         ge.eliteBadge,
-		ParentName:         ge.activeParentName,
-		CurrentEpoch:       ge.currentEpoch,
-		EpochEventFired:    copyBoolMap(ge.epochEventFired),
-		AwakeningsFired:    copyBoolMap(ge.awakeningsFired),
-		AncientMemoryUsed:  ge.ancientMemoryUsed,
-		SurvivedEpochs:     copyBoolMap(ge.survivedEpochs),
-		PendingCatastrophe: ge.pendingCatastrophe,
-		EpochEventHistory:  append([]EpochEventRecord(nil), ge.epochEventHistory...),
-		Ruins:              ge.Buildings.GetAllRuins(),
-		LegacyBonuses:      copyBoolMap(ge.legacyBonuses),
-		CatastropheHistory: append([]string(nil), ge.catastropheHistory...),
-		Morale:             ge.morale,
-		History:            ge.History,
-		AccountID:          ge.accountIDLocked(),
+		SpeedMultiplier:        ge.speedMultiplier,
+		WonderBanks:            ge.Buildings.GetWonderBanks(),
+		LegacyBuildings:        ge.Buildings.GetLegacyBuildings(),
+		CheaterBadge:           ge.cheaterBadge,
+		EliteBadge:             ge.eliteBadge,
+		ParentName:             ge.activeParentName,
+		CurrentEpoch:           ge.currentEpoch,
+		EpochEventFired:        copyBoolMap(ge.epochEventFired),
+		AwakeningsFired:        copyBoolMap(ge.awakeningsFired),
+		AncientMemoryUsed:      ge.ancientMemoryUsed,
+		SurvivedEpochs:         copyBoolMap(ge.survivedEpochs),
+		PendingCatastrophe:     ge.pendingCatastrophe,
+		EpochEventHistory:      append([]EpochEventRecord(nil), ge.epochEventHistory...),
+		CatastropheFired:       copyBoolMap(ge.catastropheFired),
+		SuccumbResearchDerived: true,
+		Ruins:                  ge.Buildings.GetAllRuins(),
+		LegacyBonuses:          copyBoolMap(ge.legacyBonuses),
+		CatastropheHistory:     append([]string(nil), ge.catastropheHistory...),
+		Morale:                 ge.morale,
+		History:                ge.History,
+		AccountID:              ge.accountIDLocked(),
 	}
 }
 
@@ -736,6 +745,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 		ge.legacyBonuses = make(map[string]bool)
 	}
 	ge.catastropheHistory = save.CatastropheHistory
+	ge.restoreCatastropheState(&save)
 
 	// Restore history collector
 	if save.History != nil {
@@ -765,6 +775,11 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.activeSaveName = filename
 	// Adopt the loaded save's lineage parent (empty for legacy/root saves).
 	ge.activeParentName = save.ParentName
+
+	// Tell the UI a different game state is live (e.g. so a pending catastrophe
+	// modal the player closed in the old session is shown again). Handlers run
+	// under this write lock and must not call back into the engine.
+	ge.Bus.Publish(EventData{Type: EventGameLoaded, Payload: map[string]interface{}{"save": filename}})
 
 	return nil
 }

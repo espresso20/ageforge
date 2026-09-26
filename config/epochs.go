@@ -288,3 +288,33 @@ func EpochForAge(ageKey string) string {
 	}
 	return "stone_era" // fallback
 }
+
+// CatastropheGateEpoch is the first epoch in which a civilizational catastrophe
+// can strike: the epoch that contains the Iron Age. Transitions into earlier
+// epochs (in practice only the Stone Era, which every run starts in) never roll
+// a catastrophe, and `catastrophe invoke` is refused there. Good and challenging
+// epoch events are unaffected by the gate.
+const CatastropheGateEpoch = "iron_era"
+
+// CatastropheAllowed reports whether a catastrophe may occur in the given epoch
+// (random roll or voluntary invoke). Unknown epoch keys are not allowed.
+func CatastropheAllowed(epochKey string) bool {
+	byKey := EpochByKey()
+	ep, ok := byKey[epochKey]
+	if !ok {
+		return false
+	}
+	return ep.Order >= byKey[CatastropheGateEpoch].Order
+}
+
+// NextEpoch returns the epoch that follows epochKey in order, or ok=false when
+// epochKey is the final epoch or unknown.
+func NextEpoch(epochKey string) (EpochDef, bool) {
+	all := Epochs()
+	for i, e := range all {
+		if e.Key == epochKey && i+1 < len(all) {
+			return all[i+1], true
+		}
+	}
+	return EpochDef{}, false
+}

@@ -46,6 +46,9 @@ type GameState struct {
 	EpochColor         string // tview color tag
 	EpochSurvived      bool   // player endured a catastrophe this epoch
 	PendingCatastrophe string // epoch key if catastrophe modal should show; "" otherwise
+	// CatastropheOutlook reports the catastrophe odds at the NEXT epoch
+	// transition (see GameEngine.CatastropheOutlook).
+	CatastropheOutlook CatastropheOutlook
 	// Ancient Memory (Trello yn98pTQw): tech key of a pending cache offer that the UI
 	// should pop an accept/decline modal for; "" when there is no pending offer.
 	PendingMemoryTech     string
@@ -54,6 +57,13 @@ type GameState struct {
 	// Phase 9: civilization history + legacy bonuses
 	LegacyBonuses      map[string]bool // epochKey -> true if succumb legacy bonus is active
 	CatastropheHistory []string        // narrative log entries
+	// Catastrophe outcome counts, derived from CatastropheHistory (so they
+	// survive prestige like the history does). A pending catastrophe is neither.
+	CatastrophesEndured   int
+	CatastrophesSuccumbed int
+	// SuccumbResearchBonus is the permanent research_speed bonus from Succumb
+	// (+25% per distinct epoch succumbed), e.g. 0.50 after two epochs.
+	SuccumbResearchBonus float64
 	// History overlay
 	History *HistoryCollector
 	// Morale system
@@ -128,6 +138,11 @@ type EpochEventRecord struct {
 	EventName string
 	EventType string // good_minor/good_major/good_legendary/bad_challenging/catastrophe
 	Tick      int
+	// Outcome is set on catastrophe records only: CatastrophePending until the
+	// player chooses, then CatastropheEndured or CatastropheSuccumbed. Empty on
+	// other event types, and on catastrophe records from saves that predate it
+	// whose outcome could not be reconstructed on load.
+	Outcome string `json:"Outcome,omitempty"`
 }
 
 // BuildQueueSnapshot represents a building under construction for UI
