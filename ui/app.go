@@ -15,6 +15,7 @@ type App struct {
 	engine    *game.GameEngine
 	dashboard *Dashboard
 	version   string
+	screenSet bool // a (theme-wrapped) screen is installed; Run won't open the terminal
 }
 
 // NewApp creates the UI application
@@ -78,21 +79,33 @@ func (a *App) setup() {
 	}
 }
 
+// SetScreen installs s as the app's screen, wrapped by theme.WrapScreen so theme
+// sentinels resolve. Tests use it to run the real app on a SimulationScreen; call
+// it before Run. Without it, Run opens the terminal itself.
+func (a *App) SetScreen(s tcell.Screen) {
+	a.tviewApp.SetScreen(theme.WrapScreen(s))
+	a.screenSet = true
+}
+
 // Run starts the tview application (blocks until exit)
 func (a *App) Run() error {
 	// Every theme paints its own canvas (theming.md §3.7): the terminal screen is
 	// wrapped so theme sentinels in widget chrome and tcell.ColorDefault resolve
 	// to the ACTIVE theme on every cell. Without this, tview.Styles' Ref colors
-	// would reach the terminal unresolved.
-	screen, err := tcell.NewScreen()
-	if err != nil {
-		return err
+	// would reach the terminal unresolved. A screen installed via SetScreen is
+	// already wrapped and is left alone.
+	if !a.screenSet {
+		screen, err := tcell.NewScreen()
+		if err != nil {
+			return err
+		}
+		themed := theme.WrapScreen(screen)
+		if err := themed.Init(); err != nil {
+			return err
+		}
+		a.tviewApp.SetScreen(themed)
+		a.screenSet = true
 	}
-	themed := theme.WrapScreen(screen)
-	if err := themed.Init(); err != nil {
-		return err
-	}
-	a.tviewApp.SetScreen(themed)
 
 	a.dashboard.StartUpdates()
 	defer a.dashboard.StopUpdates()

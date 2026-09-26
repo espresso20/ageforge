@@ -65,6 +65,15 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	out["danger_modal"] = draw()
 	pages.RemovePage("wipe_confirm")
 
+	// Filled-button modals: Negative-fill ENDURE/SUCCUMB and Positive-fill ACCEPT,
+	// with their escaped "[E]"/"[S]"/"[A]" shortcut labels.
+	d.showCatastropheModal("stone_era")
+	out["catastrophe_modal"] = draw()
+	d.closeCatastropheModal()
+	d.showAncientMemoryModal("fire_mastery", "")
+	out["ancient_memory_modal"] = draw()
+	d.closeAncientMemoryModal()
+
 	return out
 }
 

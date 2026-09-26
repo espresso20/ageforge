@@ -54,7 +54,7 @@ func newReproHarness(t *testing.T) *reproHarness {
 	eng.SetAccount(acct)
 	a := NewApp(eng, "dev") // "dev" skips the network update check
 	sim := tcell.NewSimulationScreen("UTF-8")
-	a.tviewApp.SetScreen(sim) // calls sim.Init()
+	a.SetScreen(sim) // theme-wrapped; calls sim.Init()
 	sim.SetSize(200, 60)
 
 	h := &reproHarness{t: t, eng: eng, a: a, sim: sim, runErr: make(chan error, 1)}
