@@ -34,12 +34,13 @@ import (
 // the stored snapshot under the mutex, nothing here touches the engine or acquires an
 // engine lock. The diplomacy data is read straight off the snapshot's Diplomacy.Factions.
 //
-// A note on civ-dot SIZE: the design calls for sizing each civ by "Strength," but the
-// UI projection game.FactionInfo carries no Strength field (that lives on the internal
-// faction def, not the snapshot). We size from what the snapshot DOES expose — a
-// strength proxy built from Opinion magnitude plus a standing weight (allies/at-war
-// read as larger, more consequential neighbors) — so the dots still convey relative
-// weight without reaching past the snapshot contract.
+// A note on civ-dot SIZE: each civ is sized by its "Strength," the 1-5 power rating that
+// lives on the internal FactionDef. That value is now projected onto the UI snapshot —
+// game.FactionInfo carries a real Strength field (game/types.go), copied straight from
+// FactionDef.Strength in DiplomacyManager.Snapshot (game/diplomacy.go). So the dot size
+// derives from the civ's real Strength via civStrengthBucket (1-5 → a 0..3 bucket, with a
+// live war making a neighbor loom one size larger), read straight off the snapshot — no
+// Opinion-magnitude proxy, and nothing here reaches past the snapshot contract.
 
 // WorldMap is the overlay widget renderer for the world view. Like CityMap it satisfies
 // the OverlayManager widget contract via Build (returns the primitive) and Refresh
