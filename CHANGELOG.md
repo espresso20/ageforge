@@ -46,6 +46,8 @@ All notable changes to AgeForge are documented here.
 - Modifiers: negative production debuffs apply correctly and build-cost modifiers are wired in.
 - Stash is buildable again (its first-copy cost had exceeded the base wood cap).
 - Tick loop and UI snapshot no longer rebuild the building table (and other config tables) every tick; a late-game tick is ~13x faster.
+- Age-advance splash no longer freezes the game when an epoch catastrophe rolls on the same advance; the catastrophe modal now opens after the splash is dismissed.
+- Catastrophe and Ancient Memory modal buttons show their labels (they rendered blank) and their keyboard shortcuts.
 
 ---
 

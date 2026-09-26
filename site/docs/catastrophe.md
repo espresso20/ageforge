@@ -4,6 +4,10 @@ A catastrophe is a civilization-threatening event that forces you to make a perm
 
 When a catastrophe fires, the game pauses progression and presents a modal with three choices: **Endure**, **Succumb**, or **Defer**. You cannot advance ages until the catastrophe is resolved.
 
+Each button shows its shortcut: **E** Endure, **S** Succumb, **D** Defer. Tab or the arrow keys move between buttons and Enter picks the highlighted one. Endure is highlighted when the modal opens, so a stray Enter chooses Endure.
+
+When the catastrophe rolls on the same advance that crosses into a new epoch, the age-advance splash shows first. The catastrophe modal opens once you dismiss the splash with any key, or when the splash times out after 20 seconds.
+
 ---
 
 ## When It Triggers
