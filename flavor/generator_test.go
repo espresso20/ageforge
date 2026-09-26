@@ -543,3 +543,144 @@ func BenchmarkStreamLine(b *testing.B) {
 		_ = st.Line(req, rng)
 	}
 }
+
+// --- the humanizer pass, frozen into tests ----------------------------------
+
+// TestHouseTics holds the catalog's OWN machine tells to a ceiling. The shapes
+// TestNoAITells bans are the generic ones; a bulk read of a generated corpus
+// found a second layer that is specific to this catalog, where one writer
+// reached for the same device until it became a signature:
+//
+//   - "eleven" as the default funny number (28 lines before the pass),
+//   - the "asked twice ... both times" repetition gag (54),
+//   - "very" and "quietly" as padding ("has gone very quiet", five times),
+//   - "nobody wants to be the one who",
+//   - anonymous somebody/nobody actors in about one line in five.
+//
+// Each ceiling sits a little above the post-pass count, so a new line can use
+// the device and a new pool cannot bring the habit back.
+func TestHouseTics(t *testing.T) {
+	type tic struct {
+		name string
+		re   *regexp.Regexp
+		max  int
+	}
+	tics := []tic{
+		{"the number eleven", regexp.MustCompile(`(?i)\beleven\b`), 10},
+		{"the twice gag", regexp.MustCompile(`(?i)\btwice\b`), 28},
+		{"very", regexp.MustCompile(`(?i)\bvery\b`), 12},
+		{"quietly", regexp.MustCompile(`(?i)\bquietly\b`), 0},
+		{"wants to be the one", regexp.MustCompile(`(?i)\bwants? to be the (one|person)\b`), 2},
+		{"gone quiet", regexp.MustCompile(`(?i)\b(gone|went|been) (very )?quiet\b`), 3},
+		{"asked N times", regexp.MustCompile(`(?i)\b(asked|told|reminded|answered|thanked)\b[^.]{0,50}\b(twice|three times|four times|five times|each time|both times)\b`), 6},
+	}
+	anon := regexp.MustCompile(`(?i)\b(somebody|someone|nobody|no one)\b`)
+	const maxAnonShare = 0.18
+
+	counts := make([]int, len(tics))
+	total, anonLines := 0, 0
+	for _, m := range Moments() {
+		for _, tpl := range templatesFor(m) {
+			text := authoredText(tpl)
+			total++
+			for i, x := range tics {
+				if x.re.MatchString(text) {
+					counts[i]++
+				}
+			}
+			if anon.MatchString(text) {
+				anonLines++
+			}
+		}
+	}
+	for i, x := range tics {
+		if counts[i] > x.max {
+			t.Errorf("%q appears in %d skeletons; the ceiling is %d", x.name, counts[i], x.max)
+		}
+		t.Logf("%-22s %3d (ceiling %d)", x.name, counts[i], x.max)
+	}
+	if share := float64(anonLines) / float64(total); share > maxAnonShare {
+		t.Errorf("%.1f%% of skeletons hand the action to somebody/nobody; the ceiling is %.0f%% — name a person",
+			share*100, maxAnonShare*100)
+	}
+	t.Logf("anonymous actor share %.1f%% of %d skeletons", float64(anonLines)/float64(total)*100, total)
+}
+
+// TestNoNearDuplicateSkeletons catches the same sentence written twice with a
+// noun swapped: "The depot clock has stopped" in one Moment and "The depot clock
+// stopped" in another, "One boot came home" / "One crate came home" / "One drone
+// came home" across three eras. A Stream cannot see these as repeats, and a
+// player reads them as the machine cycling nouns through one frame. Measured as
+// the overlap of content words between every pair of skeletons in the catalog.
+func TestNoNearDuplicateSkeletons(t *testing.T) {
+	const maxOverlap = 0.55
+	stop := map[string]bool{}
+	for _, w := range strings.Fields("the a an of to and in was is it they them that on for with at from by as he his her she had has have one two were be are not this but or out who all what their there been no so when if back its into up over than where which being about since") {
+		stop[w] = true
+	}
+	word := regexp.MustCompile(`[a-z']+`)
+	type entry struct {
+		id    string
+		text  string
+		words map[string]bool
+	}
+	var all []entry
+	for _, m := range Moments() {
+		for _, tpl := range templatesFor(m) {
+			text := strings.TrimSpace(authoredText(tpl))
+			ws := map[string]bool{}
+			for _, w := range word.FindAllString(strings.ToLower(text), -1) {
+				if len(w) > 2 && !stop[w] {
+					ws[w] = true
+				}
+			}
+			if len(ws) >= 3 {
+				all = append(all, entry{tpl.ID, text, ws})
+			}
+		}
+	}
+	for i := 0; i < len(all); i++ {
+		for j := i + 1; j < len(all); j++ {
+			inter := 0
+			for w := range all[i].words {
+				if all[j].words[w] {
+					inter++
+				}
+			}
+			union := len(all[i].words) + len(all[j].words) - inter
+			if o := float64(inter) / float64(union); o > maxOverlap {
+				t.Errorf("near-duplicate skeletons (%.0f%% shared content words):\n    %s %q\n    %s %q",
+					o*100, all[i].id, all[i].text, all[j].id, all[j].text)
+			}
+		}
+	}
+}
+
+// TestAbstractResourcesAreNeverGoods pins needTangible end to end: a resource
+// you cannot carry may appear as a figure ("120 knowledge") and nowhere else.
+// Before the guard, expedition rewards and faction specialties produced
+// "Nobody wants to sit up guarding the knowledge tonight" and "There is a smell
+// of data on the back stairs".
+func TestAbstractResourcesAreNeverGoods(t *testing.T) {
+	if len(abstractResource) == 0 {
+		t.Fatal("abstractResource is empty")
+	}
+	for key := range abstractResource {
+		label := resourceLabel(key)
+		figure := regexp.MustCompile(`\d+ ` + regexp.QuoteMeta(label))
+		bare := regexp.MustCompile(`(?i)\b` + regexp.QuoteMeta(label) + `\b`)
+		for _, m := range Moments() {
+			rng := rand.New(rand.NewSource(int64(len(key)) + int64(m)))
+			for _, age := range config.AgeOrder() {
+				for i := 0; i < 40; i++ {
+					req := Request{Moment: m, Age: age, Tone: allTones[i%4], Kind: gameKinds[m][i%len(gameKinds[m])],
+						Subject: "Tech Consortium", Resource: key, Amount: 120}
+					line := Line(req, rng)
+					if bare.MatchString(figure.ReplaceAllString(line, "")) {
+						t.Fatalf("%v at %s treats %q as goods: %q", m, age, key, line)
+					}
+				}
+			}
+		}
+	}
+}

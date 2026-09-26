@@ -53,6 +53,8 @@ var encStandoffBanks = map[string][]string{
 // not travel.
 func encStandoffTemplates() []tmpl {
 	out := pool("enc_standoff_any", erasAny, encStandoffAny)
+	out = append(out, pool("enc_standoff_grounded", erasGrounded, encStandoffGrounded)...)
+	out = append(out, pool("enc_standoff_late", erasLate, encStandoffLate)...)
 	out = append(out, pool("enc_standoff_ancient", erasAncient, encStandoffAncient)...)
 	out = append(out, pool("enc_standoff_feudal", erasFeudal, encStandoffFeudal)...)
 	out = append(out, pool("enc_standoff_industrial", erasIndustrial, encStandoffIndustrial)...)
@@ -69,7 +71,6 @@ var encStandoffAny = []skel{
 	{Text: "Neither side ate first", Reg: rPlain, Topic: "food"},
 	{Text: "The waiting took four hours", Reg: rPlain, Topic: "time"},
 	{Text: "Nobody sat down once", Reg: rPlain, Topic: "people"},
-	{Text: "Somebody's dog went over", Reg: rPlain, Topic: "animal"},
 	{Text: "Water was shared, grudgingly", Reg: rWry, Topic: "ground"},
 	{Text: "The wind never dropped", Reg: rPlain, Topic: "weather"},
 	{Text: "Two names were shouted across", Reg: rPlain, Topic: "name"},
@@ -83,12 +84,11 @@ var encStandoffAny = []skel{
 	{Text: "What crossed the gap was ~", Slot: "enc_standoff_gesture", Reg: rPlain, Topic: "people"},
 
 	// --- mid. The working length: one thing, with enough detail to place it. ---
-	{Text: "The man on watch counted them twice and got two different numbers", Reg: rPlain, Form: fLedger, Topic: "count"},
+	{Text: "The man on watch put their number at sixty and will not be talked down from it", Reg: rPlain, Form: fLedger, Topic: "count"},
 	{Text: "Whatever was shouted from the far side, nobody here could make it out", Reg: rPlain, Topic: "noise"},
 	{Text: "Our interpreter got three words of it and guessed at the rest", Reg: rWry, Topic: "message"},
 	{Text: "They handed a body over at the halfway point and stepped back", Reg: rPlain, Topic: "casualty"},
 	{Text: "Both sides used the same water and took turns about it", Reg: rPlain, Topic: "ground"},
-	{Text: "A dog crossed the open ground and had to be fetched back", Reg: rPlain, Topic: "animal"},
 	{Text: "The waiting went on so long that people began sitting down", Reg: rPlain, Topic: "time"},
 	{Text: "A quiet swap was made in the middle and both men have denied it", Reg: rWry, Topic: "trade"},
 	{Text: "It rained on both of them for the whole of the afternoon", Reg: rPlain, Topic: "weather"},
@@ -102,7 +102,6 @@ var encStandoffAny = []skel{
 	{Text: "Estimates of their numbers went from sixty to ninety and were then left alone", Reg: rWry, Form: fLedger, Topic: "count"},
 	{Text: "An old woman on our side shouted something rude in their language", Reg: rWry, Topic: "noise"},
 	{Text: "Two of theirs were recognised and neither name has been said aloud", Reg: rPlain, Topic: "name"},
-	{Text: "The ground between them is churned to mud from all the standing", Reg: rPlain, Topic: "ground"},
 	{Text: "Somebody has been telling it as a great victory since about noon", Reg: rWry, Form: fOverheard, Topic: "rumour"},
 	{Text: "Whatever they had been eating carried across on the wind for two hours", Reg: rWry, Topic: "smell"},
 	{Text: "The men who held the left have complained about the ground ever since", Reg: rPlain, Form: fComplaint, Topic: "ground"},
@@ -126,29 +125,26 @@ var encStandoffAny = []skel{
 	{Text: "The shouting went back and forth for a quarter of an hour before anybody worked out that the two sides were using different words for the same river", Reg: rWry, Topic: "message"},
 	{Text: "A body was carried out to the middle by four of theirs and left on the grass, and two of ours went and got it without being told to", Reg: rPlain, Topic: "casualty"},
 	{Text: "Both sides drank from the same water within an hour of each other, upstream and down, and there has been an argument since about who got the better end", Reg: rWry, Topic: "ground"},
-	{Text: "The dog belongs to somebody in the second row and it went straight across, and a boy of about nine had to walk out into the open and carry it back", Reg: rPlain, Topic: "animal"},
 	{Text: "Food had not been thought about at all, so the whole afternoon was got through on what happened to be in people's pockets", Reg: rPlain, Topic: "food"},
-	{Text: "A trade was done quietly at the left-hand end while everybody else was watching the middle, and the two men involved have each denied it twice", Reg: rWry, Form: fOverheard, Topic: "trade"},
+	{Text: "A trade was done at the left-hand end while everybody else was watching the middle, and the two men involved deny it in exactly the same words", Reg: rWry, Form: fOverheard, Topic: "trade"},
 	{Text: "The weather turned about halfway through and the rain came in sideways, and neither side would give the other the satisfaction of moving into the lee of the hill", Reg: rWry, Topic: "weather"},
 	{Text: "The version being told in the town tonight has three times the numbers, a river crossing, and a speech that nobody who was there remembers hearing", Reg: rWry, Form: fOverheard, Topic: "rumour"},
 	{Text: "What went into writing afterwards was the hour it began, the hour it ended, an estimate of their strength, and one line about the ground being poor", Reg: rPlain, Form: fNotice, Topic: "paper"},
 	{Text: "A name was shouted across the gap by somebody on their side, and a woman four ranks back in ours answered it before she could stop herself", Reg: rPlain, Topic: "name"},
-	{Text: "There were children on the slope behind us the entire time, sent away twice, and back inside the quarter hour on both occasions", Reg: rWry, Topic: "town"},
+	{Text: "There were children on the slope behind us the entire time, sent away at the start and back inside the quarter hour", Reg: rWry, Topic: "town"},
 	{Text: "One man counted the far side at eighty and another at two hundred and forty, and the two of them were still going at it after dark", Reg: rWry, Form: fLedger, Topic: "count"},
 	{Text: "An old man walked out from their line with both hands open and stood in the middle a long while before anybody would come and hear him", Reg: rPlain, Topic: "stranger"},
 	{Text: "The ones who were nearest have been asked what was said and have given four different answers, none of which agree on the language it was in", Reg: rPlain, Form: fOverheard, Topic: "message"},
 	{Text: "The two front ranks settled at ~, which held for the rest of the day and was measured afterwards by a man who had nothing else to do", Slot: "enc_standoff_distance", Reg: rWry, Topic: "count"},
 	{Text: "Shouting carried fine across ~, and the insults were understood well enough on both sides for two men to be told to stop", Slot: "enc_standoff_distance", Reg: rWry, Topic: "noise"},
-	{Text: "A woman at their front gave ~, held it a moment, and dropped her arm, and the men behind her began packing up before she had turned round", Slot: "enc_standoff_gesture", Reg: rPlain, Topic: "people"},
-	{Text: "Somebody near the middle answered with ~ and has been asked since whether that was wise, and has said each time that it seemed reasonable at the hour", Slot: "enc_standoff_gesture", Reg: rWry, Topic: "argument"},
+	{Text: "A woman at their front raised one hand, held it there a moment and let it drop, and the men behind her began packing up before she had turned round", Reg: rPlain, Topic: "people"},
+	{Text: "Somebody near the middle answered with ~, and says now that it seemed reasonable at the hour", Slot: "enc_standoff_gesture", Reg: rWry, Topic: "argument"},
 
 	// --- very long. Digressive, specific, a paragraph that forgot to stop. ---
 	{Text: "Our interpreter learned the language forty years ago from a trader who has been dead for twenty of them, and she caught perhaps half of what was shouted across, and she will only admit to a third of that", Reg: rWry, Topic: "message"},
-	{Text: "The dog went over at some point in the second hour, was fed by three separate people on the far side, and had to be walked back by a boy sent out with both hands in the air and no idea what he was doing", Reg: rWry, Topic: "animal"},
-	{Text: "There is a man in the second row who put his hand up and shouted something that could have started the whole thing, and he has been asked about it by four separate people and has stopped answering his door", Reg: rPlain, Topic: "argument"},
+	{Text: "There is a man in the second row who put his hand up and shouted something that could have started the whole thing, and he has stopped answering his door", Reg: rPlain, Topic: "argument"},
 	{Text: "What got eaten in those four hours was two loaves passed down the line, a bag of dried fruit belonging to somebody who has not been thanked for it, and the water that had been meant for the walk home", Reg: rPlain, Form: fLedger, Topic: "food"},
 	{Text: "The account written up afterwards runs to nine lines, six of which are about the ground and the weather, and the other three say that contact was made at the hour stated and that the far side withdrew at its own pace", Reg: rPlain, Form: fNotice, Topic: "paper"},
-	{Text: "The story has been told in the town four times since last night and has acquired, in order, a river, a wolf, an insult in a language nobody there speaks, and a man who walked out alone into the middle and came back grinning", Reg: rWry, Form: fOverheard, Topic: "rumour"},
 	{Text: "Nobody here has much to say about the far side's numbers, their weapons or their intentions, and everybody here has a very great deal to say about how long they were made to stand in one place with wet feet", Reg: rWry, Form: fComplaint, Topic: "people"},
 
 	// --- kind: aggressive ---
@@ -173,8 +169,8 @@ var encStandoffAny = []skel{
 	{Text: "The most dangerous moment of the whole afternoon was a sneeze", Tones: []Tone{Wry}, Reg: rJoke, Topic: "noise"},
 	{Text: "Both sides have marched off telling it as a win", Tones: []Tone{Wry}, Reg: rWry, Topic: "rumour"},
 	{Text: "It was ended by everybody getting bored at roughly the same time, which took rather longer than anyone will admit to in the morning", Tones: []Tone{Wry}, Reg: rWry, Topic: "time"},
-	{Text: "Somebody has worked out that if you count the standing about as fighting, this was the longest engagement anybody here has ever been in", Tones: []Tone{Wry}, Reg: rJoke, Form: fLedger, Topic: "count"},
-	{Text: "Nobody sang on the way back", Tones: []Tone{Grim}, Reg: rPlain, Topic: "sleep"},
+	{Text: "The oldest man on the line says that if the standing about counts as fighting, this was the longest engagement anybody here has ever been in", Tones: []Tone{Wry}, Reg: rJoke, Form: fLedger, Topic: "count"},
+	{Text: "They took the long way back", Tones: []Tone{Grim}, Reg: rPlain, Topic: "sleep"},
 	{Text: "A body came over and nobody knew the face", Tones: []Tone{Grim}, Reg: rPlain, Topic: "casualty"},
 	{Text: "The wounded man they let through died in the night", Tones: []Tone{Grim}, Reg: rPlain, Topic: "wound"},
 	{Text: "The two men who were told to hold the left have not eaten since and will not be spoken to, and one of them has been sat in the same place since dark", Tones: []Tone{Grim}, Reg: rPlain, Topic: "people"},
@@ -201,6 +197,33 @@ var encStandoffAny = []skel{
 	{Text: "The figure going round tonight is {amt_res}", Needs: needRes | needAmount, Reg: rPlain, Form: fOverheard, Topic: "count"},
 	{Text: "Somebody has priced the whole afternoon at {amt_res} in lost work", Needs: needRes | needAmount, Reg: rWry, Form: fLedger, Topic: "money"},
 	{Text: "A man on our side has worked out that standing about for four hours cost the town something like {amt_res}, and he has told nine people, and two of them have asked him to do the sum again", Needs: needRes | needAmount, Reg: rJoke, Form: fLedger, Topic: "money"},
+	{Text: "Both sides had brought more people than they needed and fewer than they had claimed", Reg: rWry, Topic: "count"},
+	{Text: "The two commanders never came within speaking distance of each other, and each has since said the other was afraid to", Reg: rWry, Topic: "authority"},
+	{Text: "A runner was sent back for orders and came back with a question", Reg: rWry, Topic: "message"},
+	{Text: "The rain held off all day", Reg: rPlain, Topic: "weather"},
+}
+
+// encStandoffGrounded is the part of the old ungated pool whose imagery is a town
+// with lanes, dogs and a washing line: true from the Stone Age to the
+// Modern Age, and wrong on a station. Moved here after a corpus review.
+var encStandoffGrounded = []skel{
+	{Text: "A dog crossed the open ground and had to be fetched back", Reg: rPlain, Topic: "animal"},
+	{Text: "Somebody's dog went over", Reg: rPlain, Topic: "animal"},
+	{Text: "The dog belongs to somebody in the second row and it went straight across, and a boy of about nine had to walk out into the open and carry it back", Reg: rPlain, Topic: "animal"},
+	{Text: "The dog went over at some point in the second hour, was fed by three separate people on the far side, and had to be walked back by a boy sent out with both hands in the air and no idea what he was doing", Reg: rWry, Topic: "animal"},
+	{Text: "The story has been told in the town four times since last night and has acquired, in order, a river, a wolf, an insult in a language nobody there speaks, and a man who walked out alone into the middle and came back grinning", Reg: rWry, Form: fOverheard, Topic: "rumour"},
+	{Text: "The ground between them is churned to mud from all the standing", Reg: rPlain, Topic: "ground"},
+}
+
+// encStandoffLate is the digital and cosmic voice: the field notes have become
+// logs, and the logs have started to notice how long everything takes.
+var encStandoffLate = []skel{
+	{Text: "Both sides spent the afternoon running simulations of the afternoon", Reg: rWry, Topic: "machine"},
+	{Text: "Their ships and ours held position for six hours at a range neither side could quite reach, which the tacticians on both sides have since described as the correct range", Reg: rWry, Topic: "weapon"},
+	{Text: "No shot was fired", Reg: rPlain, Topic: "weapon"},
+	{Text: "Their envoy's message was polite, formally correct and four thousand pages long", Reg: rJoke, Form: fLedger, Topic: "message"},
+	{Text: "An officer on our side worked out how long the war could go on at this rate, and the answer was longer than the sun has left, and the figure has been classified", Reg: rWry, Topic: "time"},
+	{Text: "They sent a greeting in every language we have ever used, including two we stopped using", Reg: rWry, Topic: "message"},
 }
 
 // encStandoffAncient — elders, spears, herds, hides, the ford, the watch-fire.
@@ -223,7 +246,7 @@ var encStandoffAncient = []skel{
 	{Text: "The boys who fed the watch-fire want it known that nobody relieved them", Reg: rWry, Form: fComplaint, Topic: "border"},
 	{Text: "The herds were driven apart before anything could start, which took most of an hour and involved a good deal of shouting at animals rather than at people", Reg: rWry, Topic: "animal"},
 	{Text: "One of the elders walked out alone to the middle of the ground, stood there a while, and came back at a considerably slower pace than he went out", Reg: rPlain, Topic: "authority"},
-	{Text: "A hide was carried across as a gift and handed straight back, and the man who carried it has been asked four times what was said to him", Reg: rPlain, Topic: "trade"},
+	{Text: "A hide was carried across as a gift and handed straight back, and the man who carried it cannot agree with himself about what was said to him", Reg: rPlain, Topic: "trade"},
 	{Text: "The harvest was standing in the valley the whole time and neither lot went into it, which the old men have been remarking on since with something like surprise", Reg: rWry, Topic: "town"},
 	{Text: "Their dogs and ours worked out where the line was long before the men did, and settled it between themselves at the water without anybody getting bitten", Reg: rWry, Topic: "animal"},
 	{Text: "Frost on the grass at first light, two lines of men standing in it, and a boy of about ten going up and down our side with a water skin", Reg: rPlain, Topic: "weather"},
@@ -249,7 +272,7 @@ var encStandoffFeudal = []skel{
 	{Text: "A horn went up on their side and got no answer", Reg: rPlain, Topic: "noise"},
 	{Text: "The militia went home to the harvest and were glad to", Reg: rWry, Topic: "town"},
 	{Text: "An arrow stuck in the gate post and has been left there", Reg: rPlain, Topic: "weapon"},
-	{Text: "The quartermaster counted their column at four hundred, stopped counting, and wrote down four hundred, and has been asked about it twice since by men who counted more", Reg: rWry, Form: fLedger, Topic: "count"},
+	{Text: "The quartermaster counted their column at four hundred, stopped counting, and wrote down four hundred, and the men who counted more have been coming to find him about it since", Reg: rWry, Form: fLedger, Topic: "count"},
 	{Text: "A boy carried a message across the ground on foot because no rider would go, and he was given bread on the far side and sent back with nothing written down", Reg: rPlain, Topic: "message"},
 	{Text: "Wax was melted for a seal on an agreement neither steward believed in, and the parchment it was pressed into has already been folded into somebody's boot", Reg: rWry, Form: fNotice, Topic: "paper"},
 	{Text: "The storehouse doors were shut for the first time since the spring, and the man with the key had to be found, and he was asleep in the undercroft", Reg: rPlain, Topic: "building"},
@@ -262,7 +285,7 @@ var encStandoffFeudal = []skel{
 // encStandoffIndustrial — depots, sidings, foremen, telegrams, triplicate.
 var encStandoffIndustrial = []skel{
 	{Text: "The depot cat stayed indoors", Reg: rPlain, Topic: "animal"},
-	{Text: "Payroll was late again", Reg: rPlain, Form: fComplaint, Topic: "money"},
+	{Text: "Two shifts' wages went unclaimed", Reg: rPlain, Form: fComplaint, Topic: "money"},
 	{Text: "Two lorries idled all afternoon", Reg: rPlain, Form: fLedger, Topic: "machine"},
 	{Text: "Nobody rang the telephone", Reg: rPlain, Topic: "message"},
 	{Text: "The wire was cut", Reg: rPlain, Topic: "message"},
@@ -283,14 +306,14 @@ var encStandoffIndustrial = []skel{
 	{Text: "Nobody in the depot office will put a name to who moved first, and the telegram that went out at six says only that a meeting took place", Reg: rPlain, Form: fNotice, Topic: "paper"},
 	{Text: "Two columns halted a street apart in the rain and neither advanced, and the trams went between them on the hour as though nothing at all were happening", Reg: rWry, Topic: "machine"},
 	{Text: "A photograph was taken from the annexe roof and came out badly blurred, and the men in the front of it have all identified themselves anyway", Reg: rJoke, Topic: "town"},
-	{Text: "The warehouse doors were padlocked at eleven in the morning and the key went into the foreman's coat pocket, and he walked out to the line and stood there until dark, and the doors were still locked when the night shift came on", Reg: rPlain, Topic: "building"},
+	{Text: "The warehouse doors were padlocked at half past ten in the morning and the key went into the foreman's coat pocket, and he walked out to the line and stood there until dark, and the doors were still locked when the night shift came on", Reg: rPlain, Topic: "building"},
 	{Text: "The wages office has worked out what four hours of two hundred men standing about in a wet yard comes to, and has put the figure on the foreman's desk, and the foreman has put a mug on top of it", Reg: rJoke, Form: fLedger, Topic: "money"},
 }
 
 // encStandoffDigital — feeds, uplinks, drones, analysts, the open channel.
 var encStandoffDigital = []skel{
 	{Text: "The uplink stayed open", Reg: rPlain, Topic: "machine"},
-	{Text: "Two drones, one hour", Reg: rPlain, Form: fLedger, Topic: "machine"},
+	{Text: "Their drone watched ours for an hour", Reg: rPlain, Form: fLedger, Topic: "machine"},
 	{Text: "Nobody closed the channel", Reg: rPlain, Topic: "message"},
 	{Text: "The feed shows nothing", Reg: rPlain, Topic: "machine"},
 	{Text: "An analyst called it close", Reg: rWry, Topic: "people"},
@@ -299,10 +322,10 @@ var encStandoffDigital = []skel{
 	{Text: "The after-action briefing has one line in it and a lot of white space", Reg: rWry, Form: fNotice, Topic: "paper"},
 	{Text: "The network flagged the whole thing as an engagement, which is generous", Reg: rJoke, Form: fNotice, Topic: "paper"},
 	{Text: "Two vehicles idled facing each other for most of the morning", Reg: rPlain, Topic: "machine"},
-	{Text: "An analyst has been asked to account for the silence, twice", Reg: rPlain, Form: fComplaint, Topic: "paper"},
+	{Text: "An analyst has been told to explain the gap in the logs by morning", Reg: rPlain, Form: fComplaint, Topic: "paper"},
 	{Text: "Both sets of comms ended up on one channel by accident", Reg: rWry, Topic: "message"},
 	{Text: "Wind, boots, and forty minutes of nothing on the uplink", Reg: rPlain, Topic: "noise"},
-	{Text: "Somebody streamed the whole afternoon and got very few viewers", Reg: rJoke, Topic: "rumour"},
+	{Text: "Somebody streamed the whole afternoon and got four viewers", Reg: rJoke, Topic: "rumour"},
 	{Text: "The road between the two positions stayed empty all night", Reg: rPlain, Topic: "border"},
 	{Text: "One analyst noticed that both sides were carrying the same rifles", Reg: rPlain, Topic: "weapon"},
 	{Text: "The channel logs are twenty minutes of somebody breathing and four seconds of a man saying a name that has been played back so often the audio is going", Reg: rWry, Form: fOverheard, Topic: "message"},
@@ -317,7 +340,7 @@ var encStandoffDigital = []skel{
 
 // encStandoffCosmic — hulls, bays, transponders, the airlock, the relay.
 var encStandoffCosmic = []skel{
-	{Text: "Two hulls, no movement", Reg: rPlain, Form: fLedger, Topic: "machine"},
+	{Text: "Neither hull moved for six hours", Reg: rPlain, Form: fLedger, Topic: "machine"},
 	{Text: "The relay logged it", Reg: rPlain, Form: fNotice, Topic: "paper"},
 	{Text: "Their reactor ran hot", Reg: rPlain, Topic: "machine"},
 	{Text: "The airlock never cycled", Reg: rPlain, Topic: "machine"},
@@ -340,5 +363,5 @@ var encStandoffCosmic = []skel{
 	{Text: "Nothing crossed the gap in four hours except one very poor joke on an open frequency, which their side did not laugh at and ours has been repeating since", Reg: rJoke, Form: fOverheard, Topic: "noise"},
 	{Text: "A boarding party got as far as the tube, stood in it fully suited for twenty minutes, and came back through the airlock without anybody saying why", Reg: rPlain, Topic: "people"},
 	{Text: "The transponder codes were exchanged, logged, checked against the list, found to be twelve years out of date on their side, and passed anyway by an officer who has since written four hundred words about why", Reg: rWry, Form: fNotice, Topic: "paper"},
-	{Text: "Somebody in the forward bay scratched a name into the frame beside the port during the second hour, and it has been found, and nobody has painted over it, and there is an argument going on about whether it should stay", Reg: rPlain, Topic: "name"},
+	{Text: "Somebody in the forward bay scratched a name into the frame beside the port during the second hour. It has been found and left as it is, and there is an argument about whether it should stay", Reg: rPlain, Topic: "name"},
 }

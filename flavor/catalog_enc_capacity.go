@@ -28,7 +28,7 @@ var encCapacityBanks = map[string][]string{
 		"a crate of dried fruit", "a very large mirror", "two more caged birds",
 		"a painted chest", "a bolt of heavy cloth", "a jar of something sweet",
 		"another set of matched cups", "a life-size statue of a stranger",
-		"a box of small carved animals", "three barrels of oil",
+		"a box of small carved figures", "three barrels of oil",
 		"a bundle of dried flowers", "a heavy stone bowl",
 		"a sack of seed nobody recognises", "a cage of white rabbits",
 		"a set of ceremonial knives", "an enormous woven basket",
@@ -54,6 +54,7 @@ var encCapacityBanks = map[string][]string{
 // not travel.
 func encCapacityTemplates() []tmpl {
 	out := pool("enc_cap_any", erasAny, encCapacityAny)
+	out = append(out, pool("enc_cap_late", erasLate, encCapacityLate)...)
 	out = append(out, pool("enc_cap_ancient", erasAncient, encCapacityAncient)...)
 	out = append(out, pool("enc_cap_feudal", erasFeudal, encCapacityFeudal)...)
 	out = append(out, pool("enc_cap_industrial", erasIndustrial, encCapacityIndustrial)...)
@@ -68,7 +69,7 @@ func encCapacityTemplates() []tmpl {
 var encCapacityAny = []skel{
 	// --- short. A fact, and then the sentence stops. ---
 	{Text: "Nothing can get down the corridor", Reg: rPlain, Topic: "building"},
-	{Text: "Seven chairs, eleven visitors", Reg: rWry, Form: fLedger, Topic: "count"},
+	{Text: "Seven chairs, fourteen visitors", Reg: rWry, Form: fLedger, Topic: "count"},
 	{Text: "Somebody signed for all of it", Reg: rPlain, Form: fNotice, Topic: "paper"},
 	{Text: "The bird has stopped singing", Reg: rPlain, Topic: "animal"},
 	{Text: "Nobody will open the tall crate", Reg: rPlain, Topic: "haul"},
@@ -80,13 +81,13 @@ var encCapacityAny = []skel{
 	{Text: "Water is being carried upstairs", Reg: rPlain, Topic: "people"},
 	{Text: "One name was written twice", Reg: rPlain, Topic: "name"},
 	{Text: "Everything is stacked waist-high", Reg: rPlain, Topic: "haul"},
-	{Text: "The interpreter has gone quiet", Reg: rPlain, Topic: "message"},
+	{Text: "The interpreter has lost her voice", Reg: rPlain, Topic: "message"},
 	{Text: "There is dust on ~ already", Slot: "enc_cap_gift", Reg: rPlain, Topic: "kit"},
 
 	// --- mid. The working length: one thing, with enough detail to place it. ---
 	{Text: "Gifts have been stacked along the corridor wall for over a week", Reg: rPlain, Topic: "haul"},
 	{Text: "The man who keeps the list has run out of page", Reg: rPlain, Form: fComplaint, Topic: "paper"},
-	{Text: "An envoy has read every notice on the wall twice", Reg: rPlain, Topic: "people"},
+	{Text: "An envoy has started correcting the spelling on the notices", Reg: rPlain, Topic: "people"},
 	{Text: "The animal that came this morning has eaten nothing it was offered", Reg: rPlain, Topic: "animal"},
 	{Text: "Two delegations who dislike each other have been put in one room", Reg: rPlain, Topic: "argument"},
 	{Text: "The cost of feeding everybody has been mentioned at the table", Reg: rPlain, Topic: "money"},
@@ -105,7 +106,7 @@ var encCapacityAny = []skel{
 	{Text: "The queue outside has doubled since morning and nobody has counted it", Reg: rPlain, Topic: "count"},
 	{Text: "An old woman has been sitting on a chest since first light", Reg: rPlain, Topic: "people"},
 	{Text: "One of the sealed jars has been leaking down the inside of a chest", Reg: rPlain, Topic: "smell"},
-	{Text: "Nobody has told the cook how many are eating tonight", Reg: rPlain, Form: fComplaint, Topic: "food"},
+	{Text: "The kitchen has stopped asking how many are eating and started cooking for forty", Reg: rPlain, Form: fComplaint, Topic: "food"},
 	{Text: "A gift arrived wrapped in cloth worth more than the gift", Reg: rWry, Topic: "trade"},
 	{Text: "The rope across the cupboard door was somebody's idea of a solution", Reg: rWry, Topic: "kit"},
 	{Text: "The pile by the door has taken ~ as well", Slot: "enc_cap_gift", Reg: rPlain, Topic: "haul"},
@@ -125,14 +126,14 @@ var encCapacityAny = []skel{
 	{Text: "Somebody worked out that the visitors have eaten more in nine days than the household gets through in a month, and the figure has been repeated at every meal since", Reg: rWry, Form: fComplaint, Topic: "food"},
 	{Text: "The room set aside for guests has a man asleep in it who came with the second lot and has since attached himself to nobody in particular", Reg: rPlain, Topic: "sleep"},
 	{Text: "Nobody knows what the animal eats, so it has been offered bread, fruit, boiled grain and a bowl of water, and it has taken the water", Reg: rPlain, Topic: "animal"},
-	{Text: "The woman who keeps the list has asked three times for a second book and has been told three times that one is being looked for", Reg: rPlain, Form: fComplaint, Topic: "paper"},
-	{Text: "There is a rule about how many of these the household may take, and everybody knows the rule, and nobody wants to be the person who says it out loud", Reg: rWry, Form: fNotice, Topic: "authority"},
-	{Text: "The bread and the meat have been going out at twice the usual rate for eleven days, and the woman who buys both has started writing the numbers on the wall", Reg: rPlain, Form: fLedger, Topic: "money"},
+	{Text: "The woman who keeps the list has asked for a second book, been told that one is being looked for, and started writing in the margins of the first", Reg: rPlain, Form: fComplaint, Topic: "paper"},
+	{Text: "There is a rule about how many of these the household may take, everybody knows the rule, and the household went past it on the second day", Reg: rWry, Form: fNotice, Topic: "authority"},
+	{Text: "The bread and the meat have been going out at twice the usual rate since the first party arrived, and the woman who buys both has started writing the numbers on the wall", Reg: rPlain, Form: fLedger, Topic: "money"},
 	{Text: "Somebody has been sleeping in the far room since the third day, and the household believes he came with a delegation, and the delegations believe he lives here", Reg: rWry, Topic: "sleep"},
 	{Text: "A jar that came in sealed has been opened, sniffed by four people in turn, and sealed again with a cloth and a length of string", Reg: rPlain, Topic: "smell"},
 	{Text: "An envoy who arrived before the cold weather now dresses like everybody else here, eats with the house, and was heard this morning complaining about the price of fish", Reg: rWry, Topic: "stranger"},
 	{Text: "Nobody can say who signed for the second load, because the paper it was signed on has been used to wrap something, and the something has gone upstairs", Reg: rWry, Topic: "paper"},
-	{Text: "The tall visitor has read every notice on the wall by the door, in order, twice, and has begun asking the servants about the ones he does not understand", Reg: rPlain, Topic: "people"},
+	{Text: "The tall visitor has read every notice on the wall by the door, in order, and has begun asking the servants about the ones he does not understand", Reg: rPlain, Topic: "people"},
 	{Text: "Two servants spent the whole morning shifting ~ from one side of a room to the other, and then shifting it back after somebody senior walked through", Slot: "enc_cap_gift", Reg: rWry, Topic: "haul"},
 	{Text: "For the second time this month somebody has moved ~ without being asked, and the second move was into a worse place than the first", Slot: "enc_cap_gift", Reg: rWry, Topic: "argument"},
 	{Text: "The far end of a list somewhere has ~ written on it in a hand nobody recognises, and the item itself has not been seen since it came through the door", Slot: "enc_cap_gift", Reg: rWry, Form: fLedger, Topic: "paper"},
@@ -140,7 +141,7 @@ var encCapacityAny = []skel{
 	// --- very long. Digressive, specific, a paragraph that forgot to stop. ---
 	{Text: "Two of the waiting parties will not be in the same room, so one has the front and one has the back, and the passage between them has a chair in it with somebody sitting on it", Reg: rPlain, Topic: "argument"},
 	{Text: "The third delegation this month came in while the second was still waiting to be seen, and the second has now been waiting long enough to have opinions about the third that it has been sharing with anybody who walks past", Reg: rWry, Topic: "time"},
-	{Text: "The interpreter has been working eleven days without a break, has been thanked twice, and this morning turned a long and formal greeting into a shorter and less formal one that nobody in the room queried", Reg: rWry, Topic: "message"},
+	{Text: "The interpreter has worked every day since the first party arrived and has been thanked once, and this morning turned a long and formal greeting into a shorter and less formal one that nobody in the room queried", Reg: rWry, Topic: "message"},
 	{Text: "One count of what has come in this month made it forty-one separate items, another the next day made it thirty-eight, and both numbers are written up on the same wall in the same hand", Reg: rWry, Form: fLedger, Topic: "count"},
 	{Text: "A woman came in on the fourth day with a small box and a long speech, was heard out, was given water and a chair, and is still in the chair, and the box is still on her knees", Reg: rPlain, Topic: "stranger"},
 	{Text: "The household has been feeding between nine and fourteen extra people at every meal for nine days, and the woman who does the buying has stopped asking how long this goes on and has started buying for twenty", Reg: rPlain, Form: fComplaint, Topic: "food"},
@@ -197,6 +198,17 @@ var encCapacityAny = []skel{
 	{Text: "Nobody has worked out what to do with what came from {subject}, so it has been left where it was set down, and people have begun walking round it as though it had always been there", Needs: needSubject, Reg: rWry, Topic: "haul"},
 }
 
+// encCapacityLate is the digital and cosmic voice: the field notes have become
+// logs, and the logs have started to notice how long everything takes.
+var encCapacityLate = []skel{
+	{Text: "The gift registry has run out of storage", Reg: rWry, Form: fLedger, Topic: "count"},
+	{Text: "One delegation has brought a gift that has not finished arriving", Reg: rJoke, Topic: "stranger"},
+	{Text: "Protocol requires every gift to be acknowledged in person, and at current rates the acknowledgements will be finished some time after the last person able to give them has died", Reg: rWry, Form: fNotice, Topic: "authority"},
+	{Text: "The guest quarters are full of envoys waiting to be told they can go home", Reg: rPlain, Topic: "people"},
+	{Text: "An envoy asked what we needed and was shown the list of things we have been given", Reg: rWry, Topic: "trade"},
+	{Text: "Storage is full", Reg: rPlain, Form: fNotice, Topic: "building"},
+}
+
 // encCapacityAncient — the elders, the store-pit, hides drying for guests who
 // show no sign of going home.
 var encCapacityAncient = []skel{
@@ -245,7 +257,7 @@ var encCapacityFeudal = []skel{
 	{Text: "Supper was served twice because neither party would sit at one table", Reg: rPlain, Topic: "food"},
 	{Text: "A horn was blown for a delegation that had already gone home", Reg: rJoke, Topic: "noise"},
 	{Text: "Somebody's cart blocked the gate for most of the afternoon", Reg: rPlain, Topic: "machine"},
-	{Text: "The clerk who keeps the visitors' list has asked twice to be moved to other work, and both requests went to the steward, who has them", Reg: rWry, Form: fComplaint, Topic: "paper"},
+	{Text: "The clerk who keeps the visitors' list has asked in writing to be moved to other work, and the request went to the steward, who has it", Reg: rWry, Form: fComplaint, Topic: "paper"},
 	{Text: "Sacks of foreign grain have been stacked against the storehouse wall under a cloth, and the cloth has been taken twice for other uses and put back once", Reg: rPlain, Topic: "haul"},
 	{Text: "Parchment has run short on account of all the polite refusals, and the clerks are writing the newest ones on the backs of old muster lists", Reg: rWry, Topic: "paper"},
 	{Text: "The militia turned out to carry chests up two flights of stairs, which was rather less than any of them had in mind when they answered the muster", Reg: rWry, Form: fComplaint, Topic: "people"},
@@ -272,7 +284,7 @@ var encCapacityIndustrial = []skel{
 	{Text: "A wire came in asking whether the previous wire had come in", Reg: rJoke, Topic: "message"},
 	{Text: "The lorries arrived at six and are still standing in the yard", Reg: rPlain, Topic: "machine"},
 	{Text: "Three delegations have been booked into the same Thursday afternoon", Reg: rPlain, Form: fNotice, Topic: "time"},
-	{Text: "A brass band was hired for the fourth arrival and quietly stood down", Reg: rWry, Topic: "noise"},
+	{Text: "A brass band was hired for the fourth arrival and stood down after one tune", Reg: rWry, Topic: "noise"},
 	{Text: "Smoke from the visitors' cigars has filled the upper corridor", Reg: rPlain, Topic: "smell"},
 	{Text: "Everything has been entered in triplicate, filed in three separate places, and the man who knows which three has been off sick since the second delegation came in", Reg: rWry, Form: fLedger, Topic: "paper"},
 	{Text: "The warehouse manager has stopped answering the telephone, on the grounds that every call this week has been about somewhere to put something", Reg: rWry, Form: fComplaint, Topic: "building"},
@@ -301,13 +313,13 @@ var encCapacityDigital = []skel{
 	{Text: "The conference room is booked out until the end of the quarter", Reg: rPlain, Form: fNotice, Topic: "building"},
 	{Text: "Three envoys are in reception and one of them has fallen asleep", Reg: rPlain, Topic: "sleep"},
 	{Text: "Somebody printed the wrong name on the welcome screen again", Reg: rPlain, Topic: "name"},
-	{Text: "Two drones are circling the roof waiting for landing clearance", Reg: rPlain, Topic: "border"},
+	{Text: "Two drones are circling the building waiting for landing clearance", Reg: rPlain, Topic: "border"},
 	{Text: "The storage room downstairs now has a spreadsheet of its own", Reg: rWry, Form: fLedger, Topic: "haul"},
 	{Text: "An assistant has been moving the same meeting for eleven weeks, and the last four messages about it have gone to a person who left in March", Reg: rPlain, Topic: "message"},
-	{Text: "The uplink was left open through an entire welcome speech, and the far end has since asked, twice and politely, for a copy of what was said afterwards", Reg: rWry, Form: fOverheard, Topic: "rumour"},
+	{Text: "The uplink was left open through an entire welcome speech, and the far end has since asked, politely, for a copy of what was said afterwards", Reg: rWry, Form: fOverheard, Topic: "rumour"},
 	{Text: "An analyst has been photographing the gifts for insurance, has got through sixty of them, and has been told that the insurance office wants them photographed against a plain wall", Reg: rPlain, Form: fLedger, Topic: "paper"},
-	{Text: "The office manager has begun turning arrivals away very politely at the door, and has developed a form of words for it that the whole floor can now recite", Reg: rWry, Form: fOverheard, Topic: "people"},
-	{Text: "Four identical baskets arrived from four different embassies on the same afternoon, and three of them have been opened and one has been quietly put in a cupboard", Reg: rWry, Form: fLedger, Topic: "count"},
+	{Text: "The office manager has begun turning arrivals away politely at the door, and has developed a form of words for it that the whole floor can now recite", Reg: rWry, Form: fOverheard, Topic: "people"},
+	{Text: "Four identical baskets arrived from four different embassies on the same afternoon, and three of them have been opened and one has been put in a cupboard", Reg: rWry, Form: fLedger, Topic: "count"},
 	{Text: "The security desk stopped logging deliveries at some point on Wednesday, and the log resumed on Thursday in a different hand, with a note about the missing day", Reg: rPlain, Form: fLedger, Topic: "paper"},
 	{Text: "A crate of ceremonial hardware is under a desk on the second floor, and the person who sits at that desk has been working with their knees at an angle for nine days and has raised it with facilities three times", Reg: rPlain, Form: fComplaint, Topic: "argument"},
 	{Text: "The parking outside has been taken by diplomatic vehicles since Monday, which is fine, except that the delivery entrance is behind them and the sandwich order has been left at the barrier three days running", Reg: rWry, Form: fComplaint, Topic: "food"},
@@ -334,7 +346,7 @@ var encCapacityCosmic = []skel{
 	{Text: "Somebody's ceremonial statue will not go through the hatch", Reg: rWry, Topic: "building"},
 	{Text: "The airlock queue has become a matter of protocol, and two junior officers have spent the morning working out an order that offends the smallest number of people", Reg: rWry, Form: fNotice, Topic: "authority"},
 	{Text: "A freighter captain has been waiting behind three diplomatic ships since yesterday, and has been on the relay about it four times, and is being answered by a machine", Reg: rWry, Form: fComplaint, Topic: "message"},
-	{Text: "The station gardens have been closed for a reception since the middle of last week, and the reception has been moved twice without the gardens being reopened", Reg: rPlain, Topic: "building"},
+	{Text: "The station gardens have been closed for a reception since the middle of last week, and the reception has been moved to next week without the gardens being reopened", Reg: rPlain, Topic: "building"},
 	{Text: "The manifest lists ninety crates and describes none of them, and the officer who wrote it has been off shift since the third delegation docked", Reg: rPlain, Form: fLedger, Topic: "paper"},
 	{Text: "Two delegations in orbit are refusing to come down in the order the dock has given them, and the dock has stopped offering an order and is now offering times", Reg: rWry, Topic: "argument"},
 	{Text: "The hull outside the visitors' berth has been polished twice this month by a crew that has not been outside for any other reason in two years", Reg: rWry, Topic: "machine"},

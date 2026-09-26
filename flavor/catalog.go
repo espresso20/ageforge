@@ -96,6 +96,11 @@ var (
 	erasEarly = []era{eraAncient, eraFeudal}
 	erasMid   = []era{eraFeudal, eraIndustrial}
 	erasLate  = []era{eraDigital, eraCosmic}
+
+	// erasGrounded is every age with lanes, dogs and a washing line. The
+	// ungated pools used to hold these lines, which is how the Transcendent Age
+	// ended up narrated by a baker with a shovel.
+	erasGrounded = []era{eraAncient, eraFeudal, eraIndustrial}
 )
 
 // eraBucket pairs an era with the suffix its pool ids use. The order is fixed so
