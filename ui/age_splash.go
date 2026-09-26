@@ -46,6 +46,10 @@ func ShowAgeSplashFull(om *OverlayManager, oldAge, newAge string,
 	}
 
 	// SetInputCapture on the overlay Flex so all keypresses trigger dismiss.
+	// A container's capture fires for keys routed to any focused child, and
+	// keeping titleTV as the focusable item means a Pages re-focus (e.g. when
+	// a page above is removed) lands on titleTV inside this Flex rather than
+	// on a bare primitive with no key handler.
 	overlay.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		dismiss()
 		return nil
