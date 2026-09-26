@@ -1056,8 +1056,8 @@ func cmdThemeList(acct *game.Account) CommandResult {
 		case t.Accessible:
 			note = "  [cyan](accessible)[-]"
 		}
-		lines = append(lines, fmt.Sprintf("%s[white]%-18s[-] [gray]%s[-]%s",
-			marker, t.Name, t.Key, note))
+		lines = append(lines, fmt.Sprintf("%s[white]%-20s[-] [gray]%-20s[-] [dim]%-5s[-]%s",
+			marker, t.Name, t.Key, strings.ToLower(t.Variant()), note))
 	}
 	lines = append(lines, "[gray]Use `theme <key>` to switch.[-]")
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
