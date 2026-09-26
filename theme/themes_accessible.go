@@ -23,7 +23,7 @@ const (
 // bright blue, Negative a warm orange; Accent/Highlight/Label favor the blue/
 // yellow/white spread that stays mutually distinct under deuteranopia simulation
 // (avoiding an accent≈positive collision).
-var Deuteranopia = Theme{
+var Deuteranopia = define(Theme{
 	Key:        "deuteranopia",
 	Name:       "Deuteranopia-safe",
 	Blurb:      "Red-green safe: blue gains, orange losses, ▲/▼ signs.",
@@ -41,13 +41,13 @@ var Deuteranopia = Theme{
 	},
 	GainGlyph: gainGlyph,
 	LossGlyph: lossGlyph,
-}
+})
 
 // Protanopia is tuned for red-green deficiency of the L-cone type. The safe hues
 // differ slightly from deuteranopia (the orange is pushed a touch warmer/lighter
 // and positive a touch deeper) since L-cone loss darkens reds differently; shipping
 // it separately serves protanopes better than a single "colorblind" catch-all.
-var Protanopia = Theme{
+var Protanopia = define(Theme{
 	Key:        "protanopia",
 	Name:       "Protanopia-safe",
 	Blurb:      "Red-green safe (L-cone): blue gains, amber losses, ▲/▼ signs.",
@@ -65,13 +65,13 @@ var Protanopia = Theme{
 	},
 	GainGlyph: gainGlyph,
 	LossGlyph: lossGlyph,
-}
+})
 
 // HighContrast is maximum legibility: near-black background, near-white text, and
 // saturated, unambiguous role colors comfortably above the AA floor. For low-vision
 // players and high-glare terminals. It also keeps ± blue/orange + glyphs so it is
 // colorblind-safe as well as high-contrast.
-var HighContrast = Theme{
+var HighContrast = define(Theme{
 	Key:        "high_contrast",
 	Name:       "High Contrast",
 	Blurb:      "Maximum legibility: near-black on near-white, bold roles.",
@@ -89,10 +89,10 @@ var HighContrast = Theme{
 	},
 	GainGlyph: gainGlyph,
 	LossGlyph: lossGlyph,
-}
+})
 
-func init() {
-	register(Deuteranopia)
-	register(Protanopia)
-	register(HighContrast)
-}
+var _ = register(
+	Deuteranopia,
+	Protanopia,
+	HighContrast,
+)

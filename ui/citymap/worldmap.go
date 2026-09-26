@@ -323,7 +323,7 @@ const worldTerrainMix = 0.70
 // RoleBackground so nothing competes with the foreground dots. Water is pulled a touch
 // LESS toward bg so the sea reads as a distinct dark basin rather than washing into land.
 func mutedBiomeTones(pal terrainPalette) []color.RGBA {
-	bg := rgba(theme.Color(theme.RoleBackground))
+	bg := mapColor(theme.RoleBackground)
 	muted := make([]color.RGBA, biomeCount)
 	for bi := biome(0); bi < biomeCount; bi++ {
 		mix := worldTerrainMix
@@ -347,7 +347,7 @@ func mutedBiomeTones(pal terrainPalette) []color.RGBA {
 // atlas uses; blending the live biome color toward them keeps the theme's character while
 // guaranteeing the land reads as land, not grey.
 func atlasBiomeTones(pal terrainPalette) []color.RGBA {
-	bg := rgba(theme.Color(theme.RoleBackground))
+	bg := mapColor(theme.RoleBackground)
 	tones := make([]color.RGBA, biomeCount)
 
 	// Canonical map anchors (muted, not cartoon). Land biomes blend toward these so the
@@ -711,7 +711,7 @@ func drawSettlementField(img *image.RGBA, pal terrainPalette, wf *terrainField, 
 	// now-vivid land — the grass tone deepened toward the shadow role, so it sits quietly on
 	// the map (clearly behind the bright foreground civ dots) rather than as bright noise.
 	// Lives in the theme (RoleDim/shadow) → retints on a switch.
-	dim := rgba(theme.Color(theme.RoleDim))
+	dim := mapColor(theme.RoleDim)
 	landDim := blend(darken(pal.bGrass, 0.28), dim, 0.35)
 
 	// Render each live cell as a SMALL, dim mark — a distant settlement, not a blob. Most
@@ -864,8 +864,8 @@ func drawYourCiv(img *image.RGBA, pal terrainPalette, wf *terrainField, w, h int
 	if nx, ny, ok := nearestPassablePx(wf, cx, cy); ok {
 		cx, cy = nx, ny
 	}
-	accent := rgba(theme.Color(theme.RoleAccent))
-	bg := rgba(theme.Color(theme.RoleBackground))
+	accent := mapColor(theme.RoleAccent)
+	bg := mapColor(theme.RoleBackground)
 
 	// ROUND radius (rx == ry) scaling gently with canvas so your seat stays prominent on
 	// big and small maps, clamped to a tight band: a neighbour dot is ~3–6px across, so a
@@ -941,7 +941,7 @@ func factionColor(key string) color.RGBA {
 		hsh *= 16777619
 	}
 	deg := float64(hsh % 360)
-	return rotateHue(rgba(theme.Color(theme.RoleLabel)), deg)
+	return rotateHue(mapColor(theme.RoleLabel), deg)
 }
 
 // civStrengthBucket derives a 0..3 dot-size bucket from the civ's real Strength — the
@@ -998,7 +998,7 @@ func drawWorldCivs(img *image.RGBA, pal terrainPalette, state game.GameState, wf
 	baseRX := float64(w) * 0.34
 	baseRY := float64(h) * 0.34
 
-	hotRed := brighten(rgba(theme.Color(theme.RoleNegative)), 0.20) // at-war override body
+	hotRed := brighten(mapColor(theme.RoleNegative), 0.20) // at-war override body
 
 	out := make([]worldDot, 0, len(civs))
 	for i, c := range civs {
@@ -1036,12 +1036,12 @@ func drawWorldCivs(img *image.RGBA, pal terrainPalette, state game.GameState, wf
 		}
 
 		ident := factionColor(c.key) // the civ's own identity hue
-		standing := rgba(theme.Color(c.role))
+		standing := mapColor(c.role)
 
 		// Standing ring: a slightly larger disc of the relationship color under the body,
 		// so an ally/rival reads its standing as a colored halo around its identity hue.
 		// (Neutral/friendly rings are quiet — Dim/Label — so they don't shout.)
-		ringCol := blend(rgba(theme.Color(theme.RoleBackground)), standing, 0.55)
+		ringCol := blend(mapColor(theme.RoleBackground), standing, 0.55)
 		fillDot(img, cx, cy, r+1, ringCol)
 
 		if c.atWar {

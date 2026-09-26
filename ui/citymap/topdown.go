@@ -221,22 +221,35 @@ type tdPal struct {
 	shadow    color.RGBA // a soft dark for drop-shadows
 }
 
-// newTdPal resolves the theme roles the era recipes need. Pure read of the active theme; no
-// locks. Kept separate from the legacy terrainPalette so the top-down path never pulls a
-// biome/water tone.
+// tdShadow is the drop-shadow tone blended under roofs (drawShadow, 28%).
+func tdShadow(bg, dim color.RGBA) color.RGBA {
+	if theme.IsLight() {
+		// Light theme: a drop shadow must DARKEN whatever it falls on, even after the
+		// light re-key (liftForLight). Anchor it near black off the proxy canvas so the
+		// 28% shadow blend always pulls the ground down.
+		return blend(bg, color.RGBA{A: 0xff}, 0.6)
+	}
+	// Dark themes: unchanged from before the light-theme overhaul.
+	return blend(dim, color.RGBA{A: 0xff}, 0.45)
+}
+
+// newTdPal resolves the theme roles the era recipes need (through mapColor, so a light
+// theme yields its dark-polarity proxy). Pure read of the active theme; no locks. Kept
+// separate from the legacy terrainPalette so the top-down path never pulls a biome/water
+// tone.
 func newTdPal() tdPal {
-	bg := rgba(theme.Color(theme.RoleBackground))
-	dim := rgba(theme.Color(theme.RoleDim))
+	bg := mapColor(theme.RoleBackground)
+	dim := mapColor(theme.RoleDim)
 	return tdPal{
 		bg:        bg,
 		dim:       dim,
-		text:      rgba(theme.Color(theme.RoleText)),
-		accent:    rgba(theme.Color(theme.RoleAccent)),
-		highlight: rgba(theme.Color(theme.RoleHighlight)),
-		positive:  rgba(theme.Color(theme.RolePositive)),
-		label:     rgba(theme.Color(theme.RoleLabel)),
+		text:      mapColor(theme.RoleText),
+		accent:    mapColor(theme.RoleAccent),
+		highlight: mapColor(theme.RoleHighlight),
+		positive:  mapColor(theme.RolePositive),
+		label:     mapColor(theme.RoleLabel),
 		// Shadow: background pushed dark, so it grounds a roof without a hard black.
-		shadow: blend(dim, color.RGBA{A: 0xff}, 0.45),
+		shadow: tdShadow(bg, dim),
 	}
 }
 

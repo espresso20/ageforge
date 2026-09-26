@@ -47,6 +47,8 @@ Faction standing reads the **same everywhere**, through signal colours:
 
 Your own seat is always the **command hub** at the heart of the view.
 
+These views stay dark on every theme, light ones included — space is dark. On the planetary maps, civilization markers stay marker-bright against the map's own canvas whatever theme you use.
+
 | Age | View | Shows |
 |---|---|---|
 | **18 · Space** | Home cluster | Your command hub and rival colonies, their spheres of influence, trade lanes (gold) and conflict lanes (dashed red). |

@@ -32,7 +32,7 @@ func (d *Dashboard) showSaveChoiceModal() {
 				if err := d.engine.SaveGame(name); err != nil {
 					d.engine.AddLog("error", err.Error())
 				} else {
-					d.engine.AddLog("info", "[lime]Saved → "+name)
+					d.engine.AddLog("info", "[positive]Saved → "+name)
 				}
 				d.app.SetFocus(d.inputField)
 			case "Branch new":
@@ -42,7 +42,7 @@ func (d *Dashboard) showSaveChoiceModal() {
 					if err := d.engine.BranchSave(name); err != nil {
 						d.engine.AddLog("error", err.Error())
 					} else {
-						d.engine.AddLog("info", "[lime]Branched → "+name+" (autosave now follows it)")
+						d.engine.AddLog("info", "[positive]Branched → "+name+" (autosave now follows it)")
 					}
 					d.app.SetFocus(d.inputField)
 				})

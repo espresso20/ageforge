@@ -45,7 +45,7 @@ func TestUnlockedByRoundTrip(t *testing.T) {
 // theme (Accessible or the default Forge) declares NEITHER and no hint.
 func TestGatedThemeRegistryConsistency(t *testing.T) {
 	for _, th := range All() {
-		alwaysAvailable := th.Accessible || th.Key == DefaultKey
+		alwaysAvailable := th.AlwaysAvailable()
 		hasMilestone := th.UnlockMilestone != ""
 		hasChain := th.UnlockChain != ""
 

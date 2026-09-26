@@ -43,7 +43,7 @@ func themeAvailable(acct *game.Account, t theme.Theme) bool {
 	if game.DevModeActive {
 		return true
 	}
-	if t.Accessible || t.Key == theme.DefaultKey {
+	if t.AlwaysAvailable() {
 		return true
 	}
 	return acct != nil && acct.HasTheme(t.Key)

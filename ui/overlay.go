@@ -77,7 +77,7 @@ func (om *OverlayManager) Register(name, title string, provide OverlayProvider) 
 	theme.Track(func() {
 		tv.SetBorderColor(theme.Color(theme.RoleAccent)).
 			SetTitleColor(theme.Color(theme.RoleAccent)).
-			SetBackgroundColor(theme.Color(theme.RoleBackground))
+			SetBackgroundColor(theme.Color(theme.RoleSurface))
 	})
 	tv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
@@ -141,7 +141,7 @@ func (om *OverlayManager) buildWidgetRoot(we *widgetEntry, prim tview.Primitive)
 		SetBorderColor(theme.Color(theme.RoleAccent)).
 		SetTitle(" " + we.title + " — ESC to close ").
 		SetTitleColor(theme.Color(theme.RoleAccent)).
-		SetBackgroundColor(theme.Color(theme.RoleBackground))
+		SetBackgroundColor(theme.Color(theme.RoleSurface))
 	frame.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
 			om.Hide()

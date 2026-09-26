@@ -49,8 +49,7 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 			}
 			d.closeAncientMemoryModal()
 		})
-	btnAccept.SetBackgroundColor(theme.Color(theme.RolePositive))
-	btnAccept.SetLabelColor(theme.Color(theme.RoleText))
+	styleFilledButton(btnAccept, theme.RolePositive)
 
 	btnDecline := tview.NewButton(tview.Escape("[D] Decline")).
 		SetSelectedFunc(func() {

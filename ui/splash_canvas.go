@@ -10,6 +10,8 @@ import (
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
+
+	"github.com/espresso20/ageforge/theme"
 )
 
 // ── Star layers ─────────────────────────────────────────────────────────────
@@ -155,7 +157,7 @@ func (sc *splashCanvas) Draw(screen tcell.Screen) {
 		if v > 220 {
 			v = 220
 		}
-		fg := tcell.NewRGBColor(v+35, v+25, v+15)
+		fg := splashStarColor(v, alpha)
 		style := tcell.StyleDefault.Foreground(fg)
 		if s.tier == 2 && alpha > 0.82 {
 			style = style.Bold(true)
@@ -167,7 +169,7 @@ func (sc *splashCanvas) Draw(screen tcell.Screen) {
 	pulse := (math.Sin(tick*0.55) + 1.0) / 2.0
 	goldR := int32(182 + int(pulse*73))
 	goldG := int32(112 + int(pulse*68))
-	titleFG := tcell.NewRGBColor(goldR, goldG, 0)
+	titleFG := splashTitleColor(goldR, goldG, pulse)
 	titleStyle := tcell.StyleDefault.Foreground(titleFG).Bold(true)
 	blank := tcell.StyleDefault
 
@@ -203,7 +205,7 @@ func (sc *splashCanvas) Draw(screen tcell.Screen) {
 
 	// ── Tagline ───────────────────────────────────────────────────────────────
 	if tly >= by && tly < by+bh {
-		mutedStyle := tcell.StyleDefault.Foreground(tcell.NewRGBColor(139, 148, 158))
+		mutedStyle := tcell.StyleDefault.Foreground(theme.Color(theme.RoleDim))
 		// Wipe the row across the title width first.
 		for col := 0; col < titleW; col++ {
 			tx := originX + col
@@ -229,7 +231,7 @@ func (sc *splashCanvas) Draw(screen tcell.Screen) {
 		blx := bx + (bw-len(badge))/2
 		if bly < by+bh {
 			cyanStyle := tcell.StyleDefault.
-				Foreground(tcell.NewRGBColor(56, 189, 248)).
+				Foreground(theme.Color(theme.RoleLabel)).
 				Bold(true)
 			for k, ch := range badge {
 				tx := blx + k
@@ -240,4 +242,29 @@ func (sc *splashCanvas) Draw(screen tcell.Screen) {
 			}
 		}
 	}
+}
+
+// splashStarColor is the twinkling star's ink at brightness v (0..220) / alpha
+// (0..1). On a dark theme it keeps the original warm-white starlight, which
+// brightens with alpha; on a light theme "brighter" has to mean darker, so the
+// star fades in from the canvas toward the Dim/Text ink instead.
+func splashStarColor(v int32, alpha float64) tcell.Color {
+	if !theme.IsLight() {
+		return tcell.NewRGBColor(v+35, v+25, v+15)
+	}
+	if alpha > 1 {
+		alpha = 1
+	}
+	ink := theme.Mix(theme.Color(theme.RoleDim), theme.Color(theme.RoleText), alpha)
+	return theme.Mix(theme.Color(theme.RoleBackground), ink, 0.35+0.65*alpha)
+}
+
+// splashTitleColor is the pulsing AGEFORGE title color. Dark themes keep the
+// original gold pulse (r,g from the caller); a light theme pulses its Accent
+// toward its Bright ink, since gold on a white page is unreadable.
+func splashTitleColor(r, g int32, pulse float64) tcell.Color {
+	if !theme.IsLight() {
+		return tcell.NewRGBColor(r, g, 0)
+	}
+	return theme.Mix(theme.Color(theme.RoleAccent), theme.Color(theme.RoleBright), 0.35*pulse)
 }

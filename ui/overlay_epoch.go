@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // epochProvider generates the epoch overlay text from the current game state.
@@ -44,8 +45,8 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 		for _, a := range ep.Ages {
 			ageNames = append(ageNames, epochOverlayFormatAgeKey(a))
 		}
-		fmt.Fprintf(sb, " [%s]%s %s[-]   Ages: %s\n",
-			ep.Color, ep.Icon, ep.Name,
+		fmt.Fprintf(sb, " %s%s %s[-]   Ages: %s\n",
+			theme.NameTag(ep.Color), ep.Icon, ep.Name,
 			strings.Join(ageNames, " · "))
 		fmt.Fprintf(sb, " [gray]Primary resource: %s   Energy: %s[-]\n",
 			ep.PrimaryResource, ep.EnergyResource)
@@ -121,7 +122,7 @@ func epochProviderHistory(sb *strings.Builder, state game.GameState) {
 		record := findEpochEvent(state.EpochEventHistory, ep.Key)
 
 		var line strings.Builder
-		fmt.Fprintf(&line, "   [%s]%s %s[-]", ep.Color, ep.Icon, ep.Name)
+		fmt.Fprintf(&line, "   %s%s %s[-]", theme.NameTag(ep.Color), ep.Icon, ep.Name)
 
 		if isCurrent {
 			line.WriteString("   [gray][current][-]")
@@ -173,8 +174,8 @@ func epochProviderLegacyBonuses(sb *strings.Builder, state game.GameState) {
 		for res, pct := range bonuses {
 			parts = append(parts, fmt.Sprintf("%s +%.0f%%", res, pct*100))
 		}
-		fmt.Fprintf(sb, "   [%s]%s %s:[-]  %s\n",
-			ep.Color, ep.Icon, ep.Name,
+		fmt.Fprintf(sb, "   %s%s %s:[-]  %s\n",
+			theme.NameTag(ep.Color), ep.Icon, ep.Name,
 			strings.Join(parts, ", "))
 	}
 

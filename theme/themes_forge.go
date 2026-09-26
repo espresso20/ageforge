@@ -21,11 +21,12 @@ import "github.com/gdamore/tcell/v2"
 //     was the obvious "brand" pick, but white-on-gold is ~1.4:1 — unreadable; the
 //     selection backs light text, so it must stay dark. The gold brand lives in
 //     borders/titles via Accent.)
-var Forge = Theme{
+var Forge = define(Theme{
 	Key:        "forge",
 	Name:       "Forge",
 	Blurb:      "The classic dark-and-gold AgeForge look.",
 	Accessible: false,
+	Standard:   true,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0x0d, 0x11, 0x17),
 		RoleText:       tcell.NewRGBColor(0xff, 0xff, 0xff),
@@ -36,10 +37,14 @@ var Forge = Theme{
 		RolePositive:   tcell.NewRGBColor(0x3f, 0xb9, 0x50),
 		RoleNegative:   tcell.NewRGBColor(0xf8, 0x51, 0x49),
 		RoleSelection:  tcell.NewRGBColor(0x21, 0x30, 0x4a),
+		// Extended roles left unset derive to the pre-overhaul look (Surface =
+		// Background, Border = Accent, OnAccent = black, …). Chip is pinned to the
+		// footer-keycap label grey the UI hard-coded before it was a role.
+		RoleChip: tcell.NewRGBColor(0x30, 0x36, 0x3d),
 	},
 	// Non-accessible: sign carried by color alone, glyphs left empty.
 	GainGlyph: "",
 	LossGlyph: "",
-}
+})
 
-func init() { register(Forge) }
+var _ = register(Forge)

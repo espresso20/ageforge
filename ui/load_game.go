@@ -304,7 +304,7 @@ func (b *loadGameBrowser) doDelete() {
 		})
 	// Transient confirm modal (rebuilt per delete): construction-read the danger
 	// background from the Negative role so it tints with the theme.
-	modal.SetBackgroundColor(theme.Color(theme.RoleNegative))
+	styleDangerModal(modal)
 	b.pages.AddPage(page, modal, true, true)
 }
 
@@ -368,8 +368,7 @@ func (b *loadGameBrowser) doRename() {
 	}
 
 	okBtn := tview.NewButton("[ OK ]").SetSelectedFunc(submit)
-	okBtn.SetBackgroundColor(theme.Color(theme.RoleAccent))
-	okBtn.SetLabelColor(theme.Color(theme.RoleBackground))
+	styleFilledButton(okBtn, theme.RoleAccent)
 	cancelBtn := tview.NewButton("[ Cancel ]").SetSelectedFunc(close)
 
 	// Enter in the input field submits.
@@ -466,7 +465,7 @@ func rowLabel(s game.SaveInfo, prefix string, active bool) string {
 		if tag != "" {
 			tag += " "
 		}
-		tag += "[aqua]● active[-]"
+		tag += "[label]● active[-]"
 	}
 	if tag != "" {
 		tag = "   " + tag
@@ -479,7 +478,7 @@ func rowLabel(s game.SaveInfo, prefix string, active bool) string {
 // footerButton renders one keycap-style action button: the hotkey on a gold
 // cap fused to its label on a dark chip — e.g. a gold "Enter" beside "Load".
 func footerButton(key, label string) string {
-	return fmt.Sprintf("[black:gold:b] %s [white:#30363d:b] %s [-:-:-]", key, label)
+	return theme.KeycapButton(key, label)
 }
 
 // footerBar is the Load Game action bar: a keycap button per action so the
@@ -501,7 +500,7 @@ func footerBar() string {
 func legendText() string {
 	return strings.Join([]string{
 		"[gold]★ auto[-]      automatic save slot (overwritten on autosave)",
-		"[aqua]● active[-]    the save your game is autosaving into",
+		"[label]● active[-]    the save your game is autosaving into",
 		"[red]⚠ modified[-]  save file edited outside the game",
 		"[red]⚠ corrupt[-]   file could not be read — cannot be loaded",
 	}, "\n")

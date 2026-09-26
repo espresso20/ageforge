@@ -69,7 +69,7 @@ func showAccountNameConfirmModal(app *tview.Application, pages *tview.Pages, nam
 		})
 	// Opaque background so the modal doesn't bleed the page beneath it, matching the
 	// other button-modals (and the earlier modal-opacity fix).
-	modal.SetBackgroundColor(theme.Color(theme.RoleBackground))
+	modal.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	pages.AddPage(accountNameConfirmPage, modal, true, true)
 	app.SetFocus(modal)
@@ -122,7 +122,11 @@ func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pa
 		// Dark slate field with white text — tview's default light field
 		// background renders the white name near-invisible on the dark modal.
 		SetFieldBackgroundColor(theme.Color(theme.RoleSelection)).
-		SetFieldTextColor(theme.Color(theme.RoleText))
+		SetFieldTextColor(theme.Color(theme.RoleSelectionText))
+	// Every child of the modal panel paints Surface so the panel reads as one
+	// piece on themes where Surface differs from the canvas (Daylight).
+	errTV.SetBackgroundColor(theme.Color(theme.RoleSurface))
+	input.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	escHint := "Esc: cancel"
 	if escAccepts {
@@ -132,6 +136,7 @@ func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pa
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText("[gray]Enter: confirm  ·  Tab: reroll name  ·  " + escHint + "[-]")
+	hintTV.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	// closeAndRestore removes the modal page and restores focus to focusReturn.
 	// Used on cancel (Esc).
@@ -175,7 +180,7 @@ func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pa
 	// actually draws, so transparent spacers would let the page beneath (the
 	// dashboard, for a Branch save) bleed through; an explicit background paints
 	// them.
-	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(theme.Color(theme.RoleBackground)) }
+	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(theme.Color(theme.RoleSurface)) }
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(input, 1, 0, true).
 		AddItem(spacer(), 1, 0, false).
@@ -186,7 +191,7 @@ func showSaveNameModalOpts(app *tview.Application, pages *tview.Pages, title, pa
 		SetTitle(title).
 		SetTitleColor(theme.Color(theme.RoleAccent)).
 		SetBorderColor(theme.Color(theme.RoleAccent))
-	inner.SetBackgroundColor(theme.Color(theme.RoleBackground))
+	inner.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	// Esc cancels; Tab rerolls a fresh suggestion. Enter is handled by the field's
 	// DoneFunc above so plain typing keys still reach the input.

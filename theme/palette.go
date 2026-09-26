@@ -3,6 +3,7 @@ package theme
 import (
 	"fmt"
 	"sync"
+	"sync/atomic"
 
 	"github.com/gdamore/tcell/v2"
 )
@@ -14,25 +15,38 @@ const DefaultKey = "forge"
 // active is the package-global current theme. It is process-wide state by design:
 // the name-remap in remap.go mutates global tcell.ColorNames, so there is exactly
 // one active theme per process. Guarded by mu.
+//
+// activeColors mirrors active.Colors behind an atomic pointer so the screen
+// wrapper (screen.go), which resolves every cell of every frame, reads the palette
+// without taking mu or copying the whole Theme.
 var (
-	mu     sync.RWMutex
-	active Theme
+	mu           sync.RWMutex
+	active       Theme
+	activeColors atomic.Pointer[[numRoles]tcell.Color]
 )
 
 // init seeds the active theme to Forge and applies its remap so the very first
-// Draw (splash) already wears a coherent palette. The themes_*.go init()s run
-// before this (same package, registration order is forge → accessible), so the
-// registry is populated by now; we fall back to a zero Theme defensively.
+// Draw (splash) already wears a coherent palette. Themes register through
+// package-level var initialization (themes_*.go), which Go completes before any
+// init() runs, so the registry is fully populated here regardless of file order.
 func init() {
 	t, ok := ByKey(DefaultKey)
 	if !ok {
-		// Should never happen — Forge registers in themes_forge.go init(). If a
-		// future refactor breaks that, don't panic the whole program over a theme;
-		// just run with the zero value until SetActive is called.
+		// Should never happen — Forge registers in themes_forge.go. If a future
+		// refactor breaks that, don't panic the whole program over a theme; just
+		// run with the zero value until SetActive is called.
 		return
 	}
-	active = t
+	setActive(t)
 	applyRemap(t)
+}
+
+func setActive(t Theme) {
+	mu.Lock()
+	active = t
+	mu.Unlock()
+	cols := t.Colors
+	activeColors.Store(&cols)
 }
 
 // Active returns the currently active theme (a copy).
@@ -54,9 +68,7 @@ func SetActive(key string) error {
 	if !ok {
 		return fmt.Errorf("theme: unknown theme %q", key)
 	}
-	mu.Lock()
-	active = t
-	mu.Unlock()
+	setActive(t)
 
 	// Order matters: remap the named tags first (so any restyle closure that pulls
 	// a color sees the new palette), then re-run the widget restyle pass. Both are
@@ -69,22 +81,16 @@ func SetActive(key string) error {
 // Color returns the active theme's color for role. Path B (direct widget chrome)
 // routes through here instead of tcell color literals (theming.md §3.3).
 func Color(role Role) tcell.Color {
-	mu.RLock()
-	defer mu.RUnlock()
-	return active.Color(role)
+	if role < 0 || role >= numRoles {
+		return tcell.ColorDefault
+	}
+	if cols := activeColors.Load(); cols != nil {
+		return cols[role]
+	}
+	return tcell.ColorDefault
 }
 
-// Tag returns the active theme's color for role as a tview inline color tag, e.g.
-// "[#ffd700]". This is the §3.2 fallback / future semantic-token form (§9): a
-// helper that emits the active hex at format time, independent of the ColorNames
-// remap. Unused by Phase 1a UI but provided so the fallback path exists.
-func Tag(role Role) string {
-	return tagFor(Color(role))
-}
-
-// tagFor renders a tcell.Color as a tview "[#rrggbb]" tag. Colors carry true RGB
-// (themes are built with NewRGBColor), so RGB() yields the literal components.
-func tagFor(c tcell.Color) string {
-	r, g, b := c.RGB()
-	return fmt.Sprintf("[#%02x%02x%02x]", r, g, b)
+// IsLight reports whether the active theme has a light background.
+func IsLight() bool {
+	return RelativeLuminance(Color(RoleBackground)) >= lightLuminanceThreshold
 }

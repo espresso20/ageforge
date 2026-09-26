@@ -149,7 +149,7 @@ func atlasMedium(ageKey string) worldMedium {
 	tones := atlasBiomeTones(pal)
 
 	var mp mediumPalette
-	mp.background = rgba(theme.Color(theme.RoleBackground))
+	mp.background = mapColor(theme.RoleBackground)
 	for bi := biome(0); bi < biomeCount; bi++ {
 		mp.land[bi] = tones[bi]
 	}

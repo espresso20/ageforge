@@ -189,7 +189,7 @@ func showWipeConfirmation(app *tview.Application, pages *tview.Pages, engine *ga
 				pages.AddPage("splash", newSplash, true, true)
 			}
 		})
-	modal.SetBackgroundColor(theme.Color(theme.RoleNegative))
+	styleDangerModal(modal)
 	pages.AddPage("wipe_confirm", modal, true, true)
 }
 

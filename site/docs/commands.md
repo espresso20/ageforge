@@ -271,7 +271,7 @@ Voluntary catastrophes let you force an epoch event outside the normal roll. Use
 | `account backup` | Full snapshot of the active account (`account.json` + saves) saved to `data/backups/<name>-<id8>-<timestamp>/`. The Accounts panel's `b` action does the same for the highlighted account |
 | `account wipe` | Points you to the **Accounts** panel's **Wipe Account** action — the actual (permanent) wipe lives there behind a type-the-name confirm, not this command |
 | `theme` | Open the **Themes** picker — browse palettes with live preview (also on the main menu) |
-| `theme list` | List every theme by name and key, marking the active one and noting which are accessible |
+| `theme list` | List every theme by name and key, marking the active one and noting each theme's light/dark variant and which are accessible |
 | `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`) |
 | `dump` | Export logs to a file for debugging — the one player-reachable place that still prints raw tick counts, alongside the wall-clock reading |
 | `help` | Open the Help panel — full command reference and list of available panels |
@@ -302,8 +302,8 @@ AgeForge's interface colors are driven by a set of swappable themes. Open the pi
 
 | Command | Description |
 |---|---|
-| `theme` | Open the **Themes** picker — browse palettes with live preview (`↑`/`↓` previews, `Enter` keeps, `Esc` reverts) |
-| `theme list` | List every theme by name and key, marking the active one and the lock status of any theme you haven't unlocked |
+| `theme` | Open the **Themes** picker — browse palettes with live preview (`↑`/`↓` previews, `Enter` keeps, `Esc`/`q` reverts) |
+| `theme list` | List every theme by name and key, marking the active one, each theme's light/dark variant, and the lock status of any theme you haven't unlocked |
 | `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`) |
 
 ```
@@ -312,7 +312,7 @@ theme list
 theme high_contrast
 ```
 
-Your theme choice **persists per account** (saved in `account.json`, not in any game save), so it carries across every save and new game. There are 9 themes — the default **Forge** look, three always-unlocked **accessibility** themes (colorblind-safe + high-contrast), and five **flavor** themes you unlock by reaching later ages.
+Your theme choice **persists per account** (saved in `account.json`, not in any game save), so it carries across every save and new game. There are 11 themes, dark and light — two **Standard** themes (the default dark **Forge** and the light **Daylight**), four always-unlocked **accessibility** themes (colorblind-safe, plus high-contrast in dark and light), and five **flavor** themes you unlock by reaching later ages. Every theme paints its own background, so it looks right whatever your terminal's colors.
 
 See [Themes & Accessibility](themes.md) for the full list and unlock conditions.
 

@@ -494,7 +494,7 @@ func TestFactionsOverlayWiring(t *testing.T) {
 	if !strings.Contains(sidebar, "factions") {
 		t.Errorf("sidebar is missing the factions entry:\n%s", sidebar)
 	}
-	if !strings.Contains(sidebar, "[black:gold] factions") {
+	if !strings.Contains(sidebar, "[onaccent:accent] factions") {
 		t.Errorf("sidebar entry does not highlight under the registered overlay name:\n%s", sidebar)
 	}
 	// 4. Autocomplete offers it.

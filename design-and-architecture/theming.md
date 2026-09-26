@@ -19,6 +19,14 @@ tags (§3.4) are **not** free: they're real, hand-applied edits, and they are th
 bulk of Phase-1 work. "Retint 957 sites from one palette" is true as an *outcome*; it is
 not true that all 957 sites cost nothing. Budget Phase 1 for the ~65 edits, not for zero.
 
+> **Light-theme overhaul (2026-09, card dzjsC9cY).** Sections §3.1, §3.7, §3.8, §4,
+> §7, §8 and the audit appendix describe the current system. The short version:
+> a theme now specifies its whole surface (17 roles, not 9); every theme paints its
+> own canvas; widget chrome late-binds through `theme.Ref` + `theme.WrapScreen`, so
+> no widget can keep a stale color after a live switch; map derivations read roles
+> through a luminance-aware adapter; raw colors outside `theme/` fail a test. The
+> historical Phase-1..4 plan below is kept for context.
+
 ---
 
 ## 1. Goals / Non-Goals
@@ -156,6 +164,54 @@ type Theme struct {
 `tcell.Color` carries true RGB (`tcell.NewRGBColor(r,g,b)`), so themes are defined as
 explicit RGB and are not at the mercy of the terminal's 16-color palette on
 truecolor-capable terminals.
+
+#### Current role model (light-theme overhaul)
+
+Nine roles described text on a canvas. They could not describe a light theme,
+because the UI also draws panels, borders, selected rows, keycaps and danger
+panels, and each of those needs a paired "text that reads on it" color. The model
+is now 17 roles, split into the original core and an extended set:
+
+| Role | Tag name | Used for | Derived default (if a theme leaves it unset) |
+|------|----------|----------|------|
+| Background | `bg` | canvas | — (core) |
+| Text | `text` | primary text | — (core) |
+| Dim | `dim` | secondary text, hints | — (core) |
+| Label | `label` | field labels, values | — (core) |
+| Accent | `accent` | titles, brand | — (core) |
+| Highlight | `highlight` | numbers, attention | — (core) |
+| Positive | `positive` | good / gains | — (core) |
+| Negative | `negative` | bad / losses | — (core) |
+| Selection | `selection` | selected-row fill | — (core) |
+| Surface | `surface` | modal / overlay / panel fill | Background |
+| Border | `border` | box borders, rules | Accent |
+| SelectionText | `seltext` | text on Selection | Text |
+| Bright | `bright` | emphasis inside body copy | Text |
+| Warning | `warning` | warn | Highlight |
+| OnAccent | `onaccent` | text on an Accent fill (keycaps, primary buttons) | black or white, whichever reads |
+| Chip | `chip` | keycap-label / chip fill | Background 15% toward Text |
+| OnNegative | `onnegative` | text on a Negative fill (danger panels) | Text if ≥ 3:1 on Negative, else black/white |
+
+The derivations reproduce exactly what the UI drew before the extended roles
+existed, which is how the dark themes kept their look (pinned by
+`TestDerivedRoles_PreserveDarkThemes`). Forge pins `Chip = #30363d`, the keycap grey
+the footer used to hard-code.
+
+Semantic good / warn / bad are Positive / Warning / Negative.
+
+**Light/dark** is derived, not stored: `Theme.IsLight()` is true when Background's
+relative luminance is ≥ 0.25, and `Variant()` returns "Light"/"Dark". Deriving it
+means it cannot drift from the palette.
+
+**Groups** (picker sections): `Theme.Group()` is Accessibility if `Accessible`,
+Standard if `Standard` (always unlocked, e.g. Forge and Daylight), otherwise
+Unlockable. `AlwaysAvailable()` is `Accessible || Standard`; the registry test
+requires every other theme to declare exactly one unlock key.
+
+Themes register through package-level var initialization
+(`var _ = register(...)`), which Go completes before any `init()` runs. The old
+`init()` registration relied on file-name order and in practice ran *after*
+`palette.go`'s seeding `init()`.
 
 ### 3.2 Retinting Path A (inline tags) — the name-remap strategy
 
@@ -336,6 +392,109 @@ silently:
 ```
 Plus a contrast test (§8) over every shipped theme.
 
+### 3.7 Background painting and late-bound chrome (light-theme overhaul)
+
+**Decision: every theme paints an explicit background.** A light theme has to look
+light on a black terminal, and a dark theme dark on a white one, so nothing may
+fall through to the terminal's default colors. There is no per-theme
+"transparent background" option. Nothing needed one: Forge was already painting
+`#0d1117` on every widget through `tview.Styles.PrimitiveBackgroundColor`. The
+only places that showed the terminal default were `StyleDefault` draws (splash
+starfield, spacer cells) and unpainted screen area, and those were accidents.
+Terminal transparency would be a new feature, not something we are preserving.
+
+**The real bug was staleness, not painting.** tview reads `tview.Styles` once, when
+a widget is constructed. Before the overhaul, `Styles` held concrete RGB, so the
+~130 widgets not enrolled in `theme.Track` (146 constructors, 17 Track closures)
+kept whatever canvas and text color were active when they were built. A live
+switch from Forge to a light theme therefore left dark boxes under dark ink. The
+remap retinted the named tags, but nothing retinted the boxes behind them.
+
+**Mechanism.**
+
+- `theme.Ref(role)` returns a sentinel `tcell.Color`: a `ColorValid` palette index
+  far outside 0–255 that never has `IsRGB` set, so it cannot collide with a real
+  theme color. `applyRemap` fills **every** `tview.Styles` field with Refs,
+  including the ones tview uses for inverse states (list selection, button
+  activation, dropdowns).
+- `theme.WrapScreen(s)` wraps the terminal screen. Every write path
+  (`SetContent`, `SetCell`, `Put`, `PutStr*`, `Fill`, `SetStyle`, `Clear`) resolves
+  styles against the active theme: Refs become their role color, `ColorDefault` fg
+  becomes Text and `ColorDefault` bg becomes Background. `Clear` fills with the
+  theme canvas. The active palette sits behind an `atomic.Pointer`, so per-cell
+  resolution takes no lock.
+- `ui.App.Run` installs the wrapper before `tview.Application.Run`. Tests draw
+  through `theme.WrapScreen(tcell.NewSimulationScreen(...))`.
+
+The result: a theme switch is just a redraw. Existing `theme.Track` closures still
+work (they set concrete colors and re-run on switch), but new chrome should
+prefer `theme.Ref(role)`, which needs no enrollment at all.
+
+**Inline tags** are already late-bound: tview re-resolves `[name]` through
+`tcell.ColorNames` on every Draw (§3.2). So `theme.Tag(role)` now returns a *named*
+tag (`[accent]`), no longer a hex literal. A hex tag computed at format time
+freezes the color of whatever theme was active then. That was a latent bug in
+`BarFillColor` for any static text. `theme.HexTag` survives only for colors that
+deliberately are not the active theme's, like the picker's swatches of other
+themes. Helpers: `Tag`, `TagFgBg`, `TagFgBgAttr`, `Keycap`, `KeycapButton`,
+`Selected`, `Paint`, `NameTag` (for data-supplied color names such as
+`config/epochs.go`'s, keeping the hue but correcting it with `Legible`) and
+`LegibleTag`. Every role has a tag name (the table in §3.1). The seven legacy
+aliases (`gold`, `gray`, `cyan`, `green`, `red`, `yellow`, `white`) stay remapped,
+so the ~930 existing tags keep working without edits.
+
+**Why the legacy aliases were not mass-rewritten to role names.** They already route
+through the theme via the remap and are late-bound, and the raw-color guard
+(§3.8) forbids any name outside the owned vocabulary. Rewriting them would be about
+930 edits across the largest files in `ui/` with zero visual change. That is a
+merge-conflict magnet for other work in flight. New code should use role names.
+
+**Maps.** The citymap/worldmap recipes (hundreds of blends in `ui/citymap`) assume a
+dark canvas. Map code reads roles through `citymap.mapColor(role)`: on a dark
+theme it returns the theme's own role, byte-for-byte. On a light theme it returns
+a dark-polarity *proxy* built from the theme's hues: the ink becomes the canvas,
+the page becomes the light pole, Dim is lifted to mid-grey, and semantic roles are
+raised to marker brightness (HSL L ≥ 0.62, then until ≥ 4.5:1 on the proxy
+canvas). The recipes therefore compose a correct map. The citymap then re-keys it
+for the light page with `liftForLight`, a monotonic concave lightness curve
+(`l' = 0.15 + 0.85·l^0.7`), which preserves every lighter-than/darker-than
+relationship (streets over ground, lit roof over shaded wall). On light themes the
+drop-shadow tone is anchored near black so the 28% shadow blend always darkens.
+Labels on light themes use `theme.Legible(…, banner, 4.5)`, and "bright" means
+more ink. Space ages keep the dark proxy unlifted. World-map mediums (charcoal,
+clay, parchment, blueprint, satellite, neon) paint their own canvases, and their
+civ markers use the proxy so they stay marker-bright on those canvases.
+`TestMapPolarity_AllThemes` pins the contract.
+
+### 3.8 Audit rules for future UI code — "no raw colors outside `theme/`"
+
+Enforced by `ui/theme_guard_test.go` (an AST walk over `ui/`, `game/`, `config/`):
+
+1. **No inline tag with a raw color.** Tag fg/bg must be a role name or legacy alias.
+   `[#rrggbb]`, `[aqua]`, `[black:gold]`, `[white:#30363d]` all fail. Use
+   `theme.Tag(role)` / `theme.TagFgBg` / `theme.Keycap*`.
+2. **No `tcell.Color<Name>` constants.** Use `theme.Color(role)` for a concrete color
+   or `theme.Ref(role)` for widget chrome.
+3. **No `tcell.NewRGBColor` / `NewHexColor` / `GetColor`** outside a short allow-list
+   of pixel-streaming and color-math files (`ui/citymap/citymap.go`,
+   `ui/citymap/overlay.go`, `ui/splash_canvas.go` for its dark-theme art).
+4. **Fills come with their "on" role.** Text drawn on Accent uses OnAccent, on
+   Negative uses OnNegative, on Selection uses SelectionText, on Chip uses Text. Use
+   `styleFilledButton` / `styleDangerModal` / `dangerTag` (`ui/theme_widgets.go`).
+   Canvas roles such as `[red]` or `[gray]` inside a Negative panel are a bug. The
+   account-wipe panel shipped `[red]` on its red fill.
+5. **Panels paint Surface, and so do their children.** Modals and overlays use
+   `RoleSurface`, and every child primitive sets it too, so the panel reads as one
+   piece on themes where Surface ≠ Background.
+6. **Identity hues** (epochs, lineages, factions) keep their hue through
+   `theme.Legible` / `NameTag`, never a raw tag.
+7. **Map colors** go through `mapColor`, never `rgba(theme.Color(...))` directly.
+
+The render sweep (`ui/theme_render_test.go`) is the backstop for these rules. It
+draws the dashboard, several overlays including both maps, the picker and a danger
+modal under every theme, then fails on any glyph with fg == bg and on any cell
+without a concrete RGB background.
+
 ---
 
 ## 4. Shipped Themes
@@ -372,12 +531,34 @@ Maximum legibility: pure/near-pure background, white text, saturated unambiguous
 colors, every role pair comfortably above the WCAG AA contrast floor (§8 enforces
 this). For low-vision players and high-glare terminals.
 
+### Daylight — `daylight` *(Standard, default-unlocked, light)*
+The clean light default, added by the light-theme overhaul. Off-white canvas
+`#f6f7f9`, true-white Surface panels, charcoal ink `#1f2328`, slate Dim, deep-teal
+labels, and deep-amber accent `#9a6700` that echoes Forge's gold. Positive and
+Negative are forest green and brick red. Every foreground role is a *dark* variant
+of its Forge counterpart, because on a light page the roles must be darker than the
+page. Listed under Standard next to Forge.
+
+### High Contrast Light — `high_contrast_light` *(accessible, default-unlocked, light)*
+White page, black ink, black borders. Every text role clears AAA (7:1) where the
+matrix demands it. It keeps the colorblind-safe blue gain / dark-orange loss and the
+▲/▼ glyphs. The new role model made it nearly free, so it ships.
+
+### Group summary
+
+| Group | Themes |
+|-------|--------|
+| Standard | Forge (dark, default), Daylight (light) |
+| Accessibility | Deuteranopia-safe, Protanopia-safe, High Contrast (dark); High Contrast Light (light) |
+| Unlockable | Parchment (light), Bronze, Cyberpunk, Monochrome, Cosmic (dark) |
+
 ### Flavor themes (milestone-gated, §5)
 Curated, code-defined, **cosmetic only** — they never alter the ± encoding semantics
 in a way that breaks accessibility expectations (and still pass the contrast guard).
 Candidates:
 - **Parchment** — light sepia background, ink-brown text, wax-red/forest-green ±.
-  (Our first light-background theme; a real contrast-guard exercise.)
+  (The first light-background theme. Before the overhaul it only half-worked:
+  widgets built under another theme kept their dark canvas after a live switch.)
 - **Bronze Age** — burnished metallics.
 - **Cyberpunk** — magenta/cyan neon on black (riffs on the existing `cyberpunk_age`
   age palette).
@@ -466,6 +647,29 @@ live sample of the running UI. We remember the theme that was active on open.
 Because retinting is a global remap, "preview" and "apply" are the same operation —
 the only difference is whether we persist and whether cancel reverts. Clean.
 
+### Picker layout (light-theme overhaul)
+
+- **Grouped list.** Section headings Standard / Accessibility / Unlockable
+  (`theme.Groups`). Headings are list items that the changed handler skips in the
+  direction of travel, wrapping like `tview.List`. The skip uses only
+  `List.SetCurrentItem`, which just re-enters the handler: no lock is taken, no
+  `QueueUpdateDraw` (the TCGiSWYX deadlock guard, `TestThemePicker_NoDeadlockOnNavigate`).
+- **Row tags.** `(current)`, `light`/`dark`, `accessible`, `🔒 locked`.
+- **Details pane** (Surface): name, "Light theme · Standard", blurb, accessible
+  note with glyphs, lock line with the unlock hint, and swatches for Background,
+  Surface, Text, Accent, Positive, Negative, Highlight, Dim and Selection. Each
+  swatch sits on a contrast rim (`▐███▌`), so a Background swatch doesn't vanish
+  into the pane.
+- **Sample panel.** A Box whose draw function paints a miniature UI in the
+  candidate's *own literal colors*: canvas, Surface panel with Border and Accent
+  title, label/number/± rows, body plus dim text, a selected row, a keycap with its
+  chip label, and a danger chip. It is independent of the active theme, so the
+  preview is correct even without live apply. Live apply still runs, so the whole
+  UI behind the picker shows the candidate too.
+- Locked themes still preview (list, details, sample, live apply); only Enter is
+  gated.
+- `theme list` shows each theme's light/dark variant.
+
 ### Palette swatches
 The picker detail pane shows the theme's blurb plus a swatch row — one colored block
 per role rendered with that role's color tag, labeled (Accent / Positive / Negative /
@@ -507,6 +711,23 @@ Thresholds:
 - Dim vs Background: **>= 3.0** (it's intentionally secondary, AA large-text floor).
 - Accent vs Background: **>= 3.0** (often borders/titles, large glyphs).
 - Text on Selection background: **>= 4.5**.
+
+**Full role matrix (light-theme overhaul, `theme/contrast_roles_test.go`).** Every pair
+the UI actually draws is checked, on both Background *and* Surface:
+
+| fg on bg | Standard | Accessible |
+|----------|---------:|-----------:|
+| Text, Bright on Background/Surface | 4.5 | 7.0 |
+| Label, Highlight, Positive, Negative, Warning on Background/Surface | 4.5 | 4.5 |
+| Dim, Accent on Background/Surface | 3.0 | 4.5 |
+| Border on Background/Surface (non-text UI) | 3.0 | 3.0 |
+| SelectionText on Selection | 4.5 | 7.0 |
+| OnAccent on Accent (keycaps) | 4.5 | 4.5 |
+| Text on Chip | 4.5 | 7.0 |
+| OnNegative on Negative (bold danger text) | 3.0 | 4.5 |
+
+`TestRoles_AllSet` asserts that no role is unset or non-RGB, so an unset role can't
+fall through to the terminal default. The render sweep (§3.8) is the end-to-end check.
 
 ### Check: colorblind distinguishability (simulation, not luminance)
 
@@ -632,3 +853,38 @@ Per project rules, the shipping change updates `site/`:
   themes ship unlocked.
 - Any wiki page that asserts "green = gain / red = loss" should note accessible
   themes use blue/orange + glyphs instead.
+
+---
+
+## Appendix — color audit catalog (light-theme overhaul, base `06f6d24`)
+
+Everything that bypassed the theme, or that would break on a light background,
+and what happened to it.
+
+| Category | Count at base | Resolution |
+|----------|--------------:|------------|
+| Widgets built with construction-time `tview.Styles` colors, not in `theme.Track` | ~129 of 146 constructors (17 Track closures) | `tview.Styles` now holds `theme.Ref` sentinels, resolved per cell by `theme.WrapScreen` (§3.7) |
+| tview defaults never set (inverse text, graphics, tertiary, more-contrast bg) | 5 `Styles` fields | all 11 fields set to Refs |
+| `tcell.StyleDefault` draws (terminal-default bg) | 8 (splash canvas 5, citymap 3) | wrapper resolves ColorDefault to Background/Text; `Clear` paints the canvas |
+| `tcell.Color<Name>` constants | 110, all in the inert `AgePalettes` (`ui/theme.go`) | moved to `theme/agepalettes.go` |
+| `tcell.NewRGBColor` outside theme | 10 (citymap 5, splash 4, picker 1) | splash tagline/badge → roles; starfield/title → light-aware; citymap pixel streaming + math allow-listed |
+| Keycap tags `[black:gold:b]` + `[white:#30363d:b]`, sidebar `[black:gold]` | 2 sites | `theme.KeycapButton`, `theme.Selected` (OnAccent/Accent, Text/Chip) |
+| Stray unowned tag names `[aqua]` ×6, `[lime]` ×3, `[orange]`, `[blue]` | 11 | `[label]`, `[positive]`, `[warning]`, `[label]` |
+| Hex tags | 1 (`[#808080]` picker fallback) | `theme.HexTag` (falls back to Dim) |
+| Data-supplied color names (`config/epochs.go`: `lightblue`, `blue`, `magenta`) | 3 names, 4 render sites | `theme.NameTag` (Legible-corrected hue) |
+| Legacy alias tags `[gold]` 167, `[gray]` 265, `[cyan]` 175, `[green]` 85, `[red]` 82, `[yellow]` 71, `[white]` 87 | 932 | unchanged; already late-bound via remap, now part of the guarded vocabulary |
+| `SetBackgroundColor(Negative)` danger panels with canvas-colored text | 11 sites; the account-wipe panel drew `[red]` on the red fill | `styleDangerModal`, OnNegative tags, `styleFilledButton` |
+| Buttons with a label color that doesn't pair with the fill (Accent+Background, Negative+Text/Highlight, Positive+Text) | 4 | `styleFilledButton` → OnAccent / OnNegative / BestOn |
+| Modal/overlay panels on Background | 13 sites | Surface (children too) |
+| `theme.Tag` emitting frozen hex (used by progress bars) | 2 helpers | named late-bound tags |
+| Map derivations `rgba(theme.Color(...))` | 29 (palette 12, topdown 7, worldmap 9, worldmedium 1) | `mapColor` light proxy + `liftForLight` + light shadow anchor + legible labels (§3.7) |
+| Progress bars, sparklines, morale graph, age ✓/✗ strip, onboarding panel | — | already role tags; covered by the render sweep |
+| Wonder icon half-block pixel art (`ui/wonder_icon.go`) | 1 | intentional art: self-contained sprite tiles with their own backgrounds |
+
+Visible changes on dark themes, all deliberate: the four stray names take their
+role's hue (for example aqua `#00ffff` becomes Forge's Label `#39c5cf`); the splash
+tagline and prestige badge use Dim/Label; the Succumb button label is OnNegative,
+no longer yellow-on-red; danger text on the orange Negative of the colorblind
+themes is black, where it used to be white at about 2:1; the keycap-label Chip on
+non-Forge dark themes is tinted from the theme (Forge keeps `#30363d`). Map
+renders on dark themes are byte-identical (`TestMapColor_DarkThemesUnchanged`).

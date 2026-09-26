@@ -52,8 +52,7 @@ func (d *Dashboard) showCatastropheModal(epochKey string) {
 			}
 			d.closeCatastropheModal()
 		})
-	btnEndure.SetBackgroundColor(theme.Color(theme.RoleNegative))
-	btnEndure.SetLabelColor(theme.Color(theme.RoleText))
+	styleFilledButton(btnEndure, theme.RoleNegative)
 
 	btnSuccumb := tview.NewButton(tview.Escape("[S] SUCCUMB")).
 		SetSelectedFunc(func() {
@@ -62,8 +61,7 @@ func (d *Dashboard) showCatastropheModal(epochKey string) {
 			}
 			d.closeCatastropheModal()
 		})
-	btnSuccumb.SetBackgroundColor(theme.Color(theme.RoleNegative))
-	btnSuccumb.SetLabelColor(theme.Color(theme.RoleHighlight))
+	styleFilledButton(btnSuccumb, theme.RoleNegative)
 
 	btnDefer := tview.NewButton(tview.Escape("[D] Defer — Decide Later")).
 		SetSelectedFunc(func() {

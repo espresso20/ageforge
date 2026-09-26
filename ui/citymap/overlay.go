@@ -477,12 +477,24 @@ func stampOverlay(screen tcell.Screen, plan overlayPlan, offX, offY, cols, rows 
 		} else {
 			base = theme.Color(lb.role)
 		}
+		light := theme.IsLight()
 		if lb.bright {
-			base = brightenTcell(base, 0.35)
+			if light {
+				// "Pop" on a light banner means more ink, not more white.
+				base = theme.Mix(base, theme.Color(theme.RoleBright), 0.35)
+			} else {
+				base = brightenTcell(base, 0.35)
+			}
 		}
 		// The muted pill background: theme bg pushed dark + a whisper of the label's own
 		// hue, so the banner sits quietly under the text without a harsh solid box.
 		bannerBg := labelBannerBg(base)
+		if light {
+			// Lineage colors come through the map's dark-polarity proxy (bright hues made
+			// for the map canvas); on the light banner they must darken to stay readable.
+			// Dark themes keep their exact label colors.
+			base = theme.Legible(base, bannerBg, 4.5)
+		}
 		textStyle := tcell.StyleDefault.Foreground(base).Background(bannerBg)
 		if lb.kind == labelTitle || lb.kind == labelCapital {
 			textStyle = textStyle.Bold(true)

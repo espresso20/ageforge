@@ -350,20 +350,21 @@ func (p *accountsPanel) doImport() {
 	errTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
-	errTV.SetBackgroundColor(theme.Color(theme.RoleBackground))
+	errTV.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	input := tview.NewInputField().
 		SetLabel("File path: ").
 		SetText(defaultPath).
 		SetFieldWidth(48).
 		SetFieldBackgroundColor(theme.Color(theme.RoleSelection)).
-		SetFieldTextColor(theme.Color(theme.RoleText))
+		SetFieldTextColor(theme.Color(theme.RoleSelectionText))
+	input.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	hintTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText("[gray]Enter: import (merge)  ·  Esc: cancel[-]")
-	hintTV.SetBackgroundColor(theme.Color(theme.RoleBackground))
+	hintTV.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	close := func() {
 		p.pages.RemovePage(accountsImportPage)
@@ -405,7 +406,7 @@ func (p *accountsPanel) doImport() {
 		}
 	})
 
-	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(theme.Color(theme.RoleBackground)) }
+	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(theme.Color(theme.RoleSurface)) }
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(input, 1, 0, true).
 		AddItem(spacer(), 1, 0, false).
@@ -416,7 +417,7 @@ func (p *accountsPanel) doImport() {
 		SetTitle(" Import Account Backup ").
 		SetTitleColor(theme.Color(theme.RoleAccent)).
 		SetBorderColor(theme.Color(theme.RoleAccent))
-	inner.SetBackgroundColor(theme.Color(theme.RoleBackground))
+	inner.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	modal := centeredModal(inner, 68, 7)
 	modal.SetInputCapture(func(ev *tcell.EventKey) *tcell.EventKey {
@@ -478,7 +479,7 @@ func (p *accountsPanel) doWipe() {
 			}
 			p.app.SetFocus(p.list)
 		})
-	step1.SetBackgroundColor(theme.Color(theme.RoleNegative))
+	styleDangerModal(step1)
 	p.pages.AddPage(accountsWipeConfirm1, step1, true, true)
 }
 
@@ -492,6 +493,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 
 	input := tview.NewInputField().
 		SetLabel("Account name: ").
+		SetLabelColor(theme.Color(theme.RoleOnNegative)).
 		SetFieldWidth(40).
 		SetFieldBackgroundColor(theme.Color(theme.RoleSelection)).
 		SetFieldTextColor(theme.Color(theme.RoleText))
@@ -500,14 +502,14 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(fmt.Sprintf(
-			"[white]Type this name exactly to confirm:[-]\n[yellow::b]%s[-]\n[red]This permanently deletes the account.[-]\n[gray]A full backup is saved to data/backups/ first, so a copy is recoverable.[-]",
+			dangerTag+"Type this name exactly to confirm:[-]\n"+dangerTagBold+"%s[-:-:-]\n"+dangerTagBold+"This permanently deletes the account.[-:-:-]\n"+dangerTag+"A full backup is saved to data/backups/ first, so a copy is recoverable.[-]",
 			expectedName,
 		))
 
 	hintTV := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[red]Enter: confirm  ·  Esc: cancel[-]")
+		SetText(dangerTag + "Enter: confirm  ·  Esc: cancel[-]")
 
 	abort := func() {
 		p.pages.RemovePage(accountsWipeTypeGate)
@@ -516,13 +518,13 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 
 	confirm := func() {
 		if strings.TrimSpace(input.GetText()) != expectedName {
-			errTV.SetText("[yellow]Name doesn't match — account NOT wiped.[-]")
+			errTV.SetText(dangerTagBold + "Name doesn't match — account NOT wiped.[-:-:-]")
 			p.app.SetFocus(input)
 			return
 		}
 		backupPath, err := p.engine.WipeAccountByID(id)
 		if err != nil {
-			errTV.SetText(fmt.Sprintf("[red]Wipe failed: %v[-]", err))
+			errTV.SetText(fmt.Sprintf(dangerTagBold+"Wipe failed: %v[-:-:-]", err))
 			p.app.SetFocus(input)
 			return
 		}
@@ -552,8 +554,8 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 		AddItem(hintTV, 1, 0, false)
 	inner.SetBorder(true).
 		SetTitle(" Confirm Account Wipe ").
-		SetTitleColor(theme.Color(theme.RoleText)).
-		SetBorderColor(theme.Color(theme.RoleText))
+		SetTitleColor(theme.Color(theme.RoleOnNegative)).
+		SetBorderColor(theme.Color(theme.RoleOnNegative))
 	inner.SetBackgroundColor(theme.Color(theme.RoleNegative))
 
 	modal := centeredModal(inner, 72, 13)
@@ -613,15 +615,15 @@ func (p *accountsPanel) showMessage(title, body string) {
 		SetWrap(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(body)
-	tv.SetBackgroundColor(theme.Color(theme.RoleBackground))
+	tv.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	hint := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText("[gray]Enter / Esc: close[-]")
-	hint.SetBackgroundColor(theme.Color(theme.RoleBackground))
+	hint.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
-	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(theme.Color(theme.RoleBackground)) }
+	spacer := func() *tview.Box { return tview.NewBox().SetBackgroundColor(theme.Color(theme.RoleSurface)) }
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(tv, 0, 1, false).
 		AddItem(spacer(), 1, 0, false).
@@ -630,7 +632,7 @@ func (p *accountsPanel) showMessage(title, body string) {
 		SetTitle(fmt.Sprintf(" %s ", title)).
 		SetTitleColor(theme.Color(theme.RoleAccent)).
 		SetBorderColor(theme.Color(theme.RoleAccent))
-	inner.SetBackgroundColor(theme.Color(theme.RoleBackground))
+	inner.SetBackgroundColor(theme.Color(theme.RoleSurface))
 
 	close := func() {
 		p.pages.RemovePage(accountsMessagePage)
@@ -667,7 +669,7 @@ func accountRowLabel(s game.AccountSummary) string {
 	name := displayNameOr(s)
 	label := fmt.Sprintf("%s   [gray]%s[-]", name, shortAccountID(s.AccountID))
 	if s.Active {
-		label = "[aqua]● " + name + "[-]   [gray]" + shortAccountID(s.AccountID) + "[-]   [aqua](current)[-]"
+		label = "[label]● " + name + "[-]   [gray]" + shortAccountID(s.AccountID) + "[-]   [label](current)[-]"
 	}
 	if s.Tampered {
 		label += "   [red]⚠ modified[-]"
@@ -690,7 +692,7 @@ func accountDetailText(s game.AccountSummary, recovery string) string {
 
 	var status []string
 	if s.Active {
-		status = append(status, "[aqua]● current account[-]")
+		status = append(status, "[label]● current account[-]")
 	}
 	if s.Tampered {
 		status = append(status, "[red]⚠ modified outside the game[-]")

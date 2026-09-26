@@ -229,7 +229,7 @@ func TestFooterBarShowsHotkeyButtons(t *testing.T) {
 		}
 	}
 	// Buttons must be styled with a real color tag, not plain text.
-	if !contains(bar, "[black:gold:b]") {
+	if !contains(bar, "[onaccent:accent:b]") {
 		t.Errorf("footerBar() should style keycaps with a color tag, got %q", bar)
 	}
 	// Regression guard: the old footer used bare [Enter]/[d]/[r]/[c]/[Esc], which
