@@ -182,7 +182,7 @@ Early in a fresh prestige run, you may stumble on a relic of the civilization yo
 
 > You have discovered an old cache. It appears to contain memories of a now-extinct civilization.
 
-When the cache surfaces, you get an **Accept / Decline** modal offering one technology appropriate to your current age.
+When the cache surfaces, you get an **Accept / Decline** modal offering one technology appropriate to your current age. Press **A** to accept or **D** to decline.
 
 - **Accept** — the offered tech is researched immediately, **free of prerequisites**, bypassing the normal age gate and knowledge cost. The catch: it completes at **half research speed** (2× the normal tick count). Skipping the prerequisite chain is paid for in slow recall.
 - **Decline** — the cache crumbles to dust. Nothing happens.

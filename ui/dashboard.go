@@ -527,10 +527,16 @@ func (d *Dashboard) refresh() {
 	// engine lock / in a Bus handler. GetState() above already released the lock.
 	d.processThemeUnlocks(state)
 
-	// Phase 9: catastrophe modal — show once per new pending catastrophe; Defer hides it
+	// Phase 9: catastrophe modal — show once per new pending catastrophe; Defer hides it.
+	// Never stack it on top of the age splash: an epoch-transition roll sets
+	// PendingCatastrophe inside the same advance, so both surface in this refresh.
+	// Stacked, the modal steals focus from the splash ("press any key" does nothing),
+	// and the splash's 20s auto-dismiss (OverlayManager.Hide → onClose) then moves
+	// focus to the input field underneath the still-visible modal, leaving it
+	// unreachable by keyboard. Wait until the splash is gone; the next refresh shows it.
 	if state.PendingCatastrophe == "" {
 		d.catModalShown = "" // reset so next catastrophe will show fresh
-	} else if d.catModalShown == "" {
+	} else if d.catModalShown == "" && d.overlayMgr.ActiveName() != "age_splash" {
 		d.catModalShown = state.PendingCatastrophe
 		d.showCatastropheModal(state.PendingCatastrophe)
 	}

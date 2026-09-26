@@ -45,7 +45,7 @@ func (d *Dashboard) showCatastropheModal(epochKey string) {
 			"  [green]✓ Catastrophe recorded in civilization history[-]")
 
 	// --- buttons ---
-	btnEndure := tview.NewButton("[ENDURE]").
+	btnEndure := tview.NewButton(tview.Escape("[E] ENDURE")).
 		SetSelectedFunc(func() {
 			if err := d.engine.Endure(); err != nil {
 				d.engine.AddLog("error", "Endure failed: "+err.Error())
@@ -55,7 +55,7 @@ func (d *Dashboard) showCatastropheModal(epochKey string) {
 	btnEndure.SetBackgroundColor(theme.Color(theme.RoleNegative))
 	btnEndure.SetLabelColor(theme.Color(theme.RoleText))
 
-	btnSuccumb := tview.NewButton("[SUCCUMB]").
+	btnSuccumb := tview.NewButton(tview.Escape("[S] SUCCUMB")).
 		SetSelectedFunc(func() {
 			if err := d.engine.Succumb(); err != nil {
 				d.engine.AddLog("error", "Succumb failed: "+err.Error())
@@ -65,7 +65,7 @@ func (d *Dashboard) showCatastropheModal(epochKey string) {
 	btnSuccumb.SetBackgroundColor(theme.Color(theme.RoleNegative))
 	btnSuccumb.SetLabelColor(theme.Color(theme.RoleHighlight))
 
-	btnDefer := tview.NewButton("[Defer — Decide Later]").
+	btnDefer := tview.NewButton(tview.Escape("[D] Defer — Decide Later")).
 		SetSelectedFunc(func() {
 			d.closeCatastropheModal()
 		})
@@ -76,7 +76,7 @@ func (d *Dashboard) showCatastropheModal(epochKey string) {
 		AddItem(tview.NewBox(), 2, 0, false).
 		AddItem(btnSuccumb, 12, 0, false).
 		AddItem(tview.NewBox(), 2, 0, false).
-		AddItem(btnDefer, 22, 0, false)
+		AddItem(btnDefer, 26, 0, false)
 
 	// --- inner box ---
 	inner := tview.NewFlex().SetDirection(tview.FlexRow).
