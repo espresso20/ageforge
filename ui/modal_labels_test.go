@@ -50,12 +50,16 @@ func newLabelTestDashboard() (*Dashboard, *tview.Pages) {
 // unless escaped. These check what actually lands on screen, shortcuts included.
 func TestCatastropheModalButtonLabelsVisible(t *testing.T) {
 	d, pages := newLabelTestDashboard()
-	d.showCatastropheModal("stone_era")
+	d.showCatastropheModal("iron_era")
 	screen := renderPages(t, pages, 160, 50)
-	for _, want := range []string{"[E] ENDURE", "[S] SUCCUMB", "[D] Defer — Decide Later"} {
+	for _, want := range []string{"[E] ENDURE", "[S] SUCCUMB", "type 'catastrophe' to reopen"} {
 		if !strings.Contains(screen, want) {
-			t.Errorf("catastrophe modal: button label %q not on screen\n%s", want, screen)
+			t.Errorf("catastrophe modal: label %q not on screen\n%s", want, screen)
 		}
+	}
+	// Defer is gone: the choice waits behind Esc + the `catastrophe` command.
+	if strings.Contains(screen, "Defer") {
+		t.Errorf("catastrophe modal still offers Defer\n%s", screen)
 	}
 }
 
