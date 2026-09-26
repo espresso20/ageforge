@@ -68,7 +68,7 @@ There is also a prestige-run path to free research: early in a new run (Primitiv
 
 ## Ancient Knowledge (Epoch Succumb Reward)
 
-Succumbing to a catastrophe grants **Ancient Knowledge** — a permanent +25% research speed bonus that persists through prestige resets. Players who plan to Succumb early gain a significant compounding research advantage across all future runs.
+Succumbing to a catastrophe grants **Ancient Knowledge** — a permanent +25% research speed bonus per distinct epoch succumbed (up to +150% from Iron to Cosmic) that persists through prestige resets. Players who plan to Succumb early gain a significant compounding research advantage across all future runs.
 
 ---
 

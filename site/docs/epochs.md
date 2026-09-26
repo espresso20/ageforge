@@ -10,7 +10,7 @@ The critical difference between ages and epochs: **ages are about what you build
 
 | # | Icon | Epoch | Ages | Primary Resource | Energy Resource | Catastrophe |
 |---|------|-------|------|-----------------|-----------------|-------------|
-| 1 | ◈ | Stone Era | Primitive → Stone → Bronze | wood | food | The Great Meteor |
+| 1 | ◈ | Stone Era | Primitive → Stone → Bronze | wood | food | none (catastrophes start in the Iron Era) |
 | 2 | ⚔ | Iron Era | Iron → Classical → Medieval | iron | coal | The Great Plague |
 | 3 | ⚙ | Steel Era | Renaissance → Colonial → Industrial | steel | coal | The World War |
 | 4 | ⚡ | Electric Era | Victorian → Electric → Atomic | steel | electricity | The Nuclear Exchange |
@@ -23,16 +23,16 @@ The Cosmic Era is the only epoch with 4 ages instead of 3.
 ### Epoch Flavours
 
 **◈ Stone Era** — *"Humanity's first steps — wood, stone, and fire."*
-Your settlement scratches out survival. Food is the bottleneck; wood is the building block. Events are raw and primal — river floods, wandering sages, tribal raids. Every resource counts, and your faith capacity is tiny. The easiest run to recover from if you Succumb — reset cost is low.
+Your settlement scratches out survival. Food is the bottleneck; wood is the building block. Events are raw and primal — river floods, wandering sages, tribal raids. Every resource counts, and your faith capacity is tiny. No catastrophe can strike here, random or invoked.
 
 **⚔ Iron Era** — *"Empires of iron and faith rise and fall."*
-Iron is king. Your armies grow, trade routes lengthen, and the church exerts real influence. The great plague catastrophe is punishing on large workforces. Oracle prophecies and imperial roads can dramatically accelerate your mid-game.
+Iron is king. Your armies grow, trade routes lengthen, and the church exerts real influence. The Great Plague is the first catastrophe that can strike, and the cheapest one to Succumb to. Oracle prophecies and imperial roads can dramatically accelerate your mid-game.
 
 **⚙ Steel Era** — *"Steam, steel, and global ambition."*
 Industrial scale changes everything. Workers' uprisings can gut your production. The colonial bounty (+5000 gold) is one of the biggest windfall events in the game. Coal seam discoveries extend your energy runway significantly.
 
 **⚡ Electric Era** — *"Electricity and the atom reshape civilisation."*
-Power grids, oil strikes, and nuclear theory accelerate research dramatically. The nuclear meltdown catastrophe is the first one that can cascade into research losses. Nuclear scares and labour movements are short, bearable setbacks compared to what comes later.
+Power grids, oil strikes, and nuclear theory accelerate research dramatically. This era's catastrophe is The Nuclear Exchange. Nuclear scares and labour movements are short, bearable setbacks compared to what comes later.
 
 **▣ Digital Era** — *"Data flows become the rivers of power."*
 Data replaces iron as the critical bottleneck. Server outages are crippling — 50% data production loss for 120 ticks hits hard. AI breakthrough (+50% knowledge production) is the top pick for research-focused runs. The Great Hack catastrophe can erase critical data reserves.
@@ -79,7 +79,7 @@ The outcome is determined in two steps:
 | 25–75% (Mid Faith) | 50% | 50% |
 | 76–100% (High Faith) | 60% | 40% |
 
-**Step 2 — If the roll is bad:** there's a 30% chance it escalates to a **Catastrophe** (modal prompt, your choice). The remaining 70% of bad rolls produce a Challenging event (applied immediately, no choice required).
+**Step 2 — If the roll is bad:** there's a 30% chance it escalates to a **Catastrophe** (modal prompt, your choice). The remaining 70% of bad rolls produce a Challenging event (applied immediately, no choice required). That makes the catastrophe chance 18% / 15% / 12% at low / mid / high faith. A bad roll never escalates on a transition into an epoch before the Iron Era, in an epoch that already had its catastrophe this run, or while another catastrophe is pending. See [Catastrophe](catastrophe.md).
 
 **Step 3 — If the roll is good:** your culture fill percentage gates which tier of event you can receive:
 
@@ -109,7 +109,7 @@ Press **`epoch`** to open the Epoch tab. It displays:
 
 - Current epoch name, icon, and primary/energy resources
 - The result of your last epoch transition roll
-- Your pending catastrophe status (if any)
+- Your catastrophe status for this epoch (pending, survived, succumbed), and the catastrophe odds for the next transition
 - Full epoch event history for the current civilisation cycle
 - Your legacy bonuses earned across all runs
 - Civilisation history log (catastrophe decisions, Succumb/Endure records)
@@ -244,39 +244,33 @@ Beyond the transition roll, each epoch has 5 events that only appear in the rand
 
 ---
 
-## Endure vs Succumb vs Defer
+## Endure vs Succumb
 
-When a catastrophe is pending, you're presented with three choices. This is the most consequential decision in the game — take your time.
+When a catastrophe hits, nothing happens until you choose. The game keeps running, but **you can't advance ages or prestige while a catastrophe is pending**. Press Esc to close the choice and look around; a status-bar badge reminds you it is waiting, and typing `catastrophe` reopens it. There is no Defer button.
 
 ### Endure — Pay the price and survive
 
-You absorb the hit and continue your current civilisation:
-
-- **20% of all built buildings** destroyed randomly
+- **20% of your non-wonder buildings** destroyed at random (wonders are spared and don't count)
+- Workers of destroyed buildings go back to the idle pool
 - **All resources** reduced to 15% of current amounts
-- **25% of workers** removed
-- **-10% all production** for 216 ticks (reconstruction period)
-- Earn the "Survived" marker for that epoch — recorded in civilisation history
+- **25% of workers** lost, the same share from every building
+- **-10% all production** for 216 ticks (reconstruction), and morale -10
+- Earn the "Survived" marker for that epoch, recorded in the civilisation log
 
-Best when: you've built a large, mature civilisation that would be painful to restart. Losing 20% of buildings hurts, but recovering is faster than rebuilding from scratch.
-
-Watch out for: having almost no resources already (reducing near-zero to 15% of near-zero is survivable). The real damage is the building and worker loss.
+Best when: you've built a large, mature civilisation that would be painful to restart, or you already hold this epoch's legacy bonus.
 
 ### Succumb — Reset, earn permanent power
 
-You let the catastrophe win. Your civilisation falls — but it leaves a mark on history:
-
-- **8 ruins** generated from your current buildings (they produce at 50% base rate in your next run, no workers required)
-- **Legacy Bonus** — permanent production multiplier for this epoch's primary resource(s), active in all future runs including after prestige
-- **Ancient Knowledge** — permanent +25% research speed (stacks with each Succumb)
-- Full reset: resources, buildings, workers, and research reset to zero
-- Ruins and all cross-run bonuses carry forward
+- **Up to 8 ruins** from your current buildings (50% base rate in later runs, no workers). Ruins are capped at 24 in total; past the cap the lowest-value ruins crumble first
+- **Legacy Bonus** — permanent production bonus for this epoch's primary resource(s), active in all future runs including after prestige
+- **Ancient Knowledge** — permanent +25% research speed per distinct epoch succumbed (a second Succumb in the same epoch adds nothing)
+- Full reset to the Primitive Age: resources, buildings, workers and research. No prestige points are earned; prestige level and upgrades are kept
 
 **Legacy bonuses by epoch:**
 
 | Epoch | Legacy Bonus |
 |-------|-------------|
-| ◈ Stone Era | wood +20%, stone +20% |
+| ◈ Stone Era | wood +20%, stone +20% (not reachable any more; kept by saves that earned it) |
 | ⚔ Iron Era | iron +20% |
 | ⚙ Steel Era | steel +25%, coal +25% |
 | ⚡ Electric Era | electricity +25%, uranium +25% |
@@ -284,27 +278,17 @@ You let the catastrophe win. Your civilisation falls — but it leaves a mark on
 | ◉ Neon Era | plasma +30%, dark_matter_crystals +30% |
 | ✦ Cosmic Era | dark_matter +35% |
 
-Best when: you're early in the epoch (low reset cost), or you haven't earned this epoch's legacy bonus yet, or the bonus is one you'll benefit from across many more runs. Succumbing in the Stone Era when your settlement is small is nearly free — you get the wood/stone boost, 8 ruins giving passive production, and +25% research speed, all for the cost of maybe 30 minutes of progress.
+Best when: you just entered the epoch (low reset cost) and don't hold its legacy bonus yet. Right after entering the Iron Era is the cheapest window.
 
-**The stacking math matters:** each Succumb adds another +25% research speed permanently. Players who Succumb in every epoch end the run with dramatically faster research in all future runs.
-
-### Defer — Think it over
-
-Close the modal. The catastrophe stays pending; you will be prompted again when you next open the game. **You cannot advance ages while a catastrophe is pending.**
-
-Best when: you genuinely need to think about whether to Endure or Succumb, or you need to check your resources and building count before deciding.
-
-Defer is not a way to avoid the choice — it's a pause button.
+**The stacking math:** six epochs can be succumbed in (Iron to Cosmic), so Ancient Knowledge tops out at +150% research speed.
 
 ### Voluntary Catastrophe
-
-You can trigger a catastrophe yourself at any point during an epoch:
 
 ```
 catastrophe invoke
 ```
 
-One catastrophe maximum per epoch. This is the primary tool for deliberate Succumb runs — trigger early, take the reset while your civilisation is still small, and get the legacy bonus at minimal cost.
+Triggers the current epoch's catastrophe now. Refused before the Iron Era, while another catastrophe is pending, or if this epoch already had its catastrophe this run (random or invoked). An epoch whose transition rolled a good or challenging event can still be invoked.
 
 ---
 
@@ -330,7 +314,7 @@ Duration of 0 means instant/one-shot. Duration > 0 means the effect is tracked a
 
 Keep faith at 50–70% of cap. Invest in culture buildings at a moderate pace. Take transition events as they come without over-optimising.
 
-This works because the math at 50% faith is already coin-flip territory. With decent culture (40%+ fill) you're eligible for Major events. You won't hit Legendary, but Grand Discovery and Worker Innovation are both transformative. The reliable 50% good rate means over 7 epochs, you expect 3–4 good events, 2–3 challenging ones, and maybe one catastrophe.
+This works because the math at 50% faith is already coin-flip territory. With decent culture (40%+ fill) you're eligible for Major events. You won't hit Legendary, but Grand Discovery and Worker Innovation are both transformative. The reliable 50% good rate means over the 6 transitions of a run you expect about 3 good events, 2–3 challenging ones, and maybe one catastrophe.
 
 Best for: first or second run, players who don't want to commit hard to any single strategy, relaxed sessions.
 
@@ -338,7 +322,7 @@ Best for: first or second run, players who don't want to commit hard to any sing
 
 Stack faith production buildings aggressively. Keep faith at 75%+ of cap going into every epoch transition.
 
-Going from 50% to 76%+ faith flips your odds from 50/50 to 60/40. Over 7 epochs that's statistically one extra good event compared to a neutral run. More importantly, it cuts your catastrophe exposure — the bad roll pool shrinks, and catastrophes are a subset of that. With 60% good rate and only 40% bad, the chance of a catastrophe on any given transition drops from 12% (30% of 40%) to only about 10% of 40% chance... the math is meaningful at scale.
+Going from 50% to 76%+ faith flips your odds from 50/50 to 60/40. Over 6 transitions that's about 0.6 extra good events compared to a neutral run. It also cuts your catastrophe exposure: catastrophes are 30% of bad rolls, so the chance per transition drops from 15% to 12%.
 
 Trade-offs: faith buildings typically draw on food workers. You're competing with gathering/farming capacity. Don't let food go critical in the early Stone Era chasing faith.
 
@@ -396,11 +380,11 @@ The sweet spot is usually one full age's worth of extra time (enough ticks to bu
 
 **Know your epoch's primary resource before transitioning in.** The Digital Era wants data infrastructure online before you arrive. The Neon Era wants plasma reactors. Don't cross an epoch boundary and find out you can't produce the era's core resource.
 
-**Succumb early, Endure late.** In the Stone and Iron eras, reset cost is low and the legacy bonus + ruins + research speed compound over many more epochs. In the Neon and Cosmic eras, your civilisation represents enormous investment — Enduring is usually worth the hit.
+**Succumb early, Endure late.** In the Iron and Steel eras, reset cost is low and the legacy bonus + ruins + research speed compound over many more epochs. In the Neon and Cosmic eras, your civilisation represents enormous investment — Enduring is usually worth the hit.
 
-**Each Succumb stacks +25% research speed permanently.** Players who Succumb in Stone and Iron eras finish techs dramatically faster in subsequent epochs. This is the primary argument for deliberate early Succumbs.
+**Each epoch you Succumb in adds +25% research speed permanently.** Repeat Succumbs in the same epoch add nothing, so the value is in collecting different epochs. This is the main argument for a deliberate early Succumb in the Iron Era.
 
-**One catastrophe per epoch maximum.** You cannot chain-catastrophe your way through an epoch. Voluntary invoke is the tool for deliberate Succumb strategies.
+**One catastrophe per epoch per run.** You cannot chain-catastrophe your way through an epoch, and none can strike before the Iron Era. Voluntary invoke is the tool for deliberate Succumb strategies.
 
 ---
 
@@ -416,16 +400,17 @@ The sweet spot is usually one full age's worth of extra time (enough ticks to bu
 
 **After Succumb:**
 - Resources, buildings, workers, research: reset to zero
-- Ruins (8 from last run) placed in your fresh civilisation — produce passively
+- Ruins (up to 8 new from the last run, 24 in total) placed in your fresh civilisation — produce passively
 - All legacy bonuses active and applied
-- All accumulated permanent research speed bonuses active
+- Ancient Knowledge active: +25% research speed per epoch succumbed
 - Epoch event history and catastrophe history preserved
 - Prestige bonuses preserved
 
 **After Prestige (end of full run):**
-- Similar to Succumb but triggered deliberately at the transcendent age
-- Legacy bonuses carry
-- Catastrophe/epoch history carries
+- Similar to Succumb but chosen deliberately, from the Modern Age on, and it earns prestige points
+- Refused while a catastrophe is pending
+- Legacy bonuses, Ancient Knowledge and ruins carry
+- The civilisation log carries; the per-run epoch event history is cleared
 - Prestige upgrades available
 
 The epoch framework is designed so that each run builds on the last. A player three runs in has meaningful advantages — ruins giving free passive production, stacked research speed, and legacy bonuses on the resources that matter most — while still needing to play through all 22 ages.
