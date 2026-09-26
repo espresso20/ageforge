@@ -281,9 +281,11 @@ const (
 	// repeating, so two different sentences a few lines apart do not both happen
 	// to be about the long rope.
 	slotMemory = 6
-	// streamRetries is how many times a Stream will redraw before accepting a
-	// repeat. It always accepts eventually, so a narrow eligible pool degrades to
-	// plain Generate instead of looping.
+	// streamRetries is how many times a Stream will redraw before giving up on
+	// the soft (topic, slot) filters. A skeleton repeat is then ruled out by a
+	// direct pick from the unseen part of the pool; only a pool narrower than
+	// streamMemory can still repeat, and it degrades to plain Generate rather
+	// than looping.
 	streamRetries = 12
 )
 
@@ -342,6 +344,18 @@ func (s *Stream) Generate(req Request, rng *rand.Rand) Result {
 			break
 		}
 	}
+	// The topic and slot rings are soft preferences; the skeleton ring is a
+	// promise. If every retry still landed on a sentence from the last
+	// streamMemory lines, pick directly from the ones that are not, so a pool
+	// wider than the window can never repeat inside it. Measured before this
+	// existed: about one repeat per ten thousand lines, which is rare but is
+	// exactly the "didn't I just read that" moment the Stream is for.
+	if res.Template != "" && s.seen(res.Template) {
+		if fresh := s.unseen(eligible(req)); len(fresh) > 0 {
+			res = render(fresh[rng.Intn(len(fresh))], req, rng)
+			topic = topics[res.Template]
+		}
+	}
 	if res.Template != "" {
 		s.recent[s.at] = res.Template
 		s.at = (s.at + 1) % len(s.recent)
@@ -369,6 +383,18 @@ func (s *Stream) sameSlotRecently(slot string) bool {
 		}
 	}
 	return false
+}
+
+// unseen returns the templates in pool that are not in the recent skeleton ring,
+// preserving catalog order so the pick stays deterministic given the rng.
+func (s *Stream) unseen(pool []tmpl) []tmpl {
+	out := make([]tmpl, 0, len(pool))
+	for _, t := range pool {
+		if !s.seen(t.ID) {
+			out = append(out, t)
+		}
+	}
+	return out
 }
 
 // seen reports whether id is in the recent skeleton ring.
