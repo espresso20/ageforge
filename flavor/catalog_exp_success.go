@@ -34,7 +34,7 @@ var expSuccessBanks = map[string][]string{
 	// A small physical thing that goes wrong or gets lost.
 	"exp_success_kit": {
 		"lamp", "rope", "knife", "good coat", "water skin", "spare boot",
-		"cooking pot", "second lamp", "small hammer", "water bottle", "belt knife",
+		"cooking pot", "tin cup", "small hammer", "water bottle", "belt knife",
 		"good blanket", "long rope", "brass whistle", "walking staff",
 		"leather satchel", "spare pin", "sharpening stone",
 	},
