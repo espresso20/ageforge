@@ -1,0 +1,59 @@
+name: Go
+
+on:
+  pull_request:
+    paths-ignore:
+      - "site/**"
+      - "**.md"
+      - "design-and-architecture/**"
+      - "project_beta/**"
+  push:
+    branches: [master]
+    paths-ignore:
+      - "site/**"
+      - "**.md"
+      - "design-and-architecture/**"
+      - "project_beta/**"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: gofmt, vet, build, test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -l .)
+          if [ -n "$unformatted" ]; then
+            echo "These files are not gofmt-formatted (run: gofmt -w .):"
+            for f in $unformatted; do
+              echo "::error file=$f::not gofmt-formatted"
+            done
+            exit 1
+          fi
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go build
+        run: go build ./...
+
+      - name: go test
+        run: go test ./...
+
+      - name: go test -race
+        run: go test -race ./...
