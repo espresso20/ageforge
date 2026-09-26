@@ -566,16 +566,25 @@ func TestHouseTics(t *testing.T) {
 		max  int
 	}
 	tics := []tic{
-		{"the number eleven", regexp.MustCompile(`(?i)\beleven\b`), 10},
-		{"the twice gag", regexp.MustCompile(`(?i)\btwice\b`), 28},
-		{"very", regexp.MustCompile(`(?i)\bvery\b`), 12},
+		{"the number eleven", regexp.MustCompile(`(?i)\beleven\b`), 9},
+		{"the twice gag", regexp.MustCompile(`(?i)\btwice\b`), 26},
+		{"very", regexp.MustCompile(`(?i)\bvery\b`), 10},
 		{"quietly", regexp.MustCompile(`(?i)\bquietly\b`), 0},
 		{"wants to be the one", regexp.MustCompile(`(?i)\bwants? to be the (one|person)\b`), 2},
-		{"gone quiet", regexp.MustCompile(`(?i)\b(gone|went|been) (very )?quiet\b`), 3},
-		{"asked N times", regexp.MustCompile(`(?i)\b(asked|told|reminded|answered|thanked)\b[^.]{0,50}\b(twice|three times|four times|five times|each time|both times)\b`), 6},
+		{"gone quiet", regexp.MustCompile(`(?i)\b(gone|went|been) (very )?quiet\b`), 2},
+		{"asked N times", regexp.MustCompile(`(?i)\b(asked|told|reminded|answered|thanked)\b[^.]{0,50}\b(twice|three times|four times|five times|each time|both times)\b`), 5},
+		// Found by the second, late-age corpus review: "has asked" had become
+		// every late-era character's reaction, a committee was the punchline
+		// of six lines, and the restored-from-backup dread was losing its
+		// force by the ninth use.
+		{"has asked", regexp.MustCompile(`(?i)\b(has|have|had) asked\b`), 24},
+		{"committee", regexp.MustCompile(`(?i)\b(committee|working group)\b`), 3},
+		{"restored from backup", regexp.MustCompile(`(?i)\b(restored|restoration|backup of|from backup|backups were)\b`), 8},
+		{"the ship's mind", regexp.MustCompile(`(?i)\bship's mind\b`), 5},
+		{"the same", regexp.MustCompile(`(?i)\bthe same\b`), 88},
 	}
 	anon := regexp.MustCompile(`(?i)\b(somebody|someone|nobody|no one)\b`)
-	const maxAnonShare = 0.18
+	const maxAnonShare = 0.15
 
 	counts := make([]int, len(tics))
 	total, anonLines := 0, 0

@@ -360,80 +360,86 @@ func TestRepetitionInAStream(t *testing.T) {
 		wantDistinct     = 60
 		wantDistinctLine = 70
 		maxStreamRepeats = 5
+		// seeds is how many independent runs the Stream-versus-raw comparison
+		// is summed over. One seed of 200 draws put the comparison at the mercy
+		// of which slot fills that seed happened to hit; five make it a
+		// measurement.
+		seeds = 5
 	)
 	for _, m := range Moments() {
 		for _, bucket := range eraBuckets {
 			age := eraAges[bucket.era]
-			rng := rand.New(rand.NewSource(int64(m)*104729 + int64(bucket.era)))
-			bySkeleton := map[string]int{}
-			byLine := map[string]int{}
-			worstID, worst := "", 0
-			for i := 0; i < draws; i++ {
-				res := Generate(Request{Moment: m, Age: age}, rng)
-				bySkeleton[res.Template]++
-				byLine[res.Text]++
-				if bySkeleton[res.Template] > worst {
-					worstID, worst = res.Template, bySkeleton[res.Template]
+			var rawSk, rawLn, stSk, stLn int
+			for k := 0; k < seeds; k++ {
+				seed := int64(m)*104729 + int64(bucket.era) + int64(k)*7919
+				rng := rand.New(rand.NewSource(seed))
+				bySkeleton := map[string]int{}
+				byLine := map[string]int{}
+				worst := 0
+				for i := 0; i < draws; i++ {
+					res := Generate(Request{Moment: m, Age: age}, rng)
+					bySkeleton[res.Template]++
+					byLine[res.Text]++
+					if bySkeleton[res.Template] > worst {
+						worst = bySkeleton[res.Template]
+					}
+				}
+				if len(bySkeleton) < wantDistinct {
+					t.Errorf("%v at %s seed %d: only %d distinct skeletons in %d lines; want >= %d",
+						m, age, k, len(bySkeleton), draws, wantDistinct)
+				}
+				if len(byLine) < wantDistinctLine {
+					t.Errorf("%v at %s seed %d: only %d distinct finished lines in %d; want >= %d",
+						m, age, k, len(byLine), draws, wantDistinctLine)
+				}
+				// No assertion on the RAW max on purpose: a uniform memoryless draw
+				// puts it wherever the seed feels like. The same draws as a PLAYER
+				// meets them, through a Stream, can be held to a real ceiling.
+				srng := rand.New(rand.NewSource(seed))
+				st := NewStream()
+				streamSk := map[string]int{}
+				streamLines := map[string]int{}
+				streamWorst := 0
+				for i := 0; i < draws; i++ {
+					res := st.Generate(Request{Moment: m, Age: age}, srng)
+					streamSk[res.Template]++
+					streamLines[res.Text]++
+					if streamSk[res.Template] > streamWorst {
+						streamWorst = streamSk[res.Template]
+					}
+				}
+				// The ceiling is asserted on the first seed only, as it always was:
+				// with a 32-line window a skeleton can legitimately recur every 33
+				// lines, so across many seeds one of them eventually shows six.
+				if k == 0 && streamWorst > maxStreamRepeats {
+					t.Errorf("%v at %s seed %d: through a Stream, one skeleton still repeated %d times in %d lines; want <= %d",
+						m, age, k, streamWorst, draws, maxStreamRepeats)
+				}
+				rawSk += len(bySkeleton)
+				rawLn += len(byLine)
+				stSk += len(streamSk)
+				stLn += len(streamLines)
+				if k == 0 {
+					t.Logf("%-20v %-11s raw: %3d skeletons / %3d lines / worst %d    stream: %3d skeletons / %3d lines / worst %d",
+						m, bucket.suffix, len(bySkeleton), len(byLine), worst,
+						len(streamSk), len(streamLines), streamWorst)
 				}
 			}
-			if len(bySkeleton) < wantDistinct {
-				t.Errorf("%v at %s: only %d distinct skeletons in %d lines; want >= %d",
-					m, age, len(bySkeleton), draws, wantDistinct)
+			// The Stream must not be WORSE than the raw generator. Distinct
+			// SKELETONS is held strictly, summed over the seeds: that is what a
+			// player perceives as repetition. Distinct finished LINES gets ten
+			// percent of slack, and it is earned: a Stream also suppresses a
+			// repeated noun-phrase draw, and the redraw often lands on a slotless
+			// sentence, which trades a noun variant for a wider spread of
+			// sentences.
+			if stSk < rawSk {
+				t.Errorf("%v at %s: over %d seeds the Stream produced FEWER distinct skeletons (%d) than the raw generator (%d)",
+					m, age, seeds, stSk, rawSk)
 			}
-			if len(byLine) < wantDistinctLine {
-				t.Errorf("%v at %s: only %d distinct finished lines in %d; want >= %d",
-					m, age, len(byLine), draws, wantDistinctLine)
+			if stLn*10 < rawLn*9 {
+				t.Errorf("%v at %s: over %d seeds the Stream produced materially fewer distinct lines (%d) than the raw generator (%d)",
+					m, age, seeds, stLn, rawLn)
 			}
-			// No assertion on the RAW max on purpose — see the doc comment. It is
-			// logged because the shape of the number is informative, but a uniform
-			// memoryless draw puts it wherever the seed feels like, and asserting on
-			// it would be asserting on luck.
-			_ = worstID
-			// And the same 200 lines as a PLAYER meets them: through a Stream, which
-			// is what the engine uses. Recency suppression is the only thing that
-			// makes the tight bar reachable, which is why it exists.
-			srng := rand.New(rand.NewSource(int64(m)*104729 + int64(bucket.era)))
-			st := NewStream()
-			streamSk := map[string]int{}
-			streamLines := map[string]int{}
-			streamWorst := 0
-			for i := 0; i < draws; i++ {
-				res := st.Generate(Request{Moment: m, Age: age}, srng)
-				streamSk[res.Template]++
-				streamLines[res.Text]++
-				if streamSk[res.Template] > streamWorst {
-					streamWorst = streamSk[res.Template]
-				}
-			}
-			if streamWorst > maxStreamRepeats {
-				t.Errorf("%v at %s: through a Stream, one skeleton still repeated %d times in %d lines; want <= %d",
-					m, age, streamWorst, draws, maxStreamRepeats)
-			}
-			// The Stream must not be WORSE than the raw generator, and the metric
-			// that is held strictly is distinct SKELETONS — how many separate things
-			// were said — because that is what a player perceives as repetition.
-			//
-			// Distinct finished LINES gets a little slack, and the slack is earned:
-			// a Stream also suppresses a repeated noun-phrase DRAW, so when the same
-			// long rope comes up twice in six lines it redraws, and the redraw often
-			// lands on a slotless sentence. That trades a couple of noun variants for
-			// a genuinely wider spread of sentences, which is the better trade.
-			// Two skeletons of slack out of ~95: both runs are one seed of 200
-			// draws, and the Stream's topic filter legitimately trades a sentence
-			// or two for spacing. A real regression costs far more than two;
-			// the hard window guarantee lives in TestStreamNeverRepeatsInsideItsWindow.
-			if len(streamSk)+2 < len(bySkeleton) {
-				t.Errorf("%v at %s: the Stream produced FEWER distinct skeletons (%d) than the raw generator (%d)",
-					m, age, len(streamSk), len(bySkeleton))
-			}
-			if len(streamLines)*10 < len(byLine)*9 {
-				t.Errorf("%v at %s: the Stream produced materially fewer distinct lines (%d) than the raw generator (%d)",
-					m, age, len(streamLines), len(byLine))
-			}
-
-			t.Logf("%-20v %-11s raw: %3d skeletons / %3d lines / worst %d    stream: %3d skeletons / %3d lines / worst %d",
-				m, bucket.suffix, len(bySkeleton), len(byLine), worst,
-				len(streamSk), len(streamLines), streamWorst)
 		}
 	}
 }
@@ -1392,6 +1398,117 @@ var eraMarkers = map[string][]era{
 	"barrows":  {eraAncient, eraFeudal, eraIndustrial},
 	"barrow":   {eraAncient, eraFeudal, eraIndustrial},
 	"mud":      {eraAncient, eraFeudal, eraIndustrial},
+
+	// --- spans: pre-modern set dressing. A second corpus review of the late
+	// ages still found a medieval village under the uplinks: door bars, lamps,
+	// servants, a council sitting before it was light, a map case. Anything that
+	// lights, bars, serves or keeps time by the sun stops at the Modern Age.
+	// lateSetDressing in late_test.go pins that these stay marked.
+	"bar":                 {eraAncient, eraFeudal, eraIndustrial},
+	"barred":              {eraAncient, eraFeudal, eraIndustrial},
+	"lamp":                {eraAncient, eraFeudal, eraIndustrial},
+	"lamps":               {eraAncient, eraFeudal, eraIndustrial},
+	"lantern":             {eraAncient, eraFeudal, eraIndustrial},
+	"lanterns":            {eraAncient, eraFeudal, eraIndustrial},
+	"candle":              {eraAncient, eraFeudal, eraIndustrial},
+	"candles":             {eraAncient, eraFeudal, eraIndustrial},
+	"torch":               {eraAncient, eraFeudal, eraIndustrial},
+	"torches":             {eraAncient, eraFeudal, eraIndustrial},
+	"servant":             {eraAncient, eraFeudal, eraIndustrial},
+	"servants":            {eraAncient, eraFeudal, eraIndustrial},
+	"household":           {eraAncient, eraFeudal, eraIndustrial},
+	"council":             {eraAncient, eraFeudal, eraIndustrial},
+	"the well":            {eraAncient, eraFeudal, eraIndustrial},
+	"map case":            {eraAncient, eraFeudal, eraIndustrial},
+	"first light":         {eraAncient, eraFeudal, eraIndustrial},
+	"dawn":                {eraAncient, eraFeudal, eraIndustrial},
+	"dusk":                {eraAncient, eraFeudal, eraIndustrial},
+	"before it was light": {eraAncient, eraFeudal, eraIndustrial},
+	"by dark":             {eraAncient, eraFeudal, eraIndustrial},
+	"after dark":          {eraAncient, eraFeudal, eraIndustrial},
+	"outer houses":        {eraAncient, eraFeudal, eraIndustrial},
+	"runner":              {eraAncient, eraFeudal, eraIndustrial},
+	"salt":                {eraAncient, eraFeudal, eraIndustrial},
+	"chest":               {eraAncient, eraFeudal, eraIndustrial},
+	"chests":              {eraAncient, eraFeudal, eraIndustrial},
+	"basket":              {eraAncient, eraFeudal, eraIndustrial},
+	"baskets":             {eraAncient, eraFeudal, eraIndustrial},
+	"bench":               {eraAncient, eraFeudal, eraIndustrial},
+	"plank":               {eraAncient, eraFeudal, eraIndustrial},
+	"planks":              {eraAncient, eraFeudal, eraIndustrial},
+	"coin":                {eraAncient, eraFeudal, eraIndustrial},
+	"by the fire":         {eraAncient, eraFeudal, eraIndustrial},
+	"ink":                 {eraAncient, eraFeudal, eraIndustrial},
+	"water skin":          {eraAncient, eraFeudal, eraIndustrial},
+	"water skins":         {eraAncient, eraFeudal, eraIndustrial},
+	"walking staff":       {eraAncient, eraFeudal, eraIndustrial},
+	"sharpening stone":    {eraAncient, eraFeudal, eraIndustrial},
+	"cooking pot":         {eraAncient, eraFeudal, eraIndustrial},
+
+	// Overland travel on foot: the set dressing of a party that walks there.
+	// A Neon Heist does not cross a river at the second camp.
+	"river":     {eraAncient, eraFeudal, eraIndustrial},
+	"hills":     {eraAncient, eraFeudal, eraIndustrial},
+	"ridge":     {eraAncient, eraFeudal, eraIndustrial},
+	"tree line": {eraAncient, eraFeudal, eraIndustrial},
+	"camp":      {eraAncient, eraFeudal, eraIndustrial},
+	"crossing":  {eraAncient, eraFeudal, eraIndustrial},
+	"miles":     {eraAncient, eraFeudal, eraIndustrial},
+	"mile":      {eraAncient, eraFeudal, eraIndustrial},
+	"far bank":  {eraAncient, eraFeudal, eraIndustrial},
+	"slope":     {eraAncient, eraFeudal, eraIndustrial},
+	"walk home": {eraAncient, eraFeudal, eraIndustrial},
+	"walk back": {eraAncient, eraFeudal, eraIndustrial},
+	"trail":     {eraAncient, eraFeudal, eraIndustrial},
+
+	// The river that "the water" means in a walking chronicle, and the other
+	// phrases of a trek. Found in the second late-age corpus review: a
+	// Transcendent crew turning back at the water, a Cyberpunk team buying
+	// directions off a local.
+	"back at the water":     {eraAncient, eraFeudal, eraIndustrial},
+	"off at the water":      {eraAncient, eraFeudal, eraIndustrial},
+	"by the water":          {eraAncient, eraFeudal, eraIndustrial},
+	"past the water":        {eraAncient, eraFeudal, eraIndustrial},
+	"beyond the water":      {eraAncient, eraFeudal, eraIndustrial},
+	"into the water":        {eraAncient, eraFeudal, eraIndustrial},
+	"crossed the water":     {eraAncient, eraFeudal, eraIndustrial},
+	"bend in the water":     {eraAncient, eraFeudal, eraIndustrial},
+	"because of the water":  {eraAncient, eraFeudal, eraIndustrial},
+	"best of the water":     {eraAncient, eraFeudal, eraIndustrial},
+	"got the water wrong":   {eraAncient, eraFeudal, eraIndustrial},
+	"water they were":       {eraAncient, eraFeudal, eraIndustrial},
+	"near water":            {eraAncient, eraFeudal, eraIndustrial},
+	"out of the rock":       {eraAncient, eraFeudal, eraIndustrial},
+	"wash water":            {eraAncient, eraFeudal, eraIndustrial},
+	"old marks":             {eraAncient, eraFeudal, eraIndustrial},
+	"dried meat":            {eraAncient, eraFeudal, eraIndustrial},
+	"wet pack":              {eraAncient, eraFeudal, eraIndustrial},
+	"off a local":           {eraAncient, eraFeudal, eraIndustrial},
+	"the blade":             {eraAncient, eraFeudal, eraIndustrial},
+	"walked with them":      {eraAncient, eraFeudal, eraIndustrial},
+	"walked along with":     {eraAncient, eraFeudal, eraIndustrial},
+	"walked a long way":     {eraAncient, eraFeudal, eraIndustrial},
+	"walked it":             {eraAncient, eraFeudal, eraIndustrial},
+	"walked the last":       {eraAncient, eraFeudal, eraIndustrial},
+	"walked past the place": {eraAncient, eraFeudal, eraIndustrial},
+	"last night out":        {eraAncient, eraFeudal, eraIndustrial},
+	"rained the whole way":  {eraAncient, eraFeudal, eraIndustrial},
+	"rain for six":          {eraAncient, eraFeudal, eraIndustrial},
+	"paces":                 {eraAncient, eraFeudal, eraIndustrial},
+	"paced":                 {eraAncient, eraFeudal, eraIndustrial},
+	"no moon":               {eraAncient, eraFeudal, eraIndustrial},
+	"in the dirt":           {eraAncient, eraFeudal, eraIndustrial},
+	"sweeps her step":       {eraAncient, eraFeudal, eraIndustrial},
+	"up on the wall":        {eraAncient, eraFeudal, eraIndustrial},
+	"length of string":      {eraAncient, eraFeudal, eraIndustrial},
+	"barrels of oil":        {eraAncient, eraFeudal, eraIndustrial},
+	"stone bowl":            {eraAncient, eraFeudal, eraIndustrial},
+	"sixth night":           {eraAncient, eraFeudal, eraIndustrial},
+	"blades":                {eraAncient, eraFeudal, eraIndustrial},
+	"dragged":               {eraAncient, eraFeudal, eraIndustrial},
+	"carried nine days":     {eraAncient, eraFeudal, eraIndustrial},
+	"medicine box":          {eraAncient, eraFeudal, eraIndustrial},
+	"three packs":           {eraAncient, eraFeudal, eraIndustrial},
 }
 
 // eraName gives a bucket a readable name for failure messages.
