@@ -3,7 +3,7 @@
 Open it with `citymap` (or `map`, or the `m` tab shortcut). The **City Map** is a procedural, top-down pixel-art rendering of your civilization as one living settlement — you look straight down at the roofs, streets and squares of a city built from your **actual building counts**. It is:
 
 - **Deterministic** — the same civilization always draws the same city. Layout is stable and grows in place; new buildings slot into the existing fabric rather than reshuffling it.
-- **Theme-aware** — every colour is pulled from your active [theme](themes.md), so switching themes retints the whole city instantly.
+- **Theme-aware** — every colour is pulled from your active [theme](themes.md), so switching themes retints the whole city instantly. On a light theme the map re-keys itself for the light page — lighter ground, lighter streets, darker shadows and walls, darkened labels — while space-age cities stay dark.
 - **Panic-safe** — the renderer never crashes the game; a bad draw degrades gracefully instead of taking the tab down.
 - **Gradual** — the city re-skins to the current era as you advance. Nothing snaps; roofs, ground, walls and props restyle age by age while the bones of the city persist.
 
