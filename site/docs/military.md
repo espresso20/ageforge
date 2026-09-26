@@ -180,7 +180,7 @@ The soldier (and resource) cost is already spent at launch, so the outcome only 
 
 **On failure:** A reduced fraction of the rewards is awarded. No additional soldiers are deducted on failure — the launch cost is the entire cost, win or lose.
 
-**How a resolution reads.** Every expedition resolution logs two lines: the **mechanical** one (which mission, whether it succeeded, that loot was gained) and, beneath it in grey, a **short account of how it went**. The account is written fresh each time — it varies with the mission's category, whether it succeeded, and the age you are in — and it is purely cosmetic: it never carries a number you cannot find on the line above it.
+**How a resolution reads.** Every expedition resolution logs the **mechanical** line (which mission, whether it succeeded, that loot was gained). About one resolution in three also gets, beneath it in grey, a **short account of how it went** — rarer than every time on purpose, so the grey lines stay worth reading. The account varies with the mission's category, whether it succeeded, and the age you are in (a Bronze Age party and a Quantum Age crew come home to different places), it will not repeat a sentence you saw in roughly the last screenful of log, and it is purely cosmetic: it never carries a number you cannot find on the line above it.
 
 ### Full expedition table
 
