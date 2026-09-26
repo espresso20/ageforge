@@ -17,7 +17,7 @@ const (
 	flavorLossGlyph = "▼"
 )
 
-// Parchment is the one LIGHT-background theme: dark ink-brown text on warm cream,
+// Parchment is the unlockable LIGHT-background theme: dark ink-brown text on warm cream,
 // with sepia/leather accents. It's the real contrast-guard exercise (theming.md §4,
 // §8) — on a light bg the role colors must be DARK enough to stay legible, so the
 // usual bright accent/positive/negative become deep, saturated versions: forest
@@ -25,7 +25,7 @@ const (
 var Parchment = define(Theme{
 	Key:        "parchment",
 	Name:       "Parchment",
-	Blurb:      "Ink on warm parchment — the one light-background look.",
+	Blurb:      "Ink on warm parchment — a sepia manuscript page.",
 	Accessible: false,
 	Colors: [numRoles]tcell.Color{
 		RoleBackground: tcell.NewRGBColor(0xf2, 0xe8, 0xd0), // warm cream
