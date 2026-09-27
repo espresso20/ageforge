@@ -11,15 +11,12 @@ CLI idle/clicker empire builder game built with Go + tview/tcell. 22 ages, 301 b
 - No global state; pass dependencies explicitly
 - Bus handlers run under engine write lock — never call GetState() or other lock-acquiring methods inside them
 
-## TODO / DONE Workflow
-- **TODO.md** tracks all pending and in-progress work, organized by phase.
-- **DONE.md** is the permanent history of completed work — items are moved here (never deleted) when finished.
-- When working on any multi-step plan or feature:
-  - Mark items `[~]` (in progress) in TODO.md before starting them
-  - Mark items `[x]` and move them to DONE.md (with a brief date/note) when finished
-  - Add newly discovered sub-tasks to TODO.md immediately — do not hold them in context only
-  - Never implement something already listed in DONE.md; check it first to avoid duplication
-- The goal: full session-resumability. TODO.md + DONE.md should always reflect true current state.
+## Work Tracking (Trello + GitHub)
+- The backlog lives on the public Trello board: https://trello.com/b/tf31C2cz/ageforge (lists: Refactor, Bugs, Features, Balance, Later Enhancements, Doing, Done). There is no TODO.md / DONE.md.
+- Read it without auth: `curl -sL https://trello.com/b/tf31C2cz.json` returns lists, cards, labels and checklists. Writing to the board needs Trello auth that isn't set up, so tell Adam which cards to move rather than assuming they moved.
+- Reference cards by shortLink in PR titles, e.g. `feat(trade): ... (card iKgfDClK)`.
+- Before starting a feature, check the Done list and recent merged PRs (`gh pr list --state merged`) so you don't redo shipped work.
+- The current state lives in: open PRs (`gh pr list`), CHANGELOG.md `[Unreleased]`, and the nightly smoke report (see Testing). Record newly discovered follow-ups in the PR description or ask Adam to add a card; don't hold them only in context.
 
 ## Build & Run
 ```bash
@@ -75,4 +72,4 @@ This project is large. Burning main context on file reads is wasteful. Follow th
 1. Write a self-contained subagent prompt with exact spec
 2. Spawn subagent — it reads, implements, tests, reports back
 3. Review summary in main context
-4. Commit if clean; update TODO.md + DONE.md
+4. Commit if clean; open a PR and note any Trello cards to move
