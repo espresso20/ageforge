@@ -2,6 +2,7 @@ package smoke
 
 import (
 	"fmt"
+	"maps"
 	"os"
 	"path/filepath"
 	"runtime/debug"
@@ -38,6 +39,33 @@ type checkpoint struct {
 	// save 5s or older gets offline catch-up on load); reload is its verdict.
 	b      *game.GameEngine
 	reload string
+	// memory is the bot's at the save (see botMemory).
+	memory botMemory
+}
+
+// botMemory is what the bot carries between decisions: the ticks it last
+// traded each resource, so two trading rules can't undo each other. It is the
+// player's memory, not the game's, so no save carries it, and a player who
+// reloads still remembers what they just did. The loaded run's fresh bot is
+// given the uninterrupted bot's copy, or the two would trade differently from
+// the first decision and every checkpoint would read as a divergence.
+type botMemory struct {
+	tick         int
+	sold, bought map[string]int
+}
+
+func rememberBot(b *Bot) botMemory {
+	return botMemory{tick: b.tick, sold: maps.Clone(b.sold), bought: maps.Clone(b.bought)}
+}
+
+func (m botMemory) restore(b *Bot) {
+	b.tick = m.tick
+	if m.sold != nil {
+		b.sold = maps.Clone(m.sold)
+	}
+	if m.bought != nil {
+		b.bought = maps.Clone(m.bought)
+	}
 }
 
 // saveloadSkip lists GameState paths that legitimately differ between an
@@ -134,7 +162,8 @@ func saveloadSeed(e *Env, seed int64, want, n int) (rows []string, fails, warns 
 			lastAge = r.age
 			st := r.ge.GetState()
 			cp := &checkpoint{idx: len(cps) + 1, age: r.age, cycle: r.cycle, ticks: r.ticks, sim: r.sim,
-				gameTick: st.Tick, file: fmt.Sprintf("saveload-%d-%d", seed, len(cps)+1), endTicks: r.ticks + n, atSave: st}
+				gameTick: st.Tick, file: fmt.Sprintf("saveload-%d-%d", seed, len(cps)+1), endTicks: r.ticks + n, atSave: st,
+				memory: rememberBot(r.bot)}
 			if err := r.ge.SaveGame(cp.file); err != nil {
 				fail("save_error", repro, "saving checkpoint %d (%s): %v", cp.idx, cp.age, err)
 				return true
@@ -296,6 +325,7 @@ func continueFrom(e *Env, seed int64, cp *checkpoint, ge *game.GameEngine, befor
 	} else {
 		r = newRunner(cfg, seed, ge)
 		r.ticks, r.sim, r.cycle = cp.ticks, cp.sim, cp.cycle
+		cp.memory.restore(r.bot)
 		r.enterAge(ge.GetState())
 	}
 	armed := false
