@@ -391,8 +391,15 @@ func TestReproAgeSplashAllAges(t *testing.T) {
 		// Endure any random epoch catastrophe: pending blocks the next advance.
 		h.advanceAndCheck(i, 'e')
 	}
-	if st := h.eng.GetState(); st.NextAge != "" {
+	st := h.eng.GetState()
+	if st.NextAge != "" {
 		t.Fatalf("did not reach final age: %s", st.Age)
+	}
+	// A harbinger arrived in the last age of every epoch but the Cosmic Era
+	// and resolved at the next transition, all without taking the front page
+	// or focus from the splash sequence checked above (it is non-blocking).
+	if n := len(st.HarbingerHistory); n != len(config.Epochs())-1 {
+		t.Fatalf("harbingers resolved on the walk = %d, want %d: %+v", n, len(config.Epochs())-1, st.HarbingerHistory)
 	}
 }
 
