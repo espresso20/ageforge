@@ -24,7 +24,7 @@
   </a>
   &nbsp;
   <a href="https://github.com/espresso20/ageforge/blob/master/LICENSE">
-    <img src="https://img.shields.io/github/license/espresso20/ageforge?style=for-the-badge&color=4a4a4a&labelColor=1a1a1a" alt="License">
+    <img src="https://img.shields.io/badge/license-non--commercial-4a4a4a?style=for-the-badge&labelColor=1a1a1a" alt="License">
   </a>
   &nbsp;
   <a href="https://ageforge.io">
