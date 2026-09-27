@@ -508,7 +508,43 @@ func flowIncomes() map[string]map[string]float64 {
 	return flowIncomeMap
 }
 
+// TypicalIncome is FlowIncome's "what the age produces" for any resource,
+// construction resources included: FlowCopies fully staffed copies of every
+// producer of res up to age, every earlier wonder and every tech up to age,
+// times the production_all bonus held by then. It is what the Storage
+// Covenant (StorageHoldHours) sizes storage against.
+func TypicalIncome(res, age string) float64 {
+	return typicalIncomes()[age][res]
+}
+
+var (
+	typicalIncomeOnce sync.Once
+	typicalIncomeMap  map[string]map[string]float64
+)
+
+func typicalIncomes() map[string]map[string]float64 {
+	typicalIncomeOnce.Do(func() {
+		typicalIncomeMap = computeIncomes(BaseBuildings(), Technologies(), AgeOrder(), func(string) bool { return true })
+	})
+	return typicalIncomeMap
+}
+
+// StorageHoldHours is the Storage Covenant (economy.md, Law 1): the most
+// storage buildable in an age must hold at least this many hours of the age's
+// TypicalIncome at 1x, for every construction resource of the age. Typical
+// income is a moderate investment (five copies of each producer); the smoke
+// bot ends an age making one to three times it, so 1.5 hours of it is about
+// an hour of a well-built economy: a player who checks in hourly loses
+// nothing at a cap, and one who checks in less often leans on the build plan
+// and wonder overflow rather than on storage, which keeps its pressure.
+const StorageHoldHours = 1.5
+
 func computeFlowIncomes(defs []BuildingDef, techs []TechDef, order []string) map[string]map[string]float64 {
+	return computeIncomes(defs, techs, order, IsFlowResource)
+}
+
+// computeIncomes is FlowIncome's formula for every resource include accepts.
+func computeIncomes(defs []BuildingDef, techs []TechDef, order []string, include func(string) bool) map[string]map[string]float64 {
 	idx := make(map[string]int, len(order))
 	for i, a := range order {
 		idx[a] = i
@@ -526,7 +562,7 @@ func computeFlowIncomes(defs []BuildingDef, techs []TechDef, order []string) map
 				if d.Category == "wonder" && j < i && e.Type == "bonus" && e.Target == "production_all" {
 					bonus += e.Value
 				}
-				if e.Type != "production" || e.Value <= 0 || !flowResources[e.Target] {
+				if e.Type != "production" || e.Value <= 0 || !include(e.Target) {
 					continue
 				}
 				switch {
@@ -542,7 +578,7 @@ func computeFlowIncomes(defs []BuildingDef, techs []TechDef, order []string) map
 				continue
 			}
 			for _, e := range t.Effects {
-				if e.Type == "production" && e.Value > 0 && flowResources[e.Target] {
+				if e.Type == "production" && e.Value > 0 && include(e.Target) {
 					inc[e.Target] += e.Value
 				}
 				if e.Type == "bonus" && e.Target == "production_all" {
