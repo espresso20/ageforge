@@ -3,6 +3,7 @@ package game
 import (
 	"math"
 	"math/rand"
+	"os"
 	"reflect"
 	"sort"
 	"strings"
@@ -199,8 +200,8 @@ func TestEndure_ResourcesDebuffMoraleAndRecord(t *testing.T) {
 	ge.Resources.LoadStorage(map[string]float64{"wood": 1000, "food": 1000})
 	ge.Resources.LoadAmounts(map[string]float64{"wood": 800, "food": 200})
 	ge.morale = 0.60
-	if err := ge.InvokeCatastrophe(); err != nil {
-		t.Fatalf("invoke in iron era: %v", err)
+	if err := ge.forceCatastrophe(); err != nil {
+		t.Fatalf("force in iron era: %v", err)
 	}
 	if err := ge.Endure(); err != nil {
 		t.Fatal(err)
@@ -246,7 +247,6 @@ func succumbIn(t *testing.T, ge *GameEngine, age string) {
 	ge.age = age
 	ge.currentEpoch = config.EpochForAge(age)
 	ge.pendingCatastrophe = ge.currentEpoch
-	ge.catastropheFired[ge.currentEpoch] = true
 	if err := ge.Succumb(); err != nil {
 		t.Fatalf("Succumb in %s: %v", age, err)
 	}
@@ -284,8 +284,8 @@ func TestSuccumb_RuinsResetAndLegacy(t *testing.T) {
 	if got := ge.succumbResearchBonus(); got != 0.25 {
 		t.Errorf("research bonus = %v, want 0.25", got)
 	}
-	if ge.pendingCatastrophe != "" || len(ge.catastropheFired) != 0 {
-		t.Error("Succumb must clear pending and the per-run catastrophe set")
+	if ge.pendingCatastrophe != "" {
+		t.Error("Succumb must clear pending")
 	}
 	st := ge.GetState()
 	if st.CatastrophesSuccumbed != 1 || st.CatastrophesEndured != 0 {
@@ -393,9 +393,6 @@ func TestLoad_ReconstructsOutcomesOnOldRecords(t *testing.T) {
 			t.Errorf("record %d (%s %s) outcome = %q, want %q", i, r.EpochKey, r.EventType, r.Outcome, want[i])
 		}
 	}
-	if !ge.catastropheFired["steel_era"] || !ge.catastropheFired["iron_era"] {
-		t.Errorf("catastropheFired not rebuilt: %v", ge.catastropheFired)
-	}
 }
 
 // --- Pending blocks progress --------------------------------------------------
@@ -449,8 +446,8 @@ func TestNoCatastropheBeforeIronEpoch(t *testing.T) {
 		t.Fatal("gate: stone must be closed, iron and later open")
 	}
 	ge := catEngine(t, "bronze_age", 1)
-	if err := ge.InvokeCatastrophe(); err == nil {
-		t.Error("invoke in the Stone Era must be refused")
+	if err := ge.forceCatastrophe(); err == nil {
+		t.Error("forcing a catastrophe in the Stone Era must be refused")
 	}
 	// A forced bad+escalate roll on a Stone Era transition stays a challenging event.
 	ge.rng = badThenEscalate()
@@ -486,25 +483,86 @@ func TestRollNeverOverwritesPending(t *testing.T) {
 	if ge.pendingCatastrophe != "iron_era" {
 		t.Fatalf("pending overwritten: %q", ge.pendingCatastrophe)
 	}
-	if ge.catastropheFired["steel_era"] {
-		t.Error("steel era marked as struck without a catastrophe")
+	for _, r := range ge.epochEventHistory {
+		if r.EpochKey == "steel_era" && r.EventType == "catastrophe" {
+			t.Error("steel era got a catastrophe record while iron was pending")
+		}
 	}
-	if err := ge.InvokeCatastrophe(); err == nil {
-		t.Error("invoke while pending must be refused")
+	if err := ge.forceCatastrophe(); err == nil {
+		t.Error("forcing while pending must be refused")
 	}
 }
 
-func TestInvokeOncePerEpochPerRun(t *testing.T) {
-	ge := catEngine(t, "iron_age", 4)
-	ge.epochEventFired["iron_era"] = true // the transition rolled something non-catastrophic
-	if err := ge.InvokeCatastrophe(); err != nil {
-		t.Fatalf("invoke after a non-catastrophe transition: %v", err)
+// The dev console's /catastrophe is the only direct trigger, and it respects
+// the Iron gate. Without dev mode it does nothing.
+func TestDevCatastropheCommandRespectsGate(t *testing.T) {
+	prev := DevModeActive
+	t.Cleanup(func() { DevModeActive = prev })
+
+	DevModeActive = false
+	ge := catEngine(t, "iron_age", 1)
+	if out := DevConsoleCommand("/catastrophe", ge); out != "" || ge.pendingCatastrophe != "" {
+		t.Fatalf("dev command ran without dev mode: %q, pending=%q", out, ge.pendingCatastrophe)
 	}
-	if err := ge.Endure(); err != nil {
-		t.Fatal(err)
+
+	DevModeActive = true
+	stone := catEngine(t, "bronze_age", 1)
+	if out := DevConsoleCommand("/catastrophe", stone); !strings.Contains(out, "refused") || stone.pendingCatastrophe != "" {
+		t.Errorf("stone era: %q, pending=%q; want refused", out, stone.pendingCatastrophe)
 	}
-	if err := ge.InvokeCatastrophe(); err == nil {
-		t.Error("second invoke in the same epoch must be refused")
+	if out := DevConsoleCommand("/catastrophe", ge); ge.pendingCatastrophe != "iron_era" {
+		t.Errorf("iron era: %q, pending=%q; want iron_era", out, ge.pendingCatastrophe)
+	}
+	// Other dev commands still reach DevExecCommand.
+	if out := DevConsoleCommand("/ages", ge); !strings.Contains(out, "iron_age") {
+		t.Errorf("/ages via DevConsoleCommand = %q", out)
+	}
+}
+
+// --- Harbinger seam: invite ---------------------------------------------------
+
+func TestInvitedCatastropheStrikesAtNextAllowedTransition(t *testing.T) {
+	ge := catEngine(t, "bronze_age", 1)
+	ge.inviteCatastrophe()
+	// Rigged to roll a good event: the invite must override it.
+	ge.rng = riggedRNG(0.0)
+	ge.currentEpoch = "iron_era"
+	ge.rollEpochEvent("iron_era")
+	if ge.pendingCatastrophe != "iron_era" {
+		t.Fatalf("invited catastrophe did not strike: pending=%q", ge.pendingCatastrophe)
+	}
+	if ge.catastropheInvited {
+		t.Error("invite not consumed")
+	}
+	last := ge.epochEventHistory[len(ge.epochEventHistory)-1]
+	if last.EventType != "catastrophe" || !strings.Contains(last.EventName, "invited") {
+		t.Errorf("record = %+v", last)
+	}
+}
+
+func TestInviteWaitsWhileGatedOrPending(t *testing.T) {
+	ge := catEngine(t, "stone_age", 1)
+	ge.inviteCatastrophe()
+	ge.rng = riggedRNG(0.0)
+	ge.rollEpochEvent("stone_era") // gated
+	if ge.pendingCatastrophe != "" || !ge.catastropheInvited {
+		t.Fatalf("gated transition: pending=%q invited=%v; want none and kept", ge.pendingCatastrophe, ge.catastropheInvited)
+	}
+	ge.pendingCatastrophe = "iron_era"
+	ge.rollEpochEvent("steel_era") // something already pending
+	if ge.pendingCatastrophe != "iron_era" || !ge.catastropheInvited {
+		t.Fatalf("pending transition: pending=%q invited=%v; want iron_era and kept", ge.pendingCatastrophe, ge.catastropheInvited)
+	}
+	// The outlook reports a certain catastrophe while invited.
+	ge.pendingCatastrophe = ""
+	ge.currentEpoch = "steel_era" // next: electric, not rolled yet
+	if o := ge.catastropheOutlook(); !o.Possible || o.Probability != 1 || o.Tier != CatastropheTierHigh {
+		t.Errorf("invited outlook = %+v, want certain/high", o)
+	}
+	// Succumb and prestige start a new run: the invite does not carry over.
+	succumbIn(t, ge, "iron_age")
+	if ge.catastropheInvited {
+		t.Error("invite survived Succumb")
 	}
 }
 
@@ -691,11 +749,6 @@ func TestCatastropheOutlook(t *testing.T) {
 	if o := ge.CatastropheOutlook(); o.Possible || o.NextEpochKey != "steel_era" {
 		t.Errorf("already-rolled next epoch outlook = %+v, want not possible", o)
 	}
-	ge = catEngine(t, "medieval_age", 1)
-	ge.catastropheFired["steel_era"] = true
-	if o := ge.CatastropheOutlook(); o.Possible {
-		t.Errorf("already-struck next epoch outlook = %+v, want not possible", o)
-	}
 }
 
 // --- Save/load with pending ----------------------------------------------------------
@@ -703,7 +756,7 @@ func TestCatastropheOutlook(t *testing.T) {
 func TestSaveLoadKeepsPendingAndItStillBlocks(t *testing.T) {
 	t.Cleanup(SetDataDirForTest(t.TempDir()))
 	ge := catEngine(t, "iron_age", 8)
-	if err := ge.InvokeCatastrophe(); err != nil {
+	if err := ge.forceCatastrophe(); err != nil {
 		t.Fatal(err)
 	}
 	if err := ge.SaveGame("cat_pending"); err != nil {
@@ -721,9 +774,6 @@ func TestSaveLoadKeepsPendingAndItStillBlocks(t *testing.T) {
 	if ge2.GetState().PendingCatastrophe != "iron_era" {
 		t.Fatalf("pending lost across save/load: %q", ge2.pendingCatastrophe)
 	}
-	if !ge2.catastropheFired["iron_era"] {
-		t.Error("catastropheFired lost across save/load")
-	}
 	ge2.mu.Lock()
 	ge2.ageReady = true
 	ge2.mu.Unlock()
@@ -737,8 +787,30 @@ func TestSaveLoadKeepsPendingAndItStillBlocks(t *testing.T) {
 	if err := ge2.Endure(); err != nil {
 		t.Fatal(err)
 	}
-	if err := ge2.InvokeCatastrophe(); err == nil {
-		t.Error("invoke after the loaded catastrophe was endured must be refused (once per epoch)")
+}
+
+// Saves written by early builds of this change carry catastrophe_fired. The
+// field is ignored on load but must not break the signature check.
+func TestLoadIgnoresDeprecatedCatastropheFired(t *testing.T) {
+	t.Cleanup(SetDataDirForTest(t.TempDir()))
+	ge := catEngine(t, "iron_age", 3)
+	snap := ge.buildSaveSnapshot()
+	snap.CatastropheFired = map[string]bool{"iron_era": true}
+	snap.Signature = signSave(snap, saveHMACKey)
+	if err := os.MkdirAll(saveDirectory(), 0755); err != nil {
+		t.Fatal(err)
+	}
+	writeRawSave(t, "cat_deprecated", snap)
+
+	ge2 := NewGameEngine()
+	if err := ge2.LoadGame("cat_deprecated"); err != nil {
+		t.Fatal(err)
+	}
+	if ge2.cheaterBadge {
+		t.Error("save with catastrophe_fired failed signature verification")
+	}
+	if ge2.buildSaveSnapshot().CatastropheFired != nil {
+		t.Error("catastrophe_fired must not be written back")
 	}
 }
 

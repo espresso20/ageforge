@@ -11,15 +11,16 @@ import (
 
 // Civilizational catastrophes (Phase 9).
 //
-// A catastrophe can strike at an epoch transition (a bad epoch roll escalates)
-// or be invoked voluntarily with `catastrophe invoke`. Either way it only sets
-// pendingCatastrophe: nothing is destroyed until the player chooses Endure or
-// Succumb. While a catastrophe is pending the game keeps running but AdvanceAge
+// A catastrophe strikes at an epoch transition (a bad epoch roll escalates).
+// Players cannot trigger one directly; the dev console's /catastrophe does, for
+// testing. Either way it only sets pendingCatastrophe: nothing is destroyed
+// until the player chooses Endure or Succumb. While a catastrophe is pending the game keeps running but AdvanceAge
 // and DoPrestige refuse, so the choice cannot be skipped or overwritten.
 //
 // Rules in one place:
 //   - No catastrophe before config.CatastropheGateEpoch (the Iron Era).
-//   - At most one catastrophe per epoch per run (catastropheFired).
+//   - At most one random catastrophe per epoch per run: each epoch's
+//     transition rolls once (epochEventFired).
 //   - All randomness comes from the seeded ge.rng over stable pools.
 //
 // Every method here that is not exported expects the engine write lock to be
@@ -93,11 +94,11 @@ type CatastropheOutlook struct {
 	// NextEpochKey is the epoch the next transition enters; "" in the final epoch.
 	NextEpochKey string
 	// Possible is false when the next transition cannot roll a catastrophe at
-	// all: no next epoch, it is before the Iron-epoch gate, or its roll or its
-	// catastrophe already happened this run.
+	// all: no next epoch, it is before the Iron-epoch gate, or its transition
+	// roll already happened this run.
 	Possible bool
 	// Probability is the chance in [0,1] that the next transition produces a
-	// catastrophe. 0 when !Possible.
+	// catastrophe. 0 when !Possible; 1 when a catastrophe has been invited.
 	Probability float64
 	// Tier buckets Probability: none / low / medium / high.
 	Tier CatastropheTier
@@ -160,12 +161,10 @@ func (ge *GameEngine) epochGoodChance() float64 {
 }
 
 // catastropheCanStrike reports whether a catastrophe may be triggered in
-// epochKey right now: past the Iron-epoch gate, not already struck this run,
-// and nothing pending (a pending catastrophe is never overwritten). Read-only.
+// epochKey right now: past the Iron-epoch gate and nothing pending (a pending
+// catastrophe is never overwritten). Read-only.
 func (ge *GameEngine) catastropheCanStrike(epochKey string) bool {
-	return ge.pendingCatastrophe == "" &&
-		config.CatastropheAllowed(epochKey) &&
-		!ge.catastropheFired[epochKey]
+	return ge.pendingCatastrophe == "" && config.CatastropheAllowed(epochKey)
 }
 
 // catastropheBlockErr is the error AdvanceAge and DoPrestige return while a
@@ -175,23 +174,27 @@ func (ge *GameEngine) catastropheBlockErr(action string) error {
 	return fmt.Errorf("%s is upon you — type 'catastrophe' to choose Endure or Succumb before %s", name, action)
 }
 
+// How a catastrophe came about; it only changes the log line and event name.
+const (
+	catastropheRolled  = ""        // bad transition roll escalated
+	catastropheForced  = "forced"  // dev console /catastrophe
+	catastropheInvited = "invited" // honoured invite (Harbinger seam, unwired)
+)
+
 // triggerCatastrophe makes epochKey's catastrophe pending: log line, history
 // record, and a bus event so the dashboard toast fires. Callers must check
 // catastropheCanStrike first. Must be called under the write lock; the bus
 // handlers it reaches must not take the engine lock (see CLAUDE.md).
-func (ge *GameEngine) triggerCatastrophe(epochKey string, voluntary bool) {
+func (ge *GameEngine) triggerCatastrophe(epochKey, source string) {
 	ep := config.EpochByKey()[epochKey]
 	catName, _ := config.CatastropheInfo(epochKey)
 	ge.pendingCatastrophe = epochKey
-	ge.catastropheFired[epochKey] = true
 
 	eventName := catName
-	if voluntary {
-		eventName = catName + " (invoked)"
-		ge.addLog("warning", fmt.Sprintf("☄ Voluntary catastrophe invoked for the %s: %s.", ep.Name, catName))
-	} else {
-		ge.addLog("warning", fmt.Sprintf("☄ %s threatens the %s — prepare yourself.", catName, ep.Name))
+	if source != catastropheRolled {
+		eventName = catName + " (" + source + ")"
 	}
+	ge.addLog("warning", fmt.Sprintf("☄ %s threatens the %s — prepare yourself.", catName, ep.Name))
 	ge.addLog("warning", "  Type 'catastrophe' to choose Endure or Succumb. Advancing and prestige wait until you do.")
 
 	ge.epochEventHistory = append(ge.epochEventHistory, EpochEventRecord{
@@ -206,7 +209,7 @@ func (ge *GameEngine) triggerCatastrophe(epochKey string, voluntary bool) {
 			"event_name": catName,
 			"event_type": "catastrophe",
 			"epoch_key":  epochKey,
-			"voluntary":  voluntary,
+			"source":     source,
 		},
 	})
 }
@@ -223,25 +226,45 @@ func (ge *GameEngine) setCatastropheOutcome(epochKey, outcome string) {
 	}
 }
 
-// InvokeCatastrophe voluntarily triggers the catastrophe for the current epoch.
-// Refused before the Iron Era, while another catastrophe is pending, or if this
-// epoch has already had its catastrophe this run.
-func (ge *GameEngine) InvokeCatastrophe() error {
+// forceCatastrophe makes the current epoch's catastrophe pending right now.
+// It is a testing tool behind the dev console (/catastrophe), not a player
+// action. It still respects the Iron-epoch gate and never overwrites a pending
+// catastrophe, but it ignores the once-per-transition roll.
+func (ge *GameEngine) forceCatastrophe() error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	if ge.pendingCatastrophe != "" {
-		return fmt.Errorf("a catastrophe is already pending — type 'catastrophe' to decide")
+		return fmt.Errorf("a catastrophe is already pending")
 	}
 	if !config.CatastropheAllowed(ge.currentEpoch) {
 		gate := config.EpochByKey()[config.CatastropheGateEpoch]
 		return fmt.Errorf("catastrophes cannot strike before the %s", gate.Name)
 	}
-	if ge.catastropheFired[ge.currentEpoch] {
-		ep := config.EpochByKey()[ge.currentEpoch]
-		return fmt.Errorf("the %s has already faced its catastrophe this run", ep.Name)
-	}
-	ge.triggerCatastrophe(ge.currentEpoch, true)
+	ge.triggerCatastrophe(ge.currentEpoch, catastropheForced)
 	return nil
+}
+
+// Harbinger seam (not wired to any command or UI yet).
+//
+// catastropheInvited, when set, makes the next epoch transition into an epoch
+// allowed by the Iron gate produce a catastrophe instead of rolling. It is
+// consumed when honoured, kept while the target is gated or another
+// catastrophe is pending, and not persisted. The Harbinger's "Invite it"
+// action will set it (and persist it) in a later change.
+
+// inviteCatastrophe arms the invite. Must be called under the write lock.
+func (ge *GameEngine) inviteCatastrophe() { ge.catastropheInvited = true }
+
+// honourInvite triggers the invited catastrophe for epochKey if the invite is
+// armed and the catastrophe can strike there. Reports whether it did. Called
+// by rollEpochEvent under the write lock.
+func (ge *GameEngine) honourInvite(epochKey string) bool {
+	if !ge.catastropheInvited || !ge.catastropheCanStrike(epochKey) {
+		return false
+	}
+	ge.catastropheInvited = false
+	ge.triggerCatastrophe(epochKey, catastropheInvited)
+	return true
 }
 
 // CatastropheOutlook reports the catastrophe odds at the next epoch transition.
@@ -262,11 +285,14 @@ func (ge *GameEngine) catastropheOutlook() CatastropheOutlook {
 		return out
 	}
 	out.NextEpochKey = next.Key
-	if !config.CatastropheAllowed(next.Key) || ge.epochEventFired[next.Key] || ge.catastropheFired[next.Key] {
+	if !config.CatastropheAllowed(next.Key) || ge.epochEventFired[next.Key] {
 		return out
 	}
 	out.Possible = true
 	out.Probability = (1 - ge.epochGoodChance()) * catastropheChanceOnBadRoll
+	if ge.catastropheInvited {
+		out.Probability = 1
+	}
 	out.Tier = catastropheTierFor(out.Probability)
 	return out
 }
@@ -422,7 +448,7 @@ func (ge *GameEngine) Succumb() error {
 	ge.starvationTicks = 0
 	ge.currentEpoch = config.EpochForAge("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
-	ge.catastropheFired = make(map[string]bool)
+	ge.catastropheInvited = false
 	ge.awakeningsFired = make(map[string]bool)
 	ge.survivedEpochs = make(map[string]bool)
 	ge.pendingCatastrophe = ""
@@ -545,25 +571,8 @@ func countCatastropheOutcomes(history []string) (endured, succumbed int) {
 // migrates saves written before the overhaul. Call from LoadGame after the
 // epoch, legacy and milestone fields are restored, under the write lock.
 func (ge *GameEngine) restoreCatastropheState(save *GameSave) {
-	// Per-run catastrophe set. Older saves lack it: rebuild what we can from the
-	// epochs endured this run plus the pending one.
-	ge.catastropheFired = make(map[string]bool)
-	if save.CatastropheFired != nil {
-		for k, v := range save.CatastropheFired {
-			if v {
-				ge.catastropheFired[k] = true
-			}
-		}
-	} else {
-		for k, v := range ge.survivedEpochs {
-			if v {
-				ge.catastropheFired[k] = true
-			}
-		}
-	}
-	if ge.pendingCatastrophe != "" {
-		ge.catastropheFired[ge.pendingCatastrophe] = true
-	}
+	// save.CatastropheFired (written by early builds of this change) is ignored:
+	// the once-per-epoch rule is the transition roll's own epochEventFired.
 
 	// Outcomes on catastrophe records from older saves. The newest record per
 	// epoch is the one that matters; older duplicates can only be succumbs from

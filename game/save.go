@@ -72,8 +72,10 @@ type GameSave struct {
 	SurvivedEpochs     map[string]bool    `json:"survived_epochs,omitempty"`
 	PendingCatastrophe string             `json:"pending_catastrophe,omitempty"`
 	EpochEventHistory  []EpochEventRecord `json:"epoch_event_history,omitempty"`
-	// CatastropheFired: epochs that have had their catastrophe this run. Older
-	// saves lack it; restoreCatastropheState rebuilds it.
+	// CatastropheFired is deprecated and ignored on load. Early builds of the
+	// catastrophe overhaul wrote it; the field stays in the struct only so those
+	// saves still pass signature verification (signSave re-marshals this
+	// struct). Never written.
 	CatastropheFired map[string]bool `json:"catastrophe_fired,omitempty"`
 	// SuccumbResearchDerived marks saves written after the Succumb research
 	// bonus moved out of PermanentBonuses (it is derived from LegacyBonuses).
@@ -508,7 +510,6 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		SurvivedEpochs:         copyBoolMap(ge.survivedEpochs),
 		PendingCatastrophe:     ge.pendingCatastrophe,
 		EpochEventHistory:      append([]EpochEventRecord(nil), ge.epochEventHistory...),
-		CatastropheFired:       copyBoolMap(ge.catastropheFired),
 		SuccumbResearchDerived: true,
 		Ruins:                  ge.Buildings.GetAllRuins(),
 		LegacyBonuses:          copyBoolMap(ge.legacyBonuses),

@@ -105,9 +105,6 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 		fmt.Fprintf(sb, " Next transition (%s): [yellow]%.0f%% catastrophe chance[-] [gray](%s; more faith, lower odds)[-]\n",
 			config.EpochByKey()[o.NextEpochKey].Name, o.Probability*100, o.Tier)
 	}
-
-	sb.WriteString("\n")
-	sb.WriteString(" To invoke voluntarily: [gray]catastrophe invoke[-]\n")
 }
 
 // epochProviderHistory renders the epoch history section.

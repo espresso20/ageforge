@@ -410,15 +410,20 @@ func TestReproAgeSplashWithCatastrophe(t *testing.T) {
 		if !h.grantNextAge() {
 			break
 		}
-		// Advance, then invoke (if allowed in the new epoch), atomically w.r.t.
-		// refresh() (both on the UI goroutine, like a typed command) so the
-		// splash and the modal surface in the same refresh.
+		// Advance, then force the new epoch's catastrophe with the dev console
+		// (refused before the Iron Era, and while the transition's own roll is
+		// pending), atomically w.r.t. refresh() (both on the UI goroutine, like
+		// a typed command) so the splash and the modal surface in the same
+		// refresh.
 		h.advanceAndCheckWith(i, 'e', func() {
 			h.onUI(func() {
+				before := h.eng.GetState().EpochKey
 				if err := h.eng.AdvanceAge(); err != nil {
 					h.t.Errorf("AdvanceAge: %v", err)
 				}
-				_ = h.eng.InvokeCatastrophe()
+				if h.eng.GetState().EpochKey != before {
+					game.DevConsoleCommand("/catastrophe", h.eng)
+				}
 			})
 		})
 	}
@@ -442,8 +447,8 @@ func (h *reproHarness) reachBronze() {
 	}
 }
 
-// advanceIntoIronWithCatastrophe crosses into the Iron Era and invokes its
-// catastrophe in the same UI update, then dismisses the splash with a key.
+// advanceIntoIronWithCatastrophe crosses into the Iron Era and forces its
+// catastrophe (dev console) in the same UI update.
 func (h *reproHarness) advanceIntoIronWithCatastrophe() {
 	h.t.Helper()
 	h.grantNextAge()
@@ -451,7 +456,7 @@ func (h *reproHarness) advanceIntoIronWithCatastrophe() {
 		if err := h.eng.AdvanceAge(); err != nil {
 			h.t.Errorf("AdvanceAge: %v", err)
 		}
-		_ = h.eng.InvokeCatastrophe() // fails only if the transition already rolled one
+		game.DevConsoleCommand("/catastrophe", h.eng) // refused only if the transition already rolled one
 	})
 	if h.eng.GetState().PendingCatastrophe == "" {
 		h.t.Fatal("no catastrophe pending after entering the Iron Era")

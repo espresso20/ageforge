@@ -311,7 +311,7 @@ func (d *Dashboard) build() {
 			}
 			// Route /commands to dev exec when dev mode is active
 			if game.DevModeActive && strings.HasPrefix(cmd, "/") {
-				result := game.DevExecCommand(cmd, d.engine)
+				result := game.DevConsoleCommand(cmd, d.engine)
 				if result != "" {
 					d.engine.AddLog("info", "[positive]dev → "+result+"[-]")
 				}

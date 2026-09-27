@@ -171,13 +171,10 @@ type GameEngine struct {
 	epochEventFired    map[string]bool
 	survivedEpochs     map[string]bool // epochs where player chose Endure
 	pendingCatastrophe string          // epoch key when catastrophe modal should show; "" otherwise
-	// catastropheFired marks epochs that have already faced their catastrophe this
-	// run (random roll or voluntary invoke), so each epoch sees at most one per run.
-	// Separate from epochEventFired, which the transition roll always sets whatever
-	// it rolls: `catastrophe invoke` stays available in an epoch whose transition
-	// rolled a good or challenging event. Reset on DoPrestige/Succumb/Reset.
-	catastropheFired  map[string]bool
-	epochEventHistory []EpochEventRecord
+	// catastropheInvited forces a catastrophe at the next allowed epoch
+	// transition (Harbinger seam; see honourInvite). Not persisted yet.
+	catastropheInvited bool
+	epochEventHistory  []EpochEventRecord
 	// awakeningsFired tracks which one-time Age Awakenings have fired this run, so each
 	// fires at most once per prestige cycle and a save/reload does not re-fire. Keyed by
 	// AwakeningDef.Key. Cleared on prestige/reset alongside epochEventFired.
@@ -285,7 +282,6 @@ func NewGameEngine() *GameEngine {
 		stopCh:           make(chan struct{}),
 		currentEpoch:     config.EpochForAge("primitive_age"),
 		epochEventFired:  make(map[string]bool),
-		catastropheFired: make(map[string]bool),
 		awakeningsFired:  make(map[string]bool),
 		survivedEpochs:   make(map[string]bool),
 		legacyBonuses:    make(map[string]bool),
@@ -1831,8 +1827,8 @@ func (ge *GameEngine) fireAwakening(newAge string) {
 //   - Faith fill % gates good-event probability (see epochGoodChance).
 //   - On a bad roll, a further catastropheChanceOnBadRoll chance escalates to a
 //     catastrophe (modal prompt), but only in epochs allowed by the Iron-epoch
-//     gate, only if this epoch has not already had one this run, and never while
-//     another catastrophe is pending (it is never overwritten).
+//     gate, and never while another catastrophe is pending (it is never
+//     overwritten). An armed invite (honourInvite) skips the rolls and forces it.
 //   - Otherwise a challenging (non-catastrophe) bad event is applied immediately.
 //
 // Both rolls come from the seeded ge.rng, and the escalation roll is drawn on
@@ -1845,6 +1841,9 @@ func (ge *GameEngine) rollEpochEvent(epochKey string) {
 	}
 	ge.epochEventFired[epochKey] = true
 
+	if ge.honourInvite(epochKey) {
+		return
+	}
 	rng := ge.gameRNG()
 	if rng.Float64() < ge.epochGoodChance() {
 		ge.rollGoodEpochEvent()
@@ -1852,7 +1851,7 @@ func (ge *GameEngine) rollEpochEvent(epochKey string) {
 	}
 	escalate := rng.Float64() < catastropheChanceOnBadRoll
 	if escalate && ge.catastropheCanStrike(epochKey) {
-		ge.triggerCatastrophe(epochKey, false)
+		ge.triggerCatastrophe(epochKey, catastropheRolled)
 		return
 	}
 	ge.rollChallengingEpochEvent(epochKey)
@@ -3242,7 +3241,7 @@ func (ge *GameEngine) DoPrestige() error {
 	ge.log = nil
 	ge.currentEpoch = config.EpochForAge("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
-	ge.catastropheFired = make(map[string]bool)
+	ge.catastropheInvited = false
 	ge.awakeningsFired = make(map[string]bool)
 	ge.survivedEpochs = make(map[string]bool)
 	ge.pendingCatastrophe = ""
@@ -3339,7 +3338,7 @@ func (ge *GameEngine) Reset() {
 	ge.eliteBadge = false
 	ge.currentEpoch = config.EpochForAge("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
-	ge.catastropheFired = make(map[string]bool)
+	ge.catastropheInvited = false
 	ge.awakeningsFired = make(map[string]bool)
 	ge.survivedEpochs = make(map[string]bool)
 	ge.pendingCatastrophe = ""

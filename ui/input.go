@@ -1783,45 +1783,33 @@ func cmdDismiss(args []string, engine *game.GameEngine) CommandResult {
 }
 
 func cmdCatastrophe(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) == 0 {
-		// Bare `catastrophe`: reopen the pending choice, or report the outlook.
-		state := engine.GetState()
-		if state.PendingCatastrophe != "" {
-			return CommandResult{Type: "success", OpenCatastrophe: true}
-		}
-		return CommandResult{Message: catastropheOutlookText(state.CatastropheOutlook), Type: "info"}
-	}
-	if strings.ToLower(args[0]) != "invoke" {
+	if len(args) > 0 {
 		return CommandResult{
-			Message: "Usage: catastrophe — reopen a pending catastrophe (or show the odds)\n" +
-				"       catastrophe invoke — voluntarily trigger this epoch's catastrophe",
-			Type: "info",
+			Message: "Usage: catastrophe — reopen a pending catastrophe choice, or show the odds for the next epoch transition",
+			Type:    "info",
 		}
 	}
-	if err := engine.InvokeCatastrophe(); err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+	// Bare `catastrophe`: reopen the pending choice, or report the outlook.
+	state := engine.GetState()
+	if state.PendingCatastrophe != "" {
+		return CommandResult{Type: "success", OpenCatastrophe: true}
 	}
-	return CommandResult{
-		Message: "[red]Catastrophe invoked! Choose Endure or Succumb.[-]",
-		Type:    "warning",
-	}
+	return CommandResult{Message: catastropheOutlookText(state.CatastropheOutlook), Type: "info"}
 }
 
 // catastropheOutlookText renders the no-pending status line for the bare
-// `catastrophe` command: odds at the next epoch transition, and invoke usage.
+// `catastrophe` command: the odds at the next epoch transition.
 func catastropheOutlookText(o game.CatastropheOutlook) string {
 	var sb strings.Builder
 	sb.WriteString("No catastrophe pending.\n")
 	switch {
 	case o.NextEpochKey == "":
-		sb.WriteString("  This is the final epoch: no further transition, no random catastrophe.\n")
+		sb.WriteString("  This is the final epoch: no further transition, no random catastrophe.")
 	case !o.Possible:
-		fmt.Fprintf(&sb, "  Next transition (%s): no catastrophe possible.\n", config.EpochByKey()[o.NextEpochKey].Name)
+		fmt.Fprintf(&sb, "  Next transition (%s): no catastrophe possible.", config.EpochByKey()[o.NextEpochKey].Name)
 	default:
-		fmt.Fprintf(&sb, "  Next transition (%s): %.0f%% catastrophe chance (%s), faith %.0f%% full.\n",
+		fmt.Fprintf(&sb, "  Next transition (%s): %.0f%% catastrophe chance (%s), faith %.0f%% full.",
 			config.EpochByKey()[o.NextEpochKey].Name, o.Probability*100, o.Tier, o.FaithFill*100)
 	}
-	gate := config.EpochByKey()[config.CatastropheGateEpoch].Name
-	fmt.Fprintf(&sb, "  [gray]catastrophe invoke[-] — trigger this epoch's catastrophe now (%s onward, once per epoch per run)", gate)
-	return sb.String()
+	return strings.TrimRight(sb.String(), "\n")
 }

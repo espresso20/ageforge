@@ -161,7 +161,18 @@ func TestCatastropheCommandReopensOrReports(t *testing.T) {
 	if !strings.Contains(res.Message, "Iron Era") {
 		t.Errorf("outlook should name the next epoch:\n%s", res.Message)
 	}
-	if r := HandleCommand("catastrophe invoke", eng); r.Type != "error" {
-		t.Errorf("invoke in the Stone Era should fail, got %+v", r)
+	// The player-facing invoke is gone: it only prints usage and triggers nothing.
+	r := HandleCommand("catastrophe invoke", eng)
+	if r.OpenCatastrophe || !strings.HasPrefix(r.Message, "Usage: catastrophe") || strings.Contains(r.Message, "invoke") {
+		t.Errorf("catastrophe invoke: got %+v, want usage only", r)
+	}
+	if eng.GetState().PendingCatastrophe != "" {
+		t.Error("catastrophe invoke triggered a catastrophe")
+	}
+	if got := NewAutoCompleter(eng)("catastrophe i"); len(got) != 0 {
+		t.Errorf("autocomplete still offers catastrophe subcommands: %v", got)
+	}
+	if strings.Contains(helpProvider(eng.GetState(), 120), "catastrophe invoke") {
+		t.Error("help still lists catastrophe invoke")
 	}
 }
