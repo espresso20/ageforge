@@ -67,7 +67,7 @@ Derived from the targets:
 
 **Measuring it.** The smoke harness plays a greedy bot on fixed seeds and reports the time
 spent in each age; `smoke/targets.go` holds the same table (a test keeps the two equal) and
-`-pacing enforce` fails a run with a first-cycle age outside 0.5x-2x of it. CI runs enforced:
+`-pacing enforce` fails a set of runs whose median for a first-cycle age leaves 0.5x-2x of it. CI runs enforced:
 the per-PR fast tier grades the Primitive and Stone Ages, the nightly every age to the first
 prestige. The bot has to play like a reasonable person for this to
 measure the game rather than the bot (see the bot's strategy comment in `smoke/bot.go`).

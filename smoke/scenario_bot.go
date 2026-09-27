@@ -36,6 +36,10 @@ func runBotSet(e *Env, res *Result, name, scenario string, cfg Config, seeds []i
 		return r
 	})
 	sum := NewSummary(name, cfg, started, runs)
+	for _, p := range sum.PacingFailures {
+		res.fail(KindPacing+"/pacing_"+p.Verdict, "%s: cycle 1 %s took %s (median of %d seeds, %s to %s) against a %s target (band %gx to %gx)",
+			name, p.Age, dur(p.MedianSecs), p.Samples, dur(p.MinSecs), dur(p.MaxSecs), dur(p.TargetSecs), PacingLow, PacingHigh)
+	}
 	for _, r := range runs {
 		for _, a := range r.Anomalies {
 			f := res.fail(a.Kind+"/"+a.Check, "%s: %s (cycle %d, %s, tick %d, seen %dx)", name, a.Message, a.Cycle, a.Age, a.Tick, a.Count)

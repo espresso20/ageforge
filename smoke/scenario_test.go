@@ -245,17 +245,18 @@ func TestPrestigedAgeIsNotGraded(t *testing.T) {
 	if a := r.res.Ages[0]; !a.Prestiged || a.Verdict != VerdictNone {
 		t.Errorf("split = %+v, want prestiged and ungraded", a)
 	}
-	// A completed 0-second age is still fast, and fails under enforce.
-	r.closeAge()
-	if len(r.res.Anomalies) != 1 || r.res.Anomalies[0].Check != "pacing_fast" {
-		t.Errorf("a completed 0-second age: anomalies %+v, want one pacing_fast", r.res.Anomalies)
+	// Enforcement grades the median across seeds: one fast seed of three
+	// passes, a fast median fails, and the prestige age never counts.
+	atomic := PacingTargets["atomic_age"].Seconds()
+	runs := []*RunResult{
+		{Seed: 1, Ages: []AgeSplit{{Cycle: 1, Age: "modern_age", Prestiged: true}, {Cycle: 1, Age: "atomic_age", Seconds: atomic}, {Cycle: 1, Age: "electric_age", Seconds: 1}}},
+		{Seed: 2, Ages: []AgeSplit{{Cycle: 1, Age: "modern_age", Prestiged: true}, {Cycle: 1, Age: "atomic_age", Seconds: 0.1 * atomic}, {Cycle: 1, Age: "electric_age", Seconds: 1}}},
+		{Seed: 3, Ages: []AgeSplit{{Cycle: 1, Age: "modern_age", Prestiged: true}, {Cycle: 1, Age: "atomic_age", Seconds: atomic}, {Cycle: 2, Age: "electric_age", Seconds: 1}}},
 	}
-
-	runs := []*RunResult{{Seed: 1, Ages: []AgeSplit{
-		{Cycle: 1, Age: "modern_age", Prestiged: true},
-		{Cycle: 1, Age: "atomic_age", Seconds: PacingTargets["atomic_age"].Seconds()},
-	}}}
 	sum := NewSummary("progression", cfg, time.Now(), runs)
+	if len(sum.PacingFailures) != 1 || sum.PacingFailures[0].Age != "electric_age" || !sum.Failed {
+		t.Errorf("pacing failures = %+v, want only the cycle-1 electric_age median", sum.PacingFailures)
+	}
 	var sb strings.Builder
 	sum.writePacingTable(&sb)
 	for _, p := range sum.Pacing {

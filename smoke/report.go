@@ -24,6 +24,9 @@ type Summary struct {
 	Prices    []PriceRow    `json:"harbinger_prices"`
 	Failed    bool          `json:"failed"`
 	Anomalies int           `json:"anomaly_count"`
+	// PacingFailures are the first-cycle ages whose median across seeds left
+	// the band, under -pacing enforce (see NewSummary).
+	PacingFailures []PacingRow `json:"pacing_failures,omitempty"`
 }
 
 // ConfigJSON is Config with durations in seconds.
@@ -149,6 +152,18 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 		}
 		return rank(a) < rank(b)
 	})
+	// Enforcement grades the median across seeds, like the table: one seed's
+	// age can run fast or slow on its events (a lucky Renaissance on a good
+	// epoch roll) without the game having changed pace. Only completed ages
+	// of the first cycle count; later cycles run with prestige upgrades.
+	if cfg.Pacing == PacingEnforce {
+		for _, p := range s.Pacing {
+			if p.Cycle == 1 && !p.Unfinished && !p.Prestiged && (p.Verdict == VerdictSlow || p.Verdict == VerdictFast) {
+				s.PacingFailures = append(s.PacingFailures, p)
+				s.Failed = true
+			}
+		}
+	}
 	return s
 }
 
@@ -207,7 +222,7 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 	fmt.Fprintf(&sb, ". Took %s of wall time.\n\n", time.Duration(s.WallMs)*time.Millisecond)
 	sb.WriteString("Times are simulated wall-clock at 1x speed (tick_speed bonuses included). ")
 	if s.Config.Pacing == PacingEnforce {
-		sb.WriteString("Pacing is enforced: a first-cycle age outside its target band, or any age past its timeout, fails the run (later cycles and ages left by prestige are graded only), as do panics, soft-locks and invariant violations.\n\n")
+		sb.WriteString("Pacing is enforced: a first-cycle age whose median across seeds is outside its target band fails the set, and any age past its timeout fails its run (later cycles and ages left by prestige are graded only), as do panics, soft-locks and invariant violations.\n\n")
 	} else {
 		sb.WriteString("Pacing is report-only: ages are graded against their targets but never fail the run; panics, soft-locks and invariant violations do.\n\n")
 	}

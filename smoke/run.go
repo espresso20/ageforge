@@ -50,7 +50,8 @@ type Config struct {
 	// Pacing is PacingReport (default) or PacingEnforce. In report mode an
 	// age past its timeout and a run out of MaxSim are pacing notes, not
 	// failures, and play continues past a timeout; in enforce mode they fail
-	// the run, as does any first-cycle age outside the target band.
+	// the run, and a first-cycle age whose median across seeds leaves the
+	// target band fails the set (NewSummary).
 	Pacing string
 	// LastPassage is how the bot answers the Last Passage: "endure"
 	// (default) or "succumb" (takes the Cosmic Legacy while it can).
@@ -463,16 +464,10 @@ func (r *runner) enterAge(st game.GameState) {
 	r.timedOut = false
 }
 
+// closeAge records the age just completed. Its verdict is graded across
+// seeds in NewSummary, which is where -pacing enforce fails a set.
 func (r *runner) closeAge() {
-	a := r.split(false)
-	r.res.Ages = append(r.res.Ages, a)
-	// The targets describe a first run: later cycles play with prestige
-	// upgrades and are graded, never failed (their timeouts still apply).
-	if r.cfg.enforce() && r.cycle == 1 && (a.Verdict == VerdictSlow || a.Verdict == VerdictFast) {
-		r.anomaly(KindPacing, "pacing_"+a.Verdict,
-			fmt.Sprintf("%s took %s at 1x against a %s target (band %gx to %gx)", a.Age, dur(a.Seconds), dur(a.TargetSecs), PacingLow, PacingHigh),
-			game.GameState{}, false)
-	}
+	r.res.Ages = append(r.res.Ages, r.split(false))
 }
 
 // closeAgeByPrestige records the age a prestige left: reported, never graded

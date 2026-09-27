@@ -39,7 +39,7 @@ func run() int {
 	mode := flag.String("mode", "", "deprecated alias for -tier (quick = fast, full = full)")
 	scenarios := flag.String("scenario", "all", "comma-separated scenarios to run, or all (the tier's set); see -list")
 	list := flag.Bool("list", false, "list the scenarios and exit")
-	pacing := flag.String("pacing", smoke.PacingReport, "report (grade ages against smoke/targets.go, never fail) or enforce (fail on a first-cycle age outside the band, or any age past its timeout; progression only)")
+	pacing := flag.String("pacing", smoke.PacingReport, "report (grade ages against smoke/targets.go, never fail) or enforce (fail when a first-cycle age's median across seeds leaves the band, or any age passes its timeout; progression only)")
 	seeds := flag.Int("seeds", 0, "seeds per bot scenario (0 = the scenario's tier default)")
 	seedBase := flag.Int64("seed-base", 1, "first seed; seeds are seed-base, seed-base+1, ...")
 	catastrophe := flag.String("catastrophe", "endure", "how the bot answers a catastrophe: endure or succumb")

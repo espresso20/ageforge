@@ -69,7 +69,7 @@ func (s *Session) WriteSummary(w io.Writer) error {
 	if s.Pacing != PacingEnforce {
 		sb.WriteString(" (graded, never fails the job)")
 	} else {
-		sb.WriteString(" for the progression scenario's first cycle (graded only elsewhere)")
+		sb.WriteString(" for the progression scenario's first cycle, by median across seeds (graded only elsewhere)")
 	}
 	sb.WriteString(".\n\n")
 	s.scenarioTable(&sb)
