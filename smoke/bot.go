@@ -362,9 +362,12 @@ func (b *Bot) tradeInto(p *plan, rates map[string]game.ExchangeRateInfo, want st
 }
 
 // recently reports whether m records res within the last 150 ticks (5 min).
+// The game tick restarts at prestige, so a record from a later tick than now
+// is from the previous run and doesn't count.
 func (b *Bot) recently(m map[string]int, res string) bool {
 	t, ok := m[res]
-	return ok && b.tick-t < 150
+	d := b.tick - t
+	return ok && d >= 0 && d < 150
 }
 
 // queuedCount is how many copies of key are under construction.
