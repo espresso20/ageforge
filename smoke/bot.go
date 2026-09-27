@@ -25,8 +25,14 @@ import (
 //   - while the slowest requirement is more than the horizon away, invest in
 //     the best producer for it; otherwise save
 //   - staff buildings by how much each worker moves the requirements forward
+//   - prefer producers it can pay for within a few horizons over pricier
+//     ones that need a resource nothing makes yet
+//   - at the market: buy food when workers starve, buy whatever blocks the
+//     most wanted purchase (storage included) with spare resources, and
+//     otherwise even out the slowest target; never undo a recent trade
 //   - bank surplus into the age's wonder, research affordable techs with
-//     surplus knowledge, and hand-gather while the game allows it
+//     surplus knowledge (a tech that makes a missing target resource
+//     first), and hand-gather while the game allows it
 //
 // Every map walk goes through sorted keys so a seed replays the same decisions.
 type Bot struct {
@@ -51,6 +57,9 @@ type Bot struct {
 	// or both (level 1 only).
 	Harbinger string
 	tick      int
+	// sold and bought remember the tick each resource last left or entered
+	// through the market, so two trading rules can't undo each other.
+	sold, bought map[string]int
 }
 
 // gatherYield matches the command line's per-command cap (ui gatherMaxYield).
@@ -76,6 +85,8 @@ func NewBot(ge *game.GameEngine) *Bot {
 		HorizonTicks: 900, // 30 minutes at 1x
 		Actions:      make(map[string]int),
 		Errors:       make(map[string]int),
+		sold:         make(map[string]int),
+		bought:       make(map[string]int),
 	}
 }
 
@@ -100,6 +111,10 @@ type plan struct {
 	// blocker is the resource keeping the most wanted purchase out of reach;
 	// hand-gathering goes there first.
 	blocker string
+	// blockNeed is how much of blocker that purchase costs; blockCost is its
+	// whole price, which trades for the blocker must not sell off.
+	blockNeed float64
+	blockCost map[string]float64
 }
 
 func sortedKeys[V any](m map[string]V) []string {
@@ -237,9 +252,12 @@ func (b *Bot) trade(p *plan) {
 		return
 	}
 	rates := p.st.Trade.ExchangeRates
+	if b.tradeForFood(p, rates) || b.tradeForBlocker(p, rates) {
+		return
+	}
 	for _, want := range p.worst {
 		room := math.Min(p.target[want], p.storage[want]) - p.amt[want]
-		if room <= 0 {
+		if room <= 0 || b.recently(b.sold, want) {
 			continue
 		}
 		dW := p.target[want] - p.amt[want]
@@ -247,7 +265,7 @@ func (b *Bot) trade(p *plan) {
 		from, rate, sell := "", 0.0, 0.0
 		for _, k := range sortedKeys(rates) {
 			x := rates[k]
-			if x.To != want || x.Rate < x.BaseRate*0.6 || p.amt[x.From] < 1 {
+			if x.To != want || x.Rate < x.BaseRate*0.6 || p.amt[x.From] < 1 || b.recently(b.bought, x.From) {
 				continue
 			}
 			dS := p.target[x.From] - p.amt[x.From]
@@ -272,9 +290,81 @@ func (b *Bot) trade(p *plan) {
 		if got, err := b.ge.ExchangeResources(from, want, sell); b.act("trade", from+"->"+want, err) {
 			p.amt[from] -= sell
 			p.amt[want] += got
+			b.sold[from], b.bought[want] = b.tick, b.tick
 		}
 		return
 	}
+}
+
+// tradeForBlocker buys the resource blocking the most wanted purchase when
+// the market sells it: it sells whatever the bot holds the most spare of
+// (above what this age's targets need), at most a quarter of that cap per
+// trade. Reports whether it traded.
+func (b *Bot) tradeForBlocker(p *plan, rates map[string]game.ExchangeRateInfo) bool {
+	want := p.blocker
+	if want == "" {
+		return false
+	}
+	return b.tradeInto(p, rates, want, math.Min(p.blockNeed, p.storage[want])-p.amt[want], p.blockCost)
+}
+
+// tradeForFood buys food when workers are starving and no food building is
+// affordable (the Iron Age field works costs iron the bot may not have).
+// Starvation drags morale down and every rate with it, a spiral a player
+// would break at the market.
+func (b *Bot) tradeForFood(p *plan, rates map[string]game.ExchangeRateInfo) bool {
+	food := p.st.Resources["food"]
+	if p.foodRate >= 0 || food.Amount > 0.1*food.Storage {
+		return false
+	}
+	return b.tradeInto(p, rates, "food", 0.25*food.Storage-food.Amount, nil)
+}
+
+// tradeInto sells whatever the bot holds the most spare of for up to short
+// of want, in one trade. keep is a price whose inputs must not be sold.
+func (b *Bot) tradeInto(p *plan, rates map[string]game.ExchangeRateInfo, want string, short float64, keep map[string]float64) bool {
+	if short <= 0 || b.recently(b.sold, want) {
+		return false
+	}
+	from, best, sell := "", 0.0, 0.0
+	for _, k := range sortedKeys(rates) {
+		x := rates[k]
+		if x.To != want || x.Rate < x.BaseRate*0.6 || x.Rate <= 0 || b.recently(b.bought, x.From) {
+			continue
+		}
+		// Spare is what this age's targets and the purchase itself don't
+		// need, or, for a resource sitting at its cap, whatever the cap is
+		// wasting anyway. (Selling the purchase's other inputs would just
+		// swap which one blocks it.)
+		spare := p.amt[x.From] - p.target[x.From] - keep[x.From]
+		if p.amt[x.From] >= 0.95*p.storage[x.From] {
+			spare = math.Max(spare, math.Min(0.25*p.storage[x.From], p.amt[x.From]-keep[x.From]))
+		}
+		if spare <= 0 {
+			continue
+		}
+		n := math.Min(math.Min(spare, 0.25*p.storage[x.From]), short/x.Rate)
+		if v := n * x.Rate; v > best {
+			from, best, sell = x.From, v, n
+		}
+	}
+	if from == "" || sell < 1 {
+		return false
+	}
+	got, err := b.ge.ExchangeResources(from, want, sell)
+	if !b.act("trade", from+"->"+want, err) {
+		return false
+	}
+	p.amt[from] -= sell
+	p.amt[want] += got
+	b.sold[from], b.bought[want] = b.tick, b.tick
+	return true
+}
+
+// recently reports whether m records res within the last 150 ticks (5 min).
+func (b *Bot) recently(m map[string]int, res string) bool {
+	t, ok := m[res]
+	return ok && b.tick-t < 150
 }
 
 // queuedCount is how many copies of key are under construction.
@@ -406,7 +496,12 @@ func (b *Bot) tryBuild(p *plan, key, kind string) bool {
 // a producer of that resource instead. Reports whether key itself was bought.
 func (b *Bot) buyOrBootstrap(p *plan, key, kind string, depth int) bool {
 	c := b.cost(p, key)
-	if p.fits(c) && p.affordable(c) {
+	if !p.fits(c) {
+		// Over a cap: fits noted it in capNeed and the storage pass comes
+		// first. Chasing the capped resource itself would only waste it.
+		return false
+	}
+	if p.affordable(c) {
 		return b.tryBuild(p, key, kind)
 	}
 	block, worst := "", -1.0
@@ -427,7 +522,7 @@ func (b *Bot) buyOrBootstrap(p *plan, key, kind string, depth int) bool {
 		return false
 	}
 	if p.blocker == "" {
-		p.blocker = block
+		p.blocker, p.blockNeed, p.blockCost = block, c[block], c
 	}
 	if depth > 0 {
 		if k2, ok := b.bestFor(p, producer(block)); ok && k2 != key {
@@ -605,9 +700,15 @@ func (b *Bot) assign(p *plan, pop int) {
 }
 
 // bestFor picks the buildable building with the best effect value per unit
-// of cost for (typ, target). match decides whether an effect counts.
+// of cost for (typ, target). match decides whether an effect counts. It
+// prefers buildings the bot can pay for within a few horizons at current
+// rates: a pricier producer that needs a resource nothing makes yet (the
+// Renaissance foundry's steel) loses to one it can actually buy (the mill),
+// as it would for a human. If nothing is reachable it falls back to the best
+// score, so buyOrBootstrap can go after the blocker.
 func (b *Bot) bestFor(p *plan, match func(config.Effect) float64) (string, bool) {
 	best, bestScore := "", 0.0
+	far, farScore := "", 0.0
 	for _, key := range sortedKeys(p.st.Buildings) {
 		if !b.buildable(p, key) {
 			continue
@@ -623,11 +724,39 @@ func (b *Bot) bestFor(p *plan, match func(config.Effect) float64) (string, bool)
 		if !p.fits(c) {
 			continue
 		}
-		if s := v / p.costFrac(c); s > bestScore {
+		s := v / p.costFrac(c)
+		if b.payEta(p, c) > 4*b.HorizonTicks {
+			if s > farScore {
+				far, farScore = key, s
+			}
+			continue
+		}
+		if s > bestScore {
 			best, bestScore = key, s
 		}
 	}
+	if best == "" {
+		best = far
+	}
 	return best, best != ""
+}
+
+// payEta is how many ticks until the bot holds cost at current rates (0 if
+// it already does, +Inf if a missing resource is not being produced).
+func (b *Bot) payEta(p *plan, cost map[string]float64) float64 {
+	eta := 0.0
+	for r, c := range cost {
+		deficit := c - p.amt[r]
+		if deficit <= 0 {
+			continue
+		}
+		rate := p.st.Resources[r].Rate
+		if rate <= 0 {
+			return math.Inf(1)
+		}
+		eta = math.Max(eta, deficit/rate)
+	}
+	return eta
 }
 
 func producer(res string) func(config.Effect) float64 {
@@ -672,11 +801,13 @@ func (b *Bot) build(p *plan) {
 		}
 	}
 
-	// 3. Storage for anything that must fit under a cap.
+	// 3. Storage for anything that must fit under a cap. A storage building
+	// the bot can't pay for records its blocker, so the market can supply it
+	// (the Renaissance vault's stone, which nothing in that age produces).
 	for _, res := range sortedKeys(p.capNeed) {
 		for i := 0; i < 50 && p.capNeed[res] > p.storage[res]*0.98; i++ {
 			key, ok := b.bestFor(p, storer(res))
-			if !ok || !b.tryBuild(p, key, "build_storage") {
+			if !ok || !b.buyOrBootstrap(p, key, "build_storage", 0) {
 				break
 			}
 		}
@@ -709,7 +840,9 @@ func (b *Bot) build(p *plan) {
 }
 
 // bankWonder moves surplus above the age requirements into the wonder bank.
-// While investing it only banks what would otherwise be lost at the cap.
+// While investing it only banks what would otherwise be lost at the cap,
+// unless nothing but the wonder wants that resource (the Hoover Dam's
+// stone): holding it back then only delays the advance.
 func (b *Bot) bankWonder(p *plan) {
 	w := p.st.CurrentAgeWonderKey
 	if w == "" {
@@ -723,23 +856,30 @@ func (b *Bot) bankWonder(p *plan) {
 			continue
 		}
 		keep := p.st.NextAgeResReqs[res]
-		if p.invest {
+		onlyWonder := p.target[res]-left <= keep
+		if p.invest && !onlyWonder {
 			if p.amt[res] < 0.9*p.storage[res] {
 				continue
 			}
 			keep = math.Max(keep, 0.5*p.storage[res])
 		}
 		dep := math.Min(left, p.amt[res]-keep)
-		if dep < 1 {
+		if dep < left {
+			dep = math.Floor(dep) // whole units, except the last fraction
+		}
+		if dep <= 0 || (dep < 1 && dep < left) {
 			continue
 		}
-		if b.act("bank_wonder", fmt.Sprintf("%s %.0f", res, math.Floor(dep)), b.ge.BankWonderResource(w, res, math.Floor(dep))) {
-			p.amt[res] -= math.Floor(dep)
+		if b.act("bank_wonder", fmt.Sprintf("%s %.0f", res, dep), b.ge.BankWonderResource(w, res, dep)) {
+			p.amt[res] -= dep
 		}
 	}
 }
 
-// research starts the cheapest available tech the knowledge surplus pays for.
+// research starts the cheapest available tech the knowledge surplus pays
+// for, except that a tech producing a target resource nothing else is
+// producing goes first (steel forging when the Renaissance asks for steel
+// and no Medieval building makes it).
 func (b *Bot) research(p *plan) {
 	rs := p.st.Research
 	if rs.CurrentTech != "" {
@@ -750,7 +890,22 @@ func (b *Bot) research(p *plan) {
 	capK := p.storage["knowledge"]
 	rate := p.st.Resources["knowledge"].Rate
 	keys := sortedKeys(rs.Techs)
-	sort.SliceStable(keys, func(i, j int) bool { return rs.Techs[keys[i]].Cost < rs.Techs[keys[j]].Cost })
+	techs := config.TechByKey()
+	unblocks := func(key string) bool {
+		for _, e := range techs[key].Effects {
+			if e.Type == "production" && p.target[e.Target] > p.amt[e.Target] && p.st.Resources[e.Target].Rate <= 0 {
+				return true
+			}
+		}
+		return false
+	}
+	sort.SliceStable(keys, func(i, j int) bool {
+		ui, uj := unblocks(keys[i]), unblocks(keys[j])
+		if ui != uj {
+			return ui
+		}
+		return rs.Techs[keys[i]].Cost < rs.Techs[keys[j]].Cost
+	})
 	for _, key := range keys {
 		t := rs.Techs[key]
 		if !t.Available || t.Researched || t.Cost > k {
