@@ -1,4 +1,4 @@
-.PHONY: build run clean check test vet validate all release release-patch release-minor release-major commit
+.PHONY: build run clean check test vet validate smoke smoke-full all release release-patch release-minor release-major commit
 
 # Default: build + vet + run
 all: check run
@@ -38,6 +38,22 @@ test:
 # Run tests (raw go test output, for CI or piping)
 test-raw: build vet
 	@go test ./... -v -count=1
+
+# Smoke test (quick, a few minutes): UI sweep under every theme, then the headless
+# autoplayer on 5 seeds up to the first prestige. Report in smoke-report/.
+# Fails on panics, soft-locks and invariant violations, never on pacing.
+smoke:
+	@status=0; \
+	go test -tags smoke -count=1 -run TestSmokeUISweep ./ui || status=1; \
+	go run ./cmd/smoke -mode quick -out smoke-report || status=1; \
+	exit $$status
+
+# Nightly smoke: more seeds, two prestige cycles, then on to deep ages.
+smoke-full:
+	@status=0; \
+	go test -tags smoke -count=1 -run TestSmokeUISweep ./ui || status=1; \
+	go run ./cmd/smoke -mode full -out smoke-report || status=1; \
+	exit $$status
 
 # Run the game
 run: build
