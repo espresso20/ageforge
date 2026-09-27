@@ -271,7 +271,7 @@ go run ./cmd/smoke -h                        # every flag
 
 - **Fast tier** (`make smoke`, `-tier fast`): the scenarios above marked fast. It runs on every pull request as the `smoke (fast tier)` job in `.github/workflows/go.yml` (skipped for doc-only changes, like the rest of that workflow), writes a summary to the job page and uploads `smoke-report/` as an artifact.
 - **Full tier** (`make smoke-full`, `-tier full`): every scenario, deeper. It runs nightly in `.github/workflows/smoke.yml` (and on demand from the Actions tab) with the same summary and artifact.
-- Both fail on panics, soft-locks, invariant violations, save/load divergence, fuzz failures, account failures, docs mismatches and blown perf budgets. Pacing does not fail them while it runs in report mode.
+- Both fail on panics, soft-locks, invariant violations, save/load divergence, fuzz failures, account failures, docs mismatches and blown perf budgets, and both run with `-pacing enforce`, so an age of the progression scenario's first cycle outside its pacing band fails them too (see Pacing targets below).
 - **Known bugs** can be reported as warnings instead of failures so the job stays useful while they wait for a fix (`-strict` fails on them too); today there are none. When a known bug is fixed, delete its special case in the scenario.
 
 #### Reading the report
@@ -289,7 +289,9 @@ Before calling a soft-lock a bug, check whether a sensible player would be stuck
 
 `smoke/targets.go` holds the pacing contract: the time a player should spend in each age at 1x game time (15 minutes in the Primitive Age up to 12 hours in the Atomic Age, about 3 days to the Modern Age and the first prestige, then 12 to 24 hours per age). An age passes when it takes 0.5x to 2x its target; the report marks each age ✓, slow or fast. The per-age timeout is derived from the same table (4x the target, at least an hour): in report mode an age past it is flagged and play goes on, so a slow age reads as slow instead of killing the run, and only a true no-progress soft-lock fails.
 
-To change the targets, edit `PacingTargets` in `smoke/targets.go` (`PacingLow`, `PacingHigh`, `TimeoutFactor` and `TimeoutFloor` sit beside it); `TestTargetsCoverEveryAge` checks every age has one. `-pacing enforce` makes an age outside the band, or past its timeout, fail the run. Switch the nightly to it once the balance lands on the table.
+The game derives its economy from the same table (payback times, build and research caps; see `design-and-architecture/economy.md`, Law 2), so the targets live in the game: to change them, edit `config.AgeTargets` in `config/pacing.go`, then make `PacingTargets` in `smoke/targets.go` match it. `TestPacingTargetsMatchConfig` fails while the two differ, and `TestTargetsCoverEveryAge` checks every age but the last has one. `PacingLow`, `PacingHigh`, `TimeoutFactor` and `TimeoutFloor` sit beside `PacingTargets`. Changing a target changes the game, not just the grade: every producer's rate follows it.
+
+**Pacing is enforced in CI.** Both tiers run with `-pacing enforce`: in the progression scenario an age of the first cycle outside the band, or any age past its timeout, fails the run, so a PR that makes the game meaningfully slower or faster fails its `smoke (fast tier)` check (the fast tier grades the Primitive and Stone Ages) and the nightly grades every age to the prestige. Later cycles run with prestige upgrades and are graded but never fail (the targets describe a first run), an age left by prestige is not a completed age and isn't graded, and the other scenarios always run in report mode (the idle style checks in every three hours; saveload and perf cut their runs short). If a balance change moves an age out of the band on purpose, change the target in the same PR.
 
 #### Email
 

@@ -66,8 +66,10 @@ Derived from the targets:
   payback time, the next copy is minutes away early and an hour or two late.
 
 **Measuring it.** The smoke harness plays a greedy bot on fixed seeds and reports the time
-spent in each age; `smoke/targets.go` holds the same table and `-pacing enforce` fails a run
-whose median leaves 0.5x-2x of it. The bot has to play like a reasonable person for this to
+spent in each age; `smoke/targets.go` holds the same table (a test keeps the two equal) and
+`-pacing enforce` fails a run with a first-cycle age outside 0.5x-2x of it. CI runs enforced:
+the per-PR fast tier grades the Primitive and Stone Ages, the nightly every age to the first
+prestige. The bot has to play like a reasonable person for this to
 measure the game rather than the bot (see the bot's strategy comment in `smoke/bot.go`).
 
 ### Law 3 — The Payback Rule
@@ -110,12 +112,20 @@ hand-set rates, and requirements on them, including wonder prices, are sized to 
 age produces of them. Resources no building of an age costs (iron ore, marble, knowledge
 before the Medieval Age) also keep their typed rates.
 
+"What the age produces" has one definition, **`config.FlowIncome(res, age)`**: the output
+of `FlowCopies` (5) fully staffed copies of every producer of the resource from the
+Primitive Age up to that age, plus every earlier age's wonder (each advance requires its
+age's wonder, so they stand), plus the flat output of the techs up to that age. It is a
+moderate investment, not a maximum, and it leaves out bonuses and worker upkeep. The Gate
+Covenant's flow check and the harbinger's Appease price are both sized to it.
+
 **Market parity (corollary).** The market trades any two construction resources of the
 player's current age at parity less a 20% fee, whether or not the pair is listed in
 `config.BaseExchangeRates`. So a round trip always loses value and trading never beats
 building, and every construction resource has a source as long as one of them is produced:
-stone after the Bronze Age, iron after the Medieval Age, steel from the Modern Age on, titanium and crypto
-come from the market. Listed pairs with a flow resource (or knowledge where it isn't a
+stone after the Bronze Age, iron after the Medieval Age, steel from the Modern Age on,
+crypto, and titanium outside the Space Age (whose Orbital Refinery makes it) come from the
+market. Listed pairs with a flow resource (or knowledge where it isn't a
 construction resource) keep their fixed rates.
 
 **Wonders** cost `WonderPriceUnits` (40) price units of their age, in their typed resource
@@ -238,31 +248,44 @@ discounts assumed**:
    **half** that storage in every resource it costs. This is the 2× of Law 1.
 3. **Storable (resources):** each resource requirement is at most **80%** of that storage
    (1.25× headroom), so the gate never needs the last storage slot of every age.
-4. **Sourced:** every resource the gate asks for, directly or in a required building's price,
-   has a way in by the end of A that does not need that resource first: a building that
-   doesn't cost it, hand gathering (food, wood, stone, through the Medieval Age), a market
-   exchange, or techs whose flat output alone covers the whole amount within 48 hours at 1x.
-   A producer that costs its own output (the Bronze Age smithy and iron, the Renaissance mill
-   and steel) doesn't count until something else supplies the first batch.
+4. **Storable (wonder):** each part of A's wonder, which every advance also requires, costs
+   at most that storage. Wonders are banked a deposit at a time (`wonder collect`), so no
+   margin is asked for, but a part bigger than a full store means banking at the cap in
+   rounds.
+5. **Sourced:** every resource the gate asks for, directly, in a required building's price
+   or in the wonder's, has a way in **in A** that does not need that resource first: a
+   building of A that doesn't cost it, hand gathering (food, wood, stone, through the
+   Medieval Age), a market exchange (a listed pair, or parity when the resource is a
+   construction resource of A), or techs whose flat output alone covers the whole amount
+   within 48 hours at 1x. Older ages' producers only count through the market's parity:
+   the age lock stops you building more of them, and their output is sized to an older
+   age's prices (the Stellar Cradle cost 940T uranium in the Fusion Age, where only old
+   Atomic Age mines made any). A producer that costs its own output (the Bronze Age smithy
+   and iron, the Renaissance mill and steel) doesn't count until something else supplies
+   the first batch.
+6. **Flow within the target:** every flow resource the gate asks for (requirement, required
+   copies and wonder together) is made within A's pacing target at `FlowIncome`, or the rest
+   costs at most **10 price units** of A at the market's listed pairs (gold → food, gold →
+   culture). Faith has no market, so a faith requirement must fit A's own output: the
+   Renaissance's old 44K faith at about 1.5 faith/tick and the Sistine Chapel's old 6M faith
+   both fail it.
 
 The same sourcing rule applies to every building on its own: nothing may cost a resource
 with no source in the building's own age (coal before the Renaissance, crypto before
-Cyberpunk). Those buildings were dead content.
+Cyberpunk). Those buildings were dead content. The last age's wonder, which no gate
+requires, is checked the same way.
 
 `smoke.StaticGates` implements all of this and `TestGateCovenant` (smoke/static_test.go)
 fails `go test ./...` when a balance change breaks it, so it runs in CI on every PR.
-
-Two things the covenant does not check yet: the current age's **wonder**, which every
-advance also requires (the Stellar Cradle cost 940T uranium in an age where only the
-market's fixed-rate pairs and old Atomic buildings could supply it), and whether a
-requirement on a **flow resource** can be met in a reasonable time (the Renaissance asked
-44K faith at about 1.5 faith/tick). Both were fixed by hand in the pacing rebalance.
+`TestGateCovenantCatchesBrokenGates` feeds it the old broken numbers and checks each one is
+caught.
 
 **Gate size.** With Law 3 the time an age takes follows mostly from its gate (required
 buildings plus wonder, in price units) and the stock of older buildings. Gates that were
 far smaller than their neighbours' finished in a fraction of the target and were enlarged
 (Classical, Colonial, Industrial); the steel-heavy Space Age gate was trimmed, since steel
-and titanium come only from the market there.
+and titanium came only from the market there, and the Space Age's Orbital Refinery now
+makes titanium.
 
 **Levers, in order of preference.** When a gate breaks the covenant:
 
@@ -389,6 +412,41 @@ comes at about 2.4 days on seeds 1–10. Space (2.1x) is the one age still outsi
 
 The Iron Age gate keeps its 80K food and 20K knowledge: the Stone Era harbinger's prices are
 derived from it.
+
+## Appendix — Pacing follow-ups (2026-09-27)
+
+Time in each age for the smoke bot (Harbinger ignored), median (min–max) over seeds 1–5,
+playing to a Quantum Age prestige. The Space Age was the one age out of band.
+
+| Age | Target | Before | After |
+|---|---|---|---|
+| Fusion | 20 h | 17.7 h (16.8–18.1) | 16.8 h (16.3–16.9) |
+| Space | 22 h | 2.1 d (1.8–2.2) | 1.2 d (1.1–1.2) |
+| Interstellar | 24 h | 1.8 d (1.7–1.9) | 1.5 d (1.5–1.6) |
+| Galactic | 24 h | 1.2 d (1.2–1.3) | 1.3 d (1.3–1.3) |
+
+Every age from the Primitive to the Galactic is now inside 0.5x–2x; the ages before Fusion
+moved by at most 0.2x (the bot's trading change below touches every age).
+
+**Why the Space Age was slow.** Titanium unlocks there, nearly every Space building costs
+it, and nothing made it. That alone is only the market's 20% fee, but the smoke bot, whose
+slowest target was titanium, traded the plasma and electricity it was saving for the next
+producer into titanium as fast as they came in, so it hardly invested in the Space Age at
+all. The bot no longer sells what its most wanted purchase is saved for (unless that
+resource sits at its cap), and the Orbital Refinery now makes titanium (it made dark matter,
+which unlocks an age later) without costing it (its 88T titanium went to plasma), so the age
+has a producer that can start the supply. The bot change did most of it: 2.3x to 1.3x with
+the refinery either way.
+
+### Hand-set numbers
+
+| What | Before | After | Why |
+|---|---|---|---|
+| Orbital Refinery | 4 dark matter/tick; 88T titanium, 44T plasma, 110T electricity (typed) | titanium (Law 3 rate); 110T plasma, 110T electricity | a Space Age titanium producer that doesn't need titanium first |
+| Sistine Chapel (typed) | 9.9M stone, 7M gold | 8.5M stone, 8.5M gold (24M each after sizing) | 27M stone was over the 25.5M Renaissance storage |
+| World Simulation (typed) | 50T steel, 6T electricity | 30T steel, 18T electricity (34T, 20T after sizing) | 54T steel was over the 46.8T Digital storage |
+| Iron Forged milestone | 40 coal | 40 iron | coal is locked until the Renaissance |
+| Harbinger Appease | 15% of the passage storage | 1/4 of `FlowIncome` over the thread's ages | faith is a flow resource; see epochs.md |
 
 ## Appendix — Gate Covenant fixes (2026-09-26)
 
