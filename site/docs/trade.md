@@ -6,7 +6,7 @@ Two interlocking systems power your economy beyond raw production: **resource ex
 
 ## Resource Exchange
 
-Instant, one-off swaps between two resource types. You need at least one trade building before any exchange is possible: a `market` or anything later in the trade lineage (trading post, merchant quarter, guildhall, exchange, port, stock exchange, bank, ...). Upgrading your markets keeps the exchange open, since the upgraded buildings count too.
+Instant, one-off swaps between two resource types. You need at least one trade building before any exchange is possible: a `market` or anything later in the trade lineage (trading post, merchant quarter, guildhall, exchange, port, stock exchange, bank, ...). Upgrading your markets keeps the exchange open, since the upgraded buildings count too. If you skipped the market in the Bronze Age, the Iron Age trading post costs only stone and iron, so it can always open the exchange (and it is the Iron Age's gold producer).
 
 ```
 trade <from> <to> <amount>

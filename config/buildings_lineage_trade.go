@@ -28,7 +28,11 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 1 — iron_age  rate=0.10
 	b = append(b, BuildingDef{
 		Name: "Trading Post", Key: "trading_post", Category: "production",
-		BaseCost:    map[string]float64{"stone": 5500, "iron": 2500, "gold": 1500},
+		// note: no gold. The trading post is the Iron Age's only gold
+		// producer and its only trade building (the market needs one), and
+		// the Bronze Age market is optional, so a gold price locked players
+		// out of gold for the whole age. The Payback Rule re-derives its rate.
+		BaseCost:    map[string]float64{"stone": 5500, "iron": 2500},
 		CostScale:   1.40,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 0.10}},
 		BuildTicks:  300,

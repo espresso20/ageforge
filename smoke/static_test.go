@@ -102,3 +102,59 @@ func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 		}
 	}
 }
+
+// TestGateCovenantCatchesColdStartTraps feeds the covenant the Iron Age
+// trading post as it was, priced in gold. It was the Iron Age's only gold
+// producer and its only trade building (the market needs one), so a player
+// who skipped the optional Bronze Age market could never get gold in the
+// Iron Age: not for the trading post, nor for the agoras, legion forts and
+// temples, nor for the Classical Age's gold (and its knowledge, which only
+// the gold-priced agora makes). The old rule counted market parity without
+// asking whether a trade building could stand.
+//
+// The second case is the carry-over assumption at work: had the Iron Age
+// gate required a market, that market would stand in the Iron Age, the
+// exchange would be open, and the same price would be fine.
+func TestGateCovenantCatchesColdStartTraps(t *testing.T) {
+	oldPost := func() map[string]config.BuildingDef {
+		defs := config.BuildingByKey()
+		post := defs["trading_post"]
+		post.BaseCost = map[string]float64{"stone": 32000, "iron": 15000, "gold": 8800}
+		defs["trading_post"] = post
+		return defs
+	}
+	problems, _ := staticGates(config.Ages(), oldPost())
+	want := map[string]bool{"dead_building/trading_post": false, "dead_building/agora": false,
+		"dead_building/legion_fort": false, "dead_building/temple": false,
+		"unsourced/classical_age requirement/gold": false, "unsourced/classical_age requirement/knowledge": false}
+	for _, g := range problems {
+		k := g.Kind + "/" + g.Key
+		if g.Kind == "unsourced" {
+			k += "/" + g.Resource
+		}
+		if _, ok := want[k]; ok {
+			want[k] = true
+			continue
+		}
+		t.Errorf("unexpected problem %+v", g)
+	}
+	for k, seen := range want {
+		if !seen {
+			t.Errorf("guard missed %s", k)
+		}
+	}
+
+	ages := config.Ages()
+	for i := range ages {
+		if ages[i].Key == "iron_age" {
+			reqs := map[string]int{"market": 1}
+			for k, v := range ages[i].BuildingReqs {
+				reqs[k] = v
+			}
+			ages[i].BuildingReqs = reqs
+		}
+	}
+	if problems, _ := staticGates(ages, oldPost()); len(problems) > 0 {
+		t.Errorf("with a required Bronze Age market carried into the Iron Age, want no problems, got %+v", problems)
+	}
+}
