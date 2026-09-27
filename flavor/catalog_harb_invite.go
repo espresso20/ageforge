@@ -13,11 +13,11 @@ package flavor
 // A false prophet can be invited too, and the engine forces the catastrophe
 // anyway. For that case the caller sends Kind: KindFalseProphet on
 // HarbingerFulfilled, which adds a few lines about a liar proved right by
-// somebody else. Those lines live only in the ancient and feudal pools, the
-// only ages a false prophet can appear in.
+// somebody else. Those lines live in the ancient and feudal pools, where
+// nearly every false warning ends.
 
-// KindFalseProphet is the Request.Kind for HarbingerFulfilled when the
-// harbinger who was invited had been lying.
+// KindFalseProphet is the Request.Kind for HarbingerFulfilled and
+// HarbingerVindicated when the warning had been invented.
 const KindFalseProphet = "false_prophet"
 
 var tFalse = []string{KindFalseProphet}

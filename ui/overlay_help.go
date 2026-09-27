@@ -62,6 +62,8 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("  [cyan]festival[-]                        - Spend culture for a temporary production boost\n")
 	sb.WriteString("  [cyan]festival confirm yes[-]            - Hold the festival now\n")
 	sb.WriteString("  [cyan]catastrophe[-]                     - Reopen a pending catastrophe choice (or show the odds)\n")
+	sb.WriteString("  [cyan]harbinger[-]                       - Open the Harbinger panel (alias: harb)\n")
+	sb.WriteString("  [cyan]harbinger[-] appease|brace|invite  - Answer the harbinger without the panel\n")
 
 	sb.WriteString("\n[gold]═══ Game ═══[-]\n")
 	sb.WriteString("  [cyan]rates[-]                       - Show resource rate breakdown\n")
@@ -101,6 +103,7 @@ func helpProvider(_ game.GameState, _ int) string {
 		{"workers", "Worker domains & assignments"},
 		{"logs", "Recent game log entries"},
 		{"epoch", "Epoch progress & catastrophe"},
+		{"harbinger", "The harbinger's warning & your answers (alias: harb)"},
 		{"history", "Civilization history timeline"},
 		{"buildings", "Built structures by lineage"},
 		{"citymap", "Your settlement map (alias: map)"},
@@ -131,6 +134,7 @@ func helpProvider(_ game.GameState, _ int) string {
 			{"/prestige <level 0-9>", "Set prestige level"},
 			{"/speed <multiplier>", "Set the tick-speed multiplier"},
 			{"/catastrophe", "Force the current epoch's catastrophe (Iron Era on)"},
+			{"/harbinger", "Bring the current age's harbinger now"},
 		} {
 			sb.WriteString("  [cyan]" + padRight(d.cmd, 28) + "[-] — " + d.desc + "\n")
 		}

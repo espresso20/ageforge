@@ -40,7 +40,8 @@ const (
 	catastropheChanceOnBadRoll = 0.30
 
 	// Endure consequences.
-	endureDestroyDivisor   = 5    // floor(destroyable/5) = 20% of non-wonder buildings
+	// Endure destroys 20% of non-wonder buildings (floor) unbraced; see
+	// braceDestroyPct in harbinger.go for the braced shares.
 	endureResourceKeep     = 0.15 // resources drop to 15% of stored amounts
 	endureWorkerLoss       = 0.25 // 25% of the worker pool is lost
 	endureDebuffTicks      = 216  // Reconstruction Effort duration
@@ -178,7 +179,7 @@ func (ge *GameEngine) catastropheBlockErr(action string) error {
 const (
 	catastropheRolled  = ""        // bad transition roll escalated
 	catastropheForced  = "forced"  // dev console /catastrophe
-	catastropheInvited = "invited" // honoured invite (Harbinger seam, unwired)
+	catastropheInvited = "invited" // honoured invite (the Harbinger's Invite)
 )
 
 // triggerCatastrophe makes epochKey's catastrophe pending: log line, history
@@ -244,13 +245,12 @@ func (ge *GameEngine) forceCatastrophe() error {
 	return nil
 }
 
-// Harbinger seam (not wired to any command or UI yet).
+// Invite (armed by the Harbinger's Invite action; see harbinger.go).
 //
 // catastropheInvited, when set, makes the next epoch transition into an epoch
 // allowed by the Iron gate produce a catastrophe instead of rolling. It is
 // consumed when honoured, kept while the target is gated or another
-// catastrophe is pending, and not persisted. The Harbinger's "Invite it"
-// action will set it (and persist it) in a later change.
+// catastrophe is pending, persisted, and cleared by Succumb and prestige.
 
 // inviteCatastrophe arms the invite. Must be called under the write lock.
 func (ge *GameEngine) inviteCatastrophe() { ge.catastropheInvited = true }
@@ -289,7 +289,7 @@ func (ge *GameEngine) catastropheOutlook() CatastropheOutlook {
 		return out
 	}
 	out.Possible = true
-	out.Probability = (1 - ge.epochGoodChance()) * catastropheChanceOnBadRoll
+	out.Probability = (1 - ge.epochGoodChance()) * catastropheChanceOnBadRoll * ge.harbingerAppeaseMultiplier()
 	if ge.catastropheInvited {
 		out.Probability = 1
 	}
@@ -318,8 +318,10 @@ func (ge *GameEngine) releaseWorkersFrom(destroyed map[string]int) {
 
 // Endure executes the Endure consequences for the pending catastrophe:
 //   - 20% of destroyable (non-wonder) buildings destroyed, at least 1 if any;
-//     workers assigned to them return to the idle pool
-//   - all unlocked resources drop to 15% of their stored amounts
+//     workers assigned to them return to the idle pool (15% / 10% when the
+//     harbinger was braced at level 1 / 2)
+//   - all unlocked resources drop to 15% of their stored amounts (30% / 45%
+//     braced)
 //   - 25% of the worker pool lost, spread proportionally over every building
 //   - Reconstruction Effort: production -10% for 216 ticks
 //   - morale -0.10
@@ -335,6 +337,13 @@ func (ge *GameEngine) Endure() error {
 	}
 	epochKey := ge.pendingCatastrophe
 	ge.pendingCatastrophe = ""
+	// A Brace bought from the harbinger softens the blow.
+	brace := ge.pendingBraceLevel
+	if brace < 0 || brace > HarbingerMaxBrace {
+		brace = 0
+	}
+	ge.pendingBraceLevel = 0
+	destroyPct, keep := braceDestroyPct[brace], braceKeepFrac[brace]
 	ge.survivedEpochs[epochKey] = true
 	ge.setCatastropheOutcome(epochKey, CatastropheEndured)
 
@@ -342,7 +351,7 @@ func (ge *GameEngine) Endure() error {
 	epName := config.EpochByKey()[epochKey].Name
 
 	destroyable := ge.Buildings.DestroyableCount()
-	destroyCount := destroyable / endureDestroyDivisor
+	destroyCount := destroyable * destroyPct / 100
 	if destroyCount < 1 && destroyable > 0 {
 		destroyCount = 1
 	}
@@ -351,7 +360,7 @@ func (ge *GameEngine) Endure() error {
 
 	for key, r := range ge.Resources.resources {
 		if r != nil && ge.Resources.IsUnlocked(key) {
-			r.Amount *= endureResourceKeep
+			r.Amount *= keep
 		}
 	}
 
@@ -371,7 +380,10 @@ func (ge *GameEngine) Endure() error {
 	for _, desc := range names {
 		ge.addLog("warning", fmt.Sprintf("  → %s lost", desc))
 	}
-	ge.addLog("warning", "  All resources reduced to 15% of stored amounts.")
+	if brace > 0 {
+		ge.addLog("info", fmt.Sprintf("  Braced (level %d): %d%% of buildings lost instead of 20%%, %.0f%% of stock kept instead of 15%%.", brace, destroyPct, keep*100))
+	}
+	ge.addLog("warning", fmt.Sprintf("  All resources reduced to %.0f%% of stored amounts.", keep*100))
 	ge.addLog("warning", "  25% of workers lost.")
 	ge.addLog("info", fmt.Sprintf("  Timed: production -10%% for %d ticks (reconstruction period).", endureDebuffTicks))
 	ge.addLog("success", fmt.Sprintf("  ✦ Survived marker earned for %s badge.", epName))
@@ -448,7 +460,7 @@ func (ge *GameEngine) Succumb() error {
 	ge.starvationTicks = 0
 	ge.currentEpoch = config.EpochForAge("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
-	ge.catastropheInvited = false
+	ge.clearHarbingerRun()
 	ge.awakeningsFired = make(map[string]bool)
 	ge.survivedEpochs = make(map[string]bool)
 	ge.pendingCatastrophe = ""

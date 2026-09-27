@@ -1,6 +1,8 @@
 # Catastrophe System
 
-A catastrophe is a civilization-threatening event that forces a permanent choice: **Endure** or **Succumb**. Catastrophes strike when your civilization crosses into a new epoch, from the **Iron Era** on. You can't trigger one yourself.
+A catastrophe is a civilization-threatening event that forces a permanent choice: **Endure** or **Succumb**. Catastrophes strike when your civilization crosses into a new epoch, from the **Iron Era** on. You can't trigger one directly; the only way to choose one is to **Invite** it when a harbinger comes.
+
+> **The Harbinger.** Every epoch whose transition can bring a catastrophe has harbingers who warn you of it, one figure per age, from the epoch's first age until the transition. While a harbinger is present you can **Appease** it (spend faith and culture to lower the real odds), **Brace** (spend resources so an Endure costs less) or **Invite** the catastrophe (guarantee it, for a deliberate Succumb). See [The Harbinger](harbinger.md).
 
 When a catastrophe hits, nothing is destroyed yet. The game keeps running and the choice waits for you:
 
@@ -30,8 +32,9 @@ Extra rules:
 - **One per epoch per run.** Each epoch's transition rolls once per run. Succumb and prestige start a new run, so the epochs roll again.
 - **Never overwritten.** A new catastrophe can't replace one that is still pending. You can't reach the next transition while one is pending anyway.
 - **At most 6 per run**, one for each epoch from Iron to Cosmic.
+- **The harbinger can change the odds.** Each level of Appease multiplies the chance by 0.6 (two levels at most). Invite makes it certain. See [The Harbinger](harbinger.md).
 
-The `catastrophe` command (with nothing after it) shows the odds for your next transition when nothing is pending. The Epoch tab shows the same line. See [Epochs](epochs.md) for the event tables.
+The `catastrophe` command (with nothing after it) shows the risk for your next transition when nothing is pending: the odds as a figure from the Industrial Age on, a low / medium / high severity before it. The Epoch tab shows the same line. While a harbinger is present, both repeat its warning, so they can't give away a false prophet. See [Epochs](epochs.md) for the event tables.
 
 ---
 
@@ -57,15 +60,27 @@ The name is flavor. Endure and Succumb work the same way in every epoch; only th
 
 Pay a cost and keep your civilization.
 
-- **20% of your buildings destroyed**: `floor(non-wonder buildings / 5)`, at least 1 if you have any. Wonders are never destroyed and don't count toward the total.
+- **20% of your buildings destroyed**: `floor(non-wonder buildings / 5)`, at least 1 if you have any. Wonders are never destroyed and don't count toward the total. Brace lowers this to 15% or 10%.
 - **Workers of destroyed buildings go idle** first, the same as when you sell a building.
-- **All unlocked resources drop to 15%** of their stored amounts.
+- **All unlocked resources drop to 15%** of their stored amounts. Brace raises this to 30% or 45%.
 - **25% of the worker pool is lost.** There is one worker pool, so every building loses the same share of its assigned workers, whatever its domain (food, knowledge, military and so on).
 - **Reconstruction Effort**: production −10% for 216 ticks.
 - **Morale −10 points.**
 - **Survived** marker on the epoch badge and a line in the civilization log.
 
 Age, research, wonders and prestige are untouched.
+
+### Brace
+
+If the harbinger warned you and you paid to **Brace**, Endure costs less. Brace only changes the two numbers below; worker loss, the debuff and the morale hit stay the same.
+
+| Brace level | Buildings destroyed | Stored resources kept |
+|-------------|---------------------|-----------------------|
+| none | 20% | 15% |
+| 1 | 15% | 30% |
+| 2 | 10% | 45% |
+
+Buildings destroyed are rounded down, with at least 1 if you have any. The Brace is attached to the pending catastrophe, so it still applies if you press Esc and Endure later, or save and load first. It does nothing for Succumb. See [Brace](harbinger.md#brace-soften-an-endure).
 
 The −10% applies to every building, including the ones that survived, for the full 216 ticks. Negative production modifiers are floored at 10% of base, but a single −10% lands in full whatever other bonuses you hold. The same flooring covers per-resource rate modifiers and gather rate, and any active debuff shows in the Active Multipliers panel.
 
@@ -152,6 +167,8 @@ Rate bonuses add to your other `<resource>_rate` bonuses and apply from tick 1 o
 
 Over the 6 transitions of a run, high faith against low faith is roughly a third of a catastrophe fewer. More important, high faith also buys better good events. See [Faith](faith.md).
 
+A harbinger's Appease multiplies these chances by 0.6 per level (0.36 at two levels), and Invite makes the catastrophe certain. See [The Harbinger](harbinger.md).
+
 ---
 
 ## Civilization Log
@@ -175,7 +192,8 @@ The Epoch tab's history marks each past epoch's catastrophe as **Survived**, **S
 
 - your civilization is large and deep into its run,
 - you already hold this epoch's legacy (a repeat Succumb there adds nothing but ruins),
-- you're close to a milestone chain that a reset would wipe.
+- you're close to a milestone chain that a reset would wipe,
+- you braced when the harbinger warned you, so Endure costs less.
 
 ### Succumb beats Endure when
 
@@ -193,4 +211,4 @@ Enduring costs 10 points of morale. Keep food positive, avoid over-militarizing 
 
 ### The long game
 
-Succumbing once in each epoch from Iron to Cosmic, over several runs, collects all six reachable legacy bonuses and +150% research speed. Which epochs you get the chance in is up to the transition rolls. Each run after that starts with those bonuses and up to 24 ruins producing from tick 1.
+Succumbing once in each epoch from Iron to Cosmic, over several runs, collects all six reachable legacy bonuses and +150% research speed. You don't have to wait for the rolls: when a harbinger comes, **Invite** guarantees the catastrophe at that transition, so you can pick which epochs to fall in. Each run after that starts with those bonuses and up to 24 ruins producing from tick 1.

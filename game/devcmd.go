@@ -8,6 +8,7 @@ import "strings"
 // none of these commands exist for a normal player.
 //
 //	/catastrophe — make the current epoch's catastrophe pending now (testing)
+//	/harbinger   — bring the current age's harbinger now (testing)
 func DevConsoleCommand(cmd string, ge *GameEngine) string {
 	if !DevModeActive {
 		return ""
@@ -18,6 +19,12 @@ func DevConsoleCommand(cmd string, ge *GameEngine) string {
 			return "catastrophe refused: " + err.Error()
 		}
 		return "catastrophe forced for the current epoch"
+	}
+	if len(parts) > 0 && strings.ToLower(parts[0]) == "/harbinger" {
+		if err := ge.summonHarbinger(); err != nil {
+			return "harbinger refused: " + err.Error()
+		}
+		return "harbinger summoned for the current age"
 	}
 	return DevExecCommand(cmd, ge)
 }

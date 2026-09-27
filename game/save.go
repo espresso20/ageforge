@@ -85,6 +85,13 @@ type GameSave struct {
 	Ruins              map[string]int  `json:"ruins,omitempty"`
 	LegacyBonuses      map[string]bool `json:"legacy_bonuses,omitempty"`
 	CatastropheHistory []string        `json:"catastrophe_history,omitempty"`
+	// Harbinger (see harbinger.go). All omitempty, so saves without a harbinger
+	// and saves from before the feature keep their bytes and signatures.
+	Harbinger          *HarbingerSave    `json:"harbinger,omitempty"`
+	HarbingerArrived   map[string]bool   `json:"harbinger_arrived,omitempty"`
+	CatastropheInvited bool              `json:"catastrophe_invited,omitempty"`
+	PendingBraceLevel  int               `json:"pending_brace_level,omitempty"`
+	HarbingerHistory   []HarbingerRecord `json:"harbinger_history,omitempty"`
 	// Morale system
 	Morale float64 `json:"morale,omitempty"`
 	// History overlay samples
@@ -514,6 +521,11 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		Ruins:                  ge.Buildings.GetAllRuins(),
 		LegacyBonuses:          copyBoolMap(ge.legacyBonuses),
 		CatastropheHistory:     append([]string(nil), ge.catastropheHistory...),
+		Harbinger:              ge.harbingerSaveCopy(),
+		HarbingerArrived:       copyBoolMap(ge.harbingerArrived),
+		CatastropheInvited:     ge.catastropheInvited,
+		PendingBraceLevel:      ge.pendingBraceLevel,
+		HarbingerHistory:       append([]HarbingerRecord(nil), ge.harbingerHistory...),
 		Morale:                 ge.morale,
 		History:                ge.History,
 		AccountID:              ge.accountIDLocked(),
@@ -747,6 +759,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	}
 	ge.catastropheHistory = save.CatastropheHistory
 	ge.restoreCatastropheState(&save)
+	ge.restoreHarbingerState(&save)
 
 	// Restore history collector
 	if save.History != nil {

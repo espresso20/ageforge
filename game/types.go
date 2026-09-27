@@ -54,6 +54,10 @@ type GameState struct {
 	PendingMemoryTech     string
 	PendingMemoryTechName string // resolved display name of PendingMemoryTech ("" if none)
 	EpochEventHistory     []EpochEventRecord
+	// Harbinger is the live harbinger, nil when none is present (harbinger.go).
+	Harbinger *HarbingerView
+	// HarbingerHistory lists resolved harbingers this run, oldest first.
+	HarbingerHistory []HarbingerRecord
 	// Phase 9: civilization history + legacy bonuses
 	LegacyBonuses      map[string]bool // epochKey -> true if succumb legacy bonus is active
 	CatastropheHistory []string        // narrative log entries

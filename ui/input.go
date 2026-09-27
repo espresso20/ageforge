@@ -125,6 +125,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return CommandResult{OverlayName: "worldmap"}
 	case "catastrophe", "cat":
 		return cmdCatastrophe(args, engine)
+	case "harbinger", "harb":
+		return cmdHarbinger(args, engine)
 	case "dump", "exportlogs":
 		return cmdDump(args, engine)
 	case "saves":
@@ -1794,12 +1796,41 @@ func cmdCatastrophe(args []string, engine *game.GameEngine) CommandResult {
 	if state.PendingCatastrophe != "" {
 		return CommandResult{Type: "success", OpenCatastrophe: true}
 	}
-	return CommandResult{Message: catastropheOutlookText(state.CatastropheOutlook), Type: "info"}
+	return CommandResult{Message: catastropheOutlookText(state), Type: "info"}
+}
+
+// cmdHarbinger opens the Harbinger panel, or answers the harbinger directly
+// with `harbinger appease|brace|invite`.
+func cmdHarbinger(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 {
+		return CommandResult{OverlayName: "harbinger"}
+	}
+	var err error
+	switch strings.ToLower(args[0]) {
+	case "appease":
+		err = engine.HarbingerAppease()
+	case "brace":
+		err = engine.HarbingerBrace()
+	case "invite":
+		err = engine.HarbingerInvite()
+	default:
+		return CommandResult{
+			Message: "Usage: harbinger — open the Harbinger panel; harbinger appease | brace | invite — answer it directly",
+			Type:    "info",
+		}
+	}
+	if err != nil {
+		return CommandResult{Message: err.Error(), Type: "error"}
+	}
+	// The engine logs the action itself.
+	return CommandResult{Type: "success"}
 }
 
 // catastropheOutlookText renders the no-pending status line for the bare
-// `catastrophe` command: the odds at the next epoch transition.
-func catastropheOutlookText(o game.CatastropheOutlook) string {
+// `catastrophe` command: the risk at the next epoch transition, as precisely
+// as the current age can tell it (see outlookRiskText).
+func catastropheOutlookText(state game.GameState) string {
+	o := state.CatastropheOutlook
 	var sb strings.Builder
 	sb.WriteString("No catastrophe pending.\n")
 	switch {
@@ -1808,8 +1839,32 @@ func catastropheOutlookText(o game.CatastropheOutlook) string {
 	case !o.Possible:
 		fmt.Fprintf(&sb, "  Next transition (%s): no catastrophe possible.", config.EpochByKey()[o.NextEpochKey].Name)
 	default:
-		fmt.Fprintf(&sb, "  Next transition (%s): %.0f%% catastrophe chance (%s), faith %.0f%% full.",
-			config.EpochByKey()[o.NextEpochKey].Name, o.Probability*100, o.Tier, o.FaithFill*100)
+		fmt.Fprintf(&sb, "  Next transition (%s): %s, faith %.0f%% full.",
+			config.EpochByKey()[o.NextEpochKey].Name, outlookRiskText(state), o.FaithFill*100)
 	}
 	return strings.TrimRight(sb.String(), "\n")
+}
+
+// outlookRiskText describes the next transition's catastrophe risk the way
+// the current age can know it. From the Industrial Age on the odds are
+// published: "14% catastrophe chance (medium)". Before it there is no figure,
+// only a severity. While a harbinger is present its severity is the one shown
+// everywhere, so no other screen can contradict (and so expose) a false
+// prophet.
+func outlookRiskText(state game.GameState) string {
+	o := state.CatastropheOutlook
+	tier, numeric, prob, speaker := o.Tier, harbingerNumericAge(state.Age), o.Probability, ""
+	if h := state.Harbinger; h != nil {
+		tier, numeric, prob, speaker = h.Tier, h.Numeric, h.Probability, h.Name
+	}
+	var risk string
+	if numeric {
+		risk = fmt.Sprintf("%.0f%% catastrophe chance (%s)", prob*100, tier)
+	} else {
+		risk = fmt.Sprintf("%s risk of catastrophe (no figures before the Industrial Age)", tier)
+	}
+	if speaker != "" {
+		return fmt.Sprintf("%s warns of %s", capFirstUI(speaker), risk)
+	}
+	return risk
 }

@@ -6,13 +6,14 @@ package flavor
 //
 // # The feature, in one paragraph
 //
-// Before an epoch transition that can roll a catastrophe, the age's harbinger
-// turns up (config.HarbingerFor) and warns of it. How frightened they are
-// follows the real risk tier. Before the Industrial Age they are vague; from
-// the Industrial Age on their medium prints the odds, which the UI shows as a
-// number, so the prose refers to "the figure" and never contains a digit. The
-// player can appease, brace, invite the doom on purpose, or ignore it. Before the Industrial Age some
-// harbingers are false prophets, and after the transition the log says so.
+// Through an epoch whose transition can roll a catastrophe, each age's
+// harbinger (config.HarbingerFor) takes up the warning in turn. How frightened
+// they are follows the risk tier. Before the Industrial Age they are vague;
+// from the Industrial Age on their medium prints the odds, which the UI shows
+// as a number, so the prose refers to "the figure" and never contains a digit.
+// The player can appease, brace, invite the doom on purpose, or ignore it. In
+// the Stone, Iron and Steel Eras the whole warning may be false, and after the
+// transition the log says so.
 //
 // # The request shape
 //

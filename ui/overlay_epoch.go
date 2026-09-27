@@ -20,6 +20,8 @@ func epochProvider(state game.GameState, _ int) string {
 	sb.WriteString("\n")
 	epochProviderHistory(&sb, state)
 	sb.WriteString("\n")
+	epochProviderHarbingers(&sb, state)
+	sb.WriteString("\n")
 	epochProviderLegacyBonuses(&sb, state)
 	sb.WriteString("\n")
 	epochProviderCivilizationLog(&sb, state)
@@ -100,11 +102,88 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 		}
 	}
 
-	// Odds at the next transition (same numbers the `catastrophe` command shows).
+	// Risk at the next transition (same wording the `catastrophe` command uses:
+	// a figure from the Industrial Age on, a severity before it).
 	if o := state.CatastropheOutlook; o.Possible {
-		fmt.Fprintf(sb, " Next transition (%s): [yellow]%.0f%% catastrophe chance[-] [gray](%s; more faith, lower odds)[-]\n",
-			config.EpochByKey()[o.NextEpochKey].Name, o.Probability*100, o.Tier)
+		fmt.Fprintf(sb, " Next transition (%s): [yellow]%s[-] [gray](more faith, lower odds)[-]\n",
+			config.EpochByKey()[o.NextEpochKey].Name, outlookRiskText(state))
 	}
+
+	// Harbinger status.
+	if h := state.Harbinger; h != nil {
+		status := "waiting for the passage"
+		if h.Invited {
+			status = "invited, the catastrophe will come"
+		}
+		fmt.Fprintf(sb, " Harbinger: [warning]%s is here[-] [gray](%s; appease %d/%d, brace %d/%d; type 'harbinger')[-]\n",
+			capFirstUI(h.Name), status, h.AppeaseLevel, game.HarbingerMaxAppease, h.BraceLevel, game.HarbingerMaxBrace)
+	} else if r := latestHarbinger(state.HarbingerHistory, state.EpochKey); r != nil {
+		fmt.Fprintf(sb, " Harbinger: %s\n", harbingerRecordText(*r))
+	}
+}
+
+// epochProviderHarbingers lists this run's resolved harbingers, oldest first.
+func epochProviderHarbingers(sb *strings.Builder, state game.GameState) {
+	sb.WriteString(" [yellow]── Harbingers ──[-]\n")
+	if len(state.HarbingerHistory) == 0 {
+		sb.WriteString("   [gray]None have come and gone this run[-]\n")
+		return
+	}
+	for _, r := range state.HarbingerHistory {
+		fmt.Fprintf(sb, "   · %s\n", harbingerRecordText(r))
+	}
+}
+
+// latestHarbinger returns the newest harbinger record whose passage led into
+// epochKey (the one resolved on entering it), or nil.
+func latestHarbinger(history []game.HarbingerRecord, epochKey string) *game.HarbingerRecord {
+	for i := len(history) - 1; i >= 0; i-- {
+		if history[i].TargetEpochKey == epochKey {
+			return &history[i]
+		}
+	}
+	return nil
+}
+
+// harbingerRecordText renders a resolved harbinger in one line.
+func harbingerRecordText(r game.HarbingerRecord) string {
+	var verdict string
+	switch r.Outcome {
+	case game.HarbingerOutcomeFulfilled:
+		verdict = "[red]Fulfilled[-] [gray](invited)[-]"
+	case game.HarbingerOutcomeVindicated:
+		verdict = "[red]Vindicated[-]"
+	case game.HarbingerOutcomeSpared:
+		verdict = "[green]Spared[-]"
+	case game.HarbingerOutcomeDiscredited:
+		verdict = "[yellow]Discredited[-]"
+	default:
+		verdict = "[gray]unknown[-]"
+	}
+	if r.FalseProphet && r.Outcome != game.HarbingerOutcomeDiscredited {
+		verdict += " [gray](a false prophet)[-]"
+	}
+	var extras []string
+	if r.AppeaseLevel > 0 {
+		extras = append(extras, fmt.Sprintf("appeased %d", r.AppeaseLevel))
+	}
+	if r.BraceLevel > 0 {
+		extras = append(extras, fmt.Sprintf("braced %d", r.BraceLevel))
+	}
+	extra := ""
+	if len(extras) > 0 {
+		extra = " [gray](" + strings.Join(extras, ", ") + ")[-]"
+	}
+	chain := []string{capFirstUI(r.Name)}
+	if len(r.Chain) > 1 {
+		chain = chain[:0]
+		for _, a := range r.Chain {
+			if def, ok := config.HarbingerFor(a); ok {
+				chain = append(chain, capFirstUI(def.Name))
+			}
+		}
+	}
+	return fmt.Sprintf("%s → %s: %s%s", strings.Join(chain, ", "), r.TargetEpochName, verdict, extra)
 }
 
 // epochProviderHistory renders the epoch history section.

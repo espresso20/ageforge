@@ -79,15 +79,21 @@ func gameSubject(m Moment, age string) string {
 	return ""
 }
 
-// falseProphetsPossible reports whether an age's harbinger can be lying.
+// falseProphetsPossible reports whether an age's harbinger can be repeating a
+// false warning. The game rolls once per epoch, with the chance of the epoch's
+// first age, and every later figure of that epoch repeats the result.
 func falseProphetsPossible(age string) bool {
-	h, ok := config.HarbingerFor(age)
+	ep, ok := config.EpochByKey()[config.EpochForAge(age)]
+	if !ok || len(ep.Ages) == 0 {
+		return false
+	}
+	h, ok := config.HarbingerFor(ep.Ages[0])
 	return ok && h.FalseProphetChance > 0
 }
 
 // harbReachable reports whether the game can ever ask for m at age. Only
-// HarbingerDiscredited is restricted: it needs a false prophet, and the roster
-// pins FalseProphetChance to zero from the Industrial Age on.
+// HarbingerDiscredited is restricted: it needs a false warning, which only the
+// Stone, Iron and Steel Eras can roll.
 func harbReachable(m Moment, age string) bool {
 	if m == HarbingerDiscredited {
 		return falseProphetsPossible(age)
@@ -100,7 +106,7 @@ func harbKinds(m Moment, age string) []string {
 	switch m {
 	case HarbingerWarning:
 		return HarbingerTiers()
-	case HarbingerFulfilled:
+	case HarbingerFulfilled, HarbingerVindicated, HarbingerDiscredited:
 		if falseProphetsPossible(age) {
 			return []string{"", KindFalseProphet}
 		}
@@ -377,8 +383,8 @@ func mustEra(t testing.TB, age string) era {
 }
 
 // TestHarbingerFalseProphetLines pins the KindFalseProphet lines: they exist
-// only in HarbingerFulfilled, only in ages that can have a false prophet, and a
-// plain Fulfilled request never reaches them.
+// only in HarbingerFulfilled and HarbingerVindicated, only in ages that can
+// have a false prophet, and a plain request never reaches them.
 func TestHarbingerFalseProphetLines(t *testing.T) {
 	found := 0
 	for _, m := range Moments() {
@@ -393,8 +399,8 @@ func TestHarbingerFalseProphetLines(t *testing.T) {
 				continue
 			}
 			found++
-			if m != HarbingerFulfilled {
-				t.Errorf("%s is a false-prophet line outside HarbingerFulfilled", tp.ID)
+			if m != HarbingerFulfilled && m != HarbingerVindicated {
+				t.Errorf("%s is a false-prophet line outside HarbingerFulfilled and HarbingerVindicated", tp.ID)
 			}
 			for _, age := range config.AgeOrder() {
 				if eraOK(tp, mustEra(t, age)) && ageOK(tp, age) && !falseProphetsPossible(age) {
@@ -406,9 +412,11 @@ func TestHarbingerFalseProphetLines(t *testing.T) {
 	if found == 0 {
 		t.Fatal("no KindFalseProphet lines in the catalog")
 	}
-	for _, tp := range eligible(Request{Moment: HarbingerFulfilled, Age: "bronze_age", Subject: "the Soothsayer"}) {
-		if len(tp.Kinds) > 0 {
-			t.Errorf("%s fired on a plain Fulfilled request", tp.ID)
+	for _, m := range []Moment{HarbingerFulfilled, HarbingerVindicated} {
+		for _, tp := range eligible(Request{Moment: m, Age: "bronze_age", Subject: "the Soothsayer"}) {
+			if len(tp.Kinds) > 0 {
+				t.Errorf("%s fired on a plain %s request", tp.ID, m)
+			}
 		}
 	}
 }

@@ -26,6 +26,7 @@
   - [Epochs](epochs.md)
   - [Events](events.md)
   - [Catastrophe System](catastrophe.md)
+  - [The Harbinger](harbinger.md)
   - [Faith](faith.md)
   - [Morale](morale.md)
   - [Knowledge](knowledge.md)
