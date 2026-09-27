@@ -1,0 +1,300 @@
+package game
+
+import (
+	"reflect"
+	"strings"
+	"testing"
+)
+
+// planTestEngine is a Primitive Age game with room to store things: 50
+// stashes, and a big knowledge cap for research tests. Storage is set on the
+// resource directly, so tests that call recalculateRates must set it again.
+func planTestEngine(t *testing.T) *GameEngine {
+	t.Helper()
+	ge := newSeededEngine(1)
+	ge.Buildings.counts["stash"] = 50
+	ge.recalculateRates()
+	ge.Resources.resources["knowledge"].Storage = 1e6
+	return ge
+}
+
+func setAmount(ge *GameEngine, res string, v float64) { ge.Resources.resources[res].Amount = v }
+
+func queued(ge *GameEngine, key string) int { return ge.Buildings.GetQueueCount(key, ge.buildQueue) }
+
+func logHas(ge *GameEngine, sub string) bool {
+	for _, l := range ge.log {
+		if strings.Contains(l.Message, sub) {
+			return true
+		}
+	}
+	return false
+}
+
+func TestPlan_PaysWhenItStartsNotWhenQueued(t *testing.T) {
+	ge := planTestEngine(t)
+	setAmount(ge, "wood", 0)
+	if _, err := ge.PlanAddBuild("hut", 3); err != nil {
+		t.Fatal(err)
+	}
+	ge.runPlanTick()
+	if queued(ge, "hut") != 0 || ge.Resources.Get("wood") != 0 {
+		t.Fatalf("started with no wood: queue %d, wood %v", queued(ge, "hut"), ge.Resources.Get("wood"))
+	}
+	two, _ := ge.Buildings.BuildBatchCost("hut", 2, ge.buildQueue)
+	setAmount(ge, "wood", two["wood"])
+	ge.runPlanTick()
+	if queued(ge, "hut") != 2 {
+		t.Fatalf("queued huts = %d, want 2 (the price of two copies was held)", queued(ge, "hut"))
+	}
+	if w := ge.Resources.Get("wood"); w > 1e-9 {
+		t.Errorf("wood left = %v, want 0 (paid along the cost curve)", w)
+	}
+	if len(ge.plan) != 1 || ge.plan[0].Count != 1 || ge.plan[0].Started != 2 {
+		t.Errorf("plan = %+v, want one item with 1 left and 2 started", ge.plan)
+	}
+	if !logHas(ge, "Plan started: 2 × Hut") {
+		t.Error("no summary log line for the two starts")
+	}
+}
+
+// A waiting item reserves its price: a later item may only use what is left.
+func TestPlan_LaterItemsCannotSpendAnEarlierItemsReservation(t *testing.T) {
+	ge := planTestEngine(t)
+	shrine := ge.Buildings.GetCost("shrine")["wood"]
+	hut := ge.Buildings.GetCost("hut")["wood"]
+	if _, err := ge.PlanAddBuild("shrine", 1); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ge.PlanAddBuild("hut", 1); err != nil {
+		t.Fatal(err)
+	}
+	setAmount(ge, "wood", shrine-1) // enough for the hut, not the shrine
+	ge.runPlanTick()
+	if queued(ge, "hut") != 0 {
+		t.Fatal("the hut spent wood the shrine above it is saving")
+	}
+	v := ge.planViews()
+	if v[0].Status != PlanStatusWaiting || v[1].Status != PlanStatusWaiting {
+		t.Errorf("statuses = %s, %s; want waiting, waiting", v[0].Status, v[1].Status)
+	}
+	setAmount(ge, "wood", shrine+hut)
+	ge.runPlanTick()
+	if queued(ge, "shrine") != 1 || queued(ge, "hut") != 1 {
+		t.Errorf("queued shrine %d, hut %d; want 1 and 1", queued(ge, "shrine"), queued(ge, "hut"))
+	}
+	if len(ge.plan) != 0 {
+		t.Errorf("plan not empty after both started: %+v", ge.plan)
+	}
+}
+
+// A waiting item doesn't hold back resources it doesn't need.
+func TestPlan_SkipsPastAWaitingItemForOtherResources(t *testing.T) {
+	ge := planTestEngine(t)
+	if err := ge.PlanAddResearch("tool_making"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ge.PlanAddBuild("hut", 1); err != nil {
+		t.Fatal(err)
+	}
+	setAmount(ge, "knowledge", 0)
+	setAmount(ge, "wood", 100)
+	ge.runPlanTick()
+	if queued(ge, "hut") != 1 {
+		t.Error("the hut waited behind research that needs no wood")
+	}
+	if ge.Research.currentTech != "" || len(ge.plan) != 1 {
+		t.Errorf("research started without knowledge, or the item left: %+v", ge.plan)
+	}
+}
+
+// An item priced over the cap can't be saved for, so it reserves nothing.
+func TestPlan_OverCapItemReservesNothing(t *testing.T) {
+	ge := newSeededEngine(1) // base storage: 50 wood
+	if cost := ge.Buildings.GetCost("shrine")["wood"]; cost <= ge.Resources.GetStorage("wood") {
+		t.Skipf("setup: shrine (%v wood) fits the base cap", cost)
+	}
+	if _, err := ge.PlanAddBuild("shrine", 1); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ge.PlanAddBuild("hut", 1); err != nil {
+		t.Fatal(err)
+	}
+	setAmount(ge, "wood", 40)
+	ge.runPlanTick()
+	if queued(ge, "hut") != 1 {
+		t.Error("the hut waited behind a shrine that can't fit in storage")
+	}
+	v := ge.planViews()
+	if len(v) != 1 || v[0].Status != PlanStatusBlocked || !strings.Contains(v[0].Note, "storage") {
+		t.Errorf("shrine view = %+v, want blocked on storage", v)
+	}
+}
+
+func TestPlan_ResearchQueueStartsInOrder(t *testing.T) {
+	ge := planTestEngine(t)
+	if err := ge.PlanAddResearch("fire_mastery"); err == nil {
+		t.Fatal("planned fire_mastery before its prerequisite")
+	}
+	for _, k := range []string{"tool_making", "fire_mastery"} {
+		if err := ge.PlanAddResearch(k); err != nil {
+			t.Fatalf("plan %s: %v", k, err)
+		}
+	}
+	setAmount(ge, "knowledge", 5000)
+	ge.runPlanTick()
+	if ge.Research.currentTech != "tool_making" {
+		t.Fatalf("researching %q, want tool_making", ge.Research.currentTech)
+	}
+	if v := ge.planViews(); len(v) != 1 || v[0].Note != "research slot busy" {
+		t.Fatalf("views = %+v, want fire_mastery waiting on the slot", v)
+	}
+	for i := 0; i < 1000 && ge.Research.currentTech != ""; i++ {
+		ge.processResearch()
+	}
+	ge.runPlanTick()
+	if ge.Research.currentTech != "fire_mastery" || len(ge.plan) != 0 {
+		t.Errorf("after tool_making: researching %q, plan %+v", ge.Research.currentTech, ge.plan)
+	}
+}
+
+func TestPlan_InvalidItemsDropOut(t *testing.T) {
+	ge := planTestEngine(t)
+	if _, err := ge.PlanAddBuild("hut", 2); err != nil {
+		t.Fatal(err)
+	}
+	if err := ge.PlanAddResearch("tool_making"); err != nil {
+		t.Fatal(err)
+	}
+	if err := ge.PlanAddResearch("fire_mastery"); err != nil {
+		t.Fatal(err)
+	}
+	ge.Research.researched["tool_making"] = true
+	ge.age = "stone_age" // the huts belong to the Primitive Age now
+	ge.runPlanTick()
+	if len(ge.plan) != 1 || ge.plan[0].Key != "fire_mastery" {
+		t.Errorf("plan = %+v, want only fire_mastery", ge.plan)
+	}
+	if !logHas(ge, "Plan: dropped 2 × Hut") || !logHas(ge, "Plan: dropped research Tool Making (already researched)") {
+		t.Error("missing drop log lines")
+	}
+	// Removing a prerequisite from the plan drops what needed it.
+	ge2 := planTestEngine(t)
+	_ = ge2.PlanAddResearch("tool_making")
+	_ = ge2.PlanAddResearch("fire_mastery")
+	if _, err := ge2.PlanRemove(1); err != nil {
+		t.Fatal(err)
+	}
+	ge2.runPlanTick()
+	if len(ge2.plan) != 0 {
+		t.Errorf("fire_mastery survived losing its planned prerequisite: %+v", ge2.plan)
+	}
+}
+
+func TestPlan_AddRespectsMaxCountAndMerges(t *testing.T) {
+	ge := planTestEngine(t)
+	ge.Buildings.counts["stash"] = 48
+	n, err := ge.PlanAddBuild("stash", 5)
+	if err != nil || n != 2 {
+		t.Fatalf("PlanAddBuild(stash, 5) = %d, %v; want 2 (MaxCount 50)", n, err)
+	}
+	if _, err := ge.PlanAddBuild("stash", 1); err == nil {
+		t.Error("planned a stash past MaxCount")
+	}
+	if _, err := ge.PlanAddBuild("hut", 1); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ge.PlanAddBuild("hut", 4); err != nil {
+		t.Fatal(err)
+	}
+	if len(ge.plan) != 2 || ge.plan[1].Count != 5 {
+		t.Errorf("plan = %+v, want the huts merged into one item of 5", ge.plan)
+	}
+	if _, err := ge.PlanAddBuild("bronze_smithy_not_a_key", 1); err == nil {
+		t.Error("planned an unknown building")
+	}
+}
+
+func TestPlan_MoveRemoveClear(t *testing.T) {
+	ge := planTestEngine(t)
+	for _, k := range []string{"hut", "shrine", "wood_camp"} {
+		if _, err := ge.PlanAddBuild(k, 1); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if to, err := ge.PlanMove(3, -1); err != nil || to != 2 {
+		t.Fatalf("PlanMove(3, -1) = %d, %v", to, err)
+	}
+	if to, _ := ge.PlanMove(1, -5); to != 1 {
+		t.Errorf("moving past the top landed at %d", to)
+	}
+	keys := func() string {
+		var s []string
+		for _, it := range ge.plan {
+			s = append(s, it.Key)
+		}
+		return strings.Join(s, ",")
+	}
+	if got := keys(); got != "hut,wood_camp,shrine" {
+		t.Errorf("order = %s", got)
+	}
+	if _, err := ge.PlanRemove(4); err == nil {
+		t.Error("removed item 4 of 3")
+	}
+	if _, err := ge.PlanRemove(1); err != nil || keys() != "wood_camp,shrine" {
+		t.Errorf("after remove 1: %s, %v", keys(), err)
+	}
+	if ge.PlanClear() != 2 || len(ge.plan) != 0 {
+		t.Error("clear left items behind")
+	}
+}
+
+func TestPlan_SurvivesSaveAndLoad(t *testing.T) {
+	isolateAccountDir(t)
+	ge := planTestEngine(t)
+	if _, err := ge.PlanAddBuild("hut", 4); err != nil {
+		t.Fatal(err)
+	}
+	if err := ge.PlanAddResearch("tool_making"); err != nil {
+		t.Fatal(err)
+	}
+	ge.plan[0].Started = 3
+	if err := ge.SaveGame("plan-roundtrip"); err != nil {
+		t.Fatal(err)
+	}
+	loaded := NewGameEngine()
+	if err := loaded.LoadGame("plan-roundtrip"); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(loaded.plan, ge.plan) {
+		t.Errorf("plan after load = %+v, want %+v", loaded.plan, ge.plan)
+	}
+	if st := loaded.GetState(); len(st.Plan) != 2 {
+		t.Errorf("state: plan %d items, want 2", len(st.Plan))
+	}
+}
+
+func TestPlan_ClearedByPrestigeSuccumbAndReset(t *testing.T) {
+	ge := planTestEngine(t)
+	_, _ = ge.PlanAddBuild("hut", 2)
+	ge.Reset()
+	if len(ge.plan) != 0 {
+		t.Errorf("after Reset: plan %+v", ge.plan)
+	}
+
+	ge = planTestEngine(t)
+	_, _ = ge.PlanAddBuild("hut", 2)
+	ge.mu.Lock()
+	ge.completePrestige(prestigePlain)
+	ge.mu.Unlock()
+	if len(ge.plan) != 0 {
+		t.Errorf("after prestige: plan %+v", ge.plan)
+	}
+
+	ge = planTestEngine(t)
+	_, _ = ge.PlanAddBuild("hut", 2)
+	succumbIn(t, ge, "iron_age")
+	if len(ge.plan) != 0 {
+		t.Errorf("after Succumb: plan %+v", ge.plan)
+	}
+}

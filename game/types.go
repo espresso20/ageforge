@@ -89,6 +89,9 @@ type GameState struct {
 	// 1.0+moraleMaxBonus at the cap, down to moraleMinMult at the 0.10 floor.
 	// Exposed so the UI renders the model without re-deriving the formula.
 	MoraleMultiplier float64
+	// Plan is the build plan in order, each item with the price of its next
+	// start and whether it could start now (plan.go).
+	Plan []PlanItemView
 	// PermanentBonuses is the authoritative runtime map of all cumulative
 	// permanent bonuses (epoch events, legacy, milestones, etc.).
 	// Populated in GetState(); not stored in save JSON.

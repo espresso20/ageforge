@@ -286,6 +286,10 @@ type GameEngine struct {
 	// state only — it is not persisted, and a reload simply starts with an empty
 	// history.
 	prose *flavor.Stream
+
+	// plan is the build plan the engine works through as resources come in
+	// (plan.go). Saved; cleared by prestige, Succumb and Reset.
+	plan []PlanItem
 }
 
 // BuildQueueItem represents a building under construction
@@ -1022,6 +1026,9 @@ func (ge *GameEngine) doTick() {
 	// Soldiers discarded at the storage cap don't count; the helper floors at 0
 	// so a net drain never reduces the lifetime total.
 	ge.Stats.RecordSoldiersTrained(ge.Resources.Get("soldiers") - soldiersBefore)
+
+	// The build plan starts whatever this tick's income pays for (plan.go).
+	ge.runPlanTick()
 
 	// Log net food rate and capped resources every 10 ticks
 	if ge.tick%10 == 0 {
@@ -2647,7 +2654,14 @@ func (ge *GameEngine) previousAgeBuildError(key string, def config.BuildingDef) 
 func (ge *GameEngine) BuildBuilding(key string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
+	return ge.startBuildLocked(key, false)
+}
 
+// startBuildLocked is BuildBuilding under the write lock: every check the
+// command makes, the payment, and the queueing (or instant build). The build
+// plan starts its builds through it too, with quiet set so the per-copy
+// "Started building" line gives way to the plan's own summary.
+func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
 	def, exists := ge.Buildings.defs[key]
 	if !exists {
 		// Unknown building key — suggest closest match
@@ -2709,7 +2723,9 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 			TicksLeft:   def.BuildTicks,
 			TotalTicks:  def.BuildTicks,
 		})
-		ge.addLog("info", fmt.Sprintf("Started building %s (%d ticks)", def.Name, def.BuildTicks))
+		if !quiet {
+			ge.addLog("info", fmt.Sprintf("Started building %s (%d ticks)", def.Name, def.BuildTicks))
+		}
 	} else {
 		// Instant build
 		ge.Buildings.counts[key]++
@@ -3100,7 +3116,13 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 func (ge *GameEngine) StartResearch(techKey string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
+	return ge.startResearchLocked(techKey, false)
+}
 
+// startResearchLocked is StartResearch under the write lock; the build plan
+// starts its techs through it with quiet set (its own summary line replaces
+// "Started researching").
+func (ge *GameEngine) startResearchLocked(techKey string, quiet bool) error {
 	ageOrder := ge.progress.GetAgeOrder()
 	knowledge := ge.Resources.Get("knowledge")
 
@@ -3121,7 +3143,9 @@ func (ge *GameEngine) StartResearch(techKey string) error {
 		ge.Research.ticksLeft = 0
 	}
 	ge.addLog("debug", fmt.Sprintf("Research start: %s (cost: %.0f knowledge, %d ticks)", def.Name, def.Cost, ge.Research.totalTicks))
-	ge.addLog("info", fmt.Sprintf("Started researching %s (%d ticks)", def.Name, ge.Research.totalTicks))
+	if !quiet {
+		ge.addLog("info", fmt.Sprintf("Started researching %s (%d ticks)", def.Name, ge.Research.totalTicks))
+	}
 	return nil
 }
 
@@ -3422,6 +3446,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	// Bus intentionally kept — dashboard subscriptions must survive across resets.
 	ge.permanentBonuses = make(map[string]float64)
 	ge.buildQueue = nil
+	ge.plan = nil
 	ge.log = nil
 	ge.currentEpoch = config.EpochForAge("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
@@ -3526,6 +3551,7 @@ func (ge *GameEngine) Reset() {
 	ge.tickSpeedBonus = 0
 	ge.speedMultiplier = 1.0
 	ge.buildQueue = nil
+	ge.plan = nil
 	ge.log = nil
 
 	ge.applyAgeUnlocks("primitive_age")
@@ -3724,6 +3750,7 @@ func (ge *GameEngine) GetState() GameState {
 		Morale:                ge.morale,
 		MoraleCap:             ge.moraleCap(),
 		MoraleMultiplier:      ge.moraleMultiplier(),
+		Plan:                  ge.planViews(),
 		PermanentBonuses: func() map[string]float64 {
 			out := make(map[string]float64, len(ge.permanentBonuses))
 			for k, v := range ge.permanentBonuses {
