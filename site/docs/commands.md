@@ -2,6 +2,8 @@
 
 All commands are typed at the `>` prompt at the bottom of the screen. Press `↑`/`↓` to navigate history.
 
+Counts (`recruit 5`, `build farm 3`, `sell hut 2`, ...) are whole numbers from 1 to 1,000,000, and amounts (`gather`, `trade`, `wonder collect`) are positive numbers. Anything else is refused with the command's usage line rather than guessed at.
+
 ---
 
 ## Timers and durations

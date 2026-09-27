@@ -741,8 +741,9 @@ func (ge *GameEngine) MaxSpeedForAge() float64 {
 
 // SetSpeedMultiplier sets the game speed multiplier (0.5 increments, capped by age)
 func (ge *GameEngine) SetSpeedMultiplier(mult float64) error {
-	// Validate it's a 0.5 increment and at least 1.0
-	if mult < 1.0 || mult != float64(int(mult*2))/2 {
+	// Validate it's a finite 0.5 increment and at least 1.0 (int() of an
+	// infinity is undefined, so rule those out before the increment check).
+	if math.IsNaN(mult) || math.IsInf(mult, 0) || mult < 1.0 || mult != float64(int(mult*2))/2 {
 		return fmt.Errorf("invalid speed: %.1f (must be 1.0, 1.5, 2.0, etc.)", mult)
 	}
 	ge.mu.Lock()
@@ -2575,6 +2576,9 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 	if !ge.Resources.IsUnlocked(resource) {
 		return 0, fmt.Errorf("resource '%s' is not yet unlocked", resource)
 	}
+	if err := checkAmount(amount); err != nil {
+		return 0, err
+	}
 	actual := ge.Resources.Add(resource, amount)
 	ge.Stats.RecordGather(resource, amount)
 	ge.addLog("debug", fmt.Sprintf("Gather: %s +%.1f (total: %.1f)", resource, amount, actual))
@@ -2585,6 +2589,9 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 // BuildBuilding constructs a building (instant or queued)
 // BankWonderResource deposits resources from player storage into a wonder's bank.
 func (ge *GameEngine) BankWonderResource(wonderKey, resource string, amount float64) error {
+	if err := checkAmount(amount); err != nil {
+		return err
+	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
@@ -2702,6 +2709,9 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 // queue for this key. This prevents batch purchases and the `max` command from
 // bypassing cost scaling.
 func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
+	if count <= 0 {
+		return 0, fmt.Errorf("build count must be positive (got %d)", count)
+	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
@@ -2804,6 +2814,9 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 
 // RecruitWorker recruits workers
 func (ge *GameEngine) RecruitWorker(vType string, count int) error {
+	if count <= 0 {
+		return fmt.Errorf("recruit count must be positive (got %d)", count)
+	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
@@ -2827,6 +2840,9 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 // AssignWorker assigns workers to a building.
 // Any worker can be assigned to any building with WorkerCapacity > 0.
 func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
+	if count <= 0 {
+		return fmt.Errorf("assign count must be positive (got %d)", count)
+	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
@@ -2918,6 +2934,9 @@ func (ge *GameEngine) UnassignAll(buildingKey string) (int, error) {
 
 // UnassignWorker removes a specific number of workers from a building.
 func (ge *GameEngine) UnassignWorker(buildingKey string, count int) error {
+	if count <= 0 {
+		return fmt.Errorf("unassign count must be positive (got %d)", count)
+	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
@@ -2957,6 +2976,17 @@ func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) er
 	return nil
 }
 
+// checkAmount rejects a resource amount no command can mean: NaN, an
+// infinity, zero or a negative. NaN is the dangerous one: every comparison
+// with it is false, so it slips past "have < need" checks and poisons
+// whatever it is added to or subtracted from.
+func checkAmount(amount float64) error {
+	if math.IsNaN(amount) || math.IsInf(amount, 0) || amount <= 0 {
+		return fmt.Errorf("amount must be a positive number (got %v)", amount)
+	}
+	return nil
+}
+
 // formatResourceMap formats a map[string]float64 as "key1 45, key2 20" sorted by key.
 func formatResourceMap(m map[string]float64) string {
 	keys := make([]string, 0, len(m))
@@ -2974,6 +3004,9 @@ func formatResourceMap(m map[string]float64) string {
 // SellBuilding removes n copies of a built building, refunds 50% of cost,
 // and unassigns any workers that were in the sold slots.
 func (ge *GameEngine) SellBuilding(key string, n int) error {
+	if n <= 0 {
+		return fmt.Errorf("sell count must be positive (got %d)", n)
+	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
@@ -3784,6 +3817,9 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 
 // ExchangeResources performs a resource exchange via the trade system
 func (ge *GameEngine) ExchangeResources(from, to string, amount float64) (float64, error) {
+	if err := checkAmount(amount); err != nil {
+		return 0, err
+	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 

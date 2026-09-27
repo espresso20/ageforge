@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"sort"
@@ -150,6 +151,39 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 	}
 }
 
+// maxCommandCount is the largest count any command accepts. No game gets
+// anywhere near it, and capping it at the prompt keeps every count-times-cost
+// sum finite and every population check free of integer overflow.
+const maxCommandCount = 1_000_000
+
+// parseCount reads a count argument: a whole number from 1 to
+// maxCommandCount. The error says what was wrong, for the caller to put after
+// its usage line.
+func parseCount(arg string) (int, error) {
+	n, err := strconv.Atoi(arg)
+	if err != nil || n < 1 || n > maxCommandCount {
+		return 0, fmt.Errorf("the count must be a whole number from 1 to %d (got %q)", maxCommandCount, arg)
+	}
+	return n, nil
+}
+
+// parseAmount reads a resource amount: a positive, finite number. ParseFloat
+// happily returns NaN and infinities for "NaN" and "Inf", and NaN slips past
+// every comparison, so both are refused here.
+func parseAmount(arg string) (float64, error) {
+	n, err := strconv.ParseFloat(arg, 64)
+	if err != nil || math.IsNaN(n) || math.IsInf(n, 0) || n <= 0 {
+		return 0, fmt.Errorf("the amount must be a positive number (got %q)", arg)
+	}
+	return n, nil
+}
+
+// usageError is the error result for a bad argument: the usage line, then
+// what was wrong with the argument.
+func usageError(usage string, err error) CommandResult {
+	return CommandResult{Message: usage + " (" + err.Error() + ")", Type: "error"}
+}
+
 func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 
@@ -186,9 +220,9 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 			}
 		} else {
 			var err error
-			amount, err = strconv.ParseFloat(args[2], 64)
-			if err != nil || amount <= 0 {
-				return CommandResult{Message: "Usage: wonder collect <resource> <amount|all>", Type: "error"}
+			amount, err = parseAmount(args[2])
+			if err != nil {
+				return usageError("Usage: wonder collect <resource> <amount|all>", err)
 			}
 		}
 		if err := engine.BankWonderResource(curWonder.key, resource, amount); err != nil {
@@ -280,9 +314,9 @@ func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
 		if strings.ToLower(args[1]) == "all" {
 			all = true
 		} else {
-			n, err := strconv.Atoi(args[1])
-			if err != nil || n <= 0 {
-				return CommandResult{Message: "Usage: upgrade <building> [count|all]", Type: "error"}
+			n, err := parseCount(args[1])
+			if err != nil {
+				return usageError("Usage: upgrade <building> [count|all]", err)
 			}
 			count = n
 		}
@@ -379,9 +413,11 @@ func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 	}
 	amount := 3.0
 	if len(args) >= 2 {
-		if n, err := strconv.ParseFloat(args[1], 64); err == nil && n > 0 {
-			amount = n
+		n, err := parseAmount(args[1])
+		if err != nil {
+			return usageError("Usage: gather <food|wood|stone> [amount] (max 25)", err)
 		}
+		amount = n
 	}
 	if amount > gatherMaxYield {
 		amount = gatherMaxYield
@@ -424,21 +460,21 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 	// hit the MaxCount limit". BuildMultiple returns the actual count built.
 	if len(args) >= 2 {
 		countArg := strings.ToLower(args[1])
-		count := 0
-		if countArg == "max" {
-			count = 10000 // BuildMultiple will stop when resources run out or max is hit
-		} else if n, err := strconv.Atoi(countArg); err == nil && n > 0 {
+		count := 10000 // "max": BuildMultiple will stop when resources run out or max is hit
+		if countArg != "max" {
+			n, err := parseCount(countArg)
+			if err != nil {
+				return usageError("Usage: build <building> [count|max]", err)
+			}
 			count = n
 		}
-		if count > 0 {
-			built, err := engine.BuildMultiple(key, count)
-			if err != nil {
-				return CommandResult{Message: err.Error(), Type: "error"}
-			}
-			return CommandResult{
-				Message: fmt.Sprintf("Built %d %s!", built, key),
-				Type:    "success",
-			}
+		built, err := engine.BuildMultiple(key, count)
+		if err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{
+			Message: fmt.Sprintf("Built %d %s!", built, key),
+			Type:    "success",
 		}
 	}
 
@@ -468,12 +504,9 @@ func cmdRecruit(args []string, engine *game.GameEngine) CommandResult {
 		return CommandResult{Message: fmt.Sprintf("Recruited %d workers!", recruited), Type: "success"}
 	}
 
-	n, err := strconv.Atoi(arg)
-	if err != nil || n <= 0 {
-		return CommandResult{
-			Message: "Usage: recruit [count|max] — workers are recruited from available housing capacity and assigned to buildings.",
-			Type:    "error",
-		}
+	n, err := parseCount(arg)
+	if err != nil {
+		return usageError("Usage: recruit [count|max] — workers are recruited from available housing capacity and assigned to buildings.", err)
 	}
 	if err := engine.RecruitWorker("worker", n); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
@@ -498,9 +531,11 @@ func cmdAssign(args []string, engine *game.GameEngine) CommandResult {
 	}
 	count := 1
 	if len(args) >= 2 {
-		if n, err := strconv.Atoi(args[1]); err == nil && n > 0 {
-			count = n
+		n, err := parseCount(args[1])
+		if err != nil {
+			return usageError("Usage: assign <building> [count|all]", err)
 		}
+		count = n
 	}
 	if err := engine.AssignWorker(building, count); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
@@ -528,9 +563,11 @@ func cmdUnassign(args []string, engine *game.GameEngine) CommandResult {
 	}
 	count := 1
 	if len(args) >= 2 {
-		if n, err := strconv.Atoi(args[1]); err == nil && n > 0 {
-			count = n
+		n, err := parseCount(args[1])
+		if err != nil {
+			return usageError("Usage: unassign <building> [count|all]", err)
 		}
+		count = n
 	}
 	if err := engine.UnassignWorker(building, count); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
@@ -936,9 +973,9 @@ func cmdSpeed(args []string, engine *game.GameEngine) CommandResult {
 			Type:    "info",
 		}
 	}
-	n, err := strconv.ParseFloat(args[0], 64)
+	n, err := parseAmount(args[0])
 	if err != nil {
-		return CommandResult{Message: "Usage: speed <1.0|1.5|2.0|...>", Type: "error"}
+		return usageError("Usage: speed <1.0|1.5|2.0|...>", err)
 	}
 	if err := engine.SetSpeedMultiplier(n); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
@@ -1554,9 +1591,9 @@ func cmdTrade(args []string, engine *game.GameEngine) CommandResult {
 	}
 	from := strings.ToLower(args[0])
 	to := strings.ToLower(args[1])
-	amount, err := strconv.ParseFloat(args[2], 64)
-	if err != nil || amount <= 0 {
-		return CommandResult{Message: "Amount must be a positive number", Type: "error"}
+	amount, err := parseAmount(args[2])
+	if err != nil {
+		return usageError("Usage: trade <from> <to> <amount>", err)
 	}
 
 	got, err := engine.ExchangeResources(from, to, amount)
@@ -1765,9 +1802,9 @@ func cmdSell(args []string, engine *game.GameEngine) CommandResult {
 	building := args[0]
 	count := 1
 	if len(args) >= 2 {
-		n, err := strconv.Atoi(args[1])
-		if err != nil || n <= 0 {
-			return CommandResult{Message: "Usage: sell <building> [count]", Type: "error"}
+		n, err := parseCount(args[1])
+		if err != nil {
+			return usageError("Usage: sell <building> [count]", err)
 		}
 		count = n
 	}
@@ -1788,9 +1825,9 @@ func cmdDismiss(args []string, engine *game.GameEngine) CommandResult {
 		if strings.ToLower(args[1]) == "all" {
 			all = true
 		} else {
-			n, err := strconv.Atoi(args[1])
-			if err != nil || n <= 0 {
-				return CommandResult{Message: "Usage: dismiss <building> [count|all]", Type: "error"}
+			n, err := parseCount(args[1])
+			if err != nil {
+				return usageError("Usage: dismiss <building> [count|all]", err)
 			}
 			count = n
 		}

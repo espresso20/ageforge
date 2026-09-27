@@ -81,13 +81,16 @@ func (vm *WorkerManager) IsUnlocked(_ string) bool {
 	return vm.unlocked["worker"]
 }
 
-// Recruit adds workers to the single pool. Returns false if not unlocked or over pop cap.
+// Recruit adds workers to the single pool. Returns false if not unlocked, if
+// count is not positive, or if it would take the population over popCap.
 func (vm *WorkerManager) Recruit(_ string, count int, popCap int) bool {
 	rt := vm.domains["worker"]
-	if !vm.unlocked["worker"] {
+	if !vm.unlocked["worker"] || count <= 0 {
 		return false
 	}
-	if vm.TotalPop()+count > popCap {
+	// Compare against the room left rather than TotalPop()+count: a count near
+	// math.MaxInt wraps that sum negative and sails under the cap.
+	if count > popCap-vm.TotalPop() {
 		return false
 	}
 	rt.count += count
@@ -100,7 +103,7 @@ func (vm *WorkerManager) Assign(_, buildingKey string, count int) bool {
 	rt := vm.domains["worker"]
 	byKey := vm.buildingDefs
 	def, ok := byKey[buildingKey]
-	if !ok || def.WorkerCapacity == 0 {
+	if !ok || def.WorkerCapacity == 0 || count <= 0 {
 		return false
 	}
 	if vm.IdleCount("worker") < count {
@@ -110,10 +113,11 @@ func (vm *WorkerManager) Assign(_, buildingKey string, count int) bool {
 	return true
 }
 
-// Unassign removes workers from a building assignment
+// Unassign removes workers from a building assignment. A count that is not
+// positive is refused: a negative one would assign workers instead.
 func (vm *WorkerManager) Unassign(_, buildingKey string, count int) bool {
 	rt := vm.domains["worker"]
-	if rt.assignments[buildingKey] < count {
+	if count <= 0 || rt.assignments[buildingKey] < count {
 		return false
 	}
 	rt.assignments[buildingKey] -= count
