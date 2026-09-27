@@ -45,3 +45,6 @@ spritegen
 data/account.json
 data/account-export.json
 data/*.corrupt
+
+# Smoke test reports (make smoke)
+smoke-report/

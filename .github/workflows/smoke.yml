@@ -1,0 +1,59 @@
+name: Smoke
+
+# Nightly end-to-end play: the UI sweep under every theme, then the headless
+# autoplayer in full mode (see CONTRIBUTING.md, "Smoke testing"). Fails only
+# on panics, soft-locks or invariant violations; slow pacing is reported in
+# the artifact but never fails the job.
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  smoke:
+    name: smoke (full)
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: UI sweep
+        run: go test -tags smoke -count=1 -run TestSmokeUISweep -v ./ui
+
+      - name: Autoplayer (full mode)
+        if: ${{ !cancelled() }}
+        run: go run ./cmd/smoke -mode full -v -out smoke-report
+
+      - name: Autoplayer (harbinger answers bought)
+        if: ${{ !cancelled() }}
+        run: go run ./cmd/smoke -mode quick -harbinger both -v -out smoke-report/harbinger-both
+
+      - name: Job summary
+        if: ${{ always() }}
+        run: |
+          for f in smoke-report/report.md smoke-report/harbinger-both/report.md; do
+            if [ -f "$f" ]; then
+              head -n 60 "$f" >> "$GITHUB_STEP_SUMMARY"
+              echo "" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: smoke-report
+          path: smoke-report/
+          if-no-files-found: warn
