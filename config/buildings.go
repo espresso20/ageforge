@@ -351,7 +351,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Primitive Age — normal costs: 30-300
 		{
 			Name: "Sacred Grove", Key: "sacred_grove", Category: "wonder",
-			BaseCost:  map[string]float64{"wood": 8000, "food": 5000},
+			BaseCost:  map[string]float64{"wood": 8000, "food": 500},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "production", Target: "knowledge", Value: 0.02},
@@ -365,7 +365,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Stone Age — normal costs: 200-1000
 		{
 			Name: "Great Monolith", Key: "great_monolith", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 25000, "wood": 20000, "food": 10000},
+			BaseCost:  map[string]float64{"stone": 25000, "wood": 20000, "food": 1500},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "production", Target: "knowledge", Value: 0.05},

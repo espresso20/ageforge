@@ -12,14 +12,14 @@ func buildingsLineageFood() []BuildingDef {
 	// rate = 0.05 * 2^tier  CostScale: 1.18 (tier 0), 1.30 (tiers 1+)  Category: "production"
 	// =========================================================================
 
-	// tier 0 — primitive_age  rate=0.50
+	// tier 0 — primitive_age  rate=1.0 (doubled for the opening; food is the Primitive bottleneck)
 	// Rate raised from 0.05 → 0.50 so gathering camps can sustain early workers.
 	// BuildTicks lowered from 40 → 12 so food production comes online before starvation.
 	b = append(b, BuildingDef{
 		Name: "Gathering Camp", Key: "gathering_camp", Category: "production",
 		BaseCost:    map[string]float64{"wood": 20},
 		CostScale:   1.12,
-		Effects:     []Effect{{Type: "production", Target: "food", Value: 0.50}},
+		Effects:     []Effect{{Type: "production", Target: "food", Value: 1.0}},
 		BuildTicks:  12,
 		RequiredAge: "primitive_age",
 		Description: "Foragers gather berries and roots. +0.50 food/tick (3 workers).",
@@ -27,14 +27,14 @@ func buildingsLineageFood() []BuildingDef {
 		WorkerDomain: "food", WorkerCapacity: 3,
 		EpochKey: "stone_era", OutputResource: "food",
 	})
-	// tier 1 — stone_age  rate=1.00
+	// tier 1 — stone_age  rate=1.5 (raised with tier 0)
 	// Rate raised from 0.10 → 1.00 to maintain ×2 per tier vs gathering_camp (0.50).
 	// BuildTicks lowered from 100 → 30 proportional to gathering_camp reduction.
 	b = append(b, BuildingDef{
 		Name: "Forager Post", Key: "forager_post", Category: "production",
 		BaseCost:    map[string]float64{"wood": 150, "stone": 80},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "food", Value: 1.00}},
+		Effects:     []Effect{{Type: "production", Target: "food", Value: 1.5}},
 		BuildTicks:  30,
 		RequiredAge: "stone_age",
 		Description: "Organised foraging post. +1.00 food/tick (4 workers).",

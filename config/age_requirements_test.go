@@ -15,15 +15,16 @@ func ageByKeyT(t *testing.T, key string) AgeDef {
 	return a
 }
 
-// stone_age sits in the 2.0x band. Raw food 8000 -> 16000, knowledge 1400 -> 2800.
+// stone_age sits in the 2.0x band. Raw food 500 -> 1000, knowledge 75 -> 150
+// (cut for the 15-minute Primitive Age, economy.md pacing rebalance).
 func TestNormalizeAgeRequirements_StoneAgeResourceScaling(t *testing.T) {
 	stone := ageByKeyT(t, "stone_age")
 
-	wantFood := roundSignificant(8000*2.0, 2)
+	wantFood := roundSignificant(500*2.0, 2)
 	if got := stone.ResourceReqs["food"]; got != wantFood {
 		t.Errorf("stone_age food req = %v, want %v", got, wantFood)
 	}
-	wantKnowledge := roundSignificant(1400*2.0, 2)
+	wantKnowledge := roundSignificant(75*2.0, 2)
 	if got := stone.ResourceReqs["knowledge"]; got != wantKnowledge {
 		t.Errorf("stone_age knowledge req = %v, want %v", got, wantKnowledge)
 	}
@@ -41,7 +42,7 @@ func TestNormalizeAgeRequirements_LateAgeUses125Factor(t *testing.T) {
 }
 
 // Building floor: iron_age scriptorium was 3, must be raised to the floor of 5.
-// A high count like bronze_age longhouse (40) must be left unchanged.
+// A count above the floor like bronze_age longhouse (15) must be left unchanged.
 func TestNormalizeAgeRequirements_BuildingFloor(t *testing.T) {
 	iron := ageByKeyT(t, "iron_age")
 	if got := iron.BuildingReqs["scriptorium"]; got != 5 {
@@ -49,8 +50,8 @@ func TestNormalizeAgeRequirements_BuildingFloor(t *testing.T) {
 	}
 
 	bronze := ageByKeyT(t, "bronze_age")
-	if got := bronze.BuildingReqs["longhouse"]; got != 40 {
-		t.Errorf("bronze_age longhouse req = %d, want 40 (above floor, unchanged)", got)
+	if got := bronze.BuildingReqs["longhouse"]; got != 15 {
+		t.Errorf("bronze_age longhouse req = %d, want 15 (above floor, unchanged)", got)
 	}
 }
 
