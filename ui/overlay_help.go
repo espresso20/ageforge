@@ -20,6 +20,18 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("  [cyan]upgrade[-]                       - List available building upgrades\n")
 	sb.WriteString("  [cyan]upgrade[-] <building> [n|all]    - Upgrade building to next age tier (pays cost delta)\n")
 
+	sb.WriteString("\n[gold]═══ Build Plan ═══[-]\n")
+	sb.WriteString("[gray]Queue builds and techs; each starts, and is paid for, when the resources are there, even while you are away.[-]\n")
+	sb.WriteString("  [cyan]plan[-]                          - Open the Plan panel (reorder and remove with keys)\n")
+	sb.WriteString("  [cyan]plan build[-] <building> [count] - Add copies of a building of this age\n")
+	sb.WriteString("  [cyan]plan research[-] <tech>         - Add a tech (techs start one at a time, in order)\n")
+	sb.WriteString("  [cyan]plan trade[-] <from> <to> [amt]  - Sell from for to as it comes in (no amount: keep topped up)\n")
+	sb.WriteString("  [cyan]plan advance[-]                  - Advance as soon as the next age is ready\n")
+	sb.WriteString("  [cyan]plan list[-]                     - Print the plan with each item's status\n")
+	sb.WriteString("  [cyan]plan remove[-] <n>              - Remove item n\n")
+	sb.WriteString("  [cyan]plan up[-] <n> / [cyan]plan down[-] <n> - Move item n one place\n")
+	sb.WriteString("  [cyan]plan clear[-]                    - Empty the plan\n")
+
 	sb.WriteString("\n[gold]═══ Workers ═══[-]\n")
 	sb.WriteString("  [cyan]recruit[-] [count|max]           - Recruit workers from available housing (default: 1)\n")
 	sb.WriteString("  [cyan]assign[-] <building> [n|all]     - Assign workers to a building\n")
@@ -55,6 +67,7 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("\n[gold]═══ Wonders & Prestige ═══[-]\n")
 	sb.WriteString("  [cyan]wonder[-]                          - Show current wonder bank status\n")
 	sb.WriteString("  [cyan]wonder collect[-] <res> <amt|all> - Bank resources into current wonder\n")
+	sb.WriteString("  [cyan]wonder overflow[-] [on|off]        - Bank what full stores would waste (on by default)\n")
 	sb.WriteString("  [cyan]prestige[-]                        - View prestige status\n")
 	sb.WriteString("  [cyan]prestige[-] confirm yes            - Reset game with prestige bonus\n")
 	sb.WriteString("  [cyan]prestige[-] shop                   - View prestige upgrades\n")
@@ -94,6 +107,7 @@ func helpProvider(_ game.GameState, _ int) string {
 	for _, p := range []struct{ cmd, desc string }{
 		{"milestones", "Milestone goals & rewards"},
 		{"research", "Technology tree & progress"},
+		{"plan", "Build plan: queued builds & techs, started as resources come in"},
 		{"expedition", "Scouting expeditions (resource cost)"},
 		{"army", "Army overview & military campaigns"},
 		{"trade", "Exchange rates & trade routes"},

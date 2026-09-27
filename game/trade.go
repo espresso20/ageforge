@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"math"
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
@@ -119,6 +120,22 @@ func (tm *TradeManager) GetExchangeRate(from, to string) float64 {
 	}
 	pressure := tm.supplyPressure[from+":"+to]
 	return base * (1.0 - pressure*0.3)
+}
+
+// RateIn is what Exchange would pay now for one from in age: the market rate
+// less supply pressure, floored at half the market rate. Read-only.
+func (tm *TradeManager) RateIn(from, to, age string) float64 {
+	base, ok := config.MarketRate(from, to, age)
+	if !ok {
+		return 0
+	}
+	return math.Max(base*(1.0-tm.supplyPressure[from+":"+to]*0.3), base*0.5)
+}
+
+// Pressure is the supply pressure on from → to (0 when the market has fully
+// recovered). Read-only.
+func (tm *TradeManager) Pressure(from, to string) float64 {
+	return tm.supplyPressure[from+":"+to]
 }
 
 // Exchange performs an instant resource exchange
@@ -303,21 +320,25 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 	}
 
 	// Decay supply pressure (2% per tick toward 0)
-	for key, pressure := range tm.supplyPressure {
-		if pressure > 0 {
-			tm.supplyPressure[key] = pressure * 0.98
-			if tm.supplyPressure[key] < 0.001 {
-				delete(tm.supplyPressure, key)
-			}
-		} else if pressure < 0 {
-			tm.supplyPressure[key] = pressure * 0.98
-			if tm.supplyPressure[key] > -0.001 {
-				delete(tm.supplyPressure, key)
-			}
-		}
-	}
+	tm.DecayPressure(1)
 
 	return messages
+}
+
+// DecayPressure lets n ticks of supply-pressure decay pass (2% a tick toward
+// 0), as Tick does one tick at a time; offline catch-up passes many at once.
+// Keys are walked in sorted order so the float results never depend on map
+// order.
+func (tm *TradeManager) DecayPressure(n int) {
+	f := math.Pow(0.98, float64(n))
+	for _, key := range sortedKeys(tm.supplyPressure) {
+		p := tm.supplyPressure[key] * f
+		if math.Abs(p) < 0.001 {
+			delete(tm.supplyPressure, key)
+			continue
+		}
+		tm.supplyPressure[key] = p
+	}
 }
 
 // Snapshot returns the trade state for UI consumption. disrupted is the set of

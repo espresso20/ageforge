@@ -286,6 +286,14 @@ type GameEngine struct {
 	// state only — it is not persisted, and a reload simply starts with an empty
 	// history.
 	prose *flavor.Stream
+
+	// plan is the build plan the engine works through as resources come in
+	// (plan.go). Saved; cleared by prestige, Succumb and Reset.
+	plan []PlanItem
+	// wonderOverflowOff turns off banking what the caps would cut off into
+	// the current age's wonder (overflow.go). The player's preference: saved,
+	// kept across prestige and Succumb, cleared by Reset.
+	wonderOverflowOff bool
 }
 
 // BuildQueueItem represents a building under construction
@@ -293,6 +301,10 @@ type BuildQueueItem struct {
 	BuildingKey string
 	TicksLeft   int
 	TotalTicks  int
+	// FromPlan marks a copy the build plan started: on completion it is
+	// staffed from idle workers (plan.go). omitempty keeps older saves'
+	// bytes, and their signatures, unchanged.
+	FromPlan bool `json:",omitempty"`
 }
 
 // NewGameEngine creates a new game engine initialised to the Primitive Age.
@@ -1015,13 +1027,17 @@ func (ge *GameEngine) doTick() {
 	// only the soldiers actually trained this tick (post-storage-clamp delta).
 	soldiersBefore := ge.Resources.Get("soldiers")
 
-	// Apply resource rates (production - consumption)
-	ge.Resources.ApplyRates()
+	// Apply resource rates (production - consumption); what a cap cuts off
+	// goes to the wonder bank while overflow is on (overflow.go).
+	ge.applyTickRates()
 
 	// Credit the lifetime soldiers-trained counter with the post-clamp delta.
 	// Soldiers discarded at the storage cap don't count; the helper floors at 0
 	// so a net drain never reduces the lifetime total.
 	ge.Stats.RecordSoldiersTrained(ge.Resources.Get("soldiers") - soldiersBefore)
+
+	// The build plan starts whatever this tick's income pays for (plan.go).
+	ge.runPlanTick()
 
 	// Log net food rate and capped resources every 10 ticks
 	if ge.tick%10 == 0 {
@@ -1130,23 +1146,38 @@ func (ge *GameEngine) doTick() {
 func (ge *GameEngine) processResearch() {
 	completed := ge.Research.Tick()
 	if completed != "" {
-		def := ge.Research.defs[completed]
-		ge.addLog("debug", fmt.Sprintf("Research complete: %s", def.Name))
-		ge.addLog("success", fmt.Sprintf("Research complete: %s!", def.Name))
-		// Cosmetic flavour on roughly half of breakthroughs (varies, never spams).
-		if ge.quipRNG().Intn(2) == 0 {
-			if q := config.PickLogFlavor(config.LogFlavorResearchDone, ge.quipRNG()); q != "" {
-				ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
-			}
-		}
-		ge.Bus.Publish(EventData{
-			Type:    EventResearchDone,
-			Payload: map[string]interface{}{"tech": completed},
-		})
+		ge.finishResearch(completed)
 	} else if ge.Research.currentTech != "" {
 		ge.addLog("debug", fmt.Sprintf("Research: %s %d/%d ticks",
 			ge.Research.currentTech, ge.Research.totalTicks-ge.Research.ticksLeft, ge.Research.totalTicks))
 	}
+}
+
+// advanceResearch moves research on by n ticks at once (offline catch-up).
+// Reports whether a tech completed.
+func (ge *GameEngine) advanceResearch(n int) bool {
+	if completed := ge.Research.Advance(n); completed != "" {
+		ge.finishResearch(completed)
+		return true
+	}
+	return false
+}
+
+// finishResearch logs a completed tech and publishes EventResearchDone.
+func (ge *GameEngine) finishResearch(completed string) {
+	def := ge.Research.defs[completed]
+	ge.addLog("debug", fmt.Sprintf("Research complete: %s", def.Name))
+	ge.addLog("success", fmt.Sprintf("Research complete: %s!", def.Name))
+	// Cosmetic flavour on roughly half of breakthroughs (varies, never spams).
+	if ge.quipRNG().Intn(2) == 0 {
+		if q := config.PickLogFlavor(config.LogFlavorResearchDone, ge.quipRNG()); q != "" {
+			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+		}
+	}
+	ge.Bus.Publish(EventData{
+		Type:    EventResearchDone,
+		Payload: map[string]interface{}{"tech": completed},
+	})
 }
 
 // processEvents handles random events
@@ -2502,22 +2533,7 @@ func (ge *GameEngine) processBuildQueue() {
 	for _, item := range ge.buildQueue {
 		item.TicksLeft--
 		if item.TicksLeft <= 0 {
-			ge.Buildings.counts[item.BuildingKey]++
-			def := ge.Buildings.defs[item.BuildingKey]
-			ge.addLog("debug", fmt.Sprintf("Build complete: %s (count now %d)", def.Name, ge.Buildings.GetCount(item.BuildingKey)))
-			ge.addLog("success", fmt.Sprintf("%s completed! (#%d)", def.Name, ge.Buildings.GetCount(item.BuildingKey)))
-			// Cosmetic flavour — present but not stale: ~1 in 3 completions get a quip,
-			// so a long build queue stays lively without turning into wallpaper.
-			if ge.quipRNG().Intn(3) == 0 {
-				if q := config.PickLogFlavor(config.LogFlavorBuildingComplete, ge.quipRNG()); q != "" {
-					ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
-				}
-			}
-			ge.Stats.RecordBuild()
-			ge.Bus.Publish(EventData{
-				Type:    EventBuildingBuilt,
-				Payload: map[string]interface{}{"building": item.BuildingKey},
-			})
+			ge.finishBuild(item)
 		} else {
 			def := ge.Buildings.defs[item.BuildingKey]
 			ge.addLog("debug", fmt.Sprintf("Build queue: %s %d/%d ticks", def.Name, item.TotalTicks-item.TicksLeft, item.TotalTicks))
@@ -2525,6 +2541,53 @@ func (ge *GameEngine) processBuildQueue() {
 		}
 	}
 	ge.buildQueue = remaining
+}
+
+// advanceBuildQueue moves construction on by n ticks at once (offline
+// catch-up), completing what finishes as processBuildQueue does, without its
+// per-tick progress lines. Reports whether anything completed.
+func (ge *GameEngine) advanceBuildQueue(n int) bool {
+	if len(ge.buildQueue) == 0 {
+		return false
+	}
+	var remaining []BuildQueueItem
+	done := false
+	for _, item := range ge.buildQueue {
+		item.TicksLeft -= n
+		if item.TicksLeft <= 0 {
+			ge.finishBuild(item)
+			done = true
+		} else {
+			remaining = append(remaining, item)
+		}
+	}
+	ge.buildQueue = remaining
+	return done
+}
+
+// finishBuild completes one queued copy: the count, the log lines, the stats
+// and the bus event, and staffing from idle workers for a plan's copy.
+func (ge *GameEngine) finishBuild(item BuildQueueItem) {
+	key := item.BuildingKey
+	ge.Buildings.counts[key]++
+	if item.FromPlan {
+		ge.staffFromIdle(key)
+	}
+	def := ge.Buildings.defs[key]
+	ge.addLog("debug", fmt.Sprintf("Build complete: %s (count now %d)", def.Name, ge.Buildings.GetCount(key)))
+	ge.addLog("success", fmt.Sprintf("%s completed! (#%d)", def.Name, ge.Buildings.GetCount(key)))
+	// Cosmetic flavour — present but not stale: ~1 in 3 completions get a quip,
+	// so a long build queue stays lively without turning into wallpaper.
+	if ge.quipRNG().Intn(3) == 0 {
+		if q := config.PickLogFlavor(config.LogFlavorBuildingComplete, ge.quipRNG()); q != "" {
+			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+		}
+	}
+	ge.Stats.RecordBuild()
+	ge.Bus.Publish(EventData{
+		Type:    EventBuildingBuilt,
+		Payload: map[string]interface{}{"building": key},
+	})
 }
 
 // --- Public API for commands ---
@@ -2647,7 +2710,14 @@ func (ge *GameEngine) previousAgeBuildError(key string, def config.BuildingDef) 
 func (ge *GameEngine) BuildBuilding(key string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
+	return ge.startBuildLocked(key, false)
+}
 
+// startBuildLocked is BuildBuilding under the write lock: every check the
+// command makes, the payment, and the queueing (or instant build). The build
+// plan starts its builds through it too, with quiet set so the per-copy
+// "Started building" line gives way to the plan's own summary.
+func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
 	def, exists := ge.Buildings.defs[key]
 	if !exists {
 		// Unknown building key — suggest closest match
@@ -2708,12 +2778,18 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 			BuildingKey: key,
 			TicksLeft:   def.BuildTicks,
 			TotalTicks:  def.BuildTicks,
+			FromPlan:    quiet,
 		})
-		ge.addLog("info", fmt.Sprintf("Started building %s (%d ticks)", def.Name, def.BuildTicks))
+		if !quiet {
+			ge.addLog("info", fmt.Sprintf("Started building %s (%d ticks)", def.Name, def.BuildTicks))
+		}
 	} else {
 		// Instant build
 		ge.Buildings.counts[key]++
 		ge.Stats.RecordBuild()
+		if quiet {
+			ge.staffFromIdle(key)
+		}
 		ge.recalculateRates()
 		ge.addLog("success", fmt.Sprintf("Built %s (#%d)", def.Name, ge.Buildings.GetCount(key)))
 		ge.Bus.Publish(EventData{
@@ -3100,7 +3176,13 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 func (ge *GameEngine) StartResearch(techKey string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
+	return ge.startResearchLocked(techKey, false)
+}
 
+// startResearchLocked is StartResearch under the write lock; the build plan
+// starts its techs through it with quiet set (its own summary line replaces
+// "Started researching").
+func (ge *GameEngine) startResearchLocked(techKey string, quiet bool) error {
 	ageOrder := ge.progress.GetAgeOrder()
 	knowledge := ge.Resources.Get("knowledge")
 
@@ -3121,7 +3203,9 @@ func (ge *GameEngine) StartResearch(techKey string) error {
 		ge.Research.ticksLeft = 0
 	}
 	ge.addLog("debug", fmt.Sprintf("Research start: %s (cost: %.0f knowledge, %d ticks)", def.Name, def.Cost, ge.Research.totalTicks))
-	ge.addLog("info", fmt.Sprintf("Started researching %s (%d ticks)", def.Name, ge.Research.totalTicks))
+	if !quiet {
+		ge.addLog("info", fmt.Sprintf("Started researching %s (%d ticks)", def.Name, ge.Research.totalTicks))
+	}
 	return nil
 }
 
@@ -3422,6 +3506,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	// Bus intentionally kept — dashboard subscriptions must survive across resets.
 	ge.permanentBonuses = make(map[string]float64)
 	ge.buildQueue = nil
+	ge.plan = nil
 	ge.log = nil
 	ge.currentEpoch = config.EpochForAge("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
@@ -3526,6 +3611,7 @@ func (ge *GameEngine) Reset() {
 	ge.tickSpeedBonus = 0
 	ge.speedMultiplier = 1.0
 	ge.buildQueue = nil
+	ge.plan = nil
 	ge.log = nil
 
 	ge.applyAgeUnlocks("primitive_age")
@@ -3534,6 +3620,7 @@ func (ge *GameEngine) Reset() {
 
 	ge.cheaterBadge = false
 	ge.eliteBadge = false
+	ge.wonderOverflowOff = false
 	ge.currentEpoch = config.EpochForAge("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
 	ge.clearHarbingerRun()
@@ -3724,6 +3811,8 @@ func (ge *GameEngine) GetState() GameState {
 		Morale:                ge.morale,
 		MoraleCap:             ge.moraleCap(),
 		MoraleMultiplier:      ge.moraleMultiplier(),
+		Plan:                  ge.planViews(),
+		WonderOverflow:        !ge.wonderOverflowOff,
 		PermanentBonuses: func() map[string]float64 {
 			out := make(map[string]float64, len(ge.permanentBonuses))
 			for k, v := range ge.permanentBonuses {
@@ -3790,9 +3879,20 @@ func (ge *GameEngine) GetLogs() []LogEntry {
 const (
 	MaxOfflineTime    = 24 * time.Hour
 	OfflineEfficiency = 0.5
+	// OfflineStepTicks is the step the offline catch-up advances by: each
+	// step credits that many ticks of production (at OfflineEfficiency, up
+	// to the caps, overflow to the wonder bank), moves construction and
+	// research on, and lets the build plan start what the step paid for. A
+	// minute at 1x: 24 hours away is 1,440 steps.
+	OfflineStepTicks = 30
 )
 
-// applyOfflineProgress applies simulated progress for time spent offline (must be called with lock held)
+// applyOfflineProgress applies simulated progress for time spent offline
+// (must be called with lock held). Time passes in OfflineStepTicks steps, so
+// the build plan starts items as the resources for them come in, the caps
+// apply along the way, and construction and research finish while the player
+// is away. With an empty plan, nothing under construction and overflow off,
+// it pays exactly the old lump sum: rate x ticks x OfflineEfficiency, capped.
 func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	if elapsed < 5*time.Second {
 		return // too short to matter
@@ -3816,23 +3916,6 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		return
 	}
 
-	gains := make(map[string]float64)
-	for key, r := range ge.Resources.resources {
-		if !ge.Resources.unlocked[key] || r.Rate <= 0 {
-			continue
-		}
-		amount := r.Rate * float64(offlineTicks) * OfflineEfficiency
-		if r.Amount+amount > r.Storage {
-			amount = r.Storage - r.Amount
-		}
-		if amount > 0 {
-			ge.Resources.Add(key, amount)
-			gains[key] = amount
-		}
-	}
-
-	ge.tick += offlineTicks
-
 	// Log welcome back message
 	minutes := int(elapsed.Minutes())
 	hours := minutes / 60
@@ -3845,11 +3928,50 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	}
 
 	ge.addLog("event", fmt.Sprintf("Welcome back! You were away for %s.", timeStr))
+
+	gains := make(map[string]float64)
+	banked := make(map[string]float64)
+	bankedInto := ""
+	var starts planStarts
+	for done := 0; done < offlineTicks; {
+		n := min(OfflineStepTicks, offlineTicks-done)
+		w := ge.overflowWonder()
+		ge.Resources.AddProduced(float64(n)*OfflineEfficiency,
+			func(res string, g float64) { gains[res] += g },
+			func(res string, lost float64) {
+				if b := ge.bankOverflow(w, res, lost); b > 0 {
+					banked[res] += b
+					bankedInto = w
+				}
+			})
+		ge.tick += n
+		done += n
+		ge.Trade.DecayPressure(n) // the plan's trades meet a market that recovers as time passes
+		changed := ge.advanceBuildQueue(n)
+		if ge.advanceResearch(n) {
+			changed = true
+		}
+		if changed {
+			ge.recalculateRates()
+		}
+		ge.runPlan(&starts)
+	}
+
 	if len(gains) > 0 {
 		ge.addLog("info", fmt.Sprintf("Offline progress (%d ticks at 50%% efficiency):", offlineTicks))
 		for _, res := range sortedKeys(gains) {
 			ge.addLog("info", fmt.Sprintf("  +%.1f %s", gains[res], res))
 		}
+	}
+	if len(banked) > 0 {
+		var parts []string
+		for _, res := range sortedKeys(banked) {
+			parts = append(parts, fmt.Sprintf("%.0f %s", banked[res], res))
+		}
+		ge.addLog("info", fmt.Sprintf("Overflow banked into %s: %s.", ge.Buildings.defs[bankedInto].Name, strings.Join(parts, ", ")))
+	}
+	if !starts.empty() {
+		ge.addLog("info", "While you were away your plan started: "+starts.describe(ge.Buildings.defs))
 	}
 }
 

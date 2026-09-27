@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // renderCurrentWonderSummary returns a short text block for the current-age wonder,
@@ -73,9 +74,21 @@ func renderCurrentWonderSummary(state game.GameState) string {
 		} else {
 			fmt.Fprintf(&sb, "   [gray]wonder collect <res> <amt|all>[-]\n")
 		}
+		fmt.Fprintf(&sb, "   %s\n", wonderOverflowLine(state.WonderOverflow))
 	}
 	sb.WriteString("\n")
 	return sb.String()
+}
+
+// wonderOverflowLine describes the wonder overflow switch for the wonder
+// panels: whether production a full store would waste goes into the bank.
+func wonderOverflowLine(on bool) string {
+	if on {
+		return theme.Paint(theme.RoleLabel, "Overflow") + " " + theme.Paint(theme.RolePositive, "on") +
+			theme.Paint(theme.RoleDim, ": what a full store would waste is banked here (wonder overflow off)")
+	}
+	return theme.Paint(theme.RoleLabel, "Overflow") + " " + theme.Paint(theme.RoleWarning, "off") +
+		theme.Paint(theme.RoleDim, ": production over a cap is lost (wonder overflow on)")
 }
 
 // wondersProvider generates the wonders overlay text from the current game state.

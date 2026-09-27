@@ -19,6 +19,9 @@ type ResourceManager struct {
 	resources map[string]*Resource
 	defs      map[string]config.ResourceDef
 	unlocked  map[string]bool
+	// order is every resource key, sorted, fixed at construction, so the
+	// per-tick walks (and the overflow they report) never follow map order.
+	order []string
 }
 
 // NewResourceManager creates a resource manager with base definitions
@@ -36,6 +39,7 @@ func NewResourceManager() *ResourceManager {
 			Storage: def.BaseStorage,
 		}
 	}
+	rm.order = sortedKeys(rm.resources)
 	return rm
 }
 
@@ -143,9 +147,48 @@ func (rm *ResourceManager) AddStorage(key string, amount float64) {
 
 // ApplyRates applies per-tick production rates
 func (rm *ResourceManager) ApplyRates() {
-	for key, r := range rm.resources {
-		if rm.unlocked[key] && r.Rate != 0 {
-			rm.Add(key, r.Rate)
+	rm.ApplyRatesCapped(nil)
+}
+
+// ApplyRatesCapped applies one tick of rates like ApplyRates, in key order,
+// and calls lost (when non-nil) with what the storage cap cut off each
+// resource that hit it.
+func (rm *ResourceManager) ApplyRatesCapped(lost func(key string, amount float64)) {
+	for _, key := range rm.order {
+		r := rm.resources[key]
+		if !rm.unlocked[key] || r.Rate == 0 {
+			continue
+		}
+		want := r.Amount + r.Rate
+		rm.Add(key, r.Rate)
+		if lost != nil && r.Rate > 0 && want > r.Amount {
+			lost(key, want-r.Amount)
+		}
+	}
+}
+
+// AddProduced credits scale ticks of every positive rate (offline catch-up),
+// in key order, never past a cap: a resource at or over its cap gains
+// nothing. gained and lost (either may be nil) receive what each resource
+// took in and what its cap cut off.
+func (rm *ResourceManager) AddProduced(scale float64, gained, lost func(key string, amount float64)) {
+	for _, key := range rm.order {
+		r := rm.resources[key]
+		if !rm.unlocked[key] || r.Rate <= 0 {
+			continue
+		}
+		amount := r.Rate * scale
+		g := math.Min(amount, r.Storage-r.Amount)
+		if g > 0 {
+			r.Amount += g
+			if gained != nil {
+				gained(key, g)
+			}
+		} else {
+			g = 0
+		}
+		if lost != nil && amount-g > 0 {
+			lost(key, amount-g)
 		}
 	}
 }

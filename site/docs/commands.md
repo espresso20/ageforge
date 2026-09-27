@@ -40,6 +40,34 @@ gather wood 5
 
 ---
 
+## Build Plan
+
+A list of builds and techs the game starts for you, in order, as the resources come in: while you play and while you are away (offline catch-up runs it too). Each item is paid for when it starts, not when you add it. Full rules on the [Build Plan](plan.md) page.
+
+| Command | Description |
+|---|---|
+| `plan` | Open the **Plan** panel: the items, what each costs next and whether it can start. `↑`/`↓` select, `U`/`D` move the selected item, `X` removes it, `C` twice clears the plan. |
+| `plan build <building> [count]` | Add copies of a building of this age (default 1). Adding more of the building at the end of the plan adds to that item. |
+| `plan research <tech>` | Add a tech. Techs start one at a time, in plan order; a prerequisite can be planned before it. |
+| `plan trade <from> <to> [amount]` | Sell `from` for `to` at the market as it comes in, until `amount` of `to` is bought; with no amount, keep `to` topped up until you remove the item. Needs a trade building to sell. |
+| `plan advance` | Advance to the next age as soon as its requirements are met. The next age's buildings and techs can be planned too; they wait for the advance. |
+| `plan list` | Print the plan with each item's status |
+| `plan remove <n>` | Remove item `n` |
+| `plan up <n>` | Move item `n` one place up |
+| `plan down <n>` | Move item `n` one place down |
+| `plan clear` | Empty the plan |
+
+```
+plan build hut 10
+plan build gathering_camp 5
+plan research tool_making
+plan trade gold stone 50000
+plan advance
+plan up 3
+```
+
+---
+
 ## Workers
 
 | Command | Description |
@@ -166,6 +194,9 @@ Active trade routes run for a fixed duration. Routes whose imports include a res
 | Command | Description |
 |---|---|
 | `wonder collect <resource> <amount>` | Bank resources toward a wonder |
+| `wonder overflow` | Show whether overflow is on |
+| `wonder overflow on` | Bank what full stores would waste into the current wonder (the default) |
+| `wonder overflow off` | Let production over a storage cap be lost instead |
 | `build <wonder_key>` | Build the wonder once its bank is full |
 
 ```
@@ -173,6 +204,8 @@ wonder collect wood 1000
 wonder collect stone 500
 build great_monolith
 ```
+
+**Overflow.** While overflow is on, production that a full store would throw away goes into the current age's wonder bank instead, for every resource the wonder still needs and only up to what it still needs. It never takes from what you hold, works during offline catch-up too, and says so in the log when it finishes a resource's part of the bank. See [Wonders](wonders.md#overflow).
 
 Wonders are shown in **Wonders** overlay (`wonders`) with progress bars for each required resource. Each completed wonder now displays a colour sprite thumbnail next to its name in the Wonders overlay. Completed wonders also appear on the City Map as the largest, most ornate central complexes — an era-appropriate silhouette (a ziggurat in the ancient ages, a cathedral/keep in the medieval ages) in muted, in-family colours (see [City Map](#city-map) below).
 

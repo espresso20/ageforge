@@ -338,19 +338,19 @@ Every storage building is **capped at 25 copies** (Stash at 50). The cap exists 
 | Building | Age | Effect | Max |
 |----------|-----|--------|-----|
 | Stash | Primitive | +500 all storage | 50 |
-| Storage Pit | Stone | +600 all storage | 25 |
-| Warehouse | Bronze | +4,000 all storage | 25 |
-| Granary | Iron | +15,000 all storage | 25 |
-| Classical Vault | Classical | +100,000 all storage | 25 |
-| Keep | Medieval | +400,000 all storage | 25 |
-| Renaissance Vault | Renaissance | +500,000 all storage | 25 |
-| Colonial Warehouse | Colonial | +10M all storage | 25 |
-| Industrial Depot | Industrial | +50M all storage | 25 |
-| Victorian Vault | Victorian | +350M all storage | 25 |
+| Storage Pit | Stone | +2,200 all storage | 25 |
+| Warehouse | Bronze | +11,000 all storage | 25 |
+| Granary | Iron | +26,000 all storage | 25 |
+| Classical Vault | Classical | +110,000 all storage | 25 |
+| Keep | Medieval | +410,000 all storage | 25 |
+| Renaissance Vault | Renaissance | +2.7M all storage | 25 |
+| Colonial Warehouse | Colonial | +33M all storage | 25 |
+| Industrial Depot | Industrial | +170M all storage | 25 |
+| Victorian Vault | Victorian | +1.1B all storage | 25 |
 | Electric Warehouse | Electric | +3.5B all storage | 25 |
 | Atomic Vault | Atomic | +20B all storage | 25 |
 | Modern Depot | Modern | +90B all storage | 25 |
-| Info Vault | Information | +260B all storage | 25 |
+| Info Vault | Information | +790B all storage | 25 |
 | Digital Archive | Digital | +1.5T all storage | 25 |
 | Cyber Vault | Cyberpunk | +8T all storage | 25 |
 | Fusion Vault | Fusion | +30T all storage | 25 |
@@ -358,6 +358,8 @@ Every storage building is **capped at 25 copies** (Stash at 50). The cap exists 
 | Stellar Vault | Interstellar | +2Q all storage | 25 |
 | Galactic Vault | Galactic | +20Q all storage | 25 |
 | Quantum Vault | Quantum | +200Q all storage | 25 |
+
+A full stack of an age's storage (with every earlier age's) holds at least an hour and a half of that age's typical production of each resource it builds with, so a player who checks in every hour or so loses nothing at a cap. For longer absences the [build plan](plan.md) spends income as it arrives and [wonder overflow](wonders.md#overflow) banks what a full store would waste.
 
 > **Tip:** Stash is hard-capped at 50. Build them out before you leave the Primitive Age, then start on Storage Pits the moment you enter the Stone Age. Storage bottlenecks stop all late-game resource accumulation dead — build storage first when entering every new age.
 

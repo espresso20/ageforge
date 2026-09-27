@@ -173,6 +173,20 @@ func (rm *ResearchManager) Tick() string {
 	return ""
 }
 
+// Advance moves research on by n ticks at once (offline catch-up). Returns
+// the completed tech key, or "" if none completed.
+func (rm *ResearchManager) Advance(n int) string {
+	if rm.currentTech == "" || n <= 0 {
+		return ""
+	}
+	if rm.ticksLeft > n {
+		rm.ticksLeft -= n
+		return ""
+	}
+	rm.ticksLeft = 1
+	return rm.Tick()
+}
+
 // CancelResearch cancels current research
 func (rm *ResearchManager) CancelResearch() (string, bool) {
 	if rm.currentTech == "" {

@@ -81,6 +81,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdDiplomacy(args, engine)
 	case "wonder":
 		return cmdWonder(args, engine)
+	case "plan":
+		return cmdPlan(args, engine)
 	case "prestige":
 		return cmdPrestige(args, engine)
 	case "festival":
@@ -185,6 +187,9 @@ func usageError(usage string, err error) CommandResult {
 }
 
 func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) >= 1 && strings.ToLower(args[0]) == "overflow" {
+		return cmdWonderOverflow(args[1:], engine)
+	}
 	state := engine.GetState()
 
 	// Find the wonder for the current age
@@ -273,6 +278,23 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 		fmt.Fprintf(&sb, "\n[gray]Use 'wonder collect <resource> <amount|all>' to bank resources.[-]")
 	}
 	return CommandResult{Message: sb.String(), Type: "info"}
+}
+
+// cmdWonderOverflow is `wonder overflow [on|off]`: show or set whether
+// production a full store would waste goes into the current wonder's bank.
+func cmdWonderOverflow(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 {
+		return CommandResult{Message: wonderOverflowLine(engine.WonderOverflow()), Type: "info"}
+	}
+	switch strings.ToLower(args[0]) {
+	case "on":
+		engine.SetWonderOverflow(true)
+		return CommandResult{Message: "Wonder overflow on: what a full store would waste now goes into the current wonder's bank.", Type: "info"}
+	case "off":
+		engine.SetWonderOverflow(false)
+		return CommandResult{Message: "Wonder overflow off: production over a storage cap is lost again.", Type: "info"}
+	}
+	return CommandResult{Message: "Usage: wonder overflow [on|off]", Type: "error"}
 }
 
 func cmdAdvance(engine *game.GameEngine) CommandResult {
@@ -1982,4 +2004,117 @@ func outlookRiskText(state game.GameState) string {
 		return fmt.Sprintf("%s warns of %s", capFirstUI(speaker), risk)
 	}
 	return risk
+}
+
+// planUsage lists the plan subcommands.
+const planUsage = "Usage: plan [build <building> [count] | research <tech> | trade <from> <to> [amount] | advance | list | remove <n> | up <n> | down <n> | clear]"
+
+// cmdPlan is the `plan` command. Bare `plan` opens the Plan panel.
+func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 {
+		return CommandResult{OverlayName: "plan"}
+	}
+	sub := strings.ToLower(args[0])
+	rest := args[1:]
+	switch sub {
+	case "build":
+		if len(rest) == 0 || len(rest) > 2 {
+			return CommandResult{Message: "Usage: plan build <building> [count]", Type: "error"}
+		}
+		key := strings.ToLower(rest[0])
+		count := 1
+		if len(rest) == 2 {
+			n, err := parseCount(rest[1])
+			if err != nil {
+				return usageError("Usage: plan build <building> [count]", err)
+			}
+			count = n
+		}
+		added, err := engine.PlanAddBuild(key, count)
+		if err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		name := config.BuildingByKey()[key].Name
+		msg := fmt.Sprintf("Planned %d × %s. It starts as soon as the resources are there.", added, name)
+		if added < count {
+			msg = fmt.Sprintf("Planned %d × %s (the most its limit allows). It starts as soon as the resources are there.", added, name)
+		}
+		return CommandResult{Message: msg, Type: "info"}
+	case "research", "res":
+		if len(rest) != 1 {
+			return CommandResult{Message: "Usage: plan research <tech>", Type: "error"}
+		}
+		key := strings.ToLower(rest[0])
+		if err := engine.PlanAddResearch(key); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Planned research: %s. Techs start one at a time, in plan order.", config.TechByKey()[key].Name), Type: "info"}
+	case "list":
+		return CommandResult{Message: planListText(engine.GetState()), Type: "info"}
+	case "remove", "rm":
+		n, err := planIndexArg(rest, "remove")
+		if err != nil {
+			return usageError("Usage: plan remove <n>", err)
+		}
+		what, err := engine.PlanRemove(n)
+		if err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: "Removed " + what + " from the plan.", Type: "info"}
+	case "up", "down":
+		n, err := planIndexArg(rest, sub)
+		if err != nil {
+			return usageError("Usage: plan "+sub+" <n>", err)
+		}
+		delta := -1
+		if sub == "down" {
+			delta = 1
+		}
+		to, err := engine.PlanMove(n, delta)
+		if err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Plan item %d is now number %d.", n, to), Type: "info"}
+	case "clear":
+		n := engine.PlanClear()
+		return CommandResult{Message: fmt.Sprintf("Cleared the plan (%d items).", n), Type: "info"}
+	case "trade":
+		if len(rest) < 2 || len(rest) > 3 {
+			return CommandResult{Message: "Usage: plan trade <from> <to> [amount]", Type: "error"}
+		}
+		from, to := strings.ToLower(rest[0]), strings.ToLower(rest[1])
+		amount := 0.0
+		if len(rest) == 3 {
+			a, err := parseAmount(rest[2])
+			if err != nil {
+				return usageError("Usage: plan trade <from> <to> [amount]", err)
+			}
+			amount = a
+		}
+		if err := engine.PlanAddTrade(from, to, amount); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		what := "keeping " + to + " topped up"
+		if amount > 0 {
+			what = "until " + FormatNumber(amount) + " " + to + " is bought"
+		}
+		return CommandResult{Message: fmt.Sprintf("Planned: sell %s for %s as it comes in, %s.", from, to, what), Type: "info"}
+	case "advance":
+		if len(rest) != 0 {
+			return CommandResult{Message: "Usage: plan advance", Type: "error"}
+		}
+		if err := engine.PlanAddAdvance(); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: "Planned: advance as soon as the next age's requirements are met.", Type: "info"}
+	}
+	return CommandResult{Message: planUsage, Type: "error"}
+}
+
+// planIndexArg reads the one item number a plan subcommand takes.
+func planIndexArg(rest []string, sub string) (int, error) {
+	if len(rest) != 1 {
+		return 0, fmt.Errorf("plan %s takes one item number", sub)
+	}
+	return parseCount(rest[0])
 }

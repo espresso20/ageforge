@@ -182,6 +182,17 @@ func runStatic(e *Env, res *Result) {
 	for _, g := range problems {
 		res.fail("gate_"+g.Kind, "%s -> %s: %s %s (need %s, max storage %s)", g.From, g.To, g.Key, g.Resource, num(g.Need), num(g.MaxStorage))
 	}
-	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances", len(problems), len(slack))
+	rows := StaticStorage()
+	short := 0
+	for _, r := range rows {
+		if !r.OK() {
+			short++
+			res.fail("storage_covenant", "%s: max %s storage %s holds %.2f h of typical income %s/tick (want %g h)", r.Age, r.Resource, num(r.MaxStorage), r.Hours, num(r.Income), config.StorageHoldHours)
+		}
+	}
+	res.Summary = fmt.Sprintf("%d gate problem(s) across %d advances; %d age(s) short of the Storage Covenant", len(problems), len(slack), short)
 	res.section("Static gate check", "%s", strings.TrimPrefix(sb.String(), "\n## Static gate check\n\n"))
+	var st strings.Builder
+	writeStorage(&st, rows)
+	res.section("Storage Covenant", "%s", st.String())
 }

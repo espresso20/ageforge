@@ -143,7 +143,85 @@ func offlineBase(res *Result, base *game.GameEngine, age string, seed int64) []s
 			fail("offline_loadgame_path", "%s", msg)
 		}
 	}
+	if row := offlinePlan(base, name, age, fail); row != "" {
+		rows = append(rows, row)
+	}
 	return rows
+}
+
+// offlinePlanBudget is how long a full day of offline catch-up with a build
+// plan may take on the wall clock. It runs in steps (game.OfflineStepTicks),
+// not tick by tick; a millisecond-scale step keeps it well under a second.
+const offlinePlanBudget = 2 * time.Second
+
+// offlinePlan closes the game for a day with a build plan queued: every
+// producer of the age, 25 copies each. The catch-up must start plan items as
+// the day's income pays for them (not only what the store held when the
+// player left), keep the invariants, log a summary, and do it quickly. The
+// same closure twice must come back identical.
+func offlinePlan(base *game.GameEngine, name, age string, fail func(check, format string, args ...interface{})) string {
+	var runs []game.GameState
+	var took time.Duration
+	var started int
+	for i := 0; i < 2; i++ {
+		ge, err := freshLoad(base, name)
+		if err != nil {
+			fail("load_error", "%v", err)
+			return ""
+		}
+		pre := ge.GetState()
+		planned := 0
+		for _, key := range sortedKeys(pre.Buildings) {
+			bs, def := pre.Buildings[key], config.BuildingByKey()[key]
+			if bs.Unlocked && def.RequiredAge == age && def.Category == "production" && planned < 6 {
+				if n, err := ge.PlanAddBuild(key, 25); err == nil && n > 0 {
+					planned++
+				}
+			}
+		}
+		if planned == 0 {
+			return ""
+		}
+		before := len(pre.BuildQueue) + totalBuilt(pre)
+		start := time.Now()
+		ge.SimulateOffline(game.MaxOfflineTime)
+		took = time.Since(start)
+		post := ge.GetState()
+		started = len(post.BuildQueue) + totalBuilt(post) - before
+		if started <= 0 {
+			fail("offline_plan_idle", "a day away with %d producers planned started none of them", planned)
+		}
+		summary := false
+		for _, l := range post.Log {
+			summary = summary || strings.HasPrefix(l.Message, "While you were away your plan started")
+		}
+		if started > 0 && !summary {
+			fail("offline_plan_log", "the plan started %d buildings offline but the log has no summary", started)
+		}
+		for _, p := range invariantProblems(post, config.BuildingByKey()) {
+			fail(p.check, "after a day offline with a plan: %s", p.msg)
+		}
+		runs = append(runs, post)
+	}
+	if took > offlinePlanBudget {
+		fail("offline_plan_slow", "a day offline with a plan took %s (budget %s)", took, offlinePlanBudget)
+	}
+	skip := func(p string) bool {
+		return p == "Log" || p == "SaveExists" || strings.HasPrefix(p, "Stats.PlayTime")
+	}
+	if d := firstDiff(runs[0], runs[1], skip); d != "" {
+		fail("offline_plan_nondeterministic", "the same day offline with the same plan came back different: %s", d)
+	}
+	return fmt.Sprintf("| %s | 24h with a plan | %d | - | %d buildings started | %s wall |", age, runs[0].Tick-base.GetState().Tick, started, took.Round(time.Millisecond))
+}
+
+// totalBuilt is every building copy standing.
+func totalBuilt(st game.GameState) int {
+	n := 0
+	for _, bs := range st.Buildings {
+		n += bs.Count
+	}
+	return n
 }
 
 // freshLoad saves base under name and loads it into a new engine at once,
@@ -177,14 +255,17 @@ func checkOffline(o offlineRun, fail func(check, format string, args ...interfac
 	anyRate, anyGain := false, false
 	for _, k := range sortedKeys(o.gains) {
 		g, pre, post := o.gains[k], o.pre.Resources[k], o.post.Resources[k]
-		limit := math.Max(pre.Rate, 0) * float64(ticks) * game.OfflineEfficiency
+		// Construction finishes while the player is away, so the rate can
+		// rise during the closure; it never exceeds the higher of the rates
+		// before and after (buildings only complete, they are not lost).
+		limit := math.Max(math.Max(pre.Rate, post.Rate), 0) * float64(ticks) * game.OfflineEfficiency
 		switch {
 		case bad(g):
 			fail("offline_nan", "%s away: %s gain is %v", o.d, k, g)
 		case g < -1e-9:
 			fail("offline_loss", "%s away: %s fell by %s", o.d, k, num(-g))
 		case g > limit*(1+1e-9)+1e-6:
-			fail("offline_overpaid", "%s away: %s gained %s, more than rate %.4g x %d ticks x %.0f%% = %s", o.d, k, num(g), pre.Rate, ticks, game.OfflineEfficiency*100, num(limit))
+			fail("offline_overpaid", "%s away: %s gained %s, more than rate %.4g (the higher of before and after) x %d ticks x %.0f%% = %s", o.d, k, num(g), math.Max(pre.Rate, post.Rate), ticks, game.OfflineEfficiency*100, num(limit))
 		}
 		if post.Amount > post.Storage*(1+1e-9)+1e-6 {
 			fail("offline_over_storage", "%s away: %s is %s over its %s cap", o.d, k, num(post.Amount), num(post.Storage))

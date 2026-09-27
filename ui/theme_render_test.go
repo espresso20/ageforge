@@ -57,6 +57,25 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 		d.overlayMgr.Hide()
 	}
 
+	// The Plan panel with an item of each status (ready, blocked on storage,
+	// waiting with a progress bar), the selection chip and a feedback line.
+	for _, it := range []struct {
+		key string
+		n   int
+	}{{"hut", 3}, {"story_circle", 1}, {"wood_camp", 1}, {"stash", 2}} {
+		if _, err := engine.PlanAddBuild(it.key, it.n); err != nil {
+			t.Fatalf("plan %s: %v", it.key, err)
+		}
+	}
+	d.planPanel.note, d.planPanel.noteGood = "Removed 1 × Farm.", true
+	if !d.overlayMgr.Show("plan", engine.GetState()) {
+		t.Fatal("overlay plan not registered")
+	}
+	out["overlay:plan"] = draw()
+	d.overlayMgr.Hide()
+	engine.PlanClear()
+	d.planPanel.reset()
+
 	picker := CreateThemePickerPage(app, pages, nil, "dashboard")
 	pages.AddPage(themePickerPage, picker, true, true)
 	out["theme_picker"] = draw()

@@ -38,6 +38,7 @@ const sweepTimeout = 4 * time.Second
 var sweepOverlays = []struct{ cmd, overlay string }{
 	{"milestones", "milestones"},
 	{"research", "techs"},
+	{"plan", "plan"},
 	{"expedition", "expedition"},
 	{"army", "army"},
 	{"trade", "trade"},
@@ -62,7 +63,7 @@ var sweepOverlays = []struct{ cmd, overlay string }{
 var sweepCommands = []string{
 	"status", "rates", "build", "upgrade", "wonder", "festival", "blackmarket",
 	"prestige", "prestige shop", "speed", "catastrophe", "theme", "theme list",
-	"saves", "account",
+	"saves", "account", "plan list", "wonder overflow",
 }
 
 type sweeper struct {

@@ -10,6 +10,7 @@
   - [The City Map](city-map.md)
   - [The World Map](world-map.md)
   - [All Commands](commands.md)
+  - [The Build Plan](plan.md)
   - [Saving & Loading](saving-and-loading.md)
   - [Account & Recovery](account.md)
   - [Themes & Accessibility](themes.md)

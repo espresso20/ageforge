@@ -92,6 +92,9 @@ type Dashboard struct {
 	// harbPanel is the Harbinger panel's UI state (feedback line, Invite
 	// confirmation). Owned by the tview goroutine.
 	harbPanel harbingerPanel
+	// planPanel is the Plan panel's UI state (selection, feedback line,
+	// Clear confirmation). Owned by the tview goroutine.
+	planPanel planPanel
 
 	// Milestone-gated theme unlocks (theming.md §5; see theme_unlock.go). Both fields
 	// are owned by the UI goroutine — touched only from refresh(), which runs inside
@@ -148,6 +151,15 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		// tview goroutine, no engine lock held: the engine's action methods and
 		// GetState take their own locks.
 		if !d.harbPanel.handleKey(event, d.engine) {
+			return event
+		}
+		d.overlayMgr.Refresh(d.engine.GetState())
+		return nil
+	})
+	d.overlayMgr.Register("plan", "Build Plan", d.planPanel.provider)
+	d.overlayMgr.SetKeyHandler("plan", func(event *tcell.EventKey) *tcell.EventKey {
+		// tview goroutine, no engine lock held (see the harbinger handler).
+		if !d.planPanel.handleKey(event, d.engine) {
 			return event
 		}
 		d.overlayMgr.Refresh(d.engine.GetState())
@@ -364,6 +376,9 @@ func (d *Dashboard) build() {
 			if result.OverlayName == "harbinger" {
 				d.harbPanel.reset()
 			}
+			if result.OverlayName == "plan" {
+				d.planPanel.reset()
+			}
 			if result.OverlayName != "" {
 				state := d.engine.GetState()
 				d.overlayMgr.Show(result.OverlayName, state)
@@ -491,7 +506,7 @@ func (d *Dashboard) updateSidebar(activeOverlay string) {
 }
 
 func buildSidebarText(active string) string {
-	commands := []string{"milestones", "research", "expedition", "army", "trade", "factions", "stats", "wonders", "workers", "logs", "epoch", "harbinger", "history", "citymap", "worldmap", "help"}
+	commands := []string{"milestones", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders", "workers", "logs", "epoch", "harbinger", "history", "citymap", "worldmap", "help"}
 	var sb strings.Builder
 	sb.WriteString("\n")
 	for _, cmd := range commands {

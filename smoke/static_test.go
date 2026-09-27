@@ -37,12 +37,86 @@ func TestGateCovenant(t *testing.T) {
 	}
 }
 
+// TestStorageCovenant: the most storage buildable in every age holds
+// config.StorageHoldHours of the age's typical production of each of its
+// construction resources (economy.md, Law 1). A store that fills in minutes
+// throws away most of what a player makes between visits.
+func TestStorageCovenant(t *testing.T) {
+	rows := StaticStorage()
+	if len(rows) == 0 {
+		t.Fatal("no ages checked")
+	}
+	for _, r := range rows {
+		if !r.OK() {
+			t.Errorf("%s: the most %s storage buildable (%s) holds %.2f h of typical income (%s/tick), under %g h; raise the age's storage per copy",
+				r.Age, r.Resource, num(r.MaxStorage), r.Hours, num(r.Income), config.StorageHoldHours)
+		}
+	}
+}
+
+// TestStorageCovenantCatchesBrokenStorage keeps the guard honest: the
+// storage the Renaissance to Victorian Ages had before the covenant (500K,
+// 10M, 50M and 350M per copy, where a full store held under half an hour of
+// gold or steel) must each be flagged, and so must halving every storage
+// building, which puts nearly every age under.
+func TestStorageCovenantCatchesBrokenStorage(t *testing.T) {
+	old := map[string]float64{
+		"renaissance_vault":  500e3,
+		"colonial_warehouse": 10e6,
+		"industrial_depot":   50e6,
+		"victorian_vault":    350e6,
+	}
+	withStorage := func(per func(key string, v float64) float64) map[string]config.BuildingDef {
+		defs := config.BuildingByKey()
+		for k, d := range defs {
+			if d.Category != "storage" {
+				continue
+			}
+			effs := append([]config.Effect(nil), d.Effects...)
+			for i, e := range effs {
+				if e.Type == "storage" {
+					effs[i].Value = per(k, e.Value)
+				}
+			}
+			d.Effects = effs
+			defs[k] = d
+		}
+		return defs
+	}
+	broken := withStorage(func(k string, v float64) float64 {
+		if o, ok := old[k]; ok {
+			return o
+		}
+		return v
+	})
+	flagged := map[string]bool{}
+	for _, r := range staticStorage(broken, config.TypicalIncome) {
+		if !r.OK() {
+			flagged[r.Age] = true
+		}
+	}
+	for _, age := range []string{"renaissance_age", "colonial_age", "industrial_age", "victorian_age"} {
+		if !flagged[age] {
+			t.Errorf("%s: the pre-covenant storage was not flagged", age)
+		}
+	}
+	halved := 0
+	for _, r := range staticStorage(withStorage(func(_ string, v float64) float64 { return v / 2 }), config.TypicalIncome) {
+		if !r.OK() {
+			halved++
+		}
+	}
+	if halved < 10 {
+		t.Errorf("halving every storage building flagged only %d ages", halved)
+	}
+}
+
 // TestGateCovenantCatchesBrokenGates keeps the guard honest: the pre-fix
 // numbers must each be flagged. 50 longhouses was the Stone Age wall, 30
 // barracks for Medieval named a Bronze Age building the age lock forbids
-// building later, 40K food cannot fit 1.25x under Stone Age storage, and
+// building later, 80K food cannot fit 1.25x under Stone Age storage, and
 // iron does not exist before the Bronze Age; and a Bronze Age smithy priced
-// in coal (which unlocks in the Renaissance) could never be built. The 40K
+// in coal (which unlocks in the Renaissance) could never be built. The 80K
 // food is also far more than a Stone Age economy makes in 45 minutes, with no
 // market yet to buy the rest.
 //
@@ -58,7 +132,7 @@ func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 		switch ages[i].Key {
 		case "bronze_age":
 			ages[i].BuildingReqs = map[string]int{"longhouse": 50}
-			ages[i].ResourceReqs = map[string]float64{"food": 40000, "iron": 10}
+			ages[i].ResourceReqs = map[string]float64{"food": 80000, "iron": 10}
 		case "medieval_age":
 			ages[i].BuildingReqs = map[string]int{"barracks": 30}
 		case "renaissance_age":
@@ -75,7 +149,7 @@ func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 	smithy.BaseCost = map[string]float64{"wood": 900, "coal": 100}
 	defs["smithy"] = smithy
 	sistine := defs["sistine_chapel"]
-	sistine.BaseCost = map[string]float64{"stone": 40e6, "gold": 10e6, "faith": 6e6, "culture": 8e6}
+	sistine.BaseCost = map[string]float64{"stone": 100e6, "gold": 10e6, "faith": 6e6, "culture": 8e6}
 	defs["sistine_chapel"] = sistine
 	cradle := defs["stellar_cradle"]
 	cradle.BaseCost = map[string]float64{"uranium": 940e12}

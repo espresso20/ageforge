@@ -472,6 +472,7 @@ func (ge *GameEngine) Succumb() error {
 	ge.Stats = NewGameStats()
 	ge.permanentBonuses = make(map[string]float64)
 	ge.buildQueue = nil
+	ge.plan = nil
 	ge.log = nil
 	ge.speedMultiplier = 1.0
 	ge.tickSpeedBonus = 0

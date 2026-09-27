@@ -188,6 +188,7 @@ func Scenarios() []Scenario {
 		{Name: "perf", Desc: "late-game tick and GetState latency against budgets, and memory growth over a long run", Run: runPerf},
 		{Name: "ui", Desc: "UI sweep under the themes, plus the dashboard and every overlay at 80x24 and 100x30", Run: runUI},
 		{Name: "styles", Desc: "the bot under different play styles: greedy, idle check-ins, harbinger buyer, succumber, cosmic legacy hunter", FullOnly: true, Run: runStyles},
+		{Name: "idle", Desc: "check-in players at 1h, 3h and 8h leaving a build plan each visit: median time to the first prestige against the idle targets", FullOnly: true, Run: runIdle},
 		{Name: "prestige", Desc: "two prestige cycles: the points formula, upgrade effects, and legacies, ruins and the Cosmic Legacy persisting", FullOnly: true, Run: runPrestige},
 	}
 }

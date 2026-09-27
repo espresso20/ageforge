@@ -192,6 +192,7 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 			} else {
 				fmt.Fprintf(&sb, "  [gray]wonder collect <res> <amt|all>[-]\n")
 			}
+			fmt.Fprintf(&sb, "  %s\n", wonderOverflowLine(state.WonderOverflow))
 		}
 		fmt.Fprintf(&sb, "\n[gray]Build time: %s[-]\n", formatTicks(current.def.BuildTicks, state))
 	}

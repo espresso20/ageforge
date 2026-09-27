@@ -55,6 +55,10 @@ type Bot struct {
 	// wonder banked with what would otherwise be lost at the cap. See
 	// CheckIn.
 	CheckInTicks float64
+	// UsePlan makes a check-in player leave a build plan for the hours until
+	// the next visit (planAhead). The idle style sets it; the greedy bot,
+	// always there, has no use for one.
+	UsePlan bool
 
 	// Actions counts successful player actions by kind; Errors counts
 	// rejected ones. Both feed the report.
@@ -190,10 +194,18 @@ func (b *Bot) newPlan(st game.GameState) *plan {
 	b.harbingerTargets(p)
 	if b.CheckInTicks > 0 {
 		// Room for what comes in before the next visit, up to what the age
-		// still needs: anything over the cap by then is lost.
+		// still needs: anything over the cap by then is lost. A player who
+		// leaves a build plan spends most of it as it comes in, so they
+		// store an hour's worth (the Storage Covenant's scale) rather than
+		// the whole interval's: storage bought for eight hours of income
+		// would cost more than the income it saves.
+		ahead := b.CheckInTicks
+		if b.UsePlan {
+			ahead = math.Min(ahead, planStoreTicks)
+		}
 		for _, res := range sortedKeys(p.target) {
 			if rate := st.Resources[res].Rate; rate > 0 && p.target[res] > 0 {
-				want := math.Min(p.target[res], p.amt[res]+rate*b.CheckInTicks)
+				want := math.Min(p.target[res], p.amt[res]+rate*ahead)
 				p.capNeed[res] = math.Max(p.capNeed[res], want)
 			}
 		}
@@ -268,16 +280,542 @@ func (b *Bot) CheckIn(st game.GameState) int {
 	if b.Trace != nil {
 		b.traceCheckIn("checkin", st)
 	}
+	if b.UsePlan && b.expandStorage(st) {
+		st = b.ge.GetState()
+	}
 	for round := 1; ; round++ {
 		before := b.actionCount()
 		b.Play(st)
 		if round >= maxCheckInRounds || b.actionCount() == before {
+			if b.UsePlan {
+				b.planAhead(b.ge.GetState())
+			}
 			if b.Trace != nil {
 				b.traceCheckIn(fmt.Sprintf("leaves after %d round(s)", round), b.ge.GetState())
 			}
 			return round
 		}
 		st = b.ge.GetState()
+	}
+}
+
+// maxPlanCopies bounds one plan item the bot queues.
+const maxPlanCopies = 40
+
+// planIncomeSlack scales the income a check-in player budgets the plan
+// against: production grows while they are away (the plan adds producers),
+// and an item the income doesn't reach just waits for the next visit.
+const planIncomeSlack = 1.5
+
+// planStoreTicks is how much of the income ahead a check-in player who
+// leaves a plan buys storage for: an hour at 1x.
+const planStoreTicks = 1800
+
+// planAhead is how a check-in player leaves the game: a build plan
+// (`plan build`, `plan research`, `plan trade`) for the hours until the next
+// visit, so the income of those hours is spent as it comes in instead of
+// piling up at the caps. It replaces the previous visit's plan. Wonder
+// overflow stays on (the default), so what the plan doesn't spend and the
+// stores can't hold goes into the wonder.
+//
+// The plan is budgeted: each resource's budget is what the bot holds plus
+// what it will make before the next visit (with some slack, see
+// planIncomeSlack), less what the next age asks for as a resource
+// requirement. Items go in priority order, each with as many copies as the
+// budget left covers (along the cost curve):
+//
+//  1. the age's wonder, which starts once overflow and deposits fill its bank;
+//  2. storage for anything that must fit under a cap (requirements, the
+//     income ahead, prices over a cap);
+//  3. the next age's required buildings;
+//  4. housing when the population is capped and worker slots stand empty;
+//  5. producers of the slowest requirements, slowest first;
+//  6. techs the knowledge budget covers, a missing producer's tech first;
+//  7. trades for what the age buys rather than makes, from what overflows.
+//
+// While the goal is beyond the horizon (investing), producers go before
+// storage and required buildings: a waiting item holds its price back, and a
+// required building waiting on stone would hold back the stone pits that
+// bootstrap it. Storage and required buildings get a copy even when the
+// budget can't cover one, as long as what they lack is coming in: they are
+// what the age needs, and the plan waits for them. Anything short of a
+// resource nothing makes is first bought at the market (fundAtMarket).
+func (b *Bot) planAhead(st game.GameState) {
+	if b.CheckInTicks <= 0 {
+		return
+	}
+	b.ge.PlanClear()
+	p := b.newPlan(st)
+	// Income ahead: today's rate plus what the buildings under construction
+	// will add (they finish within minutes), with slack for the producers
+	// the plan itself adds on the way.
+	ahead := map[string]float64{}
+	for _, q := range st.BuildQueue {
+		for _, e := range b.defs[b.nameToKey[q.Name]].Effects {
+			if e.Type == "production" && e.Value > 0 {
+				ahead[e.Target] += e.Value
+			}
+		}
+	}
+	budget := map[string]float64{}
+	for res, r := range st.Resources {
+		if r.Unlocked {
+			income := (math.Max(r.Rate, 0) + ahead[res]) * planIncomeSlack
+			budget[res] = p.amt[res] + income*b.CheckInTicks - st.NextAgeResReqs[res]
+		}
+	}
+	covers := func(c map[string]float64) bool {
+		for r, v := range c {
+			if budget[r] < v {
+				return false
+			}
+		}
+		return true
+	}
+	// accrues reports whether every part of c the budget lacks is being
+	// made, so the plan will get there by waiting.
+	accrues := func(c map[string]float64) bool {
+		for r, v := range c {
+			if budget[r] < v && st.Resources[r].Rate+ahead[r] <= 0 {
+				return false
+			}
+		}
+		return true
+	}
+	add := func(key, kind string, want int, essential bool) int {
+		n := 0
+		for n < want && n < maxPlanCopies && b.buildable(p, key) {
+			c := b.cost(p, key)
+			if !p.fits(c) {
+				break
+			}
+			if !covers(c) && n == 0 {
+				b.fundAtMarket(p, c, budget)
+			}
+			if !covers(c) && !(essential && accrues(c)) {
+				break
+			}
+			for r, v := range c {
+				budget[r] -= v
+			}
+			p.extra[key]++
+			n++
+		}
+		if n == 0 {
+			return 0
+		}
+		got, err := b.ge.PlanAddBuild(key, n)
+		b.act("plan_"+kind, fmt.Sprintf("%s %d", key, n), err)
+		if err != nil {
+			got = 0
+		}
+		p.extra[key] -= n - got
+		for _, e := range b.defs[key].Effects {
+			if e.Type == "production" && e.Value > 0 {
+				ahead[e.Target] += e.Value * float64(got) // planned producers count as coming in
+			}
+		}
+		return got
+	}
+
+	storage := func() {
+		for _, key := range sortedKeys(p.needBld) {
+			p.fits(b.cost(p, key)) // record prices over a cap in capNeed
+		}
+		for _, res := range sortedKeys(p.capNeed) {
+			if p.capNeed[res] <= p.storage[res]*0.98 {
+				continue
+			}
+			key, ok := b.bestFor(p, storer(res))
+			if !ok {
+				continue
+			}
+			per := 0.0
+			for _, e := range b.defs[key].Effects {
+				per += storer(res)(e)
+			}
+			want := 1
+			if per > 0 {
+				want = int(math.Ceil((p.capNeed[res] - p.storage[res]) / per))
+			}
+			n := add(key, "storage", want, true)
+			for _, e := range b.defs[key].Effects {
+				if e.Type == "storage" {
+					for r := range p.storage {
+						if e.Target == r || e.Target == "all" {
+							p.storage[r] += e.Value * float64(n)
+						}
+					}
+				}
+			}
+		}
+	}
+	required := func() {
+		for _, key := range sortedKeys(p.needBld) {
+			add(key, "required", p.needBld[key], true)
+		}
+	}
+	producers := func() {
+		for i, res := range p.worst {
+			if i >= 3 {
+				break
+			}
+			if key, ok := b.bestFor(p, producer(res)); ok {
+				add(key, "production", maxPlanCopies, false)
+			}
+		}
+	}
+	housingFor := func() {
+		ws := st.Workers
+		if ws.TotalPop >= ws.MaxPop && p.slots > ws.MaxPop {
+			if key, ok := b.bestFor(p, housing); ok {
+				add(key, "housing", 5, false)
+			}
+		}
+	}
+
+	if w := st.CurrentAgeWonderKey; w != "" && st.Buildings[w].Count == 0 && b.queuedCount(st, w) == 0 {
+		_, err := b.ge.PlanAddBuild(w, 1)
+		b.act("plan_wonder", w, err)
+	}
+	// Trades go right after the wonder: a build waiting on stone holds back
+	// the gold it also costs, so a trade below it could never sell that gold
+	// for the stone. Each is capped at what is missing.
+	b.planTrades(p, st)
+	if p.invest {
+		producers()
+		storage()
+		required()
+		housingFor()
+	} else {
+		storage()
+		required()
+		housingFor()
+		producers()
+	}
+	b.planTechs(p, st, budget)
+	// 8. Advance as soon as the age is ready, not at the next visit, and
+	// 9. a start on the next age, which waits for the advance: its storage,
+	// its wonder and the buildings the age after it requires.
+	if st.NextAge != "" {
+		b.act("plan_advance", st.NextAge, b.ge.PlanAddAdvance())
+		b.planNextAge(st.NextAge)
+	}
+}
+
+// planNextAge queues the next age's opening moves behind the advance item:
+// a few copies of its storage building, its wonder, and its share of the
+// following gate (the next age's buildings the age after it requires). They
+// wait, reserving nothing, until the advance unlocks them, so a long absence
+// that finishes one age keeps going in the next.
+func (b *Bot) planNextAge(next string) {
+	ages := config.AgeByKey()
+	// First, producers of the next age that today's income can pay for:
+	// the best one per resource the next age makes, so its new resources
+	// (the Stone Age's stone, the Bronze Age's iron) start flowing without
+	// waiting for a visit.
+	st := b.ge.GetState()
+	best := map[string]string{}
+	bestV := map[string]float64{}
+	for _, k := range sortedKeys(b.defs) {
+		d := b.defs[k]
+		if d.RequiredAge != next || d.Category == "wonder" || d.Category == "storage" || d.MaxCount > 0 {
+			continue
+		}
+		fundable := true
+		for r := range d.BaseCost {
+			if st.Resources[r].Rate <= 0 {
+				fundable = false
+			}
+		}
+		if !fundable {
+			continue
+		}
+		units := 0.0
+		for r, c := range d.BaseCost {
+			units += c / math.Max(st.Resources[r].Storage, 1)
+		}
+		for _, e := range d.Effects {
+			if e.Type == "production" && e.Value > 0 && !config.IsFlowResource(e.Target) {
+				if v := e.Value / math.Max(units, 1e-9); v > bestV[e.Target] {
+					best[e.Target], bestV[e.Target] = k, v
+				}
+			}
+		}
+	}
+	seen := map[string]bool{}
+	for _, res := range sortedKeys(best) {
+		if k := best[res]; !seen[k] {
+			seen[k] = true
+			_, err := b.ge.PlanAddBuild(k, 5)
+			b.act("plan_next_production", k, err)
+		}
+	}
+	var keys []string
+	for _, k := range sortedKeys(b.defs) {
+		if d := b.defs[k]; d.RequiredAge == next && d.Category == "storage" {
+			keys = append(keys, k)
+		}
+	}
+	for _, k := range keys {
+		_, err := b.ge.PlanAddBuild(k, 3)
+		b.act("plan_next_storage", k, err)
+	}
+	nd := ages[next]
+	for _, k := range sortedKeys(b.defs) {
+		if d := b.defs[k]; d.RequiredAge == next && d.Category == "wonder" {
+			_, err := b.ge.PlanAddBuild(k, 1)
+			b.act("plan_next_wonder", k, err)
+		}
+	}
+	after := ""
+	for i, a := range config.AgeOrder() {
+		if a == nd.Key && i+1 < len(config.AgeOrder()) {
+			after = config.AgeOrder()[i+1]
+		}
+	}
+	if after == "" {
+		return
+	}
+	reqs := ages[after].BuildingReqs
+	for _, k := range sortedKeys(reqs) {
+		if b.defs[k].RequiredAge == next {
+			_, err := b.ge.PlanAddBuild(k, reqs[k])
+			b.act("plan_next_required", fmt.Sprintf("%s %d", k, reqs[k]), err)
+		}
+	}
+}
+
+// maxPlanTrades bounds the trade items a check-in player leaves.
+const maxPlanTrades = 4
+
+// planTrades adds `plan trade` items for the resources the age still needs
+// that the income before the next visit won't bring (the market-only stone
+// and iron of the later ages): each sold from the resource that fills its
+// store before the next visit with the most to spare, for what is missing.
+// A seller can serve several targets while its spare lasts: what it makes
+// before the next visit past a full store and past what the age still needs
+// of it.
+func (b *Bot) planTrades(p *plan, st game.GameState) {
+	traders := 0
+	for key, bs := range st.Buildings {
+		if b.defs[key].LineageKey == "trade" {
+			traders += bs.Count
+		}
+	}
+	income := func(r string) float64 { return math.Max(st.Resources[r].Rate, 0) * b.CheckInTicks }
+	if traders == 0 {
+		// No market yet: if the age needs a resource nothing makes, plan
+		// the cheapest trade building first; the trade items below wait
+		// for it.
+		missing := false
+		for _, res := range p.worst {
+			if st.Resources[res].Rate <= 0 && p.target[res] > p.amt[res] {
+				missing = true
+			}
+		}
+		key, cheapest := "", math.Inf(1)
+		for _, k := range sortedKeys(st.Buildings) {
+			if b.defs[k].LineageKey != "trade" || !b.buildable(p, k) {
+				continue
+			}
+			if f := p.costFrac(b.cost(p, k)); f < cheapest {
+				key, cheapest = k, f
+			}
+		}
+		if !missing || key == "" {
+			return
+		}
+		_, err := b.ge.PlanAddBuild(key, 1)
+		b.act("plan_market", key, err)
+	}
+	spare := map[string]float64{}
+	spareOf := func(r string) float64 {
+		if v, ok := spare[r]; ok {
+			return v
+		}
+		v := p.amt[r] + income(r) - math.Max(0, p.target[r])
+		spare[r] = math.Max(v, 0)
+		return spare[r]
+	}
+	added := 0
+	for _, want := range p.worst {
+		short := p.target[want] - p.amt[want] - income(want)
+		// Several sellers may serve one target, best first, until what is
+		// missing is covered.
+		for short > 0 && added < maxPlanTrades {
+			from, best, rate := "", 0.0, 0.0
+			for _, k := range sortedKeys(st.Trade.ExchangeRates) {
+				x := st.Trade.ExchangeRates[k]
+				if x.To != want || x.Rate <= 0 || x.From == want {
+					continue
+				}
+				if v := spareOf(x.From) * x.Rate; v > best && !b.planHasTrade(x.From, want) {
+					from, best, rate = x.From, v, x.Rate
+				}
+			}
+			if from == "" || best < 1 {
+				break
+			}
+			amount := math.Min(short, best)
+			// A resource the age makes little of is kept topped up instead
+			// (no amount): what it buys also feeds the other items of the
+			// plan that cost it, which an amount sized to the gate misses.
+			ask := amount
+			if income(want) < 0.5*(p.target[want]-p.amt[want]) {
+				ask = 0
+			}
+			if !b.act("plan_trade", from+"->"+want, b.ge.PlanAddTrade(from, want, ask)) {
+				break
+			}
+			added++
+			spare[from] -= amount / rate
+			short -= amount
+		}
+	}
+}
+
+// planHasTrade reports whether the plan already trades from for to.
+func (b *Bot) planHasTrade(from, to string) bool {
+	for _, v := range b.ge.GetState().Plan {
+		if v.Kind == game.PlanTrade && v.Key == from && v.To == to {
+			return true
+		}
+	}
+	return false
+}
+
+// planTechs adds the techs the knowledge budget covers, a missing
+// producer's tech first, if the research slot will be free before the next
+// visit.
+func (b *Bot) planTechs(p *plan, st game.GameState, budget map[string]float64) {
+	rs := st.Research
+	if rs.CurrentTech != "" && float64(rs.TicksLeft) > b.CheckInTicks {
+		return
+	}
+	techs := config.TechByKey()
+	keys := sortedKeys(rs.Techs)
+	unblocks := func(key string) bool {
+		for _, e := range techs[key].Effects {
+			if e.Type == "production" && p.target[e.Target] > p.amt[e.Target] && st.Resources[e.Target].Rate <= 0 {
+				return true
+			}
+		}
+		return false
+	}
+	sort.SliceStable(keys, func(i, j int) bool {
+		ui, uj := unblocks(keys[i]), unblocks(keys[j])
+		if ui != uj {
+			return ui
+		}
+		return rs.Techs[keys[i]].Cost < rs.Techs[keys[j]].Cost
+	})
+	planned := 0
+	for _, key := range keys {
+		t := rs.Techs[key]
+		if planned >= 3 || !t.Available || t.Researched || key == rs.CurrentTech {
+			continue
+		}
+		if t.Cost > p.storage["knowledge"] || budget["knowledge"] < t.Cost {
+			continue
+		}
+		if b.act("plan_research", key, b.ge.PlanAddResearch(key)) {
+			budget["knowledge"] -= t.Cost
+			planned++
+		}
+	}
+}
+
+// expandStorage is the first thing a check-in player does on arriving to
+// full stores: build the storage the hours until the next visit call for
+// (newPlan's capNeed: requirements, prices, and the income ahead up to what
+// the age still needs), buying at the market whatever storage input nothing
+// makes, with what sits at the caps before anything else spends it. Reports
+// whether it built anything.
+func (b *Bot) expandStorage(st game.GameState) bool {
+	p := b.newPlan(st)
+	built := false
+	skip := map[string]bool{}
+	for i := 0; i < 25; i++ {
+		res := ""
+		for _, r := range sortedKeys(p.capNeed) {
+			if !skip[r] && p.capNeed[r] > p.storage[r]*0.98 {
+				res = r
+				break
+			}
+		}
+		if res == "" {
+			break
+		}
+		key, ok := b.bestFor(p, storer(res))
+		if !ok {
+			skip[res] = true
+			continue
+		}
+		c := b.cost(p, key)
+		if !p.affordable(c) {
+			have := make(map[string]float64, len(p.amt))
+			for k, v := range p.amt {
+				have[k] = v
+			}
+			b.fundAtMarket(p, c, have)
+		}
+		if !b.tryBuild(p, key, "build_storage") {
+			skip[res] = true
+			continue
+		}
+		built = true
+	}
+	return built
+}
+
+// fundAtMarket buys, before leaving, what a plan item's price c needs and the
+// hours ahead won't bring: each resource the budget lacks (the Industrial
+// Age's stone and iron, the Atomic Age's iron and stone come only from the
+// market). It sells what refills before the next visit anyway (income over
+// the interval at least a full store), never what c itself needs, at most a
+// quarter of a store per trade and a few trades per resource. The trades are
+// real (`trade`); budget follows what changed hands.
+func (b *Bot) fundAtMarket(p *plan, c map[string]float64, budget map[string]float64) {
+	traders := 0
+	for key, bs := range p.st.Buildings {
+		if b.defs[key].LineageKey == "trade" {
+			traders += bs.Count
+		}
+	}
+	if traders == 0 {
+		return
+	}
+	rates := p.st.Trade.ExchangeRates
+	for _, r := range sortedKeys(c) {
+		for i := 0; i < 6; i++ {
+			short := math.Min(c[r]-budget[r], p.storage[r]-p.amt[r])
+			if short <= 0 {
+				break
+			}
+			from, best, sell := "", 0.0, 0.0
+			for _, k := range sortedKeys(rates) {
+				x := rates[k]
+				if x.To != r || x.Rate <= 0 || p.st.Resources[x.From].Rate*b.CheckInTicks < p.storage[x.From] {
+					continue
+				}
+				n := math.Min(math.Min(p.amt[x.From]-c[x.From], 0.25*p.storage[x.From]), short/x.Rate)
+				if v := n * x.Rate; n >= 1 && v > best {
+					from, best, sell = x.From, v, n
+				}
+			}
+			if from == "" {
+				break
+			}
+			got, err := b.ge.ExchangeResources(from, r, sell)
+			if !b.act("trade_plan", from+"->"+r, err) {
+				break
+			}
+			p.amt[from] -= sell
+			p.amt[r] += got
+			budget[from] -= sell
+			budget[r] += got
+		}
 	}
 }
 
@@ -292,6 +830,26 @@ func (b *Bot) traceCheckIn(what string, st game.GameState) {
 	}
 	fmt.Fprintf(b.Trace, "tick %d %s %s: queue %d, research %q; waiting on: %s\n", st.Tick, what, st.Age, len(st.BuildQueue),
 		st.Research.CurrentTech, strings.Join(parts, "; "))
+	if len(st.Plan) > 0 {
+		var items []string
+		for _, v := range st.Plan {
+			s := fmt.Sprintf("%s x%d %s", v.Key, v.Count, v.Status)
+			switch v.Kind {
+			case game.PlanTrade:
+				s = fmt.Sprintf("trade %s->%s (got %s, want %s more) %s", v.Key, v.To, num(v.Got), num(v.Amount), v.Status)
+			case game.PlanAdvance:
+				s = "advance " + v.Status
+			}
+			switch {
+			case v.Note != "":
+				s += " (" + v.Note + ")"
+			case v.Short != "":
+				s += fmt.Sprintf(" (%s %.0f%%)", v.Short, v.Progress*100)
+			}
+			items = append(items, s)
+		}
+		fmt.Fprintf(b.Trace, "tick %d   plan: %s\n", st.Tick, strings.Join(items, "; "))
+	}
 }
 
 // actionCount is the number of successful actions so far, less hand
@@ -747,6 +1305,17 @@ func (b *Bot) weights(p *plan) map[string]float64 {
 func (b *Bot) recruit(p *plan) int {
 	ws := p.st.Workers
 	room := min(ws.MaxPop, p.slots) - ws.TotalPop
+	if b.UsePlan && ws.MaxPop > p.slots {
+		// A check-in player keeps some idle hands for the producers the
+		// plan will finish before the next visit (it staffs them from idle
+		// workers): as many as half the food surplus feeds, within housing.
+		per := 0.1
+		if ws.TotalPop > 0 && ws.FoodDrain > 0 {
+			per = ws.FoodDrain / float64(ws.TotalPop)
+		}
+		spare := int(math.Max(0, p.foodRate) / per / 2)
+		room = max(room, 0) + min(ws.MaxPop-max(p.slots, ws.TotalPop), spare)
+	}
 	if room <= 0 {
 		return ws.TotalPop
 	}
@@ -985,7 +1554,12 @@ func (b *Bot) bankWonder(p *plan) {
 		onlyWonder := p.target[res]-left <= keep
 		switch {
 		case p.invest && !onlyWonder && b.CheckInTicks > 0:
-			// Bank what would be lost at the cap before the next visit.
+			// Bank what would be lost at the cap before the next visit. With
+			// overflow on the game does that as it happens, and what the
+			// store holds now is better left to the build plan.
+			if p.st.WonderOverflow {
+				continue
+			}
 			over := p.amt[res] + math.Max(p.st.Resources[res].Rate, 0)*b.CheckInTicks - p.storage[res]
 			if over <= 0 {
 				continue

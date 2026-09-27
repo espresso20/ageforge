@@ -310,6 +310,12 @@ func HarbingerPrices() []PriceRow {
 // covers it. It assumes every earlier storage copy was built in its own age,
 // which is the best case.
 func MaxStorage(ageKey, res string) float64 {
+	return maxStorageIn(config.BuildingByKey(), ageKey, res)
+}
+
+// maxStorageIn is MaxStorage over defs (the static checks' broken-number
+// tests feed in altered storage buildings).
+func maxStorageIn(defs map[string]config.BuildingDef, ageKey, res string) float64 {
 	order := map[string]int{}
 	for i, k := range config.AgeOrder() {
 		order[k] = i
@@ -323,7 +329,6 @@ func MaxStorage(ageKey, res string) float64 {
 	}
 	// Sorted, not map order: the float sum below must come out the same on
 	// every run or the report's storage caps wobble in the last digit.
-	defs := config.BuildingByKey()
 	for _, key := range sortedKeys(defs) {
 		d := defs[key]
 		if d.RequiredAge == "" || order[d.RequiredAge] > limit || d.Category == "wonder" {

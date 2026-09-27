@@ -6,7 +6,8 @@ name: Smoke
 # run, as does anything else that breaks.
 #
 #   - Nightly: the full tier, every scenario; progression stops at the
-#     Digital Age.
+#     Digital Age. The idle scenario enforces the check-in targets
+#     (smoke/idle_targets.go: first prestige at 1h, 3h and 8h check-ins).
 #   - Weekly: the deep tier, progression to a Quantum Age prestige through
 #     the Last Passage, so every age from the Primitive to the Galactic is
 #     enforced. One seed per job (about 5 minutes each), then a merge job pools
@@ -25,6 +26,10 @@ on:
         type: choice
         options: [nightly, weekly]
         default: nightly
+      scenarios:
+        description: "nightly only: comma-separated scenarios (all, or e.g. idle,progression); see go run ./cmd/smoke -list"
+        type: string
+        default: all
 
 permissions:
   contents: read
@@ -54,9 +59,13 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Smoke (full tier, all scenarios)
+      - name: Smoke (full tier)
         id: smoke
-        run: go run ./cmd/smoke -tier full -scenario all -pacing enforce -v -out smoke-report
+        env:
+          # All on the schedule; a dispatch may pick some (the idle check-in
+          # targets alone: idle).
+          SCENARIOS: ${{ inputs.scenarios || 'all' }}
+        run: go run ./cmd/smoke -tier full -scenario "$SCENARIOS" -pacing enforce -v -out smoke-report
 
       - name: Job summary
         if: ${{ always() }}
