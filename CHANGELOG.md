@@ -101,6 +101,8 @@ All notable changes to AgeForge are documented here.
 - After a prestige, the storage upgrade didn't apply until the first tick, and starting resources beyond the base storage were cut off (Starting Food tier 3 gave 35 food, not 75).
 - `dump` wrote its file to a `data/logs` folder relative to wherever the game was launched; it now goes in `logs/` in your account's data folder.
 - Upgrading only some copies of a building left all its workers on the copies that remained, more than they have slots for. Workers over the remaining slots now move to the upgraded building, or go idle if it's full.
+- Loading a game reset the festival and black-market cooldowns, and a prestige left them counting against the old run's ticks. Both are saved now and reset on prestige.
+- Selling a storage building left stock above the new, lower cap for anything not being produced.
 - Autocomplete offers `diplomacy tribute`, `diplomacy raid`, `account wipe` and the `acct` alias, and no longer re-offers an argument you've already typed (`research list list`).
 
 ---
