@@ -186,7 +186,12 @@ type GameEngine struct {
 	// harbingerCheckedEpoch is the epoch the tick hook last looked for a
 	// thread in (harbingerTickCheck). Not persisted.
 	harbingerCheckedEpoch string
-	epochEventHistory     []EpochEventRecord
+	// pendingLastPassage is set while a prestige from the final epoch waits
+	// for Endure or Succumb (last_passage.go); cosmicLegacy is the one-time
+	// Cosmic Legacy flag, kept across prestige and Succumb. Both persisted.
+	pendingLastPassage bool
+	cosmicLegacy       bool
+	epochEventHistory  []EpochEventRecord
 	// awakeningsFired tracks which one-time Age Awakenings have fired this run, so each
 	// fires at most once per prestige cycle and a save/reload does not re-fire. Keyed by
 	// AwakeningDef.Key. Cleared on prestige/reset alongside epochEventFired.
@@ -2413,6 +2418,7 @@ func (ge *GameEngine) buildResolver() *Resolver {
 	r.AddAll(ge.wonderModifiers())
 	r.AddAll(ge.permanentModifiers())
 	r.AddAll(ge.legacyModifiers())
+	r.AddAll(ge.cosmicLegacyModifiers())
 	r.AddAll(ge.eventModifiers())
 	r.AddAll(ge.moraleModifiers())
 	r.AddAll(ge.diplomacyModifiers())
@@ -3231,18 +3237,48 @@ func (ge *GameEngine) DoPrestige() error {
 	if ge.pendingCatastrophe != "" {
 		return ge.catastropheBlockErr("prestiging")
 	}
+	if ge.pendingLastPassage {
+		return lastPassageBlockErr()
+	}
 
 	ageOrder := ge.progress.GetAgeOrder()
 	if !ge.Prestige.CanPrestige(ge.age, ageOrder) {
 		return fmt.Errorf("must reach Modern Age or later to prestige")
 	}
 
-	points := ge.Prestige.CalculatePoints(
+	// In the final epoch prestige is the passage, and it can bring the Last
+	// Passage (last_passage.go). If it comes, prestige waits for the choice.
+	if ge.lastPassageApplies() {
+		if ge.rollLastPassage() {
+			return nil
+		}
+		ge.completePrestige(lastPassageSpared)
+		return nil
+	}
+	ge.completePrestige(prestigePlain)
+	return nil
+}
+
+// completePrestige awards the run's prestige points (all, part or none of
+// them, as how says), logs the run's last lines and resets for the new run.
+// Called by DoPrestige and by the Last Passage choice, under the write lock.
+func (ge *GameEngine) completePrestige(how prestigeEnding) {
+	ageOrder := ge.progress.GetAgeOrder()
+	full := ge.Prestige.CalculatePoints(
 		ge.age, ageOrder,
 		ge.Milestones.CompletedCount(),
 		ge.Research.ResearchedCount(),
 		ge.Stats.TotalBuilt,
 	)
+	points := ge.lastPassagePoints(how, full)
+	ge.recordLastPassageOutcome(how, points, full)
+	// The verdict and the ending belong to the old run; the reset below clears
+	// the log, so they are written aside and carried over.
+	carried := ge.runEndingLines(how, points, full)
+	newLegacy := how == lastPassageSuccumbed && !ge.cosmicLegacy
+	if how == lastPassageSuccumbed {
+		ge.cosmicLegacy = true
+	}
 
 	ge.Prestige.Prestige(points)
 
@@ -3296,7 +3332,13 @@ func (ge *GameEngine) DoPrestige() error {
 
 	ge.recalculateTickSpeed()
 
+	ge.log = carried
 	ge.addLog("success", fmt.Sprintf("Prestige complete! Level %d (+%d points)", ge.Prestige.GetLevel(), points))
+	if newLegacy {
+		ge.addLog("success", fmt.Sprintf("✦ Cosmic Legacy: production +%.0f%%, permanent. It survives every prestige and every fall.", CosmicLegacyProductionBonus*100))
+	} else if ge.cosmicLegacy {
+		ge.addLog("info", fmt.Sprintf("Cosmic Legacy active: production +%.0f%%.", CosmicLegacyProductionBonus*100))
+	}
 	ge.addLog("info", fmt.Sprintf("Passive bonus: +%.0f%% production, +%.0f%% tick speed",
 		float64(ge.Prestige.GetLevel())*2, ge.tickSpeedBonus*100))
 	if n := ge.legacyEpochCount(); n > 0 {
@@ -3317,8 +3359,6 @@ func (ge *GameEngine) DoPrestige() error {
 	// Roll for an Ancient Memory cache — prestige level is now >= 1, the age is
 	// primitive, and the flag was just cleared above, so this fresh run is eligible.
 	ge.maybeOfferAncientMemory()
-
-	return nil
 }
 
 // BuyPrestigeUpgrade purchases a prestige upgrade tier
@@ -3374,6 +3414,8 @@ func (ge *GameEngine) Reset() {
 	ge.epochEventHistory = nil
 	ge.legacyBonuses = make(map[string]bool)
 	ge.catastropheHistory = nil
+	ge.pendingLastPassage = false
+	ge.cosmicLegacy = false
 	ge.morale = moraleNeutral
 	ge.lowMoraleWarned = false
 	// Full wipe: no previous civilization, so no cache. Clear the run flag.
@@ -3543,6 +3585,7 @@ func (ge *GameEngine) GetState() GameState {
 		CatastrophesEndured:   endured,
 		CatastrophesSuccumbed: succumbed,
 		SuccumbResearchBonus:  ge.succumbResearchBonus(),
+		LastPassage:           ge.lastPassageState(prestigeSnap.PendingPoints),
 		History:               ge.History,
 		Morale:                ge.morale,
 		MoraleCap:             ge.moraleCap(),

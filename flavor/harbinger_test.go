@@ -57,6 +57,13 @@ func isHarbinger(m Moment) bool {
 	return false
 }
 
+// isRare reports whether m fires only a handful of times a run, so it is
+// sized by its own pool floor rather than the per-line Moments' floors: the
+// harbinger Moments, and RunEnding (once a run, at prestige).
+func isRare(m Moment) bool {
+	return isHarbinger(m) || m == RunEnding
+}
+
 // harbName is the roster name for an age, which is what the game sends as
 // Request.Subject for every harbinger Moment.
 func harbName(t testing.TB, age string) string {
@@ -70,7 +77,10 @@ func harbName(t testing.TB, age string) string {
 // gameSubject is the Subject the engine sends for a Moment at an age: the
 // harbinger's name for the harbinger Moments, nothing otherwise.
 func gameSubject(m Moment, age string) string {
-	if !isHarbinger(m) {
+	if m == RunEnding && !config.IsFinalEpoch(config.EpochForAge(age)) {
+		return "" // the plain register has no speaker; see catalog_run_ending.go
+	}
+	if !isHarbinger(m) && m != RunEnding {
 		return ""
 	}
 	if h, ok := config.HarbingerFor(age); ok {
@@ -91,14 +101,33 @@ func falseProphetsPossible(age string) bool {
 	return ok && h.FalseProphetChance > 0
 }
 
-// harbReachable reports whether the game can ever ask for m at age. Only
-// HarbingerDiscredited is restricted: it needs a false warning, which only the
-// Stone, Iron and Steel Eras can roll.
+// harbReachable reports whether the game can ever ask for m at age.
+// HarbingerDiscredited needs a false warning, which only the Stone, Iron and
+// Steel Eras can roll; RunEnding needs a prestige, which the Modern Age unlocks.
 func harbReachable(m Moment, age string) bool {
-	if m == HarbingerDiscredited {
+	switch m {
+	case HarbingerDiscredited:
 		return falseProphetsPossible(age)
+	case RunEnding:
+		return runEndReachable(age)
 	}
 	return true
+}
+
+// runEndReachable reports whether a run can end (prestige) at age: the Modern
+// Age and every age after it.
+func runEndReachable(age string) bool {
+	for _, a := range runEndPlainAges {
+		if a == age {
+			return true
+		}
+	}
+	for _, a := range runEndCosmicAges {
+		if a == age {
+			return true
+		}
+	}
+	return false
 }
 
 // harbKinds returns the Request.Kind values the game sends for m at age.

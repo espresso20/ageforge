@@ -41,7 +41,7 @@ Data replaces iron as the critical bottleneck. Server outages are crippling — 
 Plasma is everything — both primary and energy resource. The neural uprising is the nastiest non-catastrophe event in the game (20% worker loss, food drain, food stolen simultaneously). Corporate espionage can steal 10,000 gold and 8,000 data at once. Plan defensively.
 
 **✦ Cosmic Era** — *"Between stars and beyond time itself."*
-Dark matter and antimatter at scales that make earlier resources feel quaint. The Transcendence Signal event (+100,000 knowledge, +50,000 culture) is the most valuable event in the entire game. Reality fractures and entropy waves are manageable if you have strong production. The Reality Tear catastrophe is the hardest reset decision of the run.
+Dark matter and antimatter at scales that make earlier resources feel quaint. The Transcendence Signal event (+100,000 knowledge, +50,000 culture) is the most valuable event in the entire game. Reality fractures and entropy waves are manageable if you have strong production. The Reality Tear catastrophe is the hardest reset decision of the run. With no epoch after it, the Cosmic Era's passage is prestige itself: the **Last Passage**, which its harbingers warn of from the Interstellar Age on. See [The Last Passage](prestige.md#the-last-passage).
 
 ---
 
@@ -81,7 +81,7 @@ The outcome is determined in two steps:
 
 **Step 2 — If the roll is bad:** there's a 30% chance it escalates to a **Catastrophe** (modal prompt, your choice). The remaining 70% of bad rolls produce a Challenging event (applied immediately, no choice required). That makes the catastrophe chance 18% / 15% / 12% at low / mid / high faith. A bad roll never escalates on a transition into an epoch before the Iron Era, in an epoch that already had its catastrophe this run, or while another catastrophe is pending. See [Catastrophe](catastrophe.md).
 
-**The Harbinger.** Every epoch whose transition can bring a catastrophe has a harbinger thread: from the epoch's first age until the transition, each age's figure warns you of it. Appeasing it multiplies the catastrophe chance in Step 2 by 0.6 per level (two levels at most); inviting it makes the catastrophe certain. See [The Harbinger](harbinger.md).
+**The Harbinger.** Every epoch whose transition can bring a catastrophe has a harbinger thread: from the epoch's first age until the transition, each age's figure warns you of it. Appeasing it multiplies the catastrophe chance in Step 2 by 0.6 per level (two levels at most); inviting it makes the catastrophe certain. See [The Harbinger](harbinger.md). The Cosmic Era has no transition out, so its thread warns of the [Last Passage](prestige.md#the-last-passage) instead, which rolls with the same odds when you confirm prestige.
 
 **Step 3 — If the roll is good:** your culture fill percentage gates which tier of event you can receive:
 
@@ -111,7 +111,7 @@ Press **`epoch`** to open the Epoch tab. It displays:
 
 - Current epoch name, icon, and primary/energy resources
 - The result of your last epoch transition roll
-- Your catastrophe status for this epoch (pending, survived, succumbed), and the catastrophe odds for the next transition
+- Your catastrophe status for this epoch (pending, survived, succumbed), and the catastrophe odds for the next transition. In the Cosmic Era the next passage is prestige (the Last Passage), and the tab shows **THE LAST PASSAGE** while its choice is pending
 - The current [harbinger](harbinger.md), if one is present, and for past harbinger threads this run the chain of figures and the verdict
 - Full epoch event history for the current civilisation cycle
 - Your legacy bonuses earned across all runs
@@ -384,7 +384,7 @@ The sweet spot is usually one full age's worth of extra time (enough ticks to bu
 
 **One catastrophe per epoch per run.** You cannot chain-catastrophe your way through an epoch, and none can strike before the Iron Era.
 
-**Listen to the harbinger.** It walks with you through every epoch whose transition can bring a catastrophe, and its price is the same in every age of the epoch. Appease if you want to keep your run, Brace if Endure is the plan, Invite if you want the legacy bonus. See [The Harbinger](harbinger.md).
+**Listen to the harbinger.** It walks with you through every epoch whose transition can bring a catastrophe, and through the Cosmic Era toward the Last Passage. Its price is the same in every age of the epoch. Appease if you want to keep your run, Brace if Endure is the plan, Invite if you want the legacy bonus. See [The Harbinger](harbinger.md).
 
 ---
 
@@ -409,6 +409,7 @@ The sweet spot is usually one full age's worth of extra time (enough ticks to bu
 **After Prestige (end of full run):**
 - Similar to Succumb but chosen deliberately, from the Modern Age on, and it earns prestige points
 - Refused while a catastrophe is pending
+- From the Cosmic Era it can bring the [Last Passage](prestige.md#the-last-passage), which holds the prestige until you Endure (keep part of the run's points) or Succumb (no points, but the permanent Cosmic Legacy)
 - Legacy bonuses, Ancient Knowledge and ruins carry
 - The civilisation log carries; the per-run epoch event history is cleared
 - Prestige upgrades available

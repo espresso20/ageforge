@@ -395,9 +395,9 @@ func TestReproAgeSplashAllAges(t *testing.T) {
 	if st.NextAge != "" {
 		t.Fatalf("did not reach final age: %s", st.Age)
 	}
-	// Every epoch but the Cosmic Era ran a harbinger thread: it started in the
-	// epoch's first age, handed off at each later age, and resolved at the
-	// passage, all without taking the front page or focus from the splash
+	// Every epoch but the Cosmic Era ran a harbinger thread to its passage: it
+	// started in the epoch's first age, handed off at each later age, and
+	// resolved at the passage, all without taking the front page or focus from the splash
 	// sequence checked above (it is non-blocking). The Stone Era's thread may
 	// start on the first tick or, if the first advance beats it, in the Stone
 	// Age.
@@ -418,8 +418,15 @@ func TestReproAgeSplashAllAges(t *testing.T) {
 		arrivals++
 		handoffs += len(r.Chain) - 1
 	}
-	if st.Harbinger != nil {
-		t.Errorf("a harbinger is present in the final epoch: %+v", st.Harbinger)
+	// The Cosmic Era's thread warns of the Last Passage (prestige), so it is
+	// still running at the final age, voiced by the fourth figure.
+	cosmic := epochs[len(epochs)-1]
+	if h := st.Harbinger; h == nil || !h.LastPassage || h.Age != cosmic.Ages[len(cosmic.Ages)-1] ||
+		len(h.Earlier) != len(cosmic.Ages)-1 {
+		t.Errorf("final epoch harbinger = %+v, want the Last Passage thread in its last age", st.Harbinger)
+	} else {
+		arrivals++
+		handoffs += len(h.Earlier)
 	}
 	t.Logf("harbinger arrivals %d, handoffs %d", arrivals, handoffs)
 }

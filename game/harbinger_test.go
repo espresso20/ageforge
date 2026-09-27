@@ -270,11 +270,14 @@ func TestHarbingerSpeakerChangesEachAge(t *testing.T) {
 	}
 }
 
-// Every epoch but the last has a thread; the Cosmic Era has none, in any age.
+// Every epoch whose passage can bring a catastrophe has a thread, in every
+// age: the transition into an epoch past the Iron gate, or in the final epoch
+// prestige itself (the Last Passage).
 func TestHarbingerThreadFollowsCatastropheGate(t *testing.T) {
 	for _, ep := range config.Epochs() {
 		next, hasNext := config.NextEpoch(ep.Key)
-		want := hasNext && config.CatastropheAllowed(next.Key)
+		want := (hasNext && config.CatastropheAllowed(next.Key)) ||
+			(config.IsFinalEpoch(ep.Key) && config.CatastropheAllowed(ep.Key))
 		var ge *GameEngine
 		if ep.Ages[0] == "primitive_age" {
 			ge = catEngine(t, "primitive_age", 3)
@@ -292,8 +295,8 @@ func TestHarbingerThreadFollowsCatastropheGate(t *testing.T) {
 		}
 	}
 	ge := catEngine(t, "transcendent_age", 1)
-	if err := ge.summonHarbinger(); err == nil {
-		t.Error("summoning in the final epoch must be refused")
+	if err := ge.summonHarbinger(); err != nil || ge.harbinger.TargetEpoch != "" {
+		t.Errorf("summoning in the final epoch: err %v thread %+v, want a Last Passage thread", err, ge.harbinger)
 	}
 }
 
@@ -498,6 +501,11 @@ func TestHarbingerCostExamples(t *testing.T) {
 	}{
 		{"stone_era", map[string]float64{"faith": 12000}, map[string]float64{"food": 9600, "wood": 4800, "knowledge": 2400}},
 		{"steel_era", map[string]float64{"faith": 2250000, "culture": 2250000}, map[string]float64{"knowledge": 360000, "gold": 1800000, "steel": 288000}},
+		// The Cosmic Era's passage is prestige. Appease is priced off the
+		// entry into the era (plasma 310B → 15%); Brace off the era's own
+		// advances, for resources held from Interstellar (dark matter 13T,
+		// titanium 630B → 12%). Antimatter and quantum flux arrive later.
+		{"cosmic_era", map[string]float64{"faith": 46500000000, "culture": 46500000000}, map[string]float64{"dark_matter": 1560000000000, "titanium": 75600000000}},
 	}
 	for _, c := range cases {
 		if got := harbingerAppeaseCost(c.epoch, 1); !reflect.DeepEqual(got, c.appease) {
@@ -506,9 +514,6 @@ func TestHarbingerCostExamples(t *testing.T) {
 		if got := harbingerBraceCost(c.epoch, 1); !reflect.DeepEqual(got, c.brace) {
 			t.Errorf("%s brace = %v, want %v", c.epoch, got, c.brace)
 		}
-	}
-	if got := harbingerAppeaseCost("cosmic_era", 1); len(got) != 0 {
-		t.Errorf("cosmic era has no passage, appease = %v", got)
 	}
 }
 
@@ -867,7 +872,8 @@ func TestOldSaveInMiddleAgeGetsThreadOnLoad(t *testing.T) {
 	}
 }
 
-// Saves with no thread carry no harbinger keys; the Cosmic Era never gets one.
+// Saves with no thread carry no harbinger or Last Passage keys. A Cosmic Era
+// save gets its Last Passage thread on load.
 func TestHarbingerFieldsOmittedWhenAbsent(t *testing.T) {
 	t.Cleanup(SetDataDirForTest(t.TempDir()))
 	ge := catEngine(t, "quantum_age", 1)
@@ -875,7 +881,7 @@ func TestHarbingerFieldsOmittedWhenAbsent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, k := range []string{"harbinger", "catastrophe_invited", "pending_brace_level"} {
+	for _, k := range []string{"harbinger", "catastrophe_invited", "pending_brace_level", "pending_last_passage", "cosmic_legacy"} {
 		if strings.Contains(string(raw), `"`+k) {
 			t.Errorf("save without a harbinger contains %q", k)
 		}
@@ -888,9 +894,9 @@ func TestHarbingerFieldsOmittedWhenAbsent(t *testing.T) {
 		t.Fatal(err)
 	}
 	ge2.harbingerTickCheck()
-	if ge2.harbinger != nil || ge2.catastropheInvited || ge2.harbingerArrived == nil || ge2.cheaterBadge {
-		t.Errorf("cosmic save loaded as harbinger=%v invited=%v arrived=%v cheater=%v",
-			ge2.harbinger, ge2.catastropheInvited, ge2.harbingerArrived, ge2.cheaterBadge)
+	if h := ge2.harbinger; h == nil || h.TargetEpoch != "" || h.Age != "quantum_age" || ge2.catastropheInvited || ge2.cheaterBadge {
+		t.Errorf("cosmic save loaded as harbinger=%+v invited=%v cheater=%v",
+			ge2.harbinger, ge2.catastropheInvited, ge2.cheaterBadge)
 	}
 }
 

@@ -1336,6 +1336,13 @@ func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
 			if err := engine.DoPrestige(); err != nil {
 				return CommandResult{Message: err.Error(), Type: "error"}
 			}
+			if engine.GetState().LastPassage.Pending {
+				return CommandResult{
+					Message:         "☄ The Last Passage has come. Prestige waits until you choose Endure or Succumb.",
+					Type:            "warning",
+					OpenCatastrophe: true,
+				}
+			}
 			return CommandResult{
 				Message: "Prestige complete! Your empire has been reset with permanent bonuses.",
 				Type:    "success",
@@ -1349,6 +1356,7 @@ func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
 		lines = append(lines, fmt.Sprintf("  You will earn [cyan]%d[-] prestige points.", p.PendingPoints))
 		lines = append(lines, "  [red]ALL progress will be reset:[-] resources, buildings, workers, research, military.")
 		lines = append(lines, "  Only prestige points and upgrades are kept.")
+		lines = append(lines, lastPassageWarningLines(state)...)
 		lines = append(lines, "")
 		lines = append(lines, "  Type [cyan]prestige confirm yes[-] to proceed.")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "warning"}
@@ -1384,11 +1392,20 @@ func cmdPrestigeStatus(engine *game.GameEngine) CommandResult {
 		lines = append(lines, fmt.Sprintf("  Passive Bonus: [green]+%.0f%%[-] production", p.PassiveBonus*100))
 	}
 
-	if p.CanPrestige {
+	if state.LastPassage.CosmicLegacy {
+		lines = append(lines, fmt.Sprintf("  Cosmic Legacy: [gold]+%.0f%%[-] production (permanent)", game.CosmicLegacyProductionBonus*100))
+	}
+
+	switch {
+	case state.LastPassage.Pending:
+		lines = append(lines, "\n  [red]☄ The Last Passage has come. Prestige waits for your answer.[-]")
+		lines = append(lines, "  Type [cyan]catastrophe[-] to choose Endure or Succumb.")
+	case p.CanPrestige:
 		lines = append(lines, fmt.Sprintf("\n  [green]You can prestige now for %d points![-]", p.PendingPoints))
+		lines = append(lines, lastPassageStatusLines(state)...)
 		lines = append(lines, "  Type [cyan]prestige confirm[-] to reset with bonuses.")
-	} else {
-		lines = append(lines, fmt.Sprintf("\n  [yellow]Reach Medieval Age to prestige (would earn %d pts)[-]", p.PendingPoints))
+	default:
+		lines = append(lines, fmt.Sprintf("\n  [yellow]Reach the Modern Age to prestige (would earn %d pts)[-]", p.PendingPoints))
 	}
 
 	lines = append(lines, "\n  Type [cyan]prestige shop[-] to view upgrades.")
@@ -1787,16 +1804,71 @@ func cmdDismiss(args []string, engine *game.GameEngine) CommandResult {
 func cmdCatastrophe(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) > 0 {
 		return CommandResult{
-			Message: "Usage: catastrophe — reopen a pending catastrophe choice, or show the odds for the next epoch transition",
+			Message: "Usage: catastrophe — reopen a pending catastrophe (or Last Passage) choice, or show the odds at the next passage",
 			Type:    "info",
 		}
 	}
 	// Bare `catastrophe`: reopen the pending choice, or report the outlook.
 	state := engine.GetState()
-	if state.PendingCatastrophe != "" {
+	if pendingChoiceKey(state) != "" {
 		return CommandResult{Type: "success", OpenCatastrophe: true}
 	}
 	return CommandResult{Message: catastropheOutlookText(state), Type: "info"}
+}
+
+// lastPassageStatusLines is the Last Passage risk line for `prestige`, empty
+// before the Cosmic Era. The odds follow the harbinger's precision (numeric by
+// then), and while a harbinger is present its figure is the one shown.
+func lastPassageStatusLines(state game.GameState) []string {
+	o := state.CatastropheOutlook
+	if o.Passage != game.PassagePrestige || !o.Possible {
+		return nil
+	}
+	lines := []string{fmt.Sprintf("  [red]☄ The Last Passage:[-] %s when you prestige.", lastPassageRiskText(state))}
+	if h := state.Harbinger; h != nil && h.LastPassage {
+		lines = append(lines, fmt.Sprintf("  %s is warning of it. Type [cyan]harbinger[-] to answer.", capFirstUI(h.Name)))
+	}
+	return lines
+}
+
+// lastPassageRiskText is the Last Passage chance the way the current age can
+// know it (a figure in the Cosmic Era); while a harbinger is present its figure
+// is the one shown, as everywhere else.
+func lastPassageRiskText(state game.GameState) string {
+	o := state.CatastropheOutlook
+	tier, numeric, prob := o.Tier, harbingerNumericAge(state.Age), o.Probability
+	if h := state.Harbinger; h != nil {
+		tier, numeric, prob = h.Tier, h.Numeric, h.Probability
+	}
+	if numeric {
+		return fmt.Sprintf("%.0f%% chance (%s)", prob*100, tier)
+	}
+	return fmt.Sprintf("%s risk", tier)
+}
+
+// lastPassageWarningLines explains, on `prestige confirm`, what the Last
+// Passage does if the roll goes against you. Empty before the Cosmic Era.
+func lastPassageWarningLines(state game.GameState) []string {
+	o := state.CatastropheOutlook
+	if o.Passage != game.PassagePrestige || !o.Possible {
+		return nil
+	}
+	lp := state.LastPassage
+	lines := []string{
+		"",
+		fmt.Sprintf("  [red]☄ In the Cosmic Era prestige can bring the Last Passage: %s.[-]", lastPassageRiskText(state)),
+		"  If it comes, prestige waits for your choice:",
+		fmt.Sprintf("    Endure: keep %d%% of this run's points (%d of %d).", lp.KeepPct, lp.PointsIfEndured, lp.PointsNow),
+	}
+	if lp.CosmicLegacy {
+		lines = append(lines, "    Succumb is closed: you already carry the Cosmic Legacy.")
+	} else {
+		lines = append(lines, fmt.Sprintf("    Succumb: no points from this run, and the Cosmic Legacy (+%.0f%% production, permanent).", game.CosmicLegacyProductionBonus*100))
+	}
+	if lp.Invited {
+		lines = append(lines, "  [red]You invited it. It will come.[-]")
+	}
+	return lines
 }
 
 // cmdHarbinger opens the Harbinger panel, or answers the harbinger directly
@@ -1834,8 +1906,11 @@ func catastropheOutlookText(state game.GameState) string {
 	var sb strings.Builder
 	sb.WriteString("No catastrophe pending.\n")
 	switch {
+	case o.Passage == game.PassagePrestige && o.Possible:
+		fmt.Fprintf(&sb, "  Next passage (prestige, the Last Passage): %s, faith %.0f%% full.",
+			outlookRiskText(state), o.FaithFill*100)
 	case o.NextEpochKey == "":
-		sb.WriteString("  This is the final epoch: no further transition, no random catastrophe.")
+		sb.WriteString("  This is the final epoch: its passage is prestige, and the Last Passage cannot strike now.")
 	case !o.Possible:
 		fmt.Fprintf(&sb, "  Next transition (%s): no catastrophe possible.", config.EpochByKey()[o.NextEpochKey].Name)
 	default:

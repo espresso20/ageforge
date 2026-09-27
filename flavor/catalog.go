@@ -198,6 +198,8 @@ func buildTemplates(m Moment) []tmpl {
 		return harbInvitedTemplates()
 	case HarbingerFulfilled:
 		return harbFulfilledTemplates()
+	case RunEnding:
+		return runEndingTemplates()
 	default:
 		return nil
 	}

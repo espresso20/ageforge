@@ -91,6 +91,9 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 	case state.PendingCatastrophe != "":
 		sb.WriteString(" Catastrophe: [red]PENDING — type 'catastrophe' to choose Endure or Succumb[-]\n")
 		sb.WriteString(" [gray]  Advancing and prestige are blocked until you decide.[-]\n")
+	case state.LastPassage.Pending:
+		sb.WriteString(" Catastrophe: [red]THE LAST PASSAGE — type 'catastrophe' to choose Endure or Succumb[-]\n")
+		sb.WriteString(" [gray]  Prestige waits until you decide; nothing else does.[-]\n")
 	case !config.CatastropheAllowed(state.EpochKey):
 		gate := config.EpochByKey()[config.CatastropheGateEpoch].Name
 		fmt.Fprintf(sb, " Catastrophe: [gray]none before the %s[-]\n", gate)
@@ -104,7 +107,10 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 
 	// Risk at the next transition (same wording the `catastrophe` command uses:
 	// a figure from the Industrial Age on, a severity before it).
-	if o := state.CatastropheOutlook; o.Possible {
+	if o := state.CatastropheOutlook; o.Possible && o.Passage == game.PassagePrestige {
+		fmt.Fprintf(sb, " Next passage (prestige, the Last Passage): [yellow]%s[-] [gray](more faith, lower odds)[-]\n",
+			outlookRiskText(state))
+	} else if o.Possible {
 		fmt.Fprintf(sb, " Next transition (%s): [yellow]%s[-] [gray](more faith, lower odds)[-]\n",
 			config.EpochByKey()[o.NextEpochKey].Name, outlookRiskText(state))
 	}
@@ -112,7 +118,14 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 	// Harbinger status.
 	if h := state.Harbinger; h != nil {
 		status := "waiting for the passage"
-		if h.Invited {
+		switch {
+		case h.PassageCame:
+			status = "the Last Passage has come"
+		case h.LastPassage && h.Invited:
+			status = "invited, the Last Passage will come at prestige"
+		case h.LastPassage:
+			status = "waiting for your prestige"
+		case h.Invited:
 			status = "invited, the catastrophe will come"
 		}
 		fmt.Fprintf(sb, " Harbinger: [warning]%s is here[-] [gray](%s; appease %d/%d, brace %d/%d; type 'harbinger')[-]\n",

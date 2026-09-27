@@ -18,7 +18,9 @@ import (
 // current age's roster figure (config.HarbingerFor) takes up the warning, so
 // the Stone Era goes the Wild Man, the Hermit, the Soothsayer. The thread
 // never blocks anything and never expires. The Cosmic Era has no outgoing
-// transition, so its four figures never speak.
+// transition: its passage is prestige, and its thread (TargetEpoch "") warns
+// of the Last Passage instead (last_passage.go), resolving when a prestige
+// from the Cosmic Era completes.
 //
 // Answers belong to the passage, not the figure, and carry across handoffs:
 //
@@ -163,7 +165,12 @@ type HarbingerView struct {
 	// Earlier names the figures who spoke before the current one, in order.
 	Earlier []string
 	// Numeric is true from the Industrial Age on: the panel prints Probability.
-	Numeric         bool
+	Numeric bool
+	// LastPassage is true for the final epoch's thread, whose passage is
+	// prestige: TargetEpochKey is "" and TargetEpochName is "the Last Passage".
+	// PassageCame is true once that passage has struck and waits for a choice.
+	LastPassage     bool
+	PassageCame     bool
 	TargetEpochKey  string
 	TargetEpochName string
 	Lines           []string
@@ -190,6 +197,10 @@ type HarbingerView struct {
 	EndureKeepPct        int
 	NextEndureDestroyPct int
 	NextEndureKeepPct    int
+	// The Last Passage's Endure keeps a share of the run's prestige points
+	// instead: at the current and the next Brace level, in percent.
+	EndurePointsPct     int
+	NextEndurePointsPct int
 }
 
 // --- Thread start and handoff -----------------------------------------------------
@@ -271,9 +282,8 @@ func (ge *GameEngine) harbingerArrive() bool {
 	}
 	ge.harbinger.Lines = ge.harbingerSpeak(def, announced)
 
-	target := config.EpochByKey()[out.NextEpochKey]
-	ge.addLog("event", fmt.Sprintf("⚑ %s has come, warning of the passage into the %s. Type 'harbinger' to answer.",
-		capFirst(def.Name), target.Name))
+	ge.addLog("event", fmt.Sprintf("⚑ %s has come, warning of %s. Type 'harbinger' to answer.",
+		capFirst(def.Name), harbingerPassageText(out.NextEpochKey)))
 	ge.harbingerLogLines()
 	ge.publishHarbinger(def, out.NextEpochKey, false)
 	return true
@@ -294,11 +304,21 @@ func (ge *GameEngine) harbingerHandoff() {
 	h.AnnouncedTier = tier
 	h.Lines = ge.harbingerSpeak(def, tier)
 
-	target := config.EpochByKey()[h.TargetEpoch]
-	ge.addLog("event", fmt.Sprintf("⚑ %s takes up the warning of the passage into the %s. Type 'harbinger' to answer.",
-		capFirst(def.Name), target.Name))
+	ge.addLog("event", fmt.Sprintf("⚑ %s takes up the warning of %s. Type 'harbinger' to answer.",
+		capFirst(def.Name), harbingerPassageText(h.TargetEpoch)))
 	ge.harbingerLogLines()
 	ge.publishHarbinger(def, h.TargetEpoch, true)
+}
+
+// harbingerPassageText names the passage a thread warns of, for log lines:
+// "the passage into the Iron Era", or "the Last Passage" when targetEpoch is ""
+// (the final epoch, whose passage is prestige).
+func harbingerPassageText(targetEpoch string) string {
+	if targetEpoch == "" {
+		name, _ := config.LastPassageInfo()
+		return "the" + strings.TrimPrefix(name, "The")
+	}
+	return "the passage into the " + config.EpochByKey()[targetEpoch].Name
 }
 
 // harbingerSpeak draws the arrival and warning lines for def at tier.
@@ -351,7 +371,7 @@ func (ge *GameEngine) summonHarbinger() error {
 		ge.currentEpoch = ep
 	}
 	if !ge.harbingerArrive() {
-		return fmt.Errorf("the next epoch transition cannot bring a catastrophe")
+		return fmt.Errorf("the next passage cannot bring a catastrophe")
 	}
 	return nil
 }
@@ -413,7 +433,8 @@ func (ge *GameEngine) harbingerDisplay() (CatastropheTier, float64) {
 // --- Costs --------------------------------------------------------------------
 
 // harbingerAdvanceAges are the ages still to be entered from epochKey's first
-// age through the passage: its later ages and the next epoch's first age.
+// age through the passage: its later ages and the next epoch's first age. In
+// the final epoch, whose passage is prestige, that is its own later ages.
 func harbingerAdvanceAges(epochKey string) []string {
 	ep, ok := config.EpochByKey()[epochKey]
 	if !ok || len(ep.Ages) == 0 {
@@ -427,15 +448,27 @@ func harbingerAdvanceAges(epochKey string) []string {
 }
 
 // harbingerPassageStorage is the largest single requirement for entering the
-// epoch after epochKey: the storage every resource must reach to pass. 0 in
-// the final epoch.
+// epoch after epochKey: the storage every resource must reach to pass.
+//
+// The final epoch's passage is prestige, which asks for no storage at all. Its
+// Appease is priced off the largest requirement for entering the final epoch
+// instead: storage the player provably holds from its first age, so the price
+// is payable in every age of the epoch, and the same figure the epoch before
+// it paid for its own passage. (Pricing it off the epoch's own advances would
+// put Appease out of reach until the last age, and a player may prestige from
+// the first.)
 func harbingerPassageStorage(epochKey string) float64 {
-	next, ok := config.NextEpoch(epochKey)
-	if !ok || len(next.Ages) == 0 {
+	var gate string
+	if next, ok := config.NextEpoch(epochKey); ok && len(next.Ages) > 0 {
+		gate = next.Ages[0]
+	} else if ep, ok := config.EpochByKey()[epochKey]; ok && config.IsFinalEpoch(epochKey) && len(ep.Ages) > 0 {
+		gate = ep.Ages[0]
+	}
+	if gate == "" {
 		return 0
 	}
 	max := 0.0
-	for _, v := range config.AgeByKey()[next.Ages[0]].ResourceReqs {
+	for _, v := range config.AgeByKey()[gate].ResourceReqs {
 		if v > max {
 			max = v
 		}
@@ -518,8 +551,15 @@ func (ge *GameEngine) harbingerActionCheck() error {
 	if ge.harbinger == nil {
 		return fmt.Errorf("no harbinger is here — one comes through each epoch whose passage can bring a catastrophe")
 	}
+	if ge.pendingLastPassage {
+		return fmt.Errorf("the Last Passage has already come — type 'catastrophe' to answer it")
+	}
 	return nil
 }
+
+// lastPassageCame is the refusal every action shows while the Last Passage
+// is pending: the answers belonged to the passage, which has been rolled.
+const lastPassageCame = "the Last Passage has already come"
 
 // appeaseBlocked explains why Appease cannot be bought now, or "".
 func (ge *GameEngine) appeaseBlocked() string {
@@ -527,6 +567,8 @@ func (ge *GameEngine) appeaseBlocked() string {
 	switch {
 	case h == nil:
 		return "no harbinger is here"
+	case ge.pendingLastPassage:
+		return lastPassageCame
 	case h.Invited:
 		return "you invited the catastrophe; it will come whatever you offer"
 	case h.AppeaseLevel >= HarbingerMaxAppease:
@@ -541,6 +583,8 @@ func (ge *GameEngine) braceBlocked() string {
 	switch {
 	case h == nil:
 		return "no harbinger is here"
+	case ge.pendingLastPassage:
+		return lastPassageCame
 	case h.BraceLevel >= HarbingerMaxBrace:
 		return "already braced as far as it goes"
 	}
@@ -553,6 +597,8 @@ func (ge *GameEngine) inviteBlocked() string {
 	switch {
 	case h == nil:
 		return "no harbinger is here"
+	case ge.pendingLastPassage:
+		return lastPassageCame
 	case h.Invited:
 		return "already invited"
 	}
@@ -629,8 +675,13 @@ func (ge *GameEngine) HarbingerBrace() error {
 	}
 	h.BraceLevel = level
 	def, _ := config.HarbingerFor(h.Age)
-	ge.addLog("success", fmt.Sprintf("⚑ %s (Brace %d/%d): paid %s. If the catastrophe comes and you Endure, %d%% of buildings fall (not 20%%) and %.0f%% of stock is kept (not 15%%).",
-		def.BraceLabel, level, HarbingerMaxBrace, harbingerCostText(cost), braceDestroyPct[level], braceKeepFrac[level]*100))
+	if h.TargetEpoch == "" {
+		ge.addLog("success", fmt.Sprintf("⚑ %s (Brace %d/%d): paid %s. If the Last Passage comes and you Endure, you keep %.0f%% of the run's prestige points (not %.0f%%).",
+			def.BraceLabel, level, HarbingerMaxBrace, harbingerCostText(cost), LastPassageKeepFor(level)*100, LastPassageKeep*100))
+	} else {
+		ge.addLog("success", fmt.Sprintf("⚑ %s (Brace %d/%d): paid %s. If the catastrophe comes and you Endure, %d%% of buildings fall (not 20%%) and %.0f%% of stock is kept (not 15%%).",
+			def.BraceLabel, level, HarbingerMaxBrace, harbingerCostText(cost), braceDestroyPct[level], braceKeepFrac[level]*100))
+	}
 	ge.harbingerFlavorLog(flavor.HarbingerBraced, "")
 	return nil
 }
@@ -650,9 +701,14 @@ func (ge *GameEngine) HarbingerInvite() error {
 	h.Invited = true
 	ge.inviteCatastrophe()
 	def, _ := config.HarbingerFor(h.Age)
-	target := config.EpochByKey()[h.TargetEpoch]
-	ge.addLog("warning", fmt.Sprintf("⚑ %s: you have invited it. The passage into the %s will bring the catastrophe. This cannot be undone.",
-		def.InviteLabel, target.Name))
+	if h.TargetEpoch == "" {
+		ge.addLog("warning", fmt.Sprintf("⚑ %s: you have invited it. Your next prestige will bring the Last Passage. This cannot be undone.",
+			def.InviteLabel))
+	} else {
+		target := config.EpochByKey()[h.TargetEpoch]
+		ge.addLog("warning", fmt.Sprintf("⚑ %s: you have invited it. The passage into the %s will bring the catastrophe. This cannot be undone.",
+			def.InviteLabel, target.Name))
+	}
 	ge.harbingerFlavorLog(flavor.HarbingerInvited, "")
 	return nil
 }
@@ -677,13 +733,23 @@ func (ge *GameEngine) harbingerFlavorLog(moment flavor.Moment, kind string) {
 // verdict in the last figure's voice, hands the Brace level to the pending
 // catastrophe, records the outcome and clears the thread. Called by
 // detectEpochTransition right after the roll, under the write lock.
+//
+// epochKey "" is the Last Passage (the final epoch's prestige): called by
+// completePrestige once the passage is settled, with came telling whether it
+// struck. Its Brace has already been applied to the points, so nothing is
+// handed on.
 func (ge *GameEngine) resolveHarbinger(epochKey string, came bool) {
 	h := ge.harbinger
 	if h == nil {
 		return
 	}
 	def, _ := config.HarbingerFor(h.Age)
-	target := config.EpochByKey()[epochKey]
+	targetName := config.EpochByKey()[epochKey].Name
+	opens := fmt.Sprintf("The %s dawns untouched.", targetName)
+	if epochKey == "" {
+		targetName, _ = config.LastPassageInfo()
+		opens = "The Last Passage opens, and nothing comes through it."
+	}
 	name := capFirst(def.Name)
 
 	var outcome, msg, kind string
@@ -706,13 +772,13 @@ func (ge *GameEngine) resolveHarbinger(epochKey string, came bool) {
 		}
 	case h.FalseProphet:
 		outcome, moment = HarbingerOutcomeDiscredited, flavor.HarbingerDiscredited
-		msg = fmt.Sprintf("⚑ The %s dawns untouched. The warning had been invented from the start, and %s was the last to repeat it.", target.Name, def.Name)
+		msg = fmt.Sprintf("⚑ %s The warning had been invented from the start, and %s was the last to repeat it.", opens, def.Name)
 	default:
 		outcome, moment = HarbingerOutcomeSpared, flavor.HarbingerSpared
-		msg = fmt.Sprintf("⚑ The %s dawns untouched. %s's warning was real, and you were spared.", target.Name, name)
+		msg = fmt.Sprintf("⚑ %s %s's warning was real, and you were spared.", opens, name)
 	}
 	ge.addLog("event", msg)
-	if came && h.BraceLevel > 0 {
+	if came && h.BraceLevel > 0 && epochKey != "" {
 		ge.pendingBraceLevel = h.BraceLevel
 		ge.addLog("info", fmt.Sprintf("  Your preparations hold: if you Endure, %d%% of buildings fall and %.0f%% of stock is kept.",
 			braceDestroyPct[h.BraceLevel], braceKeepFrac[h.BraceLevel]*100))
@@ -721,7 +787,7 @@ func (ge *GameEngine) resolveHarbinger(epochKey string, came bool) {
 
 	ge.harbingerHistory = append(ge.harbingerHistory, HarbingerRecord{
 		Age: h.Age, Name: def.Name, Chain: append([]string(nil), h.Chain...),
-		EpochKey: h.EpochKey, TargetEpochKey: epochKey, TargetEpochName: target.Name,
+		EpochKey: h.EpochKey, TargetEpochKey: epochKey, TargetEpochName: targetName,
 		Outcome: outcome, FalseProphet: h.FalseProphet, AnnouncedTier: h.AnnouncedTier,
 		AppeaseLevel: h.AppeaseLevel, BraceLevel: h.BraceLevel, Invited: h.Invited,
 		Tick: ge.tick,
@@ -758,6 +824,8 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 		Age: h.Age, AgeName: config.AgeByKey()[h.Age].Name,
 		AppeaseLabel: def.AppeaseLabel, BraceLabel: def.BraceLabel, InviteLabel: def.InviteLabel,
 		Numeric:         def.ForecastPrecision == config.ForecastNumeric,
+		LastPassage:     h.TargetEpoch == "",
+		PassageCame:     h.TargetEpoch == "" && ge.pendingLastPassage,
 		TargetEpochKey:  h.TargetEpoch,
 		TargetEpochName: config.EpochByKey()[h.TargetEpoch].Name,
 		Lines:           append([]string(nil), h.Lines...),
@@ -794,6 +862,11 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 	}
 	v.NextEndureDestroyPct = braceDestroyPct[next]
 	v.NextEndureKeepPct = int(math.Round(braceKeepFrac[next] * 100))
+	v.EndurePointsPct = int(math.Round(LastPassageKeepFor(h.BraceLevel) * 100))
+	v.NextEndurePointsPct = int(math.Round(LastPassageKeepFor(next) * 100))
+	if v.LastPassage {
+		v.TargetEpochName = harbingerPassageText("")
+	}
 	return v
 }
 

@@ -584,17 +584,19 @@ func (d *Dashboard) refresh() {
 	if d.catReshow.Swap(false) {
 		d.catModalShown = ""
 	}
-	if state.PendingCatastrophe == "" {
+	// The Last Passage (a prestige from the Cosmic Era waiting on its choice)
+	// uses the same modal and the same single-show rule; pendingChoiceKey names it.
+	if pending := pendingChoiceKey(state); pending == "" {
 		d.catModalShown = "" // reset so next catastrophe will show fresh
 		if d.pages.HasPage(catastrophePage) {
 			d.closeCatastropheModal() // e.g. a save without a pending catastrophe was loaded
 		}
-	} else if d.catModalShown != state.PendingCatastrophe && d.overlayMgr.ActiveName() != "age_splash" {
+	} else if d.catModalShown != pending && d.overlayMgr.ActiveName() != "age_splash" {
 		if d.pages.HasPage(catastrophePage) {
 			d.pages.RemovePage(catastrophePage) // stale modal for a different epoch
 		}
-		d.catModalShown = state.PendingCatastrophe
-		d.showCatastropheModal(state.PendingCatastrophe)
+		d.catModalShown = pending
+		d.showCatastropheModal(pending)
 	}
 
 	// Ancient Memory offer modal — same single-show pattern as the catastrophe modal.
@@ -725,6 +727,9 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 	catStr := ""
 	if state.PendingCatastrophe != "" {
 		catStr = fmt.Sprintf("  %s ☄ CATASTROPHE PENDING — type 'catastrophe' %s",
+			theme.TagFgBg(theme.RoleOnNegative, theme.RoleNegative), theme.Reset)
+	} else if state.LastPassage.Pending {
+		catStr = fmt.Sprintf("  %s ☄ LAST PASSAGE — type 'catastrophe' %s",
 			theme.TagFgBg(theme.RoleOnNegative, theme.RoleNegative), theme.Reset)
 	}
 	// Harbinger badge: present until the epoch transition resolves it. Nothing

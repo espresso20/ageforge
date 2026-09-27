@@ -85,6 +85,67 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 	return l
 }
 
+// buildLastPassageModalLayout assembles the text for the Last Passage, the
+// Cosmic Era's catastrophe: prestige waits on it, Endure keeps a share of the
+// run's points, Succumb trades them all for the Cosmic Legacy (closed once the
+// player carries it).
+func buildLastPassageModalLayout(lp game.LastPassageState) catastropheModalLayout {
+	name, flavorText := config.LastPassageInfo()
+	inner := catastropheModalWidth - 2
+
+	headerLines := []string{fmt.Sprintf("[red]☄ %s[-]", tview.Escape(name))}
+	for _, l := range tview.WordWrap(flavorText, inner-2) {
+		headerLines = append(headerLines, "[gray]"+tview.Escape(strings.TrimSpace(l))+"[-]")
+	}
+	headerLines = append(headerLines, "[gray]Prestige waits on your answer. Nothing else does.[-]")
+
+	keepLine := fmt.Sprintf("  [red]• You keep %d%% of this run's prestige points: %d of %d[-]", lp.KeepPct, lp.PointsIfEndured, lp.PointsNow)
+	endureLines := []string{
+		"[white]── ENDURE — pass through, diminished ──[-]",
+		keepLine,
+	}
+	if lp.BraceLevel > 0 {
+		endureLines = append(endureLines, fmt.Sprintf("  [green]✓ Braced (level %d): %d%% kept instead of %.0f%%[-]", lp.BraceLevel, lp.KeepPct, game.LastPassageKeep*100))
+	}
+	endureLines = append(endureLines, "  [green]✓ Level, upgrades, legacies and ruins carry over as always[-]")
+
+	succumbLines := []string{
+		"[white]── SUCCUMB — let it take the run ──[-]",
+		"  [red]• Prestige completes with no points from this run (level still rises)[-]",
+	}
+	if lp.CosmicLegacy {
+		succumbLines = append(succumbLines,
+			"  [gray]• You already carry the Cosmic Legacy. Succumb is closed to you.[-]")
+	} else {
+		succumbLines = append(succumbLines,
+			fmt.Sprintf("  [gold]✓ Cosmic Legacy: production +%.0f%%, permanent, through every prestige[-]", game.CosmicLegacyProductionBonus*100),
+			"  [gold]✓ Earned once, kept forever[-]")
+	}
+
+	l := catastropheModalLayout{
+		title:   " ✦ " + name + " ",
+		header:  strings.Join(headerLines, "\n"),
+		endure:  strings.Join(endureLines, "\n"),
+		succumb: strings.Join(succumbLines, "\n"),
+		hint:    "[gray]Esc: decide later · prestige waits · type 'catastrophe' to reopen[-]",
+	}
+	l.height = lineCount(l.header) + 1 + lineCount(l.endure) + 1 + lineCount(l.succumb) + 1 + 1 + 1 + 2
+	return l
+}
+
+// pendingChoiceKey is the key of the choice the catastrophe modal waits on: the
+// pending catastrophe's epoch key, config.LastPassageKey for a pending Last
+// Passage, or "" when nothing waits.
+func pendingChoiceKey(state game.GameState) string {
+	switch {
+	case state.PendingCatastrophe != "":
+		return state.PendingCatastrophe
+	case state.LastPassage.Pending:
+		return config.LastPassageKey
+	}
+	return ""
+}
+
 func lineCount(s string) int { return strings.Count(s, "\n") + 1 }
 
 // surfaceBox is an opaque filler painted with the modal surface color. tview
@@ -117,8 +178,11 @@ func floatingModal(inner tview.Primitive, width, height int) *tview.Flex {
 // showCatastropheModal displays the Endure / Succumb choice for the pending
 // catastrophe as a box floating over the dashboard. Esc closes it without
 // choosing (the catastrophe stays pending and keeps blocking advancement; the
-// `catastrophe` command reopens it). Must be called from the UI goroutine.
-func (d *Dashboard) showCatastropheModal(epochKey string) {
+// `catastrophe` command reopens it). key is the pending epoch key, or
+// config.LastPassageKey for the Last Passage variant (prestige waits instead;
+// Succumb is disabled once the Cosmic Legacy is held). Must be called from the
+// UI goroutine.
+func (d *Dashboard) showCatastropheModal(key string) {
 	if d.pages.HasPage(catastrophePage) {
 		d.pages.ShowPage(catastrophePage)
 		d.pages.SendToFront(catastrophePage)
@@ -128,25 +192,39 @@ func (d *Dashboard) showCatastropheModal(epochKey string) {
 		return
 	}
 	st := d.engine.GetState()
-	l := buildCatastropheModalLayout(epochKey, st.LegacyBonuses[epochKey], st.SuccumbResearchBonus)
+	endure, succumb := d.engine.Endure, d.engine.Succumb
+	succumbOpen := true
+	var l catastropheModalLayout
+	if key == config.LastPassageKey {
+		l = buildLastPassageModalLayout(st.LastPassage)
+		endure, succumb = d.engine.EndureLastPassage, d.engine.SuccumbLastPassage
+		succumbOpen = !st.LastPassage.CosmicLegacy
+	} else {
+		l = buildCatastropheModalLayout(key, st.LegacyBonuses[key], st.SuccumbResearchBonus)
+	}
 
 	btnEndure := tview.NewButton(tview.Escape("[E] ENDURE")).
 		SetSelectedFunc(func() {
-			if err := d.engine.Endure(); err != nil {
+			if err := endure(); err != nil {
 				d.engine.AddLog("error", "Endure failed: "+err.Error())
 			}
 			d.closeCatastropheModal()
 		})
 	styleFilledButton(btnEndure, theme.RoleNegative)
 
-	btnSuccumb := tview.NewButton(tview.Escape("[S] SUCCUMB")).
-		SetSelectedFunc(func() {
-			if err := d.engine.Succumb(); err != nil {
+	btnSuccumb := tview.NewButton(tview.Escape("[S] SUCCUMB"))
+	if succumbOpen {
+		btnSuccumb.SetSelectedFunc(func() {
+			if err := succumb(); err != nil {
 				d.engine.AddLog("error", "Succumb failed: "+err.Error())
 			}
 			d.closeCatastropheModal()
 		})
-	styleFilledButton(btnSuccumb, theme.RoleNegative)
+		styleFilledButton(btnSuccumb, theme.RoleNegative)
+	} else {
+		// Closed: drawn in the chip fill, never focused, never pressed.
+		styleFilledButton(btnSuccumb, theme.RoleChip)
+	}
 
 	btnRow := tview.NewFlex().SetDirection(tview.FlexColumn).
 		AddItem(surfaceBox(), 0, 1, false).
@@ -173,6 +251,9 @@ func (d *Dashboard) showCatastropheModal(epochKey string) {
 	modal := floatingModal(inner, catastropheModalWidth, l.height)
 
 	focusOrder := []*tview.Button{btnEndure, btnSuccumb}
+	if !succumbOpen {
+		focusOrder = focusOrder[:1]
+	}
 	focusIdx := 0
 	setFocus := func(i int) {
 		focusIdx = i
@@ -197,6 +278,9 @@ func (d *Dashboard) showCatastropheModal(epochKey string) {
 				btnEndure.InputHandler()(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone), nil)
 				return nil
 			case 's', 'S':
+				if !succumbOpen {
+					return nil
+				}
 				setFocus(1)
 				btnSuccumb.InputHandler()(tcell.NewEventKey(tcell.KeyEnter, 0, tcell.ModNone), nil)
 				return nil
@@ -220,15 +304,15 @@ func (d *Dashboard) closeCatastropheModal() {
 	}
 }
 
-// reopenCatastropheModal shows the modal for the pending catastrophe, if any.
-// Reports whether one was pending.
+// reopenCatastropheModal shows the modal for the pending catastrophe or Last
+// Passage, if any. Reports whether one was pending.
 func (d *Dashboard) reopenCatastropheModal() bool {
-	st := d.engine.GetState()
-	if st.PendingCatastrophe == "" {
+	key := pendingChoiceKey(d.engine.GetState())
+	if key == "" {
 		return false
 	}
-	d.catModalShown = st.PendingCatastrophe
-	d.showCatastropheModal(st.PendingCatastrophe)
+	d.catModalShown = key
+	d.showCatastropheModal(key)
 	return true
 }
 

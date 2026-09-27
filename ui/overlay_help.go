@@ -61,7 +61,7 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("  [cyan]prestige[-] buy <key>              - Buy a prestige upgrade\n")
 	sb.WriteString("  [cyan]festival[-]                        - Spend culture for a temporary production boost\n")
 	sb.WriteString("  [cyan]festival confirm yes[-]            - Hold the festival now\n")
-	sb.WriteString("  [cyan]catastrophe[-]                     - Reopen a pending catastrophe choice (or show the odds)\n")
+	sb.WriteString("  [cyan]catastrophe[-]                     - Reopen a pending catastrophe or Last Passage (or show the odds)\n")
 	sb.WriteString("  [cyan]harbinger[-]                       - Open the Harbinger panel (alias: harb)\n")
 	sb.WriteString("  [cyan]harbinger[-] appease|brace|invite  - Answer the harbinger without the panel\n")
 
@@ -135,6 +135,7 @@ func helpProvider(_ game.GameState, _ int) string {
 			{"/speed <multiplier>", "Set the tick-speed multiplier"},
 			{"/catastrophe", "Force the current epoch's catastrophe (Iron Era on)"},
 			{"/harbinger", "Bring the current age's harbinger now"},
+			{"/lastpassage", "Make the Last Passage pending (final epoch)"},
 		} {
 			sb.WriteString("  [cyan]" + padRight(d.cmd, 28) + "[-] — " + d.desc + "\n")
 		}

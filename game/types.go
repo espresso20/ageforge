@@ -46,8 +46,9 @@ type GameState struct {
 	EpochColor         string // tview color tag
 	EpochSurvived      bool   // player endured a catastrophe this epoch
 	PendingCatastrophe string // epoch key if catastrophe modal should show; "" otherwise
-	// CatastropheOutlook reports the catastrophe odds at the NEXT epoch
-	// transition (see GameEngine.CatastropheOutlook).
+	// CatastropheOutlook reports the catastrophe odds at the NEXT passage: the
+	// epoch transition, or prestige in the final epoch (see
+	// GameEngine.CatastropheOutlook).
 	CatastropheOutlook CatastropheOutlook
 	// Ancient Memory (Trello yn98pTQw): tech key of a pending cache offer that the UI
 	// should pop an accept/decline modal for; "" when there is no pending offer.
@@ -68,6 +69,9 @@ type GameState struct {
 	// SuccumbResearchBonus is the permanent research_speed bonus from Succumb
 	// (+25% per distinct epoch succumbed), e.g. 0.50 after two epochs.
 	SuccumbResearchBonus float64
+	// LastPassage is the Cosmic Era's prestige passage: pending choice, the
+	// Endure share and the Cosmic Legacy flag (last_passage.go).
+	LastPassage LastPassageState
 	// History overlay
 	History *HistoryCollector
 	// Morale system

@@ -1,6 +1,6 @@
 # The Harbinger
 
-Harbingers are figures who walk with you through an epoch whose passage into the next can bring a [catastrophe](catastrophe.md), and tell you how worried to be. You can pay to lower the odds, pay to soften the blow, or invite the catastrophe on purpose.
+Harbingers are figures who walk with you through an epoch whose passage can bring a [catastrophe](catastrophe.md), and tell you how worried to be. For most epochs the passage is the crossing into the next epoch. For the Cosmic Era, the last one, it is your next prestige: the [Last Passage](#the-last-passage). You can pay to lower the odds, pay to soften the blow, or invite the catastrophe on purpose.
 
 A harbinger never blocks anything and never expires. You can ignore it completely and the game plays on as normal.
 
@@ -8,7 +8,7 @@ A harbinger never blocks anything and never expires. You can ignore it completel
 
 ## When Harbingers Come
 
-Each epoch whose outgoing transition can roll a catastrophe gets one **harbinger thread**. The thread starts when you enter the epoch's **first age** and lasts until you cross into the next epoch, which settles it.
+Each epoch whose passage can bring a catastrophe gets one **harbinger thread**. The thread starts when you enter the epoch's **first age** and lasts until the passage settles it: crossing into the next epoch, or in the Cosmic Era, confirming prestige.
 
 The speaker changes with the age. Each time you advance within the epoch, that age's figure takes up the warning:
 
@@ -20,6 +20,7 @@ The speaker changes with the age. Each time you advance within the epoch, that a
 | Electric Era | the Doomsayer, the Telegraph, the Civil Defence Broadcast | Digital Era |
 | Digital Era | the Evening News, the Chain Email, the Viral Video | Neon Era |
 | Neon Era | the Ghost in the Net, the Reactor Warden, the Deep Space Monitor | Cosmic Era |
+| Cosmic Era | the Distress Beacon, the Elder Relay, your future self, your unmade self | the Last Passage (your next prestige) |
 
 Rules:
 
@@ -27,7 +28,7 @@ Rules:
 - **A new run starts with one.** In a new game, and after Succumb or prestige, the Stone Era thread starts on the first tick. The Wild Man greets every new game.
 - **Loading a save counts.** If a save sits in any age of a qualifying epoch without a thread, one starts there when the save loads, with that age's figure.
 - **Only when a catastrophe is possible.** If the epoch's transition can't bring one (it already rolled this run, for example), no thread starts.
-- **Not in the Cosmic Era.** It is the last epoch, so there is no transition left to warn about.
+- **The Cosmic Era warns of prestige.** It is the last epoch, so its passage is the end of the run. See [The Last Passage](#the-last-passage).
 
 When a thread starts, or a new figure takes it up, you get:
 
@@ -41,7 +42,7 @@ Type `harbinger` (or `harb`) to open the Harbinger panel. It shows the current f
 
 ## The Roster
 
-Every age has a figure written for it. 18 of the 22 appear in play: all three ages of each epoch from the Stone Era to the Neon Era. Only the Cosmic Era's four never speak, because the Cosmic Era has no outgoing transition.
+Every age has a figure written for it, and all 22 appear in play: three for each epoch from the Stone Era to the Neon Era, and four for the Cosmic Era, whose thread warns of the Last Passage.
 
 ### Who they are
 
@@ -65,10 +66,10 @@ Every age has a figure written for it. 18 of the 22 appear in play: all three ag
 | Cyberpunk | the Ghost in the Net | Yes | Numeric | 0 | A dead corporate AI that leaks internal risk memos through the net, glitching on every third word. |
 | Fusion | the Reactor Warden | Yes | Numeric | 0 | The plant's safety intelligence, which has never before spoken outside a scheduled drill. |
 | Space | the Deep Space Monitor | Yes | Numeric | 0 | A station behind the moon that has watched one patch of sky for forty years, and has just marked a packet urgent. |
-| Interstellar | the Distress Beacon | No | Numeric | 0 | Still looping from a colony that went silent eighty years ago, and the loop has changed. |
-| Galactic | the Elder Relay | No | Numeric | 0 | An alien relay older than the species that found it, speaking in geometry for the first time in an age. |
-| Quantum | your future self | No | Numeric | 0 | A message in your handwriting, stamped nine years from now, that knows your passcode. |
-| Transcendent | your unmade self | No | Numeric | 0 | A version of you from a branch that ended, come to see whether this one ends the same way. |
+| Interstellar | the Distress Beacon | Yes | Numeric | 0 | Still looping from a colony that went silent eighty years ago, and the loop has changed. |
+| Galactic | the Elder Relay | Yes | Numeric | 0 | An alien relay older than the species that found it, speaking in geometry for the first time in an age. |
+| Quantum | your future self | Yes | Numeric | 0 | A message in your handwriting, stamped nine years from now, that knows your passcode. |
+| Transcendent | your unmade self | Yes | Numeric | 0 | A version of you from a branch that ended, come to see whether this one ends the same way. |
 
 The false-prophet chance only counts for the figure who starts the thread. Normally that is the epoch's first age; the other chances only matter when a save loads mid-epoch without a thread. See [False prophets](#false-prophets).
 
@@ -130,7 +131,7 @@ A thread may be a lie. It rolls once, when its first figure arrives, using that 
 | Stone Era (starts with the Wild Man) | 8/64, 12.5% |
 | Iron Era (starts with the Desert Prophet) | 5/64, about 7.8% |
 | Steel Era (starts with the Court Astrologer) | 2/64, about 3.1% |
-| Electric, Digital and Neon Eras | none |
+| Electric, Digital, Neon and Cosmic Eras | none |
 
 A false thread claims **medium** or **high** risk (picked at random when it starts), whatever the real odds are. Every figure in that epoch repeats the same false claim, using the same warning lines a real harbinger would. The `catastrophe` command and the Epoch tab repeat the warning too, so you can't tell a false thread apart from the screen.
 
@@ -154,7 +155,7 @@ The price is set by the passage, so it is the same in every age of the epoch. If
 | 1 | 15% of the passage storage, in faith (and the same in culture, from the Steel Era on) | ×0.6 |
 | 2 | 30% of the passage storage, in faith (and culture) | ×0.36 (×0.6 again) |
 
-- The **passage storage** is the largest single amount the next epoch's first age asks for. Your storage has to hold that much before you can advance anyway.
+- The **passage storage** is the largest single amount the next epoch's first age asks for. Your storage has to hold that much before you can advance anyway. The Cosmic Era has no next epoch; see [the Cosmic Era's price](#what-it-costs-by-epoch).
 - Culture is only charged if you already had it when the epoch began. It unlocks in the Classical Age, so Stone and Iron Era threads cost faith only.
 - Two levels at most.
 - Appease always changes the real odds, including with a false prophet.
@@ -182,6 +183,7 @@ Things to know:
 - Brace only matters if the catastrophe comes **and** you choose Endure. If no catastrophe comes, or you Succumb, the resources are simply spent.
 - The Brace is attached to the pending catastrophe. If you close the choice with Esc and Endure later, or save and load in between, it still applies.
 - Brace is allowed after Invite.
+- **In the Cosmic Era, Brace protects points, not your civilization.** An Endure at the Last Passage keeps 50% of the run's prestige points unbraced, 70% at level 1 and 85% at level 2. The building and resource numbers above don't apply there. See [The Last Passage](prestige.md#the-last-passage).
 
 ### What it costs, by epoch
 
@@ -195,8 +197,11 @@ Level 1 prices. Level 2 costs double.
 | Electric Era | 70.5M faith, 70.5M culture | 56.4M steel, 924K oil, 3.96M electricity |
 | Digital Era | 147B faith, 147B culture | 156M gold, 117.6B electricity, 19.2B data |
 | Neon Era | 46.5B faith, 46.5B culture | 288B electricity, 46.8B data, 3B crypto |
+| Cosmic Era | 46.5B faith, 46.5B culture | 1.56T dark matter, 75.6B titanium |
 
 The Digital Era's Appease is dearer than the Neon Era's because entering the Cyberpunk Age asks for more than entering the Interstellar Age.
+
+The Cosmic Era's passage is prestige, which asks for no storage of its own. Its Appease is based instead on the largest requirement for entering the Cosmic Era (310B plasma, at the Interstellar Age), which your storage already held when you arrived. That makes it the same price the Neon Era paid for its own passage. Its Brace is based on the most the Cosmic Era's own advances ask of each resource you have held since the Interstellar Age: 13T dark matter (for the Quantum Age) and 630B titanium (for the Galactic Age). Antimatter and quantum flux arrive later, so they are left out.
 
 ### Invite: choose the catastrophe
 
@@ -206,6 +211,8 @@ The Digital Era's Appease is dearer than the Neon Era's because entering the Cyb
 - After inviting, Appease is refused. Brace is still allowed.
 
 Invite is for players who want to Succumb on purpose, to collect an epoch's legacy bonus and Ancient Knowledge. It is the only way to choose a catastrophe; there is no command to trigger one directly. See [Succumb](catastrophe.md#succumb).
+
+In the Cosmic Era, Invite means your next prestige brings the Last Passage. It is how you choose the [Cosmic Legacy](prestige.md#cosmic-legacy) on purpose.
 
 ### Why the price is tied to the passage
 
@@ -228,6 +235,12 @@ If the catastrophe came and you had braced, the log also says what Endure will c
 
 The Epoch tab (`epoch`) shows the current thread's status and, for past threads this run, the whole chain of figures and the verdict.
 
+### The Last Passage
+
+The Cosmic Era's thread is settled when you confirm prestige, not at an age advance. The panel names its passage: "Warning of the Last Passage: the end of this civilization, when you next prestige." When the thread starts, the log reads `⚑ <Figure> has come, warning of the Last Passage.`
+
+Confirming prestige rolls once, with the usual odds for the faith band (18%, 15% or 12%), times 0.6 per level of Appease, or certain if you invited it. If nothing comes, the verdict is Spared ("The Last Passage opens, and nothing comes through it. ...") and prestige completes. If it comes, prestige waits for you to Endure or Succumb. Endure keeps part of the run's points and Succumb grants the Cosmic Legacy. See [The Last Passage](prestige.md#the-last-passage).
+
 ---
 
 ## Saving, Succumb and Prestige
@@ -235,6 +248,7 @@ The Epoch tab (`epoch`) shows the current thread's status and, for past threads 
 - The thread is saved with your game: the figures who have spoken, what the current one said, your Appease and Brace levels, and whether you invited the catastrophe. A Brace attached to a pending catastrophe is saved too.
 - **Succumb** clears the live thread, the invite and any Brace. Past verdicts are kept, like the epoch event history. The new run's Stone Era thread starts on the first tick.
 - **Prestige** clears all of it, past verdicts included, and the Wild Man greets the new run.
+- A pending Last Passage is saved with your game, and the choice is still waiting when you load.
 
 ---
 
@@ -256,7 +270,7 @@ In the panel:
 | **I** | Invite. Press **I** twice to confirm, since it can't be undone. |
 | **Esc** | Close the panel |
 
-With no harbinger present (in the Cosmic Era, for example), the panel says so and describes the outlook for your next epoch transition in plain words.
+With no harbinger present, the panel says so and describes the outlook for your next passage in plain words.
 
 ---
 
@@ -266,4 +280,5 @@ With no harbinger present (in the Cosmic Era, for example), the panel says so an
 - **Want to keep your run?** Appease is the direct answer. One level cuts the risk by 40%, and it can't hurt the odds.
 - **Worried but short on faith?** Brace instead. It doesn't lower the odds, but it makes Endure much cheaper if the catastrophe comes.
 - **Early warnings deserve a little doubt.** A Stone, Iron or Steel Era warning of high risk may be false. Your own faith fill tells you the real band (see [Faith and the Odds](catastrophe.md#faith-and-the-odds)).
+- **Prestiging from the Cosmic Era?** The Last Passage costs you points, not buildings. Appease to lower the odds, Brace to keep more points on an Endure, Invite if you want the Cosmic Legacy.
 - **Hunting legacy bonuses?** Invite, then Succumb at the transition. Skip Appease; it is refused after Invite anyway. Brace only if you think you might change your mind and Endure.

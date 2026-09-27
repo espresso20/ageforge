@@ -95,6 +95,8 @@ func statsProvider(state game.GameState, _ int) string {
 		"Catastrophes:", totalCatastrophes, state.CatastrophesEndured, state.CatastrophesSuccumbed)
 	if state.PendingCatastrophe != "" {
 		sb.WriteString(" [red]  One catastrophe pending — type 'catastrophe' to decide[-]\n")
+	} else if state.LastPassage.Pending {
+		sb.WriteString(" [red]  The Last Passage is pending — type 'catastrophe' to decide[-]\n")
 	}
 
 	// Legacy Bonuses
@@ -134,6 +136,9 @@ func statsProvider(state game.GameState, _ int) string {
 				fmt.Fprintf(&sb, "  %-16s %s\n", epochLabel+":", strings.Join(parts, ",  "))
 			}
 		}
+	}
+	if state.LastPassage.CosmicLegacy {
+		fmt.Fprintf(&sb, "  %-16s production +%.0f%% (permanent, through every prestige)\n", "Cosmic Legacy:", game.CosmicLegacyProductionBonus*100)
 	}
 
 	// Milestone summary hint
@@ -424,6 +429,8 @@ func multiplierSourceLabel(src string) string {
 		return "Diplomacy"
 	case "legacy":
 		return "Legacy"
+	case "cosmic_legacy":
+		return "Cosmic Legacy"
 	}
 	return capitalize(src)
 }

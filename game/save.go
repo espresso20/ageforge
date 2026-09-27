@@ -92,6 +92,12 @@ type GameSave struct {
 	CatastropheInvited bool              `json:"catastrophe_invited,omitempty"`
 	PendingBraceLevel  int               `json:"pending_brace_level,omitempty"`
 	HarbingerHistory   []HarbingerRecord `json:"harbinger_history,omitempty"`
+	// The Last Passage (see last_passage.go). omitempty, so saves without it
+	// keep their bytes and signatures. PendingLastPassage is a prestige from
+	// the final epoch waiting for Endure or Succumb; CosmicLegacy is the
+	// one-time flag Succumb grants, kept across every prestige.
+	PendingLastPassage bool `json:"pending_last_passage,omitempty"`
+	CosmicLegacy       bool `json:"cosmic_legacy,omitempty"`
 	// Morale system
 	Morale float64 `json:"morale,omitempty"`
 	// History overlay samples
@@ -526,6 +532,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		CatastropheInvited:     ge.catastropheInvited,
 		PendingBraceLevel:      ge.pendingBraceLevel,
 		HarbingerHistory:       append([]HarbingerRecord(nil), ge.harbingerHistory...),
+		PendingLastPassage:     ge.pendingLastPassage,
+		CosmicLegacy:           ge.cosmicLegacy,
 		Morale:                 ge.morale,
 		History:                ge.History,
 		AccountID:              ge.accountIDLocked(),
@@ -747,6 +755,10 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	}
 	ge.pendingCatastrophe = save.PendingCatastrophe
 	ge.epochEventHistory = save.EpochEventHistory
+	// A pending Last Passage only exists in the final epoch; restored before
+	// the harbinger, whose outlook check reads it.
+	ge.pendingLastPassage = save.PendingLastPassage && ge.pendingCatastrophe == "" && config.IsFinalEpoch(ge.currentEpoch)
+	ge.cosmicLegacy = save.CosmicLegacy
 
 	// Restore Phase 9: catastrophe system
 	if save.Ruins != nil {
@@ -870,7 +882,7 @@ type SaveInfo struct {
 	Techs              int    // number of researched techs
 	Soldiers           int    // resources["soldiers"], truncated to int
 	PrestigeTotal      int    // prestige.total_earned (lifetime prestige points)
-	PendingCatastrophe string // pending_catastrophe → catastrophe display name ("" if none)
+	PendingCatastrophe string // pending_catastrophe → catastrophe display name ("" if none); "The Last Passage" for pending_last_passage
 	MilestonesDone     int    // count of completed milestones
 	MilestonesTotal    int    // total milestones defined in config (0 if unavailable)
 	// ParentName is the lineage parent of this save ("" for a root). Surfaced
@@ -925,6 +937,7 @@ func ListSaveDetails() ([]SaveInfo, error) {
 			CurrentTitle       string                `json:"current_title"`
 			CurrentEpoch       string                `json:"current_epoch"`
 			PendingCatastrophe string                `json:"pending_catastrophe"`
+			PendingLastPassage bool                  `json:"pending_last_passage"`
 			Milestones         []string              `json:"milestones"`
 			Resources          map[string]float64    `json:"resources"`
 			Buildings          map[string]int        `json:"buildings"`
@@ -977,7 +990,7 @@ func ListSaveDetails() ([]SaveInfo, error) {
 			Techs:              len(header.Research.Researched),
 			Soldiers:           int(header.Resources["soldiers"]),
 			PrestigeTotal:      header.Prestige.TotalEarned,
-			PendingCatastrophe: catastropheDisplayName(header.PendingCatastrophe),
+			PendingCatastrophe: pendingChoiceDisplayName(header.PendingCatastrophe, header.PendingLastPassage),
 			MilestonesDone:     len(header.Milestones),
 			MilestonesTotal:    len(config.Milestones()),
 			ParentName:         header.ParentName,
@@ -1008,6 +1021,16 @@ func catastropheDisplayName(epochKey string) string {
 	}
 	name, _ := config.CatastropheInfo(epochKey)
 	return name
+}
+
+// pendingChoiceDisplayName names the choice a save is waiting on: its pending
+// catastrophe, else the Last Passage, else "".
+func pendingChoiceDisplayName(epochKey string, lastPassage bool) string {
+	if epochKey == "" && lastPassage {
+		name, _ := config.LastPassageInfo()
+		return name
+	}
+	return catastropheDisplayName(epochKey)
 }
 
 // corruptInfo builds a SaveInfo for an unreadable/unparseable save, falling back

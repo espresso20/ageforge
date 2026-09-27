@@ -318,3 +318,24 @@ func NextEpoch(epochKey string) (EpochDef, bool) {
 	}
 	return EpochDef{}, false
 }
+
+// LastPassageKey is the catastrophe key of the Last Passage, the Cosmic Era's
+// passage. The Cosmic Era has no next epoch, so its passage is prestige itself:
+// the end of the run can bring one last catastrophe (game/last_passage.go).
+const LastPassageKey = "last_passage"
+
+// LastPassageInfo returns the display name and flavor text of the Last Passage.
+func LastPassageInfo() (name, flavor string) {
+	return "The Last Passage",
+		"The civilization reaches the end of its road, and something waiting there reaches back."
+}
+
+// IsFinalEpoch reports whether epochKey is the last epoch, whose passage is
+// prestige rather than an epoch transition. Unknown keys are not final.
+func IsFinalEpoch(epochKey string) bool {
+	if _, ok := EpochByKey()[epochKey]; !ok {
+		return false
+	}
+	_, hasNext := NextEpoch(epochKey)
+	return !hasNext
+}

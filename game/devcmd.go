@@ -9,6 +9,7 @@ import "strings"
 //
 //	/catastrophe — make the current epoch's catastrophe pending now (testing)
 //	/harbinger   — bring the current age's harbinger now (testing)
+//	/lastpassage — make the Last Passage pending now, final epoch only (testing)
 func DevConsoleCommand(cmd string, ge *GameEngine) string {
 	if !DevModeActive {
 		return ""
@@ -25,6 +26,12 @@ func DevConsoleCommand(cmd string, ge *GameEngine) string {
 			return "harbinger refused: " + err.Error()
 		}
 		return "harbinger summoned for the current age"
+	}
+	if len(parts) > 0 && strings.ToLower(parts[0]) == "/lastpassage" {
+		if err := ge.forceLastPassage(); err != nil {
+			return "last passage refused: " + err.Error()
+		}
+		return "the Last Passage is pending"
 	}
 	return DevExecCommand(cmd, ge)
 }
