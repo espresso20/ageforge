@@ -129,13 +129,13 @@ func saveloadSeed(e *Env, seed int64, want, n int) (rows []string, fails, warns 
 	cfg.hook = func(r *runner) bool {
 		for _, cp := range cps {
 			if cp.atEnd == nil && r.ticks == cp.endTicks {
-				st := deepCopy(r.ge.GetState())
+				st := r.ge.GetState()
 				cp.atEnd = &st
 			}
 		}
 		if len(cps) < want && r.age != lastAge && r.ticks-r.ageT0 >= checkpointDelay {
 			lastAge = r.age
-			st := deepCopy(r.ge.GetState())
+			st := r.ge.GetState()
 			cp := &checkpoint{idx: len(cps) + 1, age: r.age, cycle: r.cycle, ticks: r.ticks, sim: r.sim,
 				gameTick: st.Tick, file: fmt.Sprintf("saveload-%d-%d", seed, len(cps)+1), endTicks: r.ticks + n, atSave: st}
 			if err := r.ge.SaveGame(cp.file); err != nil {
@@ -310,7 +310,7 @@ func continueFrom(e *Env, seed int64, cp *checkpoint, ge *game.GameEngine, befor
 			}
 		}
 		if r.ticks == cp.endTicks {
-			end = deepCopy(r.ge.GetState())
+			end = r.ge.GetState()
 			return true
 		}
 		return false

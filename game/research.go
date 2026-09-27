@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/espresso20/ageforge/config"
 )
@@ -287,7 +288,7 @@ func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) 
 			Name:          def.Name,
 			Age:           def.Age,
 			Cost:          def.Cost,
-			Prerequisites: def.Prerequisites,
+			Prerequisites: slices.Clone(def.Prerequisites), // def is the manager's table
 			Description:   def.Description,
 			Researched:    rm.researched[key],
 			Available:     available && !rm.researched[key],

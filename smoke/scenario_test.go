@@ -49,26 +49,25 @@ func TestTargetsCoverEveryAge(t *testing.T) {
 	}
 }
 
-func TestFirstDiffAndDeepCopy(t *testing.T) {
+func TestFirstDiff(t *testing.T) {
 	type inner struct{ V []float64 }
 	type s struct {
 		M map[string]float64
 		P *inner
 		T []string
 	}
-	a := s{M: map[string]float64{"a": 1, "b": 0.1 + 0.2}, P: &inner{V: []float64{1, 2}}, T: nil}
-	b := deepCopy(a)
+	mk := func() s {
+		return s{M: map[string]float64{"a": 1, "b": 0.1 + 0.2}, P: &inner{V: []float64{1, 2}}, T: nil}
+	}
+	a, b := mk(), mk()
 	if d := firstDiff(a, b, nil); d != "" {
-		t.Fatalf("copy differs: %s", d)
+		t.Fatalf("equal values differ: %s", d)
 	}
 	b.P.V[1] = 2 + 1e-15
-	if a.P.V[1] != 2 {
-		t.Fatal("deepCopy shares a slice through a pointer")
-	}
 	if d := firstDiff(a, b, nil); !strings.HasPrefix(d, "P.V[1]") {
 		t.Errorf("a one-ulp change should be found at P.V[1], got %q", d)
 	}
-	b = deepCopy(a)
+	b = mk()
 	b.T = []string{}
 	if d := firstDiff(a, b, nil); d != "" {
 		t.Errorf("nil and empty slices should match, got %q", d)

@@ -795,6 +795,20 @@ func (ge *GameEngine) resolveHarbinger(epochKey string, came bool) {
 	ge.harbinger = nil
 }
 
+// cloneHarbingerHistory copies the records and each record's Chain, for a
+// snapshot that must share nothing with the engine.
+func cloneHarbingerHistory(in []HarbingerRecord) []HarbingerRecord {
+	if in == nil {
+		return nil
+	}
+	out := make([]HarbingerRecord, len(in))
+	for i, r := range in {
+		r.Chain = append([]string(nil), r.Chain...)
+		out[i] = r
+	}
+	return out
+}
+
 // clearHarbingerRun drops all per-run harbinger state: the live thread, the
 // once-per-epoch record, the invite and the Brace level handed to a pending
 // catastrophe. Called by Succumb, DoPrestige and Reset under the write lock;

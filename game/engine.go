@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -3671,7 +3672,7 @@ func (ge *GameEngine) GetState() GameState {
 		Seed:                  ge.seed,
 		RNGDraws:              rngDraws,
 		QuipDraws:             quipDraws,
-		LastAgeAdvanceSummary: ge.lastAgeAdvanceSummary,
+		LastAgeAdvanceSummary: ge.lastAgeAdvanceSummary.clone(),
 		// Phase 8: epoch fields
 		EpochKey:              ge.currentEpoch,
 		EpochName:             epochDef.Name,
@@ -3682,9 +3683,9 @@ func (ge *GameEngine) GetState() GameState {
 		CatastropheOutlook:    ge.catastropheOutlook(),
 		PendingMemoryTech:     ge.pendingMemoryTech,
 		PendingMemoryTechName: ge.Research.defs[ge.pendingMemoryTech].Name,
-		EpochEventHistory:     ge.epochEventHistory,
+		EpochEventHistory:     slices.Clone(ge.epochEventHistory), // setCatastropheOutcome edits records in place
 		Harbinger:             ge.harbingerView(),
-		HarbingerHistory:      append([]HarbingerRecord(nil), ge.harbingerHistory...),
+		HarbingerHistory:      cloneHarbingerHistory(ge.harbingerHistory),
 		LegacyBonuses: func() map[string]bool {
 			out := make(map[string]bool, len(ge.legacyBonuses))
 			for k, v := range ge.legacyBonuses {
@@ -3692,12 +3693,12 @@ func (ge *GameEngine) GetState() GameState {
 			}
 			return out
 		}(),
-		CatastropheHistory:    ge.catastropheHistory,
+		CatastropheHistory:    slices.Clone(ge.catastropheHistory),
 		CatastrophesEndured:   endured,
 		CatastrophesSuccumbed: succumbed,
 		SuccumbResearchBonus:  ge.succumbResearchBonus(),
 		LastPassage:           ge.lastPassageState(prestigeSnap.PendingPoints),
-		History:               ge.History,
+		History:               ge.History.Clone(),
 		Morale:                ge.morale,
 		MoraleCap:             ge.moraleCap(),
 		MoraleMultiplier:      ge.moraleMultiplier(),

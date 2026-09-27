@@ -1,6 +1,10 @@
 package game
 
-import "github.com/espresso20/ageforge/config"
+import (
+	"maps"
+
+	"github.com/espresso20/ageforge/config"
+)
 
 // ProgressManager handles age progression
 type ProgressManager struct {
@@ -95,12 +99,13 @@ func (pm *ProgressManager) GetAgeOrder() map[string]int {
 	return out
 }
 
-// GetRequirementsForNext returns the requirements for the next age
+// GetRequirementsForNext returns copies of the requirements for the next age
+// (they end up in GameState, and the originals are the engine's age table).
 func (pm *ProgressManager) GetRequirementsForNext(currentKey string) (map[string]float64, map[string]int) {
 	nextKey := pm.GetNextAge(currentKey)
 	if nextKey == "" {
 		return nil, nil
 	}
 	nextAge := pm.ages[pm.ageIndex[nextKey]]
-	return nextAge.ResourceReqs, nextAge.BuildingReqs
+	return maps.Clone(nextAge.ResourceReqs), maps.Clone(nextAge.BuildingReqs)
 }
