@@ -93,6 +93,14 @@ All notable changes to AgeForge are documented here.
 - The catastrophe modal covered the whole dashboard with blank space and had see-through rows; it is now a box sized to its content, floating over the visible dashboard.
 - The Epoch tab showed a pending or overwritten catastrophe as "Survived"; it now shows Survived, Succumbed, Pending, or "outcome not recorded" for old saves.
 - The Stats panel counted succumbs as survived; Survived now means Endured, and Succumbed counts every succumb.
+- `recruit 9223372036854775807` overflowed the population check and left the population near -9.2 quintillion. Counts are now whole numbers from 1 to 1,000,000 and amounts must be positive numbers; anything else is refused with the usage line (`trade food wood NaN` and `wonder collect food NaN` used to turn a resource into NaN).
+- Loading a game dropped building upgrades offered in an earlier age (a lineage with no tier in the current age lost its offer, and `upgrade gathering_camp` said there was nothing to upgrade). Saves now keep the offers.
+- Loading an Iron Age save unlocked coal, which normal play unlocks in the Renaissance Age.
+- Loading a game restarted its random events, expeditions and encounters from the run's first roll. A loaded game now carries on the same random stream it was saved with.
+- Research bonuses could come back a hair off after a load (0.7999999999999999 instead of 0.8).
+- After a prestige, the storage upgrade didn't apply until the first tick, and starting resources beyond the base storage were cut off (Starting Food tier 3 gave 35 food, not 75).
+- `dump` wrote its file to a `data/logs` folder relative to wherever the game was launched; it now goes in `logs/` in your account's data folder.
+- Autocomplete offers `diplomacy tribute`, `diplomacy raid`, `account wipe` and the `acct` alias, and no longer re-offers an argument you've already typed (`research list list`).
 
 ---
 
