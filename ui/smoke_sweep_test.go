@@ -178,8 +178,8 @@ func (s *sweeper) inputText() string {
 	return txt
 }
 
-// submit types cmd into the command input and presses Enter, taking a second
-// Enter when the first only accepted an autocomplete suggestion.
+// submit types cmd into the command input and presses Enter once, which runs
+// it even while the autocomplete dropdown is open.
 func (s *sweeper) submit(cmd string) {
 	s.t.Helper()
 	s.wait("input focus", s.inputFocused)
@@ -188,11 +188,7 @@ func (s *sweeper) submit(cmd string) {
 	}
 	s.wait("typed text", func() bool { return s.inputText() == cmd })
 	s.press(tcell.KeyEnter, 0)
-	s.wait("Enter processed", func() bool { t := s.inputText(); return t == "" || strings.HasPrefix(t, cmd) && t != cmd })
-	if s.inputText() != "" {
-		s.press(tcell.KeyEnter, 0)
-		s.wait("command submitted", func() bool { return s.inputText() == "" })
-	}
+	s.wait("command submitted on the first Enter", func() bool { return s.inputText() == "" })
 	s.ping()
 }
 
