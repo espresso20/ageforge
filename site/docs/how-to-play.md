@@ -153,7 +153,7 @@ Food workers are special — they produce food but all workers across all domain
 
 ### Upgrading buildings after an age advance
 
-Buildings are **not** automatically transformed when you advance an age. Instead, they gain a pending upgrade marker and a gold hint appears in the Economy tab showing the target building. Use `upgrade <building>` to convert your existing copies to the new tier — for example, `upgrade gathering_camp` after entering the Stone Age converts your Gathering Camps into Forager Posts. Each upgrade costs only the price difference between old and new (with 50% of the old building's value credited back), so it is always cheaper than demolishing and rebuilding. Upgrade your food and storage lineages first after every advance. See [Buildings](buildings.md#building-upgrades) for the full guide.
+Buildings are **not** automatically transformed when you advance an age. Instead, they gain a pending upgrade marker and a gold hint appears in the Economy tab showing the target building. Use `upgrade <building>` to convert your existing copies to the new tier — for example, `upgrade gathering_camp` after entering the Stone Age converts your Gathering Camps into Forager Posts. Each upgrade costs only the price difference between old and new (with 50% of the old building's value credited back), so it is always cheaper than demolishing and rebuilding. Upgrade your food lineage first after every advance. Storage buildings never upgrade — the ones you built keep counting, so just start on the new age's storage. See [Buildings](buildings.md#building-upgrades) for the full guide.
 
 ---
 

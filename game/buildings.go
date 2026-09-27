@@ -356,6 +356,18 @@ func (bm *BuildingManager) GetPopCapacity() int {
 	return cap
 }
 
+// TradeBuildingCount is how many buildings of the trade lineage (market,
+// trading post, ... port, ...) stand. Any of them opens the exchange.
+func (bm *BuildingManager) TradeBuildingCount() int {
+	n := 0
+	for key, count := range bm.counts {
+		if bm.defs[key].LineageKey == "trade" {
+			n += count
+		}
+	}
+	return n
+}
+
 // GetStorageBonuses returns per-resource storage bonuses from buildings
 // "all" key means it applies to every resource
 func (bm *BuildingManager) GetStorageBonuses() map[string]float64 {
@@ -533,6 +545,23 @@ func (bm *BuildingManager) LoadPendingUpgrades(upgrades map[string]string) {
 	}
 }
 
+// UpgradeRoom is how many more copies of key an upgrade may create: the room
+// left under its MaxCount (queued copies included), or n when it has none.
+func (bm *BuildingManager) UpgradeRoom(key string, n int, queue []BuildQueueItem) int {
+	def, ok := bm.defs[key]
+	if !ok || def.MaxCount <= 0 {
+		return n
+	}
+	room := def.MaxCount - bm.counts[key] - bm.GetQueueCount(key, queue)
+	if room < 0 {
+		room = 0
+	}
+	if n > room {
+		return room
+	}
+	return n
+}
+
 // UpgradeCost computes the total cost delta to upgrade upgradeCount copies of oldKey to newKey.
 // Cost per copy = max(0, new_copy_cost[res] - old_copy_sell_value[res]) per resource.
 // Old sell value = floor(old_copy_cost * 0.5). New copy cost is at the current new count + i.
@@ -581,6 +610,8 @@ func (bm *BuildingManager) PartialTransform(oldKey, newKey string, count int, re
 	if count > have {
 		count = have
 	}
+	// MaxCount holds for upgrades too: an upgrade must not push newKey past its cap.
+	count = bm.UpgradeRoom(newKey, count, nil)
 	if count <= 0 {
 		return 0
 	}

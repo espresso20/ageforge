@@ -6,7 +6,7 @@ Two interlocking systems power your economy beyond raw production: **resource ex
 
 ## Resource Exchange
 
-Instant, one-off swaps between two resource types. You need at least one `market` or `port` built before any exchange is possible.
+Instant, one-off swaps between two resource types. You need at least one trade building before any exchange is possible: a `market` or anything later in the trade lineage (trading post, merchant quarter, guildhall, exchange, port, stock exchange, bank, ...). Upgrading your markets keeps the exchange open, since the upgraded buildings count too.
 
 ```
 trade <from> <to> <amount>
@@ -27,7 +27,7 @@ Each pair has a **base rate** — the units of the target resource you receive p
 | Colonial | gold↔coal |
 | Industrial | steel→gold, oil→gold |
 | Electric | electricity→gold |
-| Information | data↔gold |
+| Modern | data↔gold |
 | Cyberpunk | crypto↔gold |
 | Space | dark\_matter→gold |
 | Quantum | quantum\_flux→gold |
@@ -58,7 +58,7 @@ effective rate = base rate × (1 − pressure × 0.30)
 
 Pressure caps at 1.0 (a 30% rate reduction). There is also a hard floor at 50% of base rate — you can never be squeezed below half the listed rate.
 
-Pressure **decays 2% per tick**, multiplicatively. Leave a pair alone and it recovers fully on its own. Having more markets and ports helps too: each market or port you own reduces how much pressure a single trade adds (formula: `+0.10 / (1 + market_count × 0.20)`).
+Pressure **decays 2% per tick**, multiplicatively. Leave a pair alone and it recovers fully on its own. Having more trade buildings helps too: each trade-lineage building you own (market, port, bank, ...) reduces how much pressure a single trade adds (formula: `+0.10 / (1 + trade_building_count × 0.20)`).
 
 **When to exchange:** Use exchanges to convert surplus resources into something you're running short on, or to buy a specific resource you can't produce yet. Don't use the same pair repeatedly in quick succession — you'll hammer the rate. Spread trades across different pairs, or wait a few ticks between repeat swaps on the same pair.
 
@@ -350,7 +350,7 @@ Don't bother rushing allies before you have the relevant route running. Opinion 
 
 - Never spam the same exchange pair back-to-back. Use `trade list` to check the pressure indicator before repeat trades — a `↓` marker with percentage means you're paying the penalty.
 - If you need large amounts of one resource, spread exchanges across different source resources (e.g., convert iron to gold, then wood to gold separately, rather than repeatedly selling iron).
-- Building more markets and ports directly reduces how fast pressure builds per trade. In Colonial Age+, having Port ×2 and Market ×3 makes pressure largely a non-issue for occasional exchanges.
+- Building more trade-lineage buildings directly reduces how fast pressure builds per trade. By the Colonial Age, five or so trade buildings (ports, exchanges, banks, ...) make pressure largely a non-issue for occasional exchanges.
 
 ### Diplomacy + Trade Synergy
 

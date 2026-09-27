@@ -299,13 +299,17 @@ func baseBuildingsRaw() []BuildingDef {
 		// ===== INTERSTELLAR AGE (costs: 250T-750T) =====
 		{
 			Name: "Stellar Vault", Key: "stellar_vault", Category: "storage",
-			BaseCost:    map[string]float64{"titanium": 60e12, "plasma": 50e12, "electricity": 80e12},
-			CostScale:   1.3,
-			MaxCount:    25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 500e12}},
+			BaseCost:  map[string]float64{"titanium": 60e12, "plasma": 50e12, "electricity": 80e12},
+			CostScale: 1.3,
+			MaxCount:  25,
+			// note: 500T -> 2Q (galactic 2Q -> 20Q, quantum 10Q -> 200Q). Cosmic-era
+			// storage had fallen out of band with its own prices (median first copy
+			// 13-57% of max storage vs 3-8% everywhere else), so no age gate there
+			// fit the Storage Covenant. See economy.md "Gate Covenant".
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 2e15}},
 			BuildTicks:  6000,
 			RequiredAge: "interstellar_age",
-			Description: "Pocket-dimension storage. +500T storage.",
+			Description: "Pocket-dimension storage. +2Q storage.",
 		},
 
 		// ===== GALACTIC AGE (costs: 1.25Q-3.75Q) =====
@@ -314,10 +318,10 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:    map[string]float64{"dark_matter": 100e12, "titanium": 500e12, "plasma": 200e12},
 			CostScale:   1.3,
 			MaxCount:    25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 2e15}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 20e15}},
 			BuildTicks:  10000,
 			RequiredAge: "galactic_age",
-			Description: "Galaxy-spanning storage network. +2Q storage.",
+			Description: "Galaxy-spanning storage network. +20Q storage.",
 		},
 
 		// ===== QUANTUM AGE (costs: 6Q-20Q) =====
@@ -328,10 +332,10 @@ func baseBuildingsRaw() []BuildingDef {
 			BaseCost:    map[string]float64{"antimatter": 1e15, "dark_matter": 2e15, "titanium": 500e12},
 			CostScale:   1.35,
 			MaxCount:    25,
-			Effects:     []Effect{{Type: "storage", Target: "all", Value: 10e15}},
+			Effects:     []Effect{{Type: "storage", Target: "all", Value: 200e15}},
 			BuildTicks:  12000,
 			RequiredAge: "quantum_age",
-			Description: "Stores matter in quantum superposition. +10Q storage.",
+			Description: "Stores matter in quantum superposition. +200Q storage.",
 		},
 
 		// ===== TRANSCENDENT AGE =====

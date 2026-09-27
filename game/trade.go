@@ -126,9 +126,12 @@ func (tm *TradeManager) Exchange(from, to string, amount float64, resources *Res
 		return 0, fmt.Errorf("no exchange rate for %s → %s", from, to)
 	}
 
-	// Require at least 1 market or port
-	if buildings.GetCount("market") < 1 && buildings.GetCount("port") < 1 {
-		return 0, fmt.Errorf("need a market or port to trade")
+	// Require a trade building: a market or anything its lineage becomes.
+	// Checking "market" alone meant upgrading your markets (as the log
+	// suggests on reaching the Iron Age) shut the exchange until ports.
+	traders := buildings.TradeBuildingCount()
+	if traders < 1 {
+		return 0, fmt.Errorf("need a market (or a later trade building) to trade")
 	}
 
 	// Check sender has enough
@@ -150,7 +153,7 @@ func (tm *TradeManager) Exchange(from, to string, amount float64, resources *Res
 
 	// Update supply pressure (selling more pushes rate down)
 	// More markets reduce pressure impact
-	marketCount := float64(buildings.GetCount("market") + buildings.GetCount("port"))
+	marketCount := float64(traders)
 	pressureIncrease := 0.1 / (1.0 + marketCount*0.2)
 	tm.supplyPressure[key] += pressureIncrease
 	if tm.supplyPressure[key] > 1.0 {

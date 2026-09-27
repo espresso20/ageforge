@@ -18,7 +18,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// tier 0 — iron_age  output=iron  rate=0.10
 	b = append(b, BuildingDef{
 		Name: "Smelter", Key: "smelter", Category: "production",
-		BaseCost:    map[string]float64{"stone": 5500, "iron": 2500, "coal": 1000},
+		BaseCost:    map[string]float64{"stone": 5500, "iron": 2500},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "production", Target: "iron", Value: 0.10}},
 		BuildTicks:  400,
@@ -31,7 +31,7 @@ func buildingsLineageMetallurgy() []BuildingDef {
 	// tier 1 — classical_age  output=iron  rate=0.20
 	b = append(b, BuildingDef{
 		Name: "Forge", Key: "forge", Category: "production",
-		BaseCost:    map[string]float64{"stone": 36000, "gold": 12000, "coal": 5000},
+		BaseCost:    map[string]float64{"stone": 36000, "gold": 12000},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "production", Target: "iron", Value: 0.20}},
 		BuildTicks:  600,

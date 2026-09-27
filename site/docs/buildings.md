@@ -35,6 +35,8 @@ build                    — list all available buildings (with costs and count 
 
 When you advance to a new age, buildings that have a next-tier equivalent are **not** automatically transformed. Instead, each such building gets a **pending upgrade** marker and continues producing at its old rate. You choose when to upgrade — building by building, at your own pace.
 
+Storage buildings never get an upgrade: your stashes, storage pits and vaults keep counting toward your storage for the rest of the run (see [Storage Buildings](#storage-buildings-21-tiers)).
+
 ### The upgrade hint
 
 In the Economy tab building list, upgradeable buildings display a gold hint line:
@@ -54,6 +56,8 @@ upgrade <building> all     — same as no count argument
 ```
 
 There is no `upgrade all` global command — upgrades are per building so you control the order and pacing.
+
+An upgrade stops at the new building's max count. If the target is capped and has room for fewer copies than you asked for, only that many are upgraded and the rest stay as they are; if it is already full, the upgrade is refused.
 
 **Examples:**
 ```
@@ -285,11 +289,11 @@ Your 20 Gathering Camps stay as Gathering Camps — producing at their full rate
 
 Storage buildings form their own lineage and expand your resource cap for **every** resource simultaneously. Unlike production buildings, storage buildings require no workers — just build them and the caps go up.
 
-Every storage building is **capped at 25 copies** (Stash at 50). The cap exists by design: each tier's storage-per-copy is at least its dominant build cost, so a full stack always provides more cap than it costs and a storage building never becomes an unaffordable wall — but the flattened cost curve would eventually outrun even that, so the stack is bounded just below where it would. Advance to the next tier instead of over-stacking.
+Every storage building is **capped at 25 copies** (Stash at 50). The cap exists by design: each tier's storage-per-copy is at least its dominant build cost, so a full stack always provides more cap than it costs and a storage building never becomes an unaffordable wall — but the flattened cost curve would eventually outrun even that, so the stack is bounded just below where it would. Build the next age's storage instead of over-stacking.
 
 | Building | Age | Effect | Max |
 |----------|-----|--------|-----|
-| Stash | Primitive | +300 all storage | 50 |
+| Stash | Primitive | +500 all storage | 50 |
 | Storage Pit | Stone | +600 all storage | 25 |
 | Warehouse | Bronze | +4,000 all storage | 25 |
 | Granary | Iron | +15,000 all storage | 25 |
@@ -307,13 +311,13 @@ Every storage building is **capped at 25 copies** (Stash at 50). The cap exists 
 | Cyber Vault | Cyberpunk | +8T all storage | 25 |
 | Fusion Vault | Fusion | +30T all storage | 25 |
 | Orbital Depot | Space | +200T all storage | 25 |
-| Stellar Vault | Interstellar | +500T all storage | 25 |
-| Galactic Vault | Galactic | +2Q all storage | 25 |
-| Quantum Vault | Quantum | +10Q all storage | 25 |
+| Stellar Vault | Interstellar | +2Q all storage | 25 |
+| Galactic Vault | Galactic | +20Q all storage | 25 |
+| Quantum Vault | Quantum | +200Q all storage | 25 |
 
-> **Tip:** Stash is hard-capped at 50. Transition to Storage Pit the moment you enter the Stone Age. Storage bottlenecks stop all late-game resource accumulation dead — build storage first when entering every new age.
+> **Tip:** Stash is hard-capped at 50. Build them out before you leave the Primitive Age, then start on Storage Pits the moment you enter the Stone Age. Storage bottlenecks stop all late-game resource accumulation dead — build storage first when entering every new age.
 
-Storage buildings also participate in the upgrade system on age advance — use `upgrade <key>` to convert them to the next tier at the delta cost (see [Building Upgrades](#building-upgrades)).
+Storage buildings **never upgrade** and are never offered as upgrades on age advance. Storage is cumulative: every storage building you have built keeps adding its capacity for the rest of the run, so the stashes from the Primitive Age still count in the Quantum Age. Like every other building, an older age's storage can no longer be built once you advance (the game tells you to build the current age's storage instead), so fill each tier while it is current.
 
 ---
 
