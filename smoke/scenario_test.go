@@ -1,0 +1,232 @@
+package smoke
+
+import (
+	"bytes"
+	"math"
+	"strings"
+	"testing"
+	"time"
+
+	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/game"
+)
+
+func TestTargetsCoverEveryAge(t *testing.T) {
+	ages := config.AgeOrder()
+	for i, a := range ages {
+		_, ok := Target(a)
+		if last := i == len(ages)-1; ok == last {
+			t.Errorf("%s: has target = %v; every age but the last needs one", a, ok)
+		}
+	}
+	for a := range PacingTargets {
+		if _, ok := config.AgeByKey()[a]; !ok {
+			t.Errorf("pacing target for unknown age %q", a)
+		}
+	}
+	if got := CumulativeTarget("modern_age"); got < 60*time.Hour || got > 90*time.Hour {
+		t.Errorf("targets to the Modern Age sum to %s; the plan is about 3 days", got)
+	}
+	if got := AgeTimeout("primitive_age"); got != TimeoutFloor {
+		t.Errorf("primitive timeout %s, want the %s floor", got, TimeoutFloor)
+	}
+	if got := AgeTimeout("atomic_age"); got != 48*time.Hour {
+		t.Errorf("atomic timeout %s, want 4 x 12h", got)
+	}
+	target := PacingTargets["stone_age"].Seconds()
+	for _, c := range []struct {
+		secs     float64
+		finished bool
+		want     string
+	}{
+		{target, true, VerdictOK}, {target * 0.49, true, VerdictFast}, {target * 2.01, true, VerdictSlow},
+		{target * 0.5, true, VerdictOK}, {target * 2, true, VerdictOK}, {target * 0.1, false, VerdictNone},
+		{target * 3, false, VerdictSlow},
+	} {
+		if got := Verdict("stone_age", c.secs, c.finished); got != c.want {
+			t.Errorf("Verdict(stone, %.2fx, finished=%v) = %q, want %q", c.secs/target, c.finished, got, c.want)
+		}
+	}
+}
+
+func TestFirstDiffAndDeepCopy(t *testing.T) {
+	type inner struct{ V []float64 }
+	type s struct {
+		M map[string]float64
+		P *inner
+		T []string
+	}
+	a := s{M: map[string]float64{"a": 1, "b": 0.1 + 0.2}, P: &inner{V: []float64{1, 2}}, T: nil}
+	b := deepCopy(a)
+	if d := firstDiff(a, b, nil); d != "" {
+		t.Fatalf("copy differs: %s", d)
+	}
+	b.P.V[1] = 2 + 1e-15
+	if a.P.V[1] != 2 {
+		t.Fatal("deepCopy shares a slice through a pointer")
+	}
+	if d := firstDiff(a, b, nil); !strings.HasPrefix(d, "P.V[1]") {
+		t.Errorf("a one-ulp change should be found at P.V[1], got %q", d)
+	}
+	b = deepCopy(a)
+	b.T = []string{}
+	if d := firstDiff(a, b, nil); d != "" {
+		t.Errorf("nil and empty slices should match, got %q", d)
+	}
+	b.M["c"] = 3
+	if d := firstDiff(a, b, func(p string) bool { return p == "M" }); d != "" {
+		t.Errorf("skipped path still reported: %q", d)
+	}
+
+	ta, _ := jsonTree([]byte(`{"x":["b","a"],"y":{"z":["1","2"]},"n":1.5}`))
+	tb, _ := jsonTree([]byte(`{"x":["a","b"],"y":{"z":["1","2"]},"n":1.5}`))
+	if got := sortStringSets(ta, tb, ""); len(got) != 1 || got[0] != "x" {
+		t.Errorf("order-only paths = %v, want [x]", got)
+	}
+	if d := firstDiff(ta, tb, nil); d != "" {
+		t.Errorf("after sorting, trees differ: %s", d)
+	}
+}
+
+func TestPrestigeFormulaMatchesDocs(t *testing.T) {
+	st := game.GameState{Age: "modern_age"}
+	st.Milestones.CompletedCount = 25
+	st.Research.TotalResearched = 31
+	st.Stats.TotalBuilt = 149
+	// 12 + 2 + 2 + 2 = 18
+	if got := PrestigePoints(st); got != 18 {
+		t.Errorf("level 0: %d points, want 18", got)
+	}
+	st.Prestige.Level = 3 // 18 / sqrt(4) = 9
+	if got := PrestigePoints(st); got != 9 {
+		t.Errorf("level 3: %d points, want 9", got)
+	}
+	st = game.GameState{Age: "medieval_age"}
+	st.Prestige.Level = 99 // 5 / 10 floors to 0, but Medieval guarantees 1
+	if got := PrestigePoints(st); got != 1 {
+		t.Errorf("medieval floor: %d points, want 1", got)
+	}
+	if want := int(math.Floor(21 / math.Sqrt(2))); PrestigePoints(game.GameState{Age: "transcendent_age", Prestige: game.PrestigeState{Level: 1}}) != want {
+		t.Errorf("transcendent at level 1 should pay %d", want)
+	}
+}
+
+// The scenarios below run in the plain test suite in a few seconds each, so
+// a harness regression shows up in `go test ./...` and not only in CI's
+// smoke job.
+
+func testEnv() *Env {
+	return &Env{Tier: TierFast, SeedBase: 1, Pacing: PacingReport, Parallel: 2, Base: DefaultConfig(), RepoRoot: ".."}
+}
+
+func runScenario(t *testing.T, name string) *Result {
+	t.Helper()
+	sess, err := RunScenarios(testEnv(), []string{name})
+	if err != nil {
+		t.Fatal(err)
+	}
+	r := sess.Scenarios[0]
+	for _, f := range r.Failures {
+		t.Errorf("%s: %s: %s\n%s\n%s", name, f.Check, f.Message, f.Repro, f.Detail)
+	}
+	return r
+}
+
+func TestAccountsScenario(t *testing.T) {
+	runScenario(t, "accounts")
+}
+
+func TestOfflineScenario(t *testing.T) {
+	if testing.Short() || raceEnabled {
+		t.Skip("plays to the Stone Age")
+	}
+	runScenario(t, "offline")
+}
+
+func TestPrestigeHookedMechanics(t *testing.T) {
+	if testing.Short() || raceEnabled {
+		t.Skip("plays to the Stone Age twice")
+	}
+	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
+	res := &Result{}
+	steps := prestigeHooked(testEnv(), res)
+	for _, f := range res.Failures {
+		t.Errorf("%s: %s\n%s", f.Check, f.Message, f.Detail)
+	}
+	if len(steps) < 20 {
+		t.Errorf("only %d hooked steps ran:\n%s", len(steps), strings.Join(steps, "\n"))
+	}
+}
+
+func TestFuzzShortRun(t *testing.T) {
+	if testing.Short() || raceEnabled {
+		t.Skip("plays a few thousand ticks")
+	}
+	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
+	t.Chdir(t.TempDir()) // `dump` writes under ./data/logs
+	ge := game.NewGameEngine()
+	gen := newFuzzer(7, ge)
+	if len(gen.commands) < 40 {
+		t.Fatalf("the autocompleter offered only %d commands: %v", len(gen.commands), gen.commands)
+	}
+	script := fuzzScript(gen.r, 60, 20, 20)
+	f, done := fuzzExec(7, script, gen)
+	if f != nil {
+		t.Fatalf("%s at step %d: %s\n%s", f.check, f.step, f.msg, f.detail)
+	}
+	if len(done) != len(script) {
+		t.Errorf("ran %d of %d steps", len(done), len(script))
+	}
+}
+
+func TestDocsyncParsers(t *testing.T) {
+	cmds, accepts, err := handlerCommands("..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(cmds) < 30 || len(accepts["trade"]) == 0 || !accepts["trade"]["route"] {
+		t.Errorf("handler parse looks wrong: %d commands, trade accepts %v", len(cmds), accepts["trade"])
+	}
+	claims, err := docClaims("..")
+	if err != nil {
+		t.Fatal(err)
+	}
+	hero := 0
+	for _, c := range claims {
+		if strings.HasPrefix(c.text, "hero stat") {
+			hero++
+		}
+	}
+	if hero < 3 {
+		t.Errorf("found %d hero stats in site/index.html, want the ages, buildings and techs", hero)
+	}
+	if n, rows, err := lineageTable(".."); err != nil || n == 0 || rows == 0 {
+		t.Errorf("lineage table: heading %d, rows %d, err %v", n, rows, err)
+	}
+}
+
+func TestSessionReports(t *testing.T) {
+	sess := &Session{Tier: TierFast, Pacing: PacingReport, Scenarios: []*Result{
+		{Name: "fuzz", Status: StatusFail, Summary: "1 crash", Failures: []Finding{{Check: "fuzz_panic", Message: "boom", Repro: "go run ./cmd/smoke -scenario fuzz"}}},
+		{Name: "docsync", Status: StatusPass, Warnings: []Finding{{Check: "w", Message: "careful"}}},
+		{Name: "styles", Status: StatusSkip, Summary: "full tier only"},
+	}, Failed: true}
+	var sum, md, js bytes.Buffer
+	for _, w := range []func() error{
+		func() error { return sess.WriteSummary(&sum) },
+		func() error { return sess.WriteMarkdown(&md) },
+		func() error { return sess.WriteJSON(&js) },
+	} {
+		if err := w(); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for _, want := range []string{"FAIL", "| fuzz | ✗ FAIL |", "fuzz / fuzz_panic", "boom", "careful", "- skip"} {
+		if !strings.Contains(sum.String(), want) {
+			t.Errorf("summary missing %q:\n%s", want, sum.String())
+		}
+	}
+	if !strings.Contains(md.String(), "go run ./cmd/smoke -scenario fuzz") || !strings.Contains(js.String(), `"fuzz_panic"`) {
+		t.Errorf("report or JSON missing the finding")
+	}
+}
