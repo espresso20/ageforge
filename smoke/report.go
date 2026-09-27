@@ -55,6 +55,9 @@ type PacingRow struct {
 	MaxSecs     float64 `json:"max_seconds"`
 	MedianTicks int     `json:"median_ticks"`
 	Unfinished  bool    `json:"unfinished,omitempty"`
+	// Prestiged rows are ages left by prestige (AgeSplit.Prestiged): shown,
+	// never graded.
+	Prestiged bool `json:"prestiged,omitempty"`
 	// TargetSecs is the pacing target, Ratio the median over it, Verdict
 	// the median graded against the band (see targets.go).
 	TargetSecs float64 `json:"target_seconds,omitempty"`
@@ -75,9 +78,10 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 		},
 	}
 	type key struct {
-		cycle int
-		age   string
-		open  bool
+		cycle     int
+		age       string
+		open      bool
+		prestiged bool
 	}
 	s.Prices = HarbingerPrices()
 	s.Gates, s.Slack = StaticGates()
@@ -92,7 +96,7 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 		// Sum repeated visits to an age (Succumb) into one sample per seed.
 		perSeed := map[key][2]float64{}
 		for _, a := range r.Ages {
-			k := key{a.Cycle, a.Age, a.Unfinished}
+			k := key{a.Cycle, a.Age, a.Unfinished, a.Prestiged}
 			v := perSeed[k]
 			perSeed[k] = [2]float64{v[0] + a.Seconds, v[1] + float64(a.Ticks)}
 			if a.TimedOut {
@@ -112,9 +116,12 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 		lo, med, hi := spread(v)
 		_, tmed, _ := spread(ticks[k])
 		row := PacingRow{
-			Cycle: k.cycle, Age: k.age, Unfinished: k.open, Samples: len(v),
+			Cycle: k.cycle, Age: k.age, Unfinished: k.open, Prestiged: k.prestiged, Samples: len(v),
 			MinSecs: lo, MedianSecs: med, MaxSecs: hi, MedianTicks: int(tmed),
 			Verdict: Verdict(k.age, med, !k.open), TimedOut: timedOut[k],
+		}
+		if k.prestiged {
+			row.Verdict = VerdictNone
 		}
 		if t, ok := Target(k.age); ok {
 			row.TargetSecs = t.Seconds()
@@ -130,7 +137,17 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 		if a.Age != b.Age {
 			return order[a.Age] < order[b.Age]
 		}
-		return !a.Unfinished && b.Unfinished
+		// Completed, then left by prestige, then unfinished.
+		rank := func(p PacingRow) int {
+			switch {
+			case p.Unfinished:
+				return 2
+			case p.Prestiged:
+				return 1
+			}
+			return 0
+		}
+		return rank(a) < rank(b)
 	})
 	return s
 }
@@ -190,7 +207,7 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 	fmt.Fprintf(&sb, ". Took %s of wall time.\n\n", time.Duration(s.WallMs)*time.Millisecond)
 	sb.WriteString("Times are simulated wall-clock at 1x speed (tick_speed bonuses included). ")
 	if s.Config.Pacing == PacingEnforce {
-		sb.WriteString("Pacing is enforced: an age outside its target band, or past its timeout, fails the run, as do panics, soft-locks and invariant violations.\n\n")
+		sb.WriteString("Pacing is enforced: a first-cycle age outside its target band, or any age past its timeout, fails the run (later cycles and ages left by prestige are graded only), as do panics, soft-locks and invariant violations.\n\n")
 	} else {
 		sb.WriteString("Pacing is report-only: ages are graded against their targets but never fail the run; panics, soft-locks and invariant violations do.\n\n")
 	}
@@ -303,11 +320,14 @@ func (s *Summary) writePacingTable(sb *strings.Builder) {
 		if p.Unfinished {
 			age += " (unfinished)"
 		}
+		if p.Prestiged {
+			age += " (left by prestige)"
+		}
 		if p.TimedOut {
 			age += " (past timeout)"
 		}
 		target, ratio := "-", "-"
-		if p.TargetSecs > 0 {
+		if p.TargetSecs > 0 && !p.Prestiged {
 			target = dur(p.TargetSecs)
 			ratio = fmt.Sprintf("%.2gx", p.Ratio)
 		}

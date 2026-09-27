@@ -9,8 +9,10 @@ import (
 // Pacing targets: how long a player should spend in each age at 1x game
 // time, from entering it to entering the next. This table is the pacing
 // contract the balance work aims at (≈3 days of play to the Modern Age, the
-// first prestige). Edit the numbers here; the report, the per-age timeouts
-// and `-pacing enforce` all read them. See CONTRIBUTING.md, "Pacing targets".
+// first prestige). It mirrors config.AgeTargets, which the game derives its
+// economy from: edit that one, then make this match
+// (TestPacingTargetsMatchConfig). The report, the per-age timeouts and
+// `-pacing enforce` all read this copy. See CONTRIBUTING.md, "Pacing targets".
 var PacingTargets = map[string]time.Duration{
 	"primitive_age":    15 * time.Minute,
 	"stone_age":        45 * time.Minute,

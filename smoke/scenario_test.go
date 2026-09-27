@@ -229,3 +229,41 @@ func TestSessionReports(t *testing.T) {
 		t.Errorf("report or JSON missing the finding")
 	}
 }
+
+// An age left by prestige is not a completed age: prestiging on entering the
+// Modern Age spends 0 seconds there, which used to grade as a "fast" Modern
+// Age and fail every -pacing enforce run with prestige cycles.
+func TestPrestigedAgeIsNotGraded(t *testing.T) {
+	cfg := DefaultConfig()
+	cfg.Pacing = PacingEnforce
+	r := newRunner(cfg, 1, game.NewGameEngine())
+	r.age = "modern_age"
+	r.closeAgeByPrestige()
+	if len(r.res.Anomalies) != 0 {
+		t.Fatalf("closing an age by prestige raised %+v", r.res.Anomalies[0])
+	}
+	if a := r.res.Ages[0]; !a.Prestiged || a.Verdict != VerdictNone {
+		t.Errorf("split = %+v, want prestiged and ungraded", a)
+	}
+	// A completed 0-second age is still fast, and fails under enforce.
+	r.closeAge()
+	if len(r.res.Anomalies) != 1 || r.res.Anomalies[0].Check != "pacing_fast" {
+		t.Errorf("a completed 0-second age: anomalies %+v, want one pacing_fast", r.res.Anomalies)
+	}
+
+	runs := []*RunResult{{Seed: 1, Ages: []AgeSplit{
+		{Cycle: 1, Age: "modern_age", Prestiged: true},
+		{Cycle: 1, Age: "atomic_age", Seconds: PacingTargets["atomic_age"].Seconds()},
+	}}}
+	sum := NewSummary("progression", cfg, time.Now(), runs)
+	var sb strings.Builder
+	sum.writePacingTable(&sb)
+	for _, p := range sum.Pacing {
+		if p.Age == "modern_age" && (!p.Prestiged || p.Verdict != VerdictNone) {
+			t.Errorf("modern row = %+v, want prestiged and ungraded", p)
+		}
+	}
+	if !strings.Contains(sb.String(), "modern_age (left by prestige)") {
+		t.Errorf("pacing table does not mark the prestige age:\n%s", sb.String())
+	}
+}
