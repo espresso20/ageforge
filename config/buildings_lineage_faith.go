@@ -205,7 +205,7 @@ func buildingsLineageFaith() []BuildingDef {
 	// tier 14 — digital_age  rate=32.768
 	b = append(b, BuildingDef{
 		Name: "Cyber Shrine", Key: "cyber_shrine", Category: "research",
-		BaseCost:    map[string]float64{"electricity": 380e9, "data": 45e9, "crypto": 200e9},
+		BaseCost:    map[string]float64{"electricity": 380e9, "data": 45e9},
 		CostScale:   1.30,
 		Effects:     []Effect{{Type: "production", Target: "faith", Value: 32.768}, {Type: "morale", Value: 0.0035}},
 		BuildTicks:  3600,

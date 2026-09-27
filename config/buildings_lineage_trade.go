@@ -171,7 +171,7 @@ func buildingsLineageTrade() []BuildingDef {
 	// tier 12 — digital_age  rate=204.80
 	b = append(b, BuildingDef{
 		Name: "Crypto Exchange", Key: "crypto_exchange", Category: "production",
-		BaseCost:    map[string]float64{"electricity": 420e9, "data": 52e9, "crypto": 100e9},
+		BaseCost:    map[string]float64{"electricity": 420e9, "data": 52e9},
 		CostScale:   1.40,
 		Effects:     []Effect{{Type: "production", Target: "gold", Value: 204.80}},
 		BuildTicks:  3600,
