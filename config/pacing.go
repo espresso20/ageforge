@@ -468,3 +468,93 @@ func exchangeLevels() map[string]map[string]float64 {
 	exchangeLevelsOnce.Do(func() { exchangeLevelsMap = priceLevels(BaseBuildings()) })
 	return exchangeLevelsMap
 }
+
+// FlowCopies is the "reasonable production level" of a flow resource: how
+// many copies of each of its producers a player who invests moderately in it
+// keeps, fully staffed. Flow producers keep hand-set rates (Law 3), so
+// anything sized to what an age produces of a flow resource (harbinger
+// Appease prices, the Gate Covenant's flow check) is sized to FlowIncome.
+const FlowCopies = 5.0
+
+// ProductionAllCap is the most the production_all bonus can multiply output
+// by. It must equal the engine's productionCap (a game test checks).
+const ProductionAllCap = 3.0
+
+// FlowIncome is what a player who invests moderately in the flow resource res
+// makes per tick in age at 1x: FlowCopies fully staffed copies of every
+// non-wonder producer of res from the Primitive Age up to and including age,
+// plus the output of every earlier age's wonder (each advance requires its
+// age's wonder, so they stand), plus the flat output of every tech up to
+// age, all multiplied by the production_all bonus held by then: every tech up
+// to age and every earlier age's wonder, capped at ProductionAllCap as the
+// engine caps it (from the Electric Age on the cap is reached, and output
+// triples). Monuments, milestones, morale and worker upkeep are left out. 0
+// for an unknown age or a resource nothing produces by then.
+func FlowIncome(res, age string) float64 {
+	return flowIncomes()[age][res]
+}
+
+var (
+	flowIncomeOnce sync.Once
+	flowIncomeMap  map[string]map[string]float64
+)
+
+// flowIncomes caches FlowIncome for every age and flow resource. The harbinger
+// prices read it on every state snapshot. Read-only.
+func flowIncomes() map[string]map[string]float64 {
+	flowIncomeOnce.Do(func() {
+		flowIncomeMap = computeFlowIncomes(BaseBuildings(), Technologies(), AgeOrder())
+	})
+	return flowIncomeMap
+}
+
+func computeFlowIncomes(defs []BuildingDef, techs []TechDef, order []string) map[string]map[string]float64 {
+	idx := make(map[string]int, len(order))
+	for i, a := range order {
+		idx[a] = i
+	}
+	out := make(map[string]map[string]float64, len(order))
+	for i, age := range order {
+		inc := map[string]float64{}
+		bonus := 0.0 // production_all
+		for _, d := range defs {
+			j, ok := idx[d.RequiredAge]
+			if !ok || j > i {
+				continue
+			}
+			for _, e := range d.Effects {
+				if d.Category == "wonder" && j < i && e.Type == "bonus" && e.Target == "production_all" {
+					bonus += e.Value
+				}
+				if e.Type != "production" || e.Value <= 0 || !flowResources[e.Target] {
+					continue
+				}
+				switch {
+				case d.Category != "wonder":
+					inc[e.Target] += FlowCopies * e.Value
+				case j < i:
+					inc[e.Target] += e.Value
+				}
+			}
+		}
+		for _, t := range techs {
+			if j, ok := idx[t.Age]; !ok || j > i {
+				continue
+			}
+			for _, e := range t.Effects {
+				if e.Type == "production" && e.Value > 0 && flowResources[e.Target] {
+					inc[e.Target] += e.Value
+				}
+				if e.Type == "bonus" && e.Target == "production_all" {
+					bonus += e.Value
+				}
+			}
+		}
+		mult := math.Min(1+bonus, ProductionAllCap)
+		for k := range inc {
+			inc[k] *= mult
+		}
+		out[age] = inc
+	}
+	return out
+}

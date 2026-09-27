@@ -402,8 +402,8 @@ func TestFalseThreadClaim(t *testing.T) {
 	if !v.Numeric || v.Tier != CatastropheTierHigh || math.Abs(v.Probability-0.18) > 1e-9 {
 		t.Errorf("industrial view of a false thread = numeric %v %s %.3f, want the claimed high 18%%", v.Numeric, v.Tier, v.Probability)
 	}
-	// Appease ×0.6 moves the claim as it moves the real odds (the faith spend
-	// changes the band as well).
+	// Appease ×0.6 moves the claim as it moves the real odds (read live, so a
+	// band change from the faith spend would count too).
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}
@@ -499,13 +499,17 @@ func TestHarbingerCostExamples(t *testing.T) {
 		appease map[string]float64
 		brace   map[string]float64
 	}{
-		{"stone_era", map[string]float64{"faith": 12000}, map[string]float64{"food": 9600, "wood": 4800, "knowledge": 2400}},
-		{"steel_era", map[string]float64{"faith": 2250000, "culture": 2250000}, map[string]float64{"knowledge": 360000, "gold": 1800000, "steel": 288000}},
-		// The Cosmic Era's passage is prestige. Appease is priced off the
-		// entry into the era (plasma 310B → 15%); Brace off the era's own
-		// advances, for resources held from Interstellar (dark matter 13T,
-		// titanium 630B → 12%). Antimatter and quantum flux arrive later.
-		{"cosmic_era", map[string]float64{"faith": 46500000000, "culture": 46500000000}, map[string]float64{"dark_matter": 1560000000000, "titanium": 75600000000}},
+		// Appease is a quarter of what FlowIncome makes over the thread's
+		// ages at their targets. Stone Era faith: 0.01, 0.03 and 0.07 a tick
+		// over 450, 1,350 and 2,700 ticks = 234; a quarter is 58.5 → 59.
+		{"stone_era", map[string]float64{"faith": 59}, map[string]float64{"food": 9600, "wood": 4800, "knowledge": 2400}},
+		{"steel_era", map[string]float64{"faith": 74000, "culture": 770000}, map[string]float64{"knowledge": 360000, "gold": 1800000, "steel": 288000}},
+		// The Cosmic Era's passage is prestige; Appease counts its ages but
+		// the last (Interstellar, Galactic, Quantum). Brace is priced off
+		// the era's own advances, for resources held from Interstellar (dark
+		// matter 13T, titanium 630B → 12%). Antimatter and quantum flux
+		// arrive later.
+		{"cosmic_era", map[string]float64{"faith": 1200000000, "culture": 19000000000}, map[string]float64{"dark_matter": 1560000000000, "titanium": 75600000000}},
 	}
 	for _, c := range cases {
 		if got := harbingerAppeaseCost(c.epoch, 1); !reflect.DeepEqual(got, c.appease) {
@@ -521,13 +525,13 @@ func TestHarbingerCostExamples(t *testing.T) {
 
 func TestAppeaseCostsLevelsAndOdds(t *testing.T) {
 	ge := threadEngine(t, "steel_era", 4)
-	setStock(ge, map[string][2]float64{"faith": {1e7, 1e7}, "culture": {1e7, 1e7}})
+	setStock(ge, map[string][2]float64{"faith": {6e5, 6e5}, "culture": {1e7, 1e7}})
 
-	// Level 1: 2.25M each. Faith fill 0.775 → high band, base 12%.
+	// Level 1: 74K faith, 770K culture. Faith fill 0.877 → high band, base 12%.
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}
-	if f, c := ge.Resources.Get("faith"), ge.Resources.Get("culture"); f != 7.75e6 || c != 7.75e6 {
+	if f, c := ge.Resources.Get("faith"), ge.Resources.Get("culture"); f != 526000 || c != 9.23e6 {
 		t.Errorf("after level 1: faith %v culture %v", f, c)
 	}
 	if o := ge.CatastropheOutlook(); math.Abs(o.Probability-0.12*0.6) > 1e-9 {
@@ -537,11 +541,11 @@ func TestAppeaseCostsLevelsAndOdds(t *testing.T) {
 		t.Error("no Appease log line")
 	}
 
-	// Level 2 costs double. Fill 0.325 → mid band, base 15%.
+	// Level 2 costs double. Fill 0.63 → mid band, base 15%.
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}
-	if f := ge.Resources.Get("faith"); f != 3.25e6 {
+	if f := ge.Resources.Get("faith"); f != 378000 {
 		t.Errorf("after level 2: faith %v", f)
 	}
 	if o := ge.CatastropheOutlook(); math.Abs(o.Probability-0.15*0.36) > 1e-9 {
@@ -553,19 +557,19 @@ func TestAppeaseCostsLevelsAndOdds(t *testing.T) {
 	if err := ge.HarbingerAppease(); err == nil || !strings.Contains(err.Error(), "as far as it goes") {
 		t.Errorf("third appease: err = %v", err)
 	}
-	if f := ge.Resources.Get("faith"); f != 3.25e6 {
+	if f := ge.Resources.Get("faith"); f != 378000 {
 		t.Errorf("refused appease deducted faith: %v", f)
 	}
 }
 
 func TestAppeaseRefusesWhenUnaffordable(t *testing.T) {
-	ge := threadEngine(t, "stone_era", 4) // appease: 12000 faith
-	setStock(ge, map[string][2]float64{"faith": {5000, 8000}})
+	ge := threadEngine(t, "stone_era", 4) // appease: 59 faith
+	setStock(ge, map[string][2]float64{"faith": {20, 40}})
 	err := ge.HarbingerAppease()
-	if err == nil || !strings.Contains(err.Error(), "7000 more faith") || !strings.Contains(err.Error(), "storage must reach 12000") {
+	if err == nil || !strings.Contains(err.Error(), "39 more faith") || !strings.Contains(err.Error(), "storage must reach 59") {
 		t.Fatalf("err = %v, want the shortfall and the storage it needs", err)
 	}
-	if ge.Resources.Get("faith") != 5000 || ge.harbinger.AppeaseLevel != 0 {
+	if ge.Resources.Get("faith") != 20 || ge.harbinger.AppeaseLevel != 0 {
 		t.Error("a refused appease changed state")
 	}
 	if st := ge.GetState(); st.Harbinger.AppeaseAffordable {
@@ -596,7 +600,7 @@ func TestAppeaseChangesTheRealRoll(t *testing.T) {
 		// Faith fill ends at 0.5 either way (mid band), so only Appease differs.
 		setStock(ge, map[string][2]float64{"faith": {15000, 30000}})
 		if appease {
-			setStock(ge, map[string][2]float64{"faith": {27000, 30000}}) // 12000 paid → 15000
+			setStock(ge, map[string][2]float64{"faith": {15059, 30000}}) // 59 paid → 15000
 			if err := ge.HarbingerAppease(); err != nil {
 				t.Fatal(err)
 			}
@@ -944,5 +948,43 @@ func TestSuccumbAndPrestigeResetHarbinger(t *testing.T) {
 	ge.harbingerTickCheck()
 	if ge.harbinger == nil || ge.harbinger.Age != "primitive_age" {
 		t.Errorf("after prestige, first tick: thread = %+v", ge.harbinger)
+	}
+}
+
+// The Appease price is sized so a moderate faith (and culture) economy can
+// pay it: modelled at config.FlowIncome through the thread's ages at their
+// targets, level 1 must come before the thread's last age ends and level 2
+// (on top of it) by the passage, in every epoch.
+func TestAppeasePayableWithinThread(t *testing.T) {
+	for _, ep := range config.Epochs() {
+		cost1, cost2 := harbingerAppeaseCost(ep.Key, 1), harbingerAppeaseCost(ep.Key, 2)
+		if len(cost1) == 0 {
+			continue
+		}
+		for res, l1 := range cost1 {
+			if math.Abs(cost2[res]-2*l1) > 1e-6 {
+				t.Errorf("%s: level 2 %s = %v, want double %v", ep.Key, res, cost2[res], l1)
+			}
+			made, total, l1At := 0.0, 0.0, -1.0
+			ages := harbingerAppeaseAges(ep.Key)
+			for _, a := range ages {
+				total += config.AgeTargetTicks(a)
+			}
+			elapsed := 0.0
+			for _, a := range ages {
+				rate, span := config.FlowIncome(res, a), config.AgeTargetTicks(a)
+				if l1At < 0 && rate > 0 && made+rate*span >= l1 {
+					l1At = elapsed + (l1-made)/rate
+				}
+				made += rate * span
+				elapsed += span
+			}
+			if l1At < 0 || l1At >= total {
+				t.Errorf("%s: level 1 %s (%v) is never made at a moderate income", ep.Key, res, l1)
+			}
+			if made < l1+cost2[res] {
+				t.Errorf("%s: levels 1 and 2 of %s (%v) exceed the thread's moderate income %v", ep.Key, res, l1+cost2[res], made)
+			}
+		}
 	}
 }

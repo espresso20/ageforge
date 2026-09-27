@@ -330,15 +330,14 @@ epoch (`harbingerAppeaseCost(epochKey, level)`, `harbingerBraceCost(epochKey, le
 up, level 2 at double, so the price is the same in every age of the epoch. Pricing off current
 caps would make the epoch's first age (smallest caps) a discount.
 
-- `harbingerPassageStorage(epochKey)`: the largest single `ResourceReqs` value of the next
-  epoch's first age, i.e. the storage every resource must reach to pass.
+- `harbingerAppeaseAges(epochKey)`: the epoch's ages, minus the game's last age.
 - `harbingerHeldSinceStart(epochKey)`: resources unlocked (cumulative `UnlockResources`) by the
   epoch's first age, so every price is payable in every age of the epoch.
 - `harbingerAdvanceAges(epochKey)`: the epoch's later ages plus the next epoch's first age.
 
 | Action | Cost (level 1) | Effect | Cap |
 |--------|----------------|--------|-----|
-| Appease | 15% of the passage storage in faith, and in culture if culture is held since the start (Steel Era on) | Multiplies the real catastrophe chance by `harbingerAppeaseFactor` = 0.6 per level (0.36 at 2) | 2 |
+| Appease | `harbingerAppeaseIncomeShare` (1/4) of `config.FlowIncome` summed over `harbingerAppeaseAges` at their `AgeTargetTicks`, in faith, and in culture if culture is held since the start (Steel Era on); rounded up to 2 significant figures | Multiplies the real catastrophe chance by `harbingerAppeaseFactor` = 0.6 per level (0.36 at 2) | 2 |
 | Brace | 12% of `harbingerBraceBasis`: per resource held since the start, minus faith and culture, the largest `ResourceReqs` across `harbingerAdvanceAges` | Endure destroys 15% / 10% of non-wonder buildings and keeps 30% / 45% of resources (unbraced 20% / 15%) | 2 |
 | Invite | free | Sets `HarbingerSave.Invited` and arms `catastropheInvited`; Appease refuses afterwards, Brace does not | once |
 
@@ -346,15 +345,17 @@ Level-1 prices from the current config:
 
 | Thread | Appease | Brace |
 |--------|---------|-------|
-| Stone | 12,000 faith | 9,600 food, 4,800 wood, 2,400 knowledge |
-| Iron | 33,000 faith | 26,400 knowledge, 26,400 stone, 6,360 iron, 21,600 gold |
-| Steel | 2.25M faith + culture | 360K knowledge, 1.8M gold, 288K steel |
-| Electric | 70.5M faith + culture | 56.4M steel, 924K oil, 3.96M electricity |
-| Digital | 147B faith + culture | 156M gold, 117.6B electricity, 19.2B data |
-| Neon | 46.5B faith + culture | 288B electricity, 46.8B data, 3B crypto |
+| Stone | 59 faith | 9,600 food, 4,800 wood, 2,400 knowledge |
+| Iron | 5,400 faith | 26,400 knowledge, 26,400 stone, 6,360 iron, 21,600 gold |
+| Steel | 74K faith, 770K culture | 360K knowledge, 1.8M gold, 288K steel |
+| Electric | 1.2M faith, 16M culture | 56.4M steel, 924K oil, 3.96M electricity |
+| Digital | 12M faith, 180M culture | 156M gold, 117.6B electricity, 19.2B data |
+| Neon | 130M faith, 2B culture | 288B electricity, 46.8B data, 3B crypto |
 
-Digital's Appease exceeds Neon's because the Cyberpunk entry requirement is larger than the
-Interstellar one. When storage cannot yet hold a price, `shortfall` adds "(your X storage must
+Appease follows income, not storage (2026-09-27): faith is a flow resource at hand-set rates
+with no market, so the old 15%-of-passage-storage price was out of reach in most threads once
+the pacing rebalance shortened the ages. `TestAppeasePayableWithinThread` checks that the
+modelled income reaches level 1 before the thread ends and levels 1 and 2 by the passage. When storage cannot yet hold a price, `shortfall` adds "(your X storage must
 reach N first)" to the refusal.
 
 - **Appease** is applied through `harbingerAppeaseMultiplier()`, which scales
@@ -488,14 +489,12 @@ Fixed across the four Cosmic ages, level 2 at double:
 
 | Action | Level 1 | Basis |
 |--------|---------|-------|
-| Appease | 46.5B faith + 46.5B culture | 15% of the largest requirement for entering the Cosmic Era (310B plasma, the Interstellar gate) |
+| Appease | 1.2B faith + 19B culture | a quarter of `config.FlowIncome` over the Interstellar, Galactic and Quantum Ages at their targets |
 | Brace | 1.56T dark matter + 75.6B titanium | 12% of the most the Cosmic Era's own advances ask of each resource held since the Interstellar Age (dark matter 13T for Quantum, titanium 630B for Galactic) |
 
-Prestige has no storage requirement of its own, so `harbingerPassageStorage` falls back to the
-final epoch's own entry gate: storage the player provably holds from the first Cosmic age, and
-the same figure the Neon Era paid for its passage. Pricing off the epoch's later advances would
-put Appease out of reach until the last age, and a player may prestige from the first.
-Antimatter and quantum flux unlock after the Interstellar Age, so the held-since-start rule
+Appease counts every Cosmic age but the Transcendent, which has no advance to pace
+(`harbingerAppeaseAges`). A player who prestiges on arriving leaves before Appease is in reach;
+one who stays for the epoch gets the same timing as every other thread. Antimatter and quantum flux unlock after the Interstellar Age, so the held-since-start rule
 excludes them from Brace.
 
 ### Persistence
@@ -511,7 +510,7 @@ CosmicLegacy       bool `json:"cosmic_legacy,omitempty"`
 
 - `game/last_passage.go`: `LastPassageKeep` (0.50, unbraced Endure share),
   `lastPassageKeepFrac` (0.50 / 0.70 / 0.85 by Brace), `CosmicLegacyProductionBonus` (0.10).
-- `game/harbinger.go`: `harbingerPassageStorage` (the final-epoch fallback above).
+- `game/harbinger.go`: `harbingerAppeaseAges` (the Cosmic ages Appease is priced over).
 
 ---
 

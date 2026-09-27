@@ -283,7 +283,7 @@ A pending catastrophe blocks `advance` and `prestige confirm yes` until you choo
 | Command | Description |
 |---|---|
 | `harbinger` (or `harb`) | Open the **Harbinger** panel. Also listed under Panels in the sidebar. With no harbinger present it says so and describes the outlook for your next epoch transition |
-| `harbinger appease` | Buy the next Appease level: 15% of the passage storage (the largest amount the next epoch's first age asks for) in faith, and in culture from the Steel Era on (30% for level 2). The Cosmic Era has its own fixed price: 46.5B faith and 46.5B culture. Each level multiplies the real catastrophe chance by 0.6. Two levels at most; refused after Invite |
+| `harbinger appease` | Buy the next Appease level: a quarter of what a moderate faith economy makes over the epoch's ages, in faith, and the same for culture from the Steel Era on (level 2 double; see [Harbinger](harbinger.md#what-it-costs-by-epoch) for the prices). Each level multiplies the real catastrophe chance by 0.6. Two levels at most; refused after Invite |
 | `harbinger brace` | Buy the next Brace level: 12% of the most the epoch still asks of each resource you had when it began, except faith and culture (24% for level 2). An Endure then destroys 15% / 10% of buildings and keeps 30% / 45% of stored resources (in the Cosmic Era it keeps 70% / 85% of the run's prestige points instead of 50%). Two levels at most |
 | `harbinger invite` | Guarantee the catastrophe at this transition (in the Cosmic Era, the Last Passage at your next prestige). Free, and can't be undone |
 
