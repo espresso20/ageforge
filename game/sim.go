@@ -19,3 +19,22 @@ func (ge *GameEngine) StepTicks(n int) time.Duration {
 	}
 	return elapsed
 }
+
+// SimulateOffline applies the catch-up a save gets when it is loaded elapsed
+// after it was written: the same applyOfflineProgress LoadGame runs (capped
+// at MaxOfflineTime, at OfflineEfficiency), as if the game had been closed
+// that long. For simulation and tests (the smoke suite's offline scenario);
+// the game itself reaches it only through LoadGame. Takes the write lock.
+func (ge *GameEngine) SimulateOffline(elapsed time.Duration) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.applyOfflineProgress(elapsed)
+}
+
+// ForceCatastropheForTest makes the current epoch's catastrophe pending now,
+// as the dev console's /catastrophe does, with the same gates (the Iron
+// epoch, nothing already pending). A test hook for other packages (the smoke
+// suite's prestige scenario); not reachable from play.
+func (ge *GameEngine) ForceCatastropheForTest() error {
+	return ge.forceCatastrophe()
+}
