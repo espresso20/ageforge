@@ -41,7 +41,7 @@ func TestNormalizeAgeRequirements_LateAgeUses125Factor(t *testing.T) {
 }
 
 // Building floor: iron_age scriptorium was 3, must be raised to the floor of 5.
-// A high count like bronze_age longhouse (50) must be left unchanged.
+// A high count like bronze_age longhouse (40) must be left unchanged.
 func TestNormalizeAgeRequirements_BuildingFloor(t *testing.T) {
 	iron := ageByKeyT(t, "iron_age")
 	if got := iron.BuildingReqs["scriptorium"]; got != 5 {
@@ -49,8 +49,8 @@ func TestNormalizeAgeRequirements_BuildingFloor(t *testing.T) {
 	}
 
 	bronze := ageByKeyT(t, "bronze_age")
-	if got := bronze.BuildingReqs["longhouse"]; got != 50 {
-		t.Errorf("bronze_age longhouse req = %d, want 50 (above floor, unchanged)", got)
+	if got := bronze.BuildingReqs["longhouse"]; got != 40 {
+		t.Errorf("bronze_age longhouse req = %d, want 40 (above floor, unchanged)", got)
 	}
 }
 
@@ -63,7 +63,7 @@ func TestNormalizeAgeRequirements_LateAgesNoBuildingFloor(t *testing.T) {
 	// they must equal their raw literals exactly.
 	trans := ageByKeyT(t, "transcendent_age")
 	wantReqs := map[string]int{
-		"reality_academy": 500, "reality_forge": 300, "probability_war_room": 200,
+		"reality_academy": 20, "reality_forge": 15, "probability_war_room": 15,
 	}
 	for k, want := range wantReqs {
 		if got := trans.BuildingReqs[k]; got != want {

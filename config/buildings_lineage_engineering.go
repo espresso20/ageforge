@@ -17,7 +17,9 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 0 — bronze_age  output=iron  rate≈0.10
 	b = append(b, BuildingDef{
 		Name: "Smithy", Key: "smithy", Category: "production",
-		BaseCost:    map[string]float64{"wood": 900, "stone": 600, "iron": 200},
+		// note: no iron in the price. The smithy is the Bronze Age's only iron
+		// source and the age grants 30 iron, so an iron price walled the age.
+		BaseCost:    map[string]float64{"wood": 900, "stone": 600},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "production", Target: "iron", Value: 0.10}},
 		BuildTicks:  150,
@@ -30,7 +32,7 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 1 — iron_age  output=iron  rate=0.20
 	b = append(b, BuildingDef{
 		Name: "Ironworks", Key: "ironworks", Category: "production",
-		BaseCost:    map[string]float64{"stone": 6000, "iron": 3000, "coal": 1500},
+		BaseCost:    map[string]float64{"stone": 6000, "iron": 3000},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "production", Target: "iron", Value: 0.20}},
 		BuildTicks:  300,
@@ -69,7 +71,10 @@ func buildingsLineageEngineering() []BuildingDef {
 	// tier 4 — renaissance_age  output=steel  rate=1.60
 	b = append(b, BuildingDef{
 		Name: "Mill", Key: "mill", Category: "production",
-		BaseCost:    map[string]float64{"gold": 600000, "steel": 200000, "iron": 100000},
+		// note: no steel in the price. Every steel producer cost steel, with a
+		// 0.1/tick tech the only way in, so the Renaissance walled at ~850K
+		// steel per mill. The mill is the bootstrap; the foundry still costs steel.
+		BaseCost:    map[string]float64{"gold": 600000, "iron": 100000},
 		CostScale:   1.35,
 		Effects:     []Effect{{Type: "production", Target: "steel", Value: 1.60}},
 		BuildTicks:  2400,

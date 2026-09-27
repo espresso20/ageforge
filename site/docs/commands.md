@@ -21,7 +21,7 @@ Balance values are still *defined* in ticks — a tech costs so many ticks of re
 | `build <key>` | Start constructing a building |
 | `build cancel` | Cancel the current build in the queue |
 | `sell <building> [count]` | Demolish a building and recover 50% of its build cost. Workers are returned to idle. |
-| `upgrade <building> [count\|all]` | Convert building copies to the next-age tier equivalent, paying only the cost delta (new copy cost minus 50% of the old copy's sell value). Defaults to all copies if no count given. |
+| `upgrade <building> [count\|all]` | Convert building copies to the next-age tier equivalent, paying only the cost delta (new copy cost minus 50% of the old copy's sell value). Defaults to all copies if no count given. Stops at the new building's max count. Storage buildings are never upgraded — older storage keeps counting. |
 | `gather <resource> [amount]` | Manually gather food, wood, or stone (max 25 per command). Disabled from the Renaissance Age onward — works through the Medieval Age only. |
 
 **Example:**

@@ -706,7 +706,9 @@ func (ge *GameEngine) LoadGame(filename string) error {
 			continue
 		}
 		def, ok := ge.Buildings.defs[key]
-		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" {
+		// Storage never transforms (see advanceAge), so a save with legacy
+		// stashes gets no stash -> storage_pit offer back.
+		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || def.Category == "storage" {
 			continue
 		}
 		next := config.BuildingNextTierForAge(def.LineageKey, def.LineageTier, save.Age)

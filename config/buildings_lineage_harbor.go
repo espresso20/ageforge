@@ -90,7 +90,7 @@ func buildingsLineageHarbor() []BuildingDef {
 	// tier 4 — digital_age
 	b = append(b, BuildingDef{
 		Name: "Logistics Hub", Key: "logistics_hub", Category: "production",
-		BaseCost:  map[string]float64{"electricity": 350e9, "data": 45e9, "crypto": 80e9},
+		BaseCost:  map[string]float64{"electricity": 350e9, "data": 45e9},
 		CostScale: 1.45,
 		Effects: []Effect{
 			{Type: "production", Target: "gold", Value: 102.40},

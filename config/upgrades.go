@@ -19,20 +19,9 @@ func BuildingUpgrades() []BuildingUpgradeDef {
 		{From: "tower_block", To: "arcology_pod", CostScale: 0.25, MinAge: "cyberpunk_age"},
 		{From: "arcology_pod", To: "orbital_habitat", CostScale: 0.25, MinAge: "space_age"},
 
-		// Storage chain: stash → storage_pit → warehouse → classical_vault → ...
-		{From: "stash", To: "storage_pit", CostScale: 0.25, MinAge: "stone_age"},
-		{From: "storage_pit", To: "warehouse", CostScale: 0.25, MinAge: "bronze_age"},
-		{From: "warehouse", To: "classical_vault", CostScale: 0.25, MinAge: "classical_age"},
-		{From: "classical_vault", To: "industrial_depot", CostScale: 0.25, MinAge: "industrial_age"},
-		{From: "industrial_depot", To: "modern_depot", CostScale: 0.25, MinAge: "modern_age"},
-		{From: "modern_depot", To: "info_vault", CostScale: 0.25, MinAge: "information_age"},
-		{From: "info_vault", To: "digital_archive", CostScale: 0.25, MinAge: "digital_age"},
-		{From: "digital_archive", To: "cyber_vault", CostScale: 0.25, MinAge: "cyberpunk_age"},
-		{From: "cyber_vault", To: "fusion_vault", CostScale: 0.25, MinAge: "fusion_age"},
-		{From: "fusion_vault", To: "orbital_depot", CostScale: 0.25, MinAge: "space_age"},
-		{From: "orbital_depot", To: "stellar_vault", CostScale: 0.25, MinAge: "interstellar_age"},
-		{From: "stellar_vault", To: "galactic_vault", CostScale: 0.25, MinAge: "galactic_age"},
-		{From: "galactic_vault", To: "quantum_vault", CostScale: 0.25, MinAge: "quantum_age"},
+		// No storage chain: storage never transforms (decision log). Upgrading a
+		// stash spent a capped storage_pit slot on a copy the age lock never lets
+		// you rebuild, which lowered the most you could ever store.
 
 		// Knowledge chain: story_circle → scriptorium → library → university
 		{From: "story_circle", To: "scriptorium", CostScale: 0.25, MinAge: "stone_age"},

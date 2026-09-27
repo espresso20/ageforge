@@ -154,7 +154,7 @@ func buildingsLineageGeologicalExtraction() []BuildingDef {
 	// tier 10 — electric_age  rate=81.92  output=uranium
 	b = append(b, BuildingDef{
 		Name: "Nuclear Extraction Plant", Key: "nuclear_extraction_plant", Category: "production",
-		BaseCost:    map[string]float64{"steel": 950e6, "electricity": 380e6, "uranium": 50e6},
+		BaseCost:    map[string]float64{"steel": 950e6, "electricity": 380e6},
 		CostScale:   1.30,
 		Effects:     []Effect{{Type: "production", Target: "uranium", Value: 81.92}},
 		BuildTicks:  3600,

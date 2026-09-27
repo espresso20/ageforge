@@ -27,6 +27,10 @@ These are non-negotiable design constraints. Every balance change must be checke
 Violation of this law makes buildings literally unbuildable (costs exceed what can ever be
 accumulated). This was the root cause of hut #68+ being impossible with 50 stashes.
 
+For age gates this is made exact by the **Gate Covenant** (see Storage Design): the last
+required copy of every required building costs at most half the storage buildable by then,
+with no discounts, and a unit test enforces it.
+
 ### Law 2 — The Build Time Curve
 > The time required to save up for and build the next building should follow a predictable,
 > intentional curve across the full game. It should never feel instant and never feel impossible.
@@ -163,16 +167,60 @@ just walk away for a year and come back to infinite resources.
 
 ### Storage Buildings by Age
 
-| Age | Storage Building | Capacity per building | Max Count |
-|-----|-----------------|----------------------|-----------|
-| Primitive | Stash | +300 all | 50 → 15,000 max |
-| Stone | Storage Pit | +600 all | TBD |
-| Bronze | Warehouse | +2,000 all | TBD |
-| Iron | Granary (food only) | +5,000 food | TBD |
-| ... | ... | ... | ... |
+Every age has one storage building, each capped at **25 copies** (the stash at 50). Storage
+never transforms or upgrades: the stashes you built in the Primitive Age still count in the
+Quantum Age, and because of the age lock they can never be rebuilt later. The live numbers
+are in `config/buildings.go`; the smoke report's "Tightest requirement per advance" table
+shows how much headroom each advance has.
 
-> **TODO:** Audit all storage buildings to verify Law 1 is satisfied for every age transition.
-> The Primitive→Stone transition is the first known violation (hut costs exceed stash cap).
+### The Gate Covenant (Law 1 applied to age gates)
+
+Law 1 as written ("storage ≥ 2× the most expensive building expected at that stage") left
+"expected" open, and every age gate eventually broke it. The Gate Covenant pins it down. For
+every advance from age A to age B, against the **most storage buildable by the end of A**
+(every storage building up to A at its MaxCount, plus storage techs), with **no build_cost
+discounts assumed**:
+
+1. **Buildable:** every building B requires can be built in A. The age lock only lets you
+   build the current age's buildings, so a requirement naming an older building (Medieval
+   asking for 30 Bronze Age barracks) can only be met by copies built ages earlier, and an
+   `upgrade` in between destroys them for good. Requirements name the building the lineage
+   has in A.
+2. **Storable (buildings):** the last required copy of each required building costs at most
+   **half** that storage in every resource it costs. This is the 2× of Law 1.
+3. **Storable (resources):** each resource requirement is at most **80%** of that storage
+   (1.25× headroom), so the gate never needs the last storage slot of every age.
+4. **Sourced:** every resource the gate asks for, directly or in a required building's price,
+   has a way in by the end of A that does not need that resource first: a building that
+   doesn't cost it, hand gathering (food, wood, stone, through the Medieval Age), a market
+   exchange, or techs whose flat output alone covers the whole amount within 48 hours at 1x.
+   A producer that costs its own output (the Bronze Age smithy and iron, the Renaissance mill
+   and steel) doesn't count until something else supplies the first batch.
+
+The same sourcing rule applies to every building on its own: nothing may cost a resource
+with no source in the building's own age (coal before the Renaissance, crypto before
+Cyberpunk). Those buildings were dead content.
+
+`smoke.StaticGates` implements all of this and `TestGateCovenant` (smoke/static_test.go)
+fails `go test ./...` when a balance change breaks it, so it runs in CI on every PR.
+
+**Levers, in order of preference.** When a gate breaks the covenant:
+
+1. If it names an older age's building, retarget it to the same lineage's building in A
+   (the lowest tier there, which is what the older building upgrades into, so upgraded
+   copies count).
+2. If the storage buildings of that age are out of band with the age's own prices, raise
+   their per-copy storage. "In band" means the median first-copy price is 3–8% of the
+   age's max storage, which is where Classical through Space sit.
+3. Otherwise lower the count to the largest that fits, rounded down to a multiple of 5
+   (exact below 10).
+4. For a sourcing failure, drop the unobtainable resource from the price of the one
+   producer that bootstraps it (or open an exchange in the age the resource unlocks),
+   rather than inventing a new building.
+
+Counts are the usual lever because the normalized cost curves (1.15 per copy, 1.13 for
+housing and storage) made late copies explode: copy #80 costs 62,000× copy #1, so the
+old late-game counts of 50–500 were never reachable at any storage.
 
 ---
 
@@ -216,3 +264,63 @@ playing correctly. That's the idle game working as designed.
 - [ ] Update population panel to show current-tier workers prominently, legacy collapsed
 - [ ] Update resource rate breakdown to show worker contribution separately from building base
 - [ ] Worker assignment UI uses domain name (not class name) to avoid churn on age advance
+
+---
+
+## Appendix — Gate Covenant fixes (2026-09-26)
+
+Every number changed to make every advance pass the Gate Covenant. Requirement counts are
+the values the game uses (after `normalizeAgeRequirements`); prices are normalized.
+
+### Age requirements
+
+| Advance to | Before | After | Why |
+|---|---|---|---|
+| Bronze | 50 longhouse | 40 longhouse | copy #50 cost 43.9K wood vs 40K max Stone storage |
+| Classical | 15 barracks, 5 market | 15 hunting lodge, 5 trading post | barracks and market are Bronze Age buildings (age lock) |
+| Medieval | 20 library, 30 barracks | 15 library, 15 military academy | library copy #20 at 1.93×; barracks is Bronze Age (copy #30 cost 1.6× Bronze storage anyway) |
+| Renaissance | 15 market | 10 guildhall | market is Bronze Age; guildhall copy #15 over 2× |
+| Industrial | 5 market garden | removed | market garden is Renaissance; the Colonial food building (plantation, 5) was already required |
+| Victorian | 1.1M oil | removed | nothing produces oil before the Victorian oil derrick |
+| Electric | 20 steam turbine, 15 steel mill | 10 steam turbine, 10 bessemer plant | turbine copy #20 over max storage; steel mill is Industrial |
+| Atomic | 20 electric arc furnace, 20 steam works | 15 electric arc furnace, 15 power station | furnace at 1.35×; steam works is Victorian |
+| Modern | 30 nuclear reactor, 30 bunker complex | 15, 15 | copy #30 cost 1.4T steel / 2T stone vs 598B storage |
+| Information | 50 think tank, 60 oil refinery | 20, 15 | copy #50/#60 cost 30–190× storage |
+| Digital | 30 server farm, 80 media center, 30 innovation hub | 10, 15, 15 | up to 3,000× over |
+| Cyberpunk | 80 AI research lab, 80 data center, 50 neural grid | 15, 15, 15 | up to 4,000× over |
+| Fusion | 50 augmentation foundry, 80 arcology pod, 50 black market | 15, 25, 15 | up to 300× over |
+| Space | 80 fusion reactor, 60 fusion reactor array, 50 plasma command | 10, 10, 10 | up to 6,000× over |
+| Interstellar | 80 launch complex, 60 orbital habitat, 50 solar collector array | 10, 20, 10 | up to 4,600× over |
+| Galactic | 80 warp drive plant, 60 generation ship, 50 orbital refinery | 15, 30, 15 antimatter forge | orbital refinery is Space Age; the rest up to 11,000× over |
+| Quantum | 80 stellar exchange, 100 antimatter forge, 120 Dyson sphere habitat | 15, 15 stellar metallurgy, 30 | antimatter forge is Interstellar; up to 190,000× over |
+| Transcendent | 500 reality academy, 300 reality forge, 200 probability war room | 20, 15, 15 | copy #500 cost 10^30× storage |
+
+### Storage (cosmic era out of band: median first copy was 13–57% of max storage)
+
+| Building | Before (per copy / max) | After (per copy / max) |
+|---|---|---|
+| Stellar Vault (Interstellar) | +500T / 12.5Q | +2Q / 50Q |
+| Galactic Vault (Galactic) | +2Q / 50Q | +20Q / 500Q |
+| Quantum Vault (Quantum) | +10Q / 250Q | +200Q / 5,000Q |
+
+### Prices (sourcing)
+
+| Building (age) | Removed from price | Why |
+|---|---|---|
+| Smithy (Bronze) | 850 iron | the only Bronze iron source; the age grants 30 iron |
+| Mill (Renaissance) | 850K steel | every steel producer cost steel; only a 0.1/tick tech fed it |
+| Ironworks, Smelter (Iron) | 6.4K, 4.2K coal | coal unlocks in the Renaissance |
+| Forge (Classical) | 21K coal | same |
+| Nuclear Extraction Plant (Electric) | 150M uranium | uranium unlocks in the Atomic Age |
+| Crypto Exchange, Cyber Shrine, Logistics Hub (Digital) | 590B, 600B, 640B crypto | crypto unlocks in Cyberpunk |
+| Monument of Ages (Modern) | 1.4M titanium | titanium unlocks in the Space Age |
+
+### Exchange and mechanics
+
+| Change | Before | After |
+|---|---|---|
+| gold ↔ data exchange | from Information Age | from Modern Age (where data unlocks and ten buildings, think tank included, cost it) |
+| Storage upgrades (stash → storage pit, ...) | offered on every advance | never offered; storage never transforms |
+| Upgrades into a capped building | ignored MaxCount | stop at MaxCount |
+| Market exchange needs | a market or a port | any trade-lineage building (upgrading markets no longer shuts the exchange) |
+

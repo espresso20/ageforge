@@ -95,9 +95,13 @@ func BaseExchangeRates() []ExchangeRateDef {
 		// Electric
 		{From: "electricity", To: "gold", BaseRate: 0.5, MinAge: "electric_age"},
 
-		// Information Age
-		{From: "data", To: "gold", BaseRate: 5.0, MinAge: "information_age"},
-		{From: "gold", To: "data", BaseRate: 0.15, MinAge: "information_age"},
+		// Modern Age (data unlocks here)
+		// note: was information_age. Data unlocks in the Modern Age, where ten
+		// buildings (think_tank among them, which the Information Age requires)
+		// cost it and nothing but a 1/tick tech produced it; the market is the
+		// Modern Age's way in.
+		{From: "data", To: "gold", BaseRate: 5.0, MinAge: "modern_age"},
+		{From: "gold", To: "data", BaseRate: 0.15, MinAge: "modern_age"},
 
 		// Cyberpunk
 		{From: "crypto", To: "gold", BaseRate: 20.0, MinAge: "cyberpunk_age"},
