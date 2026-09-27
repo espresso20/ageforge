@@ -1,6 +1,7 @@
 package game
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -149,37 +150,76 @@ func TestScoutParty_LaunchableInStoneAge_RejectedPastBronze(t *testing.T) {
 	}
 }
 
-// TestExpedition_TickNoLongerLosesSoldiers verifies the worker-loss hack is gone:
-// resolving an expedition (win or lose) does not touch the worker pool. Soldiers
-// are spent at launch only.
+// TestExpedition_ResolvesWithoutWorkerLoss verifies the worker-loss hack is
+// gone: resolving an expedition, won or lost, does not touch the worker pool.
+// Soldiers are spent at launch only.
+//
+// A resolution can also roll a faction encounter (rollExpeditionEncounter), a
+// separate system that moves workers on purpose in both directions: a boon can
+// deliver a work gang, a setback can bury a few. When this test built an
+// unseeded engine, that roll made it fail at random (CI: before=5 after=8, a
+// work gang). It now plays a fixed set of seeds and judges only resolutions
+// where no encounter fired. Encounter worker effects have their own tests
+// (encounters_test.go, faction_malus_test.go).
 func TestExpedition_ResolvesWithoutWorkerLoss(t *testing.T) {
-	ge := NewGameEngine()
-	setAge(ge, "iron_age")
-	setSoldiers(ge, 10)
+	var clean, won, lost int
+	for seed := int64(1); seed <= 40; seed++ {
+		ge := newSeededEngine(seed)
+		setAge(ge, "iron_age")
+		setSoldiers(ge, 10)
 
-	ge.mu.Lock()
-	ge.Workers.UnlockType("worker")
-	ge.Workers.Recruit("worker", 5, 100)
-	popBefore := ge.Workers.TotalPop()
-	ge.mu.Unlock()
-
-	if err := ge.LaunchExpedition("trade_escort"); err != nil {
-		t.Fatalf("LaunchExpedition error: %v", err)
-	}
-
-	// Drive the expedition to resolution. trade_escort's active duration is now
-	// randomized (up to ~100 ticks, Bug RQPHYAHC), so budget generously; the loop
-	// exits as soon as it resolves.
-	for i := 0; i < 200 && ge.Military.HasActive(); i++ {
 		ge.mu.Lock()
-		ge.processExpeditions()
+		ge.Workers.UnlockType("worker")
+		ge.Workers.Recruit("worker", 5, 100)
+		popBefore := ge.Workers.TotalPop()
 		ge.mu.Unlock()
-	}
 
-	if ge.Military.HasActive() {
-		t.Fatalf("expedition did not resolve within tick budget")
+		if err := ge.LaunchExpedition("trade_escort"); err != nil {
+			t.Fatalf("seed %d: LaunchExpedition error: %v", seed, err)
+		}
+		// trade_escort's active duration is randomized (up to ~100 ticks, Bug
+		// RQPHYAHC), so budget generously; the loop exits once it resolves.
+		for i := 0; i < 200 && ge.Military.HasActive(); i++ {
+			ge.mu.Lock()
+			ge.processExpeditions()
+			ge.mu.Unlock()
+		}
+		if ge.Military.HasActive() {
+			t.Fatalf("seed %d: expedition did not resolve within tick budget", seed)
+		}
+
+		// An encounter always discovers a civ here: none are known at the start
+		// and the Iron Age has undiscovered ones in range. Skip those seeds.
+		if len(ge.Diplomacy.factions) > 0 {
+			continue
+		}
+		clean++
+		switch {
+		case logContains(ge, "Trade Escort succeeded!"):
+			won++
+		case logContains(ge, "Trade Escort failed!"):
+			lost++
+		}
+		if popAfter := ge.Workers.TotalPop(); popAfter != popBefore {
+			t.Errorf("seed %d: worker pop changed by expedition resolution: before=%d after=%d (should be unchanged)", seed, popBefore, popAfter)
+		}
 	}
-	if popAfter := ge.Workers.TotalPop(); popAfter != popBefore {
-		t.Errorf("worker pop changed by expedition resolution: before=%d after=%d (should be unchanged)", popBefore, popAfter)
+	// The seeds are fixed, so these counts are too. If a tuning change moves
+	// them below the floor, widen the seed range rather than loosening the check.
+	t.Logf("%d encounter-free resolutions: %d won, %d lost", clean, won, lost)
+	if clean < 20 || won == 0 || lost == 0 {
+		t.Fatalf("seed sweep too thin: %d encounter-free resolutions (%d won, %d lost); need >= 20 with both outcomes", clean, won, lost)
 	}
+}
+
+// logContains reports whether any log line contains s.
+func logContains(ge *GameEngine, s string) bool {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	for _, l := range ge.log {
+		if strings.Contains(l.Message, s) {
+			return true
+		}
+	}
+	return false
 }
