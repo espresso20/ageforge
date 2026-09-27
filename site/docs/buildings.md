@@ -25,7 +25,6 @@ The single most impactful action in AgeForge is: build more buildings, fill them
 build <key>              — queue one building (must have enough resources)
 build <key> <count>      — queue and build that many copies
 build <key> max          — build as many as you can afford right now
-build cancel             — cancel the current build queue item
 build                    — list all available buildings (with costs and count built)
 ```
 

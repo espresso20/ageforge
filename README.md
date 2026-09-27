@@ -46,16 +46,16 @@ Start in the Primitive Age with bare hands and 15 food. Gather resources, build 
 
 ## Features
 
-- **Resource Management**: 25 resources across 22 ages with storage limits and production chains
-- **Building System**: 301 buildings (251 lineage buildings + 21 storage + 22 Wonders + 4 cultural monuments + 3 administrative) with scaling costs and construction queues
+- **Resource Management**: 26 resources across 22 ages with storage limits and production chains
+- **Building System**: 301 buildings (250 lineage buildings + 21 storage + 22 Wonders + 4 cultural monuments + 4 standalone: the Nano Foundry and 3 diplomatic buildings) with scaling costs and construction queues
 - **Worker System**: 12 domains (food, faith, knowledge, military, trade, engineering, hacker, astronaut, lumber, masonry, metallurgy, energy) with per-domain class progression and food economy
-- **Tech Tree**: 52 technologies with prerequisites and permanent bonuses
-- **Military**: 15 expeditions with risk/reward and defense ratings
+- **Tech Tree**: 73 technologies with prerequisites and permanent bonuses
+- **Military**: 16 expeditions with risk/reward and defense ratings
 - **Epoch System**: 7 epochs with faith-gated event rolls, catastrophe choices from the Iron Era on (Endure/Succumb), and legacy bonuses that carry across runs
 - **Random Events**: 62 events (27 base + 35 epoch-exclusive) with streak balancing
-- **Milestones**: 33 achievements across 5 chains with civilization titles and temporary speed boosts
+- **Milestones**: 77 milestones across 6 chains with civilization titles and temporary speed boosts
 - **Age Progression**: 22 ages from Primitive to Transcendent with exponential requirements and building transformation on advance
-- **Trade System**: 15 trade routes and resource exchange with supply/demand pressure
+- **Trade System**: 21 trade routes and resource exchange with supply/demand pressure
 - **Diplomacy**: 6 NPC factions with opinion tracking, gifts, and trade bonuses
 - **Prestige**: Reset-and-grow system with 9 upgrades and passive production bonuses (requires Modern Age)
 - **Speed System**: Wonder-based speed multipliers (+0.5x per wonder built)

@@ -47,7 +47,7 @@ Every prestige, from any age, ends with one closing line in the log, written for
 Points earned per prestige run are calculated as:
 
 ```
-base      = age_index  (0 = Primitive, 1 = Stone, ..., 12 = Modern, 21 = Quantum)
+base      = age_index  (0 = Primitive, 1 = Stone, ..., 12 = Modern, 20 = Quantum, 21 = Transcendent)
 bonus     = floor(milestones / 10) + floor(techs / 15) + floor(total_built / 50)
 raw       = base + bonus
 points    = floor(raw / sqrt(prestige_level + 1))
@@ -64,7 +64,7 @@ points    = floor(raw / sqrt(prestige_level + 1))
 | Every 15 techs researched | +1 pt |
 | Every 50 buildings constructed (lifetime) | +1 pt |
 
-Reaching Modern Age for the first time typically yields **4–8 points** depending on playstyle. Pushing to late ages (Quantum = index 21) before prestiiging yields 20+ before the divisor.
+Reaching Modern Age for the first time typically yields **4–8 points** depending on playstyle. Pushing to late ages (Quantum = index 20) before prestiiging yields 20+ before the divisor.
 
 ---
 

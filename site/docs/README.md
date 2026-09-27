@@ -16,7 +16,7 @@ AgeForge runs entirely in your terminal using a full-screen TUI built with Go + 
 | [Themes & Accessibility](themes.md) | Palettes, colorblind-safe + high-contrast themes |
 | [The 22 Ages](ages.md) | Every age, its requirements, and unlocks |
 | [Buildings](buildings.md) | All 301 buildings including wonders |
-| [Technologies](technologies.md) | All 52 techs with effects |
+| [Technologies](technologies.md) | All 73 techs with effects |
 | [Prestige System](prestige.md) | Permanent upgrades across resets |
 
 ---
@@ -25,11 +25,11 @@ AgeForge runs entirely in your terminal using a full-screen TUI built with Go + 
 
 - **22 Ages** — Primitive → Transcendent
 - **26 Resources** — from Wood and Stone to Quantum Energy (including Soldiers)
-- **300 Buildings** — a 14-lineage production system plus storage and wonders
-- **52 Technologies** — prerequisite chains, age-gated
+- **301 Buildings** — a 14-lineage production system plus storage and wonders
+- **73 Technologies** — prerequisite chains, age-gated
 - **16 Expeditions** — risk/reward military system
 - **21 Trade routes** — alongside an 11-civilization faction roster
-- **74 Milestones** — in 6 chains with civilization titles
+- **77 Milestones** — in 6 chains with civilization titles
 - **9 Prestige upgrades** — permanent bonuses across resets
 - **City Map** — Theme-aware procedural rendering of your capital, with per-age layouts, roads, and your actual buildings drawn as named, lineage-coloured 2.5D markers that retint live with your theme
 
