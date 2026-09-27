@@ -56,9 +56,10 @@ func saveloadSkip(path string) bool {
 // reloadSkip is saveloadSkip plus the resource rates: a live snapshot holds
 // the rates the last tick computed before morale and the like moved, while
 // LoadGame recomputes them from the saved state. The next tick agrees
-// again, and the continued-play comparison covers them.
+// again, and the continued-play comparison covers them. Military.SoldierRate
+// is the soldiers resource's rate under another name.
 func reloadSkip(path string) bool {
-	if saveloadSkip(path) {
+	if saveloadSkip(path) || path == "Military.SoldierRate" {
 		return true
 	}
 	if strings.HasPrefix(path, "Resources[") {
@@ -275,24 +276,12 @@ func continueCheckpoint(e *Env, seed int64, cp *checkpoint, repro string, fail, 
 	cont = "differs"
 	f := fmt.Sprintf("checkpoint %d (%s, game tick %d): %d ticks after loading, the game differs from the uninterrupted run; first divergence at %s",
 		cp.idx, cp.age, cp.gameTick, cp.endTicks-cp.ticks, d)
-	why, rngOnly := explainDivergence(e, seed, cp, endB)
-	if why != "" {
+	if why := explainDivergence(e, seed, cp, endB); why != "" {
 		f += ". " + why
-	}
-	if rngOnly && !e.Strict {
-		// A known bug (the RNG restarts on load), reported on every run
-		// but not failing it; any other divergence still fails. -strict
-		// fails on it too.
-		warn(KnownRNGReset, repro, "%s", f)
-		return "RNG restarted (known)"
 	}
 	fail("continue_divergence", repro, "%s", f)
 	return cont
 }
-
-// KnownRNGReset is the check name of the one known save/load divergence:
-// LoadGame reseeds the RNG, so a loaded game's random stream restarts.
-const KnownRNGReset = "known_bug_rng_restarts_on_load"
 
 // continueFrom plays the checkpoint's N ticks on ge (a loaded engine, or nil
 // to replay the seed from scratch up to the checkpoint first) with a fresh
@@ -337,20 +326,24 @@ func continueFrom(e *Env, seed int64, cp *checkpoint, ge *game.GameEngine, befor
 }
 
 // explainDivergence tells a save that loses the RNG position apart from a
-// save that loses state: it replays the seed to the checkpoint, reseeds the
-// RNG there (what LoadGame does), and plays on. If that matches the loaded
-// run, everything saved came back and only the random stream restarted.
-func explainDivergence(e *Env, seed int64, cp *checkpoint, loaded game.GameState) (why string, rngOnly bool) {
+// save that loses state: it replays the seed to the checkpoint, restarts the
+// RNG there from the seed (what LoadGame did before saves carried the stream
+// position), and plays on. If that matches the loaded run, everything saved
+// came back except the stream position.
+func explainDivergence(e *Env, seed int64, cp *checkpoint, loaded game.GameState) string {
 	ctl, p := continueFrom(e, seed, cp, nil, func(ge *game.GameEngine) { ge.SeedRNG(ge.Seed()) })
 	if p != "" {
-		return "", false
+		return ""
 	}
-	// The replay is a different engine, so its start time differs.
-	skip := func(path string) bool { return saveloadSkip(path) || path == "Stats.GameStarted" }
+	// The replay is a different engine, so its start time differs, and its
+	// stream positions count from the restart.
+	skip := func(path string) bool {
+		return saveloadSkip(path) || path == "Stats.GameStarted" || path == "RNGDraws" || path == "QuipDraws"
+	}
 	if firstDiff(ctl, loaded, skip) == "" && firstDiff(postLog(ctl, cp.gameTick), postLog(loaded, cp.gameTick), nil) == "" {
-		return "A replay that only reseeds the RNG at the checkpoint matches the loaded run exactly, so the save restores every field but not the RNG stream position: LoadGame calls SeedRNG(save.Seed), which restarts the random sequence from the run's start", true
+		return "A replay that restarts the RNG from the seed at the checkpoint matches the loaded run exactly, so the save restores every field but not the RNG stream position: LoadGame must replay the saved rng_draws/quip_draws"
 	}
-	return "A replay that reseeds the RNG at the checkpoint does not match the loaded run either, so the save loses state beyond the RNG position", false
+	return "A replay that restarts the RNG at the checkpoint does not match the loaded run either, so the save loses state beyond the RNG position"
 }
 
 // diffSaveFiles compares two save files, ignoring the write timestamp and

@@ -272,7 +272,7 @@ go run ./cmd/smoke -h                        # every flag
 - **Fast tier** (`make smoke`, `-tier fast`): the scenarios above marked fast. It runs on every pull request as the `smoke (fast tier)` job in `.github/workflows/go.yml` (skipped for doc-only changes, like the rest of that workflow), writes a summary to the job page and uploads `smoke-report/` as an artifact.
 - **Full tier** (`make smoke-full`, `-tier full`): every scenario, deeper. It runs nightly in `.github/workflows/smoke.yml` (and on demand from the Actions tab) with the same summary and artifact.
 - Both fail on panics, soft-locks, invariant violations, save/load divergence, fuzz failures, account failures, docs mismatches and blown perf budgets. Pacing does not fail them while it runs in report mode.
-- **Known bugs** are reported as warnings instead of failures so the job stays useful while they wait for a fix; today that is only `known_bug_rng_restarts_on_load` (the RNG restarts from the run's seed on load). `-strict` fails on them too. When a known bug is fixed, delete its special case in the scenario.
+- **Known bugs** can be reported as warnings instead of failures so the job stays useful while they wait for a fix (`-strict` fails on them too); today there are none. When a known bug is fixed, delete its special case in the scenario.
 
 #### Reading the report
 

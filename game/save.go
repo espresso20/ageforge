@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/flavor"
 )
 
 // saveHMACKey is the HMAC signing key for save integrity. Its presence in the
@@ -38,7 +39,17 @@ type GameSave struct {
 	// faction-encounter/buff stream is reproducible from its start. omitempty keeps
 	// legacy saves (which lack it) byte-identical; on load a zero seed means "no seed
 	// persisted" and the freshly-generated one from NewGameEngine is kept.
-	Seed      int64                 `json:"seed,omitempty"`
+	Seed int64 `json:"seed,omitempty"`
+	// RNGDraws and QuipDraws are how many steps the gameplay and quip streams
+	// had taken from Seed when the game was saved; LoadGame replays them so
+	// the loaded game draws what the saved one would have drawn next. Zero on
+	// saves from before they were recorded, which restart both streams.
+	RNGDraws  uint64 `json:"rng_draws,omitempty"`
+	QuipDraws uint64 `json:"quip_draws,omitempty"`
+	// Prose is the flavour Stream's recent-line memory. It decides how often a
+	// flavour line is redrawn, and so how many gameplay draws it spends, so
+	// the stream position alone doesn't keep a loaded game on the same stream.
+	Prose     *flavor.StreamState   `json:"prose,omitempty"`
 	Resources map[string]float64    `json:"resources"`
 	Storage   map[string]float64    `json:"storage"`
 	Buildings map[string]int        `json:"buildings"`
@@ -476,11 +487,16 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 	agesReached := make([]string, len(ge.Stats.AgesReached))
 	copy(agesReached, ge.Stats.AgesReached)
 
+	rngDraws, quipDraws := ge.rngDraws()
+
 	return GameSave{
 		Timestamp: time.Now(),
 		Tick:      ge.tick,
 		Age:       ge.age,
 		Seed:      ge.seed,
+		RNGDraws:  rngDraws,
+		QuipDraws: quipDraws,
+		Prose:     ge.prose.State(),
 		Resources: ge.Resources.GetAll(),
 		Storage:   ge.Resources.GetAllStorage(),
 		Buildings: ge.Buildings.GetAll(),
@@ -635,12 +651,16 @@ func (ge *GameEngine) LoadGame(filename string) error {
 
 	ge.tick = save.Tick
 	ge.age = save.Age
-	// Restore the run's master seed so its encounter/buff stream stays reproducible.
-	// A zero seed means the save predates seed persistence — keep the fresh seed
-	// NewGameEngine already generated rather than pinning the run to 0.
-	if save.Seed != 0 {
-		ge.SeedRNG(save.Seed)
+	// Restore the run's master seed and both streams' positions, so the loaded
+	// game carries on drawing exactly where the saved one stopped. A zero seed
+	// means the save predates seed persistence — keep the fresh seed
+	// NewGameEngine already generated rather than pinning the run to 0. Saves
+	// without positions (older ones) restart the streams from the seed, as
+	// every load used to.
+	if save.Seed != 0 && !ge.restoreRNG(save.Seed, save.RNGDraws, save.QuipDraws) {
+		ge.addLog("debug", fmt.Sprintf("Load: RNG position (%d, %d) is past the replay cap; streams restart from the seed", save.RNGDraws, save.QuipDraws))
 	}
+	ge.prose = flavor.StreamFromState(save.Prose)
 	ge.Workers.SetAge(save.Age)
 	ge.Resources.LoadAmounts(save.Resources)
 	if save.Storage != nil {

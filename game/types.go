@@ -37,6 +37,10 @@ type GameState struct {
 	// reproducibility/debugging. Persisted via GameSave.Seed, not through this
 	// snapshot.
 	Seed int64
+	// RNGDraws and QuipDraws are the gameplay and quip streams' positions (steps
+	// taken since Seed), persisted in the save so a load resumes the stream.
+	RNGDraws  uint64
+	QuipDraws uint64
 	// Phase 7: result of the last age advance transformation pass
 	LastAgeAdvanceSummary AgeAdvanceSummary
 	// Phase 8: epoch system

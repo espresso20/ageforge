@@ -260,18 +260,24 @@ type GameEngine struct {
 	// encounter/buff stream is reproducible from its start. `rng` is (re)built from
 	// `seed` via SeedRNG. rand.Rand is not safe for concurrent use, but every roll
 	// runs inside doTick's write lock, so no extra synchronisation is needed.
-	// Roll-stream continuity across save/reload is NOT preserved (re-seeding on load
-	// restarts the stream) — only the seed itself round-trips.
-	seed int64
-	rng  *rand.Rand
+	// The stream position round-trips too: rng draws from rngSrc, which counts
+	// its steps; the save records the count and LoadGame replays to it (rng.go).
+	// rngOwner is the *rand.Rand built on rngSrc, so a test that swaps in its
+	// own ge.rng doesn't get rngSrc's count saved for it.
+	seed     int64
+	rng      *rand.Rand
+	rngSrc   *countingSource
+	rngOwner *rand.Rand
 
 	// quip is a second stream seeded from the same master seed, used only for
 	// the dim one-line log quips (config.PickLogFlavor and the coin flips that
 	// decide whether a quip appears). They land in the log, so they must be
 	// reproducible, but a separate stream keeps them from shifting gameplay
 	// rolls: adding a quip, or a code path that logs one before a roll, cannot
-	// change what the next ge.rng draw returns.
-	quip *rand.Rand
+	// change what the next ge.rng draw returns. Its position is saved like rng's.
+	quip      *rand.Rand
+	quipSrc   *countingSource
+	quipOwner *rand.Rand
 
 	// prose is the recent-history filter for generated flavour. One Stream for
 	// the whole log, so an expedition line and a raid line cannot repeat each
@@ -348,8 +354,12 @@ func newSeed() int64 { return time.Now().UnixNano() }
 // fields); NewGameEngine/Reset call it while single-threaded or locked.
 func (ge *GameEngine) SeedRNG(seed int64) {
 	ge.seed = seed
-	ge.rng = rand.New(rand.NewSource(seed))
-	ge.quip = rand.New(rand.NewSource(seed ^ quipSeedSalt))
+	ge.rngSrc = newCountingSource(seed)
+	ge.rng = rand.New(ge.rngSrc)
+	ge.rngOwner = ge.rng
+	ge.quipSrc = newCountingSource(seed ^ quipSeedSalt)
+	ge.quip = rand.New(ge.quipSrc)
+	ge.quipOwner = ge.quip
 }
 
 // quipSeedSalt separates the quip stream from the gameplay stream so the two
@@ -362,7 +372,9 @@ const quipSeedSalt int64 = 0x51_9C_0FFE_E0D1
 // write lock.
 func (ge *GameEngine) quipRNG() *rand.Rand {
 	if ge.quip == nil {
-		ge.quip = rand.New(rand.NewSource(ge.seed ^ quipSeedSalt))
+		ge.quipSrc = newCountingSource(ge.seed ^ quipSeedSalt)
+		ge.quip = rand.New(ge.quipSrc)
+		ge.quipOwner = ge.quip
 	}
 	return ge.quip
 }
@@ -3609,6 +3621,7 @@ func (ge *GameEngine) GetState() GameState {
 	}
 
 	endured, succumbed := countCatastropheOutcomes(ge.catastropheHistory)
+	rngDraws, quipDraws := ge.rngDraws()
 
 	return GameState{
 		Tick:                 ge.tick,
@@ -3656,6 +3669,8 @@ func (ge *GameEngine) GetState() GameState {
 		CheaterBadge:          ge.cheaterBadge,
 		EliteBadge:            ge.eliteBadge,
 		Seed:                  ge.seed,
+		RNGDraws:              rngDraws,
+		QuipDraws:             quipDraws,
 		LastAgeAdvanceSummary: ge.lastAgeAdvanceSummary,
 		// Phase 8: epoch fields
 		EpochKey:              ge.currentEpoch,
