@@ -1,0 +1,114 @@
+name: Claude agent
+
+# Runs a Claude Code agent on a GitHub runner to work a task end to end:
+# read the brief, change code, run the checks, push a branch, open a PR.
+# It never merges; a human (or the orchestrating session) reviews and merges.
+#
+# Triggers:
+#   - an issue labelled `agent`, when both the issue author and the labeller
+#     have write access (public repo: a stranger's issue text must never
+#     become a prompt)
+#   - workflow_dispatch with a free-text brief
+#
+# Off until the CLAUDE_CODE_OAUTH_TOKEN secret exists (created with
+# `claude setup-token`; bills to the Claude subscription, not the API).
+# Do not also set ANTHROPIC_API_KEY: if both exist the API key wins and
+# usage is billed per token.
+
+on:
+  issues:
+    types: [labeled]
+  workflow_dispatch:
+    inputs:
+      prompt:
+        description: "Task brief for the agent"
+        required: true
+        type: string
+      model:
+        description: "Model"
+        required: false
+        default: claude-opus-5-5
+        type: choice
+        options:
+          - claude-opus-5-5
+          - claude-fable-5-1
+          - claude-sonnet-5
+      effort:
+        description: "Reasoning effort"
+        required: false
+        default: xhigh
+        type: choice
+        options:
+          - medium
+          - high
+          - xhigh
+          - max
+
+concurrency:
+  group: claude-agent-${{ github.event.issue.number || github.run_id }}
+  cancel-in-progress: false
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    outputs:
+      enabled: ${{ steps.check.outputs.enabled }}
+    steps:
+      - id: check
+        env:
+          HAS_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN != '' }}
+        run: echo "enabled=$HAS_TOKEN" >> "$GITHUB_OUTPUT"
+
+  agent:
+    needs: gate
+    if: >-
+      needs.gate.outputs.enabled == 'true' && (
+        github.event_name == 'workflow_dispatch' ||
+        (
+          github.event.label.name == 'agent' &&
+          contains(fromJSON('["OWNER","MEMBER","COLLABORATOR"]'), github.event.issue.author_association)
+        )
+      )
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+      actions: read
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: anthropics/claude-code-action@756cc22e19660d20e8cc9496b4f242475a7f7790 # v1.0.235
+        env:
+          GH_TOKEN: ${{ github.token }}
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            You are working on AgeForge (this repository). Read CLAUDE.md first and follow it.
+
+            ## Task
+            ${{ github.event_name == 'workflow_dispatch' && github.event.inputs.prompt || format('GitHub issue #{0}: {1}
+
+            {2}', github.event.issue.number, github.event.issue.title, github.event.issue.body) }}
+
+            ## Working agreement
+            - Work on a new branch named for the change (feat/espresso/…, fix/espresso/…, balance/espresso/…, docs/espresso/…). Never push to master.
+            - Keep `gofmt -l .` empty and make `go build ./...`, `go vet ./...`, `go vet -tags smoke ./...` and `go test -race ./...` pass.
+            - Run `make smoke` (the fast smoke tier, pacing enforced) before opening the PR. This runner is the same Linux image CI uses, so its results count.
+            - Follow the site/ wiki sync rule and add CHANGELOG [Unreleased] entries for player-visible changes.
+            - Real bugs you find outside the task: list them in the PR description; don't fix them in this PR.
+            - Open a PR against master with a short, plain description: what changed, why, how it was verified, and anything the reviewer must decide. If this came from an issue, write "Refs #<number>". Do not merge. No AI attribution lines.
+          claude_args: |
+            --model ${{ github.event.inputs.model || 'claude-opus-5-5' }}
+            --effort ${{ github.event.inputs.effort || 'xhigh' }}
+            --max-turns 400
+            --allowedTools "Read,Edit,Write,Glob,Grep,Bash(go:*),Bash(gofmt:*),Bash(make:*),Bash(git:*),Bash(gh:*),Bash(ls:*),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(grep:*),Bash(sed:*),Bash(wc:*),Bash(sort:*),Bash(diff:*),Bash(mkdir:*),Bash(python3:*)"

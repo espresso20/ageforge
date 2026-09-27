@@ -518,6 +518,17 @@ Commit types map 1:1 to board lanes — if your change is a `fix`, it came from 
 
 ---
 
+## Claude agent (GitHub Actions)
+
+`.github/workflows/claude-agent.yml` runs a Claude Code agent on a GitHub runner. It works a task end to end (code, `go test -race`, `make smoke`), pushes a branch and opens a PR. It never merges.
+
+- **Start one:** label an issue `agent` (the issue author and the labeller both need write access), or run the workflow manually with a brief (Actions → Claude agent → Run workflow). Manual runs can pick the model and effort.
+- **Defaults:** `claude-opus-5-5` at `xhigh` effort, 400 turns max, 5-hour job timeout.
+- **Setup (owner only):**
+  1. Run `claude setup-token` locally.
+  2. Add the result as the repository secret `CLAUDE_CODE_OAUTH_TOKEN`. That bills to the Claude subscription. Do not also add `ANTHROPIC_API_KEY`: if both exist the API key wins and usage is billed per token.
+  3. Install the Claude GitHub App on the repo. The workflow is skipped until the secret exists.
+
 ## Reporting Bugs
 
 Found a bug? [Open a GitHub Issue](https://github.com/espresso20/ageforge/issues) with what you were doing, what you expected, what happened, and your OS + terminal. It will be triaged into a Trello bug ticket.
