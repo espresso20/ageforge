@@ -49,13 +49,18 @@ type GameSave struct {
 	// Prose is the flavour Stream's recent-line memory. It decides how often a
 	// flavour line is redrawn, and so how many gameplay draws it spends, so
 	// the stream position alone doesn't keep a loaded game on the same stream.
-	Prose     *flavor.StreamState   `json:"prose,omitempty"`
-	Resources map[string]float64    `json:"resources"`
-	Storage   map[string]float64    `json:"storage"`
-	Buildings map[string]int        `json:"buildings"`
-	Workers   map[string]WorkerInfo `json:"workers"`
-	Unlocked  UnlockedState         `json:"unlocked"`
-	Stats     *GameStats            `json:"stats"`
+	Prose *flavor.StreamState `json:"prose,omitempty"`
+	// FestivalReadyTick and BlackMarketReadyTick are the cooldowns' end
+	// ticks. Unsaved, a load made the next festival or deal available at
+	// once, and a loaded game no longer played out as the saved one would.
+	FestivalReadyTick    int                   `json:"festival_ready_tick,omitempty"`
+	BlackMarketReadyTick int                   `json:"black_market_ready_tick,omitempty"`
+	Resources            map[string]float64    `json:"resources"`
+	Storage              map[string]float64    `json:"storage"`
+	Buildings            map[string]int        `json:"buildings"`
+	Workers              map[string]WorkerInfo `json:"workers"`
+	Unlocked             UnlockedState         `json:"unlocked"`
+	Stats                *GameStats            `json:"stats"`
 	// Phase 3 additions
 	Research         ResearchSave                  `json:"research"`
 	Military         MilitarySave                  `json:"military"`
@@ -497,11 +502,14 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		RNGDraws:  rngDraws,
 		QuipDraws: quipDraws,
 		Prose:     ge.prose.State(),
-		Resources: ge.Resources.GetAll(),
-		Storage:   ge.Resources.GetAllStorage(),
-		Buildings: ge.Buildings.GetAll(),
-		Workers:   ge.Workers.GetAll(),
-		Unlocked:  ge.getUnlockedState(),
+
+		FestivalReadyTick:    ge.festivalReadyTick,
+		BlackMarketReadyTick: ge.blackMarketReadyTick,
+		Resources:            ge.Resources.GetAll(),
+		Storage:              ge.Resources.GetAllStorage(),
+		Buildings:            ge.Buildings.GetAll(),
+		Workers:              ge.Workers.GetAll(),
+		Unlocked:             ge.getUnlockedState(),
 		Stats: &GameStats{
 			TotalBuilt:      ge.Stats.TotalBuilt,
 			TotalRecruited:  ge.Stats.TotalRecruited,
@@ -661,6 +669,8 @@ func (ge *GameEngine) LoadGame(filename string) error {
 		ge.addLog("debug", fmt.Sprintf("Load: RNG position (%d, %d) is past the replay cap; streams restart from the seed", save.RNGDraws, save.QuipDraws))
 	}
 	ge.prose = flavor.StreamFromState(save.Prose)
+	ge.festivalReadyTick = save.FestivalReadyTick
+	ge.blackMarketReadyTick = save.BlackMarketReadyTick
 	ge.Workers.SetAge(save.Age)
 	ge.Resources.LoadAmounts(save.Resources)
 	if save.Storage != nil {

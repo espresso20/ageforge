@@ -246,8 +246,8 @@ type GameEngine struct {
 	festivalReadyTick int
 
 	// blackMarketReadyTick is the earliest tick a black-market deal may run
-	// (cooldown anti-spam). 0 = ready now. Transient: not persisted, so a reload
-	// simply makes the deal available again — acceptable for a flavour sink.
+	// (cooldown anti-spam). 0 = ready now. Both cooldowns are saved, and both
+	// reset with the tick counter on prestige and Reset.
 	blackMarketReadyTick int
 
 	// blackMarketRand is the RNG seam for the black-market win/lose roll; nil
@@ -3424,6 +3424,8 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	// Fresh run: this prestige cycle may roll a new Ancient Memory.
 	ge.ancientMemoryUsed = false
 	ge.pendingMemoryTech = ""
+	// The cooldowns are tick numbers and the tick counter just went back to 0.
+	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
 
 	// Restore cross-run state
 	ge.Buildings.LoadRuins(savedRuins)
@@ -3537,6 +3539,7 @@ func (ge *GameEngine) Reset() {
 	// Full wipe: no previous civilization, so no cache. Clear the run flag.
 	ge.ancientMemoryUsed = false
 	ge.pendingMemoryTech = ""
+	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
 	// A wiped game is a brand-new run: re-roll the master seed.
 	ge.SeedRNG(newSeed())
 
