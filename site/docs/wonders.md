@@ -13,6 +13,20 @@ wonder collect <resource> <amount>   # bank resources
 build <wonder_key>                   # start construction once bank is full
 ```
 
+A [build plan](plan.md) can hold the wonder too (`plan build <wonder_key>`): it starts construction the moment the bank is full.
+
+### Overflow
+
+**Wonder overflow** is on by default. When a resource the current age's wonder still needs would be clamped at its storage cap, the part the cap would cut off goes into the wonder's bank instead of being lost, up to what the wonder still needs of it. It never takes anything you hold: only what production was about to waste. It works during offline catch-up too.
+
+```
+wonder overflow        # is it on?
+wonder overflow off    # production over a cap is lost again
+wonder overflow on
+```
+
+The log says so when overflow finishes a resource's part of the bank (and when the bank is full), and the welcome-back summary adds up what it banked while you were away. The switch is saved with your game and survives prestige. The Wonders overlay shows whether it is on.
+
 Progress is shown in the **Wonders** overlay (`wonders`) with per-resource progress bars. Each completed wonder in the overlay now displays a small colour thumbnail — a 2-character half-block pixel art icon sampled from the wonder's sprite — making it easy to visually identify wonders at a glance.
 
 ---

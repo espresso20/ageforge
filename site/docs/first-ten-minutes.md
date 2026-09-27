@@ -228,8 +228,9 @@ Your first priority: build **Stone Pits** and **Woodcutter Camps**, and assign w
 | Check economy tab | `status` |
 | Check worker breakdown | `status` |
 | Check logs | `logs` |
+| Queue builds for while you're away | `plan build hut 10`, `plan advance` |
 | Save the game | `Esc` |
 
 ---
 
-> **Tip:** The game is idle — you don't need to babysit it. Set up your assignments, queue a few buildings, start a research, then step away for a few minutes and come back to see the progress.
+> **Tip:** The game is idle — you don't need to babysit it. Set up your assignments, then leave a [build plan](plan.md) before you step away: `plan build hut 10`, `plan research fire_mastery`, `plan advance`. The plan starts each item as the resources come in, while you play and while you are away, and pays for it only when it starts.

@@ -31,6 +31,30 @@ For age gates this is made exact by the **Gate Covenant** (see Storage Design): 
 required copy of every required building costs at most half the storage buildable by then,
 with no discounts, and a unit test enforces it.
 
+The covenant has a second, time-based clause (2026-09-27):
+
+> The most storage buildable in an age must hold at least **`StorageHoldHours` (1.5) hours
+> of the age's typical production** of each of its construction resources.
+
+Typical production is `config.TypicalIncome(res, age)`, `FlowIncome`'s definition applied
+to every resource: `FlowCopies` (5) fully staffed copies of every producer up to the age,
+the earlier wonders and the techs, times the `production_all` bonus held by then. Prices
+size storage from below (the Gate Covenant); this clause sizes it to time. Without it a
+full Renaissance to Victorian store filled in 5 to 15 minutes, so a player away for three
+hours lost nearly all of it.
+
+**Why 1.5 hours.** The smoke bot ends an age making one to three times the typical income
+(it keeps more than five copies of the best producers and has the bonuses), so 1.5 hours of
+typical income is about one hour of a well-built economy: a player who checks in hourly
+loses nothing at a cap. Longer absences are the build plan's and wonder overflow's job,
+which put the income to work instead of holding it, so storage keeps its pressure. At 2
+hours (every age's storage about a third bigger again) 8-hour check-ins improved by about
+5% and 3-hour ones not at all (measured with an earlier bot), so the extra storage wasn't
+earning its keep. The lever is the age's storage per
+copy, raised only where an age falls short; there is no flat multiplier. `smoke.StaticStorage`
+checks it, `TestStorageCovenant` fails `go test ./...` when a change breaks it, and
+`TestStorageCovenantCatchesBrokenStorage` feeds it the old numbers.
+
 ### Law 2 — The Pacing Curve
 > Every age has a target length at 1x, and the economy is derived from it. Nothing is priced
 > or rated by guesswork against "normal play pace".
@@ -72,6 +96,15 @@ the per-PR fast tier grades the Primitive and Stone Ages, the nightly every age 
 prestige, and a weekly deep run every age to the Galactic (five seeds to a Quantum Age
 prestige). The bot has to play like a reasonable person for this to
 measure the game rather than the bot (see the bot's strategy comment in `smoke/bot.go`).
+
+**Idle targets.** The targets describe an attentive player. The player AgeForge is built
+for checks in a few times a day, so the check-in player has targets of its own, in
+`smoke/idle_targets.go`: the first prestige within **3.5 days at 1-hour check-ins, 5 days
+at 3-hour and 8 days at 8-hour**, the median of three seeds. The bot plays those
+(`Bot.CheckIn`, `Bot.planAhead`): at each visit it spends and builds storage, then leaves a
+build plan for the hours until the next one, with wonder overflow on. The nightly's `idle`
+scenario enforces them; the per-age greedy targets don't apply, since a check-in player
+can only act at a visit.
 
 ### Law 3 — The Payback Rule
 > A production building, fully staffed, earns back the price of its first copy in its age's
@@ -373,6 +406,87 @@ playing correctly. That's the idle game working as designed.
 - [ ] Worker assignment UI uses domain name (not class name) to avoid churn on age advance
 
 ---
+
+## Appendix — Check-in play: build plan, overflow, storage (2026-09-27)
+
+The idle appendix below found that visits to the first prestige hardly depended on the
+check-in interval, because storage capped what a visit could achieve. This change gives
+the check-in player three tools and measures them.
+
+**Build plan** (`plan`, `game/plan.go`). An ordered list of builds, techs, trades and an
+advance that the engine walks after production every tick and during offline catch-up.
+Items are paid when they start. The one real design choice was what a blocked item does to
+the items after it:
+
+- strict order (stop at the first unaffordable item) lets one big item stall the whole
+  plan for hours;
+- free skipping lets cheap items further down eat the resources the top item is saving
+  for, forever;
+- **skip with reservation** (chosen): a waiting item doesn't block, but it holds back its
+  next price, and a later item only starts from what is left. The order is the priority,
+  and resources the top items don't need still get spent. An item that money won't unblock
+  holds nothing: a price over the cap, a resource the current income won't bring within a
+  day, a wonder bank that isn't full, the next age's building before the advance. Without
+  that exemption one item waiting on market-only stone held back the gold of everything
+  below it.
+
+Techs start in plan order (a research queue). Trade items hold back what they will sell
+and sell once the market's supply pressure is under 2%, so they trade about once a minute
+at within 0.6% of the market rate instead of losing up to 30% by trading every tick. An
+advance item advances at its place in the plan, so the items below it can't spend what the
+requirements count. Copies the plan finishes are staffed from idle workers.
+
+**Offline** now runs in one-minute steps (`OfflineStepTicks`): production at 50% up to the
+caps with overflow, construction and research advance, then the plan starts what the step
+paid for. With nothing planned or under construction it pays exactly the old lump sum. A
+day away with a plan takes about 10 ms. Construction and research used to stand still
+offline.
+
+**Wonder overflow** (on by default, `wonder overflow off`) banks what a cap cuts off into
+the current wonder, up to its need. It only takes production that would be lost.
+
+**Storage.** The time clause of Law 1 (1.5 hours of typical income) raised the storage per
+copy of the Stone, Bronze, Iron, Classical, Medieval, Renaissance, Colonial, Industrial,
+Victorian and Information Ages (from +2.5% for the Keep to +440% for the Renaissance Vault;
+the numbers are in the CHANGELOG). The other eleven ages already kept it.
+
+### Results
+
+First prestige, median of three seeds (min–max). After: the nightly's `idle` scenario on a
+GitHub runner (run 36347171804). Before: PR #125's idle bot on master.
+
+| check-in every | before | after | target | visits after |
+|---|---|---|---|---|
+| 1 h | 7.3 d (7.0–8.2) | 2.8 d (2.7–3.1) | 3.5 d | 67 |
+| 3 h | 17.4 d (17.2–18.1) | 3.9 d (3.7–4.0) | 5 d | 31 |
+| 8 h | 44.5 d (44.1–45.5) | 7.2 d (7.1–7.5) | 8 d | 21 |
+
+Time per age (median) at 3-hour check-ins, before → after: Primitive 12 h → 2.0 h, Stone
+1.2 d → 6.0 h, Bronze 1.2 d → 4.8 h, Iron 1.4 d → 5.3 h, Classical 1.2 d → 8.8 h, Medieval
+14.5 h → 6.3 h, Renaissance 22.8 h → 5.9 h, Colonial 20 h → 5.9 h, Industrial 2.4 d → 11.1 h,
+Victorian 2.0 d → 8.0 h, Electric 2.7 d → 10.0 h, Atomic 2.7 d → 16.8 h. At 8 hours every
+age takes one or two visits (Stone 8.8 h, Classical 16.2 h, Atomic 1.1 d); visits to the
+prestige now fall with the interval (67, 31, 21) instead of staying near 150.
+
+What each tool is worth, taking one away at a time (local runs, same seeds; `-no-plan`,
+`-no-overflow`, and a build with the old storage numbers):
+
+| | 1 h | 3 h | 8 h |
+|---|---|---|---|
+| all three | 2.8 d | 4.0 d | 7.4 d |
+| no plan | 6.0 d | past 10 d | past 16 d |
+| no overflow | 3.2 d | 4.3 d | 9.4 d |
+| old storage | 3.1 d | 4.5 d | 8.3 d |
+
+The plan does most of the work, overflow matters most at long intervals (more of the day's
+income meets a full store), and storage adds about a tenth everywhere.
+
+**Nothing overshot.** The idle player stays slower than the greedy one at every interval
+(2.1 days for the greedy bot). Greedy pacing stays inside 0.5x–2x in every age, but the
+storage raise sped the middle ages up: the Renaissance went from 0.72x to 0.57x of its
+target and the first prestige from 2.4 to 2.1 days. The Renaissance Vault sits right on the
+1.5-hour line (gold income jumps there), so if a later change pushes the Renaissance under
+0.5x, the levers are that age's gate or its gold rates rather than its storage.
 
 ## Appendix — Idle play and the Iron Age gold trap (2026-09-27)
 
