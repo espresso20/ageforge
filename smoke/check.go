@@ -14,17 +14,35 @@ func bad(v float64) bool { return math.IsNaN(v) || math.IsInf(v, 0) }
 
 // checkInvariants runs the per-sweep checks against one snapshot.
 func (r *runner) checkInvariants(st game.GameState) {
+	for _, p := range invariantProblems(st, r.bot.defs) {
+		r.anomaly(KindInvariant, p.check, p.msg, st, true)
+	}
+}
+
+// checkStorageFeasible flags a next-age requirement that no amount of
+// building in this age can satisfy.
+func (r *runner) checkStorageFeasible(st game.GameState) {
+	for _, p := range storageProblems(st, r.bot.defs) {
+		r.anomaly(KindInvariant, p.check, p.msg, st, true)
+	}
+}
+
+// invariantProblems is every invariant st breaks: non-finite or negative
+// resources, amounts over their cap, bad multipliers, worker bookkeeping,
+// and requirements no storage can hold. Scenarios other than progression
+// (offline, fuzz, saveload) share it.
+func invariantProblems(st game.GameState, defs map[string]config.BuildingDef) []problem {
+	var out []problem
+	add := func(check, msg string) { out = append(out, problem{check, msg}) }
 	for _, key := range sortedKeys(st.Resources) {
 		rs := st.Resources[key]
 		switch {
 		case bad(rs.Amount) || bad(rs.Rate) || bad(rs.Storage):
-			r.anomaly(KindInvariant, "nan_resource",
-				fmt.Sprintf("%s has a non-finite value: amount=%v rate=%v storage=%v", key, rs.Amount, rs.Rate, rs.Storage), st, true)
+			add("nan_resource", fmt.Sprintf("%s has a non-finite value: amount=%v rate=%v storage=%v", key, rs.Amount, rs.Rate, rs.Storage))
 		case rs.Amount < 0:
-			r.anomaly(KindInvariant, "negative_resource", fmt.Sprintf("%s is negative: %v", key, rs.Amount), st, true)
+			add("negative_resource", fmt.Sprintf("%s is negative: %v", key, rs.Amount))
 		case rs.Amount > rs.Storage*(1+1e-9)+1e-6:
-			r.anomaly(KindInvariant, "over_storage",
-				fmt.Sprintf("%s amount %s is above its storage cap %s", key, num(rs.Amount), num(rs.Storage)), st, true)
+			add("over_storage", fmt.Sprintf("%s amount %s is above its storage cap %s", key, num(rs.Amount), num(rs.Storage)))
 		}
 	}
 	for _, v := range []struct {
@@ -36,21 +54,21 @@ func (r *runner) checkInvariants(st game.GameState) {
 		{"prestige_passive_bonus", st.Prestige.PassiveBonus},
 	} {
 		if bad(v.val) {
-			r.anomaly(KindInvariant, "nan_value", fmt.Sprintf("%s is non-finite: %v", v.name, v.val), st, true)
+			add("nan_value", fmt.Sprintf("%s is non-finite: %v", v.name, v.val))
 		}
 	}
 	for _, k := range sortedKeys(st.PermanentBonuses) {
 		if bad(st.PermanentBonuses[k]) {
-			r.anomaly(KindInvariant, "nan_value", fmt.Sprintf("permanent bonus %s is non-finite", k), st, true)
+			add("nan_value", fmt.Sprintf("permanent bonus %s is non-finite", k))
 		}
 	}
 	for _, m := range st.Modifiers {
 		if bad(m.Value) {
-			r.anomaly(KindInvariant, "nan_value", fmt.Sprintf("modifier %+v is non-finite", m), st, true)
+			add("nan_value", fmt.Sprintf("modifier %+v is non-finite", m))
 		}
 	}
 	if st.TickIntervalMs <= 0 {
-		r.anomaly(KindInvariant, "tick_interval", fmt.Sprintf("tick interval is %dms", st.TickIntervalMs), st, true)
+		add("tick_interval", fmt.Sprintf("tick interval is %dms", st.TickIntervalMs))
 	}
 
 	ws := st.Workers
@@ -59,24 +77,55 @@ func (r *runner) checkInvariants(st game.GameState) {
 		bs := st.Buildings[key]
 		assigned += bs.WorkersAssigned
 		if bs.WorkersAssigned < 0 {
-			r.anomaly(KindInvariant, "negative_assignment", fmt.Sprintf("%s has %d workers assigned", key, bs.WorkersAssigned), st, true)
+			add("negative_assignment", fmt.Sprintf("%s has %d workers assigned", key, bs.WorkersAssigned))
 		}
 		if capacity := bs.Count * bs.WorkerCapacity; bs.WorkersAssigned > capacity {
-			r.anomaly(KindInvariant, "over_capacity",
-				fmt.Sprintf("%s has %d workers assigned but %d copies x %d slots = %d", key, bs.WorkersAssigned, bs.Count, bs.WorkerCapacity, capacity), st, true)
+			add("over_capacity",
+				fmt.Sprintf("%s has %d workers assigned but %d copies x %d slots = %d", key, bs.WorkersAssigned, bs.Count, bs.WorkerCapacity, capacity))
 		}
 		if bs.Count < 0 {
-			r.anomaly(KindInvariant, "negative_building", fmt.Sprintf("%s count is %d", key, bs.Count), st, true)
+			add("negative_building", fmt.Sprintf("%s count is %d", key, bs.Count))
 		}
 	}
 	if assigned > ws.TotalPop {
-		r.anomaly(KindInvariant, "over_population",
-			fmt.Sprintf("%d workers assigned but population is %d", assigned, ws.TotalPop), st, true)
+		add("over_population", fmt.Sprintf("%d workers assigned but population is %d", assigned, ws.TotalPop))
 	}
 	if ws.TotalIdle < 0 {
-		r.anomaly(KindInvariant, "negative_idle", fmt.Sprintf("idle workers is %d", ws.TotalIdle), st, true)
+		add("negative_idle", fmt.Sprintf("idle workers is %d", ws.TotalIdle))
 	}
-	r.checkStorageFeasible(st)
+	return append(out, storageProblems(st, defs)...)
+}
+
+// storageProblems flags a next-age resource requirement that no amount of
+// storage building in this age can hold, and a required building that can't
+// be built or whose last copy can't fit under any reachable cap.
+func storageProblems(st game.GameState, defs map[string]config.BuildingDef) []problem {
+	var out []problem
+	for _, res := range sortedKeys(st.NextAgeResReqs) {
+		need := st.NextAgeResReqs[res]
+		if got := achievableStorage(st, res, defs); need > got {
+			out = append(out, problem{"requirement_over_storage",
+				fmt.Sprintf("advancing to %s needs %s %s but the most storage buildable in %s is %s",
+					st.NextAge, num(need), res, st.Age, num(got))})
+		}
+	}
+	for _, bld := range sortedKeys(st.NextAgeBldReqs) {
+		need, bs, def := st.NextAgeBldReqs[bld], st.Buildings[bld], defs[bld]
+		if bs.Count < need && (bs.IsLegacy || (def.RequiredAge != "" && def.RequiredAge != st.Age)) {
+			out = append(out, problem{"required_building_unbuildable",
+				fmt.Sprintf("advancing to %s needs %d %s but only %d exist and %s can't be built in %s",
+					st.NextAge, need, bld, bs.Count, bld, st.Age)})
+			continue
+		}
+		res, cost, capacity, ok := lastCopyOverStorage(st, bld, defs)
+		if !ok {
+			continue
+		}
+		out = append(out, problem{"required_building_over_storage",
+			fmt.Sprintf("advancing to %s needs %d %s; copy #%d costs %s %s but the most %s storage buildable in %s is %s",
+				st.NextAge, need, bld, need, num(cost), res, res, st.Age, num(capacity))})
+	}
+	return out
 }
 
 // achievableStorage is the highest cap reachable for res in the current age:
@@ -106,35 +155,6 @@ func achievableStorage(st game.GameState, res string, defs map[string]config.Bui
 		}
 	}
 	return capacity
-}
-
-// checkStorageFeasible flags a next-age resource requirement that no amount
-// of storage building in this age can hold.
-func (r *runner) checkStorageFeasible(st game.GameState) {
-	for _, res := range sortedKeys(st.NextAgeResReqs) {
-		need := st.NextAgeResReqs[res]
-		if got := achievableStorage(st, res, r.bot.defs); need > got {
-			r.anomaly(KindInvariant, "requirement_over_storage",
-				fmt.Sprintf("advancing to %s needs %s %s but the most storage buildable in %s is %s",
-					st.NextAge, num(need), res, st.Age, num(got)), st, true)
-		}
-	}
-	for _, bld := range sortedKeys(st.NextAgeBldReqs) {
-		need, bs, def := st.NextAgeBldReqs[bld], st.Buildings[bld], r.bot.defs[bld]
-		if bs.Count < need && (bs.IsLegacy || (def.RequiredAge != "" && def.RequiredAge != st.Age)) {
-			r.anomaly(KindInvariant, "required_building_unbuildable",
-				fmt.Sprintf("advancing to %s needs %d %s but only %d exist and %s can't be built in %s",
-					st.NextAge, need, bld, bs.Count, bld, st.Age), st, true)
-			continue
-		}
-		res, cost, capacity, ok := lastCopyOverStorage(st, bld, r.bot.defs)
-		if !ok {
-			continue
-		}
-		r.anomaly(KindInvariant, "required_building_over_storage",
-			fmt.Sprintf("advancing to %s needs %d %s; copy #%d costs %s %s but the most %s storage buildable in %s is %s",
-				st.NextAge, st.NextAgeBldReqs[bld], bld, st.NextAgeBldReqs[bld], num(cost), res, res, st.Age, num(capacity)), st, true)
-	}
 }
 
 // lastCopyOverStorage checks whether the last copy of bld the next age asks

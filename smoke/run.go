@@ -41,12 +41,33 @@ type Config struct {
 	DecideEvery  int           // ticks between bot decisions
 	CheckEvery   int           // ticks between invariant sweeps
 	SoftlockSpan time.Duration // no progress for this long is a soft-lock
-	AgeTimeout   time.Duration // more than this in one age is a stall
-	MaxSim       time.Duration // hard cap per run
-	Horizon      time.Duration // bot saves instead of investing inside this
+	// AgeTimeout, if set, is a fixed time allowed in every age. Zero derives
+	// each age's timeout from the pacing table (see AgeTimeout).
+	AgeTimeout time.Duration
+	MaxSim     time.Duration // hard cap per run
+	Horizon    time.Duration // bot saves instead of investing inside this
+
+	// Pacing is PacingReport (default) or PacingEnforce. In report mode an
+	// age past its timeout and a run out of MaxSim are pacing notes, not
+	// failures, and play continues past a timeout; in enforce mode they fail
+	// the run, as does any age outside the target band.
+	Pacing string
+	// LastPassage is how the bot answers the Last Passage: "endure"
+	// (default) or "succumb" (takes the Cosmic Legacy while it can).
+	LastPassage string
+	// InviteCosmic makes the bot Invite the Cosmic Era's harbinger, so its
+	// next prestige brings the Last Passage.
+	InviteCosmic bool
+	// Style labels the run in reports ("greedy", "idle", ...).
+	Style string
 
 	// TraceDir, if set, receives trace-<seed>.log with every bot action.
 	TraceDir string
+
+	// hook, if set, runs at every decision point before the runner looks at
+	// the state; returning true ends the run as done. Scenarios in this
+	// package use it (saveload checkpoints, perf sampling).
+	hook func(r *runner) bool
 }
 
 // DefaultConfig is the quick-mode configuration.
@@ -59,17 +80,31 @@ func DefaultConfig() Config {
 		DecideEvery:  5,
 		CheckEvery:   25,
 		SoftlockSpan: 30 * time.Minute,
-		AgeTimeout:   48 * time.Hour,
 		MaxSim:       2000 * time.Hour,
 		Horizon:      30 * time.Minute,
+		Pacing:       PacingReport,
+		LastPassage:  "endure",
+		Style:        "greedy",
 	}
 }
+
+// ageTimeout is the time allowed in age before it counts as timed out.
+func (c Config) ageTimeout(age string) time.Duration {
+	if c.AgeTimeout > 0 {
+		return c.AgeTimeout
+	}
+	return AgeTimeout(age)
+}
+
+func (c Config) enforce() bool { return c.Pacing == PacingEnforce }
 
 // Anomaly kinds. Any of these fails the session.
 const (
 	KindPanic     = "panic"
 	KindSoftlock  = "softlock"
 	KindInvariant = "invariant"
+	// KindPacing is only raised under -pacing enforce.
+	KindPacing = "pacing"
 )
 
 // Anomaly is one problem found during a run. Repeats of the same check are
@@ -94,18 +129,28 @@ type AgeSplit struct {
 	Seconds float64 `json:"seconds_1x"`
 	// Unfinished marks the age a run ended in without advancing.
 	Unfinished bool `json:"unfinished,omitempty"`
+	// TargetSecs is the pacing target (0 when the age has none), Verdict
+	// grades Seconds against it, and TimedOut marks an age that ran past
+	// its timeout (report mode keeps playing).
+	TargetSecs float64 `json:"target_seconds_1x,omitempty"`
+	Verdict    string  `json:"verdict,omitempty"`
+	TimedOut   bool    `json:"timed_out,omitempty"`
 }
 
 // CycleSplit is the time from a fresh start to prestige.
 type CycleSplit struct {
-	Cycle      int     `json:"cycle"`
-	Ticks      int     `json:"ticks"`
-	Seconds    float64 `json:"seconds_1x"`
-	Points     int     `json:"prestige_points"`
-	FinalAge   string  `json:"final_age"`
-	Prestiged  bool    `json:"prestiged"`
-	Succumbed  int     `json:"succumbed"`
-	TechsTotal int     `json:"techs"`
+	Cycle   int     `json:"cycle"`
+	Ticks   int     `json:"ticks"`
+	Seconds float64 `json:"seconds_1x"`
+	Points  int     `json:"prestige_points"`
+	// Expected is what the documented formula pays for the run; a Last
+	// Passage ending (Ending endured or succumbed) pays part or none of it.
+	Expected   int    `json:"expected_points"`
+	Ending     string `json:"ending,omitempty"`
+	FinalAge   string `json:"final_age"`
+	Prestiged  bool   `json:"prestiged"`
+	Succumbed  int    `json:"succumbed"`
+	TechsTotal int    `json:"techs"`
 }
 
 // Stats counts events over a run.
@@ -135,6 +180,7 @@ type Stats struct {
 // RunResult is the outcome of one seed.
 type RunResult struct {
 	Seed       int64              `json:"seed"`
+	Style      string             `json:"style,omitempty"`
 	Outcome    string             `json:"outcome"`
 	Ticks      int                `json:"ticks"`
 	Seconds    float64            `json:"seconds_1x"`
@@ -145,6 +191,11 @@ type RunResult struct {
 	Anomalies  []*Anomaly         `json:"anomalies"`
 	Harbingers []*HarbingerThread `json:"harbingers"`
 	Stats      Stats              `json:"stats"`
+	// Notes are non-failing observations (report-mode pacing timeouts,
+	// budget exhaustion).
+	Notes []string `json:"notes,omitempty"`
+	// CosmicLegacy is true when the run ended holding the Cosmic Legacy.
+	CosmicLegacy bool `json:"cosmic_legacy,omitempty"`
 }
 
 // Failed reports whether the run hit a panic, soft-lock or invariant
@@ -158,6 +209,8 @@ const (
 	OutcomeSoftlock = "softlock"
 	OutcomeStalled  = "stalled"
 	OutcomeBudget   = "budget"
+	// OutcomeSlow ends a run whose age timed out under -pacing enforce.
+	OutcomeSlow = "slow"
 )
 
 type runner struct {
@@ -187,6 +240,7 @@ type runner struct {
 	hiTech     int
 	lastRes    float64
 	lastProg   time.Duration
+	timedOut   bool // the current age is past its timeout
 	byCheck    map[string]*Anomaly
 	thread     *HarbingerThread // live harbinger thread being tracked
 	stopReason string
@@ -194,10 +248,32 @@ type runner struct {
 
 // Run plays one seed to completion and returns what happened.
 func Run(cfg Config, seed int64) *RunResult {
+	start := time.Now()
+	ge := game.NewGameEngine()
+	ge.SeedRNG(seed)
+	r := newRunner(cfg, seed, ge)
+	defer func() {
+		r.res.WallMillis = time.Since(start).Milliseconds()
+	}()
+	if cfg.TraceDir != "" {
+		if f, err := os.Create(filepath.Join(cfg.TraceDir, fmt.Sprintf("trace-%d.log", seed))); err == nil {
+			w := bufio.NewWriter(f)
+			r.bot.Trace = w
+			defer func() { w.Flush(); f.Close() }()
+		}
+	}
+	r.play()
+	return r.res
+}
+
+// newRunner wires a runner and a fresh bot to ge, which the caller has
+// already seeded or loaded.
+func newRunner(cfg Config, seed int64, ge *game.GameEngine) *runner {
 	r := &runner{
 		cfg:     cfg,
 		seed:    seed,
-		res:     &RunResult{Seed: seed},
+		ge:      ge,
+		res:     &RunResult{Seed: seed, Style: cfg.Style},
 		ageIdx:  make(map[string]int),
 		byCheck: make(map[string]*Anomaly),
 		prevEvt: make(map[string]bool),
@@ -211,26 +287,11 @@ func Run(cfg Config, seed int64) *RunResult {
 	for i, k := range config.AgeOrder() {
 		r.ageIdx[k] = i
 	}
-	start := time.Now()
-	defer func() {
-		r.res.WallMillis = time.Since(start).Milliseconds()
-	}()
-
-	r.ge = game.NewGameEngine()
-	r.ge.SeedRNG(seed)
-	r.bot = NewBot(r.ge)
+	r.bot = NewBot(ge)
 	r.bot.Harbinger = cfg.Harbinger
 	r.bot.HorizonTicks = cfg.Horizon.Seconds() / game.BaseTickInterval.Seconds()
-	if cfg.TraceDir != "" {
-		if f, err := os.Create(filepath.Join(cfg.TraceDir, fmt.Sprintf("trace-%d.log", seed))); err == nil {
-			w := bufio.NewWriter(f)
-			r.bot.Trace = w
-			defer func() { w.Flush(); f.Close() }()
-		}
-	}
 	r.subscribe()
-	r.play()
-	return r.res
+	return r
 }
 
 // subscribe counts bus events. Handlers run under the engine write lock, so
@@ -270,30 +331,55 @@ func (r *runner) play() {
 	st := r.ge.GetState()
 	r.enterAge(st)
 	r.checkStorageFeasible(st)
-	for {
-		if r.sim >= r.cfg.MaxSim {
-			r.stop(OutcomeBudget)
-			r.anomaly(KindSoftlock, "run_budget", fmt.Sprintf("run did not finish within %s simulated", r.cfg.MaxSim), st, true)
+	for !r.step() {
+	}
+}
+
+// step runs one tick of the loop, with a decision first every DecideEvery
+// ticks, and reports whether the run is over. Panics reach the caller.
+func (r *runner) step() bool {
+	if r.sim >= r.cfg.MaxSim {
+		r.stop(OutcomeBudget)
+		msg := fmt.Sprintf("run did not finish within %s simulated", r.cfg.MaxSim)
+		if r.cfg.enforce() {
+			r.anomaly(KindPacing, "run_budget", msg, r.ge.GetState(), true)
+		} else {
+			r.note(msg + " (a pacing outcome: reported, not failed, in report mode)")
+		}
+		return true
+	}
+	if r.ticks%r.cfg.DecideEvery == 0 {
+		if r.cfg.hook != nil && r.cfg.hook(r) {
+			r.stop(OutcomeDone)
+			return true
+		}
+		st := r.ge.GetState()
+		r.observe(st)
+		if r.ticks%r.cfg.CheckEvery < r.cfg.DecideEvery {
+			r.checkInvariants(st)
+		}
+		if r.stopReason != "" {
+			return true
+		}
+		if done := r.control(&st); done {
+			r.stop(OutcomeDone)
+			return true
+		}
+		r.bot.Play(st)
+	}
+	r.sim += r.ge.StepTicks(1)
+	r.ticks++
+	return false
+}
+
+// note records a non-failing observation once.
+func (r *runner) note(msg string) {
+	for _, n := range r.res.Notes {
+		if n == msg {
 			return
 		}
-		if r.ticks%r.cfg.DecideEvery == 0 {
-			st = r.ge.GetState()
-			r.observe(st)
-			if r.ticks%r.cfg.CheckEvery < r.cfg.DecideEvery {
-				r.checkInvariants(st)
-			}
-			if r.stopReason != "" {
-				return
-			}
-			if done := r.control(&st); done {
-				r.stop(OutcomeDone)
-				return
-			}
-			r.bot.Play(st)
-		}
-		r.sim += r.ge.StepTicks(1)
-		r.ticks++
 	}
+	r.res.Notes = append(r.res.Notes, msg)
 }
 
 func (r *runner) stop(outcome string) {
@@ -311,9 +397,23 @@ func (r *runner) finish() {
 	res.Stats.Actions = r.bot.Actions
 	res.Stats.ActionErrors = r.bot.Errors
 	if r.stopReason != OutcomeDone {
-		res.Ages = append(res.Ages, AgeSplit{Cycle: r.cycle, Age: r.age, Ticks: r.ticks - r.ageT0,
-			Seconds: (r.sim - r.ageS0).Seconds(), Unfinished: true})
+		res.Ages = append(res.Ages, r.split(true))
 	}
+	func() {
+		defer func() { _ = recover() }() // the engine may be wedged after a panic
+		res.CosmicLegacy = r.ge.GetState().LastPassage.CosmicLegacy
+	}()
+}
+
+// split is the pacing record of the current age so far.
+func (r *runner) split(unfinished bool) AgeSplit {
+	secs := (r.sim - r.ageS0).Seconds()
+	a := AgeSplit{Cycle: r.cycle, Age: r.age, Ticks: r.ticks - r.ageT0, Seconds: secs,
+		Unfinished: unfinished, TimedOut: r.timedOut, Verdict: Verdict(r.age, secs, !unfinished)}
+	if t, ok := Target(r.age); ok {
+		a.TargetSecs = t.Seconds()
+	}
+	return a
 }
 
 func (r *runner) panicked(rec interface{}, stack []byte) {
@@ -355,13 +455,17 @@ func (r *runner) enterAge(st game.GameState) {
 	r.ageT0, r.ageS0 = r.ticks, r.sim
 	r.hiBuild, r.hiTech, r.lastRes = -1, -1, -1
 	r.lastProg = r.sim
+	r.timedOut = false
 }
 
 func (r *runner) closeAge() {
-	r.res.Ages = append(r.res.Ages, AgeSplit{
-		Cycle: r.cycle, Age: r.age,
-		Ticks: r.ticks - r.ageT0, Seconds: (r.sim - r.ageS0).Seconds(),
-	})
+	a := r.split(false)
+	r.res.Ages = append(r.res.Ages, a)
+	if r.cfg.enforce() && (a.Verdict == VerdictSlow || a.Verdict == VerdictFast) {
+		r.anomaly(KindPacing, "pacing_"+a.Verdict,
+			fmt.Sprintf("%s took %s at 1x against a %s target (band %gx to %gx)", a.Age, dur(a.Seconds), dur(a.TargetSecs), PacingLow, PacingHigh),
+			game.GameState{}, false)
+	}
 }
 
 // observe updates pacing, event counts and the soft-lock detector.
@@ -430,10 +534,15 @@ func (r *runner) observe(st game.GameState) {
 				r.cfg.SoftlockSpan, Blockers(st)), st, true)
 		return
 	}
-	if r.sim-r.ageS0 > r.cfg.AgeTimeout {
-		r.stop(OutcomeStalled)
-		r.anomaly(KindSoftlock, "age_timeout",
-			fmt.Sprintf("still in %s after %s; blocked on: %s", st.Age, r.cfg.AgeTimeout, Blockers(st)), st, true)
+	if limit := r.cfg.ageTimeout(st.Age); !r.timedOut && r.sim-r.ageS0 > limit {
+		r.timedOut = true
+		if r.cfg.enforce() {
+			r.stop(OutcomeSlow)
+			r.anomaly(KindPacing, "age_timeout",
+				fmt.Sprintf("still in %s after %s (timeout %s); blocked on: %s", st.Age, dur((r.sim-r.ageS0).Seconds()), limit, Blockers(st)), st, true)
+		} else {
+			r.note(fmt.Sprintf("cycle %d: %s ran past its %s timeout; still progressing, so play went on", r.cycle, st.Age, limit))
+		}
 	}
 }
 
@@ -441,6 +550,18 @@ func (r *runner) observe(st game.GameState) {
 // true when the run has reached its goal. st is refreshed after any
 // transition.
 func (r *runner) control(st *game.GameState) bool {
+	if st.LastPassage.Pending && st.PendingCatastrophe == "" {
+		// A Last Passage left pending (by a loaded save): answer it.
+		r.answerLastPassage(*st)
+		*st = r.ge.GetState()
+	}
+	if r.cfg.InviteCosmic {
+		if v := st.Harbinger; v != nil && v.LastPassage && !v.Invited && !v.PassageCame && v.InviteBlocked == "" {
+			if r.bot.act("harbinger_invite", "last_passage", r.ge.HarbingerInvite()) {
+				*st = r.ge.GetState()
+			}
+		}
+	}
 	if st.PendingCatastrophe != "" {
 		var err error
 		if r.cfg.Catastrophe == "succumb" {
@@ -496,17 +617,41 @@ func (r *runner) control(st *game.GameState) bool {
 		return r.cfg.FinalAge == "" || r.ageIdx[st.Age] >= r.ageIdx[r.cfg.FinalAge]
 	}
 	if st.Prestige.CanPrestige && (r.cfg.PrestigeAge == "" || r.ageIdx[st.Age] >= r.ageIdx[r.cfg.PrestigeAge]) {
-		points := st.Prestige.PendingPoints
+		before := *st
+		expected := PrestigePoints(before)
+		if before.Prestige.PendingPoints != expected {
+			r.anomaly(KindInvariant, "prestige_formula",
+				fmt.Sprintf("prestige would pay %d points but the documented formula gives %d (age %s, %d milestones, %d techs, %d built, level %d)",
+					before.Prestige.PendingPoints, expected, before.Age, before.Milestones.CompletedCount,
+					before.Research.TotalResearched, before.Stats.TotalBuilt, before.Prestige.Level), before, true)
+		}
 		if err := r.ge.DoPrestige(); err != nil {
 			r.bot.Errors["prestige"]++
 			return false
 		}
+		ending := "plain"
+		if mid := r.ge.GetState(); mid.LastPassage.Pending {
+			ending = r.answerLastPassage(mid)
+		}
+		after := r.ge.GetState()
+		if after.Prestige.Level != before.Prestige.Level+1 {
+			r.anomaly(KindInvariant, "prestige_incomplete",
+				fmt.Sprintf("prestige from %s left the level at %d (was %d)", before.Age, after.Prestige.Level, before.Prestige.Level), after, true)
+			*st = after
+			return false
+		}
+		points := after.Prestige.TotalEarned - before.Prestige.TotalEarned
+		if ending == "plain" && points != expected {
+			r.anomaly(KindInvariant, "prestige_formula",
+				fmt.Sprintf("prestige paid %d points but the documented formula gives %d", points, expected), after, true)
+		}
+		r.checkPrestigeCarry(before, after, ending)
 		r.res.Stats.Prestiges++
 		r.closeAge()
 		r.res.Cycles = append(r.res.Cycles, CycleSplit{
 			Cycle: r.cycle, Ticks: r.ticks - r.cycT0, Seconds: (r.sim - r.cycS0).Seconds(),
-			Points: points, FinalAge: st.Age, Prestiged: true, Succumbed: r.succ,
-			TechsTotal: st.Research.TotalResearched,
+			Points: points, Expected: expected, Ending: ending, FinalAge: before.Age, Prestiged: true,
+			Succumbed: r.succ, TechsTotal: before.Research.TotalResearched,
 		})
 		r.cycle++
 		r.succ = 0
