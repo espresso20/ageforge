@@ -575,7 +575,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Fusion Age — normal costs: 10T-15T
 		{
 			Name: "Stellar Cradle", Key: "stellar_cradle", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 750e12, "plasma": 600e12, "electricity": 800e12, "uranium": 940e12},
+			BaseCost:  map[string]float64{"steel": 750e12, "plasma": 600e12, "electricity": 800e12},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "production", Target: "plasma", Value: 15.0},

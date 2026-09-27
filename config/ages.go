@@ -249,7 +249,7 @@ func Ages() []AgeDef {
 			Description:     "Between the stars, new frontiers await.",
 			Quip:            "The nearest neighbor is four light-years away. Finally, some peace.",
 			ResourceReqs:    map[string]float64{"titanium": 100000000000, "plasma": 250000000000},
-			BuildingReqs:    map[string]int{"launch_complex": 10, "orbital_habitat": 20, "solar_collector_array": 10},
+			BuildingReqs:    map[string]int{"launch_complex": 10, "orbital_habitat": 15, "solar_collector_array": 10},
 			UnlockBuildings: []string{"generation_ship", "stellar_vault", "protein_synthesizer", "reality_matter_weaver", "stellar_core_drill", "xenology_institute", "void_monastery", "fleet_command", "galactic_trade_hub", "warp_drive_plant", "antimatter_forge", "pulsar_tap", "galactic_network_node", "cultural_beacon", "warp_nexus"},
 			UnlockResources: []string{"dark_matter"},
 		},
