@@ -53,7 +53,7 @@ smoke-full:
 
 # Smoke suite, deep tier (what the weekly runs, one seed per CI job): the
 # progression scenario on five seeds to a Quantum Age prestige, pacing
-# enforced on every age to the Galactic. Takes hours.
+# enforced on every age to the Galactic. About 10-15 minutes.
 smoke-deep:
 	@go run ./cmd/smoke -tier deep -seeds 5 -pacing enforce -v -out smoke-report
 

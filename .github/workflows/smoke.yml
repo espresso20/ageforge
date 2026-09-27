@@ -9,7 +9,7 @@ name: Smoke
 #     Digital Age.
 #   - Weekly: the deep tier, progression to a Quantum Age prestige through
 #     the Last Passage, so every age from the Primitive to the Galactic is
-#     enforced. One seed per job (a few hours each), then a merge job pools
+#     enforced. One seed per job (about 5 minutes each), then a merge job pools
 #     the runs and grades the median.
 #
 # Run either by hand from the Actions tab (workflow_dispatch, "suite").
@@ -105,8 +105,8 @@ jobs:
     name: deep (seed ${{ matrix.seed }})
     if: ${{ github.event.schedule == '41 3 * * 0' || (github.event_name == 'workflow_dispatch' && inputs.suite == 'weekly') }}
     runs-on: ubuntu-latest
-    # Under GitHub's 6-hour job limit, with room for setup and upload.
-    timeout-minutes: 340
+    # A seed takes about 5 minutes; a hang fails well before GitHub's 6-hour cap.
+    timeout-minutes: 60
     permissions:
       contents: read
     strategy:

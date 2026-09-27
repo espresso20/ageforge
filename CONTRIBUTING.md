@@ -244,7 +244,7 @@ The unit tests prove pieces work. The smoke suite proves the game holds together
 ```bash
 make smoke                                   # fast tier, what every PR runs (a few minutes)
 make smoke-full                              # full tier, what the nightly runs
-make smoke-deep                              # deep tier, what the weekly runs (hours: five seeds to a Quantum Age prestige)
+make smoke-deep                              # deep tier, what the weekly runs (five seeds to a Quantum Age prestige, 10-15 minutes)
 go run ./cmd/smoke -list                     # the scenarios
 go run ./cmd/smoke -scenario saveload -v     # one scenario (comma-separate several)
 go run ./cmd/smoke -scenario progression -seed-base 7 -seeds 1 -trace -v   # one seed, every bot action in smoke-report/trace-7.log
@@ -274,7 +274,7 @@ go run ./cmd/smoke -h                        # every flag
 
 - **Fast tier** (`make smoke`, `-tier fast`): the scenarios above marked fast. It runs on every pull request as the `smoke (fast tier)` job in `.github/workflows/go.yml` (skipped for doc-only changes, like the rest of that workflow), writes a summary to the job page and uploads `smoke-report/` as an artifact.
 - **Full tier** (`make smoke-full`, `-tier full`): every scenario, deeper. It runs nightly in `.github/workflows/smoke.yml` (and on demand from the Actions tab, suite `nightly`) with the same summary and artifact.
-- **Deep tier** (`make smoke-deep`, `-tier deep`): the static check and the progression scenario only, played to a Quantum Age prestige, so pacing is enforced on every first-cycle age from the Primitive to the Galactic (the nightly stops at the Digital Age). It runs weekly (Sunday 03:41 UTC) in the same workflow, and on demand with suite `weekly`: one job per seed (`deep (seed N)`, in report mode, a few hours each, under GitHub's 6-hour job limit), then `smoke (deep tier)` downloads their reports, pools the runs with `-merge` and grades the median under `-pacing enforce`. It fails if a seed breaks, a seed job wrote no report, or a first-cycle age's median leaves the band. It emails like the nightly.
+- **Deep tier** (`make smoke-deep`, `-tier deep`): the static check and the progression scenario only, played to a Quantum Age prestige, so pacing is enforced on every first-cycle age from the Primitive to the Galactic (the nightly stops at the Digital Age). It runs weekly (Sunday 03:41 UTC) in the same workflow, and on demand with suite `weekly`: one job per seed (`deep (seed N)`, in report mode, about 5 minutes each on a runner; one job per seed leaves room under the 6-hour job limit for more seeds or cycles), then `smoke (deep tier)` downloads their reports, pools the runs with `-merge` and grades the median under `-pacing enforce`. It fails if a seed breaks, a seed job wrote no report, or a first-cycle age's median leaves the band. It emails like the nightly.
 - Both fail on panics, soft-locks, invariant violations, save/load divergence, fuzz failures, account failures, docs mismatches and blown perf budgets, and both run with `-pacing enforce`, so a first-cycle age of the progression scenario whose median across seeds leaves its pacing band fails them too (see Pacing targets below).
 - **Known bugs** can be reported as warnings instead of failures so the job stays useful while they wait for a fix (`-strict` fails on them too); today there are none. When a known bug is fixed, delete its special case in the scenario.
 
