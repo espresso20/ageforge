@@ -239,32 +239,67 @@ CI (`.github/workflows/go.yml`) runs `gofmt -l`, `go vet`, `go build`, a cross-c
 
 ### Smoke testing
 
-The unit tests prove pieces work. `make smoke` proves the game is playable: it boots the real engine with no UI and plays it end to end, the way a player would, then tells you whether anything broke.
+The unit tests prove pieces work. The smoke suite proves the game holds together: it boots the real engine with no UI and plays it, saves and reloads it, closes it for hours, types garbage at it, and checks the docs against it. It is one runner (`cmd/smoke`, package `smoke`) with named scenarios that share a report. Ticks run synchronously through `GameEngine.StepTicks`, so days of play take seconds, and seeds are fully reproducible: the same seed gives the same report.
 
 ```bash
-make smoke          # quick: UI sweep + 5 seeds up to the first prestige (under a minute today)
-make smoke-full     # nightly: UI sweep + 10 seeds, 2 prestige cycles, then on to digital_age
+make smoke                                   # fast tier, what every PR runs (a few minutes)
+make smoke-full                              # full tier, what the nightly runs
+go run ./cmd/smoke -list                     # the scenarios
+go run ./cmd/smoke -scenario saveload -v     # one scenario (comma-separate several)
+go run ./cmd/smoke -scenario progression -seed-base 7 -seeds 1 -trace -v   # one seed, every bot action in smoke-report/trace-7.log
+go run ./cmd/smoke -scenario styles -style idle -tier full   # one play style
 go run ./cmd/smoke -h                        # every flag
-go run ./cmd/smoke -seeds 1 -trace -v        # one seed, with every bot action in smoke-report/trace-1.log
-go run ./cmd/smoke -harbinger both           # the bot also buys Appease and Brace (level 1)
 ```
 
-What it checks:
+#### Scenarios
 
-- **The autoplayer** (`cmd/smoke`, package `smoke`) drives `GameEngine` through its public methods only (build, recruit, assign, upgrade, research, wonder banking, festivals, gathering, advance, prestige, catastrophe choice). No dev commands, no god mode, no speed changes. Ticks run synchronously through `GameEngine.StepTicks`, so a day of play takes seconds. It fails on:
-  - panics (recovered, with a state dump and stack)
-  - soft-locks: 30 simulated minutes with no new building, research or rising resources, or 48 hours stuck in one age
-  - invariant violations, checked every 25 ticks: negative, NaN or infinite values; resources above their cap; more workers assigned than exist or than a building holds; a catastrophe still pending after a successful advance; a next-age requirement (resource amount, or the price of the last required building) larger than the most storage buildable in the current age
-- **The UI sweep** (`ui/smoke_sweep_test.go`, build tag `smoke`) runs the real app on a simulated screen. Under every theme it opens the splash's theme picker, load game and accounts screens, starts a game and opens every sidebar panel plus help and the other overlays by typing their commands; under the default theme it also runs the read-only commands. After every step the event loop must answer within 4 seconds. A failing step prints the screen as text.
+| scenario | tier | what it checks |
+|---|---|---|
+| `static` | fast | The Gate Covenant from config alone: every age gate fits storage and every resource it needs has a source (also `go test ./smoke`). |
+| `docsync` | fast | Every "N ages / buildings / technologies / ..." claim in `site/index.html` (hero stats included), `README.md`, `site/docs/README.md` and the opening lines of each wiki page matches the config count; `buildings.md`'s lineage heading and table match the lineage count; `commands.md` documents every command in `ui/input.go`'s `HandleCommand` and every subcommand the autocompleter offers, and documents nothing the handler doesn't accept. Fix the docs, not the check. |
+| `progression` | fast: 3 seeds to the Bronze Age; full: 8 seeds, 2 prestige cycles, on to the Digital Age | The greedy bot (public engine methods only: no dev commands, god mode or speed changes) plays each seed. Fails on panics, soft-locks (30 simulated minutes with no new building, research or rising resources) and invariant violations (checked every 25 ticks: negative or non-finite values, resources over their cap, worker bookkeeping, a stale pending catastrophe, a requirement no storage can hold, a prestige that pays other than the documented formula or loses a legacy, ruins, upgrades or the Cosmic Legacy). Grades every age against the pacing table. |
+| `saveload` | fast: 2 checkpoints; full: 4 on 2 seeds | At one checkpoint per age, saves through `SaveGame`, loads into a fresh engine and plays the same N ticks with a fresh bot. The reload must equal the saved state, re-save to the same data and pass the signature check (a tampered copy must fail it), and the continued game must equal the uninterrupted run. The first divergent field is reported, with a replay that tells an RNG restart from lost state. |
+| `offline` | fast: 1 base state; full: 3 | Closes the game for 1h, 8h, 24h and 30h through the offline catch-up (`GameEngine.SimulateOffline`, the function `LoadGame` runs), plus one end-to-end load of a save written 8h ago. Gains must be positive, within rate x ticks x 50%, under the caps, capped at 24h (30h pays exactly what 24h does), and the invariants must hold while the game ticks on. |
+| `fuzz` | fast: 300 commands; full: 25,000 on 2 seeds | Random commands through the real handler (`ui.HandleCommand`): valid commands walked through the autocompleter's suggestions, valid commands with hostile arguments (huge, negative, NaN, unicode, path-like), mangled lines and garbage, with bot play between batches so later commands meet a real game. No panics, no hangs, invariants hold, ticks keep counting. A failure is replayed and shrunk to a short command list. |
+| `accounts` | fast | In a temp data dir: create two accounts with a save each, switch, export and import (the export must round-trip; tampered or garbage exports are refused), back up, recover from a recovery code (garbage and typo'd codes refused), wipe one account (the other's files stay byte-identical, a backup is written), wipe the active one and restore it from its export. |
+| `perf` | fast | The late-game `BenchmarkTick` and `BenchmarkGetState` (in `game/tick_perf_test.go`) against budgets (250µs and 1ms, generous for CI runners; actuals are reported), and a long run that samples the heap after GC and the size of every collection in `GameState`, failing on unbounded growth. |
+| `ui` | fast: the default and one light theme at 80x24; full: every theme at 80x24 and 100x30 | Runs `TestSmokeUISweep` (every theme at 180x56: splash pages, a new game, every overlay and read-only command) and `TestSmokeUISmallTerminals` (the dashboard and every overlay at small sizes, then live resizes) from `ui/smoke_sweep_test.go` (build tag `smoke`). A panic, a frozen event loop or a blank screen fails it. |
+| `styles` | full | The bot under five styles, 2 seeds each: `greedy`, `idle` (decides only at check-ins every 3 game-hours), `harbinger` (buys Appease and Brace), `succumber` (Succumbs every catastrophe), `cosmic` (Invites the Cosmic Era's harbinger, then Succumbs the Last Passage). Reports pacing and outcomes per style. |
+| `prestige` | full | Plays for two prestige cycles (reporting how far it got if the budget runs out first), then drives the same mechanics through the engine's test hooks: a Succumb for a legacy bonus and ruins, prestiges from the Modern Age checked against the formula, upgrades measured against a twin engine that bought none, a succumbed Last Passage for the Cosmic Legacy, and the prestiges it must survive. |
 
-Reading the report (`smoke-report/report.md`, plus `report.json` for scripts):
+#### Tiers and CI
 
-- **Runs**: outcome per seed. `done` means it reached its goal; `softlock`, `stalled`, `budget` and `panic` fail the run.
-- **Pacing per age**: time spent in each age at 1x speed (min/median/max across seeds). Pacing never fails the run; use it to spot an age that suddenly takes twice as long.
-- **Events** and **Harbingers**: catastrophes, epoch events, harbinger threads, verdicts, and whether the harbinger's answers were affordable.
-- **Anomalies**: each problem with a state dump that names what was blocking the next age.
+- **Fast tier** (`make smoke`, `-tier fast`): the scenarios above marked fast. It runs on every pull request as the `smoke (fast tier)` job in `.github/workflows/go.yml` (skipped for doc-only changes, like the rest of that workflow), writes a summary to the job page and uploads `smoke-report/` as an artifact.
+- **Full tier** (`make smoke-full`, `-tier full`): every scenario, deeper. It runs nightly in `.github/workflows/smoke.yml` (and on demand from the Actions tab) with the same summary and artifact.
+- Both fail on panics, soft-locks, invariant violations, save/load divergence, fuzz failures, account failures, docs mismatches and blown perf budgets. Pacing does not fail them while it runs in report mode.
+- **Known bugs** are reported as warnings instead of failures so the job stays useful while they wait for a fix; today that is only `known_bug_rng_restarts_on_load` (the RNG restarts from the run's seed on load). `-strict` fails on them too. When a known bug is fixed, delete its special case in the scenario.
 
-Before calling a soft-lock a bug, check whether a sensible player would be stuck too or whether the bot is just not clever enough (the trace helps). Improve the bot for the second case. Seeds control the engine's seeded RNG, but random events, expeditions and some flavour still use the global `math/rand`, so the same seed does not replay exactly.
+#### Reading the report
+
+Everything lands in `smoke-report/` (`-out` to change it):
+
+- `summary.md`: the verdict, one row per scenario, the pacing table and the failures. It is what the CI job page and the email show.
+- `report.md`: the full report, one section per scenario with every failure (message, repro command, and a state dump or stack under "detail"), the warnings, and the scenario's tables.
+- `report.json`: the same for scripts.
+- `progression.md`, `style-<name>.md`, `prestige-played.md`: the full bot report for each set of runs: outcome per seed, pacing, events and catastrophes, harbinger threads, bot actions, and each anomaly with a dump that names what was blocking the next age.
+
+Before calling a soft-lock a bug, check whether a sensible player would be stuck too or whether the bot is just not clever enough (`-trace` helps). Improve the bot for the second case.
+
+#### Pacing targets
+
+`smoke/targets.go` holds the pacing contract: the time a player should spend in each age at 1x game time (15 minutes in the Primitive Age up to 12 hours in the Atomic Age, about 3 days to the Modern Age and the first prestige, then 12 to 24 hours per age). An age passes when it takes 0.5x to 2x its target; the report marks each age ✓, slow or fast. The per-age timeout is derived from the same table (4x the target, at least an hour): in report mode an age past it is flagged and play goes on, so a slow age reads as slow instead of killing the run, and only a true no-progress soft-lock fails.
+
+To change the targets, edit `PacingTargets` in `smoke/targets.go` (`PacingLow`, `PacingHigh`, `TimeoutFactor` and `TimeoutFloor` sit beside it); `TestTargetsCoverEveryAge` checks every age has one. `-pacing enforce` makes an age outside the band, or past its timeout, fail the run. Switch the nightly to it once the balance lands on the table.
+
+#### Email
+
+Both workflows can email the summary (with `report.md` attached when it is under 300 KB) after every run, pass or fail. It is optional: with no secrets the email steps skip, and they always skip on pull requests from forks, which get no secrets. To turn it on, add three repository secrets (Settings → Secrets and variables → Actions):
+
+- `MAIL_USERNAME`: the Gmail address that sends the mail.
+- `MAIL_PASSWORD`: a Gmail [app password](https://support.google.com/accounts/answer/185833) for it, not the account password.
+- `MAIL_TO`: where the mail goes (comma-separate several).
+
+To keep the nightly emails but stop the per-PR ones, add a repository variable `SMOKE_EMAIL_PR` set to `false`.
 
 **Common test patterns:**
 - Tests create isolated managers — no shared state between tests

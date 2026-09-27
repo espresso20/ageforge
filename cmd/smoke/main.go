@@ -1,15 +1,19 @@
-// Command smoke boots AgeForge headless, plays it end to end with a greedy
-// bot over several seeds, and reports panics, soft-locks, invariant
-// violations, pacing and event counts.
+// Command smoke runs AgeForge's smoke suite: named scenarios that play the
+// game headless (a greedy bot, save/load round trips, offline catch-up,
+// command fuzzing, accounts, performance, the UI on a simulated terminal,
+// docs against config) and report what broke.
 //
-// It exits 1 if any seed hit a panic, a soft-lock or an invariant violation.
-// Slow pacing is reported but never fails the run.
+// It exits 1 if any scenario failed: a panic, a soft-lock, an invariant
+// violation, a save/load divergence, a fuzz crash, an account failure, a
+// docs mismatch or a blown performance budget. Pacing fails nothing unless
+// -pacing enforce.
 //
 // Usage:
 //
-//	go run ./cmd/smoke                 # quick mode (make smoke)
-//	go run ./cmd/smoke -mode full      # nightly mode (make smoke-full)
-//	go run ./cmd/smoke -seeds 1 -v     # one seed, progress on stderr
+//	go run ./cmd/smoke                         # fast tier (make smoke)
+//	go run ./cmd/smoke -tier full              # everything, deeper (make smoke-full)
+//	go run ./cmd/smoke -scenario saveload -v   # one scenario
+//	go run ./cmd/smoke -list                   # what the scenarios are
 package main
 
 import (
@@ -19,11 +23,10 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
-	"sync"
+	"strings"
 	"time"
 
 	"github.com/espresso20/ageforge/config"
-	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/smoke"
 )
 
@@ -32,147 +35,173 @@ func main() {
 }
 
 func run() int {
-	mode := flag.String("mode", "quick", "preset: quick (5 seeds, one run to prestige) or full (10 seeds, 2 prestige cycles, then on to digital_age)")
-	seeds := flag.Int("seeds", 0, "number of seeds (0 = mode default)")
+	tier := flag.String("tier", smoke.TierFast, "fast (per PR, a few minutes) or full (nightly: every scenario, deeper, more seeds)")
+	mode := flag.String("mode", "", "deprecated alias for -tier (quick = fast, full = full)")
+	scenarios := flag.String("scenario", "all", "comma-separated scenarios to run, or all (the tier's set); see -list")
+	list := flag.Bool("list", false, "list the scenarios and exit")
+	pacing := flag.String("pacing", smoke.PacingReport, "report (grade ages against smoke/targets.go, never fail) or enforce (fail on an age outside the band)")
+	seeds := flag.Int("seeds", 0, "seeds per bot scenario (0 = the scenario's tier default)")
 	seedBase := flag.Int64("seed-base", 1, "first seed; seeds are seed-base, seed-base+1, ...")
 	catastrophe := flag.String("catastrophe", "endure", "how the bot answers a catastrophe: endure or succumb")
-	prestigeAge := flag.String("prestige-age", "", "age at which to prestige (default: first age where prestige is allowed)")
-	cycles := flag.Int("cycles", 0, "prestige cycles to play (0 = mode default)")
-	finalAge := flag.String("final-age", "-", "after the last prestige keep playing to this age (\"\" = stop at prestige; default: mode preset)")
-	harbinger := flag.String("harbinger", "ignore", "bot answer to harbingers: ignore, appease, brace or both (level 1 only)")
-	stopAge := flag.String("stop-age", "", "end each run as soon as this age is entered (before prestige)")
+	harbinger := flag.String("harbinger", smoke.HarbingerIgnore, "bot answer to harbingers: ignore, appease, brace or both (level 1 only)")
+	style := flag.String("style", "", "styles scenario: run only this style ("+strings.Join(smoke.StyleNames(), ", ")+")")
+	prestigeAge := flag.String("prestige-age", "", "progression: age at which to prestige (default: first age where prestige is allowed)")
+	cycles := flag.Int("cycles", 0, "progression: prestige cycles to play (0 = tier default)")
+	finalAge := flag.String("final-age", "-", "progression: after the last prestige keep playing to this age (\"\" = stop at prestige; default: tier preset)")
+	stopAge := flag.String("stop-age", "", "progression: end each run as soon as this age is entered")
 	softlock := flag.Duration("softlock", 0, "simulated 1x span without progress that counts as a soft-lock (0 = default 30m)")
-	ageTimeout := flag.Duration("age-timeout", 0, "simulated 1x time in one age that counts as stalled (0 = default)")
-	maxSim := flag.Duration("max-sim", 0, "simulated 1x cap per seed (0 = default)")
+	ageTimeout := flag.Duration("age-timeout", 0, "fixed simulated 1x time allowed in every age (0 = derive each age's from the pacing table)")
+	maxSim := flag.Duration("max-sim", 0, "progression: simulated 1x cap per seed (0 = tier default)")
 	checkEvery := flag.Int("check-every", 0, "ticks between invariant sweeps (0 = default 25)")
+	strict := flag.Bool("strict", false, "fail on known bugs too (they are reported as warnings otherwise)")
+	fuzzCommands := flag.Int("fuzz-commands", 0, "fuzz: commands per seed (0 = tier default)")
 	parallel := flag.Int("parallel", runtime.NumCPU(), "seeds to run at once")
-	outDir := flag.String("out", "smoke-report", "directory for report.md and report.json")
+	outDir := flag.String("out", "smoke-report", "directory for report.md, summary.md, report.json and per-scenario files")
 	trace := flag.Bool("trace", false, "write every bot action to <out>/trace-<seed>.log")
-	verbose := flag.Bool("v", false, "print each seed's result to stderr as it finishes")
+	verbose := flag.Bool("v", false, "print progress to stderr")
 	flag.Parse()
 
-	cfg := smoke.DefaultConfig()
-	nSeeds, defCycles, defFinal := 5, 1, ""
+	if *list {
+		for _, s := range smoke.Scenarios() {
+			tag := ""
+			if s.FullOnly {
+				tag = " (full tier)"
+			}
+			fmt.Printf("%-12s %s%s\n", s.Name, s.Desc, tag)
+		}
+		return 0
+	}
 	switch *mode {
+	case "":
 	case "quick":
+		*tier = smoke.TierFast
 	case "full":
-		nSeeds, defCycles, defFinal = 10, 2, "digital_age"
+		*tier = smoke.TierFull
 	default:
-		fmt.Fprintf(os.Stderr, "unknown -mode %q (want quick or full)\n", *mode)
+		fmt.Fprintf(os.Stderr, "unknown -mode %q (want quick or full; prefer -tier)\n", *mode)
 		return 2
 	}
-	if *seeds > 0 {
-		nSeeds = *seeds
+	if *tier != smoke.TierFast && *tier != smoke.TierFull {
+		fmt.Fprintf(os.Stderr, "unknown -tier %q (want fast or full)\n", *tier)
+		return 2
 	}
-	if *cycles > 0 {
-		defCycles = *cycles
+	if *pacing != smoke.PacingReport && *pacing != smoke.PacingEnforce {
+		fmt.Fprintf(os.Stderr, "unknown -pacing %q (want report or enforce)\n", *pacing)
+		return 2
 	}
-	if *finalAge != "-" {
-		defFinal = *finalAge
-	}
-	cfg.Seeds = nil
-	for i := 0; i < nSeeds; i++ {
-		cfg.Seeds = append(cfg.Seeds, *seedBase+int64(i))
-	}
-	cfg.Cycles = defCycles
-	cfg.FinalAge = defFinal
-	cfg.PrestigeAge = *prestigeAge
-	cfg.StopAge = *stopAge
-	cfg.Harbinger = *harbinger
-	switch cfg.Harbinger {
+
+	base := smoke.DefaultConfig()
+	base.Catastrophe = *catastrophe
+	base.Harbinger = *harbinger
+	base.Pacing = *pacing
+	switch base.Harbinger {
 	case smoke.HarbingerIgnore, smoke.HarbingerAppease, smoke.HarbingerBrace, smoke.HarbingerBoth:
 	default:
-		fmt.Fprintf(os.Stderr, "unknown -harbinger %q (want ignore, appease, brace or both)\n", cfg.Harbinger)
+		fmt.Fprintf(os.Stderr, "unknown -harbinger %q (want ignore, appease, brace or both)\n", base.Harbinger)
 		return 2
 	}
-	cfg.Catastrophe = *catastrophe
+	if base.Catastrophe != "endure" && base.Catastrophe != "succumb" {
+		fmt.Fprintf(os.Stderr, "unknown -catastrophe %q (want endure or succumb)\n", base.Catastrophe)
+		return 2
+	}
 	if *softlock > 0 {
-		cfg.SoftlockSpan = *softlock
+		base.SoftlockSpan = *softlock
 	}
 	if *ageTimeout > 0 {
-		cfg.AgeTimeout = *ageTimeout
-	}
-	if *maxSim > 0 {
-		cfg.MaxSim = *maxSim
+		base.AgeTimeout = *ageTimeout
 	}
 	if *checkEvery > 0 {
-		cfg.CheckEvery = *checkEvery
+		base.CheckEvery = *checkEvery
 	}
-	if cfg.Catastrophe != "endure" && cfg.Catastrophe != "succumb" {
-		fmt.Fprintf(os.Stderr, "unknown -catastrophe %q (want endure or succumb)\n", cfg.Catastrophe)
-		return 2
+	if *style != "" {
+		if _, err := smoke.ApplyStyle(base, *style); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 2
+		}
 	}
 	ages := config.AgeByKey()
-	for _, a := range []string{cfg.PrestigeAge, cfg.FinalAge, cfg.StopAge} {
+	for _, a := range []string{*prestigeAge, *stopAge, strings.TrimPrefix(*finalAge, "-")} {
 		if _, ok := ages[a]; a != "" && !ok {
 			fmt.Fprintf(os.Stderr, "unknown age %q\n", a)
 			return 2
 		}
 	}
-
-	// The engine stats a save file on every snapshot; keep that away from
-	// the real data directory.
-	tmp, err := os.MkdirTemp("", "ageforge-smoke-")
-	if err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 2
-	}
-	defer os.RemoveAll(tmp)
-	defer game.SetDataDirForTest(tmp)()
-
 	if err := os.MkdirAll(*outDir, 0o755); err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
+	absOut, _ := filepath.Abs(*outDir)
 	if *trace {
-		cfg.TraceDir = *outDir
+		base.TraceDir = absOut
 	}
-	started := time.Now()
-	results := make([]*smoke.RunResult, len(cfg.Seeds))
-	sem := make(chan struct{}, max(1, *parallel))
-	var wg sync.WaitGroup
-	var mu sync.Mutex
-	for i, seed := range cfg.Seeds {
-		wg.Add(1)
-		go func(i int, seed int64) {
-			defer wg.Done()
-			sem <- struct{}{}
-			defer func() { <-sem }()
-			r := smoke.Run(cfg, seed)
-			results[i] = r
-			if *verbose {
-				mu.Lock()
-				fmt.Fprintf(os.Stderr, "seed %d: %s at %s after %d ticks (%s at 1x), %d anomalies, %s wall\n",
-					seed, r.Outcome, r.FinalAge, r.Ticks, time.Duration(r.Seconds*float64(time.Second)).Round(time.Minute),
-					len(r.Anomalies), time.Duration(r.WallMillis)*time.Millisecond)
-				mu.Unlock()
-			}
-		}(i, seed)
-	}
-	wg.Wait()
 
-	sum := smoke.NewSummary(*mode, cfg, started, results)
-	mdPath := filepath.Join(*outDir, "report.md")
-	jsonPath := filepath.Join(*outDir, "report.json")
-	if err := writeFile(mdPath, sum.WriteMarkdown); err != nil {
+	env := &smoke.Env{
+		Tier: *tier, Seeds: *seeds, SeedBase: *seedBase, Pacing: *pacing, Parallel: *parallel,
+		OutDir: absOut, RepoRoot: repoRoot(), Base: base, Style: *style, FuzzCommands: *fuzzCommands, Strict: *strict,
+		Overrides: smoke.Overrides{MaxSim: *maxSim, StopAge: *stopAge, PrestigeAge: *prestigeAge, Cycles: *cycles},
+	}
+	if *finalAge != "-" {
+		env.Overrides.FinalAge, env.Overrides.FinalAgeSet = *finalAge, true
+	}
+	if *verbose {
+		env.Logf = func(format string, args ...interface{}) {
+			fmt.Fprintf(os.Stderr, "[%s] %s\n", time.Now().Format("15:04:05"), fmt.Sprintf(format, args...))
+		}
+	}
+
+	var names []string
+	for _, n := range strings.Split(*scenarios, ",") {
+		if n = strings.TrimSpace(n); n != "" {
+			names = append(names, n)
+		}
+	}
+	sess, err := smoke.RunScenarios(env, names)
+	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 2
 	}
-	if err := writeFile(jsonPath, sum.WriteJSON); err != nil {
-		fmt.Fprintln(os.Stderr, err)
-		return 2
+	for _, f := range []struct {
+		name  string
+		write func(io.Writer) error
+	}{{"report.md", sess.WriteMarkdown}, {"summary.md", sess.WriteSummary}, {"report.json", sess.WriteJSON}} {
+		if err := writeFile(filepath.Join(absOut, f.name), f.write); err != nil {
+			fmt.Fprintln(os.Stderr, err)
+			return 2
+		}
 	}
-
 	verdict := "PASS"
-	if sum.Failed {
+	if sess.Failed {
 		verdict = "FAIL"
 	}
-	fmt.Printf("smoke %s: %d seed(s), %d anomaly(ies), %s wall. Report: %s, %s\n",
-		verdict, len(results), sum.Anomalies, time.Since(started).Round(time.Second), mdPath, jsonPath)
-	if sum.Failed {
+	var parts []string
+	for _, r := range sess.Scenarios {
+		parts = append(parts, fmt.Sprintf("%s %s", r.Name, r.Status))
+	}
+	fmt.Printf("smoke %s (%s tier, %s): %s. Report: %s\n", verdict, sess.Tier,
+		(time.Duration(sess.WallMs) * time.Millisecond).Round(time.Second), strings.Join(parts, ", "), filepath.Join(*outDir, "report.md"))
+	if sess.Failed {
 		return 1
 	}
 	return 0
+}
+
+// repoRoot walks up from the working directory to the directory holding
+// go.mod ("" if there is none).
+func repoRoot() string {
+	dir, err := os.Getwd()
+	if err != nil {
+		return ""
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(dir, "go.mod")); err == nil {
+			return dir
+		}
+		parent := filepath.Dir(dir)
+		if parent == dir {
+			return ""
+		}
+		dir = parent
+	}
 }
 
 func writeFile(path string, write func(io.Writer) error) error {

@@ -19,6 +19,7 @@ package ui
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
 	"time"
@@ -210,7 +211,10 @@ func (s *sweeper) splashPage(key rune, page string, exercise func()) {
 	s.ping()
 }
 
-func TestSmokeUISweep(t *testing.T) {
+// bootSweeper starts the real App on a w x h simulated screen, in a temp
+// data dir with a named account, and waits for the splash menu.
+func bootSweeper(t *testing.T, w, h int) (*sweeper, *game.GameEngine) {
+	t.Helper()
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
 	t.Cleanup(func() { _ = theme.SetActive(theme.DefaultKey) })
 	acct, err := game.CreateNamedAccount("Smoke Sweep")
@@ -222,14 +226,140 @@ func TestSmokeUISweep(t *testing.T) {
 	a := NewApp(eng, "dev") // "dev" skips the network update check
 	sim := tcell.NewSimulationScreen("UTF-8")
 	a.SetScreen(sim)
-	sim.SetSize(180, 56)
-	h := &reproHarness{t: t, eng: eng, a: a, sim: sim, runErr: make(chan error, 1)}
-	go func() { h.runErr <- a.Run() }()
+	sim.SetSize(w, h)
+	hr := &reproHarness{t: t, eng: eng, a: a, sim: sim, runErr: make(chan error, 1)}
+	go func() { hr.runErr <- a.Run() }()
 	// Registered after SetDataDirForTest, so (cleanups run last in, first
 	// out) it runs before the data dir is restored.
-	t.Cleanup(h.teardown)
-	s := &sweeper{reproHarness: h, step: "boot"}
+	t.Cleanup(hr.teardown)
+	s := &sweeper{reproHarness: hr, step: "boot"}
 	s.wait("splash menu", func() bool { return s.front() == "splash" })
+	return s, eng
+}
+
+// sweepThemes picks the themes for the small-terminal sweep from
+// SMOKE_UI_THEMES: "all", or a comma list of keys where "default" is the
+// default theme and "light" the first light (Standard, non-default) one.
+// Unset means default and light.
+func sweepThemes(t *testing.T) []string {
+	spec := os.Getenv("SMOKE_UI_THEMES")
+	if spec == "" {
+		spec = "default,light"
+	}
+	var out []string
+	for _, k := range strings.Split(spec, ",") {
+		switch k = strings.TrimSpace(k); k {
+		case "all":
+			for _, th := range theme.All() {
+				out = append(out, th.Key)
+			}
+		case "default":
+			out = append(out, theme.DefaultKey)
+		case "light":
+			out = append(out, "daylight")
+		case "":
+		default:
+			out = append(out, k)
+		}
+	}
+	for _, k := range out {
+		found := false
+		for _, th := range theme.All() {
+			found = found || th.Key == k
+		}
+		if !found {
+			t.Fatalf("SMOKE_UI_THEMES names unknown theme %q", k)
+		}
+	}
+	return out
+}
+
+// sweepSizes parses SMOKE_UI_SIZES ("80x24,100x30"; unset means both).
+func sweepSizes(t *testing.T) [][2]int {
+	spec := os.Getenv("SMOKE_UI_SIZES")
+	if spec == "" {
+		spec = "80x24,100x30"
+	}
+	var out [][2]int
+	for _, s := range strings.Split(spec, ",") {
+		var w, h int
+		if _, err := fmt.Sscanf(strings.TrimSpace(s), "%dx%d", &w, &h); err != nil || w <= 0 || h <= 0 {
+			t.Fatalf("bad SMOKE_UI_SIZES entry %q", s)
+		}
+		out = append(out, [2]int{w, h})
+	}
+	return out
+}
+
+// TestSmokeUISmallTerminals opens the dashboard and every overlay on small
+// terminals (SMOKE_UI_SIZES, default 80x24 and 100x30) under the themes in
+// SMOKE_UI_THEMES, then resizes the live dashboard to each other size. A
+// panic, a frozen event loop or a blank screen fails it.
+func TestSmokeUISmallTerminals(t *testing.T) {
+	sizes := sweepSizes(t)
+	themes := sweepThemes(t)
+	steps := 0
+	for _, sz := range sizes {
+		for _, key := range themes {
+			sz, key := sz, key
+			t.Run(fmt.Sprintf("%dx%d/%s", sz[0], sz[1], key), func(t *testing.T) {
+				s, _ := bootSweeper(t, sz[0], sz[1])
+				s.step = "switch theme to " + key
+				s.ui(func() {
+					if err := theme.SetActive(key); err != nil {
+						t.Errorf("SetActive(%q): %v", key, err)
+					}
+				})
+				s.step = fmt.Sprintf("new game at %dx%d", sz[0], sz[1])
+				s.press(tcell.KeyRune, 'n')
+				s.wait("new game name prompt", func() bool { return s.front() == newGameNamePage })
+				s.press(tcell.KeyEnter, 0)
+				s.wait("dashboard with input focus", func() bool { return s.front() == "dashboard" && s.inputFocused() })
+				s.ping()
+				if strings.TrimSpace(s.liveScreen()) == "" {
+					s.fail("blank dashboard at %dx%d", sz[0], sz[1])
+				}
+				for _, o := range sweepOverlays {
+					s.step = fmt.Sprintf("[%dx%d %s] %s", sz[0], sz[1], key, o.cmd)
+					s.submit(o.cmd)
+					s.wait("overlay "+o.overlay, func() bool { return s.activeOverlay() == o.overlay })
+					s.ping()
+					if strings.TrimSpace(s.liveScreen()) == "" {
+						s.fail("blank screen with overlay %s open", o.overlay)
+					}
+					s.press(tcell.KeyEsc, 0)
+					s.wait("overlay closed", func() bool { return s.activeOverlay() == "" && s.inputFocused() })
+					steps++
+				}
+				for _, other := range append(sizes, [2]int{sz[0], sz[1]}) {
+					other := other
+					s.step = fmt.Sprintf("resize to %dx%d", other[0], other[1])
+					// The simulation screen resizes silently; post the event a
+					// real terminal would send.
+					s.sim.SetSize(other[0], other[1])
+					if err := s.sim.PostEvent(tcell.NewEventResize(other[0], other[1])); err != nil {
+						s.fail("posting the resize event: %v", err)
+					}
+					time.Sleep(120 * time.Millisecond) // tview throttles resize redraws
+					s.ping()
+					if strings.TrimSpace(s.liveScreen()) == "" {
+						s.fail("blank dashboard after resizing to %dx%d", other[0], other[1])
+					}
+				}
+				for _, l := range s.eng.GetLogs() {
+					if strings.Contains(l.Message, "recovered from panic") {
+						t.Errorf("engine recovered a panic: %s", l.Message)
+					}
+				}
+			})
+		}
+	}
+	t.Logf("small terminals: %d size(s) x %d theme(s), %d overlay steps", len(sizes), len(themes), steps)
+}
+
+func TestSmokeUISweep(t *testing.T) {
+	s, eng := bootSweeper(t, 180, 56)
+	h := s.reproHarness
 
 	steps := 0
 	for i, th := range theme.All() {

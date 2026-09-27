@@ -37,8 +37,12 @@ type ConfigJSON struct {
 	DecideEvery  int     `json:"decide_every_ticks"`
 	CheckEvery   int     `json:"check_every_ticks"`
 	SoftlockSecs float64 `json:"softlock_seconds"`
-	AgeTimeout   float64 `json:"age_timeout_seconds"`
-	MaxSimSecs   float64 `json:"max_sim_seconds"`
+	// AgeTimeout is 0 when each age's timeout comes from the pacing table.
+	AgeTimeout  float64 `json:"age_timeout_seconds"`
+	MaxSimSecs  float64 `json:"max_sim_seconds"`
+	Pacing      string  `json:"pacing"`
+	Style       string  `json:"style,omitempty"`
+	LastPassage string  `json:"last_passage,omitempty"`
 }
 
 // PacingRow aggregates one (cycle, age) across seeds. Times are 1x seconds.
@@ -51,6 +55,12 @@ type PacingRow struct {
 	MaxSecs     float64 `json:"max_seconds"`
 	MedianTicks int     `json:"median_ticks"`
 	Unfinished  bool    `json:"unfinished,omitempty"`
+	// TargetSecs is the pacing target, Ratio the median over it, Verdict
+	// the median graded against the band (see targets.go).
+	TargetSecs float64 `json:"target_seconds,omitempty"`
+	Ratio      float64 `json:"ratio,omitempty"`
+	Verdict    string  `json:"verdict,omitempty"`
+	TimedOut   bool    `json:"timed_out,omitempty"`
 }
 
 // NewSummary aggregates results.
@@ -61,6 +71,7 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 			Seeds: cfg.Seeds, Catastrophe: cfg.Catastrophe, Harbinger: cfg.Harbinger, PrestigeAge: cfg.PrestigeAge,
 			Cycles: cfg.Cycles, FinalAge: cfg.FinalAge, DecideEvery: cfg.DecideEvery, CheckEvery: cfg.CheckEvery,
 			SoftlockSecs: cfg.SoftlockSpan.Seconds(), AgeTimeout: cfg.AgeTimeout.Seconds(), MaxSimSecs: cfg.MaxSim.Seconds(),
+			Pacing: cfg.Pacing, Style: cfg.Style, LastPassage: cfg.LastPassage,
 		},
 	}
 	type key struct {
@@ -72,6 +83,7 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 	s.Gates, s.Slack = StaticGates()
 	secs := map[key][]float64{}
 	ticks := map[key][]float64{}
+	timedOut := map[key]bool{}
 	for _, r := range runs {
 		s.Anomalies += len(r.Anomalies)
 		if r.Failed() {
@@ -83,6 +95,9 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 			k := key{a.Cycle, a.Age, a.Unfinished}
 			v := perSeed[k]
 			perSeed[k] = [2]float64{v[0] + a.Seconds, v[1] + float64(a.Ticks)}
+			if a.TimedOut {
+				timedOut[k] = true
+			}
 		}
 		for k, v := range perSeed {
 			secs[k] = append(secs[k], v[0])
@@ -96,10 +111,16 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 	for k, v := range secs {
 		lo, med, hi := spread(v)
 		_, tmed, _ := spread(ticks[k])
-		s.Pacing = append(s.Pacing, PacingRow{
+		row := PacingRow{
 			Cycle: k.cycle, Age: k.age, Unfinished: k.open, Samples: len(v),
 			MinSecs: lo, MedianSecs: med, MaxSecs: hi, MedianTicks: int(tmed),
-		})
+			Verdict: Verdict(k.age, med, !k.open), TimedOut: timedOut[k],
+		}
+		if t, ok := Target(k.age); ok {
+			row.TargetSecs = t.Seconds()
+			row.Ratio = med / t.Seconds()
+		}
+		s.Pacing = append(s.Pacing, row)
 	}
 	sort.Slice(s.Pacing, func(i, j int) bool {
 		a, b := s.Pacing[i], s.Pacing[j]
@@ -168,7 +189,11 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 	}
 	fmt.Fprintf(&sb, ". Took %s of wall time.\n\n", time.Duration(s.WallMs)*time.Millisecond)
 	sb.WriteString("Times are simulated wall-clock at 1x speed (tick_speed bonuses included). ")
-	sb.WriteString("Pacing never fails the run; panics, soft-locks and invariant violations do.\n\n")
+	if s.Config.Pacing == PacingEnforce {
+		sb.WriteString("Pacing is enforced: an age outside its target band, or past its timeout, fails the run, as do panics, soft-locks and invariant violations.\n\n")
+	} else {
+		sb.WriteString("Pacing is report-only: ages are graded against their targets but never fail the run; panics, soft-locks and invariant violations do.\n\n")
+	}
 
 	sb.WriteString("## Runs\n\n| seed | outcome | reached | ticks | 1x time | cycles to prestige | anomalies | wall |\n|---|---|---|---|---|---|---|---|\n")
 	for _, r := range s.Runs {
@@ -180,14 +205,13 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 			orDefault(strings.Join(cyc, ", "), "-"), len(r.Anomalies), time.Duration(r.WallMillis)*time.Millisecond)
 	}
 
-	sb.WriteString("\n## Pacing per age\n\nTime spent in each age, from entering it to entering the next, across seeds.\n\n")
-	sb.WriteString("| cycle | age | seeds | min | median | max | median ticks |\n|---|---|---|---|---|---|---|\n")
-	for _, p := range s.Pacing {
-		age := p.Age
-		if p.Unfinished {
-			age += " (unfinished: run ended here)"
+	sb.WriteString("\n## Pacing per age\n\n")
+	fmt.Fprintf(&sb, "Time spent in each age, from entering it to entering the next, across seeds, against the target in smoke/targets.go (pass: %gx to %gx the target; the verdict grades the median).\n\n", PacingLow, PacingHigh)
+	s.writePacingTable(&sb)
+	for _, r := range s.Runs {
+		for _, n := range r.Notes {
+			fmt.Fprintf(&sb, "- seed %d: %s\n", r.Seed, n)
 		}
-		fmt.Fprintf(&sb, "| %d | %s | %d | %s | %s | %s | %d |\n", p.Cycle, age, p.Samples, dur(p.MinSecs), dur(p.MedianSecs), dur(p.MaxSecs), p.MedianTicks)
 	}
 	var cyc []float64
 	for _, r := range s.Runs {
@@ -268,6 +292,28 @@ func countStr(m map[string]int) string {
 		parts = append(parts, fmt.Sprintf("%s %d", k, m[k]))
 	}
 	return strings.Join(parts, ", ")
+}
+
+// writePacingTable renders the per-age pacing rows with their targets and
+// verdicts.
+func (s *Summary) writePacingTable(sb *strings.Builder) {
+	sb.WriteString("| cycle | age | seeds | min | median | max | target | ratio | verdict |\n|---|---|---|---|---|---|---|---|---|\n")
+	for _, p := range s.Pacing {
+		age := p.Age
+		if p.Unfinished {
+			age += " (unfinished)"
+		}
+		if p.TimedOut {
+			age += " (past timeout)"
+		}
+		target, ratio := "-", "-"
+		if p.TargetSecs > 0 {
+			target = dur(p.TargetSecs)
+			ratio = fmt.Sprintf("%.2gx", p.Ratio)
+		}
+		fmt.Fprintf(sb, "| %d | %s | %d | %s | %s | %s | %s | %s | %s |\n", p.Cycle, age, p.Samples,
+			dur(p.MinSecs), dur(p.MedianSecs), dur(p.MaxSecs), target, ratio, verdictMark(p.Verdict))
+	}
 }
 
 func countTotal(m map[string]int) int {

@@ -39,21 +39,17 @@ test:
 test-raw: build vet
 	@go test ./... -v -count=1
 
-# Smoke test (quick, a few minutes): UI sweep under every theme, then the headless
-# autoplayer on 5 seeds up to the first prestige. Report in smoke-report/.
-# Fails on panics, soft-locks and invariant violations, never on pacing.
+# Smoke suite, fast tier (a few minutes; what every PR runs): static gates,
+# docsync, 3 seeds of play to the Bronze Age, save/load, offline, fuzz,
+# accounts, perf budgets and the UI sweeps. Report in smoke-report/.
+# One scenario: go run ./cmd/smoke -scenario saveload -v (see -list).
 smoke:
-	@status=0; \
-	go test -tags smoke -count=1 -run TestSmokeUISweep ./ui || status=1; \
-	go run ./cmd/smoke -mode quick -out smoke-report || status=1; \
-	exit $$status
+	@go run ./cmd/smoke -tier fast -v -out smoke-report
 
-# Nightly smoke: more seeds, two prestige cycles, then on to deep ages.
+# Smoke suite, full tier (what the nightly runs): every scenario, deeper and
+# on more seeds, plus the play styles and two prestige cycles.
 smoke-full:
-	@status=0; \
-	go test -tags smoke -count=1 -run TestSmokeUISweep ./ui || status=1; \
-	go run ./cmd/smoke -mode full -out smoke-report || status=1; \
-	exit $$status
+	@go run ./cmd/smoke -tier full -v -out smoke-report
 
 # Run the game
 run: build

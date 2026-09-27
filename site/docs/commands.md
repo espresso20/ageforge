@@ -19,16 +19,15 @@ Balance values are still *defined* in ticks — a tech costs so many ticks of re
 | Command | Description |
 |---|---|
 | `build <key>` | Start constructing a building |
-| `build cancel` | Cancel the current build in the queue |
 | `sell <building> [count]` | Demolish a building and recover 50% of its build cost. Workers are returned to idle. |
 | `upgrade <building> [count\|all]` | Convert building copies to the next-age tier equivalent, paying only the cost delta (new copy cost minus 50% of the old copy's sell value). Defaults to all copies if no count given. Stops at the new building's max count. Storage buildings are never upgraded — older storage keeps counting. |
 | `gather <resource> [amount]` | Manually gather food, wood, or stone (max 25 per command). Disabled from the Renaissance Age onward — works through the Medieval Age only. |
+| `buildings` | Open the **Buildings** panel |
 
 **Example:**
 ```
 build hut
 build lumber_mill
-build cancel
 sell lumber_mill
 sell gathering_camp 3
 upgrade forager_post
@@ -48,6 +47,8 @@ gather wood 5
 | `unassign <building_key> [count\|all]` | Unassign workers from a building (returns them to idle pool) |
 | `dismiss <building_key> [count\|all]` | Permanently remove workers from a building and from the population pool entirely |
 | `workers` | Open the worker status overlay (summary, slot utilization, domain breakdown) |
+| `status` (or `s`) | Print a status summary: age and tick, every unlocked resource with amount, storage and rate, and your population by class with idle counts and assignments |
+| `rates` | Print a per-resource rate breakdown — buildings, workers, research, events, trade, bonuses and food drain |
 
 Workers are recruited generically from available housing capacity and assigned to buildings, where they become that building's domain class (Gatherer, Lumberjack, etc.). `unassign` returns workers to idle; `dismiss` reduces total population.
 
@@ -72,6 +73,9 @@ See [Workers & Domains (Reference)](workers-and-domains.md) for the full domain 
 
 | Command | Description |
 |---|---|
+| `research` | Open the **Research** panel |
+| `techs` | Opens the same **Research** panel |
+| `research list` | List the technologies you can research now, with their knowledge cost |
 | `research <key>` | Start researching a technology |
 | `research cancel` | Cancel active research (progress is lost) |
 
@@ -120,8 +124,12 @@ From the **Industrial Age** you can build a **Geographic Society**, which sends 
 
 | Command | Description |
 |---|---|
-| `trade start <key>` | Activate a trade route |
-| `trade stop <key>` | Cancel an active trade route |
+| `trade` | Open the **Trade** panel |
+| `trade list` | List the market's exchange rates (build a market first) |
+| `trade <from> <to> <amount>` | Exchange resources at the market rate (needs a market), e.g. `trade wood stone 100` |
+| `trade route` (or `trade route list`) | List your active trade routes and the routes you can start |
+| `trade route start <key>` | Activate a trade route |
+| `trade route stop <key>` | Cancel an active trade route |
 | `blackmarket` (or `bm`) | Show black-market status — culture cost, payout odds, and cooldown (Colonial Age+) |
 | `blackmarket <resource>` | Run a high-risk culture deal for a chance at a big haul of the chosen resource |
 | `trade black <resource>` | Alias for `blackmarket <resource>` |
@@ -136,8 +144,10 @@ From the **Industrial Age** you can build a **Geographic Society**, which sends 
 | `diplomacy raid <civ>` | Raid a civilization's trade route (-20 opinion; a war provocation) |
 
 ```
-trade start coastal_market
-trade stop coastal_market
+trade list
+trade wood stone 100
+trade route start coastal_market
+trade route stop coastal_market
 factions                   # opens the Factions panel
 diplomacy                  # the same panel, under its older name
 diplomacy gift merchant_guild
@@ -233,6 +243,17 @@ Spend a lump of **culture** (max(2,000, 5% of your culture storage cap)) for **+
 
 ---
 
+## Milestones & Epochs
+
+| Command | Description |
+|---|---|
+| `milestones` (or `ms`) | Open the **Milestones** panel — chain progress, earned titles and active speed boosts |
+| `epoch` | Open the **Epoch** panel |
+
+See [Milestones](milestones.md) and [Epochs](epochs.md).
+
+---
+
 ## Civilization History
 
 | Command | Description |
@@ -296,6 +317,7 @@ See [The Harbinger](harbinger.md) for the roster, false prophets and verdicts.
 | `load` | Open the **Load Game** browser (your save tree) to pick which save/branch to load |
 | `load <name>` | Load that save directly |
 | `saves` | List all save files |
+| `save list` | Same as `saves` |
 | `Esc` | Quick-save to your active save |
 | `account` | Show the active account's short ID and **recovery code** (restores identity, not progress) |
 | `account list` | List the local accounts on this machine, marking the active one |

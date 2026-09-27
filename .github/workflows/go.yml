@@ -62,3 +62,79 @@ jobs:
 
       - name: go test -race
         run: go test -race ./...
+
+  # The smoke suite's fast tier on every pull request (see CONTRIBUTING.md,
+  # "Smoke testing"): static gates, docsync, a few seeds of play, save/load,
+  # offline catch-up, command fuzzing, accounts, perf budgets and the UI at
+  # small terminal sizes. Fails on crashes, soft-locks, invariant violations,
+  # save/load divergence, fuzz failures, account failures, docs mismatches
+  # and blown perf budgets; pacing is graded but never fails the job.
+  smoke:
+    name: smoke (fast tier)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    env:
+      # A flag, not the secrets themselves, so the smoke step (PR code) never
+      # sees them. Empty on fork PRs and until the secrets are set; the email
+      # step then skips. Set the repo variable SMOKE_EMAIL_PR to "false" to
+      # stop PR emails and keep the nightly ones.
+      MAIL_ENABLED: ${{ secrets.MAIL_USERNAME != '' && secrets.MAIL_PASSWORD != '' && secrets.MAIL_TO != '' && vars.SMOKE_EMAIL_PR != 'false' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - name: Smoke (fast tier)
+        id: smoke
+        run: go run ./cmd/smoke -tier fast -v -out smoke-report
+
+      - name: Job summary
+        if: ${{ always() }}
+        run: |
+          if [ -f smoke-report/summary.md ]; then
+            cat smoke-report/summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "The smoke run wrote no report; see the step log." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: smoke-report
+          path: smoke-report/
+          if-no-files-found: warn
+
+      - name: Email body
+        id: email
+        if: ${{ always() && env.MAIL_ENABLED == 'true' }}
+        env:
+          RESULT: ${{ steps.smoke.outcome == 'success' && 'PASS' || 'FAIL' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          SHA: ${{ github.event.pull_request.head.sha }}
+        run: bash scripts/smoke-email.sh "PR #$PR_NUMBER"
+
+      - name: Email the report
+        if: ${{ always() && env.MAIL_ENABLED == 'true' && steps.email.outcome == 'success' }}
+        # dawidd6/action-send-mail v22
+        uses: dawidd6/action-send-mail@67ce3558d613188179559c61d3565140cf389968
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          to: ${{ secrets.MAIL_TO }}
+          from: AgeForge Smoke <${{ secrets.MAIL_USERNAME }}>
+          subject: ${{ steps.email.outputs.subject }}
+          body: file://${{ runner.temp }}/smoke-email.md
+          html_body: file://${{ runner.temp }}/smoke-email.md
+          convert_markdown: true
+          attachments: ${{ steps.email.outputs.attachments }}

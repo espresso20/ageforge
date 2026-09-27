@@ -1,6 +1,6 @@
 # Technologies
 
-Research is your civilization's most powerful long-term lever. 52 technologies span all 22 ages — each one permanently alters your production rates, military strength, storage caps, or the pace of the game itself. Research is **sequential**: only one technology can be in progress at a time, and it must run to completion (or be deliberately cancelled) before you can start the next.
+Research is your civilization's most powerful long-term lever. 73 technologies span all 22 ages — each one permanently alters your production rates, military strength, storage caps, or the pace of the game itself. Research is **sequential**: only one technology can be in progress at a time, and it must run to completion (or be deliberately cancelled) before you can start the next.
 
 ---
 
