@@ -23,7 +23,7 @@ The Cosmic Era is the only epoch with 4 ages instead of 3.
 ### Epoch Flavours
 
 **◈ Stone Era** — *"Humanity's first steps — wood, stone, and fire."*
-Your settlement scratches out survival. Food is the bottleneck; wood is the building block. Events are raw and primal — river floods, wandering sages, tribal raids. Every resource counts, and your faith capacity is tiny. No catastrophe can strike here, random or invoked.
+Your settlement scratches out survival. Food is the bottleneck; wood is the building block. Events are raw and primal — river floods, wandering sages, tribal raids. Every resource counts, and your faith capacity is tiny. No catastrophe can strike here.
 
 **⚔ Iron Era** — *"Empires of iron and faith rise and fall."*
 Iron is king. Your armies grow, trade routes lengthen, and the church exerts real influence. The Great Plague is the first catastrophe that can strike, and the cheapest one to Succumb to. Oracle prophecies and imperial roads can dramatically accelerate your mid-game.
@@ -282,14 +282,6 @@ Best when: you just entered the epoch (low reset cost) and don't hold its legacy
 
 **The stacking math:** six epochs can be succumbed in (Iron to Cosmic), so Ancient Knowledge tops out at +150% research speed.
 
-### Voluntary Catastrophe
-
-```
-catastrophe invoke
-```
-
-Triggers the current epoch's catastrophe now. Refused before the Iron Era, while another catastrophe is pending, or if this epoch already had its catastrophe this run (random or invoked). An epoch whose transition rolled a good or challenging event can still be invoked.
-
 ---
 
 ## Random Event Types (Reference)
@@ -384,7 +376,7 @@ The sweet spot is usually one full age's worth of extra time (enough ticks to bu
 
 **Each epoch you Succumb in adds +25% research speed permanently.** Repeat Succumbs in the same epoch add nothing, so the value is in collecting different epochs. This is the main argument for a deliberate early Succumb in the Iron Era.
 
-**One catastrophe per epoch per run.** You cannot chain-catastrophe your way through an epoch, and none can strike before the Iron Era. Voluntary invoke is the tool for deliberate Succumb strategies.
+**One catastrophe per epoch per run.** You cannot chain-catastrophe your way through an epoch, and none can strike before the Iron Era.
 
 ---
 

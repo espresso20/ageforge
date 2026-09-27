@@ -1,6 +1,6 @@
 # Catastrophe System
 
-A catastrophe is a civilization-threatening event that forces a permanent choice: **Endure** or **Succumb**. Catastrophes can strike when your civilization crosses into a new epoch, and you can also invoke one yourself. Neither is possible before the **Iron Era**.
+A catastrophe is a civilization-threatening event that forces a permanent choice: **Endure** or **Succumb**. Catastrophes strike when your civilization crosses into a new epoch, from the **Iron Era** on. You can't trigger one yourself.
 
 When a catastrophe hits, nothing is destroyed yet. The game keeps running and the choice waits for you:
 
@@ -26,8 +26,8 @@ So the chance of a catastrophe at a transition is **18% at low faith, 15% at mid
 
 Extra rules:
 
-- **Iron Era gate.** No catastrophe before the epoch that contains the Iron Age. In practice the Stone Era never has one, random or invoked.
-- **One per epoch per run.** Once an epoch has had its catastrophe (random or invoked), it cannot have another this run. Succumb and prestige start a new run, so the epochs can roll again.
+- **Iron Era gate.** No catastrophe before the epoch that contains the Iron Age. In practice the Stone Era never has one.
+- **One per epoch per run.** Each epoch's transition rolls once per run. Succumb and prestige start a new run, so the epochs roll again.
 - **Never overwritten.** A new catastrophe can't replace one that is still pending. You can't reach the next transition while one is pending anyway.
 - **At most 6 per run**, one for each epoch from Iron to Cosmic.
 
@@ -122,7 +122,7 @@ The research bonus comes straight from your legacy flags: +25% per epoch flagged
 
 From Iron to Cosmic there are 6 epochs you can succumb in, so the most you can earn now is **+150%**. A save that earned the Stone Era legacy before the Iron gate existed keeps it (+175% total).
 
-**When to Succumb:** your civilization is still small, and you don't yet hold this epoch's legacy. The Iron Era is the earliest place this is possible.
+**When to Succumb:** you don't yet hold this epoch's legacy, and the reset is cheap for you. A catastrophe always arrives right as you enter an epoch, so the question is how much of the run you'd be giving up.
 
 ---
 
@@ -154,24 +154,6 @@ Over the 6 transitions of a run, high faith against low faith is roughly a third
 
 ---
 
-## Voluntary Catastrophe
-
-```
-catastrophe invoke
-```
-
-Triggers the current epoch's catastrophe now and opens the Endure / Succumb modal. It is refused:
-
-- before the Iron Era,
-- while another catastrophe is pending,
-- if this epoch has already had its catastrophe this run.
-
-An epoch whose transition rolled a good or challenging event can still be invoked.
-
-**Why invoke?** To Succumb while your civilization is small and lock in this epoch's legacy bonus early. The cheapest window is right after entering the Iron Era. After a Succumb you have to climb back to the Iron Era before you can invoke again, and the epochs you already hold give no new legacy or research bonus, so repeat loops only add ruins, and ruins are capped.
-
----
-
 ## Civilization Log
 
 Every resolved catastrophe adds a line:
@@ -197,7 +179,7 @@ The Epoch tab's history marks each past epoch's catastrophe as **Survived**, **S
 
 ### Succumb beats Endure when
 
-- you just entered the epoch and the reset is cheap,
+- the reset is cheap (early epochs, or a run you were going to prestige soon anyway),
 - you don't hold this epoch's legacy yet,
 - you have plenty of runs ahead to cash in the research bonus.
 
@@ -211,4 +193,4 @@ Enduring costs 10 points of morale. Keep food positive, avoid over-militarizing 
 
 ### The long game
 
-Succumbing once in each epoch from Iron to Cosmic, over several runs, collects all six reachable legacy bonuses and +150% research speed. Each run after that starts with those bonuses and up to 24 ruins producing from tick 1.
+Succumbing once in each epoch from Iron to Cosmic, over several runs, collects all six reachable legacy bonuses and +150% research speed. Which epochs you get the chance in is up to the transition rolls. Each run after that starts with those bonuses and up to 24 ruins producing from tick 1.

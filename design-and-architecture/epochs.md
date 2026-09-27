@@ -125,11 +125,17 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 **Rules**
 
 - **Iron-epoch gate.** No catastrophe before the epoch containing the Iron Age
-  (`config.CatastropheGateEpoch = "iron_era"`). The Stone Era never has one, random or invoked.
+  (`config.CatastropheGateEpoch = "iron_era"`). The Stone Era never has one.
   Good and challenging epoch events are unaffected.
-- **One per epoch per run.** `catastropheFired` records epochs that have had their catastrophe
-  this run (random or invoked); it is reset by Succumb, prestige and a new game. It is separate
-  from `epochEventFired`, which the transition roll always sets.
+- **One per epoch per run.** Each epoch's transition rolls once per run (`epochEventFired`), reset
+  by Succumb, prestige and a new game.
+- **No player trigger.** `catastrophe invoke` was removed (2026-09-26). Choosing to face a
+  catastrophe moves to the Harbinger's planned "Invite it" action. The engine keeps an unwired
+  seam for it: `catastropheInvited` makes the next transition into an allowed epoch produce a
+  catastrophe instead of rolling (consumed when honoured, kept while gated or something is
+  pending, reset by Succumb/prestige, not persisted yet), and `CatastropheOutlook` reports
+  probability 1 while it is armed. The dev console's `/catastrophe` forces one for testing and
+  respects the gate.
 - **Pending blocks progress.** A catastrophe only sets `pendingCatastrophe`; nothing is destroyed
   until the player chooses. The game keeps running, but `AdvanceAge` and `DoPrestige` refuse while
   one is pending, and the roll never overwrites a pending catastrophe.
@@ -169,12 +175,6 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 ║   Esc: decide later · advancing waits · type 'catastrophe' …     ║
 ╚══════════════════════════════════════════════════════════════════╝
 ```
-
-### Voluntary Catastrophe
-
-`catastrophe invoke` triggers the current epoch's catastrophe. It is refused before the Iron Era,
-while another catastrophe is pending, or if the epoch already had its catastrophe this run. An
-epoch whose transition rolled a good or challenging event can still be invoked.
 
 ### ENDURE — Consequences
 
@@ -230,7 +230,7 @@ epoch whose transition rolled a good or challenging event can still be invoked.
 
 | | Regular Prestige | Catastrophe Succumb |
 |--|-----------------|---------------------|
-| Trigger | Player-initiated from the Modern Age | Random (12–18% per transition, Iron Era on) or voluntary |
+| Trigger | Player-initiated from the Modern Age | Random (12–18% per transition, Iron Era on) |
 | Reset scope | Full | Full; up to 8 new ruins (24 max) carry forward |
 | Bonus pool | Prestige upgrade tree + points | Epoch legacy bonus + Ancient Knowledge |
 | Repeatable | Yes | Once per epoch per run; bonuses once per epoch ever |
@@ -254,8 +254,9 @@ Kept from the original design for reference. None of this exists in the game.
   Fallout Shelter tech and Nuclear Vault; Ghost Protocol tech and Dead Drop Network; Phoenix
   Protocol tech and Corporate Ruins wonder; Reality Anchor tech and Scar in Reality wonder
   (the Reality Tear legacy was also meant to boost antimatter + quantum_flux instead of dark_matter).
-- **Invoke from the Epoch or Stats tab** (today it is the `catastrophe invoke` command).
-- **A harbinger** who warns of the next catastrophe, built on `CatastropheOutlook`.
+- **A Harbinger** who warns of the next catastrophe (built on `CatastropheOutlook`) and offers
+  "Invite it", which arms `catastropheInvited` to guarantee one at the next transition. This
+  replaces the removed `catastrophe invoke` command.
 
 ---
 
@@ -338,7 +339,7 @@ adds 5 exclusive events that only appear during that epoch.
 | Cosmic Era exclusive | 5 | Cosmic Era only |
 | Good epoch events (major epoch roll) | 10 | One fires per epoch transition (if good) |
 | Challenging bad epoch events (major epoch roll) | 8 | One fires per epoch transition (if bad, non-catastrophe) |
-| Catastrophe events | 7 (6 reachable) | Iron Era on: at most one per epoch per run (catastrophe roll or invoke) |
+| Catastrophe events | 7 (6 reachable) | Iron Era on: at most one per epoch per run (transition roll) |
 | **Total** | **88** | |
 
 Note: The 10 good + 8 bad + 7 catastrophe events are **epoch transition events**, separate from
@@ -450,16 +451,15 @@ Previous epoch exclusive events are permanently removed from the pool on epoch t
 Epoch transition events (good/bad/catastrophe) are a separate pool, fired once per epoch
 transition — NOT drawn from the regular random event pool.
 
-### Voluntary Catastrophe (implementation)
+### Triggering (implementation)
 
-Exposed via `GameEngine.InvokeCatastrophe() error` (game/catastrophe.go):
-- Returns an error before `config.CatastropheGateEpoch`, while a catastrophe is pending, or if
-  `catastropheFired[currentEpoch]` is set
-- Otherwise calls `triggerCatastrophe`, which sets `pendingCatastrophe` and `catastropheFired`,
-  appends an `EpochEventRecord` with `Outcome: "pending"`, and publishes `EventEpochEventFired`
-  (`event_type: "catastrophe"`) so the dashboard toast fires
+In game/catastrophe.go:
+- `triggerCatastrophe(epochKey, source)` sets `pendingCatastrophe`, appends an `EpochEventRecord`
+  with `Outcome: "pending"`, and publishes `EventEpochEventFired` (`event_type: "catastrophe"`) so
+  the dashboard toast fires. Sources: the transition roll, an honoured invite, or the dev
+  console's `forceCatastrophe` (`/catastrophe`, via `game.DevConsoleCommand`).
 - The dashboard's refresh loop shows the modal once per pending catastrophe; Esc hides it until
-  the `catastrophe` command (or a save load, via `EventGameLoaded`) brings it back
+  the `catastrophe` command (or a save load, via `EventGameLoaded`) brings it back.
 
 ### Catastrophe Save State
 
@@ -470,7 +470,7 @@ CatastropheHistory   []string          `json:"catastrophe_history,omitempty"`
 SurvivedEpochs       map[string]bool   `json:"survived_epochs,omitempty"`
 EpochEventFired      map[string]bool   `json:"epoch_event_fired,omitempty"`
 PendingCatastrophe   string            `json:"pending_catastrophe,omitempty"`
-CatastropheFired     map[string]bool   `json:"catastrophe_fired,omitempty"`
+CatastropheFired     map[string]bool   `json:"catastrophe_fired,omitempty"` // deprecated, ignored, never written
 SuccumbResearchDerived bool            `json:"succumb_research_derived,omitempty"`
 Ruins                map[string]int    `json:"ruins,omitempty"`
 ```
@@ -481,4 +481,5 @@ recorded" where it can't.
 
 Ruins persist across runs (they're part of your civilization's identity). Legacy bonuses are
 permanent and never removed. `EpochEventFired` prevents a second transition roll in the same
-epoch; `CatastropheFired` limits catastrophes (random or voluntary) to one per epoch per run.
+epoch, which is also what limits catastrophes to one per epoch per run. `CatastropheFired` was
+written by early builds of the overhaul; it stays in the struct only so those saves still verify.
