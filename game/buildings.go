@@ -457,7 +457,9 @@ func (bm *BuildingManager) IsWonderBankFull(wonderKey string) bool {
 	}
 	bank := bm.wonderBanks[wonderKey]
 	for res, need := range def.BaseCost {
-		if bank[res] < need {
+		// Same tolerance as BankResource, which refuses a deposit once less
+		// than 0.001 remains: a bank it calls full must count as full here.
+		if need-bank[res] > 0.001 {
 			return false
 		}
 	}

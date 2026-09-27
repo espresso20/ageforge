@@ -3787,6 +3787,7 @@ func (ge *GameEngine) ExchangeResources(from, to string, amount float64) (float6
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
+	ge.Trade.SetAge(ge.age)
 	got, err := ge.Trade.Exchange(from, to, amount, ge.Resources, ge.Buildings, ge.tick)
 	if err != nil {
 		return 0, err

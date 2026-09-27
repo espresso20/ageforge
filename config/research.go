@@ -17,7 +17,7 @@ type TechDef struct {
 // Technologies returns all 52 tech definitions, ordered loosely by age.
 // Use TechByKey() for random access or TechsByAge() to group by age.
 func Technologies() []TechDef {
-	return []TechDef{
+	return normalizeResearchTicks([]TechDef{
 		// === PRIMITIVE AGE === (~1 min each)
 		{
 			Name: "Tool Making", Key: "tool_making",
@@ -769,7 +769,7 @@ func Technologies() []TechDef {
 				{Type: "production", Target: "quantum_flux", Value: 10.0},
 			},
 		},
-	}
+	})
 }
 
 // TechByKey returns a map of key -> TechDef

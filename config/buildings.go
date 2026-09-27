@@ -901,8 +901,17 @@ func roundSignificant(v float64, sig int) float64 {
 	}
 	d := math.Ceil(math.Log10(v))
 	power := float64(sig) - d
-	mag := math.Pow(10, power)
-	rounded := math.Round(v*mag) / mag
+	var rounded float64
+	if power >= 0 {
+		mag := math.Pow(10, power)
+		rounded = math.Round(v*mag) / mag
+	} else {
+		// Multiply by an exact power of ten rather than divide by an inexact
+		// fraction: 10/1e-5 came out as 999999.9999999999, and a wonder bank
+		// filled in whole units could then never reach its price.
+		mag := math.Pow(10, -power)
+		rounded = math.Round(v/mag) * mag
+	}
 	if rounded < 1 {
 		return 1
 	}
@@ -986,8 +995,14 @@ func BaseBuildings() []BuildingDef {
 	// see building_flavor.go. Functional Description is never modified here.
 	applyBuildingFlavor(result)
 	// Normalize cost curves at the single chokepoint so every consumer
-	// (BuildingByKey, the engine, the audit tool) inherits flattened values.
-	return normalizeCostCurves(result)
+	// (BuildingByKey, the engine, the audit tool) inherits flattened values,
+	// then derive production rates and build times from those prices and the
+	// age targets (pacing.go).
+	result = normalizeCostCurves(result)
+	result = normalizeProductionRates(result)
+	result = normalizeWonderCosts(result)
+	result = normalizeBuildTicks(result)
+	return syncDescriptionRates(result)
 }
 
 // BuildingByKey returns a map of building key → BuildingDef, sourced from BaseBuildings().
