@@ -151,7 +151,7 @@ A handful of **milestone rewards** (Master Builder, Grand Architect, and others)
 
 ### Build times
 
-Build times are capped by the age's pace: nothing takes longer to build than **1/6 of its age's target time** (wonders included), and storage buildings, which queue one copy at a time, take at most **1/48** of it. In practice that is 2 minutes in the Primitive Age, 1 hour in the Renaissance and 4 hours from the Interstellar Age on (storage: 19 seconds, 8 minutes and 30 minutes). The full per-age list is in the table under [How Production Rates Are Set](#how-production-rates-are-set).
+Build times are capped by the age's pace: nothing takes longer to build than **1/6 of its age's target time** (wonders included), and storage buildings take at most **1/48** of it (you can queue several copies at once, up to the cap). In practice that is 2 minutes in the Primitive Age, 1 hour in the Renaissance and 4 hours from the Interstellar Age on (storage: 19 seconds, 8 minutes and 30 minutes). The full per-age list is in the table under [How Production Rates Are Set](#how-production-rates-are-set).
 
 ---
 

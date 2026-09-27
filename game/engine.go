@@ -1674,16 +1674,16 @@ func (ge *GameEngine) getAllResearchProductionEffects() []config.Effect {
 // See advanceAge for the model: each resource is capped to ~a handful of the
 // cheapest new-age building rather than a flat percentage of the prior hoard.
 const (
-	// carryoverStarterBuildings caps a carried-over resource to roughly this many
+	// CarryoverStarterBuildings caps a carried-over resource to roughly this many
 	// of the cheapest new-age building that uses it — a small head start.
-	carryoverStarterBuildings = 8
-	// carryoverResidualPct is the fallback fraction kept for resources that no
+	CarryoverStarterBuildings = 8
+	// CarryoverResidualPct is the fallback fraction kept for resources that no
 	// new-age (non-wonder) building uses as a build cost. Kept at the legacy 10%
 	// because this branch mostly catches food (the worker-sustain resource) —
 	// cutting it harder risks a starvation spiral right at the age transition,
 	// and the mass-buy problem this rebalance fixes lives entirely in the
 	// build-cost cap above.
-	carryoverResidualPct = 0.10
+	CarryoverResidualPct = 0.10
 )
 
 // advanceAge advances to newAge and applies all transition consequences:
@@ -1778,7 +1778,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// note: Age-transition carryover model (EPIC: age-pacing economy rebalance).
 	// The old flat-10% reduction still left a huge stockpile (10% of a hoard is
 	// plenty to mass-buy a new age's buildings). Instead we cap each resource to
-	// ~carryoverStarterBuildings of the CHEAPEST new-age building that uses it —
+	// ~CarryoverStarterBuildings of the CHEAPEST new-age building that uses it —
 	// a small head start, not a fresh stockpile. Resources no new-age building
 	// uses fall back to a small residual percentage. Players who didn't over-
 	// accumulate keep what they had (amount below the cap is untouched).
@@ -1789,13 +1789,13 @@ func (ge *GameEngine) advanceAge(newAge string) {
 			continue
 		}
 		if entry, ok := entryCosts[key]; ok && entry > 0 {
-			capAmt := carryoverStarterBuildings * entry
+			capAmt := CarryoverStarterBuildings * entry
 			if r.Amount > capAmt {
 				r.Amount = capAmt
 			}
 			// else: kept as-is — they didn't over-accumulate this resource.
 		} else {
-			r.Amount *= carryoverResidualPct
+			r.Amount *= CarryoverResidualPct
 		}
 	}
 	ge.addLog("info", "Age transition: resources reduced to a starter head start")
@@ -2666,17 +2666,22 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 	if def.RequiredAge != "" && def.RequiredAge != ge.age {
 		return ge.previousAgeBuildError(key, def)
 	}
+	// A unique building under construction says so. Only unique ones: a
+	// capped building like storage queues copies up to its MaxCount, as
+	// BuildMultiple always allowed. (This check used to cover every capped
+	// building, so a player who checks in a few times a day could queue one
+	// storage copy per visit with `build`, but any number with `build <key> N`.)
+	if def.MaxCount == 1 {
+		for _, item := range ge.buildQueue {
+			if item.BuildingKey == key {
+				return fmt.Errorf("%s is already under construction (%d ticks left)", def.Name, item.TicksLeft)
+			}
+		}
+	}
 	if def.MaxCount > 0 {
 		inQueue := ge.Buildings.GetQueueCount(key, ge.buildQueue)
 		if ge.Buildings.GetCount(key)+inQueue >= def.MaxCount {
 			return fmt.Errorf("%s is at max count (%d)", def.Name, def.MaxCount)
-		}
-	}
-
-	// Check if already building this (for unique buildings)
-	for _, item := range ge.buildQueue {
-		if item.BuildingKey == key && def.MaxCount > 0 {
-			return fmt.Errorf("%s is already under construction (%d ticks left)", def.Name, item.TicksLeft)
 		}
 	}
 
