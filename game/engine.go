@@ -3432,6 +3432,12 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	// Apply age unlocks for primitive age
 	ge.applyAgeUnlocks("primitive_age")
 
+	// Recompute derived caps and rates for the fresh managers now, not on the
+	// first tick: the storage upgrade has to be in the first snapshot of the
+	// new run, and in place before the starting resources land, or they are
+	// clamped to the base storage it raises.
+	ge.recalculateRates()
+
 	// Apply starting resources (base + prestige bonus)
 	ge.Resources.Add("food", 15)
 	ge.Resources.Add("wood", 12)
@@ -3478,6 +3484,7 @@ func (ge *GameEngine) BuyPrestigeUpgrade(key string) error {
 	if err := ge.Prestige.BuyUpgrade(key); err != nil {
 		return err
 	}
+	ge.recalculateRates() // a storage or rate upgrade shows at once, not next tick
 	ge.addLog("success", fmt.Sprintf("Purchased prestige upgrade: %s", key))
 	return nil
 }
