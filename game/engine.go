@@ -4016,6 +4016,7 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 
 	// Perform partial transform
 	moved := ge.Buildings.PartialTransform(key, newKey, count, ge.Workers.RenameAssignment)
+	ge.rehomeUpgradedWorkers(key, newKey, oldDef, newDef)
 
 	ge.recalculateRates()
 
@@ -4026,6 +4027,26 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	ge.addLog("success", fmt.Sprintf("Upgraded %d %s → %s (cost: %s)",
 		moved, oldDef.Name, newDef.Name, costStr))
 	return nil
+}
+
+// rehomeUpgradedWorkers settles workers after an upgrade. A partial upgrade
+// left the old key's workers where they were, which could be more than the
+// copies left can hold (upgrade 7 of 46 wood camps and 138 workers sat in
+// 117 slots). The overflow follows the upgraded copies to the new building
+// while it has room; the rest go back to the idle pool. Under the write lock.
+func (ge *GameEngine) rehomeUpgradedWorkers(oldKey, newKey string, oldDef, newDef config.BuildingDef) {
+	excess := ge.Workers.GetAssignedCount("worker", oldKey) - oldDef.WorkerCapacity*ge.Buildings.GetCount(oldKey)
+	if excess <= 0 {
+		return
+	}
+	ge.Workers.Unassign("worker", oldKey, excess)
+	room := newDef.WorkerCapacity*ge.Buildings.GetCount(newKey) - ge.Workers.GetAssignedCount("worker", newKey)
+	if room > excess {
+		room = excess
+	}
+	if room > 0 {
+		ge.Workers.Assign("worker", newKey, room)
+	}
 }
 
 // GetAvailableUpgrades returns upgrade info for buildings that have a pending player-driven upgrade.
