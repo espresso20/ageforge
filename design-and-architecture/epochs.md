@@ -148,7 +148,9 @@ were never built are kept under **Future ideas (not implemented)** at the end of
   next transition's epoch, whether a catastrophe is possible there, its probability, a coarse tier
   (none/low/medium/high: under 14%, under 17%, 17% and up) and the faith fill driving it. The
   probability includes the Harbinger's Appease multiplier. It is read-only and lock-safe; the
-  Harbinger reads it when a thread starts, at each handoff and for its panel.
+  Harbinger reads it when a thread starts, at each handoff and for its panel. `Passage` says what
+  the next passage is: `"epoch"` (`PassageEpoch`) or, in the final epoch, `"prestige"`
+  (`PassagePrestige`, with `NextEpochKey` empty). See [The Last Passage](#the-last-passage).
 
 **The modal** is a box floating over the dashboard, sized to its content:
 
@@ -236,6 +238,7 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 | Bonus pool | Prestige upgrade tree + points | Epoch legacy bonus + Ancient Knowledge |
 | Repeatable | Yes | Once per epoch per run; bonuses once per epoch ever |
 | Blocked by a pending catastrophe | Yes | n/a |
+| Can bring a catastrophe | From the Cosmic Era: the Last Passage | n/a |
 
 ### Future ideas (not implemented)
 
@@ -268,10 +271,10 @@ and `FalseProphetChance`), `flavor/` (arrival, warning, action and outcome lines
 
 ### Threads, start and handoff
 
-A **thread** belongs to an epoch whose outgoing transition can roll a catastrophe (Stone through
-Neon). It lasts from the epoch's first age until that transition. The speaker is always the
-current age's roster figure, so 18 of the 22 figures appear; the Cosmic Era's four never do,
-because it has no outgoing transition.
+A **thread** belongs to an epoch whose passage can roll a catastrophe: its outgoing transition
+(Stone through Neon), or for the Cosmic Era, prestige (see [The Last Passage](#the-last-passage);
+the thread's `TargetEpoch` is `""`). It lasts from the epoch's first age until that passage. The
+speaker is always the current age's roster figure, so all 22 figures appear.
 
 Three hooks start or advance a thread, all under the write lock:
 
@@ -411,6 +414,104 @@ the thread, and `pendingBraceLevel` is zeroed unless a catastrophe is pending.
 `clearHarbingerRun` (live thread, arrivals, `harbingerCheckedEpoch`, invite, pending Brace) runs
 on Succumb, prestige and reset, and the next tick starts the Stone Era thread.
 `harbingerHistory` follows `epochEventHistory`: kept by Succumb, cleared by prestige.
+
+---
+
+## The Last Passage
+
+Built 2026-09-26. Code: `game/last_passage.go`, with the Cosmic thread's pricing in
+`game/harbinger.go`. Player docs: `site/docs/prestige.md#the-last-passage`.
+
+### Prestige is the Cosmic Era's passage
+
+Every other epoch's passage is its transition into the next epoch. The Cosmic Era has no next
+epoch, so its passage is prestige. `CatastropheOutlook.Passage` is `"prestige"` there and
+`NextEpochKey` is empty; `Possible` is false once the Last Passage is pending. The Cosmic
+Era gets a harbinger thread like any other, starting at the Interstellar Age, with the four
+cosmic figures handing off per age (Distress Beacon, Elder Relay, your future self, your unmade
+self). Its figures are all past the Industrial Age, so no false prophets and numeric odds.
+
+### The roll
+
+`DoPrestige`, once confirmed, calls `rollLastPassage()` when `lastPassageApplies()` (final epoch,
+past the Iron gate). One `ge.rng` `Float64()` is always drawn, so the stream's shape does not
+depend on the odds or on an invite. The chance is `catastropheOutlook().Probability`, the same
+formula as `rollEpochEvent`: `(1 - good chance) × 0.30 × harbingerAppeaseMultiplier()`, i.e.
+18% / 15% / 12% by faith band, certain when `catastropheInvited` is armed (consumed on a hit).
+Prestige from any earlier epoch never rolls.
+
+- **Miss:** verdict `spared`, the RunEnding line, and prestige completes.
+- **Hit:** `triggerLastPassage` sets `pendingLastPassage` and publishes a bus event for the toast.
+  Prestige does not complete.
+
+### Pending state
+
+`pendingLastPassage` blocks only `DoPrestige` (`lastPassageBlockErr`); `AdvanceAge`, building
+and everything else carry on. The dashboard shows the choice in the catastrophe modal
+(`✦ The Last Passage`), Esc hides it, the status bar carries a `☄ LAST PASSAGE` badge and the bare
+`catastrophe` command reopens it. The save list reports it as the pending choice. The dev
+console's `/lastpassage` (`forceLastPassage`) sets it for testing, final epoch only.
+
+### Endure and Succumb
+
+Both go through `resolveLastPassage` and complete the prestige; the level rises either way.
+
+| Choice | Points from the run | Other effect |
+|--------|---------------------|--------------|
+| Endure | `floor(full × keep)`, minimum 0, where `keep` = `lastPassageKeepFrac[brace]` = 0.50 / 0.70 / 0.85 at Brace 0 / 1 / 2 | Verdict `vindicated` (`fulfilled` if invited) |
+| Succumb | 0 | Sets `cosmicLegacy` |
+
+Brace in the Cosmic Era changes only the points share; nothing survives prestige to destroy.
+`recordLastPassageOutcome` appends a `catastropheHistory` entry carrying the Endured / Succumbed
+markers, so the Stats tallies count it.
+
+**Cosmic Legacy.** A one-time permanent flag. `cosmicLegacyModifiers()` emits
+`production_all +CosmicLegacyProductionBonus` (0.10) into the resolver as source `cosmic_legacy`,
+derived from the flag and never stored as a bonus value, like the derived Succumb research bonus
+(`legacy`). It survives every prestige and Succumb; only a full wipe clears it. With the flag
+held, the modal disables Succumb ("You already carry the Cosmic Legacy. Succumb is closed to
+you."), so Endure is the only choice.
+
+**Invite** in the Cosmic Era arms `catastropheInvited` for the next prestige. It is the deliberate
+path to the Cosmic Legacy; Appease is refused afterwards, Brace still raises the Endure share.
+
+### The run's last lines
+
+The prestige reset clears the log. `runEndingLines` writes the verdict, the Endure / Succumb
+lines and one RunEnding flavor line aside (drawn in that order from `ge.rng`) and the new run's
+log starts with them. `logRunEnding` runs on every prestige, from any age: the line is in the
+voice of the age the run ended in, with the age's harbinger as the subject in the Cosmic Era.
+
+### Costs
+
+Fixed across the four Cosmic ages, level 2 at double:
+
+| Action | Level 1 | Basis |
+|--------|---------|-------|
+| Appease | 46.5B faith + 46.5B culture | 15% of the largest requirement for entering the Cosmic Era (310B plasma, the Interstellar gate) |
+| Brace | 1.56T dark matter + 75.6B titanium | 12% of the most the Cosmic Era's own advances ask of each resource held since the Interstellar Age (dark matter 13T for Quantum, titanium 630B for Galactic) |
+
+Prestige has no storage requirement of its own, so `harbingerPassageStorage` falls back to the
+final epoch's own entry gate: storage the player provably holds from the first Cosmic age, and
+the same figure the Neon Era paid for its passage. Pricing off the epoch's later advances would
+put Appease out of reach until the last age, and a player may prestige from the first.
+Antimatter and quantum flux unlock after the Interstellar Age, so the held-since-start rule
+excludes them from Brace.
+
+### Persistence
+
+`GameSave` fields, both `omitempty`:
+
+```go
+PendingLastPassage bool `json:"pending_last_passage,omitempty"`
+CosmicLegacy       bool `json:"cosmic_legacy,omitempty"`
+```
+
+### Tuning constants
+
+- `game/last_passage.go`: `LastPassageKeep` (0.50, unbraced Endure share),
+  `lastPassageKeepFrac` (0.50 / 0.70 / 0.85 by Brace), `CosmicLegacyProductionBonus` (0.10).
+- `game/harbinger.go`: `harbingerPassageStorage` (the final-epoch fallback above).
 
 ---
 
@@ -646,4 +747,5 @@ Epoch-system decisions. The project-wide log is in `README.md`.
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
+| 2026-09-26 | Prestige is the Cosmic Era's passage (the Last Passage), rolled once at confirmed prestige with the epoch odds; pending blocks only prestige; Endure keeps 50/70/85% of the run's points by Brace; Succumb grants a one-time Cosmic Legacy (+10% `production_all`, derived from a flag) | The Cosmic Era's four harbingers had nothing to warn of because the epoch has no transition out; prestige is the only passage it has, and points are what a prestige can lose, so Endure and Brace act on them |
 | 2026-09-26 | Harbinger replaces invoke; epoch-long threads with the speaker changing each age; false prophets rolled once per thread (Stone, Iron, Steel Era); Appease x0.6 per level; Brace tiers (15%/30%, 10%/45%); costs priced off the passage | Choosing a catastrophe fits better as an answer to a warning than as a bare command; a thread gives the warning time to matter and uses 18 figures instead of 6; false prophets make early warnings worth doubting until the odds are printed; passage pricing keeps the price the same in every age so paying early is not a discount; x0.6 still lowers the odds after the worst faith-band drop the price can cause; Brace gives Endure-minded players something to buy without touching the odds |

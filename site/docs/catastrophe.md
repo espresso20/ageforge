@@ -2,7 +2,7 @@
 
 A catastrophe is a civilization-threatening event that forces a permanent choice: **Endure** or **Succumb**. Catastrophes strike when your civilization crosses into a new epoch, from the **Iron Era** on. You can't trigger one directly; the only way to choose one is to **Invite** it when a harbinger comes.
 
-> **The Harbinger.** Every epoch whose transition can bring a catastrophe has harbingers who warn you of it, one figure per age, from the epoch's first age until the transition. While a harbinger is present you can **Appease** it (spend faith and culture to lower the real odds), **Brace** (spend resources so an Endure costs less) or **Invite** the catastrophe (guarantee it, for a deliberate Succumb). See [The Harbinger](harbinger.md).
+> **The Harbinger.** Every epoch whose transition can bring a catastrophe, and the Cosmic Era, whose passage is prestige, has harbingers who warn you of it, one figure per age, from the epoch's first age until the transition. While a harbinger is present you can **Appease** it (spend faith and culture to lower the real odds), **Brace** (spend resources so an Endure costs less) or **Invite** the catastrophe (guarantee it, for a deliberate Succumb). See [The Harbinger](harbinger.md).
 
 When a catastrophe hits, nothing is destroyed yet. The game keeps running and the choice waits for you:
 
@@ -34,7 +34,18 @@ Extra rules:
 - **At most 6 per run**, one for each epoch from Iron to Cosmic.
 - **The harbinger can change the odds.** Each level of Appease multiplies the chance by 0.6 (two levels at most). Invite makes it certain. See [The Harbinger](harbinger.md).
 
-The `catastrophe` command (with nothing after it) shows the risk for your next transition when nothing is pending: the odds as a figure from the Industrial Age on, a low / medium / high severity before it. The Epoch tab shows the same line. While a harbinger is present, both repeat its warning, so they can't give away a false prophet. See [Epochs](epochs.md) for the event tables.
+The `catastrophe` command (with nothing after it) shows the risk for your next transition when nothing is pending: the odds as a figure from the Industrial Age on, a low / medium / high severity before it. In the Cosmic Era it shows the risk of the Last Passage instead: `Next passage (prestige, the Last Passage): <risk>, faith N% full.` The Epoch tab shows the same line. While a harbinger is present, both repeat its warning, so they can't give away a false prophet. See [Epochs](epochs.md) for the event tables.
+
+---
+
+## The Last Passage
+
+The Cosmic Era has no next epoch, so its passage is prestige. When you confirm prestige in the Cosmic Era, the **Last Passage** rolls with the same odds (18% / 15% / 12% by faith, ×0.6 per level of Appease, certain if invited). If it comes, the prestige waits for your choice:
+
+- **Endure** completes the prestige but keeps only 50% of the run's prestige points (70% or 85% if you braced).
+- **Succumb** completes the prestige with no points from this run and grants the **Cosmic Legacy**, a permanent +10% production. You can earn it once; after that, Succumb is closed.
+
+It behaves like a pending catastrophe: Esc closes the choice, a **☄ LAST PASSAGE** badge shows in the status bar, the bare `catastrophe` command reopens it, and it is saved with your game. Unlike a catastrophe, it blocks only prestige. Either choice adds a line to the civilization log and counts as Survived or Succumbed. See [The Last Passage](prestige.md#the-last-passage).
 
 ---
 
@@ -180,7 +191,7 @@ Tick N — Endured <Catastrophe> (<Epoch>). N buildings lost.
 Tick N — Succumbed to <Catastrophe> (<Epoch>). Civilization reset. Legacy bonus earned.
 ```
 
-The log survives Succumb and prestige. The Stats panel counts **Survived** (Endured) and **Succumbed** from these lines, so a pending catastrophe counts as neither.
+Endure and Succumb at the Last Passage add a line of their own. The log survives Succumb and prestige. The Stats panel counts **Survived** (Endured) and **Succumbed** from these lines, so a pending catastrophe counts as neither.
 
 The Epoch tab's history marks each past epoch's catastrophe as **Survived**, **Succumbed** or **Pending**. A catastrophe from an older save whose outcome was never stored shows as "outcome not recorded" rather than guessing.
 

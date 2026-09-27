@@ -6,7 +6,7 @@ Prestige is the endgame reset loop. When you reach the **Modern Age** (Age 12), 
 prestige confirm yes
 ```
 
-> Prestige resets your age, resources, buildings, workers, and research. Prestige upgrades, legacy bonuses from Succumb, and ruins are **permanent**.
+> Prestige resets your age, resources, buildings, workers, and research. Prestige upgrades, legacy bonuses from Succumb, the Cosmic Legacy and ruins are **permanent**.
 
 ---
 
@@ -15,6 +15,8 @@ prestige confirm yes
 You unlock the ability to prestige at **Modern Age (Age 12)** and any age beyond. There is no hard cap — if you push all the way to Quantum Age before prestiiging, you'll earn substantially more points.
 
 Prestige is refused while a [catastrophe](catastrophe.md) is pending. Type `catastrophe` and choose Endure or Succumb first.
+
+In the Cosmic Era, confirming prestige can bring the [Last Passage](#the-last-passage). If it comes, the prestige waits until you choose Endure or Succumb.
 
 To check your current prestige status:
 
@@ -35,6 +37,8 @@ prestige confirm yes
 ```
 
 The double confirmation (`confirm yes`) is intentional — prestige is irreversible.
+
+Every prestige, from any age, ends with one closing line in the log, written for the age the run ended in. From the Modern Age to the Space Age the civilization simply winds down: offices empty, the last tram runs, the orbital yards shut. In the Cosmic Era the age's harbinger is there at the end, and the lines turn to cosmic dread ("Your unmade self took your hand.").
 
 ---
 
@@ -61,6 +65,68 @@ points    = floor(raw / sqrt(prestige_level + 1))
 | Every 50 buildings constructed (lifetime) | +1 pt |
 
 Reaching Modern Age for the first time typically yields **4–8 points** depending on playstyle. Pushing to late ages (Quantum = index 21) before prestiiging yields 20+ before the divisor.
+
+---
+
+## The Last Passage
+
+Every epoch's [harbinger](harbinger.md) warns of its passage into the next epoch. The Cosmic Era has no next epoch, so its passage is prestige itself: the **Last Passage**. From the Interstellar Age on, a harbinger thread warns of it like any other, with a new figure each age: the Distress Beacon, the Elder Relay, your future self, then your unmade self.
+
+Prestige from before the Cosmic Era is unchanged. Nothing rolls.
+
+### The roll
+
+When you type `prestige confirm yes` in the Cosmic Era, the Last Passage rolls once, with the same odds as an epoch catastrophe (see [Faith and the Odds](catastrophe.md#faith-and-the-odds)):
+
+| Faith fill | Chance of the Last Passage |
+|------------|----------------------------|
+| under 25% | 18% |
+| 25–75% | 15% |
+| over 75% | 12% |
+
+Each level of Appease multiplies the chance by 0.6 (two levels at most). Invite makes it certain.
+
+`prestige` shows the current chance and which figure is warning of it, for example `☄ The Last Passage: 18% chance (high) when you prestige.` `prestige confirm` spells out what Endure and Succumb would give you before you commit.
+
+- **Nothing comes.** The verdict is Spared, and prestige completes as normal.
+- **It comes.** Prestige does **not** complete yet. A choice opens, titled **✦ The Last Passage**, in the same style as the catastrophe modal.
+
+### While it is pending
+
+- **Esc** closes the choice. The status bar shows **☄ LAST PASSAGE — type 'catastrophe'**, and a bare `catastrophe` reopens it.
+- Only prestige is blocked. You can still advance ages, build and play on.
+- It is saved with your game, and the Load Game browser lists it as the pending choice.
+
+### Endure or Succumb
+
+Both finish the prestige and raise your prestige level. Both add a line to the civilization log and count toward the Stats panel's Survived or Succumbed tally.
+
+**Endure** keeps part of this run's prestige points. Brace raises the share:
+
+| Brace level | Points kept |
+|-------------|-------------|
+| none | 50% |
+| 1 | 70% |
+| 2 | 85% |
+
+The result is rounded down, so a small run can keep 0 points. Here Brace changes only the points share: buildings and resources reset anyway. The log records a Vindicated verdict, or Fulfilled if you invited it.
+
+**Succumb** earns no points from this run and grants the [Cosmic Legacy](#cosmic-legacy). If you already carry it, Succumb is closed ("You already carry the Cosmic Legacy. Succumb is closed to you.") and Endure is the only choice.
+
+### Choosing it on purpose
+
+Inviting the Cosmic Era's harbinger is how you take the Cosmic Legacy on purpose. Invite is free, can't be undone and closes Appease; your next prestige brings the Last Passage. Brace levels still raise the Endure share, in case you change your mind. See [Invite](harbinger.md#invite-choose-the-catastrophe).
+
+---
+
+## Cosmic Legacy
+
+A one-time, permanent reward for Succumbing to the Last Passage.
+
+- **+10% production** (all resources), active from tick 1 of every run.
+- Shows as **Cosmic Legacy** in the Stats overlay, under Active Multipliers and in the Legacy Bonuses list. `prestige` shows `Cosmic Legacy: +10% production (permanent)`.
+- Survives every prestige and every Succumb. Only wiping the game clears it.
+- You earn it once. While you hold it, Succumb is closed at the Last Passage.
 
 ---
 
@@ -125,6 +191,7 @@ These stack on top of your purchased upgrade bonuses. A prestige level 5 player 
 - Prestige level and all purchased upgrade tiers
 - Ruins (from past Succumb events) — carry into the new run
 - Legacy bonuses (from Succumb events) — active from tick 1
+- The Cosmic Legacy, if you have earned it
 - Ancient Knowledge bonus (+25% research speed per distinct epoch succumbed) — derived from your legacy flags, so prestige never drops it
 - Civilization history / catastrophe log
 
@@ -260,4 +327,5 @@ If your faith resource is at **100% of its storage cap** at the moment you prest
 - **Milestones are permanent** — your civilization title and all completed milestone chains carry over; milestone progress toward chains is preserved
 - **Each run should complete one more wonder than the last** — wonder bonuses compound with prestige bonuses for dramatic acceleration
 - **Don't rush the first prestige** — reaching further ages (through Classical, Medieval, even Renaissance) before your first prestige gives substantially more points than resetting at the minimum threshold
+- **Prestiging from the Cosmic Era is a gamble.** Appease before you confirm to lower the odds, Brace if you would Endure, Invite if you want the Cosmic Legacy
 - **The passive bonus compounds** — at prestige level 10, you have +20% production all and +10% tick speed before spending a single upgrade point

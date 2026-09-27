@@ -204,8 +204,9 @@ See **[The World Map](world-map.md)** for the full per-age breakdown.
 
 | Command | Description |
 |---|---|
-| `prestige` | View prestige status and available points |
-| `prestige confirm yes` | Trigger prestige reset (requires Modern Age) |
+| `prestige` | View prestige status and available points. In the Cosmic Era it also shows the chance of the Last Passage and which figure is warning of it, and shows the Cosmic Legacy if you hold it |
+| `prestige confirm` | Explain what confirming would do. In the Cosmic Era this includes what Endure (share of this run's points) and Succumb (the Cosmic Legacy) would give you if the Last Passage comes |
+| `prestige confirm yes` | Trigger prestige reset (requires Modern Age). In the Cosmic Era it first rolls the Last Passage; if it comes, prestige waits for your choice |
 | `prestige shop` | View prestige upgrade list |
 | `prestige buy <key>` | Purchase a prestige upgrade |
 
@@ -216,6 +217,8 @@ prestige buy tick_speed
 ```
 
 Available upgrades and costs are shown in **Stats** overlay (`stats`).
+
+See [The Last Passage](prestige.md#the-last-passage) for what can happen when you prestige from the Cosmic Era.
 
 ---
 
@@ -246,9 +249,9 @@ Graphs appear after ~30 seconds of play. History is saved and restored automatic
 
 | Command | Description |
 |---|---|
-| `catastrophe` (or `cat`) | Reopen the Endure / Succumb choice for a pending catastrophe. With nothing pending, show the catastrophe odds for the next epoch transition |
+| `catastrophe` (or `cat`) | Reopen the Endure / Succumb choice for a pending catastrophe or Last Passage. With nothing pending, show the catastrophe odds for the next epoch transition (in the Cosmic Era, for the Last Passage at your next prestige) |
 
-A pending catastrophe blocks `advance` and `prestige confirm yes` until you choose. In the choice modal, **E** endures, **S** succumbs and **Esc** closes it without choosing; the status bar shows a pending badge until you decide. There is no Defer option, and no command to trigger a catastrophe directly; the harbinger's Invite (below) is the only way to choose one. See [Catastrophe](catastrophe.md).
+A pending catastrophe blocks `advance` and `prestige confirm yes` until you choose. A pending Last Passage blocks only `prestige confirm yes`. In the choice modal, **E** endures, **S** succumbs and **Esc** closes it without choosing; the status bar shows a pending badge until you decide. There is no Defer option, and no command to trigger a catastrophe directly; the harbinger's Invite (below) is the only way to choose one. See [Catastrophe](catastrophe.md).
 
 ---
 
@@ -257,11 +260,11 @@ A pending catastrophe blocks `advance` and `prestige confirm yes` until you choo
 | Command | Description |
 |---|---|
 | `harbinger` (or `harb`) | Open the **Harbinger** panel. Also listed under Panels in the sidebar. With no harbinger present it says so and describes the outlook for your next epoch transition |
-| `harbinger appease` | Buy the next Appease level: 15% of the passage storage (the largest amount the next epoch's first age asks for) in faith, and in culture from the Steel Era on (30% for level 2). Each level multiplies the real catastrophe chance by 0.6. Two levels at most; refused after Invite |
-| `harbinger brace` | Buy the next Brace level: 12% of the most the epoch still asks of each resource you had when it began, except faith and culture (24% for level 2). An Endure then destroys 15% / 10% of buildings and keeps 30% / 45% of stored resources. Two levels at most |
-| `harbinger invite` | Guarantee the catastrophe at this transition. Free, and can't be undone |
+| `harbinger appease` | Buy the next Appease level: 15% of the passage storage (the largest amount the next epoch's first age asks for) in faith, and in culture from the Steel Era on (30% for level 2). The Cosmic Era has its own fixed price: 46.5B faith and 46.5B culture. Each level multiplies the real catastrophe chance by 0.6. Two levels at most; refused after Invite |
+| `harbinger brace` | Buy the next Brace level: 12% of the most the epoch still asks of each resource you had when it began, except faith and culture (24% for level 2). An Endure then destroys 15% / 10% of buildings and keeps 30% / 45% of stored resources (in the Cosmic Era it keeps 70% / 85% of the run's prestige points instead of 50%). Two levels at most |
+| `harbinger invite` | Guarantee the catastrophe at this transition (in the Cosmic Era, the Last Passage at your next prestige). Free, and can't be undone |
 
-Every epoch whose transition can bring a catastrophe (Stone to Neon Era) has a harbinger thread, from its first age until the transition, with each age's figure taking up the warning in turn. The actions work in any age of the thread, cost the same in each, and carry over between figures.
+Every epoch whose transition can bring a catastrophe (Stone to Neon Era) has a harbinger thread, and so does the Cosmic Era, whose thread warns of the Last Passage (your next prestige). Each thread runs from its first age until its passage, with each age's figure taking up the warning in turn. The actions work in any age of the thread, cost the same in each, and carry over between figures.
 
 **Keys in the Harbinger panel:**
 
