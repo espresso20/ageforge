@@ -105,6 +105,9 @@ func TestLateEraVoiceShare(t *testing.T) {
 	for _, age := range lateAges() {
 		var parts []string
 		for _, m := range Moments() {
+			if !harbReachable(m, age) {
+				continue // no false prophets this late, so nothing to discredit
+			}
 			share := lateEraShare(m, age)
 			parts = append(parts, fmt.Sprintf("%s %2.0f%%", strings.TrimPrefix(strings.TrimPrefix(m.String(), "Expedition"), "Encounter"), share*100))
 			if share < minLateEraShare {

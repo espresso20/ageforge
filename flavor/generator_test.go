@@ -28,6 +28,17 @@ var gameKinds = map[Moment][]string{
 	EncounterStandoff:   {"peaceful", "aggressive", "mercantile", "isolationist"},
 	EncounterAtCapacity: {"peaceful", "aggressive", "mercantile", "isolationist"},
 	WarRaid:             {"peaceful", "aggressive", "mercantile", "isolationist"},
+	// Harbinger Moments: the warning takes the risk tier, a fulfilled invite
+	// may carry the false-prophet kind, and the rest take no kind at all.
+	HarbingerArrival:     {""},
+	HarbingerWarning:     {TierHigh, TierMedium, TierLow, TierNone},
+	HarbingerAppeased:    {""},
+	HarbingerBraced:      {""},
+	HarbingerVindicated:  {""},
+	HarbingerSpared:      {""},
+	HarbingerDiscredited: {""},
+	HarbingerInvited:     {""},
+	HarbingerFulfilled:   {"", KindFalseProphet},
 }
 
 // gameRequests returns the requests the engine can realistically build for a
@@ -46,6 +57,12 @@ func gameRequests(m Moment, age string) []Request {
 						Request{Moment: m, Tone: tone, Age: age, Kind: kind, Subject: subj, Resource: "soldiers", Amount: 1},
 						Request{Moment: m, Tone: tone, Age: age, Kind: kind, Subject: subj, Resource: "dark_matter_crystals", Amount: 12},
 					)
+				}
+			case HarbingerArrival, HarbingerWarning, HarbingerAppeased, HarbingerBraced,
+				HarbingerVindicated, HarbingerSpared, HarbingerDiscredited,
+				HarbingerInvited, HarbingerFulfilled:
+				for _, subj := range []string{gameSubject(m, age), ""} {
+					out = append(out, Request{Moment: m, Tone: tone, Age: age, Kind: kind, Subject: subj})
 				}
 			case WarRaid:
 				for _, subj := range []string{"Merchant Guild", "Void Reavers"} {
@@ -248,6 +265,9 @@ func TestEveryAgeEveryMomentYieldsCleanLines(t *testing.T) {
 		}
 		foreign := foreignMarkers(e)
 		for _, m := range Moments() {
+			if isHarbinger(m) {
+				continue // TestHarbingerLinesAreClean runs this matrix for them, per tier
+			}
 			rng := rand.New(rand.NewSource(int64(len(age))*131 + int64(m)))
 			st := NewStream()
 			for _, req := range gameRequests(m, age) {
@@ -288,7 +308,13 @@ func TestHygieneOverFuzzedRequests(t *testing.T) {
 	ages := append(config.AgeOrder(), "", "not_an_age")
 	n := 0
 	for _, m := range Moments() {
-		for i := 0; i < 20000; i++ {
+		// The harbinger Moments read Age, Subject and (for two of them) Kind and
+		// nothing else, so a quarter of the draws covers their hostile surface.
+		draws := 20000
+		if isHarbinger(m) {
+			draws = 5000
+		}
+		for i := 0; i < draws; i++ {
 			req := Request{
 				Moment:   m,
 				Tone:     allTones[rng.Intn(len(allTones))],
@@ -378,12 +404,17 @@ func TestStreamNeverRepeatsInsideItsWindow(t *testing.T) {
 	}
 	topics := topicIndex()
 	for _, age := range config.AgeOrder() {
-		draws := 2000
-		if deep[age] && !testing.Short() {
-			draws = 10000
-		}
 		for _, m := range Moments() {
-			req := Request{Moment: m, Age: age, Kind: gameKinds[m][0], Tone: Neutral}
+			if !harbReachable(m, age) {
+				continue // a false prophet cannot be discredited where none exist
+			}
+			// Harbinger pools are a few dozen sentences; 2,000 draws already
+			// cycle each one about sixty times, so the deep run adds only time.
+			draws := 2000
+			if deep[age] && !testing.Short() && !isHarbinger(m) {
+				draws = 10000
+			}
+			req := Request{Moment: m, Age: age, Kind: gameKinds[m][0], Tone: Neutral, Subject: gameSubject(m, age)}
 			pool := eligible(req)
 			if len(pool) <= streamMemory {
 				t.Fatalf("%v at %s: only %d eligible skeletons, not wider than the %d-line window",
@@ -582,6 +613,19 @@ func TestHouseTics(t *testing.T) {
 		{"restored from backup", regexp.MustCompile(`(?i)\b(restored|restoration|backup of|from backup|backups were)\b`), 8},
 		{"the ship's mind", regexp.MustCompile(`(?i)\bship's mind\b`), 5},
 		{"the same", regexp.MustCompile(`(?i)\bthe same\b`), 88},
+		// Found by the humanizer pass over the harbinger Moments. The first
+		// draft leaned on an ironic reversal ("the people who had laughed
+		// were quiet now") in 39 sentences, six times the rate of the rest of
+		// the catalog; ended long lines on an "as if" simile; filled time with
+		// "for a long time"; announced things in the passive ("It has been
+		// proclaimed"); and turned observations into sayings ("there is a kind
+		// of relief in", "it is one thing to").
+		{"the people who had", regexp.MustCompile(`(?i)\b(people|those|ones|men|women|man|woman) who (had|have)\b`), 26},
+		{"ends on as if", regexp.MustCompile(`(?i)\bas (if|though)\b[^,]*$`), 17},
+		{"for a long time", regexp.MustCompile(`(?i)\bfor a (long time|while)\b`), 10},
+		{"a great many", regexp.MustCompile(`(?i)\ba great (many|deal)\b`), 16},
+		{"it has been proclaimed", regexp.MustCompile(`(?i)^it (has been|is|was) (agreed|ordered|proclaimed|decreed|announced)`), 6},
+		{"a kind of", regexp.MustCompile(`(?i)\b(there is|there was) a (strange )?kind of\b|\bit is one thing to\b|\bis a kind of\b`), 0},
 	}
 	anon := regexp.MustCompile(`(?i)\b(somebody|someone|nobody|no one)\b`)
 	const maxAnonShare = 0.15
