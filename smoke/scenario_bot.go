@@ -35,6 +35,12 @@ func runBotSet(e *Env, res *Result, name, scenario string, cfg Config, seeds []i
 			r.Ticks, dur(r.Seconds), len(r.Anomalies), (time.Duration(r.WallMillis) * time.Millisecond).Round(100*time.Millisecond))
 		return r
 	})
+	return foldBotSet(e, res, name, scenario, cfg, started, runs)
+}
+
+// foldBotSet grades a set of finished runs (NewSummary) and folds their
+// pacing failures and anomalies into res; see runBotSet.
+func foldBotSet(e *Env, res *Result, name, scenario string, cfg Config, started time.Time, runs []*RunResult) *Summary {
 	sum := NewSummary(name, cfg, started, runs)
 	for _, p := range sum.PacingFailures {
 		res.fail(KindPacing+"/pacing_"+p.Verdict, "%s: cycle 1 %s took %s (median of %d seeds, %s to %s) against a %s target (band %gx to %gx)",
@@ -44,7 +50,7 @@ func runBotSet(e *Env, res *Result, name, scenario string, cfg Config, seeds []i
 		for _, a := range r.Anomalies {
 			f := res.fail(a.Kind+"/"+a.Check, "%s: %s (cycle %d, %s, tick %d, seen %dx)", name, a.Message, a.Cycle, a.Age, a.Tick, a.Count)
 			f.Seed = a.Seed
-			f.Repro = reproCmd(scenario, cfg, a.Seed)
+			f.Repro = reproCmd(e.Tier, scenario, cfg, a.Seed)
 			f.Detail = a.Dump
 		}
 	}
@@ -58,8 +64,12 @@ func runBotSet(e *Env, res *Result, name, scenario string, cfg Config, seeds []i
 }
 
 // reproCmd is the command line that replays one seed of a bot scenario.
-func reproCmd(scenario string, cfg Config, seed int64) string {
-	parts := []string{"go run ./cmd/smoke", "-scenario " + scenario, fmt.Sprintf("-seed-base %d -seeds 1", seed)}
+func reproCmd(tier, scenario string, cfg Config, seed int64) string {
+	parts := []string{"go run ./cmd/smoke"}
+	if tier != "" && tier != TierFast {
+		parts = append(parts, "-tier "+tier)
+	}
+	parts = append(parts, "-scenario "+scenario, fmt.Sprintf("-seed-base %d -seeds 1", seed))
 	if cfg.Catastrophe != "" && cfg.Catastrophe != "endure" {
 		parts = append(parts, "-catastrophe "+cfg.Catastrophe)
 	}
@@ -71,6 +81,9 @@ func reproCmd(scenario string, cfg Config, seed int64) string {
 	}
 	if cfg.Style != "" && cfg.Style != "greedy" {
 		parts = append(parts, "-style "+cfg.Style)
+	}
+	if cfg.CheckIn > 0 && cfg.CheckIn != IdleCheckIn {
+		parts = append(parts, "-check-in "+cfg.CheckIn.String())
 	}
 	parts = append(parts, "-trace -v")
 	return strings.Join(parts, " ")
@@ -89,14 +102,25 @@ func writeFileFunc(path string, write func(io.Writer) error) error {
 	return f.Close()
 }
 
+// DeepPrestigeAge is where the deep tier's runs prestige.
+const DeepPrestigeAge = "quantum_age"
+
 // progressionConfig is the progression scenario's run for the tier.
 func progressionConfig(e *Env, o Overrides) (Config, []int64) {
 	cfg := e.Base
 	var seeds []int64
-	if e.full() {
+	switch {
+	case e.Tier == TierDeep:
+		// One cycle to a Quantum Age prestige, the final epoch's passage:
+		// every age from the Primitive to the Galactic is graded, and the
+		// Invite makes the Last Passage come (endured) on every seed.
+		seeds = e.seeds(3)
+		cfg.Cycles, cfg.PrestigeAge, cfg.FinalAge, cfg.MaxSim = 1, DeepPrestigeAge, "", 1000*time.Hour
+		cfg.InviteCosmic = true
+	case e.full():
 		seeds = e.seeds(8)
 		cfg.Cycles, cfg.FinalAge, cfg.MaxSim = 2, "digital_age", 600*time.Hour
-	} else {
+	default:
 		seeds = e.seeds(3)
 		cfg.Cycles, cfg.StopAge, cfg.MaxSim = 1, "bronze_age", 300*time.Hour
 	}
@@ -120,7 +144,12 @@ func progressionConfig(e *Env, o Overrides) (Config, []int64) {
 
 func runProgression(e *Env, res *Result) {
 	cfg, seeds := progressionConfig(e, e.Overrides)
-	sum := runBotSet(e, res, "progression", "progression", cfg, seeds)
+	describeProgression(res, runBotSet(e, res, "progression", "progression", cfg, seeds))
+}
+
+// describeProgression writes the progression scenario's summary line and
+// sections from its graded runs.
+func describeProgression(res *Result, sum *Summary) {
 	reached := map[string]int{}
 	for _, r := range sum.Runs {
 		reached[r.FinalAge]++

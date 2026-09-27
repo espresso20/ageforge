@@ -35,7 +35,8 @@ func main() {
 }
 
 func run() int {
-	tier := flag.String("tier", smoke.TierFast, "fast (per PR, a few minutes) or full (nightly: every scenario, deeper, more seeds)")
+	tier := flag.String("tier", smoke.TierFast, "fast (per PR, a few minutes), full (nightly: every scenario, deeper, more seeds) or deep (weekly: progression to a Quantum Age prestige)")
+	merge := flag.String("merge", "", "comma-separated report.json files (or directories holding one) whose progression runs are pooled and graded again under -pacing, instead of running anything (the weekly job's per-seed shards)")
 	mode := flag.String("mode", "", "deprecated alias for -tier (quick = fast, full = full)")
 	scenarios := flag.String("scenario", "all", "comma-separated scenarios to run, or all (the tier's set); see -list")
 	list := flag.Bool("list", false, "list the scenarios and exit")
@@ -45,13 +46,14 @@ func run() int {
 	catastrophe := flag.String("catastrophe", "endure", "how the bot answers a catastrophe: endure or succumb")
 	harbinger := flag.String("harbinger", smoke.HarbingerIgnore, "bot answer to harbingers: ignore, appease, brace or both (Appease both levels, Brace level 1)")
 	style := flag.String("style", "", "styles scenario: run only this style ("+strings.Join(smoke.StyleNames(), ", ")+")")
+	checkIn := flag.Duration("check-in", 0, "idle style: simulated 1x time between check-ins (0 = 3h)")
 	prestigeAge := flag.String("prestige-age", "", "progression: age at which to prestige (default: first age where prestige is allowed)")
 	cycles := flag.Int("cycles", 0, "progression: prestige cycles to play (0 = tier default)")
 	finalAge := flag.String("final-age", "-", "progression: after the last prestige keep playing to this age (\"\" = stop at prestige; default: tier preset)")
 	stopAge := flag.String("stop-age", "", "progression: end each run as soon as this age is entered")
 	softlock := flag.Duration("softlock", 0, "simulated 1x span without progress that counts as a soft-lock (0 = default 30m)")
 	ageTimeout := flag.Duration("age-timeout", 0, "fixed simulated 1x time allowed in every age (0 = derive each age's from the pacing table)")
-	maxSim := flag.Duration("max-sim", 0, "progression: simulated 1x cap per seed (0 = tier default)")
+	maxSim := flag.Duration("max-sim", 0, "progression and styles: simulated 1x cap per seed (0 = the scenario default)")
 	checkEvery := flag.Int("check-every", 0, "ticks between invariant sweeps (0 = default 25)")
 	strict := flag.Bool("strict", false, "fail on known bugs too (they are reported as warnings otherwise)")
 	fuzzCommands := flag.Int("fuzz-commands", 0, "fuzz: commands per seed (0 = tier default)")
@@ -81,8 +83,8 @@ func run() int {
 		fmt.Fprintf(os.Stderr, "unknown -mode %q (want quick or full; prefer -tier)\n", *mode)
 		return 2
 	}
-	if *tier != smoke.TierFast && *tier != smoke.TierFull {
-		fmt.Fprintf(os.Stderr, "unknown -tier %q (want fast or full)\n", *tier)
+	if *tier != smoke.TierFast && *tier != smoke.TierFull && *tier != smoke.TierDeep {
+		fmt.Fprintf(os.Stderr, "unknown -tier %q (want fast, full or deep)\n", *tier)
 		return 2
 	}
 	if *pacing != smoke.PacingReport && *pacing != smoke.PacingEnforce {
@@ -113,6 +115,10 @@ func run() int {
 	if *checkEvery > 0 {
 		base.CheckEvery = *checkEvery
 	}
+	if *checkIn < 0 {
+		fmt.Fprintf(os.Stderr, "-check-in must not be negative (got %s)\n", *checkIn)
+		return 2
+	}
 	if *style != "" {
 		if _, err := smoke.ApplyStyle(base, *style); err != nil {
 			fmt.Fprintln(os.Stderr, err)
@@ -137,7 +143,7 @@ func run() int {
 
 	env := &smoke.Env{
 		Tier: *tier, Seeds: *seeds, SeedBase: *seedBase, Pacing: *pacing, Parallel: *parallel,
-		OutDir: absOut, RepoRoot: repoRoot(), Base: base, Style: *style, FuzzCommands: *fuzzCommands, Strict: *strict,
+		OutDir: absOut, RepoRoot: repoRoot(), Base: base, Style: *style, CheckIn: *checkIn, FuzzCommands: *fuzzCommands, Strict: *strict,
 		Overrides: smoke.Overrides{MaxSim: *maxSim, StopAge: *stopAge, PrestigeAge: *prestigeAge, Cycles: *cycles},
 	}
 	if *finalAge != "-" {
@@ -155,7 +161,13 @@ func run() int {
 			names = append(names, n)
 		}
 	}
-	sess, err := smoke.RunScenarios(env, names)
+	var sess *smoke.Session
+	var err error
+	if *merge != "" {
+		sess, err = mergeReports(env, *merge)
+	} else {
+		sess, err = smoke.RunScenarios(env, names)
+	}
 	if err != nil {
 		fmt.Fprintln(os.Stderr, err)
 		return 2
@@ -183,6 +195,29 @@ func run() int {
 		return 1
 	}
 	return 0
+}
+
+// mergeReports reads the listed report.json files (a directory stands for
+// the report.json inside it) and merges their progression runs.
+func mergeReports(env *smoke.Env, list string) (*smoke.Session, error) {
+	var parts []*smoke.Session
+	for _, p := range strings.Split(list, ",") {
+		if p = strings.TrimSpace(p); p == "" {
+			continue
+		}
+		if fi, err := os.Stat(p); err == nil && fi.IsDir() {
+			p = filepath.Join(p, "report.json")
+		}
+		s, err := smoke.ReadSession(p)
+		if err != nil {
+			return nil, err
+		}
+		parts = append(parts, s)
+	}
+	if env.Logf != nil {
+		env.Logf("merging %d report(s)", len(parts))
+	}
+	return smoke.MergeProgression(env, parts)
 }
 
 // repoRoot walks up from the working directory to the directory holding

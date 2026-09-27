@@ -5,6 +5,7 @@ import (
 	"io"
 	"math"
 	"sort"
+	"strings"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
@@ -47,6 +48,13 @@ type Bot struct {
 	// HorizonTicks is how far away (in ticks) the slowest requirement may be
 	// before the bot stops investing in production and starts saving.
 	HorizonTicks float64
+	// CheckInTicks is the time to the next decision for a player who only
+	// checks in now and then (the idle style); 0 for one who is always
+	// there. A check-in player plans for what happens before the next
+	// visit: storage for what production will bring in by then, and the
+	// wonder banked with what would otherwise be lost at the cap. See
+	// CheckIn.
+	CheckInTicks float64
 
 	// Actions counts successful player actions by kind; Errors counts
 	// rejected ones. Both feed the report.
@@ -180,6 +188,16 @@ func (b *Bot) newPlan(st game.GameState) *plan {
 		}
 	}
 	b.harbingerTargets(p)
+	if b.CheckInTicks > 0 {
+		// Room for what comes in before the next visit, up to what the age
+		// still needs: anything over the cap by then is lost.
+		for _, res := range sortedKeys(p.target) {
+			if rate := st.Resources[res].Rate; rate > 0 && p.target[res] > 0 {
+				want := math.Min(p.target[res], p.amt[res]+rate*b.CheckInTicks)
+				p.capNeed[res] = math.Max(p.capNeed[res], want)
+			}
+		}
+	}
 	p.maxEta = 0
 	for _, res := range sortedKeys(p.target) {
 		deficit := p.target[res] - p.amt[res]
@@ -238,6 +256,56 @@ func (b *Bot) Play(st game.GameState) {
 	b.gather(p)
 }
 
+// maxCheckInRounds bounds the rounds of one check-in.
+const maxCheckInRounds = 30
+
+// CheckIn is one visit by a player who checks in now and then: rounds of
+// Play on a fresh snapshot until one changes nothing, so a visit spends and
+// queues everything worthwhile (several producers, storage for the hours
+// ahead, staffing, the wonder) instead of making one decision and leaving.
+// No time passes during a visit. Returns the rounds played.
+func (b *Bot) CheckIn(st game.GameState) int {
+	if b.Trace != nil {
+		b.traceCheckIn("checkin", st)
+	}
+	for round := 1; ; round++ {
+		before := b.actionCount()
+		b.Play(st)
+		if round >= maxCheckInRounds || b.actionCount() == before {
+			if b.Trace != nil {
+				b.traceCheckIn(fmt.Sprintf("leaves after %d round(s)", round), b.ge.GetState())
+			}
+			return round
+		}
+		st = b.ge.GetState()
+	}
+}
+
+// traceCheckIn writes what a visit finds or leaves: each resource the age
+// still needs, as held/cap (+rate per tick, still to make), slowest first.
+func (b *Bot) traceCheckIn(what string, st game.GameState) {
+	p := b.newPlan(st)
+	var parts []string
+	for _, res := range p.worst {
+		r := st.Resources[res]
+		parts = append(parts, fmt.Sprintf("%s %s/%s (%+.3g/t, need %s)", res, num(r.Amount), num(r.Storage), r.Rate, num(p.target[res])))
+	}
+	fmt.Fprintf(b.Trace, "tick %d %s %s: queue %d, research %q; waiting on: %s\n", st.Tick, what, st.Age, len(st.BuildQueue),
+		st.Research.CurrentTech, strings.Join(parts, "; "))
+}
+
+// actionCount is the number of successful actions so far, less hand
+// gathering, which a player can always do once more.
+func (b *Bot) actionCount() int {
+	n := 0
+	for k, v := range b.Actions {
+		if k != "gather" {
+			n += v
+		}
+	}
+	return n
+}
+
 // trade sells one resource for the slowest target resource at the market, as
 // a player would with `trade`. It picks the amount that evens out the two
 // resources' times to target (never selling one that would then become the
@@ -254,7 +322,7 @@ func (b *Bot) trade(p *plan) {
 		return
 	}
 	rates := p.st.Trade.ExchangeRates
-	if b.tradeForFood(p, rates) || b.tradeForBlocker(p, rates) {
+	if b.tradeForFood(p, rates) || b.tradeForBlocker(p, rates) || b.tradeOverflow(p, rates) {
 		return
 	}
 	for _, want := range p.worst {
@@ -305,6 +373,50 @@ func (b *Bot) trade(p *plan) {
 		}
 		return
 	}
+}
+
+// tradeOverflow is a check-in player's trade: whatever will be lost at a cap
+// before the next visit (held now plus what comes in by then, over the cap)
+// is sold for the slowest target resource that still has room by then.
+// Selling it costs nothing, since it would be gone anyway. Only with
+// CheckInTicks set; reports whether it traded.
+func (b *Bot) tradeOverflow(p *plan, rates map[string]game.ExchangeRateInfo) bool {
+	if b.CheckInTicks <= 0 {
+		return false
+	}
+	ahead := func(res string) float64 {
+		return p.amt[res] + math.Max(p.st.Resources[res].Rate, 0)*b.CheckInTicks
+	}
+	for _, want := range p.worst {
+		room := math.Min(p.target[want], p.storage[want]) - ahead(want)
+		if room <= 0 || b.recently(b.sold, want) {
+			continue
+		}
+		from, best, sell := "", 0.0, 0.0
+		for _, k := range sortedKeys(rates) {
+			x := rates[k]
+			if x.To != want || x.Rate <= 0 || x.Rate < x.BaseRate*0.6 || b.recently(b.bought, x.From) {
+				continue
+			}
+			over := math.Min(ahead(x.From)-p.storage[x.From], p.amt[x.From])
+			n := math.Min(over, room/x.Rate)
+			if v := n * x.Rate; n >= 1 && v > best {
+				from, best, sell = x.From, v, n
+			}
+		}
+		if from == "" {
+			continue
+		}
+		got, err := b.ge.ExchangeResources(from, want, sell)
+		if !b.act("trade_overflow", from+"->"+want, err) {
+			return false
+		}
+		p.amt[from] -= sell
+		p.amt[want] += got
+		b.sold[from], b.bought[want] = b.tick, b.tick
+		return true
+	}
+	return false
 }
 
 // tradeForBlocker buys the resource blocking the most wanted purchase when
@@ -871,7 +983,15 @@ func (b *Bot) bankWonder(p *plan) {
 		}
 		keep := p.st.NextAgeResReqs[res]
 		onlyWonder := p.target[res]-left <= keep
-		if p.invest && !onlyWonder {
+		switch {
+		case p.invest && !onlyWonder && b.CheckInTicks > 0:
+			// Bank what would be lost at the cap before the next visit.
+			over := p.amt[res] + math.Max(p.st.Resources[res].Rate, 0)*b.CheckInTicks - p.storage[res]
+			if over <= 0 {
+				continue
+			}
+			keep = math.Max(keep, p.amt[res]-over)
+		case p.invest && !onlyWonder:
 			if p.amt[res] < 0.9*p.storage[res] {
 				continue
 			}
