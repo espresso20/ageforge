@@ -172,9 +172,18 @@ type GameEngine struct {
 	survivedEpochs     map[string]bool // epochs where player chose Endure
 	pendingCatastrophe string          // epoch key when catastrophe modal should show; "" otherwise
 	// catastropheInvited forces a catastrophe at the next allowed epoch
-	// transition (Harbinger seam; see honourInvite). Not persisted yet.
+	// transition (armed by the Harbinger's Invite; see honourInvite). Persisted.
 	catastropheInvited bool
-	epochEventHistory  []EpochEventRecord
+	// Harbinger (see harbinger.go). harbinger is the live one, nil when none is
+	// present. harbingerArrived records the epochs a harbinger has come in this
+	// run (once per epoch). pendingBraceLevel is the Brace level handed to the
+	// pending catastrophe, applied by Endure. harbingerHistory holds resolved
+	// harbingers; like epochEventHistory it survives Succumb, not prestige.
+	harbinger         *HarbingerSave
+	harbingerArrived  map[string]bool
+	pendingBraceLevel int
+	harbingerHistory  []HarbingerRecord
+	epochEventHistory []EpochEventRecord
 	// awakeningsFired tracks which one-time Age Awakenings have fired this run, so each
 	// fires at most once per prestige cycle and a save/reload does not re-fire. Keyed by
 	// AwakeningDef.Key. Cleared on prestige/reset alongside epochEventFired.
@@ -282,6 +291,7 @@ func NewGameEngine() *GameEngine {
 		stopCh:           make(chan struct{}),
 		currentEpoch:     config.EpochForAge("primitive_age"),
 		epochEventFired:  make(map[string]bool),
+		harbingerArrived: make(map[string]bool),
 		awakeningsFired:  make(map[string]bool),
 		survivedEpochs:   make(map[string]bool),
 		legacyBonuses:    make(map[string]bool),
@@ -1740,6 +1750,11 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// of any epoch-event flavor, and logs as the pivotal "this is a new era" beat.
 	ge.fireAwakening(newAge)
 
+	// Harbinger: entering the last age of an epoch whose transition can bring a
+	// catastrophe. Non-blocking (log, toast, badge), so it never competes with
+	// the age splash for focus.
+	ge.maybeHarbingerArrive()
+
 	// Age advancement celebration morale boost
 	ge.applyMorale(0.08)
 }
@@ -1779,7 +1794,10 @@ func (ge *GameEngine) detectEpochTransition(newAge string) {
 			"epoch_icon": ep.Icon,
 		},
 	})
+	hadPending := ge.pendingCatastrophe != ""
 	ge.rollEpochEvent(newEpoch)
+	// A harbinger resolves on the transition it warned about, whatever the roll.
+	ge.resolveHarbinger(newEpoch, !hadPending && ge.pendingCatastrophe == newEpoch)
 }
 
 // fireAwakening fires the one-time Age Awakening for newAge, if one triggers on that
@@ -1849,7 +1867,9 @@ func (ge *GameEngine) rollEpochEvent(epochKey string) {
 		ge.rollGoodEpochEvent()
 		return
 	}
-	escalate := rng.Float64() < catastropheChanceOnBadRoll
+	// Appease scales the escalation chance, so it lowers the real odds by the
+	// same factor the outlook reports.
+	escalate := rng.Float64() < catastropheChanceOnBadRoll*ge.harbingerAppeaseMultiplier()
 	if escalate && ge.catastropheCanStrike(epochKey) {
 		ge.triggerCatastrophe(epochKey, catastropheRolled)
 		return
@@ -3241,7 +3261,8 @@ func (ge *GameEngine) DoPrestige() error {
 	ge.log = nil
 	ge.currentEpoch = config.EpochForAge("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
-	ge.catastropheInvited = false
+	ge.clearHarbingerRun()
+	ge.harbingerHistory = nil
 	ge.awakeningsFired = make(map[string]bool)
 	ge.survivedEpochs = make(map[string]bool)
 	ge.pendingCatastrophe = ""
@@ -3338,7 +3359,8 @@ func (ge *GameEngine) Reset() {
 	ge.eliteBadge = false
 	ge.currentEpoch = config.EpochForAge("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
-	ge.catastropheInvited = false
+	ge.clearHarbingerRun()
+	ge.harbingerHistory = nil
 	ge.awakeningsFired = make(map[string]bool)
 	ge.survivedEpochs = make(map[string]bool)
 	ge.pendingCatastrophe = ""
@@ -3501,6 +3523,8 @@ func (ge *GameEngine) GetState() GameState {
 		PendingMemoryTech:     ge.pendingMemoryTech,
 		PendingMemoryTechName: ge.Research.defs[ge.pendingMemoryTech].Name,
 		EpochEventHistory:     ge.epochEventHistory,
+		Harbinger:             ge.harbingerView(),
+		HarbingerHistory:      append([]HarbingerRecord(nil), ge.harbingerHistory...),
 		LegacyBonuses: func() map[string]bool {
 			out := make(map[string]bool, len(ge.legacyBonuses))
 			for k, v := range ge.legacyBonuses {
