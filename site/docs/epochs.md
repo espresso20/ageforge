@@ -81,6 +81,8 @@ The outcome is determined in two steps:
 
 **Step 2 — If the roll is bad:** there's a 30% chance it escalates to a **Catastrophe** (modal prompt, your choice). The remaining 70% of bad rolls produce a Challenging event (applied immediately, no choice required). That makes the catastrophe chance 18% / 15% / 12% at low / mid / high faith. A bad roll never escalates on a transition into an epoch before the Iron Era, in an epoch that already had its catastrophe this run, or while another catastrophe is pending. See [Catastrophe](catastrophe.md).
 
+**The Harbinger.** When you enter the last age of an epoch and the coming transition can bring a catastrophe, a harbinger arrives to warn you. Appeasing it multiplies the catastrophe chance in Step 2 by 0.6 per level (two levels at most); inviting it makes the catastrophe certain. See [The Harbinger](harbinger.md).
+
 **Step 3 — If the roll is good:** your culture fill percentage gates which tier of event you can receive:
 
 | Culture % of Storage Cap | Eligible Tiers |
@@ -110,6 +112,7 @@ Press **`epoch`** to open the Epoch tab. It displays:
 - Current epoch name, icon, and primary/energy resources
 - The result of your last epoch transition roll
 - Your catastrophe status for this epoch (pending, survived, succumbed), and the catastrophe odds for the next transition
+- The current [harbinger](harbinger.md), if one is present, and the verdicts of past harbingers this run
 - Full epoch event history for the current civilisation cycle
 - Your legacy bonuses earned across all runs
 - Civilisation history log (catastrophe decisions, Succumb/Endure records)
@@ -253,6 +256,7 @@ When a catastrophe hits, nothing happens until you choose. The game keeps runnin
 - **20% of your non-wonder buildings** destroyed at random (wonders are spared and don't count)
 - Workers of destroyed buildings go back to the idle pool
 - **All resources** reduced to 15% of current amounts
+- If you braced when the harbinger warned you, 15% or 10% of buildings are destroyed instead, and 30% or 45% of resources are kept. See [Brace](harbinger.md#brace-soften-an-endure)
 - **25% of workers** lost, the same share from every building
 - **-10% all production** for 216 ticks (reconstruction), and morale -10
 - Earn the "Survived" marker for that epoch, recorded in the civilisation log
@@ -281,6 +285,8 @@ Best when: you've built a large, mature civilisation that would be painful to re
 Best when: you just entered the epoch (low reset cost) and don't hold its legacy bonus yet. Right after entering the Iron Era is the cheapest window.
 
 **The stacking math:** six epochs can be succumbed in (Iron to Cosmic), so Ancient Knowledge tops out at +150% research speed.
+
+**Choosing to fall:** you can't trigger a catastrophe directly, but when a harbinger comes you can **Invite** it, which guarantees the catastrophe at that transition. See [The Harbinger](harbinger.md).
 
 ---
 
@@ -377,6 +383,8 @@ The sweet spot is usually one full age's worth of extra time (enough ticks to bu
 **Each epoch you Succumb in adds +25% research speed permanently.** Repeat Succumbs in the same epoch add nothing, so the value is in collecting different epochs. This is the main argument for a deliberate early Succumb in the Iron Era.
 
 **One catastrophe per epoch per run.** You cannot chain-catastrophe your way through an epoch, and none can strike before the Iron Era.
+
+**Listen to the harbinger.** It arrives one age before each transition that can bring a catastrophe. Appease if you want to keep your run, Brace if Endure is the plan, Invite if you want the legacy bonus. See [The Harbinger](harbinger.md).
 
 ---
 

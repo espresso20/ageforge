@@ -248,7 +248,39 @@ Graphs appear after ~30 seconds of play. History is saved and restored automatic
 |---|---|
 | `catastrophe` (or `cat`) | Reopen the Endure / Succumb choice for a pending catastrophe. With nothing pending, show the catastrophe odds for the next epoch transition |
 
-A pending catastrophe blocks `advance` and `prestige confirm yes` until you choose. In the choice modal, **E** endures, **S** succumbs and **Esc** closes it without choosing; the status bar shows a pending badge until you decide. There is no Defer option, and no command to trigger a catastrophe yourself. See [Catastrophe](catastrophe.md).
+A pending catastrophe blocks `advance` and `prestige confirm yes` until you choose. In the choice modal, **E** endures, **S** succumbs and **Esc** closes it without choosing; the status bar shows a pending badge until you decide. There is no Defer option, and no command to trigger a catastrophe directly; the harbinger's Invite (below) is the only way to choose one. See [Catastrophe](catastrophe.md).
+
+---
+
+## Harbinger
+
+| Command | Description |
+|---|---|
+| `harbinger` (or `harb`) | Open the **Harbinger** panel. Also listed under Panels in the sidebar. With no harbinger present it says so and describes the outlook for your next epoch transition |
+| `harbinger appease` | Buy the next Appease level: 15% of your faith and culture storage caps (30% for level 2). Each level multiplies the real catastrophe chance by 0.6. Two levels at most; refused after Invite |
+| `harbinger brace` | Buy the next Brace level: 12% of the storage cap of each resource the next age requires, except faith and culture (24% for level 2). An Endure then destroys 15% / 10% of buildings and keeps 30% / 45% of stored resources. Two levels at most |
+| `harbinger invite` | Guarantee the catastrophe at this transition. Free, and can't be undone |
+
+A harbinger comes when you enter the last age of an epoch (Bronze, Medieval, Industrial, Atomic, Digital and Space) and the coming transition can bring a catastrophe. The actions only work while it is present; it stays until the transition.
+
+**Keys in the Harbinger panel:**
+
+| Key | Action |
+|---|---|
+| `A` | Appease |
+| `B` | Brace |
+| `I` | Invite. Press `I` twice to confirm, since it can't be undone |
+| `Esc` | Close the panel |
+
+```
+harbinger
+harb
+harbinger appease
+harbinger brace
+harbinger invite
+```
+
+See [The Harbinger](harbinger.md) for the roster, false prophets and verdicts.
 
 ---
 

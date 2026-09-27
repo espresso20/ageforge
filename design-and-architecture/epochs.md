@@ -129,13 +129,13 @@ were never built are kept under **Future ideas (not implemented)** at the end of
   Good and challenging epoch events are unaffected.
 - **One per epoch per run.** Each epoch's transition rolls once per run (`epochEventFired`), reset
   by Succumb, prestige and a new game.
-- **No player trigger.** `catastrophe invoke` was removed (2026-09-26). Choosing to face a
-  catastrophe moves to the Harbinger's planned "Invite it" action. The engine keeps an unwired
-  seam for it: `catastropheInvited` makes the next transition into an allowed epoch produce a
-  catastrophe instead of rolling (consumed when honoured, kept while gated or something is
-  pending, reset by Succumb/prestige, not persisted yet), and `CatastropheOutlook` reports
-  probability 1 while it is armed. The dev console's `/catastrophe` forces one for testing and
-  respects the gate.
+- **No direct player trigger.** `catastrophe invoke` was removed (2026-09-26). Choosing to face
+  a catastrophe is the Harbinger's **Invite** (see [Harbinger](#harbinger)), which arms
+  `catastropheInvited`: the next transition into an allowed epoch produces a catastrophe instead
+  of rolling (consumed when honoured, kept while gated or something is pending, reset by
+  Succumb/prestige, saved as `catastrophe_invited`), and `CatastropheOutlook` reports probability
+  1 while it is armed. The dev console's `/catastrophe` forces one for testing and respects the
+  gate.
 - **Pending blocks progress.** A catastrophe only sets `pendingCatastrophe`; nothing is destroyed
   until the player chooses. The game keeps running, but `AdvanceAge` and `DoPrestige` refuse while
   one is pending, and the roll never overwrites a pending catastrophe.
@@ -146,8 +146,9 @@ were never built are kept under **Future ideas (not implemented)** at the end of
   `GameEngine.rng`, drawing from pools built in sorted-key order.
 - **Outlook.** `GameEngine.CatastropheOutlook()` (also `GameState.CatastropheOutlook`) reports the
   next transition's epoch, whether a catastrophe is possible there, its probability, a coarse tier
-  (none/low/medium/high) and the faith fill driving it. It is read-only and lock-safe, meant as the
-  hook for a future harbinger who warns of the next catastrophe.
+  (none/low/medium/high: under 14%, under 17%, 17% and up) and the faith fill driving it. The
+  probability includes the Harbinger's Appease multiplier. It is read-only and lock-safe; the
+  Harbinger reads it at arrival and for its panel.
 
 **The modal** is a box floating over the dashboard, sized to its content:
 
@@ -179,9 +180,9 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 ### ENDURE — Consequences
 
 - `floor(non-wonder buildings / 5)` destroyed, at least 1 if any. Wonders are neither destroyed
-  nor counted.
+  nor counted. With a Harbinger Brace (`pendingBraceLevel` 1 / 2) it is 15% / 10%, same floor.
 - Workers assigned to destroyed buildings return to the idle pool (same rule as selling).
-- All unlocked resources drop to 15% of their stored amounts.
+- All unlocked resources drop to 15% of their stored amounts (30% / 45% braced).
 - 25% of the single worker pool is lost; every building's assignment shrinks by the same share,
   whatever its worker domain.
 - Reconstruction Effort: `production_all` −10% for 216 ticks. Morale −0.10.
@@ -230,7 +231,7 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 
 | | Regular Prestige | Catastrophe Succumb |
 |--|-----------------|---------------------|
-| Trigger | Player-initiated from the Modern Age | Random (12–18% per transition, Iron Era on) |
+| Trigger | Player-initiated from the Modern Age | Random (12–18% per transition, Iron Era on; lowered by Appease), or guaranteed by the Harbinger's Invite |
 | Reset scope | Full | Full; up to 8 new ruins (24 max) carry forward |
 | Bonus pool | Prestige upgrade tree + points | Epoch legacy bonus + Ancient Knowledge |
 | Repeatable | Yes | Once per epoch per run; bonuses once per epoch ever |
@@ -254,9 +255,105 @@ Kept from the original design for reference. None of this exists in the game.
   Fallout Shelter tech and Nuclear Vault; Ghost Protocol tech and Dead Drop Network; Phoenix
   Protocol tech and Corporate Ruins wonder; Reality Anchor tech and Scar in Reality wonder
   (the Reality Tear legacy was also meant to boost antimatter + quantum_flux instead of dark_matter).
-- **A Harbinger** who warns of the next catastrophe (built on `CatastropheOutlook`) and offers
-  "Invite it", which arms `catastropheInvited` to guarantee one at the next transition. This
-  replaces the removed `catastrophe invoke` command.
+
+---
+
+## Harbinger
+
+Built 2026-09-26. Code: `game/harbinger.go` (mechanic), `config/harbingers.go` (the 22-entry
+roster: `Name`, `Description`, `AppeaseLabel`, `BraceLabel`, `InviteLabel`, plus the derived
+`ForecastPrecision` and `FalseProphetChance`), `flavor/` (arrival, warning, action and outcome
+lines). Player docs: `site/docs/harbinger.md`.
+
+### Arrival
+
+- `advanceAge` calls `maybeHarbingerArrive()` after `detectEpochTransition` and `fireAwakening`.
+  `restoreHarbingerState` calls it again after a load.
+- It arrives only when the player stands in the **last age of the current epoch**, no harbinger
+  is live, `harbingerArrived[currentEpoch]` is unset, and `catastropheOutlook().Possible` is true
+  (the next epoch is past the Iron gate and has not rolled this run). So it visits the Bronze,
+  Medieval, Industrial, Atomic, Digital and Space Ages only. The Cosmic Era is last and gets none.
+  The other 16 roster entries exist but never appear under this rule.
+- Non-blocking: a log entry plus the arrival and warning lines, `EventHarbingerArrived` on the bus
+  (toast), and a status-bar badge while `GameState.Harbinger` is non-nil. It never expires.
+- The dev console's `/harbinger` (`summonHarbinger`) skips the last-age and once-per-epoch checks
+  but still needs `Possible`.
+
+### False prophets and precision
+
+- `FalseProphetChance` is `(8 - ageIndex) / 64` before the Industrial Age (index 8) and 0 from
+  it: 6/64 at Bronze, 3/64 at Medieval, 0 for every later visitor.
+- A false prophet's `AnnouncedTier` is medium or high (rolled), whatever the real tier. The
+  displayed tier is `announced + (liveReal - ArrivalRealTier)`, clamped to low..high, so Appease
+  and faith-band changes move it like a real one. `HarbingerView` carries no false-prophet flag.
+- `ForecastPrecision` is numeric from the Industrial Age: the panel prints
+  `HarbingerView.Probability` (after Appease). Vague ages show the tier only. Numeric and
+  false-prophet ages never overlap, by construction of the two curves.
+
+### Actions
+
+Costs are fractions of the **current storage cap** (`harbingerLevelCost`), rounded up; level 2
+costs double. Locked resources and resources with zero storage are skipped. Caps track the
+economy at every age, never read zero (rates can), and bound what the next age's requirements
+can be, so a fraction of the cap is always a slice of what it takes to advance. The harbinger
+never expires, so an idle player can let storage fill and pay later.
+
+| Action | Cost (level 1) | Effect | Cap |
+|--------|----------------|--------|-----|
+| Appease | 15% of faith cap + 15% of culture cap (culture once unlocked, Classical) | Multiplies the real catastrophe chance by `harbingerAppeaseFactor` = 0.6 per level (0.36 at 2) | 2 |
+| Brace | 12% of the cap of each resource in the next age's `ResourceReqs`, minus faith and culture (falls back to the epoch's primary resource) | Endure destroys 15% / 10% of non-wonder buildings and keeps 30% / 45% of resources (unbraced 20% / 15%) | 2 |
+| Invite | free | Sets `HarbingerSave.Invited` and arms `catastropheInvited`; Appease refuses afterwards, Brace does not | once |
+
+- **Appease** is applied through `harbingerAppeaseMultiplier()`, which scales
+  `catastropheChanceOnBadRoll` in both `rollEpochEvent` (the real roll) and `catastropheOutlook`
+  (the displayed odds), so the two cannot disagree. It lowers the real odds even for a false
+  prophet. Spending 15% of the faith cap can drop the faith band; worst case the base chance goes
+  from 12% to 18% (x1.5), and x0.6 still leaves 0.9x, so each level always lowers the odds.
+- **Brace** lives on `HarbingerSave.BraceLevel` until resolution, then moves to
+  `ge.pendingBraceLevel` if the catastrophe came. `Endure` reads and clears it
+  (`braceDestroyPct`, `braceKeepFrac`). Succumb ignores it. Keeping it on the pending catastrophe
+  means Esc-then-Endure and save/load both keep the discount.
+
+### Resolution
+
+`detectEpochTransition` calls `resolveHarbinger(newEpoch, came)` right after `rollEpochEvent`,
+where `came` is "no catastrophe was pending before the roll and one is pending for this epoch
+now". Verdicts (`HarbingerRecord.Outcome`):
+
+| Outcome | Condition |
+|---------|-----------|
+| `fulfilled` | came and invited |
+| `vindicated` | came, not invited (a false prophet here gets a note that the warning was invented) |
+| `spared` | did not come, true harbinger |
+| `discredited` | did not come, false prophet |
+
+It logs the verdict (and the braced Endure numbers if relevant), draws one flavor line, appends a
+`HarbingerRecord` to `harbingerHistory` and clears the live harbinger.
+
+### Determinism
+
+All draws come from the seeded `ge.rng` under the write lock. Arrival draws, in order: the
+false-prophet `Float64()` (always, whatever the age's chance, so the stream's shape does not
+depend on it), then `Intn(2)` for the fake tier only if the harbinger is false, then the arrival
+and warning lines from the engine's flavor `Stream`. Each action and the resolution draw one
+flavor line.
+
+### Persistence and resets
+
+`GameSave` fields, all `omitempty` (old saves load clean):
+
+```go
+Harbinger          *HarbingerSave    `json:"harbinger,omitempty"`
+HarbingerArrived   map[string]bool   `json:"harbinger_arrived,omitempty"`
+CatastropheInvited bool              `json:"catastrophe_invited,omitempty"`
+PendingBraceLevel  int               `json:"pending_brace_level,omitempty"`
+HarbingerHistory   []HarbingerRecord `json:"harbinger_history,omitempty"`
+```
+
+On load, levels are clamped to 2, an unknown roster age drops the harbinger, and
+`pendingBraceLevel` is zeroed unless a catastrophe is pending. `clearHarbingerRun` (live
+harbinger, arrivals, invite, pending Brace) runs on Succumb, prestige and reset.
+`harbingerHistory` follows `epochEventHistory`: kept by Succumb, cleared by prestige.
 
 ---
 
@@ -483,3 +580,13 @@ Ruins persist across runs (they're part of your civilization's identity). Legacy
 permanent and never removed. `EpochEventFired` prevents a second transition roll in the same
 epoch, which is also what limits catastrophes to one per epoch per run. `CatastropheFired` was
 written by early builds of the overhaul; it stays in the struct only so those saves still verify.
+
+---
+
+## Decision Log
+
+Epoch-system decisions. The project-wide log is in `README.md`.
+
+| Date | Decision | Rationale |
+|------|----------|-----------|
+| 2026-09-26 | Harbinger replaces invoke; false prophets pre-industrial; Appease x0.6 per level; Brace tiers (15%/30%, 10%/45%) | Choosing a catastrophe fits better as an answer to a warning than as a bare command; false prophets make early warnings worth doubting until the odds are printed; x0.6 per level with storage-cap pricing always lowers the odds even when the faith spend drops a band; Brace gives Endure-minded players something to buy without touching the odds |
