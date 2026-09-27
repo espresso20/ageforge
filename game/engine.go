@@ -1137,23 +1137,38 @@ func (ge *GameEngine) doTick() {
 func (ge *GameEngine) processResearch() {
 	completed := ge.Research.Tick()
 	if completed != "" {
-		def := ge.Research.defs[completed]
-		ge.addLog("debug", fmt.Sprintf("Research complete: %s", def.Name))
-		ge.addLog("success", fmt.Sprintf("Research complete: %s!", def.Name))
-		// Cosmetic flavour on roughly half of breakthroughs (varies, never spams).
-		if ge.quipRNG().Intn(2) == 0 {
-			if q := config.PickLogFlavor(config.LogFlavorResearchDone, ge.quipRNG()); q != "" {
-				ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
-			}
-		}
-		ge.Bus.Publish(EventData{
-			Type:    EventResearchDone,
-			Payload: map[string]interface{}{"tech": completed},
-		})
+		ge.finishResearch(completed)
 	} else if ge.Research.currentTech != "" {
 		ge.addLog("debug", fmt.Sprintf("Research: %s %d/%d ticks",
 			ge.Research.currentTech, ge.Research.totalTicks-ge.Research.ticksLeft, ge.Research.totalTicks))
 	}
+}
+
+// advanceResearch moves research on by n ticks at once (offline catch-up).
+// Reports whether a tech completed.
+func (ge *GameEngine) advanceResearch(n int) bool {
+	if completed := ge.Research.Advance(n); completed != "" {
+		ge.finishResearch(completed)
+		return true
+	}
+	return false
+}
+
+// finishResearch logs a completed tech and publishes EventResearchDone.
+func (ge *GameEngine) finishResearch(completed string) {
+	def := ge.Research.defs[completed]
+	ge.addLog("debug", fmt.Sprintf("Research complete: %s", def.Name))
+	ge.addLog("success", fmt.Sprintf("Research complete: %s!", def.Name))
+	// Cosmetic flavour on roughly half of breakthroughs (varies, never spams).
+	if ge.quipRNG().Intn(2) == 0 {
+		if q := config.PickLogFlavor(config.LogFlavorResearchDone, ge.quipRNG()); q != "" {
+			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+		}
+	}
+	ge.Bus.Publish(EventData{
+		Type:    EventResearchDone,
+		Payload: map[string]interface{}{"tech": completed},
+	})
 }
 
 // processEvents handles random events
@@ -2509,22 +2524,7 @@ func (ge *GameEngine) processBuildQueue() {
 	for _, item := range ge.buildQueue {
 		item.TicksLeft--
 		if item.TicksLeft <= 0 {
-			ge.Buildings.counts[item.BuildingKey]++
-			def := ge.Buildings.defs[item.BuildingKey]
-			ge.addLog("debug", fmt.Sprintf("Build complete: %s (count now %d)", def.Name, ge.Buildings.GetCount(item.BuildingKey)))
-			ge.addLog("success", fmt.Sprintf("%s completed! (#%d)", def.Name, ge.Buildings.GetCount(item.BuildingKey)))
-			// Cosmetic flavour — present but not stale: ~1 in 3 completions get a quip,
-			// so a long build queue stays lively without turning into wallpaper.
-			if ge.quipRNG().Intn(3) == 0 {
-				if q := config.PickLogFlavor(config.LogFlavorBuildingComplete, ge.quipRNG()); q != "" {
-					ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
-				}
-			}
-			ge.Stats.RecordBuild()
-			ge.Bus.Publish(EventData{
-				Type:    EventBuildingBuilt,
-				Payload: map[string]interface{}{"building": item.BuildingKey},
-			})
+			ge.finishBuild(item.BuildingKey)
 		} else {
 			def := ge.Buildings.defs[item.BuildingKey]
 			ge.addLog("debug", fmt.Sprintf("Build queue: %s %d/%d ticks", def.Name, item.TotalTicks-item.TicksLeft, item.TotalTicks))
@@ -2532,6 +2532,49 @@ func (ge *GameEngine) processBuildQueue() {
 		}
 	}
 	ge.buildQueue = remaining
+}
+
+// advanceBuildQueue moves construction on by n ticks at once (offline
+// catch-up), completing what finishes as processBuildQueue does, without its
+// per-tick progress lines. Reports whether anything completed.
+func (ge *GameEngine) advanceBuildQueue(n int) bool {
+	if len(ge.buildQueue) == 0 {
+		return false
+	}
+	var remaining []BuildQueueItem
+	done := false
+	for _, item := range ge.buildQueue {
+		item.TicksLeft -= n
+		if item.TicksLeft <= 0 {
+			ge.finishBuild(item.BuildingKey)
+			done = true
+		} else {
+			remaining = append(remaining, item)
+		}
+	}
+	ge.buildQueue = remaining
+	return done
+}
+
+// finishBuild completes one queued copy of key: the count, the log lines,
+// the stats and the bus event.
+func (ge *GameEngine) finishBuild(key string) {
+	ge.Buildings.counts[key]++
+	def := ge.Buildings.defs[key]
+	ge.addLog("debug", fmt.Sprintf("Build complete: %s (count now %d)", def.Name, ge.Buildings.GetCount(key)))
+	ge.addLog("success", fmt.Sprintf("%s completed! (#%d)", def.Name, ge.Buildings.GetCount(key)))
+	// Cosmetic flavour — present but not stale: ~1 in 3 completions get a quip,
+	// so a long build queue stays lively without turning into wallpaper.
+	if ge.quipRNG().Intn(3) == 0 {
+		if q := config.PickLogFlavor(config.LogFlavorBuildingComplete, ge.quipRNG()); q != "" {
+			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+		}
+	}
+	ge.Stats.RecordBuild()
+	ge.Bus.Publish(EventData{
+		Type:    EventBuildingBuilt,
+		Payload: map[string]interface{}{"building": key},
+	})
 }
 
 // --- Public API for commands ---
@@ -3817,9 +3860,20 @@ func (ge *GameEngine) GetLogs() []LogEntry {
 const (
 	MaxOfflineTime    = 24 * time.Hour
 	OfflineEfficiency = 0.5
+	// OfflineStepTicks is the step the offline catch-up advances by: each
+	// step credits that many ticks of production (at OfflineEfficiency, up
+	// to the caps), moves construction and research on, and lets the build
+	// plan start what the step paid for. A minute at 1x: 24 hours away is
+	// 1,440 steps.
+	OfflineStepTicks = 30
 )
 
-// applyOfflineProgress applies simulated progress for time spent offline (must be called with lock held)
+// applyOfflineProgress applies simulated progress for time spent offline
+// (must be called with lock held). Time passes in OfflineStepTicks steps, so
+// the build plan starts items as the resources for them come in, the caps
+// apply along the way, and construction and research finish while the player
+// is away. With an empty plan and nothing under construction, it pays
+// exactly the old lump sum: rate x ticks x OfflineEfficiency, capped.
 func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	if elapsed < 5*time.Second {
 		return // too short to matter
@@ -3843,23 +3897,6 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		return
 	}
 
-	gains := make(map[string]float64)
-	for key, r := range ge.Resources.resources {
-		if !ge.Resources.unlocked[key] || r.Rate <= 0 {
-			continue
-		}
-		amount := r.Rate * float64(offlineTicks) * OfflineEfficiency
-		if r.Amount+amount > r.Storage {
-			amount = r.Storage - r.Amount
-		}
-		if amount > 0 {
-			ge.Resources.Add(key, amount)
-			gains[key] = amount
-		}
-	}
-
-	ge.tick += offlineTicks
-
 	// Log welcome back message
 	minutes := int(elapsed.Minutes())
 	hours := minutes / 60
@@ -3872,11 +3909,33 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	}
 
 	ge.addLog("event", fmt.Sprintf("Welcome back! You were away for %s.", timeStr))
+
+	gains := make(map[string]float64)
+	var starts planStarts
+	for done := 0; done < offlineTicks; {
+		n := min(OfflineStepTicks, offlineTicks-done)
+		ge.Resources.AddProduced(float64(n)*OfflineEfficiency,
+			func(res string, g float64) { gains[res] += g }, nil)
+		ge.tick += n
+		done += n
+		changed := ge.advanceBuildQueue(n)
+		if ge.advanceResearch(n) {
+			changed = true
+		}
+		if changed {
+			ge.recalculateRates()
+		}
+		ge.runPlan(&starts)
+	}
+
 	if len(gains) > 0 {
 		ge.addLog("info", fmt.Sprintf("Offline progress (%d ticks at 50%% efficiency):", offlineTicks))
 		for _, res := range sortedKeys(gains) {
 			ge.addLog("info", fmt.Sprintf("  +%.1f %s", gains[res], res))
 		}
+	}
+	if !starts.empty() {
+		ge.addLog("info", "While you were away your plan started: "+starts.describe(ge.Buildings.defs))
 	}
 }
 

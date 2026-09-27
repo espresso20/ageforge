@@ -4,6 +4,7 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+	"time"
 )
 
 // planTestEngine is a Primitive Age game with room to store things: 50
@@ -296,5 +297,98 @@ func TestPlan_ClearedByPrestigeSuccumbAndReset(t *testing.T) {
 	succumbIn(t, ge, "iron_age")
 	if len(ge.plan) != 0 {
 		t.Errorf("after Succumb: plan %+v", ge.plan)
+	}
+}
+
+// Offline catch-up runs the plan as the time passes: with a 50-wood cap a
+// lump sum could pay for two or three huts; stepping through the hour pays
+// for every copy the hour's production covers.
+func TestOffline_RunsThePlanAsResourcesComeIn(t *testing.T) {
+	ge := newSeededEngine(1)
+	ge.Buildings.counts["wood_camp"] = 6
+	ge.recalculateRates()
+	rate := ge.Resources.GetRate("wood")
+	if rate <= 0 {
+		t.Fatal("setup: no wood income")
+	}
+	if _, err := ge.PlanAddBuild("hut", 30); err != nil {
+		t.Fatal(err)
+	}
+	ge.SimulateOffline(time.Hour)
+	started := 0
+	if len(ge.plan) > 0 {
+		started = ge.plan[0].Started
+	} else {
+		started = 30
+	}
+	if started < 8 {
+		t.Errorf("the plan started %d huts in an hour offline at %.2f wood/tick, want many more than one cap's worth", started, rate)
+	}
+	if !logHas(ge, "While you were away your plan started") {
+		t.Error("no offline plan summary")
+	}
+	if got := ge.Buildings.GetCount("hut"); got == 0 {
+		t.Error("no hut finished construction offline")
+	}
+}
+
+// With nothing to do offline, the stepped catch-up pays what the old lump
+// sum did: rate x ticks x efficiency, capped.
+func TestOffline_EmptyPlanPaysTheLumpSum(t *testing.T) {
+	ge := newSeededEngine(1)
+	ge.Buildings.counts["stash"] = 50
+	ge.Buildings.counts["wood_camp"] = 2
+	ge.recalculateRates()
+	setAmount(ge, "wood", 0)
+	rate := ge.Resources.GetRate("wood")
+	store := ge.Resources.GetStorage("wood")
+	tick0 := ge.tick
+	ge.SimulateOffline(20 * time.Minute)
+	ticks := ge.tick - tick0
+	want := min(rate*float64(ticks)*OfflineEfficiency, store)
+	if got := ge.Resources.Get("wood"); abs(got-want) > 1e-6*want {
+		t.Errorf("wood after 20 min = %v, want %v (%d ticks at %v)", got, want, ticks, rate)
+	}
+}
+
+func abs(v float64) float64 {
+	if v < 0 {
+		return -v
+	}
+	return v
+}
+
+// A full day offline with a long plan resolves quickly and deterministically.
+func TestOffline_DayWithPlanIsFastAndDeterministic(t *testing.T) {
+	run := func() (*GameEngine, time.Duration) {
+		ge := newSeededEngine(7)
+		ge.Buildings.counts["wood_camp"] = 10
+		ge.Buildings.counts["stash"] = 20
+		ge.recalculateRates()
+		for _, k := range []string{"hut", "stash", "gathering_camp", "wood_camp", "shrine", "story_circle"} {
+			if _, err := ge.PlanAddBuild(k, 25); err != nil {
+				t.Fatal(err)
+			}
+		}
+		_ = ge.PlanAddResearch("tool_making")
+		_ = ge.PlanAddResearch("fire_mastery")
+		start := time.Now()
+		ge.SimulateOffline(MaxOfflineTime)
+		return ge, time.Since(start)
+	}
+	a, took := run()
+	b, _ := run()
+	if took > 3*time.Second {
+		t.Errorf("24h offline took %s", took)
+	}
+	t.Logf("24h offline with a plan: %s", took)
+	sa, sb := a.buildSaveSnapshot(), b.buildSaveSnapshot()
+	sa.Timestamp, sb.Timestamp = time.Time{}, time.Time{}
+	sa.Stats.GameStarted, sb.Stats.GameStarted = time.Time{}, time.Time{} // wall clock
+	va, vb := reflect.ValueOf(sa), reflect.ValueOf(sb)
+	for i := 0; i < va.NumField(); i++ {
+		if !reflect.DeepEqual(va.Field(i).Interface(), vb.Field(i).Interface()) {
+			t.Errorf("two identical games came back from 24h offline with different %s", va.Type().Field(i).Name)
+		}
 	}
 }
