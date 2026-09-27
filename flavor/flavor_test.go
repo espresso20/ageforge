@@ -238,7 +238,11 @@ func TestZeroRequestIsGrammatical(t *testing.T) {
 			}
 			seen[res.Text] = true
 		}
-		if len(seen) < 150 {
+		// The distinct-line floor is for the per-line Moments. The harbinger
+		// Moments fire a few times a run and are sized by TestHarbingerPoolFloors;
+		// a tiered warning with no tier deliberately reaches only its small
+		// tier-neutral set.
+		if !isHarbinger(m) && len(seen) < 150 {
 			t.Errorf("%v: zero Request produced only %d distinct lines in 500 draws; want >= 150", m, len(seen))
 		}
 	}
@@ -310,6 +314,9 @@ func TestSkeletonFloors(t *testing.T) {
 	const perEraFloor = 70
 
 	for _, m := range Moments() {
+		if isHarbinger(m) {
+			continue // sized for how often they fire: see TestHarbingerPoolFloors
+		}
 		total := DistinctSkeletons(m)
 		if total == 0 {
 			t.Fatalf("%v has no skeletons", m)
@@ -367,6 +374,9 @@ func TestRepetitionInAStream(t *testing.T) {
 		seeds = 5
 	)
 	for _, m := range Moments() {
+		if isHarbinger(m) {
+			continue // a few lines a run, not two hundred: see TestHarbingerPoolFloors
+		}
 		for _, bucket := range eraBuckets {
 			age := eraAges[bucket.era]
 			var rawSk, rawLn, stSk, stLn int
@@ -910,22 +920,20 @@ func TestEveryResourceClassified(t *testing.T) {
 // "foods"/"knowledges" (mass noun given an s) and "a food"/"a knowledge" (mass
 // noun given an indefinite article).
 func TestNoMassNounPluralization(t *testing.T) {
-	var badPlural, badArticle []*regexp.Regexp
+	// One alternation per check rather than one regexp per label: the same
+	// matches, at a fraction of the cost once fourteen Moments feed it.
+	var plural, article []string
 	for key, class := range resourceClass {
-		if class != massNoun {
-			continue
-		}
 		label := regexp.QuoteMeta(resourceLabel(key))
-		badPlural = append(badPlural, regexp.MustCompile(`(?i)\b`+label+`s\b`))
-		badArticle = append(badArticle, regexp.MustCompile(`(?i)\ba `+label+`\b`))
-	}
-	for key, class := range resourceClass {
-		if class != countNoun {
-			continue
+		plural = append(plural, label)
+		if class == massNoun {
+			article = append(article, label)
 		}
-		label := regexp.QuoteMeta(resourceLabel(key))
-		badPlural = append(badPlural, regexp.MustCompile(`(?i)\b`+label+`s\b`))
 	}
+	sort.Strings(plural)
+	sort.Strings(article)
+	badPlural := []*regexp.Regexp{regexp.MustCompile(`(?i)\b(?:` + strings.Join(plural, "|") + `)s\b`)}
+	badArticle := []*regexp.Regexp{regexp.MustCompile(`(?i)\ba (?:` + strings.Join(article, "|") + `)\b`)}
 
 	lines := 0
 	for _, m := range Moments() {
@@ -1097,6 +1105,12 @@ func TestSubjectFrames(t *testing.T) {
 					t.Errorf("%v: %q uses {subject} outside a title frame — "+
 						"expedition names are verb-led and cannot be sentence subjects", m, frag)
 				}
+				continue
+			}
+			// Harbinger names are all singular ("the Oracle", "your future
+			// self"; TestHarbingerLabels in config pins their shape), so a
+			// copula after one is grammatical.
+			if isHarbinger(m) {
 				continue
 			}
 			for _, c := range copulas {
@@ -1356,8 +1370,10 @@ var eraMarkers = map[string][]era{
 	"relays":       {eraCosmic},
 	"manifest":     {eraCosmic},
 	"freighter":    {eraCosmic},
-	"reactor":      {eraCosmic},
-	"airlock":      {eraCosmic},
+	// The Fusion Age is in the digital bucket and its harbinger is the plant's
+	// own safety system, so reactors are at home there too.
+	"reactor": {eraDigital, eraCosmic},
+	"airlock": {eraCosmic},
 
 	// --- spans: at home in the ages that have ground, nowhere else -----------
 	"road":    {eraAncient, eraFeudal, eraIndustrial, eraDigital},
@@ -1541,9 +1557,15 @@ func atHome(homes []era, e era) bool {
 // catches an anachronism at the exact line carrying it.
 func TestNoEraBleedInAuthoredText(t *testing.T) {
 	prose := authoredProse()
+	// Compiled once: the catalog has grown past three thousand strings, and
+	// compiling each marker per string was most of this test's time.
+	res := make(map[string]*regexp.Regexp, len(eraMarkers))
+	for word := range eraMarkers {
+		res[word] = markerRE(word)
+	}
 	for _, u := range prose {
 		for word, homes := range eraMarkers {
-			if !markerRE(word).MatchString(u.text) {
+			if !res[word].MatchString(u.text) {
 				continue
 			}
 			for e := range u.eras {
@@ -1598,6 +1620,13 @@ func TestNoEraBleedInOutput(t *testing.T) {
 
 	lines := 0
 	for _, m := range Moments() {
+		if isHarbinger(m) {
+			// Era bleed for these is checked at every one of the 22 ages, with
+			// the real roster names, by TestHarbingerLinesAreClean. Their lines
+			// ignore Kind (bar the tier), resource and amount, so this matrix
+			// would only repeat those draws five hundred times over.
+			continue
+		}
 		for _, a := range ages {
 			rng := rand.New(rand.NewSource(int64(m)*7717 + int64(a.era)))
 			for _, tone := range tones {
@@ -1643,6 +1672,11 @@ func TestEveryEraHasItsOwnVoice(t *testing.T) {
 		wantDistinct     = 220
 	)
 	for _, m := range Moments() {
+		if isHarbinger(m) {
+			// Their era voice is held per AGE by TestHarbingerSpeakerFit and
+			// TestLateEraVoiceShare; the 2000-draw depth floor does not apply.
+			continue
+		}
 		for _, bucket := range eraBuckets {
 			age := eraAges[bucket.era]
 			p := eligible(Request{Moment: m, Age: age})

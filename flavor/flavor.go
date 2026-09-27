@@ -111,6 +111,32 @@ const (
 	EncounterAtCapacity
 	// WarRaid is a periodic raid by a civilization at war with you.
 	WarRaid
+	// HarbingerArrival is the age's harbinger turning up before an epoch
+	// transition. Subject is the harbinger's roster Name ("the Town Crier").
+	// See harbinger.go for the request shape all seven harbinger Moments share.
+	HarbingerArrival
+	// HarbingerWarning is the warning itself: the cry, the headline, the leaked
+	// memo, and the settlement's reaction to it. Kind is the risk tier, one of
+	// TierNone, TierLow, TierMedium, TierHigh.
+	HarbingerWarning
+	// HarbingerAppeased follows the player paying to lower the odds.
+	HarbingerAppeased
+	// HarbingerBraced follows the player paying to soften the blow.
+	HarbingerBraced
+	// HarbingerVindicated is a harbinger who warned, and the catastrophe came.
+	HarbingerVindicated
+	// HarbingerSpared is a real harbinger who warned, and the roll went the
+	// player's way.
+	HarbingerSpared
+	// HarbingerDiscredited is a false prophet found out after the transition.
+	// Only reachable before the Industrial Age; see config.HarbingerDef.
+	HarbingerDiscredited
+	// HarbingerInvited is the settlement reacting to its leader inviting the
+	// catastrophe on purpose.
+	HarbingerInvited
+	// HarbingerFulfilled is an invited catastrophe arriving. Kind is
+	// KindFalseProphet when the harbinger who was invited had been lying.
+	HarbingerFulfilled
 )
 
 // String returns a stable, flavor-free identifier for a Moment. Safe to log.
@@ -126,6 +152,24 @@ func (m Moment) String() string {
 		return "EncounterAtCapacity"
 	case WarRaid:
 		return "WarRaid"
+	case HarbingerArrival:
+		return "HarbingerArrival"
+	case HarbingerWarning:
+		return "HarbingerWarning"
+	case HarbingerAppeased:
+		return "HarbingerAppeased"
+	case HarbingerBraced:
+		return "HarbingerBraced"
+	case HarbingerVindicated:
+		return "HarbingerVindicated"
+	case HarbingerSpared:
+		return "HarbingerSpared"
+	case HarbingerDiscredited:
+		return "HarbingerDiscredited"
+	case HarbingerInvited:
+		return "HarbingerInvited"
+	case HarbingerFulfilled:
+		return "HarbingerFulfilled"
 	case MomentUnknown:
 		return "MomentUnknown"
 	default:
@@ -332,13 +376,18 @@ func (s *Stream) Generate(req Request, rng *rand.Rand) Result {
 		s.slots = make([]string, slotMemory)
 	}
 	topics := topicIndex()
+	// The eligible pool is computed once per line, not once per retry. Each
+	// draw below is exactly what Generate would make (one Intn over the same
+	// pool, then render), so the stream is unchanged; the rescans were most
+	// of the cost for a pool only just wider than the window.
+	pool := eligible(req)
+	if len(pool) == 0 {
+		return Result{Moment: req.Moment}
+	}
 	var res Result
 	var topic string
 	for i := 0; i <= streamRetries; i++ {
-		res = Generate(req, rng)
-		if res.Template == "" {
-			break
-		}
+		res = render(pool[rng.Intn(len(pool))], req, rng)
 		topic = topics[res.Template]
 		if !s.seen(res.Template) && !s.sameTopicRecently(topic) && !s.sameSlotRecently(res.slot) {
 			break
@@ -350,8 +399,19 @@ func (s *Stream) Generate(req Request, rng *rand.Rand) Result {
 	// wider than the window can never repeat inside it. Measured before this
 	// existed: about one repeat per ten thousand lines, which is rare but is
 	// exactly the "didn't I just read that" moment the Stream is for.
+	//
+	// The direct pick still prefers a sentence whose topic is not in the recent
+	// ring when the unseen part of the pool offers one. For a pool much wider
+	// than the window this almost never matters; for one only just wider (the
+	// harbinger Moments, which fire a handful of times a run and are sized
+	// accordingly) the unseen remainder is two or three sentences, and picking
+	// blind among them put two same-topic lines side by side about one time in
+	// thirty. Still one rng draw, so the draw count is unchanged.
 	if res.Template != "" && s.seen(res.Template) {
-		if fresh := s.unseen(eligible(req)); len(fresh) > 0 {
+		if fresh := s.unseen(pool); len(fresh) > 0 {
+			if calm := s.offTopic(fresh, topics); len(calm) > 0 {
+				fresh = calm
+			}
 			res = render(fresh[rng.Intn(len(fresh))], req, rng)
 			topic = topics[res.Template]
 		}
@@ -397,6 +457,18 @@ func (s *Stream) unseen(pool []tmpl) []tmpl {
 	return out
 }
 
+// offTopic returns the templates in pool whose topic is not in the recent
+// topic ring, preserving order.
+func (s *Stream) offTopic(pool []tmpl, topics map[string]string) []tmpl {
+	out := make([]tmpl, 0, len(pool))
+	for _, t := range pool {
+		if !s.sameTopicRecently(topics[t.ID]) {
+			out = append(out, t)
+		}
+	}
+	return out
+}
+
 // seen reports whether id is in the recent skeleton ring.
 func (s *Stream) seen(id string) bool {
 	for _, x := range s.recent {
@@ -431,6 +503,15 @@ func Moments() []Moment {
 		EncounterStandoff,
 		EncounterAtCapacity,
 		WarRaid,
+		HarbingerArrival,
+		HarbingerWarning,
+		HarbingerAppeased,
+		HarbingerBraced,
+		HarbingerVindicated,
+		HarbingerSpared,
+		HarbingerDiscredited,
+		HarbingerInvited,
+		HarbingerFulfilled,
 	}
 }
 

@@ -127,6 +127,7 @@ var banks = mergeBanks(
 	encStandoffBanks,
 	encCapacityBanks,
 	warRaidBanks,
+	harbingerBanks,
 )
 
 // mergeBanks folds the bank tables into one map. A key collision is an authoring
@@ -179,6 +180,24 @@ func buildTemplates(m Moment) []tmpl {
 		return encCapacityTemplates()
 	case WarRaid:
 		return warRaidTemplates()
+	case HarbingerArrival:
+		return harbArrivalTemplates()
+	case HarbingerWarning:
+		return harbWarningTemplates()
+	case HarbingerAppeased:
+		return harbAppeasedTemplates()
+	case HarbingerBraced:
+		return harbBracedTemplates()
+	case HarbingerVindicated:
+		return harbVindicatedTemplates()
+	case HarbingerSpared:
+		return harbSparedTemplates()
+	case HarbingerDiscredited:
+		return harbDiscreditedTemplates()
+	case HarbingerInvited:
+		return harbInvitedTemplates()
+	case HarbingerFulfilled:
+		return harbFulfilledTemplates()
 	default:
 		return nil
 	}

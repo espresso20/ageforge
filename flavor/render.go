@@ -108,6 +108,13 @@ type tmpl struct {
 	// Eras restricts eligibility to these eras; nil means any era. An unknown or
 	// empty Request.Age also matches everything.
 	Eras []era
+	// Ages narrows eligibility further, to these config age keys; nil means any
+	// age in Eras. It exists for the harbinger Moments, whose speaker changes
+	// every age: a newsboy's headline and a civil-defence broadcast share an
+	// era bucket and nothing else. Like Eras, an unknown or empty Request.Age
+	// matches everything. Set it through agePool, which also fills Eras so the
+	// era-bleed lint sees the right bucket.
+	Ages []string
 	// Reg, Form and Topic carry the authored sentence's register tags through to
 	// the tests that assert the mix, and Topic through to Stream. They never
 	// affect eligibility — a quota is a property of the CATALOG, not a filter on
@@ -184,9 +191,14 @@ func eligible(req Request) []tmpl {
 	if len(all) == 0 {
 		return nil
 	}
+	// A bounded age reads its Moment's templates already filtered by era and
+	// age (see ageCache), in catalog order, so the result is the list the
+	// full scan would build, from a slice a fraction of the size.
+	if byAge, ok := ageCache()[req.Moment][req.Age]; ok {
+		all = byAge
+	}
 	have := satisfied(req)
 	kind := strings.ToLower(strings.TrimSpace(req.Kind))
-	e, bounded := eraOf(req.Age)
 
 	out := make([]tmpl, 0, len(all))
 	for _, t := range all {
@@ -196,13 +208,38 @@ func eligible(req Request) []tmpl {
 		if !toneOK(t, req.Tone) || !kindOK(t, kind) {
 			continue
 		}
-		if bounded && !eraOK(t, e) {
-			continue
-		}
 		out = append(out, t)
 	}
 	return out
 }
+
+// ageCache holds, per Moment and per config age key, the Moment's templates
+// that the age's era and age gates admit, in catalog order. Built once, like
+// templateCache. An empty or unknown age has no entry, and eligible falls
+// back to the whole catalog, which is the permissive default.
+//
+// It exists because the harbinger Moments carry per-age pools: HarbingerWarning
+// has over five hundred templates of which any one age can reach about a tenth,
+// and scanning all of them on every draw (thirteen times a line through a
+// Stream) was most of the cost of a line.
+var ageCache = sync.OnceValue(func() map[Moment]map[string][]tmpl {
+	out := make(map[Moment]map[string][]tmpl, len(Moments()))
+	for _, m := range Moments() {
+		byAge := make(map[string][]tmpl, len(ageIndex()))
+		for age := range ageIndex() {
+			e, _ := eraOf(age)
+			var list []tmpl
+			for _, t := range templatesFor(m) {
+				if eraOK(t, e) && ageOK(t, age) {
+					list = append(list, t)
+				}
+			}
+			byAge[age] = list
+		}
+		out[m] = byAge
+	}
+	return out
+})
 
 // satisfied is the bitmask of needs req can actually meet.
 func satisfied(req Request) need {
@@ -269,6 +306,19 @@ func eraOK(t tmpl, e era) bool {
 	}
 	for _, x := range t.Eras {
 		if x == e {
+			return true
+		}
+	}
+	return false
+}
+
+// ageOK reports whether a template accepts this age key (nil Ages = any).
+func ageOK(t tmpl, age string) bool {
+	if len(t.Ages) == 0 {
+		return true
+	}
+	for _, a := range t.Ages {
+		if a == age {
 			return true
 		}
 	}

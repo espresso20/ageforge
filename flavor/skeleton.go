@@ -99,6 +99,9 @@ var knownTopics = map[string]bool{
 	"rumour": true, "sleep": true, "smell": true, "stranger": true,
 	"time": true, "town": true, "trade": true, "weapon": true,
 	"weather": true, "wound": true,
+	// Added with the harbinger Moments, whose subject matter is portents, the
+	// households deciding what to do about them, and the work that stops.
+	"omen": true, "family": true, "work": true,
 }
 
 // skel is one authored sentence plus its eligibility rules. Text carries NO
