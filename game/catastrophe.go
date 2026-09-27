@@ -89,16 +89,21 @@ const (
 	catastropheTierHighAt   = 0.17
 )
 
-// CatastropheOutlook describes the catastrophe odds at the NEXT epoch
-// transition, given the current faith fill and the rules above.
+// CatastropheOutlook describes the catastrophe odds at the NEXT passage, given
+// the current faith fill and the rules above. The passage is the next epoch
+// transition, or in the final epoch (which has none) prestige itself, where the
+// Last Passage can strike (last_passage.go).
 type CatastropheOutlook struct {
-	// NextEpochKey is the epoch the next transition enters; "" in the final epoch.
+	// Passage is PassageEpoch, or PassagePrestige in the final epoch.
+	Passage string
+	// NextEpochKey is the epoch the next transition enters; "" in the final
+	// epoch, whose passage is prestige.
 	NextEpochKey string
-	// Possible is false when the next transition cannot roll a catastrophe at
-	// all: no next epoch, it is before the Iron-epoch gate, or its transition
-	// roll already happened this run.
+	// Possible is false when the next passage cannot bring a catastrophe at
+	// all: it is before the Iron-epoch gate, its transition roll already
+	// happened this run, or the Last Passage is already pending.
 	Possible bool
-	// Probability is the chance in [0,1] that the next transition produces a
+	// Probability is the chance in [0,1] that the next passage produces a
 	// catastrophe. 0 when !Possible; 1 when a catastrophe has been invited.
 	Probability float64
 	// Tier buckets Probability: none / low / medium / high.
@@ -234,7 +239,7 @@ func (ge *GameEngine) setCatastropheOutcome(epochKey, outcome string) {
 func (ge *GameEngine) forceCatastrophe() error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	if ge.pendingCatastrophe != "" {
+	if ge.pendingCatastrophe != "" || ge.pendingLastPassage {
 		return fmt.Errorf("a catastrophe is already pending")
 	}
 	if !config.CatastropheAllowed(ge.currentEpoch) {
@@ -267,8 +272,8 @@ func (ge *GameEngine) honourInvite(epochKey string) bool {
 	return true
 }
 
-// CatastropheOutlook reports the catastrophe odds at the next epoch transition.
-// Takes the read lock; use catastropheOutlook from code that already holds a lock.
+// CatastropheOutlook reports the catastrophe odds at the next passage: the next
+// epoch transition, or prestige in the final epoch. Takes the read lock; use catastropheOutlook from code that already holds a lock.
 func (ge *GameEngine) CatastropheOutlook() CatastropheOutlook {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
@@ -279,13 +284,21 @@ func (ge *GameEngine) CatastropheOutlook() CatastropheOutlook {
 // safe under either lock, and from GetState.
 func (ge *GameEngine) catastropheOutlook() CatastropheOutlook {
 	fill, _ := ge.faithFill()
-	out := CatastropheOutlook{Tier: CatastropheTierNone, FaithFill: fill}
+	out := CatastropheOutlook{Passage: PassageEpoch, Tier: CatastropheTierNone, FaithFill: fill}
 	next, ok := config.NextEpoch(ge.currentEpoch)
-	if !ok {
-		return out
-	}
-	out.NextEpochKey = next.Key
-	if !config.CatastropheAllowed(next.Key) || ge.epochEventFired[next.Key] {
+	switch {
+	case ok:
+		out.NextEpochKey = next.Key
+		if !config.CatastropheAllowed(next.Key) || ge.epochEventFired[next.Key] {
+			return out
+		}
+	case config.IsFinalEpoch(ge.currentEpoch):
+		// The final epoch's passage is prestige: the Last Passage.
+		out.Passage = PassagePrestige
+		if !ge.lastPassageApplies() || ge.pendingLastPassage {
+			return out
+		}
+	default:
 		return out
 	}
 	out.Possible = true
@@ -332,6 +345,9 @@ func (ge *GameEngine) Endure() error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
+	if ge.pendingCatastrophe == "" && ge.pendingLastPassage {
+		return ge.resolveLastPassage(lastPassageEndured)
+	}
 	if ge.pendingCatastrophe == "" {
 		return fmt.Errorf("no pending catastrophe to endure")
 	}
@@ -412,6 +428,9 @@ func (ge *GameEngine) Succumb() error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
+	if ge.pendingCatastrophe == "" && ge.pendingLastPassage {
+		return ge.resolveLastPassage(lastPassageSuccumbed)
+	}
 	if ge.pendingCatastrophe == "" {
 		return fmt.Errorf("no pending catastrophe to succumb to")
 	}
@@ -464,6 +483,7 @@ func (ge *GameEngine) Succumb() error {
 	ge.awakeningsFired = make(map[string]bool)
 	ge.survivedEpochs = make(map[string]bool)
 	ge.pendingCatastrophe = ""
+	ge.pendingLastPassage = false
 	ge.morale = 0.50
 	ge.lowMoraleWarned = false
 	// Fresh run after the fall: eligible to roll a new Ancient Memory.

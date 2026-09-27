@@ -135,6 +135,7 @@ func helpProvider(_ game.GameState, _ int) string {
 			{"/speed <multiplier>", "Set the tick-speed multiplier"},
 			{"/catastrophe", "Force the current epoch's catastrophe (Iron Era on)"},
 			{"/harbinger", "Bring the current age's harbinger now"},
+			{"/lastpassage", "Make the Last Passage pending (final epoch)"},
 		} {
 			sb.WriteString("  [cyan]" + padRight(d.cmd, 28) + "[-] — " + d.desc + "\n")
 		}

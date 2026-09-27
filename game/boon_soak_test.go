@@ -302,6 +302,7 @@ func TestBoonSoak_BoundedAndDeterministic(t *testing.T) {
 		if err := ge.DoPrestige(); err != nil {
 			t.Fatalf("cycle %d DoPrestige failed: %v", cycle, err)
 		}
+		endureLastPassageIfPending(t, ge)
 
 		ge.mu.Lock()
 		if n := len(ge.Events.active); n != 0 {
@@ -404,6 +405,7 @@ func TestBoonSoak_Deterministic(t *testing.T) {
 		if err := ge.DoPrestige(); err != nil {
 			t.Fatalf("DoPrestige failed: %v", err)
 		}
+		endureLastPassageIfPending(t, ge)
 
 		ge.mu.Lock()
 		ge.age = lastAgeKey()

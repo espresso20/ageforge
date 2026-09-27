@@ -740,9 +740,14 @@ func TestCatastropheOutlook(t *testing.T) {
 		})
 	}
 
+	// The final epoch's passage is prestige: the Last Passage, same odds.
 	ge := catEngine(t, "quantum_age", 1)
-	if o := ge.CatastropheOutlook(); o.Possible || o.NextEpochKey != "" || o.Tier != CatastropheTierNone || o.Probability != 0 {
-		t.Errorf("final epoch outlook = %+v, want none", o)
+	if o := ge.CatastropheOutlook(); !o.Possible || o.Passage != PassagePrestige || o.NextEpochKey != "" || o.Probability != 0.18 {
+		t.Errorf("final epoch outlook = %+v, want the Last Passage at 18%%", o)
+	}
+	ge.pendingLastPassage = true
+	if o := ge.CatastropheOutlook(); o.Possible || o.Passage != PassagePrestige || o.Probability != 0 {
+		t.Errorf("final epoch outlook with the Last Passage pending = %+v, want not possible", o)
 	}
 	ge = catEngine(t, "medieval_age", 1)
 	ge.epochEventFired["steel_era"] = true
