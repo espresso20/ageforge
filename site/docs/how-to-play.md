@@ -14,7 +14,7 @@ Build → Recruit → Assign → Research → Advance → Repeat
 2. **Recruit** workers to grow your workforce
 3. **Assign** workers to gather specific resources
 4. **Research** technologies that multiply your output
-5. **Advance** to the next age when requirements are met
+5. **Advance** to the next age when requirements are met and the age's wonder is built
 6. **Prestige** when you reach the Modern Age (or later) for permanent bonuses
 
 ---
@@ -25,7 +25,7 @@ Build → Recruit → Assign → Research → Advance → Repeat
 ┌─ Status bar ──────────────────────────────────────────────────────────────────┐
 │ 🏛 Stone Age  [P0]  "Founder"         Tick: 1,247  Pop: 18/30  ×1  Panels Esc │
 ├─ Age progress ────────────────────────────────────────────────────────────────┤
-│ Next: Bronze Age  food:3102/8000 ████░░  stone:890/4000 ███░░  wood:1240/8000 │
+│ Next: Bronze Age  food:3102/4000 █████░  stone:890/4000 ███░░  wood:1240/8000 │
 ├─ Tab bar ─────────────────────────────────────────────────────────────────────┤
 │ Type a command name to open its overlay panel. Esc to close. │
 ├─ Tab content (scrollable) ────────────────────────────────────────────────────┤
@@ -53,42 +53,49 @@ Build → Recruit → Assign → Research → Advance → Repeat
 
 ## Step-by-step: First 15 minutes
 
-### 1. Build huts (pop cap)
+The Primitive Age is tuned to take about **15 minutes** at 1x speed, the Stone Age about **45 minutes**, and the Bronze Age about **1.5 hours**. See [How Long Each Age Takes](ages.md#how-long-each-age-takes) for the full curve.
+
+### 1. Build a gathering camp and a wood camp
+Food runs out before anything else. Get production going first:
+```
+build gathering_camp
+build wood_camp
+```
+A fully staffed gathering camp makes **+1.0 food/tick**; a staffed wood camp about **+0.57 wood/tick**.
+
+### 2. Build huts (pop cap)
 Your starting pop cap is too low. Build huts to raise it:
 ```
 build hut
 ```
 Queue another while the first is building. Population cap unlocks more workers.
 
-### 2. Build stashes (storage)
+### 3. Build stashes (storage)
 Resources cap out quickly. Add storage:
 ```
 build stash
 ```
 
-### 3. Recruit your first workers
+### 4. Recruit your first workers
 ```
 recruit 2
 ```
 Workers are recruited generically — no domain needed. Assign them to buildings to give them a domain class.
 
-### 4. Assign food workers to a building
+### 5. Assign food workers to a building
 Idle workers produce nothing. Assign them:
 ```
-assign gathering_camp 2
+assign gathering_camp 3
 ```
+Staffed camps make **5x** what an empty one does (an unstaffed building runs at 20%), so fill each camp's 3 slots.
 
-### 5. Assign knowledge workers to a building
-Knowledge workers produce knowledge. Assign one:
+### 6. Assign knowledge workers to a building
+Knowledge workers produce knowledge. Build a story circle and assign one:
 ```
+build story_circle
 assign story_circle 1
 ```
-
-### 6. Build a gathering camp
-Gathering camps boost food and wood production:
-```
-build gathering_camp
-```
+A fully staffed story circle makes **+0.2 knowledge/tick**.
 
 ### 7. Research tool making
 Once you have enough knowledge (800 kp):
@@ -97,8 +104,16 @@ research tool_making
 ```
 This gives a permanent +15% gather rate bonus.
 
-### 8. Watch the age bar
-The second row shows what you need for the next age. Keep building and assigning until the requirements fill up. The game advances automatically.
+### 8. Build the age's wonder
+Every age has a wonder, and you can't advance until it stands. For the Primitive Age that's the Sacred Grove (1,000 wood, 500 food):
+```
+wonder collect wood 1000
+wonder collect food 500
+build sacred_grove
+```
+
+### 9. Watch the age bar
+The second row shows what you need for the next age. The Stone Age asks for 1,000 food, 1,000 wood, 150 knowledge, 10 huts and 5 story circles, plus the Sacred Grove. Keep building and assigning until the requirements fill up. The game advances automatically.
 
 ---
 
@@ -106,7 +121,7 @@ The second row shows what you need for the next age. Keep building and assigning
 
 - Resources cap at their storage limit — once capped, production is wasted
 - **Food drain** = `baseFoodCost × 1.12^tier /tick` per worker. Food domain workers start at 0.06/tick (Primitive Age) — very cheap. Other domains start at 1.0–32.0. Always keep food production positive — if food hits zero, workers die at 1 per 5 ticks
-- **Knowledge** is the most important resource early — prioritise knowledge workers
+- **Food** runs out first early on — keep your gathering camps staffed before anything else, then build up knowledge
 - Watch the `Rate` column in the Economy tab; negative rates will drain you
 
 ## Morale
@@ -144,12 +159,12 @@ Food workers are special — they produce food but all workers across all domain
 
 | Age | Priority buildings |
 |---|---|
-| Primitive | Hut, Stash, Gathering Camp, Story Circle, Shrine, Sacred Grove |
-| Stone Age | Stone Pit, Woodcutter Camp, Forager Post, Longhouse, Storage Pit |
-| Bronze Age | Farm, Lumber Mill, Quarry, Scriptorium, Market, Smithy, Warehouse |
-| Iron Age | Smelter, Hunting Lodge, Granary, Trading Post |
-| Classical | Agora, Library, Forge, Amphitheater, Aqueduct |
-| Medieval | University, Cathedral, Castle Keep, Great Library |
+| Primitive | Gathering Camp, Wood Camp, Hut, Stash, Story Circle, Shrine, Sacred Grove |
+| Stone Age | Stone Pit, Woodcutter Camp, Forager Post, Longhouse, Elders' Hall, Storage Pit, Great Monolith |
+| Bronze Age | Farm, Lumber Mill, Quarry, Scriptorium, Market, Smithy, Warehouse, Stonehenge |
+| Iron Age | Smelter, Agora, Trading Post, Hunting Lodge, Granary, Colosseum |
+| Classical | Library, Military Academy, Merchant Quarter, Forge, Amphitheater, Aqueduct, Parthenon |
+| Medieval | Guildhall, Castle Keep, Monastery Library, Cathedral, Great Library |
 
 ### Upgrading buildings after an age advance
 
@@ -159,7 +174,7 @@ Buildings are **not** automatically transformed when you advance an age. Instead
 
 ## What are wonders?
 
-Wonders are unique mega-structures (22 total) that grant **permanent civilization bonuses**. They cost enormous amounts of resources that you must **bank** before building:
+Wonders are unique mega-structures (22 total, one per age) that grant **permanent civilization bonuses**. Your age's wonder is **required to advance** to the next age. Each one costs about the same share of its age's economy, and you must **bank** the resources before building:
 
 ```
 wonder collect wood 500

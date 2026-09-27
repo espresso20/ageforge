@@ -12,6 +12,34 @@ Knowledge is produced by **Knowledge lineage buildings** with **Knowledge-domain
 
 Story Circle → Elders' Hall → Scriptorium → Agora → Library → Monastery Library → University → Natural Philosophy Hall → Research Institute → Academy → Physics Laboratory → Research Campus → Think Tank → Innovation Hub → AI Research Lab → Neuro Research Center → Theoretical Institute → Deep Space Observatory → Xenology Institute → Cosmic Research Station → Reality Academy
 
+**Knowledge rates (fully staffed, per building):**
+
+| Building | Age | Knowledge/tick | Workers |
+|----------|-----|----------------|---------|
+| Story Circle | Primitive | 0.2 | 2 |
+| Elders' Hall | Stone | 0.6 | 2 |
+| Scriptorium | Bronze | 2.0 | 3 |
+| Agora | Iron | 1.6 | 3 |
+| Library | Classical | 3.2 | 4 |
+| Monastery Library | Medieval | 78.3 | 4 |
+| University | Renaissance | 270 | 5 |
+| Natural Philosophy Hall | Colonial | 772 | 5 |
+| Research Institute | Industrial | 12.8 | 6 |
+| Academy | Victorian | 25.6 | 6 |
+| Physics Laboratory | Electric | 51.2 | 7 |
+| Research Campus | Atomic | 102 | 7 |
+| Think Tank | Modern | 205 | 8 |
+| Innovation Hub | Information | 410 | 8 |
+| AI Research Lab | Digital | 819 | 10 |
+| Neuro Research Center | Cyberpunk | 1,640 | 10 |
+| Theoretical Institute | Fusion | 3,280 | 12 |
+| Deep Space Observatory | Space | 6,550 | 12 |
+| Xenology Institute | Interstellar | 13,100 | 15 |
+| Cosmic Research Station | Galactic | 26,200 | 15 |
+| Reality Academy | Quantum | 52,400 | 20 |
+
+The first five tiers have hand-set rates. From the **Medieval to the Colonial Age**, buildings also cost knowledge, so knowledge counts as a construction resource and its producers follow the [Payback Rule](buildings.md#how-production-rates-are-set): fully staffed, each earns back its first copy's price within the age's payback time. That is why the Monastery Library, University and Natural Philosophy Hall jump so far ahead. From the Industrial Age on, nothing but research costs knowledge, and the lineage goes back to fixed rates that double each age. Your older halls and universities keep producing through all of this, so don't sell them. While knowledge is a construction resource (Medieval to Colonial), the market also trades it at parity with the age's other construction resources; see [Resources](resources.md#buying-at-the-market).
+
 **Recruit and assign Knowledge workers:**
 
 ```
@@ -93,7 +121,7 @@ They synergize: high culture increases your knowledge production rate, which acc
 
 ## Tips
 
-- Get your first Story Circle + 2 Knowledge workers before your first age advance — early research unlocks compound fast
+- Get your first Story Circle + 2 Knowledge workers before your first age advance — early research unlocks compound fast. The Stone Age itself asks for 150 knowledge and 5 Story Circles, the Bronze Age for 1.5K knowledge and 5 Elders' Halls
 - Keep knowledge capped before starting research; don't let it drain below the tech cost mid-research
 - Library and University unlock tiers have large capacity bonuses — prioritize them when they become available
 - The culture thresholds at 500, 2,500, and 10,000 each give +5/+10/+15% knowledge rate — culture investment directly pays off in research speed

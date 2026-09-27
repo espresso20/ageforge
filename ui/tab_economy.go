@@ -383,10 +383,10 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 		sb.WriteString("\n [gold]─── Getting Started ───[-]\n")
 		sb.WriteString(" [white]New here? Walk the first steps:[-]\n")
 		sb.WriteString(" [white]1.[-] [cyan]gather wood 5[-] [white]/[-] [cyan]gather food[-] — collect by hand\n")
-		sb.WriteString(" [white]2.[-] [cyan]build hut[-] — shelter; raises your population cap\n")
-		sb.WriteString(" [white]3.[-] [cyan]recruit worker[-] — bring in your first worker\n")
-		sb.WriteString(" [white]4.[-] [cyan]assign gathering_camp 3[-] — put workers to work\n")
-		sb.WriteString(" [white]5.[-] [cyan]build[-] the age's [gold]wonder[-] — unlocks a speed bonus\n")
+		sb.WriteString(" [white]2.[-] [cyan]build gathering_camp[-] [white]and[-] [cyan]build wood_camp[-] — food runs short first\n")
+		sb.WriteString(" [white]3.[-] [cyan]build hut[-] — shelter; raises your population cap\n")
+		sb.WriteString(" [white]4.[-] [cyan]recruit worker[-] [white]then[-] [cyan]assign gathering_camp 3[-] — staffed camps make 5x\n")
+		sb.WriteString(" [white]5.[-] [cyan]build[-] the age's [gold]wonder[-] — required to advance; adds a speed bonus\n")
 		sb.WriteString(" [white]Type[-] [cyan]help[-] [white]for all commands.[-]\n")
 	}
 

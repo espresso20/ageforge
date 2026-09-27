@@ -351,7 +351,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Primitive Age — normal costs: 30-300
 		{
 			Name: "Sacred Grove", Key: "sacred_grove", Category: "wonder",
-			BaseCost:  map[string]float64{"wood": 8000, "food": 5000},
+			BaseCost:  map[string]float64{"wood": 8000, "food": 500},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "production", Target: "knowledge", Value: 0.02},
@@ -365,7 +365,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Stone Age — normal costs: 200-1000
 		{
 			Name: "Great Monolith", Key: "great_monolith", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 25000, "wood": 20000, "food": 10000},
+			BaseCost:  map[string]float64{"stone": 25000, "wood": 20000, "food": 1500},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "production", Target: "knowledge", Value: 0.05},
@@ -435,7 +435,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Renaissance Age — normal costs: 400k-600k
 		{
 			Name: "Sistine Chapel", Key: "sistine_chapel", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 9900000, "gold": 7000000, "faith": 6000000, "culture": 8000000},
+			BaseCost:  map[string]float64{"stone": 9900000, "gold": 7000000, "faith": 20000, "culture": 8000000},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "production", Target: "culture", Value: 3.5},
@@ -575,7 +575,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Fusion Age — normal costs: 10T-15T
 		{
 			Name: "Stellar Cradle", Key: "stellar_cradle", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 750e12, "plasma": 600e12, "electricity": 800e12, "uranium": 940e12},
+			BaseCost:  map[string]float64{"steel": 750e12, "plasma": 600e12, "electricity": 800e12},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "production", Target: "plasma", Value: 15.0},
@@ -901,8 +901,17 @@ func roundSignificant(v float64, sig int) float64 {
 	}
 	d := math.Ceil(math.Log10(v))
 	power := float64(sig) - d
-	mag := math.Pow(10, power)
-	rounded := math.Round(v*mag) / mag
+	var rounded float64
+	if power >= 0 {
+		mag := math.Pow(10, power)
+		rounded = math.Round(v*mag) / mag
+	} else {
+		// Multiply by an exact power of ten rather than divide by an inexact
+		// fraction: 10/1e-5 came out as 999999.9999999999, and a wonder bank
+		// filled in whole units could then never reach its price.
+		mag := math.Pow(10, -power)
+		rounded = math.Round(v/mag) * mag
+	}
 	if rounded < 1 {
 		return 1
 	}
@@ -986,8 +995,14 @@ func BaseBuildings() []BuildingDef {
 	// see building_flavor.go. Functional Description is never modified here.
 	applyBuildingFlavor(result)
 	// Normalize cost curves at the single chokepoint so every consumer
-	// (BuildingByKey, the engine, the audit tool) inherits flattened values.
-	return normalizeCostCurves(result)
+	// (BuildingByKey, the engine, the audit tool) inherits flattened values,
+	// then derive production rates and build times from those prices and the
+	// age targets (pacing.go).
+	result = normalizeCostCurves(result)
+	result = normalizeProductionRates(result)
+	result = normalizeWonderCosts(result)
+	result = normalizeBuildTicks(result)
+	return syncDescriptionRates(result)
 }
 
 // BuildingByKey returns a map of building key → BuildingDef, sourced from BaseBuildings().

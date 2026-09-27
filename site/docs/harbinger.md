@@ -203,6 +203,10 @@ The Digital Era's Appease is dearer than the Neon Era's because entering the Cyb
 
 The Cosmic Era's passage is prestige, which asks for no storage of its own. Its Appease is based instead on the largest requirement for entering the Cosmic Era (310B plasma, at the Interstellar Age), which your storage already held when you arrived. That makes it the same price the Neon Era paid for its own passage. Its Brace is based on the most the Cosmic Era's own advances ask of each resource you have held since the Interstellar Age: 13T dark matter (for the Quantum Age) and 630B titanium (for the Galactic Age). Antimatter and quantum flux arrive later, so they are left out.
 
+#### Can you afford it?
+
+Brace usually, Appease rarely. Faith is produced at fixed rates and ages are short, so your faith seldom reaches the Level-1 Appease price before the passage. In the smoke-test bot's runs, faith never reached it in the Stone, Iron, Steel, Electric or Digital Era threads. Culture can be bought at the market (gold → culture); faith cannot. Brace is priced in construction resources, and in the same runs it became affordable within 0 to 6 hours of each thread starting.
+
 ### Invite: choose the catastrophe
 
 - Free.
@@ -276,7 +280,7 @@ With no harbinger present, the panel says so and describes the outlook for your 
 
 ## Strategy
 
-- **No hurry.** The price is the same in every age of the epoch, so pay whenever your storage can hold it. The last age of the epoch is fine.
+- **No hurry.** The price is the same in every age of the epoch, so pay whenever your storage (and, for Appease, your faith) can cover it. The last age of the epoch is fine.
 - **Want to keep your run?** Appease is the direct answer. One level cuts the risk by 40%, and it can't hurt the odds.
 - **Worried but short on faith?** Brace instead. It doesn't lower the odds, but it makes Endure much cheaper if the catastrophe comes.
 - **Early warnings deserve a little doubt.** A Stone, Iron or Steel Era warning of high risk may be false. Your own faith fill tells you the real band (see [Faith and the Odds](catastrophe.md#faith-and-the-odds)).

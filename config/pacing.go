@@ -1,0 +1,470 @@
+package config
+
+import (
+	"math"
+	"regexp"
+	"sort"
+	"strconv"
+	"sync"
+	"time"
+)
+
+// Pacing: the target curve and the rules derived from it
+// (design-and-architecture/economy.md, Laws 2 and 3).
+//
+// The whole economy is paced from one table, AgeTargets: how long a player
+// should spend in each age at 1x. These rules turn it into numbers:
+//
+//   - The Payback Rule (normalizeProductionRates): a production building,
+//     fully staffed, earns back the price of its first copy in
+//     PaybackTicks(age), valued at the age's price parity. For construction
+//     resources the rate typed into a lineage file is ignored.
+//   - Market parity (MarketRate): the market trades any two construction
+//     resources of the current age at parity less ExchangeFee, so trading
+//     never beats building and no resource is stranded without a source.
+//   - Wonder size (normalizeWonderCosts): each age's wonder, which the next
+//     advance requires, costs WonderPriceUnits of its age.
+//   - Time caps (normalizeBuildTicks, normalizeResearchTicks): nothing takes
+//     longer to build or research than a fixed share of its age's target.
+//
+// A construction resource of an age is one that appears in the first-copy
+// price of at least one of that age's buildings (wonders aside), except the
+// flow resources below. Its price level is the median of those prices; the
+// parity of two resources is the ratio of their price levels.
+
+// TickSeconds is the length of one tick at 1x. It must equal
+// game.BaseTickInterval (a game test checks it).
+const TickSeconds = 2.0
+
+// AgeTargets is the time a player should spend in each age at 1x, entering
+// it to entering the next. The final age's entry only sizes its buildings.
+var AgeTargets = map[string]time.Duration{
+	"primitive_age":    15 * time.Minute,
+	"stone_age":        45 * time.Minute,
+	"bronze_age":       90 * time.Minute,
+	"iron_age":         150 * time.Minute,
+	"classical_age":    210 * time.Minute,
+	"medieval_age":     270 * time.Minute,
+	"renaissance_age":  6 * time.Hour,
+	"colonial_age":     7 * time.Hour,
+	"industrial_age":   8 * time.Hour,
+	"victorian_age":    9 * time.Hour,
+	"electric_age":     10 * time.Hour,
+	"atomic_age":       12 * time.Hour,
+	"modern_age":       12 * time.Hour,
+	"information_age":  14 * time.Hour,
+	"digital_age":      16 * time.Hour,
+	"cyberpunk_age":    18 * time.Hour,
+	"fusion_age":       20 * time.Hour,
+	"space_age":        22 * time.Hour,
+	"interstellar_age": 24 * time.Hour,
+	"galactic_age":     24 * time.Hour,
+	"quantum_age":      24 * time.Hour,
+	"transcendent_age": 24 * time.Hour,
+}
+
+const (
+	// PaybackDivisor and PaybackEpochExponent set the payback as a share of
+	// the age's target: target × epochProgress^exponent / divisor. See
+	// PaybackTicks.
+	PaybackDivisor       = 16.0
+	PaybackEpochExponent = 1.25
+	// BuildTimeDivisor caps construction at target / BuildTimeDivisor, for
+	// wonders too: an age's wonder must stand before the next advance.
+	BuildTimeDivisor = 6.0
+	// StorageBuildTimeDivisor is the cap for storage buildings, which queue
+	// one copy at a time (MaxCount) and are bought many times an age.
+	StorageBuildTimeDivisor = 48.0
+	// ExchangeFee is what the market keeps on a trade at parity.
+	ExchangeFee = 0.2
+	// WonderPriceUnits is what an age's wonder costs in price units of its
+	// age (see priceUnits), spread over its resources in their literal
+	// proportions.
+	WonderPriceUnits = 40.0
+)
+
+// flowResources are never priced for the rules above, even where a building
+// costs them: their amounts drive other systems (food feeds workers, faith
+// sets morale and catastrophe odds, culture fills its own caps and pays for
+// festivals and monuments, soldiers are an army). Their producers keep their
+// literal rates, and requirements on them are sized to those rates.
+var flowResources = map[string]bool{"food": true, "faith": true, "culture": true, "soldiers": true}
+
+// IsFlowResource reports whether res is exempt from the Payback Rule and
+// market parity.
+func IsFlowResource(res string) bool { return flowResources[res] }
+
+// AgeTargetTicks is AgeTargets[age] in ticks at 1x (0 for an unknown age).
+func AgeTargetTicks(age string) float64 {
+	return AgeTargets[age].Seconds() / TickSeconds
+}
+
+// PaybackTicks is how long a fully staffed producer of age takes to earn back
+// its first copy's price.
+//
+// The share of the target grows through the game: 1/16 in the Primitive Age,
+// 1/7 in the Iron Age, 1/4 in the Renaissance, 1/3 in the Victorian, 2/3 in
+// the Space Age. A Primitive player has nothing but what they build that
+// age, so producers must pay back fast. Later, every age also runs on the
+// previous ages' buildings, which keep producing forever, and those pile
+// up; each new producer can add less or the age flies by.
+func PaybackTicks(age string) float64 {
+	return AgeTargetTicks(age) * math.Pow(epochProgress(age), PaybackEpochExponent) / PaybackDivisor
+}
+
+// epochProgress counts epochs of three ages each, continuously: 1 in the
+// Primitive Age, 2 in the Iron Age, 3 in the Renaissance, 1/3 more per age.
+// Continuous rather than by epoch so the first age of an epoch doesn't
+// inherit buildings that paid back much faster than its own.
+func epochProgress(age string) float64 {
+	if i, ok := ageIndex()[age]; ok {
+		return 1 + float64(i)/3
+	}
+	return 1
+}
+
+var (
+	ageIndexOnce sync.Once
+	ageIndexMap  map[string]int
+)
+
+// ageIndex caches each age's position. BaseBuildings derives every payback
+// from it and the engine calls BuildingByKey on hot paths, so rebuilding
+// Ages() per building would be expensive. Read-only.
+func ageIndex() map[string]int {
+	ageIndexOnce.Do(func() {
+		ageIndexMap = map[string]int{}
+		for i, k := range AgeOrder() {
+			ageIndexMap[k] = i
+		}
+	})
+	return ageIndexMap
+}
+
+// priceLevels returns, per age, the median first-copy price of each
+// construction resource across that age's buildings (wonders aside).
+func priceLevels(defs []BuildingDef) map[string]map[string]float64 {
+	prices := map[string]map[string][]float64{}
+	for _, d := range defs {
+		if d.RequiredAge == "" || d.Category == "wonder" {
+			continue
+		}
+		for res, c := range d.BaseCost {
+			if c <= 0 || flowResources[res] {
+				continue
+			}
+			if prices[d.RequiredAge] == nil {
+				prices[d.RequiredAge] = map[string][]float64{}
+			}
+			prices[d.RequiredAge][res] = append(prices[d.RequiredAge][res], c)
+		}
+	}
+	out := make(map[string]map[string]float64, len(prices))
+	for age, byRes := range prices {
+		out[age] = make(map[string]float64, len(byRes))
+		for res, v := range byRes {
+			out[age][res] = median(v)
+		}
+	}
+	return out
+}
+
+func median(v []float64) float64 {
+	s := append([]float64(nil), v...)
+	sort.Float64s(s)
+	n := len(s)
+	if n%2 == 1 {
+		return s[n/2]
+	}
+	return (s[n/2-1] + s[n/2]) / 2
+}
+
+// roundRate rounds a derived rate to 3 significant figures. Unlike
+// roundSignificant it never floors a small positive value at 1.
+func roundRate(v float64) float64 {
+	if v <= 0 {
+		return v
+	}
+	mag := math.Pow(10, 3-math.Ceil(math.Log10(v)))
+	return math.Round(v*mag) / mag
+}
+
+// priceUnits is a price measured in price levels of age: 1.0 is a building
+// that costs the median of one resource. Resources without a level (flow
+// resources) do not count.
+func priceUnits(cost map[string]float64, levels map[string]float64) float64 {
+	u := 0.0
+	for res, c := range cost {
+		if pl := levels[res]; pl > 0 {
+			u += c / pl
+		}
+	}
+	return u
+}
+
+// normalizeProductionRates applies the Payback Rule. For every non-wonder
+// building, each production effect on a construction resource of its age is
+// set to
+//
+//	rate = priceUnits(first copy) × priceLevel(output) / PaybackTicks(age) / n
+//
+// where n is the number of such outputs, so a building with two outputs
+// splits its value between them. Effects on flow resources and on resources
+// no building of the age costs keep their literal values. Wonders are left
+// alone: they are a one-off, not an investment.
+func normalizeProductionRates(defs []BuildingDef) []BuildingDef {
+	levels := priceLevels(defs)
+	for i := range defs {
+		d := &defs[i]
+		if d.Category == "wonder" || d.RequiredAge == "" {
+			continue
+		}
+		lv := levels[d.RequiredAge]
+		pb := PaybackTicks(d.RequiredAge)
+		if pb <= 0 || len(lv) == 0 {
+			continue
+		}
+		n := 0
+		for _, e := range d.Effects {
+			if e.Type == "production" && e.Value > 0 && lv[e.Target] > 0 {
+				n++
+			}
+		}
+		if n == 0 {
+			continue
+		}
+		units := priceUnits(d.BaseCost, lv)
+		// Effects is a fresh literal slice per call; copy anyway so no other
+		// def can alias the rewritten values.
+		effs := append([]Effect(nil), d.Effects...)
+		for j, e := range effs {
+			if e.Type == "production" && e.Value > 0 && lv[e.Target] > 0 {
+				effs[j].Value = roundRate(units * lv[e.Target] / pb / float64(n))
+			}
+		}
+		d.Effects = effs
+	}
+	return defs
+}
+
+// normalizeBuildTicks caps construction time at a share of the age's target,
+// so a required building can never take longer to build than the age is
+// meant to last.
+func normalizeBuildTicks(defs []BuildingDef) []BuildingDef {
+	for i := range defs {
+		d := &defs[i]
+		t := AgeTargetTicks(d.RequiredAge)
+		if t <= 0 || d.BuildTicks <= 0 {
+			continue
+		}
+		div := BuildTimeDivisor
+		if d.Category == "storage" {
+			div = StorageBuildTimeDivisor
+		}
+		if limit := int(t / div); d.BuildTicks > limit {
+			d.BuildTicks = max(limit, 1)
+		}
+	}
+	return defs
+}
+
+// normalizeWonderCosts sizes every wonder to WonderPriceUnits of its age:
+// the parts of its price in construction resources are scaled together so
+// they add up to that many price units, keeping their proportions. An age's
+// wonder must be built before the next advance, so its price is part of the
+// gate. Parts in flow resources, or in resources no building of the age
+// costs, keep their literal values (they are sized by hand to what the age
+// produces).
+func normalizeWonderCosts(defs []BuildingDef) []BuildingDef {
+	levels := priceLevels(defs)
+	for i := range defs {
+		d := &defs[i]
+		if d.Category != "wonder" {
+			continue
+		}
+		lv := levels[d.RequiredAge]
+		units := priceUnits(d.BaseCost, lv)
+		if units <= 0 {
+			continue
+		}
+		k := WonderPriceUnits / units
+		cost := make(map[string]float64, len(d.BaseCost))
+		for res, c := range d.BaseCost {
+			if lv[res] > 0 {
+				c = roundSignificant(c*k, 2)
+			}
+			cost[res] = c
+		}
+		d.BaseCost = cost
+	}
+	return defs
+}
+
+// ResearchTimeDivisor caps a tech's research time at its age's target
+// divided by this, so the handful of techs an age offers fit in it (research
+// runs one tech at a time).
+const ResearchTimeDivisor = 8.0
+
+// normalizeResearchTicks applies the research-time cap.
+func normalizeResearchTicks(techs []TechDef) []TechDef {
+	for i := range techs {
+		t := &techs[i]
+		if limit := int(AgeTargetTicks(t.Age) / ResearchTimeDivisor); limit > 0 && t.ResearchTicks > limit {
+			t.ResearchTicks = limit
+		}
+	}
+	return techs
+}
+
+// syncDescriptionRates rewrites every "+<n> <resource>/tick" in a building's
+// Description to the effect's actual value. The Payback Rule derives most
+// rates, so the numbers typed into the lineage files' descriptions would
+// otherwise go stale, and the description is where the build list shows
+// them.
+func syncDescriptionRates(defs []BuildingDef) []BuildingDef {
+	for i := range defs {
+		d := &defs[i]
+		if d.Description == "" {
+			continue
+		}
+		rates := map[string]float64{}
+		for _, e := range d.Effects {
+			if e.Type == "production" && e.Value > 0 {
+				if _, seen := rates[e.Target]; !seen {
+					rates[e.Target] = e.Value
+				}
+			}
+		}
+		d.Description = descRateRe.ReplaceAllStringFunc(d.Description, func(m string) string {
+			sub := descRateRe.FindStringSubmatch(m)
+			v, ok := rates[sub[2]]
+			if !ok {
+				return m
+			}
+			return "+" + FormatRateValue(v) + " " + sub[2] + "/tick"
+		})
+	}
+	return defs
+}
+
+// descRateRe matches "+<number> <resource>/tick" in a description.
+var descRateRe = regexp.MustCompile(`\+([0-9][0-9.,]*[KMBTQ]?)\s+([a-z_]+)/tick`)
+
+// FormatRateValue prints a per-tick rate with 3 significant figures and a
+// K/M/B/T/Q suffix from a thousand up (0.711, 44.8, 3.34K, 2.72M).
+func FormatRateValue(v float64) string {
+	v = roundRate(v)
+	suffixes := []struct {
+		at  float64
+		sfx string
+	}{{1e15, "Q"}, {1e12, "T"}, {1e9, "B"}, {1e6, "M"}, {1e3, "K"}}
+	for _, s := range suffixes {
+		if v >= s.at {
+			return strconv.FormatFloat(roundRate(v/s.at), 'f', -1, 64) + s.sfx
+		}
+	}
+	return strconv.FormatFloat(v, 'f', -1, 64)
+}
+
+// PriceLevels returns the median first-copy price of each construction
+// resource in age (nil for an age with no buildings).
+func PriceLevels(age string) map[string]float64 {
+	return priceLevels(BaseBuildings())[age]
+}
+
+// ExchangeRate is the market rate from def.From to def.To in age: parity
+// minus ExchangeFee when both are construction resources of age, the
+// literal BaseRate otherwise.
+func ExchangeRate(def ExchangeRateDef, age string) float64 {
+	return exchangeRate(def, exchangeLevels()[age])
+}
+
+func exchangeRate(def ExchangeRateDef, lv map[string]float64) float64 {
+	from, to := lv[def.From], lv[def.To]
+	if from <= 0 || to <= 0 {
+		return def.BaseRate
+	}
+	return roundRate(to / from * (1 - ExchangeFee))
+}
+
+// MarketRate is the rate the market pays for one from in age, and whether
+// the pair trades at all. Any two construction resources of age trade at
+// parity less ExchangeFee; the listed pairs (BaseExchangeRates) trade at
+// ExchangeRate. The listed pairs keep their historical behavior of not
+// checking MinAge here; MarketPairs is what the UI and the bot offer.
+func MarketRate(from, to, age string) (float64, bool) {
+	if from == to {
+		return 0, false
+	}
+	if def, ok := exchangeByKey()[from+":"+to]; ok {
+		return ExchangeRate(def, age), true
+	}
+	lv := exchangeLevels()[age]
+	if lv[from] > 0 && lv[to] > 0 {
+		return exchangeRate(ExchangeRateDef{From: from, To: to}, lv), true
+	}
+	return 0, false
+}
+
+// MarketPairs lists what the market offers in age: every listed pair whose
+// MinAge has been reached, plus every ordered pair of the age's construction
+// resources, each with its rate for age as BaseRate. Sorted by from, then to.
+func MarketPairs(age string) []ExchangeRateDef {
+	order := ageIndex()
+	seen := map[string]bool{}
+	var out []ExchangeRateDef
+	for _, def := range BaseExchangeRates() {
+		if order[def.MinAge] > order[age] {
+			continue
+		}
+		def.BaseRate = ExchangeRate(def, age)
+		seen[def.From+":"+def.To] = true
+		out = append(out, def)
+	}
+	lv := exchangeLevels()[age]
+	res := make([]string, 0, len(lv))
+	for r := range lv {
+		res = append(res, r)
+	}
+	sort.Strings(res)
+	for _, from := range res {
+		for _, to := range res {
+			if from == to || seen[from+":"+to] {
+				continue
+			}
+			def := ExchangeRateDef{From: from, To: to, MinAge: age}
+			def.BaseRate = exchangeRate(def, lv)
+			out = append(out, def)
+		}
+	}
+	sort.SliceStable(out, func(i, j int) bool {
+		if out[i].From != out[j].From {
+			return out[i].From < out[j].From
+		}
+		return out[i].To < out[j].To
+	})
+	return out
+}
+
+var (
+	exchangeByKeyOnce sync.Once
+	exchangeByKeyMap  map[string]ExchangeRateDef
+)
+
+func exchangeByKey() map[string]ExchangeRateDef {
+	exchangeByKeyOnce.Do(func() { exchangeByKeyMap = ExchangeRateByKey() })
+	return exchangeByKeyMap
+}
+
+var (
+	exchangeLevelsOnce sync.Once
+	exchangeLevelsMap  map[string]map[string]float64
+)
+
+// exchangeLevels caches the price levels for the market, which reads them on
+// every state snapshot. Config is static, so computing them once is safe;
+// the map is shared and must be treated as read-only.
+func exchangeLevels() map[string]map[string]float64 {
+	exchangeLevelsOnce.Do(func() { exchangeLevelsMap = priceLevels(BaseBuildings()) })
+	return exchangeLevelsMap
+}

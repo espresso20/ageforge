@@ -13,11 +13,48 @@ trade <from> <to> <amount>
 trade list
 ```
 
-`trade list` shows all rates currently available to your age, including any active market pressure penalties.
+`trade list` shows all rates currently available to your age, including any active market pressure penalties. Rates follow your age: see [Exchange Rates](#exchange-rates).
 
 ### Exchange Rates
 
-Each pair has a **base rate** — the units of the target resource you receive per unit sold at zero market pressure. Rates are unlocked by age:
+Each pair has a **base rate** — the units of the target resource you receive per unit sold at zero market pressure. The rate of a pair depends on what the two resources are in your current age.
+
+**Construction resources trade at parity.** A *construction resource* of an age is any resource that one of that age's buildings costs (wonders aside), except the flow resources: food, faith, culture and soldiers. Each age has a **price level** per construction resource, the median first-copy price in that resource among the age's buildings. Any two construction resources of your current age trade at the ratio of their price levels, less a **20% fee**:
+
+```
+base rate (A → B) = price level of B ÷ price level of A × 0.8
+```
+
+That covers every pair of them, including ones that were never on the list: steel → titanium in the Space Age, data → crypto in the Cyberpunk Age, gold → stone. Price levels change with each age, so these rates do too. The fee means a round trip always loses value (0.8 × 0.8 keeps 64%), so trading never beats building. It is how you get the resources that no building of your age makes: stone after the Bronze Age, iron after the Medieval Age, steel from the Modern Age, titanium, crypto.
+
+Examples from each age (base rates, before pressure):
+
+| Age | Examples |
+|---|---|
+| Bronze | wood → stone 0.48, stone → wood 1.33, gold → iron 0.792, iron → gold 0.808 |
+| Iron | gold → stone 1.5, wood → gold 0.711, iron → wood 1.07 |
+| Classical | iron → stone 3.67, gold → iron 0.533, wood → stone 1.96 |
+| Medieval | knowledge → gold 3.2, gold → knowledge 0.2, iron → stone 3.93 |
+| Renaissance | coal → steel 1.41, gold → steel 0.267, knowledge → steel 2 |
+| Colonial | wood → iron 7.08, steel → gold 1.78, knowledge → steel 4.11 |
+| Industrial | coal → steel 2.1, iron → steel 2.8, stone → gold 1.2 |
+| Victorian | oil → steel 1.8, coal → oil 0.457, gold → steel 1.31 |
+| Electric | oil → steel 4, electricity → gold 1.7, coal → electricity 0.64 |
+| Atomic | uranium → steel 8, gold → uranium 0.109, electricity → iron 0.94 |
+| Modern | data → steel 20.5, oil → electricity 3.67, gold → data 0.0963 |
+| Information | data → gold 17.2, electricity → steel 1.33, steel → data 0.048 |
+| Digital | data → steel 9.25, electricity → data 0.0985, steel → electricity 0.562 |
+| Cyberpunk | data → crypto 4.42, steel → crypto 0.46, crypto → electricity 1.95 |
+| Fusion | plasma → steel 3.2, electricity → plasma 0.267, steel → electricity 0.6 |
+| Space | steel → titanium 1.11, plasma → titanium 1.67, titanium → steel 0.576 |
+| Interstellar | electricity → titanium 6.86, dark\_matter → plasma 4, plasma → dark\_matter 0.16 |
+| Galactic | plasma → titanium 16.9, antimatter → dark\_matter 4, dark\_matter → antimatter 0.16 |
+| Quantum | titanium → quantum\_flux 0.198, quantum\_flux → antimatter 232, dark\_matter → antimatter 0.96 |
+| Transcendent | dark\_matter → antimatter 0.96, antimatter → dark\_matter 0.667 |
+
+The **Trade** overlay (`trade list`) lists every pair open to you in your current age with its live rate.
+
+**Listed pairs.** The market also keeps its original list of pairs, unlocked by age:
 
 | Age | Available Pairs |
 |---|---|
@@ -32,17 +69,23 @@ Each pair has a **base rate** — the units of the target resource you receive p
 | Space | dark\_matter→gold |
 | Quantum | quantum\_flux→gold |
 
-Full base rates for notable pairs:
+Where both sides of a listed pair are construction resources of your current age, it trades at parity like any other pair (gold → wood is 3.43 in the Bronze Age, 0.9 in the Iron Age). Otherwise it keeps its fixed rate: always for pairs involving food, faith or culture, and for pairs involving knowledge, coal, stone and the rest in ages where no building costs them. The fixed rates:
 
-| From | To | Base Rate |
+| From | To | Fixed Rate |
 |---|---|---|
 | gold | food | 50 |
 | gold | wood | 40 |
 | gold | stone | 30 |
+| gold | culture | 3.0 |
+| gold | coal | 10 |
+| coal | gold | 0.08 |
 | iron | gold | 2.0 |
 | iron | stone | 3.0 |
 | gold | knowledge | 5.0 |
 | faith | culture | 2.0 |
+| oil | gold | 3.0 |
+| steel | gold | 5.0 |
+| electricity | gold | 0.5 |
 | data | gold | 5.0 |
 | crypto | gold | 20.0 |
 | dark\_matter | gold | 50.0 |
@@ -60,7 +103,7 @@ Pressure caps at 1.0 (a 30% rate reduction). There is also a hard floor at 50% o
 
 Pressure **decays 2% per tick**, multiplicatively. Leave a pair alone and it recovers fully on its own. Having more trade buildings helps too: each trade-lineage building you own (market, port, bank, ...) reduces how much pressure a single trade adds (formula: `+0.10 / (1 + trade_building_count × 0.20)`).
 
-**When to exchange:** Use exchanges to convert surplus resources into something you're running short on, or to buy a specific resource you can't produce yet. Don't use the same pair repeatedly in quick succession — you'll hammer the rate. Spread trades across different pairs, or wait a few ticks between repeat swaps on the same pair.
+**When to exchange:** Use exchanges to convert surplus resources into something you're running short on, or to buy a specific resource you can't produce yet, or that no building of your age produces at all. Don't use the same pair repeatedly in quick succession — you'll hammer the rate. Spread trades across different pairs, or wait a few ticks between repeat swaps on the same pair.
 
 ---
 
@@ -360,7 +403,7 @@ The loop is self-reinforcing. Don't think of routes and diplomacy as separate sy
 
 ### End-game State
 
-With all 21 routes active and your discovered civilizations allied, gold income from routes alone becomes enormous. At that point, resource exchange becomes redundant for most pairs — use it only for exotic resource-to-resource conversions that no route covers.
+With all 21 routes active and your discovered civilizations allied, gold income from routes alone becomes enormous. Resource exchange stays useful even then: it is the way to get construction resources your age has no producer for (titanium, crypto, steel from the Modern Age on), and to rebalance between the ones you do make.
 
 ---
 

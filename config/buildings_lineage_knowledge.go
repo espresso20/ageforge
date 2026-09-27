@@ -13,64 +13,64 @@ func buildingsLineageKnowledge() []BuildingDef {
 	// plus catch-up — knowledge was ~250x slower than gathering_camp. See XtWUrrKY.
 	// =========================================================================
 
-	// tier 0 — primitive_age  rate=0.05
+	// tier 0 — primitive_age  rate=0.2
 	b = append(b, BuildingDef{
 		Name: "Story Circle", Key: "story_circle", Category: "research",
 		BaseCost:    map[string]float64{"wood": 20},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.05}},
+		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.2}},
 		BuildTicks:  80,
 		RequiredAge: "primitive_age",
-		Description: "Elders share stories around the fire. +0.05 knowledge/tick (2 workers).",
+		Description: "Elders share stories around the fire. +0.2 knowledge/tick (2 workers).",
 		LineageKey:  "knowledge", LineageTier: 0,
 		WorkerDomain: "knowledge", WorkerCapacity: 2,
 		EpochKey: "stone_era", OutputResource: "knowledge",
 	})
-	// tier 1 — stone_age  rate=0.1
+	// tier 1 — stone_age  rate=0.6
 	b = append(b, BuildingDef{
 		Name: "Elders' Hall", Key: "elders_hall", Category: "research",
 		BaseCost:    map[string]float64{"wood": 120, "stone": 80},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.1}},
+		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.6}},
 		BuildTicks:  200,
 		RequiredAge: "stone_age",
-		Description: "A hall where tribal elders convene. +0.1 knowledge/tick (2 workers).",
+		Description: "A hall where tribal elders convene. +0.4 knowledge/tick (2 workers).",
 		LineageKey:  "knowledge", LineageTier: 1,
 		WorkerDomain: "knowledge", WorkerCapacity: 2,
 		EpochKey: "stone_era", OutputResource: "knowledge",
 	})
-	// tier 2 — bronze_age  rate=0.2
+	// tier 2 — bronze_age  rate=2.0
 	b = append(b, BuildingDef{
 		Name: "Scriptorium", Key: "scriptorium", Category: "research",
 		BaseCost:    map[string]float64{"wood": 700, "stone": 400, "gold": 200},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.2}},
+		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 2.0}},
 		BuildTicks:  150,
 		RequiredAge: "bronze_age",
-		Description: "Scribes copy and preserve texts. +0.2 knowledge/tick (3 workers).",
+		Description: "Scribes copy and preserve texts. +0.8 knowledge/tick (3 workers).",
 		LineageKey:  "knowledge", LineageTier: 2,
 		WorkerDomain: "knowledge", WorkerCapacity: 3,
 		EpochKey: "stone_era", OutputResource: "knowledge",
 	})
-	// tier 3 — iron_age  rate=0.4
+	// tier 3 — iron_age  rate=1.6
 	b = append(b, BuildingDef{
 		Name: "Agora", Key: "agora", Category: "research",
 		BaseCost:    map[string]float64{"stone": 5000, "gold": 2500, "iron": 1500},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.4}},
+		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 1.6}},
 		BuildTicks:  300,
 		RequiredAge: "iron_age",
-		Description: "Open marketplace of ideas. +0.4 knowledge/tick (3 workers).",
+		Description: "Open marketplace of ideas. +1.6 knowledge/tick (3 workers).",
 		LineageKey:  "knowledge", LineageTier: 3,
 		WorkerDomain: "knowledge", WorkerCapacity: 3,
 		EpochKey: "iron_era", OutputResource: "knowledge",
 	})
-	// tier 4 — classical_age  rate=0.8
+	// tier 4 — classical_age  rate=3.2
 	b = append(b, BuildingDef{
 		Name: "Library", Key: "library", Category: "research",
 		BaseCost:    map[string]float64{"stone": 35000, "gold": 12000, "iron": 8000},
 		CostScale:   1.30,
-		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 0.8}},
+		Effects:     []Effect{{Type: "production", Target: "knowledge", Value: 3.2}},
 		BuildTicks:  600,
 		RequiredAge: "classical_age",
 		Description: "Repository of written knowledge. +0.8 knowledge/tick (4 workers).",

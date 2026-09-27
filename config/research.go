@@ -17,7 +17,7 @@ type TechDef struct {
 // Technologies returns all 52 tech definitions, ordered loosely by age.
 // Use TechByKey() for random access or TechsByAge() to group by age.
 func Technologies() []TechDef {
-	return []TechDef{
+	return normalizeResearchTicks([]TechDef{
 		// === PRIMITIVE AGE === (~1 min each)
 		{
 			Name: "Tool Making", Key: "tool_making",
@@ -201,7 +201,7 @@ func Technologies() []TechDef {
 			Prerequisites: []string{"iron_smelting"},
 			Description:   "Refining iron into steel for superior tools and weapons.",
 			Effects: []Effect{
-				{Type: "production", Target: "steel", Value: 0.1},
+				{Type: "production", Target: "steel", Value: 0.25},
 				{Type: "bonus", Target: "iron_rate", Value: 0.3},
 			},
 		},
@@ -769,7 +769,7 @@ func Technologies() []TechDef {
 				{Type: "production", Target: "quantum_flux", Value: 10.0},
 			},
 		},
-	}
+	})
 }
 
 // TechByKey returns a map of key -> TechDef

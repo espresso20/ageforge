@@ -35,10 +35,17 @@ type TradeManager struct {
 	// tick) and Snapshot (every UI refresh) don't rebuild them per call.
 	// Read-only: never mutate these or the maps inside the defs; Snapshot hands
 	// the UI copies of Export/Import so nothing outside the lock aliases them.
-	rateDefs  map[string]config.ExchangeRateDef
 	routeList []config.TradeRouteDef
 	routeDefs map[string]config.TradeRouteDef
+
+	// age prices the exchange: two construction resources trade at the
+	// current age's parity (config.MarketRate). The engine sets it before
+	// every exchange; "" falls back to the listed pairs at their base rates.
+	age string
 }
+
+// SetAge sets the age whose price parity the exchange trades at.
+func (tm *TradeManager) SetAge(age string) { tm.age = age }
 
 // ActiveRoute represents a running trade route
 type ActiveRoute struct {
@@ -86,7 +93,6 @@ func NewTradeManager() *TradeManager {
 		totalExchanged: make(map[string]float64),
 		totalImported:  make(map[string]float64),
 		totalExported:  make(map[string]float64),
-		rateDefs:       config.ExchangeRateByKey(),
 		routeList:      routes,
 		routeDefs:      routeDefs,
 	}
@@ -107,21 +113,18 @@ func copyAmounts(m map[string]float64) map[string]float64 {
 
 // GetExchangeRate returns the current rate for a resource pair, accounting for supply pressure
 func (tm *TradeManager) GetExchangeRate(from, to string) float64 {
-	rates := tm.rateDefs
-	key := from + ":" + to
-	def, ok := rates[key]
+	base, ok := config.MarketRate(from, to, tm.age)
 	if !ok {
 		return 0
 	}
-	pressure := tm.supplyPressure[key]
-	return def.BaseRate * (1.0 - pressure*0.3)
+	pressure := tm.supplyPressure[from+":"+to]
+	return base * (1.0 - pressure*0.3)
 }
 
 // Exchange performs an instant resource exchange
 func (tm *TradeManager) Exchange(from, to string, amount float64, resources *ResourceManager, buildings *BuildingManager, tick int) (float64, error) {
-	rates := tm.rateDefs
 	key := from + ":" + to
-	def, ok := rates[key]
+	base, ok := config.MarketRate(from, to, tm.age)
 	if !ok {
 		return 0, fmt.Errorf("no exchange rate for %s → %s", from, to)
 	}
@@ -141,9 +144,9 @@ func (tm *TradeManager) Exchange(from, to string, amount float64, resources *Res
 
 	// Calculate received amount with supply pressure
 	pressure := tm.supplyPressure[key]
-	rate := def.BaseRate * (1.0 - pressure*0.3)
-	if rate < def.BaseRate*0.5 {
-		rate = def.BaseRate * 0.5 // floor at 50% of base
+	rate := base * (1.0 - pressure*0.3)
+	if rate < base*0.5 {
+		rate = base * 0.5 // floor at 50% of base
 	}
 	got := amount * rate
 
@@ -321,22 +324,21 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 // resources currently blockaded by war/embargo (from DiplomacyManager); routes
 // importing one are flagged Disrupted so the overlay can warn the player.
 func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings *BuildingManager, disrupted map[string]bool) TradeState {
-	rates := tm.rateDefs
 	allRoutes := tm.routeDefs
 
-	// Exchange rates
+	// Exchange rates: what the market offers in this age (listed pairs plus
+	// every pair of the age's construction resources, at parity).
 	exchangeRates := make(map[string]ExchangeRateInfo)
-	for key, def := range rates {
-		if ageOrder[def.MinAge] > ageOrder[age] {
-			continue
-		}
+	for _, def := range config.MarketPairs(age) {
+		key := def.From + ":" + def.To
 		pressure := tm.supplyPressure[key]
-		currentRate := def.BaseRate * (1.0 - pressure*0.3)
+		base := def.BaseRate
+		currentRate := base * (1.0 - pressure*0.3)
 		exchangeRates[key] = ExchangeRateInfo{
 			From:     def.From,
 			To:       def.To,
 			Rate:     currentRate,
-			BaseRate: def.BaseRate,
+			BaseRate: base,
 			Pressure: pressure,
 		}
 	}

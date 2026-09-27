@@ -81,7 +81,7 @@ Food is the most critical resource. Every worker in every domain drains food eac
 **How to increase food:**
 - Assign food-domain workers to Food lineage buildings (`assign gathering_camp 5`)
 - Build more Food lineage buildings to increase total worker capacity
-- Research Agriculture, Crop Rotation, and related techs for food multipliers
+- Research Fire Mastery, Animal Husbandry, Agriculture and related techs for extra food per tick
 
 **Watch the food rate** in the Economy tab — keep the rate (`+N/t`) positive before recruiting new workers from any domain.
 
@@ -96,7 +96,7 @@ Knowledge powers all research. Technologies cost knowledge to unlock, and your k
 - Build Knowledge lineage buildings (Story Circle → Library → University → ...)
 - Knowledge storage starts at 30 — build Knowledge buildings early to raise the cap
 
-Knowledge workers have the highest production multiplier progression of any domain: at Quantum tier (tier 20), a single Quantum Theorist produces `2^20 × base_rate` — massively more than a Primitive-age knowledge worker (tier 0).
+Each Knowledge building has its own fully staffed rate: 0.2 knowledge/tick for a Story Circle, 0.6 for an Elders' Hall, 2.0 for a Scriptorium, 1.6 for an Agora and 3.2 for a Library. From the Medieval to the Colonial Age buildings also cost knowledge, so it counts as a construction resource there and its producers follow the [Payback Rule](buildings.md#how-production-rates-are-set) (a Monastery Library makes 78.3/tick, a University 270). See [Knowledge](knowledge.md) for the full lineage.
 
 ---
 
@@ -141,10 +141,10 @@ Beyond the prestige/threshold gates, culture now has two ways to spend the surpl
 
 | Monument | Age | Culture Cost | Permanent Bonus |
 |----------|-----|--------------|-----------------|
-| Cultural Obelisk | Classical | 2,500 | +1% all production |
-| Grand Amphitheatre | Medieval | 25,000 | +2% all production |
-| Eternal Library | Industrial | 500,000 | +3% all production |
-| Monument of Ages | Modern | 25,000,000 | +5% all production |
+| Cultural Obelisk | Classical | 710 | +1% all production |
+| Grand Amphitheatre | Medieval | 7,100 | +2% all production |
+| Eternal Library | Industrial | 140,000 | +3% all production |
+| Monument of Ages | Modern | 7,100,000 | +5% all production |
 
 **`festival` command** — spend a scaling lump of culture (`max(2,000, 5% of your culture cap)`) for **+20% to all production for 150 ticks**, on a **300-tick cooldown**. See [Commands](commands.md).
 
@@ -178,6 +178,28 @@ The 25 civilian resources share storage from the Storage lineage buildings. Each
 **Priority:** Build a new Storage lineage building as your first or second action when entering any new age.
 
 Late-game resources (Plasma, Titanium, Dark Matter, Antimatter, Quantum Flux) have especially low base storage (10–30 units) and will cap out instantly without dedicated storage investment. See [Buildings](buildings.md) for the full Storage lineage progression.
+
+---
+
+## Production Rates
+
+Every building rate in the game is the **fully staffed** rate shown in the building's description. For **construction resources** (anything the buildings of your current age cost) the rate follows the **Payback Rule**: fully staffed, a producer earns back the price of its first copy within the age's payback time. That time is a growing share of the age: under a minute in the Primitive Age, 22 minutes in the Iron Age, 1.5 hours in the Renaissance. Later ages repay more slowly because your older buildings keep producing too. The **flow resources** (food, faith, culture and soldiers) keep hand-set rates, and the requirements that ask for them are sized to match. Details and the full table are on [Buildings](buildings.md#how-production-rates-are-set).
+
+---
+
+## Buying at the Market
+
+Once you own any trade-lineage building (a `market` or its successors), the market trades **any two construction resources of your current age** at their **price parity less a 20% fee**. Each age has a price level per resource (the typical first-copy price in that resource), and one unit buys `0.8 × (price level of what you buy) / (price level of what you sell)`. In the Space Age, for example, steel and titanium are priced 180T and 250T, so 1 steel buys 1.11 titanium and 1 titanium buys 0.576 steel. Any pair works, not only the pairs that were listed before (steel → titanium in the Space Age, data → crypto in the Cyberpunk Age, gold → stone). Older fixed pairs involving food, culture, faith and similar resources keep their listed rates. Repeated trades of one pair still push its rate down (floor 50%), and a round trip always loses value, so trading never beats building. See [Trade & Diplomacy](trade.md#resource-exchange).
+
+Some construction resources have **no producing building in certain ages**, and the market is where you get them. Producers you built in earlier ages keep running, but the current age has none to build:
+
+- **Stone** from the Iron Age on
+- **Iron** from the Renaissance Age on
+- **Steel** from the Modern Age on
+- **Titanium** in the Space Age and later (earlier titanium smelters make only a trickle)
+- **Crypto** in the Cyberpunk Age (apart from the Neon Citadel wonder and the Blockchain tech)
+
+The same goes for wood in the Colonial Age, coal in the Electric Age and data in the Modern Age. Faith cannot be bought at the market at all.
 
 ---
 
