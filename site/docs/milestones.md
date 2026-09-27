@@ -129,7 +129,7 @@ The Trade chain expanded from 3 to 5 milestones, and its two capstones now grant
 | Milestone | Age required | Reward |
 |---|---|---|
 | Bronze Age Pioneer | Bronze Age | +30 iron, +30 gold |
-| Iron Forged | Iron Age | +40 coal, +10% iron rate |
+| Iron Forged | Iron Age | +40 iron, +10% iron rate |
 | Classical Scholar | Classical Age | +150 knowledge, +10% knowledge rate |
 | Medieval Lord | Medieval Age | +50 faith, +25 steel |
 | Enlightened | Renaissance Age | +75 culture, +15% knowledge rate |
