@@ -66,7 +66,7 @@ func (g GateSlack) Ratio() float64 { return g.MaxStorage / g.Need }
 // writeGates renders the static gate check.
 func (s *Summary) writeGates(sb *strings.Builder) {
 	sb.WriteString("\n## Static gate check\n\n")
-	fmt.Fprintf(sb, "From config alone, against the most storage buildable in the age you advance from, with no build_cost discounts: every required building must be buildable in that age, its last required copy must cost at most 1/%g of the storage, and every resource requirement must fit with %gx to spare, and every resource the gate needs must have a source that doesn't cost it first (the Gate Covenant, economy.md). `go test ./smoke` fails on any row here; the runtime invariants are what fail a run.\n\n", GateBuildingMargin, GateResourceMargin)
+	fmt.Fprintf(sb, "From config alone, against the most storage buildable in the age you advance from, with no build_cost discounts: every required building must be buildable in that age, its last required copy must cost at most 1/%g of the storage, every resource requirement must fit with %gx to spare, and every resource the gate needs must have a source that doesn't cost it first (the Gate Covenant, economy.md). No building may cost a resource with no source in its own age. `go test ./smoke` fails on any row here; the runtime invariants are what fail a run.\n\n", GateBuildingMargin, GateResourceMargin)
 	if len(s.Gates) == 0 {
 		sb.WriteString("No problems.\n")
 	} else {
