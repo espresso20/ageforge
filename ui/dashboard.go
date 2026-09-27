@@ -318,75 +318,21 @@ func (d *Dashboard) build() {
 	// Wire up autocomplete
 	d.inputField.SetAutocompleteFunc(NewAutoCompleter(d.engine))
 	d.inputField.SetAutocompletedFunc(func(text string, index, source int) bool {
+		// tview gives Enter to an open dropdown instead of the DoneFunc. Enter
+		// runs what was typed; Tab or a click takes the suggestion. PgUp/PgDn
+		// through the list already writes the pick into the field, so Enter then
+		// runs the pick.
+		if source == tview.AutocompletedEnter {
+			d.submitInput()
+			return true
+		}
 		d.inputField.SetText(text + " ")
 		return true
 	})
 
 	d.inputField.SetDoneFunc(func(key tcell.Key) {
 		if key == tcell.KeyEnter {
-			text := d.inputField.GetText()
-			d.inputField.SetText("")
-			// Reset history navigation state
-			d.histIdx = -1
-			d.histDraft = ""
-			if text == "" {
-				return
-			}
-			// Record non-empty trimmed commands in history (cap at 50)
-			cmd := strings.TrimSpace(text)
-			if cmd != "" {
-				if len(d.cmdHistory) >= 50 {
-					d.cmdHistory = d.cmdHistory[1:] // drop oldest
-				}
-				d.cmdHistory = append(d.cmdHistory, cmd)
-			}
-			if strings.ToLower(cmd) == "quit" {
-				d.engine.SaveGame(d.engine.ActiveSaveName())
-				d.app.Stop()
-				return
-			}
-			// Route /commands to dev exec when dev mode is active
-			if game.DevModeActive && strings.HasPrefix(cmd, "/") {
-				result := game.DevConsoleCommand(cmd, d.engine)
-				if result != "" {
-					d.engine.AddLog("info", "[positive]dev → "+result+"[-]")
-				}
-				return
-			}
-			if strings.ToLower(cmd) == "save" { // bare save — no name
-				d.showSaveChoiceModal()
-				return
-			}
-			if strings.ToLower(cmd) == "load" { // bare load — open the browser instead of assuming a slot
-				page := CreateLoadGamePage(d.app, d.pages, d.engine, "dashboard", false)
-				d.pages.AddPage(loadGamePage, page, true, true)
-				d.app.SetFocus(page)
-				return
-			}
-			if strings.ToLower(cmd) == "theme" { // bare theme — open the live picker (theme list / theme <key> fall through)
-				page := CreateThemePickerPage(d.app, d.pages, d.engine, "dashboard")
-				d.pages.AddPage(themePickerPage, page, true, true)
-				d.app.SetFocus(page)
-				return
-			}
-			result := HandleCommand(text, d.engine)
-			if result.OpenCatastrophe {
-				d.reopenCatastropheModal()
-			}
-			if result.OverlayName == "harbinger" {
-				d.harbPanel.reset()
-			}
-			if result.OverlayName == "plan" {
-				d.planPanel.reset()
-			}
-			if result.OverlayName != "" {
-				state := d.engine.GetState()
-				d.overlayMgr.Show(result.OverlayName, state)
-				d.updateSidebar(result.OverlayName)
-			}
-			if result.Message != "" && result.Type != "success" {
-				d.engine.AddLog(result.Type, result.Message)
-			}
+			d.submitInput()
 		}
 	})
 
@@ -924,4 +870,72 @@ func (d *Dashboard) showDevUnlockModal() {
 
 	d.pages.AddPage(devUnlockPage, centered, true, true)
 	d.app.SetFocus(field)
+}
+
+// submitInput runs the command in the input field, clears it and records it
+// in history. Called on Enter, whether or not the autocomplete dropdown is open.
+func (d *Dashboard) submitInput() {
+	text := d.inputField.GetText()
+	d.inputField.SetText("")
+	// Reset history navigation state
+	d.histIdx = -1
+	d.histDraft = ""
+	if text == "" {
+		return
+	}
+	// Record non-empty trimmed commands in history (cap at 50)
+	cmd := strings.TrimSpace(text)
+	if cmd != "" {
+		if len(d.cmdHistory) >= 50 {
+			d.cmdHistory = d.cmdHistory[1:] // drop oldest
+		}
+		d.cmdHistory = append(d.cmdHistory, cmd)
+	}
+	if strings.ToLower(cmd) == "quit" {
+		d.engine.SaveGame(d.engine.ActiveSaveName())
+		d.app.Stop()
+		return
+	}
+	// Route /commands to dev exec when dev mode is active
+	if game.DevModeActive && strings.HasPrefix(cmd, "/") {
+		result := game.DevConsoleCommand(cmd, d.engine)
+		if result != "" {
+			d.engine.AddLog("info", "[positive]dev → "+result+"[-]")
+		}
+		return
+	}
+	if strings.ToLower(cmd) == "save" { // bare save — no name
+		d.showSaveChoiceModal()
+		return
+	}
+	if strings.ToLower(cmd) == "load" { // bare load — open the browser instead of assuming a slot
+		page := CreateLoadGamePage(d.app, d.pages, d.engine, "dashboard", false)
+		d.pages.AddPage(loadGamePage, page, true, true)
+		d.app.SetFocus(page)
+		return
+	}
+	if strings.ToLower(cmd) == "theme" { // bare theme — open the live picker (theme list / theme <key> fall through)
+		page := CreateThemePickerPage(d.app, d.pages, d.engine, "dashboard")
+		d.pages.AddPage(themePickerPage, page, true, true)
+		d.app.SetFocus(page)
+		return
+	}
+	result := HandleCommand(text, d.engine)
+	if result.OpenCatastrophe {
+		d.reopenCatastropheModal()
+	}
+	if result.OverlayName == "harbinger" {
+		d.harbPanel.reset()
+	}
+	if result.OverlayName == "plan" {
+		d.planPanel.reset()
+	}
+	if result.OverlayName != "" {
+		state := d.engine.GetState()
+		d.overlayMgr.Show(result.OverlayName, state)
+		d.updateSidebar(result.OverlayName)
+	}
+	if result.Message != "" && result.Type != "success" {
+		d.engine.AddLog(result.Type, result.Message)
+	}
 }

@@ -226,23 +226,16 @@ func (h *reproHarness) dev(cmd string) string {
 	return game.DevExecCommand(cmd, h.eng)
 }
 
-// submit types a command into the real input field and presses Enter. The
-// input has autocomplete: the first Enter may only accept a suggestion, so keep
-// pressing Enter until the field clears (the DoneFunc clears it).
+// submit types a command into the real input field and presses Enter once.
+// Enter runs the typed text even while the autocomplete dropdown is open, and
+// the submit clears the field.
 func (h *reproHarness) submit(cmd string) {
 	h.t.Helper()
 	h.waitFor("input focus before typing "+cmd, 3*time.Second, h.inputHasFocus)
 	h.typeText(cmd)
 	h.waitFor("typed text to land", 3*time.Second, func() bool { return h.inputText() == cmd })
-	// First Enter either submits (field clears) or accepts the autocomplete
-	// suggestion (field becomes "cmd "). Wait for one of those before deciding.
 	h.key(tcell.KeyEnter, 0)
-	h.waitFor("Enter processed", 3*time.Second, func() bool { t := h.inputText(); return t == "" || t == cmd+" " })
-	if h.inputText() == "" {
-		return
-	}
-	h.key(tcell.KeyEnter, 0)
-	h.waitFor("command submitted", 3*time.Second, func() bool { return h.inputText() == "" })
+	h.waitFor("command submitted on the first Enter", 3*time.Second, func() bool { return h.inputText() == "" })
 }
 
 // bigStorageKey returns the storage building with the largest "all" bonus.

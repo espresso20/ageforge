@@ -78,6 +78,7 @@ All notable changes to AgeForge are documented here.
 
 ### Fixed
 - **Iron Age gold trap.** Reaching the Iron Age without a Bronze Age market left no way to get gold: the trading post, the only gold producer and the only trade building (the market needs one), cost gold, and so did agoras, legion forts, temples and the Classical Age's requirement. The trading post is now priced in stone and iron only. The automated age-gate check (the "Gate Covenant") now asks whether every resource a gate needs can be had by a player who skipped every building no earlier gate required, so a trap of this kind fails the build; it found no others.
+- **Commands needed Enter twice.** While the suggestion list was open, the first Enter only took the suggestion (`advance` became `advance `), so `advance`, `status`, `research list` and the rest ran on the second press. Enter now runs what you typed on the first press; Tab still takes the highlighted suggestion.
 - **`build` queues several storage copies.** Building a storage building a second time while the first copy was under construction was refused ("already under construction"), though `build <storage> 5` queued five. Now each `build` queues another copy, up to the building's cap. Only unique buildings still refuse a second copy.
 
 ### Removed
