@@ -280,11 +280,29 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 
 	case "plan":
 		if len(completed) == 0 {
-			return filterPrefix([]string{"build", "research", "list", "remove", "up", "down", "clear"}, partial, prefix)
+			return filterPrefix([]string{"build", "research", "trade", "advance", "list", "remove", "up", "down", "clear"}, partial, prefix)
 		}
 		switch sub := strings.ToLower(completed[0]); {
 		case sub == "build" && len(completed) == 1:
 			return filterPrefix(plannableBuildingKeys(state), partial, prefix)
+		case sub == "trade" && len(completed) <= 2:
+			// The market's pairs: sellers first, then what the seller buys.
+			seen := map[string]bool{}
+			var keys []string
+			for _, x := range state.Trade.ExchangeRates {
+				k := x.From
+				if len(completed) == 2 {
+					if !strings.EqualFold(x.From, completed[1]) {
+						continue
+					}
+					k = x.To
+				}
+				if !seen[k] && state.Resources[k].Unlocked {
+					seen[k] = true
+					keys = append(keys, k)
+				}
+			}
+			return filterPrefix(keys, partial, prefix)
 		case sub == "research" && len(completed) == 1:
 			return filterPrefix(plannableTechKeys(state), partial, prefix)
 		case (sub == "remove" || sub == "up" || sub == "down") && len(completed) == 1:
@@ -435,15 +453,16 @@ func assignedBuildingKeysAll(state game.GameState) []string {
 	return keys
 }
 
-// availableTechKeys returns tech keys that are currently available to research
-// (unlocked but not yet started or completed).
 // plannableBuildingKeys is what `plan build` can take: this age's unlocked
-// buildings (its wonder included) short of their MaxCount.
+// buildings (its wonder included) short of their MaxCount, and the next
+// age's, which wait for the advance.
 func plannableBuildingKeys(state game.GameState) []string {
 	defs := config.BuildingByKey()
 	var keys []string
 	for key, bs := range state.Buildings {
-		if d := defs[key]; bs.Unlocked && !bs.IsLegacy && !bs.AtMaxCount && d.RequiredAge == state.Age {
+		d := defs[key]
+		now := bs.Unlocked && !bs.IsLegacy && !bs.AtMaxCount && d.RequiredAge == state.Age
+		if now || (state.NextAge != "" && d.RequiredAge == state.NextAge) {
 			keys = append(keys, key)
 		}
 	}
@@ -452,8 +471,9 @@ func plannableBuildingKeys(state game.GameState) []string {
 }
 
 // plannableTechKeys is what `plan research` can take: unresearched techs of
-// this age or earlier that are neither in progress nor planned already.
-// Prerequisites may still be missing; they can be planned first.
+// this age, an earlier one or the next that are neither in progress nor
+// planned already. Prerequisites may still be missing; they can be planned
+// first.
 func plannableTechKeys(state game.GameState) []string {
 	order := map[string]int{}
 	for i, a := range config.AgeOrder() {
@@ -467,7 +487,7 @@ func plannableTechKeys(state game.GameState) []string {
 	}
 	var keys []string
 	for key, ts := range state.Research.Techs {
-		if !ts.Researched && !planned[key] && order[ts.Age] <= order[state.Age] {
+		if !ts.Researched && !planned[key] && (order[ts.Age] <= order[state.Age] || ts.Age == state.NextAge) {
 			keys = append(keys, key)
 		}
 	}
@@ -475,6 +495,8 @@ func plannableTechKeys(state game.GameState) []string {
 	return keys
 }
 
+// availableTechKeys returns tech keys that are currently available to research
+// (unlocked but not yet started or completed).
 func availableTechKeys(state game.GameState) []string {
 	var keys []string
 	for key, ts := range state.Research.Techs {

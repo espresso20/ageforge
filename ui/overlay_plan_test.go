@@ -56,15 +56,34 @@ func TestPlanCommands(t *testing.T) {
 	}
 }
 
+func TestPlanTradeAndAdvanceCommands(t *testing.T) {
+	engine := game.NewGameEngine()
+	if res := HandleCommand("plan advance", engine); res.Type == "error" {
+		t.Fatalf("plan advance: %s", res.Message)
+	}
+	if res := HandleCommand("plan advance", engine); res.Type != "error" {
+		t.Error("a second plan advance was accepted")
+	}
+	for _, c := range []string{"plan trade", "plan trade wood", "plan trade wood iron", "plan trade wood wood", "plan trade wood food -5", "plan advance now"} {
+		if res := HandleCommand(c, engine); res.Type != "error" {
+			t.Errorf("%q = %+v, want an error", c, res)
+		}
+	}
+	text := plainText(planPanelText(engine.GetState(), 0, "", false, false))
+	if !strings.Contains(text, "advance to the Stone Age") || !strings.Contains(text, "waiting for the requirements") {
+		t.Errorf("panel:\n%s", text)
+	}
+}
+
 func TestPlanAutocomplete(t *testing.T) {
 	engine := game.NewGameEngine()
 	comp := NewAutoCompleter(engine)
-	if got := strings.Join(comp("plan "), ","); got != "plan build,plan clear,plan down,plan list,plan remove,plan research,plan up" {
+	if got := strings.Join(comp("plan "), ","); got != "plan advance,plan build,plan clear,plan down,plan list,plan remove,plan research,plan trade,plan up" {
 		t.Errorf("plan subcommands = %s", got)
 	}
 	builds := strings.Join(comp("plan build "), ",")
-	if !strings.Contains(builds, "plan build hut") || strings.Contains(builds, "longhouse") {
-		t.Errorf("plan build offers %s; want this age's buildings only", builds)
+	if !strings.Contains(builds, "plan build hut") || !strings.Contains(builds, "plan build longhouse") || strings.Contains(builds, "warehouse") {
+		t.Errorf("plan build offers %s; want this age's buildings and the next age's only", builds)
 	}
 	if got := comp("plan research tool"); len(got) != 1 || got[0] != "plan research tool_making" {
 		t.Errorf("plan research tool = %v", got)

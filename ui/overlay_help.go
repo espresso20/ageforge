@@ -25,6 +25,8 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("  [cyan]plan[-]                          - Open the Plan panel (reorder and remove with keys)\n")
 	sb.WriteString("  [cyan]plan build[-] <building> [count] - Add copies of a building of this age\n")
 	sb.WriteString("  [cyan]plan research[-] <tech>         - Add a tech (techs start one at a time, in order)\n")
+	sb.WriteString("  [cyan]plan trade[-] <from> <to> [amt]  - Sell from for to as it comes in (no amount: keep topped up)\n")
+	sb.WriteString("  [cyan]plan advance[-]                  - Advance as soon as the next age is ready\n")
 	sb.WriteString("  [cyan]plan list[-]                     - Print the plan with each item's status\n")
 	sb.WriteString("  [cyan]plan remove[-] <n>              - Remove item n\n")
 	sb.WriteString("  [cyan]plan up[-] <n> / [cyan]plan down[-] <n> - Move item n one place\n")

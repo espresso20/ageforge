@@ -28,7 +28,9 @@ import (
 //     above it, while resources the top items don't need are not left idle.
 //     Items that cannot start for a reason money won't fix reserve nothing: a
 //     price over the current storage cap (the next storage building has to
-//     come first), or a wonder whose bank is not full yet.
+//     come first), a resource it lacks that the current income won't bring
+//     in within a day (it needs the market or a producer first), or a wonder
+//     whose bank is not full yet.
 //   - Techs start in plan order: only the first research item can take the
 //     research slot when it frees up. Later research items still reserve
 //     their knowledge.
@@ -43,6 +45,8 @@ import (
 const (
 	PlanBuild    = "build"
 	PlanResearch = "research"
+	PlanTrade    = "trade"
+	PlanAdvance  = "advance"
 )
 
 // MaxPlanItems caps the plan's length; maxPlanCount caps one build item.
@@ -60,6 +64,12 @@ type PlanItem struct {
 	Key     string `json:"key"`
 	Count   int    `json:"count"`
 	Started int    `json:"started,omitempty"`
+	// Trade items (plan_trade.go): Key is what is sold, To what is bought,
+	// Amount how much of To is still wanted (0: no limit) and Got how much
+	// the item has bought so far. Count stays 1 until Amount is met.
+	To     string  `json:"to,omitempty"`
+	Amount float64 `json:"amount,omitempty"`
+	Got    float64 `json:"got,omitempty"`
 }
 
 // Plan item statuses, for the UI.
@@ -77,6 +87,10 @@ type PlanItemView struct {
 	Name    string
 	Count   int
 	Started int
+	// To, Amount and Got are a trade item's (see PlanItem).
+	To     string
+	Amount float64
+	Got    float64
 	// Cost is the price of the next start (nil for a wonder, paid through its bank).
 	Cost map[string]float64
 	// Status is PlanStatusReady, PlanStatusWaiting or PlanStatusBlocked.
@@ -103,10 +117,13 @@ func clonePlan(p []PlanItem) []PlanItem {
 func loadPlan(saved []PlanItem) []PlanItem {
 	var out []PlanItem
 	for _, it := range saved {
-		if (it.Kind != PlanBuild && it.Kind != PlanResearch) || it.Count <= 0 || len(out) >= MaxPlanItems {
+		if (it.Kind != PlanBuild && it.Kind != PlanResearch && it.Kind != PlanTrade && it.Kind != PlanAdvance) || it.Count <= 0 || len(out) >= MaxPlanItems {
 			continue
 		}
-		if it.Kind == PlanResearch {
+		if it.Kind == PlanTrade && (it.To == "" || !(it.Amount >= 0) || math.IsInf(it.Amount, 0) || !(it.Got >= 0)) {
+			continue
+		}
+		if it.Kind != PlanBuild {
 			it.Count = 1
 		}
 		it.Count = min(it.Count, maxPlanCount)
@@ -232,6 +249,12 @@ func (ge *GameEngine) planIndexErr(n int) error {
 
 // planItemLabel is "3 × Hut" or "research Pottery".
 func (ge *GameEngine) planItemLabel(it PlanItem) string {
+	if it.Kind == PlanTrade {
+		return "trade " + it.Key + " for " + it.To
+	}
+	if it.Kind == PlanAdvance {
+		return "advance when ready"
+	}
 	if it.Kind == PlanResearch {
 		return "research " + config.TechByKey()[it.Key].Name
 	}
@@ -263,10 +286,13 @@ func (ge *GameEngine) planBuildInvalid(key string, planned int) string {
 	if !ok {
 		return "unknown building"
 	}
-	if !ge.Buildings.IsUnlocked(key) {
+	// The next age's buildings may be planned ahead: they wait (checkPlanItem)
+	// until an advance unlocks them.
+	future := def.RequiredAge != "" && def.RequiredAge == ge.progress.GetNextAge(ge.age)
+	if !ge.Buildings.IsUnlocked(key) && !future {
 		return "not unlocked yet"
 	}
-	if def.RequiredAge != "" && def.RequiredAge != ge.age {
+	if def.RequiredAge != "" && def.RequiredAge != ge.age && !future {
 		return "it belongs to another age"
 	}
 	if def.MaxCount > 0 {
@@ -295,7 +321,7 @@ func (ge *GameEngine) planResearchInvalid(key string, idx int) string {
 		return "already being researched"
 	}
 	order := ge.progress.GetAgeOrder()
-	if order[def.Age] > order[ge.age] {
+	if order[def.Age] > order[ge.age] && def.Age != ge.progress.GetNextAge(ge.age) {
 		return "it belongs to a later age"
 	}
 	for _, pre := range def.Prerequisites {
@@ -323,6 +349,23 @@ type planStarts struct {
 	builds map[string]int
 	order  []string // build keys in first-start order
 	techs  []string
+	// trades sums what trade items sold and bought, by "from>to".
+	trades     map[string][2]float64
+	tradeOrder []string
+	// advanced is the age an advance item moved to ("" if none).
+	advanced string
+}
+
+func (s *planStarts) addTrade(from, to string, sold, got float64) {
+	if s.trades == nil {
+		s.trades = map[string][2]float64{}
+	}
+	k := from + ">" + to
+	if _, ok := s.trades[k]; !ok {
+		s.tradeOrder = append(s.tradeOrder, k)
+	}
+	t := s.trades[k]
+	s.trades[k] = [2]float64{t[0] + sold, t[1] + got}
 }
 
 func (s *planStarts) addBuild(key string) {
@@ -335,7 +378,9 @@ func (s *planStarts) addBuild(key string) {
 	s.builds[key]++
 }
 
-func (s *planStarts) empty() bool { return len(s.order) == 0 && len(s.techs) == 0 }
+func (s *planStarts) empty() bool {
+	return len(s.order) == 0 && len(s.techs) == 0 && len(s.tradeOrder) == 0 && s.advanced == ""
+}
 
 // describe renders the starts as "2 × Hut, Farm, research Pottery".
 func (s *planStarts) describe(defs map[string]config.BuildingDef) string {
@@ -350,6 +395,14 @@ func (s *planStarts) describe(defs map[string]config.BuildingDef) string {
 	techs := config.TechByKey()
 	for _, k := range s.techs {
 		parts = append(parts, "research "+techs[k].Name)
+	}
+	for _, k := range s.tradeOrder {
+		from, to, _ := strings.Cut(k, ">")
+		t := s.trades[k]
+		parts = append(parts, fmt.Sprintf("traded %s %s for %s %s", formatPlanAmount(t[0]), from, formatPlanAmount(t[1]), to))
+	}
+	if s.advanced != "" {
+		parts = append(parts, "advanced to "+s.advanced)
 	}
 	return strings.Join(parts, ", ")
 }
@@ -367,6 +420,9 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 	switch it.Kind {
 	case PlanBuild:
 		def := ge.Buildings.defs[it.Key]
+		if def.RequiredAge != "" && def.RequiredAge != ge.age {
+			return planCheck{blocked: "waits for the " + ge.progress.GetAgeName(def.RequiredAge)}
+		}
 		if def.Category == "wonder" {
 			if DevGodMode || ge.Buildings.IsWonderBankFull(it.Key) {
 				return planCheck{}
@@ -382,15 +438,24 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 				return planCheck{cost: cost, blocked: "needs more " + res + " storage"}
 			}
 		}
+		if res := ge.planUnfunded(cost); res != "" {
+			return planCheck{cost: cost, blocked: "too little " + res + " coming in"}
+		}
 		return planCheck{cost: cost, reserve: true}
 	case PlanResearch:
 		def := config.TechByKey()[it.Key]
+		if order := ge.progress.GetAgeOrder(); order[def.Age] > order[ge.age] {
+			return planCheck{blocked: "waits for the " + ge.progress.GetAgeName(def.Age)}
+		}
 		cost := map[string]float64{"knowledge": def.Cost}
 		if DevGodMode {
 			cost = nil
 		}
 		if def.Cost > ge.Resources.GetStorage("knowledge") && !DevGodMode {
 			return planCheck{cost: cost, blocked: "needs more knowledge storage"}
+		}
+		if res := ge.planUnfunded(cost); res != "" {
+			return planCheck{cost: cost, blocked: "too little " + res + " coming in"}
 		}
 		if ge.Research.currentTech != "" {
 			return planCheck{cost: cost, blocked: "research slot busy", reserve: true}
@@ -406,6 +471,28 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		return planCheck{cost: cost, reserve: true}
 	}
 	return planCheck{blocked: "unknown item"}
+}
+
+// planFundTicks is how far ahead the plan looks for income: MaxOfflineTime,
+// the longest the plan ever runs unattended, in ticks at 1x.
+var planFundTicks = MaxOfflineTime.Seconds() / BaseTickInterval.Seconds()
+
+// planUnfunded is a resource cost needs more of than is held and that the
+// current income won't bring in within planFundTicks (a day), or "" if there
+// is none. Such an item can't start until the player acts (trades, builds a
+// producer), so it reserves nothing: holding resources back for it would
+// stall the plan behind it.
+func (ge *GameEngine) planUnfunded(cost map[string]float64) string {
+	for _, res := range sortedKeys(cost) {
+		short := cost[res] - ge.Resources.Get(res)
+		if short <= 0 {
+			continue
+		}
+		if rate := ge.Resources.GetRate(res); rate <= 0 || short/rate > planFundTicks {
+			return res
+		}
+	}
+	return ""
 }
 
 // planFree is what is left of res after the reservations so far.
@@ -435,7 +522,34 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 	reserved := map[string]float64{}
 	researchSeen := false
 	out := make([]PlanItem, 0, len(ge.plan))
-	for _, it := range ge.plan {
+	advanceAt := -1
+	for i, it := range ge.plan {
+		if it.Kind == PlanAdvance {
+			if ge.planAdvanceBlocker() == "" {
+				// Ready: advance here, before the items below spend what the
+				// requirements count. The rest waits for the next tick,
+				// where what belonged to the old age drops out.
+				advanceAt = i
+				out = append(out, ge.plan[i+1:]...)
+				break
+			}
+			out = append(out, it)
+			continue
+		}
+		if it.Kind == PlanTrade {
+			if reason := ge.planTradeInvalid(it); reason != "" {
+				ge.addLog("warning", fmt.Sprintf("Plan: dropped %s (%s).", ge.planItemLabel(it), reason))
+				continue
+			}
+			if sold, got := ge.runPlanTrade(&it, reserved); got > 0 {
+				started = true
+				starts.addTrade(it.Key, it.To, sold, got)
+			}
+			if it.Count > 0 {
+				out = append(out, it)
+			}
+			continue
+		}
 		var reason string
 		if it.Kind == PlanBuild {
 			// Copies the surviving items above will take first (their
@@ -507,7 +621,30 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 		out = nil
 	}
 	ge.plan = out
+	if advanceAt >= 0 {
+		next := ge.progress.GetNextAge(ge.age)
+		ge.addLog("info", fmt.Sprintf("Plan: advancing to the %s.", ge.progress.GetAgeName(next)))
+		ge.advanceAge(next)
+		starts.advanced = ge.progress.GetAgeName(ge.age)
+		started = true
+	}
 	return started
+}
+
+// staffFromIdle assigns idle workers to key's empty worker slots. The plan
+// calls it when a copy it started completes: a player who plans a producer
+// while away wants it staffed, and otherwise it would run at the unstaffed
+// 20% until they came back. Only idle workers: the plan never recruits (more
+// mouths to feed is the player's call). Rates are recalculated by the caller.
+func (ge *GameEngine) staffFromIdle(key string) {
+	def := ge.Buildings.defs[key]
+	if def.WorkerCapacity <= 0 {
+		return
+	}
+	free := def.WorkerCapacity*ge.Buildings.GetCount(key) - ge.Workers.GetAssignedCount("worker", key)
+	if n := min(free, ge.Workers.IdleCount("worker")); n > 0 {
+		ge.Workers.Assign("worker", key, n)
+	}
 }
 
 // runPlanTick runs the plan once during live play and logs what started.
@@ -530,6 +667,14 @@ func (ge *GameEngine) planViews() []PlanItemView {
 	techs := config.TechByKey()
 	out := make([]PlanItemView, 0, len(ge.plan))
 	for _, it := range ge.plan {
+		if it.Kind == PlanTrade {
+			out = append(out, ge.planTradeView(it, reserved))
+			continue
+		}
+		if it.Kind == PlanAdvance {
+			out = append(out, ge.planAdvanceView(it))
+			continue
+		}
 		v := PlanItemView{Kind: it.Kind, Key: it.Key, Count: it.Count, Started: it.Started}
 		if it.Kind == PlanResearch {
 			v.Name = techs[it.Key].Name

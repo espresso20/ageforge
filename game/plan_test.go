@@ -7,14 +7,21 @@ import (
 	"time"
 )
 
-// planTestEngine is a Primitive Age game with room to store things: 50
-// stashes, and a big knowledge cap for research tests. Storage is set on the
-// resource directly, so tests that call recalculateRates must set it again.
+// planTestEngine is a Primitive Age game with room to store things (50
+// stashes, and a big knowledge cap for research tests) and a trickle of wood
+// and knowledge, so waiting items are saving up rather than stuck. Storage
+// is set on the resource directly, so tests that call recalculateRates must
+// set it again.
 func planTestEngine(t *testing.T) *GameEngine {
 	t.Helper()
 	ge := newSeededEngine(1)
 	ge.Buildings.counts["stash"] = 50
+	ge.Buildings.counts["wood_camp"] = 1
+	ge.Buildings.counts["story_circle"] = 1
 	ge.recalculateRates()
+	if ge.Resources.GetRate("wood") <= 0 || ge.Resources.GetRate("knowledge") <= 0 {
+		t.Fatal("setup: no wood or knowledge income")
+	}
 	ge.Resources.resources["knowledge"].Storage = 1e6
 	return ge
 }
@@ -129,6 +136,28 @@ func TestPlan_OverCapItemReservesNothing(t *testing.T) {
 	v := ge.planViews()
 	if len(v) != 1 || v[0].Status != PlanStatusBlocked || !strings.Contains(v[0].Note, "storage") {
 		t.Errorf("shrine view = %+v, want blocked on storage", v)
+	}
+}
+
+// An item short of something nothing makes can't start until the player
+// acts, so it reserves nothing either.
+func TestPlan_UnfundedItemReservesNothing(t *testing.T) {
+	ge := planTestEngine(t)
+	ge.Resources.resources["wood"].Rate = 0 // nothing makes wood now
+	shrine := ge.Buildings.GetCost("shrine")["wood"]
+	if _, err := ge.PlanAddBuild("shrine", 1); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ge.PlanAddBuild("hut", 1); err != nil {
+		t.Fatal(err)
+	}
+	setAmount(ge, "wood", shrine-1)
+	ge.runPlanTick()
+	if queued(ge, "hut") != 1 {
+		t.Error("the hut waited behind a shrine nothing can fund")
+	}
+	if v := ge.planViews(); len(v) != 1 || v[0].Note != "too little wood coming in" {
+		t.Errorf("shrine view = %+v", v)
 	}
 }
 

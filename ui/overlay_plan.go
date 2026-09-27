@@ -131,8 +131,22 @@ func planStatusText(v game.PlanItemView) string {
 
 // planItemTitle is "Hut ×3 (2 started)" or "research Tool Making".
 func planItemTitle(v game.PlanItemView) string {
-	if v.Kind == game.PlanResearch {
+	switch v.Kind {
+	case game.PlanResearch:
 		return "research " + v.Name
+	case game.PlanAdvance:
+		return v.Name
+	case game.PlanTrade:
+		s := "trade " + v.Key + " for " + v.To
+		if v.Amount > 0 {
+			s += " (" + FormatNumber(v.Amount) + " more)"
+		} else {
+			s += " (keep topped up)"
+		}
+		if v.Got > 0 {
+			s += ", bought " + FormatNumber(v.Got)
+		}
+		return s
 	}
 	s := v.Name
 	if v.Count > 1 {

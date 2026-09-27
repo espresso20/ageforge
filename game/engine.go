@@ -301,6 +301,10 @@ type BuildQueueItem struct {
 	BuildingKey string
 	TicksLeft   int
 	TotalTicks  int
+	// FromPlan marks a copy the build plan started: on completion it is
+	// staffed from idle workers (plan.go). omitempty keeps older saves'
+	// bytes, and their signatures, unchanged.
+	FromPlan bool `json:",omitempty"`
 }
 
 // NewGameEngine creates a new game engine initialised to the Primitive Age.
@@ -2529,7 +2533,7 @@ func (ge *GameEngine) processBuildQueue() {
 	for _, item := range ge.buildQueue {
 		item.TicksLeft--
 		if item.TicksLeft <= 0 {
-			ge.finishBuild(item.BuildingKey)
+			ge.finishBuild(item)
 		} else {
 			def := ge.Buildings.defs[item.BuildingKey]
 			ge.addLog("debug", fmt.Sprintf("Build queue: %s %d/%d ticks", def.Name, item.TotalTicks-item.TicksLeft, item.TotalTicks))
@@ -2551,7 +2555,7 @@ func (ge *GameEngine) advanceBuildQueue(n int) bool {
 	for _, item := range ge.buildQueue {
 		item.TicksLeft -= n
 		if item.TicksLeft <= 0 {
-			ge.finishBuild(item.BuildingKey)
+			ge.finishBuild(item)
 			done = true
 		} else {
 			remaining = append(remaining, item)
@@ -2561,10 +2565,14 @@ func (ge *GameEngine) advanceBuildQueue(n int) bool {
 	return done
 }
 
-// finishBuild completes one queued copy of key: the count, the log lines,
-// the stats and the bus event.
-func (ge *GameEngine) finishBuild(key string) {
+// finishBuild completes one queued copy: the count, the log lines, the stats
+// and the bus event, and staffing from idle workers for a plan's copy.
+func (ge *GameEngine) finishBuild(item BuildQueueItem) {
+	key := item.BuildingKey
 	ge.Buildings.counts[key]++
+	if item.FromPlan {
+		ge.staffFromIdle(key)
+	}
 	def := ge.Buildings.defs[key]
 	ge.addLog("debug", fmt.Sprintf("Build complete: %s (count now %d)", def.Name, ge.Buildings.GetCount(key)))
 	ge.addLog("success", fmt.Sprintf("%s completed! (#%d)", def.Name, ge.Buildings.GetCount(key)))
@@ -2770,6 +2778,7 @@ func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
 			BuildingKey: key,
 			TicksLeft:   def.BuildTicks,
 			TotalTicks:  def.BuildTicks,
+			FromPlan:    quiet,
 		})
 		if !quiet {
 			ge.addLog("info", fmt.Sprintf("Started building %s (%d ticks)", def.Name, def.BuildTicks))
@@ -2778,6 +2787,9 @@ func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
 		// Instant build
 		ge.Buildings.counts[key]++
 		ge.Stats.RecordBuild()
+		if quiet {
+			ge.staffFromIdle(key)
+		}
 		ge.recalculateRates()
 		ge.addLog("success", fmt.Sprintf("Built %s (#%d)", def.Name, ge.Buildings.GetCount(key)))
 		ge.Bus.Publish(EventData{
@@ -3934,6 +3946,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 			})
 		ge.tick += n
 		done += n
+		ge.Trade.DecayPressure(n) // the plan's trades meet a market that recovers as time passes
 		changed := ge.advanceBuildQueue(n)
 		if ge.advanceResearch(n) {
 			changed = true

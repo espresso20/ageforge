@@ -2007,7 +2007,7 @@ func outlookRiskText(state game.GameState) string {
 }
 
 // planUsage lists the plan subcommands.
-const planUsage = "Usage: plan [build <building> [count] | research <tech> | list | remove <n> | up <n> | down <n> | clear]"
+const planUsage = "Usage: plan [build <building> [count] | research <tech> | trade <from> <to> [amount] | advance | list | remove <n> | up <n> | down <n> | clear]"
 
 // cmdPlan is the `plan` command. Bare `plan` opens the Plan panel.
 func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
@@ -2078,6 +2078,35 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 	case "clear":
 		n := engine.PlanClear()
 		return CommandResult{Message: fmt.Sprintf("Cleared the plan (%d items).", n), Type: "info"}
+	case "trade":
+		if len(rest) < 2 || len(rest) > 3 {
+			return CommandResult{Message: "Usage: plan trade <from> <to> [amount]", Type: "error"}
+		}
+		from, to := strings.ToLower(rest[0]), strings.ToLower(rest[1])
+		amount := 0.0
+		if len(rest) == 3 {
+			a, err := parseAmount(rest[2])
+			if err != nil {
+				return usageError("Usage: plan trade <from> <to> [amount]", err)
+			}
+			amount = a
+		}
+		if err := engine.PlanAddTrade(from, to, amount); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		what := "keeping " + to + " topped up"
+		if amount > 0 {
+			what = "until " + FormatNumber(amount) + " " + to + " is bought"
+		}
+		return CommandResult{Message: fmt.Sprintf("Planned: sell %s for %s as it comes in, %s.", from, to, what), Type: "info"}
+	case "advance":
+		if len(rest) != 0 {
+			return CommandResult{Message: "Usage: plan advance", Type: "error"}
+		}
+		if err := engine.PlanAddAdvance(); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: "Planned: advance as soon as the next age's requirements are met.", Type: "info"}
 	}
 	return CommandResult{Message: planUsage, Type: "error"}
 }

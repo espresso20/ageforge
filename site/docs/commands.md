@@ -49,6 +49,8 @@ A list of builds and techs the game starts for you, in order, as the resources c
 | `plan` | Open the **Plan** panel: the items, what each costs next and whether it can start. `↑`/`↓` select, `U`/`D` move the selected item, `X` removes it, `C` twice clears the plan. |
 | `plan build <building> [count]` | Add copies of a building of this age (default 1). Adding more of the building at the end of the plan adds to that item. |
 | `plan research <tech>` | Add a tech. Techs start one at a time, in plan order; a prerequisite can be planned before it. |
+| `plan trade <from> <to> [amount]` | Sell `from` for `to` at the market as it comes in, until `amount` of `to` is bought; with no amount, keep `to` topped up until you remove the item. Needs a trade building to sell. |
+| `plan advance` | Advance to the next age as soon as its requirements are met. The next age's buildings and techs can be planned too; they wait for the advance. |
 | `plan list` | Print the plan with each item's status |
 | `plan remove <n>` | Remove item `n` |
 | `plan up <n>` | Move item `n` one place up |
@@ -59,6 +61,8 @@ A list of builds and techs the game starts for you, in order, as the resources c
 plan build hut 10
 plan build gathering_camp 5
 plan research tool_making
+plan trade gold stone 50000
+plan advance
 plan up 3
 ```
 
