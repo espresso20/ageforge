@@ -18,6 +18,10 @@ type overlayEntry struct {
 	tv      *tview.TextView
 	root    tview.Primitive // centered flex wrapper — added/removed from pages.Pages
 	provide OverlayProvider
+	// keys, when set, sees every key but Esc while the overlay has focus and
+	// returns nil to consume it (SetKeyHandler). Runs on the tview goroutine,
+	// never under the engine lock.
+	keys func(event *tcell.EventKey) *tcell.EventKey
 }
 
 // widgetEntry backs an overlay whose content is any tview.Primitive (e.g. a custom
@@ -79,10 +83,14 @@ func (om *OverlayManager) Register(name, title string, provide OverlayProvider) 
 			SetTitleColor(theme.Color(theme.RoleAccent)).
 			SetBackgroundColor(theme.Color(theme.RoleSurface))
 	})
+	entry := &overlayEntry{title: title, tv: tv, provide: provide}
 	tv.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		if event.Key() == tcell.KeyEsc {
 			om.Hide()
 			return nil
+		}
+		if entry.keys != nil {
+			return entry.keys(event)
 		}
 		return event
 	})
@@ -98,7 +106,16 @@ func (om *OverlayManager) Register(name, title string, provide OverlayProvider) 
 		AddItem(inner, 0, 17, true). // 17/20 = 85% of width
 		AddItem(nil, 0, 1, false)
 
-	om.entries[name] = &overlayEntry{title: title, tv: tv, root: root, provide: provide}
+	entry.root = root
+	om.entries[name] = entry
+}
+
+// SetKeyHandler gives the named text overlay a key handler (see
+// overlayEntry.keys). Unknown names are ignored.
+func (om *OverlayManager) SetKeyHandler(name string, keys func(event *tcell.EventKey) *tcell.EventKey) {
+	if e, ok := om.entries[name]; ok {
+		e.keys = keys
+	}
 }
 
 // RegisterWidget registers an overlay backed by any tview.Primitive instead of a TextView.

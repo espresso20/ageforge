@@ -282,6 +282,28 @@ func (ge *GameEngine) summonHarbinger() error {
 	return nil
 }
 
+// SummonHarbingerForTest is a test hook for other packages (the UI's panel
+// and theme-sweep tests): it places the engine in age, with that age's epoch
+// and unlocks, and brings its harbinger the way the dev console's /harbinger
+// does. Not reachable from play. Takes the write lock.
+func (ge *GameEngine) SummonHarbingerForTest(age string) error {
+	ge.mu.Lock()
+	if _, ok := config.AgeByKey()[age]; !ok {
+		ge.mu.Unlock()
+		return fmt.Errorf("unknown age %q", age)
+	}
+	ge.age = age
+	ge.currentEpoch = config.EpochForAge(age)
+	for _, a := range config.AgeOrder() {
+		ge.applyAgeUnlocks(a)
+		if a == age {
+			break
+		}
+	}
+	ge.mu.Unlock()
+	return ge.summonHarbinger()
+}
+
 // --- Odds ---------------------------------------------------------------------
 
 // harbingerAppeaseMultiplier is the factor Appease applies to the catastrophe

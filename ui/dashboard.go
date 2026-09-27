@@ -89,6 +89,10 @@ type Dashboard struct {
 	overlayMgr *OverlayManager
 	lastState  *game.GameState
 
+	// harbPanel is the Harbinger panel's UI state (feedback line, Invite
+	// confirmation). Owned by the tview goroutine.
+	harbPanel harbingerPanel
+
 	// Milestone-gated theme unlocks (theming.md §5; see theme_unlock.go). Both fields
 	// are owned by the UI goroutine — touched only from refresh(), which runs inside
 	// QueueUpdateDraw and never under the engine lock, so account.UnlockTheme's Save
@@ -139,6 +143,16 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.Register("workers", "Workers", workersProvider)
 	d.overlayMgr.Register("logs", "Logs", logsProvider)
 	d.overlayMgr.Register("epoch", "Epoch", epochProvider)
+	d.overlayMgr.Register("harbinger", "Harbinger", d.harbPanel.provider)
+	d.overlayMgr.SetKeyHandler("harbinger", func(event *tcell.EventKey) *tcell.EventKey {
+		// tview goroutine, no engine lock held: the engine's action methods and
+		// GetState take their own locks.
+		if !d.harbPanel.handleKey(event, d.engine) {
+			return event
+		}
+		d.overlayMgr.Refresh(d.engine.GetState())
+		return nil
+	})
 	d.overlayMgr.Register("history", "Civilization History", historyProvider)
 	d.overlayMgr.Register("buildings", "Buildings", buildingsProvider)
 	d.overlayMgr.Register("help", "Help", helpProvider)
@@ -244,6 +258,12 @@ func (d *Dashboard) build() {
 		epochIcon, _ := e.Payload["epoch_icon"].(string)
 		d.toastMgr.Show(fmt.Sprintf("✦ The %s %s Dawns!", epochIcon, epochName), "gold", 6*time.Second)
 	})
+	d.engine.Bus.Subscribe(game.EventHarbingerArrived, func(e game.EventData) {
+		// Runs under the engine write lock: payload and the toast queue only.
+		// A toast is queued behind the age-advance one and never takes focus.
+		name, _ := e.Payload["harbinger_name"].(string)
+		d.toastMgr.Show(fmt.Sprintf("⚑ %s has come — type 'harbinger'", capFirstUI(name)), "warning", 8*time.Second)
+	})
 	d.engine.Bus.Subscribe(game.EventGameLoaded, func(e game.EventData) {
 		// Runs under the engine write lock: only flip the flag, never touch the engine.
 		d.catReshow.Store(true)
@@ -336,6 +356,9 @@ func (d *Dashboard) build() {
 			result := HandleCommand(text, d.engine)
 			if result.OpenCatastrophe {
 				d.reopenCatastropheModal()
+			}
+			if result.OverlayName == "harbinger" {
+				d.harbPanel.reset()
 			}
 			if result.OverlayName != "" {
 				state := d.engine.GetState()
@@ -464,7 +487,7 @@ func (d *Dashboard) updateSidebar(activeOverlay string) {
 }
 
 func buildSidebarText(active string) string {
-	commands := []string{"milestones", "research", "expedition", "army", "trade", "factions", "stats", "wonders", "workers", "logs", "epoch", "history", "citymap", "worldmap", "help"}
+	commands := []string{"milestones", "research", "expedition", "army", "trade", "factions", "stats", "wonders", "workers", "logs", "epoch", "harbinger", "history", "citymap", "worldmap", "help"}
 	var sb strings.Builder
 	sb.WriteString("\n")
 	for _, cmd := range commands {
@@ -699,6 +722,13 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 	if state.PendingCatastrophe != "" {
 		catStr = fmt.Sprintf("  %s ☄ CATASTROPHE PENDING — type 'catastrophe' %s",
 			theme.TagFgBg(theme.RoleOnNegative, theme.RoleNegative), theme.Reset)
+	}
+	// Harbinger badge: present until the epoch transition resolves it. Nothing
+	// expires, so the badge is the idle player's reminder that there is a
+	// choice waiting (it never blocks anything).
+	if state.Harbinger != nil {
+		catStr += fmt.Sprintf("  %s ⚑ HARBINGER — type 'harbinger' %s",
+			theme.TagFgBg(theme.RoleOnAccent, theme.RoleAccent), theme.Reset)
 	}
 	// Colour morale by the continuous production multiplier, not the raw percent:
 	// green = bonus (mult>1.0), white = neutral (==1.0), red = penalty (<1.0).

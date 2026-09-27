@@ -28,6 +28,7 @@ var commands = []string{
 	"trade", "t",
 	"factions", "diplomacy", "dip",
 	"catastrophe", "cat",
+	"harbinger", "harb",
 	"status", "s",
 	"help", "h",
 	"prestige",
@@ -159,6 +160,11 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 			return filterPrefix([]string{"yes"}, partial, prefix)
 		}
 
+	case "harbinger", "harb":
+		if len(completed) == 0 {
+			return filterPrefix([]string{"appease", "brace", "invite"}, partial, prefix)
+		}
+		return nil
 	case "festival":
 		if len(completed) == 0 {
 			return filterPrefix([]string{"confirm"}, partial, prefix)

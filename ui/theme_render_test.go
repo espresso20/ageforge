@@ -74,6 +74,21 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	out["ancient_memory_modal"] = draw()
 	d.closeAncientMemoryModal()
 
+	// Harbinger: the panel (severity, keycaps, affordable and unaffordable
+	// costs), the Epoch overlay's harbinger lines and the status-bar badge.
+	if err := engine.SummonHarbingerForTest("bronze_age"); err != nil {
+		t.Fatal(err)
+	}
+	d.refresh()
+	out["dashboard_harbinger_badge"] = draw()
+	for _, name := range []string{"harbinger", "epoch"} {
+		if !d.overlayMgr.Show(name, engine.GetState()) {
+			t.Fatalf("overlay %q not registered", name)
+		}
+		out["overlay:"+name+"_harbinger"] = draw()
+		d.overlayMgr.Hide()
+	}
+
 	return out
 }
 
