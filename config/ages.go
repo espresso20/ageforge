@@ -94,7 +94,7 @@ func Ages() []AgeDef {
 			Description:     "Great empires are built and philosophy flourishes.",
 			Quip:            "Everyone is suddenly very interested in columns and the meaning of life.",
 			ResourceReqs:    map[string]float64{"stone": 75000, "iron": 15000, "gold": 8000, "knowledge": 20000},
-			BuildingReqs:    map[string]int{"hunting_lodge": 15, "agora": 8, "trading_post": 5},
+			BuildingReqs:    map[string]int{"hunting_lodge": 15, "agora": 12, "trading_post": 10},
 			UnlockBuildings: []string{"villa", "classical_vault", "estate_farm", "wood_workshop", "marble_works", "library", "oracle_house", "military_academy", "merchant_quarter", "aqueduct", "forge", "amphitheater", "parthenon", "cultural_obelisk"},
 			UnlockResources: []string{"culture"},
 		},
@@ -112,10 +112,13 @@ func Ages() []AgeDef {
 		// === 6: RENAISSANCE AGE (Steel Era) ===
 		{
 			Name: "Renaissance Age", Key: "renaissance_age", Order: 6,
-			EpochKey:        "steel_era",
-			Description:     "Art, science, and exploration flourish.",
-			Quip:            "Everyone's a painter, a scientist, and a poet now. Productivity is a casualty.",
-			ResourceReqs:    map[string]float64{"gold": 100000, "knowledge": 125000, "steel": 2000, "faith": 25000},
+			EpochKey:    "steel_era",
+			Description: "Art, science, and exploration flourish.",
+			Quip:        "Everyone's a painter, a scientist, and a poet now. Productivity is a casualty.",
+			// note: steel and faith are sized to what the Medieval Age makes of
+			// them. No Medieval building produces steel (the steel forging tech
+			// does), and faith comes from the faith lineage's flat rates.
+			ResourceReqs:    map[string]float64{"gold": 100000, "knowledge": 125000, "steel": 500, "faith": 4600},
 			BuildingReqs:    map[string]int{"monastery_library": 5, "guildhall": 10, "castle_keep": 3},
 			UnlockBuildings: []string{"estate", "renaissance_vault", "market_garden", "coal_mine", "iron_mine", "university", "basilica", "fortress", "exchange", "mill", "foundry", "art_studio", "sistine_chapel"},
 			UnlockResources: []string{"coal"},
@@ -127,7 +130,7 @@ func Ages() []AgeDef {
 			Description:     "Exploration and trade span the globe.",
 			Quip:            "You discover lands that were, somewhat awkwardly, already discovered.",
 			ResourceReqs:    map[string]float64{"gold": 470000, "knowledge": 625000, "steel": 76500, "culture": 200000},
-			BuildingReqs:    map[string]int{"exchange": 5, "university": 3, "art_studio": 5},
+			BuildingReqs:    map[string]int{"exchange": 8, "university": 8, "art_studio": 8},
 			UnlockBuildings: []string{"settlement_block", "colonial_warehouse", "plantation", "coal_works", "deep_iron_mine", "natural_philosophy_hall", "mission", "fort", "port", "harbor", "dockyard", "iron_works", "concert_hall", "embassy", "grand_lighthouse"},
 		},
 		// === 8: INDUSTRIAL AGE (Steel Era) ===
@@ -137,7 +140,7 @@ func Ages() []AgeDef {
 			Description:     "Machines revolutionize production.",
 			Quip:            "Smoke everywhere, hours endless, output magnificent. Two out of three.",
 			ResourceReqs:    map[string]float64{"steel": 310000, "gold": 2500000, "knowledge": 2000000},
-			BuildingReqs:    map[string]int{"plantation": 5, "port": 8},
+			BuildingReqs:    map[string]int{"plantation": 8, "port": 10},
 			UnlockBuildings: []string{"tenement", "industrial_depot", "agricultural_works", "steam_coal_plant", "steam_mine", "research_institute", "church", "military_base", "stock_exchange", "harbor_authority", "iron_works_complex", "steel_mill", "coal_plant", "opera_house", "grand_embassy", "geographic_society", "crystal_palace", "eternal_library_monument"},
 			UnlockResources: []string{"oil"},
 		},

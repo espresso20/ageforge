@@ -201,7 +201,7 @@ func Technologies() []TechDef {
 			Prerequisites: []string{"iron_smelting"},
 			Description:   "Refining iron into steel for superior tools and weapons.",
 			Effects: []Effect{
-				{Type: "production", Target: "steel", Value: 0.1},
+				{Type: "production", Target: "steel", Value: 0.25},
 				{Type: "bonus", Target: "iron_rate", Value: 0.3},
 			},
 		},

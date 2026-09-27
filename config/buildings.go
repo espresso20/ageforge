@@ -435,7 +435,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Renaissance Age — normal costs: 400k-600k
 		{
 			Name: "Sistine Chapel", Key: "sistine_chapel", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 9900000, "gold": 7000000, "faith": 6000000, "culture": 8000000},
+			BaseCost:  map[string]float64{"stone": 9900000, "gold": 7000000, "faith": 20000, "culture": 8000000},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "production", Target: "culture", Value: 3.5},
