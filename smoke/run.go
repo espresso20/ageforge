@@ -51,6 +51,12 @@ type Config struct {
 	// plays rounds until nothing more is worth doing (Bot.CheckIn).
 	// ApplyStyle sets DecideEvery, Horizon and SoftlockSpan to match.
 	CheckIn time.Duration
+	// NoPlan and NoOverflow switch off, for a check-in player, the two tools
+	// the game gives one: leaving a build plan at each visit (Bot.planAhead)
+	// and wonder overflow. Both are on by default; the switches exist to
+	// measure what each is worth (-no-plan, -no-overflow).
+	NoPlan     bool
+	NoOverflow bool
 
 	// Pacing is PacingReport (default) or PacingEnforce. In report mode an
 	// age past its timeout and a run out of MaxSim are pacing notes, not
@@ -255,6 +261,9 @@ type runner struct {
 	byCheck    map[string]*Anomaly
 	thread     *HarbingerThread // live harbinger thread being tracked
 	stopReason string
+	// advancing is set while control calls AdvanceAge, so the age-advance
+	// bus handler leaves that advance to control.
+	advancing bool
 }
 
 // Run plays one seed to completion and returns what happened.
@@ -302,6 +311,10 @@ func newRunner(cfg Config, seed int64, ge *game.GameEngine) *runner {
 	r.bot.Harbinger = cfg.Harbinger
 	r.bot.HorizonTicks = cfg.Horizon.Seconds() / game.BaseTickInterval.Seconds()
 	r.bot.CheckInTicks = cfg.CheckIn.Seconds() / game.BaseTickInterval.Seconds()
+	r.bot.UsePlan = cfg.CheckIn > 0 && !cfg.NoPlan
+	if cfg.NoOverflow {
+		ge.SetWonderOverflow(false)
+	}
 	r.subscribe()
 	return r
 }
@@ -330,6 +343,19 @@ func (r *runner) subscribe() {
 	bus.Subscribe(game.EventMilestoneCompleted, func(game.EventData) { s.Milestones++ })
 	bus.Subscribe(game.EventResearchDone, func(game.EventData) { s.TechsResearched++ })
 	bus.Subscribe(game.EventBuildingBuilt, func(game.EventData) { s.BuildingsCompleted++ })
+	// A build plan's advance item moves the age between decisions: the old
+	// age ends at that tick, not at the next visit. (The runner's own
+	// AdvanceAge is recorded in control.) No engine calls here: the handler
+	// runs under the engine lock.
+	bus.Subscribe(game.EventAgeAdvanced, func(e game.EventData) {
+		if r.advancing {
+			return
+		}
+		next, _ := e.Payload["new_age"].(string)
+		s.AgesAdvanced++
+		r.closeAge()
+		r.enterAge(game.GameState{Age: next})
+	})
 }
 
 func (r *runner) play() {
@@ -609,7 +635,10 @@ func (r *runner) control(st *game.GameState) bool {
 	if st.AgeReady {
 		pendingBefore := st.PendingCatastrophe
 		from := st.Age
-		if err := r.ge.AdvanceAge(); err == nil {
+		r.advancing = true
+		err := r.ge.AdvanceAge()
+		r.advancing = false
+		if err == nil {
 			after := r.ge.GetState()
 			if pendingBefore != "" {
 				r.anomaly(KindInvariant, "advance_with_pending_catastrophe",
