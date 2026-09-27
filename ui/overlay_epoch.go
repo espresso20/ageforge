@@ -174,8 +174,16 @@ func harbingerRecordText(r game.HarbingerRecord) string {
 	if len(extras) > 0 {
 		extra = " [gray](" + strings.Join(extras, ", ") + ")[-]"
 	}
-	return fmt.Sprintf("%s, %s → %s: %s%s",
-		capFirstUI(r.Name), epochOverlayFormatAgeKey(r.Age), r.TargetEpochName, verdict, extra)
+	chain := []string{capFirstUI(r.Name)}
+	if len(r.Chain) > 1 {
+		chain = chain[:0]
+		for _, a := range r.Chain {
+			if def, ok := config.HarbingerFor(a); ok {
+				chain = append(chain, capFirstUI(def.Name))
+			}
+		}
+	}
+	return fmt.Sprintf("%s → %s: %s%s", strings.Join(chain, ", "), r.TargetEpochName, verdict, extra)
 }
 
 // epochProviderHistory renders the epoch history section.

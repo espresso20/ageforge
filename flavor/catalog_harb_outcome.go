@@ -2,12 +2,16 @@ package flavor
 
 // The three verdicts, logged after the transition resolves:
 //
-//   - HarbingerVindicated: the harbinger warned and the catastrophe came.
+//   - HarbingerVindicated: the harbinger warned and the catastrophe came. The
+//     caller sends Kind: KindFalseProphet when the warning had been invented,
+//     which adds a few lines (ancient and feudal pools) about a fraud proved
+//     right by chance.
 //   - HarbingerSpared: a real harbinger warned and the roll went the player's
 //     way. The danger was real; this is relief, and a little embarrassment.
-//   - HarbingerDiscredited: a false prophet, found out. Only reachable before
-//     the Industrial Age, because config.HarbingerDef.FalseProphetChance is 0
-//     from there on, so it carries no pools for the later eras at all.
+//   - HarbingerDiscredited: a false prophet, found out. A false warning is
+//     rolled once per epoch, at the epoch's first age, so it can reach the last
+//     figure of the Stone, Iron and Steel Eras (the Steel Era's is the
+//     Industrial Age's Newsboy, who falls back on the era-neutral pool).
 //
 // The catastrophe has its own text. These sentences are about the WARNING:
 // who remembered it, who apologised for laughing, who wants their candles
@@ -42,6 +46,7 @@ func harbDiscreditedTemplates() []tmpl {
 	out = append(out, pool("harb_discredited_early", erasEarly, harbDiscreditedEarly)...)
 	out = append(out, pool("harb_discredited_ancient", erasAncient, harbDiscreditedAncient)...)
 	out = append(out, pool("harb_discredited_feudal", erasFeudal, harbDiscreditedFeudal)...)
+	out = append(out, agePools("harb_discredited_age", harbDiscreditedAges)...)
 	return out
 }
 
@@ -99,6 +104,10 @@ var harbVindicatedAncient = []skel{
 	{Text: "The hunters complain that nobody told them properly", Reg: rWry, Form: fComplaint, Topic: "argument"},
 	{Text: "Three huts, one pit and most of the herd, as the warning said", Reg: rPlain, Form: fLedger, Topic: "count"},
 	{Text: "The herd has been counted, and the count matches the prophecy", Reg: rPlain, Form: fLedger, Topic: "animal"},
+	// a false prophet, proved right by chance
+	{Text: "It came out later that {subject} had made the whole warning up, and the elders could not decide whether that made it better or worse", Kinds: tFalse, Needs: needSubject, Reg: rPlain, Topic: "argument"},
+	{Text: "The fraud had guessed right, and nobody in the camp knew what to do about it", Kinds: tFalse, Reg: rWry, Topic: "stranger"},
+	{Text: "The hunters hold that a liar who is right is still a liar, and the old women answer that a liar who is right is still right", Kinds: tFalse, Reg: rWry, Form: fOverheard, Topic: "rumour"},
 }
 
 var harbVindicatedFeudal = []skel{
@@ -116,6 +125,10 @@ var harbVindicatedFeudal = []skel{
 	{Text: "The steward complains that everyone is blaming him for not doubling the watch", Reg: rWry, Form: fComplaint, Topic: "authority"},
 	{Text: "It is decreed that the day shall be kept as a day of fasting from now on", Reg: rPlain, Form: fNotice, Topic: "food"},
 	{Text: "In the tavern they say {subject} knew the hour and would not tell it", Needs: needSubject, Reg: rPlain, Form: fOverheard, Topic: "time"},
+	// a false prophet, proved right by chance
+	{Text: "The friars could not settle whether a false prophecy that comes true is still false, and wrote to the bishop", Kinds: tFalse, Reg: rPlain, Topic: "religion"},
+	{Text: "The alehouse verdict is that {subject} invented every word of it and was then proved right by bad luck", Kinds: tFalse, Needs: needSubject, Reg: rWry, Form: fOverheard, Topic: "rumour"},
+	{Text: "The chronicle records the warning as a fraud and the disaster as foretold, on facing pages", Kinds: tFalse, Reg: rJoke, Topic: "paper"},
 }
 
 var harbVindicatedIndustrial = []skel{
@@ -308,8 +321,9 @@ var harbDiscreditedAny = []skel{
 	{Text: "It has been agreed that nobody will speak of it again", Reg: rJoke, Form: fNotice, Topic: "authority"},
 }
 
-// harbDiscreditedEarly spans the ancient and feudal buckets: the only ages a
-// false prophet can turn up in.
+// harbDiscreditedEarly spans the ancient and feudal buckets, where nearly all
+// false warnings end (the Steel Era's last figure, in the Industrial Age, uses
+// the era-neutral pool).
 var harbDiscreditedEarly = []skel{
 	{Text: "The offerings were taken back", Reg: rPlain, Topic: "religion"},
 	{Text: "The fires were let go out in disgust", Reg: rPlain, Topic: "sleep"},
@@ -375,4 +389,40 @@ var harbDiscreditedFeudal = []skel{
 	{Text: "The lord came back from the country, where he had fled before anyone else, and made a speech about steadiness in the face of rumour", Reg: rWry, Topic: "authority"},
 	{Text: "Wills drawn up in the panic are being torn up now", Reg: rPlain, Topic: "paper"},
 	{Text: "Twelve wills, torn up", Reg: rPlain, Form: fLedger, Topic: "paper"},
+}
+
+// harbDiscreditedAges holds the per-age Discredited lines. A false warning is
+// rolled at an epoch's first age and repeated by every later figure, so the
+// Steel Era's can end with the Industrial Age's Newsboy: a printed figure
+// that turns out to have been invented.
+var harbDiscreditedAges = []ageSet{
+	{ages("industrial_age"), []skel{
+		{Text: "The paper printed a retraction on page nine", Reg: rPlain, Topic: "paper"},
+		{Text: "Nobody bought the late edition the next day", Reg: rPlain, Topic: "trade"},
+		{Text: "The figure had been made up", Reg: rPlain, Topic: "count"},
+		{Text: "The mills reopened on the Monday", Reg: rPlain, Topic: "work"},
+		{Text: "The editor who printed the odds resigned, and was taken on a week later by a rival paper that wanted his readers", Reg: rWry, Topic: "authority"},
+		{Text: "It turned out the odds had been set by a compositor with a grudge and a free afternoon", Reg: rJoke, Topic: "machine"},
+		{Text: "Families brought their tinned goods back up from the cellars and did not say much about it", Reg: rPlain, Topic: "family"},
+		{Text: "The newsboys found a different corner", Reg: rPlain, Topic: "town"},
+		{Text: "Letters to the editor ran for a month, each angrier than the last", Reg: rWry, Topic: "message"},
+		{Text: "The paper blamed the printers, and the printers blamed the paper", Reg: rWry, Topic: "argument"},
+		{Text: "The factory owners who shut early want the lost wages paid back to them", Reg: rWry, Form: fComplaint, Topic: "money"},
+		{Text: "The forecast printed in last week's late edition is withdrawn in full", Reg: rPlain, Form: fNotice, Topic: "authority"},
+		{Text: "Extra coal, extra flour, extra candles, all bought for nothing", Reg: rWry, Form: fLedger, Topic: "haul"},
+		{Text: "The insurance men sent round letters asking for the emergency premiums to be paid anyway", Reg: rWry, Topic: "money"},
+		{Text: "In the pubs they say the whole thing was cooked up to sell papers", Reg: rPlain, Form: fOverheard, Topic: "rumour"},
+		{Text: "The chapel emptied again", Reg: rPlain, Topic: "religion"},
+		{Text: "A crowd stood outside the newspaper offices that evening and threw nothing worse than insults, which the editor printed the next morning in a column headed Readers Respond", Reg: rJoke, Topic: "people"},
+		{Text: "Overnight a rude word appeared in chalk across the paper's front window, and the paper put a photograph of it on the front page", Reg: rJoke, Topic: "building"},
+		{Text: "The trams ran full again by the end of the week", Reg: rPlain, Topic: "town"},
+		{Text: "The mayor, who had ordered the schools shut, now says he never believed a word of it", Reg: rWry, Topic: "authority"},
+		{Text: "The usual corner was taken over by a boy selling matches, and nobody saw {subject} there again", Needs: needSubject, Reg: rPlain, Topic: "stranger"},
+		{Text: "Somebody paid {subject} to shout it, and the police would like to know who", Needs: needSubject, Reg: rWry, Topic: "authority"},
+		{Text: "Word in the pubs is that {subject} sells a different paper now, on a different street, under a different name", Needs: needSubject, Reg: rJoke, Form: fOverheard, Topic: "stranger"},
+		{Text: "The shopkeepers who put up their shutters say {subject} owes them a week's takings", Needs: needSubject, Reg: rWry, Form: fComplaint, Topic: "money"},
+		{Text: "No one could say who had given {subject} the figure, and the paper did not care to find out", Needs: needSubject, Reg: rPlain, Topic: "message"},
+		{Text: "The police took a statement from {subject}, who said only that the figure had seemed about right", Needs: needSubject, Reg: rWry, Topic: "authority"},
+		{Text: "The last anyone saw of {subject}, the unsold late editions were going into the canal a bundle at a time", Needs: needSubject, Reg: rJoke, Topic: "paper"},
+	}},
 }

@@ -262,7 +262,11 @@ func (d *Dashboard) build() {
 		// Runs under the engine write lock: payload and the toast queue only.
 		// A toast is queued behind the age-advance one and never takes focus.
 		name, _ := e.Payload["harbinger_name"].(string)
-		d.toastMgr.Show(fmt.Sprintf("⚑ %s has come — type 'harbinger'", capFirstUI(name)), "warning", 8*time.Second)
+		verb := "has come"
+		if handoff, _ := e.Payload["handoff"].(bool); handoff {
+			verb = "takes up the warning"
+		}
+		d.toastMgr.Show(fmt.Sprintf("⚑ %s %s — type 'harbinger'", capFirstUI(name), verb), "warning", 8*time.Second)
 	})
 	d.engine.Bus.Subscribe(game.EventGameLoaded, func(e game.EventData) {
 		// Runs under the engine write lock: only flip the flag, never touch the engine.

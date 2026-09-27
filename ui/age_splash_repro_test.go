@@ -395,12 +395,33 @@ func TestReproAgeSplashAllAges(t *testing.T) {
 	if st.NextAge != "" {
 		t.Fatalf("did not reach final age: %s", st.Age)
 	}
-	// A harbinger arrived in the last age of every epoch but the Cosmic Era
-	// and resolved at the next transition, all without taking the front page
-	// or focus from the splash sequence checked above (it is non-blocking).
-	if n := len(st.HarbingerHistory); n != len(config.Epochs())-1 {
-		t.Fatalf("harbingers resolved on the walk = %d, want %d: %+v", n, len(config.Epochs())-1, st.HarbingerHistory)
+	// Every epoch but the Cosmic Era ran a harbinger thread: it started in the
+	// epoch's first age, handed off at each later age, and resolved at the
+	// passage, all without taking the front page or focus from the splash
+	// sequence checked above (it is non-blocking). The Stone Era's thread may
+	// start on the first tick or, if the first advance beats it, in the Stone
+	// Age.
+	epochs := config.Epochs()
+	if n := len(st.HarbingerHistory); n != len(epochs)-1 {
+		t.Fatalf("harbinger threads resolved on the walk = %d, want %d: %+v", n, len(epochs)-1, st.HarbingerHistory)
 	}
+	arrivals, handoffs := 0, 0
+	for i, r := range st.HarbingerHistory {
+		ages := epochs[i].Ages
+		want := ages
+		if i == 0 && len(r.Chain) == len(ages)-1 {
+			want = ages[1:]
+		}
+		if r.EpochKey != epochs[i].Key || strings.Join(r.Chain, ",") != strings.Join(want, ",") {
+			t.Errorf("thread %d: epoch %s chain %v, want %s %v", i, r.EpochKey, r.Chain, epochs[i].Key, want)
+		}
+		arrivals++
+		handoffs += len(r.Chain) - 1
+	}
+	if st.Harbinger != nil {
+		t.Errorf("a harbinger is present in the final epoch: %+v", st.Harbinger)
+	}
+	t.Logf("harbinger arrivals %d, handoffs %d", arrivals, handoffs)
 }
 
 // TestReproAgeSplashWithCatastrophe forces a pending catastrophe to surface in

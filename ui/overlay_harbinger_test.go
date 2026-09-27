@@ -121,17 +121,14 @@ func TestHarbingerPanelKeys(t *testing.T) {
 		t.Error("refused brace changed the level")
 	}
 
-	// Appease with a full faith bank (Bronze Age: faith only).
-	faithCap := engine.GetState().Resources["faith"].Storage
-	if _, err := engine.GatherResource("faith", faithCap); err != nil {
-		t.Fatal(err)
-	}
+	// Appease: the passage price (12000 faith in the Stone Era) is beyond a
+	// new settlement's storage, and the panel says what storage it needs.
 	press('A')
-	if st := engine.GetState(); st.Harbinger.AppeaseLevel != 1 || !d.harbPanel.noteGood {
+	if st := engine.GetState(); st.Harbinger.AppeaseLevel != 0 || d.harbPanel.noteGood {
 		t.Fatalf("appease: level %d note %q", st.Harbinger.AppeaseLevel, d.harbPanel.note)
 	}
-	if !strings.Contains(untag(renderText(t, pages, 160, 60)), "Appeased.") {
-		t.Error("panel did not show the appease feedback")
+	if !strings.Contains(untag(renderText(t, pages, 160, 60)), "faith storage must reach 12000") {
+		t.Error("panel did not show the appease refusal")
 	}
 
 	// Invite: first press only arms it.
@@ -225,7 +222,8 @@ func TestOutlookFollowsHarbingerPrecision(t *testing.T) {
 func TestEpochOverlayHarbingerHistory(t *testing.T) {
 	st := game.NewGameEngine().GetState()
 	st.HarbingerHistory = []game.HarbingerRecord{
-		{Age: "bronze_age", Name: "the Soothsayer", TargetEpochKey: "iron_era", TargetEpochName: "Iron Era",
+		{Age: "bronze_age", Name: "the Soothsayer", Chain: []string{"primitive_age", "stone_age", "bronze_age"},
+			TargetEpochKey: "iron_era", TargetEpochName: "Iron Era",
 			Outcome: game.HarbingerOutcomeDiscredited, FalseProphet: true},
 		{Age: "medieval_age", Name: "the Town Crier", TargetEpochKey: "steel_era", TargetEpochName: "Steel Era",
 			Outcome: game.HarbingerOutcomeVindicated, AppeaseLevel: 2, BraceLevel: 1},
@@ -233,11 +231,41 @@ func TestEpochOverlayHarbingerHistory(t *testing.T) {
 	txt := untag(epochProvider(st, 120))
 	for _, want := range []string{
 		"── Harbingers ──",
-		"The Soothsayer, Bronze Age → Iron Era: Discredited",
-		"The Town Crier, Medieval Age → Steel Era: Vindicated (appeased 2, braced 1)",
+		"The Wild Man, The Hermit, The Soothsayer → Iron Era: Discredited",
+		"The Town Crier → Steel Era: Vindicated (appeased 2, braced 1)",
 	} {
 		if !strings.Contains(txt, want) {
 			t.Errorf("epoch overlay missing %q:\n%s", want, txt)
 		}
+	}
+}
+
+// A handoff toasts the new figure, and the panel names who spoke before.
+func TestHarbingerHandoffToastAndEarlierFigures(t *testing.T) {
+	d, engine, _ := harbDashboard(t, "bronze_age")
+	engine.Bus.Publish(game.EventData{Type: game.EventHarbingerArrived, Payload: map[string]interface{}{
+		"harbinger_name": "the Soothsayer", "handoff": true,
+	}})
+	found := false
+	for i := 0; i < 3 && !found; i++ { // an arrival toast may be queued ahead of it
+		found = strings.Contains(d.toastMgr.GetCurrent(), "The Soothsayer takes up the warning")
+		if !found {
+			d.toastMgr.mu.Lock()
+			d.toastMgr.current = nil
+			if len(d.toastMgr.queue) > 0 {
+				next := d.toastMgr.queue[0]
+				d.toastMgr.current, d.toastMgr.queue = &next, d.toastMgr.queue[1:]
+			}
+			d.toastMgr.mu.Unlock()
+		}
+	}
+	if !found {
+		t.Error("no handoff toast")
+	}
+	st := engine.GetState()
+	st.Harbinger.Earlier = []string{"the Wild Man", "the Hermit"}
+	txt := untag(harbingerPanelText(st, "", false, false))
+	if !strings.Contains(txt, "Took up the warning from The Wild Man, then The Hermit. Your answers stand.") {
+		t.Errorf("panel does not name the earlier figures:\n%s", txt)
 	}
 }

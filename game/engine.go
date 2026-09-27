@@ -183,7 +183,10 @@ type GameEngine struct {
 	harbingerArrived  map[string]bool
 	pendingBraceLevel int
 	harbingerHistory  []HarbingerRecord
-	epochEventHistory []EpochEventRecord
+	// harbingerCheckedEpoch is the epoch the tick hook last looked for a
+	// thread in (harbingerTickCheck). Not persisted.
+	harbingerCheckedEpoch string
+	epochEventHistory     []EpochEventRecord
 	// awakeningsFired tracks which one-time Age Awakenings have fired this run, so each
 	// fires at most once per prestige cycle and a save/reload does not re-fire. Keyed by
 	// AwakeningDef.Key. Cleared on prestige/reset alongside epochEventFired.
@@ -910,6 +913,10 @@ func (ge *GameEngine) doTick() {
 	defer ge.mu.Unlock()
 
 	ge.tick++
+
+	// Harbinger: start the epoch's thread if nothing has (new game, Succumb,
+	// prestige, reset). One outlook check per epoch.
+	ge.harbingerTickCheck()
 
 	// Process build queue
 	ge.processBuildQueue()
@@ -1750,10 +1757,10 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// of any epoch-event flavor, and logs as the pivotal "this is a new era" beat.
 	ge.fireAwakening(newAge)
 
-	// Harbinger: entering the last age of an epoch whose transition can bring a
-	// catastrophe. Non-blocking (log, toast, badge), so it never competes with
-	// the age splash for focus.
-	ge.maybeHarbingerArrive()
+	// Harbinger: the new age's figure takes up the epoch's warning, or a new
+	// epoch's thread starts. Non-blocking (log, toast, badge), so it never
+	// competes with the age splash for focus.
+	ge.harbingerOnAgeAdvance()
 
 	// Age advancement celebration morale boost
 	ge.applyMorale(0.08)

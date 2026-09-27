@@ -140,7 +140,7 @@ func harbingerPanelText(state game.GameState, note string, noteGood, inviteArmed
 // next transition's outlook in plain words.
 func harbingerAbsentText(sb *strings.Builder, state game.GameState) {
 	sb.WriteString(" No harbinger is here.\n\n")
-	sb.WriteString(theme.Paint(theme.RoleDim, " A harbinger comes when you enter the last age of an epoch and the passage into\n the next one could bring a catastrophe. It stays until that passage.") + "\n\n")
+	sb.WriteString(theme.Paint(theme.RoleDim, " Harbingers walk through every epoch whose passage into the next could bring a\n catastrophe, one figure per age, from its first age until that passage.") + "\n\n")
 
 	o := state.CatastropheOutlook
 	sb.WriteString(theme.Paint(theme.RoleAccent, "── Outlook ──") + "\n")
@@ -163,7 +163,15 @@ func harbingerAbsentText(sb *strings.Builder, state game.GameState) {
 func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.HarbingerView, inviteArmed bool) {
 	fmt.Fprintf(sb, " %s   %s\n", theme.Paint(theme.RoleBright, strings.ToUpper(capFirstUI(h.Name))),
 		theme.Paint(theme.RoleDim, h.AgeName+" harbinger"))
-	sb.WriteString(" " + theme.Paint(theme.RoleLabel, h.Description) + "\n\n")
+	sb.WriteString(" " + theme.Paint(theme.RoleLabel, h.Description) + "\n")
+	if len(h.Earlier) > 0 {
+		names := make([]string, len(h.Earlier))
+		for i, n := range h.Earlier {
+			names[i] = capFirstUI(n)
+		}
+		sb.WriteString(" " + theme.Paint(theme.RoleDim, "Took up the warning from "+strings.Join(names, ", then ")+". Your answers stand.") + "\n")
+	}
+	sb.WriteString("\n")
 	fmt.Fprintf(sb, " Warning of the passage into the %s.\n\n", theme.Paint(theme.RoleHighlight, h.TargetEpochName))
 
 	for _, l := range h.Lines {
@@ -213,7 +221,7 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 
 	sb.WriteString("\n " + theme.KeycapButton("A", "Appease") + "  " + theme.KeycapButton("B", "Brace") + "  " +
 		theme.KeycapButton("I", "Invite (twice)") + "  " + theme.KeycapButton("Esc", "Close") + "\n")
-	sb.WriteString(theme.Paint(theme.RoleDim, " Nothing here expires. The harbinger waits for the passage, however long you take.") + "\n")
+	sb.WriteString(theme.Paint(theme.RoleDim, " Nothing here expires. The price is the same in every age of the epoch.") + "\n")
 }
 
 // harbingerCostLine prints the next level's cost, each resource coloured by
