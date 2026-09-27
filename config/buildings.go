@@ -435,7 +435,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Renaissance Age — normal costs: 400k-600k
 		{
 			Name: "Sistine Chapel", Key: "sistine_chapel", Category: "wonder",
-			BaseCost:  map[string]float64{"stone": 9900000, "gold": 7000000, "faith": 20000, "culture": 8000000},
+			BaseCost:  map[string]float64{"stone": 8500000, "gold": 8500000, "faith": 20000, "culture": 8000000},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "production", Target: "culture", Value: 3.5},
@@ -547,7 +547,7 @@ func baseBuildingsRaw() []BuildingDef {
 		// Digital Age — normal costs: 400B-750B
 		{
 			Name: "World Simulation", Key: "world_simulation", Category: "wonder",
-			BaseCost:  map[string]float64{"steel": 50e12, "data": 900e9, "electricity": 6e12},
+			BaseCost:  map[string]float64{"steel": 30e12, "data": 900e9, "electricity": 18e12},
 			CostScale: 1.0,
 			Effects: []Effect{
 				{Type: "production", Target: "data", Value: 60.0},

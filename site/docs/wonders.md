@@ -41,6 +41,8 @@ Because every wonder stands between you and the next age, each one costs about t
 
 The flow resources (food, faith, culture) aren't priced that way, so those parts were set by hand to what your buildings actually make: the Sacred Grove takes **500 food**, the Great Monolith **1,500 food**, and the Sistine Chapel **20,000 faith** (down from 6M). The Stellar Cradle no longer costs uranium.
 
+Wonders are banked a deposit at a time, but each part of a wonder's price still fits in the most storage you can build in its age, so you never bank at the cap in rounds. The Sistine Chapel (24M stone and 24M gold, was 27M and 19M) and the World Simulation (34T steel and 20T electricity, was 54T and 6.4T) were rebalanced to fit.
+
 No wonder takes longer to build than a sixth of its age's target length (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)). Build times below are at 1x speed; one tick is 2 seconds.
 
 ---
@@ -129,8 +131,8 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 
 | Resource | Cost |
 |---|---|
-| Stone | 27M |
-| Gold | 19M |
+| Stone | 24M |
+| Gold | 24M |
 | Faith | 20,000 |
 | Culture | 8M |
 
@@ -237,9 +239,9 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 
 | Resource | Cost |
 |---|---|
-| Steel | 54T |
-| Data | 970B |
-| Electricity | 6.4T |
+| Steel | 34T |
+| Data | 1T |
+| Electricity | 20T |
 
 **Bonus:** +60.0 data/t · +15.0 knowledge/t
 

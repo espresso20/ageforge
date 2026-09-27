@@ -42,7 +42,16 @@ func TestGateCovenant(t *testing.T) {
 // barracks for Medieval named a Bronze Age building the age lock forbids
 // building later, 40K food cannot fit 1.25x under Stone Age storage, and
 // iron does not exist before the Bronze Age; and a Bronze Age smithy priced
-// in coal (which unlocks in the Renaissance) could never be built.
+// in coal (which unlocks in the Renaissance) could never be built. The 40K
+// food is also far more than a Stone Age economy makes in 45 minutes, with no
+// market yet to buy the rest.
+//
+// The wonder and flow checks, with the numbers that slipped past the older
+// covenant: the Renaissance's 44K faith (about 1.5 faith/tick in the Medieval
+// Age) and the Sistine Chapel's 6M faith, which no market sells; the Stellar
+// Cradle's 940T uranium, which only Atomic Age mines (unbuildable by the
+// Fusion Age) produced; and a Sistine Chapel whose stone outgrows every
+// Renaissance warehouse.
 func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 	ages := config.Ages()
 	for i := range ages {
@@ -52,15 +61,33 @@ func TestGateCovenantCatchesBrokenGates(t *testing.T) {
 			ages[i].ResourceReqs = map[string]float64{"food": 40000, "iron": 10}
 		case "medieval_age":
 			ages[i].BuildingReqs = map[string]int{"barracks": 30}
+		case "renaissance_age":
+			reqs := map[string]float64{}
+			for k, v := range ages[i].ResourceReqs {
+				reqs[k] = v
+			}
+			reqs["faith"] = 44000
+			ages[i].ResourceReqs = reqs
 		}
 	}
 	defs := config.BuildingByKey()
 	smithy := defs["smithy"]
 	smithy.BaseCost = map[string]float64{"wood": 900, "coal": 100}
 	defs["smithy"] = smithy
+	sistine := defs["sistine_chapel"]
+	sistine.BaseCost = map[string]float64{"stone": 40e6, "gold": 10e6, "faith": 6e6, "culture": 8e6}
+	defs["sistine_chapel"] = sistine
+	cradle := defs["stellar_cradle"]
+	cradle.BaseCost = map[string]float64{"uranium": 940e12}
+	for k, v := range defs["stellar_cradle"].BaseCost {
+		cradle.BaseCost[k] = v
+	}
+	defs["stellar_cradle"] = cradle
 	problems, _ := staticGates(ages, defs)
 	want := map[string]bool{"building/longhouse": false, "resource/food": false, "unbuildable/barracks": false,
-		"unsourced/bronze_age requirement": false, "dead_building/smithy": false}
+		"unsourced/bronze_age requirement": false, "dead_building/smithy": false,
+		"flow/bronze_age requirement": false, "flow/renaissance_age requirement": false, "flow/sistine_chapel": false,
+		"wonder/sistine_chapel": false, "unsourced/stellar_cradle": false}
 	for _, g := range problems {
 		k := g.Kind + "/" + g.Key
 		if _, ok := want[k]; ok {
