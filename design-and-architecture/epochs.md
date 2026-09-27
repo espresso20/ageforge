@@ -148,7 +148,7 @@ were never built are kept under **Future ideas (not implemented)** at the end of
   next transition's epoch, whether a catastrophe is possible there, its probability, a coarse tier
   (none/low/medium/high: under 14%, under 17%, 17% and up) and the faith fill driving it. The
   probability includes the Harbinger's Appease multiplier. It is read-only and lock-safe; the
-  Harbinger reads it at arrival and for its panel.
+  Harbinger reads it when a thread starts, at each handoff and for its panel.
 
 **The modal** is a box floating over the dashboard, sized to its content:
 
@@ -260,55 +260,105 @@ Kept from the original design for reference. None of this exists in the game.
 
 ## Harbinger
 
-Built 2026-09-26. Code: `game/harbinger.go` (mechanic), `config/harbingers.go` (the 22-entry
-roster: `Name`, `Description`, `AppeaseLabel`, `BraceLabel`, `InviteLabel`, plus the derived
-`ForecastPrecision` and `FalseProphetChance`), `flavor/` (arrival, warning, action and outcome
-lines). Player docs: `site/docs/harbinger.md`.
+Built 2026-09-26; reworked the same day from a single last-age visit into epoch-long threads.
+Code: `game/harbinger.go` (mechanic), `config/harbingers.go` (the 22-entry roster: `Name`,
+`Description`, `AppeaseLabel`, `BraceLabel`, `InviteLabel`, plus the derived `ForecastPrecision`
+and `FalseProphetChance`), `flavor/` (arrival, warning, action and outcome lines). Player docs:
+`site/docs/harbinger.md`.
 
-### Arrival
+### Threads, start and handoff
 
-- `advanceAge` calls `maybeHarbingerArrive()` after `detectEpochTransition` and `fireAwakening`.
-  `restoreHarbingerState` calls it again after a load.
-- It arrives only when the player stands in the **last age of the current epoch**, no harbinger
-  is live, `harbingerArrived[currentEpoch]` is unset, and `catastropheOutlook().Possible` is true
-  (the next epoch is past the Iron gate and has not rolled this run). So it visits the Bronze,
-  Medieval, Industrial, Atomic, Digital and Space Ages only. The Cosmic Era is last and gets none.
-  The other 16 roster entries exist but never appear under this rule.
-- Non-blocking: a log entry plus the arrival and warning lines, `EventHarbingerArrived` on the bus
-  (toast), and a status-bar badge while `GameState.Harbinger` is non-nil. It never expires.
-- The dev console's `/harbinger` (`summonHarbinger`) skips the last-age and once-per-epoch checks
-  but still needs `Possible`.
+A **thread** belongs to an epoch whose outgoing transition can roll a catastrophe (Stone through
+Neon). It lasts from the epoch's first age until that transition. The speaker is always the
+current age's roster figure, so 18 of the 22 figures appear; the Cosmic Era's four never do,
+because it has no outgoing transition.
 
-### False prophets and precision
+Three hooks start or advance a thread, all under the write lock:
 
-- `FalseProphetChance` is `(8 - ageIndex) / 64` before the Industrial Age (index 8) and 0 from
-  it: 6/64 at Bronze, 3/64 at Medieval, 0 for every later visitor.
-- A false prophet's `AnnouncedTier` is medium or high (rolled), whatever the real tier. The
-  displayed tier is `announced + (liveReal - ArrivalRealTier)`, clamped to low..high, so Appease
-  and faith-band changes move it like a real one. `HarbingerView` carries no false-prophet flag.
-- `ForecastPrecision` is numeric from the Industrial Age: the panel prints
-  `HarbingerView.Probability` (after Appease). Vague ages show the tier only. Numeric and
-  false-prophet ages never overlap, by construction of the two curves.
+- `harbingerOnAgeAdvance()`, at the end of `advanceAge` (after `detectEpochTransition` and
+  `fireAwakening`). If a thread is live for the current epoch and its `Age` differs from the new
+  age, `harbingerHandoff()` passes it to the new figure. Otherwise `maybeHarbingerArrive()` tries
+  to start the new epoch's thread (the old one was already resolved by the transition).
+- `harbingerTickCheck()`, near the top of `doTick`. Starts a thread on the first tick of an epoch
+  that has none: a new game, Succumb, prestige or reset, none of which advance an age. The
+  unpersisted `harbingerCheckedEpoch` limits it to one outlook check per epoch. This is how the
+  Wild Man greets a new game.
+- `restoreHarbingerState()`, after a load, ends with `harbingerOnAgeAdvance()`: a save in any age
+  of a qualifying epoch without a thread gets one there (with that age's figure), and a saved
+  thread whose `Age` lags the loaded age is handed off.
 
-### Actions
+`maybeHarbingerArrive` requires no live thread and `harbingerArrived[currentEpoch]` unset;
+`harbingerArrive` then requires `catastropheOutlook().Possible` (next epoch past the Iron gate and
+not yet rolled this run). Starting a thread sets `harbingerArrived`, so it is once per epoch per
+run.
 
-Costs are fractions of the **current storage cap** (`harbingerLevelCost`), rounded up; level 2
-costs double. Locked resources and resources with zero storage are skipped. Caps track the
-economy at every age, never read zero (rates can), and bound what the next age's requirements
-can be, so a fraction of the cap is always a slice of what it takes to advance. The harbinger
-never expires, so an idle player can let storage fill and pay later.
+A **handoff** appends the new age to `HarbingerSave.Chain`, sets `Age`, re-derives
+`AnnouncedTier` from `harbingerDisplay()` and draws a fresh arrival and warning line in the new
+voice. Levels, the invite, `FalseProphet` and `ClaimFactor` stay with the thread. Each start or
+handoff logs, publishes `EventHarbingerArrived` (payload `handoff` true on a handoff, which the
+toast renders as "takes up the warning") and keeps the status-bar badge up while
+`GameState.Harbinger` is non-nil. `HarbingerView.Earlier` lists the earlier figures for the
+panel's "Took up the warning from ..." line. Nothing expires.
+
+The dev console's `/harbinger` (`summonHarbinger`) starts a thread with the current figure,
+skipping the once-per-epoch rule but still needing `Possible`.
+
+### False prophets and ClaimFactor
+
+- The thread rolls once, at its first figure, against that age's `FalseProphetChance`
+  (`(8 - ageIndex) / 64` before the Industrial Age, 0 from it). Among first ages that is
+  Primitive 8/64, Iron 5/64, Renaissance 2/64, and 0 for Victorian, Modern and Cyberpunk. A thread
+  started mid-epoch by a load uses that age's chance.
+- A false thread claims medium or high (rolled). The claim is stored as
+  `ClaimFactor = claimBase[tier] / realChance` at the start, with `claimBase` 0.15 for medium and
+  0.18 for high (the real mid- and low-faith chances). `harbingerDisplay()` then reports
+  `real × ClaimFactor` (capped at 1, tier never below low), so Appease, a faith-band change or an
+  Invite move the false claim exactly as they move a true one, and every figure repeats it.
+- `ForecastPrecision` is per current figure: numeric from the Industrial Age, where the panel
+  prints `HarbingerView.Probability`. For a false Steel Era thread that reaches the Newsboy this
+  is the claimed figure. `HarbingerView` carries no false-prophet flag, and the UI's
+  `catastrophe` outlook and Epoch tab show the thread's tier and figure while one is live.
+- Old saves with `FalseProphet` but no `claim_factor` load with `ClaimFactor = 1`.
+
+### Actions and passage-based costs
+
+Answers belong to the passage and carry across handoffs. Costs are pure functions of the thread's
+epoch (`harbingerAppeaseCost(epochKey, level)`, `harbingerBraceCost(epochKey, level)`), rounded
+up, level 2 at double, so the price is the same in every age of the epoch. Pricing off current
+caps would make the epoch's first age (smallest caps) a discount.
+
+- `harbingerPassageStorage(epochKey)`: the largest single `ResourceReqs` value of the next
+  epoch's first age, i.e. the storage every resource must reach to pass.
+- `harbingerHeldSinceStart(epochKey)`: resources unlocked (cumulative `UnlockResources`) by the
+  epoch's first age, so every price is payable in every age of the epoch.
+- `harbingerAdvanceAges(epochKey)`: the epoch's later ages plus the next epoch's first age.
 
 | Action | Cost (level 1) | Effect | Cap |
 |--------|----------------|--------|-----|
-| Appease | 15% of faith cap + 15% of culture cap (culture once unlocked, Classical) | Multiplies the real catastrophe chance by `harbingerAppeaseFactor` = 0.6 per level (0.36 at 2) | 2 |
-| Brace | 12% of the cap of each resource in the next age's `ResourceReqs`, minus faith and culture (falls back to the epoch's primary resource) | Endure destroys 15% / 10% of non-wonder buildings and keeps 30% / 45% of resources (unbraced 20% / 15%) | 2 |
+| Appease | 15% of the passage storage in faith, and in culture if culture is held since the start (Steel Era on) | Multiplies the real catastrophe chance by `harbingerAppeaseFactor` = 0.6 per level (0.36 at 2) | 2 |
+| Brace | 12% of `harbingerBraceBasis`: per resource held since the start, minus faith and culture, the largest `ResourceReqs` across `harbingerAdvanceAges` | Endure destroys 15% / 10% of non-wonder buildings and keeps 30% / 45% of resources (unbraced 20% / 15%) | 2 |
 | Invite | free | Sets `HarbingerSave.Invited` and arms `catastropheInvited`; Appease refuses afterwards, Brace does not | once |
+
+Level-1 prices from the current config:
+
+| Thread | Appease | Brace |
+|--------|---------|-------|
+| Stone | 12,000 faith | 9,600 food, 4,800 wood, 2,400 knowledge |
+| Iron | 33,000 faith | 26,400 knowledge, 26,400 stone, 6,360 iron, 21,600 gold |
+| Steel | 2.25M faith + culture | 360K knowledge, 1.8M gold, 288K steel |
+| Electric | 70.5M faith + culture | 56.4M steel, 924K oil, 3.96M electricity |
+| Digital | 147B faith + culture | 156M gold, 117.6B electricity, 19.2B data |
+| Neon | 46.5B faith + culture | 288B electricity, 46.8B data, 3B crypto |
+
+Digital's Appease exceeds Neon's because the Cyberpunk entry requirement is larger than the
+Interstellar one. When storage cannot yet hold a price, `shortfall` adds "(your X storage must
+reach N first)" to the refusal.
 
 - **Appease** is applied through `harbingerAppeaseMultiplier()`, which scales
   `catastropheChanceOnBadRoll` in both `rollEpochEvent` (the real roll) and `catastropheOutlook`
   (the displayed odds), so the two cannot disagree. It lowers the real odds even for a false
-  prophet. Spending 15% of the faith cap can drop the faith band; worst case the base chance goes
-  from 12% to 18% (x1.5), and x0.6 still leaves 0.9x, so each level always lowers the odds.
+  thread. Worst case the faith spend drops the fill from the top band to the bottom (12% to 18%,
+  x1.5), and x0.6 still leaves 0.9x, so each level always lowers the odds.
 - **Brace** lives on `HarbingerSave.BraceLevel` until resolution, then moves to
   `ge.pendingBraceLevel` if the catastrophe came. `Endure` reads and clears it
   (`braceDestroyPct`, `braceKeepFrac`). Succumb ignores it. Keeping it on the pending catastrophe
@@ -318,25 +368,28 @@ never expires, so an idle player can let storage fill and pay later.
 
 `detectEpochTransition` calls `resolveHarbinger(newEpoch, came)` right after `rollEpochEvent`,
 where `came` is "no catastrophe was pending before the roll and one is pending for this epoch
-now". Verdicts (`HarbingerRecord.Outcome`):
+now". The verdict is spoken in the last figure's voice. Outcomes (`HarbingerRecord.Outcome`):
 
 | Outcome | Condition |
 |---------|-----------|
 | `fulfilled` | came and invited |
-| `vindicated` | came, not invited (a false prophet here gets a note that the warning was invented) |
-| `spared` | did not come, true harbinger |
-| `discredited` | did not come, false prophet |
+| `vindicated` | came, not invited (a false thread here gets a note that the warning was invented) |
+| `spared` | did not come, true thread |
+| `discredited` | did not come, false thread |
 
 It logs the verdict (and the braced Endure numbers if relevant), draws one flavor line, appends a
-`HarbingerRecord` to `harbingerHistory` and clears the live harbinger.
+`HarbingerRecord` (with `Age`/`Name` of the last figure and the full `Chain`) to
+`harbingerHistory`, and clears the live thread. The Epoch overlay lists each record's chain of
+figures. The same `advanceAge` call then runs `harbingerOnAgeAdvance()`, which may start the new
+epoch's thread.
 
 ### Determinism
 
-All draws come from the seeded `ge.rng` under the write lock. Arrival draws, in order: the
+All draws come from the seeded `ge.rng` under the write lock. A thread start draws, in order: the
 false-prophet `Float64()` (always, whatever the age's chance, so the stream's shape does not
-depend on it), then `Intn(2)` for the fake tier only if the harbinger is false, then the arrival
-and warning lines from the engine's flavor `Stream`. Each action and the resolution draw one
-flavor line.
+depend on it), then `Intn(2)` for the claimed tier only if the thread is false, then the arrival
+and warning lines from the engine's flavor `Stream`. A handoff draws two lines; each action and
+the resolution draw one.
 
 ### Persistence and resets
 
@@ -350,9 +403,13 @@ PendingBraceLevel  int               `json:"pending_brace_level,omitempty"`
 HarbingerHistory   []HarbingerRecord `json:"harbinger_history,omitempty"`
 ```
 
-On load, levels are clamped to 2, an unknown roster age drops the harbinger, and
-`pendingBraceLevel` is zeroed unless a catastrophe is pending. `clearHarbingerRun` (live
-harbinger, arrivals, invite, pending Brace) runs on Succumb, prestige and reset.
+`HarbingerSave` gained `chain` (ages that have spoken, first to current) and `claim_factor`
+(false threads only); `HarbingerRecord` gained `chain`. All `omitempty`.
+
+On load, levels are clamped to 2, an empty `Chain` becomes `[Age]`, an unknown roster age drops
+the thread, and `pendingBraceLevel` is zeroed unless a catastrophe is pending.
+`clearHarbingerRun` (live thread, arrivals, `harbingerCheckedEpoch`, invite, pending Brace) runs
+on Succumb, prestige and reset, and the next tick starts the Stone Era thread.
 `harbingerHistory` follows `epochEventHistory`: kept by Succumb, cleared by prestige.
 
 ---
@@ -589,4 +646,4 @@ Epoch-system decisions. The project-wide log is in `README.md`.
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| 2026-09-26 | Harbinger replaces invoke; false prophets pre-industrial; Appease x0.6 per level; Brace tiers (15%/30%, 10%/45%) | Choosing a catastrophe fits better as an answer to a warning than as a bare command; false prophets make early warnings worth doubting until the odds are printed; x0.6 per level with storage-cap pricing always lowers the odds even when the faith spend drops a band; Brace gives Endure-minded players something to buy without touching the odds |
+| 2026-09-26 | Harbinger replaces invoke; epoch-long threads with the speaker changing each age; false prophets rolled once per thread (Stone, Iron, Steel Era); Appease x0.6 per level; Brace tiers (15%/30%, 10%/45%); costs priced off the passage | Choosing a catastrophe fits better as an answer to a warning than as a bare command; a thread gives the warning time to matter and uses 18 figures instead of 6; false prophets make early warnings worth doubting until the odds are printed; passage pricing keeps the price the same in every age so paying early is not a discount; x0.6 still lowers the odds after the worst faith-band drop the price can cause; Brace gives Endure-minded players something to buy without touching the odds |

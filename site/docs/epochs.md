@@ -81,7 +81,7 @@ The outcome is determined in two steps:
 
 **Step 2 — If the roll is bad:** there's a 30% chance it escalates to a **Catastrophe** (modal prompt, your choice). The remaining 70% of bad rolls produce a Challenging event (applied immediately, no choice required). That makes the catastrophe chance 18% / 15% / 12% at low / mid / high faith. A bad roll never escalates on a transition into an epoch before the Iron Era, in an epoch that already had its catastrophe this run, or while another catastrophe is pending. See [Catastrophe](catastrophe.md).
 
-**The Harbinger.** When you enter the last age of an epoch and the coming transition can bring a catastrophe, a harbinger arrives to warn you. Appeasing it multiplies the catastrophe chance in Step 2 by 0.6 per level (two levels at most); inviting it makes the catastrophe certain. See [The Harbinger](harbinger.md).
+**The Harbinger.** Every epoch whose transition can bring a catastrophe has a harbinger thread: from the epoch's first age until the transition, each age's figure warns you of it. Appeasing it multiplies the catastrophe chance in Step 2 by 0.6 per level (two levels at most); inviting it makes the catastrophe certain. See [The Harbinger](harbinger.md).
 
 **Step 3 — If the roll is good:** your culture fill percentage gates which tier of event you can receive:
 
@@ -112,7 +112,7 @@ Press **`epoch`** to open the Epoch tab. It displays:
 - Current epoch name, icon, and primary/energy resources
 - The result of your last epoch transition roll
 - Your catastrophe status for this epoch (pending, survived, succumbed), and the catastrophe odds for the next transition
-- The current [harbinger](harbinger.md), if one is present, and the verdicts of past harbingers this run
+- The current [harbinger](harbinger.md), if one is present, and for past harbinger threads this run the chain of figures and the verdict
 - Full epoch event history for the current civilisation cycle
 - Your legacy bonuses earned across all runs
 - Civilisation history log (catastrophe decisions, Succumb/Endure records)
@@ -384,7 +384,7 @@ The sweet spot is usually one full age's worth of extra time (enough ticks to bu
 
 **One catastrophe per epoch per run.** You cannot chain-catastrophe your way through an epoch, and none can strike before the Iron Era.
 
-**Listen to the harbinger.** It arrives one age before each transition that can bring a catastrophe. Appease if you want to keep your run, Brace if Endure is the plan, Invite if you want the legacy bonus. See [The Harbinger](harbinger.md).
+**Listen to the harbinger.** It walks with you through every epoch whose transition can bring a catastrophe, and its price is the same in every age of the epoch. Appease if you want to keep your run, Brace if Endure is the plan, Invite if you want the legacy bonus. See [The Harbinger](harbinger.md).
 
 ---
 

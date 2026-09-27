@@ -2,7 +2,7 @@
 
 A catastrophe is a civilization-threatening event that forces a permanent choice: **Endure** or **Succumb**. Catastrophes strike when your civilization crosses into a new epoch, from the **Iron Era** on. You can't trigger one directly; the only way to choose one is to **Invite** it when a harbinger comes.
 
-> **The Harbinger.** When you enter the last age of an epoch and the coming transition can bring a catastrophe, that age's harbinger arrives to warn you. While it is present you can **Appease** it (spend faith and culture to lower the real odds), **Brace** (spend resources so an Endure costs less) or **Invite** the catastrophe (guarantee it, for a deliberate Succumb). See [The Harbinger](harbinger.md).
+> **The Harbinger.** Every epoch whose transition can bring a catastrophe has harbingers who warn you of it, one figure per age, from the epoch's first age until the transition. While a harbinger is present you can **Appease** it (spend faith and culture to lower the real odds), **Brace** (spend resources so an Endure costs less) or **Invite** the catastrophe (guarantee it, for a deliberate Succumb). See [The Harbinger](harbinger.md).
 
 When a catastrophe hits, nothing is destroyed yet. The game keeps running and the choice waits for you:
 

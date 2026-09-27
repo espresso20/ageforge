@@ -1,77 +1,80 @@
 # The Harbinger
 
-A harbinger is a figure who turns up shortly before an epoch transition that can bring a [catastrophe](catastrophe.md), and tells you how worried to be. You can pay to lower the odds, pay to soften the blow, or invite the catastrophe on purpose.
+Harbingers are figures who walk with you through an epoch whose passage into the next can bring a [catastrophe](catastrophe.md), and tell you how worried to be. You can pay to lower the odds, pay to soften the blow, or invite the catastrophe on purpose.
 
-The harbinger never blocks anything and never expires. You can ignore it completely and the game plays on as normal.
+A harbinger never blocks anything and never expires. You can ignore it completely and the game plays on as normal.
 
 ---
 
-## When a Harbinger Comes
+## When Harbingers Come
 
-A harbinger arrives when you enter the **last age of an epoch** and the coming epoch transition can roll a catastrophe. That age's harbinger turns up once, and stays until you cross into the next epoch.
+Each epoch whose outgoing transition can roll a catastrophe gets one **harbinger thread**. The thread starts when you enter the epoch's **first age** and lasts until you cross into the next epoch, which settles it.
 
-In practice that means six ages:
+The speaker changes with the age. Each time you advance within the epoch, that age's figure takes up the warning:
 
-| Age you enter | Harbinger | Warns about the passage into |
-|---------------|-----------|------------------------------|
-| Bronze Age | the Soothsayer | Iron Era |
-| Medieval Age | the Town Crier | Steel Era |
-| Industrial Age | the Newsboy | Electric Era |
-| Atomic Age | the Civil Defence Broadcast | Digital Era |
-| Digital Age | the Viral Video | Neon Era |
-| Space Age | the Deep Space Monitor | Cosmic Era |
+| Epoch | Figures, in order | Warns about the passage into |
+|-------|-------------------|------------------------------|
+| Stone Era | the Wild Man, the Hermit, the Soothsayer | Iron Era |
+| Iron Era | the Desert Prophet, the Oracle, the Town Crier | Steel Era |
+| Steel Era | the Court Astrologer, the Pamphleteer, the Newsboy | Electric Era |
+| Electric Era | the Doomsayer, the Telegraph, the Civil Defence Broadcast | Digital Era |
+| Digital Era | the Evening News, the Chain Email, the Viral Video | Neon Era |
+| Neon Era | the Ghost in the Net, the Reactor Warden, the Deep Space Monitor | Cosmic Era |
 
 Rules:
 
-- **At most one per epoch per run.** Succumb and prestige start a new run, so harbingers come again.
-- **Only when a catastrophe is possible.** If that epoch's transition can't bring one (it already rolled this run, for example), nobody comes.
+- **One thread per epoch per run.** Succumb and prestige start a new run, so the threads start again.
+- **A new run starts with one.** In a new game, and after Succumb or prestige, the Stone Era thread starts on the first tick. The Wild Man greets every new game.
+- **Loading a save counts.** If a save sits in any age of a qualifying epoch without a thread, one starts there when the save loads, with that age's figure.
+- **Only when a catastrophe is possible.** If the epoch's transition can't bring one (it already rolled this run, for example), no thread starts.
 - **Not in the Cosmic Era.** It is the last epoch, so there is no transition left to warn about.
-- **Loading a save counts.** If a save sits in the last age of an epoch and the harbinger hasn't come yet, it arrives when the save loads.
 
-When one arrives you get:
+When a thread starts, or a new figure takes it up, you get:
 
-- a log entry naming the harbinger and the epoch it warns about, followed by its arrival and warning lines,
-- a toast,
-- a **⚑ HARBINGER** badge in the status bar for as long as it is present.
+- a log entry naming the figure and the epoch it warns about, followed by its arrival and warning lines,
+- a toast ("... has come" for the first figure, "... takes up the warning" for the rest),
+- a **⚑ HARBINGER** badge in the status bar for as long as the thread lasts.
 
-Type `harbinger` (or `harb`) to open the Harbinger panel.
+Type `harbinger` (or `harb`) to open the Harbinger panel. It shows the current figure and, after a handoff, who it took up the warning from.
 
 ---
 
 ## The Roster
 
-Every age has a harbinger written for it, but only six ever visit under the rule above: the last age of each epoch from the Stone Era to the Neon Era. The other sixteen stand in ages that never end an epoch (or, for the Transcendent Age, end the last one), so they don't appear in play.
+Every age has a figure written for it. 18 of the 22 appear in play: all three ages of each epoch from the Stone Era to the Neon Era. Only the Cosmic Era's four never speak, because the Cosmic Era has no outgoing transition.
 
-### Who comes
+### Who they are
 
-| Age | Harbinger | Visits? | Forecast | False prophet | Who they are |
-|-----|-----------|---------|----------|---------------|--------------|
-| Primitive | the Wild Man | No | Vague | 8/64 (12.5%) | A man who lives past the last fire walks in from the wilderness, grey with ash, to say what he has seen. |
-| Stone | the Hermit | No | Vague | 7/64 (10.9%) | Comes down from the high caves once in a generation, and never with good news. |
-| Bronze | the Soothsayer | **Yes** | Vague | 6/64 (9.4%) | Reads the future in knucklebones, sparrows and goat livers, and wants paying before and after. |
-| Iron | the Desert Prophet | No | Vague | 5/64 (7.8%) | Walks in from the dry country with sand in his beard and one message for the city. |
-| Classical | the Oracle | No | Vague | 4/64 (6.3%) | Speaks from the smoke over the cleft rock, through priests who charge by the question. |
-| Medieval | the Town Crier | **Yes** | Vague | 3/64 (4.7%) | Rings his bell at the market cross and reads out doom in the voice he uses for tolls. |
-| Renaissance | the Court Astrologer | No | Vague | 2/64 (3.1%) | Casts the prince's horoscope, and lately the prince's horoscope has been bad for everyone. |
-| Colonial | the Pamphleteer | No | Vague | 1/64 (1.6%) | Prints doom on cheap paper and sells it outside the coffee house for a penny. |
-| Industrial | the Newsboy | **Yes** | Numeric | 0 | Shouts the late edition from the corner, and the late edition has the odds printed on it. |
-| Victorian | the Doomsayer | No | Numeric | 0 | Stands on a soap crate by the park railings with a sandwich board and a table of figures. |
-| Electric | the Telegraph | No | Numeric | 0 | Chatters all night at the post office with dispatches from stations that have stopped answering. |
-| Atomic | the Civil Defence Broadcast | **Yes** | Numeric | 0 | Three long notes on every wireless, then a calm voice reading the odds from a card. |
-| Modern | the Evening News | No | Numeric | 0 | Leads with it at six, with a graphic, an expert and an anchor trying not to look worried. |
-| Information | the Chain Email | No | Numeric | 0 | Forward this to ten people or it happens to you. It has a spreadsheet attached. |
-| Digital | the Viral Video | **Yes** | Numeric | 0 | Shaky, portrait, a million views by lunch, and the odds on a whiteboard at the end. |
-| Cyberpunk | the Ghost in the Net | No | Numeric | 0 | A dead corporate AI that leaks internal risk memos through the net, glitching on every third word. |
-| Fusion | the Reactor Warden | No | Numeric | 0 | The plant's safety intelligence, which has never before spoken outside a scheduled drill. |
-| Space | the Deep Space Monitor | **Yes** | Numeric | 0 | A station behind the moon that has watched one patch of sky for forty years, and has just marked a packet urgent. |
+| Age | Harbinger | Appears? | Forecast | False-prophet chance if it starts the thread | Who they are |
+|-----|-----------|----------|----------|----------------------------------------------|--------------|
+| Primitive | the Wild Man | Yes | Vague | 8/64 (12.5%) | A man who lives past the last fire walks in from the wilderness, grey with ash, to say what he has seen. |
+| Stone | the Hermit | Yes | Vague | 7/64 (10.9%) | Comes down from the high caves once in a generation, and never with good news. |
+| Bronze | the Soothsayer | Yes | Vague | 6/64 (9.4%) | Reads the future in knucklebones, sparrows and goat livers, and wants paying before and after. |
+| Iron | the Desert Prophet | Yes | Vague | 5/64 (7.8%) | Walks in from the dry country with sand in his beard and one message for the city. |
+| Classical | the Oracle | Yes | Vague | 4/64 (6.3%) | Speaks from the smoke over the cleft rock, through priests who charge by the question. |
+| Medieval | the Town Crier | Yes | Vague | 3/64 (4.7%) | Rings his bell at the market cross and reads out doom in the voice he uses for tolls. |
+| Renaissance | the Court Astrologer | Yes | Vague | 2/64 (3.1%) | Casts the prince's horoscope, and lately the prince's horoscope has been bad for everyone. |
+| Colonial | the Pamphleteer | Yes | Vague | 1/64 (1.6%) | Prints doom on cheap paper and sells it outside the coffee house for a penny. |
+| Industrial | the Newsboy | Yes | Numeric | 0 | Shouts the late edition from the corner, and the late edition has the odds printed on it. |
+| Victorian | the Doomsayer | Yes | Numeric | 0 | Stands on a soap crate by the park railings with a sandwich board and a table of figures. |
+| Electric | the Telegraph | Yes | Numeric | 0 | Chatters all night at the post office with dispatches from stations that have stopped answering. |
+| Atomic | the Civil Defence Broadcast | Yes | Numeric | 0 | Three long notes on every wireless, then a calm voice reading the odds from a card. |
+| Modern | the Evening News | Yes | Numeric | 0 | Leads with it at six, with a graphic, an expert and an anchor trying not to look worried. |
+| Information | the Chain Email | Yes | Numeric | 0 | Forward this to ten people or it happens to you. It has a spreadsheet attached. |
+| Digital | the Viral Video | Yes | Numeric | 0 | Shaky, portrait, a million views by lunch, and the odds on a whiteboard at the end. |
+| Cyberpunk | the Ghost in the Net | Yes | Numeric | 0 | A dead corporate AI that leaks internal risk memos through the net, glitching on every third word. |
+| Fusion | the Reactor Warden | Yes | Numeric | 0 | The plant's safety intelligence, which has never before spoken outside a scheduled drill. |
+| Space | the Deep Space Monitor | Yes | Numeric | 0 | A station behind the moon that has watched one patch of sky for forty years, and has just marked a packet urgent. |
 | Interstellar | the Distress Beacon | No | Numeric | 0 | Still looping from a colony that went silent eighty years ago, and the loop has changed. |
 | Galactic | the Elder Relay | No | Numeric | 0 | An alien relay older than the species that found it, speaking in geometry for the first time in an age. |
 | Quantum | your future self | No | Numeric | 0 | A message in your handwriting, stamped nine years from now, that knows your passcode. |
 | Transcendent | your unmade self | No | Numeric | 0 | A version of you from a branch that ended, come to see whether this one ends the same way. |
 
+The false-prophet chance only counts for the figure who starts the thread. Normally that is the epoch's first age; the other chances only matter when a save loads mid-epoch without a thread. See [False prophets](#false-prophets).
+
 ### What the actions are called
 
-Each harbinger names the three actions in its own terms. The effect is the same in every age.
+Each figure names the three actions in its own terms. The effect is the same whoever is speaking.
 
 | Age | Appease | Brace | Invite |
 |-----|---------|-------|--------|
@@ -102,16 +105,16 @@ Each harbinger names the three actions in its own terms. The effect is the same 
 
 ## Reading the Warning
 
-The harbinger's words tell you how bad the risk is. How much detail you get depends on the age.
+The figure's words tell you how bad the risk is. How much detail you get depends on who is speaking now.
 
-**Before the Industrial Age** (the Soothsayer and the Town Crier), the panel shows only the harbinger's words and a vague severity: **low**, **medium** or **high risk**.
+**Before the Industrial Age**, the panel shows only the figure's words and a vague severity: **low**, **medium** or **high risk**.
 
-**From the Industrial Age on**, the panel also prints the real odds, for example `Odds published: 9%`. The number already includes any Appease you have bought.
+**From the Industrial Age on**, the panel also prints the odds, for example `Odds published: 9%`. The number already includes any Appease you have bought. In the Steel Era this means the thread starts vague and becomes numeric when the Newsboy takes it up.
 
-The severity follows the real catastrophe chance for the transition:
+The severity follows the catastrophe chance for the transition:
 
-| Real chance | Severity shown |
-|-------------|----------------|
+| Chance | Severity shown |
+|--------|----------------|
 | under 14% | low risk |
 | 14% to under 17% | medium risk |
 | 17% or more | high risk |
@@ -120,36 +123,39 @@ Without any Appease that works out to **low** at high faith (12%), **medium** at
 
 ### False prophets
 
-Before the Industrial Age a harbinger may be lying. The chance falls by 1/64 per age, from 8/64 in the Primitive Age to zero in the Industrial Age. For the two early harbingers that actually visit:
+A thread may be a lie. It rolls once, when its first figure arrives, using that figure's chance from the roster. For threads that start normally, in the epoch's first age:
 
-| Harbinger | Chance it is a false prophet |
-|-----------|------------------------------|
-| the Soothsayer (Bronze) | 6/64, about 9.4% |
-| the Town Crier (Medieval) | 3/64, about 4.7% |
-| everyone from the Newsboy (Industrial) on | none |
+| Thread | Chance it is false |
+|--------|--------------------|
+| Stone Era (starts with the Wild Man) | 8/64, 12.5% |
+| Iron Era (starts with the Desert Prophet) | 5/64, about 7.8% |
+| Steel Era (starts with the Court Astrologer) | 2/64, about 3.1% |
+| Electric, Digital and Neon Eras | none |
 
-A false prophet announces **medium** or **high** risk (picked at random when it arrives), whatever the real odds are. It uses the same warning lines as a real harbinger, and the `catastrophe` command and the Epoch tab repeat its warning, so you can't tell the two apart from the screen. After it arrives, its announced severity moves up or down by the same amount the real risk moves, so Appease or a change in faith shifts it the same way it would shift a real warning. It never drops below low risk.
+A false thread claims **medium** or **high** risk (picked at random when it starts), whatever the real odds are. Every figure in that epoch repeats the same false claim, using the same warning lines a real harbinger would. The `catastrophe` command and the Epoch tab repeat the warning too, so you can't tell a false thread apart from the screen.
 
-The truth comes out at the transition. Appease still lowers the real odds even when the harbinger is a false prophet, and Brace still works if the catastrophe happens to come anyway.
+The claim is kept as a fixed multiple of the real chance. Appease, a change in faith, or an Invite move it exactly as they would move a real warning. It never drops below low risk. A false Steel Era thread that reaches the Newsboy prints the claimed figure, not the real one.
 
-Printed odds are why false prophets stop at the Industrial Age: a printed figure can be wrong, but it can't be invented the way a vision can.
+The truth comes out at the transition. Appease still lowers the real odds when the thread is false, and Brace still works if the catastrophe happens to come anyway.
 
 ---
 
 ## Answering the Harbinger
 
-While a harbinger is present you can Appease, Brace or Invite. You can do more than one, and you can do them any time before the transition. Nothing expires, so if you can't afford a level now, you can let your storage fill and pay later.
+While a thread lasts you can Appease, Brace or Invite, in any age of the epoch. Your answers belong to the passage, not to the figure: levels you buy and an Invite carry over when the next figure takes up the warning. Nothing expires.
+
+The price is set by the passage, so it is the same in every age of the epoch. If your storage can't hold the price yet, the refusal tells you how much storage you need.
 
 ### Appease: lower the odds
 
 | Level | Cost | Real catastrophe chance |
 |-------|------|-------------------------|
 | 0 | none | unchanged |
-| 1 | 15% of your faith storage cap + 15% of your culture storage cap | ×0.6 |
-| 2 | 30% of your faith storage cap + 30% of your culture storage cap | ×0.36 (×0.6 again) |
+| 1 | 15% of the passage storage, in faith (and the same in culture, from the Steel Era on) | ×0.6 |
+| 2 | 30% of the passage storage, in faith (and culture) | ×0.36 (×0.6 again) |
 
-- The cost is a share of your storage **cap**, not of what you have stored. You need that much on hand to pay.
-- Culture is only charged once it is unlocked (Classical Age). The Soothsayer in the Bronze Age takes faith only.
+- The **passage storage** is the largest single amount the next epoch's first age asks for. Your storage has to hold that much before you can advance anyway.
+- Culture is only charged if you already had it when the epoch began. It unlocks in the Classical Age, so Stone and Iron Era threads cost faith only.
 - Two levels at most.
 - Appease always changes the real odds, including with a false prophet.
 - **Not after Invite.** Once you invite the catastrophe, Appease is refused: it will come whatever you offer.
@@ -160,26 +166,15 @@ Spending faith lowers your faith fill, and that can drop you into a worse faith 
 
 ### Brace: soften an Endure
 
-Brace spends the resources the **next** age asks for to advance into it (its advance requirements), leaving out faith and culture. If you haven't unlocked one of those resources yet, or it has no storage, it is left out of the price.
+Brace spends the resources the epoch still asks of you. For each resource, the price is based on the most the epoch asks of it across its remaining advances (into its later ages and into the next epoch). Only resources you already had when the epoch began count, and faith and culture are left out.
 
 | Level | Cost | If you Endure: buildings destroyed | If you Endure: stored resources kept |
 |-------|------|------------------------------------|--------------------------------------|
 | 0 (unbraced) | none | 20% | 15% |
-| 1 | 12% of the storage cap of each of those resources | 15% | 30% |
-| 2 | 24% of the storage cap of each of those resources | 10% | 45% |
+| 1 | 12% of the most the epoch asks of each of those resources | 15% | 30% |
+| 2 | 24% of the same | 10% | 45% |
 
 Buildings destroyed are counted from your non-wonder buildings, rounded down, with at least 1 if you have any. Wonders are never destroyed. The rest of Endure (25% of workers lost, the 216-tick reconstruction debuff, −10 morale) is the same at every Brace level. See [Endure](catastrophe.md#endure).
-
-What each visiting harbinger's Brace draws on:
-
-| Harbinger | Next age | Brace resources |
-|-----------|----------|-----------------|
-| the Soothsayer (Bronze) | Iron | food, wood, stone, iron, knowledge |
-| the Town Crier (Medieval) | Renaissance | gold, knowledge, steel |
-| the Newsboy (Industrial) | Victorian | steel, oil, gold |
-| the Civil Defence Broadcast (Atomic) | Modern | electricity, uranium, steel |
-| the Viral Video (Digital) | Cyberpunk | data, electricity |
-| the Deep Space Monitor (Space) | Interstellar | titanium, plasma |
 
 Things to know:
 
@@ -188,43 +183,58 @@ Things to know:
 - The Brace is attached to the pending catastrophe. If you close the choice with Esc and Endure later, or save and load in between, it still applies.
 - Brace is allowed after Invite.
 
+### What it costs, by epoch
+
+Level 1 prices. Level 2 costs double.
+
+| Thread | Appease (level 1) | Brace (level 1) |
+|--------|-------------------|-----------------|
+| Stone Era | 12,000 faith | 9,600 food, 4,800 wood, 2,400 knowledge |
+| Iron Era | 33,000 faith | 26,400 knowledge, 26,400 stone, 6,360 iron, 21,600 gold |
+| Steel Era | 2.25M faith, 2.25M culture | 360K knowledge, 1.8M gold, 288K steel |
+| Electric Era | 70.5M faith, 70.5M culture | 56.4M steel, 924K oil, 3.96M electricity |
+| Digital Era | 147B faith, 147B culture | 156M gold, 117.6B electricity, 19.2B data |
+| Neon Era | 46.5B faith, 46.5B culture | 288B electricity, 46.8B data, 3B crypto |
+
+The Digital Era's Appease is dearer than the Neon Era's because entering the Cyberpunk Age asks for more than entering the Interstellar Age.
+
 ### Invite: choose the catastrophe
 
 - Free.
 - Guarantees the catastrophe at this transition.
-- **Can't be undone.**
+- **Can't be undone.** It stays with the thread when the next figure takes over.
 - After inviting, Appease is refused. Brace is still allowed.
 
 Invite is for players who want to Succumb on purpose, to collect an epoch's legacy bonus and Ancient Knowledge. It is the only way to choose a catastrophe; there is no command to trigger one directly. See [Succumb](catastrophe.md#succumb).
 
-### Why the costs are shares of your storage cap
+### Why the price is tied to the passage
 
-Your storage caps grow with your economy at every age and never read zero. The next age's requirements also have to fit in your storage before you can advance, so a slice of your cap is always a slice of what it takes to move on. That keeps the price meaningful in the Bronze Age and in the Space Age alike.
+The price comes from what the passage asks, not from your current storage. Your storage is smallest in the epoch's first age, so a price based on it would make paying early a discount. Tying it to the passage keeps it the same in every age of the epoch, whoever is speaking.
 
 ---
 
 ## At the Transition
 
-When you cross into the next epoch the harbinger's warning is settled and the log records one of four verdicts:
+When you cross into the next epoch the thread is settled, in the voice of the last figure, and the log records one of four verdicts:
 
 | Verdict | What happened |
 |---------|---------------|
 | **Fulfilled** | You invited the catastrophe, and it came. |
-| **Vindicated** | It warned you, you didn't invite it, and the catastrophe came. This also covers a false prophet whose warning came true by chance; the log notes that the warning had been invented. |
-| **Spared** | A real harbinger, and no catastrophe came. |
+| **Vindicated** | It warned you, you didn't invite it, and the catastrophe came. This also covers a false thread whose warning came true by chance; the log notes that the warning had been invented. |
+| **Spared** | A real warning, and no catastrophe came. |
 | **Discredited** | A false prophet, and no catastrophe came. |
 
-If the catastrophe came and you had braced, the log also says what Endure will cost you at that Brace level. Then the harbinger leaves and the catastrophe choice works as usual (see [Catastrophe System](catastrophe.md)).
+If the catastrophe came and you had braced, the log also says what Endure will cost you at that Brace level. Then the thread ends and the catastrophe choice works as usual (see [Catastrophe System](catastrophe.md)). If the new epoch can also bring a catastrophe, its own thread starts with its first figure.
 
-The Epoch tab (`epoch`) shows the current harbinger's status and the verdicts of past harbingers this run.
+The Epoch tab (`epoch`) shows the current thread's status and, for past threads this run, the whole chain of figures and the verdict.
 
 ---
 
 ## Saving, Succumb and Prestige
 
-- The harbinger is saved with your game: who it is, what it said, your Appease and Brace levels, and whether you invited the catastrophe. A Brace attached to a pending catastrophe is saved too.
-- **Succumb** clears the live harbinger, the invite and any Brace. Past verdicts are kept, like the epoch event history.
-- **Prestige** clears all of it, past verdicts included.
+- The thread is saved with your game: the figures who have spoken, what the current one said, your Appease and Brace levels, and whether you invited the catastrophe. A Brace attached to a pending catastrophe is saved too.
+- **Succumb** clears the live thread, the invite and any Brace. Past verdicts are kept, like the epoch event history. The new run's Stone Era thread starts on the first tick.
+- **Prestige** clears all of it, past verdicts included, and the Wild Man greets the new run.
 
 ---
 
@@ -246,13 +256,14 @@ In the panel:
 | **I** | Invite. Press **I** twice to confirm, since it can't be undone. |
 | **Esc** | Close the panel |
 
-With no harbinger present, the panel says so and describes the outlook for your next epoch transition in plain words.
+With no harbinger present (in the Cosmic Era, for example), the panel says so and describes the outlook for your next epoch transition in plain words.
 
 ---
 
 ## Strategy
 
+- **No hurry.** The price is the same in every age of the epoch, so pay whenever your storage can hold it. The last age of the epoch is fine.
 - **Want to keep your run?** Appease is the direct answer. One level cuts the risk by 40%, and it can't hurt the odds.
 - **Worried but short on faith?** Brace instead. It doesn't lower the odds, but it makes Endure much cheaper if the catastrophe comes.
-- **Early warnings deserve a little doubt.** A Bronze or Medieval warning of high risk may be a false prophet. Your own faith fill tells you the real band (see [Faith and the Odds](catastrophe.md#faith-and-the-odds)).
+- **Early warnings deserve a little doubt.** A Stone, Iron or Steel Era warning of high risk may be false. Your own faith fill tells you the real band (see [Faith and the Odds](catastrophe.md#faith-and-the-odds)).
 - **Hunting legacy bonuses?** Invite, then Succumb at the transition. Skip Appease; it is refused after Invite anyway. Brace only if you think you might change your mind and Endure.
