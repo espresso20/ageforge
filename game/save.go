@@ -61,6 +61,12 @@ type GameSave struct {
 	WonderBanks      map[string]map[string]float64 `json:"wonder_banks,omitempty"`
 	// Phase 7: legacy building keys
 	LegacyBuildings []string `json:"legacy_buildings,omitempty"`
+	// PendingUpgrades is the live oldKey -> newKey upgrade offer set, and
+	// PendingUpgradesSaved marks saves that carry it (an empty set is omitted,
+	// so the flag tells "no offers" apart from "saved before this field").
+	// Older saves rebuild the set from LegacyBuildings (rebuildPendingUpgrades).
+	PendingUpgrades      map[string]string `json:"pending_upgrades,omitempty"`
+	PendingUpgradesSaved bool              `json:"pending_upgrades_saved,omitempty"`
 	// Phase 8: epoch system
 	CurrentEpoch    string          `json:"current_epoch,omitempty"`
 	EpochEventFired map[string]bool `json:"epoch_event_fired,omitempty"`
@@ -534,6 +540,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		SpeedMultiplier:        ge.speedMultiplier,
 		WonderBanks:            ge.Buildings.GetWonderBanks(),
 		LegacyBuildings:        ge.Buildings.GetLegacyBuildings(),
+		PendingUpgrades:        ge.Buildings.GetAllPendingUpgrades(),
+		PendingUpgradesSaved:   true,
 		CheaterBadge:           ge.cheaterBadge,
 		EliteBadge:             ge.eliteBadge,
 		ParentName:             ge.activeParentName,
@@ -719,24 +727,13 @@ func (ge *GameEngine) LoadGame(filename string) error {
 		ge.Buildings.LoadLegacyBuildings(save.LegacyBuildings)
 	}
 
-	// Reconstruct pending upgrades from legacy buildings.
-	// pendingUpgrades is not persisted to disk; we derive it from the
-	// legacy set + current age so the 'upgrade' command works after a reload.
-	for _, key := range save.LegacyBuildings {
-		if ge.Buildings.GetCount(key) <= 0 {
-			continue
-		}
-		def, ok := ge.Buildings.defs[key]
-		// Storage never transforms (see advanceAge), so a save with legacy
-		// stashes gets no stash -> storage_pit offer back.
-		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || def.Category == "storage" {
-			continue
-		}
-		next := config.BuildingNextTierForAge(def.LineageKey, def.LineageTier, save.Age)
-		if next == nil {
-			continue
-		}
-		ge.Buildings.SetPendingUpgrade(key, next.Key)
+	// Restore the pending upgrade offers. Saves written since they were
+	// persisted carry the exact live set; older ones rebuild it from the
+	// legacy set and the loaded age.
+	if save.PendingUpgradesSaved {
+		ge.Buildings.LoadPendingUpgrades(save.PendingUpgrades)
+	} else {
+		ge.Buildings.LoadPendingUpgrades(ge.rebuildPendingUpgrades(save.LegacyBuildings, save.Age))
 	}
 
 	// Restore speed multiplier
@@ -831,6 +828,50 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.Bus.Publish(EventData{Type: EventGameLoaded, Payload: map[string]interface{}{"save": filename}})
 
 	return nil
+}
+
+// rebuildPendingUpgrades derives the upgrade offers for a save that predates
+// PendingUpgrades, following the rule advanceAge applies live: on entering
+// an age, every built lineage building whose next tier belongs to that age
+// is offered that tier, and the offer stands through later ages until the
+// building is upgraded away. So a legacy building still standing is offered
+// its next tier from the latest age up to the loaded one that has it. (The
+// old rebuild only looked at the loaded age, and dropped every offer from an
+// earlier age whose lineage has no tier in the current one.) Must be called
+// under the write lock.
+func (ge *GameEngine) rebuildPendingUpgrades(legacy []string, age string) map[string]string {
+	out := make(map[string]string)
+	cur, ok := ge.progress.ageIndex[age]
+	if !ok {
+		return out
+	}
+	all := config.BaseBuildings()
+	for _, key := range legacy {
+		if ge.Buildings.GetCount(key) <= 0 {
+			continue
+		}
+		def, ok := ge.Buildings.defs[key]
+		// Storage never transforms (see advanceAge), so a save with legacy
+		// stashes gets no stash -> storage_pit offer back.
+		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || def.Category == "storage" {
+			continue
+		}
+		best, bestOrder := "", -1
+		for _, b := range all {
+			if b.LineageKey != def.LineageKey || b.LineageTier != def.LineageTier+1 {
+				continue
+			}
+			// A later age's offer overwrites an earlier one; within one age the
+			// first match wins, as in config.BuildingNextTierForAge.
+			if order, ok := ge.progress.ageIndex[b.RequiredAge]; ok && order <= cur && order > bestOrder {
+				best, bestOrder = b.Key, order
+			}
+		}
+		if best != "" {
+			out[key] = best
+		}
+	}
+	return out
 }
 
 // copyBoolMap returns a deep copy of a map[string]bool.

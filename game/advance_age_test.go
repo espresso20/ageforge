@@ -1,10 +1,6 @@
 package game
 
-import (
-	"testing"
-
-	"github.com/espresso20/ageforge/config"
-)
+import "testing"
 
 func TestAdvanceAge_SetsUpgradesForGatheringCamp(t *testing.T) {
 	ge := NewGameEngine()
@@ -82,21 +78,9 @@ func TestLoadGame_RestoresPendingUpgrades(t *testing.T) {
 	ge.Buildings.LoadLegacyBuildings(legacyBuildings)
 	// NOTE: before the fix, LoadGame stopped here; pendingUpgrades stayed empty.
 
-	// The fix: reconstruct pending upgrades from legacy buildings + current age.
-	for _, key := range legacyBuildings {
-		if ge.Buildings.GetCount(key) <= 0 {
-			continue
-		}
-		def, ok := ge.Buildings.defs[key]
-		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" {
-			continue
-		}
-		next := config.BuildingNextTierForAge(def.LineageKey, def.LineageTier, age)
-		if next == nil {
-			continue
-		}
-		ge.Buildings.SetPendingUpgrade(key, next.Key)
-	}
+	// The fix: reconstruct pending upgrades from legacy buildings + current age
+	// (what LoadGame does for a save without a persisted pending set).
+	ge.Buildings.LoadPendingUpgrades(ge.rebuildPendingUpgrades(legacyBuildings, age))
 
 	// The pending upgrade must now be present
 	target, found := ge.Buildings.GetPendingUpgrade("gathering_camp")
