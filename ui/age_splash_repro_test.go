@@ -69,16 +69,9 @@ func newReproHarness(t *testing.T) *reproHarness {
 
 	h := &reproHarness{t: t, eng: eng, a: a, sim: sim, runErr: make(chan error, 1)}
 	go func() { h.runErr <- a.Run() }()
-	t.Cleanup(func() {
-		eng.Stop()
-		stopped := make(chan struct{})
-		go func() { a.Stop(); close(stopped) }()
-		select {
-		case <-stopped:
-		case <-time.After(3 * time.Second):
-			t.Logf("app.Stop() did not return (event loop wedged)")
-		}
-	})
+	// Registered after SetDataDirForTest, so (cleanups run last in, first
+	// out) it runs before the data dir is restored.
+	t.Cleanup(h.teardown)
 
 	// Real "New Game" path: the splash List has shortcut 'n', which opens the
 	// civilization-name prompt pre-filled with a generated name; Enter accepts.
@@ -104,6 +97,30 @@ func newReproHarness(t *testing.T) *reproHarness {
 	t0 := eng.GetState().Tick
 	h.waitFor("storage recalculated", 10*time.Second, func() bool { return eng.GetState().Tick > t0+1 })
 	return h
+}
+
+// teardown stops the engine and the App and waits for both to finish, so
+// nothing they started can touch package state after the test's earlier-
+// registered cleanups run. CI once caught SetDataDirForTest's restore racing
+// a goroutine that was still resolving a path through the old data dir.
+func (h *reproHarness) teardown() {
+	h.eng.Stop() // returns once the tick loop (autosave, account flush) has exited
+	stopped := make(chan struct{})
+	go func() { h.a.Stop(); close(stopped) }()
+	select {
+	case <-stopped:
+	case <-time.After(3 * time.Second):
+		h.t.Errorf("app.Stop() did not return (event loop wedged)")
+		return
+	}
+	// app.Stop returns before the event loop does, and a refresh still in the
+	// queue calls GetState, which stats the save file under the data dir. Only
+	// Run returning means the loop is done.
+	select {
+	case <-h.runErr:
+	case <-time.After(5 * time.Second):
+		h.t.Errorf("app.Run() did not return after Stop; its event loop could still touch the data dir")
+	}
 }
 
 // dumpGoroutines returns the stacks of all goroutines.
