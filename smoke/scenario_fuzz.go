@@ -306,38 +306,59 @@ func fuzzScript(r *rand.Rand, n, botEvery, botLen int) []fuzzStep {
 	return s
 }
 
-// shrink removes command steps while the failure (same check) still
-// happens, within budget. Bot steps stay: they are what moves the game on.
+// shrink cuts a failing script down while the failure (same check) still
+// happens, within budget: first the failing command alone on a fresh game,
+// then chunks of other commands (ddmin), then chunks of bot play. Adjacent
+// bot stretches are merged, which replays the same.
 func shrink(seed int64, script []fuzzStep, check string, budget time.Duration) []fuzzStep {
 	deadline := time.Now().Add(budget)
 	fails := func(s []fuzzStep) bool {
 		f, _ := fuzzExec(seed, s, nil)
 		return f != nil && f.check == check
 	}
+	last := len(script) - 1
+	if alone := script[last:]; fails(alone) {
+		return alone
+	}
 	cur := script
-	// The failing step is last; drop everything after the last bot step
-	// that isn't it, in shrinking chunks (ddmin over command steps).
-	for chunk := len(cur) / 2; chunk >= 1 && time.Now().Before(deadline); chunk /= 2 {
-		for i := 0; i < len(cur)-1 && time.Now().Before(deadline); {
-			j := i
-			var cand []fuzzStep
-			removed := 0
-			for k, st := range cur {
-				if k >= i && removed < chunk && st.Bot == 0 && k != len(cur)-1 {
-					removed++
-					j = k
+	pass := func(isTarget func(fuzzStep) bool) {
+		for chunk := len(cur) / 2; chunk >= 1 && time.Now().Before(deadline); chunk /= 2 {
+			for i := 0; i < len(cur)-1 && time.Now().Before(deadline); {
+				j := i
+				var cand []fuzzStep
+				removed := 0
+				for k, st := range cur {
+					if k >= i && removed < chunk && isTarget(st) && k != len(cur)-1 {
+						removed++
+						j = k
+						continue
+					}
+					cand = append(cand, st)
+				}
+				if removed > 0 && fails(cand) {
+					cur = cand
 					continue
 				}
-				cand = append(cand, st)
+				i = j + 1
 			}
-			if removed > 0 && fails(cand) {
-				cur = cand
-				continue
-			}
-			i = j + 1
 		}
 	}
-	return cur
+	pass(func(s fuzzStep) bool { return s.Bot == 0 })
+	pass(func(s fuzzStep) bool { return s.Bot > 0 })
+	return mergeBot(cur)
+}
+
+// mergeBot folds adjacent bot stretches into one.
+func mergeBot(s []fuzzStep) []fuzzStep {
+	var out []fuzzStep
+	for _, st := range s {
+		if n := len(out); n > 0 && st.Bot > 0 && out[n-1].Bot > 0 {
+			out[n-1].Bot += st.Bot
+			continue
+		}
+		out = append(out, st)
+	}
+	return out
 }
 
 func runFuzz(e *Env, res *Result) {

@@ -34,6 +34,10 @@ type checkpoint struct {
 	endTicks int
 	atSave   game.GameState
 	atEnd    *game.GameState
+	// b is the engine the save was loaded into, right after the save (a
+	// save 5s or older gets offline catch-up on load); reload is its verdict.
+	b      *game.GameEngine
+	reload string
 }
 
 // saveloadSkip lists GameState paths that legitimately differ between an
@@ -45,6 +49,20 @@ func saveloadSkip(path string) bool {
 	switch path {
 	case "SaveExists", "Stats.PlayTime", "Log", "LastAgeAdvanceSummary":
 		return true
+	}
+	return false
+}
+
+// reloadSkip is saveloadSkip plus the resource rates: a live snapshot holds
+// the rates the last tick computed before morale and the like moved, while
+// LoadGame recomputes them from the saved state. The next tick agrees
+// again, and the continued-play comparison covers them.
+func reloadSkip(path string) bool {
+	if saveloadSkip(path) {
+		return true
+	}
+	if strings.HasPrefix(path, "Resources[") {
+		return strings.HasSuffix(path, "].Rate") || strings.Contains(path, "].Breakdown")
 	}
 	return false
 }
@@ -124,6 +142,9 @@ func saveloadSeed(e *Env, seed int64, want, n int) (rows []string, fails, warns 
 				return true
 			}
 			cps = append(cps, cp)
+			// Load at once: LoadGame gives a save 5s or older offline
+			// catch-up, which would read as a divergence.
+			reloadCheckpoint(cp, dir, repro, fail, warn)
 		}
 		if len(cps) == want {
 			done := true
@@ -144,21 +165,30 @@ func saveloadSeed(e *Env, seed int64, want, n int) (rows []string, fails, warns 
 	}
 
 	for _, cp := range cps {
-		reload, cont := saveloadCheckpoint(e, seed, cp, dir, repro, fail, warn)
-		rows = append(rows, fmt.Sprintf("| %d | %d | %s | %d | %s | %s |", seed, cp.idx, cp.age, cp.gameTick, reload, cont))
+		cont := "-"
+		if cp.b != nil {
+			cont = continueCheckpoint(e, seed, cp, repro, fail, warn)
+		}
+		rows = append(rows, fmt.Sprintf("| %d | %d | %s | %d | %s | %s |", seed, cp.idx, cp.age, cp.gameTick, cp.reload, cont))
 	}
 	return rows, fails, warns
 }
 
-// saveloadCheckpoint checks one checkpoint and returns the reload and
-// continuation verdicts for the table.
-func saveloadCheckpoint(e *Env, seed int64, cp *checkpoint, dir, repro string, fail, warn func(check, repro, format string, args ...interface{})) (reload, cont string) {
-	reload, cont = "ok", "ok"
+type reporter func(check, repro, format string, args ...interface{})
+
+// reloadCheckpoint checks the save just written: its signature, that a
+// tampered copy fails it, that it loads into a fresh engine as the state it
+// was saved from, and that re-saving writes the same data. It leaves the
+// loaded engine in cp.b and the verdict in cp.reload.
+func reloadCheckpoint(cp *checkpoint, dir, repro string, fail, warn reporter) {
+	reload := "ok"
+	defer func() { cp.reload = reload }()
 	path := filepath.Join(dir, cp.file+".json")
 	raw, err := os.ReadFile(path)
 	if err != nil {
 		fail("save_missing", repro, "checkpoint %d: %v", cp.idx, err)
-		return "missing", "-"
+		reload = "missing"
+		return
 	}
 	if cheater, _ := game.PeekSaveBadges(cp.file); cheater {
 		fail("save_signature", repro, "checkpoint %d (%s): a save straight from SaveGame fails its own signature check", cp.idx, cp.age)
@@ -190,13 +220,15 @@ func saveloadCheckpoint(e *Env, seed int64, cp *checkpoint, dir, repro string, f
 		stB = b.GetState()
 	}()
 	if b == nil {
-		return "load failed", "-"
+		reload = "load failed"
+		return
 	}
+	cp.b = b
 	if stB.CheaterBadge {
 		fail("save_signature", repro, "checkpoint %d (%s): the reloaded game carries the cheater badge", cp.idx, cp.age)
 		reload = "cheater badge"
 	}
-	if d := firstDiff(cp.atSave, stB, saveloadSkip); d != "" {
+	if d := firstDiff(cp.atSave, stB, reloadSkip); d != "" {
 		fail("reload_divergence", repro, "checkpoint %d (%s, game tick %d): the loaded state differs from the saved one at %s", cp.idx, cp.age, cp.gameTick, d)
 		reload = "differs"
 	}
@@ -215,14 +247,20 @@ func saveloadCheckpoint(e *Env, seed int64, cp *checkpoint, dir, repro string, f
 			warn("save_map_order", repro, "checkpoint %d (%s): the save writes %s in a different order each time (a set serialized in map order), so two saves of the same game differ byte for byte", cp.idx, cp.age, p)
 		}
 	}
+}
 
+// continueCheckpoint plays the loaded engine on for the checkpoint's N
+// ticks and compares it with the uninterrupted run. It returns the verdict
+// for the table.
+func continueCheckpoint(e *Env, seed int64, cp *checkpoint, repro string, fail, warn reporter) string {
+	cont := "ok"
 	if cp.atEnd == nil {
-		return reload, "not reached"
+		return "not reached"
 	}
-	endB, perr := continueFrom(e, seed, cp, b, nil)
+	endB, perr := continueFrom(e, seed, cp, cp.b, nil)
 	if perr != "" {
 		fail("continue_panic", repro, "checkpoint %d (%s): the loaded game broke while continuing: %s", cp.idx, cp.age, perr)
-		return reload, "panicked"
+		return "panicked"
 	}
 	d := firstDiff(*cp.atEnd, endB, saveloadSkip)
 	if d == "" {
@@ -232,7 +270,7 @@ func saveloadCheckpoint(e *Env, seed int64, cp *checkpoint, dir, repro string, f
 		}
 	}
 	if d == "" {
-		return reload, cont
+		return cont
 	}
 	cont = "differs"
 	f := fmt.Sprintf("checkpoint %d (%s, game tick %d): %d ticks after loading, the game differs from the uninterrupted run; first divergence at %s",
@@ -246,10 +284,10 @@ func saveloadCheckpoint(e *Env, seed int64, cp *checkpoint, dir, repro string, f
 		// but not failing it; any other divergence still fails. -strict
 		// fails on it too.
 		warn(KnownRNGReset, repro, "%s", f)
-		return reload, "RNG restarted (known)"
+		return "RNG restarted (known)"
 	}
 	fail("continue_divergence", repro, "%s", f)
-	return reload, cont
+	return cont
 }
 
 // KnownRNGReset is the check name of the one known save/load divergence:
