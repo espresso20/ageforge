@@ -39,6 +39,8 @@ var gameKinds = map[Moment][]string{
 	HarbingerDiscredited: {""},
 	HarbingerInvited:     {""},
 	HarbingerFulfilled:   {"", KindFalseProphet},
+	// RunEnding takes no kind; its Subject is the harbinger in the Cosmic Era.
+	RunEnding: {""},
 }
 
 // gameRequests returns the requests the engine can realistically build for a
@@ -60,7 +62,7 @@ func gameRequests(m Moment, age string) []Request {
 				}
 			case HarbingerArrival, HarbingerWarning, HarbingerAppeased, HarbingerBraced,
 				HarbingerVindicated, HarbingerSpared, HarbingerDiscredited,
-				HarbingerInvited, HarbingerFulfilled:
+				HarbingerInvited, HarbingerFulfilled, RunEnding:
 				for _, subj := range []string{gameSubject(m, age), ""} {
 					out = append(out, Request{Moment: m, Tone: tone, Age: age, Kind: kind, Subject: subj})
 				}
@@ -311,7 +313,7 @@ func TestHygieneOverFuzzedRequests(t *testing.T) {
 		// The harbinger Moments read Age, Subject and (for two of them) Kind and
 		// nothing else, so a quarter of the draws covers their hostile surface.
 		draws := 20000
-		if isHarbinger(m) {
+		if isRare(m) {
 			draws = 5000
 		}
 		for i := 0; i < draws; i++ {
@@ -411,7 +413,7 @@ func TestStreamNeverRepeatsInsideItsWindow(t *testing.T) {
 			// Harbinger pools are a few dozen sentences; 2,000 draws already
 			// cycle each one about sixty times, so the deep run adds only time.
 			draws := 2000
-			if deep[age] && !testing.Short() && !isHarbinger(m) {
+			if deep[age] && !testing.Short() && !isRare(m) {
 				draws = 10000
 			}
 			req := Request{Moment: m, Age: age, Kind: gameKinds[m][0], Tone: Neutral, Subject: gameSubject(m, age)}

@@ -41,7 +41,7 @@ func TestDumpCorpus(t *testing.T) {
 	}
 	only := os.Getenv("FLAVOR_DUMP_ONLY")
 	for _, m := range Moments() {
-		harb := isHarbinger(m)
+		harb := isRare(m)
 		if (only == "harbinger" && !harb) || (only == "core" && harb) {
 			continue
 		}

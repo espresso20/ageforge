@@ -242,7 +242,7 @@ func TestZeroRequestIsGrammatical(t *testing.T) {
 		// Moments fire a few times a run and are sized by TestHarbingerPoolFloors;
 		// a tiered warning with no tier deliberately reaches only its small
 		// tier-neutral set.
-		if !isHarbinger(m) && len(seen) < 150 {
+		if !isRare(m) && len(seen) < 150 {
 			t.Errorf("%v: zero Request produced only %d distinct lines in 500 draws; want >= 150", m, len(seen))
 		}
 	}
@@ -314,8 +314,8 @@ func TestSkeletonFloors(t *testing.T) {
 	const perEraFloor = 70
 
 	for _, m := range Moments() {
-		if isHarbinger(m) {
-			continue // sized for how often they fire: see TestHarbingerPoolFloors
+		if isRare(m) {
+			continue // sized for how often they fire: see TestHarbingerPoolFloors, TestRunEndingPoolFloors
 		}
 		total := DistinctSkeletons(m)
 		if total == 0 {
@@ -374,7 +374,7 @@ func TestRepetitionInAStream(t *testing.T) {
 		seeds = 5
 	)
 	for _, m := range Moments() {
-		if isHarbinger(m) {
+		if isRare(m) {
 			continue // a few lines a run, not two hundred: see TestHarbingerPoolFloors
 		}
 		for _, bucket := range eraBuckets {
@@ -1109,8 +1109,8 @@ func TestSubjectFrames(t *testing.T) {
 			}
 			// Harbinger names are all singular ("the Oracle", "your future
 			// self"; TestHarbingerLabels in config pins their shape), so a
-			// copula after one is grammatical.
-			if isHarbinger(m) {
+			// copula after one is grammatical. RunEnding's Subject is one too.
+			if isRare(m) {
 				continue
 			}
 			for _, c := range copulas {
@@ -1672,7 +1672,7 @@ func TestEveryEraHasItsOwnVoice(t *testing.T) {
 		wantDistinct     = 220
 	)
 	for _, m := range Moments() {
-		if isHarbinger(m) {
+		if isRare(m) {
 			// Their era voice is held per AGE by TestHarbingerSpeakerFit and
 			// TestLateEraVoiceShare; the 2000-draw depth floor does not apply.
 			continue

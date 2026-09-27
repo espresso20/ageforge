@@ -137,6 +137,12 @@ const (
 	// HarbingerFulfilled is an invited catastrophe arriving. Kind is
 	// KindFalseProphet when the harbinger who was invited had been lying.
 	HarbingerFulfilled
+	// RunEnding is the end of a run: logged at every prestige, after the
+	// verdict and before the new run begins. Age is the age the run ended in.
+	// From the Modern to the Space Age the civilization winds down in a plain
+	// voice; in the Cosmic Era the age's harbinger speaks, so Subject is its
+	// roster Name there and empty before. See catalog_run_ending.go.
+	RunEnding
 )
 
 // String returns a stable, flavor-free identifier for a Moment. Safe to log.
@@ -170,6 +176,8 @@ func (m Moment) String() string {
 		return "HarbingerInvited"
 	case HarbingerFulfilled:
 		return "HarbingerFulfilled"
+	case RunEnding:
+		return "RunEnding"
 	case MomentUnknown:
 		return "MomentUnknown"
 	default:
@@ -512,6 +520,7 @@ func Moments() []Moment {
 		HarbingerDiscredited,
 		HarbingerInvited,
 		HarbingerFulfilled,
+		RunEnding,
 	}
 }
 
