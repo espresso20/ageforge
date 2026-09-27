@@ -58,8 +58,8 @@ a game no one could finish; no run reached the Modern Age at all.
 Derived from the targets:
 - **Payback** (Law 3) sets production.
 - **Construction time** is at most 1/6 of the age's target, wonders included (the next
-  advance needs them), and 1/48 for storage buildings, which queue one copy at a time and
-  are bought many times an age.
+  advance needs them), and 1/48 for storage buildings, which are bought many times an
+  age.
 - **Research time** is at most 1/8 of the tech's age target, so the handful of techs an age
   offers fit in it one at a time.
 - The per-building wait falls out of these: with a dozen producers each repaying in the
@@ -69,7 +69,8 @@ Derived from the targets:
 spent in each age; `smoke/targets.go` holds the same table (a test keeps the two equal) and
 `-pacing enforce` fails a set of runs whose median for a first-cycle age leaves 0.5x-2x of it. CI runs enforced:
 the per-PR fast tier grades the Primitive and Stone Ages, the nightly every age to the first
-prestige. The bot has to play like a reasonable person for this to
+prestige, and a weekly deep run every age to the Galactic (five seeds to a Quantum Age
+prestige). The bot has to play like a reasonable person for this to
 measure the game rather than the bot (see the bot's strategy comment in `smoke/bot.go`).
 
 ### Law 3 — The Payback Rule
@@ -252,17 +253,38 @@ discounts assumed**:
    at most that storage. Wonders are banked a deposit at a time (`wonder collect`), so no
    margin is asked for, but a part bigger than a full store means banking at the cap in
    rounds.
-5. **Sourced:** every resource the gate asks for, directly, in a required building's price
-   or in the wonder's, has a way in **in A** that does not need that resource first: a
-   building of A that doesn't cost it, hand gathering (food, wood, stone, through the
-   Medieval Age), a market exchange (a listed pair, or parity when the resource is a
-   construction resource of A), or techs whose flat output alone covers the whole amount
-   within 48 hours at 1x. Older ages' producers only count through the market's parity:
-   the age lock stops you building more of them, and their output is sized to an older
-   age's prices (the Stellar Cradle cost 940T uranium in the Fusion Age, where only old
-   Atomic Age mines made any). A producer that costs its own output (the Bronze Age smithy
-   and iron, the Renaissance mill and steel) doesn't count until something else supplies
-   the first batch.
+5. **Sourced, from a cold start:** every resource the gate asks for, directly, in a
+   required building's price or in the wonder's, can be had **in A** by a player who
+   skipped every building no gate required. What A reaches is a fixed point: start from
+   what carries over (below), buy every building of A whose first copy that pays for, add
+   what those buildings make, open the market once a trade building stands or can be
+   bought (the exchange needs one), and add what the market sells (parity between A's
+   construction resources, the listed pairs); repeat. The gate's total must then come
+   from A itself: A's producers, hand gathering (food, wood, stone, through the Medieval
+   Age), the market, techs whose flat output alone covers the whole amount within 48 hours
+   at 1x, or the carried stock.
+
+   **What carries over into A**, and nothing else:
+   - every building an earlier gate required, and every earlier age's wonder (an upgrade
+     keeps the lineage and its output);
+   - the resources the gate into A required, held at the advance, up to the carryover cap
+     (8 copies of A's cheapest building priced in it; faith whole);
+   - a steady supply of every resource an earlier gate required as a resource requirement,
+     unless it could be hand-gathered then or the stock carried into that age met it:
+     thousands of iron can't be banked without making it, and whatever made it (a producer,
+     or a trade building and the market) still stands. Prices of required buildings imply
+     no supply: a few scriptoriums' gold can come from events.
+
+   Carried producers are sized to an older age's prices (the Stellar Cradle cost 940T
+   uranium in the Fusion Age, where only old Atomic Age mines made any), so they only pay
+   for a first copy of A's buildings and seed market parity; they never supply a gate's
+   total. A producer that costs its own output (the Bronze Age smithy and iron, the
+   Renaissance mill and steel) doesn't count until something else supplies the first
+   batch. The rule used to count market parity without asking whether a trade building
+   could stand, which let the **Iron Age gold trap** through: the trading post cost gold,
+   and it was both the Iron Age's only gold producer and its only trade building, so a
+   player who had skipped the optional Bronze Age market could never get gold there (one
+   smoke seed spent 2.5 days in the Iron Age). The trading post no longer costs gold.
 6. **Flow within the target:** every flow resource the gate asks for (requirement, required
    copies and wonder together) is made within A's pacing target at `FlowIncome`, or the rest
    costs at most **10 price units** of A at the market's listed pairs (gold → food, gold →
@@ -278,7 +300,9 @@ requires, is checked the same way.
 `smoke.StaticGates` implements all of this and `TestGateCovenant` (smoke/static_test.go)
 fails `go test ./...` when a balance change breaks it, so it runs in CI on every PR.
 `TestGateCovenantCatchesBrokenGates` feeds it the old broken numbers and checks each one is
-caught.
+caught, and `TestGateCovenantCatchesColdStartTraps` does the same for the gold-priced trading
+post (and checks that a market required by the Iron Age gate would have carried over and
+fixed it).
 
 **Gate size.** With Law 3 the time an age takes follows mostly from its gate (required
 buildings plus wonder, in price units) and the stock of older buildings. Gates that were

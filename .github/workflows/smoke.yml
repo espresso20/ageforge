@@ -1,26 +1,43 @@
 name: Smoke
 
-# Nightly: the smoke suite's full tier, every scenario (see CONTRIBUTING.md,
-# "Smoke testing"). Pacing is enforced: a first-cycle age of the progression
-# scenario whose median across seeds leaves 0.5x-2x of its target
-# (config.AgeTargets) fails the job,
-# as does anything else that breaks.
+# Two scheduled suites (see CONTRIBUTING.md, "Smoke testing"), both with
+# pacing enforced: a first-cycle age of the progression scenario whose median
+# across seeds leaves 0.5x-2x of its target (config.AgeTargets) fails the
+# run, as does anything else that breaks.
+#
+#   - Nightly: the full tier, every scenario; progression stops at the
+#     Digital Age.
+#   - Weekly: the deep tier, progression to a Quantum Age prestige through
+#     the Last Passage, so every age from the Primitive to the Galactic is
+#     enforced. One seed per job (a few hours each), then a merge job pools
+#     the runs and grades the median.
+#
+# Run either by hand from the Actions tab (workflow_dispatch, "suite").
 
 on:
   schedule:
-    - cron: "17 6 * * *"
+    - cron: "17 6 * * *" # nightly
+    - cron: "41 3 * * 0" # weekly
   workflow_dispatch:
+    inputs:
+      suite:
+        description: "nightly (full tier) or weekly (deep tier)"
+        type: choice
+        options: [nightly, weekly]
+        default: nightly
 
 permissions:
   contents: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  # Per suite: the Sunday nightly must not cancel the weekly still running.
+  group: ${{ github.workflow }}-${{ github.ref }}-${{ github.event.schedule || inputs.suite }}
   cancel-in-progress: true
 
 jobs:
   smoke:
     name: smoke (full tier)
+    if: ${{ github.event.schedule == '17 6 * * *' || (github.event_name == 'workflow_dispatch' && inputs.suite == 'nightly') }}
     runs-on: ubuntu-latest
     timeout-minutes: 180
     permissions:
@@ -65,6 +82,125 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           SHA: ${{ github.sha }}
         run: bash scripts/smoke-email.sh nightly
+
+      - name: Email the report
+        if: ${{ always() && env.MAIL_ENABLED == 'true' && steps.email.outcome == 'success' }}
+        # dawidd6/action-send-mail v22
+        uses: dawidd6/action-send-mail@67ce3558d613188179559c61d3565140cf389968
+        with:
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.MAIL_USERNAME }}
+          password: ${{ secrets.MAIL_PASSWORD }}
+          to: ${{ secrets.MAIL_TO }}
+          from: AgeForge Smoke <${{ secrets.MAIL_USERNAME }}>
+          subject: ${{ steps.email.outputs.subject }}
+          body: file://${{ runner.temp }}/smoke-email.md
+          html_body: file://${{ runner.temp }}/smoke-email.md
+          convert_markdown: true
+          attachments: ${{ steps.email.outputs.attachments }}
+
+  deep-seed:
+    name: deep (seed ${{ matrix.seed }})
+    if: ${{ github.event.schedule == '41 3 * * 0' || (github.event_name == 'workflow_dispatch' && inputs.suite == 'weekly') }}
+    runs-on: ubuntu-latest
+    # Under GitHub's 6-hour job limit, with room for setup and upload.
+    timeout-minutes: 340
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        seed: [1, 2, 3, 4, 5]
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # Report mode: one seed's pacing is only graded here; the merge job
+      # enforces the median across seeds. Panics, soft-locks and invariant
+      # violations still fail this job.
+      - name: Play seed ${{ matrix.seed }} to a Quantum Age prestige
+        run: go run ./cmd/smoke -tier deep -scenario progression -seed-base ${{ matrix.seed }} -seeds 1 -pacing report -v -out smoke-report
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: smoke-deep-seed-${{ matrix.seed }}
+          path: smoke-report/
+          if-no-files-found: warn
+
+  deep:
+    name: smoke (deep tier)
+    needs: deep-seed
+    if: ${{ always() && needs.deep-seed.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    env:
+      MAIL_ENABLED: ${{ secrets.MAIL_USERNAME != '' && secrets.MAIL_PASSWORD != '' && secrets.MAIL_TO != '' }}
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: smoke-deep-seed-*
+          path: seeds
+
+      - name: Merge the seeds and enforce pacing
+        id: smoke
+        env:
+          SEEDS: 5
+          SEED_JOBS: ${{ needs.deep-seed.result }}
+        run: |
+          shopt -s nullglob
+          reports=(seeds/*/report.json)
+          if [ "${#reports[@]}" -eq 0 ]; then
+            echo "::error::no seed job wrote a report (seed jobs: $SEED_JOBS)"
+            exit 1
+          fi
+          status=0
+          go run ./cmd/smoke -tier deep -merge "$(IFS=,; echo "${reports[*]}")" -pacing enforce -v -out smoke-report || status=$?
+          if [ "${#reports[@]}" -lt "$SEEDS" ] || [ "$SEED_JOBS" != "success" ]; then
+            echo "::error::${#reports[@]} of $SEEDS seeds reported (seed jobs: $SEED_JOBS)"
+            status=1
+          fi
+          exit "$status"
+
+      - name: Job summary
+        if: ${{ always() }}
+        run: |
+          if [ -f smoke-report/summary.md ]; then
+            cat smoke-report/summary.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "The merge wrote no report; see the step log." >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: smoke-report-deep
+          path: smoke-report/
+          if-no-files-found: warn
+
+      - name: Email body
+        id: email
+        if: ${{ always() && env.MAIL_ENABLED == 'true' }}
+        env:
+          RESULT: ${{ steps.smoke.outcome == 'success' && 'PASS' || 'FAIL' }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SHA: ${{ github.sha }}
+        run: bash scripts/smoke-email.sh weekly
 
       - name: Email the report
         if: ${{ always() && env.MAIL_ENABLED == 'true' && steps.email.outcome == 'success' }}

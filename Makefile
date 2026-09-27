@@ -1,4 +1,4 @@
-.PHONY: build run clean check test vet validate smoke smoke-full all release release-patch release-minor release-major commit
+.PHONY: build run clean check test vet validate smoke smoke-full smoke-deep all release release-patch release-minor release-major commit
 
 # Default: build + vet + run
 all: check run
@@ -50,6 +50,12 @@ smoke:
 # on more seeds, plus the play styles and two prestige cycles.
 smoke-full:
 	@go run ./cmd/smoke -tier full -pacing enforce -v -out smoke-report
+
+# Smoke suite, deep tier (what the weekly runs, one seed per CI job): the
+# progression scenario on five seeds to a Quantum Age prestige, pacing
+# enforced on every age to the Galactic. Takes hours.
+smoke-deep:
+	@go run ./cmd/smoke -tier deep -seeds 5 -pacing enforce -v -out smoke-report
 
 # Run the game
 run: build
