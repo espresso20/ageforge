@@ -122,6 +122,11 @@ type GameEngine struct {
 	running    bool
 	stopCh     chan struct{}
 	stopOnce   sync.Once
+	// loopDone is closed when the current Start loop has returned; nil until
+	// Start first runs. Stop waits on it, so once Stop returns no tick,
+	// autosave or account flush from that loop is still in flight. Guarded
+	// by mu.
+	loopDone chan struct{}
 
 	// Permanent bonuses from milestones
 	permanentBonuses map[string]float64
@@ -562,6 +567,7 @@ func (ge *GameEngine) updateMoraleTick() {
 // Start begins the game tick loop in the calling goroutine. It blocks until
 // Stop is called. Safe to call again after Stop — the stop channel is
 // re-initialised so the engine can restart (e.g. ESC → splash → New Game).
+// Stop waits for this function to return.
 //
 // NOTE: Do not call Start from inside the UI goroutine without a wrapper; it
 // blocks indefinitely. Wrap with go ge.Start() or run via the app goroutine.
@@ -578,7 +584,13 @@ func (ge *GameEngine) Start() {
 	default:
 	}
 	ge.running = true
+	// Read the channel once, under the lock: a later restart replaces the
+	// field, and this loop must keep listening to the channel it started with.
+	stop := ge.stopCh
+	done := make(chan struct{})
+	ge.loopDone = done
 	ge.mu.Unlock()
+	defer close(done)
 
 	timer := time.NewTimer(ge.getTickInterval())
 	defer timer.Stop()
@@ -588,6 +600,13 @@ func (ge *GameEngine) Start() {
 	for {
 		select {
 		case <-timer.C:
+			// select picks at random between ready cases, so a timer that
+			// fired alongside Stop could still tick. Check stop first.
+			select {
+			case <-stop:
+				return
+			default:
+			}
 			ge.safeTick()
 
 			// Periodic autosave (outside the tick lock) → overwrite the active save
@@ -620,7 +639,7 @@ func (ge *GameEngine) Start() {
 			}
 
 			timer.Reset(ge.getTickInterval())
-		case <-ge.stopCh:
+		case <-stop:
 			return
 		}
 	}
@@ -906,21 +925,38 @@ func (ge *GameEngine) StartNewNamedGame(name string) error {
 	return ge.SaveGame(name)
 }
 
-// Stop halts the game tick loop. Safe to call multiple times; subsequent
-// calls are no-ops. After Stop returns the Start goroutine has exited.
+// Stop halts the game tick loop and waits for it to exit: when Stop returns,
+// the Start goroutine has returned and no tick, autosave or account flush of
+// its is still running. Safe to call multiple times, and before Start ever
+// ran. Must not be called from the tick goroutine or with ge.mu held; nothing
+// does (the tick loop never blocks on the UI, so the UI goroutine can wait).
 func (ge *GameEngine) Stop() {
+	first := false
 	ge.stopOnce.Do(func() {
+		first = true
 		ge.mu.Lock()
 		ge.running = false
+		stop := ge.stopCh
 		ge.mu.Unlock()
-		close(ge.stopCh)
-		// Flush any pending account lifetime stats on a clean exit so a prestige/age-up
-		// since the last autosave isn't lost (Phase 6). Outside ge.mu — Save does I/O —
-		// and via the locking accessor. No-op when not dirty.
+		close(stop)
+	})
+
+	ge.mu.RLock()
+	done := ge.loopDone
+	ge.mu.RUnlock()
+	if done != nil {
+		<-done
+	}
+
+	// Flush any pending account lifetime stats on a clean exit so a prestige/age-up
+	// since the last autosave isn't lost (Phase 6). After the loop has exited, so it
+	// cannot race an autosave's flush; outside ge.mu — Save does I/O — and via the
+	// locking accessor. No-op when not dirty.
+	if first {
 		if acct := ge.Account(); acct != nil {
 			_ = acct.FlushIfDirty()
 		}
-	})
+	}
 }
 
 // doTick processes one game tick. It holds the write lock for its entire
