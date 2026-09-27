@@ -53,7 +53,7 @@ func autoExpeditionTestEngine(t *testing.T, age string, n, assigned int, stock f
 func runAutoTicks(ge *GameEngine, n int) (launched, resolved int) {
 	prevActive := ge.Military.ActiveByCategory(ExpeditionScouting) != nil
 	for i := 0; i < n; i++ {
-		resolved += len(ge.Military.Tick(0, 0))
+		resolved += len(ge.Military.Tick(ge.gameRNG(), 0, 0))
 		ge.processAutoExpeditions()
 		nowActive := ge.Military.ActiveByCategory(ExpeditionScouting) != nil
 		if nowActive && !prevActive {

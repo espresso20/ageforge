@@ -225,16 +225,9 @@ func TestSmokeUISweep(t *testing.T) {
 	sim.SetSize(180, 56)
 	h := &reproHarness{t: t, eng: eng, a: a, sim: sim, runErr: make(chan error, 1)}
 	go func() { h.runErr <- a.Run() }()
-	t.Cleanup(func() {
-		eng.Stop()
-		stopped := make(chan struct{})
-		go func() { a.Stop(); close(stopped) }()
-		select {
-		case <-stopped:
-		case <-time.After(3 * time.Second):
-			t.Logf("app.Stop() did not return (event loop wedged)")
-		}
-	})
+	// Registered after SetDataDirForTest, so (cleanups run last in, first
+	// out) it runs before the data dir is restored.
+	t.Cleanup(h.teardown)
 	s := &sweeper{reproHarness: h, step: "boot"}
 	s.wait("splash menu", func() bool { return s.front() == "splash" })
 

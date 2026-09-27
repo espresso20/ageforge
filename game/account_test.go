@@ -23,13 +23,12 @@ import (
 // is called (none here do), so the shared override + reset are safe.
 func isolateAccountDir(t *testing.T) string {
 	t.Helper()
-	priorDir := dataDirOverride
 	priorID := getActiveAccountID()
 	tmp := t.TempDir()
-	dataDirOverride = tmp
+	priorDir := setDataDirOverride(tmp)
 	setActiveAccountID("")
 	t.Cleanup(func() {
-		dataDirOverride = priorDir
+		setDataDirOverride(priorDir)
 		setActiveAccountID(priorID)
 	})
 	return tmp

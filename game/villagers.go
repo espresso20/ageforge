@@ -228,11 +228,12 @@ func (vm *WorkerManager) KillWorker(count int) int {
 		if assigned <= rt.count {
 			break
 		}
-		// Find the largest assignment and reduce it by 1
+		// Find the largest assignment and reduce it by 1. Ties break on the
+		// smaller key, as in RemovePct, so map order never picks the loser.
 		maxKey := ""
 		maxVal := 0
 		for k, c := range rt.assignments {
-			if c > maxVal {
+			if c > maxVal || (c == maxVal && c > 0 && k < maxKey) {
 				maxVal = c
 				maxKey = k
 			}

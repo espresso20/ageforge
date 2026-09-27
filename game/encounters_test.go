@@ -197,10 +197,10 @@ func TestBoonApplier_InjectsAndExpires(t *testing.T) {
 
 	// One tick before expiry it is still active; the duration-th tick removes it.
 	for i := 0; i < dur-1; i++ {
-		ge.Events.Tick(i, "medieval_age", order, ge.currentEpoch)
+		ge.Events.Tick(ge.gameRNG(), i, "medieval_age", order, ge.currentEpoch)
 	}
 	stillActive := ge.buildResolver().AddTotal("food_rate")
-	ge.Events.Tick(dur, "medieval_age", order, ge.currentEpoch)
+	ge.Events.Tick(ge.gameRNG(), dur, "medieval_age", order, ge.currentEpoch)
 	afterExpiry := ge.buildResolver().AddTotal("food_rate")
 	ge.mu.Unlock()
 

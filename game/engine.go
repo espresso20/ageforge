@@ -122,6 +122,11 @@ type GameEngine struct {
 	running    bool
 	stopCh     chan struct{}
 	stopOnce   sync.Once
+	// loopDone is closed when the current Start loop has returned; nil until
+	// Start first runs. Stop waits on it, so once Stop returns no tick,
+	// autosave or account flush from that loop is still in flight. Guarded
+	// by mu.
+	loopDone chan struct{}
 
 	// Permanent bonuses from milestones
 	permanentBonuses map[string]float64
@@ -260,6 +265,14 @@ type GameEngine struct {
 	seed int64
 	rng  *rand.Rand
 
+	// quip is a second stream seeded from the same master seed, used only for
+	// the dim one-line log quips (config.PickLogFlavor and the coin flips that
+	// decide whether a quip appears). They land in the log, so they must be
+	// reproducible, but a separate stream keeps them from shifting gameplay
+	// rolls: adding a quip, or a code path that logs one before a roll, cannot
+	// change what the next ge.rng draw returns.
+	quip *rand.Rand
+
 	// prose is the recent-history filter for generated flavour. One Stream for
 	// the whole log, so an expedition line and a raid line cannot repeat each
 	// other's sentence inside a screenful; see expedition_flavor.go. Cosmetic
@@ -336,6 +349,22 @@ func newSeed() int64 { return time.Now().UnixNano() }
 func (ge *GameEngine) SeedRNG(seed int64) {
 	ge.seed = seed
 	ge.rng = rand.New(rand.NewSource(seed))
+	ge.quip = rand.New(rand.NewSource(seed ^ quipSeedSalt))
+}
+
+// quipSeedSalt separates the quip stream from the gameplay stream so the two
+// never replay each other's draws.
+const quipSeedSalt int64 = 0x51_9C_0FFE_E0D1
+
+// quipRNG returns the seeded quip stream. An engine not built by NewGameEngine
+// gets one derived from whatever seed it has; the gameplay stream is left
+// alone, so a test that swapped in its own ge.rng keeps it. Call only under the
+// write lock.
+func (ge *GameEngine) quipRNG() *rand.Rand {
+	if ge.quip == nil {
+		ge.quip = rand.New(rand.NewSource(ge.seed ^ quipSeedSalt))
+	}
+	return ge.quip
 }
 
 // Seed returns this run's master RNG seed (persisted in the save; surfaced in
@@ -351,14 +380,11 @@ const AutosaveInterval = 60 * time.Second
 // moraleCap returns 1.0 + 0.05 per wonder built.
 func (ge *GameEngine) moraleCap() float64 {
 	cap := 1.0
-	for key, count := range ge.Buildings.counts {
-		if count > 0 {
-			def, ok := ge.Buildings.defs[key]
-			if ok && def.Category == "wonder" {
-				cap += 0.05 * float64(count)
-			}
+	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
+		if def.Category == "wonder" {
+			cap += 0.05 * float64(count)
 		}
-	}
+	})
 	return cap
 }
 
@@ -488,20 +514,13 @@ func (ge *GameEngine) updateMoraleTick() {
 	// and defs (lock-free; we already hold the engine write lock — do NOT call
 	// GetState()).
 	moraleFromBuildings := 0.0
-	for key, count := range ge.Buildings.counts {
-		if count == 0 {
-			continue
-		}
-		def, ok := ge.Buildings.defs[key]
-		if !ok {
-			continue
-		}
+	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
 		for _, eff := range def.Effects {
 			if eff.Type == "morale" {
 				moraleFromBuildings += eff.Value * float64(count)
 			}
 		}
-	}
+	})
 	if moraleFromBuildings != 0 {
 		ge.applyMorale(moraleFromBuildings)
 	}
@@ -548,6 +567,7 @@ func (ge *GameEngine) updateMoraleTick() {
 // Start begins the game tick loop in the calling goroutine. It blocks until
 // Stop is called. Safe to call again after Stop — the stop channel is
 // re-initialised so the engine can restart (e.g. ESC → splash → New Game).
+// Stop waits for this function to return.
 //
 // NOTE: Do not call Start from inside the UI goroutine without a wrapper; it
 // blocks indefinitely. Wrap with go ge.Start() or run via the app goroutine.
@@ -564,7 +584,13 @@ func (ge *GameEngine) Start() {
 	default:
 	}
 	ge.running = true
+	// Read the channel once, under the lock: a later restart replaces the
+	// field, and this loop must keep listening to the channel it started with.
+	stop := ge.stopCh
+	done := make(chan struct{})
+	ge.loopDone = done
 	ge.mu.Unlock()
+	defer close(done)
 
 	timer := time.NewTimer(ge.getTickInterval())
 	defer timer.Stop()
@@ -574,6 +600,13 @@ func (ge *GameEngine) Start() {
 	for {
 		select {
 		case <-timer.C:
+			// select picks at random between ready cases, so a timer that
+			// fired alongside Stop could still tick. Check stop first.
+			select {
+			case <-stop:
+				return
+			default:
+			}
 			ge.safeTick()
 
 			// Periodic autosave (outside the tick lock) → overwrite the active save
@@ -606,7 +639,7 @@ func (ge *GameEngine) Start() {
 			}
 
 			timer.Reset(ge.getTickInterval())
-		case <-ge.stopCh:
+		case <-stop:
 			return
 		}
 	}
@@ -892,21 +925,38 @@ func (ge *GameEngine) StartNewNamedGame(name string) error {
 	return ge.SaveGame(name)
 }
 
-// Stop halts the game tick loop. Safe to call multiple times; subsequent
-// calls are no-ops. After Stop returns the Start goroutine has exited.
+// Stop halts the game tick loop and waits for it to exit: when Stop returns,
+// the Start goroutine has returned and no tick, autosave or account flush of
+// its is still running. Safe to call multiple times, and before Start ever
+// ran. Must not be called from the tick goroutine or with ge.mu held; nothing
+// does (the tick loop never blocks on the UI, so the UI goroutine can wait).
 func (ge *GameEngine) Stop() {
+	first := false
 	ge.stopOnce.Do(func() {
+		first = true
 		ge.mu.Lock()
 		ge.running = false
+		stop := ge.stopCh
 		ge.mu.Unlock()
-		close(ge.stopCh)
-		// Flush any pending account lifetime stats on a clean exit so a prestige/age-up
-		// since the last autosave isn't lost (Phase 6). Outside ge.mu — Save does I/O —
-		// and via the locking accessor. No-op when not dirty.
+		close(stop)
+	})
+
+	ge.mu.RLock()
+	done := ge.loopDone
+	ge.mu.RUnlock()
+	if done != nil {
+		<-done
+	}
+
+	// Flush any pending account lifetime stats on a clean exit so a prestige/age-up
+	// since the last autosave isn't lost (Phase 6). After the loop has exited, so it
+	// cannot race an autosave's flush; outside ge.mu — Save does I/O — and via the
+	// locking accessor. No-op when not dirty.
+	if first {
 		if acct := ge.Account(); acct != nil {
 			_ = acct.FlushIfDirty()
 		}
-	})
+	}
 }
 
 // doTick processes one game tick. It holds the write lock for its entire
@@ -965,7 +1015,8 @@ func (ge *GameEngine) doTick() {
 		if f, ok := snap["food"]; ok {
 			ge.addLog("debug", fmt.Sprintf("Food: %.1f (rate %+.3f/t), pop=%d", f.Amount, f.Rate, ge.Workers.TotalPop()))
 		}
-		for key, rs := range snap {
+		for _, key := range sortedKeys(snap) {
+			rs := snap[key]
 			if rs.Unlocked && rs.Amount >= rs.Storage && rs.Storage > 0 {
 				ge.addLog("debug", fmt.Sprintf("Resource at cap: %s (%.0f/%.0f)", key, rs.Amount, rs.Storage))
 			}
@@ -984,7 +1035,7 @@ func (ge *GameEngine) doTick() {
 		ge.starvationTicks++
 		if ge.starvationTicks == 1 {
 			ge.addLog("warning", "⚠ Your people are starving! Food has run out.")
-			if q := config.PickLogFlavor(config.LogFlavorStarvation); q != "" {
+			if q := config.PickLogFlavor(config.LogFlavorStarvation, ge.quipRNG()); q != "" {
 				ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
 			}
 		}
@@ -997,7 +1048,7 @@ func (ge *GameEngine) doTick() {
 	} else if ge.starvationTicks > 0 {
 		ge.starvationTicks = 0
 		ge.addLog("info", "✓ Food supply restored — starvation ended.")
-		if q := config.PickLogFlavor(config.LogFlavorStarvationEnded); q != "" {
+		if q := config.PickLogFlavor(config.LogFlavorStarvationEnded, ge.quipRNG()); q != "" {
 			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
 		}
 	}
@@ -1069,8 +1120,8 @@ func (ge *GameEngine) processResearch() {
 		ge.addLog("debug", fmt.Sprintf("Research complete: %s", def.Name))
 		ge.addLog("success", fmt.Sprintf("Research complete: %s!", def.Name))
 		// Cosmetic flavour on roughly half of breakthroughs (varies, never spams).
-		if rand.Intn(2) == 0 {
-			if q := config.PickLogFlavor(config.LogFlavorResearchDone); q != "" {
+		if ge.quipRNG().Intn(2) == 0 {
+			if q := config.PickLogFlavor(config.LogFlavorResearchDone, ge.quipRNG()); q != "" {
 				ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
 			}
 		}
@@ -1087,7 +1138,7 @@ func (ge *GameEngine) processResearch() {
 // processEvents handles random events
 func (ge *GameEngine) processEvents() {
 	ageOrder := ge.progress.GetAgeOrder()
-	triggered, expired := ge.Events.Tick(ge.tick, ge.age, ageOrder, ge.currentEpoch)
+	triggered, expired := ge.Events.Tick(ge.gameRNG(), ge.tick, ge.age, ageOrder, ge.currentEpoch)
 
 	for _, def := range triggered {
 		ge.addLog("debug", fmt.Sprintf("Event triggered: %s (sentiment: %s)", def.Name, def.Sentiment))
@@ -1159,7 +1210,7 @@ func (ge *GameEngine) processExpeditions() {
 		}
 	}
 	// Tick all active expeditions (one per category); each may resolve this tick.
-	for _, res := range ge.Military.Tick(militaryBonus, expeditionBonus) {
+	for _, res := range ge.Military.Tick(ge.gameRNG(), militaryBonus, expeditionBonus) {
 		ge.addLog("debug", fmt.Sprintf("Expedition resolved: %s (rewards: %d types)", res.Key, len(res.Rewards)))
 		ge.addLog("event", res.Message)
 		// Cosmetic flavour, generated HERE rather than in MilitaryManager because
@@ -1200,21 +1251,13 @@ func (ge *GameEngine) processTrade() {
 // rebuild and re-normalize the entire building table on each call.
 func (ge *GameEngine) harborRouteBonus() float64 {
 	bonus := 0.0
-	defs := ge.Buildings.defs
-	for key, count := range ge.Buildings.counts {
-		if count == 0 {
-			continue
-		}
-		def, ok := defs[key]
-		if !ok {
-			continue
-		}
+	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
 		for _, eff := range def.Effects {
 			if eff.Type == "trade_route_income" {
 				bonus += eff.Value * float64(count)
 			}
 		}
-	}
+	})
 	return bonus
 }
 
@@ -1225,7 +1268,7 @@ func (ge *GameEngine) processDiplomacy() {
 	// "traded recently" this window. TradeManager.RecordTrade already runs in
 	// the same lock, so reading the active count here is safe.
 	tradedRecently := ge.Trade.ActiveRouteCount() > 0
-	messages := ge.Diplomacy.Tick(ge.age, ageOrder, ge.tick, tradedRecently)
+	messages := ge.Diplomacy.Tick(ge.gameRNG(), ge.age, ageOrder, ge.tick, tradedRecently)
 	for _, msg := range messages {
 		ge.addLog("event", msg)
 	}
@@ -1304,8 +1347,8 @@ func (ge *GameEngine) processDiplomacy() {
 // checkMilestones checks for newly completed milestones and chains
 func (ge *GameEngine) checkMilestones() {
 	ageOrder := ge.progress.GetAgeOrder()
-	researchedTechs := make(map[string]bool)
-	for _, key := range ge.Research.GetResearched() {
+	researchedTechs := make(map[string]bool, len(ge.Research.researched))
+	for key := range ge.Research.researched {
 		researchedTechs[key] = true
 	}
 
@@ -1588,8 +1631,13 @@ func (ge *GameEngine) recalculateRates() {
 // getAllResearchProductionEffects returns production effects from researched techs
 func (ge *GameEngine) getAllResearchProductionEffects() []config.Effect {
 	var effects []config.Effect
-	allTechs := ge.Research.defs // held defs: recalculateRates runs every tick
-	for _, key := range ge.Research.GetResearched() {
+	// Held defs in sorted order: recalculateRates runs every tick, and callers
+	// sum these effects, so the order must not follow the researched map.
+	allTechs := ge.Research.defs
+	for _, key := range ge.Research.order {
+		if !ge.Research.researched[key] {
+			continue
+		}
 		if def, ok := allTechs[key]; ok {
 			for _, eff := range def.Effects {
 				if eff.Type == "production" {
@@ -1638,7 +1686,8 @@ func (ge *GameEngine) advanceAge(newAge string) {
 		count                            int
 	}
 	var transforms []pendingTransform
-	for key, count := range ge.Buildings.counts {
+	for _, key := range sortedKeys(ge.Buildings.counts) {
+		count := ge.Buildings.counts[key]
 		if count == 0 {
 			continue
 		}
@@ -1672,7 +1721,8 @@ func (ge *GameEngine) advanceAge(newAge string) {
 			t.oldName, t.newName, t.count, t.oldKey))
 	}
 	// Mark buildings as legacy if their lineage now has a higher-tier unlocked equivalent.
-	for key, count := range ge.Buildings.counts {
+	for _, key := range sortedKeys(ge.Buildings.counts) {
+		count := ge.Buildings.counts[key]
 		if count == 0 || ge.Buildings.IsLegacy(key) {
 			continue
 		}
@@ -1737,7 +1787,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	ge.addLog("success", fmt.Sprintf("Advanced from %s to %s!", oldName, newName))
 	// Cosmetic flavour echo in the log (distinct from the age splash quip — see ui/age_splash.go).
 	// Age transitions are rare, so it fires every time.
-	if q := config.PickLogFlavor(config.LogFlavorAgeAdvance); q != "" {
+	if q := config.PickLogFlavor(config.LogFlavorAgeAdvance, ge.quipRNG()); q != "" {
 		ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
 	}
 
@@ -2026,7 +2076,8 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		// 10 free buildings of the most common built non-wonder type
 		bestKey := ""
 		bestCount := 0
-		for key, count := range ge.Buildings.counts {
+		for _, key := range sortedKeys(ge.Buildings.counts) {
+			count := ge.Buildings.counts[key]
 			if def, ok := ge.Buildings.defs[key]; ok && def.Category != "wonder" && count > bestCount {
 				bestKey = key
 				bestCount = count
@@ -2324,20 +2375,16 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 // Must be called with the engine lock held.
 func (ge *GameEngine) getWonderBonuses() map[string]float64 {
 	out := make(map[string]float64)
-	for key, count := range ge.Buildings.counts {
-		if count == 0 {
-			continue
-		}
-		def, ok := ge.Buildings.defs[key]
-		if !ok || (def.Category != "wonder" && def.Category != "monument") {
-			continue
+	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
+		if def.Category != "wonder" && def.Category != "monument" {
+			return
 		}
 		for _, eff := range def.Effects {
 			if eff.Type == "bonus" {
 				out[eff.Target] += eff.Value * float64(count)
 			}
 		}
-	}
+	})
 	return out
 }
 
@@ -2440,8 +2487,8 @@ func (ge *GameEngine) processBuildQueue() {
 			ge.addLog("success", fmt.Sprintf("%s completed! (#%d)", def.Name, ge.Buildings.GetCount(item.BuildingKey)))
 			// Cosmetic flavour — present but not stale: ~1 in 3 completions get a quip,
 			// so a long build queue stays lively without turning into wallpaper.
-			if rand.Intn(3) == 0 {
-				if q := config.PickLogFlavor(config.LogFlavorBuildingComplete); q != "" {
+			if ge.quipRNG().Intn(3) == 0 {
+				if q := config.PickLogFlavor(config.LogFlavorBuildingComplete, ge.quipRNG()); q != "" {
 					ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
 				}
 			}
@@ -3228,7 +3275,7 @@ func (ge *GameEngine) launchExpeditionLocked(key string) error {
 	}
 
 	// Age range + active-expedition validation (does NOT touch resources).
-	if err := ge.Military.LaunchExpedition(key, ge.age, ageOrder); err != nil {
+	if err := ge.Military.LaunchExpedition(ge.gameRNG(), key, ge.age, ageOrder); err != nil {
 		return err
 	}
 
@@ -3729,8 +3776,8 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	ge.addLog("event", fmt.Sprintf("Welcome back! You were away for %s.", timeStr))
 	if len(gains) > 0 {
 		ge.addLog("info", fmt.Sprintf("Offline progress (%d ticks at 50%% efficiency):", offlineTicks))
-		for res, amount := range gains {
-			ge.addLog("info", fmt.Sprintf("  +%.1f %s", amount, res))
+		for _, res := range sortedKeys(gains) {
+			ge.addLog("info", fmt.Sprintf("  +%.1f %s", gains[res], res))
 		}
 	}
 }
@@ -3985,8 +4032,8 @@ func (ge *GameEngine) countWonders() int {
 
 // getResearchedTechMap returns a map of researched tech keys (must be called with lock held)
 func (ge *GameEngine) getResearchedTechMap() map[string]bool {
-	m := make(map[string]bool)
-	for _, key := range ge.Research.GetResearched() {
+	m := make(map[string]bool, len(ge.Research.researched))
+	for key := range ge.Research.researched {
 		m[key] = true
 	}
 	return m
@@ -4016,11 +4063,11 @@ func formatMilestoneRewards(effects []config.Effect) string {
 // formatCost formats a cost map for display
 func formatCost(cost map[string]float64) string {
 	s := ""
-	for k, v := range cost {
+	for _, k := range sortedKeys(cost) {
 		if s != "" {
 			s += ", "
 		}
-		s += fmt.Sprintf("%s: %.0f", k, v)
+		s += fmt.Sprintf("%s: %.0f", k, cost[k])
 	}
 	return s
 }

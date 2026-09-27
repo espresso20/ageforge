@@ -57,12 +57,12 @@ func TestMonuments_GrantPermanentProductionBonus(t *testing.T) {
 	ge := NewGameEngine()
 
 	// Register a monument def (mirrors config) and mark one built.
-	ge.Buildings.defs["monument_of_ages"] = config.BuildingDef{
+	ge.Buildings.injectDef(config.BuildingDef{
 		Key:      "monument_of_ages",
 		Name:     "Monument of Ages",
 		Category: "monument",
 		Effects:  []config.Effect{{Type: "bonus", Target: "production_all", Value: 0.05}},
-	}
+	})
 
 	if got := ge.getWonderBonuses()["production_all"]; got != 0 {
 		t.Fatalf("baseline static production_all bonus = %v, want 0 (nothing built yet)", got)

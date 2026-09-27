@@ -78,15 +78,17 @@ var logFlavorPools = map[string][]string{
 	},
 }
 
-// PickLogFlavor returns a random flavour line for the given moment, or ""
+// PickLogFlavor returns a flavour line for the given moment, drawn from rng, or ""
 // if the moment is unknown or its pool is empty. Callers append the result
 // as a separate, dim, cosmetic log line — never in place of functional text.
-func PickLogFlavor(moment string) string {
+// The line lands in the game log, so the engine passes its seeded run RNG to
+// keep the log reproducible for a given seed.
+func PickLogFlavor(moment string, rng *rand.Rand) string {
 	pool := logFlavorPools[moment]
 	if len(pool) == 0 {
 		return ""
 	}
-	return pool[rand.Intn(len(pool))]
+	return pool[rng.Intn(len(pool))]
 }
 
 // LogFlavorMoments returns the set of registered moment keys (sorted-order

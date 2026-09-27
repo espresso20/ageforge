@@ -404,7 +404,7 @@ func (ge *GameEngine) Endure() error {
 	ge.addLog("info", fmt.Sprintf("  Timed: production -10%% for %d ticks (reconstruction period).", endureDebuffTicks))
 	ge.addLog("success", fmt.Sprintf("  ✦ Survived marker earned for %s badge.", epName))
 	// Cosmetic flavour — a wry beat after surviving the catastrophe.
-	if q := config.PickLogFlavor(config.LogFlavorCatastropheSurvived); q != "" {
+	if q := config.PickLogFlavor(config.LogFlavorCatastropheSurvived, ge.quipRNG()); q != "" {
 		ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
 	}
 
@@ -537,8 +537,8 @@ func (ge *GameEngine) Succumb() error {
 // is cleared (prestige or succumb resets) so cross-run bonuses are not lost.
 // The research bonus is not stored here; it is derived (legacyModifiers).
 func (ge *GameEngine) reapplyLegacyBonuses() {
-	for epochKey, active := range ge.legacyBonuses {
-		if !active {
+	for _, epochKey := range sortedKeys(ge.legacyBonuses) {
+		if !ge.legacyBonuses[epochKey] {
 			continue
 		}
 		for res, mult := range config.LegacyBonusForEpoch(epochKey) {

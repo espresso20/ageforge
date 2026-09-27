@@ -232,8 +232,10 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 		disrupted = diplomacy.DisruptedResources()
 	}
 
-	// Process active trade routes
-	for key, route := range tm.activeRoutes {
+	// Process active trade routes in key order: routes can compete for the
+	// same export, so which one runs first decides which one is starved.
+	for _, key := range sortedKeys(tm.activeRoutes) {
+		route := tm.activeRoutes[key]
 		def, ok := routes[key]
 		if !ok {
 			continue

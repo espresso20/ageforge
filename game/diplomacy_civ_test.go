@@ -116,7 +116,7 @@ func TestFirstContact_GatedAndNeutral(t *testing.T) {
 // announces first contact — no expedition required.
 func TestFirstContact_FiresFlavorMessage(t *testing.T) {
 	dm := NewDiplomacyManager()
-	msgs := dm.Tick("medieval_age", fullAgeOrder(), 1, false)
+	msgs := dm.Tick(testRNG(), "medieval_age", fullAgeOrder(), 1, false)
 	joined := ""
 	for _, m := range msgs {
 		joined += m + "\n"
@@ -241,7 +241,7 @@ func TestWorkerLending_AddsAndReturns(t *testing.T) {
 	// Advance the manager past the return tick; processLending should queue a return.
 	ge.mu.Lock()
 	dm := ge.Diplomacy
-	_ = dm.processLending(100) // tick >= ReturnTick
+	_ = dm.processLending(testRNG(), 100) // tick >= ReturnTick
 	for _, n := range dm.TakePendingReturns() {
 		ge.Workers.KillWorker(n)
 	}
@@ -259,7 +259,7 @@ func TestWorkerLending_PermanentAtHighOpinion(t *testing.T) {
 	dm := NewDiplomacyManager()
 	// A permanent batch (as would be created at opinion > 80) must survive.
 	dm.lentBatches = []LentWorkerBatch{{FactionKey: "riverlands_tribes", Count: 4, ReturnTick: 50, Permanent: true}}
-	_ = dm.processLending(10_000) // way past ReturnTick
+	_ = dm.processLending(testRNG(), 10_000) // way past ReturnTick
 	if returns := dm.TakePendingReturns(); len(returns) != 0 {
 		t.Errorf("permanent loan was returned: %v", returns)
 	}
@@ -282,12 +282,14 @@ func TestWorkerLending_PermanentFlagWhenOpinionAbove80(t *testing.T) {
 		}
 	}
 	dm.factions[peaceful] = &FactionState{Discovered: true, Status: "allied", Opinion: 95}
-	// Run many lend windows; the ~12% roll will fire eventually.
+	// Run many lend windows; the ~12% roll fires within a few. The rng is
+	// seeded, so this is the same sequence on every run.
+	rng := testRNG()
 	for tick := driftInterval; tick < driftInterval*400 && !dm.hasLentBatch(peaceful); tick += driftInterval {
-		_ = dm.processLending(tick)
+		_ = dm.processLending(rng, tick)
 	}
 	if !dm.hasLentBatch(peaceful) {
-		t.Skip("lend roll did not fire within the window (probabilistic) — invariant unverified this run")
+		t.Fatal("lend roll never fired in 400 seeded windows")
 	}
 	for _, b := range dm.lentBatches {
 		if b.FactionKey == peaceful && !b.Permanent {

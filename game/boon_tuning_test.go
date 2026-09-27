@@ -720,7 +720,7 @@ func runTuningScenario(t *testing.T, sc tuningScenario, ticks int, seed int64) *
 			}
 		}
 
-		ge.Events.Tick(tick, ge.age, order, ge.currentEpoch)
+		ge.Events.Tick(ge.gameRNG(), tick, ge.age, order, ge.currentEpoch)
 
 		if n := ge.activeFactionBoonCount(); n > 0 {
 			stats.ticksAnyBoon++

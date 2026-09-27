@@ -1,6 +1,7 @@
 package config
 
 import (
+	"math/rand"
 	"strings"
 	"testing"
 )
@@ -50,8 +51,9 @@ func TestPickLogFlavorReturnsValidLine(t *testing.T) {
 			valid[line] = true
 		}
 		// Sample many times to exercise the rand path across the whole pool.
+		rng := rand.New(rand.NewSource(1))
 		for i := 0; i < 200; i++ {
-			got := PickLogFlavor(moment)
+			got := PickLogFlavor(moment, rng)
 			if got == "" {
 				t.Fatalf("PickLogFlavor(%q) returned empty for a populated pool", moment)
 			}
@@ -69,8 +71,9 @@ func TestPickLogFlavorVaries(t *testing.T) {
 	// building_complete has the largest pool; over 300 draws we should see
 	// several distinct lines unless the RNG or picker is broken.
 	seen := make(map[string]bool)
+	rng := rand.New(rand.NewSource(1))
 	for i := 0; i < 300; i++ {
-		seen[PickLogFlavor(LogFlavorBuildingComplete)] = true
+		seen[PickLogFlavor(LogFlavorBuildingComplete, rng)] = true
 	}
 	if len(seen) < 2 {
 		t.Errorf("PickLogFlavor never varied over 300 draws (saw %d distinct lines)", len(seen))
@@ -80,10 +83,11 @@ func TestPickLogFlavorVaries(t *testing.T) {
 // TestPickLogFlavorUnknownMoment confirms an unregistered or empty moment key
 // degrades gracefully to "" rather than panicking — the engine guards on this.
 func TestPickLogFlavorUnknownMoment(t *testing.T) {
-	if got := PickLogFlavor("no_such_moment"); got != "" {
+	rng := rand.New(rand.NewSource(1))
+	if got := PickLogFlavor("no_such_moment", rng); got != "" {
 		t.Errorf("PickLogFlavor(unknown) = %q, want empty string", got)
 	}
-	if got := PickLogFlavor(""); got != "" {
+	if got := PickLogFlavor("", rng); got != "" {
 		t.Errorf("PickLogFlavor(empty) = %q, want empty string", got)
 	}
 }

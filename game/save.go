@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/espresso20/ageforge/config"
@@ -263,9 +264,30 @@ type UnlockedState struct {
 // runs outside tests.
 var dataDirOverride string
 
+// dataDirMu guards dataDirOverride. Tests swap the override while background
+// goroutines (the tick loop's autosave, a UI refresh reading GetState's
+// SaveExists) may be resolving paths through it; the lock makes that a clean
+// handoff instead of a data race. Same pattern as activeAccountMu.
+var dataDirMu sync.RWMutex
+
+// getDataDirOverride returns the test override, or "" when unset.
+func getDataDirOverride() string {
+	dataDirMu.RLock()
+	defer dataDirMu.RUnlock()
+	return dataDirOverride
+}
+
+// setDataDirOverride sets the test override and returns the previous value.
+func setDataDirOverride(dir string) (prior string) {
+	dataDirMu.Lock()
+	defer dataDirMu.Unlock()
+	prior, dataDirOverride = dataDirOverride, dir
+	return prior
+}
+
 // SetDataDirForTest points the data ROOT (saves/account/pointer) at dir and returns a
 // restore func, so tests in OTHER packages (e.g. ui) can isolate the data root the way
-// in-package tests do via dataDirOverride directly. Pass "" to clear. This is a test-only
+// in-package tests do via setDataDirOverride. Pass "" to clear. This is a test-only
 // seam — production never calls it; it is exported solely to cross the package boundary.
 // The active theme persists into the active account's account.json under this root, so a ui
 // test that exercises SetActiveTheme must call this to avoid clobbering a real ./data tree.
@@ -277,12 +299,11 @@ var dataDirOverride string
 // cleanup keeps the seam symmetric with the in-package isolateAccountDir helper and the
 // suite order-independent.
 func SetDataDirForTest(dir string) (restore func()) {
-	priorDir := dataDirOverride
 	priorID := getActiveAccountID()
-	dataDirOverride = dir
+	priorDir := setDataDirOverride(dir)
 	setActiveAccountID("")
 	return func() {
-		dataDirOverride = priorDir
+		setDataDirOverride(priorDir)
 		setActiveAccountID(priorID)
 	}
 }
@@ -297,8 +318,8 @@ func SetDataDirForTest(dir string) (restore func()) {
 // SCOPED dir resolving to <root>/accounts/<activeID>/. Account.json and saves resolve
 // through the scoped dir; the pointer and the migration resolve through this root.
 func rootDataDir() string {
-	if dataDirOverride != "" {
-		return dataDirOverride
+	if dir := getDataDirOverride(); dir != "" {
+		return dir
 	}
 	exe, err := os.Executable()
 	if err != nil {

@@ -144,12 +144,12 @@ func assertResolverGolden(t *testing.T, ge *GameEngine, resCheck string, gather 
 // eff.Type=="bonus", count-scaled) without coupling the test to any real
 // wonder's balance numbers.
 func addWonder(ge *GameEngine, key, target string, value float64, count int) {
-	ge.Buildings.defs[key] = config.BuildingDef{
+	ge.Buildings.injectDef(config.BuildingDef{
 		Key:      key,
 		Name:     key,
 		Category: "wonder",
 		Effects:  []config.Effect{{Type: "bonus", Target: target, Value: value}},
-	}
+	})
 	ge.Buildings.counts[key] = count
 }
 
