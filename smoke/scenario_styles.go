@@ -39,16 +39,26 @@ func firstLastPassageAge() string {
 }
 
 // ApplyStyle turns base into the named style. Unknown names are an error.
+// base.CheckIn is the idle style's time between check-ins (0: IdleCheckIn);
+// every other style plays continuously.
 func ApplyStyle(base Config, style string) (Config, error) {
 	c := base
 	c.Style = style
+	c.CheckIn = 0
 	switch style {
 	case StyleGreedy:
 	case StyleIdle:
-		every := int(IdleCheckIn / game.BaseTickInterval)
+		c.CheckIn = base.CheckIn
+		if c.CheckIn <= 0 {
+			c.CheckIn = IdleCheckIn
+		}
+		every := int(c.CheckIn / game.BaseTickInterval)
 		c.DecideEvery, c.CheckEvery = every, every
+		// Save rather than invest only when the goal lands before the next
+		// visit anyway.
+		c.Horizon = c.CheckIn
 		// Caps fill between check-ins, so "no progress" needs a longer window.
-		c.SoftlockSpan = 4 * IdleCheckIn
+		c.SoftlockSpan = 4 * c.CheckIn
 	case StyleHarbinger:
 		c.Harbinger = HarbingerBoth
 	case StyleSuccumb:
@@ -73,8 +83,17 @@ func runStyles(e *Env, res *Result) {
 	for _, style := range styles {
 		base := e.Base
 		base.Cycles, base.MaxSim = 1, 300*time.Hour
-		if style == StyleCosmic {
+		switch style {
+		case StyleCosmic:
 			base.MaxSim = 600 * time.Hour
+		case StyleIdle:
+			// Enough for a 3-hourly check-in player to reach the first
+			// prestige (about 18 days).
+			base.MaxSim = 720 * time.Hour
+		}
+		base.CheckIn = e.CheckIn
+		if o := e.Overrides.MaxSim; o > 0 {
+			base.MaxSim = o
 		}
 		cfg, err := ApplyStyle(base, style)
 		if err != nil {

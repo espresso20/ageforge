@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # Builds the smoke-report email for the CI workflows (go.yml's smoke job and
-# smoke.yml's nightly job): the body in $RUNNER_TEMP/smoke-email.md, and the
+# smoke.yml's nightly and weekly jobs): the body in $RUNNER_TEMP/smoke-email.md, and the
 # subject and attachment list as step outputs.
 #
-# Usage: scripts/smoke-email.sh "<context>"   e.g. "PR #42" or "nightly"
+# Usage: scripts/smoke-email.sh "<context>"   e.g. "PR #42", "nightly" or "weekly"
 # Env:   RESULT (PASS|FAIL, from the smoke step's outcome), RUN_URL, SHA,
 #        PR_URL (optional), RUNNER_TEMP, GITHUB_OUTPUT.
 set -euo pipefail

@@ -46,6 +46,11 @@ type Config struct {
 	AgeTimeout time.Duration
 	MaxSim     time.Duration // hard cap per run
 	Horizon    time.Duration // bot saves instead of investing inside this
+	// CheckIn, if set, makes the bot a player who looks at the game only
+	// this often (the idle style): each decision point is a visit that
+	// plays rounds until nothing more is worth doing (Bot.CheckIn).
+	// ApplyStyle sets DecideEvery, Horizon and SoftlockSpan to match.
+	CheckIn time.Duration
 
 	// Pacing is PacingReport (default) or PacingEnforce. In report mode an
 	// age past its timeout and a run out of MaxSim are pacing notes, not
@@ -296,6 +301,7 @@ func newRunner(cfg Config, seed int64, ge *game.GameEngine) *runner {
 	r.bot = NewBot(ge)
 	r.bot.Harbinger = cfg.Harbinger
 	r.bot.HorizonTicks = cfg.Horizon.Seconds() / game.BaseTickInterval.Seconds()
+	r.bot.CheckInTicks = cfg.CheckIn.Seconds() / game.BaseTickInterval.Seconds()
 	r.subscribe()
 	return r
 }
@@ -371,7 +377,11 @@ func (r *runner) step() bool {
 			r.stop(OutcomeDone)
 			return true
 		}
-		r.bot.Play(st)
+		if r.bot.CheckInTicks > 0 {
+			r.bot.CheckIn(st)
+		} else {
+			r.bot.Play(st)
+		}
 	}
 	r.sim += r.ge.StepTicks(1)
 	r.ticks++

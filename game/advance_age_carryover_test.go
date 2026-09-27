@@ -7,7 +7,7 @@ import (
 )
 
 // TestAdvanceAge_CapsHoardedResource verifies that a player who over-accumulates
-// a resource the new age uses has it capped to ~carryoverStarterBuildings of the
+// a resource the new age uses has it capped to ~CarryoverStarterBuildings of the
 // cheapest new-age building's cost — NOT carried over as a flat percentage of the
 // hoard. (EPIC: age-pacing economy rebalance, sub-ticket 2.)
 func TestAdvanceAge_CapsHoardedResource(t *testing.T) {
@@ -24,7 +24,7 @@ func TestAdvanceAge_CapsHoardedResource(t *testing.T) {
 
 	entry := config.AgeEntryCosts("stone_age")
 	for _, res := range []string{"wood", "stone"} {
-		cap := carryoverStarterBuildings * entry[res]
+		cap := CarryoverStarterBuildings * entry[res]
 		got := ge.Resources.Get(res)
 		if got != cap {
 			t.Errorf("%s: hoard should be capped to %.2f (8×%.2f), got %.2f",
@@ -87,11 +87,11 @@ func TestAdvanceAge_ResidualForUnusedResource(t *testing.T) {
 
 	ge.advanceAge("stone_age")
 
-	want := startAmt * carryoverResidualPct
+	want := startAmt * CarryoverResidualPct
 	got := ge.Resources.Get(unused)
 	if got != want {
 		t.Errorf("unused resource %q should drop to residual %.2f (%.0f%%), got %.2f",
-			unused, want, carryoverResidualPct*100, got)
+			unused, want, CarryoverResidualPct*100, got)
 	}
 }
 

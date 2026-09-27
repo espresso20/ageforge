@@ -19,7 +19,15 @@ const (
 	TierFast = "fast"
 	// TierFull is the nightly tier (`make smoke-full`): everything, deeper.
 	TierFull = "full"
+	// TierDeep is the weekly tier: only the progression scenario, played
+	// to a Quantum Age prestige through the Last Passage, so pacing is
+	// graded on every age the nightly never reaches. CI runs one seed per
+	// job and merges the reports (-merge).
+	TierDeep = "deep"
 )
+
+// deepScenarios are the scenarios the deep tier runs by default.
+var deepScenarios = map[string]bool{"static": true, "progression": true}
 
 // Scenario statuses.
 const (
@@ -49,6 +57,8 @@ type Env struct {
 	Overrides Overrides
 	// Style limits the styles scenario to one style ("" runs them all).
 	Style string
+	// CheckIn is the idle style's time between check-ins (0: IdleCheckIn).
+	CheckIn time.Duration
 	// Strict fails on known bugs too instead of reporting them as warnings.
 	// There are none today; a scenario that learns of one checks it.
 	Strict bool
@@ -230,6 +240,12 @@ func RunScenarios(e *Env, names []string) (*Session, error) {
 			continue
 		}
 		res := &Result{Name: sc.Name}
+		if e.Tier == TierDeep && !deepScenarios[sc.Name] && !want[sc.Name] {
+			res.Status = StatusSkip
+			res.Summary = "not in the deep tier"
+			sess.Scenarios = append(sess.Scenarios, res)
+			continue
+		}
 		if sc.FullOnly && !e.full() && !want[sc.Name] {
 			res.Status = StatusSkip
 			res.Summary = "full tier only"
