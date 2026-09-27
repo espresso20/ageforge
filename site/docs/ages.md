@@ -10,6 +10,27 @@ Each age unlocks exactly one wonder building. You must **build that wonder** bef
 
 Every age can be finished, and an automated check (the "Gate Covenant") keeps it that way in every release. Every building requirement names a building you can build in the age you are advancing **from**, never an older one you can no longer build. And the last required copy of each building always costs at most **half** the storage you can build by then (every storage building up to your current age at its build cap), so a full set of storage always leaves room to afford it.
 
+## How Long Each Age Takes
+
+Each age is tuned to a target length in game time at 1x speed. Building output, prices, wonder costs and requirements are all sized to it: a staffed production building earns back the price of its first copy in a fraction of the age's target, and nothing takes longer to build than a sixth of it.
+
+| Age | Target | Age | Target |
+|---|---|---|---|
+| Primitive | 15m | Modern | 12h |
+| Stone | 45m | Information | 14h |
+| Bronze | 1.5h | Digital | 16h |
+| Iron | 2.5h | Cyberpunk | 18h |
+| Classical | 3.5h | Fusion | 20h |
+| Medieval | 4.5h | Space | 22h |
+| Renaissance | 6h | Interstellar | 24h |
+| Colonial | 7h | Galactic | 24h |
+| Industrial | 8h | Quantum | 24h |
+| Victorian | 9h | | |
+| Electric | 10h | | |
+| Atomic | 12h | | |
+
+That is about three days from a fresh start to the Modern Age, where prestige unlocks. You don't have to sit through it: the game grants up to 24 hours of offline progress when you come back.
+
 ## What Happens on Age Advance
 
 When your civilization crosses into a new age:
@@ -70,10 +91,10 @@ Starting age. No requirements.
 
 | Requirement | Amount |
 |---|---|
-| Food | 16,000 |
-| Wood | 10,000 |
-| Knowledge | 2,800 |
-| Huts | 20 |
+| Food | 1,000 |
+| Wood | 1,000 |
+| Knowledge | 150 |
+| Huts | 10 |
 | Story Circles | 5 |
 
 **Unlocks:** Longhouse, Storage Pit, Forager Post, Woodcutter Camp, Stone Camp, Stone Pit, Elders' Hall, Standing Stones, War Camp, Great Monolith · **Resource:** Stone
@@ -86,11 +107,11 @@ Starting age. No requirements.
 
 | Requirement | Amount |
 |---|---|
-| Food | 30,000 |
-| Wood | 16,000 |
-| Stone | 8,000 |
-| Knowledge | 10,000 |
-| Longhouses | 40 |
+| Food | 4,000 |
+| Wood | 8,000 |
+| Stone | 4,000 |
+| Knowledge | 1,500 |
+| Longhouses | 15 |
 | Stone Pits | 5 |
 | Elders' Halls | 5 |
 
@@ -128,8 +149,8 @@ Starting age. No requirements.
 | Gold | 14,000 |
 | Knowledge | 35,000 |
 | Hunting Lodges | 15 |
-| Agoras | 8 |
-| Trading Posts | 5 |
+| Agoras | 12 |
+| Trading Posts | 10 |
 
 **Unlocks:** Villa, Classical Vault, Estate Farm, Wood Workshop, Marble Works, Library, Oracle House, Military Academy, Merchant Quarter, Aqueduct, Forge, Amphitheater, Parthenon · **Resource:** Culture
 
@@ -161,8 +182,8 @@ Starting age. No requirements.
 |---|---|
 | Gold | 180,000 |
 | Knowledge | 220,000 |
-| Steel | 3,500 |
-| Faith | 44,000 |
+| Steel | 880 |
+| Faith | 8,100 |
 | Monastery Libraries | 5 |
 | Guildhalls | 10 |
 | Castle Keeps | 5 |
@@ -181,9 +202,9 @@ Starting age. No requirements.
 | Knowledge | 940,000 |
 | Steel | 110,000 |
 | Culture | 300,000 |
-| Exchanges | 5 |
-| Universities | 5 |
-| Art Studios | 5 |
+| Exchanges | 8 |
+| Universities | 8 |
+| Art Studios | 8 |
 
 **Unlocks:** Settlement Block, Colonial Warehouse, Plantation, Coal Works, Deep Iron Mine, Natural Philosophy Hall, Mission, Fort, Port, Dockyard, Iron Works, Concert Hall, Grand Lighthouse
 
@@ -198,8 +219,8 @@ Starting age. No requirements.
 | Steel | 470,000 |
 | Gold | 3,800,000 |
 | Knowledge | 3,000,000 |
-| Plantations | 5 |
-| Ports | 8 |
+| Plantations | 8 |
+| Ports | 10 |
 
 **Unlocks:** Tenement, Industrial Depot, Agricultural Works, Steam Coal Plant, Steam Mine, Research Institute, Church, Military Base, Stock Exchange, Iron Works Complex, Steel Mill, Coal Plant, Opera House, Geographic Society, Crystal Palace · **Resource:** Oil
 
@@ -366,7 +387,7 @@ Prestige becomes available at this age. Type `prestige confirm yes` to reset wit
 | Titanium | 130,000,000,000 |
 | Plasma | 310,000,000,000 |
 | Launch Complexes | 10 |
-| Orbital Habitats | 20 |
+| Orbital Habitats | 15 |
 | Solar Collector Arrays | 10 |
 
 **Unlocks:** Generation Ship, Stellar Vault, Protein Synthesizer, Reality Matter Weaver, Stellar Core Drill, Xenology Institute, Void Monastery, Fleet Command, Galactic Trade Hub, Warp Drive Plant, Antimatter Forge, Pulsar Tap, Galactic Network Node, Cultural Beacon, Warp Nexus · **Resource:** Dark Matter
@@ -395,7 +416,7 @@ Prestige becomes available at this age. Type `prestige confirm yes` to reset wit
 
 | Requirement | Amount |
 |---|---|
-| Antimatter | 6,200,000,000,000 |
+| Antimatter | 6,300,000,000,000 |
 | Dark Matter | 13,000,000,000,000 |
 | Stellar Exchanges | 15 |
 | Stellar Metallurgy | 15 |

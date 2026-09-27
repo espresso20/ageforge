@@ -37,6 +37,34 @@ Faith is produced by **Faith lineage buildings** with **Faith-domain workers** a
 
 Shrine → Standing Stones → Altar → Temple → Oracle House → Cathedral → Basilica → Mission → Church → Grand Cathedral → Revival Hall → Spiritual Center → Meditation Center → Digital Temple → Cyber Shrine → Neon Sanctuary → Quantum Chapel → Orbital Sanctuary → Void Monastery → Stellar Shrine → Transcendence Hall
 
+**Faith rates (fully staffed, per building):**
+
+| Building | Age | Faith/tick | Workers |
+|----------|-----|------------|---------|
+| Shrine | Primitive | 0.002 | 2 |
+| Standing Stones | Stone | 0.004 | 2 |
+| Altar | Bronze | 0.008 | 3 |
+| Temple | Iron | 0.016 | 3 |
+| Oracle House | Classical | 0.032 | 4 |
+| Cathedral | Medieval | 0.064 | 5 |
+| Basilica | Renaissance | 0.128 | 5 |
+| Mission | Colonial | 0.256 | 5 |
+| Church | Industrial | 0.512 | 5 |
+| Grand Cathedral | Victorian | 1.02 | 6 |
+| Revival Hall | Electric | 2.05 | 6 |
+| Spiritual Center | Atomic | 4.1 | 6 |
+| Meditation Center | Modern | 8.19 | 7 |
+| Digital Temple | Information | 16.4 | 7 |
+| Cyber Shrine | Digital | 32.8 | 8 |
+| Neon Sanctuary | Cyberpunk | 65.5 | 8 |
+| Quantum Chapel | Fusion | 131 | 9 |
+| Orbital Sanctuary | Space | 262 | 9 |
+| Void Monastery | Interstellar | 524 | 10 |
+| Stellar Shrine | Galactic | 1,050 | 10 |
+| Transcendence Hall | Quantum | 2,100 | 12 |
+
+Faith is a **flow resource**: unlike construction resources, whose rates follow the [Payback Rule](buildings.md#how-production-rates-are-set), faith rates are set by hand and double each tier, and the requirements that ask for faith are sized to them. Faith cannot be bought at the market. Early on, the big faith sources are not the lineage buildings: the **Stonehenge** wonder (Bronze Age) adds 0.6 faith/tick, the **Theology** tech (Medieval Age) 0.3 faith/tick and the **Sistine Chapel** wonder (Renaissance Age) 1.8 faith/tick.
+
 **Recruit and assign Faith workers:**
 
 ```
@@ -46,6 +74,19 @@ assign temple 5
 ```
 
 Workers are recruited generically (no domain argument). They become Faith workers when assigned to a faith-domain building.
+
+---
+
+## Faith Costs
+
+Faith is also spent directly in two places:
+
+| What | Faith needed |
+|------|--------------|
+| Entering the Renaissance Age | 8.1K, alongside 180K gold, 220K knowledge and 880 steel |
+| Sistine Chapel (Renaissance wonder) | 20K, alongside culture, gold and stone |
+
+Bank faith through the Medieval Age so the Renaissance gate doesn't hold you up. The gate only checks your faith, and faith carries over into the new age untouched. The Sistine Chapel, which you must build before leaving the Renaissance Age, actually spends it (through `wonder collect`), which lowers your faith % until it refills, so keep an eye on the epoch odds below if an epoch boundary is close.
 
 ---
 

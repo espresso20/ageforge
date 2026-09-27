@@ -98,7 +98,7 @@ Do not let pending upgrades accumulate for too long during high-demand periods �
 ### Strategic advice
 
 - **Upgrade high-count buildings early.** The cost formula makes the last few copies cheaper to upgrade than the first, so a civilization with 15 Gathering Camps gets proportionally cheaper upgrades than one with 3. Reward your past investment.
-- **Upgrade before starvation events.** A Farm produces significantly more than a Gathering Camp. If an epoch catastrophe is incoming, having upgraded food buildings gives you a wider safety margin.
+- **Upgrade before starvation events.** A Farm produces twice what a Gathering Camp does (2 vs 1 food/tick fully staffed). If an epoch catastrophe is incoming, having upgraded food buildings gives you a wider safety margin.
 - **You control the order.** You might upgrade your food lineage immediately on age advance and leave military or knowledge buildings pending until you've banked enough resources. There is no time pressure — pending buildings still produce.
 - **Don't sell pending buildings for cash.** The 50% sell refund is already baked into the upgrade delta — you get that value back when you upgrade. Selling instead throws away the upgrade discount.
 
@@ -148,6 +148,10 @@ A handful of **milestone rewards** (Master Builder, Grand Architect, and others)
 - 2nd: 18 wood
 - 5th: 27 wood
 - Building 5 at once: 16+18+21+24+27 = **106 wood total** (not 16×5=80)
+
+### Build times
+
+Build times are capped by the age's pace: nothing takes longer to build than **1/6 of its age's target time** (wonders included), and storage buildings, which queue one copy at a time, take at most **1/48** of it. In practice that is 2 minutes in the Primitive Age, 1 hour in the Renaissance and 4 hours from the Interstellar Age on (storage: 19 seconds, 8 minutes and 30 minutes). The full per-age list is in the table under [How Production Rates Are Set](#how-production-rates-are-set).
 
 ---
 
@@ -213,6 +217,47 @@ actual_rate = base_rate × count × (0.20 + 0.80 × workers_assigned / total_cap
 At **0 workers** a building still produces at **20% of base rate** (the idle floor). At **full staffing** it produces at **100%**. This means an empty building isn't wasted — it's just throttled.
 
 Buildings without a worker domain (Housing, Culture/Arts) produce at exactly `base_rate × count` regardless of workers.
+
+### How Production Rates Are Set
+
+`base_rate` is the **fully staffed** rate, and it is the number each building's description shows.
+
+For **construction resources** (anything the buildings of an age cost: wood, stone, iron, gold, steel, coal, electricity, data and so on), rates follow the **Payback Rule**: a producer's output is set so that, fully staffed, it earns back the price of its first copy in its age's **payback time**. The payback time is a share of how long the age is meant to take, and that share grows through the game: about 1/16 of the age in the Primitive Age, about 1/7 in the Iron Age, a quarter in the Renaissance, about a third in the Victorian Age and about two thirds in the Space Age. Later ages repay more slowly because every building you put up in earlier ages keeps producing alongside the new tier.
+
+Output is valued at **price parity**. Each age has a price level for each resource (the typical first-copy price in that resource among the age's buildings), and resources are worth each other in the ratio of those levels. A building with two outputs splits its value between them. Because rates follow prices, they grow roughly 5–8x per age.
+
+**Examples:**
+- Wood Camp (Primitive): costs 16 wood and makes 0.569 wood/tick fully staffed, so it repays itself in 28 ticks (56 seconds).
+- Stone Pit (Stone): costs 180 stone and 300 wood. At Stone Age parity (240 stone = 360 wood) that is worth 380 stone, and at 3.14 stone/tick it repays in about 4 minutes.
+
+**Flow resources keep hand-set rates:** food, faith, culture and soldiers. They feed workers, set morale and epoch odds, fill culture caps or make up your army, and the requirements that ask for them are sized to those rates. Resources nothing in the age costs (marble and iron ore, for example, or knowledge outside the Medieval to Colonial Ages) also keep fixed rates.
+
+| Age | Target time | Payback (fully staffed) | Build-time cap | Storage build cap |
+|-----|-------------|-------------------------|----------------|-------------------|
+| Primitive | 15m | 56s | 2m | 19s |
+| Stone | 45m | 4m | 8m | 56s |
+| Bronze | 1.5h | 11m | 15m | 2m |
+| Iron | 2.5h | 22m | 25m | 3m |
+| Classical | 3.5h | 38m | 35m | 4m |
+| Medieval | 4.5h | 58m | 45m | 6m |
+| Renaissance | 6h | 1.5h | 1h | 8m |
+| Colonial | 7h | 2h | 1.2h | 9m |
+| Industrial | 8h | 2.5h | 1.3h | 10m |
+| Victorian | 9h | 3.2h | 1.5h | 11m |
+| Electric | 10h | 3.9h | 1.7h | 12m |
+| Atomic | 12h | 5.1h | 2h | 15m |
+| Modern | 12h | 5.6h | 2h | 15m |
+| Information | 14h | 7.1h | 2.3h | 18m |
+| Digital | 16h | 8.7h | 2.7h | 20m |
+| Cyberpunk | 18h | 10.6h | 3h | 22m |
+| Fusion | 20h | 12.6h | 3.3h | 25m |
+| Space | 22h | 14.7h | 3.7h | 28m |
+| Interstellar | 24h | 17.1h | 4h | 30m |
+| Galactic | 24h | 18.1h | 4h | 30m |
+| Quantum | 24h | 19.1h | 4h | 30m |
+| Transcendent | 24h | 20.2h | 4h | 30m |
+
+Times are game time at 1x speed (1 tick = 2 seconds). Some construction resources have no producer in certain ages (stone after the Bronze Age, for example); the market sells them at parity instead. See [Resources](resources.md#buying-at-the-market).
 
 ---
 
@@ -326,10 +371,10 @@ Cultural Monuments are one-off structures (Category: `monument`, capped at one c
 
 | Monument | Age | Culture Cost | Permanent Bonus |
 |----------|-----|--------------|-----------------|
-| Cultural Obelisk | Classical | 2,500 | +1% all production |
-| Grand Amphitheatre | Medieval | 25,000 | +2% all production |
-| Eternal Library | Industrial | 500,000 | +3% all production |
-| Monument of Ages | Modern | 25,000,000 | +5% all production |
+| Cultural Obelisk | Classical | 710 | +1% all production |
+| Grand Amphitheatre | Medieval | 7,100 | +2% all production |
+| Eternal Library | Industrial | 140,000 | +3% all production |
+| Monument of Ages | Modern | 7,100,000 | +5% all production |
 
 Monuments are one of the two culture sinks (the other is the `festival` command); prestige gates remain the primary long-term sink. See [Culture](resources.md#culture).
 
@@ -353,6 +398,8 @@ Wonders are unique one-of-a-kind buildings — you can only build each wonder on
 wonder collect <resource> <amount|all>   — bank resources toward the active wonder
 build <wonder_key>                       — begin construction once fully funded
 ```
+
+Each age's wonder must be built before you can advance to the next age. A wonder's price adds up to 40 **price units** of its age, where one price unit is what a typical building of that age charges in a single resource (valued at [price parity](#how-production-rates-are-set)); each wonder keeps its own mix of resources. A wonder takes at most 1/6 of the age's target time to build.
 
 Wonders provide powerful civilization-wide bonuses. Each wonder completed grants a permanent +0.5× speed boost to your game tick rate.
 

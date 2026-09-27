@@ -31,41 +31,96 @@ For age gates this is made exact by the **Gate Covenant** (see Storage Design): 
 required copy of every required building costs at most half the storage buildable by then,
 with no discounts, and a unit test enforces it.
 
-### Law 2 — The Build Time Curve
-> The time required to save up for and build the next building should follow a predictable,
-> intentional curve across the full game. It should never feel instant and never feel impossible.
+### Law 2 — The Pacing Curve
+> Every age has a target length at 1x, and the economy is derived from it. Nothing is priced
+> or rated by guesswork against "normal play pace".
 
-Target build times (approximate, at normal play pace):
+AgeForge is a terminal idle game that players check a few times a day, and it grants up to
+24 hours of offline progress, so game time is close to calendar time. The targets
+(`config.AgeTargets`, 2026-09-27):
 
-| Age Tier | Target build time per building |
-|----------|-------------------------------|
-| Primitive | 1–5 min |
-| Stone | 5–15 min |
-| Bronze / Iron | 15–45 min |
-| Classical → Renaissance | 1–4 hrs |
-| Colonial → Industrial | 4–12 hrs |
-| Victorian → Atomic | 12–48 hrs |
-| Modern → Digital | 2–7 days |
-| Cyberpunk → Fusion | 1–2 weeks |
-| Space → Galactic | 2–4 weeks |
-| Quantum | Prestige milestone |
+| Age | Target | Age | Target | Age | Target |
+|-----|--------|-----|--------|-----|--------|
+| Primitive | 15 min | Renaissance | 6 h | Information | 14 h |
+| Stone | 45 min | Colonial | 7 h | Digital | 16 h |
+| Bronze | 1.5 h | Industrial | 8 h | Cyberpunk | 18 h |
+| Iron | 2.5 h | Victorian | 9 h | Fusion | 20 h |
+| Classical | 3.5 h | Electric | 10 h | Space | 22 h |
+| Medieval | 4.5 h | Atomic | 12 h | Interstellar, Galactic, Quantum | 24 h each |
+| | | Modern | 12 h | | |
 
-**Prestige loop target: several weeks of real calendar time.**
-Prestige is a major milestone, not a reset you do every few hours. The first prestige loop
-should feel like an accomplishment. Subsequent loops are faster due to prestige bonuses,
-eventually allowing players to reach and exceed their previous age ceiling.
+That is about three days to the Modern Age, where the first prestige unlocks, and about
+twelve days to the Quantum Age. **The first prestige is a three-day goal, not a several-week
+one**: the old "several weeks of calendar time" target, and the per-building build-time
+table that went with it (hours to weeks per building from the Victorian Age on), described
+a game no one could finish; no run reached the Modern Age at all.
 
-### Law 3 — The Production Curve
-> Total resource production rate must stay on a smooth exponential curve. At no point should
-> a player's production rate plateau or drop. Each age tier should provide a meaningful
-> production multiplier over the previous tier.
+Derived from the targets:
+- **Payback** (Law 3) sets production.
+- **Construction time** is at most 1/6 of the age's target, wonders included (the next
+  advance needs them), and 1/48 for storage buildings, which queue one copy at a time and
+  are bought many times an age.
+- **Research time** is at most 1/8 of the tech's age target, so the handful of techs an age
+  offers fit in it one at a time.
+- The per-building wait falls out of these: with a dozen producers each repaying in the
+  payback time, the next copy is minutes away early and an hour or two late.
 
-Target production multiplier per age advance: approximately **5–10×** total output.
+**Measuring it.** The smoke harness plays a greedy bot on fixed seeds and reports the time
+spent in each age; `smoke/targets.go` holds the same table and `-pacing enforce` fails a run
+whose median leaves 0.5x-2x of it. The bot has to play like a reasonable person for this to
+measure the game rather than the bot (see the bot's strategy comment in `smoke/bot.go`).
 
-This means:
-- A player entering Bronze Age should produce roughly 5–10× more resources per tick than
-  they did at peak Stone Age.
-- Building costs at each age should be calibrated to this multiplier — not guessed.
+### Law 3 — The Payback Rule
+> A production building, fully staffed, earns back the price of its first copy in its age's
+> **payback time**, valued at the age's **price parity**. Its output is derived from its
+> price; no rate is typed in for a construction resource.
+
+Definitions:
+- A **construction resource** of an age is one that appears in the first-copy price of at
+  least one of that age's buildings (wonders aside), except the flow resources below.
+- Its **price level** is the median of those first-copy prices. The **parity** of two
+  resources is the ratio of their price levels. A **price unit** is one price level: a
+  building costing the median in each of three resources costs 3 price units.
+- The **payback time** is `target × epochProgress^1.25 / 16`, where `epochProgress` counts
+  epochs of three ages continuously (1 in the Primitive Age, 2 in the Iron Age, 3 in the
+  Renaissance). That is 1/16 of the target in the Primitive Age, about 1/7 in the Iron Age,
+  1/4 in the Renaissance, 1/3 in the Victorian and 2/3 in the Space Age.
+
+Then `rate = priceUnits(first copy) × priceLevel(output) / payback / n`, where a building
+with n construction-resource outputs splits its value between them. Staffing still scales it
+from 20% to 100% (Law 4).
+
+Why the payback grows through the game: a Primitive player has nothing but what they build
+that age, so producers have to repay in minutes. From the Bronze Age on every age also runs
+on all the older buildings, which keep producing forever, and there are more of them each
+age; if new producers repaid as fast, the later ages would fly by (at a flat 1/20 share the
+smoke bot finished the Renaissance in under an hour and the whole run to Modern in a day).
+Counting progress per age rather than per epoch keeps the first age of an epoch from
+inheriting buildings that repaid much faster than its own.
+
+Why this replaced "5-10x per age": rates used to double each age while prices grew 5-8x,
+so by the Renaissance a new producer took weeks to repay and gates needed months of
+production. Deriving rates from prices makes production track prices by construction; the
+old 5-10x target now holds because prices grow that fast.
+
+**Flow resources** (food, faith, culture, soldiers) are exempt: their amounts drive other
+systems (food feeds workers, faith sets morale and catastrophe odds, culture fills its own
+caps and pays for festivals and monuments, soldiers are an army). Their producers keep
+hand-set rates, and requirements on them, including wonder prices, are sized to what the
+age produces of them. Resources no building of an age costs (iron ore, marble, knowledge
+before the Medieval Age) also keep their typed rates.
+
+**Market parity (corollary).** The market trades any two construction resources of the
+player's current age at parity less a 20% fee, whether or not the pair is listed in
+`config.BaseExchangeRates`. So a round trip always loses value and trading never beats
+building, and every construction resource has a source as long as one of them is produced:
+stone after the Bronze Age, iron after the Medieval Age, steel from the Modern Age on, titanium and crypto
+come from the market. Listed pairs with a flow resource (or knowledge where it isn't a
+construction resource) keep their fixed rates.
+
+**Wonders** cost `WonderPriceUnits` (40) price units of their age, in their typed resource
+proportions, plus hand-sized flow parts. They are part of every gate: the current age's
+wonder must stand before `advance`.
 
 ### Law 4 — The Coupling Law
 > Every production building has a **worker capacity** (how many workers of a given type it
@@ -125,17 +180,10 @@ capacity per building** than the previous tier.
 
 ## Cost Scaling Formula
 
-Building costs should be **derived from expected production rate**, not guessed.
-
-```
-building_cost = production_rate_at_age × target_build_time_in_ticks
-```
-
-Where:
-- `production_rate_at_age` = expected total resource production for the relevant resource
-  at the point the player first encounters this building
-- `target_build_time_in_ticks` = build time target for this age tier (from Law 2)
-- `tick_interval` = ~1,500ms (1.5 seconds at base speed)
+Prices are the given; production is derived from them (Law 3). The direction used to be the
+other way round (`building_cost = production_rate × target_build_time`), but the rates were
+never set to match, which is how prices outran production by 10^5 by the late game. A tick is
+2 seconds at 1x (`game.BaseTickInterval`, mirrored by `config.TickSeconds`).
 
 ### Cost Scale Factors
 
@@ -204,6 +252,18 @@ Cyberpunk). Those buildings were dead content.
 `smoke.StaticGates` implements all of this and `TestGateCovenant` (smoke/static_test.go)
 fails `go test ./...` when a balance change breaks it, so it runs in CI on every PR.
 
+Two things the covenant does not check yet: the current age's **wonder**, which every
+advance also requires (the Stellar Cradle cost 940T uranium in an age where only the
+market's fixed-rate pairs and old Atomic buildings could supply it), and whether a
+requirement on a **flow resource** can be met in a reasonable time (the Renaissance asked
+44K faith at about 1.5 faith/tick). Both were fixed by hand in the pacing rebalance.
+
+**Gate size.** With Law 3 the time an age takes follows mostly from its gate (required
+buildings plus wonder, in price units) and the stock of older buildings. Gates that were
+far smaller than their neighbours' finished in a fraction of the target and were enlarged
+(Classical, Colonial, Industrial); the steel-heavy Space Age gate was trimmed, since steel
+and titanium come only from the market there.
+
 **Levers, in order of preference.** When a gate breaks the covenant:
 
 1. If it names an older age's building, retarget it to the same lineage's building in A
@@ -256,9 +316,9 @@ playing correctly. That's the idle game working as designed.
 - [ ] Remove MaxCount from all production/housing buildings in config/buildings.go
 
 ### Phase 3 — Balance Numbers
-- [ ] Derive all building base costs using: `cost = production_rate_at_age × target_build_ticks`
-- [ ] Verify Storage Covenant (Law 1) for all 22 age transitions
-- [ ] Tune worker food costs and output multipliers against the build time curve (Law 2)
+- [x] Derive production from prices and the age targets (the Payback Rule, Law 3, 2026-09-27)
+- [x] Verify Storage Covenant (Law 1) for all 22 age transitions (Gate Covenant, 2026-09-26)
+- [ ] Tune worker food costs against the new rates (food producers keep hand-set rates)
 
 ### Phase 4 — UI
 - [ ] Update population panel to show current-tier workers prominently, legacy collapsed
@@ -266,6 +326,69 @@ playing correctly. That's the idle game working as designed.
 - [ ] Worker assignment UI uses domain name (not class name) to avoid churn on age advance
 
 ---
+
+## Appendix — Pacing rebalance (2026-09-27)
+
+Time in each age for the smoke bot, median (min–max) over seeds 1–5 at 1x, against the
+Law 2 targets. Before: master at 62eefac, run with no age timeout. After: this change.
+
+| Age | Target | Before | After |
+|---|---|---|---|
+| Primitive | 15 min | 5.8 h (5.7–6.0) | 18 min (17–18) |
+| Stone | 45 min | 23.5 h (22.6–24.0) | 1.1 h (1.1–1.1) |
+| Bronze | 1.5 h | 1.0 d (22.4 h–1.1 d) | 2.3 h (2.2–2.3) |
+| Iron | 2.5 h | 5.0 d (4.9–5.4) | 2.5 h (2.4–2.9) |
+| Classical | 3.5 h | 16.1 d (16.0–18.0) | 4.1 h (4.0–4.5) |
+| Medieval | 4.5 h | 7.9 d (7.5–8.7) | 2.9 h (2.6–3.2) |
+| Renaissance | 6 h | 46.9 d (45.4–59.7) | 4.3 h (3.3–5.7) |
+| Colonial | 7 h | never (stalled at 83 d) | 5.1 h (4.1–5.5) |
+| Industrial | 8 h | – | 8.1 h (7.6–8.5) |
+| Victorian | 9 h | – | 7.7 h (7.2–9.3) |
+| Electric | 10 h | – | 8.9 h (7.9–9.4) |
+| Atomic | 12 h | – | 9.5 h (9.4–9.8) |
+| Modern | 12 h | – | 13.4 h (12.7–14.0) |
+| Information | 14 h | – | 18.7 h (18.6–19.8) |
+| Digital | 16 h | – | 18.7 h (16.3–19.1) |
+| Cyberpunk | 18 h | – | 1.0 d (4.3 h–1.1 d) |
+| Fusion | 20 h | – | 17.7 h (16.6–18.0) |
+| Space | 22 h | – | 1.9 d (1.8–2.0) |
+| Interstellar | 24 h | – | 1.8 d (1.7–1.9) |
+| Galactic | 24 h | – | 1.3 d (1.3–1.4) |
+
+Every age through Atomic is inside 0.5x–2x of its target; the first prestige (Modern Age)
+comes at about 2.4 days on seeds 1–10. Space (2.1x) is the one age still outside the band.
+
+### Rules and constants (config/pacing.go)
+
+| Constant | Value | Meaning |
+|---|---|---|
+| `PaybackDivisor`, `PaybackEpochExponent` | 16, 1.25 | payback = target × epochProgress^1.25 / 16 |
+| `BuildTimeDivisor` | 6 | build time ≤ target / 6 (wonders too) |
+| `StorageBuildTimeDivisor` | 48 | storage build time ≤ target / 48 |
+| `ResearchTimeDivisor` | 8 | research time ≤ tech age target / 8 |
+| `ExchangeFee` | 0.2 | market keeps 20% at parity |
+| `WonderPriceUnits` | 40 | wonder price in price units of its age |
+
+### Hand-set numbers
+
+| What | Before | After | Why |
+|---|---|---|---|
+| Stone Age gate (raw) | 8K food, 5.2K wood, 1.4K knowledge, 20 huts | 500, 500, 75, 10 huts | 15-minute Primitive Age |
+| Bronze Age gate (raw) | 15K food, 8K wood, 4K stone, 5K knowledge, 40 longhouses | 2K, 4K, 2K, 750, 15 longhouses | 45-minute Stone Age |
+| Classical gate | 8 agoras, 5 trading posts | 12, 10 | Iron Age ran at half its target |
+| Renaissance gate (raw) | 2K steel, 25K faith | 500, 4.6K | no Medieval steel building; faith is flow |
+| Colonial gate | 5 exchanges, 3 universities, 5 art studios | 8, 8, 8 | Renaissance ran at under half its target |
+| Industrial gate | 5 plantations, 8 ports | 8, 10 | Colonial ran at half its target |
+| Interstellar gate | 20 orbital habitats | 15 | market-only steel made the last copies most of the gate |
+| Gathering camp, forager post | 0.5, 1.0 food | 1.0, 1.5 | food is the Primitive bottleneck |
+| Story circle … library | 0.05, 0.1, 0.2, 0.4, 0.8 knowledge | 0.2, 0.6, 2.0, 1.6, 3.2 | knowledge isn't a construction resource before the Medieval Age |
+| Steel Forging | 0.1 steel/tick | 0.25 | the only Medieval steel source |
+| Sacred Grove, Great Monolith food | 5K, 10K | 500, 1.5K | flow part of a wonder |
+| Sistine Chapel faith | 6M | 20K | 6M faith was most of the 47-day Renaissance |
+| Stellar Cradle | 940T uranium | no uranium | nothing in the Fusion Age produces it |
+
+The Iron Age gate keeps its 80K food and 20K knowledge: the Stone Era harbinger's prices are
+derived from it.
 
 ## Appendix — Gate Covenant fixes (2026-09-26)
 

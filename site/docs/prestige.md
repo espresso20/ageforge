@@ -14,6 +14,8 @@ prestige confirm yes
 
 You unlock the ability to prestige at **Modern Age (Age 12)** and any age beyond. There is no hard cap — if you push all the way to Quantum Age before prestiiging, you'll earn substantially more points.
 
+At 1x speed a run is paced to reach the Modern Age in about **3 days of game time** (the smoke-test bot gets there in about 2.4 days). The ages before it range from 15 minutes (Primitive) to 12 hours (Atomic); the Modern Age and the ages after it take 12 to 24 hours each. The game grants up to 24 hours of offline progress, so time away counts.
+
 Prestige is refused while a [catastrophe](catastrophe.md) is pending. Type `catastrophe` and choose Endure or Succumb first.
 
 In the Cosmic Era, confirming prestige can bring the [Last Passage](#the-last-passage). If it comes, the prestige waits until you choose Endure or Succumb.
@@ -326,6 +328,6 @@ If your faith resource is at **100% of its storage cap** at the moment you prest
 - **Buy upgrades before prestiging** — spend any banked points from prior runs the moment you log in; you don't need to trigger prestige to spend points
 - **Milestones are permanent** — your civilization title and all completed milestone chains carry over; milestone progress toward chains is preserved
 - **Each run should complete one more wonder than the last** — wonder bonuses compound with prestige bonuses for dramatic acceleration
-- **Don't rush the first prestige** — reaching further ages (through Classical, Medieval, even Renaissance) before your first prestige gives substantially more points than resetting at the minimum threshold
+- **Don't rush the first prestige** — reaching further ages (Information, Digital and beyond) before your first prestige gives substantially more points than resetting at the minimum threshold
 - **Prestiging from the Cosmic Era is a gamble.** Appease before you confirm to lower the odds, Brace if you would Endure, Invite if you want the Cosmic Legacy
 - **The passive bonus compounds** — at prestige level 10, you have +20% production all and +10% tick speed before spending a single upgrade point

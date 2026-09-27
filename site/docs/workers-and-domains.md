@@ -118,19 +118,21 @@ Where `total_capacity = building_count × building.WorkerCapacity`.
 
 The 0.20 floor means idle buildings always contribute something. Full staffing is required to reach full rate.
 
+`base_rate` is the fully staffed rate shown in the building's description. For construction resources it is set by the Payback Rule (fully staffed, a producer earns back its first copy's price within the age's payback time); food, faith, culture and soldiers keep hand-set rates. See [How Production Rates Are Set](buildings.md#how-production-rates-are-set).
+
 **Example — gathering_camp:**
 
-- Base rate: 0.50 food/tick, WorkerCapacity: 3
-- Built 2× → total capacity 6, base output: 0.50 × 2 = 1.0 food/tick
-- With 3 workers assigned (50% fill): `1.0 × (0.20 + 0.80 × 0.50)` = **0.60 food/tick**
-- With all 6 workers assigned (100% fill): **1.0 food/tick**
+- Base rate: 1.0 food/tick, WorkerCapacity: 3
+- Built 2× → total capacity 6, base output: 1.0 × 2 = 2.0 food/tick
+- With 3 workers assigned (50% fill): `2.0 × (0.20 + 0.80 × 0.50)` = **1.2 food/tick**
+- With all 6 workers assigned (100% fill): **2.0 food/tick**
 
 **Example — library (classical_age, knowledge domain):**
 
-- WorkerCapacity: 4
-- Built 3× → 12 total slots
-- Base output: knowledge/tick
-- Assign workers with `assign library 8` to reach 67% efficiency
+- Base rate: 3.2 knowledge/tick, WorkerCapacity: 4
+- Built 3× → 12 total slots, base output: 3.2 × 3 = 9.6 knowledge/tick
+- With `assign library 8` (67% fill): `9.6 × (0.20 + 0.80 × 0.67)` ≈ **7.0 knowledge/tick** (73% efficiency)
+- With all 12 slots filled: **9.6 knowledge/tick**
 
 ---
 
@@ -453,7 +455,7 @@ For a full per-lineage building list see [Buildings](buildings.md).
 
 ### Early game (Primitive / Stone Age)
 
-Recruit 5–10 workers immediately and assign them to `gathering_camp`. Each camp holds 3 workers; build 2–3 camps before recruiting past 9. Foragers at 0.06 food/tick each, and camps produce 0.50 food/tick base — a fully staffed camp more than covers its own drain.
+Recruit 5–10 workers immediately and assign them to `gathering_camp`. Each camp holds 3 workers; build 2–3 camps before recruiting past 9. Foragers eat 0.06 food/tick each, and a fully staffed camp produces 1.0 food/tick, so it covers its own three workers' drain (0.18) several times over.
 
 ```
 build gathering_camp

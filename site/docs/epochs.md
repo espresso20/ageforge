@@ -20,6 +20,8 @@ The critical difference between ages and epochs: **ages are about what you build
 
 The Cosmic Era is the only epoch with 4 ages instead of 3.
 
+Each age is paced to a target time at 1x speed, from 15 minutes for the Primitive Age up to 12 hours for the Atomic Age, then 12 to 22 hours through the Digital and Neon Eras and 24 hours for each Cosmic Era age. By epoch that is roughly 2.5 hours for the Stone Era, 10.5 for the Iron Era, 21 for the Steel Era, 31 for the Electric Era, 42 for the Digital Era and 60 for the Neon Era. The Modern Age, where prestige unlocks, arrives after about 3 days of game time (the smoke-test bot takes about 2.4 days).
+
 ### Epoch Flavours
 
 **◈ Stone Era** — *"Humanity's first steps — wood, stone, and fire."*

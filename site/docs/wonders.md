@@ -35,93 +35,103 @@ Once completed, the wonder appears as a named gold marker on the City Map (`map`
 
 ---
 
+## What wonders cost
+
+Because every wonder stands between you and the next age, each one costs about the same share of its age's economy: **40 price units** of that age. A price unit is the median price of one resource in that age (the typical first-copy price of the age's buildings in that resource). Each wonder keeps its own resource mix; only the size changed.
+
+The flow resources (food, faith, culture) aren't priced that way, so those parts were set by hand to what your buildings actually make: the Sacred Grove takes **500 food**, the Great Monolith **1,500 food**, and the Sistine Chapel **20,000 faith** (down from 6M). The Stellar Cradle no longer costs uranium.
+
+No wonder takes longer to build than a sixth of its age's target length (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)). Build times below are at 1x speed; one tick is 2 seconds.
+
+---
+
 ## Wonder list
 
 ### 🌿 Sacred Grove
-**Age:** Primitive · **Key:** `sacred_grove` · **Build:** 300 ticks
+**Age:** Primitive · **Key:** `sacred_grove` · **Build:** 75 ticks (2m 30s)
 
 | Resource | Cost |
 |---|---|
-| Wood | 8,000 |
-| Food | 5,000 |
+| Wood | 1,000 |
+| Food | 500 |
 
 **Bonus:** +0.02 knowledge/t · +0.05 food/t
 
 ---
 
 ### 🗿 Great Monolith
-**Age:** Stone · **Key:** `great_monolith` · **Build:** 800 ticks
+**Age:** Stone · **Key:** `great_monolith` · **Build:** 225 ticks (7m 30s)
 
 | Resource | Cost |
 |---|---|
-| Stone | 25,000 |
-| Wood | 20,000 |
-| Food | 10,000 |
+| Stone | 6,300 |
+| Wood | 5,000 |
+| Food | 1,500 |
 
 **Bonus:** +0.05 knowledge/t · +5,000 all storage
 
 ---
 
 ### ⭕ Stonehenge
-**Age:** Bronze · **Key:** `stonehenge` · **Build:** 1,200 ticks
+**Age:** Bronze · **Key:** `stonehenge` · **Build:** 450 ticks (15m)
 
 | Resource | Cost |
 |---|---|
-| Stone | 80,000 |
-| Wood | 45,000 |
-| Iron | 8,000 |
+| Stone | 34,000 |
+| Wood | 19,000 |
+| Iron | 3,400 |
 
 **Bonus:** +0.8 knowledge/t · +0.6 faith/t
 
 ---
 
 ### 🏟 Colosseum
-**Age:** Iron · **Key:** `colosseum` · **Build:** 2,000 ticks
+**Age:** Iron · **Key:** `colosseum` · **Build:** 750 ticks (25m)
 
 | Resource | Cost |
 |---|---|
-| Stone | 400,000 |
-| Iron | 90,000 |
-| Gold | 80,000 |
+| Stone | 320,000 |
+| Iron | 72,000 |
+| Gold | 64,000 |
 
 **Bonus:** +100 population cap · +2.0 culture/t
 
 ---
 
 ### 🏛 Parthenon
-**Age:** Classical · **Key:** `parthenon` · **Build:** 2,500 ticks
+**Age:** Classical · **Key:** `parthenon` · **Build:** 1,050 ticks (35m)
 
 | Resource | Cost |
 |---|---|
-| Stone | 1.8M |
-| Gold | 800,000 |
-| Iron | 800,000 |
+| Stone | 1M |
+| Gold | 440,000 |
+| Iron | 440,000 |
 
 **Bonus:** +2.0 culture/t · +1.2 knowledge/t
 
 ---
 
 ### 📚 Great Library
-**Age:** Medieval · **Key:** `great_library` · **Build:** 3,600 ticks
+**Age:** Medieval · **Key:** `great_library` · **Build:** 1,350 ticks (45m)
 
 | Resource | Cost |
 |---|---|
-| Stone | 8M |
-| Gold | 6M |
-| Knowledge | 1.9M |
+| Stone | 3.5M |
+| Gold | 2.7M |
+| Knowledge | 840,000 |
 
 **Bonus:** +2.0 knowledge/t · **+30% knowledge rate** (permanent multiplier)
 
 ---
 
 ### 🎨 Sistine Chapel
-**Age:** Renaissance · **Key:** `sistine_chapel` · **Build:** 5,200 ticks
+**Age:** Renaissance · **Key:** `sistine_chapel` · **Build:** 1,800 ticks (1h)
 
 | Resource | Cost |
 |---|---|
-| Stone | 9.9M |
-| Gold | 7M |
-| Faith | 6M |
+| Stone | 27M |
+| Gold | 19M |
+| Faith | 20,000 |
 | Culture | 8M |
 
 **Bonus:** +3.5 culture/t · +1.8 faith/t
@@ -129,79 +139,79 @@ Once completed, the wonder appears as a named gold marker on the City Map (`map`
 ---
 
 ### 🏮 Grand Lighthouse
-**Age:** Colonial · **Key:** `grand_lighthouse` · **Build:** 6,200 ticks
+**Age:** Colonial · **Key:** `grand_lighthouse` · **Build:** 2,100 ticks (1h 10m)
 
 | Resource | Cost |
 |---|---|
-| Stone | 40M |
-| Gold | 30M |
-| Steel | 6M |
+| Stone | 160M |
+| Gold | 120M |
+| Steel | 23M |
 
 **Bonus:** +5.0 gold/t · **+80% expedition reward** — the best military wonder
 
 ---
 
 ### 🏗 Crystal Palace
-**Age:** Industrial · **Key:** `crystal_palace` · **Build:** 9,000 ticks
+**Age:** Industrial · **Key:** `crystal_palace` · **Build:** 2,400 ticks (1h 20m)
 
 | Resource | Cost |
 |---|---|
-| Steel | 800M |
-| Iron | 700M |
-| Gold | 550M |
-| Coal | 700M |
+| Steel | 450M |
+| Iron | 400M |
+| Gold | 310M |
+| Coal | 400M |
 
 **Bonus:** **+15% all production** · +8.0 gold/t
 
 ---
 
 ### 🗼 Eiffel Tower
-**Age:** Victorian · **Key:** `eiffel_tower` · **Build:** 14,000 ticks
+**Age:** Victorian · **Key:** `eiffel_tower` · **Build:** 2,700 ticks (1h 30m)
 
 | Resource | Cost |
 |---|---|
-| Steel | 5.5B |
-| Iron | 4.5B |
-| Gold | 6B |
+| Steel | 4.7B |
+| Iron | 3.8B |
+| Gold | 5.1B |
 
 **Bonus:** +5.0 culture/t · +2.0 knowledge/t
 
 ---
 
 ### 🌊 Hoover Dam
-**Age:** Electric · **Key:** `hoover_dam` · **Build:** 24,000 ticks
+**Age:** Electric · **Key:** `hoover_dam` · **Build:** 3,000 ticks (1h 40m)
 
 | Resource | Cost |
 |---|---|
-| Steel | 25B |
+| Steel | 71B |
 | Stone | 50B |
-| Electricity | 7B |
+| Electricity | 20B |
 
 **Bonus:** +10.0 electricity/t · **+20% all production**
 
 ---
 
 ### ⚛️ Particle Accelerator
-**Age:** Atomic · **Key:** `particle_accelerator` · **Build:** 32,000 ticks
+**Age:** Atomic · **Key:** `particle_accelerator` · **Build:** 3,600 ticks (2h)
 
 | Resource | Cost |
 |---|---|
-| Steel | 450B |
-| Electricity | 600B |
-| Uranium | 70B |
+| Steel | 100B |
+| Electricity | 140B |
+| Uranium | 16B |
 
 **Bonus:** +10.0 knowledge/t · +1.5 uranium/t
 
 ---
 
 ### 🚀 Space Program
-**Age:** Modern · **Key:** `space_program` · **Build:** 46,000 ticks
+**Age:** Modern · **Key:** `space_program` · **Build:** 3,600 ticks (2h)
 
 | Resource | Cost |
 |---|---|
-| Steel | 900B |
-| Gold | 800B |
-| Electricity | 500B |
+| Steel | 770B |
+| Gold | 690B |
+| Electricity | 430B |
 | Knowledge | 600B |
 
 **Bonus:** +6.0 knowledge/t · +8.0 culture/t
@@ -209,124 +219,123 @@ Once completed, the wonder appears as a named gold marker on the City Map (`map`
 ---
 
 ### 🌐 Global Network
-**Age:** Information · **Key:** `global_network` · **Build:** 63,000 ticks
+**Age:** Information · **Key:** `global_network` · **Build:** 4,200 ticks (2h 20m)
 
 | Resource | Cost |
 |---|---|
-| Steel | 5T |
-| Data | 600B |
-| Electricity | 990B |
-| Gold | 2.5T |
+| Steel | 4.8T |
+| Data | 580B |
+| Electricity | 960B |
+| Gold | 2.4T |
 
 **Bonus:** +30.0 data/t · **+30% knowledge rate**
 
 ---
 
 ### 💻 World Simulation
-**Age:** Digital · **Key:** `world_simulation` · **Build:** 120,000 ticks
+**Age:** Digital · **Key:** `world_simulation` · **Build:** 4,800 ticks (2h 40m)
 
 | Resource | Cost |
 |---|---|
-| Steel | 50T |
-| Data | 900B |
-| Electricity | 6T |
+| Steel | 54T |
+| Data | 970B |
+| Electricity | 6.4T |
 
 **Bonus:** +60.0 data/t · +15.0 knowledge/t
 
 ---
 
 ### 🌆 Neon Citadel
-**Age:** Cyberpunk · **Key:** `neon_citadel` · **Build:** 360,000 ticks
+**Age:** Cyberpunk · **Key:** `neon_citadel` · **Build:** 5,400 ticks (3h)
 
 | Resource | Cost |
 |---|---|
-| Steel | 80T |
-| Electricity | 60T |
-| Crypto | 9T |
-| Data | 5T |
+| Steel | 100T |
+| Electricity | 77T |
+| Crypto | 12T |
+| Data | 6.4T |
 
 **Bonus:** +10.0 crypto/t · **+500 population cap**
 
 ---
 
 ### ☀️ Stellar Cradle
-**Age:** Fusion · **Key:** `stellar_cradle` · **Build:** 450,000 ticks
+**Age:** Fusion · **Key:** `stellar_cradle` · **Build:** 6,000 ticks (3h 20m)
 
 | Resource | Cost |
 |---|---|
-| Steel | 750T |
-| Plasma | 600T |
-| Electricity | 800T |
-| Uranium | 940T |
+| Steel | 430T |
+| Plasma | 340T |
+| Electricity | 460T |
 
 **Bonus:** +15.0 plasma/t · +200.0 electricity/t
 
 ---
 
 ### 🛰 Dyson Scaffold
-**Age:** Space · **Key:** `dyson_scaffold` · **Build:** 640,000 ticks
+**Age:** Space · **Key:** `dyson_scaffold` · **Build:** 6,600 ticks (3h 40m)
 
 | Resource | Cost |
 |---|---|
-| Titanium | 900T |
-| Plasma | 650T |
-| Steel | 5.5Q |
+| Titanium | 910T |
+| Plasma | 660T |
+| Steel | 5.6Q |
 
 **Bonus:** +200.0 electricity/t · +30.0 plasma/t
 
 ---
 
 ### 🌀 Warp Nexus
-**Age:** Interstellar · **Key:** `warp_nexus` · **Build:** 860,000 ticks
+**Age:** Interstellar · **Key:** `warp_nexus` · **Build:** 7,200 ticks (4h)
 
 | Resource | Cost |
 |---|---|
-| Titanium | 7Q |
-| Dark Matter | 500T |
-| Plasma | 6.5Q |
+| Titanium | 31Q |
+| Dark Matter | 2.2Q |
+| Plasma | 29Q |
 
 **Bonus:** +8.0 dark matter/t · **+80% all production**
 
 ---
 
 ### 🌌 Cosmic Beacon
-**Age:** Galactic · **Key:** `cosmic_beacon` · **Build:** 1,860,000 ticks
+**Age:** Galactic · **Key:** `cosmic_beacon` · **Build:** 7,200 ticks (4h)
 
 | Resource | Cost |
 |---|---|
-| Dark Matter | 8Q |
-| Antimatter | 6Q |
-| Titanium | 23Q |
+| Dark Matter | 23Q |
+| Antimatter | 17Q |
+| Titanium | 65Q |
 
 **Bonus:** +10.0 antimatter/t · **+50% all production**
 
 ---
 
 ### ⚡ Reality Anchor
-**Age:** Quantum · **Key:** `reality_anchor` · **Build:** 2,500,000 ticks
+**Age:** Quantum · **Key:** `reality_anchor` · **Build:** 7,200 ticks (4h)
 
 | Resource | Cost |
 |---|---|
-| Quantum Flux | 50Q |
-| Antimatter | 80Q |
-| Dark Matter | 90Q |
+| Quantum Flux | 24Q |
+| Antimatter | 39Q |
+| Dark Matter | 44Q |
 
 **Bonus:** +15.0 quantum flux/t · **+50% all production**
 
 ---
 
 ### ✨ Singularity Core
-**Age:** Transcendent · **Key:** `singularity_core` · **Build:** 8,675,309 ticks
+**Age:** Transcendent · **Key:** `singularity_core` · **Build:** 7,200 ticks (4h)
 
 | Resource | Cost |
 |---|---|
-| Quantum Flux | 890Q |
-| Antimatter | 900Q |
-| Dark Matter | 900Q |
+| Quantum Flux | 360Q |
+| Antimatter | 370Q |
+| Dark Matter | 370Q |
 
 **Bonus:** **+200% all production** · +20.0 quantum flux/t
 
-> The Singularity Core is the ultimate wonder. Its build time is intentionally absurd — completing it before prestiging is considered a legendary achievement.
+> The Singularity Core is the ultimate wonder: the biggest bill in the game and the biggest single production bonus.
 
 ---
 
