@@ -196,7 +196,7 @@ Some construction resources have **no producing building in certain ages**, and 
 - **Stone** from the Iron Age on
 - **Iron** from the Renaissance Age on
 - **Steel** from the Modern Age on
-- **Titanium** in the Space Age and later (earlier titanium smelters make only a trickle)
+- **Titanium** from the Interstellar Age on (in the Space Age the Orbital Refinery makes it; earlier titanium smelters make only a trickle)
 - **Crypto** in the Cyberpunk Age (apart from the Neon Citadel wonder and the Blockchain tech)
 
 The same goes for wood in the Colonial Age, coal in the Electric Age and data in the Modern Age. Faith cannot be bought at the market at all.

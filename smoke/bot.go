@@ -29,7 +29,9 @@ import (
 //     ones that need a resource nothing makes yet
 //   - at the market: buy food when workers starve, buy whatever blocks the
 //     most wanted purchase (storage included) with spare resources, and
-//     otherwise even out the slowest target; never undo a recent trade
+//     otherwise even out the slowest target; never undo a recent trade, and
+//     never sell what the most wanted purchase is being saved for unless it
+//     sits at its cap
 //   - bank surplus into the age's wonder, research affordable techs with
 //     surplus knowledge (a tech that makes a missing target resource
 //     first), and hand-gather while the game allows it
@@ -54,7 +56,7 @@ type Bot struct {
 	// Trace, if set, receives one line per attempted action.
 	Trace io.Writer
 	// Harbinger is the policy for harbinger answers: ignore, appease, brace
-	// or both (level 1 only).
+	// or both (Appease up to level 2, Brace level 1).
 	Harbinger string
 	tick      int
 	// sold and bought remember the tick each resource last left or entered
@@ -278,7 +280,16 @@ func (b *Bot) trade(p *plan) {
 			case dS < 0:
 				n = -dS // not produced: only the surplus is spare
 			}
-			n = math.Min(math.Min(n, p.amt[x.From]), 0.25*p.storage[x.From])
+			// Don't sell what the most wanted purchase is being saved for,
+			// unless it sits at its cap: with a target nothing produces, this
+			// trade would otherwise drain the purchase's inputs as fast as
+			// they come in (the Space Age's plasma and electricity, traded
+			// away for titanium while the producers they would buy wait).
+			spare := p.amt[x.From]
+			if spare < 0.95*p.storage[x.From] {
+				spare -= p.blockCost[x.From]
+			}
+			n = math.Min(math.Min(n, spare), 0.25*p.storage[x.From])
 			n = math.Min(n, room/x.Rate)
 			if n*x.Rate > sell*rate {
 				from, rate, sell = x.From, x.Rate, n

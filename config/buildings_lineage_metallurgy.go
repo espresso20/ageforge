@@ -203,21 +203,26 @@ func buildingsLineageMetallurgy() []BuildingDef {
 		WorkerDomain: "metallurgy", WorkerCapacity: 16,
 		EpochKey: "neon_era", OutputResource: "dark_matter",
 	})
-	// tier 14 — space_age  output=dark_matter  rate=4.0
+	// tier 14 — space_age  output=titanium (rate set by the Payback Rule)
+	// note: was dark_matter at 4/tick, a resource that only unlocks in the
+	// Interstellar Age. Titanium unlocks in the Space Age and nearly every
+	// Space building costs it, yet nothing there made it: the market was the
+	// only way in. The refinery doesn't cost titanium either (its 88T went to
+	// plasma), so it can start the supply, like the Bronze Age smithy and iron.
 	b = append(b, BuildingDef{
 		Name: "Orbital Refinery", Key: "orbital_refinery", Category: "production",
-		BaseCost:    map[string]float64{"titanium": 88e12, "plasma": 44e12, "electricity": 110e12},
+		BaseCost:    map[string]float64{"plasma": 110e12, "electricity": 110e12},
 		CostScale:   1.35,
-		Effects:     []Effect{{Type: "production", Target: "dark_matter", Value: 4.0}},
+		Effects:     []Effect{{Type: "production", Target: "titanium", Value: 4.0}},
 		BuildTicks:  30000,
 		RequiredAge: "space_age",
-		Description: "Zero-gravity orbital dark matter refinery. +4.0 dark_matter/tick (18 workers).",
+		Description: "Zero-gravity orbital titanium refinery. +4.0 titanium/tick (18 workers).",
 		LineageKey:  "metallurgy", LineageTier: 14,
 		WorkerDomain: "metallurgy", WorkerCapacity: 18,
-		EpochKey: "neon_era", OutputResource: "dark_matter",
+		EpochKey: "neon_era", OutputResource: "titanium",
 	})
 	// tier 15 — interstellar_age  output=antimatter  rate=2.0 (new material)
-	// Resource pivot: dark_matter → antimatter. Validator shows 0.50x (dark_matter:4.0 → antimatter:2.0) — intentional.
+	// Resource pivot: titanium → antimatter. Validator shows 0.50x (titanium:4.0 → antimatter:2.0) — intentional.
 	// antimatter is a tier-8 resource; starting at 2.0/tick matches cosmic-era rarity.
 	b = append(b, BuildingDef{
 		Name: "Antimatter Forge", Key: "antimatter_forge", Category: "production",
