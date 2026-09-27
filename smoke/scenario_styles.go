@@ -83,8 +83,13 @@ func runStyles(e *Env, res *Result) {
 	for _, style := range styles {
 		base := e.Base
 		base.Cycles, base.MaxSim = 1, 300*time.Hour
-		if style == StyleCosmic {
+		switch style {
+		case StyleCosmic:
 			base.MaxSim = 600 * time.Hour
+		case StyleIdle:
+			// Enough for a 3-hourly check-in player to reach the first
+			// prestige (about 18 days).
+			base.MaxSim = 720 * time.Hour
 		}
 		base.CheckIn = e.CheckIn
 		if o := e.Overrides.MaxSim; o > 0 {

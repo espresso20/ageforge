@@ -374,6 +374,70 @@ playing correctly. That's the idle game working as designed.
 
 ---
 
+## Appendix — Idle play and the Iron Age gold trap (2026-09-27)
+
+### The gold trap
+
+The trading post cost 32K stone, 15K iron and 8.8K gold. It was the Iron Age's only gold
+producer and its only trade building, so a player who skipped the optional Bronze Age
+market could not get gold in the Iron Age at all (a smoke seed spent 2.5 days there). It
+now costs stone and iron only; the Payback Rule sets its rate from the smaller price
+(48.8 gold/tick, was 65.2) and gold's Iron Age price level falls from 8,000 to 7,500.
+Rule 5 of the Gate Covenant now checks sourcing from a cold start (see above), and with
+the trading post fixed it finds no other trap of the kind. Greedy pacing moved by at most
+0.1x (Iron 2.7 h to 2.6 h, Classical 3.8 h to 4.1 h, Colonial 4.3 h to 5.0 h, seeds 1–8).
+
+### Idle play
+
+The target player checks in a few times a day. The smoke suite's `idle` style models one,
+with the game running between visits. Time to the first prestige (Modern Age), seeds 1–3,
+median (min–max), against about 2.4 days for the greedy bot:
+
+| check-in every | before (one decision per visit) | after (a visit spends everything) | visits |
+|---|---|---|---|
+| 1 h | 27.0 d (25.9–27.2) | 7.3 d (7.0–8.2) | ~175 |
+| 3 h | 76.3 d (71.2–76.3) | 17.4 d (17.2–18.1) | ~140 |
+| 8 h | not reached in 83 d (stuck in the Classical Age) | 44.5 d (44.1–45.5) | ~134 |
+
+Time per age at 3-hour check-ins, after: Primitive 12 h (48x the target), Stone 1.2 d,
+Bronze 1.2 d, Iron 1.4 d, Classical 1.2 d, Medieval 14.5 h (3.2x), Renaissance 22.8 h,
+Colonial 20 h (2.9x), Industrial 2.4 d (7.2x), Victorian 2.0 d, Electric 2.7 d, Atomic
+2.7 d (5.4x). At 1-hour check-ins the Medieval through Colonial Ages are inside the band
+(1.4x–1.5x) and the rest 2x–4x. No run soft-locked at any interval.
+
+**What was the harness.** The idle bot made one decision per visit: one producer, one
+storage copy and one trade every three hours. A visit is now rounds of decisions until
+nothing more is worth doing, with storage bought for what comes in before the next visit
+and whatever would be lost at a cap banked into the wonder or traded (`Bot.CheckIn`).
+
+**What was the game.** `build` refused a second copy of a storage building while one was
+under construction, so a player got one storage copy per visit (`build <key> N` queued any
+number). Fixed: only unique buildings refuse.
+
+**What still is the game.** The number of visits to the first prestige hardly depends on
+the interval (about 130–180), so a visit's progress is capped, and the cap is storage. At
+3-hour check-ins (seed 1, 149 visits) three in four of the needed resources that
+something produces are at their cap when the player arrives, and a store that filled did
+so in a median of 20–50 minutes (5–15 minutes from the Renaissance to the Victorian Age). Production is sized so producers repay in the payback
+time (Law 3); storage is sized so the last required copy costs half of it (the Gate
+Covenant). Nothing sizes storage to hours of production, so a player away for three hours
+loses most of what their economy makes, and the gap to the targets does not close in the
+later ages. The Industrial Age is worst: its buildings need stone and coal that nothing in
+the age produces, so everything comes through the market, bounded by what the other stores
+held.
+
+Also: research runs one tech at a time with no queue, so a check-in player starts one tech
+per visit even when a tech takes minutes. Techs rarely gate an advance, but it is the same
+shape of problem.
+
+**Recommendation.** Keep the targets (they describe an attentive player). To let a
+check-in player keep up, give them a way to put the hours between visits to work that
+doesn't need storage: a planned-build queue that pays for each copy when it starts rather
+than when it is queued (the usual idle-game answer), or a wonder bank that takes overflow
+automatically. Raising storage to hold a check-in's worth of production would also work
+but removes the resource pressure storage exists for. A research queue is a smaller,
+separate fix. None of this is in this change.
+
 ## Appendix — Pacing rebalance (2026-09-27)
 
 Time in each age for the smoke bot, median (min–max) over seeds 1–5 at 1x, against the
