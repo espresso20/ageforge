@@ -38,7 +38,7 @@ Every 3rd age advance = 1 epoch transition. 7 epochs × 3 ages = 21 ages exactly
 2. **Extraction lineages switch output** — Organic and Geological lineages produce new resources
 3. **Metallurgy's processing chain advances** — new ore → new refined metal
 4. **Event pool changes** — epoch-exclusive events replace previous epoch's exclusive events
-5. **Catastrophe is offered** — the Civilizational Catastrophe modal appears (see below)
+5. **Catastrophe may strike** — from the Iron Era on, a bad transition roll can escalate into the Civilizational Catastrophe modal (see below)
 6. **UI epoch badge updates** — the epoch badge near the age indicator changes color and icon
 7. **New worker domains may unlock** — Hacker (Digital Era), Astronaut (Neon Era)
 
@@ -48,7 +48,7 @@ Every 3rd age advance = 1 epoch transition. 7 epochs × 3 ages = 21 ages exactly
 
 At each epoch transition, the game rolls a **major epoch event** — a single significant event
 that could be a boon or a disaster. Catastrophe is **not guaranteed** — it is one possible bad
-outcome among several, occurring roughly 15% of the time across a full run.
+outcome among several, 12–18% per transition depending on faith, and never before the Iron Era.
 
 ### The Roll
 
@@ -69,8 +69,9 @@ Roll at each epoch transition:
       30% → Civilizational Catastrophe (the Endure / Succumb modal)
 ```
 
-**Catastrophe probability per epoch:** 50% × 30% ≈ **15% per epoch transition.**
-In a 7-epoch run, expected catastrophes: 0–2. Sometimes none. Sometimes two. Always special.
+**Catastrophe probability per transition:** (1 − good chance) × 30% = **18% / 15% / 12%** at
+low / mid / high faith. A run has 6 transitions (Iron through Cosmic; every run starts in the Stone
+Era), so expected catastrophes are about 0.9 per run at mid faith, with at most 6 (one per epoch).
 
 **Faith matters:** Keeping faith above 75% of its cap improves your odds of a good epoch event
 at every transition. This is a new strategic reason to invest in Faith buildings and workers
@@ -116,88 +117,96 @@ Severe but recoverable — no reset, no modal. Applied immediately on epoch tran
 7. **Economic Crash** — all gold halved; building costs +50% for 72h
 8. **The Dark Age** — knowledge production and all research paused for 48h; one random tech gains a knowledge debt that must be cleared before it can be used
 
-### Civilizational Catastrophe (30% of bad outcomes ≈ 15% overall)
+### Civilizational Catastrophe (30% of bad outcomes, 12–18% per transition)
 
-When rolled, the Catastrophe modal appears for the current epoch. The player chooses:
+This section describes what is built (updated 2026-09-26). Ideas from the original design that
+were never built are kept under **Future ideas (not implemented)** at the end of it.
+
+**Rules**
+
+- **Iron-epoch gate.** No catastrophe before the epoch containing the Iron Age
+  (`config.CatastropheGateEpoch = "iron_era"`). The Stone Era never has one.
+  Good and challenging epoch events are unaffected.
+- **One per epoch per run.** Each epoch's transition rolls once per run (`epochEventFired`), reset
+  by Succumb, prestige and a new game.
+- **No player trigger.** `catastrophe invoke` was removed (2026-09-26). Choosing to face a
+  catastrophe moves to the Harbinger's planned "Invite it" action. The engine keeps an unwired
+  seam for it: `catastropheInvited` makes the next transition into an allowed epoch produce a
+  catastrophe instead of rolling (consumed when honoured, kept while gated or something is
+  pending, reset by Succumb/prestige, not persisted yet), and `CatastropheOutlook` reports
+  probability 1 while it is armed. The dev console's `/catastrophe` forces one for testing and
+  respects the gate.
+- **Pending blocks progress.** A catastrophe only sets `pendingCatastrophe`; nothing is destroyed
+  until the player chooses. The game keeps running, but `AdvanceAge` and `DoPrestige` refuse while
+  one is pending, and the roll never overwrites a pending catastrophe.
+- **No Defer.** The modal has two choices. Esc closes it without choosing; a status-bar badge
+  shows the pending catastrophe and the bare `catastrophe` command reopens the modal. A save with a
+  pending catastrophe shows the modal again on load.
+- **Seeded.** Every roll (epoch event, destroyed buildings, ruins) comes from the run's seeded
+  `GameEngine.rng`, drawing from pools built in sorted-key order.
+- **Outlook.** `GameEngine.CatastropheOutlook()` (also `GameState.CatastropheOutlook`) reports the
+  next transition's epoch, whether a catastrophe is possible there, its probability, a coarse tier
+  (none/low/medium/high) and the faith fill driving it. It is read-only and lock-safe, meant as the
+  hook for a future harbinger who warns of the next catastrophe.
+
+**The modal** is a box floating over the dashboard, sized to its content:
 
 ```
-╔══════════════════════════════════════════════════════════╗
-║  ☄ THE GREAT METEOR                                      ║
-║  A celestial body has struck your settlement.            ║
-║  The sky burns. Your people scatter.                     ║
-╠══════════════════════════════════════════════════════════╣
-║                                                          ║
-║  [ENDURE]                    [SUCCUMB]                   ║
-║                                                          ║
-║  Weather the catastrophe.    Let civilization fall.      ║
-║                                                          ║
-║  Your people survive, but:   Everything resets. But:     ║
-║  • 20% buildings destroyed   • Epoch Legacy Bonus        ║
-║  • Resources wiped to 15%    • 8 Ruins carry forward     ║
-║  • 25% workers lost          • Ancient Knowledge kept    ║
-║  • Building costs +20%       • Catastrophe title earned  ║
-║    for 72h (reconstruction)  • Stone Legacy: +20%        ║
-║                                wood/stone production     ║
-║  Research kept. Progress      All research kept as       ║
-║  kept. The scars remain.      "Ancient Knowledge."       ║
-║                               History remembers you.     ║
-╚══════════════════════════════════════════════════════════╝
+╔════════════════════ ☄ Iron Era Catastrophe ════════════════════╗
+║                    ☄ The Great Plague                            ║
+║     A devastating plague sweeps your cities. The streets…        ║
+║                                                                  ║
+║ ── ENDURE — weather the catastrophe ──                           ║
+║   • 20% of buildings destroyed (wonders are spared)              ║
+║   • All resources reduced to 15%                                 ║
+║   • 25% of workers lost; workers of destroyed buildings go idle  ║
+║   • Production -10% for 216 ticks, morale -10                    ║
+║   ✓ Age, research, wonders and prestige preserved                ║
+║   ✓ Survived marker on the epoch badge                           ║
+║                                                                  ║
+║ ── SUCCUMB — let civilization fall ──                            ║
+║   • Full reset to the Primitive Age: buildings, resources, …     ║
+║   • No prestige points earned (level and upgrades are kept)      ║
+║   ✓ Up to 8 buildings become ruins (50% output, max 24 ruins)    ║
+║   ✓ Ancient Knowledge: research speed +25% (total +25%, …)       ║
+║   ✓ Iron Era legacy: iron +20% (permanent)                       ║
+║                                                                  ║
+║              [E] ENDURE        [S] SUCCUMB                       ║
+║   Esc: decide later · advancing waits · type 'catastrophe' …     ║
+╚══════════════════════════════════════════════════════════════════╝
 ```
 
-### Voluntary Catastrophe
+### ENDURE — Consequences
 
-Players can **always invoke a Catastrophe voluntarily** for their current epoch via the Epoch tab
-(or Stats tab). This lets players deliberately chase Legacy Bonuses without relying on the random
-roll. Voluntary catastrophe presents the same Endure/Succumb modal with identical consequences and
-rewards.
+- `floor(non-wonder buildings / 5)` destroyed, at least 1 if any. Wonders are neither destroyed
+  nor counted.
+- Workers assigned to destroyed buildings return to the idle pool (same rule as selling).
+- All unlocked resources drop to 15% of their stored amounts.
+- 25% of the single worker pool is lost; every building's assignment shrinks by the same share,
+  whatever its worker domain.
+- Reconstruction Effort: `production_all` −10% for 216 ticks. Morale −0.10.
+- "Survived" marker on the epoch badge and a civilization-log entry.
+- Research, wonders, age and prestige are untouched.
 
-A voluntary invocation counts as the epoch's catastrophe — if you already received a catastrophe
-randomly this epoch, the voluntary option is unavailable until the next epoch.
+### SUCCUMB — Consequences
 
-### ENDURE — Consequences and Rewards
-
-**Immediate damage (applied on choice):**
-- **20% of buildings randomly destroyed** (shown to player as a list: "43 Farms lost, 8 Monasteries lost")
-- All resources drop to 15% of current stored amount
-- 25% of workers removed (distributed evenly across all domains)
-- Research, milestones, wonders, and age unlocks are fully preserved
-
-**Lasting consequences (fade after 72 real hours):**
-- All building costs +20% (reconstruction premium — materials are scarce)
-- Worker food drain +10% (survivors need more care in the aftermath)
-- Random events hit 20% harder during recovery window
-
-**Permanent rewards (never fade):**
-- "Survived" marker added to epoch badge (visual distinction in UI)
-- Unlock **Reconstruction** tech branch for this epoch (5 epoch-specific recovery techs)
-- Unique Wonder unlocked: **Monument to the Fallen** — costs nothing to build, provides massive
-  culture (+2,000) + faith (+500/tick permanently) + morale bonus
-- Title earned: "The Undying [Epoch]" (e.g., "The Undying Iron Lords") — shown in Stats tab
-
-### SUCCUMB — Civilizational Reset
-
-**Immediate reset:**
-- Full civilization reset: all buildings → 0, all resources → 0, all workers → 0
-- Age resets to Primitive; epoch resets to Stone Era
-- **8 Ruins carry forward**: random buildings from your previous civilization remain as Ruins.
-  Ruins produce at 50% output with no workers assigned. Cannot be rebuilt if destroyed. Cannot
-  be built again (they're relics of the fallen age). Shown with a ☒ marker in the Economy tab.
-- All current epoch's research carries as **Ancient Knowledge**: permanent +25% research speed
-  for that epoch's tech tree in all future runs
-- Civilization history log gains a lore entry for the catastrophe
-
-**Permanent rewards (stack across runs, never lost):**
-- **Epoch Legacy Bonus**: epoch-specific production multiplier that applies to every future run
-- **Catastrophe Title**: recorded in civilization history permanently
-- **Faster Return**: all techs from 2 epochs below the catastrophe point auto-complete in next run
-- **Exclusive Starting Event**: a unique event only available to civilizations that experienced
-  this specific catastrophe — appears in the first 10 ticks of the new run
+- Up to 8 non-wonder buildings become ruins (50% base output, no workers). Ruins persist across
+  Succumb and prestige, capped at **24**: past the cap the lowest-value ruins (earliest
+  `RequiredAge`, then lowest base output, then key) are dropped first. The cap also trims old saves
+  on load.
+- The epoch's legacy flag is set. Its per-resource bonus goes into `permanentBonuses` via
+  `reapplyLegacyBonuses` after every reset.
+- **Ancient Knowledge:** +25% `research_speed` per distinct legacy epoch. Derived from the flags,
+  never stored, emitted into the resolver as source `legacy` (shows in Active Multipliers). It
+  survives save/load, Succumb and prestige by construction. Saves from before this change stored
+  +25% in `permanentBonuses`; it is stripped on load (`succumb_research_derived` marks new saves).
+- Full reset to the Primitive Age. Prestige level, points and upgrades are kept; no points earned.
 
 ### The 7 Catastrophes
 
 | Epoch | Catastrophe Name | Flavor Text |
 |-------|----------------|-------------|
-| Stone Era | **The Great Meteor** | A celestial body strikes your settlement. The sky burns. |
+| Stone Era | **The Great Meteor** | Defined in config but unreachable (Iron-epoch gate). |
 | Iron Era | **The Great Plague** | A devastating plague sweeps your cities. The streets are silent. |
 | Steel Era | **The World War** | Industrial warfare tears civilization apart. The factories are ash. |
 | Electric Era | **The Nuclear Exchange** | Nations unleash the atom. Cities become glass. |
@@ -205,36 +214,49 @@ randomly this epoch, the voluntary option is unavailable until the next epoch.
 | Neon Era | **Corporate Armageddon** | The megacorps end the world with a fusion bomb. |
 | Cosmic Era | **The Reality Tear** | Exotic matter destabilizes spacetime. Reality cracks open. |
 
-### SUCCUMB Legacy Bonuses by Epoch
+### SUCCUMB Legacy Bonuses by Epoch (built)
 
-| Epoch Catastrophe | Epoch Legacy Bonus | Exclusive Unique |
-|-------------------|--------------------|-----------------|
-| The Great Meteor | +20% wood + stone production (permanent) | **Meteor Fragment** wonder available |
-| The Great Plague | +20% iron production; Ancient Immunity passive (events 15% less severe) | **Plague Doctor** worker class unlocked |
-| The World War | +25% steel + coal production; War Doctrine tech | **Armistice Monument** wonder |
-| The Nuclear Exchange | +25% electricity + uranium production; Fallout Shelter tech | **Nuclear Vault** building |
-| The Great Hack | +30% data + titanium production; Ghost Protocol tech | **Dead Drop Network** building |
-| Corporate Armageddon | +30% plasma + dark_matter production; Phoenix Protocol tech | **Corporate Ruins** wonder |
-| The Reality Tear | +35% antimatter + quantum_flux production; Reality Anchor tech | **Scar in Reality** wonder |
-
-Legacy Bonuses stack across runs. A civilization that has succumbed to all 7 catastrophes receives
-all 7 legacy bonuses simultaneously and has access to all 7 exclusive buildings and wonders.
+| Epoch | Legacy bonus |
+|-------|--------------|
+| Stone Era | wood +20%, stone +20% (kept by saves that earned it; no longer reachable) |
+| Iron Era | iron +20% |
+| Steel Era | steel +25%, coal +25% |
+| Electric Era | electricity +25%, uranium +25% |
+| Digital Era | data +30%, titanium_ore +30% |
+| Neon Era | plasma +30%, dark_matter_crystals +30% |
+| Cosmic Era | dark_matter +35% |
 
 ### Catastrophe vs Regular Prestige
 
 | | Regular Prestige | Catastrophe Succumb |
 |--|-----------------|---------------------|
-| Trigger | Player-initiated anytime | Random (~15% per epoch) or voluntary |
-| Reset scope | Full | Full + 8 Ruins carry forward |
-| Bonus pool | Prestige upgrade tree (9 slots) | Epoch Legacy Bonuses (7 slots) |
-| Lore / narrative | None | Civilization history records it |
-| Repeatable | Yes, unlimited | Once per epoch per run (random OR voluntary, not both) |
-| Stack with each other | Yes | Yes — fully compatible |
+| Trigger | Player-initiated from the Modern Age | Random (12–18% per transition, Iron Era on) |
+| Reset scope | Full | Full; up to 8 new ruins (24 max) carry forward |
+| Bonus pool | Prestige upgrade tree + points | Epoch legacy bonus + Ancient Knowledge |
+| Repeatable | Yes | Once per epoch per run; bonuses once per epoch ever |
+| Blocked by a pending catastrophe | Yes | n/a |
 
-A player who has both prestiged and succumbed to catastrophes holds both bonus types simultaneously.
-They are designed to reward different play styles: efficiency players use prestige; narrative players
-build catastrophe histories. Players who want to guarantee Legacy Bonuses use the voluntary option;
-players who want the full experience let fate decide.
+### Future ideas (not implemented)
+
+Kept from the original design for reference. None of this exists in the game.
+
+- **Endure lasting consequences:** building costs +20% and worker food drain +10% for 72 real
+  hours; random events 20% harder during recovery.
+- **Endure permanent rewards:** a Reconstruction tech branch (5 epoch-specific recovery techs); a
+  **Monument to the Fallen** wonder (free, +2,000 culture, +500 faith/tick, morale bonus); titles
+  such as "The Undying Iron Lords" shown in the Stats tab.
+- **Succumb extras:** Ancient Knowledge scoped to the fallen epoch's tech tree; a Catastrophe Title;
+  **Faster Return** (techs from 2 epochs below the catastrophe auto-complete next run); an
+  **Exclusive Starting Event** in the first 10 ticks of the next run; ruins marked ☒ in the
+  Economy tab.
+- **Exclusive uniques per catastrophe:** Meteor Fragment wonder; Ancient Immunity passive (events
+  15% less severe) and a Plague Doctor worker class; War Doctrine tech and Armistice Monument;
+  Fallout Shelter tech and Nuclear Vault; Ghost Protocol tech and Dead Drop Network; Phoenix
+  Protocol tech and Corporate Ruins wonder; Reality Anchor tech and Scar in Reality wonder
+  (the Reality Tear legacy was also meant to boost antimatter + quantum_flux instead of dark_matter).
+- **A Harbinger** who warns of the next catastrophe (built on `CatastropheOutlook`) and offers
+  "Invite it", which arms `catastropheInvited` to guarantee one at the next transition. This
+  replaces the removed `catastrophe invoke` command.
 
 ---
 
@@ -317,7 +339,7 @@ adds 5 exclusive events that only appear during that epoch.
 | Cosmic Era exclusive | 5 | Cosmic Era only |
 | Good epoch events (major epoch roll) | 10 | One fires per epoch transition (if good) |
 | Challenging bad epoch events (major epoch roll) | 8 | One fires per epoch transition (if bad, non-catastrophe) |
-| Catastrophe events | 7 | One fires per epoch transition (if catastrophe roll) |
+| Catastrophe events | 7 (6 reachable) | Iron Era on: at most one per epoch per run (transition roll) |
 | **Total** | **88** | |
 
 Note: The 10 good + 8 bad + 7 catastrophe events are **epoch transition events**, separate from
@@ -429,12 +451,15 @@ Previous epoch exclusive events are permanently removed from the pool on epoch t
 Epoch transition events (good/bad/catastrophe) are a separate pool, fired once per epoch
 transition — NOT drawn from the regular random event pool.
 
-### Voluntary Catastrophe
+### Triggering (implementation)
 
-Exposed via `GameEngine.InvokeCatastrophe() error`:
-- Returns error if catastrophe already occurred this epoch (random or voluntary)
-- Sets `ge.pendingCatastrophe = ge.currentEpoch`
-- UI polls `ge.pendingCatastrophe` to show modal on next tick
+In game/catastrophe.go:
+- `triggerCatastrophe(epochKey, source)` sets `pendingCatastrophe`, appends an `EpochEventRecord`
+  with `Outcome: "pending"`, and publishes `EventEpochEventFired` (`event_type: "catastrophe"`) so
+  the dashboard toast fires. Sources: the transition roll, an honoured invite, or the dev
+  console's `forceCatastrophe` (`/catastrophe`, via `game.DevConsoleCommand`).
+- The dashboard's refresh loop shows the modal once per pending catastrophe; Esc hides it until
+  the `catastrophe` command (or a save load, via `EventGameLoaded`) brings it back.
 
 ### Catastrophe Save State
 
@@ -445,9 +470,16 @@ CatastropheHistory   []string          `json:"catastrophe_history,omitempty"`
 SurvivedEpochs       map[string]bool   `json:"survived_epochs,omitempty"`
 EpochEventFired      map[string]bool   `json:"epoch_event_fired,omitempty"`
 PendingCatastrophe   string            `json:"pending_catastrophe,omitempty"`
-Ruins                []RuinState       `json:"ruins,omitempty"`
+CatastropheFired     map[string]bool   `json:"catastrophe_fired,omitempty"` // deprecated, ignored, never written
+SuccumbResearchDerived bool            `json:"succumb_research_derived,omitempty"`
+Ruins                map[string]int    `json:"ruins,omitempty"`
 ```
 
+`EpochEventRecord.Outcome` (`pending` / `endured` / `succumbed`) is stored on catastrophe records;
+older saves get it reconstructed on load where the engine can tell, and are shown as "outcome not
+recorded" where it can't.
+
 Ruins persist across runs (they're part of your civilization's identity). Legacy bonuses are
-permanent and never removed. `EpochEventFired` prevents a second roll in the same epoch (for
-voluntary catastrophe gating).
+permanent and never removed. `EpochEventFired` prevents a second transition roll in the same
+epoch, which is also what limits catastrophes to one per epoch per run. `CatastropheFired` was
+written by early builds of the overhaul; it stays in the struct only so those saves still verify.

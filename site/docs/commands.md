@@ -246,9 +246,9 @@ Graphs appear after ~30 seconds of play. History is saved and restored automatic
 
 | Command | Description |
 |---|---|
-| `catastrophe invoke` | Trigger a voluntary catastrophe for the current epoch |
+| `catastrophe` (or `cat`) | Reopen the Endure / Succumb choice for a pending catastrophe. With nothing pending, show the catastrophe odds for the next epoch transition |
 
-Voluntary catastrophes let you force an epoch event outside the normal roll. Use with caution — catastrophes can destroy buildings (Endure) or reset your run (Succumb). See [Epochs](epochs.md).
+A pending catastrophe blocks `advance` and `prestige confirm yes` until you choose. In the choice modal, **E** endures, **S** succumbs and **Esc** closes it without choosing; the status bar shows a pending badge until you decide. There is no Defer option, and no command to trigger a catastrophe yourself. See [Catastrophe](catastrophe.md).
 
 ---
 

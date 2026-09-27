@@ -1,36 +1,47 @@
 # Catastrophe System
 
-A catastrophe is a civilization-threatening event that forces you to make a permanent, irreversible choice. Catastrophes occur at epoch transitions — every 3 ages, when your civilization crosses into a new epoch — and can also be invoked voluntarily at any time during an epoch.
+A catastrophe is a civilization-threatening event that forces a permanent choice: **Endure** or **Succumb**. Catastrophes strike when your civilization crosses into a new epoch, from the **Iron Era** on. You can't trigger one yourself.
 
-When a catastrophe fires, the game pauses progression and presents a modal with three choices: **Endure**, **Succumb**, or **Defer**. You cannot advance ages until the catastrophe is resolved.
+When a catastrophe hits, nothing is destroyed yet. The game keeps running and the choice waits for you:
 
-Each button shows its shortcut: **E** Endure, **S** Succumb, **D** Defer. Tab or the arrow keys move between buttons and Enter picks the highlighted one. Endure is highlighted when the modal opens, so a stray Enter chooses Endure.
+- A modal opens with the two choices. Each button shows its shortcut: **E** Endure, **S** Succumb. Tab or the arrow keys move between them and Enter picks the highlighted one. Endure is highlighted when the modal opens, so a stray Enter chooses Endure.
+- **Esc** closes the modal without choosing, so you can look around first. The catastrophe stays pending.
+- While a catastrophe is pending, the status bar shows a **☄ CATASTROPHE PENDING** badge, and **advancing to the next age and prestige are refused**. Type `catastrophe` to reopen the choice.
+- The pending catastrophe is saved with your game. If you close the game, or come back after a long idle, the modal opens again when the save loads.
 
 When the catastrophe rolls on the same advance that crosses into a new epoch, the age-advance splash shows first. The catastrophe modal opens once you dismiss the splash with any key, or when the splash times out after 20 seconds.
+
+There is no "defer" button any more. Esc plus the `catastrophe` command does the same job without letting the choice be skipped.
 
 ---
 
 ## When It Triggers
 
-Epochs span 3 ages each (7 epochs total across 22 ages). At every epoch transition, an **Epoch Event Roll** fires. The roll can land good or bad based on your faith level:
+There are 7 epochs across 22 ages (Cosmic spans 4 ages, the rest 3). Every run starts in the Stone Era, so a run has **6 epoch transitions**: into Iron, Steel, Electric, Digital, Neon and Cosmic. Each transition fires one **Epoch Event Roll**:
 
-- A **bad roll** (60/50/40% depending on faith) → 70% chance of a Challenging event, **30% chance of a Catastrophe**
+1. **Good or bad?** Faith fill decides the good-event chance: 40% below 25% faith, 50% between 25% and 75% (or when faith has no storage yet), 60% above 75%.
+2. **On a bad roll**, a further **30% chance** escalates it to a catastrophe. Otherwise you get a Challenging event, applied immediately.
 
-So a catastrophe is not guaranteed at every epoch — it is a weighted roll outcome. Higher faith reduces bad-roll probability, which reduces the chance a catastrophe appears at all.
+So the chance of a catastrophe at a transition is **18% at low faith, 15% at mid faith, 12% at high faith**.
 
-Additionally: only **one catastrophe per epoch** can occur, whether random or voluntary. Once one has been resolved (or invoked), no further catastrophe can trigger for the remainder of that epoch.
+Extra rules:
 
-See [Epochs](epochs.md) for full event tables and faith thresholds.
+- **Iron Era gate.** No catastrophe before the epoch that contains the Iron Age. In practice the Stone Era never has one.
+- **One per epoch per run.** Each epoch's transition rolls once per run. Succumb and prestige start a new run, so the epochs roll again.
+- **Never overwritten.** A new catastrophe can't replace one that is still pending. You can't reach the next transition while one is pending anyway.
+- **At most 6 per run**, one for each epoch from Iron to Cosmic.
+
+The `catastrophe` command (with nothing after it) shows the odds for your next transition when nothing is pending. The Epoch tab shows the same line. See [Epochs](epochs.md) for the event tables.
 
 ---
 
-## The Seven Catastrophes
+## The Catastrophes
 
-Each epoch has a named catastrophe with its own flavor:
+Each epoch has a named catastrophe:
 
-| Epoch | Catastrophe Name | Flavor |
-|-------|-----------------|--------|
-| Stone Era | The Great Meteor | A celestial body has struck your settlement. The sky burns. Your people scatter. |
+| Epoch | Catastrophe | Flavor |
+|-------|-------------|--------|
+| Stone Era | The Great Meteor | Not reachable: no catastrophes before the Iron Era. |
 | Iron Era | The Great Plague | A devastating plague sweeps your cities. The streets fall silent. |
 | Steel Era | The World War | Industrial warfare tears civilization apart. The factories are ash. |
 | Electric Era | The Nuclear Exchange | Nations unleash the atom. Cities become glass. |
@@ -38,154 +49,88 @@ Each epoch has a named catastrophe with its own flavor:
 | Neon Era | Corporate Armageddon | The megacorps end the world with a fusion bomb. |
 | Cosmic Era | The Reality Tear | Exotic matter destabilizes spacetime. Reality cracks open. |
 
----
-
-## The Three Choices
-
-### Endure
-
-Pay a cost and keep your civilization intact.
-
-- **20% of buildings destroyed** — chosen uniformly at random from all non-wonder buildings; wonders are never destroyed
-- **All resources reduced to 15% of current stored amounts** — every unlocked resource drops to 15% simultaneously
-- **Workers reduced by 25%** — a quarter of your workforce is lost
-- **Production debuff −10% for 216 ticks** — a timed `Reconstruction Effort` event applies −10% to all production for the recovery period
-- **Survived marker** recorded in your civilization history for that epoch
-
-Endure is painful but survivable, but it is no longer cheap on production. The −10% reconstruction debuff genuinely applies for its full 216-tick window: **every** building — even the ones that survived — produces at 90% until the timer expires. (Earlier builds effectively ignored this penalty unless you happened to hold enough positive production bonuses to offset it; it now bites as designed.) Budget for the building loss, the worker loss, *and* a flat −10% on everything for the reconstruction period. The hit is temporary — buildings grow back, workers can be re-recruited, and the debuff expires on its own — but a large civilization should plan around running below capacity for the full window rather than assuming the penalty is negligible.
-
-**Morale impact:** Enduring also costs morale on top of the building destruction — a hit that drags the civilization-wide morale percentage down. If morale was already low heading into a catastrophe, this can push it into the low band (toward the 10% floor), where worker output is penalised and recovery slows. Once you stabilise, morale drifts back toward the 50% neutral baseline on its own; prioritise food surplus after Enduring to speed that recovery.
-
-**When to choose Endure:** When your civilization is large and a full reset would cost you more than the legacy bonus is worth. Late in an epoch, with 20+ ages progressed and significant building counts, Endure preserves enormous progress that Succumb would erase.
+The name is flavor. Endure and Succumb work the same way in every epoch; only the legacy bonus differs.
 
 ---
 
-### Succumb
+## Endure
 
-Accept total reset and gain permanent power.
+Pay a cost and keep your civilization.
 
-- **Full civilization reset** — resources, buildings, workers, research, milestones, and build queue all reset to zero
-- **8 ruins generated** from your current buildings and carried into the new run (produced at 50% base rate, no workers required)
-- **Ancient Knowledge** — permanent +25% research speed for all future runs (stacks additively with each Succumb)
-- **Epoch Legacy Bonus** — permanent production multiplier for the primary resources of this epoch, active from tick 1 of every future run
-- **Epoch Succumbed** marker recorded in civilization history
+- **20% of your buildings destroyed**: `floor(non-wonder buildings / 5)`, at least 1 if you have any. Wonders are never destroyed and don't count toward the total.
+- **Workers of destroyed buildings go idle** first, the same as when you sell a building.
+- **All unlocked resources drop to 15%** of their stored amounts.
+- **25% of the worker pool is lost.** There is one worker pool, so every building loses the same share of its assigned workers, whatever its domain (food, knowledge, military and so on).
+- **Reconstruction Effort**: production −10% for 216 ticks.
+- **Morale −10 points.**
+- **Survived** marker on the epoch badge and a line in the civilization log.
 
-The full reset is real — you return to Primitive Age with 15 food and 12 wood. But the permanent bonuses, ruins, and prestige upgrades all survive.
+Age, research, wonders and prestige are untouched.
 
-**Morale impact:** After a Succumb full reset, morale returns to the **50% neutral baseline**, like a fresh civilization. You begin the new run with no production penalty and no bonus — morale sits in the neutral band and drifts toward 50% naturally. To climb into the high band (up to a +20% production bonus), raise morale the normal way with worship and culture buildings once you re-establish.
+The −10% applies to every building, including the ones that survived, for the full 216 ticks. Negative production modifiers are floored at 10% of base, but a single −10% lands in full whatever other bonuses you hold. The same flooring covers per-resource rate modifiers and gather rate, and any active debuff shows in the Active Multipliers panel.
 
-**What carries forward after Succumb:**
+If morale was already low, the −10 can push it into the low band, where output is penalized. Morale drifts back toward 50% on its own; a food surplus speeds that up.
 
-| Item | Survives? |
-|------|----------|
-| Prestige level and upgrade tiers | Yes |
-| Ruins (up to 8 new from current run) | Yes |
-| Epoch legacy bonuses (all prior + new) | Yes |
-| Ancient Knowledge bonus | Yes (+25% stacked) |
-| Catastrophe/civilization history log | Yes |
-| Resources, buildings, workers | No — reset to zero |
-| Research / tech tree | No — reset |
-| Milestones and chains | No — reset |
-| Epoch event history | Yes (carried forward) |
+**When to Endure:** your civilization is big, and a full reset would cost more than the legacy bonus is worth. Also when you already hold this epoch's legacy bonus.
 
-**When to choose Succumb:** When your civilization is still small (early in an epoch) and the reset cost is low relative to the permanent bonus you'll gain. The Ancient Knowledge +25% research speed compounds across every single future run — an early Succumb in the Stone Era costs little but pays dividends forever. Multiple Succumbs across different epochs stack legacy bonuses for dramatic long-term acceleration.
+### How the destruction is picked
 
----
+- Every built non-wonder building instance goes into a pool, in a fixed order (sorted by building key).
+- The pool is shuffled with your run's seeded random generator and the first N are destroyed.
+- Destroyed buildings are removed entirely; they don't become ruins.
 
-### Defer
+Because the generator is seeded per run, the same run state destroys the same buildings.
 
-Close the modal without deciding.
+**Recovery checklist:**
 
-- The catastrophe stays **pending** — nothing changes immediately
-- You will be prompted again the next time you open the game
-- **Age advancement is blocked** until you resolve the pending catastrophe
-- You can continue gathering resources and playing otherwise
-
-Defer has no cost and no timer — you can hold a catastrophe pending indefinitely. This is useful if you want to accumulate more resources, push a few more milestone goals, or simply need to think through the choice.
-
-**When to choose Defer:** When you're mid-milestone chain, when you want to ensure faith is high enough to benefit from Endure or Succumb more optimally, or when you'd prefer to make the choice on your next session.
-
-> Age advancement is blocked until the catastrophe is resolved. Defer is a pause, not an escape — you must eventually Endure or Succumb.
+1. The log lists every lost building by name. Rebuild food and housing first.
+2. Reassign or recruit workers for the rebuilt capacity.
+3. Wait out the 216-tick reconstruction debuff; it can't be removed early.
 
 ---
 
-## Endure in Detail
+## Succumb
 
-The 20% building destruction is handled by `DestroyRandom`:
+Let the civilization fall, and keep something permanent.
 
-- A pool of all current building instances is assembled (each copy of each building is a separate entry)
-- Wonders are explicitly excluded — they cannot be destroyed
-- The pool is shuffled randomly
-- The first N = `floor(total_buildings / 5)` entries are destroyed (minimum 1 if any buildings exist)
-- The destroyed buildings are removed entirely — they do not become ruins
+- **Up to 8 buildings become ruins**, picked at random from your non-wonder buildings (same seeded, fixed-order pool as Endure). Ruins produce at 50% of base rate with no workers.
+- **Ruin cap: 24.** Ruins carry across Succumb and prestige, but the total never exceeds 24. When new ruins push past the cap, the **lowest-value ruins crumble first**: earliest age first, then lowest base output. A late-game fall replaces primitive rubble instead of being thrown away. Saves from before the cap are trimmed the same way when loaded.
+- **Legacy bonus** for the epoch (table below), permanent.
+- **Ancient Knowledge**: +25% research speed for each distinct epoch you have succumbed in. Succumbing twice in the same epoch doesn't add another 25%.
+- **Full reset** to the Primitive Age: buildings, resources, workers, research, milestones, events, build queue. You start with 15 food and 12 wood, plus prestige starting bonuses.
+- **No prestige points are earned.** Your prestige level, points and upgrades are kept.
+- A line in the civilization log.
 
-After destruction, the production debuff event (`endure_reconstruction`) is injected:
+Morale restarts at 50%.
 
-```
-Effect: production_all -10% for 216 ticks
-```
+### What carries forward
 
-This is separate from the building loss. Even buildings that survived are producing at 90% for the reconstruction period, and this now applies in full — negative production modifiers are floored so production can't drop below 10% of base, but a single −10% debuff lands cleanly off the top regardless of what other bonuses you hold. Plan for both effects simultaneously.
+| Item | After Succumb |
+|------|---------------|
+| Prestige level, points and upgrades | Kept |
+| Ruins | Kept, plus up to 8 new, capped at 24 |
+| Legacy flags (bonuses and Ancient Knowledge) | Kept, plus this epoch |
+| Civilization log | Kept |
+| Epoch event history | Kept |
+| Resources, buildings, workers | Reset |
+| Research | Reset |
+| Milestones and chains | Reset |
 
-This flooring applies to **all** rate pools, not just `production_all`: negative per-resource rate modifiers (e.g. `food_rate`) and negative gather-rate modifiers now apply the same way, each clamped to no lower than 10% of the base they act on. A future debuff or negative milestone targeting a single resource (or worker gather output) reduces that rate as designed instead of being silently ignored — and it appears in the Active Multipliers panel alongside the positive bonuses.
+### Ancient Knowledge
 
-**Recovery checklist after Endure:**
-1. Check which buildings were destroyed (the log lists every lost building by name)
-2. Rebuild the most impactful lost buildings first (usually food and worker capacity)
-3. Re-recruit workers if needed to fill rebuilt capacity
-4. Wait out the 216-tick reconstruction debuff (there is no way to remove it early)
-5. Resume normal progression once the timed event expires
+The research bonus comes straight from your legacy flags: +25% per epoch flagged. It is recomputed whenever it's needed, so save/load, Succumb and prestige can't drop or double it. It shows as **Legacy** under Research Speed in the Active Multipliers panel.
 
----
+From Iron to Cosmic there are 6 epochs you can succumb in, so the most you can earn now is **+150%**. A save that earned the Stone Era legacy before the Iron gate existed keeps it (+175% total).
 
-## Succumb in Detail
-
-The 8 ruins are generated before the reset:
-
-- A pool of all current building instances is assembled (excluding wonders)
-- The pool is shuffled randomly
-- Up to 8 instances are selected and moved to the ruins map
-- Their counts are removed from the active building count (so workers can no longer be assigned to them)
-- After the reset, the ruins are restored into the new civilization's building state
-
-Ruins produce at **50% of base rate with no worker scaling**:
-
-```
-ruin_production = base_rate × ruin_count × 0.50
-```
-
-No workers are needed. No assignment is required. They produce automatically from tick 1.
-
-**After reset, the following sequence applies:**
-1. Epoch legacy bonus is applied to `permanentBonuses` map (affects all future production calculations)
-2. Ancient Knowledge is stacked: `permanentBonuses["research_speed"] += 0.25`
-3. All prior legacy bonuses from previous Succumbs are re-applied
-4. Age unlocks for Primitive Age are applied
-5. Starting resources: 15 food, 12 wood (+ prestige starting_food/starting_wood bonuses)
-6. Ruins are loaded into the building state
-
----
-
-## Defer in Detail
-
-Defer has no mechanical cost on the engine side. When you choose Defer:
-
-- `pendingCatastrophe` remains set to the current epoch key
-- The UI hides the modal
-- All normal gameplay continues (resource production, ticking, building, etc.)
-- Age advancement is blocked by a check against `pendingCatastrophe != ""`
-
-You can Defer indefinitely. There is no counter, no escalating penalty, no second catastrophe that triggers if you wait too long. The only cost of Defer is the age advancement block.
+**When to Succumb:** you don't yet hold this epoch's legacy, and the reset is cheap for you. A catastrophe always arrives right as you enter an epoch, so the question is how much of the run you'd be giving up.
 
 ---
 
 ## Legacy Bonus Table
 
-Epoch legacy bonuses earned from Succumb are additive with all other production multipliers:
-
-| Epoch | Resources Boosted | Bonus |
-|-------|-----------------|-------|
-| Stone Era | wood, stone | +20% each |
+| Epoch | Resources boosted | Bonus |
+|-------|-------------------|-------|
+| Stone Era | wood, stone | +20% each (only on saves that earned it before the Iron gate) |
 | Iron Era | iron | +20% |
 | Steel Era | steel, coal | +25% each |
 | Electric Era | electricity, uranium | +25% each |
@@ -193,108 +138,59 @@ Epoch legacy bonuses earned from Succumb are additive with all other production 
 | Neon Era | plasma, dark matter crystals | +30% each |
 | Cosmic Era | dark matter | +35% |
 
-These bonuses apply to the production rate calculation in every future tick, regardless of prestige resets. They are stored in `legacyBonuses` (a map of epoch key → true) and re-applied via `reapplyLegacyBonuses()` after every reset.
-
-A player who has Succumbed in every epoch has stacked production bonuses across all primary resources, making mid-game resource phases almost instant.
+Rate bonuses add to your other `<resource>_rate` bonuses and apply from tick 1 of every later run, including after prestige. A new game (wiping the save) clears them.
 
 ---
 
 ## Faith and the Odds
 
-Your **faith level** directly controls the probability that any epoch transition rolls good or bad:
+| Faith fill | Good event | Catastrophe at the transition |
+|------------|------------|-------------------------------|
+| under 25% | 40% | 18% |
+| 25–75% (or no faith storage) | 50% | 15% |
+| over 75% | 60% | 12% |
 
-| Faith Level | Threshold | Chance of Good Event |
-|-------------|-----------|---------------------|
-| 0–24.9% | No Faith / Dim Faith | 40% good |
-| 25–75% | Low Faith / Mid Faith | 50% good |
-| 75.1–100% | Strong Faith / Faith Full | 60% good |
-
-A bad roll doesn't guarantee a catastrophe — it gives a 70% chance of a Challenging event and only a 30% chance of a Catastrophe. Maintaining 76%+ faith heading into an epoch transition gives you the best possible odds:
-
-- At 60% good: only 40% bad. Of those bad rolls, 30% escalate → **12% catastrophe chance**
-- At 40% good: 60% bad. Of those, 30% escalate → **18% catastrophe chance**
-
-That 6% difference across 7 epoch transitions means roughly half a catastrophe more or less across a full run.
-
-> Invest in Faith lineage buildings before every epoch transition. A full faith bar before each transition is the single best risk-reduction measure available.
-
-See [Faith](faith.md) for the full Faith system and building lineage.
+Over the 6 transitions of a run, high faith against low faith is roughly a third of a catastrophe fewer. More important, high faith also buys better good events. See [Faith](faith.md).
 
 ---
 
-## Voluntary Catastrophe
+## Civilization Log
 
-You can trigger a catastrophe yourself at any time during an epoch:
+Every resolved catastrophe adds a line:
 
 ```
-catastrophe invoke
+Tick N — Endured <Catastrophe> (<Epoch>). N buildings lost.
+Tick N — Succumbed to <Catastrophe> (<Epoch>). Civilization reset. Legacy bonus earned.
 ```
 
-This bypasses the epoch transition roll entirely and immediately presents the Endure / Succumb / Defer modal. One catastrophe per epoch maximum — you cannot invoke a second one after resolving the first, and a voluntary invocation counts toward that limit.
+The log survives Succumb and prestige. The Stats panel counts **Survived** (Endured) and **Succumbed** from these lines, so a pending catastrophe counts as neither.
 
-**Why invoke voluntarily?**
-
-- You want to Succumb while your civilization is small, minimizing reset cost
-- You want to lock in a legacy bonus before reaching the natural epoch transition
-- You're still in the Stone Era with a tiny civilization — resetting now costs almost nothing
-- You want to test Endure consequences without waiting for an epoch roll
-
-> The canonical optimal play: invoke catastrophe voluntarily in the Stone Era (first available epoch), choose Succumb. The legacy bonus (wood +20%, stone +20%) and Ancient Knowledge (+25% research speed) are earned when your civilization is at its smallest, making the reset nearly costless. These bonuses then compound through every subsequent run.
+The Epoch tab's history marks each past epoch's catastrophe as **Survived**, **Succumbed** or **Pending**. A catastrophe from an older save whose outcome was never stored shows as "outcome not recorded" rather than guessing.
 
 ---
 
-## Civilization History
+## Strategy
 
-Every catastrophe resolution is logged in your civilization history. The entry records:
+### Endure beats Succumb when
 
-```
-Tick N — Endured/Succumbed to <Catastrophe Name> (<Epoch Name>). N buildings lost. / Civilization reset. Legacy bonus earned.
-```
+- your civilization is large and deep into its run,
+- you already hold this epoch's legacy (a repeat Succumb there adds nothing but ruins),
+- you're close to a milestone chain that a reset would wipe.
 
-This history survives all resets, including prestige. You can review it to track your run lineage and see which epochs you've resolved catastrophes in.
+### Succumb beats Endure when
 
----
+- the reset is cheap (early epochs, or a run you were going to prestige soon anyway),
+- you don't hold this epoch's legacy yet,
+- you have plenty of runs ahead to cash in the research bonus.
 
-## Strategy Guide
+### Pending is a pause, not a dodge
 
-### When Endure beats Succumb
+Esc lets you check your buildings and resources before you commit, and the game keeps producing meanwhile. But you can't advance or prestige until you choose.
 
-- You're late in a full run with 100+ buildings and 30+ ages progressed
-- You've already Succumbed in this epoch during a previous life and claimed the legacy bonus
-- Your civilization is large enough that the ancient knowledge +25% research speed marginal gain is small relative to the reset cost
-- You're close to a milestone chain completion that resets on Succumb
+### Morale
 
-### When Succumb beats Endure
+Enduring costs 10 points of morale. Keep food positive, avoid over-militarizing (military above 30% of population drains morale), and build worship and culture buildings to climb back. See [Morale](morale.md).
 
-- Your civilization is small (under 30 buildings, early in the epoch)
-- You haven't yet claimed the legacy bonus for this epoch
-- You have a high number of ruins already, making the head start on reset very strong
-- You're behind on your expected progression and want to leverage compounding permanent bonuses
+### The long game
 
-### Managing morale through catastrophes
-
-A catastrophe endured costs morale, dragging the civilization-wide percentage down toward — and possibly into — the low band, where production is penalised (down to ×0.50 at the 10% floor). Recover by removing the drags: keep food positive, and avoid over-militarising (military workers above 30% of population drain morale further). Building worship and culture buildings raises morale back into the neutral and high bands, and morale also drifts back toward the 50% neutral baseline on its own. Surviving multiple catastrophes in a single run without attending to morale is a common reason civilizations stall — sustained low morale suppresses all worker output until you stabilise.
-
-See [Morale](morale.md) for the full morale system.
-
-### When Defer is correct
-
-- You're mid-build of an important wonder that would be lost to Endure
-- You want to drain your food/wood into starting resource prestige upgrades before resetting
-- You're one age advance away from a milestone and want to complete it first
-- It's literally just bad timing and you need 10 more minutes
-
-### The Optimal Long-Term Path
-
-The highest long-term output comes from collecting all 7 legacy bonuses by Succumbing once per epoch across different runs, then running full prestige loops with all bonuses stacked. After 7+ runs you'll have:
-
-- +20% wood, +20% stone (Stone Era)
-- +20% iron (Iron Era)
-- +25% steel, +25% coal (Steel Era)
-- +25% electricity, +25% uranium (Electric Era)
-- +30% data, +30% titanium ore (Digital Era)
-- +30% plasma, +30% dark matter crystals (Neon Era)
-- +35% dark matter (Cosmic Era)
-- +25% research speed per Succumb × (number of Succumbs)
-
-This makes the mid-game effectively instant and late-game resources trivial to accumulate.
+Succumbing once in each epoch from Iron to Cosmic, over several runs, collects all six reachable legacy bonuses and +150% research speed. Which epochs you get the chance in is up to the transition rolls. Each run after that starts with those bonuses and up to 24 ruins producing from tick 1.

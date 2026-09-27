@@ -5,6 +5,7 @@ import (
 	"math/rand"
 	"sort"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -60,9 +61,16 @@ type Dashboard struct {
 	activeShameBadge string
 
 	// catModalShown tracks the pending catastrophe key we have already shown a modal for,
-	// so that choosing Defer does not immediately re-show the modal on the next refresh tick.
-	// Reset to "" when PendingCatastrophe clears (player chose Endure or Succumb).
+	// so that closing it with Esc does not re-pop it on the next refresh tick (the
+	// `catastrophe` command reopens it). Reset to "" when PendingCatastrophe clears
+	// (player chose Endure or Succumb) or when a save is loaded.
 	catModalShown string
+	// catReshow is set by the EventGameLoaded bus handler (which runs under the
+	// engine lock, possibly off the UI goroutine) and consumed by refresh(): a
+	// freshly loaded save with a pending catastrophe shows its modal again.
+	catReshow atomic.Bool
+	// catFocus is the catastrophe modal button that owns focus while it is open.
+	catFocus tview.Primitive
 
 	// memoryModalShown guards the Ancient Memory offer modal the same way catModalShown
 	// guards the catastrophe modal: it holds the offered tech key once shown so a Defer
@@ -236,9 +244,17 @@ func (d *Dashboard) build() {
 		epochIcon, _ := e.Payload["epoch_icon"].(string)
 		d.toastMgr.Show(fmt.Sprintf("✦ The %s %s Dawns!", epochIcon, epochName), "gold", 6*time.Second)
 	})
+	d.engine.Bus.Subscribe(game.EventGameLoaded, func(e game.EventData) {
+		// Runs under the engine write lock: only flip the flag, never touch the engine.
+		d.catReshow.Store(true)
+	})
 	d.engine.Bus.Subscribe(game.EventEpochEventFired, func(e game.EventData) {
 		eventName, _ := e.Payload["event_name"].(string)
 		eventType, _ := e.Payload["event_type"].(string)
+		if eventType == "catastrophe" {
+			d.toastMgr.Show(fmt.Sprintf("☄ Catastrophe: %s — type 'catastrophe' to decide", eventName), "red", 8*time.Second)
+			return
+		}
 		color := "cyan"
 		if eventType == "bad_challenging" {
 			color = "red"
@@ -295,7 +311,7 @@ func (d *Dashboard) build() {
 			}
 			// Route /commands to dev exec when dev mode is active
 			if game.DevModeActive && strings.HasPrefix(cmd, "/") {
-				result := game.DevExecCommand(cmd, d.engine)
+				result := game.DevConsoleCommand(cmd, d.engine)
 				if result != "" {
 					d.engine.AddLog("info", "[positive]dev → "+result+"[-]")
 				}
@@ -318,6 +334,9 @@ func (d *Dashboard) build() {
 				return
 			}
 			result := HandleCommand(text, d.engine)
+			if result.OpenCatastrophe {
+				d.reopenCatastropheModal()
+			}
 			if result.OverlayName != "" {
 				state := d.engine.GetState()
 				d.overlayMgr.Show(result.OverlayName, state)
@@ -527,16 +546,26 @@ func (d *Dashboard) refresh() {
 	// engine lock / in a Bus handler. GetState() above already released the lock.
 	d.processThemeUnlocks(state)
 
-	// Phase 9: catastrophe modal — show once per new pending catastrophe; Defer hides it.
+	// Phase 9: catastrophe modal — show once per new pending catastrophe; Esc hides it
+	// until the player types `catastrophe` (or loads a save, which shows it again).
 	// Never stack it on top of the age splash: an epoch-transition roll sets
 	// PendingCatastrophe inside the same advance, so both surface in this refresh.
 	// Stacked, the modal steals focus from the splash ("press any key" does nothing),
 	// and the splash's 20s auto-dismiss (OverlayManager.Hide → onClose) then moves
 	// focus to the input field underneath the still-visible modal, leaving it
 	// unreachable by keyboard. Wait until the splash is gone; the next refresh shows it.
+	if d.catReshow.Swap(false) {
+		d.catModalShown = ""
+	}
 	if state.PendingCatastrophe == "" {
 		d.catModalShown = "" // reset so next catastrophe will show fresh
-	} else if d.catModalShown == "" && d.overlayMgr.ActiveName() != "age_splash" {
+		if d.pages.HasPage(catastrophePage) {
+			d.closeCatastropheModal() // e.g. a save without a pending catastrophe was loaded
+		}
+	} else if d.catModalShown != state.PendingCatastrophe && d.overlayMgr.ActiveName() != "age_splash" {
+		if d.pages.HasPage(catastrophePage) {
+			d.pages.RemovePage(catastrophePage) // stale modal for a different epoch
+		}
 		d.catModalShown = state.PendingCatastrophe
 		d.showCatastropheModal(state.PendingCatastrophe)
 	}
@@ -663,6 +692,14 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		}
 		epochStr = fmt.Sprintf("  %s%s %s%s[-]", theme.NameTag(state.EpochColor), state.EpochIcon, state.EpochName, survivedMark)
 	}
+	// Pending catastrophe badge: persistent until the player chooses, so a player
+	// who closed the modal (or came back after a long idle) sees why advancing
+	// is blocked and how to reopen the choice.
+	catStr := ""
+	if state.PendingCatastrophe != "" {
+		catStr = fmt.Sprintf("  %s ☄ CATASTROPHE PENDING — type 'catastrophe' %s",
+			theme.TagFgBg(theme.RoleOnNegative, theme.RoleNegative), theme.Reset)
+	}
 	// Colour morale by the continuous production multiplier, not the raw percent:
 	// green = bonus (mult>1.0), white = neutral (==1.0), red = penalty (<1.0).
 	// computeMoraleBand is the shared source of truth (same as the workers panel).
@@ -683,8 +720,8 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		acctStr = fmt.Sprintf("[gold]%s[-] · ", name)
 	}
 	d.statusTV.SetText(fmt.Sprintf(
-		"%s[gold]%s[-]%s%s%s  Tick: %d%s%s%s  |  Pop: %d/%d%s  |  [gray]type panel name to open  ESC=close/menu[-]",
-		acctStr, state.AgeName, prestigeStr, titleStr, epochStr, state.Tick, nextAgeStr, speedStr, devStr,
+		"%s[gold]%s[-]%s%s%s%s  Tick: %d%s%s%s  |  Pop: %d/%d%s  |  [gray]type panel name to open  ESC=close/menu[-]",
+		acctStr, state.AgeName, prestigeStr, titleStr, epochStr, catStr, state.Tick, nextAgeStr, speedStr, devStr,
 		state.Workers.TotalPop, state.Workers.MaxPop, moraleStr,
 	))
 }

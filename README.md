@@ -51,7 +51,7 @@ Start in the Primitive Age with bare hands and 15 food. Gather resources, build 
 - **Worker System**: 12 domains (food, faith, knowledge, military, trade, engineering, hacker, astronaut, lumber, masonry, metallurgy, energy) with per-domain class progression and food economy
 - **Tech Tree**: 52 technologies with prerequisites and permanent bonuses
 - **Military**: 15 expeditions with risk/reward and defense ratings
-- **Epoch System**: 7 epochs with faith-gated event rolls, catastrophe choices (Endure/Succumb/Defer), and legacy bonuses that carry across runs
+- **Epoch System**: 7 epochs with faith-gated event rolls, catastrophe choices from the Iron Era on (Endure/Succumb), and legacy bonuses that carry across runs
 - **Random Events**: 62 events (27 base + 35 epoch-exclusive) with streak balancing
 - **Milestones**: 33 achievements across 5 chains with civilization titles and temporary speed boosts
 - **Age Progression**: 22 ages from Primitive to Transcendent with exponential requirements and building transformation on advance

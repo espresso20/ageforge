@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"sort"
 
 	"github.com/espresso20/ageforge/config"
 )
@@ -587,36 +588,79 @@ func (bm *BuildingManager) PartialTransform(oldKey, newKey string, count int, re
 
 // === Phase 9: Ruins ===
 
-// GenerateRuins converts up to n randomly selected non-wonder building instances
-// into ruins on a Succumb catastrophe. Ruins are removed from counts (so they
-// no longer receive worker assignments) but continue to produce at 50% base
-// rate via the ruins map in WorkerScaledProduction.
-// Returns a map of building key → number of ruins created (nil if none).
-func (bm *BuildingManager) GenerateRuins(n int) map[string]int {
-	type inst struct{ key string }
-	var pool []inst
+// MaxRuins caps the total number of ruin instances a civilization can carry.
+// Ruins persist across Succumb and Prestige, so without a cap repeated Succumbs
+// would pile them up forever. When a new batch pushes the total over the cap,
+// the lowest-value ruins are dropped first (see ruinLess), so a late-game fall
+// replaces primitive rubble rather than being thrown away.
+const MaxRuins = 24
+
+// destroyablePool returns one entry per built non-wonder building instance, in a
+// stable order (keys sorted), so a seeded shuffle over it is reproducible.
+// Map iteration order must never leak into a random draw.
+func (bm *BuildingManager) destroyablePool() []string {
+	keys := make([]string, 0, len(bm.counts))
 	for key, c := range bm.counts {
-		if c == 0 {
+		if c <= 0 {
 			continue
 		}
 		if def, ok := bm.defs[key]; !ok || def.Category == "wonder" {
 			continue
 		}
-		for i := 0; i < c; i++ {
-			pool = append(pool, inst{key})
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	var pool []string
+	for _, key := range keys {
+		for i := 0; i < bm.counts[key]; i++ {
+			pool = append(pool, key)
 		}
 	}
-	if len(pool) == 0 {
+	return pool
+}
+
+// DestroyableCount returns how many built building instances a catastrophe can
+// destroy or ruin: everything except wonders.
+func (bm *BuildingManager) DestroyableCount() int {
+	n := 0
+	for key, c := range bm.counts {
+		if c <= 0 {
+			continue
+		}
+		if def, ok := bm.defs[key]; ok && def.Category != "wonder" {
+			n += c
+		}
+	}
+	return n
+}
+
+// drawFromPool shuffles a copy of pool with rng and returns the first n entries
+// tallied by key. n is clamped to the pool size.
+func drawFromPool(rng *rand.Rand, pool []string, n int) map[string]int {
+	if n <= 0 || len(pool) == 0 {
 		return nil
 	}
-	rand.Shuffle(len(pool), func(i, j int) { pool[i], pool[j] = pool[j], pool[i] })
-	if n > len(pool) {
-		n = len(pool)
+	shuffled := append([]string(nil), pool...)
+	rng.Shuffle(len(shuffled), func(i, j int) { shuffled[i], shuffled[j] = shuffled[j], shuffled[i] })
+	if n > len(shuffled) {
+		n = len(shuffled)
 	}
-	newRuins := make(map[string]int)
-	for _, inst := range pool[:n] {
-		newRuins[inst.key]++
+	out := make(map[string]int)
+	for _, key := range shuffled[:n] {
+		out[key]++
 	}
+	return out
+}
+
+// GenerateRuins converts up to n randomly selected non-wonder building instances
+// into ruins on a Succumb catastrophe. Ruins are removed from counts (so they
+// no longer receive worker assignments) but continue to produce at 50% base
+// rate via the ruins map in WorkerScaledProduction. The draw uses rng over a
+// stable pool, so the same seed picks the same buildings. It does not apply the
+// ruin cap; call EnforceRuinCap afterwards.
+// Returns a map of building key → number of ruins created (nil if none).
+func (bm *BuildingManager) GenerateRuins(rng *rand.Rand, n int) map[string]int {
+	newRuins := drawFromPool(rng, bm.destroyablePool(), n)
 	for key, count := range newRuins {
 		bm.ruins[key] += count
 		bm.counts[key] -= count
@@ -625,6 +669,79 @@ func (bm *BuildingManager) GenerateRuins(n int) map[string]int {
 		}
 	}
 	return newRuins
+}
+
+// ruinValue ranks a ruin type for the cap: later-age buildings are worth more,
+// then higher base production (what a ruin actually yields, at 50%).
+func (bm *BuildingManager) ruinValue(key string, ageIdx map[string]int) (int, float64) {
+	def := bm.defs[key]
+	output := 0.0
+	for _, eff := range def.Effects {
+		if eff.Type == "production" {
+			output += eff.Value
+		}
+	}
+	return ageIdx[def.RequiredAge], output
+}
+
+// EnforceRuinCap trims the ruins map to MaxRuins instances, dropping the
+// lowest-value ruins first (earliest age, then lowest base output, then key for
+// a stable tie-break). Returns how many ruin instances were removed.
+func (bm *BuildingManager) EnforceRuinCap() int {
+	total := 0
+	keys := make([]string, 0, len(bm.ruins))
+	for k, v := range bm.ruins {
+		if v <= 0 {
+			delete(bm.ruins, k)
+			continue
+		}
+		total += v
+		keys = append(keys, k)
+	}
+	if total <= MaxRuins {
+		return 0
+	}
+	ageIdx := make(map[string]int)
+	for i, a := range config.AgeOrder() {
+		ageIdx[a] = i
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		ai, oi := bm.ruinValue(keys[i], ageIdx)
+		aj, oj := bm.ruinValue(keys[j], ageIdx)
+		if ai != aj {
+			return ai < aj
+		}
+		if oi != oj {
+			return oi < oj
+		}
+		return keys[i] < keys[j]
+	})
+	dropped := 0
+	for _, k := range keys {
+		if total <= MaxRuins {
+			break
+		}
+		cut := bm.ruins[k]
+		if total-cut < MaxRuins {
+			cut = total - MaxRuins
+		}
+		bm.ruins[k] -= cut
+		if bm.ruins[k] <= 0 {
+			delete(bm.ruins, k)
+		}
+		total -= cut
+		dropped += cut
+	}
+	return dropped
+}
+
+// RuinTotal returns the total number of ruin instances.
+func (bm *BuildingManager) RuinTotal() int {
+	n := 0
+	for _, v := range bm.ruins {
+		n += v
+	}
+	return n
 }
 
 // GetAllRuins returns a copy of the ruins map.
@@ -638,48 +755,36 @@ func (bm *BuildingManager) GetAllRuins() map[string]int {
 	return out
 }
 
-// LoadRuins restores ruins from a saved state.
+// LoadRuins restores ruins from a saved state (or carries them across a
+// reset) and applies the ruin cap, so saves written before the cap existed
+// are trimmed on load.
 func (bm *BuildingManager) LoadRuins(ruins map[string]int) {
 	for k, v := range ruins {
 		if v > 0 {
 			bm.ruins[k] += v
 		}
 	}
+	bm.EnforceRuinCap()
 }
 
 // DestroyRandom destroys up to count individual building instances chosen
-// uniformly at random. Wonders are excluded because they represent one-off
-// civilisation milestones. Unlike GenerateRuins, destroyed buildings are
-// removed entirely (they do not become ruins).
-// Returns human-readable descriptions for the log (e.g. "3 Lumber Mill").
-func (bm *BuildingManager) DestroyRandom(count int) []string {
-	// Build a pool of destroyable instances (key repeated by count)
-	type inst struct{ key string }
-	var pool []inst
-	for key, c := range bm.counts {
-		if c == 0 {
-			continue
-		}
-		if def, ok := bm.defs[key]; !ok || def.Category == "wonder" {
-			continue
-		}
-		for i := 0; i < c; i++ {
-			pool = append(pool, inst{key})
-		}
+// uniformly at random with rng from a stable pool (same seed → same picks).
+// Wonders are excluded because they represent one-off civilisation milestones.
+// Unlike GenerateRuins, destroyed buildings are removed entirely (they do not
+// become ruins). Workers assigned to the destroyed buildings are NOT touched
+// here; the engine releases them (see GameEngine.releaseWorkersFrom).
+// Returns building key → number destroyed, and human-readable descriptions for
+// the log (e.g. "3 Lumber Mill") in sorted key order.
+func (bm *BuildingManager) DestroyRandom(rng *rand.Rand, count int) (map[string]int, []string) {
+	destroyed := drawFromPool(rng, bm.destroyablePool(), count)
+	keys := make([]string, 0, len(destroyed))
+	for key := range destroyed {
+		keys = append(keys, key)
 	}
-	if len(pool) == 0 {
-		return nil
-	}
-	rand.Shuffle(len(pool), func(i, j int) { pool[i], pool[j] = pool[j], pool[i] })
-	if count > len(pool) {
-		count = len(pool)
-	}
-	destroyed := make(map[string]int)
-	for _, inst := range pool[:count] {
-		destroyed[inst.key]++
-	}
+	sort.Strings(keys)
 	var names []string
-	for key, n := range destroyed {
+	for _, key := range keys {
+		n := destroyed[key]
 		bm.counts[key] -= n
 		if bm.counts[key] < 0 {
 			bm.counts[key] = 0
@@ -688,7 +793,7 @@ func (bm *BuildingManager) DestroyRandom(count int) []string {
 			names = append(names, fmt.Sprintf("%d %s", n, def.Name))
 		}
 	}
-	return names
+	return destroyed, names
 }
 
 // TransformBuilding is called during age transition to upgrade all instances of

@@ -14,6 +14,8 @@ prestige confirm yes
 
 You unlock the ability to prestige at **Modern Age (Age 12)** and any age beyond. There is no hard cap — if you push all the way to Quantum Age before prestiiging, you'll earn substantially more points.
 
+Prestige is refused while a [catastrophe](catastrophe.md) is pending. Type `catastrophe` and choose Endure or Succumb first.
+
 To check your current prestige status:
 
 ```
@@ -123,7 +125,7 @@ These stack on top of your purchased upgrade bonuses. A prestige level 5 player 
 - Prestige level and all purchased upgrade tiers
 - Ruins (from past Succumb events) — carry into the new run
 - Legacy bonuses (from Succumb events) — active from tick 1
-- Ancient Knowledge bonus (+25% research speed per Succumb) — stacks across all Succumbs
+- Ancient Knowledge bonus (+25% research speed per distinct epoch succumbed) — derived from your legacy flags, so prestige never drops it
 - Civilization history / catastrophe log
 
 ### Morale on Prestige
@@ -145,7 +147,7 @@ Culture is reduced to **20% of its current value** rather than fully reset. Any 
 Legacy bonuses are earned by choosing **Succumb** during a catastrophe event. They are separate from prestige upgrades but interact with them on every subsequent run.
 
 Each Succumb grants:
-- **Ancient Knowledge** — permanent +25% research speed (stacks additively per Succumb)
+- **Ancient Knowledge** — permanent +25% research speed per distinct epoch succumbed (a second Succumb in the same epoch adds nothing; +150% at most from Iron to Cosmic)
 - **Epoch Legacy Bonus** — permanent production multiplier for the primary resources of that epoch
 
 | Epoch | Legacy Production Bonus |
@@ -158,9 +160,9 @@ Each Succumb grants:
 | Neon Era | plasma +30%, dark matter crystals +30% |
 | Cosmic Era | dark matter +35% |
 
-These bonuses apply from **tick 1** of every new run, including after prestige. A player who has Succumbed in the Stone Era and Iron Era starts every run with wood, stone, and iron production already multiplied.
+These bonuses apply from **tick 1** of every new run, including after prestige. A player who has Succumbed in the Iron Era and Steel Era starts every run with iron, steel and coal production already multiplied, and +50% research speed.
 
-Multiple Succumbs in different epochs stack independently. There is no cap on how many legacy bonuses you can accumulate across runs.
+Succumbs in different epochs stack; a second Succumb in an epoch you already hold adds nothing. Catastrophes start in the Iron Era, so six legacy bonuses are reachable (the Stone Era one only exists on saves that earned it before that rule).
 
 Legacy bonuses survive prestige the same way ruins do — they are part of your permanent meta-state.
 
@@ -170,7 +172,7 @@ Legacy bonuses survive prestige the same way ruins do — they are part of your 
 
 When you prestige, any ruins you've accumulated from Succumb events carry forward. Ruins produce at 50% base rate with no worker requirement — they're free production from tick 1.
 
-On a fresh prestige run with accumulated ruins, your food, wood, or other resources may already be ticking up before you've built a single building. The more catastrophes you've Succumbed to, the stronger your ruins collection.
+On a fresh prestige run with accumulated ruins, your food, wood, or other resources may already be ticking up before you've built a single building. Each Succumb adds up to 8 ruins, and the collection is capped at 24; past the cap the lowest-value (earliest-age) ruins crumble first, so later falls upgrade the collection.
 
 See [Catastrophe](catastrophe.md) for how ruins are generated.
 

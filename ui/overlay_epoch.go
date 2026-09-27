@@ -85,21 +85,26 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 	sb.WriteString("\n")
 
 	// Catastrophe status
-	hasCatastrophe := epochHasCatastrophe(state.EpochEventHistory, state.EpochKey)
-	if state.PendingCatastrophe != "" {
-		sb.WriteString(" Catastrophe: [red]PENDING — choose Endure / Succumb / Defer[-]\n")
-	} else if hasCatastrophe {
-		if state.LegacyBonuses[state.EpochKey] {
-			sb.WriteString(" Catastrophe: [yellow]Succumbed — legacy bonus gained[-]\n")
+	switch {
+	case state.PendingCatastrophe != "":
+		sb.WriteString(" Catastrophe: [red]PENDING — type 'catastrophe' to choose Endure or Succumb[-]\n")
+		sb.WriteString(" [gray]  Advancing and prestige are blocked until you decide.[-]\n")
+	case !config.CatastropheAllowed(state.EpochKey):
+		gate := config.EpochByKey()[config.CatastropheGateEpoch].Name
+		fmt.Fprintf(sb, " Catastrophe: [gray]none before the %s[-]\n", gate)
+	default:
+		if r := latestCatastrophe(state.EpochEventHistory, state.EpochKey); r != nil {
+			fmt.Fprintf(sb, " Catastrophe: %s\n", catastropheOutcomeLabel(r.Outcome))
 		} else {
-			sb.WriteString(" Catastrophe: [green]✓ Survived[-]\n")
+			sb.WriteString(" Catastrophe: [gray]not yet triggered[-]\n")
 		}
-	} else {
-		sb.WriteString(" Catastrophe: [gray]not yet triggered[-]\n")
 	}
 
-	sb.WriteString("\n")
-	sb.WriteString(" To invoke voluntarily: [gray]catastrophe invoke[-]\n")
+	// Odds at the next transition (same numbers the `catastrophe` command shows).
+	if o := state.CatastropheOutlook; o.Possible {
+		fmt.Fprintf(sb, " Next transition (%s): [yellow]%.0f%% catastrophe chance[-] [gray](%s; more faith, lower odds)[-]\n",
+			config.EpochByKey()[o.NextEpochKey].Name, o.Probability*100, o.Tier)
+	}
 }
 
 // epochProviderHistory renders the epoch history section.
@@ -134,13 +139,8 @@ func epochProviderHistory(sb *strings.Builder, state game.GameState) {
 				line.WriteString("   [gray]no event[-]")
 			}
 
-			hasCat := epochHasCatastrophe(state.EpochEventHistory, ep.Key)
-			if hasCat {
-				if state.LegacyBonuses[ep.Key] {
-					line.WriteString("   [yellow]Succumbed[-]")
-				} else {
-					line.WriteString("   [green]✓ Survived[-]")
-				}
+			if r := latestCatastrophe(state.EpochEventHistory, ep.Key); r != nil {
+				line.WriteString("   " + catastropheOutcomeLabel(r.Outcome))
 			}
 		}
 
@@ -209,14 +209,30 @@ func findEpochEvent(history []game.EpochEventRecord, epochKey string) *game.Epoc
 	return last
 }
 
-// epochHasCatastrophe returns true if a catastrophe event was recorded for the given epoch.
-func epochHasCatastrophe(history []game.EpochEventRecord, epochKey string) bool {
-	for _, r := range history {
-		if r.EpochKey == epochKey && r.EventType == "catastrophe" {
-			return true
+// latestCatastrophe returns the most recent catastrophe record for epochKey, or nil.
+func latestCatastrophe(history []game.EpochEventRecord, epochKey string) *game.EpochEventRecord {
+	for i := len(history) - 1; i >= 0; i-- {
+		if history[i].EpochKey == epochKey && history[i].EventType == "catastrophe" {
+			return &history[i]
 		}
 	}
-	return false
+	return nil
+}
+
+// catastropheOutcomeLabel renders a catastrophe record's outcome. Only an
+// actual Endure reads as Survived: a pending catastrophe says so, and a record
+// whose outcome was never stored (older saves) says it is unknown rather than
+// claiming survival.
+func catastropheOutcomeLabel(outcome string) string {
+	switch outcome {
+	case game.CatastropheEndured:
+		return "[green]✓ Survived[-]"
+	case game.CatastropheSuccumbed:
+		return "[yellow]Succumbed — legacy bonus[-]"
+	case game.CatastrophePending:
+		return "[red]Pending[-]"
+	}
+	return "[gray]catastrophe (outcome not recorded)[-]"
 }
 
 // epochEventColor returns a tview color tag name for an epoch event type.

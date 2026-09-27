@@ -270,6 +270,10 @@ func (vm *WorkerManager) AddPctAll(pct float64) {
 // exceeds the remaining population. Integer truncation can leave the total
 // assigned count one or two above the new count; the reconciliation loop at
 // the bottom corrects this by reducing the largest assignment first.
+//
+// There is a single worker pool, so this already spans every worker domain:
+// food, knowledge, military and the rest all lose the same share of their
+// assigned workers (Endure's 25% loss relies on this).
 func (vm *WorkerManager) RemovePct(pct float64) {
 	rt := vm.domains["worker"]
 	remove := int(float64(rt.count) * pct)
@@ -296,10 +300,12 @@ func (vm *WorkerManager) RemovePct(pct float64) {
 	}
 	for totalAssigned > rt.count {
 		// Find the building with the most assigned workers and reduce it by 1.
+		// Ties break on the smaller key so the result never depends on map
+		// iteration order (keeps seeded catastrophe runs reproducible).
 		maxKey := ""
 		maxVal := 0
 		for k, v := range rt.assignments {
-			if v > maxVal {
+			if v > maxVal || (v == maxVal && v > 0 && k < maxKey) {
 				maxVal = v
 				maxKey = k
 			}

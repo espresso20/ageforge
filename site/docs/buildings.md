@@ -361,7 +361,7 @@ See [Wonders](wonders.md) for the full list with costs and effects.
 
 ## Ruins
 
-Ruins are ancient remnants of a previous civilization — created when you choose **Succumb** during a catastrophe event. Up to 8 buildings are converted into ruins and carried forward into your new run.
+Ruins are ancient remnants of a previous civilization — created when you choose **Succumb** during a catastrophe event. Up to 8 buildings are converted into ruins and carried forward into your new run. Ruins are capped at 24 in total; when a new batch goes over, the lowest-value ruins (earliest age, then lowest output) crumble first.
 
 **How ruins differ from normal buildings:**
 

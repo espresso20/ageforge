@@ -42,7 +42,7 @@ Effects are applied the tick the counter hits zero. You'll see a success message
 | Source | How much | Notes |
 |---|---|---|
 | **Tech bonuses** | Varies — see tech list | Accumulate permanently as techs complete |
-| **Ancient Knowledge** (Succumb) | +0.25 (25%) | Granted permanently when you Succumb to an epoch catastrophe; survives all future resets |
+| **Ancient Knowledge** (Succumb) | +0.25 (25%) per epoch | Granted permanently for each distinct epoch you Succumb in (Iron to Cosmic, up to +150%); survives Succumb, prestige and save/load |
 | **Prestige: Research Speed** | +0.05 per tier, max 5 tiers (+25%) | Boosts `knowledge_rate`, not `research_speed` directly — see note below |
 
 > **Note on Prestige "Research Speed":** Despite its name, the prestige upgrade boosts `knowledge_rate` (how fast you generate knowledge), not the `research_speed` tick-reduction multiplier. More knowledge income means you can afford more techs faster, but it doesn't reduce tick counts. The two mechanics are complementary, not the same thing.
@@ -596,7 +596,7 @@ Knowledge costs scale steeply: from 800 kp (Primitive) to 500,000,000 kp (Transc
 
 **Prestige resets research** entirely. All techs, all bonuses — gone. The only persistent research benefit across a prestige reset is the **Ancient Knowledge** bonus (+25% research_speed) that comes from Succumbing, and the knowledge-rate bonus from the prestige upgrade shop.
 
-**Succumbing early is worth considering.** Succumbing to an epoch catastrophe in the Stone Era costs you a run but grants +25% research speed permanently. Players who Succumb at least once and invest in the Research Speed prestige upgrade begin each subsequent run with noticeably faster research from tick one.
+**Succumbing early is worth considering.** Succumbing to an epoch catastrophe right after entering the Iron Era (the earliest a catastrophe can strike) costs you a run but grants +25% research speed permanently, and each further epoch you Succumb in adds another +25%. Players who Succumb at least once and invest in the Research Speed prestige upgrade begin each subsequent run with noticeably faster research from tick one.
 
 **Don't overlook `civil_engineering`** — −5% build cost plus +100 all storage is exceptionally good value in the Classical Age and helps throughout the rest of the run.
 

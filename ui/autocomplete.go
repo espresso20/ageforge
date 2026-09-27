@@ -248,9 +248,6 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 			return filterPrefix(localAccountNames(engine), partial, prefix)
 		}
 
-	case "catastrophe", "cat":
-		return filterPrefix([]string{"invoke"}, partial, prefix)
-
 	case "wonder":
 		if len(completed) == 0 {
 			// Only subcommand is "collect"

@@ -9,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 )
@@ -21,6 +22,8 @@ type CommandResult struct {
 	Message     string
 	Type        string // "info", "success", "error", "warning"
 	OverlayName string // non-empty → dashboard should open this overlay panel
+	// OpenCatastrophe asks the dashboard to (re)open the pending catastrophe modal.
+	OpenCatastrophe bool
 }
 
 // HandleCommand parses a raw command string and dispatches to the appropriate
@@ -1780,18 +1783,33 @@ func cmdDismiss(args []string, engine *game.GameEngine) CommandResult {
 }
 
 func cmdCatastrophe(args []string, engine *game.GameEngine) CommandResult {
-	if len(args) < 1 || strings.ToLower(args[0]) != "invoke" {
+	if len(args) > 0 {
 		return CommandResult{
-			Message: "Usage: catastrophe invoke — voluntarily trigger the epoch catastrophe\n" +
-				"  [red]Warning: this will open the Endure / Succumb / Defer modal.[-]",
-			Type: "info",
+			Message: "Usage: catastrophe — reopen a pending catastrophe choice, or show the odds for the next epoch transition",
+			Type:    "info",
 		}
 	}
-	if err := engine.InvokeCatastrophe(); err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+	// Bare `catastrophe`: reopen the pending choice, or report the outlook.
+	state := engine.GetState()
+	if state.PendingCatastrophe != "" {
+		return CommandResult{Type: "success", OpenCatastrophe: true}
 	}
-	return CommandResult{
-		Message: "[red]Catastrophe invoked! A choice awaits...[-]",
-		Type:    "warning",
+	return CommandResult{Message: catastropheOutlookText(state.CatastropheOutlook), Type: "info"}
+}
+
+// catastropheOutlookText renders the no-pending status line for the bare
+// `catastrophe` command: the odds at the next epoch transition.
+func catastropheOutlookText(o game.CatastropheOutlook) string {
+	var sb strings.Builder
+	sb.WriteString("No catastrophe pending.\n")
+	switch {
+	case o.NextEpochKey == "":
+		sb.WriteString("  This is the final epoch: no further transition, no random catastrophe.")
+	case !o.Possible:
+		fmt.Fprintf(&sb, "  Next transition (%s): no catastrophe possible.", config.EpochByKey()[o.NextEpochKey].Name)
+	default:
+		fmt.Fprintf(&sb, "  Next transition (%s): %.0f%% catastrophe chance (%s), faith %.0f%% full.",
+			config.EpochByKey()[o.NextEpochKey].Name, o.Probability*100, o.Tier, o.FaithFill*100)
 	}
+	return strings.TrimRight(sb.String(), "\n")
 }
