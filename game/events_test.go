@@ -93,7 +93,7 @@ func TestEventManager_InjectedEventExpires(t *testing.T) {
 	ageOrder := map[string]int{"primitive_age": 0}
 
 	// Tick 1: still active
-	em.Tick(1, "primitive_age", ageOrder, "stone_era")
+	em.Tick(testRNG(), 1, "primitive_age", ageOrder, "stone_era")
 	active := em.GetActive()
 	found := false
 	for _, a := range active {
@@ -106,7 +106,7 @@ func TestEventManager_InjectedEventExpires(t *testing.T) {
 	}
 
 	// Tick 2: should expire
-	_, expired := em.Tick(2, "primitive_age", ageOrder, "stone_era")
+	_, expired := em.Tick(testRNG(), 2, "primitive_age", ageOrder, "stone_era")
 	foundExpired := false
 	for _, ae := range expired {
 		if ae.Key == "short_boost" {

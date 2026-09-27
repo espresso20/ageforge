@@ -174,7 +174,7 @@ func driveCycle(t *testing.T, ge *GameEngine, ticks int, obs *soakObservations) 
 		}
 
 		// Real per-tick expiry: this is the ONLY thing that plateaus concurrency.
-		ge.Events.Tick(tick, ge.age, order, ge.currentEpoch)
+		ge.Events.Tick(ge.gameRNG(), tick, ge.age, order, ge.currentEpoch)
 
 		if tick%soakSampleEvery == 0 {
 			r := ge.buildResolver()

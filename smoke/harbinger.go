@@ -274,7 +274,11 @@ func MaxStorage(ageKey, res string) float64 {
 			total = r.BaseStorage
 		}
 	}
-	for _, d := range config.BuildingByKey() {
+	// Sorted, not map order: the float sum below must come out the same on
+	// every run or the report's storage caps wobble in the last digit.
+	defs := config.BuildingByKey()
+	for _, key := range sortedKeys(defs) {
+		d := defs[key]
 		if d.RequiredAge == "" || order[d.RequiredAge] > limit || d.Category == "wonder" {
 			continue
 		}

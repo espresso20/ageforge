@@ -260,20 +260,12 @@ func (mm *MilestoneManager) CompletedCount() int {
 
 // GetCompleted returns all completed milestone keys
 func (mm *MilestoneManager) GetCompleted() []string {
-	var keys []string
-	for k := range mm.completed {
-		keys = append(keys, k)
-	}
-	return keys
+	return sortedKeys(mm.completed)
 }
 
 // GetChainsCompleted returns all completed chain keys
 func (mm *MilestoneManager) GetChainsCompleted() []string {
-	var keys []string
-	for k := range mm.chainsCompleted {
-		keys = append(keys, k)
-	}
-	return keys
+	return sortedKeys(mm.chainsCompleted)
 }
 
 // GetCurrentTitle returns the current civilization title

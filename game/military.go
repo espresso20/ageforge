@@ -237,7 +237,9 @@ func (mm *MilitaryManager) ExpeditionDefByKey(key string) *ExpeditionDef {
 // assumes the player can afford the launch and only enforces age range and the
 // one-active-per-category rule (a scouting and a military expedition may run
 // concurrently, but not two of the same category).
-func (mm *MilitaryManager) LaunchExpedition(key, currentAge string, ageOrder map[string]int) error {
+//
+// The duration roll comes from rng (the engine's seeded run RNG).
+func (mm *MilitaryManager) LaunchExpedition(rng *rand.Rand, key, currentAge string, ageOrder map[string]int) error {
 	def := mm.ExpeditionDefByKey(key)
 	if def == nil {
 		return fmt.Errorf("unknown expedition: %s", key)
@@ -256,11 +258,11 @@ func (mm *MilitaryManager) LaunchExpedition(key, currentAge string, ageOrder map
 
 	// Roll a randomized active duration in [DurationMin, DurationMax] (inclusive).
 	// Every shipped def carries a valid range; the guards below only keep a
-	// malformed def from handing rand.Intn an arg <= 0 or pinning an expedition
+	// malformed def from handing rng.Intn an arg <= 0 or pinning an expedition
 	// at 0 ticks (which would resolve it instantly, forever).
 	ticks := def.DurationMin
 	if def.DurationMax > def.DurationMin {
-		ticks = def.DurationMin + rand.Intn(def.DurationMax-def.DurationMin+1)
+		ticks = def.DurationMin + rng.Intn(def.DurationMax-def.DurationMin+1)
 	}
 	if ticks <= 0 {
 		ticks = minExpeditionDurationTicks
@@ -330,14 +332,15 @@ type ExpeditionResult struct {
 // Success probability per expedition: successRoll > (DifficultyBase - militaryBonus×0.3).
 // militaryBonus reduces effective difficulty; expeditionBonus scales reward amounts.
 // Soldiers are spent at launch (win or lose); success vs failure differs only in
-// reward (full vs 30%), not in any extra soldier loss.
-func (mm *MilitaryManager) Tick(militaryBonus, expeditionBonus float64) []ExpeditionResult {
+// reward (full vs 30%), not in any extra soldier loss. The success roll comes
+// from rng, one draw per resolving expedition, scouting before military.
+func (mm *MilitaryManager) Tick(rng *rand.Rand, militaryBonus, expeditionBonus float64) []ExpeditionResult {
 	// Iterate categories in a stable order so resolution logs/results are
 	// deterministic regardless of map iteration order.
 	cats := []string{ExpeditionScouting, ExpeditionMilitary}
 	var results []ExpeditionResult
 	for _, cat := range cats {
-		if res, ok := mm.tickCategory(cat, militaryBonus, expeditionBonus); ok {
+		if res, ok := mm.tickCategory(rng, cat, militaryBonus, expeditionBonus); ok {
 			results = append(results, res)
 		}
 	}
@@ -346,7 +349,7 @@ func (mm *MilitaryManager) Tick(militaryBonus, expeditionBonus float64) []Expedi
 
 // tickCategory advances one category's active expedition. ok is true only on the
 // tick the expedition resolves (carrying its rewards + message).
-func (mm *MilitaryManager) tickCategory(category string, militaryBonus, expeditionBonus float64) (ExpeditionResult, bool) {
+func (mm *MilitaryManager) tickCategory(rng *rand.Rand, category string, militaryBonus, expeditionBonus float64) (ExpeditionResult, bool) {
 	active := mm.activeByCat[category]
 	if active == nil {
 		return ExpeditionResult{}, false
@@ -370,7 +373,7 @@ func (mm *MilitaryManager) tickCategory(category string, militaryBonus, expediti
 		difficulty = 0.05
 	}
 
-	successRoll := rand.Float64()
+	successRoll := rng.Float64()
 	success := successRoll > difficulty
 
 	rewards := make(map[string]float64)

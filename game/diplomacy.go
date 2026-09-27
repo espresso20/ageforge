@@ -469,14 +469,11 @@ func (dm *DiplomacyManager) SendGift(factionKey string, gold float64) (float64, 
 // GetTradeBonus returns the sum of bonuses from allied factions for a resource.
 // Civs at war never grant a bonus regardless of stored status.
 func (dm *DiplomacyManager) GetTradeBonus(resourceKey string) float64 {
-	defs := dm.factionDefs
+	// Roster order, not map order: the float sum must be the same every run.
 	bonus := 0.0
-	for key, fs := range dm.factions {
-		if fs.Status != "allied" || fs.AtWar {
-			continue
-		}
-		def, ok := defs[key]
-		if !ok {
+	for _, def := range dm.factionList {
+		fs, ok := dm.factions[def.Key]
+		if !ok || fs.Status != "allied" || fs.AtWar {
 			continue
 		}
 		if def.Specialty == resourceKey {
@@ -521,7 +518,11 @@ func (dm *DiplomacyManager) DisruptedResources() map[string]bool {
 // tradedRecently reflects whether the player completed a trade cycle in the
 // recent window (drives mercantile drift). Side effects on other systems (worker
 // pool, resource losses) are queued and drained by the engine via TakePending*.
-func (dm *DiplomacyManager) Tick(age string, ageOrder map[string]int, tick int, tradedRecently bool) []string {
+//
+// rng supplies every random draw (worker lending). Loops that draw from it or
+// queue side effects walk the factions in roster order (factionList), never
+// map order, so a seeded rng gives the same outcome on every run.
+func (dm *DiplomacyManager) Tick(rng *rand.Rand, age string, ageOrder map[string]int, tick int, tradedRecently bool) []string {
 	var messages []string
 
 	// Discover new civs and announce first contact.
@@ -558,7 +559,7 @@ func (dm *DiplomacyManager) Tick(age string, ageOrder map[string]int, tick int, 
 	}
 
 	// Worker-lending lifecycle: return due batches, then maybe lend new ones.
-	messages = append(messages, dm.processLending(tick)...)
+	messages = append(messages, dm.processLending(rng, tick)...)
 
 	// War: raids + auto-end (wait-them-out) timer.
 	messages = append(messages, dm.processWar(tick)...)
@@ -569,7 +570,7 @@ func (dm *DiplomacyManager) Tick(age string, ageOrder map[string]int, tick int, 
 // processLending returns any lent batches whose ReturnTick has passed (queuing
 // the worker removal), then rolls a small chance for high-opinion peaceful civs
 // to lend new workers. Returns log messages for both directions.
-func (dm *DiplomacyManager) processLending(tick int) []string {
+func (dm *DiplomacyManager) processLending(rng *rand.Rand, tick int) []string {
 	var messages []string
 	defs := dm.factionDefs
 
@@ -594,12 +595,13 @@ func (dm *DiplomacyManager) processLending(tick int) []string {
 	if tick%driftInterval != 0 {
 		return messages
 	}
-	for key, fs := range dm.factions {
-		if !fs.Discovered || fs.AtWar {
+	for _, def := range dm.factionList {
+		key := def.Key
+		fs, ok := dm.factions[key]
+		if !ok || !fs.Discovered || fs.AtWar {
 			continue
 		}
-		def, ok := defs[key]
-		if !ok || def.Personality != "peaceful" || fs.Opinion < 40 {
+		if def.Personality != "peaceful" || fs.Opinion < 40 {
 			continue
 		}
 		// Don't stack loans from the same civ.
@@ -607,10 +609,10 @@ func (dm *DiplomacyManager) processLending(tick int) []string {
 			continue
 		}
 		// ~12% chance per eligible window.
-		if rand.Float64() > 0.12 {
+		if rng.Float64() > 0.12 {
 			continue
 		}
-		count := 3 + rand.Intn(4) // 3..6 workers
+		count := 3 + rng.Intn(4) // 3..6 workers
 		permanent := fs.Opinion > lendPermanentOpinion
 		batch := LentWorkerBatch{
 			FactionKey: key,
@@ -641,13 +643,10 @@ func (dm *DiplomacyManager) hasLentBatch(factionKey string) bool {
 // provocation. Returns log messages; resource losses are queued for the engine.
 func (dm *DiplomacyManager) processWar(tick int) []string {
 	var messages []string
-	defs := dm.factionDefs
-	for key, fs := range dm.factions {
-		if !fs.AtWar {
-			continue
-		}
-		def, ok := defs[key]
-		if !ok {
+	for _, def := range dm.factionList {
+		key := def.Key
+		fs, ok := dm.factions[key]
+		if !ok || !fs.AtWar {
 			continue
 		}
 		// Wait-them-out: peace after a provocation-free cooldown.

@@ -29,6 +29,11 @@ type BuildingManager struct {
 	ruins           map[string]int                // ruins from Succumb — produce at 50% base rate, no worker scaling
 	pendingUpgrades map[string]string             // oldKey -> newKey: player-driven upgrade awaiting payment
 
+	// order is every def key, sorted, fixed at construction (defs never change
+	// after that). eachBuilt walks it so float sums across buildings come out
+	// the same on every run (see sortedKeys) without sorting on every tick.
+	order []string
+
 	// costMult is the global build-cost multiplier applied to every computed
 	// building cost (GetCost / BuildBatchCost / UpgradeCost new-copy side). It is
 	// the resolver's build_cost additive pool folded into a factor by the engine:
@@ -41,15 +46,29 @@ type BuildingManager struct {
 
 // NewBuildingManager creates a building manager
 func NewBuildingManager() *BuildingManager {
+	defs := config.BuildingByKey()
 	return &BuildingManager{
 		counts:          make(map[string]int),
-		defs:            config.BuildingByKey(),
+		defs:            defs,
+		order:           sortedKeys(defs),
 		unlocked:        make(map[string]bool),
 		wonderBanks:     make(map[string]map[string]float64),
 		legacyBuildings: make(map[string]bool),
 		ruins:           make(map[string]int),
 		pendingUpgrades: make(map[string]string),
 		costMult:        1.0,
+	}
+}
+
+// eachBuilt calls f for every building type with a positive count, in sorted
+// key order. Counts for keys with no def are skipped; they carry no effects.
+// It runs several times a tick, so it walks the precomputed order rather than
+// sorting, and allocates nothing.
+func (bm *BuildingManager) eachBuilt(f func(key string, count int, def config.BuildingDef)) {
+	for _, key := range bm.order {
+		if c := bm.counts[key]; c > 0 {
+			f(key, c, bm.defs[key])
+		}
 	}
 }
 
@@ -287,11 +306,7 @@ func (bm *BuildingManager) GetEffects() []config.Effect {
 // Buildings without workers use: rate = base × count (unchanged behaviour).
 func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(domain, key string) int) map[string]float64 {
 	rates := make(map[string]float64)
-	for key, count := range bm.counts {
-		if count == 0 {
-			continue
-		}
-		def := bm.defs[key]
+	bm.eachBuilt(func(key string, count int, def config.BuildingDef) {
 		for _, eff := range def.Effects {
 			if eff.Type != "production" {
 				continue
@@ -310,9 +325,10 @@ func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(domain, key s
 			}
 			rates[eff.Target] += rate
 		}
-	}
+	})
 	// Ruins produce at 50% base rate; no worker scaling
-	for key, count := range bm.ruins {
+	for _, key := range sortedKeys(bm.ruins) {
+		count := bm.ruins[key]
 		if count == 0 {
 			continue
 		}
@@ -344,14 +360,13 @@ func (bm *BuildingManager) GetPopCapacity() int {
 // "all" key means it applies to every resource
 func (bm *BuildingManager) GetStorageBonuses() map[string]float64 {
 	bonuses := make(map[string]float64)
-	for key, count := range bm.counts {
-		def := bm.defs[key]
+	bm.eachBuilt(func(_ string, count int, def config.BuildingDef) {
 		for _, eff := range def.Effects {
 			if eff.Type == "storage" {
 				bonuses[eff.Target] += eff.Value * float64(count)
 			}
 		}
-	}
+	})
 	return bonuses
 }
 

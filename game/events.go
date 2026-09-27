@@ -48,21 +48,34 @@ const (
 	eventMaxDelay = 600 // 20 minutes (600 ticks * 2s)
 )
 
-// NewEventManager creates a new event manager
+// eventUnscheduled marks an EventManager whose first random event has not been
+// scheduled yet. The first delay is drawn on the first Tick, off the rng that
+// Tick is handed, rather than at construction: the engine builds its managers
+// before it knows the run's seed, so a draw here would come from the wrong
+// stream.
+const eventUnscheduled = -1
+
+// NewEventManager creates a new event manager. It makes no random draws; the
+// first event is scheduled on the first Tick.
 func NewEventManager() *EventManager {
-	// Schedule first event between 150-600 ticks from start
-	firstDelay := eventMinDelay + rand.Intn(eventMaxDelay-eventMinDelay+1)
 	return &EventManager{
 		defs:          config.RandomEvents(),
 		defMap:        config.EventByKey(),
 		lastFired:     make(map[string]int),
-		nextEventTick: firstDelay,
+		nextEventTick: eventUnscheduled,
 	}
 }
 
 // Tick processes one tick: checks for new events, processes active event durations.
 // Returns list of newly triggered events and list of expired ActiveEvents (with accumulated losses).
-func (em *EventManager) Tick(tick int, currentAge string, ageOrder map[string]int, currentEpoch string) (triggered []config.EventDef, expired []ActiveEvent) {
+// Every random draw comes from rng, in a fixed order, so a seeded rng gives a
+// reproducible event stream.
+func (em *EventManager) Tick(rng *rand.Rand, tick int, currentAge string, ageOrder map[string]int, currentEpoch string) (triggered []config.EventDef, expired []ActiveEvent) {
+	if em.nextEventTick == eventUnscheduled {
+		// First event 150-600 ticks from the start of the run.
+		em.nextEventTick = eventMinDelay + rng.Intn(eventMaxDelay-eventMinDelay+1)
+	}
+
 	// Process active events first - decrement durations
 	var stillActive []ActiveEvent
 	for _, ae := range em.active {
@@ -81,7 +94,7 @@ func (em *EventManager) Tick(tick int, currentAge string, ageOrder map[string]in
 	}
 
 	// Determine sentiment constraints based on streaks
-	forceSentiment := em.requiredSentiment()
+	forceSentiment := em.requiredSentiment(rng)
 
 	// Check for new random events (one per tick max)
 	eligible := em.getEligible(tick, currentAge, ageOrder, forceSentiment, currentEpoch)
@@ -98,7 +111,7 @@ func (em *EventManager) Tick(tick int, currentAge string, ageOrder map[string]in
 		return
 	}
 
-	roll := rand.Intn(totalWeight)
+	roll := rng.Intn(totalWeight)
 	cumulative := 0
 	for _, def := range eligible {
 		cumulative += def.Weight
@@ -120,7 +133,7 @@ func (em *EventManager) Tick(tick int, currentAge string, ageOrder map[string]in
 			}
 
 			// Schedule next event 5-20 minutes from now
-			em.nextEventTick = tick + eventMinDelay + rand.Intn(eventMaxDelay-eventMinDelay+1)
+			em.nextEventTick = tick + eventMinDelay + rng.Intn(eventMaxDelay-eventMinDelay+1)
 			break
 		}
 	}
@@ -130,14 +143,14 @@ func (em *EventManager) Tick(tick int, currentAge string, ageOrder map[string]in
 
 // requiredSentiment returns a sentiment filter based on current streaks.
 // "" means no constraint, "good" means only good/mixed, "bad" means only bad/mixed.
-func (em *EventManager) requiredSentiment() string {
+func (em *EventManager) requiredSentiment(rng *rand.Rand) string {
 	// Hard rule: never more than 2 bad in a row → force good
 	if em.badStreak >= 2 {
 		return "good"
 	}
 	// After 3 good in a row, force bad (with a tiny 3% chance to reset and allow more good)
 	if em.goodStreak >= 3 {
-		if rand.Intn(100) < 3 {
+		if rng.Intn(100) < 3 {
 			em.goodStreak = 0 // lucky reset
 			return ""
 		}

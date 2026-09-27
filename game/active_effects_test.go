@@ -18,12 +18,12 @@ import (
 // recalculateRates has a positive base rate to multiply. Mirrors addWonder's
 // approach but for a production effect rather than a bonus effect.
 func addProductionBuilding(ge *GameEngine, key, res string, value float64, count int) {
-	ge.Buildings.defs[key] = config.BuildingDef{
+	ge.Buildings.injectDef(config.BuildingDef{
 		Key:      key,
 		Name:     key,
 		Category: "production",
 		Effects:  []config.Effect{{Type: "production", Target: res, Value: value}},
-	}
+	})
 	ge.Buildings.counts[key] = count
 }
 

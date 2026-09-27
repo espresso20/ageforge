@@ -23,12 +23,17 @@ type ResearchManager struct {
 	// bonuses accumulates effect values keyed by eff.Target (e.g. "tick_speed",
 	// "production_all", "research_speed"). These feed into engine.recalculateRates.
 	bonuses map[string]float64
+	// order is every tech key, sorted, fixed at construction. Per-tick walks
+	// over researched techs use it so summed effects never follow map order.
+	order []string
 }
 
 // NewResearchManager creates a new research manager
 func NewResearchManager() *ResearchManager {
+	defs := config.TechByKey()
 	return &ResearchManager{
-		defs:       config.TechByKey(),
+		defs:       defs,
+		order:      sortedKeys(defs),
 		researched: make(map[string]bool),
 		bonuses:    make(map[string]float64),
 	}
@@ -173,7 +178,8 @@ func (rm *ResearchManager) CancelResearch() (string, bool) {
 // Returns the keys of techs that were completed.
 func (rm *ResearchManager) ForceCompleteN(n int, currentAge string, ageOrder map[string]int) []string {
 	var completed []string
-	for key, def := range rm.defs {
+	for _, key := range sortedKeys(rm.defs) {
+		def := rm.defs[key]
 		if len(completed) >= n {
 			break
 		}
@@ -215,13 +221,10 @@ func (rm *ResearchManager) ResearchedCount() int {
 	return len(rm.researched)
 }
 
-// GetResearched returns all researched tech keys
+// GetResearched returns all researched tech keys, sorted. Callers sum tech
+// effects in this order, so it must not follow map order.
 func (rm *ResearchManager) GetResearched() []string {
-	var keys []string
-	for k := range rm.researched {
-		keys = append(keys, k)
-	}
-	return keys
+	return sortedKeys(rm.researched)
 }
 
 // GetBonuses returns a copy of all bonuses

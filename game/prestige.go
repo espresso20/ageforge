@@ -124,13 +124,10 @@ func (pm *PrestigeManager) GetBonuses() map[string]float64 {
 	}
 
 	// Upgrade bonuses (rate and flat bonuses, not starting resources)
-	defs := pm.upgradeDefs
-	for key, tier := range pm.upgrades {
+	// List order, not map order: float sums must be the same every run.
+	for _, def := range pm.upgradeList {
+		tier := pm.upgrades[def.Key]
 		if tier <= 0 {
-			continue
-		}
-		def, ok := defs[key]
-		if !ok {
 			continue
 		}
 		if def.EffectType == "rate_bonus" || def.EffectType == "flat_bonus" {
@@ -156,13 +153,10 @@ func (pm *PrestigeManager) Modifiers() []Modifier {
 // GetStartingResources returns bonus starting resources from prestige upgrades
 func (pm *PrestigeManager) GetStartingResources() map[string]float64 {
 	resources := make(map[string]float64)
-	defs := pm.upgradeDefs
-	for key, tier := range pm.upgrades {
+	// List order, not map order: float sums must be the same every run.
+	for _, def := range pm.upgradeList {
+		tier := pm.upgrades[def.Key]
 		if tier <= 0 {
-			continue
-		}
-		def, ok := defs[key]
-		if !ok {
 			continue
 		}
 		if def.EffectType == "starting_resource" {
