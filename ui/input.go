@@ -81,6 +81,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdDiplomacy(args, engine)
 	case "wonder":
 		return cmdWonder(args, engine)
+	case "plan":
+		return cmdPlan(args, engine)
 	case "prestige":
 		return cmdPrestige(args, engine)
 	case "festival":
@@ -2002,4 +2004,88 @@ func outlookRiskText(state game.GameState) string {
 		return fmt.Sprintf("%s warns of %s", capFirstUI(speaker), risk)
 	}
 	return risk
+}
+
+// planUsage lists the plan subcommands.
+const planUsage = "Usage: plan [build <building> [count] | research <tech> | list | remove <n> | up <n> | down <n> | clear]"
+
+// cmdPlan is the `plan` command. Bare `plan` opens the Plan panel.
+func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 {
+		return CommandResult{OverlayName: "plan"}
+	}
+	sub := strings.ToLower(args[0])
+	rest := args[1:]
+	switch sub {
+	case "build":
+		if len(rest) == 0 || len(rest) > 2 {
+			return CommandResult{Message: "Usage: plan build <building> [count]", Type: "error"}
+		}
+		key := strings.ToLower(rest[0])
+		count := 1
+		if len(rest) == 2 {
+			n, err := parseCount(rest[1])
+			if err != nil {
+				return usageError("Usage: plan build <building> [count]", err)
+			}
+			count = n
+		}
+		added, err := engine.PlanAddBuild(key, count)
+		if err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		name := config.BuildingByKey()[key].Name
+		msg := fmt.Sprintf("Planned %d × %s. It starts as soon as the resources are there.", added, name)
+		if added < count {
+			msg = fmt.Sprintf("Planned %d × %s (the most its limit allows). It starts as soon as the resources are there.", added, name)
+		}
+		return CommandResult{Message: msg, Type: "info"}
+	case "research", "res":
+		if len(rest) != 1 {
+			return CommandResult{Message: "Usage: plan research <tech>", Type: "error"}
+		}
+		key := strings.ToLower(rest[0])
+		if err := engine.PlanAddResearch(key); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Planned research: %s. Techs start one at a time, in plan order.", config.TechByKey()[key].Name), Type: "info"}
+	case "list":
+		return CommandResult{Message: planListText(engine.GetState()), Type: "info"}
+	case "remove", "rm":
+		n, err := planIndexArg(rest, "remove")
+		if err != nil {
+			return usageError("Usage: plan remove <n>", err)
+		}
+		what, err := engine.PlanRemove(n)
+		if err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: "Removed " + what + " from the plan.", Type: "info"}
+	case "up", "down":
+		n, err := planIndexArg(rest, sub)
+		if err != nil {
+			return usageError("Usage: plan "+sub+" <n>", err)
+		}
+		delta := -1
+		if sub == "down" {
+			delta = 1
+		}
+		to, err := engine.PlanMove(n, delta)
+		if err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Plan item %d is now number %d.", n, to), Type: "info"}
+	case "clear":
+		n := engine.PlanClear()
+		return CommandResult{Message: fmt.Sprintf("Cleared the plan (%d items).", n), Type: "info"}
+	}
+	return CommandResult{Message: planUsage, Type: "error"}
+}
+
+// planIndexArg reads the one item number a plan subcommand takes.
+func planIndexArg(rest []string, sub string) (int, error) {
+	if len(rest) != 1 {
+		return 0, fmt.Errorf("plan %s takes one item number", sub)
+	}
+	return parseCount(rest[0])
 }

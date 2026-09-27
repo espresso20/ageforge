@@ -9,6 +9,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -39,6 +40,7 @@ var commands = []string{
 	"account", "acct",
 	"theme",
 	"wonder",
+	"plan",
 	"dump", "exportlogs",
 	"milestones", "ms",
 	"techs", "army", "stats", "wonders", "workers", "logs", "epoch", "history", "buildings",
@@ -276,6 +278,24 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 			return filterPrefix(localAccountNames(engine), partial, prefix)
 		}
 
+	case "plan":
+		if len(completed) == 0 {
+			return filterPrefix([]string{"build", "research", "list", "remove", "up", "down", "clear"}, partial, prefix)
+		}
+		switch sub := strings.ToLower(completed[0]); {
+		case sub == "build" && len(completed) == 1:
+			return filterPrefix(plannableBuildingKeys(state), partial, prefix)
+		case sub == "research" && len(completed) == 1:
+			return filterPrefix(plannableTechKeys(state), partial, prefix)
+		case (sub == "remove" || sub == "up" || sub == "down") && len(completed) == 1:
+			nums := make([]string, len(state.Plan))
+			for i := range state.Plan {
+				nums[i] = fmt.Sprint(i + 1)
+			}
+			return filterPrefix(nums, partial, prefix)
+		}
+		return nil
+
 	case "wonder":
 		if len(completed) == 0 {
 			return filterPrefix([]string{"collect", "overflow"}, partial, prefix)
@@ -417,6 +437,44 @@ func assignedBuildingKeysAll(state game.GameState) []string {
 
 // availableTechKeys returns tech keys that are currently available to research
 // (unlocked but not yet started or completed).
+// plannableBuildingKeys is what `plan build` can take: this age's unlocked
+// buildings (its wonder included) short of their MaxCount.
+func plannableBuildingKeys(state game.GameState) []string {
+	defs := config.BuildingByKey()
+	var keys []string
+	for key, bs := range state.Buildings {
+		if d := defs[key]; bs.Unlocked && !bs.IsLegacy && !bs.AtMaxCount && d.RequiredAge == state.Age {
+			keys = append(keys, key)
+		}
+	}
+	sort.Strings(keys)
+	return keys
+}
+
+// plannableTechKeys is what `plan research` can take: unresearched techs of
+// this age or earlier that are neither in progress nor planned already.
+// Prerequisites may still be missing; they can be planned first.
+func plannableTechKeys(state game.GameState) []string {
+	order := map[string]int{}
+	for i, a := range config.AgeOrder() {
+		order[a] = i
+	}
+	planned := map[string]bool{state.Research.CurrentTech: true}
+	for _, v := range state.Plan {
+		if v.Kind == game.PlanResearch {
+			planned[v.Key] = true
+		}
+	}
+	var keys []string
+	for key, ts := range state.Research.Techs {
+		if !ts.Researched && !planned[key] && order[ts.Age] <= order[state.Age] {
+			keys = append(keys, key)
+		}
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 func availableTechKeys(state game.GameState) []string {
 	var keys []string
 	for key, ts := range state.Research.Techs {

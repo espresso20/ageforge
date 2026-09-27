@@ -40,6 +40,30 @@ gather wood 5
 
 ---
 
+## Build Plan
+
+A list of builds and techs the game starts for you, in order, as the resources come in: while you play and while you are away (offline catch-up runs it too). Each item is paid for when it starts, not when you add it. Full rules on the [Build Plan](plan.md) page.
+
+| Command | Description |
+|---|---|
+| `plan` | Open the **Plan** panel: the items, what each costs next and whether it can start. `↑`/`↓` select, `U`/`D` move the selected item, `X` removes it, `C` twice clears the plan. |
+| `plan build <building> [count]` | Add copies of a building of this age (default 1). Adding more of the building at the end of the plan adds to that item. |
+| `plan research <tech>` | Add a tech. Techs start one at a time, in plan order; a prerequisite can be planned before it. |
+| `plan list` | Print the plan with each item's status |
+| `plan remove <n>` | Remove item `n` |
+| `plan up <n>` | Move item `n` one place up |
+| `plan down <n>` | Move item `n` one place down |
+| `plan clear` | Empty the plan |
+
+```
+plan build hut 10
+plan build gathering_camp 5
+plan research tool_making
+plan up 3
+```
+
+---
+
 ## Workers
 
 | Command | Description |
