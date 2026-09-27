@@ -1638,7 +1638,14 @@ func (ge *GameEngine) recalculateRates() {
 		specific := storageBonuses[def.Key]
 		specific += researchBonuses[def.Key]
 		specific += permanentBonuses[def.Key]
-		ge.Resources.resources[def.Key].Storage = def.BaseStorage + allBonus + specific
+		r := ge.Resources.resources[def.Key]
+		r.Storage = def.BaseStorage + allBonus + specific
+		// Storage can shrink (a storage building sold or destroyed). Add clamps
+		// on the way in, but a resource with no production never passes through
+		// Add again, so without this it sat above its new cap indefinitely.
+		if r.Amount > r.Storage {
+			r.Amount = r.Storage
+		}
 	}
 }
 
