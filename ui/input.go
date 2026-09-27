@@ -185,6 +185,9 @@ func usageError(usage string, err error) CommandResult {
 }
 
 func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) >= 1 && strings.ToLower(args[0]) == "overflow" {
+		return cmdWonderOverflow(args[1:], engine)
+	}
 	state := engine.GetState()
 
 	// Find the wonder for the current age
@@ -273,6 +276,23 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 		fmt.Fprintf(&sb, "\n[gray]Use 'wonder collect <resource> <amount|all>' to bank resources.[-]")
 	}
 	return CommandResult{Message: sb.String(), Type: "info"}
+}
+
+// cmdWonderOverflow is `wonder overflow [on|off]`: show or set whether
+// production a full store would waste goes into the current wonder's bank.
+func cmdWonderOverflow(args []string, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 {
+		return CommandResult{Message: wonderOverflowLine(engine.WonderOverflow()), Type: "info"}
+	}
+	switch strings.ToLower(args[0]) {
+	case "on":
+		engine.SetWonderOverflow(true)
+		return CommandResult{Message: "Wonder overflow on: what a full store would waste now goes into the current wonder's bank.", Type: "info"}
+	case "off":
+		engine.SetWonderOverflow(false)
+		return CommandResult{Message: "Wonder overflow off: production over a storage cap is lost again.", Type: "info"}
+	}
+	return CommandResult{Message: "Usage: wonder overflow [on|off]", Type: "error"}
 }
 
 func cmdAdvance(engine *game.GameEngine) CommandResult {

@@ -250,56 +250,6 @@ func TestPlan_MoveRemoveClear(t *testing.T) {
 	}
 }
 
-func TestPlan_SurvivesSaveAndLoad(t *testing.T) {
-	isolateAccountDir(t)
-	ge := planTestEngine(t)
-	if _, err := ge.PlanAddBuild("hut", 4); err != nil {
-		t.Fatal(err)
-	}
-	if err := ge.PlanAddResearch("tool_making"); err != nil {
-		t.Fatal(err)
-	}
-	ge.plan[0].Started = 3
-	if err := ge.SaveGame("plan-roundtrip"); err != nil {
-		t.Fatal(err)
-	}
-	loaded := NewGameEngine()
-	if err := loaded.LoadGame("plan-roundtrip"); err != nil {
-		t.Fatal(err)
-	}
-	if !reflect.DeepEqual(loaded.plan, ge.plan) {
-		t.Errorf("plan after load = %+v, want %+v", loaded.plan, ge.plan)
-	}
-	if st := loaded.GetState(); len(st.Plan) != 2 {
-		t.Errorf("state: plan %d items, want 2", len(st.Plan))
-	}
-}
-
-func TestPlan_ClearedByPrestigeSuccumbAndReset(t *testing.T) {
-	ge := planTestEngine(t)
-	_, _ = ge.PlanAddBuild("hut", 2)
-	ge.Reset()
-	if len(ge.plan) != 0 {
-		t.Errorf("after Reset: plan %+v", ge.plan)
-	}
-
-	ge = planTestEngine(t)
-	_, _ = ge.PlanAddBuild("hut", 2)
-	ge.mu.Lock()
-	ge.completePrestige(prestigePlain)
-	ge.mu.Unlock()
-	if len(ge.plan) != 0 {
-		t.Errorf("after prestige: plan %+v", ge.plan)
-	}
-
-	ge = planTestEngine(t)
-	_, _ = ge.PlanAddBuild("hut", 2)
-	succumbIn(t, ge, "iron_age")
-	if len(ge.plan) != 0 {
-		t.Errorf("after Succumb: plan %+v", ge.plan)
-	}
-}
-
 // Offline catch-up runs the plan as the time passes: with a 50-wood cap a
 // lump sum could pay for two or three huts; stepping through the hour pays
 // for every copy the hour's production covers.
@@ -339,6 +289,7 @@ func TestOffline_EmptyPlanPaysTheLumpSum(t *testing.T) {
 	ge.Buildings.counts["stash"] = 50
 	ge.Buildings.counts["wood_camp"] = 2
 	ge.recalculateRates()
+	ge.wonderOverflowOff = true
 	setAmount(ge, "wood", 0)
 	rate := ge.Resources.GetRate("wood")
 	store := ge.Resources.GetStorage("wood")
@@ -390,5 +341,110 @@ func TestOffline_DayWithPlanIsFastAndDeterministic(t *testing.T) {
 		if !reflect.DeepEqual(va.Field(i).Interface(), vb.Field(i).Interface()) {
 			t.Errorf("two identical games came back from 24h offline with different %s", va.Type().Field(i).Name)
 		}
+	}
+}
+
+func TestPlanAndOverflow_SurviveSaveAndLoad(t *testing.T) {
+	isolateAccountDir(t)
+	ge := planTestEngine(t)
+	if _, err := ge.PlanAddBuild("hut", 4); err != nil {
+		t.Fatal(err)
+	}
+	if err := ge.PlanAddResearch("tool_making"); err != nil {
+		t.Fatal(err)
+	}
+	ge.plan[0].Started = 3
+	ge.SetWonderOverflow(false)
+	if err := ge.SaveGame("plan-roundtrip"); err != nil {
+		t.Fatal(err)
+	}
+	loaded := NewGameEngine()
+	if err := loaded.LoadGame("plan-roundtrip"); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(loaded.plan, ge.plan) {
+		t.Errorf("plan after load = %+v, want %+v", loaded.plan, ge.plan)
+	}
+	if loaded.WonderOverflow() {
+		t.Error("overflow came back on")
+	}
+	if st := loaded.GetState(); len(st.Plan) != 2 || st.WonderOverflow {
+		t.Errorf("state: plan %d items, overflow %v", len(st.Plan), st.WonderOverflow)
+	}
+}
+
+func TestPlan_ClearedByPrestigeSuccumbAndReset(t *testing.T) {
+	ge := planTestEngine(t)
+	_, _ = ge.PlanAddBuild("hut", 2)
+	ge.SetWonderOverflow(false)
+	ge.Reset()
+	if len(ge.plan) != 0 || !ge.WonderOverflow() {
+		t.Errorf("after Reset: plan %+v, overflow %v", ge.plan, ge.WonderOverflow())
+	}
+
+	ge = planTestEngine(t)
+	_, _ = ge.PlanAddBuild("hut", 2)
+	ge.SetWonderOverflow(false)
+	ge.mu.Lock()
+	ge.completePrestige(prestigePlain)
+	ge.mu.Unlock()
+	if len(ge.plan) != 0 {
+		t.Errorf("after prestige: plan %+v", ge.plan)
+	}
+	if ge.WonderOverflow() {
+		t.Error("prestige reset the overflow preference")
+	}
+
+	ge = planTestEngine(t)
+	_, _ = ge.PlanAddBuild("hut", 2)
+	succumbIn(t, ge, "iron_age")
+	if len(ge.plan) != 0 {
+		t.Errorf("after Succumb: plan %+v", ge.plan)
+	}
+}
+
+func TestOverflow_BanksWhatTheCapCutsOff(t *testing.T) {
+	ge := newSeededEngine(1)
+	ge.Buildings.counts["wood_camp"] = 5
+	ge.recalculateRates()
+	w := ge.progress.WonderForAge(ge.age)
+	rate := ge.Resources.GetRate("wood")
+	setAmount(ge, "wood", ge.Resources.GetStorage("wood"))
+	ge.applyTickRates()
+	if got := ge.Buildings.wonderBanks[w]["wood"]; abs(got-rate) > 1e-9 {
+		t.Errorf("banked %v wood, want the tick's %v", got, rate)
+	}
+	if ge.Resources.Get("wood") != ge.Resources.GetStorage("wood") {
+		t.Error("overflow took from the store itself")
+	}
+	ge.wonderOverflowOff = true
+	ge.applyTickRates()
+	if got := ge.Buildings.wonderBanks[w]["wood"]; abs(got-rate) > 1e-9 {
+		t.Errorf("banked with overflow off: %v", got)
+	}
+	// Never past what the wonder needs, and one log line when a part fills.
+	ge.wonderOverflowOff = false
+	need := ge.Buildings.defs[w].BaseCost["wood"]
+	ge.Buildings.wonderBanks[w]["wood"] = need - rate/2
+	ge.applyTickRates()
+	if got := ge.Buildings.wonderBanks[w]["wood"]; got != need {
+		t.Errorf("bank = %v, want exactly %v", got, need)
+	}
+	if !logHas(ge, "Overflow finished banking wood") {
+		t.Error("no log line when overflow filled the wood part")
+	}
+}
+
+func TestOverflow_WorksOffline(t *testing.T) {
+	ge := newSeededEngine(1)
+	ge.Buildings.counts["wood_camp"] = 5
+	ge.recalculateRates()
+	w := ge.progress.WonderForAge(ge.age)
+	ge.SimulateOffline(time.Hour)
+	if ge.Buildings.wonderBanks[w]["wood"] <= 0 {
+		t.Error("an hour offline at the cap banked nothing into the wonder")
+	}
+	if !logHas(ge, "Overflow banked into") {
+		t.Error("no offline overflow summary")
 	}
 }

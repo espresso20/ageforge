@@ -147,9 +147,22 @@ func (rm *ResourceManager) AddStorage(key string, amount float64) {
 
 // ApplyRates applies per-tick production rates
 func (rm *ResourceManager) ApplyRates() {
-	for key, r := range rm.resources {
-		if rm.unlocked[key] && r.Rate != 0 {
-			rm.Add(key, r.Rate)
+	rm.ApplyRatesCapped(nil)
+}
+
+// ApplyRatesCapped applies one tick of rates like ApplyRates, in key order,
+// and calls lost (when non-nil) with what the storage cap cut off each
+// resource that hit it.
+func (rm *ResourceManager) ApplyRatesCapped(lost func(key string, amount float64)) {
+	for _, key := range rm.order {
+		r := rm.resources[key]
+		if !rm.unlocked[key] || r.Rate == 0 {
+			continue
+		}
+		want := r.Amount + r.Rate
+		rm.Add(key, r.Rate)
+		if lost != nil && r.Rate > 0 && want > r.Amount {
+			lost(key, want-r.Amount)
 		}
 	}
 }

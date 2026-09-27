@@ -290,6 +290,10 @@ type GameEngine struct {
 	// plan is the build plan the engine works through as resources come in
 	// (plan.go). Saved; cleared by prestige, Succumb and Reset.
 	plan []PlanItem
+	// wonderOverflowOff turns off banking what the caps would cut off into
+	// the current age's wonder (overflow.go). The player's preference: saved,
+	// kept across prestige and Succumb, cleared by Reset.
+	wonderOverflowOff bool
 }
 
 // BuildQueueItem represents a building under construction
@@ -1019,8 +1023,9 @@ func (ge *GameEngine) doTick() {
 	// only the soldiers actually trained this tick (post-storage-clamp delta).
 	soldiersBefore := ge.Resources.Get("soldiers")
 
-	// Apply resource rates (production - consumption)
-	ge.Resources.ApplyRates()
+	// Apply resource rates (production - consumption); what a cap cuts off
+	// goes to the wonder bank while overflow is on (overflow.go).
+	ge.applyTickRates()
 
 	// Credit the lifetime soldiers-trained counter with the post-clamp delta.
 	// Soldiers discarded at the storage cap don't count; the helper floors at 0
@@ -3603,6 +3608,7 @@ func (ge *GameEngine) Reset() {
 
 	ge.cheaterBadge = false
 	ge.eliteBadge = false
+	ge.wonderOverflowOff = false
 	ge.currentEpoch = config.EpochForAge("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
 	ge.clearHarbingerRun()
@@ -3794,6 +3800,7 @@ func (ge *GameEngine) GetState() GameState {
 		MoraleCap:             ge.moraleCap(),
 		MoraleMultiplier:      ge.moraleMultiplier(),
 		Plan:                  ge.planViews(),
+		WonderOverflow:        !ge.wonderOverflowOff,
 		PermanentBonuses: func() map[string]float64 {
 			out := make(map[string]float64, len(ge.permanentBonuses))
 			for k, v := range ge.permanentBonuses {
@@ -3862,9 +3869,9 @@ const (
 	OfflineEfficiency = 0.5
 	// OfflineStepTicks is the step the offline catch-up advances by: each
 	// step credits that many ticks of production (at OfflineEfficiency, up
-	// to the caps), moves construction and research on, and lets the build
-	// plan start what the step paid for. A minute at 1x: 24 hours away is
-	// 1,440 steps.
+	// to the caps, overflow to the wonder bank), moves construction and
+	// research on, and lets the build plan start what the step paid for. A
+	// minute at 1x: 24 hours away is 1,440 steps.
 	OfflineStepTicks = 30
 )
 
@@ -3872,8 +3879,8 @@ const (
 // (must be called with lock held). Time passes in OfflineStepTicks steps, so
 // the build plan starts items as the resources for them come in, the caps
 // apply along the way, and construction and research finish while the player
-// is away. With an empty plan and nothing under construction, it pays
-// exactly the old lump sum: rate x ticks x OfflineEfficiency, capped.
+// is away. With an empty plan, nothing under construction and overflow off,
+// it pays exactly the old lump sum: rate x ticks x OfflineEfficiency, capped.
 func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	if elapsed < 5*time.Second {
 		return // too short to matter
@@ -3911,11 +3918,20 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	ge.addLog("event", fmt.Sprintf("Welcome back! You were away for %s.", timeStr))
 
 	gains := make(map[string]float64)
+	banked := make(map[string]float64)
+	bankedInto := ""
 	var starts planStarts
 	for done := 0; done < offlineTicks; {
 		n := min(OfflineStepTicks, offlineTicks-done)
+		w := ge.overflowWonder()
 		ge.Resources.AddProduced(float64(n)*OfflineEfficiency,
-			func(res string, g float64) { gains[res] += g }, nil)
+			func(res string, g float64) { gains[res] += g },
+			func(res string, lost float64) {
+				if b := ge.bankOverflow(w, res, lost); b > 0 {
+					banked[res] += b
+					bankedInto = w
+				}
+			})
 		ge.tick += n
 		done += n
 		changed := ge.advanceBuildQueue(n)
@@ -3933,6 +3949,13 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		for _, res := range sortedKeys(gains) {
 			ge.addLog("info", fmt.Sprintf("  +%.1f %s", gains[res], res))
 		}
+	}
+	if len(banked) > 0 {
+		var parts []string
+		for _, res := range sortedKeys(banked) {
+			parts = append(parts, fmt.Sprintf("%.0f %s", banked[res], res))
+		}
+		ge.addLog("info", fmt.Sprintf("Overflow banked into %s: %s.", ge.Buildings.defs[bankedInto].Name, strings.Join(parts, ", ")))
 	}
 	if !starts.empty() {
 		ge.addLog("info", "While you were away your plan started: "+starts.describe(ge.Buildings.defs))

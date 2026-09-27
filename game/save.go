@@ -140,11 +140,14 @@ type GameSave struct {
 	// invariant: stamp only via SaveGame, never an in-place JSON edit). On load it is
 	// informational only and does NOT switch the active account (set once at boot).
 	AccountID string `json:"account_id,omitempty"`
-	// Plan is the build plan (plan.go), in order. omitempty, so saves from
-	// before it existed keep their bytes and load with an empty plan.
-	Plan      []PlanItem `json:"plan,omitempty"`
-	Signature string     `json:"_sig,omitempty"`
-	Proof     string     `json:"_proof,omitempty"`
+	// Plan is the build plan (plan.go), in order. WonderOverflowOff records
+	// that the player turned wonder overflow off (overflow.go); it is on by
+	// default, so saves from before either existed load with an empty plan
+	// and overflow on. Both omitempty, so those saves keep their bytes.
+	Plan              []PlanItem `json:"plan,omitempty"`
+	WonderOverflowOff bool       `json:"wonder_overflow_off,omitempty"`
+	Signature         string     `json:"_sig,omitempty"`
+	Proof             string     `json:"_proof,omitempty"`
 }
 
 // hmacSign returns the HMAC-SHA256 of payload under key, hex-encoded. This is the
@@ -594,6 +597,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		History:                ge.History,
 		AccountID:              ge.accountIDLocked(),
 		Plan:                   clonePlan(ge.plan),
+		WonderOverflowOff:      ge.wonderOverflowOff,
 	}
 }
 
@@ -848,10 +852,11 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	}
 	ge.lowMoraleWarned = false
 
-	// The build plan. A hand-edited plan is trimmed to what the plan accepts;
-	// items that can no longer start drop out, with a log line, on the next
-	// tick.
+	// The build plan and the overflow switch. A hand-edited plan is trimmed
+	// to what the plan accepts; items that can no longer start drop out, with
+	// a log line, on the next tick.
 	ge.plan = loadPlan(save.Plan)
+	ge.wonderOverflowOff = save.WonderOverflowOff
 
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()

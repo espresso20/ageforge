@@ -278,8 +278,10 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 
 	case "wonder":
 		if len(completed) == 0 {
-			// Only subcommand is "collect"
-			return filterPrefix([]string{"collect"}, partial, prefix)
+			return filterPrefix([]string{"collect", "overflow"}, partial, prefix)
+		}
+		if len(completed) == 1 && strings.ToLower(completed[0]) == "overflow" {
+			return filterPrefix([]string{"on", "off"}, partial, prefix)
 		}
 		if len(completed) == 1 && strings.ToLower(completed[0]) == "collect" {
 			// 2nd arg: an unlocked resource key

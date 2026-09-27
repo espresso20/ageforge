@@ -166,6 +166,9 @@ Active trade routes run for a fixed duration. Routes whose imports include a res
 | Command | Description |
 |---|---|
 | `wonder collect <resource> <amount>` | Bank resources toward a wonder |
+| `wonder overflow` | Show whether overflow is on |
+| `wonder overflow on` | Bank what full stores would waste into the current wonder (the default) |
+| `wonder overflow off` | Let production over a storage cap be lost instead |
 | `build <wonder_key>` | Build the wonder once its bank is full |
 
 ```
@@ -173,6 +176,8 @@ wonder collect wood 1000
 wonder collect stone 500
 build great_monolith
 ```
+
+**Overflow.** While overflow is on, production that a full store would throw away goes into the current age's wonder bank instead, for every resource the wonder still needs and only up to what it still needs. It never takes from what you hold, works during offline catch-up too, and says so in the log when it finishes a resource's part of the bank. See [Wonders](wonders.md#overflow).
 
 Wonders are shown in **Wonders** overlay (`wonders`) with progress bars for each required resource. Each completed wonder now displays a colour sprite thumbnail next to its name in the Wonders overlay. Completed wonders also appear on the City Map as the largest, most ornate central complexes — an era-appropriate silhouette (a ziggurat in the ancient ages, a cathedral/keep in the medieval ages) in muted, in-family colours (see [City Map](#city-map) below).
 

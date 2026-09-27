@@ -55,6 +55,7 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("\n[gold]═══ Wonders & Prestige ═══[-]\n")
 	sb.WriteString("  [cyan]wonder[-]                          - Show current wonder bank status\n")
 	sb.WriteString("  [cyan]wonder collect[-] <res> <amt|all> - Bank resources into current wonder\n")
+	sb.WriteString("  [cyan]wonder overflow[-] [on|off] - Bank what full stores would waste (on by default)\n")
 	sb.WriteString("  [cyan]prestige[-]                        - View prestige status\n")
 	sb.WriteString("  [cyan]prestige[-] confirm yes            - Reset game with prestige bonus\n")
 	sb.WriteString("  [cyan]prestige[-] shop                   - View prestige upgrades\n")
