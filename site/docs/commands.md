@@ -332,7 +332,7 @@ See [The Harbinger](harbinger.md) for the roster, false prophets and verdicts.
 | `theme` | Open the **Themes** picker — browse palettes with live preview (also on the main menu) |
 | `theme list` | List every theme by name and key, marking the active one and noting each theme's light/dark variant and which are accessible |
 | `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`) |
-| `dump` | Export logs to a file for debugging — the one player-reachable place that still prints raw tick counts, alongside the wall-clock reading |
+| `dump` | Export logs to a file for debugging, in `logs/` inside your active account's folder (`data/accounts/<id>/logs/`) — the one player-reachable place that still prints raw tick counts, alongside the wall-clock reading |
 | `help` | Open the Help panel — full command reference and list of available panels |
 
 Save files live under your **active account's** slot — `data/accounts/<id>/saves/*.json`, relative to the directory you launch the game from (saves are per-account). The `save <name>` and `load <name>` commands above work with the same files as the **Load Game** browser below. See [Saving & Loading](saving-and-loading.md) and [Account & Recovery](account.md).

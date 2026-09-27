@@ -334,14 +334,17 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	logs := engine.GetLogs()
 
-	// Create data/logs directory
-	if err := os.MkdirAll("data/logs", 0755); err != nil {
+	// Dumps go in a logs folder in the active account's data directory, where
+	// its saves live. (A relative "data/logs" landed wherever the game was
+	// launched from.)
+	dir := filepath.Join(game.DataDir(), "logs")
+	if err := os.MkdirAll(dir, 0755); err != nil {
 		return CommandResult{Message: fmt.Sprintf("Failed to create logs directory: %v", err), Type: "error"}
 	}
 
 	// Generate timestamped filename
 	ts := time.Now().Format("2006-01-02_150405")
-	filename := fmt.Sprintf("data/logs/dump_%s.log", ts)
+	filename := filepath.Join(dir, fmt.Sprintf("dump_%s.log", ts))
 
 	var sb strings.Builder
 

@@ -3,7 +3,6 @@ package smoke
 import (
 	"fmt"
 	"math/rand"
-	"os"
 	"runtime"
 	"runtime/debug"
 	"sort"
@@ -372,12 +371,6 @@ func runFuzz(e *Env, res *Result) {
 	}
 	if e.FuzzCommands > 0 {
 		cmds = e.FuzzCommands
-	}
-	// dump writes to ./data/logs; keep that in a temp dir.
-	wd, _ := os.Getwd()
-	tmp, err := os.MkdirTemp("", "ageforge-fuzz-")
-	if err == nil && os.Chdir(tmp) == nil {
-		defer func() { _ = os.Chdir(wd); os.RemoveAll(tmp) }()
 	}
 	total, byFirst := 0, map[string]int{}
 	var rows []string
