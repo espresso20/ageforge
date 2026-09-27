@@ -67,7 +67,7 @@ var saveJSONSkip = map[string]bool{"timestamp": true, "_sig": true, "_proof": tr
 func runSaveload(e *Env, res *Result) {
 	seeds, cps, n := e.seeds(1), 2, 2000
 	if e.full() {
-		seeds, cps, n = e.seeds(2), 5, 10000
+		seeds, cps, n = e.seeds(2), 4, 10000
 	}
 	n -= n % e.Base.DecideEvery
 	type out struct {

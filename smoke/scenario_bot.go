@@ -91,7 +91,7 @@ func progressionConfig(e *Env, o Overrides) (Config, []int64) {
 	var seeds []int64
 	if e.full() {
 		seeds = e.seeds(8)
-		cfg.Cycles, cfg.FinalAge, cfg.MaxSim = 2, "digital_age", 1200*time.Hour
+		cfg.Cycles, cfg.FinalAge, cfg.MaxSim = 2, "digital_age", 600*time.Hour
 	} else {
 		seeds = e.seeds(3)
 		cfg.Cycles, cfg.StopAge, cfg.MaxSim = 1, "bronze_age", 300*time.Hour

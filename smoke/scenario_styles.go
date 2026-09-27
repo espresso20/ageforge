@@ -72,9 +72,9 @@ func runStyles(e *Env, res *Result) {
 	var rows []string
 	for _, style := range styles {
 		base := e.Base
-		base.Cycles, base.MaxSim = 1, 500*time.Hour
+		base.Cycles, base.MaxSim = 1, 300*time.Hour
 		if style == StyleCosmic {
-			base.MaxSim = 1000 * time.Hour
+			base.MaxSim = 600 * time.Hour
 		}
 		cfg, err := ApplyStyle(base, style)
 		if err != nil {

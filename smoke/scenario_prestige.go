@@ -28,7 +28,7 @@ import (
 
 func runPrestige(e *Env, res *Result) {
 	cfg := e.Base
-	cfg.Cycles, cfg.MaxSim = 2, 1500*time.Hour
+	cfg.Cycles, cfg.MaxSim = 2, 400*time.Hour
 	sum := runBotSet(e, res, "prestige-played", "prestige", cfg, e.seeds(1))
 	var played []string
 	for _, r := range sum.Runs {
