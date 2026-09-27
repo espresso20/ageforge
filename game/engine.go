@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"math"
 	"math/rand"
+	"slices"
 	"sort"
 	"strings"
 	"sync"
@@ -245,8 +246,8 @@ type GameEngine struct {
 	festivalReadyTick int
 
 	// blackMarketReadyTick is the earliest tick a black-market deal may run
-	// (cooldown anti-spam). 0 = ready now. Transient: not persisted, so a reload
-	// simply makes the deal available again — acceptable for a flavour sink.
+	// (cooldown anti-spam). 0 = ready now. Both cooldowns are saved, and both
+	// reset with the tick counter on prestige and Reset.
 	blackMarketReadyTick int
 
 	// blackMarketRand is the RNG seam for the black-market win/lose roll; nil
@@ -260,18 +261,24 @@ type GameEngine struct {
 	// encounter/buff stream is reproducible from its start. `rng` is (re)built from
 	// `seed` via SeedRNG. rand.Rand is not safe for concurrent use, but every roll
 	// runs inside doTick's write lock, so no extra synchronisation is needed.
-	// Roll-stream continuity across save/reload is NOT preserved (re-seeding on load
-	// restarts the stream) — only the seed itself round-trips.
-	seed int64
-	rng  *rand.Rand
+	// The stream position round-trips too: rng draws from rngSrc, which counts
+	// its steps; the save records the count and LoadGame replays to it (rng.go).
+	// rngOwner is the *rand.Rand built on rngSrc, so a test that swaps in its
+	// own ge.rng doesn't get rngSrc's count saved for it.
+	seed     int64
+	rng      *rand.Rand
+	rngSrc   *countingSource
+	rngOwner *rand.Rand
 
 	// quip is a second stream seeded from the same master seed, used only for
 	// the dim one-line log quips (config.PickLogFlavor and the coin flips that
 	// decide whether a quip appears). They land in the log, so they must be
 	// reproducible, but a separate stream keeps them from shifting gameplay
 	// rolls: adding a quip, or a code path that logs one before a roll, cannot
-	// change what the next ge.rng draw returns.
-	quip *rand.Rand
+	// change what the next ge.rng draw returns. Its position is saved like rng's.
+	quip      *rand.Rand
+	quipSrc   *countingSource
+	quipOwner *rand.Rand
 
 	// prose is the recent-history filter for generated flavour. One Stream for
 	// the whole log, so an expedition line and a raid line cannot repeat each
@@ -348,8 +355,12 @@ func newSeed() int64 { return time.Now().UnixNano() }
 // fields); NewGameEngine/Reset call it while single-threaded or locked.
 func (ge *GameEngine) SeedRNG(seed int64) {
 	ge.seed = seed
-	ge.rng = rand.New(rand.NewSource(seed))
-	ge.quip = rand.New(rand.NewSource(seed ^ quipSeedSalt))
+	ge.rngSrc = newCountingSource(seed)
+	ge.rng = rand.New(ge.rngSrc)
+	ge.rngOwner = ge.rng
+	ge.quipSrc = newCountingSource(seed ^ quipSeedSalt)
+	ge.quip = rand.New(ge.quipSrc)
+	ge.quipOwner = ge.quip
 }
 
 // quipSeedSalt separates the quip stream from the gameplay stream so the two
@@ -362,7 +373,9 @@ const quipSeedSalt int64 = 0x51_9C_0FFE_E0D1
 // write lock.
 func (ge *GameEngine) quipRNG() *rand.Rand {
 	if ge.quip == nil {
-		ge.quip = rand.New(rand.NewSource(ge.seed ^ quipSeedSalt))
+		ge.quipSrc = newCountingSource(ge.seed ^ quipSeedSalt)
+		ge.quip = rand.New(ge.quipSrc)
+		ge.quipOwner = ge.quip
 	}
 	return ge.quip
 }
@@ -741,8 +754,9 @@ func (ge *GameEngine) MaxSpeedForAge() float64 {
 
 // SetSpeedMultiplier sets the game speed multiplier (0.5 increments, capped by age)
 func (ge *GameEngine) SetSpeedMultiplier(mult float64) error {
-	// Validate it's a 0.5 increment and at least 1.0
-	if mult < 1.0 || mult != float64(int(mult*2))/2 {
+	// Validate it's a finite 0.5 increment and at least 1.0 (int() of an
+	// infinity is undefined, so rule those out before the increment check).
+	if math.IsNaN(mult) || math.IsInf(mult, 0) || mult < 1.0 || mult != float64(int(mult*2))/2 {
 		return fmt.Errorf("invalid speed: %.1f (must be 1.0, 1.5, 2.0, etc.)", mult)
 	}
 	ge.mu.Lock()
@@ -1624,7 +1638,14 @@ func (ge *GameEngine) recalculateRates() {
 		specific := storageBonuses[def.Key]
 		specific += researchBonuses[def.Key]
 		specific += permanentBonuses[def.Key]
-		ge.Resources.resources[def.Key].Storage = def.BaseStorage + allBonus + specific
+		r := ge.Resources.resources[def.Key]
+		r.Storage = def.BaseStorage + allBonus + specific
+		// Storage can shrink (a storage building sold or destroyed). Add clamps
+		// on the way in, but a resource with no production never passes through
+		// Add again, so without this it sat above its new cap indefinitely.
+		if r.Amount > r.Storage {
+			r.Amount = r.Storage
+		}
 	}
 }
 
@@ -2575,6 +2596,9 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 	if !ge.Resources.IsUnlocked(resource) {
 		return 0, fmt.Errorf("resource '%s' is not yet unlocked", resource)
 	}
+	if err := checkAmount(amount); err != nil {
+		return 0, err
+	}
 	actual := ge.Resources.Add(resource, amount)
 	ge.Stats.RecordGather(resource, amount)
 	ge.addLog("debug", fmt.Sprintf("Gather: %s +%.1f (total: %.1f)", resource, amount, actual))
@@ -2585,6 +2609,9 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 // BuildBuilding constructs a building (instant or queued)
 // BankWonderResource deposits resources from player storage into a wonder's bank.
 func (ge *GameEngine) BankWonderResource(wonderKey, resource string, amount float64) error {
+	if err := checkAmount(amount); err != nil {
+		return err
+	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
@@ -2702,6 +2729,9 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 // queue for this key. This prevents batch purchases and the `max` command from
 // bypassing cost scaling.
 func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
+	if count <= 0 {
+		return 0, fmt.Errorf("build count must be positive (got %d)", count)
+	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
@@ -2804,6 +2834,9 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 
 // RecruitWorker recruits workers
 func (ge *GameEngine) RecruitWorker(vType string, count int) error {
+	if count <= 0 {
+		return fmt.Errorf("recruit count must be positive (got %d)", count)
+	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
@@ -2827,6 +2860,9 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 // AssignWorker assigns workers to a building.
 // Any worker can be assigned to any building with WorkerCapacity > 0.
 func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
+	if count <= 0 {
+		return fmt.Errorf("assign count must be positive (got %d)", count)
+	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
@@ -2918,6 +2954,9 @@ func (ge *GameEngine) UnassignAll(buildingKey string) (int, error) {
 
 // UnassignWorker removes a specific number of workers from a building.
 func (ge *GameEngine) UnassignWorker(buildingKey string, count int) error {
+	if count <= 0 {
+		return fmt.Errorf("unassign count must be positive (got %d)", count)
+	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
@@ -2957,6 +2996,17 @@ func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) er
 	return nil
 }
 
+// checkAmount rejects a resource amount no command can mean: NaN, an
+// infinity, zero or a negative. NaN is the dangerous one: every comparison
+// with it is false, so it slips past "have < need" checks and poisons
+// whatever it is added to or subtracted from.
+func checkAmount(amount float64) error {
+	if math.IsNaN(amount) || math.IsInf(amount, 0) || amount <= 0 {
+		return fmt.Errorf("amount must be a positive number (got %v)", amount)
+	}
+	return nil
+}
+
 // formatResourceMap formats a map[string]float64 as "key1 45, key2 20" sorted by key.
 func formatResourceMap(m map[string]float64) string {
 	keys := make([]string, 0, len(m))
@@ -2974,6 +3024,9 @@ func formatResourceMap(m map[string]float64) string {
 // SellBuilding removes n copies of a built building, refunds 50% of cost,
 // and unassigns any workers that were in the sold slots.
 func (ge *GameEngine) SellBuilding(key string, n int) error {
+	if n <= 0 {
+		return fmt.Errorf("sell count must be positive (got %d)", n)
+	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
@@ -3378,6 +3431,8 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	// Fresh run: this prestige cycle may roll a new Ancient Memory.
 	ge.ancientMemoryUsed = false
 	ge.pendingMemoryTech = ""
+	// The cooldowns are tick numbers and the tick counter just went back to 0.
+	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
 
 	// Restore cross-run state
 	ge.Buildings.LoadRuins(savedRuins)
@@ -3385,6 +3440,12 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 
 	// Apply age unlocks for primitive age
 	ge.applyAgeUnlocks("primitive_age")
+
+	// Recompute derived caps and rates for the fresh managers now, not on the
+	// first tick: the storage upgrade has to be in the first snapshot of the
+	// new run, and in place before the starting resources land, or they are
+	// clamped to the base storage it raises.
+	ge.recalculateRates()
 
 	// Apply starting resources (base + prestige bonus)
 	ge.Resources.Add("food", 15)
@@ -3432,6 +3493,7 @@ func (ge *GameEngine) BuyPrestigeUpgrade(key string) error {
 	if err := ge.Prestige.BuyUpgrade(key); err != nil {
 		return err
 	}
+	ge.recalculateRates() // a storage or rate upgrade shows at once, not next tick
 	ge.addLog("success", fmt.Sprintf("Purchased prestige upgrade: %s", key))
 	return nil
 }
@@ -3484,6 +3546,7 @@ func (ge *GameEngine) Reset() {
 	// Full wipe: no previous civilization, so no cache. Clear the run flag.
 	ge.ancientMemoryUsed = false
 	ge.pendingMemoryTech = ""
+	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
 	// A wiped game is a brand-new run: re-roll the master seed.
 	ge.SeedRNG(newSeed())
 
@@ -3576,6 +3639,7 @@ func (ge *GameEngine) GetState() GameState {
 	}
 
 	endured, succumbed := countCatastropheOutcomes(ge.catastropheHistory)
+	rngDraws, quipDraws := ge.rngDraws()
 
 	return GameState{
 		Tick:                 ge.tick,
@@ -3623,7 +3687,9 @@ func (ge *GameEngine) GetState() GameState {
 		CheaterBadge:          ge.cheaterBadge,
 		EliteBadge:            ge.eliteBadge,
 		Seed:                  ge.seed,
-		LastAgeAdvanceSummary: ge.lastAgeAdvanceSummary,
+		RNGDraws:              rngDraws,
+		QuipDraws:             quipDraws,
+		LastAgeAdvanceSummary: ge.lastAgeAdvanceSummary.clone(),
 		// Phase 8: epoch fields
 		EpochKey:              ge.currentEpoch,
 		EpochName:             epochDef.Name,
@@ -3634,9 +3700,9 @@ func (ge *GameEngine) GetState() GameState {
 		CatastropheOutlook:    ge.catastropheOutlook(),
 		PendingMemoryTech:     ge.pendingMemoryTech,
 		PendingMemoryTechName: ge.Research.defs[ge.pendingMemoryTech].Name,
-		EpochEventHistory:     ge.epochEventHistory,
+		EpochEventHistory:     slices.Clone(ge.epochEventHistory), // setCatastropheOutcome edits records in place
 		Harbinger:             ge.harbingerView(),
-		HarbingerHistory:      append([]HarbingerRecord(nil), ge.harbingerHistory...),
+		HarbingerHistory:      cloneHarbingerHistory(ge.harbingerHistory),
 		LegacyBonuses: func() map[string]bool {
 			out := make(map[string]bool, len(ge.legacyBonuses))
 			for k, v := range ge.legacyBonuses {
@@ -3644,12 +3710,12 @@ func (ge *GameEngine) GetState() GameState {
 			}
 			return out
 		}(),
-		CatastropheHistory:    ge.catastropheHistory,
+		CatastropheHistory:    slices.Clone(ge.catastropheHistory),
 		CatastrophesEndured:   endured,
 		CatastrophesSuccumbed: succumbed,
 		SuccumbResearchBonus:  ge.succumbResearchBonus(),
 		LastPassage:           ge.lastPassageState(prestigeSnap.PendingPoints),
-		History:               ge.History,
+		History:               ge.History.Clone(),
 		Morale:                ge.morale,
 		MoraleCap:             ge.moraleCap(),
 		MoraleMultiplier:      ge.moraleMultiplier(),
@@ -3784,6 +3850,9 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 
 // ExchangeResources performs a resource exchange via the trade system
 func (ge *GameEngine) ExchangeResources(from, to string, amount float64) (float64, error) {
+	if err := checkAmount(amount); err != nil {
+		return 0, err
+	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
@@ -3957,6 +4026,7 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 
 	// Perform partial transform
 	moved := ge.Buildings.PartialTransform(key, newKey, count, ge.Workers.RenameAssignment)
+	ge.rehomeUpgradedWorkers(key, newKey, oldDef, newDef)
 
 	ge.recalculateRates()
 
@@ -3967,6 +4037,26 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	ge.addLog("success", fmt.Sprintf("Upgraded %d %s → %s (cost: %s)",
 		moved, oldDef.Name, newDef.Name, costStr))
 	return nil
+}
+
+// rehomeUpgradedWorkers settles workers after an upgrade. A partial upgrade
+// left the old key's workers where they were, which could be more than the
+// copies left can hold (upgrade 7 of 46 wood camps and 138 workers sat in
+// 117 slots). The overflow follows the upgraded copies to the new building
+// while it has room; the rest go back to the idle pool. Under the write lock.
+func (ge *GameEngine) rehomeUpgradedWorkers(oldKey, newKey string, oldDef, newDef config.BuildingDef) {
+	excess := ge.Workers.GetAssignedCount("worker", oldKey) - oldDef.WorkerCapacity*ge.Buildings.GetCount(oldKey)
+	if excess <= 0 {
+		return
+	}
+	ge.Workers.Unassign("worker", oldKey, excess)
+	room := newDef.WorkerCapacity*ge.Buildings.GetCount(newKey) - ge.Workers.GetAssignedCount("worker", newKey)
+	if room > excess {
+		room = excess
+	}
+	if room > 0 {
+		ge.Workers.Assign("worker", newKey, room)
+	}
 }
 
 // GetAvailableUpgrades returns upgrade info for buildings that have a pending player-driven upgrade.

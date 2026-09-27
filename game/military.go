@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"maps"
 	"math/rand"
 	"sort"
 )
@@ -495,7 +496,7 @@ func (mm *MilitaryManager) Snapshot(currentAge string, ageOrder map[string]int, 
 			DurationMin:       def.DurationMin,
 			DurationMax:       def.DurationMax,
 			Difficulty:        def.DifficultyBase,
-			Cost:              def.Cost,
+			Cost:              maps.Clone(def.Cost), // def is the manager's table
 			Description:       def.Description,
 			CanLaunch:         canLaunch,
 			LaunchBlockReason: reason,

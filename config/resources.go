@@ -10,12 +10,14 @@ type ResourceDef struct {
 	Name        string
 	Key         string
 	BaseStorage float64 // starting storage cap before storage buildings; units match production rates (per-tick)
-	Age         string  // minimum age key at which this resource becomes unlocked
+	Age         string  // the age whose UnlockResources list unlocks it (TestResourceAgesMatchAgeUnlocks)
 	Description string
 }
 
 // BaseResources returns all resource definitions
 // Base storage is intentionally low — players must build storage buildings to hold more
+// The slice order is load-bearing (boon pools and a few UI lists walk it), so a
+// resource whose unlock age moved keeps its place and just carries the new Age.
 func BaseResources() []ResourceDef {
 	return []ResourceDef{
 		// Primitive Age (Stone Era)
@@ -28,12 +30,12 @@ func BaseResources() []ResourceDef {
 		// Bronze Age (Stone Era)
 		{Name: "Iron", Key: "iron", BaseStorage: 50, Age: "bronze_age", Description: "Metal for tools and weapons"},
 		{Name: "Gold", Key: "gold", BaseStorage: 50, Age: "bronze_age", Description: "Currency and trade"},
-		// Iron Age (Iron Era)
-		{Name: "Coal", Key: "coal", BaseStorage: 50, Age: "iron_age", Description: "Fuel for smelting and industry"},
+		// Iron Age (Iron Era); coal unlocks in the Renaissance Age (Steel Era)
+		{Name: "Coal", Key: "coal", BaseStorage: 50, Age: "renaissance_age", Description: "Fuel for smelting and industry"},
 		{Name: "Soldiers", Key: "soldiers", BaseStorage: 0, Age: "iron_age", Description: "Trained fighting force produced by military buildings; spent launching expeditions"},
-		// Classical Age (Iron Era) — intermediate ore for Geological Extraction lineage
-		{Name: "Marble", Key: "marble", BaseStorage: 30, Age: "classical_age", Description: "Refined stone for monumental construction"},
-		{Name: "Iron Ore", Key: "iron_ore", BaseStorage: 30, Age: "classical_age", Description: "Raw iron ore before smelting — feeds Metallurgy lineage"},
+		// Iron Age (Iron Era): intermediate ores for Geological Extraction and Metallurgy
+		{Name: "Marble", Key: "marble", BaseStorage: 30, Age: "iron_age", Description: "Refined stone for monumental construction"},
+		{Name: "Iron Ore", Key: "iron_ore", BaseStorage: 30, Age: "iron_age", Description: "Raw iron ore before smelting — feeds Metallurgy lineage"},
 		// Medieval Age (Iron Era)
 		{Name: "Steel", Key: "steel", BaseStorage: 30, Age: "medieval_age", Description: "Refined metal for advanced construction"},
 		// Classical Age (Iron Era)
@@ -44,10 +46,10 @@ func BaseResources() []ResourceDef {
 		{Name: "Electricity", Key: "electricity", BaseStorage: 50, Age: "victorian_age", Description: "Powers modern infrastructure"},
 		// Atomic Age
 		{Name: "Uranium", Key: "uranium", BaseStorage: 30, Age: "atomic_age", Description: "Radioactive fuel for reactors"},
-		// Modern Age (Digital Era)
+		// Modern Age (Digital Era); titanium ore unlocks in the Space Age
 		{Name: "Data", Key: "data", BaseStorage: 50, Age: "modern_age", Description: "Digital information and analytics"},
 		{Name: "Nanobots", Key: "nanobots", BaseStorage: 20, Age: "modern_age", Description: "Microscopic machines — Organic Extraction output in the Digital Era"},
-		{Name: "Titanium Ore", Key: "titanium_ore", BaseStorage: 20, Age: "modern_age", Description: "Raw titanium ore — feeds Metallurgy lineage; smelts into titanium"},
+		{Name: "Titanium Ore", Key: "titanium_ore", BaseStorage: 20, Age: "space_age", Description: "Raw titanium ore — feeds Metallurgy lineage; smelts into titanium"},
 		// Cyberpunk Age (Neon Era)
 		{Name: "Crypto", Key: "crypto", BaseStorage: 50, Age: "cyberpunk_age", Description: "Decentralized digital currency"},
 		{Name: "Dark Matter Crystals", Key: "dark_matter_crystals", BaseStorage: 10, Age: "cyberpunk_age", Description: "Crystallised dark matter — raw form; refined into dark matter by Metallurgy lineage"},

@@ -49,8 +49,8 @@ type Env struct {
 	Overrides Overrides
 	// Style limits the styles scenario to one style ("" runs them all).
 	Style string
-	// Strict fails on known bugs too (see KnownRNGReset) instead of
-	// reporting them as warnings.
+	// Strict fails on known bugs too instead of reporting them as warnings.
+	// There are none today; a scenario that learns of one checks it.
 	Strict bool
 	// FuzzCommands overrides the fuzz scenario's command count when > 0.
 	FuzzCommands int

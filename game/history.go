@@ -1,5 +1,7 @@
 package game
 
+import "slices"
+
 const historyMaxSamples = 300
 const historySampleInterval = 10 // every 10 ticks (~20s at 1x, ~13s at 1.5x)
 
@@ -26,6 +28,18 @@ type AgeMarker struct {
 type HistoryCollector struct {
 	Samples    []HistorySample `json:"samples"`
 	AgeMarkers []AgeMarker     `json:"age_markers"`
+}
+
+// Clone returns a deep copy (nil for nil), for snapshots that must not move
+// as the collector keeps sampling.
+func (h *HistoryCollector) Clone() *HistoryCollector {
+	if h == nil {
+		return nil
+	}
+	return &HistoryCollector{
+		Samples:    slices.Clone(h.Samples),
+		AgeMarkers: slices.Clone(h.AgeMarkers),
+	}
 }
 
 // NewHistoryCollector returns an empty collector.

@@ -1,6 +1,9 @@
 package game
 
-import "time"
+import (
+	"slices"
+	"time"
+)
 
 // GameState is a read-only snapshot of the entire game state for UI consumption
 type GameState struct {
@@ -37,6 +40,10 @@ type GameState struct {
 	// reproducibility/debugging. Persisted via GameSave.Seed, not through this
 	// snapshot.
 	Seed int64
+	// RNGDraws and QuipDraws are the gameplay and quip streams' positions (steps
+	// taken since Seed), persisted in the save so a load resumes the stream.
+	RNGDraws  uint64
+	QuipDraws uint64
 	// Phase 7: result of the last age advance transformation pass
 	LastAgeAdvanceSummary AgeAdvanceSummary
 	// Phase 8: epoch system
@@ -120,6 +127,13 @@ type AgeAdvanceSummary struct {
 	NewAge               string
 	BuildingsTransformed []BuildingTransform
 	BuildingsLegacy      []string // keys of buildings newly marked legacy this transition
+}
+
+// clone returns a copy that shares no slices with s.
+func (s AgeAdvanceSummary) clone() AgeAdvanceSummary {
+	s.BuildingsTransformed = slices.Clone(s.BuildingsTransformed)
+	s.BuildingsLegacy = slices.Clone(s.BuildingsLegacy)
+	return s
 }
 
 // BuildingTransform describes one building that upgraded during an age advance.

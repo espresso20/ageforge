@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/espresso20/ageforge/config"
 )
@@ -134,6 +135,23 @@ func (rm *ResearchManager) StartMemoryResearch(key string, speedBonus float64) e
 	return nil
 }
 
+// rebuildBonuses recomputes bonuses from every researched tech, summed in
+// rm.order. Summing in completion order instead made the totals depend on the
+// order techs were finished (0.1+0.3+0.4 is not 0.4+0.1+0.3 in floating
+// point), so a loaded game, which can only replay them in one fixed order,
+// came back with bonuses a few ulps off the live ones.
+func (rm *ResearchManager) rebuildBonuses() {
+	rm.bonuses = make(map[string]float64)
+	for _, key := range rm.order {
+		if !rm.researched[key] {
+			continue
+		}
+		for _, eff := range rm.defs[key].Effects {
+			rm.bonuses[eff.Target] += eff.Value
+		}
+	}
+}
+
 // Tick processes one tick of research. Returns completed tech key or empty string.
 func (rm *ResearchManager) Tick() string {
 	if rm.currentTech == "" {
@@ -145,10 +163,7 @@ func (rm *ResearchManager) Tick() string {
 		rm.researched[completed] = true
 
 		// Apply effects as permanent bonuses
-		def := rm.defs[completed]
-		for _, eff := range def.Effects {
-			rm.bonuses[eff.Target] += eff.Value
-		}
+		rm.rebuildBonuses()
 
 		rm.currentTech = ""
 		rm.ticksLeft = 0
@@ -190,10 +205,10 @@ func (rm *ResearchManager) ForceCompleteN(n int, currentAge string, ageOrder map
 			continue
 		}
 		rm.researched[key] = true
-		for _, eff := range def.Effects {
-			rm.bonuses[eff.Target] += eff.Value
-		}
 		completed = append(completed, key)
+	}
+	if len(completed) > 0 {
+		rm.rebuildBonuses()
 	}
 	// Also cancel any in-progress research to avoid state inconsistency
 	if len(completed) > 0 && rm.currentTech != "" {
@@ -273,7 +288,7 @@ func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) 
 			Name:          def.Name,
 			Age:           def.Age,
 			Cost:          def.Cost,
-			Prerequisites: def.Prerequisites,
+			Prerequisites: slices.Clone(def.Prerequisites), // def is the manager's table
 			Description:   def.Description,
 			Researched:    rm.researched[key],
 			Available:     available && !rm.researched[key],
@@ -303,16 +318,10 @@ func (rm *ResearchManager) Snapshot(currentAge string, ageOrder map[string]int) 
 // changed between versions.
 func (rm *ResearchManager) LoadState(researched []string, currentTech string, ticksLeft, totalTicks int) {
 	rm.researched = make(map[string]bool)
-	rm.bonuses = make(map[string]float64)
 	for _, key := range researched {
 		rm.researched[key] = true
-		// Re-apply bonuses
-		if def, ok := rm.defs[key]; ok {
-			for _, eff := range def.Effects {
-				rm.bonuses[eff.Target] += eff.Value
-			}
-		}
 	}
+	rm.rebuildBonuses()
 	rm.currentTech = currentTech
 	rm.ticksLeft = ticksLeft
 	rm.totalTicks = totalTicks

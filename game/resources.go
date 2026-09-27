@@ -1,6 +1,10 @@
 package game
 
-import "github.com/espresso20/ageforge/config"
+import (
+	"math"
+
+	"github.com/espresso20/ageforge/config"
+)
 
 // Resource holds the runtime state of a single resource
 type Resource struct {
@@ -70,11 +74,16 @@ func (rm *ResourceManager) GetRate(key string) float64 {
 	return 0
 }
 
-// Add adds an amount to a resource, respecting storage limits
+// Add adds an amount to a resource, respecting storage limits. A NaN amount is
+// ignored: it would otherwise stick to the resource forever, since the clamps
+// below compare false against NaN.
 func (rm *ResourceManager) Add(key string, amount float64) float64 {
 	r, ok := rm.resources[key]
 	if !ok {
 		return 0
+	}
+	if math.IsNaN(amount) {
+		return r.Amount
 	}
 	r.Amount += amount
 	if r.Amount > r.Storage {
@@ -86,10 +95,11 @@ func (rm *ResourceManager) Add(key string, amount float64) float64 {
 	return r.Amount
 }
 
-// Remove subtracts from a resource. Returns false if insufficient.
+// Remove subtracts from a resource. Returns false if insufficient (a NaN
+// amount is never sufficient: written as !(have >= need) so NaN fails it).
 func (rm *ResourceManager) Remove(key string, amount float64) bool {
 	r, ok := rm.resources[key]
-	if !ok || r.Amount < amount {
+	if !ok || !(r.Amount >= amount) {
 		return false
 	}
 	r.Amount -= amount
@@ -99,7 +109,7 @@ func (rm *ResourceManager) Remove(key string, amount float64) bool {
 // CanAfford checks if all costs can be paid
 func (rm *ResourceManager) CanAfford(costs map[string]float64) bool {
 	for key, amount := range costs {
-		if rm.Get(key) < amount {
+		if !(rm.Get(key) >= amount) { // NaN costs are unaffordable
 			return false
 		}
 	}

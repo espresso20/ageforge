@@ -496,13 +496,10 @@ func (bm *BuildingManager) IsLegacy(key string) bool {
 	return bm.legacyBuildings[key]
 }
 
-// GetLegacyBuildings returns all legacy building keys for save serialization.
+// GetLegacyBuildings returns all legacy building keys, sorted, for save
+// serialization (in map order, two saves of one game differed byte for byte).
 func (bm *BuildingManager) GetLegacyBuildings() []string {
-	var keys []string
-	for key := range bm.legacyBuildings {
-		keys = append(keys, key)
-	}
-	return keys
+	return sortedKeys(bm.legacyBuildings)
 }
 
 // LoadLegacyBuildings restores legacy building flags from a save.
@@ -540,8 +537,10 @@ func (bm *BuildingManager) GetAllPendingUpgrades() map[string]string {
 	return out
 }
 
-// LoadPendingUpgrades restores pending upgrade markers from a save.
+// LoadPendingUpgrades replaces the pending upgrade markers with a save's set,
+// so a load into a running engine doesn't keep the old game's offers.
 func (bm *BuildingManager) LoadPendingUpgrades(upgrades map[string]string) {
+	clear(bm.pendingUpgrades)
 	for k, v := range upgrades {
 		bm.pendingUpgrades[k] = v
 	}

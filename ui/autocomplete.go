@@ -36,7 +36,7 @@ var commands = []string{
 	"blackmarket", "bm",
 	"upgrade",
 	"advance", "rates", "speed", "save", "saves", "load",
-	"account",
+	"account", "acct",
 	"theme",
 	"wonder",
 	"dump", "exportlogs",
@@ -96,7 +96,9 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 	switch cmd {
 	case "gather", "g":
 		// cmdGather only accepts food, wood, stone — not all resource keys
-		return filterPrefix([]string{"food", "wood", "stone"}, partial, prefix)
+		if len(completed) == 0 {
+			return filterPrefix([]string{"food", "wood", "stone"}, partial, prefix)
+		}
 
 	case "build", "b":
 		if len(completed) == 0 {
@@ -115,48 +117,62 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 		if len(completed) == 0 {
 			return filterPrefix(workerBuildingKeys(state), partial, prefix)
 		}
-		return filterPrefix([]string{"all"}, partial, prefix)
+		if len(completed) == 1 {
+			return filterPrefix([]string{"all"}, partial, prefix)
+		}
 
 	case "unassign", "u":
 		if len(completed) == 0 {
 			return filterPrefix(assignedBuildingKeysAll(state), partial, prefix)
 		}
-		return filterPrefix([]string{"all"}, partial, prefix)
+		if len(completed) == 1 {
+			return filterPrefix([]string{"all"}, partial, prefix)
+		}
 
 	case "dismiss":
 		if len(completed) == 0 {
 			return filterPrefix(assignedBuildingKeysAll(state), partial, prefix)
 		}
-		return filterPrefix([]string{"all"}, partial, prefix)
+		if len(completed) == 1 {
+			return filterPrefix([]string{"all"}, partial, prefix)
+		}
 
 	case "sell":
 		if len(completed) == 0 {
 			return filterPrefix(builtBuildingKeys(state), partial, prefix)
 		}
 
+	// These take one argument; once it is typed there is nothing left to
+	// offer (they used to re-offer it: "research list list").
 	case "research", "res":
-		keys := availableTechKeys(state)
-		keys = append(keys, "list", "cancel")
-		return filterPrefix(keys, partial, prefix)
+		if len(completed) == 0 {
+			keys := availableTechKeys(state)
+			keys = append(keys, "list", "cancel")
+			return filterPrefix(keys, partial, prefix)
+		}
 
 	case "expedition", "exp":
-		keys := expeditionKeysByCategory(state, game.ExpeditionScouting)
-		keys = append(keys, "list")
-		return filterPrefix(keys, partial, prefix)
+		if len(completed) == 0 {
+			keys := expeditionKeysByCategory(state, game.ExpeditionScouting)
+			keys = append(keys, "list")
+			return filterPrefix(keys, partial, prefix)
+		}
 
 	case "campaign":
-		keys := expeditionKeysByCategory(state, game.ExpeditionMilitary)
-		keys = append(keys, "list")
-		return filterPrefix(keys, partial, prefix)
+		if len(completed) == 0 {
+			keys := expeditionKeysByCategory(state, game.ExpeditionMilitary)
+			keys = append(keys, "list")
+			return filterPrefix(keys, partial, prefix)
+		}
 
 	case "prestige":
 		if len(completed) == 0 {
 			return filterPrefix([]string{"confirm", "shop", "buy"}, partial, prefix)
 		}
-		if strings.ToLower(completed[0]) == "buy" {
+		if len(completed) == 1 && strings.ToLower(completed[0]) == "buy" {
 			return filterPrefix(prestigeUpgradeKeys(state), partial, prefix)
 		}
-		if strings.ToLower(completed[0]) == "confirm" {
+		if len(completed) == 1 && strings.ToLower(completed[0]) == "confirm" {
 			return filterPrefix([]string{"yes"}, partial, prefix)
 		}
 
@@ -169,7 +185,7 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 		if len(completed) == 0 {
 			return filterPrefix([]string{"confirm"}, partial, prefix)
 		}
-		if strings.ToLower(completed[0]) == "confirm" {
+		if len(completed) == 1 && strings.ToLower(completed[0]) == "confirm" {
 			return filterPrefix([]string{"yes"}, partial, prefix)
 		}
 
@@ -211,7 +227,7 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 
 	case "diplomacy", "dip":
 		if len(completed) == 0 {
-			return filterPrefix([]string{"ally", "rival", "embargo", "gift", "neutral"}, partial, prefix)
+			return filterPrefix([]string{"ally", "rival", "embargo", "gift", "neutral", "tribute", "raid"}, partial, prefix)
 		}
 		if len(completed) == 1 {
 			return filterPrefix(discoveredFactionKeys(state), partial, prefix)
@@ -226,16 +242,22 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 		}
 
 	case "speed":
-		return filterPrefix(availableSpeedOptions(engine), partial, prefix)
+		if len(completed) == 0 {
+			return filterPrefix(availableSpeedOptions(engine), partial, prefix)
+		}
 
 	case "save":
 		// "save list" shows save files; "save [name]" saves to named slot
-		names := saveNames()
-		names = append([]string{"list"}, names...)
-		return filterPrefix(names, partial, prefix)
+		if len(completed) == 0 {
+			names := saveNames()
+			names = append([]string{"list"}, names...)
+			return filterPrefix(names, partial, prefix)
+		}
 
 	case "load":
-		return filterPrefix(saveNames(), partial, prefix)
+		if len(completed) == 0 {
+			return filterPrefix(saveNames(), partial, prefix)
+		}
 
 	case "theme":
 		// "theme list" plus a key per registered theme. Only the first arg is
@@ -248,9 +270,9 @@ func suggestArg(cmd string, completed []string, partial string, prefix string, e
 		// Subcommands. `switch <name>` completes to the local account display names; the
 		// rest take args that aren't enumerable here (recover code, export/import paths).
 		if len(completed) == 0 {
-			return filterPrefix([]string{"list", "switch", "recover", "export", "backup", "import"}, partial, prefix)
+			return filterPrefix([]string{"list", "switch", "recover", "export", "backup", "import", "wipe"}, partial, prefix)
 		}
-		if strings.ToLower(completed[0]) == "switch" {
+		if len(completed) == 1 && strings.ToLower(completed[0]) == "switch" {
 			return filterPrefix(localAccountNames(engine), partial, prefix)
 		}
 

@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/flavor"
 )
 
 // saveHMACKey is the HMAC signing key for save integrity. Its presence in the
@@ -38,13 +39,28 @@ type GameSave struct {
 	// faction-encounter/buff stream is reproducible from its start. omitempty keeps
 	// legacy saves (which lack it) byte-identical; on load a zero seed means "no seed
 	// persisted" and the freshly-generated one from NewGameEngine is kept.
-	Seed      int64                 `json:"seed,omitempty"`
-	Resources map[string]float64    `json:"resources"`
-	Storage   map[string]float64    `json:"storage"`
-	Buildings map[string]int        `json:"buildings"`
-	Workers   map[string]WorkerInfo `json:"workers"`
-	Unlocked  UnlockedState         `json:"unlocked"`
-	Stats     *GameStats            `json:"stats"`
+	Seed int64 `json:"seed,omitempty"`
+	// RNGDraws and QuipDraws are how many steps the gameplay and quip streams
+	// had taken from Seed when the game was saved; LoadGame replays them so
+	// the loaded game draws what the saved one would have drawn next. Zero on
+	// saves from before they were recorded, which restart both streams.
+	RNGDraws  uint64 `json:"rng_draws,omitempty"`
+	QuipDraws uint64 `json:"quip_draws,omitempty"`
+	// Prose is the flavour Stream's recent-line memory. It decides how often a
+	// flavour line is redrawn, and so how many gameplay draws it spends, so
+	// the stream position alone doesn't keep a loaded game on the same stream.
+	Prose *flavor.StreamState `json:"prose,omitempty"`
+	// FestivalReadyTick and BlackMarketReadyTick are the cooldowns' end
+	// ticks. Unsaved, a load made the next festival or deal available at
+	// once, and a loaded game no longer played out as the saved one would.
+	FestivalReadyTick    int                   `json:"festival_ready_tick,omitempty"`
+	BlackMarketReadyTick int                   `json:"black_market_ready_tick,omitempty"`
+	Resources            map[string]float64    `json:"resources"`
+	Storage              map[string]float64    `json:"storage"`
+	Buildings            map[string]int        `json:"buildings"`
+	Workers              map[string]WorkerInfo `json:"workers"`
+	Unlocked             UnlockedState         `json:"unlocked"`
+	Stats                *GameStats            `json:"stats"`
 	// Phase 3 additions
 	Research         ResearchSave                  `json:"research"`
 	Military         MilitarySave                  `json:"military"`
@@ -61,6 +77,12 @@ type GameSave struct {
 	WonderBanks      map[string]map[string]float64 `json:"wonder_banks,omitempty"`
 	// Phase 7: legacy building keys
 	LegacyBuildings []string `json:"legacy_buildings,omitempty"`
+	// PendingUpgrades is the live oldKey -> newKey upgrade offer set, and
+	// PendingUpgradesSaved marks saves that carry it (an empty set is omitted,
+	// so the flag tells "no offers" apart from "saved before this field").
+	// Older saves rebuild the set from LegacyBuildings (rebuildPendingUpgrades).
+	PendingUpgrades      map[string]string `json:"pending_upgrades,omitempty"`
+	PendingUpgradesSaved bool              `json:"pending_upgrades_saved,omitempty"`
 	// Phase 8: epoch system
 	CurrentEpoch    string          `json:"current_epoch,omitempty"`
 	EpochEventFired map[string]bool `json:"epoch_event_fired,omitempty"`
@@ -470,16 +492,24 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 	agesReached := make([]string, len(ge.Stats.AgesReached))
 	copy(agesReached, ge.Stats.AgesReached)
 
+	rngDraws, quipDraws := ge.rngDraws()
+
 	return GameSave{
 		Timestamp: time.Now(),
 		Tick:      ge.tick,
 		Age:       ge.age,
 		Seed:      ge.seed,
-		Resources: ge.Resources.GetAll(),
-		Storage:   ge.Resources.GetAllStorage(),
-		Buildings: ge.Buildings.GetAll(),
-		Workers:   ge.Workers.GetAll(),
-		Unlocked:  ge.getUnlockedState(),
+		RNGDraws:  rngDraws,
+		QuipDraws: quipDraws,
+		Prose:     ge.prose.State(),
+
+		FestivalReadyTick:    ge.festivalReadyTick,
+		BlackMarketReadyTick: ge.blackMarketReadyTick,
+		Resources:            ge.Resources.GetAll(),
+		Storage:              ge.Resources.GetAllStorage(),
+		Buildings:            ge.Buildings.GetAll(),
+		Workers:              ge.Workers.GetAll(),
+		Unlocked:             ge.getUnlockedState(),
 		Stats: &GameStats{
 			TotalBuilt:      ge.Stats.TotalBuilt,
 			TotalRecruited:  ge.Stats.TotalRecruited,
@@ -534,6 +564,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		SpeedMultiplier:        ge.speedMultiplier,
 		WonderBanks:            ge.Buildings.GetWonderBanks(),
 		LegacyBuildings:        ge.Buildings.GetLegacyBuildings(),
+		PendingUpgrades:        ge.Buildings.GetAllPendingUpgrades(),
+		PendingUpgradesSaved:   true,
 		CheaterBadge:           ge.cheaterBadge,
 		EliteBadge:             ge.eliteBadge,
 		ParentName:             ge.activeParentName,
@@ -627,12 +659,18 @@ func (ge *GameEngine) LoadGame(filename string) error {
 
 	ge.tick = save.Tick
 	ge.age = save.Age
-	// Restore the run's master seed so its encounter/buff stream stays reproducible.
-	// A zero seed means the save predates seed persistence — keep the fresh seed
-	// NewGameEngine already generated rather than pinning the run to 0.
-	if save.Seed != 0 {
-		ge.SeedRNG(save.Seed)
+	// Restore the run's master seed and both streams' positions, so the loaded
+	// game carries on drawing exactly where the saved one stopped. A zero seed
+	// means the save predates seed persistence — keep the fresh seed
+	// NewGameEngine already generated rather than pinning the run to 0. Saves
+	// without positions (older ones) restart the streams from the seed, as
+	// every load used to.
+	if save.Seed != 0 && !ge.restoreRNG(save.Seed, save.RNGDraws, save.QuipDraws) {
+		ge.addLog("debug", fmt.Sprintf("Load: RNG position (%d, %d) is past the replay cap; streams restart from the seed", save.RNGDraws, save.QuipDraws))
 	}
+	ge.prose = flavor.StreamFromState(save.Prose)
+	ge.festivalReadyTick = save.FestivalReadyTick
+	ge.blackMarketReadyTick = save.BlackMarketReadyTick
 	ge.Workers.SetAge(save.Age)
 	ge.Resources.LoadAmounts(save.Resources)
 	if save.Storage != nil {
@@ -667,10 +705,16 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// resource's introduction (e.g. the `soldiers` resource added in the military
 	// rework) won't have it in their serialized unlock set even when the player is
 	// already past its unlock age — unlock anything whose unlock-age has been reached.
+	// The rule is live play's: the UnlockResources lists of every age up to the
+	// loaded one (what applyAgeUnlocks replays). It used to read ResourceDef.Age,
+	// which disagreed with the age table for coal, so every Iron Age load
+	// unlocked coal three ages early.
 	currentOrder := ge.progress.ageIndex[save.Age]
-	for _, def := range config.BaseResources() {
-		if order, ok := ge.progress.ageIndex[def.Age]; ok && order <= currentOrder {
-			ge.Resources.UnlockResource(def.Key)
+	for _, age := range ge.progress.ages {
+		if ge.progress.ageIndex[age.Key] <= currentOrder {
+			for _, key := range age.UnlockResources {
+				ge.Resources.UnlockResource(key)
+			}
 		}
 	}
 	for _, key := range save.Unlocked.Buildings {
@@ -719,24 +763,13 @@ func (ge *GameEngine) LoadGame(filename string) error {
 		ge.Buildings.LoadLegacyBuildings(save.LegacyBuildings)
 	}
 
-	// Reconstruct pending upgrades from legacy buildings.
-	// pendingUpgrades is not persisted to disk; we derive it from the
-	// legacy set + current age so the 'upgrade' command works after a reload.
-	for _, key := range save.LegacyBuildings {
-		if ge.Buildings.GetCount(key) <= 0 {
-			continue
-		}
-		def, ok := ge.Buildings.defs[key]
-		// Storage never transforms (see advanceAge), so a save with legacy
-		// stashes gets no stash -> storage_pit offer back.
-		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || def.Category == "storage" {
-			continue
-		}
-		next := config.BuildingNextTierForAge(def.LineageKey, def.LineageTier, save.Age)
-		if next == nil {
-			continue
-		}
-		ge.Buildings.SetPendingUpgrade(key, next.Key)
+	// Restore the pending upgrade offers. Saves written since they were
+	// persisted carry the exact live set; older ones rebuild it from the
+	// legacy set and the loaded age.
+	if save.PendingUpgradesSaved {
+		ge.Buildings.LoadPendingUpgrades(save.PendingUpgrades)
+	} else {
+		ge.Buildings.LoadPendingUpgrades(ge.rebuildPendingUpgrades(save.LegacyBuildings, save.Age))
 	}
 
 	// Restore speed multiplier
@@ -831,6 +864,50 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.Bus.Publish(EventData{Type: EventGameLoaded, Payload: map[string]interface{}{"save": filename}})
 
 	return nil
+}
+
+// rebuildPendingUpgrades derives the upgrade offers for a save that predates
+// PendingUpgrades, following the rule advanceAge applies live: on entering
+// an age, every built lineage building whose next tier belongs to that age
+// is offered that tier, and the offer stands through later ages until the
+// building is upgraded away. So a legacy building still standing is offered
+// its next tier from the latest age up to the loaded one that has it. (The
+// old rebuild only looked at the loaded age, and dropped every offer from an
+// earlier age whose lineage has no tier in the current one.) Must be called
+// under the write lock.
+func (ge *GameEngine) rebuildPendingUpgrades(legacy []string, age string) map[string]string {
+	out := make(map[string]string)
+	cur, ok := ge.progress.ageIndex[age]
+	if !ok {
+		return out
+	}
+	all := config.BaseBuildings()
+	for _, key := range legacy {
+		if ge.Buildings.GetCount(key) <= 0 {
+			continue
+		}
+		def, ok := ge.Buildings.defs[key]
+		// Storage never transforms (see advanceAge), so a save with legacy
+		// stashes gets no stash -> storage_pit offer back.
+		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || def.Category == "storage" {
+			continue
+		}
+		best, bestOrder := "", -1
+		for _, b := range all {
+			if b.LineageKey != def.LineageKey || b.LineageTier != def.LineageTier+1 {
+				continue
+			}
+			// A later age's offer overwrites an earlier one; within one age the
+			// first match wins, as in config.BuildingNextTierForAge.
+			if order, ok := ge.progress.ageIndex[b.RequiredAge]; ok && order <= cur && order > bestOrder {
+				best, bestOrder = b.Key, order
+			}
+		}
+		if best != "" {
+			out[key] = best
+		}
+	}
+	return out
 }
 
 // copyBoolMap returns a deep copy of a map[string]bool.

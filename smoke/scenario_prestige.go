@@ -154,17 +154,14 @@ func prestigeHooked(e *Env, res *Result) (steps []string) {
 			key       string
 			got, want float64
 		}
-		// Starting resources land at the reset; caps and rates are
-		// recalculated on the first tick.
-		up.StepTicks(1)
-		ctl.StepTicks(1)
-		u1, c1 := up.GetState(), ctl.GetState()
+		// Everything lands at the reset: starting resources, caps and
+		// rates are all in the first snapshot of the new run.
 		effects := []effect{
 			{"starting_food", u2.Resources["food"].Amount - c2.Resources["food"].Amount, 25 * float64(bought["starting_food"])},
 			{"starting_wood", u2.Resources["wood"].Amount - c2.Resources["wood"].Amount, 25 * float64(bought["starting_wood"])},
-			{"population_cap", float64(u1.Workers.MaxPop - c1.Workers.MaxPop), 2 * float64(bought["population_cap"])},
-			{"storage_bonus", u1.Resources["food"].Storage - c1.Resources["food"].Storage, 20 * float64(bought["storage_bonus"])},
-			{"tick_speed", u1.TickSpeedBonus - c1.TickSpeedBonus, 0.05 * float64(bought["tick_speed"])},
+			{"population_cap", float64(u2.Workers.MaxPop - c2.Workers.MaxPop), 2 * float64(bought["population_cap"])},
+			{"storage_bonus", u2.Resources["food"].Storage - c2.Resources["food"].Storage, 20 * float64(bought["storage_bonus"])},
+			{"tick_speed", u2.TickSpeedBonus - c2.TickSpeedBonus, 0.05 * float64(bought["tick_speed"])},
 		}
 		for _, ef := range effects {
 			if bought[ef.key] == 0 {

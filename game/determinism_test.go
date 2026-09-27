@@ -21,9 +21,23 @@ import (
 // resolutions (with their encounter rolls), lending windows and war raids.
 const determinismTicks = 3000
 
+// determinismScript is the fixed script determinismRun drives: what to build,
+// and which expeditions to send.
+type determinismScript struct {
+	builds, scouting, military []string
+}
+
 // determinismRun builds a mid-game engine from seed and drives it through a
 // fixed script, returning a fingerprint of everything the RNG can touch.
 func determinismRun(t *testing.T, seed int64) string {
+	t.Helper()
+	ge, sc := determinismSetup(t, seed)
+	transcript := sc.play(ge, 0, determinismTicks)
+	return determinismFingerprint(ge) + transcript
+}
+
+// determinismSetup builds determinismRun's mid-game engine and its script.
+func determinismSetup(t *testing.T, seed int64) (*GameEngine, determinismScript) {
 	t.Helper()
 	ge := newSeededEngine(seed)
 
@@ -89,14 +103,21 @@ func determinismRun(t *testing.T, seed int64) string {
 	if len(builds) == 0 || len(scouting) == 0 || len(military) == 0 {
 		t.Fatalf("scenario setup: %d buildings, %d scouting, %d military expeditions", len(builds), len(scouting), len(military))
 	}
+	return ge, determinismScript{builds: builds, scouting: scouting, military: military}
+}
 
+// play runs script iterations [from, to) on ge, one tick each, and returns
+// the log transcript. Split at any iteration, two calls play exactly what one
+// call over the whole range would.
+func (sc determinismScript) play(ge *GameEngine, from, to int) string {
+	builds, scouting, military := sc.builds, sc.scouting, sc.military
 	// The engine keeps only the last MaxLogSize lines, so the log is sampled
 	// every iteration: each pass records the lines stamped with this
 	// iteration's ticks. Lines from one doTick are recorded twice (once in
 	// the next pass too), which is harmless: the transcript only has to be a
 	// deterministic function of the full log history.
 	var transcript strings.Builder
-	for i := 0; i < determinismTicks; i++ {
+	for i := from; i < to; i++ {
 		t0 := ge.tick
 		// The script. Errors are part of the run (a failed build is still
 		// deterministic), so they are ignored rather than asserted.
@@ -134,7 +155,7 @@ func determinismRun(t *testing.T, seed int64) string {
 			}
 		}
 	}
-	return determinismFingerprint(ge) + transcript.String()
+	return transcript.String()
 }
 
 // determinismFingerprint renders the RNG-reachable state as text. Floats are
