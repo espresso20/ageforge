@@ -437,30 +437,34 @@ MaxCount is enforced on storage buildings only.
 
 | Age | Building | Storage bonus | Max Count |
 |-----|----------|--------------|-----------|
-| Primitive | Stash | +300 all | 50 |
-| Stone | Storage Pit | +800 all | 40 |
-| Bronze | Warehouse | +2,000 all | 35 |
-| Iron | Granary | +5,000 food only | 30 |
-| Classical | Vault | +10,000 gold/knowledge | 25 |
-| Medieval | Castle Vault | +25,000 all | 20 |
-| Renaissance | Treasury | +60,000 all | 18 |
-| Colonial | Customs House | +150,000 all | 15 |
-| Industrial | Industrial Depot | +400,000 all | 12 |
-| Victorian | Victorian Vault | +1,000,000 all | 10 |
-| Electric | Electric Warehouse | +2,500,000 all | 8 |
-| Atomic | Atomic Vault | +6,000,000 all | 7 |
-| Modern | Modern Depot | +15,000,000 all | 6 |
-| Information | Info Vault | +40,000,000 all | 5 |
-| Digital | Digital Archive | +100,000,000 all | 4 |
-| Cyberpunk | Cyber Vault | +250,000,000 all | 4 |
-| Fusion | Fusion Vault | +600,000,000 all | 3 |
-| Space | Orbital Depot | +1.5B all | 3 |
-| Interstellar | Stellar Vault | +4B all | 2 |
-| Galactic | Galactic Vault | +10B all | 2 |
-| Quantum | Quantum Vault | +25B all | 2 |
+| Primitive | Stash | +500 all | 50 |
+| Stone | Storage Pit | +600 all | 25 |
+| Bronze | Warehouse | +4,000 all | 25 |
+| Iron | Granary | +15,000 all | 25 |
+| Classical | Classical Vault | +100,000 all | 25 |
+| Medieval | Keep | +400,000 all | 25 |
+| Renaissance | Renaissance Vault | +500,000 all | 25 |
+| Colonial | Colonial Warehouse | +10M all | 25 |
+| Industrial | Industrial Depot | +50M all | 25 |
+| Victorian | Victorian Vault | +350M all | 25 |
+| Electric | Electric Warehouse | +3.5B all | 25 |
+| Atomic | Atomic Vault | +20B all | 25 |
+| Modern | Modern Depot | +90B all | 25 |
+| Information | Info Vault | +260B all | 25 |
+| Digital | Digital Archive | +1.5T all | 25 |
+| Cyberpunk | Cyber Vault | +8T all | 25 |
+| Fusion | Fusion Vault | +30T all | 25 |
+| Space | Orbital Depot | +200T all | 25 |
+| Interstellar | Stellar Vault | +2Q all | 25 |
+| Galactic | Galactic Vault | +20Q all | 25 |
+| Quantum | Quantum Vault | +200Q all | 25 |
 
-**Storage Covenant check:** At each age, max possible storage must be ≥ 2× cost of most
-expensive building in that age. This must be verified during balance tuning (Phase 3).
+Storage never transforms and is never offered as an upgrade: each age's copies can only be
+built in that age (age lock), so trading one in for a capped slot of the next tier would
+only lower the most you can ever store.
+
+**Storage Covenant check:** enforced per age gate by the Gate Covenant (economy.md) and
+`TestGateCovenant` in smoke/static_test.go.
 
 ---
 
