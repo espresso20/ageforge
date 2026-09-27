@@ -1643,7 +1643,10 @@ func (ge *GameEngine) advanceAge(newAge string) {
 			continue
 		}
 		def, ok := ge.Buildings.defs[key]
-		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" {
+		// Storage never transforms (decision log: storage is cumulative). An
+		// upgrade would trade a copy the age lock never lets you rebuild for one
+		// of the new tier's capped slots, lowering the most you can ever store.
+		if !ok || def.LineageKey == "" || def.LineageKey == "wonder" || def.Category == "storage" {
 			continue
 		}
 		next := config.BuildingNextTierForAge(def.LineageKey, def.LineageTier, newAge)
@@ -2554,6 +2557,19 @@ func (ge *GameEngine) BankWonderResource(wonderKey, resource string, amount floa
 	return nil
 }
 
+// previousAgeBuildError explains why an older age's building can't be built.
+// Only point at 'upgrade' when an upgrade is actually on offer: storage never
+// transforms, and some lineages have no next tier this age.
+func (ge *GameEngine) previousAgeBuildError(key string, def config.BuildingDef) error {
+	if _, ok := ge.Buildings.GetPendingUpgrade(key); ok && ge.Buildings.GetCount(key) > 0 {
+		return fmt.Errorf("%s belongs to a previous age — use 'upgrade %s' to advance your buildings", def.Name, key)
+	}
+	if def.Category == "storage" {
+		return fmt.Errorf("%s belongs to a previous age and can no longer be built — the ones you have keep counting, so build this age's storage instead", def.Name)
+	}
+	return fmt.Errorf("%s belongs to a previous age and can no longer be built", def.Name)
+}
+
 func (ge *GameEngine) BuildBuilding(key string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -2574,7 +2590,7 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 	// Wonders always match because their RequiredAge equals the age they unlock in,
 	// and the player can only be in that age when they attempt to build the wonder.
 	if def.RequiredAge != "" && def.RequiredAge != ge.age {
-		return fmt.Errorf("%s belongs to a previous age — use 'upgrade' to advance your buildings", def.Name)
+		return ge.previousAgeBuildError(key, def)
 	}
 	if def.MaxCount > 0 {
 		inQueue := ge.Buildings.GetQueueCount(key, ge.buildQueue)
@@ -2654,7 +2670,7 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	}
 	// Age lock: only allow building structures that belong to the current age.
 	if def.RequiredAge != "" && def.RequiredAge != ge.age {
-		return 0, fmt.Errorf("%s belongs to a previous age — use 'upgrade' to advance your buildings", def.Name)
+		return 0, ge.previousAgeBuildError(key, def)
 	}
 
 	built := 0
@@ -3862,6 +3878,12 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	if count <= 0 {
 		return fmt.Errorf("no %s to upgrade", oldDef.Name)
 	}
+	if room := ge.Buildings.UpgradeRoom(newKey, count, ge.buildQueue); room < count {
+		if room <= 0 {
+			return fmt.Errorf("%s is at max count (%d)", newDef.Name, newDef.MaxCount)
+		}
+		count = room
+	}
 
 	cost, ok := ge.Buildings.UpgradeCost(key, newKey, count)
 	if !ok {
@@ -3915,6 +3937,9 @@ func (ge *GameEngine) GetAvailableUpgrades() []UpgradeInfo {
 		oldDef, ok1 := byKey[oldKey]
 		newDef, ok2 := byKey[newKey]
 		if !ok1 || !ok2 {
+			continue
+		}
+		if count = ge.Buildings.UpgradeRoom(newKey, count, ge.buildQueue); count <= 0 {
 			continue
 		}
 		cost, ok := ge.Buildings.UpgradeCost(oldKey, newKey, count)
