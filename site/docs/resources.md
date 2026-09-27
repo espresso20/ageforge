@@ -38,7 +38,7 @@ These resources are produced by Geological Extraction buildings and consumed by 
 |----------|-----|---------|--------------|-------|
 | Marble | `marble` | Iron Age | 30 | Refined stone for monumental construction |
 | Iron Ore | `iron_ore` | Iron Age | 30 | Raw ore before smelting — feeds Metallurgy lineage |
-| Titanium Ore | `titanium_ore` | Modern Age | 20 | Raw titanium ore — refines into titanium via Metallurgy |
+| Titanium Ore | `titanium_ore` | Space Age | 20 | Raw titanium ore — refines into titanium via Metallurgy |
 | Dark Matter Crystals | `dark_matter_crystals` | Cyberpunk Age | 10 | Crystallised dark matter — refines into dark matter |
 | Nanobots | `nanobots` | Modern Age | 20 | Microscopic machines. Built by the **Nano Foundry** (Modern Age) and Organic Extraction from Digital Era+; consumed as a build material by several digital/cyberpunk buildings |
 
@@ -46,7 +46,7 @@ These resources are produced by Geological Extraction buildings and consumed by 
 
 | Resource | Key | Unlocks | Base Storage | Notes |
 |----------|-----|---------|--------------|-------|
-| Coal | `coal` | Iron Age | 50 | Fuel for smelting; Organic Extraction output in Steel Era |
+| Coal | `coal` | Renaissance Age | 50 | Fuel for smelting; Organic Extraction output in Steel Era |
 | Steel | `steel` | Medieval Age | 30 | Refined metal for advanced construction |
 | Oil | `oil` | Industrial Age | 50 | Fuel for machines; Organic Extraction output in Electric Era |
 | Electricity | `electricity` | Victorian Age | 50 | Powers modern infrastructure |
@@ -163,8 +163,8 @@ Geological Extraction buildings  →  raw ore  →  Metallurgy buildings  →  r
 
 | Raw Ore | Refined Output | Notes |
 |---------|---------------|-------|
-| Iron Ore | Iron / Steel | Classical Age ore; Metallurgy lineage starts Iron Age |
-| Titanium Ore | Titanium | Modern Age ore |
+| Iron Ore | Iron / Steel | Iron Age ore; Metallurgy lineage starts Iron Age |
+| Titanium Ore | Titanium | Space Age ore |
 | Dark Matter Crystals | Dark Matter | Cyberpunk Age ore |
 
 You must have both the Geological Extraction lineage buildings (to produce ore) and the Metallurgy lineage buildings (to refine it) staffed with appropriate workers to keep metal flowing. An ore surplus with no smelters, or smelters with no ore supply, both result in zero output.

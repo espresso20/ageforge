@@ -675,10 +675,16 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// resource's introduction (e.g. the `soldiers` resource added in the military
 	// rework) won't have it in their serialized unlock set even when the player is
 	// already past its unlock age — unlock anything whose unlock-age has been reached.
+	// The rule is live play's: the UnlockResources lists of every age up to the
+	// loaded one (what applyAgeUnlocks replays). It used to read ResourceDef.Age,
+	// which disagreed with the age table for coal, so every Iron Age load
+	// unlocked coal three ages early.
 	currentOrder := ge.progress.ageIndex[save.Age]
-	for _, def := range config.BaseResources() {
-		if order, ok := ge.progress.ageIndex[def.Age]; ok && order <= currentOrder {
-			ge.Resources.UnlockResource(def.Key)
+	for _, age := range ge.progress.ages {
+		if ge.progress.ageIndex[age.Key] <= currentOrder {
+			for _, key := range age.UnlockResources {
+				ge.Resources.UnlockResource(key)
+			}
 		}
 	}
 	for _, key := range save.Unlocked.Buildings {
