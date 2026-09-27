@@ -44,12 +44,12 @@ test-raw: build vet
 # accounts, perf budgets and the UI sweeps. Report in smoke-report/.
 # One scenario: go run ./cmd/smoke -scenario saveload -v (see -list).
 smoke:
-	@go run ./cmd/smoke -tier fast -v -out smoke-report
+	@go run ./cmd/smoke -tier fast -pacing enforce -v -out smoke-report
 
 # Smoke suite, full tier (what the nightly runs): every scenario, deeper and
 # on more seeds, plus the play styles and two prestige cycles.
 smoke-full:
-	@go run ./cmd/smoke -tier full -v -out smoke-report
+	@go run ./cmd/smoke -tier full -pacing enforce -v -out smoke-report
 
 # Run the game
 run: build

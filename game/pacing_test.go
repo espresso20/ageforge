@@ -14,6 +14,14 @@ func TestPacingTickMatchesEngine(t *testing.T) {
 	}
 }
 
+// TestProductionCapMatchesConfig: config.FlowIncome models the production_all
+// bonus with the engine's cap.
+func TestProductionCapMatchesConfig(t *testing.T) {
+	if productionCap != config.ProductionAllCap {
+		t.Fatalf("config.ProductionAllCap = %v, engine productionCap = %v", config.ProductionAllCap, productionCap)
+	}
+}
+
 // TestMarketTradesAtParity: two construction resources of the current age
 // trade at the age's parity less the fee, including pairs no one listed.
 func TestMarketTradesAtParity(t *testing.T) {

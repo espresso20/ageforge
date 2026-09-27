@@ -902,7 +902,7 @@ func Milestones() []MilestoneDef {
 			Category:    "ages",
 			MinAge:      "iron_age",
 			Rewards: []Effect{
-				{Type: "instant_resource", Target: "coal", Value: 40},
+				{Type: "instant_resource", Target: "iron", Value: 40}, // was coal, locked until the Renaissance
 				{Type: "permanent_bonus", Target: "iron_rate", Value: 0.10},
 			},
 		},

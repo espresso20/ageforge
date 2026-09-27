@@ -157,7 +157,12 @@ type Scenario struct {
 	Desc string
 	// FullOnly scenarios are skipped in the fast tier.
 	FullOnly bool
-	Run      func(e *Env, res *Result)
+	// Paced scenarios run with the session's pacing mode; the rest always
+	// run in report mode. The pacing targets describe a greedy first run, so
+	// only the progression scenario is held to them: the idle style checks
+	// in every few hours, and the saveload and perf runs are cut short.
+	Paced bool
+	Run   func(e *Env, res *Result)
 }
 
 // Scenarios is the suite, in run order.
@@ -165,7 +170,7 @@ func Scenarios() []Scenario {
 	return []Scenario{
 		{Name: "static", Desc: "Gate Covenant check from config alone: every age gate fits storage and has a source", Run: runStatic},
 		{Name: "docsync", Desc: "site and README headline numbers, lineage count and command reference match config and the command table", Run: runDocsync},
-		{Name: "progression", Desc: "greedy bot plays seeds end to end: panics, soft-locks, invariants, and the pacing table", Run: runProgression},
+		{Name: "progression", Desc: "greedy bot plays seeds end to end: panics, soft-locks, invariants, and the pacing table", Paced: true, Run: runProgression},
 		{Name: "saveload", Desc: "save at a checkpoint per age, load into a fresh engine, continue, and compare against the uninterrupted run", Run: runSaveload},
 		{Name: "offline", Desc: "close the game for 1h, 8h and 30h through the offline-gains path: positive, sane, capped at 24h", Run: runOffline},
 		{Name: "fuzz", Desc: "random, malformed and hostile commands through the real command handler: no panics, invariants hold, ticks go on", Run: runFuzz},
@@ -233,7 +238,11 @@ func RunScenarios(e *Env, names []string) (*Session, error) {
 		}
 		e.logf("scenario %s: running", sc.Name)
 		start := time.Now()
-		runIsolated(e, sc, res)
+		se := *e
+		if !sc.Paced {
+			se.Base.Pacing = PacingReport
+		}
+		runIsolated(&se, sc, res)
 		res.WallMs = time.Since(start).Milliseconds()
 		if res.Status == "" {
 			res.Status = StatusPass

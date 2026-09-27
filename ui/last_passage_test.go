@@ -189,7 +189,7 @@ func TestHarbingerPanelLastPassage(t *testing.T) {
 		"THE DISTRESS BEACON", "Warning of the Last Passage: the end of this civilization, when you next prestige.",
 		"Odds published:", "%", "If it comes and you Endure: you keep 50% of the run's prestige points.",
 		"Next level: 70% kept.", "Guarantees the Last Passage at your next prestige",
-		"Next level costs: 46.5B faith (have 0), 46.5B culture (have 0)",
+		"Next level costs: 1.20B faith (have 0), 19.0B culture (have 0)",
 	} {
 		if !strings.Contains(txt, want) {
 			t.Errorf("panel missing %q:\n%s", want, txt)

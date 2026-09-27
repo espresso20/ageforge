@@ -68,7 +68,8 @@ jobs:
   # offline catch-up, command fuzzing, accounts, perf budgets and the UI at
   # small terminal sizes. Fails on crashes, soft-locks, invariant violations,
   # save/load divergence, fuzz failures, account failures, docs mismatches
-  # and blown perf budgets; pacing is graded but never fails the job.
+  # and blown perf budgets, and on a Primitive or Stone Age that leaves its
+  # pacing band (-pacing enforce: the game got meaningfully slower or faster).
   smoke:
     name: smoke (fast tier)
     if: github.event_name == 'pull_request'
@@ -92,7 +93,7 @@ jobs:
 
       - name: Smoke (fast tier)
         id: smoke
-        run: go run ./cmd/smoke -tier fast -v -out smoke-report
+        run: go run ./cmd/smoke -tier fast -pacing enforce -v -out smoke-report
 
       - name: Job summary
         if: ${{ always() }}

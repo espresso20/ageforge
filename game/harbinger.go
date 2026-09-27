@@ -60,29 +60,30 @@ const (
 	// 0.6 at level 1, 0.36 at level 2.
 	harbingerAppeaseFactor = 0.6
 
-	// Costs are priced off the PASSAGE, not the player's current caps, so the
-	// price is the same in every age of the epoch (current caps are smallest
-	// in the epoch's first age, which would make paying early a discount).
-	// Level 2 costs double (level × fraction).
+	// Costs belong to the thread, not the player's current caps or age, so the
+	// price is the same in every age of the epoch. Level 2 costs double.
 	//
-	// Appease: 15% of the passage storage — the largest amount any one
-	// resource must reach to enter the next epoch — in faith and in culture.
-	// Faith and culture storage come from the same all-resource warehouses as
-	// everything else, so by the time the player can advance their caps hold
-	// at least that much; before then the price may exceed the cap, and the
-	// refusal says so. No age requires faith or culture past the Renaissance,
-	// so their own requirements cannot price them. Faith also drives the roll
-	// (faith fill bands): worst case, paying drops the fill from the top band
-	// to the bottom, raising the base chance from 12% to 18% (×1.5), and ×0.6
-	// still leaves 0.9× of where it started, so Appease always lowers the odds.
+	// Appease: harbingerAppeaseIncomeShare of what a player who invests
+	// moderately in faith (and culture) makes over the thread's ages at their
+	// pacing targets: config.FlowIncome × config.AgeTargetTicks, summed over
+	// harbingerAppeaseAges. Faith is a flow resource at hand-set rates and the
+	// market sells none, so the price has to follow what the ages produce; the
+	// old price (15% of the passage storage) was out of reach in most threads
+	// once the pacing rebalance made ages short. At a quarter, with income
+	// growing through the thread, level 1 comes partway through and level 1
+	// plus level 2 (three quarters) before the passage. Faith also drives the
+	// roll (faith fill bands): worst case, paying drops the fill from the top
+	// band to the bottom, raising the base chance from 12% to 18% (×1.5), and
+	// ×0.6 still leaves 0.9× of where it started, so Appease always lowers
+	// the odds.
 	//
 	// Brace: 12% of the most the epoch asks of each core resource across its
 	// remaining advances (into its later ages and into the next epoch), for
 	// resources the player has held since the epoch began. It softens a
-	// catastrophe that may not come, so it is priced under Appease per
-	// resource, but it draws on several resources at once.
-	harbingerAppeaseCostFrac = 0.15
-	harbingerBraceCostFrac   = 0.12
+	// catastrophe that may not come, so it is priced under what the epoch
+	// asks, but it draws on several resources at once.
+	harbingerAppeaseIncomeShare = 0.25
+	harbingerBraceCostFrac      = 0.12
 )
 
 // Endure numbers by Brace level (index 0 = unbraced): share of destroyable
@@ -447,33 +448,25 @@ func harbingerAdvanceAges(epochKey string) []string {
 	return out
 }
 
-// harbingerPassageStorage is the largest single requirement for entering the
-// epoch after epochKey: the storage every resource must reach to pass.
-//
-// The final epoch's passage is prestige, which asks for no storage at all. Its
-// Appease is priced off the largest requirement for entering the final epoch
-// instead: storage the player provably holds from its first age, so the price
-// is payable in every age of the epoch, and the same figure the epoch before
-// it paid for its own passage. (Pricing it off the epoch's own advances would
-// put Appease out of reach until the last age, and a player may prestige from
-// the first.)
-func harbingerPassageStorage(epochKey string) float64 {
-	var gate string
-	if next, ok := config.NextEpoch(epochKey); ok && len(next.Ages) > 0 {
-		gate = next.Ages[0]
-	} else if ep, ok := config.EpochByKey()[epochKey]; ok && config.IsFinalEpoch(epochKey) && len(ep.Ages) > 0 {
-		gate = ep.Ages[0]
+// harbingerAppeaseAges are the ages whose income prices epochKey's Appease:
+// every age of the epoch except the game's last, which has no advance to pace.
+// In the final epoch, whose passage is prestige, a player who prestiges from
+// its first age leaves before Appease is in reach; one who stays for the
+// epoch gets the same timing as every other thread.
+func harbingerAppeaseAges(epochKey string) []string {
+	ep, ok := config.EpochByKey()[epochKey]
+	if !ok {
+		return nil
 	}
-	if gate == "" {
-		return 0
-	}
-	max := 0.0
-	for _, v := range config.AgeByKey()[gate].ResourceReqs {
-		if v > max {
-			max = v
+	order := config.AgeOrder()
+	last := order[len(order)-1]
+	var out []string
+	for _, a := range ep.Ages {
+		if a != last {
+			out = append(out, a)
 		}
 	}
-	return max
+	return out
 }
 
 // harbingerHeldSinceStart reports the resources unlocked by the time the
@@ -497,21 +490,41 @@ func harbingerHeldSinceStart(epochKey string) map[string]bool {
 }
 
 // harbingerAppeaseCost is the price of Appease level (1 or 2) in epochKey's
-// thread: harbingerAppeaseCostFrac × level of the passage storage, in faith
-// and in culture (culture only if held since the epoch began). Pure.
+// thread, in faith and in culture (culture only if held since the epoch
+// began): level × harbingerAppeaseIncomeShare of the resource's
+// config.FlowIncome over harbingerAppeaseAges at their pacing targets, the
+// level-1 figure rounded up to two significant figures. Pure.
 func harbingerAppeaseCost(epochKey string, level int) map[string]float64 {
-	passage := harbingerPassageStorage(epochKey)
 	held := harbingerHeldSinceStart(epochKey)
 	cost := map[string]float64{}
-	if passage <= 0 {
-		return cost
-	}
 	for _, k := range []string{"faith", "culture"} {
-		if held[k] {
-			cost[k] = math.Ceil(passage * harbingerAppeaseCostFrac * float64(level))
+		if !held[k] {
+			continue
+		}
+		income := 0.0
+		for _, a := range harbingerAppeaseAges(epochKey) {
+			income += config.FlowIncome(k, a) * config.AgeTargetTicks(a)
+		}
+		if l1 := ceilSignificant(income*harbingerAppeaseIncomeShare, 2); l1 > 0 {
+			cost[k] = l1 * float64(level)
 		}
 	}
 	return cost
+}
+
+// ceilSignificant rounds v up to sig significant figures (v itself if v <= 0).
+func ceilSignificant(v float64, sig int) float64 {
+	if v <= 0 {
+		return v
+	}
+	exp := int(math.Ceil(math.Log10(v))) - sig
+	// Scale by an exact power of ten either way (see config.roundSignificant).
+	if exp >= 0 {
+		mag := math.Pow(10, float64(exp))
+		return math.Ceil(v/mag-1e-9) * mag
+	}
+	mag := math.Pow(10, float64(-exp))
+	return math.Ceil(v*mag-1e-9) / mag
 }
 
 // harbingerBraceBasis is, per core resource, the most any remaining advance of

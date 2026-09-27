@@ -37,7 +37,7 @@ func affordStr(ever bool, after float64) string {
 // writeHarbingers renders the harbinger section: event counts, the static
 // price table and each thread's affordability as the bot lived it.
 func (s *Summary) writeHarbingers(sb *strings.Builder) {
-	fmt.Fprintf(sb, "\n## Harbingers\n\nBot policy `%s` (level 1 only).\n\n", orDefault(s.Config.Harbinger, HarbingerIgnore))
+	fmt.Fprintf(sb, "\n## Harbingers\n\nBot policy `%s` (Appease both levels, Brace level 1).\n\n", orDefault(s.Config.Harbinger, HarbingerIgnore))
 
 	sb.WriteString("| seed | threads started | speaker handoffs | verdicts | false prophets revealed | appease bought | brace bought |\n|---|---|---|---|---|---|---|\n")
 	for _, r := range s.Runs {
@@ -94,6 +94,8 @@ func (s *Summary) writeHarbingers(sb *strings.Builder) {
 		}
 	}
 
+	s.writeAppeaseTiming(sb, threads)
+
 	// Flag passages where no seed could ever afford an answer.
 	type agg struct{ seen, appease, brace int }
 	byPassage := map[string]*agg{}
@@ -123,5 +125,50 @@ func (s *Summary) writeHarbingers(sb *strings.Builder) {
 				fmt.Fprintf(sb, "- **%s never affordable** in the %s thread across %d observed thread(s).\n", x.name, k, a.seen)
 			}
 		}
+	}
+}
+
+// writeAppeaseTiming summarizes, per passage, when Appease level 1 and then
+// level 2 (with level 1 bought) first became affordable, against the
+// thread's length: the Appease pricing aims at level 1 partway through and
+// level 2 near the passage.
+func (s *Summary) writeAppeaseTiming(sb *strings.Builder, threads []*HarbingerThread) {
+	type agg struct{ l1, l2, length []float64 }
+	by := map[string]*agg{}
+	var keys []string
+	for _, th := range threads {
+		k := th.Epoch + " → " + th.TargetEpoch
+		a := by[k]
+		if a == nil {
+			a = &agg{}
+			by[k] = a
+			keys = append(keys, k)
+		}
+		a.length = append(a.length, th.LengthSecs)
+		if th.AppeaseAffordable {
+			a.l1 = append(a.l1, th.AppeaseAfterSecs)
+		}
+		if th.AppeaseL2AfterSecs >= 0 {
+			a.l2 = append(a.l2, th.AppeaseL2AfterSecs)
+		}
+	}
+	cell := func(v []float64, n int, length float64) string {
+		if len(v) == 0 {
+			return fmt.Sprintf("never (0/%d)", n)
+		}
+		_, med, _ := spread(v)
+		share := ""
+		if length > 0 {
+			share = fmt.Sprintf(", %.0f%% in", 100*med/length)
+		}
+		return fmt.Sprintf("%s (%d/%d%s)", dur(med), len(v), n, share)
+	}
+	sb.WriteString("\n### Appease timing per passage\n\nMedian time from the thread's start until level 1 was affordable, and until level 2 was affordable with level 1 bought, over the threads that got there; the share is of the median thread length. Only meaningful under an Appease policy.\n\n")
+	sb.WriteString("| passage | threads | thread length (median) | L1 affordable | L2 affordable |\n|---|---|---|---|---|\n")
+	for _, k := range keys {
+		a := by[k]
+		_, length, _ := spread(a.length)
+		fmt.Fprintf(sb, "| %s | %d | %s | %s | %s |\n", k, len(a.length), dur(length),
+			cell(a.l1, len(a.length), length), cell(a.l2, len(a.length), length))
 	}
 }

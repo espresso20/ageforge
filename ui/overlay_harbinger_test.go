@@ -121,13 +121,13 @@ func TestHarbingerPanelKeys(t *testing.T) {
 		t.Error("refused brace changed the level")
 	}
 
-	// Appease: the passage price (12000 faith in the Stone Era) is beyond a
+	// Appease: the Stone Era price (59 faith) is beyond a
 	// new settlement's storage, and the panel says what storage it needs.
 	press('A')
 	if st := engine.GetState(); st.Harbinger.AppeaseLevel != 0 || d.harbPanel.noteGood {
 		t.Fatalf("appease: level %d note %q", st.Harbinger.AppeaseLevel, d.harbPanel.note)
 	}
-	if !strings.Contains(untag(renderText(t, pages, 160, 60)), "faith storage must reach 12000") {
+	if !strings.Contains(untag(renderText(t, pages, 160, 60)), "faith storage must reach 59") {
 		t.Error("panel did not show the appease refusal")
 	}
 

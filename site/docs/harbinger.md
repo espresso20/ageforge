@@ -152,10 +152,10 @@ The price is set by the passage, so it is the same in every age of the epoch. If
 | Level | Cost | Real catastrophe chance |
 |-------|------|-------------------------|
 | 0 | none | unchanged |
-| 1 | 15% of the passage storage, in faith (and the same in culture, from the Steel Era on) | ×0.6 |
-| 2 | 30% of the passage storage, in faith (and culture) | ×0.36 (×0.6 again) |
+| 1 | a quarter of the thread's faith income, in faith (and a quarter of its culture income, in culture, from the Steel Era on) | ×0.6 |
+| 2 | double level 1 | ×0.36 (×0.6 again) |
 
-- The **passage storage** is the largest single amount the next epoch's first age asks for. Your storage has to hold that much before you can advance anyway. The Cosmic Era has no next epoch; see [the Cosmic Era's price](#what-it-costs-by-epoch).
+- The **thread's income** is what a player who invests moderately in faith makes over the epoch's ages, each at its target length (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)): five fully staffed copies of every faith building so far, the faith of every wonder already built, the flat faith of the techs, all multiplied by the production bonus of the techs and wonders you hold by then (it reaches the ×3 cap in the Electric Age). Culture is counted the same way. So level 1 comes partway through the epoch, and level 2 on top of it before the passage, if you keep a few faith buildings staffed.
 - Culture is only charged if you already had it when the epoch began. It unlocks in the Classical Age, so Stone and Iron Era threads cost faith only.
 - Two levels at most.
 - Appease always changes the real odds, including with a false prophet.
@@ -191,21 +191,35 @@ Level 1 prices. Level 2 costs double.
 
 | Thread | Appease (level 1) | Brace (level 1) |
 |--------|-------------------|-----------------|
-| Stone Era | 12,000 faith | 9,600 food, 4,800 wood, 2,400 knowledge |
-| Iron Era | 33,000 faith | 26,400 knowledge, 26,400 stone, 6,360 iron, 21,600 gold |
-| Steel Era | 2.25M faith, 2.25M culture | 360K knowledge, 1.8M gold, 288K steel |
-| Electric Era | 70.5M faith, 70.5M culture | 56.4M steel, 924K oil, 3.96M electricity |
-| Digital Era | 147B faith, 147B culture | 156M gold, 117.6B electricity, 19.2B data |
-| Neon Era | 46.5B faith, 46.5B culture | 288B electricity, 46.8B data, 3B crypto |
-| Cosmic Era | 46.5B faith, 46.5B culture | 1.56T dark matter, 75.6B titanium |
+| Stone Era | 59 faith | 9,600 food, 4,800 wood, 2,400 knowledge |
+| Iron Era | 5,400 faith | 26,400 knowledge, 26,400 stone, 6,360 iron, 21,600 gold |
+| Steel Era | 74K faith, 770K culture | 360K knowledge, 1.8M gold, 288K steel |
+| Electric Era | 1.2M faith, 16M culture | 56.4M steel, 924K oil, 3.96M electricity |
+| Digital Era | 12M faith, 180M culture | 156M gold, 117.6B electricity, 19.2B data |
+| Neon Era | 130M faith, 2B culture | 288B electricity, 46.8B data, 3B crypto |
+| Cosmic Era | 1.2B faith, 19B culture | 1.56T dark matter, 75.6B titanium |
 
-The Digital Era's Appease is dearer than the Neon Era's because entering the Cyberpunk Age asks for more than entering the Interstellar Age.
+Appease used to cost 15% of the passage storage (12,000 faith in the Stone Era, 147B in the Digital Era), which faith could almost never reach once ages became short.
 
-The Cosmic Era's passage is prestige, which asks for no storage of its own. Its Appease is based instead on the largest requirement for entering the Cosmic Era (310B plasma, at the Interstellar Age), which your storage already held when you arrived. That makes it the same price the Neon Era paid for its own passage. Its Brace is based on the most the Cosmic Era's own advances ask of each resource you have held since the Interstellar Age: 13T dark matter (for the Quantum Age) and 630B titanium (for the Galactic Age). Antimatter and quantum flux arrive later, so they are left out.
+The Cosmic Era's passage is prestige, which you may take in any of its ages. Its Appease counts the Interstellar, Galactic and Quantum Ages, so if you prestige as soon as you arrive, Appease is out of reach; stay a day or two and it isn't. Its Brace is based on the most the Cosmic Era's own advances ask of each resource you have held since the Interstellar Age: 13T dark matter (for the Quantum Age) and 630B titanium (for the Galactic Age). Antimatter and quantum flux arrive later, so they are left out.
 
 #### Can you afford it?
 
-Brace usually, Appease rarely. Faith is produced at fixed rates and ages are short, so your faith seldom reaches the Level-1 Appease price before the passage. In the smoke-test bot's runs, faith never reached it in the Stone, Iron, Steel, Electric or Digital Era threads. Culture can be bought at the market (gold → culture); faith cannot. Brace is priced in construction resources, and in the same runs it became affordable within 0 to 6 hours of each thread starting.
+Yes, both, if you invest a little in faith. Faith can't be bought at the market (culture can, gold → culture), so Appease is priced off what faith buildings actually make. In the smoke-test bot's runs (five seeds, the bot building toward Appease and buying each level as soon as it could), the median thread went like this:
+
+| Thread | Thread length | Level 1 affordable | Level 2 affordable (after level 1) |
+|--------|---------------|--------------------|------------------------------------|
+| Stone Era | 3.2 h | after 58 min (30%) | after 1.6 h (50%) |
+| Iron Era | 9.2 h | after 2.6 h (28%) | after 5.9 h (64%) |
+| Steel Era | 23 h | after 8 h (34%) | after 19 h (80%) |
+| Electric Era | 1.1 days | after 11 h (44%) | after 22 h (85%) |
+| Digital Era | 1.8 days | after 9 h (21%) | after 23 h (56%) |
+| Neon Era | 3.0 days | after 7 h (9%) | after 1 day (35%) |
+| Cosmic Era (to a Quantum Age prestige) | 3.3 days | after 11 h (14%) | after 1.8 days (57%) |
+
+From the Digital Era on, faith saved in earlier eras carries over (faith is never reduced at an advance), so Appease comes earlier in the thread. Brace is priced in construction resources and became affordable within 0 to 6 hours of each thread starting.
+
+Faith you spend on Appease is faith the gate can't use: keep what the next age asks for, and what the Sistine Chapel still needs, before you appease.
 
 ### Invite: choose the catastrophe
 

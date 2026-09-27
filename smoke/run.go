@@ -50,7 +50,8 @@ type Config struct {
 	// Pacing is PacingReport (default) or PacingEnforce. In report mode an
 	// age past its timeout and a run out of MaxSim are pacing notes, not
 	// failures, and play continues past a timeout; in enforce mode they fail
-	// the run, as does any age outside the target band.
+	// the run, and a first-cycle age whose median across seeds leaves the
+	// target band fails the set (NewSummary).
 	Pacing string
 	// LastPassage is how the bot answers the Last Passage: "endure"
 	// (default) or "succumb" (takes the Cosmic Legacy while it can).
@@ -129,6 +130,11 @@ type AgeSplit struct {
 	Seconds float64 `json:"seconds_1x"`
 	// Unfinished marks the age a run ended in without advancing.
 	Unfinished bool `json:"unfinished,omitempty"`
+	// Prestiged marks an age the run left by prestige rather than by
+	// advancing. It is not a completed age (a run that prestiges on entering
+	// the first allowed age spends no time in it), so it is reported but never
+	// graded.
+	Prestiged bool `json:"prestiged,omitempty"`
 	// TargetSecs is the pacing target (0 when the age has none), Verdict
 	// grades Seconds against it, and TimedOut marks an age that ran past
 	// its timeout (report mode keeps playing).
@@ -458,14 +464,18 @@ func (r *runner) enterAge(st game.GameState) {
 	r.timedOut = false
 }
 
+// closeAge records the age just completed. Its verdict is graded across
+// seeds in NewSummary, which is where -pacing enforce fails a set.
 func (r *runner) closeAge() {
+	r.res.Ages = append(r.res.Ages, r.split(false))
+}
+
+// closeAgeByPrestige records the age a prestige left: reported, never graded
+// (see AgeSplit.Prestiged).
+func (r *runner) closeAgeByPrestige() {
 	a := r.split(false)
+	a.Prestiged, a.Verdict = true, VerdictNone
 	r.res.Ages = append(r.res.Ages, a)
-	if r.cfg.enforce() && (a.Verdict == VerdictSlow || a.Verdict == VerdictFast) {
-		r.anomaly(KindPacing, "pacing_"+a.Verdict,
-			fmt.Sprintf("%s took %s at 1x against a %s target (band %gx to %gx)", a.Age, dur(a.Seconds), dur(a.TargetSecs), PacingLow, PacingHigh),
-			game.GameState{}, false)
-	}
 }
 
 // observe updates pacing, event counts and the soft-lock detector.
@@ -647,7 +657,7 @@ func (r *runner) control(st *game.GameState) bool {
 		}
 		r.checkPrestigeCarry(before, after, ending)
 		r.res.Stats.Prestiges++
-		r.closeAge()
+		r.closeAgeByPrestige()
 		r.res.Cycles = append(r.res.Cycles, CycleSplit{
 			Cycle: r.cycle, Ticks: r.ticks - r.cycT0, Seconds: (r.sim - r.cycS0).Seconds(),
 			Points: points, Expected: expected, Ending: ending, FinalAge: before.Age, Prestiged: true,

@@ -1,8 +1,10 @@
 name: Smoke
 
 # Nightly: the smoke suite's full tier, every scenario (see CONTRIBUTING.md,
-# "Smoke testing"). Pacing runs in report mode: graded in the report and the
-# job summary, never failing the job. Everything else that breaks fails it.
+# "Smoke testing"). Pacing is enforced: a first-cycle age of the progression
+# scenario whose median across seeds leaves 0.5x-2x of its target
+# (config.AgeTargets) fails the job,
+# as does anything else that breaks.
 
 on:
   schedule:
@@ -37,7 +39,7 @@ jobs:
 
       - name: Smoke (full tier, all scenarios)
         id: smoke
-        run: go run ./cmd/smoke -tier full -scenario all -pacing report -v -out smoke-report
+        run: go run ./cmd/smoke -tier full -scenario all -pacing enforce -v -out smoke-report
 
       - name: Job summary
         if: ${{ always() }}

@@ -68,6 +68,8 @@ func (s *Session) WriteSummary(w io.Writer) error {
 		(time.Duration(s.WallMs) * time.Millisecond).Round(time.Second), s.Pacing)
 	if s.Pacing != PacingEnforce {
 		sb.WriteString(" (graded, never fails the job)")
+	} else {
+		sb.WriteString(" for the progression scenario's first cycle, by median across seeds (graded only elsewhere)")
 	}
 	sb.WriteString(".\n\n")
 	s.scenarioTable(&sb)

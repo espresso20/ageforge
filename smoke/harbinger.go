@@ -24,8 +24,9 @@ func (b *Bot) wantsBrace() bool {
 	return b.Harbinger == HarbingerBrace || b.Harbinger == HarbingerBoth
 }
 
-// harbingerTargets folds the level-1 Appease/Brace prices the policy wants
-// into the plan, so the bot invests toward them like any requirement.
+// harbingerTargets folds the next Appease level (up to level 2) and the
+// level-1 Brace price the policy wants into the plan, so the bot invests
+// toward them like any requirement.
 func (b *Bot) harbingerTargets(p *plan) {
 	v := p.st.Harbinger
 	if v == nil {
@@ -37,29 +38,49 @@ func (b *Bot) harbingerTargets(p *plan) {
 			p.capNeed[r] = math.Max(p.capNeed[r], c)
 		}
 	}
-	if b.wantsAppease() && v.AppeaseLevel == 0 && v.AppeaseBlocked == "" {
-		add(v.AppeaseCost)
+	if b.wantsAppease() && v.AppeaseBlocked == "" {
+		add(v.AppeaseCost) // the next level's price; nil once maxed
 	}
 	if b.wantsBrace() && v.BraceLevel == 0 && v.BraceBlocked == "" {
 		add(v.BraceCost)
 	}
 }
 
-// answerHarbinger buys level 1 of whatever the policy wants as soon as it is
-// affordable. Reports whether it spent anything.
+// answerHarbinger buys the next Appease level (both levels) and level 1 of
+// Brace, whichever the policy wants, as soon as each is affordable. Reports
+// whether it spent anything.
 func (b *Bot) answerHarbinger(st game.GameState) bool {
 	v := st.Harbinger
 	if v == nil {
 		return false
 	}
 	spent := false
-	if b.wantsAppease() && v.AppeaseLevel == 0 && v.AppeaseAffordable {
+	if b.wantsAppease() && v.AppeaseLevel < game.HarbingerMaxAppease && v.AppeaseAffordable && b.spareFor(st, v.AppeaseCost) {
 		spent = b.act("harbinger_appease", v.TargetEpochKey, b.ge.HarbingerAppease()) || spent
 	}
 	if b.wantsBrace() && v.BraceLevel == 0 && v.BraceAffordable {
 		spent = b.act("harbinger_brace", v.TargetEpochKey, b.ge.HarbingerBrace()) || spent
 	}
 	return spent
+}
+
+// spareFor reports whether cost leaves what the next advance still needs of
+// each resource: its requirement and what the age's wonder still has to be
+// banked. A player saves faith for the Sistine Chapel before appeasing with
+// it; the bot used to spend it first and stall the Renaissance.
+func (b *Bot) spareFor(st game.GameState, cost map[string]float64) bool {
+	for res, c := range cost {
+		keep := st.NextAgeResReqs[res]
+		if w := st.CurrentAgeWonderKey; w != "" {
+			if left := b.defs[w].BaseCost[res] - st.Buildings[w].WonderBank[res]; left > 0 {
+				keep += left
+			}
+		}
+		if st.Resources[res].Amount < c+keep {
+			return false
+		}
+	}
+	return true
 }
 
 // ResourcePoint is one resource's stock and cap at a moment.
@@ -81,6 +102,8 @@ type HarbingerThread struct {
 	FalseProphet *bool `json:"false_prophet,omitempty"`
 
 	AppeaseL1 map[string]float64 `json:"appease_l1_cost"`
+	// AppeaseL2 is the level-2 price, read once level 1 is bought.
+	AppeaseL2 map[string]float64 `json:"appease_l2_cost,omitempty"`
 	BraceL1   map[string]float64 `json:"brace_l1_cost"`
 	// Stock and storage of every priced resource when the thread started and
 	// at the last decision before it resolved (the passage).
@@ -94,8 +117,13 @@ type HarbingerThread struct {
 	// Seconds (1x) from the thread's start to first affordability; -1 if never.
 	AppeaseAfterSecs float64 `json:"appease_affordable_after_seconds"`
 	BraceAfterSecs   float64 `json:"brace_affordable_after_seconds"`
-	AppeaseLevel     int     `json:"appease_level_bought"`
-	BraceLevel       int     `json:"brace_level_bought"`
+	// AppeaseL2AfterSecs is when level 2 first became affordable with level 1
+	// already bought (-1 if never): the second payment, not the sum.
+	AppeaseL2AfterSecs float64 `json:"appease_l2_affordable_after_seconds"`
+	// LengthSecs is the thread's span so far: start to its last decision.
+	LengthSecs   float64 `json:"length_seconds"`
+	AppeaseLevel int     `json:"appease_level_bought"`
+	BraceLevel   int     `json:"brace_level_bought"`
 
 	startSim time.Duration
 }
@@ -143,7 +171,7 @@ func (r *runner) trackHarbinger(st game.GameState) {
 		th = &HarbingerThread{
 			Cycle: r.cycle, Epoch: config.EpochForAge(v.Age), TargetEpoch: v.TargetEpochKey,
 			StartTick: r.ticks, Outcome: "unresolved", startSim: r.sim,
-			AppeaseAfterSecs: -1, BraceAfterSecs: -1,
+			AppeaseAfterSecs: -1, BraceAfterSecs: -1, AppeaseL2AfterSecs: -1,
 		}
 		// The live view prices the NEXT level; at the start that is level 1.
 		if v.AppeaseLevel == 0 {
@@ -172,6 +200,25 @@ func (r *runner) trackHarbinger(st game.GameState) {
 			th.BraceAffordable, th.BraceAfterSecs = true, since
 		}
 	}
+	if v.AppeaseLevel == 1 && th.AppeaseL2 == nil {
+		th.AppeaseL2 = v.AppeaseCost
+	}
+	if v.AppeaseLevel == 1 && v.AppeaseAffordable && th.AppeaseL2AfterSecs < 0 {
+		th.AppeaseL2AfterSecs = since
+	}
+	// A level bought since the last look (the bot plays right after an age
+	// advance, which this snapshot predates) was affordable by now at the
+	// latest.
+	if v.AppeaseLevel >= 1 && !th.AppeaseAffordable {
+		th.AppeaseAffordable, th.AppeaseAfterSecs = true, since
+	}
+	if v.AppeaseLevel >= 2 && th.AppeaseL2AfterSecs < 0 {
+		th.AppeaseL2AfterSecs = since
+	}
+	if v.BraceLevel >= 1 && !th.BraceAffordable {
+		th.BraceAffordable, th.BraceAfterSecs = true, since
+	}
+	th.LengthSecs = since
 	th.AppeaseLevel = max(th.AppeaseLevel, v.AppeaseLevel)
 	th.BraceLevel = max(th.BraceLevel, v.BraceLevel)
 	th.AtPassage = pricedPoints(st, th.AppeaseL1, th.BraceL1)
