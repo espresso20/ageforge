@@ -120,6 +120,13 @@ func (r *runner) checkStorageFeasible(st game.GameState) {
 		}
 	}
 	for _, bld := range sortedKeys(st.NextAgeBldReqs) {
+		need, bs, def := st.NextAgeBldReqs[bld], st.Buildings[bld], r.bot.defs[bld]
+		if bs.Count < need && (bs.IsLegacy || (def.RequiredAge != "" && def.RequiredAge != st.Age)) {
+			r.anomaly(KindInvariant, "required_building_unbuildable",
+				fmt.Sprintf("advancing to %s needs %d %s but only %d exist and %s can't be built in %s",
+					st.NextAge, need, bld, bs.Count, bld, st.Age), st, true)
+			continue
+		}
 		res, cost, capacity, ok := lastCopyOverStorage(st, bld, r.bot.defs)
 		if !ok {
 			continue

@@ -217,7 +217,64 @@ func (b *Bot) Play(st game.GameState) {
 	b.bankWonder(p)
 	b.research(p)
 	b.festival(p)
+	b.trade(p)
 	b.gather(p)
+}
+
+// trade sells one resource for the slowest target resource at the market, as
+// a player would with `trade`. It picks the amount that evens out the two
+// resources' times to target (never selling one that would then become the
+// slower of the two), skips rates pushed below 60% of base by recent trades,
+// and makes at most one exchange per decision.
+func (b *Bot) trade(p *plan) {
+	traders := 0
+	for key, bs := range p.st.Buildings {
+		if b.defs[key].LineageKey == "trade" {
+			traders += bs.Count
+		}
+	}
+	if traders == 0 {
+		return
+	}
+	rates := p.st.Trade.ExchangeRates
+	for _, want := range p.worst {
+		room := math.Min(p.target[want], p.storage[want]) - p.amt[want]
+		if room <= 0 {
+			continue
+		}
+		dW := p.target[want] - p.amt[want]
+		rW := math.Max(p.st.Resources[want].Rate, 1e-6)
+		from, rate, sell := "", 0.0, 0.0
+		for _, k := range sortedKeys(rates) {
+			x := rates[k]
+			if x.To != want || x.Rate < x.BaseRate*0.6 || p.amt[x.From] < 1 {
+				continue
+			}
+			dS := p.target[x.From] - p.amt[x.From]
+			rS := p.st.Resources[x.From].Rate
+			var n float64
+			switch {
+			case rS > 0:
+				// (dW - r n)/rW == (dS + n)/rS
+				n = (dW*rS - dS*rW) / (x.Rate*rS + rW)
+			case dS < 0:
+				n = -dS // not produced: only the surplus is spare
+			}
+			n = math.Min(math.Min(n, p.amt[x.From]), 0.25*p.storage[x.From])
+			n = math.Min(n, room/x.Rate)
+			if n*x.Rate > sell*rate {
+				from, rate, sell = x.From, x.Rate, n
+			}
+		}
+		if from == "" || sell < 1 {
+			continue
+		}
+		if got, err := b.ge.ExchangeResources(from, want, sell); b.act("trade", from+"->"+want, err) {
+			p.amt[from] -= sell
+			p.amt[want] += got
+		}
+		return
+	}
 }
 
 // queuedCount is how many copies of key are under construction.
@@ -383,9 +440,10 @@ func (b *Bot) buyOrBootstrap(p *plan, key, kind string, depth int) bool {
 // upgrade converts legacy buildings to their next tier, one copy at a time.
 // It upgrades toward a required building whenever it can afford to, and
 // otherwise only while investing and only when a copy is cheap. It never
-// upgrades into a building with a MaxCount: an upgrade spends one of the
-// target's capped slots (and can overrun the cap), which for storage lowers
-// the most the player can ever store. Reports whether anything changed.
+// upgrades into a building with a MaxCount: an upgrade would spend one of the
+// target's capped slots. (The game no longer offers storage upgrades and
+// stops any upgrade at the cap; this is belt and braces.) Reports whether
+// anything changed.
 func (b *Bot) upgrade(p *plan) bool {
 	changed := false
 	for _, u := range b.ge.GetAvailableUpgrades() {
