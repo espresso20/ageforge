@@ -115,9 +115,6 @@ func saveloadSeed(e *Env, seed int64, want, n int) (rows []string, fails, warns 
 	fail := func(check, repro, format string, args ...interface{}) {
 		fails = append(fails, Finding{Check: check, Seed: seed, Message: fmt.Sprintf(format, args...), Repro: repro})
 	}
-	warn := func(check, repro, format string, args ...interface{}) {
-		warns = append(warns, Finding{Check: check, Seed: seed, Message: fmt.Sprintf(format, args...), Repro: repro})
-	}
 	repro := fmt.Sprintf("go run ./cmd/smoke -scenario saveload -seed-base %d -seeds 1 -v", seed)
 	dir := filepath.Join(game.DataDir(), "saves")
 
@@ -145,7 +142,7 @@ func saveloadSeed(e *Env, seed int64, want, n int) (rows []string, fails, warns 
 			cps = append(cps, cp)
 			// Load at once: LoadGame gives a save 5s or older offline
 			// catch-up, which would read as a divergence.
-			reloadCheckpoint(cp, dir, repro, fail, warn)
+			reloadCheckpoint(cp, dir, repro, fail)
 		}
 		if len(cps) == want {
 			done := true
@@ -168,7 +165,7 @@ func saveloadSeed(e *Env, seed int64, want, n int) (rows []string, fails, warns 
 	for _, cp := range cps {
 		cont := "-"
 		if cp.b != nil {
-			cont = continueCheckpoint(e, seed, cp, repro, fail, warn)
+			cont = continueCheckpoint(e, seed, cp, repro, fail)
 		}
 		rows = append(rows, fmt.Sprintf("| %d | %d | %s | %d | %s | %s |", seed, cp.idx, cp.age, cp.gameTick, cp.reload, cont))
 	}
@@ -181,7 +178,7 @@ type reporter func(check, repro, format string, args ...interface{})
 // tampered copy fails it, that it loads into a fresh engine as the state it
 // was saved from, and that re-saving writes the same data. It leaves the
 // loaded engine in cp.b and the verdict in cp.reload.
-func reloadCheckpoint(cp *checkpoint, dir, repro string, fail, warn reporter) {
+func reloadCheckpoint(cp *checkpoint, dir, repro string, fail reporter) {
 	reload := "ok"
 	defer func() { cp.reload = reload }()
 	path := filepath.Join(dir, cp.file+".json")
@@ -245,7 +242,7 @@ func reloadCheckpoint(cp *checkpoint, dir, repro string, fail, warn reporter) {
 			}
 		}
 		for _, p := range orderOnly {
-			warn("save_map_order", repro, "checkpoint %d (%s): the save writes %s in a different order each time (a set serialized in map order), so two saves of the same game differ byte for byte", cp.idx, cp.age, p)
+			fail("save_map_order", repro, "checkpoint %d (%s): the save writes %s in a different order each time (a set serialized in map order), so two saves of the same game differ byte for byte", cp.idx, cp.age, p)
 		}
 	}
 }
@@ -253,7 +250,7 @@ func reloadCheckpoint(cp *checkpoint, dir, repro string, fail, warn reporter) {
 // continueCheckpoint plays the loaded engine on for the checkpoint's N
 // ticks and compares it with the uninterrupted run. It returns the verdict
 // for the table.
-func continueCheckpoint(e *Env, seed int64, cp *checkpoint, repro string, fail, warn reporter) string {
+func continueCheckpoint(e *Env, seed int64, cp *checkpoint, repro string, fail reporter) string {
 	cont := "ok"
 	if cp.atEnd == nil {
 		return "not reached"

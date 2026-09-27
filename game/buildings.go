@@ -496,13 +496,10 @@ func (bm *BuildingManager) IsLegacy(key string) bool {
 	return bm.legacyBuildings[key]
 }
 
-// GetLegacyBuildings returns all legacy building keys for save serialization.
+// GetLegacyBuildings returns all legacy building keys, sorted, for save
+// serialization (in map order, two saves of one game differed byte for byte).
 func (bm *BuildingManager) GetLegacyBuildings() []string {
-	var keys []string
-	for key := range bm.legacyBuildings {
-		keys = append(keys, key)
-	}
-	return keys
+	return sortedKeys(bm.legacyBuildings)
 }
 
 // LoadLegacyBuildings restores legacy building flags from a save.
