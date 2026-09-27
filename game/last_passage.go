@@ -332,3 +332,12 @@ func (ge *GameEngine) lastPassageState(pointsNow int) LastPassageState {
 	}
 	return s
 }
+
+// SetCosmicLegacyForTest sets the Cosmic Legacy flag: a test hook for other
+// packages (the UI's modal tests, where Succumb must show as closed). Not
+// reachable from play. Takes the write lock.
+func (ge *GameEngine) SetCosmicLegacyForTest(held bool) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.cosmicLegacy = held
+}

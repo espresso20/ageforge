@@ -9,6 +9,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 )
@@ -88,6 +89,28 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 		out["overlay:"+name+"_harbinger"] = draw()
 		d.overlayMgr.Hide()
 	}
+
+	// The Last Passage: the Cosmic Era panel, the modal variant with Succumb
+	// open and closed (chip-filled), and its status-bar badge.
+	if err := engine.SummonHarbingerForTest("galactic_age"); err != nil {
+		t.Fatal(err)
+	}
+	if !d.overlayMgr.Show("harbinger", engine.GetState()) {
+		t.Fatal("overlay harbinger not registered")
+	}
+	out["overlay:harbinger_last_passage"] = draw()
+	d.overlayMgr.Hide()
+	if err := engine.ForceLastPassageForTest("galactic_age"); err != nil {
+		t.Fatal(err)
+	}
+	d.refresh()
+	out["last_passage_modal"] = draw()
+	d.closeCatastropheModal()
+	out["dashboard_last_passage_badge"] = draw()
+	engine.SetCosmicLegacyForTest(true)
+	d.showCatastropheModal(config.LastPassageKey)
+	out["last_passage_modal_succumb_closed"] = draw()
+	d.closeCatastropheModal()
 
 	return out
 }

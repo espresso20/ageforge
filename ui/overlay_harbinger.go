@@ -96,7 +96,7 @@ func (p *harbingerPanel) handleKey(event *tcell.EventKey, engine *game.GameEngin
 			return true
 		}
 		p.inviteArmed = false
-		err, ok = engine.HarbingerInvite(), "Invited. It will come at the transition."
+		err, ok = engine.HarbingerInvite(), "Invited. It will come at the passage."
 	}
 	if err != nil {
 		p.note, p.noteGood = err.Error(), false
@@ -140,13 +140,21 @@ func harbingerPanelText(state game.GameState, note string, noteGood, inviteArmed
 // next transition's outlook in plain words.
 func harbingerAbsentText(sb *strings.Builder, state game.GameState) {
 	sb.WriteString(" No harbinger is here.\n\n")
-	sb.WriteString(theme.Paint(theme.RoleDim, " Harbingers walk through every epoch whose passage into the next could bring a\n catastrophe, one figure per age, from its first age until that passage.") + "\n\n")
+	sb.WriteString(theme.Paint(theme.RoleDim, " Harbingers walk through every epoch whose passage into the next could bring a\n catastrophe, one figure per age, from its first age until that passage. In the\n Cosmic Era the passage is prestige itself: the Last Passage.") + "\n\n")
 
 	o := state.CatastropheOutlook
 	sb.WriteString(theme.Paint(theme.RoleAccent, "── Outlook ──") + "\n")
 	switch {
+	case o.Passage == game.PassagePrestige && o.Possible:
+		fmt.Fprintf(sb, " Prestige here could bring the Last Passage. The risk is %s.\n", harbingerRiskWords(o.Tier))
+		if harbingerNumericAge(state.Age) {
+			fmt.Fprintf(sb, " Published odds: %s\n", theme.Paint(theme.RoleHighlight, harbingerPercent(o.Probability)))
+		}
+		sb.WriteString(theme.Paint(theme.RoleDim, " More faith in storage makes it less likely.") + "\n")
+	case o.Passage == game.PassagePrestige && state.LastPassage.Pending:
+		sb.WriteString(" " + theme.Paint(theme.RoleNegative, "The Last Passage has come. Type 'catastrophe' to choose.") + "\n")
 	case o.NextEpochKey == "":
-		sb.WriteString(" This is the final epoch. No passage lies ahead, and no harbinger will come.\n")
+		sb.WriteString(" This is the final epoch. Its passage is prestige, and no harbinger has come.\n")
 	case !o.Possible:
 		fmt.Fprintf(sb, " The passage into the %s cannot bring a catastrophe.\n", config.EpochByKey()[o.NextEpochKey].Name)
 	default:
@@ -172,20 +180,32 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 		sb.WriteString(" " + theme.Paint(theme.RoleDim, "Took up the warning from "+strings.Join(names, ", then ")+". Your answers stand.") + "\n")
 	}
 	sb.WriteString("\n")
-	fmt.Fprintf(sb, " Warning of the passage into the %s.\n\n", theme.Paint(theme.RoleHighlight, h.TargetEpochName))
+	if h.LastPassage {
+		fmt.Fprintf(sb, " Warning of %s: the end of this civilization, when you next prestige.\n\n",
+			theme.Paint(theme.RoleHighlight, h.TargetEpochName))
+	} else {
+		fmt.Fprintf(sb, " Warning of the passage into the %s.\n\n", theme.Paint(theme.RoleHighlight, h.TargetEpochName))
+	}
 
 	for _, l := range h.Lines {
 		sb.WriteString(" " + theme.Paint(theme.RoleDim, "“"+l+"”") + "\n")
 	}
 	sb.WriteString("\n")
 
-	fmt.Fprintf(sb, " Severity: %s\n", harbingerSeverityText(h.Tier))
-	if h.Numeric {
+	switch {
+	case h.PassageCame:
+		sb.WriteString(" " + theme.Paint(theme.RoleNegative, "The Last Passage has come. Prestige waits: type 'catastrophe' to choose.") + "\n")
+	case h.Numeric:
+		fmt.Fprintf(sb, " Severity: %s\n", harbingerSeverityText(h.Tier))
 		fmt.Fprintf(sb, " Odds published: %s\n", theme.Paint(theme.RoleHighlight, harbingerPercent(h.Probability)))
-	} else {
+	default:
+		fmt.Fprintf(sb, " Severity: %s\n", harbingerSeverityText(h.Tier))
 		sb.WriteString(theme.Paint(theme.RoleDim, " The omens give no figure. Their words are all you have to go on.") + "\n")
 	}
-	if h.Invited {
+	switch {
+	case h.Invited && h.LastPassage && !h.PassageCame:
+		sb.WriteString(" " + theme.Paint(theme.RoleNegative, "You have invited it. The Last Passage will come when you prestige.") + "\n")
+	case h.Invited && !h.LastPassage:
 		sb.WriteString(" " + theme.Paint(theme.RoleNegative, "You have invited it. The catastrophe will come at the passage.") + "\n")
 	}
 
@@ -201,17 +221,29 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 	// Brace.
 	fmt.Fprintf(sb, " %s %s   %s\n", theme.Keycap("B"), theme.Paint(theme.RoleBright, "Brace — "+h.BraceLabel),
 		harbingerLevelText(h.BraceLevel, game.HarbingerMaxBrace))
-	fmt.Fprintf(sb, theme.Paint(theme.RoleDim, "     If it comes and you Endure: %d%% of buildings fall, %d%% of stock is kept.")+"\n",
-		h.EndureDestroyPct, h.EndureKeepPct)
-	if h.BraceBlocked == "" {
-		fmt.Fprintf(sb, theme.Paint(theme.RoleDim, "     Next level: %d%% fall, %d%% kept.")+"\n", h.NextEndureDestroyPct, h.NextEndureKeepPct)
+	if h.LastPassage {
+		fmt.Fprintf(sb, theme.Paint(theme.RoleDim, "     If it comes and you Endure: you keep %d%% of the run's prestige points.")+"\n",
+			h.EndurePointsPct)
+		if h.BraceBlocked == "" {
+			fmt.Fprintf(sb, theme.Paint(theme.RoleDim, "     Next level: %d%% kept.")+"\n", h.NextEndurePointsPct)
+		}
+	} else {
+		fmt.Fprintf(sb, theme.Paint(theme.RoleDim, "     If it comes and you Endure: %d%% of buildings fall, %d%% of stock is kept.")+"\n",
+			h.EndureDestroyPct, h.EndureKeepPct)
+		if h.BraceBlocked == "" {
+			fmt.Fprintf(sb, theme.Paint(theme.RoleDim, "     Next level: %d%% fall, %d%% kept.")+"\n", h.NextEndureDestroyPct, h.NextEndureKeepPct)
+		}
 	}
 	harbingerCostLine(sb, state, h.BraceBlocked, h.BraceCost)
 	sb.WriteString("\n")
 
 	// Invite.
 	fmt.Fprintf(sb, " %s %s\n", theme.Keycap("I"), theme.Paint(theme.RoleBright, "Invite — "+h.InviteLabel))
-	sb.WriteString(theme.Paint(theme.RoleDim, "     Guarantees the catastrophe at this passage. Free. Cannot be undone.") + "\n")
+	if h.LastPassage {
+		sb.WriteString(theme.Paint(theme.RoleDim, "     Guarantees the Last Passage at your next prestige; Succumb then earns the\n     Cosmic Legacy. Free. Cannot be undone.") + "\n")
+	} else {
+		sb.WriteString(theme.Paint(theme.RoleDim, "     Guarantees the catastrophe at this passage. Free. Cannot be undone.") + "\n")
+	}
 	switch {
 	case h.InviteBlocked != "":
 		sb.WriteString("     " + theme.Paint(theme.RoleDim, "Done: "+h.InviteBlocked+".") + "\n")
