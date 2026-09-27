@@ -237,6 +237,35 @@ go test ./game/ -v -count=1                            # one package
 
 CI (`.github/workflows/go.yml`) runs `gofmt -l`, `go vet`, `go build`, a cross-compile of the release targets and `go test -race` on every PR and every push to `master`. Run `gofmt -w .` before pushing.
 
+### Smoke testing
+
+The unit tests prove pieces work. `make smoke` proves the game is playable: it boots the real engine with no UI and plays it end to end, the way a player would, then tells you whether anything broke.
+
+```bash
+make smoke          # quick: UI sweep + 5 seeds up to the first prestige (under a minute today)
+make smoke-full     # nightly: UI sweep + 10 seeds, 2 prestige cycles, then on to digital_age
+go run ./cmd/smoke -h                        # every flag
+go run ./cmd/smoke -seeds 1 -trace -v        # one seed, with every bot action in smoke-report/trace-1.log
+go run ./cmd/smoke -harbinger both           # the bot also buys Appease and Brace (level 1)
+```
+
+What it checks:
+
+- **The autoplayer** (`cmd/smoke`, package `smoke`) drives `GameEngine` through its public methods only (build, recruit, assign, upgrade, research, wonder banking, festivals, gathering, advance, prestige, catastrophe choice). No dev commands, no god mode, no speed changes. Ticks run synchronously through `GameEngine.StepTicks`, so a day of play takes seconds. It fails on:
+  - panics (recovered, with a state dump and stack)
+  - soft-locks: 30 simulated minutes with no new building, research or rising resources, or 48 hours stuck in one age
+  - invariant violations, checked every 25 ticks: negative, NaN or infinite values; resources above their cap; more workers assigned than exist or than a building holds; a catastrophe still pending after a successful advance; a next-age requirement (resource amount, or the price of the last required building) larger than the most storage buildable in the current age
+- **The UI sweep** (`ui/smoke_sweep_test.go`, build tag `smoke`) runs the real app on a simulated screen. Under every theme it opens the splash's theme picker, load game and accounts screens, starts a game and opens every sidebar panel plus help and the other overlays by typing their commands; under the default theme it also runs the read-only commands. After every step the event loop must answer within 4 seconds. A failing step prints the screen as text.
+
+Reading the report (`smoke-report/report.md`, plus `report.json` for scripts):
+
+- **Runs**: outcome per seed. `done` means it reached its goal; `softlock`, `stalled`, `budget` and `panic` fail the run.
+- **Pacing per age**: time spent in each age at 1x speed (min/median/max across seeds). Pacing never fails the run; use it to spot an age that suddenly takes twice as long.
+- **Events** and **Harbingers**: catastrophes, epoch events, harbinger threads, verdicts, and whether the harbinger's answers were affordable.
+- **Anomalies**: each problem with a state dump that names what was blocking the next age.
+
+Before calling a soft-lock a bug, check whether a sensible player would be stuck too or whether the bot is just not clever enough (the trace helps). Improve the bot for the second case. Seeds control the engine's seeded RNG, but random events, expeditions and some flavour still use the global `math/rand`, so the same seed does not replay exactly.
+
 **Common test patterns:**
 - Tests create isolated managers — no shared state between tests
 - Resource tests must respect `BaseStorage` caps — use `AddStorage()` before `Add()` for large amounts
