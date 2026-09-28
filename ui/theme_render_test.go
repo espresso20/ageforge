@@ -59,7 +59,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	d.inputField.SetText("")
 
 	state := engine.GetState()
-	for _, name := range []string{"stats", "help", "citymap", "worldmap"} {
+	for _, name := range []string{"stats", "help", "trade", "citymap", "worldmap"} {
 		if !d.overlayMgr.Show(name, state) {
 			t.Fatalf("overlay %q not registered", name)
 		}

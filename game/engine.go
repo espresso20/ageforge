@@ -2669,18 +2669,31 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 	return actual, nil
 }
 
-// BuildBuilding constructs a building (instant or queued)
-// BankWonderResource deposits resources from player storage into a wonder's bank.
-func (ge *GameEngine) BankWonderResource(wonderKey, resource string, amount float64) error {
+// BankWonderResource deposits amount of resource from player storage into a
+// wonder's bank, at most what the bank still needs, and returns what went in.
+// An amount beyond what is on hand is refused, not partly banked.
+func (ge *GameEngine) BankWonderResource(wonderKey, resource string, amount float64) (float64, error) {
 	if err := checkAmount(amount); err != nil {
-		return err
+		return 0, err
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
+	return ge.bankWonderLocked(wonderKey, resource, amount)
+}
 
+// BankWonderMax deposits as much of resource as the wonder's bank still
+// needs, up to what is on hand (`wonder collect <res> all`), and returns what
+// went in.
+func (ge *GameEngine) BankWonderMax(wonderKey, resource string) (float64, error) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	return ge.bankWonderLocked(wonderKey, resource, ge.Resources.Get(resource))
+}
+
+func (ge *GameEngine) bankWonderLocked(wonderKey, resource string, amount float64) (float64, error) {
 	deposited, err := ge.Buildings.BankResource(wonderKey, resource, amount, ge.Resources)
 	if err != nil {
-		return err
+		return 0, err
 	}
 
 	def := ge.Buildings.defs[wonderKey]
@@ -2691,7 +2704,7 @@ func (ge *GameEngine) BankWonderResource(wonderKey, resource string, amount floa
 	if ge.Buildings.IsWonderBankFull(wonderKey) {
 		ge.addLog("success", fmt.Sprintf("%s bank is full! Type 'build %s' to begin construction.", def.Name, wonderKey))
 	}
-	return nil
+	return deposited, nil
 }
 
 // previousAgeBuildError explains why an older age's building can't be built.
@@ -2707,6 +2720,7 @@ func (ge *GameEngine) previousAgeBuildError(key string, def config.BuildingDef) 
 	return fmt.Errorf("%s belongs to a previous age and can no longer be built", def.Name)
 }
 
+// BuildBuilding constructs a building (instant or queued)
 func (ge *GameEngine) BuildBuilding(key string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -2759,7 +2773,7 @@ func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
 		// godmode: skip all cost/bank checks, build instantly below
 	} else if def.Category == "wonder" {
 		if !ge.Buildings.IsWonderBankFull(key) {
-			return fmt.Errorf("%s bank is not full — use 'wonder collect <resource> <amount>' to bank resources first", def.Name)
+			return fmt.Errorf("%s bank is not full — use 'wonder collect <resource|all> [amount|all]' to bank resources first", def.Name)
 		}
 		// Resources were already deducted when banked; nothing to pay here.
 	} else {

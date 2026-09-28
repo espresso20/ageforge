@@ -205,42 +205,28 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 		return CommandResult{Message: "No wonder available this age.", Type: "error"}
 	}
 
+	deposit := false
+	if len(args) > 0 {
+		switch strings.ToLower(args[0]) {
+		case "collect", "bank":
+			deposit = true
+		default:
+			return CommandResult{Message: fmt.Sprintf("Unknown wonder command %q. %s, or 'wonder overflow [on|off]'.", args[0], wonderCollectUsage), Type: "error"}
+		}
+	}
+
 	bs := state.Buildings[curWonder.key]
 	if bs.Count > 0 {
+		if deposit {
+			return CommandResult{Message: fmt.Sprintf("%s is already built: there is nothing left to bank this age.", curWonder.name), Type: "error"}
+		}
 		return CommandResult{
 			Message: fmt.Sprintf("[gold]★ %s[-] is already built!", curWonder.name),
 			Type:    "info",
 		}
 	}
-
-	// "wonder collect <resource> <amount|all>"
-	if len(args) >= 3 && strings.ToLower(args[0]) == "collect" {
-		resource := strings.ToLower(args[1])
-		var amount float64
-		if strings.ToLower(args[2]) == "all" {
-			if rs, ok := state.Resources[resource]; ok {
-				amount = rs.Amount
-			} else {
-				return CommandResult{Message: fmt.Sprintf("Unknown resource: %s", args[1]), Type: "error"}
-			}
-		} else {
-			var err error
-			amount, err = parseAmount(args[2])
-			if err != nil {
-				return usageError("Usage: wonder collect <resource> <amount|all>", err)
-			}
-		}
-		if err := engine.BankWonderResource(curWonder.key, resource, amount); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
-		}
-		newBS := engine.GetState().Buildings[curWonder.key]
-		banked := newBS.WonderBank[resource]
-		need := curWonder.def.BaseCost[resource]
-		msg := fmt.Sprintf("Banked %.0f %s into %s (%s / %s)", amount, resource, curWonder.name, FormatNumber(banked), FormatNumber(need))
-		if newBS.WonderBankFull {
-			msg += fmt.Sprintf("\n[green]Bank full! Type 'build %s' to begin construction.[-]", curWonder.key)
-		}
-		return CommandResult{Message: msg, Type: "success"}
+	if deposit {
+		return cmdWonderCollect(args[1:], curWonder, state, engine)
 	}
 
 	// Default: show bank status
@@ -275,9 +261,94 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 	if bs.WonderBankFull {
 		fmt.Fprintf(&sb, "\n[green]Bank full! Type 'build %s' to begin construction.[-]", curWonder.key)
 	} else {
-		fmt.Fprintf(&sb, "\n[gray]Use 'wonder collect <resource> <amount|all>' to bank resources.[-]")
+		fmt.Fprintf(&sb, "\n[gray]Use 'wonder collect <resource|all> [amount|all]' to bank resources.[-]")
 	}
 	return CommandResult{Message: sb.String(), Type: "info"}
+}
+
+const wonderCollectUsage = "Usage: wonder collect|bank <resource|all> [amount|all|max]"
+
+// cmdWonderCollect is `wonder collect|bank <resource|all> [amount|all|max]`:
+// bank resources into the current age's unbuilt wonder. `all` or `max` (or
+// no amount) banks as much as the wonder still needs, up to what is on hand;
+// `all` for the resource does that for every resource the wonder needs.
+func cmdWonderCollect(args []string, w *wonderInfo, state game.GameState, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 || len(args) > 2 {
+		return CommandResult{Message: wonderCollectUsage, Type: "error"}
+	}
+	resource := strings.ToLower(args[0])
+	whole := true // bank as much as can go in
+	var amount float64
+	if len(args) == 2 {
+		switch strings.ToLower(args[1]) {
+		case "all", "max":
+		default:
+			if resource == "all" {
+				return usageError(wonderCollectUsage, fmt.Errorf("'wonder collect all' banks every resource as far as it goes; give an amount for one resource at a time"))
+			}
+			var err error
+			if amount, err = parseAmount(args[1]); err != nil {
+				return usageError(wonderCollectUsage, err)
+			}
+			whole = false
+		}
+	}
+	if resource == "all" {
+		return wonderCollectAll(w, engine)
+	}
+	if _, ok := state.Resources[resource]; !ok {
+		return CommandResult{Message: fmt.Sprintf("Unknown resource: %s", args[0]), Type: "error"}
+	}
+
+	var deposited float64
+	var err error
+	if whole {
+		deposited, err = engine.BankWonderMax(w.key, resource)
+	} else {
+		deposited, err = engine.BankWonderResource(w.key, resource, amount)
+	}
+	if err != nil {
+		return CommandResult{Message: "Nothing banked: " + err.Error() + ".", Type: "error"}
+	}
+	bs := engine.GetState().Buildings[w.key]
+	msg := fmt.Sprintf("Banked %s %s into %s (%s / %s)", FormatNumber(deposited), resource, w.name,
+		FormatNumber(bs.WonderBank[resource]), FormatNumber(w.def.BaseCost[resource]))
+	if !whole && deposited < amount {
+		msg += fmt.Sprintf(": it only needed %s more", FormatNumber(deposited))
+	}
+	return CommandResult{Message: msg + wonderFullNote(w, bs), Type: "success"}
+}
+
+// wonderCollectAll is `wonder collect all`: bank every resource the wonder
+// still needs, each as far as what is on hand goes, and say what went in and
+// why the rest didn't.
+func wonderCollectAll(w *wonderInfo, engine *game.GameEngine) CommandResult {
+	var banked, skipped []string
+	for _, res := range sortedMapKeys(w.def.BaseCost) {
+		dep, err := engine.BankWonderMax(w.key, res)
+		if err != nil {
+			skipped = append(skipped, err.Error())
+			continue
+		}
+		banked = append(banked, fmt.Sprintf("%s %s", FormatNumber(dep), res))
+	}
+	bs := engine.GetState().Buildings[w.key]
+	if len(banked) == 0 {
+		return CommandResult{Message: "Nothing banked: " + strings.Join(skipped, "; ") + ".", Type: "error"}
+	}
+	msg := fmt.Sprintf("Banked %s into %s.", strings.Join(banked, ", "), w.name)
+	if len(skipped) > 0 {
+		msg += " Not banked: " + strings.Join(skipped, "; ") + "."
+	}
+	return CommandResult{Message: msg + wonderFullNote(w, bs), Type: "success"}
+}
+
+// wonderFullNote is the line a deposit adds once the wonder's bank is full.
+func wonderFullNote(w *wonderInfo, bs game.BuildingState) string {
+	if !bs.WonderBankFull {
+		return ""
+	}
+	return fmt.Sprintf("\n[green]Bank full! Type 'build %s' to begin construction.[-]", w.key)
 }
 
 // cmdWonderOverflow is `wonder overflow [on|off]`: show or set whether
