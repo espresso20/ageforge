@@ -131,7 +131,7 @@ func (pm *PrestigeManager) GetBonuses() map[string]float64 {
 			continue
 		}
 		if def.EffectType == "rate_bonus" || def.EffectType == "flat_bonus" {
-			bonuses[def.EffectKey] += def.PerTier * float64(tier)
+			bonuses[def.EffectKey] += float64(def.PerTier * float64(tier))
 		}
 	}
 
@@ -160,7 +160,7 @@ func (pm *PrestigeManager) GetStartingResources() map[string]float64 {
 			continue
 		}
 		if def.EffectType == "starting_resource" {
-			resources[def.EffectKey] += def.PerTier * float64(tier)
+			resources[def.EffectKey] += float64(def.PerTier * float64(tier))
 		}
 	}
 	return resources

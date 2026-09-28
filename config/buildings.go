@@ -1,6 +1,10 @@
 package config
 
-import "math"
+import (
+	"math"
+
+	"github.com/espresso20/ageforge/detmath"
+)
 
 // Effect represents a single game effect applied by a building, tech, or milestone.
 // The semantics of Value depend on Type:
@@ -899,17 +903,17 @@ func roundSignificant(v float64, sig int) float64 {
 	if v <= 0 {
 		return v
 	}
-	d := math.Ceil(math.Log10(v))
+	d := math.Ceil(detmath.Log10(v))
 	power := float64(sig) - d
 	var rounded float64
 	if power >= 0 {
-		mag := math.Pow(10, power)
+		mag := detmath.Pow(10, power)
 		rounded = math.Round(v*mag) / mag
 	} else {
 		// Multiply by an exact power of ten rather than divide by an inexact
 		// fraction: 10/1e-5 came out as 999999.9999999999, and a wonder bank
 		// filled in whole units could then never reach its price.
-		mag := math.Pow(10, -power)
+		mag := detmath.Pow(10, -power)
 		rounded = math.Round(v/mag) * mag
 	}
 	if rounded < 1 {
@@ -960,7 +964,7 @@ func normalizeCostCurves(defs []BuildingDef) []BuildingDef {
 		}
 
 		// Multiplier that preserves the pivot (10th) copy cost.
-		m := math.Pow(d.CostScale/newScale, float64(exponent))
+		m := detmath.Pow(d.CostScale/newScale, float64(exponent))
 		for res := range d.BaseCost {
 			d.BaseCost[res] = roundSignificant(d.BaseCost[res]*m, 2)
 		}

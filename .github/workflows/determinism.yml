@@ -1,0 +1,114 @@
+name: Determinism
+
+# A seed must play the same run on every machine (see CONTRIBUTING.md, "Float
+# rules for simulation code"). Each runner plays the same fixed progression
+# seeds and writes a fingerprint (scripts/determinism.sh fingerprint); the
+# compare job fails unless every fingerprint matches, and prints each seed's
+# first differing state digest.
+
+on:
+  pull_request:
+    paths-ignore:
+      - "site/**"
+      - "**.md"
+      - "design-and-architecture/**"
+      - "project_beta/**"
+  push:
+    branches: [master]
+    paths-ignore:
+      - "site/**"
+      - "**.md"
+      - "design-and-architecture/**"
+      - "project_beta/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fingerprint:
+    name: determinism (${{ matrix.name }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: linux-amd64
+            os: ubuntu-latest
+          - name: linux-arm64
+            os: ubuntu-24.04-arm
+          - name: macos-arm64
+            os: macos-latest
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # detmath's results are pinned bit for bit; this is where arm64 runs them.
+      - name: detmath golden bits
+        run: go test -count=1 ./detmath -run 'TestGoldenBits|TestLogMatchesStdlibOnAMD64|TestPowIntegerMatchesStdlib|TestSpecialCases'
+
+      - name: Fingerprint
+        run: bash scripts/determinism.sh fingerprint "fingerprint/${{ matrix.name }}"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fingerprint-${{ matrix.name }}
+          path: |
+            fingerprint/${{ matrix.name }}/report.json
+            fingerprint/${{ matrix.name }}/config.sha256
+          if-no-files-found: error
+
+  compare:
+    name: determinism (compare)
+    needs: fingerprint
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: fingerprint-*
+          path: fingerprints
+
+      - name: Compare fingerprints
+        env:
+          WANT: 3
+          JOBS: ${{ needs.fingerprint.result }}
+        run: |
+          set -o pipefail
+          shopt -s nullglob
+          dirs=(fingerprints/fingerprint-*)
+          status=0
+          if [ "${#dirs[@]}" -lt "$WANT" ]; then
+            echo "::error::${#dirs[@]} of $WANT fingerprints (fingerprint jobs: $JOBS)"
+            status=1
+          fi
+          if [ "${#dirs[@]}" -ge 2 ]; then
+            bash scripts/determinism.sh compare "${dirs[@]}" | tee compare.txt || status=1
+          fi
+          {
+            echo "## Cross-machine determinism"
+            echo
+            echo '```'
+            cat compare.txt 2>/dev/null || echo "nothing to compare"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          if grep -q '^MISMATCH' compare.txt 2>/dev/null; then
+            echo "::error::a seed played differently on different machines; see the log for the first differing tick"
+          fi
+          exit "$status"

@@ -160,7 +160,7 @@ func autoExpeditionIntervalFor(count int, fill float64) int {
 	if fill > 1 {
 		fill = 1
 	}
-	relief := 1 - autoExpeditionWorkerRelief*fill
+	relief := 1 - float64(autoExpeditionWorkerRelief*fill)
 	interval := int(math.Round(autoExpeditionBaseInterval * relief / float64(count)))
 	if interval < autoExpeditionMinInterval {
 		interval = autoExpeditionMinInterval

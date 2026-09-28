@@ -7,6 +7,8 @@ import (
 	"strconv"
 	"sync"
 	"time"
+
+	"github.com/espresso20/ageforge/detmath"
 )
 
 // Pacing: the target curve and the rules derived from it
@@ -109,7 +111,7 @@ func AgeTargetTicks(age string) float64 {
 // previous ages' buildings, which keep producing forever, and those pile
 // up; each new producer can add less or the age flies by.
 func PaybackTicks(age string) float64 {
-	return AgeTargetTicks(age) * math.Pow(epochProgress(age), PaybackEpochExponent) / PaybackDivisor
+	return AgeTargetTicks(age) * detmath.Pow(epochProgress(age), PaybackEpochExponent) / PaybackDivisor
 }
 
 // epochProgress counts epochs of three ages each, continuously: 1 in the
@@ -185,7 +187,7 @@ func roundRate(v float64) float64 {
 	if v <= 0 {
 		return v
 	}
-	mag := math.Pow(10, 3-math.Ceil(math.Log10(v)))
+	mag := detmath.Pow(10, 3-math.Ceil(detmath.Log10(v)))
 	return math.Round(v*mag) / mag
 }
 
@@ -567,7 +569,7 @@ func computeIncomes(defs []BuildingDef, techs []TechDef, order []string, include
 				}
 				switch {
 				case d.Category != "wonder":
-					inc[e.Target] += FlowCopies * e.Value
+					inc[e.Target] += float64(FlowCopies * e.Value)
 				case j < i:
 					inc[e.Target] += e.Value
 				}

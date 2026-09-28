@@ -142,7 +142,7 @@ func factionProfile(def config.FactionDef, state FactionState, age string) boon.
 	} else if str > 5 {
 		str = 5
 	}
-	prof.MagnitudeScale *= strengthMagBase + strengthMagPerUnit*float64(str)
+	prof.MagnitudeScale *= strengthMagBase + float64(strengthMagPerUnit*float64(str))
 
 	// Standing → magnitude (+ rarity when allied).
 	switch state.Status {
@@ -309,7 +309,7 @@ func factionMalusProfile(def config.FactionDef, state FactionState, age string) 
 	} else if str > 5 {
 		str = 5
 	}
-	prof.MagnitudeScale = malusStrengthBase + malusStrengthPerUnit*float64(str)
+	prof.MagnitudeScale = malusStrengthBase + float64(malusStrengthPerUnit*float64(str))
 
 	switch {
 	case state.AtWar:
