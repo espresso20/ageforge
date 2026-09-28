@@ -227,6 +227,6 @@ Every worker in every domain costs food per tick. The exact amount is `baseFoodC
 - **Knowledge workers for fast research** — the knowledge domain multiplier doubles each tier, making late-game knowledge workers vastly more productive than early-tier ones.
 - **Metallurgy requires both extraction and refining** — assign masonry workers to geological extraction buildings to produce raw ore, then metallurgy workers to smelters to refine it.
 - **Single pool** — all workers are in one pool regardless of which buildings they are assigned to. Reassign freely between any buildings at any time.
-- **Check idle count** — press `e` (Economy tab) to see the idle count in the status bar. Unassigned workers still drain food for zero extra production benefit.
+- **Check idle count** — type `status` (or `s`) to see the idle count. Unassigned workers still drain food for zero extra production benefit.
 - **Use `dismiss` to cut population** — if you are in a food deficit and can't produce enough, `dismiss` workers from non-critical buildings to permanently reduce drain. `unassign` alone does not help; idle workers still cost food.
 - **Use `workers` for a full picture** — the overlay shows net food/tick and per-domain breakdown, making it easy to spot which domain is draining the most.

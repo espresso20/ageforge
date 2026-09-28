@@ -25,7 +25,10 @@ import (
 //     ui.TestRegistryMatchesDispatcher holds to the command handler): every
 //     command and subcommand in the registry is documented, every documented
 //     command exists, and every documented literal subcommand is one the
-//     registry lists.
+//     registry lists;
+//   - the shortcuts table in commands.md against the registry's aliases:
+//     every alias is listed, next to the command it stands for, and nothing
+//     else is.
 
 // Quantity keys.
 const (
@@ -337,6 +340,39 @@ func documentedForms(md string) (forms []string, all string) {
 	return forms, md
 }
 
+// documentedShortcuts reads the "| Shortcut | Command |" table in
+// commands.md: each shortcut in a row's first column, mapped to the command
+// in its second.
+func documentedShortcuts(md string) map[string]string {
+	out := map[string]string{}
+	inTable := false
+	for _, line := range strings.Split(md, "\n") {
+		t := strings.TrimSpace(line)
+		switch {
+		case strings.HasPrefix(t, "| Shortcut |"):
+			inTable = true
+			continue
+		case !strings.HasPrefix(t, "|"):
+			inTable = false
+			continue
+		case !inTable || strings.HasPrefix(t, "|---"):
+			continue
+		}
+		cells := strings.Split(strings.Trim(t, "|"), "|")
+		if len(cells) < 2 {
+			continue
+		}
+		cmd := ""
+		if m := codeSpan.FindStringSubmatch(cells[1]); m != nil {
+			cmd = m[1]
+		}
+		for _, m := range codeSpan.FindAllStringSubmatch(cells[0], -1) {
+			out[m[1]] = cmd
+		}
+	}
+	return out
+}
+
 // requiredForms are command shapes with no keyword to find them by.
 var requiredForms = []struct{ cmd, prefix, what string }{
 	{"trade", "`trade <", "the resource exchange, trade <from> <to> <amount>"},
@@ -393,16 +429,20 @@ func runDocsync(e *Env, res *Result) {
 			alias[n] = names[0]
 		}
 	}
-	var missing, aliasesMissing []string
+	shortcuts := documentedShortcuts(md)
 	for _, names := range cmds {
 		if !documented(names[0]) {
-			missing = append(missing, names[0])
 			res.fail("doc_command_missing", "commands.md has no `%s` (a registered command)", names[0])
 		}
 		for _, a := range names[1:] {
-			if !documented(a) {
-				aliasesMissing = append(aliasesMissing, a)
+			if _, ok := shortcuts[a]; !ok {
+				res.fail("doc_shortcut_missing", "commands.md's shortcuts table has no `%s` (an alias of %s)", a, names[0])
 			}
+		}
+	}
+	for _, s := range sortedKeys(shortcuts) {
+		if cmd := shortcuts[s]; cmd == "" || alias[s] != cmd || s == cmd {
+			res.fail("doc_shortcut_wrong", "commands.md's shortcuts table says `%s` is `%s`, but the command registry has no such alias", s, cmd)
 		}
 	}
 	offered := offeredSubcommands()
@@ -476,9 +516,6 @@ func runDocsync(e *Env, res *Result) {
 	}
 	res.section("Config counts", "%s", strings.Join(cs, ", "))
 	res.section("Number claims", "| where | text | says | verdict |\n|---|---|---|---|\n%s", strings.Join(rows, "\n"))
-	if len(aliasesMissing) > 0 {
-		res.section("Undocumented aliases (not failing)", "%s", strings.Join(aliasesMissing, ", "))
-	}
 }
 
 // isLiteralWord is a plain lowercase word, not a placeholder like <key>,

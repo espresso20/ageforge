@@ -2,6 +2,7 @@ package smoke
 
 import (
 	"bytes"
+	"maps"
 	"math"
 	"slices"
 	"strings"
@@ -202,6 +203,11 @@ func TestDocsyncParsers(t *testing.T) {
 	}
 	if n, rows, err := lineageTable(".."); err != nil || n == 0 || rows == 0 {
 		t.Errorf("lineage table: heading %d, rows %d, err %v", n, rows, err)
+	}
+	md := "| Key | Tab |\n|---|---|\n| `e` | Economy |\n\n| Shortcut | Command |\n|---|---|\n| `b` | `build` |\n| `h`, `?` | `help` |\n"
+	want := map[string]string{"b": "build", "h": "help", "?": "help"}
+	if got := documentedShortcuts(md); !maps.Equal(got, want) {
+		t.Errorf("shortcuts table read as %v, want %v", got, want)
 	}
 }
 
