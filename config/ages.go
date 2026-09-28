@@ -126,10 +126,14 @@ func Ages() []AgeDef {
 		// === 7: COLONIAL AGE (Steel Era) ===
 		{
 			Name: "Colonial Age", Key: "colonial_age", Order: 7,
-			EpochKey:        "steel_era",
-			Description:     "Exploration and trade span the globe.",
-			Quip:            "You discover lands that were, somewhat awkwardly, already discovered.",
-			ResourceReqs:    map[string]float64{"gold": 470000, "knowledge": 625000, "steel": 76500, "culture": 200000},
+			EpochKey:    "steel_era",
+			Description: "Exploration and trade span the globe.",
+			Quip:        "You discover lands that were, somewhat awkwardly, already discovered.",
+			// note: knowledge is the Renaissance's slow resource (universities
+			// make it; the market sells it at parity), so it is what paces the
+			// age: 30M after the 1.5x below, with config.PaybackAdjust. More
+			// buildings or a bigger wonder only moved time into the Colonial Age.
+			ResourceReqs:    map[string]float64{"gold": 470000, "knowledge": 20000000, "steel": 76500, "culture": 200000},
 			BuildingReqs:    map[string]int{"exchange": 8, "university": 8, "art_studio": 8},
 			UnlockBuildings: []string{"settlement_block", "colonial_warehouse", "plantation", "coal_works", "deep_iron_mine", "natural_philosophy_hall", "mission", "fort", "port", "harbor", "dockyard", "iron_works", "concert_hall", "embassy", "grand_lighthouse"},
 		},

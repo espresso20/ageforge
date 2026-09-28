@@ -120,7 +120,9 @@ Definitions:
 - The **payback time** is `target × epochProgress^1.25 / 16`, where `epochProgress` counts
   epochs of three ages continuously (1 in the Primitive Age, 2 in the Iron Age, 3 in the
   Renaissance). That is 1/16 of the target in the Primitive Age, about 1/7 in the Iron Age,
-  1/4 in the Renaissance, 1/3 in the Victorian and 2/3 in the Space Age.
+  1/4 in the Renaissance, 1/3 in the Victorian and 2/3 in the Space Age. `PaybackAdjust`
+  stretches it for an age the smooth curve leaves too fast; today only the Renaissance
+  (1.3x, see the appendix of 2026-09-28).
 
 Then `rate = priceUnits(first copy) × priceLevel(output) / payback / n`, where a building
 with n construction-resource outputs splits its value between them. Staffing still scales it
@@ -406,6 +408,111 @@ playing correctly. That's the idle game working as designed.
 - [ ] Worker assignment UI uses domain name (not class name) to avoid churn on age advance
 
 ---
+
+## Appendix — Renaissance pace and 8-hour headroom (2026-09-28)
+
+Two follow-ups to the check-in appendix below. Before: master (nightly run 36432409007,
+weekly deep run 36456050959). After: this change (nightly-suite run 36466888675 with the
+static, progression and idle scenarios; weekly deep run 36466891574).
+
+### The Renaissance
+
+The storage raise left the greedy bot finishing the Renaissance in 0.57x of its target.
+Traced, the age is about 2.5 hours of economy and an hour of construction at the end (the
+Sistine Chapel's build time, capped at a sixth of the target). Stone and steel come only
+from the market, paid for with gold, and the market's throughput per trade is bounded by
+what a store holds, which is why the storage raise sped it up.
+
+What each lever did (local, 8 seeds, median; baseline Renaissance 3.7 h, Colonial 5.4 h):
+
+| Change | Renaissance | Colonial |
+|---|---|---|
+| Colonial gate 10 exchanges, universities, art studios (was 8) | 4.0 h | 4.8 h |
+| Sistine Chapel at 60 price units (was 40) | 3.9 h | 5.1 h |
+| Payback 1.4x | 3.9 h | 5.7 h |
+| Gate asks 45M gold | 3.8 h | 5.5 h |
+| Gate asks 7.5M steel | 3.9 h | 5.0 h |
+| Gate asks 30M knowledge | 4.8 h | 4.7 h |
+| **Gate asks 30M knowledge, payback 1.3x** | **5.8 h** | **5.2 h** |
+
+Every way of making the gate bigger moved time from the Renaissance into the Colonial
+Age hour for hour: the bot keeps investing while it waits, and what it builds speeds the
+next age up. Only a slower payback slows both. Knowledge is the lever with teeth because
+it is the Renaissance's slow resource (universities make it; the market sells it at parity
+with a 20% fee). The fix is both: `config.PaybackAdjust` stretches the Renaissance's payback
+1.3x (1.5 h to 1.9 h; its exchanges make 3.76K gold a tick, were 4.89K), and the Colonial
+gate asks for 30M knowledge (was 940K; 37% of the Renaissance's most storage, under the
+Gate Covenant's 80%). The Storage Covenant still holds (the Renaissance's typical gold
+income falls, so its vault holds more hours), and so does the Gate Covenant. The Steel
+Era's Brace, 12% of the era's largest knowledge requirement, goes from 360K to 3.6M
+knowledge, still under a thousandth of the Industrial Age's storage.
+
+Greedy pacing, median time per age (deep tier, 5 seeds):
+
+| Age | Target | Before | After |
+|---|---|---|---|
+| Primitive | 15 min | 17 min (1.2x) | 17 min (1.2x) |
+| Stone | 45 min | 57 min (1.3x) | 57 min (1.3x) |
+| Bronze | 1.5 h | 1.7 h (1.1x) | 1.7 h (1.1x) |
+| Iron | 2.5 h | 3.1 h (1.3x) | 3.1 h (1.3x) |
+| Classical | 3.5 h | 3.9 h (1.1x) | 3.9 h (1.1x) |
+| Medieval | 4.5 h | 3.1 h (0.69x) | 3.1 h (0.69x) |
+| **Renaissance** | 6 h | **3.4 h (0.57x)** | **5.8 h (0.97x)** |
+| Colonial | 7 h | 5.4 h (0.78x) | 5.1 h (0.73x) |
+| Industrial | 8 h | 6.4 h (0.80x) | 6.5 h (0.81x) |
+| Victorian | 9 h | 6.1 h (0.67x) | 6.3 h (0.70x) |
+| Electric | 10 h | 8.5 h (0.85x) | 8.6 h (0.86x) |
+| Atomic | 12 h | 9.1 h (0.76x) | 9.3 h (0.77x) |
+| Modern | 12 h | 12.2 h (1.0x) | 12.9 h (1.1x) |
+| Information | 14 h | 20.9 h (1.5x) | 21.1 h (1.5x) |
+| Digital | 16 h | 18.4 h (1.2x) | 18.3 h (1.1x) |
+| Cyberpunk | 18 h | 20.1 h (1.1x) | 20.7 h (1.1x) |
+| Fusion | 20 h | 16.7 h (0.84x) | 17.0 h (0.85x) |
+| Space | 22 h | 1.3 d (1.4x) | 1.1 d (1.2x) |
+| Interstellar | 24 h | 1.6 d (1.6x) | 1.6 d (1.6x) |
+| Galactic | 24 h | 1.2 d (1.2x) | 1.3 d (1.3x) |
+
+The first prestige moves from 2.1 to 2.3 days (nightly, 8 seeds). The tightest age is now
+the Medieval at 0.69x.
+
+### 8-hour check-ins
+
+At 8-hour check-ins the first prestige took 7.2 days against 8 (10% headroom). Read visit
+by visit (`-trace`, which now also lists required buildings still to start and an unbuilt
+wonder), about one visit in five found the age finished except the wonder: its bank was
+short, and the stone or iron to fill it sat in the stores, bought by a plan trade while the
+player was away. The plan's wonder item waited for a full bank, overflow only takes what a
+cap cuts off, and a trade into a full store stops. So the player lost eight hours to a
+`wonder collect`. That is the game, not the bot: no plan item could have done it.
+
+- **A planned wonder pays its bank from stock** (`game/plan.go`). Its price is what the bank
+  still lacks; once what is held after the reservations above covers all of it, the plan
+  banks it and starts the wonder. While it waits it reserves nothing (a wonder is 40 price
+  units; holding that back stalls the plan for hours, and made 1-hour and 3-hour check-ins
+  slower when tried). A part bigger than a full store still fills by deposits and overflow.
+- **The idle bot** now plans its wonder last before the advance, so it takes what the age's
+  other items leave; keeps the market-only inputs of its storage and required buildings
+  topped up with a `plan trade` (the Atomic Age's vaults cost iron nothing makes there, and
+  the vaults, then the bunkers behind them, waited a visit for it); and counts a planned
+  trade as income once a trade building stands.
+
+First prestige, median of three seeds (min–max):
+
+| Check-in | Target | Before | After |
+|---|---|---|---|
+| 1 h | 3.5 d | 2.8 d (2.7–3.1) | 2.9 d (2.9–3.2) |
+| 3 h | 5 d | 3.9 d (3.7–4.0) | 3.9 d (3.8–3.9) |
+| 8 h | 8 d | 7.2 d (7.1–7.5) | 6.5 d (6.5–7.1) |
+
+8-hour headroom goes from 10% to 23%. Measured locally before the Renaissance change, the
+wonder fix took the 8-hour median from 7.4 to 6.8 days and the market top-ups to 6.5; the
+Renaissance change costs the 1-hour player about a tenth of a day. At 8 hours the Atomic
+Age now takes 11.7 h (was 1.2 d); the Industrial and Electric Ages take longer (19.2 h and
+23.3 h, were 14.7 h and 21.3 h), and those are where the next hours are. At 1 hour the
+Stone Age takes 5.6 h (was 2.8 h), most likely because the plan now advances out of the
+Primitive Age mid-absence (the wonder no longer waits for a visit) and the Stone Age opening
+it leaves waits for the next visit to recruit. The 1-hour total barely moved, so it is left
+for later.
 
 ## Appendix — Check-in play: build plan, overflow, storage (2026-09-27)
 

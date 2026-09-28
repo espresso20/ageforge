@@ -30,7 +30,13 @@ import (
 //     price over the current storage cap (the next storage building has to
 //     come first), a resource it lacks that the current income won't bring
 //     in within a day (it needs the market or a producer first), or a wonder
-//     whose bank is not full yet.
+//     (see below).
+//   - A wonder's price is what its bank still lacks. Once what is held,
+//     after the reservations above it, covers all of that, the plan banks it
+//     and starts the wonder. While it waits it reserves nothing: it is 40
+//     price units of its age, and holding that back would stall everything
+//     below it for hours. Deposits and wonder overflow fill the bank as
+//     before; a part bigger than a full store can only be banked that way.
 //   - Techs start in plan order: only the first research item can take the
 //     research slot when it frees up. Later research items still reserve
 //     their knowledge.
@@ -91,7 +97,7 @@ type PlanItemView struct {
 	To     string
 	Amount float64
 	Got    float64
-	// Cost is the price of the next start (nil for a wonder, paid through its bank).
+	// Cost is the price of the next start (for a wonder, what its bank still lacks).
 	Cost map[string]float64
 	// Status is PlanStatusReady, PlanStatusWaiting or PlanStatusBlocked.
 	Status string
@@ -427,7 +433,18 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 			if DevGodMode || ge.Buildings.IsWonderBankFull(it.Key) {
 				return planCheck{}
 			}
-			return planCheck{blocked: "bank not full"}
+			// The rest of the bank is the price: it is paid from what is
+			// held once that covers all of it. A part bigger than a full
+			// store is banked in rounds (deposits, overflow), and a wonder
+			// holds nothing back while it waits, like one whose bank the
+			// income won't fill.
+			rest := ge.wonderBankRest(it.Key)
+			for _, res := range sortedKeys(rest) {
+				if rest[res] > ge.Resources.GetStorage(res) {
+					return planCheck{cost: rest, blocked: "bank not full"}
+				}
+			}
+			return planCheck{cost: rest}
 		}
 		cost, _ := ge.Buildings.BuildBatchCost(it.Key, 1, ge.buildQueue)
 		if DevGodMode {
@@ -471,6 +488,30 @@ func (ge *GameEngine) checkPlanItem(it PlanItem, researchFirst bool) planCheck {
 		return planCheck{cost: cost, reserve: true}
 	}
 	return planCheck{blocked: "unknown item"}
+}
+
+// wonderBankRest is what wonder w's bank still lacks, by resource.
+func (ge *GameEngine) wonderBankRest(w string) map[string]float64 {
+	bank := ge.Buildings.wonderBanks[w]
+	rest := map[string]float64{}
+	for res, need := range ge.Buildings.defs[w].BaseCost {
+		if left := need - bank[res]; left > 0.001 {
+			rest[res] = left
+		}
+	}
+	return rest
+}
+
+// payWonderBank banks what wonder w still lacks from what is held, so a
+// planned wonder can start. The caller has checked that it is covered.
+func (ge *GameEngine) payWonderBank(w string) error {
+	rest := ge.wonderBankRest(w)
+	for _, res := range sortedKeys(rest) {
+		if _, err := ge.Buildings.BankResource(w, res, rest[res], ge.Resources); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 // planFundTicks is how far ahead the plan looks for income: MaxOfflineTime,
@@ -578,6 +619,14 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 			chk := ge.checkPlanItem(it, first)
 			if chk.blocked == "" && ge.planCovers(chk.cost, reserved) {
 				var err error
+				if it.Kind == PlanBuild && len(chk.cost) > 0 && ge.Buildings.defs[it.Key].Category == "wonder" {
+					// A wonder is paid through its bank.
+					err = ge.payWonderBank(it.Key)
+				}
+				if err != nil {
+					ge.addLog("debug", fmt.Sprintf("Plan: %s refused: %v", ge.planItemLabel(it), err))
+					break
+				}
 				if it.Kind == PlanBuild {
 					err = ge.startBuildLocked(it.Key, true)
 				} else {

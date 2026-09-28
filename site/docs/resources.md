@@ -96,7 +96,7 @@ Knowledge powers all research. Technologies cost knowledge to unlock, and your k
 - Build Knowledge lineage buildings (Story Circle → Library → University → ...)
 - Knowledge storage starts at 30 — build Knowledge buildings early to raise the cap
 
-Each Knowledge building has its own fully staffed rate: 0.2 knowledge/tick for a Story Circle, 0.6 for an Elders' Hall, 2.0 for a Scriptorium, 1.6 for an Agora and 3.2 for a Library. From the Medieval to the Colonial Age buildings also cost knowledge, so it counts as a construction resource there and its producers follow the [Payback Rule](buildings.md#how-production-rates-are-set) (a Monastery Library makes 78.3/tick, a University 270). See [Knowledge](knowledge.md) for the full lineage.
+Each Knowledge building has its own fully staffed rate: 0.2 knowledge/tick for a Story Circle, 0.6 for an Elders' Hall, 2.0 for a Scriptorium, 1.6 for an Agora and 3.2 for a Library. From the Medieval to the Colonial Age buildings also cost knowledge, so it counts as a construction resource there and its producers follow the [Payback Rule](buildings.md#how-production-rates-are-set) (a Monastery Library makes 78.3/tick, a University 208). See [Knowledge](knowledge.md) for the full lineage.
 
 ---
 
@@ -183,7 +183,7 @@ Late-game resources (Plasma, Titanium, Dark Matter, Antimatter, Quantum Flux) ha
 
 ## Production Rates
 
-Every building rate in the game is the **fully staffed** rate shown in the building's description. For **construction resources** (anything the buildings of your current age cost) the rate follows the **Payback Rule**: fully staffed, a producer earns back the price of its first copy within the age's payback time. That time is a growing share of the age: under a minute in the Primitive Age, 22 minutes in the Iron Age, 1.5 hours in the Renaissance. Later ages repay more slowly because your older buildings keep producing too. The **flow resources** (food, faith, culture and soldiers) keep hand-set rates, and the requirements that ask for them are sized to match. Details and the full table are on [Buildings](buildings.md#how-production-rates-are-set).
+Every building rate in the game is the **fully staffed** rate shown in the building's description. For **construction resources** (anything the buildings of your current age cost) the rate follows the **Payback Rule**: fully staffed, a producer earns back the price of its first copy within the age's payback time. That time is a growing share of the age: under a minute in the Primitive Age, 22 minutes in the Iron Age, 1.9 hours in the Renaissance. Later ages repay more slowly because your older buildings keep producing too. The **flow resources** (food, faith, culture and soldiers) keep hand-set rates, and the requirements that ask for them are sized to match. Details and the full table are on [Buildings](buildings.md#how-production-rates-are-set).
 
 ---
 

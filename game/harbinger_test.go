@@ -503,7 +503,7 @@ func TestHarbingerCostExamples(t *testing.T) {
 		// ages at their targets. Stone Era faith: 0.01, 0.03 and 0.07 a tick
 		// over 450, 1,350 and 2,700 ticks = 234; a quarter is 58.5 → 59.
 		{"stone_era", map[string]float64{"faith": 59}, map[string]float64{"food": 9600, "wood": 4800, "knowledge": 2400}},
-		{"steel_era", map[string]float64{"faith": 74000, "culture": 770000}, map[string]float64{"knowledge": 360000, "gold": 1800000, "steel": 288000}},
+		{"steel_era", map[string]float64{"faith": 74000, "culture": 770000}, map[string]float64{"knowledge": 3600000, "gold": 1800000, "steel": 288000}},
 		// The Cosmic Era's passage is prestige; Appease counts its ages but
 		// the last (Interstellar, Galactic, Quantum). Brace is priced off
 		// the era's own advances, for resources held from Interstellar (dark

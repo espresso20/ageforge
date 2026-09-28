@@ -18,7 +18,7 @@ build <wonder_key>                   # start construction once bank is full
 
 `wonder bank` is the same command as `wonder collect` (`wonder bank food all`), `max` means the same as `all`, and leaving the amount off (`wonder bank food`) means `all` too. Each deposit says how much went in. When nothing can go in, the command says why: the wonder is already built, it doesn't need that resource (and lists the ones it does), that part of the bank is full, you have none on hand, or a set amount is more than you have (that is refused rather than banked in part; use `all` to bank what you have).
 
-A [build plan](plan.md) can hold the wonder too (`plan build <wonder_key>`): it starts construction the moment the bank is full.
+A [build plan](plan.md) can hold the wonder too (`plan build <wonder_key>`): it banks what the wonder still lacks from what you hold as soon as that covers all of it, and starts construction.
 
 ### Overflow
 

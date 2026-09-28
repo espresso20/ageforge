@@ -109,9 +109,27 @@ func AgeTargetTicks(age string) float64 {
 // the Space Age. A Primitive player has nothing but what they build that
 // age, so producers must pay back fast. Later, every age also runs on the
 // previous ages' buildings, which keep producing forever, and those pile
-// up; each new producer can add less or the age flies by.
+// up; each new producer can add less or the age flies by. PaybackAdjust
+// stretches it for the odd age the curve leaves too fast.
 func PaybackTicks(age string) float64 {
-	return AgeTargetTicks(age) * detmath.Pow(epochProgress(age), PaybackEpochExponent) / PaybackDivisor
+	adj := 1.0
+	if v, ok := PaybackAdjust[age]; ok {
+		adj = v
+	}
+	return adj * AgeTargetTicks(age) * detmath.Pow(epochProgress(age), PaybackEpochExponent) / PaybackDivisor
+}
+
+// PaybackAdjust multiplies the payback of the ages it lists: the curve is
+// smooth and the ages aren't. The Renaissance is where gold income jumps (its
+// exchanges buy the stone and steel the age can't make), and once the Storage
+// Covenant raised its vault the smoke bot finished it in 0.57x of its target.
+// Its producers repay 1.3x slower (about 1.9 hours instead of 1.5); the other
+// half of that fix is its gate's knowledge requirement (config/ages.go).
+// Its storage is not a lever: the Renaissance Vault sits on the Storage
+// Covenant's line. Keep this list short; a second entry means the curve
+// itself wants changing.
+var PaybackAdjust = map[string]float64{
+	"renaissance_age": 1.3,
 }
 
 // epochProgress counts epochs of three ages each, continuously: 1 in the
