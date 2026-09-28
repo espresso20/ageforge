@@ -573,7 +573,7 @@ func (d *Dashboard) refresh() {
 	d.refreshStatus(state)
 	d.refreshAgeProgress(state)
 	d.refreshLog(state)
-	d.toastTV.SetText(d.toastMgr.GetCurrent())
+	d.toastTV.SetText(safeTags(d.toastMgr.GetCurrent()))
 
 	// Economy tab is always visible as the permanent background
 	d.economyTab.Refresh(state)
@@ -638,7 +638,7 @@ func (d *Dashboard) refreshWorkerMini(state game.GameState) {
 		}
 		fmt.Fprintf(&sb, "[gray]Net:[%s] %s%.2f/t[-]\n", netColor, prefix, food.Rate)
 	}
-	d.workerMiniTV.SetText(sb.String())
+	d.workerMiniTV.SetText(safeTags(sb.String()))
 }
 
 func (d *Dashboard) refreshStatus(state game.GameState) {
@@ -769,7 +769,7 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 		fmt.Fprintf(&sb, "[red]✗ Wonder: %s[-]  ", state.CurrentAgeWonderName)
 	}
 
-	d.ageTV.SetText(sb.String())
+	d.ageTV.SetText(safeTags(sb.String()))
 }
 
 func (d *Dashboard) refreshLog(state game.GameState) {
@@ -804,7 +804,7 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 		}
 		fmt.Fprintf(&sb, "%sT%d[-] [%s]%s[-]\n", dim, entry.Tick, color, entry.Message)
 	}
-	d.logTV.SetText(sb.String())
+	d.logTV.SetText(safeTags(sb.String()))
 	d.logTV.ScrollToEnd()
 }
 

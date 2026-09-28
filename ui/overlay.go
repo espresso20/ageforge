@@ -184,7 +184,7 @@ func (om *OverlayManager) buildWidgetRoot(we *widgetEntry, prim tview.Primitive)
 func (om *OverlayManager) Show(name string, state game.GameState) bool {
 	// Try text overlays first.
 	if e, ok := om.entries[name]; ok {
-		e.tv.SetText(e.provide(state, om.screenW))
+		e.tv.SetText(safeTags(e.provide(state, om.screenW)))
 		e.tv.ScrollToBeginning()
 		if om.active != name {
 			if om.active != "" {
@@ -235,7 +235,7 @@ func (om *OverlayManager) Refresh(state game.GameState) {
 	}
 	// Text overlay path.
 	if e, ok := om.entries[om.active]; ok {
-		e.tv.SetText(e.provide(state, om.screenW))
+		e.tv.SetText(safeTags(e.provide(state, om.screenW)))
 		return
 	}
 	// Widget overlay path — use in-place refresh if available, else rebuild.
