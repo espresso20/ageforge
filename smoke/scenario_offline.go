@@ -264,10 +264,10 @@ func checkOffline(o offlineRun, fail func(check, format string, args ...interfac
 			fail("offline_nan", "%s away: %s gain is %v", o.d, k, g)
 		case g < -1e-9:
 			fail("offline_loss", "%s away: %s fell by %s", o.d, k, num(-g))
-		case g > limit*(1+1e-9)+1e-6:
+		case g > float64(limit*(1+1e-9))+1e-6:
 			fail("offline_overpaid", "%s away: %s gained %s, more than rate %.4g (the higher of before and after) x %d ticks x %.0f%% = %s", o.d, k, num(g), math.Max(pre.Rate, post.Rate), ticks, game.OfflineEfficiency*100, num(limit))
 		}
-		if post.Amount > post.Storage*(1+1e-9)+1e-6 {
+		if post.Amount > float64(post.Storage*(1+1e-9))+1e-6 {
 			fail("offline_over_storage", "%s away: %s is %s over its %s cap", o.d, k, num(post.Amount), num(post.Storage))
 		}
 		if pre.Rate > 0 && pre.Amount < pre.Storage-1 {
@@ -358,7 +358,7 @@ func loadGamePath(base *game.GameEngine, name string, d time.Duration, want offl
 		a, b := st.Resources[k].Amount, want.post.Resources[k].Amount
 		// The wall clock moved on while writing and loading: one tick more
 		// or less of catch-up is fine.
-		slack := math.Abs(float64(dt))*math.Max(want.pre.Resources[k].Rate, 0)*game.OfflineEfficiency + 1e-6 + 1e-9*math.Abs(b)
+		slack := float64(math.Abs(float64(dt))*math.Max(want.pre.Resources[k].Rate, 0)*game.OfflineEfficiency) + 1e-6 + float64(1e-9*math.Abs(b))
 		if math.Abs(a-b) > slack {
 			return fmt.Sprintf("a save %s old loaded with %s %s; SimulateOffline(%s) gave %s", d, k, num(a), d, num(b))
 		}

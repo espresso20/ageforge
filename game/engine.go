@@ -407,7 +407,7 @@ func (ge *GameEngine) moraleCap() float64 {
 	cap := 1.0
 	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
 		if def.Category == "wonder" {
-			cap += 0.05 * float64(count)
+			cap += float64(0.05 * float64(count))
 		}
 	})
 	return cap
@@ -425,7 +425,7 @@ func (ge *GameEngine) clampMorale() {
 
 // applyMorale adds delta to morale and clamps.
 func (ge *GameEngine) applyMorale(delta float64) {
-	ge.morale += delta
+	ge.morale += float64(delta) // callers pass products: round them, no FMA
 	ge.clampMorale()
 }
 
@@ -470,7 +470,7 @@ func (ge *GameEngine) moraleMultiplier() float64 {
 		if frac > 1.0 {
 			frac = 1.0
 		}
-		return 1.0 + frac*moraleMaxBonus
+		return 1.0 + float64(frac*moraleMaxBonus)
 	}
 
 	if m < moraleNeutral {
@@ -482,7 +482,7 @@ func (ge *GameEngine) moraleMultiplier() float64 {
 		if frac > 1.0 {
 			frac = 1.0
 		}
-		return 1.0 - frac*(1.0-moraleMinMult)
+		return 1.0 - float64(frac*(1.0-moraleMinMult))
 	}
 
 	return 1.0 // exactly neutral
@@ -542,7 +542,7 @@ func (ge *GameEngine) updateMoraleTick() {
 	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
 		for _, eff := range def.Effects {
 			if eff.Type == "morale" {
-				moraleFromBuildings += eff.Value * float64(count)
+				moraleFromBuildings += float64(eff.Value * float64(count))
 			}
 		}
 	})
@@ -761,7 +761,7 @@ func (ge *GameEngine) MaxSpeedForAge() float64 {
 			wonderCount++
 		}
 	}
-	return 1.0 + float64(wonderCount)*0.5
+	return 1.0 + float64(float64(wonderCount)*0.5)
 }
 
 // SetSpeedMultiplier sets the game speed multiplier (0.5 increments, capped by age)
@@ -1299,7 +1299,7 @@ func (ge *GameEngine) harborRouteBonus() float64 {
 	ge.Buildings.eachBuilt(func(_ string, count int, def config.BuildingDef) {
 		for _, eff := range def.Effects {
 			if eff.Type == "trade_route_income" {
-				bonus += eff.Value * float64(count)
+				bonus += float64(eff.Value * float64(count))
 			}
 		}
 	})
@@ -1382,7 +1382,7 @@ func (ge *GameEngine) processDiplomacy() {
 		if fill > 1.0 {
 			fill = 1.0
 		}
-		totalOpinion += perWorker * float64(def.WorkerCapacity) * float64(count) * (0.20 + 0.80*fill)
+		totalOpinion += float64(perWorker * float64(def.WorkerCapacity) * float64(count) * (0.20 + float64(0.80*fill)))
 	}
 	if totalOpinion > 0 {
 		ge.Diplomacy.AddPassiveOpinion(totalOpinion)
@@ -1500,7 +1500,7 @@ func (ge *GameEngine) recalculateRates() {
 	// 1.0+moraleMaxBonus when morale is high, down to moraleMinMult when low.
 	mMult := ge.moraleMultiplier()
 	for res, rate := range ge.Buildings.WorkerScaledProduction(ge.Workers.GetAssignedCount) {
-		moraleRate := rate * mMult
+		moraleRate := float64(rate * mMult)
 		r := ge.Resources.resources[res]
 		if r != nil {
 			r.Rate += moraleRate
@@ -1598,7 +1598,7 @@ func (ge *GameEngine) recalculateRates() {
 		for res, rate := range ge.Workers.GetProductionRates() {
 			r := ge.Resources.resources[res]
 			if r != nil {
-				r.Rate += rate * gatherDelta
+				r.Rate += float64(rate * gatherDelta)
 			}
 		}
 	}
@@ -1631,7 +1631,7 @@ func (ge *GameEngine) recalculateRates() {
 		if bonus > 0 {
 			r := ge.Resources.resources[def.Key]
 			if r != nil && r.Rate > 0 {
-				tradeBonus := r.Rate * bonus
+				tradeBonus := float64(r.Rate * bonus)
 				r.Rate += tradeBonus
 				r.Breakdown.TradeRate += tradeBonus
 			}
@@ -2433,7 +2433,7 @@ func (ge *GameEngine) getWonderBonuses() map[string]float64 {
 		}
 		for _, eff := range def.Effects {
 			if eff.Type == "bonus" {
-				out[eff.Target] += eff.Value * float64(count)
+				out[eff.Target] += float64(eff.Value * float64(count))
 			}
 		}
 	})

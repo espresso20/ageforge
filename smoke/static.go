@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -124,7 +125,7 @@ func (s *Summary) writeGates(sb *strings.Builder) {
 
 // lastCopyPrice is the undiscounted price of copy #n of d in res.
 func lastCopyPrice(d config.BuildingDef, res string, n int) float64 {
-	return d.BaseCost[res] * math.Pow(d.CostScale, float64(n-1))
+	return float64(d.BaseCost[res] * detmath.Pow(d.CostScale, float64(n-1)))
 }
 
 // StaticGates checks every advance against the Gate Covenant and returns
@@ -467,7 +468,7 @@ func staticGates(ages []config.AgeDef, defs map[string]config.BuildingDef) ([]Ga
 			if !config.IsFlowResource(res) || amount[res] <= 0 {
 				continue
 			}
-			made := config.FlowIncome(res, from.Key) * config.AgeTargetTicks(from.Key)
+			made := float64(config.FlowIncome(res, from.Key) * config.AgeTargetTicks(from.Key))
 			if short := amount[res] - made; short > 0 {
 				if u := flowMarketUnits(res, short, cold[i]); u < 0 || u > GateFlowMarketUnits {
 					out = append(out, GateProblem{From: from.Key, To: to.Key, Kind: "flow", Key: needs[res], Resource: res,

@@ -564,7 +564,7 @@ func (ge *GameEngine) legacyEpochCount() int {
 // +25% per distinct epoch succumbed. Derived from the legacy flags, so it
 // survives save/load, Succumb and DoPrestige without being stored. Read-only.
 func (ge *GameEngine) succumbResearchBonus() float64 {
-	return float64(ge.legacyEpochCount()) * SuccumbResearchBonusPerEpoch
+	return float64(float64(ge.legacyEpochCount()) * SuccumbResearchBonusPerEpoch)
 }
 
 // legacyModifiers emits the derived Succumb research bonus into the resolver

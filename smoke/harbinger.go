@@ -341,7 +341,7 @@ func maxStorageIn(defs map[string]config.BuildingDef, ageKey, res string) float6
 			if d.MaxCount == 0 {
 				return math.Inf(1)
 			}
-			total += e.Value * float64(d.MaxCount)
+			total += float64(e.Value * float64(d.MaxCount))
 		}
 	}
 	for _, t := range config.Technologies() {

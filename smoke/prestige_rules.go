@@ -82,7 +82,7 @@ func prestigeCarryProblems(before, after game.GameState, ending string) []proble
 				fmt.Sprintf("prestige upgrade %s fell from tier %d to %d", key, before.Prestige.Upgrades[key].Tier, t)})
 		}
 	}
-	if want := float64(after.Prestige.Level) * 0.02; math.Abs(after.Prestige.PassiveBonus-want) > 1e-9 {
+	if want := float64(float64(after.Prestige.Level) * 0.02); math.Abs(after.Prestige.PassiveBonus-want) > 1e-9 {
 		out = append(out, problem{"prestige_passive_bonus",
 			fmt.Sprintf("passive bonus is %.4f at level %d; the documented +2%%/level is %.4f", after.Prestige.PassiveBonus, after.Prestige.Level, want)})
 	}

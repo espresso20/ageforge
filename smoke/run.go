@@ -51,6 +51,12 @@ type Config struct {
 	// plays rounds until nothing more is worth doing (Bot.CheckIn).
 	// ApplyStyle sets DecideEvery, Horizon and SoftlockSpan to match.
 	CheckIn time.Duration
+	// DigestEvery, if set, records the engine's state digest every this
+	// many ticks in RunResult.Digests, so two runs of a seed (on different
+	// machines) can be compared tick range by tick range: the first
+	// differing entry brackets where they parted. The final digest is
+	// always recorded (RunResult.StateDigest).
+	DigestEvery int
 	// NoPlan and NoOverflow switch off, for a check-in player, the two tools
 	// the game gives one: leaving a build plan at each visit (Bot.planAhead)
 	// and wonder overflow. Both are on by default; the switches exist to
@@ -213,6 +219,17 @@ type RunResult struct {
 	Notes []string `json:"notes,omitempty"`
 	// CosmicLegacy is true when the run ended holding the Cosmic Legacy.
 	CosmicLegacy bool `json:"cosmic_legacy,omitempty"`
+	// StateDigest is the engine's state digest when the run ended
+	// (GameEngine.StateDigest): one seed must end on the same digest on
+	// every machine. Digests is the trail Config.DigestEvery asks for.
+	StateDigest string       `json:"state_digest,omitempty"`
+	Digests     []TickDigest `json:"digests,omitempty"`
+}
+
+// TickDigest is the engine's state digest at a tick (total across cycles).
+type TickDigest struct {
+	Tick   int    `json:"tick"`
+	Digest string `json:"digest"`
 }
 
 // Failed reports whether the run hit a panic, soft-lock or invariant
@@ -386,6 +403,9 @@ func (r *runner) step() bool {
 		}
 		return true
 	}
+	if r.cfg.DigestEvery > 0 && r.ticks%r.cfg.DigestEvery == 0 {
+		r.res.Digests = append(r.res.Digests, TickDigest{Tick: r.ticks, Digest: r.ge.StateDigest()})
+	}
 	if r.ticks%r.cfg.DecideEvery == 0 {
 		if r.cfg.hook != nil && r.cfg.hook(r) {
 			r.stop(OutcomeDone)
@@ -444,6 +464,7 @@ func (r *runner) finish() {
 	func() {
 		defer func() { _ = recover() }() // the engine may be wedged after a panic
 		res.CosmicLegacy = r.ge.GetState().LastPassage.CosmicLegacy
+		res.StateDigest = r.ge.StateDigest()
 	}()
 }
 

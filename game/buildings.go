@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/detmath"
 )
 
 // BuildingManager manages all buildings, including production buildings, wonders,
@@ -183,7 +184,7 @@ func (bm *BuildingManager) BuildBatchCost(key string, n int, queue []BuildQueueI
 		for resource, base := range def.BaseCost {
 			// Per-copy floor (matching GetCost) so a batch of n equals the sum of
 			// n single buys — charge and display agree whichever path is used.
-			total[resource] += applyCostMult(base*math.Pow(def.CostScale, exp), bm.costMult)
+			total[resource] += applyCostMult(base*detmath.Pow(def.CostScale, exp), bm.costMult)
 		}
 	}
 	return total, true
@@ -207,7 +208,7 @@ func (bm *BuildingManager) SellCost(key string, n int) (map[string]float64, bool
 		// copy number being removed: current-i (1-indexed), so exponent = current-1-i
 		exp := float64(current - 1 - i)
 		for res, base := range def.BaseCost {
-			refund[res] += math.Floor(base*math.Pow(def.CostScale, exp)) * 0.5
+			refund[res] += float64(math.Floor(base*detmath.Pow(def.CostScale, exp)) * 0.5)
 		}
 	}
 	return refund, true
@@ -238,7 +239,7 @@ func (bm *BuildingManager) GetCost(key string) map[string]float64 {
 	count := bm.counts[key]
 	cost := make(map[string]float64)
 	for res, base := range def.BaseCost {
-		cost[res] = applyCostMult(base*math.Pow(def.CostScale, float64(count)), bm.costMult)
+		cost[res] = applyCostMult(base*detmath.Pow(def.CostScale, float64(count)), bm.costMult)
 	}
 	return cost
 }
@@ -320,7 +321,7 @@ func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(domain, key s
 				if fillRatio > 1.0 {
 					fillRatio = 1.0
 				}
-				rate = eff.Value * float64(count) * (0.20 + 0.80*fillRatio)
+				rate = eff.Value * float64(count) * (0.20 + float64(0.80*fillRatio))
 			} else {
 				rate = eff.Value * float64(count)
 			}
@@ -336,7 +337,7 @@ func (bm *BuildingManager) WorkerScaledProduction(getAssigned func(domain, key s
 		def := bm.defs[key]
 		for _, eff := range def.Effects {
 			if eff.Type == "production" {
-				rates[eff.Target] += eff.Value * float64(count) * 0.50
+				rates[eff.Target] += float64(eff.Value * float64(count) * 0.50)
 			}
 		}
 	}
@@ -376,7 +377,7 @@ func (bm *BuildingManager) GetStorageBonuses() map[string]float64 {
 	bm.eachBuilt(func(_ string, count int, def config.BuildingDef) {
 		for _, eff := range def.Effects {
 			if eff.Type == "storage" {
-				bonuses[eff.Target] += eff.Value * float64(count)
+				bonuses[eff.Target] += float64(eff.Value * float64(count))
 			}
 		}
 	})
@@ -596,12 +597,12 @@ func (bm *BuildingManager) UpgradeCost(oldKey, newKey string, upgradeCount int) 
 		newExp := float64(newCount + i)
 		for res, base := range newDef.BaseCost {
 			// New copy gets the build_cost discount (you're paying to build it).
-			newCopyCost := applyCostMult(base*math.Pow(newDef.CostScale, newExp), bm.costMult)
+			newCopyCost := applyCostMult(base*detmath.Pow(newDef.CostScale, newExp), bm.costMult)
 			// Old sell value for this resource (0 if old building doesn't cost this
 			// resource). Refund is NOT discounted — it reflects what was paid, not
 			// the current build_cost reductions.
 			oldBase := oldDef.BaseCost[res]
-			oldCopyCost := math.Floor(oldBase * math.Pow(oldDef.CostScale, oldExp))
+			oldCopyCost := math.Floor(oldBase * detmath.Pow(oldDef.CostScale, oldExp))
 			oldSellValue := math.Floor(oldCopyCost * 0.5)
 			delta := newCopyCost - oldSellValue
 			if delta < 0 {

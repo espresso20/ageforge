@@ -369,7 +369,7 @@ func (mm *MilitaryManager) tickCategory(rng *rand.Rand, category string, militar
 	}
 
 	// Success calculation: military bonus reduces difficulty
-	difficulty := def.DifficultyBase - (militaryBonus * 0.3)
+	difficulty := def.DifficultyBase - float64(militaryBonus*0.3)
 	if difficulty < 0.05 {
 		difficulty = 0.05
 	}
@@ -390,7 +390,7 @@ func (mm *MilitaryManager) tickCategory(rng *rand.Rand, category string, militar
 	} else {
 		// Partial rewards on failure
 		for res, amount := range def.Rewards {
-			partial := amount * 0.3
+			partial := float64(amount * 0.3)
 			rewards[res] = partial
 			mm.totalLoot[res] += partial
 		}

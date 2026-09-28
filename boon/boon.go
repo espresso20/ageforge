@@ -5,8 +5,8 @@
 // knowing anything about them.
 //
 // Decoupling is the whole point. This package imports AT MOST config (for the
-// resource-key / effect vocabulary) and the standard library. It does NOT
-// import game — that would be an import cycle and would defeat the isolation
+// resource-key / effect vocabulary), detmath and the standard library. It does
+// NOT import game — that would be an import cycle and would defeat the isolation
 // that makes the roll engine unit-testable with a fake Applier. All knowledge
 // of the outside world enters through two seams:
 //
@@ -29,7 +29,7 @@
 // from its seed. It never touches package-level rand.
 package boon
 
-import "math"
+import "github.com/espresso20/ageforge/detmath"
 
 // Kind enumerates the categories of boon this engine can grant. The first five
 // map to machinery the game already exposes and are catalogued below. The last
@@ -288,5 +288,5 @@ func (p Profile) effectiveWeight(d Def) float64 {
 	if d.Weight <= 0 {
 		return 0
 	}
-	return math.Pow(float64(d.Weight), 1.0/p.rarityScale()) * p.kindWeightMult(d.Kind)
+	return detmath.Pow(float64(d.Weight), 1.0/p.rarityScale()) * p.kindWeightMult(d.Kind)
 }

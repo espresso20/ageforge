@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/detmath"
 )
 
 // TradeManager handles both instant resource exchange and repeating trade routes.
@@ -119,7 +120,7 @@ func (tm *TradeManager) GetExchangeRate(from, to string) float64 {
 		return 0
 	}
 	pressure := tm.supplyPressure[from+":"+to]
-	return base * (1.0 - pressure*0.3)
+	return base * (1.0 - float64(pressure*0.3))
 }
 
 // RateIn is what Exchange would pay now for one from in age: the market rate
@@ -129,7 +130,7 @@ func (tm *TradeManager) RateIn(from, to, age string) float64 {
 	if !ok {
 		return 0
 	}
-	return math.Max(base*(1.0-tm.supplyPressure[from+":"+to]*0.3), base*0.5)
+	return math.Max(base*(1.0-float64(tm.supplyPressure[from+":"+to]*0.3)), base*0.5)
 }
 
 // Pressure is the supply pressure on from → to (0 when the market has fully
@@ -161,11 +162,11 @@ func (tm *TradeManager) Exchange(from, to string, amount float64, resources *Res
 
 	// Calculate received amount with supply pressure
 	pressure := tm.supplyPressure[key]
-	rate := base * (1.0 - pressure*0.3)
+	rate := base * (1.0 - float64(pressure*0.3))
 	if rate < base*0.5 {
 		rate = base * 0.5 // floor at 50% of base
 	}
-	got := amount * rate
+	got := float64(amount * rate)
 
 	// Execute trade
 	resources.Remove(from, amount)
@@ -174,7 +175,7 @@ func (tm *TradeManager) Exchange(from, to string, amount float64, resources *Res
 	// Update supply pressure (selling more pushes rate down)
 	// More markets reduce pressure impact
 	marketCount := float64(traders)
-	pressureIncrease := 0.1 / (1.0 + marketCount*0.2)
+	pressureIncrease := 0.1 / (1.0 + float64(marketCount*0.2))
 	tm.supplyPressure[key] += pressureIncrease
 	if tm.supplyPressure[key] > 1.0 {
 		tm.supplyPressure[key] = 1.0
@@ -306,7 +307,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 					if diplomacy != nil {
 						bonus += diplomacy.GetTradeBonus(res)
 					}
-					actual := amount * (1.0 + bonus)
+					actual := float64(amount * (1.0 + bonus))
 					resources.Add(res, actual)
 					tm.totalImported[res] += actual
 				}
@@ -330,7 +331,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 // Keys are walked in sorted order so the float results never depend on map
 // order.
 func (tm *TradeManager) DecayPressure(n int) {
-	f := math.Pow(0.98, float64(n))
+	f := detmath.Pow(0.98, float64(n))
 	for _, key := range sortedKeys(tm.supplyPressure) {
 		p := tm.supplyPressure[key] * f
 		if math.Abs(p) < 0.001 {
@@ -354,7 +355,7 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 		key := def.From + ":" + def.To
 		pressure := tm.supplyPressure[key]
 		base := def.BaseRate
-		currentRate := base * (1.0 - pressure*0.3)
+		currentRate := base * (1.0 - float64(pressure*0.3))
 		exchangeRates[key] = ExchangeRateInfo{
 			From:     def.From,
 			To:       def.To,

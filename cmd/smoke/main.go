@@ -57,6 +57,7 @@ func run() int {
 	ageTimeout := flag.Duration("age-timeout", 0, "fixed simulated 1x time allowed in every age (0 = derive each age's from the pacing table)")
 	maxSim := flag.Duration("max-sim", 0, "progression and styles: simulated 1x cap per seed (0 = the scenario default)")
 	checkEvery := flag.Int("check-every", 0, "ticks between invariant sweeps (0 = default 25)")
+	digestEvery := flag.Int("digest-every", 0, "record the engine state digest every N ticks in report.json (runs[].digests), to find where two machines' runs of a seed part (0 = final digest only)")
 	strict := flag.Bool("strict", false, "fail on known bugs too (they are reported as warnings otherwise)")
 	fuzzCommands := flag.Int("fuzz-commands", 0, "fuzz: commands per seed (0 = tier default)")
 	parallel := flag.Int("parallel", runtime.NumCPU(), "seeds to run at once")
@@ -117,6 +118,9 @@ func run() int {
 	}
 	if *checkEvery > 0 {
 		base.CheckEvery = *checkEvery
+	}
+	if *digestEvery > 0 {
+		base.DigestEvery = *digestEvery
 	}
 	if *checkIn < 0 {
 		fmt.Fprintf(os.Stderr, "-check-in must not be negative (got %s)\n", *checkIn)

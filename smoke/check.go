@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -41,7 +42,7 @@ func invariantProblems(st game.GameState, defs map[string]config.BuildingDef) []
 			add("nan_resource", fmt.Sprintf("%s has a non-finite value: amount=%v rate=%v storage=%v", key, rs.Amount, rs.Rate, rs.Storage))
 		case rs.Amount < 0:
 			add("negative_resource", fmt.Sprintf("%s is negative: %v", key, rs.Amount))
-		case rs.Amount > rs.Storage*(1+1e-9)+1e-6:
+		case rs.Amount > float64(rs.Storage*(1+1e-9))+1e-6:
 			add("over_storage", fmt.Sprintf("%s amount %s is above its storage cap %s", key, num(rs.Amount), num(rs.Storage)))
 		}
 	}
@@ -150,7 +151,7 @@ func achievableStorage(st game.GameState, res string, defs map[string]config.Bui
 				return math.Inf(1)
 			}
 			if left := def.MaxCount - bs.Count; left > 0 {
-				capacity += e.Value * float64(left)
+				capacity += float64(e.Value * float64(left))
 			}
 		}
 	}
@@ -176,7 +177,7 @@ func lastCopyOverStorage(st game.GameState, bld string, defs map[string]config.B
 	if steps < 0 {
 		steps = 0
 	}
-	mult := math.Pow(defs[bld].CostScale, steps)
+	mult := detmath.Pow(defs[bld].CostScale, steps)
 	for _, r := range sortedKeys(bs.NextCost) {
 		c := bs.NextCost[r] * mult
 		if got := achievableStorage(st, r, defs); c > got {

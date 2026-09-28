@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/flavor"
 )
 
@@ -408,7 +409,7 @@ func (ge *GameEngine) harbingerAppeaseMultiplier() float64 {
 	if ge.harbinger == nil || ge.harbinger.AppeaseLevel <= 0 {
 		return 1
 	}
-	return math.Pow(harbingerAppeaseFactor, float64(ge.harbinger.AppeaseLevel))
+	return detmath.Pow(harbingerAppeaseFactor, float64(ge.harbinger.AppeaseLevel))
 }
 
 // harbingerDisplay is what the warning says now: the real tier and chance for
@@ -503,7 +504,7 @@ func harbingerAppeaseCost(epochKey string, level int) map[string]float64 {
 		}
 		income := 0.0
 		for _, a := range harbingerAppeaseAges(epochKey) {
-			income += config.FlowIncome(k, a) * config.AgeTargetTicks(a)
+			income += float64(config.FlowIncome(k, a) * config.AgeTargetTicks(a))
 		}
 		if l1 := ceilSignificant(income*harbingerAppeaseIncomeShare, 2); l1 > 0 {
 			cost[k] = l1 * float64(level)
@@ -517,14 +518,14 @@ func ceilSignificant(v float64, sig int) float64 {
 	if v <= 0 {
 		return v
 	}
-	exp := int(math.Ceil(math.Log10(v))) - sig
+	exp := int(math.Ceil(detmath.Log10(v))) - sig
 	// Scale by an exact power of ten either way (see config.roundSignificant).
 	if exp >= 0 {
-		mag := math.Pow(10, float64(exp))
+		mag := detmath.Pow(10, float64(exp))
 		return math.Ceil(v/mag-1e-9) * mag
 	}
-	mag := math.Pow(10, float64(-exp))
-	return math.Ceil(v*mag-1e-9) / mag
+	mag := detmath.Pow(10, float64(-exp))
+	return math.Ceil(float64(v*mag)-1e-9) / mag
 }
 
 // harbingerBraceBasis is, per core resource, the most any remaining advance of

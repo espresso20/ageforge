@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -179,7 +180,7 @@ func (b *Bot) newPlan(st game.GameState) *plan {
 		if have < n {
 			p.needBld[bld] = n - have
 			for res, c := range st.Buildings[bld].NextCost {
-				p.target[res] += c * float64(n-have)
+				p.target[res] += float64(c * float64(n-have))
 			}
 		}
 	}
@@ -205,7 +206,7 @@ func (b *Bot) newPlan(st game.GameState) *plan {
 		}
 		for _, res := range sortedKeys(p.target) {
 			if rate := st.Resources[res].Rate; rate > 0 && p.target[res] > 0 {
-				want := math.Min(p.target[res], p.amt[res]+rate*ahead)
+				want := math.Min(p.target[res], p.amt[res]+float64(rate*ahead))
 				p.capNeed[res] = math.Max(p.capNeed[res], want)
 			}
 		}
@@ -361,7 +362,7 @@ func (b *Bot) planAhead(st game.GameState) {
 	for res, r := range st.Resources {
 		if r.Unlocked {
 			income := (math.Max(r.Rate, 0) + ahead[res]) * planIncomeSlack
-			budget[res] = p.amt[res] + income*b.CheckInTicks - st.NextAgeResReqs[res]
+			budget[res] = p.amt[res] + float64(income*b.CheckInTicks) - st.NextAgeResReqs[res]
 		}
 	}
 	covers := func(c map[string]float64) bool {
@@ -412,7 +413,7 @@ func (b *Bot) planAhead(st game.GameState) {
 		p.extra[key] -= n - got
 		for _, e := range b.defs[key].Effects {
 			if e.Type == "production" && e.Value > 0 {
-				ahead[e.Target] += e.Value * float64(got) // planned producers count as coming in
+				ahead[e.Target] += float64(e.Value * float64(got)) // planned producers count as coming in
 			}
 		}
 		return got
@@ -443,7 +444,7 @@ func (b *Bot) planAhead(st game.GameState) {
 				if e.Type == "storage" {
 					for r := range p.storage {
 						if e.Target == r || e.Target == "all" {
-							p.storage[r] += e.Value * float64(n)
+							p.storage[r] += float64(e.Value * float64(n))
 						}
 					}
 				}
@@ -603,7 +604,7 @@ func (b *Bot) planTrades(p *plan, st game.GameState) {
 			traders += bs.Count
 		}
 	}
-	income := func(r string) float64 { return math.Max(st.Resources[r].Rate, 0) * b.CheckInTicks }
+	income := func(r string) float64 { return float64(math.Max(st.Resources[r].Rate, 0) * b.CheckInTicks) }
 	if traders == 0 {
 		// No market yet: if the age needs a resource nothing makes, plan
 		// the cheapest trade building first; the trade items below wait
@@ -902,7 +903,7 @@ func (b *Bot) trade(p *plan) {
 			switch {
 			case rS > 0:
 				// (dW - r n)/rW == (dS + n)/rS
-				n = (dW*rS - dS*rW) / (x.Rate*rS + rW)
+				n = (float64(dW*rS) - float64(dS*rW)) / (float64(x.Rate*rS) + rW)
 			case dS < 0:
 				n = -dS // not produced: only the surplus is spare
 			}
@@ -943,7 +944,7 @@ func (b *Bot) tradeOverflow(p *plan, rates map[string]game.ExchangeRateInfo) boo
 		return false
 	}
 	ahead := func(res string) float64 {
-		return p.amt[res] + math.Max(p.st.Resources[res].Rate, 0)*b.CheckInTicks
+		return p.amt[res] + float64(math.Max(p.st.Resources[res].Rate, 0)*b.CheckInTicks)
 	}
 	for _, want := range p.worst {
 		room := math.Min(p.target[want], p.storage[want]) - ahead(want)
@@ -998,7 +999,7 @@ func (b *Bot) tradeForFood(p *plan, rates map[string]game.ExchangeRateInfo) bool
 	if p.foodRate >= 0 || food.Amount > 0.1*food.Storage {
 		return false
 	}
-	return b.tradeInto(p, rates, "food", 0.25*food.Storage-food.Amount, nil)
+	return b.tradeInto(p, rates, "food", float64(0.25*food.Storage)-food.Amount, nil)
 }
 
 // tradeInto sells whatever the bot holds the most spare of for up to short
@@ -1099,7 +1100,7 @@ func (b *Bot) buildable(p *plan, key string) bool {
 // already bought this decision.
 func (b *Bot) cost(p *plan, key string) map[string]float64 {
 	base := p.st.Buildings[key].NextCost
-	mult := math.Pow(b.defs[key].CostScale, float64(p.extra[key]))
+	mult := detmath.Pow(b.defs[key].CostScale, float64(p.extra[key]))
 	out := make(map[string]float64, len(base))
 	for r, c := range base {
 		out[r] = c * mult
@@ -1337,7 +1338,7 @@ func (b *Bot) recruit(p *plan) int {
 		return ws.TotalPop
 	}
 	if b.act("recruit", fmt.Sprint(n), b.ge.RecruitWorker("worker", n)) {
-		p.foodRate -= per * float64(n)
+		p.foodRate -= float64(per * float64(n))
 		return ws.TotalPop + n
 	}
 	return ws.TotalPop
@@ -1361,7 +1362,7 @@ func (b *Bot) assign(p *plan, pop int) {
 		}
 		score := 0.0
 		for r, v := range b.perWorkerYield(key) {
-			score += v * w[r]
+			score += float64(v * w[r])
 		}
 		slots = append(slots, slot{key: key, cap: bs.Count * def.WorkerCapacity, score: score})
 	}
@@ -1560,7 +1561,7 @@ func (b *Bot) bankWonder(p *plan) {
 			if p.st.WonderOverflow {
 				continue
 			}
-			over := p.amt[res] + math.Max(p.st.Resources[res].Rate, 0)*b.CheckInTicks - p.storage[res]
+			over := p.amt[res] + float64(math.Max(p.st.Resources[res].Rate, 0)*b.CheckInTicks) - p.storage[res]
 			if over <= 0 {
 				continue
 			}

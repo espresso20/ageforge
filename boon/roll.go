@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/detmath"
 )
 
 // rareResourceKeys is the curated pool a Grand Cache draws from, intersected
@@ -122,7 +123,7 @@ func ageIndex(age string) int {
 // growth factor compounded over the profile's age position, times the profile's
 // MagnitudeScale so standing and strength show up in the size of a gift.
 func (p Profile) instantScale() float64 {
-	return math.Pow(instantGrowthPerAge, float64(ageIndex(p.Age))) * p.magScale()
+	return detmath.Pow(instantGrowthPerAge, float64(ageIndex(p.Age))) * p.magScale()
 }
 
 // resolveTarget picks the concrete target resource for a Def under a profile.
@@ -221,7 +222,7 @@ func rollFloatRange(rng *rand.Rand, lo, hi float64) float64 {
 	if hi <= lo {
 		return lo
 	}
-	return lo + rng.Float64()*(hi-lo)
+	return lo + float64(rng.Float64()*(hi-lo))
 }
 
 // rollFlavor picks a template from the Def's pool and fills its placeholders

@@ -89,7 +89,7 @@ func (rm *ResourceManager) Add(key string, amount float64) float64 {
 	if math.IsNaN(amount) {
 		return r.Amount
 	}
-	r.Amount += amount
+	r.Amount += float64(amount) // callers pass products: round them, no FMA
 	if r.Amount > r.Storage {
 		r.Amount = r.Storage
 	}
@@ -106,7 +106,7 @@ func (rm *ResourceManager) Remove(key string, amount float64) bool {
 	if !ok || !(r.Amount >= amount) {
 		return false
 	}
-	r.Amount -= amount
+	r.Amount -= float64(amount) // as in Add
 	return true
 }
 
@@ -177,7 +177,7 @@ func (rm *ResourceManager) AddProduced(scale float64, gained, lost func(key stri
 		if !rm.unlocked[key] || r.Rate <= 0 {
 			continue
 		}
-		amount := r.Rate * scale
+		amount := float64(r.Rate * scale)
 		g := math.Min(amount, r.Storage-r.Amount)
 		if g > 0 {
 			r.Amount += g
