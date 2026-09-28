@@ -29,7 +29,7 @@ plan build longhouse 15        # the next age's buildings wait for the advance
 - **Trades are paced.** A trade item holds back what it will sell (what the items above leave, up to what it still wants) and sells once the market has recovered from its last sale, so the rate stays within a percent of the market's instead of sinking by selling every tick. It never buys more than the store has room for, and it needs a trade building standing, like `trade`.
 - **Advance at its place.** An advance item advances the moment the requirements are met, when the walk reaches it: items above it go first, items below wait for the next tick, so they can't spend what the requirements count.
 - **Dead items drop out.** A building of an earlier age after an advance, a building at its limit, a tech already researched, a tech whose prerequisite is neither researched nor planned before it, a trade the new age's market doesn't offer: each leaves the plan with a line in the log.
-- **Staffed.** Copies the plan builds are staffed from your idle workers when they finish. The plan never recruits.
+- **Staffed.** Copies the plan builds are staffed when they finish, from your idle workers first. If those run out, the plan moves workers out of buildings an advance superseded (a higher tier of their line is open), the same line's first, so the next age's producers built after `plan advance` don't sit empty until you come back. It never moves food workers or workers in this age's buildings, and it never recruits.
 
 Each tick's starts are summed up in one log line (`Plan started: 3 × Hut, research Pottery`), and the welcome-back message says what the plan did while you were away.
 
