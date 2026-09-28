@@ -137,6 +137,8 @@ This reuses the existing diplomacy war/embargo state — there's no separate dis
 
 There is no cap on how many routes can run simultaneously — stack them all.
 
+The Trade overlay does not list civilizations. The one faction effect it shows is an **Allied Bonuses** block, which appears under the routes while an ally is boosting a resource (see [Allied Bonuses](#allied-bonuses)). The overlay's last line points to the **Factions** panel (`factions`) for standing, opinion and diplomacy actions.
+
 ### Full Trade Routes Reference
 
 | Key | Name | Min Age | Required Building | Export (per cycle) | Import (per cycle) | Cycle (ticks) |
@@ -309,6 +311,8 @@ actual import = base import × (1.0 + trade_bonus)
 Bonuses from multiple allied factions stack additively if they share a specialty (unlikely, but possible in theory).
 
 The allied trade bonus also surfaces in the **Active Multipliers** panel (Stats overlay) as a `Diplomacy` line on the affected resource's rate, so you can see at a glance which of your production rates an alliance is amplifying. The number shown is the same `1 + trade_bonus` factor described above — the panel and the applied bonus read from the same source, so they can't drift.
+
+The Trade overlay lists the same bonuses under **Allied Bonuses**, one line per ally (for example *Merchant Guild: +20% gold*). An ally that is at war with you grants nothing and is left off the list.
 
 | Civilization | Specialty | Allied Bonus |
 |---|---|---|

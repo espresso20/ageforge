@@ -628,6 +628,15 @@ func TestHouseTics(t *testing.T) {
 		{"a great many", regexp.MustCompile(`(?i)\ba great (many|deal)\b`), 16},
 		{"it has been proclaimed", regexp.MustCompile(`(?i)^it (has been|is|was) (agreed|ordered|proclaimed|decreed|announced)`), 6},
 		{"a kind of", regexp.MustCompile(`(?i)\b(there is|there was) a (strange )?kind of\b|\bit is one thing to\b|\bis a kind of\b`), 0},
+		// Found by the humanizer pass over the third late-age batch. The
+		// first draft counted down to a punchline in ledger form ("Six
+		// delegations waiting, twenty gifts unopened, one envoy asleep in the
+		// lift") nine times; parked a lone adverb on the end of a sentence
+		// (", politely"); and let every grumbler want to know who, or want
+		// it noted.
+		{"countdown triad", regexp.MustCompile(`(?i)^[a-z]+( [a-z'-]+){0,5}, [a-z]+( [a-z'-]+){0,5}, (and )?(one|none|all|no)\b`), 7},
+		{"trailing adverb", regexp.MustCompile(`, [a-z]+ly\s*$`), 11},
+		{"wants it noted", regexp.MustCompile(`(?i)\bwants? (it (noted|put|written)|to know (who|which|why|what|whether))\b`), 11},
 	}
 	anon := regexp.MustCompile(`(?i)\b(somebody|someone|nobody|no one)\b`)
 	const maxAnonShare = 0.15
