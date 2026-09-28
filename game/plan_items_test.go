@@ -172,6 +172,92 @@ func TestPlan_StaffsWhatItBuilds(t *testing.T) {
 	}
 }
 
+// A `plan advance` that fires while the player is away is followed by the
+// next age's producers, but the old age's copies took every idle worker. The
+// plan staffs the new ones with workers from the buildings the advance
+// superseded, leaves the food producers alone and recruits nobody.
+func TestOffline_PlanStaffsTheNewAgeAfterAnAdvance(t *testing.T) {
+	ge := newSeededEngine(1)
+	ge.Buildings.counts["stash"] = 50
+	ge.Buildings.counts["hut"] = 10
+	ge.Buildings.counts["wood_camp"] = 10
+	ge.Buildings.counts["gathering_camp"] = 10
+	ge.recalculateRates()
+	if err := ge.RecruitWorker("worker", 60); err != nil {
+		t.Fatal(err)
+	}
+	for _, k := range []string{"wood_camp", "gathering_camp"} {
+		if err := ge.AssignWorker(k, 30); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if err := ge.PlanAddAdvance(); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := ge.PlanAddBuild("stone_camp", 3); err != nil {
+		t.Fatal(err)
+	}
+	// Meet the Stone Age gate by hand.
+	reqs, blds := ge.progress.GetRequirementsForNext(ge.age)
+	for r, v := range reqs {
+		ge.Resources.resources[r].Storage = v * 2
+		setAmount(ge, r, v)
+	}
+	for k, n := range blds {
+		ge.Buildings.counts[k] = max(ge.Buildings.counts[k], n)
+	}
+	ge.Buildings.counts[ge.progress.WonderForAge(ge.age)] = 1
+	ge.pendingCatastrophe = ""
+
+	ge.SimulateOffline(time.Hour)
+
+	if ge.age != "stone_age" {
+		t.Fatalf("age = %s, want the plan to have advanced to stone_age", ge.age)
+	}
+	camps := ge.Buildings.GetCount("stone_camp")
+	if camps != 3 {
+		t.Fatalf("stone camps built = %d, want 3", camps)
+	}
+	if got, want := ge.Workers.GetAssignedCount("worker", "stone_camp"), 3*camps; got != want {
+		t.Errorf("stone camps staffed with %d workers, want %d", got, want)
+	}
+	if got := ge.Workers.GetAssignedCount("worker", "gathering_camp"); got != 30 {
+		t.Errorf("gathering camps have %d workers, want the 30 they had (the plan must not move food workers)", got)
+	}
+	if got := ge.Workers.GetAssignedCount("worker", "wood_camp"); got != 30-3*camps {
+		t.Errorf("wood camps have %d workers, want %d (the stone camps' workers came from them)", got, 30-3*camps)
+	}
+	if pop := ge.Workers.TotalPop(); pop != 60 {
+		t.Errorf("population = %d, want 60 (the plan never recruits)", pop)
+	}
+}
+
+// Workers in buildings of the current age are the player's arrangement: a
+// plan copy with no idle hands to fill it waits for them.
+func TestPlan_StaffingLeavesCurrentBuildingsAlone(t *testing.T) {
+	ge := planTestEngine(t)
+	ge.Buildings.counts["hut"] = 5
+	ge.Buildings.counts["wood_camp"] = 3
+	ge.recalculateRates()
+	if err := ge.RecruitWorker("worker", 9); err != nil {
+		t.Fatal(err)
+	}
+	if err := ge.AssignWorker("wood_camp", 9); err != nil {
+		t.Fatal(err)
+	}
+	setAmount(ge, "wood", 1000)
+	if _, err := ge.PlanAddBuild("gathering_camp", 1); err != nil {
+		t.Fatal(err)
+	}
+	ge.runPlanTick()
+	for i := 0; i < 100 && queued(ge, "gathering_camp") > 0; i++ {
+		ge.processBuildQueue()
+	}
+	if got := ge.Workers.GetAssignedCount("worker", "gathering_camp"); got != 0 {
+		t.Errorf("the plan moved %d workers out of this age's wood camps", got)
+	}
+}
+
 // Offline trades meet a market that recovers as the time passes.
 func TestOffline_TradesAsTimePasses(t *testing.T) {
 	ge := bronzeEngine(t)

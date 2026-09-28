@@ -302,7 +302,7 @@ type BuildQueueItem struct {
 	TicksLeft   int
 	TotalTicks  int
 	// FromPlan marks a copy the build plan started: on completion it is
-	// staffed from idle workers (plan.go). omitempty keeps older saves'
+	// staffed (staffPlanCopy, plan.go). omitempty keeps older saves'
 	// bytes, and their signatures, unchanged.
 	FromPlan bool `json:",omitempty"`
 }
@@ -2569,12 +2569,12 @@ func (ge *GameEngine) advanceBuildQueue(n int) bool {
 }
 
 // finishBuild completes one queued copy: the count, the log lines, the stats
-// and the bus event, and staffing from idle workers for a plan's copy.
+// and the bus event, and staffing for a plan's copy.
 func (ge *GameEngine) finishBuild(item BuildQueueItem) {
 	key := item.BuildingKey
 	ge.Buildings.counts[key]++
 	if item.FromPlan {
-		ge.staffFromIdle(key)
+		ge.staffPlanCopy(key)
 	}
 	def := ge.Buildings.defs[key]
 	ge.addLog("debug", fmt.Sprintf("Build complete: %s (count now %d)", def.Name, ge.Buildings.GetCount(key)))
@@ -2805,7 +2805,7 @@ func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
 		ge.Buildings.counts[key]++
 		ge.Stats.RecordBuild()
 		if quiet {
-			ge.staffFromIdle(key)
+			ge.staffPlanCopy(key)
 		}
 		ge.recalculateRates()
 		ge.addLog("success", fmt.Sprintf("Built %s (#%d)", def.Name, ge.Buildings.GetCount(key)))

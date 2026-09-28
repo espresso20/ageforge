@@ -706,12 +706,18 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 	return started
 }
 
-// staffFromIdle assigns idle workers to key's empty worker slots. The plan
-// calls it when a copy it started completes: a player who plans a producer
-// while away wants it staffed, and otherwise it would run at the unstaffed
-// 20% until they came back. Only idle workers: the plan never recruits (more
-// mouths to feed is the player's call). Rates are recalculated by the caller.
-func (ge *GameEngine) staffFromIdle(key string) {
+// staffPlanCopy fills key's empty worker slots. The plan calls it when a copy
+// it started completes: a player who plans a producer while away wants it
+// staffed, and otherwise it would run at the unstaffed 20% until they came
+// back. Idle workers go first. Then come workers in buildings an advance
+// superseded (legacy: a higher tier of their lineage is open), the same
+// lineage's first: after a `plan advance` the old age's copies have
+// usually taken every idle hand, and the new age's producers would otherwise
+// wait for the next visit. It never takes food workers (the move must not
+// starve anyone) or this age's (they are where the player put them), and it
+// never recruits (more mouths to feed is the player's call). Rates are
+// recalculated by the caller.
+func (ge *GameEngine) staffPlanCopy(key string) {
 	def := ge.Buildings.defs[key]
 	if def.WorkerCapacity <= 0 {
 		return
@@ -719,7 +725,47 @@ func (ge *GameEngine) staffFromIdle(key string) {
 	free := def.WorkerCapacity*ge.Buildings.GetCount(key) - ge.Workers.GetAssignedCount("worker", key)
 	if n := min(free, ge.Workers.IdleCount("worker")); n > 0 {
 		ge.Workers.Assign("worker", key, n)
+		free -= n
 	}
+	if free <= 0 || ge.Buildings.IsLegacy(key) {
+		return
+	}
+	var same, other []string
+	for _, src := range sortedKeys(ge.Buildings.legacyBuildings) {
+		if !ge.Buildings.legacyBuildings[src] || !planStaffSource(ge.Buildings.defs[src]) {
+			continue
+		}
+		if ge.Buildings.defs[src].LineageKey == def.LineageKey {
+			same = append(same, src)
+		} else {
+			other = append(other, src)
+		}
+	}
+	for _, src := range append(same, other...) {
+		if free <= 0 {
+			break
+		}
+		if n := min(free, ge.Workers.GetAssignedCount("worker", src)); n > 0 {
+			ge.Workers.Unassign("worker", src, n)
+			ge.Workers.Assign("worker", key, n)
+			free -= n
+		}
+	}
+}
+
+// planStaffSource reports whether staffPlanCopy may take workers from a
+// legacy building of def: a producer (production or research) that makes no
+// food. Soldiers, priests and the like stay where they are.
+func planStaffSource(def config.BuildingDef) bool {
+	if def.Category != "production" && def.Category != "research" {
+		return false
+	}
+	for _, eff := range def.Effects {
+		if eff.Type == "production" && eff.Target == "food" {
+			return false
+		}
+	}
+	return true
 }
 
 // runPlanTick runs the plan once during live play and logs what started.
