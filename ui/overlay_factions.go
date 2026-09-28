@@ -591,27 +591,12 @@ func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameS
 	}
 }
 
-// dealKindLabel is the word a deal line leads with, padded to one width.
-func dealKindLabel(kind string) string {
-	switch kind {
-	case game.DealWant:
-		return "wants"
-	case game.DealFavor:
-		return "favor"
-	case game.DealRare:
-		return "rare "
-	}
-	return "sells"
-}
-
-// dealLine renders one offer: "1. sells 516 wood → 618 food   +20% vs market".
+// dealLine renders one offer from the player's side, in the words of
+// game.DealTerms: "1. Buy: give 516 wood → get 618 food   +20% vs market".
 // What you can't pay yet is in the Negative role; a taken offer is dim.
 func dealLine(d game.DealInfo, state game.GameState, width int) string {
 	give := FormatNumber(d.GiveAmt) + " " + d.Give
-	get := fmt.Sprintf("+%d standing", d.Standing)
-	if d.Get != "" {
-		get = FormatNumber(d.GetAmt) + " " + d.Get
-	}
+	get := game.DealGets(d.Get, d.GetAmt, d.Standing, FormatNumber)
 	note := ""
 	switch {
 	case d.Taken:
@@ -623,7 +608,7 @@ func dealLine(d game.DealInfo, state game.GameState, width int) string {
 	case d.Get != "":
 		note = "not sold at the market"
 	}
-	plain := fmt.Sprintf("%d. %s %s → %s", d.Num, dealKindLabel(d.Kind), give, get)
+	plain := fmt.Sprintf("%d. %s", d.Num, game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, FormatNumber))
 	if d.Taken {
 		return theme.Paint(theme.RoleDim, truncate(plain+"  "+note, width))
 	}
@@ -635,9 +620,11 @@ func dealLine(d game.DealInfo, state game.GameState, width int) string {
 	if runeLen(plain)+runeLen(note)+1 > width {
 		note, gap = "", ""
 	}
-	return fmt.Sprintf("%s %s %s %s %s%s%s",
+	// Same words as plain, painted: the numbers-and-kind skeleton of DealTerms.
+	return fmt.Sprintf("%s %s %s %s %s %s%s%s",
 		theme.Paint(theme.RoleLabel, fmt.Sprintf("%d.", d.Num)),
-		theme.Paint(theme.RoleAccent, dealKindLabel(d.Kind)),
-		theme.Paint(giveRole, give), theme.Paint(theme.RoleDim, "→"), theme.Paint(theme.RolePositive, get),
+		theme.Paint(theme.RoleAccent, game.DealKindLabel(d.Kind)+":"),
+		theme.Paint(theme.RoleDim, "give"), theme.Paint(giveRole, give),
+		theme.Paint(theme.RoleDim, "→ get"), theme.Paint(theme.RolePositive, get),
 		gap, theme.Paint(theme.RoleDim, note))
 }

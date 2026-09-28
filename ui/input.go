@@ -1882,11 +1882,8 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 		if err != nil {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
-		got := fmt.Sprintf("+%d standing", d.Standing)
-		if d.Get != "" {
-			got = FormatNumber(d.GetAmt) + " " + d.Get
-		}
-		return CommandResult{Message: fmt.Sprintf("Deal done: %s %s for %s.", FormatNumber(d.GiveAmt), d.Give, got), Type: "success"}
+		terms := game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, FormatNumber)
+		return CommandResult{Message: "Deal done (" + terms + ").", Type: "success"}
 
 	default:
 		return CommandResult{Message: "Usage: diplomacy [ally|rival|embargo|gift|neutral|tribute|raid] <civ_key> | deals [civ_key] | accept <civ_key> <n>", Type: "error"}

@@ -582,10 +582,10 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 	out := plainText(raw)
 	for _, want := range []string{
 		"Deals: new offers in",
-		"1. wants 2.10K stone → 3.00K food",
+		"1. Sell: give 2.10K stone → get 3.00K food",
 		"+13% vs market",
-		"2. favor 727 iron → +5 standing",
-		"3. sells 10 iron → 12 food  taken",
+		"2. Favor: give 727 iron → get +5 standing",
+		"3. Buy: give 10 iron → get 12 food  taken",
 		"Deals: none — they are at war with you.",
 		"diplomacy accept <civ> <n>",
 	} {
@@ -598,8 +598,15 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 	if l := lineContaining(raw, "1."); !strings.Contains(l, "[negative]2.10K stone") {
 		t.Errorf("unaffordable price not in the Negative role: %q", l)
 	}
-	if l := lineContaining(raw, "favor"); !strings.Contains(l, "[highlight]727 iron") {
+	if l := lineContaining(raw, "Favor:"); !strings.Contains(l, "[highlight]727 iron") {
 		t.Errorf("affordable price not in the Highlight role: %q", l)
+	}
+	// Every deal line, painted or not, reads exactly as game.DealTerms words it.
+	for _, d := range state.Diplomacy.Factions["riverlands_tribes"].Deals {
+		want := strconv.Itoa(d.Num) + ". " + game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, FormatNumber)
+		if got := plainText(dealLine(d, state, panelWidth)); !strings.HasPrefix(got, want) {
+			t.Errorf("deal line %q does not start with %q", got, want)
+		}
 	}
 	for _, l := range strings.Split(raw, "\n") {
 		if !strings.Contains(l, " → ") {
@@ -613,10 +620,13 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 	}
 }
 
-// TestDiplomacyDealCommands drives `diplomacy deals`, `diplomacy accept` and
-// the deal-number completion against a live engine.
+// TestDiplomacyDealCommands drives `diplomacy deals`, `diplomacy accept`,
+// `plan deal` and the deal-number completion against a live engine. A new
+// game may hold the price of a deal or not, and a civ may offer one deal
+// only, so the plan item is added before any deal is taken.
 func TestDiplomacyDealCommands(t *testing.T) {
 	engine := game.NewGameEngine()
+	engine.SeedRNG(1)
 	if res := HandleCommand("diplomacy deals", engine); !strings.Contains(res.Message, "not met anyone") {
 		t.Errorf("deals before first contact: %q", res.Message)
 	}
@@ -641,6 +651,14 @@ func TestDiplomacyDealCommands(t *testing.T) {
 	if got := comp("diplomacy accept riv"); len(got) != 1 || strings.TrimSpace(got[0]) != "diplomacy accept riverlands_tribes" {
 		t.Errorf("civs suggested: %v", got)
 	}
+	if res := HandleCommand("plan deal riverlands_tribes 1", engine); res.Type != "info" {
+		t.Errorf("plan deal: %+v", res)
+	}
+	label := game.DealKindLabel(deals[0].Kind) + ": give "
+	if st := engine.GetState(); len(st.Plan) != 1 || st.Plan[0].Kind != game.PlanDeal ||
+		!strings.HasPrefix(st.Plan[0].Name, "deal with the Riverlands Tribes ("+label) || !strings.Contains(st.Plan[0].Name, " → get ") {
+		t.Errorf("plan after plan deal: %+v", st.Plan)
+	}
 	// Taking deal 1 either goes through or says what is short; a second
 	// take of a taken deal is refused.
 	switch res := HandleCommand("diplomacy accept riverlands_tribes 1", engine); {
@@ -655,12 +673,5 @@ func TestDiplomacyDealCommands(t *testing.T) {
 		if res := HandleCommand(bad, engine); res.Type != "error" {
 			t.Errorf("%q: %+v", bad, res)
 		}
-	}
-	last := strconv.Itoa(len(deals))
-	if res := HandleCommand("plan deal riverlands_tribes "+last, engine); res.Type != "info" {
-		t.Errorf("plan deal: %+v", res)
-	}
-	if st := engine.GetState(); len(st.Plan) != 1 || st.Plan[0].Kind != game.PlanDeal || !strings.Contains(st.Plan[0].Name, "Riverlands Tribes") {
-		t.Errorf("plan after plan deal: %+v", st.Plan)
 	}
 }

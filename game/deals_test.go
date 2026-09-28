@@ -558,3 +558,49 @@ func TestDeals_Plan(t *testing.T) {
 		t.Error("no log line for the dropped deal item")
 	}
 }
+
+// TestDeals_Wording: every surface words a deal from the player's side,
+// "<Kind>: give X → get Y", with the civ selling its specialty as your Buy
+// and the civ wanting your goods as your Sell; the log line and the plan
+// label carry the same terms.
+func TestDeals_Wording(t *testing.T) {
+	num := formatPlanAmount
+	for _, c := range []struct {
+		d    FactionDeal
+		want string
+	}{
+		{FactionDeal{Kind: DealSell, Give: "coal", GiveAmt: 876e6, Get: "food", GetAmt: 966e3}, "Buy: give 876.0M coal → get 966.0K food"},
+		{FactionDeal{Kind: DealWant, Give: "iron", GiveAmt: 440e6, Get: "food", GetAmt: 877e3}, "Sell: give 440.0M iron → get 877.0K food"},
+		{FactionDeal{Kind: DealFavor, Give: "steel", GiveAmt: 899e6, Standing: 5}, "Favor: give 899.0M steel → get +5 standing"},
+		{FactionDeal{Kind: DealRare, Give: "electricity", GiveAmt: 25.7e9, Get: "oil", GetAmt: 3.3e9}, "Rare: give 25.7B electricity → get 3.3B oil"},
+	} {
+		if got := DealTerms(c.d.Kind, c.d.Give, c.d.GiveAmt, c.d.Get, c.d.GetAmt, c.d.Standing, num); got != c.want {
+			t.Errorf("DealTerms(%s) = %q, want %q", c.d.Kind, got, c.want)
+		}
+	}
+
+	ge := dealEngine(t, "colonial_age")
+	meet(ge, "merchant_guild", 30)
+	if err := ge.PlanAddDeal("merchant_guild", 2); err != nil {
+		t.Fatal(err)
+	}
+	ge.mu.Lock()
+	d1, d2 := ge.Diplomacy.factions["merchant_guild"].Deals[0], ge.Diplomacy.factions["merchant_guild"].Deals[1]
+	ge.Resources.resources[d2.Give].Amount = 0
+	views := ge.planViews()
+	ge.mu.Unlock()
+	if want := "deal with the Merchant Guild (" + dealTerms(d2) + ")"; len(views) != 1 || views[0].Name != want {
+		t.Errorf("plan label %+v, want %q", views, want)
+	}
+	if _, err := ge.AcceptFactionDeal("merchant_guild", 1); err != nil {
+		t.Fatal(err)
+	}
+	want := "Deal with the Merchant Guild (" + dealTerms(d1) + ")."
+	found := false
+	for _, l := range ge.GetState().Log {
+		found = found || l.Message == want
+	}
+	if !found {
+		t.Errorf("no log line %q", want)
+	}
+}

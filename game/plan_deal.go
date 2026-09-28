@@ -115,7 +115,7 @@ func (ge *GameEngine) planDealView(it PlanItem, reserved map[string]float64) Pla
 		return v
 	}
 	d, blocked := ge.planDealCheck(it)
-	v.Name += ": " + dealTerms(d)
+	v.Name += " (" + dealTerms(d) + ")"
 	v.Cost = map[string]float64{d.Give: d.GiveAmt}
 	if blocked != "" {
 		v.Status, v.Note = PlanStatusBlocked, blocked

@@ -16,7 +16,8 @@ import (
 //
 // Rules (site/docs/trade.md, Trade deals):
 //
-//   - Kinds. A "sell" deal is the civ's specialty for one of your
+//   - Kinds (keys are the civ's side; the player sees Buy, Sell, Favor and
+//     Rare, see DealTerms). A "sell" deal is the civ's specialty for one of your
 //     construction resources. A "want" deal is the civ asking for one of the
 //     resources you hold most of (fullest stores first) and paying in its
 //     specialty, a little better than a sell. A "favor" deal pays for the
@@ -617,16 +618,43 @@ func (ge *GameEngine) takeDeal(def config.FactionDef, fs *FactionState, i int) F
 		fs.Status = "friendly"
 	}
 	d.Taken = true
-	ge.addLog("success", fmt.Sprintf("Deal with the %s: %s.", def.Name, dealTerms(*d)))
+	ge.addLog("success", fmt.Sprintf("Deal with the %s (%s).", def.Name, dealTerms(*d)))
 	return *d
 }
 
-// dealTerms is "1.2K iron for 800 gold" or "3K stone for +5 standing".
-func dealTerms(d FactionDeal) string {
-	if d.Get == "" {
-		return fmt.Sprintf("%s %s for +%d standing", formatPlanAmount(d.GiveAmt), d.Give, d.Standing)
+// DealKindLabel is a deal's kind from the player's side: the civ selling
+// its specialty is your Buy, the civ wanting your goods is your Sell.
+func DealKindLabel(kind string) string {
+	switch kind {
+	case DealWant:
+		return "Sell"
+	case DealFavor:
+		return "Favor"
+	case DealRare:
+		return "Rare"
 	}
-	return fmt.Sprintf("%s %s for %s %s", formatPlanAmount(d.GiveAmt), d.Give, formatPlanAmount(d.GetAmt), d.Get)
+	return "Buy"
+}
+
+// DealGets is what a deal pays you: "966K food" or "+5 standing".
+func DealGets(get string, getAmt float64, standing int, num func(float64) string) string {
+	if get == "" {
+		return fmt.Sprintf("+%d standing", standing)
+	}
+	return num(getAmt) + " " + get
+}
+
+// DealTerms is how every surface words a deal, from the player's side:
+// "Buy: give 876M coal → get 966K food", "Favor: give 899M steel → get +5
+// standing". The Factions panel, `diplomacy deals`, `diplomacy accept`, the
+// plan and the log all use it; num formats the amounts.
+func DealTerms(kind, give string, giveAmt float64, get string, getAmt float64, standing int, num func(float64) string) string {
+	return fmt.Sprintf("%s: give %s %s → get %s", DealKindLabel(kind), num(giveAmt), give, DealGets(get, getAmt, standing, num))
+}
+
+// dealTerms is DealTerms for a saved deal, with the log's number format.
+func dealTerms(d FactionDeal) string {
+	return DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, formatPlanAmount)
 }
 
 // AcceptFactionDeal takes offer n (1-based, as the Factions panel and

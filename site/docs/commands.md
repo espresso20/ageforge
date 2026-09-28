@@ -188,8 +188,8 @@ From the **Industrial Age** you can build a **Geographic Society**, which sends 
 | `diplomacy neutral <civ>` | Reset a civilization to neutral |
 | `diplomacy tribute <civ>` | Sue for peace with a civilization at war (pays gold + culture, scaled to its strength) |
 | `diplomacy raid <civ>` | Raid a civilization's trade route (-20 opinion; a war provocation) |
-| `diplomacy deals [civ]` | List a civilization's trade deals, numbered (no civ: every civilization you have met) |
-| `diplomacy accept <civ> <n>` | Take trade deal `n` from a civilization: pay its price, get its goods or standing. See [Trade deals](trade.md#trade-deals) |
+| `diplomacy deals [civ]` | List a civilization's trade deals, numbered and worded from your side, e.g. `1. Buy: give 876M coal → get 966K food` (no civ: every civilization you have met) |
+| `diplomacy accept <civ> <n>` | Take trade deal `n` from a civilization: give its price, get its goods or standing. See [Trade deals](trade.md#trade-deals) |
 
 ```
 trade list
