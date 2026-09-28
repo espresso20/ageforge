@@ -12,14 +12,12 @@ on:
       - "site/**"
       - "**.md"
       - "design-and-architecture/**"
-      - "project_beta/**"
   push:
     branches: [master]
     paths-ignore:
       - "site/**"
       - "**.md"
       - "design-and-architecture/**"
-      - "project_beta/**"
   workflow_dispatch:
 
 permissions:
