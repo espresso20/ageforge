@@ -47,7 +47,7 @@ Build → Recruit → Assign → Research → Advance → Repeat
 - **PgUp / PgDn** — scroll the active tab
 - **↑ / ↓** — navigate command history
 - **Esc** — save game
-- Single-letter shortcuts: `e` `r` `m` `t` `s` `w` `l` switch tabs directly
+- Short names for common commands: `b` is `build`, `r` is `recruit`, `a` is `assign`, `s` is `status`, `t` is `trade` — see [Command shortcuts](commands.md#command-shortcuts) for the full list
 
 ---
 

@@ -4,6 +4,8 @@ All commands are typed at the `>` prompt at the bottom of the screen. `↑`/`↓
 
 Counts (`recruit 5`, `build farm 3`, `sell hut 2`, ...) are whole numbers from 1 to 1,000,000, and amounts (`gather`, `trade`, `wonder collect`) are positive numbers. Anything else is refused with the command's usage line rather than guessed at.
 
+Command names and the game keys they take (buildings, techs, resources, civilizations, themes, expeditions, trade routes, prestige upgrades) are not case-sensitive: `sell Hut` is `sell hut`, and `research Tool Making` is `research tool_making`.
+
 ## The prompt
 
 As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now, affordable first; `plan build` and `plan research` the same, then the next age's; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `sell` buildings you have; `trade` and `plan trade` what the market buys and sells; `diplomacy` the civilizations you have met; `theme` the themes you have unlocked; `load` your saves.
@@ -378,6 +380,7 @@ See [The Harbinger](harbinger.md) for the roster, false prophets and verdicts.
 | `theme list` | List every theme by name and key, marking the active one and noting each theme's light/dark variant and which are accessible |
 | `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`) |
 | `quit` | Save your game and quit |
+| `logs` | Open the **Logs** panel — recent game log entries |
 | `dump` | Export logs to a file for debugging, in `logs/` inside your active account's folder (`data/accounts/<id>/logs/`) — the one player-reachable place that still prints raw tick counts, alongside the wall-clock reading |
 | `help` | Open the Help panel — full command reference and list of available panels |
 
@@ -452,18 +455,26 @@ Highlighting a save updates a **detail pane** on the side with everything you ne
 
 ---
 
-## Tab shortcuts
+## Command shortcuts
 
-Type a single letter to jump straight to a tab:
+These commands have a shorter name. The short name takes everything the full one does: `b hut 3` is `build hut 3`, `r max` is `recruit max`.
 
-| Key | Tab |
+| Shortcut | Command |
 |---|---|
-| `e` | Economy tab |
-| `r` | Research overlay (`research`) |
-| `m` | City Map overlay |
-| `t` | Trade overlay (`trade`) |
-| `s` | Stats overlay (`stats`) |
-| `w` | Wonders overlay (`wonders`) |
-| `l` | Logs overlay (`logs`) |
-| `history` | Civilization History overlay |
-| `workers` | Worker status overlay (summary / slot utilization / domain breakdown) |
+| `g` | `gather` |
+| `b` | `build` |
+| `r` | `recruit` |
+| `a` | `assign` |
+| `u` | `unassign` |
+| `res` | `research` |
+| `exp` | `expedition` |
+| `t` | `trade` |
+| `bm` | `blackmarket` |
+| `dip` | `diplomacy` |
+| `cat` | `catastrophe` |
+| `harb` | `harbinger` |
+| `s` | `status` |
+| `exportlogs` | `dump` |
+| `h`, `?` | `help` |
+| `acct` | `account` |
+| `ms` | `milestones` |

@@ -1159,7 +1159,7 @@ func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 
 	// Support multi-word keys entered with spaces by joining all remaining args
 	// with underscores (e.g. "research bronze working" → "bronze_working").
-	techKey := strings.Join(args, "_")
+	techKey := strings.ToLower(strings.Join(args, "_"))
 	if err := engine.StartResearch(techKey); err != nil {
 		return CommandResult{Message: err.Error(), Type: "error"}
 	}
@@ -1206,7 +1206,7 @@ func cmdExpedition(args []string, engine *game.GameEngine) CommandResult {
 		return cmdScoutingList(engine)
 	}
 
-	expKey := strings.Join(args, "_")
+	expKey := strings.ToLower(strings.Join(args, "_"))
 
 	// Reject military keys here — they belong to `campaign`.
 	if def := engine.Military.ExpeditionDefByKey(expKey); def != nil && def.Category != game.ExpeditionScouting {
@@ -1241,7 +1241,7 @@ func cmdCampaign(args []string, engine *game.GameEngine) CommandResult {
 		return cmdCampaignList(engine)
 	}
 
-	expKey := strings.Join(args, "_")
+	expKey := strings.ToLower(strings.Join(args, "_"))
 
 	// Reject scouting keys here — they belong to `expedition`.
 	if def := engine.Military.ExpeditionDefByKey(expKey); def != nil && def.Category != game.ExpeditionMilitary {
@@ -1428,7 +1428,7 @@ func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
 		if len(args) < 2 {
 			return CommandResult{Message: "Usage: prestige buy <upgrade_key>", Type: "error"}
 		}
-		key := strings.Join(args[1:], "_")
+		key := strings.ToLower(strings.Join(args[1:], "_"))
 		if err := engine.BuyPrestigeUpgrade(key); err != nil {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
@@ -1660,7 +1660,7 @@ func cmdTradeRoute(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 2 {
 		return CommandResult{Message: "Usage: trade route start|stop <route_key>", Type: "error"}
 	}
-	routeKey := strings.Join(args[1:], "_")
+	routeKey := strings.ToLower(strings.Join(args[1:], "_"))
 
 	switch subcmd {
 	case "start":
@@ -1722,7 +1722,7 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 		if len(args) < 2 {
 			return CommandResult{Message: "Usage: diplomacy ally <faction_key>", Type: "error"}
 		}
-		factionKey := strings.Join(args[1:], "_")
+		factionKey := strings.ToLower(strings.Join(args[1:], "_"))
 		if err := engine.SetDiplomaticStatus(factionKey, "allied"); err != nil {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
@@ -1732,7 +1732,7 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 		if len(args) < 2 {
 			return CommandResult{Message: "Usage: diplomacy rival <faction_key>", Type: "error"}
 		}
-		factionKey := strings.Join(args[1:], "_")
+		factionKey := strings.ToLower(strings.Join(args[1:], "_"))
 		if err := engine.SetDiplomaticStatus(factionKey, "rival"); err != nil {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
@@ -1742,7 +1742,7 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 		if len(args) < 2 {
 			return CommandResult{Message: "Usage: diplomacy embargo <faction_key>", Type: "error"}
 		}
-		factionKey := strings.Join(args[1:], "_")
+		factionKey := strings.ToLower(strings.Join(args[1:], "_"))
 		if err := engine.SetDiplomaticStatus(factionKey, "embargo"); err != nil {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
@@ -1752,7 +1752,7 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 		if len(args) < 2 {
 			return CommandResult{Message: "Usage: diplomacy gift <faction_key>", Type: "error"}
 		}
-		factionKey := strings.Join(args[1:], "_")
+		factionKey := strings.ToLower(strings.Join(args[1:], "_"))
 		if err := engine.SendGift(factionKey); err != nil {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
@@ -1762,7 +1762,7 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 		if len(args) < 2 {
 			return CommandResult{Message: "Usage: diplomacy neutral <faction_key>", Type: "error"}
 		}
-		factionKey := strings.Join(args[1:], "_")
+		factionKey := strings.ToLower(strings.Join(args[1:], "_"))
 		if err := engine.SetDiplomaticStatus(factionKey, "neutral"); err != nil {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
@@ -1772,7 +1772,7 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 		if len(args) < 2 {
 			return CommandResult{Message: "Usage: diplomacy tribute <civ_key>", Type: "error"}
 		}
-		factionKey := strings.Join(args[1:], "_")
+		factionKey := strings.ToLower(strings.Join(args[1:], "_"))
 		if err := engine.SendTribute(factionKey); err != nil {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
@@ -1782,7 +1782,7 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 		if len(args) < 2 {
 			return CommandResult{Message: "Usage: diplomacy raid <civ_key>", Type: "error"}
 		}
-		factionKey := strings.Join(args[1:], "_")
+		factionKey := strings.ToLower(strings.Join(args[1:], "_"))
 		if err := engine.RaidCivRoute(factionKey); err != nil {
 			return CommandResult{Message: err.Error(), Type: "error"}
 		}
@@ -1824,7 +1824,7 @@ func cmdSell(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
 		return CommandResult{Message: "Usage: sell <building> [count]", Type: "error"}
 	}
-	building := args[0]
+	building := strings.ToLower(args[0])
 	count := 1
 	if len(args) >= 2 {
 		n, err := parseCount(args[1])
@@ -1843,7 +1843,7 @@ func cmdDismiss(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
 		return CommandResult{Message: "Usage: dismiss <building> [count|all]", Type: "error"}
 	}
-	building := args[0]
+	building := strings.ToLower(args[0])
 	all := false
 	count := 1
 	if len(args) >= 2 {
