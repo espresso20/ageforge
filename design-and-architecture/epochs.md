@@ -347,7 +347,7 @@ Level-1 prices from the current config:
 |--------|---------|-------|
 | Stone | 59 faith | 9,600 food, 4,800 wood, 2,400 knowledge |
 | Iron | 5,400 faith | 26,400 knowledge, 26,400 stone, 6,360 iron, 21,600 gold |
-| Steel | 74K faith, 770K culture | 360K knowledge, 1.8M gold, 288K steel |
+| Steel | 74K faith, 770K culture | 3.6M knowledge, 1.8M gold, 288K steel |
 | Electric | 1.2M faith, 16M culture | 56.4M steel, 924K oil, 3.96M electricity |
 | Digital | 12M faith, 180M culture | 156M gold, 117.6B electricity, 19.2B data |
 | Neon | 130M faith, 2B culture | 288B electricity, 46.8B data, 3B crypto |

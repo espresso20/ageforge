@@ -378,9 +378,13 @@ func (b *Bot) planAhead(st game.GameState) {
 	}
 	// accrues reports whether every part of c the budget lacks is being
 	// made, so the plan will get there by waiting.
+	// tradeIn is what the plan's trade items buy: it comes in while the
+	// player is away even though nothing makes it (the Bronze Age's gold
+	// before a market stands, the later ages' market-only stone).
+	tradeIn := map[string]bool{}
 	accrues := func(c map[string]float64) bool {
 		for r, v := range c {
-			if budget[r] < v && st.Resources[r].Rate+ahead[r] <= 0 {
+			if budget[r] < v && st.Resources[r].Rate+ahead[r] <= 0 && !tradeIn[r] {
 				return false
 			}
 		}
@@ -395,6 +399,17 @@ func (b *Bot) planAhead(st game.GameState) {
 			}
 			if !covers(c) && n == 0 {
 				b.fundAtMarket(p, c, budget)
+			}
+			if essential {
+				// What the age hardly makes and the budget lacks (the
+				// Atomic Age's iron for its vaults) is kept topped up at
+				// the market while the player is away.
+				for _, r := range sortedKeys(c) {
+					scarce := (st.Resources[r].Rate+ahead[r])*b.CheckInTicks < 0.1*c[r]
+					if budget[r] < c[r] && scarce && !tradeIn[r] && b.planTopUp(p, st, r) {
+						tradeIn[r] = true
+					}
+				}
 			}
 			if !covers(c) && !(essential && accrues(c)) {
 				break
@@ -486,6 +501,11 @@ func (b *Bot) planAhead(st game.GameState) {
 	// the gold it also costs, so a trade below it could never sell that gold
 	// for the stone. Each is capped at what is missing.
 	b.planTrades(p, st)
+	for _, v := range b.ge.GetState().Plan {
+		if v.Kind == game.PlanTrade {
+			tradeIn[v.To] = true
+		}
+	}
 	if p.invest {
 		producers()
 		storage()
@@ -679,6 +699,28 @@ func (b *Bot) planTrades(p *plan, st game.GameState) {
 	}
 }
 
+// planTopUp adds a `plan trade` item that keeps res topped up (no amount),
+// sold from the resource with the most to spare before the next visit (what
+// it holds and makes, less what the age still needs of it). Reports whether
+// it added one.
+func (b *Bot) planTopUp(p *plan, st game.GameState, res string) bool {
+	from, best := "", 0.0
+	for _, k := range sortedKeys(st.Trade.ExchangeRates) {
+		x := st.Trade.ExchangeRates[k]
+		if x.To != res || x.Rate <= 0 || x.From == res || b.planHasTrade(x.From, res) {
+			continue
+		}
+		spare := p.amt[x.From] + float64(math.Max(st.Resources[x.From].Rate, 0)*b.CheckInTicks) - math.Max(0, p.target[x.From])
+		if v := spare * x.Rate; v > best {
+			from, best = x.From, v
+		}
+	}
+	if from == "" || best < 1 {
+		return false
+	}
+	return b.act("plan_topup", from+"->"+res, b.ge.PlanAddTrade(from, res, 0))
+}
+
 // planHasTrade reports whether the plan already trades from for to.
 func (b *Bot) planHasTrade(from, to string) bool {
 	for _, v := range b.ge.GetState().Plan {
@@ -831,6 +873,14 @@ func (b *Bot) traceCheckIn(what string, st game.GameState) {
 	for _, res := range p.worst {
 		r := st.Resources[res]
 		parts = append(parts, fmt.Sprintf("%s %s/%s (%+.3g/t, need %s)", res, num(r.Amount), num(r.Storage), r.Rate, num(p.target[res])))
+	}
+	// Required buildings not yet built or queued, whose price is in hand
+	// (the ones it isn't show up above as resources).
+	for _, k := range sortedKeys(p.needBld) {
+		parts = append(parts, fmt.Sprintf("%s %d more", k, p.needBld[k]))
+	}
+	if w := st.CurrentAgeWonderKey; w != "" && st.Buildings[w].Count == 0 && b.queuedCount(st, w) == 0 {
+		parts = append(parts, w+" unbuilt")
 	}
 	fmt.Fprintf(b.Trace, "tick %d %s %s: queue %d, research %q; waiting on: %s\n", st.Tick, what, st.Age, len(st.BuildQueue),
 		st.Research.CurrentTech, strings.Join(parts, "; "))
