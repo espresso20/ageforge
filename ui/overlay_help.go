@@ -3,159 +3,107 @@ package ui
 import (
 	"strings"
 
+	"github.com/rivo/tview"
+
 	"github.com/espresso20/ageforge/game"
 )
 
-// helpProvider renders the Help overlay: a categorised command reference and a
-// list of the panels the player can open. It is intentionally static (it does
-// not read game state) so the same reference is available at any point in play.
+// helpProvider renders the Help overlay from the command registry
+// (commands.go): each section's usage rows, the panels the player can open,
+// the prompt's keys and the shortcuts. It is intentionally static (it does
+// not read game state) so the same reference is available at any point in
+// play.
 func helpProvider(_ game.GameState, _ int) string {
 	var sb strings.Builder
+	reg := registry()
 
-	sb.WriteString("[gold]═══ Actions ═══[-]\n")
-	sb.WriteString("  [cyan]gather[-] <food|wood|stone> [n] - Hand-gather resources (max 10, until Medieval Age)\n")
-	sb.WriteString("  [cyan]build[-] <building> [count|max] - Build structure(s) (default: 1)\n")
-	sb.WriteString("  [cyan]sell[-] <building> [count]      - Demolish building(s), recover 50% of build cost\n")
-	sb.WriteString("  [cyan]advance[-]                       - Advance to the next age (when ready)\n")
-	sb.WriteString("  [cyan]upgrade[-]                       - List available building upgrades\n")
-	sb.WriteString("  [cyan]upgrade[-] <building> [n|all]    - Upgrade building to next age tier (pays cost delta)\n")
-
-	sb.WriteString("\n[gold]═══ Build Plan ═══[-]\n")
-	sb.WriteString("[gray]Queue builds and techs; each starts, and is paid for, when the resources are there, even while you are away.[-]\n")
-	sb.WriteString("  [cyan]plan[-]                          - Open the Plan panel (reorder and remove with keys)\n")
-	sb.WriteString("  [cyan]plan build[-] <building> [count] - Add copies of a building of this age\n")
-	sb.WriteString("  [cyan]plan research[-] <tech>         - Add a tech (techs start one at a time, in order)\n")
-	sb.WriteString("  [cyan]plan trade[-] <from> <to> [amt]  - Sell from for to as it comes in (no amount: keep topped up)\n")
-	sb.WriteString("  [cyan]plan advance[-]                  - Advance as soon as the next age is ready\n")
-	sb.WriteString("  [cyan]plan list[-]                     - Print the plan with each item's status\n")
-	sb.WriteString("  [cyan]plan remove[-] <n>              - Remove item n\n")
-	sb.WriteString("  [cyan]plan up[-] <n> / [cyan]plan down[-] <n> - Move item n one place\n")
-	sb.WriteString("  [cyan]plan clear[-]                    - Empty the plan\n")
-
-	sb.WriteString("\n[gold]═══ Workers ═══[-]\n")
-	sb.WriteString("  [cyan]recruit[-] [count|max]           - Recruit workers from available housing (default: 1)\n")
-	sb.WriteString("  [cyan]assign[-] <building> [n|all]     - Assign workers to a building\n")
-	sb.WriteString("  [cyan]unassign[-] <building> [n|all]   - Unassign workers from a building\n")
-	sb.WriteString("  [cyan]dismiss[-] <building> [n|all]    - Fire workers from a building (removes from pool)\n")
-
-	sb.WriteString("\n[gold]═══ Research, Expeditions & Army ═══[-]\n")
-	sb.WriteString("  [cyan]research[-] <tech_key>          - Research a technology\n")
-	sb.WriteString("  [cyan]research[-] cancel             - Cancel current research\n")
-	sb.WriteString("  [cyan]research[-] list               - List available techs\n")
-	sb.WriteString("  [cyan]expedition[-]                  - Open the Expeditions (scouting) panel\n")
-	sb.WriteString("  [cyan]expedition[-] <key>            - Send a scouting expedition (costs resources)\n")
-	sb.WriteString("  [cyan]expedition[-] list             - List available expeditions\n")
-	sb.WriteString("  [cyan]army[-]                        - Open the Army (military) panel\n")
-	sb.WriteString("  [cyan]campaign[-] <key>             - Wage a military campaign (costs soldiers)\n")
-	sb.WriteString("  [cyan]campaign[-] list              - List available campaigns\n")
-
-	sb.WriteString("\n[gold]═══ Trade & Diplomacy ═══[-]\n")
-	sb.WriteString("  [cyan]trade[-] <from> <to> <amount>  - Exchange resources\n")
-	sb.WriteString("  [cyan]trade[-] list                  - Show exchange rates\n")
-	sb.WriteString("  [cyan]trade[-] route list            - List trade routes\n")
-	sb.WriteString("  [cyan]trade[-] route start <key>     - Start a trade route\n")
-	sb.WriteString("  [cyan]trade[-] route stop <key>      - Stop a trade route\n")
-	sb.WriteString("  [cyan]blackmarket[-] [resource]      - High-risk culture gamble for a resource haul (colonial+)\n")
-	sb.WriteString("  [cyan]factions[-]                    - Open the Factions panel (favours, Society, standings)\n")
-	sb.WriteString("  [cyan]diplomacy[-]                   - Alias for factions (opens the same panel)\n")
-	sb.WriteString("  [cyan]diplomacy[-] ally <faction>    - Ally with faction (costs gold)\n")
-	sb.WriteString("  [cyan]diplomacy[-] rival <faction>   - Declare rivalry\n")
-	sb.WriteString("  [cyan]diplomacy[-] embargo <faction> - Embargo faction\n")
-	sb.WriteString("  [cyan]diplomacy[-] gift <faction>    - Send gift (+15 opinion)\n")
-	sb.WriteString("  [cyan]diplomacy[-] neutral <faction> - Reset to neutral\n")
-
-	sb.WriteString("\n[gold]═══ Wonders & Prestige ═══[-]\n")
-	sb.WriteString("  [cyan]wonder[-]                          - Show current wonder bank status\n")
-	sb.WriteString("  [cyan]wonder collect[-] <res> <amt|all> - Bank resources into current wonder\n")
-	sb.WriteString("  [cyan]wonder overflow[-] [on|off]        - Bank what full stores would waste (on by default)\n")
-	sb.WriteString("  [cyan]prestige[-]                        - View prestige status\n")
-	sb.WriteString("  [cyan]prestige[-] confirm yes            - Reset game with prestige bonus\n")
-	sb.WriteString("  [cyan]prestige[-] shop                   - View prestige upgrades\n")
-	sb.WriteString("  [cyan]prestige[-] buy <key>              - Buy a prestige upgrade\n")
-	sb.WriteString("  [cyan]festival[-]                        - Spend culture for a temporary production boost\n")
-	sb.WriteString("  [cyan]festival confirm yes[-]            - Hold the festival now\n")
-	sb.WriteString("  [cyan]catastrophe[-]                     - Reopen a pending catastrophe or Last Passage (or show the odds)\n")
-	sb.WriteString("  [cyan]harbinger[-]                       - Open the Harbinger panel (alias: harb)\n")
-	sb.WriteString("  [cyan]harbinger[-] appease|brace|invite  - Answer the harbinger without the panel\n")
-
-	sb.WriteString("\n[gold]═══ Game ═══[-]\n")
-	sb.WriteString("  [cyan]rates[-]                       - Show resource rate breakdown\n")
-	sb.WriteString("  [cyan]status[-]                      - Show detailed status\n")
-	sb.WriteString("  [cyan]speed[-] [1.0|1.5|2.0|...]     - Set game speed (unlocks per wonder built)\n")
-	sb.WriteString("  [cyan]theme[-]                       - Open the theme picker (palettes + accessibility)\n")
-	sb.WriteString("  [cyan]theme[-] list                  - List themes with unlock status\n")
-	sb.WriteString("  [cyan]theme[-] <key>                 - Switch to a theme by key\n")
-	sb.WriteString("  [cyan]save[-] [name]                 - Save game (default: autosave)\n")
-	sb.WriteString("  [cyan]load[-] [name]                 - Load game (default: autosave)\n")
-	sb.WriteString("  [cyan]saves[-]                       - List all save files\n")
-	sb.WriteString("  [cyan]dump[-]                        - Export logs to file for debugging\n")
-	sb.WriteString("  [cyan]help[-]                        - Open this Help panel\n")
-
-	sb.WriteString("\n[gold]═══ Accounts ═══[-]\n")
-	sb.WriteString("[gray]Each account is its own slot. Switch/new/wipe live in the Accounts panel (main menu).[-]\n")
-	sb.WriteString("  [cyan]account[-]                     - Show this account's ID, recovery code & backup help\n")
-	sb.WriteString("  [cyan]account[-] list                - List your local accounts\n")
-	sb.WriteString("  [cyan]account[-] switch <name>       - Switch to an existing local account\n")
-	sb.WriteString("  [cyan]account[-] export [path]       - Back up this account's progress to a file\n")
-	sb.WriteString("  [cyan]account[-] backup              - Full snapshot (account.json + saves) to data/backups/\n")
-	sb.WriteString("  [cyan]account[-] import <path>       - Restore an account from a backup file\n")
-	sb.WriteString("  [cyan]account[-] recover <code>      - Restore your identity from a recovery code\n")
-	sb.WriteString("[gray]Wiping or exporting an account also auto-creates a full backup first (last 10 kept).[-]\n")
+	for i, sec := range helpSections {
+		if i > 0 {
+			sb.WriteString("\n")
+		}
+		sb.WriteString("[gold]═══ " + sec.name + " ═══[-]\n")
+		if sec.note != "" {
+			sb.WriteString("[gray]" + sec.note + "[-]\n")
+		}
+		var rows []Usage
+		for _, c := range reg {
+			if c.Section == sec.name {
+				rows = appendHelpRows(rows, c)
+			}
+		}
+		width := 0
+		for _, r := range rows {
+			if n := len([]rune(r.Form)); n > width {
+				width = n
+			}
+		}
+		for _, r := range rows {
+			sb.WriteString("  " + helpForm(r.Form) + strings.Repeat(" ", width-len([]rune(r.Form))) + " - " + r.Text + "\n")
+		}
+	}
 
 	sb.WriteString("\n[gold]═══ Panels ═══[-]\n")
 	sb.WriteString("[gray]Type the command to open the panel.[-]\n")
-	for _, p := range []struct{ cmd, desc string }{
-		{"milestones", "Milestone goals & rewards"},
-		{"research", "Technology tree & progress"},
-		{"plan", "Build plan: queued builds & techs, started as resources come in"},
-		{"expedition", "Scouting expeditions (resource cost)"},
-		{"army", "Army overview & military campaigns"},
-		{"trade", "Exchange rates & trade routes"},
-		{"factions", "Live favours, Geographic Society & standings (alias: diplomacy)"},
-		{"stats", "Empire statistics"},
-		{"wonders", "Wonder bank & built wonders"},
-		{"workers", "Worker domains & assignments"},
-		{"logs", "Recent game log entries"},
-		{"epoch", "Epoch progress & catastrophe"},
-		{"harbinger", "The harbinger's warning & your answers (alias: harb)"},
-		{"history", "Civilization history timeline"},
-		{"buildings", "Built structures by lineage"},
-		{"citymap", "Your settlement map (alias: map)"},
-		{"worldmap", "Known world — your civ & the civs you have met"},
-		{"theme", "Theme picker — palettes & accessibility"},
-		{"help", "This Help panel"},
-	} {
-		sb.WriteString("  [cyan]" + padRight(p.cmd, 12) + "[-] — " + p.desc + "\n")
+	for _, name := range panelOrder {
+		if c := lookup(reg, name); c != nil && c.Panel != "" {
+			sb.WriteString("  [cyan]" + padRight(c.Name, 12) + "[-] — " + c.Panel + "\n")
+		}
 	}
 	sb.WriteString("  [cyan]" + padRight("Accounts", 12) + "[-] — Switch/create/back-up accounts [gray](main-menu panel, not a command)[-]\n")
 
+	sb.WriteString("\n[gold]═══ The Prompt ═══[-]\n")
+	sb.WriteString("[gray]As you type, the best completion shows in dim text after the cursor.[-]\n")
+	sb.WriteString("  [cyan]Tab[-]    - Take the completion; press again for the next one\n")
+	sb.WriteString("  [cyan]→[-]      - Take the completion (cursor at the end of the line)\n")
+	sb.WriteString("  [cyan]Enter[-]  - Run the line; an unfinished line runs its completion\n")
+	sb.WriteString("           (irreversible ones, like sell, are only filled in: Enter again runs them)\n")
+	sb.WriteString("  [cyan]↑/↓[-]    - Command history\n")
+
 	sb.WriteString("\n[gold]═══ Shortcuts ═══[-]\n")
-	sb.WriteString("[gray]g=gather, b=build, r=recruit, a=assign, u=unassign, s=status, res=research, exp=expedition, t=trade, dip=factions[-]\n")
+	var short []string
+	for _, c := range reg {
+		for _, a := range c.Aliases {
+			short = append(short, a+"="+c.Name)
+		}
+	}
+	sb.WriteString("[gray]" + strings.Join(short, ", ") + "[-]\n")
 
 	// Developer Console — only listed when dev mode is active (Ctrl+K passphrase).
 	// Hidden entirely otherwise so the reference stays clean for normal play.
 	if game.DevModeActive {
 		sb.WriteString("\n[gold]═══ Developer Console ═══[-]\n")
 		sb.WriteString("[gray]DEV mode active — type these in the [-][cyan]>[-][gray] prompt:[-]\n")
-		for _, d := range []struct{ cmd, desc string }{
-			{"/god", "Toggle godmode — free costs, instant builds"},
-			{"/fill", "Fill all resources to their storage cap"},
-			{"/give <resource> <amount>", "Add an amount of a resource"},
-			{"/build <building_key>", "Instantly place one building"},
-			{"/techs", "Unlock all techs up to the current age"},
-			{"/age <age_key>", "Jump to any age"},
-			{"/ages", "List all age keys"},
-			{"/prestige <level 0-9>", "Set prestige level"},
-			{"/speed <multiplier>", "Set the tick-speed multiplier"},
-			{"/catastrophe", "Force the current epoch's catastrophe (Iron Era on)"},
-			{"/harbinger", "Bring the current age's harbinger now"},
-			{"/lastpassage", "Make the Last Passage pending (final epoch)"},
-		} {
-			sb.WriteString("  [cyan]" + padRight(d.cmd, 28) + "[-] — " + d.desc + "\n")
+		for _, d := range devCommands {
+			sb.WriteString("  [cyan]" + padRight(d.form, 28) + "[-] — " + d.text + "\n")
 		}
 	}
 
 	return sb.String()
+}
+
+// appendHelpRows adds c's help rows, then its subcommands', depth first.
+func appendHelpRows(rows []Usage, c *Command) []Usage {
+	rows = append(rows, c.Help...)
+	for _, s := range c.Subs {
+		rows = appendHelpRows(rows, s)
+	}
+	return rows
+}
+
+// helpForm colours a usage form: the command words cyan, placeholders plain.
+func helpForm(form string) string {
+	words := strings.Fields(form)
+	n := 0
+	for n < len(words) && !strings.ContainsAny(words[n][:1], "<[") {
+		n++
+	}
+	head := strings.Join(words[:n], " ")
+	rest := strings.Join(words[n:], " ")
+	out := "[cyan]" + tview.Escape(head) + "[-]"
+	if rest != "" {
+		out += " " + tview.Escape(rest)
+	}
+	return out
 }
 
 // padRight pads s with spaces on the right to width w (no truncation).

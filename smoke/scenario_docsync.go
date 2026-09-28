@@ -2,9 +2,6 @@ package smoke
 
 import (
 	"fmt"
-	"go/ast"
-	"go/parser"
-	"go/token"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -24,10 +21,11 @@ import (
 //     page (hero stats included), the README and the wiki's front page, and
 //     in the opening lines of every wiki page, against config counts;
 //   - the lineage count and table rows in buildings.md;
-//   - commands.md against the command handler: every registered command and
-//     every subcommand the autocompleter offers is documented, every
-//     documented command exists, and every documented literal subcommand is
-//     one the handler accepts.
+//   - commands.md against the command registry (ui.Commands, which
+//     ui.TestRegistryMatchesDispatcher holds to the command handler): every
+//     command and subcommand in the registry is documented, every documented
+//     command exists, and every documented literal subcommand is one the
+//     registry lists.
 
 // Quantity keys.
 const (
@@ -231,94 +229,18 @@ func lineageTable(root string) (heading, rows int, err error) {
 	return heading, rows, nil
 }
 
-// handlerCommands parses ui/input.go: HandleCommand's switch gives every
-// registered command (the first name in a case is the command, the rest are
-// aliases) and the handler function it calls; each handler's own string
-// comparisons and cases give the subcommand words it accepts.
-func handlerCommands(root string) (cmds [][]string, accepts map[string]map[string]bool, err error) {
-	fset := token.NewFileSet()
-	f, err := parser.ParseFile(fset, filepath.Join(root, "ui/input.go"), nil, 0)
-	if err != nil {
-		return nil, nil, err
-	}
-	funcs := map[string]*ast.FuncDecl{}
-	for _, d := range f.Decls {
-		if fd, ok := d.(*ast.FuncDecl); ok {
-			funcs[fd.Name.Name] = fd
-		}
-	}
-	hc := funcs["HandleCommand"]
-	if hc == nil {
-		return nil, nil, fmt.Errorf("HandleCommand not found in ui/input.go")
-	}
+// registryCommands reads the command registry (ui.Commands): every command
+// (its name, then its aliases) and the words each takes right after its name.
+func registryCommands() (cmds [][]string, accepts map[string]map[string]bool) {
 	accepts = map[string]map[string]bool{}
-	ast.Inspect(hc.Body, func(n ast.Node) bool {
-		sw, ok := n.(*ast.SwitchStmt)
-		if !ok {
-			return true
-		}
-		for _, st := range sw.Body.List {
-			cc := st.(*ast.CaseClause)
-			var names []string
-			for _, e := range cc.List {
-				if lit, ok := e.(*ast.BasicLit); ok && lit.Kind == token.STRING {
-					s, _ := strconv.Unquote(lit.Value)
-					names = append(names, s)
-				}
-			}
-			if len(names) == 0 {
-				continue
-			}
-			cmds = append(cmds, names)
-			words := map[string]bool{}
-			ast.Inspect(cc, func(n ast.Node) bool {
-				if call, ok := n.(*ast.CallExpr); ok {
-					if id, ok := call.Fun.(*ast.Ident); ok && funcs[id.Name] != nil && id.Name != "HandleCommand" {
-						for w := range stringWords(funcs[id.Name].Body) {
-							words[w] = true
-						}
-					}
-				}
-				return true
-			})
-			for w := range stringWords(cc) {
-				words[w] = true
-			}
-			accepts[names[0]] = words
-		}
-		return false
-	})
-	return cmds, accepts, nil
-}
-
-// stringWords is every string literal used as a switch case or compared
-// with == / != under n: the words a handler reacts to.
-func stringWords(n ast.Node) map[string]bool {
-	out := map[string]bool{}
-	add := func(e ast.Expr) {
-		if lit, ok := e.(*ast.BasicLit); ok && lit.Kind == token.STRING {
-			s, _ := strconv.Unquote(lit.Value)
-			out[strings.ToLower(s)] = true
-		}
+	for _, c := range ui.Commands() {
+		cmds = append(cmds, c.Names)
+		accepts[c.Names[0]] = c.Accepts
 	}
-	ast.Inspect(n, func(n ast.Node) bool {
-		switch x := n.(type) {
-		case *ast.CaseClause:
-			for _, e := range x.List {
-				add(e)
-			}
-		case *ast.BinaryExpr:
-			if x.Op == token.EQL || x.Op == token.NEQ {
-				add(x.X)
-				add(x.Y)
-			}
-		}
-		return true
-	})
-	return out
+	return cmds, accepts
 }
 
-// dynamicWords is every key the autocompleter can offer that is not a
+// dynamicWords is every game key a command can take that is not a
 // subcommand: resources, buildings, techs, themes, upgrades, factions,
 // routes, expeditions.
 func dynamicWords() map[string]bool {
@@ -357,12 +279,11 @@ func dynamicWords() map[string]bool {
 	return out
 }
 
-// offeredSubcommands asks the autocompleter what follows each command on a
-// fresh game, keeping keywords and dropping keys and numbers, two levels
-// deep ("trade route start").
-func offeredSubcommands(cmds [][]string) map[string][]string {
-	ge := game.NewGameEngine()
-	comp := ui.NewAutoCompleter(ge)
+// offeredSubcommands is what the registry lists after each command, two
+// words deep ("trade route start"), keeping keywords and dropping game keys
+// and numbers (gather's food, wood and stone are resources, not
+// subcommands).
+func offeredSubcommands() map[string][]string {
 	dyn := dynamicWords()
 	keyword := func(w string) bool {
 		if _, err := strconv.ParseFloat(strings.TrimSuffix(w, "x"), 64); err == nil {
@@ -371,28 +292,19 @@ func offeredSubcommands(cmds [][]string) map[string][]string {
 		return !dyn[w]
 	}
 	out := map[string][]string{}
-	for _, names := range cmds {
-		cmd := names[0]
+	for _, c := range ui.Commands() {
 		var subs []string
-		first := map[string]bool{}
-		for _, s := range comp(cmd + " ") {
-			if f := strings.Fields(s); len(f) == 2 && keyword(f[1]) {
-				first[f[1]] = true
+		for _, s := range c.Subs {
+			ok := true
+			for _, w := range strings.Fields(s) {
+				ok = ok && keyword(w)
 			}
-		}
-		for _, w := range sortedKeys(first) {
-			subs = append(subs, w)
-			for _, s2 := range comp(cmd + " " + w + " ") {
-				// Some completers offer their first-level words at every
-				// position ("research list list"); only genuinely nested
-				// words count.
-				if f2 := strings.Fields(s2); len(f2) == 3 && keyword(f2[2]) && !first[f2[2]] {
-					subs = append(subs, w+" "+f2[2])
-				}
+			if ok {
+				subs = append(subs, s)
 			}
 		}
 		sort.Strings(subs)
-		out[cmd] = subs
+		out[c.Names[0]] = subs
 	}
 	return out
 }
@@ -465,11 +377,7 @@ func runDocsync(e *Env, res *Result) {
 		}
 	}
 
-	cmds, accepts, err := handlerCommands(e.RepoRoot)
-	if err != nil {
-		res.fail("docsync_parse", "%v", err)
-		return
-	}
+	cmds, accepts := registryCommands()
 	mdRaw, err := os.ReadFile(filepath.Join(e.RepoRoot, "site/docs/commands.md"))
 	if err != nil {
 		res.fail("docsync_read", "%v", err)
@@ -497,7 +405,7 @@ func runDocsync(e *Env, res *Result) {
 			}
 		}
 	}
-	offered := offeredSubcommands(cmds)
+	offered := offeredSubcommands()
 	// A subcommand is documented when some documented form of the command
 	// (or an alias) names its words in order, as literals or as choices in
 	// brackets: `recruit [count|max]` documents recruit max.
@@ -530,7 +438,7 @@ func runDocsync(e *Env, res *Result) {
 	for _, names := range cmds {
 		for _, sub := range offered[names[0]] {
 			if ok := subDocumented(names[0], sub); !ok {
-				res.fail("doc_subcommand_missing", "commands.md has no `%s %s` (the autocompleter offers it)", names[0], sub)
+				res.fail("doc_subcommand_missing", "commands.md has no `%s %s` (the command registry lists it)", names[0], sub)
 			}
 		}
 	}
@@ -546,7 +454,7 @@ func runDocsync(e *Env, res *Result) {
 		f := strings.Fields(strings.ToLower(form))
 		primary, ok := alias[f[0]]
 		if !ok {
-			res.fail("doc_command_unknown", "commands.md documents `%s`, but %q is not a registered command", form, f[0])
+			res.fail("doc_command_unknown", "commands.md documents `%s`, but %q is not in the command registry", form, f[0])
 			continue
 		}
 		if len(f) < 2 || !isLiteralWord(f[1]) {
@@ -558,7 +466,7 @@ func runDocsync(e *Env, res *Result) {
 			off[strings.Fields(s)[0]] = true
 		}
 		if !acc[f[1]] && !off[f[1]] {
-			res.fail("doc_subcommand_unknown", "commands.md documents `%s`, but `%s` does not accept %q", form, primary, f[1])
+			res.fail("doc_subcommand_unknown", "commands.md documents `%s`, but the registry's `%s` does not take %q", form, primary, f[1])
 		}
 	}
 	res.Summary = fmt.Sprintf("%d number claim(s) checked, %d wrong; %d command(s), %d documented form(s)", len(claims), wrong, len(cmds), len(forms))
