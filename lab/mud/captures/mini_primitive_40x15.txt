@@ -1,0 +1,15 @@
+╭─ The Clearing ───────────── morning ─╮
+│      ♣Woods───⌂Huts────@Fire         │
+│       8 !     │10      │ ?           │
+│               │        │             │
+│               ▪Stash───······        │
+│                2       │             │
+│                        │             │
+│                        ∩Track        │
+│                                      │
+│ ? The Wild Man is in the Clearing.   │
+│                                      │
+│                                      │
+│                                      │
+│                                      │
+╰─ walk ↵ ─────────────────────────────╯

@@ -1,0 +1,36 @@
+ § The Observatory Deck  Interstellar Age · Cosmic Era                                                    night · solar
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│          ·            .      ·               ·       . ·     ▗▄▄▄▄▄▄▄▄▄▄▄▄▄││                                        │
+│          · ·  .              ·    .          ·       .        ─•    .  ·.  ││                     @Observ.──★Spire   │
+│       ·   +·  .          .                   +                          .. ││                     │         │        │
+│      .    ·              .                                              .. ││ ♣Weavers──⌂Habitat──○Ring─────$Bazaar  │
+│                .  .                     .     .       ·  ·  .        .     ││ │         •         │         │        │
+│                 ┌──┐  ┌──┐  ┌──┐  ┌──┐  ┌──┐  ┌──┐   ╭─╮           ╲ ╱ ╲ ╱ ││ ≡Hydro────▪Depots──•#Launch──•¤StarFrg │
+│                 │▪▪│  │▪▪│  │▪▪│  │▪▪│  │▪▪│  │▪▪│  ╭┴─┴╮          ─◊─ ─◊─ ││ │         •         │                  │
+│                 │▪▪│  │▪▪│  │▪▪│  │▪▪│  │▪▪│  │▪▪│  │▫▫▫│          ╱ ╲ ╱ ╲ ││ ▲Tethers──‡Fleet────∩JumpGt            │
+│═╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The observatory deck looks out at stars that have been catalogued twice. Nobody here has seen the ground in years.
+  Nobody here is standing still. Night cycle. The city does not sleep so much as dim. A solar storm has the hull
+  lights flickering.
+
+  Here: Cyber Hub ×14 (old) · Neuro Research Center ×10 (old) · AI Research Lab ×5 (old) · Data Center ×15 (old) ·
+  Innovation Hub ×5 (old) · Research Institute ×30 (old) · Natural Philosophy Hall ×15 (old)   Hands: 763/763
+  Makes: Data +11.5B/t ▱▱▱▱▱   Knowledge +371k/t ▱▱▱▱▱
+  Exits: spinward the Beacon Spire · rimward the Orbital Ring
+
+
+
+
+
+
+
+
+
+
+  > go academy
+  You walk to the Observatory Deck.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back

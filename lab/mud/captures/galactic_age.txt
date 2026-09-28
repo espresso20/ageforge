@@ -1,0 +1,36 @@
+ ○ The Orbital Ring  Galactic Age · Cosmic Era                                                                afternoon
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                  ·  .          ·                .       . · .▗▄▄▄▄▄▄▄▄▄▄▄▄▄││                                        │
+│                  +             +                .       . · .             .││                     §Observ.──★Spire   │
+│                 ·                                   .        ·             ││                     │         │        │
+│                 ·+  .                               .  ·                ·  ││ ♣Weavers──⌂Habitat──@Ring─────$Bazaar  │
+│       ·  .    .         ·                · .           ·         .         ││ │         •         │         │        │
+│  ╭─╮   ╭─╮       o   ╭───╮                     ╭─╮    ╭─╮                  ││ ≡Hydro────▪Depots──•#Launch──•¤StarFrg │
+│ ─┤▫├─ ─┤▫├─     /█\  │ ◦ │  ▐▀▀▌  ▐▀▀▌  ▐▀▀▌  ╭┴─┴╮  ╭┴─┴╮      ╭◊╮   ╭◊╮  ││ │         •         │                  │
+│  ╰─╯   ╰─╯      / \  ╰───╯  ▐◘ ▌  ▐◘ ▌  ▐◘ ▌  ▐▫▫▫▌  ▐▫▫▫▌     ◊┤$├◊ ◊┤$├◊ ││ ▲Tethers──‡Fleet────∩JumpGt            │
+│═╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The ring curves up and away in both directions until it meets itself overhead. The Elder Relay stands in the middle
+  of it all, and people walk wide around. Its message arrived as geometry, and the linguists needed a day to make it
+  into words. Afternoon shift. Outside the windows, nothing, in every direction.
+
+  Here: VR Studio ×15 (old) · Concert Hall ×8 (old)
+  Makes: Culture +27k/t ▱▱▱▱▱
+  Folk: 6637 (room for 126.1M)   morale ▰▰▰▰▰
+  Also here: the Elder Relay.
+  Exits: hubward the Observatory Deck · spinward the Bazaar Ring · rimward the Launch Complex · antispinward the
+  Habitat Rings
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back

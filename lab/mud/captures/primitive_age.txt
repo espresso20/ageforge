@@ -1,0 +1,36 @@
+ ⌂ The Huts  Primitive Age · Stone Era                                                                 afternoon · rain
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│      ▔▀▀▀▀▀▀▀▀▀▀▔▀▀▀▀▀▀▀▀▀▔                                 ☼              ││                                        │
+│       ╱   ▔▀▀▀▀▀▀▀▀▔▀▀▀▀▀▀▀▔      ╱   ╱   ╱                                ││                     §Stories──★Rise    │
+│                                                ╱                           ││                     │         │        │
+│               ╱                               ╱                            ││ ♣Woods────@Huts─────○Fire─────······   │
+│                                       ╱         ╱   ╱   ╱                 ╱││ │         •         │                  │
+│  ♣   ♣                     /\    /\    /\    /\    ╱ ╱                     ││ ≡Fields───▪Stash────······             │
+│ ♣♣♣ ♣♣♣                 ╱ /▫ \  /▫ \  /▫ \  /▫ \    ╱                   ╱  ││                     │                  │
+│  |   |                    |__|  |__|  |__|  |__| ╱   ╱                 ╱   ││                     ∩Track             │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  Huts, close together, for warmth and for gossip. People cross it with somewhere to be. The afternoon has gone slow
+  and golden. It is raining, lightly and without conviction.
+
+  Here: Hut ×10
+  Exits: east the Clearing · south the Stash Pits · west the Woods
+
+
+
+
+
+
+
+
+
+
+
+
+
+  > go huts
+  You walk to the Huts.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back

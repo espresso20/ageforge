@@ -1,0 +1,15 @@
+╭─ The Orbital Ring ─────── afternoon ─╮
+│                   §Observ.─★Spire    │
+│                   │94      │20       │
+│                   │        │         │
+│ ♣Weavers─⌂Habitat─@Ring────$Bazaar   │
+│ │67      │130     │23 ?    │57       │
+│ │        •        │        │         │
+│ ≡Hydro───▪Depots─•#Launch─•¤StarFrg  │
+│ │31      │160     │164      56       │
+│ │        •        │                  │
+│ ▲Tethers─‡Fleet───∩JumpGt            │
+│  49       55                         │
+│ ? The Elder Relay is in the Orbital  │
+│ Ring.                                │
+╰─ walk ↵ ─────────────────────────────╯

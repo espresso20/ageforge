@@ -1,0 +1,36 @@
+ ○ The Village Green  Bronze Age · Stone Era                                                           afternoon · rain
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                                          ☼               ▔▀▀▀▀▀▀▀▀▀▔       ││                                        │
+│         ╱       ╱                                        ╱▔▀▀▀▀▀▔▀▀▀▀▀▀▀▀▀▔││                     §Stories──★Rise    │
+│        ╱       ╱                      ╱                                    ││                     │         │        │
+│       ╱       ╱                                                            ││ ♣Woods────⌂Huts─────@Green────$Barter  │
+│╱    ╱                 ╱                                                    ││ │         •         │                  │
+│  /\   /\                         o     )            ╱                      ││ ≡Fields───▪Stash───•#Smithy            │
+│ /▫ \ /▫ \                       /█\   (*)          ╱                 ¤ o ¤ ││ •                   │                  │
+│ |__| |__|          ╱           ╱/ \  o─^─o        ╱                 ▀▀ ▀▀  ││ ▲Pits               ∩Track             │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  A patch of grass worn to dirt by people standing about on it. The Soothsayer has taken the best spot, and nobody has
+  asked for it back. Three people said they had dreamed about the Soothsayer the week before, and one of them had told
+  people at the time, which has made her briefly important. The afternoon has gone slow and golden. It is raining,
+  lightly and without conviction.
+
+  Folk: 260 (room for 575)   morale ▰▰▰▱▱
+  Also here: the Soothsayer.
+  Exits: north the Story Circle · east the Barter Stones · south Smithy Lane · west the Huts
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back

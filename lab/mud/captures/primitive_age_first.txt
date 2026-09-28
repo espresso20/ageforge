@@ -1,0 +1,36 @@
+ ○ The Clearing  Primitive Age · Stone Era                                                               morning · rain
+╭──────────────────────────────────────────────────────────────────────────────────────╮╭─ map ────────────────────────╮
+│▀▀▔           ▔▀▀▀▔ ☼                                                               ▔▀││                              │
+│                 ▔▀▀▀▔            ╱                     ╱               ╱             ││                              │
+│                                                       ╱  ╱   ╱                    ╱  ││ ♣Woods────⌂Huts─────@Fire    │
+│                                                                      ╱           ╱   ││           │         │        │
+│                  ╱                        ╱                 ╱        ╱               ││           ▪Stash────······   │
+│  /\   /\        ╱                     o  ╱  )         ╱                    ╱         ││                     │        │
+│ /▫ \ /▫ \      ╱                 ╱   /█\╱╱ (*)                                      ╱││                     ∩Track   │
+│╱|__| |__|                       ╱   ╱/ \╱ o─^─o                   ╱                ╱ ││                              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._││                              │
+╰──────────────────────────────────────────────────────────────────────────────────────╯╰──────────────────────────────╯
+
+  A clearing with a fire in it, which is most of what the settlement is so far. The Wild Man stands in the middle of
+  it all, and people walk wide around. Several people packed a bag that night and unpacked it in the morning, feeling
+  foolish. Morning. The shadows are long and pointing west. It is raining, lightly and without conviction.
+
+  Folk: 0 (room for 100)   morale ▰▰▰▱▱
+  Also here: the Wild Man.
+  Exits: south the south track · west the Huts
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back

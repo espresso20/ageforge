@@ -1,0 +1,36 @@
+ ¤ The Foundries  Industrial Age · Steel Era                                                              night · cloud
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│               ·         ·      ☾·          ·                               ││                                        │
+│               ·         ·                  ·                               ││                     §Univ.────★Promen. │
+│                             ·  ·  ·              ·  ·      ·   ·      ·    ││                     │         │        │
+│                        °  ° ·                  ° ·         ·   ·           ││ ♣Coal─────⌂Terrace──○Piazza───$Exch.   │
+│ ·   +       ·  ·                      °  °                     ·  ·        ││ │         •         │         │        │
+│                       °  °    °  °    °  °    °    °                       ││ ≡Plant.───▪Wareh.──•#Mills───•@Foundry │
+│ ╱│╱│╱│ ╱│╱│╱│         ▌  ▌    ▌  ▌    ▌  ▌   ▄*▄  ▄*▄                      ││ │         •         │                  │
+│ │▫▫▫▫│ │▫▫▫▫│        ▐█▄▄█▌  ▐█▄▄█▌  ▐█▄▄█▌  ███  ███                      ││ ▲Mines────‡Fort─────∩Toll              │
+│▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  Foundries pour iron into sand under a roof of permanent smoke. People cross it with somewhere to be. The old iron
+  works is still in use, and nobody has had the heart to pull it down. Night, and the lit windows are the only way to
+  tell where the streets are. The sky is the colour of the chimneys.
+
+  Here: Steel Mill ×5 · Iron Works ×6 (old) · Ironmonger ×12   Hands: 131/131
+  Makes: Steel +2.6M/t ▰▰▰▰▰ full   Iron +28k/t ▱▱▱▱▱
+  Exits: north the Exchange · west the Mills
+
+
+
+
+
+
+
+
+
+
+
+  > go forge
+  You walk through the Exchange to the Foundries.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back

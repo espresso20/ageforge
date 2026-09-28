@@ -1,0 +1,148 @@
+=== 1/4  go gate ===
+ ∩ The Toll Road  Industrial Age · Steel Era                                                              night · cloud
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│   ·                            ☾        ·                  ·             · ││                                        │
+│   ·         ·                                      ·                     · ││                     §Univ.────★Promen. │
+│             ·                                              ·              ·││                     │         │        │
+│   ·             ·                       +                  ·             ··││ ♣Coal─────⌂Terrace──○Piazza───$Exch.   │
+│·                    ·                                             ·        ││ │         •         │         │        │
+│                                                                            ││ ≡Plant.───▪Wareh.──•#Mills───•¤Foundry │
+│ ▙▟▙▟▙ ▙▟▙▟▙               ╱▔▔▔▔╲  ┼─┼─┼   ▄▄o                              ││ │         •         │                  │
+│ █▫ ▫█ █▫ ▫█               │ o  │  │x│x│  (o)(o)                            ││ ▲Mines────‡Fort─────@Toll              │
+│▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The toll road runs out between milestones and a toll-keeper's hut. Sentries walk the line with their eyes on the
+  horizon. Everyone seems to be looking at the road out. Night, and the lit windows are the only way to tell where the
+  streets are. The sky is the colour of the chimneys.
+
+  Caravans: 2 route(s) on the road
+  Also here: an envoy of Artisan League, raiders of Ironhold Clans, an envoy of Merchant Guild, an envoy of Riverlands
+  Tribes.
+  Exits: north the Mills · west the Fort · out the wide world
+
+
+
+
+
+
+
+
+
+
+  > go gate
+  You walk through the Mills to the Toll Road.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 2/4  go forge ===
+ ¤ The Foundries  Industrial Age · Steel Era                                                              night · cloud
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│               ·         ·      ☾·          ·                               ││                                        │
+│               ·         ·                  ·                               ││                     §Univ.────★Promen. │
+│                            ·· ··                ··         ·   ·      ·    ││                     │         │        │
+│                    °  °     ·              °     ·         ·   ·           ││ ♣Coal─────⌂Terrace──○Piazza───$Exch.   │
+│ ·   +       ·  ·                  °  °                         ·  ·        ││ │         •         │         │        │
+│                   °  °    °  °    °  °    °    °     ▗                     ││ ≡Plant.───▪Wareh.──•#Mills───•@Foundry │
+│ ╱│╱│╱│ ╱│╱│╱│     ▌  ▌    ▌  ▌    ▌  ▌   ▄*▄  ▄*▄   ▟x▖                    ││ │         •         │                  │
+│ │▫▫▫▫│ │▫▫▫▫│    ▐█▄▄█▌  ▐█▄▄█▌  ▐█▄▄█▌  ███  ███  ▟▘ ▀▙                   ││ ▲Mines────‡Fort─────∩Toll              │
+│▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  Foundries pour iron into sand under a roof of permanent smoke. People cross it with somewhere to be. Scorched
+  footings mark where the iron works used to be. The old iron works is still in use, and nobody has had the heart to
+  pull it down. Night, and the lit windows are the only way to tell where the streets are. The sky is the colour of
+  the chimneys.
+
+  Here: Steel Mill ×5 · Iron Works ×4 (old) 2 ruined · Ironmonger ×8 4 ruined   Hands: 131/99
+  Makes: Steel +2.6M/t ▰▰▰▰▰ full   Iron +28k/t ▱▱▱▱▱
+  Exits: north the Exchange · west the Mills
+
+
+
+
+
+
+
+
+  > go gate
+  You walk through the Mills to the Toll Road.
+  > go forge
+  You walk through the Mills to the Foundries.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 3/4  go terraces ===
+ ⌂ The Terraces  Industrial Age · Steel Era                                                               night · cloud
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                                ☾           ·   ·        ·                  ││                                        │
+│                             ·                                              ││                     §Univ.────★Promen. │
+│                      ·   ·  ·                                      +       ││                     │         │        │
+│                      ·   +                                         ·       ││ ♣Coal─────@Terrace──○Piazza───$Exch.   │
+│                                             ·                         ·    ││ │         •         │         │        │
+│  ╔╗   ╔╗              ┌┴┐  ┌┴┐  ┌┴┐  ┌┴┐  ┌┴┐   /\              ╭─╮   ╭─╮  ││ ≡Plant.───▪Wareh.──•#Mills───•¤Foundry │
+│  ║╠╗  ║╠╗             │▫│  │▫│  │▫│  │▫│  │▫│  /▫ \            ╭┴─┴╮ ╭┴─┴╮ ││ │         •         │                  │
+│ ▄╨╨▄ ▄╨╨▄             │▫│  │▫│  │▫│  │▫│  │▫│  |__|            ▐▫▫▫▌ ▐▫▫▫▌ ││ ▲Mines────‡Fort─────∩Toll              │
+│▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  Terraces of brick houses, each with a step somebody scrubs every morning. It is packed, and the newest buildings
+  have been fitted into the gaps between the old. Somebody is singing. Between the new buildings stands the old house,
+  doing what it always did. Night, and the lit windows are the only way to tell where the streets are. The sky is the
+  colour of the chimneys.
+
+  Here: Tenement ×30 · Estate ×8 (old) · House ×7 (old)
+  Exits: east the Piazza · south the Warehouses · west the Coal Pits
+
+
+
+
+
+
+
+  > go gate
+  You walk through the Mills to the Toll Road.
+  > go forge
+  You walk through the Mills to the Foundries.
+  > go terraces
+  You walk through the Exchange and the Piazza to the Terraces.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 4/4  survey ===
+ ⌂ The Terraces  Industrial Age · Steel Era                                                               night · cloud
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                                ☾           ·   ·        ·                  ││                                        │
+│                             ·                                              ││                     §Univ.────★Promen. │
+│                      ·   ·  ·                                      +       ││                     │         │        │
+│                      ·   +                                         ·       ││ ♣Coal─────@Terrace──○Piazza───$Exch.   │
+│                                             ·                         ·    ││ │         •         │         │        │
+│  ╔╗   ╔╗              ┌┴┐  ┌┴┐  ┌┴┐  ┌┴┐  ┌┴┐   /\              ╭─╮   ╭─╮  ││ ≡Plant.───▪Wareh.──•#Mills───•¤Foundry │
+│  ║╠╗  ║╠╗             │▫│  │▫│  │▫│  │▫│  │▫│  /▫ \            ╭┴─┴╮ ╭┴─┴╮ ││ │         •         │                  │
+│ ▄╨╨▄ ▄╨╨▄             │▫│  │▫│  │▫│  │▫│  │▫│  |__|            ▐▫▫▫▌ ▐▫▫▫▌ ││ ▲Mines────‡Fort─────∩Toll              │
+│▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  You climb somewhere high and look out over the Piazza and everything around it.
+  § The University            45 built  newest: Natural Philosophy Hall
+  ★ The Grand Promenade        9 built  newest: Crystal Palace
+  ♣ The Coal Pits             39 built  newest: Steam Coal Plant
+  ⌂ The Terraces              45 built  newest: Tenement
+  ○ The Piazza                 8 built  newest: Concert Hall
+  $ The Exchange              15 built  newest: Port
+  ≡ The Plantations           31 built  newest: Plantation
+  ▪ The Warehouses            53 built  newest: Industrial Depot
+  # The Mills                 37 built  newest: Coal Plant
+  ¤ The Foundries             17 built  newest: Steel Mill  6 ruined
+  ▲ The Mines                 13 built  newest: Stonemason's Guild
+  ‡ The Fort                  30 built  newest: Fortress
+  ∩ The Toll Road           —
+
+  You walk through the Mills to the Foundries.
+  > go terraces
+  You walk through the Exchange and the Piazza to the Terraces.
+  > survey
+  You take it all in.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back

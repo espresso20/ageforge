@@ -1,0 +1,15 @@
+╭─ The Forum ────────────────── night ─╮
+│                   §Library*★Wonders  │
+│                   │24      │6        │
+│                   │        │         │
+│ ♣Timber──⌂Lanes*──@Forum───$Guilds*  │
+│ │32      │15      │ ?      │15       │
+│ │        •        │        │         │
+│ ≡Fields──▪Granary*#Works──•¤Forges*  │
+│ │23      │33      │17       12       │
+│ │        •        │                  │
+│ ▲Quarry──‡Barrack*∩Gate              │
+│  13       30                         │
+│ * The Library Steps: +9 Monastery    │
+│ Library                              │
+╰─ walk ↵ ─────────────────────────────╯

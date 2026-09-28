@@ -1,0 +1,36 @@
+ ○ The Forum  Medieval Age · Iron Era                                                                             night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│    ·                  ·                                      ☾             ││                                        │
+│    ·               +  +    ·                                  +            ││                     §Library──★Wonders │
+│     +          ·             ·  ·                           ·              ││                     │         │        │
+│     ·                                                       ·              ││ ♣Timber───⌂Lanes────@Forum────$Guilds  │
+│                                              +      ·                      ││ │         •         │         │        │
+│  /\   /\                        o   ▁▄▄▄▄▄▁                                ││ ≡Fields───▪Granary─•#Works───•¤Forges  │
+│ /▫ \ /▫ \                      /█\   ║ ║ ║                    ¤ o ¤  ¤ o ¤ ││ │         •         │                  │
+│ |__| |__|                      / \  ▀▀▀▀▀▀▀                  ▀▀ ▀▀  ▀▀ ▀▀  ││ ▲Quarry───‡Barrack──∩Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  Paving stones, a speaking platform, and a great many opinions. The Town Crier stands in the middle of it all, and
+  people walk wide around. The bells rang all night. Night. The fires are banked and the stars are very close.
+
+  Folk: 809 (room for 2375)   morale ▰▰▰▱▱
+  Also here: the Town Crier.
+  Exits: north the Library Steps · east Guild Row · south the Workshops · west the Lanes
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back

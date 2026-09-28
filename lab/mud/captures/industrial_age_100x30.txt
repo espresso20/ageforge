@@ -1,0 +1,30 @@
+ ○ The Piazza  Industrial Age · Steel Era                                             night · cloud
+╭────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│             ·   ·     ☾       +           ·            ││                     §Univ.────★Promen. │
+│             ·   ·             ·                        ││                     │         │        │
+│                                                   ·    ││ ♣Coal─────⌂Terrace──@Piazza───$Exch.   │
+│ ┌┴┐      o     ╷     ╭─╮    ╭─╮    ╭─╮    ╭─╮    ╱▔▔▔╲ ││ │         •         │         │        │
+│ │▫│     /█\   ╲│╱   ╭┴─┴╮  ╭┴─┴╮  ╭┴─┴╮  ╭┴─┴╮   ║ ║ ║ ││ ≡Plant.───▪Wareh.──•#Mills───•¤Foundry │
+│ │▫│     / \  ▐▄▄▄▌  ▐▫▫▫▌  ▐▫▫▫▌  ▐▫▫▫▌  ▐▫▫▫▌   ▀▀▀▀▀ ││ │         •         │                  │
+│▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁││ ▲Mines────‡Fort─────∩Toll              │
+╰────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The piazza is cobbled in a pattern the architect was very pleased with. The Newsboy stands in
+  the middle of it all, and people walk wide around. The shift whistle blew early. Night, and the
+  lit windows are the only way to tell where the streets are. The sky is the colour of the
+  chimneys.
+
+  Here: Concert Hall ×8
+  Makes: Culture +125/t ▱▱▱▱▱
+  Folk: 1302 (room for 62k)   morale ▰▰▰▰▰
+  Also here: the Newsboy.
+  Exits: north the University · east the Exchange · south the Mills · west the Terraces
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back

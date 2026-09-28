@@ -1,0 +1,36 @@
+ ⌂ The Stacks  Cyberpunk Age · Neon Era                                                                           night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                                             +                    ·   ☾   · ││                                        │
+│                     ·                       ·                    · ·       ││                     §Servers──★Citadel │
+│                     ·     +         ·      ·                     ·         ││                     │         │        │
+│                     ·                      +                             · ││ ♣Vats─────@Stacks───○Atrium───$Night   │
+│   ·               ·                 ·              +                       ││ │         •         │         │        │
+│  ║ ║   ║ ║        ▐▀▀▌  ▐▀▀▌  ▐▀▀▌  ▐▀▀▌  ┌┴┐  ┌┴┐  ┌┴┐                    ││ ≡Vats─────▪Vaults──•#Augment──¤Refin.  │
+│ ╔╩═╩╗ ╔╩═╩╗       ▐▫▫▌  ▐▫▫▌  ▐▫▫▌  ▐▫▫▌  │▫│  │▫│  │▫│          ▐▀▀▌ ▐▀▀▌ ││ │         │         │                  │
+│ ║▫ ▫║ ║▫ ▫║       ▐▫▫▌  ▐▫▫▌  ▐▫▫▌  ▐▫▫▌  │▫│  │▫│  │▫│          ▐◘ ▌ ▐◘ ▌ ││ ▲Crystal──‡Drones───∩Skyport           │
+│▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  Housing stacks rise in pods, bolted on wherever there was room for one more. Nobody here has seen the ground in
+  years. Somebody is singing. Between the new buildings stands the old house, doing what it always did. Night cycle.
+  The city does not sleep so much as dim.
+
+  Here: Arcology Pod ×25 · Smart Complex ×30 (old) · Row House ×30 (old) · Settlement Block ×8 (old) · House ×7 (old)
+  Exits: east the Arcology Atrium · south the Cyber Vaults · west the Nanovats
+
+
+
+
+
+
+
+
+
+
+
+
+  > go homes
+  You walk to the Stacks.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back

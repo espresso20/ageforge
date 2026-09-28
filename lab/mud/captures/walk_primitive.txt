@@ -1,0 +1,185 @@
+=== 1/5  (opening look) ===
+ ○ The Clearing  Primitive Age · Stone Era                                                               morning · rain
+╭──────────────────────────────────────────────────────────────────────────────────────╮╭─ map ────────────────────────╮
+│▀▀▔           ▔▀▀▀▔ ☼                                                               ▔▀││                              │
+│                 ▔▀▀▀▔            ╱                     ╱               ╱             ││                              │
+│                                                       ╱  ╱   ╱                    ╱  ││ ♣Woods────⌂Huts─────@Fire    │
+│                                                                      ╱           ╱   ││           │         │        │
+│                  ╱                        ╱                 ╱        ╱               ││           ▪Stash────······   │
+│  /\   /\        ╱                     o  ╱  )         ╱                    ╱         ││                     │        │
+│ /▫ \ /▫ \      ╱                 ╱   /█\╱╱ (*)                                      ╱││                     ∩Track   │
+│╱|__| |__|                       ╱   ╱/ \╱ o─^─o                   ╱                ╱ ││                              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._││                              │
+╰──────────────────────────────────────────────────────────────────────────────────────╯╰──────────────────────────────╯
+
+  A clearing with a fire in it, which is most of what the settlement is so far. The Wild Man stands in the middle of
+  it all, and people walk wide around. Several people packed a bag that night and unpacked it in the morning, feeling
+  foolish. Morning. The shadows are long and pointing west. It is raining, lightly and without conviction.
+
+  Folk: 0 (room for 100)   morale ▰▰▰▱▱
+  Also here: the Wild Man.
+  Exits: south the south track · west the Huts
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 2/5  west ===
+ ⌂ The Huts  Primitive Age · Stone Era                                                                   morning · rain
+╭──────────────────────────────────────────────────────────────────────────────────────╮╭─ map ────────────────────────╮
+│                    ▔▀▀▀▀▀▔▀▀▀▀▀▀▀▀▀▀▔                                                ││                              │
+│       ╱         ╱     ▔▀▀▀▀▀▀▀▀▔  ╱   ▔▀▀▀▀▀▀▀▀▀▀▔                              ╱   ╱││                              │
+│                                                ╱                                     ││ ♣Woods────@Huts─────○Fire    │
+│               ╱                               ╱                                      ││           │         │        │
+│                                       ╱         ╱   ╱   ╱                 ╱         ╱││           ▪Stash────······   │
+│  ♣   ♣                          /\    /\    /\    /\ ╱                             ╱ ││                     │        │
+│ ♣♣♣ ♣♣♣                 ╱    ╱ /▫ \  /▫ \  /▫ \  /▫ \                   ╱            ││                     ∩Track   │
+│  |   |                         |__|╱ |__|  |__|  |__|╱                 ╱      ╱      ││                              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._││                              │
+╰──────────────────────────────────────────────────────────────────────────────────────╯╰──────────────────────────────╯
+
+  Huts, close together, for warmth and for gossip. It is busy in the ordinary way. Fresh sawdust and mortar around the
+  hut. Morning. The shadows are long and pointing west. It is raining, lightly and without conviction.
+
+  Here: Hut ×10
+  Exits: east the Clearing · south the Stash Pits · west the Woods
+
+
+
+
+
+
+
+
+
+
+
+
+
+  > west
+  You walk west to the Huts.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 3/5  south ===
+ ▪ The Stash Pits  Primitive Age · Stone Era                                                             morning · rain
+╭──────────────────────────────────────────────────────────────────────────────────────╮╭─ map ────────────────────────╮
+│                    ☼                                                     ▔▀▀▀▔       ││                              │
+│    ╱                                      ╱           ▔▀▀▀▀▀▀▀▀▀▀▔    ▔▀▀▀▀▀▀▀▀▀▀▔   ││                              │
+│            ╱                                          ╱              ╱        ╱╱     ││ ♣Woods────⌂Huts─────○Fire    │
+│           ╱                                   ╱                     ╱        ╱       ││           │         │        │
+│     ╱         ╱    ╱                                                                 ││           @Stash────······   │
+│    ╱         ╱    ╱                                ╱               ╱                 ││                     │        │
+│                         ╱            ___    ___                   ╱                  ││                     ∩Track   │
+│                                     (▒▒▒)  (▒▒▒)                                     ││                              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._││                              │
+╰──────────────────────────────────────────────────────────────────────────────────────╯╰──────────────────────────────╯
+
+  Stash pits, lined with bark and covered with a flat rock. There is room here for a great deal more. People keep
+  stopping to look at the stash. Morning. The shadows are long and pointing west. It is raining, lightly and without
+  conviction.
+
+  Here: Stash ×2
+  Shelves: Food ▱▱▱▱▱  Wood ▱▱▱▱▱
+  Exits: north the Huts · east the south track
+
+
+
+
+
+
+
+
+
+  > west
+  You walk west to the Huts.
+  > south
+  You walk south to the Stash Pits.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 4/5  go track ===
+ ∩ The Track Out  Primitive Age · Stone Era                                                              morning · rain
+╭──────────────────────────────────────────────────────────────────────────────────────╮╭─ map ────────────────────────╮
+│                ▔▀▀▀▀▀▀▀▀▀▀▔                                                          ││                              │
+│               ╱                   ▔▀▀▀▀▀▀▀▀▔  ╱                                      ││                              │
+│                                              ╱          ╱                            ││ ♣Woods────⌂Huts─────○Fire    │
+│                                             ╱          ╱                             ││           │         │        │
+│╱                  ╱                             ╱                    ╱               ││           ▪Stash────······   │
+│                  ╱               ╱             ╱                                     ││                     │        │
+│                                 ╱      ║   ║  ╱                                      ││                     @Track   │
+│              ╱ ╱                       ╨   ╨              ╱       ╱                  ││                              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._││                              │
+╰──────────────────────────────────────────────────────────────────────────────────────╯╰──────────────────────────────╯
+
+  The track out of the settlement, trodden flat by everyone who ever left. Morning. The shadows are long and pointing
+  west. It is raining, lightly and without conviction.
+
+  Exits: north the south track
+
+
+
+
+
+
+
+
+
+
+  > west
+  You walk west to the Huts.
+  > south
+  You walk south to the Stash Pits.
+  > go track
+  You walk through the south track to the Track Out.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 5/5  survey ===
+ ∩ The Track Out  Primitive Age · Stone Era                                                              morning · rain
+╭──────────────────────────────────────────────────────────────────────────────────────╮╭─ map ────────────────────────╮
+│                ▔▀▀▀▀▀▀▀▀▀▀▔                                                          ││                              │
+│               ╱                   ▔▀▀▀▀▀▀▀▀▔  ╱                                      ││                              │
+│                                              ╱          ╱                            ││ ♣Woods────⌂Huts─────○Fire    │
+│                                             ╱          ╱                             ││           │         │        │
+│╱                  ╱                             ╱                    ╱               ││           ▪Stash────······   │
+│                  ╱               ╱             ╱                                     ││                     │        │
+│                                 ╱      ║   ║  ╱                                      ││                     @Track   │
+│              ╱ ╱                       ╨   ╨              ╱       ╱                  ││                              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._││                              │
+╰──────────────────────────────────────────────────────────────────────────────────────╯╰──────────────────────────────╯
+
+  You climb somewhere high and look out over the Clearing and everything around it.
+  ♣ The Woods                  8 built  newest: Wood Camp  short-handed
+  ⌂ The Huts                  10 built  newest: Hut
+  ○ The Clearing            —
+  ▪ The Stash Pits             2 built  newest: Stash
+  # The south track         open ground
+  ∩ The Track Out           —
+
+
+
+
+
+  > west
+  You walk west to the Huts.
+  > south
+  You walk south to the Stash Pits.
+  > go track
+  You walk through the south track to the Track Out.
+  > survey
+  You take it all in.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back

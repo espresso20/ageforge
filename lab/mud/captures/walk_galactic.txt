@@ -1,0 +1,222 @@
+=== 1/6  (opening look) ===
+ ○ The Orbital Ring  Galactic Age · Cosmic Era                                                                afternoon
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                  ·  .          ·                .       . · .▗▄▄▄▄▄▄▄▄▄▄▄▄▄││                                        │
+│                  +             +                .       . · .             .││                     §Observ.──★Spire   │
+│                 ·                                   .        ·             ││                     │         │        │
+│                 ·+  .                               .  ·                ·  ││ ♣Weavers──⌂Habitat──@Ring─────$Bazaar  │
+│       ·  .    .         ·                · .           ·         .         ││ │         •         │         │        │
+│  ╭─╮   ╭─╮       o   ╭───╮                     ╭─╮    ╭─╮                  ││ ≡Hydro────▪Depots──•#Launch──•¤StarFrg │
+│ ─┤▫├─ ─┤▫├─     /█\  │ ◦ │  ▐▀▀▌  ▐▀▀▌  ▐▀▀▌  ╭┴─┴╮  ╭┴─┴╮      ╭◊╮   ╭◊╮  ││ │         •         │                  │
+│  ╰─╯   ╰─╯      / \  ╰───╯  ▐◘ ▌  ▐◘ ▌  ▐◘ ▌  ▐▫▫▫▌  ▐▫▫▫▌     ◊┤$├◊ ◊┤$├◊ ││ ▲Tethers──‡Fleet────∩JumpGt            │
+│═╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The ring curves up and away in both directions until it meets itself overhead. The Elder Relay stands in the middle
+  of it all, and people walk wide around. Its message arrived as geometry, and the linguists needed a day to make it
+  into words. Afternoon shift. Outside the windows, nothing, in every direction.
+
+  Here: VR Studio ×15 (old) · Concert Hall ×8 (old)
+  Makes: Culture +27k/t ▱▱▱▱▱
+  Folk: 6637 (room for 126.1M)   morale ▰▰▰▰▰
+  Also here: the Elder Relay.
+  Exits: hubward the Observatory Deck · spinward the Bazaar Ring · rimward the Launch Complex · antispinward the
+  Habitat Rings
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 2/6  hubward ===
+ § The Observatory Deck  Galactic Age · Cosmic Era                                                            afternoon
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│        .           .         .+                           ·  ▗▄▄▄▄▄▄▄▄▄▄▄▄▄││                                        │
+│    .       ·                  ·                                         ·  ││                     @Observ.──★Spire   │
+│·                          .                                ·   ·           ││                     │         │        │
+│·    .  .           .         .                       ·    ··.  ·           ││ ♣Weavers──⌂Habitat──○Ring─────$Bazaar  │
+│     .   . .           .     .        .   ·           +   ·  .       .      ││ │         •         │         │        │
+│                 ┌──┐  ┌──┐  ┌──┐  ┌──┐  ┌──┐  ┌──┐   ╭─╮         ┼     ┼   ││ ≡Hydro────▪Depots──•#Launch──•¤StarFrg │
+│                 │▪▪│  │▪▪│  │▪▪│  │▪▪│  │▪▪│  │▪▪│  ╭┴─┴╮        ║     ║   ││ │         •         │                  │
+│                 │▪▪│  │▪▪│  │▪▪│  │▪▪│  │▪▪│  │▪▪│  │▫▫▫│       ╱║╲   ╱║╲  ││ ▲Tethers──‡Fleet────∩JumpGt            │
+│═╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The observatory deck looks out at stars that have been catalogued twice. Nobody here has seen the ground in years.
+  Afternoon shift. Outside the windows, nothing, in every direction.
+
+  Here: Cyber Hub ×14 (old) · Neuro Research Center ×10 (old) · AI Research Lab ×5 (old) · Data Center ×15 (old) ·
+  Innovation Hub ×5 (old) · Research Institute ×30 (old) · Natural Philosophy Hall ×15 (old)   Hands: 763/763
+  Makes: Data +11.5B/t ▱▱▱▱▱   Knowledge +371k/t ▱▱▱▱▱
+  Exits: spinward the Beacon Spire · rimward the Orbital Ring
+
+
+
+
+
+
+
+
+
+
+
+  > hubward
+  You walk hubward to the Observatory Deck.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 3/6  spinward ===
+ ★ The Beacon Spire  Galactic Age · Cosmic Era                                                                afternoon
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│ ·                 .·      .     .          ·             . · ▗▄▄▄▄▄▄▄▄▄▄▄▄▄││                                        │
+│                   .+ ·    .                            ·   ·   · .         ││                     §Observ.──@Spire   │
+│  .   ·                                   · ·          ··                   ││                     │         │        │
+│ +.                     .                 · +          +  .                 ││ ♣Weavers──⌂Habitat──○Ring─────$Bazaar  │
+│             .    ·                .    .          ▲                    ·   ││ │         •         │         │        │
+│    ┼    ╲ ╱  ╭┄┄┄╮  \ | /   ▲ ▲   ▐▪▪▪▌  ╭─┬─╮   ▐█▌   ╭──────╮  ▀▄▄▄▄▄▀   ││ ≡Hydro────▪Depots──•#Launch──•¤StarFrg │
+│    ║    ─◊─  ┆ ☼ ┆   (*)   ▐█▀█▌  ▐▪▪▪▌  ├─┼─┤   ▐█▌   │ ◦  ◦ │   ▀███▀    ││ │         •         │                  │
+│   ╱║╲   ╱ ╲  ╰┄┄┄╯  / | \  ▐▫▫▫▌  ▐▪▪▪▌  ╰─┴─╯  ╱▀▀▀╲  ╰──────╯  ≈≈▐█▌≈≈   ││ ▲Tethers──‡Fleet────∩JumpGt            │
+│═╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The beacon spire rises from the ring into nothing. People keep stopping to look at the cosmic beacon. Afternoon
+  shift. Outside the windows, nothing, in every direction.
+
+  Here: Cosmic Beacon · Warp Nexus · Dyson Scaffold · Stellar Cradle · Neon Citadel · World Simulation · Global
+  Network · Space Program · Particle Accelerator · Hoover Dam · Eiffel Tower · Crystal Palace · Grand Lighthouse ·
+  Sistine Chapel · Great Library · Parthenon · Colosseum · Stonehenge · Great Monolith · Sacred Grove
+  Makes: Antimatter +7432.5B/t ▰▱▱▱▱   Dark Matter +41712.2B/t ▰▰▰▰▰ full   Electricity +2071.9B/t ▰▰▰▱▱
+  Exits: rimward the Bazaar Ring · antispinward the Observatory Deck
+
+
+
+
+
+
+
+
+  > hubward
+  You walk hubward to the Observatory Deck.
+  > spinward
+  You walk spinward to the Beacon Spire.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 4/6  go launch ===
+ # The Launch Complex  Galactic Age · Cosmic Era                                                              afternoon
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                   ·    .               · .           +       ▗▄▄▄▄▄▄▄▄▄▄▄▄▄││                                        │
+│.    .        .    ·    .    .            .           ·     .              ·││                     §Observ.──★Spire   │
+│     .        .   ·          .           ·   +          .                 .·││                     │         │        │
+│     .        .   +          .     ·                    .                 . ││ ♣Weavers──⌂Habitat──○Ring─────$Bazaar  │
+│ .     ·         ·                           ·               ·     .        ││ │         •         │         │        │
+│              ▲      ▲      ▲      ▲      ▲     ╲╱    ╲╱    ╲╱         \│/  ││ ≡Hydro────▪Depots──•@Launch──•¤StarFrg │
+│             ▐█▌    ▐█▌    ▐█▌    ▐█▌    ▐█▌    ╱╲    ╱╲    ╱╲        ─ ☼ ─ ││ │         •         │                  │
+│ [▒][▒]      ╱║╲    ╱║╲    ╱║╲    ╱║╲    ╱║╲   ╱  ╲  ╱  ╲  ╱  ╲        /│\  ││ ▲Tethers──‡Fleet────∩JumpGt            │
+│═╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The launch complex is gantries, fuel lines, and a countdown that never reaches zero. Nobody here has seen the ground
+  in years. Between the new buildings stands the old solar collector array, doing what it always did. Afternoon shift.
+  Outside the windows, nothing, in every direction.
+
+  Here: Dyson Assembly ×13 · Quasar Tap ×14 · Pulsar Tap ×14 (old) · Warp Drive Plant ×15 (old) · Solar Collector
+  Array ×10 (old) · Augmentation Foundry ×5 (old) · Dark Energy Tap ×1 (old) · Quantum Battery Array ×14 (old) · Smart
+  Energy Grid ×20 (old) · Smart Grid Node ×13 (old) · Nuclear Plant ×15 (old) · Steam Works ×13 (old) · Workshop ×2
+  (old) · Aqueduct ×15 (old)   Hands: 2361/2361
+  Makes: Dark Matter +41712.2B/t ▰▰▰▰▰ full   Plasma +5942.3B/t ▰▱▱▱▱   Electricity +2071.9B/t ▰▰▰▱▱
+  Exits: hubward the Orbital Ring · spinward the Star Forge · rimward the Jump Gate · antispinward the Orbital Depots
+
+
+
+
+  > hubward
+  You walk hubward to the Observatory Deck.
+  > spinward
+  You walk spinward to the Beacon Spire.
+  > go launch
+  You walk through the Bazaar Ring and the Orbital Ring to the Launch Complex.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 5/6  rimward ===
+ ∩ The Jump Gate  Galactic Age · Cosmic Era                                                                   afternoon
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│              .             .                                 ▗▄▄▄▄▄▄▄▄▄▄▄▄▄││                                        │
+│              .             .·                                    ·        .││                     §Observ.──★Spire   │
+│    .          .                ·     ·                 ·    .              ││                     │         │        │
+│               .                +    .·                 ·    .    ·         ││ ♣Weavers──⌂Habitat──○Ring─────$Bazaar  │
+│    .+       ·       .  ·            .             ·  .              .      ││ │         •         │         │        │
+│  ╲▁   ╲▁                      ╭───╮                                        ││ ≡Hydro────▪Depots──•#Launch──•¤StarFrg │
+│  ╱ │  ╱ │                     │   │   ▄▄o                                  ││ │         •         │                  │
+│ ▐██▌ ▐██▌                     ╰───╯  (o)(o)                                ││ ▲Tethers──‡Fleet────@JumpGt            │
+│═╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The jump gate sits dark between departures, a ring of nothing held open. Travellers come and go without being asked
+  their business. Everyone seems to be looking at the road out. Afternoon shift. Outside the windows, nothing, in
+  every direction.
+
+  Caravans: 4 route(s) on the road
+  Also here: an envoy of Artisan League, an envoy of Merchant Guild, an envoy of Plasma Nomads, an envoy of Riverlands
+  Tribes, an envoy of Tech Consortium.
+  Exits: hubward the Launch Complex · antispinward the Fleet Yards · out the wide world
+
+
+
+
+  > hubward
+  You walk hubward to the Observatory Deck.
+  > spinward
+  You walk spinward to the Beacon Spire.
+  > go launch
+  You walk through the Bazaar Ring and the Orbital Ring to the Launch Complex.
+  > rimward
+  You walk rimward to the Jump Gate.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 6/6  out ===
+ ∩ The Jump Gate  Galactic Age · Cosmic Era                                                                   afternoon
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│              .             .                                 ▗▄▄▄▄▄▄▄▄▄▄▄▄▄││                                        │
+│              .             .·                                    ·        .││                     §Observ.──★Spire   │
+│    .          .                ·     ·                 ·    .              ││                     │         │        │
+│               .                +    .·                 ·    .    ·         ││ ♣Weavers──⌂Habitat──○Ring─────$Bazaar  │
+│    .+       ·       .  ·            .             ·  .              .      ││ │         •         │         │        │
+│  ╲▁   ╲▁                      ╭───╮                                        ││ ≡Hydro────▪Depots──•#Launch──•¤StarFrg │
+│  ╱ │  ╱ │                     │   │   ▄▄o                                  ││ │         •         │                  │
+│ ▐██▌ ▐██▌                     ╰───╯  (o)(o)                                ││ ▲Tethers──‡Fleet────@JumpGt            │
+│═╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪══╪═══╪││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The wide world  beyond the Jump Gate
+  The road forks, and every fork has somebody at the end of it.
+  1  Artisan League            3 jumps hubward       neutral   opinion +100  peaceful
+  2  Atomic Directorate        4 jumps hubward       neutral   opinion +0  isolationist
+  3  Ironhold Clans            5 jumps spinward      neutral   opinion -100  aggressive
+  4  Merchant Guild            2 jumps rimward       neutral   opinion +100  mercantile
+  5  Plasma Nomads             10 jumps spinward     neutral   opinion +100  peaceful
+  6  Riverlands Tribes         7 jumps hubward       neutral   opinion +100  peaceful
+  7  Shadow Syndicate          2 jumps spinward      neutral   opinion -100  aggressive
+  8  Stellar Federation        4 jumps antispinward  neutral   opinion +0  isolationist
+  9  Tech Consortium           4 jumps hubward       neutral   opinion +100  mercantile
+  10  Void Reavers              9 jumps antispinward  neutral   opinion -100  aggressive
+
+  You walk spinward to the Beacon Spire.
+  > go launch
+  You walk through the Bazaar Ring and the Orbital Ring to the Launch Complex.
+  > rimward
+  You walk rimward to the Jump Gate.
+  > out
+  You stand at the edge of the settlement and look out.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back

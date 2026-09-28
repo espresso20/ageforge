@@ -1,0 +1,148 @@
+=== 1/4  frame 1 ===
+ ¤ The Forge Quarter  Medieval Age · Iron Era                                                                     night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                        ·         ·    ·            ·         ☾           · ││                                        │
+│                                                    ·                     · ││                     §Library──★Wonders │
+│                          ·        ··  ·                                    ││                     │         │        │
+│                          +    °       ·      °            ·                ││ ♣Timber───⌂Lanes────○Forum────$Guilds  │
+│             ·             ·            °                  ·     ·       ·  ││ │         •         │         │        │
+│   °     °                    °    °    °    °                              ││ ≡Fields───▪Granary─•#Works───•@Forges  │
+│  /¯\   /¯\                  ▄*▄  ▄*▄  ▄*▄  ▄*▄                             ││ │         •         │                  │
+│ |▫ ▫| |▫ ▫|                 ███  ███  ███  ███                             ││ ▲Quarry───‡Barrack──∩Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The forge quarter rings with hammers from first light. People cross it with somewhere to be. Night. The fires are
+  banked and the stars are very close.
+
+  Here: Forge ×12 (old)   Hands: 48/48
+  Makes: Iron +3269/t ▰▰▰▰▰
+  Exits: north Guild Row · west the Workshops
+
+
+
+
+
+
+
+
+
+
+
+
+  > go forge
+  You walk through Guild Row to the Forge Quarter.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 2/4  frame 2 ===
+ ¤ The Forge Quarter  Medieval Age · Iron Era                                                                     night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                        ·         +    ·            +         ☾           + ││                                        │
+│                                                    ·                     · ││                     §Library──★Wonders │
+│                          ·    ·   +   ·      ·                             ││                     │         │        │
+│                          ·            + °                 +                ││ ♣Timber───⌂Lanes────○Forum────$Guilds  │
+│             ·             ·       °                       ·     ·       ·  ││ │         │         │         │        │
+│   °     °                    °    °    °    °                              ││ ≡Fields───▪Granary•─#Works──•─@Forges  │
+│  /¯\   /¯\                  ▄*▄  ▄*▄  ▄*▄  ▄*▄                             ││ │         │         │                  │
+│ |▫ ▫| |▫ ▫|                 ███  ███  ███  ███                             ││ ▲Quarry───‡Barrack──∩Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The forge quarter rings with hammers from first light. People cross it with somewhere to be. Night. The fires are
+  banked and the stars are very close.
+
+  Here: Forge ×12 (old)   Hands: 48/48
+  Makes: Iron +3269/t ▰▰▰▰▰
+  Exits: north Guild Row · west the Workshops
+
+
+
+
+
+
+
+
+
+
+
+
+  > go forge
+  You walk through Guild Row to the Forge Quarter.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 3/4  frame 3 ===
+ ¤ The Forge Quarter  Medieval Age · Iron Era                                                                     night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                        ·         ·    ·            ·         ☾           · ││                                        │
+│                                                    ·                     · ││                     §Library──★Wonders │
+│                          +        ·   · ·                                  ││                     │         │        │
+│                          ·         °  ·                   ·                ││ ♣Timber───⌂Lanes────○Forum────$Guilds  │
+│             ·             ·  °              °             ·     +       +  ││ │         •         │         │        │
+│   °     °                    °    °    °    °                              ││ ≡Fields───▪Granary──#Works─•──@Forges  │
+│  /¯\   /¯\                  ▄*▄  ▄*▄  ▄*▄  ▄*▄                             ││ │         •         │                  │
+│ |▫ ▫| |▫ ▫|                 ███  ███  ███  ███                             ││ ▲Quarry───‡Barrack──∩Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The forge quarter rings with hammers from first light. People cross it with somewhere to be. The Ironhold Clans:
+  Specialty Windfall has put the place in a strange mood. Night. The fires are banked and the stars are very close.
+
+  Here: Forge ×12 (old)   Hands: 48/48
+  Makes: Iron +3269/t ▰▰▰▰▰
+  Exits: north Guild Row · west the Workshops
+
+
+
+
+
+
+
+
+
+
+
+
+  > go forge
+  You walk through Guild Row to the Forge Quarter.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 4/4  frame 4 ===
+ ¤ The Forge Quarter  Medieval Age · Iron Era                                                                     night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                        +         ·    ·            ·         ☾           · ││                                        │
+│                                                    +                     + ││                     §Library──★Wonders │
+│                          ·        ··  ·                                    ││                     │         │        │
+│                          ·    °       ·      °            ·                ││ ♣Timber───⌂Lanes────○Forum────$Guilds  │
+│             ·             ·            °                  ·     ·       ·  ││ │         │         │         │        │
+│   °     °                    °    °    °    °                              ││ ≡Fields───▪Granary──#Works•───@Forges  │
+│  /¯\   /¯\                  ▄*▄  ▄*▄  ▄*▄  ▄*▄                             ││ │         │         │                  │
+│ |▫ ▫| |▫ ▫|                 ███  ███  ███  ███                             ││ ▲Quarry───‡Barrack──∩Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The forge quarter rings with hammers from first light. People cross it with somewhere to be. Night. The fires are
+  banked and the stars are very close.
+
+  Here: Forge ×12 (old)   Hands: 48/48
+  Makes: Iron +3269/t ▰▰▰▰▰
+  Exits: north Guild Row · west the Workshops
+
+
+
+
+
+
+
+
+
+
+
+
+  > go forge
+  You walk through Guild Row to the Forge Quarter.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back

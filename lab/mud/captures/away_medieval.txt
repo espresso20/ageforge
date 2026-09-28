@@ -1,0 +1,148 @@
+=== 1/4  (opening look) ===
+ ○ The Forum  Medieval Age · Iron Era                                                                             night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│    ·                  ·                                      ☾             ││                                        │
+│    ·               +  +    ·                                  +            ││                     §Library*─★Wonders │
+│     +          ·             ·  ·                           ·              ││                     │         │        │
+│     ·                                                       ·              ││ ♣Timber───⌂Lanes*───@Forum────$Guilds* │
+│                                              +      ·                      ││ │         •         │         │        │
+│  /\   /\                        o   ▁▄▄▄▄▄▁                                ││ ≡Fields───▪Granary*•#Works───•¤Forges* │
+│ /▫ \ /▫ \                      /█\   ║ ║ ║                    ¤ o ¤  ¤ o ¤ ││ │         •         │                  │
+│ |__| |__|                      / \  ▀▀▀▀▀▀▀                  ▀▀ ▀▀  ▀▀ ▀▀  ││ ▲Quarry───‡Barrack*─∩Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  While you were away (2h 08m)
+  The Library Steps: +9 Monastery Library
+  The Wonder Walk: +1 Great Library
+  The Lanes: +5 Manor
+  Guild Row: +8 Guildhall
+  The Granaries: +7 Keep
+  The Forge Quarter: +11 Forge
+  The Barracks Yard: +1 Castle Keep
+  · Guildhall completed! (#10)
+  · Scout Nearby Ruins succeeded! Gained loot.
+  · Great Library completed! (#1)
+  · ✦ Ready to advance to the Renaissance Age! Type 'advance' when you're ready.
+  Places marked * on the map have changed. Walk over and look.
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 2/4  look ===
+ ○ The Forum  Medieval Age · Iron Era                                                                             night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│    ·                  ·                                      ☾             ││                                        │
+│    ·               +  +    ·                                  +            ││                     §Library*─★Wonders │
+│     +          ·             ·  ·                           ·              ││                     │         │        │
+│     ·                                                       ·              ││ ♣Timber───⌂Lanes*───@Forum────$Guilds* │
+│                                              +      ·                      ││ │         •         │         │        │
+│  /\   /\                        o   ▁▄▄▄▄▄▁                                ││ ≡Fields───▪Granary*•#Works───•¤Forges* │
+│ /▫ \ /▫ \                      /█\   ║ ║ ║                    ¤ o ¤  ¤ o ¤ ││ │         •         │                  │
+│ |__| |__|                      / \  ▀▀▀▀▀▀▀                  ▀▀ ▀▀  ▀▀ ▀▀  ││ ▲Quarry───‡Barrack*─∩Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  Paving stones, a speaking platform, and a great many opinions. The Town Crier stands in the middle of it all, and
+  people walk wide around. The bells rang all night. Night. The fires are banked and the stars are very close.
+
+  Folk: 809 (room for 2375)   morale ▰▰▰▱▱
+  Also here: the Town Crier.
+  Exits: north the Library Steps · east Guild Row · south the Workshops · west the Lanes
+
+
+
+
+
+
+
+
+
+
+
+
+
+  > look
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 3/4  go homes ===
+ ⌂ The Lanes  Medieval Age · Iron Era                                                                             night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│      ·       ·                                 · ·           ☾   ·         ││                                        │
+│                         ·                    · ·     ·       +   ·         ││                     §Library*─★Wonders │
+│      ·                  ·                            +                    ·││                     │         │        │
+│      +                                    ·                 ·       ·     ·││ ♣Timber───@Lanes────○Forum────$Guilds* │
+│                                               ·       ·     ·       ·      ││ │         •         │         │        │
+│  ♣   ♣                     /\    /\    /\    /\                            ││ ≡Fields───▪Granary*•#Works───•¤Forges* │
+│ ♣♣♣ ♣♣♣                   /▫ \  /▫ \  /▫ \  /▫ \                           ││ │         •         │                  │
+│  |   |                    |__|  |__|  |__|  |__|                           ││ ▲Quarry───‡Barrack*─∩Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  Narrow lanes of houses lean toward each other over the street. The traffic has worn a groove down the middle. The
+  old house is still in use, and nobody has had the heart to pull it down. Night. The fires are banked and the stars
+  are very close.
+
+  Here: Manor ×8 · House ×7 (old)
+  Since you last looked (2h 08m): The Lanes: +5 Manor
+  Exits: east the Forum · south the Granaries · west the Timber Yards
+
+
+
+
+
+
+
+
+
+
+  > look
+  > go homes
+  You walk to the Lanes.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 4/4  go forge ===
+ ¤ The Forge Quarter  Medieval Age · Iron Era                                                                     night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                        ·         ·    ·            ·         ☾           · ││                                        │
+│                                                    ·                     · ││                     §Library*─★Wonders │
+│                          ·        ··  ·                                    ││                     │         │        │
+│                          +    °       ·      °            ·                ││ ♣Timber───⌂Lanes*───○Forum────$Guilds* │
+│             ·             ·            °                  ·     ·       ·  ││ │         •         │         │        │
+│   °     °                    °    °    °    °                              ││ ≡Fields───▪Granary*•#Works───•@Forges  │
+│  /¯\   /¯\                  ▄*▄  ▄*▄  ▄*▄  ▄*▄                             ││ │         •         │                  │
+│ |▫ ▫| |▫ ▫|                 ███  ███  ███  ███                             ││ ▲Quarry───‡Barrack*─∩Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The forge quarter rings with hammers from first light. People cross it with somewhere to be. The Ironhold Clans:
+  Specialty Windfall has put the place in a strange mood. Night. The fires are banked and the stars are very close.
+
+  Here: Forge ×12 (old)   Hands: 48/48
+  Makes: Iron +3269/t ▰▰▰▰▰
+  Since you last looked (2h 08m): The Forge Quarter: +11 Forge
+  Exits: north Guild Row · west the Workshops
+
+
+
+
+
+
+
+
+  > look
+  > go homes
+  You walk to the Lanes.
+  > go forge
+  You walk through the Forum and Guild Row to the Forge Quarter.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back

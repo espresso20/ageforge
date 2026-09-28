@@ -1,0 +1,36 @@
+ ≡ The Plantations  Industrial Age · Steel Era                                                            night · cloud
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│·                         ·     ☾       ·                                   ││                                        │
+│                    +     +             ·                                   ││                     §Univ.────★Promen. │
+│                    ·        ·                                              ││                     │         │        │
+│               ·    +        ·                                  ·           ││ ♣Coal─────⌂Terrace──○Piazza───$Exch.   │
+│      ·        ·     ·                                                ·    ·││ │         •         │         │        │
+│                                                                            ││ @Plant.───▪Wareh.──•#Mills───•¤Foundry │
+│                     ψψψψψ  ψψψψψ   ψ ψ    ψ ψ    ψ ψ           ╱▔▔▔╲ ╱▔▔▔╲ ││ │         •         │                  │
+│                     ψψψψψ  ψψψψψ  "ψ"ψ"  "ψ"ψ"  "ψ"ψ"          │▫ ▫│ │▫ ▫│ ││ ▲Mines────‡Fort─────∩Toll              │
+│",',"'.",',"'.",',"'.",',"'.",',"'.",',"'.",',"'.",',"'.",',"'.",',"'.",',"'││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  Plantations stretch in straight rows to the horizon. You have to turn sideways to get through. Night, and the lit
+  windows are the only way to tell where the streets are. The sky is the colour of the chimneys.
+
+  Here: Plantation ×8 (old) · Demesne ×10 (old) · Field Works ×13 (old)   Hands: 189/189
+  Makes: Food +2091/t ▱▱▱▱▱
+  Exits: north the Coal Pits · east the Warehouses · south the Mines
+
+
+
+
+
+
+
+
+
+
+
+
+  > go fields
+  You walk through the Terraces and the Coal Pits to the Plantations.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back

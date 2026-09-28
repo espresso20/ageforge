@@ -1,0 +1,36 @@
+ $ The Venture Quarter  Digital Age · Digital Era                                                                  noon
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                                 ☼                                          ││                                        │
+│                                                                            ││                     §Campus───★Mall    │
+│                                                                            ││                     │         │        │
+│                                                                            ││ ♣Refin.───⌂Blocks───○Concou.──@Venture │
+│                                                                            ││ │         •         │         │        │
+│                     ╱▔▔▔╲  ╱▔▔▔╲  ╱▔▔▔╲  ╱▔▔▔╲                             ││ ≡Agri─────▪Vaults──•#Grid─────¤Alloys  │
+│ ▐▀▀▌ ▐▀▀▌           ║ ║ ║  ║ ║ ║  ║ ║ ║  ║ ║ ║   ¤ o ¤                     ││ │         │         │                  │
+│ ▐◘ ▌ ▐◘ ▌           ▀▀▀▀▀  ▀▀▀▀▀  ▀▀▀▀▀  ▀▀▀▀▀  ▀▀ ▀▀                      ││ ▲Deep─────‡Command──∩Interch           │
+│▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔▔││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The venture quarter is glass, coffee, and pitch decks. It is packed, and the newest buildings have been fitted into
+  the gaps between the old. The Rail Freight keeps the cranes busy. Noon, if anyone still checks.
+
+  Here: Corporate HQ ×12 (old) · Stock Exchange ×10 (old) · Merchant Quarter ×5 (old)   Hands: 164/164
+  Makes: Gold +940.6M/t ▰▱▱▱▱
+  Also here: cargo for the Rail Freight, cargo for the Oil Pipeline.
+  Exits: north the Monument Mall · south the Alloy Plants · west the Concourse
+
+
+
+
+
+
+
+
+
+
+
+  > go market
+  You walk to the Venture Quarter.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back

@@ -1,0 +1,333 @@
+=== 1/9  (opening look) ===
+ ○ The Forum  Medieval Age · Iron Era                                                                             night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│    ·                  ·                                      ☾             ││                                        │
+│    ·               +  +    ·                                  +            ││                     §Library──★Wonders │
+│     +          ·             ·  ·                           ·              ││                     │         │        │
+│     ·                                                       ·              ││ ♣Timber───⌂Lanes────@Forum────$Guilds  │
+│                                              +      ·                      ││ │         •         │         │        │
+│  /\   /\                        o   ▁▄▄▄▄▄▁                                ││ ≡Fields───▪Granary─•#Works───•¤Forges  │
+│ /▫ \ /▫ \                      /█\   ║ ║ ║                    ¤ o ¤  ¤ o ¤ ││ │         •         │                  │
+│ |__| |__|                      / \  ▀▀▀▀▀▀▀                  ▀▀ ▀▀  ▀▀ ▀▀  ││ ▲Quarry───‡Barrack──∩Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  Paving stones, a speaking platform, and a great many opinions. The Town Crier stands in the middle of it all, and
+  people walk wide around. The bells rang all night. Night. The fires are banked and the stars are very close.
+
+  Folk: 809 (room for 2375)   morale ▰▰▰▱▱
+  Also here: the Town Crier.
+  Exits: north the Library Steps · east Guild Row · south the Workshops · west the Lanes
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 2/9  north ===
+ § The Library Steps  Medieval Age · Iron Era                                                                     night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                     ·          ·                        · ·  ☾    ·        ││                                        │
+│                  +             +                        ·         +        ││                     @Library──★Wonders │
+│                     ·               ·                                      ││                     │         │        │
+│                     ·               ·                                      ││ ♣Timber───⌂Lanes────○Forum────$Guilds  │
+│   ·                     ·                                    ·             ││ │         •         │         │        │
+│                       ∩      ∩      ∩      ∩      ∩                 ▄▄▄▄▄  ││ ≡Fields───▪Granary─•#Works───•¤Forges  │
+│                      │§│    │§│    │§│    │§│    │§│               ▐≡≡≡≡≡▌ ││ │         •         │                  │
+│                      └─┘    └─┘    └─┘    └─┘    └─┘               ▐≡≡≡≡≡▌ ││ ▲Quarry───‡Barrack──∩Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  Library steps, where scholars argue in the sun and read in the shade. It is busy in the ordinary way. Every station
+  is taken. The library dates from an older age and looks it. Night. The fires are banked and the stars are very
+  close.
+
+  Here: Monastery Library ×14 · Library ×10 (old)   Hands: 96/96
+  Makes: Knowledge +2800/t ▰▰▰▱▱
+  Studying: Alchemy ▰▰▰▰▰ 91 ticks left
+  Exits: east the Wonder Walk · south the Forum
+
+
+
+
+
+
+
+
+
+
+  > north
+  You walk north to the Library Steps.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 3/9  east ===
+ ★ The Wonder Walk  Medieval Age · Iron Era                                                                       night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                          ·     ·   ·                 +       ☾         +   ││                                        │
+│              ·                 +   ·                 ·     ·               ││                     §Library──@Wonders │
+│     +   ·    ·                                                           · ││                     │         │        │
+│              ·                                                             ││ ♣Timber───⌂Lanes────○Forum────$Guilds  │
+│           ·   ·     ·                                       ·       ·      ││ │         •         │         │        │
+│   ∩     ∩      ▄▄▄▄▄   ▁▄▄▄▄▄▁  ▄▄▄▄▄▄▄            ▄                       ││ ≡Fields───▪Granary─•#Works───•¤Forges  │
+│  │§│   │§│    ▐≡≡≡≡≡▌   ║║║║║   ▌∩∩∩∩∩▐  ▄▄▄ ▄▄▄   █    ♣♣♣                ││ │         •         │                  │
+│  └─┘   └─┘    ▐≡≡≡≡≡▌  ▀▀▀▀▀▀▀  ▌∩∩∩∩∩▐  █ █ █ █  ▐█▌  ♣♣†♣♣               ││ ▲Quarry───‡Barrack──∩Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The wonder walk is lined with the things your people built to be remembered. Fresh sawdust and mortar around the
+  great library. Night. The fires are banked and the stars are very close.
+
+  Here: Great Library · Parthenon · Colosseum · Stonehenge · Great Monolith · Sacred Grove
+  Makes: Knowledge +2800/t ▰▰▰▱▱   Culture +4.8/t ▱▱▱▱▱
+  Exits: south Guild Row · west the Library Steps
+
+
+
+
+
+
+
+
+
+
+  > north
+  You walk north to the Library Steps.
+  > east
+  You walk east to the Wonder Walk.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 4/9  visit great library ===
+ ★ The Wonder Walk  Medieval Age · Iron Era                                                                       night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                          ·     ·   ·                 +       ☾         +   ││                                        │
+│              ·                 +   ·                 ·     ·               ││                     §Library──@Wonders │
+│     +   ·    ·                                                           · ││                     │         │        │
+│              ·                                                             ││ ♣Timber───⌂Lanes────○Forum────$Guilds  │
+│           ·   ·     ·                                       ·       ·      ││ │         •         │         │        │
+│   ∩     ∩      ▄▄▄▄▄   ▁▄▄▄▄▄▁  ▄▄▄▄▄▄▄            ▄                       ││ ≡Fields───▪Granary─•#Works───•¤Forges  │
+│  │§│   │§│    ▐≡≡≡≡≡▌   ║║║║║   ▌∩∩∩∩∩▐  ▄▄▄ ▄▄▄   █    ♣♣♣                ││ │         •         │                  │
+│  └─┘   └─┘    ▐≡≡≡≡≡▌  ▀▀▀▀▀▀▀  ▌∩∩∩∩∩▐  █ █ █ █  ▐█▌  ♣♣†♣♣               ││ ▲Quarry───‡Barrack──∩Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  Great Library  in the Wonder Walk
+  Every book worth having, guarded by people who'd rather you didn't touch them.
+  Repository of all knowledge. +2 knowledge/tick, +30% knowledge rate. Unlocks +0.5x speed.
+  key great_library
+
+
+
+
+
+
+
+
+
+
+  > north
+  You walk north to the Library Steps.
+  > east
+  You walk east to the Wonder Walk.
+  > visit great library
+  You are already in the Wonder Walk.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 5/9  south ===
+ $ Guild Row  Medieval Age · Iron Era                                                                             night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                ·   ·   ·                           ·         ☾             ││                                        │
+│      +             +   +               ·                                   ││                     §Library──★Wonders │
+│      ·                            ·                          ·             ││                     │         │        │
+│                                             ·                +             ││ ♣Timber───⌂Lanes────○Forum────@Guilds  │
+│                   ·                     ·               ·                  ││ │         •         │         │        │
+│                                                                            ││ ≡Fields───▪Granary─•#Works───•¤Forges  │
+│                        ¤ o ¤   ¤ o ¤   ¤ o ¤   ¤ o ¤                       ││ │         •         │                  │
+│                       ▀▀ ▀▀   ▀▀ ▀▀   ▀▀ ▀▀   ▀▀ ▀▀                        ││ ▲Quarry───‡Barrack──∩Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  Guild row is all signboards and scales. It is busy in the ordinary way. People keep stopping to look at the
+  guildhall. The work goes on in shifts, and the shifts overlap. The old trading post is still in use, and nobody has
+  had the heart to pull it down. Night. The fires are banked and the stars are very close.
+
+  Here: Guildhall ×10 · Trading Post ×5 (old)   Hands: 55/55
+  Makes: Gold +14k/t ▰▰▰▰▰ full
+  Exits: north the Wonder Walk · south the Forge Quarter · west the Forum
+
+
+
+
+
+  > north
+  You walk north to the Library Steps.
+  > east
+  You walk east to the Wonder Walk.
+  > visit great library
+  You are already in the Wonder Walk.
+  > south
+  You walk south to Guild Row.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 6/9  go gate ===
+ ∩ The Town Gate  Medieval Age · Iron Era                                                                         night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                                 ·             ·      +       ☾             ││                                        │
+│                                 ·     ·              ·                     ││                     §Library──★Wonders │
+│      ·                                ·              +                     ││                     │         │        │
+│      +                                                                     ││ ♣Timber───⌂Lanes────○Forum────$Guilds  │
+│                                              +            ·             ·  ││ │         •         │         │        │
+│                                                                            ││ ≡Fields───▪Granary─•#Works───•¤Forges  │
+│  /\ ║  /\ ║                       ║   ║                                    ││ │         •         │                  │
+│ /▫ \║ /▫ \║                       ╨   ╨                                    ││ ▲Quarry───‡Barrack──@Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The town gate stands open, with a guard who knows everyone's business. Travellers come and go without being asked
+  their business. Everyone seems to be looking at the road out. Night. The fires are banked and the stars are very
+  close.
+
+  Also here: an envoy of Riverlands Tribes.
+  Exits: north the Workshops · west the Barracks Yard · out the wide world
+
+
+
+
+  > north
+  You walk north to the Library Steps.
+  > east
+  You walk east to the Wonder Walk.
+  > visit great library
+  You are already in the Wonder Walk.
+  > south
+  You walk south to Guild Row.
+  > go gate
+  You walk through the Forum and the Workshops to the Town Gate.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 7/9  out ===
+ ∩ The Town Gate  Medieval Age · Iron Era                                                                         night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│                                 ·             ·      +       ☾             ││                                        │
+│                                 ·     ·              ·                     ││                     §Library──★Wonders │
+│      ·                                ·              +                     ││                     │         │        │
+│      +                                                                     ││ ♣Timber───⌂Lanes────○Forum────$Guilds  │
+│                                              +            ·             ·  ││ │         •         │         │        │
+│                                                                            ││ ≡Fields───▪Granary─•#Works───•¤Forges  │
+│  /\ ║  /\ ║                       ║   ║                                    ││ │         •         │                  │
+│ /▫ \║ /▫ \║                       ╨   ╨                                    ││ ▲Quarry───‡Barrack──@Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  The wide world  beyond the Town Gate
+  The road forks, and every fork has somebody at the end of it.
+  1  Ironhold Clans            5 days east           neutral   opinion -93  aggressive
+  2  Riverlands Tribes         7 days north          neutral   opinion +100  peaceful
+
+
+
+
+
+  You walk north to the Library Steps.
+  > east
+  You walk east to the Wonder Walk.
+  > visit great library
+  You are already in the Wonder Walk.
+  > south
+  You walk south to Guild Row.
+  > go gate
+  You walk through the Forum and the Workshops to the Town Gate.
+  > out
+  You stand at the edge of the settlement and look out.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 8/9  visit ironworks ===
+ # The Workshops  Medieval Age · Iron Era                                                                         night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│ ·                      ·                                     ☾             ││                                        │
+│ +        ·             +                                                   ││                     §Library──★Wonders │
+│                        ·           ·        ·          ·     · ·           ││                     │         │        │
+│                                      °                 ·     + ·           ││ ♣Timber───⌂Lanes────○Forum────$Guilds  │
+│    ·                         °                    °                        ││ │         •         │         │        │
+│                       °      °      °      °      °                 °   °  ││ ≡Fields───▪Granary─•@Works───•¤Forges  │
+│  ___   ___           /¯\    /¯\    /¯\    /¯\    /¯\               ▄*▄ ▄*▄ ││ │         •         │                  │
+│ (▒▒▒) (▒▒▒)         |▫ ▫|  |▫ ▫|  |▫ ▫|  |▫ ▫|  |▫ ▫|              ███ ███ ││ ▲Quarry───‡Barrack──∩Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  Ironworks  ×15  in the Workshops
+  Bronze was a phase. We've moved on to something with edge.
+  Organised iron working and tools. +36.3 iron/tick (5 workers).
+  hands 75/75 · old: still works, cannot be built any more · key ironworks
+
+
+
+
+
+  You walk east to the Wonder Walk.
+  > visit great library
+  You are already in the Wonder Walk.
+  > south
+  You walk south to Guild Row.
+  > go gate
+  You walk through the Forum and the Workshops to the Town Gate.
+  > out
+  You stand at the edge of the settlement and look out.
+  > visit ironworks
+  You walk to the Workshops.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
+=== 9/9  survey ===
+ # The Workshops  Medieval Age · Iron Era                                                                         night
+╭────────────────────────────────────────────────────────────────────────────╮╭─ map ──────────────────────────────────╮
+│ ·                      ·                                     ☾             ││                                        │
+│ +        ·             +                                                   ││                     §Library──★Wonders │
+│                        ·           ·        ·          ·     · ·           ││                     │         │        │
+│                                      °                 ·     + ·           ││ ♣Timber───⌂Lanes────○Forum────$Guilds  │
+│    ·                         °                    °                        ││ │         •         │         │        │
+│                       °      °      °      °      °                 °   °  ││ ≡Fields───▪Granary─•@Works───•¤Forges  │
+│  ___   ___           /¯\    /¯\    /¯\    /¯\    /¯\               ▄*▄ ▄*▄ ││ │         •         │                  │
+│ (▒▒▒) (▒▒▒)         |▫ ▫|  |▫ ▫|  |▫ ▫|  |▫ ▫|  |▫ ▫|              ███ ███ ││ ▲Quarry───‡Barrack──∩Gate              │
+│._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_.._,.'_││                                        │
+╰────────────────────────────────────────────────────────────────────────────╯╰────────────────────────────────────────╯
+
+  You climb somewhere high and look out over the Forum and everything around it.
+  § The Library Steps         24 built  newest: Monastery Library
+  ★ The Wonder Walk            6 built  newest: Great Library
+  ♣ The Timber Yards          32 built  newest: Wood Workshop
+  ⌂ The Lanes                 15 built  newest: Manor
+  ○ The Forum               —
+  $ Guild Row                 15 built  newest: Guildhall
+  ≡ The Demesne Fields        23 built  newest: Estate Farm
+  ▪ The Granaries             33 built  newest: Keep
+  # The Workshops             17 built  newest: Aqueduct
+  ¤ The Forge Quarter         12 built  newest: Forge
+  ▲ The Quarry                13 built  newest: Marble Works
+  ‡ The Barracks Yard         30 built  newest: Castle Keep
+  ∩ The Town Gate           —
+
+  You stand at the edge of the settlement and look out.
+  > visit ironworks
+  You walk to the Workshops.
+  > survey
+  You take it all in.
+────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────
+ > █
+ ←↑→↓ walk  l look  x examine  survey   out   ? help  q back
