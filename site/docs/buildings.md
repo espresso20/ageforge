@@ -222,7 +222,7 @@ Buildings without a worker domain (Housing, Culture/Arts) produce at exactly `ba
 
 `base_rate` is the **fully staffed** rate, and it is the number each building's description shows.
 
-For **construction resources** (anything the buildings of an age cost: wood, stone, iron, gold, steel, coal, electricity, data and so on), rates follow the **Payback Rule**: a producer's output is set so that, fully staffed, it earns back the price of its first copy in its age's **payback time**. The payback time is a share of how long the age is meant to take, and that share grows through the game: about 1/16 of the age in the Primitive Age, about 1/7 in the Iron Age, a quarter in the Renaissance, about a third in the Victorian Age and about two thirds in the Space Age. Later ages repay more slowly because every building you put up in earlier ages keeps producing alongside the new tier.
+For **construction resources** (anything the buildings of an age cost: wood, stone, iron, gold, steel, coal, electricity, data and so on), rates follow the **Payback Rule**: a producer's output is set so that, fully staffed, it earns back the price of its first copy in its age's **payback time**. The payback time is a share of how long the age is meant to take, and that share grows through the game: about 1/16 of the age in the Primitive Age, about 1/7 in the Iron Age, a quarter in the Renaissance (stretched to about a third there; see below), about a third in the Victorian Age and about two thirds in the Space Age. Later ages repay more slowly because every building you put up in earlier ages keeps producing alongside the new tier.
 
 Output is valued at **price parity**. Each age has a price level for each resource (the typical first-copy price in that resource among the age's buildings), and resources are worth each other in the ratio of those levels. A building with two outputs splits its value between them. Because rates follow prices, they grow roughly 5–8x per age.
 
@@ -240,7 +240,7 @@ Output is valued at **price parity**. Each age has a price level for each resour
 | Iron | 2.5h | 22m | 25m | 3m |
 | Classical | 3.5h | 38m | 35m | 4m |
 | Medieval | 4.5h | 58m | 45m | 6m |
-| Renaissance | 6h | 1.5h | 1h | 8m |
+| Renaissance | 6h | 1.9h | 1h | 8m |
 | Colonial | 7h | 2h | 1.2h | 9m |
 | Industrial | 8h | 2.5h | 1.3h | 10m |
 | Victorian | 9h | 3.2h | 1.5h | 11m |
@@ -256,6 +256,8 @@ Output is valued at **price parity**. Each age has a price level for each resour
 | Galactic | 24h | 18.1h | 4h | 30m |
 | Quantum | 24h | 19.1h | 4h | 30m |
 | Transcendent | 24h | 20.2h | 4h | 30m |
+
+The Renaissance's payback is 1.3x what the curve gives (1.5 hours): it is where gold income jumps, and at the curve's rate the age ran at barely half its target. Its University makes 208 knowledge/tick, Exchange 3.76K gold, Mill 520 steel, Foundry 711 steel and Coal Mine 289 coal.
 
 Times are game time at 1x speed (1 tick = 2 seconds). Some construction resources have no producer in certain ages (stone after the Bronze Age, for example); the market sells them at parity instead. See [Resources](resources.md#buying-at-the-market).
 

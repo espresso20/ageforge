@@ -199,7 +199,7 @@ Starting age. No requirements.
 | Requirement | Amount |
 |---|---|
 | Gold | 710,000 |
-| Knowledge | 940,000 |
+| Knowledge | 30,000,000 |
 | Steel | 110,000 |
 | Culture | 300,000 |
 | Exchanges | 8 |
