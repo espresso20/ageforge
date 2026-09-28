@@ -356,7 +356,7 @@ func (d *Dashboard) build() {
 			if d.histIdx != -1 {
 				d.histIdx = -1
 			}
-			// Tab and → (at the end of the line) take completions.
+			// Tab, Backtab and → (at the end of the line) take completions.
 			if d.inputField.acceptKey(event) {
 				return nil
 			}
@@ -862,9 +862,15 @@ func (d *Dashboard) showDevUnlockModal() {
 }
 
 // submitInput runs the command in the input field, clears it and records it
-// in history. Called on Enter.
+// in history. Called on Enter. A whole command runs as typed; otherwise the
+// ghost completion runs when it makes a whole command, except a Dangerous
+// one, which is put in the field for a second Enter (completer.enterLine).
 func (d *Dashboard) submitInput() {
-	text := d.inputField.GetText()
+	text, run := d.inputField.comp.enterLine(d.inputField.GetText())
+	if !run {
+		d.inputField.SetText(text)
+		return
+	}
 	d.inputField.SetText("")
 	// Reset history navigation state
 	d.histIdx = -1

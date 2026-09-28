@@ -13,7 +13,7 @@ import (
 
 // completer answers the command prompt's questions from the registry
 // (commands.go) and the game: what completes the text so far (Tab, the ghost
-// text).
+// text) and what Enter should run.
 //
 // It runs on every keystroke and every draw, on the UI goroutine. Values
 // read from the game are cached per snapshot: the dashboard hands out the
@@ -158,6 +158,12 @@ func (c *completer) complete(line string) bool {
 	return ok && p.complete(c.valid)
 }
 
+// dangerous reports whether line would run a Dangerous command.
+func (c *completer) dangerous(line string) bool {
+	p, ok := parse(c.cmds, strings.Fields(line))
+	return ok && p.dangerous()
+}
+
 // ghost is the dim text shown after what was typed: the rest of the best
 // completion. Nothing for an empty prompt, or for a line that is already a
 // whole command (Enter would run it as typed).
@@ -175,6 +181,29 @@ func (c *completer) ghost(text string) string {
 		return ""
 	}
 	return best[len(typed):]
+}
+
+// enterLine decides what Enter runs. A whole command runs as typed.
+// Otherwise a ghost completion that makes a whole command runs, unless it is
+// Dangerous: then the completion goes into the field (run false) and a
+// second Enter runs it. Anything else runs as typed, and the game says what
+// is wrong with it.
+func (c *completer) enterLine(text string) (line string, run bool) {
+	if strings.TrimSpace(text) == "" || c.complete(text) {
+		return text, true
+	}
+	g := c.ghost(text)
+	if g == "" {
+		return text, true
+	}
+	full := strings.TrimSpace(text + g)
+	if !c.complete(full) {
+		return text, true
+	}
+	if c.dangerous(full) {
+		return full, false
+	}
+	return full, true
 }
 
 // candidates returns every full line that completes text, best first. A

@@ -50,3 +50,34 @@ func TestAutoCompleter_NoRepeatAfterLastArg(t *testing.T) {
 		t.Errorf("completing %q = %v, want it to offer list", "research ", got)
 	}
 }
+
+// TestEnterLine is the Enter rule table, without the UI.
+func TestEnterLine(t *testing.T) {
+	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
+	c := newCompleter(game.NewGameEngine(), nil)
+	for _, tc := range []struct {
+		typed, line string
+		run         bool
+	}{
+		{"advance", "advance", true}, // whole: as typed
+		{"adv", "advance", true},     // ghost makes it whole
+		{"b", "b", true},             // an alias is whole (bare build lists)
+		{"research list", "research list", true},
+		{"research ", "research ", true}, // bare research opens the panel
+		{"plan bu", "plan bu", true},     // plan build needs a building: as typed
+		{"zzqx", "zzqx", true},           // garbage: as typed
+		{"build nosuch", "build nosuch", true},
+		{"plan cle", "plan clear", false}, // dangerous: filled in, not run
+		{"prestige confirm y", "prestige confirm yes", false},
+		{"research canc", "research cancel", false},
+		{"prestige confirm yes", "prestige confirm yes", true}, // typed in full: runs
+		{"festival conf", "festival confirm", true},            // the prompt, not the act
+		{"build hut m", "build hut max", true},
+		{"q", "quit", false}, // not a quit on a stray key
+	} {
+		line, run := c.enterLine(tc.typed)
+		if line != tc.line || run != tc.run {
+			t.Errorf("Enter on %q = (%q, run %v), want (%q, run %v)", tc.typed, line, run, tc.line, tc.run)
+		}
+	}
+}

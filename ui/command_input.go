@@ -10,9 +10,9 @@ import (
 
 // commandInput is the dashboard's command prompt: a tview InputField that
 // shows the best completion of what was typed as dim ghost text after the
-// cursor, fish-style. Tab takes the completion, → at the end of the line
-// takes it too; Enter lives in
-// Dashboard.submitInput. There is no dropdown.
+// cursor, fish-style. Tab takes the completion (again: the next candidate),
+// → at the end of the line takes it too; Enter's rules live in
+// completer.enterLine and Dashboard.submitInput. There is no dropdown.
 type commandInput struct {
 	*tview.InputField
 	comp *completer
@@ -20,6 +20,16 @@ type commandInput struct {
 	// atEnd: at the last draw the cursor sat right after the text, so the
 	// ghost was showing and → takes it.
 	atEnd bool
+	cycle tabCycle
+}
+
+// tabCycle is a run of Tab presses: the candidates for the text before the
+// first Tab, which one is in the field, and the text Tab last set (any other
+// edit ends the run).
+type tabCycle struct {
+	cands []string
+	idx   int
+	set   string
 }
 
 func newCommandInput(comp *completer) *commandInput {
@@ -64,15 +74,17 @@ func (c *commandInput) Draw(screen tcell.Screen) {
 	}
 }
 
-// acceptKey handles the completion keys: Tab takes the first candidate, →
-// takes the ghost when the cursor is at the end. It reports whether the key
-// was used.
+// acceptKey handles the completion keys: Tab and Backtab take and cycle the
+// candidates, → takes the ghost when the cursor is at the end. It reports
+// whether the key was used.
 func (c *commandInput) acceptKey(ev *tcell.EventKey) bool {
 	switch ev.Key() {
-	case tcell.KeyTab:
-		if cands := c.comp.candidates(c.GetText()); len(cands) > 0 {
-			c.SetText(cands[0])
+	case tcell.KeyTab, tcell.KeyBacktab:
+		step := 1
+		if ev.Key() == tcell.KeyBacktab {
+			step = -1
 		}
+		c.tab(step)
 		return true // Tab never leaves the prompt
 	case tcell.KeyRight:
 		if !c.atEnd {
@@ -87,10 +99,39 @@ func (c *commandInput) acceptKey(ev *tcell.EventKey) bool {
 		if len(cands) > 0 {
 			line = cands[0] // keeps the trailing space when more follows
 		}
-		c.SetText(line)
+		c.setText(line)
 		return true
 	}
 	return false
+}
+
+// tab takes the first candidate, or on a repeat press the next one (step
+// -1: the previous one). A run with one candidate starts over from what is
+// in the field, so Tab after `plan build ` goes on to the building.
+func (c *commandInput) tab(step int) {
+	text := c.GetText()
+	if text == c.cycle.set && len(c.cycle.cands) > 1 {
+		n := len(c.cycle.cands)
+		c.cycle.idx = ((c.cycle.idx+step)%n + n) % n
+		c.setText(c.cycle.cands[c.cycle.idx])
+		return
+	}
+	cands := c.comp.candidates(text)
+	if len(cands) == 0 {
+		c.cycle = tabCycle{}
+		return
+	}
+	idx := 0
+	if step < 0 {
+		idx = len(cands) - 1
+	}
+	c.cycle = tabCycle{cands: cands, idx: idx}
+	c.setText(cands[idx])
+}
+
+func (c *commandInput) setText(s string) {
+	c.SetText(s)
+	c.cycle.set = s
 }
 
 // cursorSpy is a screen that remembers where the cursor was put.
