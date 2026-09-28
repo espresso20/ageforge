@@ -120,64 +120,41 @@ func tradeProvider(state game.GameState, _ int) string {
 		sb.WriteString(" [gray]Build a market to unlock trade routes[-]\n")
 	}
 
+	writeAllyTradeBonuses(&sb, state.Diplomacy)
+
 	sb.WriteString(" [gray]Commands: trade route start/stop <key>[-]\n")
 
-	// === Diplomacy ===
-	sb.WriteString("\n [gold]═══ Diplomacy ═══[-]\n\n")
-	dip := state.Diplomacy
-
-	if len(dip.Factions) == 0 {
-		sb.WriteString(" [gray]No factions discovered yet[-]\n")
-		sb.WriteString(" [gray]Reach Colonial Age to discover factions[-]\n")
-	} else {
-		factionKeys := make([]string, 0, len(dip.Factions))
-		for k := range dip.Factions {
-			factionKeys = append(factionKeys, k)
-		}
-		sort.Strings(factionKeys)
-
-		for _, key := range factionKeys {
-			faction := dip.Factions[key]
-			if !faction.Discovered {
-				fmt.Fprintf(&sb, " [gray]??? %s [Undiscovered][-]\n", faction.Name)
-				continue
-			}
-
-			statusColor := "white"
-			switch faction.Status {
-			case "allied":
-				statusColor = "green"
-			case "friendly":
-				statusColor = "cyan"
-			case "rival":
-				statusColor = "red"
-			case "embargo":
-				statusColor = "yellow"
-			}
-
-			opinionColor := "white"
-			if faction.Opinion >= 50 {
-				opinionColor = "green"
-			} else if faction.Opinion >= 25 {
-				opinionColor = "cyan"
-			} else if faction.Opinion < 0 {
-				opinionColor = "red"
-			}
-
-			bonusStr := ""
-			if faction.Status == "allied" && faction.TradeBonus > 0 {
-				bonusStr = fmt.Sprintf("  [green]+%.0f%% %s[-]", faction.TradeBonus*100, faction.Specialty)
-			}
-
-			fmt.Fprintf(&sb, " %-20s [%s][%s][-]  Op: [%s]%d[-]%s  [gray](%d trades)[-]\n",
-				faction.Name, statusColor, faction.Status, opinionColor, faction.Opinion,
-				bonusStr, faction.TradeCount)
-		}
-	}
-
-	sb.WriteString("\n [gray]Commands: diplomacy ally/rival/embargo/gift/neutral <faction>[-]\n")
+	// Faction standing lives on the Factions panel only. This overlay used to
+	// carry its own copy, which went stale (it still said factions were found
+	// by reaching the Colonial Age; first contact comes from expeditions).
+	sb.WriteString("\n [gray]Faction standing and deals: type factions[-]\n")
 
 	return sb.String()
+}
+
+// writeAllyTradeBonuses lists the allies currently boosting your income, the
+// one piece of faction state that belongs on the trade screen. It mirrors
+// game.DiplomacyManager.GetTradeBonus: an allied civ that is not at war adds
+// its TradeBonus to its specialty resource, both to route imports and to that
+// resource's production rate. Writes nothing when no ally applies.
+func writeAllyTradeBonuses(sb *strings.Builder, dip game.DiplomacyState) {
+	keys := make([]string, 0, len(dip.Factions))
+	for k, f := range dip.Factions {
+		if f.Discovered && f.Status == "allied" && !f.AtWar && f.TradeBonus > 0 {
+			keys = append(keys, k)
+		}
+	}
+	if len(keys) == 0 {
+		return
+	}
+	sort.Strings(keys)
+	sb.WriteString(" [gold]Allied Bonuses:[-]\n")
+	for _, k := range keys {
+		f := dip.Factions[k]
+		fmt.Fprintf(sb, "   %s: [green]+%.0f%% %s[-] [gray](route imports and production)[-]\n",
+			f.Name, f.TradeBonus*100, f.Specialty)
+	}
+	sb.WriteString("\n")
 }
 
 // formatResMap formats a resource→amount map into a sorted, comma-separated
