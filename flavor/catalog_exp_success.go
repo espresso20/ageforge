@@ -66,25 +66,20 @@ var expSuccessAny = []skel{
 	{Text: "Nine in, eleven counted", Reg: rPlain, Form: fLedger, Topic: "count"},
 	{Text: "Serit slept eleven hours", Reg: rPlain, Topic: "name"},
 	{Text: "Everyone wants a share", Reg: rPlain, Topic: "argument"},
-	{Text: "The cook is singing badly", Reg: rPlain, Topic: "people"},
 	{Text: "Word travelled ahead of them", Reg: rPlain, Topic: "rumour"},
 	{Text: "The rope held", Reg: rPlain, Topic: "kit"},
 	{Text: "A stranger walked in behind them", Reg: rPlain, Topic: "stranger"},
 	{Text: "Three teeth between four men", Reg: rWry, Form: fLedger, Topic: "wound"},
-	{Text: "The bread had gone green", Reg: rPlain, Topic: "food"},
 	{Text: "Two names are gone", Reg: rPlain, Topic: "casualty"},
 	{Text: "Half of them are asleep sitting up", Reg: rPlain, Topic: "sleep"},
 	{Text: "The cook was told nothing", Reg: rPlain, Form: fComplaint, Topic: "food"},
-	{Text: "A child is charging admission", Reg: rJoke, Topic: "town"},
 	{Text: "Kel is not speaking to Serit", Reg: rPlain, Topic: "argument"},
 	{Text: "Boots off, then arguing", Reg: rWry, Topic: "people"},
 	{Text: "Somebody has bled on this", Reg: rPlain, Topic: "wound"},
 
 	// --- mid. The working length: one thing, with enough detail to place it. ---
 	{Text: "The youngest one has not stopped talking since the moment he got in", Reg: rWry, Topic: "people"},
-	{Text: "One of them came back barefoot and will not discuss it", Reg: rWry, Topic: "people"},
 	{Text: "There is a prisoner in the back room who will not give a name", Reg: rPlain, Topic: "stranger"},
-	{Text: "They came back a day early, which has upset the kitchen enormously", Reg: rWry, Form: fComplaint, Topic: "food"},
 	{Text: "The oldest of them sat down in the doorway and would not get up", Reg: rPlain, Topic: "people"},
 	{Text: "Two of them have new scars and two versions of how they got them", Reg: rWry, Topic: "wound"},
 	{Text: "The list of names is shorter than it was when they set out", Reg: rPlain, Form: fLedger, Topic: "casualty"},
@@ -101,12 +96,9 @@ var expSuccessAny = []skel{
 	{Text: "Everything is spread across the floor and being sorted by size", Reg: rPlain, Form: fLedger, Topic: "haul"},
 	{Text: "The map is longer than it was on the morning they set out, and one whole corner of it is now taken up with a coastline that two of them insist is there and the third says he never saw", Reg: rPlain, Topic: "map"},
 	{Text: "A child has already made up a song about the whole business", Reg: rWry, Topic: "town"},
-	{Text: "The children were sent to bed and listened from the stairs anyway", Reg: rPlain, Topic: "town"},
 	{Text: "There is a name being repeated tonight that nobody knew this morning", Reg: rPlain, Topic: "name"},
-	{Text: "The old woman who told them where to look would like paying", Reg: rPlain, Topic: "money"},
 	{Text: "Something followed them for two days and then it stopped", Reg: rPlain, Topic: "ground"},
 	{Text: "The rain started an hour after the last of them was indoors", Reg: rPlain, Topic: "weather"},
-	{Text: "The water was worse than the fighting, according to all four of them", Reg: rPlain, Form: fOverheard, Topic: "ground"},
 	{Text: "A woman named Serit did most of the work and none of the talking", Reg: rWry, Topic: "name"},
 	{Text: "The wound on the tall one's arm is being described as nothing much", Reg: rWry, Topic: "wound"},
 	{Text: "Two of them came back wearing boots that belong to somebody else", Reg: rWry, Topic: "people"},
@@ -122,29 +114,19 @@ var expSuccessAny = []skel{
 
 	// --- long. Circumstantial, subordinated, the way a chronicle actually runs. ---
 	{Text: "There was an argument about the share before anyone had washed, another one after the evening meal, and a third this morning involving two people who did not go", Reg: rWry, Topic: "argument"},
-	{Text: "Somebody put a mark on the doorframe for every day they were out, then stopped on the ninth, and has not gone back to finish it", Reg: rPlain, Topic: "time"},
-	{Text: "The heavy stuff went into the back room, the light stuff into the front, and one bundle that nobody will claim is sitting in the passage", Reg: rPlain, Form: fLedger, Topic: "haul"},
 	{Text: "Two of them have been sat in the corner since they got in, eating without speaking, and the third keeps getting up to check the door", Reg: rPlain, Topic: "people"},
 	{Text: "There is a list on the wall of what came back and a shorter list beside it of what was promised, and the two are being compared by strangers all afternoon", Reg: rWry, Form: fLedger, Topic: "paper"},
-	{Text: "It took four of them to get the heavy end through the door and it will take six to get it out again when somebody decides where it goes", Reg: rWry, Topic: "haul"},
-	{Text: "Two of them have gone straight back out to fetch the load that was cached at the halfway point, on the grounds that somebody else will take it if they wait", Reg: rPlain, Topic: "haul"},
 	{Text: "The tall one has told everybody that she is fine, has said it while sitting down, and has now been carried indoors by two people she is still telling", Reg: rWry, Topic: "wound"},
-	{Text: "Everything that came in wet is hanging up, everything that came in broken is in a pile by the door, and everything that came in whole has already been taken by somebody", Reg: rWry, Form: fLedger, Topic: "haul"},
 	{Text: "Kel has explained the route to four separate people and drawn it out each time on the back of the same sheet, and no two of the drawings agree", Reg: rWry, Topic: "map"},
 	{Text: "Somebody has been going round asking what each thing is worth, and getting a different number from every person, and writing all of them down", Reg: rWry, Form: fLedger, Topic: "money"},
 
 	// --- very long. Digressive, specific, a paragraph that forgot to stop. ---
 	{Text: "The count was done at the door by two people who did not agree, then again in the back room by one who did not care, and the number written up came from a boy nobody had asked", Reg: rWry, Form: fLedger, Topic: "count"},
-	{Text: "The evening meal was late because the kitchen had planned for twelve and cooked for twelve, and fifteen came in, two of whom nobody could name, and the whole thing was stretched with water and a great deal of bread", Reg: rPlain, Topic: "food"},
 	{Text: "Word had gone round three days ago that they were all dead, on the authority of a man who heard it from a man who was not there, and that man has found a reason to be out of town since noon", Reg: rWry, Form: fOverheard, Topic: "rumour"},
 	{Text: "The heaviest of what came in has been left in the passage where it was dropped, because moving it needs four people and every one of the four has found something else that badly needs doing", Reg: rWry, Topic: "haul"},
-	{Text: "A woman has been waiting by the door since the middle of the afternoon with a clean shirt for one of them, and he walked straight past her to the food", Reg: rPlain, Topic: "town"},
-	{Text: "Everything came back through the same door within the space of an hour, in no order at all, and the sorting of it has been handed to a boy of about ten who has taken to the work with more seriousness than anyone expected", Reg: rWry, Form: fLedger, Topic: "haul"},
 
 	// --- kind: scouting ---
 	{Text: "Three days out, two back", Kinds: []string{"scouting"}, Reg: rPlain, Form: fLedger, Topic: "time"},
-	{Text: "They walked a good deal further than they were told to", Kinds: []string{"scouting"}, Reg: rWry, Topic: "map"},
-	{Text: "The new marks on the map are in a shaky hand", Kinds: []string{"scouting"}, Reg: rPlain, Topic: "map"},
 	{Text: "They counted the lights on the far side and stopped at forty", Kinds: []string{"scouting"}, Reg: rPlain, Topic: "border"},
 	{Text: "Nobody has been that far and come home still talking", Kinds: []string{"scouting"}, Reg: rWry, Topic: "map"},
 
@@ -168,7 +150,6 @@ var expSuccessAny = []skel{
 	{Text: "Somebody filed the {subject} order under things that worked", Needs: needSubject, Reg: rWry, Form: fNotice, Topic: "paper"},
 	{Text: "A page titled {subject} now has three names crossed out on it", Needs: needSubject, Reg: rPlain, Form: fNotice, Topic: "paper"},
 	{Text: "The line that reads {subject} has a thumbprint on it now", Needs: needSubject, Reg: rPlain, Form: fNotice, Topic: "paper"},
-	{Text: "Everything filed under {subject} came home muddy, including the paper it was written on, which somebody had folded into a boot", Needs: needSubject, Reg: rWry, Form: fNotice, Topic: "paper"},
 
 	// --- the resource, as a thing in a room rather than as a payout ---
 	{Text: "Nobody wants to sit up guarding the {res} tonight", Needs: needRes, Reg: rPlain, Topic: "money"},
@@ -241,6 +222,28 @@ var expSuccessGrounded = []skel{
 	{Text: "Two were buried on the way out, at a bend in the water that nobody thought to mark, and the man who dug for them cannot now say where it was", Reg: rPlain, Topic: "casualty"},
 	{Text: "Water got into ~ on the last night out", Slot: "exp_success_haul", Reg: rPlain, Topic: "haul"},
 	{Text: "The blades have all been cleaned and put away and the man who did it has been sitting looking at the wall ever since", Kinds: []string{"military"}, Reg: rPlain, Topic: "weapon"},
+
+	// --- re-tagged out of the shared pool by the third late-age review: the
+	// kitchen, the back door, the walk home. True up to the Modern Age. ---
+	{Text: "The bread had gone green", Reg: rPlain, Topic: "food"},
+	{Text: "The cook is singing badly", Reg: rPlain, Topic: "people"},
+	{Text: "A child is charging admission", Reg: rJoke, Topic: "town"},
+	{Text: "One of them came back barefoot and will not discuss it", Reg: rWry, Topic: "people"},
+	{Text: "They came back a day early, which has upset the kitchen enormously", Reg: rWry, Form: fComplaint, Topic: "food"},
+	{Text: "The children were sent to bed and listened from the stairs anyway", Reg: rPlain, Topic: "town"},
+	{Text: "The old woman who told them where to look would like paying", Reg: rPlain, Topic: "money"},
+	{Text: "The water was worse than the fighting, according to all four of them", Reg: rPlain, Form: fOverheard, Topic: "ground"},
+	{Text: "Somebody put a mark on the doorframe for every day they were out, then stopped on the ninth, and has not gone back to finish it", Reg: rPlain, Topic: "time"},
+	{Text: "The heavy stuff went into the back room, the light stuff into the front, and one bundle that nobody will claim is sitting in the passage", Reg: rPlain, Form: fLedger, Topic: "haul"},
+	{Text: "It took four of them to get the heavy end through the door and it will take six to get it out again when somebody decides where it goes", Reg: rWry, Topic: "haul"},
+	{Text: "Two of them have gone straight back out to fetch the load that was cached at the halfway point, on the grounds that somebody else will take it if they wait", Reg: rPlain, Topic: "haul"},
+	{Text: "Everything that came in wet is hanging up, everything that came in broken is in a pile by the door, and everything that came in whole has already been taken by somebody", Reg: rWry, Form: fLedger, Topic: "haul"},
+	{Text: "The evening meal was late because the kitchen had planned for twelve and cooked for twelve, and fifteen came in, two of whom nobody could name, and the whole thing was stretched with water and a great deal of bread", Reg: rPlain, Topic: "food"},
+	{Text: "A woman has been waiting by the door since the middle of the afternoon with a clean shirt for one of them, and he walked straight past her to the food", Reg: rPlain, Topic: "town"},
+	{Text: "Everything came back through the same door within the space of an hour, in no order at all, and the sorting of it has been handed to a boy of about ten who has taken to the work with more seriousness than anyone expected", Reg: rWry, Form: fLedger, Topic: "haul"},
+	{Text: "They walked a good deal further than they were told to", Kinds: []string{"scouting"}, Reg: rWry, Topic: "map"},
+	{Text: "The new marks on the map are in a shaky hand", Kinds: []string{"scouting"}, Reg: rPlain, Topic: "map"},
+	{Text: "Everything filed under {subject} came home muddy, including the paper it was written on, which somebody had folded into a boot", Needs: needSubject, Reg: rWry, Form: fNotice, Topic: "paper"},
 }
 
 // expSuccessLate is the digital and cosmic voice: the field notes have become
@@ -328,6 +331,26 @@ var expSuccessLate = []skel{
 	{Text: "Every system aboard came back in better shape than the maintenance logs said it left", Reg: rPlain, Topic: "machine"},
 	{Text: "A sponsor's logo on the side of the lead vehicle has been in every shot on the news, and the sponsor wants a bigger logo", Reg: rWry, Topic: "money"},
 	{Text: "The medic who cleared them for the trip met them at the door and checked them over again without being asked", Reg: rPlain, Topic: "people"},
+
+	// --- added by the third late-age review: offices, stations, the long view ---
+	{Text: "Nobody has unpacked yet", Reg: rPlain, Topic: "haul"},
+	{Text: "Their badge photos are two haircuts out of date", Reg: rWry, Topic: "people"},
+	{Text: "Serit's desk plant died while she was away, and the office held a vote on whether to tell her before the debrief or after it", Reg: rWry, Topic: "name"},
+	{Text: "Customs held on to one man's belt", Reg: rWry, Topic: "haul"},
+	{Text: "The sample tubes carry labels in four different hands, and one of the hands was shaking", Reg: rPlain, Form: fLedger, Topic: "count"},
+	{Text: "Security walked them from the door to medical without letting them stop at the vending machines", Reg: rPlain, Topic: "authority"},
+	{Text: "Their inboxes were forwarded to a shared folder that now holds four thousand unread messages", Reg: rPlain, Topic: "message"},
+	{Text: "The pay system caps a trip at thirty days, and the last nine are going through as a manual claim that needs four signatures", Reg: rWry, Form: fComplaint, Topic: "money"},
+	{Text: "The sealed room smells of cold metal and somebody's orange", Reg: rPlain, Topic: "smell"},
+	{Text: "The medical officer took a splinter out of one of them that has no business existing where they went, and it is in a dish now with a label on it", Reg: rPlain, Topic: "wound"},
+	{Text: "The survey came in as one file so large that the first three people who tried to open it froze their terminals, and the fourth printed the index and has been reading it on paper at her desk since lunch", Reg: rWry, Topic: "map"},
+	{Text: "One of them brought back a stone for his daughter and declared it on the customs form as a stone", Reg: rPlain, Topic: "kit"},
+	{Text: "The welcome-back message on the lobby screens misspells two of their names", Reg: rWry, Topic: "name"},
+	{Text: "A cake arrived large enough to need a permit", Tones: []Tone{Triumphant}, Reg: rJoke, Topic: "food"},
+	{Text: "The survey grid came back with every square filled in and a note in the margin of one of them", Kinds: []string{"scouting"}, Reg: rPlain, Topic: "map"},
+	{Text: "Every magazine they signed out came back full", Kinds: []string{"military"}, Reg: rPlain, Form: fLedger, Topic: "weapon"},
+	{Text: "The press release calls the whole thing routine, in nine hundred words", Tones: []Tone{Wry}, Reg: rJoke, Form: fNotice, Topic: "paper"},
+	{Text: "Kel slept in the decontamination shower", Reg: rPlain, Topic: "sleep"},
 }
 
 // expSuccessAncient — fires, herds, hides, spears, the elders.
@@ -465,6 +488,28 @@ var expSuccessDigital = []skel{
 	{Text: "Their biometrics on the way in matched the ones taken on the way out, and that has become the good news of the day", Reg: rWry, Topic: "people"},
 	{Text: "The fusion plant's own drone team wants to borrow them for a week", Reg: rWry, Topic: "trade"},
 	{Text: "The cyber team spent the night pulling apart the code on the device they brought back and found, under the encryption and several layers of decoy, a comment in plain text from the programmer asking whoever read it to say hello to his mother", Reg: rWry, Topic: "machine"},
+
+	// --- added by the third late-age review: the building, the city, the network ---
+	{Text: "The drone footage is mostly car parks", Reg: rPlain, Topic: "machine"},
+	{Text: "Four passwords reset, one account locked", Reg: rPlain, Form: fLedger, Topic: "count"},
+	{Text: "The analysts want the raw feed and are being given the edited one", Reg: rWry, Form: fComplaint, Topic: "argument"},
+	{Text: "A courier on a motorbike brought the last case across the city at rush hour", Reg: rPlain, Topic: "haul"},
+	{Text: "The team's shared calendar still has them out of office until Thursday", Reg: rWry, Topic: "time"},
+	{Text: "Kel printed the route on the office printer and it came out in magenta, because the black cartridge has been empty since March", Reg: rJoke, Topic: "map"},
+	{Text: "Their taxi home was booked by the office and sent to the wrong entrance", Reg: rPlain, Topic: "town"},
+	{Text: "The uplink bill for the fortnight is on the director's desk under a sticky note that says good work", Reg: rWry, Topic: "money"},
+	{Text: "One of them came home running implant firmware that no clinic in the city will touch", Reg: rPlain, Topic: "wound"},
+	{Text: "The team channel was muted for the afternoon so they could sleep, and forty people unmuted it by evening to say welcome back", Reg: rWry, Topic: "message"},
+	{Text: "The reactor team sent flowers and an invoice", Reg: rJoke, Topic: "money"},
+	{Text: "Traffic cameras caught their van four times on the way in and the fines are already in the post", Reg: rWry, Topic: "town"},
+	{Text: "Everyone on the floor had watched the drone feed live, and in the debrief they kept correcting the team's account of its own route", Reg: rWry, Topic: "people"},
+	{Text: "The analyst who planned the route has printed the final position report, framed it and hung it by the lifts, and she is often standing near it at odd hours of the day in case anybody has questions", Reg: rJoke, Topic: "people"},
+	{Text: "The network logs from the trip run to four terabytes", Reg: rPlain, Form: fLedger, Topic: "count"},
+	{Text: "Kel's phone had nine hundred notifications and he read every one of them standing in the lobby", Reg: rPlain, Topic: "name"},
+	{Text: "The office bought pizza for twelve, and there were nine of them and most of the floor", Reg: rPlain, Topic: "food"},
+	{Text: "A drone written off on the second day turned up this morning on a loading ramp behind the building, battery flat and camera still running, with forty hours of footage of a car park nobody has had the heart to delete", Reg: rWry, Topic: "machine"},
+	{Text: "Street vendors outside the building are selling their faces on stickers", Reg: rJoke, Topic: "rumour"},
+	{Text: "The map layer they built has been pushed to every phone in the department", Kinds: []string{"scouting"}, Reg: rPlain, Topic: "map"},
 }
 
 // expSuccessCosmic — hulls, bays, relays, transponders, airlocks.
@@ -517,4 +562,28 @@ var expSuccessCosmic = []skel{
 	{Text: "They were gone long enough for the language on the station to drift, and the first hour back went on working out that the dock crew's word for the samples meant something close to what they meant, though not close enough for a form", Reg: rWry, Topic: "message"},
 	{Text: "The mission was declared a success by a committee that had been reconstituted in their absence, and the chair who read out the verdict had been a child when they left and seemed nervous about getting their names right", Reg: rWry, Topic: "authority"},
 	{Text: "The last thing the long-range sensors picked up before the return burn was something moving the wrong way at the edge of the system, and it has been filed for later", Reg: rPlain, Topic: "map"},
+
+	// --- added by the third late-age review: the ring, the fleet, and what is out past it ---
+	{Text: "The hab ring stayed up late for them", Reg: rPlain, Topic: "town"},
+	{Text: "Their suits smell of ozone", Reg: rPlain, Topic: "smell"},
+	{Text: "The docking clamps held on the first try", Reg: rPlain, Topic: "machine"},
+	{Text: "One of them brought back sand from a world the survey marked as not worth the fuel, and it sits in a jar on the mess table", Reg: rPlain, Topic: "haul"},
+	{Text: "Nothing in the samples has a name yet", Reg: rPlain, Topic: "name"},
+	{Text: "The station's children lined the observation gallery and waved at a ship that could not see them", Reg: rPlain, Topic: "people"},
+	{Text: "Two of them came back a few days older than the rest, and the medic has written this down without comment", Reg: rWry, Topic: "time"},
+	{Text: "Hydroponics sent up a bowl of fresh tomatoes, one each, with the names written on the stalks in pen", Reg: rPlain, Topic: "food"},
+	{Text: "Dock control logged the approach and drew a small star beside it", Reg: rWry, Topic: "authority"},
+	{Text: "The navigator wants her chair put back where she left it, and the night crew moved it a centimetre", Reg: rWry, Form: fComplaint, Topic: "people"},
+	{Text: "Customs on the ring wanted a value put on a sealed flask of another star's light, for duty purposes", Reg: rWry, Form: fNotice, Topic: "money"},
+	{Text: "They brought back a signal from the edge of the system that sounds like singing, and it has been played once in a locked room to four specialists, and all four asked to hear it again without being able to say why", Reg: rPlain, Topic: "noise"},
+	{Text: "The quarantine berth looks out on the planet and the crew have been given the good chairs", Reg: rPlain, Topic: "building"},
+	{Text: "Their mission patch is already on a mug in the station shop", Reg: rWry, Topic: "trade"},
+	{Text: "Every suit radio worked", Reg: rPlain, Form: fLedger, Topic: "kit"},
+	{Text: "Four years out, one weekend by the ship's clock", Reg: rWry, Form: fLedger, Topic: "time"},
+	{Text: "The long-range crew are holding a small wake for the probe they left behind", Reg: rWry, Topic: "religion"},
+	{Text: "Something followed their drive plume out past the gas giant and turned back at the edge of the system, and the log shows the turn, though the watch officer that night saw nothing on her screens", Reg: rPlain, Topic: "stranger"},
+	{Text: "Their gunnery officer fired nothing and is being bought drinks anyway", Kinds: []string{"military"}, Reg: rWry, Topic: "weapon"},
+	{Text: "The star charts they brought back have three new names on them and one question mark", Kinds: []string{"scouting"}, Reg: rPlain, Topic: "map"},
+	{Text: "The empty cryo pod came back strapped in its cradle with the name still on the lid", Tones: []Tone{Grim}, Reg: rPlain, Topic: "casualty"},
+	{Text: "Two of the crew uploaded on the way home to save mass, and the other two carried them back on a drive in a padded case", Reg: rWry, Topic: "people"},
 }

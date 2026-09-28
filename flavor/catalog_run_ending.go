@@ -55,7 +55,7 @@ var runEndAny = []skel{
 	{Text: "The grumbling was that it had come before anything was finished", Reg: rWry, Form: fComplaint, Topic: "time"},
 	{Text: "Whatever could be carried was handed to whoever could carry it, and what could not be carried was left where it stood with a note saying whose it had been", Reg: rPlain, Topic: "haul"},
 	{Text: "Doors were left open", Reg: rPlain, Topic: "building"},
-	{Text: "Bread was shared out until it was gone", Reg: rPlain, Topic: "food"},
+	{Text: "Food was shared out until it was gone", Reg: rPlain, Topic: "food"},
 	{Text: "Most people wanted to be with their families, and were", Reg: rPlain, Topic: "family"},
 }
 
