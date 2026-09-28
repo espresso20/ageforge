@@ -9,9 +9,14 @@
 Wonders require you to **bank resources** before construction begins. Resources in the wonder bank are reserved and cannot be used elsewhere.
 
 ```
-wonder collect <resource> <amount>   # bank resources
+wonder                               # the bank: each resource, banked / needed
+wonder collect <resource> <amount>   # bank that much (never more than it still needs)
+wonder collect <resource> all        # as much as it still needs, up to what you have
+wonder collect all                   # the same for every resource it needs
 build <wonder_key>                   # start construction once bank is full
 ```
+
+`wonder bank` is the same command as `wonder collect` (`wonder bank food all`), `max` means the same as `all`, and leaving the amount off (`wonder bank food`) means `all` too. Each deposit says how much went in. When nothing can go in, the command says why: the wonder is already built, it doesn't need that resource (and lists the ones it does), that part of the bank is full, you have none on hand, or a set amount is more than you have (that is refused rather than banked in part; use `all` to bank what you have).
 
 A [build plan](plan.md) can hold the wonder too (`plan build <wonder_key>`): it starts construction the moment the bank is full.
 

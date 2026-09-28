@@ -108,7 +108,7 @@ func TestEngineAmountGuards(t *testing.T) {
 		if _, err := ge.GatherResource("food", amt); err == nil {
 			t.Errorf("GatherResource(%v) succeeded", amt)
 		}
-		if err := ge.BankWonderResource("great_monolith", "stone", amt); err == nil {
+		if _, err := ge.BankWonderResource("great_monolith", "stone", amt); err == nil {
 			t.Errorf("BankWonderResource(%v) succeeded", amt)
 		}
 		if err := ge.SetSpeedMultiplier(amt); err == nil {

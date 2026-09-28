@@ -207,7 +207,10 @@ Active trade routes run for a fixed duration. Routes whose imports include a res
 
 | Command | Description |
 |---|---|
-| `wonder collect <resource> <amount>` | Bank resources toward a wonder |
+| `wonder` | Show the current wonder's bank: each resource, banked / needed |
+| `wonder collect <resource> <amount>` (or `wonder bank …`) | Bank that much of a resource toward the current wonder (at most what it still needs) |
+| `wonder collect <resource> [all\|max]` | Bank as much as the wonder still needs of it, up to what you have (no amount means the same) |
+| `wonder collect all` | Do that for every resource the wonder still needs |
 | `wonder overflow` | Show whether overflow is on |
 | `wonder overflow on` | Bank what full stores would waste into the current wonder (the default) |
 | `wonder overflow off` | Let production over a storage cap be lost instead |
@@ -215,9 +218,12 @@ Active trade routes run for a fixed duration. Routes whose imports include a res
 
 ```
 wonder collect wood 1000
-wonder collect stone 500
+wonder bank food all       # as much food as it still needs, up to what you have
+wonder bank all            # every resource it still needs, as far as your stores go
 build great_monolith
 ```
+
+A deposit says how much went in and the bank's new total. When nothing can go in, the command says why: the wonder is already built, it doesn't need that resource (and which ones it does), that part of the bank is already full, you have none on hand, or you asked for more than you have. `wonder bank all` banks what it can and lists what it skipped. Autocomplete after `wonder bank` offers only the resources the wonder still needs.
 
 **Overflow.** While overflow is on, production that a full store would throw away goes into the current age's wonder bank instead, for every resource the wonder still needs and only up to what it still needs. It never takes from what you hold, works during offline catch-up too, and says so in the log when it finishes a resource's part of the bank. See [Wonders](wonders.md#overflow).
 
