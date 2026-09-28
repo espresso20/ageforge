@@ -1,0 +1,48 @@
+┌────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┐│ ATLAS ─────────────────────────────
+│ ┌───────────────────────────────────┐                                 ∙                    ∙                           ││ plate 8 of 8 · Star chart
+│ │ STELLAR CHART · SOL NEIGHBOURHOOD │                       18h                                                        ││ 9 of 11 peoples met · 5 routes
+│ │ within 30 light years             │                             ·                                                    ││
+│ │ Interstellar Age · Cosmic Era     │  ··         ·· · · · · · · · ·                                    ·              ││ SINCE YOU LAST LOOKED ─────────────
+│ └───────────────────────────────────┘   16h · · ·           ·        · ··        20h                                   ││ + route opened: Warp Commerce
+│                                        · ··                    • Beta Caelustan                                        ││ + 1778 expeditions returned
+│                                      · ·            ·                         ··                                       ││ + 1 wonder raised
+│                                   · ·    ·      • Eta Wenelshire          ┄┄┄┄┄  · ·                                   ││
+│                                  ·     ·   ·         ·                ┄┄┄┄·    ┄┄┄┄ ··  30 ly                          ││ INSPECT ───────────────────────────
+│                               ··                       · · · · ·    ┄┄             ┄┄  ·                               ││ SOL
+│     ∙                        ·     · ∙      ·   · · · ·          ·┄┄ ·   ·           ┄  ·                 ∙            ││ home
+│                            ·    ··           ··                   ┄   ··••      •  ✶ Tau Galaemark                     ││ shared with Riverlands Tribes, Iro…
+│                          14h ··           ··   ·         STELLAR FEDERATION ✶•     ·  ┄    ·    22h                    ││
+│     · ∙                 ·☄ the Distress Beacon 18%                ┄  ·      ·  20 ly  ┄     ·                          ││ LEGEND ────────────────────────────
+│                         ·              ·         ·                ┄ ·      •  ····   ┄┄∙     ·                         ││ ☉  Sol, home
+│                        ·  ∙          ··            ·              ·┄            ··  ┄┄        ·           ·            ││ •  colony (accent)
+│                       ·      ✶ Gamma Norania     • Eta Mareland ·   ┄┄┄         ··┄┄           ·                       ││ ✶  bright star · ∙ dim
+│               ∙∙      ·         · ·· ·✶ Lambda Dunelheim        · ··  10 ly ┄┄┄✶ Epsilon Wenaos                        ││ ·  hyperlane · ◆ cargo
+│                      ·            ·    · ·∙     ··    ·        ·     ·             ·            ·                      ││ ┄  sphere of influence
+│                      ·            ·        · ·∙·                      ·            ·    ·       ·                      ││ ✶  seat of a people
+│                     ··  ·        ·            · Sigma Talustan  ∙     ·             ·           • Delta Varorwold      ││ ◌  10 ly rings, RA spokes
+│                   · ·            ·      ∙     ·  • Tau Zanuria         ·            ·            ·                   ··││
+│       ∙            12h  ·  ·  ·  ··  ·  ·  ·  ··◆ ·  ·    [☉ SOL · Varath ·  ·  ·  ··  ·  ·  ·   ·    0h               ││
+│ ·                   ·            ·         ∙  ·• Tau Eldofell          · ✶ Lambda Sarador        ·  ·                  ││
+│ ∙                   ·            ·            ··        ·    ·         ·            ·           ·                      ││
+│                      ·            ·             ·                    ··            ·            ·                      ││
+│                      ·            ··            ··   ··   • Kappa Draadale         ·            ·                      ││
+│                      ·             ·              ·· ·          ·· ·              ·       ✶ Eta Galstan ∙              ││
+│                       ··            ·                · ·· · · · ·               ∙·    · ·      ·                       ││
+│∙            ·          ·             ·             ·              ·            ·   ✶ Epsilon Osirholm                  ││
+│                         ·             ·          ·                  ·         ·              ··                        ││
+│                          ·             ···      ·                    ·      ·∙              ·                   ∙ ·    ││
+│                          10h              · ·                             ·                ·    2h                     ││
+│                            ·                 ···                       · ·                ·                            ││
+│                             ∙·    ·         ·    · · ·    ·     · · ··   ·             · ·                             ││
+│                                ·                      · · · · ·                       ·                                ││
+│                                 ··         ·                              ·          ·                                 ││
+│                                    ··    ·                                  ·     ··                                   ││
+│                                     · ·            ·                   ∙       ··                                      ││
+│                                        ··· ·                               · ··                                        ││
+│                                         8h   · · ·                    · ··       4h                                    ││
+│               ·                                    ·· · · · · · · · ·         ·                                        ││
+│                                                                                                                        ││
+│  ├────┼────┤ 2 ly                                            6h                                        ·               ││
+│                                                                                                                        ││
+└────────────────────────────────────────────────────────────────────────────────────────────────────────────────────────┘│
+ RA 0h00m · 0.4 ly from Sol                                                          ←↑↓→ move  tab next  +/- zoom  0 fit  [ ] plates  ⏎ verb  g legend  q quit

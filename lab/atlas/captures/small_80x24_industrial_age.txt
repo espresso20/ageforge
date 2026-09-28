@@ -1,0 +1,24 @@
+┏━━━━━━┬━━━━━━━┬━━━━━━┬━━━━━━━┬━━━━━━┬━━━━━━━┬━━━━━━┬━━━━━━━┬━━━━━━━━━━━━━━━━━━┓
+┃  A New & Accurate Map of Varath    ┊       ┊      ┊                          ┃
+┃           │─╮╮╮     ┊       ┊      ┊       ┊      ┊         ─╯╎  ┊      N    ┃
+┃           ╰───╮╮    ┊       ┊      ┊       · ╭╭ MERCHANT GUILD ◉ new    ▲    ┃
+┤        ┈┈┈┈┈┈┼··╮╮╭─────○╮╮┈┼┈┈┈┈┈┈┼┈┈┈☄···┼┈││╎╭╯╯┈┈╭ ╌╌╌╌ HARIRIA   W─✛─40N┃
+┃        VESORDALE ─╯ ··  ╭│─╮╮   the Newsboy 18% ╯╯┊ ╭╌╌╌─╯  ·  ╎╎┊╰     ▼    ┃
+┃              QUENAATH   ╰╯ ╰─╮╮    ┊       ┊      ╌╌╌╌─                 S    ┃
+┤       ┈┈┈┈┈┈·~~~♣┈♣┈ CAELEN ┼╰─╮╮╮◆╌╌╌╌╌⚑╌◆╌╌╌╌╌╌╌┼┈┈┈╰╰                  16N┃
+┃      ~~   ~· ┊     VARIRHEIM ✦ ✦···········×      ┊    ╰                     ┃
+┃      VARWOLD ┊  ◉   ·~~~~   ✦✦◉]·  ┊○╰╮│   ┊      ┊                          ┃
+┃       ~~~   ELDORDALE ~○~ ~╌╌✦·✦···········×      ┊                          ┃
+┤    I R O N H O L D  C L A N S ·╎┈~~┼┈┈··╮╮┈┼┈┈┈┈┈┈┼┈┈┈┈┈                   8S┃
+┃       ~    CAELURIA ┊ ╎╌╌·~ ○     ╎╎    ○╮╮┊      ┊                          ┃
+┃    KORIRMERE ·  ~··☄~~◉ ╎ ZANFELL  ┊    ╭╯╯┊      ┊ ╭──                      ┃
+┃            RIVERLANDS TRIBES +ally ┊ ☄ ╭╯╯ ┊      ┊╭╭─                       ┃
+┤         ╎┈≀~┈·┈~≀┈○ Sarbury ┼┈┈┈┈┈┈┼○ Zanofield ┈┈┼╰╰                     32S┃
+┃  ├▀▀▀▀▀┼▄▄▄▄▄┤ 1000 miles  ATH    ♣┊╭╯╯    ┊      ┊·                         ┃
+┃        MORORIA ╮~·· ╱  · ╎○ Ralahaven      ┊╭╭────                           ┃
+┗━━━━━━━90°W━━━━60°W━━━30°W━━━━0°━━━━━30°E━━━━60°E━━━90°E━━━━120°E━━━━━━━━━━━━━┛
+ ULPORT                    Victorian Age is within … since you last looked
+ capital · 9 provinces     » advance                 + 3 provinces annexed
+ 331 buildings · 9 wonders                           + met the Merchant Guild
+ pop 1218/64905                                      + met the Artisan League
+ 6°12′N, 8°38′E · 27 miles from Ulp…  tab next  +/- zoom  [ ] plates  ⏎ verb  q
