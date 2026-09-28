@@ -108,14 +108,15 @@ jobs:
             - Run `make smoke` (the fast smoke tier, pacing enforced) before opening the PR. This runner is the same Linux image CI uses, so its results count.
             - Follow the site/ wiki sync rule and add CHANGELOG [Unreleased] entries for player-visible changes.
             - Real bugs you find outside the task: list them in the PR description; don't fix them in this PR.
-            - In this CI run you may use sub-agents (the Task/Agent tool) and TodoWrite freely; CLAUDE.md's token rules still apply to what you read.
+            - This is a headless CI run: do ALL the work yourself in this session. Do not delegate to sub-agents (CLAUDE.md's subagent rules don't apply here); the job ends when you stop, and anything handed off is lost.
+            - Don't consult Trello or other network services; everything you need is in the repo and this brief. Use plain commands without `$(...)` substitution (it's refused); run the inner command first instead.
             - If a tool or command is refused, try an allowed alternative instead of stopping; if you truly can't proceed, open a draft PR or comment explaining what blocked you.
             - Open a PR against master with a short, plain description: what changed, why, how it was verified, and anything the reviewer must decide. If this came from an issue, write "Refs #<number>". Do not merge. No AI attribution lines.
           claude_args: |
             --model ${{ github.event.inputs.model || 'claude-opus-5-5' }}
             --effort ${{ github.event.inputs.effort || 'high' }}
             --max-turns 400
-            --allowedTools "Task,Agent,TodoWrite,Read,Edit,MultiEdit,Write,Glob,Grep,NotebookEdit,Bash(go:*),Bash(gofmt:*),Bash(make:*),Bash(git:*),Bash(gh:*),Bash(cd:*),Bash(ls:*),Bash(pwd),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(grep:*),Bash(rg:*),Bash(find:*),Bash(sed:*),Bash(awk:*),Bash(cut:*),Bash(tr:*),Bash(uniq:*),Bash(wc:*),Bash(sort:*),Bash(diff:*),Bash(xargs:*),Bash(echo:*),Bash(printf:*),Bash(test:*),Bash([:*),Bash(true),Bash(mkdir:*),Bash(cp:*),Bash(mv:*),Bash(rm:*),Bash(touch:*),Bash(tee:*),Bash(env:*),Bash(which:*),Bash(time:*),Bash(timeout:*),Bash(sleep:*),Bash(jq:*),Bash(python3:*),Bash(bash:*),Bash(./dev.sh:*)"
+            --allowedTools "TodoWrite,Read,Edit,MultiEdit,Write,Glob,Grep,NotebookEdit,Bash(go:*),Bash(gofmt:*),Bash(make:*),Bash(git:*),Bash(gh:*),Bash(cd:*),Bash(ls:*),Bash(pwd),Bash(cat:*),Bash(head:*),Bash(tail:*),Bash(grep:*),Bash(rg:*),Bash(find:*),Bash(sed:*),Bash(awk:*),Bash(cut:*),Bash(tr:*),Bash(uniq:*),Bash(wc:*),Bash(sort:*),Bash(diff:*),Bash(xargs:*),Bash(echo:*),Bash(printf:*),Bash(test:*),Bash([:*),Bash(true),Bash(mkdir:*),Bash(cp:*),Bash(mv:*),Bash(rm:*),Bash(touch:*),Bash(tee:*),Bash(env:*),Bash(which:*),Bash(time:*),Bash(timeout:*),Bash(sleep:*),Bash(jq:*),Bash(python3:*),Bash(bash:*),Bash(./dev.sh:*)"
 
       - name: Report refused tool calls
         if: always()
