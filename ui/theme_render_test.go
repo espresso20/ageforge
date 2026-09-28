@@ -48,6 +48,16 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	out := map[string][]tcell.SimCell{}
 	out["dashboard"] = draw()
 
+	// The prompt with ghost text: "adv" typed, "ance" drawn dim after it.
+	d.inputField.SetText("adv")
+	d.inputField.Focus(func(tview.Primitive) {})
+	out["dashboard_ghost"] = draw()
+	if !d.inputField.atEnd || d.inputField.Ghost() != "ance" {
+		t.Fatalf("no ghost text drawn for %q (at end %v, ghost %q)", "adv", d.inputField.atEnd, d.inputField.Ghost())
+	}
+	d.inputField.Blur()
+	d.inputField.SetText("")
+
 	state := engine.GetState()
 	for _, name := range []string{"stats", "help", "citymap", "worldmap"} {
 		if !d.overlayMgr.Show(name, state) {

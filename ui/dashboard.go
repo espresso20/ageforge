@@ -48,7 +48,7 @@ type Dashboard struct {
 	logTV               *tview.TextView
 	statusTV            *tview.TextView
 	ageTV               *tview.TextView
-	inputField          *tview.InputField
+	inputField          *commandInput
 	lastAge             string
 	pendingAgeSplash    string // set by bus handler, consumed by refresh()
 	pendingEpochChanged bool   // whether the pending age advance also crossed an epoch boundary
@@ -302,10 +302,10 @@ func (d *Dashboard) build() {
 		d.toastMgr.Show(fmt.Sprintf("Epoch Event: %s", eventName), color, 6*time.Second)
 	})
 
-	// Command input
-	d.inputField = tview.NewInputField().
-		SetLabel("❯ ").
-		SetFieldWidth(0)
+	// Command input: completions show as ghost text (command_input.go),
+	// drawn from the registry and the state of the last refresh.
+	d.inputField = newCommandInput(newCompleter(d.engine, func() *game.GameState { return d.lastState }))
+	d.inputField.SetLabel("❯ ").SetFieldWidth(0)
 	d.inputField.SetBorder(true).SetTitle(" Command ")
 	theme.Track(func() {
 		d.inputField.SetFieldBackgroundColor(theme.Color(theme.RoleBackground)).
@@ -313,21 +313,6 @@ func (d *Dashboard) build() {
 		// Frame the command bar so it reads as a first-class element, not an afterthought.
 		d.inputField.SetBorderColor(theme.Color(theme.RoleAccent)).
 			SetTitleColor(theme.Color(theme.RoleAccent))
-	})
-
-	// Wire up autocomplete
-	d.inputField.SetAutocompleteFunc(NewAutoCompleter(d.engine))
-	d.inputField.SetAutocompletedFunc(func(text string, index, source int) bool {
-		// tview gives Enter to an open dropdown instead of the DoneFunc. Enter
-		// runs what was typed; Tab or a click takes the suggestion. PgUp/PgDn
-		// through the list already writes the pick into the field, so Enter then
-		// runs the pick.
-		if source == tview.AutocompletedEnter {
-			d.submitInput()
-			return true
-		}
-		d.inputField.SetText(text + " ")
-		return true
 	})
 
 	d.inputField.SetDoneFunc(func(key tcell.Key) {
@@ -370,6 +355,10 @@ func (d *Dashboard) build() {
 			// Any other key: exit history mode and update draft
 			if d.histIdx != -1 {
 				d.histIdx = -1
+			}
+			// Tab and → (at the end of the line) take completions.
+			if d.inputField.acceptKey(event) {
+				return nil
 			}
 			// Keep draft in sync while user types normally
 			// (draft is re-read from field on next Up press, so nothing extra needed)
@@ -873,7 +862,7 @@ func (d *Dashboard) showDevUnlockModal() {
 }
 
 // submitInput runs the command in the input field, clears it and records it
-// in history. Called on Enter, whether or not the autocomplete dropdown is open.
+// in history. Called on Enter.
 func (d *Dashboard) submitInput() {
 	text := d.inputField.GetText()
 	d.inputField.SetText("")
