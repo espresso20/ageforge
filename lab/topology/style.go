@@ -138,7 +138,7 @@ func styleFor(age string) style {
 			name: "QUANTUM LATTICE", chip: "SINGULARITY",
 			lines: linesDashed, boxes: linesRound, pillL: '‹', pillR: '›',
 			head: '◆', quantum: true, gaugeOn: '━', gaugeOff: '╌',
-			spark: braille, pinIn: '◈', pinOut: '╌', sever: '╳', alarm: '▲', warn: '◇',
+			spark: braille, pinIn: '▸', pinOut: '╌', sever: '╳', alarm: '▲', warn: '◇',
 			tintAge: "quantum_age", tintAmount: 0.5, speed: 2.0,
 		}
 	}

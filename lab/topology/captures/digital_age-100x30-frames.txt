@@ -1,0 +1,128 @@
+── frame 0 ──
+ ◆ NETWORK TOPOLOGY  │  Digital Age · Digital Era                                       tick 169210
+┌ Housing ───── ×70─ ┐
+│ ⣤⣤⣤⣤⣤⣤⣤⣤ +1.0M pop │───┐                                        ┌─━━━─▶┤△Citizens 2926   eats 858├
+└────────────────────┘   │                                        │
+                         │                                        │      ┌ Research ───── 53 done─ ┐
+┤Food ×18      +940/t├───┤      ┌ CORE SWITCH ──── 16 stores─ ┐   ┣─────▶│ ██████▏·········· 3240s │
+                         ├─━━━─▶│ pop     ▏···· 2.9k/1.… IDLE │   ┃      └─────────────────────────┘
+┤Scholarship   +13k/t├──━┓━━───▶│ food    ▏····    +2.5k      │─━─┫
+                         ┣─────▶│ wood    ▏····    +1.3k      │   │      ┌ Garrison ──── def 1.9G─ ┐
+┤Harbor ×3  +801.0M/t├───╋─────▶│ knowle… ▏····    +145k      │───┘  ┌──▶│ ▏········· 139.2M/12.3T │
+                         ┃      │ faith   ▏····     +8.9      │      │   └─────────────────────────┘
+┤Commerce   +828.7M/t├───┫      │ stone   ▏····       ±0      │      │
+                         ┃      │ iron    ▏····     +35k      │      │   ┌ Market ────── 0 routes─ ┐
+┤Military ×38  +11k/t├─━━┓━─━━━▶│ gold    █████   +17.6G FULL │      │   │ • 3 ROUTES UNUSED       │
+                         ├─────▶│ soldie… ▏····     +40k      │───━━━┘   └─────────────────────────┘
+┤Metallurgy +161.9M/t├─━─┼──┬──▶│ iron_o… ▏····     +405      │
+                         │  ├──▶│ steel   ▎····  +600.9M      │─━━───┐   ┌ Wonder ─────────────────┐
+┤Culture ×23  +3.8k/t├─━━╋──┼──▶│ culture ▏····     +14k      │      ┣──▶│ ············· 0% banked │
+                         │  ├──▶│ oil     ▏····   +89.7M      │      ┃   └─────────────────────────┘
+┤Forestry     +1.5M/t├─━━┴──┼──▶│ electr… ▌····    +7.6G      │──────┫
+                            ┣──▶│ uranium ▏····    +3.2M      │      │   ┌ World ──────────────────┐
+┤Power ×29    +1.0G/t├──────┏━━▶│ data    ▏····  +527.7M      │─━━━──┘   │ → Cyberpunk Age     41% │
+                            ┃   │ nanobo… ▏····       ±0      │          │ · Artisan League    +99 │
+┤Engineering  +1.1G/t├───━━━┫   └─────────────────────────────┘          │ · Atomic Directorate +0 │
+                            ┃                                            │ · Ironhold Clans    -99 │
+┤△Quarry & M… +893k/t├──────┫                                            │ · Merchant Guild     +0 │
+                            │                                            │ · Riverlands Tribes +99 │
+┤Netrunners +146.6M/t├─━━━──┘                                            │ △ the Viral Video  OMEN │
+                                                                         └─────────────────────────┘
+ ▲ Quarry & Mine UNDERSTAFFED  ·  pop IDLE  ·  gold FULL  ·  Citizens 301 IDLE  … ⏎ inspect  q quit
+
+── frame 1 ──
+ ◆ NETWORK TOPOLOGY  │  Digital Age · Digital Era                                       tick 169210
+┌ Housing ───── ×70─ ┐
+│ ⣤⣤⣤⣤⣤⣤⣤⣤ +1.0M pop │─━─┐                                        ┌──━━━▶┤△Citizens 2926   eats 858├
+└────────────────────┘   │                                        │
+                         │                                        │      ┌ Research ───── 53 done─ ┐
+┤Food ×18      +940/t├───┤      ┌ CORE SWITCH ──── 16 stores─ ┐   ┣━━───▶│ ██████▏·········· 3240s │
+                         ├──━━━▶│ pop     ▏···· 2.9k/1.… IDLE │   │      └─────────────────────────┘
+┤Scholarship   +13k/t├───┼━━━──▶│ food    ▏····    +2.5k      │─━━┤
+                         ┏─────▶│ wood    ▏····    +1.3k      │   │      ┌ Garrison ──── def 1.9G─ ┐
+┤Harbor ×3  +801.0M/t├───┃━────▶│ knowle… ▏····    +145k      │───┘  ┌──▶│ ▏········· 139.2M/12.3T │
+                         ┃      │ faith   ▏····     +8.9      │      │   └─────────────────────────┘
+┤Commerce   +828.7M/t├─━─┤      │ stone   ▏····       ±0      │      │
+                         │      │ iron    ▏····     +35k      │      │   ┌ Market ────── 0 routes─ ┐
+┤Military ×38  +11k/t├───╋──━━━▶│ gold    █████   +17.6G FULL │      │   │ • 3 ROUTES UNUSED       │
+                         ┣━────▶│ soldie… ▏····     +40k      │────━━┛   └─────────────────────────┘
+┤Metallurgy +161.9M/t├─━━╋──┬──▶│ iron_o… ▏····     +405      │
+                         │  ├──▶│ steel   ▎····  +600.9M      │──━━━─┐   ┌ Wonder ─────────────────┐
+┤Culture ×23  +3.8k/t├──━╋━─┼──▶│ culture ▏····     +14k      │      ┣━━▶│ ············· 0% banked │
+                         │  ├──▶│ oil     ▏····   +89.7M      │      │   └─────────────────────────┘
+┤Forestry     +1.5M/t├─━━┻──╋──▶│ electr… ▌····    +7.6G      │──────┤
+                            ┣──▶│ uranium ▏····    +3.2M      │      │   ┌ World ──────────────────┐
+┤Power ×29    +1.0G/t├─━━───╋──▶│ data    ▏····  +527.7M      │───━━━┘   │ → Cyberpunk Age     41% │
+                            ┃   │ nanobo… ▏····       ±0      │          │ · Artisan League    +99 │
+┤Engineering  +1.1G/t├─────━┃   └─────────────────────────────┘          │ · Atomic Directorate +0 │
+                            ┃                                            │ · Ironhold Clans    -99 │
+┤△Quarry & M… +893k/t├─━────┤                                            │ · Merchant Guild     +0 │
+                            │                                            │ · Riverlands Tribes +99 │
+┤Netrunners +146.6M/t├───━━━┘                                            │ △ the Viral Video  OMEN │
+                                                                         └─────────────────────────┘
+ ▲ Quarry & Mine UNDERSTAFFED  ·  pop IDLE  ·  gold FULL  ·  Citizens 301 IDLE  … ⏎ inspect  q quit
+
+── frame 2 ──
+ ◆ NETWORK TOPOLOGY  │  Digital Age · Digital Era                                       tick 169210
+┌ Housing ───── ×70─ ┐
+│ ⣤⣤⣤⣤⣤⣤⣤⣤ +1.0M pop │─━━┐                                        ┌─────▶┤△Citizens 2926   eats 858├
+└────────────────────┘   │                                        │
+                         │                                        │      ┌ Research ───── 53 done─ ┐
+┤Food ×18      +940/t├───┤      ┌ CORE SWITCH ──── 16 stores─ ┐   ├━━━──▶│ ██████▏·········· 3240s │
+                         ├─────▶│ pop     ▏···· 2.9k/1.… IDLE │   │      └─────────────────────────┘
+┤Scholarship   +13k/t├───┼─━━━─▶│ food    ▏····    +2.5k      │─━━┫
+                         ┣━────▶│ wood    ▏····    +1.3k      │   │      ┌ Garrison ──── def 1.9G─ ┐
+┤Harbor ×3  +801.0M/t├─━━┃━━───▶│ knowle… ▏····    +145k      │───┘  ┌──▶│ ▏········· 139.2M/12.3T │
+                         │      │ faith   ▏····     +8.9      │      │   └─────────────────────────┘
+┤Commerce   +828.7M/t├──━┫      │ stone   ▏····       ±0      │      │
+                         ┃      │ iron    ▏····     +35k      │      ┃   ┌ Market ────── 0 routes─ ┐
+┤Military ×38  +11k/t├───┼──━━━▶│ gold    █████   +17.6G FULL │      ┃   │ • 3 ROUTES UNUSED       │
+                         ┣━━───▶│ soldie… ▏····     +40k      │──────┛   └─────────────────────────┘
+┤Metallurgy +161.9M/t├───╋━━┬──▶│ iron_o… ▏····     +405      │
+                         │  ├──▶│ steel   ▎····  +600.9M      │────━━┓   ┌ Wonder ─────────────────┐
+┤Culture ×23  +3.8k/t├───┼━━╋──▶│ culture ▏····     +14k      │      ├──▶│ ············· 0% banked │
+                         ┃  ┣──▶│ oil     ▏····   +89.7M      │      │   └─────────────────────────┘
+┤Forestry     +1.5M/t├─━━┻──┃──▶│ electr… ▌····    +7.6G      │─━━───┤
+                            ┏──▶│ uranium ▏····    +3.2M      │      ┃   ┌ World ──────────────────┐
+┤Power ×29    +1.0G/t├───━━━┃──▶│ data    ▏····  +527.7M      │─────━┛   │ → Cyberpunk Age     41% │
+                            ┃   │ nanobo… ▏····       ±0      │          │ · Artisan League    +99 │
+┤Engineering  +1.1G/t├──────┤   └─────────────────────────────┘          │ · Atomic Directorate +0 │
+                            │                                            │ · Ironhold Clans    -99 │
+┤△Quarry & M… +893k/t├─━━───┤                                            │ · Merchant Guild     +0 │
+                            ┃                                            │ · Riverlands Tribes +99 │
+┤Netrunners +146.6M/t├─────━┛                                            │ △ the Viral Video  OMEN │
+                                                                         └─────────────────────────┘
+ ▲ Quarry & Mine UNDERSTAFFED  ·  pop IDLE  ·  gold FULL  ·  Citizens 301 IDLE  … ⏎ inspect  q quit
+
+── frame 3 ──
+ ◆ NETWORK TOPOLOGY  │  Digital Age · Digital Era                                       tick 169210
+┌ Housing ───── ×70─ ┐
+│ ⣤⣤⣤⣤⣤⣤⣤⣤ +1.0M pop │──━┓                                        ┌─────▶┤△Citizens 2926   eats 858├
+└────────────────────┘   ┃                                        │
+                         │                                        │      ┌ Research ───── 53 done─ ┐
+┤Food ×18      +940/t├───┤      ┌ CORE SWITCH ──── 16 stores─ ┐   ├──━━━▶│ ██████▏·········· 3240s │
+                         ├─────▶│ pop     ▏···· 2.9k/1.… IDLE │   ┃      └─────────────────────────┘
+┤Scholarship   +13k/t├───┼──━━━▶│ food    ▏····    +2.5k      │──━┫
+                         ┣━━───▶│ wood    ▏····    +1.3k      │   │      ┌ Garrison ──── def 1.9G─ ┐
+┤Harbor ×3  +801.0M/t├──━╋━━━──▶│ knowle… ▏····    +145k      │─━─┘  ┌──▶│ ▏········· 139.2M/12.3T │
+                         ┃      │ faith   ▏····     +8.9      │      │   └─────────────────────────┘
+┤Commerce   +828.7M/t├───┤      │ stone   ▏····       ±0      │      ┃
+                         ┃      │ iron    ▏····     +35k      │      ┃   ┌ Market ────── 0 routes─ ┐
+┤Military ×38  +11k/t├───╋━─━━━▶│ gold    █████   +17.6G FULL │      ┃   │ • 3 ROUTES UNUSED       │
+                         ├━━━──▶│ soldie… ▏····     +40k      │──────┘   └─────────────────────────┘
+┤Metallurgy +161.9M/t├───┼─━┳──▶│ iron_o… ▏····     +405      │
+                         │  ┣──▶│ steel   ▎····  +600.9M      │──────┓   ┌ Wonder ─────────────────┐
+┤Culture ×23  +3.8k/t├───╋─━┃━─▶│ culture ▏····     +14k      │      ┣━─▶│ ············· 0% banked │
+                         ┃  ┣──▶│ oil     ▏····   +89.7M      │      ┃   └─────────────────────────┘
+┤Forestry     +1.5M/t├──━┛━─┃━━▶│ electr… ▌····    +7.6G      │──━━━─┫
+                            ┏━━▶│ uranium ▏····    +3.2M      │      ┃   ┌ World ──────────────────┐
+┤Power ×29    +1.0G/t├─────━╋──▶│ data    ▏····  +527.7M      │──────┘   │ → Cyberpunk Age     41% │
+                            │   │ nanobo… ▏····       ±0      │          │ · Artisan League    +99 │
+┤Engineering  +1.1G/t├─━────┤   └─────────────────────────────┘          │ · Atomic Directorate +0 │
+                            ┃                                            │ · Ironhold Clans    -99 │
+┤△Quarry & M… +893k/t├─━━━──┫                                            │ · Merchant Guild     +0 │
+                            ┃                                            │ · Riverlands Tribes +99 │
+┤Netrunners +146.6M/t├──────┘                                            │ △ the Viral Video  OMEN │
+                                                                         └─────────────────────────┘
+ ▲ Quarry & Mine UNDERSTAFFED  ·  pop IDLE  ·  gold FULL  ·  Citizens 301 IDLE  … ⏎ inspect  q quit
+

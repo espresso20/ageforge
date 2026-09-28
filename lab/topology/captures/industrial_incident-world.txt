@@ -1,0 +1,48 @@
+ ◆ TELEGRAPH EXCHANGE  │  Industrial Age · Steel Era                                                                            Δ last 14m: +3 pop   tick 45580
+ ·▪ flow   ▪▪ backlog   ╳ cut link   ▲ alarm   △ warning   rates per tick · wires run producer → store → use, imports run back
+
+
+
+
+
+
+
+
+
+ ╔ ▲ Ironhold Clans  neutral═ ╗                                                                                                  ╔ Riverlands Tribes ═════════╗
+ ║ ▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯ -100 ║────────────────── ╳                                                               ┌─▪·─────▪·────║ ▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮▮ +100 ║
+ ╚════════════════════════════╝                                                                                   │              ╚════════════════════════════╝
+                                                  │                                                               │
+                                                  │                                                               │
+                                                  │                                                               ·
+                                                  │                                                               ▪
+                                                  │                                                               │
+                                                  │                                                               │
+                                                  │         ╔ Your city ══════════ Industrial Age═ ╗              │
+                                                  │         ║ 957 citizens · 0 idle                ║              │
+                                                  └─────────║ gold      ▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯   +835k ║◀────▪·─────▪·┘
+                                                            ║ steel     ▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯   +348k ║
+                                                            ║ knowledge ▮▮▮▮▮▮▮▮▮▮▮▯▯▯▯▯▯▯    +66k ║
+                                                            ║ iron      ▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯    +19k ║
+                                         ┌─────────────────▶║ food      ▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯▯    +961 ║
+                                         │                  ║ 2 of 11 civs met                     ║
+                                         │                  ╚══════════════════════════════════════╝
+                                         │
+                                         │
+                                         │
+                                         │
+ ╔ △ the Newsboy ═ harbinger═ ╗          │                                                                                       ╔═ ? uncharted ══════════════╗
+ ║ △ OMEN                     ║──────────┘                                                                                       ║ 9 civs not yet met         ║
+ ╚════════════════════════════╝                                                                                                  ╚════════════════════════════╝
+
+
+
+
+
+
+
+
+
+
+
+   CATASTROPHE: THE WORLD WAR  ·  Ironhold Clans AT WAR  ·  the Newsboy OMEN                    ←↑↓→ select  ⏎ inspect  w world  d diff  t theme  a age  q quit

@@ -1,0 +1,48 @@
+ ◆ NEON GRID  │  Cyberpunk Age · Neon Era                                                                                 Δ quiet since last look   tick 197085
+ •◉ flow   ◉◉ backlog   ╳ cut link   ▲ alarm   △ warning   rates per tick · wires run producer → store → use, imports run back
+
+
+
+
+ ╔ Artisan League ══ neutral═ ╗                                                                                                  ╔ Atomic Directorate ════════╗
+ ║ ▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰ +100 ║─◉─────•◉─────•◉─────•◉╮                                                    ╭─────────────────────║ ▰▰▰▰▰▰▰▰▰▰▰▱▱▱▱▱▱▱▱▱▱▱▱ +0 ║
+ ╚════════════════════════════╝                       │                                                    │                     ╚════════════════════════════╝
+                                                      │                                                    │
+                                                      │                                                    │
+                                                      │                                                    │
+                                                      •                                                    │
+                                                      ◉                                                    │
+                                                      │                                                    │
+                                                      │                                                    │
+                                                      │                                                    │
+ ╔ Ironhold Clans ══ neutral═ ╗                       │                                                    │                     ╔ Merchant Guild ══ neutral═ ╗
+ ║ ▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱ -100 ║────────────╮          │                                                    │      ╭──────────────║ ▰▰▰▰▰▰▰▰▰▰▰▱▱▱▱▱▱▱▱▱▱▱▱ +0 ║
+ ╚════════════════════════════╝            │          •                                                    │      │              ╚════════════════════════════╝
+                                           │          ◉     ╔ Your city ═══════════ Cyberpunk Age═ ╗       │      │
+                                           │          │     ║ 3.4k citizens · 545 idle             ║       │      │
+                                           │          ╰────▶║ electric… ▰▰▰▰▰▰▰▰▰▱▱▱▱▱▱▱▱▱  +43.9G ║◀──────╯      │
+                                           ╰───────────────▶║ data      ▰▰▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱   +3.1G ║              │
+                                     ╭─•◉─────•◉─────•◉────▶║ gold      ▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱ +946.9M ║◀─────────────╯
+                                     │                      ║ steel     ▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱ +124.0M ║
+                                     │          ╭──────────▶║ oil       ▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱▱ +123.4M ║◀────────────────────╮
+                                     │          │           ║ 6 of 11 civs met                     ║                     │
+ ╔ Riverlands Tribes ═════════╗      ◉          │           ╚══════════════════════════════════════╝                     │       ╔ Tech Consortium ═══════════╗
+ ║ ▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰▰ +100 ║──────•          │                                                                        ╰───────║ ▰▰▰▰▰▰▰▰▰▰▰▱▱▱▱▱▱▱▱▱▱▱▱ +0 ║
+ ╚════════════════════════════╝                 │                                                                                ╚════════════════════════════╝
+                                                │
+                                                │
+                                                │
+                                                │
+                                                │
+                                                │
+                                                │
+                                                │
+ ╔ △ the Ghost in the Net ════╗                 │                                                                                ╔═ ? uncharted ══════════════╗
+ ║ △ OMEN                     ║─────────────────╯                                                                                ║ 5 civs not yet met         ║
+ ╚════════════════════════════╝                                                                                                  ╚════════════════════════════╝
+
+
+
+
+
+ ▲ Quarry & Mine UNDERSTAFFED  ·  Metallurgy UNDERSTAFFED  ·  pop IDLE  ·  Citizens 545 IDLE  … ←↑↓→ select  ⏎ inspect  w world  d diff  t theme  a age  q quit

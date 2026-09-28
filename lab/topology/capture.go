@@ -77,8 +77,27 @@ func hex(c tcell.Color) string {
 	return fmt.Sprintf("#%02x%02x%02x", r, g, b)
 }
 
+// styles interns inline styles as CSS classes, so an animated page of 16
+// frames stays small.
+type styles struct {
+	ids map[string]int
+	css strings.Builder
+}
+
+func newStyles() *styles { return &styles{ids: map[string]int{}} }
+
+func (t *styles) class(st string) string {
+	id, ok := t.ids[st]
+	if !ok {
+		id = len(t.ids)
+		t.ids[st] = id
+		fmt.Fprintf(&t.css, ".s%d{%s}\n", id, st)
+	}
+	return fmt.Sprintf("s%d", id)
+}
+
 // preHTML renders the shot as one <pre> of styled runs.
-func (s shot) preHTML(id string, hidden bool) string {
+func (s shot) preHTML(id string, hidden bool, t *styles) string {
 	var b strings.Builder
 	disp := ""
 	if hidden {
@@ -99,7 +118,7 @@ func (s shot) preHTML(id string, hidden bool) string {
 			if bo {
 				st += ";font-weight:bold"
 			}
-			fmt.Fprintf(&b, `<span style="%s">%s</span>`, st, html.EscapeString(run.String()))
+			fmt.Fprintf(&b, `<span class="%s">%s</span>`, t.class(st), html.EscapeString(run.String()))
 			x = j
 		}
 		b.WriteByte('\n')
@@ -108,7 +127,7 @@ func (s shot) preHTML(id string, hidden bool) string {
 	return b.String()
 }
 
-func page(title string, bg tcell.Color, body string) string {
+func page(title string, bg tcell.Color, body string, t *styles) string {
 	return fmt.Sprintf(`<!doctype html>
 <html><head><meta charset="utf-8"><title>%s</title>
 <style>
@@ -116,7 +135,7 @@ body{margin:0;padding:16px;background:%s;}
 .term{font-family:Menlo,"SF Mono","DejaVu Sans Mono",Consolas,monospace;font-size:13px;line-height:1.0;margin:0;display:inline-block;transform-origin:0 0}
 .term span{white-space:pre}
 .cap{font:12px -apple-system,Segoe UI,sans-serif;color:#888;margin:0 0 8px}
-</style></head><body>
+%s</style></head><body>
 <p class="cap">%s</p>
 <div id="wrap">%s</div>
 <script>
@@ -129,7 +148,7 @@ w.style.height=(ph*s)+'px';}
 addEventListener('resize',fit);addEventListener('load',fit);
 </script>
 </body></html>
-`, html.EscapeString(title), hex(bg), html.EscapeString(title), body)
+`, html.EscapeString(title), hex(bg), t.css.String(), html.EscapeString(title), body)
 }
 
 // writeCapture writes <base>.txt and <base>.html for one frame.
@@ -139,7 +158,9 @@ func writeCapture(dir, base, title string, v *view, t theme.Theme, mono bool) er
 	if err := os.WriteFile(filepath.Join(dir, base+".txt"), []byte(s.text()), 0o644); err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(dir, base+".html"), []byte(page(title, t.Color(theme.RoleBackground), s.preHTML("f0", false))), 0o644)
+	st := newStyles()
+	pre := s.preHTML("f0", false, st)
+	return os.WriteFile(filepath.Join(dir, base+".html"), []byte(page(title, t.Color(theme.RoleBackground), pre, st)), 0o644)
 }
 
 // writeAnim writes <base>-anim.html (a JS frame loop over n frames) and
@@ -147,11 +168,12 @@ func writeCapture(dir, base, title string, v *view, t theme.Theme, mono bool) er
 func writeAnim(dir, base, title string, v *view, t theme.Theme, n int) error {
 	pal := newPalette(t, v.s, false)
 	var pres, txt strings.Builder
+	st := newStyles()
 	start := v.frame
 	for i := 0; i < n; i++ {
 		v.frame = start + i
 		s := renderShot(v, pal)
-		pres.WriteString(s.preHTML(fmt.Sprintf("f%d", i), i > 0))
+		pres.WriteString(s.preHTML(fmt.Sprintf("f%d", i), i > 0, st))
 		pres.WriteByte('\n')
 		if i < 4 {
 			fmt.Fprintf(&txt, "── frame %d ──\n%s\n", i, s.text())
@@ -161,7 +183,7 @@ func writeAnim(dir, base, title string, v *view, t theme.Theme, n int) error {
 	js := fmt.Sprintf(`<script>
 let i=0;const n=%d;setInterval(()=>{document.getElementById('f'+i).style.display='none';i=(i+1)%%n;document.getElementById('f'+i).style.display='inline-block';},140);
 </script>`, n)
-	if err := os.WriteFile(filepath.Join(dir, base+"-anim.html"), []byte(page(title+" (animated)", t.Color(theme.RoleBackground), pres.String()+js)), 0o644); err != nil {
+	if err := os.WriteFile(filepath.Join(dir, base+"-anim.html"), []byte(page(title+" (animated)", t.Color(theme.RoleBackground), pres.String()+js, st)), 0o644); err != nil {
 		return err
 	}
 	return os.WriteFile(filepath.Join(dir, base+"-frames.txt"), []byte(txt.String()), 0o644)

@@ -61,7 +61,7 @@ func (v *view) buildWorld() (*node, []*node, []*edge) {
 	if unmet > 0 {
 		// Civilizations not yet met: one quiet placeholder, no link.
 		hosts = append(hosts, &node{id: "world:unmet", kind: kHost, title: "? uncharted",
-			sub: fmt.Sprintf("%d civilizations unmet", unmet), gauge: -1})
+			sub: fmt.Sprintf("%d civs not yet met", unmet), gauge: -1})
 	}
 	return city, hosts, edges
 }
@@ -262,5 +262,5 @@ func (v *view) drawCity(n *node) {
 			met++
 		}
 	}
-	c.text(n.x+2, n.y+n.h-2, clip(fmt.Sprintf("%d of %d civilizations met", met, len(v.m.st.Diplomacy.Factions)), iw), cDim, iw)
+	c.text(n.x+2, n.y+n.h-2, clip(fmt.Sprintf("%d of %d civs met", met, len(v.m.st.Diplomacy.Factions)), iw), cDim, iw)
 }
