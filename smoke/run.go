@@ -569,15 +569,17 @@ func (r *runner) observe(st game.GameState) {
 	for _, b := range st.Buildings {
 		builds += b.Count
 	}
+	// Float sums in sorted order: map order moves the last bit run to run.
 	total := 0.0
-	for _, rs := range st.Resources {
-		if rs.Unlocked {
+	for _, k := range sortedKeys(st.Resources) {
+		if rs := st.Resources[k]; rs.Unlocked {
 			total += rs.Amount
 		}
 	}
 	if w := st.CurrentAgeWonderKey; w != "" {
-		for _, v := range st.Buildings[w].WonderBank {
-			total += v
+		bank := st.Buildings[w].WonderBank
+		for _, k := range sortedKeys(bank) {
+			total += bank[k]
 		}
 	}
 	progressed := false

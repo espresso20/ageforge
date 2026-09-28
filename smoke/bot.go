@@ -175,7 +175,10 @@ func (b *Bot) newPlan(st game.GameState) *plan {
 		p.target[res] += v
 		p.capNeed[res] = math.Max(p.capNeed[res], v)
 	}
-	for bld, n := range st.NextAgeBldReqs {
+	// Sorted: several buildings add to one resource's target, and a float
+	// sum in map order moves the last bit from run to run.
+	for _, bld := range sortedKeys(st.NextAgeBldReqs) {
+		n := st.NextAgeBldReqs[bld]
 		have := st.Buildings[bld].Count + p.queued[bld]
 		if have < n {
 			p.needBld[bld] = n - have
@@ -533,8 +536,8 @@ func (b *Bot) planNextAge(next string) {
 			continue
 		}
 		units := 0.0
-		for r, c := range d.BaseCost {
-			units += c / math.Max(st.Resources[r].Storage, 1)
+		for _, r := range sortedKeys(d.BaseCost) { // a float sum: sorted, not map order
+			units += d.BaseCost[r] / math.Max(st.Resources[r].Storage, 1)
 		}
 		for _, e := range d.Effects {
 			if e.Type == "production" && e.Value > 0 && !config.IsFlowResource(e.Target) {
