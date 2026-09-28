@@ -72,7 +72,7 @@ func renderCurrentWonderSummary(state game.GameState) string {
 		if bs.WonderBankFull {
 			fmt.Fprintf(&sb, "   [green]✓ Bank full! Type 'build %s'[-]\n", current.key)
 		} else {
-			fmt.Fprintf(&sb, "   [gray]wonder collect <res> <amt|all>[-]\n")
+			fmt.Fprintf(&sb, "   [gray]wonder collect <res|all> [amt|all][-]\n")
 		}
 		fmt.Fprintf(&sb, "   %s\n", wonderOverflowLine(state.WonderOverflow))
 	}
@@ -186,7 +186,7 @@ func wondersProvider(state game.GameState, _ int) string {
 							clr, k, FormatNumber(banked), FormatNumber(need))
 					}
 				}
-				sb.WriteString("   [gray]Bank resources to build (wonder collect <res> <amt|all>)[-]\n")
+				sb.WriteString("   [gray]Bank resources to build (wonder collect <res|all> [amt|all])[-]\n")
 			}
 			if w.def.Description != "" {
 				fmt.Fprintf(&sb, "   [gray]%s[-]\n", w.def.Description)

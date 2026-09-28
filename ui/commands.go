@@ -37,6 +37,7 @@ const (
 	ArgTech                           // a tech available to research now
 	ArgPlanTech                       // a tech the plan takes
 	ArgResource                       // an unlocked resource
+	ArgWonderResource                 // a resource the current wonder's bank still needs
 	ArgTradeFrom                      // a resource the market buys from you
 	ArgTradeTo                        // a resource the market sells for the previous argument
 	ArgFaction                        // a discovered civilization
@@ -247,8 +248,9 @@ func registry() []*Command {
 		{Name: "wonder", Section: secWonders, BareOK: true,
 			Help: []Usage{{"wonder", "Show current wonder bank status"}},
 			Subs: []*Command{
-				sub("collect", "wonder collect <res> <amt|all>", "Bank resources into current wonder",
-					Arg{Kind: ArgResource}, Arg{Kind: ArgNumber, Words: []string{"all"}}),
+				{Name: "collect", Aliases: []string{"bank"},
+					Args: []Arg{{Kind: ArgWonderResource, Words: []string{"all"}}, {Kind: ArgNumber, Words: []string{"all", "max"}, Optional: true}},
+					Help: []Usage{{"wonder collect <res|all> [amt|all|max]", "Bank resources into the current wonder (alias: bank; no amount: as much as it needs)"}}},
 				sub("overflow", "wonder overflow [on|off]", "Bank what full stores would waste (on by default)",
 					Arg{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}),
 			}},

@@ -5,6 +5,7 @@ import (
 	"math"
 	"math/rand"
 	"sort"
+	"strings"
 
 	"github.com/espresso20/ageforge/config"
 )
@@ -398,8 +399,11 @@ func (bm *BuildingManager) LoadCounts(counts map[string]int) {
 	}
 }
 
-// BankResource deposits amount of resource into a wonder's bank from player storage.
-// Returns the actual amount deposited (capped at remaining need), or an error.
+// BankResource deposits amount of resource into a wonder's bank from player
+// storage, capped at what the bank still needs, and returns what went in. The
+// refusals, in order: not a wonder that takes deposits now, a resource it
+// doesn't need, a resource already fully banked, none on hand, and less on
+// hand than the (capped) amount.
 func (bm *BuildingManager) BankResource(wonderKey, resource string, amount float64, rm *ResourceManager) (float64, error) {
 	def, ok := bm.defs[wonderKey]
 	if !ok {
@@ -416,15 +420,22 @@ func (bm *BuildingManager) BankResource(wonderKey, resource string, amount float
 	}
 	required, exists := def.BaseCost[resource]
 	if !exists {
-		return 0, fmt.Errorf("%s does not require %s", def.Name, resource)
+		return 0, fmt.Errorf("%s doesn't need %s (it needs %s)", def.Name, resource, strings.Join(sortedKeys(def.BaseCost), ", "))
 	}
 	banked := bm.wonderBanks[wonderKey][resource]
 	remaining := required - banked
 	if remaining <= 0.001 {
-		return 0, fmt.Errorf("%s bank for %s is already full", resource, def.Name)
+		return 0, fmt.Errorf("%s already has all the %s it needs", def.Name, resource)
 	}
 	if amount > remaining {
 		amount = remaining
+	}
+	have := rm.Get(resource)
+	if have < 0.001 {
+		return 0, fmt.Errorf("you have no %s to bank", resource)
+	}
+	if have < amount {
+		return 0, fmt.Errorf("not enough %s (have: %s, need: %s)", resource, formatPlanAmount(have), formatPlanAmount(amount))
 	}
 	if !rm.Pay(map[string]float64{resource: amount}) {
 		return 0, fmt.Errorf("not enough %s", resource)

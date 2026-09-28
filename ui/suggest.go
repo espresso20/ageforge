@@ -138,7 +138,7 @@ func buildUniverse() map[ArgKind]map[string]bool {
 		ArgBuilding: b, ArgPlanBuilding: b, ArgBuiltBuilding: b, ArgWorkerBuilding: b,
 		ArgStaffedBuilding: b, ArgUpgradeBuilding: b,
 		ArgTech: set(techs), ArgPlanTech: set(techs),
-		ArgResource: r, ArgTradeFrom: r, ArgTradeTo: r,
+		ArgResource: r, ArgWonderResource: r, ArgTradeFrom: r, ArgTradeTo: r,
 		ArgFaction: set(factions), ArgTheme: set(themes),
 		ArgExpedition: set(expeditions), ArgCampaign: set(expeditions),
 		ArgRouteAvailable: set(routes), ArgRouteActive: set(routes),
@@ -365,6 +365,8 @@ func (c *completer) compute(k ArgKind, prev []string, st game.GameState) []strin
 		return plannableTechKeys(st)
 	case ArgResource:
 		return unlockedResourceKeys(st)
+	case ArgWonderResource:
+		return wonderNeedKeys(st)
 	case ArgTradeFrom:
 		return tradeKeys(st, "")
 	case ArgTradeTo:
@@ -524,6 +526,28 @@ func unlockedResourceKeys(state game.GameState) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+// wonderNeedKeys is what `wonder collect` suggests: the resources the current
+// age's unbuilt wonder still needs, the ones on hand first.
+func wonderNeedKeys(state game.GameState) []string {
+	w := state.CurrentAgeWonderKey
+	if w == "" {
+		return nil
+	}
+	bank := state.Buildings[w].WonderBank
+	var keys []string
+	for res, need := range config.BuildingByKey()[w].BaseCost {
+		if need-bank[res] > 0.001 {
+			keys = append(keys, res)
+		}
+	}
+	return byRank(keys, func(k string) int {
+		if state.Resources[k].Amount > 0 {
+			return 0
+		}
+		return 1
+	})
 }
 
 // tradeKeys is the market's side of an exchange: with from empty, what it

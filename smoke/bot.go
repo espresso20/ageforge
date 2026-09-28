@@ -1578,7 +1578,8 @@ func (b *Bot) bankWonder(p *plan) {
 		if dep <= 0 || (dep < 1 && dep < left) {
 			continue
 		}
-		if b.act("bank_wonder", fmt.Sprintf("%s %.0f", res, dep), b.ge.BankWonderResource(w, res, dep)) {
+		_, err := b.ge.BankWonderResource(w, res, dep)
+		if b.act("bank_wonder", fmt.Sprintf("%s %.0f", res, dep), err) {
 			p.amt[res] -= dep
 		}
 	}
