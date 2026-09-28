@@ -28,7 +28,7 @@ var warRaidBanks = map[string][]string{
 	// Things they broke getting in, getting out, or apparently for the exercise.
 	"war_raid_damage": {
 		"the outer wall", "the north door", "the water store", "the door frame",
-		"the back stairs", "the light over the entrance", "the long ladder",
+		"the light over the entrance", "the long ladder",
 		"the lock on the store room", "the lock on the main door",
 		"the ceiling of the passage", "the covered way down to the water",
 		"the seals around the inner door", "the lights along the passage",
@@ -75,7 +75,6 @@ var warRaidAny = []skel{
 	{Text: "The outer wall is open", Reg: rPlain, Topic: "building"},
 	{Text: "Two children have not been found", Reg: rPlain, Topic: "casualty"},
 	{Text: "It rained on and off", Reg: rPlain, Topic: "weather"},
-	{Text: "The bread was left outside", Reg: rPlain, Topic: "food"},
 	{Text: "Sen has gone to sit with her sister", Reg: rPlain, Topic: "name"},
 	{Text: "Everything smells of wet ash", Reg: rPlain, Topic: "smell"},
 	{Text: "Somebody bit through a lip", Reg: rPlain, Topic: "wound"},
@@ -98,11 +97,8 @@ var warRaidAny = []skel{
 	{Text: "Nobody has claimed ~ and it has been sitting there two days", Slot: "war_raid_trace", Reg: rPlain, Topic: "kit"},
 
 	// --- mid. The working length: one thing, with enough detail to place it. ---
-	{Text: "The man on the wall saw them and stayed where he was", Reg: rWry, Topic: "border"},
 	{Text: "Everyone says they were asleep and about half of them were", Reg: rWry, Form: fOverheard, Topic: "sleep"},
-	{Text: "The back door was open from the inside", Reg: rPlain, Topic: "building"},
 	{Text: "A girl of about seven bit one of them on the hand", Reg: rPlain, Topic: "people"},
-	{Text: "Two houses on the corner were missed entirely", Reg: rPlain, Topic: "people"},
 	{Text: "A mark was left on the door and it is meant to be read", Reg: rWry, Topic: "message"},
 	{Text: "The quiet afterwards went on for most of an hour", Reg: rWry, Topic: "noise"},
 	{Text: "The people two doors along are packing what they have left", Reg: rPlain, Topic: "town"},
@@ -111,18 +107,13 @@ var warRaidAny = []skel{
 
 	// --- long. Circumstantial, subordinated, the way a chronicle runs. ---
 	{Text: "On the table by the door there is ~, and nobody has touched it since it was carried in", Slot: "war_raid_trace", Reg: rPlain, Topic: "kit"},
-	{Text: "The wall goes up again in the morning, higher this time, and the man who said it was high enough two years ago has been reminded of that by everybody carrying stone", Reg: rWry, Form: fComplaint, Topic: "argument"},
 	{Text: "Two people who were nowhere near the door that night have resigned from things they had appointed themselves to, and a third is expected to follow", Reg: rJoke, Topic: "authority"},
-	{Text: "Everything that could be moved indoors was moved indoors before the light came up, and most of it has been carried back out since because the houses are full", Reg: rPlain, Form: fLedger, Topic: "haul"},
 	{Text: "There is talk of going out after them, and the talk has names in it now, and the older ones have started sitting in on it", Reg: rWry, Form: fOverheard, Topic: "argument"},
 	{Text: "The blame has settled, without anybody deciding it, on the one who sleeps nearest the door, and he has stopped coming out at meals", Reg: rWry, Topic: "argument"},
-	{Text: "The wind was up all evening and covered most of the noise, so the first anybody knew of it was a door going in", Reg: rPlain, Topic: "weather"},
 
 	// --- very long. Digressive, specific, a paragraph that forgot to stop. ---
 	{Text: "The count of what is gone was started twice and abandoned twice, once because the woman doing it was called away and once because the man who took over could not read her marks, and it is being started again this evening", Reg: rWry, Form: fLedger, Topic: "count"},
-	{Text: "The smallest of the children was under the floor the whole time and did not make a sound, and has been carried about by three different people today, and has been asleep for most of it", Reg: rPlain, Topic: "sleep"},
 	{Text: "The men who came up from the far end an hour too late have spent all day explaining where they were, and the explanation has got shorter each time, and nobody has asked for it since noon", Reg: rWry, Form: fComplaint, Topic: "people"},
-	{Text: "The rebuilding was started before the ash had gone cold, by two men who had been up all night and were not asked to, and there is now a good deal of new timber lying in the wrong place", Reg: rWry, Topic: "building"},
 
 	// --- kind: aggressive ---
 	{Text: "It happened in broad daylight", Kinds: []string{"aggressive"}, Reg: rPlain, Topic: "time"},
@@ -138,7 +129,6 @@ var warRaidAny = []skel{
 	// --- tone ---
 	{Text: "The blood has been washed twice", Tones: []Tone{Grim}, Reg: rPlain, Topic: "wound"},
 	{Text: "Two of the dead were laid out in the same room as the living", Tones: []Tone{Grim}, Reg: rPlain, Topic: "casualty"},
-	{Text: "The people who were loudest about the wall being high enough have gone indoors, and the people who were quiet about it are being kind, mostly", Tones: []Tone{Wry}, Reg: rWry, Topic: "argument"},
 
 	// --- the raider's name, in frames a plural or singular name survives ---
 	{Text: "Somebody named {subject} out loud", Needs: needSubject, Reg: rPlain, Topic: "name"},
@@ -154,10 +144,7 @@ var warRaidAny = []skel{
 	{Text: "Whoever came in knew where to find the {res}", Needs: needRes, Reg: rPlain, Topic: "haul"},
 	{Text: "Everything else got stepped over on the way to the {res}", Needs: needRes, Reg: rPlain, Topic: "haul"},
 	{Text: "The floor where the {res} used to sit has been swept and swept again, by a man who was told to stop an hour ago", Needs: needRes, Reg: rWry, Topic: "building"},
-	{Text: "Nobody had thought to move the {res} indoors, and the two people who told everyone to move it have not said so again, which everybody has noticed", Needs: needRes, Reg: rWry, Topic: "argument"},
-	{Text: "A line of spilled {res} runs down the back stairs and along the passage, and it will be there a while yet", Needs: needRes | needMassRes, Reg: rPlain, Topic: "smell"},
 	{Text: "Somebody stood in front of {res_stores} with both arms out, and got put on the floor for it, and has been telling the story since the middle of the morning with the arms still out", Needs: needRes | needMassRes, Reg: rWry, Topic: "people"},
-	{Text: "Two of them walked out of the low door carrying {res_haul} between them at no particular speed, and one of them looked back at the house before he went, and four people saw that and none of them describe him the same way", Needs: needRes | needMassRes, Reg: rWry, Topic: "haul"},
 	{Text: "The number being said out loud this evening is {amt_res}, and the number the two who did the counting wrote down is not that number, and the difference is being argued about in the back room by people who counted nothing", Needs: needRes | needAmount, Reg: rWry, Form: fLedger, Topic: "count"},
 }
 
@@ -208,6 +195,22 @@ var warRaidGrounded = []skel{
 	{Text: "The woman who washes the dead has kept back ~ and given it to the boy who sweeps her step", Slot: "war_raid_trace", Reg: rPlain, Topic: "casualty"},
 	{Text: "There was no moon at all, which they will have known about, because the two nights before it were bright enough to read by", Reg: rWry, Topic: "weather"},
 	{Text: "The man who is keeping watch tonight kept watch last night and the night before, and has been told to go and lie down by everybody who passes the ladder, and is still up on the wall", Tones: []Tone{Grim}, Reg: rWry, Topic: "sleep"},
+
+	// --- re-tagged out of the shared pool by the third late-age review: the
+	// kitchen, the back door, the walk home. True up to the Modern Age. ---
+	{Text: "The bread was left outside", Reg: rPlain, Topic: "food"},
+	{Text: "The man on the wall saw them and stayed where he was", Reg: rWry, Topic: "border"},
+	{Text: "The back door was open from the inside", Reg: rPlain, Topic: "building"},
+	{Text: "Two houses on the corner were missed entirely", Reg: rPlain, Topic: "people"},
+	{Text: "The wall goes up again in the morning, higher this time, and the man who said it was high enough two years ago has been reminded of that by everybody carrying stone", Reg: rWry, Form: fComplaint, Topic: "argument"},
+	{Text: "Everything that could be moved indoors was moved indoors before the light came up, and most of it has been carried back out since because the houses are full", Reg: rPlain, Form: fLedger, Topic: "haul"},
+	{Text: "The wind was up all evening and covered most of the noise, so the first anybody knew of it was a door going in", Reg: rPlain, Topic: "weather"},
+	{Text: "The smallest of the children was under the floor the whole time and did not make a sound, and has been carried about by three different people today, and has been asleep for most of it", Reg: rPlain, Topic: "sleep"},
+	{Text: "The rebuilding was started before the ash had gone cold, by two men who had been up all night and were not asked to, and there is now a good deal of new timber lying in the wrong place", Reg: rWry, Topic: "building"},
+	{Text: "A line of spilled {res} runs down the back stairs and along the passage, and it will be there a while yet", Needs: needRes | needMassRes, Reg: rPlain, Topic: "smell"},
+	{Text: "Two of them walked out of the low door carrying {res_haul} between them at no particular speed, and one of them looked back at the house before he went, and four people saw that and none of them describe him the same way", Needs: needRes | needMassRes, Reg: rWry, Topic: "haul"},
+	{Text: "Nobody had thought to move the {res} indoors, and the two people who told everyone to move it have not said so again, which everybody has noticed", Needs: needRes, Reg: rWry, Topic: "argument"},
+	{Text: "The people who were loudest about the wall being high enough have gone indoors, and the people who were quiet about it are being kind, mostly", Tones: []Tone{Wry}, Reg: rWry, Topic: "argument"},
 }
 
 // warRaidLate is the digital and cosmic voice: the field notes have become
@@ -262,6 +265,25 @@ var warRaidLate = []skel{
 	{Text: "The night staff want to know why the raid alert reached the day staff first", Reg: rWry, Form: fComplaint, Topic: "people"},
 	{Text: "The sprinklers put out the fire in the stores and flooded the level below, where the spare equipment was kept", Reg: rPlain, Topic: "machine"},
 	{Text: "The names of the dead were read out over the public address system at noon, and every corridor in the complex stopped to listen", Reg: rPlain, Topic: "casualty"},
+
+	// --- added by the third late-age review: offices, stations, the long view ---
+	{Text: "The shutters are still down", Reg: rPlain, Topic: "building"},
+	{Text: "Every door log has a gap in it", Reg: rPlain, Topic: "paper"},
+	{Text: "Two stairwells are sealed with tape", Reg: rPlain, Topic: "building"},
+	{Text: "The lost property office has been turned over to the belongings of the missing", Reg: rPlain, Topic: "casualty"},
+	{Text: "Everyone was handed a foil blanket and most of them are still wearing one", Reg: rPlain, Topic: "people"},
+	{Text: "The blood bank ran low by midnight and a queue formed in the corridor to give more", Reg: rPlain, Topic: "wound"},
+	{Text: "Insurance assessors arrived before the fire crews had finished", Reg: rWry, Topic: "money"},
+	{Text: "The one lift that still works has a queue and a guard", Reg: rPlain, Topic: "machine"},
+	{Text: "The names of the missing went up on the whiteboard in the canteen, and they have been rubbed out one at a time through the day as people turned up, and the last three have been circled", Reg: rPlain, Topic: "name"},
+	{Text: "The rumour on the residential levels is that they had a floor plan", Reg: rPlain, Form: fOverheard, Topic: "rumour"},
+	{Text: "Residents are asked not to post photographs of the breach", Reg: rPlain, Form: fNotice, Topic: "authority"},
+	{Text: "Four doors breached, two stores emptied, one guard still in surgery", Reg: rPlain, Form: fLedger, Topic: "count"},
+	{Text: "The maintenance crew are on their thirtieth hour and have started writing the time on every work order they sign", Reg: rWry, Form: fComplaint, Topic: "people"},
+	{Text: "They set off every alarm on purpose on the way out", Kinds: []string{"aggressive"}, Reg: rWry, Topic: "noise"},
+	{Text: "They spoke to nobody and their suits carried no markings", Kinds: []string{"isolationist"}, Reg: rPlain, Topic: "stranger"},
+	{Text: "The morgue ran out of drawers and borrowed a cold store", Tones: []Tone{Grim}, Reg: rPlain, Topic: "casualty"},
+	{Text: "A woman from the damaged section has been going door to door on the upper levels with a photograph of her son on her phone, and every door has opened for her, and nobody behind any of them has seen him", Tones: []Tone{Grim}, Reg: rPlain, Topic: "casualty"},
 }
 
 // warRaidAncient — the elders, the herd, the store-pit, the watch-fire.
@@ -386,6 +408,25 @@ var warRaidDigital = []skel{
 	{Text: "The after-action review has been asked to explain how an attack this large came through a network this closely watched, and would like more time", Reg: rWry, Topic: "paper"},
 	{Text: "People filmed it on their phones from the flats across the street, and the footage is better than anything the security system kept", Reg: rPlain, Topic: "people"},
 	{Text: "Their implants made them invisible to our cameras and easy to see for a cleaner with a mop, who passed them in the service corridor and took them for contractors", Reg: rWry, Topic: "machine"},
+
+	// --- added by the third late-age review: the building, the city, the network ---
+	{Text: "Their drones jammed ours", Reg: rPlain, Topic: "machine"},
+	{Text: "The fusion plant was never touched", Reg: rPlain, Topic: "building"},
+	{Text: "The lobby feed shows them holding the door for each other", Reg: rWry, Topic: "people"},
+	{Text: "The police arrived in time to photograph the tyre marks", Reg: rWry, Topic: "authority"},
+	{Text: "An analyst traced their vehicles to a rented garage across the city and found it swept clean", Reg: rPlain, Topic: "map"},
+	{Text: "The street outside is closed and covered in broken glass", Reg: rPlain, Topic: "town"},
+	{Text: "People in the flats opposite are still posting clips, and the analysts are going through every one of them frame by frame", Reg: rPlain, Topic: "rumour"},
+	{Text: "Their malware emptied the stores database and left the canteen menu alone", Reg: rWry, Topic: "machine"},
+	{Text: "The hospital across the road took the wounded, then the families, then the press, and wants the network team to do something about the press", Reg: rWry, Topic: "wound"},
+	{Text: "The security company that runs the doors has issued a statement saying its system performed as designed, and the analysts have spent the day reading the design documents, which run to four hundred pages and mention the east door once", Reg: rWry, Topic: "authority"},
+	{Text: "Two of the night staff slept under their desks", Reg: rPlain, Topic: "sleep"},
+	{Text: "The word in the office is that one of the raiders used to work here", Reg: rPlain, Form: fOverheard, Topic: "rumour"},
+	{Text: "All staff must re-enrol their fingerprints by Friday", Reg: rWry, Form: fNotice, Topic: "authority"},
+	{Text: "Six of the forty cameras were working, and none of the six faced the door they used", Reg: rWry, Form: fLedger, Topic: "count"},
+	{Text: "The cleaners were told to wait for the forensics team and have been waiting since six", Reg: rPlain, Form: fComplaint, Topic: "people"},
+	{Text: "They shot out every streetlight on the way in", Kinds: []string{"aggressive"}, Reg: rPlain, Topic: "weapon"},
+	{Text: "The office has put flowers on two empty desks", Tones: []Tone{Grim}, Reg: rPlain, Topic: "casualty"},
 }
 
 // warRaidCosmic — the hull, the bay, the airlock, the dock crew.
@@ -426,4 +467,24 @@ var warRaidCosmic = []skel{
 	{Text: "Everyone on the damaged ring has been moved inward, and the inner rings are now so crowded that people are sleeping in the corridors under the emergency lighting", Reg: rPlain, Topic: "people"},
 	{Text: "The attack was launched from so far out that the ships that made it are still accelerating away from something they finished weeks ago", Reg: rWry, Topic: "time"},
 	{Text: "The raiders took nothing anyone can identify and left a small device bolted to the outer hull, and it has been counting down in a notation no one on the station can read", Reg: rPlain, Topic: "stranger"},
+
+	// --- added by the third late-age review: the ring, the fleet, and what is out past it ---
+	{Text: "The ring is still wobbling", Reg: rPlain, Topic: "machine"},
+	{Text: "Pressure alarms all night", Reg: rPlain, Topic: "noise"},
+	{Text: "They took the seed vault", Reg: rPlain, Topic: "haul"},
+	{Text: "Hydroponics lost a whole tier to decompression", Reg: rPlain, Topic: "food"},
+	{Text: "The medical bay has been treating cold burns since the second watch", Reg: rPlain, Topic: "wound"},
+	{Text: "Their boarding craft left scorch rings on the hull that look like handprints", Reg: rPlain, Topic: "message"},
+	{Text: "The station's children have been moved to the core, where the gravity is lighter, and have been told it is a holiday", Reg: rWry, Topic: "town"},
+	{Text: "A suit with nobody in it was found walking the outer hull on its last instructions", Reg: rPlain, Topic: "stranger"},
+	{Text: "The raiders came in through a cargo lock welded shut thirty years ago, and the weld was cut from the inside, and the security chief wants everyone who has lived aboard longer than that interviewed", Reg: rPlain, Topic: "border"},
+	{Text: "The comms mast took a hit and the station has been talking to the fleet by flashing its docking lights", Reg: rWry, Topic: "message"},
+	{Text: "The air smells of the backup scrubbers", Reg: rPlain, Topic: "smell"},
+	{Text: "The crews say the raiders kept their helmets on the whole time, and some say there was nothing inside them", Reg: rPlain, Form: fOverheard, Topic: "rumour"},
+	{Text: "Walking outside the inner ring is suspended until the hull crews say otherwise", Reg: rPlain, Form: fNotice, Topic: "authority"},
+	{Text: "Three decks vented, forty sealed in, all recovered alive", Reg: rPlain, Form: fLedger, Topic: "count"},
+	{Text: "The hull crews have dug out last month's request for more patrols and pinned it to the mess door", Reg: rWry, Form: fComplaint, Topic: "argument"},
+	{Text: "Their ships stayed in view long after the raid, lit up and slow", Kinds: []string{"aggressive"}, Reg: rWry, Topic: "border"},
+	{Text: "The dead are being kept in the cold hold until the burial ship comes", Tones: []Tone{Grim}, Reg: rPlain, Topic: "casualty"},
+	{Text: "Their boarders wore no insignia and spoke in hand signals only", Kinds: []string{"isolationist"}, Reg: rPlain, Topic: "stranger"},
 }

@@ -38,6 +38,8 @@ var lateSetDressing = []string{
 	"water skin", "walking staff", "river", "hills", "camp", "crossing", "miles",
 	"trail", "dried meat", "wet pack", "off a local", "walked with them",
 	"paces", "no moon", "in the dirt", "dog", "lane", "washing", "mud", "spade",
+	// The third review: the kitchen and the yard behind it.
+	"bread", "doorframe", "back stairs", "cellar", "barefoot", "goat", "horse",
 }
 
 // TestLateSetDressingIsMarked pins the list above to eraMarkers, then checks
@@ -73,8 +75,17 @@ func TestLateSetDressingIsMarked(t *testing.T) {
 	t.Logf("%d late-reachable authored strings checked against %d set-dressing words", checked, len(lateSetDressing))
 }
 
-// minLateEraShare is the floor on era-voiced lines in digital-and-later ages.
-const minLateEraShare = 0.50
+// minLateEraShare is the floor on era-voiced lines in digital-and-later ages,
+// for the five Moments that fire all run long. It was half until a third review
+// found the other half still narrated by a kitchen: bread, back stairs, a child
+// charging admission. Two lines in three now come from a pool written for the
+// era.
+const minLateEraShare = 0.65
+
+// minRareLateEraShare is the floor for the harbinger Moments and RunEnding,
+// which fire a handful of times a run and are sized for that. Their pools were
+// not part of the third review, so they keep the original floor.
+const minRareLateEraShare = 0.50
 
 // lateEraShare returns the share of drawn lines that came from an era-gated
 // pool, for one Moment at one age, over the requests the engine actually sends,
@@ -99,8 +110,9 @@ func lateEraShare(m Moment, age string) float64 {
 	return float64(gated) / n
 }
 
-// TestLateEraVoiceShare holds every digital-or-later age to at least half its
-// drawn lines coming from a pool written for that era, for every Moment.
+// TestLateEraVoiceShare holds every digital-or-later age to two drawn lines in
+// three coming from a pool written for that era, for every everyday Moment, and
+// to half for the rare ones.
 func TestLateEraVoiceShare(t *testing.T) {
 	for _, age := range lateAges() {
 		var parts []string
@@ -110,9 +122,13 @@ func TestLateEraVoiceShare(t *testing.T) {
 			}
 			share := lateEraShare(m, age)
 			parts = append(parts, fmt.Sprintf("%s %2.0f%%", strings.TrimPrefix(strings.TrimPrefix(m.String(), "Expedition"), "Encounter"), share*100))
-			if share < minLateEraShare {
+			floor := minLateEraShare
+			if isRare(m) {
+				floor = minRareLateEraShare
+			}
+			if share < floor {
 				t.Errorf("%v at %s: %.0f%% of drawn lines are era-voiced; want >= %.0f%%",
-					m, age, share*100, minLateEraShare*100)
+					m, age, share*100, floor*100)
 			}
 		}
 		t.Logf("%-18s %s", age, strings.Join(parts, "  "))

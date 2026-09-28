@@ -1525,6 +1525,29 @@ var eraMarkers = map[string][]era{
 	"carried nine days":     {eraAncient, eraFeudal, eraIndustrial},
 	"medicine box":          {eraAncient, eraFeudal, eraIndustrial},
 	"three packs":           {eraAncient, eraFeudal, eraIndustrial},
+
+	// The house around the people: bread on the table, a doorframe to mark,
+	// a cellar to hide in, a goat in the yard. A third late-age review found
+	// the Information Age onward still narrated by a kitchen with a back door,
+	// because none of these was marked and the shared pools filled up with
+	// them. They stop at the Modern Age like the rest of the domestic set.
+	"bread":       {eraAncient, eraFeudal, eraIndustrial},
+	"doorframe":   {eraAncient, eraFeudal, eraIndustrial},
+	"doorframes":  {eraAncient, eraFeudal, eraIndustrial},
+	"doorstep":    {eraAncient, eraFeudal, eraIndustrial},
+	"back stairs": {eraAncient, eraFeudal, eraIndustrial},
+	"hearth":      {eraAncient, eraFeudal, eraIndustrial},
+	"firewood":    {eraAncient, eraFeudal, eraIndustrial},
+	"cellar":      {eraAncient, eraFeudal, eraIndustrial},
+	"pantry":      {eraAncient, eraFeudal, eraIndustrial},
+	"sack":        {eraAncient, eraFeudal, eraIndustrial},
+	"buckets":     {eraAncient, eraFeudal, eraIndustrial},
+	"barefoot":    {eraAncient, eraFeudal, eraIndustrial},
+	"horse":       {eraAncient, eraFeudal, eraIndustrial},
+	"horses":      {eraAncient, eraFeudal, eraIndustrial},
+	"cattle":      {eraAncient, eraFeudal, eraIndustrial},
+	"goat":        {eraAncient, eraFeudal, eraIndustrial},
+	"goats":       {eraAncient, eraFeudal, eraIndustrial},
 }
 
 // eraName gives a bucket a readable name for failure messages.
