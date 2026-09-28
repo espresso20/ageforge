@@ -8,7 +8,7 @@ Command names and the game keys they take (buildings, techs, resources, civiliza
 
 ## The prompt
 
-As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now, affordable first; `plan build` and `plan research` the same, then the next age's; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `sell` buildings you have; `trade` and `plan trade` what the market buys and sells; `diplomacy` the civilizations you have met; `theme` the themes you have unlocked; `load` your saves.
+As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now, affordable first; `plan build` and `plan research` the same, then the next age's; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `sell` buildings you have; `trade` and `plan trade` what the market buys and sells; `diplomacy` the civilizations you have met, and `diplomacy accept` and `plan deal` a civilization's open deal numbers after it; `theme` the themes you have unlocked; `load` your saves.
 
 | Key | What it does |
 |---|---|
@@ -65,6 +65,7 @@ A list of builds and techs the game starts for you, in order, as the resources c
 | `plan research <tech>` | Add a tech. Techs start one at a time, in plan order; a prerequisite can be planned before it. |
 | `plan trade <from> <to> [amount]` | Sell `from` for `to` at the market as it comes in, until `amount` of `to` is bought; with no amount, keep `to` topped up until you remove the item. Needs a trade building to sell. |
 | `plan advance` | Advance to the next age as soon as its requirements are met. The next age's buildings and techs can be planned too; they wait for the advance. |
+| `plan deal <civ> <n>` | Take a civilization's trade deal `n` as soon as its price is there. It holds its price back from the items below while it waits, and drops out if the offer rotates away. See [Trade deals](trade.md#trade-deals). |
 | `plan list` | Print the plan with each item's status |
 | `plan remove <n>` | Remove item `n` |
 | `plan up <n>` | Move item `n` one place up |
@@ -77,6 +78,7 @@ plan build gathering_camp 5
 plan research tool_making
 plan trade gold stone 50000
 plan advance
+plan deal merchant_guild 2
 plan up 3
 ```
 
@@ -186,6 +188,8 @@ From the **Industrial Age** you can build a **Geographic Society**, which sends 
 | `diplomacy neutral <civ>` | Reset a civilization to neutral |
 | `diplomacy tribute <civ>` | Sue for peace with a civilization at war (pays gold + culture, scaled to its strength) |
 | `diplomacy raid <civ>` | Raid a civilization's trade route (-20 opinion; a war provocation) |
+| `diplomacy deals [civ]` | List a civilization's trade deals, numbered (no civ: every civilization you have met) |
+| `diplomacy accept <civ> <n>` | Take trade deal `n` from a civilization: pay its price, get its goods or standing. See [Trade deals](trade.md#trade-deals) |
 
 ```
 trade list
@@ -197,6 +201,8 @@ diplomacy                  # the same panel, under its older name
 diplomacy gift merchant_guild
 diplomacy ally merchant_guild
 diplomacy tribute ironhold_clans   # end a war you'd rather not fight
+diplomacy deals merchant_guild     # what the Guild offers right now
+diplomacy accept merchant_guild 1  # take its first deal
 ```
 
 Active trade routes run for a fixed duration. Routes whose imports include a resource specialised in by a civilization you're **at war with or have embargoed** are **disrupted** (no income) until the conflict ends — see [Trade Disruption](trade.md#trade-disruption-war-amp-embargo). **Harbours** (`harbor` → `logistics_hub`) boost the income of every active route. Check the **Trade** overlay (`trade`) for rates, and the **Factions** panel (`factions`, or the older `diplomacy` / `dip`) for live favours, Geographic Society status and civ standings — see [The Factions panel](trade.md#the-factions-panel). Bare `diplomacy` opens that panel; add an action (`ally`/`rival`/`embargo`/`gift`/`neutral`) to act on a faction directly. You meet civilizations by **running scouting expeditions**, not by building anything — but once you have met them, a staffed **Embassy** (Colonial Age) or **Grand Embassy** (Industrial Age) passively raises opinion with your non-hostile factions — see the [Trade & Diplomacy](trade.md#embassy-buildings) wiki page.

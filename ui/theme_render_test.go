@@ -67,6 +67,25 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 		d.overlayMgr.Hide()
 	}
 
+	// The Factions panel with trade deals: a civ with open offers (one of
+	// them unaffordable) and a hostile one that offers none.
+	for _, c := range []struct {
+		key     string
+		opinion int
+	}{{"riverlands_tribes", 30}, {"ironhold_clans", -80}} {
+		if err := engine.MeetFactionForTest(c.key, c.opinion); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if len(engine.GetState().Diplomacy.Factions["riverlands_tribes"].Deals) == 0 {
+		t.Fatal("the Factions panel sweep has no deals to draw")
+	}
+	if !d.overlayMgr.Show("factions", engine.GetState()) {
+		t.Fatal("overlay factions not registered")
+	}
+	out["overlay:factions_deals"] = draw()
+	d.overlayMgr.Hide()
+
 	// The Plan panel with an item of each status (ready, blocked on storage,
 	// waiting with a progress bar), the selection chip and a feedback line.
 	for _, it := range []struct {

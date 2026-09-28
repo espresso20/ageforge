@@ -78,7 +78,7 @@ func TestPlanTradeAndAdvanceCommands(t *testing.T) {
 func TestPlanAutocomplete(t *testing.T) {
 	engine := game.NewGameEngine()
 	comp := NewAutoCompleter(engine)
-	if got := strings.Join(comp("plan "), ","); got != "plan advance,plan build,plan clear,plan down,plan list,plan remove,plan research,plan trade,plan up" {
+	if got := strings.Join(comp("plan "), ","); got != "plan advance,plan build,plan clear,plan deal,plan down,plan list,plan remove,plan research,plan trade,plan up" {
 		t.Errorf("plan subcommands = %s", got)
 	}
 	builds := strings.Join(comp("plan build "), ",")

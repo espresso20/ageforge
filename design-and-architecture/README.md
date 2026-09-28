@@ -30,6 +30,7 @@ Decisions recorded here are settled. They can be revisited but require explicit 
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
+| 2026-09-28 | Faction trade deals are derived, fixed-price side contracts (game/deals.go) | A civ's deals come from its data and your standing, like factionProfile's boons, so there are no per-civ tables to balance. Rates are pinned to the market (5-25% better, never past parity) so trading still never beats building; lots are 1-4 price units and the greedy bot ignores deals, so they stay a side channel (the `-deals=on` bot measures them). Standing from deals caps at opinion 50 and hostile civs don't trade, so deals can't buy an alliance or a peace. The refresh timer counts live ticks only, so check-in players find the offers they left. |
 | 2026-03-03 | Workers couple to buildings (Philosophy B) | Preserves assignment mechanic, creates unified production chain |
 | 2026-03-03 | Age-tiered worker classes (Gatherer→Serf→Drone→Harvester etc.) | Flavor + mechanical progression; higher tiers cost more food but produce significantly more |
 | 2026-03-03 | Age transition transformation pass | Buildings upgrade in-place (count preserved), workers rename on age advance — civilisation feels like it advances rather than just unlocking more |

@@ -51,6 +51,7 @@ const (
 	ArgSpeed                          // a speed multiplier
 	ArgAccount                        // a local account's name
 	ArgPlanItem                       // a plan item's number
+	ArgDeal                           // a trade deal's number, of the civilization in the previous argument
 )
 
 // Arg is one argument slot.
@@ -168,6 +169,8 @@ func registry() []*Command {
 				sub("trade", "plan trade <from> <to> [amt]", "Sell from for to as it comes in (no amount: keep topped up)",
 					Arg{Kind: ArgTradeFrom}, Arg{Kind: ArgTradeTo}, Arg{Kind: ArgNumber, Optional: true}),
 				sub("advance", "plan advance", "Advance as soon as the next age is ready"),
+				sub("deal", "plan deal <civ> <n>", "Take a civilization's trade deal n once its price is there",
+					Arg{Kind: ArgFaction}, Arg{Kind: ArgDeal}),
 				sub("list", "plan list", "Print the plan with each item's status"),
 				{Name: "remove", Aliases: []string{"rm"}, Args: []Arg{{Kind: ArgPlanItem}},
 					Help: []Usage{{"plan remove <n>", "Remove item n"}}},
@@ -240,6 +243,10 @@ func registry() []*Command {
 				sub("gift", "diplomacy gift <civ>", "Send gift (+15 opinion)", civArg...),
 				sub("neutral", "diplomacy neutral <civ>", "Reset to neutral", civArg...),
 				sub("tribute", "diplomacy tribute <civ>", "Sue for peace with a civilization at war", civArg...),
+				sub("deals", "diplomacy deals [civ]", "List trade deals (one civilization, or every one you have met)",
+					Arg{Kind: ArgFaction, Optional: true}),
+				sub("accept", "diplomacy accept <civ> <n>", "Take a civilization's trade deal n",
+					Arg{Kind: ArgFaction}, Arg{Kind: ArgDeal}),
 				{Name: "raid", Dangerous: true, Args: civArg,
 					Help: []Usage{{"diplomacy raid <civ>", "Raid a civilization's trade route (a war provocation)"}}},
 			}},
@@ -505,7 +512,7 @@ func slotTakes(a Arg, w string, valid func(Arg, string) bool) bool {
 		return true
 	case ArgWord:
 		return false
-	case ArgNumber, ArgSpeed, ArgPlanItem:
+	case ArgNumber, ArgSpeed, ArgPlanItem, ArgDeal:
 		_, err := strconv.ParseFloat(w, 64)
 		return err == nil
 	}

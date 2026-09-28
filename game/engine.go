@@ -1387,6 +1387,9 @@ func (ge *GameEngine) processDiplomacy() {
 	if totalOpinion > 0 {
 		ge.Diplomacy.AddPassiveOpinion(totalOpinion)
 	}
+
+	// Faction trade deals: advance the offer timers, re-roll what is due.
+	ge.tickFactionDeals()
 }
 
 // checkMilestones checks for newly completed milestones and chains

@@ -1,6 +1,6 @@
 # The Build Plan
 
-AgeForge is paced for a player who checks in a few times a day. The build plan is how you put the hours between visits to work: a list of builds, techs, trades and an advance that the game starts for you, in order, as the resources come in. It runs while you play, and it runs while you are away (offline catch-up executes it as the time passes, not in one lump at the end).
+AgeForge is paced for a player who checks in a few times a day. The build plan is how you put the hours between visits to work: a list of builds, techs, trades, faction deals and an advance that the game starts for you, in order, as the resources come in. It runs while you play, and it runs while you are away (offline catch-up executes it as the time passes, not in one lump at the end).
 
 Open it with `plan`. Add to it with commands:
 
@@ -11,6 +11,7 @@ plan research tool_making      # techs start one at a time, in plan order
 plan trade gold stone 50000    # sell gold for stone as gold comes in, until 50K stone is bought
 plan trade gold stone          # no amount: keep stone topped up
 plan advance                   # advance as soon as the requirements are met
+plan deal merchant_guild 2     # take the Merchant Guild's deal 2 once its price is there
 plan build longhouse 15        # the next age's buildings wait for the advance
 ```
 
@@ -27,6 +28,7 @@ plan build longhouse 15        # the next age's buildings wait for the advance
 - **A wonder pays its bank from what you hold.** A wonder's price in the plan is what its bank still lacks. Once what you hold (after what the items above it hold back) covers all of that, the plan banks it and starts construction, so a wonder whose stock sat in your stores no longer waits for you to `wonder collect`. While it waits it holds nothing back: it is a big bill, and holding it would stall everything below it. A part bigger than a full store can't be paid at once; deposits and [wonder overflow](wonders.md#overflow) fill it as before.
 - **Techs queue.** Only the first research item in the plan can take the research slot when it frees up; later ones still hold their knowledge.
 - **Trades are paced.** A trade item holds back what it will sell (what the items above leave, up to what it still wants) and sells once the market has recovered from its last sale, so the rate stays within a percent of the market's instead of sinking by selling every tick. It never buys more than the store has room for, and it needs a trade building standing, like `trade`.
+- **Deals wait for their price.** A deal item (`plan deal <civ> <n>`, see [Trade deals](trade.md#trade-deals)) is a one-off purchase at a fixed price, so it runs like a single build: it holds its price back while it waits and takes the deal once what is left covers it. It holds nothing while the goods wouldn't fit in their store or the civilization won't trade (war, embargo, rivalry, hostility). It drops out once taken, or when the offer is gone: the civilization's offers rotated or you took it by hand. Offers don't rotate while you are away, so a deal planned before you leave is still there for the plan to take.
 - **Advance at its place.** An advance item advances the moment the requirements are met, when the walk reaches it: items above it go first, items below wait for the next tick, so they can't spend what the requirements count.
 - **Dead items drop out.** A building of an earlier age after an advance, a building at its limit, a tech already researched, a tech whose prerequisite is neither researched nor planned before it, a trade the new age's market doesn't offer: each leaves the plan with a line in the log.
 - **Staffed.** Copies the plan builds are staffed from your idle workers when they finish. The plan never recruits.

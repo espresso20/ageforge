@@ -220,6 +220,9 @@ diplomacy gift <civ_key>
 diplomacy neutral <civ_key>
 diplomacy tribute <civ_key>     # sue for peace with a civ at war
 diplomacy raid <civ_key>        # raid their trade route (provocation — tanks opinion)
+diplomacy deals [civ_key]       # list trade deals (one civ, or every civ you have met)
+diplomacy accept <civ_key> <n>  # take deal n
+plan deal <civ_key> <n>         # take deal n once its price is there
 ```
 
 ### The Factions panel
@@ -231,10 +234,47 @@ The panel reads top to bottom:
 - **Header** — the title, plus how many civilizations you have met and how many remain undiscovered.
 - **Live Favours & Setbacks** — every timed faction effect currently running. Encounters hand out timed **favours** (marked `✦`) and, when a run goes badly, timed **setbacks** (marked `⚠`). Each line names the civilization that granted it, the effect, its magnitude (`+13% food`, `+8% all prod`, `+9% tick speed`) and the wall-clock time left on it. The section header carries the occupancy of both capacity pools — `boons 2/5 · setbacks 1/3` — because both are hard caps: **five** concurrent favours and **three** concurrent setbacks (see [First Contact & Discovery](#first-contact-amp-discovery) for what happens when you hit them). Workers on loan from another civ are listed here too; they carry no expiry clock, but they are a live effect all the same.
 - **Geographic Society** — the automation block, in one of three states: **nothing built** (a prompt to build one, Industrial Age); **starved** (a dispatch is due but your stores can't outfit the party); or **running** — the number of Societies, worker staffing with its fill percentage, the effective dispatch interval, and a countdown with a progress bar to the next dispatch. See [Automatic dispatch](military.md#automatic-dispatch-the-geographic-society).
-- **Known Factions** — a detail card per civilization you have met: name, personality, specialty and a **strength rating** drawn as 1–5 stars, the backstory snippet, the opinion bar, color-coded status with the active trade bonus, a threshold indicator (e.g. *+8 to friendly*, *ally-eligible — 500g*), war banner, lent workers, and a line flagging any live favour or setback that civilization is currently applying — so the card and the section at the top of the panel agree without you cross-referencing them.
+- **Known Factions** — a detail card per civilization you have met: name, personality, specialty and a **strength rating** drawn as 1–5 stars, the backstory snippet, the opinion bar, color-coded status with the active trade bonus, a threshold indicator (e.g. *+8 to friendly*, *ally-eligible — 500g*), war banner, lent workers, a line flagging any live favour or setback that civilization is currently applying — so the card and the section at the top of the panel agree without you cross-referencing them — and its current **trade deals**: one numbered line per offer (`2. wants 225K iron → 342K gold   +16% vs market`), the price in red while you can't pay it, taken offers dimmed, and when the next set arrives. A civilization that won't trade says why instead (`Deals: none — they are at war with you.`). See [Trade deals](#trade-deals).
 - **Not Yet Met** — a compact roster of the civilizations you have not met yet: one line each with the name, strength, the age you must reach, specialty and personality. It draws six rows at most; any remainder collapses into a `… N more` tail.
 
 Every duration on the panel — favour and setback remainders, the Society's interval and countdown — reads as approximate wall-clock time, not ticks. See [Timers and durations](commands.md#timers-and-durations).
+
+### Trade deals
+
+Every civilization you have met offers a small, rotating set of **trade deals**. Nothing is hand-written per civilization: a civ's specialty, personality and strength and your standing with it decide what it offers. The Factions panel shows each civ's deals on its card; `diplomacy deals [civ]` lists them, `diplomacy accept <civ> <n>` takes one, and `plan deal <civ> <n>` queues one in the [build plan](plan.md).
+
+**Kinds.**
+
+| Kind | You pay | You get |
+|---|---|---|
+| **sells** | one of your construction resources | the civ's specialty, sized by the goods |
+| **wants** | one of the resources you hold most of (fullest store first) | the civ's specialty, a little better than a sell |
+| **favor** | one of the resources you hold most of | **+5 standing** instead of goods |
+| **rare** | one of your construction resources | a construction resource of the **next** age that this age's market doesn't sell, at a steep price (0.6 of its next-age parity) |
+
+**Rates.** Where the market trades the pair, a deal pays **5% to 25% better than the market** (it trades at 0.84 to 1.0 of parity where the market pays 0.8). Where the market doesn't trade the pair, the rate comes from the two resources' price levels (food and culture are valued by what the age's producers of them return). A deal never pays better than parity, so trading still never beats building. Deals ignore market pressure: each one is a fixed contract.
+
+**Personality.**
+
+| Personality | Deals |
+|---|---|
+| **peaceful** | 2 when neutral, 3 friendly, 4 allied; mostly sells |
+| **mercantile** | one more than peaceful, 2 points better rates, 20% bigger lots, and asks for more of your goods |
+| **aggressive** | one fewer than peaceful (at least one), 4 points worse rates, and asks for favours more often |
+| **isolationist** | one deal (two when allied): a **rare** deal when the next age has goods for it to sell, its specialty otherwise |
+
+**Standing.** Friendly (friendly status, or opinion 25+) and allied civilizations offer more deals, at better rates (0.88 of parity neutral, 0.92 friendly, 0.96 allied, plus 0.03 on a want) and in bigger lots. A civilization **at war**, under your **embargo**, your **rival**, or with opinion **-50 or lower** offers nothing and refuses its standing offers until that changes. Taking a goods deal adds +1 opinion and counts as a trade; a favor adds +5. Standing from deals stops at **opinion 50**: deals can bring a civ to the edge of an alliance, never past it, and they can't end a war (no one at war trades with you; tribute or waiting it out still ends it).
+
+**Size.** A deal moves about 1.5 median building prices of the age (×0.9 plus 0.1 per point of the civ's strength, ×1.25 friendly, ×1.5 allied, ×1.2 mercantile, ×2 for a rare deal, and a roll between ×0.75 and ×1.25), capped so the goods fit in half your store and the price in 80% of it. Amounts are rounded to three figures, never in your favour.
+
+**Refresh.** Offers rotate after **an hour of play at 1x** (1,800 ticks) and when you advance an age. The timer only runs while the game does: offline catch-up doesn't advance it, so when you come back you find the offers you left, and a deal you planned is still there for the plan to take while you are away. The panel shows the time to the next set.
+
+**Examples** (neutral standing, at each civ's own age):
+
+- *Riverlands Tribes* (peaceful, food), Bronze Age: `wants 2.1K stone → 3.0K food` (+13% vs market), `favor 727 iron → +5 standing`.
+- *Merchant Guild* (mercantile, gold), Colonial Age: `wants 2.2M knowledge → 23M gold` (+16%), `sells 5.4M wood → 22M gold` (+12%), and a third.
+- *Ironhold Clans* (aggressive, iron), Medieval Age: one deal, `wants 84.5K knowledge → 179K iron` (+8%).
+- *Atomic Directorate* (isolationist, steel), Atomic Age: `rare 25.7B electricity → 3.3B oil`, oil being the Modern Age's goods.
 
 ### Personalities
 

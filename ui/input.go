@@ -1859,9 +1859,69 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 		}
 		return CommandResult{Message: fmt.Sprintf("Raided %s's trade route.", factionKey), Type: "warning"}
 
+	case "deals":
+		if len(args) > 2 {
+			return CommandResult{Message: "Usage: diplomacy deals [civ_key]", Type: "error"}
+		}
+		civ := ""
+		if len(args) == 2 {
+			civ = strings.ToLower(args[1])
+		}
+		return cmdDiplomacyDeals(civ, engine)
+
+	case "accept":
+		const usage = "Usage: diplomacy accept <civ_key> <n>"
+		if len(args) != 3 {
+			return CommandResult{Message: usage, Type: "error"}
+		}
+		n, err := parseCount(args[2])
+		if err != nil {
+			return usageError(usage, err)
+		}
+		d, err := engine.AcceptFactionDeal(strings.ToLower(args[1]), n)
+		if err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		got := fmt.Sprintf("+%d standing", d.Standing)
+		if d.Get != "" {
+			got = FormatNumber(d.GetAmt) + " " + d.Get
+		}
+		return CommandResult{Message: fmt.Sprintf("Deal done: %s %s for %s.", FormatNumber(d.GiveAmt), d.Give, got), Type: "success"}
+
 	default:
-		return CommandResult{Message: "Usage: diplomacy [ally|rival|embargo|gift|neutral|tribute|raid] <civ_key>", Type: "error"}
+		return CommandResult{Message: "Usage: diplomacy [ally|rival|embargo|gift|neutral|tribute|raid] <civ_key> | deals [civ_key] | accept <civ_key> <n>", Type: "error"}
 	}
+}
+
+// cmdDiplomacyDeals lists the trade deals of one civilization, or of every
+// one met when civ is "".
+func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
+	state := engine.GetState()
+	var lines []string
+	for _, def := range config.BaseFactions() {
+		f, ok := state.Diplomacy.Factions[def.Key]
+		if civ != "" && def.Key != civ {
+			continue
+		}
+		if !ok || !f.Discovered {
+			if civ != "" {
+				return CommandResult{Message: fmt.Sprintf("%s has not been discovered yet", def.Name), Type: "error"}
+			}
+			continue
+		}
+		lines = append(lines, fmt.Sprintf("%s %s", theme.Paint(theme.RoleAccent, def.Name), theme.Paint(theme.RoleDim, "("+def.Key+")")))
+		var sb strings.Builder
+		writeFactionDeals(&sb, f, state, 100)
+		lines = append(lines, strings.TrimRight(sb.String(), "\n"))
+	}
+	if len(lines) == 0 {
+		if civ != "" {
+			return CommandResult{Message: "unknown civilization: " + civ, Type: "error"}
+		}
+		return CommandResult{Message: "You have not met anyone to trade with yet. Scouting expeditions make first contact.", Type: "info"}
+	}
+	lines = append(lines, theme.Paint(theme.RoleDim, "Take one with: diplomacy accept <civ> <n> (or plan deal <civ> <n>)"))
+	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
 
 func cmdDiplomacyStatus(engine *game.GameEngine) CommandResult {
@@ -2078,7 +2138,7 @@ func outlookRiskText(state game.GameState) string {
 }
 
 // planUsage lists the plan subcommands.
-const planUsage = "Usage: plan [build <building> [count] | research <tech> | trade <from> <to> [amount] | advance | list | remove <n> | up <n> | down <n> | clear]"
+const planUsage = "Usage: plan [build <building> [count] | research <tech> | trade <from> <to> [amount] | deal <civ> <n> | advance | list | remove <n> | up <n> | down <n> | clear]"
 
 // cmdPlan is the `plan` command. Bare `plan` opens the Plan panel.
 func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
@@ -2170,6 +2230,19 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 			what = "until " + FormatNumber(amount) + " " + to + " is bought"
 		}
 		return CommandResult{Message: fmt.Sprintf("Planned: sell %s for %s as it comes in, %s.", from, to, what), Type: "info"}
+	case "deal":
+		const usage = "Usage: plan deal <civ> <n>"
+		if len(rest) != 2 {
+			return CommandResult{Message: usage, Type: "error"}
+		}
+		n, err := parseCount(rest[1])
+		if err != nil {
+			return usageError(usage, err)
+		}
+		if err := engine.PlanAddDeal(strings.ToLower(rest[0]), n); err != nil {
+			return CommandResult{Message: err.Error(), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Planned: take deal %d with %s as soon as its price is there.", n, strings.ToLower(rest[0])), Type: "info"}
 	case "advance":
 		if len(rest) != 0 {
 			return CommandResult{Message: "Usage: plan advance", Type: "error"}

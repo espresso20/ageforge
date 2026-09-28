@@ -37,6 +37,8 @@ import (
 //     price units of its age, and holding that back would stall everything
 //     below it for hours. Deposits and wonder overflow fill the bank as
 //     before; a part bigger than a full store can only be banked that way.
+//   - Deal items (plan_deal.go) take a civilization's trade deal once its
+//     fixed price is free, reserving it while they wait, like one build.
 //   - Techs start in plan order: only the first research item can take the
 //     research slot when it frees up. Later research items still reserve
 //     their knowledge.
@@ -76,6 +78,8 @@ type PlanItem struct {
 	To     string  `json:"to,omitempty"`
 	Amount float64 `json:"amount,omitempty"`
 	Got    float64 `json:"got,omitempty"`
+	// Deal items (plan_deal.go): Key is the civilization, Deal the offer's ID.
+	Deal int `json:"deal,omitempty"`
 }
 
 // Plan item statuses, for the UI.
@@ -123,7 +127,10 @@ func clonePlan(p []PlanItem) []PlanItem {
 func loadPlan(saved []PlanItem) []PlanItem {
 	var out []PlanItem
 	for _, it := range saved {
-		if (it.Kind != PlanBuild && it.Kind != PlanResearch && it.Kind != PlanTrade && it.Kind != PlanAdvance) || it.Count <= 0 || len(out) >= MaxPlanItems {
+		if (it.Kind != PlanBuild && it.Kind != PlanResearch && it.Kind != PlanTrade && it.Kind != PlanAdvance && it.Kind != PlanDeal) || it.Count <= 0 || len(out) >= MaxPlanItems {
+			continue
+		}
+		if it.Kind == PlanDeal && (it.Key == "" || it.Deal <= 0) {
 			continue
 		}
 		if it.Kind == PlanTrade && (it.To == "" || !(it.Amount >= 0) || math.IsInf(it.Amount, 0) || !(it.Got >= 0)) {
@@ -261,6 +268,9 @@ func (ge *GameEngine) planItemLabel(it PlanItem) string {
 	if it.Kind == PlanAdvance {
 		return "advance when ready"
 	}
+	if it.Kind == PlanDeal {
+		return ge.planDealLabel(it)
+	}
 	if it.Kind == PlanResearch {
 		return "research " + config.TechByKey()[it.Key].Name
 	}
@@ -360,6 +370,8 @@ type planStarts struct {
 	tradeOrder []string
 	// advanced is the age an advance item moved to ("" if none).
 	advanced string
+	// deals are the deal items taken, as labels.
+	deals []string
 }
 
 func (s *planStarts) addTrade(from, to string, sold, got float64) {
@@ -385,7 +397,7 @@ func (s *planStarts) addBuild(key string) {
 }
 
 func (s *planStarts) empty() bool {
-	return len(s.order) == 0 && len(s.techs) == 0 && len(s.tradeOrder) == 0 && s.advanced == ""
+	return len(s.order) == 0 && len(s.techs) == 0 && len(s.tradeOrder) == 0 && s.advanced == "" && len(s.deals) == 0
 }
 
 // describe renders the starts as "2 × Hut, Farm, research Pottery".
@@ -407,6 +419,7 @@ func (s *planStarts) describe(defs map[string]config.BuildingDef) string {
 		t := s.trades[k]
 		parts = append(parts, fmt.Sprintf("traded %s %s for %s %s", formatPlanAmount(t[0]), from, formatPlanAmount(t[1]), to))
 	}
+	parts = append(parts, s.deals...)
 	if s.advanced != "" {
 		parts = append(parts, "advanced to "+s.advanced)
 	}
@@ -577,6 +590,19 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 			out = append(out, it)
 			continue
 		}
+		if it.Kind == PlanDeal {
+			if gone := ge.planDealGone(it); gone != "" {
+				ge.addLog("warning", fmt.Sprintf("Plan: dropped %s (%s).", ge.planItemLabel(it), gone))
+				continue
+			}
+			if ge.runPlanDeal(it, reserved) {
+				started = true
+				starts.deals = append(starts.deals, "took a "+ge.planItemLabel(it))
+				continue
+			}
+			out = append(out, it)
+			continue
+		}
 		if it.Kind == PlanTrade {
 			if reason := ge.planTradeInvalid(it); reason != "" {
 				ge.addLog("warning", fmt.Sprintf("Plan: dropped %s (%s).", ge.planItemLabel(it), reason))
@@ -722,6 +748,10 @@ func (ge *GameEngine) planViews() []PlanItemView {
 		}
 		if it.Kind == PlanAdvance {
 			out = append(out, ge.planAdvanceView(it))
+			continue
+		}
+		if it.Kind == PlanDeal {
+			out = append(out, ge.planDealView(it, reserved))
 			continue
 		}
 		v := PlanItemView{Kind: it.Kind, Key: it.Key, Count: it.Count, Started: it.Started}
