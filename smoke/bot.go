@@ -493,17 +493,15 @@ func (b *Bot) planAhead(st game.GameState) {
 		}
 	}
 
-	if w := st.CurrentAgeWonderKey; w != "" && st.Buildings[w].Count == 0 && b.queuedCount(st, w) == 0 {
-		_, err := b.ge.PlanAddBuild(w, 1)
-		b.act("plan_wonder", w, err)
-	}
-	// Trades go right after the wonder: a build waiting on stone holds back
-	// the gold it also costs, so a trade below it could never sell that gold
-	// for the stone. Each is capped at what is missing.
+	// Trades go first: a build waiting on stone holds back the gold it also
+	// costs, so a trade below it could never sell that gold for the stone.
+	// Each is capped at what is missing.
 	b.planTrades(p, st)
-	for _, v := range b.ge.GetState().Plan {
-		if v.Kind == game.PlanTrade {
-			tradeIn[v.To] = true
+	if b.hasTrader(st) {
+		for _, v := range b.ge.GetState().Plan {
+			if v.Kind == game.PlanTrade {
+				tradeIn[v.To] = true
+			}
 		}
 	}
 	if p.invest {
@@ -518,6 +516,13 @@ func (b *Bot) planAhead(st game.GameState) {
 		producers()
 	}
 	b.planTechs(p, st, budget)
+	// The wonder goes last before the advance: it pays the rest of its bank
+	// from what the items above leave, so it takes the stock once the age's
+	// investments are made rather than before (overflow fills it meanwhile).
+	if w := st.CurrentAgeWonderKey; w != "" && st.Buildings[w].Count == 0 && b.queuedCount(st, w) == 0 {
+		_, err := b.ge.PlanAddBuild(w, 1)
+		b.act("plan_wonder", w, err)
+	}
 	// 8. Advance as soon as the age is ready, not at the next visit, and
 	// 9. a start on the next age, which waits for the advance: its storage,
 	// its wonder and the buildings the age after it requires.
@@ -704,6 +709,9 @@ func (b *Bot) planTrades(p *plan, st game.GameState) {
 // it holds and makes, less what the age still needs of it). Reports whether
 // it added one.
 func (b *Bot) planTopUp(p *plan, st game.GameState, res string) bool {
+	if !b.hasTrader(st) {
+		return false
+	}
 	from, best := "", 0.0
 	for _, k := range sortedKeys(st.Trade.ExchangeRates) {
 		x := st.Trade.ExchangeRates[k]
@@ -719,6 +727,18 @@ func (b *Bot) planTopUp(p *plan, st game.GameState, res string) bool {
 		return false
 	}
 	return b.act("plan_topup", from+"->"+res, b.ge.PlanAddTrade(from, res, 0))
+}
+
+// hasTrader reports whether a trade building stands, so the market is open
+// and a plan trade item can sell while the player is away. (A trade item
+// waiting for one still holds back what it would sell.)
+func (b *Bot) hasTrader(st game.GameState) bool {
+	for key, bs := range st.Buildings {
+		if bs.Count > 0 && b.defs[key].LineageKey == "trade" {
+			return true
+		}
+	}
+	return false
 }
 
 // planHasTrade reports whether the plan already trades from for to.
