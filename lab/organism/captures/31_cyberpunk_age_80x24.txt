@@ -1,0 +1,24 @@
+ Cyberpunk Age · Neon Era             pop 4133/8.1M · idle 485 · food +2584.4/s
+                                    ! energy 40                           ·····
+                                                   ☾                 ✶══--
+                                  ¤¤¤    !     harbinger · the ghost in the net
+                     ¤ craft 63 ¤¤¤¤¤¤ !!•!*****    ♪ culture 21
+               ◊ metal 39  ◊•◊◊◊◊¤¤¤¤¤!!●! *╱***  * knowledge 53
+             # stone 25  ##•#•◊◊╲ ¤¤•╲ •╱! •●●♪♪♪+++ ╱$   $ trade 41
+                          #╲╲##╲╲◊ ¤¤● ●●•**● ╱╱++++$╱$─
+       % timber 80  %%%%%%%•╲╲╲╲●╲╲ ╲╲ │╱ ╱╱●♪♪++•╱$$$^$^─
+                     %%╲%%%%╲• ╲╲╲•╲••╲•• ••╱●╱╱╱$$•╱^^^^^^   ^ military 32
+   ·    & food 25   &&&●&╲●%%╲╲─•╲╲╲╲ ╲ │╱╱╱╱╱╱•●╱╱^•──●@@@@ @ net 27
+      Ironhold      &&─&╲╲&&&╲──•╲╲╲•╲• │••──╱╱•───╱@@╱●─@@              Atomic
+ Artisan  ▲ Riverlands          ╲╲───╲╲╲╱•────╱╱   ●  .  .  Tech Merchant   ▲
+    ▲    ▲▲▲     ▲                     ╲╱┃           ·        ▲      ▲     ▲▲▲
+   ▲▲▲  ▲▲▲▲▲   ▲▲▲                   ┃┃╂┃                   ▲▲▲    ▲▲▲   ▲▲▲▲▲
+    |     |      |                   ┃┃╂┃┃┃  ·                |      |      |
+            ,                      ˙    │    ∘              neon era: cyberpunk
+   ◉                    ✹               │     ·    .                digital era
+         ◉      ∘                    ╱╱╱╲╲,                      ° electric era
+         ◉†                 ────────╱╱    ╲│─────╲─      ,            steel era
+                     ◉  ∘─╱╱─╱───│╱        ╱╱╲╲─╲╲╲──        ,         iron era
+     ◉       ·             ──│╱│╱╱╱╲   ╱╱─╱│╲╲╲╲╲╲                    stone era
+━━━━━ timber ━━━━━━━━━━━━━━━━━ craft ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ » Tick speed: +15% (interval: 1739ms)

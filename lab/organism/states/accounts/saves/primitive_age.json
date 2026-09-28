@@ -1,0 +1,835 @@
+{
+  "timestamp": "2026-09-28T17:31:03.719456-05:00",
+  "tick": 520,
+  "age": "primitive_age",
+  "seed": 7,
+  "rng_draws": 6,
+  "quip_draws": 52,
+  "prose": {
+    "recent": [
+      "harb_arrival_any_6",
+      "harb_warn_ancient_31",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "at": 2,
+    "topics": [
+      "family",
+      "religion",
+      "",
+      ""
+    ],
+    "topic_at": 2,
+    "slots": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  },
+  "resources": {
+    "antimatter": 0,
+    "coal": 0,
+    "crypto": 0,
+    "culture": 0,
+    "dark_matter": 0,
+    "dark_matter_crystals": 0,
+    "data": 0,
+    "electricity": 0,
+    "faith": 0,
+    "food": 1050,
+    "gold": 0,
+    "iron": 0,
+    "iron_ore": 0,
+    "knowledge": 281.0279999999999,
+    "marble": 0,
+    "nanobots": 0,
+    "oil": 0,
+    "plasma": 0,
+    "quantum_flux": 0,
+    "soldiers": 0,
+    "steel": 0,
+    "stone": 0,
+    "titanium": 0,
+    "titanium_ore": 0,
+    "uranium": 0,
+    "wood": 1050
+  },
+  "storage": {
+    "antimatter": 1020,
+    "coal": 1050,
+    "crypto": 1050,
+    "culture": 1050,
+    "dark_matter": 1020,
+    "dark_matter_crystals": 1010,
+    "data": 1050,
+    "electricity": 1050,
+    "faith": 1050,
+    "food": 1050,
+    "gold": 1050,
+    "iron": 1050,
+    "iron_ore": 1030,
+    "knowledge": 1030,
+    "marble": 1030,
+    "nanobots": 1020,
+    "oil": 1050,
+    "plasma": 1030,
+    "quantum_flux": 1010,
+    "soldiers": 1000,
+    "steel": 1030,
+    "stone": 1050,
+    "titanium": 1030,
+    "titanium_ore": 1020,
+    "uranium": 1030,
+    "wood": 1050
+  },
+  "buildings": {
+    "gathering_camp": 8,
+    "hut": 10,
+    "sacred_grove": 1,
+    "stash": 2,
+    "story_circle": 5,
+    "wood_camp": 12
+  },
+  "workers": {
+    "worker": {
+      "count": 70,
+      "food_cost": 0.06,
+      "assignment": {
+        "gathering_camp": 24,
+        "story_circle": 10,
+        "wood_camp": 36
+      }
+    }
+  },
+  "unlocked": {
+    "resources": [
+      "food",
+      "wood",
+      "knowledge",
+      "faith"
+    ],
+    "buildings": [
+      "hut",
+      "stash",
+      "gathering_camp",
+      "wood_camp",
+      "story_circle",
+      "shrine",
+      "sacred_grove"
+    ],
+    "workers": [
+      "worker"
+    ]
+  },
+  "stats": {
+    "total_built": 38,
+    "total_recruited": 70,
+    "total_gathered": {
+      "food": 1774.2139999999918,
+      "knowledge": 281.0279999999999,
+      "wood": 3905.7204239999946
+    },
+    "game_started": "2026-09-28T17:31:03.534035-05:00",
+    "ages_reached": [
+      "primitive_age"
+    ],
+    "soldiers_trained": 0
+  },
+  "research": {
+    "researched": [],
+    "current_tech": "",
+    "ticks_left": 0,
+    "total_ticks": 0
+  },
+  "military": {
+    "completed_count": 0,
+    "total_loot": {}
+  },
+  "events": {
+    "last_fired": {
+      "river_flooding": 415
+    },
+    "active": [
+      {
+        "Key": "river_flooding",
+        "Name": "River Blessing",
+        "TicksLeft": 39,
+        "Effects": [
+          {
+            "Type": "production",
+            "Target": "food",
+            "Value": 0.25
+          }
+        ],
+        "WorkersLost": 0,
+        "ResourcesLost": null
+      }
+    ],
+    "next_event_tick": 937,
+    "good_streak": 1,
+    "bad_streak": 0
+  },
+  "milestones": [
+    "first_farmers",
+    "first_shelter",
+    "first_storehouse",
+    "wonder_builder"
+  ],
+  "permanent_bonuses": {
+    "production_all": 0.05
+  },
+  "build_queue": [],
+  "prestige": {
+    "level": 0,
+    "total_earned": 0,
+    "available": 0,
+    "upgrades": {}
+  },
+  "trade": {
+    "active_routes": {},
+    "supply_pressure": {},
+    "total_exchanged": {},
+    "total_imported": {},
+    "total_exported": {}
+  },
+  "diplomacy": {
+    "factions": {}
+  },
+  "speed_multiplier": 1,
+  "wonder_banks": {
+    "sacred_grove": {
+      "food": 500,
+      "wood": 1000
+    }
+  },
+  "pending_upgrades_saved": true,
+  "current_epoch": "stone_era",
+  "succumb_research_derived": true,
+  "harbinger": {
+    "age": "primitive_age",
+    "chain": [
+      "primitive_age"
+    ],
+    "epoch_key": "stone_era",
+    "target_epoch": "iron_era",
+    "announced_tier": "high",
+    "lines": [
+      "Several people packed a bag that night and unpacked it in the morning, feeling foolish.",
+      "The elders cut their hair."
+    ],
+    "arrived_tick": 1
+  },
+  "harbinger_arrived": {
+    "stone_era": true
+  },
+  "morale": 0.5,
+  "history": {
+    "samples": [
+      {
+        "tick": 10,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 20,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 30,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 40,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 50,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 60,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 70,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 80,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 90,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 100,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 110,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 120,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 130,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 140,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 150,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 160,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 170,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 180,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0.04000000000000001,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 190,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0.08000000000000002,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 200,
+        "population": 5,
+        "food_rate": 0.9000000000000001,
+        "know_rate": 0.24000000000000005,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 210,
+        "population": 33,
+        "food_rate": 0.2200000000000002,
+        "know_rate": 0.4,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 220,
+        "population": 55,
+        "food_rate": 1.9000000000000004,
+        "know_rate": 0.4,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 230,
+        "population": 61,
+        "food_rate": 3.5400000000000014,
+        "know_rate": 0.4,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 240,
+        "population": 66,
+        "food_rate": 4.04,
+        "know_rate": 0.6000000000000001,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 250,
+        "population": 66,
+        "food_rate": 4.04,
+        "know_rate": 0.6000000000000001,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 260,
+        "population": 66,
+        "food_rate": 4.04,
+        "know_rate": 0.6000000000000001,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 270,
+        "population": 68,
+        "food_rate": 3.92,
+        "know_rate": 0.8,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 280,
+        "population": 68,
+        "food_rate": 3.92,
+        "know_rate": 0.8,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 290,
+        "population": 68,
+        "food_rate": 3.92,
+        "know_rate": 0.8,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 300,
+        "population": 68,
+        "food_rate": 3.92,
+        "know_rate": 0.8400000000000001,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 310,
+        "population": 70,
+        "food_rate": 3.8,
+        "know_rate": 1,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 320,
+        "population": 70,
+        "food_rate": 3.8,
+        "know_rate": 1,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 330,
+        "population": 70,
+        "food_rate": 3.8,
+        "know_rate": 1,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 340,
+        "population": 70,
+        "food_rate": 3.8,
+        "know_rate": 1,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 350,
+        "population": 70,
+        "food_rate": 3.8,
+        "know_rate": 1,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 360,
+        "population": 70,
+        "food_rate": 3.8,
+        "know_rate": 1,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 370,
+        "population": 70,
+        "food_rate": 3.8,
+        "know_rate": 1,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 380,
+        "population": 70,
+        "food_rate": 3.8,
+        "know_rate": 1,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 390,
+        "population": 70,
+        "food_rate": 3.8,
+        "know_rate": 1,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 400,
+        "population": 70,
+        "food_rate": 3.8,
+        "know_rate": 1,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 410,
+        "population": 70,
+        "food_rate": 3.8,
+        "know_rate": 1,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 420,
+        "population": 70,
+        "food_rate": 4.1652,
+        "know_rate": 1.0144,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5351999999999999,
+        "age_order": 0
+      },
+      {
+        "tick": 430,
+        "population": 70,
+        "food_rate": 4.139599999999999,
+        "know_rate": 1.0111999999999999,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5271999999999997,
+        "age_order": 0
+      },
+      {
+        "tick": 440,
+        "population": 70,
+        "food_rate": 4.113999999999998,
+        "know_rate": 1.0079999999999998,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5191999999999994,
+        "age_order": 0
+      },
+      {
+        "tick": 450,
+        "population": 70,
+        "food_rate": 4.088399999999997,
+        "know_rate": 1.0047999999999997,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5111999999999992,
+        "age_order": 0
+      },
+      {
+        "tick": 460,
+        "population": 70,
+        "food_rate": 4.062799999999997,
+        "know_rate": 1.0015999999999996,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.503199999999999,
+        "age_order": 0
+      },
+      {
+        "tick": 470,
+        "population": 70,
+        "food_rate": 4.05,
+        "know_rate": 1,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 480,
+        "population": 70,
+        "food_rate": 4.05,
+        "know_rate": 1,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 490,
+        "population": 70,
+        "food_rate": 4.05,
+        "know_rate": 1,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 500,
+        "population": 70,
+        "food_rate": 4.05,
+        "know_rate": 1,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 510,
+        "population": 70,
+        "food_rate": 4.05,
+        "know_rate": 1,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      },
+      {
+        "tick": 520,
+        "population": 70,
+        "food_rate": 4.1000000000000005,
+        "know_rate": 1.02,
+        "faith": 0,
+        "prod_all": 0.05,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      }
+    ],
+    "age_markers": null
+  },
+  "_sig": "9bfb69e97cc2c5f8c9aea8dbba9215482995c8b18b40e5e557a294771e73c3a9"
+}

@@ -1,0 +1,241 @@
+{
+  "timestamp": "2026-09-28T17:31:03.550685-05:00",
+  "tick": 10,
+  "age": "primitive_age",
+  "seed": 7,
+  "rng_draws": 4,
+  "quip_draws": 4,
+  "prose": {
+    "recent": [
+      "harb_arrival_any_6",
+      "harb_warn_ancient_31",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "at": 2,
+    "topics": [
+      "family",
+      "religion",
+      "",
+      ""
+    ],
+    "topic_at": 2,
+    "slots": [
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ]
+  },
+  "resources": {
+    "antimatter": 0,
+    "coal": 0,
+    "crypto": 0,
+    "culture": 0,
+    "dark_matter": 0,
+    "dark_matter_crystals": 0,
+    "data": 0,
+    "electricity": 0,
+    "faith": 0,
+    "food": 35,
+    "gold": 0,
+    "iron": 0,
+    "iron_ore": 0,
+    "knowledge": 0,
+    "marble": 0,
+    "nanobots": 0,
+    "oil": 0,
+    "plasma": 0,
+    "quantum_flux": 0,
+    "soldiers": 0,
+    "steel": 0,
+    "stone": 0,
+    "titanium": 0,
+    "titanium_ore": 0,
+    "uranium": 0,
+    "wood": 34
+  },
+  "storage": {
+    "antimatter": 20,
+    "coal": 50,
+    "crypto": 50,
+    "culture": 50,
+    "dark_matter": 20,
+    "dark_matter_crystals": 10,
+    "data": 50,
+    "electricity": 50,
+    "faith": 50,
+    "food": 50,
+    "gold": 50,
+    "iron": 50,
+    "iron_ore": 30,
+    "knowledge": 30,
+    "marble": 30,
+    "nanobots": 20,
+    "oil": 50,
+    "plasma": 30,
+    "quantum_flux": 10,
+    "soldiers": 0,
+    "steel": 30,
+    "stone": 50,
+    "titanium": 30,
+    "titanium_ore": 20,
+    "uranium": 30,
+    "wood": 50
+  },
+  "buildings": {
+    "hut": 3
+  },
+  "workers": {
+    "worker": {
+      "count": 0,
+      "food_cost": 0.06,
+      "assignment": {}
+    }
+  },
+  "unlocked": {
+    "resources": [
+      "food",
+      "wood",
+      "knowledge",
+      "faith"
+    ],
+    "buildings": [
+      "hut",
+      "stash",
+      "gathering_camp",
+      "wood_camp",
+      "story_circle",
+      "shrine",
+      "sacred_grove"
+    ],
+    "workers": [
+      "worker"
+    ]
+  },
+  "stats": {
+    "total_built": 3,
+    "total_recruited": 0,
+    "total_gathered": {
+      "wood": 50
+    },
+    "game_started": "2026-09-28T17:31:03.534035-05:00",
+    "ages_reached": [
+      "primitive_age"
+    ],
+    "soldiers_trained": 0
+  },
+  "research": {
+    "researched": [],
+    "current_tech": "",
+    "ticks_left": 0,
+    "total_ticks": 0
+  },
+  "military": {
+    "completed_count": 0,
+    "total_loot": {}
+  },
+  "events": {
+    "last_fired": {},
+    "active": [],
+    "next_event_tick": 415,
+    "good_streak": 0,
+    "bad_streak": 0
+  },
+  "milestones": [
+    "first_shelter"
+  ],
+  "permanent_bonuses": {},
+  "build_queue": [
+    {
+      "BuildingKey": "hut",
+      "TicksLeft": 3,
+      "TotalTicks": 8
+    }
+  ],
+  "prestige": {
+    "level": 0,
+    "total_earned": 0,
+    "available": 0,
+    "upgrades": {}
+  },
+  "trade": {
+    "active_routes": {},
+    "supply_pressure": {},
+    "total_exchanged": {},
+    "total_imported": {},
+    "total_exported": {}
+  },
+  "diplomacy": {
+    "factions": {}
+  },
+  "speed_multiplier": 1,
+  "pending_upgrades_saved": true,
+  "current_epoch": "stone_era",
+  "succumb_research_derived": true,
+  "harbinger": {
+    "age": "primitive_age",
+    "chain": [
+      "primitive_age"
+    ],
+    "epoch_key": "stone_era",
+    "target_epoch": "iron_era",
+    "announced_tier": "high",
+    "lines": [
+      "Several people packed a bag that night and unpacked it in the morning, feeling foolish.",
+      "The elders cut their hair."
+    ],
+    "arrived_tick": 1
+  },
+  "harbinger_arrived": {
+    "stone_era": true
+  },
+  "morale": 0.5,
+  "history": {
+    "samples": [
+      {
+        "tick": 10,
+        "population": 0,
+        "food_rate": 0,
+        "know_rate": 0,
+        "faith": 0,
+        "prod_all": 0,
+        "tick_speed": 0,
+        "morale": 0.5,
+        "age_order": 0
+      }
+    ],
+    "age_markers": null
+  },
+  "_sig": "7aea065d9771f0aef567a8e0cef803bff478ed74c2c8818486c4e69a2bb60962"
+}
