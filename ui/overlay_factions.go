@@ -6,6 +6,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // The Factions panel.
@@ -78,7 +79,7 @@ func factionsProvider(state game.GameState, w int) string {
 		if !ok || !f.Discovered {
 			continue
 		}
-		writeFactionCard(&sb, def, f, tally[def.Key], usable)
+		writeFactionCard(&sb, def, f, tally[def.Key], usable, state)
 	}
 	if met > 0 {
 		// Embassies no longer gate first contact, but they are still how you court
@@ -91,6 +92,7 @@ func factionsProvider(state game.GameState, w int) string {
 	writeUndiscoveredRoster(&sb, pending, ages, usable)
 
 	sb.WriteString("\n [gray]Commands: diplomacy ally/rival/embargo/gift/neutral/tribute/raid <civ>[-]\n")
+	sb.WriteString(" [gray]Deals: diplomacy deals <civ> · diplomacy accept <civ> <n> · plan deal <civ> <n>[-]\n")
 
 	return sb.String()
 }
@@ -253,7 +255,7 @@ func writeGeographicSociety(sb *strings.Builder, state game.GameState) {
 // The body is unchanged from the original diplomacy panel apart from two
 // additions — the strength rating and the live-effect line — so muscle memory
 // and the existing assertions both survive.
-func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.FactionInfo, t factionEffectTally, usable int) {
+func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.FactionInfo, t factionEffectTally, usable int, state game.GameState) {
 	// Strength lives on the snapshot, but a hand-built FactionInfo (tests, older
 	// saves) can carry a zero, so fall back to the static definition.
 	strength := f.Strength
@@ -344,6 +346,9 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 		}
 		fmt.Fprintf(sb, "   %s\n", strings.Join(parts, "  "))
 	}
+
+	// Trade deals: what this civ offers now, or why it offers nothing.
+	writeFactionDeals(sb, f, state, usable)
 
 	// Action hint: the diplomacy commands available given current status.
 	switch {
@@ -565,4 +570,61 @@ func diplomacyThreshold(status string, opinion int) string {
 	default:
 		return "[gray](ally-eligible — 500g)[-]"
 	}
+}
+
+// writeFactionDeals renders a civ's trade deals on its card: one numbered
+// line per offer (the number `diplomacy accept` takes), with how much better
+// than the market it pays, or why the civ offers nothing. Theme roles only.
+func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameState, usable int) {
+	if f.DealsBlocked != "" {
+		fmt.Fprintf(sb, "   %s\n", theme.Paint(theme.RoleWarning, "Deals: none — they are "+f.DealsBlocked+"."))
+		return
+	}
+	if len(f.Deals) == 0 {
+		fmt.Fprintf(sb, "   %s\n", theme.Paint(theme.RoleDim, "Deals: nothing to offer right now."))
+		return
+	}
+	fmt.Fprintf(sb, "   %s %s\n", theme.Paint(theme.RoleLabel, "Deals:"),
+		theme.Paint(theme.RoleDim, "new offers in "+formatTicks(f.DealRefreshIn, state)))
+	for _, d := range f.Deals {
+		fmt.Fprintf(sb, "    %s\n", dealLine(d, state, usable-4))
+	}
+}
+
+// dealLine renders one offer from the player's side, in the words of
+// game.DealTerms: "1. Buy: give 516 wood → get 618 food   +20% vs market".
+// What you can't pay yet is in the Negative role; a taken offer is dim.
+func dealLine(d game.DealInfo, state game.GameState, width int) string {
+	give := FormatNumber(d.GiveAmt) + " " + d.Give
+	get := game.DealGets(d.Get, d.GetAmt, d.Standing, FormatNumber)
+	note := ""
+	switch {
+	case d.Taken:
+		note = "taken"
+	case d.Edge > 0:
+		note = fmt.Sprintf("%+.0f%% vs market", d.Edge*100)
+	case d.Kind == game.DealRare:
+		note = "next age's goods"
+	case d.Get != "":
+		note = "not sold at the market"
+	}
+	plain := fmt.Sprintf("%d. %s", d.Num, game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, FormatNumber))
+	if d.Taken {
+		return theme.Paint(theme.RoleDim, truncate(plain+"  "+note, width))
+	}
+	giveRole := theme.RoleHighlight
+	if state.Resources[d.Give].Amount < d.GiveAmt {
+		giveRole = theme.RoleNegative
+	}
+	gap := columnGap(width - runeLen(plain) - runeLen(note))
+	if runeLen(plain)+runeLen(note)+1 > width {
+		note, gap = "", ""
+	}
+	// Same words as plain, painted: the numbers-and-kind skeleton of DealTerms.
+	return fmt.Sprintf("%s %s %s %s %s %s%s%s",
+		theme.Paint(theme.RoleLabel, fmt.Sprintf("%d.", d.Num)),
+		theme.Paint(theme.RoleAccent, game.DealKindLabel(d.Kind)+":"),
+		theme.Paint(theme.RoleDim, "give"), theme.Paint(giveRole, give),
+		theme.Paint(theme.RoleDim, "→ get"), theme.Paint(theme.RolePositive, get),
+		gap, theme.Paint(theme.RoleDim, note))
 }

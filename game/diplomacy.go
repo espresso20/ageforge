@@ -88,6 +88,14 @@ type FactionState struct {
 	RaidedRoutes        int // times the player raided this civ's trade route
 	Embargoes           int // times the player embargoed this civ
 	LastProvocationTick int // tick of the most recent provocation (drives the wait-out timer)
+
+	// Trade deals (deals.go): the current offers, how many times they have
+	// been rolled, ticks of live play since the last roll, and the age they
+	// were priced for.
+	Deals     []FactionDeal
+	DealRound int
+	DealTicks int
+	DealsFor  string
 }
 
 // LentWorkerBatch records one outstanding worker loan from a civilization.
@@ -734,6 +742,9 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 			info.Status = fs.Status
 			info.TradeCount = fs.TradeCount
 			info.AtWar = fs.AtWar
+			info.Deals = dealInfos(fs, age)
+			info.DealsBlocked = dealBlocked(*fs)
+			info.DealRefreshIn = max(dealRefreshTicks-fs.DealTicks, 0)
 		} else if ageOrder[age] >= ageOrder[def.MinAge] {
 			// Eligible (age floor met) but not yet met: discovery is triggered by
 			// running expeditions, with a late age fallback (see DiscoverFactions).
@@ -771,6 +782,10 @@ func (dm *DiplomacyManager) LoadState(factions map[string]FactionStateSave, lent
 			RaidedRoutes:        v.RaidedRoutes,
 			Embargoes:           v.Embargoes,
 			LastProvocationTick: v.LastProvocationTick,
+			Deals:               append([]FactionDeal(nil), v.Deals...),
+			DealRound:           v.DealRound,
+			DealTicks:           v.DealTicks,
+			DealsFor:            v.DealsFor,
 		}
 	}
 	if lent != nil {
@@ -799,6 +814,12 @@ type FactionStateSave struct {
 	RaidedRoutes        int    `json:"raided_routes"`
 	Embargoes           int    `json:"embargoes"`
 	LastProvocationTick int    `json:"last_provocation_tick"`
+	// Trade deals (deals.go); absent from saves before them, which roll a
+	// fresh set on the first tick.
+	Deals     []FactionDeal `json:"deals,omitempty"`
+	DealRound int           `json:"deal_round,omitempty"`
+	DealTicks int           `json:"deal_ticks,omitempty"`
+	DealsFor  string        `json:"deals_for,omitempty"`
 }
 
 // GetFactionsForSave returns faction states for serialization
@@ -815,6 +836,10 @@ func (dm *DiplomacyManager) GetFactionsForSave() map[string]FactionStateSave {
 			RaidedRoutes:        fs.RaidedRoutes,
 			Embargoes:           fs.Embargoes,
 			LastProvocationTick: fs.LastProvocationTick,
+			Deals:               append([]FactionDeal(nil), fs.Deals...),
+			DealRound:           fs.DealRound,
+			DealTicks:           fs.DealTicks,
+			DealsFor:            fs.DealsFor,
 		}
 	}
 	return out

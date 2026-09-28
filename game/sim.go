@@ -1,6 +1,25 @@
 package game
 
-import "time"
+import (
+	"fmt"
+	"time"
+)
+
+// MeetFactionForTest discovers civ key at opinion and rolls its trade deals,
+// as first contact on an expedition followed by a tick would. A test hook for
+// other packages (the ui panel tests and theme sweep); not reachable from
+// play.
+func (ge *GameEngine) MeetFactionForTest(key string, opinion int) error {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	if _, ok := ge.Diplomacy.factionDefs[key]; !ok {
+		return fmt.Errorf("unknown civilization: %s", key)
+	}
+	ge.Diplomacy.DiscoverFaction(key)
+	ge.Diplomacy.factions[key].Opinion = opinion
+	ge.tickFactionDeals()
+	return nil
+}
 
 // StepTicks runs n game ticks synchronously on the calling goroutine, as fast
 // as the CPU allows, and returns the wall-clock time those ticks would have

@@ -46,6 +46,7 @@ type ConfigJSON struct {
 	Pacing      string  `json:"pacing"`
 	Style       string  `json:"style,omitempty"`
 	LastPassage string  `json:"last_passage,omitempty"`
+	Deals       bool    `json:"deals,omitempty"`
 }
 
 // PacingRow aggregates one (cycle, age) across seeds. Times are 1x seconds.
@@ -77,7 +78,7 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 			Seeds: cfg.Seeds, Catastrophe: cfg.Catastrophe, Harbinger: cfg.Harbinger, PrestigeAge: cfg.PrestigeAge,
 			Cycles: cfg.Cycles, FinalAge: cfg.FinalAge, DecideEvery: cfg.DecideEvery, CheckEvery: cfg.CheckEvery,
 			SoftlockSecs: cfg.SoftlockSpan.Seconds(), AgeTimeout: cfg.AgeTimeout.Seconds(), MaxSimSecs: cfg.MaxSim.Seconds(),
-			Pacing: cfg.Pacing, Style: cfg.Style, LastPassage: cfg.LastPassage,
+			Pacing: cfg.Pacing, Style: cfg.Style, LastPassage: cfg.LastPassage, Deals: cfg.Deals,
 		},
 	}
 	type key struct {
@@ -218,6 +219,9 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 		s.Mode, len(s.Runs), s.Config.Catastrophe, orDefault(s.Config.PrestigeAge, "first allowed age"), s.Config.Cycles)
 	if s.Config.FinalAge != "" {
 		fmt.Fprintf(&sb, ", then on to `%s`", s.Config.FinalAge)
+	}
+	if s.Config.Deals {
+		sb.WriteString(", faction deals on")
 	}
 	fmt.Fprintf(&sb, ". Took %s of wall time.\n\n", time.Duration(s.WallMs)*time.Millisecond)
 	sb.WriteString("Times are simulated wall-clock at 1x speed (tick_speed bonuses included). ")

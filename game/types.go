@@ -562,4 +562,10 @@ type FactionInfo struct {
 	LentWorkers int    // workers currently on loan from this civ (0 if none)
 	LentReturn  int    // ticks until lent workers return (0 = none / permanent)
 	LentPerm    bool   // lent workers are permanent (opinion was > 80 at lend time)
+	// Trade deals (deals.go): the current offers, numbered for `diplomacy
+	// accept`; why the civ won't trade ("" if it will); and the ticks of
+	// play until the offers rotate.
+	Deals         []DealInfo
+	DealsBlocked  string
+	DealRefreshIn int
 }

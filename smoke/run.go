@@ -63,6 +63,10 @@ type Config struct {
 	// measure what each is worth (-no-plan, -no-overflow).
 	NoPlan     bool
 	NoOverflow bool
+	// Deals turns on the bot's faction-deal policy (Bot.Deals, -deals=on).
+	// Off by default: deals are a side channel, and the pacing targets are
+	// graded on the bot that ignores them.
+	Deals bool
 
 	// Pacing is PacingReport (default) or PacingEnforce. In report mode an
 	// age past its timeout and a run out of MaxSim are pacing notes, not
@@ -329,6 +333,7 @@ func newRunner(cfg Config, seed int64, ge *game.GameEngine) *runner {
 	r.bot.HorizonTicks = cfg.Horizon.Seconds() / game.BaseTickInterval.Seconds()
 	r.bot.CheckInTicks = cfg.CheckIn.Seconds() / game.BaseTickInterval.Seconds()
 	r.bot.UsePlan = cfg.CheckIn > 0 && !cfg.NoPlan
+	r.bot.Deals = cfg.Deals
 	if cfg.NoOverflow {
 		ge.SetWonderOverflow(false)
 	}

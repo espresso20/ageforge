@@ -141,6 +141,16 @@ func (sc determinismScript) play(ge *GameEngine, from, to int) string {
 		if i%90 == 0 {
 			_ = ge.RecruitWorker("worker", 2)
 		}
+		if i%150 == 75 {
+			// Take each civ's first open trade deal, in roster order.
+			for _, def := range config.BaseFactions() {
+				for n := 1; n <= 5; n++ {
+					if _, err := ge.AcceptFactionDeal(def.Key, n); err == nil {
+						break
+					}
+				}
+			}
+		}
 		ge.mu.Lock()
 		if ge.pendingCatastrophe != "" {
 			ge.mu.Unlock()
@@ -181,7 +191,10 @@ func determinismFingerprint(ge *GameEngine) string {
 	fmt.Fprintf(&b, "next event %d streaks %d/%d\n", ge.Events.nextEventTick, ge.Events.goodStreak, ge.Events.badStreak)
 	for _, k := range slices.Sorted(maps.Keys(ge.Diplomacy.factions)) {
 		fs := ge.Diplomacy.factions[k]
-		fmt.Fprintf(&b, "civ %s op %d war %v status %s\n", k, fs.Opinion, fs.AtWar, fs.Status)
+		fmt.Fprintf(&b, "civ %s op %d war %v status %s deals %d/%d/%s\n", k, fs.Opinion, fs.AtWar, fs.Status, fs.DealRound, fs.DealTicks, fs.DealsFor)
+		for _, d := range fs.Deals {
+			fmt.Fprintf(&b, "  deal %d %s %s %x %s %x %d %v\n", d.ID, d.Kind, d.Give, math.Float64bits(d.GiveAmt), d.Get, math.Float64bits(d.GetAmt), d.Standing, d.Taken)
+		}
 	}
 	for _, lb := range ge.Diplomacy.lentBatches {
 		fmt.Fprintf(&b, "lent %s %d %d %v\n", lb.FactionKey, lb.Count, lb.ReturnTick, lb.Permanent)

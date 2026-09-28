@@ -56,6 +56,10 @@ type Bot struct {
 	// wonder banked with what would otherwise be lost at the cap. See
 	// CheckIn.
 	CheckInTicks float64
+	// Deals makes the bot take faction trade deals (takeDeals). Off by
+	// default: the greedy bot ignores them, and -deals=on measures what they
+	// are worth.
+	Deals bool
 	// UsePlan makes a check-in player leave a build plan for the hours until
 	// the next visit (planAhead). The idle style sets it; the greedy bot,
 	// always there, has no use for one.
@@ -269,7 +273,49 @@ func (b *Bot) Play(st game.GameState) {
 	b.research(p)
 	b.festival(p)
 	b.trade(p)
+	if b.Deals {
+		b.takeDeals(p)
+	}
 	b.gather(p)
+}
+
+// takeDeals is the -deals=on policy, a player who reads the Factions panel:
+// take an open goods deal whose goods a target of the age still lacks (with
+// room for them) and whose price is spare: held beyond its own target, not
+// what the most wanted purchase is being saved for, and not knowledge, which
+// research spends, unless it sits at its cap. Favor and rare deals only when
+// their price would otherwise be lost at the cap. One deal per decision.
+func (b *Bot) takeDeals(p *plan) {
+	for _, key := range sortedKeys(p.st.Diplomacy.Factions) {
+		for _, d := range p.st.Diplomacy.Factions[key].Deals {
+			if d.Taken || p.amt[d.Give] < d.GiveAmt {
+				continue
+			}
+			atCap := p.amt[d.Give] >= 0.95*p.storage[d.Give]
+			spare := p.amt[d.Give] - d.GiveAmt - p.target[d.Give] - p.blockCost[d.Give]
+			switch {
+			case atCap:
+			case d.Give == "knowledge" || spare < 0:
+				continue
+			}
+			if d.Kind == game.DealSell || d.Kind == game.DealWant {
+				short := p.target[d.Get] - p.amt[d.Get]
+				room := p.storage[d.Get] - p.amt[d.Get]
+				if short <= 0 || room < d.GetAmt {
+					continue
+				}
+			} else if !atCap {
+				continue
+			}
+			if got, err := b.ge.AcceptFactionDeal(key, d.Num); b.act("deal", fmt.Sprintf("%s#%d %s->%s", key, d.Num, d.Give, d.Get), err) {
+				p.amt[d.Give] -= got.GiveAmt
+				if got.Get != "" {
+					p.amt[got.Get] += got.GetAmt
+				}
+			}
+			return
+		}
+	}
 }
 
 // maxCheckInRounds bounds the rounds of one check-in.

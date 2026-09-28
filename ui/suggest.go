@@ -334,7 +334,7 @@ func sortedWords(ws []string) []string {
 func (c *completer) values(k ArgKind, prev []string) []string {
 	st := c.state()
 	key := strconv.Itoa(int(k))
-	if k == ArgTradeTo && len(prev) > 0 {
+	if (k == ArgTradeTo || k == ArgDeal) && len(prev) > 0 {
 		key += ":" + strings.ToLower(prev[0])
 	}
 	if v, ok := c.cache[key]; ok {
@@ -395,6 +395,11 @@ func (c *completer) compute(k ArgKind, prev []string, st game.GameState) []strin
 		return availableSpeedOptions(c.engine)
 	case ArgAccount:
 		return localAccountNames(c.engine)
+	case ArgDeal:
+		if len(prev) == 0 {
+			return nil
+		}
+		return dealNumbers(st, strings.ToLower(prev[0]))
 	case ArgPlanItem:
 		nums := make([]string, len(st.Plan))
 		for i := range st.Plan {
@@ -687,6 +692,18 @@ func discoveredFactionKeys(state game.GameState) []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+// dealNumbers is what `diplomacy accept <civ>` and `plan deal <civ>` suggest:
+// the numbers of the civ's offers still open.
+func dealNumbers(state game.GameState, civ string) []string {
+	var nums []string
+	for _, d := range state.Diplomacy.Factions[civ].Deals {
+		if !d.Taken {
+			nums = append(nums, strconv.Itoa(d.Num))
+		}
+	}
+	return nums
 }
 
 // unlockedThemeKeys returns the themes the active account may switch to,
