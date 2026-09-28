@@ -5,6 +5,8 @@ import (
 	"math"
 	"sort"
 	"strings"
+
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // ProgressBar returns a text-based progress bar with colored segments.
@@ -25,51 +27,10 @@ func ProgressBar(current, max float64, width int) string {
 	return BarFillColor() + strings.Repeat("█", filled) + BarEmptyColor() + strings.Repeat("░", empty) + "[-]"
 }
 
-// suffixes for large number formatting
-var suffixes = []struct {
-	threshold float64
-	suffix    string
-}{
-	{1e15, "Q"},
-	{1e12, "T"},
-	{1e9, "B"},
-	{1e6, "M"},
-	{1e3, "K"},
-}
-
-// FormatNumber formats a number with suffix notation for large values (K/M/B/T/Q)
+// FormatNumber formats an amount for display (950, 12.5K, 1.23M). It is
+// textfmt.Number, the one number formatter the whole game uses.
 func FormatNumber(n float64) string {
-	negative := n < 0
-	abs := math.Abs(n)
-
-	prefix := ""
-	if negative {
-		prefix = "-"
-	}
-
-	if abs < 1000 {
-		if abs == math.Floor(abs) {
-			return fmt.Sprintf("%s%.0f", prefix, abs)
-		}
-		return fmt.Sprintf("%s%.1f", prefix, abs)
-	}
-
-	for _, s := range suffixes {
-		if abs >= s.threshold {
-			scaled := abs / s.threshold
-			var formatted string
-			if scaled >= 100 {
-				formatted = fmt.Sprintf("%.0f%s", scaled, s.suffix)
-			} else if scaled >= 10 {
-				formatted = fmt.Sprintf("%.1f%s", scaled, s.suffix)
-			} else {
-				formatted = fmt.Sprintf("%.2f%s", scaled, s.suffix)
-			}
-			return prefix + formatted
-		}
-	}
-
-	return fmt.Sprintf("%s%.0f", prefix, abs)
+	return textfmt.Number(n)
 }
 
 // FormatRate formats a rate with sign and suffix notation.

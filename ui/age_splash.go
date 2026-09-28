@@ -28,7 +28,7 @@ func ShowAgeSplashFull(om *OverlayManager, oldAge, newAge string,
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
-	titleTV.SetText(buildAgeSplashText(newAge, summary, epochChanged, epochEvent))
+	titleTV.SetText(safeTags(buildAgeSplashText(newAge, summary, epochChanged, epochEvent)))
 
 	// Layout: text-only flex with focusable=true so the overlay itself receives input
 	overlay := tview.NewFlex().SetDirection(tview.FlexRow).

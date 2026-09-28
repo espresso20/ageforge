@@ -266,7 +266,7 @@ func (t *EconomyTab) refreshResources(state game.GameState) {
 				rateColor, FormatRate(rs.Rate), bar, glyph)
 		}
 	}
-	t.resourceTV.SetText(sb.String())
+	t.resourceTV.SetText(safeTags(sb.String()))
 }
 
 func (t *EconomyTab) refreshBuildings(state game.GameState) {
@@ -390,7 +390,7 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 		sb.WriteString(" [white]Type[-] [cyan]help[-] [white]for all commands.[-]\n")
 	}
 
-	t.buildingTV.SetText(sb.String())
+	t.buildingTV.SetText(safeTags(sb.String()))
 }
 
 // ScrollUp scrolls the buildings panel up
@@ -526,5 +526,5 @@ func (t *EconomyTab) refreshUnderConstruction(state game.GameState) {
 		}
 	}
 
-	t.constructionTV.SetText(sb.String())
+	t.constructionTV.SetText(safeTags(sb.String()))
 }

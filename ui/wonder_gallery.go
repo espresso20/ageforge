@@ -207,7 +207,7 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 	maxSpeed := 1.0 + float64(wonderCount)*0.5
 	fmt.Fprintf(&sb, "\n[gold]Wonders built: %d[-] — [cyan]Max speed: %.1fx[-]", wonderCount, maxSpeed)
 
-	infoTV.SetText(sb.String())
+	infoTV.SetText(safeTags(sb.String()))
 
 	wp.root.AddItem(infoTV, 0, 1, false)
 }
