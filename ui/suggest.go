@@ -376,7 +376,7 @@ func (c *completer) compute(k ArgKind, prev []string, st game.GameState) []strin
 	case ArgFaction:
 		return discoveredFactionKeys(st)
 	case ArgTheme:
-		return themeKeys()
+		return unlockedThemeKeys(c.engine)
 	case ArgSave:
 		return saveNames()
 	case ArgExpedition:
@@ -403,36 +403,68 @@ func (c *completer) compute(k ArgKind, prev []string, st game.GameState) []strin
 	return nil
 }
 
-// buildableBuildingKeys returns the unlocked buildings, sorted.
+// byRank sorts keys by rank (lower first), then alphabetically.
+func byRank(keys []string, rank func(string) int) []string {
+	sort.Slice(keys, func(i, j int) bool {
+		ri, rj := rank(keys[i]), rank(keys[j])
+		if ri != rj {
+			return ri < rj
+		}
+		return keys[i] < keys[j]
+	})
+	return keys
+}
+
+// buildableBuildingKeys is what `build` suggests: buildings that can be
+// built in this age (unlocked, not superseded, short of their limit), the
+// affordable ones first.
 func buildableBuildingKeys(state game.GameState) []string {
 	var keys []string
 	for key, bs := range state.Buildings {
-		if bs.Unlocked {
+		if bs.Unlocked && !bs.IsLegacy && !bs.AtMaxCount {
 			keys = append(keys, key)
 		}
 	}
-	sort.Strings(keys)
-	return keys
+	return byRank(keys, func(k string) int {
+		if state.Buildings[k].CanBuild {
+			return 0
+		}
+		return 1
+	})
 }
 
-// plannableBuildingKeys is what `plan build` can take: this age's unlocked
-// buildings (its wonder included) short of their MaxCount, and the next
-// age's, which wait for the advance.
+// plannableBuildingKeys is what `plan build` takes and suggests: this age's
+// unlocked buildings (its wonder included) short of their MaxCount, the
+// affordable ones first, then the next age's, which wait for the advance.
 func plannableBuildingKeys(state game.GameState) []string {
 	defs := config.BuildingByKey()
+	rank := map[string]int{}
 	var keys []string
 	for key, bs := range state.Buildings {
 		d := defs[key]
-		now := bs.Unlocked && !bs.IsLegacy && !bs.AtMaxCount && d.RequiredAge == state.Age
-		if now || (state.NextAge != "" && d.RequiredAge == state.NextAge) {
-			keys = append(keys, key)
+		switch {
+		case bs.Unlocked && !bs.IsLegacy && !bs.AtMaxCount && d.RequiredAge == state.Age:
+			rank[key] = 1
+			if bs.CanBuild {
+				rank[key] = 0
+			}
+		case state.NextAge != "" && d.RequiredAge == state.NextAge:
+			rank[key] = 2
+		default:
+			continue
 		}
+		keys = append(keys, key)
 	}
-	sort.Strings(keys)
-	return keys
+	return byRank(keys, func(k string) int { return rank[k] })
 }
 
-// availableTechKeys returns the techs that can start now, sorted.
+// techAffordable reports whether the knowledge to start t is in store.
+func techAffordable(state game.GameState, t game.TechState) bool {
+	return state.Resources["knowledge"].Amount >= t.Cost
+}
+
+// availableTechKeys is what `research` suggests: techs that can start now,
+// the affordable ones first.
 func availableTechKeys(state game.GameState) []string {
 	var keys []string
 	for key, ts := range state.Research.Techs {
@@ -440,14 +472,19 @@ func availableTechKeys(state game.GameState) []string {
 			keys = append(keys, key)
 		}
 	}
-	sort.Strings(keys)
-	return keys
+	return byRank(keys, func(k string) int {
+		if techAffordable(state, state.Research.Techs[k]) {
+			return 0
+		}
+		return 1
+	})
 }
 
-// plannableTechKeys is what `plan research` can take: unresearched techs of
+// plannableTechKeys is what `plan research` takes: unresearched techs of
 // this age, an earlier one or the next that are neither in progress nor
 // planned already. Prerequisites may still be missing; they can be planned
-// first.
+// first. Suggested in the order research would take them: available and
+// affordable, available, then the rest.
 func plannableTechKeys(state game.GameState) []string {
 	order := map[string]int{}
 	for i, a := range config.AgeOrder() {
@@ -465,8 +502,16 @@ func plannableTechKeys(state game.GameState) []string {
 			keys = append(keys, key)
 		}
 	}
-	sort.Strings(keys)
-	return keys
+	return byRank(keys, func(k string) int {
+		ts := state.Research.Techs[k]
+		switch {
+		case ts.Available && techAffordable(state, ts):
+			return 0
+		case ts.Available:
+			return 1
+		}
+		return 2
+	})
 }
 
 // unlockedResourceKeys returns the unlocked resources, sorted.
@@ -520,17 +565,22 @@ func builtBuildingKeys(state game.GameState) []string {
 	return keys
 }
 
-// workerBuildingKeys returns the unlocked buildings that take workers,
-// sorted.
+// workerBuildingKeys is what `assign` suggests: built buildings that take
+// workers, the ones with a free slot first.
 func workerBuildingKeys(state game.GameState) []string {
 	var keys []string
 	for key, bs := range state.Buildings {
-		if bs.Unlocked && bs.WorkerDomain != "" && bs.WorkerCapacity > 0 {
+		if bs.Count > 0 && bs.WorkerDomain != "" && bs.WorkerCapacity > 0 {
 			keys = append(keys, key)
 		}
 	}
-	sort.Strings(keys)
-	return keys
+	return byRank(keys, func(k string) int {
+		bs := state.Buildings[k]
+		if bs.WorkersAssigned < bs.Count*bs.WorkerCapacity {
+			return 0
+		}
+		return 1
+	})
 }
 
 // assignedBuildingKeysAll returns the buildings with at least one worker
@@ -566,7 +616,8 @@ func expeditionKeysByCategory(state game.GameState, category string) []string {
 	return keys
 }
 
-// prestigeUpgradeKeys returns the prestige upgrades with a tier left, sorted.
+// prestigeUpgradeKeys returns the prestige upgrades with a tier left, the
+// ones the points on hand can buy first.
 func prestigeUpgradeKeys(state game.GameState) []string {
 	var keys []string
 	for key, u := range state.Prestige.Upgrades {
@@ -574,8 +625,12 @@ func prestigeUpgradeKeys(state game.GameState) []string {
 			keys = append(keys, key)
 		}
 	}
-	sort.Strings(keys)
-	return keys
+	return byRank(keys, func(k string) int {
+		if state.Prestige.Upgrades[k].NextCost <= state.Prestige.Available {
+			return 0
+		}
+		return 1
+	})
 }
 
 // availableTradeRouteKeys returns the routes that can start, sorted.
@@ -610,6 +665,19 @@ func discoveredFactionKeys(state game.GameState) []string {
 	return keys
 }
 
+// unlockedThemeKeys returns the themes the active account may switch to,
+// in the registry's order.
+func unlockedThemeKeys(engine *game.GameEngine) []string {
+	acct := themeAccount(engine)
+	var keys []string
+	for _, t := range theme.All() {
+		if themeAvailable(acct, t) {
+			keys = append(keys, t.Key)
+		}
+	}
+	return keys
+}
+
 // availableSpeedOptions returns the speed multipliers from 1.0 up to the
 // current max, in steps of 0.5 (the max rises 0.5x per wonder built).
 func availableSpeedOptions(engine *game.GameEngine) []string {
@@ -622,14 +690,22 @@ func availableSpeedOptions(engine *game.GameEngine) []string {
 }
 
 // upgradeableBuildingKeys returns the buildings with an upgrade available,
-// sorted.
+// the affordable ones first.
 func upgradeableBuildingKeys(engine *game.GameEngine) []string {
+	afford := map[string]bool{}
 	var keys []string
 	for _, u := range engine.GetAvailableUpgrades() {
-		keys = append(keys, u.FromKey)
+		if _, seen := afford[u.FromKey]; !seen {
+			keys = append(keys, u.FromKey)
+		}
+		afford[u.FromKey] = afford[u.FromKey] || u.CanAfford
 	}
-	sort.Strings(keys)
-	return keys
+	return byRank(keys, func(k string) int {
+		if afford[k] {
+			return 0
+		}
+		return 1
+	})
 }
 
 func saveNames() []string {
