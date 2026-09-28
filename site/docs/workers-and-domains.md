@@ -98,7 +98,7 @@ Assigns workers from the idle pool to the specified building. The domain is reso
 - The building must have been **built at least once** (`Count > 0`) — you cannot assign to unbuilt buildings
 - Assignment is capped at `building_count × WorkerCapacity` — the total staffing capacity
 - You cannot assign more workers than you have idle
-- Press TAB after `assign ` to autocomplete available worker-accepting building keys
+- Type `assign ` and the prompt suggests your built buildings that take workers, the ones with a free slot first (`Tab` takes the suggestion)
 
 **Production scaling formula:**
 
@@ -494,13 +494,13 @@ Focusing one domain can unlock milestone chains faster. Spreading across domains
 
 ---
 
-## Autocomplete Reference
+## Completion Reference
 
-The command input supports TAB autocomplete for all worker commands:
+The prompt suggests completions for all worker commands, shown dim after the cursor; `Tab` takes one and cycles to the next (see [The prompt](commands.md#the-prompt)):
 
-| Typed | TAB Suggestions |
+| Typed | Suggestions |
 |-------|----------------|
-| `assign ` | all unlocked building keys with WorkerCapacity > 0 (alphabetical) |
+| `assign ` | your built buildings with WorkerCapacity > 0, the ones with a free slot first |
 | `assign gathering_camp ` | `all` |
 | `assign lib` | `library`, `library_of_congress`, … (filtered by prefix) |
 | `unassign ` | only building keys that currently have workers assigned |
@@ -509,7 +509,7 @@ The command input supports TAB autocomplete for all worker commands:
 | `dismiss barracks ` | `all` |
 | `recruit ` | `max` |
 
-Autocomplete only shows buildings you have **unlocked** for assign, and buildings with **active assignments** for unassign — it won't suggest buildings you haven't reached yet or that have no workers to remove.
+Suggestions only show buildings you have **built** for assign, and buildings with **active assignments** for unassign and dismiss — they won't offer buildings you haven't built or that have no workers to remove.
 
 ---
 

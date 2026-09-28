@@ -1,0 +1,511 @@
+package ui
+
+import (
+	"strconv"
+	"strings"
+)
+
+// The command registry: every command a player can type at the prompt, with
+// its aliases, subcommands, argument slots, help rows and a Dangerous flag.
+// It is the one list the rest of the game reads:
+//
+//   - completion (suggest.go): the ghost text, Tab and the Enter rules;
+//   - the Help panel (overlay_help.go): sections, usage rows, panels, shortcuts;
+//   - the smoke docsync scenario: registry against site/docs/commands.md,
+//     both ways;
+//   - the smoke fuzz scenario: its command corpus.
+//
+// HandleCommand (input.go) keeps its own switch; TestRegistryMatchesDispatcher
+// holds the two together in both directions. To add a command, add it here and
+// to HandleCommand, then document it in site/docs/commands.md.
+
+// ArgKind is what an argument slot takes. Completion offers values of the
+// kind from the live game state; the Enter rules check a typed value against
+// every value the kind can ever take.
+type ArgKind int
+
+const (
+	ArgText            ArgKind = iota // free text: a name, a path, a code
+	ArgNumber                         // a count or an amount (or one of Arg.Words)
+	ArgWord                           // one of Arg.Words and nothing else
+	ArgBuilding                       // a building buildable now (build)
+	ArgPlanBuilding                   // a building the plan takes: this age's, then the next age's
+	ArgBuiltBuilding                  // a building with at least one copy (sell)
+	ArgWorkerBuilding                 // a built building that takes workers (assign)
+	ArgStaffedBuilding                // a building with workers in it (unassign, dismiss)
+	ArgUpgradeBuilding                // a building with an upgrade available
+	ArgTech                           // a tech available to research now
+	ArgPlanTech                       // a tech the plan takes
+	ArgResource                       // an unlocked resource
+	ArgTradeFrom                      // a resource the market buys from you
+	ArgTradeTo                        // a resource the market sells for the previous argument
+	ArgFaction                        // a discovered civilization
+	ArgTheme                          // an unlocked theme
+	ArgSave                           // an existing save
+	ArgExpedition                     // a scouting expedition
+	ArgCampaign                       // a military campaign
+	ArgRouteAvailable                 // a trade route that can start
+	ArgRouteActive                    // a running trade route
+	ArgPrestigeUpgrade                // a prestige upgrade with a tier left
+	ArgSpeed                          // a speed multiplier
+	ArgAccount                        // a local account's name
+	ArgPlanItem                       // a plan item's number
+)
+
+// Arg is one argument slot.
+type Arg struct {
+	Kind     ArgKind
+	Words    []string // literal words the slot also takes ("max", "all")
+	Optional bool
+}
+
+// Usage is one help row: the form a player types and what it does.
+type Usage struct{ Form, Text string }
+
+// Command is a command or a subcommand.
+type Command struct {
+	Name    string
+	Aliases []string
+	Subs    []*Command
+	Args    []Arg
+	// BareOK: complete with nothing after it, even though it has
+	// subcommands or a required argument (bare `plan` opens the panel).
+	BareOK bool
+	// Dangerous: irreversible. Enter never runs it from a completion guess;
+	// it fills the field and waits for a second Enter. A dangerous command
+	// with arguments only counts as run once an argument is given (bare
+	// `sell` just prints its usage).
+	Dangerous bool
+	// Section is the Help panel section a top-level command is listed in;
+	// "" lists it only under Panels (when Panel is set) or not at all.
+	Section string
+	// Panel, when set, lists the command under the Help panel's Panels, with
+	// this description.
+	Panel string
+	// Dashboard: run by the dashboard itself, not HandleCommand (quit).
+	Dashboard bool
+	Help      []Usage
+}
+
+// Help panel sections, in display order.
+const (
+	secActions  = "Actions"
+	secPlan     = "Build Plan"
+	secWorkers  = "Workers"
+	secResearch = "Research, Expeditions & Army"
+	secTrade    = "Trade & Diplomacy"
+	secWonders  = "Wonders & Prestige"
+	secGame     = "Game"
+	secAccounts = "Accounts"
+)
+
+// helpSections is the Help panel's section order, and each one's note.
+var helpSections = []struct{ name, note string }{
+	{secActions, ""},
+	{secPlan, "Queue builds and techs; each starts, and is paid for, when the resources are there, even while you are away."},
+	{secWorkers, ""},
+	{secResearch, ""},
+	{secTrade, ""},
+	{secWonders, ""},
+	{secGame, ""},
+	{secAccounts, "Each account is its own slot. Switch/new/wipe live in the Accounts panel (main menu)."},
+}
+
+var (
+	optCount    = Arg{Kind: ArgNumber, Optional: true}
+	optCountMax = Arg{Kind: ArgNumber, Words: []string{"max"}, Optional: true}
+	optCountAll = Arg{Kind: ArgNumber, Words: []string{"all"}, Optional: true}
+	civArg      = []Arg{{Kind: ArgFaction}}
+)
+
+// sub builds a subcommand with one help row.
+func sub(name, form, text string, args ...Arg) *Command {
+	return &Command{Name: name, Args: args, Help: []Usage{{form, text}}}
+}
+
+// panel builds a command that only opens a panel.
+func panel(name, desc string, aliases ...string) *Command {
+	return &Command{Name: name, Aliases: aliases, Panel: desc}
+}
+
+// registry is the player command list, in Help panel order within each
+// section. Built fresh per call: callers may not modify it.
+func registry() []*Command {
+	confirmYes := func(form, text string) *Command {
+		return &Command{Name: "confirm", BareOK: true, Subs: []*Command{{Name: "yes", Dangerous: true}}, Help: []Usage{{form, text}}}
+	}
+	prestigeConfirm := confirmYes("prestige confirm yes", "Reset game with prestige bonus")
+	festivalConfirm := confirmYes("festival confirm yes", "Hold the festival now")
+
+	return []*Command{
+		// Actions
+		{Name: "gather", Aliases: []string{"g"}, Section: secActions,
+			Args: []Arg{{Kind: ArgWord, Words: []string{"food", "wood", "stone"}}, optCount},
+			Help: []Usage{{"gather <food|wood|stone> [n]", "Hand-gather resources (max " + strconv.Itoa(int(gatherMaxYield)) + ", until the Medieval Age)"}}},
+		{Name: "build", Aliases: []string{"b"}, Section: secActions,
+			Args: []Arg{{Kind: ArgBuilding, Optional: true}, optCountMax},
+			Help: []Usage{{"build <building> [count|max]", "Build structure(s) (default: 1)"}}},
+		{Name: "sell", Section: secActions, Dangerous: true,
+			Args: []Arg{{Kind: ArgBuiltBuilding}, optCount},
+			Help: []Usage{{"sell <building> [count]", "Demolish building(s), recover 50% of build cost"}}},
+		{Name: "advance", Section: secActions,
+			Help: []Usage{{"advance", "Advance to the next age (when ready)"}}},
+		{Name: "upgrade", Section: secActions,
+			Args: []Arg{{Kind: ArgUpgradeBuilding, Optional: true}, optCountAll},
+			Help: []Usage{
+				{"upgrade", "List available building upgrades"},
+				{"upgrade <building> [n|all]", "Upgrade building to next age tier (pays cost delta)"},
+			}},
+
+		// Build Plan
+		{Name: "plan", Section: secPlan, BareOK: true, Panel: "Build plan: queued builds & techs, started as resources come in",
+			Help: []Usage{{"plan", "Open the Plan panel (reorder and remove with keys)"}},
+			Subs: []*Command{
+				sub("build", "plan build <building> [count]", "Add copies of a building of this age", Arg{Kind: ArgPlanBuilding}, optCount),
+				{Name: "research", Aliases: []string{"res"}, Args: []Arg{{Kind: ArgPlanTech}},
+					Help: []Usage{{"plan research <tech>", "Add a tech (techs start one at a time, in order)"}}},
+				sub("trade", "plan trade <from> <to> [amt]", "Sell from for to as it comes in (no amount: keep topped up)",
+					Arg{Kind: ArgTradeFrom}, Arg{Kind: ArgTradeTo}, Arg{Kind: ArgNumber, Optional: true}),
+				sub("advance", "plan advance", "Advance as soon as the next age is ready"),
+				sub("list", "plan list", "Print the plan with each item's status"),
+				{Name: "remove", Aliases: []string{"rm"}, Args: []Arg{{Kind: ArgPlanItem}},
+					Help: []Usage{{"plan remove <n>", "Remove item n"}}},
+				sub("up", "plan up <n>", "Move item n one place up", Arg{Kind: ArgPlanItem}),
+				sub("down", "plan down <n>", "Move item n one place down", Arg{Kind: ArgPlanItem}),
+				{Name: "clear", Dangerous: true, Help: []Usage{{"plan clear", "Empty the plan"}}},
+			}},
+
+		// Workers
+		{Name: "recruit", Aliases: []string{"r"}, Section: secWorkers,
+			Args: []Arg{optCountMax},
+			Help: []Usage{{"recruit [count|max]", "Recruit workers from available housing (default: 1)"}}},
+		{Name: "assign", Aliases: []string{"a"}, Section: secWorkers,
+			Args: []Arg{{Kind: ArgWorkerBuilding}, optCountAll},
+			Help: []Usage{{"assign <building> [n|all]", "Assign workers to a building"}}},
+		{Name: "unassign", Aliases: []string{"u"}, Section: secWorkers,
+			Args: []Arg{{Kind: ArgStaffedBuilding}, optCountAll},
+			Help: []Usage{{"unassign <building> [n|all]", "Unassign workers from a building"}}},
+		{Name: "dismiss", Section: secWorkers, Dangerous: true,
+			Args: []Arg{{Kind: ArgStaffedBuilding}, optCountAll},
+			Help: []Usage{{"dismiss <building> [n|all]", "Fire workers from a building (removes from pool)"}}},
+
+		// Research, Expeditions & Army
+		{Name: "research", Aliases: []string{"res"}, Section: secResearch, Panel: "Technology tree & progress",
+			Args: []Arg{{Kind: ArgTech, Optional: true}},
+			Help: []Usage{{"research <tech_key>", "Research a technology"}},
+			Subs: []*Command{
+				{Name: "cancel", Dangerous: true, Help: []Usage{{"research cancel", "Cancel current research (progress is lost)"}}},
+				sub("list", "research list", "List available techs"),
+			}},
+		panel("techs", ""),
+		{Name: "expedition", Aliases: []string{"exp"}, Section: secResearch, Panel: "Scouting expeditions (resource cost)",
+			Args: []Arg{{Kind: ArgExpedition, Optional: true}},
+			Help: []Usage{
+				{"expedition", "Open the Expeditions (scouting) panel"},
+				{"expedition <key>", "Send a scouting expedition (costs resources)"},
+			},
+			Subs: []*Command{sub("list", "expedition list", "List available expeditions")}},
+		{Name: "army", Section: secResearch, Panel: "Army overview & military campaigns",
+			Help: []Usage{{"army", "Open the Army (military) panel"}}},
+		{Name: "campaign", Section: secResearch,
+			Args: []Arg{{Kind: ArgCampaign, Optional: true}},
+			Help: []Usage{{"campaign <key>", "Wage a military campaign (costs soldiers)"}},
+			Subs: []*Command{sub("list", "campaign list", "List available campaigns")}},
+
+		// Trade & Diplomacy
+		{Name: "trade", Aliases: []string{"t"}, Section: secTrade, BareOK: true, Panel: "Exchange rates & trade routes",
+			Args: []Arg{{Kind: ArgTradeFrom}, {Kind: ArgTradeTo}, {Kind: ArgNumber}},
+			Help: []Usage{{"trade <from> <to> <amount>", "Exchange resources"}},
+			Subs: []*Command{
+				sub("list", "trade list", "Show exchange rates"),
+				{Name: "route", BareOK: true, Subs: []*Command{
+					sub("list", "trade route list", "List trade routes"),
+					sub("start", "trade route start <key>", "Start a trade route", Arg{Kind: ArgRouteAvailable}),
+					sub("stop", "trade route stop <key>", "Stop a trade route", Arg{Kind: ArgRouteActive}),
+				}},
+				sub("black", "trade black [resource]", "Same as blackmarket", Arg{Kind: ArgResource, Optional: true}),
+			}},
+		{Name: "blackmarket", Aliases: []string{"bm"}, Section: secTrade,
+			Args: []Arg{{Kind: ArgResource, Optional: true}},
+			Help: []Usage{{"blackmarket [resource]", "High-risk culture gamble for a resource haul (colonial+)"}}},
+		{Name: "factions", Section: secTrade, Panel: "Live favours, Geographic Society & standings (alias: diplomacy)",
+			Help: []Usage{{"factions", "Open the Factions panel (favours, Society, standings)"}}},
+		{Name: "diplomacy", Aliases: []string{"dip"}, Section: secTrade, BareOK: true,
+			Help: []Usage{{"diplomacy", "Alias for factions (opens the same panel)"}},
+			Subs: []*Command{
+				sub("ally", "diplomacy ally <civ>", "Ally with a civilization (costs gold)", civArg...),
+				sub("rival", "diplomacy rival <civ>", "Declare rivalry", civArg...),
+				sub("embargo", "diplomacy embargo <civ>", "Embargo a civilization", civArg...),
+				sub("gift", "diplomacy gift <civ>", "Send gift (+15 opinion)", civArg...),
+				sub("neutral", "diplomacy neutral <civ>", "Reset to neutral", civArg...),
+				sub("tribute", "diplomacy tribute <civ>", "Sue for peace with a civilization at war", civArg...),
+				{Name: "raid", Dangerous: true, Args: civArg,
+					Help: []Usage{{"diplomacy raid <civ>", "Raid a civilization's trade route (a war provocation)"}}},
+			}},
+
+		// Wonders & Prestige
+		{Name: "wonder", Section: secWonders, BareOK: true,
+			Help: []Usage{{"wonder", "Show current wonder bank status"}},
+			Subs: []*Command{
+				sub("collect", "wonder collect <res> <amt|all>", "Bank resources into current wonder",
+					Arg{Kind: ArgResource}, Arg{Kind: ArgNumber, Words: []string{"all"}}),
+				sub("overflow", "wonder overflow [on|off]", "Bank what full stores would waste (on by default)",
+					Arg{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}),
+			}},
+		panel("wonders", "Wonder bank & built wonders"),
+		{Name: "prestige", Section: secWonders, BareOK: true,
+			Help: []Usage{{"prestige", "View prestige status"}},
+			Subs: []*Command{
+				prestigeConfirm,
+				sub("shop", "prestige shop", "View prestige upgrades"),
+				sub("buy", "prestige buy <key>", "Buy a prestige upgrade", Arg{Kind: ArgPrestigeUpgrade}),
+			}},
+		{Name: "festival", Section: secWonders, BareOK: true,
+			Help: []Usage{{"festival", "Spend culture for a temporary production boost"}},
+			Subs: []*Command{festivalConfirm}},
+		{Name: "catastrophe", Aliases: []string{"cat"}, Section: secWonders,
+			Help: []Usage{{"catastrophe", "Reopen a pending catastrophe or Last Passage (or show the odds)"}}},
+		{Name: "harbinger", Aliases: []string{"harb"}, Section: secWonders, BareOK: true,
+			Panel: "The harbinger's warning & your answers (alias: harb)",
+			Help: []Usage{
+				{"harbinger", "Open the Harbinger panel (alias: harb)"},
+				{"harbinger appease|brace|invite", "Answer the harbinger without the panel"},
+			},
+			Subs: []*Command{{Name: "appease"}, {Name: "brace"}, {Name: "invite", Dangerous: true}}},
+
+		// Game
+		{Name: "rates", Section: secGame, Help: []Usage{{"rates", "Show resource rate breakdown"}}},
+		{Name: "status", Aliases: []string{"s"}, Section: secGame, Help: []Usage{{"status", "Show detailed status"}}},
+		{Name: "speed", Section: secGame, Args: []Arg{{Kind: ArgSpeed, Optional: true}},
+			Help: []Usage{{"speed [1.0|1.5|2.0|...]", "Set game speed (unlocks per wonder built)"}}},
+		{Name: "theme", Section: secGame, Panel: "Theme picker — palettes & accessibility",
+			Args: []Arg{{Kind: ArgTheme, Optional: true}},
+			Help: []Usage{
+				{"theme", "Open the theme picker (palettes + accessibility)"},
+				{"theme <key>", "Switch to a theme by key"},
+			},
+			Subs: []*Command{sub("list", "theme list", "List themes with unlock status")}},
+		{Name: "save", Section: secGame, Args: []Arg{{Kind: ArgText, Optional: true}},
+			Help: []Usage{{"save [name]", "Save (no name: overwrite or branch; a name: branch a new save)"}},
+			Subs: []*Command{sub("list", "save list", "Same as saves")}},
+		{Name: "load", Section: secGame, Dangerous: true, Args: []Arg{{Kind: ArgSave, Optional: true}},
+			Help: []Usage{{"load [name]", "Load a save (no name: open the save browser)"}}},
+		{Name: "saves", Section: secGame, Help: []Usage{{"saves", "List all save files"}}},
+		{Name: "dump", Aliases: []string{"exportlogs"}, Section: secGame,
+			Help: []Usage{{"dump", "Export logs to file for debugging"}}},
+		{Name: "help", Aliases: []string{"h", "?"}, Section: secGame, Panel: "This Help panel",
+			Help: []Usage{{"help", "Open this Help panel"}}},
+		{Name: "quit", Section: secGame, Dashboard: true, Dangerous: true,
+			Help: []Usage{{"quit", "Save and quit the game"}}},
+
+		// Accounts
+		{Name: "account", Aliases: []string{"acct"}, Section: secAccounts, BareOK: true,
+			Help: []Usage{{"account", "Show this account's ID, recovery code & backup help"}},
+			Subs: []*Command{
+				sub("list", "account list", "List your local accounts"),
+				{Name: "switch", Dangerous: true, Args: []Arg{{Kind: ArgAccount}},
+					Help: []Usage{{"account switch <name>", "Switch to an existing local account"}}},
+				sub("export", "account export [path]", "Back up this account's progress to a file", Arg{Kind: ArgText, Optional: true}),
+				sub("backup", "account backup", "Full snapshot (account.json + saves) to data/backups/"),
+				{Name: "import", Dangerous: true, Args: []Arg{{Kind: ArgText}, {Kind: ArgWord, Words: []string{"replace"}, Optional: true}},
+					Help: []Usage{{"account import <path> [replace]", "Restore an account from a backup file"}}},
+				{Name: "recover", Dangerous: true, Args: []Arg{{Kind: ArgText}, {Kind: ArgWord, Words: []string{"confirm"}, Optional: true}},
+					Help: []Usage{{"account recover <code>", "Restore your identity from a recovery code"}}},
+				{Name: "wipe", Dangerous: true,
+					Help: []Usage{{"account wipe", "Where to wipe an account (the Accounts panel)"}}},
+			}},
+
+		// Panels only
+		panel("milestones", "Milestone goals & rewards", "ms"),
+		panel("stats", "Empire statistics"),
+		panel("workers", "Worker domains & assignments"),
+		panel("logs", "Recent game log entries"),
+		panel("epoch", "Epoch progress & catastrophe"),
+		panel("history", "Civilization history timeline"),
+		panel("buildings", "Built structures by lineage"),
+		panel("citymap", "Your settlement map (alias: map)"),
+		panel("map", ""),
+		panel("worldmap", "Known world — your civ & the civs you have met"),
+	}
+}
+
+// panelOrder is the Help panel's Panels list order (the sidebar's, then the rest).
+var panelOrder = []string{
+	"milestones", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders",
+	"workers", "logs", "epoch", "harbinger", "history", "buildings", "citymap", "worldmap", "theme", "help",
+}
+
+// devCommand is one dev-console command. They are not player commands: the
+// dashboard sends a /line straight to game.DevConsoleCommand, and they are
+// listed and completed only while dev mode is active.
+type devCommand struct{ name, form, text string }
+
+var devCommands = []devCommand{
+	{"/god", "/god", "Toggle godmode — free costs, instant builds"},
+	{"/fill", "/fill", "Fill all resources to their storage cap"},
+	{"/give", "/give <resource> <amount>", "Add an amount of a resource"},
+	{"/build", "/build <building_key>", "Instantly place one building"},
+	{"/techs", "/techs", "Unlock all techs up to the current age"},
+	{"/age", "/age <age_key>", "Jump to any age"},
+	{"/ages", "/ages", "List all age keys"},
+	{"/prestige", "/prestige <level 0-9>", "Set prestige level"},
+	{"/speed", "/speed <multiplier>", "Set the tick-speed multiplier"},
+	{"/catastrophe", "/catastrophe", "Force the current epoch's catastrophe (Iron Era on)"},
+	{"/harbinger", "/harbinger", "Bring the current age's harbinger now"},
+	{"/lastpassage", "/lastpassage", "Make the Last Passage pending (final epoch)"},
+}
+
+// CommandInfo is a registry entry as the smoke suite sees it.
+type CommandInfo struct {
+	Names []string // the name, then its aliases
+	// Subs are the subcommand paths under the command, one or two words deep
+	// ("route", "route start"), including literal argument words ("max",
+	// "confirm yes"), primary names only.
+	Subs []string
+	// Accepts is every word the command takes right after its name: its
+	// subcommands and their aliases, and its first slot's literal words.
+	Accepts   map[string]bool
+	Dangerous bool
+}
+
+// Commands lists the player commands from the registry, for the smoke
+// suite's docsync and fuzz scenarios.
+func Commands() []CommandInfo {
+	var out []CommandInfo
+	for _, c := range registry() {
+		info := CommandInfo{Names: append([]string{c.Name}, c.Aliases...), Accepts: map[string]bool{}, Dangerous: c.Dangerous}
+		for _, w := range nextWords(c, true) {
+			info.Accepts[w] = true
+		}
+		for _, w := range nextWords(c, false) {
+			info.Subs = append(info.Subs, w)
+			if s := lookup(c.Subs, w); s != nil {
+				for _, w2 := range nextWords(s, false) {
+					info.Subs = append(info.Subs, w+" "+w2)
+				}
+			}
+		}
+		out = append(out, info)
+	}
+	return out
+}
+
+// nextWords is the literal words that can follow c: its subcommands (with
+// aliases when aliases is set) and its first slot's words.
+func nextWords(c *Command, aliases bool) []string {
+	var out []string
+	for _, s := range c.Subs {
+		out = append(out, s.Name)
+		if aliases {
+			out = append(out, s.Aliases...)
+		}
+	}
+	if len(c.Args) > 0 {
+		out = append(out, c.Args[0].Words...)
+	}
+	return out
+}
+
+// lookup finds the command named w (or aliased w) in cs.
+func lookup(cs []*Command, w string) *Command {
+	w = strings.ToLower(w)
+	for _, c := range cs {
+		if c.Name == w {
+			return c
+		}
+		for _, a := range c.Aliases {
+			if a == w {
+				return c
+			}
+		}
+	}
+	return nil
+}
+
+// parsed is a command line read against the registry.
+type parsed struct {
+	path []*Command // the command, then each subcommand
+	args []string   // the words after the last of them
+}
+
+func (p parsed) last() *Command { return p.path[len(p.path)-1] }
+
+// parse reads words against cmds: the command, then subcommands for as
+// long as the words name them; the rest are arguments. ok is false when the
+// first word is no command.
+func parse(cmds []*Command, words []string) (parsed, bool) {
+	if len(words) == 0 {
+		return parsed{}, false
+	}
+	c := lookup(cmds, words[0])
+	if c == nil {
+		return parsed{}, false
+	}
+	p := parsed{path: []*Command{c}}
+	i := 1
+	for ; i < len(words); i++ {
+		s := lookup(p.last().Subs, words[i])
+		if s == nil {
+			break
+		}
+		p.path = append(p.path, s)
+	}
+	p.args = words[i:]
+	return p, true
+}
+
+// complete reports whether p is a whole command: every word fits a slot
+// (valid decides the ones that name game things) and every required slot
+// is filled.
+func (p parsed) complete(valid func(Arg, string) bool) bool {
+	c := p.last()
+	if len(p.args) == 0 {
+		return c.BareOK || len(c.Args) == 0 && len(c.Subs) == 0 || len(c.Args) > 0 && c.Args[0].Optional
+	}
+	if len(p.args) > len(c.Args) {
+		return false
+	}
+	for i, w := range p.args {
+		if !slotTakes(c.Args[i], w, valid) {
+			return false
+		}
+	}
+	for _, a := range c.Args[len(p.args):] {
+		if !a.Optional {
+			return false
+		}
+	}
+	return true
+}
+
+// dangerous reports whether running p would do something irreversible.
+func (p parsed) dangerous() bool {
+	for i, c := range p.path {
+		if !c.Dangerous {
+			continue
+		}
+		if i < len(p.path)-1 || len(c.Args) == 0 || len(p.args) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+// slotTakes reports whether the slot a takes the word w.
+func slotTakes(a Arg, w string, valid func(Arg, string) bool) bool {
+	for _, x := range a.Words {
+		if strings.EqualFold(x, w) {
+			return true
+		}
+	}
+	switch a.Kind {
+	case ArgText:
+		return true
+	case ArgWord:
+		return false
+	case ArgNumber, ArgSpeed, ArgPlanItem:
+		_, err := strconv.ParseFloat(w, 64)
+		return err == nil
+	}
+	return valid(a, w)
+}

@@ -222,7 +222,7 @@ diplomacy raid <civ_key>        # raid their trade route (provocation — tanks 
 
 ### The Factions panel
 
-`factions` opens the **Factions** panel — one screen for everything the other civilizations are doing to you. `diplomacy` and `dip` with no arguments open the same panel under its older name, and `diplomacy <action> <civ_key>` still performs the action directly. It also appears in the sidebar Panels list, in command autocomplete, and in the in-game `help` panel.
+`factions` opens the **Factions** panel — one screen for everything the other civilizations are doing to you. `diplomacy` and `dip` with no arguments open the same panel under its older name, and `diplomacy <action> <civ_key>` still performs the action directly. It also appears in the sidebar Panels list, in the prompt's completions, and in the in-game `help` panel.
 
 The panel reads top to bottom:
 

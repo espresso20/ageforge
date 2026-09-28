@@ -16,7 +16,8 @@ import (
 
 // The fuzz scenario types commands into the real command handler
 // (ui.HandleCommand, what the dashboard's input field calls) against a live
-// engine: valid commands with valid arguments from the autocompleter, valid
+// engine: valid commands from the command registry with valid arguments from
+// the prompt's completions (ui.NewAutoCompleter), valid
 // commands with hostile arguments, mangled commands and garbage. After each
 // command the engine ticks a little, and it must not panic, hang, break an
 // invariant or stop ticking. Every few commands the bot plays for a while
@@ -67,19 +68,15 @@ type fuzzer struct {
 	commands []string
 }
 
-// newFuzzer builds the command corpus from the autocompleter: every command
-// name it offers for any first letter.
+// newFuzzer builds the command corpus from the command registry: every
+// command name and alias HandleCommand takes (quit is the dashboard's, and
+// would only report an unknown command here).
 func newFuzzer(seed int64, ge *game.GameEngine) *fuzzer {
-	comp := ui.NewAutoCompleter(ge)
-	seen := map[string]bool{}
-	for c := 'a'; c <= 'z'; c++ {
-		for _, s := range comp(string(c)) {
-			seen[strings.TrimSpace(s)] = true
-		}
-	}
 	var cmds []string
-	for c := range seen {
-		cmds = append(cmds, c)
+	for _, c := range ui.Commands() {
+		if c.Names[0] != "quit" {
+			cmds = append(cmds, c.Names...)
+		}
 	}
 	sort.Strings(cmds)
 	return &fuzzer{r: rand.New(rand.NewSource(seed)), commands: cmds}

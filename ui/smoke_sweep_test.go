@@ -178,8 +178,8 @@ func (s *sweeper) inputText() string {
 	return txt
 }
 
-// submit types cmd into the command input and presses Enter once, which runs
-// it even while the autocomplete dropdown is open.
+// submit types cmd into the command input and presses Enter once. The sweep
+// only types whole commands, which Enter runs as typed.
 func (s *sweeper) submit(cmd string) {
 	s.t.Helper()
 	s.wait("input focus", s.inputFocused)
@@ -190,6 +190,49 @@ func (s *sweeper) submit(cmd string) {
 	s.press(tcell.KeyEnter, 0)
 	s.wait("command submitted on the first Enter", func() bool { return s.inputText() == "" })
 	s.ping()
+}
+
+// ghost types "adv" and checks the prompt shows "advance", the "ance" drawn
+// visibly (not in its own background colour), then deletes the typing.
+func (s *sweeper) ghost(themeKey string) {
+	s.t.Helper()
+	s.step = "[" + themeKey + "] ghost text"
+	s.wait("input focus", s.inputFocused)
+	for _, r := range "adv" {
+		s.press(tcell.KeyRune, r)
+	}
+	s.wait("typed adv", func() bool { return s.inputText() == "adv" })
+	var row string
+	var invisible int
+	s.wait("ghost text on the prompt", func() bool {
+		s.ui(func() {
+			cells, w, _ := s.sim.GetContents()
+			_, y, _, _ := s.a.dashboard.inputField.GetInnerRect()
+			var sb strings.Builder
+			invisible = 0
+			for x := 0; x < w; x++ {
+				c := cells[y*w+x]
+				r := ' '
+				if len(c.Runes) > 0 {
+					r = c.Runes[0]
+				}
+				sb.WriteRune(r)
+				fg, bg, _ := c.Style.Decompose()
+				if r != ' ' && fg.Hex() == bg.Hex() {
+					invisible++
+				}
+			}
+			row = sb.String()
+		})
+		return strings.Contains(row, "❯ advance")
+	})
+	if invisible > 0 {
+		s.fail("%d invisible cell(s) on the prompt row %q", invisible, strings.TrimSpace(row))
+	}
+	for range "adv" {
+		s.press(tcell.KeyBackspace2, 0)
+	}
+	s.wait("prompt cleared", func() bool { return s.inputText() == "" })
 }
 
 // splashPage opens a splash menu entry by its shortcut and backs out with Esc.
@@ -388,6 +431,8 @@ func TestSmokeUISweep(t *testing.T) {
 		s.press(tcell.KeyEnter, 0)
 		s.wait("dashboard with input focus", func() bool { return s.front() == "dashboard" && s.inputFocused() })
 		s.ping()
+
+		s.ghost(key)
 
 		for _, o := range sweepOverlays {
 			s.step = fmt.Sprintf("[%s] %s", key, o.cmd)

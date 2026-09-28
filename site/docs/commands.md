@@ -1,8 +1,20 @@
 # Commands
 
-All commands are typed at the `>` prompt at the bottom of the screen. `Enter` runs what you typed, `Tab` takes the highlighted suggestion, and `↑`/`↓` navigate history.
+All commands are typed at the `>` prompt at the bottom of the screen. `↑`/`↓` navigate history.
 
 Counts (`recruit 5`, `build farm 3`, `sell hut 2`, ...) are whole numbers from 1 to 1,000,000, and amounts (`gather`, `trade`, `wonder collect`) are positive numbers. Anything else is refused with the command's usage line rather than guessed at.
+
+## The prompt
+
+As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now, affordable first; `plan build` and `plan research` the same, then the next age's; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `sell` buildings you have; `trade` and `plan trade` what the market buys and sells; `diplomacy` the civilizations you have met; `theme` the themes you have unlocked; `load` your saves.
+
+| Key | What it does |
+|---|---|
+| `Tab` | Take the completion. Press it again for the next one (`Shift+Tab` goes back). When more can follow (`plan build `), a space comes with it. |
+| `→` | Take the completion, when the cursor is at the end of the line |
+| `Enter` | If the line is already a whole command, run it exactly as typed. If not, and the completion makes it one, run the completion (`adv` runs `advance`). Otherwise run the line as typed, and the game says what is wrong with it. |
+
+Commands that can't be undone are never run from a completion: `Enter` on `plan cle` fills in `plan clear` and waits, and a second `Enter` runs it. These are `sell`, `dismiss`, `research cancel`, `plan clear`, `load <name>`, `prestige confirm yes`, `festival confirm yes`, `harbinger invite`, `diplomacy raid`, `quit`, and `account switch`, `import`, `recover` and `wipe`. Typed in full, they run on the first `Enter` like anything else.
 
 ---
 
@@ -365,6 +377,7 @@ See [The Harbinger](harbinger.md) for the roster, false prophets and verdicts.
 | `theme` | Open the **Themes** picker — browse palettes with live preview (also on the main menu) |
 | `theme list` | List every theme by name and key, marking the active one and noting each theme's light/dark variant and which are accessible |
 | `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`) |
+| `quit` | Save your game and quit |
 | `dump` | Export logs to a file for debugging, in `logs/` inside your active account's folder (`data/accounts/<id>/logs/`) — the one player-reachable place that still prints raw tick counts, alongside the wall-clock reading |
 | `help` | Open the Help panel — full command reference and list of available panels |
 

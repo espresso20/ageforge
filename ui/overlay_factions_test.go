@@ -497,16 +497,9 @@ func TestFactionsOverlayWiring(t *testing.T) {
 	if !strings.Contains(sidebar, "[onaccent:accent] factions") {
 		t.Errorf("sidebar entry does not highlight under the registered overlay name:\n%s", sidebar)
 	}
-	// 4. Autocomplete offers it.
-	found := false
-	for _, c := range commands {
-		if c == "factions" {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Error("autocomplete command list is missing \"factions\"")
+	// 4. The command registry (and so completion) has it.
+	if lookup(registry(), "factions") == nil {
+		t.Error("the command registry is missing \"factions\"")
 	}
 	// 5. Help advertises it.
 	if help := helpProvider(game.GameState{}, panelWidth); !strings.Contains(help, "factions") {

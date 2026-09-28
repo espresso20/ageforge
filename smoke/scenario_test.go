@@ -3,6 +3,7 @@ package smoke
 import (
 	"bytes"
 	"math"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -166,7 +167,7 @@ func TestFuzzShortRun(t *testing.T) {
 	ge := game.NewGameEngine()
 	gen := newFuzzer(7, ge)
 	if len(gen.commands) < 40 {
-		t.Fatalf("the autocompleter offered only %d commands: %v", len(gen.commands), gen.commands)
+		t.Fatalf("the command registry gave only %d commands: %v", len(gen.commands), gen.commands)
 	}
 	script := fuzzScript(gen.r, 60, 20, 20)
 	f, done := fuzzExec(7, script, gen)
@@ -179,12 +180,12 @@ func TestFuzzShortRun(t *testing.T) {
 }
 
 func TestDocsyncParsers(t *testing.T) {
-	cmds, accepts, err := handlerCommands("..")
-	if err != nil {
-		t.Fatal(err)
-	}
+	cmds, accepts := registryCommands()
 	if len(cmds) < 30 || len(accepts["trade"]) == 0 || !accepts["trade"]["route"] {
-		t.Errorf("handler parse looks wrong: %d commands, trade accepts %v", len(cmds), accepts["trade"])
+		t.Errorf("registry read looks wrong: %d commands, trade accepts %v", len(cmds), accepts["trade"])
+	}
+	if subs := offeredSubcommands(); !slices.Contains(subs["trade"], "route start") || slices.Contains(subs["gather"], "food") {
+		t.Errorf("offered subcommands look wrong: trade %v, gather %v", subs["trade"], subs["gather"])
 	}
 	claims, err := docClaims("..")
 	if err != nil {
