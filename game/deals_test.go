@@ -323,7 +323,7 @@ func TestDeals_AcceptOnce(t *testing.T) {
 	d2 := ge.Diplomacy.factions["merchant_guild"].Deals[1]
 	ge.Resources.resources[d2.Give].Amount = d2.GiveAmt / 2
 	ge.mu.Unlock()
-	if _, err := ge.AcceptFactionDeal("merchant_guild", 2); err == nil || !strings.Contains(err.Error(), "not enough") {
+	if _, err := ge.AcceptFactionDeal("merchant_guild", 2); err == nil || !strings.Contains(err.Error(), "Not enough") {
 		t.Errorf("unaffordable accept: %v", err)
 	}
 	for _, bad := range []int{0, 99} {
@@ -570,14 +570,18 @@ func TestDeals_Wording(t *testing.T) {
 		d    FactionDeal
 		want string
 	}{
-		{FactionDeal{Kind: DealSell, Give: "coal", GiveAmt: 876e6, Get: "food", GetAmt: 966e3}, "Buy: give 876.0M coal → get 966.0K food"},
-		{FactionDeal{Kind: DealWant, Give: "iron", GiveAmt: 440e6, Get: "food", GetAmt: 877e3}, "Sell: give 440.0M iron → get 877.0K food"},
-		{FactionDeal{Kind: DealFavor, Give: "steel", GiveAmt: 899e6, Standing: 5}, "Favor: give 899.0M steel → get +5 standing"},
-		{FactionDeal{Kind: DealRare, Give: "electricity", GiveAmt: 25.7e9, Get: "oil", GetAmt: 3.3e9}, "Rare: give 25.7B electricity → get 3.3B oil"},
+		{FactionDeal{Kind: DealSell, Give: "coal", GiveAmt: 876e6, Get: "food", GetAmt: 966e3}, "Buy: give 876M coal → get 966K food"},
+		{FactionDeal{Kind: DealWant, Give: "iron_ore", GiveAmt: 440e6, Get: "food", GetAmt: 877e3}, "Sell: give 440M iron ore → get 877K food"},
+		{FactionDeal{Kind: DealFavor, Give: "steel", GiveAmt: 899e6, Standing: 5}, "Goodwill: give 899M steel → get +5 opinion"},
+		{FactionDeal{Kind: DealRare, Give: "electricity", GiveAmt: 25.7e9, Get: "oil", GetAmt: 3.3e9}, "Rare: give 25.7B electricity → get 3.30B oil"},
 	} {
 		if got := DealTerms(c.d.Kind, c.d.Give, c.d.GiveAmt, c.d.Get, c.d.GetAmt, c.d.Standing, num); got != c.want {
 			t.Errorf("DealTerms(%s) = %q, want %q", c.d.Kind, got, c.want)
 		}
+	}
+	// The log and the plan label word the same terms as a clause.
+	if got, want := dealLogTerms(FactionDeal{Kind: DealSell, Give: "iron_ore", GiveAmt: 876e6, Get: "food", GetAmt: 966e3}), "Buy: give 876M iron ore, get 966K food"; got != want {
+		t.Errorf("dealLogTerms = %q, want %q", got, want)
 	}
 
 	ge := dealEngine(t, "colonial_age")
@@ -590,13 +594,13 @@ func TestDeals_Wording(t *testing.T) {
 	ge.Resources.resources[d2.Give].Amount = 0
 	views := ge.planViews()
 	ge.mu.Unlock()
-	if want := "deal with the Merchant Guild (" + dealTerms(d2) + ")"; len(views) != 1 || views[0].Name != want {
+	if want := "deal with the Merchant Guild (" + dealLogTerms(d2) + ")"; len(views) != 1 || views[0].Name != want {
 		t.Errorf("plan label %+v, want %q", views, want)
 	}
 	if _, err := ge.AcceptFactionDeal("merchant_guild", 1); err != nil {
 		t.Fatal(err)
 	}
-	want := "Deal with the Merchant Guild (" + dealTerms(d1) + ")."
+	want := "Deal with the Merchant Guild. " + dealLogTerms(d1) + "."
 	found := false
 	for _, l := range ge.GetState().Log {
 		found = found || l.Message == want

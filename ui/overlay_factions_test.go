@@ -584,7 +584,7 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 		"Deals: new offers in",
 		"1. Sell: give 2.10K stone → get 3.00K food",
 		"+13% vs market",
-		"2. Favor: give 727 iron → get +5 standing",
+		"2. Goodwill: give 727 iron → get +5 opinion",
 		"3. Buy: give 10 iron → get 12 food  taken",
 		"Deals: none — they are at war with you.",
 		"diplomacy accept <civ> <n>",
@@ -598,7 +598,7 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 	if l := lineContaining(raw, "1."); !strings.Contains(l, "[negative]2.10K stone") {
 		t.Errorf("unaffordable price not in the Negative role: %q", l)
 	}
-	if l := lineContaining(raw, "Favor:"); !strings.Contains(l, "[highlight]727 iron") {
+	if l := lineContaining(raw, "Goodwill:"); !strings.Contains(l, "[highlight]727 iron") {
 		t.Errorf("affordable price not in the Highlight role: %q", l)
 	}
 	// Every deal line, painted or not, reads exactly as game.DealTerms words it.
