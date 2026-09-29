@@ -251,7 +251,7 @@ func TestLastPassageEndureKeepsAShareOfThePoints(t *testing.T) {
 		if ge.cosmicLegacy || ge.pendingLastPassage {
 			t.Errorf("brace %d: Endure granted the legacy or left it pending", brace)
 		}
-		if indexOfLog(ge, "was right") < 0 || indexOfLog(ge, "ENDURE: The Last Passage") < 0 {
+		if indexOfLog(ge, "was right") < 0 || indexOfLog(ge, "Endure: The Last Passage") < 0 {
 			t.Errorf("brace %d: missing verdict or outcome:\n%s", brace, strings.Join(logMessages(ge), "\n"))
 		}
 		if e, _ := countCatastropheOutcomes(ge.catastropheHistory); e != 1 {
@@ -280,7 +280,7 @@ func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 	if snap.Level != 3 || snap.Available != 4 || snap.TotalEarned != 10 || !ge.cosmicLegacy || ge.age != "primitive_age" {
 		t.Fatalf("after Succumb: %+v legacy %v age %s", snap, ge.cosmicLegacy, ge.age)
 	}
-	if indexOfLog(ge, "Cosmic Legacy: all production +10%") < 0 || indexOfLog(ge, "SUCCUMB: The Last Passage") < 0 {
+	if indexOfLog(ge, "Cosmic Legacy: all production +10%") < 0 || indexOfLog(ge, "Succumb: The Last Passage") < 0 {
 		t.Errorf("log:\n%s", strings.Join(logMessages(ge), "\n"))
 	}
 	if _, s := countCatastropheOutcomes(ge.catastropheHistory); s != 1 {

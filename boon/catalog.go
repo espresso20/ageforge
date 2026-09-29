@@ -81,8 +81,8 @@ func Catalog() []Def {
 			Weight: weightCommon,
 			Target: TargetSpecialty,
 			Flavors: []string{
-				"Their master artisans share a trade secret — +{pct} {res} for {ticks} ticks.",
-				"A gift of hard-won expertise flows your way — +{pct} {res} production.",
+				"Their master artisans share a trade secret: +{pct} {res} for {ticks}.",
+				"A gift of hard-won expertise comes your way: +{pct} {res} production for {ticks}.",
 			},
 		},
 		{
@@ -93,8 +93,8 @@ func Catalog() []Def {
 			Weight: weightCommon,
 			Target: TargetRandomAge,
 			Flavors: []string{
-				"A sudden bounty of {res} — output climbs +{pct} for {ticks} ticks.",
-				"Fortune favours your {res} stores — +{pct} while it lasts.",
+				"A sudden bounty of {res}. Output climbs +{pct} for {ticks}.",
+				"Luck runs your way: +{pct} {res} output for {ticks}.",
 			},
 		},
 		{
@@ -106,8 +106,8 @@ func Catalog() []Def {
 			Target:   TargetSpecificResource,
 			Resource: "knowledge",
 			Flavors: []string{
-				"Foreign scholars open their libraries — +{pct} knowledge for {ticks} ticks.",
-				"A spark of shared insight takes hold — +{pct} knowledge.",
+				"Foreign scholars open their libraries: +{pct} knowledge for {ticks}.",
+				"A spark of shared insight takes hold: +{pct} knowledge for {ticks}.",
 			},
 		},
 		{
@@ -118,8 +118,8 @@ func Catalog() []Def {
 			Weight: weightUncommon,
 			Target: TargetNone,
 			Flavors: []string{
-				"A wave of industry sweeps the realm — +{pct} to all production for {ticks} ticks.",
-				"Every workshop hums a little louder — +{pct} production across the board.",
+				"A wave of industry sweeps across your lands: +{pct} all production for {ticks}.",
+				"Every workshop hums a little louder: +{pct} all production for {ticks}.",
 			},
 		},
 		{
@@ -130,8 +130,8 @@ func Catalog() []Def {
 			Weight: weightUncommon,
 			Target: TargetNone,
 			Flavors: []string{
-				"The days seem to quicken — +{pct} tick speed for {ticks} ticks.",
-				"Time itself leans in your favour — +{pct} tempo for a while.",
+				"The days seem to quicken: +{pct} game speed for {ticks}.",
+				"Time itself leans your way: +{pct} game speed for {ticks}.",
 			},
 		},
 		{
@@ -142,7 +142,7 @@ func Catalog() []Def {
 			Target: TargetRandomAge,
 			Flavors: []string{
 				"A caravan arrives bearing {amt} {res}.",
-				"Crates of {res} land at your gates — {amt} in all.",
+				"Crates of {res} land at your gates, {amt} in all.",
 			},
 		},
 		{
@@ -152,7 +152,7 @@ func Catalog() []Def {
 			Weight: weightRare,
 			Target: TargetRandomRare,
 			Flavors: []string{
-				"A lost vault swings open — {amt} {res} spills into your coffers.",
+				"A lost vault swings open: {amt} {res} spills into your coffers.",
 				"An ancient hoard of {res} is yours: {amt} units.",
 			},
 		},
@@ -164,14 +164,14 @@ func Catalog() []Def {
 			Weight: weightUncommon,
 			Target: TargetNone,
 			Flavors: []string{
-				"{n} skilled hands arrive to lend their labour for {ticks} ticks.",
-				"A work-gang of {n} joins your cause for a season.",
+				"{n} skilled workers arrive to lend a hand for {ticks}.",
+				"A crew of {n} workers joins your cause for {ticks}.",
 			},
 		},
 	}
 }
 
-// MalusCatalog returns the SETBACK table — the negative mirror of Catalog().
+// MalusCatalog returns the SETBACK table, the negative mirror of Catalog().
 // Same engine, same Def shape, same weighted pick; only the sign changes. It is
 // drawn instead of Catalog() when a Profile's Polarity is Negative.
 //
@@ -192,9 +192,9 @@ func MalusCatalog() []Def {
 			Weight: weightUncommon,
 			Target: TargetNone,
 			Flavors: []string{
-				"The expedition succumbs to dysentery on the road home — {n} do not return.",
-				"Camp fever moves through the returning column; {n} are buried where they fell.",
-				"Bad water at the last ford. {n} of your people are lost to it.",
+				"Dysentery takes hold on the march back. Workers lost on the road home: {n}.",
+				"Camp fever moves through the returning column. Workers lost: {n}.",
+				"Bad water at the last ford. Workers lost to it: {n}.",
 			},
 		},
 		{
@@ -205,9 +205,9 @@ func MalusCatalog() []Def {
 			Weight: weightCommon,
 			Target: TargetRandomAge,
 			Flavors: []string{
-				"Damp got into the stores on the journey back — {frac} of your {res} is fit for nothing.",
-				"The {res} was packed badly and travelled worse; {frac} of it is written off.",
-				"Vermin found the {res} stores before your quartermaster did — {frac} gone.",
+				"Damp got into the stores on the journey back: {frac} of your {res} is fit for nothing.",
+				"The {res} was packed badly and traveled worse; {frac} of it is written off.",
+				"Vermin found the {res} stores before your quartermaster did and took {frac} of it.",
 			},
 		},
 		{
@@ -219,8 +219,8 @@ func MalusCatalog() []Def {
 			Weight: weightUncommon,
 			Target: TargetRandomAge,
 			Flavors: []string{
-				"They pressed a relic on you as a parting gift. {res} output falls {pct} for {ticks} ticks, and nobody will say why.",
-				"The thing your scouts carried home was not meant to leave its shrine — {res} output drops {pct} for {ticks} ticks.",
+				"They pressed a relic on you as a parting gift. Your {res} output falls {pct} for {ticks}, and nobody will say why.",
+				"The thing your scouts carried home was not meant to leave its shrine: {res} output drops {pct} for {ticks}.",
 			},
 		},
 		{
@@ -232,8 +232,8 @@ func MalusCatalog() []Def {
 			Weight: weightUncommon,
 			Target: TargetNone,
 			Flavors: []string{
-				"Word of the expedition's fate spreads faster than the truth of it — all production falls {pct} for {ticks} ticks.",
-				"The augurs read the returning party's account and go quiet. Production drops {pct} across the realm for {ticks} ticks.",
+				"Word of the expedition's fate spreads faster than the truth of it. All production falls {pct} for {ticks}.",
+				"The augurs read the returning party's account and go quiet. All production drops {pct} for {ticks}.",
 			},
 		},
 		{
@@ -246,8 +246,8 @@ func MalusCatalog() []Def {
 			Weight: weightCommon,
 			Target: TargetRandomAge,
 			Flavors: []string{
-				"Half the scouting party never came back, and {frac} of the {res} they carried went with them. The rest work {pct} slower for {ticks} ticks.",
-				"You are still waiting on names from the last expedition. {frac} of the {res} is unaccounted for and the realm works {pct} slower for {ticks} ticks.",
+				"Part of the party never came back, and {frac} of the {res} they carried went with them. All production falls {pct} for {ticks}.",
+				"You are still waiting on names from the last expedition. {frac} of the {res} is unaccounted for, and all production runs {pct} slower for {ticks}.",
 			},
 		},
 	}

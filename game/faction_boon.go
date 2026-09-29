@@ -261,7 +261,9 @@ func (ge *GameEngine) applyFactionBoon(def config.FactionDef, state FactionState
 // see the roll before deciding whether to grant it or bounce it (see
 // rollExpeditionEncounter). Returns the zero Boon when nothing rolled.
 func (ge *GameEngine) rollFactionBoon(def config.FactionDef, state FactionState) boon.Boon {
-	return boon.RollBoon(factionProfile(def, state, ge.age), ge.rng)
+	prof := factionProfile(def, state, ge.age)
+	prof.TickInterval = ge.tickIntervalLocked() // durations read at the current game speed
+	return boon.RollBoon(prof, ge.rng)
 }
 
 // applyRolledFactionBoon applies an already-rolled boon and returns its
@@ -341,6 +343,7 @@ func factionMalusProfile(def config.FactionDef, state FactionState, age string) 
 // Runs under the write lock.
 func (ge *GameEngine) applyFactionMalus(def config.FactionDef, state FactionState) string {
 	prof := factionMalusProfile(def, state, ge.age)
+	prof.TickInterval = ge.tickIntervalLocked()
 
 	atCap := ge.activeFactionMalusCount() >= MaxConcurrentFactionMaluses
 	if atCap {
@@ -355,8 +358,9 @@ func (ge *GameEngine) applyFactionMalus(def config.FactionDef, state FactionStat
 		return ""
 	}
 	if atCap {
-		// Strip the optional dip a ResourceDrain may carry; the drain itself stays.
-		b.Magnitude, b.DurationTicks = 0, 0
+		// Strip the optional dip a ResourceDrain may carry; the drain itself
+		// stays, and its line drops the slowdown it no longer brings.
+		b = b.WithoutDip()
 	}
 
 	line := boon.Apply(b, boonApplier{ge: ge, name: def.Name, key: def.Key, malus: true})
