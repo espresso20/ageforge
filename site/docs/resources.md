@@ -36,7 +36,7 @@ These resources are produced by Geological Extraction buildings and consumed by 
 
 | Resource | Key | Unlocks | Base Storage | Notes |
 |----------|-----|---------|--------------|-------|
-| Marble | `marble` | Iron Age | 30 | Refined stone for monumental construction |
+| Marble | `marble` | Iron Age | 30 | Polished stone from quarries |
 | Iron Ore | `iron_ore` | Iron Age | 30 | Raw ore before smelting; feeds the Metallurgy lineage |
 | Titanium Ore | `titanium_ore` | Space Age | 20 | Raw titanium ore; the Metallurgy lineage refines it into titanium |
 | Dark Matter Crystals | `dark_matter_crystals` | Cyberpunk Age | 10 | Crystallized dark matter; refines into dark matter |

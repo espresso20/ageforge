@@ -37,15 +37,15 @@ Effects are applied the tick the counter hits zero. You'll see a success message
 
 ## Research Speed Sources
 
-`research_speed` reduces the tick count when research starts. Its sources add together. The table also lists the prestige upgrade whose name suggests it belongs here:
+`research_speed` reduces the tick count when research starts. Its sources add together. The table also lists the prestige upgrade whose key (`research_speed`) suggests it belongs here:
 
 | Source | How much | Notes |
 |---|---|---|
 | **Tech bonuses** | None in the current tree | No tech has a research speed effect today |
 | **Ancient Knowledge** (Succumb) | +0.25 (25%) per epoch | Granted permanently for each distinct epoch you Succumb in (Iron to Cosmic, up to +150%); survives Succumb, prestige and save/load |
-| **Prestige: Research Speed** | +0.05 per tier, max 5 tiers (+25%) | Raises knowledge output, not `research_speed` (see the note below) |
+| **Prestige: Knowledge Production** | +0.05 per tier, max 5 tiers (+25%) | Raises knowledge output, not `research_speed` (see the note below) |
 
-> **Note on Prestige "Research Speed":** Despite its name, this prestige upgrade raises knowledge output (how fast you make knowledge), not the `research_speed` bonus that cuts tick counts. More knowledge lets you afford techs sooner, but each tech still takes the same number of ticks.
+> **Note on Prestige "Knowledge Production":** Despite its key (`research_speed`), this prestige upgrade raises knowledge output (how fast you make knowledge), not the `research_speed` bonus that cuts tick counts. More knowledge lets you afford techs sooner, but each tech still takes the same number of ticks.
 
 No tech in the current tree grants `research_speed`, so the tick reduction comes from Succumb's Ancient Knowledge. Many techs raise knowledge output instead (see [Knowledge output](#knowledge-output) below).
 
@@ -230,7 +230,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 
 | Key | Name | Cost | Ticks | Prerequisites | Effect |
 |---|---|---|---|---|---|
-| `electricity_tech` | Electricity | 800K kp | 2,700 | `nuclear_fission` | +50% all production, +5.0 electricity/tick |
+| `electricity_tech` | Advanced Electrics | 800K kp | 2,700 | `nuclear_fission` | +50% all production, +5.0 electricity/tick |
 | `computers` | Computers | 1M kp | 2,700 | `electricity_tech` | +80% knowledge output |
 | `satellite_tech` | Satellite Technology | 1.2M kp | 2,700 | `rocketry`, `electricity_tech` | +1.0 data/tick, +60% knowledge output |
 | `nanofabrication` | Nanofabrication | 1.1M kp | 2,700 | `computers` | −8% build cost |
@@ -338,7 +338,7 @@ These are the biggest single techs in the game. Each adds a percentage to all pr
 | Mass Production | +0.40 |
 | Power Distribution | +0.30 |
 | Chemical Engineering | +0.20 |
-| Electricity | +0.50 |
+| Advanced Electrics | +0.50 |
 | Machine Learning | +0.50 |
 | Cybernetics | +0.50 |
 | Plasma Physics | +0.30 |
@@ -506,7 +506,7 @@ These techs add a flat amount to a resource's production each tick. Unlike the p
 | Electrification | electricity | +1.0/tick |
 | Power Distribution | electricity | +3.0/tick |
 | Nuclear Fission | electricity | +5.0/tick, uranium +0.5/tick |
-| Electricity | electricity | +5.0/tick |
+| Advanced Electrics | electricity | +5.0/tick |
 | Radio | culture | +2.0/tick |
 | Social Media | culture | +5.0/tick, gold +5.0/tick |
 | Chemical Engineering | oil | +1.0/tick |
@@ -538,7 +538,7 @@ assign <building_key> [count|all]
 
 Knowledge building rates, per fully staffed copy: the early lineage is set by hand (Story Circle 0.2, Elders' Hall 0.6, Scriptorium 2.0, Agora 1.6, Library 3.2 knowledge/tick). In the Medieval, Renaissance and Colonial ages, where knowledge is also a building material, the rate is derived from the building's price like any other producer (Monastery Library 78.3, University 208, Natural Philosophy Hall 772). From the Industrial Age on, knowledge buildings follow `rate = 0.05 × 2^tier` (Research Institute 12.8, Academy 25.6, and so on). A fully staffed high-tier knowledge building produces far more per tick than several low-tier ones. Upgrade your knowledge lineage early and put workers in the highest-tier building you can afford.
 
-The prestige **Research Speed** upgrade adds +5% knowledge output per tier. Five tiers give your knowledge buildings a permanent +25% from the start of each run.
+The prestige **Knowledge Production** upgrade adds +5% knowledge output per tier. Five tiers give your knowledge buildings a permanent +25% from the start of each run.
 
 ---
 
@@ -604,4 +604,4 @@ Knowledge costs rise steeply: from 800 kp (Primitive) to 500M kp (Transcendent).
 
 ---
 
-*See also: [Epochs](epochs.md) for how Grand Discovery and the Dark Age event fire; [Prestige](prestige.md) for the Research Speed upgrade and the Ancient Civilization Memory; [Buildings](buildings.md) for the knowledge lineage.*
+*See also: [Epochs](epochs.md) for how Grand Discovery and the Dark Age event fire; [Prestige](prestige.md) for the Knowledge Production upgrade and the Ancient Civilization Memory; [Buildings](buildings.md) for the knowledge lineage.*

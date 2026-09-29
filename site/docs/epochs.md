@@ -30,9 +30,9 @@ Each age is paced to a target time at 1x speed, from 15 minutes for the Primitiv
 
 **⚙ Steel Era.** Production reaches industrial scale. A Workers' Uprising costs you 8% of your workers and 500 faith. Colonial Bounty (+5K gold) is one of the biggest windfalls in the game, and Coal Seam Discovery adds +0.4 coal/tick for 180 ticks.
 
-**⚡ Electric Era.** Power Surge, Oil Strike and Nuclear Theory all push production or research forward. This era's catastrophe is The Nuclear Exchange. Nuclear scares and labor movements are short, bearable setbacks compared to what comes later.
+**⚡ Electric Era.** Grid Surge, Oil Strike and Nuclear Theory all push production or research forward. This era's catastrophe is The Nuclear Exchange. Nuclear scares and labor movements are short, bearable setbacks compared to what comes later.
 
-**▣ Digital Era.** Data replaces iron as the bottleneck. A Server Outage takes 0.5 data/tick for 120 ticks, and a Data Breach steals 5K data outright. AI Breakthrough (+0.5 knowledge/tick, +0.2 data/tick) is the event research-focused runs hope for. The Great Hack is this era's catastrophe.
+**▣ Digital Era.** Data replaces iron as the bottleneck. A Server Outage takes 0.5 data/tick for 120 ticks, and The Great Breach steals 5K data outright. AI Breakthrough (+0.5 knowledge/tick, +0.2 data/tick) is the event research-focused runs hope for. The Great Hack is this era's catastrophe.
 
 **◉ Neon Era.** Plasma is both the primary and the energy resource. Neural Uprising is the nastiest event outside the transition roll: it removes 20% of your workers, steals 500 food and drains food at the same time. Corporate Espionage steals 10K gold and 8K data at once. Keep reserves.
 
@@ -49,8 +49,8 @@ Each epoch has a single **Awakening**: a one-time production boost that fires th
 | ◈ Stone Era | Pottery Mastery | Stone Age | +1 food/tick, +0.5 stone/tick for ~8 min |
 | ⚔ Iron Era | Discovery of Metallurgy | Iron Age | +2 iron/tick for ~16 min |
 | ⚙ Steel Era | Steam Breakthrough | Industrial Age | +25% all production for ~6.5 min |
-| ⚡ Electric Era | Electrification | Victorian Age | +2 electricity/tick, +10% all production for ~10 min |
-| ▣ Digital Era | Information Age Dawns | Modern Age | +2 data/tick, +1 knowledge/tick for ~10 min |
+| ⚡ Electric Era | The Grid Wakes | Victorian Age | +2 electricity/tick, +10% all production for ~10 min |
+| ▣ Digital Era | Networks Wake | Modern Age | +2 data/tick, +1 knowledge/tick for ~10 min |
 | ◉ Neon Era | Cybernetic Awakening | Cyberpunk Age | +20% all production for ~8 min |
 | ✦ Cosmic Era | First Contact Signal | Interstellar Age | +1.5 dark matter/tick, +10% all production for ~13 min |
 
@@ -175,7 +175,7 @@ Apart from the transition roll, each epoch has 5 events that only enter the rand
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
 | Tribal Raid | Bad | Food -0.15/tick for 60 ticks, 8 food stolen, -10% workers |
-| Sacred Grove | Good | Faith +0.2/tick for 120 ticks, +200 wood |
+| Humming Grove | Good | Faith +0.2/tick for 120 ticks, +200 wood |
 | Beast Stampede | Bad | -30 wood, -20 food (instant) |
 | River Blessing | Good | Food +0.25/tick for 144 ticks |
 | Wandering Sage | Good | +500 knowledge, +100 faith (instant) |
@@ -204,7 +204,7 @@ Apart from the transition roll, each epoch has 5 events that only enter the rand
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| Power Surge | Good | Electricity +0.35/tick for 144 ticks |
+| Grid Surge | Good | Electricity +0.35/tick for 144 ticks |
 | Oil Strike | Good | Oil +0.5/tick for 180 ticks, +3K gold |
 | The Broadcast | Good | +5K culture, then faith +0.2/tick for 180 ticks |
 | Labor Movement | Bad | Food -0.1/tick, gold -0.1/tick for 60 ticks |
@@ -214,7 +214,7 @@ Apart from the transition roll, each epoch has 5 events that only enter the rand
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| Data Breach | Bad | 5K data stolen, knowledge -0.2/tick for 120 ticks |
+| The Great Breach | Bad | 5K data stolen, knowledge -0.2/tick for 120 ticks |
 | Viral Moment | Good | +20K culture (instant) |
 | Tech Monopoly | Good | Gold +0.4/tick for 180 ticks |
 | Server Outage | Bad | Data -0.5/tick for 120 ticks |
@@ -224,7 +224,7 @@ Apart from the transition roll, each epoch has 5 events that only enter the rand
 
 | Event | Sentiment | Effect |
 |-------|-----------|--------|
-| Plasma Storm | Good | Plasma +0.5/tick, electricity +0.3/tick for 180 ticks |
+| Plasma Windfall | Good | Plasma +0.5/tick, electricity +0.3/tick for 180 ticks |
 | Void Rift | Good | +5K dark matter (instant) |
 | Neural Uprising | Bad | 500 food stolen, food -0.1/tick for 120 ticks, -20% workers |
 | Corporate Espionage | Bad | -10K gold, -8K data (instant) |

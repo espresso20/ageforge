@@ -113,7 +113,7 @@ One more military milestone sits outside the chain: train 100 soldiers and build
 | Milestone | Condition | Reward |
 |---|---|---|
 | First Market | Build 1 Market (Bronze Age) | +25 gold |
-| Merchant Guild | Build 8 Markets (Iron Age) | +5% gold rate |
+| Market Town | Build 8 Markets (Iron Age) | +5% gold rate |
 | Caravan Network | Build 5 Trading Posts (Classical Age) | +10% gold rate |
 | Merchant Princes *(hidden)* | Build 12 Trading Posts and 4 Merchant Quarters (Medieval Age) | +5% all production |
 | Trade Empire *(hidden)* | Build 30 Trading Posts and 12 Merchant Quarters (Renaissance Age) | +10% all production |
@@ -155,7 +155,7 @@ The last three milestones pay out all production, so completing the chain lifts 
 | Modern Era *(hidden)* | Modern Age | +20% all production |
 | Information Pioneer *(hidden)* | Information Age | +20% knowledge rate |
 | Digital Native *(hidden)* | Digital Age | +20% all production |
-| Cyberpunk *(hidden)* | Cyberpunk Age | +15% worker output |
+| Jacked In *(hidden)* | Cyberpunk Age | +15% worker output |
 | Fusion Pioneer *(hidden)* | Fusion Age | +20% all production |
 | Space Explorer *(hidden)* | Space Age | +20% all production, +20% expedition reward |
 | Star Voyager *(hidden)* | Interstellar Age | +20% all production |

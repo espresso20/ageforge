@@ -47,7 +47,7 @@ The class name shown in the game comes from the building's domain and the curren
 | engineering | - | Craftsman | Artisan | Engineer | Tinker | Systems Engineer |
 | lumber | - | Lumberjack | Sawyer | Forester | Steam Logger | Petroleum Worker |
 | masonry | - | Miner | Iron Extractor | Medieval Miner | Victorian Quarryman | Modern Geologist |
-| metallurgy | - | Smelter | Ironworker | Medieval Smith | Steam Smelter | Modern Metallurgist |
+| metallurgy | - | Furnace Hand | Ironworker | Medieval Smith | Steam Smelter | Modern Metallurgist |
 | energy | - | - | - | - | Stoker | Power Engineer |
 | hacker | - | - | - | - | - | - |
 | astronaut | - | - | - | - | - | - |
@@ -256,11 +256,11 @@ Primitive: Shaman → Stone: Elder → Bronze: Scribe → Iron: Scholar → Clas
 
 ### lumber (starts Stone Age)
 
-Stone: Gatherer → Bronze: Woodcutter → Iron: Lumberjack → Classical: Sawyer → Medieval: Forester → Renaissance: Colonial Logger → Colonial: Mill Worker → Industrial: Coal Extractor → Victorian: Steam Logger → Electric: Electric Forester → Atomic: Fuel Extractor → Modern: Petroleum Worker → Information: Digital Forester → Digital: Bio-Extractor → Cyberpunk: Nano-Harvester → Fusion: Organic Engineer → Space: Biofield Harvester → Interstellar: Quantum Extractor → Galactic: Galactic Forester → **Quantum: Cosmic Extractor**
+Stone: Gatherer → Bronze: Woodcutter → Iron: Lumberjack → Classical: Sawyer → Medieval: Forester → Renaissance: Renaissance Logger → Colonial: Mill Worker → Industrial: Coal Extractor → Victorian: Steam Logger → Electric: Electric Forester → Atomic: Fuel Extractor → Modern: Petroleum Worker → Information: Digital Forester → Digital: Bio-Extractor → Cyberpunk: Nano-Harvester → Fusion: Organic Engineer → Space: Biofield Harvester → Interstellar: Quantum Extractor → Galactic: Galactic Forester → **Quantum: Cosmic Extractor**
 
 ### masonry (starts Stone Age)
 
-Stone: Quarryman → Bronze: Stone Cutter → Iron: Miner → Classical: Iron Extractor → Medieval: Medieval Miner → Renaissance: Renaissance Quarryman → Colonial: Colonial Miner → Industrial: Industrial Miner → Victorian: Victorian Quarryman → Electric: Electric Miner → Atomic: Uranium Miner → Modern: Modern Geologist → Information: Data Miner → Digital: Digital Excavator → Cyberpunk: Cyber Miner → Fusion: Plasma Driller → Space: Space Miner → Interstellar: Asteroid Miner → Galactic: Dark Matter Extractor → **Quantum: Crystal Miner**
+Stone: Quarryman → Bronze: Stone Cutter → Iron: Miner → Classical: Iron Extractor → Medieval: Medieval Miner → Renaissance: Renaissance Quarryman → Colonial: Colonial Miner → Industrial: Industrial Miner → Victorian: Victorian Quarryman → Electric: Electric Miner → Atomic: Uranium Miner → Modern: Modern Geologist → Information: Precision Miner → Digital: Digital Excavator → Cyberpunk: Cyber Miner → Fusion: Plasma Driller → Space: Space Miner → Interstellar: Asteroid Miner → Galactic: Dark Matter Extractor → **Quantum: Crystal Miner**
 
 ### faith (early tiers from Primitive, formal tiers from Medieval)
 
@@ -306,7 +306,7 @@ Bronze: Peddler → Iron: Merchant → Classical: Trader → Medieval: Nobleman 
 | Iron | Craftsman |
 | Classical | Artisan |
 | Medieval | Engineer |
-| Renaissance | Master Eng. |
+| Renaissance | Master Engineer |
 | Colonial | Mechanic |
 | Industrial | Machinist |
 | Victorian | Tinker |
@@ -324,7 +324,7 @@ Bronze: Peddler → Iron: Merchant → Classical: Trader → Medieval: Nobleman 
 
 ### metallurgy (starts Iron Age)
 
-Iron: Smelter → Classical: Ironworker → Medieval: Medieval Smith → Renaissance: Renaissance Metallurgist → Colonial: Foundry Worker → Industrial: Factory Worker → Victorian: Steam Smelter → Electric: Electric Smelter → Atomic: Atomic Metallurgist → Modern: Modern Metallurgist → Information: Digital Foundry Worker → Digital: Digital Smelter → Cyberpunk: Cyber Forge Worker → Fusion: Plasma Metallurgist → Space: Stellar Foundry Worker → Interstellar: Stellar Smelter → Galactic: Galactic Metallurgist → **Quantum: Quantum Smelter**
+Iron: Furnace Hand → Classical: Ironworker → Medieval: Medieval Smith → Renaissance: Renaissance Metallurgist → Colonial: Foundry Worker → Industrial: Factory Worker → Victorian: Steam Smelter → Electric: Electric Smelter → Atomic: Atomic Metallurgist → Modern: Modern Metallurgist → Information: Digital Foundry Worker → Digital: Digital Smelter → Cyberpunk: Cyber Forge Worker → Fusion: Plasma Metallurgist → Space: Stellar Foundry Worker → Interstellar: Stellar Smelter → Galactic: Galactic Metallurgist → **Quantum: Quantum Smelter**
 
 ### energy (starts Victorian Age)
 

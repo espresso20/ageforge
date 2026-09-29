@@ -140,12 +140,12 @@ A one-time, permanent reward for Succumbing to the Last Passage.
 |---------|-----|-----------------|----------|----------------|
 | Gather Boost | `gather_boost` | +5% worker output | 5 | 2 / 3 / 4 / 6 / 8 |
 | Storage Bonus | `storage_bonus` | +20 storage for every resource | 5 | 2 / 3 / 4 / 6 / 8 |
-| Research Speed | `research_speed` | +5% knowledge output | 5 | 2 / 3 / 5 / 8 / 10 |
+| Knowledge Production | `research_speed` | +5% knowledge production | 5 | 2 / 3 / 5 / 8 / 10 |
 | Military Power | `military_power` | +5% military power | 5 | 2 / 3 / 5 / 8 / 10 |
 | Starting Food | `starting_food` | +25 starting food | 5 | 1 / 2 / 3 / 4 / 5 |
 | Starting Wood | `starting_wood` | +25 starting wood | 5 | 1 / 2 / 3 / 4 / 5 |
-| `Population Cap` | `population_cap` | +2 housing | 5 | 2 / 3 / 5 / 8 / 10 |
-| Expedition Loot | `expedition_loot` | +5% expedition reward | 5 | 2 / 3 / 5 / 8 / 10 |
+| Housing Bonus | `population_cap` | +2 housing | 5 | 2 / 3 / 5 / 8 / 10 |
+| Expedition Loot | `expedition_loot` | +5% expedition rewards | 5 | 2 / 3 / 5 / 8 / 10 |
 | Temporal Mastery | `tick_speed` | +5% tick speed | 5 | 6 / 10 / 17 / 23 / 33 |
 
 ```
@@ -161,8 +161,8 @@ You can buy prestige upgrades **before you prestige again**. Points left over fr
 
 | Kind | Upgrades | What each tier does |
 |------|----------|---------------------|
-| Percentage | Gather Boost, Research Speed, Military Power, Expedition Loot, Temporal Mastery | Adds a percentage to that rate. Gather Boost at tier 3 is +15% worker output. |
-| Flat | Storage Bonus, `population_cap` | Adds a flat amount. Storage Bonus at tier 5 is +100 storage for every resource. |
+| Percentage | Gather Boost, Knowledge Production, Military Power, Expedition Loot, Temporal Mastery | Adds a percentage to that rate. Gather Boost at tier 3 is +15% worker output. |
+| Flat | Storage Bonus, Housing Bonus | Adds a flat amount. Storage Bonus at tier 5 is +100 storage for every resource. |
 | Starting resource | Starting Food, Starting Wood | Adds to what you start each run with. At tier 5 you begin with +125 food or wood. |
 
 ---

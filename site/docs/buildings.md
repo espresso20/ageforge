@@ -338,7 +338,7 @@ Every storage building is **capped at 25 copies** (Stash at 50). The cap is deli
 | Warehouse | Bronze | +11K | 25 |
 | Granary | Iron | +26K | 25 |
 | Classical Vault | Classical | +110K | 25 |
-| Keep | Medieval | +410K | 25 |
+| Strongroom | Medieval | +410K | 25 |
 | Renaissance Vault | Renaissance | +2.7M | 25 |
 | Colonial Warehouse | Colonial | +33M | 25 |
 | Industrial Depot | Industrial | +170M | 25 |
@@ -370,7 +370,7 @@ Cultural Monuments are one-off structures (one copy each) that turn surplus **cu
 | Monument | Age | Culture Cost | Permanent Bonus |
 |----------|-----|--------------|-----------------|
 | Cultural Obelisk | Classical | 710 | +1% all production |
-| Grand Amphitheatre | Medieval | 7.1K | +2% all production |
+| Grand Amphitheater | Medieval | 7.1K | +2% all production |
 | Eternal Library | Industrial | 140K | +3% all production |
 | Monument of Ages | Modern | 7.1M | +5% all production |
 

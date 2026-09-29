@@ -159,7 +159,7 @@ The Trade panel doesn't list civilizations. The one diplomacy effect it shows is
 | `crypto_market` | Crypto Market | Cyberpunk | Black Market ×1 | 50 crypto | 1K gold | 8 |
 | `fusion_export` | Fusion Export | Fusion | Fusion Reactor ×1 | 200 electricity | 1K gold | 12 |
 | `warp_commerce` | Warp Commerce | Space | Warp Drive Plant ×1 | 500 gold | 200 dark matter | 15 |
-| `stellar_exchange` | Stellar Exchange | Galactic | Galactic Trade Hub ×1 | 100 dark matter | 2K gold | 20 |
+| `stellar_exchange` | Stellar Freight | Galactic | Galactic Trade Hub ×1 | 100 dark matter | 2K gold | 20 |
 | `quantum_trade` | Quantum Trade | Quantum | Reality Processor ×1 | 50 quantum flux | 5K gold | 10 |
 
 A few routes appear in the list before you can build what they need. Cotton Exchange and Steamship Line need a Seaport (Modern Age), Rail Freight needs a Steam Works (Victorian Age), and Warp Commerce needs a Warp Drive Plant (Interstellar Age).

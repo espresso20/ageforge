@@ -59,7 +59,7 @@ At 1x speed (2 seconds per tick):
 
 Use the `logs` command to open the Logs panel and see your full event history. Events appear as log entries with their effect and duration. When a timed event ends, the "ended" entry shows its losses in yellow, which is useful for judging the actual damage.
 
-> **A note on tone.** Event log lines are written with a little personality: a wandering merchant "smelling of cabbage and opportunity," a crypto boom turning your least competent citizen into a thought leader. The flavor is cosmetic and always sits *alongside* the mechanical summary (the resources gained or lost, and the duration), never in place of it, so you can read the joke and still know exactly what happened to your economy. Milestone completions and other notable log moments (a building finishing, an age turning over, a research breakthrough, a famine starting or ending, enduring a catastrophe) carry the same light touch.
+> **A note on tone.** Event log lines are written with a little personality: wandering traders "smelling of cabbage and opportunity," a crypto boom turning your least competent worker into a thought leader. The flavor is cosmetic and always sits *alongside* the mechanical summary (the resources gained or lost, and the duration), never in place of it, so you can read the joke and still know exactly what happened to your economy. Milestone completions and other notable log moments (a building finishing, an age turning over, a research breakthrough, a famine starting or ending, enduring a catastrophe) carry the same light touch.
 
 The **Stats panel** lists every currently active timed event under "Active Events" with the approximate wall-clock time left on it (e.g. `~2m 30s`; see [Timers and durations](commands.md#timers-and-durations)). Under each event it shows the ongoing per-tick or percentage effect, color-coded: **green** for a bonus, **red** for a penalty. A Famine shows `food -3.0/t` in red; a production-boost event shows `all production +10%` in green. (On the colorblind-safe and high-contrast [themes](commands.md#themes), bonuses show **blue** and penalties **orange**, with `▲`/`▼` glyphs marking the sign.) Instant effects (resource grants, theft, worker loss) are not listed there, since they already happened when the event fired.
 
@@ -156,8 +156,8 @@ Awakenings are one-time boosts, one per epoch, that fire the first time you ente
 | Stone Era ◈ | Stone Age | Pottery Mastery | +1.0 food/tick, +0.5 stone/tick | 250 ticks (~8 min) |
 | Iron Era ⚔ | Iron Age | Discovery of Metallurgy | +2.0 iron/tick | 500 ticks (~16 min) |
 | Steel Era ⚙ | Industrial Age | Steam Breakthrough | +25% to all production | 200 ticks (~6.5 min) |
-| Electric Era ⚡ | Victorian Age | Electrification | +2.0 electricity/tick, +10% all production | 300 ticks (~10 min) |
-| Digital Era ▣ | Modern Age | Information Age Dawns | +2.0 data/tick, +1.0 knowledge/tick | 300 ticks (~10 min) |
+| Electric Era ⚡ | Victorian Age | The Grid Wakes | +2.0 electricity/tick, +10% all production | 300 ticks (~10 min) |
+| Digital Era ▣ | Modern Age | Networks Wake | +2.0 data/tick, +1.0 knowledge/tick | 300 ticks (~10 min) |
 | Neon Era ◉ | Cyberpunk Age | Cybernetic Awakening | +20% to all production | 250 ticks (~8 min) |
 | Cosmic Era ✦ | Interstellar Age | First Contact Signal | +1.5 dark matter/tick, +10% all production | 400 ticks (~13 min) |
 
@@ -226,7 +226,7 @@ Mixed events (like `earthquake` or `plasma_storm`) reset both streak counters, w
 
 - **Bad timed events are temporary (except worker loss).** A drought takes 0.5 food/tick for 10 ticks, which is 20 seconds at 1x. Don't make permanent decisions (like restructuring worker assignments) because of a short debuff.
 
-- **Bank resources before the late game.** Thefts take fixed amounts, and the amounts get bigger in later epochs. Early thefts are small, but the Digital Era's Data Breach steals 5K data and the Neon Era's Corporate Espionage takes 10K gold at once (both epoch-exclusive events). A surplus absorbs the hit.
+- **Bank resources before the late game.** Thefts take fixed amounts, and the amounts get bigger in later epochs. Early thefts are small, but The Great Breach (Digital Era) steals 5K data and Corporate Espionage (Neon Era) takes 10K gold at once (both epoch-exclusive events). A surplus absorbs the hit.
 
 - **Keep idle workers at all times.** Worker loss from `plague`, `mine_collapse` or `industrial_accident` is the only permanent damage in this system. Assigning every worker with none idle is the riskiest setup. Even 5 to 10 unassigned workers give you room.
 

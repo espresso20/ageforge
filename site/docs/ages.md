@@ -158,7 +158,7 @@ Starting age. No requirements.
 | Agoras | 12 |
 | Trading Posts | 10 |
 
-**Unlocks:** Villa, Classical Vault, Estate Farm, Wood Workshop, Marble Works, Library, Oracle House, Military Academy, Merchant Quarter, Aqueduct, Forge, Amphitheater, Parthenon · **Resource:** Culture
+**Unlocks:** Villa, Classical Vault, Terrace Farm, Wood Workshop, Marble Works, Library, Oracle House, Military Academy, Merchant Quarter, Aqueduct, Forge, Amphitheater, Parthenon · **Resource:** Culture
 
 ---
 
@@ -176,7 +176,7 @@ Starting age. No requirements.
 | Libraries | 15 |
 | Military Academies | 15 |
 
-**Unlocks:** Manor, Keep, Demesne, Sawmill, Stonemasons' Guild, Monastery Library, Cathedral, Castle Keep, Guildhall, Workshop, Ironmonger, Great Hall, Great Library · **Resource:** Steel
+**Unlocks:** Manor, Strongroom, Demesne, Sawmill, Stonemasons' Guild, Monastery Library, Cathedral, Castle Keep, Guildhall, Workshop, Ironmonger, Great Hall, Great Library · **Resource:** Steel
 
 ---
 
@@ -212,7 +212,7 @@ Starting age. No requirements.
 | Universities | 8 |
 | Art Studios | 8 |
 
-**Unlocks:** Settlement Block, Colonial Warehouse, Plantation, Coal Works, Deep Iron Mine, Natural Philosophy Hall, Mission, Fort, Port, Dockyard, Iron Works, Concert Hall, Grand Lighthouse
+**Unlocks:** Settlement Block, Colonial Warehouse, Plantation, Coal Works, Deep Iron Mine, Natural Philosophy Hall, Mission, Fort, Port, Dockyard, Colonial Steelworks, Concert Hall, Grand Lighthouse
 
 ---
 
@@ -228,7 +228,7 @@ Starting age. No requirements.
 | Plantations | 8 |
 | Ports | 10 |
 
-**Unlocks:** Tenement, Industrial Depot, Agricultural Works, Steam Coal Plant, Steam Mine, Research Institute, Church, Military Base, Stock Exchange, Iron Works Complex, Steel Mill, Coal Plant, Opera House, Geographic Society, Crystal Palace · **Resource:** Oil
+**Unlocks:** Tenement, Industrial Depot, Agricultural Works, Steam Colliery, Steam Mine, Research Institute, Church, Military Base, Stock Exchange, Integrated Steelworks, Steel Mill, Coal Plant, Opera House, Geographic Society, Crystal Palace · **Resource:** Oil
 
 ---
 
@@ -241,7 +241,7 @@ Starting age. No requirements.
 | Steel | 2.4M |
 | Gold | 15M |
 | Steel Mills | 5 |
-| Iron Works Complexes | 5 |
+| Integrated Steelworks | 5 |
 | Tenements | 30 |
 
 **Unlocks:** Row House, Victorian Vault, Mechanized Farm, Oil Derrick, Uranium Mine, Academy, Grand Cathedral, Garrison, Bank, Steam Works, Bessemer Plant, Steam Turbine, Grand Museum, Eiffel Tower · **Resource:** Electricity · **New domain:** energy
@@ -261,7 +261,7 @@ Starting age. No requirements.
 | Academies | 10 |
 | Bessemer Plants | 10 |
 
-**Unlocks:** Apartment Block, Electric Warehouse, Industrial Farm, Oil Field, Nuclear Extraction Plant, Physics Laboratory, Revival Hall, Command Post, Financial District, Power Station, Electric Arc Furnace, Power Generator, Radio Station, Hoover Dam
+**Unlocks:** Apartment Block, Electric Warehouse, Industrial Farm, Oil Field, Nuclear Extraction Plant, Physics Laboratory, Revival Hall, Command Post, Financial District, Power Station, Electric Arc Furnace, Dynamo Hall, Radio Station, Hoover Dam
 
 ---
 
@@ -278,7 +278,7 @@ Starting age. No requirements.
 | Power Stations | 15 |
 | Physics Laboratories | 15 |
 
-**Unlocks:** Housing Project, Atomic Vault, Agricultural Complex, Petroleum Refinery, Uranium Processing Works, Research Campus, Spiritual Center, Bunker Complex, Corporate HQ, Nuclear Plant, Advanced Alloy Plant, Nuclear Reactor, Cinema, Particle Accelerator · **Resource:** Uranium
+**Unlocks:** Housing Project, Atomic Vault, Agricultural Complex, Petroleum Refinery, Uranium Processing Works, Research Campus, Spiritual Center, Bunker Complex, Corporate HQ, Nuclear Plant, Advanced Alloy Plant, Breeder Reactor, Cinema, Particle Accelerator · **Resource:** Uranium
 
 ---
 
@@ -291,13 +291,13 @@ Starting age. No requirements.
 | Electricity | 33M |
 | Uranium | 6.9M |
 | Steel | 470M |
-| Nuclear Reactors | 15 |
+| Breeder Reactors | 15 |
 | Bunker Complexes | 15 |
 | Research Campuses | 15 |
 
 Prestige becomes available at this age. Type `prestige confirm yes` to reset with permanent upgrades. See [Prestige System](prestige.md).
 
-**Unlocks:** Tower Block, Modern Depot, Agri-Complex, Oil Platform, Titanium Mine, Think Tank, Meditation Center, Special Ops HQ, Investment Firm, Power Grid Hub, Titanium Smelter, Oil Refinery, TV Studio, Space Program · **Resources:** Data, Nanobots, Titanium Ore
+**Unlocks:** Tower Block, Modern Depot, Agritech Campus, Oil Platform, Titanium Mine, Think Tank, Meditation Center, Special Ops HQ, Investment Firm, Power Grid Hub, Titanium Smelter, Oil Refinery, TV Studio, Space Program · **Resources:** Data, Nanobots, Titanium Ore
 
 ---
 
@@ -314,7 +314,7 @@ Prestige becomes available at this age. Type `prestige confirm yes` to reset wit
 | Tower Blocks | 30 |
 | Oil Refineries | 15 |
 
-**Unlocks:** Smart Complex, Info Vault, Smart Farm, Smart Refinery, Precision Mine, Innovation Hub, Digital Temple, Cyber Command, Venture Hub, Smart Grid Node, Aerospace Foundry, Smart Energy Grid, Server Farm, Media Center, Global Network · **New domain:** hacker
+**Unlocks:** Smart Complex, Info Vault, Smart Farm, Smart Refinery, Precision Mine, Innovation Hub, Digital Temple, Cyber Command, Venture Hub, Smart Grid Node, Aerospace Foundry, Microgrid Array, Server Farm, Media Center, Global Network · **New domain:** hacker
 
 ---
 
@@ -363,7 +363,7 @@ Prestige becomes available at this age. Type `prestige confirm yes` to reset wit
 | Arcology Pods | 25 |
 | Black Markets | 15 |
 
-**Unlocks:** Habitat Ring, Fusion Vault, Bio Reactor Farm, Molecular Synthesizer, Exotic Mineral Extractor, Theoretical Institute, Quantum Chapel, Plasma Command, Energy Exchange, Fusion Reactor, Exotic Matter Forge, Fusion Reactor Array, Quantum Server Farm, Neural Art Complex, Stellar Cradle · **Resource:** Plasma
+**Unlocks:** Habitat Ring, Fusion Vault, Bio Reactor Farm, Molecular Synthesizer, Exotic Mineral Extractor, Theoretical Institute, Quantum Chapel, Plasma Command, Energy Exchange, Fusion Reactor, Exotic Matter Forge, Tokamak Array, Quantum Server Farm, Neural Art Complex, Stellar Cradle · **Resource:** Plasma
 
 ---
 
@@ -377,7 +377,7 @@ Prestige becomes available at this age. Type `prestige confirm yes` to reset wit
 | Electricity | 2.4T |
 | Data | 390B |
 | Fusion Reactors | 10 |
-| Fusion Reactor Arrays | 10 |
+| Tokamak Arrays | 10 |
 | Plasma Commands | 10 |
 
 **Unlocks:** Orbital Habitat, Orbital Depot, Hydroponic Bay, Quantum Organic Extractor, Asteroid Crystal Mine, Deep Space Observatory, Orbital Sanctuary, Space Force Base, Asteroid Market, Launch Complex, Orbital Refinery, Solar Collector Array, Orbital Data Relay, Zero-G Gallery, Dyson Scaffold · **Resource:** Titanium · **New domain:** astronaut
