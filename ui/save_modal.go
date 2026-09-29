@@ -36,7 +36,7 @@ func (d *Dashboard) showSaveChoiceModal() {
 				}
 				d.app.SetFocus(d.inputField)
 			case "Branch new":
-				showSaveNameModal(d.app, d.pages, " Branch a New Save ", branchNamePage, d.inputField, func(name string) {
+				showSaveNameModal(d.app, d.pages, " Branch a new save ", branchNamePage, d.inputField, func(name string) {
 					// showSaveNameModal validates the name format; BranchSave guards
 					// against an existing name and logs an error if it's taken.
 					if err := d.engine.BranchSave(name); err != nil {

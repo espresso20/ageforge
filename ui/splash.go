@@ -50,7 +50,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	// The Load Game browser lists every save (player-named + autosave) and handles
 	// its own empty state, so the menu item is always enabled — gating it on the
 	// autosave alone would hide the browser even when player-named saves exist.
-	mainList.AddItem("  ⚔  Load Game", "", 'l', func() {
+	mainList.AddItem("  ⚔  Load game", "", 'l', func() {
 		// Build the page fresh each time so the save list is always current,
 		// then add + focus it (mirrors the modal add/remove lifecycle). We do NOT
 		// halt the canvas here: the browser is an opaque full-screen page, so the
@@ -60,7 +60,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 		pages.AddPage(loadGamePage, page, true, true)
 		app.SetFocus(page)
 	})
-	mainList.AddItem("  ✦  New Game", "", 'n', func() {
+	mainList.AddItem("  ✦  New game", "", 'n', func() {
 		// Prompt for a civilization name first; only start the game on confirm.
 		// Cancel returns to the splash with the canvas still animating.
 		showNewGameNameModal(app, pages, mainList, func(name string) {
@@ -82,7 +82,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 		canvas.halt()
 		app.Stop()
 	})
-	mainList.AddItem("  ✗  Wipe Save", "", 'x', func() {
+	mainList.AddItem("  ✗  Delete all saves", "", 'x', func() {
 		showWipeConfirmation(app, pages, engine, canvas.halt, currentVersion)
 	})
 	mainList.AddItem("  ◆  Accounts", "", 'a', func() {
@@ -94,7 +94,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 		pages.AddPage(accountsPage, page, true, true)
 		app.SetFocus(page)
 	})
-	mainList.AddItem("  ↑  Check for Update", "", 'u', func() {
+	mainList.AddItem("  ↑  Check for updates", "", 'u', func() {
 		showUpdateCheck(app, pages, currentVersion)
 	})
 
@@ -118,7 +118,7 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 			}
 			app.QueueUpdateDraw(func() {
 				versionTV.SetText(fmt.Sprintf(
-					"[gold]%s  ✦ new update available! (u)[-]",
+					"[gold]%s  ✦ Update available (u)[-]",
 					currentVersion,
 				))
 			})
@@ -171,15 +171,19 @@ func CreateSplashPage(app *tview.Application, pages *tview.Pages, engine *game.G
 	return outer
 }
 
-// showWipeConfirmation shows the "are you sure?" modal before wiping data.
+// wipeConfirmLabel is the destructive button on the delete-all-saves dialog.
+const wipeConfirmLabel = "Delete all saves"
+
+// showWipeConfirmation asks before deleting every save of the active account
+// (game.WipeAllSaves removes the .json files in its saves directory).
 // cleanup is called (to halt the canvas animation) before recreating the splash.
 func showWipeConfirmation(app *tview.Application, pages *tview.Pages, engine *game.GameEngine, cleanup func(), currentVersion string) {
 	modal := tview.NewModal().
-		SetText("⚠  WIPE ALL DATA  ⚠\n\nThis will permanently delete ALL save files\nand reset the game to zero.\n\nPrestige, upgrades, progress — everything gone.\n\nAre you REALLY sure?").
-		AddButtons([]string{"I'm Kidding!", "NUKE IT ALL"}).
+		SetText("⚠  Delete all saves?\n\nEvery save for this account is deleted.\nThose runs and their prestige are lost.\nYour account (themes, lifetime stats) is kept.\n\nThis cannot be undone.").
+		AddButtons([]string{"Cancel", wipeConfirmLabel}).
 		SetDoneFunc(func(_ int, buttonLabel string) {
 			pages.RemovePage("wipe_confirm")
-			if buttonLabel == "NUKE IT ALL" {
+			if buttonLabel == wipeConfirmLabel {
 				cleanup() // stop old canvas goroutine
 				game.WipeAllSaves()
 				engine.Reset()
@@ -210,7 +214,7 @@ func showUpdateCheck(app *tview.Application, pages *tview.Pages, currentVersion 
 				return
 			}
 			if !result.IsNewer {
-				showUpdateMsg(app, pages, "You're up to date!\n\n"+currentVersion+" is the latest version.")
+				showUpdateMsg(app, pages, "You're up to date.\n\n"+currentVersion+" is the latest version.")
 				return
 			}
 			showUpdateConfirm(app, pages, result)
@@ -230,15 +234,15 @@ func showUpdateMsg(app *tview.Application, pages *tview.Pages, msg string) {
 
 func showUpdateConfirm(app *tview.Application, pages *tview.Pages, result game.UpdateResult) {
 	msg := fmt.Sprintf(
-		"  ✦  Update Available  ✦\n\n  Latest:   %s\n  Current:  %s\n\nDownload and install now?",
+		"  ✦  Update available  ✦\n\n  Latest:   %s\n  Current:  %s\n\nDownload and install now?",
 		result.LatestVersion, result.CurrentVersion,
 	)
 	modal := tview.NewModal().
 		SetText(msg).
-		AddButtons([]string{"Update Now", "Later"}).
+		AddButtons([]string{"Update now", "Later"}).
 		SetDoneFunc(func(_ int, label string) {
 			pages.RemovePage(updateModalPage)
-			if label == "Update Now" {
+			if label == "Update now" {
 				showUpdateInstall(app, pages, result)
 			}
 		})

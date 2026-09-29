@@ -135,7 +135,7 @@ func CreateThemePickerPage(app *tview.Application, pages *tview.Pages, engine *g
 	subtitle := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[gray]Preview applies live — pick a theme that reads well in your terminal. Light or Dark, every theme paints its own background.[-]")
+		SetText("[gray]The preview is live. Pick a theme that reads well in your terminal; light or dark, every theme paints its own background.[-]")
 
 	// ── Theme list ───────────────────────────────────────────────────────────
 	p.list = tview.NewList()
@@ -405,7 +405,7 @@ func themeDetailText(t theme.Theme, available bool) string {
 		lines = append(lines, "[gray]"+t.Blurb+"[-]")
 	}
 	if t.Accessible {
-		note := "[cyan]Accessible[-] [gray]— colorblind-safe / high-contrast, always unlocked[-]"
+		note := "[cyan]Accessible:[-] [gray]colorblind-safe or high-contrast, always unlocked[-]"
 		if t.GainGlyph != "" || t.LossGlyph != "" {
 			// Show the signed glyphs so the shape-based ± encoding is visible in the
 			// picker itself (theming.md §7).
@@ -420,9 +420,9 @@ func themeDetailText(t theme.Theme, available bool) string {
 		// empty "Locked —" tail if it ever happens).
 		hint := t.UnlockHint
 		if hint == "" {
-			hint = "unlock via a milestone"
+			hint = "unlocked by a milestone"
 		}
-		lines = append(lines, fmt.Sprintf("[red]🔒 Locked[-] [gray]— %s[-]", hint))
+		lines = append(lines, fmt.Sprintf("[red]🔒 Locked:[-] [gray]%s[-]", hint))
 	}
 	lines = append(lines, "") // blank spacer before the swatch block
 	lines = append(lines, themeSwatches(t))
@@ -493,7 +493,7 @@ func drawThemeSample(screen tcell.Screen, x, y, w, h int, th theme.Theme) {
 	// Canvas.
 	bg := col(theme.RoleBackground)
 	fill(x, y, x+w, y+h, bg)
-	put(x+1, y, "Sample — "+th.Name+" ("+th.Variant()+")", col(theme.RoleDim), bg, false)
+	put(x+1, y, "Sample: "+th.Name+" ("+th.Variant()+")", col(theme.RoleDim), bg, false)
 
 	// Surface panel with a border.
 	px0, py0, px1, py1 := x+1, y+1, x+w-1, y+h
