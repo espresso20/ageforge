@@ -573,7 +573,7 @@ func TestDeals_Wording(t *testing.T) {
 		{FactionDeal{Kind: DealSell, Give: "coal", GiveAmt: 876e6, Get: "food", GetAmt: 966e3}, "Buy: give 876M coal → get 966K food"},
 		{FactionDeal{Kind: DealWant, Give: "iron_ore", GiveAmt: 440e6, Get: "food", GetAmt: 877e3}, "Sell: give 440M iron ore → get 877K food"},
 		{FactionDeal{Kind: DealFavor, Give: "steel", GiveAmt: 899e6, Standing: 5}, "Goodwill: give 899M steel → get +5 opinion"},
-		{FactionDeal{Kind: DealRare, Give: "electricity", GiveAmt: 25.7e9, Get: "oil", GetAmt: 3.3e9}, "Rare: give 25.7B electricity → get 3.30B oil"},
+		{FactionDeal{Kind: DealRare, Give: "electricity", GiveAmt: 25.7e9, Get: "oil", GetAmt: 3.3e9}, "Rare: give 25.7B electricity → get 3.3B oil"},
 	} {
 		if got := DealTerms(c.d.Kind, c.d.Give, c.d.GiveAmt, c.d.Get, c.d.GetAmt, c.d.Standing, num); got != c.want {
 			t.Errorf("DealTerms(%s) = %q, want %q", c.d.Kind, got, c.want)

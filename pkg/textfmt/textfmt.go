@@ -9,6 +9,7 @@ package textfmt
 import (
 	"fmt"
 	"math"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -24,9 +25,11 @@ var suffixes = []struct {
 	{1e3, "K"},
 }
 
-// Number formats an amount for display: whole numbers below 1000 print as
-// is (950), fractions below 1000 keep one decimal (12.5), and larger values
-// use a K/M/B/T/Q suffix with three significant figures (12.5K, 1.23M, 876M).
+// Number formats an amount or rate for display: three significant figures,
+// trailing zeros dropped, and a K/M/B/T/Q suffix from a thousand up
+// (950, 12.5, 0.711, 1.5K, 1.23M, 876M). Rounding goes through strconv, so
+// the output is identical on every architecture (config descriptions built
+// with it are part of the determinism fingerprint).
 func Number(n float64) string {
 	if math.IsNaN(n) || math.IsInf(n, 0) {
 		return "0"
@@ -36,36 +39,50 @@ func Number(n float64) string {
 		prefix = "-"
 	}
 	abs := math.Abs(n)
-
+	if abs == 0 {
+		return "0"
+	}
 	if abs < 1000 {
-		if abs == math.Floor(abs) {
-			return fmt.Sprintf("%s%.0f", prefix, abs)
+		s := sig3(abs)
+		if s != "1000" {
+			return prefix + s
 		}
-		s := fmt.Sprintf("%.1f", abs)
-		if s == "1000.0" {
-			return prefix + "1.00K"
-		}
-		if s == "0.0" {
-			// Keep small fractions visible (0.04 is not "0.0").
-			return prefix + trimZeros(fmt.Sprintf("%.2f", abs))
-		}
-		return prefix + s
+		abs = 1000 // 999.96 rolls over to 1K
 	}
+	for i := len(suffixes) - 1; i >= 0; i-- {
+		// walk from K upwards so a rollover (999.6K) moves to the next suffix
+		s := suffixes[i]
+		if abs < s.threshold {
+			continue
+		}
+		next := math.Inf(1)
+		if i > 0 {
+			next = suffixes[i-1].threshold
+		}
+		if abs >= next {
+			continue
+		}
+		str := sig3(abs / s.threshold)
+		if str == "1000" && i > 0 {
+			return prefix + "1" + suffixes[i-1].suffix
+		}
+		return prefix + str + s.suffix
+	}
+	return prefix + sig3(abs)
+}
 
-	for _, s := range suffixes {
-		if abs >= s.threshold {
-			scaled := abs / s.threshold
-			switch {
-			case scaled >= 100:
-				return fmt.Sprintf("%s%.0f%s", prefix, scaled, s.suffix)
-			case scaled >= 10:
-				return fmt.Sprintf("%s%.1f%s", prefix, scaled, s.suffix)
-			default:
-				return fmt.Sprintf("%s%.2f%s", prefix, scaled, s.suffix)
-			}
-		}
+// sig3 prints v (0 < v < ~1000) with three significant figures and no
+// exponent or trailing zeros.
+func sig3(v float64) string {
+	if v < 0.001 {
+		return trimZeros(strconv.FormatFloat(v, 'f', 6, 64))
 	}
-	return fmt.Sprintf("%s%.0f", prefix, abs)
+	s := strconv.FormatFloat(v, 'g', 3, 64)
+	if strings.ContainsAny(s, "e") {
+		f, _ := strconv.ParseFloat(s, 64)
+		s = strconv.FormatFloat(f, 'f', -1, 64)
+	}
+	return s
 }
 
 // Int formats a whole count with Number.
@@ -80,7 +97,7 @@ func Signed(n float64) string {
 }
 
 // Rate formats a per-tick rate with its unit: "+3.25/tick", "-0.12/tick".
-// Rates below 1 keep enough decimals to show a non-zero digit.
+// Small rates keep three significant figures (0.004, 0.711).
 func Rate(r float64) string {
 	return RateValue(r) + "/tick"
 }
@@ -95,16 +112,6 @@ func RateValue(r float64) string {
 	}
 	if abs == 0 {
 		return "+0"
-	}
-	if abs < 1 {
-		prec := 2
-		for prec < 6 && math.Round(abs*math.Pow10(prec)) == 0 {
-			prec++
-		}
-		return sign + fmt.Sprintf("%.*f", prec, abs)
-	}
-	if abs < 100 && abs != math.Floor(abs) {
-		return sign + trimZeros(fmt.Sprintf("%.2f", abs))
 	}
 	return sign + Number(abs)
 }

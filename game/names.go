@@ -68,13 +68,10 @@ func humanKey(key string) string {
 }
 
 // ResourceName returns the lowercase display name of a resource for use
-// mid-sentence ("iron ore", "dark matter"). Unknown keys fall back to the key
-// with spaces.
+// mid-sentence ("iron ore", "dark matter"). It is config.ResourceLabel, the
+// one source of resource wording.
 func ResourceName(key string) string {
-	if n, ok := names().resources[key]; ok && n != "" {
-		return strings.ToLower(n)
-	}
-	return humanKey(key)
+	return config.ResourceLabel(key)
 }
 
 // BuildingName returns a building's display name ("Lumber Mill").
@@ -149,42 +146,17 @@ func PrestigeUpgradeName(key string) string {
 
 // EffectTargetName names a bonus target the way the glossary does:
 // production_all → "all production", gather_rate → "worker output",
-// food_rate → "food production", tick_speed → "game speed".
+// food_rate → "food production", tick_speed → "game speed". It extends
+// config.EffectTargetLabel (the one source of target wording) with the
+// storage and bare-resource targets that milestones and events use.
 func EffectTargetName(target string) string {
-	switch target {
-	case "production_all", "all":
-		return "all production"
-	case "gather_rate":
-		return "worker output"
-	case "tick_speed":
-		return "game speed"
-	case "research_speed":
-		return "research speed"
-	case "knowledge_rate":
-		return "knowledge production"
-	case "military_power":
-		return "military power"
-	case "expedition_reward":
-		return "expedition rewards"
-	case "build_cost":
-		return "build cost"
-	case "population", "pop_cap":
-		return "housing"
-	case "trade_income", "trade_route_income":
-		return "trade route income"
-	case "morale":
-		return "morale"
-	}
-	if strings.HasSuffix(target, "_rate") {
-		return ResourceName(strings.TrimSuffix(target, "_rate")) + " production"
-	}
-	if strings.HasSuffix(target, "_storage") {
-		return ResourceName(strings.TrimSuffix(target, "_storage")) + " storage"
+	if res, ok := strings.CutSuffix(target, "_storage"); ok {
+		return ResourceName(res) + " storage"
 	}
 	if _, ok := names().resources[target]; ok {
 		return ResourceName(target) + " production"
 	}
-	return humanKey(target)
+	return config.EffectTargetLabel(target)
 }
 
 // Amount formats one amount of a resource: "23 food", "1.23M iron ore".

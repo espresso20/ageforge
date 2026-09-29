@@ -3,11 +3,11 @@ package config
 import (
 	"math"
 	"sort"
-	"strconv"
 	"sync"
 	"time"
 
 	"github.com/espresso20/ageforge/detmath"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // Pacing: the target curve and the rules derived from it
@@ -336,19 +336,10 @@ func normalizeResearchTicks(techs []TechDef) []TechDef {
 }
 
 // FormatRateValue prints a per-tick rate with 3 significant figures and a
-// K/M/B/T/Q suffix from a thousand up (0.711, 44.8, 3.34K, 2.72M).
+// K/M/B/T/Q suffix from a thousand up (0.711, 44.8, 3.34K, 2.72M). It is
+// textfmt.Number, the one number format the game uses.
 func FormatRateValue(v float64) string {
-	v = roundRate(v)
-	suffixes := []struct {
-		at  float64
-		sfx string
-	}{{1e15, "Q"}, {1e12, "T"}, {1e9, "B"}, {1e6, "M"}, {1e3, "K"}}
-	for _, s := range suffixes {
-		if v >= s.at {
-			return strconv.FormatFloat(roundRate(v/s.at), 'f', -1, 64) + s.sfx
-		}
-	}
-	return strconv.FormatFloat(v, 'f', -1, 64)
+	return textfmt.Number(v)
 }
 
 // PriceLevels returns the median first-copy price of each construction

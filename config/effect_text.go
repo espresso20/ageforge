@@ -4,6 +4,9 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"time"
+
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // Player-facing wording for effects.
@@ -90,28 +93,7 @@ func signed(v float64, s string) string {
 // DurationText renders a tick count as wall-clock time at 1x speed, in the
 // same shape the UI's formatTicks uses: "~30s", "~4m 48s", "~1h 12m".
 func DurationText(ticks int) string {
-	total := int(math.Round(float64(ticks) * TickSeconds))
-	switch {
-	case total <= 0:
-		return "~0s"
-	case total < 60:
-		return fmt.Sprintf("~%ds", total)
-	case total < 3600:
-		if s := total % 60; s != 0 {
-			return fmt.Sprintf("~%dm %ds", total/60, s)
-		}
-		return fmt.Sprintf("~%dm", total/60)
-	case total < 86400:
-		if m := (total % 3600) / 60; m != 0 {
-			return fmt.Sprintf("~%dh %dm", total/3600, m)
-		}
-		return fmt.Sprintf("~%dh", total/3600)
-	default:
-		if h := (total % 86400) / 3600; h != 0 {
-			return fmt.Sprintf("~%dd %dh", total/86400, h)
-		}
-		return fmt.Sprintf("~%dd", total/86400)
-	}
+	return textfmt.Ticks(ticks, time.Duration(TickSeconds*float64(time.Second)))
 }
 
 // RateText is a per-tick change to one resource: "gold +5/tick".

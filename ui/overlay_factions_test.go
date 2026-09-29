@@ -582,7 +582,7 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 	out := plainText(raw)
 	for _, want := range []string{
 		"Deals: new offers in",
-		"1. Sell: give 2.10K stone → get 3.00K food",
+		"1. Sell: give 2.1K stone → get 3K food",
 		"+13% vs market",
 		"2. Goodwill: give 727 iron → get +5 opinion",
 		"3. Buy: give 10 iron → get 12 food  taken",
@@ -595,7 +595,7 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 	}
 	// 100 stone can't pay 2.1K: the price is painted Negative; the favor's
 	// iron is affordable and painted Highlight.
-	if l := lineContaining(raw, "1."); !strings.Contains(l, "[negative]2.10K stone") {
+	if l := lineContaining(raw, "1."); !strings.Contains(l, "[negative]2.1K stone") {
 		t.Errorf("unaffordable price not in the Negative role: %q", l)
 	}
 	if l := lineContaining(raw, "Goodwill:"); !strings.Contains(l, "[highlight]727 iron") {
