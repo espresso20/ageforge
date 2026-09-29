@@ -1,6 +1,7 @@
 package config
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 )
@@ -33,45 +34,16 @@ func TestEventTextIsSane(t *testing.T) {
 			if strings.ContainsAny(s, "[]") {
 				t.Errorf("event %q %s contains a square bracket (tview tag risk): %q", e.Key, label, s)
 			}
-			if strings.Contains(s, "%") {
+			if pctDirective.MatchString(s) {
 				t.Errorf("event %q %s contains a %% directive: %q", e.Key, label, s)
 			}
 		}
 	}
 }
 
-// TestEventLogMessageKeepsEffectSummary spot-checks that the humour rewrite did
-// not strip the mechanical summary from representative events: a resource grant
-// must still name its payoff, and a timed effect must still say it's timed.
-// These anchors are the bits a player actually reads for game state — the joke
-// rides alongside them, never in their place.
-func TestEventLogMessageKeepsEffectSummary(t *testing.T) {
-	byKey := EventByKey()
-	cases := []struct {
-		key      string
-		mustHave []string // every substring must appear (case-insensitive)
-	}{
-		{"bountiful_harvest", []string{"250", "food"}},
-		{"wandering_traders", []string{"15", "gold", "10", "food"}},
-		{"first_contact", []string{"500", "knowledge", "50", "titanium"}},
-		{"gold_rush", []string{"gold", "15 ticks"}},
-		{"drought", []string{"food", "10 ticks"}},
-		{"transcendence_signal", []string{"100000", "knowledge", "50000", "culture"}},
-	}
-	for _, c := range cases {
-		e, ok := byKey[c.key]
-		if !ok {
-			t.Errorf("event %q not found", c.key)
-			continue
-		}
-		lower := strings.ToLower(e.LogMessage)
-		for _, sub := range c.mustHave {
-			if !strings.Contains(lower, strings.ToLower(sub)) {
-				t.Errorf("event %q LogMessage %q lost effect anchor %q", c.key, e.LogMessage, sub)
-			}
-		}
-	}
-}
+// pctDirective matches a leftover printf verb ("%s", "%d"); a percentage such
+// as "15%" is fine. The full effect check lives in TestEventTextMatchesEffects.
+var pctDirective = regexp.MustCompile(`%[a-zA-Z]`)
 
 // TestMilestoneFlavorIsSane verifies every milestone and chain carries a
 // non-empty Flavor and that the strings are safe to render. The engine wraps

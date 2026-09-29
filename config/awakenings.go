@@ -43,7 +43,7 @@ func Awakenings() []AwakeningDef {
 			Key:      "awakening_pottery_mastery",
 			EpochKey: "stone_era", TriggerAge: "stone_age",
 			Name:       "Pottery Mastery",
-			FlavorText: "Clay yields to patient hands. Sealed vessels hold the harvest through the lean months — and the surplus, for once, keeps.",
+			FlavorText: "Clay yields to patient hands. Sealed vessels hold the harvest through the lean months, and the surplus, for once, keeps. Food +1/tick, stone +0.5/tick for ~8m 20s.",
 			Duration:   250,
 			Effects: []Effect{
 				{Type: "production", Target: "food", Value: 1.0},
@@ -54,7 +54,7 @@ func Awakenings() []AwakeningDef {
 			Key:      "awakening_metallurgy",
 			EpochKey: "iron_era", TriggerAge: "iron_age",
 			Name:       "Discovery of Metallurgy",
-			FlavorText: "The forge runs hotter than any fire before it. Ore that once defied you now bleeds into ingots — and the smiths cannot smelt fast enough.",
+			FlavorText: "The forge runs hotter than any fire before it, and the smiths cannot smelt fast enough. Iron +2/tick for ~16m 40s.",
 			Duration:   500,
 			Effects: []Effect{
 				{Type: "production", Target: "iron", Value: 2.0},
@@ -64,7 +64,7 @@ func Awakenings() []AwakeningDef {
 			Key:      "awakening_steam_breakthrough",
 			EpochKey: "steel_era", TriggerAge: "industrial_age",
 			Name:       "Steam Breakthrough",
-			FlavorText: "Pressure, piston, purpose. The first engine coughs, catches, and roars — and every workshop in the land suddenly works twice as hard.",
+			FlavorText: "The first steam engine coughs, catches and roars. All production +25% for ~6m 40s.",
 			Duration:   200,
 			Effects: []Effect{
 				{Type: "production_all", Value: 0.25},
@@ -73,8 +73,8 @@ func Awakenings() []AwakeningDef {
 		{
 			Key:      "awakening_electrification",
 			EpochKey: "electric_era", TriggerAge: "victorian_age",
-			Name:       "Electrification",
-			FlavorText: "Night surrenders. The grid hums to life, lamps bloom across the skyline, and machines that never sleep take up the long shift.",
+			Name:       "The Grid Wakes",
+			FlavorText: "The grid hums to life, lamps come on across the skyline, and machines take up the night shift. Electricity +2/tick and all production +10% for ~10m.",
 			Duration:   300,
 			Effects: []Effect{
 				{Type: "production", Target: "electricity", Value: 2.0},
@@ -84,8 +84,8 @@ func Awakenings() []AwakeningDef {
 		{
 			Key:      "awakening_information_age",
 			EpochKey: "digital_era", TriggerAge: "modern_age",
-			Name:       "Information Age Dawns",
-			FlavorText: "Knowledge stops being scarce. The networks wake, the archives open, and insight compounds faster than anyone can read it.",
+			Name:       "Networks Wake",
+			FlavorText: "Knowledge stops being scarce. The networks come online and the archives open. Data +2/tick, knowledge +1/tick for ~10m.",
 			Duration:   300,
 			Effects: []Effect{
 				{Type: "production", Target: "data", Value: 2.0},
@@ -96,7 +96,7 @@ func Awakenings() []AwakeningDef {
 			Key:      "awakening_cybernetic",
 			EpochKey: "neon_era", TriggerAge: "cyberpunk_age",
 			Name:       "Cybernetic Awakening",
-			FlavorText: "Flesh and circuit reach an accord. Augmented crews never tire, never blink — and the city's output climbs to a neon-lit fever pitch.",
+			FlavorText: "Flesh and circuit reach an accord, and augmented crews work without tiring. All production +20% for ~8m 20s.",
 			Duration:   250,
 			Effects: []Effect{
 				{Type: "production_all", Value: 0.20},
@@ -106,7 +106,7 @@ func Awakenings() []AwakeningDef {
 			Key:      "awakening_first_contact",
 			EpochKey: "cosmic_era", TriggerAge: "interstellar_age",
 			Name:       "First Contact Signal",
-			FlavorText: "A pattern threads through the static — too regular to be noise, too strange to be us. Whatever sent it, your engineers cannot stop listening.",
+			FlavorText: "A pattern threads through the static, too regular to be noise and too strange to be ours. Your engineers cannot stop listening. Dark matter +1.5/tick and all production +10% for ~13m 20s.",
 			Duration:   400,
 			Effects: []Effect{
 				{Type: "production", Target: "dark_matter", Value: 1.5},

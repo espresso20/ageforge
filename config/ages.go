@@ -58,7 +58,7 @@ func Ages() []AgeDef {
 		{
 			Name: "Stone Age", Key: "stone_age", Order: 1,
 			EpochKey:        "stone_era",
-			Description:     "Tools of stone change everything.",
+			Description:     "Stone tools and the first permanent camps.",
 			Quip:            "Turns out you can hit almost anything with a rock. Revolutionary.",
 			ResourceReqs:    map[string]float64{"food": 500, "wood": 500, "knowledge": 75},
 			BuildingReqs:    map[string]int{"hut": 10, "story_circle": 5},
@@ -69,7 +69,7 @@ func Ages() []AgeDef {
 		{
 			Name: "Bronze Age", Key: "bronze_age", Order: 2,
 			EpochKey:        "stone_era",
-			Description:     "Discovery of metalworking changes everything.",
+			Description:     "Metalworking arrives, and with it trade.",
 			Quip:            "Things are about to get significantly less wooden.",
 			ResourceReqs:    map[string]float64{"food": 2000, "wood": 4000, "stone": 2000, "knowledge": 750},
 			BuildingReqs:    map[string]int{"longhouse": 15, "stone_pit": 5, "elders_hall": 5},
@@ -80,7 +80,7 @@ func Ages() []AgeDef {
 		{
 			Name: "Iron Age", Key: "iron_age", Order: 3,
 			EpochKey:        "iron_era",
-			Description:     "Iron tools and weapons transform society.",
+			Description:     "Iron tools and weapons spread.",
 			Quip:            "Harder, sharper, and far more likely to end an argument permanently.",
 			ResourceReqs:    map[string]float64{"food": 40000, "wood": 20000, "stone": 8000, "iron": 4000, "knowledge": 10000},
 			BuildingReqs:    map[string]int{"lumber_mill": 8, "quarry": 8, "scriptorium": 3},
@@ -141,7 +141,7 @@ func Ages() []AgeDef {
 		{
 			Name: "Industrial Age", Key: "industrial_age", Order: 8,
 			EpochKey:        "steel_era",
-			Description:     "Machines revolutionize production.",
+			Description:     "Machines take over production.",
 			Quip:            "Smoke everywhere, hours endless, output magnificent. Two out of three.",
 			ResourceReqs:    map[string]float64{"steel": 310000, "gold": 2500000, "knowledge": 2000000},
 			BuildingReqs:    map[string]int{"plantation": 8, "port": 10},
@@ -165,7 +165,7 @@ func Ages() []AgeDef {
 		{
 			Name: "Electric Age", Key: "electric_age", Order: 10,
 			EpochKey:        "electric_era",
-			Description:     "Electrification transforms daily life.",
+			Description:     "Electric light and power reach daily life.",
 			Quip:            "Lightning, domesticated. The dark is now strictly optional.",
 			ResourceReqs:    map[string]float64{"steel": 9125000, "oil": 2625000, "electricity": 850000},
 			BuildingReqs:    map[string]int{"steam_turbine": 10, "academy": 10, "bessemer_plant": 10},
@@ -175,7 +175,7 @@ func Ages() []AgeDef {
 		{
 			Name: "Atomic Age", Key: "atomic_age", Order: 11,
 			EpochKey:        "electric_era",
-			Description:     "Nuclear power unleashes terrifying potential.",
+			Description:     "Nuclear power, for better and worse.",
 			Quip:            "You have split the atom. The atom is taking it personally.",
 			ResourceReqs:    map[string]float64{"steel": 85625000, "electricity": 9250000, "oil": 6125000},
 			BuildingReqs:    map[string]int{"electric_arc_furnace": 15, "power_station": 15, "physics_laboratory": 15},
@@ -228,8 +228,8 @@ func Ages() []AgeDef {
 		{
 			Name: "Fusion Age", Key: "fusion_age", Order: 16,
 			EpochKey:        "neon_era",
-			Description:     "Clean energy breakthrough changes everything.",
-			Quip:            "Limitless clean power, at last. Only forty years later than promised.",
+			Description:     "Fusion brings clean, plentiful energy.",
+			Quip:            "Endless clean power, at last. Only forty years later than promised.",
 			ResourceReqs:    map[string]float64{"electricity": 390625000000, "crypto": 20000000000, "data": 62500000000},
 			BuildingReqs:    map[string]int{"augmentation_foundry": 15, "arcology_pod": 25, "black_market": 15},
 			UnlockBuildings: []string{"habitat_ring", "fusion_vault", "bio_reactor_farm", "molecular_synthesizer", "exotic_mineral_extractor", "theoretical_institute", "quantum_chapel", "plasma_command", "energy_exchange", "fusion_reactor", "exotic_matter_forge", "fusion_reactor_array", "quantum_server_farm", "neural_art_complex", "stellar_cradle"},
@@ -250,7 +250,7 @@ func Ages() []AgeDef {
 		{
 			Name: "Interstellar Age", Key: "interstellar_age", Order: 18,
 			EpochKey:        "cosmic_era",
-			Description:     "Between the stars, new frontiers await.",
+			Description:     "Ships cross the space between stars.",
 			Quip:            "The nearest neighbor is four light-years away. Finally, some peace.",
 			ResourceReqs:    map[string]float64{"titanium": 100000000000, "plasma": 250000000000},
 			BuildingReqs:    map[string]int{"launch_complex": 10, "orbital_habitat": 15, "solar_collector_array": 10},
@@ -283,7 +283,7 @@ func Ages() []AgeDef {
 		{
 			Name: "Transcendent Age", Key: "transcendent_age", Order: 21,
 			EpochKey:        "cosmic_era",
-			Description:     "Final ascension. The ultimate civilization.",
+			Description:     "The last age. There is nowhere further to go.",
 			Quip:            "You have become everything. It is quieter than the brochure suggested.",
 			ResourceReqs:    map[string]float64{"quantum_flux": 150000000000000, "antimatter": 250000000000000},
 			BuildingReqs:    map[string]int{"reality_academy": 20, "reality_forge": 15, "probability_war_room": 15},

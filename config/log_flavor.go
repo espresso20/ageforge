@@ -35,9 +35,9 @@ var logFlavorPools = map[string][]string{
 	LogFlavorBuildingComplete: {
 		"The foreman declares it finished and immediately starts complaining about the next one.",
 		"It is standing. It is, against the odds, standing.",
-		"The ribbon-cutting was brief; nobody could find scissors.",
+		"The opening ceremony was brief; nobody could agree who should speak first.",
 		"Built on time and only slightly over budget, which counts as a triumph.",
-		"The workers admire their handiwork, then quietly wonder where the next paycheck is.",
+		"The workers admire their handiwork, then wonder where the next meal is coming from.",
 		"A new building. The mapmakers sigh and reach for a fresh sheet.",
 		"It matches the others. We have decided this is intentional.",
 		"Construction complete. The scaffolding will linger for a suspiciously long time.",
@@ -51,11 +51,11 @@ var logFlavorPools = map[string][]string{
 		"Future generations will study this moment, then misquote it.",
 	},
 	LogFlavorResearchDone: {
-		"The researchers celebrate, then realise this opens up six new mysteries.",
+		"The researchers celebrate, then realize this opens up six new mysteries.",
 		"Knowledge advances. Somewhere, a stubborn assumption quietly dies.",
 		"The scholars are pleased, which for scholars means slightly less frowning.",
 		"It works in theory and, remarkably, also in practice.",
-		"A breakthrough. The grant committee will pretend they expected it all along.",
+		"A breakthrough. The elders will pretend they expected it all along.",
 		"Discovery achieved. The notes are illegible but the result is sound.",
 	},
 	LogFlavorStarvation: {
