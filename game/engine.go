@@ -758,7 +758,7 @@ func (ge *GameEngine) recalculateTickSpeed() {
 }
 
 // MaxSpeedForAge returns the maximum speed multiplier gated by wonders.
-// Each wonder built adds +0.5x on top of the 1.0x base, so players must
+// Each wonder built adds config.WonderSpeedCapStep on top of the 1.0x base, so players must
 // invest in wonders to unlock higher speed settings via the `speed` command.
 // NOTE: Caller must hold at least an RLock if called from outside the tick goroutine.
 func (ge *GameEngine) MaxSpeedForAge() float64 {
@@ -772,7 +772,7 @@ func (ge *GameEngine) MaxSpeedForAge() float64 {
 }
 
 // wonderSpeedStep is how much each completed wonder raises the speed cap.
-const wonderSpeedStep = 0.5
+const wonderSpeedStep = config.WonderSpeedCapStep
 
 // starvationDeathInterval is how many ticks pass between starvation deaths
 // while food sits at zero.
@@ -3576,7 +3576,7 @@ func (ge *GameEngine) DoPrestige() error {
 
 	ageOrder := ge.progress.GetAgeOrder()
 	if !ge.Prestige.CanPrestige(ge.age, ageOrder) {
-		return fmt.Errorf("You can prestige once you reach the %s.", AgeName("modern_age"))
+		return fmt.Errorf("You can prestige once you reach the %s.", AgeName(PrestigeMinAge))
 	}
 
 	// In the final epoch prestige is the passage, and it can bring the Last

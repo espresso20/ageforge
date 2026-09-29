@@ -190,7 +190,7 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 			if bs.WonderBankFull {
 				fmt.Fprintf(&sb, "  [green]✓ The bank is full. Build it with: build %s[-]\n", current.key)
 			} else {
-				fmt.Fprintf(&sb, "  [gray]%s[-]\n", wonderCollectHint)
+				fmt.Fprintf(&sb, "  [gray]%s[-]\n", wonderCollectHint())
 			}
 			fmt.Fprintf(&sb, "  %s\n", wonderOverflowLine(state.WonderOverflow))
 		}
@@ -204,7 +204,7 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 			wonderCount++
 		}
 	}
-	maxSpeed := 1.0 + float64(wonderCount)*wonderSpeedStep
+	maxSpeed := 1.0 + float64(wonderCount)*config.WonderSpeedCapStep
 	fmt.Fprintf(&sb, "\n[gold]Wonders built: %d[-] [gray]·[-] [cyan]Speed cap: %.1fx[-]", wonderCount, maxSpeed)
 
 	infoTV.SetText(safeTags(sb.String()))
@@ -212,15 +212,13 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 	wp.root.AddItem(infoTV, 0, 1, false)
 }
 
-// wonderSpeedStep mirrors game's wonderSpeedStep: each built wonder raises
-// the speed cap by this much over the 1.0x base.
-const wonderSpeedStep = 0.5
-
 // wonderSpeedCapText is the speed line every wonder card carries.
-var wonderSpeedCapText = fmt.Sprintf("Raises the speed cap by %.1fx", wonderSpeedStep)
+var wonderSpeedCapText = "Raises the speed cap by " + config.FormatAmount(config.WonderSpeedCapStep) + "x"
 
-// wonderCollectHint matches the wonder collect help row in commands.go.
-var wonderCollectHint = lit("wonder collect <res|all> [amt|all|max]")
+// wonderCollectHint is the registry's wonder collect form, escaped for tview.
+func wonderCollectHint() string {
+	return lit(helpRow("wonder collect").Form)
+}
 
 // formatEffect formats a building effect for display, in the same words as
 // formatTechEffect ("+10% all production", "unlocks Lumber Mill"), colored

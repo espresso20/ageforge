@@ -766,11 +766,12 @@ func unlockedThemeKeys(engine *game.GameEngine) []string {
 }
 
 // availableSpeedOptions returns the speed multipliers from 1.0 up to the
-// current max, in steps of 0.5 (the max rises 0.5x per wonder built).
+// current max, in steps of config.WonderSpeedCapStep (the max rises that much
+// per wonder built).
 func availableSpeedOptions(engine *game.GameEngine) []string {
 	maxSpeed := engine.GetMaxSpeed()
 	var options []string
-	for s := 1.0; s <= maxSpeed; s += 0.5 {
+	for s := 1.0; s <= maxSpeed; s += config.WonderSpeedCapStep {
 		options = append(options, fmt.Sprintf("%.1f", s))
 	}
 	return options

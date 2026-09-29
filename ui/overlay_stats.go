@@ -10,20 +10,6 @@ import (
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
-// prestigeMinAgeOrder mirrors game.PrestigeManager.CanPrestige: prestige opens
-// at the age with this Order (the Modern Age). game/ does not export it yet.
-const prestigeMinAgeOrder = 12
-
-// prestigeAgeName names the age that opens prestige ("Modern Age").
-func prestigeAgeName() string {
-	for _, def := range config.AgeByKey() {
-		if def.Order == prestigeMinAgeOrder {
-			return def.Name
-		}
-	}
-	return "Modern Age"
-}
-
 // statsProvider generates the stats overlay text from the current game state.
 // Covers: game statistics, active epoch events, and prestige upgrades/points.
 func statsProvider(state game.GameState, _ int) string {
@@ -187,9 +173,9 @@ func statsProvider(state game.GameState, _ int) string {
 	if p.CanPrestige {
 		fmt.Fprintf(&sb, " [green]Prestige now for %s.[-]\n", textfmt.Count(p.PendingPoints, "point", "points"))
 	} else if p.Level == 0 {
-		fmt.Fprintf(&sb, " [gray]Reach the %s to prestige.[-]\n", prestigeAgeName())
+		fmt.Fprintf(&sb, " [gray]Reach the %s to prestige.[-]\n", game.AgeName(game.PrestigeMinAge))
 	} else {
-		fmt.Fprintf(&sb, " [yellow]Reach the %s to prestige again.[-]\n", prestigeAgeName())
+		fmt.Fprintf(&sb, " [yellow]Reach the %s to prestige again.[-]\n", game.AgeName(game.PrestigeMinAge))
 	}
 
 	upgradeKeys := []string{

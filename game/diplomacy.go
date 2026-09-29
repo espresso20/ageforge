@@ -38,9 +38,13 @@ const (
 	lendDurationTicks    = 200
 	lendPermanentOpinion = 80
 
-	// Allying needs at least this opinion and costs allyGoldCost gold.
-	allyMinOpinion = 50
-	allyGoldCost   = 500.0
+	// Allying needs at least AllyOpinion opinion and costs AllyCost gold. A
+	// gift costs GiftCost gold and adds GiftOpinion opinion. Exported so the
+	// UI quotes the same numbers.
+	AllyOpinion = 50
+	AllyCost    = 500.0
+	GiftCost    = 200.0
+	GiftOpinion = 15
 )
 
 // errUnknownCiv is the refusal for a civ key that is not on the roster.
@@ -351,10 +355,10 @@ func (dm *DiplomacyManager) SetStatus(factionKey, status string, gold float64) (
 	var cost float64
 	switch status {
 	case "allied":
-		if fs.Opinion < allyMinOpinion {
-			return 0, fmt.Errorf("The %s need opinion %d before they will ally (now %d).", def.Name, allyMinOpinion, fs.Opinion)
+		if fs.Opinion < AllyOpinion {
+			return 0, fmt.Errorf("The %s need opinion %d before they will ally (now %d).", def.Name, AllyOpinion, fs.Opinion)
 		}
-		cost = allyGoldCost
+		cost = AllyCost
 	case "rival":
 		cost = 0
 	case "embargo":
@@ -481,12 +485,12 @@ func (dm *DiplomacyManager) SendGift(factionKey string, gold float64) (float64, 
 		return 0, errNotMet(def.Name)
 	}
 
-	cost := 200.0
+	cost := GiftCost
 	if gold < cost {
 		return 0, fmt.Errorf("Not enough gold for a gift to the %s: need %s, have %s.", def.Name, textfmt.Number(cost), textfmt.Number(gold))
 	}
 
-	fs.Opinion += 15
+	fs.Opinion += GiftOpinion
 	if fs.Opinion > opinionMax {
 		fs.Opinion = opinionMax
 	}

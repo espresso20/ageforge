@@ -1163,7 +1163,7 @@ func cmdSpeed(args []string, engine *game.GameEngine) CommandResult {
 		mult := engine.GetSpeedMultiplier()
 		maxSpeed := engine.GetMaxSpeed()
 		return CommandResult{
-			Message: fmt.Sprintf("Current speed: [cyan]%.1fx[-] (speed cap: [green]%.1fx[-]; each wonder built raises it by 0.5x)", mult, maxSpeed),
+			Message: fmt.Sprintf("Current speed: [cyan]%.1fx[-] (speed cap: [green]%.1fx[-]; each wonder built raises it by %sx)", mult, maxSpeed, config.FormatAmount(config.WonderSpeedCapStep)),
 			Type:    "info",
 		}
 	}
@@ -1597,7 +1597,7 @@ func cmdPrestigeStatus(engine *game.GameEngine) CommandResult {
 		lines = append(lines, lastPassageStatusLines(state)...)
 		lines = append(lines, "  Type [cyan]prestige confirm[-] to reset with bonuses.")
 	default:
-		lines = append(lines, fmt.Sprintf("\n  [yellow]Reach the Modern Age to prestige (it would earn %s now).[-]", textfmt.Count(p.PendingPoints, "point", "points")))
+		lines = append(lines, fmt.Sprintf("\n  [yellow]Reach the %s to prestige (it would earn %s now).[-]", game.AgeName(game.PrestigeMinAge), textfmt.Count(p.PendingPoints, "point", "points")))
 	}
 
 	lines = append(lines, "\n  Type [cyan]prestige shop[-] to view upgrades.")

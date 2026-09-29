@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 )
@@ -72,7 +73,7 @@ func renderCurrentWonderSummary(state game.GameState) string {
 		if bs.WonderBankFull {
 			fmt.Fprintf(&sb, "   [green]✓ The bank is full. Build it with: build %s[-]\n", current.key)
 		} else {
-			fmt.Fprintf(&sb, "   [gray]%s[-]\n", wonderCollectHint)
+			fmt.Fprintf(&sb, "   [gray]%s[-]\n", wonderCollectHint())
 		}
 		fmt.Fprintf(&sb, "   %s\n", wonderOverflowLine(state.WonderOverflow))
 	}
@@ -106,14 +107,14 @@ func wondersProvider(state game.GameState, _ int) string {
 	for _, w := range wonders {
 		if bs, ok := state.Buildings[w.key]; ok && bs.Count > 0 {
 			builtCount++
-			maxSpeed += wonderSpeedStep
+			maxSpeed += config.WonderSpeedCapStep
 		}
 	}
 
 	// Header
 	fmt.Fprintf(&sb, "[gold]═══ Wonders: %d / %d ═══[-]\n", builtCount, totalCount)
-	fmt.Fprintf(&sb, " [cyan]Speed cap: %.1fx[-]   [gray]Each wonder raises the speed cap by %.1fx (set it with: speed %.1f).[-]\n\n",
-		maxSpeed, wonderSpeedStep, 1.0+wonderSpeedStep)
+	fmt.Fprintf(&sb, " [cyan]Speed cap: %.1fx[-]   [gray]Each wonder raises the speed cap by %sx (set it with: speed %.1f).[-]\n\n",
+		maxSpeed, config.FormatAmount(config.WonderSpeedCapStep), 1.0+config.WonderSpeedCapStep)
 
 	// List each wonder
 	for _, w := range wonders {
@@ -186,7 +187,7 @@ func wondersProvider(state game.GameState, _ int) string {
 							clr, game.ResourceName(k), FormatNumber(banked), FormatNumber(need))
 					}
 				}
-				sb.WriteString("   [gray]Bank resources to build it: " + wonderCollectHint + "[-]\n")
+				sb.WriteString("   [gray]Bank resources to build it: " + wonderCollectHint() + "[-]\n")
 			}
 			if w.def.Description != "" {
 				fmt.Fprintf(&sb, "   [gray]%s[-]\n", w.def.Description)

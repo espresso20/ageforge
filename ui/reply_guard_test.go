@@ -221,13 +221,13 @@ func TestSaveNamesAreOneWord(t *testing.T) {
 }
 
 // TestDiplomacyPricesMatchEngine holds the prices the help rows and the
-// Factions panel quote (allyGoldCost, allyMinOpinion, giftGoldCost,
-// giftOpinion) to what the engine charges.
+// Factions panel quote (game.AllyCost, AllyOpinion, GiftCost, GiftOpinion) to
+// what the engine charges.
 func TestDiplomacyPricesMatchEngine(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	ge := game.NewGameEngine()
 	const civ = "riverlands_tribes"
-	if err := ge.MeetFactionForTest(civ, allyMinOpinion-giftOpinion); err != nil {
+	if err := ge.MeetFactionForTest(civ, game.AllyOpinion-game.GiftOpinion); err != nil {
 		t.Fatal(err)
 	}
 	ge.Resources.LoadStorage(map[string]float64{"gold": 10000})
@@ -236,23 +236,23 @@ func TestDiplomacyPricesMatchEngine(t *testing.T) {
 	gold := func() float64 { return ge.GetState().Resources["gold"].Amount }
 
 	if err := ge.SetDiplomaticStatus(civ, "allied"); err == nil {
-		t.Errorf("allied at opinion %d, but the help says it needs %d", opinion(), allyMinOpinion)
+		t.Errorf("allied at opinion %d, but the help says it needs %d", opinion(), game.AllyOpinion)
 	}
 	before, op := gold(), opinion()
 	if err := ge.SendGift(civ); err != nil {
 		t.Fatal(err)
 	}
-	if spent := before - gold(); spent != giftGoldCost {
-		t.Errorf("a gift cost %v gold, the help says %d", spent, giftGoldCost)
+	if spent := before - gold(); spent != game.GiftCost {
+		t.Errorf("a gift cost %v gold, the help says %v", spent, game.GiftCost)
 	}
-	if got := opinion() - op; got != giftOpinion {
-		t.Errorf("a gift raised opinion by %d, the help says %d", got, giftOpinion)
+	if got := opinion() - op; got != game.GiftOpinion {
+		t.Errorf("a gift raised opinion by %d, the help says %d", got, game.GiftOpinion)
 	}
 	before = gold()
 	if err := ge.SetDiplomaticStatus(civ, "allied"); err != nil {
 		t.Fatalf("ally at opinion %d: %v", opinion(), err)
 	}
-	if spent := before - gold(); spent != allyGoldCost {
-		t.Errorf("allying cost %v gold, the help says %d", spent, allyGoldCost)
+	if spent := before - gold(); spent != game.AllyCost {
+		t.Errorf("allying cost %v gold, the help says %v", spent, game.AllyCost)
 	}
 }

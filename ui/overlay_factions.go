@@ -10,16 +10,6 @@ import (
 	"github.com/espresso20/ageforge/theme"
 )
 
-// Diplomacy costs shown on the civilization cards. They mirror the literals in
-// game.DiplomacyManager.SendGift and SetStatus("allied"); game/ does not export
-// them yet.
-const (
-	giftGoldCost   = 200
-	giftOpinion    = 15
-	allyGoldCost   = 500
-	allyMinOpinion = 50
-)
-
 // The Factions panel.
 //
 // This started life as a pure diplomacy screen (opinion bars and status labels)
@@ -367,8 +357,8 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 	case f.Status == "allied":
 		fmt.Fprintf(sb, "   [gray]diplomacy rival/embargo/neutral %s[-]\n\n", def.Key)
 	default:
-		fmt.Fprintf(sb, "   [gray]Send a gift: %d gold for +%d opinion (diplomacy gift %s) · ally/rival/embargo/neutral %s[-]\n\n",
-			giftGoldCost, giftOpinion, def.Key, def.Key)
+		fmt.Fprintf(sb, "   [gray]Send a gift: %s for +%d opinion (diplomacy gift %s) · ally/rival/embargo/neutral %s[-]\n\n",
+			game.Amount(game.GiftCost, "gold"), game.GiftOpinion, def.Key, def.Key)
 	}
 }
 
@@ -569,10 +559,10 @@ func diplomacyThreshold(status string, opinion int, key string) string {
 	switch {
 	case opinion < 25:
 		return fmt.Sprintf("[gray](+%d opinion to friendly)[-]", 25-opinion)
-	case opinion < allyMinOpinion:
-		return fmt.Sprintf("[gray](+%d opinion to ally-eligible)[-]", allyMinOpinion-opinion)
+	case opinion < game.AllyOpinion:
+		return fmt.Sprintf("[gray](+%d opinion to ally-eligible)[-]", game.AllyOpinion-opinion)
 	default:
-		return fmt.Sprintf("[gray](can ally: diplomacy ally %s, %d gold)[-]", key, allyGoldCost)
+		return fmt.Sprintf("[gray](can ally: diplomacy ally %s, %s)[-]", key, game.Amount(game.AllyCost, "gold"))
 	}
 }
 
@@ -600,13 +590,10 @@ func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameS
 // What you can't pay yet is in the Negative role; a taken offer is dim.
 // Resource keys go in as display names, so "iron_ore" reads "iron ore".
 func dealLine(d game.DealInfo, state game.GameState, width int) string {
-	giveName := game.ResourceName(d.Give)
-	getName := ""
-	if d.Get != "" {
-		getName = game.ResourceName(d.Get)
-	}
-	give := FormatNumber(d.GiveAmt) + " " + giveName
-	get := game.DealGets(getName, d.GetAmt, d.Standing, FormatNumber)
+	// Raw keys go in; game.DealGets and DealTerms name the resources, so the
+	// painted skeleton below and plain use the same words ("iron ore").
+	give := FormatNumber(d.GiveAmt) + " " + game.ResourceName(d.Give)
+	get := game.DealGets(d.Get, d.GetAmt, d.Standing, FormatNumber)
 	note := ""
 	switch {
 	case d.Taken:
@@ -618,7 +605,7 @@ func dealLine(d game.DealInfo, state game.GameState, width int) string {
 	case d.Get != "":
 		note = "not sold at the market"
 	}
-	plain := fmt.Sprintf("%d. %s", d.Num, game.DealTerms(d.Kind, giveName, d.GiveAmt, getName, d.GetAmt, d.Standing, FormatNumber))
+	plain := fmt.Sprintf("%d. %s", d.Num, game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, FormatNumber))
 	if d.Taken {
 		return theme.Paint(theme.RoleDim, truncate(plain+"  "+note, width))
 	}

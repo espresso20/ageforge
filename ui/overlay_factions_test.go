@@ -574,6 +574,7 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 				{Num: 1, Kind: game.DealWant, Give: "stone", GiveAmt: 2100, Get: "food", GetAmt: 3000, Edge: 0.13},
 				{Num: 2, Kind: game.DealFavor, Give: "iron", GiveAmt: 727, Standing: 5},
 				{Num: 3, Kind: game.DealSell, Give: "iron", GiveAmt: 10, Get: "food", GetAmt: 12, Taken: true},
+				{Num: 4, Kind: game.DealWant, Give: "iron_ore", GiveAmt: 50, Get: "dark_matter", GetAmt: 2},
 			}},
 			"ironhold_clans": {Name: "Ironhold Clans", Discovered: true, Status: "neutral", AtWar: true, DealsBlocked: "at war with you"},
 		}},

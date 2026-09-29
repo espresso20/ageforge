@@ -72,16 +72,18 @@ func (pm *PrestigeManager) CalculatePoints(age string, ageOrder map[string]int, 
 	return points
 }
 
-// CanPrestige returns true if the player has reached Modern Age (order ≥ 12).
-// Modern Age is the minimum threshold; later ages are also valid prestige points.
-// The order value is compared against the ageOrder map provided by ProgressManager.
+// PrestigeMinAge is the age that opens prestige; every later age counts too.
+const PrestigeMinAge = "modern_age"
+
+// CanPrestige returns true if the player has reached PrestigeMinAge or later,
+// comparing orders from the ageOrder map provided by ProgressManager.
 func (pm *PrestigeManager) CanPrestige(age string, ageOrder map[string]int) bool {
 	idx, ok := ageOrder[age]
 	if !ok {
 		return false
 	}
-	// Modern Age is order 12 in the 22-age sequence.
-	return idx >= 12
+	minIdx, ok := ageOrder[PrestigeMinAge]
+	return ok && idx >= minIdx
 }
 
 // Prestige increments level and adds points

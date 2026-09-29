@@ -48,7 +48,7 @@ var onboardingSteps = []onboardingStep{
 	{Commands: []string{"build gathering_camp", "build wood_camp"}, Join: "and", Note: "food runs short first"},
 	{Commands: []string{"build hut"}, Note: "shelter; raises your housing"},
 	{Commands: []string{"recruit 3", "assign gathering_camp 3"}, Join: "then", Note: "staffed camps make 5x"},
-	{Commands: []string{"wonder collect all"}, Note: "then build the [gold]wonder[-] once its bank is full. You need it to advance, and it raises the speed cap by 0.5x."},
+	{Commands: []string{"wonder collect all"}, Note: "then build the [gold]wonder[-] once its bank is full. You need it to advance, and it raises the speed cap by " + config.FormatAmount(config.WonderSpeedCapStep) + "x."},
 }
 
 // onboardingCommands flattens onboardingSteps into the commands in the order a
