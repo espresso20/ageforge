@@ -65,8 +65,8 @@ func TestHarbingerPanelPreIndustrial(t *testing.T) {
 	}
 	txt := untag(harbingerPanelText(st, "", false, false))
 	for _, want := range []string{
-		"THE SOOTHSAYER", h.Description, "Iron Era", "Severity:", "The omens give no figure",
-		"Appease — " + h.AppeaseLabel, "Brace — " + h.BraceLabel, "Invite — " + h.InviteLabel,
+		"The Soothsayer", h.Description, "Iron Era", "Severity:", "The omens give no figure",
+		"Appease: " + h.AppeaseLabel, "Brace: " + h.BraceLabel, "Invite: " + h.InviteLabel,
 		"Level 0 / 2", "Next level costs:", "20% of buildings fall, 15% of stock is kept", "Next level: 15% fall, 30% kept",
 		" A ", " B ", " I ", "Esc",
 	} {
@@ -79,7 +79,7 @@ func TestHarbingerPanelPreIndustrial(t *testing.T) {
 			t.Errorf("panel missing warning line %q", l)
 		}
 	}
-	if strings.Contains(txt, "Odds published") {
+	if strings.Contains(txt, "Published odds") {
 		t.Error("pre-industrial panel printed the odds")
 	}
 }
@@ -91,7 +91,7 @@ func TestHarbingerPanelPostIndustrial(t *testing.T) {
 		t.Fatalf("industrial age harbinger = %+v", st.Harbinger)
 	}
 	txt := untag(harbingerPanelText(st, "", false, false))
-	want := "Odds published: " + harbingerPercent(st.Harbinger.Probability)
+	want := "Published odds: " + harbingerPercent(st.Harbinger.Probability)
 	if !strings.Contains(txt, want) {
 		t.Errorf("panel missing %q:\n%s", want, txt)
 	}
@@ -164,12 +164,12 @@ func TestHarbingerPanelKeys(t *testing.T) {
 func TestHarbingerStatusBadgeAndSidebar(t *testing.T) {
 	d, _, _ := harbDashboard(t, "")
 	d.refresh()
-	if strings.Contains(d.statusTV.GetText(true), "HARBINGER") {
+	if strings.Contains(d.statusTV.GetText(true), "⚑ Harbinger") {
 		t.Error("badge shown with no harbinger")
 	}
 	d2, _, _ := harbDashboard(t, "medieval_age")
 	d2.refresh()
-	if !strings.Contains(d2.statusTV.GetText(true), "⚑ HARBINGER") {
+	if !strings.Contains(d2.statusTV.GetText(true), "⚑ Harbinger.") {
 		t.Errorf("no harbinger badge in status bar: %q", d2.statusTV.GetText(true))
 	}
 	if !strings.Contains(buildSidebarText(""), "harbinger") {

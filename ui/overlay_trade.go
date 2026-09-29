@@ -2,83 +2,76 @@ package ui
 
 import (
 	"fmt"
+	"math"
 	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
-// tradeProvider generates the trade overlay text from the current game state.
-// It mirrors the logic from TradeTab.Refresh — same data, formatted as plain text.
+// tradeProvider renders the Trade panel: market rates, trade routes and the
+// allied bonuses that change trade income.
 func tradeProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 	trade := state.Trade
 
-	// === Exchange Rates ===
-	fmt.Fprintf(&sb, " [gold]═══ Exchange Rates ═══[-]\n\n")
+	// === Market rates ===
+	fmt.Fprintf(&sb, " [gold]═══ Market rates ═══[-]\n\n")
+	if trade.TradeBuildings < 1 {
+		sb.WriteString(" [yellow]Trading needs a Market: build market[-]\n\n")
+	}
 	if len(trade.ExchangeRates) == 0 {
-		sb.WriteString(" [gray]No exchange rates available yet[-]\n")
-		sb.WriteString(" [gray]Build a market to unlock trading[-]\n")
+		sb.WriteString(" [gray]The market has no rates in this age.[-]\n")
 	} else {
 		keys := make([]string, 0, len(trade.ExchangeRates))
 		for k := range trade.ExchangeRates {
 			keys = append(keys, k)
 		}
 		sort.Strings(keys)
-
 		for _, key := range keys {
-			info := trade.ExchangeRates[key]
-			// Market pressure is a short-term penalty/bonus from repeated trades.
-			// Positive pressure = price moved against you (recently sold a lot).
-			// Negative pressure = price moved in your favour (recovery period).
-			pressureStr := ""
-			if info.Pressure > 0.1 {
-				pressureStr = fmt.Sprintf(" [red]↓%.0f%%[-]", info.Pressure*30)
-			} else if info.Pressure < -0.1 {
-				pressureStr = fmt.Sprintf(" [green]↑%.0f%%[-]", -info.Pressure*30)
-			}
-
-			rateColor := "white"
-			if info.Rate > info.BaseRate {
-				rateColor = "green"
-			} else if info.Rate < info.BaseRate*0.9 {
-				rateColor = "yellow"
-			}
-
-			fmt.Fprintf(&sb, " %s → %s: [%s]%.2f[-]%s\n",
-				info.From, info.To, rateColor, info.Rate, pressureStr)
+			sb.WriteString(" " + exchangeRateLine(trade.ExchangeRates[key]) + "\n")
 		}
 	}
 
-	sb.WriteString("\n [gray]Commands: trade <from> <to> <amount>[-]\n")
+	sb.WriteString("\n [gray]Commands: trade <give> <get> <amount to give>[-]\n")
 	sb.WriteString(" [gray]Example: trade food wood 50[-]\n")
 
 	if len(trade.TotalExchanged) > 0 {
-		sb.WriteString("\n [gold]Total Exchanged:[-]\n")
+		// note: the snapshot sums what you gave and what you got per resource,
+		// so this cannot be split into sold and bought without a game change.
+		sb.WriteString("\n [gold]Traded at the market (given plus received):[-]\n")
 		exchKeys := make([]string, 0, len(trade.TotalExchanged))
 		for k := range trade.TotalExchanged {
 			exchKeys = append(exchKeys, k)
 		}
 		sort.Strings(exchKeys)
 		for _, res := range exchKeys {
-			fmt.Fprintf(&sb, "   %s: %.0f\n", res, trade.TotalExchanged[res])
+			fmt.Fprintf(&sb, "   %s\n", game.Amount(trade.TotalExchanged[res], res))
 		}
 	}
 
-	// === Trade Routes ===
-	sb.WriteString("\n [gold]═══ Trade Routes ═══[-]\n\n")
+	// === Trade routes ===
+	sb.WriteString("\n [gold]═══ Trade routes ═══[-]\n\n")
 
-	// Disruption banner: war/embargo blockades suspend any route importing the
-	// listed resources until the conflict ends.
+	// Disruption banner: a war or an embargo blockades these resources, and
+	// any route importing one is suspended until the conflict ends.
 	if len(trade.DisruptedResources) > 0 {
-		fmt.Fprintf(&sb, " [red]⚠ Trade disrupted by hostile powers:[-] %s\n",
-			strings.Join(trade.DisruptedResources, ", "))
-		sb.WriteString(" [gray]Routes importing these are suspended until peace (end the war/embargo).[-]\n\n")
+		names := make([]string, len(trade.DisruptedResources))
+		for i, r := range trade.DisruptedResources {
+			names[i] = game.ResourceName(r)
+		}
+		fmt.Fprintf(&sb, " [red]⚠ Routes importing %s are suspended (a war, or your embargo).[-]\n", textfmt.List(names))
+		sb.WriteString(" [gray]Lift your embargo with: diplomacy neutral <civ>[-]\n\n")
 	}
 
 	if len(trade.ActiveRoutes) > 0 {
-		sb.WriteString(" [gold]Active Routes:[-]\n\n")
-		for _, route := range trade.ActiveRoutes {
+		sb.WriteString(" [gold]Active routes:[-]\n\n")
+		// The snapshot builds this list from a map; sort it so the panel does
+		// not reshuffle on every refresh.
+		active := append([]game.ActiveRouteInfo(nil), trade.ActiveRoutes...)
+		sort.Slice(active, func(i, j int) bool { return active[i].Key < active[j].Key })
+		for _, route := range active {
 			marker := "[green]▸[-]"
 			if route.Disrupted {
 				marker = "[red]✖[-]"
@@ -87,16 +80,16 @@ func tradeProvider(state game.GameState, _ int) string {
 			fmt.Fprintf(&sb, "   Export: %s\n", formatResMap(route.Export))
 			fmt.Fprintf(&sb, "   Import: %s\n", formatResMap(route.Import))
 			if route.Disrupted {
-				fmt.Fprintf(&sb, "   [red]DISRUPTED — %s shipments blockaded[-]\n\n", route.DisruptedBy)
+				fmt.Fprintf(&sb, "   [red]Suspended: %s imports are blockaded[-]\n\n", game.ResourceName(route.DisruptedBy))
 			} else {
-				fmt.Fprintf(&sb, "   %s remaining  [gray](%d cycles done)[-]\n\n",
-					formatTicks(route.TicksLeft, state), route.CyclesDone)
+				fmt.Fprintf(&sb, "   %s left in this cycle  [gray](%s done)[-]\n\n",
+					formatTicks(route.TicksLeft, state), textfmt.Count(route.CyclesDone, "cycle", "cycles"))
 			}
 		}
 	}
 
 	if len(trade.AvailableRoutes) > 0 {
-		sb.WriteString(" [gold]Available Routes:[-]\n\n")
+		sb.WriteString(" [gold]Available routes:[-]\n\n")
 		for _, route := range trade.AvailableRoutes {
 			statusIcon := "[red]✗[-]"
 			if route.CanStart {
@@ -109,34 +102,73 @@ func tradeProvider(state game.GameState, _ int) string {
 			if route.CanStart {
 				fmt.Fprintf(&sb, "   [green]trade route start %s[-]\n", route.Key)
 			} else {
-				fmt.Fprintf(&sb, "   [red]need %d %s[-]\n", route.MinCount, route.RequiredBld)
+				fmt.Fprintf(&sb, "   [red]needs %s (have %s)[-]\n",
+					game.BuildingCount(route.MinCount, route.RequiredBld),
+					textfmt.Int(state.Buildings[route.RequiredBld].Count))
 			}
 			sb.WriteString("\n")
 		}
 	}
 
 	if len(trade.ActiveRoutes) == 0 && len(trade.AvailableRoutes) == 0 {
-		sb.WriteString(" [gray]No trade routes available yet[-]\n")
-		sb.WriteString(" [gray]Build a market to unlock trade routes[-]\n")
+		sb.WriteString(" [gray]No trade routes in this age yet.[-]\n")
 	}
 
 	writeAllyTradeBonuses(&sb, state.Diplomacy)
 
 	sb.WriteString(" [gray]Commands: trade route start/stop <key>[-]\n")
 
-	// Faction standing lives on the Factions panel only. This overlay used to
-	// carry its own copy, which went stale (it still said factions were found
-	// by reaching the Colonial Age; first contact comes from expeditions).
-	sb.WriteString("\n [gray]Faction standing and deals: type factions[-]\n")
+	// Civilization opinion lives on the Factions panel only. This panel used
+	// to carry its own copy, which went stale.
+	sb.WriteString("\n [gray]Opinion and deals with other civilizations: type factions[-]\n")
 
 	return sb.String()
 }
 
+// exchangeRateLine renders one market rate from the player's side:
+// "1 food → 0.50 wood (-30% from recent selling)". The rate shown is the one
+// the market pays: never below the 50% floor game.TradeManager applies, so
+// the percentage never shows a drop larger than 50%.
+func exchangeRateLine(info game.ExchangeRateInfo) string {
+	rate := info.Rate
+	if floor := info.BaseRate * 0.5; rate < floor {
+		rate = floor
+	}
+	rateColor := "white"
+	if rate > info.BaseRate {
+		rateColor = "green"
+	} else if rate < info.BaseRate*0.9 {
+		rateColor = "yellow"
+	}
+	shift := ""
+	if info.BaseRate > 0 {
+		pct := math.Round((rate/info.BaseRate - 1) * 100)
+		switch {
+		case pct <= -1:
+			shift = fmt.Sprintf(" [red](%.0f%% from recent selling)[-]", pct)
+		case pct >= 1:
+			shift = fmt.Sprintf(" [green](+%.0f%% while the market recovers)[-]", pct)
+		}
+	}
+	return fmt.Sprintf("1 %s → [%s]%s %s[-]%s",
+		game.ResourceName(info.From), rateColor, marketRate(rate), game.ResourceName(info.To), shift)
+}
+
+// marketRate prints a per-unit rate: two decimals below 100 (0.50, 1.25),
+// the shared number format above that.
+func marketRate(r float64) string {
+	if r < 100 {
+		return fmt.Sprintf("%.2f", r)
+	}
+	return textfmt.Number(r)
+}
+
 // writeAllyTradeBonuses lists the allies currently boosting your income, the
-// one piece of faction state that belongs on the trade screen. It mirrors
-// game.DiplomacyManager.GetTradeBonus: an allied civ that is not at war adds
-// its TradeBonus to its specialty resource, both to route imports and to that
-// resource's production rate. Writes nothing when no ally applies.
+// one piece of civilization state that belongs on the trade screen. It
+// mirrors game.DiplomacyManager.GetTradeBonus: an allied civ that is not at
+// war adds its TradeBonus to its specialty resource, both to route imports
+// and to that resource's production rate. Writes nothing when no ally
+// applies.
 func writeAllyTradeBonuses(sb *strings.Builder, dip game.DiplomacyState) {
 	keys := make([]string, 0, len(dip.Factions))
 	for k, f := range dip.Factions {
@@ -148,18 +180,17 @@ func writeAllyTradeBonuses(sb *strings.Builder, dip game.DiplomacyState) {
 		return
 	}
 	sort.Strings(keys)
-	sb.WriteString(" [gold]Allied Bonuses:[-]\n")
+	sb.WriteString(" [gold]Allied bonuses:[-]\n")
 	for _, k := range keys {
 		f := dip.Factions[k]
-		fmt.Fprintf(sb, "   %s: [green]+%.0f%% %s[-] [gray](route imports and production)[-]\n",
-			f.Name, f.TradeBonus*100, f.Specialty)
+		fmt.Fprintf(sb, "   %s: [green]%s %s[-] [gray](route imports and production)[-]\n",
+			f.Name, textfmt.SignedPercent(f.TradeBonus), game.ResourceName(f.Specialty))
 	}
 	sb.WriteString("\n")
 }
 
-// formatResMap formats a resource→amount map into a sorted, comma-separated
-// string (e.g. "50 food, 20 wood"). Returns "none" for empty maps.
-// Keys are sorted for stable output across Go map iteration.
+// formatResMap formats a resource→amount map as "50 food, 20 wood", sorted by
+// key so the order is stable. Returns "none" for an empty map.
 func formatResMap(m map[string]float64) string {
 	if len(m) == 0 {
 		return "none"
@@ -169,9 +200,9 @@ func formatResMap(m map[string]float64) string {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	var parts []string
+	parts := make([]string, 0, len(keys))
 	for _, k := range keys {
-		parts = append(parts, fmt.Sprintf("%.0f %s", m[k], k))
+		parts = append(parts, game.Amount(m[k], k))
 	}
 	return strings.Join(parts, ", ")
 }

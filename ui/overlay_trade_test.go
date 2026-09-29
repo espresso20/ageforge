@@ -20,7 +20,7 @@ func TestTradeProvider_NoDiplomacySection(t *testing.T) {
 		if strings.Contains(out, "Diplomacy ═") {
 			t.Errorf("%s: trade overlay still renders a Diplomacy section:\n%s", name, out)
 		}
-		if !strings.Contains(out, "Faction standing and deals: type factions") {
+		if !strings.Contains(out, "Opinion and deals with other civilizations: type factions") {
 			t.Errorf("%s: trade overlay is missing the pointer to the Factions panel:\n%s", name, out)
 		}
 		// Faction rows belong to the Factions panel, not here.
@@ -30,7 +30,7 @@ func TestTradeProvider_NoDiplomacySection(t *testing.T) {
 			}
 		}
 		// The Trade sections themselves still render.
-		for _, want := range []string{"Exchange Rates", "Trade Routes"} {
+		for _, want := range []string{"Market rates", "Trade routes"} {
 			if !strings.Contains(out, want) {
 				t.Errorf("%s: trade overlay missing %q", name, want)
 			}
@@ -49,8 +49,8 @@ func TestTradeProvider_AllyBonuses(t *testing.T) {
 	}}}
 	out := tradeProvider(state, panelWidth)
 
-	if !strings.Contains(out, "Allied Bonuses") {
-		t.Fatalf("an ally with a trade bonus should get an Allied Bonuses block:\n%s", out)
+	if !strings.Contains(out, "Allied bonuses") {
+		t.Fatalf("an ally with a trade bonus should get an Allied bonuses block:\n%s", out)
 	}
 	line := lineContaining(out, "Merchant Guild")
 	for _, want := range []string{"+20% gold", "route imports and production"} {
@@ -65,7 +65,7 @@ func TestTradeProvider_AllyBonuses(t *testing.T) {
 		}
 	}
 
-	if out := tradeProvider(game.GameState{}, panelWidth); strings.Contains(out, "Allied Bonuses") {
-		t.Errorf("no allies, yet the Allied Bonuses block renders:\n%s", out)
+	if out := tradeProvider(game.GameState{}, panelWidth); strings.Contains(out, "Allied bonuses") {
+		t.Errorf("no allies, yet the Allied bonuses block renders:\n%s", out)
 	}
 }

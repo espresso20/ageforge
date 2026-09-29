@@ -129,7 +129,8 @@ func planStatusText(v game.PlanItemView) string {
 	}
 }
 
-// planItemTitle is "Hut ×3 (2 started)" or "research Tool Making".
+// planItemTitle is "Hut ×3 (2 started)", "research Tool Making" or
+// "trade food for wood: 500 wood still to buy, 300 bought".
 func planItemTitle(v game.PlanItemView) string {
 	switch v.Kind {
 	case game.PlanResearch:
@@ -137,14 +138,14 @@ func planItemTitle(v game.PlanItemView) string {
 	case game.PlanAdvance:
 		return v.Name
 	case game.PlanTrade:
-		s := "trade " + v.Key + " for " + v.To
+		s := "trade " + game.ResourceName(v.Key) + " for " + game.ResourceName(v.To)
 		if v.Amount > 0 {
-			s += " (" + FormatNumber(v.Amount) + " more)"
+			s += ": " + game.Amount(v.Amount, v.To) + " still to buy"
 		} else {
-			s += " (keep topped up)"
+			s += ": keeps " + game.ResourceName(v.To) + " topped up"
 		}
 		if v.Got > 0 {
-			s += ", bought " + FormatNumber(v.Got)
+			s += ", " + FormatNumber(v.Got) + " bought"
 		}
 		return s
 	}
@@ -169,7 +170,7 @@ func planItemDetail(v game.PlanItemView, state game.GameState) string {
 		if v.Short != "" {
 			cost := v.Cost[v.Short]
 			free := v.Progress * cost
-			line := fmt.Sprintf("  %s %s / %s", v.Short, FormatNumber(free), FormatNumber(cost))
+			line := fmt.Sprintf("  %s %s / %s", game.ResourceName(v.Short), FormatNumber(free), FormatNumber(cost))
 			if held := state.Resources[v.Short].Amount - free; held >= 1 {
 				line += fmt.Sprintf(" (%s held for items above)", FormatNumber(held))
 			}
@@ -188,7 +189,7 @@ func planItemDetail(v game.PlanItemView, state game.GameState) string {
 func formatPlanCost(cost map[string]float64) string {
 	var parts []string
 	for _, k := range sortedMapKeys(cost) {
-		parts = append(parts, FormatNumber(cost[k])+" "+k)
+		parts = append(parts, game.Amount(cost[k], k))
 	}
 	return strings.Join(parts, ", ")
 }
@@ -205,12 +206,12 @@ func sortedMapKeys(m map[string]float64) []string {
 // planPanelText renders the panel. Pure: state in, text out.
 func planPanelText(state game.GameState, sel int, note string, noteGood, clearArmed bool) string {
 	var sb strings.Builder
-	sb.WriteString(theme.Paint(theme.RoleAccent, "═══ Build Plan ═══") + "\n")
+	sb.WriteString(theme.Paint(theme.RoleAccent, "═══ Build plan ═══") + "\n")
 	sb.WriteString(theme.Paint(theme.RoleDim, " Started in order as resources come in, while you play and while you are away.\n Each item is paid when it starts. A waiting item holds its price back from the\n items below it; items below may still start with what it doesn't need.") + "\n\n")
 
 	if len(state.Plan) == 0 {
 		sb.WriteString(" The plan is empty.\n\n")
-		sb.WriteString(" " + theme.Paint(theme.RoleLabel, "plan build <building> [count]") + theme.Paint(theme.RoleDim, "   e.g. plan build hut 10") + "\n")
+		sb.WriteString(" " + theme.Paint(theme.RoleLabel, lit("plan build <building> [count]")) + theme.Paint(theme.RoleDim, "   e.g. plan build hut 10") + "\n")
 		sb.WriteString(" " + theme.Paint(theme.RoleLabel, "plan research <tech>") + theme.Paint(theme.RoleDim, "            techs start one at a time, in order") + "\n")
 	} else {
 		for i, v := range state.Plan {
@@ -246,7 +247,7 @@ func planPanelText(state game.GameState, sel int, note string, noteGood, clearAr
 // planListText is `plan list`: the plan as plain log lines.
 func planListText(state game.GameState) string {
 	if len(state.Plan) == 0 {
-		return "The plan is empty. Add items with 'plan build <building> [count]' or 'plan research <tech>'."
+		return lit("The plan is empty. Add items with: plan build <building> [count], or plan research <tech>.")
 	}
 	var sb strings.Builder
 	sb.WriteString(theme.Paint(theme.RoleAccent, "Build plan") + "\n")
@@ -256,7 +257,7 @@ func planListText(state game.GameState) string {
 		case game.PlanStatusWaiting:
 			status = fmt.Sprintf("waiting, %.0f%%", v.Progress*100)
 			if v.Short != "" {
-				status += " (short of " + v.Short + ")"
+				status += " (short of " + game.ResourceName(v.Short) + ")"
 			}
 		case game.PlanStatusBlocked:
 			status = "blocked: " + v.Note

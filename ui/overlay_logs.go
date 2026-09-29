@@ -2,9 +2,11 @@ package ui
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // logsProvider generates the logs overlay text from the current game state.
@@ -12,7 +14,7 @@ import (
 func logsProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 
-	sb.WriteString("[gold]═══ Game Log ═══[-]\n\n")
+	sb.WriteString("[gold]═══ Game log ═══[-]\n\n")
 
 	logs := state.Log
 
@@ -36,6 +38,8 @@ func logsProvider(state game.GameState, _ int) string {
 	}
 
 	for _, entry := range visible {
+		// The severity prefixes are written tview-escaped ("[X[]" prints as
+		// "[X]") so all five show; "[+]", "[!]" and "[*]" never parse as tags.
 		color := "white"
 		prefix := "   "
 		switch entry.Type {
@@ -47,33 +51,33 @@ func logsProvider(state game.GameState, _ int) string {
 			prefix = "[!]"
 		case "error":
 			color = "red"
-			prefix = "[X]"
+			prefix = "[X[]"
 		case "event":
 			color = "gold"
 			prefix = "[*]"
 		case "info":
 			color = "cyan"
-			prefix = "[i]"
+			prefix = "[i[]"
 		}
 		fmt.Fprintf(&sb, "[gray]T%-5d[-] [%s]%s %s[-]\n", entry.Tick, color, prefix, entry.Message)
 	}
 
 	// Engine state summary at the bottom
-	sb.WriteString("\n[gold]═══ Engine State ═══[-]\n")
-	fmt.Fprintf(&sb, " Tick: [cyan]%d[-]  Age: [cyan]%s[-]  Pop: [cyan]%d/%d[-]\n",
+	sb.WriteString("\n[gold]═══ Engine state ═══[-]\n")
+	fmt.Fprintf(&sb, " Tick: [cyan]%d[-]  Age: [cyan]%s[-]  Population: [cyan]%d/%d[-]\n",
 		state.Tick, state.AgeName, state.Workers.TotalPop, state.Workers.MaxPop)
-	fmt.Fprintf(&sb, " Food drain: [yellow]%.2f/tick[-]  Idle: [yellow]%d[-]\n",
-		state.Workers.FoodDrain, state.Workers.TotalIdle)
+	fmt.Fprintf(&sb, " Food use: [yellow]%s[-]  Idle: [yellow]%d[-]\n",
+		textfmt.Rate(-state.Workers.FoodDrain), state.Workers.TotalIdle)
 	if state.TickSpeedBonus > 0 {
-		fmt.Fprintf(&sb, " Tick speed: [green]+%.0f%%[-] (interval: [cyan]%dms[-])\n",
-			state.TickSpeedBonus*100, state.TickIntervalMs)
+		fmt.Fprintf(&sb, " Game speed: [green]%s[-] (one tick every [cyan]%dms[-])\n",
+			textfmt.SignedPercent(state.TickSpeedBonus), state.TickIntervalMs)
 	} else {
-		fmt.Fprintf(&sb, " Tick speed: [gray]base[-] (interval: [cyan]%dms[-])\n", state.TickIntervalMs)
+		fmt.Fprintf(&sb, " Game speed: [gray]base[-] (one tick every [cyan]%dms[-])\n", state.TickIntervalMs)
 	}
 
 	// Active events (compact)
 	if len(state.ActiveEvents) > 0 {
-		sb.WriteString("\n [gold]Active Events:[-]\n")
+		sb.WriteString("\n [gold]Active events:[-]\n")
 		for _, evt := range state.ActiveEvents {
 			fmt.Fprintf(&sb, "  [yellow]⚡ %s[-] (%s left)\n", evt.Name, formatTicks(evt.TicksLeft, state))
 		}
@@ -81,7 +85,7 @@ func logsProvider(state game.GameState, _ int) string {
 
 	// Build queue
 	if len(state.BuildQueue) > 0 {
-		sb.WriteString("\n [gold]Build Queue:[-]\n")
+		sb.WriteString("\n [gold]Build queue:[-]\n")
 		for _, bq := range state.BuildQueue {
 			pct := 0.0
 			if bq.TotalTicks > 0 {
@@ -141,11 +145,16 @@ func logsProvider(state game.GameState, _ int) string {
 			}
 		}
 		for _, d := range domains {
-			fmt.Fprintf(&sb, "  [cyan]%s[-] x%d (idle: %d)\n", d.name, d.count, d.idle)
-			for bldKey, count := range d.assignments {
+			fmt.Fprintf(&sb, "  [cyan]%s[-] ×%d (idle: %d)\n", d.name, d.count, d.idle)
+			bldKeys := make([]string, 0, len(d.assignments))
+			for k, count := range d.assignments {
 				if count > 0 {
-					fmt.Fprintf(&sb, "    → %s: %d\n", bldKey, count)
+					bldKeys = append(bldKeys, k)
 				}
+			}
+			sort.Strings(bldKeys)
+			for _, k := range bldKeys {
+				fmt.Fprintf(&sb, "    → %s: %d\n", game.BuildingName(k), d.assignments[k])
 			}
 		}
 	}

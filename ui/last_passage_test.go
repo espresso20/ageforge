@@ -186,8 +186,8 @@ func TestHarbingerPanelLastPassage(t *testing.T) {
 	txt := untag(harbingerPanelText(engine.GetState(), "", false, false))
 	t.Logf("Cosmic Era harbinger panel:\n%s", txt)
 	for _, want := range []string{
-		"THE DISTRESS BEACON", "Warning of the Last Passage: the end of this civilization, when you next prestige.",
-		"Odds published:", "%", "If it comes and you Endure: you keep 50% of the run's prestige points.",
+		"The Distress Beacon", "Warning of the Last Passage: the end of this civilization, when you next prestige.",
+		"Published odds:", "%", "If it comes and you Endure: you keep 50% of the run's prestige points.",
 		"Next level: 70% kept.", "Guarantees the Last Passage at your next prestige",
 		"Next level costs: 1.20B faith (have 0), 19.0B culture (have 0)",
 	} {
