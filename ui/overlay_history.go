@@ -14,7 +14,7 @@ func historyProvider(state game.GameState, w int) string {
 
 func renderHistoryOverlay(state game.GameState, w int) string {
 	if state.History == nil || len(state.History.Samples) < 2 {
-		return "\n[gray] No history yet — play for a while and check back.[-]\n"
+		return "\n[gray] No history yet. Play for a while and check back.[-]\n"
 	}
 
 	samples := state.History.Samples
@@ -48,18 +48,18 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 	}
 
 	metrics := []metricDef{
-		{"Population", "[cyan]", func(s game.HistorySample) float64 { return s.Population }, "workers", false},
-		{"Food Rate", "[green]", func(s game.HistorySample) float64 { return s.FoodRate }, "/tick", true},
-		{"Knowledge", "[yellow]", func(s game.HistorySample) float64 { return s.KnowRate }, "/tick", true},
+		{"Population", "[cyan]", func(s game.HistorySample) float64 { return s.Population }, " workers", false},
+		{"Food rate", "[green]", func(s game.HistorySample) float64 { return s.FoodRate }, "/tick", true},
+		{"Knowledge rate", "[yellow]", func(s game.HistorySample) float64 { return s.KnowRate }, "/tick", true},
 		{"Faith", "[gold]", func(s game.HistorySample) float64 { return s.Faith }, "", false},
 		{"Morale", "[yellow]", func(s game.HistorySample) float64 { return s.Morale * 100 }, "%", false},
-		{"Prod Bonus", "[warning]", func(s game.HistorySample) float64 { return s.ProdAll * 100 }, "%", false},
-		{"Tick Speed", "[gray]", func(s game.HistorySample) float64 { return s.TickSpeed }, "x", false},
+		{"All production", "[warning]", func(s game.HistorySample) float64 { return s.ProdAll * 100 }, "%", false},
+		{"Game speed", "[gray]", func(s game.HistorySample) float64 { return s.TickSpeed }, "x", false},
 	}
 
 	var sb strings.Builder
 
-	sb.WriteString("\n[gold]═══ Civilization History ═══[-]\n")
+	sb.WriteString("\n[gold]═══ Civilization history ═══[-]\n")
 	sb.WriteString(fmt.Sprintf("[gray]Ticks %d – %d  │  %d samples  │  age advances marked │[-]\n\n",
 		firstTick, lastTick, n))
 
@@ -90,12 +90,12 @@ func renderHistoryOverlay(state game.GameState, w int) string {
 		}
 
 		curStr := fmtVal(cur)
-		if m.rate {
+		if m.rate && cur >= 0 {
 			curStr = "+" + curStr
 		}
 
 		// header line
-		sb.WriteString(fmt.Sprintf("%s%-14s[-] %s %s%s  [gray]min:%-8s max:%s[-]\n",
+		sb.WriteString(fmt.Sprintf("%s%-15s[-] %s %s%s  [gray]min:%-8s max:%s[-]\n",
 			m.color, m.label, trend, curStr, m.unit,
 			fmtVal(minV), fmtVal(maxV)))
 

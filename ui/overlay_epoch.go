@@ -10,7 +10,7 @@ import (
 )
 
 // epochProvider generates the epoch overlay text from the current game state.
-// Shows current epoch status, epoch history, legacy bonuses, and civilisation log.
+// Shows current epoch status, epoch history, legacy bonuses, and civilization log.
 func epochProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 
@@ -31,7 +31,7 @@ func epochProvider(state game.GameState, _ int) string {
 
 // epochProviderCurrentEpoch renders the current epoch status section.
 func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
-	sb.WriteString("[gold]── Current Epoch ──[-]\n\n")
+	sb.WriteString("[gold]── Current epoch ──[-]\n\n")
 
 	if state.EpochKey == "" {
 		sb.WriteString(" [gray]No epoch data yet.[-]\n")
@@ -45,13 +45,13 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 	} else {
 		ageNames := make([]string, 0, len(ep.Ages))
 		for _, a := range ep.Ages {
-			ageNames = append(ageNames, epochOverlayFormatAgeKey(a))
+			ageNames = append(ageNames, game.AgeName(a))
 		}
 		fmt.Fprintf(sb, " %s%s %s[-]   Ages: %s\n",
 			theme.NameTag(ep.Color), ep.Icon, ep.Name,
 			strings.Join(ageNames, " · "))
 		fmt.Fprintf(sb, " [gray]Primary resource: %s   Energy: %s[-]\n",
-			ep.PrimaryResource, ep.EnergyResource)
+			game.ResourceName(ep.PrimaryResource), game.ResourceName(ep.EnergyResource))
 	}
 
 	sb.WriteString("\n")
@@ -63,7 +63,7 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 	} else {
 		evColor := epochEventColor(currentEvent.EventType)
 		if currentEvent.EventType == "catastrophe" {
-			fmt.Fprintf(sb, " Epoch event: [%s]%s[-]   [red]— catastrophe[-]\n",
+			fmt.Fprintf(sb, " Epoch event: [%s]%s[-]   [red](catastrophe)[-]\n",
 				evColor, currentEvent.EventName)
 		} else {
 			evDefs := config.EpochEventByKey()
@@ -89,10 +89,10 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 	// Catastrophe status
 	switch {
 	case state.PendingCatastrophe != "":
-		sb.WriteString(" Catastrophe: [red]PENDING — type 'catastrophe' to choose Endure or Succumb[-]\n")
+		sb.WriteString(" Catastrophe: [red]pending. Type catastrophe to choose Endure or Succumb.[-]\n")
 		sb.WriteString(" [gray]  Advancing and prestige are blocked until you decide.[-]\n")
 	case state.LastPassage.Pending:
-		sb.WriteString(" Catastrophe: [red]THE LAST PASSAGE — type 'catastrophe' to choose Endure or Succumb[-]\n")
+		sb.WriteString(" Catastrophe: [red]the Last Passage. Type catastrophe to choose Endure or Succumb.[-]\n")
 		sb.WriteString(" [gray]  Prestige waits until you decide; nothing else does.[-]\n")
 	case !config.CatastropheAllowed(state.EpochKey):
 		gate := config.EpochByKey()[config.CatastropheGateEpoch].Name
@@ -139,7 +139,7 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 func epochProviderHarbingers(sb *strings.Builder, state game.GameState) {
 	sb.WriteString(" [yellow]── Harbingers ──[-]\n")
 	if len(state.HarbingerHistory) == 0 {
-		sb.WriteString("   [gray]None have come and gone this run[-]\n")
+		sb.WriteString("   [gray]None have come and gone this run.[-]\n")
 		return
 	}
 	for _, r := range state.HarbingerHistory {
@@ -201,7 +201,7 @@ func harbingerRecordText(r game.HarbingerRecord) string {
 
 // epochProviderHistory renders the epoch history section.
 func epochProviderHistory(sb *strings.Builder, state game.GameState) {
-	sb.WriteString(" [yellow]── Epoch History ──[-]\n")
+	sb.WriteString(" [yellow]── Epoch history ──[-]\n")
 
 	allEpochs := config.Epochs()
 	currentEpochOrder := -1
@@ -222,7 +222,7 @@ func epochProviderHistory(sb *strings.Builder, state game.GameState) {
 		fmt.Fprintf(&line, "   %s%s %s[-]", theme.NameTag(ep.Color), ep.Icon, ep.Name)
 
 		if isCurrent {
-			line.WriteString("   [gray][current][-]")
+			line.WriteString("   [gray](current)[-]")
 		} else {
 			if record != nil {
 				evColor := epochEventColor(record.EventType)
@@ -243,7 +243,7 @@ func epochProviderHistory(sb *strings.Builder, state game.GameState) {
 
 // epochProviderLegacyBonuses renders the legacy bonuses section.
 func epochProviderLegacyBonuses(sb *strings.Builder, state game.GameState) {
-	sb.WriteString(" [yellow]── Legacy Bonuses (from Succumb) ──[-]\n")
+	sb.WriteString(" [yellow]── Legacy bonuses (from Succumb) ──[-]\n")
 
 	if len(state.LegacyBonuses) == 0 {
 		sb.WriteString("   [gray]None yet[-]\n")
@@ -262,13 +262,8 @@ func epochProviderLegacyBonuses(sb *strings.Builder, state game.GameState) {
 		}
 		anyShown = true
 
-		var parts []string
-		for res, pct := range bonuses {
-			parts = append(parts, fmt.Sprintf("%s +%.0f%%", res, pct*100))
-		}
 		fmt.Fprintf(sb, "   %s%s %s:[-]  %s\n",
-			theme.NameTag(ep.Color), ep.Icon, ep.Name,
-			strings.Join(parts, ", "))
+			theme.NameTag(ep.Color), ep.Icon, ep.Name, legacyBonusLine(bonuses))
 	}
 
 	if !anyShown {
@@ -276,12 +271,12 @@ func epochProviderLegacyBonuses(sb *strings.Builder, state game.GameState) {
 	}
 }
 
-// epochProviderCivilizationLog renders the civilisation catastrophe log section.
+// epochProviderCivilizationLog renders the civilization catastrophe log section.
 func epochProviderCivilizationLog(sb *strings.Builder, state game.GameState) {
-	sb.WriteString(" [yellow]── Civilization Log ──[-]\n")
+	sb.WriteString(" [yellow]── Civilization log ──[-]\n")
 
 	if len(state.CatastropheHistory) == 0 {
-		sb.WriteString("   [gray]No catastrophes yet[-]\n")
+		sb.WriteString("   [gray]No catastrophes yet.[-]\n")
 		return
 	}
 
@@ -312,15 +307,15 @@ func latestCatastrophe(history []game.EpochEventRecord, epochKey string) *game.E
 }
 
 // catastropheOutcomeLabel renders a catastrophe record's outcome. Only an
-// actual Endure reads as Survived: a pending catastrophe says so, and a record
+// actual Endure reads as Endured: a pending catastrophe says so, and a record
 // whose outcome was never stored (older saves) says it is unknown rather than
-// claiming survival.
+// claiming the player endured it.
 func catastropheOutcomeLabel(outcome string) string {
 	switch outcome {
 	case game.CatastropheEndured:
-		return "[green]✓ Survived[-]"
+		return "[green]✓ Endured[-]"
 	case game.CatastropheSuccumbed:
-		return "[yellow]Succumbed — legacy bonus[-]"
+		return "[yellow]Succumbed (legacy bonus)[-]"
 	case game.CatastrophePending:
 		return "[red]Pending[-]"
 	}
@@ -342,16 +337,4 @@ func epochEventColor(eventType string) string {
 		return "red"
 	}
 	return "white"
-}
-
-// epochOverlayFormatAgeKey converts a snake_case age key to a display-friendly title.
-// e.g. "colonial_age" -> "Colonial Age"
-func epochOverlayFormatAgeKey(key string) string {
-	words := strings.Split(key, "_")
-	for i, w := range words {
-		if len(w) > 0 {
-			words[i] = strings.ToUpper(w[:1]) + w[1:]
-		}
-	}
-	return strings.Join(words, " ")
 }

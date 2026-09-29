@@ -6,7 +6,18 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
+)
+
+// Diplomacy costs shown on the civilization cards. They mirror the literals in
+// game.DiplomacyManager.SendGift and SetStatus("allied"); game/ does not export
+// them yet.
+const (
+	giftGoldCost   = 200
+	giftOpinion    = 15
+	allyGoldCost   = 500
+	allyMinOpinion = 50
 )
 
 // The Factions panel.
@@ -15,7 +26,7 @@ import (
 // and grew into the single surface for everything the other civilizations are
 // doing to you. Three things live here that used to live nowhere:
 //
-//   - LIVE FAVOURS & SETBACKS — the timed buffs and penalties an encounter
+//   - BOONS AND SETBACKS: the timed buffs and penalties an encounter
 //     hands out. Before this they only appeared in the Statistics panel as
 //     anonymous "active events", so a player had no way to know which civ was
 //     responsible or that the effects were capped.
@@ -66,13 +77,13 @@ func factionsProvider(state game.GameState, w int) string {
 	writeGeographicSociety(&sb, state)
 
 	// ─── Known Factions ───
-	sb.WriteString("\n [yellow]── Known Factions ──[-]\n\n")
+	sb.WriteString("\n [yellow]── Civilizations you have met ──[-]\n\n")
 	if met == 0 {
 		// The old copy here pointed at the Colonial Age and an Embassy. Both were
 		// wrong: the first civ is reachable in the Bronze Age, and first contact
 		// has been expedition-driven since the encounter engine landed.
-		sb.WriteString(" [gray]You have not met anyone yet. Run scouting expeditions —[-]\n")
-		sb.WriteString(" [gray]your scouts make first contact out in the field.[-]\n")
+		sb.WriteString(" [gray]You have not met anyone yet. Your scouts make first contact[-]\n")
+		sb.WriteString(" [gray]out in the field, so send scouting expeditions.[-]\n")
 	}
 	for _, def := range defs {
 		f, ok := factions[def.Key]
@@ -97,10 +108,10 @@ func factionsProvider(state game.GameState, w int) string {
 	return sb.String()
 }
 
-// factionEffectTally counts the live favours and setbacks attributable to one
+// factionEffectTally counts the live boons and setbacks attributable to one
 // civilization.
 type factionEffectTally struct {
-	favours  int
+	boons    int
 	setbacks int
 }
 
@@ -116,7 +127,7 @@ func tallyFactionEffects(state game.GameState) map[string]factionEffectTally {
 		}
 		t := out[key]
 		if isBoon {
-			t.favours++
+			t.boons++
 		} else {
 			t.setbacks++
 		}
@@ -125,7 +136,7 @@ func tallyFactionEffects(state game.GameState) map[string]factionEffectTally {
 	return out
 }
 
-// writeLiveFactionEffects renders the Live Favours & Setbacks section: every
+// writeLiveFactionEffects renders the Boons and setbacks section: every
 // active event the encounter engine attributes to a civ, with its magnitude and
 // wall-clock remainder, plus the occupancy of the two capacity pools.
 //
@@ -133,15 +144,15 @@ func tallyFactionEffects(state game.GameState) map[string]factionEffectTally {
 // on a timer the way a boon does — but they ARE a live effect another civ is
 // having on your empire, and this is where a player looks for that.
 func writeLiveFactionEffects(sb *strings.Builder, state game.GameState, defs []config.FactionDef, usable int, tally map[string]factionEffectTally) {
-	favours, setbacks := 0, 0
+	boons, setbacks := 0, 0
 	for _, t := range tally {
-		favours += t.favours
+		boons += t.boons
 		setbacks += t.setbacks
 	}
 
-	writeHeadedLine(sb, usable, "yellow", "── Live Favours & Setbacks ──",
+	writeHeadedLine(sb, usable, "yellow", "── Boons and setbacks ──",
 		fmt.Sprintf("boons %d/%d · setbacks %d/%d",
-			favours, game.MaxConcurrentFactionBoons, setbacks, game.MaxConcurrentFactionMaluses))
+			boons, game.MaxConcurrentFactionBoons, setbacks, game.MaxConcurrentFactionMaluses))
 	sb.WriteString("\n")
 
 	// Three columns: what it is, how big it is, how long it lasts. Fixed widths so
@@ -191,7 +202,7 @@ func writeLiveFactionEffects(sb *strings.Builder, state game.GameState, defs []c
 		wrote = true
 	}
 
-	// Lent workers — a live effect with no expiry clock.
+	// Lent workers: a live effect with no expiry clock.
 	for _, def := range defs {
 		f, ok := state.Diplomacy.Factions[def.Key]
 		if !ok || f.LentWorkers <= 0 {
@@ -206,9 +217,8 @@ func writeLiveFactionEffects(sb *strings.Builder, state game.GameState, defs []c
 	}
 
 	if !wrote {
-		sb.WriteString(" [gray]No favours or setbacks in play.[-]\n")
-		sb.WriteString(" [gray]Send scouting expeditions — encounters out in the field are[-]\n")
-		sb.WriteString(" [gray]what earn a civilization's favour.[-]\n")
+		sb.WriteString(" [gray]No boons or setbacks in play.[-]\n")
+		sb.WriteString(" [gray]Civilizations grant boons after encounters on scouting expeditions.[-]\n")
 	}
 }
 
@@ -229,12 +239,12 @@ func writeGeographicSociety(sb *strings.Builder, state game.GameState) {
 	if auto.Capacity > 0 {
 		fill = auto.Assigned * 100 / auto.Capacity
 	}
-	fmt.Fprintf(sb, " Societies: [cyan]%d[-] · Staffed: [cyan]%d/%d[-] (%d%%) · Interval: %s\n",
+	fmt.Fprintf(sb, " Societies: [cyan]%d[-] · Staffed: [cyan]%d/%d[-] (%d%%) · Sends a party every %s\n",
 		auto.Count, auto.Assigned, auto.Capacity, fill, formatTicks(auto.Interval, state))
 
 	if auto.Starved {
-		sb.WriteString(" [yellow]⚠ A dispatch is due but the party cannot be outfitted —[-]\n")
-		sb.WriteString(" [yellow]  stores are short of the expedition cost.[-]\n")
+		sb.WriteString(" [yellow]⚠ A party is due, but you cannot pay the expedition cost.[-]\n")
+		sb.WriteString(" [yellow]  It goes out once you have the resources.[-]\n")
 		return
 	}
 
@@ -244,7 +254,7 @@ func writeGeographicSociety(sb *strings.Builder, state game.GameState) {
 		line += "   " + ProgressBar(float64(auto.Interval-auto.TicksLeft), float64(auto.Interval), 20)
 	}
 	sb.WriteString(line + "\n")
-	sb.WriteString(" [gray]Automated exploration running.[-]\n")
+	sb.WriteString(" [gray]The Society is running: parties go out on their own.[-]\n")
 }
 
 // writeFactionCard renders the detail block for one discovered civilization:
@@ -273,7 +283,7 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 
 	// War banner takes precedence — it's the headline state when active.
 	if f.AtWar {
-		sb.WriteString("   [red]⚔ AT WAR — raids incoming. 'diplomacy tribute " + def.Key + "' to sue for peace.[-]\n")
+		sb.WriteString("   [red]⚔ At war: expect raids. Sue for peace with: diplomacy tribute " + def.Key + "[-]\n")
 	}
 
 	// Opinion bar across the -100..100 range. Clamp first to stay panic-free.
@@ -317,13 +327,13 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 	// Active bonus + trade-rate modifier (only allied specialty trades get it).
 	bonus := "[gray]no active bonus[-]"
 	if f.Status == "allied" && f.TradeBonus > 0 {
-		bonus = fmt.Sprintf("[green]+%.0f%% %s trades[-]", f.TradeBonus*100, f.Specialty)
+		bonus = fmt.Sprintf("[green]%s %s trades[-]", textfmt.SignedPercent(f.TradeBonus), game.ResourceName(f.Specialty))
 	}
-	fmt.Fprintf(sb, "   Status:  [%s][%s][-]  %s  [gray](%d trades)[-]\n",
-		statusColor, f.Status, bonus, f.TradeCount)
+	fmt.Fprintf(sb, "   Status: [%s]%s[-]  %s  [gray](%s done)[-]\n",
+		statusColor, f.Status, bonus, textfmt.Count(f.TradeCount, "trade", "trades"))
 
-	// Threshold indicator — distance to the next status tier.
-	fmt.Fprintf(sb, "   %s\n", diplomacyThreshold(f.Status, f.Opinion))
+	// Threshold indicator: distance to the next status tier.
+	fmt.Fprintf(sb, "   %s\n", diplomacyThreshold(f.Status, f.Opinion, def.Key))
 
 	// Lent-worker status, if this civ has workers on loan with you.
 	if f.LentWorkers > 0 {
@@ -336,13 +346,13 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 
 	// Live effects this civ is currently applying, so the card and the section at
 	// the top of the panel agree without the player having to cross-reference.
-	if t.favours > 0 || t.setbacks > 0 {
+	if t.boons > 0 || t.setbacks > 0 {
 		var parts []string
-		if t.favours > 0 {
-			parts = append(parts, fmt.Sprintf("[gold]✦ %d %s active[-]", t.favours, pluralize("favour", t.favours)))
+		if t.boons > 0 {
+			parts = append(parts, fmt.Sprintf("[gold]✦ %s active[-]", textfmt.Count(t.boons, "boon", "boons")))
 		}
 		if t.setbacks > 0 {
-			parts = append(parts, fmt.Sprintf("[red]⚠ %d %s active[-]", t.setbacks, pluralize("setback", t.setbacks)))
+			parts = append(parts, fmt.Sprintf("[red]⚠ %s active[-]", textfmt.Count(t.setbacks, "setback", "setbacks")))
 		}
 		fmt.Fprintf(sb, "   %s\n", strings.Join(parts, "  "))
 	}
@@ -357,8 +367,8 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 	case f.Status == "allied":
 		fmt.Fprintf(sb, "   [gray]diplomacy rival/embargo/neutral %s[-]\n\n", def.Key)
 	default:
-		fmt.Fprintf(sb, "   [gray]diplomacy gift %s (200g, +15) · ally/rival/embargo/neutral %s[-]\n\n",
-			def.Key, def.Key)
+		fmt.Fprintf(sb, "   [gray]Send a gift: %d gold for +%d opinion (diplomacy gift %s) · ally/rival/embargo/neutral %s[-]\n\n",
+			giftGoldCost, giftOpinion, def.Key, def.Key)
 	}
 }
 
@@ -398,7 +408,7 @@ func writeUndiscoveredRoster(sb *strings.Builder, pending []config.FactionDef, a
 		if a, found := ages[def.MinAge]; found {
 			ageName = a.Name
 		}
-		detail := truncate(fmt.Sprintf("??? reach %s · %s, %s", ageName, def.Specialty, def.Personality), detailBudget)
+		detail := truncate(fmt.Sprintf("met by expedition from the %s · %s, %s", ageName, game.ResourceName(def.Specialty), def.Personality), detailBudget)
 		fmt.Fprintf(sb, " [cyan]%s[-] [gray]%s[-]  [gray]%s[-]\n",
 			padRight(truncate(def.Name, nameCol), nameCol), strengthStars(def.Strength), detail)
 	}
@@ -422,7 +432,7 @@ func panelUsableWidth(w int) int {
 }
 
 // writeHeadedLine writes a section header with a right-aligned summary on the
-// same row: "── Live Favours & Setbacks ──        boons 2/5 · setbacks 1/3".
+// same row: "── Boons and setbacks ──        boons 2/5 · setbacks 1/3".
 // Both halves are passed uncoloured so the gap is computed from the width that
 // actually prints, not from the length of the colour tags.
 func writeHeadedLine(sb *strings.Builder, usable int, color, header, summary string) {
@@ -467,14 +477,6 @@ func strengthStars(n int) string {
 	return strings.Repeat("★", n) + strings.Repeat("☆", 5-n)
 }
 
-// pluralize appends an "s" to word when n is not 1.
-func pluralize(word string, n int) string {
-	if n == 1 {
-		return word
-	}
-	return word + "s"
-}
-
 // effectsSummary renders every effect of an active event as one comma-joined
 // magnitude string, returned twice: once plain (for width arithmetic) and once
 // with sign colouring (for display). Effects with no renderable magnitude are
@@ -492,22 +494,23 @@ func effectsSummary(effects []game.EventEffectInfo) (plain, colored string) {
 	return strings.Join(plains, ", "), strings.Join(coloreds, ", ")
 }
 
-// effectMagnitude renders one active-event effect as a short magnitude —
-// "+13% food", "+8% all prod", "+9% tick speed" — in plain and coloured form.
+// effectMagnitude renders one active-event effect as a short magnitude
+// ("+13% food production", "+8% all production", "+0.5 food/tick") in plain
+// and colored form.
 //
 // The "<res>_rate" suffix case is the one that matters most here: it is the
-// shape every faction specialty boon and setback arrives in, and without it a
-// favour renders as a name with no number attached.
+// shape every civilization specialty boon and setback arrives in, and without
+// it a boon renders as a name with no number attached.
 func effectMagnitude(eff game.EventEffectInfo) (plain, colored string) {
 	switch {
 	case eff.Type == "production":
-		plain = fmt.Sprintf("%+.1f/t %s", eff.Value, eff.Target)
+		plain = fmt.Sprintf("%s %s/tick", textfmt.Signed(eff.Value), game.ResourceName(eff.Target))
 	case eff.Type == "production_all":
-		plain = fmt.Sprintf("%+.0f%% all prod", eff.Value*100)
+		plain = textfmt.SignedPercent(eff.Value) + " all production"
 	case eff.Type == "tick_speed":
-		plain = fmt.Sprintf("%+.0f%% tick speed", eff.Value*100)
+		plain = textfmt.SignedPercent(eff.Value) + " game speed"
 	case strings.HasSuffix(eff.Type, "_rate"):
-		plain = fmt.Sprintf("%+.0f%% %s", eff.Value*100, rateEffectLabel(eff))
+		plain = textfmt.SignedPercent(eff.Value) + " " + rateEffectLabel(eff)
 	default:
 		return "", ""
 	}
@@ -551,10 +554,11 @@ func truncate(s string, max int) string {
 	return string(r[:max-1]) + "…"
 }
 
-// diplomacyThreshold renders the distance-to-next-tier indicator for a faction
-// given its current status and opinion. Hostile statuses (rival/embargo) decay
-// toward neutral, so they report "decaying" rather than a climb target.
-func diplomacyThreshold(status string, opinion int) string {
+// diplomacyThreshold renders the distance-to-next-tier indicator for a
+// civilization given its current status and opinion. Hostile statuses
+// (rival/embargo) decay toward neutral, so they report "decaying" rather than
+// a climb target. key is the civ key the ally command takes.
+func diplomacyThreshold(status string, opinion int, key string) string {
 	switch status {
 	case "allied":
 		return "[gray](maxed)[-]"
@@ -564,11 +568,11 @@ func diplomacyThreshold(status string, opinion int) string {
 	// neutral / friendly: climbing toward the next eligibility gate.
 	switch {
 	case opinion < 25:
-		return fmt.Sprintf("[gray](+%d to friendly)[-]", 25-opinion)
-	case opinion < 50:
-		return fmt.Sprintf("[gray](+%d to ally-eligible)[-]", 50-opinion)
+		return fmt.Sprintf("[gray](+%d opinion to friendly)[-]", 25-opinion)
+	case opinion < allyMinOpinion:
+		return fmt.Sprintf("[gray](+%d opinion to ally-eligible)[-]", allyMinOpinion-opinion)
 	default:
-		return "[gray](ally-eligible — 500g)[-]"
+		return fmt.Sprintf("[gray](can ally: diplomacy ally %s, %d gold)[-]", key, allyGoldCost)
 	}
 }
 
@@ -577,7 +581,7 @@ func diplomacyThreshold(status string, opinion int) string {
 // than the market it pays, or why the civ offers nothing. Theme roles only.
 func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameState, usable int) {
 	if f.DealsBlocked != "" {
-		fmt.Fprintf(sb, "   %s\n", theme.Paint(theme.RoleWarning, "Deals: none — they are "+f.DealsBlocked+"."))
+		fmt.Fprintf(sb, "   %s\n", theme.Paint(theme.RoleWarning, "Deals: none while they are "+f.DealsBlocked+"."))
 		return
 	}
 	if len(f.Deals) == 0 {
@@ -594,9 +598,15 @@ func writeFactionDeals(sb *strings.Builder, f game.FactionInfo, state game.GameS
 // dealLine renders one offer from the player's side, in the words of
 // game.DealTerms: "1. Buy: give 516 wood → get 618 food   +20% vs market".
 // What you can't pay yet is in the Negative role; a taken offer is dim.
+// Resource keys go in as display names, so "iron_ore" reads "iron ore".
 func dealLine(d game.DealInfo, state game.GameState, width int) string {
-	give := FormatNumber(d.GiveAmt) + " " + d.Give
-	get := game.DealGets(d.Get, d.GetAmt, d.Standing, FormatNumber)
+	giveName := game.ResourceName(d.Give)
+	getName := ""
+	if d.Get != "" {
+		getName = game.ResourceName(d.Get)
+	}
+	give := FormatNumber(d.GiveAmt) + " " + giveName
+	get := game.DealGets(getName, d.GetAmt, d.Standing, FormatNumber)
 	note := ""
 	switch {
 	case d.Taken:
@@ -608,7 +618,7 @@ func dealLine(d game.DealInfo, state game.GameState, width int) string {
 	case d.Get != "":
 		note = "not sold at the market"
 	}
-	plain := fmt.Sprintf("%d. %s", d.Num, game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, FormatNumber))
+	plain := fmt.Sprintf("%d. %s", d.Num, game.DealTerms(d.Kind, giveName, d.GiveAmt, getName, d.GetAmt, d.Standing, FormatNumber))
 	if d.Taken {
 		return theme.Paint(theme.RoleDim, truncate(plain+"  "+note, width))
 	}

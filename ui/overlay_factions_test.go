@@ -67,7 +67,7 @@ func TestFactionsProvider_RendersAllFactions(t *testing.T) {
 	// Section headers, status labels and the undiscovered teaser marker.
 	for _, want := range []string{
 		"Factions", "Opinion", "Status", "allied",
-		"Live Favours & Setbacks", "Geographic Society", "Known Factions", "Not Yet Met", "???",
+		"Boons and setbacks", "Geographic Society", "Civilizations you have met", "Not yet met", "met by expedition from the",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("overlay output missing expected token %q", want)
@@ -135,7 +135,7 @@ func TestFactionsProvider_RendersExpandedCivData(t *testing.T) {
 		t.Fatal("factionsProvider returned empty output for expanded roster")
 	}
 	// Personality labels, a war banner, and lent-worker status should all surface.
-	for _, want := range []string{"AT WAR", "on loan", "tribute"} {
+	for _, want := range []string{"At war", "on loan", "tribute"} {
 		if !strings.Contains(out, want) {
 			t.Errorf("expanded overlay missing expected token %q", want)
 		}
@@ -223,8 +223,8 @@ func TestFactionsProvider_LiveFavoursAndSetbacks(t *testing.T) {
 	}
 
 	// The civ cards echo their own live effects.
-	if !strings.Contains(out, "✦ 1 favour active") {
-		t.Errorf("the granting civ's card should flag its live favour, got:\n%s", out)
+	if !strings.Contains(out, "✦ 1 boon active") {
+		t.Errorf("the granting civ's card should flag its live boon, got:\n%s", out)
 	}
 	if !strings.Contains(out, "⚠ 1 setback active") {
 		t.Errorf("the afflicting civ's card should flag its live setback, got:\n%s", out)
@@ -235,7 +235,7 @@ func TestFactionsProvider_LiveFavoursAndSetbacks(t *testing.T) {
 // stands in when nothing is running — a statement plus how to earn one.
 func TestFactionsProvider_LiveEffectsEmptyState(t *testing.T) {
 	out := factionsProvider(game.GameState{}, panelWidth)
-	if !strings.Contains(out, "No favours or setbacks in play") {
+	if !strings.Contains(out, "No boons or setbacks in play") {
 		t.Errorf("empty live-effects section missing its statement, got:\n%s", out)
 	}
 	if !strings.Contains(out, "boons 0/5") {
@@ -266,7 +266,7 @@ func TestFactionsProvider_GeographicSocietyStates(t *testing.T) {
 			Count: 1, Assigned: 2, Capacity: 5,
 		}
 		out := factionsProvider(state, panelWidth)
-		if !strings.Contains(out, "cannot be outfitted") {
+		if !strings.Contains(out, "cannot pay the expedition cost") {
 			t.Errorf("starved Society should warn that it can't afford a party, got:\n%s", out)
 		}
 		if !strings.Contains(out, "[yellow]") {
@@ -299,7 +299,7 @@ func TestFactionsProvider_GeographicSocietyStates(t *testing.T) {
 		if !strings.Contains(next, "█") || !strings.Contains(next, "░") {
 			t.Errorf("dispatch countdown should carry a partial progress bar, got %q", next)
 		}
-		if !strings.Contains(out, "Automated exploration running") {
+		if !strings.Contains(out, "parties go out on their own") {
 			t.Error("running Society should say so")
 		}
 	})
@@ -315,7 +315,7 @@ func TestFactionsProvider_UndiscoveredRosterIsCompact(t *testing.T) {
 	// One line per civ, at most maxRosterRows of them, then a count.
 	rows := 0
 	for _, line := range strings.Split(out, "\n") {
-		if strings.Contains(line, "??? reach ") {
+		if strings.Contains(line, "met by expedition from the ") {
 			rows++
 		}
 	}
@@ -330,7 +330,7 @@ func TestFactionsProvider_UndiscoveredRosterIsCompact(t *testing.T) {
 
 	// The first unmet civ is the Bronze Age one, and its line carries everything.
 	first := lineContaining(out, "Riverlands Tribes")
-	for _, want := range []string{"★☆☆☆☆", "??? reach Bronze Age", "food", "peaceful"} {
+	for _, want := range []string{"★☆☆☆☆", "met by expedition from the Bronze Age", "food", "peaceful"} {
 		if !strings.Contains(first, want) {
 			t.Errorf("roster line %q missing %q", first, want)
 		}
@@ -386,12 +386,12 @@ func TestEffectMagnitude(t *testing.T) {
 		want      string
 		wantColor string
 	}{
-		{game.EventEffectInfo{Type: "food_rate", Target: "food", Value: 0.13}, "+13% food", "green"},
-		{game.EventEffectInfo{Type: "iron_rate", Target: "iron", Value: -0.11}, "-11% iron", "red"},
-		{game.EventEffectInfo{Type: "gather_rate", Value: 0.20}, "+20% gather", "green"},
-		{game.EventEffectInfo{Type: "production_all", Value: 0.08}, "+8% all prod", "green"},
-		{game.EventEffectInfo{Type: "tick_speed", Value: 0.09}, "+9% tick speed", "green"},
-		{game.EventEffectInfo{Type: "production", Target: "wood", Value: 2.5}, "+2.5/t wood", "green"},
+		{game.EventEffectInfo{Type: "food_rate", Target: "food", Value: 0.13}, "+13% food production", "green"},
+		{game.EventEffectInfo{Type: "iron_rate", Target: "iron", Value: -0.11}, "-11% iron production", "red"},
+		{game.EventEffectInfo{Type: "gather_rate", Value: 0.20}, "+20% worker output", "green"},
+		{game.EventEffectInfo{Type: "production_all", Value: 0.08}, "+8% all production", "green"},
+		{game.EventEffectInfo{Type: "tick_speed", Value: 0.09}, "+9% game speed", "green"},
+		{game.EventEffectInfo{Type: "production", Target: "wood", Value: 2.5}, "+2.5 wood/tick", "green"},
 		{game.EventEffectInfo{Type: "something_else", Value: 1}, "", ""},
 	}
 	for _, c := range cases {
@@ -548,13 +548,13 @@ func TestDiplomacyThreshold(t *testing.T) {
 	}{
 		{"neutral", 0, "to friendly"},
 		{"friendly", 30, "to ally-eligible"},
-		{"friendly", 55, "ally-eligible"},
+		{"friendly", 55, "can ally: diplomacy ally riverlands_tribes, 500 gold"},
 		{"allied", 100, "maxed"},
 		{"rival", -10, "decaying"},
 		{"embargo", -50, "decaying"},
 	}
 	for _, c := range cases {
-		got := diplomacyThreshold(c.status, c.opinion)
+		got := diplomacyThreshold(c.status, c.opinion, "riverlands_tribes")
 		if !strings.Contains(got, c.want) {
 			t.Errorf("diplomacyThreshold(%q, %d) = %q, want it to contain %q",
 				c.status, c.opinion, got, c.want)
@@ -586,7 +586,7 @@ func TestFactionsProvider_RendersDeals(t *testing.T) {
 		"+13% vs market",
 		"2. Goodwill: give 727 iron → get +5 opinion",
 		"3. Buy: give 10 iron → get 12 food  taken",
-		"Deals: none — they are at war with you.",
+		"Deals: none while they are at war with you.",
 		"diplomacy accept <civ> <n>",
 	} {
 		if !strings.Contains(out, want) {

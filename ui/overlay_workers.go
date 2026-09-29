@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 const workerSectionWidth = 44
@@ -37,13 +38,13 @@ func workersProvider(state game.GameState, _ int) string {
 
 	// ── Morale ───────────────────────────────────
 	// Banded model: bar + status recolour by band (green high / neutral mid /
-	// red low) off state.MoraleMultiplier — no "penalty" copy in the neutral band.
+	// red low) off state.MoraleMultiplier; no "penalty" copy in the neutral band.
 	sb.WriteString(workerSection("Morale"))
 	band := computeMoraleBand(state.Morale, state.MoraleMultiplier)
 	moraleBar := moraleBandBar(int(state.Morale*20), 20, 20, band.Color)
 	capStr := ""
 	if state.MoraleCap > 1.0 {
-		capStr = fmt.Sprintf("  [gray]cap: %.2f[-]", state.MoraleCap)
+		capStr = fmt.Sprintf("  [gray]cap %s[-]", textfmt.Percent(state.MoraleCap))
 	}
 	fmt.Fprintf(&sb, "  [white]Morale:[white] [%s]%.0f%%[-]%s  %s\n", band.Color, state.Morale*100, capStr, moraleBar)
 	switch {
@@ -58,10 +59,12 @@ func workersProvider(state game.GameState, _ int) string {
 
 	// ── Summary ──────────────────────────────────
 	sb.WriteString(workerSection("Summary"))
-	fmt.Fprintf(&sb, "  [white]Pop:[white] [yellow]%d[white] / [green]%d[-]   [white]Idle:[white] [cyan]%d[-]   [white]Housing left:[white] [green]%d[-]\n",
+	fmt.Fprintf(&sb, "  [white]Population:[white] [yellow]%d[white] / [green]%d[-]   [white]Idle:[white] [cyan]%d[-]   [white]Housing left:[white] [green]%d[-]\n",
 		total, maxPop, idle, housingLeft)
 
-	// Food sustainability
+	// Food sustainability. Every worker eats the same amount, whatever it
+	// does: the age's food-class cost (game.WorkerManager.FoodDrain), so the
+	// per-worker figure is the total drain over the headcount.
 	foodRS, hasFoodRS := state.Resources["food"]
 	if hasFoodRS {
 		netFood := foodRS.Rate // already net (includes worker drain)
@@ -75,23 +78,21 @@ func workersProvider(state game.GameState, _ int) string {
 		}
 
 		netColor := "green"
-		netPrefix := "+"
 		if netFood < 0 {
 			netColor = "red"
-			netPrefix = ""
 		}
-		fmt.Fprintf(&sb, "  [white]Food drain:[white] [red]%.2f/tick[-]   [white]Net food:[white] [%s]%s%.2f/tick[-]\n",
-			foodDrain, netColor, netPrefix, netFood)
+		fmt.Fprintf(&sb, "  [white]Food use:[white] [red]%s[-] [gray](%s food each)[-]   [white]Net food:[white] [%s]%s[-]\n",
+			textfmt.Rate(-foodDrain), strings.TrimPrefix(textfmt.RateValue(drainPerWorker), "+"), netColor, textfmt.Rate(netFood))
 		if netFood >= 0 && breakEven > 0 {
-			fmt.Fprintf(&sb, "  [gray]Sustains up to [white]%d[-][gray] workers at current food rate[-]\n", breakEven)
+			fmt.Fprintf(&sb, "  [gray]Current food production feeds up to [white]%s[-][gray].[-]\n", textfmt.Count(breakEven, "worker", "workers"))
 		} else if netFood < 0 {
-			sb.WriteString("  [red]⚠ Food deficit — workers may starve[-]\n")
+			sb.WriteString("  [red]⚠ Food is falling. Workers starve when it runs out.[-]\n")
 		}
 	}
 	sb.WriteString("\n")
 
-	// ── Slot Utilization ─────────────────────────
-	sb.WriteString(workerSection("Slot Utilization"))
+	// ── Building slots ───────────────────────────
+	sb.WriteString(workerSection("Building slots"))
 	totalSlots := 0
 	filledSlots := 0
 	type openSlot struct {
@@ -112,8 +113,13 @@ func workersProvider(state game.GameState, _ int) string {
 			openSlots = append(openSlots, openSlot{Name: bs.Name, Open: open})
 		}
 	}
+	// Ties break on the name: state.Buildings is a map, so without it equal
+	// counts would swap places between refreshes.
 	sort.Slice(openSlots, func(i, j int) bool {
-		return openSlots[i].Open > openSlots[j].Open
+		if openSlots[i].Open != openSlots[j].Open {
+			return openSlots[i].Open > openSlots[j].Open
+		}
+		return openSlots[i].Name < openSlots[j].Name
 	})
 
 	if totalSlots > 0 {
@@ -134,12 +140,12 @@ func workersProvider(state game.GameState, _ int) string {
 			sb.WriteString("  [green]✓ All slots filled[-]\n")
 		}
 	} else {
-		sb.WriteString("  [gray]No worker buildings built yet[-]\n")
+		sb.WriteString("  [gray]No worker buildings built yet.[-]\n")
 	}
 	sb.WriteString("\n")
 
-	// ── Domain Breakdown ─────────────────────────
-	sb.WriteString(workerSection("Domain Breakdown"))
+	// ── By domain ────────────────────────────────
+	sb.WriteString(workerSection("By domain"))
 
 	type domainGroup struct {
 		Domain string
@@ -180,7 +186,7 @@ func workersProvider(state game.GameState, _ int) string {
 	}
 
 	if len(groupOrder) == 0 {
-		fmt.Fprintf(&sb, "  [cyan]Idle: %d[white] — assign with: [cyan]assign <building> [count|all][-]\n", idle)
+		fmt.Fprintf(&sb, "  [cyan]Idle: %d[white]. Assign with: [cyan]assign <building> [count|all][-]\n", idle)
 	} else {
 		for _, domain := range groupOrder {
 			grp := groupMap[domain]
@@ -188,15 +194,14 @@ func workersProvider(state game.GameState, _ int) string {
 			if !ok {
 				label = capitalize(domain)
 			}
+			// note: no per-domain food figure here. The class table carries one,
+			// but the game charges every worker the food class's cost (see the
+			// summary above), so showing the domain's would be a number nobody pays.
 			classInfo := ""
-			foodCostStr := ""
 			if cls, found := config.WorkerClassByDomainAndAge(domain, state.Age); found && cls.ClassName != "" {
 				classInfo = fmt.Sprintf(" %s × %d", cls.ClassName, grp.Total)
-				if cls.FoodCost > 0 {
-					foodCostStr = fmt.Sprintf("  [gray]%.3f food/tick each[-]", cls.FoodCost)
-				}
 			}
-			fmt.Fprintf(&sb, "  [cyan][%s][-][white]%s[-]%s\n", label, classInfo, foodCostStr)
+			fmt.Fprintf(&sb, "  [cyan]%s[-][white]%s[-]\n", label, classInfo)
 			for _, row := range grp.Rows {
 				bar := assignBar(row.WorkersAssigned, row.Capacity, 10)
 				fmt.Fprintf(&sb, "    %-26s %s [cyan]%d[white]/[green]%d[-]\n",
@@ -205,7 +210,7 @@ func workersProvider(state game.GameState, _ int) string {
 			fmt.Fprintln(&sb)
 		}
 		if idle > 0 {
-			fmt.Fprintf(&sb, "  [yellow]Idle: %d[white] — assign with: [cyan]assign <building> [count|all][-]\n", idle)
+			fmt.Fprintf(&sb, "  [yellow]Idle: %d[white]. Assign with: [cyan]assign <building> [count|all][-]\n", idle)
 		}
 	}
 

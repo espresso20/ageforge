@@ -27,10 +27,10 @@ func TestMultiplierSourceLabel(t *testing.T) {
 
 func TestMultiplierTargetLabel(t *testing.T) {
 	cases := map[string]string{
-		"production_all": "All Production",
-		"tick_speed":     "Tick Speed",
-		"gather_rate":    "Gather Rate",
-		"food_rate":      "Food Rate", // <res>_rate via formatBonusName
+		"production_all": "All production",
+		"tick_speed":     "Game speed",
+		"gather_rate":    "Worker output",
+		"food_rate":      "Food production", // <res>_rate via game.EffectTargetName
 	}
 	for in, want := range cases {
 		if got := multiplierTargetLabel(in); got != want {
@@ -94,10 +94,10 @@ func TestRenderActiveMultipliers_ActiveEvent(t *testing.T) {
 	if !strings.Contains(out, "Event: Peaceful Century +1%") {
 		t.Errorf("active event bonus missing from panel:\n%s", out)
 	}
-	if !strings.Contains(out, "All Production") || !strings.Contains(out, "Morale ×1.18") {
+	if !strings.Contains(out, "All production") || !strings.Contains(out, "Morale ×1.18") {
 		t.Errorf("production_all line malformed:\n%s", out)
 	}
-	if !strings.Contains(out, "Tick Speed") || !strings.Contains(out, "Prestige +5%") {
+	if !strings.Contains(out, "Game speed") || !strings.Contains(out, "Prestige +5%") {
 		t.Errorf("tick_speed line malformed:\n%s", out)
 	}
 }
@@ -108,7 +108,7 @@ func TestRenderActiveMultipliers_SpeedMultiplierLine(t *testing.T) {
 		Modifiers:       nil,
 	}
 	out := renderActiveMultipliers(state)
-	if !strings.Contains(out, "Game Speed") || !strings.Contains(out, "×2.00") {
+	if !strings.Contains(out, "Game speed") || !strings.Contains(out, "×2.00") {
 		t.Errorf("speed multiplier line missing:\n%s", out)
 	}
 }
@@ -239,10 +239,10 @@ func TestStatsProvider_ActiveEventEffects(t *testing.T) {
 	}
 	out := statsProvider(state, 0)
 
-	if !strings.Contains(out, "[red]    food -3.0/t[-]") {
+	if !strings.Contains(out, "[red]    -3 food/tick[-]") {
 		t.Errorf("negative production effect should render red-tagged:\n%s", out)
 	}
-	if !strings.Contains(out, "[green]    gold +1.0/t[-]") {
+	if !strings.Contains(out, "[green]    +1 gold/tick[-]") {
 		t.Errorf("positive production effect should render green-tagged:\n%s", out)
 	}
 }

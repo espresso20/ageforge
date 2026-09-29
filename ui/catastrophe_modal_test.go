@@ -120,8 +120,8 @@ func TestEpochHistoryNeverShowsUnresolvedAsSurvived(t *testing.T) {
 	var sb strings.Builder
 	epochProviderHistory(&sb, state)
 	out := sb.String()
-	if strings.Contains(out, "Survived") {
-		t.Errorf("unresolved catastrophes shown as Survived:\n%s", out)
+	if strings.Contains(out, "Endured") {
+		t.Errorf("unresolved catastrophes shown as Endured:\n%s", out)
 	}
 	if !strings.Contains(out, "Pending") || !strings.Contains(out, "outcome not recorded") {
 		t.Errorf("expected Pending and 'outcome not recorded' labels:\n%s", out)
@@ -132,7 +132,7 @@ func TestEpochHistoryNeverShowsUnresolvedAsSurvived(t *testing.T) {
 	sb.Reset()
 	epochProviderHistory(&sb, state)
 	out = sb.String()
-	if !strings.Contains(out, "Survived") || !strings.Contains(out, "Succumbed") {
+	if !strings.Contains(out, "Endured") || !strings.Contains(out, "Succumbed") {
 		t.Errorf("resolved outcomes missing:\n%s", out)
 	}
 }
@@ -144,11 +144,12 @@ func TestStatsCatastropheCounts(t *testing.T) {
 	// Legacy flags no longer drive the count (a repeat succumb in one epoch has one flag).
 	state.LegacyBonuses = map[string]bool{"iron_era": true}
 	out := statsProvider(state, 120)
-	if !strings.Contains(out, "(Endured: 2  Succumbed: 3)") {
+	if !strings.Contains(out, "5  (endured 2, succumbed 3)") {
 		t.Errorf("catastrophe counts wrong:\n%s", out)
 	}
-	if !strings.Contains(out, "Epochs Survived:") || !strings.Contains(out, "Epochs Survived:     2") {
-		t.Errorf("Epochs Survived should equal Endured:\n%s", out)
+	// The old "Epochs Survived" line duplicated the endured count; it is gone.
+	if strings.Contains(out, "Epochs Survived") {
+		t.Errorf("stats still shows the Epochs Survived line:\n%s", out)
 	}
 }
 

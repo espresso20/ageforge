@@ -7,27 +7,42 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
-// formatTechEffect converts a config.Effect into a human-readable display string.
+// formatTechEffect names a config.Effect in glossary words: "+10% all
+// production", "+0.5 food/tick", "+500 storage for every resource",
+// "+10 housing", "unlocks Lumber Mill".
 func formatTechEffect(eff config.Effect) string {
 	switch eff.Type {
 	case "bonus":
-		return fmt.Sprintf("+%.0f%% %s", eff.Value*100, formatBonusName(eff.Target))
+		return textfmt.SignedPercent(eff.Value) + " " + game.EffectTargetName(eff.Target)
 	case "production":
-		if eff.Value >= 0 {
-			return fmt.Sprintf("+%.1f %s/tick", eff.Value, eff.Target)
-		}
-		return fmt.Sprintf("%.1f %s/tick", eff.Value, eff.Target)
+		return textfmt.Signed(eff.Value) + " " + game.ResourceName(eff.Target) + "/tick"
 	case "storage":
-		return fmt.Sprintf("+%.0f %s storage", eff.Value, eff.Target)
+		if eff.Target == "all" {
+			return textfmt.Signed(eff.Value) + " storage for every resource"
+		}
+		return textfmt.Signed(eff.Value) + " " + game.ResourceName(eff.Target) + " storage"
 	case "unlock":
-		return fmt.Sprintf("unlock: %s", eff.Target)
+		return "unlocks " + game.BuildingName(eff.Target)
 	case "capacity":
-		return fmt.Sprintf("+%.0f %s capacity", eff.Value, eff.Target)
+		switch eff.Target {
+		case "population":
+			return textfmt.Signed(eff.Value) + " housing"
+		case "military":
+			return textfmt.Signed(eff.Value) + " soldier storage"
+		}
+		return textfmt.Signed(eff.Value) + " " + game.EffectTargetName(eff.Target)
 	default:
-		return fmt.Sprintf("%s: %s +%.1f", eff.Type, eff.Target, eff.Value)
+		return game.EffectTargetName(eff.Target) + " " + textfmt.Signed(eff.Value)
 	}
+}
+
+// techLabel is a tech's name with the key the research command takes:
+// "Bronze Working (bronze_working)".
+func techLabel(name, key string) string {
+	return name + " (" + key + ")"
 }
 
 // researchProvider generates the full research overlay text. It renders three
@@ -49,7 +64,7 @@ func researchProvider(state game.GameState, _ int) string {
 	fmt.Fprintf(&sb, " [gold]Progress: %d / %d techs researched[-]\n\n", state.Research.TotalResearched, len(state.Research.Techs))
 
 	// === Currently Researching ===
-	fmt.Fprintf(&sb, " [gold]═══ Currently Researching ═══[-]\n\n")
+	fmt.Fprintf(&sb, " [gold]═══ Researching now ═══[-]\n\n")
 	if state.Research.CurrentTech != "" {
 		done := state.Research.TotalTicks - state.Research.TicksLeft
 		total := state.Research.TotalTicks
@@ -63,13 +78,13 @@ func researchProvider(state game.GameState, _ int) string {
 		// on time-to-finish rather than restating it in ticks.
 		fmt.Fprintf(&sb, "  %s %s left  (%d%%)\n", bar, formatTicks(state.Research.TicksLeft, state), pct)
 	} else {
-		sb.WriteString("  [gray]No research in progress — use: research <key>[-]\n")
+		sb.WriteString("  [gray]No research in progress. Start one with: research <key>[-]\n")
 	}
 
-	// === Active Research Bonuses ===
-	sb.WriteString("\n [gold]═══ Active Research Bonuses ═══[-]\n\n")
+	// === Research bonuses ===
+	sb.WriteString("\n [gold]═══ Research bonuses ═══[-]\n\n")
 	if len(state.Research.Bonuses) == 0 {
-		sb.WriteString("  [gray]No research bonuses yet[-]\n")
+		sb.WriteString("  [gray]No research bonuses yet.[-]\n")
 	} else {
 		keys := make([]string, 0, len(state.Research.Bonuses))
 		for k := range state.Research.Bonuses {
@@ -80,16 +95,16 @@ func researchProvider(state game.GameState, _ int) string {
 		for _, key := range keys {
 			value := state.Research.Bonuses[key]
 			name := formatBonusName(key)
-			if value > 0 {
-				fmt.Fprintf(&sb, "  [green]+%.0f%%[-]  %s\n\n", value*100, name)
-			} else {
-				fmt.Fprintf(&sb, "  [red]%.0f%%[-]  %s\n\n", value*100, name)
+			color := "green"
+			if value <= 0 {
+				color = "red"
 			}
+			fmt.Fprintf(&sb, "  [%s]%s[-]  %s\n\n", color, textfmt.SignedPercent(value), name)
 		}
 	}
 
-	// === Available Now ===
-	sb.WriteString(" [gold]═══ Available Now ═══[-]\n")
+	// === Available now ===
+	sb.WriteString(" [gold]═══ Available now ═══[-]\n")
 
 	knowledgeAmt := 0.0
 	if rs, ok := state.Resources["knowledge"]; ok {
@@ -131,11 +146,11 @@ func researchProvider(state game.GameState, _ int) string {
 			var affordStr string
 			if knowledgeAmt < ts.Cost {
 				need := ts.Cost - knowledgeAmt
-				affordStr = fmt.Sprintf("  [red](need %.0f more)[-]", need)
+				affordStr = fmt.Sprintf("  [red](need %s more knowledge)[-]", FormatNumber(need))
 			}
 
-			fmt.Fprintf(&sb, "  [cyan]○[-]  %-24s [gray]%.0f knowledge · %s[-]%s\n",
-				ts.Name, ts.Cost, formatTicks(def.ResearchTicks, state), affordStr)
+			fmt.Fprintf(&sb, "  [cyan]○[-]  %-40s [gray]%s knowledge · %s[-]%s\n",
+				techLabel(ts.Name, tech.Key), FormatNumber(ts.Cost), formatTicks(def.ResearchTicks, state), affordStr)
 
 			if ts.Description != "" {
 				fmt.Fprintf(&sb, "     [gray]%s[-]\n", ts.Description)
@@ -151,8 +166,8 @@ func researchProvider(state game.GameState, _ int) string {
 		}
 	}
 
-	// === Tech Tree ===
-	sb.WriteString("\n [gold]═══ Tech Tree ═══[-]\n")
+	// === Tech tree ===
+	sb.WriteString("\n [gold]═══ Tech tree ═══[-]\n")
 
 	for _, ageKey := range ageOrder {
 		ageTechs, ok := techsByAge[ageKey]
@@ -219,7 +234,7 @@ func researchProvider(state game.GameState, _ int) string {
 				fmt.Fprintf(&sb, "  [yellow]⟳[-]  [yellow]%-24s[-]  [gray](in progress)[-]\n", ts.Name)
 
 			} else if ts.Available {
-				fmt.Fprintf(&sb, "  [cyan]○[-]  [cyan]%-24s[-]  [gray]%.0f knowledge — %s[-]", ts.Name, ts.Cost, formatTicks(def.ResearchTicks, state))
+				fmt.Fprintf(&sb, "  [cyan]○[-]  [cyan]%-40s[-]  [gray]%s knowledge · %s[-]", techLabel(ts.Name, tech.Key), FormatNumber(ts.Cost), formatTicks(def.ResearchTicks, state))
 				// Show prereqs if any
 				if len(ts.Prerequisites) > 0 {
 					var prereqNames []string
@@ -260,37 +275,10 @@ func researchProvider(state game.GameState, _ int) string {
 	return sb.String()
 }
 
-// formatBonusName converts a research/milestone bonus key to a human-readable
-// display name. Falls back to title-casing the key with spaces if no explicit
-// mapping is defined (handles dynamically-generated resource rate keys like
-// "iron_rate" → "Iron Rate").
+// formatBonusName names a research/milestone bonus key in glossary words, as
+// a label: "All production", "Worker output", "Iron production", "Housing".
 func formatBonusName(key string) string {
-	switch key {
-	case "gather_rate":
-		return "Gather Rate"
-	case "production_all":
-		return "All Production"
-	case "military_power":
-		return "Military Power"
-	case "expedition_reward":
-		return "Expedition Rewards"
-	case "research_speed":
-		return "Research Speed"
-	case "build_cost":
-		return "Build Cost"
-	case "population":
-		return "Population Cap"
-	}
-	// Convert key_rate pattern
-	if strings.HasSuffix(key, "_rate") {
-		res := strings.TrimSuffix(key, "_rate")
-		return capitalize(res) + " Rate"
-	}
-	parts := strings.Split(key, "_")
-	for i, p := range parts {
-		parts[i] = capitalize(p)
-	}
-	return strings.Join(parts, " ")
+	return textfmt.Capitalize(game.EffectTargetName(key))
 }
 
 // capitalize upper-cases the first letter of s.
