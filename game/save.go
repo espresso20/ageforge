@@ -5,7 +5,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -222,6 +225,8 @@ type TradeSave struct {
 	ActiveRoutes   map[string]ActiveRoute `json:"active_routes"`
 	SupplyPressure map[string]float64     `json:"supply_pressure"`
 	TotalExchanged map[string]float64     `json:"total_exchanged"`
+	TotalSold      map[string]float64     `json:"total_sold,omitempty"`
+	TotalBought    map[string]float64     `json:"total_bought,omitempty"`
 	TotalImported  map[string]float64     `json:"total_imported"`
 	TotalExported  map[string]float64     `json:"total_exported"`
 }
@@ -407,7 +412,7 @@ const AutosaveName = "autosave"
 func (ge *GameEngine) SaveGame(filename string) error {
 	dir := saveDirectory()
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("failed to create save directory: %w", err)
+		return fmt.Errorf("could not create the save folder: %w", err)
 	}
 
 	// Take the read lock for the snapshot + marshal so doTick cannot mutate
@@ -426,17 +431,17 @@ func (ge *GameEngine) SaveGame(filename string) error {
 	ge.mu.RUnlock()
 
 	if err != nil {
-		return fmt.Errorf("failed to marshal save: %w", err)
+		return fmt.Errorf("could not encode the game state: %w", err)
 	}
 
 	// Atomic write: temp file + rename to prevent corruption on crash
 	path := filepath.Join(dir, filename+".json")
 	tmpPath := path + ".tmp"
 	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
-		return fmt.Errorf("failed to write save: %w", err)
+		return fmt.Errorf("could not write the save file: %w", err)
 	}
 	if err := os.Rename(tmpPath, path); err != nil {
-		return fmt.Errorf("failed to finalize save: %w", err)
+		return fmt.Errorf("could not write the save file: %w", err)
 	}
 	return nil
 }
@@ -561,6 +566,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			ActiveRoutes:   tradeActiveRoutes,
 			SupplyPressure: tradePressure,
 			TotalExchanged: tradeExchanged,
+			TotalSold:      maps.Clone(ge.Trade.totalSold),
+			TotalBought:    maps.Clone(ge.Trade.totalBought),
 			TotalImported:  tradeImported,
 			TotalExported:  tradeExported,
 		},
@@ -625,7 +632,7 @@ func (ge *GameEngine) BranchSave(newName string) error {
 		return err
 	}
 	if SaveExists(clean) {
-		return fmt.Errorf("a save named %q already exists — pick another name", clean)
+		return fmt.Errorf("A save named '%s' already exists. Pick another name.", clean)
 	}
 	parent := ge.ActiveSaveName()
 	ge.SetActiveParentName(parent)
@@ -643,12 +650,15 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	path := savePath(filename)
 	data, err := os.ReadFile(path)
 	if err != nil {
-		return fmt.Errorf("failed to read save: %w", err)
+		if errors.Is(err, fs.ErrNotExist) {
+			return noSaveError{name: filename, err: err}
+		}
+		return fmt.Errorf("could not read the save file: %w", err)
 	}
 
 	var save GameSave
 	if err := json.Unmarshal(data, &save); err != nil {
-		return fmt.Errorf("failed to parse save: %w", err)
+		return fmt.Errorf("the save file '%s' is damaged and cannot be read: %w", filename, err)
 	}
 
 	// Verify integrity before loading — set badge flags on the save struct
@@ -756,7 +766,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.Prestige.LoadState(save.Prestige.Level, save.Prestige.TotalEarned, save.Prestige.Available, save.Prestige.Upgrades)
 
 	// Restore trade
-	ge.Trade.LoadState(save.Trade.ActiveRoutes, save.Trade.SupplyPressure, save.Trade.TotalExchanged, save.Trade.TotalImported, save.Trade.TotalExported)
+	ge.Trade.LoadState(save.Trade)
 
 	// Restore diplomacy. Lent-worker batches are restored for tracking only —
 	// those workers were already counted into the saved worker pool when first
@@ -1206,25 +1216,39 @@ func sanitizeSaveName(name string) (string, error) {
 	name = strings.TrimSpace(name)
 
 	if name == "" {
-		return "", fmt.Errorf("save name cannot be empty")
+		return "", fmt.Errorf("The save name is empty. Give the save a name.")
 	}
 	if len(name) > maxSaveNameLen {
-		return "", fmt.Errorf("save name too long (max %d characters)", maxSaveNameLen)
+		return "", fmt.Errorf("That save name is too long (the most is %d characters).", maxSaveNameLen)
 	}
 	if strings.ContainsRune(name, 0) {
-		return "", fmt.Errorf("save name contains an invalid character")
+		return "", fmt.Errorf("That save name has a character a file name cannot use.")
 	}
 	if strings.ContainsAny(name, `/\`) {
-		return "", fmt.Errorf("save name cannot contain path separators")
+		return "", fmt.Errorf("Save names cannot contain / or \\.")
 	}
 	if strings.Contains(name, "..") {
-		return "", fmt.Errorf("save name cannot contain '..'")
+		return "", fmt.Errorf("Save names cannot contain '..'.")
 	}
 	if strings.HasPrefix(name, ".") {
-		return "", fmt.Errorf("save name cannot start with a dot")
+		return "", fmt.Errorf("Save names cannot start with a dot.")
 	}
 	return name, nil
 }
+
+// noSaveError is the refusal for a save name with no file behind it. It
+// wraps the underlying error (fs.ErrNotExist) for errors.Is, but prints only
+// the player-facing sentence, not the OS error with its full path.
+type noSaveError struct {
+	name string
+	err  error
+}
+
+func (e noSaveError) Error() string {
+	return fmt.Sprintf("No save named '%s'. Type saves to list them.", e.name)
+}
+
+func (e noSaveError) Unwrap() error { return e.err }
 
 // ValidateSaveName is the exported entry point to the same validation the rename
 // and save paths use: it strips a trailing ".json", trims whitespace, and rejects
@@ -1243,10 +1267,10 @@ func DeleteSave(filename string) error {
 		return err
 	}
 	if !SaveExists(name) {
-		return fmt.Errorf("save %q does not exist", name)
+		return noSaveError{name: name, err: fs.ErrNotExist}
 	}
 	if err := os.Remove(savePath(name)); err != nil {
-		return fmt.Errorf("failed to delete save: %w", err)
+		return fmt.Errorf("could not delete the save file: %w", err)
 	}
 	return nil
 }
@@ -1258,27 +1282,27 @@ func DeleteSave(filename string) error {
 func RenameSave(oldName, newName string) error {
 	src, err := sanitizeSaveName(oldName)
 	if err != nil {
-		return fmt.Errorf("invalid source name: %w", err)
+		return err
 	}
 	dst, err := sanitizeSaveName(newName)
 	if err != nil {
-		return fmt.Errorf("invalid new name: %w", err)
+		return fmt.Errorf("New name: %w", err)
 	}
 	if !SaveExists(src) {
-		return fmt.Errorf("save %q does not exist", src)
+		return noSaveError{name: src, err: fs.ErrNotExist}
 	}
 	if src == dst {
-		return fmt.Errorf("new name is the same as the current name")
+		return fmt.Errorf("The new name is the same as the current one.")
 	}
 	if SaveExists(dst) {
-		return fmt.Errorf("a save named %q already exists", dst)
+		return fmt.Errorf("A save named '%s' already exists. Pick another name.", dst)
 	}
 	srcPath := savePath(src)
 	// Write the renamed file into the same directory the source lives in so a
 	// save in the legacy CWD location isn't orphaned by a canonical-dir write.
 	dstPath := filepath.Join(filepath.Dir(srcPath), dst+".json")
 	if err := os.Rename(srcPath, dstPath); err != nil {
-		return fmt.Errorf("failed to rename save: %w", err)
+		return fmt.Errorf("could not rename the save file: %w", err)
 	}
 
 	// Re-parent any children so the lineage survives the rename. Best-effort:
@@ -1355,7 +1379,7 @@ func DuplicateSave(filename string) (string, error) {
 		return "", err
 	}
 	if !SaveExists(src) {
-		return "", fmt.Errorf("save %q does not exist", src)
+		return "", noSaveError{name: src, err: fs.ErrNotExist}
 	}
 
 	// Find the first free "-copy" variant. The base + suffix must still satisfy
@@ -1365,13 +1389,13 @@ func DuplicateSave(filename string) (string, error) {
 		dst = fmt.Sprintf("%s-copy-%d", src, n)
 	}
 	if _, err := sanitizeSaveName(dst); err != nil {
-		return "", fmt.Errorf("cannot build a valid copy name: %w", err)
+		return "", fmt.Errorf("could not make a name for the copy: %w", err)
 	}
 
 	srcPath := savePath(src)
 	data, err := os.ReadFile(srcPath)
 	if err != nil {
-		return "", fmt.Errorf("failed to read save: %w", err)
+		return "", fmt.Errorf("could not read the save file: %w", err)
 	}
 	// Place the copy alongside the source (canonical or legacy dir) for the same
 	// reason as RenameSave. Write atomically (temp + rename).
@@ -1379,11 +1403,11 @@ func DuplicateSave(filename string) (string, error) {
 	dstPath := filepath.Join(dir, dst+".json")
 	tmpPath := dstPath + ".tmp"
 	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
-		return "", fmt.Errorf("failed to write copy: %w", err)
+		return "", fmt.Errorf("could not write the copy: %w", err)
 	}
 	if err := os.Rename(tmpPath, dstPath); err != nil {
 		os.Remove(tmpPath)
-		return "", fmt.Errorf("failed to finalize copy: %w", err)
+		return "", fmt.Errorf("could not write the copy: %w", err)
 	}
 	return dst, nil
 }

@@ -31,8 +31,30 @@ func setAmount(ge *GameEngine, res string, v float64) { ge.Resources.resources[r
 func queued(ge *GameEngine, key string) int { return ge.Buildings.GetQueueCount(key, ge.buildQueue) }
 
 func logHas(ge *GameEngine, sub string) bool {
+	return logHasAll(ge, sub)
+}
+
+// logHasAll reports whether one log line contains every sub.
+// logHasLine reports whether some log line is exactly want.
+func logHasLine(ge *GameEngine, want string) bool {
 	for _, l := range ge.log {
-		if strings.Contains(l.Message, sub) {
+		if l.Message == want {
+			return true
+		}
+	}
+	return false
+}
+
+func logHasAll(ge *GameEngine, subs ...string) bool {
+	for _, l := range ge.log {
+		all := true
+		for _, sub := range subs {
+			if !strings.Contains(l.Message, sub) {
+				all = false
+				break
+			}
+		}
+		if all {
 			return true
 		}
 	}
@@ -61,7 +83,7 @@ func TestPlan_PaysWhenItStartsNotWhenQueued(t *testing.T) {
 	if len(ge.plan) != 1 || ge.plan[0].Count != 1 || ge.plan[0].Started != 2 {
 		t.Errorf("plan = %+v, want one item with 1 left and 2 started", ge.plan)
 	}
-	if !logHas(ge, "Plan started: 2 × Hut") {
+	if !logHas(ge, "Plan: started building 2 Huts.") {
 		t.Error("no summary log line for the two starts")
 	}
 }
@@ -205,7 +227,7 @@ func TestPlan_InvalidItemsDropOut(t *testing.T) {
 	if len(ge.plan) != 1 || ge.plan[0].Key != "fire_mastery" {
 		t.Errorf("plan = %+v, want only fire_mastery", ge.plan)
 	}
-	if !logHas(ge, "Plan: dropped 2 × Hut") || !logHas(ge, "Plan: dropped research Tool Making (already researched)") {
+	if !logHas(ge, "Plan: dropped 2 Huts") || !logHas(ge, "Plan: dropped research Tool Making (already researched)") {
 		t.Error("missing drop log lines")
 	}
 	// Removing a prerequisite from the plan drops what needed it.
@@ -303,8 +325,9 @@ func TestOffline_RunsThePlanAsResourcesComeIn(t *testing.T) {
 	if started < 8 {
 		t.Errorf("the plan started %d huts in an hour offline at %.2f wood/tick, want many more than one cap's worth", started, rate)
 	}
-	if !logHas(ge, "While you were away your plan started") {
-		t.Error("no offline plan summary")
+	want := "While you were away, your plan started building " + BuildingCount(started, "hut") + "."
+	if !logHasLine(ge, want) {
+		t.Errorf("no offline plan summary %q", want)
 	}
 	if got := ge.Buildings.GetCount("hut"); got == 0 {
 		t.Error("no hut finished construction offline")

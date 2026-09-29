@@ -5,6 +5,7 @@ import (
 	"math"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // PrestigeManager manages the prestige meta-progression layer.
@@ -71,16 +72,18 @@ func (pm *PrestigeManager) CalculatePoints(age string, ageOrder map[string]int, 
 	return points
 }
 
-// CanPrestige returns true if the player has reached Modern Age (order ≥ 12).
-// Modern Age is the minimum threshold; later ages are also valid prestige points.
-// The order value is compared against the ageOrder map provided by ProgressManager.
+// PrestigeMinAge is the age that opens prestige; every later age counts too.
+const PrestigeMinAge = "modern_age"
+
+// CanPrestige returns true if the player has reached PrestigeMinAge or later,
+// comparing orders from the ageOrder map provided by ProgressManager.
 func (pm *PrestigeManager) CanPrestige(age string, ageOrder map[string]int) bool {
 	idx, ok := ageOrder[age]
 	if !ok {
 		return false
 	}
-	// Modern Age is order 12 in the 22-age sequence.
-	return idx >= 12
+	minIdx, ok := ageOrder[PrestigeMinAge]
+	return ok && idx >= minIdx
 }
 
 // Prestige increments level and adds points
@@ -95,17 +98,17 @@ func (pm *PrestigeManager) BuyUpgrade(key string) error {
 	defs := pm.upgradeDefs
 	def, ok := defs[key]
 	if !ok {
-		return fmt.Errorf("unknown prestige upgrade: %s", key)
+		return unknownKeyError("prestige upgrade", key, defs, "Type prestige shop to see the upgrades.")
 	}
 
 	currentTier := pm.upgrades[key]
 	if currentTier >= def.MaxTier {
-		return fmt.Errorf("%s is already at max tier (%d)", def.Name, def.MaxTier)
+		return fmt.Errorf("%s is already at its top tier (%d).", def.Name, def.MaxTier)
 	}
 
 	cost := def.Costs[currentTier]
 	if pm.available < cost {
-		return fmt.Errorf("need %d prestige points for %s tier %d (have %d)", cost, def.Name, currentTier+1, pm.available)
+		return fmt.Errorf("%s tier %d costs %s (you have %s). Prestige again to earn more.", def.Name, currentTier+1, textfmt.Count(cost, "prestige point", "prestige points"), textfmt.Int(pm.available))
 	}
 
 	pm.available -= cost
@@ -215,13 +218,19 @@ func formatPrestigeEffect(def config.PrestigeUpgradeDef, tier int) string {
 	if tier == 0 {
 		return "Not purchased"
 	}
+	v := def.PerTier * float64(tier)
 	switch def.EffectType {
 	case "rate_bonus":
-		return fmt.Sprintf("+%.0f%% %s", def.PerTier*float64(tier)*100, def.EffectKey)
+		return textfmt.SignedPercent(v) + " " + EffectTargetName(def.EffectKey)
 	case "flat_bonus":
-		return fmt.Sprintf("+%.0f %s", def.PerTier*float64(tier), def.EffectKey)
+		// A flat "all" bonus raises every resource's storage (see the
+		// storage bonuses in engine.go), not production.
+		if def.EffectKey == "all" {
+			return textfmt.Signed(v) + " storage for every resource"
+		}
+		return textfmt.Signed(v) + " " + EffectTargetName(def.EffectKey)
 	case "starting_resource":
-		return fmt.Sprintf("+%.0f starting %s", def.PerTier*float64(tier), def.EffectKey)
+		return textfmt.Signed(v) + " starting " + ResourceName(def.EffectKey)
 	}
 	return ""
 }

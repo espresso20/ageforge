@@ -10,6 +10,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // ShowAgeSplash is the simplified variant of ShowAgeSplashFull for callers that
@@ -20,7 +21,7 @@ func ShowAgeSplash(om *OverlayManager, oldAge, newAge string) {
 }
 
 // ShowAgeSplashFull is the full variant of ShowAgeSplash that also displays the
-// transformation summary and optional epoch event reveal.
+// available-upgrades summary and optional epoch event reveal.
 func ShowAgeSplashFull(om *OverlayManager, oldAge, newAge string,
 	summary game.AgeAdvanceSummary, epochChanged bool, epochEvent game.EpochEventRecord) {
 	// Age title overlay
@@ -28,7 +29,7 @@ func ShowAgeSplashFull(om *OverlayManager, oldAge, newAge string,
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter)
 
-	titleTV.SetText(buildAgeSplashText(newAge, summary, epochChanged, epochEvent))
+	titleTV.SetText(safeTags(buildAgeSplashText(newAge, summary, epochChanged, epochEvent)))
 
 	// Layout: text-only flex with focusable=true so the overlay itself receives input
 	overlay := tview.NewFlex().SetDirection(tview.FlexRow).
@@ -102,29 +103,40 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 				bNames = append(bNames, bKey)
 			}
 		}
-		fmt.Fprintf(&sb, "[cyan]New Buildings:[-] %s\n", strings.Join(bNames, ", "))
+		fmt.Fprintf(&sb, "[cyan]New buildings:[-] %s\n", strings.Join(bNames, ", "))
 	}
 	if len(newDef.UnlockResources) > 0 {
-		fmt.Fprintf(&sb, "[green]New Resources:[-] %s\n", strings.Join(newDef.UnlockResources, ", "))
+		rNames := make([]string, 0, len(newDef.UnlockResources))
+		for _, rKey := range newDef.UnlockResources {
+			rNames = append(rNames, game.ResourceName(rKey))
+		}
+		fmt.Fprintf(&sb, "[green]New resources:[-] %s\n", strings.Join(rNames, ", "))
 	}
 	if len(newDef.UnlockVillagers) > 0 {
-		fmt.Fprintf(&sb, "[yellow]New Workers:[-] %s\n", strings.Join(newDef.UnlockVillagers, ", "))
+		wNames := make([]string, 0, len(newDef.UnlockVillagers))
+		for _, wKey := range newDef.UnlockVillagers {
+			wNames = append(wNames, textfmt.Capitalize(strings.ReplaceAll(wKey, "_", " ")))
+		}
+		fmt.Fprintf(&sb, "[yellow]New worker types:[-] %s\n", strings.Join(wNames, ", "))
 	}
 
 	// Highlight the wonder for this age
 	for _, bKey := range newDef.UnlockBuildings {
 		if def, ok := allBuildings[bKey]; ok && def.Category == "wonder" {
-			fmt.Fprintf(&sb, "\n[gold::b]★ Wonder Unlocked: %s[-]\n", def.Name)
-			fmt.Fprintf(&sb, "[white]Build it to unlock +0.5x game speed![-]\n")
+			fmt.Fprintf(&sb, "\n[gold::b]★ Wonder unlocked: %s[-]\n", def.Name)
+			fmt.Fprintf(&sb, "[white]Bank its cost, then build it. It raises the speed cap by %sx.[-]\n",
+				config.FormatAmount(config.WonderSpeedCapStep))
 			break
 		}
 	}
 
-	// Transformation summary
+	// Upgrade summary. Advancing only offers these upgrades (the buildings
+	// stay as they are until the player runs `upgrade`), so say that.
 	if len(summary.BuildingsTransformed) > 0 || len(summary.BuildingsLegacy) > 0 {
 		fmt.Fprintf(&sb, "\n")
 		if len(summary.BuildingsTransformed) > 0 {
-			fmt.Fprintf(&sb, "[yellow]── Buildings Transformed ──[-]\n")
+			fmt.Fprintf(&sb, "[yellow]── Upgrades available ──[-]\n")
+			fmt.Fprintf(&sb, "  Type [cyan]upgrade[-] to see the costs, or [cyan]upgrade <building>[-] to upgrade one.\n")
 			for _, t := range summary.BuildingsTransformed {
 				oldName := t.OldName
 				if oldName == "" {
@@ -139,7 +151,7 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 			}
 		}
 		if len(summary.BuildingsLegacy) > 0 {
-			fmt.Fprintf(&sb, "[yellow]── Legacy Buildings ──[-]\n")
+			fmt.Fprintf(&sb, "[yellow]── Legacy buildings ──[-]\n")
 			for _, legKey := range summary.BuildingsLegacy {
 				legName := legKey
 				if def, ok := allBuildings[legKey]; ok {
@@ -182,7 +194,7 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 			flavorText = evDef.FlavorText
 		}
 
-		fmt.Fprintf(&sb, "\n[gold]══ EPOCH TRANSITION ══[-]\n")
+		fmt.Fprintf(&sb, "\n[gold]══ New epoch ══[-]\n")
 		fmt.Fprintf(&sb, "[%s]%s %s[-]\n", epochColor, epochIcon, epochEvent.EpochName)
 		fmt.Fprintf(&sb, "\n[%s]%s[-]\n", eventColor, epochEvent.EventName)
 		if flavorText != "" {
@@ -190,6 +202,6 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 		}
 	}
 
-	fmt.Fprintf(&sb, "\n[gray]Press any key to continue[-]")
+	fmt.Fprintf(&sb, "\n[gray]Press any key to continue.[-]")
 	return sb.String()
 }

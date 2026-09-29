@@ -62,7 +62,7 @@ func TestGarrisonSavedSummary(t *testing.T) {
 		Buildings: 3, Workers: 1, Raids: 2,
 		Resources: map[string]float64{"food": 1200, "gold": 300, "wood": 50, "stone": 40, "iron": 30, "dust": 0.2},
 	}))
-	want := "3 buildings, 1 worker, 1.20K food, 300 gold, 50 wood, 40 stone (2 raids blunted)"
+	want := "3 buildings, 1 worker, 1.2K food, 300 gold, 50 wood, 40 stone (2 raids blunted)"
 	if got != want {
 		t.Errorf("summary = %q, want %q", got, want)
 	}

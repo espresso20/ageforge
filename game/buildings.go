@@ -9,6 +9,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/detmath"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // BuildingManager manages all buildings, including production buildings, wonders,
@@ -145,6 +146,40 @@ func editDistance(a, b string) int {
 		prev = curr
 	}
 	return prev[lb]
+}
+
+// closestKey returns the key nearest to input by edit distance (at most 2),
+// or "" if none is that close. Keys are compared in sorted order so a tie
+// always resolves to the same suggestion.
+func closestKey[V any](input string, keys map[string]V) string {
+	sorted := make([]string, 0, len(keys))
+	for k := range keys {
+		sorted = append(sorted, k)
+	}
+	sort.Strings(sorted)
+	best := ""
+	bestDist := 3
+	for _, k := range sorted {
+		if d := editDistance(input, k); d < bestDist {
+			bestDist = d
+			best = k
+		}
+	}
+	return best
+}
+
+// unknownKeyError is the refusal for a key the player mistyped:
+// "Unknown tech 'x'. Did you mean 'y'? Type research list to see what you can
+// research." The suggestion part is dropped when nothing is close.
+func unknownKeyError[V any](kind, input string, keys map[string]V, hint string) error {
+	msg := fmt.Sprintf("Unknown %s '%s'.", kind, input)
+	if s := closestKey(input, keys); s != "" && s != input {
+		msg += fmt.Sprintf(" Did you mean '%s'?", s)
+	}
+	if hint != "" {
+		msg += " " + hint
+	}
+	return fmt.Errorf("%s", msg)
 }
 
 // GetCount returns how many of a building exist
@@ -408,38 +443,42 @@ func (bm *BuildingManager) LoadCounts(counts map[string]int) {
 func (bm *BuildingManager) BankResource(wonderKey, resource string, amount float64, rm *ResourceManager) (float64, error) {
 	def, ok := bm.defs[wonderKey]
 	if !ok {
-		return 0, fmt.Errorf("unknown building: %s", wonderKey)
+		return 0, unknownKeyError("wonder", wonderKey, bm.defs, "Type wonders to see them.")
 	}
 	if def.Category != "wonder" {
 		return 0, fmt.Errorf("%s is not a wonder", def.Name)
 	}
 	if !bm.unlocked[wonderKey] {
-		return 0, fmt.Errorf("%s is not yet unlocked", def.Name)
+		return 0, fmt.Errorf("%s is not unlocked yet", def.Name)
 	}
 	if bm.counts[wonderKey] > 0 {
 		return 0, fmt.Errorf("%s is already built", def.Name)
 	}
 	required, exists := def.BaseCost[resource]
 	if !exists {
-		return 0, fmt.Errorf("%s doesn't need %s (it needs %s)", def.Name, resource, strings.Join(sortedKeys(def.BaseCost), ", "))
+		needs := make([]string, 0, len(def.BaseCost))
+		for _, k := range sortedKeys(def.BaseCost) {
+			needs = append(needs, ResourceName(k))
+		}
+		return 0, fmt.Errorf("%s doesn't need %s (it needs %s)", def.Name, ResourceName(resource), strings.Join(needs, ", "))
 	}
 	banked := bm.wonderBanks[wonderKey][resource]
 	remaining := required - banked
 	if remaining <= 0.001 {
-		return 0, fmt.Errorf("%s already has all the %s it needs", def.Name, resource)
+		return 0, fmt.Errorf("%s already has all the %s it needs", def.Name, ResourceName(resource))
 	}
 	if amount > remaining {
 		amount = remaining
 	}
 	have := rm.Get(resource)
 	if have < 0.001 {
-		return 0, fmt.Errorf("you have no %s to bank", resource)
+		return 0, fmt.Errorf("you have no %s to bank", ResourceName(resource))
 	}
 	if have < amount {
-		return 0, fmt.Errorf("not enough %s (have: %s, need: %s)", resource, formatPlanAmount(have), formatPlanAmount(amount))
+		return 0, fmt.Errorf("not enough %s: need %s, have %s", ResourceName(resource), textfmt.Number(amount), textfmt.Number(have))
 	}
 	if !rm.Pay(map[string]float64{resource: amount}) {
-		return 0, fmt.Errorf("not enough %s", resource)
+		return 0, fmt.Errorf("not enough %s", ResourceName(resource))
 	}
 	if bm.wonderBanks[wonderKey] == nil {
 		bm.wonderBanks[wonderKey] = make(map[string]float64)
@@ -833,7 +872,7 @@ func (bm *BuildingManager) LoadRuins(ruins map[string]int) {
 // become ruins). Workers assigned to the destroyed buildings are NOT touched
 // here; the engine releases them (see GameEngine.releaseWorkersFrom).
 // Returns building key → number destroyed, and human-readable descriptions for
-// the log (e.g. "3 Lumber Mill") in sorted key order.
+// the log (e.g. "3 Lumber Mills") in sorted key order.
 func (bm *BuildingManager) DestroyRandom(rng *rand.Rand, count int) (map[string]int, []string) {
 	destroyed := drawFromPool(rng, bm.destroyablePool(), count)
 	keys := make([]string, 0, len(destroyed))
@@ -849,7 +888,7 @@ func (bm *BuildingManager) DestroyRandom(rng *rand.Rand, count int) (map[string]
 			bm.counts[key] = 0
 		}
 		if def, ok := bm.defs[key]; ok {
-			names = append(names, fmt.Sprintf("%d %s", n, def.Name))
+			names = append(names, textfmt.Int(n)+" "+pluralName(n, def.Name))
 		}
 	}
 	return destroyed, names

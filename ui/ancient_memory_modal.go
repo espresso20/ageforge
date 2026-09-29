@@ -36,13 +36,13 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 
 	body := tview.NewTextView().
 		SetDynamicColors(true).
-		SetText(fmt.Sprintf("[white]── Recovered Memory: [-][cyan]%s[-]\n", techName) +
+		SetText(fmt.Sprintf("[white]── Recovered memory: [-][cyan]%s[-]\n", techName) +
 			fmt.Sprintf("  [gray]%s[-]\n\n", def.Description) +
 			"  [green]✓ Research it now, free of prerequisites[-]\n" +
-			"  [red]• It returns slowly — half research speed (2× ticks)[-]\n" +
+			"  [red]• It takes twice as long to research[-]\n" +
 			"  [gray]Only one such memory surfaces per civilization.[-]")
 
-	btnAccept := tview.NewButton(tview.Escape("[A] ACCEPT")).
+	btnAccept := tview.NewButton("[A[] Accept").
 		SetSelectedFunc(func() {
 			if err := d.engine.AcceptAncientMemory(); err != nil {
 				d.engine.AddLog("error", "Could not recover the memory: "+err.Error())
@@ -51,7 +51,7 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 		})
 	styleFilledButton(btnAccept, theme.RolePositive)
 
-	btnDecline := tview.NewButton(tview.Escape("[D] Decline")).
+	btnDecline := tview.NewButton("[D[] Decline").
 		SetSelectedFunc(func() {
 			d.engine.DeclineAncientMemory()
 			d.closeAncientMemoryModal()

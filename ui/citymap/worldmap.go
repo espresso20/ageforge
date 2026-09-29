@@ -1221,7 +1221,7 @@ func (p *overlayPlan) addWorldCivLabels(geo worldGeometry, cols, rows int, occup
 	}
 }
 
-// addWorldTitle stamps the corner title "Known World — <Age>" at the top-left in the
+// addWorldTitle stamps the corner title "Known world · <Age>" at the top-left in the
 // accent role, drawn last so it crowns its corner. Uses the live age name (falling back
 // to the age key). Mirrors the city map's title pattern.
 func (p *overlayPlan) addWorldTitle(state game.GameState, cols, rows int) {
@@ -1229,9 +1229,9 @@ func (p *overlayPlan) addWorldTitle(state game.GameState, cols, rows int) {
 	if age == "" {
 		age = state.Age
 	}
-	title := "Known World"
+	title := "Known world"
 	if age != "" {
-		title = "Known World — " + age
+		title = "Known world · " + age
 	}
 	title = truncLabel(title, cols-1)
 	if title == "" {

@@ -599,7 +599,7 @@ func TestReproCatastropheEscBadgeBlockReopen(t *testing.T) {
 	if h.hasPage("catastrophe") {
 		t.Fatalf("refresh() re-popped the modal after Esc\n%s", h.describeUI())
 	}
-	if scr := h.screenText(); !strings.Contains(scr, "CATASTROPHE PENDING") {
+	if scr := h.screenText(); !strings.Contains(scr, "Catastrophe pending") {
 		t.Errorf("pending badge missing from the status bar:\n%s", scr)
 	}
 
@@ -619,7 +619,7 @@ func TestReproCatastropheEscBadgeBlockReopen(t *testing.T) {
 		t.Fatalf("still pending after Endure: %q", st.PendingCatastrophe)
 	}
 	time.Sleep(600 * time.Millisecond) // one refresh so the status bar updates
-	if scr := h.screenText(); strings.Contains(scr, "CATASTROPHE PENDING") {
+	if scr := h.screenText(); strings.Contains(scr, "Catastrophe pending") {
 		t.Errorf("pending badge still shown after Endure:\n%s", scr)
 	}
 }

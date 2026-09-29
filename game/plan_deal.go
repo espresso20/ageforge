@@ -29,29 +29,29 @@ func (ge *GameEngine) PlanAddDeal(key string, n int) error {
 	defer ge.mu.Unlock()
 	def, ok := ge.Diplomacy.factionDefs[key]
 	if !ok {
-		return fmt.Errorf("unknown civilization: %s", key)
+		return ge.Diplomacy.errUnknownCiv(key)
 	}
 	fs, ok := ge.Diplomacy.factions[key]
 	if !ok || !fs.Discovered {
-		return fmt.Errorf("%s has not been discovered yet", def.Name)
+		return errNotMet(def.Name)
 	}
 	if fs.DealsFor != ge.age || n < 1 || n > len(fs.Deals) {
-		return fmt.Errorf("no deal %d with the %s (they offer %d)", n, def.Name, len(dealInfos(fs, ge.age)))
+		return fmt.Errorf("There is no deal %d with the %s (they offer %d). Type diplomacy deals to see them.", n, def.Name, len(dealInfos(fs, ge.age)))
 	}
 	d := fs.Deals[n-1]
 	if d.Taken {
-		return fmt.Errorf("deal %d with the %s is already taken", n, def.Name)
+		return fmt.Errorf("Deal %d with the %s is already taken.", n, def.Name)
 	}
 	if why := dealBlocked(*fs); why != "" {
-		return fmt.Errorf("the %s won't trade: they are %s", def.Name, why)
+		return fmt.Errorf("The %s won't trade: they are %s.", def.Name, why)
 	}
 	for _, it := range ge.plan {
 		if it.Kind == PlanDeal && it.Key == key && it.Deal == d.ID {
-			return fmt.Errorf("the plan already takes that deal")
+			return fmt.Errorf("The plan already takes that deal.")
 		}
 	}
 	if len(ge.plan) >= MaxPlanItems {
-		return fmt.Errorf("the plan is full (%d items) — remove one first", MaxPlanItems)
+		return errPlanFull()
 	}
 	ge.plan = append(ge.plan, PlanItem{Kind: PlanDeal, Key: key, Count: 1, Deal: d.ID})
 	return nil
@@ -115,7 +115,7 @@ func (ge *GameEngine) planDealView(it PlanItem, reserved map[string]float64) Pla
 		return v
 	}
 	d, blocked := ge.planDealCheck(it)
-	v.Name += " (" + dealTerms(d) + ")"
+	v.Name += " (" + dealLogTerms(d) + ")"
 	v.Cost = map[string]float64{d.Give: d.GiveAmt}
 	if blocked != "" {
 		v.Status, v.Note = PlanStatusBlocked, blocked

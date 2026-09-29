@@ -170,8 +170,8 @@ var expFailAny = []skel{
 	{Text: "Whatever came home of the {res} was set down in the middle of the floor by the first man through the door, and it has not been moved since, and people have been walking round it all evening", Needs: needRes, Reg: rPlain, Topic: "building"},
 	{Text: "They set down {res_haul} and nobody moved to help", Needs: needRes | needMassRes, Reg: rPlain, Topic: "haul"},
 	{Text: "Nothing has been done with {res_stores} since the count", Needs: needRes | needMassRes, Reg: rPlain, Topic: "money"},
-	{Text: "All of it together came to {amt_res}", Needs: needRes | needAmount, Reg: rPlain, Form: fLedger, Topic: "count"},
-	{Text: "The figure written up is {amt_res}, and the man who wrote it has been asked whether that is the whole of it, and said yes without looking up", Needs: needRes | needAmount, Reg: rPlain, Form: fLedger, Topic: "count"},
+	{Text: "The biggest share was {amt_res}", Needs: needRes | needAmount, Reg: rPlain, Form: fLedger, Topic: "count"},
+	{Text: "The largest figure written up is {amt_res}, and the man who wrote it did not look up when asked about the rest", Needs: needRes | needAmount, Reg: rPlain, Form: fLedger, Topic: "count"},
 }
 
 // expFailGrounded is the part of the old ungated pool whose imagery is a town

@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // Wall-clock rendering of tick counts.
@@ -70,27 +71,5 @@ func formatTickRange(minTicks, maxTicks int, state game.GameState) string {
 // number that moves whenever tick speed does, and it makes a status line harder
 // to scan than the thing it is describing.
 func humanizeDuration(d time.Duration) string {
-	if d <= 0 {
-		return "0s"
-	}
-	total := int(d.Round(time.Second) / time.Second)
-	switch {
-	case total < 60:
-		return fmt.Sprintf("%ds", total)
-	case total < 3600:
-		if s := total % 60; s != 0 {
-			return fmt.Sprintf("%dm %ds", total/60, s)
-		}
-		return fmt.Sprintf("%dm", total/60)
-	case total < 86400:
-		if m := (total % 3600) / 60; m != 0 {
-			return fmt.Sprintf("%dh %dm", total/3600, m)
-		}
-		return fmt.Sprintf("%dh", total/3600)
-	default:
-		if h := (total % 86400) / 3600; h != 0 {
-			return fmt.Sprintf("%dd %dh", total/86400, h)
-		}
-		return fmt.Sprintf("%dd", total/86400)
-	}
+	return textfmt.Duration(d)
 }

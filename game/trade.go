@@ -2,11 +2,13 @@ package game
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"sort"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/detmath"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // TradeManager handles both instant resource exchange and repeating trade routes.
@@ -28,8 +30,12 @@ type TradeManager struct {
 
 	activeRoutes map[string]*ActiveRoute // route key -> runtime state
 
-	// Cumulative stats for display in the Trade tab.
+	// Cumulative stats for display in the Trade panel. totalExchanged sums
+	// both sides of every market trade (kept for old saves); totalSold and
+	// totalBought split them.
 	totalExchanged map[string]float64
+	totalSold      map[string]float64
+	totalBought    map[string]float64
 	totalImported  map[string]float64
 	totalExported  map[string]float64
 
@@ -57,6 +63,9 @@ type ActiveRoute struct {
 	// Disrupted is transient runtime state (recomputed every tick from diplomacy
 	// war/embargo) — not persisted. True when the route's imports are blockaded.
 	Disrupted bool `json:"-"`
+	// Starved is transient: true after a run was skipped because the exports
+	// were short, so the warning logs once per shortage, not every run.
+	Starved bool `json:"-"`
 }
 
 // routeDisruptedBy returns the first imported resource of def that appears in the
@@ -93,6 +102,8 @@ func NewTradeManager() *TradeManager {
 		lastExchange:   make(map[string]int),
 		activeRoutes:   make(map[string]*ActiveRoute),
 		totalExchanged: make(map[string]float64),
+		totalSold:      make(map[string]float64),
+		totalBought:    make(map[string]float64),
 		totalImported:  make(map[string]float64),
 		totalExported:  make(map[string]float64),
 		routeList:      routes,
@@ -139,12 +150,15 @@ func (tm *TradeManager) Pressure(from, to string) float64 {
 	return tm.supplyPressure[from+":"+to]
 }
 
-// Exchange performs an instant resource exchange
-func (tm *TradeManager) Exchange(from, to string, amount float64, resources *ResourceManager, buildings *BuildingManager, tick int) (float64, error) {
+// Exchange sells amount of give for get at the market rate and returns how
+// much get the player received. amount always counts the give side, matching
+// the command `trade <give> <get> <amount>`.
+func (tm *TradeManager) Exchange(give, get string, amount float64, resources *ResourceManager, buildings *BuildingManager, tick int) (float64, error) {
+	from, to := give, get
 	key := from + ":" + to
 	base, ok := config.MarketRate(from, to, tm.age)
 	if !ok {
-		return 0, fmt.Errorf("no exchange rate for %s → %s", from, to)
+		return 0, fmt.Errorf("The market does not trade %s for %s in this age. Type trade list to see the rates.", ResourceName(from), ResourceName(to))
 	}
 
 	// Require a trade building: a market or anything its lineage becomes.
@@ -152,12 +166,12 @@ func (tm *TradeManager) Exchange(from, to string, amount float64, resources *Res
 	// suggests on reaching the Iron Age) shut the exchange until ports.
 	traders := buildings.TradeBuildingCount()
 	if traders < 1 {
-		return 0, fmt.Errorf("need a market (or a later trade building) to trade")
+		return 0, fmt.Errorf("You need a Market to trade.")
 	}
 
 	// Check sender has enough
 	if resources.Get(from) < amount {
-		return 0, fmt.Errorf("not enough %s (have: %.0f, need: %.0f)", from, resources.Get(from), amount)
+		return 0, fmt.Errorf("Not enough %s to give %s (you have %s).", ResourceName(from), textfmt.Number(amount), textfmt.Number(resources.Get(from)))
 	}
 
 	// Calculate received amount with supply pressure
@@ -184,6 +198,8 @@ func (tm *TradeManager) Exchange(from, to string, amount float64, resources *Res
 	tm.lastExchange[key] = tick
 	tm.totalExchanged[from] += amount
 	tm.totalExchanged[to] += got
+	tm.totalSold[from] += amount
+	tm.totalBought[to] += got
 
 	return got, nil
 }
@@ -193,22 +209,22 @@ func (tm *TradeManager) StartRoute(key string, buildings *BuildingManager, age s
 	routes := tm.routeDefs
 	def, ok := routes[key]
 	if !ok {
-		return fmt.Errorf("unknown trade route: %s", key)
+		return unknownKeyError("trade route", key, routes, "Type trade route list to see the routes.")
 	}
 
 	// Check age requirement
 	if ageOrder[def.MinAge] > ageOrder[age] {
-		return fmt.Errorf("%s requires %s", def.Name, def.MinAge)
+		return fmt.Errorf("%s needs the %s.", def.Name, AgeName(def.MinAge))
 	}
 
 	// Check building requirement
 	if buildings.GetCount(def.RequiredBld) < def.MinCount {
-		return fmt.Errorf("%s requires %d %s(s) (have: %d)", def.Name, def.MinCount, def.RequiredBld, buildings.GetCount(def.RequiredBld))
+		return fmt.Errorf("%s needs %s (you have %s).", def.Name, BuildingCount(def.MinCount, def.RequiredBld), textfmt.Int(buildings.GetCount(def.RequiredBld)))
 	}
 
 	// Check not already active
 	if _, active := tm.activeRoutes[key]; active {
-		return fmt.Errorf("%s is already active", def.Name)
+		return fmt.Errorf("%s is already running.", def.Name)
 	}
 
 	tm.activeRoutes[key] = &ActiveRoute{
@@ -221,7 +237,7 @@ func (tm *TradeManager) StartRoute(key string, buildings *BuildingManager, age s
 // StopRoute deactivates a trade route
 func (tm *TradeManager) StopRoute(key string) error {
 	if _, active := tm.activeRoutes[key]; !active {
-		return fmt.Errorf("trade route %s is not active", key)
+		return fmt.Errorf("%s is not running. Type trade route list to see your routes.", RouteName(key))
 	}
 	delete(tm.activeRoutes, key)
 	return nil
@@ -264,7 +280,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 
 		// Check building still meets requirements
 		if buildings.GetCount(def.RequiredBld) < def.MinCount {
-			messages = append(messages, fmt.Sprintf("Trade route %s stopped: not enough %s", def.Name, def.RequiredBld))
+			messages = append(messages, fmt.Sprintf("Trade route %s stopped: it needs %s.", def.Name, BuildingCount(def.MinCount, def.RequiredBld)))
 			delete(tm.activeRoutes, key)
 			continue
 		}
@@ -277,7 +293,7 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 		if route.Disrupted {
 			route.TicksLeft--
 			if route.TicksLeft <= 0 {
-				messages = append(messages, fmt.Sprintf("Trade route %s disrupted: %s shipments are blockaded by hostile powers.", def.Name, blockedRes))
+				messages = append(messages, fmt.Sprintf("Trade route %s disrupted: a war or embargo is blocking %s shipments.", def.Name, ResourceName(blockedRes)))
 				route.TicksLeft = def.TicksPerRun
 			}
 			continue
@@ -313,6 +329,19 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 				}
 
 				route.CyclesDone++
+				route.Starved = false
+				// A completed cycle warms every civ you have met and are not at war with.
+				if diplomacy != nil {
+					diplomacy.RecordTrade()
+				}
+			} else if !route.Starved {
+				route.Starved = true
+				for _, res := range sortedKeys(def.Export) {
+					if resources.Get(res) < def.Export[res] {
+						messages = append(messages, fmt.Sprintf("%s skipped a run: it needs %s to export.", def.Name, Amount(def.Export[res], res)))
+						break
+					}
+				}
 			}
 
 			// Reset cycle
@@ -355,7 +384,9 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 		key := def.From + ":" + def.To
 		pressure := tm.supplyPressure[key]
 		base := def.BaseRate
-		currentRate := base * (1.0 - float64(pressure*0.3))
+		// The same 50% floor Exchange applies, so the listed rate is the
+		// rate the player actually gets.
+		currentRate := math.Max(base*(1.0-float64(pressure*0.3)), base*0.5)
 		exchangeRates[key] = ExchangeRateInfo{
 			From:     def.From,
 			To:       def.To,
@@ -422,17 +453,28 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 	}
 
 	return TradeState{
+		TotalSold:          maps.Clone(tm.totalSold),
+		TotalBought:        maps.Clone(tm.totalBought),
 		ExchangeRates:      exchangeRates,
 		ActiveRoutes:       activeRoutes,
 		AvailableRoutes:    availableRoutes,
 		TotalExchanged:     totalExchanged,
 		TotalImported:      totalImported,
 		DisruptedResources: disruptedResources,
+		TradeBuildings:     buildings.TradeBuildingCount(),
 	}
 }
 
 // LoadState restores trade state from save
-func (tm *TradeManager) LoadState(activeRoutes map[string]ActiveRoute, supplyPressure, totalExchanged, totalImported, totalExported map[string]float64) {
+func (tm *TradeManager) LoadState(s TradeSave) {
+	activeRoutes, supplyPressure, totalExchanged, totalImported, totalExported :=
+		s.ActiveRoutes, s.SupplyPressure, s.TotalExchanged, s.TotalImported, s.TotalExported
+	if s.TotalSold != nil {
+		tm.totalSold = s.TotalSold
+	}
+	if s.TotalBought != nil {
+		tm.totalBought = s.TotalBought
+	}
 	if activeRoutes != nil {
 		for k, v := range activeRoutes {
 			route := v // copy

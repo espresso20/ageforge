@@ -12,7 +12,8 @@ import (
 // buildingsProvider generates the buildings overlay text from the current game
 // state. It lists all unlocked buildings across all ages up to and including
 // the current age, grouped by age in chronological order (oldest first).
-// This is a read-only browser — players use the 'build' command to construct.
+// This is a read-only browser: players use the build command to construct.
+// Each row shows the key the build command takes next to the name.
 func buildingsProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 
@@ -28,7 +29,7 @@ func buildingsProvider(state game.GameState, _ int) string {
 		}
 	}
 	if currentIdx < 0 {
-		// Fallback: show all ages if current age is unrecognised.
+		// Fallback: show all ages if current age is unrecognized.
 		currentIdx = len(ageOrder) - 1
 	}
 
@@ -44,8 +45,8 @@ func buildingsProvider(state game.GameState, _ int) string {
 		}
 	}
 
-	fmt.Fprintf(&sb, "[gold]═══ Buildings: %d built / %d unlocked ═══[-]\n", totalBuilt, totalUnlocked)
-	sb.WriteString(" [gray]Browse all ages. Use 'build <key>' to construct (current age only).[-]\n\n")
+	fmt.Fprintf(&sb, "[gold]═══ Buildings: %d built, %d unlocked ═══[-]\n", totalBuilt, totalUnlocked)
+	sb.WriteString(" [gray]Every age so far. Build with: build <key> (current age only).[-]\n\n")
 
 	for i := 0; i <= currentIdx; i++ {
 		ageKey := ageOrder[i]
@@ -88,7 +89,7 @@ func buildingsProvider(state game.GameState, _ int) string {
 			// Build status indicator.
 			builtPart := ""
 			if bs.Count > 0 {
-				builtPart = fmt.Sprintf(" [green]x%d[-]", bs.Count)
+				builtPart = fmt.Sprintf(" [green]×%d[-]", bs.Count)
 			}
 
 			// Legacy indicator.
@@ -102,7 +103,7 @@ func buildingsProvider(state game.GameState, _ int) string {
 			if bs.WorkerDomain != "" && bs.WorkerCapacity > 0 {
 				workerPart = fmt.Sprintf(" [cyan]workers: %d/%d[-]", bs.WorkersAssigned, bs.WorkerCapacity*bs.Count)
 				if bs.Count == 0 {
-					workerPart = fmt.Sprintf(" [gray]workers: cap %d/bldg[-]", bs.WorkerCapacity)
+					workerPart = fmt.Sprintf(" [gray]workers: up to %d each[-]", bs.WorkerCapacity)
 				}
 			}
 
@@ -113,7 +114,7 @@ func buildingsProvider(state game.GameState, _ int) string {
 			} else if bs.IsLegacy {
 				nameColor = "gray"
 			}
-			fmt.Fprintf(&sb, " [%s]%s[-]%s%s%s\n", nameColor, bs.Name, builtPart, legacyPart, workerPart)
+			fmt.Fprintf(&sb, " [%s]%s[-] [gray](%s)[-]%s%s%s\n", nameColor, bs.Name, e.key, builtPart, legacyPart, workerPart)
 
 			// Cost and description on indent.
 			if len(bs.NextCost) > 0 && !bs.IsLegacy {

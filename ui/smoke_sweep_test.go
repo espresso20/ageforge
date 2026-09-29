@@ -387,7 +387,7 @@ func TestSmokeUISmallTerminals(t *testing.T) {
 					}
 				}
 				for _, l := range s.eng.GetLogs() {
-					if strings.Contains(l.Message, "recovered from panic") {
+					if strings.Contains(l.Message, "This tick hit an error") {
 						t.Errorf("engine recovered a panic: %s", l.Message)
 					}
 				}
@@ -472,7 +472,7 @@ func TestSmokeUISweep(t *testing.T) {
 	}
 
 	for _, l := range eng.GetLogs() {
-		if strings.Contains(l.Message, "recovered from panic") {
+		if strings.Contains(l.Message, "This tick hit an error") {
 			t.Errorf("engine recovered a panic during the sweep: %s", l.Message)
 		}
 	}

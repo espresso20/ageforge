@@ -13,6 +13,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/espresso20/ageforge/ui/citymap"
 )
@@ -237,24 +238,25 @@ func (d *Dashboard) build() {
 			newEpoch := config.EpochForAge(newAge)
 			d.pendingEpochChanged = (oldEpoch != newEpoch && d.lastAge != "")
 		}
-		d.toastMgr.Show("AGE ADVANCED!", "gold", 5*time.Second)
+		newAge, _ := e.Payload["new_age"].(string)
+		d.toastMgr.Show("Age advanced: "+game.AgeName(newAge), "gold", 5*time.Second)
 	})
 	d.engine.Bus.Subscribe(game.EventResearchDone, func(e game.EventData) {
 		tech, _ := e.Payload["tech"].(string)
-		d.toastMgr.Show(fmt.Sprintf("Research Complete: %s", tech), "cyan", 4*time.Second)
+		d.toastMgr.Show("Research complete: "+game.TechName(tech), "cyan", 4*time.Second)
 	})
 	d.engine.Bus.Subscribe(game.EventBuildingBuilt, func(e game.EventData) {
 		building, _ := e.Payload["building"].(string)
 		// Only toast for wonders — look up from config, not engine state (avoids deadlock)
 		if def, ok := config.BuildingByKey()[building]; ok && def.Category == "wonder" {
-			d.toastMgr.Show(fmt.Sprintf("Wonder Built: %s", def.Name), "green", 4*time.Second)
+			d.toastMgr.Show(fmt.Sprintf("Wonder built: %s", def.Name), "green", 4*time.Second)
 		}
 	})
 	d.engine.Bus.Subscribe(game.EventMilestoneCompleted, func(e game.EventData) {
 		name, _ := e.Payload["name"].(string)
 		rewardText, _ := e.Payload["reward_text"].(string)
 		// note: flavor quip rides in the log line, not the height-1 toast — see engine.checkMilestones.
-		msg := fmt.Sprintf("Milestone: %s!", name)
+		msg := "Milestone: " + name
 		if rewardText != "" {
 			msg += " " + rewardText
 		}
@@ -263,12 +265,16 @@ func (d *Dashboard) build() {
 	d.engine.Bus.Subscribe(game.EventChainCompleted, func(e game.EventData) {
 		name, _ := e.Payload["name"].(string)
 		title, _ := e.Payload["title"].(string)
-		d.toastMgr.Show(fmt.Sprintf("Chain Complete: %s! Title: %s — Speed Boost!", name, title), "cyan", 5*time.Second)
+		key, _ := e.Payload["key"].(string)
+		d.toastMgr.Show(chainToast(name, title, config.MilestoneChainByKey()[key]), "cyan", 5*time.Second)
 	})
 	d.engine.Bus.Subscribe(game.EventEpochAdvanced, func(e game.EventData) {
 		epochName, _ := e.Payload["epoch_name"].(string)
 		epochIcon, _ := e.Payload["epoch_icon"].(string)
-		d.toastMgr.Show(fmt.Sprintf("✦ The %s %s Dawns!", epochIcon, epochName), "gold", 6*time.Second)
+		if epochIcon == "" {
+			epochIcon = "✦"
+		}
+		d.toastMgr.Show(fmt.Sprintf("%s %s dawns", epochIcon, epochName), "gold", 6*time.Second)
 	})
 	d.engine.Bus.Subscribe(game.EventHarbingerArrived, func(e game.EventData) {
 		// Runs under the engine write lock: payload and the toast queue only.
@@ -278,7 +284,7 @@ func (d *Dashboard) build() {
 		if handoff, _ := e.Payload["handoff"].(bool); handoff {
 			verb = "takes up the warning"
 		}
-		d.toastMgr.Show(fmt.Sprintf("⚑ %s %s — type 'harbinger'", capFirstUI(name), verb), "warning", 8*time.Second)
+		d.toastMgr.Show(fmt.Sprintf("⚑ %s %s. Type harbinger to read the warning.", capFirstUI(name), verb), "warning", 8*time.Second)
 	})
 	d.engine.Bus.Subscribe(game.EventGameLoaded, func(e game.EventData) {
 		// Runs under the engine write lock: only flip the flag, never touch the engine.
@@ -288,7 +294,7 @@ func (d *Dashboard) build() {
 		eventName, _ := e.Payload["event_name"].(string)
 		eventType, _ := e.Payload["event_type"].(string)
 		if eventType == "catastrophe" {
-			d.toastMgr.Show(fmt.Sprintf("☄ Catastrophe: %s — type 'catastrophe' to decide", eventName), "red", 8*time.Second)
+			d.toastMgr.Show(fmt.Sprintf("☄ Catastrophe: %s. Type catastrophe to choose.", eventName), "red", 8*time.Second)
 			return
 		}
 		color := "cyan"
@@ -299,7 +305,7 @@ func (d *Dashboard) build() {
 		} else if eventType == "good_legendary" {
 			color = "gold"
 		}
-		d.toastMgr.Show(fmt.Sprintf("Epoch Event: %s", eventName), color, 6*time.Second)
+		d.toastMgr.Show(fmt.Sprintf("Epoch event: %s", eventName), color, 6*time.Second)
 	})
 
 	// Command input: completions show as ghost text (command_input.go),
@@ -573,7 +579,7 @@ func (d *Dashboard) refresh() {
 	d.refreshStatus(state)
 	d.refreshAgeProgress(state)
 	d.refreshLog(state)
-	d.toastTV.SetText(d.toastMgr.GetCurrent())
+	d.toastTV.SetText(safeTags(d.toastMgr.GetCurrent()))
 
 	// Economy tab is always visible as the permanent background
 	d.economyTab.Refresh(state)
@@ -627,32 +633,29 @@ func (d *Dashboard) refreshWorkerMini(state game.GameState) {
 	food, hasFoodRS := state.Resources["food"]
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "[yellow]%d[white]/[green]%d[-]  [gray]Idle:[white] %d[-]\n", w.TotalPop, w.MaxPop, w.TotalIdle)
-	fmt.Fprintf(&sb, "[gray]House left:[white] %d[-]\n", w.MaxPop-w.TotalPop)
-	fmt.Fprintf(&sb, "[gray]Drain:[red] %.2f/t[-]\n", w.FoodDrain)
+	fmt.Fprintf(&sb, "[gray]Housing left:[white] %d[-]\n", w.MaxPop-w.TotalPop)
+	// note: textfmt.Rate carries its own sign, so no manual "+"/"-" prefixes here.
+	fmt.Fprintf(&sb, "[gray]Food use:[red] %s[-]\n", textfmt.Rate(-w.FoodDrain))
 	if hasFoodRS {
 		netColor := "green"
-		prefix := "+"
 		if food.Rate < 0 {
 			netColor = "red"
-			prefix = ""
 		}
-		fmt.Fprintf(&sb, "[gray]Net:[%s] %s%.2f/t[-]\n", netColor, prefix, food.Rate)
+		fmt.Fprintf(&sb, "[gray]Food net:[%s] %s[-]\n", netColor, textfmt.Rate(food.Rate))
 	}
-	d.workerMiniTV.SetText(sb.String())
+	d.workerMiniTV.SetText(safeTags(sb.String()))
 }
 
 func (d *Dashboard) refreshStatus(state game.GameState) {
-	nextAgeStr := ""
-	if state.NextAge != "" {
-		nextAgeStr = fmt.Sprintf("  [gray]Next: %s[-]", state.NextAge)
-	}
+	// note: the next age lives on the Next Age bar below, so the status bar
+	// no longer repeats it (it used to print the raw key).
 	prestigeStr := ""
 	if state.Prestige.Level > 0 {
-		prestigeStr = fmt.Sprintf("  [cyan]P%d[-]", state.Prestige.Level)
+		prestigeStr = fmt.Sprintf("  [cyan]Prestige %d[-]", state.Prestige.Level)
 	}
 	speedStr := ""
 	if state.SpeedMultiplier > 1 {
-		speedStr = fmt.Sprintf("  [yellow]%.1fx[-]", state.SpeedMultiplier)
+		speedStr = fmt.Sprintf("  [yellow]Speed %.1fx[-]", state.SpeedMultiplier)
 	}
 	titleStr := ""
 	if state.Milestones.CurrentTitle != "" {
@@ -667,7 +670,7 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 	if state.EpochKey != "" {
 		survivedMark := ""
 		if state.EpochSurvived {
-			survivedMark = " ·Survived"
+			survivedMark = " · endured"
 		}
 		epochStr = fmt.Sprintf("  %s%s %s%s[-]", theme.NameTag(state.EpochColor), state.EpochIcon, state.EpochName, survivedMark)
 	}
@@ -676,17 +679,17 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 	// is blocked and how to reopen the choice.
 	catStr := ""
 	if state.PendingCatastrophe != "" {
-		catStr = fmt.Sprintf("  %s ☄ CATASTROPHE PENDING — type 'catastrophe' %s",
+		catStr = fmt.Sprintf("  %s ☄ Catastrophe pending. Type catastrophe to choose. %s",
 			theme.TagFgBg(theme.RoleOnNegative, theme.RoleNegative), theme.Reset)
 	} else if state.LastPassage.Pending {
-		catStr = fmt.Sprintf("  %s ☄ LAST PASSAGE — type 'catastrophe' %s",
+		catStr = fmt.Sprintf("  %s ☄ Last Passage. Type catastrophe to choose. %s",
 			theme.TagFgBg(theme.RoleOnNegative, theme.RoleNegative), theme.Reset)
 	}
 	// Harbinger badge: present until the epoch transition resolves it. Nothing
 	// expires, so the badge is the idle player's reminder that there is a
 	// choice waiting (it never blocks anything).
 	if state.Harbinger != nil {
-		catStr += fmt.Sprintf("  %s ⚑ HARBINGER — type 'harbinger' %s",
+		catStr += fmt.Sprintf("  %s ⚑ Harbinger. Type harbinger to read it. %s",
 			theme.TagFgBg(theme.RoleOnAccent, theme.RoleAccent), theme.Reset)
 	}
 	// Colour morale by the continuous production multiplier, not the raw percent:
@@ -695,9 +698,9 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 	mBand := computeMoraleBand(state.Morale, state.MoraleMultiplier)
 	moraleDelta := ""
 	if mBand.DeltaLabel != "" {
-		moraleDelta = fmt.Sprintf(" [%s]%s[-]", mBand.Color, mBand.DeltaLabel)
+		moraleDelta = fmt.Sprintf(" (production [%s]%s[-])", mBand.Color, mBand.DeltaLabel)
 	}
-	moraleStr := fmt.Sprintf("  Morale: [%s]%.0f%%[-]%s", mBand.Color, state.Morale*100, moraleDelta)
+	moraleStr := fmt.Sprintf("  Morale [%s]%.0f%%[-]%s", mBand.Color, state.Morale*100, moraleDelta)
 	// Leading account-name segment, when an account is wired. Truncate a long name so
 	// the status line stays readable on narrow terminals.
 	acctStr := ""
@@ -709,15 +712,15 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		acctStr = fmt.Sprintf("[gold]%s[-] · ", name)
 	}
 	d.statusTV.SetText(fmt.Sprintf(
-		"%s[gold]%s[-]%s%s%s%s  Tick: %d%s%s%s  |  Pop: %d/%d%s  |  [gray]type panel name to open  ESC=close/menu[-]",
-		acctStr, state.AgeName, prestigeStr, titleStr, epochStr, catStr, state.Tick, nextAgeStr, speedStr, devStr,
+		"%s[gold]%s[-]%s%s%s%s%s%s  |  Pop: %d/%d%s  |  [gray]type a panel name to open it · Esc: close or menu[-]",
+		acctStr, state.AgeName, prestigeStr, titleStr, epochStr, catStr, speedStr, devStr,
 		state.Workers.TotalPop, state.Workers.MaxPop, moraleStr,
 	))
 }
 
 func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 	if state.NextAge == "" {
-		d.ageTV.SetText(" [gold]You have reached the final age![-]")
+		d.ageTV.SetText(" [gold]You have reached the final age.[-]")
 		return
 	}
 
@@ -741,7 +744,7 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 		if current >= req {
 			mark, color = "✓", "green"
 		}
-		fmt.Fprintf(&sb, "[%s]%s[-] %s %s/%s  ", color, mark, key, FormatNumber(current), FormatNumber(req))
+		fmt.Fprintf(&sb, "[%s]%s[-] %s %s/%s  ", color, mark, textfmt.Capitalize(game.ResourceName(key)), FormatNumber(current), FormatNumber(req))
 	}
 
 	// Building requirements
@@ -760,7 +763,7 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 		if current >= req {
 			mark, color = "✓", "green"
 		}
-		fmt.Fprintf(&sb, "[%s]%s[-] %s %d/%d  ", color, mark, key, current, req)
+		fmt.Fprintf(&sb, "[%s]%s[-] %s %d/%d  ", color, mark, game.BuildingName(key), current, req)
 	}
 
 	// Wonder gate: show if current age wonder must still be completed.
@@ -769,7 +772,7 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 		fmt.Fprintf(&sb, "[red]✗ Wonder: %s[-]  ", state.CurrentAgeWonderName)
 	}
 
-	d.ageTV.SetText(sb.String())
+	d.ageTV.SetText(safeTags(sb.String()))
 }
 
 func (d *Dashboard) refreshLog(state game.GameState) {
@@ -804,7 +807,7 @@ func (d *Dashboard) refreshLog(state game.GameState) {
 		}
 		fmt.Fprintf(&sb, "%sT%d[-] [%s]%s[-]\n", dim, entry.Tick, color, entry.Message)
 	}
-	d.logTV.SetText(sb.String())
+	d.logTV.SetText(safeTags(sb.String()))
 	d.logTV.ScrollToEnd()
 }
 
@@ -835,7 +838,7 @@ func (d *Dashboard) showDevUnlockModal() {
 			input := field.GetText()
 			d.pages.RemovePage(devUnlockPage)
 			if game.CheckDevKey(input) {
-				d.engine.AddLog("info", "[red]DEV MODE ACTIVE[-] — prefix commands with / (e.g. /god, /fill, /give wood 9999)")
+				d.engine.AddLog("info", "[red]Dev mode on.[-] Prefix commands with / (for example /god, /fill, /give wood 9999).")
 				d.app.SetFocus(d.inputField)
 			} else {
 				d.app.SetFocus(d.inputField)

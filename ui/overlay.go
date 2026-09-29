@@ -75,7 +75,7 @@ func (om *OverlayManager) Register(name, title string, provide OverlayProvider) 
 		SetScrollable(true).
 		SetWrap(true)
 	tv.SetBorder(true).
-		SetTitle(" " + title + " — ESC to close ")
+		SetTitle(" " + title + " (Esc to close) ")
 	// Persistent overlay chrome (built once, reused on every Show): enroll so a live
 	// theme switch restyles the border/title/background.
 	theme.Track(func() {
@@ -156,7 +156,7 @@ func (om *OverlayManager) buildWidgetRoot(we *widgetEntry, prim tview.Primitive)
 	// theme switch re-runs buildWidgetRoot on next open.
 	frame.SetBorder(true).
 		SetBorderColor(theme.Color(theme.RoleAccent)).
-		SetTitle(" " + we.title + " — ESC to close ").
+		SetTitle(" " + we.title + " (Esc to close) ").
 		SetTitleColor(theme.Color(theme.RoleAccent)).
 		SetBackgroundColor(theme.Color(theme.RoleSurface))
 	frame.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
@@ -184,7 +184,7 @@ func (om *OverlayManager) buildWidgetRoot(we *widgetEntry, prim tview.Primitive)
 func (om *OverlayManager) Show(name string, state game.GameState) bool {
 	// Try text overlays first.
 	if e, ok := om.entries[name]; ok {
-		e.tv.SetText(e.provide(state, om.screenW))
+		e.tv.SetText(safeTags(e.provide(state, om.screenW)))
 		e.tv.ScrollToBeginning()
 		if om.active != name {
 			if om.active != "" {
@@ -235,7 +235,7 @@ func (om *OverlayManager) Refresh(state game.GameState) {
 	}
 	// Text overlay path.
 	if e, ok := om.entries[om.active]; ok {
-		e.tv.SetText(e.provide(state, om.screenW))
+		e.tv.SetText(safeTags(e.provide(state, om.screenW)))
 		return
 	}
 	// Widget overlay path — use in-place refresh if available, else rebuild.

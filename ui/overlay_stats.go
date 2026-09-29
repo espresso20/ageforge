@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // statsProvider generates the stats overlay text from the current game state.
@@ -18,54 +19,54 @@ func statsProvider(state game.GameState, _ int) string {
 	sb.WriteString("[gold]═══ Statistics ═══[-]\n\n")
 	s := state.Stats
 
-	fmt.Fprintf(&sb, " [gold]Play Time:[-]          %s\n", s.PlayTime.Truncate(1e9))
-	fmt.Fprintf(&sb, " [gold]Total Ticks:[-]        %d\n", state.Tick)
-	fmt.Fprintf(&sb, " [gold]Buildings Built:[-]    %d\n", s.TotalBuilt)
-	fmt.Fprintf(&sb, " [gold]Workers Recruited:[-]  %d\n", s.TotalRecruited)
-	fmt.Fprintf(&sb, " [gold]Techs Researched:[-]   %d\n", state.Research.TotalResearched)
-	fmt.Fprintf(&sb, " [gold]Expeditions Done:[-]   %d\n", state.Military.CompletedCount)
+	fmt.Fprintf(&sb, " [gold]Play time:[-]          %s\n", s.PlayTime.Truncate(1e9))
+	fmt.Fprintf(&sb, " [gold]Game ticks:[-]         %s\n", textfmt.Int(state.Tick))
+	fmt.Fprintf(&sb, " [gold]Buildings built:[-]    %s\n", textfmt.Int(s.TotalBuilt))
+	fmt.Fprintf(&sb, " [gold]Workers recruited:[-]  %s\n", textfmt.Int(s.TotalRecruited))
+	fmt.Fprintf(&sb, " [gold]Techs researched:[-]   %s\n", textfmt.Int(state.Research.TotalResearched))
+	fmt.Fprintf(&sb, " [gold]Expeditions and campaigns done:[-] %s\n", textfmt.Int(state.Military.CompletedCount))
 
-	sb.WriteString("\n [gold]Ages Reached:[-]\n")
+	sb.WriteString("\n [gold]Ages reached:[-]\n")
 	for _, age := range s.AgesReached {
-		fmt.Fprintf(&sb, "   [green]✓[-] %s\n", age)
+		fmt.Fprintf(&sb, "   [green]✓[-] %s\n", game.AgeName(age))
 	}
 
-	sb.WriteString("\n [gold]Total Gathered:[-]\n")
+	sb.WriteString("\n [gold]Total gathered:[-]\n")
 	gKeys := make([]string, 0, len(s.TotalGathered))
 	for k := range s.TotalGathered {
 		gKeys = append(gKeys, k)
 	}
 	sort.Strings(gKeys)
 	for _, k := range gKeys {
-		fmt.Fprintf(&sb, "   %-12s %s\n", k, FormatNumber(s.TotalGathered[k]))
+		fmt.Fprintf(&sb, "   %-14s %s\n", textfmt.Capitalize(game.ResourceName(k)), FormatNumber(s.TotalGathered[k]))
 	}
 
 	// ─── Lifetime (Account) ───
 	// Cross-save aggregates persisted on the account (accounts.md §3.3, Phase 6),
-	// distinct from the per-save Statistics above. Renders "—" gracefully when no
-	// account is wired (AccountStats nil) so the overlay never blanks out.
-	sb.WriteString("\n [yellow]── Lifetime (Account) ──[-]\n")
+	// distinct from the per-save Statistics above. Renders a placeholder when no
+	// account is wired (AccountStats nil) so the panel never blanks out.
+	sb.WriteString("\n [yellow]── Lifetime (account) ──[-]\n")
 	if state.AccountStats == nil {
-		sb.WriteString(" [gray]No account loaded[-]\n")
+		sb.WriteString(" [gray]No account loaded.[-]\n")
 	} else {
 		as := state.AccountStats
 		if as.DisplayName != "" {
 			fmt.Fprintf(&sb, " [gray]Account:[-] [white]%s[-]\n", as.DisplayName)
 		}
-		fmt.Fprintf(&sb, " [gold]Total Prestiges:[-]   %d\n", as.TotalPrestiges)
+		fmt.Fprintf(&sb, " [gold]Total prestiges:[-]   %d\n", as.TotalPrestiges)
 
-		highestAge := "—"
+		highestAge := "none"
 		if as.HighestAge != "" {
 			highestAge = as.HighestAge
 			if def, ok := config.AgeByKey()[as.HighestAge]; ok {
 				highestAge = def.Name
 			}
 		}
-		fmt.Fprintf(&sb, " [gold]Highest Age Ever:[-]  %s\n", highestAge)
+		fmt.Fprintf(&sb, " [gold]Highest age ever:[-]  %s\n", highestAge)
 
 		sb.WriteString(" [gold]Achievements:[-]\n")
 		if len(as.Achievements) == 0 {
-			sb.WriteString("   [gray]None unlocked yet[-]\n")
+			sb.WriteString("   [gray]None unlocked yet.[-]\n")
 		} else {
 			names := make([]string, 0, len(as.Achievements))
 			for _, key := range as.Achievements {
@@ -79,28 +80,27 @@ func statsProvider(state game.GameState, _ int) string {
 	}
 
 	// Epoch & Legacy section
-	sb.WriteString("\n [yellow]── Epoch & Legacy ──[-]\n")
+	sb.WriteString("\n [yellow]── Epoch and legacy ──[-]\n")
 
 	epochDisplay := state.EpochIcon + " " + state.EpochName
 	if strings.TrimSpace(epochDisplay) == "" {
-		epochDisplay = "—"
+		epochDisplay = "none"
 	}
-	fmt.Fprintf(&sb, " %-20s [cyan]%s[-]\n", "Current Epoch:", epochDisplay)
+	fmt.Fprintf(&sb, " %-20s [cyan]%s[-]\n", "Current epoch:", epochDisplay)
 
-	// Survived means Endured; both counts come from the civilization log, so a
-	// pending catastrophe is in neither and repeat succumbs all count.
-	fmt.Fprintf(&sb, " %-20s %d\n", "Epochs Survived:", state.CatastrophesEndured)
+	// Both counts come from the civilization log, so a pending catastrophe is
+	// in neither and repeat succumbs all count.
 	totalCatastrophes := state.CatastrophesEndured + state.CatastrophesSuccumbed
-	fmt.Fprintf(&sb, " %-20s %d  (Endured: %d  Succumbed: %d)\n",
+	fmt.Fprintf(&sb, " %-20s %d  (endured %d, succumbed %d)\n",
 		"Catastrophes:", totalCatastrophes, state.CatastrophesEndured, state.CatastrophesSuccumbed)
 	if state.PendingCatastrophe != "" {
-		sb.WriteString(" [red]  One catastrophe pending — type 'catastrophe' to decide[-]\n")
+		sb.WriteString(" [red]  One catastrophe is pending. Type catastrophe to choose.[-]\n")
 	} else if state.LastPassage.Pending {
-		sb.WriteString(" [red]  The Last Passage is pending — type 'catastrophe' to decide[-]\n")
+		sb.WriteString(" [red]  The Last Passage is pending. Type catastrophe to choose.[-]\n")
 	}
 
-	// Legacy Bonuses
-	sb.WriteString("\n [gold]Legacy Bonuses:[-]\n")
+	// Legacy bonuses
+	sb.WriteString("\n [gold]Legacy bonuses:[-]\n")
 	if len(state.LegacyBonuses) == 0 {
 		sb.WriteString("  [gray]None[-]\n")
 	} else {
@@ -124,32 +124,23 @@ func statsProvider(state game.GameState, _ int) string {
 					epochLabel = epochDef.Name
 				}
 
-				bonusKeys := make([]string, 0, len(bonuses))
-				for k := range bonuses {
-					bonusKeys = append(bonusKeys, k)
-				}
-				sort.Strings(bonusKeys)
-				parts := make([]string, 0, len(bonusKeys))
-				for _, k := range bonusKeys {
-					parts = append(parts, fmt.Sprintf("%s +%.0f%%", k, bonuses[k]*100))
-				}
-				fmt.Fprintf(&sb, "  %-16s %s\n", epochLabel+":", strings.Join(parts, ",  "))
+				fmt.Fprintf(&sb, "  %-16s %s\n", epochLabel+":", legacyBonusLine(bonuses))
 			}
 		}
 	}
 	if state.LastPassage.CosmicLegacy {
-		fmt.Fprintf(&sb, "  %-16s production +%.0f%% (permanent, through every prestige)\n", "Cosmic Legacy:", game.CosmicLegacyProductionBonus*100)
+		fmt.Fprintf(&sb, "  %-16s all production %s (permanent, through every prestige)\n", "Cosmic Legacy:", textfmt.SignedPercent(game.CosmicLegacyProductionBonus))
 	}
 
 	// Milestone summary hint
 	ms := state.Milestones
-	fmt.Fprintf(&sb, "\n [gray]Milestones: %d/%d — type [white]milestones[-][gray] to view[-]\n",
+	fmt.Fprintf(&sb, "\n [gray]Milestones: %d/%d. Type [white]milestones[-][gray] to see them.[-]\n",
 		ms.CompletedCount, ms.TotalCount)
 
 	// ─── Active Events ───
-	sb.WriteString("\n[gold]═══ Active Events ═══[-]\n\n")
+	sb.WriteString("\n[gold]═══ Active events ═══[-]\n\n")
 	if len(state.ActiveEvents) == 0 {
-		sb.WriteString(" [gray]No active events[-]\n")
+		sb.WriteString(" [gray]No active events.[-]\n")
 	} else {
 		for _, evt := range state.ActiveEvents {
 			fmt.Fprintf(&sb, " [yellow]⚡[-] [yellow]%s[-] (%s left)\n", evt.Name, formatTicks(evt.TicksLeft, state))
@@ -158,18 +149,11 @@ func statsProvider(state game.GameState, _ int) string {
 				if eff.Value < 0 {
 					color = "red"
 				}
-				// The "<res>_rate" case is what a faction specialty boon or
-				// setback arrives as, and it is the common case — without it a
+				// The "<res>_rate" case is what a civilization specialty boon or
+				// setback arrives as, and it is the common case: without it a
 				// boon renders as a name with no magnitude at all.
-				switch {
-				case eff.Type == "production":
-					fmt.Fprintf(&sb, " [%s]    %s %+.1f/t[-]\n", color, eff.Target, eff.Value)
-				case eff.Type == "production_all":
-					fmt.Fprintf(&sb, " [%s]    all production %+.0f%%[-]\n", color, eff.Value*100)
-				case eff.Type == "tick_speed":
-					fmt.Fprintf(&sb, " [%s]    tick speed %+.0f%%[-]\n", color, eff.Value*100)
-				case strings.HasSuffix(eff.Type, "_rate"):
-					fmt.Fprintf(&sb, " [%s]    %s %+.0f%%[-]\n", color, rateEffectLabel(eff), eff.Value*100)
+				if plain, _ := effectMagnitude(eff); plain != "" {
+					fmt.Fprintf(&sb, " [%s]    %s[-]\n", color, plain)
 				}
 			}
 		}
@@ -181,17 +165,17 @@ func statsProvider(state game.GameState, _ int) string {
 
 	fmt.Fprintf(&sb, " [gold]Level:[-] [cyan]%d[-]", p.Level)
 	if p.PassiveBonus > 0 {
-		fmt.Fprintf(&sb, "  [green]+%.0f%% production[-]", p.PassiveBonus*100)
+		fmt.Fprintf(&sb, "  [green]%s all production[-]", textfmt.SignedPercent(p.PassiveBonus))
 	}
 	sb.WriteString("\n")
 	fmt.Fprintf(&sb, " [gold]Points:[-] [cyan]%d[-] available / %d total\n", p.Available, p.TotalEarned)
 
 	if p.CanPrestige {
-		fmt.Fprintf(&sb, " [green]Can prestige for %d pts![-]\n", p.PendingPoints)
+		fmt.Fprintf(&sb, " [green]Prestige now for %s.[-]\n", textfmt.Count(p.PendingPoints, "point", "points"))
 	} else if p.Level == 0 {
-		sb.WriteString(" [gray]Reach Medieval Age to prestige[-]\n")
+		fmt.Fprintf(&sb, " [gray]Reach the %s to prestige.[-]\n", game.AgeName(game.PrestigeMinAge))
 	} else {
-		sb.WriteString(" [yellow]Reach Medieval Age to prestige again[-]\n")
+		fmt.Fprintf(&sb, " [yellow]Reach the %s to prestige again.[-]\n", game.AgeName(game.PrestigeMinAge))
 	}
 
 	upgradeKeys := []string{
@@ -213,12 +197,12 @@ func statsProvider(state game.GameState, _ int) string {
 	}
 
 	if !hasPurchased && p.Level > 0 {
-		sb.WriteString("\n [gray]No upgrades purchased yet[-]\n")
-		sb.WriteString(" [gray]Type 'prestige shop' to browse[-]\n")
+		sb.WriteString("\n [gray]No upgrades bought yet.[-]\n")
+		sb.WriteString(" [gray]Browse them with: prestige shop[-]\n")
 	}
 
 	// ─── Resource Rates ───
-	sb.WriteString("\n[gold]═══ Resource Rates (per tick) ═══[-]\n\n")
+	sb.WriteString("\n[gold]═══ Resource rates ═══[-]\n\n")
 	rateKeys := make([]string, 0, len(state.Resources))
 	for k, rs := range state.Resources {
 		if rs.Unlocked {
@@ -227,20 +211,20 @@ func statsProvider(state game.GameState, _ int) string {
 	}
 	sort.Strings(rateKeys)
 	if len(rateKeys) == 0 {
-		sb.WriteString(" [gray]No unlocked resources[-]\n")
+		sb.WriteString(" [gray]No unlocked resources.[-]\n")
 	} else {
 		for _, k := range rateKeys {
 			rs := state.Resources[k]
-			if rs.Rate >= 0 {
-				fmt.Fprintf(&sb, "  [cyan]%-16s[-] [green]+%.2f /tick[-]\n", k, rs.Rate)
-			} else {
-				fmt.Fprintf(&sb, "  [cyan]%-16s[-] [red]%.2f /tick[-]\n", k, rs.Rate)
+			color := "green"
+			if rs.Rate < 0 {
+				color = "red"
 			}
+			fmt.Fprintf(&sb, "  [cyan]%-16s[-] [%s]%s[-]\n", textfmt.Capitalize(game.ResourceName(k)), color, textfmt.Rate(rs.Rate))
 		}
 	}
 
 	// ─── Active Multipliers ───
-	sb.WriteString("\n[gold]═══ Active Multipliers ═══[-]\n\n")
+	sb.WriteString("\n[gold]═══ Active multipliers ═══[-]\n\n")
 	sb.WriteString(renderActiveMultipliers(state))
 
 	return sb.String()
@@ -292,13 +276,13 @@ func renderActiveMultipliers(state game.GameState) string {
 	// SpeedMultiplier: a wonder gate, not a resolver modifier. Render it on its
 	// own line so it stays visible.
 	if state.SpeedMultiplier > 1.0 {
-		fmt.Fprintf(&sb, "  [cyan]%-20s[-] [yellow]×%.2f[-]   [gray]wonders[-]\n",
-			"Game Speed", state.SpeedMultiplier)
+		fmt.Fprintf(&sb, "  [cyan]%-20s[-] [yellow]×%.2f[-]   [gray]speed setting[-]\n",
+			"Game speed", state.SpeedMultiplier)
 		wrote = true
 	}
 
 	if !wrote {
-		return " [gray]No active multipliers[-]\n"
+		return " [gray]No active multipliers.[-]\n"
 	}
 	return sb.String()
 }
@@ -395,14 +379,10 @@ func summarizeBreakdown(mods []game.Modifier) string {
 	return strings.Join(parts, " [gray]·[-] ")
 }
 
-// multiplierTargetLabel maps a resolver target id to a friendly panel label.
-// Reuses formatBonusName (overlay_research.go) which already handles
-// production_all, gather_rate, <res>_rate, military_power, etc.
+// multiplierTargetLabel maps a resolver target id to a panel label in
+// glossary words: "All production", "Worker output", "Food production",
+// "Game speed".
 func multiplierTargetLabel(target string) string {
-	switch target {
-	case "tick_speed":
-		return "Tick Speed"
-	}
 	return formatBonusName(target)
 }
 
@@ -435,15 +415,27 @@ func multiplierSourceLabel(src string) string {
 	return capitalize(src)
 }
 
-// rateEffectLabel names the thing a "<res>_rate" active-event effect acts on.
-// Target carries the resource key for the effects boon/apply.go builds, but
-// event defs may leave it empty, so fall back to trimming the type's suffix —
-// "iron_rate" reads as "iron", "gather_rate" as "gather".
+// rateEffectLabel names the thing a "<res>_rate" active-event effect acts on,
+// in glossary words. Target carries the resource key for the effects
+// boon/apply.go builds, but event defs may leave it empty, so fall back to the
+// type: "iron_rate" reads "iron production", "gather_rate" "worker output".
 func rateEffectLabel(eff game.EventEffectInfo) string {
 	if eff.Target != "" {
-		return eff.Target
+		return game.EffectTargetName(eff.Target)
 	}
-	return strings.TrimSuffix(eff.Type, "_rate")
+	return game.EffectTargetName(eff.Type)
+}
+
+// legacyBonusLine renders an epoch's legacy bonus map as
+// "Stone production +20%, wood production +20%", sorted by the display
+// text so the line never reorders between refreshes.
+func legacyBonusLine(bonuses map[string]float64) string {
+	parts := make([]string, 0, len(bonuses))
+	for k, v := range bonuses {
+		parts = append(parts, game.EffectTargetName(k)+" "+textfmt.SignedPercent(v))
+	}
+	sort.Strings(parts)
+	return textfmt.Capitalize(strings.Join(parts, ", "))
 }
 
 // absFloat is a tiny abs helper for epsilon comparisons (avoids importing math

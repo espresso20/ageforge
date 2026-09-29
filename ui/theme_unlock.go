@@ -78,7 +78,7 @@ func evaluateThemeUnlock(acct *game.Account, completedKey string, firstSync bool
 // color comes from the active theme's role tag so the toast reads in whatever theme
 // is live. Kept separate (and pure) so the message format is testable.
 func themeUnlockToast(themeName string) string {
-	return fmt.Sprintf("%s🎨 New theme unlocked: %s! Type 'theme' to use it.[-]",
+	return fmt.Sprintf("%s🎨 New theme unlocked: %s. Type theme to use it.[-]",
 		theme.Tag(theme.RoleAccent), themeName)
 }
 

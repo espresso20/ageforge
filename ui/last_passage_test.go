@@ -46,7 +46,7 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 	if strings.Contains(screen, "buildings destroyed") {
 		t.Error("the Last Passage modal shows the epoch catastrophe's Endure terms")
 	}
-	if !strings.Contains(d.statusTV.GetText(true), "☄ LAST PASSAGE — type 'catastrophe'") {
+	if !strings.Contains(d.statusTV.GetText(true), "☄ Last Passage. Type catastrophe to choose.") {
 		t.Errorf("no Last Passage badge: %q", d.statusTV.GetText(true))
 	}
 
@@ -60,7 +60,7 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 	if pages.HasPage(catastrophePage) {
 		t.Error("refresh re-popped a modal the player closed")
 	}
-	if !strings.Contains(d.statusTV.GetText(true), "LAST PASSAGE") {
+	if !strings.Contains(d.statusTV.GetText(true), "Last Passage") {
 		t.Error("badge gone after Esc")
 	}
 
@@ -84,7 +84,7 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 		t.Fatalf("after E: pending %v level %d age %s", st.LastPassage.Pending, st.Prestige.Level, st.Age)
 	}
 	d.refresh()
-	if pages.HasPage(catastrophePage) || strings.Contains(d.statusTV.GetText(true), "LAST PASSAGE") {
+	if pages.HasPage(catastrophePage) || strings.Contains(d.statusTV.GetText(true), "Last Passage") {
 		t.Error("modal or badge survived the choice")
 	}
 }
@@ -186,10 +186,10 @@ func TestHarbingerPanelLastPassage(t *testing.T) {
 	txt := untag(harbingerPanelText(engine.GetState(), "", false, false))
 	t.Logf("Cosmic Era harbinger panel:\n%s", txt)
 	for _, want := range []string{
-		"THE DISTRESS BEACON", "Warning of the Last Passage: the end of this civilization, when you next prestige.",
-		"Odds published:", "%", "If it comes and you Endure: you keep 50% of the run's prestige points.",
+		"The Distress Beacon", "Warning of the Last Passage: the end of this civilization, when you next prestige.",
+		"Published odds:", "%", "If it comes and you Endure: you keep 50% of the run's prestige points.",
 		"Next level: 70% kept.", "Guarantees the Last Passage at your next prestige",
-		"Next level costs: 1.20B faith (have 0), 19.0B culture (have 0)",
+		"Next level costs: 1.2B faith (have 0), 19B culture (have 0)",
 	} {
 		if !strings.Contains(txt, want) {
 			t.Errorf("panel missing %q:\n%s", want, txt)

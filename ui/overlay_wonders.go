@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/theme"
 )
@@ -29,22 +30,22 @@ func renderCurrentWonderSummary(state game.GameState) string {
 	bs, hasBs := state.Buildings[current.key]
 	built := hasBs && bs.Count > 0
 
-	sb.WriteString("[gold]═══ Current Age Wonder ═══[-]\n")
+	sb.WriteString("[gold]═══ This age's wonder ═══[-]\n")
 	if built {
-		fmt.Fprintf(&sb, " %s [gold]★ %s[-]  [green]BUILT[-]  [gray]%s[-]\n", WonderSpriteIcon(current.key), current.name, current.ageName)
+		fmt.Fprintf(&sb, " %s [gold]★ %s[-]  [green]Built[-]  [gray]%s[-]\n", WonderSpriteIcon(current.key), current.name, current.ageName)
 	} else {
-		fmt.Fprintf(&sb, " [yellow]○ %s[-]  [gray]%s — Not yet built[-]\n", current.name, current.ageName)
+		fmt.Fprintf(&sb, " [yellow]○ %s[-]  [gray]%s, not built yet[-]\n", current.name, current.ageName)
 	}
 
 	// Effects
 	for _, eff := range current.def.Effects {
 		fmt.Fprintf(&sb, "   %s\n", formatEffect(eff))
 	}
-	fmt.Fprintf(&sb, "   [gold]+0.5x game speed[-]\n")
+	fmt.Fprintf(&sb, "   [gold]%s[-]\n", wonderSpeedCapText)
 
 	// Bank progress if not built
 	if !built && hasBs {
-		fmt.Fprintf(&sb, "\n [cyan]Wonder Bank:[-]\n")
+		fmt.Fprintf(&sb, "\n [cyan]Wonder bank:[-]\n")
 		costKeys := make([]string, 0, len(current.def.BaseCost))
 		for k := range current.def.BaseCost {
 			costKeys = append(costKeys, k)
@@ -67,12 +68,12 @@ func renderCurrentWonderSummary(state game.GameState) string {
 				clr = "yellow"
 			}
 			bar := wonderProgressBar(pct, 8)
-			fmt.Fprintf(&sb, "   [%s]%s %s %s / %s[-]\n", clr, k, bar, FormatNumber(banked), FormatNumber(need))
+			fmt.Fprintf(&sb, "   [%s]%s %s %s / %s[-]\n", clr, game.ResourceName(k), bar, FormatNumber(banked), FormatNumber(need))
 		}
 		if bs.WonderBankFull {
-			fmt.Fprintf(&sb, "   [green]✓ Bank full! Type 'build %s'[-]\n", current.key)
+			fmt.Fprintf(&sb, "   [green]✓ The bank is full. Build it with: build %s[-]\n", current.key)
 		} else {
-			fmt.Fprintf(&sb, "   [gray]wonder collect <res|all> [amt|all][-]\n")
+			fmt.Fprintf(&sb, "   [gray]%s[-]\n", wonderCollectHint())
 		}
 		fmt.Fprintf(&sb, "   %s\n", wonderOverflowLine(state.WonderOverflow))
 	}
@@ -91,8 +92,8 @@ func wonderOverflowLine(on bool) string {
 		theme.Paint(theme.RoleDim, ": production over a cap is lost (wonder overflow on)")
 }
 
-// wondersProvider generates the wonders overlay text from the current game state.
-// Text-only — no pixel art images. Shows wonder name, age, description, effects, and build status.
+// wondersProvider generates the Wonders panel text from the current game state.
+// Text only (no pixel art). Shows wonder name, age, description, effects, and build status.
 func wondersProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 	sb.WriteString(renderCurrentWonderSummary(state))
@@ -106,14 +107,14 @@ func wondersProvider(state game.GameState, _ int) string {
 	for _, w := range wonders {
 		if bs, ok := state.Buildings[w.key]; ok && bs.Count > 0 {
 			builtCount++
-			maxSpeed += 0.5
+			maxSpeed += config.WonderSpeedCapStep
 		}
 	}
 
 	// Header
 	fmt.Fprintf(&sb, "[gold]═══ Wonders: %d / %d ═══[-]\n", builtCount, totalCount)
-	fmt.Fprintf(&sb, " [cyan]Max Speed: %.1fx[-]   [gray]Each wonder grants +0.5x game speed[-]\n\n",
-		maxSpeed)
+	fmt.Fprintf(&sb, " [cyan]Speed cap: %.1fx[-]   [gray]Each wonder raises the speed cap by %sx (set it with: speed %.1f).[-]\n\n",
+		maxSpeed, config.FormatAmount(config.WonderSpeedCapStep), 1.0+config.WonderSpeedCapStep)
 
 	// List each wonder
 	for _, w := range wonders {
@@ -123,7 +124,7 @@ func wondersProvider(state game.GameState, _ int) string {
 
 		if built {
 			fmt.Fprintf(&sb, " %s [gold]★ %s[-]   [gray]%s[-]\n", WonderSpriteIcon(w.key), w.name, w.ageName)
-			fmt.Fprintf(&sb, "   [green]BUILT[-]\n")
+			fmt.Fprintf(&sb, "   [green]Built[-]\n")
 			if w.def.Description != "" {
 				fmt.Fprintf(&sb, "   [gray]%s[-]\n", w.def.Description)
 			}
@@ -133,10 +134,10 @@ func wondersProvider(state game.GameState, _ int) string {
 					fmt.Fprintf(&sb, "     %s\n", formatEffect(eff))
 				}
 			}
-			sb.WriteString("   [gold]+0.5x game speed[-]\n")
+			fmt.Fprintf(&sb, "   [gold]%s[-]\n", wonderSpeedCapText)
 		} else if unlocked {
 			if bs.WonderBankFull {
-				fmt.Fprintf(&sb, " [yellow]○ %s[-]   [gray]%s[-]   [green][BANK FULL — ready to build!][-]\n",
+				fmt.Fprintf(&sb, " [yellow]○ %s[-]   [gray]%s[-]   [green](bank full, ready to build)[-]\n",
 					w.name, w.ageName)
 			} else {
 				// Compute fill percentage
@@ -183,10 +184,10 @@ func wondersProvider(state game.GameState, _ int) string {
 							clr = "yellow"
 						}
 						fmt.Fprintf(&sb, "     [%s]%s: %s / %s[-]\n",
-							clr, k, FormatNumber(banked), FormatNumber(need))
+							clr, game.ResourceName(k), FormatNumber(banked), FormatNumber(need))
 					}
 				}
-				sb.WriteString("   [gray]Bank resources to build (wonder collect <res|all> [amt|all])[-]\n")
+				sb.WriteString("   [gray]Bank resources to build it: " + wonderCollectHint() + "[-]\n")
 			}
 			if w.def.Description != "" {
 				fmt.Fprintf(&sb, "   [gray]%s[-]\n", w.def.Description)
@@ -197,9 +198,9 @@ func wondersProvider(state game.GameState, _ int) string {
 					fmt.Fprintf(&sb, "     %s\n", formatEffect(eff))
 				}
 			}
-			sb.WriteString("   [gold]+0.5x game speed when built[-]\n")
+			fmt.Fprintf(&sb, "   [gold]%s once built[-]\n", wonderSpeedCapText)
 		} else {
-			fmt.Fprintf(&sb, " [gray]? ???[-]   [gray]%s — locked[-]\n", w.ageName)
+			fmt.Fprintf(&sb, " [gray]? ???[-]   [gray]%s, locked[-]\n", w.ageName)
 		}
 
 		sb.WriteString("\n")
@@ -207,7 +208,7 @@ func wondersProvider(state game.GameState, _ int) string {
 
 	// Speed summary footer
 	if builtCount == 0 {
-		sb.WriteString("[gray]No wonders built yet. Build the wonder for your current age to unlock speed bonuses.[-]\n")
+		sb.WriteString("[gray]No wonders built yet. Each one you build raises the speed cap.[-]\n")
 	} else {
 		var builtNames []string
 		for _, w := range wonders {

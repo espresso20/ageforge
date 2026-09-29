@@ -193,7 +193,7 @@ func offlinePlan(base *game.GameEngine, name, age string, fail func(check, forma
 		}
 		summary := false
 		for _, l := range post.Log {
-			summary = summary || strings.HasPrefix(l.Message, "While you were away your plan started")
+			summary = summary || strings.HasPrefix(l.Message, "While you were away, your plan started")
 		}
 		if started > 0 && !summary {
 			fail("offline_plan_log", "the plan started %d buildings offline but the log has no summary", started)
@@ -288,7 +288,7 @@ func checkOffline(o offlineRun, fail func(check, format string, args ...interfac
 	}
 	welcome := false
 	for _, l := range o.post.Log {
-		welcome = welcome || strings.HasPrefix(l.Message, "Welcome back!")
+		welcome = welcome || strings.HasPrefix(l.Message, "Welcome back.")
 	}
 	if !welcome {
 		fail("offline_no_welcome", "%s away: no welcome-back log line", o.d)

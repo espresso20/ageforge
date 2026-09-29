@@ -169,7 +169,7 @@ func harbingerAbsentText(sb *strings.Builder, state game.GameState) {
 
 // harbingerPresentText is the panel with a harbinger present.
 func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.HarbingerView, inviteArmed bool) {
-	fmt.Fprintf(sb, " %s   %s\n", theme.Paint(theme.RoleBright, strings.ToUpper(capFirstUI(h.Name))),
+	fmt.Fprintf(sb, " %s   %s\n", theme.Paint(theme.RoleBright, capFirstUI(h.Name)),
 		theme.Paint(theme.RoleDim, h.AgeName+" harbinger"))
 	sb.WriteString(" " + theme.Paint(theme.RoleLabel, h.Description) + "\n")
 	if len(h.Earlier) > 0 {
@@ -197,7 +197,7 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 		sb.WriteString(" " + theme.Paint(theme.RoleNegative, "The Last Passage has come. Prestige waits: type 'catastrophe' to choose.") + "\n")
 	case h.Numeric:
 		fmt.Fprintf(sb, " Severity: %s\n", harbingerSeverityText(h.Tier))
-		fmt.Fprintf(sb, " Odds published: %s\n", theme.Paint(theme.RoleHighlight, harbingerPercent(h.Probability)))
+		fmt.Fprintf(sb, " Published odds: %s\n", theme.Paint(theme.RoleHighlight, harbingerPercent(h.Probability)))
 	default:
 		fmt.Fprintf(sb, " Severity: %s\n", harbingerSeverityText(h.Tier))
 		sb.WriteString(theme.Paint(theme.RoleDim, " The omens give no figure. Their words are all you have to go on.") + "\n")
@@ -212,14 +212,14 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 	sb.WriteString("\n" + theme.Paint(theme.RoleAccent, "── Answers ──") + "\n\n")
 
 	// Appease.
-	fmt.Fprintf(sb, " %s %s   %s\n", theme.Keycap("A"), theme.Paint(theme.RoleBright, "Appease — "+h.AppeaseLabel),
+	fmt.Fprintf(sb, " %s %s   %s\n", theme.Keycap("A"), theme.Paint(theme.RoleBright, "Appease: "+h.AppeaseLabel),
 		harbingerLevelText(h.AppeaseLevel, game.HarbingerMaxAppease))
 	sb.WriteString(theme.Paint(theme.RoleDim, "     Each level multiplies the real catastrophe chance by 0.6.") + "\n")
 	harbingerCostLine(sb, state, h.AppeaseBlocked, h.AppeaseCost)
 	sb.WriteString("\n")
 
 	// Brace.
-	fmt.Fprintf(sb, " %s %s   %s\n", theme.Keycap("B"), theme.Paint(theme.RoleBright, "Brace — "+h.BraceLabel),
+	fmt.Fprintf(sb, " %s %s   %s\n", theme.Keycap("B"), theme.Paint(theme.RoleBright, "Brace: "+h.BraceLabel),
 		harbingerLevelText(h.BraceLevel, game.HarbingerMaxBrace))
 	if h.LastPassage {
 		fmt.Fprintf(sb, theme.Paint(theme.RoleDim, "     If it comes and you Endure: you keep %d%% of the run's prestige points.")+"\n",
@@ -239,7 +239,7 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 	sb.WriteString("\n")
 
 	// Invite.
-	fmt.Fprintf(sb, " %s %s\n", theme.Keycap("I"), theme.Paint(theme.RoleBright, "Invite — "+h.InviteLabel))
+	fmt.Fprintf(sb, " %s %s\n", theme.Keycap("I"), theme.Paint(theme.RoleBright, "Invite: "+h.InviteLabel))
 	if h.LastPassage {
 		sb.WriteString(theme.Paint(theme.RoleDim, "     Guarantees the Last Passage at your next prestige; Succumb then earns the\n     Cosmic Legacy. Free. Cannot be undone.") + "\n")
 	} else {
@@ -257,7 +257,7 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 	sb.WriteString(theme.Paint(theme.RoleDim, " Nothing here expires. The price is the same in every age of the epoch.") + "\n")
 }
 
-// harbingerCostLine prints the next level's cost, each resource coloured by
+// harbingerCostLine prints the next level's cost, each resource colored by
 // whether you have it, or why the action is unavailable.
 func harbingerCostLine(sb *strings.Builder, state game.GameState, blocked string, cost map[string]float64) {
 	if blocked != "" {
@@ -275,7 +275,7 @@ func harbingerCostLine(sb *strings.Builder, state game.GameState, blocked string
 			continue
 		}
 		have := state.Resources[def.Key].Amount
-		item := fmt.Sprintf("%s %s", FormatNumber(need), def.Key)
+		item := game.Amount(need, def.Key)
 		if have >= need {
 			parts = append(parts, theme.Paint(theme.RolePositive, item))
 		} else {
@@ -290,17 +290,18 @@ func harbingerLevelText(level, max int) string {
 	return theme.Paint(theme.RoleLabel, fmt.Sprintf("Level %d / %d", level, max))
 }
 
-// harbingerSeverityText renders the vague severity with its colour.
+// harbingerSeverityText renders the vague severity with its color, in the
+// same words as the outlook line (harbingerRiskWords).
 func harbingerSeverityText(t game.CatastropheTier) string {
 	switch t {
 	case game.CatastropheTierHigh:
-		return theme.Paint(theme.RoleNegative, "HIGH") + " — the harbinger is in open terror"
+		return theme.Paint(theme.RoleNegative, "high") + ": the harbinger is in open terror"
 	case game.CatastropheTierMedium:
-		return theme.Paint(theme.RoleWarning, "MEDIUM") + " — a real danger, worth paying to lessen"
+		return theme.Paint(theme.RoleWarning, "medium") + ": a real danger, worth paying to lessen"
 	case game.CatastropheTierLow:
-		return theme.Paint(theme.RolePositive, "LOW") + " — uneasy rather than afraid"
+		return theme.Paint(theme.RolePositive, "low") + ": uneasy rather than afraid"
 	}
-	return theme.Paint(theme.RoleDim, "NONE") + " — nothing to fear"
+	return theme.Paint(theme.RoleDim, "none") + ": nothing to fear"
 }
 
 // harbingerRiskWords is the tier in plain words for the outlook line.
@@ -309,11 +310,11 @@ func harbingerRiskWords(t game.CatastropheTier) string {
 	case game.CatastropheTierHigh:
 		return theme.Paint(theme.RoleNegative, "high")
 	case game.CatastropheTierMedium:
-		return theme.Paint(theme.RoleWarning, "moderate")
+		return theme.Paint(theme.RoleWarning, "medium")
 	case game.CatastropheTierLow:
 		return theme.Paint(theme.RolePositive, "low")
 	}
-	return "nil"
+	return "none"
 }
 
 // harbingerNumericAge reports whether age's forecasts print the odds.

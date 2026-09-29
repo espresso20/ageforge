@@ -417,3 +417,11 @@ func TestFactionCapsExported(t *testing.T) {
 			MaxConcurrentFactionBoons, MaxConcurrentFactionMaluses)
 	}
 }
+
+// boon cannot import game, so it mirrors the base tick length for flavor
+// durations. Keep the two in step.
+func TestBoonDefaultTickIntervalMatchesBase(t *testing.T) {
+	if boon.DefaultTickInterval != BaseTickInterval {
+		t.Errorf("boon.DefaultTickInterval = %v, BaseTickInterval = %v", boon.DefaultTickInterval, BaseTickInterval)
+	}
+}

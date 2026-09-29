@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // Civilizational catastrophes (Phase 9).
@@ -186,7 +187,7 @@ func (ge *GameEngine) catastropheCanStrike(epochKey string) bool {
 // catastrophe is pending. action is a gerund ("advancing", "prestiging").
 func (ge *GameEngine) catastropheBlockErr(action string) error {
 	name, _ := config.CatastropheInfo(ge.pendingCatastrophe)
-	return fmt.Errorf("%s is upon you — type 'catastrophe' to choose Endure or Succumb before %s", name, action)
+	return fmt.Errorf("%s is upon you. Type 'catastrophe' to choose Endure or Succumb before %s", name, action)
 }
 
 // How a catastrophe came about; it only changes the log line and event name.
@@ -548,10 +549,10 @@ func (ge *GameEngine) Succumb() error {
 	}
 	ge.addLog("success", fmt.Sprintf("Ancient Knowledge: research speed +%.0f%% (permanent, +%.0f%% per epoch succumbed).", ge.succumbResearchBonus()*100, SuccumbResearchBonusPerEpoch*100))
 	if len(savedRuins) > 0 {
-		ge.addLog("info", fmt.Sprintf("%d ruin(s) from fallen civilizations carry forward (max %d).", ge.Buildings.RuinTotal(), MaxRuins))
+		ge.addLog("info", fmt.Sprintf("%s from fallen civilizations carry forward (max %d).", textfmt.Count(ge.Buildings.RuinTotal(), "ruin", "ruins"), MaxRuins))
 	}
 	if droppedRuins > 0 {
-		ge.addLog("info", fmt.Sprintf("%d older, lower-value ruin(s) crumbled to make room.", droppedRuins))
+		ge.addLog("info", fmt.Sprintf("%s crumbled to make room.", textfmt.Count(droppedRuins, "older, lower-value ruin", "older, lower-value ruins")))
 	}
 	ge.addLog("info", "Type [cyan]help[-] to rebuild.")
 

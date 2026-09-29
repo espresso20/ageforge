@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // The build plan: an ordered list of builds and techs the player wants, which
@@ -154,20 +155,20 @@ func loadPlan(saved []PlanItem) []PlanItem {
 // building must be one `build` would accept in this age, ignoring cost.
 func (ge *GameEngine) PlanAddBuild(key string, count int) (int, error) {
 	if count <= 0 || count > maxPlanCount {
-		return 0, fmt.Errorf("the count must be a whole number from 1 to %d", maxPlanCount)
+		return 0, fmt.Errorf("The count must be a whole number from 1 to %d.", maxPlanCount)
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	def, ok := ge.Buildings.defs[key]
 	if !ok {
 		if s := ge.Buildings.SuggestKey(key); s != "" {
-			return 0, fmt.Errorf("unknown building '%s' — did you mean '%s'?", key, s)
+			return 0, fmt.Errorf("Unknown building '%s'. Did you mean '%s'?", key, s)
 		}
-		return 0, fmt.Errorf("unknown building '%s'", key)
+		return 0, fmt.Errorf("Unknown building '%s'. Type build to see what you can build.", key)
 	}
 	planned := plannedCopies(ge.plan, key)
 	if reason := ge.planBuildInvalid(key, planned); reason != "" {
-		return 0, fmt.Errorf("can't plan %s: %s", def.Name, reason)
+		return 0, fmt.Errorf("Can't plan %s: %s.", def.Name, reason)
 	}
 	if def.MaxCount > 0 {
 		room := def.MaxCount - ge.Buildings.GetCount(key) - ge.Buildings.GetQueueCount(key, ge.buildQueue) - planned
@@ -176,13 +177,13 @@ func (ge *GameEngine) PlanAddBuild(key string, count int) (int, error) {
 	if n := len(ge.plan); n > 0 && ge.plan[n-1].Kind == PlanBuild && ge.plan[n-1].Key == key {
 		add := min(count, maxPlanCount-ge.plan[n-1].Count)
 		if add <= 0 {
-			return 0, fmt.Errorf("that plan item already holds %d, the most one item can", maxPlanCount)
+			return 0, fmt.Errorf("That plan item already holds %d, the most one item can.", maxPlanCount)
 		}
 		ge.plan[n-1].Count += add
 		return add, nil
 	}
 	if len(ge.plan) >= MaxPlanItems {
-		return 0, fmt.Errorf("the plan is full (%d items) — remove one first", MaxPlanItems)
+		return 0, errPlanFull()
 	}
 	ge.plan = append(ge.plan, PlanItem{Kind: PlanBuild, Key: key, Count: count})
 	return count, nil
@@ -196,18 +197,18 @@ func (ge *GameEngine) PlanAddResearch(key string) error {
 	defer ge.mu.Unlock()
 	def, ok := config.TechByKey()[key]
 	if !ok {
-		return fmt.Errorf("unknown technology '%s'", key)
+		return unknownKeyError("tech", key, config.TechByKey(), "Type research list to see what you can research.")
 	}
 	for _, it := range ge.plan {
 		if it.Kind == PlanResearch && it.Key == key {
-			return fmt.Errorf("%s is already in the plan", def.Name)
+			return fmt.Errorf("%s is already in the plan.", def.Name)
 		}
 	}
 	if len(ge.plan) >= MaxPlanItems {
-		return fmt.Errorf("the plan is full (%d items) — remove one first", MaxPlanItems)
+		return errPlanFull()
 	}
 	if reason := ge.planResearchInvalid(key, len(ge.plan)); reason != "" {
-		return fmt.Errorf("can't plan %s: %s", def.Name, reason)
+		return fmt.Errorf("Can't plan %s: %s.", def.Name, reason)
 	}
 	ge.plan = append(ge.plan, PlanItem{Kind: PlanResearch, Key: key, Count: 1})
 	return nil
@@ -255,15 +256,24 @@ func (ge *GameEngine) PlanMove(n, delta int) (int, error) {
 
 func (ge *GameEngine) planIndexErr(n int) error {
 	if len(ge.plan) == 0 {
-		return fmt.Errorf("the plan is empty")
+		return fmt.Errorf("The plan is empty.")
 	}
-	return fmt.Errorf("no plan item %d (the plan has %d)", n, len(ge.plan))
+	return fmt.Errorf("There is no plan item %d (the plan has %s).", n, textfmt.Count(len(ge.plan), "item", "items"))
 }
 
-// planItemLabel is "3 × Hut" or "research Pottery".
+// errPlanFull is the refusal when the plan holds MaxPlanItems items.
+func errPlanFull() error {
+	return fmt.Errorf("The plan is full (%d items). Remove one with plan remove <n> first.", MaxPlanItems)
+}
+
+// planItemLabel is "3 Huts", "research Pottery", "trade iron ore for food"
+// or, with an amount left to buy, "trade iron ore for 500 food".
 func (ge *GameEngine) planItemLabel(it PlanItem) string {
 	if it.Kind == PlanTrade {
-		return "trade " + it.Key + " for " + it.To
+		if it.Amount > 0 {
+			return "trade " + ResourceName(it.Key) + " for " + Amount(it.Amount, it.To)
+		}
+		return "trade " + ResourceName(it.Key) + " for " + ResourceName(it.To)
 	}
 	if it.Kind == PlanAdvance {
 		return "advance when ready"
@@ -274,11 +284,7 @@ func (ge *GameEngine) planItemLabel(it PlanItem) string {
 	if it.Kind == PlanResearch {
 		return "research " + config.TechByKey()[it.Key].Name
 	}
-	name := it.Key
-	if d, ok := ge.Buildings.defs[it.Key]; ok {
-		name = d.Name
-	}
-	return fmt.Sprintf("%d × %s", it.Count, name)
+	return BuildingCount(it.Count, it.Key)
 }
 
 // ===== Validity =====
@@ -400,28 +406,34 @@ func (s *planStarts) empty() bool {
 	return len(s.order) == 0 && len(s.techs) == 0 && len(s.tradeOrder) == 0 && s.advanced == "" && len(s.deals) == 0
 }
 
-// describe renders the starts as "2 × Hut, Farm, research Pottery".
+// describe renders the starts as verb-led clauses: "started building 2 Huts
+// and 1 Farm, started researching Pottery, traded 5K coal for 1.2K food".
+// Callers prefix it ("Plan: ", "While you were away, your plan ").
 func (s *planStarts) describe(defs map[string]config.BuildingDef) string {
 	var parts []string
-	for _, k := range s.order {
-		name := defs[k].Name
-		if n := s.builds[k]; n > 1 {
-			name = fmt.Sprintf("%d × %s", n, name)
+	if len(s.order) > 0 {
+		builds := make([]string, 0, len(s.order))
+		for _, k := range s.order {
+			builds = append(builds, BuildingCount(s.builds[k], k))
 		}
-		parts = append(parts, name)
+		parts = append(parts, "started building "+textfmt.List(builds))
 	}
-	techs := config.TechByKey()
-	for _, k := range s.techs {
-		parts = append(parts, "research "+techs[k].Name)
+	if len(s.techs) > 0 {
+		techs := config.TechByKey()
+		names := make([]string, 0, len(s.techs))
+		for _, k := range s.techs {
+			names = append(names, techs[k].Name)
+		}
+		parts = append(parts, "started researching "+textfmt.List(names))
 	}
 	for _, k := range s.tradeOrder {
 		from, to, _ := strings.Cut(k, ">")
 		t := s.trades[k]
-		parts = append(parts, fmt.Sprintf("traded %s %s for %s %s", formatPlanAmount(t[0]), from, formatPlanAmount(t[1]), to))
+		parts = append(parts, fmt.Sprintf("traded %s for %s", Amount(t[0], from), Amount(t[1], to)))
 	}
 	parts = append(parts, s.deals...)
 	if s.advanced != "" {
-		parts = append(parts, "advanced to "+s.advanced)
+		parts = append(parts, "advanced to the "+s.advanced)
 	}
 	return strings.Join(parts, ", ")
 }
@@ -772,7 +784,7 @@ func planStaffSource(def config.BuildingDef) bool {
 func (ge *GameEngine) runPlanTick() {
 	var s planStarts
 	if ge.runPlan(&s) {
-		ge.addLog("info", "Plan started: "+s.describe(ge.Buildings.defs))
+		ge.addLog("info", "Plan: "+s.describe(ge.Buildings.defs)+".")
 	}
 }
 

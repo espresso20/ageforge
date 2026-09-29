@@ -591,7 +591,7 @@ func (r *runner) observe(st game.GameState) {
 		if l.Tick <= r.logTick {
 			continue
 		}
-		if l.Type == "error" && strings.Contains(l.Message, "died of starvation") {
+		if l.Type == "error" && strings.Contains(l.Message, "starved to death") {
 			r.res.Stats.StarvationDeaths++
 		}
 	}

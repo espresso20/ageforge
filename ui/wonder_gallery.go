@@ -127,7 +127,7 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 	if current == nil {
 		// No wonder for this age (shouldn't happen, but handle gracefully)
 		tv := tview.NewTextView().SetDynamicColors(true).SetTextAlign(tview.AlignCenter)
-		tv.SetText("[gray]No wonder available this age[-]")
+		tv.SetText("[gray]No wonder in this age.[-]")
 		wp.root.AddItem(tv, 0, 1, false)
 		return
 	}
@@ -146,10 +146,10 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 	var sb strings.Builder
 	if built {
 		fmt.Fprintf(&sb, "%s [gold::b]★ %s[-]\n", WonderSpriteIcon(current.key), current.name)
-		fmt.Fprintf(&sb, "[green]BUILT[-] — [gray]%s[-]\n\n", current.ageName)
+		fmt.Fprintf(&sb, "[green]Built[-] [gray](%s)[-]\n\n", current.ageName)
 	} else {
 		fmt.Fprintf(&sb, "[yellow::b]%s[-]\n", current.name)
-		fmt.Fprintf(&sb, "[gray]%s — Not yet built[-]\n\n", current.ageName)
+		fmt.Fprintf(&sb, "[gray]%s, not built yet[-]\n\n", current.ageName)
 	}
 
 	// Show effects/perks
@@ -157,12 +157,12 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 	for _, eff := range current.def.Effects {
 		fmt.Fprintf(&sb, "  %s\n", formatEffect(eff))
 	}
-	fmt.Fprintf(&sb, "  [gold]+0.5x game speed[-]\n")
+	fmt.Fprintf(&sb, "  [gold]%s[-]\n", wonderSpeedCapText)
 
 	// Bank progress if not built
 	if !built {
 		if bs, ok := state.Buildings[current.key]; ok {
-			fmt.Fprintf(&sb, "\n[cyan]Wonder Bank:[-]\n")
+			fmt.Fprintf(&sb, "\n[cyan]Wonder bank:[-]\n")
 			costKeys := make([]string, 0, len(current.def.BaseCost))
 			for k := range current.def.BaseCost {
 				costKeys = append(costKeys, k)
@@ -185,12 +185,12 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 					clr = "yellow"
 				}
 				bar := wonderProgressBar(pct, 8)
-				fmt.Fprintf(&sb, "  [%s]%s %s %s / %s[-]\n", clr, k, bar, FormatNumber(banked), FormatNumber(need))
+				fmt.Fprintf(&sb, "  [%s]%s %s %s / %s[-]\n", clr, game.ResourceName(k), bar, FormatNumber(banked), FormatNumber(need))
 			}
 			if bs.WonderBankFull {
-				fmt.Fprintf(&sb, "  [green]✓ Bank full! Type 'build %s'[-]\n", current.key)
+				fmt.Fprintf(&sb, "  [green]✓ The bank is full. Build it with: build %s[-]\n", current.key)
 			} else {
-				fmt.Fprintf(&sb, "  [gray]wonder collect <res|all> [amt|all][-]\n")
+				fmt.Fprintf(&sb, "  [gray]%s[-]\n", wonderCollectHint())
 			}
 			fmt.Fprintf(&sb, "  %s\n", wonderOverflowLine(state.WonderOverflow))
 		}
@@ -204,29 +204,34 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 			wonderCount++
 		}
 	}
-	maxSpeed := 1.0 + float64(wonderCount)*0.5
-	fmt.Fprintf(&sb, "\n[gold]Wonders built: %d[-] — [cyan]Max speed: %.1fx[-]", wonderCount, maxSpeed)
+	maxSpeed := 1.0 + float64(wonderCount)*config.WonderSpeedCapStep
+	fmt.Fprintf(&sb, "\n[gold]Wonders built: %d[-] [gray]·[-] [cyan]Speed cap: %.1fx[-]", wonderCount, maxSpeed)
 
-	infoTV.SetText(sb.String())
+	infoTV.SetText(safeTags(sb.String()))
 
 	wp.root.AddItem(infoTV, 0, 1, false)
 }
 
-// formatEffect formats a building effect for display
+// wonderSpeedCapText is the speed line every wonder card carries.
+var wonderSpeedCapText = "Raises the speed cap by " + config.FormatAmount(config.WonderSpeedCapStep) + "x"
+
+// wonderCollectHint is the registry's wonder collect form, escaped for tview.
+func wonderCollectHint() string {
+	return lit(helpRow("wonder collect").Form)
+}
+
+// formatEffect formats a building effect for display, in the same words as
+// formatTechEffect ("+10% all production", "unlocks Lumber Mill"), colored
+// by kind.
 func formatEffect(eff config.Effect) string {
+	text := formatTechEffect(eff)
 	switch eff.Type {
 	case "production":
-		return fmt.Sprintf("[green]+%g %s/tick[-]", eff.Value, eff.Target)
-	case "capacity":
-		return fmt.Sprintf("[yellow]+%.0f %s cap[-]", eff.Value, eff.Target)
-	case "storage":
-		if eff.Target == "all" {
-			return fmt.Sprintf("[yellow]+%.0f all storage[-]", eff.Value)
-		}
-		return fmt.Sprintf("[yellow]+%.0f %s storage[-]", eff.Value, eff.Target)
+		return "[green]" + text + "[-]"
+	case "capacity", "storage":
+		return "[yellow]" + text + "[-]"
 	case "bonus":
-		return fmt.Sprintf("[cyan]+%.0f%% %s[-]", eff.Value*100, eff.Target)
-	default:
-		return fmt.Sprintf("%s %s: %g", eff.Type, eff.Target, eff.Value)
+		return "[cyan]" + text + "[-]"
 	}
+	return text
 }

@@ -46,12 +46,12 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("[gray]Type the command to open the panel.[-]\n")
 	for _, name := range panelOrder {
 		if c := lookup(reg, name); c != nil && c.Panel != "" {
-			sb.WriteString("  [cyan]" + padRight(c.Name, 12) + "[-] — " + c.Panel + "\n")
+			sb.WriteString("  [cyan]" + padRight(c.Name, 12) + "[-] - " + c.Panel + "\n")
 		}
 	}
-	sb.WriteString("  [cyan]" + padRight("Accounts", 12) + "[-] — Switch/create/back-up accounts [gray](main-menu panel, not a command)[-]\n")
+	sb.WriteString("  [cyan]" + padRight("Accounts", 12) + "[-] - Switch, create or back up accounts [gray](main-menu panel, not a command)[-]\n")
 
-	sb.WriteString("\n[gold]═══ The Prompt ═══[-]\n")
+	sb.WriteString("\n[gold]═══ The prompt ═══[-]\n")
 	sb.WriteString("[gray]As you type, the best completion shows in dim text after the cursor.[-]\n")
 	sb.WriteString("  [cyan]Tab[-]    - Take the completion; press again for the next one\n")
 	sb.WriteString("  [cyan]→[-]      - Take the completion (cursor at the end of the line)\n")
@@ -71,10 +71,10 @@ func helpProvider(_ game.GameState, _ int) string {
 	// Developer Console — only listed when dev mode is active (Ctrl+K passphrase).
 	// Hidden entirely otherwise so the reference stays clean for normal play.
 	if game.DevModeActive {
-		sb.WriteString("\n[gold]═══ Developer Console ═══[-]\n")
-		sb.WriteString("[gray]DEV mode active — type these in the [-][cyan]>[-][gray] prompt:[-]\n")
+		sb.WriteString("\n[gold]═══ Developer console ═══[-]\n")
+		sb.WriteString("[gray]Dev mode is on. Type these in the [-][cyan]>[-][gray] prompt:[-]\n")
 		for _, d := range devCommands {
-			sb.WriteString("  [cyan]" + padRight(d.form, 28) + "[-] — " + d.text + "\n")
+			sb.WriteString("  [cyan]" + padRight(d.form, 28) + "[-] - " + d.text + "\n")
 		}
 	}
 
@@ -90,7 +90,7 @@ func appendHelpRows(rows []Usage, c *Command) []Usage {
 	return rows
 }
 
-// helpForm colours a usage form: the command words cyan, placeholders plain.
+// helpForm colors a usage form: the command words cyan, placeholders plain.
 func helpForm(form string) string {
 	words := strings.Fields(form)
 	n := 0

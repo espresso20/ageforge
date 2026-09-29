@@ -76,7 +76,7 @@ func CreateAccountsPage(app *tview.Application, pages *tview.Pages, engine *game
 	subtitle := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[gray]Each account is its own slot — switch between them, or back one up to a file.[-]")
+		SetText("[gray]Each account is its own slot. Switch between them, or back one up to a file.[-]")
 
 	// ── Account list ───────────────────────────────────────────────────────────
 	p.list = tview.NewList()
@@ -175,7 +175,7 @@ func (p *accountsPanel) updateDetail(index int) {
 	s := p.summaries[index]
 	recovery, err := p.engine.RecoveryCodeForID(s.AccountID)
 	if err != nil {
-		recovery = "—"
+		recovery = "unavailable"
 	}
 	p.detail.SetText(accountDetailText(s, recovery))
 }
@@ -262,10 +262,10 @@ func (p *accountsPanel) doSwitch() {
 // with NO carry-over, re-applies its (default) theme, then rebuilds the list selecting the new
 // account.
 func (p *accountsPanel) doNew() {
-	showSaveNameModalOpts(p.app, p.pages, " Name New Account ", accountNamePage, p.list, "", func(name string) {
+	showSaveNameModalOpts(p.app, p.pages, " Name new account ", accountNamePage, p.list, "", func(name string) {
 		acct, err := p.engine.CreateAccount(name)
 		if err != nil {
-			p.showMessage("New Account Failed", fmt.Sprintf("[red]%v[-]", err))
+			p.showMessage("New account failed", fmt.Sprintf("[red]%v[-]", err))
 			return
 		}
 		// A fresh (or reopened same-name) account resolves its own theme — a brand-new one
@@ -287,18 +287,18 @@ func (p *accountsPanel) doExport() {
 	}
 	blob, err := p.engine.ExportAccountByID(s.AccountID)
 	if err != nil {
-		p.showMessage("Export Failed", fmt.Sprintf("[red]%v[-]", err))
+		p.showMessage("Export failed", fmt.Sprintf("[red]%v[-]", err))
 		return
 	}
 	path := game.AccountExportPath(s.AccountID)
 	if dir := filepath.Dir(path); dir != "" {
 		if err := os.MkdirAll(dir, 0755); err != nil {
-			p.showMessage("Export Failed", fmt.Sprintf("[red]could not create %s: %v[-]", dir, err))
+			p.showMessage("Export failed", fmt.Sprintf("[red]Could not create %s: %v[-]", dir, err))
 			return
 		}
 	}
 	if err := os.WriteFile(path, blob, 0644); err != nil {
-		p.showMessage("Export Failed", fmt.Sprintf("[red]%v[-]", err))
+		p.showMessage("Export failed", fmt.Sprintf("[red]%v[-]", err))
 		return
 	}
 	// Also take a FULL slot snapshot (account.json + saves/) alongside the progress blob. A
@@ -312,7 +312,7 @@ func (p *accountsPanel) doExport() {
 		"[gold]Backed up %s[-]\n\n%s\n\nThis file carries this account's progress (unlocks, stats,\nachievements). Restore it with Import (i) on any machine.%s",
 		displayNameOr(s), path, backupLine,
 	)
-	p.showMessage("Account Exported", msg)
+	p.showMessage("Account exported", msg)
 }
 
 // doBackup takes a FULL snapshot of the SELECTED account's slot (account.json + saves/) into
@@ -325,14 +325,14 @@ func (p *accountsPanel) doBackup() {
 	}
 	backupPath, err := p.engine.BackupAccount(s.AccountID)
 	if err != nil {
-		p.showMessage("Backup Failed", fmt.Sprintf("[red]%v[-]", err))
+		p.showMessage("Backup failed", fmt.Sprintf("[red]%v[-]", err))
 		return
 	}
 	msg := fmt.Sprintf(
-		"[gold]Backed up %s[-]\n\n%s\n\nThis is a FULL snapshot: account.json plus every save in this\naccount's slot. Restore by copying the folder's contents back\ninto data/accounts/<id>/. Only the 10 most recent are kept.",
+		"[gold]Backed up %s[-]\n\n%s\n\nThis is a full snapshot: account.json plus every save in this\naccount's slot. Restore by copying the folder's contents back\ninto data/accounts/<id>/. Only the 10 most recent are kept.",
 		displayNameOr(s), backupPath,
 	)
-	p.showMessage("Account Backed Up", msg)
+	p.showMessage("Account backed up", msg)
 }
 
 // doImport opens a path-entry modal (defaulting to the selected account's export path), reads
@@ -380,7 +380,7 @@ func (p *accountsPanel) doImport() {
 		}
 		blob, err := os.ReadFile(path)
 		if err != nil {
-			errTV.SetText(fmt.Sprintf("[red]cannot read %s: %v[-]", path, err))
+			errTV.SetText(fmt.Sprintf("[red]Cannot read %s: %v[-]", path, err))
 			p.app.SetFocus(input)
 			return
 		}
@@ -397,7 +397,7 @@ func (p *accountsPanel) doImport() {
 		p.app.SetFocus(p.list)
 		p.refresh(0)
 		p.selectByID(imported.AccountID)
-		p.status.SetText(fmt.Sprintf("[green]Imported %s — press Enter to switch to it[-]", displayNameOrName(imported.DisplayName)))
+		p.status.SetText(fmt.Sprintf("[green]Imported %s. Press Enter to switch to it.[-]", displayNameOrName(imported.DisplayName)))
 	}
 
 	input.SetDoneFunc(func(key tcell.Key) {
@@ -414,7 +414,7 @@ func (p *accountsPanel) doImport() {
 		AddItem(spacer(), 1, 0, false).
 		AddItem(hintTV, 1, 0, false)
 	inner.SetBorder(true).
-		SetTitle(" Import Account Backup ").
+		SetTitle(" Import account backup ").
 		SetTitleColor(theme.Color(theme.RoleAccent)).
 		SetBorderColor(theme.Color(theme.RoleAccent))
 	inner.SetBackgroundColor(theme.Color(theme.RoleSurface))
@@ -441,14 +441,14 @@ func (p *accountsPanel) doRecovery() {
 	}
 	code, err := p.engine.RecoveryCodeForID(s.AccountID)
 	if err != nil {
-		p.showMessage("Recovery Code", fmt.Sprintf("[red]%v[-]", err))
+		p.showMessage("Recovery code", fmt.Sprintf("[red]%v[-]", err))
 		return
 	}
 	msg := fmt.Sprintf(
-		"[gold]%s[-]\n\n[white::b]%s[-]\n\nThis code restores your IDENTITY (your account ID) across\nmachines and reinstalls — NOT your earned progress. It is not\na password; it only proves which account you are.\n\nWrite it down. Restore with:  account recover <code>\nProgress (unlocks, stats) is backed up separately via Export.",
+		"[gold]%s[-]\n\n[white::b]%s[-]\n\nThis code restores your account ID on another machine or after\na reinstall. It does not restore progress (unlocks, stats,\nachievements); back those up with Export (e). It is not a\npassword: it only proves which account you are.\n\nWrite it down. Restore with:  account recover <code>",
 		displayNameOr(s), code,
 	)
-	p.showMessage("Recovery Code", msg)
+	p.showMessage("Recovery code", msg)
 }
 
 // doWipe runs the two-step gate for permanently deleting the SELECTED account (identity + theme
@@ -467,7 +467,7 @@ func (p *accountsPanel) doWipe() {
 	// STEP 1 — the are-you-sure gate.
 	step1 := tview.NewModal().
 		SetText(fmt.Sprintf(
-			"⚠  WIPE ACCOUNT  ⚠\n\nThis permanently deletes the account \"%s\":\nall theme unlocks, lifetime stats, and achievements.\n\nThis CANNOT be undone. Game saves are NOT affected.",
+			"⚠  Wipe account?\n\nThis deletes the account \"%s\": its theme unlocks,\nlifetime stats, achievements and every save in its slot.\n\nA backup goes to data/backups/ first; restoring it is manual.",
 			name,
 		)).
 		AddButtons([]string{"Keep it", "Wipe it"}).
@@ -502,7 +502,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
 		SetText(fmt.Sprintf(
-			dangerTag+"Type this name exactly to confirm:[-]\n"+dangerTagBold+"%s[-:-:-]\n"+dangerTagBold+"This permanently deletes the account.[-:-:-]\n"+dangerTag+"A full backup is saved to data/backups/ first, so a copy is recoverable.[-]",
+			dangerTag+"Type this name exactly to confirm:[-]\n"+dangerTagBold+"%s[-:-:-]\n"+dangerTagBold+"This permanently deletes the account.[-:-:-]\n"+dangerTag+"A backup (account and saves) goes to data/backups/ first; restoring it is manual.[-]",
 			expectedName,
 		))
 
@@ -518,7 +518,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 
 	confirm := func() {
 		if strings.TrimSpace(input.GetText()) != expectedName {
-			errTV.SetText(dangerTagBold + "Name doesn't match — account NOT wiped.[-:-:-]")
+			errTV.SetText(dangerTagBold + "Name doesn't match. The account was not wiped.[-:-:-]")
 			p.app.SetFocus(input)
 			return
 		}
@@ -553,7 +553,7 @@ func (p *accountsPanel) showWipeTypeGate(id, expectedName string, wasActive bool
 		AddItem(spacer(), 1, 0, false).
 		AddItem(hintTV, 1, 0, false)
 	inner.SetBorder(true).
-		SetTitle(" Confirm Account Wipe ").
+		SetTitle(" Confirm account wipe ").
 		SetTitleColor(theme.Color(theme.RoleOnNegative)).
 		SetBorderColor(theme.Color(theme.RoleOnNegative))
 	inner.SetBackgroundColor(theme.Color(theme.RoleNegative))
@@ -601,7 +601,7 @@ func (p *accountsPanel) resolveAfterWipe(wasActive bool, backupPath string) {
 	p.refresh(0)
 	p.app.SetFocus(p.list)
 	if backupPath != "" {
-		p.status.SetText(fmt.Sprintf("[gray]Account wiped — backup saved to %s[-]", backupPath))
+		p.status.SetText(fmt.Sprintf("[gray]Account wiped. Backup saved to %s[-]", backupPath))
 	} else {
 		p.status.SetText("[gray]Account wiped.[-]")
 	}

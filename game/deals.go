@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/detmath"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // Faction trade deals: each civilization you have met offers a small,
@@ -572,11 +573,11 @@ func (ge *GameEngine) dealProblem(fs *FactionState, d FactionDeal) (blocked, sho
 	}
 	for _, r := range []string{d.Give, d.Get} {
 		if r != "" && !ge.Resources.IsUnlocked(r) {
-			return r + " is not unlocked", ""
+			return ResourceName(r) + " is not unlocked yet", ""
 		}
 	}
 	if d.Get != "" && ge.Resources.GetStorage(d.Get)-ge.Resources.Get(d.Get) < d.GetAmt {
-		return fmt.Sprintf("not enough room for %s %s", formatPlanAmount(d.GetAmt), d.Get), ""
+		return fmt.Sprintf("not enough %s storage for %s", ResourceName(d.Get), Amount(d.GetAmt, d.Get)), ""
 	}
 	if !(ge.Resources.Get(d.Give) >= d.GiveAmt) {
 		return "", d.Give
@@ -618,7 +619,7 @@ func (ge *GameEngine) takeDeal(def config.FactionDef, fs *FactionState, i int) F
 		fs.Status = "friendly"
 	}
 	d.Taken = true
-	ge.addLog("success", fmt.Sprintf("Deal with the %s (%s).", def.Name, dealTerms(*d)))
+	ge.addLog("success", fmt.Sprintf("Deal with the %s. %s.", def.Name, dealLogTerms(*d)))
 	return *d
 }
 
@@ -629,32 +630,39 @@ func DealKindLabel(kind string) string {
 	case DealWant:
 		return "Sell"
 	case DealFavor:
-		return "Favor"
+		return "Goodwill" // display only: the saved kind key stays "favor"
 	case DealRare:
 		return "Rare"
 	}
 	return "Buy"
 }
 
-// DealGets is what a deal pays you: "966K food" or "+5 standing".
+// DealGets is what a deal pays you: "966K food" or "+5 opinion".
 func DealGets(get string, getAmt float64, standing int, num func(float64) string) string {
 	if get == "" {
-		return fmt.Sprintf("+%d standing", standing)
+		return fmt.Sprintf("+%d opinion", standing)
 	}
-	return num(getAmt) + " " + get
+	return num(getAmt) + " " + ResourceName(get)
 }
 
 // DealTerms is how every surface words a deal, from the player's side:
-// "Buy: give 876M coal → get 966K food", "Favor: give 899M steel → get +5
-// standing". The Factions panel, `diplomacy deals`, `diplomacy accept`, the
-// plan and the log all use it; num formats the amounts.
+// "Buy: give 876M iron ore → get 966K food", "Goodwill: give 899M steel →
+// get +5 opinion". The Factions panel, `diplomacy deals` and `diplomacy
+// accept` use it; num formats the amounts. The log and the plan label use
+// dealLogTerms, the same terms as a clause.
 func DealTerms(kind, give string, giveAmt float64, get string, getAmt float64, standing int, num func(float64) string) string {
-	return fmt.Sprintf("%s: give %s %s → get %s", DealKindLabel(kind), num(giveAmt), give, DealGets(get, getAmt, standing, num))
+	return fmt.Sprintf("%s: give %s %s → get %s", DealKindLabel(kind), num(giveAmt), ResourceName(give), DealGets(get, getAmt, standing, num))
 }
 
 // dealTerms is DealTerms for a saved deal, with the log's number format.
 func dealTerms(d FactionDeal) string {
-	return DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, formatPlanAmount)
+	return DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, textfmt.Number)
+}
+
+// dealLogTerms is a deal's terms as a clause for the log and the plan
+// label: "Buy: give 876M iron ore, get 966K food".
+func dealLogTerms(d FactionDeal) string {
+	return fmt.Sprintf("%s: give %s, get %s", DealKindLabel(d.Kind), Amount(d.GiveAmt, d.Give), DealGets(d.Get, d.GetAmt, d.Standing, textfmt.Number))
 }
 
 // AcceptFactionDeal takes offer n (1-based, as the Factions panel and
@@ -664,28 +672,28 @@ func (ge *GameEngine) AcceptFactionDeal(key string, n int) (FactionDeal, error) 
 	defer ge.mu.Unlock()
 	def, ok := ge.Diplomacy.factionDefs[key]
 	if !ok {
-		return FactionDeal{}, fmt.Errorf("unknown civilization: %s", key)
+		return FactionDeal{}, ge.Diplomacy.errUnknownCiv(key)
 	}
 	fs, ok := ge.Diplomacy.factions[key]
 	if !ok || !fs.Discovered {
-		return FactionDeal{}, fmt.Errorf("%s has not been discovered yet", def.Name)
+		return FactionDeal{}, errNotMet(def.Name)
 	}
 	if why := dealBlocked(*fs); why != "" {
-		return FactionDeal{}, fmt.Errorf("the %s won't trade: they are %s", def.Name, why)
+		return FactionDeal{}, fmt.Errorf("The %s won't trade: they are %s.", def.Name, why)
 	}
 	if fs.DealsFor != ge.age || len(fs.Deals) == 0 {
-		return FactionDeal{}, fmt.Errorf("the %s have no offers right now", def.Name)
+		return FactionDeal{}, fmt.Errorf("The %s have no offers right now. New offers arrive with each rotation.", def.Name)
 	}
 	if n < 1 || n > len(fs.Deals) {
-		return FactionDeal{}, fmt.Errorf("no deal %d with the %s (they offer %d)", n, def.Name, len(fs.Deals))
+		return FactionDeal{}, fmt.Errorf("There is no deal %d with the %s (they offer %d). Type diplomacy deals to see them.", n, def.Name, len(fs.Deals))
 	}
 	d := fs.Deals[n-1]
 	blocked, short := ge.dealProblem(fs, d)
 	switch {
 	case blocked != "":
-		return FactionDeal{}, fmt.Errorf("can't take deal %d with the %s: %s", n, def.Name, blocked)
+		return FactionDeal{}, fmt.Errorf("Can't take deal %d with the %s: %s.", n, def.Name, blocked)
 	case short != "":
-		return FactionDeal{}, fmt.Errorf("not enough %s (have %s, need %s)", short, formatPlanAmount(ge.Resources.Get(short)), formatPlanAmount(d.GiveAmt))
+		return FactionDeal{}, fmt.Errorf("Not enough %s for deal %d: need %s, have %s.", ResourceName(short), n, textfmt.Number(d.GiveAmt), textfmt.Number(ge.Resources.Get(short)))
 	}
 	return ge.takeDeal(def, fs, n-1), nil
 }

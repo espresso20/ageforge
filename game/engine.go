@@ -12,6 +12,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/flavor"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 const (
@@ -346,7 +347,7 @@ func NewGameEngine() *GameEngine {
 	ge.Resources.Add("wood", 50)
 	// Startup flavor — the step-by-step onboarding now lives in the Buildings panel
 	// (main-screen polish part 1), so the log stays clean for live events.
-	ge.addLog("event", "Welcome to AgeForge! You have nothing but your hands.")
+	ge.addLog("event", "Welcome to AgeForge. You have nothing but your hands.")
 	// Subscribe to age advances to record markers in history.
 	// IMPORTANT: Bus handlers run under the engine write lock — do NOT call GetState().
 	ge.Bus.Subscribe(EventAgeAdvanced, func(e EventData) {
@@ -586,7 +587,8 @@ func (ge *GameEngine) updateMoraleTick() {
 	// Low morale warning (fires once, resets when morale recovers above 0.40)
 	if ge.morale < 0.40 && !ge.lowMoraleWarned {
 		ge.lowMoraleWarned = true
-		ge.addLog("warning", fmt.Sprintf("⚠ Morale critical: %.0f%% — worker output severely reduced", ge.morale*100))
+		ge.addLog("warning", fmt.Sprintf("⚠ Morale low (%s): all production %s. Faith output raises morale.",
+			textfmt.Percent(ge.morale), textfmt.SignedPercent(ge.moraleMultiplier()-1)))
 	} else if ge.morale >= 0.40 && ge.lowMoraleWarned {
 		ge.lowMoraleWarned = false
 	}
@@ -643,7 +645,7 @@ func (ge *GameEngine) Start() {
 			if time.Since(lastAutosave) >= AutosaveInterval {
 				if err := ge.SaveGame(ge.ActiveSaveName()); err != nil {
 					ge.mu.Lock()
-					ge.addLog("warning", fmt.Sprintf("Autosave failed: %v", err))
+					ge.addLog("warning", fmt.Sprintf("Autosave failed: could not write the save file (%v). Try saving by hand.", err))
 					ge.mu.Unlock()
 				} else {
 					ge.mu.Lock()
@@ -658,7 +660,7 @@ func (ge *GameEngine) Start() {
 				if acct := ge.Account(); acct != nil {
 					if err := acct.FlushIfDirty(); err != nil {
 						ge.mu.Lock()
-						ge.addLog("warning", fmt.Sprintf("Account flush failed: %v", err))
+						ge.addLog("warning", fmt.Sprintf("Could not save your lifetime stats (%v). The game tries again at the next autosave.", err))
 						ge.mu.Unlock()
 					}
 				}
@@ -680,7 +682,7 @@ func (ge *GameEngine) safeTick() {
 	defer func() {
 		if r := recover(); r != nil {
 			ge.mu.Lock()
-			ge.addLog("error", fmt.Sprintf("Tick recovered from panic: %v", r))
+			ge.addLog("error", fmt.Sprintf("This tick hit an error and was skipped. Save your game and report the bug: %v", r))
 			ge.mu.Unlock()
 		}
 	}()
@@ -702,7 +704,12 @@ func (ge *GameEngine) getTickInterval() time.Duration {
 // tickIntervalLocked is getTickInterval for callers that already hold ge.mu
 // (read or write).
 func (ge *GameEngine) tickIntervalLocked() time.Duration {
-	bonus := ge.tickSpeedBonus
+	return ge.tickIntervalWithBonusLocked(ge.tickSpeedBonus)
+}
+
+// tickIntervalWithBonusLocked is tickIntervalLocked for a given total
+// tick_speed bonus. Caller holds ge.mu (read or write).
+func (ge *GameEngine) tickIntervalWithBonusLocked(bonus float64) time.Duration {
 	mult := ge.speedMultiplier
 	if mult < 1.0 {
 		mult = 1.0
@@ -754,7 +761,7 @@ func (ge *GameEngine) recalculateTickSpeed() {
 }
 
 // MaxSpeedForAge returns the maximum speed multiplier gated by wonders.
-// Each wonder built adds +0.5x on top of the 1.0x base, so players must
+// Each wonder built adds config.WonderSpeedCapStep on top of the 1.0x base, so players must
 // invest in wonders to unlock higher speed settings via the `speed` command.
 // NOTE: Caller must hold at least an RLock if called from outside the tick goroutine.
 func (ge *GameEngine) MaxSpeedForAge() float64 {
@@ -764,24 +771,31 @@ func (ge *GameEngine) MaxSpeedForAge() float64 {
 			wonderCount++
 		}
 	}
-	return 1.0 + float64(float64(wonderCount)*0.5)
+	return 1.0 + float64(float64(wonderCount)*wonderSpeedStep)
 }
+
+// wonderSpeedStep is how much each completed wonder raises the speed cap.
+const wonderSpeedStep = config.WonderSpeedCapStep
+
+// starvationDeathInterval is how many ticks pass between starvation deaths
+// while food sits at zero.
+const starvationDeathInterval = 5
 
 // SetSpeedMultiplier sets the game speed multiplier (0.5 increments, capped by age)
 func (ge *GameEngine) SetSpeedMultiplier(mult float64) error {
 	// Validate it's a finite 0.5 increment and at least 1.0 (int() of an
 	// infinity is undefined, so rule those out before the increment check).
 	if math.IsNaN(mult) || math.IsInf(mult, 0) || mult < 1.0 || mult != float64(int(mult*2))/2 {
-		return fmt.Errorf("invalid speed: %.1f (must be 1.0, 1.5, 2.0, etc.)", mult)
+		return fmt.Errorf("Speed must be 1.0, 1.5, 2.0 and so on (got %g).", mult)
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	maxSpeed := ge.MaxSpeedForAge()
 	if mult > maxSpeed {
-		return fmt.Errorf("speed %.1fx not unlocked yet (max: %.1fx — build more wonders!)", mult, maxSpeed)
+		return fmt.Errorf("Speed %.1fx is above your cap of %.1fx. Each wonder raises the speed cap by %.1fx.", mult, maxSpeed, wonderSpeedStep)
 	}
 	ge.speedMultiplier = mult
-	ge.addLog("info", fmt.Sprintf("Game speed set to %.1fx", mult))
+	ge.addLog("info", fmt.Sprintf("Game speed set to %.1fx.", mult))
 	return nil
 }
 
@@ -1005,7 +1019,7 @@ func (ge *GameEngine) doTick() {
 	// Process build queue
 	ge.processBuildQueue()
 	if len(ge.buildQueue) > 0 {
-		ge.addLog("debug", fmt.Sprintf("Build queue: %d item(s) in progress", len(ge.buildQueue)))
+		ge.addLog("debug", fmt.Sprintf("Build queue: %s in progress", textfmt.Count(len(ge.buildQueue), "item", "items")))
 	}
 
 	// Process research
@@ -1063,24 +1077,26 @@ func (ge *GameEngine) doTick() {
 		}
 	}
 
-	// Starvation: when food is at 0 with active drain, workers die every 5 ticks
+	// Starvation: when food is at 0 with active drain, one worker dies every
+	// starvationDeathInterval ticks.
 	if ge.Resources.Get("food") <= 0 && ge.Workers.FoodDrain() > 0 {
 		ge.starvationTicks++
 		if ge.starvationTicks == 1 {
-			ge.addLog("warning", "⚠ Your people are starving! Food has run out.")
+			ge.addLog("warning", fmt.Sprintf("⚠ Food has run out. One worker dies every %s until you have food again.",
+				ge.durationLocked(starvationDeathInterval)))
 			if q := config.PickLogFlavor(config.LogFlavorStarvation, ge.quipRNG()); q != "" {
 				ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
 			}
 		}
-		if ge.starvationTicks%5 == 0 && ge.Workers.TotalPop() > 0 {
+		if ge.starvationTicks%starvationDeathInterval == 0 && ge.Workers.TotalPop() > 0 {
 			killed := ge.Workers.KillWorker(1)
 			if killed > 0 {
-				ge.addLog("error", fmt.Sprintf("☠ A worker has died of starvation! (pop: %d)", ge.Workers.TotalPop()))
+				ge.addLog("error", fmt.Sprintf("☠ A worker starved to death. Population: %d.", ge.Workers.TotalPop()))
 			}
 		}
 	} else if ge.starvationTicks > 0 {
 		ge.starvationTicks = 0
-		ge.addLog("info", "✓ Food supply restored — starvation ended.")
+		ge.addLog("info", "✓ Food is back. Workers have stopped starving.")
 		if q := config.PickLogFlavor(config.LogFlavorStarvationEnded, ge.quipRNG()); q != "" {
 			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
 		}
@@ -1108,7 +1124,7 @@ func (ge *GameEngine) doTick() {
 		if !ge.ageReady {
 			ge.ageReady = true
 			nextName := ge.progress.GetAgeName(nextAge)
-			ge.addLog("event", fmt.Sprintf("✦ Ready to advance to the %s! Type 'advance' when you're ready.", nextName))
+			ge.addLog("event", fmt.Sprintf("✦ Ready to advance to the %s. Type 'advance' when you're ready.", nextName))
 		}
 	} else {
 		ge.ageReady = false // requirements dropped — not ready anymore
@@ -1170,7 +1186,7 @@ func (ge *GameEngine) advanceResearch(n int) bool {
 func (ge *GameEngine) finishResearch(completed string) {
 	def := ge.Research.defs[completed]
 	ge.addLog("debug", fmt.Sprintf("Research complete: %s", def.Name))
-	ge.addLog("success", fmt.Sprintf("Research complete: %s!", def.Name))
+	ge.addLog("success", fmt.Sprintf("Research complete: %s.", def.Name))
 	// Cosmetic flavour on roughly half of breakthroughs (varies, never spams).
 	if ge.quipRNG().Intn(2) == 0 {
 		if q := config.PickLogFlavor(config.LogFlavorResearchDone, ge.quipRNG()); q != "" {
@@ -1190,7 +1206,12 @@ func (ge *GameEngine) processEvents() {
 
 	for _, def := range triggered {
 		ge.addLog("debug", fmt.Sprintf("Event triggered: %s (sentiment: %s)", def.Name, def.Sentiment))
-		ge.addLog("event", def.LogMessage)
+		// Setbacks log as warnings so they don't read like windfalls.
+		if def.Sentiment == "bad" {
+			ge.addLog("warning", def.LogMessage)
+		} else {
+			ge.addLog("event", def.LogMessage)
+		}
 		ge.applyEventEffects(def)
 	}
 
@@ -1278,7 +1299,7 @@ func (ge *GameEngine) harborRouteBonus() float64 {
 func (ge *GameEngine) processDiplomacy() {
 	ageOrder := ge.progress.GetAgeOrder()
 	// Mercantile civs warm to trade activity: treat any active trade route as
-	// "traded recently" this window. TradeManager.RecordTrade already runs in
+	// "traded recently" this window. TradeManager.Tick (which calls RecordTrade) runs in
 	// the same lock, so reading the active count here is safe.
 	tradedRecently := ge.Trade.ActiveRouteCount() > 0
 	messages := ge.Diplomacy.Tick(ge.gameRNG(), ge.age, ageOrder, ge.tick, tradedRecently)
@@ -1378,7 +1399,11 @@ func (ge *GameEngine) checkMilestones() {
 
 	for _, ms := range completed {
 		rewardText := formatMilestoneRewards(ms.Rewards)
-		ge.addLog("success", fmt.Sprintf("Milestone achieved: %s!", ms.Name))
+		line := fmt.Sprintf("Milestone achieved: %s.", ms.Name)
+		if parts := milestoneRewardParts(ms.Rewards); parts != "" {
+			line += " " + parts + "."
+		}
+		ge.addLog("success", line)
 		// Cosmetic flavour quip on its own dim line (never replaces the reward text).
 		if ms.Flavor != "" {
 			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", ms.Flavor))
@@ -1407,7 +1432,9 @@ func (ge *GameEngine) checkMilestones() {
 	// Check chains
 	newChains := ge.Milestones.CheckChains()
 	for _, chain := range newChains {
-		ge.addLog("success", fmt.Sprintf("Chain complete: %s! Title: %s", chain.Name, chain.Title))
+		ge.addLog("success", fmt.Sprintf("Chain complete: %s. Title: %s. Game speed %s for %s.",
+			chain.Name, chain.Title, textfmt.SignedPercent(chain.BoostValue),
+			ge.durationWithSpeedBonusLocked(chain.BoostDuration, chain.BoostValue)))
 		// Cosmetic flavour quip on its own dim line (never replaces the title/boost).
 		if chain.Flavor != "" {
 			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", chain.Flavor))
@@ -1723,8 +1750,8 @@ func (ge *GameEngine) advanceAge(newAge string) {
 			NewKey: t.newKey, NewName: t.newName,
 			Count: t.count,
 		})
-		ge.addLog("info", fmt.Sprintf("↑ %s → %s available (×%d) — type: upgrade %s",
-			t.oldName, t.newName, t.count, t.oldKey))
+		ge.addLog("info", fmt.Sprintf("↑ %s can upgrade to %s. Type 'upgrade %s'.",
+			BuildingCount(t.count, t.oldKey), t.newName, t.oldKey))
 	}
 	// Mark buildings as legacy if their lineage now has a higher-tier unlocked equivalent.
 	for _, key := range sortedKeys(ge.Buildings.counts) {
@@ -1783,14 +1810,15 @@ func (ge *GameEngine) advanceAge(newAge string) {
 			r.Amount *= CarryoverResidualPct
 		}
 	}
-	ge.addLog("info", "Age transition: resources reduced to a starter head start")
+	ge.addLog("info", fmt.Sprintf("Stockpiles trimmed for the new age: each resource is capped at %d times the cost of the cheapest new building that uses it, resources no new building uses keep %s, and faith is untouched.",
+		CarryoverStarterBuildings, textfmt.Percent(CarryoverResidualPct)))
 
 	oldName := ge.progress.GetAgeName(oldAge)
 	newName := ge.progress.GetAgeName(newAge)
 	unlocks := ge.progress.GetUnlocks(newAge)
 	ge.addLog("debug", fmt.Sprintf("Age advance: %s → %s (unlocks: %d buildings, %d resources, %d workers)",
 		oldAge, newAge, len(unlocks.UnlockBuildings), len(unlocks.UnlockResources), len(unlocks.UnlockVillagers)))
-	ge.addLog("success", fmt.Sprintf("Advanced from %s to %s!", oldName, newName))
+	ge.addLog("success", fmt.Sprintf("Advanced from the %s to the %s.", oldName, newName))
 	// Cosmetic flavour echo in the log (distinct from the age splash quip — see ui/age_splash.go).
 	// Age transitions are rare, so it fires every time.
 	if q := config.PickLogFlavor(config.LogFlavorAgeAdvance, ge.quipRNG()); q != "" {
@@ -1800,7 +1828,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// Notify player about the wonder available in this age
 	for _, bKey := range unlocks.UnlockBuildings {
 		if def, ok := ge.Buildings.defs[bKey]; ok && def.Category == "wonder" {
-			ge.addLog("event", fmt.Sprintf("★ Wonder available: %s — build it to unlock a permanent +0.5x speed bonus!", def.Name))
+			ge.addLog("event", fmt.Sprintf("★ Wonder available: %s. Each wonder raises the speed cap by %.1fx (see speed).", def.Name, wonderSpeedStep))
 			break
 		}
 	}
@@ -1856,7 +1884,7 @@ func (ge *GameEngine) detectEpochTransition(newAge string) {
 	}
 	ge.currentEpoch = newEpoch
 	ep := config.EpochByKey()[newEpoch]
-	ge.addLog("event", fmt.Sprintf("[%s]✦ The %s Dawns — %s[-]", ep.Color, ep.Name, ep.Description))
+	ge.addLog("event", fmt.Sprintf("[%s]✦ The %s begins. %s[-]", ep.Color, ep.Name, ep.Description))
 	ge.Bus.Publish(EventData{
 		Type: EventEpochAdvanced,
 		Payload: map[string]interface{}{
@@ -1900,7 +1928,8 @@ func (ge *GameEngine) fireAwakening(newAge string) {
 	ep := config.EpochByKey()[def.EpochKey]
 	// One log line per awakening — the pivotal "new era" beat. Coloured by the epoch
 	// so the awakening visually belongs to the era it ushers in.
-	ge.addLog("event", fmt.Sprintf("[%s]✦ Awakening: %s — %s[-]", ep.Color, def.Name, def.FlavorText))
+	// The flavor text states the boost and its duration, so no separate effect line.
+	ge.addLog("event", fmt.Sprintf("[%s]✦ Awakening: %s. %s[-]", ep.Color, def.Name, def.FlavorText))
 
 	ge.Bus.Publish(EventData{
 		Type: EventAwakeningFired,
@@ -2022,64 +2051,64 @@ func (ge *GameEngine) rollChallengingEpochEvent(epochKey string) {
 	})
 }
 
-// applyGoodEpochEvent applies the effects of a good epoch transition event.
+// applyGoodEpochEvent applies the effects of a good epoch transition event. The
+// headline's flavor text states each effect; "→" lines under it report only
+// what the text cannot know (actual counts, amounts, names).
 func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
-	ge.addLog("success", fmt.Sprintf("✦ %s — %s", ev.Name, ev.FlavorText))
+	ge.addLog("success", fmt.Sprintf("✦ %s. %s", ev.Name, ev.FlavorText))
 	ageOrder := ge.progress.GetAgeOrder()
 	switch ev.Key {
 	case "age_of_plenty":
 		// ×2 all production for Duration ticks via production_all effect
-		ge.Events.InjectEvent(ActiveEvent{
-			Key:       "epoch_age_of_plenty",
-			Name:      ev.Name,
-			TicksLeft: ev.Duration,
-			Effects:   []config.Effect{{Type: "production_all", Value: 1.0}},
-		})
+		ge.injectEpochEffects("epoch_age_of_plenty", ev,
+			[]config.Effect{{Type: "production_all", Value: 1.0}})
 	case "population_surge":
 		// +15% workers across all domains, instant
+		before := ge.Workers.TotalPop()
 		ge.Workers.AddPctAll(0.15)
+		if gained := ge.Workers.TotalPop() - before; gained > 0 {
+			ge.addLog("success", fmt.Sprintf("  → %s joined (population now %d).",
+				textfmt.Count(gained, "new worker", "new workers"), ge.Workers.TotalPop()))
+		}
 	case "ancient_cache":
 		// Fill 40% of each resource's storage cap
+		const cacheFill = 0.40
 		for _, def := range ge.Resources.defs {
 			cap := ge.Resources.GetStorage(def.Key)
 			if cap > 0 && ge.Resources.IsUnlocked(def.Key) {
-				ge.Resources.Add(def.Key, cap*0.40)
+				ge.Resources.Add(def.Key, cap*cacheFill)
 			}
 		}
 	case "trade_winds":
-		// Gold ×2 production for Duration ticks
-		ge.Events.InjectEvent(ActiveEvent{
-			Key:       "epoch_trade_winds",
-			Name:      ev.Name,
-			TicksLeft: ev.Duration,
-			Effects:   []config.Effect{{Type: "production", Target: "gold", Value: 5.0}},
-		})
+		// Flat +5 gold/tick for Duration ticks
+		ge.injectEpochEffects("epoch_trade_winds", ev,
+			[]config.Effect{{Type: "production", Target: "gold", Value: 5.0}})
 	case "cultural_festival":
 		// Instant culture +30%, faith +20%; timed production boost
-		ge.Resources.Add("culture", ge.Resources.Get("culture")*0.30)
-		ge.Resources.Add("faith", ge.Resources.Get("faith")*0.20)
-		ge.Events.InjectEvent(ActiveEvent{
-			Key:       "epoch_cultural_festival",
-			Name:      ev.Name,
-			TicksLeft: ev.Duration,
-			Effects: []config.Effect{
-				{Type: "production", Target: "culture", Value: 1.0},
-				{Type: "production", Target: "faith", Value: 1.0},
-			},
+		culture := ge.gainResource("culture", ge.Resources.Get("culture")*0.30)
+		faith := ge.gainResource("faith", ge.Resources.Get("faith")*0.20)
+		if gained := Amounts(map[string]float64{"culture": culture, "faith": faith}); gained != "nothing" {
+			ge.addLog("success", fmt.Sprintf("  → +%s.", gained))
+		}
+		ge.injectEpochEffects("epoch_cultural_festival", ev, []config.Effect{
+			{Type: "production", Target: "culture", Value: 1.0},
+			{Type: "production", Target: "faith", Value: 1.0},
 		})
 	case "grand_discovery":
 		// Complete 3 free techs from current age
 		completed := ge.Research.ForceCompleteN(3, ge.age, ageOrder)
 		for _, key := range completed {
-			def := config.TechByKey()[key]
-			ge.addLog("success", fmt.Sprintf("  → Free tech: %s", def.Name))
+			ge.addLog("success", fmt.Sprintf("  → Free tech: %s.", TechName(key)))
+		}
+		if len(completed) == 0 {
+			ge.addLog("success", "  → No techs were left to research this age.")
 		}
 	case "worker_innovation":
 		// Permanent +10% production_all
 		ge.permanentBonuses["production_all"] += 0.10
-		ge.addLog("success", "  → All production permanently +10%")
 	case "architects_gift":
 		// 10 free buildings of the most common built non-wonder type
+		const giftCount = 10
 		bestKey := ""
 		bestCount := 0
 		for _, key := range sortedKeys(ge.Buildings.counts) {
@@ -2090,98 +2119,129 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 			}
 		}
 		if bestKey != "" {
-			ge.Buildings.counts[bestKey] += 10
-			def := ge.Buildings.defs[bestKey]
-			ge.addLog("success", fmt.Sprintf("  → 10 free %s", def.Name))
+			ge.Buildings.counts[bestKey] += giftCount
+			ge.addLog("success", fmt.Sprintf("  → %s, free.", BuildingCount(giftCount, bestKey)))
 		}
 	case "peaceful_century":
 		// +20% all production for Duration ticks
-		ge.Events.InjectEvent(ActiveEvent{
-			Key:       "epoch_peaceful_century",
-			Name:      ev.Name,
-			TicksLeft: ev.Duration,
-			Effects:   []config.Effect{{Type: "production_all", Value: 0.20}},
-		})
+		ge.injectEpochEffects("epoch_peaceful_century", ev,
+			[]config.Effect{{Type: "production_all", Value: 0.20}})
 	case "epoch_blessing":
 		// Permanent +15% production_all; recorded as a golden age
 		ge.permanentBonuses["production_all"] += 0.15
-		ge.addLog("success", "  → Epoch Blessing: all production permanently +15%")
 	}
 }
 
-// applyChallengingEpochEvent applies a challenging (non-catastrophe) bad epoch event.
+// applyChallengingEpochEvent applies a challenging (non-catastrophe) bad epoch
+// event. As with good events, "→" lines report only what the flavor text
+// cannot state (what burned, who died, how much was lost).
 func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochKey string) {
-	ge.addLog("warning", fmt.Sprintf("⚠ %s — %s", ev.Name, ev.FlavorText))
+	ge.addLog("warning", fmt.Sprintf("⚠ %s. %s", ev.Name, ev.FlavorText))
 	switch ev.Key {
 	case "the_famine":
-		ge.Events.InjectEvent(ActiveEvent{
-			Key:       "epoch_famine",
-			Name:      ev.Name,
-			TicksLeft: ev.Duration,
-			Effects:   []config.Effect{{Type: "production", Target: "food", Value: -3.0}},
-		})
+		ge.injectEpochEffects("epoch_famine", ev,
+			[]config.Effect{{Type: "production", Target: "food", Value: -3.0}})
 	case "merchant_betrayal":
-		ge.Resources.Remove("gold", ge.Resources.Get("gold")*0.50)
-		ge.Events.InjectEvent(ActiveEvent{
-			Key:       "epoch_merchant_betrayal",
-			Name:      ev.Name,
-			TicksLeft: ev.Duration,
-			Effects:   []config.Effect{{Type: "production", Target: "gold", Value: -2.0}},
-		})
+		ge.loseShare("gold", 0.50)
+		ge.injectEpochEffects("epoch_merchant_betrayal", ev,
+			[]config.Effect{{Type: "production", Target: "gold", Value: -2.0}})
 	case "the_great_fire":
-		destroyed, names := ge.Buildings.DestroyRandom(ge.gameRNG(), 8)
+		destroyed, _ := ge.Buildings.DestroyRandom(ge.gameRNG(), 8)
 		ge.releaseWorkersFrom(destroyed)
-		for _, desc := range names {
-			ge.addLog("warning", fmt.Sprintf("  → Destroyed: %s", desc))
+		var lost []string
+		for _, key := range sortedKeys(destroyed) {
+			lost = append(lost, BuildingCount(destroyed[key], key))
+		}
+		if len(lost) > 0 {
+			ge.addLog("warning", fmt.Sprintf("  → Destroyed: %s.", textfmt.List(lost)))
+		} else {
+			ge.addLog("warning", "  → The fire burned out before it reached any buildings.")
 		}
 	case "epidemic":
+		before := ge.Workers.TotalPop()
 		ge.Workers.RemovePct(0.20)
-		ge.Events.InjectEvent(ActiveEvent{
-			Key:       "epoch_epidemic",
-			Name:      ev.Name,
-			TicksLeft: ev.Duration,
-			Effects:   []config.Effect{{Type: "production", Target: "food", Value: -1.5}},
-		})
+		if lost := before - ge.Workers.TotalPop(); lost > 0 {
+			ge.addLog("warning", fmt.Sprintf("  → %s lost.", textfmt.Count(lost, "worker", "workers")))
+		}
+		ge.injectEpochEffects("epoch_epidemic", ev,
+			[]config.Effect{{Type: "production", Target: "food", Value: -1.5}})
 	case "resource_drought":
 		// Debuff epoch's primary resource
 		primaryRes := "wood" // fallback
 		if ep, ok := config.EpochByKey()[epochKey]; ok {
 			primaryRes = ep.PrimaryResource
 		}
-		ge.Events.InjectEvent(ActiveEvent{
-			Key:       "epoch_resource_drought",
-			Name:      ev.Name,
-			TicksLeft: ev.Duration,
-			Effects:   []config.Effect{{Type: "production", Target: primaryRes, Value: -3.0}},
-		})
+		drought := []config.Effect{{Type: "production", Target: primaryRes, Value: -3.0}}
+		ge.injectEpochEffects("epoch_resource_drought", ev, drought)
+		// The text cannot name the resource (it depends on the epoch), so say it.
+		ge.logTimedEffects("warning", drought, ev.Duration)
 	case "political_instability":
-		ge.Resources.Remove("faith", ge.Resources.Get("faith")*0.60)
-		ge.Events.InjectEvent(ActiveEvent{
-			Key:       "epoch_political_instability",
-			Name:      ev.Name,
-			TicksLeft: ev.Duration,
-			Effects: []config.Effect{
-				{Type: "production", Target: "knowledge", Value: -2.0},
-			},
+		ge.loseShare("faith", 0.60)
+		ge.injectEpochEffects("epoch_political_instability", ev, []config.Effect{
+			{Type: "production", Target: "knowledge", Value: -2.0},
 		})
 	case "economic_crash":
-		ge.Resources.Remove("gold", ge.Resources.Get("gold")*0.50)
-		ge.Events.InjectEvent(ActiveEvent{
-			Key:       "epoch_economic_crash",
-			Name:      ev.Name,
-			TicksLeft: ev.Duration,
-			Effects:   []config.Effect{{Type: "production", Target: "gold", Value: -3.0}},
-		})
+		ge.loseShare("gold", 0.50)
+		ge.injectEpochEffects("epoch_economic_crash", ev,
+			[]config.Effect{{Type: "production", Target: "gold", Value: -3.0}})
 	case "the_dark_age":
-		ge.Research.CancelResearch()
-		ge.Resources.Remove("knowledge", ge.Resources.Get("knowledge")*0.80)
-		ge.Events.InjectEvent(ActiveEvent{
-			Key:       "epoch_dark_age",
-			Name:      ev.Name,
-			TicksLeft: ev.Duration,
-			Effects:   []config.Effect{{Type: "production", Target: "knowledge", Value: -3.0}},
-		})
+		if tech, ok := ge.Research.CancelResearch(); ok {
+			ge.addLog("warning", fmt.Sprintf("  → Research on %s canceled (no refund).", TechName(tech)))
+		}
+		ge.loseShare("knowledge", 0.80)
+		ge.injectEpochEffects("epoch_dark_age", ev,
+			[]config.Effect{{Type: "production", Target: "knowledge", Value: -3.0}})
 	}
+}
+
+// injectEpochEffects starts an epoch event's timed effects. It logs nothing:
+// the event's flavor text already states them. Caller holds ge.mu.
+func (ge *GameEngine) injectEpochEffects(key string, ev config.EpochEventDef, effects []config.Effect) {
+	ge.Events.InjectEvent(ActiveEvent{
+		Key:       key,
+		Name:      ev.Name,
+		TicksLeft: ev.Duration,
+		Effects:   effects,
+	})
+}
+
+// logTimedEffects logs a timed boost or penalty as
+// "  → All production +25% for ~6m." Caller holds ge.mu.
+func (ge *GameEngine) logTimedEffects(logType string, effects []config.Effect, ticks int) {
+	if text := effectsText(effects); text != "" {
+		ge.addLog(logType, fmt.Sprintf("  → %s for %s.", textfmt.Capitalize(text), ge.durationLocked(ticks)))
+	}
+}
+
+// loseShare removes a fraction of a resource's stock and logs
+// "  → Lost 500 gold (50% of your stock)." Caller holds ge.mu.
+func (ge *GameEngine) loseShare(res string, frac float64) {
+	loss := ge.Resources.Get(res) * frac
+	if loss <= 0 || !ge.Resources.Remove(res, loss) {
+		return
+	}
+	ge.addLog("warning", fmt.Sprintf("  → Lost %s (%s of your stock).", Amount(loss, res), textfmt.Percent(frac)))
+}
+
+// gainResource adds to a resource and returns what storage actually took.
+func (ge *GameEngine) gainResource(res string, amount float64) float64 {
+	before := ge.Resources.Get(res)
+	return ge.Resources.Add(res, amount) - before
+}
+
+// effectsText describes timed event effects: "all production +25%",
+// "food -3/tick and gold +5/tick". Unknown effect types are left out.
+func effectsText(effects []config.Effect) string {
+	var parts []string
+	for _, e := range effects {
+		switch e.Type {
+		case "production_all":
+			parts = append(parts, "all production "+textfmt.SignedPercent(e.Value))
+		case "production":
+			parts = append(parts, ResourceName(e.Target)+" "+textfmt.Rate(e.Value))
+		}
+	}
+	return textfmt.List(parts)
 }
 
 // FestivalStatus is the snapshot the `festival` command renders: the live cost,
@@ -2237,12 +2297,12 @@ func (ge *GameEngine) DoFestival() error {
 	defer ge.mu.Unlock()
 
 	if ge.tick < ge.festivalReadyTick {
-		return fmt.Errorf("festival is on cooldown (%d ticks remaining)", ge.festivalReadyTick-ge.tick)
+		return fmt.Errorf("The next festival is ready in %s.", ge.durationLocked(ge.festivalReadyTick-ge.tick))
 	}
 	cost := ge.festivalCost()
 	have := ge.Resources.Get("culture")
 	if have < cost {
-		return fmt.Errorf("not enough culture for a festival: need %.0f, have %.0f", cost, have)
+		return fmt.Errorf("Not enough culture for a festival: need %s, have %s.", textfmt.Number(cost), textfmt.Number(have))
 	}
 	ge.Resources.Remove("culture", cost)
 	ge.Events.InjectEvent(ActiveEvent{
@@ -2252,8 +2312,8 @@ func (ge *GameEngine) DoFestival() error {
 		Effects:   []config.Effect{{Type: "production_all", Value: festivalBuffPercent}},
 	})
 	ge.festivalReadyTick = ge.tick + festivalCooldownTicks
-	ge.addLog("success", fmt.Sprintf("Held a cultural festival — spent %.0f culture for +%.0f%% production (%d ticks).",
-		cost, festivalBuffPercent*100, festivalBuffTicks))
+	ge.addLog("success", fmt.Sprintf("Held a cultural festival for %s: all production %s for %s.",
+		Amount(cost, "culture"), textfmt.SignedPercent(festivalBuffPercent), ge.durationLocked(festivalBuffTicks)))
 	return nil
 }
 
@@ -2341,23 +2401,23 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 
 	ageOrder := ge.progress.GetAgeOrder()
 	if ageOrder[blackMarketMinAge] > ageOrder[ge.age] {
-		return false, 0, fmt.Errorf("the black market opens in the %s", blackMarketMinAge)
+		return false, 0, fmt.Errorf("The black market opens in the %s.", AgeName(blackMarketMinAge))
 	}
 	if ge.tick < ge.blackMarketReadyTick {
-		return false, 0, fmt.Errorf("the black market is lying low (%d ticks remaining)", ge.blackMarketReadyTick-ge.tick)
+		return false, 0, fmt.Errorf("The smugglers are lying low. Try again in %s.", ge.durationLocked(ge.blackMarketReadyTick-ge.tick))
 	}
 	// Validate the requested payout resource is something we can value in gold.
 	if _, ok := config.ResourceByKey()[resource]; !ok {
-		return false, 0, fmt.Errorf("unknown resource: %s", resource)
+		return false, 0, fmt.Errorf("Unknown resource '%s'.", resource)
 	}
 	cost := ge.blackMarketCost()
 	have := ge.Resources.Get("culture")
 	if have < cost {
-		return false, 0, fmt.Errorf("not enough culture for a black-market deal: need %.0f, have %.0f", cost, have)
+		return false, 0, fmt.Errorf("Not enough culture for a smuggling run: need %s, have %s.", textfmt.Number(cost), textfmt.Number(have))
 	}
 	reward := ge.blackMarketReward(resource, cost)
 	if reward <= 0 {
-		return false, 0, fmt.Errorf("%s can't be fenced on the black market", resource)
+		return false, 0, fmt.Errorf("Smugglers do not deal in %s. Pick another resource.", ResourceName(resource))
 	}
 
 	// Culture is spent up front regardless of outcome — that's the risk.
@@ -2365,11 +2425,11 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 	ge.blackMarketReadyTick = ge.tick + blackMarketCooldownTicks
 
 	if ge.bmRandFloat() < blackMarketWinChance {
-		ge.Resources.Add(resource, reward)
-		ge.addLog("success", fmt.Sprintf("Black-market deal paid off — %.0f culture bought %.1f %s.", cost, reward, resource))
+		got := ge.gainResource(resource, reward)
+		ge.addLog("success", fmt.Sprintf("The smuggling run paid off: %s bought %s.", Amount(cost, "culture"), Amount(got, resource)))
 		return true, reward, nil
 	}
-	ge.addLog("warning", fmt.Sprintf("Black-market deal went bad — %.0f culture vanished with the smugglers.", cost))
+	ge.addLog("warning", fmt.Sprintf("The smuggling run failed. You lost %s.", Amount(cost, "culture")))
 	return false, 0, nil
 }
 
@@ -2529,7 +2589,7 @@ func (ge *GameEngine) finishBuild(item BuildQueueItem) {
 	}
 	def := ge.Buildings.defs[key]
 	ge.addLog("debug", fmt.Sprintf("Build complete: %s (count now %d)", def.Name, ge.Buildings.GetCount(key)))
-	ge.addLog("success", fmt.Sprintf("%s completed! (#%d)", def.Name, ge.Buildings.GetCount(key)))
+	ge.addLog("success", fmt.Sprintf("%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)))
 	// Cosmetic flavour — present but not stale: ~1 in 3 completions get a quip,
 	// so a long build queue stays lively without turning into wallpaper.
 	if ge.quipRNG().Intn(3) == 0 {
@@ -2562,15 +2622,15 @@ func (ge *GameEngine) AdvanceAge() error {
 			wonderKey := ge.progress.WonderForAge(ge.age)
 			if wonderKey != "" && ge.Buildings.GetCount(wonderKey) < 1 {
 				if def, ok := ge.Buildings.defs[wonderKey]; ok {
-					return fmt.Errorf("you must complete the %s wonder before advancing — use 'wonder collect' then 'build %s'", def.Name, wonderKey)
+					return fmt.Errorf("Build the %s wonder before advancing: bank its cost with 'wonder collect', then type 'build %s'.", def.Name, wonderKey)
 				}
 			}
-			return fmt.Errorf("age requirements not met yet — check the Stats tab for what's needed")
+			return fmt.Errorf("Not ready to advance. The Next Age bar lists what is missing.")
 		}
 	}
 	nextAge := ge.progress.GetNextAge(ge.age)
 	if nextAge == "" {
-		return fmt.Errorf("you are already at the final age")
+		return fmt.Errorf("You are already in the final age.")
 	}
 	ge.advanceAge(nextAge)
 	return nil
@@ -2607,19 +2667,28 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 	// economy is expected to run on buildings and workers. Lock is held here, so
 	// we use the ge.age field and pure config.AgeOrder() — no GetState().
 	if pastMedievalForGather(ge.age) {
-		return 0, fmt.Errorf("gathering by hand is no longer practical past the Medieval Age — your economy runs on buildings and workers now")
+		return 0, fmt.Errorf("Gathering by hand ends after the Medieval Age. Build producers and assign workers instead.")
 	}
 
 	if !ge.Resources.IsUnlocked(resource) {
-		return 0, fmt.Errorf("resource '%s' is not yet unlocked", resource)
+		return 0, fmt.Errorf("You cannot gather %s yet. Gather food, wood or stone.", ResourceName(resource))
 	}
 	if err := checkAmount(amount); err != nil {
 		return 0, err
 	}
+	before := ge.Resources.Get(resource)
 	actual := ge.Resources.Add(resource, amount)
 	ge.Stats.RecordGather(resource, amount)
 	ge.addLog("debug", fmt.Sprintf("Gather: %s +%.1f (total: %.1f)", resource, amount, actual))
-	ge.addLog("success", fmt.Sprintf("Gathered %.0f %s", amount, resource))
+	// Log what storage actually took, not what was asked for.
+	switch gained := actual - before; {
+	case gained <= 0:
+		ge.addLog("warning", fmt.Sprintf("%s storage is full. Gathered nothing.", textfmt.Capitalize(ResourceName(resource))))
+	case gained < amount:
+		ge.addLog("success", fmt.Sprintf("Gathered %s (%s storage is now full).", Amount(gained, resource), ResourceName(resource)))
+	default:
+		ge.addLog("success", fmt.Sprintf("Gathered %s.", Amount(gained, resource)))
+	}
 	return actual, nil
 }
 
@@ -2653,10 +2722,11 @@ func (ge *GameEngine) bankWonderLocked(wonderKey, resource string, amount float6
 	def := ge.Buildings.defs[wonderKey]
 	banked := ge.Buildings.wonderBanks[wonderKey][resource]
 	need := def.BaseCost[resource]
-	ge.addLog("info", fmt.Sprintf("Banked %.0f %s toward %s (%.0f / %.0f)", deposited, resource, def.Name, banked, need))
+	ge.addLog("info", fmt.Sprintf("Banked %s toward %s (%s of %s).",
+		Amount(deposited, resource), def.Name, textfmt.Number(banked), textfmt.Number(need)))
 
 	if ge.Buildings.IsWonderBankFull(wonderKey) {
-		ge.addLog("success", fmt.Sprintf("%s bank is full! Type 'build %s' to begin construction.", def.Name, wonderKey))
+		ge.addLog("success", fmt.Sprintf("%s is fully banked. Type 'build %s' to start construction.", def.Name, wonderKey))
 	}
 	return deposited, nil
 }
@@ -2666,12 +2736,12 @@ func (ge *GameEngine) bankWonderLocked(wonderKey, resource string, amount float6
 // transforms, and some lineages have no next tier this age.
 func (ge *GameEngine) previousAgeBuildError(key string, def config.BuildingDef) error {
 	if _, ok := ge.Buildings.GetPendingUpgrade(key); ok && ge.Buildings.GetCount(key) > 0 {
-		return fmt.Errorf("%s belongs to a previous age — use 'upgrade %s' to advance your buildings", def.Name, key)
+		return fmt.Errorf("%s belongs to a previous age. Type 'upgrade %s' to upgrade the ones you have.", def.Name, key)
 	}
 	if def.Category == "storage" {
-		return fmt.Errorf("%s belongs to a previous age and can no longer be built — the ones you have keep counting, so build this age's storage instead", def.Name)
+		return fmt.Errorf("%s belongs to a previous age and can no longer be built. The ones you have still count, so build this age's storage instead.", def.Name)
 	}
-	return fmt.Errorf("%s belongs to a previous age and can no longer be built", def.Name)
+	return fmt.Errorf("%s belongs to a previous age and can no longer be built.", def.Name)
 }
 
 // BuildBuilding constructs a building (instant or queued)
@@ -2688,14 +2758,10 @@ func (ge *GameEngine) BuildBuilding(key string) error {
 func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
 	def, exists := ge.Buildings.defs[key]
 	if !exists {
-		// Unknown building key — suggest closest match
-		if suggestion := ge.Buildings.SuggestKey(key); suggestion != "" {
-			return fmt.Errorf("unknown building '%s' — did you mean '%s'?", key, suggestion)
-		}
-		return fmt.Errorf("unknown building '%s'. Type 'build' to see available buildings.", key)
+		return ge.unknownBuildingErr(key)
 	}
 	if !ge.Buildings.IsUnlocked(key) {
-		return fmt.Errorf("building '%s' is not yet unlocked", def.Name)
+		return fmt.Errorf("%s is not unlocked yet.", def.Name)
 	}
 	// Age lock: only allow building structures that belong to the current age.
 	// Storage and wonder categories with no RequiredAge (empty string) are exempt.
@@ -2712,14 +2778,14 @@ func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
 	if def.MaxCount == 1 {
 		for _, item := range ge.buildQueue {
 			if item.BuildingKey == key {
-				return fmt.Errorf("%s is already under construction (%d ticks left)", def.Name, item.TicksLeft)
+				return fmt.Errorf("%s is already under construction (%s left).", def.Name, ge.durationLocked(item.TicksLeft))
 			}
 		}
 	}
 	if def.MaxCount > 0 {
 		inQueue := ge.Buildings.GetQueueCount(key, ge.buildQueue)
 		if ge.Buildings.GetCount(key)+inQueue >= def.MaxCount {
-			return fmt.Errorf("%s is at max count (%d)", def.Name, def.MaxCount)
+			return fmt.Errorf("%s is at its max count of %d.", def.Name, def.MaxCount)
 		}
 	}
 
@@ -2727,7 +2793,7 @@ func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
 		// godmode: skip all cost/bank checks, build instantly below
 	} else if def.Category == "wonder" {
 		if !ge.Buildings.IsWonderBankFull(key) {
-			return fmt.Errorf("%s bank is not full — use 'wonder collect <resource|all> [amount|all]' to bank resources first", def.Name)
+			return fmt.Errorf("%s is not fully banked yet. Bank its cost first with 'wonder collect <resource|all> [amount|all]'.", def.Name)
 		}
 		// Resources were already deducted when banked; nothing to pay here.
 	} else {
@@ -2735,7 +2801,7 @@ func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
 		// factored into the cost curve (fixes queue-blindness exploit).
 		cost, _ := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
 		if !ge.Resources.Pay(cost) {
-			return fmt.Errorf("cannot afford %s (need: %s)", def.Name, formatCost(cost))
+			return fmt.Errorf("Cannot afford %s: need %s.", def.Name, ge.shortfallText(cost))
 		}
 	}
 
@@ -2749,7 +2815,7 @@ func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
 			FromPlan:    quiet,
 		})
 		if !quiet {
-			ge.addLog("info", fmt.Sprintf("Started building %s (%d ticks)", def.Name, def.BuildTicks))
+			ge.addLog("info", fmt.Sprintf("Started building %s (%s).", def.Name, ge.durationLocked(def.BuildTicks)))
 		}
 	} else {
 		// Instant build
@@ -2759,7 +2825,7 @@ func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
 			ge.staffPlanCopy(key)
 		}
 		ge.recalculateRates()
-		ge.addLog("success", fmt.Sprintf("Built %s (#%d)", def.Name, ge.Buildings.GetCount(key)))
+		ge.addLog("success", fmt.Sprintf("%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)))
 		ge.Bus.Publish(EventData{
 			Type:    EventBuildingBuilt,
 			Payload: map[string]interface{}{"building": key},
@@ -2779,20 +2845,17 @@ func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
 // bypassing cost scaling.
 func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	if count <= 0 {
-		return 0, fmt.Errorf("build count must be positive (got %d)", count)
+		return 0, fmt.Errorf("Build count must be positive (got %d).", count)
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
 	def, exists := ge.Buildings.defs[key]
 	if !exists {
-		if suggestion := ge.Buildings.SuggestKey(key); suggestion != "" {
-			return 0, fmt.Errorf("unknown building '%s' — did you mean '%s'?", key, suggestion)
-		}
-		return 0, fmt.Errorf("unknown building '%s'. Type 'build' to see available buildings.", key)
+		return 0, ge.unknownBuildingErr(key)
 	}
 	if !ge.Buildings.IsUnlocked(key) {
-		return 0, fmt.Errorf("building '%s' is not yet unlocked", def.Name)
+		return 0, fmt.Errorf("%s is not unlocked yet.", def.Name)
 	}
 	// Age lock: only allow building structures that belong to the current age.
 	if def.RequiredAge != "" && def.RequiredAge != ge.age {
@@ -2840,18 +2903,18 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 		if def.MaxCount > 0 {
 			inQueue := ge.Buildings.GetQueueCount(key, ge.buildQueue)
 			if ge.Buildings.GetCount(key)+inQueue >= def.MaxCount {
-				return 0, fmt.Errorf("%s is at max count (%d)", def.Name, def.MaxCount)
+				return 0, fmt.Errorf("%s is at its max count of %d.", def.Name, def.MaxCount)
 			}
 		}
 		unitCost, _ := ge.Buildings.BuildBatchCost(key, 1, ge.buildQueue)
-		return 0, fmt.Errorf("cannot afford %s (need: %s)", def.Name, formatCost(unitCost))
+		return 0, fmt.Errorf("Cannot afford %s: need %s.", def.Name, ge.shortfallText(unitCost))
 	}
 
 	if def.BuildTicks > 0 {
-		ge.addLog("info", fmt.Sprintf("Queued %d %s for construction", built, def.Name))
+		ge.addLog("info", fmt.Sprintf("Queued %s.", BuildingCount(built, key)))
 	} else {
 		ge.recalculateRates()
-		ge.addLog("success", fmt.Sprintf("Built %d %s (total: %d)", built, def.Name, ge.Buildings.GetCount(key)))
+		ge.addLog("success", fmt.Sprintf("Built %s (you have %d).", BuildingCount(built, key), ge.Buildings.GetCount(key)))
 	}
 	return built, nil
 }
@@ -2862,7 +2925,7 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 	defer ge.mu.Unlock()
 
 	if !ge.Workers.IsUnlocked(vType) {
-		return 0, fmt.Errorf("worker type '%s' is not yet unlocked", vType)
+		return 0, fmt.Errorf("Worker type '%s' is not unlocked yet.", vType)
 	}
 
 	popCap := ge.Buildings.GetPopCapacity()
@@ -2870,21 +2933,22 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 
 	available := popCap - ge.Workers.TotalPop()
 	if available <= 0 {
-		return 0, fmt.Errorf("population cap reached (%d/%d)", ge.Workers.TotalPop(), popCap)
+		return 0, fmt.Errorf("No housing left (%d/%d). Build housing to recruit more.", ge.Workers.TotalPop(), popCap)
 	}
 
 	if !ge.Workers.Recruit(vType, available, popCap) {
-		return 0, fmt.Errorf("cannot recruit %s(s)", vType)
+		return 0, fmt.Errorf("Could not recruit any workers.")
 	}
 	ge.Stats.RecordRecruit(available)
-	ge.addLog("info", fmt.Sprintf("Recruited %d worker(s) (pop: %d/%d)", available, ge.Workers.TotalPop(), popCap))
+	ge.addLog("info", fmt.Sprintf("Recruited %s (population %d/%d).",
+		textfmt.Count(available, "worker", "workers"), ge.Workers.TotalPop(), popCap))
 	return available, nil
 }
 
 // RecruitWorker recruits workers
 func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 	if count <= 0 {
-		return fmt.Errorf("recruit count must be positive (got %d)", count)
+		return fmt.Errorf("Recruit count must be positive (got %d).", count)
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -2896,13 +2960,18 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 	if !ge.Workers.Recruit(vType, count, popCap) {
 		totalPop := ge.Workers.TotalPop()
 		if !ge.Workers.IsUnlocked(vType) {
-			return fmt.Errorf("worker type '%s' is not yet unlocked", vType)
+			return fmt.Errorf("Worker type '%s' is not unlocked yet.", vType)
 		}
-		return fmt.Errorf("cannot recruit %d %s(s) (pop: %d/%d)", count, vType, totalPop, popCap)
+		if totalPop >= popCap {
+			return fmt.Errorf("No housing left (%d/%d). Build housing to recruit more.", totalPop, popCap)
+		}
+		return fmt.Errorf("Not enough housing for %s (%d/%d). Build housing to recruit more.",
+			textfmt.Count(count, "more worker", "more workers"), totalPop, popCap)
 	}
 	ge.Stats.RecordRecruit(count)
-	ge.addLog("debug", fmt.Sprintf("Recruit: %d worker(s) (pop: %d/%d)", count, ge.Workers.TotalPop(), popCap))
-	ge.addLog("info", fmt.Sprintf("Recruited %d worker(s)", count))
+	ge.addLog("debug", fmt.Sprintf("Recruit: %d (pop: %d/%d)", count, ge.Workers.TotalPop(), popCap))
+	ge.addLog("info", fmt.Sprintf("Recruited %s (population %d/%d).",
+		textfmt.Count(count, "worker", "workers"), ge.Workers.TotalPop(), popCap))
 	return nil
 }
 
@@ -2910,36 +2979,34 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 // Any worker can be assigned to any building with WorkerCapacity > 0.
 func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
 	if count <= 0 {
-		return fmt.Errorf("assign count must be positive (got %d)", count)
+		return fmt.Errorf("Assign count must be positive (got %d).", count)
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	if ge.Buildings.GetCount(buildingKey) == 0 {
-		return fmt.Errorf("no %s built yet — build one first", buildingKey)
-	}
-	byKey := config.BuildingByKey()
-	def, ok := byKey[buildingKey]
-	if !ok || def.WorkerCapacity == 0 {
-		return fmt.Errorf("building %s does not accept workers", buildingKey)
+	def, err := ge.staffableBuilding(buildingKey)
+	if err != nil {
+		return err
 	}
 	// Enforce capacity cap
 	totalCap := def.WorkerCapacity * ge.Buildings.GetCount(buildingKey)
 	alreadyAssigned := ge.Workers.GetAssignedCount("worker", buildingKey)
 	available := totalCap - alreadyAssigned
 	if available <= 0 {
-		return fmt.Errorf("all %d worker slot(s) for %s are full", totalCap, buildingKey)
+		return fmt.Errorf("All %s at %s are full.", textfmt.Count(totalCap, "worker slot", "worker slots"), def.Name)
 	}
 	if count > available {
-		return fmt.Errorf("only %d worker slot(s) available for %s (%d/%d filled)", available, buildingKey, alreadyAssigned, totalCap)
+		return fmt.Errorf("Only %s free at %s (%d/%d filled).",
+			textfmt.Count(available, "worker slot is", "worker slots are"), def.Name, alreadyAssigned, totalCap)
 	}
 	if !ge.Workers.Assign("worker", buildingKey, count) {
 		idle := ge.Workers.IdleCount("worker")
-		return fmt.Errorf("cannot assign %d workers to %s (idle: %d)", count, buildingKey, idle)
+		return fmt.Errorf("Only %s idle (you asked for %d). Recruit more or unassign some elsewhere.",
+			textfmt.Count(idle, "worker is", "workers are"), count)
 	}
 	ge.recalculateRates()
 	ge.addLog("debug", fmt.Sprintf("Assign: %d → %s", count, buildingKey))
-	ge.addLog("info", fmt.Sprintf("Assigned %d worker(s) to %s", count, buildingKey))
+	ge.addLog("info", fmt.Sprintf("Assigned %s to %s.", textfmt.Count(count, "worker", "workers"), def.Name))
 	return nil
 }
 
@@ -2949,33 +3016,29 @@ func (ge *GameEngine) AssignAll(buildingKey string) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	if ge.Buildings.GetCount(buildingKey) == 0 {
-		return 0, fmt.Errorf("no %s built yet — build one first", buildingKey)
-	}
-	byKey := config.BuildingByKey()
-	def, ok := byKey[buildingKey]
-	if !ok || def.WorkerCapacity == 0 {
-		return 0, fmt.Errorf("building %s does not accept workers", buildingKey)
+	def, err := ge.staffableBuilding(buildingKey)
+	if err != nil {
+		return 0, err
 	}
 	// Cap at available capacity
 	toAssign := ge.Workers.IdleCount("worker")
 	if toAssign <= 0 {
-		return 0, fmt.Errorf("no idle workers to assign")
+		return 0, fmt.Errorf("No idle workers to assign. Recruit more first.")
 	}
 	totalCap := def.WorkerCapacity * ge.Buildings.GetCount(buildingKey)
 	alreadyAssigned := ge.Workers.GetAssignedCount("worker", buildingKey)
 	available := totalCap - alreadyAssigned
 	if available <= 0 {
-		return 0, fmt.Errorf("all %d worker slot(s) for %s are full", totalCap, buildingKey)
+		return 0, fmt.Errorf("All %s at %s are full.", textfmt.Count(totalCap, "worker slot", "worker slots"), def.Name)
 	}
 	if toAssign > available {
 		toAssign = available
 	}
 	if !ge.Workers.Assign("worker", buildingKey, toAssign) {
-		return 0, fmt.Errorf("cannot assign workers to %s", buildingKey)
+		return 0, fmt.Errorf("Could not assign workers to %s.", def.Name)
 	}
 	ge.recalculateRates()
-	ge.addLog("info", fmt.Sprintf("Assigned all %d worker(s) to %s", toAssign, buildingKey))
+	ge.addLog("info", fmt.Sprintf("Assigned %s to %s.", textfmt.Count(toAssign, "worker", "workers"), def.Name))
 	return toAssign, nil
 }
 
@@ -2984,42 +3047,44 @@ func (ge *GameEngine) UnassignAll(buildingKey string) (int, error) {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	byKey := config.BuildingByKey()
-	def, ok := byKey[buildingKey]
-	if !ok || def.WorkerCapacity == 0 {
-		return 0, fmt.Errorf("building %s does not accept workers", buildingKey)
+	def, err := ge.workerBuilding(buildingKey)
+	if err != nil {
+		return 0, err
 	}
 	assigned := ge.Workers.GetAssignedCount("worker", buildingKey)
 	if assigned <= 0 {
-		return 0, fmt.Errorf("no workers assigned to %s", buildingKey)
+		return 0, fmt.Errorf("No workers are assigned to %s.", def.Name)
 	}
 	if !ge.Workers.Unassign("worker", buildingKey, assigned) {
-		return 0, fmt.Errorf("cannot unassign workers from %s", buildingKey)
+		return 0, fmt.Errorf("Could not unassign workers from %s.", def.Name)
 	}
 	ge.recalculateRates()
-	ge.addLog("info", fmt.Sprintf("Unassigned all %d worker(s) from %s", assigned, buildingKey))
+	ge.addLog("info", fmt.Sprintf("Unassigned %s from %s.", textfmt.Count(assigned, "worker", "workers"), def.Name))
 	return assigned, nil
 }
 
 // UnassignWorker removes a specific number of workers from a building.
 func (ge *GameEngine) UnassignWorker(buildingKey string, count int) error {
 	if count <= 0 {
-		return fmt.Errorf("unassign count must be positive (got %d)", count)
+		return fmt.Errorf("Unassign count must be positive (got %d).", count)
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	byKey := config.BuildingByKey()
-	def, ok := byKey[buildingKey]
-	if !ok || def.WorkerCapacity == 0 {
-		return fmt.Errorf("building %s does not accept workers", buildingKey)
+	def, err := ge.workerBuilding(buildingKey)
+	if err != nil {
+		return err
 	}
 	if !ge.Workers.Unassign("worker", buildingKey, count) {
-		return fmt.Errorf("cannot unassign %d workers from %s", count, buildingKey)
+		assigned := ge.Workers.GetAssignedCount("worker", buildingKey)
+		if assigned <= 0 {
+			return fmt.Errorf("No workers are assigned to %s.", def.Name)
+		}
+		return fmt.Errorf("Only %s assigned to %s.", textfmt.Count(assigned, "worker is", "workers are"), def.Name)
 	}
 	ge.recalculateRates()
 	ge.addLog("debug", fmt.Sprintf("Unassign: %d ← %s", count, buildingKey))
-	ge.addLog("info", fmt.Sprintf("Unassigned %d worker(s) from %s", count, buildingKey))
+	ge.addLog("info", fmt.Sprintf("Unassigned %s from %s.", textfmt.Count(count, "worker", "workers"), def.Name))
 	return nil
 }
 
@@ -3028,20 +3093,23 @@ func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) er
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
+	def, ok := ge.Buildings.defs[buildingKey]
+	if !ok {
+		return ge.unknownBuildingErr(buildingKey)
+	}
 	if all {
 		count = ge.Workers.GetAssignedCount("worker", buildingKey)
 	}
 	if count <= 0 {
-		return fmt.Errorf("no workers assigned to %s", buildingKey)
+		return fmt.Errorf("No workers are assigned to %s.", def.Name)
 	}
 	dismissed := ge.Workers.Dismiss(buildingKey, count)
 	if dismissed == 0 {
-		return fmt.Errorf("no workers assigned to %s", buildingKey)
+		return fmt.Errorf("No workers are assigned to %s.", def.Name)
 	}
-	byKey := config.BuildingByKey()
-	def, _ := byKey[buildingKey]
 	ge.recalculateRates()
-	ge.addLog("info", fmt.Sprintf("Dismissed %d workers from %s (pop: %d)", dismissed, def.Name, ge.Workers.TotalPop()))
+	ge.addLog("info", fmt.Sprintf("Dismissed %s from %s. They left your population (now %d).",
+		textfmt.Count(dismissed, "worker", "workers"), def.Name, ge.Workers.TotalPop()))
 	return nil
 }
 
@@ -3051,54 +3119,89 @@ func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) er
 // whatever it is added to or subtracted from.
 func checkAmount(amount float64) error {
 	if math.IsNaN(amount) || math.IsInf(amount, 0) || amount <= 0 {
-		return fmt.Errorf("amount must be a positive number (got %v)", amount)
+		return fmt.Errorf("Amount must be a positive number (got %v).", amount)
 	}
 	return nil
 }
 
-// formatResourceMap formats a map[string]float64 as "key1 45, key2 20" sorted by key.
-func formatResourceMap(m map[string]float64) string {
-	keys := make([]string, 0, len(m))
-	for k := range m {
-		keys = append(keys, k)
+// unknownBuildingErr refuses a key that names no building, suggesting the
+// closest one: "Unknown building 'farmm'. Did you mean 'farm'?"
+func (ge *GameEngine) unknownBuildingErr(key string) error {
+	if suggestion := ge.Buildings.SuggestKey(key); suggestion != "" {
+		return fmt.Errorf("Unknown building '%s'. Did you mean '%s'?", key, suggestion)
 	}
-	sort.Strings(keys)
-	parts := make([]string, 0, len(keys))
-	for _, k := range keys {
-		parts = append(parts, fmt.Sprintf("%s %.0f", k, m[k]))
+	return fmt.Errorf("Unknown building '%s'. Type 'build' to see available buildings.", key)
+}
+
+// workerBuilding returns the definition of a building that takes workers, or
+// the refusal to show when the key is unknown or the building has no worker
+// slots. Caller holds ge.mu.
+func (ge *GameEngine) workerBuilding(key string) (config.BuildingDef, error) {
+	def, ok := ge.Buildings.defs[key]
+	if !ok {
+		return def, ge.unknownBuildingErr(key)
 	}
-	return strings.Join(parts, ", ")
+	if def.WorkerCapacity == 0 {
+		return def, fmt.Errorf("%s does not take workers.", def.Name)
+	}
+	return def, nil
+}
+
+// staffableBuilding is workerBuilding that also requires at least one copy
+// built, for assigning. Caller holds ge.mu.
+func (ge *GameEngine) staffableBuilding(key string) (config.BuildingDef, error) {
+	def, err := ge.workerBuilding(key)
+	if err != nil {
+		return def, err
+	}
+	if ge.Buildings.GetCount(key) == 0 {
+		return def, fmt.Errorf("You have no %s yet. Build one first.", def.Name)
+	}
+	return def, nil
+}
+
+// shortfallText names what a cost is short of: "10 gold (have 5)" for each
+// resource the player lacks, or the whole cost when nothing is short.
+// Caller holds ge.mu.
+func (ge *GameEngine) shortfallText(cost map[string]float64) string {
+	var short []string
+	for _, res := range sortedKeys(cost) {
+		if have := ge.Resources.Get(res); have < cost[res] {
+			short = append(short, fmt.Sprintf("%s (have %s)", Amount(cost[res], res), textfmt.Number(have)))
+		}
+	}
+	if len(short) == 0 {
+		return Amounts(cost)
+	}
+	return textfmt.List(short)
 }
 
 // SellBuilding removes n copies of a built building, refunds 50% of cost,
 // and unassigns any workers that were in the sold slots.
 func (ge *GameEngine) SellBuilding(key string, n int) error {
 	if n <= 0 {
-		return fmt.Errorf("sell count must be positive (got %d)", n)
+		return fmt.Errorf("Sell count must be positive (got %d).", n)
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
 	if ge.age == "primitive_age" {
-		return fmt.Errorf("sell is not available in the primitive age")
+		return fmt.Errorf("You cannot sell buildings in the %s.", AgeName("primitive_age"))
 	}
 
 	byKey := config.BuildingByKey()
 	def, ok := byKey[key]
 	if !ok {
-		if suggestion := ge.Buildings.SuggestKey(key); suggestion != "" {
-			return fmt.Errorf("unknown building '%s' — did you mean '%s'?", key, suggestion)
-		}
-		return fmt.Errorf("unknown building '%s'", key)
+		return ge.unknownBuildingErr(key)
 	}
 
 	if def.Category == "wonder" {
-		return fmt.Errorf("wonders cannot be sold")
+		return fmt.Errorf("Wonders cannot be sold.")
 	}
 
 	current := ge.Buildings.GetCount(key)
 	if current == 0 {
-		return fmt.Errorf("no %s built", def.Name)
+		return fmt.Errorf("You have no %s to sell.", def.Name)
 	}
 
 	if n > current {
@@ -3108,7 +3211,7 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 	// Check build queue — reject if any copy of this building is queued
 	for _, item := range ge.buildQueue {
 		if item.BuildingKey == key {
-			return fmt.Errorf("cannot sell a building that is under construction")
+			return fmt.Errorf("A %s is still under construction. Sell after it is finished.", def.Name)
 		}
 	}
 
@@ -3130,13 +3233,22 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 		}
 	}
 
-	// Add refund to resources
-	for res, amount := range refund {
-		ge.Resources.Add(res, amount)
+	// Add refund to resources, keeping what storage actually took.
+	got := make(map[string]float64, len(refund))
+	clipped := false
+	for _, res := range sortedKeys(refund) {
+		got[res] = ge.gainResource(res, refund[res])
+		if got[res] < refund[res] {
+			clipped = true
+		}
 	}
 
 	ge.recalculateRates()
-	ge.addLog("info", fmt.Sprintf("Sold %d %s — returned: %s", n, def.Name, formatResourceMap(refund)))
+	line := fmt.Sprintf("Sold %s. Refund: %s.", BuildingCount(n, key), Amounts(got))
+	if clipped {
+		line += " Storage was full, so part of the refund was lost."
+	}
+	ge.addLog("info", line)
 	return nil
 }
 
@@ -3172,7 +3284,7 @@ func (ge *GameEngine) startResearchLocked(techKey string, quiet bool) error {
 	}
 	ge.addLog("debug", fmt.Sprintf("Research start: %s (cost: %.0f knowledge, %d ticks)", def.Name, def.Cost, ge.Research.totalTicks))
 	if !quiet {
-		ge.addLog("info", fmt.Sprintf("Started researching %s (%d ticks)", def.Name, ge.Research.totalTicks))
+		ge.addLog("info", fmt.Sprintf("Started researching %s (%s).", def.Name, ge.durationLocked(ge.Research.totalTicks)))
 	}
 	return nil
 }
@@ -3184,10 +3296,9 @@ func (ge *GameEngine) CancelResearch() error {
 
 	tech, ok := ge.Research.CancelResearch()
 	if !ok {
-		return fmt.Errorf("no research in progress")
+		return fmt.Errorf("No research in progress.")
 	}
-	def := config.TechByKey()[tech]
-	ge.addLog("warning", fmt.Sprintf("Cancelled research: %s (no refund)", def.Name))
+	ge.addLog("warning", fmt.Sprintf("Research on %s canceled (no refund).", TechName(tech)))
 	return nil
 }
 
@@ -3265,7 +3376,7 @@ func (ge *GameEngine) maybeOfferAncientMemory() {
 	ge.ancientMemoryUsed = true
 	ge.pendingMemoryTech = techKey
 	def := config.TechByKey()[techKey]
-	ge.addLog("event", fmt.Sprintf("✦ %s A memory of [cyan]%s[-] stirs — research it free of prerequisites, but at half speed.", ancientMemoryFlavor, def.Name))
+	ge.addLog("event", fmt.Sprintf("✦ %s A memory of [cyan]%s[-] stirs. You can research it without its prerequisites, at half speed.", ancientMemoryFlavor, def.Name))
 }
 
 // selectMemoryTech picks a random tech appropriate to the current age, with the
@@ -3313,7 +3424,7 @@ func (ge *GameEngine) AcceptAncientMemory() error {
 	defer ge.mu.Unlock()
 
 	if ge.pendingMemoryTech == "" {
-		return fmt.Errorf("no ancient memory to accept")
+		return fmt.Errorf("There is no ancient memory to accept.")
 	}
 	techKey := ge.pendingMemoryTech
 	ge.pendingMemoryTech = ""
@@ -3325,7 +3436,7 @@ func (ge *GameEngine) AcceptAncientMemory() error {
 		return err
 	}
 	def := config.TechByKey()[techKey]
-	ge.addLog("success", fmt.Sprintf("Recovered the memory of %s — researching at half speed (%d ticks).", def.Name, ge.Research.totalTicks))
+	ge.addLog("success", fmt.Sprintf("Recovered the memory of %s. Researching it at half speed (%s).", def.Name, ge.durationLocked(ge.Research.totalTicks)))
 	return nil
 }
 
@@ -3420,7 +3531,7 @@ func (ge *GameEngine) DoPrestige() error {
 
 	ageOrder := ge.progress.GetAgeOrder()
 	if !ge.Prestige.CanPrestige(ge.age, ageOrder) {
-		return fmt.Errorf("must reach Modern Age or later to prestige")
+		return fmt.Errorf("You can prestige once you reach the %s.", AgeName(PrestigeMinAge))
 	}
 
 	// In the final epoch prestige is the passage, and it can bring the Last
@@ -3519,19 +3630,23 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.recalculateTickSpeed()
 
 	ge.log = carried
-	ge.addLog("success", fmt.Sprintf("Prestige complete! Level %d (+%d points)", ge.Prestige.GetLevel(), points))
+	ge.addLog("success", fmt.Sprintf("Prestige complete. Level %d, %s earned.",
+		ge.Prestige.GetLevel(), textfmt.Count(points, "prestige point", "prestige points")))
 	if newLegacy {
-		ge.addLog("success", fmt.Sprintf("✦ Cosmic Legacy: production +%.0f%%, permanent. It survives every prestige and every fall.", CosmicLegacyProductionBonus*100))
+		ge.addLog("success", fmt.Sprintf("✦ Cosmic Legacy: all production %s, permanent. It survives every prestige and every fall.", textfmt.SignedPercent(CosmicLegacyProductionBonus)))
 	} else if ge.cosmicLegacy {
-		ge.addLog("info", fmt.Sprintf("Cosmic Legacy active: production +%.0f%%.", CosmicLegacyProductionBonus*100))
+		ge.addLog("info", fmt.Sprintf("Cosmic Legacy active: all production %s.", textfmt.SignedPercent(CosmicLegacyProductionBonus)))
 	}
-	ge.addLog("info", fmt.Sprintf("Passive bonus: +%.0f%% production, +%.0f%% tick speed",
-		float64(ge.Prestige.GetLevel())*2, ge.tickSpeedBonus*100))
+	pb := ge.Prestige.GetBonuses()
+	ge.addLog("info", fmt.Sprintf("Prestige bonus: all production %s, game speed %s.",
+		textfmt.SignedPercent(pb["production_all"]), textfmt.SignedPercent(ge.tickSpeedBonus)))
 	if n := ge.legacyEpochCount(); n > 0 {
-		ge.addLog("info", fmt.Sprintf("Legacy bonuses active: %d epoch(s), research speed +%.0f%%", n, ge.succumbResearchBonus()*100))
+		ge.addLog("info", fmt.Sprintf("Legacy bonuses active from %s you succumbed to: research speed %s.",
+			textfmt.Count(n, "epoch", "epochs"), textfmt.SignedPercent(ge.succumbResearchBonus())))
 	}
 	if len(savedRuins) > 0 {
-		ge.addLog("info", fmt.Sprintf("%d ruin type(s) carry forward from past civilizations.", len(savedRuins)))
+		ge.addLog("info", fmt.Sprintf("Ruins carried forward from past civilizations: %s.",
+			textfmt.Count(len(savedRuins), "type", "types")))
 	}
 	ge.addLog("info", "Type [cyan]help[-] to get started again.")
 
@@ -3556,7 +3671,7 @@ func (ge *GameEngine) BuyPrestigeUpgrade(key string) error {
 		return err
 	}
 	ge.recalculateRates() // a storage or rate upgrade shows at once, not next tick
-	ge.addLog("success", fmt.Sprintf("Purchased prestige upgrade: %s", key))
+	ge.addLog("success", ge.prestigeUpgradeLine(key))
 	return nil
 }
 
@@ -3615,7 +3730,7 @@ func (ge *GameEngine) Reset() {
 	// A wiped game is a brand-new run: re-roll the master seed.
 	ge.SeedRNG(newSeed())
 
-	ge.addLog("event", "Game wiped! Starting fresh.")
+	ge.addLog("event", "Game wiped. Starting fresh.")
 	ge.addLog("info", "Type [cyan]help[-] for commands.")
 }
 
@@ -3898,18 +4013,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		return
 	}
 
-	// Log welcome back message
-	minutes := int(elapsed.Minutes())
-	hours := minutes / 60
-	mins := minutes % 60
-	var timeStr string
-	if hours > 0 {
-		timeStr = fmt.Sprintf("%dh %dm", hours, mins)
-	} else {
-		timeStr = fmt.Sprintf("%dm", mins)
-	}
-
-	ge.addLog("event", fmt.Sprintf("Welcome back! You were away for %s.", timeStr))
+	ge.addLog("event", fmt.Sprintf("Welcome back. You were away for %s.", textfmt.Duration(elapsed)))
 
 	gains := make(map[string]float64)
 	banked := make(map[string]float64)
@@ -3940,20 +4044,16 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	}
 
 	if len(gains) > 0 {
-		ge.addLog("info", fmt.Sprintf("Offline progress (%d ticks at 50%% efficiency):", offlineTicks))
+		ge.addLog("info", fmt.Sprintf("Offline progress (at %s efficiency):", textfmt.Percent(OfflineEfficiency)))
 		for _, res := range sortedKeys(gains) {
-			ge.addLog("info", fmt.Sprintf("  +%.1f %s", gains[res], res))
+			ge.addLog("info", "  +"+Amount(gains[res], res))
 		}
 	}
 	if len(banked) > 0 {
-		var parts []string
-		for _, res := range sortedKeys(banked) {
-			parts = append(parts, fmt.Sprintf("%.0f %s", banked[res], res))
-		}
-		ge.addLog("info", fmt.Sprintf("Overflow banked into %s: %s.", ge.Buildings.defs[bankedInto].Name, strings.Join(parts, ", ")))
+		ge.addLog("info", fmt.Sprintf("Overflow banked into %s: %s.", ge.Buildings.defs[bankedInto].Name, Amounts(banked)))
 	}
 	if !starts.empty() {
-		ge.addLog("info", "While you were away your plan started: "+starts.describe(ge.Buildings.defs))
+		ge.addLog("info", "While you were away, your plan "+starts.describe(ge.Buildings.defs)+".")
 	}
 }
 
@@ -3970,7 +4070,7 @@ func (ge *GameEngine) ExchangeResources(from, to string, amount float64) (float6
 	if err != nil {
 		return 0, err
 	}
-	ge.addLog("info", fmt.Sprintf("Traded %.0f %s → %.1f %s", amount, from, got, to))
+	ge.addLog("info", fmt.Sprintf("Traded %s for %s.", Amount(amount, from), Amount(got, to)))
 	return got, nil
 }
 
@@ -3983,7 +4083,7 @@ func (ge *GameEngine) StartTradeRoute(key string) error {
 	if err := ge.Trade.StartRoute(key, ge.Buildings, ge.age, ageOrder); err != nil {
 		return err
 	}
-	ge.addLog("info", fmt.Sprintf("Trade route started: %s", key))
+	ge.addLog("info", fmt.Sprintf("Trade route started: %s.", RouteName(key)))
 	return nil
 }
 
@@ -3995,7 +4095,7 @@ func (ge *GameEngine) StopTradeRoute(key string) error {
 	if err := ge.Trade.StopRoute(key); err != nil {
 		return err
 	}
-	ge.addLog("info", fmt.Sprintf("Trade route stopped: %s", key))
+	ge.addLog("info", fmt.Sprintf("Trade route stopped: %s.", RouteName(key)))
 	return nil
 }
 
@@ -4012,7 +4112,7 @@ func (ge *GameEngine) SetDiplomaticStatus(factionKey, status string) error {
 	if cost > 0 {
 		ge.Resources.Remove("gold", cost)
 	}
-	ge.addLog("info", fmt.Sprintf("Diplomatic status with %s set to %s", factionKey, status))
+	ge.addLog("info", diplomaticStatusLine(CivName(factionKey), status, cost))
 	return nil
 }
 
@@ -4022,12 +4122,14 @@ func (ge *GameEngine) SendGift(factionKey string) error {
 	defer ge.mu.Unlock()
 
 	gold := ge.Resources.Get("gold")
+	before := ge.civOpinion(factionKey)
 	cost, err := ge.Diplomacy.SendGift(factionKey, gold)
 	if err != nil {
 		return err
 	}
 	ge.Resources.Remove("gold", cost)
-	ge.addLog("info", fmt.Sprintf("Sent gift to %s (+15 opinion)", factionKey))
+	ge.addLog("info", fmt.Sprintf("Sent the %s a gift: %s, opinion %s.",
+		CivName(factionKey), Amount(cost, "gold"), textfmt.Signed(float64(ge.civOpinion(factionKey)-before))))
 	return nil
 }
 
@@ -4045,11 +4147,8 @@ func (ge *GameEngine) SendTribute(factionKey string) error {
 	}
 	ge.Resources.Remove("gold", goldCost)
 	ge.Resources.Remove("culture", cultureCost)
-	name := factionKey
-	if def, ok := config.FactionByKey()[factionKey]; ok {
-		name = def.Name
-	}
-	ge.addLog("success", fmt.Sprintf("Tribute paid to %s (%.0f gold, %.0f culture) — the war is over.", name, goldCost, cultureCost))
+	ge.addLog("success", fmt.Sprintf("Paid the %s a tribute of %s. The war is over.",
+		CivName(factionKey), Amounts(map[string]float64{"gold": goldCost, "culture": cultureCost})))
 	return nil
 }
 
@@ -4059,18 +4158,17 @@ func (ge *GameEngine) RaidCivRoute(factionKey string) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
+	before := ge.civOpinion(factionKey)
 	started, err := ge.Diplomacy.RaidTradeRoute(factionKey, ge.tick)
 	if err != nil {
 		return err
 	}
-	name := factionKey
-	if def, ok := config.FactionByKey()[factionKey]; ok {
-		name = def.Name
-	}
+	name := CivName(factionKey)
 	if started {
-		ge.addLog("warning", fmt.Sprintf("You raided the %s's trade route — they have declared WAR!", name))
+		ge.addLog("warning", fmt.Sprintf("You raided a %s trade route. They declared war.", name))
 	} else {
-		ge.addLog("warning", fmt.Sprintf("You raided the %s's trade route (-20 opinion).", name))
+		ge.addLog("warning", fmt.Sprintf("You raided a %s trade route. Opinion %s.",
+			name, textfmt.Signed(float64(ge.civOpinion(factionKey)-before))))
 	}
 	return nil
 }
@@ -4082,16 +4180,15 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 
-	newKey, hasPending := ge.Buildings.GetPendingUpgrade(key)
-	if !hasPending {
-		return fmt.Errorf("no upgrade available for %s", key)
-	}
-
 	byKey := config.BuildingByKey()
 	oldDef, hasOld := byKey[key]
+	if !hasOld {
+		return ge.unknownBuildingErr(key)
+	}
+	newKey, hasPending := ge.Buildings.GetPendingUpgrade(key)
 	newDef, hasNew := byKey[newKey]
-	if !hasOld || !hasNew {
-		return fmt.Errorf("building definition not found")
+	if !hasPending || !hasNew {
+		return fmt.Errorf("%s has no upgrade this age. Type 'upgrade' to list the ones that do.", oldDef.Name)
 	}
 
 	oldCount := ge.Buildings.GetCount(key)
@@ -4102,30 +4199,22 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 		count = oldCount
 	}
 	if count <= 0 {
-		return fmt.Errorf("no %s to upgrade", oldDef.Name)
+		return fmt.Errorf("You have no %s to upgrade.", oldDef.Name)
 	}
 	if room := ge.Buildings.UpgradeRoom(newKey, count, ge.buildQueue); room < count {
 		if room <= 0 {
-			return fmt.Errorf("%s is at max count (%d)", newDef.Name, newDef.MaxCount)
+			return fmt.Errorf("%s is at its max count of %d.", newDef.Name, newDef.MaxCount)
 		}
 		count = room
 	}
 
 	cost, ok := ge.Buildings.UpgradeCost(key, newKey, count)
 	if !ok {
-		return fmt.Errorf("could not calculate upgrade cost")
+		return fmt.Errorf("Could not work out the cost to upgrade %s. Please report this bug.", oldDef.Name)
 	}
 
 	if !ge.Resources.CanAfford(cost) {
-		var needed []string
-		for res, amt := range cost {
-			have := ge.Resources.Get(res)
-			if have < amt {
-				needed = append(needed, fmt.Sprintf("%s %.0f/%.0f", res, have, amt))
-			}
-		}
-		sort.Strings(needed)
-		return fmt.Errorf("insufficient resources: %s", strings.Join(needed, ", "))
+		return fmt.Errorf("Cannot afford to upgrade %s: need %s.", BuildingCount(count, key), ge.shortfallText(cost))
 	}
 
 	// Deduct resources
@@ -4139,12 +4228,12 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 
 	ge.recalculateRates()
 
-	costStr := formatResourceMap(cost)
-	if costStr == "" {
+	costStr := Amounts(cost)
+	if costStr == "nothing" {
 		costStr = "free"
 	}
-	ge.addLog("success", fmt.Sprintf("Upgraded %d %s → %s (cost: %s)",
-		moved, oldDef.Name, newDef.Name, costStr))
+	ge.addLog("success", fmt.Sprintf("Upgraded %s to %s. Cost: %s.",
+		BuildingCount(moved, key), pluralName(moved, newDef.Name), costStr))
 	return nil
 }
 
@@ -4239,35 +4328,91 @@ func (ge *GameEngine) getResearchedTechMap() map[string]bool {
 	return m
 }
 
-// formatMilestoneRewards formats milestone reward effects for display
+// formatMilestoneRewards formats milestone reward effects for the toast:
+// "(+10% all production, +500 food)". Empty when there are no rewards.
 func formatMilestoneRewards(effects []config.Effect) string {
+	parts := milestoneRewardParts(effects)
+	if parts == "" {
+		return ""
+	}
+	return "(" + parts + ")"
+}
+
+// milestoneRewardParts lists milestone rewards with display names:
+// "+10% all production, +500 food".
+func milestoneRewardParts(effects []config.Effect) string {
 	var parts []string
 	for _, e := range effects {
 		switch e.Type {
 		case "instant_resource":
-			parts = append(parts, fmt.Sprintf("+%.0f %s", e.Value, e.Target))
+			parts = append(parts, "+"+Amount(e.Value, e.Target))
 		case "permanent_bonus":
-			if e.Value < 0 {
-				parts = append(parts, fmt.Sprintf("%.0f%% %s", e.Value*100, e.Target))
-			} else {
-				parts = append(parts, fmt.Sprintf("+%.0f%% %s", e.Value*100, e.Target))
-			}
+			parts = append(parts, textfmt.SignedPercent(e.Value)+" "+EffectTargetName(e.Target))
 		}
 	}
-	if len(parts) == 0 {
-		return ""
-	}
-	return "(" + strings.Join(parts, ", ") + ")"
+	return strings.Join(parts, ", ")
 }
 
-// formatCost formats a cost map for display
-func formatCost(cost map[string]float64) string {
-	s := ""
-	for _, k := range sortedKeys(cost) {
-		if s != "" {
-			s += ", "
+// durationWithSpeedBonusLocked is durationLocked for a span during which an
+// extra tick_speed bonus applies (a chain boost shortens its own wall-clock
+// length). Caller holds ge.mu.
+func (ge *GameEngine) durationWithSpeedBonusLocked(ticks int, extra float64) string {
+	return DurationText(ticks, ge.tickIntervalWithBonusLocked(ge.tickSpeedBonus+extra))
+}
+
+// diplomaticStatusLine announces a status change from the player's side:
+// "You are now allied with the Merchant Guild."
+func diplomaticStatusLine(civ, status string, cost float64) string {
+	switch status {
+	case "allied":
+		if cost > 0 {
+			return fmt.Sprintf("You are now allied with the %s. The alliance cost %s.", civ, Amount(cost, "gold"))
 		}
-		s += fmt.Sprintf("%s: %.0f", k, cost[k])
+		return fmt.Sprintf("You are now allied with the %s.", civ)
+	case "rival":
+		return fmt.Sprintf("You declared the %s your rival.", civ)
+	case "embargo":
+		return fmt.Sprintf("You placed an embargo on the %s.", civ)
+	case "neutral":
+		return fmt.Sprintf("You are now neutral toward the %s.", civ)
 	}
-	return s
+	return fmt.Sprintf("Your status with the %s is now %s.", civ, status)
+}
+
+// civOpinion reads a civilization's opinion of the player (0 when unknown).
+// Caller holds ge.mu.
+func (ge *GameEngine) civOpinion(key string) int {
+	if fs, ok := ge.Diplomacy.factions[key]; ok && fs != nil {
+		return fs.Opinion
+	}
+	return 0
+}
+
+// prestigeUpgradeLine announces a prestige purchase with its total effect at
+// the new tier: "Bought Gather Boost (tier 2): worker output +10%."
+func (ge *GameEngine) prestigeUpgradeLine(key string) string {
+	def, ok := config.PrestigeUpgradeByKey()[key]
+	if !ok {
+		return fmt.Sprintf("Bought %s.", PrestigeUpgradeName(key))
+	}
+	tier := ge.Prestige.upgrades[key]
+	total := float64(def.PerTier * float64(tier))
+	var effect string
+	switch def.EffectType {
+	case "rate_bonus":
+		effect = EffectTargetName(def.EffectKey) + " " + textfmt.SignedPercent(total)
+	case "flat_bonus":
+		switch def.EffectKey {
+		case "all":
+			effect = "storage for every resource " + textfmt.Signed(total)
+		default:
+			effect = EffectTargetName(def.EffectKey) + " " + textfmt.Signed(total)
+		}
+	case "starting_resource":
+		effect = "each run starts with +" + Amount(total, def.EffectKey)
+	}
+	if effect == "" {
+		return fmt.Sprintf("Bought %s (tier %d).", def.Name, tier)
+	}
+	return fmt.Sprintf("Bought %s (tier %d): %s.", def.Name, tier, effect)
 }

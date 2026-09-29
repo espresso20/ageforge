@@ -68,7 +68,7 @@ func TestCmdThemeValidKeySwitchesActive(t *testing.T) {
 	}
 
 	res := cmdTheme([]string{target}, nil)
-	if res.Type != "success" {
+	if res.Type != "info" {
 		t.Errorf("theme %s should succeed, got %q: %q", target, res.Type, res.Message)
 	}
 	if got := theme.Active().Key; got != target {

@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/espresso20/ageforge/config"
@@ -15,7 +14,7 @@ func (ge *GameEngine) MeetFactionForTest(key string, opinion int) error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	if _, ok := ge.Diplomacy.factionDefs[key]; !ok {
-		return fmt.Errorf("unknown civilization: %s", key)
+		return ge.Diplomacy.errUnknownCiv(key)
 	}
 	ge.Diplomacy.DiscoverFaction(key)
 	ge.Diplomacy.factions[key].Opinion = opinion

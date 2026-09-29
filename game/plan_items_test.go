@@ -1,6 +1,7 @@
 package game
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 	"time"
@@ -95,7 +96,7 @@ func TestPlanTrade_InvalidPairsAndMissingMarket(t *testing.T) {
 	if err := be.PlanAddTrade("wood", "stone", 0); err != nil {
 		t.Fatal(err)
 	}
-	if v := be.planViews(); len(v) != 1 || !strings.Contains(v[0].Note, "market") {
+	if v := be.planViews(); len(v) != 1 || !strings.Contains(v[0].Note, "Market") {
 		t.Errorf("view without a market = %+v", v)
 	}
 }
@@ -274,7 +275,12 @@ func TestOffline_TradesAsTimePasses(t *testing.T) {
 	if ge.Resources.Get("stone") <= 0 {
 		t.Error("two hours offline with a trade planned bought no stone")
 	}
-	if !logHas(ge, "While you were away your plan started: traded") {
-		t.Error("no offline trade summary")
+	summary := regexp.MustCompile(`^While you were away, your plan traded [0-9.]+[KMBT]? wood for [0-9.]+[KMBT]? stone\.$`)
+	found := false
+	for _, l := range ge.log {
+		found = found || summary.MatchString(l.Message)
+	}
+	if !found {
+		t.Errorf("no offline trade summary matching %s", summary)
 	}
 }

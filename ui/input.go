@@ -1,7 +1,9 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
+	"io/fs"
 	"math"
 	"os"
 	"path/filepath"
@@ -12,6 +14,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -146,11 +149,72 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 	case "theme":
 		return cmdTheme(args, engine)
 	default:
-		return CommandResult{
-			Message: fmt.Sprintf("Unknown command: %s. Type 'help' for commands.", cmd),
-			Type:    "error",
+		return CommandResult{Message: unknownCommandText(cmd), Type: "error"}
+	}
+}
+
+// unknownCommandText is the refusal for a first word that is no command:
+// "Unknown command 'biuld'. Did you mean 'build'? Type help for all commands."
+func unknownCommandText(cmd string) string {
+	msg := fmt.Sprintf("Unknown command '%s'.", cmd)
+	if s := closestCommand(cmd); s != "" {
+		msg += fmt.Sprintf(" Did you mean '%s'?", s)
+	}
+	return msg + " Type help for all commands."
+}
+
+// usageFor is "Usage: " and the registry's help form for the command path
+// (the longest form that starts with it), so a usage line names its slots
+// exactly as the Help panel does. The log escapes the [slot] brackets on the
+// way to the screen (safeTags).
+func usageFor(path string) string {
+	return "Usage: " + helpRow(path).Form
+}
+
+// helpRow is the registry help row for the command path: the form that is
+// the path, or the path followed by its argument slots (the longest such
+// form, so `upgrade` finds "upgrade <building> [count|all]"). A path with no
+// row gives the path itself (TestUsagePathsExist keeps every caller's path
+// real).
+func helpRow(path string) Usage {
+	best := Usage{Form: path}
+	found := false
+	fits := func(form string) bool {
+		if form == path {
+			return true
+		}
+		rest, ok := strings.CutPrefix(form, path+" ")
+		return ok && rest != "" && strings.ContainsAny(rest[:1], "<[")
+	}
+	var walk func(c *Command)
+	walk = func(c *Command) {
+		for _, u := range c.Help {
+			if fits(u.Form) && (!found || len(u.Form) > len(best.Form)) {
+				best, found = u, true
+			}
+		}
+		for _, s := range c.Subs {
+			walk(s)
 		}
 	}
+	for _, c := range registry() {
+		walk(c)
+	}
+	return best
+}
+
+// subUsage is "Usage: " and every help form under the command, joined with
+// " | ": the reply to a subcommand the command does not know.
+func subUsage(name string) string {
+	c := lookup(registry(), name)
+	if c == nil {
+		return "Usage: " + name
+	}
+	var forms []string
+	for _, u := range appendHelpRows(nil, c) {
+		forms = append(forms, u.Form)
+	}
+	return "Usage: " + strings.Join(forms, " | ")
 }
 
 // maxCommandCount is the largest count any command accepts. No game gets
@@ -186,6 +250,23 @@ func usageError(usage string, err error) CommandResult {
 	return CommandResult{Message: usage + " (" + err.Error() + ")", Type: "error"}
 }
 
+// errorResult is the refusal for an engine error, as a sentence: capital
+// first letter, closing period.
+func errorResult(err error) CommandResult {
+	return CommandResult{Message: textfmt.Sentence(err.Error()), Type: "error"}
+}
+
+// sortedKeysOf returns m's keys in order, so lists built from game maps come
+// out the same on every call.
+func sortedKeysOf[V any](m map[string]V) []string {
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
+}
+
 func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) >= 1 && strings.ToLower(args[0]) == "overflow" {
 		return cmdWonderOverflow(args[1:], engine)
@@ -211,7 +292,7 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 		case "collect", "bank":
 			deposit = true
 		default:
-			return CommandResult{Message: fmt.Sprintf("Unknown wonder command %q. %s, or 'wonder overflow [on|off]'.", args[0], wonderCollectUsage), Type: "error"}
+			return CommandResult{Message: fmt.Sprintf("Unknown wonder command %q. %s, or 'wonder overflow [on|off]'.", args[0], wonderBankUsage), Type: "error"}
 		}
 	}
 
@@ -221,7 +302,7 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 			return CommandResult{Message: fmt.Sprintf("%s is already built: there is nothing left to bank this age.", curWonder.name), Type: "error"}
 		}
 		return CommandResult{
-			Message: fmt.Sprintf("[gold]★ %s[-] is already built!", curWonder.name),
+			Message: fmt.Sprintf("[gold]★ %s[-] is already built.", curWonder.name),
 			Type:    "info",
 		}
 	}
@@ -231,7 +312,7 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 
 	// Default: show bank status
 	var sb strings.Builder
-	fmt.Fprintf(&sb, "[gold::b]%s[-] — Wonder Bank\n\n", curWonder.name)
+	fmt.Fprintf(&sb, "[gold::b]%s[-]: wonder bank\n\n", curWonder.name)
 
 	costKeys := make([]string, 0, len(curWonder.def.BaseCost))
 	for k := range curWonder.def.BaseCost {
@@ -255,18 +336,18 @@ func cmdWonder(args []string, engine *game.GameEngine) CommandResult {
 		} else if pct > 0 {
 			clr = "yellow"
 		}
-		fmt.Fprintf(&sb, "  [%s]%s: %s / %s (%.0f%%)[-]\n", clr, res, FormatNumber(banked), FormatNumber(need), pct)
+		fmt.Fprintf(&sb, "  [%s]%s: %s / %s (%.0f%%)[-]\n", clr, game.ResourceName(res), FormatNumber(banked), FormatNumber(need), pct)
 	}
 
 	if bs.WonderBankFull {
-		fmt.Fprintf(&sb, "\n[green]Bank full! Type 'build %s' to begin construction.[-]", curWonder.key)
+		fmt.Fprintf(&sb, "\n[green]Bank full. Type 'build %s' to start construction.[-]", curWonder.key)
 	} else {
-		fmt.Fprintf(&sb, "\n[gray]Use 'wonder collect <resource|all> [amount|all]' to bank resources.[-]")
+		fmt.Fprintf(&sb, "\n[gray]Bank resources with 'wonder collect <resource|all> [amount|all|max]'.[-]")
 	}
 	return CommandResult{Message: sb.String(), Type: "info"}
 }
 
-const wonderCollectUsage = "Usage: wonder collect|bank <resource|all> [amount|all|max]"
+const wonderBankUsage = "Usage: wonder collect|bank <resource|all> [amount|all|max]"
 
 // cmdWonderCollect is `wonder collect|bank <resource|all> [amount|all|max]`:
 // bank resources into the current age's unbuilt wonder. `all` or `max` (or
@@ -274,7 +355,7 @@ const wonderCollectUsage = "Usage: wonder collect|bank <resource|all> [amount|al
 // `all` for the resource does that for every resource the wonder needs.
 func cmdWonderCollect(args []string, w *wonderInfo, state game.GameState, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 || len(args) > 2 {
-		return CommandResult{Message: wonderCollectUsage, Type: "error"}
+		return CommandResult{Message: wonderBankUsage, Type: "error"}
 	}
 	resource := strings.ToLower(args[0])
 	whole := true // bank as much as can go in
@@ -284,11 +365,11 @@ func cmdWonderCollect(args []string, w *wonderInfo, state game.GameState, engine
 		case "all", "max":
 		default:
 			if resource == "all" {
-				return usageError(wonderCollectUsage, fmt.Errorf("'wonder collect all' banks every resource as far as it goes; give an amount for one resource at a time"))
+				return usageError(wonderBankUsage, fmt.Errorf("'wonder collect all' banks every resource as far as it goes; give an amount for one resource at a time"))
 			}
 			var err error
 			if amount, err = parseAmount(args[1]); err != nil {
-				return usageError(wonderCollectUsage, err)
+				return usageError(wonderBankUsage, err)
 			}
 			whole = false
 		}
@@ -297,7 +378,7 @@ func cmdWonderCollect(args []string, w *wonderInfo, state game.GameState, engine
 		return wonderCollectAll(w, engine)
 	}
 	if _, ok := state.Resources[resource]; !ok {
-		return CommandResult{Message: fmt.Sprintf("Unknown resource: %s", args[0]), Type: "error"}
+		return CommandResult{Message: fmt.Sprintf("Unknown resource '%s'. Type wonder to see what %s still needs.", args[0], w.name), Type: "error"}
 	}
 
 	var deposited float64
@@ -308,47 +389,59 @@ func cmdWonderCollect(args []string, w *wonderInfo, state game.GameState, engine
 		deposited, err = engine.BankWonderResource(w.key, resource, amount)
 	}
 	if err != nil {
-		return CommandResult{Message: "Nothing banked: " + err.Error() + ".", Type: "error"}
+		return CommandResult{Message: "Nothing banked. " + textfmt.Sentence(err.Error()), Type: "error"}
 	}
-	bs := engine.GetState().Buildings[w.key]
-	msg := fmt.Sprintf("Banked %s %s into %s (%s / %s)", FormatNumber(deposited), resource, w.name,
-		FormatNumber(bs.WonderBank[resource]), FormatNumber(w.def.BaseCost[resource]))
+	// The engine logs the deposit (and a full bank); only a short deposit
+	// needs a word of its own.
 	if !whole && deposited < amount {
-		msg += fmt.Sprintf(": it only needed %s more", FormatNumber(deposited))
+		return CommandResult{Message: fmt.Sprintf("Only %s went in: that is all %s still needed.",
+			game.Amount(deposited, resource), w.name), Type: "info"}
 	}
-	return CommandResult{Message: msg + wonderFullNote(w, bs), Type: "success"}
+	return CommandResult{Type: "success"}
 }
 
 // wonderCollectAll is `wonder collect all`: bank every resource the wonder
-// still needs, each as far as what is on hand goes, and say what went in and
-// why the rest didn't.
+// still needs, each as far as what is on hand goes. The engine logs each
+// deposit; the reply names what was not banked and why.
 func wonderCollectAll(w *wonderInfo, engine *game.GameEngine) CommandResult {
-	var banked, skipped []string
+	state := engine.GetState()
+	bs := state.Buildings[w.key]
+	var banked int
+	var skipped, full []string // full: already banked in full, named only when nothing went in
 	for _, res := range sortedMapKeys(w.def.BaseCost) {
-		dep, err := engine.BankWonderMax(w.key, res)
-		if err != nil {
-			skipped = append(skipped, err.Error())
+		name := game.ResourceName(res)
+		switch {
+		case bs.WonderBank[res] >= w.def.BaseCost[res]:
+			full = append(full, name+" (already has all it needs)")
+			continue
+		case state.Resources[res].Amount <= 0:
+			skipped = append(skipped, name+" (you have none)")
 			continue
 		}
-		banked = append(banked, fmt.Sprintf("%s %s", FormatNumber(dep), res))
+		if _, err := engine.BankWonderMax(w.key, res); err != nil {
+			skipped = append(skipped, name+" ("+strings.TrimRight(lowerFirst(err.Error()), ".")+")")
+			continue
+		}
+		banked++
 	}
-	bs := engine.GetState().Buildings[w.key]
-	if len(banked) == 0 {
-		return CommandResult{Message: "Nothing banked: " + strings.Join(skipped, "; ") + ".", Type: "error"}
+	if banked == 0 {
+		all := append(skipped, full...)
+		sort.Strings(all)
+		return CommandResult{Message: "Nothing banked: " + strings.Join(all, ", ") + ".", Type: "error"}
 	}
-	msg := fmt.Sprintf("Banked %s into %s.", strings.Join(banked, ", "), w.name)
 	if len(skipped) > 0 {
-		msg += " Not banked: " + strings.Join(skipped, "; ") + "."
+		return CommandResult{Message: "Not banked: " + strings.Join(skipped, ", ") + ".", Type: "info"}
 	}
-	return CommandResult{Message: msg + wonderFullNote(w, bs), Type: "success"}
+	return CommandResult{Type: "success"}
 }
 
-// wonderFullNote is the line a deposit adds once the wonder's bank is full.
-func wonderFullNote(w *wonderInfo, bs game.BuildingState) string {
-	if !bs.WonderBankFull {
-		return ""
+// lowerFirst lowercases the first letter of s, to set an engine sentence
+// inside parentheses.
+func lowerFirst(s string) string {
+	if s == "" {
+		return s
 	}
-	return fmt.Sprintf("\n[green]Bank full! Type 'build %s' to begin construction.[-]", w.key)
+	return strings.ToLower(s[:1]) + s[1:]
 }
 
 // cmdWonderOverflow is `wonder overflow [on|off]`: show or set whether
@@ -370,13 +463,9 @@ func cmdWonderOverflow(args []string, engine *game.GameEngine) CommandResult {
 
 func cmdAdvance(engine *game.GameEngine) CommandResult {
 	if err := engine.AdvanceAge(); err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+		return errorResult(err)
 	}
-	state := engine.GetState()
-	return CommandResult{
-		Message: fmt.Sprintf("Your civilization enters the [gold]%s[-]!", state.AgeName),
-		Type:    "success",
-	}
+	return CommandResult{Type: "success"} // the engine logs the new age
 }
 
 func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
@@ -387,16 +476,17 @@ func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
 			return CommandResult{Message: "No building upgrades available right now.", Type: "info"}
 		}
 		var lines []string
-		lines = append(lines, "[gold]Available Upgrades (cost delta: new copy cost − 50% old refund):[-]")
+		lines = append(lines, "[gold]Upgrades you can make[-] (pays the difference in cost: the new copy's cost less a 50% refund on the old one)")
+		sort.Slice(upgrades, func(i, j int) bool { return upgrades[i].FromKey < upgrades[j].FromKey })
 		for _, u := range upgrades {
 			affordable := "[red]✗[-]"
 			if u.CanAfford {
 				affordable = "[green]✓[-]"
 			}
-			lines = append(lines, fmt.Sprintf("  %s [cyan]%s[-] → [cyan]%s[-] (%d available) - Cost: %s",
-				affordable, u.FromKey, u.ToKey, u.Count, FormatCost(u.Cost)))
+			lines = append(lines, fmt.Sprintf("  %s [cyan]%s[-] → [cyan]%s[-]: %s, cost for all: %s",
+				affordable, u.FromKey, u.ToKey, textfmt.Count(u.Count, "copy", "copies"), FormatCost(u.Cost)))
 		}
-		lines = append(lines, "\n  Type [cyan]upgrade <building> [n|all][-]")
+		lines = append(lines, "\n  Type [cyan]"+lit(strings.TrimPrefix(usageFor("upgrade"), "Usage: "))+"[-]")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
 
@@ -409,7 +499,7 @@ func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
 		} else {
 			n, err := parseCount(args[1])
 			if err != nil {
-				return usageError("Usage: upgrade <building> [count|all]", err)
+				return usageError(usageFor("upgrade"), err)
 			}
 			count = n
 		}
@@ -418,7 +508,7 @@ func cmdUpgrade(args []string, engine *game.GameEngine) CommandResult {
 	}
 
 	if err := engine.UpgradeBuilding(building, count, all); err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+		return errorResult(err)
 	}
 	return CommandResult{Message: "", Type: "success"}
 }
@@ -432,7 +522,7 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	// launched from.)
 	dir := filepath.Join(game.DataDir(), "logs")
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return CommandResult{Message: fmt.Sprintf("Failed to create logs directory: %v", err), Type: "error"}
+		return CommandResult{Message: "Could not create the logs folder: " + shortIOError(err) + ".", Type: "error"}
 	}
 
 	// Generate timestamped filename
@@ -487,7 +577,7 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	}
 
 	if err := os.WriteFile(filename, []byte(sb.String()), 0644); err != nil {
-		return CommandResult{Message: fmt.Sprintf("Failed to write dump: %v", err), Type: "error"}
+		return CommandResult{Message: "Could not write the dump: " + shortIOError(err) + ".", Type: "error"}
 	}
 
 	return CommandResult{
@@ -496,36 +586,36 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	}
 }
 
-// gatherMaxYield is the per-use cap on hand-gathered resources.
-const gatherMaxYield = 25.0
+// gatherDefaultYield is what one bare `gather` brings in; gatherMaxYield is
+// the per-use cap.
+const (
+	gatherDefaultYield = 3.0
+	gatherMaxYield     = 25.0
+)
 
 func cmdGather(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
-		return CommandResult{Message: "Usage: gather <food|wood|stone> [amount] (max 25)", Type: "error"}
+		return CommandResult{Message: usageFor("gather") + " (max " + textfmt.Number(gatherMaxYield) + " per use)", Type: "error"}
 	}
 	resource := strings.ToLower(args[0])
 	if resource != "food" && resource != "wood" && resource != "stone" {
-		return CommandResult{Message: "You can only hand-gather food, wood, or stone.", Type: "error"}
+		return CommandResult{Message: "You can only gather food, wood or stone by hand.", Type: "error"}
 	}
-	amount := 3.0
+	amount := gatherDefaultYield
 	if len(args) >= 2 {
 		n, err := parseAmount(args[1])
 		if err != nil {
-			return usageError("Usage: gather <food|wood|stone> [amount] (max 25)", err)
+			return usageError(usageFor("gather")+" (max "+textfmt.Number(gatherMaxYield)+" per use)", err)
 		}
 		amount = n
 	}
 	if amount > gatherMaxYield {
 		amount = gatherMaxYield
 	}
-	actual, err := engine.GatherResource(resource, amount)
-	if err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+	if _, err := engine.GatherResource(resource, amount); err != nil {
+		return errorResult(err)
 	}
-	return CommandResult{
-		Message: fmt.Sprintf("Gathered %.0f %s (total: %.0f)", amount, resource, actual),
-		Type:    "success",
-	}
+	return CommandResult{Type: "success"} // the engine logs what was gathered
 }
 
 func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
@@ -534,7 +624,8 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 		state := engine.GetState()
 		var lines []string
 		lines = append(lines, "[gold]Available buildings:[-]")
-		for key, b := range state.Buildings {
+		for _, key := range sortedKeysOf(state.Buildings) {
+			b := state.Buildings[key]
 			if !b.Unlocked {
 				continue
 			}
@@ -560,151 +651,130 @@ func cmdBuild(args []string, engine *game.GameEngine) CommandResult {
 		if countArg != "max" {
 			n, err := parseCount(countArg)
 			if err != nil {
-				return usageError("Usage: build <building> [count|max]", err)
+				return usageError(usageFor("build"), err)
 			}
 			count = n
 		}
-		built, err := engine.BuildMultiple(key, count)
-		if err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+		if _, err := engine.BuildMultiple(key, count); err != nil {
+			return errorResult(err)
 		}
-		return CommandResult{
-			Message: fmt.Sprintf("Built %d %s!", built, key),
-			Type:    "success",
-		}
+		return CommandResult{Type: "success"} // the engine logs each build
 	}
 
 	if err := engine.BuildBuilding(key); err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+		return errorResult(err)
 	}
-	return CommandResult{
-		Message: fmt.Sprintf("Built %s!", key),
-		Type:    "success",
-	}
+	return CommandResult{Type: "success"} // the engine logs the build
 }
 
 func cmdRecruit(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
 		if err := engine.RecruitWorker("worker", 1); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+			return errorResult(err)
 		}
-		return CommandResult{Message: "Recruited 1 worker!", Type: "success"}
+		return CommandResult{Type: "success"} // the engine logs the recruits
 	}
 
 	arg := strings.ToLower(args[0])
 	if arg == "max" {
-		recruited, err := engine.RecruitMax("worker")
-		if err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+		if _, err := engine.RecruitMax("worker"); err != nil {
+			return errorResult(err)
 		}
-		return CommandResult{Message: fmt.Sprintf("Recruited %d workers!", recruited), Type: "success"}
+		return CommandResult{Type: "success"}
 	}
 
 	n, err := parseCount(arg)
 	if err != nil {
-		return usageError("Usage: recruit [count|max] — workers are recruited from available housing capacity and assigned to buildings.", err)
+		return usageError(usageFor("recruit")+". New workers start idle; put them to work with 'assign <building>'.", err)
 	}
 	if err := engine.RecruitWorker("worker", n); err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+		return errorResult(err)
 	}
-	return CommandResult{Message: fmt.Sprintf("Recruited %d worker(s)!", n), Type: "success"}
+	return CommandResult{Type: "success"}
 }
 
 func cmdAssign(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
-		return CommandResult{Message: "Usage: assign <building> [count|all]", Type: "error"}
+		return CommandResult{Message: usageFor("assign"), Type: "error"}
 	}
 	building := strings.ToLower(args[0])
 	if len(args) >= 2 && strings.ToLower(args[1]) == "all" {
-		n, err := engine.AssignAll(building)
-		if err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+		if _, err := engine.AssignAll(building); err != nil {
+			return errorResult(err)
 		}
-		return CommandResult{
-			Message: fmt.Sprintf("Assigned all %d workers to %s", n, building),
-			Type:    "success",
-		}
+		return CommandResult{Type: "success"} // the engine logs the assignment
 	}
 	count := 1
 	if len(args) >= 2 {
 		n, err := parseCount(args[1])
 		if err != nil {
-			return usageError("Usage: assign <building> [count|all]", err)
+			return usageError(usageFor("assign"), err)
 		}
 		count = n
 	}
 	if err := engine.AssignWorker(building, count); err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+		return errorResult(err)
 	}
-	return CommandResult{
-		Message: fmt.Sprintf("Assigned %d worker(s) to %s", count, building),
-		Type:    "success",
-	}
+	return CommandResult{Type: "success"}
 }
 
 func cmdUnassign(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
-		return CommandResult{Message: "Usage: unassign <building> [count|all]", Type: "error"}
+		return CommandResult{Message: usageFor("unassign"), Type: "error"}
 	}
 	building := strings.ToLower(args[0])
 	if len(args) >= 2 && strings.ToLower(args[1]) == "all" {
-		n, err := engine.UnassignAll(building)
-		if err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+		if _, err := engine.UnassignAll(building); err != nil {
+			return errorResult(err)
 		}
-		return CommandResult{
-			Message: fmt.Sprintf("Unassigned all %d workers from %s", n, building),
-			Type:    "success",
-		}
+		return CommandResult{Type: "success"} // the engine logs the change
 	}
 	count := 1
 	if len(args) >= 2 {
 		n, err := parseCount(args[1])
 		if err != nil {
-			return usageError("Usage: unassign <building> [count|all]", err)
+			return usageError(usageFor("unassign"), err)
 		}
 		count = n
 	}
 	if err := engine.UnassignWorker(building, count); err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+		return errorResult(err)
 	}
-	return CommandResult{
-		Message: fmt.Sprintf("Unassigned %d worker(s) from %s", count, building),
-		Type:    "success",
-	}
+	return CommandResult{Type: "success"}
 }
 
 func cmdStatus(engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	var lines []string
 
-	lines = append(lines, fmt.Sprintf("[gold]Age:[-] %s  [gold]Tick:[-] %d", state.AgeName, state.Tick))
+	lines = append(lines, fmt.Sprintf("[gold]Age:[-] %s  [gold]Game time:[-] %s", state.AgeName, formatTicks(state.Tick, state)))
 	lines = append(lines, "")
 
 	// Resources
 	lines = append(lines, "[gold]Resources:[-]")
-	for _, rs := range state.Resources {
+	for _, key := range sortedKeysOf(state.Resources) {
+		rs := state.Resources[key]
 		if !rs.Unlocked {
 			continue
 		}
 		bar := ProgressBar(rs.Amount, rs.Storage, 15)
 		lines = append(lines, fmt.Sprintf("  %-10s %s/%s %s %s",
-			rs.Name, FormatNumber(rs.Amount), FormatNumber(rs.Storage), FormatRate(rs.Rate), bar))
+			rs.Name, FormatNumber(rs.Amount), FormatNumber(rs.Storage), FormatRateTick(rs.Rate), bar))
 	}
 	lines = append(lines, "")
 
 	// Population
 	v := state.Workers
-	lines = append(lines, fmt.Sprintf("[gold]Population:[-] %d/%d (idle: %d, food drain: %.1f/tick)",
-		v.TotalPop, v.MaxPop, v.TotalIdle, v.FoodDrain))
+	lines = append(lines, fmt.Sprintf("[gold]Population:[-] %d/%d (idle: %d, food drain: %s/tick)",
+		v.TotalPop, v.MaxPop, v.TotalIdle, textfmt.Number(v.FoodDrain)))
 	for _, vt := range v.Types {
 		if !vt.Unlocked {
 			continue
 		}
 		lines = append(lines, fmt.Sprintf("  %-10s %d (idle: %d)", vt.Name, vt.Count, vt.IdleCount))
-		for building, count := range vt.Assignments {
-			if count > 0 {
-				lines = append(lines, fmt.Sprintf("    → %s: %d", building, count))
+		for _, building := range sortedKeysOf(vt.Assignments) {
+			if count := vt.Assignments[building]; count > 0 {
+				lines = append(lines, fmt.Sprintf("    → %s: %d", game.BuildingName(building), count))
 			}
 		}
 	}
@@ -745,24 +815,20 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		lines = append(lines, fmt.Sprintf("[gold]Account:[-] %s  (%s)", acct.Name(), shortAccountID(acct.AccountID)))
 		lines = append(lines, fmt.Sprintf("[gold]Recovery code:[-] %s", acct.RecoveryCode()))
 		lines = append(lines, "")
-		lines = append(lines, "This code restores your IDENTITY (your account ID) across machines and")
-		lines = append(lines, "reinstalls — NOT your earned progress. It is not a password: it proves")
-		lines = append(lines, "nothing secret, only which account you are. Write it down.")
+		lines = append(lines, recoveryCodeNote...)
+		lines = append(lines, "It is not a password: it only says which account you are. Write it down.")
 		lines = append(lines, "")
-		lines = append(lines, "Restore identity on another machine with:  account recover <code>")
+		lines = append(lines, "Restore your account ID on another machine with:  account recover <code>")
 		lines = append(lines, "")
-		lines = append(lines, "[gold]Progress (unlocks, stats, achievements)[-] is backed up SEPARATELY as a")
-		lines = append(lines, "per-account file. Export and import both work now and are multi-account —")
-		lines = append(lines, "each account is its own slot; an import adds/restores that account alongside")
-		lines = append(lines, "your others. Switch between accounts in the [gold]Accounts[-] panel on the main menu.")
-		lines = append(lines, "  account list                    → list your local accounts")
-		lines = append(lines, "  account switch <name>           → switch to an existing local account")
-		lines = append(lines, "  account export [path]           → write this account's progress backup")
-		lines = append(lines, "  account backup                  → full snapshot (account.json + saves) to data/backups/")
-		lines = append(lines, "  account import <path> [replace] → restore an account from a backup (merges by default)")
+		lines = append(lines, "[gold]Progress backups:[-] each account is its own slot, and an import adds or")
+		lines = append(lines, "restores that account next to your others. Switch accounts in the [gold]Accounts[-] panel on the main menu.")
+		for _, path := range []string{"account list", "account switch", "account export", "account backup", "account import"} {
+			u := helpRow(path)
+			lines = append(lines, fmt.Sprintf("  %-33s %s", u.Form, u.Text))
+		}
 		lines = append(lines, "")
-		lines = append(lines, "[red]Wipe Account[-] (permanently delete an account's identity + unlocks + stats)")
-		lines = append(lines, "lives in the [gold]Accounts[-] panel on the main menu, behind a type-your-name confirm.")
+		lines = append(lines, "[red]Wipe account[-] (delete an account's ID, unlocks and stats for good)")
+		lines = append(lines, "lives in the [gold]Accounts[-] panel on the main menu, behind a type-your-name confirmation.")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
 
@@ -787,14 +853,14 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 			}
 			age := s.HighestAge
 			if age == "" {
-				age = "—"
+				age = "none yet"
 			}
 			tampered := ""
 			if s.Tampered {
 				tampered = "  [red]⚠ modified[-]"
 			}
 			lines = append(lines, fmt.Sprintf("%s%s  [gray](%s)[-]  [gray]age:[-] %s%s",
-				marker, name, shortAccountID(s.AccountID), age, tampered))
+				marker, lit(name), shortAccountID(s.AccountID), age, tampered))
 		}
 		lines = append(lines, "")
 		lines = append(lines, "Switch with:  account switch <name>   (or use the Accounts panel on the main menu)")
@@ -802,25 +868,27 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 
 	case "switch":
 		if len(args) < 2 {
-			return CommandResult{Message: "Usage: account switch <name>", Type: "error"}
+			return CommandResult{Message: usageFor("account switch"), Type: "error"}
 		}
 		// Resolve name→id via the shared derivation, then switch only if that slot exists.
 		// A non-existent slot errors with guidance rather than minting an empty account
-		// (use the Accounts panel — or `account import` — to create/restore one).
+		// (use the Accounts panel, or `account import`, to create/restore one).
 		name := strings.Join(args[1:], " ")
 		id := game.AccountIDForName(name)
 		if err := engine.SwitchAccount(id); err != nil {
 			return CommandResult{
-				Message: fmt.Sprintf("No account named %q — create it from the Accounts panel on the main menu.", strings.TrimSpace(name)),
+				Message: fmt.Sprintf("No account named %q. Create it from the Accounts panel on the main menu, or type 'account list' to see yours.", strings.TrimSpace(name)),
 				Type:    "error",
 			}
 		}
 		// Re-resolve the active theme against the now-active account so the UI doesn't keep
 		// the prior account's theme after the swap (theming.md §6).
 		applyAccountTheme(engine)
+		// Info, not success: the engine logs nothing here, and the dashboard
+		// drops success replies.
 		return CommandResult{
 			Message: fmt.Sprintf("Now playing as %s (%s).", strings.TrimSpace(name), shortAccountID(id)),
-			Type:    "success",
+			Type:    "info",
 		}
 
 	case "export":
@@ -832,7 +900,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		}
 		blob, err := acct.ExportProgress()
 		if err != nil {
-			return CommandResult{Message: fmt.Sprintf("Export failed: %v", err), Type: "error"}
+			return CommandResult{Message: "Export failed: " + shortIOError(err), Type: "error"}
 		}
 		// Resolve the destination: explicit path arg, or a default that names the account so
 		// multiple accounts' exports don't collide in a shared directory. The blob carries the
@@ -845,41 +913,39 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		}
 		if dir := filepath.Dir(path); dir != "" {
 			if err := os.MkdirAll(dir, 0755); err != nil {
-				return CommandResult{Message: fmt.Sprintf("Export failed: %v", err), Type: "error"}
+				return CommandResult{Message: "Export failed: " + shortIOError(err), Type: "error"}
 			}
 		}
 		if err := os.WriteFile(path, blob, 0644); err != nil {
-			return CommandResult{Message: fmt.Sprintf("Export failed: %v", err), Type: "error"}
+			return CommandResult{Message: "Export failed: " + shortIOError(err), Type: "error"}
 		}
 		var lines []string
-		lines = append(lines, fmt.Sprintf("[gold]Progress exported:[-] %s", path))
-		lines = append(lines, "This file is your PROGRESS backup (unlocks, stats, achievements). Keep it")
-		lines = append(lines, "safe — it is separate from your recovery code, which carries only identity.")
-		lines = append(lines, "Restore it with:  account import "+path)
-		// Also take a FULL slot snapshot (account.json + saves/). A backup failure must not fail
-		// the export — append a soft note instead.
+		lines = append(lines, fmt.Sprintf("Progress exported to %s. Restore it with: account import %s", path, path))
+		lines = append(lines, "This file backs up your progress (unlocks, stats, achievements). Your recovery")
+		lines = append(lines, "code is separate and restores only your account ID.")
+		// Also take a full slot snapshot (account.json + saves/). A backup failure must not fail
+		// the export, so it only adds a line when it works.
 		if backupPath, bErr := engine.BackupAccount(acct.AccountID); bErr == nil {
-			lines = append(lines, "")
-			lines = append(lines, fmt.Sprintf("[gold]Full backup (account.json + saves):[-] %s", backupPath))
+			lines = append(lines, fmt.Sprintf("Full backup (account.json and saves) written to %s.", backupPath))
 		}
-		return CommandResult{Message: strings.Join(lines, "\n"), Type: "success"}
+		// Info, not success: the path must reach the log, and the engine logs nothing here.
+		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 
 	case "backup":
-		// A FULL snapshot of the ACTIVE account's slot (account.json + saves/) into
+		// A full snapshot of the active account's slot (account.json + saves/) into
 		// <root>/backups/. Distinct from export, which serializes only meta-progression.
 		if acct == nil {
 			return CommandResult{Message: "No account to back up.", Type: "warning"}
 		}
 		backupPath, err := engine.BackupAccount(acct.AccountID)
 		if err != nil {
-			return CommandResult{Message: fmt.Sprintf("Backup failed: %v", err), Type: "error"}
+			return CommandResult{Message: "Backup failed: " + shortIOError(err), Type: "error"}
 		}
 		var lines []string
-		lines = append(lines, fmt.Sprintf("[gold]Full backup saved:[-] %s", backupPath))
-		lines = append(lines, "A complete snapshot of this account: account.json plus every save in")
-		lines = append(lines, "its slot. Restore by copying the folder's contents back into")
-		lines = append(lines, "data/accounts/<id>/. Only the 10 most recent backups per account are kept.")
-		return CommandResult{Message: strings.Join(lines, "\n"), Type: "success"}
+		lines = append(lines, fmt.Sprintf("Full backup saved to %s.", backupPath))
+		lines = append(lines, "It holds this account's account.json and every save in its slot. To restore,")
+		lines = append(lines, "copy the folder's contents back into data/accounts/<id>/. The 10 most recent backups per account are kept.")
+		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 
 	case "import":
 		if acct == nil {
@@ -889,27 +955,24 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 			}
 		}
 		if len(args) < 2 {
-			return CommandResult{
-				Message: "Usage: account import <path> [replace]",
-				Type:    "error",
-			}
+			return CommandResult{Message: usageFor("account import"), Type: "error"}
 		}
 		path := args[1]
 		// merge by default; the `replace` token switches to wholesale replacement.
 		merge := !(len(args) >= 3 && strings.EqualFold(args[2], "replace"))
 		blob, err := os.ReadFile(path)
 		if err != nil {
-			return CommandResult{Message: fmt.Sprintf("Import failed: cannot read %s: %v", path, err), Type: "error"}
+			return CommandResult{Message: fmt.Sprintf("Import failed: cannot read %s (%s).", path, shortIOError(err)), Type: "error"}
 		}
-		// An export is a single-account backup: it lands in its OWN account's slot (keyed by
+		// An export is a single-account backup: it lands in its own account's slot (keyed by
 		// the blob's account id), not the active account. Restoring a backup means making that
 		// account current, so switch to it on success.
 		imported, err := engine.ImportAccountExport(blob, merge)
 		if err != nil {
-			return CommandResult{Message: fmt.Sprintf("Import failed: %v", err), Type: "error"}
+			return CommandResult{Message: "Import failed: " + textfmt.Sentence(err.Error()), Type: "error"}
 		}
 		if err := engine.SwitchAccount(imported.AccountID); err != nil {
-			return CommandResult{Message: fmt.Sprintf("Imported, but could not switch to the account: %v", err), Type: "error"}
+			return CommandResult{Message: "Imported, but could not switch to the account: " + textfmt.Sentence(err.Error()), Type: "error"}
 		}
 		mode := "merged"
 		if !merge {
@@ -921,39 +984,35 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		}
 		themeCount := len(imported.UnlockedThemes())
 		return CommandResult{
-			Message: fmt.Sprintf("Imported account %q (%s) — now active — %d theme(s) unlocked, progress %s.",
-				name, shortAccountID(imported.AccountID), themeCount, mode),
-			Type: "success",
+			Message: fmt.Sprintf("Imported account %q (%s). It is now active: %s, progress %s.",
+				name, shortAccountID(imported.AccountID), textfmt.Count(themeCount, "theme", "themes"), mode),
+			Type: "info",
 		}
 
 	case "recover":
 		if len(args) < 2 {
-			return CommandResult{
-				Message: "Usage: account recover <code>",
-				Type:    "error",
-			}
+			return CommandResult{Message: usageFor("account recover"), Type: "error"}
 		}
 		code := args[1]
 		confirmed := len(args) >= 3 && strings.EqualFold(args[2], "confirm")
 
-		// Overwrite guard: if the CURRENT account already has earned progress (unlocked
-		// themes), recovering would replace the local identity and the code does NOT
+		// Overwrite guard: if the current account already has earned progress (unlocked
+		// themes), recovering would replace the local identity and the code does not
 		// carry that progress. Require an explicit confirm token before proceeding.
 		if acct != nil && len(acct.UnlockedThemes()) > 0 && !confirmed {
 			var lines []string
 			lines = append(lines, "[red]Warning:[-] this account has unlocked progress on this machine.")
-			lines = append(lines, "Recovering will REPLACE the current local identity. The recovery code")
-			lines = append(lines, "carries identity only — your unlocks/stats are NOT carried by it and")
-			lines = append(lines, "would no longer be attached to this identity. Export your progress first")
-			lines = append(lines, "with `account export` (it writes a backup you can import later).")
+			lines = append(lines, "Recovering replaces the account ID on this machine.")
+			lines = append(lines, recoveryCodeNote...)
+			lines = append(lines, "Your unlocks and stats would no longer be attached to this account.")
 			lines = append(lines, "")
-			lines = append(lines, fmt.Sprintf("To proceed anyway:  account recover %s confirm", code))
+			lines = append(lines, fmt.Sprintf("To go ahead anyway:  account recover %s confirm", code))
 			return CommandResult{Message: strings.Join(lines, "\n"), Type: "warning"}
 		}
 
 		restored, err := game.ImportRecoveryCode(code)
 		if err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+			return errorResult(err)
 		}
 		engine.SetAccount(restored)
 		// Re-resolve the active theme against the now-installed account so the UI
@@ -962,24 +1021,53 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		// Forge; a restore of an account with a stored theme honors it.
 		applyAccountTheme(engine)
 		return CommandResult{
-			Message: fmt.Sprintf("Identity restored: %s", shortAccountID(restored.AccountID)),
-			Type:    "success",
+			Message: fmt.Sprintf("Account ID restored: %s. Import a progress backup with 'account import <path>' to bring back unlocks and stats.", shortAccountID(restored.AccountID)),
+			Type:    "info",
 		}
 
 	case "wipe":
-		// The destructive wipe lives behind the Accounts panel's type-your-name gate — we
-		// deliberately do NOT wipe from a bare command. Direct the player there.
+		// The destructive wipe lives behind the Accounts panel's type-your-name gate; we
+		// deliberately do not wipe from a bare command. Direct the player there.
 		return CommandResult{
-			Message: "Wiping an account is permanent and lives in the Accounts panel on the main menu (press Esc to reach it, then 'Accounts', then 'w' on the account). It deletes that account's identity, theme unlocks, lifetime stats, and achievements — game saves are NOT affected.",
+			Message: "Wiping an account is permanent, so it lives in the Accounts panel on the main menu (press Esc, choose Accounts, then press w on the account). It deletes that account's ID, theme unlocks, lifetime stats and achievements. Game saves are not affected.",
 			Type:    "warning",
 		}
 
 	default:
-		return CommandResult{
-			Message: "Usage: account  |  account list  |  account switch <name>  |  account recover <code>  |  account export [path]  |  account backup  |  account import <path> [replace]  |  account wipe",
+		return CommandResult{Message: subUsage("account"), Type: "error"}
+	}
+}
+
+// recoveryCodeNote says what a recovery code does and does not restore.
+var recoveryCodeNote = []string{
+	"This code restores your account ID on another machine. It does not restore",
+	"progress (unlocks, stats, achievements). Back those up with account export.",
+}
+
+// shortIOError is an I/O error without the file path the OS puts in it:
+// "permission denied", "no such file or directory".
+func shortIOError(err error) string {
+	var pe *fs.PathError
+	if errors.As(err, &pe) {
+		return pe.Err.Error()
+	}
+	var le *os.LinkError
+	if errors.As(err, &le) {
+		return le.Err.Error()
+	}
+	return err.Error()
+}
+
+// oneWordName refuses a save name typed as several words: `save my run`
+// used to save as "my".
+func oneWordName(verb string, args []string) (string, *CommandResult) {
+	if len(args) > 1 {
+		return "", &CommandResult{
+			Message: fmt.Sprintf("Save names are one word (try '%s %s').", verb, strings.Join(args, "_")),
 			Type:    "error",
 		}
 	}
+	return args[0], nil
 }
 
 func cmdSave(args []string, engine *game.GameEngine) CommandResult {
@@ -989,17 +1077,20 @@ func cmdSave(args []string, engine *game.GameEngine) CommandResult {
 	// to pop the Overwrite/Branch modal, but this path stays sane for tests and
 	// other callers.
 	if len(args) > 0 {
-		name := args[0]
-		if err := engine.BranchSave(name); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+		name, refused := oneWordName("save", args)
+		if refused != nil {
+			return *refused
 		}
-		return CommandResult{Message: fmt.Sprintf("Branched a new save '%s' — autosave now follows it", name), Type: "info"}
+		if err := engine.BranchSave(name); err != nil {
+			return errorResult(err)
+		}
+		return CommandResult{Message: fmt.Sprintf("Branched a new save '%s'. Autosave now follows it.", name), Type: "info"}
 	}
 	active := engine.ActiveSaveName()
 	if err := engine.SaveGame(active); err != nil {
-		return CommandResult{Message: fmt.Sprintf("Save failed: %v", err), Type: "error"}
+		return CommandResult{Message: "Could not save: " + shortIOError(err) + ".", Type: "error"}
 	}
-	return CommandResult{Message: fmt.Sprintf("Saved to '%s'", active), Type: "info"}
+	return CommandResult{Message: fmt.Sprintf("Saved to '%s'.", active), Type: "info"}
 }
 
 func cmdLoad(args []string, engine *game.GameEngine) CommandResult {
@@ -1007,13 +1098,19 @@ func cmdLoad(args []string, engine *game.GameEngine) CommandResult {
 	// The dashboard intercepts a bare `load` to open the Load Game tree; this
 	// fallback keeps other callers (and tests) from loading a slot by surprise.
 	if len(args) == 0 {
-		return CommandResult{Message: "Type 'load <name>' to load a specific save, or open Load Game from the menu (or press Esc) to browse your save tree.", Type: "info"}
+		return CommandResult{Message: "Type 'load <name>' to load a save, or open Load Game from the menu (press Esc) to browse your save tree.", Type: "info"}
 	}
-	name := args[0]
+	name, refused := oneWordName("load", args)
+	if refused != nil {
+		return *refused
+	}
 	if err := engine.LoadGame(name); err != nil {
-		return CommandResult{Message: fmt.Sprintf("Load failed: %v", err), Type: "error"}
+		if errors.Is(err, fs.ErrNotExist) {
+			return CommandResult{Message: fmt.Sprintf("No save named '%s'. Type saves to list them.", name), Type: "error"}
+		}
+		return CommandResult{Message: fmt.Sprintf("Could not load '%s': %s.", name, strings.TrimRight(shortIOError(err), ".")), Type: "error"}
 	}
-	return CommandResult{Message: fmt.Sprintf("Game loaded from '%s'", name), Type: "info"}
+	return CommandResult{Message: fmt.Sprintf("Game loaded from '%s'.", name), Type: "info"}
 }
 
 func cmdRates(engine *game.GameEngine) CommandResult {
@@ -1021,33 +1118,34 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 	var lines []string
 	lines = append(lines, "[gold]Resource Rate Breakdown:[-]")
 
-	for _, rs := range state.Resources {
+	for _, key := range sortedKeysOf(state.Resources) {
+		rs := state.Resources[key]
 		if !rs.Unlocked || (rs.Rate == 0 && rs.Breakdown == (game.RateBreakdown{})) {
 			continue
 		}
-		lines = append(lines, fmt.Sprintf("  [cyan]%s[-]:  %s/tick", rs.Name, FormatRate(rs.Rate)))
+		lines = append(lines, fmt.Sprintf("  [cyan]%s[-]:  %s", rs.Name, FormatRateTick(rs.Rate)))
 		b := rs.Breakdown
 		var parts []string
 		if b.BuildingRate != 0 {
-			parts = append(parts, fmt.Sprintf("Buildings: %+.2f", b.BuildingRate))
+			parts = append(parts, fmt.Sprintf("Buildings: %s", textfmt.RateValue(b.BuildingRate)))
 		}
 		if b.WorkerRate != 0 {
-			parts = append(parts, fmt.Sprintf("Workers: %+.2f", b.WorkerRate))
+			parts = append(parts, fmt.Sprintf("Workers: %s", textfmt.RateValue(b.WorkerRate)))
 		}
 		if b.ResearchRate != 0 {
-			parts = append(parts, fmt.Sprintf("Research: %+.2f", b.ResearchRate))
+			parts = append(parts, fmt.Sprintf("Research: %s", textfmt.RateValue(b.ResearchRate)))
 		}
 		if b.EventRate != 0 {
-			parts = append(parts, fmt.Sprintf("Events: %+.2f", b.EventRate))
+			parts = append(parts, fmt.Sprintf("Events: %s", textfmt.RateValue(b.EventRate)))
 		}
 		if b.TradeRate != 0 {
-			parts = append(parts, fmt.Sprintf("Trade: %+.2f", b.TradeRate))
+			parts = append(parts, fmt.Sprintf("Trade: %s", textfmt.RateValue(b.TradeRate)))
 		}
 		if b.BonusRate != 0 {
-			parts = append(parts, fmt.Sprintf("Bonuses: %+.2f", b.BonusRate))
+			parts = append(parts, fmt.Sprintf("Bonuses: %s", textfmt.RateValue(b.BonusRate)))
 		}
 		if b.FoodDrain != 0 {
-			parts = append(parts, fmt.Sprintf("Drain: %+.2f", b.FoodDrain))
+			parts = append(parts, fmt.Sprintf("Drain: %s", textfmt.RateValue(b.FoodDrain)))
 		}
 		if len(parts) > 0 {
 			lines = append(lines, fmt.Sprintf("    %s", strings.Join(parts, "  ")))
@@ -1065,7 +1163,7 @@ func cmdSpeed(args []string, engine *game.GameEngine) CommandResult {
 		mult := engine.GetSpeedMultiplier()
 		maxSpeed := engine.GetMaxSpeed()
 		return CommandResult{
-			Message: fmt.Sprintf("Current speed: [cyan]%.1fx[-] (max: [green]%.1fx[-], +0.5x per wonder built)", mult, maxSpeed),
+			Message: fmt.Sprintf("Current speed: [cyan]%.1fx[-] (speed cap: [green]%.1fx[-]; each wonder built raises it by %sx)", mult, maxSpeed, config.FormatAmount(config.WonderSpeedCapStep)),
 			Type:    "info",
 		}
 	}
@@ -1074,18 +1172,15 @@ func cmdSpeed(args []string, engine *game.GameEngine) CommandResult {
 		return usageError("Usage: speed <1.0|1.5|2.0|...>", err)
 	}
 	if err := engine.SetSpeedMultiplier(n); err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+		return errorResult(err)
 	}
-	return CommandResult{
-		Message: fmt.Sprintf("Game speed set to %.1fx", n),
-		Type:    "success",
-	}
+	return CommandResult{Type: "success"} // the engine logs the new speed
 }
 
 func cmdSaveList() CommandResult {
 	saves, err := game.ListSaveDetails()
 	if err != nil {
-		return CommandResult{Message: fmt.Sprintf("Failed to list saves: %v", err), Type: "error"}
+		return CommandResult{Message: "Could not list saves: " + shortIOError(err) + ".", Type: "error"}
 	}
 	if len(saves) == 0 {
 		return CommandResult{Message: "No save files found.", Type: "info"}
@@ -1121,7 +1216,7 @@ func cmdSaveList() CommandResult {
 func cmdTheme(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
 		return CommandResult{
-			Message: "Usage: theme list | theme <key>. Type `theme` from the menu (or open it) for the live picker.",
+			Message: "Usage: theme list | theme <key>. Type 'theme' at the prompt for the live picker.",
 			Type:    "info",
 		}
 	}
@@ -1133,7 +1228,7 @@ func cmdTheme(args []string, engine *game.GameEngine) CommandResult {
 	t, ok := theme.ByKey(key)
 	if !ok {
 		return CommandResult{
-			Message: fmt.Sprintf("Unknown theme: %s. Valid: %s", key, strings.Join(themeKeys(), ", ")),
+			Message: fmt.Sprintf("Unknown theme '%s'. Themes: %s.", key, strings.Join(themeKeys(), ", ")),
 			Type:    "error",
 		}
 	}
@@ -1143,7 +1238,7 @@ func cmdTheme(args []string, engine *game.GameEngine) CommandResult {
 		return CommandResult{Message: themeUnavailableMsg, Type: "error"}
 	}
 	if err := theme.SetActive(t.Key); err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+		return errorResult(err)
 	}
 	theme.Restyle()
 	// Persist account-wide so a CLI switch survives saves (theming.md §6). Nil-guarded;
@@ -1152,7 +1247,8 @@ func cmdTheme(args []string, engine *game.GameEngine) CommandResult {
 	if acct := themeAccount(engine); acct != nil {
 		_ = acct.SetActiveTheme(t.Key)
 	}
-	return CommandResult{Message: fmt.Sprintf("Theme set: %s", t.Name), Type: "success"}
+	// Info, not success: the engine logs nothing for a theme switch.
+	return CommandResult{Message: fmt.Sprintf("Theme set to %s.", t.Name), Type: "info"}
 }
 
 // themeAccount returns engine's account, or nil when accountless. Mirrors the
@@ -1197,7 +1293,7 @@ func cmdThemeList(acct *game.Account) CommandResult {
 		lines = append(lines, fmt.Sprintf("%s[white]%-20s[-] [gray]%-20s[-] [dim]%-5s[-]%s",
 			marker, t.Name, t.Key, strings.ToLower(t.Variant()), note))
 	}
-	lines = append(lines, "[gray]Use `theme <key>` to switch.[-]")
+	lines = append(lines, "[gray]Switch with 'theme <key>'.[-]")
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
 
@@ -1223,33 +1319,31 @@ func cmdResearch(args []string, engine *game.GameEngine) CommandResult {
 	}
 	if subcmd == "cancel" {
 		if err := engine.CancelResearch(); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+			return errorResult(err)
 		}
-		return CommandResult{Message: "Research cancelled.", Type: "warning"}
+		return CommandResult{Type: "success"} // the engine logs the cancellation
 	}
 
 	// Support multi-word keys entered with spaces by joining all remaining args
 	// with underscores (e.g. "research bronze working" → "bronze_working").
 	techKey := strings.ToLower(strings.Join(args, "_"))
 	if err := engine.StartResearch(techKey); err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+		return errorResult(err)
 	}
-	return CommandResult{
-		Message: fmt.Sprintf("Started researching %s!", techKey),
-		Type:    "success",
-	}
+	return CommandResult{Type: "success"} // the engine logs the start
 }
 
 func cmdResearchList(engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	var lines []string
-	lines = append(lines, "[gold]Available Technologies:[-]")
+	lines = append(lines, "[gold]Available techs:[-]")
 
-	for key, ts := range state.Research.Techs {
+	for _, key := range sortedKeysOf(state.Research.Techs) {
+		ts := state.Research.Techs[key]
 		if !ts.Available {
 			continue
 		}
-		lines = append(lines, fmt.Sprintf("  [cyan]%s[-] - %s (%.0f knowledge)", key, ts.Name, ts.Cost))
+		lines = append(lines, fmt.Sprintf("  [cyan]%s[-] - %s (%s)", key, ts.Name, game.Amount(ts.Cost, "knowledge")))
 	}
 
 	if state.Research.CurrentTech != "" {
@@ -1258,7 +1352,7 @@ func cmdResearchList(engine *game.GameEngine) CommandResult {
 	}
 
 	if len(lines) == 1 {
-		lines = append(lines, "  [gray]No technologies available to research[-]")
+		lines = append(lines, "  [gray]No techs to research right now.[-]")
 	}
 
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
@@ -1282,22 +1376,15 @@ func cmdExpedition(args []string, engine *game.GameEngine) CommandResult {
 	// Reject military keys here — they belong to `campaign`.
 	if def := engine.Military.ExpeditionDefByKey(expKey); def != nil && def.Category != game.ExpeditionScouting {
 		return CommandResult{
-			Message: fmt.Sprintf("%s is a military campaign — wage it with 'campaign %s'.", def.Name, expKey),
+			Message: fmt.Sprintf("%s is a military campaign. Wage it with 'campaign %s'.", def.Name, expKey),
 			Type:    "info",
 		}
 	}
 
 	if err := engine.LaunchExpedition(expKey); err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+		return errorResult(err)
 	}
-	name := expKey
-	if def := engine.Military.ExpeditionDefByKey(expKey); def != nil {
-		name = def.Name
-	}
-	return CommandResult{
-		Message: fmt.Sprintf("Expedition launched: %s!", name),
-		Type:    "success",
-	}
+	return CommandResult{Type: "success"} // the engine logs the launch
 }
 
 // cmdCampaign handles the `campaign` command — the MILITARY surface. No args or
@@ -1317,22 +1404,15 @@ func cmdCampaign(args []string, engine *game.GameEngine) CommandResult {
 	// Reject scouting keys here — they belong to `expedition`.
 	if def := engine.Military.ExpeditionDefByKey(expKey); def != nil && def.Category != game.ExpeditionMilitary {
 		return CommandResult{
-			Message: fmt.Sprintf("%s is a scouting expedition — send it with 'expedition %s'.", def.Name, expKey),
+			Message: fmt.Sprintf("%s is a scouting expedition. Send it with 'expedition %s'.", def.Name, expKey),
 			Type:    "info",
 		}
 	}
 
 	if err := engine.LaunchExpedition(expKey); err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+		return errorResult(err)
 	}
-	name := expKey
-	if def := engine.Military.ExpeditionDefByKey(expKey); def != nil {
-		name = def.Name
-	}
-	return CommandResult{
-		Message: fmt.Sprintf("Campaign launched: %s!", name),
-		Type:    "success",
-	}
+	return CommandResult{Type: "success"} // the engine logs the launch
 }
 
 // cmdFestival handles the `festival` culture-sink command. Bare `festival`
@@ -1349,28 +1429,22 @@ func cmdFestival(args []string, engine *game.GameEngine) CommandResult {
 	case "confirm":
 		if len(args) >= 2 && strings.ToLower(args[1]) == "yes" {
 			if err := engine.DoFestival(); err != nil {
-				return CommandResult{Message: err.Error(), Type: "error"}
+				return errorResult(err)
 			}
-			st := engine.FestivalStatus()
-			state := engine.GetState()
-			return CommandResult{
-				Message: fmt.Sprintf("Festival underway! Spent %.0f culture. +%.0f%% to all production for %s.",
-					st.Cost, st.BuffPercent*100, formatTicks(st.BuffTicks, state)),
-				Type: "success",
-			}
+			return CommandResult{Type: "success"} // the engine logs the festival
 		}
 		// Show the confirm prompt with the live cost.
 		st := engine.FestivalStatus()
 		state := engine.GetState()
 		if !st.Ready {
 			return CommandResult{
-				Message: fmt.Sprintf("[yellow]Festival on cooldown[-] — %s until the next one can be held.", formatTicks(st.CooldownLeft, state)),
+				Message: fmt.Sprintf("[yellow]Festival on cooldown.[-] The next one can be held in %s.", formatTicks(st.CooldownLeft, state)),
 				Type:    "warning",
 			}
 		}
 		var lines []string
 		lines = append(lines, "[gold]Hold a Cultural Festival?[-]")
-		lines = append(lines, fmt.Sprintf("  Cost: [cyan]%.0f culture[-] (you have %.0f)", st.Cost, st.Culture))
+		lines = append(lines, fmt.Sprintf("  Cost: [cyan]%s[-] (you have %s)", game.Amount(st.Cost, "culture"), textfmt.Number(st.Culture)))
 		lines = append(lines, fmt.Sprintf("  Effect: [green]+%.0f%%[-] to all production for [cyan]%s[-].", st.BuffPercent*100, formatTicks(st.BuffTicks, state)))
 		lines = append(lines, fmt.Sprintf("  Cooldown afterward: [cyan]%s[-].", formatTicks(st.CooldownTicks, state)))
 		if st.Culture < st.Cost {
@@ -1381,7 +1455,7 @@ func cmdFestival(args []string, engine *game.GameEngine) CommandResult {
 		lines = append(lines, "  Type [cyan]festival confirm yes[-] to celebrate.")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "warning"}
 	default:
-		return CommandResult{Message: "Usage: festival [confirm yes]", Type: "error"}
+		return CommandResult{Message: subUsage("festival"), Type: "error"}
 	}
 }
 
@@ -1391,17 +1465,17 @@ func cmdFestivalStatus(engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	var lines []string
 	lines = append(lines, "[gold]Cultural Festival[-]")
-	lines = append(lines, "  Spend a lump of culture for a temporary empire-wide production boost.")
-	lines = append(lines, fmt.Sprintf("  Cost: [cyan]%.0f culture[-]  (you have %.0f)", st.Cost, st.Culture))
+	lines = append(lines, "  Spend a lump of culture to raise all production for a while.")
+	lines = append(lines, fmt.Sprintf("  Cost: [cyan]%s[-]  (you have %s)", game.Amount(st.Cost, "culture"), textfmt.Number(st.Culture)))
 	lines = append(lines, fmt.Sprintf("  Effect: [green]+%.0f%%[-] to all production for [cyan]%s[-].", st.BuffPercent*100, formatTicks(st.BuffTicks, state)))
 	if st.Ready {
 		if st.Culture >= st.Cost {
-			lines = append(lines, "  Status: [green]ready[-] — type [cyan]festival confirm yes[-].")
+			lines = append(lines, "  Status: [green]ready[-]. Type [cyan]festival confirm yes[-].")
 		} else {
 			lines = append(lines, "  Status: [yellow]not enough culture yet.[-]")
 		}
 	} else {
-		lines = append(lines, fmt.Sprintf("  Status: [yellow]on cooldown[-] — %s remaining.", formatTicks(st.CooldownLeft, state)))
+		lines = append(lines, fmt.Sprintf("  Status: [yellow]on cooldown[-], %s left.", formatTicks(st.CooldownLeft, state)))
 	}
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
@@ -1416,20 +1490,11 @@ func cmdBlackMarket(args []string, engine *game.GameEngine) CommandResult {
 	}
 	resource := strings.ToLower(args[0])
 
-	won, gain, err := engine.DoBlackMarket(resource)
-	if err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+	if _, _, err := engine.DoBlackMarket(resource); err != nil {
+		return errorResult(err)
 	}
-	if won {
-		return CommandResult{
-			Message: fmt.Sprintf("[green]The deal paid off![-] Smugglers delivered %.1f %s.", gain, resource),
-			Type:    "success",
-		}
-	}
-	return CommandResult{
-		Message: fmt.Sprintf("[red]The deal went bad.[-] The culture is gone and no %s arrived.", resource),
-		Type:    "warning",
-	}
+	// The engine logs the run, paid off or failed; no second line here.
+	return CommandResult{Type: "success"}
 }
 
 // cmdBlackMarketStatus renders the bare `blackmarket` status panel.
@@ -1441,17 +1506,17 @@ func cmdBlackMarketStatus(engine *game.GameEngine) CommandResult {
 		lines = append(lines, "  [gray]Smuggling networks open in the Colonial Age.[-]")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
-	lines = append(lines, "  Spend culture on a high-risk smuggling deal for a chance at a big resource haul.")
-	lines = append(lines, fmt.Sprintf("  Cost: [cyan]%.0f culture[-] per deal  (you have %.0f)", st.Cost, st.Culture))
-	lines = append(lines, fmt.Sprintf("  Odds: [green]%.0f%%[-] payout at [green]%.1fx[-] value, else the culture is lost.", st.WinChance*100, st.WinMult))
+	lines = append(lines, "  Spend culture on a smuggling run: a gamble on a big haul of one resource.")
+	lines = append(lines, fmt.Sprintf("  Cost: [cyan]%s[-] per run  (you have %s)", game.Amount(st.Cost, "culture"), textfmt.Number(st.Culture)))
+	lines = append(lines, fmt.Sprintf("  Odds: [green]%.0f%%[-] chance of a haul worth [green]%.1fx[-] the culture; otherwise the culture is lost.", st.WinChance*100, st.WinMult))
 	if st.Ready {
 		if st.Culture >= st.Cost {
-			lines = append(lines, "  Status: [green]ready[-] — type [cyan]blackmarket <resource>[-] (e.g. blackmarket gold).")
+			lines = append(lines, "  Status: [green]ready[-]. Type [cyan]blackmarket <resource>[-] (for example, blackmarket gold).")
 		} else {
 			lines = append(lines, "  Status: [yellow]not enough culture yet.[-]")
 		}
 	} else {
-		lines = append(lines, fmt.Sprintf("  Status: [yellow]lying low[-] — %s until the next deal.", formatTicks(st.CooldownLeft, engine.GetState())))
+		lines = append(lines, fmt.Sprintf("  Status: [yellow]lying low[-]. The next run is possible in %s.", formatTicks(st.CooldownLeft, engine.GetState())))
 	}
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
@@ -1467,7 +1532,7 @@ func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
 		// Require "prestige confirm yes" to actually execute
 		if len(args) >= 2 && strings.ToLower(args[1]) == "yes" {
 			if err := engine.DoPrestige(); err != nil {
-				return CommandResult{Message: err.Error(), Type: "error"}
+				return errorResult(err)
 			}
 			if engine.GetState().LastPassage.Pending {
 				return CommandResult{
@@ -1476,18 +1541,15 @@ func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
 					OpenCatastrophe: true,
 				}
 			}
-			return CommandResult{
-				Message: "Prestige complete! Your empire has been reset with permanent bonuses.",
-				Type:    "success",
-			}
+			return CommandResult{Type: "success"} // the engine logs the prestige
 		}
 		// Show warning
 		state := engine.GetState()
 		p := state.Prestige
 		var lines []string
-		lines = append(lines, "[yellow]⚠ PRESTIGE WARNING ⚠[-]")
+		lines = append(lines, "[yellow]⚠ Prestige warning[-]")
 		lines = append(lines, fmt.Sprintf("  You will earn [cyan]%d[-] prestige points.", p.PendingPoints))
-		lines = append(lines, "  [red]ALL progress will be reset:[-] resources, buildings, workers, research, military.")
+		lines = append(lines, "  [red]All progress is reset:[-] resources, buildings, workers, research and military.")
 		lines = append(lines, "  Only prestige points and upgrades are kept.")
 		lines = append(lines, lastPassageWarningLines(state)...)
 		lines = append(lines, "")
@@ -1497,18 +1559,15 @@ func cmdPrestige(args []string, engine *game.GameEngine) CommandResult {
 		return cmdPrestigeShop(engine)
 	case "buy":
 		if len(args) < 2 {
-			return CommandResult{Message: "Usage: prestige buy <upgrade_key>", Type: "error"}
+			return CommandResult{Message: usageFor("prestige buy"), Type: "error"}
 		}
 		key := strings.ToLower(strings.Join(args[1:], "_"))
 		if err := engine.BuyPrestigeUpgrade(key); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+			return errorResult(err)
 		}
-		return CommandResult{
-			Message: fmt.Sprintf("Purchased prestige upgrade: %s!", key),
-			Type:    "success",
-		}
+		return CommandResult{Type: "success"} // the engine logs the purchase
 	default:
-		return CommandResult{Message: "Usage: prestige [confirm|shop|buy <key>]", Type: "error"}
+		return CommandResult{Message: subUsage("prestige"), Type: "error"}
 	}
 }
 
@@ -1534,11 +1593,11 @@ func cmdPrestigeStatus(engine *game.GameEngine) CommandResult {
 		lines = append(lines, "\n  [red]☄ The Last Passage has come. Prestige waits for your answer.[-]")
 		lines = append(lines, "  Type [cyan]catastrophe[-] to choose Endure or Succumb.")
 	case p.CanPrestige:
-		lines = append(lines, fmt.Sprintf("\n  [green]You can prestige now for %d points![-]", p.PendingPoints))
+		lines = append(lines, fmt.Sprintf("\n  [green]You can prestige now for %s.[-]", textfmt.Count(p.PendingPoints, "point", "points")))
 		lines = append(lines, lastPassageStatusLines(state)...)
 		lines = append(lines, "  Type [cyan]prestige confirm[-] to reset with bonuses.")
 	default:
-		lines = append(lines, fmt.Sprintf("\n  [yellow]Reach the Modern Age to prestige (would earn %d pts)[-]", p.PendingPoints))
+		lines = append(lines, fmt.Sprintf("\n  [yellow]Reach the %s to prestige (it would earn %s now).[-]", game.AgeName(game.PrestigeMinAge), textfmt.Count(p.PendingPoints, "point", "points")))
 	}
 
 	lines = append(lines, "\n  Type [cyan]prestige shop[-] to view upgrades.")
@@ -1550,7 +1609,7 @@ func cmdPrestigeShop(engine *game.GameEngine) CommandResult {
 	p := state.Prestige
 	var lines []string
 
-	lines = append(lines, fmt.Sprintf("[gold]Prestige Shop[-] (available: [cyan]%d[-] pts)", p.Available))
+	lines = append(lines, fmt.Sprintf("[gold]Prestige shop[-] (you have [cyan]%s[-])", textfmt.Count(p.Available, "point", "points")))
 	lines = append(lines, "")
 
 	for _, key := range []string{
@@ -1562,16 +1621,16 @@ func cmdPrestigeShop(engine *game.GameEngine) CommandResult {
 		if !ok {
 			continue
 		}
-		tierStr := fmt.Sprintf("%d/%d", u.Tier, u.MaxTier)
-		costStr := "[gray]MAXED[-]"
+		tierStr := fmt.Sprintf("tier %d/%d", u.Tier, u.MaxTier)
+		costStr := "[gray]maxed[-]"
 		if u.NextCost > 0 {
-			costStr = fmt.Sprintf("[cyan]%d pts[-]", u.NextCost)
+			costStr = "next: [cyan]" + textfmt.Count(u.NextCost, "point", "points") + "[-]"
 		}
-		lines = append(lines, fmt.Sprintf("  [cyan]%s[-] [%s] %s - %s (Next: %s)",
+		lines = append(lines, fmt.Sprintf("  [cyan]%s[-] (%s) %s - %s (%s)",
 			key, tierStr, u.Name, u.Description, costStr))
 	}
 
-	lines = append(lines, "\n  Type [cyan]prestige buy <key>[-] to purchase.")
+	lines = append(lines, "\n  Type [cyan]prestige buy <upgrade>[-] to buy one.")
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
 
@@ -1658,7 +1717,7 @@ func appendExpeditionGroup(lines *[]string, label string, exps []game.Expedition
 		reqs := strings.Join(reqParts, ", ")
 		line := fmt.Sprintf("  %s [cyan]%s[-] - %s (%s)", canStr, exp.Key, exp.Name, reqs)
 		if !exp.CanLaunch && exp.LaunchBlockReason != "" {
-			line += fmt.Sprintf(" [red]— %s[-]", exp.LaunchBlockReason)
+			line += fmt.Sprintf(" [red](%s)[-]", strings.TrimRight(exp.LaunchBlockReason, "."))
 		}
 		*lines = append(*lines, line)
 	}
@@ -1681,43 +1740,48 @@ func cmdTrade(args []string, engine *game.GameEngine) CommandResult {
 		return cmdBlackMarket(args[1:], engine)
 	}
 
-	// Exchange: trade <from> <to> <amount>
+	// Market trade: trade <give> <get> <amount>, where amount is how much of
+	// give to sell.
 	if len(args) < 3 {
-		return CommandResult{Message: "Usage: trade <from> <to> <amount> or trade list / trade route list", Type: "error"}
+		return CommandResult{Message: usageFor("trade") + ". Or 'trade list' for market rates, 'trade route list' for routes.", Type: "error"}
 	}
-	from := strings.ToLower(args[0])
-	to := strings.ToLower(args[1])
+	give := strings.ToLower(args[0])
+	get := strings.ToLower(args[1])
 	amount, err := parseAmount(args[2])
 	if err != nil {
-		return usageError("Usage: trade <from> <to> <amount>", err)
+		return usageError(usageFor("trade"), err)
 	}
 
-	got, err := engine.ExchangeResources(from, to, amount)
-	if err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+	if _, err := engine.ExchangeResources(give, get, amount); err != nil {
+		return errorResult(err)
 	}
-	return CommandResult{
-		Message: fmt.Sprintf("Exchanged %.0f %s → %.1f %s", amount, from, got, to),
-		Type:    "success",
-	}
+	return CommandResult{Type: "success"} // the engine logs both sides of the trade
 }
 
+// cmdTradeList is `trade list`: the market rate of every pair that trades
+// this age, as "food → gold: 0.25 gold per food". The rates are listed with
+// or without a trade building; trading itself needs one.
 func cmdTradeList(engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	trade := state.Trade
 	var lines []string
-	lines = append(lines, "[gold]Exchange Rates:[-]")
-
+	lines = append(lines, "[gold]Market rates:[-]")
+	if trade.TradeBuildings == 0 {
+		lines = append(lines, "  [yellow]You need a Market to trade.[-]")
+	}
 	if len(trade.ExchangeRates) == 0 {
-		lines = append(lines, "  [gray]No exchange rates available (build a market first)[-]")
-	} else {
-		for _, info := range trade.ExchangeRates {
-			pressureStr := ""
-			if info.Pressure > 0.05 {
-				pressureStr = fmt.Sprintf(" [red]↓%.0f%%[-]", info.Pressure*30)
-			}
-			lines = append(lines, fmt.Sprintf("  [cyan]%s → %s[-]: %.2f%s", info.From, info.To, info.Rate, pressureStr))
+		lines = append(lines, "  [gray]Nothing trades at the market this age.[-]")
+	}
+	for _, key := range sortedKeysOf(trade.ExchangeRates) {
+		info := trade.ExchangeRates[key]
+		line := fmt.Sprintf("  [cyan]%s → %s[-]: %s %s per %s", info.From, info.To,
+			strings.TrimPrefix(textfmt.RateValue(info.Rate), "+"), game.ResourceName(info.To), game.ResourceName(info.From))
+		if info.Pressure > 0.05 {
+			// The market takes 30% off the rate at full supply pressure, and
+			// never more than half.
+			line += fmt.Sprintf(" (%s lower after recent sales)", textfmt.Percent(math.Min(info.Pressure*0.3, 0.5)))
 		}
+		lines = append(lines, line)
 	}
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
@@ -1728,24 +1792,25 @@ func cmdTradeRoute(args []string, engine *game.GameEngine) CommandResult {
 	}
 	subcmd := strings.ToLower(args[0])
 
+	const usage = "Usage: trade route start|stop <route>"
 	if len(args) < 2 {
-		return CommandResult{Message: "Usage: trade route start|stop <route_key>", Type: "error"}
+		return CommandResult{Message: usage, Type: "error"}
 	}
 	routeKey := strings.ToLower(strings.Join(args[1:], "_"))
 
 	switch subcmd {
 	case "start":
 		if err := engine.StartTradeRoute(routeKey); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+			return errorResult(err)
 		}
-		return CommandResult{Message: fmt.Sprintf("Trade route started: %s", routeKey), Type: "success"}
+		return CommandResult{Type: "success"} // the engine logs the route
 	case "stop":
 		if err := engine.StopTradeRoute(routeKey); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+			return errorResult(err)
 		}
-		return CommandResult{Message: fmt.Sprintf("Trade route stopped: %s", routeKey), Type: "success"}
+		return CommandResult{Type: "success"}
 	default:
-		return CommandResult{Message: "Usage: trade route start|stop <route_key>", Type: "error"}
+		return CommandResult{Message: usage, Type: "error"}
 	}
 }
 
@@ -1753,13 +1818,13 @@ func cmdTradeRouteList(engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	trade := state.Trade
 	var lines []string
-	lines = append(lines, "[gold]Trade Routes:[-]")
+	lines = append(lines, "[gold]Trade routes:[-]")
 
 	if len(trade.ActiveRoutes) > 0 {
 		lines = append(lines, "\n[green]Active:[-]")
 		for _, route := range trade.ActiveRoutes {
-			lines = append(lines, fmt.Sprintf("  [cyan]%s[-] (%s) - %s left, %d cycles done",
-				route.Name, route.Key, formatTicks(route.TicksLeft, state), route.CyclesDone))
+			lines = append(lines, fmt.Sprintf("  [cyan]%s[-] (%s): %s left, %s done",
+				route.Name, route.Key, formatTicks(route.TicksLeft, state), textfmt.Count(route.CyclesDone, "cycle", "cycles")))
 		}
 	}
 
@@ -1776,117 +1841,73 @@ func cmdTradeRouteList(engine *game.GameEngine) CommandResult {
 	}
 
 	if len(trade.ActiveRoutes) == 0 && len(trade.AvailableRoutes) == 0 {
-		lines = append(lines, "  [gray]No trade routes available yet[-]")
+		lines = append(lines, "  [gray]No trade routes available yet.[-]")
 	}
 
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
 
+// civKey reads a civilization typed as one or more words, joined with "_"
+// the way the keys are: `diplomacy ally merchant guild` is merchant_guild.
+func civKey(words []string) string {
+	return strings.ToLower(strings.Join(words, "_"))
+}
+
 func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
-		return cmdDiplomacyStatus(engine)
+		return CommandResult{OverlayName: "factions"}
 	}
 	subcmd := strings.ToLower(args[0])
 
+	// The status changes, gift, tribute and raid each log their own line in
+	// the engine (with the civilization's name), so the replies carry no text.
+	var err error
 	switch subcmd {
-	case "ally":
+	case "ally", "rival", "embargo", "neutral", "gift", "tribute", "raid":
 		if len(args) < 2 {
-			return CommandResult{Message: "Usage: diplomacy ally <faction_key>", Type: "error"}
+			return CommandResult{Message: usageFor("diplomacy " + subcmd), Type: "error"}
 		}
-		factionKey := strings.ToLower(strings.Join(args[1:], "_"))
-		if err := engine.SetDiplomaticStatus(factionKey, "allied"); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+		civ := civKey(args[1:])
+		switch subcmd {
+		case "ally":
+			err = engine.SetDiplomaticStatus(civ, "allied")
+		case "rival":
+			err = engine.SetDiplomaticStatus(civ, "rival")
+		case "embargo":
+			err = engine.SetDiplomaticStatus(civ, "embargo")
+		case "neutral":
+			err = engine.SetDiplomaticStatus(civ, "neutral")
+		case "gift":
+			err = engine.SendGift(civ)
+		case "tribute":
+			err = engine.SendTribute(civ)
+		case "raid":
+			err = engine.RaidCivRoute(civ)
 		}
-		return CommandResult{Message: fmt.Sprintf("Allied with %s!", factionKey), Type: "success"}
-
-	case "rival":
-		if len(args) < 2 {
-			return CommandResult{Message: "Usage: diplomacy rival <faction_key>", Type: "error"}
+		if err != nil {
+			return errorResult(err)
 		}
-		factionKey := strings.ToLower(strings.Join(args[1:], "_"))
-		if err := engine.SetDiplomaticStatus(factionKey, "rival"); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
-		}
-		return CommandResult{Message: fmt.Sprintf("Declared rivalry with %s!", factionKey), Type: "warning"}
-
-	case "embargo":
-		if len(args) < 2 {
-			return CommandResult{Message: "Usage: diplomacy embargo <faction_key>", Type: "error"}
-		}
-		factionKey := strings.ToLower(strings.Join(args[1:], "_"))
-		if err := engine.SetDiplomaticStatus(factionKey, "embargo"); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
-		}
-		return CommandResult{Message: fmt.Sprintf("Embargoed %s!", factionKey), Type: "warning"}
-
-	case "gift":
-		if len(args) < 2 {
-			return CommandResult{Message: "Usage: diplomacy gift <faction_key>", Type: "error"}
-		}
-		factionKey := strings.ToLower(strings.Join(args[1:], "_"))
-		if err := engine.SendGift(factionKey); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
-		}
-		return CommandResult{Message: fmt.Sprintf("Sent gift to %s (+15 opinion)", factionKey), Type: "success"}
-
-	case "neutral":
-		if len(args) < 2 {
-			return CommandResult{Message: "Usage: diplomacy neutral <faction_key>", Type: "error"}
-		}
-		factionKey := strings.ToLower(strings.Join(args[1:], "_"))
-		if err := engine.SetDiplomaticStatus(factionKey, "neutral"); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
-		}
-		return CommandResult{Message: fmt.Sprintf("Reset %s to neutral", factionKey), Type: "info"}
-
-	case "tribute":
-		if len(args) < 2 {
-			return CommandResult{Message: "Usage: diplomacy tribute <civ_key>", Type: "error"}
-		}
-		factionKey := strings.ToLower(strings.Join(args[1:], "_"))
-		if err := engine.SendTribute(factionKey); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
-		}
-		return CommandResult{Message: fmt.Sprintf("Tribute paid to %s — peace restored.", factionKey), Type: "success"}
-
-	case "raid":
-		if len(args) < 2 {
-			return CommandResult{Message: "Usage: diplomacy raid <civ_key>", Type: "error"}
-		}
-		factionKey := strings.ToLower(strings.Join(args[1:], "_"))
-		if err := engine.RaidCivRoute(factionKey); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
-		}
-		return CommandResult{Message: fmt.Sprintf("Raided %s's trade route.", factionKey), Type: "warning"}
+		return CommandResult{Type: "success"}
 
 	case "deals":
-		if len(args) > 2 {
-			return CommandResult{Message: "Usage: diplomacy deals [civ_key]", Type: "error"}
-		}
-		civ := ""
-		if len(args) == 2 {
-			civ = strings.ToLower(args[1])
-		}
-		return cmdDiplomacyDeals(civ, engine)
+		return cmdDiplomacyDeals(civKey(args[1:]), engine)
 
 	case "accept":
-		const usage = "Usage: diplomacy accept <civ_key> <n>"
-		if len(args) != 3 {
+		usage := usageFor("diplomacy accept")
+		if len(args) < 3 {
 			return CommandResult{Message: usage, Type: "error"}
 		}
-		n, err := parseCount(args[2])
+		n, err := parseCount(args[len(args)-1])
 		if err != nil {
 			return usageError(usage, err)
 		}
-		d, err := engine.AcceptFactionDeal(strings.ToLower(args[1]), n)
-		if err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+		if _, err := engine.AcceptFactionDeal(civKey(args[1:len(args)-1]), n); err != nil {
+			return errorResult(err)
 		}
-		terms := game.DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, FormatNumber)
-		return CommandResult{Message: "Deal done (" + terms + ").", Type: "success"}
+		return CommandResult{Type: "success"} // the engine logs the deal and its terms
 
 	default:
-		return CommandResult{Message: "Usage: diplomacy [ally|rival|embargo|gift|neutral|tribute|raid] <civ_key> | deals [civ_key] | accept <civ_key> <n>", Type: "error"}
+		return CommandResult{Message: subUsage("diplomacy"), Type: "error"}
 	}
 }
 
@@ -1902,7 +1923,7 @@ func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 		}
 		if !ok || !f.Discovered {
 			if civ != "" {
-				return CommandResult{Message: fmt.Sprintf("%s has not been discovered yet", def.Name), Type: "error"}
+				return CommandResult{Message: fmt.Sprintf("You have not met the %s yet. Scouting expeditions make first contact.", def.Name), Type: "error"}
 			}
 			continue
 		}
@@ -1913,7 +1934,7 @@ func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 	}
 	if len(lines) == 0 {
 		if civ != "" {
-			return CommandResult{Message: "unknown civilization: " + civ, Type: "error"}
+			return CommandResult{Message: fmt.Sprintf("No civilization called '%s'. Type 'diplomacy deals' to see the ones you have met.", civ), Type: "error"}
 		}
 		return CommandResult{Message: "You have not met anyone to trade with yet. Scouting expeditions make first contact.", Type: "info"}
 	}
@@ -1921,55 +1942,28 @@ func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 }
 
-func cmdDiplomacyStatus(engine *game.GameEngine) CommandResult {
-	state := engine.GetState()
-	dip := state.Diplomacy
-	var lines []string
-	lines = append(lines, "[gold]Faction Status:[-]")
-
-	if len(dip.Factions) == 0 {
-		lines = append(lines, "  [gray]No factions discovered yet (reach Colonial Age)[-]")
-		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
-	}
-
-	for key, f := range dip.Factions {
-		if !f.Discovered {
-			lines = append(lines, fmt.Sprintf("  [gray]%s [Undiscovered][-]", f.Name))
-			continue
-		}
-		bonusStr := ""
-		if f.Status == "allied" && f.TradeBonus > 0 {
-			bonusStr = fmt.Sprintf("  [green]+%.0f%% %s[-]", f.TradeBonus*100, f.Specialty)
-		}
-		lines = append(lines, fmt.Sprintf("  [cyan]%s[-] (%s) [%s]  Opinion: %d%s  Trades: %d",
-			f.Name, key, f.Status, f.Opinion, bonusStr, f.TradeCount))
-	}
-
-	return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
-}
-
 func cmdSell(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
-		return CommandResult{Message: "Usage: sell <building> [count]", Type: "error"}
+		return CommandResult{Message: usageFor("sell"), Type: "error"}
 	}
 	building := strings.ToLower(args[0])
 	count := 1
 	if len(args) >= 2 {
 		n, err := parseCount(args[1])
 		if err != nil {
-			return usageError("Usage: sell <building> [count]", err)
+			return usageError(usageFor("sell"), err)
 		}
 		count = n
 	}
 	if err := engine.SellBuilding(building, count); err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+		return errorResult(err)
 	}
 	return CommandResult{Message: "", Type: "success"}
 }
 
 func cmdDismiss(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) < 1 {
-		return CommandResult{Message: "Usage: dismiss <building> [count|all]", Type: "error"}
+		return CommandResult{Message: usageFor("dismiss"), Type: "error"}
 	}
 	building := strings.ToLower(args[0])
 	all := false
@@ -1980,13 +1974,13 @@ func cmdDismiss(args []string, engine *game.GameEngine) CommandResult {
 		} else {
 			n, err := parseCount(args[1])
 			if err != nil {
-				return usageError("Usage: dismiss <building> [count|all]", err)
+				return usageError(usageFor("dismiss"), err)
 			}
 			count = n
 		}
 	}
 	if err := engine.DismissWorkers(building, count, all); err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+		return errorResult(err)
 	}
 	return CommandResult{Message: "", Type: "success"}
 }
@@ -1994,7 +1988,7 @@ func cmdDismiss(args []string, engine *game.GameEngine) CommandResult {
 func cmdCatastrophe(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) > 0 {
 		return CommandResult{
-			Message: "Usage: catastrophe — reopen a pending catastrophe (or Last Passage) choice, or show the odds at the next passage",
+			Message: "Usage: catastrophe (reopens a pending catastrophe or Last Passage choice, or shows the odds at the next passage)",
 			Type:    "info",
 		}
 	}
@@ -2077,12 +2071,12 @@ func cmdHarbinger(args []string, engine *game.GameEngine) CommandResult {
 		err = engine.HarbingerInvite()
 	default:
 		return CommandResult{
-			Message: "Usage: harbinger — open the Harbinger panel; harbinger appease | brace | invite — answer it directly",
+			Message: "Usage: harbinger (opens the Harbinger panel), or harbinger appease|brace|invite (answers it directly)",
 			Type:    "info",
 		}
 	}
 	if err != nil {
-		return CommandResult{Message: err.Error(), Type: "error"}
+		return errorResult(err)
 	}
 	// The engine logs the action itself.
 	return CommandResult{Type: "success"}
@@ -2134,9 +2128,6 @@ func outlookRiskText(state game.GameState) string {
 	return risk
 }
 
-// planUsage lists the plan subcommands.
-const planUsage = "Usage: plan [build <building> [count] | research <tech> | trade <from> <to> [amount] | deal <civ> <n> | advance | list | remove <n> | up <n> | down <n> | clear]"
-
 // cmdPlan is the `plan` command. Bare `plan` opens the Plan panel.
 func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) == 0 {
@@ -2147,34 +2138,33 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 	switch sub {
 	case "build":
 		if len(rest) == 0 || len(rest) > 2 {
-			return CommandResult{Message: "Usage: plan build <building> [count]", Type: "error"}
+			return CommandResult{Message: usageFor("plan build"), Type: "error"}
 		}
 		key := strings.ToLower(rest[0])
 		count := 1
 		if len(rest) == 2 {
 			n, err := parseCount(rest[1])
 			if err != nil {
-				return usageError("Usage: plan build <building> [count]", err)
+				return usageError(usageFor("plan build"), err)
 			}
 			count = n
 		}
 		added, err := engine.PlanAddBuild(key, count)
 		if err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+			return errorResult(err)
 		}
-		name := config.BuildingByKey()[key].Name
-		msg := fmt.Sprintf("Planned %d × %s. It starts as soon as the resources are there.", added, name)
+		msg := fmt.Sprintf("Planned %s. It starts as soon as the resources are there.", game.BuildingCount(added, key))
 		if added < count {
-			msg = fmt.Sprintf("Planned %d × %s (the most its limit allows). It starts as soon as the resources are there.", added, name)
+			msg = fmt.Sprintf("Planned %s (the most its limit allows). It starts as soon as the resources are there.", game.BuildingCount(added, key))
 		}
 		return CommandResult{Message: msg, Type: "info"}
 	case "research", "res":
-		if len(rest) != 1 {
-			return CommandResult{Message: "Usage: plan research <tech>", Type: "error"}
+		if len(rest) == 0 {
+			return CommandResult{Message: usageFor("plan research"), Type: "error"}
 		}
-		key := strings.ToLower(rest[0])
+		key := strings.ToLower(strings.Join(rest, "_"))
 		if err := engine.PlanAddResearch(key); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+			return errorResult(err)
 		}
 		return CommandResult{Message: fmt.Sprintf("Planned research: %s. Techs start one at a time, in plan order.", config.TechByKey()[key].Name), Type: "info"}
 	case "list":
@@ -2182,17 +2172,17 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 	case "remove", "rm":
 		n, err := planIndexArg(rest, "remove")
 		if err != nil {
-			return usageError("Usage: plan remove <n>", err)
+			return usageError(usageFor("plan remove"), err)
 		}
 		what, err := engine.PlanRemove(n)
 		if err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+			return errorResult(err)
 		}
 		return CommandResult{Message: "Removed " + what + " from the plan.", Type: "info"}
 	case "up", "down":
 		n, err := planIndexArg(rest, sub)
 		if err != nil {
-			return usageError("Usage: plan "+sub+" <n>", err)
+			return usageError(usageFor("plan "+sub), err)
 		}
 		delta := -1
 		if sub == "down" {
@@ -2200,56 +2190,59 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		}
 		to, err := engine.PlanMove(n, delta)
 		if err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+			return errorResult(err)
 		}
 		return CommandResult{Message: fmt.Sprintf("Plan item %d is now number %d.", n, to), Type: "info"}
 	case "clear":
 		n := engine.PlanClear()
-		return CommandResult{Message: fmt.Sprintf("Cleared the plan (%d items).", n), Type: "info"}
+		return CommandResult{Message: fmt.Sprintf("Cleared the plan (%s).", textfmt.Count(n, "item", "items")), Type: "info"}
 	case "trade":
+		// plan trade <give> <get> [amount]: amount is how much of get to buy.
 		if len(rest) < 2 || len(rest) > 3 {
-			return CommandResult{Message: "Usage: plan trade <from> <to> [amount]", Type: "error"}
+			return CommandResult{Message: usageFor("plan trade"), Type: "error"}
 		}
-		from, to := strings.ToLower(rest[0]), strings.ToLower(rest[1])
+		give, get := strings.ToLower(rest[0]), strings.ToLower(rest[1])
 		amount := 0.0
 		if len(rest) == 3 {
 			a, err := parseAmount(rest[2])
 			if err != nil {
-				return usageError("Usage: plan trade <from> <to> [amount]", err)
+				return usageError(usageFor("plan trade"), err)
 			}
 			amount = a
 		}
-		if err := engine.PlanAddTrade(from, to, amount); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+		if err := engine.PlanAddTrade(give, get, amount); err != nil {
+			return errorResult(err)
 		}
-		what := "keeping " + to + " topped up"
 		if amount > 0 {
-			what = "until " + FormatNumber(amount) + " " + to + " is bought"
+			return CommandResult{Message: fmt.Sprintf("Plan: buy %s with %s as it comes in.",
+				game.Amount(amount, get), game.ResourceName(give)), Type: "info"}
 		}
-		return CommandResult{Message: fmt.Sprintf("Planned: sell %s for %s as it comes in, %s.", from, to, what), Type: "info"}
+		return CommandResult{Message: fmt.Sprintf("Plan: buy %s with %s as it comes in, until you remove the item.",
+			game.ResourceName(get), game.ResourceName(give)), Type: "info"}
 	case "deal":
-		const usage = "Usage: plan deal <civ> <n>"
-		if len(rest) != 2 {
+		usage := usageFor("plan deal")
+		if len(rest) < 2 {
 			return CommandResult{Message: usage, Type: "error"}
 		}
-		n, err := parseCount(rest[1])
+		n, err := parseCount(rest[len(rest)-1])
 		if err != nil {
 			return usageError(usage, err)
 		}
-		if err := engine.PlanAddDeal(strings.ToLower(rest[0]), n); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+		civ := civKey(rest[:len(rest)-1])
+		if err := engine.PlanAddDeal(civ, n); err != nil {
+			return errorResult(err)
 		}
-		return CommandResult{Message: fmt.Sprintf("Planned: take deal %d with %s as soon as its price is there.", n, strings.ToLower(rest[0])), Type: "info"}
+		return CommandResult{Message: fmt.Sprintf("Planned: take deal %d with the %s as soon as its price is there.", n, game.CivName(civ)), Type: "info"}
 	case "advance":
 		if len(rest) != 0 {
-			return CommandResult{Message: "Usage: plan advance", Type: "error"}
+			return CommandResult{Message: usageFor("plan advance"), Type: "error"}
 		}
 		if err := engine.PlanAddAdvance(); err != nil {
-			return CommandResult{Message: err.Error(), Type: "error"}
+			return errorResult(err)
 		}
 		return CommandResult{Message: "Planned: advance as soon as the next age's requirements are met.", Type: "info"}
 	}
-	return CommandResult{Message: planUsage, Type: "error"}
+	return CommandResult{Message: subUsage("plan"), Type: "error"}
 }
 
 // planIndexArg reads the one item number a plan subcommand takes.

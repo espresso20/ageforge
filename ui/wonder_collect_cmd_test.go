@@ -37,7 +37,7 @@ func TestWonderBankCommand(t *testing.T) {
 			want: map[string]float64{"wonder bank food all": 500, "wonder bank food 100": 100, "wonder bank food max": 500, "wonder bank food": 500, "wonder collect food all": 500}},
 		{name: "some food", food: 60,
 			want: map[string]float64{"wonder bank food all": 60, "wonder bank food max": 60, "wonder bank food": 60, "wonder collect food all": 60},
-			err:  "not enough food (have: 60, need: 100)"},
+			err:  "not enough food: need 100, have 60"},
 		{name: "no food", food: 0, err: "you have no food to bank"},
 		{name: "wonder doesn't need food", age: bronze, food: 50000, err: "Stonehenge doesn't need food (it needs iron, stone, wood)"},
 		{name: "food already banked", food: 50000, err: "Sacred Grove already has all the food it needs",
@@ -61,6 +61,7 @@ func TestWonderBankCommand(t *testing.T) {
 					c.setup(t, ge)
 				}
 				before := ge.GetState()
+				logsBefore := playerLogCount(ge)
 				res := HandleCommand(form, ge)
 				after := ge.GetState()
 				key := "sacred_grove"
@@ -71,7 +72,7 @@ func TestWonderBankCommand(t *testing.T) {
 				spent := before.Resources["food"].Amount - after.Resources["food"].Amount
 				want, ok := c.want[form]
 				if !ok {
-					if res.Type != "error" || !strings.Contains(res.Message, c.err) {
+					if res.Type != "error" || !strings.Contains(strings.ToLower(res.Message), strings.ToLower(c.err)) {
 						t.Errorf("%q = %+v, want an error saying %q", form, res, c.err)
 					}
 					if gotBanked != 0 || spent != 0 {
@@ -85,8 +86,9 @@ func TestWonderBankCommand(t *testing.T) {
 				if gotBanked != want || spent != want {
 					t.Errorf("%q banked %v food and spent %v, want %v", form, gotBanked, spent, want)
 				}
-				if prefix := "Banked " + FormatNumber(want) + " food into Sacred Grove"; !strings.HasPrefix(res.Message, prefix) {
-					t.Errorf("%q = %q, want it to start %q", form, res.Message, prefix)
+				// The engine logs the deposit; the reply adds nothing to it.
+				if playerLogCount(ge) == logsBefore || res.Message != "" {
+					t.Errorf("%q = %q, want the engine to log the deposit and the reply to be empty", form, res.Message)
 				}
 			})
 		}
@@ -100,16 +102,19 @@ func TestWonderBankAllResources(t *testing.T) {
 
 	ge := newWonderTestEngine(t, "", 0)
 	res := HandleCommand("wonder bank all", ge)
-	if res.Type != "success" || !strings.HasPrefix(res.Message, "Banked 1.00K wood into Sacred Grove. Not banked: you have no food to bank.") {
+	if res.Type != "info" || res.Message != "Not banked: food (you have none)." {
 		t.Errorf("no food: %+v", res)
 	}
+	if got := ge.GetState().Buildings["sacred_grove"].WonderBank["wood"]; got != 1000 {
+		t.Errorf("wood banked = %v, want 1000", got)
+	}
 	if res := HandleCommand("wonder bank all", ge); res.Type != "error" ||
-		res.Message != "Nothing banked: you have no food to bank; Sacred Grove already has all the wood it needs." {
+		res.Message != "Nothing banked: food (you have none), wood (already has all it needs)." {
 		t.Errorf("again: %+v", res)
 	}
 	ge.Resources.LoadAmounts(map[string]float64{"food": 800})
 	res = HandleCommand("wonder bank all max", ge)
-	if res.Type != "success" || !strings.Contains(res.Message, "Banked 500 food into Sacred Grove.") || !strings.Contains(res.Message, "Bank full! Type 'build sacred_grove'") {
+	if res.Type != "success" || res.Message != "" || !ge.GetState().Buildings["sacred_grove"].WonderBankFull {
 		t.Errorf("rest of the food: %+v", res)
 	}
 	if got := ge.GetState().Resources["food"].Amount; got != 300 {
@@ -127,12 +132,12 @@ func TestWonderBankAllResources(t *testing.T) {
 func TestWonderBankRefusals(t *testing.T) {
 	defer game.SetDataDirForTest(t.TempDir())()
 	for _, c := range []struct{ cmd, want string }{
-		{"wonder bank", wonderCollectUsage},
-		{"wonder bank food 1 2", wonderCollectUsage},
+		{"wonder bank", wonderBankUsage},
+		{"wonder bank food 1 2", wonderBankUsage},
 		{"wonder bank all 100", "give an amount for one resource at a time"},
 		{"wonder bank food lots", "the amount must be a positive number"},
 		{"wonder bank food -5", "the amount must be a positive number"},
-		{"wonder bank unobtainium all", "Unknown resource: unobtainium"},
+		{"wonder bank unobtainium all", "Unknown resource 'unobtainium'."},
 		{"wonder deposit food all", `Unknown wonder command "deposit"`},
 	} {
 		ge := newWonderTestEngine(t, "", 50000)

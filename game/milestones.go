@@ -1,11 +1,11 @@
 package game
 
 import (
-	"fmt"
 	"sort"
 	"strings"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // MilestoneManager tracks milestone completion, chain progress, and the
@@ -291,7 +291,7 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 		targetOrder := params.AgeOrder[def.MinAge]
 		met := currentOrder >= targetOrder
 		progress = append(progress, MilestoneProgress{
-			Label:   fmt.Sprintf("Age: %s", def.MinAge),
+			Label:   "Age: " + AgeName(def.MinAge),
 			Current: float64(currentOrder),
 			Target:  float64(targetOrder),
 			Met:     met,
@@ -309,7 +309,7 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 		required := def.MinResources[res]
 		current := params.Resources[res]
 		progress = append(progress, MilestoneProgress{
-			Label:   res,
+			Label:   textfmt.Capitalize(ResourceName(res)),
 			Current: current,
 			Target:  required,
 			Met:     current >= required,
@@ -326,7 +326,7 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 		required := def.MinBuildings[bld]
 		current := float64(params.Buildings[bld])
 		progress = append(progress, MilestoneProgress{
-			Label:   bld,
+			Label:   BuildingName(bld),
 			Current: current,
 			Target:  float64(required),
 			Met:     int(current) >= required,
@@ -477,13 +477,9 @@ func formatRewards(effects []config.Effect) string {
 	for _, e := range effects {
 		switch e.Type {
 		case "instant_resource":
-			parts = append(parts, fmt.Sprintf("+%.0f %s", e.Value, e.Target))
+			parts = append(parts, "+"+Amount(e.Value, e.Target))
 		case "permanent_bonus":
-			if e.Value < 0 {
-				parts = append(parts, fmt.Sprintf("%.0f%% %s", e.Value*100, e.Target))
-			} else {
-				parts = append(parts, fmt.Sprintf("+%.0f%% %s", e.Value*100, e.Target))
-			}
+			parts = append(parts, textfmt.SignedPercent(e.Value)+" "+EffectTargetName(e.Target))
 		}
 	}
 	return strings.Join(parts, ", ")

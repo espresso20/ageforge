@@ -106,6 +106,45 @@ func signedAmount(v float64) string {
 	return "+" + config.FormatAmount(v)
 }
 
+// TestEpochAndAwakeningLogsDoNotRepeatText: the flavor text states each
+// effect, so a timed-effect or permanent-bonus event logs its headline and
+// nothing else. Resource Drought is the exception: its text cannot name the
+// resource.
+func TestEpochAndAwakeningLogsDoNotRepeatText(t *testing.T) {
+	byKey := map[string]config.EpochEventDef{}
+	for _, ev := range append(config.GoodEpochEvents(), config.ChallengingEpochEvents()...) {
+		byKey[ev.Key] = ev
+	}
+	for _, key := range []string{"age_of_plenty", "ancient_cache", "trade_winds", "worker_innovation", "peaceful_century", "epoch_blessing", "the_famine"} {
+		ge := NewGameEngine()
+		before := len(ge.log)
+		if ev := byKey[key]; strings.HasPrefix(ev.Type, "good") {
+			ge.applyGoodEpochEvent(ev)
+		} else {
+			ge.applyChallengingEpochEvent(ev, "stone_era")
+		}
+		if got := len(ge.log) - before; got != 1 {
+			t.Errorf("%s logged %d lines, want only the headline: %v", key, got, ge.log[before:])
+		}
+	}
+
+	ge := NewGameEngine()
+	before := len(ge.log)
+	ge.applyChallengingEpochEvent(byKey["resource_drought"], "stone_era")
+	if n := len(ge.log) - before; n != 2 || !strings.Contains(ge.log[len(ge.log)-1].Message, "/tick for ") {
+		t.Errorf("resource_drought should add one line naming the resource; got %v", ge.log[before:])
+	}
+
+	for _, def := range config.Awakenings() {
+		ge := NewGameEngine()
+		before := len(ge.log)
+		ge.fireAwakening(def.TriggerAge)
+		if got := len(ge.log) - before; got != 1 {
+			t.Errorf("awakening %s logged %d lines, want 1: %v", def.Key, got, ge.log[before:])
+		}
+	}
+}
+
 // TestWonderSpeedCapStepMatchesConfig: wonder descriptions say each wonder
 // raises the speed cap by config.WonderSpeedCapStep; MaxSpeedForAge must
 // agree.
