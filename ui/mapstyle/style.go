@@ -1,0 +1,122 @@
+// Package mapstyle is the contract between the map model and the map
+// styles. There is one model (package mapmodel) and several thin renderers
+// on top of it; a style draws a Frame, handles its own keys and says what
+// its cursor is on, in the command vocabulary. The Registry lists the
+// styles a player can pick (a "map style" setting), so a new style plugs in
+// with one entry.
+package mapstyle
+
+import (
+	"github.com/gdamore/tcell/v2"
+
+	"github.com/espresso20/ageforge/mapmodel"
+)
+
+// Rect is a screen rectangle.
+type Rect struct{ X, Y, W, H int }
+
+// Frame is what a style draws: the model, the animation frame and the
+// glyph tier. Everything a frame shows is a function of these, so the same
+// frame draws the same cells.
+type Frame struct {
+	Model *mapmodel.Model
+	// Anim counts animation frames (the maps animate at about 8 per
+	// second, independent of the game tick). Ticking life keys off it.
+	Anim int
+	Tier mapmodel.GlyphTier
+}
+
+// Inspection is what a style's cursor is on.
+type Inspection struct {
+	Title string   // "Guildhall ×2"
+	Lines []string // details, one per line
+	// Command is a whole command the player can type for it ("build
+	// guildhall", "diplomacy gift ironhold_clans"), "" when none fits.
+	Command string
+}
+
+// Style is one way of drawing the map.
+type Style interface {
+	// Name is the registry key ("roguelike").
+	Name() string
+	// Draw renders the full view into r, writing every cell of r and
+	// nothing outside it.
+	Draw(scr tcell.Screen, r Rect, f Frame)
+	// DrawCompact renders the glanceable mini view (a 40x15 sidebar panel)
+	// into r, with the same guarantees.
+	DrawCompact(scr tcell.Screen, r Rect, f Frame)
+	// HandleKey applies a key to the view (cursor, zoom, toggles) and
+	// reports whether it used it.
+	HandleKey(ev *tcell.EventKey, f Frame) bool
+	// Inspect reports what the cursor is on; ok is false when the style has
+	// no cursor out.
+	Inspect(f Frame) (in Inspection, ok bool)
+	// SetOption turns a shared option on or off. Styles ignore options they
+	// do not support.
+	SetOption(o Option, on bool)
+}
+
+// Option is a view option several styles share, so a setting or a key
+// binding can drive any of them the same way.
+type Option uint8
+
+const (
+	// OptFlows overlays the flows summary: full stores, understaffed
+	// buildings, idle workers.
+	OptFlows Option = iota
+	// OptInspect puts the cursor out.
+	OptInspect
+	// OptLegend shows the legend when there is room.
+	OptLegend
+	// OptChanges highlights what is new since the last visit.
+	OptChanges
+)
+
+// Entry describes one style for the registry.
+type Entry struct {
+	Name  string // key for "map style <name>"
+	Title string // display name
+	Blurb string // one line for a picker
+	New   func() Style
+}
+
+// Registry is the set of styles a player can pick from. It holds no global
+// state: build one with NewRegistry (ui/mapstyle/all has the standard set).
+type Registry struct {
+	entries []Entry
+}
+
+// NewRegistry makes a registry; the first entry is the default.
+func NewRegistry(entries ...Entry) *Registry {
+	return &Registry{entries: append([]Entry(nil), entries...)}
+}
+
+// Entries lists the styles in order.
+func (r *Registry) Entries() []Entry { return append([]Entry(nil), r.entries...) }
+
+// Names lists the style keys in order.
+func (r *Registry) Names() []string {
+	out := make([]string, len(r.entries))
+	for i, e := range r.entries {
+		out[i] = e.Name
+	}
+	return out
+}
+
+// Default is the first style's key.
+func (r *Registry) Default() string {
+	if len(r.entries) == 0 {
+		return ""
+	}
+	return r.entries[0].Name
+}
+
+// New makes a fresh view of the named style.
+func (r *Registry) New(name string) (Style, bool) {
+	for _, e := range r.entries {
+		if e.Name == name {
+			return e.New(), true
+		}
+	}
+	return nil, false
+}

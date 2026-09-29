@@ -64,6 +64,9 @@ type GameState struct {
 	EpochEventHistory     []EpochEventRecord
 	// Harbinger is the live harbinger, nil when none is present (harbinger.go).
 	Harbinger *HarbingerView
+	// SessionStart is the state the loaded save left, captured before
+	// offline catch-up (session_mark.go); nil when the game was not loaded.
+	SessionStart *SessionMark `json:",omitempty"`
 	// HarbingerHistory lists resolved harbingers this run, oldest first.
 	HarbingerHistory []HarbingerRecord
 	// Phase 9: civilization history + legacy bonuses
