@@ -217,7 +217,7 @@ func TestLastPassageSparedCompletesPrestige(t *testing.T) {
 			ge.Prestige.GetLevel(), ge.Prestige.Snapshot().Available, full, ge.age)
 	}
 	verdict := indexOfLog(ge, "you were spared")
-	done := indexOfLog(ge, "Prestige complete!")
+	done := indexOfLog(ge, "Prestige complete.")
 	if verdict < 0 || done < 0 || verdict > done {
 		t.Fatalf("verdict %d, prestige line %d:\n%s", verdict, done, strings.Join(logMessages(ge), "\n"))
 	}
@@ -280,7 +280,7 @@ func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 	if snap.Level != 3 || snap.Available != 4 || snap.TotalEarned != 10 || !ge.cosmicLegacy || ge.age != "primitive_age" {
 		t.Fatalf("after Succumb: %+v legacy %v age %s", snap, ge.cosmicLegacy, ge.age)
 	}
-	if indexOfLog(ge, "Cosmic Legacy: production +10%") < 0 || indexOfLog(ge, "SUCCUMB: The Last Passage") < 0 {
+	if indexOfLog(ge, "Cosmic Legacy: all production +10%") < 0 || indexOfLog(ge, "SUCCUMB: The Last Passage") < 0 {
 		t.Errorf("log:\n%s", strings.Join(logMessages(ge), "\n"))
 	}
 	if _, s := countCatastropheOutcomes(ge.catastropheHistory); s != 1 {
@@ -515,7 +515,7 @@ func TestRunEndingLineAtEveryPrestige(t *testing.T) {
 		if ge.pendingLastPassage {
 			t.Fatalf("%s: rolled a Last Passage on 0.99", age)
 		}
-		done := indexOfLog(ge, "Prestige complete!")
+		done := indexOfLog(ge, "Prestige complete.")
 		if done < 1 {
 			t.Fatalf("%s: no line before the prestige summary:\n%s", age, strings.Join(logMessages(ge), "\n"))
 		}

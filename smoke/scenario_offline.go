@@ -287,7 +287,7 @@ func checkOffline(o offlineRun, fail func(check, format string, args ...interfac
 	}
 	welcome := false
 	for _, l := range o.post.Log {
-		welcome = welcome || strings.HasPrefix(l.Message, "Welcome back!")
+		welcome = welcome || strings.HasPrefix(l.Message, "Welcome back.")
 	}
 	if !welcome {
 		fail("offline_no_welcome", "%s away: no welcome-back log line", o.d)
