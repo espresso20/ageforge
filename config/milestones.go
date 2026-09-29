@@ -215,7 +215,7 @@ func Milestones() []MilestoneDef {
 		{
 			Name: "Metropolis", Key: "metropolis",
 			Description: "Reach a population of 10,000,000.",
-			Flavor:      "Ten million citizens. You have officially lost track of all their names.",
+			Flavor:      "Ten million people. You have officially lost track of all their names.",
 			Category:    "settlement", Hidden: true,
 			MinAge:        "iron_age",
 			MinPopulation: 10000000,
