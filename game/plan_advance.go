@@ -18,11 +18,11 @@ func (ge *GameEngine) PlanAddAdvance() error {
 	defer ge.mu.Unlock()
 	for _, it := range ge.plan {
 		if it.Kind == PlanAdvance {
-			return fmt.Errorf("the plan already advances when ready")
+			return fmt.Errorf("The plan already advances when ready.")
 		}
 	}
 	if ge.progress.GetNextAge(ge.age) == "" {
-		return fmt.Errorf("this is the final age")
+		return fmt.Errorf("This is the final age. There is nothing to advance to.")
 	}
 	if len(ge.plan) >= MaxPlanItems {
 		return errPlanFull()

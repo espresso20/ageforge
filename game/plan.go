@@ -266,9 +266,13 @@ func errPlanFull() error {
 	return fmt.Errorf("The plan is full (%d items). Remove one with plan remove <n> first.", MaxPlanItems)
 }
 
-// planItemLabel is "3 Huts", "research Pottery" or "trade iron ore for food".
+// planItemLabel is "3 Huts", "research Pottery", "trade iron ore for food"
+// or, with an amount left to buy, "trade iron ore for 500 food".
 func (ge *GameEngine) planItemLabel(it PlanItem) string {
 	if it.Kind == PlanTrade {
+		if it.Amount > 0 {
+			return "trade " + ResourceName(it.Key) + " for " + Amount(it.Amount, it.To)
+		}
 		return "trade " + ResourceName(it.Key) + " for " + ResourceName(it.To)
 	}
 	if it.Kind == PlanAdvance {

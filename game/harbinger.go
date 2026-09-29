@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/detmath"
 	"github.com/espresso20/ageforge/flavor"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // The Harbinger (Phase 9 follow-up).
@@ -366,14 +367,14 @@ func (ge *GameEngine) summonHarbinger() error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	if ge.harbinger != nil {
-		return fmt.Errorf("a harbinger is already here")
+		return fmt.Errorf("A harbinger is already here.")
 	}
 	// /age jumps the age without the epoch; line them up first.
 	if ep := config.EpochForAge(ge.age); ep != ge.currentEpoch {
 		ge.currentEpoch = ep
 	}
 	if !ge.harbingerArrive() {
-		return fmt.Errorf("the next passage cannot bring a catastrophe")
+		return fmt.Errorf("The next passage cannot bring a catastrophe.")
 	}
 	return nil
 }
@@ -386,7 +387,7 @@ func (ge *GameEngine) SummonHarbingerForTest(age string) error {
 	ge.mu.Lock()
 	if _, ok := config.AgeByKey()[age]; !ok {
 		ge.mu.Unlock()
-		return fmt.Errorf("unknown age %q", age)
+		return fmt.Errorf("Unknown age '%s'.", age)
 	}
 	ge.age = age
 	ge.currentEpoch = config.EpochForAge(age)
@@ -563,10 +564,10 @@ func harbingerBraceCost(epochKey string, level int) map[string]float64 {
 // harbingerActionCheck returns the common refusal for all three actions.
 func (ge *GameEngine) harbingerActionCheck() error {
 	if ge.harbinger == nil {
-		return fmt.Errorf("no harbinger is here — one comes through each epoch whose passage can bring a catastrophe")
+		return fmt.Errorf("No harbinger is here. One comes in each epoch whose passage can bring a catastrophe.")
 	}
 	if ge.pendingLastPassage {
-		return fmt.Errorf("the Last Passage has already come — type 'catastrophe' to answer it")
+		return fmt.Errorf("The Last Passage has already come. Type 'catastrophe' to answer it.")
 	}
 	return nil
 }
@@ -632,9 +633,9 @@ func (ge *GameEngine) shortfall(cost map[string]float64) string {
 		if have >= need {
 			continue
 		}
-		part := fmt.Sprintf("%.0f more %s", math.Ceil(need-have), def.Key)
+		part := textfmt.Number(math.Ceil(need-have)) + " more " + ResourceName(def.Key)
 		if ge.Resources.GetStorage(def.Key) < need {
-			part += fmt.Sprintf(" (your %s storage must reach %.0f first)", def.Key, need)
+			part += fmt.Sprintf(" (your %s storage must reach %s first)", ResourceName(def.Key), textfmt.Number(need))
 		}
 		parts = append(parts, part)
 	}
@@ -649,20 +650,20 @@ func (ge *GameEngine) HarbingerAppease() error {
 		return err
 	}
 	if why := ge.appeaseBlocked(); why != "" {
-		return fmt.Errorf("cannot appease: %s", why)
+		return fmt.Errorf("Cannot appease: %s.", why)
 	}
 	h := ge.harbinger
 	level := h.AppeaseLevel + 1
 	cost := harbingerAppeaseCost(h.EpochKey, level)
 	if len(cost) == 0 {
-		return fmt.Errorf("cannot appease: there is nothing to offer")
+		return fmt.Errorf("Cannot appease: there is nothing to offer.")
 	}
 	if !ge.Resources.Pay(cost) {
-		return fmt.Errorf("cannot afford to appease: need %s", ge.shortfall(cost))
+		return fmt.Errorf("Cannot afford to appease: you need %s.", ge.shortfall(cost))
 	}
 	h.AppeaseLevel = level
 	def, _ := config.HarbingerFor(h.Age)
-	ge.addLog("success", fmt.Sprintf("⚑ %s (Appease %d/%d): paid %s. The catastrophe chance is now ×%.2f.",
+	ge.addLog("success", fmt.Sprintf("⚑ %s (Appease %d/%d): paid %s. Catastrophe chance is now %.2fx its base.",
 		def.AppeaseLabel, level, HarbingerMaxAppease, harbingerCostText(cost), ge.harbingerAppeaseMultiplier()))
 	ge.harbingerFlavorLog(flavor.HarbingerAppeased, "")
 	return nil
@@ -676,16 +677,16 @@ func (ge *GameEngine) HarbingerBrace() error {
 		return err
 	}
 	if why := ge.braceBlocked(); why != "" {
-		return fmt.Errorf("cannot brace: %s", why)
+		return fmt.Errorf("Cannot brace: %s.", why)
 	}
 	h := ge.harbinger
 	level := h.BraceLevel + 1
 	cost := harbingerBraceCost(h.EpochKey, level)
 	if len(cost) == 0 {
-		return fmt.Errorf("cannot brace: this passage asks nothing you can stockpile")
+		return fmt.Errorf("Cannot brace: this passage asks nothing you can stockpile.")
 	}
 	if !ge.Resources.Pay(cost) {
-		return fmt.Errorf("cannot afford to brace: need %s", ge.shortfall(cost))
+		return fmt.Errorf("Cannot afford to brace: you need %s.", ge.shortfall(cost))
 	}
 	h.BraceLevel = level
 	def, _ := config.HarbingerFor(h.Age)
@@ -693,8 +694,8 @@ func (ge *GameEngine) HarbingerBrace() error {
 		ge.addLog("success", fmt.Sprintf("⚑ %s (Brace %d/%d): paid %s. If the Last Passage comes and you Endure, you keep %.0f%% of the run's prestige points (not %.0f%%).",
 			def.BraceLabel, level, HarbingerMaxBrace, harbingerCostText(cost), LastPassageKeepFor(level)*100, LastPassageKeep*100))
 	} else {
-		ge.addLog("success", fmt.Sprintf("⚑ %s (Brace %d/%d): paid %s. If the catastrophe comes and you Endure, %d%% of buildings fall (not 20%%) and %.0f%% of stock is kept (not 15%%).",
-			def.BraceLabel, level, HarbingerMaxBrace, harbingerCostText(cost), braceDestroyPct[level], braceKeepFrac[level]*100))
+		ge.addLog("success", fmt.Sprintf("⚑ %s (Brace %d/%d): paid %s. If the catastrophe comes and you Endure, %d%% of buildings fall (not %d%%) and %.0f%% of stock is kept (not %.0f%%).",
+			def.BraceLabel, level, HarbingerMaxBrace, harbingerCostText(cost), braceDestroyPct[level], braceDestroyPct[0], braceKeepFrac[level]*100, braceKeepFrac[0]*100))
 	}
 	ge.harbingerFlavorLog(flavor.HarbingerBraced, "")
 	return nil
@@ -709,7 +710,7 @@ func (ge *GameEngine) HarbingerInvite() error {
 		return err
 	}
 	if why := ge.inviteBlocked(); why != "" {
-		return fmt.Errorf("cannot invite: %s", why)
+		return fmt.Errorf("Cannot invite: %s.", why)
 	}
 	h := ge.harbinger
 	h.Invited = true
@@ -957,7 +958,7 @@ func harbingerCostText(cost map[string]float64) string {
 	var parts []string
 	for _, def := range config.BaseResources() {
 		if v, ok := cost[def.Key]; ok {
-			parts = append(parts, fmt.Sprintf("%.0f %s", v, def.Key))
+			parts = append(parts, Amount(v, def.Key))
 		}
 	}
 	return strings.Join(parts, ", ")
