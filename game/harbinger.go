@@ -194,11 +194,18 @@ type HarbingerView struct {
 	// Affordability of the next level (false when blocked).
 	AppeaseAffordable bool
 	BraceAffordable   bool
-	// Endure numbers at the current and the next Brace level.
+	// Endure numbers at the current and the next Brace level, the garrison
+	// included (see GarrisonPct).
 	EndureDestroyPct     int
 	EndureKeepPct        int
 	NextEndureDestroyPct int
 	NextEndureKeepPct    int
+	// GarrisonPct is the share (percent) the army's garrison would blunt of
+	// the catastrophe's losses on top of Brace, against the threat of the age
+	// it strikes in; 0 with no soldiers. GarrisonCapped reports that the
+	// combined Brace + garrison cap (config.EndureReductionCap) trims it.
+	GarrisonPct    int
+	GarrisonCapped bool
 	// The Last Passage's Endure keeps a share of the run's prestige points
 	// instead: at the current and the next Brace level, in percent.
 	EndurePointsPct     int
@@ -882,14 +889,21 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 		v.BraceCost = harbingerBraceCost(h.EpochKey, h.BraceLevel+1)
 		v.BraceAffordable = len(v.BraceCost) > 0 && ge.Resources.CanAfford(v.BraceCost)
 	}
-	v.EndureDestroyPct = braceDestroyPct[h.BraceLevel]
-	v.EndureKeepPct = int(math.Round(braceKeepFrac[h.BraceLevel] * 100))
 	next := h.BraceLevel
 	if next < HarbingerMaxBrace {
 		next++
 	}
-	v.NextEndureDestroyPct = braceDestroyPct[next]
-	v.NextEndureKeepPct = int(math.Round(braceKeepFrac[next] * 100))
+	// The Endure numbers count the garrison too, measured against the threat
+	// of the age the catastrophe would strike in (the first age of the target
+	// epoch): what the player would actually face.
+	at := ge.passageAge(h.TargetEpoch)
+	cur, nxt := ge.endurePreview(h.BraceLevel, at), ge.endurePreview(next, at)
+	v.EndureDestroyPct = int(math.Round(cur.DestroyPct))
+	v.EndureKeepPct = int(math.Round(cur.KeepFrac * 100))
+	v.NextEndureDestroyPct = int(math.Round(nxt.DestroyPct))
+	v.NextEndureKeepPct = int(math.Round(nxt.KeepFrac * 100))
+	v.GarrisonPct = int(math.Round(cur.Garrison * 100))
+	v.GarrisonCapped = cur.Capped || nxt.Capped
 	v.EndurePointsPct = int(math.Round(LastPassageKeepFor(h.BraceLevel) * 100))
 	v.NextEndurePointsPct = int(math.Round(LastPassageKeepFor(next) * 100))
 	if v.LastPassage {

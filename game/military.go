@@ -15,6 +15,10 @@ const (
 	ExpeditionMilitary = "military"
 )
 
+// failedLootShare is the share of an expedition's or campaign's loot that
+// comes back when it fails.
+const failedLootShare = 0.3
+
 // minExpeditionDurationTicks is the floor LaunchExpedition falls back to if a def
 // somehow carries a non-positive duration range. No shipped def hits this — it
 // exists so a malformed def can never produce a 0-tick expedition.
@@ -243,18 +247,18 @@ func (mm *MilitaryManager) ExpeditionDefByKey(key string) *ExpeditionDef {
 func (mm *MilitaryManager) LaunchExpedition(rng *rand.Rand, key, currentAge string, ageOrder map[string]int) error {
 	def := mm.ExpeditionDefByKey(key)
 	if def == nil {
-		return fmt.Errorf("unknown expedition: %s", key)
+		return fmt.Errorf("unknown expedition or campaign '%s'. Type expedition or campaign to see what you can send", key)
 	}
 
 	if existing := mm.activeByCat[def.Category]; existing != nil {
-		return fmt.Errorf("a %s expedition is already in progress (%d ticks left)", categoryLabel(def.Category), existing.TicksLeft)
+		return fmt.Errorf("%s is already under way (%s left). Wait for it to come back", categoryNoun(def.Category), approxTicks(existing.TicksLeft, BaseTickInterval))
 	}
 
 	if ageOrder[def.MinAge] > ageOrder[currentAge] {
-		return fmt.Errorf("%s requires %s age", def.Name, def.MinAge)
+		return fmt.Errorf("%s needs the %s. Advance to send it", def.Name, ageLabel(def.MinAge))
 	}
 	if def.MaxAge != "" && ageOrder[currentAge] > ageOrder[def.MaxAge] {
-		return fmt.Errorf("%s is no longer available past the %s age", def.Name, def.MaxAge)
+		return fmt.Errorf("%s ended with the %s. Type %s to see what you can send now", def.Name, ageLabel(def.MaxAge), categoryCommand(def.Category))
 	}
 
 	// Roll a randomized active duration in [DurationMin, DurationMax] (inclusive).
@@ -278,16 +282,23 @@ func (mm *MilitaryManager) LaunchExpedition(rng *rand.Rand, key, currentAge stri
 	return nil
 }
 
-// categoryLabel returns a short player-facing word for an expedition category.
-func categoryLabel(category string) string {
-	switch category {
-	case ExpeditionScouting:
-		return "scouting"
-	case ExpeditionMilitary:
-		return "military"
-	default:
-		return category
+// categoryNoun is the player-facing noun phrase for one mission of a
+// category, sentence-initial: "An expedition" (scouting) or "A campaign"
+// (military).
+func categoryNoun(category string) string {
+	if category == ExpeditionMilitary {
+		return "A campaign"
 	}
+	return "An expedition"
+}
+
+// categoryCommand is the command that sends missions of a category:
+// expedition for scouting, campaign for military.
+func categoryCommand(category string) string {
+	if category == ExpeditionMilitary {
+		return "campaign"
+	}
+	return "expedition"
 }
 
 // ActiveByCategory returns the active expedition for a category, or nil. Used by
@@ -386,15 +397,15 @@ func (mm *MilitaryManager) tickCategory(rng *rand.Rand, category string, militar
 			rewards[res] = amount * rewardMult
 			mm.totalLoot[res] += rewards[res]
 		}
-		message = fmt.Sprintf("%s succeeded! Gained loot.", def.Name)
+		message = fmt.Sprintf("%s succeeded. Loot: %s.", def.Name, amountsText(rewards))
 	} else {
 		// Partial rewards on failure
 		for res, amount := range def.Rewards {
-			partial := float64(amount * 0.3)
+			partial := float64(amount * failedLootShare)
 			rewards[res] = partial
 			mm.totalLoot[res] += partial
 		}
-		message = fmt.Sprintf("%s failed! Partial loot recovered.", def.Name)
+		message = fmt.Sprintf("%s failed. You kept %.0f%% of the loot: %s.", def.Name, failedLootShare*100, amountsText(rewards))
 	}
 
 	mm.completedCount++
@@ -444,10 +455,10 @@ func (mm *MilitaryManager) GetAvailableExpeditionsByCategory(category, currentAg
 // map (nil → Cost treated as unaffordable).
 func (mm *MilitaryManager) launchability(def ExpeditionDef, soldierCount int, resources map[string]float64) (bool, string) {
 	if mm.activeByCat[def.Category] != nil {
-		return false, fmt.Sprintf("a %s expedition is already in progress", categoryLabel(def.Category))
+		return false, fmt.Sprintf("%s is already under way: wait for it to come back", categoryNoun(def.Category))
 	}
 	if soldierCount < def.SoldiersNeeded {
-		return false, fmt.Sprintf("need %d soldiers", def.SoldiersNeeded)
+		return false, fmt.Sprintf("needs %d soldiers (you have %d): military buildings train them", def.SoldiersNeeded, soldierCount)
 	}
 	// Check Cost resources in a stable (sorted) order so the surfaced reason is
 	// deterministic regardless of map iteration order.
@@ -459,7 +470,7 @@ func (mm *MilitaryManager) launchability(def ExpeditionDef, soldierCount int, re
 	for _, res := range keys {
 		amount := def.Cost[res]
 		if resources[res] < amount {
-			return false, fmt.Sprintf("need %.0f %s", amount, res)
+			return false, fmt.Sprintf("needs %s %s (you have %s)", amountText(amount), resourceLabel(res), amountText(resources[res]))
 		}
 	}
 	return true, ""

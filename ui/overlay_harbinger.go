@@ -233,6 +233,7 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 		if h.BraceBlocked == "" {
 			fmt.Fprintf(sb, theme.Paint(theme.RoleDim, "     Next level: %d%% fall, %d%% kept.")+"\n", h.NextEndureDestroyPct, h.NextEndureKeepPct)
 		}
+		sb.WriteString(harbingerGarrisonLine(h) + "\n")
 	}
 	harbingerCostLine(sb, state, h.BraceBlocked, h.BraceCost)
 	sb.WriteString("\n")
@@ -332,4 +333,17 @@ func capFirstUI(s string) string {
 		return s
 	}
 	return strings.ToUpper(s[:1]) + s[1:]
+}
+
+// harbingerGarrisonLine says whether the army is counted in the Brace
+// preview above it, and by how much.
+func harbingerGarrisonLine(h *game.HarbingerView) string {
+	if h.GarrisonPct <= 0 {
+		return theme.Paint(theme.RoleDim, "     No garrison counted: soldiers would soften an Endure further (Army panel).")
+	}
+	line := theme.Paint(theme.RolePositive, fmt.Sprintf("     Your garrison is counted: it blunts about %d%% of what Brace leaves.", h.GarrisonPct))
+	if h.GarrisonCapped {
+		line += "\n" + theme.Paint(theme.RoleDim, fmt.Sprintf("     Brace and garrison together soften an Endure by at most %.0f%%.", config.EndureReductionCap*100))
+	}
+	return line
 }

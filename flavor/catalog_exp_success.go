@@ -2,8 +2,8 @@ package flavor
 
 // ExpeditionSuccess — a party was sent out and it worked.
 //
-// The log line directly above this one already says "<Name> succeeded! Gained
-// loot." So none of the sentences here say that it worked. They say what came
+// The log line directly above this one already says "<Name> succeeded. Loot:
+// ..." with the amounts. So none of the sentences here say that it worked. They say what came
 // back, who did not, what broke, what the map says now, what the town did about
 // it, and who is already arguing over the share. See catalog.go for the rules.
 //

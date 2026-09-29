@@ -855,7 +855,7 @@ func TestOpenerVariety(t *testing.T) {
 }
 
 // TestNoOutcomeRestating enforces the orthogonality rule. The caller prints the
-// mechanical line — "Scout Party succeeded! Gained loot." — immediately above
+// mechanical line — "Scout Party succeeded. Loot: 60 food, 60 wood, 20 stone." — immediately above
 // this one, so a flavour line that also says the venture paid out is padding
 // dressed as prose. It is a literal grep because the failure mode was literal:
 // the old catalog leaned on a small set of accounting idioms and they were the

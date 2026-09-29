@@ -294,7 +294,7 @@ A peaceful civilization with opinion 40 or more now and then **lends you** 3 to 
 
 A civilization declares **war** only when **both** conditions hold: its opinion is **below -75**, *and* you have provoked it twice. **Raiding its trade route** (`diplomacy raid`) is one provocation and **embargoing it** is another, so a raid plus an embargo, or two embargoes, while it's deeply hostile starts a war. Anger alone never starts a war, and provocations while you're on good terms don't either.
 
-While at war, the civilization **raids** you every 40 ticks and takes 50 × its strength (1-5) of its specialty resource. War is purely a matter of these raids; there's no tactical combat. Each raid is logged with what you lost and a short account of it.
+While at war, the civilization **raids** you every 40 ticks and takes 50 × its strength (1-5) of its specialty resource. War is purely a matter of these raids; there's no tactical combat. Each raid is logged with what you lost and a short account of it. A raid takes its whole amount or nothing: if you hold less than it would carry off, the log says so and you lose nothing. Your garrison blunts part of each raid that lands; see [Defense: what your army blunts](military.md#7-defense-what-your-army-blunts).
 
 There are two ways to make **peace**:
 

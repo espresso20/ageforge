@@ -15,6 +15,9 @@ type GameStats struct {
 	// milestone chain (first_soldiers, standing_army, …). Old saves without this
 	// field default to 0 and re-accrue progress as new soldiers are trained.
 	SoldiersTrained float64 `json:"soldiers_trained"`
+	// Defense is what the army's garrison has saved this run (raids, war
+	// raids, Endure). nil until it saves something; see DefenseTally.
+	Defense *DefenseTally `json:"defense,omitempty"`
 }
 
 // NewGameStats creates a new stats tracker

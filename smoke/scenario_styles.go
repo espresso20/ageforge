@@ -16,6 +16,10 @@ const (
 	StyleHarbinger = "harbinger"
 	StyleSuccumb   = "succumber"
 	StyleCosmic    = "cosmic"
+	// StyleArmy keeps a modest garrison (Bot.Army). Report-only: its pacing
+	// is graded but never fails the set, since the targets assume the greedy
+	// bot that ignores the army.
+	StyleArmy = "army"
 )
 
 // IdleCheckIn is how often the idle style looks at the game: decisions only
@@ -24,7 +28,7 @@ const IdleCheckIn = 3 * time.Hour
 
 // StyleNames lists the styles in report order.
 func StyleNames() []string {
-	return []string{StyleGreedy, StyleIdle, StyleHarbinger, StyleSuccumb, StyleCosmic}
+	return []string{StyleGreedy, StyleIdle, StyleHarbinger, StyleSuccumb, StyleCosmic, StyleArmy}
 }
 
 // firstLastPassageAge is the first age whose prestige can bring the Last
@@ -63,6 +67,9 @@ func ApplyStyle(base Config, style string) (Config, error) {
 		c.Harbinger = HarbingerBoth
 	case StyleSuccumb:
 		c.Catastrophe = "succumb"
+	case StyleArmy:
+		c.Army = true
+		c.Pacing = PacingReport
 	case StyleCosmic:
 		c.InviteCosmic = true
 		c.LastPassage = "succumb"

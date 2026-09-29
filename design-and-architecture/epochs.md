@@ -190,6 +190,45 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 - Reconstruction Effort: `production_all` −10% for 216 ticks. Morale −0.10.
 - "Survived" marker on the epoch badge and a civilization-log entry.
 - Research, wonders, age and prestige are untouched.
+- The army's garrison softens the building and stock losses; see Army defense below.
+
+### Army defense (the garrison)
+
+The Defense Rating (`soldiers × 2 × (1 + military_power)`) is measured against the raid threat
+of the age being played, `config.AgeThreat(order) = 160,000 × 2^order` (1.28M in the Iron Age),
+and blunts `0.45 × defense / (defense + threat)` of a raid's losses (`config.DefenseMitigation`).
+Constants and the reasoning for them are in `config/defense.go`; the engine side is
+`game/defense.go`.
+
+- **What it touches**: random events flagged `Raid` (their `steal_resource` and `worker_loss`,
+  not their production debuffs); diplomacy war raids (a raid bigger than the stock still takes
+  nothing, and the army never makes it land); Endure's building and stock losses. Nothing else:
+  disasters, unrest, Endure's worker loss, the Reconstruction debuff and the Last Passage are
+  unchanged.
+- **Endure**: Brace first (`braceDestroyPct` / `braceKeepFrac`), then the garrison blunts its
+  share of what is left, measured against the threat of the age the catastrophe strikes in (the
+  target epoch's first age for a harbinger preview). Brace and garrison together cut at most
+  `EndureReductionCap` = 60% of the unbraced loss (at least 8% of buildings fall, at most 66% of
+  stock is kept). `computeEndure` is the one function Endure, the catastrophe modal
+  (`GameState.PendingEndure`) and the harbinger's Brace preview all call, so a preview can
+  never promise more than Endure delivers. Buildings saved round down, so the garrison never
+  saves more than its share.
+- **No soldiers, no change**: with defense 0 every code path returns the pre-army numbers bit
+  for bit (the steal, worker and keep arithmetic only runs when the share is above 0).
+- **The incidental garrison**: age gates require military buildings and the lineage carries them
+  forward, so a player who never thinks about the army still holds a garrison. The threat base
+  was calibrated on it: the greedy smoke bot blunts 8-19% of a raid from the Iron Age on, and a
+  deliberate army (the `-army=on` bot) 25-40% from the Industrial Age.
+- **Endure timing**: a catastrophe strikes on entering an epoch's first age, when the threat has
+  just doubled, so a garrison sized for the age you left blunts little of an immediate Endure
+  (0-11% mean across the smoke seeds, with or without `-army=on`, which Endures at once). The
+  choice waits for the player and the modal preview is live, so training soldiers before
+  choosing Endure is how the garrison pays off there. Raids are where it works all age long.
+- **No upkeep**: soldiers cost nothing ongoing. Stockpiling is bounded by soldier storage and
+  saturates at the cap, and measured runs show no pacing gain from a garrison (see the Decision
+  Log), so upkeep would be a tax with nothing to correct.
+- **Tally**: `GameStats.Defense` (omitted while empty, so saves without a garrison are
+  unchanged) records what the army saved this run, shown in the Army panel.
 
 ### SUCCUMB: Consequences
 

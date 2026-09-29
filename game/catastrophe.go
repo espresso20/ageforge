@@ -57,6 +57,15 @@ const (
 	SuccumbResearchBonusPerEpoch = 0.25
 )
 
+// Endure consequences, exported for the catastrophe modal so its text is built
+// from the numbers Endure applies rather than copies of them.
+const (
+	EndureWorkerLoss       = endureWorkerLoss
+	EndureDebuffTicks      = endureDebuffTicks
+	EndureDebuffProduction = endureDebuffProduction
+	EndureMoraleHit        = endureMoraleHit
+)
+
 // Catastrophe record outcomes (EpochEventRecord.Outcome).
 const (
 	CatastrophePending   = "pending"
@@ -200,7 +209,7 @@ func (ge *GameEngine) triggerCatastrophe(epochKey, source string) {
 	if source != catastropheRolled {
 		eventName = catName + " (" + source + ")"
 	}
-	ge.addLog("warning", fmt.Sprintf("☄ %s threatens the %s — prepare yourself.", catName, ep.Name))
+	ge.addLog("warning", fmt.Sprintf("☄ %s threatens the %s. Prepare yourself.", catName, ep.Name))
 	ge.addLog("warning", "  Type 'catastrophe' to choose Endure or Succumb. Advancing and prestige wait until you do.")
 
 	ge.epochEventHistory = append(ge.epochEventHistory, EpochEventRecord{
@@ -359,21 +368,31 @@ func (ge *GameEngine) Endure() error {
 		brace = 0
 	}
 	ge.pendingBraceLevel = 0
-	destroyPct, keep := braceDestroyPct[brace], braceKeepFrac[brace]
+	// Then the garrison, measured before the blow lands (soldiers are stock
+	// too, and fall with the rest).
+	outcome := ge.endurePreview(brace, ge.age)
+	keep := outcome.KeepFrac
 	ge.survivedEpochs[epochKey] = true
 	ge.setCatastropheOutcome(epochKey, CatastropheEndured)
 
 	catName, catFlavor := config.CatastropheInfo(epochKey)
 	epName := config.EpochByKey()[epochKey].Name
 
-	destroyable := ge.Buildings.DestroyableCount()
-	destroyCount := destroyable * destroyPct / 100
-	if destroyCount < 1 && destroyable > 0 {
-		destroyCount = 1
-	}
+	destroyCount := outcome.DestroyCount
 	destroyed, names := ge.Buildings.DestroyRandom(ge.gameRNG(), destroyCount)
 	ge.releaseWorkersFrom(destroyed)
 
+	// Stock the garrison kept: the difference between the braced keep and the
+	// garrison's keep, per resource (sorted, so the tally sums in one order).
+	var keptStock map[string]float64
+	if keep != outcome.BracedKeepFrac {
+		keptStock = make(map[string]float64)
+		for _, key := range sortedKeys(ge.Resources.resources) {
+			if r := ge.Resources.resources[key]; r != nil && ge.Resources.IsUnlocked(key) {
+				keptStock[key] = float64(r.Amount*keep) - float64(r.Amount*outcome.BracedKeepFrac)
+			}
+		}
+	}
 	for key, r := range ge.Resources.resources {
 		if r != nil && ge.Resources.IsUnlocked(key) {
 			r.Amount *= keep
@@ -391,18 +410,28 @@ func (ge *GameEngine) Endure() error {
 		},
 	})
 
-	ge.addLog("warning", fmt.Sprintf("☄ ENDURE: %s — %s", catName, catFlavor))
+	ge.addLog("warning", fmt.Sprintf("☄ ENDURE: %s. %s", catName, catFlavor))
 	ge.addLog("warning", fmt.Sprintf("  Buildings destroyed: %d", destroyCount))
 	for _, desc := range names {
 		ge.addLog("warning", fmt.Sprintf("  → %s lost", desc))
 	}
 	if brace > 0 {
-		ge.addLog("info", fmt.Sprintf("  Braced (level %d): %d%% of buildings lost instead of 20%%, %.0f%% of stock kept instead of 15%%.", brace, destroyPct, keep*100))
+		ge.addLog("info", fmt.Sprintf("  Braced (level %d): %d%% of buildings lost instead of %d%%, %.0f%% of stock kept instead of %.0f%%.",
+			brace, braceDestroyPct[brace], braceDestroyPct[0], outcome.BracedKeepFrac*100, braceKeepFrac[0]*100))
+	}
+	if line := endureGarrisonLine(outcome); line != "" {
+		ge.addLog("success", line)
+		t := ge.defenseTally()
+		t.Buildings += outcome.BuildingsSaved
+		for _, key := range sortedKeys(keptStock) {
+			ge.recordSavedResource(key, keptStock[key])
+		}
 	}
 	ge.addLog("warning", fmt.Sprintf("  All resources reduced to %.0f%% of stored amounts.", keep*100))
-	ge.addLog("warning", "  25% of workers lost.")
-	ge.addLog("info", fmt.Sprintf("  Timed: production -10%% for %d ticks (reconstruction period).", endureDebuffTicks))
-	ge.addLog("success", fmt.Sprintf("  ✦ Survived marker earned for %s badge.", epName))
+	ge.addLog("warning", fmt.Sprintf("  %.0f%% of workers lost.", endureWorkerLoss*100))
+	ge.addLog("info", fmt.Sprintf("  Reconstruction: all production %.0f%% for %s. Morale %+.0f points.",
+		endureDebuffProduction*100, approxTicks(endureDebuffTicks, ge.tickIntervalLocked()), endureMoraleHit*100))
+	ge.addLog("success", fmt.Sprintf("  ✦ You endured the %s. Its badge records it.", epName))
 	// Cosmetic flavour — a wry beat after surviving the catastrophe.
 	if q := config.PickLogFlavor(config.LogFlavorCatastropheSurvived, ge.quipRNG()); q != "" {
 		ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
@@ -511,13 +540,13 @@ func (ge *GameEngine) Succumb() error {
 
 	ge.recalculateTickSpeed()
 
-	ge.addLog("event", fmt.Sprintf("☄ %s — civilization has fallen. A new dawn.", catName))
+	ge.addLog("event", fmt.Sprintf("☄ %s: civilization has fallen. A new dawn.", catName))
 	if newLegacy {
-		ge.addLog("success", fmt.Sprintf("Legacy Bonus: %s production permanently boosted.", ep.Name))
+		ge.addLog("success", fmt.Sprintf("%s legacy bonus (permanent): %s.", ep.Name, legacyBonusText(epochKey)))
 	} else {
 		ge.addLog("info", fmt.Sprintf("The %s legacy was already yours; no new legacy bonus.", ep.Name))
 	}
-	ge.addLog("success", fmt.Sprintf("Ancient Knowledge: research speed +%.0f%% (permanent, +25%% per epoch succumbed).", ge.succumbResearchBonus()*100))
+	ge.addLog("success", fmt.Sprintf("Ancient Knowledge: research speed +%.0f%% (permanent, +%.0f%% per epoch succumbed).", ge.succumbResearchBonus()*100, SuccumbResearchBonusPerEpoch*100))
 	if len(savedRuins) > 0 {
 		ge.addLog("info", fmt.Sprintf("%d ruin(s) from fallen civilizations carry forward (max %d).", ge.Buildings.RuinTotal(), MaxRuins))
 	}
@@ -653,4 +682,18 @@ func (ge *GameEngine) restoreCatastropheState(save *GameSave) {
 			ge.permanentBonuses["research_speed"] = total
 		}
 	}
+}
+
+// legacyBonusText lists an epoch's legacy bonus for a log line: "iron +10%
+// production, faith +5% production", in resource-key order.
+func legacyBonusText(epochKey string) string {
+	bonuses := config.LegacyBonusForEpoch(epochKey)
+	var parts []string
+	for _, res := range sortedKeys(bonuses) {
+		parts = append(parts, fmt.Sprintf("%s +%.0f%% production", resourceLabel(res), bonuses[res]*100))
+	}
+	if len(parts) == 0 {
+		return "none"
+	}
+	return strings.Join(parts, ", ")
 }
