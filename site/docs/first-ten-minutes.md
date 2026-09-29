@@ -10,6 +10,9 @@ You're in the **Primitive Age**. The screen shows:
 - Status bar: `Primitive Age  Tick: 0  |  Pop: 0/0  Morale: 50%`
 - Age progress bar: requirements for the Stone Age
 - The Economy panel, which is always on screen
+- On a large terminal (about 120x40 or bigger), a **mini map** above the Buildings list
+
+The mini map draws your town from your real buildings, so it grows as you build. On smaller terminals it hides to leave the Buildings list room. Type `map` any time to open the full [Map](map.md) (Esc closes it), and `icons` if you want real icons on it.
 
 You have no workers, no housing and very few resources. Start by gathering.
 
@@ -228,6 +231,7 @@ Your first priority: build **Stone Pits** and **Woodcutter Camps**, and assign w
 | Check population, idle and food drain | `status` |
 | Check worker breakdown | `workers` |
 | Check logs | `logs` |
+| Open the map | `map` |
 | Queue builds for while you're away | `plan build hut 10`, `plan advance` |
 | Save and return to the main menu | `Esc` (with no panel open) |
 

@@ -7,8 +7,7 @@
 
 - **Gameplay**
   - [How to Play](how-to-play.md)
-  - [The City Map](city-map.md)
-  - [The World Map](world-map.md)
+  - [The Map](map.md)
   - [All Commands](commands.md)
   - [The Build Plan](plan.md)
   - [Saving & Loading](saving-and-loading.md)

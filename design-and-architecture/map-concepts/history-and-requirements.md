@@ -2,6 +2,8 @@
 
 Read-only research, 2026-09-28. Sources: `git log --all` (844 commits, ~110 touch the map), PRs #26/#99/#100/#103, `design-and-architecture/map-*.md` + `city-synthesis.md`, `site/docs/city-map.md` + `world-map.md`, CHANGELOG, `map_demos/*.png`, the public Trello board (cards Wl35J3q1, BO5NDDAD, 3WaCRAzw, 3iqROH9M, NREUHI7m, d5DPYuBm, xqHcTxTo), the one surviving long Claude transcript for `~/Documents/ageforge` (session 8e71f7f5, 2026-07-06 to 08-10), the memory files `project_citymap_phase2.md`, `project_go_worldmap.md`, `project_worldmap_pictorial.md` (web port), and fresh PNG/ANSI dumps of the current renderers (`CITYMAP_PNG_DUMP`, written to `scratchpad/dump/`).
 
+> **Note:** `map_demos/` and `ui/citymap` were deleted in phase 2 (#153). The paths cited below remain in git history before that PR. `site/docs/city-map.md` and `world-map.md` are now stubs pointing to `site/docs/map.md`.
+
 Owner quotes are verbatim, typos included. Where I could only find an agent's paraphrase on a Trello card, I say so.
 
 ---

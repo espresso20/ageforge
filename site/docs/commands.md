@@ -234,53 +234,43 @@ A deposit says how much went in and the bank's new total. When nothing can go in
 
 **Overflow.** While overflow is on, production that a full store would throw away goes into the current age's wonder bank instead, for every resource the wonder still needs and only up to what it still needs. It never takes from what you hold, works during offline catch-up too, and says so in the log when it finishes a resource's part of the bank. See [Wonders](wonders.md#overflow).
 
-The **Wonders** panel (`wonders`) shows a progress bar for each required resource, and a color sprite thumbnail next to each completed wonder. Completed wonders also appear on the City Map as the largest, most ornate central buildings, drawn to fit the era (a ziggurat in the ancient ages, a cathedral or keep in the medieval ages) in muted colors that match the rest of the city (see [City Map](#city-map) below).
+The **Wonders** panel (`wonders`) shows a progress bar for each required resource, and a color sprite thumbnail next to each completed wonder. Completed wonders also appear on the Map as landmarks drawn in their era's look, and the cursor jumps to them with Tab (see [Map](#map) below).
 
 ---
 
-## Map Views
+## Map
 
-There are two map views: a close-up of **your own settlement** and a zoomed-out view of the **wider world**. The **City Map** uses your theme's colors and retints when you switch themes; the **World Map** is drawn in a different map style for each age.
+The Map draws your empire from your real game state: your buildings and the workers staffing them, your wonders, the civilizations you have met, your trade routes and wars. It has two styles, both built on the same map model: **roguelike** (the default), a glyph world seen from above with three zooms from the whole known world down to a named district, and **skyline**, your empire side-on as a panorama with one district for every age you have lived through. In both, an inspect cursor gives you the name and details of what it is on and the whole command to type for it (for example `build hut`). See **[The Map](map.md)** for both styles and all their keys.
 
 | Command | Description |
 |---|---|
-| `citymap` | Open the **City Map**: a top-down view of your settlement, drawn from your actual buildings, with a look for every age |
-| `map` | Same as `citymap` |
-| `worldmap` | Open the **World Map**: a seeded continent (elevation, biomes, coastlines, rivers) redrawn each age in that era's map style. Beyond the planet it becomes a star map of your empire and the rival civilizations |
+| `map` | Open the Map panel full screen |
+| `map style [roguelike\|skyline]` | Bare, show the current style. With a name, switch to it (default roguelike). Saved per account |
+| `map glyphs [ascii\|unicode\|nerd]` | Bare, show the current glyph set. With a name, switch to it (default unicode). `nerd` needs a Nerd Font in your terminal; every icon has a Unicode fallback. Saved per account |
+| `citymap` | Same as `map` |
+| `worldmap` | Same as `map`, opened on the known world (the roguelike style's region zoom) |
+| `icons` | A guided check: do you see Nerd Font icons? If yes it sets `map glyphs nerd`; if not it offers to install JetBrains Mono Nerd Font for your user (pinned v3.5.1, checksum-verified, no admin rights) and tells you how to select it in your terminal |
 
 ```
-citymap
+map
+map style skyline
+map glyphs ascii
 worldmap
+icons
 ```
 
-### City Map
+`map style` and `map glyphs` are saved per account, like your theme: they carry across saves and new games. With no account loaded they last for the session. On terminals of about 120x40 and larger the dashboard also shows a **mini map** of the active style above the Buildings list; on smaller terminals it hides.
 
-The City Map (`citymap`, also `map`) draws your civilization as a **top-down pixel-art city**: you look straight down at the roofs, streets and squares of one settlement, and it takes on the current era's look as you advance. Every color comes from your **active theme**, so switching themes retints the whole city at once. This view has no world terrain (the biome map is on the **World Map**); the ground is a plain surface tinted for the era, and every green thing (gardens, ponds, street trees) is **built**.
+Keys in the Map panel, in every style:
 
-The city is a compact cluster of **wards** (blocks), and the **streets are the gaps between them**, a connected web of thin lanes. Towns come in four **forms**, picked per civilization and era: rambling **organic**, **radial** (a hub with a ring road), **grid**, and **ribbon** (strung along a road), so no two civilizations look alike. The whole city always fits the panel and gets denser as you grow: close to one roof per building at low counts, packed but readable at high counts. The layout grows in place, so new buildings slot into the existing streets.
-
-The center is a paved **town square** with era props. Built **wonders** are the anchors the town clusters around, each drawn as a large complex: a **ziggurat** in the ancient ages, a **cathedral or keep** in the medieval ages.
-
-Roofs, ground, streets, walls and props change by age while the street plan stays:
-
-| Ages | Look |
+| Key | Action |
 |---|---|
-| Primitive, Stone | Earthy **thatch huts** on winding dirt lanes |
-| Bronze, Iron, Classical | A **clay-tile mudbrick** town inside a **mudbrick wall with gates** |
-| Medieval, Renaissance | A **slate-roofed timber** town inside a **stone wall with towers and a gatehouse** |
-| Industrial and later | Open **rowhouse grids** without walls, then **towers**, **arcologies** and **domes** |
+| `s` | Next style |
+| `g` | Next glyph set |
+| `Enter` | Put the command for what the cursor is on into the prompt (not run: press Enter again to run it) |
+| `Esc` | Close the Map |
 
-Walled ages leave **gates** where the main streets exit; from the Industrial Age on, cities sprawl without walls.
-
-Every kind of building you've built appears as **top-down roofs scaled to its count**, each with its own shape (huts round, longhouses long, temples ornate, camps as tents, workshops flat, wonders grand) in the era's roof material with a slight tint for its lineage, so you can tell domains apart by roof shape and color. Only a few landmarks get labels (the City Center, wonders, and one standout building when you have no civic building yet), drawn as soft pill banners that stay readable over any roof.
-
-### World Map
-
-The World Map (`worldmap`) is a single **seeded world**: one continent with elevation, biomes, coastlines and rivers that is the **same land in every game** on your account. What changes as you advance is the **map style** it is drawn in: a charcoal cave sketch in the Primitive Age, inked parchment with a compass rose in the Medieval, a satellite mosaic in the Modern, a neon holo-grid in the Cyberpunk. Ages 1 to 17 each have their own style.
-
-Once you leave the planet (Space Age onward) the World Map becomes a **strategic star map** of your empire and the rival civilizations you deal with in diplomacy. A civilization's status shows in the same colors on every star map: **red at war, green ally, gold mercantile, steel blue neutral**, with your own seat as the command hub. The five cosmic ages each have their own view, from a home star cluster up to an ascension lattice.
-
-See **[The World Map](world-map.md)** for the full list by age.
+Each style adds its own keys: zoom, cursor movement, the flows overlay, the legend. The key bar on the bottom row lists them, and [The Map](map.md) has the full tables.
 
 ---
 
@@ -504,3 +494,4 @@ These commands have a shorter name. The short name takes everything the full one
 | `h`, `?` | `help` |
 | `acct` | `account` |
 | `ms` | `milestones` |
+| `citymap`, `worldmap` | `map` |
