@@ -2,6 +2,7 @@ package game
 
 import (
 	"fmt"
+	"maps"
 	"math"
 	"sort"
 
@@ -29,8 +30,12 @@ type TradeManager struct {
 
 	activeRoutes map[string]*ActiveRoute // route key -> runtime state
 
-	// Cumulative stats for display in the Trade tab.
+	// Cumulative stats for display in the Trade panel. totalExchanged sums
+	// both sides of every market trade (kept for old saves); totalSold and
+	// totalBought split them.
 	totalExchanged map[string]float64
+	totalSold      map[string]float64
+	totalBought    map[string]float64
 	totalImported  map[string]float64
 	totalExported  map[string]float64
 
@@ -97,6 +102,8 @@ func NewTradeManager() *TradeManager {
 		lastExchange:   make(map[string]int),
 		activeRoutes:   make(map[string]*ActiveRoute),
 		totalExchanged: make(map[string]float64),
+		totalSold:      make(map[string]float64),
+		totalBought:    make(map[string]float64),
 		totalImported:  make(map[string]float64),
 		totalExported:  make(map[string]float64),
 		routeList:      routes,
@@ -191,6 +198,8 @@ func (tm *TradeManager) Exchange(give, get string, amount float64, resources *Re
 	tm.lastExchange[key] = tick
 	tm.totalExchanged[from] += amount
 	tm.totalExchanged[to] += got
+	tm.totalSold[from] += amount
+	tm.totalBought[to] += got
 
 	return got, nil
 }
@@ -444,6 +453,8 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 	}
 
 	return TradeState{
+		TotalSold:          maps.Clone(tm.totalSold),
+		TotalBought:        maps.Clone(tm.totalBought),
 		ExchangeRates:      exchangeRates,
 		ActiveRoutes:       activeRoutes,
 		AvailableRoutes:    availableRoutes,
@@ -455,7 +466,15 @@ func (tm *TradeManager) Snapshot(age string, ageOrder map[string]int, buildings 
 }
 
 // LoadState restores trade state from save
-func (tm *TradeManager) LoadState(activeRoutes map[string]ActiveRoute, supplyPressure, totalExchanged, totalImported, totalExported map[string]float64) {
+func (tm *TradeManager) LoadState(s TradeSave) {
+	activeRoutes, supplyPressure, totalExchanged, totalImported, totalExported :=
+		s.ActiveRoutes, s.SupplyPressure, s.TotalExchanged, s.TotalImported, s.TotalExported
+	if s.TotalSold != nil {
+		tm.totalSold = s.TotalSold
+	}
+	if s.TotalBought != nil {
+		tm.totalBought = s.TotalBought
+	}
 	if activeRoutes != nil {
 		for k, v := range activeRoutes {
 			route := v // copy

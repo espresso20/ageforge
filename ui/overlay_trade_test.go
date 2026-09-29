@@ -69,3 +69,25 @@ func TestTradeProvider_AllyBonuses(t *testing.T) {
 		t.Errorf("no allies, yet the Allied bonuses block renders:\n%s", out)
 	}
 }
+
+// TestTradeProvider_SoldBoughtAndRouteNeeds: market totals are split into
+// what you sold and what you bought, and a locked route names the building
+// it needs, not its key (black_market is the Black Market Hub).
+func TestTradeProvider_SoldBoughtAndRouteNeeds(t *testing.T) {
+	var s game.GameState
+	s.Trade.TotalSold = map[string]float64{"iron_ore": 1500, "food": 20}
+	s.Trade.TotalBought = map[string]float64{"gold": 300}
+	s.Trade.AvailableRoutes = []game.TradeRouteInfo{{Name: "Crypto Market", Key: "crypto_market",
+		RequiredBld: "black_market", MinCount: 1, Export: map[string]float64{"crypto": 50}, Import: map[string]float64{"gold": 1000}}}
+	out := plainText(tradeProvider(s, panelWidth))
+	for _, want := range []string{"Sold: 20 food, 1.5K iron ore", "Bought: 300 gold", "needs 1 Black Market Hub (have 0)"} {
+		if !strings.Contains(out, want) {
+			t.Errorf("trade panel missing %q:\n%s", want, out)
+		}
+	}
+	for _, gone := range []string{"given plus received", "black_market"} {
+		if strings.Contains(out, gone) {
+			t.Errorf("trade panel still shows %q:\n%s", gone, out)
+		}
+	}
+}

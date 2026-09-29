@@ -8,6 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io/fs"
+	"maps"
 	"os"
 	"path/filepath"
 	"strings"
@@ -224,6 +225,8 @@ type TradeSave struct {
 	ActiveRoutes   map[string]ActiveRoute `json:"active_routes"`
 	SupplyPressure map[string]float64     `json:"supply_pressure"`
 	TotalExchanged map[string]float64     `json:"total_exchanged"`
+	TotalSold      map[string]float64     `json:"total_sold,omitempty"`
+	TotalBought    map[string]float64     `json:"total_bought,omitempty"`
 	TotalImported  map[string]float64     `json:"total_imported"`
 	TotalExported  map[string]float64     `json:"total_exported"`
 }
@@ -562,6 +565,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			ActiveRoutes:   tradeActiveRoutes,
 			SupplyPressure: tradePressure,
 			TotalExchanged: tradeExchanged,
+			TotalSold:      maps.Clone(ge.Trade.totalSold),
+			TotalBought:    maps.Clone(ge.Trade.totalBought),
 			TotalImported:  tradeImported,
 			TotalExported:  tradeExported,
 		},
@@ -759,7 +764,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.Prestige.LoadState(save.Prestige.Level, save.Prestige.TotalEarned, save.Prestige.Available, save.Prestige.Upgrades)
 
 	// Restore trade
-	ge.Trade.LoadState(save.Trade.ActiveRoutes, save.Trade.SupplyPressure, save.Trade.TotalExchanged, save.Trade.TotalImported, save.Trade.TotalExported)
+	ge.Trade.LoadState(save.Trade)
 
 	// Restore diplomacy. Lent-worker batches are restored for tracking only —
 	// those workers were already counted into the saved worker pool when first

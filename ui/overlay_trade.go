@@ -37,17 +37,13 @@ func tradeProvider(state game.GameState, _ int) string {
 	sb.WriteString("\n [gray]Commands: trade <give> <get> <amount to give>[-]\n")
 	sb.WriteString(" [gray]Example: trade food wood 50[-]\n")
 
-	if len(trade.TotalExchanged) > 0 {
-		// note: the snapshot sums what you gave and what you got per resource,
-		// so this cannot be split into sold and bought without a game change.
-		sb.WriteString("\n [gold]Traded at the market (given plus received):[-]\n")
-		exchKeys := make([]string, 0, len(trade.TotalExchanged))
-		for k := range trade.TotalExchanged {
-			exchKeys = append(exchKeys, k)
+	if len(trade.TotalSold) > 0 || len(trade.TotalBought) > 0 {
+		sb.WriteString("\n [gold]Traded at the market:[-]\n")
+		if len(trade.TotalSold) > 0 {
+			fmt.Fprintf(&sb, "   Sold: %s\n", game.Amounts(trade.TotalSold))
 		}
-		sort.Strings(exchKeys)
-		for _, res := range exchKeys {
-			fmt.Fprintf(&sb, "   %s\n", game.Amount(trade.TotalExchanged[res], res))
+		if len(trade.TotalBought) > 0 {
+			fmt.Fprintf(&sb, "   Bought: %s\n", game.Amounts(trade.TotalBought))
 		}
 	}
 

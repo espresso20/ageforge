@@ -161,6 +161,8 @@ func guardStates(t *testing.T) (map[string]game.GameState, *game.GameEngine) {
 		"stone:gold":    {From: "stone", To: "gold", Rate: 0.1, BaseRate: 0.1},
 	}
 	s.Trade.TotalExchanged = map[string]float64{"food": 1500, "iron_ore": 20}
+	s.Trade.TotalSold = map[string]float64{"food": 1500}
+	s.Trade.TotalBought = map[string]float64{"iron_ore": 20, "dark_matter": 3}
 	s.Trade.DisruptedResources = []string{"iron_ore"}
 	s.Trade.ActiveRoutes = []game.ActiveRouteInfo{
 		{Name: "Tin Road", Key: "tin_road", TicksLeft: 30, CyclesDone: 1,
