@@ -1,34 +1,32 @@
 # First 10 Minutes
 
-A guided walkthrough of your first game. The Primitive Age is tuned to take about **15 minutes** at 1x speed; follow this and you'll hit the Stone Age in about that time.
+A guided walkthrough of your first game. The Primitive Age is tuned to take about **15 minutes** at 1x speed; follow this and you'll reach the Stone Age in about that time.
 
 ---
 
 ## Minute 0: You just launched AgeForge
 
 You're in the **Primitive Age**. The screen shows:
-- Top bar: `🏛 Primitive Age  Tick: 0  Pop: 1/6`
-- Age progress bar: requirements for Stone Age
-- Economy tab open by default
+- Status bar: `Primitive Age  Tick: 0  |  Pop: 0/0  Morale: 50%`
+- Age progress bar: requirements for the Stone Age
+- The Economy panel, which is always on screen
 
-You have 0 workers and minimal resources. Let's fix that.
+You have no workers, no housing and very few resources. Start by gathering.
 
 ```
 gather wood 25
 gather food 25
-``` 
+```
 
-Repeat until you have gathered enough wood to build a hut. Each `gather` grants up to **25** of a resource.
+Repeat until you have gathered enough wood to build what you need. Each `gather` grants up to **25** of a resource. ↑ recalls your last command.
 
-*hint* You can use the up arrow to recall previous commands and spam that gathering!
-
-*note* Hand-gathering is an early-game crutch. It works through the **Medieval Age** and is disabled from the **Renaissance Age** onward — by then your buildings and workers should carry the economy.
+Hand-gathering is an early-game crutch. It works through the **Medieval Age** and is disabled from the **Renaissance Age** onward. By then your buildings and workers should carry the economy.
 
 ---
 
 ## Step 1: Build a gathering camp and a wood camp
 
-Food runs out before anything else, so get production going before you do anything fancy. Both camps cost **16 wood**, and you start with 50.
+Food runs out before anything else, so get production going first. Both camps cost **16 wood**, and you start with 50.
 
 ```
 build gathering_camp
@@ -41,7 +39,7 @@ A gathering camp makes **+1.0 food/tick** and a wood camp about **+0.57 wood/tic
 
 ## Step 2: Build housing
 
-Each hut adds 10 to your pop cap, and the Stone Age wants 10 of them. More pop means more workers.
+Each hut adds 10 housing, and the Stone Age wants 10 huts. More housing means more workers.
 
 ```
 build hut
@@ -49,37 +47,37 @@ build hut
 build hut
 ```
 
-While those build (8 ticks each), watch the build queue progress bar in the Economy tab. Queue a new one as soon as each finishes and you have gathered enough resources to build more!. **Aim for 5 huts in your first minute.**
+While those build (8 ticks each), watch the build queue progress bar in the Economy panel. Queue a new one as soon as each finishes and you have gathered enough resources to build more. **Aim for 5 huts in your first minute.**
 
 ---
 
 ## Step 3: Build a stash
 
-Your food and wood caps are tiny (50 each). Storage fills fast and wastes production. Your first stash costs **35 wood** — gather to that and build it early to break the cap. Each stash gives **+500 storage** and you can build up to 50 before they're capped out.
+Food and wood start with only 50 storage each. Storage fills fast, and anything past it is wasted. Your first stash costs **35 wood**; gather to that and build it early. Each stash gives **+500 storage** for every resource, and you can build up to 50.
 
 ```
 build stash
 ```
 
-Build two stashes alongside huts: you need room for the 1,000 food and 1,000 wood the Stone Age asks for.
+Build two stashes alongside huts: you need room for the 1K food and 1K wood the Stone Age asks for.
 
 ---
 
 ## Step 4: Recruit workers
 
-Once your huts are up (pop cap raised), recruit some workers:
+Once your huts are up, recruit some workers:
 
 ```
 recruit 5
 ```
 
-Workers are recruited generically — there's no domain when recruiting. They become what you **assign** them to. Each worker costs food upfront — check your food rate stays positive after recruiting.
+You don't pick a domain when recruiting. Workers become whatever you **assign** them to. Recruiting is free, but every worker eats food each tick from then on, so check that your food rate stays positive.
 
 ---
 
 ## Step 5: Assign everyone
 
-This is the most important step. **Idle workers produce nothing and still consume food.**
+This is the most important step. **Idle workers produce nothing and still eat food.**
 
 ```
 assign gathering_camp 3
@@ -87,31 +85,31 @@ assign story_circle 1
 assign shrine 1
 ```
 
-General rule for early game:
-- 3 workers → each gathering_camp (food production; 3 is a full crew)
-- 2 workers → each story_circle (knowledge)
-- 1 worker → shrine (faith)
-- Up to 3 workers → each wood_camp (wood production)
+A good split for the early game:
+- 3 workers on each gathering_camp (food; 3 is a full crew)
+- 2 workers on each story_circle (knowledge)
+- 1 worker on the shrine (faith)
+- Up to 3 workers on each wood_camp (wood)
 
 Fill a building's slots before spreading workers thin: a fully staffed camp makes 5x an empty one.
 
-Workers derive their role from what they're assigned to — a worker on `gathering_camp` becomes a Forager; one on `story_circle` becomes a Shaman. Check the Economy tab (type `status` or view the Economy tab) to see your worker breakdown by domain.
+A worker's class name comes from what it's assigned to: a worker on `gathering_camp` is a Forager, one on `story_circle` a Shaman. Type `workers` to see the breakdown by domain, or `status` for population, idle count and food drain.
 
-Check the status bar shows **Idle: 0**. If it doesn't, keep assigning.
+The Workers box in the sidebar should show **Idle: 0**. If it doesn't, keep assigning.
 
 ---
 
 ## Step 6: Build story circles and a shrine
 
-Story circles produce knowledge: **+0.2 knowledge/tick** each when staffed. The Stone Age needs **5 story circles** and **150 knowledge**, and knowledge is also what lets you research techs.
+Story circles produce knowledge: **+0.2 knowledge/tick** each when staffed. The Stone Age needs **5 story circles** and **150 knowledge**, and knowledge is also what you spend on research.
 
 ```
 build story_circle
 ```
 
-Story circles cost 60 wood — build all five early.
+Story circles cost 60 wood. Build all five early.
 
-Also build your first **shrine**. Shrines produce faith, which helps prevent long-term civilisation-level disasters and contributes to epoch events.
+Also build your first **shrine**. Shrines produce faith, which helps prevent civilization-level disasters later on and feeds into epoch events.
 
 ```
 build shrine
@@ -121,10 +119,10 @@ build shrine
 
 ## Step 7: Watch your rates
 
-Open the Economy tab (or just wait — you're already there). Look at the rate column:
-- `food: +N/t` — should be positive (each staffed gathering camp adds +1.0; aim for at least +2)
-- `wood: +N/t` — should be positive (each staffed wood camp adds about +0.57)
-- `knowledge: +N/t` — should be positive (five staffed story circles make +1.0)
+The Economy panel is always on screen. Look at the rate column:
+- `food: +N/t` should be positive (each staffed gathering camp adds +1.0; aim for at least +2)
+- `wood: +N/t` should be positive (each staffed wood camp adds about +0.57)
+- `knowledge: +N/t` should be positive (five staffed story circles make +1.0)
 
 If food is negative, build another gathering camp and staff it. If knowledge is zero, assign workers to story_circle or build more of them.
 
@@ -132,47 +130,48 @@ If food is negative, build another gathering camp and staff it. If knowledge is 
 
 ## Step 8: Research your first tech
 
-Once you hit 800 knowledge (watch the knowledge bar; knowledge storage starts at 30, so you need stashes to hold that much):
+Once you have 800 knowledge (knowledge storage starts at 30, so you need stashes to hold that much):
 
 ```
 research tool_making
 ```
 
-This takes 56 ticks (just under 2 minutes) and gives +15% gather rate — permanently. It costs more knowledge than the Stone Age asks for, so if you're short, advance first and research it later.
+This takes 56 ticks (just under 2 minutes) and gives a permanent +15% worker output. It costs more knowledge than the Stone Age asks for, so if you're short, advance first and research it later.
 
-While that's researching, queue another building — keep the build queue busy constantly.
+While that's researching, queue another building. Keep the build queue busy.
 
 ---
 
 ## Step 9: Build the Sacred Grove (required to advance)
 
 Every age has a wonder, and you can't advance until it stands. The Sacred Grove costs:
-- 1,000 wood
+- 1K wood
 - 500 food
 
 Bank the resources, then build it (75 ticks, 2m 30s):
 
 ```
-wonder collect wood 1000
-wonder collect food 500
+wonder collect all
 build sacred_grove
 ```
 
-It also gives +0.02 knowledge/t and +0.05 food/t permanently. Bank in chunks as your storage allows.
+`wonder collect all` banks as much of each needed resource as you have. Run it again whenever your stock refills; your storage limits how much you can bank at once.
+
+The grove also gives +0.02 knowledge/tick and +0.05 food/tick permanently.
 
 ---
 
-## Step 10: Check the age bar
+## Step 10: Check the age bar and advance
 
-The second row always shows what you need for the **next age**. For Stone Age:
-- Food: 1,000
-- Wood: 1,000
+The second row always shows what you need for the **next age**. For the Stone Age:
+- Food: 1K
+- Wood: 1K
 - Knowledge: 150
 - Huts: 10
 - Story Circles: 5
 - The Sacred Grove built
 
-Keep building huts and story circles. Keep assigning workers. Keep knowledge flowing. The age advances **automatically** when all bars fill.
+Keep building huts and story circles, keep assigning workers and keep knowledge flowing. When every bar is full, type `advance`. The age never advances on its own. If you're stepping away, `plan advance` queues it and the plan advances for you once everything is ready.
 
 ---
 
@@ -182,29 +181,29 @@ Before you advance, you should have:
 - [ ] 10 huts
 - [ ] 5 story circles
 - [ ] The Sacred Grove built
-- [ ] 2–3 stashes
+- [ ] 2-3 stashes
 - [ ] Staffed gathering camps and wood camps
-- [ ] 10+ pop, all assigned
-- [ ] Food rate positive by at least +3/t
+- [ ] 10+ workers, all assigned
+- [ ] Food rate positive by at least +3/tick
 - [ ] Tool Making researched (optional)
 
 ---
 
 ## What the Stone Age unlocks
 
-When you reach Stone Age:
-- **Stone** resource unlocks (needed for Bronze Age)
-- **Stone Pit** — produces stone passively
-- **Stone Camp** — early masonry production building
-- **Woodcutter Camp** — dedicated wood building
-- **Forager Post** — upgraded food building
-- **Standing Stones** — better faith building
-- **Elders' Hall** — upgraded knowledge building
-- **Longhouse** — bigger housing (+25 pop cap each)
-- **War Camp** — early military building
-- **Great Monolith** — the Stone Age wonder, required to reach the Bronze Age
+When you reach the Stone Age:
+- **Stone** resource unlocks (needed for the Bronze Age)
+- **Stone Pit**: produces stone
+- **Stone Camp**: early masonry building
+- **Woodcutter Camp**: dedicated wood building
+- **Forager Post**: upgraded food building
+- The `standing_stones` building: better faith building
+- **Elders' Hall**: upgraded knowledge building
+- **Longhouse**: bigger housing (+25 housing each)
+- **War Camp**: early military building
+- **Great Monolith**: the Stone Age wonder, required to reach the Bronze Age
 
-Your first priority: build **Stone Pits** and **Woodcutter Camps**, and assign workers to them. The Stone Age is tuned to take about **45 minutes**, and the Bronze Age needs 4,000 food, 8,000 wood, 4,000 stone, 1,500 knowledge, 15 longhouses, 5 stone pits, 5 elders' halls, and the Great Monolith.
+Your first priority: build **Stone Pits** and **Woodcutter Camps**, and assign workers to them. The Stone Age is tuned to take about **45 minutes**, and the Bronze Age needs 4K food, 8K wood, 4K stone, 1.5K knowledge, 15 longhouses, 5 stone pits, 5 elders' halls, and the Great Monolith.
 
 ---
 
@@ -223,14 +222,15 @@ Your first priority: build **Stone Pits** and **Woodcutter Camps**, and assign w
 | Assign workers to story circle | `assign story_circle 1` |
 | Unassign a worker from a building | `unassign gathering_camp 1` |
 | Start first research | `research tool_making` |
-| Bank resources for the wonder | `wonder collect <resource> <amount>` |
+| Bank resources for the wonder | `wonder collect all` or `wonder collect <resource> [amount]` |
 | Build the wonder | `build sacred_grove` |
-| Check economy tab | `status` |
-| Check worker breakdown | `status` |
+| Advance to the next age | `advance` |
+| Check population, idle and food drain | `status` |
+| Check worker breakdown | `workers` |
 | Check logs | `logs` |
 | Queue builds for while you're away | `plan build hut 10`, `plan advance` |
-| Save the game | `Esc` |
+| Save and return to the main menu | `Esc` (with no panel open) |
 
 ---
 
-> **Tip:** The game is idle — you don't need to babysit it. Set up your assignments, then leave a [build plan](plan.md) before you step away: `plan build hut 10`, `plan research fire_mastery`, `plan advance`. The plan starts each item as the resources come in, while you play and while you are away, and pays for it only when it starts.
+> **Tip:** The game is idle, so you don't need to babysit it. Set up your assignments, then leave a [build plan](plan.md) before you step away: `plan build hut 10`, `plan research fire_mastery`, `plan advance`. The plan starts each item as the resources come in, while you play and while you are away, and pays for it only when it starts.

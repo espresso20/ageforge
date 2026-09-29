@@ -1,10 +1,10 @@
-# AgeForge — Worker Class System
+# AgeForge: Worker Class System
 
 ## Overview
 
 Workers are age-tiered. Every age unlocks a new class of worker for each relevant domain.
 Higher-tier workers cost more food per tick but produce significantly more per assignment.
-Old-tier workers remain after an age advance but cannot be newly recruited — only the
+Old-tier workers remain after an age advance but cannot be newly recruited. Only the
 current age's tier is available for recruitment. This creates a workforce transition dynamic:
 do you keep cheap legacy workers or invest in feeding expensive new ones?
 
@@ -14,9 +14,9 @@ do you keep cheap legacy workers or invest in feeding expensive new ones?
 - Buildings produce at **20% base rate** with no workers assigned
 - Each assigned worker of the matching domain adds to that building's output
 - Full capacity = 100% production. Over-capacity is not possible.
-- A Serf (Food domain) assigned to a Smithy (Engineering domain) produces nothing — domains are strict
-- Higher-tier workers have a higher `output_multiplier` — a Colonist does more per slot than a Gatherer
-- **Culture buildings have no worker domain** — they auto-produce culture each tick (see resources.md)
+- A Serf (Food domain) assigned to a Smithy (Engineering domain) produces nothing: domains are strict
+- Higher-tier workers have a higher `output_multiplier`, so a Colonist does more per slot than a Gatherer
+- **Culture buildings have no worker domain**: they auto-produce culture each tick (see resources.md)
 
 ## 12 Worker Domains
 
@@ -186,7 +186,7 @@ Fills: shrine, standing_stones, altar, temple, oracle_house, cathedral, basilica
        digital_temple, cyber_shrine, neon_sanctuary, quantum_chapel, orbital_sanctuary,
        void_monastery, stellar_shrine, transcendence_hall
 
-Faith workers are MORE expensive than raw material workers — spiritual leadership is a premium.
+Faith workers are MORE expensive than raw material workers, since spiritual leadership comes at a premium.
 
 | Age | Class Name | Food/tick | Output Multiplier |
 |-----|-----------|-----------|-------------------|
@@ -401,14 +401,14 @@ Fills: space_station, orbital_habitat, warp_gate, colony_ship, star_forge,
 
 1. **Only current-age tier** can be newly recruited. Advancing an age immediately unlocks
    the new tier for each domain.
-2. **Legacy workers persist** — existing workers don't disappear, but cost their original
+2. **Legacy workers persist**: existing workers don't disappear, but cost their original
    food rate. Players may keep them or dismiss them.
 3. **Dismissal**: workers can be dismissed (removed from population) to free up food budget.
 4. **Assignment is cross-tier**: a building's worker capacity accepts any tier of the
    correct domain. Higher tiers produce more per slot.
 5. **Over-assignment is impossible**: can't assign more workers to a building than its
    `worker_capacity` allows.
-6. **Culture domain exception**: Culture/Arts buildings accept no workers — they produce
+6. **Culture domain exception**: Culture/Arts buildings accept no workers; they produce
    culture automatically. See resources.md.
 
 ## UI Implications
@@ -416,9 +416,9 @@ Fills: space_station, orbital_habitat, warp_gate, colony_ship, star_forge,
 - Population panel shows active tier prominently; legacy tiers shown collapsed or grayed
 - Each worker class name appears in the UI (seeing "Serf" instead of "Worker" rewards lore engagement)
 - Worker assignment uses domain name, not individual class name, to avoid UI churn on advance
-  (you always "assign to Food" — the class name is flavor on top)
+  (you always "assign to Food"; the class name is flavor on top)
 - Three raw material domains (Food, Lumber, Masonry) are grouped under "Materials" in the UI
-  to reduce cognitive load — but they remain mechanically separate
+  to reduce cognitive load, but they remain mechanically separate
 
 ## Worker Domain Summary Reference
 
@@ -436,4 +436,4 @@ Fills: space_station, orbital_habitat, warp_gate, colony_ship, star_forge,
 | Energy | Energy lineage | Industrial | 2.50 |
 | Hacker | Digital lineage | Information | 0.30 |
 | Astronaut | Space-faring buildings | Space | 0.40 |
-| *(none)* | Culture/Arts lineage | Classical | — |
+| *(none)* | Culture/Arts lineage | Classical | none |

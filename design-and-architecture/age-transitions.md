@@ -1,16 +1,16 @@
-# AgeForge — Age Transition System
+# AgeForge: Age Transition System
 
 ## Overview
 
 When a player advances to a new age, a **transformation pass** automatically upgrades their
 civilization. Buildings transform to their next-tier equivalent, workers rename and gain new
-stats, and new construction options unlock. The player never manually migrates — the game
+stats, and new construction options unlock. The player never migrates anything by hand; the game
 handles it as part of the age advance event.
 
 This design means:
 - The Economy tab always shows **only current-age buildings** (no overflow, no age grouping)
 - Workers always reflect the current age's class names
-- Players feel the civilization genuinely advancing, not just unlocking more buildings on top
+- Players feel the civilization advancing instead of only unlocking more buildings on top
 
 ---
 
@@ -29,7 +29,7 @@ This design means:
       - Find the new-age tier for their domain
       - Rename the class (Tribesman → Laborer)
       - Apply new food cost and output multiplier immediately
-      - Count is preserved — no re-recruitment needed
+      - Count is preserved, so no re-recruitment is needed
 
 3. Unlock new-age buildings for fresh construction
 
@@ -45,11 +45,11 @@ This design means:
 ## Building Lineages
 
 A lineage is a chain of age-specific incarnations of the same production role. Buildings in
-a lineage share a domain, purpose, and worker type — only their name, stats, and age tier differ.
+a lineage share a domain, purpose, and worker type; only their name, stats, and age tier differ.
 
 **Rules:**
 - Each lineage has at most one entry per age
-- A building belongs to exactly one lineage (or is "ageless" — wonders, storage)
+- A building belongs to exactly one lineage (or is "ageless": wonders, storage)
 - Lineage advancement is automatic on age advance
 - If a lineage has no entry for the new age, the building becomes legacy
 
@@ -80,7 +80,7 @@ a lineage share a domain, purpose, and worker type — only their name, stats, a
 | Galactic | Dyson Habitat | +600,000 |
 | Quantum | Reality Fold | +1,000,000 |
 
-#### Raw Production (food / wood / stone — worker determines which resource flows)
+#### Raw Production (food / wood / stone; worker determines which resource flows)
 | Age | Building | Worker Capacity | Base Rate (20% floor) |
 |-----|----------|----------------|----------------------|
 | Primitive | Gathering Camp | 3 | 0.1/tick per worker |
@@ -208,13 +208,13 @@ Unlocks at Bronze Age.
 | Galactic | Dyson Assembly | 25 |
 | Quantum | Reality Forge | 30 |
 
-#### Storage (no lineage transformation — storage buildings are age-specific, standalone)
+#### Storage (no lineage transformation; storage buildings are age-specific, standalone)
 Storage buildings do **not** transform on age advance. They stack additionally.
 A player keeps their stashes AND can build Stone Age storage pits on top.
 This is intentional: storage growth is cumulative and should feel like infrastructure investment.
 See economy.md Law 1 (Storage Covenant) for capacity requirements per age.
 
-#### Wonders (ageless — never transform)
+#### Wonders (ageless, never transform)
 Wonders are permanent landmarks. A Great Monolith built in Stone Age stays a Great Monolith
 in the Quantum Age. They do not transform, cannot be rebuilt, and are never demolished.
 This makes wonders feel like historical monuments rather than upgradeable units.
@@ -227,7 +227,7 @@ Buildings with no next-tier lineage entry become **legacy** on age advance:
 - Still produce at their current stats
 - Cannot be built again (grayed out in Economy tab with legacy tag)
 - Cannot be upgraded
-- Do not disappear — they remain as long-standing infrastructure
+- Do not disappear; they remain as long-standing infrastructure
 - Example: `firepit` (stone age) has no bronze equivalent → stays as legacy on bronze advance
 
 Legacy buildings fade in relevance naturally (their fixed stats fall behind the new age's
@@ -241,10 +241,10 @@ On age advance, all worker classes in the player's workforce rename and restat:
 
 - The **count** is preserved exactly
 - The **food cost per worker** updates to the new tier's value immediately
-  (could be a net increase — player may need to adjust food production)
+  (could be a net increase, so the player may need to adjust food production)
 - The **output multiplier** updates to the new tier value
-- **Assignment is preserved** — workers stay in whatever buildings they were in
-- The domain stays the same — a worker assigned to a building stays assigned
+- **Assignment is preserved**: workers stay in whatever buildings they were in
+- The domain stays the same: a worker assigned to a building stays assigned
 
 **Example:**
 Stone Age advance to Bronze Age:
@@ -253,7 +253,7 @@ Stone Age advance to Bronze Age:
 - Output: each worker produces 2× more per assignment slot
 
 The player sees a net production gain but also higher food cost. This creates a moment of
-"do I have enough food production for Bronze Age Laborers?" — a satisfying decision point.
+"do I have enough food production for Bronze Age Laborers?", a real decision point.
 
 ---
 
@@ -278,7 +278,7 @@ When the age advances, show a modal/toast sequence:
 ║  Unlocked for Construction:                  ║
 ║    Smithy, Market, Library, House, Warehouse ║
 ║                                              ║
-║  ⚠ Food drain +14/tick — assign more farmers ║
+║  ⚠ Food drain +14/tick: assign more farmers  ║
 ╚══════════════════════════════════════════════╝
 ```
 

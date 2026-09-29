@@ -12,7 +12,7 @@ prestige confirm yes
 
 ## When You Can Prestige
 
-You unlock the ability to prestige at **Modern Age (Age 12)** and any age beyond. There is no hard cap — if you push all the way to Quantum Age before prestiiging, you'll earn substantially more points.
+You can prestige from the **Modern Age (Age 12)** or any later age. There is no upper limit: if you push on to the Quantum Age before prestiging, you earn more points.
 
 At 1x speed a run is paced to reach the Modern Age in about **3 days of game time** (the smoke-test bot gets there in about 2.4 days). The ages before it range from 15 minutes (Primitive) to 12 hours (Atomic); the Modern Age and the ages after it take 12 to 24 hours each. The game grants up to 24 hours of offline progress, so time away counts.
 
@@ -26,7 +26,7 @@ To check your current prestige status:
 prestige
 ```
 
-This shows your current level, available points, points you would earn right now, and whether the prestige threshold has been met. To view the upgrade shop without committing:
+This shows your current level, available points, points you would earn right now, and whether you have reached the age prestige needs. To view the upgrade shop without committing:
 
 ```
 prestige shop
@@ -38,7 +38,7 @@ When you're ready:
 prestige confirm yes
 ```
 
-The double confirmation (`confirm yes`) is intentional — prestige is irreversible.
+The double confirmation (`confirm yes`) is deliberate, because prestige can't be undone.
 
 Every prestige, from any age, ends with one closing line in the log, written for the age the run ended in. From the Modern Age to the Space Age the civilization simply winds down: offices empty, the last tram runs, the orbital yards shut. In the Cosmic Era the age's harbinger is there at the end, and the lines turn to cosmic dread ("Your unmade self took your hand.").
 
@@ -55,7 +55,7 @@ raw       = base + bonus
 points    = floor(raw / sqrt(prestige_level + 1))
 ```
 
-**Diminishing returns** apply via the `sqrt(level + 1)` divisor — each run yields fewer raw points per achievement as your prestige level grows. A minimum of 1 point is guaranteed if you've reached Medieval Age (index ≥ 5) and your level isn't too high.
+The `sqrt(level + 1)` divisor gives **diminishing returns**: each run pays fewer points for the same achievements as your prestige level grows. Every prestige pays at least 1 point.
 
 ### What contributes to points
 
@@ -66,7 +66,7 @@ points    = floor(raw / sqrt(prestige_level + 1))
 | Every 15 techs researched | +1 pt |
 | Every 50 buildings constructed (lifetime) | +1 pt |
 
-Reaching Modern Age for the first time typically yields **4–8 points** depending on playstyle. Pushing to late ages (Quantum = index 20) before prestiiging yields 20+ before the divisor.
+Reaching the Modern Age for the first time usually pays **4 to 8 points**, depending on how you played. Pushing to a late age (Quantum is index 20) before prestiging gives 20 or more before the divisor.
 
 ---
 
@@ -74,7 +74,7 @@ Reaching Modern Age for the first time typically yields **4–8 points** dependi
 
 Every epoch's [harbinger](harbinger.md) warns of its passage into the next epoch. The Cosmic Era has no next epoch, so its passage is prestige itself: the **Last Passage**. From the Interstellar Age on, a harbinger thread warns of it like any other, with a new figure each age: the Distress Beacon, the Elder Relay, your future self, then your unmade self.
 
-Prestige from before the Cosmic Era is unchanged. Nothing rolls.
+Prestige from before the Cosmic Era never rolls for it.
 
 ### The roll
 
@@ -83,7 +83,7 @@ When you type `prestige confirm yes` in the Cosmic Era, the Last Passage rolls o
 | Faith fill | Chance of the Last Passage |
 |------------|----------------------------|
 | under 25% | 18% |
-| 25–75% | 15% |
+| 25 to 75% | 15% |
 | over 75% | 12% |
 
 Each level of Appease multiplies the chance by 0.6 (two levels at most). Invite makes it certain.
@@ -91,17 +91,17 @@ Each level of Appease multiplies the chance by 0.6 (two levels at most). Invite 
 `prestige` shows the current chance and which figure is warning of it, for example `☄ The Last Passage: 18% chance (high) when you prestige.` `prestige confirm` spells out what Endure and Succumb would give you before you commit.
 
 - **Nothing comes.** The verdict is Spared, and prestige completes as normal.
-- **It comes.** Prestige does **not** complete yet. A choice opens, titled **✦ The Last Passage**, in the same style as the catastrophe modal.
+- **It comes.** Prestige does **not** complete yet. A choice opens, titled **✦ The Last Passage**, in the same style as the catastrophe choice.
 
 ### While it is pending
 
-- **Esc** closes the choice. The status bar shows **☄ LAST PASSAGE — type 'catastrophe'**, and a bare `catastrophe` reopens it.
+- **Esc** closes the choice. The status bar shows a **☄ LAST PASSAGE** warning telling you to type `catastrophe`, and a bare `catastrophe` reopens the choice.
 - Only prestige is blocked. You can still advance ages, build and play on.
 - It is saved with your game, and the Load Game browser lists it as the pending choice.
 
 ### Endure or Succumb
 
-Both finish the prestige and raise your prestige level. Both add a line to the civilization log and count toward the Stats panel's Survived or Succumbed tally.
+Both finish the prestige and raise your prestige level. Both add a line to the civilization log and count toward the Stats panel's tally of endured and succumbed catastrophes.
 
 **Endure** keeps part of this run's prestige points. Brace raises the share:
 
@@ -126,7 +126,7 @@ Inviting the Cosmic Era's harbinger is how you take the Cosmic Legacy on purpose
 A one-time, permanent reward for Succumbing to the Last Passage.
 
 - **+10% production** (all resources), active from tick 1 of every run.
-- Shows as **Cosmic Legacy** in the Stats overlay, under Active Multipliers and in the Legacy Bonuses list. `prestige` shows `Cosmic Legacy: +10% production (permanent)`.
+- Shows as **Cosmic Legacy** in the Stats panel, under Active Multipliers and in the Legacy Bonuses list. `prestige` shows `Cosmic Legacy: +10% production (permanent)`.
 - Survives every prestige and every Succumb. Only wiping the game clears it.
 - You earn it once. While you hold it, Succumb is closed at the Last Passage.
 
@@ -138,30 +138,32 @@ A one-time, permanent reward for Succumbing to the Last Passage.
 
 | Upgrade | Key | Effect per Tier | Max Tier | Cost (T1 → T5) |
 |---------|-----|-----------------|----------|----------------|
-| Gather Boost | `gather_boost` | +5% gather rate | 5 | 2 / 3 / 4 / 6 / 8 |
-| Storage Bonus | `storage_bonus` | +20 all storage | 5 | 2 / 3 / 4 / 6 / 8 |
-| Research Speed | `research_speed` | +5% knowledge rate | 5 | 2 / 3 / 5 / 8 / 10 |
+| Gather Boost | `gather_boost` | +5% worker output | 5 | 2 / 3 / 4 / 6 / 8 |
+| Storage Bonus | `storage_bonus` | +20 storage for every resource | 5 | 2 / 3 / 4 / 6 / 8 |
+| Research Speed | `research_speed` | +5% knowledge output | 5 | 2 / 3 / 5 / 8 / 10 |
 | Military Power | `military_power` | +5% military power | 5 | 2 / 3 / 5 / 8 / 10 |
 | Starting Food | `starting_food` | +25 starting food | 5 | 1 / 2 / 3 / 4 / 5 |
 | Starting Wood | `starting_wood` | +25 starting wood | 5 | 1 / 2 / 3 / 4 / 5 |
-| Population Cap | `population_cap` | +2 population cap | 5 | 2 / 3 / 5 / 8 / 10 |
+| `Population Cap` | `population_cap` | +2 housing | 5 | 2 / 3 / 5 / 8 / 10 |
 | Expedition Loot | `expedition_loot` | +5% expedition reward | 5 | 2 / 3 / 5 / 8 / 10 |
 | Temporal Mastery | `tick_speed` | +5% tick speed | 5 | 6 / 10 / 17 / 23 / 33 |
 
 ```
-prestige shop                — view available upgrades and costs
-prestige buy gather_boost    — buy next tier of Gather Boost
-prestige buy tick_speed      — buy next tier of Temporal Mastery
-prestige buy starting_food   — buy next tier of Starting Food
+prestige shop                # view available upgrades and costs
+prestige buy gather_boost    # buy the next tier of Gather Boost
+prestige buy tick_speed      # buy the next tier of Temporal Mastery
+prestige buy starting_food   # buy the next tier of Starting Food
 ```
 
-You can buy prestige upgrades **before triggering prestige** — spend any points accumulated from prior runs as soon as you log in. There is no reason to wait.
+You can buy prestige upgrades **before you prestige again**. Points left over from earlier runs can be spent as soon as you log in, so there is no reason to wait.
 
 ### Effect Types
 
-- **`rate_bonus`** upgrades (Gather Boost, Research Speed, Military Power, Expedition Loot, Temporal Mastery) — each tier adds a fractional multiplier to the named rate. `gather_boost` at tier 3 = +15% gather rate.
-- **`flat_bonus`** upgrades (Storage Bonus, Population Cap) — each tier adds a flat value. Storage Bonus at tier 5 = +100 all storage.
-- **`starting_resource`** upgrades (Starting Food, Starting Wood) — each tier adds to the starting amount of that resource on reset. At tier 5, you begin every run with +125 food or wood.
+| Kind | Upgrades | What each tier does |
+|------|----------|---------------------|
+| Percentage | Gather Boost, Research Speed, Military Power, Expedition Loot, Temporal Mastery | Adds a percentage to that rate. Gather Boost at tier 3 is +15% worker output. |
+| Flat | Storage Bonus, `population_cap` | Adds a flat amount. Storage Bonus at tier 5 is +100 storage for every resource. |
+| Starting resource | Starting Food, Starting Wood | Adds to what you start each run with. At tier 5 you begin with +125 food or wood. |
 
 ---
 
@@ -191,23 +193,21 @@ These stack on top of your purchased upgrade bonuses. A prestige level 5 player 
 
 ### Persists Across Prestige
 - Prestige level and all purchased upgrade tiers
-- Ruins (from past Succumb events) — carry into the new run
-- Legacy bonuses (from Succumb events) — active from tick 1
+- Ruins (from past Succumb events), which carry into the new run
+- Legacy bonuses (from Succumb events), active from tick 1
 - The Cosmic Legacy, if you have earned it
-- Ancient Knowledge bonus (+25% research speed per distinct epoch succumbed) — derived from your legacy flags, so prestige never drops it
-- Civilization history / catastrophe log
+- Ancient Knowledge bonus (+25% research speed per distinct epoch succumbed), which comes from your legacy bonuses, so prestige never drops it
+- Civilization history and catastrophe log
 
 ### Morale on Prestige
 
-On prestige, morale returns to the **50% neutral baseline**, exactly like a fresh civilization. There is no special "institutional memory" floor — a rebuilt civilization starts at neutral, the same as one starting from scratch.
+On prestige, morale is set to **70%**. A brand-new game starts at 50%. Morale works on a continuous curve around 50%: above it production gets a bonus that grows the higher morale goes, and below it a penalty that grows the lower it goes. So a prestige run opens with a small production bonus (about +8%, since no wonders are built yet), and morale then drifts slowly back toward 50% on its own. To keep a bonus, or reach the full +20%, you raise morale the usual ways: worship and culture buildings, good events and age advances.
 
-Because morale only penalises output below 25% and only rewards it above 75%, starting at 50% means a prestige run begins with **no production penalty and no bonus**. Morale also drifts gently back toward 50% on its own, so you never have to claw out of a hole. To earn the high-band bonus (up to +20%), you raise morale the normal way — worship and culture buildings, good events, and age advances — once your new civilization is re-established.
-
-See [Morale](morale.md) for how the bands work.
+See [Morale](morale.md) for the full curve.
 
 ### Culture on Prestige
 
-Culture is reduced to **20% of its current value** rather than fully reset. Any unlocked culture threshold bonuses remain permanently unlocked. This means a player who accumulated culture across multiple runs retains meaningful culture bonuses even after prestige.
+Culture resets with every other resource. A new run starts with none.
 
 ---
 
@@ -216,8 +216,8 @@ Culture is reduced to **20% of its current value** rather than fully reset. Any 
 Legacy bonuses are earned by choosing **Succumb** during a catastrophe event. They are separate from prestige upgrades but interact with them on every subsequent run.
 
 Each Succumb grants:
-- **Ancient Knowledge** — permanent +25% research speed per distinct epoch succumbed (a second Succumb in the same epoch adds nothing; +150% at most from Iron to Cosmic)
-- **Epoch Legacy Bonus** — permanent production multiplier for the primary resources of that epoch
+- **Ancient Knowledge**: a permanent +25% research speed per distinct epoch succumbed (a second Succumb in the same epoch adds nothing; +150% at most, Iron to Cosmic)
+- **Epoch Legacy Bonus**: a permanent production multiplier for the main resources of that epoch
 
 | Epoch | Legacy Production Bonus |
 |-------|------------------------|
@@ -233,13 +233,13 @@ These bonuses apply from **tick 1** of every new run, including after prestige. 
 
 Succumbs in different epochs stack; a second Succumb in an epoch you already hold adds nothing. Catastrophes start in the Iron Era, so six legacy bonuses are reachable (the Stone Era one only exists on saves that earned it before that rule).
 
-Legacy bonuses survive prestige the same way ruins do — they are part of your permanent meta-state.
+Legacy bonuses survive prestige the same way ruins do.
 
 ---
 
 ## Ruins at Prestige
 
-When you prestige, any ruins you've accumulated from Succumb events carry forward. Ruins produce at 50% base rate with no worker requirement — they're free production from tick 1.
+When you prestige, any ruins you've accumulated from Succumb events carry forward. Ruins produce at 50% of the base rate and need no workers, so they give free production from tick 1.
 
 On a fresh prestige run with accumulated ruins, your food, wood, or other resources may already be ticking up before you've built a single building. Each Succumb adds up to 8 ruins, and the collection is capped at 24; past the cap the lowest-value (earliest-age) ruins crumble first, so later falls upgrade the collection.
 
@@ -249,14 +249,14 @@ See [Catastrophe](catastrophe.md) for how ruins are generated.
 
 ## Ancient Civilization Memory
 
-Early in a fresh prestige run, you may stumble on a relic of the civilization you just sacrificed — an **ancient cache** that remembers something your predecessor knew. Accepting it lets you skip the normal research grind for a single technology, at the cost of a slow rebuild.
+Early in a fresh prestige run, you may find a relic of the civilization you just gave up: an **ancient cache** that remembers something your predecessor knew. Accepting it lets you skip the normal research grind for a single technology, at the cost of a slow rebuild.
 
 > You have discovered an old cache. It appears to contain memories of a now-extinct civilization.
 
-When the cache surfaces, you get an **Accept / Decline** modal offering one technology appropriate to your current age. Press **A** to accept or **D** to decline.
+When the cache surfaces, you get an **Accept / Decline** choice offering one technology suited to your current age. Press **A** to accept or **D** to decline.
 
-- **Accept** — the offered tech is researched immediately, **free of prerequisites**, bypassing the normal age gate and knowledge cost. The catch: it completes at **half research speed** (2× the normal tick count). Skipping the prerequisite chain is paid for in slow recall.
-- **Decline** — the cache crumbles to dust. Nothing happens.
+- **Accept** starts research on the offered tech at once, **free of prerequisites**, skipping the usual age requirement and knowledge cost. It completes at **half research speed** (twice the normal tick count).
+- **Decline** and the cache crumbles to dust. Nothing else happens.
 
 Either way, the run's single cache chance is spent the moment the cache is offered.
 
@@ -264,24 +264,24 @@ Either way, the run's single cache chance is spent the moment the cache is offer
 
 | Condition | Requirement |
 | --------- | ----------- |
-| Timing | **Early** in a new run — while you are still in the **Primitive** or **Stone** age |
+| Timing | **Early** in a new run, while you are still in the **Primitive** or **Stone** age |
 | Probability | **~40%** chance, rolled at most **once per prestige run** |
-| Prestige level | **Level ≥ 1** — the very first-ever run has no predecessor to remember, so the cache never appears |
+| Prestige level | **Level 1 or higher**. Your very first run has no predecessor to remember, so the cache never appears |
 | Already known | Never offers a technology you have already researched |
 
 ### One Memory Per Run
 
-There is exactly **one** cache chance per run, and the "used" flag is set the instant the cache is offered — **not** when you accept. Consequences:
+There is exactly **one** cache chance per run, and it is used up the moment the cache is offered, **not** when you accept. So:
 
-- **Declining does not let you re-roll.** The chance is consumed whether you accept or decline.
-- **Saving and reloading does not re-roll it.** The used flag persists in your save.
-- The flag **resets on the next prestige, Succumb, or reset**, so every new run gets a fresh chance to roll.
+- **Declining does not let you re-roll.** The chance is spent whether you accept or decline.
+- **Saving and reloading does not re-roll it.** Your save remembers that the chance is spent.
+- The chance **comes back on the next prestige, Succumb, or reset**, so every new run gets a fresh roll.
 
 ### Tech Tier Scales With Prestige Level
 
-Which technology the cache can offer scales with your **prestige level**. Low prestige surfaces a near-current-age tech; higher prestige reaches deeper memories — **one extra age of reach per two prestige levels**. A high-prestige player can be offered a tech from an age they haven't yet reached this run, jump-starting their tech path well ahead of the normal curve.
+Which technology the cache can offer depends on your **prestige level**. At low prestige it offers a tech from near your current age. Higher prestige reaches further: **one extra age of reach per two prestige levels**. A high-prestige player can be offered a tech from an age they haven't reached yet this run, well ahead of the normal curve.
 
-The half-speed penalty still applies no matter how advanced the offered tech is, so an out-of-age tech accepted from the cache takes a while to settle in — but it arrives without any of the prerequisites or knowledge cost it would normally demand.
+The half-speed penalty applies however advanced the offered tech is, so an out-of-age tech from the cache takes a while to finish. It still skips the prerequisites and knowledge cost it would normally need.
 
 See [Technologies](technologies.md) for the full tech tree and the other free-research path (Grand Discovery).
 
@@ -289,45 +289,39 @@ See [Technologies](technologies.md) for the full tech tree and the other free-re
 
 ## Recommended Upgrade Priorities
 
-### First prestige (4–8 points)
+### First prestige (4 to 8 points)
 
 | Priority | Upgrade | Why |
 |----------|---------|-----|
-| 1st | `starting_food` + `starting_wood` | Makes Primitive Age trivially fast; 1 pt each at tier 1 |
-| 2nd | `gather_boost` tier 1–2 | Accelerates early resource collection in every run |
-| 3rd | `research_speed` tier 1 | Knowledge snowballs; earlier techs mean faster ages |
+| 1st | `starting_food` + `starting_wood` | Makes the Primitive Age much faster; 1 pt each at tier 1 |
+| 2nd | `gather_boost` tier 1-2 | Faster early gathering in every run |
+| 3rd | `research_speed` tier 1 | More knowledge early means earlier techs and faster ages |
 
-### Second and third prestige (10–20 points)
+### Second and third prestige (10 to 20 points)
 
 | Priority | Upgrade | Why |
 |----------|---------|-----|
-| 1st | `storage_bonus` tier 1–2 | Prevents early resource caps from throttling growth |
-| 2nd | `research_speed` tier 2–3 | Compound gains become significant at higher tiers |
-| 3rd | `population_cap` tier 1 | +2 pop is small but early housing pressure is real |
+| 1st | `storage_bonus` tier 1-2 | Keeps early storage limits from holding back growth |
+| 2nd | `research_speed` tier 2-3 | The gains add up at higher tiers |
+| 3rd | `population_cap` tier 1 | +2 housing is small, but housing runs short early on |
 
 ### Late game (20+ points available)
 
 | Priority | Upgrade | Why |
 |----------|---------|-----|
-| 1st | `tick_speed` — start buying tiers | The single most impactful upgrade long-term |
-| 2nd | Max out `research_speed` | Full 5 tiers = +25% knowledge rate, stacks with Ancient Knowledge |
-| 3rd | `expedition_loot` | Late-game resource acceleration via expeditions |
+| 1st | `tick_speed`: start buying tiers | The strongest upgrade over many runs |
+| 2nd | Max out `research_speed` | All 5 tiers give +25% knowledge output and stack with Ancient Knowledge |
+| 3rd | `expedition_loot` | More resources from late-game expeditions |
 
-**Temporal Mastery** (`tick_speed`) is the most expensive upgrade (33 points for tier 5) but also the most powerful — each tier makes the entire game tick 5% faster. At tier 5 you're running at 1.25× base speed before passive bonuses.
-
----
-
-## Faith Bonus at Prestige
-
-If your faith resource is at **100% of its storage cap** at the moment you prestige, you receive a faith prestige multiplier — additional prestige points on top of the normal formula. Stacking faith buildings before triggering prestige is a legitimate optimization.
+**Temporal Mastery** (`tick_speed`) is the most expensive upgrade (33 points for tier 5) and also the strongest: each tier makes the whole game tick 5% faster. At tier 5 you're running at 1.25× base speed before passive bonuses.
 
 ---
 
 ## Tips
 
-- **Buy upgrades before prestiging** — spend any banked points from prior runs the moment you log in; you don't need to trigger prestige to spend points
-- **Milestones are permanent** — your civilization title and all completed milestone chains carry over; milestone progress toward chains is preserved
-- **Each run should complete one more wonder than the last** — wonder bonuses compound with prestige bonuses for dramatic acceleration
-- **Don't rush the first prestige** — reaching further ages (Information, Digital and beyond) before your first prestige gives substantially more points than resetting at the minimum threshold
-- **Prestiging from the Cosmic Era is a gamble.** Appease before you confirm to lower the odds, Brace if you would Endure, Invite if you want the Cosmic Legacy
-- **The passive bonus compounds** — at prestige level 10, you have +20% production all and +10% tick speed before spending a single upgrade point
+- Spend banked points from earlier runs as soon as you log in. You don't need to prestige to spend them.
+- Milestones reset on prestige. Each run earns them again, and they count toward that run's points.
+- Aim to finish one more wonder each run than the last. Wonder bonuses stack with prestige bonuses.
+- Don't rush the first prestige. Reaching later ages (Information, Digital and beyond) first gives many more points than resetting at the Modern Age.
+- Prestiging from the Cosmic Era is a gamble. Appease before you confirm to lower the odds, Brace if you would Endure, Invite if you want the Cosmic Legacy.
+- The passive bonus grows with every level. At prestige level 10 you have +20% all production and +10% tick speed before spending a single upgrade point.

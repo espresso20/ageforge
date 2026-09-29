@@ -1,6 +1,6 @@
-# Workers & Domains — Reference
+# Workers & Domains: Reference
 
-Workers are your civilization's labour force. Every building that produces resources has a worker capacity; staffing it drives output from a 20% idle floor up to 100% full efficiency. Workers are managed through a **single generic pool** — any worker can go to any building. The domain is resolved automatically from the building, not from the worker.
+Workers are your civilization's labor force. Every building that produces resources has worker slots; staffing it raises output from a 20% floor up to 100%. Workers come from a **single generic pool**, and any worker can go to any building. The domain comes from the building, not the worker.
 
 For a gentler introduction see [Workers](villagers.md).
 
@@ -8,51 +8,51 @@ For a gentler introduction see [Workers](villagers.md).
 
 ## Overview
 
-- One pool of workers — all identical until assigned to a building
-- Assigning a worker to a building gives them the **class name** for that building's domain at the current age (purely cosmetic / food-cost reference)
+- One pool of workers, all identical until assigned to a building
+- An assigned worker shows the **class name** for that building's domain at the current age (a label only)
 - **Production formula:** `base_rate × building_count × (0.20 + 0.80 × assigned / total_capacity)`
-- 20% floor: unassigned buildings are never completely idle
-- Food drain: all workers cost food per tick, scaled by current age tier
+- 20% floor: a building with no workers still produces something
+- Food drain: every worker eats the same amount per tick, set by the current age
 
 ---
 
 ## The Worker Pool
 
-There is a single pool of workers. Workers have no domain until they are assigned to a building. The total population is:
+There is a single pool of workers. Workers have no domain until they are assigned to a building. Your population is:
 
 ```
 total_workers = idle_workers + sum of all building assignments
 ```
 
-When you assign a worker to a building, they take on the **class name** for that building's domain at the current age — for example, a worker assigned to a `gathering_camp` in the primitive age becomes a **Forager**; the same worker assigned to a `story_circle` becomes a **Shaman**. The displayed class name is cosmetic and used to look up food cost scaling, but there are no separate domain pools.
+An assigned worker takes on the **class name** for that building's domain at the current age. For example, a worker on a `gathering_camp` in the Primitive Age is a **Forager**; the same worker on a `story_circle` is a **Shaman**. The class name is only a label. There are no separate domain pools.
 
-**Key points:**
+What to know:
 
-- You do not choose which domain a worker belongs to when recruiting
-- Workers can be reassigned freely between any buildings with worker capacity
-- The `status` command and Economy tab show total population, idle count, and current food drain
-- Population is capped by your housing buildings (huts, longhouses, etc.)
+- You don't choose a domain when recruiting.
+- Workers can move freely between any buildings that have worker slots.
+- The `status` command and the Economy panel show population, idle count and current food drain.
+- Your population is limited by housing (huts, longhouses and so on).
 
 ### Class Name Quick Reference
 
-The class name shown in the UI reflects the building's domain + current age. Selected examples:
+The class name shown in the game comes from the building's domain and the current age. Selected examples:
 
 | Domain | Primitive | Iron | Classical | Medieval | Victorian | Modern |
 |--------|-----------|------|-----------|----------|-----------|--------|
 | food | Forager | Laborer | Peasant | Serf | Agric. Worker | Modern Farmer |
 | knowledge | Shaman | Scholar | Philosopher | Friar | Victorian Scholar | Modern Researcher |
-| military | — | Soldier | Legionary | Knight | Victorian Guard | Modern Soldier |
-| trade | — | Merchant | Trader | Nobleman | Victorian Trader | Corporate Trader |
+| military | - | Soldier | Legionary | Knight | Victorian Guard | Modern Soldier |
+| trade | - | Merchant | Trader | Nobleman | Victorian Trader | Corporate Trader |
 | faith | Devotee | Celebrant | Initiate | Acolyte | Parish Priest | Modern Shepherd |
-| engineering | — | Craftsman | Artisan | Engineer | Tinker | Systems Engineer |
-| lumber | — | Lumberjack | Sawyer | Forester | Steam Logger | Petroleum Worker |
-| masonry | — | Miner | Iron Extractor | Medieval Miner | Victorian Quarryman | Modern Geologist |
-| metallurgy | — | Smelter | Ironworker | Medieval Smith | Steam Smelter | Modern Metallurgist |
-| energy | — | — | — | — | Stoker | Power Engineer |
-| hacker | — | — | — | — | — | — |
-| astronaut | — | — | — | — | — | — |
+| engineering | - | Craftsman | Artisan | Engineer | Tinker | Systems Engineer |
+| lumber | - | Lumberjack | Sawyer | Forester | Steam Logger | Petroleum Worker |
+| masonry | - | Miner | Iron Extractor | Medieval Miner | Victorian Quarryman | Modern Geologist |
+| metallurgy | - | Smelter | Ironworker | Medieval Smith | Steam Smelter | Modern Metallurgist |
+| energy | - | - | - | - | Stoker | Power Engineer |
+| hacker | - | - | - | - | - | - |
+| astronaut | - | - | - | - | - | - |
 
-Full class progression for every domain is in the [Worker Class Names by Age](#worker-class-names-by-age) section below.
+The full class progression for every domain is in [Worker Class Names by Age](#worker-class-names-by-age) below.
 
 ---
 
@@ -62,43 +62,43 @@ Full class progression for every domain is in the [Worker Class Names by Age](#w
 recruit [count|max]
 ```
 
-Workers are recruited from available housing capacity. No domain argument — workers are generic until assigned.
+Workers are recruited from free housing. You don't name a domain; workers are generic until assigned.
 
 | Command | Effect |
 |---------|--------|
 | `recruit` | Recruit 1 worker |
 | `recruit 5` | Recruit 5 workers |
-| `recruit max` | Recruit as many as housing cap allows |
+| `recruit max` | Recruit as many as your housing allows |
 
-**Food cost:** each worker drains food per tick immediately on recruitment, based on the current age's tier for the food domain. In primitive age this is **0.06 food/tick** per worker — very cheap. The food cost is always determined by the food domain's class for the current age, regardless of which building the worker is assigned to.
+**Food cost:** recruiting is free, but every worker eats food each tick from the moment it joins. The amount is the current age's rate for all workers, whatever building they staff: **0.06 food/tick** per worker in the Primitive Age. See [Food Drain](#food-drain).
 
-**`max` behaviour:** attempts to fill all remaining housing slots (up to population cap). It does not check your food income — you can recruit more workers than your food supports, putting you into a deficit.
+**`recruit max`** fills all your free housing. It does not check your food income, so it can recruit more workers than your food supports and put you into a deficit.
 
-**Viewing workers:** type `workers` for the full three-panel overlay (summary, slot utilization, domain breakdown), or press `e` for the Economy tab. The `workers` overlay shows net food/tick color-coded green/red (blue/orange on the accessible [themes](commands.md#themes)), a break-even or starvation warning, and per-building fill bars. A worker mini-box is always visible in the sidebar showing pop/idle/housing/drain/net at a glance.
+**Viewing workers:** type `workers` to open the Workers panel (morale, summary, slot utilization, domain breakdown), or `status` for a text summary. The Workers panel shows net food/tick in green or red (blue or orange on the accessible [themes](commands.md#themes)), how many workers your food can sustain or a deficit warning, and per-building fill bars. The Workers box in the sidebar is always visible and shows population, idle, housing left, drain and net food at a glance.
 
 ---
 
 ## Assigning Workers to Buildings
 
 ```
-assign <building_key> [count|all]
+assign <building> [count|all]
 ```
 
-Assigns workers from the idle pool to the specified building. The domain is resolved automatically from the building definition — you never specify a domain.
+Assigns workers from the idle pool to the building. The domain comes from the building; you never specify one.
 
 | Command | Effect |
 |---------|--------|
 | `assign gathering_camp 3` | Assign 3 workers to gathering_camp |
 | `assign library all` | Assign all idle workers to library |
 | `assign barracks 5` | Assign 5 workers to barracks |
-| `assign` (no args) | Shows usage error |
+| `assign` (no arguments) | Shows the usage line |
 
-**Rules:**
+Rules:
 
-- The building must have been **built at least once** (`Count > 0`) — you cannot assign to unbuilt buildings
-- Assignment is capped at `building_count × WorkerCapacity` — the total staffing capacity
-- You cannot assign more workers than you have idle
-- Type `assign ` and the prompt suggests your built buildings that take workers, the ones with a free slot first (`Tab` takes the suggestion)
+- You must have built at least one of the building. You can't assign to a building you haven't built.
+- Assignment is capped at the building count times its worker slots.
+- You can't assign more workers than you have idle.
+- Type `assign ` and the prompt suggests your built buildings that take workers, the ones with a free slot first (`Tab` takes the suggestion).
 
 **Production scaling formula:**
 
@@ -106,31 +106,31 @@ Assigns workers from the idle pool to the specified building. The domain is reso
 output = base_rate × building_count × (0.20 + 0.80 × assigned / total_capacity)
 ```
 
-Where `total_capacity = building_count × building.WorkerCapacity`.
+Here `total_capacity` is the building count times the building's worker slots.
 
 | Workers Assigned | Efficiency |
 |-----------------|------------|
 | 0 (none) | 20% |
-| 25% of capacity | 40% |
-| 50% of capacity | 60% |
-| 75% of capacity | 80% |
+| 25% of slots | 40% |
+| 50% of slots | 60% |
+| 75% of slots | 80% |
 | 100% (full staff) | 100% |
 
-The 0.20 floor means idle buildings always contribute something. Full staffing is required to reach full rate.
+The 0.20 floor means an unstaffed building always contributes something. Only full staffing reaches the full rate.
 
 `base_rate` is the fully staffed rate shown in the building's description. For construction resources it is set by the Payback Rule (fully staffed, a producer earns back its first copy's price within the age's payback time); food, faith, culture and soldiers keep hand-set rates. See [How Production Rates Are Set](buildings.md#how-production-rates-are-set).
 
-**Example — gathering_camp:**
+**Example: gathering_camp**
 
-- Base rate: 1.0 food/tick, WorkerCapacity: 3
-- Built 2× → total capacity 6, base output: 1.0 × 2 = 2.0 food/tick
+- Base rate 1.0 food/tick, 3 worker slots
+- Built 2×: 6 slots in total, base output 1.0 × 2 = 2.0 food/tick
 - With 3 workers assigned (50% fill): `2.0 × (0.20 + 0.80 × 0.50)` = **1.2 food/tick**
-- With all 6 workers assigned (100% fill): **2.0 food/tick**
+- With all 6 slots filled (100%): **2.0 food/tick**
 
-**Example — library (classical_age, knowledge domain):**
+**Example: library (Classical Age, knowledge domain)**
 
-- Base rate: 3.2 knowledge/tick, WorkerCapacity: 4
-- Built 3× → 12 total slots, base output: 3.2 × 3 = 9.6 knowledge/tick
+- Base rate 3.2 knowledge/tick, 4 worker slots
+- Built 3×: 12 slots in total, base output 3.2 × 3 = 9.6 knowledge/tick
 - With `assign library 8` (67% fill): `9.6 × (0.20 + 0.80 × 0.67)` ≈ **7.0 knowledge/tick** (73% efficiency)
 - With all 12 slots filled: **9.6 knowledge/tick**
 
@@ -139,7 +139,7 @@ The 0.20 floor means idle buildings always contribute something. Full staffing i
 ## Unassigning Workers
 
 ```
-unassign <building_key> [count|all]
+unassign <building> [count|all]
 ```
 
 Removes workers from a building and returns them to the idle pool.
@@ -150,50 +150,50 @@ Removes workers from a building and returns them to the idle pool.
 | `unassign barracks all` | Remove all workers from barracks |
 | `unassign library 5` | Remove 5 workers from library |
 
-Unassigned workers return to the idle pool immediately and can be reassigned elsewhere. They continue to drain food while idle.
+Unassigned workers go back to the idle pool at once and can be reassigned elsewhere. They keep eating while idle.
 
-**When to unassign:**
+When to unassign:
 
-- Reassigning workers from low-priority buildings to new higher-tier ones after an age advance
-- Pulling military workers off military buildings once you've banked enough soldiers — expeditions spend the `soldiers` resource, not workers, so idle military workers are pure food/morale drain
+- To move workers from low-priority buildings to new, higher-tier ones after an age advance.
+- To pull military workers off military buildings once you've banked enough soldiers. Campaigns spend the `soldiers` resource, not workers, so idle military workers only cost food and morale.
 
 ---
 
 ## Dismissing Workers
 
 ```
-dismiss <building_key> [count|all]
+dismiss <building> [count|all]
 ```
 
-`dismiss` permanently removes workers from a building **and** from the total population pool. Unlike `unassign`, dismissed workers are gone — population decreases immediately.
+`dismiss` permanently removes workers from a building **and** from your population. Unlike `unassign`, dismissed workers are gone; population drops at once.
 
 | Command | Effect |
 |---------|--------|
-| `dismiss gathering_camp 2` | Remove 2 workers from gathering_camp and reduce total pop by 2 |
+| `dismiss gathering_camp 2` | Remove 2 workers from gathering_camp and reduce population by 2 |
 | `dismiss barracks all` | Dismiss all workers assigned to barracks |
 
-**When to dismiss:**
+When to dismiss:
 
-- Food deficit — cutting idle workers with `unassign` doesn't help because idle workers still drain food. `dismiss` is the only way to reduce drain without food production changes.
-- Housing pressure — free up housing slots for more productive workers in a different domain
-- Late-game cleanup — remove early-tier cheap workers that are no longer worth their housing slot
+- **Food deficit.** Moving workers to idle with `unassign` doesn't help, because idle workers still eat. `dismiss` is the only way to cut drain without changing food production.
+- **Housing pressure.** Free housing for workers you'd rather have elsewhere.
+- **Late-game cleanup.** Remove workers from early buildings that no longer earn their housing.
 
 ---
 
 ## Starvation
 
-When food hits 0 and net food income is negative, workers begin dying:
+When food runs out while your workers are still eating, they begin dying:
 
-- A warning is logged on the first tick of deficit
-- **1 worker is killed every 5 ticks** until food net income recovers
+- A warning is logged on the first tick without food
+- **1 worker dies every 5 ticks** (10 seconds at 1x) until food recovers
 - Deaths are logged in red
-- When food returns to positive net income, deaths stop and a recovery message is shown
+- As soon as there is food in stock again, deaths stop and a recovery message is logged
 
-Starvation is intentional — overpopulating without food infrastructure is punished. Recovery options:
+Overpopulating without the food to back it up costs you workers. To recover:
 
-1. `dismiss` workers from low-priority buildings to immediately cut drain
-2. Build more food production buildings and assign workers to them
-3. `unassign` from expensive-domain buildings and `assign` them to food buildings instead
+1. `dismiss` workers from low-priority buildings to cut drain at once
+2. Build more food buildings and assign workers to them
+3. `unassign` workers from other buildings and `assign` them to food buildings
 
 ---
 
@@ -214,125 +214,127 @@ Starvation is intentional — overpopulating without food infrastructure is puni
 | `hacker` | Hacker | data / crypto | server_farm, darknet_hub, quantum_core | Information Age |
 | `astronaut` | Astronaut | dark_matter / antimatter | launch_pad, space_station | Space Age |
 
-> **Culture** (Lineage 10) has no worker domain — culture buildings produce automatically and cannot be assigned workers.
+> **Culture** (Lineage 10) has no worker domain. Culture buildings produce automatically and take no workers.
 
 ---
 
 ## Worker Class Names by Age
 
-Each domain has one class per age it spans. Class name is cosmetic but also determines the food cost lookup for workers assigned to that domain's buildings. Food costs scale geometrically: `FoodCost = baseFoodCost × 1.12^tier`.
+Each domain has one class per age it spans. The class name is a label: it doesn't change what a worker produces or eats. Food drain depends only on the age (see [Food Drain](#food-drain)).
 
-### food — base 0.06/tick, starts Primitive Age
+### food (starts Primitive Age)
 
-| Age | Class Name | Food/tick |
+The food domain's column doubles as the food each worker eats per tick in that age, since that rate applies to every worker.
+
+| Age | Class Name | Food/tick per worker |
 |-----|-----------|-----------|
 | Primitive | Forager | 0.060 |
 | Stone | Farmhand | 0.067 |
 | Bronze | Cultivator | 0.075 |
 | Iron | Laborer | 0.084 |
-| Classical | Peasant | 0.095 |
+| Classical | Peasant | 0.094 |
 | Medieval | Serf | 0.106 |
-| Renaissance | Plowman | 0.119 |
+| Renaissance | Plowman | 0.118 |
 | Colonial | Colonial Farmer | 0.133 |
 | Industrial | Factory Hand | 0.149 |
-| Victorian | Agricultural Worker | 0.167 |
-| Electric | Electric Farmer | 0.187 |
-| Atomic | Atomic Agronomist | 0.210 |
-| Modern | Modern Farmer | 0.235 |
-| Information | Digital Cultivator | 0.263 |
-| Digital | AI Agronomist | 0.295 |
-| Cyberpunk | Aug Harvester | 0.330 |
-| Fusion | Bio-Farmer | 0.370 |
-| Space | Zero-G Farmer | 0.415 |
-| Interstellar | Stellar Cultivator | 0.465 |
-| Galactic | Galactic Farmer | 0.521 |
-| Quantum | Quantum Harvester | 0.583 |
+| Victorian | Agricultural Worker | 0.166 |
+| Electric | Electric Farmer | 0.186 |
+| Atomic | Atomic Agronomist | 0.209 |
+| Modern | Modern Farmer | 0.234 |
+| Information | Digital Cultivator | 0.262 |
+| Digital | AI Agronomist | 0.293 |
+| Cyberpunk | Aug Harvester | 0.328 |
+| Fusion | Bio-Farmer | 0.368 |
+| Space | Zero-G Farmer | 0.412 |
+| Interstellar | Stellar Cultivator | 0.461 |
+| Galactic | Galactic Farmer | 0.517 |
+| Quantum | Quantum Harvester | 0.579 |
 
-### knowledge — base 1.0/tick, starts Primitive Age
+### knowledge (starts Primitive Age)
 
 Primitive: Shaman → Stone: Elder → Bronze: Scribe → Iron: Scholar → Classical: Philosopher → Medieval: Friar → Renaissance: Academician → Colonial: Naturalist → Industrial: Engineer-Scientist → Victorian: Victorian Scholar → Electric: Research Fellow → Atomic: Nuclear Scientist → Modern: Modern Researcher → Information: Data Scientist → Digital: AI Researcher → Cyberpunk: Cyber-Scholar → Fusion: Fusion Theorist → Space: Orbital Researcher → Interstellar: Stellar Scientist → Galactic: Galactic Researcher → **Quantum: Quantum Theorist**
 
-### lumber — base 1.0/tick, starts Stone Age
+### lumber (starts Stone Age)
 
 Stone: Gatherer → Bronze: Woodcutter → Iron: Lumberjack → Classical: Sawyer → Medieval: Forester → Renaissance: Colonial Logger → Colonial: Mill Worker → Industrial: Coal Extractor → Victorian: Steam Logger → Electric: Electric Forester → Atomic: Fuel Extractor → Modern: Petroleum Worker → Information: Digital Forester → Digital: Bio-Extractor → Cyberpunk: Nano-Harvester → Fusion: Organic Engineer → Space: Biofield Harvester → Interstellar: Quantum Extractor → Galactic: Galactic Forester → **Quantum: Cosmic Extractor**
 
-### masonry — base 1.0/tick, starts Stone Age
+### masonry (starts Stone Age)
 
 Stone: Quarryman → Bronze: Stone Cutter → Iron: Miner → Classical: Iron Extractor → Medieval: Medieval Miner → Renaissance: Renaissance Quarryman → Colonial: Colonial Miner → Industrial: Industrial Miner → Victorian: Victorian Quarryman → Electric: Electric Miner → Atomic: Uranium Miner → Modern: Modern Geologist → Information: Data Miner → Digital: Digital Excavator → Cyberpunk: Cyber Miner → Fusion: Plasma Driller → Space: Space Miner → Interstellar: Asteroid Miner → Galactic: Dark Matter Extractor → **Quantum: Crystal Miner**
 
-### faith — early tiers 0.08→0.40/tick (Primitive–Classical), formal tiers base 2.0 from Medieval
+### faith (early tiers from Primitive, formal tiers from Medieval)
 
-Early tiers cover shrine/altar buildings at lower food costs before the formal domain kicks in at Medieval Age.
+The early tiers cover shrines and altars before the formal domain starts at the Medieval Age.
 
-| Age | Class Name | Food/tick |
-|-----|-----------|-----------|
-| Primitive | Devotee | 0.08 |
-| Stone | Believer | 0.12 |
-| Bronze | Worshipper | 0.18 |
-| Iron | Celebrant | 0.27 |
-| Classical | Initiate | 0.40 |
-| Medieval | Acolyte | 2.00 |
-| Renaissance | Monk | 2.24 |
-| Colonial | Missionary | 2.51 |
-| Industrial | Revivalist | 2.81 |
-| Victorian | Parish Priest | 3.15 |
-| Electric | Evangelical | 3.52 |
-| Atomic | Atomic Priest | 3.95 |
-| Modern | Modern Shepherd | 4.42 |
-| Information | Digital Devotee | 4.95 |
-| Digital | Virtual Cleric | 5.54 |
-| Cyberpunk | Cyber Cleric | 6.21 |
-| Fusion | Plasma Prophet | 6.95 |
-| Space | Star Preacher | 7.79 |
-| Interstellar | Interstellar Mystic | 8.72 |
-| Galactic | Galactic High Priest | 9.77 |
-| Quantum | Quantum Sage | 10.94 |
+| Age | Class Name |
+|-----|-----------|
+| Primitive | Devotee |
+| Stone | Believer |
+| Bronze | Worshipper |
+| Iron | Celebrant |
+| Classical | Initiate |
+| Medieval | Acolyte |
+| Renaissance | Monk |
+| Colonial | Missionary |
+| Industrial | Revivalist |
+| Victorian | Parish Priest |
+| Electric | Evangelical |
+| Atomic | Atomic Priest |
+| Modern | Modern Shepherd |
+| Information | Digital Devotee |
+| Digital | Virtual Cleric |
+| Cyberpunk | Cyber Cleric |
+| Fusion | Plasma Prophet |
+| Space | Star Preacher |
+| Interstellar | Interstellar Mystic |
+| Galactic | Galactic High Priest |
+| Quantum | Quantum Sage |
 
-### military — base 2.0/tick, starts Iron Age
+### military (starts Iron Age)
 
 Iron: Soldier → Classical: Legionary → Medieval: Knight → Renaissance: Musketeer → Colonial: Colonial Marine → Industrial: Industrial Rifleman → Victorian: Victorian Guard → Electric: Electric Trooper → Atomic: Atomic Soldier → Modern: Modern Soldier → Information: Information Warrior → Digital: Digital Soldier → Cyberpunk: Cyber Warrior → Fusion: Plasma Trooper → Space: Space Marine → Interstellar: Interstellar Commando → Galactic: Galactic Guardian → **Quantum: Quantum Soldier**
 
-### trade — base 1.0/tick, starts Bronze Age
+### trade (starts Bronze Age)
 
 Bronze: Peddler → Iron: Merchant → Classical: Trader → Medieval: Nobleman → Renaissance: Banker → Colonial: Colonial Merchant → Industrial: Industrialist → Victorian: Victorian Trader → Electric: Electric Broker → Atomic: Atomic Trader → Modern: Corporate Trader → Information: Digital Trader → Digital: Crypto Broker → Cyberpunk: Cyber Dealer → Fusion: Plasma Merchant → Space: Space Trader → Interstellar: Interstellar Broker → Galactic: Galactic Merchant → **Quantum: Quantum Dealer**
 
-### engineering — early tiers 0.50→5.60/tick (Bronze–Industrial), formal tiers base 8.0 from Victorian
+### engineering (early tiers from Bronze, later tiers from Victorian)
 
-| Age | Class Name | Food/tick |
-|-----|-----------|-----------|
-| Bronze | Apprentice | 0.50 |
-| Iron | Craftsman | 0.75 |
-| Classical | Artisan | 1.10 |
-| Medieval | Engineer | 1.65 |
-| Renaissance | Master Eng. | 2.50 |
-| Colonial | Mechanic | 3.75 |
-| Industrial | Machinist | 5.60 |
-| Victorian | Tinker | 8.00 |
-| Electric | Electrical Engineer | 8.96 |
-| Atomic | Nuclear Engineer | 10.04 |
-| Modern | Systems Engineer | 11.24 |
-| Information | Software Engineer | 12.59 |
-| Digital | AI Engineer | 14.10 |
-| Cyberpunk | Cyber Engineer | 15.79 |
-| Fusion | Plasma Engineer | 17.69 |
-| Space | Space Engineer | 19.81 |
-| Interstellar | Warp Engineer | 22.19 |
-| Galactic | Galactic Engineer | 24.85 |
-| Quantum | Quantum Engineer | 27.83 |
+| Age | Class Name |
+|-----|-----------|
+| Bronze | Apprentice |
+| Iron | Craftsman |
+| Classical | Artisan |
+| Medieval | Engineer |
+| Renaissance | Master Eng. |
+| Colonial | Mechanic |
+| Industrial | Machinist |
+| Victorian | Tinker |
+| Electric | Electrical Engineer |
+| Atomic | Nuclear Engineer |
+| Modern | Systems Engineer |
+| Information | Software Engineer |
+| Digital | AI Engineer |
+| Cyberpunk | Cyber Engineer |
+| Fusion | Plasma Engineer |
+| Space | Space Engineer |
+| Interstellar | Warp Engineer |
+| Galactic | Galactic Engineer |
+| Quantum | Quantum Engineer |
 
-### metallurgy — base 2.0/tick, starts Iron Age
+### metallurgy (starts Iron Age)
 
 Iron: Smelter → Classical: Ironworker → Medieval: Medieval Smith → Renaissance: Renaissance Metallurgist → Colonial: Foundry Worker → Industrial: Factory Worker → Victorian: Steam Smelter → Electric: Electric Smelter → Atomic: Atomic Metallurgist → Modern: Modern Metallurgist → Information: Digital Foundry Worker → Digital: Digital Smelter → Cyberpunk: Cyber Forge Worker → Fusion: Plasma Metallurgist → Space: Stellar Foundry Worker → Interstellar: Stellar Smelter → Galactic: Galactic Metallurgist → **Quantum: Quantum Smelter**
 
-### energy — base 8.0/tick, starts Victorian Age
+### energy (starts Victorian Age)
 
 Victorian: Stoker → Electric: Power Worker → Atomic: Reactor Technician → Modern: Power Engineer → Information: Grid Operator → Digital: Digital Power Manager → Cyberpunk: Cyber Energy Worker → Fusion: Fusion Technician → Space: Solar Engineer → Interstellar: Dark Energy Worker → Galactic: Antimatter Specialist → **Quantum: Zero-Point Engineer**
 
-### hacker — base 16.0/tick, starts Information Age
+### hacker (starts Information Age)
 
 Information: Script Kiddie → Digital: Coder → Cyberpunk: Black Hat → Fusion: AI Hacker → Space: Orbital Hacker → Interstellar: Interstellar Netrunner → Galactic: Galactic Hacker → **Quantum: Quantum Hacker**
 
-### astronaut — base 32.0/tick, starts Space Age
+### astronaut (starts Space Age)
 
 Space: Cadet → Interstellar: Interstellar Pilot → Galactic: Galactic Explorer → **Quantum: Quantum Astronaut**
 
@@ -340,7 +342,7 @@ Space: Cadet → Interstellar: Interstellar Pilot → Galactic: Galactic Explore
 
 ## Morale
 
-Morale is a civilization-wide percentage that acts as a multiplier on **all** worker-driven building output every tick.
+Morale is a civilization-wide percentage that multiplies **all** worker-driven building output every tick.
 
 **Output formula with morale:**
 
@@ -351,45 +353,47 @@ output = base_rate × building_count × (0.20 + 0.80 × assigned / total_capacit
 ### The scale
 
 - A new civilization **starts at 50%** (neutral)
-- Floor: **10%** — production never sinks below the low-morale ramp
-- Cap: **100% + 5% per Wonder built** — with 0 wonders the ceiling is 100%
+- Floor: **10%**
+- Cap: **100% + 5% per wonder built** (100% with no wonders)
 
-### The three bands
+### The production curve
 
-Morale is a two-way dial centred on 50%. The middle band is dead; only the extremes matter:
+Morale's effect is a continuous curve centered on 50%. Any move away from 50% has an effect, small near the center and larger toward the ends:
 
-| Band | Morale | Effect |
-| ------ | -------- | -------- |
-| Low | below 25% | Production **penalty**, ramping smoothly down to **×0.50** (half output) at the 10% floor |
-| Neutral | 25%–75% | **No effect** — production runs at the normal rate |
-| High | above 75% | Production **bonus**, ramping smoothly up to **+20%** as morale approaches the cap |
+| Morale | Effect |
+| ------ | -------- |
+| 10% (the floor) | **×0.50**, half output |
+| Below 50% | Production **penalty**, easing linearly from ×0.50 at the floor to ×1.00 at 50% |
+| Exactly 50% | **×1.00**, normal output |
+| Above 50% | Production **bonus**, rising linearly from ×1.00 at 50% to **+20%** at the cap |
 
-Morale **drifts gently back toward 50% every tick**. The high bonus must therefore be earned and sustained — it bleeds away if you stop maintaining it — while a low-morale penalty is self-healing once you remove the cause.
+Morale **drifts gently back toward 50% every tick**. A bonus has to be earned and kept up, and it fades if you stop; a penalty heals itself once you remove the cause.
 
 ### What raises morale
 
-- **Morale-restoring buildings** — era-appropriate worship buildings (the shrine/temple line) and culture/entertainment buildings lift morale each tick simply by existing; no workers needed
+- **Worship and culture buildings.** The shrine and temple line and the culture buildings of each age lift morale every tick once built; they need no workers.
+- **Your faith production rate**, up to a per-tick limit
 - **Good events**
 - **Advancing to a new age**
 
 ### What lowers morale
 
-- **Food starvation**
-- **Military workers exceeding 30% of population** — the further over, the faster the drain
+- **Starvation**
+- **Military workers over 30% of population.** The further over, the faster the drain.
 - **More than 50% of workers idle**
-- **Bad events and catastrophes** — enduring a catastrophe costs morale
+- **Bad events and catastrophes.** Enduring a catastrophe costs morale.
 
 ### Where it shows
 
-Morale appears as a **colored bar** in the Workers panel (`workers`) and the villager sidebar — green when boosting, neutral in the middle band, red when penalising. It also appears in each save's detail in the Load Game browser.
+Morale appears as a **colored bar** in the Workers panel (`workers`) and as `Morale: NN%` in the status bar: green when it boosts production, red when it penalizes it. Each save's detail pane in the Load Game browser also shows it.
 
 ### Tips
 
-- Keep food income positive
-- Don't over-militarise — keep military workers under 30% of pop
-- Don't leave half your population idle
-- Build worship and culture buildings to push morale into the **+20% bonus** zone — this is the key lever
-- Build wonders to raise the cap
+- Keep food income positive.
+- Keep military workers under 30% of population.
+- Don't leave half your population idle.
+- Build worship and culture buildings to push morale toward the **+20% bonus**. This is the main lever.
+- Build wonders to raise the cap.
 
 See [Morale](morale.md) for the full morale page.
 
@@ -397,43 +401,42 @@ See [Morale](morale.md) for the full morale page.
 
 ## Food Drain
 
-Every worker costs food per tick. The amount is determined by the **food domain's class** for the current age — it is the same for all workers regardless of their building assignment:
+Every worker eats food each tick. The amount is set by the current age and is the same for every worker, whatever building it staffs:
 
 ```
-total_food_drain = food_domain_food_cost × total_worker_count
+total_food_drain = food_per_worker(current age) × population
 ```
 
-Food drain scales with age. In primitive age, workers cost **0.06 food/tick** each — very manageable. By modern age a worker costs **~0.24 food/tick** (down significantly from older builds), keeping late-game populations affordable as long as food production scales too.
+In the Primitive Age a worker eats **0.06 food/tick**. The rate rises 12% with each age, to about **0.23** in the Modern Age and **0.58** in the Quantum Age. When you advance, the new rate applies to every worker at once. The full per-age list is in the food table under [Worker Class Names by Age](#worker-class-names-by-age).
 
-**Food drain table (all workers, by age tier):**
+**Food drain table (by population):**
 
 | Age | Food/tick per worker | 10 workers | 50 workers |
 |-----|---------------------|-----------|-----------|
-| Primitive | 0.060 | 0.60 | 3.0 |
-| Stone | 0.067 | 0.67 | 3.35 |
-| Bronze | 0.075 | 0.75 | 3.75 |
-| Iron | 0.084 | 0.84 | 4.2 |
-| Classical | 0.095 | 0.95 | 4.75 |
-| Medieval | 0.106 | 1.06 | 5.3 |
-| Victorian | 0.167 | 1.67 | 8.35 |
-| Modern | 0.235 | 2.35 | 11.75 |
+| Primitive | 0.060 | 0.60 | 3.00 |
+| Stone | 0.067 | 0.67 | 3.36 |
+| Bronze | 0.075 | 0.75 | 3.76 |
+| Iron | 0.084 | 0.84 | 4.22 |
+| Classical | 0.094 | 0.94 | 4.72 |
+| Medieval | 0.106 | 1.06 | 5.29 |
+| Victorian | 0.166 | 1.66 | 8.32 |
+| Modern | 0.234 | 2.34 | 11.69 |
 
-**What happens at food = 0:** starvation begins. Workers start dying — 1 killed every 5 ticks — until food net income returns to positive. A warning is logged on the first deficit tick; deaths are shown in red. When food recovers, a recovery message is shown and deaths stop.
+**What happens at food = 0:** starvation begins. One worker dies every 5 ticks until there is food in stock again. A warning is logged on the first tick without food and each death is shown in red; when food recovers, a recovery message is logged and deaths stop.
 
-**Practical advice:**
+Practical advice:
 
-- Always ensure food income > food drain before recruiting more workers
-- The `status` command and `workers` overlay both show current food drain per tick and net food/tick
-- `unassign` returns workers to the idle pool — they still drain food while idle. Use `dismiss` to permanently remove workers from the population pool and immediately reduce total drain
-- `dismiss <building_key> [count|all]` cuts population directly; unlike `unassign`, dismissed workers are gone entirely
+- Make sure food income exceeds food drain before recruiting more workers.
+- The `status` command and the Workers panel both show food drain per tick and net food/tick.
+- `unassign` returns workers to the idle pool, where they still eat. Use `dismiss` to remove workers from your population and reduce drain at once.
 
 ---
 
 ## Worker Building Reference
 
-Key buildings that accept workers, grouped by domain:
+Key buildings that take workers, grouped by domain:
 
-| Building | Key | Domain | Worker Capacity | Available From |
+| Building | Key | Domain | Worker Slots | Available From |
 |----------|-----|--------|----------------|----------------|
 | Gathering Camp | `gathering_camp` | food | 3 | Primitive Age |
 | Forager Post | `forager_post` | food | 4 | Stone Age |
@@ -445,7 +448,7 @@ Key buildings that accept workers, grouped by domain:
 | Barracks | `barracks` | military | 4 | Bronze Age |
 | Hunting Lodge | `hunting_lodge` | military | 5 | Iron Age |
 
-Worker capacity is **per building instance**. If you have built 3 libraries, total capacity is 3 × 4 = 12 slots. Use `assign library all` to fill all available slots.
+Worker slots are **per building**. If you have built 3 libraries, you have 3 × 4 = 12 slots. Use `assign library all` to fill them.
 
 For a full per-lineage building list see [Buildings](buildings.md).
 
@@ -455,7 +458,7 @@ For a full per-lineage building list see [Buildings](buildings.md).
 
 ### Early game (Primitive / Stone Age)
 
-Recruit 5–10 workers immediately and assign them to `gathering_camp`. Each camp holds 3 workers; build 2–3 camps before recruiting past 9. Foragers eat 0.06 food/tick each, and a fully staffed camp produces 1.0 food/tick, so it covers its own three workers' drain (0.18) several times over.
+Recruit 5-10 workers right away and assign them to `gathering_camp`. Each camp holds 3 workers, so build 2-3 camps before recruiting past 9. Foragers eat 0.06 food/tick each, and a fully staffed camp produces 1.0 food/tick, so it covers its own three workers' drain (0.18) several times over.
 
 ```
 build gathering_camp
@@ -466,31 +469,31 @@ recruit 3
 assign gathering_camp 3
 ```
 
-Once food is stable, assign some workers to `story_circle` (knowledge) to begin unlocking research.
+Once food is stable, assign some workers to `story_circle` (knowledge) to start on research.
 
 ### Mid game (Bronze / Iron Age)
 
-- Assign workers to lumber and masonry buildings as soon as they are built — stone and wood extraction gate most building costs
-- Unlock the military domain (Iron Age) by building `war_camp`, then staff it with military workers — it produces the `soldiers` resource you spend on expeditions
-- Knowledge workers in libraries become critical — `scholars_haven` milestone requires 50 knowledge workers assigned to libraries
+- Staff lumber and masonry buildings as soon as they are built. Stone and wood go into most building costs.
+- Build a `war_camp` and staff it with workers. It produces the `soldiers` resource (from the Iron Age) that you spend on campaigns.
+- Knowledge workers in libraries matter more and more. The `scholars_haven` milestone needs 50 knowledge workers and 3 libraries.
 
 ### Late game
 
-- Reassign food workers to more productive domains as food buildings scale up in efficiency and storage
-- Hackers (Information Age, base 16.0 food/tick) and astronauts (Space Age, base 32.0 food/tick) require massive food income — scale food first
-- Use `unassign <building> all` + `assign <new_building> all` to quickly pivot your workforce after an age advance
+- As food buildings get more productive, move food workers to other domains.
+- Every worker eats the age's rate, and that rate keeps rising, so a large late-game population needs a large food income. Scale food before you scale headcount.
+- Use `unassign <building> all` and then `assign <new building> all` to move your workforce quickly after an age advance.
 
 ### Milestone: scholars_haven
 
-Requires **50 knowledge workers** assigned to knowledge-domain buildings and **3 Libraries** built. Track progress with `milestones` or `ms`.
+Needs **50 knowledge workers** assigned to knowledge buildings and **3 Libraries** built. Track progress with `milestones` or `ms`.
 
 ```
 assign library 50
 ```
 
-### Specialise vs. spread
+### Specialize vs. spread
 
-Focusing one domain can unlock milestone chains faster. Spreading across domains provides resilience against resource shortages but delays milestones. In the early game, food + knowledge is sufficient; add military when expeditions unlock and trade when gold becomes the bottleneck.
+Focusing on one domain can finish milestone chains faster. Spreading across domains protects you from resource shortages but delays milestones. Early on, food and knowledge are enough; add military when campaigns open up and trade when gold becomes the bottleneck.
 
 ---
 
@@ -500,36 +503,36 @@ The prompt suggests completions for all worker commands, shown dim after the cur
 
 | Typed | Suggestions |
 |-------|----------------|
-| `assign ` | your built buildings with WorkerCapacity > 0, the ones with a free slot first |
+| `assign ` | your built buildings that have worker slots, the ones with a free slot first |
 | `assign gathering_camp ` | `all` |
-| `assign lib` | `library`, `library_of_congress`, … (filtered by prefix) |
-| `unassign ` | only building keys that currently have workers assigned |
+| `assign lib` | built buildings whose key starts with `lib`, such as `library` |
+| `unassign ` | only buildings that currently have workers assigned |
 | `unassign barracks ` | `all` |
-| `dismiss ` | only building keys that currently have workers assigned |
+| `dismiss ` | only buildings that currently have workers assigned |
 | `dismiss barracks ` | `all` |
 | `recruit ` | `max` |
 
-Suggestions only show buildings you have **built** for assign, and buildings with **active assignments** for unassign and dismiss — they won't offer buildings you haven't built or that have no workers to remove.
+For `assign` the prompt only suggests buildings you have **built**, and for `unassign` and `dismiss` only buildings that have workers to remove.
 
 ---
 
 ## What Does Not Exist
 
-These command forms are **not valid** and will return an error:
+These command forms are **not valid** and return an error:
 
 ```
-recruit food            # INVALID — no domain arg
-recruit military 5      # INVALID — no domain arg
-assign food gathering_camp  # INVALID — domain is auto-resolved
-unassign all food       # INVALID — must specify a building key
+recruit food            # INVALID: no domain argument
+recruit military 5      # INVALID: no domain argument
+assign food gathering_camp  # INVALID: the domain comes from the building
+unassign all food       # INVALID: name a building
 ```
 
 ---
 
 ## See Also
 
-- [Workers](villagers.md) — introductory guide to the worker system
-- [Buildings](buildings.md) — building lineages and per-building capacity values
-- [Resources](resources.md) — which resources each lineage produces at which age
-- [Epochs](epochs.md) — how epoch transitions affect building output resources
-- [Milestones](milestones.md) — milestone chains that reward domain specialisation
+- [Workers](villagers.md): introductory guide to the worker system
+- [Buildings](buildings.md): building lineages and worker slots per building
+- [Resources](resources.md): which resources each lineage produces in which age
+- [Epochs](epochs.md): how epoch transitions affect building output resources
+- [Milestones](milestones.md): milestone chains that reward domain specialization

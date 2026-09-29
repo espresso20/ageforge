@@ -1,6 +1,6 @@
 # Wonders
 
-22 unique wonders can be built exactly once per civilization. Each grants permanent civilization-wide bonuses and a **+0.5× speed boost** when completed. They are the most impactful single buildings in the game.
+22 unique wonders can be built exactly once per civilization. Each grants permanent civilization-wide bonuses and, once completed, raises your **speed cap by 0.5x**, the highest game speed you can pick with `speed`. They are the strongest single buildings in the game.
 
 ---
 
@@ -13,8 +13,10 @@ wonder                               # the bank: each resource, banked / needed
 wonder collect <resource> <amount>   # bank that much (never more than it still needs)
 wonder collect <resource> all        # as much as it still needs, up to what you have
 wonder collect all                   # the same for every resource it needs
-build <wonder_key>                   # start construction once bank is full
+build <wonder_key>                   # start construction once the bank is full
 ```
+
+`build` does not take resources for a wonder from your stock: bank the full price with `wonder collect` first, then `build`.
 
 `wonder bank` is the same command as `wonder collect` (`wonder bank food all`), `max` means the same as `all`, and leaving the amount off (`wonder bank food`) means `all` too. Each deposit says how much went in. When nothing can go in, the command says why: the wonder is already built, it doesn't need that resource (and lists the ones it does), that part of the bank is full, you have none on hand, or a set amount is more than you have (that is refused rather than banked in part; use `all` to bank what you have).
 
@@ -22,45 +24,45 @@ A [build plan](plan.md) can hold the wonder too (`plan build <wonder_key>`): it 
 
 ### Overflow
 
-**Wonder overflow** is on by default. When a resource the current age's wonder still needs would be clamped at its storage cap, the part the cap would cut off goes into the wonder's bank instead of being lost, up to what the wonder still needs of it. It never takes anything you hold: only what production was about to waste. It works during offline catch-up too.
+**Wonder overflow** is on by default. When a resource the current age's wonder still needs would be clamped at its storage limit, the part the limit would cut off goes into the wonder's bank instead of being lost, up to what the wonder still needs of it. It never takes anything you hold: only what production was about to waste. It works during offline catch-up too.
 
 ```
 wonder overflow        # is it on?
-wonder overflow off    # production over a cap is lost again
+wonder overflow off    # production over the storage limit is lost again
 wonder overflow on
 ```
 
-The log says so when overflow finishes a resource's part of the bank (and when the bank is full), and the welcome-back summary adds up what it banked while you were away. The switch is saved with your game and survives prestige. The Wonders overlay shows whether it is on.
+The log says so when overflow finishes a resource's part of the bank (and when the bank is full), and the welcome-back summary adds up what it banked while you were away. The switch is saved with your game and survives prestige. The Wonders panel shows whether it is on.
 
-Progress is shown in the **Wonders** overlay (`wonders`) with per-resource progress bars. Each completed wonder in the overlay now displays a small colour thumbnail — a 2-character half-block pixel art icon sampled from the wonder's sprite — making it easy to visually identify wonders at a glance.
+The **Wonders** panel (`wonders`) shows progress with a bar for each resource. Each completed wonder there has a small color thumbnail, a 2-character half-block icon taken from the wonder's sprite, so you can tell them apart at a glance.
 
 ---
 
 ## Viewing Wonders on the City Map
 
-Completed wonders appear on the City Map (`map` command) as their own named, gold-tinted markers — one per wonder you've built — placed among your other buildings on the age-appropriate city layout. As you complete more across the ages, more appear. Open the City Map any time with `map` to see your wonders amid your growing settlement; the whole map (terrain, districts, and labels) also retints with your active theme.
+Completed wonders appear on the City Map (`map` command) as their own named, gold-tinted markers, one per wonder you've built, placed among your other buildings on the city layout for your age. Open the City Map any time with `map` to see them; the whole map (terrain, districts, and labels) also retints with your active theme.
 
 ---
 
 ## Wonders and Age Advancement
 
-Completing a wonder is **required** to advance to the next age. Each age unlocks one wonder — you cannot type `advance` until that wonder is built.
+Completing a wonder is **required** to advance to the next age. Each age unlocks one wonder, and `advance` is refused until that wonder is built.
 
 The wonder requirement appears in the **age progress bar** at the top of the screen alongside your other advancement requirements. If the wonder is still missing, you will see a red notice: `✗ Wonder required: <name>`.
 
 If you try to advance before completing your age's wonder, the game will tell you which wonder is blocking and remind you to use `wonder collect` then `build <key>`.
 
-Once completed, the wonder appears as a named gold marker on the City Map (`map` command), and the city's layout, terrain, and styling shift to reflect your current age.
+Once completed, the wonder appears as a named gold marker on the City Map (`map` command). The map's layout, terrain and styling follow your current age.
 
 ---
 
 ## What wonders cost
 
-Because every wonder stands between you and the next age, each one costs about the same share of its age's economy: **40 price units** of that age. A price unit is the median price of one resource in that age (the typical first-copy price of the age's buildings in that resource). Each wonder keeps its own resource mix; only the size changed.
+Because every wonder stands between you and the next age, each one costs about the same share of its age's economy: **40 price units** of that age. A price unit is the median price of one resource in that age (the typical first-copy price of the age's buildings in that resource). Each wonder has its own resource mix.
 
-The flow resources (food, faith, culture) aren't priced that way, so those parts were set by hand to what your buildings actually make: the Sacred Grove takes **500 food**, the Great Monolith **1,500 food**, and the Sistine Chapel **20,000 faith** (down from 6M). The Stellar Cradle no longer costs uranium.
+The flow resources (food, faith, culture) aren't priced that way. Those parts are set by hand to what your buildings actually make: the Sacred Grove takes **500 food**, the Great Monolith **1.5K food**, and the Sistine Chapel **20K faith**.
 
-Wonders are banked a deposit at a time, but each part of a wonder's price still fits in the most storage you can build in its age, so you never bank at the cap in rounds. The Sistine Chapel (24M stone and 24M gold, was 27M and 19M) and the World Simulation (34T steel and 20T electricity, was 54T and 6.4T) were rebalanced to fit.
+Wonders are banked a deposit at a time, but each part of a wonder's price fits in the most storage you can build in its age, so you never have to bank one resource in several rounds while sitting at its storage limit.
 
 No wonder takes longer to build than a sixth of its age's target length (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)). Build times below are at 1x speed; one tick is 2 seconds.
 
@@ -73,7 +75,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 
 | Resource | Cost |
 |---|---|
-| Wood | 1,000 |
+| Wood | 1K |
 | Food | 500 |
 
 **Bonus:** +0.02 knowledge/t · +0.05 food/t
@@ -85,11 +87,11 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 
 | Resource | Cost |
 |---|---|
-| Stone | 6,300 |
-| Wood | 5,000 |
-| Food | 1,500 |
+| Stone | 6.3K |
+| Wood | 5K |
+| Food | 1.5K |
 
-**Bonus:** +0.05 knowledge/t · +5,000 all storage
+**Bonus:** +0.05 knowledge/t · +5K storage for every resource
 
 ---
 
@@ -98,9 +100,9 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 
 | Resource | Cost |
 |---|---|
-| Stone | 34,000 |
-| Wood | 19,000 |
-| Iron | 3,400 |
+| Stone | 34K |
+| Wood | 19K |
+| Iron | 3.4K |
 
 **Bonus:** +0.8 knowledge/t · +0.6 faith/t
 
@@ -111,11 +113,11 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 
 | Resource | Cost |
 |---|---|
-| Stone | 320,000 |
-| Iron | 72,000 |
-| Gold | 64,000 |
+| Stone | 320K |
+| Iron | 72K |
+| Gold | 64K |
 
-**Bonus:** +100 population cap · +2.0 culture/t
+**Bonus:** +100 housing · +2.0 culture/t
 
 ---
 
@@ -125,8 +127,8 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 | Resource | Cost |
 |---|---|
 | Stone | 1M |
-| Gold | 440,000 |
-| Iron | 440,000 |
+| Gold | 440K |
+| Iron | 440K |
 
 **Bonus:** +2.0 culture/t · +1.2 knowledge/t
 
@@ -139,9 +141,9 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 |---|---|
 | Stone | 3.5M |
 | Gold | 2.7M |
-| Knowledge | 840,000 |
+| Knowledge | 840K |
 
-**Bonus:** +2.0 knowledge/t · **+30% knowledge rate** (permanent multiplier)
+**Bonus:** +2.0 knowledge/t · **+30% knowledge output** (permanent multiplier)
 
 ---
 
@@ -152,7 +154,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 |---|---|
 | Stone | 24M |
 | Gold | 24M |
-| Faith | 20,000 |
+| Faith | 20K |
 | Culture | 8M |
 
 **Bonus:** +3.5 culture/t · +1.8 faith/t
@@ -168,7 +170,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 | Gold | 120M |
 | Steel | 23M |
 
-**Bonus:** +5.0 gold/t · **+80% expedition reward** — the best military wonder
+**Bonus:** +5.0 gold/t · **+80% expedition reward**, the biggest expedition bonus of any wonder
 
 ---
 
@@ -249,7 +251,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 | Electricity | 960B |
 | Gold | 2.4T |
 
-**Bonus:** +30.0 data/t · **+30% knowledge rate**
+**Bonus:** +30.0 data/t · **+30% knowledge output**
 
 ---
 
@@ -276,7 +278,7 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 | Crypto | 12T |
 | Data | 6.4T |
 
-**Bonus:** +10.0 crypto/t · **+500 population cap**
+**Bonus:** +10.0 crypto/t · **+500 housing**
 
 ---
 
@@ -356,27 +358,27 @@ No wonder takes longer to build than a sixth of its age's target length (see [Ho
 
 **Bonus:** **+200% all production** · +20.0 quantum flux/t
 
-> The Singularity Core is the ultimate wonder: the biggest bill in the game and the biggest single production bonus.
+> The Singularity Core is the last wonder. It has the biggest bill in the game and the biggest single production bonus.
 
 ---
 
 ## Wonders and Morale
 
-Every wonder you build raises your **morale cap** by +5%. Morale is a civilization-wide multiplier on all worker output; it starts at 50% neutral, only produces a bonus once it climbs above 75%, and reaches up to **+20%** to all production as it approaches the cap. The base cap (0 wonders) is **100%**, and each wonder lifts that ceiling — so a higher cap means a higher reachable bonus.
+Every wonder you build raises your **morale cap** by 5 points. Morale is a civilization-wide multiplier on production. It sits on a continuous curve around 50%: above 50% you get a bonus that grows the higher morale climbs, up to **+20%** at the cap, and below 50% a penalty. The base cap with no wonders is **100%**.
 
-- 5 wonders built → morale cap **125%**
-- 10 wonders built → morale cap **150%**
-- 22 wonders built → morale cap **210%**
+- 5 wonders built: morale cap **125%**
+- 10 wonders built: morale cap **150%**
+- 22 wonders built: morale cap **210%**
 
-These figures are the morale **ceiling** — how high the morale percentage can climb — not a direct output multiplier. The production bonus from the high band still tops out at +20% as morale nears that ceiling; a higher cap doesn't raise the +20% bonus, but it makes the high-band bonus zone larger and easier to sit in. Morale starts at 50% neutral and must be raised into the high band with worship and culture buildings — wonders simply set how high it can go. Full-completion runs (all 22 wonders) unlock the maximum 210% morale ceiling.
+These figures are the morale **ceiling**, how high the morale percentage can climb, not an output multiplier. The bonus still tops out at +20%, reached at the cap. A higher cap spreads that same bonus over a wider range of morale, so you need more morale to reach the full +20%. Morale is raised with worship and culture buildings, good events and age advances.
 
 ---
 
 ## Tips
 
-- Always bank resources across multiple ticks — don't try to dump everything at once
-- **Great Library** and **Global Network** both grant +30% knowledge rate — research becomes exponentially faster with both built
-- **Grand Lighthouse** + Rocketry tech + prestige `expedition_loot` = absurd expedition loot multipliers
-- Build wonders as early as possible in each age — the speed boost fires when construction completes and helps you hit the next age faster
-- **Crystal Palace** (+15% all production) at the Industrial Age is often the single biggest inflection point in the game
-- Each wonder also raises the morale cap by +5% (100% base → 210% with all 22) — prioritising wonder completion pays dividends in both direct bonuses and morale headroom. See [Morale](morale.md)
+- Bank resources over several deposits as they come in, rather than waiting to cover the whole price at once. Overflow does some of this for you.
+- **Great Library** and **Global Network** each give +30% knowledge output, and the two stack.
+- **Grand Lighthouse**, the Rocketry tech and the prestige `expedition_loot` upgrade all raise expedition rewards, and they stack.
+- Build each age's wonder early. It is required for `advance`, and each one raises the speed cap by 0.5x, so you can set a faster `speed` sooner.
+- **Crystal Palace** (+15% all production) in the Industrial Age is one of the biggest single boosts in the game.
+- Each wonder also raises the morale cap by 5 points (100% base, 210% with all 22). See [Morale](morale.md).

@@ -9,7 +9,7 @@ Goal: determine which approach produces the best visual result for a permanent
 
 ## Shared Principles (all three versions)
 
-- **Same data source**: all three read `game.GameState` — buildings, age, resources, wonders
+- **Same data source**: all three read `game.GameState` (buildings, age, resources, wonders)
 - **Same overlay system**: registered via `overlayMgr.Register("mapv1", ...)` etc.
 - **Same refresh cadence**: re-rendered on overlay open + on every engine tick while open
 - **No shared code between versions**: each is self-contained in its own file(s)
@@ -17,9 +17,9 @@ Goal: determine which approach produces the best visual result for a permanent
 
 ---
 
-## mapv1 — Character Native (Civ 1 Authentic)
+## mapv1: Character Native (Civ 1 Authentic)
 
-**Philosophy**: Don't fight the terminal. Every cell is a `(rune, fg, bg)` triplet — draw
+**Philosophy**: Don't fight the terminal. Every cell is a `(rune, fg, bg)` triplet, drawn
 directly via tcell. Zero image conversion, zero rendering artifacts. This is structurally
 identical to how Civilization 1 (DOS, 1991) rendered its map.
 
@@ -47,7 +47,7 @@ a tcell.Style with explicit fg + bg color. The map fills the entire overlay area
 ### Tile system
 
 The map is a logical grid. Each cell maps to one terminal character.
-Terrain is determined by a seeded hash of (x, y, civSeed) — same seed every game,
+Terrain is determined by a seeded hash of (x, y, civSeed): same seed every game,
 derived from the player's civilization name or a stored seed in GameState.
 
 **Terrain tiles:**
@@ -72,8 +72,8 @@ derived from the player's civilization name or a stored seed in GameState.
 | Age group         | Rune | Style                        |
 |-------------------|------|------------------------------|
 | primitive/stone   | `⌂`  | white on brown               |
-| bronze–classical  | `⌂`  | bright white on grey         |
-| medieval–colonial | `♜`  | bright white on dark grey    |
+| bronze-classical  | `⌂`  | bright white on gray         |
+| medieval-colonial | `♜`  | bright white on dark gray    |
 | industrial+       | `▣`  | cyan on dark blue            |
 | digital+          | `▣`  | bright cyan on near-black    |
 | space+            | `◈`  | bright white on black        |
@@ -87,7 +87,7 @@ Each building type maps to a domain-appropriate rune:
 |--------------|------|-----------------|
 | food         | `⌂`  | warm green      |
 | lumber       | `♣`  | dark green      |
-| masonry      | `▪`  | grey            |
+| masonry      | `▪`  | gray            |
 | metallurgy   | `⚒`  | orange-red      |
 | energy       | `⚡`  | yellow          |
 | military     | `⚔`  | red             |
@@ -102,23 +102,23 @@ Each building type maps to a domain-appropriate rune:
 ### City growth
 
 The city radius in tiles grows with building count:
-- 0–10 buildings: radius 2 (tiny village)
-- 11–30: radius 4
-- 31–80: radius 6
-- 81–180: radius 8
+- 0-10 buildings: radius 2 (tiny village)
+- 11-30: radius 4
+- 31-80: radius 6
+- 81-180: radius 8
 - 181+: radius 10
 
-Buildings are placed deterministically by key hash — same building always appears
+Buildings are placed deterministically by key hash, so the same building always appears
 in the same relative position so the city doesn't jump on each refresh.
 
 ### Age palette shifts
 
 Background terrain colors shift subtly with age to reflect the era:
-- primitive–stone: saturated natural greens
+- primitive-stone: saturated natural greens
 - medieval: slightly darker, more muted
-- industrial: desaturated, slight grey cast, smoke-colored sky (dark bg)
+- industrial: desaturated, slight gray cast, smoke-colored sky (dark bg)
 - digital: dark background, neon-tinted terrain
-- space: near-black bg, terrain replaced with grey/crater tiles, stars in empty space
+- space: near-black bg, terrain replaced with gray/crater tiles, stars in empty space
 
 ### Layout
 
@@ -129,13 +129,13 @@ Background terrain colors shift subtly with age to reflect the era:
 │ · · · · · ⌂ ★ ◉ ★ ⌂ · n n · ·            │  ← city center (◉)
 │ · · n · · ⌂ ⌂ ▣ ⌂ · · n n · ·            │
 │ · · n n · · · · · · · · · · ·              │
-│ [Medieval Age — Civilization of Echo]       │  ← status line at bottom
+│ [Medieval Age: Civilization of Echo]        │  ← status line at bottom
 └─────────────────────────────────────────────┘
 ```
 
 ### What makes this version good
 
-- Zero image conversion — no flicker, no artifacts
+- Zero image conversion, so no flicker and no artifacts
 - Scales to any terminal size automatically
 - Every character is crisp at all font sizes
 - Authentic to the Civ 1 aesthetic the player wants
@@ -143,7 +143,7 @@ Background terrain colors shift subtly with age to reflect the era:
 
 ---
 
-## mapv2 — Image Generation + pixterm
+## mapv2: Image Generation + pixterm
 
 **Philosophy**: Generate a proper `image.RGBA` with real drawing code, then render it to
 the terminal via `ansimage` (pixterm). The difference from the failed previous attempt:
@@ -157,7 +157,7 @@ and the rendering pipeline will be tested for tview/tcell compatibility first.
 The key open question from the previous failure: **does ansimage output conflict with tview?**
 
 The safe integration path is a `tview.TextView` with `SetDynamicColors(false)` and direct
-ANSI string injection. The ansimage `Render()` method returns a string of ANSI escape codes —
+ANSI string injection. The ansimage `Render()` method returns a string of ANSI escape codes;
 this must be tested in isolation before building the full map.
 
 **Spike test (must pass before any other mapv2 work):**
@@ -178,12 +178,12 @@ GameState
     │
     ▼
 buildMapImage(state, pixW, pixH int) *image.RGBA
-    │   ├─ drawTerrain()      — base terrain layer
-    │   ├─ drawWater()        — rivers, coast, ocean
-    │   ├─ drawVegetation()   — forest/jungle coverage
-    │   ├─ drawRoads()        — era-appropriate paths
-    │   ├─ drawBuildings()    — building sprites (larger than v1 attempt)
-    │   └─ drawLabels()       — city name, wonder names
+    │   ├─ drawTerrain()      : base terrain layer
+    │   ├─ drawWater()        : rivers, coast, ocean
+    │   ├─ drawVegetation()   : forest/jungle coverage
+    │   ├─ drawRoads()        : era-appropriate paths
+    │   ├─ drawBuildings()    : building sprites (larger than v1 attempt)
+    │   └─ drawLabels()       : city name, wonder names
     │
     ▼
 ansimage.NewScaledFromImage(img, termH*2, termW, ...)
@@ -199,7 +199,7 @@ noise and tiny 3×3 pixel sprites. mapv2 will use:
 
 **Terrain generation:**
 - `github.com/ojrac/opensimplex-go` for multi-octave simplex noise
-  (or `github.com/aquilax/go-perlin` — evaluate both)
+  (or `github.com/aquilax/go-perlin`; evaluate both)
 - Two noise layers: elevation + moisture → biome lookup table
 - Smooth bilinear blending at biome borders (no hard edges)
 
@@ -207,7 +207,7 @@ noise and tiny 3×3 pixel sprites. mapv2 will use:
 - Buildings rendered at minimum 12×12 pixels (not 3×3)
 - Sprites drawn at 2× scale minimum
 - City center rendered at 24×24 with distinct silhouette per age
-- No circular layout — rectilinear city blocks for modern eras, organic for early
+- No circular layout: rectilinear city blocks for modern eras, organic for early
 
 **Color palette:**
 - Civ 1 inspired: flat colors, limited palette, high contrast
@@ -218,20 +218,20 @@ noise and tiny 3×3 pixel sprites. mapv2 will use:
 ansimage produces raw ANSI codes. tview's `SetText` passes strings through tcell which
 may re-interpret or strip escape sequences. Known mitigation options:
 
-1. `TextView.SetDynamicColors(false).SetText(ansiStr)` — may work if tcell passes ANSI through
-2. Write directly to `os.Stdout` before tview renders — dirty hack, avoid
+1. `TextView.SetDynamicColors(false).SetText(ansiStr)`: may work if tcell passes ANSI through
+2. Write directly to `os.Stdout` before tview renders (dirty hack, avoid)
 3. Use a `tview.Box` with `SetDrawFunc` and translate ansimage pixel data to tcell styles manually
-   (most reliable — avoids ANSI entirely, uses tcell's native color API)
+   (most reliable: avoids ANSI entirely, uses tcell's native color API)
 
 Option 3 is the fallback if the spike test fails. It means iterating ansimage's pixel
-matrix and calling `screen.SetContent` with computed fg/bg colors — same approach as
+matrix and calling `screen.SetContent` with computed fg/bg colors, the same approach as
 mapv1 but with the source image being a proper generated `image.RGBA`.
 
 ---
 
-## mapv3 — Noise Terrain (Greenfield)
+## mapv3: Noise Terrain (Greenfield)
 
-**Philosophy**: Forget city layout for now — focus purely on making the *terrain* look
+**Philosophy**: Forget city layout for now and focus on making the *terrain* look
 extraordinary. A proper procedural world map with realistic biomes, elevation,
 rivers, and coastlines. Buildings and city overlays added later once terrain is solid.
 Rendering method chosen *after* terrain generation works (likely mapv1-style chars or
@@ -244,12 +244,12 @@ option 3 from mapv2).
 Uses a full noise pipeline:
 
 ```
-1. Elevation map    — simplex noise, 4 octaves, persistence 0.5
-2. Moisture map     — simplex noise, different seed/frequency
-3. Temperature map  — latitude gradient + noise perturbation
-4. Biome lookup     — Whittaker biome diagram (elevation × moisture × temp)
-5. River generation — flow from high elevation to coast following steepest descent
-6. Erosion pass     — smooth sharp transitions between elevation bands
+1. Elevation map: simplex noise, 4 octaves, persistence 0.5
+2. Moisture map: simplex noise, different seed/frequency
+3. Temperature map: latitude gradient + noise perturbation
+4. Biome lookup: Whittaker biome diagram (elevation × moisture × temp)
+5. River generation: flow from high elevation to coast following steepest descent
+6. Erosion pass: smooth sharp transitions between elevation bands
 ```
 
 **Biome table (Whittaker-inspired):**
@@ -273,7 +273,7 @@ Uses a full noise pipeline:
 
 The world is generated once per civilization from a seed derived from the player's
 save slot or a stored `MapSeed uint64` in GameState (added to save JSON).
-Same seed → same world every session. Age transitions don't regenerate terrain —
+Same seed → same world every session. Age transitions don't regenerate terrain;
 they only change the visual palette and what city overlay is drawn on top.
 
 ### City placement
@@ -294,7 +294,7 @@ A future mapv4 could combine v3 terrain generation with v2 image rendering.
 
 ### What makes this version different
 
-- The *world* feels real — it looks like an actual map, not a generated game board
+- The *world* feels real: it looks like an actual map instead of a generated game board
 - Terrain persists across ages (same geography, evolving city)
 - Rivers, coastlines, and elevation create natural strategic geography
 - This is the most ambitious version and should be built last
@@ -313,7 +313,7 @@ mapv1  →  mapv2 spike test  →  mapv2 full  →  mapv3
            mapv1 / mapv2 / mapv3
 ```
 
-mapv1 first — it's the fastest to build and will immediately tell us if the
+mapv1 first: it's the fastest to build and will immediately tell us if the
 character-native approach feels good. If it does, that informs how mapv3 renders.
 mapv2 depends on the spike test result before committing to implementation.
 mapv3 is the most complex terrain generation and should be built last.
@@ -323,9 +323,9 @@ mapv3 is the most complex terrain generation and should be built last.
 ## Commands
 
 ```
-mapv1   — character-native Civ 1 style map
-mapv2   — image-generated + pixterm rendered map
-mapv3   — noise terrain + character rendering
+mapv1   : character-native Civ 1 style map
+mapv2   : image-generated + pixterm rendered map
+mapv3   : noise terrain + character rendering
 ```
 
 All three are overlays. All three can be open sequentially to compare.
@@ -337,10 +337,10 @@ No tab changes, no layout changes, no sidebar changes required.
 
 | File                  | Version | Purpose                                     |
 |-----------------------|---------|---------------------------------------------|
-| `ui/mapv1.go`         | v1      | Full implementation — tcell char rendering  |
+| `ui/mapv1.go`         | v1      | Full implementation: tcell char rendering   |
 | `ui/mapv2.go`         | v2      | Spike test + full image pipeline            |
 | `ui/mapv3_terrain.go` | v3      | Noise terrain generation (no rendering)     |
-| `ui/mapv3.go`         | v3      | Rendering layer — calls mapv3_terrain       |
+| `ui/mapv3.go`         | v3      | Rendering layer; calls mapv3_terrain        |
 
 Register in `ui/dashboard.go`:
 ```go

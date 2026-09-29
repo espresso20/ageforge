@@ -4,16 +4,13 @@ A catastrophe is a civilization-threatening event that forces a permanent choice
 
 > **The Harbinger.** Every epoch whose transition can bring a catastrophe, and the Cosmic Era, whose passage is prestige, has harbingers who warn you of it, one figure per age, from the epoch's first age until the transition. While a harbinger is present you can **Appease** it (spend faith and culture to lower the real odds), **Brace** (spend resources so an Endure costs less) or **Invite** the catastrophe (guarantee it, for a deliberate Succumb). See [The Harbinger](harbinger.md).
 
-When a catastrophe hits, nothing is destroyed yet. The game keeps running and the choice waits for you:
+When a catastrophe hits, nothing is destroyed yet. The game keeps running and the choice waits for you.
 
-- A modal opens with the two choices. Each button shows its shortcut: **E** Endure, **S** Succumb. Tab or the arrow keys move between them and Enter picks the highlighted one. Endure is highlighted when the modal opens, so a stray Enter chooses Endure.
-- **Esc** closes the modal without choosing, so you can look around first. The catastrophe stays pending.
-- While a catastrophe is pending, the status bar shows a **☄ CATASTROPHE PENDING** badge, and **advancing to the next age and prestige are refused**. Type `catastrophe` to reopen the choice.
-- The pending catastrophe is saved with your game. If you close the game, or come back after a long idle, the modal opens again when the save loads.
+A window opens with the two choices, Endure and Succumb. Press E or S, or move between them with Tab or the arrow keys and press Enter. Endure is highlighted when the window opens, so a stray Enter chooses Endure. Esc closes the window without choosing, so you can look around first; the catastrophe stays pending.
 
-When the catastrophe rolls on the same advance that crosses into a new epoch, the age-advance splash shows first. The catastrophe modal opens once you dismiss the splash with any key, or when the splash times out after 20 seconds.
+While a catastrophe is pending, the status bar shows a **☄ CATASTROPHE PENDING** badge, and the game refuses to advance to the next age or prestige. Type `catastrophe` to reopen the choice. The pending catastrophe is saved with your game, so if you close the game or come back after a long idle, the window opens again when the save loads.
 
-There is no "defer" button any more. Esc plus the `catastrophe` command does the same job without letting the choice be skipped.
+When the catastrophe rolls on the same advance that crosses into a new epoch, the age-advance splash shows first. The catastrophe window opens once you dismiss the splash with any key, or when the splash times out after 20 seconds.
 
 ---
 
@@ -26,15 +23,9 @@ There are 7 epochs across 22 ages (Cosmic spans 4 ages, the rest 3). Every run s
 
 So the chance of a catastrophe at a transition is **18% at low faith, 15% at mid faith, 12% at high faith**.
 
-Extra rules:
+A few more rules apply. No catastrophe can strike before the epoch that contains the Iron Age, so in practice the Stone Era never has one. Each epoch's transition rolls once per run; Succumb and prestige start a new run, so the epochs roll again. That makes 6 catastrophes the most a run can have, one for each epoch from Iron to Cosmic. A new catastrophe never replaces one that is still pending, and you can't reach the next transition while one is pending anyway. Finally, the harbinger can change the odds: each level of Appease multiplies the chance by 0.6 (two levels at most), and Invite makes it certain. See [The Harbinger](harbinger.md).
 
-- **Iron Era gate.** No catastrophe before the epoch that contains the Iron Age. In practice the Stone Era never has one.
-- **One per epoch per run.** Each epoch's transition rolls once per run. Succumb and prestige start a new run, so the epochs roll again.
-- **Never overwritten.** A new catastrophe can't replace one that is still pending. You can't reach the next transition while one is pending anyway.
-- **At most 6 per run**, one for each epoch from Iron to Cosmic.
-- **The harbinger can change the odds.** Each level of Appease multiplies the chance by 0.6 (two levels at most). Invite makes it certain. See [The Harbinger](harbinger.md).
-
-The `catastrophe` command (with nothing after it) shows the risk for your next transition when nothing is pending: the odds as a figure from the Industrial Age on, a low / medium / high severity before it. In the Cosmic Era it shows the risk of the Last Passage instead: `Next passage (prestige, the Last Passage): <risk>, faith N% full.` The Epoch tab shows the same line. While a harbinger is present, both repeat its warning, so they can't give away a false prophet. See [Epochs](epochs.md) for the event tables.
+The `catastrophe` command (with nothing after it) shows the risk for your next transition when nothing is pending: the odds as a figure from the Industrial Age on, a low / medium / high severity before it. In the Cosmic Era it shows the risk of the Last Passage instead, along with how full your faith is. The Epoch panel shows the same line. While a harbinger is present, both repeat its warning, so they can't give away a false prophet. See [Epochs](epochs.md) for the event tables.
 
 ---
 
@@ -45,7 +36,7 @@ The Cosmic Era has no next epoch, so its passage is prestige. When you confirm p
 - **Endure** completes the prestige but keeps only 50% of the run's prestige points (70% or 85% if you braced).
 - **Succumb** completes the prestige with no points from this run and grants the **Cosmic Legacy**, a permanent +10% production. You can earn it once; after that, Succumb is closed.
 
-It behaves like a pending catastrophe: Esc closes the choice, a **☄ LAST PASSAGE** badge shows in the status bar, the bare `catastrophe` command reopens it, and it is saved with your game. Unlike a catastrophe, it blocks only prestige. Either choice adds a line to the civilization log and counts as Survived or Succumbed. See [The Last Passage](prestige.md#the-last-passage).
+It behaves like a pending catastrophe: Esc closes the choice, a **☄ LAST PASSAGE** badge shows in the status bar, the bare `catastrophe` command reopens it, and it is saved with your game. Unlike a catastrophe, it blocks only prestige. Either choice adds a line to the civilization log and counts as Endured or Succumbed. See [The Last Passage](prestige.md#the-last-passage).
 
 ---
 
@@ -69,21 +60,21 @@ The name is flavor. Endure and Succumb work the same way in every epoch; only th
 
 ## Endure
 
-Pay a cost and keep your civilization.
+Pay a cost and keep your civilization. Enduring costs you:
 
-- **20% of your buildings destroyed**: `floor(non-wonder buildings / 5)`, at least 1 if you have any. Wonders are never destroyed and don't count toward the total. Brace lowers this to 15% or 10%.
-- **Workers of destroyed buildings go idle** first, the same as when you sell a building.
-- **All unlocked resources drop to 15%** of their stored amounts. Brace raises this to 30% or 45%.
-- **25% of the worker pool is lost.** There is one worker pool, so every building loses the same share of its assigned workers, whatever its domain (food, knowledge, military and so on).
-- **Reconstruction Effort**: production −10% for 216 ticks.
-- **Morale −10 points.**
-- **Survived** marker on the epoch badge and a line in the civilization log.
+| Loss | Amount |
+|------|--------|
+| Buildings destroyed | 20% of your non-wonder buildings, rounded down (`floor(non-wonder buildings / 5)`), at least 1 if you have any. Wonders are never destroyed and don't count. |
+| Stored resources | Every unlocked resource drops to 15% of its stored amount. |
+| Workers | 25% of the worker pool is lost. |
+| Production | Reconstruction Effort: all production −10% for 216 ticks. |
+| Morale | −10 points. |
 
-Age, research, wonders and prestige are untouched.
+Workers of the destroyed buildings go idle first, the same as when you sell a building. There is one worker pool, so the 25% loss takes the same share of assigned workers from every building, whatever its domain (food, knowledge, military and so on). Age, research, wonders and prestige are untouched. You earn the **Endured** marker on the epoch badge and a line in the civilization log.
 
 ### Brace
 
-If the harbinger warned you and you paid to **Brace**, Endure costs less. Brace only changes the two numbers below; worker loss, the debuff and the morale hit stay the same.
+If the harbinger warned you and you paid to **Brace**, Endure costs less. Brace changes only the share of buildings destroyed and the share of stored resources kept; worker loss, the production debuff and the morale hit stay the same.
 
 | Brace level | Buildings destroyed | Stored resources kept |
 |-------------|---------------------|-----------------------|
@@ -93,7 +84,7 @@ If the harbinger warned you and you paid to **Brace**, Endure costs less. Brace 
 
 Buildings destroyed are rounded down, with at least 1 if you have any. The Brace is attached to the pending catastrophe, so it still applies if you press Esc and Endure later, or save and load first. It does nothing for Succumb. See [Brace](harbinger.md#brace-soften-an-endure).
 
-The −10% applies to every building, including the ones that survived, for the full 216 ticks. Negative production modifiers are floored at 10% of base, but a single −10% lands in full whatever other bonuses you hold. The same flooring covers per-resource rate modifiers and gather rate, and any active debuff shows in the Active Multipliers panel.
+The −10% applies to every building, including the ones that survived, for the full 216 ticks. Negative production modifiers are floored at 10% of base, but a single −10% lands in full whatever other bonuses you hold. The same flooring covers per-resource rate modifiers and worker output, and any active debuff shows in the Active Multipliers panel.
 
 If morale was already low, the −10 can push it into the low band, where output is penalized. Morale drifts back toward 50% on its own; a food surplus speeds that up.
 
@@ -101,11 +92,7 @@ If morale was already low, the −10 can push it into the low band, where output
 
 ### How the destruction is picked
 
-- Every built non-wonder building instance goes into a pool, in a fixed order (sorted by building key).
-- The pool is shuffled with your run's seeded random generator and the first N are destroyed.
-- Destroyed buildings are removed entirely; they don't become ruins.
-
-Because the generator is seeded per run, the same run state destroys the same buildings.
+Every built non-wonder building goes into a pool in a fixed order (sorted by building key). The pool is shuffled with your run's seeded random generator and the first N are destroyed. Destroyed buildings are removed entirely; they don't become ruins. Because the generator is seeded per run, the same run state destroys the same buildings.
 
 **Recovery checklist:**
 
@@ -119,15 +106,11 @@ Because the generator is seeded per run, the same run state destroys the same bu
 
 Let the civilization fall, and keep something permanent.
 
-- **Up to 8 buildings become ruins**, picked at random from your non-wonder buildings (same seeded, fixed-order pool as Endure). Ruins produce at 50% of base rate with no workers.
-- **Ruin cap: 24.** Ruins carry across Succumb and prestige, but the total never exceeds 24. When new ruins push past the cap, the **lowest-value ruins crumble first**: earliest age first, then lowest base output. A late-game fall replaces primitive rubble instead of being thrown away. Saves from before the cap are trimmed the same way when loaded.
-- **Legacy bonus** for the epoch (table below), permanent.
-- **Ancient Knowledge**: +25% research speed for each distinct epoch you have succumbed in. Succumbing twice in the same epoch doesn't add another 25%.
-- **Full reset** to the Primitive Age: buildings, resources, workers, research, milestones, events, build queue. You start with 15 food and 12 wood, plus prestige starting bonuses.
-- **No prestige points are earned.** Your prestige level, points and upgrades are kept.
-- A line in the civilization log.
+Up to 8 of your non-wonder buildings become **ruins**, picked at random from the same seeded, fixed-order pool as Endure. Ruins produce at 50% of base rate with no workers. They carry across Succumb and prestige, but the total is capped at 24. When new ruins push past the cap, the lowest-value ruins crumble first (earliest age first, then lowest base output), so a late-game fall replaces primitive rubble. Older saves over the cap are trimmed the same way when loaded.
 
-Morale restarts at 50%.
+You also get the epoch's **legacy bonus** (table below), permanently, and **Ancient Knowledge**: +25% research speed for each distinct epoch you have succumbed in. Succumbing twice in the same epoch doesn't add another 25%.
+
+Then the civilization resets to the Primitive Age: buildings, resources, workers, research, milestones, events and the build queue. You start with 15 food and 12 wood, plus prestige starting bonuses. No prestige points are earned, but your prestige level, points and upgrades are kept. Morale restarts at 50%, and the civilization log gets a line.
 
 ### What carries forward
 
@@ -146,7 +129,7 @@ Morale restarts at 50%.
 
 The research bonus comes straight from your legacy flags: +25% per epoch flagged. It is recomputed whenever it's needed, so save/load, Succumb and prestige can't drop or double it. It shows as **Legacy** under Research Speed in the Active Multipliers panel.
 
-From Iron to Cosmic there are 6 epochs you can succumb in, so the most you can earn now is **+150%**. A save that earned the Stone Era legacy before the Iron gate existed keeps it (+175% total).
+From Iron to Cosmic there are 6 epochs you can succumb in, so the most you can earn is **+150%**. A save that earned the Stone Era legacy before catastrophes were limited to the Iron Era on keeps it (+175% total).
 
 **When to Succumb:** you don't yet hold this epoch's legacy, and the reset is cheap for you. A catastrophe always arrives right as you enter an epoch, so the question is how much of the run you'd be giving up.
 
@@ -156,7 +139,7 @@ From Iron to Cosmic there are 6 epochs you can succumb in, so the most you can e
 
 | Epoch | Resources boosted | Bonus |
 |-------|-------------------|-------|
-| Stone Era | wood, stone | +20% each (only on saves that earned it before the Iron gate) |
+| Stone Era | wood, stone | +20% each (only on older saves that earned it) |
 | Iron Era | iron | +20% |
 | Steel Era | steel, coal | +25% each |
 | Electric Era | electricity, uranium | +25% each |
@@ -164,7 +147,7 @@ From Iron to Cosmic there are 6 epochs you can succumb in, so the most you can e
 | Neon Era | plasma, dark matter crystals | +30% each |
 | Cosmic Era | dark matter | +35% |
 
-Rate bonuses add to your other `<resource>_rate` bonuses and apply from tick 1 of every later run, including after prestige. A new game (wiping the save) clears them.
+Rate bonuses add to your other rate bonuses for that resource and apply from tick 1 of every later run, including after prestige. A new game (wiping the save) clears them.
 
 ---
 
@@ -173,10 +156,10 @@ Rate bonuses add to your other `<resource>_rate` bonuses and apply from tick 1 o
 | Faith fill | Good event | Catastrophe at the transition |
 |------------|------------|-------------------------------|
 | under 25% | 40% | 18% |
-| 25–75% (or no faith storage) | 50% | 15% |
+| 25 to 75% (or no faith storage) | 50% | 15% |
 | over 75% | 60% | 12% |
 
-Over the 6 transitions of a run, high faith against low faith is roughly a third of a catastrophe fewer. More important, high faith also buys better good events. See [Faith](faith.md).
+Over the 6 transitions of a run, high faith against low faith is roughly a third of a catastrophe fewer. High faith also gives you more good events. See [Faith](faith.md).
 
 A harbinger's Appease multiplies these chances by 0.6 per level (0.36 at two levels), and Invite makes the catastrophe certain. See [The Harbinger](harbinger.md).
 
@@ -184,16 +167,9 @@ A harbinger's Appease multiplies these chances by 0.6 per level (0.36 at two lev
 
 ## Civilization Log
 
-Every resolved catastrophe adds a line:
+Every resolved catastrophe adds a line to the civilization log with the tick, the outcome (Endured or Succumbed), the catastrophe and its epoch, and then either the number of buildings lost (Endure) or a note that the civilization reset (Succumb). Endure and Succumb at the Last Passage add a line of their own. The log survives Succumb and prestige. The Stats panel counts **Endured** and **Succumbed** from these lines, so a pending catastrophe counts as neither.
 
-```
-Tick N — Endured <Catastrophe> (<Epoch>). N buildings lost.
-Tick N — Succumbed to <Catastrophe> (<Epoch>). Civilization reset. Legacy bonus earned.
-```
-
-Endure and Succumb at the Last Passage add a line of their own. The log survives Succumb and prestige. The Stats panel counts **Survived** (Endured) and **Succumbed** from these lines, so a pending catastrophe counts as neither.
-
-The Epoch tab's history marks each past epoch's catastrophe as **Survived**, **Succumbed** or **Pending**. A catastrophe from an older save whose outcome was never stored shows as "outcome not recorded" rather than guessing.
+The Epoch panel's history marks each past epoch's catastrophe as **Endured**, **Succumbed** or **Pending**. A catastrophe from an older save whose outcome was never stored shows as "outcome not recorded" rather than guessing.
 
 ---
 

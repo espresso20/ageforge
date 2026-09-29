@@ -1,4 +1,4 @@
-# AgeForge — Economy Design
+# AgeForge: Economy Design
 
 ## Overview
 
@@ -20,7 +20,7 @@ Housing → Population → Workers → Production
 
 These are non-negotiable design constraints. Every balance change must be checked against them.
 
-### Law 1 — The Storage Covenant
+### Law 1: The Storage Covenant
 > At any stage of the game, a player's maximum possible storage for a resource **must be
 > ≥ 2× the cost** of the most expensive building they are expected to build at that stage.
 
@@ -55,7 +55,7 @@ copy, raised only where an age falls short; there is no flat multiplier. `smoke.
 checks it, `TestStorageCovenant` fails `go test ./...` when a change breaks it, and
 `TestStorageCovenantCatchesBrokenStorage` feeds it the old numbers.
 
-### Law 2 — The Pacing Curve
+### Law 2: The Pacing Curve
 > Every age has a target length at 1x, and the economy is derived from it. Nothing is priced
 > or rated by guesswork against "normal play pace".
 
@@ -106,7 +106,7 @@ build plan for the hours until the next one, with wonder overflow on. The nightl
 scenario enforces them; the per-age greedy targets don't apply, since a check-in player
 can only act at a visit.
 
-### Law 3 — The Payback Rule
+### Law 3: The Payback Rule
 > A production building, fully staffed, earns back the price of its first copy in its age's
 > **payback time**, valued at the age's **price parity**. Its output is derived from its
 > price; no rate is typed in for a construction resource.
@@ -168,7 +168,7 @@ construction resource) keep their fixed rates.
 proportions, plus hand-sized flow parts. They are part of every gate: the current age's
 wonder must stand before `advance`.
 
-### Law 4 — The Coupling Law
+### Law 4: The Coupling Law
 > Every production building has a **worker capacity** (how many workers of a given type it
 > can employ) and a **worker output** (production per assigned worker per tick). Buildings
 > produce at **20% base rate without workers**. Full production requires workers.
@@ -178,7 +178,7 @@ This means:
 - Players must invest in housing to unlock production potential.
 - Workers and buildings are complementary, not competing.
 - The "idle" base rate (20%) means the game keeps running if you step away and forget to
-  assign, but assigned workers provide a 5× multiplier — a meaningful optimization.
+  assign, but assigned workers provide a 5× multiplier, which makes assignment worth the effort.
 
 ---
 
@@ -238,26 +238,26 @@ They should be chosen so that the Nth building takes roughly the same real time 
 given that production has also grown.
 
 General guidelines:
-- **Storage buildings**: 1.15–1.20 (slow scale, you want many of these)
-- **Production buildings**: 1.25–1.35 (moderate, you want several but not infinite)
-- **Housing buildings**: 1.10–1.15 (keep cheap — housing is a prerequisite, not a sink)
-- **Specialist buildings** (research, military): 1.35–1.50 (expensive per unit, few needed)
-- **Late-game buildings** (space, quantum): 1.45–1.60 (steep is fine, everything takes days)
+- **Storage buildings**: 1.15-1.20 (slow scale, you want many of these)
+- **Production buildings**: 1.25-1.35 (moderate, you want several but not infinite)
+- **Housing buildings**: 1.10-1.15 (keep cheap: housing is a prerequisite, not a sink)
+- **Specialist buildings** (research, military): 1.35-1.50 (expensive per unit, few needed)
+- **Late-game buildings** (space, quantum): 1.45-1.60 (steep is fine, everything takes days)
 
 ---
 
 ## Storage Design
 
-Storage is the **resource pressure** mechanism. It keeps the game interesting — players can't
-just walk away for a year and come back to infinite resources.
+Storage is the **resource pressure** mechanism: it stops players from walking away for a year
+and coming back to infinite resources.
 
 ### Rules
 - Every resource has a storage cap, set by the sum of storage buildings.
 - Storage buildings have **MaxCount** (the only building type that does).
-- At each age tier, the available storage buildings must satisfy **Law 1** — their maximum
+- At each age tier, the available storage buildings must satisfy **Law 1**: their maximum
   combined capacity must be ≥ 2× the most expensive building cost in that tier.
 - Storage should scale roughly with production: a player at Bronze Age should have roughly
-  5–10× more storage than at Primitive Age.
+  5-10× more storage than at Primitive Age.
 
 ### Storage Buildings by Age
 
@@ -341,7 +341,7 @@ fixed it).
 
 **Gate size.** With Law 3 the time an age takes follows mostly from its gate (required
 buildings plus wonder, in price units) and the stock of older buildings. Gates that were
-far smaller than their neighbours' finished in a fraction of the target and were enlarged
+far smaller than their neighbors' finished in a fraction of the target and were enlarged
 (Classical, Colonial, Industrial); the steel-heavy Space Age gate was trimmed, since steel
 and titanium came only from the market there, and the Space Age's Orbital Refinery now
 makes titanium.
@@ -352,7 +352,7 @@ makes titanium.
    (the lowest tier there, which is what the older building upgrades into, so upgraded
    copies count).
 2. If the storage buildings of that age are out of band with the age's own prices, raise
-   their per-copy storage. "In band" means the median first-copy price is 3–8% of the
+   their per-copy storage. "In band" means the median first-copy price is 3-8% of the
    age's max storage, which is where Classical through Space sit.
 3. Otherwise lower the count to the largest that fits, rounded down to a multiple of 5
    (exact below 10).
@@ -362,7 +362,7 @@ makes titanium.
 
 Counts are the usual lever because the normalized cost curves (1.15 per copy, 1.13 for
 housing and storage) made late copies explode: copy #80 costs 62,000× copy #1, so the
-old late-game counts of 50–500 were never reachable at any storage.
+old late-game counts of 50-500 were never reachable at any storage.
 
 ---
 
@@ -370,8 +370,8 @@ old late-game counts of 50–500 were never reachable at any storage.
 
 | Building Category | MaxCount | Reason |
 |-------------------|----------|--------|
-| Storage buildings | Yes — hard cap | Unlimited storage breaks resource pressure |
-| Wonders | Yes — 1 | Unique by design |
+| Storage buildings | Yes, hard cap | Unlimited storage breaks resource pressure |
+| Wonders | Yes, 1 | Unique by design |
 | Production buildings | **No** | Geometric cost scaling is the natural cap |
 | Housing buildings | **No** | Geometric cost scaling + population needs are the natural cap |
 | Military buildings | **No** | Scale naturally |
@@ -384,32 +384,32 @@ playing correctly. That's the idle game working as designed.
 
 ## Implementation Phases
 
-### Phase 1 — Data Model
+### Phase 1: Data Model
 - [ ] Add `WorkerDomain string` and `WorkerCapacity int` to `BuildingDef` in config/buildings.go
 - [ ] Add age-tiered worker class entries to config/villagers.go (see workers.md)
   - Each class: Domain, UnlockAge, FoodCost, OutputMultiplier, Name
 - [ ] Update all ~80 building definitions with their domain + capacity values
 
-### Phase 2 — Engine
+### Phase 2: Engine
 - [ ] Update VillagerManager to handle multi-tier workers per domain
 - [ ] Update ResourceManager production calculation:
   `rate = building_base_rate × (0.20 + 0.80 × assigned/capacity)`
 - [ ] Update housing pop values (hut: +3 → +10, all tiers rescaled)
 - [ ] Remove MaxCount from all production/housing buildings in config/buildings.go
 
-### Phase 3 — Balance Numbers
+### Phase 3: Balance Numbers
 - [x] Derive production from prices and the age targets (the Payback Rule, Law 3, 2026-09-27)
 - [x] Verify Storage Covenant (Law 1) for all 22 age transitions (Gate Covenant, 2026-09-26)
 - [ ] Tune worker food costs against the new rates (food producers keep hand-set rates)
 
-### Phase 4 — UI
+### Phase 4: UI
 - [ ] Update population panel to show current-tier workers prominently, legacy collapsed
 - [ ] Update resource rate breakdown to show worker contribution separately from building base
 - [ ] Worker assignment UI uses domain name (not class name) to avoid churn on age advance
 
 ---
 
-## Appendix — Renaissance pace and 8-hour headroom (2026-09-28)
+## Appendix: Renaissance pace and 8-hour headroom (2026-09-28)
 
 Two follow-ups to the check-in appendix below. Before: master (nightly run 36432409007,
 weekly deep run 36456050959). After: this change (nightly-suite run 36466888675 with the
@@ -496,13 +496,13 @@ cap cuts off, and a trade into a full store stops. So the player lost eight hour
   the vaults, then the bunkers behind them, waited a visit for it); and counts a planned
   trade as income once a trade building stands.
 
-First prestige, median of three seeds (min–max):
+First prestige, median of three seeds (min-max):
 
 | Check-in | Target | Before | After |
 |---|---|---|---|
-| 1 h | 3.5 d | 2.8 d (2.7–3.1) | 2.9 d (2.9–3.2) |
-| 3 h | 5 d | 3.9 d (3.7–4.0) | 3.9 d (3.8–3.9) |
-| 8 h | 8 d | 7.2 d (7.1–7.5) | 6.5 d (6.5–7.1) |
+| 1 h | 3.5 d | 2.8 d (2.7-3.1) | 2.9 d (2.9-3.2) |
+| 3 h | 5 d | 3.9 d (3.7-4.0) | 3.9 d (3.8-3.9) |
+| 8 h | 8 d | 7.2 d (7.1-7.5) | 6.5 d (6.5-7.1) |
 
 8-hour headroom goes from 10% to 23%. Measured locally before the Renaissance change, the
 wonder fix took the 8-hour median from 7.4 to 6.8 days and the market top-ups to 6.5; the
@@ -514,7 +514,7 @@ Primitive Age mid-absence (the wonder no longer waits for a visit) and the Stone
 it leaves waits for the next visit to recruit. The 1-hour total barely moved, so it is left
 for later.
 
-## Appendix — Check-in play: build plan, overflow, storage (2026-09-27)
+## Appendix: Check-in play: build plan, overflow, storage (2026-09-27)
 
 The idle appendix below found that visits to the first prestige hardly depended on the
 check-in interval, because storage capped what a visit could achieve. This change gives
@@ -559,14 +559,14 @@ the numbers are in the CHANGELOG). The other eleven ages already kept it.
 
 ### Results
 
-First prestige, median of three seeds (min–max). After: the nightly's `idle` scenario on a
+First prestige, median of three seeds (min-max). After: the nightly's `idle` scenario on a
 GitHub runner (run 36347171804). Before: PR #125's idle bot on master.
 
 | check-in every | before | after | target | visits after |
 |---|---|---|---|---|
-| 1 h | 7.3 d (7.0–8.2) | 2.8 d (2.7–3.1) | 3.5 d | 67 |
-| 3 h | 17.4 d (17.2–18.1) | 3.9 d (3.7–4.0) | 5 d | 31 |
-| 8 h | 44.5 d (44.1–45.5) | 7.2 d (7.1–7.5) | 8 d | 21 |
+| 1 h | 7.3 d (7.0-8.2) | 2.8 d (2.7-3.1) | 3.5 d | 67 |
+| 3 h | 17.4 d (17.2-18.1) | 3.9 d (3.7-4.0) | 5 d | 31 |
+| 8 h | 44.5 d (44.1-45.5) | 7.2 d (7.1-7.5) | 8 d | 21 |
 
 Time per age (median) at 3-hour check-ins, before → after: Primitive 12 h → 2.0 h, Stone
 1.2 d → 6.0 h, Bronze 1.2 d → 4.8 h, Iron 1.4 d → 5.3 h, Classical 1.2 d → 8.8 h, Medieval
@@ -589,13 +589,13 @@ The plan does most of the work, overflow matters most at long intervals (more of
 income meets a full store), and storage adds about a tenth everywhere.
 
 **Nothing overshot.** The idle player stays slower than the greedy one at every interval
-(2.1 days for the greedy bot). Greedy pacing stays inside 0.5x–2x in every age, but the
+(2.1 days for the greedy bot). Greedy pacing stays inside 0.5x-2x in every age, but the
 storage raise sped the middle ages up: the Renaissance went from 0.72x to 0.57x of its
 target and the first prestige from 2.4 to 2.1 days. The Renaissance Vault sits right on the
 1.5-hour line (gold income jumps there), so if a later change pushes the Renaissance under
 0.5x, the levers are that age's gate or its gold rates rather than its storage.
 
-## Appendix — Idle play and the Iron Age gold trap (2026-09-27)
+## Appendix: Idle play and the Iron Age gold trap (2026-09-27)
 
 ### The gold trap
 
@@ -606,25 +606,25 @@ now costs stone and iron only; the Payback Rule sets its rate from the smaller p
 (48.8 gold/tick, was 65.2) and gold's Iron Age price level falls from 8,000 to 7,500.
 Rule 5 of the Gate Covenant now checks sourcing from a cold start (see above), and with
 the trading post fixed it finds no other trap of the kind. Greedy pacing moved by at most
-0.1x (Iron 2.7 h to 2.6 h, Classical 3.8 h to 4.1 h, Colonial 4.3 h to 5.0 h, seeds 1–8).
+0.1x (Iron 2.7 h to 2.6 h, Classical 3.8 h to 4.1 h, Colonial 4.3 h to 5.0 h, seeds 1-8).
 
 ### Idle play
 
 The target player checks in a few times a day. The smoke suite's `idle` style models one,
-with the game running between visits. Time to the first prestige (Modern Age), seeds 1–3,
-median (min–max), against about 2.4 days for the greedy bot:
+with the game running between visits. Time to the first prestige (Modern Age), seeds 1-3,
+median (min-max), against about 2.4 days for the greedy bot:
 
 | check-in every | before (one decision per visit) | after (a visit spends everything) | visits |
 |---|---|---|---|
-| 1 h | 27.0 d (25.9–27.2) | 7.3 d (7.0–8.2) | ~175 |
-| 3 h | 76.3 d (71.2–76.3) | 17.4 d (17.2–18.1) | ~140 |
-| 8 h | not reached in 83 d (stuck in the Classical Age) | 44.5 d (44.1–45.5) | ~134 |
+| 1 h | 27.0 d (25.9-27.2) | 7.3 d (7.0-8.2) | ~175 |
+| 3 h | 76.3 d (71.2-76.3) | 17.4 d (17.2-18.1) | ~140 |
+| 8 h | not reached in 83 d (stuck in the Classical Age) | 44.5 d (44.1-45.5) | ~134 |
 
 Time per age at 3-hour check-ins, after: Primitive 12 h (48x the target), Stone 1.2 d,
 Bronze 1.2 d, Iron 1.4 d, Classical 1.2 d, Medieval 14.5 h (3.2x), Renaissance 22.8 h,
 Colonial 20 h (2.9x), Industrial 2.4 d (7.2x), Victorian 2.0 d, Electric 2.7 d, Atomic
 2.7 d (5.4x). At 1-hour check-ins the Medieval through Colonial Ages are inside the band
-(1.4x–1.5x) and the rest 2x–4x. No run soft-locked at any interval.
+(1.4x-1.5x) and the rest 2x-4x. No run soft-locked at any interval.
 
 **What was the harness.** The idle bot made one decision per visit: one producer, one
 storage copy and one trade every three hours. A visit is now rounds of decisions until
@@ -636,10 +636,10 @@ under construction, so a player got one storage copy per visit (`build <key> N` 
 number). Fixed: only unique buildings refuse.
 
 **What still is the game.** The number of visits to the first prestige hardly depends on
-the interval (about 130–180), so a visit's progress is capped, and the cap is storage. At
+the interval (about 130-180), so a visit's progress is capped, and the cap is storage. At
 3-hour check-ins (seed 1, 149 visits) three in four of the needed resources that
 something produces are at their cap when the player arrives, and a store that filled did
-so in a median of 20–50 minutes (5–15 minutes from the Renaissance to the Victorian Age). Production is sized so producers repay in the payback
+so in a median of 20-50 minutes (5-15 minutes from the Renaissance to the Victorian Age). Production is sized so producers repay in the payback
 time (Law 3); storage is sized so the last required copy costs half of it (the Gate
 Covenant). Nothing sizes storage to hours of production, so a player away for three hours
 loses most of what their economy makes, and the gap to the targets does not close in the
@@ -659,36 +659,36 @@ automatically. Raising storage to hold a check-in's worth of production would al
 but removes the resource pressure storage exists for. A research queue is a smaller,
 separate fix. None of this is in this change.
 
-## Appendix — Pacing rebalance (2026-09-27)
+## Appendix: Pacing rebalance (2026-09-27)
 
-Time in each age for the smoke bot, median (min–max) over seeds 1–5 at 1x, against the
+Time in each age for the smoke bot, median (min-max) over seeds 1-5 at 1x, against the
 Law 2 targets. Before: master at 62eefac, run with no age timeout. After: this change.
 
 | Age | Target | Before | After |
 |---|---|---|---|
-| Primitive | 15 min | 5.8 h (5.7–6.0) | 18 min (17–18) |
-| Stone | 45 min | 23.5 h (22.6–24.0) | 1.1 h (1.1–1.1) |
-| Bronze | 1.5 h | 1.0 d (22.4 h–1.1 d) | 2.3 h (2.2–2.3) |
-| Iron | 2.5 h | 5.0 d (4.9–5.4) | 2.5 h (2.4–2.9) |
-| Classical | 3.5 h | 16.1 d (16.0–18.0) | 4.1 h (4.0–4.5) |
-| Medieval | 4.5 h | 7.9 d (7.5–8.7) | 2.9 h (2.6–3.2) |
-| Renaissance | 6 h | 46.9 d (45.4–59.7) | 4.3 h (3.3–5.7) |
-| Colonial | 7 h | never (stalled at 83 d) | 5.1 h (4.1–5.5) |
-| Industrial | 8 h | – | 8.1 h (7.6–8.5) |
-| Victorian | 9 h | – | 7.7 h (7.2–9.3) |
-| Electric | 10 h | – | 8.9 h (7.9–9.4) |
-| Atomic | 12 h | – | 9.5 h (9.4–9.8) |
-| Modern | 12 h | – | 13.4 h (12.7–14.0) |
-| Information | 14 h | – | 18.7 h (18.6–19.8) |
-| Digital | 16 h | – | 18.7 h (16.3–19.1) |
-| Cyberpunk | 18 h | – | 1.0 d (4.3 h–1.1 d) |
-| Fusion | 20 h | – | 17.7 h (16.6–18.0) |
-| Space | 22 h | – | 1.9 d (1.8–2.0) |
-| Interstellar | 24 h | – | 1.8 d (1.7–1.9) |
-| Galactic | 24 h | – | 1.3 d (1.3–1.4) |
+| Primitive | 15 min | 5.8 h (5.7-6.0) | 18 min (17-18) |
+| Stone | 45 min | 23.5 h (22.6-24.0) | 1.1 h (1.1-1.1) |
+| Bronze | 1.5 h | 1.0 d (22.4 h to 1.1 d) | 2.3 h (2.2-2.3) |
+| Iron | 2.5 h | 5.0 d (4.9-5.4) | 2.5 h (2.4-2.9) |
+| Classical | 3.5 h | 16.1 d (16.0-18.0) | 4.1 h (4.0-4.5) |
+| Medieval | 4.5 h | 7.9 d (7.5-8.7) | 2.9 h (2.6-3.2) |
+| Renaissance | 6 h | 46.9 d (45.4-59.7) | 4.3 h (3.3-5.7) |
+| Colonial | 7 h | never (stalled at 83 d) | 5.1 h (4.1-5.5) |
+| Industrial | 8 h | - | 8.1 h (7.6-8.5) |
+| Victorian | 9 h | - | 7.7 h (7.2-9.3) |
+| Electric | 10 h | - | 8.9 h (7.9-9.4) |
+| Atomic | 12 h | - | 9.5 h (9.4-9.8) |
+| Modern | 12 h | - | 13.4 h (12.7-14.0) |
+| Information | 14 h | - | 18.7 h (18.6-19.8) |
+| Digital | 16 h | - | 18.7 h (16.3-19.1) |
+| Cyberpunk | 18 h | - | 1.0 d (4.3 h to 1.1 d) |
+| Fusion | 20 h | - | 17.7 h (16.6-18.0) |
+| Space | 22 h | - | 1.9 d (1.8-2.0) |
+| Interstellar | 24 h | - | 1.8 d (1.7-1.9) |
+| Galactic | 24 h | - | 1.3 d (1.3-1.4) |
 
-Every age through Atomic is inside 0.5x–2x of its target; the first prestige (Modern Age)
-comes at about 2.4 days on seeds 1–10. Space (2.1x) is the one age still outside the band.
+Every age through Atomic is inside 0.5x-2x of its target; the first prestige (Modern Age)
+comes at about 2.4 days on seeds 1-10. Space (2.1x) is the one age still outside the band.
 
 ### Rules and constants (config/pacing.go)
 
@@ -722,19 +722,19 @@ comes at about 2.4 days on seeds 1–10. Space (2.1x) is the one age still outsi
 The Iron Age gate keeps its 80K food and 20K knowledge: the Stone Era harbinger's prices are
 derived from it.
 
-## Appendix — Pacing follow-ups (2026-09-27)
+## Appendix: Pacing follow-ups (2026-09-27)
 
-Time in each age for the smoke bot (Harbinger ignored), median (min–max) over seeds 1–5,
+Time in each age for the smoke bot (Harbinger ignored), median (min-max) over seeds 1-5,
 playing to a Quantum Age prestige. The Space Age was the one age out of band.
 
 | Age | Target | Before | After |
 |---|---|---|---|
-| Fusion | 20 h | 17.7 h (16.8–18.1) | 16.8 h (16.3–16.9) |
-| Space | 22 h | 2.1 d (1.8–2.2) | 1.2 d (1.1–1.2) |
-| Interstellar | 24 h | 1.8 d (1.7–1.9) | 1.5 d (1.5–1.6) |
-| Galactic | 24 h | 1.2 d (1.2–1.3) | 1.3 d (1.3–1.3) |
+| Fusion | 20 h | 17.7 h (16.8-18.1) | 16.8 h (16.3-16.9) |
+| Space | 22 h | 2.1 d (1.8-2.2) | 1.2 d (1.1-1.2) |
+| Interstellar | 24 h | 1.8 d (1.7-1.9) | 1.5 d (1.5-1.6) |
+| Galactic | 24 h | 1.2 d (1.2-1.3) | 1.3 d (1.3-1.3) |
 
-Every age from the Primitive to the Galactic is now inside 0.5x–2x; the ages before Fusion
+Every age from the Primitive to the Galactic is now inside 0.5x-2x; the ages before Fusion
 moved by at most 0.2x (the bot's trading change below touches every age).
 
 **Why the Space Age was slow.** Titanium unlocks there, nearly every Space building costs
@@ -757,7 +757,7 @@ the refinery either way.
 | Iron Forged milestone | 40 coal | 40 iron | coal is locked until the Renaissance |
 | Harbinger Appease | 15% of the passage storage | 1/4 of `FlowIncome` over the thread's ages | faith is a flow resource; see epochs.md |
 
-## Appendix — Gate Covenant fixes (2026-09-26)
+## Appendix: Gate Covenant fixes (2026-09-26)
 
 Every number changed to make every advance pass the Gate Covenant. Requirement counts are
 the values the game uses (after `normalizeAgeRequirements`); prices are normalized.
@@ -775,7 +775,7 @@ the values the game uses (after `normalizeAgeRequirements`); prices are normaliz
 | Electric | 20 steam turbine, 15 steel mill | 10 steam turbine, 10 bessemer plant | turbine copy #20 over max storage; steel mill is Industrial |
 | Atomic | 20 electric arc furnace, 20 steam works | 15 electric arc furnace, 15 power station | furnace at 1.35×; steam works is Victorian |
 | Modern | 30 nuclear reactor, 30 bunker complex | 15, 15 | copy #30 cost 1.4T steel / 2T stone vs 598B storage |
-| Information | 50 think tank, 60 oil refinery | 20, 15 | copy #50/#60 cost 30–190× storage |
+| Information | 50 think tank, 60 oil refinery | 20, 15 | copy #50/#60 cost 30-190× storage |
 | Digital | 30 server farm, 80 media center, 30 innovation hub | 10, 15, 15 | up to 3,000× over |
 | Cyberpunk | 80 AI research lab, 80 data center, 50 neural grid | 15, 15, 15 | up to 4,000× over |
 | Fusion | 50 augmentation foundry, 80 arcology pod, 50 black market | 15, 25, 15 | up to 300× over |
@@ -785,7 +785,7 @@ the values the game uses (after `normalizeAgeRequirements`); prices are normaliz
 | Quantum | 80 stellar exchange, 100 antimatter forge, 120 Dyson sphere habitat | 15, 15 stellar metallurgy, 30 | antimatter forge is Interstellar; up to 190,000× over |
 | Transcendent | 500 reality academy, 300 reality forge, 200 probability war room | 20, 15, 15 | copy #500 cost 10^30× storage |
 
-### Storage (cosmic era out of band: median first copy was 13–57% of max storage)
+### Storage (cosmic era out of band: median first copy was 13-57% of max storage)
 
 | Building | Before (per copy / max) | After (per copy / max) |
 |---|---|---|
