@@ -1,11 +1,11 @@
 package flavor
 
 import (
-	"strconv"
 	"strings"
 	"sync"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // Resource countability — the part of this package that stops the generator
@@ -178,5 +178,5 @@ func phraseQuantity(key string, n int) string {
 			label = s
 		}
 	}
-	return strconv.Itoa(n) + " " + label
+	return textfmt.Int(n) + " " + label
 }

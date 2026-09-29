@@ -8,6 +8,7 @@ import (
 	"sync"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // The template model. A template is DATA: an ordered list of parts, where a part
@@ -374,7 +375,7 @@ var ageIndex = sync.OnceValue(func() map[string]int {
 //	{res_stores} MASS ONLY: "your food stores"
 //	{res_haul}   MASS ONLY: "a haul of food"
 //	{amt_res}    inflected quantity: "40 food", "1 soldier", "12 soldiers"
-//	{amt}        Request.Amount rounded, bare
+//	{amt}        Request.Amount rounded, K/M formatted ("1.23M")
 //	{n}          Request.Count, bare
 //	{ticks}      Request.Ticks, bare
 func fill(s string, req Request) string {
@@ -388,8 +389,8 @@ func fill(s string, req Request) string {
 		"{res_stores}", phraseStores(req.Resource),
 		"{res_haul}", phraseHaul(req.Resource),
 		"{amt_res}", phraseQuantity(req.Resource, amt),
-		"{amt}", strconv.Itoa(amt),
-		"{n}", strconv.Itoa(req.Count),
+		"{amt}", textfmt.Int(amt),
+		"{n}", textfmt.Int(req.Count),
 		"{ticks}", strconv.Itoa(req.Ticks),
 	).Replace(s)
 }
