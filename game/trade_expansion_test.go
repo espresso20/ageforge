@@ -145,6 +145,48 @@ func TestHarborRouteBonus_RaisesIncome(t *testing.T) {
 	}
 }
 
+// TestRouteCycle_RaisesOpinion: each completed route cycle gives +1 opinion to
+// every civ you have met, except civs at war with you (trade.md, "Trade
+// routes"). A skipped (starved) run gives nothing.
+func TestRouteCycle_RaisesOpinion(t *testing.T) {
+	ge := NewGameEngine()
+	ge.age = "medieval_age"
+	ge.Buildings.counts["market"] = 3
+	setRes(ge, "gold", 1e6)
+	ge.Diplomacy.factions["riverlands_tribes"] = &FactionState{Discovered: true, Opinion: 10, Status: "neutral"}
+	ge.Diplomacy.factions["ironhold_clans"] = &FactionState{Discovered: true, Opinion: -60, Status: "rival", AtWar: true}
+	ge.Diplomacy.factions["artisan_league"] = &FactionState{Discovered: false, Opinion: 0, Status: "neutral"}
+	if err := ge.Trade.StartRoute("silk_road", ge.Buildings, ge.age, ge.progress.GetAgeOrder()); err != nil {
+		t.Fatalf("StartRoute: %v", err)
+	}
+	def := config.TradeRouteByKey()["silk_road"]
+	for i := 0; i < def.TicksPerRun; i++ {
+		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0)
+	}
+	f := ge.Diplomacy.factions
+	if got := f["riverlands_tribes"].Opinion; got != 11 {
+		t.Errorf("met civ opinion after one cycle = %d, want 11", got)
+	}
+	if got := f["riverlands_tribes"].TradeCount; got != 1 {
+		t.Errorf("met civ trade count after one cycle = %d, want 1", got)
+	}
+	if got := f["ironhold_clans"].Opinion; got != -60 {
+		t.Errorf("civ at war: opinion = %d, want -60 (unchanged)", got)
+	}
+	if got := f["artisan_league"].Opinion; got != 0 {
+		t.Errorf("unmet civ: opinion = %d, want 0 (unchanged)", got)
+	}
+
+	// A run it cannot afford is skipped and warms no one.
+	setRes(ge, "gold", 0)
+	for i := 0; i < def.TicksPerRun; i++ {
+		ge.Trade.Tick(ge.Resources, ge.Buildings, ge.Diplomacy, 0)
+	}
+	if got := f["riverlands_tribes"].Opinion; got != 11 {
+		t.Errorf("after a skipped run opinion = %d, want 11", got)
+	}
+}
+
 // --- Disruption tied to diplomacy war/embargo -------------------------------
 
 // hostileFaction marks a faction at war (or embargoed) directly so its specialty

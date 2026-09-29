@@ -321,6 +321,10 @@ func (tm *TradeManager) Tick(resources *ResourceManager, buildings *BuildingMana
 
 				route.CyclesDone++
 				route.Starved = false
+				// A completed cycle warms every civ you have met and are not at war with.
+				if diplomacy != nil {
+					diplomacy.RecordTrade()
+				}
 			} else if !route.Starved {
 				route.Starved = true
 				for _, res := range sortedKeys(def.Export) {

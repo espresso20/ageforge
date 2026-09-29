@@ -1331,7 +1331,7 @@ func (ge *GameEngine) harborRouteBonus() float64 {
 func (ge *GameEngine) processDiplomacy() {
 	ageOrder := ge.progress.GetAgeOrder()
 	// Mercantile civs warm to trade activity: treat any active trade route as
-	// "traded recently" this window. TradeManager.RecordTrade already runs in
+	// "traded recently" this window. TradeManager.Tick (which calls RecordTrade) runs in
 	// the same lock, so reading the active count here is safe.
 	tradedRecently := ge.Trade.ActiveRouteCount() > 0
 	messages := ge.Diplomacy.Tick(ge.gameRNG(), ge.age, ageOrder, ge.tick, tradedRecently)
