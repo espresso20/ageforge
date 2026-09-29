@@ -18,7 +18,7 @@ func formatTechEffect(eff config.Effect) string {
 	case "bonus":
 		return textfmt.SignedPercent(eff.Value) + " " + game.EffectTargetName(eff.Target)
 	case "production":
-		return textfmt.Signed(eff.Value) + " " + game.ResourceName(eff.Target) + "/tick"
+		return rateNumber(eff.Value) + " " + game.ResourceName(eff.Target) + "/tick"
 	case "storage":
 		if eff.Target == "all" {
 			return textfmt.Signed(eff.Value) + " storage for every resource"
@@ -37,6 +37,17 @@ func formatTechEffect(eff config.Effect) string {
 	default:
 		return game.EffectTargetName(eff.Target) + " " + textfmt.Signed(eff.Value)
 	}
+}
+
+// rateNumber prints a signed per-tick amount with the decimals a small rate
+// needs ("+0.05", "+0.5", "+2.5", "-3"): textfmt.RateValue without its
+// trailing zeros. textfmt.Signed would round 0.05 up to "0.1".
+func rateNumber(v float64) string {
+	s := textfmt.RateValue(v)
+	if strings.Contains(s, ".") && !strings.ContainsAny(s, "KMBTQ") {
+		s = strings.TrimRight(strings.TrimRight(s, "0"), ".")
+	}
+	return s
 }
 
 // techLabel is a tech's name with the key the research command takes:
