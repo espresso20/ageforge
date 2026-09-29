@@ -309,7 +309,7 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 		required := def.MinResources[res]
 		current := params.Resources[res]
 		progress = append(progress, MilestoneProgress{
-			Label:   res,
+			Label:   textfmt.Capitalize(ResourceName(res)),
 			Current: current,
 			Target:  required,
 			Met:     current >= required,
@@ -326,7 +326,7 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 		required := def.MinBuildings[bld]
 		current := float64(params.Buildings[bld])
 		progress = append(progress, MilestoneProgress{
-			Label:   bld,
+			Label:   BuildingName(bld),
 			Current: current,
 			Target:  float64(required),
 			Met:     int(current) >= required,

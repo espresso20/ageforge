@@ -283,11 +283,7 @@ var guardKnownLeaks = []struct {
 	panel string
 	line  *regexp.Regexp
 	why   string
-}{
-	// note: config lineage descriptions still say "+0.64 iron_ore/tick";
-	// config.syncDescriptionRates keeps the key when it rewrites the number.
-	{"buildings", regexp.MustCompile(`\+[0-9.,]+[KMBTQ]? [a-z]+_[a-z_]+/tick`), "config building descriptions"},
-}
+}{}
 
 // guardKnownLeak reports whether line on panel is a listed known leak.
 func guardKnownLeak(panel, line string) bool {
