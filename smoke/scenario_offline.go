@@ -193,7 +193,7 @@ func offlinePlan(base *game.GameEngine, name, age string, fail func(check, forma
 		}
 		summary := false
 		for _, l := range post.Log {
-			summary = summary || strings.HasPrefix(l.Message, "While you were away your plan started")
+			summary = summary || strings.HasPrefix(l.Message, "While you were away, your plan started")
 		}
 		if started > 0 && !summary {
 			fail("offline_plan_log", "the plan started %d buildings offline but the log has no summary", started)
