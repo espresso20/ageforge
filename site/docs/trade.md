@@ -1,33 +1,34 @@
 # Trade & Diplomacy
 
-Two interlocking systems power your economy beyond raw production: **resource exchange** (on-demand swaps) and **trade routes** (passive per-tick income). Layered on top, the **diplomacy** system lets you encounter an **11-civilization roster** of NPC powers — allied civilizations amplify your trade route yields, peaceful ones lend you workers, and provoked ones can declare war. The systems are deeply synergistic.
+Two systems add to your economy beyond raw production: **resource exchange** (swap one resource for another on demand) and **trade routes** (automatic income every few ticks). On top of those, **diplomacy** lets you meet an **11-civilization roster** of other powers. Allied civilizations boost production of their specialty resource, peaceful ones lend you workers, and provoked ones can declare war. Trade routes raise opinion, and allies raise route income.
 
 ---
 
 ## Resource Exchange
 
-Instant, one-off swaps between two resource types. You need at least one trade building before any exchange is possible: a `market` or anything later in the trade lineage (trading post, merchant quarter, guildhall, exchange, port, stock exchange, bank, ...). Upgrading your markets keeps the exchange open, since the upgraded buildings count too. If you skipped the market in the Bronze Age, the Iron Age trading post costs only stone and iron, so it can always open the exchange (and it is the Iron Age's gold producer).
+An exchange is an instant, one-off swap between two resources. You need at least one trade building first: a `market` or anything later in the trade lineage (trading post, merchant quarter, guildhall, exchange, port, stock exchange, bank, ...). Upgraded buildings count too, so upgrading your markets keeps the exchange open. If you skipped the market in the Bronze Age, the Iron Age trading post costs only stone and iron, so you can always open the exchange (and it is the Iron Age's gold producer).
 
 ```
-trade <from> <to> <amount>
+trade <give> <get> <amount to give>
 trade list
+plan trade <give> <get> [amount to get]
 ```
 
-`trade list` shows all rates currently available to your age, including any active market pressure penalties. Rates follow your age: see [Exchange Rates](#exchange-rates).
+`trade list` shows every rate open to your age, including any market pressure penalty. `plan trade` queues an exchange in the [build plan](plan.md). Rates follow your age: see [Exchange Rates](#exchange-rates).
 
 ### Exchange Rates
 
-Each pair has a **base rate** — the units of the target resource you receive per unit sold at zero market pressure. The rate of a pair depends on what the two resources are in your current age.
+Each pair has a **base rate**: how many units of the resource you get per unit you give, at zero market pressure. The rate of a pair depends on what the two resources are in your current age.
 
-**Construction resources trade at parity.** A *construction resource* of an age is any resource that one of that age's buildings costs (wonders aside), except the flow resources: food, faith, culture and soldiers. Each age has a **price level** per construction resource, the median first-copy price in that resource among the age's buildings. Any two construction resources of your current age trade at the ratio of their price levels, less a **20% fee**:
+**Construction resources trade at parity.** A *construction resource* of an age is any resource that one of that age's buildings costs (wonders aside), except the flow resources: food, faith, culture and soldiers. Each age has a **price level** for each construction resource: the median first-copy price in that resource among the age's buildings. Any two construction resources of your current age trade at the ratio of their price levels, less a **20% fee**:
 
 ```
-base rate (A → B) = price level of B ÷ price level of A × 0.8
+base rate (give A, get B) = price level of B ÷ price level of A × 0.8
 ```
 
-That covers every pair of them, including ones that were never on the list: steel → titanium in the Space Age, data → crypto in the Cyberpunk Age, gold → stone. Price levels change with each age, so these rates do too. The fee means a round trip always loses value (0.8 × 0.8 keeps 64%), so trading never beats building. It is how you get the resources that no building of your age makes: stone after the Bronze Age, iron after the Medieval Age, steel from the Modern Age, titanium, crypto.
+That covers every pair of them, including pairs that were never on the list: steel for titanium in the Space Age, data for crypto in the Cyberpunk Age, gold for stone. Price levels change with each age, so these rates do too. Because of the fee a round trip always loses value (0.8 × 0.8 keeps 64%), so trading never beats building. The exchange is how you get the resources no building of your age makes: stone after the Bronze Age, iron after the Medieval Age, steel from the Modern Age on, titanium, crypto.
 
-Examples from each age (base rates, before pressure):
+Examples from each age (base rates, before pressure; "wood → stone 0.48" means you get 0.48 stone per wood):
 
 | Age | Examples |
 |---|---|
@@ -52,7 +53,7 @@ Examples from each age (base rates, before pressure):
 | Quantum | titanium → quantum\_flux 0.198, quantum\_flux → antimatter 232, dark\_matter → antimatter 0.96 |
 | Transcendent | dark\_matter → antimatter 0.96, antimatter → dark\_matter 0.667 |
 
-The **Trade** overlay (`trade list`) lists every pair open to you in your current age with its live rate.
+The **Trade** panel (`trade list`) lists every pair open to you in your current age with its live rate.
 
 **Listed pairs.** The market also keeps its original list of pairs, unlocked by age:
 
@@ -69,9 +70,9 @@ The **Trade** overlay (`trade list`) lists every pair open to you in your curren
 | Space | dark\_matter→gold |
 | Quantum | quantum\_flux→gold |
 
-Where both sides of a listed pair are construction resources of your current age, it trades at parity like any other pair (gold → wood is 3.43 in the Bronze Age, 0.9 in the Iron Age). Otherwise it keeps its fixed rate: always for pairs involving food, faith or culture, and for pairs involving knowledge, coal, stone and the rest in ages where no building costs them. The fixed rates:
+Where both sides of a listed pair are construction resources of your current age, it trades at parity like any other pair (gold → wood is 3.43 in the Bronze Age, 0.9 in the Iron Age). Otherwise it keeps a fixed rate. That is always the case for pairs with food, faith or culture, and for pairs with knowledge, coal, stone and the rest in ages where no building costs them. The fixed rates:
 
-| From | To | Fixed Rate |
+| You give | You get | Fixed Rate |
 |---|---|---|
 | gold | food | 50 |
 | gold | wood | 40 |
@@ -93,55 +94,51 @@ Where both sides of a listed pair are construction resources of your current age
 
 ### Market Pressure
 
-Every exchange you execute on the same pair increases **supply pressure** on that pair. Pressure reduces the effective rate:
+Every exchange you make on a pair adds **supply pressure** to that pair, and pressure lowers the rate:
 
 ```
 effective rate = base rate × (1 − pressure × 0.30)
 ```
 
-Pressure caps at 1.0 (a 30% rate reduction). There is also a hard floor at 50% of base rate — you can never be squeezed below half the listed rate.
+Pressure tops out at 1.0, so repeated trading can cut a pair's rate by at most 30%.
 
-Pressure **decays 2% per tick**, multiplicatively. Leave a pair alone and it recovers fully on its own. Having more trade buildings helps too: each trade-lineage building you own (market, port, bank, ...) reduces how much pressure a single trade adds (formula: `+0.10 / (1 + trade_building_count × 0.20)`).
+Pressure **decays 2% per tick**, multiplicatively, so a pair you leave alone recovers fully on its own. More trade buildings help too: each trade-lineage building you own (market, port, bank, ...) shrinks the pressure a single trade adds (`+0.10 ÷ (1 + trade buildings × 0.20)`).
 
-**When to exchange:** Use exchanges to convert surplus resources into something you're running short on, or to buy a specific resource you can't produce yet, or that no building of your age produces at all. Don't use the same pair repeatedly in quick succession — you'll hammer the rate. Spread trades across different pairs, or wait a few ticks between repeat swaps on the same pair.
+**When to exchange:** turn a surplus into something you're short on, or buy a resource you can't produce yet or that no building of your age produces. Don't hit the same pair over and over in quick succession, because you'll drive its rate down. Spread trades across different pairs, or wait a few ticks between repeat swaps on one pair.
 
 ---
 
 ## Trade Routes
 
-Trade routes run automatically in the background, consuming a set of **export** resources every N ticks and delivering **import** resources in return. Unlike exchanges, routes don't suffer market pressure — they just need the required buildings and enough exports in stock to fire.
+Trade routes run in the background. Every few ticks a route takes a set of resources from you and gives you others in return. Routes don't suffer market pressure; they only need the required buildings and enough of what they take in stock.
 
 ### Commands
 
 ```
 trade route list
-trade route start <key>
-trade route stop <key>
+trade route start <route>
+trade route stop <route>
 ```
 
-- `trade route list` — shows active routes (with the approximate wall-clock time left on the cycle and the number of cycles completed) and available routes (green checkmark if you have the required building, red X if not).
-- `trade route start <key>` — activates a route. Fails if the required building isn't built or if you haven't reached the route's minimum age.
-- `trade route stop <key>` — deactivates a route immediately, mid-cycle.
+`trade route list` shows your active routes (with the approximate time left on the current cycle and the number of cycles completed) and the routes you could start (a green checkmark if you have the required building, a red X if not). `trade route start <route>` starts a route; it fails if the required building isn't built or you haven't reached the route's age. `trade route stop <route>` stops a route at once, mid-cycle. There's no limit on how many routes can run at once, so run them all.
 
-A route **auto-suspends** if its required building is demolished while it's running — you'll see a log message. Rebuild the building and `trade route start` again to resume it.
+A route **stops itself** if you fall below its required building count while it runs, and the log says so. Rebuild the building and `trade route start` it again.
 
-If a route fires but you don't have enough export resources, it silently skips that cycle (no penalty) and tries again next cycle. Keep your export stockpiles healthy.
+If a cycle comes round and you don't have enough of what the route gives away, that cycle is skipped with no penalty, and the route tries again next cycle. Keep those stockpiles topped up.
 
 ### Trade Disruption (War & Embargo)
 
-Conflict has a price. If you are **at war** with a civilization, or you have placed it under **embargo**, every route whose **imports** include that civ's **specialty resource** is **disrupted**: it earns nothing and consumes nothing while the conflict lasts. The route isn't stopped — its timer keeps running — so it **resumes automatically** the moment peace returns (end the war via tribute or wait it out; lift the embargo with `diplomacy neutral`).
+If you are **at war** with a civilization, or you have put it under **embargo**, every route that brings in that civilization's **specialty resource** is **disrupted**: it takes nothing and gives nothing while the conflict lasts. The route isn't stopped and its timer keeps running, so it **resumes by itself** once the conflict is over (end a war with tribute or by waiting it out; lift an embargo with `diplomacy neutral`).
 
-Disrupted routes are flagged in the Trade overlay with a red ✖ and a "DISRUPTED — shipments blockaded" note naming the affected resource, and a banner at the top of the routes panel lists every blockaded resource. You'll also see a log line each time a disrupted route would have fired.
+On the Trade panel a disrupted route has a red ✖ and a note naming the blockaded resource, and a banner above the routes lists every blockaded resource. The log also notes each cycle a disrupted route misses.
 
-This reuses the existing diplomacy war/embargo state — there's no separate disruption mechanic to track. The practical lesson: before you embargo or provoke the **gold** specialist (Merchant Guild) or the **culture** specialist (Artisan League), check which of your routes import those goods.
+Disruption follows the war and embargo state directly; there's nothing separate to track. Before you embargo or provoke the **gold** specialist (Merchant Guild) or the **culture** specialist (Artisan League), check which of your routes bring in those goods.
 
-There is no cap on how many routes can run simultaneously — stack them all.
-
-The Trade overlay does not list civilizations. The one faction effect it shows is an **Allied Bonuses** block, which appears under the routes while an ally is boosting a resource (see [Allied Bonuses](#allied-bonuses)). The overlay's last line points to the **Factions** panel (`factions`) for standing, opinion and diplomacy actions.
+The Trade panel doesn't list civilizations. The one diplomacy effect it shows is an **Allied Bonuses** block under the routes while an ally is boosting a resource (see [Allied Bonuses](#allied-bonuses)). Its last line points you to the **Factions** panel (`factions`) for opinion and diplomacy actions.
 
 ### Full Trade Routes Reference
 
-| Key | Name | Min Age | Required Building | Export (per cycle) | Import (per cycle) | Cycle (ticks) |
+| Key | Name | Min Age | Required Building | You give (per cycle) | You get (per cycle) | Cycle (ticks) |
 |---|---|---|---|---|---|---|
 | `local_barter` | Local Barter | Bronze | Market ×1 | 10 food | 8 wood | 10 |
 | `stone_trade` | Stone Trade | Iron | Market ×2 | 15 wood | 12 stone | 12 |
@@ -159,19 +156,21 @@ The Trade overlay does not list civilizations. The one faction effect it shows i
 | `oil_pipeline` | Oil Pipeline | Victorian | Oil Derrick ×2 | 100 oil | 300 gold | 15 |
 | `power_exchange` | Power Exchange | Electric | Power Station ×1 | 500 electricity | 200 gold | 10 |
 | `data_trade` | Data Trade | Information | Server Farm ×1 | 100 data | 500 gold | 10 |
-| `crypto_market` | Crypto Market | Cyberpunk | Black Market ×1 | 50 crypto | 1,000 gold | 8 |
-| `fusion_export` | Fusion Export | Fusion | Fusion Reactor ×1 | 200 electricity | 1,000 gold | 12 |
+| `crypto_market` | Crypto Market | Cyberpunk | Black Market ×1 | 50 crypto | 1K gold | 8 |
+| `fusion_export` | Fusion Export | Fusion | Fusion Reactor ×1 | 200 electricity | 1K gold | 12 |
 | `warp_commerce` | Warp Commerce | Space | Warp Drive Plant ×1 | 500 gold | 200 dark matter | 15 |
-| `stellar_exchange` | Stellar Exchange | Galactic | Galactic Trade Hub ×1 | 100 dark matter | 2,000 gold | 20 |
-| `quantum_trade` | Quantum Trade | Quantum | Reality Processor ×1 | 50 quantum flux | 5,000 gold | 10 |
+| `stellar_exchange` | Stellar Freight | Galactic | Galactic Trade Hub ×1 | 100 dark matter | 2K gold | 20 |
+| `quantum_trade` | Quantum Trade | Quantum | Reality Processor ×1 | 50 quantum flux | 5K gold | 10 |
+
+A few routes appear in the list before you can build what they need. Cotton Exchange and Steamship Line need a Seaport (Modern Age), Rail Freight needs a Steam Works (Victorian Age), and Warp Commerce needs a Warp Drive Plant (Interstellar Age).
 
 ---
 
-## Harbour Lineage — Trade-Route Income
+## Harbor lineage: trade-route income
 
-Markets and banks (the **trade** lineage) make gold directly. **Harbours** are different: they make your **trade routes** more profitable. Each built harbour adds a flat percentage bonus to the **imports of every active route**, stacking additively across tiers and instances. They also produce a little gold themselves, so an idle harbour still earns its keep.
+Markets and banks (the **trade** lineage) make gold directly. **Harbors** make your **trade routes** pay more instead. Each harbor building you own adds a flat percentage to what **every active route** gives you, and the bonuses add up across tiers and copies. Harbors also produce a little gold themselves, so an unused harbor still earns something.
 
-The bonus stacks with allied-civ trade bonuses: a route importing a specialty resource you're allied for, run through a fleet of harbours, pays out `base × (1 + harbour_bonus + ally_bonus)`.
+The harbor bonus adds to an ally's bonus: a route bringing in an ally's specialty, with a fleet of harbors, pays `base × (1 + harbor bonus + ally bonus)`.
 
 | Tier | Key | Name | Min Age | Route Income Bonus | Workers |
 |---|---|---|---|---|---|
@@ -181,180 +180,181 @@ The bonus stacks with allied-civ trade bonuses: a route importing a specialty re
 | 3 | `container_terminal` | Container Terminal | Information | +20% | 8 |
 | 4 | `logistics_hub` | Logistics Hub | Digital | +25% | 10 |
 
-Harbours use the **trade** worker domain — the same recruits that staff markets and embassies — so a big harbour fleet competes with your markets for hands. Several Colonial-era routes (`triangular_trade`, `tea_clippers`, `coal_barges`) require harbours rather than ports, giving the colonial→industrial economy something fresh to build toward.
+Harbors use the **trade** worker domain, the same workers who staff markets and embassies, so a big harbor fleet competes with your markets for hands. Three routes (`triangular_trade`, `tea_clippers`, `coal_barges`) need harbors rather than ports.
 
 ---
 
 ## Black Market
 
-Once you reach the **Colonial Age**, smuggling networks open up. The black market is a **high-risk, high-reward culture sink**: you spend a lump of **culture** on a deal that *might* pay out a large haul of a resource of your choice — or vanish with your culture and deliver nothing.
+From the **Colonial Age** you can make smuggling runs on the black market. A run spends a lump of **culture** for a chance at a large haul of a resource you choose. If it fails, the culture is gone and you get nothing.
 
 ```text
-blackmarket              # show cost, odds, and cooldown
-blackmarket <resource>   # run a deal for the chosen resource
-trade black <resource>   # the same thing, via the trade command
+blackmarket              # show cost, odds and cooldown
+blackmarket <resource>   # make a smuggling run for the chosen resource
+trade black <resource>   # the same, through the trade command
 ```
 
-- **Cost:** `max(5,000, 10% of your culture storage cap)` culture per deal, scaling with your progression.
-- **Odds:** a **55% chance** of a payout. On a win you receive the chosen resource worth **2.5×** the culture stake (valued via that resource's gold exchange rate). On a loss the culture is simply gone.
-- **Cooldown:** ~240 ticks (about 8 minutes) between deals, so it can't be spammed.
-- **Always-spent:** the culture is consumed up front, win or lose — that's the gamble.
+A run costs `max(5K, 10% of your culture storage)` culture, so the price grows as you do. It has a **55% chance** to pay out. A win gives you the chosen resource worth **2.5×** the culture you staked, valued at that resource's gold exchange rate. The culture is spent up front, win or lose. After each run there's a cooldown of about 240 ticks (about 8 minutes).
 
-It's a way to convert a culture surplus into a swing of whatever resource you're short on, if you're willing to ride the variance.
+Use it to turn a culture surplus into whatever you're short on, if you can live with the odds.
 
 ---
 
-## Diplomacy — Civilization Encounters
+## Diplomacy: Civilization Encounters
 
-The game world holds an **11-civilization roster**. You meet them by **running expeditions** — an age only makes a civ *eligible*; it's a resolved **scouting expedition or military campaign** that actually turns someone up, with a generous late fallback so even a player who never explores meets everyone eventually. Each civ has an **opinion score** (-100 to +100), a **diplomatic status**, a **personality**, and a **backstory**. Status determines whether you benefit from, are ignored by, or are penalised by that civ; personality drives how its opinion drifts and whether it lends workers or goes to war.
+The game has an **11-civilization roster**. You meet them by **sending missions**: an age only makes a civilization *eligible*, and a resolved **scouting expedition or campaign** is what turns it up. A late fallback means even a player who never explores meets everyone eventually. Each civilization has an **opinion** of you (-100 to +100), a **diplomatic status**, a **personality** and a **backstory**. Status decides whether it helps you, ignores you or works against you. Personality drives how its opinion drifts and whether it lends workers or goes to war.
 
 ### Commands
 
 ```
-factions                        # opens the Factions panel
-diplomacy                       # the same panel, under its older name
-diplomacy ally <civ_key>
-diplomacy rival <civ_key>
-diplomacy embargo <civ_key>
-diplomacy gift <civ_key>
-diplomacy neutral <civ_key>
-diplomacy tribute <civ_key>     # sue for peace with a civ at war
-diplomacy raid <civ_key>        # raid their trade route (provocation — tanks opinion)
-diplomacy deals [civ_key]       # list trade deals (one civ, or every civ you have met)
-diplomacy accept <civ_key> <n>  # take deal n
-plan deal <civ_key> <n>         # take deal n once its price is there
+factions                    # open the Factions panel
+diplomacy                   # the same panel, under its older name
+diplomacy ally <civ>
+diplomacy rival <civ>
+diplomacy embargo <civ>
+diplomacy gift <civ>
+diplomacy neutral <civ>
+diplomacy tribute <civ>     # pay to end a war
+diplomacy raid <civ>        # raid their trade route: -20 opinion, and a provocation
+diplomacy deals [civ]       # list trade deals (one civilization, or every one you have met)
+diplomacy accept <civ> <n>  # take deal n
+plan deal <civ> <n>         # take deal n once you can pay for it
 ```
 
 ### The Factions panel
 
-`factions` opens the **Factions** panel — one screen for everything the other civilizations are doing to you. `diplomacy` and `dip` with no arguments open the same panel under its older name, and `diplomacy <action> <civ_key>` still performs the action directly. It also appears in the sidebar Panels list, in the prompt's completions, and in the in-game `help` panel.
+`factions` opens the **Factions** panel, one screen for everything the other civilizations are doing to you. `diplomacy` and `dip` with no arguments open the same panel, and `diplomacy <action> <civ>` still performs an action directly. The panel is also in the sidebar Panels list, the prompt's completions and the in-game `help` panel.
 
-The panel reads top to bottom:
+From top to bottom it shows:
 
-- **Header** — the title, plus how many civilizations you have met and how many remain undiscovered.
-- **Live Favours & Setbacks** — every timed faction effect currently running. Encounters hand out timed **favours** (marked `✦`) and, when a run goes badly, timed **setbacks** (marked `⚠`). Each line names the civilization that granted it, the effect, its magnitude (`+13% food`, `+8% all prod`, `+9% tick speed`) and the wall-clock time left on it. The section header carries the occupancy of both capacity pools — `boons 2/5 · setbacks 1/3` — because both are hard caps: **five** concurrent favours and **three** concurrent setbacks (see [First Contact & Discovery](#first-contact-amp-discovery) for what happens when you hit them). Workers on loan from another civ are listed here too; they carry no expiry clock, but they are a live effect all the same.
-- **Geographic Society** — the automation block, in one of three states: **nothing built** (a prompt to build one, Industrial Age); **starved** (a dispatch is due but your stores can't outfit the party); or **running** — the number of Societies, worker staffing with its fill percentage, the effective dispatch interval, and a countdown with a progress bar to the next dispatch. See [Automatic dispatch](military.md#automatic-dispatch-the-geographic-society).
-- **Known Factions** — a detail card per civilization you have met: name, personality, specialty and a **strength rating** drawn as 1–5 stars, the backstory snippet, the opinion bar, color-coded status with the active trade bonus, a threshold indicator (e.g. *+8 to friendly*, *ally-eligible — 500g*), war banner, lent workers, a line flagging any live favour or setback that civilization is currently applying — so the card and the section at the top of the panel agree without you cross-referencing them — and its current **trade deals**: one numbered line per offer, worded from your side (`2. Sell: give 225K iron → get 342K gold   +16% vs market`), the price in red while you can't pay it, taken offers dimmed, and when the next set arrives. A civilization that won't trade says why instead (`Deals: none — they are at war with you.`). See [Trade deals](#trade-deals).
-- **Not Yet Met** — a compact roster of the civilizations you have not met yet: one line each with the name, strength, the age you must reach, specialty and personality. It draws six rows at most; any remainder collapses into a `… N more` tail.
+1. The title, how many civilizations you have met and how many are still undiscovered.
+2. **Boons and setbacks**: every timed effect a civilization has on you right now. Encounters hand out timed **boons** (marked `✦`) and, when a run goes badly, timed **setbacks** (marked `⚠`). Each line names the civilization, the effect, its size (`+13% food`, `+8% all prod`, `+9% tick speed`) and the time left. The section header shows how full both pools are (`boons 2/5 · setbacks 1/3`), because both are hard limits: **five** boons and **three** setbacks at once (see [First Contact & Discovery](#first-contact-amp-discovery) for what happens at the limit). Workers on loan from another civilization are listed here too; they have no expiry clock, but they are a live effect all the same.
+3. The **Geographic Society**, in one of three states: nothing built (a prompt to build one, Industrial Age); starved (a party is due but your stores can't outfit it); or running, with the number of Societies, their staffing and fill, the dispatch interval, and a countdown with a progress bar to the next party. See [Automatic dispatch](military.md#automatic-dispatch-the-geographic-society).
+4. A card for each civilization you have met: name, personality, specialty, a **strength rating** of 1-5 stars, a line of backstory, the opinion bar, the status (color-coded) with any active trade bonus, how far it is to the next threshold (e.g. *+8 to friendly*, *ally-eligible: 500g*), a war banner, lent workers, and a line for any boon or setback that civilization is applying right now, so the card agrees with the section at the top. The card also lists the civilization's current **trade deals**, one numbered line per offer, worded from your side (`2. Sell: give 225K iron → get 342K gold   +16% vs market`). A price you can't pay yet shows in red, deals you've taken are dimmed, and the card says when the next set arrives. A civilization that won't trade says why instead (for example, because it is at war with you). See [Trade deals](#trade-deals).
+5. A short list of civilizations you haven't met yet: one line each with the name, strength, the age you must reach, specialty and personality. It shows six at most, and the rest collapse into a `… N more` line.
 
-Every duration on the panel — favour and setback remainders, the Society's interval and countdown — reads as approximate wall-clock time, not ticks. See [Timers and durations](commands.md#timers-and-durations).
+Every duration on the panel (boon and setback time left, the Society's interval and countdown) shows as approximate wall-clock time, not ticks. See [Timers and durations](commands.md#timers-and-durations).
 
 ### Trade deals
 
-Every civilization you have met offers a small, rotating set of **trade deals**. Nothing is hand-written per civilization: a civ's specialty, personality and strength and your standing with it decide what it offers. The Factions panel shows each civ's deals on its card; `diplomacy deals [civ]` lists them, `diplomacy accept <civ> <n>` takes one, and `plan deal <civ> <n>` queues one in the [build plan](plan.md).
+Every civilization you have met offers a small, rotating set of **trade deals**. Nothing is written by hand for each civilization: its specialty, personality and strength, and its opinion of you, decide what it offers. The Factions panel shows each civilization's deals on its card. `diplomacy deals [civ]` lists them, `diplomacy accept <civ> <n>` takes one, and `plan deal <civ> <n>` queues one in the [build plan](plan.md).
 
-**Kinds.** Every deal is worded from your side, the same way on the panel, in `diplomacy deals`, in the plan and in the log: `<kind>: give <price> → get <goods>`, for example `Buy: give 876M coal → get 966K food`.
+Every deal is worded from your side, the same way on the panel, in `diplomacy deals`, in the plan and in the log: `<kind>: give <price> → get <goods>`, for example `Buy: give 876M coal → get 966K food`.
 
 | Kind | You give | You get |
 |---|---|---|
-| **Buy** | one of your construction resources | the civ's specialty, sized by the goods |
-| **Sell** | one of the resources you hold most of (fullest store first), which the civ wants | the civ's specialty, a little better than a Buy |
-| **Favor** | one of the resources you hold most of | **+5 standing** instead of goods |
+| **Buy** | one of your construction resources | the civilization's specialty, sized by the goods |
+| **Sell** | one of the resources you hold most of (fullest store first), which the civilization wants | the civilization's specialty, a little more than a Buy pays |
+| **Goodwill** | one of the resources you hold most of | **+5 opinion** instead of goods |
 | **Rare** | one of your construction resources | a construction resource of the **next** age that this age's market doesn't sell, at a steep price (0.6 of its next-age parity) |
 
-Beside each line the panel says how much better than the market the deal pays (`+15% vs market`), or `not sold at the market` when the market doesn't trade the pair.
+Next to each line the panel shows how much better than the market the deal pays (`+15% vs market`), or `not sold at the market` when the market doesn't trade the pair.
 
-**Rates.** Where the market trades the pair, a deal pays **5% to 25% better than the market** (it trades at 0.84 to 1.0 of parity where the market pays 0.8). Where the market doesn't trade the pair, the rate comes from the two resources' price levels (food and culture are valued by what the age's producers of them return). A deal never pays better than parity, so trading still never beats building. Deals ignore market pressure: each one is a fixed contract.
+Where the market trades the pair, a deal pays **5% to 25% better than the market** (it trades at 0.84 to 1.0 of parity, where the market pays 0.8). Where the market doesn't trade the pair, the rate comes from the two resources' price levels (food and culture are valued by what the age's producers of them make). A deal never pays better than parity, so trading still never beats building. Deals ignore market pressure: each one is a fixed contract.
 
-**Personality.**
+A civilization's personality sets how many deals it offers and which kinds:
 
 | Personality | Deals |
 |---|---|
 | **peaceful** | 2 when neutral, 3 friendly, 4 allied; mostly Buy deals |
 | **mercantile** | one more than peaceful, 2 points better rates, 20% bigger lots, and more Sell deals (it asks for your goods) |
-| **aggressive** | one fewer than peaceful (at least one), 4 points worse rates, and more Favor deals |
+| **aggressive** | one fewer than peaceful (at least one), 4 points worse rates, and more Goodwill deals |
 | **isolationist** | one deal (two when allied): a **Rare** deal when the next age has goods for it to sell, its specialty otherwise |
 
-**Standing.** Friendly (friendly status, or opinion 25+) and allied civilizations offer more deals, at better rates (0.88 of parity neutral, 0.92 friendly, 0.96 allied, plus 0.03 on a Sell) and in bigger lots. A civilization **at war**, under your **embargo**, your **rival**, or with opinion **-50 or lower** offers nothing and refuses its standing offers until that changes. Taking a Buy, Sell or Rare deal adds +1 opinion and counts as a trade; a Favor adds +5. Standing from deals stops at **opinion 50**: deals can bring a civ to the edge of an alliance, never past it, and they can't end a war (no one at war trades with you; tribute or waiting it out still ends it).
+Opinion matters too. Friendly civilizations (friendly status, or opinion 25+) and allies offer more deals, at better rates (0.88 of parity when neutral, 0.92 friendly, 0.96 allied, plus 0.03 on a Sell) and in bigger lots. A civilization **at war** with you, under your **embargo**, your **rival**, or with opinion **-50 or lower** offers nothing and won't honor the offers it already made until that changes. Taking a Buy, Sell or Rare deal adds +1 opinion and counts as a trade; a Goodwill deal adds +5. Deals can raise opinion only up to **50**: they can bring a civilization to the edge of an alliance but not past it, and they can't end a war (no one at war trades with you; tribute or waiting it out still ends it).
 
-**Size.** A deal moves about 1.5 median building prices of the age (×0.9 plus 0.1 per point of the civ's strength, ×1.25 friendly, ×1.5 allied, ×1.2 mercantile, ×2 for a Rare deal, and a roll between ×0.75 and ×1.25), capped so the goods fit in half your store and the price in 80% of it. Amounts are rounded to three figures, never in your favour.
+A deal moves about 1.5 median building prices of the age (×0.9 plus 0.1 per point of the civilization's strength, ×1.25 friendly, ×1.5 allied, ×1.2 mercantile, ×2 for a Rare deal, and a roll between ×0.75 and ×1.25). It's capped so the goods fit in half your storage and the price in 80% of it. Amounts are rounded to three figures, never in your favor.
 
-**Refresh.** Offers rotate after **an hour of play at 1x** (1,800 ticks) and when you advance an age. The timer only runs while the game does: offline catch-up doesn't advance it, so when you come back you find the offers you left, and a deal you planned is still there for the plan to take while you are away. The panel shows the time to the next set.
+Offers rotate after **an hour of play at 1x** (1,800 ticks) and when you advance an age. The timer only runs while the game does: offline catch-up doesn't advance it, so when you come back you find the offers you left, and a deal you planned is still there for the plan to take while you're away. The panel shows the time to the next set.
 
-**Examples** (neutral standing, at each civ's own age):
+Some examples, at neutral opinion and at each civilization's own age:
 
-- *Riverlands Tribes* (peaceful, food), Bronze Age: `Sell: give 2.1K stone → get 3.0K food` (+13% vs market), `Favor: give 727 iron → get +5 standing`.
+- *Riverlands Tribes* (peaceful, food), Bronze Age: `Sell: give 2.1K stone → get 3.0K food` (+13% vs market), `Goodwill: give 727 iron → get +5 opinion`.
 - *Merchant Guild* (mercantile, gold), Colonial Age: `Sell: give 2.2M knowledge → get 23M gold` (+16%), `Buy: give 5.4M wood → get 22M gold` (+12%), and a third.
 - *Ironhold Clans* (aggressive, iron), Medieval Age: one deal, `Sell: give 84.5K knowledge → get 179K iron` (+8%).
 - *Atomic Directorate* (isolationist, steel), Atomic Age: `Rare: give 25.7B electricity → get 3.3B oil`, oil being the Modern Age's goods.
 
 ### Personalities
 
-Every civilization has one of four personalities that shapes its passive opinion drift and its behaviour toward you:
+Every civilization has one of four personalities, which sets how its opinion drifts and how it behaves toward you:
 
-| Personality | Opinion drift | Behaviour |
+| Personality | Opinion drift | Behavior |
 |---|---|---|
-| **peaceful** | trends **up** over time | Lends you workers when standing is high (see Worker Lending) |
-| **aggressive** | trends **down** over time | Provocable into **war** when deeply hostile |
-| **mercantile** | rises when you **trade**, cools when you don't | Trade-focused; reward active trade routes |
+| **peaceful** | trends **up** over time | Lends you workers when its opinion is 40 or more (see Worker Lending) |
+| **aggressive** | trends **down** over time | Can be provoked into **war** when it strongly dislikes you |
+| **mercantile** | rises while any of your trade routes is running, cools when none are | Rewards active trade routes |
 | **isolationist** | trends toward **neutral** (0) | Slow to befriend, slow to anger |
 
-Drift is gradual (±1 on a periodic cadence) and clamped to the -100..+100 range. It runs alongside the existing rival/embargo decay and the natural drift toward zero.
+Drift is gradual (1 point every 25 ticks) and stays within -100 to +100. It runs alongside the rival/embargo drain and the natural drift toward zero.
 
 ### Worker Lending
 
-Peaceful civilizations with healthy opinion (40+) occasionally **lend you workers** via an event — a backstory-flavoured *"+N workers from the &lt;civ&gt;"* message. Lent workers join your pool immediately (they may temporarily exceed your population cap) and stay for a fixed window before returning home. If the lending civ's opinion is **above 80**, the loan is **permanent** — the workers choose to stay. Loans are tracked per-civ and surface in the overlay as *↳ N workers on loan*.
+A peaceful civilization with opinion 40 or more now and then **lends you** 3 to 6 workers, announced in the log. Lent workers join your pool at once (they may take you over your housing for a while) and go home after 200 ticks. If the civilization's opinion is **above 80**, the loan is **permanent**: the workers stay. A civilization lends one batch at a time, and loans show on the Factions panel as *↳ N workers on loan*.
 
 ### War & Peace
 
-A civilization declares **war** only when **both** conditions are met: its opinion is **below -75** *and* a **provocation threshold** is crossed. Provocations are tracked per-civ — **raiding their trade route** (`diplomacy raid`) counts as one, and **embargoing them** counts as one. Two provocations (e.g. a raid + an embargo, or two embargoes) while deeply hostile trips the war. Anger alone never starts a war, and provocations while on good terms don't either.
+A civilization declares **war** only when **both** conditions hold: its opinion is **below -75**, *and* you have provoked it twice. **Raiding its trade route** (`diplomacy raid`) is one provocation and **embargoing it** is another, so a raid plus an embargo, or two embargoes, while it's deeply hostile starts a war. Anger alone never starts a war, and provocations while you're on good terms don't either.
 
-While at war, the civ launches periodic **raid events** that drain resources — severity scales with the civ's **strength** (1-5). War is purely event-driven; there is no tactical combat. Each raid is logged with the loss and a **freshly written account of it** — the raid line varies every time rather than reprinting the civilization's backstory, which now belongs to first contact and the Factions panel only.
+While at war, the civilization **raids** you every 40 ticks and takes 50 × its strength (1-5) of its specialty resource. War is purely a matter of these raids; there's no tactical combat. Each raid is logged with what you lost and a short account of it.
 
-To make **peace**, you have two options:
+There are two ways to make **peace**:
 
-1. **Tribute** — `diplomacy tribute <civ>` pays gold + culture (scaled to the civ's strength) to end the war immediately and restore a wary truce.
-2. **Wait them out** — a war auto-ends after a stretch of provocation-free ticks. Stop poking them and the war burns out on its own.
+1. **Tribute.** `diplomacy tribute <civ>` pays 300 gold and 50 culture per point of the civilization's strength and ends the war at once. Opinion rises by 25, but never above 0.
+2. **Wait it out.** A war ends by itself after 300 ticks without a new provocation. Stop provoking them and it burns out.
 
-The shorthand `dip` works in place of `diplomacy` everywhere.
+`dip` works in place of `diplomacy` everywhere.
 
 ### Opinion and Status
 
 | Status | Meaning |
 |---|---|
-| `neutral` | Default state. No bonuses, no penalties. |
-| `friendly` | Reached automatically when opinion hits 25+. No mechanical effect yet, but you're close to allied. |
-| `allied` | Requires opinion ≥ 50 and costs 500 gold. Grants the faction's trade bonus to your imports. |
-| `rival` | Free to declare. Opinion decays an extra -5 every 50 ticks (on top of natural drift). No trade bonuses. |
-| `embargo` | Free to declare. Same opinion drain as rival. Cuts you off from that faction's trade bonus entirely. |
+| `neutral` | The default. No bonuses, no penalties. |
+| `friendly` | Set when a gift or deal brings opinion to 25 or more. Friendly civilizations offer more deals at better rates, give bigger boons and gentler setbacks. |
+| `allied` | Needs opinion 50+ and costs 500 gold. Adds the civilization's bonus to your whole production of its specialty resource and to route income of it (see [Allied Bonuses](#allied-bonuses)). |
+| `rival` | Free to declare. Opinion drops an extra 5 every 50 ticks. No trade bonus and no deals. |
+| `embargo` | Free to declare. The same opinion drain as rival, no trade bonus, no deals, and it counts as a provocation. Your routes that bring in its specialty are disrupted. |
 
-**Natural opinion drift:** Every 100 ticks, opinion nudges 1 point toward zero. At allied status with positive opinion, this is a slow bleed — keep trading to offset it.
+**Natural drift:** every 100 ticks, opinion moves 1 point toward zero. For an ally this is a slow leak, so keep trading to make up for it.
 
-**Rival/embargo drain:** -5 opinion every 50 ticks. A faction at -100 is stuck there; a faction at +80 with rival declared will fall off allied threshold eventually.
+**Rival/embargo drain:** -5 opinion every 50 ticks. A civilization at -100 stays there. One at +80 that you declare a rival will eventually fall below the ally threshold.
 
 ### Raising Opinion
 
-Three passive paths, one active:
+| Source | Opinion gain | Notes |
+|---|---|---|
+| Trade routes | +1 per completed route cycle | Applies to every civilization you have met that isn't at war with you, all at once. More routes, faster gains. |
+| Embassies | a steady trickle per tick | Spread across your non-hostile civilizations (see Embassy Buildings below). |
+| Gifts | +15 per gift | `diplomacy gift <civ>` costs 200 gold. At 25+ a neutral civilization becomes friendly. |
+| Deals | +1 per Buy, Sell or Rare deal; +5 per Goodwill deal | Only up to opinion 50. |
+| Personality | +1 every 25 ticks | Peaceful civilizations, and mercantile ones while a route is running. |
 
-1. **Trade routes:** Every completed trade route cycle calls `RecordTrade()`, which gives **+1 opinion to every discovered faction** simultaneously. Run more routes and they all climb together — passively.
-2. **Embassies:** Staffed Embassy and Grand Embassy buildings passively generate opinion every tick, spread across your non-hostile factions (see **Embassy Buildings** below).
-3. **Gifting:** `diplomacy gift <faction_key>` costs 200 gold and gives **+15 opinion** to that faction. If opinion hits 25+, status auto-upgrades from neutral to friendly. Stack gifts to push a stubborn faction over 50 and then `diplomacy ally` them.
-4. **Status transitions:** Once a faction is friendly (opinion ≥ 25), you can push to 50+ and spend 500 gold to ally. Going back to neutral is free (`diplomacy neutral`) but doesn't recover the 500 gold.
+Once a civilization is at 50 or more, spend 500 gold to ally with it. Going back to neutral (`diplomacy neutral`) is free but doesn't refund the 500 gold.
 
 ### Embassy Buildings
 
-Two diplomacy buildings turn your workforce into a steady source of opinion. Assign workers to an embassy and, each tick, it raises opinion with every **non-hostile** faction (neutral, friendly, or allied — rivals and embargoed factions get nothing). Output scales with the worker fill ratio using the same `0.20 + 0.80 × fill` curve as production buildings, so a fully-staffed embassy runs at full rate while an empty one still trickles. Opinion is capped at +100 per faction.
+Two diplomacy buildings turn workers into a steady source of opinion. Staff an embassy and, each tick, it raises opinion with every **non-hostile** civilization (neutral, friendly or allied; rivals and embargoed civilizations get nothing). Output follows the same `0.20 + 0.80 × fill` staffing curve as production buildings, so a fully staffed embassy runs at full rate and an empty one still trickles. Opinion tops out at +100.
 
 | Building | Unlocks | Cost | Workers | Opinion Rate |
 |---|---|---|---|---|
 | **Embassy** | Colonial Age | gold + iron | 5 (trade domain) | +0.05 opinion / worker / tick |
 | **Grand Embassy** | Industrial Age | gold + steel | 8 (trade domain) | +0.10 opinion / worker / tick (2× the Embassy) |
 
-Embassies use the **trade** worker domain (the same Colonial Merchant / Industrialist classes that staff markets), so embassy and market workers draw from the same pool — staffing one means fewer hands for the other. Because the per-tick gain is split across all discovered non-hostile factions, embassies are most effective once several factions are in play (Industrial Age onward).
+Embassies use the **trade** worker domain, the same workers who staff markets, so every worker in an embassy is one fewer in a market. The gain each tick is split across all the non-hostile civilizations you have met, so embassies matter most once several are in play (Industrial Age onward).
 
 ### Allied Bonuses
 
-When allied, a faction applies its `TradeBonus` as a multiplier to all trade route imports of its specialty resource:
+An ally multiplies your production of its specialty resource:
 
 ```
-actual import = base import × (1.0 + trade_bonus)
+production rate = normal rate × (1 + ally bonus)
+route income    = base income × (1 + harbor bonus + ally bonus)
 ```
 
-Bonuses from multiple allied factions stack additively if they share a specialty (unlikely, but possible in theory).
+The bonus applies to your whole per-tick rate of that resource (buildings, workers and everything else), and to that resource on every trade route that brings it in. Two allies with the same specialty would add their bonuses together.
 
-The allied trade bonus also surfaces in the **Active Multipliers** panel (Stats overlay) as a `Diplomacy` line on the affected resource's rate, so you can see at a glance which of your production rates an alliance is amplifying. The number shown is the same `1 + trade_bonus` factor described above — the panel and the applied bonus read from the same source, so they can't drift.
+The bonus also shows in the **Active Multipliers** section of the Stats panel as a `Diplomacy` line on the affected resource, so you can see which of your rates an alliance is raising. The figure there is the same `1 + ally bonus` the game applies.
 
-The Trade overlay lists the same bonuses under **Allied Bonuses**, one line per ally (for example *Merchant Guild: +20% gold*). An ally that is at war with you grants nothing and is left off the list.
+The Trade panel lists the same bonuses under **Allied Bonuses**, one line per ally (for example *Merchant Guild: +20% gold*). An ally that is at war with you gives nothing and is left off the list.
 
 | Civilization | Specialty | Allied Bonus |
 |---|---|---|
@@ -372,23 +372,19 @@ The Trade overlay lists the same bonuses under **Allied Bonuses**, one line per 
 
 ### First Contact & Discovery
 
-Discovery follows a **floor + trigger + fallback** model:
+Three rules decide when you meet a civilization. Reaching its first age makes it *eligible*; it doesn't meet you on its own. Sending missions is what finds it: whenever a **scouting expedition** or **campaign** resolves, the game rolls a chance to **encounter** a civilization. An encounter discovers a new eligible civilization (first contact) or, once you know everyone within reach, meets a known one again. Scouting finds civilizations more often than campaigns, and success more often than failure (see [Military & Expeditions](military.md#civilization-encounters) for the odds). Finally, if you never send a mission, each civilization is discovered anyway about **two ages after** its first age, far later than an explorer would meet it.
 
-- **Age is a floor.** Reaching a civilization's minimum age makes it *eligible* to be met — it does **not** discover it on its own.
-- **Expeditions are the trigger.** Whenever a **scouting expedition** or **military campaign** resolves, the game rolls a chance to **encounter** a civilization. An encounter discovers a new eligible civ (first contact) — or, once you already know everyone within reach, re-encounters a known one. So you find new civilizations by *running expeditions*: scouting turns them up more readily than military campaigns, and success beats failure (see [Military & Expeditions](military.md#faction-encounters) for the odds).
-- **Late fallback.** Never run an expedition and you still meet everyone eventually: about **two ages past** a civ's minimum age it is auto-discovered anyway — just far later than an active explorer would have met it.
+On first contact the log introduces the civilization's name, personality and backstory. Until then it appears only in the not-yet-met list on the Factions panel, and you can't deal with it. The founding civilizations (Riverlands Tribes, Ironhold Clans) appear early; the rest turn up across the eras up to the Cosmic Era.
 
-A flavour log message introduces each civ's name, personality, and backstory on first contact. Until a civilization is discovered, it shows in the overlay as a locked teaser (*??? — reach the X Age*) and you cannot interact with it. The founding civs (Riverlands Tribes, Ironhold Clans) appear early; the rest are met across the eras through the Cosmic Era.
+**Encounter boons.** An encounter, whether first contact or a repeat meeting, can also grant a **boon**, rolled from a shared catalog: a timed boost to one resource (often the civilization's **specialty**) or to knowledge, an all-production or tick-speed surge, an instant lump of resources, or a gang of temporary workers. The roll depends on the civilization's character. A peaceful civilization leans toward gentle production and knowledge gifts, an aggressive one toward tick speed and spoils, a mercantile one toward caches of gold, and an isolationist one toward rare large hoards. It also depends on the civilization's **opinion** of you: the higher it is, the bigger the boon, and an **ally** can give you the rare tier that neutral civilizations never offer. Stronger civilizations give bigger gifts. Instant gifts such as a supply caravan or a lost vault also **scale with your age**, so a crate of goods that was a fortune in the Bronze Age is still a fortune in the Quantum Age. The log names the civilization and the reward.
 
-**Encounter boons.** An encounter — first contact *or* a re-encounter of a civ you already know — can also grant a **boon**, and it is no longer a single flat buff. Each encounter now **rolls a varied reward** from a shared catalogue: a timed production or knowledge windfall (including the civ's **specialty resource**), an all-production or tick-speed surge, an instant lump of resources, or a work-gang of temporary hands. The roll is **weighted by the civilization's character** — a peaceful civ leans toward gentle production/knowledge gifts, an aggressive one toward tick-speed and spoils, a mercantile one toward lump-gold caches, an isolationist one toward rare grand hoards — and by **your standing** with them: the friendlier you are, the bigger the boon, and an **allied** civ can hand you the *rare tier* that neutrals never see. Stronger civilizations gift harder. Instant gifts — a supply caravan, a lost vault — additionally **scale with your age**, so a crate of goods that was a fortune in the Bronze Age is a proportionally sized fortune in the Quantum Age rather than a rounding error. A flavour line names the civ and the reward, e.g. *"Ironhold Clans: A lost vault swings open — 900 iron spills into your coffers."*
+**You can hold five boons at once.** Only *timed* rewards take a slot; a gift used on arrival holds nothing, so the limit only ever turns away timed rewards. While all five slots are full, an encounter that rolls a **timed** reward comes back empty (the envoys are thanked and sent home with their crates unopened), but one that rolls an **instant lump of resources or a gang of temporary workers still delivers it**, since those need no slot. A full set of boons costs you buffs, not goods.
 
-**Boons are capped at five.** You can hold **five** faction boons at once. Only *timed* rewards occupy a slot — a gift consumed on arrival holds nothing — and the cap therefore only ever turns away the timed kind. While all five slots are full, an encounter that rolls a **timed** reward comes back empty — the envoys are thanked and sent home with their crates unopened, in a **different turn of phrase each time** — but one that rolls an **instant lump of resources or a work-gang of temporary hands still delivers it** — those need no slot to sit in. A full court costs you buffs, not goods.
+Each timed boon lasts **750-3000 ticks** (about **25 minutes to 1h 40m** at 1x; the panel shows the time left), so slots free up steadily. A busy explorer gets a reward from about four encounters in five, has at least one boon running almost all the time, and has all five slots full only **12-18%** of the time.
 
-Each timed boon runs **750-3000 ticks** (roughly **25 minutes to 1h 40m** at base tick speed — the panel shows the remainder in wall-clock terms), so slots free up steadily on their own: a busy explorer lands a reward on about four encounters in five, has at least one boon running almost all the time, and spends only **12-18%** of it at a completely full court. The cap is there to give the reward loop a shape, not to punish you for exploring.
+**Encounters can go badly.** A **setback** takes the place of a boon whenever the mission **failed**, on about **one in three** meetings with a civilization you are **at war** with, and on about **one in four** timed rewards turned away because all five boon slots are full. A wartime meeting that doesn't turn violent is a **standoff**: the two parties see each other and withdraw, and you come home with nothing but the sighting. A civilization you are fighting never gives you a gift. Setbacks come from their own table: a handful of workers lost on the way home (to fever or bad water), part of one resource stockpile spoiled, stolen or written off, a temporary drop in one resource's output, or a production dip across your civilization while word of the expedition spreads. Setbacks get worse with the civilization's **strength** and milder with its **opinion** of you, so an ally's bad news is gentler than a rival's, and a war with a strong civilization is the worst case. They are limited: at most three timed setbacks run at once (against five boon slots), a setback expires sooner than a boon of the same size, and a spoilage takes part of a store, never all of it.
 
-**Encounters can go badly.** A **setback** rolls in place of a boon whenever the expedition **failed** (every time), on about **one in three** contacts with a civ you are **at war** with, and about **one in four** times a *timed* reward is turned away at full boon capacity. A war contact that doesn't turn violent is a **standoff** — the two parties see each other and withdraw, and you come home with nothing but the sighting. There is never a gift from a civ you are fighting, whichever way the roll goes. Setbacks come off their own table: people lost on the way home (a handful of workers gone to fever or bad water), a share of one resource stockpile spoiled, stolen, or written off, a temporary slump in one resource's output, or a realm-wide production dip while the story of the expedition spreads. Severity scales **up** with the civilization's **strength** and **down** with your **standing** — an ally's bad news is gentler than a rival's, and a war with a strong civ is the worst of it. The damage is bounded: at most three timed setbacks run at a time (against five boon slots), a setback expires sooner than a boon of comparable size, and a spoilage takes part of a store, never the whole thing.
-
-Encounters are one more reason to keep expeditions running even after you've met everyone — with the caveat that a failed run brings back a bill, and a run launched with all five boon slots full brings back goods rather than buffs. See [Military & Expeditions](military.md#faction-encounters).
+Encounters are one more reason to keep missions running after you've met everyone, with the catch that a failed run brings back a bill and a run that resolves with all five boon slots full brings back goods rather than buffs. See [Military & Expeditions](military.md#civilization-encounters).
 
 ---
 
@@ -396,69 +392,62 @@ Encounters are one more reason to keep expeditions running even after you've met
 
 | Key | Name | Eligible From | Personality | Strength | Specialty | Allied Bonus |
 |---|---|---|---|---|---|---|
-| `riverlands_tribes` | Riverlands Tribes | Bronze Age | peaceful | 1 | food | +15% food imports |
-| `ironhold_clans` | Ironhold Clans | Medieval Age | aggressive | 3 | iron | +20% iron imports |
-| `merchant_guild` | Merchant Guild | Colonial Age | mercantile | 2 | gold | +20% gold imports |
-| `artisan_league` | Artisan League | Industrial Age | peaceful | 1 | culture | +15% culture imports |
-| `atomic_directorate` | Atomic Directorate | Atomic Age | isolationist | 4 | steel | +20% steel imports |
-| `tech_consortium` | Tech Consortium | Information Age | mercantile | 2 | data | +20% data imports |
-| `shadow_syndicate` | Shadow Syndicate | Cyberpunk Age | aggressive | 3 | crypto | +25% crypto imports |
-| `plasma_nomads` | Plasma Nomads | Fusion Age | peaceful | 2 | plasma | +22% plasma imports |
-| `stellar_federation` | Stellar Federation | Space Age | isolationist | 4 | dark\_matter | +20% dark matter imports |
-| `void_reavers` | Void Reavers | Galactic Age | aggressive | 5 | antimatter | +28% antimatter imports |
-| `quantum_collective` | Quantum Collective | Quantum Age | isolationist | 5 | quantum\_flux | +30% quantum flux imports |
+| `riverlands_tribes` | Riverlands Tribes | Bronze Age | peaceful | 1 | food | +15% food |
+| `ironhold_clans` | Ironhold Clans | Medieval Age | aggressive | 3 | iron | +20% iron |
+| `merchant_guild` | Merchant Guild | Colonial Age | mercantile | 2 | gold | +20% gold |
+| `artisan_league` | Artisan League | Industrial Age | peaceful | 1 | culture | +15% culture |
+| `atomic_directorate` | Atomic Directorate | Atomic Age | isolationist | 4 | steel | +20% steel |
+| `tech_consortium` | Tech Consortium | Information Age | mercantile | 2 | data | +20% data |
+| `shadow_syndicate` | Shadow Syndicate | Cyberpunk Age | aggressive | 3 | crypto | +25% crypto |
+| `plasma_nomads` | Plasma Nomads | Fusion Age | peaceful | 2 | plasma | +22% plasma |
+| `stellar_federation` | Stellar Federation | Space Age | isolationist | 4 | dark\_matter | +20% dark matter |
+| `void_reavers` | Void Reavers | Galactic Age | aggressive | 5 | antimatter | +28% antimatter |
+| `quantum_collective` | Quantum Collective | Quantum Age | isolationist | 5 | quantum\_flux | +30% quantum flux |
 
-**Notable behaviours:**
-
-- **Riverlands Tribes / Plasma Nomads / Artisan League** (peaceful) are your worker-lending civs — keep their opinion high (80+ for permanent loans).
-- **Ironhold Clans / Shadow Syndicate / Void Reavers** (aggressive) drift hostile and will declare war if you provoke them while deeply disliked. The Void Reavers (strength 5) raid hardest.
-- **Atomic Directorate / Stellar Federation / Quantum Collective** (isolationist) sit near neutral — hard to befriend, hard to anger.
-- **Merchant Guild / Tech Consortium** (mercantile) warm up the more trade routes you run.
+The peaceful civilizations (Riverlands Tribes, Plasma Nomads, Artisan League) are the ones that lend workers; keep their opinion above 80 for permanent loans. The aggressive ones (Ironhold Clans, Shadow Syndicate, Void Reavers) drift hostile and will declare war if you provoke them while they dislike you; the Void Reavers (strength 5) raid hardest. The isolationists (Atomic Directorate, Stellar Federation, Quantum Collective) stay near neutral, hard to befriend and hard to anger. The mercantile ones (Merchant Guild, Tech Consortium) warm up while you keep trade routes running.
 
 ---
 
 ## Strategy
 
-### Trade Routes: Priority Order
+### Trade routes: priority order
 
-**Early (Bronze–Medieval):** Start `local_barter` the moment you build a market — it runs indefinitely and costs almost nothing. Add `stone_trade` and `gold_caravan` as soon as you have Markets ×2 and ×3. The `silk_road` in Medieval is the best culture-per-tick route for most of that era; prioritise it over raw gold unless you're flush.
+**Early (Bronze to Medieval):** start `local_barter` as soon as you build a market; it runs indefinitely and costs almost nothing. Add `stone_trade` and `gold_caravan` once you have 2 and 3 markets. `silk_road` in the Medieval Age is the best culture-per-tick route for most of that era; put it ahead of raw gold unless you have plenty.
 
-**Mid-game (Colonial–Industrial):** `spice_trade` and `colonial_exports` both require a port, so build one early in Colonial. They pull in opposite directions — spice trade gives food and culture, colonial exports flip food into gold. Run both simultaneously once you have Port ×2. `rail_freight` in Industrial pays well but eats iron; only start it if you have iron to spare.
+**Mid-game (Colonial to Industrial):** `spice_trade` and `colonial_exports` both need a port, so build one early in the Colonial Age. They pull in opposite directions: spice trade gives you food and culture for gold, and colonial exports turn food into gold. Run both once you have 2 ports. `rail_freight` pays well but eats iron, so only start it if you have iron to spare.
 
-**Late-game (Electric onward):** Every subsequent route has dramatically increasing gold yields. Stack all of them as fast as you can build the required infrastructure. `crypto_market` has the shortest cycle (8 ticks) and pays 1,000 gold — it's the most gold-efficient route until `quantum_trade` comes online.
+**Late-game (Electric onward):** each later route pays much more gold. Run all of them as fast as you can build what they need. `crypto_market` has the shortest cycle (8 ticks) and pays 1K gold, the best gold per tick until `quantum_trade` comes online.
 
-### Diplomacy: When to Ally vs Stay Neutral
+### Diplomacy: when to ally
 
-Ally when you can afford the 500 gold and you're actively running the faction's specialty route. The math is simple: if `Crypto Market` is generating 1,000 gold per 8 ticks, a 25% bonus from Shadow Syndicate is an extra 250 gold per cycle — the 500 gold cost pays back in two cycles.
+Ally when you can afford the 500 gold and you depend on the civilization's specialty. For example, with `crypto_market` bringing in 1K gold every 8 ticks, allying with the Merchant Guild (+20% gold) adds 200 gold to every cycle, so the 500 gold pays for itself in three cycles. The same 20% also applies to all the rest of your gold production.
 
-Don't bother rushing allies before you have the relevant route running. Opinion will climb on its own from trade route cycles; save your gold for construction or research until the route is active.
+There's little point rushing an alliance before you produce or import that resource. Opinion climbs on its own from route cycles, so spend your gold on construction or research until then.
 
-**Gift usage:** Gifts (200 gold, +15 opinion) are most valuable when you're stuck just below the 50-threshold needed to ally. Three gifts push a faction from 0 to 45 — one more trade cycle tips them over. Don't gift factions you haven't discovered or factions you're embargoing.
+**Gifts** (200 gold, +15 opinion) are most useful when a civilization is just short of the 50 needed to ally. Starting from 0, three gifts bring it to 45; one Goodwill deal (+5) or five route cycles take it to 50. Four gifts (800 gold) take it straight to 60. You can only gift civilizations you have met.
 
-### Market Pressure Management
+### Market pressure
 
-- Never spam the same exchange pair back-to-back. Use `trade list` to check the pressure indicator before repeat trades — a `↓` marker with percentage means you're paying the penalty.
-- If you need large amounts of one resource, spread exchanges across different source resources (e.g., convert iron to gold, then wood to gold separately, rather than repeatedly selling iron).
-- Building more trade-lineage buildings directly reduces how fast pressure builds per trade. By the Colonial Age, five or so trade buildings (ports, exchanges, banks, ...) make pressure largely a non-issue for occasional exchanges.
+- Don't use the same pair back to back. Check `trade list` before a repeat trade: a `↓` marker with a percentage means you're paying the penalty.
+- If you need a lot of one resource, give different resources for it (for example, iron for gold, then wood for gold) rather than selling iron over and over.
+- Every trade-lineage building reduces how fast pressure builds. By the Colonial Age, five or so trade buildings (ports, exchanges, banks, ...) make pressure a minor issue for occasional exchanges.
 
-### Diplomacy + Trade Synergy
+### Routes and diplomacy together
 
-Every completed trade route cycle raises opinion with all discovered factions by 1. Running five active routes means every faction gains 5 opinion per cycle collectively. This compounds: more routes → faster opinion gain → earlier alliance → bigger import bonuses → faster resource accumulation → more builds → more routes.
+Every completed route cycle raises opinion with every civilization you have met by 1, so five running routes add 5 opinion per round of cycles. More routes bring earlier alliances, alliances raise both production and route income of the ally's specialty, and the extra income pays for more routes. Plan routes and diplomacy together.
 
-The loop is self-reinforcing. Don't think of routes and diplomacy as separate systems — they're one flywheel.
+### End-game
 
-### End-game State
-
-With all 21 routes active and your discovered civilizations allied, gold income from routes alone becomes enormous. Resource exchange stays useful even then: it is the way to get construction resources your age has no producer for (titanium, crypto, steel from the Modern Age on), and to rebalance between the ones you do make.
+With all 21 routes running and your civilizations allied, gold from routes alone is enormous. Resource exchange stays useful even then: it's how you get construction resources your age has no producer for (titanium, crypto, steel from the Modern Age on), and how you rebalance between the ones you do make.
 
 ---
 
 ## Tips & Common Mistakes
 
-- **The building must exist.** `trade route start <key>` will reject with a clear error if you don't have the required building at the required count. Check `trade route list` — routes with a red ✗ are waiting on buildings.
-- **Market pressure decays naturally.** Don't panic if you see a rate penalty. Wait a few ticks and the pressure drops. No action required.
-- **Embargo is not a punishment, it's a lockout — for you.** Declaring embargo prevents the faction's trade bonus from applying. There's almost no reason to ever embargo a faction; declaring rival is equally (and pointlessly) hostile but at least you could theoretically benefit from a mechanic around it later. Just leave factions at neutral if you don't want to invest in them.
-- **Routes skip, not fail, when you're broke.** If your export stockpile is empty when a cycle fires, the cycle is silently skipped. Your route stays active. Top up exports and it resumes next cycle automatically.
-- **Allied status costs 500 gold every time.** If you reset to neutral and want to re-ally, you pay 500 gold again. Opinion carries over — you don't lose it when going neutral — so you just need the gold.
-- **Gift stacking is fast.** Six gifts (1,200 gold) takes a faction from 0 opinion to 90 opinion (+15 × 6), well past the 50 threshold. If you need a faction allied fast and have the gold, this is the quickest path.
-- **Quantum Collective is worth prioritising.** The +30% quantum flux bonus is the largest single faction bonus in the game. Gift them to 50 opinion immediately when discovered and ally as soon as you can afford it — quantum flux is the gating resource for several late wonders.
+- A route needs its building. `trade route start <route>` refuses with an error if you don't have the required building at the required count. In `trade route list`, routes with a red ✗ are waiting on buildings.
+- Market pressure fades by itself. If a rate looks low, wait a few ticks and it recovers.
+- An embargo mostly hurts you. It cancels that civilization's ally bonus, stops its deals, disrupts your routes that bring in its specialty and counts as a provocation. If you don't want to invest in a civilization, leave it neutral.
+- Routes skip a cycle, they don't fail, when you run short. If you don't have what a route gives away when its cycle comes round, that cycle is skipped and the route stays active. Top up the stockpile and it carries on next cycle.
+- An alliance costs 500 gold each time. If you drop to neutral and want to ally again, you pay 500 gold again. Opinion stays when you go neutral, so the gold is all you need.
+- Gifts add up fast. Six gifts (1.2K gold) take a civilization from 0 to 90 opinion, well past 50. If you need an ally quickly and have the gold, this is the fastest way.
+- The Quantum Collective's +30% quantum flux is the largest ally bonus in the game. Gift it to 50 opinion as soon as you meet it and ally when you can afford to.

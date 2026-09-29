@@ -24,11 +24,11 @@ This means:
 The Map tab and minimap both account for this:
 
 ```go
-// tab_map.go — full-screen map tab
+// tab_map.go: full-screen map tab
 pixW := w       // terminal columns = image pixel width
 pixH := ht * 2  // terminal rows × 2 = image pixel height
 
-// minimap.go — dashboard widget (upscaled 2x for more detail)
+// minimap.go: dashboard widget (upscaled 2x for more detail)
 pixW := w * 2
 pixH := ht * 4
 ```
@@ -39,8 +39,8 @@ pixH := ht * 4
 full-screen map and the minimap. The `DetailLevel` field in `MapGenConfig` controls which
 rendering path is used:
 
-- `DetailLevel: 1` — full map (called by `MapTab.Refresh`)
-- `DetailLevel: 0` — minimap (called by `MiniMap.UpdateState`)
+- `DetailLevel: 1`: full map (called by `MapTab.Refresh`)
+- `DetailLevel: 0`: minimap (called by `MiniMap.UpdateState`)
 
 There is no separate `GenerateMinimapImage` function. Both callers use `GenerateMapImage`
 with different `DetailLevel` values and different pixel dimensions.
@@ -80,7 +80,7 @@ Each stage paints over what came before, so later stages sit visually on top.
 | 5 | `collectBuildingPlacements` | Determines (x, y) positions for all buildings using the era layout algorithm; returns a sorted `[]bldInfo` |
 | 6 | `drawSurroundings` | Per-building context rings: farmland (early eras), soot ground (industrial), parking lots (modern) |
 | 7 | `drawInfrastructure` | Roads, railways, highways, or neon trails connecting each building to the city center |
-| 8 | `drawBuildings` | Pixel-art sprites for every building, centred on its placement position; wonders also get a glow corona |
+| 8 | `drawBuildings` | Pixel-art sprites for every building, centered on its placement position; wonders also get a glow corona |
 | 9 | `drawDecorations` | Era-specific overlays: smokestacks (industrial), power lines (modern/digital), holographic billboards (cyberpunk) |
 
 The placement sort in stage 5 orders buildings furthest-from-center first so that buildings
@@ -144,9 +144,9 @@ case 9: // hypothetical post-cosmic era
 
 Terrain variation uses two noise calls:
 
-- `noise2D(x, y, seed)` — fine-grain noise (full pixel resolution), blended 60/40 from two
+- `noise2D(x, y, seed)`: fine-grain noise (full pixel resolution), blended 60/40 from two
   FNV-64a hashes; drives ground color variation and tree placement threshold.
-- `noise2D(x/4, y/4, seed+200)` — coarse noise (1/4 resolution) drives hill elevation.
+- `noise2D(x/4, y/4, seed+200)`: coarse noise (1/4 resolution) drives hill elevation.
 
 Both functions are deterministic given the same `AgeKey`-derived seed.
 
@@ -238,10 +238,10 @@ if mapCount < 1 { mapCount = 1 }
 
 | Real buildings built | Map icons shown |
 |----------------------|-----------------|
-| 1–5 | 1 |
-| 6–10 | 2 |
-| 11–15 | 3 |
-| 16–20 | 4 |
+| 1-5 | 1 |
+| 6-10 | 2 |
+| 11-15 | 3 |
+| 16-20 | 4 |
 | … | … |
 
 This applies to both regular buildings and wonders. The throttle uses `BuildingState.Count`
@@ -260,12 +260,12 @@ type plotGrid struct {
 
 - `cellSize` sets the grid granularity in pixels. Larger values create more spacing between
   buildings because each building claim covers more cells.
-- `isFree(px, py, w, h int) bool` checks a 2-cell padding around the bounding box — the
+- `isFree(px, py, w, h int) bool` checks a 2-cell padding around the bounding box, so the
   effective exclusion zone is the building footprint plus `cellSize*2` pixels on each side.
 - `claim(px, py, w, h int)` marks the cells covered by a building as occupied.
 
 To increase building spacing, raise `cellSize` in the layout function's `newPlotGrid` call.
-To decrease spacing (pack buildings tighter), lower it. Typical values are 8–14.
+To decrease spacing (pack buildings tighter), lower it. Typical values are 8 to 14.
 
 ```go
 // Typical call pattern in every layout function:
@@ -293,7 +293,7 @@ Key parameters: `maxR = int(float64(min(w, h)) * 0.30)`, anchor jitter `rng.Intn
 `cellSize: 10`, `maxR: 26% of min(w,h)`, 6 radial spokes.
 
 Six road spokes radiate from the city center. Buildings are assigned to spokes round-robin
-and placed at a random distance along the spoke with a small perpendicular offset (3–10 px).
+and placed at a random distance along the spoke with a small perpendicular offset (3 to 10 px).
 This creates a hub-and-spoke settlement pattern typical of ancient market towns.
 
 Key parameters: `numSpokes = 6`, spoke color is a blend of `pal.Road` and `pal.Ground`,
@@ -417,15 +417,15 @@ const (
 )
 ```
 
-### getBuildingSprite — sprite selection logic
+### getBuildingSprite: sprite selection logic
 
 `getBuildingSprite(domain, buildingKey, eraName string) spriteType` applies rules in order:
 
-1. **Per-building-key overrides** are checked first — a large `switch buildingKey` block at
+1. **Per-building-key overrides** are checked first: a large `switch buildingKey` block at
    the top of the function maps individual building keys directly to sprite types. These take
-   priority over all domain and era logic. This covers the majority of the 284 buildings with
+   priority over all domain and era logic. This covers most buildings with
    distinct, thematically appropriate sprites.
-2. Wonder keys are checked next by building key — any wonder always returns `spriteWonder`.
+2. Wonder keys are checked next by building key; any wonder always returns `spriteWonder`.
 3. Three era-group booleans are set: `isEarlyEra` (primitive through classical),
    `isLateEra` (space, galactic, nano), `isDigitalEra` (digital, nano).
 4. A switch on `domain` maps each worker domain to a sprite, with era overrides.
@@ -448,7 +448,7 @@ const (
 // "astronaut"        → spriteSpaceStation
 ```
 
-### drawBuildingSprite — scale behavior
+### drawBuildingSprite: scale behavior
 
 `drawBuildingSprite(img, imgW, imgH, px, py, stype, primary, accent, scale)` renders the
 pixel-art pattern from `spriteRows`:
@@ -480,7 +480,7 @@ if dl > 0 {
 
 Three changes are required:
 
-**Step 1 — Add a constant to the `spriteType` block:**
+**Step 1: Add a constant to the `spriteType` block.**
 
 Add the new constant after `spriteCrystalSpire` (the last existing constant) and before
 the closing `)`:
@@ -494,9 +494,9 @@ const (
 )
 ```
 
-**Step 2 — Add a case in `getBuildingSprite`:**
+**Step 2: Add a case in `getBuildingSprite`.**
 
-For a per-building-key override (preferred — takes priority over domain logic):
+For a per-building-key override (preferred, since it takes priority over domain logic):
 
 ```go
 // At the top of the per-building-key switch block:
@@ -514,7 +514,7 @@ case "lumber":
     return spriteLumberCamp
 ```
 
-**Step 3 — Add a pixel pattern in `spriteRows`:**
+**Step 3: Add a pixel pattern in `spriteRows`.**
 
 ```go
 case spriteMyNewSprite:
@@ -534,7 +534,7 @@ case spriteMyNewSprite:
 |-----------|---------|
 | `P` | Primary color (main building material) |
 | `A` or `I` | Accent color (roof, trim, detail, glow) |
-| `.` | Transparent — pixel is not drawn |
+| `.` | Transparent (pixel is not drawn) |
 
 Each row is a string of characters. All rows should be the same width, or the widest row
 determines the sprite width. The sprite is centered on the placement point.
@@ -598,10 +598,10 @@ and `Accent` color.RGBA values using the `c(r, g, b)` helper:
 ## 8. Adding a New Building to the Map
 
 When you add a building in `config/buildings_lineage_*.go`, the map will render it
-immediately using the category fallback in `getBuildingVisual` — no required changes.
+immediately using the category fallback in `getBuildingVisual`, with no required changes.
 However, for distinct colors and a fitting sprite, do the following:
 
-### Step 1 — Add a BuildingVisual entry
+### Step 1: Add a BuildingVisual entry
 
 In `mapgen.go`, inside the `buildingVisuals` map, add an entry for your building key:
 
@@ -614,9 +614,9 @@ In `mapgen.go`, inside the `buildingVisuals` map, add an entry for your building
 The shape is cosmetically unused in the current rendering path but documents intent and
 ensures forward compatibility if the shape-based path is ever wired in.
 
-### Step 2 — Optionally add a getBuildingSprite case
+### Step 2: Optionally add a getBuildingSprite case
 
-If the building's domain is already handled by `getBuildingSprite`, no change is needed —
+If the building's domain is already handled by `getBuildingSprite`, no change is needed:
 it will inherit the domain's sprite. If you want a specific sprite (e.g. the building is a
 new domain or a key-level override), add a case to the `buildingKey` fallback switch:
 
@@ -627,7 +627,7 @@ case "tidal_generator":
 
 Or add a new `spriteType` constant and pattern following the three-step process in Section 6.
 
-### Step 3 — No other changes needed
+### Step 3: No other changes needed
 
 `collectBuildingPlacements` iterates `cfg.Buildings` and skips entries where
 `bs.Unlocked == false || bs.Count == 0`. As soon as a building is built in game,
@@ -674,7 +674,7 @@ The full map tab uses `pixW = w` and `pixH = ht * 2`.
 
 ---
 
-## 10. Quick Reference — Common Tweaks
+## 10. Quick Reference: Common Tweaks
 
 | Goal | What to change |
 |------|----------------|

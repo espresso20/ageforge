@@ -50,12 +50,12 @@ Example session:
 └────────────────────────────────────────────────────────────────┘
 
 What kind of change?
-  1  feat      — new feature or content          → ### Added
-  2  fix       — bug fix                         → ### Fixed
-  3  balance   — tuning costs, rates, numbers    → ### Balance
-  4  refactor  — cleanup, no behavior change     → ### Changed
-  5  chore     — build/tooling/deps              (skipped in notes)
-  6  docs      — docs/comments only              (skipped in notes)
+  1  feat      - new feature or content          → ### Added
+  2  fix       - bug fix                         → ### Fixed
+  3  balance   - tuning costs, rates, numbers    → ### Balance
+  4  refactor  - cleanup, no behavior change     → ### Changed
+  5  chore     - build/tooling/deps              (skipped in notes)
+  6  docs      - docs/comments only              (skipped in notes)
 
   Choice [1-6, default 1]: 2
 
@@ -82,8 +82,8 @@ What kind of change?
 | Type | Use for | Shows up in release notes as |
 |---|---|---|
 | `feat` | New game content, new commands, new UI features | `### Added` |
-| `fix` | Bug fixes — wrong behavior, crashes, display errors | `### Fixed` |
-| `balance` | Tuning numbers — costs, rates, durations, caps | `### Balance` |
+| `fix` | Bug fixes: wrong behavior, crashes, display errors | `### Fixed` |
+| `balance` | Tuning numbers: costs, rates, durations, caps | `### Balance` |
 | `refactor` | Code cleanup with no behavior change | `### Changed` |
 | `chore` | Build scripts, CI, tooling, deps | *(skipped)* |
 | `docs` | README, comments, wiki pages only | *(skipped)* |
@@ -97,12 +97,12 @@ What kind of change?
 
 ### Examples
 
-**Good — focused fix:**
+**Good: focused fix**
 ```
 fix: knowledge rate was displaying +0.0 for values below 0.1
 ```
 
-**Good — balance change with details:**
+**Good: balance change with details**
 ```
 balance: rebalance primitive age pacing
 
@@ -111,17 +111,17 @@ balance: rebalance primitive age pacing
 - stash max count raised from 10 to 50
 ```
 
-**Good — new feature:**
+**Good: new feature**
 ```
-feat: manual age advancement — type 'advance' when ready
+feat: manual age advancement, type 'advance' when ready
 ```
 
-**Bad — too vague:**
+**Bad: too vague**
 ```
 fix: stuff
 ```
 
-**Bad — too long for a subject line, no detail separation:**
+**Bad: too long for a subject line, no detail separation**
 ```
 balance: stash now has max count of 50, all buildings in primitive take longer to build, altar production raised from .004 to .008 knowledge
 ```
@@ -139,9 +139,9 @@ make release-major   # v2.4.5 → v3.0.0  (breaking changes, save format changes
 ```
 
 **When to use which:**
-- `patch` — fixes, balance changes, small improvements. No new gameplay systems.
-- `minor` — new commands, new ages/buildings/techs/mechanics. Backwards-compatible saves.
-- `major` — save format changes, full system rewrites, anything that could break existing saves.
+- `patch`: fixes, balance changes, small improvements. No new gameplay systems.
+- `minor`: new commands, new ages/buildings/techs/mechanics. Backwards-compatible saves.
+- `major`: save format changes, full system rewrites, anything that could break existing saves.
 
 **What the script does** (`scripts/release.sh`):
 1. Validates you're on `master` with a clean working tree
@@ -175,15 +175,15 @@ make release-patch
 
 ### What happens when a build fails
 
-All commits since the **last successful tag** accumulate and get picked up by the next release — the script runs `git log <last-tag>..HEAD` to scrape commit messages. This is sometimes called a **release train**: commits queue up and ship together on the next run that succeeds.
+All commits since the **last successful tag** accumulate and get picked up by the next release: the script runs `git log <last-tag>..HEAD` to scrape commit messages. This is sometimes called a **release train**: commits queue up and ship together on the next run that succeeds.
 
 **If the Actions build fails after the tag was already pushed**, you have two options:
 
-**Option 1 — Re-run the workflow (preferred for infra failures)**
+**Option 1: Re-run the workflow (preferred for infra failures)**
 
-Go to the [Actions tab](https://github.com/espresso20/ageforge/actions), find the failed run, and click **Re-run jobs**. The tag already exists so GitHub re-triggers the same job on the same tag. No new commit or tag needed. Use this when the failure was environmental — a flaky dependency download, a runner hiccup, a typo in a config file that you've since fixed and pushed.
+Go to the [Actions tab](https://github.com/espresso20/ageforge/actions), find the failed run, and click **Re-run jobs**. The tag already exists so GitHub re-triggers the same job on the same tag. No new commit or tag needed. Use this when the failure was environmental: a flaky dependency download, a runner hiccup, a typo in a config file that you've since fixed and pushed.
 
-**Option 2 — Delete the tag and re-release (for code bugs caught post-tag)**
+**Option 2: Delete the tag and re-release (for code bugs caught post-tag)**
 
 Use this if you caught a real bug in the code after tagging but before anyone downloaded it.
 
@@ -214,7 +214,7 @@ The test suite covers all game systems with **86 tests** across 11 files:
 
 | File | Tests | What it covers |
 |------|-------|----------------|
-| `config/validate_test.go` | 12 | Cross-validates all config keys — no bad references, no duplicates, all content reachable |
+| `config/validate_test.go` | 12 | Cross-validates all config keys: no bad references, no duplicates, all content reachable |
 | `game/resources_test.go` | 7 | Add, storage cap, remove, pay/afford, rates, unlock, save/load |
 | `game/buildings_test.go` | 5 | Unlock, cost scaling, pop capacity, get all, load counts |
 | `game/villagers_test.go` | 9 | Recruit, cap limits, assign/unassign, food drain, production, soldiers, save/load |
@@ -226,7 +226,7 @@ The test suite covers all game systems with **86 tests** across 11 files:
 | `game/events_test.go` | 3 | Inject event, expiration, save/load |
 | `game/engine_test.go` | 19 | Full integration: init, gather, build, recruit, assign, research, speed, reset, milestones, save/load |
 
-The **config validation tests** are the primary safety net. They cross-reference every string key in every config file against the canonical key lists — a typo like `"foods"` or `"woodcutter_camps"` anywhere will fail the test.
+The **config validation tests** are the primary safety net. They cross-reference every string key in every config file against the canonical key lists. A typo like `"foods"` or `"woodcutter_camps"` anywhere will fail the test.
 
 ```bash
 make test                                              # full suite, formatted
@@ -311,8 +311,8 @@ The PR fast tier, the nightly and the weekly deep tier can each email the summar
 To keep the nightly emails but stop the per-PR ones, add a repository variable `SMOKE_EMAIL_PR` set to `false`.
 
 **Common test patterns:**
-- Tests create isolated managers — no shared state between tests
-- Resource tests must respect `BaseStorage` caps — use `AddStorage()` before `Add()` for large amounts
+- Tests create isolated managers, with no shared state between tests
+- Resource tests must respect `BaseStorage` caps: use `AddStorage()` before `Add()` for large amounts
 - Milestone tests use `NewProgressManager().GetAgeOrder()` for the full age map
 - Engine tests access internals via `ge.mu.Lock()` for setup, then public API for assertions
 - Save/load tests defer `os.Remove(...)` for cleanup and verify full round-trip
@@ -322,20 +322,20 @@ To keep the nightly emails but stop the per-PR ones, add a repository variable `
 ## Project Structure
 
 ```
-config/         Data definitions — ages, buildings, techs, resources, milestones,
+config/         Data definitions: ages, buildings, techs, resources, milestones,
                 events, trade, diplomacy, prestige. Pure data, no logic.
 game/           Engine, managers, tick loop. No UI imports.
 detmath/        Log, Exp, Pow with the same bits on every architecture (see Float rules).
 ui/             tview TUI. Reads GameState snapshots. Never writes to engine.
-scripts/        release.sh, commit.sh, determinism.sh — dev tooling
-main.go         Entry point — wires engine + UI.
+scripts/        release.sh, commit.sh, determinism.sh (dev tooling)
+main.go         Entry point; wires engine + UI.
 ```
 
 ---
 
 ## Key Patterns
 
-- **Config-Driven Content**: All game content is data in `config/`. Add buildings, techs, ages, events there — not in logic files.
+- **Config-Driven Content**: All game content is data in `config/`. Add buildings, techs, ages, events there, not in logic files.
 - **Manager Pattern**: Each system has its own manager with a clean API. No cross-manager direct calls.
 - **GameState Snapshot**: `engine.GetState()` returns a read-only snapshot. The UI refreshes from snapshots every 500ms and never touches engine internals.
 - **Event Bus**: Systems communicate via `game.EventBus` (pub/sub, synchronous under write lock). Subscribe in `ui/dashboard.go` for toasts, in managers for cross-system reactions.
@@ -362,9 +362,9 @@ Tests in `detmath/rules_test.go` enforce both rules: `TestNoFusedMultiplyAdd` co
 
 A hidden dev console is available for playtesting without grinding through all 22 ages.
 
-**Unlock:** Press `Ctrl+K` anywhere in the dashboard → type the developer passphrase → press Enter. If correct, a **Dev** tab appears in the tab bar (`F10`).
+**Unlock:** Press `Ctrl+K` anywhere in the dashboard → type the developer passphrase → press Enter.
 
-**Access:** `F10` or `` ` `` (backtick). The normal `>` game input still works everywhere even while in the Dev tab.
+**Access:** once unlocked, type the `/` commands below at the normal `>` prompt. Their replies go to the game log.
 
 | Command | Effect |
 |---|---|
@@ -374,35 +374,35 @@ A hidden dev console is available for playtesting without grinding through all 2
 | `/give <resource> <amount>` | Add a specific resource |
 | `/techs` | Unlock all techs up to current age |
 | `/build <key>` | Instantly place any building |
-| `/prestige <n>` | Set prestige level 0–9 |
+| `/prestige <n>` | Set prestige level 0-9 |
 | `/speed <n>` | Set tick speed multiplier |
-| `/god` | Toggle godmode — zero costs, instant builds |
+| `/god` | Toggle godmode: zero costs, instant builds |
 
-The passphrase is stored as a SHA256 hash in `game/devmode.go` — never plain text. Dev mode never persists to disk; it resets on every restart.
+The passphrase is stored as a SHA256 hash in `game/devmode.go`, never plain text. Dev mode never persists to disk; it resets on every restart.
 
 ---
 
 ## Adding Content
 
-**New building** — add a `BuildingDef` to `config/buildings.go` with `BaseCost`, `CostScale`, `BuildTicks`, `Category`, and `Effects`. Unlock it in the matching age's `UnlockBuildings` in `config/ages.go`. Cost formula: `floor(BaseCost × CostScale^count)`. Typical `CostScale`: 1.25–1.6.
+**New building**: add a `BuildingDef` to `config/buildings.go` with `BaseCost`, `CostScale`, `BuildTicks`, `Category`, and `Effects`. Unlock it in the matching age's `UnlockBuildings` in `config/ages.go`. Cost formula: `floor(BaseCost × CostScale^count)`. Typical `CostScale`: 1.25-1.6.
 
-**New tech** — add a `TechDef` to `config/techs.go` with `Age` (gate), `Cost` (knowledge), `Prerequisites`, and `Effects`. Effect types: `"production"` (flat per-tick) or `"bonus"` (multiplier, e.g. `"gold_rate"`, `"tick_speed"`).
+**New tech**: add a `TechDef` to `config/techs.go` with `Age` (gate), `Cost` (knowledge), `Prerequisites`, and `Effects`. Effect types: `"production"` (flat per-tick) or `"bonus"` (multiplier, e.g. `"gold_rate"`, `"tick_speed"`).
 
-**New age** — add an `AgeDef` to `config/ages.go` with `ResourceReqs`, `BuildingReqs`, `UnlockResources`, `UnlockBuildings`, `UnlockVillagers`. Add a matching age milestone in `config/milestones.go` with `Category: "ages"` and `MinAge` set. On age transition, each resource is capped to ~`carryoverStarterBuildings` (8) of the cheapest new-age building that uses it (via `config.AgeEntryCosts`); resources no new-age building uses as a build cost keep `carryoverResidualPct` (10%, e.g. food — avoids a starvation spiral at the transition); amounts already below the cap are preserved; faith is exempt (cumulative). See `advanceAge` in `game/engine.go`.
+**New age**: add an `AgeDef` to `config/ages.go` with `ResourceReqs`, `BuildingReqs`, `UnlockResources`, `UnlockBuildings`, `UnlockVillagers`. Add a matching age milestone in `config/milestones.go` with `Category: "ages"` and `MinAge` set. On age transition, each resource is capped to ~`carryoverStarterBuildings` (8) of the cheapest new-age building that uses it (via `config.AgeEntryCosts`); resources no new-age building uses as a build cost keep `carryoverResidualPct` (10%, e.g. food, which avoids a starvation spiral at the transition); amounts already below the cap are preserved; faith is exempt (cumulative). See `advanceAge` in `game/engine.go`.
 
-Write the **raw** `ResourceReqs`/`BuildingReqs` you want as the *baseline* — they are not the final gate. `Ages()` runs every def through `normalizeAgeRequirements` (in `config/ages.go`) before returning, so all consumers (`AgeByKey`, `AgeOrder`, and `CheckAdvancement`) see the scaled values. The scaling (EPIC economy-rebalance sub-ticket 3, deliberately moderate because the cost-curve and carryover fixes already tightened pacing; tunable in that function): resource reqs are multiplied by a per-band factor — **2.0x** for stone/bronze/iron, **1.75x** for classical/medieval/renaissance, **1.5x** for colonial/industrial/victorian, **1.25x** for electric → transcendent — then rounded to 2 significant figures. Building reqs below **5** are raised to 5 for the early/mid ages (stone_age through information_age); digital_age onward and primitive_age are untouched.
+Write the **raw** `ResourceReqs`/`BuildingReqs` you want as the *baseline*; they are not the final gate. `Ages()` runs every def through `normalizeAgeRequirements` (in `config/ages.go`) before returning, so all consumers (`AgeByKey`, `AgeOrder`, and `CheckAdvancement`) see the scaled values. The scaling (EPIC economy-rebalance sub-ticket 3, deliberately moderate because the cost-curve and carryover fixes already tightened pacing; tunable in that function): resource reqs are multiplied by a per-band factor (**2.0x** for stone/bronze/iron, **1.75x** for classical/medieval/renaissance, **1.5x** for colonial/industrial/victorian, **1.25x** for electric → transcendent), then rounded to 2 significant figures. Building reqs below **5** are raised to 5 for the early/mid ages (stone_age through information_age); digital_age onward and primitive_age are untouched.
 
-**New milestone** — add a `MilestoneDef` to `config/milestones.go`. Set `Hidden: true` if it should only appear when progress > 50%. To include it in a chain, add its key to the chain's `MilestoneKeys` in `MilestoneChains()`. Chain completion auto-grants a title + speed boost.
+**New milestone**: add a `MilestoneDef` to `config/milestones.go`. Set `Hidden: true` if it should only appear when progress > 50%. To include it in a chain, add its key to the chain's `MilestoneKeys` in `MilestoneChains()`. Chain completion auto-grants a title + speed boost.
 
-**New random event** — add an `EventDef` to `config/events.go` with `Sentiment` (good/bad/mixed), `Weight`, `Cooldown`, `Duration` (0 = instant), `MinAge`, and `Effects`. Streak logic caps bad events at 2 consecutive and forces one after 3 good ones.
+**New random event**: add an `EventDef` to `config/events.go` with `Sentiment` (good/bad/mixed), `Weight`, `Cooldown`, `Duration` (0 = instant), `MinAge`, and `Effects`. Streak logic caps bad events at 2 consecutive and forces one after 3 good ones.
 
-**New expedition** — add a def to `getExpeditions()` in `game/military.go` with `SoldiersNeeded`, `Duration`, `DifficultyBase`, `Rewards`, `MinAge`. Success: `random() > (DifficultyBase - military_bonus × 0.3)`.
+**New expedition**: add a def to `getExpeditions()` in `game/military.go` with `SoldiersNeeded`, `Duration`, `DifficultyBase`, `Rewards`, `MinAge`. Success: `random() > (DifficultyBase - military_bonus × 0.3)`.
 
-**New trade route** — add a `TradeRouteDef` to `config/trade.go` with `Export`/`Import` maps, `TicksPerRun`, `RequiredBuilding`, `MinAge`. Routes auto-cycle, importing `amount × (1.0 + diplomacy_bonus)`.
+**New trade route**: add a `TradeRouteDef` to `config/trade.go` with `Export`/`Import` maps, `TicksPerRun`, `RequiredBuilding`, `MinAge`. Routes auto-cycle, importing `amount × (1.0 + diplomacy_bonus)`.
 
-**New command** — register it in the command registry, `registry()` in `ui/commands.go`: its name and aliases, subcommands, argument slots (an `ArgKind` says what each takes, so completion offers the right game things), help rows, a Help section, and `Dangerous: true` if it can't be undone (Enter then never runs it from a completion). Then handle it in `HandleCommand` in `ui/input.go` and document it in `site/docs/commands.md`. Completion, the Help panel and the smoke fuzz corpus follow from the registry. `TestRegistryMatchesDispatcher` (`go test ./ui`) fails until the registry and the handler agree both ways, and the smoke `docsync` scenario until `commands.md` does.
+**New command**: register it in the command registry, `registry()` in `ui/commands.go`: its name and aliases, subcommands, argument slots (an `ArgKind` says what each takes, so completion offers the right game things), help rows, a Help section, and `Dangerous: true` if it can't be undone (Enter then never runs it from a completion). Then handle it in `HandleCommand` in `ui/input.go` and document it in `site/docs/commands.md`. Completion, the Help panel and the smoke fuzz corpus follow from the registry. `TestRegistryMatchesDispatcher` (`go test ./ui`) fails until the registry and the handler agree both ways, and the smoke `docsync` scenario until `commands.md` does.
 
-**New villager type** — add a `VillagerTypeDef` to `game/villagers.go` with `FoodCost` and `GatherRate`. Unlock it in the matching age in `config/ages.go`.
+**New villager type**: add a `VillagerTypeDef` to `game/villagers.go` with `FoodCost` and `GatherRate`. Unlock it in the matching age in `config/ages.go`.
 
 ---
 
@@ -423,7 +423,7 @@ minimum: 200ms
 ### Resource Rates (per tick, in order)
 
 1. Base: building production + villager gathering + research effects + event effects
-2. `production_all` multiplier — `× (1 + Σ production_all)`, applied via the resolver. The sum may be **negative** (e.g. the catastrophe Reconstruction Effort −10% debuff); a former `>0` gate that silently dropped negative pools is gone, so debuffs now apply. Result is floored at 10% of base so production can't be driven below it.
+2. `production_all` multiplier: `× (1 + Σ production_all)`, applied via the resolver. The sum may be **negative** (e.g. the catastrophe Reconstruction Effort −10% debuff), and negative pools apply as debuffs; there is no `>0` gate. Result is floored at 10% of base so production can't be driven below it.
 3. Per-resource multiplier (e.g. `gold_rate` bonus)
 4. Gather rate bonus: additive on villager rates
 5. Diplomacy trade bonuses: multiplicative on positive rates
@@ -434,9 +434,9 @@ minimum: 200ms
 ```
 cost = floor(base_cost × cost_scale ^ current_count) × (1 + Σ build_cost)
 ```
-Example: Hut — 30 wood, scale 1.3: 1st=30, 2nd=39, 3rd=50, 4th=66...
+Example with a 30-wood base cost and scale 1.3: 1st=30, 2nd=39, 3rd=50, 4th=66...
 
-`build_cost` modifiers are now consumed by `GetCost()`: build-cost-reducing milestone rewards and the Civil Engineering tech (each −3% to −5%) sum into `Σ build_cost` and multiply the scaled cost, floored at 10% of base. Previously these were defined but applied nowhere — `GetCost()` is the consumer the resolver migration wired in (see `design-and-architecture/multiplier-system.md` bug #2). Both the displayed and charged cost reflect the reduction.
+`build_cost` modifiers are consumed by `GetCost()`: build-cost-reducing milestone rewards and the Civil Engineering tech (each −3% to −5%) sum into `Σ build_cost` and multiply the scaled cost, floored at 10% of base. `GetCost()` is the consumer the resolver migration wired in (see `design-and-architecture/multiplier-system.md` bug #2). Both the displayed and charged cost reflect the reduction.
 
 ### Food Economy
 
@@ -515,7 +515,7 @@ Flow: **Config** defines data → **Manager** owns state/logic → **Engine** or
 - Config keys: `snake_case` strings (`"lumber_mill"`, `"stone_age"`)
 - `float64` for resource amounts, `int` for building counts
 - Return errors up, log at boundaries
-- Keep changes minimal — don't refactor code you didn't need to touch
+- Keep changes minimal: don't refactor code you didn't need to touch
 
 ---
 
@@ -525,17 +525,17 @@ All active work is tracked on the [AgeForge Trello board](https://trello.com/b/t
 
 | Lane | What lives there |
 |---|---|
-| **Bugs** | One ticket per bug — single fix per card |
+| **Bugs** | One ticket per bug, single fix per card |
 | **Features** | New systems, commands, and content (`feat`) |
 | **Balance** | Cost, rate, and number tuning (`balance`) |
 | **Refactor** | Cleanup with no behavior change (`refactor`) |
 | **Doing** | Actively in progress |
-| **Done** | Shipped — full history of completed work |
+| **Done** | Shipped: full history of completed work |
 | **Later Enhancements** | Shelved ideas for future consideration |
 
 When picking up work: move the card to **Doing**. When done: move it to **Done** and close the PR.
 
-Commit types map 1:1 to board lanes — if your change is a `fix`, it came from the Bugs lane. If it's `balance`, it came from Balance. This keeps the board and git history in sync.
+Commit types map 1:1 to board lanes: if your change is a `fix`, it came from the Bugs lane. If it's `balance`, it came from Balance. This keeps the board and git history in sync.
 
 ---
 

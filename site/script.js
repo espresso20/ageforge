@@ -17,7 +17,7 @@
     { count:  22, rMin: 1.35, rMax: 2.40, sMin: 0.10, sMax: 0.38, parallax: 0.11, aMin: 0.55, aMax: 1.00 },
   ];
 
-  // Nebula blobs — fixed viewport fractions, very subtle colour clouds
+  // Nebula blobs: fixed viewport fractions, very subtle color clouds
   const NEBULAE = [
     { fx: 0.12, fy: 0.22, fr: 0.32, r: 70, g: 35, b: 155 },   // indigo upper-left
     { fx: 0.82, fy: 0.10, fr: 0.26, r:  0, g: 75, b: 160 },   // cobalt upper-right
@@ -47,7 +47,7 @@
     ctx.clearRect(0, 0, canvas.width, canvas.height);
     const t = Date.now() / 1000;
 
-    // Nebulae (no parallax — ambient colour wash behind everything)
+    // Nebulae (no parallax; ambient color wash behind everything)
     for (const n of NEBULAE) {
       const cx = n.fx * canvas.width;
       const cy = n.fy * canvas.height;
@@ -62,7 +62,7 @@
       ctx.fill();
     }
 
-    // Star layers — foreground layers shift more with scroll (parallax depth)
+    // Star layers: foreground layers shift more with scroll (parallax depth)
     for (const layer of layers) {
       for (const s of layer.stars) {
         const sy  = ((s.y + scrollY * layer.parallax) % canvas.height + canvas.height) % canvas.height;
@@ -123,9 +123,9 @@ document.querySelectorAll("[data-anim]").forEach((el) => obs.observe(el));
 // ── Ages timeline ─────────────────────────────────────────────────────────────
 const AGES = [
   { name: 'Primitive\nAge',     icon: '🪨', era: 'primitive',   desc: 'Survival. Nothing but your hands and wits.' },
-  { name: 'Stone\nAge',         icon: '⛏️', era: 'primitive',   desc: 'Crude tools of stone change everything.' },
-  { name: 'Bronze\nAge',        icon: '🛡', era: 'ancient',     desc: 'Metalworking unlocks a new world of possibility.' },
-  { name: 'Iron\nAge',          icon: '⚔️',  era: 'ancient',     desc: 'Iron tools and weapons transform society.' },
+  { name: 'Stone\nAge',         icon: '⛏️', era: 'primitive',   desc: 'Stone tools, quarries and the first real houses.' },
+  { name: 'Bronze\nAge',        icon: '🛡', era: 'ancient',     desc: 'Metalworking begins.' },
+  { name: 'Iron\nAge',          icon: '⚔️',  era: 'ancient',     desc: 'Iron tools and weapons reshape society.' },
   { name: 'Classical\nAge',     icon: '🏛',  era: 'classical',   desc: 'Great empires rise. Philosophy and art flourish.' },
   { name: 'Medieval\nAge',      icon: '🏰', era: 'medieval',    desc: 'Kingdoms clash. Feudalism takes hold.' },
   { name: 'Renaissance\nAge',   icon: '🎨', era: 'renaissance', desc: 'Art, science, and exploration bloom.' },
@@ -133,7 +133,7 @@ const AGES = [
   { name: 'Industrial\nAge',    icon: '🏭', era: 'industrial',  desc: 'Steam power ignites exponential growth.' },
   { name: 'Victorian\nAge',     icon: '🎩', era: 'industrial',  desc: 'Empires at their absolute peak of confidence.' },
   { name: 'Electric\nAge',      icon: '⚡', era: 'electric',    desc: 'Electricity rewires every corner of civilization.' },
-  { name: 'Atomic\nAge',        icon: '☢️',  era: 'atomic',      desc: 'The atom unlocks both limitless power and peril.' },
+  { name: 'Atomic\nAge',        icon: '☢️',  era: 'atomic',      desc: 'The atom brings enormous power and new dangers.' },
   { name: 'Modern\nAge',        icon: '🌐', era: 'atomic',      desc: 'Global infrastructure. Mass production. Superpowers.' },
   { name: 'Information\nAge',   icon: '📡', era: 'digital',     desc: 'Data becomes the most valuable resource on Earth.' },
   { name: 'Digital\nAge',       icon: '💻', era: 'digital',     desc: 'Code shapes reality. The physical world goes virtual.' },
@@ -143,7 +143,7 @@ const AGES = [
   { name: 'Interstellar\nAge',  icon: '🛸', era: 'cosmic',      desc: 'Colony ships cross the void to distant star systems.' },
   { name: 'Galactic\nAge',      icon: '🌌', era: 'cosmic',      desc: 'An empire that spans hundreds of star systems.' },
   { name: 'Quantum\nAge',       icon: '⚛️',  era: 'cosmic',      desc: 'Reality itself becomes programmable.' },
-  { name: 'Transcendent\nAge',  icon: '✨', era: 'cosmic',      desc: 'Beyond physical form. The final age of civilisation.' },
+  { name: 'Transcendent\nAge',  icon: '✨', era: 'cosmic',      desc: 'Beyond physical form. The final age of civilization.' },
 ];
 
 const track = document.getElementById('ages-track');
@@ -234,7 +234,7 @@ document.querySelectorAll(".codeblock").forEach((block) => {
     const code = block.querySelector("code");
     const text = code ? code.innerText : block.innerText;
     navigator.clipboard.writeText(text.trim()).then(() => {
-      btn.textContent = "Copied!";
+      btn.textContent = "Copied";
       btn.classList.add("copied");
       setTimeout(() => {
         btn.textContent = "Copy";
@@ -246,7 +246,7 @@ document.querySelectorAll(".codeblock").forEach((block) => {
   block.appendChild(btn);
 });
 
-// ── Terminal mockup — static HTML lines, typewriter per line ─────────────────
+// ── Terminal mockup: static HTML lines, typewriter per line ──────────────────
 const m = (s) => `<span class="tc-m">${s}</span>`; // muted
 const g = (s) => `<span class="tc-g">${s}</span>`; // gold
 const gr = (s) => `<span class="tc-gr">${s}</span>`; // green
@@ -267,10 +267,10 @@ const TERM_LINES = [
     m('"Founder"') +
     "                      " +
     m("Tick: ") +
-    g("1,247") +
+    g("1.25K") +
     m("  Pop: ") +
     "18/30" +
-    m("  ×1  F1-F7  Esc=Save"),
+    m("  ×1"),
 
   // ── row 2: age progress
   m(
@@ -280,22 +280,22 @@ const TERM_LINES = [
   // ── row 3: next age bar
   g("  Next: Bronze Age") +
     "  " +
-    rd("food:3,102/8,000") +
+    rd("food:3.10K/8.00K") +
     " " +
     bar(4, 7) +
     "  " +
-    rd("stone:890/4,000") +
+    rd("stone:890/4.00K") +
     " " +
     bar(2, 7) +
     "  " +
-    gr("wood:1,240/8,000") +
+    gr("wood:1.24K/8.00K") +
     " " +
     bar(5, 7),
 
-  // ── row 4: tab bar
-  m("  F1:") +
-    g("Economy") +
-    m("  F2:Research  F3:Military  F4:Trade  F5:Stats  F6:Wonders  F7:Logs"),
+  // ── row 4: panel hint
+  m("  Panels: ") +
+    g("research") +
+    m("  army  trade  stats  wonders  logs  epoch  help"),
 
   // ── row 5: divider
   m(
@@ -310,9 +310,9 @@ const TERM_LINES = [
   // ── row 7-10: resources left, buildings right
   "  " +
     cy(pad("food", 10)) +
-    lpad("3,102", 6) +
+    lpad("3.10K", 6) +
     m("/") +
-    pad("8,000", 6) +
+    pad("8.00K", 6) +
     " " +
     bar(4, 6) +
     " " +
@@ -324,9 +324,9 @@ const TERM_LINES = [
 
   "  " +
     cy(pad("wood", 10)) +
-    lpad("1,240", 6) +
+    lpad("1.24K", 6) +
     m("/") +
-    pad("6,000", 6) +
+    pad("6.00K", 6) +
     " " +
     bar(3, 6) +
     " " +
@@ -343,7 +343,7 @@ const TERM_LINES = [
     cy(pad("stone", 10)) +
     lpad("  890", 6) +
     m("/") +
-    pad("4,000", 6) +
+    pad("4.00K", 6) +
     " " +
     bar(2, 6) +
     " " +
@@ -360,7 +360,7 @@ const TERM_LINES = [
     cy(pad("knowledge", 10)) +
     lpad("  450", 6) +
     m("/") +
-    pad("2,000", 6) +
+    pad("2.00K", 6) +
     " " +
     bar(2, 6) +
     " " +
@@ -379,7 +379,7 @@ const TERM_LINES = [
     g(pad("Gathering Camp", 16)) +
     m("[ 3]  wood:200"),
 
-  // ── row 12-13: villagers / buildings
+  // ── row 12-13: workers / buildings
   "  " +
     m("Pop: ") +
     "18" +
@@ -409,7 +409,7 @@ const TERM_LINES = [
     m("[ 0]  stone:15"),
 
   "  " +
-    pu(pad("shaman", 10)) +
+    pu(pad("elder", 10)) +
     m("× 6") +
     m("  knowledge:3") +
     "          " +
@@ -419,8 +419,8 @@ const TERM_LINES = [
   m(
     "  ─────────────────────────────────────────────────────────────────────────────────────────────",
   ),
-  "  " + m("[ 1242] ") + gr("✓ Built: Gathering Camp"),
-  "  " + m("[ 1244] ") + yw("★ Tribe reaches 15 members — morale rises!"),
+  "  " + m("[ 1242] ") + gr("✓ Built Gathering Camp (#3)"),
+  "  " + m("[ 1244] ") + yw("★ Milestone achieved: First Storehouse"),
   "  " + m("[ 1247] ") + m("· wood +12/t  |  food +8/t  |  knowledge +3/t"),
   m(
     "  ─────────────────────────────────────────────────────────────────────────────────────────────",
@@ -549,7 +549,7 @@ document.querySelectorAll(".step").forEach((step, i) => {
       track.appendChild(card);
     });
 
-    // Arrow navigation — same pattern as ages carousel
+    // Arrow navigation: same pattern as ages carousel
     let idx = 0;
 
     function scrollTo(i) {

@@ -2,19 +2,19 @@
 
 Status: design / implementation-ready
 Owner: UI
-Related: `design-and-architecture/accounts.md` (account-wide unlock + settings state — being written in parallel)
+Related: `design-and-architecture/accounts.md` (account-wide unlock + settings state, written in parallel)
 
 A player-selectable theme system for AgeForge's terminal UI. Ships with a default
 "Forge" look plus required accessibility themes (colorblind-safe, high-contrast)
 unlocked from day one, and flavor themes that unlock via milestones. The hard part
-isn't the picker — it's that the UI's color is currently hardcoded across ~957
+isn't the picker. It's that the UI's color is currently hardcoded across ~957
 sites in two completely different code paths. This doc resolves how to drive all
 of them from a single ~9-role palette, including a definitive feasibility verdict
 on the name-remap trick.
 
 **Don't under-budget Phase 1 from the headline.** The name-remap trick retints the
-~915 *named* inline tags (`[gold]`, `[gray]`, …) with **zero edits** — that part is
-genuinely free. But the ~42 direct `tcell` chrome calls (§2 Path B) and the ~23 hex
+~915 *named* inline tags (`[gold]`, `[gray]`, …) with **zero edits**, and that part is
+free. But the ~42 direct `tcell` chrome calls (§2 Path B) and the ~23 hex
 tags (§3.4) are **not** free: they're real, hand-applied edits, and they are the actual
 bulk of Phase-1 work. "Retint 957 sites from one palette" is true as an *outcome*; it is
 not true that all 957 sites cost nothing. Budget Phase 1 for the ~65 edits, not for zero.
@@ -42,7 +42,7 @@ not true that all 957 sites cost nothing. Budget Phase 1 for the ~65 edits, not 
 - A contrast guard that makes it structurally hard to ship an unreadable theme.
 - Theme choice and unlock state persist **account-wide**, not per-save.
 - Minimal churn on the existing 957 color sites. We do not want to hand-edit every
-  `[gold]` tag — and the feasibility work below shows the ~915 *named* tags need zero
+  `[gold]` tag, and the feasibility work below shows the ~915 *named* tags need zero
   edits. The ~42 direct `tcell` calls and ~23 hex tags still require real edits (that's
   Phase-1 work, not free); "minimal churn" means ~65 sites, not zero.
 
@@ -63,7 +63,7 @@ not true that all 957 sites cost nothing. Budget Phase 1 for the ~65 edits, not 
 
 There is no central theme. Color is hardcoded across two independent paths.
 
-### Path A — inline tview color tags (text content)
+### Path A: inline tview color tags (text content)
 `SetDynamicColors(true)` text carries inline tags like `[gold]TITLE[-]`,
 `[green]+12.5[-]`, `[#8b949e]hint[-]`. Real counts from `grep` over `ui/*.go`
 (42 files):
@@ -81,10 +81,10 @@ There is no central theme. Color is hardcoded across two independent paths.
 | `[#8b949e]` | 21 | dim hint (hex) |
 | `[#cc88ff]` `[#ff66cc]` | 2 | one-off accents (hex) |
 
-~915 inline tags total. The named colors are semantic **by convention only** —
+~915 inline tags total. The named colors are semantic **by convention only**:
 nothing enforces it, but the convention is consistent enough to remap on.
 
-### Path B — direct tcell color calls (widget chrome)
+### Path B: direct tcell color calls (widget chrome)
 Borders, modal backgrounds, list selection, input fields, age palettes. ~168
 `tcell.Color*` / `tcell.NewRGBColor` references plus 42 `Set*Color(...)` widget
 calls:
@@ -105,7 +105,7 @@ directly and apply once at widget construction.
 There is already a `ui/theme.go` with global `tcell.Color` vars (`ColorTitle`,
 `ColorAccent`, `ColorSuccess`, …) and an `AgePalette` / `ApplyAgePalette(ageKey)`
 system that mutates those globals as the player advances ages. This is **only Path B
-prior art** — it never touches the inline `[gold]` tags, which is why advancing an
+prior art**. It never touches the inline `[gold]` tags, which is why advancing an
 age recolors some chrome but not the body text. Our design subsumes this: the
 age-palette globals become one consumer of the theme palette, and the
 epoch-adaptive idea (§9) is the generalization of `ApplyAgePalette`.
@@ -129,7 +129,7 @@ by `accounts.md`.
 ### 3.1 The Theme model
 
 A theme is ~9 semantic **role** colors plus metadata. Roles, not literal color
-names — `Positive` is "the gains color," whatever hue the active theme picks.
+names: `Positive` is "the gains color," whatever hue the active theme picks.
 
 ```go
 // package theme
@@ -151,7 +151,7 @@ const (
 
 type Theme struct {
     Key         string            // "forge", "deuteranopia", "high_contrast", ...
-    Name        string            // "Forge" — shown in picker
+    Name        string            // "Forge", shown in picker
     Blurb       string            // one-line flavor for the picker detail pane
     Accessible  bool              // true => never gated, always unlocked
     Colors      [numRoles]tcell.Color
@@ -174,15 +174,15 @@ is now 17 roles, split into the original core and an extended set:
 
 | Role | Tag name | Used for | Derived default (if a theme leaves it unset) |
 |------|----------|----------|------|
-| Background | `bg` | canvas | — (core) |
-| Text | `text` | primary text | — (core) |
-| Dim | `dim` | secondary text, hints | — (core) |
-| Label | `label` | field labels, values | — (core) |
-| Accent | `accent` | titles, brand | — (core) |
-| Highlight | `highlight` | numbers, attention | — (core) |
-| Positive | `positive` | good / gains | — (core) |
-| Negative | `negative` | bad / losses | — (core) |
-| Selection | `selection` | selected-row fill | — (core) |
+| Background | `bg` | canvas | none (core) |
+| Text | `text` | primary text | none (core) |
+| Dim | `dim` | secondary text, hints | none (core) |
+| Label | `label` | field labels, values | none (core) |
+| Accent | `accent` | titles, brand | none (core) |
+| Highlight | `highlight` | numbers, attention | none (core) |
+| Positive | `positive` | good / gains | none (core) |
+| Negative | `negative` | bad / losses | none (core) |
+| Selection | `selection` | selected-row fill | none (core) |
 | Surface | `surface` | modal / overlay / panel fill | Background |
 | Border | `border` | box borders, rules | Accent |
 | SelectionText | `seltext` | text on Selection | Text |
@@ -194,7 +194,7 @@ is now 17 roles, split into the original core and an extended set:
 
 The derivations reproduce exactly what the UI drew before the extended roles
 existed, which is how the dark themes kept their look (pinned by
-`TestDerivedRoles_PreserveDarkThemes`). Forge pins `Chip = #30363d`, the keycap grey
+`TestDerivedRoles_PreserveDarkThemes`). Forge pins `Chip = #30363d`, the keycap gray
 the footer used to hard-code.
 
 Semantic good / warn / bad are Positive / Warning / Negative.
@@ -213,7 +213,7 @@ Themes register through package-level var initialization
 `init()` registration relied on file-name order and in practice ran *after*
 `palette.go`'s seeding `init()`.
 
-### 3.2 Retinting Path A (inline tags) — the name-remap strategy
+### 3.2 Retinting Path A (inline tags): the name-remap strategy
 
 **This is the load-bearing decision, so the verdict is spelled out, not asserted.**
 
@@ -227,7 +227,7 @@ What actually happens when tview draws `[gold]TEXT[-]`:
 1. `TextView.Draw` iterates visible lines and, **for every line on every Draw**,
    walks the raw text (tags still embedded) via `step()` → `parseTag()` in
    `tview/strings.go`. The line index caches only each line's *starting* state and
-   byte offset — **not** the resolved per-character colors. Colors are re-resolved
+   byte offset, **not** the resolved per-character colors. Colors are re-resolved
    from the raw string on each frame.
 
 2. For a **named** foreground tag, `parseTag` resolves the color with a direct map
@@ -242,7 +242,7 @@ What actually happens when tview draws `[gold]TEXT[-]`:
    real RGB color, not a fragile palette index.
 
 Therefore: **overwrite `tcell.ColorNames["gold"] = <theme RGB>` and, on the next
-draw cycle, every existing `[gold]` tag in the entire UI retints** — no edits to the
+draw cycle, every existing `[gold]` tag in the entire UI retints**, with no edits to the
 957 sites required for the named path. Because resolution is per-Draw, a theme
 switch followed by `app.Draw()` / `app.QueueUpdateDraw()` retints everything live.
 
@@ -251,9 +251,9 @@ switch followed by `app.Draw()` / `app.QueueUpdateDraw()` retints everything liv
 - **Hex tags bypass the map.** A `[#8b949e]` tag resolves via `tcell.GetColor("#8b949e")`,
   which parses the literal hex and never reads `ColorNames`. The 23 hex tags
   (`#8b949e`×21, plus two one-offs) are **frozen** under remap. We fix this by
-  converting them to named role tokens (§3.4) — a small, bounded edit.
+  converting them to named role tokens (§3.4), a small, bounded edit.
 - The remap is **global process state, and its blast radius is wider than "inline
-  text tags."** `tcell.ColorNames` is not a tview-tag-only table — `tcell.GetColor("name")`
+  text tags."** `tcell.ColorNames` is not a tview-tag-only table: `tcell.GetColor("name")`
   reads the *same* map. So overwriting `ColorNames["gold"]` changes **every** named-color
   resolution process-wide: not just `[gold]` tags, but any `tcell.GetColor("gold")` call
   in our code *and* any `tview.Styles` field that was assigned via a named color. Treat
@@ -303,11 +303,11 @@ tcell.ColorNames["white"]  = active.Colors[RoleText]
 If a later tview version caches resolved colors at parse time (so map mutation no
 longer retints live), the fallback is the **semantic-helper cleanup** from §9
 promoted to mandatory: replace inline `[gold]` literals with `theme.Tag(RoleAccent)`
-helpers that emit the active hex at format time. That's the "honest" long-term form
+helpers that emit the active hex at format time. That's the cleaner long-term form
 anyway; remap is the cheap shortcut that lets us ship retinting now without touching
 957 sites. The guard test (§3.6) tells us if/when we're forced onto the fallback.
 
-### 3.3 Routing Path B (direct widget calls) — palette routing
+### 3.3 Routing Path B (direct widget calls): palette routing
 
 Inline-tag remap does nothing for `SetBorderColor`, `SetBackgroundColor`,
 `SetTitleColor`, list selection, input fields. Those read a `tcell.Color` once at
@@ -329,7 +329,7 @@ construction. We route them through the theme palette instead of literals.
      redraws. The registry is the handful of long-lived chrome widgets, not every
      text view (text views retint for free via §3.2).
 
-**Registration discipline — a registry someone must *remember* to populate will rot.**
+**Registration discipline: a registry someone must *remember* to populate will rot.**
 A bare "add your widget to the slice" registry guarantees that some future widget ships
 unthemed because nobody touched the registry. Make registration the *default path*, not
 an optional afterthought:
@@ -341,7 +341,7 @@ an optional afterthought:
   tracked.
 - `roleMap` declares which `Set*Color` setter maps to which `Role` (e.g.
   `{BorderColor: RoleAccent, TitleColor: RoleAccent, BackgroundColor: RoleBackground}`),
-  so `Restyle()` is fully data-driven — it re-applies exactly the roles each widget
+  so `Restyle()` is fully data-driven: it re-applies exactly the roles each widget
   declared, with no per-widget switch statement to keep in sync.
 - A lint/grep guard in CI (or a code-review checklist item) flags raw `Set*Color`
   chrome calls outside the `theme` package and the `Track` wrappers, so the
@@ -358,13 +358,13 @@ The 23 hex tags (`#8b949e` dim hints, `#cc88ff`, `#ff66cc`) are frozen under rem
 Resolve by converting them to **named role tokens**:
 - `[#8b949e]` → `[gray]` (it's already a dim hint; same role).
 - `[#cc88ff]` / `[#ff66cc]` → `[gold]` or `[yellow]` per intent (accent vs
-  highlight) — judgment call at each of the two sites.
+  highlight), a judgment call at each of the two sites.
 
 This is ~23 targeted edits, all in the same direction (hex → role token), and it
 makes those tags theme-aware for free. The two progress-bar hex constants
 (`BarFillColor = "#9370DB"`, `BarEmptyColor = "#444444"`) become role-derived: fill
 = Accent/Highlight, empty = Dim/Background. After this pass, **zero hex literals
-remain in retintable text** — the only fixed colors left are intentional ones (map
+remain in retintable text**. The only fixed colors left are intentional ones (map
 terrain, splash art accents) which we explicitly accept.
 
 ### 3.5 Module shape
@@ -413,7 +413,7 @@ remap retinted the named tags, but nothing retinted the boxes behind them.
 **Mechanism.**
 
 - `theme.Ref(role)` returns a sentinel `tcell.Color`: a `ColorValid` palette index
-  far outside 0–255 that never has `IsRGB` set, so it cannot collide with a real
+  far outside 0-255 that never has `IsRGB` set, so it cannot collide with a real
   theme color. `applyRemap` fills **every** `tview.Styles` field with Refs,
   including the ones tview uses for inverse states (list selection, button
   activation, dropdowns).
@@ -453,7 +453,7 @@ merge-conflict magnet for other work in flight. New code should use role names.
 dark canvas. Map code reads roles through `citymap.mapColor(role)`: on a dark
 theme it returns the theme's own role, byte-for-byte. On a light theme it returns
 a dark-polarity *proxy* built from the theme's hues: the ink becomes the canvas,
-the page becomes the light pole, Dim is lifted to mid-grey, and semantic roles are
+the page becomes the light pole, Dim is lifted to mid-gray, and semantic roles are
 raised to marker brightness (HSL L ≥ 0.62, then until ≥ 4.5:1 on the proxy
 canvas). The recipes therefore compose a correct map. The citymap then re-keys it
 for the light page with `liftForLight`, a monotonic concave lightness curve
@@ -466,7 +466,7 @@ clay, parchment, blueprint, satellite, neon) paint their own canvases, and their
 civ markers use the proxy so they stay marker-bright on those canvases.
 `TestMapPolarity_AllThemes` pins the contract.
 
-### 3.8 Audit rules for future UI code — "no raw colors outside `theme/`"
+### 3.8 Audit rules for future UI code: "no raw colors outside `theme/`"
 
 Enforced by `ui/theme_guard_test.go` (an AST walk over `ui/`, `game/`, `config/`):
 
@@ -502,14 +502,14 @@ without a concrete RGB background.
 All themes are code-defined RGB. Accessibility themes are `Accessible: true` and
 **unlocked by default, never milestone-gated.**
 
-### Forge (default) — `forge`
+### Forge (default): `forge`
 The current dark + gold look, formalized. Dark near-black background, warm gold
 accent, gray dim, cyan labels, green/red for ±, yellow highlights, off-white text.
 This is what ships selected.
 
-### Deuteranopia-safe — `deuteranopia` *(accessible, default-unlocked)*
-### Protanopia-safe — `protanopia` *(accessible, default-unlocked)*
-Critical constraint: in AgeForge **green = gains and red = losses everywhere** —
+### Deuteranopia-safe: `deuteranopia` *(accessible, default-unlocked)*
+### Protanopia-safe: `protanopia` *(accessible, default-unlocked)*
+Critical constraint: in AgeForge **green = gains and red = losses everywhere**:
 resource deltas, rates, combat, trade. Red-green deficiency makes that distinction
 collapse. So the accessible palettes **must not encode ± with red vs green.**
 
@@ -519,19 +519,19 @@ collapse. So the accessible palettes **must not encode ± with red vs green.**
 - **Belt-and-suspenders: signed glyphs.** Accessible themes set `GainGlyph`/`LossGlyph`
   (`▲`/`▼`, or `+`/`-`) so the sign is encoded by **shape as well as hue**. Delta
   formatting helpers consult the active theme's glyphs; non-accessible themes can
-  leave them empty. This is the redundant-encoding principle — never rely on color
+  leave them empty. This is the redundant-encoding principle: never rely on color
   alone for meaning.
 - Accent/Highlight/Label chosen to stay mutually distinguishable under deutan/protan
   simulation (favor blue/yellow/white spread; avoid accent≈positive collisions).
 - Deutan and protan ship as separate themes because their safe hues differ slightly;
   one "colorblind" catch-all under-serves both.
 
-### High Contrast — `high_contrast` *(accessible, default-unlocked)*
+### High Contrast: `high_contrast` *(accessible, default-unlocked)*
 Maximum legibility: pure/near-pure background, white text, saturated unambiguous role
 colors, every role pair comfortably above the WCAG AA contrast floor (§8 enforces
 this). For low-vision players and high-glare terminals.
 
-### Daylight — `daylight` *(Standard, default-unlocked, light)*
+### Daylight: `daylight` *(Standard, default-unlocked, light)*
 The clean light default, added by the light-theme overhaul. Off-white canvas
 `#f6f7f9`, true-white Surface panels, charcoal ink `#1f2328`, slate Dim, deep-teal
 labels, and deep-amber accent `#9a6700` that echoes Forge's gold. Positive and
@@ -539,7 +539,7 @@ Negative are forest green and brick red. Every foreground role is a *dark* varia
 of its Forge counterpart, because on a light page the roles must be darker than the
 page. Listed under Standard next to Forge.
 
-### High Contrast Light — `high_contrast_light` *(accessible, default-unlocked, light)*
+### High Contrast Light: `high_contrast_light` *(accessible, default-unlocked, light)*
 White page, black ink, black borders. Every text role clears AAA (7:1) where the
 matrix demands it. It keeps the colorblind-safe blue gain / dark-orange loss and the
 ▲/▼ glyphs. The new role model made it nearly free, so it ships.
@@ -553,17 +553,17 @@ matrix demands it. It keeps the colorblind-safe blue gain / dark-orange loss and
 | Unlockable | Parchment (light), Bronze, Cyberpunk, Monochrome, Cosmic (dark) |
 
 ### Flavor themes (milestone-gated, §5)
-Curated, code-defined, **cosmetic only** — they never alter the ± encoding semantics
+Curated, code-defined, **cosmetic only**. They never alter the ± encoding semantics
 in a way that breaks accessibility expectations (and still pass the contrast guard).
 Candidates:
-- **Parchment** — light sepia background, ink-brown text, wax-red/forest-green ±.
+- **Parchment**: light sepia background, ink-brown text, wax-red/forest-green ±.
   (The first light-background theme. Before the overhaul it only half-worked:
   widgets built under another theme kept their dark canvas after a live switch.)
-- **Bronze Age** — burnished metallics.
-- **Cyberpunk** — magenta/cyan neon on black (riffs on the existing `cyberpunk_age`
+- **Bronze Age**: burnished metallics.
+- **Cyberpunk**: magenta/cyan neon on black (riffs on the existing `cyberpunk_age`
   age palette).
-- **Monochrome Terminal** — amber-on-black or green-on-black retro CRT.
-- **Cosmic** — deep indigo with starlight accents (riffs on `galactic_age`).
+- **Monochrome Terminal**: amber-on-black or green-on-black retro CRT.
+- **Cosmic**: deep indigo with starlight accents (riffs on `galactic_age`).
 
 Exact RGB values are filled in during Phase 2 against the contrast guard; the guard
 is the acceptance gate, not a designer's eyeball.
@@ -581,7 +581,7 @@ always available.
   code.
 - **Unlock state is account-wide.** When a milestone/chain completes, the game records
   the unlock in the **account/settings layer** (`accounts.md`). It is *not* stored in
-  `data/saves/*.json` — earn Cyberpunk on one empire and it's yours on every save and
+  `data/saves/*.json`. Earn Cyberpunk on one empire and it's yours on every save and
   every future new game. This mirrors how badges feel permanent, but lives in the
   proper account store rather than being peeked from a save.
 - Hook point: `MilestoneManager.CheckMilestones` / `CheckChains` already return
@@ -594,7 +594,7 @@ always available.
 - This doc treats the account layer as a dependency, and uses **`accounts.md`'s exact
   names** so the two docs can't drift: `UnlockTheme(key) (newly bool, err error)`,
   `HasTheme(key) bool`, `UnlockedThemes() []string`, `ActiveTheme() string`,
-  `SetActiveTheme(key) error`. (Earlier drafts of this doc said `IsThemeUnlocked` — the
+  `SetActiveTheme(key) error`. (Earlier drafts of this doc said `IsThemeUnlocked`; the
   account layer names it `HasTheme`; we use `HasTheme` here too.) `accounts.md` §8 is the
   authoritative signature list.
 
@@ -602,8 +602,8 @@ always available.
 
 ## 6. Persistence
 
-- **Active theme** and **unlocked-theme set** live in the **account/settings layer**
-  — concretely `data/account.json`, HMAC-signed for consistency with saves. (`accounts.md`
+- **Active theme** and **unlocked-theme set** live in the **account/settings layer**:
+  concretely `data/account.json`, HMAC-signed for consistency with saves. (`accounts.md`
   §3 makes this a firm decision: one signed `account.json`, not a to-be-decided choice.)
   **Never** in per-save JSON.
 - Rationale: theme is a player preference and a player-account achievement, not
@@ -627,10 +627,10 @@ on the left, a detail/preview pane on the right.
 
 ### `theme` command
 Available from the in-game `>` prompt via `HandleCommand` (`ui/input.go`):
-- `theme` — opens the picker (returns `CommandResult{OverlayName: "theme"}`).
-- `theme list` — prints unlocked vs locked themes (locked ones show their unlock
-  condition, e.g. "Cyberpunk — reach the Cyberpunk Age").
-- `theme <name>` — switches directly to a theme by key/name if unlocked; errors with
+- `theme`: opens the picker (returns `CommandResult{OverlayName: "theme"}`).
+- `theme list`: prints unlocked vs locked themes (locked ones show their unlock
+  condition, e.g. "Cyberpunk: Reach the Cyberpunk Age").
+- `theme <name>`: switches directly to a theme by key/name if unlocked; errors with
   the unlock hint if locked, errors "unknown theme" otherwise.
 
 Add a `case "theme":` to the dispatch switch returning the above.
@@ -638,13 +638,13 @@ Add a `case "theme":` to the dispatch switch returning the above.
 ### Live preview (apply-on-highlight, revert-on-cancel)
 Exactly the load-game detail-pane pattern: the picker list's `SetChangedFunc` fires
 on highlight. On highlight we **apply the theme for real** (remap + restyle + redraw)
-so the player sees the whole UI in that theme immediately — the picker is itself a
+so the player sees the whole UI in that theme immediately. The picker is itself a
 live sample of the running UI. We remember the theme that was active on open.
 - **Confirm** (Enter / select): persist the highlighted theme as active via the
   account layer; close.
 - **Cancel** (Esc): re-apply the remembered original theme; close. No persistence.
 
-Because retinting is a global remap, "preview" and "apply" are the same operation —
+Because retinting is a global remap, "preview" and "apply" are the same operation;
 the only difference is whether we persist and whether cancel reverts. Clean.
 
 ### Picker layout (light-theme overhaul)
@@ -671,7 +671,7 @@ the only difference is whether we persist and whether cancel reverts. Clean.
 - `theme list` shows each theme's light/dark variant.
 
 ### Palette swatches
-The picker detail pane shows the theme's blurb plus a swatch row — one colored block
+The picker detail pane shows the theme's blurb plus a swatch row: one colored block
 per role rendered with that role's color tag, labeled (Accent / Positive / Negative /
 …). For accessible themes, show the gain/loss **glyphs** next to the ± swatches so the
 redundant encoding is visible in the picker itself. Locked themes show swatches dimmed
@@ -679,12 +679,12 @@ with a lock marker and the unlock condition.
 
 ### Unlock notification
 When a milestone grants a theme (§5), surface it through the existing toast/log
-channel (the same path milestone completions already use), e.g. *"New theme unlocked:
-Cyberpunk — switch in Themes (`theme cyberpunk`)."* Non-modal; don't interrupt play.
-**Gate the toast on `account.UnlockTheme` returning `newly == true`** — `UnlockTheme` is
+channel (the same path milestone completions already use): a toast that names the
+theme and points to the `theme` command. Non-modal; don't interrupt play.
+**Gate the toast on `account.UnlockTheme` returning `newly == true`**. `UnlockTheme` is
 idempotent (re-unlocking an owned theme is a no-op that returns `newly == false`), so a
-milestone re-fire or a redundant chain check must not produce a duplicate "unlocked!"
-toast. Only a genuinely-new unlock notifies.
+milestone re-fire or a redundant chain check must not produce a duplicate "unlocked"
+toast. Only a new unlock notifies.
 
 ---
 
@@ -731,17 +731,17 @@ fall through to the terminal default. The render sweep (§3.8) is the end-to-end
 
 ### Check: colorblind distinguishability (simulation, not luminance)
 
-Luminance contrast and colorblind distinguishability are **different properties** — two
+Luminance contrast and colorblind distinguishability are **different properties**. Two
 hues can clear 4.5:1 against the background yet be nearly identical to a deuteranope.
 The accessible palettes (§4) are *designed* to keep Accent/Positive/Negative/Highlight
 mutually distinct under deutan/protan deficiency, but "designed to" must be backed by a
 test, not by a sighted developer's eyeball.
 
 So the guard ALSO runs the accessible palettes through **deuteranopia and protanopia
-simulation** (a standard CVD transform — Brettel/Viénot or Machado — applied to each
+simulation** (a standard CVD model such as Brettel/Viénot or Machado, applied to each
 role's RGB), then asserts that the post-simulation role colors stay separated by a
 minimum perceptual distance (e.g. a ΔE floor in a perceptually-uniform space). This is
-what actually catches an **Accent ≈ Positive collision** under simulated deficiency — a
+what actually catches an **Accent ≈ Positive collision** under simulated deficiency, a
 class of bug luminance contrast is blind to. Run it at least on the accessible themes;
 running it on all themes is cheap and worthwhile.
 
@@ -755,14 +755,14 @@ theme cannot reach players** because it can't pass CI.
 
 The guard computes WCAG luminance on the theme's **declared truecolor RGB**. But on a
 256-color (or 16-color) terminal, tcell **down-samples** each declared RGB to the
-nearest palette slot — and a pair that clears 4.5:1 in truecolor can collapse below the
+nearest palette slot, and a pair that clears 4.5:1 in truecolor can collapse below the
 floor once both ends snap to neighboring palette entries. This is worst for
 **light-background themes like Parchment**, where the foreground/background luminances
 are already close and quantization has more room to flip the ratio. So the strong claim
 ("cannot reach players") only holds on truecolor terminals; on 256-color terminals a
 "passing" theme can still be marginal.
 
-We have two honest options, and should pick one rather than wave at it:
+There are two options, and we should pick one:
 
 - **Scope the guarantee:** state plainly that the contrast guarantee applies to
   truecolor terminals, and document that 256-color rendering is best-effort. Simplest;
@@ -788,7 +788,7 @@ light-bg themes, since those are where quantization actually bites.
 - **Semantic-token cleanup (also the §3.2 fallback).** Replace inline `[gold]`
   literals with `theme.Tag(RoleAccent)` helpers that emit the active color at format
   time. This removes the reliance on the tcell-map-mutation implementation detail
-  entirely and is the honest long-term form. Large but mechanical; do it lineage-area
+  entirely and is the cleaner long-term form. Large but mechanical; do it lineage-area
   by lineage-area. Mandatory only if a tview bump breaks remap.
 - **User-authored themes.** Read extra themes from `data/themes/*.json`, run them
   through the same contrast guard at load, reject ones that fail. Lets the community
@@ -800,7 +800,7 @@ light-bg themes, since those are where quantization actually bites.
 
 Ordered so something visible lands early. Each phase is independently shippable.
 
-### Phase 1 — Theme spine + Forge + accessibility themes (visible win)
+### Phase 1: Theme spine + Forge + accessibility themes (visible win)
 - Add the `theme` package: `Theme`/`Role` model, palette accessors, the name-remap
   apply/restore (`remap.go`), the restylable-widget registry (`restyle.go`).
 - Define **Forge**, **Deuteranopia**, **Protanopia**, **High Contrast** (accessible,
@@ -810,14 +810,14 @@ Ordered so something visible lands early. Each phase is independently shippable.
   swatches.
 - Add the contrast guard test (§8) and the remap guard test (§3.6).
 - **Theme choice persists in-memory / process-local for now** if `accounts.md` isn't
-  landed yet — wire to a stub `ActiveTheme/SetActiveTheme` so the picker works end to
+  landed yet. Wire to a stub `ActiveTheme/SetActiveTheme` so the picker works end to
   end. Visible result: a player can switch between four legible themes live.
 - **Cross-doc dependency: Phase 1 has NO dependency on `accounts.md`.** It ships against a
   stub account API (`HasTheme`/`UnlockTheme`/`ActiveTheme`/`SetActiveTheme`), so theming
-  Phase 1 can land *before* the account system exists. This is deliberate — it keeps the
+  Phase 1 can land *before* the account system exists. This is deliberate: it keeps the
   two tracks from being scheduled into a deadlock.
 
-### Phase 2 — Account-wide persistence
+### Phase 2: Account-wide persistence
 - **Cross-doc dependency: this phase REQUIRES `accounts.md` Phase 3 (the unlock API).**
   Theming Phase 2 replaces the Phase-1 stub with the real `account.HasTheme` /
   `UnlockTheme` / `ActiveTheme` / `SetActiveTheme`, so it cannot start until accounts
@@ -829,25 +829,25 @@ Ordered so something visible lands early. Each phase is independently shippable.
 - Default-unlock all accessible themes + Forge; everything flavor starts locked.
 - Migrate the `ui/theme.go` age-palette globals to thin aliases over `theme.Color`.
 
-### Phase 3 — Flavor themes + milestone unlocks
+### Phase 3: Flavor themes + milestone unlocks
 - Define flavor themes (Parchment, Bronze, Cyberpunk, Monochrome, Cosmic), each
   tuned to pass the contrast guard.
 - Add the theme-unlock resolver hooked to `CheckMilestones`/`CheckChains`; persist
   unlocks account-wide; fire the unlock notification.
 - Picker shows locked themes with unlock conditions; `theme list` reflects state.
 
-### Phase 4 — Stretch
+### Phase 4: Stretch
 - Epoch-adaptive Adaptive theme (generalize `ApplyAgePalette`).
-- Begin the semantic-token cleanup (`theme.Tag`) — and keep it on the shelf as the
+- Begin the semantic-token cleanup (`theme.Tag`), and keep it on the shelf as the
   hard fallback if a dependency bump ever breaks the remap.
 - Optionally: user-authored `data/themes/*.json` with contrast-gated loading.
 
 ---
 
-## Appendix — wiki sync
+## Appendix: wiki sync
 
 Per project rules, the shipping change updates `site/`:
-- `site/docs/commands.md` — document the `theme` command (`theme`, `theme list`,
+- `site/docs/commands.md`: document the `theme` command (`theme`, `theme list`,
   `theme <name>`).
 - A new/updated accessibility section in the wiki noting colorblind + high-contrast
   themes ship unlocked.
@@ -856,7 +856,7 @@ Per project rules, the shipping change updates `site/`:
 
 ---
 
-## Appendix — color audit catalog (light-theme overhaul, base `06f6d24`)
+## Appendix: color audit catalog (light-theme overhaul, base `06f6d24`)
 
 Everything that bypassed the theme, or that would break on a light background,
 and what happened to it.
@@ -878,7 +878,7 @@ and what happened to it.
 | Modal/overlay panels on Background | 13 sites | Surface (children too) |
 | `theme.Tag` emitting frozen hex (used by progress bars) | 2 helpers | named late-bound tags |
 | Map derivations `rgba(theme.Color(...))` | 29 (palette 12, topdown 7, worldmap 9, worldmedium 1) | `mapColor` light proxy + `liftForLight` + light shadow anchor + legible labels (§3.7) |
-| Progress bars, sparklines, morale graph, age ✓/✗ strip, onboarding panel | — | already role tags; covered by the render sweep |
+| Progress bars, sparklines, morale graph, age ✓/✗ strip, onboarding panel | n/a | already role tags; covered by the render sweep |
 | Wonder icon half-block pixel art (`ui/wonder_icon.go`) | 1 | intentional art: self-contained sprite tiles with their own backgrounds |
 
 Visible changes on dark themes, all deliberate: the four stray names take their

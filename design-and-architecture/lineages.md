@@ -1,47 +1,52 @@
-# AgeForge — Building Lineages
+# AgeForge: Building Lineages
 
 ## Overview
 
-Every production building belongs to a **lineage** — a chain of age-specific incarnations
-of the same role. On age advance, buildings transform in-place (count preserved, stats
-upgraded). See age-transitions.md for the transformation mechanics.
+Every production building belongs to a **lineage**: a chain of age-specific incarnations
+of the same role. On age advance, each owned lineage building with a next tier in the new
+age is offered as a pending upgrade; the old copies keep producing as legacy buildings until
+the player runs `upgrade <building> [n|all]` and pays the cost difference. See
+age-transitions.md for the upgrade rules.
 
-**13 lineages total:**
+**14 production lineages total** (storage, wonders and cultural monuments are building
+groups, not counted here):
 1. Housing (all ages, no workers)
 2. Food Production (all ages)
-3. **Organic Extraction** (all ages) — formerly "Lumber"; produces wood → coal → oil → nanobots → dark_matter → quantum_flux
-4. **Geological Extraction** (all ages) — formerly "Masonry"; produces stone → marble/iron_ore → uranium → titanium_ore → dark_matter_crystals → antimatter
+3. **Organic Extraction** (all ages), formerly "Lumber"; produces wood → coal → oil → nanobots → dark_matter → quantum_flux
+4. **Geological Extraction** (all ages), formerly "Masonry"; produces stone → marble/iron_ore → uranium → titanium_ore → dark_matter_crystals → antimatter
 5. Knowledge (all ages)
 6. Faith (all ages)
 7. Military (all ages)
 8. Trade (Primitive → Quantum)
 9. Engineering / Infrastructure (Bronze → Quantum)
-10. Culture/Arts (Classical → Quantum, no workers — see resources.md)
-11. **Metallurgy** (Iron → Quantum) — processes Geological ore into refined construction metals
-12. Energy (Industrial → Quantum) — converts fuel to usable power resources
-13. Digital (Information → Quantum)
+10. Culture/Arts (Classical → Quantum, no workers; see resources.md)
+11. **Metallurgy** (Iron → Quantum): processes Geological ore into refined construction metals
+12. Energy (Industrial → Quantum): converts fuel to usable power resources
+13. Digital (Information → Quantum; LineageKey `hacker`)
+14. Harbor (Colonial → Digital, 5 tiers; boosts trade-route income, see config/buildings_lineage_harbor.go)
 
-**Ageless:** Storage buildings (stack cumulatively, never transform), Wonders (unique, permanent).
+**Ageless:** Storage buildings (stack cumulatively, never upgraded), Wonders (unique, permanent).
 
 ### Lineage Output by Epoch
 
-The key design feature: Organic Extraction and Geological Extraction change what resource they
-produce at each epoch boundary. The building names and worker classes also change (via the normal
-age-advance transformation), but the OUTPUT RESOURCE is the epoch-defining change.
+The main design feature: Organic Extraction and Geological Extraction change what resource they
+produce at each epoch boundary. The building names and worker classes also change (building
+names when the player runs the offered upgrade, worker classes on the age advance itself), but
+the OUTPUT RESOURCE is the epoch-defining change.
 
 | Epoch | Organic Extraction output | Geological Extraction output | Metallurgy output |
 |-------|--------------------------|-----------------------------|--------------------|
-| Stone Era | **wood** | **stone** | — (unlocks Iron Era) |
+| Stone Era | **wood** | **stone** | none (unlocks Iron Era) |
 | Iron Era | **wood** (declining) | **marble** + **iron_ore** | **iron** |
 | Steel Era | **coal** | **iron_ore** (deep seams) | **steel** |
 | Electric Era | **oil** | **uranium** | **steel** (alloys) |
 | Digital Era | **oil** (refined) / **nanobots** | **titanium_ore** | **titanium** |
 | Neon Era | **nanobots** | **dark_matter_crystals** | **dark_matter** |
-| Cosmic Era | **quantum_flux** (partial) | **antimatter** | (retired — cosmic scale) |
+| Cosmic Era | **quantum_flux** (partial) | **antimatter** | (retired at cosmic scale) |
 
 > The Organic lineage transitions from wood to coal at the Steel Era (Renaissance age). The
-> building name changes from "Lumber Works" → "Coal Mine" and the output resource switches
-> from wood to coal. Players see this as part of the age-advance transformation screen.
+> Renaissance tier is the "Coal Mine" and its output is coal. On that age advance the player's
+> wood producers are offered the Coal Mine as an upgrade; they keep producing wood until upgraded.
 
 > The Geological lineage produces BOTH marble and iron_ore in the Iron Era (transition period).
 > Marble is used in Classical/Medieval building costs; iron_ore feeds Metallurgy. Two parallel
@@ -49,7 +54,7 @@ age-advance transformation), but the OUTPUT RESOURCE is the epoch-defining chang
 
 ---
 
-## Lineage 1 — Housing
+## Lineage 1: Housing
 No workers. Pop cap scales with housing tier. ~5× per tier target.
 
 | Age | Building | Pop per building |
@@ -78,7 +83,7 @@ No workers. Pop cap scales with housing tier. ~5× per tier target.
 
 ---
 
-## Lineage 2 — Food Production
+## Lineage 2: Food Production
 Worker domain: **Food** (Gatherer → Reality Cultivator). See workers.md.
 
 | Age | Building | Worker Capacity |
@@ -107,9 +112,9 @@ Worker domain: **Food** (Gatherer → Reality Cultivator). See workers.md.
 
 ---
 
-## Lineage 3 — Organic Extraction
+## Lineage 3: Organic Extraction
 Worker domain: **Organic Extraction** (Wood Gatherer → Reality Lumberjack). See workers.md.
-**Output resource changes per epoch** — this lineage extracts carbon-based organic matter;
+**Output resource changes per epoch.** This lineage extracts carbon-based organic matter;
 what that means evolves from living trees to exotic cosmic organic compounds.
 
 | Age | Building | Worker Capacity | Output Resource | Epoch |
@@ -137,15 +142,16 @@ what that means evolves from living trees to exotic cosmic organic compounds.
 | Quantum | Reality Harvester | 30 | quantum_flux | Cosmic Era |
 
 > **Epoch transitions in this lineage:** At the Renaissance age advance (entering Steel Era),
-> the Sawmill transforms into a Coal Mine and begins producing coal instead of wood. Players
-> see this on the age advance summary screen. At Victorian (entering Electric Era), the Coal Mine
-> transforms into an Oil Derrick. And so on at each epoch boundary.
+> the Sawmill is offered an upgrade to the Coal Mine, which produces coal instead of wood. The
+> age splash lists the offer; the Sawmills keep producing wood until the player runs `upgrade`.
+> At Victorian (entering Electric Era), the Coal Mine is offered an upgrade to the Oil Derrick.
+> And so on at each epoch boundary.
 
 ---
 
-## Lineage 4 — Geological Extraction
+## Lineage 4: Geological Extraction
 Worker domain: **Geological Extraction** (Stone Picker → Reality Excavator). See workers.md.
-**Output resource changes per epoch** — this lineage mines progressively deeper geological
+**Output resource changes per epoch.** This lineage mines progressively deeper geological
 formations, from surface stone to stellar-core antimatter.
 
 In the Iron Era, this lineage produces **two outputs**: marble (for construction) AND iron_ore
@@ -178,7 +184,7 @@ economy. In implementation, two building slots or a split output rate handles th
 
 ---
 
-## Lineage 5 — Knowledge
+## Lineage 5: Knowledge
 Worker domain: **Knowledge** (Lorekeeper → Transcendent Mind). See workers.md.
 Produces: `knowledge` resource (fuels research, tech unlocks).
 
@@ -208,10 +214,10 @@ Produces: `knowledge` resource (fuels research, tech unlocks).
 
 ---
 
-## Lineage 6 — Faith
+## Lineage 6: Faith
 Worker domain: **Faith** (Shaman → Transcendent). See workers.md.
 Produces: `faith` resource. See resources.md for faith uses (morale, cohesion, diplomacy, prestige).
-Faith IS a draining resource — must be actively maintained, unlike culture.
+Faith IS a draining resource and must be actively maintained, unlike culture.
 
 | Age | Building | Worker Capacity |
 |-----|----------|----------------|
@@ -239,7 +245,7 @@ Faith IS a draining resource — must be actively maintained, unlike culture.
 
 ---
 
-## Lineage 7 — Military
+## Lineage 7: Military
 Worker domain: **Military** (Hunter → Probability Assassin). See workers.md.
 Produces: soldiers, defense rating, expedition capacity.
 
@@ -269,7 +275,7 @@ Produces: soldiers, defense rating, expedition capacity.
 
 ---
 
-## Lineage 8 — Trade / Commerce
+## Lineage 8: Trade / Commerce
 Worker domain: **Trade** (Merchant → Probability Trader). Unlocks at Bronze Age.
 Produces: `gold`, `culture` (secondary).
 
@@ -297,7 +303,7 @@ Produces: `gold`, `culture` (secondary).
 
 ---
 
-## Lineage 9 — Engineering / Infrastructure
+## Lineage 9: Engineering / Infrastructure
 Worker domain: **Engineering** (Toolmaker → Reality Engineer). Unlocks at Bronze Age.
 Produces: secondary resources (iron, steel, electricity) depending on age tier.
 
@@ -325,7 +331,7 @@ Produces: secondary resources (iron, steel, electricity) depending on age tier.
 
 ---
 
-## Lineage 10 — Culture / Arts
+## Lineage 10: Culture / Arts
 **No workers. Auto-produces culture per tick.**
 Culture accumulates (does not drain). Has a max cap set by number of culture buildings.
 See resources.md for full culture accumulation rules, thresholds, and uses.
@@ -352,11 +358,11 @@ See resources.md for full culture accumulation rules, thresholds, and uses.
 
 ---
 
-## Lineage 11 — Metallurgy (Processing Chain)
+## Lineage 11: Metallurgy (Processing Chain)
 Worker domain: **Metallurgy** (Smelter → Quantum Metallurgist). Unlocks at Iron Age.
 
 **2-stage dependency:** Metallurgy consumes raw ore from Geological Extraction and refines it
-into construction metals. It does NOT produce metals from thin air — it requires ore input.
+into construction metals. It does NOT produce metals from thin air; it requires ore input.
 If ore supply drops below Metallurgy throughput, Metallurgy buildings under-produce.
 
 ```
@@ -391,7 +397,7 @@ Geological Extraction → [ore] → Metallurgy → [refined metal] → building 
 
 ---
 
-## Lineage 12 — Energy
+## Lineage 12: Energy
 Worker domain: **Energy** (Stoker → Zero-Point Engineer). Unlocks at Industrial Age.
 Produces: `coal`, `oil`, `electricity`, `plasma`, `uranium` depending on tier.
 
@@ -413,7 +419,7 @@ Produces: `coal`, `oil`, `electricity`, `plasma`, `uranium` depending on tier.
 
 ---
 
-## Lineage 13 — Digital
+## Lineage 13: Digital
 Worker domain: **Hacker** (Programmer → Quantum Cryptographer). Unlocks at Information Age.
 Produces: `data`, `crypto`.
 
@@ -430,7 +436,22 @@ Produces: `data`, `crypto`.
 
 ---
 
-## Storage Buildings (Ageless — Cumulative, Not Transformed)
+## Lineage 14: Harbor
+Worker domain: **Trade** (same recruits as markets). Unlocks at Colonial Age.
+Produces: a little `gold`; each copy adds a trade-route income bonus applied to every active
+route's imports (`harborRouteBonus` in game/engine.go). Defined in config/buildings_lineage_harbor.go.
+
+| Age | Building | Worker Capacity | Route income bonus |
+|-----|----------|----------------|--------------------|
+| Colonial | Harbor | 4 | +5% |
+| Industrial | Harbor Authority | 5 | +10% |
+| Modern | Seaport | 6 | +15% |
+| Information | Container Terminal | 8 | +20% |
+| Digital | Logistics Hub | 10 | +25% |
+
+---
+
+## Storage Buildings (Ageless, Cumulative, Never Upgraded)
 
 Storage buildings stack across ages. A player keeps all storage they've built.
 MaxCount is enforced on storage buildings only.
@@ -459,7 +480,7 @@ MaxCount is enforced on storage buildings only.
 | Galactic | Galactic Vault | +20Q all | 25 |
 | Quantum | Quantum Vault | +200Q all | 25 |
 
-Storage never transforms and is never offered as an upgrade: each age's copies can only be
+Storage is never offered as an upgrade: each age's copies can only be
 built in that age (age lock), so trading one in for a capped slot of the next tier would
 only lower the most you can ever store.
 
@@ -468,7 +489,7 @@ only lower the most you can ever store.
 
 ---
 
-## Wonders (Ageless — Unique, Never Transform)
+## Wonders (Ageless, Unique, Never Upgraded)
 
 Wonders are permanent landmarks built once. They provide major bonuses and gate prestige/
 victory conditions. Full wonder list in config/buildings.go. Key rule: wonders with faith

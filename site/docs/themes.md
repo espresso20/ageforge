@@ -1,6 +1,6 @@
 # 🎨 Themes & Accessibility
 
-AgeForge's interface colors are driven by a set of swappable **themes** — 11 in all, both **dark** and **light**. You can switch between them **live** at any time, and your choice sticks: it's saved with your **account**, not with any individual game save, so it travels across every save and every new game. Loading an old save never changes your theme.
+AgeForge's interface colors come from swappable **themes**: 11 themes in all, **dark** and **light**. You can switch at any time and the change applies at once. Your choice is saved with your **account**, not with a game save, so it carries across every save and every new game. Loading an old save never changes your theme.
 
 Themes come in three groups: **Standard** (the default dark **Forge** and the light **Daylight**), **Accessibility** (colorblind-safe and high-contrast, in dark and light), and **Unlockable** flavor themes you earn by reaching later ages. Standard and Accessibility themes are always unlocked.
 
@@ -10,8 +10,8 @@ Themes come in three groups: **Standard** (the default dark **Forge** and the li
 
 | Theme | Key | Group | Variant | How to get it |
 |---|---|---|---|---|
-| **Forge** | `forge` | Standard | Dark | The classic dark + gold look — active by default |
-| **Daylight** | `daylight` | Standard | Light | Unlocked from the start — charcoal ink on an off-white page, white panels, deep-amber accents |
+| **Forge** | `forge` | Standard | Dark | The classic dark and gold look, active by default |
+| **Daylight** | `daylight` | Standard | Light | Unlocked from the start. Charcoal ink on an off-white page, white panels, deep-amber accents |
 | **Deuteranopia-safe** | `deuteranopia` | Accessibility | Dark | Unlocked from the start |
 | **Protanopia-safe** | `protanopia` | Accessibility | Dark | Unlocked from the start |
 | **High Contrast** | `high_contrast` | Accessibility | Dark | Unlocked from the start |
@@ -24,7 +24,7 @@ Themes come in three groups: **Standard** (the default dark **Forge** and the li
 
 ### Every theme paints its own background
 
-A theme doesn't just recolor the text — it paints the **whole surface**: the page background, panels, borders, selection, text tiers, and the good / warn / bad colors. So a light theme looks right on a dark terminal, and a dark theme looks right on a light terminal; you don't need to match your terminal's own colors to the theme.
+A theme paints the **whole surface**, text included: the page background, panels, borders, selection, text tiers, and the good / warn / bad colors. A light theme looks right on a dark terminal and a dark theme looks right on a light one, so you don't need to match your terminal's colors to the theme.
 
 A **truecolor** terminal is recommended for exact colors.
 
@@ -37,7 +37,7 @@ You can change theme from the **`theme` command** at the `>` prompt, or from the
 | Command | What it does |
 |---|---|
 | `theme` | Open the live theme picker |
-| `theme list` | List every theme by name and key, marking the active one and showing each theme's light/dark variant, which are accessible, and the lock status of any theme you haven't unlocked |
+| `theme list` | List every theme by name and key. It marks the active one and shows each theme's light/dark variant, which ones are accessible, and the lock status of any theme you haven't unlocked |
 | `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`). A locked theme is refused with its unlock hint |
 
 ```
@@ -48,11 +48,11 @@ theme daylight
 
 ### The picker
 
-The picker is a full-screen, **live-preview** screen. Themes are grouped under **Standard**, **Accessibility**, and **Unlockable** headings, and each row is tagged **light** or **dark**, **accessible**, or **locked** (`🔒`).
+The picker fills the window and **previews** each theme as you move to it. Themes are grouped under **Standard**, **Accessibility**, and **Unlockable** headings, and each row is tagged **light** or **dark**, **accessible**, or **locked** (`🔒`).
 
 | Key | Action |
 |---|---|
-| `↑` / `↓` | Preview a theme — the whole UI retints instantly so you can judge it in place |
+| `↑` / `↓` | Preview a theme. The whole interface retints at once so you can judge it in place |
 | `Enter` | Keep the highlighted theme (only if it's unlocked) |
 | `Esc` / `q` | Cancel and revert to whatever you had before |
 
@@ -61,7 +61,7 @@ Beside the list, a **details pane** shows the highlighted theme's:
 - one-line description, its **Light/Dark** variant and group;
 - the `▲` / `▼` gain/loss glyphs, for accessible themes;
 - the **unlock condition**, for locked themes;
-- **palette swatches** — a colored block for each color role;
+- **palette swatches**, a colored block for each color role;
 - a small **sample panel** painted in that theme's own colors, so you can see it on its real background.
 
 A **locked** theme can still be previewed, but `Enter` won't keep one you haven't earned yet.
@@ -70,16 +70,16 @@ A **locked** theme can still be previewed, but `Enter` won't keep one you haven'
 
 ## ♿ Accessibility
 
-Color is never the only signal. Four accessibility themes ship **unlocked from the start** and are **never gated** — they're always available:
+Color is never the only signal. Four accessibility themes are **unlocked from the start** for everyone:
 
-- **Deuteranopia-safe** and **Protanopia-safe** — for red-green color vision deficiency.
-- **High Contrast** — maximum legibility on a near-black background, for low-vision players and high-glare terminals.
-- **High Contrast Light** — the light counterpart: black ink on a white page, with text at **AAA (7:1)** contrast.
+- **Deuteranopia-safe** and **Protanopia-safe**, for red-green color vision deficiency.
+- **High Contrast**, for the most legible text on a near-black background. It suits low-vision players and high-glare screens.
+- **High Contrast Light**, the light counterpart: black ink on a white page, with text at **AAA (7:1)** contrast.
 
-Because AgeForge normally uses **green for gains and red for losses**, the accessible themes drop that pairing entirely. Instead:
+AgeForge normally uses **green for gains and red for losses**. The accessible themes drop that pairing:
 
-- Gains are **blue**, losses are **orange** — the standard colorblind-safe opposition, so red-green colorblind players can tell `+` from `−`.
-- `▲` (gain) and `▼` (loss) glyphs mark the sign by **shape as well as color**, a redundant non-color cue so the direction reads even if the hues don't.
+- Gains are **blue** and losses **orange**, the standard colorblind-safe pair, so red-green colorblind players can tell `+` from `−`.
+- `▲` (gain) and `▼` (loss) glyphs mark the sign by **shape as well as color**, so the direction reads even if the hues don't.
 
 When an accessible theme is active, the usual "green = gain / red = loss" UI legends adapt to **blue / orange + glyphs** to match.
 
@@ -91,14 +91,14 @@ Every shipped theme is **contrast-checked** (WCAG AA for text on its background)
 
 The maps follow your theme too, including light ones:
 
-- **City Map** — re-keys itself for a light page: lighter ground, streets lighter still, drop shadows and shaded walls darker, and building labels darkened so they stay readable. Space-age cities stay dark — a starfield is dark by nature.
-- **World Map** — civilization markers stay marker-bright against the map's own canvas, whatever the theme. Space-age star-maps stay dark.
+- **City Map**: adjusts for a light page, with lighter ground, even lighter streets, darker drop shadows and shaded walls, and darker building labels so they stay readable. Space-age cities stay dark, since a starfield is dark.
+- **World Map**: civilization markers stay bright against the map's own canvas, whatever the theme. Space-age star maps stay dark.
 
 ---
 
 ## 🔓 Unlocking flavor themes
 
-Beyond the Standard and Accessibility groups, AgeForge ships **flavor themes** — purely cosmetic looks you unlock by reaching an age:
+Beyond the Standard and Accessibility groups, AgeForge has **flavor themes**: cosmetic looks you unlock by reaching an age.
 
 | Theme | Variant | Unlocks when you… |
 |---|---|---|
@@ -108,7 +108,7 @@ Beyond the Standard and Accessibility groups, AgeForge ships **flavor themes** �
 | **Cyberpunk** | Dark | Reach the Cyberpunk Age |
 | **Cosmic** | Dark | Reach the Galactic Age |
 
-Unlocks are **account-wide and permanent**: earn a theme on one empire and it's yours on **every save and every future new game** — exactly like your accessibility themes.
+Unlocks are **account-wide and permanent**: earn a theme on one empire and it's yours on **every save and every future new game**, just like the accessibility themes.
 
 Until you've earned it, a flavor theme shows in the picker (and in `theme list`) with a `🔒` and its unlock condition. You can still preview a locked theme, but you can't make it your active theme until you reach the age that unlocks it.
 
@@ -116,7 +116,7 @@ Until you've earned it, a flavor theme shows in the picker (and in `theme list`)
 
 ## See also
 
-- [All Commands](commands.md) — the full `theme` command reference
-- [Account & Recovery](account.md) — how theme unlocks (and other account-wide progress) persist and travel between machines
-- [The 22 Ages](ages.md) — the ages that unlock the flavor themes
-- [The City Map](city-map.md) and [The World Map](world-map.md) — the map views
+- [All Commands](commands.md): the full `theme` command reference
+- [Account & Recovery](account.md): how theme unlocks (and other account-wide progress) are kept and moved between machines
+- [The 22 Ages](ages.md): the ages that unlock the flavor themes
+- [The City Map](city-map.md) and [The World Map](world-map.md): the map views
