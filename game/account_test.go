@@ -395,7 +395,7 @@ func TestRecoveryCodeTypoGuard(t *testing.T) {
 
 	if _, err := ImportRecoveryCode(typo); err == nil {
 		t.Errorf("typo'd code %q imported without error (typo guard failed)", typo)
-	} else if !strings.Contains(err.Error(), "checksum") {
+	} else if !strings.Contains(err.Error(), "does not check out") {
 		t.Errorf("typo'd code error = %q, want a checksum error", err.Error())
 	}
 }
