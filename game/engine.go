@@ -1977,8 +1977,8 @@ func (ge *GameEngine) fireAwakening(newAge string) {
 	ep := config.EpochByKey()[def.EpochKey]
 	// One log line per awakening — the pivotal "new era" beat. Coloured by the epoch
 	// so the awakening visually belongs to the era it ushers in.
+	// The flavor text states the boost and its duration, so no separate effect line.
 	ge.addLog("event", fmt.Sprintf("[%s]✦ Awakening: %s. %s[-]", ep.Color, def.Name, def.FlavorText))
-	ge.logTimedEffects("event", def.Effects, def.Duration)
 
 	ge.Bus.Publish(EventData{
 		Type: EventAwakeningFired,
@@ -2100,15 +2100,16 @@ func (ge *GameEngine) rollChallengingEpochEvent(epochKey string) {
 	})
 }
 
-// applyGoodEpochEvent applies the effects of a good epoch transition event and
-// logs what each one did on a "→" line under the headline.
+// applyGoodEpochEvent applies the effects of a good epoch transition event. The
+// headline's flavor text states each effect; "→" lines under it report only
+// what the text cannot know (actual counts, amounts, names).
 func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 	ge.addLog("success", fmt.Sprintf("✦ %s. %s", ev.Name, ev.FlavorText))
 	ageOrder := ge.progress.GetAgeOrder()
 	switch ev.Key {
 	case "age_of_plenty":
 		// ×2 all production for Duration ticks via production_all effect
-		ge.injectEpochEffects("success", "epoch_age_of_plenty", ev,
+		ge.injectEpochEffects("epoch_age_of_plenty", ev,
 			[]config.Effect{{Type: "production_all", Value: 1.0}})
 	case "population_surge":
 		// +15% workers across all domains, instant
@@ -2127,11 +2128,9 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 				ge.Resources.Add(def.Key, cap*cacheFill)
 			}
 		}
-		ge.addLog("success", fmt.Sprintf("  → Every unlocked resource gains %s of its storage (up to the cap).",
-			textfmt.Percent(cacheFill)))
 	case "trade_winds":
 		// Flat +5 gold/tick for Duration ticks
-		ge.injectEpochEffects("success", "epoch_trade_winds", ev,
+		ge.injectEpochEffects("epoch_trade_winds", ev,
 			[]config.Effect{{Type: "production", Target: "gold", Value: 5.0}})
 	case "cultural_festival":
 		// Instant culture +30%, faith +20%; timed production boost
@@ -2140,7 +2139,7 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		if gained := Amounts(map[string]float64{"culture": culture, "faith": faith}); gained != "nothing" {
 			ge.addLog("success", fmt.Sprintf("  → +%s.", gained))
 		}
-		ge.injectEpochEffects("success", "epoch_cultural_festival", ev, []config.Effect{
+		ge.injectEpochEffects("epoch_cultural_festival", ev, []config.Effect{
 			{Type: "production", Target: "culture", Value: 1.0},
 			{Type: "production", Target: "faith", Value: 1.0},
 		})
@@ -2156,7 +2155,6 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 	case "worker_innovation":
 		// Permanent +10% production_all
 		ge.permanentBonuses["production_all"] += 0.10
-		ge.addLog("success", fmt.Sprintf("  → All production %s, permanent.", textfmt.SignedPercent(0.10)))
 	case "architects_gift":
 		// 10 free buildings of the most common built non-wonder type
 		const giftCount = 10
@@ -2175,26 +2173,26 @@ func (ge *GameEngine) applyGoodEpochEvent(ev config.EpochEventDef) {
 		}
 	case "peaceful_century":
 		// +20% all production for Duration ticks
-		ge.injectEpochEffects("success", "epoch_peaceful_century", ev,
+		ge.injectEpochEffects("epoch_peaceful_century", ev,
 			[]config.Effect{{Type: "production_all", Value: 0.20}})
 	case "epoch_blessing":
 		// Permanent +15% production_all; recorded as a golden age
 		ge.permanentBonuses["production_all"] += 0.15
-		ge.addLog("success", fmt.Sprintf("  → All production %s, permanent.", textfmt.SignedPercent(0.15)))
 	}
 }
 
 // applyChallengingEpochEvent applies a challenging (non-catastrophe) bad epoch
-// event and logs what it did on "→" lines under the headline.
+// event. As with good events, "→" lines report only what the flavor text
+// cannot state (what burned, who died, how much was lost).
 func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochKey string) {
 	ge.addLog("warning", fmt.Sprintf("⚠ %s. %s", ev.Name, ev.FlavorText))
 	switch ev.Key {
 	case "the_famine":
-		ge.injectEpochEffects("warning", "epoch_famine", ev,
+		ge.injectEpochEffects("epoch_famine", ev,
 			[]config.Effect{{Type: "production", Target: "food", Value: -3.0}})
 	case "merchant_betrayal":
 		ge.loseShare("gold", 0.50)
-		ge.injectEpochEffects("warning", "epoch_merchant_betrayal", ev,
+		ge.injectEpochEffects("epoch_merchant_betrayal", ev,
 			[]config.Effect{{Type: "production", Target: "gold", Value: -2.0}})
 	case "the_great_fire":
 		destroyed, _ := ge.Buildings.DestroyRandom(ge.gameRNG(), 8)
@@ -2214,7 +2212,7 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 		if lost := before - ge.Workers.TotalPop(); lost > 0 {
 			ge.addLog("warning", fmt.Sprintf("  → %s lost.", textfmt.Count(lost, "worker", "workers")))
 		}
-		ge.injectEpochEffects("warning", "epoch_epidemic", ev,
+		ge.injectEpochEffects("epoch_epidemic", ev,
 			[]config.Effect{{Type: "production", Target: "food", Value: -1.5}})
 	case "resource_drought":
 		// Debuff epoch's primary resource
@@ -2222,37 +2220,38 @@ func (ge *GameEngine) applyChallengingEpochEvent(ev config.EpochEventDef, epochK
 		if ep, ok := config.EpochByKey()[epochKey]; ok {
 			primaryRes = ep.PrimaryResource
 		}
-		ge.injectEpochEffects("warning", "epoch_resource_drought", ev,
-			[]config.Effect{{Type: "production", Target: primaryRes, Value: -3.0}})
+		drought := []config.Effect{{Type: "production", Target: primaryRes, Value: -3.0}}
+		ge.injectEpochEffects("epoch_resource_drought", ev, drought)
+		// The text cannot name the resource (it depends on the epoch), so say it.
+		ge.logTimedEffects("warning", drought, ev.Duration)
 	case "political_instability":
 		ge.loseShare("faith", 0.60)
-		ge.injectEpochEffects("warning", "epoch_political_instability", ev, []config.Effect{
+		ge.injectEpochEffects("epoch_political_instability", ev, []config.Effect{
 			{Type: "production", Target: "knowledge", Value: -2.0},
 		})
 	case "economic_crash":
 		ge.loseShare("gold", 0.50)
-		ge.injectEpochEffects("warning", "epoch_economic_crash", ev,
+		ge.injectEpochEffects("epoch_economic_crash", ev,
 			[]config.Effect{{Type: "production", Target: "gold", Value: -3.0}})
 	case "the_dark_age":
 		if tech, ok := ge.Research.CancelResearch(); ok {
 			ge.addLog("warning", fmt.Sprintf("  → Research on %s canceled (no refund).", TechName(tech)))
 		}
 		ge.loseShare("knowledge", 0.80)
-		ge.injectEpochEffects("warning", "epoch_dark_age", ev,
+		ge.injectEpochEffects("epoch_dark_age", ev,
 			[]config.Effect{{Type: "production", Target: "knowledge", Value: -3.0}})
 	}
 }
 
-// injectEpochEffects starts an epoch event's timed effects and logs them as
-// "  → Gold -2/tick for ~5m." Caller holds ge.mu.
-func (ge *GameEngine) injectEpochEffects(logType, key string, ev config.EpochEventDef, effects []config.Effect) {
+// injectEpochEffects starts an epoch event's timed effects. It logs nothing:
+// the event's flavor text already states them. Caller holds ge.mu.
+func (ge *GameEngine) injectEpochEffects(key string, ev config.EpochEventDef, effects []config.Effect) {
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       key,
 		Name:      ev.Name,
 		TicksLeft: ev.Duration,
 		Effects:   effects,
 	})
-	ge.logTimedEffects(logType, effects, ev.Duration)
 }
 
 // logTimedEffects logs a timed boost or penalty as
