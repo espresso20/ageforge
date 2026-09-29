@@ -48,3 +48,4 @@ data/*.corrupt
 
 # Smoke test reports (make smoke)
 smoke-report/
+/map_captures/

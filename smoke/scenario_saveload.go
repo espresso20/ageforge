@@ -71,11 +71,11 @@ func (m botMemory) restore(b *Bot) {
 // saveloadSkip lists GameState paths that legitimately differ between an
 // uninterrupted run and a reloaded one: whether the engine has a save slot,
 // wall-clock play time, the log (not saved; compared after the checkpoint
-// separately) and the last age advance's summary (a one-shot for the age
-// splash, not saved).
+// separately), the last age advance's summary (a one-shot for the age
+// splash, not saved) and the session mark (only a loaded game has one).
 func saveloadSkip(path string) bool {
 	switch path {
-	case "SaveExists", "Stats.PlayTime", "Log", "LastAgeAdvanceSummary":
+	case "SaveExists", "Stats.PlayTime", "Log", "LastAgeAdvanceSummary", "SessionStart":
 		return true
 	}
 	return false

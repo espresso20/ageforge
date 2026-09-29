@@ -863,6 +863,10 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()
 
+	// The maps' "since your last visit" baseline: the state as saved, taken
+	// before offline catch-up moves it on.
+	ge.sessionStart = ge.sessionMarkLocked(save.Timestamp)
+
 	// Apply offline progress for time since save
 	ge.applyOfflineProgress(time.Since(save.Timestamp))
 
