@@ -120,9 +120,9 @@ trade route start <route>
 trade route stop <route>
 ```
 
-`trade route list` shows your active routes (with the approximate time left on the current cycle and the number of cycles completed) and the routes you could start (a green checkmark if you have the required building, a red X if not). `trade route start <route>` starts a route; it fails if the required building isn't built or you haven't reached the route's age. `trade route stop <route>` stops a route at once, mid-cycle.
+`trade route list` shows your active routes (with the approximate time left on the current cycle and the number of cycles completed) and the routes you could start (a green checkmark if you have the required building, a red X if not). `trade route start <route>` starts a route; it fails if the required building isn't built or you haven't reached the route's age. `trade route stop <route>` stops a route at once, mid-cycle. There's no limit on how many routes can run at once, so run them all.
 
-A route **pauses itself** if its required building is demolished while it runs, and the log says so. Rebuild the building and `trade route start` it again.
+A route **stops itself** if you fall below its required building count while it runs, and the log says so. Rebuild the building and `trade route start` it again.
 
 If a cycle comes round and you don't have enough of what the route gives away, that cycle is skipped with no penalty, and the route tries again next cycle. Keep those stockpiles topped up.
 
@@ -133,8 +133,6 @@ If you are **at war** with a civilization, or you have put it under **embargo**,
 On the Trade panel a disrupted route has a red ✖ and a note naming the blockaded resource, and a banner above the routes lists every blockaded resource. The log also notes each cycle a disrupted route misses.
 
 Disruption follows the war and embargo state directly; there's nothing separate to track. Before you embargo or provoke the **gold** specialist (Merchant Guild) or the **culture** specialist (Artisan League), check which of your routes bring in those goods.
-
-There's no limit on how many routes can run at once, so run them all.
 
 The Trade panel doesn't list civilizations. The one diplomacy effect it shows is an **Allied Bonuses** block under the routes while an ally is boosting a resource (see [Allied Bonuses](#allied-bonuses)). Its last line points you to the **Factions** panel (`factions`) for opinion and diplomacy actions.
 
@@ -241,7 +239,7 @@ Every duration on the panel (boon and setback time left, the Society's interval 
 
 Every civilization you have met offers a small, rotating set of **trade deals**. Nothing is written by hand for each civilization: its specialty, personality and strength, and its opinion of you, decide what it offers. The Factions panel shows each civilization's deals on its card. `diplomacy deals [civ]` lists them, `diplomacy accept <civ> <n>` takes one, and `plan deal <civ> <n>` queues one in the [build plan](plan.md).
 
-**Kinds.** Every deal is worded from your side, the same way on the panel, in `diplomacy deals`, in the plan and in the log: `<kind>: give <price> → get <goods>`, for example `Buy: give 876M coal → get 966K food`.
+Every deal is worded from your side, the same way on the panel, in `diplomacy deals`, in the plan and in the log: `<kind>: give <price> → get <goods>`, for example `Buy: give 876M coal → get 966K food`.
 
 | Kind | You give | You get |
 |---|---|---|
@@ -252,9 +250,9 @@ Every civilization you have met offers a small, rotating set of **trade deals**.
 
 Next to each line the panel shows how much better than the market the deal pays (`+15% vs market`), or `not sold at the market` when the market doesn't trade the pair.
 
-**Rates.** Where the market trades the pair, a deal pays **5% to 25% better than the market** (it trades at 0.84 to 1.0 of parity, where the market pays 0.8). Where the market doesn't trade the pair, the rate comes from the two resources' price levels (food and culture are valued by what the age's producers of them make). A deal never pays better than parity, so trading still never beats building. Deals ignore market pressure: each one is a fixed contract.
+Where the market trades the pair, a deal pays **5% to 25% better than the market** (it trades at 0.84 to 1.0 of parity, where the market pays 0.8). Where the market doesn't trade the pair, the rate comes from the two resources' price levels (food and culture are valued by what the age's producers of them make). A deal never pays better than parity, so trading still never beats building. Deals ignore market pressure: each one is a fixed contract.
 
-**Personality.**
+A civilization's personality sets how many deals it offers and which kinds:
 
 | Personality | Deals |
 |---|---|
@@ -263,13 +261,13 @@ Next to each line the panel shows how much better than the market the deal pays 
 | **aggressive** | one fewer than peaceful (at least one), 4 points worse rates, and more Goodwill deals |
 | **isolationist** | one deal (two when allied): a **Rare** deal when the next age has goods for it to sell, its specialty otherwise |
 
-**Opinion.** Friendly civilizations (friendly status, or opinion 25+) and allies offer more deals, at better rates (0.88 of parity when neutral, 0.92 friendly, 0.96 allied, plus 0.03 on a Sell) and in bigger lots. A civilization **at war** with you, under your **embargo**, your **rival**, or with opinion **-50 or lower** offers nothing and won't honor the offers it already made until that changes. Taking a Buy, Sell or Rare deal adds +1 opinion and counts as a trade; a Goodwill deal adds +5. Deals can raise opinion only up to **50**: they can bring a civilization to the edge of an alliance but not past it, and they can't end a war (no one at war trades with you; tribute or waiting it out still ends it).
+Opinion matters too. Friendly civilizations (friendly status, or opinion 25+) and allies offer more deals, at better rates (0.88 of parity when neutral, 0.92 friendly, 0.96 allied, plus 0.03 on a Sell) and in bigger lots. A civilization **at war** with you, under your **embargo**, your **rival**, or with opinion **-50 or lower** offers nothing and won't honor the offers it already made until that changes. Taking a Buy, Sell or Rare deal adds +1 opinion and counts as a trade; a Goodwill deal adds +5. Deals can raise opinion only up to **50**: they can bring a civilization to the edge of an alliance but not past it, and they can't end a war (no one at war trades with you; tribute or waiting it out still ends it).
 
-**Size.** A deal moves about 1.5 median building prices of the age (×0.9 plus 0.1 per point of the civilization's strength, ×1.25 friendly, ×1.5 allied, ×1.2 mercantile, ×2 for a Rare deal, and a roll between ×0.75 and ×1.25). It's capped so the goods fit in half your storage and the price in 80% of it. Amounts are rounded to three figures, never in your favor.
+A deal moves about 1.5 median building prices of the age (×0.9 plus 0.1 per point of the civilization's strength, ×1.25 friendly, ×1.5 allied, ×1.2 mercantile, ×2 for a Rare deal, and a roll between ×0.75 and ×1.25). It's capped so the goods fit in half your storage and the price in 80% of it. Amounts are rounded to three figures, never in your favor.
 
-**Refresh.** Offers rotate after **an hour of play at 1x** (1,800 ticks) and when you advance an age. The timer only runs while the game does: offline catch-up doesn't advance it, so when you come back you find the offers you left, and a deal you planned is still there for the plan to take while you're away. The panel shows the time to the next set.
+Offers rotate after **an hour of play at 1x** (1,800 ticks) and when you advance an age. The timer only runs while the game does: offline catch-up doesn't advance it, so when you come back you find the offers you left, and a deal you planned is still there for the plan to take while you're away. The panel shows the time to the next set.
 
-**Examples** (neutral opinion, at each civilization's own age):
+Some examples, at neutral opinion and at each civilization's own age:
 
 - *Riverlands Tribes* (peaceful, food), Bronze Age: `Sell: give 2.1K stone → get 3.0K food` (+13% vs market), `Goodwill: give 727 iron → get +5 opinion`.
 - *Merchant Guild* (mercantile, gold), Colonial Age: `Sell: give 2.2M knowledge → get 23M gold` (+16%), `Buy: give 5.4M wood → get 22M gold` (+12%), and a third.
@@ -374,7 +372,7 @@ The Trade panel lists the same bonuses under **Allied Bonuses**, one line per al
 
 ### First Contact & Discovery
 
-Three rules decide when you meet a civilization. Reaching its first age makes it *eligible*; it doesn't meet you on its own. Sending missions is what finds it: whenever a **scouting expedition** or **campaign** resolves, the game rolls a chance to **encounter** a civilization. An encounter discovers a new eligible civilization (first contact) or, once you know everyone within reach, meets a known one again. Scouting finds civilizations more often than campaigns, and success more often than failure (see [Military & Expeditions](military.md#faction-encounters) for the odds). Finally, if you never send a mission, each civilization is discovered anyway about **two ages after** its first age, far later than an explorer would meet it.
+Three rules decide when you meet a civilization. Reaching its first age makes it *eligible*; it doesn't meet you on its own. Sending missions is what finds it: whenever a **scouting expedition** or **campaign** resolves, the game rolls a chance to **encounter** a civilization. An encounter discovers a new eligible civilization (first contact) or, once you know everyone within reach, meets a known one again. Scouting finds civilizations more often than campaigns, and success more often than failure (see [Military & Expeditions](military.md#civilization-encounters) for the odds). Finally, if you never send a mission, each civilization is discovered anyway about **two ages after** its first age, far later than an explorer would meet it.
 
 On first contact the log introduces the civilization's name, personality and backstory. Until then it appears only in the not-yet-met list on the Factions panel, and you can't deal with it. The founding civilizations (Riverlands Tribes, Ironhold Clans) appear early; the rest turn up across the eras up to the Cosmic Era.
 
@@ -386,7 +384,7 @@ Each timed boon lasts **750-3000 ticks** (about **25 minutes to 1h 40m** at 1x; 
 
 **Encounters can go badly.** A **setback** takes the place of a boon whenever the mission **failed**, on about **one in three** meetings with a civilization you are **at war** with, and on about **one in four** timed rewards turned away because all five boon slots are full. A wartime meeting that doesn't turn violent is a **standoff**: the two parties see each other and withdraw, and you come home with nothing but the sighting. A civilization you are fighting never gives you a gift. Setbacks come from their own table: a handful of workers lost on the way home (to fever or bad water), part of one resource stockpile spoiled, stolen or written off, a temporary drop in one resource's output, or a production dip across your civilization while word of the expedition spreads. Setbacks get worse with the civilization's **strength** and milder with its **opinion** of you, so an ally's bad news is gentler than a rival's, and a war with a strong civilization is the worst case. They are limited: at most three timed setbacks run at once (against five boon slots), a setback expires sooner than a boon of the same size, and a spoilage takes part of a store, never all of it.
 
-Encounters are one more reason to keep missions running after you've met everyone, with the catch that a failed run brings back a bill and a run that resolves with all five boon slots full brings back goods rather than buffs. See [Military & Expeditions](military.md#faction-encounters).
+Encounters are one more reason to keep missions running after you've met everyone, with the catch that a failed run brings back a bill and a run that resolves with all five boon slots full brings back goods rather than buffs. See [Military & Expeditions](military.md#civilization-encounters).
 
 ---
 

@@ -165,6 +165,10 @@ func TestDocsNoRetiredText(t *testing.T) {
 	for _, f := range playerDocs(t) {
 		p := prose(f, readDoc(t, f))
 		p = strings.ReplaceAll(p, "villagers.md", "workers-page") // the page's file name stays
+		// Names that contain a retired word but mean something else.
+		for _, name := range []string{"Standing Stones", "Standing Army"} {
+			p = strings.ReplaceAll(p, name, "a game name")
+		}
 		for _, r := range retiredDocText {
 			for _, m := range r.re.FindAllStringIndex(p, -1) {
 				line := strings.Split(p, "\n")[lineOf(p, m[0])-1]
@@ -177,9 +181,9 @@ func TestDocsNoRetiredText(t *testing.T) {
 // TestDocsNoGoIdentifiers: player docs describe effects, not code. No
 // function calls, Go source paths or CamelCase identifiers.
 var goIdent = []*regexp.Regexp{
-	regexp.MustCompile(`\b[A-Z][A-Za-z]+\.?[A-Za-z]*\(\)`),                // RecordTrade(), ge.Foo()
+	regexp.MustCompile(`\b[A-Z][A-Za-z]+\.?[A-Za-z]*\(\)`),                   // RecordTrade(), ge.Foo()
 	regexp.MustCompile(`\b(game|ui|config|boon|flavor|theme)/[a-z_]+\.go\b`), // game/military.go
-	regexp.MustCompile(`\b[A-Z][a-z]+(?:[A-Z][a-z]+)+\b`),                  // TradeBonus, EventManager
+	regexp.MustCompile(`\b[A-Z][a-z]+(?:[A-Z][a-z]+)+\b`),                    // TradeBonus, EventManager
 }
 
 // camelOK are CamelCase words that are names, not code.

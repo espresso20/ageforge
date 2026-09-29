@@ -10,9 +10,9 @@ a proposed change would break the game's balance, start here.
 |------|---------------|
 | [economy.md](economy.md) | Economy laws, cost scaling, production model, worker-building coupling |
 | [workers.md](workers.md) | All 12 worker domains, age-tiered class names, food costs, output multipliers |
-| [age-transitions.md](age-transitions.md) | Age advance transformation pass: building lineages, worker renames, legacy rules, UI summary |
-| [lineages.md](lineages.md) | All 13 building lineages: full 21-tier tables, storage buildings, wonders policy |
-| [resources.md](resources.md) | All 25 resources: faith mechanics (draining), culture mechanics (accumulating), epoch resource chain, 2-stage processing chain |
+| [age-transitions.md](age-transitions.md) | Age advance: pending building upgrades run with `upgrade`, building lineages, worker renames, legacy rules, UI summary |
+| [lineages.md](lineages.md) | All 14 production lineages: full tier tables, storage buildings, wonders policy |
+| [resources.md](resources.md) | All 26 resources: faith mechanics (draining), culture mechanics (accumulating), epoch resource chain, 2-stage processing chain |
 | [epochs.md](epochs.md) | 7 epochs × 3 ages, resource transitions per epoch, Civilizational Catastrophe system (Endure vs Succumb), 63 total events across 7 epoch pools, UI epoch badge |
 
 ## How to Use These Documents
@@ -33,8 +33,8 @@ Decisions recorded here are settled. They can be revisited but require explicit 
 | 2026-09-28 | Faction trade deals are derived, fixed-price side contracts (game/deals.go) | A civ's deals come from its data and your opinion, like factionProfile's boons, so there are no per-civ tables to balance. Rates are pinned to the market (5-25% better, never past parity) so trading still never beats building; lots are 1-4 price units and the greedy bot ignores deals, so they stay a side channel (the `-deals=on` bot measures them). Opinion gained from deals caps at 50 and hostile civs don't trade, so deals can't buy an alliance or a peace. The refresh timer counts live ticks only, so check-in players find the offers they left. |
 | 2026-03-03 | Workers couple to buildings (Philosophy B) | Preserves assignment mechanic, creates unified production chain |
 | 2026-03-03 | Age-tiered worker classes (Gatherer→Serf→Drone→Harvester etc.) | Flavor + mechanical progression; higher tiers cost more food but produce significantly more |
-| 2026-03-03 | Age transition transformation pass | Buildings upgrade in-place (count preserved), workers rename on age advance, so the civilization feels like it advances instead of only unlocking more |
-| 2026-03-03 | Wonders never transform, storage buildings don't transform (cumulative) | Wonders are landmarks; storage is additive infrastructure |
+| 2026-03-03 | Age transition pass | Buildings upgrade in-place (count preserved), workers rename on age advance, so the civilization feels like it advances instead of only unlocking more. (Superseded: the age advance now offers each next tier as a pending upgrade that the player runs and pays for with `upgrade`; see age-transitions.md.) |
+| 2026-03-03 | Wonders and storage buildings are never upgraded to a new tier (storage is cumulative) | Wonders are landmarks; storage is additive infrastructure |
 | 2026-03-03 | Legacy buildings: no next-tier = stays functional, grayed, unbuildable | Player is never punished by losing production they invested in |
 | 2026-03-03 | Remove MaxCount from production/housing buildings | Geometric cost scaling is the natural cap |
 | 2026-03-03 | Keep MaxCount on storage buildings and wonders | Unlimited storage breaks resource pressure; wonders are unique by design |
@@ -46,11 +46,11 @@ Decisions recorded here are settled. They can be revisited but require explicit 
 | 2026-03-03 | Culture/Arts lineage has no worker domain; it produces passively | Culture is a civilization ambient stat, not an assigned-labor product |
 | 2026-03-03 | Culture accumulates permanently (20% persists through prestige), thresholds unlock permanent bonuses | Creates a long-term civilization identity investment separate from prestige resets |
 | 2026-03-03 | Faith is a draining resource (must maintain); gates morale, cohesion, diplomacy, prestige multiplier | A real idle management loop; neglecting faith has real costs |
-| 2026-03-03 | 13 building lineages, 12 worker domains | Final counts. Adding new content requires explicit justification |
+| 2026-03-03 | 13 building lineages, 12 worker domains | Final counts. Adding new content requires explicit justification. (Superseded: Harbor later made it 14 production lineages.) |
 | 2026-03-03 | 7 epochs (3 ages each) as meta-progression layer above ages | Cleaner than per-age transitions; 7 epochs × 3 ages = 21 exactly |
-| 2026-03-03 | Organic Extraction and Geological Extraction change output resource per epoch | "Lumber" is not always wood; the role evolves. Building transforms name AND output at epoch boundary. |
+| 2026-03-03 | Organic Extraction and Geological Extraction change output resource per epoch | "Lumber" is not always wood; the role evolves. The next tier changes name AND output at the epoch boundary. |
 | 2026-03-03 | 2-stage processing chain everywhere (Geological ore → Metallurgy → refined metal) | Adds a supply chain to optimize; every epoch has a bottleneck to balance |
-| 2026-03-03 | 25 resources total (added marble, iron_ore, titanium_ore, dark_matter_crystals) | Intermediate ores enable 2-stage chains without exposing them as build costs |
+| 2026-03-03 | 25 resources total (added marble, iron_ore, titanium_ore, dark_matter_crystals) | Intermediate ores enable 2-stage chains without exposing them as build costs. (Superseded: soldiers later made it 26.) |
 | 2026-03-03 | Civilizational Catastrophe system: Endure vs Succumb at each epoch boundary | Narrative-driven alternative/complement to prestige; 7 catastrophes, epoch-specific Legacy Bonuses, 8 Ruins carry forward on Succumb |
 | 2026-03-03 | 88 total events: 28 universal + 35 epoch-exclusive + 10 good epoch + 8 bad epoch + 7 catastrophe | Event pool shifts each epoch; transition events are separate from regular random pool |
 | 2026-03-03 | Catastrophe is not guaranteed every epoch: it's ~15% per epoch transition | Players would rage if forced into Endure/Succumb 7 times; rarity makes it feel special |

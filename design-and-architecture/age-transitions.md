@@ -2,43 +2,58 @@
 
 ## Overview
 
-When a player advances to a new age, a **transformation pass** automatically upgrades their
-civilization. Buildings transform to their next-tier equivalent, workers rename and gain new
-stats, and new construction options unlock. The player never migrates anything by hand; the game
-handles it as part of the age advance event.
+When a player advances to a new age, the engine does not replace buildings on its own. It
+offers each lineage building that has a next tier in the new age as a **pending upgrade**,
+and the player decides when to pay for it with the `upgrade` command. Workers rename and take
+the new age's stats at once, and the new age's buildings unlock for construction.
 
 This design means:
-- The Economy tab always shows **only current-age buildings** (no overflow, no age grouping)
+- Old-tier buildings keep producing until the player upgrades them, so an age advance never
+  costs production by itself
+- Upgrading costs resources, so moving a large stock of buildings to the new tier is a
+  spending decision rather than a free swap
 - Workers always reflect the current age's class names
-- Players feel the civilization advancing instead of only unlocking more buildings on top
 
 ---
 
-## Transformation Pass (on age advance)
+## Age Advance Pass (`advanceAge` in game/engine.go)
 
 ```
-1. For each building in player inventory:
-      - Look up the building's lineage chain
-      - If a next-tier entry exists for the new age: transform in-place
-          • building key, name, stats update
-          • count is preserved exactly
-          • assigned workers remain (still valid for the same domain)
-      - If no next-tier entry: building becomes "legacy" (functional, not upgradeable)
+1. For each owned building with a lineage (wonders and storage are skipped):
+      - Look up the lineage's next tier for the new age (config.BuildingNextTierForAge)
+      - If one exists:
+          • record a pending upgrade old key → new key (BuildingManager.SetPendingUpgrade)
+          • mark the old building legacy: it keeps producing but can no longer be built
+          • log a line naming the upgrade and the `upgrade <old key>` command
+      - Any other owned lineage building whose lineage now has a higher unlocked tier is
+        also marked legacy
 
-2. For each worker class in player inventory:
-      - Find the new-age tier for their domain
-      - Rename the class (Tribesman → Laborer)
-      - Apply new food cost and output multiplier immediately
-      - Count is preserved, so no re-recruitment is needed
+2. Workers.SetAge(newAge): worker classes rename and take the new tier's food cost and
+   output multiplier; counts and assignments are kept
 
-3. Unlock new-age buildings for fresh construction
+3. New-age buildings unlock for construction
 
-4. Display "Age Advance" summary screen:
-      - List all buildings that transformed (old name → new name, count)
-      - List all worker classes that renamed
-      - List newly unlocked buildings
-      - Net production change (before/after comparison)
+4. The age splash (ui/age_splash.go) lists the upgrades now on offer
+   (AgeAdvanceSummary.BuildingsTransformed) and the buildings that went legacy
 ```
+
+## Running Upgrades (`upgrade` command)
+
+- `upgrade` with no arguments lists every pending upgrade: old key, new key, copies
+  available, cost, and whether the player can afford it now
+- `upgrade <building> [n|all]` converts n copies (default all) to the new tier
+  (`GameEngine.UpgradeBuilding`)
+- Cost per copy, per resource: the new copy's cost at the current new-tier count (with
+  build_cost discounts) minus a refund of half the old copy's undiscounted cost, floored at
+  zero (`BuildingManager.UpgradeCost`)
+- The new tier's MaxCount still applies; the command upgrades as many copies as fit
+- When every copy moves, worker assignments move to the new key. After a partial upgrade,
+  workers beyond what the remaining old copies can hold follow the upgraded copies while the
+  new building has room; the rest return to the idle pool
+- Once no old copies remain, the pending upgrade is cleared
+- Trying to build a legacy building that has a pending upgrade returns an error that points
+  the player at `upgrade <key>`
+- Pending upgrades and legacy flags are saved with the game
 
 ---
 
@@ -50,8 +65,8 @@ a lineage share a domain, purpose, and worker type; only their name, stats, and 
 **Rules:**
 - Each lineage has at most one entry per age
 - A building belongs to exactly one lineage (or is "ageless": wonders, storage)
-- Lineage advancement is automatic on age advance
-- If a lineage has no entry for the new age, the building becomes legacy
+- On age advance, a lineage's next tier is offered as a pending upgrade; the player runs it
+- If a lineage has no entry for the new age, the building stays as it is and no upgrade is offered
 
 ### Lineage Definitions
 
@@ -208,34 +223,36 @@ Unlocks at Bronze Age.
 | Galactic | Dyson Assembly | 25 |
 | Quantum | Reality Forge | 30 |
 
-#### Storage (no lineage transformation; storage buildings are age-specific, standalone)
-Storage buildings do **not** transform on age advance. They stack additionally.
-A player keeps their stashes AND can build Stone Age storage pits on top.
+#### Storage (age-specific, standalone, never upgraded)
+Storage buildings are never offered as upgrades on age advance. They stack additionally.
+A player keeps their stashes AND can build this age's storage on top.
 This is intentional: storage growth is cumulative and should feel like infrastructure investment.
+Each age's storage can only be built in that age, so trading a copy in for a capped slot of the
+next tier would only lower the most the player can ever store.
 See economy.md Law 1 (Storage Covenant) for capacity requirements per age.
 
-#### Wonders (ageless, never transform)
+#### Wonders (ageless, never upgraded)
 Wonders are permanent landmarks. A Great Monolith built in Stone Age stays a Great Monolith
-in the Quantum Age. They do not transform, cannot be rebuilt, and are never demolished.
+in the Quantum Age. They are never upgraded, cannot be rebuilt, and are never demolished.
 This makes wonders feel like historical monuments rather than upgradeable units.
 
 ---
 
 ## Legacy Buildings
 
-Buildings with no next-tier lineage entry become **legacy** on age advance:
-- Still produce at their current stats
-- Cannot be built again (grayed out in Economy tab with legacy tag)
-- Cannot be upgraded
-- Do not disappear; they remain as long-standing infrastructure
-- Example: `firepit` (stone age) has no bronze equivalent → stays as legacy on bronze advance
+A building becomes **legacy** on age advance when its lineage has a newer tier: either the
+tier offered as a pending upgrade or a higher tier already unlocked.
+- Still produces at its current stats
+- Cannot be built again (the build error points at `upgrade` when an upgrade is on offer)
+- Can be upgraded with `upgrade <key>` while a pending upgrade exists
+- Does not disappear; copies the player never upgrades stay as long-standing infrastructure
 
 Legacy buildings fade in relevance naturally (their fixed stats fall behind the new age's
 production curve) without punishing the player by removing them.
 
 ---
 
-## Worker Transformation
+## Worker Renames
 
 On age advance, all worker classes in the player's workforce rename and restat:
 
@@ -259,36 +276,32 @@ The player sees a net production gain but also higher food cost. This creates a 
 
 ## Age Advance UI Summary Screen
 
-When the age advances, show a modal/toast sequence:
+The age splash (ui/age_splash.go) shows, among other things, the upgrades now on offer and
+the buildings that went legacy. Nothing on it has changed yet: the listed buildings move to
+the new tier only when the player runs `upgrade`.
 
 ```
-╔══════════════════════════════════════════════╗
-║  ✦ Bronze Age Dawns ✦                        ║
-╠══════════════════════════════════════════════╣
-║  Buildings Transformed:                       ║
-║    75 Gathering Camps → Farms               ║
-║     3 Woodcutter's Camps → Farms            ║
-║    23 Altars → Scriptoriums                 ║
-║     5 War Camps → Barracks                  ║
-║                                              ║
-║  Workers Upgraded:                           ║
-║    280 Tribesmen → Laborers                 ║
-║      5 Elders → Scribes                     ║
-║                                              ║
-║  Unlocked for Construction:                  ║
-║    Smithy, Market, Library, House, Warehouse ║
-║                                              ║
-║  ⚠ Food drain +14/tick: assign more farmers  ║
-╚══════════════════════════════════════════════╝
+── Buildings Transformed ──
+  Gathering Camp → Farm        x75
+  Altar → Scriptorium          x23
+  War Camp → Barracks          x5
+── Legacy Buildings ──
+  Firepit
 ```
+
+The section heading still reads "Buildings Transformed" (the `BuildingsTransformed` field of
+`AgeAdvanceSummary`), although each line is an offer, not a completed change.
 
 ---
 
 ## Implementation Notes
 
-- `BuildingDef` needs a `LineageKey string` field (e.g. `"raw_production"`, `"housing"`)
-  and a `LineageTier int` (0 = primitive, 1 = stone, etc.)
-- `AgeDef` triggers transformation pass in the engine's `advanceAge()` function
-- Save format: buildings saved by key; on load, if a key is not recognized (old save with
-  pre-transformation building names), the engine maps via a migration table
-- The transformation pass fires synchronously inside `advanceAge()` before the tick resumes
+- `BuildingDef` carries `LineageKey string` (e.g. `"housing"`) and `LineageTier int`
+- `advanceAge()` in game/engine.go records pending upgrades and legacy flags; it does not
+  change building counts
+- `GameEngine.UpgradeBuilding` does the conversion when the player runs `upgrade`, through
+  `BuildingManager.UpgradeCost` and `BuildingManager.PartialTransform`
+- `GameEngine.GetAvailableUpgrades` feeds the `upgrade` listing (`cmdUpgrade` in ui/input.go)
+- Save format: buildings saved by key, with pending upgrades and legacy flags alongside;
+  on load, if a key is not recognized (old save with renamed building keys), the engine maps
+  it via a migration table

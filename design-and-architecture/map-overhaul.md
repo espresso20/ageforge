@@ -1,6 +1,6 @@
 # Map Overhaul: the `citymap` rewrite
 
-**Status:** active (2026-06). Supersedes `map-system-guide.md`,
+**Status:** historical; describes the plan as of 2026-06. It superseded `map-system-guide.md`,
 `map-layout-strategy-specs.md`, `map-rendering-experiments.md`, and
 `map-background-prompts.md`, which are all aspirational or stale; the
 shipped MapV4 realized none of them.

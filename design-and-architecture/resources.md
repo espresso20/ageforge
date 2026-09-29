@@ -2,7 +2,7 @@
 
 ## Overview
 
-AgeForge has **25 resources** organized into tiers. Resources are produced by buildings,
+AgeForge has **26 resources** organized into tiers. Resources are produced by buildings,
 consumed by costs and workers (food drain), and capped by storage buildings.
 
 Most resources are **flow resources**: produced and consumed continuously, capped at
@@ -45,6 +45,7 @@ the input stage of the 2-stage processing chain and are never used as building c
 | 23 | dark_matter | Flow | Space | Refined exotic; produced by Metallurgy from dark_matter_crystals; Neon/Cosmic build cost |
 | 24 | antimatter | Flow | Galactic | Stellar extraction; produced by Geological Extraction; Cosmic Era build cost |
 | 25 | quantum_flux | Flow | Quantum | Final tier; produced by Energy lineage; Cosmic Era primary cost |
+| 26 | soldiers | Flow | Iron | Trained by Military buildings; spent launching expeditions |
 
 ---
 

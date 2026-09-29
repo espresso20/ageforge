@@ -87,7 +87,7 @@ Starting age. No requirements.
 **Unlocks:**
 - Buildings: Hut, Stash, Gathering Camp, Wood Camp, Story Circle, Shrine, Sacred Grove
 - Resources: Food, Wood, Knowledge, Faith
-- Worker domains: food, knowledge
+- Worker domains: food, knowledge, faith
 
 ---
 
@@ -103,7 +103,7 @@ Starting age. No requirements.
 | Huts | 10 |
 | Story Circles | 5 |
 
-**Unlocks:** Longhouse, Storage Pit, Forager Post, Woodcutter Camp, Stone Camp, Stone Pit, Elders' Hall, Standing Stones, War Camp, Great Monolith · **Resource:** Stone
+**Unlocks:** Longhouse, Storage Pit, Forager Post, Woodcutter Camp, Stone Camp, Stone Pit, Elders' Hall, Standing Stones, War Camp, Great Monolith · **Resource:** Stone · **New domains:** lumber, masonry
 
 ---
 
@@ -121,7 +121,7 @@ Starting age. No requirements.
 | Stone Pits | 5 |
 | Elders' Halls | 5 |
 
-**Unlocks:** House, Warehouse, Farm, Lumber Mill, Quarry, Scriptorium, Altar, Barracks, Market, Smithy, Stonehenge · **Resources:** Iron, Gold · **New domain:** trade
+**Unlocks:** House, Warehouse, Farm, Lumber Mill, Quarry, Scriptorium, Altar, Barracks, Market, Smithy, Stonehenge · **Resources:** Iron, Gold · **New domains:** trade, engineering
 
 ---
 
@@ -176,7 +176,7 @@ Starting age. No requirements.
 | Libraries | 15 |
 | Military Academies | 15 |
 
-**Unlocks:** Manor, Keep, Demesne, Sawmill, Stonemasons' Guild, Monastery Library, Cathedral, Castle Keep, Guildhall, Workshop, Ironmonger, Great Hall, Great Library · **Resource:** Steel · **New domain:** faith
+**Unlocks:** Manor, Keep, Demesne, Sawmill, Stonemasons' Guild, Monastery Library, Cathedral, Castle Keep, Guildhall, Workshop, Ironmonger, Great Hall, Great Library · **Resource:** Steel
 
 ---
 
@@ -244,7 +244,7 @@ Starting age. No requirements.
 | Iron Works Complexes | 5 |
 | Tenements | 30 |
 
-**Unlocks:** Row House, Victorian Vault, Mechanized Farm, Oil Derrick, Uranium Mine, Academy, Grand Cathedral, Garrison, Bank, Steam Works, Bessemer Plant, Steam Turbine, Grand Museum, Eiffel Tower · **Resource:** Electricity · **New domains:** engineering, energy
+**Unlocks:** Row House, Victorian Vault, Mechanized Farm, Oil Derrick, Uranium Mine, Academy, Grand Cathedral, Garrison, Bank, Steam Works, Bessemer Plant, Steam Turbine, Grand Museum, Eiffel Tower · **Resource:** Electricity · **New domain:** energy
 
 ---
 

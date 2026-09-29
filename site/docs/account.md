@@ -42,7 +42,7 @@ The account holds two distinct things:
 | **Identity** | Your chosen name and the account ID derived from it |
 | **Data** | Your earned account-wide progress: theme unlocks, lifetime stats, achievements, prefs |
 
-The split matters because the two halves are recovered very differently (see below). Your **identity** is carried by either your account name *or* the recovery code (both point at the same ID). The **data** is backed up separately with an account **export** (see [Exporting & importing accounts](#exporting--importing-accounts)).
+The split matters because the two halves are recovered very differently (see below). Your **identity** is carried by either your account name *or* the recovery code (both point at the same ID). The **data** is backed up separately with an account **export** (see [Exporting & importing accounts](#exporting-amp-importing-accounts)).
 
 > **You choose the name once.** Because the ID comes from the name, picking a *different* name later creates a *different* identity; it does not rename the account. For that reason there is no in-game rename, so choose a name you're happy to keep. (If you want a second civilization to play in parallel, create a **new account**; see the Accounts panel below.)
 
@@ -137,7 +137,7 @@ If the file is missing or has been tampered with, the import is refused with an 
 
 ## Backups
 
-A **backup** is a full copy of an account's slot on disk: its `account.json` **plus a recursive copy of that slot's `saves/` folder**. It holds more than an [export](#exporting--importing-accounts). An export writes only the account-wide progress (unlocks, lifetime stats, achievements, prefs) into a single file and carries **no saves**, while a backup copies the whole slot, your games included.
+A **backup** is a full copy of an account's slot on disk: its `account.json` **plus a recursive copy of that slot's `saves/` folder**. It holds more than an [export](#exporting-amp-importing-accounts). An export writes only the account-wide progress (unlocks, lifetime stats, achievements, prefs) into a single file and carries **no saves**, while a backup copies the whole slot, your games included.
 
 The game makes a backup at three points:
 
@@ -195,7 +195,7 @@ The code holds **only your account ID plus a checksum**.
 
 The recovery code restores your **identity** across machines and reinstalls. It is **separate from a progress export and carries no progress**; the code is short because it holds only the identity.
 
-To carry your earned progress between machines, use an account **export** (see [Exporting & importing accounts](#exporting--importing-accounts)). The two work together: the code restores *who you are*, the export restores *what you've earned*. A full move to a new machine uses **both**.
+To carry your earned progress between machines, use an account **export** (see [Exporting & importing accounts](#exporting-amp-importing-accounts)). The two work together: the code restores *who you are*, the export restores *what you've earned*. A full move to a new machine uses **both**.
 
 ---
 
@@ -227,7 +227,7 @@ These stats update the moment you prestige or advance into a new age, and are sa
 
 ## Restoring on a new machine
 
-There are **two ways** to restore your identity, because your name and your recovery code both lead to the same account ID. Either way, restoring your **identity** does not bring your earned progress with it; for that you also need an [account export](#exporting--importing-accounts).
+There are **two ways** to restore your identity, because your name and your recovery code both lead to the same account ID. Either way, restoring your **identity** does not bring your earned progress with it; for that you also need an [account export](#exporting-amp-importing-accounts).
 
 ### The simplest way: re-enter your name
 
@@ -269,7 +269,7 @@ On confirmation, the wipe **permanently deletes** that account's:
 - **lifetime stats**, and
 - **achievements**.
 
-**This cannot be undone**, and no server keeps a copy. The old identity comes back only if you wrote down its [recovery code](#the-recovery-code) beforehand, and its earned progress only if you [exported it](#exporting--importing-accounts) first.
+**This cannot be undone**, and no server keeps a copy. The old identity comes back only if you wrote down its [recovery code](#the-recovery-code) beforehand, and its earned progress only if you [exported it](#exporting-amp-importing-accounts) first.
 
 > Typing `account wipe` at the `>` prompt doesn't wipe anything. It tells you where to find the wipe in the Accounts panel, the only place it happens.
 

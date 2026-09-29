@@ -102,7 +102,7 @@ Soldier counts are soldiers trained over the run, not the size of your current a
 
 The late tiers pay out all production rather than military power alone, so finishing the Military chain speeds up your whole economy, not just campaigns and combat.
 
-> **Note:** Standing Army (train 100 soldiers and build 10 Barracks, Classical Age) is a standalone military milestone and not part of the chain.
+One more military milestone sits outside the chain: train 100 soldiers and build 10 Barracks (Classical Age) for +5% military power.
 
 ---
 
@@ -167,19 +167,65 @@ The last three milestones pay out all production, so completing the chain lifts 
 
 ## Other Milestones
 
-Additional milestones outside the main chains cover faith, trade, epoch longevity, and infrastructure:
+These milestones sit outside the chains and don't count toward any chain title.
 
-**Faith milestones:** First Shrine, Devout Settlement, Temple City *(hidden)*, Cathedral Age *(hidden)*
+**Faith**
 
-**Epoch / Longevity milestones:** First Farmers, Survivor, Enduring Civilization *(hidden)*, Age Hopper, Industrial Titan *(hidden)*, Power Grid *(hidden)*
+| Milestone | Condition | Reward |
+|---|---|---|
+| First Shrine | Build 1 Shrine | +10 faith |
+| Devout Settlement | Build 25 Shrines (Stone Age) | +5% faith rate |
+| Temple City *(hidden)* | Build 50 Temples (Iron Age) | +10% faith rate |
+| Cathedral Age *(hidden)* | Build 10 Cathedrals (Medieval Age) | +10% faith rate, +5% knowledge rate |
 
-**Additional builder milestones:** First Storehouse, Storage Network, Granary Keeper, Lumber Operation, Early Builder, Mining Syndicate, Forge Master, Seasoned Builder, Wonder Empire *(hidden)*
+**Epoch and longevity**
 
-**Additional scholar milestones:** Deep Thinker, Philosophes, Grand Library Built *(hidden)*, Tech Ascendant *(hidden)*
+| Milestone | Condition | Reward |
+|---|---|---|
+| First Farmers | Build 3 Gathering Camps and reach tick 30 | +30 food |
+| Survivor | Reach tick 10K in a run | +5% all production |
+| Enduring Civilization *(hidden)* | Reach tick 50K in a run | +5% all production |
+| Age Hopper | Reach the Classical Age and research 10 techs | +5% all production |
+| Industrial Titan *(hidden)* | Stockpile 10K coal and 5K iron ore (Industrial Age) | +10% all production |
+| Power Grid *(hidden)* | Build 50 Coal Plants and 10 Steam Turbines (Victorian Age) | +10% all production |
 
-**Additional settlement milestones:** Urban Sprawl *(hidden)*, Global City *(hidden)*
+**Builder**
 
-**Additional trade milestones:** Guildhall Master *(hidden)*, Colonial Trade Network *(hidden)*, Gold Hoard *(hidden)*
+| Milestone | Condition | Reward |
+|---|---|---|
+| First Storehouse | Build 1 Stash | +20 food, +20 wood |
+| Storage Network | Build 10 Storage Pits (Stone Age) | +5% food rate |
+| Granary Keeper | Build 25 Granaries (Bronze Age) | +5% food rate |
+| Lumber Operation | Build 25 Wood Camps (Stone Age) | +10% wood rate |
+| Early Builder | Build 500 structures (Bronze Age) | -3% build cost |
+| Mining Syndicate | Build 25 Stone Pits and 10 Iron Mines (Iron Age) | +10% iron rate |
+| Forge Master | Build 15 Smithies (Iron Age) | +5% iron rate, -3% build cost |
+| Seasoned Builder | Build 2,000 structures (Iron Age) | -3% build cost |
+| Wonder Empire *(hidden)* | Build 15 wonders (Modern Age) | +15% all production |
+
+**Scholar**
+
+| Milestone | Condition | Reward |
+|---|---|---|
+| Deep Thinker | Research 25 techs (Bronze Age) | +5% knowledge rate |
+| Philosophes | Research 35 techs (Classical Age) | +5% research speed |
+| Grand Library Built *(hidden)* | Build the Great Library (Classical Age) | +15% knowledge rate |
+| Tech Ascendant *(hidden)* | Research 52 techs (Quantum Age) | +20% research speed |
+
+**Settlement**
+
+| Milestone | Condition | Reward |
+|---|---|---|
+| Urban Sprawl *(hidden)* | Population: 100,000,000 (Medieval Age) | +15% all production |
+| Global City *(hidden)* | Population: 10,000,000,000 (Industrial Age) | +20% all production |
+
+**Trade**
+
+| Milestone | Condition | Reward |
+|---|---|---|
+| Guildhall Master *(hidden)* | Build 10 Guildhalls (Renaissance Age) | +10% gold rate |
+| Colonial Trade Network *(hidden)* | Build 3 Ports and 5 Colonial Warehouses (Colonial Age) | +10% gold rate, +10% expedition reward |
+| Gold Hoard *(hidden)* | Accumulate 1,000,000 gold (Renaissance Age) | +10% gold rate |
 
 ---
 

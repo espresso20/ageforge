@@ -197,7 +197,7 @@ When you reach the Stone Age:
 - **Stone Camp**: early masonry building
 - **Woodcutter Camp**: dedicated wood building
 - **Forager Post**: upgraded food building
-- The `standing_stones` building: better faith building
+- **Standing Stones**: better faith building
 - **Elders' Hall**: upgraded knowledge building
 - **Longhouse**: bigger housing (+25 housing each)
 - **War Camp**: early military building

@@ -44,17 +44,17 @@ It behaves like a pending catastrophe: Esc closes the choice, a **☄ LAST PASSA
 
 Each epoch has a named catastrophe:
 
-| Epoch | Catastrophe | Flavor |
-|-------|-------------|--------|
-| Stone Era | The Great Meteor | Not reachable: no catastrophes before the Iron Era. |
-| Iron Era | The Great Plague | A devastating plague sweeps your cities. The streets fall silent. |
-| Steel Era | The World War | Industrial warfare tears civilization apart. The factories are ash. |
-| Electric Era | The Nuclear Exchange | Nations unleash the atom. Cities become glass. |
-| Digital Era | The Great Hack | Every system falls silent. The AIs turn on their creators. |
+| Epoch | Catastrophe | The story |
+|-------|-------------|-----------|
+| Stone Era | The Great Meteor | Never strikes: no catastrophes before the Iron Era. |
+| Iron Era | The Great Plague | A plague empties your cities. |
+| Steel Era | The World War | Industrial war levels the factories. |
+| Electric Era | The Nuclear Exchange | Nuclear war turns cities to glass. |
+| Digital Era | The Great Hack | Every system goes dark and the AIs turn on their makers. |
 | Neon Era | Corporate Armageddon | The megacorps end the world with a fusion bomb. |
-| Cosmic Era | The Reality Tear | Exotic matter destabilizes spacetime. Reality cracks open. |
+| Cosmic Era | The Reality Tear | Exotic matter cracks spacetime open. |
 
-The name is flavor. Endure and Succumb work the same way in every epoch; only the legacy bonus differs.
+The name and story are flavor. Endure and Succumb work the same way in every epoch; only the legacy bonus differs.
 
 ---
 
@@ -106,7 +106,7 @@ Every built non-wonder building goes into a pool in a fixed order (sorted by bui
 
 Let the civilization fall, and keep something permanent.
 
-Up to 8 of your non-wonder buildings become **ruins**, picked at random from the same seeded, fixed-order pool as Endure. Ruins produce at 50% of base rate with no workers. They carry across Succumb and prestige, but the total is capped at 24. When new ruins push past the cap, the lowest-value ruins crumble first (earliest age first, then lowest base output), so a late-game fall replaces primitive rubble. Older saves over the cap are trimmed the same way when loaded.
+Up to 8 of your non-wonder buildings become **ruins**, picked at random from the same seeded, fixed-order pool as Endure. Ruins produce at 50% of base rate with no workers. They carry across Succumb and prestige, but the total is capped at 24. When new ruins push past the cap, the lowest-value ruins crumble first (earliest age first, then lowest base output), so a late-game fall replaces primitive rubble. A save loaded with more than 24 ruins is trimmed the same way.
 
 You also get the epoch's **legacy bonus** (table below), permanently, and **Ancient Knowledge**: +25% research speed for each distinct epoch you have succumbed in. Succumbing twice in the same epoch doesn't add another 25%.
 
@@ -129,7 +129,7 @@ Then the civilization resets to the Primitive Age: buildings, resources, workers
 
 The research bonus comes straight from your legacy flags: +25% per epoch flagged. It is recomputed whenever it's needed, so save/load, Succumb and prestige can't drop or double it. It shows as **Legacy** under Research Speed in the Active Multipliers panel.
 
-From Iron to Cosmic there are 6 epochs you can succumb in, so the most you can earn is **+150%**. A save that earned the Stone Era legacy before catastrophes were limited to the Iron Era on keeps it (+175% total).
+From Iron to Cosmic there are 6 epochs you can succumb in, so the most you can earn is **+150%**. The Stone Era legacy can't be earned, since no catastrophe strikes there, but a save that already holds it keeps it (+175% total).
 
 **When to Succumb:** you don't yet hold this epoch's legacy, and the reset is cheap for you. A catastrophe always arrives right as you enter an epoch, so the question is how much of the run you'd be giving up.
 
@@ -139,7 +139,7 @@ From Iron to Cosmic there are 6 epochs you can succumb in, so the most you can e
 
 | Epoch | Resources boosted | Bonus |
 |-------|-------------------|-------|
-| Stone Era | wood, stone | +20% each (only on older saves that earned it) |
+| Stone Era | wood, stone | +20% each (can't be earned; kept by saves that hold it) |
 | Iron Era | iron | +20% |
 | Steel Era | steel, coal | +25% each |
 | Electric Era | electricity, uranium | +25% each |

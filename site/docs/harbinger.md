@@ -33,7 +33,7 @@ Rules:
 When a thread starts, or a new figure takes it up, you get:
 
 - a log entry naming the figure and the epoch it warns about, followed by its arrival and warning lines,
-- a toast ("... has come" for the first figure, "... takes up the warning" for the rest),
+- a toast announcing the figure (the first one arriving, or a later one taking up the warning),
 - a **⚑ HARBINGER** badge in the status bar for as long as the thread lasts.
 
 Type `harbinger` (or `harb`) to open the Harbinger panel. It shows the current figure and, after a handoff, who it took up the warning from.
@@ -48,7 +48,7 @@ Every age has a figure written for it, and all 22 appear in play: three for each
 
 | Age | Harbinger | Appears? | Forecast | False-prophet chance if it starts the thread | Who they are |
 |-----|-----------|----------|----------|----------------------------------------------|--------------|
-| Primitive | the Wild Man | Yes | Vague | 8/64 (12.5%) | A man who lives past the last fire walks in from the wilderness, grey with ash, to say what he has seen. |
+| Primitive | the Wild Man | Yes | Vague | 8/64 (12.5%) | A man who lives past the last fire walks in from the wilderness, gray with ash, to say what he has seen. |
 | Stone | the Hermit | Yes | Vague | 7/64 (10.9%) | Comes down from the high caves once in a generation, and never with good news. |
 | Bronze | the Soothsayer | Yes | Vague | 6/64 (9.4%) | Reads the future in knucklebones, sparrows and goat livers, and wants paying before and after. |
 | Iron | the Desert Prophet | Yes | Vague | 5/64 (7.8%) | Walks in from the dry country with sand in his beard and one message for the city. |
@@ -110,7 +110,7 @@ The figure's words tell you how bad the risk is. How much detail you get depends
 
 **Before the Industrial Age**, the panel shows only the figure's words and a vague severity: **low**, **medium** or **high risk**.
 
-**From the Industrial Age on**, the panel also prints the odds, for example `Odds published: 9%`. The number already includes any Appease you have bought. In the Steel Era this means the thread starts vague and becomes numeric when the Newsboy takes it up.
+**From the Industrial Age on**, the panel also prints the odds as a percentage. The number already includes any Appease you have bought. In the Steel Era this means the thread starts vague and becomes numeric when the Newsboy takes it up.
 
 The severity follows the catastrophe chance for the transition:
 
@@ -133,7 +133,7 @@ A thread may be a lie. It rolls once, when its first figure arrives, using that 
 | Steel Era (starts with the Court Astrologer) | 2/64, about 3.1% |
 | Electric, Digital, Neon and Cosmic Eras | none |
 
-A false thread claims **medium** or **high** risk (picked at random when it starts), whatever the real odds are. Every figure in that epoch repeats the same false claim, using the same warning lines a real harbinger would. The `catastrophe` command and the Epoch panel repeat the warning too, so you can't tell a false thread apart from the screen.
+A false thread claims **medium** or **high** risk (picked at random when it starts), whatever the real odds are. Every figure in that epoch repeats the same false claim, using the same warning lines a real harbinger would. The `catastrophe` command and the Epoch panel repeat the warning too, so nothing the game shows tells a false thread apart from a real one.
 
 The claim is kept as a fixed multiple of the real chance. Appease, a change in faith, or an Invite move it exactly as they would move a real warning. It never drops below low risk. A false Steel Era thread that reaches the Newsboy prints the claimed figure, not the real one.
 
@@ -253,9 +253,9 @@ The Epoch panel (`epoch`) shows the current thread's status and, for past thread
 
 ### The Last Passage
 
-The Cosmic Era's thread is settled when you confirm prestige, not at an age advance. The panel names its passage: "Warning of the Last Passage: the end of this civilization, when you next prestige." When the thread starts, the log reads `⚑ <Figure> has come, warning of the Last Passage.`
+The Cosmic Era's thread is settled when you confirm prestige, not at an age advance. The panel and the log both say the figure warns of the Last Passage: the end of this civilization at your next prestige.
 
-Confirming prestige rolls once, with the usual odds for the faith band (18%, 15% or 12%), times 0.6 per level of Appease, or certain if you invited it. If nothing comes, the verdict is Spared ("The Last Passage opens, and nothing comes through it. ...") and prestige completes. If it comes, prestige waits for you to Endure or Succumb. Endure keeps part of the run's points and Succumb grants the Cosmic Legacy. See [The Last Passage](prestige.md#the-last-passage).
+Confirming prestige rolls once, with the usual odds for the faith band (18%, 15% or 12%), times 0.6 per level of Appease, or certain if you invited it. If nothing comes, the verdict is Spared and prestige completes. If it comes, prestige waits for you to Endure or Succumb. Endure keeps part of the run's points and Succumb grants the Cosmic Legacy. See [The Last Passage](prestige.md#the-last-passage).
 
 ---
 

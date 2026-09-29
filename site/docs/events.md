@@ -226,7 +226,7 @@ Mixed events (like `earthquake` or `plasma_storm`) reset both streak counters, w
 
 - **Bad timed events are temporary (except worker loss).** A drought takes 0.5 food/tick for 10 ticks, which is 20 seconds at 1x. Don't make permanent decisions (like restructuring worker assignments) because of a short debuff.
 
-- **Bank resources before the late game.** Pirate attacks, data breaches and corporate espionage (an epoch-exclusive event) grow as you progress. A surplus absorbs the hit. Early thefts are small; by the Neon Era, Corporate Espionage takes 10K gold at once.
+- **Bank resources before the late game.** Thefts take fixed amounts, and the amounts get bigger in later epochs. Early thefts are small, but the Digital Era's Data Breach steals 5K data and the Neon Era's Corporate Espionage takes 10K gold at once (both epoch-exclusive events). A surplus absorbs the hit.
 
 - **Keep idle workers at all times.** Worker loss from `plague`, `mine_collapse` or `industrial_accident` is the only permanent damage in this system. Assigning every worker with none idle is the riskiest setup. Even 5 to 10 unassigned workers give you room.
 
