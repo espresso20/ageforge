@@ -522,7 +522,7 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	// launched from.)
 	dir := filepath.Join(game.DataDir(), "logs")
 	if err := os.MkdirAll(dir, 0755); err != nil {
-		return CommandResult{Message: fmt.Sprintf("Failed to create logs directory: %v", err), Type: "error"}
+		return CommandResult{Message: "Could not create the logs folder: " + shortIOError(err) + ".", Type: "error"}
 	}
 
 	// Generate timestamped filename
@@ -577,7 +577,7 @@ func cmdDump(args []string, engine *game.GameEngine) CommandResult {
 	}
 
 	if err := os.WriteFile(filename, []byte(sb.String()), 0644); err != nil {
-		return CommandResult{Message: fmt.Sprintf("Failed to write dump: %v", err), Type: "error"}
+		return CommandResult{Message: "Could not write the dump: " + shortIOError(err) + ".", Type: "error"}
 	}
 
 	return CommandResult{
@@ -747,7 +747,7 @@ func cmdStatus(engine *game.GameEngine) CommandResult {
 	state := engine.GetState()
 	var lines []string
 
-	lines = append(lines, fmt.Sprintf("[gold]Age:[-] %s  [gold]Tick:[-] %d", state.AgeName, state.Tick))
+	lines = append(lines, fmt.Sprintf("[gold]Age:[-] %s  [gold]Game time:[-] %s", state.AgeName, formatTicks(state.Tick, state)))
 	lines = append(lines, "")
 
 	// Resources
@@ -759,7 +759,7 @@ func cmdStatus(engine *game.GameEngine) CommandResult {
 		}
 		bar := ProgressBar(rs.Amount, rs.Storage, 15)
 		lines = append(lines, fmt.Sprintf("  %-10s %s/%s %s %s",
-			rs.Name, FormatNumber(rs.Amount), FormatNumber(rs.Storage), FormatRate(rs.Rate), bar))
+			rs.Name, FormatNumber(rs.Amount), FormatNumber(rs.Storage), FormatRateTick(rs.Rate), bar))
 	}
 	lines = append(lines, "")
 
@@ -1123,29 +1123,29 @@ func cmdRates(engine *game.GameEngine) CommandResult {
 		if !rs.Unlocked || (rs.Rate == 0 && rs.Breakdown == (game.RateBreakdown{})) {
 			continue
 		}
-		lines = append(lines, fmt.Sprintf("  [cyan]%s[-]:  %s/tick", rs.Name, FormatRate(rs.Rate)))
+		lines = append(lines, fmt.Sprintf("  [cyan]%s[-]:  %s", rs.Name, FormatRateTick(rs.Rate)))
 		b := rs.Breakdown
 		var parts []string
 		if b.BuildingRate != 0 {
-			parts = append(parts, fmt.Sprintf("Buildings: %+.2f", b.BuildingRate))
+			parts = append(parts, fmt.Sprintf("Buildings: %s", textfmt.RateValue(b.BuildingRate)))
 		}
 		if b.WorkerRate != 0 {
-			parts = append(parts, fmt.Sprintf("Workers: %+.2f", b.WorkerRate))
+			parts = append(parts, fmt.Sprintf("Workers: %s", textfmt.RateValue(b.WorkerRate)))
 		}
 		if b.ResearchRate != 0 {
-			parts = append(parts, fmt.Sprintf("Research: %+.2f", b.ResearchRate))
+			parts = append(parts, fmt.Sprintf("Research: %s", textfmt.RateValue(b.ResearchRate)))
 		}
 		if b.EventRate != 0 {
-			parts = append(parts, fmt.Sprintf("Events: %+.2f", b.EventRate))
+			parts = append(parts, fmt.Sprintf("Events: %s", textfmt.RateValue(b.EventRate)))
 		}
 		if b.TradeRate != 0 {
-			parts = append(parts, fmt.Sprintf("Trade: %+.2f", b.TradeRate))
+			parts = append(parts, fmt.Sprintf("Trade: %s", textfmt.RateValue(b.TradeRate)))
 		}
 		if b.BonusRate != 0 {
-			parts = append(parts, fmt.Sprintf("Bonuses: %+.2f", b.BonusRate))
+			parts = append(parts, fmt.Sprintf("Bonuses: %s", textfmt.RateValue(b.BonusRate)))
 		}
 		if b.FoodDrain != 0 {
-			parts = append(parts, fmt.Sprintf("Drain: %+.2f", b.FoodDrain))
+			parts = append(parts, fmt.Sprintf("Drain: %s", textfmt.RateValue(b.FoodDrain)))
 		}
 		if len(parts) > 0 {
 			lines = append(lines, fmt.Sprintf("    %s", strings.Join(parts, "  ")))
