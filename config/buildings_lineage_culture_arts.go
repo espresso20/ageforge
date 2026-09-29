@@ -27,7 +27,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  3000,
 		RequiredAge: "classical_age",
-		Description: "Open-air theatre and culture hub. +0.5 culture/tick, +500 culture cap.",
+		Description: "Open-air theater and culture hub.",
 		LineageKey:  "culture_arts", LineageTier: 0,
 		EpochKey: "iron_era", OutputResource: "culture",
 	})
@@ -43,7 +43,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  6000,
 		RequiredAge: "medieval_age",
-		Description: "A lord's great hall for feasts and culture. +1.0 culture/tick, +1000 culture cap.",
+		Description: "A lord's great hall for feasts and culture.",
 		LineageKey:  "culture_arts", LineageTier: 1,
 		EpochKey: "iron_era", OutputResource: "culture",
 	})
@@ -59,7 +59,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  12000,
 		RequiredAge: "renaissance_age",
-		Description: "Painters and sculptors create cultural works. +2.0 culture/tick, +2500 culture cap.",
+		Description: "Painters and sculptors create cultural works.",
 		LineageKey:  "culture_arts", LineageTier: 2,
 		EpochKey: "steel_era", OutputResource: "culture",
 	})
@@ -75,7 +75,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  18000,
 		RequiredAge: "colonial_age",
-		Description: "Classical music and colonial culture. +4.0 culture/tick, +5000 culture cap.",
+		Description: "Classical music and colonial culture.",
 		LineageKey:  "culture_arts", LineageTier: 3,
 		EpochKey: "steel_era", OutputResource: "culture",
 	})
@@ -91,7 +91,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  25000,
 		RequiredAge: "industrial_age",
-		Description: "Grandest venue for opera and orchestral culture. +8.0 culture/tick, +10000 culture cap.",
+		Description: "Grandest venue for opera and orchestral culture.",
 		LineageKey:  "culture_arts", LineageTier: 4,
 		EpochKey: "steel_era", OutputResource: "culture",
 	})
@@ -107,7 +107,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  50000,
 		RequiredAge: "victorian_age",
-		Description: "A grand Victorian museum of arts and history. +15 culture/tick, +25000 culture cap.",
+		Description: "A grand Victorian museum of arts and history.",
 		LineageKey:  "culture_arts", LineageTier: 5,
 		EpochKey: "electric_era", OutputResource: "culture",
 	})
@@ -123,7 +123,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  75000,
 		RequiredAge: "electric_age",
-		Description: "Broadcasts culture to the masses. +30 culture/tick, +50000 culture cap.",
+		Description: "Broadcasts culture to the masses.",
 		LineageKey:  "culture_arts", LineageTier: 6,
 		EpochKey: "electric_era", OutputResource: "culture",
 	})
@@ -139,7 +139,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  100000,
 		RequiredAge: "atomic_age",
-		Description: "Film and cinema spread cultural influence. +60 culture/tick, +100000 culture cap.",
+		Description: "Film and cinema spread cultural influence.",
 		LineageKey:  "culture_arts", LineageTier: 7,
 		EpochKey: "electric_era", OutputResource: "culture",
 	})
@@ -155,7 +155,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  150000,
 		RequiredAge: "modern_age",
-		Description: "Television studio broadcasting global culture. +120 culture/tick, +250000 culture cap.",
+		Description: "Television studio broadcasting global culture.",
 		LineageKey:  "culture_arts", LineageTier: 8,
 		EpochKey: "digital_era", OutputResource: "culture",
 	})
@@ -171,7 +171,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  300000,
 		RequiredAge: "information_age",
-		Description: "Digital media center for global cultural content. +250 culture/tick, +500000 culture cap.",
+		Description: "Digital media center for global cultural content.",
 		LineageKey:  "culture_arts", LineageTier: 9,
 		EpochKey: "digital_era", OutputResource: "culture",
 	})
@@ -187,7 +187,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  500000,
 		RequiredAge: "digital_age",
-		Description: "Virtual reality cultural experience studio. +500 culture/tick, +1000000 culture cap.",
+		Description: "Virtual reality cultural experience studio.",
 		LineageKey:  "culture_arts", LineageTier: 10,
 		EpochKey: "digital_era", OutputResource: "culture",
 	})
@@ -203,7 +203,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  1000000,
 		RequiredAge: "cyberpunk_age",
-		Description: "Full-immersion holographic cultural performances. +1000 culture/tick, +2500000 culture cap.",
+		Description: "Full-immersion holographic cultural performances.",
 		LineageKey:  "culture_arts", LineageTier: 11,
 		EpochKey: "neon_era", OutputResource: "culture",
 	})
@@ -219,7 +219,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  1500000,
 		RequiredAge: "fusion_age",
-		Description: "Neural-linked art creation at fusion scale. +2000 culture/tick, +5000000 culture cap.",
+		Description: "Neural-linked art creation at fusion scale.",
 		LineageKey:  "culture_arts", LineageTier: 12,
 		EpochKey: "neon_era", OutputResource: "culture",
 	})
@@ -235,7 +235,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  2000000,
 		RequiredAge: "space_age",
-		Description: "Zero-gravity orbital art gallery. +4000 culture/tick, +10000000 culture cap.",
+		Description: "Zero-gravity orbital art gallery.",
 		LineageKey:  "culture_arts", LineageTier: 13,
 		EpochKey: "neon_era", OutputResource: "culture",
 	})
@@ -251,7 +251,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  2500000,
 		RequiredAge: "interstellar_age",
-		Description: "A beacon broadcasting culture across star systems. +8000 culture/tick, +25000000 culture cap.",
+		Description: "A beacon broadcasting culture across star systems.",
 		LineageKey:  "culture_arts", LineageTier: 14,
 		EpochKey: "cosmic_era", OutputResource: "culture",
 	})
@@ -267,7 +267,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  3000000,
 		RequiredAge: "galactic_age",
-		Description: "Archives of all civilisations across the galaxy. +16000 culture/tick, +50000000 culture cap.",
+		Description: "Archives of every civilization across the galaxy.",
 		LineageKey:  "culture_arts", LineageTier: 15,
 		EpochKey: "cosmic_era", OutputResource: "culture",
 	})
@@ -283,7 +283,7 @@ func buildingsLineageCultureArts() []BuildingDef {
 		},
 		BuildTicks:  5000000,
 		RequiredAge: "quantum_age",
-		Description: "Reshapes reality as a medium for art. +32000 culture/tick, +100000000 culture cap.",
+		Description: "Reshapes reality as a medium for art.",
 		LineageKey:  "culture_arts", LineageTier: 16,
 		EpochKey: "cosmic_era", OutputResource: "culture",
 	})

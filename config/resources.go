@@ -24,7 +24,7 @@ func BaseResources() []ResourceDef {
 		{Name: "Food", Key: "food", BaseStorage: 50, Age: "primitive_age", Description: "Feeds your population"},
 		{Name: "Wood", Key: "wood", BaseStorage: 50, Age: "primitive_age", Description: "Basic building material"},
 		{Name: "Knowledge", Key: "knowledge", BaseStorage: 30, Age: "primitive_age", Description: "Powers research"},
-		{Name: "Faith", Key: "faith", BaseStorage: 50, Age: "primitive_age", Description: "Spiritual influence — drains over time; neglect has consequences"},
+		{Name: "Faith", Key: "faith", BaseStorage: 50, Age: "primitive_age", Description: "Spiritual influence. Faith income raises morale"},
 		// Stone Age (Stone Era)
 		{Name: "Stone", Key: "stone", BaseStorage: 50, Age: "stone_age", Description: "Durable building material"},
 		// Bronze Age (Stone Era)
@@ -32,14 +32,14 @@ func BaseResources() []ResourceDef {
 		{Name: "Gold", Key: "gold", BaseStorage: 50, Age: "bronze_age", Description: "Currency and trade"},
 		// Iron Age (Iron Era); coal unlocks in the Renaissance Age (Steel Era)
 		{Name: "Coal", Key: "coal", BaseStorage: 50, Age: "renaissance_age", Description: "Fuel for smelting and industry"},
-		{Name: "Soldiers", Key: "soldiers", BaseStorage: 0, Age: "iron_age", Description: "Trained fighting force produced by military buildings; spent launching expeditions"},
+		{Name: "Soldiers", Key: "soldiers", BaseStorage: 0, Age: "iron_age", Description: "Trained fighting force produced by military buildings; spent on campaigns"},
 		// Iron Age (Iron Era): intermediate ores for Geological Extraction and Metallurgy
-		{Name: "Marble", Key: "marble", BaseStorage: 30, Age: "iron_age", Description: "Refined stone for monumental construction"},
-		{Name: "Iron Ore", Key: "iron_ore", BaseStorage: 30, Age: "iron_age", Description: "Raw iron ore before smelting — feeds Metallurgy lineage"},
+		{Name: "Marble", Key: "marble", BaseStorage: 30, Age: "iron_age", Description: "Polished stone from quarries"},
+		{Name: "Iron Ore", Key: "iron_ore", BaseStorage: 30, Age: "iron_age", Description: "Raw iron ore from mines and quarries"},
 		// Medieval Age (Iron Era)
 		{Name: "Steel", Key: "steel", BaseStorage: 30, Age: "medieval_age", Description: "Refined metal for advanced construction"},
 		// Classical Age (Iron Era)
-		{Name: "Culture", Key: "culture", BaseStorage: 50, Age: "classical_age", Description: "Art and cultural influence — accumulates permanently, gates prestige bonuses"},
+		{Name: "Culture", Key: "culture", BaseStorage: 50, Age: "classical_age", Description: "Art and cultural influence. Spent on monuments, festivals and appeasing harbingers"},
 		// Industrial Age
 		{Name: "Oil", Key: "oil", BaseStorage: 50, Age: "industrial_age", Description: "Fuel for machines and industry"},
 		// Victorian Age
@@ -48,11 +48,11 @@ func BaseResources() []ResourceDef {
 		{Name: "Uranium", Key: "uranium", BaseStorage: 30, Age: "atomic_age", Description: "Radioactive fuel for reactors"},
 		// Modern Age (Digital Era); titanium ore unlocks in the Space Age
 		{Name: "Data", Key: "data", BaseStorage: 50, Age: "modern_age", Description: "Digital information and analytics"},
-		{Name: "Nanobots", Key: "nanobots", BaseStorage: 20, Age: "modern_age", Description: "Microscopic machines — Organic Extraction output in the Digital Era"},
-		{Name: "Titanium Ore", Key: "titanium_ore", BaseStorage: 20, Age: "space_age", Description: "Raw titanium ore — feeds Metallurgy lineage; smelts into titanium"},
+		{Name: "Nanobots", Key: "nanobots", BaseStorage: 20, Age: "modern_age", Description: "Microscopic machines, made by the Nano Foundry from the Modern Age"},
+		{Name: "Titanium Ore", Key: "titanium_ore", BaseStorage: 20, Age: "space_age", Description: "Raw titanium ore from mines"},
 		// Cyberpunk Age (Neon Era)
 		{Name: "Crypto", Key: "crypto", BaseStorage: 50, Age: "cyberpunk_age", Description: "Decentralized digital currency"},
-		{Name: "Dark Matter Crystals", Key: "dark_matter_crystals", BaseStorage: 10, Age: "cyberpunk_age", Description: "Crystallised dark matter — raw form; refined into dark matter by Metallurgy lineage"},
+		{Name: "Dark Matter Crystals", Key: "dark_matter_crystals", BaseStorage: 10, Age: "cyberpunk_age", Description: "Crystallized dark matter from deep mines"},
 		// Fusion Age
 		{Name: "Plasma", Key: "plasma", BaseStorage: 30, Age: "fusion_age", Description: "Superheated ionized gas for energy"},
 		// Space Age

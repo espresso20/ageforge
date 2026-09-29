@@ -91,7 +91,7 @@ func precisionFor(ageIndex int) ForecastPrecision {
 var harbingerRoster = []HarbingerDef{
 	{
 		Age: "primitive_age", Key: "wild_man", Name: "the Wild Man",
-		Description:  "A man who lives past the last fire walks in from the wilderness, grey with ash, to say what he has seen.",
+		Description:  "A man who lives past the last fire walks in from the wilderness, gray with ash, to say what he has seen.",
 		AppeaseLabel: "Leave offerings at the stones",
 		BraceLabel:   "Dig in and hoard",
 		InviteLabel:  "Howl with the Wild Man",
@@ -167,7 +167,7 @@ var harbingerRoster = []HarbingerDef{
 		InviteLabel:  "Wire back SEND IT",
 	},
 	{
-		Age: "atomic_age", Key: "civil_defence_broadcast", Name: "the Civil Defence Broadcast",
+		Age: "atomic_age", Key: "civil_defence_broadcast", Name: "the Civil Defense Broadcast",
 		Description:  "Three long notes on every wireless, then a calm voice reading the odds from a card.",
 		AppeaseLabel: "Fund the early-warning network",
 		BraceLabel:   "Stock the fallout shelters",

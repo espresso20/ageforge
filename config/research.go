@@ -22,7 +22,7 @@ func Technologies() []TechDef {
 		{
 			Name: "Tool Making", Key: "tool_making",
 			Age: "primitive_age", Cost: 800, ResearchTicks: 200,
-			Description: "Primitive stone tools improve gathering efficiency.",
+			Description: "Stone tools make every worker more productive.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "gather_rate", Value: 0.15},
 			},
@@ -90,7 +90,7 @@ func Technologies() []TechDef {
 			Name: "Agriculture", Key: "agriculture",
 			Age: "bronze_age", Cost: 12000, ResearchTicks: 700,
 			Prerequisites: []string{"animal_husbandry"},
-			Description:   "Systematic farming dramatically increases food output.",
+			Description:   "Systematic farming adds steady food output.",
 			Effects: []Effect{
 				{Type: "production", Target: "food", Value: 0.5},
 			},
@@ -99,7 +99,7 @@ func Technologies() []TechDef {
 			Name: "Currency", Key: "currency",
 			Age: "bronze_age", Cost: 17500, ResearchTicks: 800,
 			Prerequisites: []string{"primitive_writing"},
-			Description:   "Standardized money enables trade.",
+			Description:   "Standardized money raises gold output.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "gold_rate", Value: 0.3},
 			},
@@ -128,7 +128,7 @@ func Technologies() []TechDef {
 			Name: "Iron Smelting", Key: "iron_smelting",
 			Age: "iron_age", Cost: 30000, ResearchTicks: 1100,
 			Prerequisites: []string{"bronze_working"},
-			Description:   "Smelting iron ore into usable metal.",
+			Description:   "Hotter furnaces raise iron output.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "iron_rate", Value: 0.4},
 				{Type: "production", Target: "iron", Value: 0.2},
@@ -148,7 +148,7 @@ func Technologies() []TechDef {
 			Name: "Mathematics", Key: "mathematics",
 			Age: "iron_age", Cost: 37500, ResearchTicks: 1200,
 			Prerequisites: []string{"primitive_writing", "currency"},
-			Description:   "Advanced calculation enables engineering.",
+			Description:   "Advanced calculation raises knowledge output.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "knowledge_rate", Value: 0.2},
 			},
@@ -218,7 +218,7 @@ func Technologies() []TechDef {
 			Name: "Banking", Key: "banking",
 			Age: "medieval_age", Cost: 30000, ResearchTicks: 2100,
 			Prerequisites: []string{"currency", "mathematics"},
-			Description:   "Financial institutions multiply gold generation.",
+			Description:   "Financial institutions raise gold output and gold storage.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "gold_rate", Value: 0.5},
 				{Type: "storage", Target: "gold", Value: 100},
@@ -228,7 +228,7 @@ func Technologies() []TechDef {
 			Name: "Feudalism", Key: "feudalism",
 			Age: "medieval_age", Cost: 22000, ResearchTicks: 1700,
 			Prerequisites: []string{"military_tactics"},
-			Description:   "Feudal system improves population management.",
+			Description:   "Feudal land grants house more workers.",
 			Effects: []Effect{
 				{Type: "capacity", Target: "population", Value: 5},
 			},
@@ -246,7 +246,7 @@ func Technologies() []TechDef {
 		{
 			Name: "Chronometry", Key: "chronometry",
 			Age: "medieval_age", Cost: 20000, ResearchTicks: 1900,
-			Description: "Precise timekeeping accelerates all activity.",
+			Description: "Precise timekeeping raises game speed.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "tick_speed", Value: 0.05},
 			},
@@ -257,7 +257,7 @@ func Technologies() []TechDef {
 			Name: "Printing Press", Key: "printing_press",
 			Age: "renaissance_age", Cost: 50000, ResearchTicks: 3000,
 			Prerequisites: []string{"theology", "alchemy"},
-			Description:   "Mass production of books accelerates knowledge.",
+			Description:   "Printed books raise knowledge output and culture.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "knowledge_rate", Value: 0.4},
 				{Type: "production", Target: "culture", Value: 0.3},
@@ -267,7 +267,7 @@ func Technologies() []TechDef {
 			Name: "Navigation", Key: "navigation",
 			Age: "renaissance_age", Cost: 45000, ResearchTicks: 2600,
 			Prerequisites: []string{"mathematics", "road_building"},
-			Description:   "Ocean navigation opens new trade routes.",
+			Description:   "Ocean navigation raises gold output and expedition rewards.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "gold_rate", Value: 0.5},
 				{Type: "bonus", Target: "expedition_reward", Value: 0.3},
@@ -277,7 +277,7 @@ func Technologies() []TechDef {
 			Name: "Gunpowder", Key: "gunpowder",
 			Age: "renaissance_age", Cost: 55000, ResearchTicks: 3200,
 			Prerequisites: []string{"alchemy", "siege_warfare"},
-			Description:   "Explosive weaponry transforms warfare.",
+			Description:   "Explosive weapons raise military power.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "military_power", Value: 0.5},
 			},
@@ -298,7 +298,7 @@ func Technologies() []TechDef {
 			Name: "Cartography", Key: "cartography",
 			Age: "colonial_age", Cost: 80000, ResearchTicks: 4000,
 			Prerequisites: []string{"navigation"},
-			Description:   "Detailed maps enable global exploration.",
+			Description:   "Detailed maps raise expedition rewards and gold output.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "expedition_reward", Value: 0.5},
 				{Type: "bonus", Target: "gold_rate", Value: 0.5},
@@ -330,7 +330,7 @@ func Technologies() []TechDef {
 			Name: "Steam Power", Key: "steam_power",
 			Age: "industrial_age", Cost: 100000, ResearchTicks: 5200,
 			Prerequisites: []string{"steel_forging"},
-			Description:   "Steam engines revolutionize production.",
+			Description:   "Steam engines raise all production.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.3},
 			},
@@ -339,7 +339,7 @@ func Technologies() []TechDef {
 			Name: "Industrialization", Key: "industrialization",
 			Age: "industrial_age", Cost: 120000, ResearchTicks: 6000,
 			Prerequisites: []string{"steam_power"},
-			Description:   "Factory systems massively increase output.",
+			Description:   "Factory systems raise all production and add steel.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.5},
 				{Type: "production", Target: "steel", Value: 0.5},
@@ -368,7 +368,7 @@ func Technologies() []TechDef {
 			Name: "Clockwork Automation", Key: "clockwork_automation",
 			Age: "industrial_age", Cost: 50000, ResearchTicks: 5400,
 			Prerequisites: []string{"chronometry"},
-			Description:   "Mechanical automation speeds up every process.",
+			Description:   "Mechanical automation raises game speed.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "tick_speed", Value: 0.10},
 			},
@@ -379,7 +379,7 @@ func Technologies() []TechDef {
 			Name: "Electrification", Key: "electrification",
 			Age: "victorian_age", Cost: 180000, ResearchTicks: 7000,
 			Prerequisites: []string{"industrialization"},
-			Description:   "Electrical power begins to transform society.",
+			Description:   "Electric power reaches homes and factories.",
 			Effects: []Effect{
 				{Type: "production", Target: "electricity", Value: 1.0},
 				{Type: "bonus", Target: "production_all", Value: 0.2},
@@ -453,7 +453,7 @@ func Technologies() []TechDef {
 			Name: "Rocketry", Key: "rocketry",
 			Age: "atomic_age", Cost: 400000, ResearchTicks: 12000,
 			Prerequisites: []string{"rifling", "chemical_engineering"},
-			Description:   "Rocket technology enables space exploration.",
+			Description:   "Rockets raise military power and expedition rewards.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "military_power", Value: 1.0},
 				{Type: "bonus", Target: "expedition_reward", Value: 0.5},
@@ -471,10 +471,10 @@ func Technologies() []TechDef {
 
 		// === MODERN AGE === (~1.1 hr each)
 		{
-			Name: "Electricity", Key: "electricity_tech",
+			Name: "Advanced Electrics", Key: "electricity_tech",
 			Age: "modern_age", Cost: 800000, ResearchTicks: 18000,
 			Prerequisites: []string{"nuclear_fission"},
-			Description:   "Advanced electrical systems transform civilization.",
+			Description:   "Advanced electrical systems raise all production.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.5},
 				{Type: "production", Target: "electricity", Value: 5.0},
@@ -484,7 +484,7 @@ func Technologies() []TechDef {
 			Name: "Computers", Key: "computers",
 			Age: "modern_age", Cost: 1000000, ResearchTicks: 20000,
 			Prerequisites: []string{"electricity_tech"},
-			Description:   "Digital computing accelerates all research.",
+			Description:   "Digital computing raises knowledge output.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "knowledge_rate", Value: 0.8},
 			},
@@ -549,7 +549,7 @@ func Technologies() []TechDef {
 			Name: "Medical Nanobots", Key: "medical_nanobots",
 			Age: "information_age", Cost: 1700000, ResearchTicks: 24000,
 			Prerequisites: []string{"nanofabrication"},
-			Description:   "Bloodstream nanobots heal and sustain workers — larger, better-fed population.",
+			Description:   "Bloodstream nanobots keep workers healthy, adding housing and food.",
 			Effects: []Effect{
 				{Type: "capacity", Target: "population", Value: 10},
 				{Type: "production", Target: "food", Value: 8.0},
@@ -581,7 +581,7 @@ func Technologies() []TechDef {
 			Name: "Self-Replication", Key: "self_replication",
 			Age: "digital_age", Cost: 3200000, ResearchTicks: 33000,
 			Prerequisites: []string{"medical_nanobots", "machine_learning"},
-			Description:   "Nanobots that build copies of themselves — runaway nanobot output.",
+			Description:   "Nanobots that build copies of themselves.",
 			Effects: []Effect{
 				{Type: "production", Target: "nanobots", Value: 200.0},
 			},
@@ -624,7 +624,7 @@ func Technologies() []TechDef {
 			Name: "Fusion Power", Key: "fusion_power",
 			Age: "fusion_age", Cost: 10000000, ResearchTicks: 65000,
 			Prerequisites: []string{"nuclear_fission", "cybernetics"},
-			Description:   "Controlled nuclear fusion for limitless energy.",
+			Description:   "Controlled fusion adds electricity and plasma.",
 			Effects: []Effect{
 				{Type: "production", Target: "electricity", Value: 20.0},
 				{Type: "production", Target: "plasma", Value: 1.0},
@@ -644,7 +644,7 @@ func Technologies() []TechDef {
 			Name: "Superconductors", Key: "superconductors",
 			Age: "fusion_age", Cost: 11000000, ResearchTicks: 70000,
 			Prerequisites: []string{"fusion_power"},
-			Description:   "Zero-resistance materials revolutionize technology.",
+			Description:   "Zero-resistance materials raise all production and storage.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.5},
 				{Type: "storage", Target: "all", Value: 50000},
@@ -752,7 +752,7 @@ func Technologies() []TechDef {
 			Name: "Quantum Computing", Key: "quantum_computing",
 			Age: "quantum_age", Cost: 150000000, ResearchTicks: 200000,
 			Prerequisites: []string{"clockwork_automation"},
-			Description:   "Quantum processing collapses wait times.",
+			Description:   "Quantum processing raises game speed.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "tick_speed", Value: 0.15},
 			},
@@ -763,7 +763,7 @@ func Technologies() []TechDef {
 			Name: "Transcendence", Key: "transcendence",
 			Age: "transcendent_age", Cost: 500000000, ResearchTicks: 320000,
 			Prerequisites: []string{"reality_manipulation"},
-			Description:   "Ascension beyond physical limitations.",
+			Description:   "A civilization beyond physical limits.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 2.0},
 				{Type: "production", Target: "quantum_flux", Value: 10.0},

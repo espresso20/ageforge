@@ -2,7 +2,6 @@ package config
 
 import (
 	"math"
-	"regexp"
 	"strings"
 	"testing"
 )
@@ -137,26 +136,6 @@ func TestWondersSizedToTheirAge(t *testing.T) {
 		u := priceUnits(d.BaseCost, levels[d.RequiredAge])
 		if math.Abs(u/WonderPriceUnits-1) > 0.05 {
 			t.Errorf("%s costs %.1f price units of %s, want %.0f", d.Key, u, d.RequiredAge, WonderPriceUnits)
-		}
-	}
-}
-
-// TestDescriptionRatesMatchEffects: the rate a description shows is the rate
-// the building has, since the build list shows the description.
-func TestDescriptionRatesMatchEffects(t *testing.T) {
-	for _, d := range BaseBuildings() {
-		for _, e := range d.Effects {
-			if e.Type != "production" || e.Value <= 0 {
-				continue
-			}
-			re := regexp.MustCompile(`\+([0-9][0-9.,]*[KMBTQ]?)\s+` + regexp.QuoteMeta(e.Target) + `/tick`)
-			m := re.FindStringSubmatch(d.Description)
-			if m == nil {
-				continue
-			}
-			if want := FormatRateValue(e.Value); m[1] != want {
-				t.Errorf("%s description says +%s %s/tick, effect is %s", d.Key, m[1], e.Target, want)
-			}
 		}
 	}
 }

@@ -102,7 +102,7 @@ func MilestoneChains() []MilestoneChainDef {
 				"fortress_state", "military_superpower",
 			},
 			Title:         "The Conquerors",
-			Flavor:        "Your neighbours have stopped sending letters and started sending apologies.",
+			Flavor:        "Your neighbors have stopped sending letters and started sending apologies.",
 			BoostValue:    2.5,
 			BoostDuration: 150,
 		},
@@ -215,7 +215,7 @@ func Milestones() []MilestoneDef {
 		{
 			Name: "Metropolis", Key: "metropolis",
 			Description: "Reach a population of 10,000,000.",
-			Flavor:      "Ten million citizens. You have officially lost track of all their names.",
+			Flavor:      "Ten million people. You have officially lost track of all their names.",
 			Category:    "settlement", Hidden: true,
 			MinAge:        "iron_age",
 			MinPopulation: 10000000,
@@ -384,7 +384,7 @@ func Milestones() []MilestoneDef {
 		// wonder_builder: 1 wonder; reward trimmed from +10% to +5%
 		{
 			Name: "Wonder Builder", Key: "wonder_builder",
-			Description: "Complete your first Wonder.",
+			Description: "Build your first wonder.",
 			Flavor:      "You built a Wonder. Your neighbors are impressed. One is drafting a strongly worded letter.",
 			Category:    "builder", Hidden: true,
 			Rewards: []Effect{
@@ -406,7 +406,7 @@ func Milestones() []MilestoneDef {
 		// wonder_collector: raised to 8 wonders
 		{
 			Name: "Wonder Collector", Key: "wonder_collector",
-			Description: "Construct 8 Wonders.",
+			Description: "Build 8 wonders.",
 			Flavor:      "Eight Wonders. Tourists from rival empires now visit just to feel inadequate.",
 			Category:    "builder", Hidden: true,
 			MinAge: "colonial_age",
@@ -417,7 +417,7 @@ func Milestones() []MilestoneDef {
 		// wonder_empire: raised to 15 wonders
 		{
 			Name: "Wonder Empire", Key: "wonder_empire",
-			Description: "Construct 15 Wonders.",
+			Description: "Build 15 wonders.",
 			Flavor:      "Fifteen Wonders. At this point you're just collecting them, like a very expensive hobby.",
 			Category:    "builder", Hidden: true,
 			MinAge: "modern_age",
@@ -444,7 +444,7 @@ func Milestones() []MilestoneDef {
 		// first_research: 1 tech — tutorial unlock, unchanged
 		{
 			Name: "First Research", Key: "first_research",
-			Description:  "Complete your first technology.",
+			Description:  "Research your first tech.",
 			Flavor:       "Your first real invention. Someone will improve it tomorrow and take all the credit.",
 			Category:     "scholar",
 			MinTechCount: 1,
@@ -455,7 +455,7 @@ func Milestones() []MilestoneDef {
 		// tech_pioneer: raised to 15 techs
 		{
 			Name: "Tech Pioneer", Key: "tech_pioneer",
-			Description:  "Research 15 technologies.",
+			Description:  "Research 15 techs.",
 			Flavor:       "Fifteen breakthroughs. The wheel was one of them, eventually.",
 			Category:     "scholar",
 			MinTechCount: 15,
@@ -477,7 +477,7 @@ func Milestones() []MilestoneDef {
 		// deep_thinker: raised to 25 techs
 		{
 			Name: "Deep Thinker", Key: "deep_thinker",
-			Description:  "Research 25 technologies.",
+			Description:  "Research 25 techs.",
 			Flavor:       "Twenty-five technologies. Your scholars have begun ending sentences with 'well, actually.'",
 			Category:     "scholar",
 			MinAge:       "bronze_age",
@@ -489,7 +489,7 @@ func Milestones() []MilestoneDef {
 		// philosophes: raised to 35 techs
 		{
 			Name: "Philosophes", Key: "philosophes",
-			Description:  "Research 35 technologies.",
+			Description:  "Research 35 techs.",
 			Flavor:       "Thirty-five technologies. The philosophers now argue about things on purpose.",
 			Category:     "scholar",
 			MinAge:       "classical_age",
@@ -501,7 +501,7 @@ func Milestones() []MilestoneDef {
 		// renaissance_mind: raised to 42 techs; renaissance age gated
 		{
 			Name: "Renaissance Mind", Key: "renaissance_mind",
-			Description: "Research 42 technologies.",
+			Description: "Research 42 techs.",
 			Flavor:      "Forty-two technologies. The answer to everything, apparently, requires a sequel.",
 			Category:    "scholar", Hidden: true,
 			MinAge:       "renaissance_age",
@@ -513,7 +513,7 @@ func Milestones() []MilestoneDef {
 		// grand_library_built — build 5 Great Libraries; classical age
 		{
 			Name: "Grand Library Built", Key: "grand_library_built",
-			Description: "Construct 5 Great Libraries.",
+			Description: "Build 5 Great Libraries.",
 			Flavor:      "Five Great Libraries. The collected wisdom of the age, and overdue fines to match.",
 			Category:    "scholar", Hidden: true,
 			MinAge:       "classical_age",
@@ -526,7 +526,7 @@ func Milestones() []MilestoneDef {
 		// Capstone broadened — keeps research_speed, adds a touch of production_all.
 		{
 			Name: "Tech Master", Key: "tech_master",
-			Description: "Research 50 technologies.",
+			Description: "Research 50 techs.",
 			Flavor:      "Fifty technologies mastered. You now understand the universe well enough to be properly worried.",
 			Category:    "scholar", Hidden: true,
 			MinAge:       "industrial_age",
@@ -539,7 +539,7 @@ func Milestones() []MilestoneDef {
 		// NEW: tech_ascendant — all 52 techs; quantum age gated
 		{
 			Name: "Tech Ascendant", Key: "tech_ascendant",
-			Description: "Research all 52 technologies.",
+			Description: "Research 52 techs.",
 			Flavor:      "Every technology, researched. The tech tree is bald. You did this.",
 			Category:    "scholar", Hidden: true,
 			MinAge:       "quantum_age",
@@ -568,7 +568,7 @@ func Milestones() []MilestoneDef {
 		{
 			Name: "War Machine", Key: "war_machine",
 			Description: "Train 250 soldiers.",
-			Flavor:      "Two hundred and fifty soldiers. The neighbours have started being noticeably more polite.",
+			Flavor:      "Two hundred and fifty soldiers. The neighbors have started being noticeably more polite.",
 			Category:    "military",
 			MinAge:      "iron_age",
 			Rewards: []Effect{
@@ -605,7 +605,7 @@ func Milestones() []MilestoneDef {
 		{
 			Name: "Fortress State", Key: "fortress_state",
 			Description: "Build 20 Castle Keeps.",
-			Flavor:      "Twenty castle keeps. Your realm is now less a country and more a very pointed suggestion.",
+			Flavor:      "Twenty castle keeps. Your kingdom is now less a country and more a very pointed suggestion.",
 			Category:    "military", Hidden: true,
 			MinAge:       "medieval_age",
 			MinBuildings: map[string]int{"castle_keep": 20},
@@ -618,7 +618,7 @@ func Milestones() []MilestoneDef {
 		// Capstone broadened to production_all (was military_power).
 		{
 			Name: "Military Superpower", Key: "military_superpower",
-			Description: "Field 2,000 soldiers.",
+			Description: "Train 2,000 soldiers.",
 			Flavor:      "Two thousand troops. Diplomacy is now mostly other people agreeing with you, quickly.",
 			Category:    "military", Hidden: true,
 			MinAge: "industrial_age",
@@ -645,8 +645,8 @@ func Milestones() []MilestoneDef {
 		},
 		// merchant_guild: raised to 8 active markets; iron age
 		{
-			Name: "Merchant Guild", Key: "merchant_guild",
-			Description:  "Operate 8 Markets.",
+			Name: "Market Town", Key: "merchant_guild",
+			Description:  "Build 8 Markets.",
 			Flavor:       "Eight markets and a guild that already has strong opinions about everyone else's.",
 			Category:     "trade",
 			MinAge:       "iron_age",
@@ -658,7 +658,7 @@ func Milestones() []MilestoneDef {
 		// caravan_network: 5 trading posts; classical age (trading_post unlocks iron age)
 		{
 			Name: "Caravan Network", Key: "caravan_network",
-			Description:  "Operate 5 Trading Posts.",
+			Description:  "Build 5 Trading Posts.",
 			Flavor:       "Five trading posts. The caravans now have a route, a schedule, and a complicated rivalry.",
 			Category:     "trade",
 			MinAge:       "classical_age",
@@ -699,7 +699,7 @@ func Milestones() []MilestoneDef {
 		// to match the rest of the late chain.
 		{
 			Name: "Maritime Empire", Key: "maritime_empire",
-			Description: "Build 5 Harbours, 5 Ports, and 2 Seaports.",
+			Description: "Build 5 Harbors, 5 Ports and 2 Seaports.",
 			Flavor:      "The sea is now a road, and you are charging tolls on it.",
 			Category:    "trade", Hidden: true,
 			MinAge:       "modern_age",
@@ -712,7 +712,7 @@ func Milestones() []MilestoneDef {
 		// guildhall_master — 10 guildhalls; renaissance age
 		{
 			Name: "Guildhall Master", Key: "guildhall_master",
-			Description: "Establish 10 Guildhalls.",
+			Description: "Build 10 Guildhalls.",
 			Flavor:      "Ten guildhalls, each convinced it secretly runs the city. One of them is right.",
 			Category:    "trade", Hidden: true,
 			MinAge:       "renaissance_age",
@@ -768,7 +768,7 @@ func Milestones() []MilestoneDef {
 		// devout_settlement: raised to 25 shrines; stone age
 		{
 			Name: "Devout Settlement", Key: "devout_settlement",
-			Description:  "Operate 25 Shrines.",
+			Description:  "Build 25 Shrines.",
 			Flavor:       "Twenty-five shrines. The priests have begun, gently, competing for foot traffic.",
 			Category:     "faith",
 			MinAge:       "stone_age",
@@ -792,7 +792,7 @@ func Milestones() []MilestoneDef {
 		// cathedral_age: raised to 10 cathedrals; medieval age
 		{
 			Name: "Cathedral Age", Key: "cathedral_age",
-			Description: "Construct 10 Cathedrals.",
+			Description: "Build 10 Cathedrals.",
 			Flavor:      "Ten cathedrals, each taking a generation to build. The architects left detailed notes for their grandchildren.",
 			Category:    "faith", Hidden: true,
 			MinAge:       "medieval_age",
@@ -810,7 +810,7 @@ func Milestones() []MilestoneDef {
 		// NEW: first_farmers — 3 gathering camps + min tick 30 (~60s)
 		{
 			Name: "First Farmers", Key: "first_farmers",
-			Description:  "Build 3 Gathering Camps and survive 30 ticks.",
+			Description:  "Build 3 Gathering Camps and play for ~1m.",
 			Flavor:       "You've stopped wandering and started farming. Bold move. We'll see how it goes.",
 			Category:     "epoch",
 			MinTick:      30,
@@ -822,7 +822,7 @@ func Milestones() []MilestoneDef {
 		// survivor: raised to 10,000 ticks
 		{
 			Name: "Survivor", Key: "survivor",
-			Description: "Survive 10,000 ticks.",
+			Description: "Play for ~5h 33m.",
 			Flavor:      "Ten thousand ticks survived. Whatever you're doing, it's apparently working.",
 			Category:    "epoch",
 			MinTick:     10000,
@@ -833,7 +833,7 @@ func Milestones() []MilestoneDef {
 		// enduring_civilization: raised to 50,000 ticks
 		{
 			Name: "Enduring Civilization", Key: "enduring_civilization",
-			Description: "Survive 50,000 ticks.",
+			Description: "Play for ~1d 3h.",
 			Flavor:      "Fifty thousand ticks. Other civilizations are now studying you in their history classes.",
 			Category:    "epoch", Hidden: true,
 			MinTick: 50000,
@@ -844,7 +844,7 @@ func Milestones() []MilestoneDef {
 		// age_hopper — reach classical age (5th age) AND have 10+ techs researched
 		{
 			Name: "Age Hopper", Key: "age_hopper",
-			Description:  "Advance through 5 ages and research 10 technologies.",
+			Description:  "Reach the Classical Age and research 10 techs.",
 			Flavor:       "Five ages, ten techs, and a frankly cavalier attitude toward the passage of time.",
 			Category:     "epoch",
 			MinAge:       "classical_age",
@@ -857,7 +857,7 @@ func Milestones() []MilestoneDef {
 		{
 			Name: "Industrial Titan", Key: "industrial_titan",
 			Description: "Stockpile 10,000 coal and 5,000 iron ore.",
-			Flavor:      "Coal and ore by the mountain. The sky is a colour now, and that colour is 'industry.'",
+			Flavor:      "Coal and ore by the mountain. The sky is a color now, and that color is 'industry.'",
 			Category:    "epoch", Hidden: true,
 			MinAge:       "industrial_age",
 			MinResources: map[string]float64{"coal": 10000, "iron_ore": 5000},
@@ -1021,7 +1021,7 @@ func Milestones() []MilestoneDef {
 			},
 		},
 		{
-			Name: "Cyberpunk", Key: "cyberpunk_milestone",
+			Name: "Jacked In", Key: "cyberpunk_milestone",
 			Description: "Advance to the Cyberpunk Age.",
 			Flavor:      "High tech, low life, and neon everywhere. Even the rain has a brand sponsor.",
 			Category:    "ages", Hidden: true,
