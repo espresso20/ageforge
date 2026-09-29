@@ -24,6 +24,7 @@ const (
 // green gains, wax-red losses, umber labels, sepia accent/highlight.
 var Parchment = define(Theme{
 	Key:        "parchment",
+	Duotone:    true,
 	Name:       "Parchment",
 	Blurb:      "Ink on warm parchment — a sepia manuscript page.",
 	Accessible: false,
@@ -108,6 +109,7 @@ var Cyberpunk = define(Theme{
 // guard, but still clears every luminance floor.
 var Monochrome = define(Theme{
 	Key:        "monochrome",
+	Duotone:    true,
 	Name:       "Monochrome",
 	Blurb:      "Greyscale terminal — meaning carried by lightness, not hue.",
 	Accessible: false,

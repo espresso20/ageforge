@@ -53,6 +53,8 @@ type view struct {
 	anim int
 	tier mapmodel.GlyphTier
 	rbuf regionBuf
+	// names is how many building names the last district-zoom frame drew.
+	names int
 }
 
 func newView() *view { return &view{zoom: zSettlement, inspect: true, legend: true, changes: true} }
@@ -60,6 +62,15 @@ func newView() *view { return &view{zoom: zSettlement, inspect: true, legend: tr
 func (v *view) Name() string { return "roguelike" }
 
 func (v *view) SetOption(o mapstyle.Option, on bool) {
+	if o == mapstyle.OptWorld {
+		switch {
+		case on:
+			v.zoom = zRegion
+		case v.zoom == zRegion:
+			v.zoom = zSettlement
+		}
+		return
+	}
 	if p := v.option(o); p != nil {
 		*p = on
 	}

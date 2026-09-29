@@ -49,13 +49,13 @@ var sweepOverlays = []struct{ cmd, overlay string }{
 	{"logs", "logs"},
 	{"epoch", "epoch"},
 	{"history", "history"},
-	{"citymap", "citymap"},
-	{"worldmap", "worldmap"},
+	{"map", "map"},
 	{"help", "help"},
 	// Not in the sidebar, still reachable by command.
 	{"buildings", "buildings"},
 	{"diplomacy", "factions"},
-	{"map", "map"},
+	{"citymap", "map"},
+	{"worldmap", "map"},
 	{"techs", "techs"},
 }
 
@@ -63,7 +63,7 @@ var sweepOverlays = []struct{ cmd, overlay string }{
 var sweepCommands = []string{
 	"status", "rates", "build", "upgrade", "wonder", "festival", "blackmarket",
 	"prestige", "prestige shop", "speed", "catastrophe", "theme", "theme list",
-	"saves", "account", "plan list", "wonder overflow",
+	"saves", "account", "plan list", "wonder overflow", "map style", "map glyphs",
 }
 
 type sweeper struct {
@@ -235,6 +235,36 @@ func (s *sweeper) ghost(themeKey string) {
 	s.wait("prompt cleared", func() bool { return s.inputText() == "" })
 }
 
+// mapTour runs through the open Map panel's styles and glyph tiers with its
+// own keys (s, g), checking the screen after each, and ends where it began
+// (the settings are saved to the account, so a full cycle restores them).
+func (s *sweeper) mapTour(where string) {
+	s.t.Helper()
+	styles, tiers := len(s.a.dashboard.mapViews.reg.Names()), 3
+	for i := 0; i < styles; i++ {
+		for j := 0; j < tiers; j++ {
+			s.step = fmt.Sprintf("%s map style %d glyphs %d", where, i, j)
+			s.press(tcell.KeyRune, 'g')
+			s.ping()
+			if txt := s.liveScreen(); !strings.Contains(txt, "g glyphs") {
+				s.fail("the Map panel's key bar is missing\n%s", txt)
+			}
+		}
+		s.press(tcell.KeyRune, 's')
+		s.ping()
+	}
+	// Tab puts the cursor on a target; the panel must survive it.
+	s.press(tcell.KeyTab, 0)
+	s.ping()
+}
+
+// miniMapShown reports whether the dashboard's last draw showed the mini map.
+func (s *sweeper) miniMapShown() bool {
+	var ok bool
+	s.ui(func() { ok = s.a.dashboard.mapDock.shown })
+	return ok
+}
+
 // splashPage opens a splash menu entry by its shortcut and backs out with Esc.
 func (s *sweeper) splashPage(key rune, page string, exercise func()) {
 	s.t.Helper()
@@ -359,6 +389,9 @@ func TestSmokeUISmallTerminals(t *testing.T) {
 				if strings.TrimSpace(s.liveScreen()) == "" {
 					s.fail("blank dashboard at %dx%d", sz[0], sz[1])
 				}
+				if sz[0] <= 100 && s.miniMapShown() {
+					s.fail("the mini map shows at %dx%d; it must hide on small terminals", sz[0], sz[1])
+				}
 				for _, o := range sweepOverlays {
 					s.step = fmt.Sprintf("[%dx%d %s] %s", sz[0], sz[1], key, o.cmd)
 					s.submit(o.cmd)
@@ -366,6 +399,9 @@ func TestSmokeUISmallTerminals(t *testing.T) {
 					s.ping()
 					if strings.TrimSpace(s.liveScreen()) == "" {
 						s.fail("blank screen with overlay %s open", o.overlay)
+					}
+					if o.cmd == "map" {
+						s.mapTour(fmt.Sprintf("[%dx%d %s]", sz[0], sz[1], key))
 					}
 					s.press(tcell.KeyEsc, 0)
 					s.wait("overlay closed", func() bool { return s.activeOverlay() == "" && s.inputFocused() })
@@ -434,6 +470,9 @@ func TestSmokeUISweep(t *testing.T) {
 
 		s.ghost(key)
 
+		s.step = "[" + key + "] mini map"
+		s.wait("the mini map on the dashboard", s.miniMapShown)
+
 		for _, o := range sweepOverlays {
 			s.step = fmt.Sprintf("[%s] %s", key, o.cmd)
 			s.submit(o.cmd)
@@ -441,6 +480,9 @@ func TestSmokeUISweep(t *testing.T) {
 			s.ping()
 			if strings.TrimSpace(s.liveScreen()) == "" {
 				s.fail("blank screen with overlay %s open", o.overlay)
+			}
+			if o.cmd == "map" {
+				s.mapTour("[" + key + "]")
 			}
 			s.press(tcell.KeyEsc, 0)
 			s.wait("overlay closed", func() bool { return s.activeOverlay() == "" && s.inputFocused() })

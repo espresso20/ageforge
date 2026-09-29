@@ -87,12 +87,9 @@ Every shipped theme is **contrast-checked** (WCAG AA for text on its background)
 
 ---
 
-## 🗺️ Maps on light themes
+## 🗺️ The Map and your theme
 
-The maps follow your theme too, including light ones:
-
-- **City Map**: adjusts for a light page, with lighter ground, even lighter streets, darker drop shadows and shaded walls, and darker building labels so they stay readable. Space-age cities stay dark, since a starfield is dark.
-- **World Map**: civilization markers stay bright against the map's own canvas, whatever the theme. Space-age star maps stay dark.
+The [Map](map.md) follows your theme too, including light ones. Both styles, roguelike and skyline, take their colors from the theme, so switching themes recolors the Map and the dashboard's mini map at once. In the **Monochrome** and **Parchment** themes the skyline is drawn as a two-tone (duotone) picture.
 
 ---
 
@@ -119,4 +116,4 @@ Until you've earned it, a flavor theme shows in the picker (and in `theme list`)
 - [All Commands](commands.md): the full `theme` command reference
 - [Account & Recovery](account.md): how theme unlocks (and other account-wide progress) are kept and moved between machines
 - [The 22 Ages](ages.md): the ages that unlock the flavor themes
-- [The City Map](city-map.md) and [The World Map](world-map.md): the map views
+- [The Map](map.md): the map styles and glyph sets

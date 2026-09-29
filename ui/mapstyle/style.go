@@ -56,6 +56,12 @@ type Style interface {
 	SetOption(o Option, on bool)
 }
 
+// CompactNews is implemented by a style whose compact view prints the
+// since-last-visit news itself, so the mini map's frame does not repeat it.
+type CompactNews interface {
+	CompactShowsNews() bool
+}
+
 // Option is a view option several styles share, so a setting or a key
 // binding can drive any of them the same way.
 type Option uint8
@@ -70,6 +76,10 @@ const (
 	OptLegend
 	// OptChanges highlights what is new since the last visit.
 	OptChanges
+	// OptWorld opens the view on the known world rather than the
+	// settlement (roguelike: the region zoom). Off returns to the
+	// settlement. Styles with one view ignore it.
+	OptWorld
 )
 
 // Entry describes one style for the registry.

@@ -262,6 +262,13 @@ func (t *EconomyTab) AddToLeftColumn(item tview.Primitive, fixedSize, proportion
 	t.leftCol.AddItem(item, fixedSize, proportion, false)
 }
 
+// WrapBuildings replaces the Buildings list in the layout with wrap(list),
+// so the Dashboard can dock the mini map above it (mapDock).
+func (t *EconomyTab) WrapBuildings(wrap func(list tview.Primitive) tview.Primitive) {
+	t.root.RemoveItem(t.buildingTV)
+	t.root.AddItem(wrap(t.buildingTV), 0, 1, false)
+}
+
 // Root returns the root primitive
 func (t *EconomyTab) Root() tview.Primitive {
 	return t.root

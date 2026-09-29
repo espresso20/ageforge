@@ -9,7 +9,7 @@ import (
 // Wonder icons — small two-cell half-block glyphs rendered from in-code 16×16
 // wonder sprites. Extracted from the retired MapV4 (ui/map.go) so the Wonders
 // overlays (overlay_wonders.go, wonder_gallery.go) keep their per-wonder icons
-// after the map rewrite. The new procedural map (ui/citymap) does not use these.
+// after the map rewrite. The maps (ui/mapstyle) do not use these.
 
 // Wonder sprite color constants (sandstone / gold palette).
 const (

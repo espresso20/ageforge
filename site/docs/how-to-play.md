@@ -40,7 +40,7 @@ Build → Recruit → Assign → Research → Advance → Repeat
 
 ## Navigation
 
-- Type a panel's name to open it: `research`, `army`, `trade`, `factions`, `citymap`, `worldmap`, `help` and so on.
+- Type a panel's name to open it: `research`, `army`, `trade`, `factions`, `map`, `help` and so on.
 - `help` opens the Help panel: a full command reference plus the list of every panel you can open.
 - **PgUp / PgDn** scroll the Economy panel.
 - **↑ / ↓** step through your command history.
@@ -183,12 +183,11 @@ build stonehenge
 
 ---
 
-## Maps
+## The Map
 
-There are two map views: a close-up of your own settlement and a zoomed-out view of the wider world.
+Type `map` to open the **Map**: your empire drawn from your real game state (your buildings and the workers staffing them, your wonders, the civilizations you have met, your trade routes). It has two styles, and `s` in the panel switches between them:
 
-**City Map** (`citymap`, or `map`) is a procedurally generated **top-down pixel-art city**. You look straight down at the roofs, streets and squares of one settlement drawn from your actual buildings. Built **wonders** anchor the center, and the city re-skins to the current era as you advance, from thatch huts on dirt lanes in the Primitive Age to mudbrick and then stone city walls from the Bronze to the Renaissance Age, and open grids and towers from the Industrial Age on. Every color comes from your active theme, so switching themes retints the whole city. There is no terrain on this view (that lives on the World Map), and every bit of greenery is built. See [The City Map](city-map.md) for how the city's look changes each age.
+- **Roguelike** (the default): a glyph world seen from above. Your town grows out of your real buildings, quarter by quarter, with streets, walls and wonders. Zoom out (`x`) to the whole known world and the civilizations you have met, or in (`z`) to a district with building names.
+- **Skyline**: your empire side-on as a panorama, one district for every age you have lived through. Windows light only where workers are staffed, and trade routes travel by land, sea or air.
 
-**World Map** (`worldmap`) shows a single **seeded world**: one continent with elevation, biomes, coastlines and rivers, the **same land every game** on your account. What changes each age is the **cartographic medium** it's drawn in: a charcoal cave-sketch (Primitive), inked parchment with a compass rose (Medieval), a satellite mosaic (Modern), a neon holo-grid (Cyberpunk), and so on through all 17 planetary ages. Once you leave the planet it becomes a **strategic star-map** of your empire and the rival civilizations, each colored by its stance toward you (at war red, ally green, mercantile gold, neutral steel blue). See [The World Map](world-map.md).
-
-Open either map at any time by typing `citymap` or `worldmap` at the prompt.
+In both styles an inspect cursor tells you what it is on and the command to type for it. Press Enter to put that command into the prompt. `map style` and `map glyphs` choose the style and the glyph set, and are saved with your account. On a large terminal the dashboard also shows a **mini map** above the Buildings list. `citymap` and `worldmap` still work and open the Map. See [The Map](map.md) for all the keys.

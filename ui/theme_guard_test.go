@@ -28,18 +28,12 @@ import (
 //   - tcell.NewRGBColor / tcell.NewHexColor / tcell.GetColor outside the short
 //     allow-list below, each of which is pixel-streaming or color math, not a
 //     palette choice.
-//
-// Map terrain anchors (image/color.RGBA in ui/citymap) are deliberately out of
-// scope: they are biome identity hues that the map derivations blend against
-// theme roles at draw time, not UI colors.
 func TestNoRawColorsOutsideTheme(t *testing.T) {
 	owned := theme.TagNames()
 
 	// Files allowed to construct literal tcell colors, and why.
 	rgbAllowed := map[string]string{
-		"ui/citymap/citymap.go": "half-block pixel streaming (image RGBA → cell fg/bg)",
-		"ui/citymap/overlay.go": "color-space conversion helpers for derived label colors",
-		"ui/splash_canvas.go":   "dark-theme starfield/title art formulas (light themes use roles)",
+		"ui/splash_canvas.go": "dark-theme starfield/title art formulas (light themes use roles)",
 	}
 
 	// A tag is [fg], [fg:bg] or [fg:bg:attrs]; fg/bg may be empty or "-".

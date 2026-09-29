@@ -2,7 +2,9 @@
 
 In September 2026 the live map was rebuilt a seventh time without ever feeling right, so we prototyped six different directions in a "Map Lab" and compared them as real terminal captures.
 
-**Chosen:** `roguelike` (a glyph world with an inspect cursor, and the default) and `skyline` (an ANSI-art panorama). Players switch between them. Both are built on one shared map model, with a thin renderer per style. The work starts with the `feat/espresso/map-v2-core` PR (phase 1) and is followed by integration (phase 2), which replaces `ui/citymap`.
+**Chosen:** `roguelike` (a glyph world with an inspect cursor, and the default) and `skyline` (an ANSI-art panorama). Players switch between them. Both are built on one shared map model, with a thin renderer per style.
+
+**Shipped:** phase 1 (#151) built the shared model and the two styles. Phase 2 (#153) put them in the game: the Map panel (`map`), the dashboard mini map, the per-account `map style` and `map glyphs` settings, and the `icons` Nerd Font check. It also removed `ui/citymap`. The player docs are [site/docs/map.md](../../site/docs/map.md).
 
 **Saved for later:** the four concepts below were strong but not chosen for now. Their specs are kept here so any of them can come back as another selectable style. Once the shared map model exists, a new style only needs a renderer that reads the model and implements the style interface.
 

@@ -31,7 +31,7 @@ AgeForge is a full-screen text interface built with Go and tview/tcell. It runs 
 - **21 Trade routes** and an 11-civilization diplomacy roster
 - **77 Milestones** in 6 chains, with civilization titles
 - **9 Prestige upgrades**: permanent bonuses across resets
-- **City Map**: a top-down pixel-art view of your capital, drawn from your actual buildings, with a look for every age. It uses your theme's colors and retints when you switch themes.
+- **The Map**: your empire drawn from your real buildings, in two styles (a roguelike glyph world with three zooms, and a side-on skyline with one district per age). An inspect cursor gives you the command for whatever it is on, and a mini map sits on the dashboard.
 
 ---
 

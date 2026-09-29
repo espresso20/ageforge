@@ -38,9 +38,9 @@ The **Wonders** panel (`wonders`) shows progress with a bar for each resource. E
 
 ---
 
-## Viewing Wonders on the City Map
+## Viewing Wonders on the Map
 
-Completed wonders appear on the City Map (`map` command) as their own named, gold-tinted markers, one per wonder you've built, placed among your other buildings on the city layout for your age. Open the City Map any time with `map` to see them; the whole map (terrain, districts, and labels) also retints with your active theme.
+Completed wonders appear on the [Map](map.md) (`map` command) as landmarks, each drawn in its era's look. In the roguelike style they stand among your streets, and Tab jumps the cursor between buildings and wonders. In the skyline they stand among the age districts. Point the inspect cursor at one to see its name, the age it belongs to, and its details.
 
 ---
 
@@ -52,7 +52,7 @@ The wonder requirement appears in the **age progress bar** at the top of the scr
 
 If you try to advance before completing your age's wonder, the game will tell you which wonder is blocking and remind you to use `wonder collect` then `build <key>`.
 
-Once completed, the wonder appears as a named gold marker on the City Map (`map` command). The map's layout, terrain and styling follow your current age.
+Once completed, the wonder appears as a landmark on the Map (`map` command).
 
 ---
 
