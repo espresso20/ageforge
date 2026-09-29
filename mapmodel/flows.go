@@ -117,7 +117,9 @@ func flowsFor(m *Model, st *game.GameState) Flows {
 // patrols. Every field comes from real state, so a busier economy is a
 // busier picture.
 type Activity struct {
-	Routes    int // trade routes running
+	Routes int // trade routes running
+	// ByMode counts the running routes by RouteMode (land, sea, air).
+	ByMode    [3]int
 	Disrupted int // routes blockaded
 	Staffed   int // workers at work
 	Idle      int
@@ -137,6 +139,7 @@ func activityFor(m *Model) Activity {
 			a.Disrupted++
 		} else {
 			a.Routes++
+			a.ByMode[r.Mode]++
 		}
 	}
 	for _, f := range m.Factions {

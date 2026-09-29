@@ -115,6 +115,11 @@ type Theme struct {
 	GainGlyph string // e.g. "▲" / "+"
 	LossGlyph string // e.g. "▼" / "-"
 
+	// Duotone marks a one-ink-on-one-paper theme (Monochrome, Parchment):
+	// pictorial surfaces such as the skyline map fold every scene color
+	// onto the ramp from Background to Text instead of drawing full color.
+	Duotone bool
+
 	// Milestone-gated unlock condition (theming.md §5). A gated (flavor) theme
 	// declares EXACTLY ONE of these — the milestone key or chain key whose
 	// completion unlocks it account-wide. The mapping lives here, in the registry,

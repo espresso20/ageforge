@@ -1,6 +1,8 @@
 package roguelike
 
 import (
+	"sort"
+
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/mapmodel"
@@ -164,16 +166,25 @@ func (v *view) free(x, y, n int) bool {
 	return true
 }
 
-// label writes text next to a tile, in the first free spot around it.
-func (v *view) label(cv *mapstyle.Canvas, p mapmodel.Pt, text string, st tcell.Style) {
+// label writes text next to a tile, in the first free spot around it, and
+// reports whether it found one.
+func (v *view) label(cv *mapstyle.Canvas, p mapmodel.Pt, text string, st tcell.Style) bool {
 	cx, cy, ok := v.g.cellOf(p)
 	n := mapstyle.TextLen(text)
 	for _, o := range [6][2]int{{2, 0}, {-n - 1, 0}, {-n / 2, -1}, {-n / 2, 1}, {2, 1}, {2, -1}} {
 		if ok && v.free(cx+o[0], cy+o[1], n) {
 			cv.Text(cx+o[0], cy+o[1], n, text, st)
-			return
+			return true
 		}
 	}
+	return false
+}
+
+// districtLabelBudget is how many building names the district zoom prints
+// in a w x h map area: about one per 160 cells, at least 4 and at most 24,
+// so a dense town reads as a map with a few names, not a wall of text.
+func districtLabelBudget(w, h int) int {
+	return min(24, max(4, w*h/160))
 }
 
 // drawLabels names things on the same grid as the art: the settlement and
@@ -185,9 +196,30 @@ func (v *view) drawLabels(cv *mapstyle.Canvas) {
 		v.label(cv, pt(s.w.CX, s.w.CY), s.w.Name, v.cls(mapmodel.CWealth).Bold(true))
 	}
 	if v.g.cellW == 2 {
+		// The names nearest the cursor first, within the label budget.
+		var anchors []*mapmodel.TownTile
 		for i := range m.Town.Tiles {
 			if tt := &m.Town.Tiles[i]; tt.Anchor && m.Building(tt.Key) != nil {
-				v.label(cv, tt.Pt, m.Building(tt.Key).Name, v.cls(mapmodel.CLabel))
+				if _, _, ok := v.g.cellOf(tt.Pt); ok {
+					anchors = append(anchors, tt)
+				}
+			}
+		}
+		dist := func(p mapmodel.Pt) int { return abs(p.X-v.cur.X) + abs(p.Y-v.cur.Y) }
+		sort.SliceStable(anchors, func(i, j int) bool {
+			if di, dj := dist(anchors[i].Pt), dist(anchors[j].Pt); di != dj {
+				return di < dj
+			}
+			return anchors[i].Key < anchors[j].Key
+		})
+		budget := districtLabelBudget(v.g.w, v.g.h)
+		v.names = 0
+		for _, tt := range anchors {
+			if v.names == budget {
+				break
+			}
+			if v.label(cv, tt.Pt, m.Building(tt.Key).Name, v.cls(mapmodel.CLabel)) {
+				v.names++
 			}
 		}
 	}

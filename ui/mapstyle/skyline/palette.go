@@ -103,8 +103,7 @@ func newPal(m *mapmodel.Model) *pal {
 		}
 		p.stars *= 0.3
 	}
-	switch theme.Active().Key {
-	case "monochrome", "parchment":
+	if theme.Active().Duotone {
 		p.mono = true
 		p.duoLo, p.duoHi = bg, theme.Color(theme.RoleText)
 		if luma(p.duoLo) > luma(p.duoHi) {

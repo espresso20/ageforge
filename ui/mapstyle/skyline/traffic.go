@@ -170,6 +170,18 @@ func bandOf(age int) int {
 	return 8
 }
 
+// runningModes lists the modes of the first n running (not disrupted)
+// routes, in model order.
+func runningModes(m *mapmodel.Model, n int) []mapmodel.RouteMode {
+	var out []mapmodel.RouteMode
+	for _, r := range m.Routes {
+		if !r.Disrupted && len(out) < n {
+			out = append(out, r.Mode)
+		}
+	}
+	return out
+}
+
 // counts is how much of each kind moves, from real state.
 type counts struct{ route, foot, army, war, private, ambient int }
 
@@ -234,11 +246,36 @@ func trafficFor(m *mapmodel.Model, anim, cam, w, groundY int) []vehicle {
 	}
 	sp := func(seed int, lo, hi float64) float64 { return lo + (hi-lo)*hashf(seed, 13) }
 
-	// trade routes
-	for i := 0; i < c.route; i++ {
+	// trade routes: one stream per running route, drawn by how its goods
+	// travel (mapmodel.Route.Mode). Sea routes sail the bays (up to three
+	// ships a bay); with no bay they come overland. Air routes fly once the
+	// age has aircraft (band 5 on), and walk or roll before that.
+	modes := runningModes(m, c.route)
+	bays := false
+	for _, d := range m.Skyline.Districts {
+		bays = bays || d.Bay
+	}
+	sea := 0
+	for i, mode := range modes {
+		if mode == mapmodel.ModeSea && bays {
+			sea++
+			continue
+		}
 		seed := 100 + i
 		var t *vtemplate
 		ln := street
+		if mode == mapmodel.ModeAir && band >= 5 {
+			switch band {
+			case 5:
+				t, ln = &tCargoJet, high
+			case 6, 7:
+				t, ln = &tFlyCargo, sky[i%3]
+			default:
+				t, ln = &tWarpShip, sky[i%3]
+			}
+			add(vkRoute, t, seed, ln, sp(seed, 0.25, 0.45))
+			continue
+		}
 		switch band {
 		case 0:
 			t = &tPorters
@@ -258,23 +295,12 @@ func trafficFor(m *mapmodel.Model, anim, cam, w, groundY int) []vehicle {
 			}
 		case 5:
 			t = &tTruck
-			if i%3 == 2 {
-				t, ln = &tCargoJet, high
-			}
 		case 6:
-			t, ln = &tFlyCargo, sky[i%3]
-			if i%2 == 1 {
-				ry := railYs(groundY)
-				r := ry[i%len(ry)]
-				t, ln = &tMaglev, lane{r.y - 1, r.d - 1}
-			}
-		case 7:
-			t, ln = &tHoverTram, lane{groundY - 4, dLane0}
-			if i%2 == 1 {
-				t, ln = &tFlyCargo, sky[i%3]
-			}
+			ry := railYs(groundY)
+			r := ry[i%len(ry)]
+			t, ln = &tMaglev, lane{r.y - 1, r.d - 1}
 		default:
-			t, ln = &tWarpShip, sky[i%3]
+			t, ln = &tHoverTram, lane{groundY - 4, dLane0}
 		}
 		add(vkRoute, t, seed, ln, sp(seed, 0.25, 0.45))
 	}
@@ -383,13 +409,13 @@ func trafficFor(m *mapmodel.Model, anim, cam, w, groundY int) []vehicle {
 		}
 		add(vkAmbient, t, seed, ln, sp(seed, 0.2, 0.7))
 	}
-	out = append(out, bayTraffic(m, anim, cam, w, groundY, band, c.route)...)
+	out = append(out, bayTraffic(m, anim, cam, w, groundY, band, sea)...)
 	out = append(out, launches(m, anim, cam, w, groundY, band)...)
 	return out
 }
 
-// bayTraffic: route ships (one per running route, up to three per bay) and
-// one boat of the age on every bay in view.
+// bayTraffic: route ships (one per running sea route, up to three per
+// bay) and one boat of the age on every bay in view.
 func bayTraffic(m *mapmodel.Model, anim, cam, w, groundY, band, routes int) []vehicle {
 	var out []vehicle
 	ships := [9]*vtemplate{&tCanoe, &tTrireme, &tSail, &tGalleon, &tSteamer, &tFreighter, &tFreighter, &tFreighter, &tFreighter}

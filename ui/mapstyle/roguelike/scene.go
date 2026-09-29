@@ -193,33 +193,29 @@ func coreLineage(lin string) bool {
 }
 
 // walls rings the core: a palisade from the Bronze Age, a stone wall with
-// towers, then a ring boulevard where the wall stood. The ring is centred on
-// the built core, so a lopsided town gets a lopsided ring.
+// towers, then a ring boulevard where the wall stood. The ring is centred
+// on the town square and its radius snaps up a fixed ladder of sizes, so
+// it holds still as the town grows and steps outward only when the core
+// outgrows it, never creeping by a tile at a time.
 func (s *scene) walls() {
 	w := s.w
 	mode := s.d.wall
 	if s.epoch == 0 && s.m.AgeIdx < 2 {
 		mode = 0
 	}
-	sx, sy, n := float64(w.CX), float64(w.CY), 1.0
+	cx, cy := w.CX, w.CY
 	var ds []float64
-	for _, t := range s.m.Town.Tiles {
-		if coreLineage(t.Lineage) {
-			sx, sy, n = sx+float64(t.X), sy+float64(t.Y), n+1
-		}
-	}
-	cx, cy := int(math.Round(sx/n)), int(math.Round(sy/n))
 	for _, t := range s.m.Town.Tiles {
 		if coreLineage(t.Lineage) {
 			ds = append(ds, rdist(t.X, t.Y, cx, cy))
 		}
 	}
 	sort.Float64s(ds)
-	r := math.Max(2.6, rdist(w.CX, w.CY, cx, cy)+2)
+	need := 2.6
 	if len(ds) > 0 {
-		r = math.Max(r, ds[len(ds)*17/20])
+		need = math.Max(need, ds[len(ds)*17/20])
 	}
-	r += 1.1
+	r := wallStep(need + 1.1)
 	s.wallR, s.wallC = r, pt(cx, cy)
 	if mode == 0 {
 		return
@@ -249,6 +245,20 @@ func (s *scene) walls() {
 			}
 		}
 	}
+}
+
+// wallRadii is the ladder the wall's radius snaps to (each about a third
+// bigger than the last).
+var wallRadii = []float64{3.7, 5, 6.5, 8.5, 11, 14, 18, 23, 29, 37, 47, 60}
+
+// wallStep is the smallest ladder radius that holds r.
+func wallStep(r float64) float64 {
+	for _, x := range wallRadii {
+		if r <= x {
+			return x
+		}
+	}
+	return r
 }
 
 // onRing reports whether an outside tile is on the one-tile-thin,

@@ -49,7 +49,7 @@ func (m *Model) Fingerprint() string {
 		w("f %s %d %v %d\n", f.Key, f.Site, f.Discovered, f.Relation)
 	}
 	for _, r := range m.Routes {
-		w("r %s %s %v\n", r.Key, r.Civ, r.Disrupted)
+		w("r %s %s %v %s\n", r.Key, r.Civ, r.Disrupted, r.Mode)
 	}
 	a := m.Activity
 	w("a %d %d %d %x %x\n", a.Routes, a.Staffed, a.Soldiers, math.Float64bits(a.Wealth), math.Float64bits(a.Traffic))

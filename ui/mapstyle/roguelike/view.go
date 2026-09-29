@@ -53,6 +53,8 @@ type view struct {
 	anim int
 	tier mapmodel.GlyphTier
 	rbuf regionBuf
+	// names is how many building names the last district-zoom frame drew.
+	names int
 }
 
 func newView() *view { return &view{zoom: zSettlement, inspect: true, legend: true, changes: true} }

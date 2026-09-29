@@ -136,6 +136,8 @@ type Route struct {
 	Disrupted bool
 	Imports   []string
 	Cycles    int
+	// Mode is how its goods travel (land, sea or air), from the route data.
+	Mode RouteMode
 	// Civ is the civ the route's caravans travel to: a cosmetic,
 	// deterministic pick among the civs you trade with ("" when you have
 	// met none).
@@ -528,7 +530,7 @@ func (m *Model) world(st *game.GameState) {
 		}
 	}
 	for _, r := range st.Trade.ActiveRoutes {
-		rt := Route{Key: r.Key, Name: r.Name, Disrupted: r.Disrupted, Cycles: r.CyclesDone}
+		rt := Route{Key: r.Key, Name: r.Name, Disrupted: r.Disrupted, Cycles: r.CyclesDone, Mode: cat.RouteMode(r.Key)}
 		for res := range r.Import {
 			rt.Imports = append(rt.Imports, res)
 		}

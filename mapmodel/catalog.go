@@ -2,6 +2,7 @@ package mapmodel
 
 import (
 	"sort"
+	"strings"
 
 	"github.com/espresso20/ageforge/config"
 )
@@ -88,6 +89,8 @@ type Catalog struct {
 	Factions []string
 	// Catastrophes maps epoch key -> catastrophe display name.
 	Catastrophes map[string]string
+	// RouteModes maps trade route key -> how its goods travel.
+	RouteModes map[string]RouteMode
 }
 
 // NewCatalog reads config. It is not cheap (config rebuilds its tables on
@@ -169,7 +172,64 @@ func NewCatalog() *Catalog {
 	for _, f := range config.BaseFactions() {
 		c.Factions = append(c.Factions, f.Key)
 	}
+	c.RouteModes = map[string]RouteMode{}
+	for _, r := range config.BaseTradeRoutes() {
+		c.RouteModes[r.Key] = routeModeOf(r, c.Defs[r.RequiredBld])
+	}
 	return c
+}
+
+// RouteMode is how a trade route's goods travel, so a style can draw the
+// right vehicles: caravans and trains, ships, or aircraft.
+type RouteMode uint8
+
+const (
+	ModeLand RouteMode = iota
+	ModeSea
+	ModeAir
+)
+
+func (m RouteMode) String() string { return [...]string{"land", "sea", "air"}[m] }
+
+// routeModeOf reads a route's mode from its data: a route that needs a
+// harbor building sails; one whose words name the sky or space (warp,
+// stellar, galactic, orbital, air) flies; rails, roads and caravans go by
+// land; ships or the sea sail; the rest go by land.
+func routeModeOf(r config.TradeRouteDef, req *Def) RouteMode {
+	if req != nil && req.Lineage == LinHarbor {
+		return ModeSea
+	}
+	words := map[string]bool{}
+	for _, w := range strings.FieldsFunc(strings.ToLower(r.Key+" "+r.Name+" "+r.RequiredBld+" "+r.Description),
+		func(c rune) bool { return c < 'a' || c > 'z' }) {
+		words[strings.TrimSuffix(w, "s")] = true
+	}
+	for _, w := range []string{"warp", "stellar", "galactic", "orbital", "space", "air", "sky"} {
+		if words[w] {
+			return ModeAir
+		}
+	}
+	for _, w := range []string{"rail", "road", "caravan", "pipeline", "train", "truck", "convoy"} {
+		if words[w] {
+			return ModeLand // "ship iron by rail" is a train
+		}
+	}
+	for _, w := range []string{"port", "harbor", "ship", "clipper", "barge", "sea", "ocean", "steamship"} {
+		if words[w] {
+			return ModeSea
+		}
+	}
+	return ModeLand
+}
+
+// RouteMode is the mode of the route with key k. A route the catalogue
+// does not know (an old save's, a removed one) gets a stable pick, so it
+// still draws the same way every time.
+func (c *Catalog) RouteMode(k string) RouteMode {
+	if m, ok := c.RouteModes[k]; ok {
+		return m
+	}
+	return RouteMode(Hash(HashStr(k)) % 3)
 }
 
 // lineageOf normalises config's lineage key.
