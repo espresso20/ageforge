@@ -223,26 +223,22 @@ func TestMilestoneDescriptionNumbers(t *testing.T) {
 	}
 }
 
-// knownInfeasibleMilestones can never complete with today's data. It is a
-// balance bug, not a wording one, so it is listed here instead of fixed: the
-// Great Library allows one copy and the milestone asks for five. Remove the
-// entry when the condition is fixed.
-var knownInfeasibleMilestones = map[string]bool{"grand_library_built": true}
-
 // TestMilestonesAreFeasible: no milestone asks for more copies of a building
 // than may exist, or more techs than there are.
 func TestMilestonesAreFeasible(t *testing.T) {
 	bld := BuildingByKey()
 	techs := len(Technologies())
 	for _, m := range Milestones() {
-		infeasible := m.MinTechCount > techs
-		for key, n := range m.MinBuildings {
-			if d, ok := bld[key]; !ok || (d.MaxCount > 0 && n > d.MaxCount) {
-				infeasible = true
-			}
+		if m.MinTechCount > techs {
+			t.Errorf("%s: asks for %d techs, there are %d", m.Key, m.MinTechCount, techs)
 		}
-		if infeasible != knownInfeasibleMilestones[m.Key] {
-			t.Errorf("%s: infeasible=%v, known=%v; fix the condition or the known list", m.Key, infeasible, knownInfeasibleMilestones[m.Key])
+		for key, n := range m.MinBuildings {
+			d, ok := bld[key]
+			if !ok {
+				t.Errorf("%s: unknown building %q", m.Key, key)
+			} else if d.MaxCount > 0 && n > d.MaxCount {
+				t.Errorf("%s: asks for %d %s, at most %d may exist", m.Key, n, key, d.MaxCount)
+			}
 		}
 	}
 }
@@ -272,14 +268,6 @@ func TestTradeRouteDescriptionsNameGiveAndGet(t *testing.T) {
 	}
 }
 
-// knownEarlyRoutes open an age or more before their required building can be
-// built, so they show "need 1 seaport" with no way to comply. Changing MinAge
-// changes pacing, so this is tracked as a balance bug; remove entries as they
-// are fixed.
-var knownEarlyRoutes = map[string]bool{
-	"cotton_exchange": true, "steamship_line": true, "rail_freight": true, "warp_commerce": true,
-}
-
 // TestTradeRouteMinAgeCoversBuilding: a route is not offered before its
 // required building exists.
 func TestTradeRouteMinAgeCoversBuilding(t *testing.T) {
@@ -294,9 +282,8 @@ func TestTradeRouteMinAgeCoversBuilding(t *testing.T) {
 			t.Errorf("%s: unknown required building %q", r.Key, r.RequiredBld)
 			continue
 		}
-		early := order[r.MinAge] < order[b.RequiredAge]
-		if early != knownEarlyRoutes[r.Key] {
-			t.Errorf("%s: opens in %s, %s arrives in %s (known early: %v)", r.Key, r.MinAge, r.RequiredBld, b.RequiredAge, knownEarlyRoutes[r.Key])
+		if order[r.MinAge] < order[b.RequiredAge] {
+			t.Errorf("%s: opens in %s, %s arrives in %s", r.Key, r.MinAge, r.RequiredBld, b.RequiredAge)
 		}
 	}
 }

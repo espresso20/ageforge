@@ -1,18 +1,18 @@
-# Citymap v3 — Top-Down Pixel-Art Living City (LOCKED SPEC)
+# Citymap v3: Top-Down Pixel-Art Living City (LOCKED SPEC)
 
 Supersedes the Phase-A isometric / terrain-gated model after playtest. The
 citymap is **NOT** a world/planet geo map and **NOT** isometric blocks planted on
-terrain. It is a **top-down pixel-art city** — you look straight down at ROOFS,
+terrain. It is a **top-down pixel-art city**. You look straight down at ROOFS,
 streets, gardens and squares, like a top-down village/city game (Stardew,
 top-down Zelda). It grows and restyles as the player's civ grows.
 
-Every decision below is LOCKED from a design pass. Do NOT re-assume — if
+Every decision below is LOCKED from a design pass. Do NOT re-assume. If
 something here is silent, ask, don't guess.
 
 ## Locked decisions
 1. **View**: top-down, roofs-from-above. No isometric walls/sides (subtle shadow
    only). No world terrain, oceans, or continents on the city view.
-2. **Ground**: neutral, ERA-TINTED — base color/texture shifts per era mood:
+2. **Ground**: neutral, ERA-TINTED. The base color/texture shifts per era mood:
    earthy (primitive/ancient) → stone (medieval/renaissance) → concrete/asphalt
    (industrial/modern) → dark neon-grid (cyber) → pale metallic (space). No
    natural water. ALL greenery is BUILT (gardens/parks/squares/street-trees).
@@ -22,33 +22,33 @@ something here is silent, ask, don't guess.
 4. **Count fidelity**: NEAR 1:1 at low counts (24 huts ≈ 24 hut-roofs),
    SUB-LINEAR at high counts (hundreds → dense but legible, not N identical
    clones).
-5. **Buildings**: each built type drawn as count-scaled TOP-DOWN ROOF sprites —
+5. **Buildings**: each built type drawn as count-scaled TOP-DOWN ROOF sprites:
    query building counts → math → that many roofs of that type.
 6. **Roof art**: age-realistic MATERIAL (thatch → clay tile → slate → flat modern
    → neon/metal) + a SUBTLE lineage tint so a temple reads different from a
    workshop. Soft drop-shadow (SE) for a hint of height. Muted & natural
    saturation, within the active theme.
 7. **Labels**: KEY LANDMARKS ONLY (city center, wonders, a promoted hero when the
-   civ has no civic building yet). Everything else unlabeled — read by roof
+   civ has no civic building yet). Everything else is unlabeled and read by roof
    shape/color.
 8. **Layout**: PERSISTENT, grows in place. One deterministic layout per civ
    (stable seed). New buildings SLOT INTO the existing layout without moving the
-   old ones (stable incremental placement — instance #N keeps its slot as #N+1 is
+   old ones (stable incremental placement: instance #N keeps its slot as #N+1 is
    added). The relative layout is stable; the fill-frame scale re-fits as it grows.
    Re-skins to the era on age-up; bones persist.
-9. **City edge**: WALLS WHERE THEY FIT — walls+gates ring the built-up area in
+9. **City edge**: WALLS WHERE THEY FIT. Walls+gates ring the built-up area in
    walled eras (ancient, medieval/renaissance); open ragged sprawl for industrial+.
 10. **Streets**: ORGANIC → GRID → AVENUES. Winding dirt lanes (village) →
     tightening grid (classical/medieval) → wide boulevards + superblocks
     (modern/cyber). Per era.
-11. **Growth**: MULTIPLE DISTRICTS but LOOSE — buildings gravitate toward
+11. **Growth**: MULTIPLE DISTRICTS but LOOSE: buildings gravitate toward
     same-kind clusters (residential / production / civic / market / garrison)
     that BLUR into each other, not hard-edged zones.
-12. **Detail**: BALANCED living-city filler — gardens, squares, trees, wells,
-    stalls, statues: alive and lived-in but never burying the buildings.
-13. **Wonders**: DOMINANT CENTERPIECE — a large, ornate, unmistakable complex
+12. **Detail**: BALANCED living-city filler (gardens, squares, trees, wells,
+    stalls, statues), alive and lived-in but never burying the buildings.
+13. **Wonders**: DOMINANT CENTERPIECE: a large, ornate, unmistakable complex
     anchoring the city center, clearly the grandest thing on the map.
-14. **Age-up**: GRADUAL RE-SKIN — roofs/streets/ground restyle to the new era;
+14. **Age-up**: GRADUAL RE-SKIN. Roofs/streets/ground restyle to the new era;
     layout/bones persist.
 15. **Minimap**: full `citymap` panel only for now (no dashboard minimap yet).
 
@@ -66,12 +66,12 @@ governs; the older wording is kept for history.
    Instead: lanes are laid first (winding, seeded, deterministic) between/around the
    growth anchors, then ALL buildings are placed in one stable sequence of slots that
    INTERLEAVES the per-type queues (round-robin) so consecutive slots are different
-   domains — a hut next to a camp next to a store, not one blob of huts — and each
+   domains (a hut next to a camp next to a store, not one blob of huts), and each
    slot is pulled toward its nearest lane so the fabric grows ALONG the streets and
    the town OUTLINE follows the lanes (not a disc). Applies at all scales; the city
    still reads as one cohesive settlement. Stable-incremental is preserved: a lot's
    (anchor, spiral-index, jitter) is a pure function of (building type, instance index,
-   seed) — never of another type's count or a shared cursor — so adding a building
+   seed), never of another type's count or a shared cursor, so adding a building
    never moves an existing one. `districtKindFor` + the `tdDistrict` cluster model are
    retired; `topPlan.anchors` replaces `topPlan.districts`.
 
@@ -79,18 +79,18 @@ governs; the older wording is kept for history.
    with count** (was: a single dominant centerpiece dropped dead-center). Anchors = the
    built WONDERS (each seats one); a wonderless village has a single city-center anchor.
    N wonders spread as a stable, seeded set of anchor points (golden-angle phyllotaxis,
-   spread ∝ √N — a few sit close, many fan out across the map). The lanes wind between
+   spread ∝ √N: a few sit close, many fan out across the map). The lanes wind between
    the anchors and the intermixed fabric grows around/between them. Each wonder sits AT
    its anchor drawn prominent (dominant roof), with a small CLEAR PLAZA of open ground
    immediately around it: the fabric spiral for a wonder anchor floors its radius just
    past the plaza so the town HUGS the wonder, and any stray lot inside the plaza is
-   dropped — the centerpiece is never buried (the playtest complaint). Wonders are
+   dropped. The centerpiece is never buried (the playtest complaint). Wonders are
    central anchors, NOT exiled to the outskirts. Scales sanely 0 → 1 → many anchors.
 
 3. **Labels are SOFT PILL BANNERS** (was: text stamped straight over the pixel field,
-   reading as a harsh line on the roofs). Each label sits on a muted background tone —
+   reading as a harsh line on the roofs). Each label sits on a muted background tone:
    the theme background lifted a touch toward the text tone + a whisper of the label's
-   role hue (a dim, gentle contrast, NOT a solid-black box) — with thin rounded
+   role hue (a dim, gentle contrast, NOT a solid-black box), with thin rounded
    side-cap glyphs (`▏`/`▕`) one cell out on each side, so it reads as a little pill
    floating just above the building. The text stays crisp in its role color on the same
    columns as before; the banner backs it for legibility over any roof/terrain. Both
@@ -99,30 +99,30 @@ governs; the older wording is kept for history.
 
 4. **The wonder/center plaza is DRESSED as a TOWN SQUARE, and density is AIRY early and
    tightens with age** (playtest: the wonder-anchored primitive village read as a ring
-   around an EMPTY plaza — a donut). The open center is NOT shrunk; it is made
+   around an EMPTY plaza, a donut). The open center is NOT shrunk; it is made
    intentional. Each plaza-clearing anchor (the wonders + the wonderless city-center) now
-   renders a deliberate town square: a PAVED-STONE ground patch (a lighter/greyer packed-
+   renders a deliberate town square: a PAVED-STONE ground patch (a lighter/grayer packed-
    or-paved tone derived from the ground family, distinct from the era-tinted dirt, drawn
    under the roof + props, theme-derived so it retints) plus a few DETERMINISTIC, seeded,
-   ERA-APPROPRIATE PROPS ringed AROUND (never overlapping) the roof — the primitive set is
+   ERA-APPROPRIATE PROPS ringed AROUND (never overlapping) the roof. The primitive set is
    a well, a firepit, standing stones/totem, and a market stall; later eras swap in
    fountains/statues/benches via `tdSquarePropsFor` (only primitive is tuned now). The
    wonder roof stays prominent at the anchor; the square dresses the ring around it. A
    wonderless village gets a MODEST square (a small paved patch + a well/firepit) so the
    heart reads as a gathering place without hollowing a hut village into a donut.
    Separately, village density is a PER-ERA knob (`tdEraStyle.slotSpacing`, routed into
-   `tdConfig.slotSpacing`): PRIMITIVE stays AIRY (unchanged spacing — its look must not
+   `tdConfig.slotSpacing`): PRIMITIVE stays AIRY (unchanged spacing; its look must not
    change) and later-era presets are progressively TIGHTER so V3-B/C cities + the
    metropolis pack denser. Framework groundwork; per-era-band values are tuned in V3-B+.
 
 5. **Streets are the GAPS BETWEEN VORONOI BLOCKS/WARDS** (was: lanes drawn first, buildings
-   lined alongside — which read as parallel "spaghetti sticks" and looked fake). The whole
+   lined alongside, which read as parallel "spaghetti sticks" and looked fake). The whole
    lane machinery is retired. New model (the Watabou Medieval Fantasy City Generator
    approach): scatter `B` block SEEDS in the compact bounded town disc (golden-angle,
    deterministic from `citySeed`, count-scaled + capped, wonder/center anchors pinned),
    run a few LLOYD RELAXATION passes for even organic wards, then a RASTER nearest-seed
    partition assigns town cells to seeds. STREETS = the region BOUNDARIES (cells where
-   √2nd − √nearest < band), painted in the packed-earth tone — one connected junctioned web
+   √2nd − √nearest < band), painted in the packed-earth tone. That gives one connected junctioned web
    BY CONSTRUCTION (cannot spaghetti). BLOCKS = region interiors; buildings FILL each ward
    perimeter-first FACING the streets, types intermixed across wards, no overlap, count-
    driven. Wonders reserve an open central ward (the dressed plaza/square); a wonderless
@@ -133,61 +133,61 @@ governs; the older wording is kept for history.
    structure stability (`tdCountBand` snaps count to a √-space band; the block field is
    identical within a band, re-forms only at a band boundary / age-up; within a band blocks
    fill progressively so most roofs hold their place). SUPERSEDES revision #1's lane-grown
-   placement — the intermix + wonder-anchor + town-square intent carries over into wards.
+   placement; the intermix + wonder-anchor + town-square intent carries over into wards.
 
-6. **Towns come in FOUR FORMS, picked per city + era — the radial wheel is one option, not the
+6. **Towns come in FOUR FORMS, picked per city + era; the radial wheel is one option, not the
    default** (was: every town's block seeds scattered by golden-angle phyllotaxis + a pinned center,
    so EVERY town read as a radial "wagon wheel"). The Voronoi ward machinery is unchanged (raster
    nearest-seed → streets = ward boundaries → buildings fill wards); only the block-SEED
    DISTRIBUTION (plus a couple of per-form constraints) varies by `tdTownForm`:
-   - **`formOrganic`** — POISSON-DISK / jittered-random scatter in the town disc, NO radial bias and
+   - **`formOrganic`**: POISSON-DISK / jittered-random scatter in the town disc, NO radial bias and
      NO forced ring/spokes → rambling irregular wards + organic streets. This is what kills the
      wheel and is the DEFAULT for primitive villages.
-   - **`formRadial`** — the ORIGINAL golden-angle phyllotaxis + pinned center: the phyllotaxis seeds
+   - **`formRadial`**: the ORIGINAL golden-angle phyllotaxis + pinned center: the phyllotaxis seeds
      put the ward boundaries on radial spokes and the pinned-center region reads as a hub with a
-     ring road — the wagon wheel. Now ONE option, era-weighted toward the ages actually planned
+     ring road (the wagon wheel). Now ONE option, era-weighted toward the ages actually planned
      around a monument/forum (ancient, medieval), NEVER primitive. The forced central ring + radial
-     spokes are the RADIAL FORM'S OWN CONSTRAINT now, not the engine default — the other three forms
+     spokes are the RADIAL FORM'S OWN CONSTRAINT now, not the engine default. The other three forms
      do NOT force a ring; their streets emerge purely from the ward boundaries.
-   - **`formGrid`** — seeds on a JITTERED GRID over the disc → rectangular-ish wards, orthogonal-ish
+   - **`formGrid`**: seeds on a JITTERED GRID over the disc → rectangular-ish wards, orthogonal-ish
      streets (a surveyed/planned town). Weighted toward colonial→modern.
-   - **`formRibbon`** — the town ELONGATED along a seeded axis with seeds strung along that axis (a
+   - **`formRibbon`**: the town ELONGATED along a seeded axis with seeds strung along that axis (a
      main road) plus a small lateral spread → a linear town strung along a road. A pinch of every
      band.
    Lloyd relaxation runs on all four; the wonder/center anchors stay pinned in every form (so the
    streets always reach the central plaza and the wonder wards stay put). `tdPickTownForm(citySeed,
    era)` is deterministic + weighted by `tdBandFormWeights(era)`: primitive/stone is
    ORGANIC-dominant with occasional ribbon and 0 weight on radial/grid (villages ramble, they are
-   not planned) — so the current village (a fixed `citySeed`) reliably rolls ORGANIC, not a wheel;
+   not planned), so the current village (a fixed `citySeed`) reliably rolls ORGANIC, not a wheel;
    ancient leans organic+radial; medieval radial+organic+grid; colonial/industrial/victorian +
    modern grid-heavy→grid-dominant; campus grid/organic; orbital organic/grid. Different citySeeds →
    different forms → no two towns identical. Per-band weights are tunable later (V3-B/C). The
-   anti-wheel property is robust-tested via the ward-seed radial ordering (a radial town's ward
-   seeds spiral centers-out — a strong seed-index↔radius correlation; organic/ribbon do not).
+   anti-wheel property is tested via the ward-seed radial ordering (a radial town's ward
+   seeds spiral centers-out, a strong seed-index↔radius correlation; organic/ribbon do not).
 
 7. **ANCIENT + MEDIEVAL are styled (V3-B).** The two walled bands are filled in on the EXISTING
    frameworks (era styles, roof-material recipes, ground tints, square props, town-form weights,
    the wall flag) so each reads distinct + era-appropriate; every other era keeps its default.
    `tdStyleForEra` now returns `ancientCityStyle` (eraHubSpoke) and `medievalCityStyle` (eraCastle).
    - **Roof materials** (`roofColorsFor` via the preset `roofBase`/`roofDark`): ancient = CLAY TILE
-     (warm terracotta, `clayAnchor`); medieval = SLATE/TILE (cool dark blue-grey, `slateAnchor`).
+     (warm terracotta, `clayAnchor`); medieval = SLATE/TILE (cool dark blue-gray, `slateAnchor`).
      Primitive stays thatch. The subtle lineage tint + the saturation cap (`clampRoofSat`) still
      hold, so roofs never paint an accent/highlight (the no-yellow-dot guarantee).
    - **Ground** (`drawGround`): ancient = packed earth / pale stone (`mudbrickAnchor`+`stoneAnchor`);
-     medieval = cobble / stone grey (`cobbleAnchor`+`graniteAnchor`). Still QUIET (same low-contrast
+     medieval = cobble / stone gray (`cobbleAnchor`+`graniteAnchor`). Still QUIET (same low-contrast
      texture dials) and theme-derived (retints).
-   - **House style** (per-era `houseProfile` on the style, read by `drawRoof`): ancient = MUDBRICK —
-     flatter, blockier flat-topped roofs (`drawRoofMudbrick`); medieval = TIMBER — steeper pitched
+   - **House style** (per-era `houseProfile` on the style, read by `drawRoof`): ancient = MUDBRICK:
+     flatter, blockier flat-topped roofs (`drawRoofMudbrick`); medieval = TIMBER: steeper pitched
      gables (`drawRoofTimber`). The roof ATLAS (which archetype) is unchanged; only the silhouette
      shifts per era.
-   - **Walls + gates + towers (locked #9 — the big new piece).** `hasWalls` is ON for both bands
+   - **Walls + gates + towers (locked #9, the big new piece).** `hasWalls` is ON for both bands
      (industrial+ stays open). `tdAddWalls(plan, style, seed)` rings the built-up area with a wall
-     FOLLOWING the (ragged) town outline just outside the outermost wards (`tdWallRadiusAt` — the
+     FOLLOWING the (ragged) town outline just outside the outermost wards (`tdWallRadiusAt`; the
      ORGANIC form rides `tdOrganicRadiusAt` so the rampart is ragged like its town; other forms use
-     a circle). Ancient = MUDBRICK curtain (tan, thin, no towers); medieval = STONE curtain (grey,
+     a circle). Ancient = MUDBRICK curtain (tan, thin, no towers); medieval = STONE curtain (gray,
      thicker) studded with periodic TOWERS + a GATEHOUSE at the main gate. GATES are placed by
      `tdGateAngles` at the angles of the town's FARTHEST-REACHING streets (the main roads), so a
-     gate always opens where a street EXITS — connectivity THROUGH the wall is preserved by
+     gate always opens where a street EXITS. Connectivity THROUGH the wall is preserved by
      construction (the street-cell web is never touched; the wall only rings it, with GAPS at the
      gates). Deterministic/seeded; the ring is capped to the town disc and the wall lots are
      included in the fill-frame fit (`computeTransform`) so the whole enceinte stays bounded
@@ -206,7 +206,7 @@ governs; the older wording is kept for history.
 ## Architecture
 
 ### Deterministic persistent layout
-- `citySeed` = stable per civ (hash of display name / account), AGE-INDEPENDENT —
+- `citySeed` = stable per civ (hash of display name / account), AGE-INDEPENDENT:
   the bones don't move across ages.
 - Placement is a STABLE SEQUENCE: each building instance takes the next slot from
   a seeded space-filling sequence (golden-angle spiral / seeded Poisson) anchored
@@ -217,9 +217,9 @@ governs; the older wording is kept for history.
   legible). Relative positions stable; absolute scale re-fits.
 
 ### cityPlan (reuse + extend the Phase-A skeleton)
-- `streets []street{pts, width, class(lane|street|avenue)}` — laid by the era
+- `streets []street{pts, width, class(lane|street|avenue)}`, laid by the era
   street generator (NO terrain routing; no water).
-- `districts []district{kind, center, members…}` — loose clusters.
+- `districts []district{kind, center, members…}`: loose clusters.
 - `lots []lot{x,y,w,h, kind, domain, tier, roofType, label}` where kind ∈
   {house, workshop, civic, market, garrison, landmark, wonder, garden, square,
   tree, prop, wall, gate}.
@@ -235,7 +235,7 @@ governs; the older wording is kept for history.
    into its district cluster via the STABLE sequence; wonders → central dominant
    complex; leftover space → gardens/squares/trees/props at balanced density.
 6. walls → if the era has walls, ring the built-up area with wall + gates.
-7. (no terrain gate — neutral ground.)
+7. (no terrain gate; neutral ground.)
 
 ### Rendering (top-down)
 era-tinted ground (+texture) → streets (paved per class + era material) →
@@ -247,7 +247,7 @@ Every color via theme roles; panic-safe; exact size.
 
 ### Top-down roof atlas (drawn top-down, filling the lot, ridge/texture hint + SE shadow)
 - hut: small round/oval thatch roof, radial streaks.
-- house: rectangle pitched roof — center ridge, two shaded slopes.
+- house: rectangle pitched roof: center ridge, two shaded slopes.
 - rowhouse/longhouse: elongated ridge roof.
 - temple/shrine: larger ornate symmetric roof + finial.
 - market: open awning grid / stalls.
@@ -259,7 +259,7 @@ Every color via theme roles; panic-safe; exact size.
 - arcology/cyber: angular neon-edged roof.
 - wonder: large multi-part ornate complex (centerpiece).
 Material palette by era (thatch/wood → clay tile → slate/lead → asphalt/steel →
-glass/neon), muted, theme-derived; lineage tint blended ~15–25%.
+glass/neon), muted, theme-derived; lineage tint blended ~15-25%.
 
 ### Era style presets (per eraForAge band)
 | era band                         | ground        | streets              | walls          | roof material  | house    | wonder        |
@@ -290,7 +290,7 @@ glass/neon), muted, theme-derived; lineage tint blended ~15–25%.
   panic-safety, correct-size.
 - DROP from the CITYMAP path only: world terrain background, terrain-routed A*
   streets, isometric drawVolume, land-gating.
-- The WORLDMAP keeps its terrain (approved, separate) — terrain.go stays; only the
+- The WORLDMAP keeps its terrain (approved, separate). terrain.go stays; only the
   citymap stops calling it.
 
 ## Worldmap (approved, unchanged by this work)

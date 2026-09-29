@@ -1,8 +1,8 @@
 # Random Events
 
-Random events are the unpredictable heartbeat of AgeForge — fires, windfalls, plagues, gold rushes, and quantum fluctuations that fire throughout your run, independent of any strategic choice you make. They keep the pace dynamic and reward players who pay attention and react.
+Random events are the fires, windfalls, plagues, gold rushes and quantum fluctuations that happen throughout your run, independent of the choices you make. They keep the pace changing and reward players who pay attention and react.
 
-> **Two event systems exist.** This page covers the **base/global random event system** — events that fire during normal gameplay based on game tick and weighted probability. The **epoch-exclusive event system** (events tied to specific epochs, governed by faith and culture) is a separate mechanism documented in [Epochs](epochs.md).
+> **Two kinds of events come from the epoch system, and this page covers neither in depth.** This page covers the **base random events**, which fire during normal play based on game tick and weighted chance. Each epoch also adds its own **epoch-exclusive random events** to the same pool, and every epoch transition fires one **epoch transition event** shaped by your faith and culture. Both are documented in [Epochs](epochs.md).
 
 ---
 
@@ -10,40 +10,40 @@ Random events are the unpredictable heartbeat of AgeForge — fires, windfalls, 
 
 ### The Timing Window
 
-The EventManager enforces a **global cooldown** between all random events. No two events can fire within 150–600 ticks of each other (roughly 5–20 minutes at 1x speed). When an event fires, the next window opens at a random point in that range. This prevents event spam and keeps each event feeling like a notable moment.
+A **global timer** spaces out all random events. After an event fires, the next one can't fire for 150 to 600 ticks (roughly 5 to 20 minutes at 1x speed), picked at random in that range. This prevents event spam and keeps each event feeling like a notable moment.
 
-The first event of any new game is also delayed by the same 150–600 tick window, giving you time to get established before the chaos begins.
+The first event of any new game waits for the same 150 to 600 tick window, giving you time to get established first.
 
 ### Weighted Random Selection
 
-Each event has a `Weight` value. Higher weight = more likely to appear. When the engine checks for a new event, it builds a pool of all eligible events and runs a weighted random draw — so a Weight 15 event is five times more likely to be drawn than a Weight 3 event from the same pool.
+Each event has a weight. The higher the weight, the more likely it is. When the game checks for a new event, it builds a pool of all eligible events and draws one by weight, so a weight 15 event is five times more likely to be drawn than a weight 3 event from the same pool.
 
-Events are only eligible if:
-- The current tick is past the event's `MinTick` (prevents certain events from firing before they're contextually relevant)
-- The current age is at or past the event's minimum required age
-- The event's individual cooldown has elapsed since it last fired
-- The event is not currently active (a timed event cannot overlap with itself)
+An event is eligible only if:
+- the run has reached the event's earliest tick (some events can't fire before they make sense),
+- the current age is at or past the event's minimum age,
+- the event's own cooldown has passed since it last fired,
+- the event is not currently active (a timed event cannot overlap with itself).
 
 ### Anti-Streak System
 
-The engine tracks consecutive good and bad events and enforces soft limits:
+The game tracks consecutive good and bad events and limits streaks:
 
 | Situation | Rule |
 |-----------|------|
-| 3 good events in a row | Next draw is forced bad (3% lucky reset chance to skip this) |
-| 2 bad events in a row | Next draw is forced good |
+| 3 good events in a row | Next draw is bad or mixed (a 3% chance skips this and allows any) |
+| 2 bad events in a row | Next draw is good or mixed |
 | Mixed event fires | Resets both streak counters |
 
-This is why you won't see four droughts back to back, and also why a lucky streak always ends. The system intentionally prevents both brutal punishment spirals and lucky-streak sailing. After two rough events, a good one is mechanically guaranteed.
+This is why you won't see four droughts back to back, and why a lucky streak always ends. After two rough events, the next one is guaranteed to be good or mixed.
 
 ### Duration and Active Events
 
 Events are either **instant** or **timed**:
 
-- **Instant (Duration = 0):** Effect is applied once and done. No active event entry. The log message is all you'll see.
-- **Timed (Duration > 0):** Effect persists for the listed number of ticks, tracked as an active event. When it expires, the engine fires an "ended" log message summarising any losses that accumulated during it (workers who fled, resources stolen tick by tick).
+- **Instant (duration 0):** The effect is applied once. No active event entry; the log message is all you'll see.
+- **Timed (duration above 0):** The event stays active for the listed number of ticks. Its per-tick effects apply the whole time. When it expires, the log prints an "ended" message that sums up what it cost you when it fired (workers who fled, resources stolen).
 
-At 1x speed (default 2 seconds per tick):
+At 1x speed (2 seconds per tick):
 
 | Duration | Real-time equivalent |
 |----------|---------------------|
@@ -57,17 +57,17 @@ At 1x speed (default 2 seconds per tick):
 
 ### Viewing Events
 
-Use the `logs` command (or press `L`) to open the Logs overlay and see your full event history. Events appear as log entries with their effect description and duration. When a timed event ends, the "ended" entry shows accumulated losses in yellow — useful for assessing actual damage.
+Use the `logs` command to open the Logs panel and see your full event history. Events appear as log entries with their effect and duration. When a timed event ends, the "ended" entry shows its losses in yellow, which is useful for judging the actual damage.
 
-> **A note on tone.** Event log lines are written with a little personality — a wandering merchant "smelling of cabbage and opportunity," a crypto boom turning your least competent citizen into a thought leader. The flavor is purely cosmetic and always rides *alongside* the mechanical summary (the resources gained or lost, and the duration), never in place of it — so you can read the joke and still know exactly what happened to your economy. Milestone completions and other notable log moments (a building finishing, an age turning over, a research breakthrough, a famine starting or ending, surviving a catastrophe) carry the same light touch.
+> **A note on tone.** Event log lines are written with a little personality: wandering traders "smelling of cabbage and opportunity," a crypto boom turning your least competent worker into a thought leader. The flavor is cosmetic and always sits *alongside* the mechanical summary (the resources gained or lost, and the duration), never in place of it, so you can read the joke and still know exactly what happened to your economy. Milestone completions and other notable log moments (a building finishing, an age turning over, a research breakthrough, a famine starting or ending, enduring a catastrophe) carry the same light touch.
 
-The **Stats overlay** lists every currently active timed event under "Active Events" with the approximate wall-clock time left on it (e.g. `~2m 30s` — see [Timers and durations](commands.md#timers-and-durations)). Beneath each event, its ongoing per-tick or percentage effect is now shown explicitly and color-coded — **green** for a bonus, **red** for a penalty — so you can see at a glance exactly what each active event is doing to your economy (e.g. a Famine shows `food -3.0/t` in red; a production-boost event shows `all production +10%` in green). (On the colorblind-safe and high-contrast [themes](commands.md#themes), bonuses show **blue** and penalties **orange**, with `▲`/`▼` glyphs marking the sign.) Instant one-shot effects (resource grants, theft) are not listed here since they already fired at trigger.
+The **Stats panel** lists every currently active timed event under "Active Events" with the approximate wall-clock time left on it (e.g. `~2m 30s`; see [Timers and durations](commands.md#timers-and-durations)). Under each event it shows the ongoing per-tick or percentage effect, color-coded: **green** for a bonus, **red** for a penalty. A Famine shows `food -3.0/t` in red; a production-boost event shows `all production +10%` in green. (On the colorblind-safe and high-contrast [themes](commands.md#themes), bonuses show **blue** and penalties **orange**, with `▲`/`▼` glyphs marking the sign.) Instant effects (resource grants, theft, worker loss) are not listed there, since they already happened when the event fired.
 
 ---
 
 ## Base Event Reference
 
-These 27 events have no `EpochKey` — they can fire in any epoch, throughout the entire game. They form the permanent background of random occurrences regardless of where you are in the run.
+These 26 events belong to no epoch. They can fire in any epoch, throughout the whole game, and form the permanent background of random events. Together with the 35 epoch-exclusive events (5 per epoch), that makes 61 random events.
 
 ### Good Events
 
@@ -81,7 +81,7 @@ These 27 events have no `EpochKey` — they can fire in any epoch, throughout th
 | Ancient Discovery | `ancient_discovery` | Iron | 6 | +50 knowledge | Instant | |
 | Renaissance Fair | `renaissance_fair` | Renaissance | 10 | +0.5 culture/tick, +0.5 gold/tick | 15 ticks | |
 | Colonial Windfall | `colonial_windfall` | Colonial | 8 | +100 gold, +30 culture | Instant | |
-| Power Surge | `power_surge` | Victorian | 6 | +3.0 electricity/tick | 10 ticks | |
+| Power Surge | `power_surge_base` | Victorian | 6 | +3.0 electricity/tick | 10 ticks | |
 | Crypto Boom | `crypto_boom` | Cyberpunk | 7 | +5.0 crypto/tick | 15 ticks | |
 | First Contact | `first_contact` | Space | 3 | +500 knowledge, +50 titanium | Instant | Rarest good event |
 | Dark Matter Rift | `dark_matter_rift` | Interstellar | 4 | +3.0 dark matter/tick | 15 ticks | |
@@ -91,17 +91,17 @@ These 27 events have no `EpochKey` — they can fire in any epoch, throughout th
 
 | Name | Key | Min Age | Weight | Effect | Duration | Notes |
 |------|-----|---------|--------|--------|----------|-------|
-| Storm | `storm` | Primitive | 14 | Wood production -0.3/tick | 5 ticks | Most common bad event |
-| Drought | `drought` | Primitive | 12 | Food production -0.5/tick | 10 ticks | |
+| Storm | `storm` | Primitive | 14 | Wood -0.3/tick | 5 ticks | Most common bad event |
+| Drought | `drought` | Primitive | 12 | Food -0.5/tick | 10 ticks | |
 | Bandit Raid | `bandit_raid` | Bronze | 10 | -10 food, -5 gold stolen | Instant | |
-| Plague | `plague` | Stone | 6 | Food production -1.0/tick, -15% workers | 8 ticks | **Workers permanently lost** |
-| Mine Collapse | `mine_collapse` | Iron | 7 | Iron production -0.5/tick, coal -0.3/tick, -5% workers | 8 ticks | **Workers permanently lost** |
-| Heresy | `heresy` | Medieval | 5 | Faith production -0.5/tick | 12 ticks | |
+| Plague | `plague` | Stone | 6 | Food -1.0/tick, -15% workers | 8 ticks | **Workers permanently lost** |
+| Mine Collapse | `mine_collapse` | Iron | 7 | Iron -0.5/tick, coal -0.3/tick, -5% workers | 8 ticks | **Workers permanently lost** |
+| Heresy | `heresy` | Medieval | 5 | Faith -0.5/tick | 12 ticks | |
 | Pirate Attack | `pirate_attack` | Colonial | 7 | -50 gold, -30 food stolen | Instant | |
 | Nuclear Scare | `nuclear_scare` | Atomic | 4 | Electricity -2.0/tick, knowledge -1.0/tick | 12 ticks | |
 | Data Breach | `data_breach` | Information | 6 | -50 data, -100 gold stolen | Instant | |
 | Industrial Accident | `industrial_accident` | Industrial | 8 | -10 steel, -15 oil stolen, -7% workers | Instant | **Workers permanently lost** |
-| Crypto Winter | `crypto_winter` | Cyberpunk | 8 | -4.5 crypto stolen/tick | 14 ticks | Ongoing drain, not one-shot |
+| Crypto Winter | `crypto_winter` | Cyberpunk | 8 | -4.5 crypto stolen | 14 ticks | The theft happens once, when it fires |
 
 ### Mixed Events
 
@@ -116,21 +116,20 @@ These 27 events have no `EpochKey` — they can fire in any epoch, throughout th
 
 | Effect Type | What It Does |
 |-------------|-------------|
-| `instant_resource` | One-time addition to a resource. Applied once; no active event tracked. |
-| `production` | Multiplier bonus or penalty to a specific resource's production rate. Persists for the event duration. Positive = boost, negative = penalty. |
-| `steal_resource` | Removes a fixed amount from a resource. For instant events, applied once. For timed events, can drain per-tick — check the expired log for total losses. |
-| `worker_loss` | Removes a percentage of your total worker pool **permanently**. Workers lost this way do not return when the event ends. |
-| `morale` | An instant, one-time adjustment to morale — good epoch events lift morale, bad ones lower it, nudging the civilization-wide morale percentage up or down. These reflect the mood and motivation of the population — a windfall lifts spirits, while disasters shake confidence. |
+| `instant_resource` | Adds a fixed amount of a resource once, when the event fires. |
+| `production` | Adds a flat amount to one resource's per-tick rate (or subtracts it, if negative) for as long as the event lasts. It is not a percentage: +3.0 electricity/tick is +3.0 no matter how much you already make. |
+| `steal_resource` | Removes a fixed amount of a resource once, when the event fires (never more than you have). For a timed event, the amount is repeated in the "ended" message. |
+| `worker_loss` | Removes a percentage of your total workers **permanently**, when the event fires. They do not return when the event ends. |
 
-**Worker loss is the only permanent structural effect** in the random event system. Morale changes from events are real but recoverable — morale drifts back toward 50% neutral over time, and worship/culture buildings, good events, and age advances raise it. All production modifiers and resource steals are temporary or one-time. If an event has `worker_loss`, treat it as a permanent cost, not a debuff.
+Every random event also nudges **morale** when it fires: a good event lifts it by 4 points and a bad one lowers it by 4 (mixed events leave it alone). This applies to the base events above and to the epoch-exclusive events alike. Epoch transition events don't change morale. Catastrophes are separate: enduring one costs 10 points of morale, and a Succumb reset returns morale to the 50% baseline. See [Morale](morale.md) for how morale affects production.
 
-> **Note:** The morale effect applies to **epoch transition events** (the faith/culture roll system documented in [Epochs](epochs.md)), not to the base or epoch-exclusive random events listed in the tables above. A good epoch transition event lifts morale; a bad one lowers it. This is separate from catastrophe morale costs — enduring a catastrophe lowers morale, and a full Succumb reset returns morale to the 50% neutral baseline. See [Morale](morale.md) for the full banded system.
+**Worker loss is the only permanent damage** in the random event system. Morale drifts back toward 50% over time, and worship and culture buildings, good events and age advances raise it. All production changes and resource thefts are temporary or one-time. If an event has worker loss, treat it as a permanent cost, not a debuff.
 
 ---
 
 ## Epoch-Exclusive Random Events (Brief Reference)
 
-Each epoch has 5 additional events that enter the random event pool only while you're in that epoch. They fire through the same weighted-random, cooldown-respecting, anti-streak system as base events — the only difference is eligibility is restricted to the matching epoch.
+Each epoch has 5 more events that enter the random event pool only while you're in that epoch. They follow the same weights, cooldowns, global timer and anti-streak rules as the base events; the only difference is that they are limited to their epoch.
 
 | Epoch | Epoch Key |
 |-------|-----------|
@@ -142,43 +141,27 @@ Each epoch has 5 additional events that enter the random event pool only while y
 | Neon Era | `neon_era` |
 | Cosmic Era | `cosmic_era` |
 
-For the full list of epoch-exclusive events including effects, durations, and strategy notes, see [Epochs — Epoch-Exclusive Random Events](epochs.md#epoch-exclusive-random-events).
+For the full list of epoch-exclusive events with effects, durations and strategy notes, see [Epochs: Epoch-Exclusive Random Events](epochs.md#epoch-exclusive-random-events).
 
-> **Important distinction:** Epoch-exclusive random events are NOT the same as epoch transition events. Epoch transition events (the faith/culture roll) fire once per epoch at the boundary and are governed entirely by faith and culture. Epoch-exclusive random events fire during normal gameplay within the epoch, following the same rules as base events. Faith and culture have no effect on whether base or epoch-exclusive random events fire — only timing, cooldowns, and the anti-streak system apply.
+> **Epoch-exclusive random events are not epoch transition events.** Transition events fire once per epoch, at the boundary, and depend on your faith and culture. Epoch-exclusive random events fire during normal play within the epoch and follow the same rules as the base events. Faith and culture have no effect on whether base or epoch-exclusive random events fire; only timing, cooldowns and the anti-streak system apply.
 
 ---
 
 ## Age Awakenings
 
-Awakenings are one-time, per-epoch milestones that fire the first time you enter an epoch's signature age — seven epochs, seven awakenings. Unlike the gambled epoch transition events (a faith/culture roll that can come up good or bad), an awakening is **deterministic**: it always fires, always grants a modest thematic production boost, and never carries a downside. The boost is **temporary** — delivered through the same active-event mechanism as any timed event, it decays after its listed duration. Each awakening fires at most once per prestige run; the fired set persists across save/load (a reload won't re-fire one you've already earned) and clears on prestige/reset, so the next run can earn them all again.
+Awakenings are one-time boosts, one per epoch, that fire the first time you enter an epoch's signature age: seven epochs, seven awakenings. Unlike the epoch transition roll (which depends on faith and culture and can come up good or bad), an awakening always fires, always gives a modest production boost that fits its era, and never has a downside. The boost is **temporary**: it works like any timed event and ends after its listed duration. Each awakening fires at most once per prestige run. The record of which ones fired is saved with your game (a reload won't fire one again) and clears on prestige or reset, so the next run can earn them all again.
 
 | Epoch | Trigger Age | Awakening | Temporary Effect | Duration |
 |-------|-------------|-----------|------------------|----------|
 | Stone Era ◈ | Stone Age | Pottery Mastery | +1.0 food/tick, +0.5 stone/tick | 250 ticks (~8 min) |
 | Iron Era ⚔ | Iron Age | Discovery of Metallurgy | +2.0 iron/tick | 500 ticks (~16 min) |
 | Steel Era ⚙ | Industrial Age | Steam Breakthrough | +25% to all production | 200 ticks (~6.5 min) |
-| Electric Era ⚡ | Victorian Age | Electrification | +2.0 electricity/tick, +10% all production | 300 ticks (~10 min) |
-| Digital Era ▣ | Modern Age | Information Age Dawns | +2.0 data/tick, +1.0 knowledge/tick | 300 ticks (~10 min) |
+| Electric Era ⚡ | Victorian Age | The Grid Wakes | +2.0 electricity/tick, +10% all production | 300 ticks (~10 min) |
+| Digital Era ▣ | Modern Age | Networks Wake | +2.0 data/tick, +1.0 knowledge/tick | 300 ticks (~10 min) |
 | Neon Era ◉ | Cyberpunk Age | Cybernetic Awakening | +20% to all production | 250 ticks (~8 min) |
 | Cosmic Era ✦ | Interstellar Age | First Contact Signal | +1.5 dark matter/tick, +10% all production | 400 ticks (~13 min) |
 
-Awakenings appear in the active-events panel like any timed event and tick down over their duration, so you can see exactly how long the boost has left.
-
-### Awakening Flavor
-
-**Pottery Mastery** — "Clay yields to patient hands. Sealed vessels hold the harvest through the lean months — and the surplus, for once, keeps."
-
-**Discovery of Metallurgy** — "The forge runs hotter than any fire before it. Ore that once defied you now bleeds into ingots — and the smiths cannot smelt fast enough."
-
-**Steam Breakthrough** — "Pressure, piston, purpose. The first engine coughs, catches, and roars — and every workshop in the land suddenly works twice as hard."
-
-**Electrification** — "Night surrenders. The grid hums to life, lamps bloom across the skyline, and machines that never sleep take up the long shift."
-
-**Information Age Dawns** — "Knowledge stops being scarce. The networks wake, the archives open, and insight compounds faster than anyone can read it."
-
-**Cybernetic Awakening** — "Flesh and circuit reach an accord. Augmented crews never tire, never blink — and the city's output climbs to a neon-lit fever pitch."
-
-**First Contact Signal** — "A pattern threads through the static — too regular to be noise, too strange to be us. Whatever sent it, your engineers cannot stop listening."
+Awakenings appear in the active events list like any timed event and count down over their duration, so you can see how long the boost has left. Each one also prints a short line of flavor text in the log when it fires.
 
 ---
 
@@ -190,70 +173,63 @@ Awakenings appear in the active-events panel like any timed event and tick down 
 logs
 ```
 
-Opens the Logs overlay. All event messages appear here with timestamps. Check it regularly — events fire while you're doing other things, and the log is the only record of what happened and what was lost.
+Opens the Logs panel. All event messages appear here with timestamps. Check it regularly: events fire while you're doing other things, and the log is the only record of what happened and what was lost.
 
-When a timed event ends, the expiry log entry shows accumulated losses in yellow (e.g. `3 workers fled`, `45 food stolen`). This tells you the actual cost of the event, not just the stated effect magnitude.
+When a timed event ends, its "ended" entry shows the losses in yellow (e.g. `3 workers fled`, `45 food stolen`).
 
 ### Responding to Bad Events
 
-**Production penalty events** (`drought`, `storm`, `heresy`, `nuclear_scare`):
-These are temporary production debuffs. Timed events you cannot avoid — ride them out. If food production goes negative during a drought, make sure you have food reserves banked before the event hits. Check `logs` when you see the event fire so you know how many ticks remain.
+**Production penalty events** (`drought`, `storm`, `heresy`, `nuclear_scare`): these are short, flat per-tick penalties that you can't avoid, so ride them out. If food goes negative during a drought, you want food banked before the event hits. The Stats panel shows how long an active event has left.
 
-**Resource steal events** (`bandit_raid`, `pirate_attack`, `data_breach`):
-Instant events — the resources are gone. Nothing to do post-fire. Defensively: keep deep reserves of gold and food (the most commonly targeted resources). Storage buildings are underrated insurance against these.
+**Resource theft events** (`bandit_raid`, `pirate_attack`, `data_breach`): the resources are gone the moment the event fires, and there is nothing to do afterwards. Keep reserves of gold and food, the resources taken most often. Storage buildings are underrated insurance against these.
 
-**Worker loss events** (`plague`, `mine_collapse`, `industrial_accident`):
-The most dangerous category. Workers lost are gone permanently. Strategies:
-- Maintain a buffer of idle (unassigned) workers at all times. Don't recruit-to-max and assign everything.
-- After a worker_loss event, check your domain assignments — capacity caps may have changed, and some buildings might now be over-assigned.
-- Use `recruit` to replace lost workers as soon as your food reserves allow.
+**Worker loss events** (`plague`, `mine_collapse`, `industrial_accident`): the most dangerous kind, because lost workers are gone for good.
+- Keep a few idle (unassigned) workers at all times rather than recruiting to the limit and assigning everyone.
+- After a worker loss, check your assignments: some buildings may now be understaffed.
+- Use `recruit` to replace lost workers as soon as your food allows.
 
-**Crypto Winter** (`crypto_winter`):
-A drain event that removes crypto per tick over 14 ticks rather than all at once. If you see it fire and you have substantial crypto reserves, you can't stop the drain — but the total loss is bounded by the event duration.
+**Crypto Winter** (`crypto_winter`): takes 4.5 crypto when it fires. The event then stays listed for 14 ticks.
 
-### Maximising Good Events
+### Making the Most of Good Events
 
-**Production boost windows:**
-When `gold_rush`, `trade_boom`, `power_surge`, `crypto_boom`, or similar boost events fire, this is the time to recruit and assign workers to that resource domain. Boosted production multiplied by more workers compounds significantly. Check your rates during the window.
+**Production boost windows:** `gold_rush`, `trade_boom`, `power_surge_base`, `crypto_boom` and the other boost events add a flat amount per tick. The bonus doesn't grow with your workers, so there's no need to reshuffle assignments to catch it; just let it run.
 
-**Knowledge windfalls:**
-`skilled_immigrants`, `ancient_discovery`, and `first_contact` give instant knowledge. If you're close to finishing a research, queue the most expensive tech you can afford — the event can tip you over the threshold.
+**Knowledge windfalls:** `skilled_immigrants`, `ancient_discovery` and `first_contact` give instant knowledge. If you're saving up for a tech, a windfall can cover the last of the cost. Research is paid in full when you start it, so check whether you can now afford the next one.
 
-**Renaissance Fair:**
-Culture and gold both boost simultaneously for 15 ticks. If you're building toward a culture-gated milestone or epoch transition, this window is worth pushing hard into culture production infrastructure.
+**Renaissance Fair:** adds culture and gold per tick for 15 ticks. It is small, so treat it as a bonus rather than something to plan around.
 
 ---
 
 ## Anti-Streak and Cooldown Details
 
-For players who want to understand the mechanics fully:
+For players who want the full mechanics:
 
-**Global cooldown:** After any event fires, the next event cannot fire for 150–600 ticks (random in that range). At 2 seconds per tick this is 5–20 minutes of real time. The first event of a new game has the same delay.
+**Global timer:** After any event fires, the next event can't fire for 150 to 600 ticks (random in that range). At 2 seconds per tick that is 5 to 20 minutes of real time. The first event of a new game has the same delay.
 
-**Per-event cooldown:** Each event definition has its own `Cooldown` field. Even after the global cooldown expires, a specific event cannot reappear until its individual cooldown has elapsed since it last fired. For example, `plague` has a 200-tick cooldown — even if the global cooldown expired, plague cannot fire again for 200 ticks after its last occurrence.
+**Per-event cooldown:** Each event also has its own cooldown. Even after the global timer runs out, a specific event cannot come back until its own cooldown has passed since it last fired. For example, `plague` has a 200-tick cooldown, so it cannot fire again for 200 ticks after its last occurrence.
 
 **Anti-streak rule:**
-- Fires after ≥ 3 good events: next draw is forced to `bad` or `mixed` only (3% chance to skip and allow any)
-- Fires after ≥ 2 bad events: next draw is forced to `good` or `mixed` only
+- After 3 or more good events in a row, the next draw is limited to bad or mixed events (a 3% chance skips this and allows any).
+- After 2 or more bad events in a row, the next draw is limited to good or mixed events.
 
-Mixed events (like `earthquake` or `plasma_storm`) reset both streak counters, which is why they can sometimes break a lucky or unlucky run's rhythm.
+Mixed events (like `earthquake` or `plasma_storm`) reset both streak counters, which is why they can break a lucky or unlucky run's rhythm.
 
-**Cannot overlap:** A timed event cannot fire a second instance of itself while already active. If `drought` is active, another drought cannot trigger until the current one expires and the individual cooldown elapses.
+**No overlap:** A timed event cannot fire again while it is still active. If `drought` is active, another drought cannot start until the current one expires and its cooldown has passed.
 
-**InjectEvent:** Some systems bypass all of these rules. Milestone chain boosts and certain epoch event side-effects use `InjectEvent`, which adds an active event directly with no cooldown or eligibility checks. These injected events still appear in the logs and tick down normally, but they do not consume the global cooldown window or affect streak counters.
+**Effects added directly:** Milestone chain boosts, festivals, epoch transition events and Endure's reconstruction debuff add their timed effects directly, without any of these checks. They show in the active events list and count down normally, but they don't use up the global timer or count toward streaks.
 
 ---
 
 ## Tips
 
-- **Check `logs` regularly.** Events fire in the background. A plague or mine collapse you didn't notice could have already taken workers. The expiry log shows actual losses.
+- **Check `logs` regularly.** Events fire in the background. A plague or mine collapse you didn't notice may already have taken workers, and the "ended" entry shows the actual losses.
 
-- **Bad timed events are temporary (except worker loss).** A 50% food production penalty for 10 ticks sounds alarming, but at 2 seconds per tick that's 20 seconds. Don't make permanent decisions (like restructuring worker assignments) because of a short-duration debuff.
+- **Bad timed events are temporary (except worker loss).** A drought takes 0.5 food/tick for 10 ticks, which is 20 seconds at 1x. Don't make permanent decisions (like restructuring worker assignments) because of a short debuff.
 
-- **Bank resources before late-game.** Pirate attacks, data breaches, and corporate espionage (epoch event) scale in magnitude as you progress. A surplus buffer absorbs the hit. Early-game resource steal amounts are small; by the Neon Era they're 10,000 gold at a time.
+- **Bank resources before the late game.** Thefts take fixed amounts, and the amounts get bigger in later epochs. Early thefts are small, but The Great Breach (Digital Era) steals 5K data and Corporate Espionage (Neon Era) takes 10K gold at once (both epoch-exclusive events). A surplus absorbs the hit.
 
-- **Maintain idle workers at all times.** Worker loss from `plague`, `mine_collapse`, or `industrial_accident` is the only permanent damage in this system. Running every worker assigned with zero idle is the riskiest configuration. Even 5–10 unassigned workers gives you breathing room.
+- **Keep idle workers at all times.** Worker loss from `plague`, `mine_collapse` or `industrial_accident` is the only permanent damage in this system. Assigning every worker with none idle is the riskiest setup. Even 5 to 10 unassigned workers give you room.
 
-- **Good events don't require preparation — but reward it.** A gold rush fires whether you're ready or not. If you have workers ready to assign to gold buildings, you can capitalise on the boost window. Players who react fast earn more from good events than those who don't notice until the window closes.
+- **Good events need no preparation.** A gold rush fires whether you're ready or not, and its flat bonus is the same either way.
 
-- **Faith and culture affect EPOCH events, not base random events.** Stacking faith doesn't make `bountiful_harvest` more likely or `drought` less likely. The base event system is purely tick-based, weighted-random, with cooldowns. Faith and culture are levers for the epoch transition roll only. See [Epochs](epochs.md) for that system.
+- **Faith and culture affect epoch transition events, not random events.** Stacking faith doesn't make `bountiful_harvest` more likely or `drought` less likely. The random event system runs on ticks, weights and cooldowns. Faith and culture only matter for the epoch transition roll. See [Epochs](epochs.md).

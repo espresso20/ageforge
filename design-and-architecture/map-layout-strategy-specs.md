@@ -3,7 +3,7 @@ Layout strategy specs (implement each):
        placeBuildingsOrganic (primitive/stone):
        - Random scatter within an ellipse radius ~40% of map size
        - Plot cell size 12px, minimum 3px padding
-       - No roads or structure — pure organic scatter
+       - No roads or structure; pure organic scatter
        - Groups of 3-5 huts near each other with 8-20px between groups
        - Use random walk from center, each building placed within 15px of a random existing building
 
@@ -131,7 +131,7 @@ Layout strategy specs (implement each):
         P.AAAP  (arch entrance: side walls P, inside accent curve)
         P.....P  (open entrance)
         AAAAAAA  (ground line)
-       Draw arch shape — semicircle cutout in rectangular block
+       Draw arch shape: semicircle cutout in rectangular block
 
        spriteBarracks (7×5 base):
        PPPPPPP  (flat roof)
@@ -144,7 +144,7 @@ Layout strategy specs (implement each):
        PPPPPPP  (parapet)
        P.....P  (arrow slit)
        PPPPPPP  (main wall)
-       A.AAA.A  (gate arch — accent color on sides, gap in middle)
+       A.AAA.A  (gate arch: accent color on sides, gap in middle)
 
        spriteTemple (7×8 base):
          .A.    (spire tip)
@@ -231,10 +231,10 @@ Layout strategy specs (implement each):
        .........  (space below)
 
        spriteWonder (10×10 base, always largest on map):
-       Design a generic "impressive structure" — use both colors, add height, make it clearly bigger and more detailed than normal buildings. Draw a stepped pyramid shape or
+       Design a generic "impressive structure": use both colors, add height, make it clearly bigger and more detailed than normal buildings. Draw a stepped pyramid shape or
        palace shape.
 
-       For the minimap (scale=1), just draw a 3×3 or 4×4 colored block using primary color — detailed sprites are too small to matter there.
+       For the minimap (scale=1), just draw a 3×3 or 4×4 colored block using primary color, since detailed sprites are too small to matter there.
 
        Implement the sprite drawing by iterating pixel rows/columns and calling setPixel(img, px+col*scale, py+row*scale, color) for each pixel in the pattern. Use primary for P
        pixels, accent for A pixels, and skip . pixels.
@@ -250,9 +250,9 @@ Layout strategy specs (implement each):
 
        Implementation Notes
 
-       - Check the actual struct/function names in mapgen.go — adapt the above spec to fit the existing code structure rather than doing a complete from-scratch rewrite
+       - Check the actual struct/function names in mapgen.go and adapt the above spec to fit the existing code structure rather than doing a complete from-scratch rewrite
        - If buildingPlacement has different field names, use the actual names
        - If the current code passes buildings as a different type, adapt accordingly
-       - The PlotGrid collision system is new — integrate it into each layout function
+       - The PlotGrid collision system is new; integrate it into each layout function
        - Make sure to import "math" for trig functions needed by orbital layout (sin, cos)
        - All layout functions should call drawBuildingSprite instead of the old shape-based drawing

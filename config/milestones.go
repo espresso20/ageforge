@@ -1,5 +1,7 @@
 package config
 
+import "fmt"
+
 // MilestoneDef defines an achievement with a one-time permanent reward.
 // All non-zero conditions must be satisfied simultaneously for the milestone
 // to complete. Conditions are checked every tick by the engine.
@@ -510,14 +512,14 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "research_speed", Value: 0.10},
 			},
 		},
-		// grand_library_built — build 5 Great Libraries; classical age
+		// grand_library_built — build the Great Library (a wonder, capped at 1)
 		{
 			Name: "Grand Library Built", Key: "grand_library_built",
-			Description: "Build 5 Great Libraries.",
-			Flavor:      "Five Great Libraries. The collected wisdom of the age, and overdue fines to match.",
+			Description: "Build the Great Library.",
+			Flavor:      "The Great Library. The collected wisdom of the age, and overdue fines to match.",
 			Category:    "scholar", Hidden: true,
 			MinAge:       "classical_age",
-			MinBuildings: map[string]int{"great_library": 5},
+			MinBuildings: map[string]int{"great_library": 1},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "knowledge_rate", Value: 0.15},
 			},
@@ -536,14 +538,14 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
 			},
 		},
-		// NEW: tech_ascendant — all 52 techs; quantum age gated
+		// tech_ascendant — every tech (the count follows the tech tree); quantum age gated
 		{
 			Name: "Tech Ascendant", Key: "tech_ascendant",
-			Description: "Research 52 techs.",
+			Description: fmt.Sprintf("Research %d techs.", len(Technologies())),
 			Flavor:      "Every technology, researched. The tech tree is bald. You did this.",
 			Category:    "scholar", Hidden: true,
 			MinAge:       "quantum_age",
-			MinTechCount: 52,
+			MinTechCount: len(Technologies()),
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "research_speed", Value: 0.20},
 			},
