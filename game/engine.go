@@ -792,7 +792,7 @@ func (ge *GameEngine) SetSpeedMultiplier(mult float64) error {
 		return fmt.Errorf("Speed %.1fx is above your cap of %.1fx. Each wonder raises the speed cap by %.1fx.", mult, maxSpeed, wonderSpeedStep)
 	}
 	ge.speedMultiplier = mult
-	ge.addLog("info", fmt.Sprintf("Game speed set to %.1fx", mult))
+	ge.addLog("info", fmt.Sprintf("Game speed set to %.1fx.", mult))
 	return nil
 }
 
@@ -1859,7 +1859,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 			r.Amount *= CarryoverResidualPct
 		}
 	}
-	ge.addLog("info", fmt.Sprintf("Stockpiles trimmed for the new age: each resource is capped at %d times the cost of the cheapest new building that uses it, other resources drop to %s, and faith is kept.",
+	ge.addLog("info", fmt.Sprintf("Stockpiles trimmed for the new age: each resource is capped at %d times the cost of the cheapest new building that uses it, resources no new building uses keep %s, and faith is untouched.",
 		CarryoverStarterBuildings, textfmt.Percent(CarryoverResidualPct)))
 
 	oldName := ge.progress.GetAgeName(oldAge)
