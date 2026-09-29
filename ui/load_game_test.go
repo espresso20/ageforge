@@ -116,7 +116,7 @@ func TestDetailTextPopulated(t *testing.T) {
 		"The Eternal", "Iron Era",
 		"Population", "Buildings", "Wonders",
 		"Milestones", "7/33", "Techs", "Soldiers",
-		"Prestige", "level 2", "1.5K points", "Morale", "75%",
+		"Prestige", "level 2", "1.50K points", "Morale", "75%",
 		"Pending", "The Great Plague",
 	} {
 		if !contains(got, want) {
