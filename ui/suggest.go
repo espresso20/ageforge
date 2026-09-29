@@ -317,6 +317,52 @@ func (c *completer) nameCandidates(partial string) []string {
 	return append(append(exact, names...), aliases...)
 }
 
+// closestCommand is the registry command name nearest to word by edit
+// distance (at most 2, or 1 for a word of three letters or fewer), or "" when
+// none is that close. Names are compared in sorted order so a tie always
+// gives the same suggestion.
+func closestCommand(word string) string {
+	word = strings.ToLower(word)
+	limit := 2
+	if len([]rune(word)) <= 3 {
+		limit = 1
+	}
+	var names []string
+	for _, c := range registry() {
+		names = append(names, c.Name)
+	}
+	sort.Strings(names)
+	best, bestDist := "", limit+1
+	for _, n := range names {
+		if d := editDistance(word, n); d < bestDist {
+			best, bestDist = n, d
+		}
+	}
+	return best
+}
+
+// editDistance is the Levenshtein distance between a and b, by rune.
+func editDistance(a, b string) int {
+	ra, rb := []rune(a), []rune(b)
+	prev := make([]int, len(rb)+1)
+	for j := range prev {
+		prev[j] = j
+	}
+	for i := 1; i <= len(ra); i++ {
+		curr := make([]int, len(rb)+1)
+		curr[0] = i
+		for j := 1; j <= len(rb); j++ {
+			cost := 1
+			if ra[i-1] == rb[j-1] {
+				cost = 0
+			}
+			curr[j] = min(curr[j-1]+1, prev[j]+1, prev[j-1]+cost)
+		}
+		prev = curr
+	}
+	return prev[len(rb)]
+}
+
 func sortedSubs(c *Command) []*Command {
 	out := append([]*Command(nil), c.Subs...)
 	sort.Slice(out, func(i, j int) bool { return out[i].Name < out[j].Name })

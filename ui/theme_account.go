@@ -20,7 +20,7 @@ import (
 
 // themeUnavailableMsg is the player-facing refusal when a theme isn't unlocked yet
 // (a locked flavor theme in Phase 3). No theme is unavailable today.
-const themeUnavailableMsg = "that theme isn't unlocked yet"
+const themeUnavailableMsg = "That theme is locked. Type 'theme list' to see how to earn it."
 
 // themeAvailable reports whether theme t may be selected/applied for the given
 // account. The policy (theming.md §4/§5/§6):
