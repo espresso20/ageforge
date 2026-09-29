@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/detmath"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // Faction trade deals: each civilization you have met offers a small,
@@ -576,7 +577,7 @@ func (ge *GameEngine) dealProblem(fs *FactionState, d FactionDeal) (blocked, sho
 		}
 	}
 	if d.Get != "" && ge.Resources.GetStorage(d.Get)-ge.Resources.Get(d.Get) < d.GetAmt {
-		return fmt.Sprintf("not enough room for %s %s", formatPlanAmount(d.GetAmt), d.Get), ""
+		return fmt.Sprintf("not enough room for %s %s", textfmt.Number(d.GetAmt), d.Get), ""
 	}
 	if !(ge.Resources.Get(d.Give) >= d.GiveAmt) {
 		return "", d.Give
@@ -654,7 +655,7 @@ func DealTerms(kind, give string, giveAmt float64, get string, getAmt float64, s
 
 // dealTerms is DealTerms for a saved deal, with the log's number format.
 func dealTerms(d FactionDeal) string {
-	return DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, formatPlanAmount)
+	return DealTerms(d.Kind, d.Give, d.GiveAmt, d.Get, d.GetAmt, d.Standing, textfmt.Number)
 }
 
 // AcceptFactionDeal takes offer n (1-based, as the Factions panel and
@@ -685,7 +686,7 @@ func (ge *GameEngine) AcceptFactionDeal(key string, n int) (FactionDeal, error) 
 	case blocked != "":
 		return FactionDeal{}, fmt.Errorf("can't take deal %d with the %s: %s", n, def.Name, blocked)
 	case short != "":
-		return FactionDeal{}, fmt.Errorf("not enough %s (have %s, need %s)", short, formatPlanAmount(ge.Resources.Get(short)), formatPlanAmount(d.GiveAmt))
+		return FactionDeal{}, fmt.Errorf("not enough %s (have %s, need %s)", short, textfmt.Number(ge.Resources.Get(short)), textfmt.Number(d.GiveAmt))
 	}
 	return ge.takeDeal(def, fs, n-1), nil
 }

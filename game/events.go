@@ -1,7 +1,6 @@
 package game
 
 import (
-	"fmt"
 	"math/rand"
 	"sort"
 	"strings"
@@ -363,13 +362,11 @@ func (em *EventManager) RecordResourceLoss(key string, resource string, amount f
 	}
 }
 
-// buildLossSuffix returns a tview-coloured loss summary string for an expired event,
-// or "" if no losses were recorded.
+// buildLossSuffix returns a tview-colored summary of the resources an expired
+// event took, or "" if it took none. Worker losses are logged when the event
+// starts, so they are not repeated here.
 func buildLossSuffix(event ActiveEvent) string {
 	var parts []string
-	if event.WorkersLost > 0 {
-		parts = append(parts, fmt.Sprintf("[yellow]%d workers fled[-]", event.WorkersLost))
-	}
 	if len(event.ResourcesLost) > 0 {
 		keys := make([]string, 0, len(event.ResourcesLost))
 		for k := range event.ResourcesLost {
@@ -378,7 +375,7 @@ func buildLossSuffix(event ActiveEvent) string {
 		sort.Strings(keys)
 		for _, k := range keys {
 			amt := event.ResourcesLost[k]
-			parts = append(parts, fmt.Sprintf("[yellow]%.0f %s stolen[-]", amt, k))
+			parts = append(parts, "[yellow]"+Amount(amt, k)+" lost[-]")
 		}
 	}
 	if len(parts) == 0 {

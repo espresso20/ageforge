@@ -32,6 +32,59 @@ func isEarlyGame(ageKey string) bool {
 	return false
 }
 
+// onboardingStep is one line of the first-steps guide: the commands to type,
+// the word that joins them, and a short note on why.
+type onboardingStep struct {
+	Commands []string
+	Join     string // "/", "and", "then"; unused for a single command
+	Note     string
+}
+
+// onboardingSteps is the first-steps guide in the Buildings panel. It is data
+// so onboarding_test.go can run every command through HandleCommand on a
+// fresh game: a step that teaches a failing command must break the build.
+var onboardingSteps = []onboardingStep{
+	{Commands: []string{"gather wood 5", "gather food"}, Join: "/", Note: "collect by hand"},
+	{Commands: []string{"build gathering_camp", "build wood_camp"}, Join: "and", Note: "food runs short first"},
+	{Commands: []string{"build hut"}, Note: "shelter; raises your housing"},
+	{Commands: []string{"recruit 3", "assign gathering_camp 3"}, Join: "then", Note: "staffed camps make 5x"},
+	{Commands: []string{"wonder collect all"}, Note: "then build the [gold]wonder[-] once its bank is full. You need it to advance, and it raises the speed cap by 0.5x."},
+}
+
+// onboardingCommands flattens onboardingSteps into the commands in the order a
+// player would type them.
+func onboardingCommands() []string {
+	var out []string
+	for _, st := range onboardingSteps {
+		out = append(out, st.Commands...)
+	}
+	return out
+}
+
+// renderOnboarding draws the first-steps guide: gold header, cyan commands,
+// white prose.
+func renderOnboarding() string {
+	var sb strings.Builder
+	sb.WriteString("\n [gold]─── Getting started ───[-]\n")
+	sb.WriteString(" [white]First steps:[-]\n")
+	for i, st := range onboardingSteps {
+		fmt.Fprintf(&sb, " [white]%d.[-] ", i+1)
+		for j, c := range st.Commands {
+			if j > 0 {
+				fmt.Fprintf(&sb, " [white]%s[-] ", st.Join)
+			}
+			fmt.Fprintf(&sb, "[cyan]%s[-]", c)
+		}
+		sep := ": "
+		if strings.HasPrefix(st.Note, "then ") {
+			sep = ", "
+		}
+		fmt.Fprintf(&sb, "%s%s\n", sep, st.Note)
+	}
+	sb.WriteString(" [white]Type[-] [cyan]help[-] [white]for all commands.[-]\n")
+	return sb.String()
+}
+
 // cultureThresholds defines the culture breakpoints at which rewards unlock.
 // The bar displayed in the economy tab measures progress towards the next threshold.
 var cultureThresholds = []float64{
@@ -88,7 +141,7 @@ func formatCultureRow(rs game.ResourceState) string {
 	var midPart string
 	if nextIdx < 0 {
 		// Above all thresholds — Culture Mastered.
-		midPart = fmt.Sprintf("[gold]✦ Culture Mastered[-]  %-8s", FormatNumber(amount))
+		midPart = fmt.Sprintf("[gold]✦ Culture mastered[-]  %-8s", FormatNumber(amount))
 	} else {
 		threshold := cultureThresholds[nextIdx]
 		bar := cultureProgressBar(amount, threshold)
@@ -98,7 +151,7 @@ func formatCultureRow(rs game.ResourceState) string {
 			FormatNumber(amount), FormatNumber(threshold), label)
 	}
 
-	return fmt.Sprintf(" %-12s %s %s\n\n", rs.Name, midPart, FormatRate(rs.Rate))
+	return fmt.Sprintf(" %-12s %s %s\n\n", rs.Name, midPart, FormatRateTick(rs.Rate))
 }
 
 // faithBand describes a faith band with its label and epoch odds text.
@@ -149,7 +202,7 @@ func formatFaithRow(rs game.ResourceState) string {
 	midPart := fmt.Sprintf("%s  %s  %s  [gray](epoch: %s)[-]",
 		barStr, band.label, pctStr, band.epochOdds)
 
-	return fmt.Sprintf(" %-12s %s %s\n\n", rs.Name, midPart, FormatRate(rs.Rate))
+	return fmt.Sprintf(" %-12s %s %s\n\n", rs.Name, midPart, FormatRateTick(rs.Rate))
 }
 
 // EconomyTab is the permanent background panel visible at all times on the Dashboard.
@@ -221,6 +274,10 @@ func (t *EconomyTab) Refresh(state game.GameState) {
 	t.refreshUnderConstruction(state)
 }
 
+// resourceLegend explains the glyphs and amount colors in the resource rows,
+// so neither carries meaning by color alone.
+const resourceLegend = " [gray]Amount color:[-] [green]rising[-] [red]falling[-] [yellow]90% full[-] [gray]·[-] [gold]◈[-] [gray]95% full ·[-] [red]▼[-] [gray]falling[-]\n"
+
 func (t *EconomyTab) refreshResources(state game.GameState) {
 	var sb strings.Builder
 
@@ -263,9 +320,10 @@ func (t *EconomyTab) refreshResources(state game.GameState) {
 			}
 			fmt.Fprintf(&sb, " %-14s [%s]%6s[-] [gray]/[-] [gray]%-6s[-]  [%s]%-8s[-]  %s%s\n\n",
 				rs.Name, amtColor, FormatNumber(rs.Amount), FormatNumber(rs.Storage),
-				rateColor, FormatRate(rs.Rate), bar, glyph)
+				rateColor, FormatRateTick(rs.Rate), bar, glyph)
 		}
 	}
+	sb.WriteString(resourceLegend)
 	t.resourceTV.SetText(safeTags(sb.String()))
 }
 
@@ -380,14 +438,7 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 	// logged 30+ minutes of play. PlayTime is wall-clock (time.Since(GameStarted)),
 	// so it's robust against tick-speed bonuses that a raw tick count would inflate.
 	if isEarlyGame(state.Age) && state.Stats.PlayTime < 30*time.Minute {
-		sb.WriteString("\n [gold]─── Getting Started ───[-]\n")
-		sb.WriteString(" [white]New here? Walk the first steps:[-]\n")
-		sb.WriteString(" [white]1.[-] [cyan]gather wood 5[-] [white]/[-] [cyan]gather food[-] — collect by hand\n")
-		sb.WriteString(" [white]2.[-] [cyan]build gathering_camp[-] [white]and[-] [cyan]build wood_camp[-] — food runs short first\n")
-		sb.WriteString(" [white]3.[-] [cyan]build hut[-] — shelter; raises your population cap\n")
-		sb.WriteString(" [white]4.[-] [cyan]recruit worker[-] [white]then[-] [cyan]assign gathering_camp 3[-] — staffed camps make 5x\n")
-		sb.WriteString(" [white]5.[-] [cyan]build[-] the age's [gold]wonder[-] — required to advance; adds a speed bonus\n")
-		sb.WriteString(" [white]Type[-] [cyan]help[-] [white]for all commands.[-]\n")
+		sb.WriteString(renderOnboarding())
 	}
 
 	t.buildingTV.SetText(safeTags(sb.String()))

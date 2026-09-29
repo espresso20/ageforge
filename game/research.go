@@ -5,6 +5,7 @@ import (
 	"slices"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // ResearchManager manages the tech tree and research progress.
@@ -51,29 +52,29 @@ func (rm *ResearchManager) StartResearch(key string, currentAge string, ageOrder
 func (rm *ResearchManager) StartResearchWithSpeed(key string, currentAge string, ageOrder map[string]int, knowledge float64, speedBonus float64) error {
 	def, ok := rm.defs[key]
 	if !ok {
-		return fmt.Errorf("unknown technology: %s", key)
+		return unknownKeyError("tech", key, rm.defs, "Type research list to see what you can research.")
 	}
 	if rm.researched[key] {
-		return fmt.Errorf("%s is already researched", def.Name)
+		return fmt.Errorf("%s is already researched.", def.Name)
 	}
 	if rm.currentTech != "" {
 		currentDef := rm.defs[rm.currentTech]
-		return fmt.Errorf("already researching %s (%d ticks left)", currentDef.Name, rm.ticksLeft)
+		return fmt.Errorf("Already researching %s (%s left). Type research cancel to stop it.", currentDef.Name, DurationText(rm.ticksLeft, BaseTickInterval))
 	}
 	// Check age requirement
 	if ageOrder[def.Age] > ageOrder[currentAge] {
-		return fmt.Errorf("%s requires %s age", def.Name, def.Age)
+		return fmt.Errorf("%s needs the %s.", def.Name, AgeName(def.Age))
 	}
 	// Check prerequisites
 	for _, prereq := range def.Prerequisites {
 		if !rm.researched[prereq] {
 			prereqDef := rm.defs[prereq]
-			return fmt.Errorf("%s requires %s to be researched first", def.Name, prereqDef.Name)
+			return fmt.Errorf("%s needs %s researched first.", def.Name, prereqDef.Name)
 		}
 	}
 	// Check cost
 	if knowledge < def.Cost {
-		return fmt.Errorf("not enough knowledge (have: %.0f, need: %.0f)", knowledge, def.Cost)
+		return fmt.Errorf("Not enough knowledge for %s: need %s, have %s.", def.Name, textfmt.Number(def.Cost), textfmt.Number(knowledge))
 	}
 
 	rm.currentTech = key
@@ -107,14 +108,14 @@ const memoryResearchSlowdown = 2.0
 func (rm *ResearchManager) StartMemoryResearch(key string, speedBonus float64) error {
 	def, ok := rm.defs[key]
 	if !ok {
-		return fmt.Errorf("unknown technology: %s", key)
+		return unknownKeyError("tech", key, rm.defs, "Type research list to see what you can research.")
 	}
 	if rm.researched[key] {
-		return fmt.Errorf("%s is already researched", def.Name)
+		return fmt.Errorf("%s is already researched.", def.Name)
 	}
 	if rm.currentTech != "" {
 		currentDef := rm.defs[rm.currentTech]
-		return fmt.Errorf("already researching %s (%d ticks left)", currentDef.Name, rm.ticksLeft)
+		return fmt.Errorf("Already researching %s (%s left). Type research cancel to stop it.", currentDef.Name, DurationText(rm.ticksLeft, BaseTickInterval))
 	}
 	// NOTE: age gate, prerequisite loop, and knowledge cost check are intentionally
 	// omitted — that is the whole point of an Ancient Memory.

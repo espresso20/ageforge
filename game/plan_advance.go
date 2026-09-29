@@ -25,7 +25,7 @@ func (ge *GameEngine) PlanAddAdvance() error {
 		return fmt.Errorf("this is the final age")
 	}
 	if len(ge.plan) >= MaxPlanItems {
-		return fmt.Errorf("the plan is full (%d items) — remove one first", MaxPlanItems)
+		return errPlanFull()
 	}
 	ge.plan = append(ge.plan, PlanItem{Kind: PlanAdvance, Count: 1})
 	return nil

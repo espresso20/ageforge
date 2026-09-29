@@ -3,14 +3,15 @@ package game
 import (
 	"fmt"
 	"math"
-	"strconv"
 
 	"github.com/espresso20/ageforge/config"
 )
 
-// Trade items: `plan trade <from> <to> [amount]` sells from for to at the
-// market as from comes in, until amount of to has been bought (no amount:
-// until removed). It is how a plan gets the resources an age buys rather
+// Trade items: `plan trade <give> <get> [amount]` sells give for get at the
+// market as give comes in, until amount of get has been bought (no amount:
+// until removed). Note the amount counts the get side here, while
+// `trade <give> <get> <amount>` counts the give side. Internally the item
+// stores give as Key and get as To. It is how a plan gets the resources an age buys rather
 // than makes (stone after the Bronze Age, the Industrial Age's iron) while
 // the player is away, instead of one trade per visit.
 //
@@ -33,26 +34,27 @@ import (
 // again (a rate within 0.6% of the market's).
 const planTradeRecovered = 0.02
 
-// PlanAddTrade appends a trade item: sell from for to as from comes in, until
-// amount of to is bought (0: until removed). The pair must trade at the
-// market in this age.
-func (ge *GameEngine) PlanAddTrade(from, to string, amount float64) error {
+// PlanAddTrade appends a trade item: sell give for get as give comes in,
+// until amount of get is bought (0: until removed). The pair must trade at
+// the market in this age.
+func (ge *GameEngine) PlanAddTrade(give, get string, amount float64) error {
+	from, to := give, get
 	if !(amount >= 0) || math.IsInf(amount, 0) {
-		return fmt.Errorf("the amount must be a positive number")
+		return fmt.Errorf("The amount (how much %s to buy) must be a positive number.", ResourceName(to))
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	it := PlanItem{Kind: PlanTrade, Key: from, To: to, Count: 1, Amount: amount}
 	if reason := ge.planTradeInvalid(it); reason != "" {
-		return fmt.Errorf("can't plan a trade of %s for %s: %s", from, to, reason)
+		return fmt.Errorf("Can't plan a trade of %s for %s: %s.", ResourceName(from), ResourceName(to), reason)
 	}
 	for _, p := range ge.plan {
 		if p.Kind == PlanTrade && p.Key == from && p.To == to {
-			return fmt.Errorf("the plan already trades %s for %s — remove that item first", from, to)
+			return fmt.Errorf("The plan already trades %s for %s. Remove that item first.", ResourceName(from), ResourceName(to))
 		}
 	}
 	if len(ge.plan) >= MaxPlanItems {
-		return fmt.Errorf("the plan is full (%d items) — remove one first", MaxPlanItems)
+		return errPlanFull()
 	}
 	ge.plan = append(ge.plan, it)
 	return nil
@@ -64,10 +66,10 @@ func (ge *GameEngine) planTradeInvalid(it PlanItem) string {
 	defs := config.ResourceByKey()
 	for _, r := range []string{it.Key, it.To} {
 		if _, ok := defs[r]; !ok {
-			return "unknown resource " + r
+			return "there is no resource called '" + r + "'"
 		}
 		if !ge.Resources.IsUnlocked(r) {
-			return r + " is not unlocked"
+			return ResourceName(r) + " is not unlocked yet"
 		}
 	}
 	if it.Key == it.To {
@@ -91,7 +93,7 @@ func (ge *GameEngine) planTradeRate(it PlanItem) float64 {
 // now, and a note when it can't trade for a reason money won't fix.
 func (ge *GameEngine) planTradeBatch(it PlanItem, reserved map[string]float64) (n float64, due bool, note string) {
 	if ge.Buildings.TradeBuildingCount() < 1 {
-		return 0, false, "needs a market (or a later trade building)"
+		return 0, false, "you need a Market to trade"
 	}
 	rate := ge.planTradeRate(it)
 	if rate <= 0 {
@@ -99,7 +101,7 @@ func (ge *GameEngine) planTradeBatch(it PlanItem, reserved map[string]float64) (
 	}
 	room := ge.Resources.GetStorage(it.To) - ge.Resources.Get(it.To)
 	if room < 1 {
-		return 0, false, it.To + " storage is full"
+		return 0, false, ResourceName(it.To) + " storage is full"
 	}
 	n = math.Max(0, math.Min(ge.planFree(it.Key, reserved), room/rate))
 	if it.Amount > 0 {
@@ -138,7 +140,7 @@ func (ge *GameEngine) runPlanTrade(it *PlanItem, reserved map[string]float64) (f
 // against reserved, as in the walk.
 func (ge *GameEngine) planTradeView(it PlanItem, reserved map[string]float64) PlanItemView {
 	v := PlanItemView{Kind: it.Kind, Key: it.Key, To: it.To, Amount: it.Amount, Got: it.Got, Count: it.Count,
-		Name: it.Key + " → " + it.To}
+		Name: ResourceName(it.Key) + " → " + ResourceName(it.To)}
 	if reason := ge.planTradeInvalid(it); reason != "" {
 		v.Status, v.Note = PlanStatusBlocked, reason
 		return v
@@ -157,17 +159,4 @@ func (ge *GameEngine) planTradeView(it PlanItem, reserved map[string]float64) Pl
 		v.Status, v.Short = PlanStatusWaiting, it.Key
 	}
 	return v
-}
-
-// formatPlanAmount prints an amount for plan log lines: 950, 12.5K, 3.1M.
-func formatPlanAmount(v float64) string {
-	for _, s := range []struct {
-		at  float64
-		sfx string
-	}{{1e15, "Q"}, {1e12, "T"}, {1e9, "B"}, {1e6, "M"}, {1e3, "K"}} {
-		if v >= s.at {
-			return strconv.FormatFloat(v/s.at, 'f', 1, 64) + s.sfx
-		}
-	}
-	return strconv.FormatFloat(v, 'f', 0, 64)
 }
