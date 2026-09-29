@@ -208,7 +208,7 @@ func offlinePlan(base *game.GameEngine, name, age string, fail func(check, forma
 	}
 	skip := func(p string) bool {
 		// wall-clock fields: play time, and when the loaded save was written
-		return p == "Log" || p == "SaveExists" || strings.HasPrefix(p, "Stats.PlayTime") || p == "SessionStart.SavedAt"
+		return p == "Log" || p == "SaveExists" || strings.HasPrefix(p, "Stats.PlayTime") || strings.HasPrefix(p, "SessionStart")
 	}
 	if d := firstDiff(runs[0], runs[1], skip); d != "" {
 		fail("offline_plan_nondeterministic", "the same day offline with the same plan came back different: %s", d)

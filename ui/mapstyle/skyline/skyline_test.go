@@ -499,7 +499,7 @@ func TestCopy(t *testing.T) {
 }
 
 func TestPerformance(t *testing.T) {
-	if testing.Short() {
+	if testing.Short() || raceEnabled {
 		t.Skip("timing")
 	}
 	m := build(fixture.Options{Age: "cyberpunk_age", Seed: 7, Routes: 5, Tick: tickAt(0.9), Scale: 2}, 1)
