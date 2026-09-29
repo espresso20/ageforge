@@ -95,7 +95,7 @@ func TestPromptKeys(t *testing.T) {
 	// watch the log line instead.)
 	h.key(tcell.KeyEnter, 0)
 	h.waitFor("plan build "+picked+" to run", 3*time.Second, func() bool {
-		return h.inputText() == "" && lastRun() == "plan build "+picked && logged("Planned 1 × ") == 1
+		return h.inputText() == "" && lastRun() == "plan build "+picked && logged("Planned 1 ") == 1
 	})
 
 	// A Dangerous partial + Enter fills in the command without running it; a

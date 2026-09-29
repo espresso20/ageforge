@@ -51,6 +51,11 @@ var copyExemptLiterals = []string{
 type copyLit struct {
 	pos  string
 	text string
+	// usageForm: a registry help form in ui/commands.go ("sell <building>
+	// [count]"). Forms reach the screen only through helpForm (tview.Escape)
+	// or a usage line in the log (safeTags); TestUsageFormsSurviveTview
+	// proves both, so the bracket guard skips them.
+	usageForm bool
 }
 
 // collectCopyLiterals returns every string literal in the non-test Go files
@@ -77,6 +82,10 @@ func collectCopyLiterals(t *testing.T) []copyLit {
 			if perr != nil {
 				return perr
 			}
+			var forms map[token.Pos]bool
+			if rel == "ui/commands.go" {
+				forms = registryFormLits(f)
+			}
 			ast.Inspect(f, func(n ast.Node) bool {
 				// Skip struct tags and import paths.
 				switch x := n.(type) {
@@ -101,7 +110,7 @@ func collectCopyLiterals(t *testing.T) []copyLit {
 						}
 					}
 					p := fset.Position(x.Pos())
-					out = append(out, copyLit{pos: rel + ":" + strconv.Itoa(p.Line), text: s})
+					out = append(out, copyLit{pos: rel + ":" + strconv.Itoa(p.Line), text: s, usageForm: forms[x.Pos()]})
 				}
 				return true
 			})
@@ -114,6 +123,48 @@ func collectCopyLiterals(t *testing.T) []copyLit {
 	return out
 }
 
+// registryFormLits finds the help-form literals of the command registry: the
+// Form of each Usage{form, text}, the form argument of sub(name, form, ...)
+// and of confirmYes(form, text).
+func registryFormLits(f *ast.File) map[token.Pos]bool {
+	out := map[token.Pos]bool{}
+	mark := func(e ast.Expr) {
+		if lit, ok := e.(*ast.BasicLit); ok && lit.Kind == token.STRING {
+			out[lit.Pos()] = true
+		}
+	}
+	isUsage := func(e ast.Expr) bool {
+		id, ok := e.(*ast.Ident)
+		return ok && id.Name == "Usage"
+	}
+	ast.Inspect(f, func(n ast.Node) bool {
+		switch x := n.(type) {
+		case *ast.CompositeLit:
+			if at, ok := x.Type.(*ast.ArrayType); ok && isUsage(at.Elt) {
+				for _, el := range x.Elts {
+					if cl, ok := el.(*ast.CompositeLit); ok && len(cl.Elts) > 0 {
+						mark(cl.Elts[0])
+					}
+				}
+			}
+			if isUsage(x.Type) && len(x.Elts) > 0 {
+				mark(x.Elts[0])
+			}
+		case *ast.CallExpr:
+			if id, ok := x.Fun.(*ast.Ident); ok {
+				switch {
+				case id.Name == "sub" && len(x.Args) > 1:
+					mark(x.Args[1])
+				case id.Name == "confirmYes" && len(x.Args) > 0:
+					mark(x.Args[0])
+				}
+			}
+		}
+		return true
+	})
+	return out
+}
+
 // bracketWordRe finds [word] spans that tview could read as a color tag.
 var bracketWordRe = regexp.MustCompile(`\[([A-Za-z][A-Za-z0-9#:\-]*)\]`)
 
@@ -123,6 +174,9 @@ var bracketWordRe = regexp.MustCompile(`\[([A-Za-z][A-Za-z0-9#:\-]*)\]`)
 // escaped ("[count[]") or pass the text through lit().
 func TestCopyNoEatenBrackets(t *testing.T) {
 	for _, l := range collectCopyLiterals(t) {
+		if l.usageForm {
+			continue
+		}
 		for _, m := range bracketWordRe.FindAllStringSubmatchIndex(l.text, -1) {
 			content := l.text[m[2]:m[3]]
 			// "[word[]" is tview's escape; the regex stops at the first ']'

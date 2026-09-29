@@ -42,8 +42,8 @@ func TestCmdThemePersistsToAccount(t *testing.T) {
 	engine.SetAccount(acct)
 
 	res := cmdTheme([]string{target}, engine)
-	if res.Type != "success" {
-		t.Fatalf("theme %s: got %q %q, want success", target, res.Type, res.Message)
+	if res.Type != "info" {
+		t.Fatalf("theme %s: got %q %q, want info", target, res.Type, res.Message)
 	}
 	if got := theme.Active().Key; got != target {
 		t.Errorf("active theme = %q after switch, want %q", got, target)
@@ -61,8 +61,8 @@ func TestCmdThemeAccountlessDoesNotPanic(t *testing.T) {
 	engine := game.NewGameEngine() // no SetAccount → Account() == nil
 
 	res := cmdTheme([]string{"deuteranopia"}, engine)
-	if res.Type != "success" {
-		t.Errorf("accountless theme switch: got %q %q, want success", res.Type, res.Message)
+	if res.Type != "info" {
+		t.Errorf("accountless theme switch: got %q %q, want info", res.Type, res.Message)
 	}
 	if got := theme.Active().Key; got != "deuteranopia" {
 		t.Errorf("active theme = %q, want deuteranopia", got)

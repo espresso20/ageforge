@@ -3,6 +3,8 @@ package ui
 import (
 	"strconv"
 	"strings"
+
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // The command registry: every command a player can type at the prompt, with
@@ -110,7 +112,7 @@ var helpSections = []struct{ name, note string }{
 	{secTrade, ""},
 	{secWonders, ""},
 	{secGame, ""},
-	{secAccounts, "Each account is its own slot. Switch/new/wipe live in the Accounts panel (main menu)."},
+	{secAccounts, "Each account is its own slot. New and wipe live in the Accounts panel (main menu)."},
 }
 
 var (
@@ -143,30 +145,31 @@ func registry() []*Command {
 		// Actions
 		{Name: "gather", Aliases: []string{"g"}, Section: secActions,
 			Args: []Arg{{Kind: ArgWord, Words: []string{"food", "wood", "stone"}}, optCount},
-			Help: []Usage{{"gather <food|wood|stone> [n]", "Hand-gather resources (max " + strconv.Itoa(int(gatherMaxYield)) + ", until the Medieval Age)"}}},
+			Help: []Usage{{"gather <food|wood|stone> [amount]", "Gather food, wood or stone by hand (default " + strconv.Itoa(int(gatherDefaultYield)) +
+				", max " + strconv.Itoa(int(gatherMaxYield)) + " per use; not after the Medieval Age)"}}},
 		{Name: "build", Aliases: []string{"b"}, Section: secActions,
 			Args: []Arg{{Kind: ArgBuilding, Optional: true}, optCountMax},
-			Help: []Usage{{"build <building> [count|max]", "Build structure(s) (default: 1)"}}},
+			Help: []Usage{{"build <building> [count|max]", "Build copies of a building (default 1)"}}},
 		{Name: "sell", Section: secActions, Dangerous: true,
 			Args: []Arg{{Kind: ArgBuiltBuilding}, optCount},
-			Help: []Usage{{"sell <building> [count]", "Demolish building(s), recover 50% of build cost"}}},
+			Help: []Usage{{"sell <building> [count]", "Demolish copies of a building and get back 50% of the build cost"}}},
 		{Name: "advance", Section: secActions,
 			Help: []Usage{{"advance", "Advance to the next age (when ready)"}}},
 		{Name: "upgrade", Section: secActions,
 			Args: []Arg{{Kind: ArgUpgradeBuilding, Optional: true}, optCountAll},
 			Help: []Usage{
-				{"upgrade", "List available building upgrades"},
-				{"upgrade <building> [n|all]", "Upgrade building to next age tier (pays cost delta)"},
+				{"upgrade", "List the building upgrades you can make"},
+				{"upgrade <building> [count|all]", "Upgrade copies to the next tier (no count: all of them; pays the difference in cost)"},
 			}},
 
 		// Build Plan
 		{Name: "plan", Section: secPlan, BareOK: true, Panel: "Build plan: queued builds & techs, started as resources come in",
 			Help: []Usage{{"plan", "Open the Plan panel (reorder and remove with keys)"}},
 			Subs: []*Command{
-				sub("build", "plan build <building> [count]", "Add copies of a building of this age", Arg{Kind: ArgPlanBuilding}, optCount),
+				sub("build", "plan build <building> [count]", "Add copies of a building (this age's, or the next age's to build after you advance)", Arg{Kind: ArgPlanBuilding}, optCount),
 				{Name: "research", Aliases: []string{"res"}, Args: []Arg{{Kind: ArgPlanTech}},
 					Help: []Usage{{"plan research <tech>", "Add a tech (techs start one at a time, in order)"}}},
-				sub("trade", "plan trade <from> <to> [amt]", "Sell from for to as it comes in (no amount: keep topped up)",
+				sub("trade", "plan trade <give> <get> [amount]", "Sell <give> for <get> as it comes in, until <amount> <get> is bought (no amount: until you remove it)",
 					Arg{Kind: ArgTradeFrom}, Arg{Kind: ArgTradeTo}, Arg{Kind: ArgNumber, Optional: true}),
 				sub("advance", "plan advance", "Advance as soon as the next age is ready"),
 				sub("deal", "plan deal <civ> <n>", "Take a civilization's trade deal n once its price is there",
@@ -182,23 +185,23 @@ func registry() []*Command {
 		// Workers
 		{Name: "recruit", Aliases: []string{"r"}, Section: secWorkers,
 			Args: []Arg{optCountMax},
-			Help: []Usage{{"recruit [count|max]", "Recruit workers from available housing (default: 1)"}}},
+			Help: []Usage{{"recruit [count|max]", "Recruit workers into free housing (default 1). They start idle."}}},
 		{Name: "assign", Aliases: []string{"a"}, Section: secWorkers,
 			Args: []Arg{{Kind: ArgWorkerBuilding}, optCountAll},
-			Help: []Usage{{"assign <building> [n|all]", "Assign workers to a building"}}},
+			Help: []Usage{{"assign <building> [count|all]", "Put idle workers to work in a building (default 1)"}}},
 		{Name: "unassign", Aliases: []string{"u"}, Section: secWorkers,
 			Args: []Arg{{Kind: ArgStaffedBuilding}, optCountAll},
-			Help: []Usage{{"unassign <building> [n|all]", "Unassign workers from a building"}}},
+			Help: []Usage{{"unassign <building> [count|all]", "Take workers out of a building; they go idle (default 1)"}}},
 		{Name: "dismiss", Section: secWorkers, Dangerous: true,
 			Args: []Arg{{Kind: ArgStaffedBuilding}, optCountAll},
-			Help: []Usage{{"dismiss <building> [n|all]", "Fire workers from a building (removes from pool)"}}},
+			Help: []Usage{{"dismiss <building> [count|all]", "Dismiss workers from a building; they leave your population (default 1)"}}},
 
 		// Research, Expeditions & Army
 		{Name: "research", Aliases: []string{"res"}, Section: secResearch, Panel: "Technology tree & progress",
 			Args: []Arg{{Kind: ArgTech, Optional: true}},
-			Help: []Usage{{"research <tech_key>", "Research a technology"}},
+			Help: []Usage{{"research <tech>", "Research a tech"}},
 			Subs: []*Command{
-				{Name: "cancel", Dangerous: true, Help: []Usage{{"research cancel", "Cancel current research (progress is lost)"}}},
+				{Name: "cancel", Dangerous: true, Help: []Usage{{"research cancel", "Cancel current research (the knowledge spent is not refunded)"}}},
 				sub("list", "research list", "List available techs"),
 			}},
 		panel("techs", ""),
@@ -206,42 +209,42 @@ func registry() []*Command {
 			Args: []Arg{{Kind: ArgExpedition, Optional: true}},
 			Help: []Usage{
 				{"expedition", "Open the Expeditions (scouting) panel"},
-				{"expedition <key>", "Send a scouting expedition (costs resources)"},
+				{"expedition <expedition>", "Send a scouting expedition (costs resources)"},
 			},
 			Subs: []*Command{sub("list", "expedition list", "List available expeditions")}},
 		{Name: "army", Section: secResearch, Panel: "Army overview & military campaigns",
 			Help: []Usage{{"army", "Open the Army (military) panel"}}},
 		{Name: "campaign", Section: secResearch,
 			Args: []Arg{{Kind: ArgCampaign, Optional: true}},
-			Help: []Usage{{"campaign <key>", "Wage a military campaign (costs soldiers)"}},
+			Help: []Usage{{"campaign <campaign>", "Wage a military campaign (costs soldiers)"}},
 			Subs: []*Command{sub("list", "campaign list", "List available campaigns")}},
 
 		// Trade & Diplomacy
-		{Name: "trade", Aliases: []string{"t"}, Section: secTrade, BareOK: true, Panel: "Exchange rates & trade routes",
+		{Name: "trade", Aliases: []string{"t"}, Section: secTrade, BareOK: true, Panel: "Market rates & trade routes",
 			Args: []Arg{{Kind: ArgTradeFrom}, {Kind: ArgTradeTo}, {Kind: ArgNumber}},
-			Help: []Usage{{"trade <from> <to> <amount>", "Exchange resources"}},
+			Help: []Usage{{"trade <give> <get> <amount>", "Sell <amount> of <give> for <get> at the market rate"}},
 			Subs: []*Command{
-				sub("list", "trade list", "Show exchange rates"),
+				sub("list", "trade list", "Show market rates"),
 				{Name: "route", BareOK: true, Subs: []*Command{
 					sub("list", "trade route list", "List trade routes"),
-					sub("start", "trade route start <key>", "Start a trade route", Arg{Kind: ArgRouteAvailable}),
-					sub("stop", "trade route stop <key>", "Stop a trade route", Arg{Kind: ArgRouteActive}),
+					sub("start", "trade route start <route>", "Start a trade route", Arg{Kind: ArgRouteAvailable}),
+					sub("stop", "trade route stop <route>", "Stop a trade route", Arg{Kind: ArgRouteActive}),
 				}},
 				sub("black", "trade black [resource]", "Same as blackmarket", Arg{Kind: ArgResource, Optional: true}),
 			}},
 		{Name: "blackmarket", Aliases: []string{"bm"}, Section: secTrade,
 			Args: []Arg{{Kind: ArgResource, Optional: true}},
-			Help: []Usage{{"blackmarket [resource]", "High-risk culture gamble for a resource haul (colonial+)"}}},
-		{Name: "factions", Section: secTrade, Panel: "Live favours, Geographic Society & standings (alias: diplomacy)",
-			Help: []Usage{{"factions", "Open the Factions panel (favours, Society, standings)"}}},
+			Help: []Usage{{"blackmarket [resource]", "Smuggling run: gamble culture on a haul of one resource (from the Colonial Age)"}}},
+		{Name: "factions", Section: secTrade, Panel: "Boons, the Geographic Society & opinion of each civilization (alias: diplomacy)",
+			Help: []Usage{{"factions", "Open the Factions panel (boons, the Geographic Society, opinion)"}}},
 		{Name: "diplomacy", Aliases: []string{"dip"}, Section: secTrade, BareOK: true,
 			Help: []Usage{{"diplomacy", "Alias for factions (opens the same panel)"}},
 			Subs: []*Command{
-				sub("ally", "diplomacy ally <civ>", "Ally with a civilization (costs gold)", civArg...),
-				sub("rival", "diplomacy rival <civ>", "Declare rivalry", civArg...),
-				sub("embargo", "diplomacy embargo <civ>", "Embargo a civilization", civArg...),
-				sub("gift", "diplomacy gift <civ>", "Send gift (+15 opinion)", civArg...),
-				sub("neutral", "diplomacy neutral <civ>", "Reset to neutral", civArg...),
+				sub("ally", "diplomacy ally <civ>", "Ally with a civilization ("+textfmt.Number(allyGoldCost)+" gold, needs opinion "+strconv.Itoa(allyMinOpinion)+")", civArg...),
+				sub("rival", "diplomacy rival <civ>", "Declare a civilization your rival", civArg...),
+				sub("embargo", "diplomacy embargo <civ>", "Embargo a civilization (a provocation: it can start a war)", civArg...),
+				sub("gift", "diplomacy gift <civ>", "Send a gift: "+textfmt.Number(giftGoldCost)+" gold for +"+strconv.Itoa(giftOpinion)+" opinion", civArg...),
+				sub("neutral", "diplomacy neutral <civ>", "Return to neutral with a civilization", civArg...),
 				sub("tribute", "diplomacy tribute <civ>", "Sue for peace with a civilization at war", civArg...),
 				sub("deals", "diplomacy deals [civ]", "List trade deals (one civilization, or every one you have met)",
 					Arg{Kind: ArgFaction, Optional: true}),
@@ -257,7 +260,7 @@ func registry() []*Command {
 			Subs: []*Command{
 				{Name: "collect", Aliases: []string{"bank"},
 					Args: []Arg{{Kind: ArgWonderResource, Words: []string{"all"}}, {Kind: ArgNumber, Words: []string{"all", "max"}, Optional: true}},
-					Help: []Usage{{"wonder collect <res|all> [amt|all|max]", "Bank resources into the current wonder (alias: bank; no amount: as much as it needs)"}}},
+					Help: []Usage{{"wonder collect <resource|all> [amount|all|max]", "Bank resources into the current wonder (alias: bank; no amount: as much as it needs)"}}},
 				sub("overflow", "wonder overflow [on|off]", "Bank what full stores would waste (on by default)",
 					Arg{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}),
 			}},
@@ -267,7 +270,7 @@ func registry() []*Command {
 			Subs: []*Command{
 				prestigeConfirm,
 				sub("shop", "prestige shop", "View prestige upgrades"),
-				sub("buy", "prestige buy <key>", "Buy a prestige upgrade", Arg{Kind: ArgPrestigeUpgrade}),
+				sub("buy", "prestige buy <upgrade>", "Buy a prestige upgrade", Arg{Kind: ArgPrestigeUpgrade}),
 			}},
 		{Name: "festival", Section: secWonders, BareOK: true,
 			Help: []Usage{{"festival", "Spend culture for a temporary production boost"}},
@@ -286,8 +289,8 @@ func registry() []*Command {
 		{Name: "rates", Section: secGame, Help: []Usage{{"rates", "Show resource rate breakdown"}}},
 		{Name: "status", Aliases: []string{"s"}, Section: secGame, Help: []Usage{{"status", "Show detailed status"}}},
 		{Name: "speed", Section: secGame, Args: []Arg{{Kind: ArgSpeed, Optional: true}},
-			Help: []Usage{{"speed [1.0|1.5|2.0|...]", "Set game speed (unlocks per wonder built)"}}},
-		{Name: "theme", Section: secGame, Panel: "Theme picker — palettes & accessibility",
+			Help: []Usage{{"speed [1.0|1.5|2.0|...]", "Set game speed (each wonder built raises the speed cap)"}}},
+		{Name: "theme", Section: secGame, Panel: "Theme picker: palettes & accessibility",
 			Args: []Arg{{Kind: ArgTheme, Optional: true}},
 			Help: []Usage{
 				{"theme", "Open the theme picker (palettes + accessibility)"},
@@ -319,7 +322,7 @@ func registry() []*Command {
 				{Name: "import", Dangerous: true, Args: []Arg{{Kind: ArgText}, {Kind: ArgWord, Words: []string{"replace"}, Optional: true}},
 					Help: []Usage{{"account import <path> [replace]", "Restore an account from a backup file"}}},
 				{Name: "recover", Dangerous: true, Args: []Arg{{Kind: ArgText}, {Kind: ArgWord, Words: []string{"confirm"}, Optional: true}},
-					Help: []Usage{{"account recover <code>", "Restore your identity from a recovery code"}}},
+					Help: []Usage{{"account recover <code> [confirm]", "Restore your account ID from a recovery code"}}},
 				{Name: "wipe", Dangerous: true,
 					Help: []Usage{{"account wipe", "Where to wipe an account (the Accounts panel)"}}},
 			}},
@@ -334,7 +337,7 @@ func registry() []*Command {
 		panel("buildings", "Built structures by lineage"),
 		panel("citymap", "Your settlement map (alias: map)"),
 		panel("map", ""),
-		panel("worldmap", "Known world — your civ & the civs you have met"),
+		panel("worldmap", "Known world: your civilization & the ones you have met"),
 	}
 }
 
@@ -350,7 +353,7 @@ var panelOrder = []string{
 type devCommand struct{ name, form, text string }
 
 var devCommands = []devCommand{
-	{"/god", "/god", "Toggle godmode — free costs, instant builds"},
+	{"/god", "/god", "Toggle godmode: free costs, instant builds"},
 	{"/fill", "/fill", "Fill all resources to their storage cap"},
 	{"/give", "/give <resource> <amount>", "Add an amount of a resource"},
 	{"/build", "/build <building_key>", "Instantly place one building"},
