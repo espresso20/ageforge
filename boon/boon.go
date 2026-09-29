@@ -5,7 +5,8 @@
 // knowing anything about them.
 //
 // Decoupling is the whole point. This package imports AT MOST config (for the
-// resource-key / effect vocabulary), detmath and the standard library. It does
+// resource-key / effect vocabulary), detmath, pkg/textfmt (number and
+// duration wording) and the standard library. It does
 // NOT import game — that would be an import cycle and would defeat the isolation
 // that makes the roll engine unit-testable with a fake Applier. All knowledge
 // of the outside world enters through two seams:
@@ -29,7 +30,11 @@
 // from its seed. It never touches package-level rand.
 package boon
 
-import "github.com/espresso20/ageforge/detmath"
+import (
+	"time"
+
+	"github.com/espresso20/ageforge/detmath"
+)
 
 // Kind enumerates the categories of boon this engine can grant. The first five
 // map to machinery the game already exposes and are catalogued below. The last
@@ -234,6 +239,22 @@ type Profile struct {
 	// (low-weight) boons get relatively more probability; < 1 lets common boons
 	// dominate. <= 0 is treated as 1.0.
 	RarityScale float64
+	// TickInterval is the length of one tick, used to word durations as
+	// wall-clock time in flavor lines. <= 0 falls back to
+	// DefaultTickInterval.
+	TickInterval time.Duration
+}
+
+// DefaultTickInterval mirrors the game's base tick length (2s at 1x speed)
+// for callers that leave Profile.TickInterval unset.
+const DefaultTickInterval = 2 * time.Second
+
+// tickInterval returns the profile's tick length, guarding non-positive values.
+func (p Profile) tickInterval() time.Duration {
+	if p.TickInterval <= 0 {
+		return DefaultTickInterval
+	}
+	return p.TickInterval
 }
 
 // DefaultProfile returns a neutral profile: every kind enabled, unit weights,

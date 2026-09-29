@@ -107,7 +107,7 @@ func (ge *GameEngine) lastPassageApplies() bool {
 // is pending.
 func lastPassageBlockErr() error {
 	name, _ := config.LastPassageInfo()
-	return fmt.Errorf("%s is upon you — type 'catastrophe' to choose Endure or Succumb before prestiging", name)
+	return fmt.Errorf("%s is upon you. Type 'catastrophe' to choose Endure or Succumb before you prestige.", name)
 }
 
 // rollLastPassage rolls the Last Passage at a confirmed prestige and reports
@@ -160,11 +160,11 @@ func (ge *GameEngine) forceLastPassage() error {
 	}
 	switch {
 	case ge.pendingLastPassage:
-		return fmt.Errorf("the Last Passage is already pending")
+		return fmt.Errorf("The Last Passage is already pending.")
 	case ge.pendingCatastrophe != "":
-		return fmt.Errorf("a catastrophe is already pending")
+		return fmt.Errorf("A catastrophe is already pending.")
 	case !ge.lastPassageApplies():
-		return fmt.Errorf("the Last Passage only comes in the final epoch")
+		return fmt.Errorf("The Last Passage only comes in the final epoch.")
 	}
 	ge.triggerLastPassage(catastropheForced)
 	return nil
@@ -177,7 +177,7 @@ func (ge *GameEngine) ForceLastPassageForTest(age string) error {
 	ge.mu.Lock()
 	if _, ok := config.AgeByKey()[age]; !ok {
 		ge.mu.Unlock()
-		return fmt.Errorf("unknown age %q", age)
+		return fmt.Errorf("Unknown age '%s'.", age)
 	}
 	ge.age = age
 	ge.currentEpoch = config.EpochForAge(age)
@@ -205,10 +205,10 @@ func (ge *GameEngine) SuccumbLastPassage() error {
 // resolveLastPassage completes the pending prestige the way how says.
 func (ge *GameEngine) resolveLastPassage(how prestigeEnding) error {
 	if !ge.pendingLastPassage {
-		return fmt.Errorf("the Last Passage has not come")
+		return fmt.Errorf("The Last Passage has not come.")
 	}
 	if how == lastPassageSuccumbed && ge.cosmicLegacy {
-		return fmt.Errorf("you already carry the Cosmic Legacy — the Last Passage can only be endured")
+		return fmt.Errorf("You already carry the Cosmic Legacy, so the Last Passage can only be endured.")
 	}
 	ge.pendingLastPassage = false
 	ge.completePrestige(how)
@@ -256,11 +256,11 @@ func (ge *GameEngine) runEndingLines(how prestigeEnding, points, full int) []Log
 	case lastPassageEndured:
 		keep := LastPassageKeepFor(ge.lastPassageBraceLevel())
 		ge.resolveHarbinger("", true)
-		ge.addLog("warning", fmt.Sprintf("☄ ENDURE: %s — %s", name, flavorText))
+		ge.addLog("warning", fmt.Sprintf("☄ Endure: %s. %s", name, flavorText))
 		ge.addLog("warning", fmt.Sprintf("  You keep %.0f%% of this run's prestige points: %d of %d.", keep*100, points, full))
 	case lastPassageSuccumbed:
 		ge.resolveHarbinger("", true)
-		ge.addLog("event", fmt.Sprintf("☄ SUCCUMB: %s took everything this run had. No prestige points from it.", name))
+		ge.addLog("event", fmt.Sprintf("☄ Succumb: %s took everything this run had. No prestige points from it.", name))
 	}
 	ge.logRunEnding()
 

@@ -5,9 +5,11 @@ import (
 	"math"
 	"math/rand"
 	"strings"
+	"time"
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/detmath"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // rareResourceKeys is the curated pool a Grand Cache draws from, intersected
@@ -92,7 +94,7 @@ func RollBoon(profile Profile, rng *rand.Rand) Boon {
 		b.DurationTicks = rollIntRange(rng, pick.DurMin, pick.DurMax)
 	}
 	b.Resource = resolveTarget(pick, profile, rng)
-	b.Flavor = rollFlavor(pick, b, rng)
+	b.Flavor = rollFlavor(pick, b, rng, profile.tickInterval())
 	return b
 }
 
@@ -236,25 +238,45 @@ func rollFloatRange(rng *rand.Rand, lo, hi float64) float64 {
 //	        malus), so a bare "-12%" never leaks into a sentence that already
 //	        said "falls".
 //	{res}   prettified target resource key
-//	{ticks} duration in ticks
-//	{amt}   InstantAmount rounded (lump grants)
-//	{n}     InstantAmount rounded (head-counts: workers gained or lost)
+//	{ticks} duration as wall-clock time at the profile's tick interval ("~50m");
+//	        templates read "for {ticks}"
+//	{amt}   InstantAmount rounded, K/M formatted (lump grants)
+//	{n}     InstantAmount rounded, K/M formatted (head-counts)
 //	{frac}  InstantAmount as a percentage (ResourceDrain's drain fraction)
-func rollFlavor(d Def, b Boon, rng *rand.Rand) string {
+func rollFlavor(d Def, b Boon, rng *rand.Rand, interval time.Duration) string {
 	if len(d.Flavors) == 0 {
 		return d.Name
 	}
 	tmpl := d.Flavors[rng.Intn(len(d.Flavors))]
-	amount := fmt.Sprintf("%d", int(math.Round(b.InstantAmount)))
+	amount := textfmt.Number(math.Round(b.InstantAmount))
 	rep := strings.NewReplacer(
 		"{pct}", fmt.Sprintf("%d%%", int(math.Round(math.Abs(b.Magnitude)*100))),
 		"{res}", resourceLabel(b.Resource),
-		"{ticks}", fmt.Sprintf("%d", b.DurationTicks),
+		"{ticks}", textfmt.Ticks(b.DurationTicks, interval),
 		"{amt}", amount,
 		"{n}", amount,
-		"{frac}", fmt.Sprintf("%d%%", int(math.Round(math.Abs(b.InstantAmount)*100))),
+		"{frac}", drainPercent(b),
 	)
 	return rep.Replace(tmpl)
+}
+
+// drainPercent is a ResourceDrain's fraction as a percentage ("12%").
+func drainPercent(b Boon) string {
+	return fmt.Sprintf("%d%%", int(math.Round(math.Abs(b.InstantAmount)*100)))
+}
+
+// WithoutDip returns b with its optional production dip removed (a
+// ResourceDrain's Magnitude and DurationTicks zeroed), as a capacity cap
+// does. A drain that carried a dip gets the drain-only line, so the text
+// never announces a slowdown that will not happen:
+// "4% of the iron they carried is gone."
+func (b Boon) WithoutDip() Boon {
+	hadDip := b.Magnitude != 0 || b.DurationTicks != 0
+	b.Magnitude, b.DurationTicks = 0, 0
+	if b.Kind == ResourceDrain && hadDip {
+		b.Flavor = fmt.Sprintf("%s of the %s they carried is gone.", drainPercent(b), resourceLabel(b.Resource))
+	}
+	return b
 }
 
 // resourceLabel prettifies a resource key for flavor text (quantum_flux →

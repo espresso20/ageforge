@@ -3,6 +3,8 @@ package boon
 import (
 	"math"
 	"math/rand"
+	"regexp"
+	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -348,5 +350,41 @@ func TestAgeIndexGuardsUnknownAges(t *testing.T) {
 	}
 	if got := ageIndex(config.AgeOrder()[0]); got != 0 {
 		t.Errorf("ageIndex(first age) = %d, want 0", got)
+	}
+}
+
+// A capped drain loses its dip, and its line stops promising a slowdown.
+func TestWithoutDipRewordsTheDrain(t *testing.T) {
+	b := Boon{Kind: ResourceDrain, Polarity: Negative, Resource: "iron_ore", InstantAmount: 0.04,
+		Magnitude: -0.05, DurationTicks: 400, Flavor: "All production falls 5% for ~13m."}
+	got := b.WithoutDip()
+	if got.Magnitude != 0 || got.DurationTicks != 0 {
+		t.Fatalf("dip not stripped: %+v", got)
+	}
+	if want := "4% of the iron ore they carried is gone."; got.Flavor != want {
+		t.Errorf("flavor = %q, want %q", got.Flavor, want)
+	}
+	// A pure drain keeps its own line.
+	pure := Boon{Kind: ResourceDrain, Resource: "food", InstantAmount: 0.1, Flavor: "damp"}
+	if got := pure.WithoutDip(); got.Flavor != "damp" {
+		t.Errorf("pure drain flavor rewritten: %q", got.Flavor)
+	}
+}
+
+// Every timed line states its duration as wall-clock time, never raw ticks.
+func TestFlavorDurationsAreWallClock(t *testing.T) {
+	wall := regexp.MustCompile(`for ~\d+[smhd]`)
+	p := DefaultProfile()
+	p.Age = "iron_age"
+	for _, pol := range []Polarity{Positive, Negative} {
+		p.Polarity = pol
+		for _, b := range rollN(p, 7, 400) {
+			if b.DurationTicks > 0 && !wall.MatchString(b.Flavor) {
+				t.Errorf("%s line has no wall-clock duration: %q", b.Name, b.Flavor)
+			}
+			if strings.Contains(b.Flavor, "ticks") {
+				t.Errorf("%s line prints raw ticks: %q", b.Name, b.Flavor)
+			}
+		}
 	}
 }
