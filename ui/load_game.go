@@ -158,7 +158,7 @@ func (b *loadGameBrowser) refresh(wantIdx int) {
 	b.list.Clear()
 	if len(rows) == 0 {
 		// Empty state — the action keys become no-ops (handleKey guards on len).
-		b.detail.SetText("[gray]No saved games found in " + savesDir() + ".\n\nStart a new game to create one.[-]")
+		b.detail.SetText("[gray]This account has no saved games yet.\n\nStart a new game to create one.[-]")
 		return
 	}
 
@@ -678,15 +678,11 @@ func pluralSaves(n int) string {
 	return fmt.Sprintf("%d saves", n)
 }
 
-// savesDir returns the player-facing saves folder label used in messages.
-func savesDir() string {
-	return "./data/saves/"
-}
-
-// savesDirLabel is the subtitle prefix (same folder, kept as its own helper so
-// the call sites read clearly).
+// savesDirLabel is the subtitle prefix. Saves live in the active account's
+// slot (data/accounts/<id>/saves/), so the label names the account rather than
+// a folder path that would be wrong for every account.
 func savesDirLabel() string {
-	return savesDir()
+	return "This account"
 }
 
 // centeredModal wraps an inner primitive in nested Flex spacers so it floats at a
