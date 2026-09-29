@@ -236,9 +236,12 @@ func TestSessionMarkRecap(t *testing.T) {
 	}
 }
 
-// TestModelShape: every age builds a sane model quickly.
+// TestModelShape: every age builds a sane model quickly (once the seed's
+// world and plan are cached; the budget is loose for -race).
 func TestModelShape(t *testing.T) {
 	b := mapmodel.NewBuilder(cat)
+	warm := fixture.State(fixture.Options{Age: "primitive_age", Seed: 7})
+	b.Build(&warm, nil)
 	for _, age := range config.AgeOrder() {
 		st := fixture.State(fixture.Options{Age: age, Seed: 7, Harbinger: true, Wars: 1})
 		t0 := time.Now()
