@@ -24,17 +24,18 @@ var copyDirs = []string{"ui", "game", "boon"}
 //   - dev-only consoles and dumps are read by us, not players;
 //   - art, glyphs and generated names are not sentences.
 var copyExemptFiles = map[string]string{
-	"game/devmode.go":           "dev console",
-	"game/devcmd.go":            "dev console",
-	"ui/citymap/debug.go":       "debug overlay",
-	"game/updater.go":           "self-update plumbing, not game text",
-	"ui/splash_canvas.go":       "art",
-	"ui/braille.go":             "chart glyphs",
-	"ui/wonder_icon.go":         "art",
-	"game/savenames.go":         "generated save names",
-	"ui/theme_widgets.go":       "widget chrome",
-	"ui/copy_guard_test.go":     "this file",
-	"game/expedition_flavor.go": "flavor catalog glue",
+	"game/devmode.go":                "dev console",
+	"game/devcmd.go":                 "dev console",
+	"ui/citymap/debug.go":            "debug overlay",
+	"game/updater.go":                "self-update plumbing, not game text",
+	"ui/splash_canvas.go":            "art",
+	"ui/braille.go":                  "chart glyphs",
+	"ui/wonder_icon.go":              "art",
+	"game/savenames.go":              "generated save names",
+	"ui/theme_widgets.go":            "widget chrome",
+	"ui/copy_guard_test.go":          "this file",
+	"game/expedition_flavor.go":      "flavor catalog glue",
+	"ui/mapstyle/capture/capture.go": "dev capture tool: writes HTML/JS for review pages, never shown in game",
 }
 
 // copyExemptLiterals are literal substrings exempt from every guard.
