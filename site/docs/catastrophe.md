@@ -69,11 +69,11 @@ The name is flavor. Endure and Succumb work the same way in every epoch; only th
 
 ## Endure
 
-Pay a cost and keep your civilization.
+Pay a cost and keep your civilization. These are the baseline numbers, with no Brace and no soldiers:
 
-- **20% of your buildings destroyed**: `floor(non-wonder buildings / 5)`, at least 1 if you have any. Wonders are never destroyed and don't count toward the total. Brace lowers this to 15% or 10%.
+- **20% of your buildings destroyed**: `floor(non-wonder buildings / 5)`, at least 1 if you have any. Wonders are never destroyed and don't count toward the total. Brace lowers this to 15% or 10%, and your garrison lowers it further.
 - **Workers of destroyed buildings go idle** first, the same as when you sell a building.
-- **All unlocked resources drop to 15%** of their stored amounts. Brace raises this to 30% or 45%.
+- **All unlocked resources drop to 15%** of their stored amounts. Brace raises this to 30% or 45%, and your garrison raises it further.
 - **25% of the worker pool is lost.** There is one worker pool, so every building loses the same share of its assigned workers, whatever its domain (food, knowledge, military and so on).
 - **Reconstruction Effort**: production −10% for 216 ticks.
 - **Morale −10 points.**
@@ -92,6 +92,38 @@ If the harbinger warned you and you paid to **Brace**, Endure costs less. Brace 
 | 2 | 10% | 45% |
 
 Buildings destroyed are rounded down, with at least 1 if you have any. The Brace is attached to the pending catastrophe, so it still applies if you press Esc and Endure later, or save and load first. It does nothing for Succumb. See [Brace](harbinger.md#brace-soften-an-endure).
+
+### Your garrison
+
+Soldiers soften an Endure too. After Brace has done its part, your garrison blunts its share of what is left: the same share it would blunt of a raid, measured against the raid threat of the age the catastrophe strikes in. A catastrophe arrives as you enter a new epoch, so that is the first age of the new epoch, where the threat has just doubled. See [Defense: what your army blunts](military.md#7-defense-what-your-army-blunts) for how the share is worked out.
+
+- **Buildings:** the braced share of buildings destroyed shrinks by the garrison's share. The number of buildings the garrison saves is rounded down, so it never saves more than its share, and at least 1 building still falls if you have any.
+- **Stock:** the garrison keeps its share of the stock that Brace would have let go.
+- Worker loss, the production debuff and the morale hit are unchanged.
+- Your soldiers are measured before the blow lands. They are stock like everything else, so afterwards they drop with the rest of your resources.
+
+**The combined cap.** Brace and garrison together can cut the unbraced loss by at most **60%**. However strong your army, at least **8%** of buildings fall and at most **66%** of stock is kept. The cap only bites at Brace level 2: level 2 already takes the building loss from 20% to 10%, so the garrison can add at most a fifth on top (10% down to 8%).
+
+| Brace | Garrison share | Buildings destroyed | Stock kept |
+|-------|----------------|---------------------|------------|
+| none | none | 20% | 15% |
+| none | 20% | 16% | 32% |
+| 1 | none | 15% | 30% |
+| 1 | 20% | 12% | 44% |
+| 2 | 20% | 8% | 56% |
+| 2 | 40% or more | 8% (cap) | 66% (cap) |
+
+A player with no soldiers takes exactly the Brace-only numbers above. Few players have none: the military buildings the age gates require train a small garrison on their own, enough to blunt roughly 8-19% of a raid. See [The garrison you already have](military.md#the-garrison-you-already-have).
+
+**What you see.** The catastrophe modal's Endure section shows the real numbers, after Brace and garrison. Under them it adds a line for each: the Brace level with its own numbers ("before your garrison"), then how many buildings the garrison saves and how much stock it keeps compared with Brace alone. With no soldiers it says so and points you to the Army panel. If the cap cut in, a grey line says Brace and garrison together soften an Endure by at most 60%. After you Endure, the log adds:
+
+```
+Your garrison held the line: N buildings still stand that would have fallen, and you keep X% of your stock instead of Y%.
+```
+
+The buildings and stock it saved go into the **Saved this run** line of the Army panel (`army`).
+
+The Last Passage is different: its Endure costs prestige points, not buildings and stock, and soldiers do not change it.
 
 The −10% applies to every building, including the ones that survived, for the full 216 ticks. Negative production modifiers are floored at 10% of base, but a single −10% lands in full whatever other bonuses you hold. The same flooring covers per-resource rate modifiers and gather rate, and any active debuff shows in the Active Multipliers panel.
 
@@ -204,7 +236,8 @@ The Epoch tab's history marks each past epoch's catastrophe as **Survived**, **S
 - your civilization is large and deep into its run,
 - you already hold this epoch's legacy (a repeat Succumb there adds nothing but ruins),
 - you're close to a milestone chain that a reset would wipe,
-- you braced when the harbinger warned you, so Endure costs less.
+- you braced when the harbinger warned you, so Endure costs less,
+- you keep a garrison that is strong for the age the catastrophe strikes in (check the Army panel's blunt share, or the Brace preview on the harbinger panel).
 
 ### Succumb beats Endure when
 

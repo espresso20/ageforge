@@ -23,6 +23,12 @@ type EventDef struct {
 	Effects     []Effect
 	Description string
 	LogMessage  string // user-visible message written to the game log when triggered
+	// Raid marks an attack by outsiders (bandits, pirates, rival clans, beasts,
+	// thieves and spies). The army's garrison blunts a Raid event's
+	// steal_resource and worker_loss effects (see config/defense.go). Disasters
+	// and unrest (earthquakes, plague, uprisings) are not raids: soldiers do not
+	// stop those.
+	Raid bool
 }
 
 // RandomEvents returns all random event definitions
@@ -116,7 +122,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Bandit Raid", Key: "bandit_raid",
 			MinAge: "bronze_age", Weight: 10, MinTick: 60, Cooldown: 60,
-			Duration: 0, Sentiment: "bad",
+			Duration: 0, Raid: true, Sentiment: "bad",
 			Description: "Bandits attack and steal resources. They left a thank-you note, which is somehow worse.",
 			LogMessage:  "Bandits cleaned out the stores and left a polite thank-you note. Lost food and gold.",
 			Effects: []Effect{
@@ -208,7 +214,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Pirate Attack", Key: "pirate_attack",
 			MinAge: "colonial_age", Weight: 7, MinTick: 320, Cooldown: 140,
-			Duration: 0, Sentiment: "bad",
+			Duration: 0, Raid: true, Sentiment: "bad",
 			Description: "Pirates raid your trade routes. They are, regrettably, very good at this.",
 			LogMessage:  "Pirates hit the trade lanes again. They're alarmingly professional about it. Lost gold and food.",
 			Effects: []Effect{
@@ -240,7 +246,7 @@ func RandomEvents() []EventDef {
 		{
 			Name: "Data Breach", Key: "data_breach",
 			MinAge: "information_age", Weight: 6, MinTick: 600, Cooldown: 180,
-			Duration: 0, Sentiment: "bad",
+			Duration: 0, Raid: true, Sentiment: "bad",
 			Description: "Hackers steal your data reserves. The password was 'password.' It is always 'password.'",
 			LogMessage:  "Hackers walked in through the front door; the password was 'password' again. Lost data and gold.",
 			Effects: []Effect{
@@ -322,7 +328,7 @@ func EpochExclusiveEvents() []EventDef {
 		{
 			Name: "Tribal Raid", Key: "tribal_raid", EpochKey: "stone_era",
 			MinAge: "primitive_age", Weight: 10, MinTick: 10, Cooldown: 80,
-			Duration: 60, Sentiment: "bad",
+			Duration: 60, Raid: true, Sentiment: "bad",
 			Description: "Rival clans descend in the night, yelling things. The yelling, frankly, works.",
 			LogMessage:  "A rival clan raids in the dark, doing a lot of yelling. It works. Food down, stores stolen, workers flee.",
 			Effects: []Effect{
@@ -345,7 +351,7 @@ func EpochExclusiveEvents() []EventDef {
 		{
 			Name: "Beast Stampede", Key: "beast_stampede", EpochKey: "stone_era",
 			MinAge: "primitive_age", Weight: 8, MinTick: 15, Cooldown: 90,
-			Duration: 0, Sentiment: "bad",
+			Duration: 0, Raid: true, Sentiment: "bad",
 			Description: "Very large animals run through the settlement at speed. The fence had opinions about this. The fence lost.",
 			LogMessage:  "Enormous beasts stampeded straight through the fence, which lost the argument. Lost wood and food.",
 			Effects: []Effect{
@@ -545,7 +551,7 @@ func EpochExclusiveEvents() []EventDef {
 		{
 			Name: "Data Breach", Key: "epoch_data_breach", EpochKey: "digital_era",
 			MinAge: "information_age", Weight: 9, MinTick: 550, Cooldown: 120,
-			Duration: 120, Sentiment: "bad",
+			Duration: 120, Raid: true, Sentiment: "bad",
 			Description: "A sophisticated attack siphons terabytes of data. The intern clicked the link. Of course the intern clicked the link.",
 			LogMessage:  "Terabytes gone because someone clicked a link promising a free cruise. Lost data, knowledge output down, 120 ticks.",
 			Effects: []Effect{
@@ -632,7 +638,7 @@ func EpochExclusiveEvents() []EventDef {
 		{
 			Name: "Corporate Espionage", Key: "corporate_espionage", EpochKey: "neon_era",
 			MinAge: "fusion_age", Weight: 8, MinTick: 760, Cooldown: 140,
-			Duration: 0, Sentiment: "bad",
+			Duration: 0, Raid: true, Sentiment: "bad",
 			Description: "A rival megacorp steals your best research. Their spy left a five-star review on the way out.",
 			LogMessage:  "A rival corp lifted our best research and the spy left a five-star review of our security. Lost gold and data.",
 			Effects: []Effect{

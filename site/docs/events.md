@@ -93,13 +93,13 @@ These 27 events have no `EpochKey` — they can fire in any epoch, throughout th
 |------|-----|---------|--------|--------|----------|-------|
 | Storm | `storm` | Primitive | 14 | Wood production -0.3/tick | 5 ticks | Most common bad event |
 | Drought | `drought` | Primitive | 12 | Food production -0.5/tick | 10 ticks | |
-| Bandit Raid | `bandit_raid` | Bronze | 10 | -10 food, -5 gold stolen | Instant | |
+| Bandit Raid | `bandit_raid` | Bronze | 10 | -10 food, -5 gold stolen | Instant | **Raid** (garrison blunts) |
 | Plague | `plague` | Stone | 6 | Food production -1.0/tick, -15% workers | 8 ticks | **Workers permanently lost** |
 | Mine Collapse | `mine_collapse` | Iron | 7 | Iron production -0.5/tick, coal -0.3/tick, -5% workers | 8 ticks | **Workers permanently lost** |
 | Heresy | `heresy` | Medieval | 5 | Faith production -0.5/tick | 12 ticks | |
-| Pirate Attack | `pirate_attack` | Colonial | 7 | -50 gold, -30 food stolen | Instant | |
+| Pirate Attack | `pirate_attack` | Colonial | 7 | -50 gold, -30 food stolen | Instant | **Raid** (garrison blunts) |
 | Nuclear Scare | `nuclear_scare` | Atomic | 4 | Electricity -2.0/tick, knowledge -1.0/tick | 12 ticks | |
-| Data Breach | `data_breach` | Information | 6 | -50 data, -100 gold stolen | Instant | |
+| Data Breach | `data_breach` | Information | 6 | -50 data, -100 gold stolen | Instant | **Raid** (garrison blunts) |
 | Industrial Accident | `industrial_accident` | Industrial | 8 | -10 steel, -15 oil stolen, -7% workers | Instant | **Workers permanently lost** |
 | Crypto Winter | `crypto_winter` | Cyberpunk | 8 | -4.5 crypto stolen/tick | 14 ticks | Ongoing drain, not one-shot |
 
@@ -109,6 +109,32 @@ These 27 events have no `EpochKey` — they can fire in any epoch, throughout th
 |------|-----|---------|--------|--------|----------|-------|
 | Earthquake | `earthquake` | Stone | 5 | -15 wood stolen, +20 stone | Instant | Trade-off |
 | Plasma Storm | `plasma_storm` | Fusion | 5 | Electricity -5.0/tick, plasma +3.0/tick | 10 ticks | Hurts power, helps plasma |
+
+### Raids and your garrison
+
+Some bad events are **raids**: attacks by outsiders. If you have soldiers, your garrison blunts part of a raid: it cuts the resources the raid steals and the workers it drives off by the share shown in the Army panel (`army`), at most 45%. The share depends on your army's Defense Rating against the raid threat of your current age; see [Defense: what your army blunts](military.md#7-defense-what-your-army-blunts). With no soldiers a raid hits exactly as listed, but from the Iron Age on most players have some: the military buildings the age gates require train a garrison that blunts roughly 8-19% of a raid without any effort (see [The garrison you already have](military.md#the-garrison-you-already-have)).
+
+The raids are:
+
+| Event | Key | Where | What the garrison blunts |
+|-------|-----|-------|--------------------------|
+| Bandit Raid | `bandit_raid` | base event, Bronze Age on | food and gold stolen |
+| Pirate Attack | `pirate_attack` | base event, Colonial Age on | gold and food stolen |
+| Data Breach | `data_breach` | base event, Information Age on | data and gold stolen |
+| Tribal Raid | `tribal_raid` | Stone Era | food stolen and workers who flee (not the food production penalty) |
+| Beast Stampede | `beast_stampede` | Stone Era | wood and food lost |
+| Data Breach | `epoch_data_breach` | Digital Era | data stolen (not the knowledge production penalty) |
+| Corporate Espionage | `corporate_espionage` | Neon Era | gold and data stolen |
+
+Soldiers only exist from the Iron Age, so the two Stone Era raids (and a Bandit Raid in the Bronze Age) still hit in full in a normal run. Only the stolen resources and lost workers are blunted; a raid's production penalty runs in full. Disasters and unrest are not raids, and soldiers do nothing against them: `plague`, `mine_collapse`, `industrial_accident`, `crypto_winter`, `earthquake` and the rest take their full toll.
+
+When the garrison blunts a raid, the log adds a green line under the event, for example:
+
+```
+Your garrison blunted about 28% of the raid: you kept 3 food and 1 gold.
+```
+
+What it kept is added to the **Saved this run** line in the Army panel.
 
 ---
 
@@ -200,7 +226,7 @@ When a timed event ends, the expiry log entry shows accumulated losses in yellow
 These are temporary production debuffs. Timed events you cannot avoid — ride them out. If food production goes negative during a drought, make sure you have food reserves banked before the event hits. Check `logs` when you see the event fire so you know how many ticks remain.
 
 **Resource steal events** (`bandit_raid`, `pirate_attack`, `data_breach`):
-Instant events — the resources are gone. Nothing to do post-fire. Defensively: keep deep reserves of gold and food (the most commonly targeted resources). Storage buildings are underrated insurance against these.
+Instant events — the resources are gone. Nothing to do post-fire. Defensively: keep deep reserves of gold and food (the most commonly targeted resources). Storage buildings are underrated insurance against these. All three are raids, so from the Iron Age on a garrison sized for your current age takes a share off each one (see [Raids and your garrison](#raids-and-your-garrison)).
 
 **Worker loss events** (`plague`, `mine_collapse`, `industrial_accident`):
 The most dangerous category. Workers lost are gone permanently. Strategies:
@@ -250,7 +276,7 @@ Mixed events (like `earthquake` or `plasma_storm`) reset both streak counters, w
 
 - **Bad timed events are temporary (except worker loss).** A 50% food production penalty for 10 ticks sounds alarming, but at 2 seconds per tick that's 20 seconds. Don't make permanent decisions (like restructuring worker assignments) because of a short-duration debuff.
 
-- **Bank resources before late-game.** Pirate attacks, data breaches, and corporate espionage (epoch event) scale in magnitude as you progress. A surplus buffer absorbs the hit. Early-game resource steal amounts are small; by the Neon Era they're 10,000 gold at a time.
+- **Bank resources before late-game.** Pirate attacks, data breaches, and corporate espionage (epoch event) scale in magnitude as you progress. A surplus buffer absorbs the hit, and a garrison that keeps up with the age blunts all three, since they are raids. Early-game resource steal amounts are small; by the Neon Era they're 10,000 gold at a time.
 
 - **Maintain idle workers at all times.** Worker loss from `plague`, `mine_collapse`, or `industrial_accident` is the only permanent damage in this system. Running every worker assigned with zero idle is the riskiest configuration. Even 5–10 unassigned workers gives you breathing room.
 

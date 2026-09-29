@@ -1,6 +1,6 @@
 # Military & Expeditions
 
-The military system is one of AgeForge's primary engines of wealth. Soldiers defend your empire from hostile events, unlock progressively richer expeditions, and gate several milestones and prestige bonuses. If you ignore it, catastrophe events will eat your stockpiles. If you invest in it, expeditions flood you with resources you couldn't produce fast enough on your own.
+The military system is one of AgeForge's primary engines of wealth. Soldiers blunt raids and soften catastrophes, unlock progressively richer expeditions, and gate several milestones and prestige bonuses. Ignore it and you still carry the small garrison the age gates build for you; invest in it and raids and catastrophes take noticeably less. If you invest in it, expeditions flood you with resources you couldn't produce fast enough on your own.
 
 ---
 
@@ -9,7 +9,7 @@ The military system is one of AgeForge's primary engines of wealth. Soldiers def
 The military system does four things:
 
 - **Campaigns** — spend stockpiled soldiers on timed military missions that return resources, gold, and knowledge on success (waged with `campaign <key>`). Soldier-free **scouting expeditions** (`expedition <key>`) cover the same ground without troops — see [§4](#4-expeditions).
-- **Defense rating** — a passive stat derived from soldier count and military bonuses that reduces damage from hostile epoch events.
+- **Defense rating** — a passive stat derived from soldier count and military bonuses. Measured against the raid threat of your current age, it blunts part of what raids, war raids and an Endure take from you (at most 45%) — see [§7](#7-defense-what-your-army-blunts).
 - **Milestones** — five military milestones chain into a title reward; the early tiers grant permanent `military_power`, while the late tiers now pay out broad `all production`.
 - **Prestige** — prestige upgrades `military_power` and `expedition_loot` carry over through resets, compounding across runs.
 
@@ -29,7 +29,7 @@ Expeditions come in **two kinds**:
 Soldiers are a stockpiled **resource** (`soldiers`), unlocked at the **Iron Age**. You don't count heads in a worker pool — you bank soldiers the way you bank food or wood, then spend them waging campaigns.
 
 - **Production:** Military buildings produce soldiers every tick when military-domain workers are assigned to them. Production is worker-scaled — a fully-staffed military building produces roughly its **soldier cap ÷ 50** soldiers per tick (minimum 0.1/tick). Assign more military workers, build more military buildings → soldiers accrue faster.
-- **Storage:** Your soldier cap equals the **sum of every military building's soldier cap**. Building or upgrading military buildings is the *only* way to raise the ceiling — the Storage lineage does not hold soldiers.
+- **Storage:** Your soldier cap is the **sum of every military building's soldier cap**, plus every storage effect that raises *all* resources (the general storage buildings and "all storage" techs). That second part is most of it: by the Iron Age a typical empire can hold a couple of hundred thousand soldiers, far more than the military buildings' own caps.
 - **Spending:** Military campaigns deduct their soldier cost from your stockpile at launch (see [§4](#4-expeditions)).
 
 ### Producing soldiers
@@ -55,7 +55,7 @@ The military *workers* who produce soldiers eat food at the base rate for their 
 Soldiers leave your stockpile in two ways:
 
 - **Expedition launch** — every *military campaign* spends its soldier cost up front, deducted whether the run later succeeds or fails. The three **scouting** expeditions (`scout_party`, `scout_ruins`, `naval_expedition`) cost **0** soldiers and instead charge a resource `Cost` — see [§4](#4-expeditions).
-- **Catastrophe events** — certain hostile epoch events can drain stored soldiers along with other losses.
+- **Catastrophes** — an Endure cuts every stored resource to the share it keeps, soldiers included, so your garrison is weaker after one. Your soldiers are measured before the blow lands, so the garrison still counts for that Endure.
 
 Spent or lost soldiers are simply removed from the stockpile. To replenish, keep military workers assigned to your military buildings so production continues.
 
@@ -65,7 +65,13 @@ Spent or lost soldiers are simply removed from the stockpile. To replenish, keep
 army
 ```
 
-Opens the **Army** panel showing current soldier count, defense rating, the active military **campaign** (if any), and completed campaign count. The active scouting expedition lives in the separate **Expeditions** panel (`expedition`) — one scouting expedition and one military campaign can run concurrently, one of each category. The running **Loot History** (total loot collected) is shown in the Expeditions panel, not here.
+Opens the **Army** panel showing current soldier count, defense rating, the active military **campaign** (if any), and completed campaign count. Under the defense rating it shows what the army does for you:
+
+- **Threat:** the raid threat of your current age.
+- "Your garrison would blunt about N% of a raid." — the share it takes off raids and war raids in your current age (an Endure measures it against the age the catastrophe strikes in) — followed by what twice the garrison would blunt and a reminder that no army blunts more than 45%. With no soldiers it reads "You have no garrison: raids hit you with full force."
+- **Saved this run:** once the garrison has saved something, the buildings, workers and resources (the four largest) it kept, and how many raids it blunted. Like other run stats, it resets with the run.
+
+The active scouting expedition lives in the separate **Expeditions** panel (`expedition`) — one scouting expedition and one military campaign can run concurrently, one of each category. The running **Loot History** (total loot collected) is shown in the Expeditions panel, not here.
 
 ---
 
@@ -292,6 +298,8 @@ Worker assignment affects **capacity scaling**: buildings run at `20% + 80% × (
 defense = soldierCount × 2.0 × (1 + militaryBonus)
 ```
 
+The defense rating is what your garrison is measured by against raids and catastrophes (see [§7](#7-defense-what-your-army-blunts)), so every point of `military_power` counts twice: it raises expedition odds and it makes the same soldiers blunt more. A +1.0 bonus doubles the defense rating of the same army.
+
 Sources, stacked additively:
 
 | Source | How to get it | Bonus per step |
@@ -306,7 +314,105 @@ The `expedition_reward` bonus (from research, prestige `expedition_loot`, and ce
 
 ---
 
-## 7. Military Milestones
+## 7. Defense: what your army blunts
+
+Soldiers you keep in stock are your **garrison**. They are never spent by defending: the garrison takes a share off what raids and catastrophes cost you, and the soldiers stay where they are.
+
+### The formula
+
+Your defense rating is measured against the **raid threat** of the age you are in:
+
+```
+defense    = soldierCount × 2.0 × (1 + militaryBonus)
+threat     = 160,000 × 2^(age order)      # Primitive Age = order 0
+mitigation = 45% × defense / (defense + threat)
+```
+
+`mitigation` is the share of a raid's losses the garrison blunts. It is 0 with no soldiers, half the ceiling (22.5%) when your defense equals the threat, and it approaches 45% without ever reaching it. More soldiers always help, but each doubling helps less than the last:
+
+| Defense vs threat | Share blunted |
+|-------------------|---------------|
+| none | 0% |
+| one third of the threat | about 11% |
+| half the threat | 15% |
+| equal to the threat | 22.5% |
+| twice the threat | 30% |
+| four times the threat | 36% |
+| nine times the threat | about 40% |
+
+The threat **doubles every age**, the same rate at which each new military building's soldier cap doubles. An army that is strong for one age is ordinary for the next and a rounding error a few ages later, so a garrison has to grow with you.
+
+| Age | Threat | Soldiers for 22.5% (no military bonus) |
+|-----|--------|----------------------------------------|
+| Iron Age | 1.28M | 640K |
+| Classical Age | 2.56M | 1.28M |
+| Medieval Age | 5.12M | 2.56M |
+| Renaissance Age | 10.24M | 5.12M |
+| Colonial Age | 20.48M | 10.24M |
+| Industrial Age | 40.96M | 20.48M |
+| Victorian Age | 81.92M | 40.96M |
+| Electric Age | 163.84M | 81.92M |
+| Atomic Age | 327.68M | 163.84M |
+| Modern Age | 655.36M | 327.68M |
+| Information Age | 1.31B | 655.36M |
+| Digital Age | 2.62B | 1.31B |
+| Cyberpunk Age | 5.24B | 2.62B |
+| Fusion Age | 10.49B | 5.24B |
+| Space Age | 20.97B | 10.49B |
+| Interstellar Age | 41.94B | 20.97B |
+| Galactic Age | 83.89B | 41.94B |
+| Quantum Age | 167.77B | 83.89B |
+| Transcendent Age | 335.54B | 167.77B |
+
+The Primitive, Stone and Bronze Ages have threats of 160K, 320K and 640K, but soldiers don't exist until the Iron Age. A `military_power` bonus cuts the soldiers needed: at +1.0, half as many.
+
+### The garrison you already have
+
+Every player carries a garrison without trying. The age gates ask for military buildings (15 Hunting Lodges for the Classical Age, 15 Military Academies for the Medieval, 3 Castle Keeps for the Renaissance, 15 Bunker Complexes for the Modern, 10 Plasma Commands for the Space Age, 15 Probability War Rooms for the Transcendent). You keep those buildings into every later age, and they train soldiers even with no workers assigned, at a fifth of the staffed rate. A player who builds only what the gates ask for blunts roughly **8-19%** of a raid from the Iron Age on (measured on the smoke-test bot, which does nothing else for its army).
+
+A deliberate army is what pushes toward the 45% ceiling: more military buildings of the current age, workers staffed into them, and `military_power` research.
+
+### What it blunts
+
+1. **Raid events.** Random events that are attacks by outsiders: Bandit Raid, Pirate Attack, Data Breach (both versions), Corporate Espionage, and the Stone Era's Tribal Raid and Beast Stampede. The garrison cuts the resources they steal and the workers they drive off by its share (at least one worker still flees if the event takes workers). A raid's production penalty is not blunted. See [Raids and your garrison](events.md#raids-and-your-garrison). The log adds a line under the event: "Your garrison blunted about N% of the raid: you kept ...".
+2. **War raids.** While a civilization is at war with you, each raid it makes takes a resource. The garrison keeps its share of that resource. A raid bigger than your stock still takes nothing, as before; the army never makes a raid that missed land. The raid's log line adds "Your garrison kept X gold from them (about N% of the raid)." (with the raid's resource in place of gold).
+3. **Endure.** When you Endure a catastrophe, the garrison blunts its share of the buildings destroyed and the stock lost, after the Harbinger's Brace, measured against the threat of the age the catastrophe strikes in (see below).
+
+Nothing else. Disasters and unrest (earthquakes, plague, mine collapses, industrial accidents, uprisings) are not raids, and soldiers do nothing against them. Endure's 25% worker loss, its production debuff and its morale hit are unchanged.
+
+A player with **no soldiers** takes exactly the losses they always did. From the Iron Age on that is rare: the military buildings the age gates require give nearly everyone some garrison (see [The garrison you already have](#the-garrison-you-already-have)).
+
+### Endure: Brace first, then the garrison
+
+A catastrophe arrives as you enter a new epoch, so it strikes in the first age of that epoch (Iron, Renaissance, Victorian, Modern, Cyberpunk or Interstellar), where the threat has just doubled. The Iron Era's catastrophe comes as soldiers first unlock, so in practice the garrison first matters at the Renaissance.
+
+1. **Brace** applies first: 20% / 15% / 10% of buildings fall and 15% / 30% / 45% of stock is kept at Brace 0 / 1 / 2.
+2. **The garrison** then blunts its share of what is left: the braced share of buildings destroyed shrinks by that share, and it keeps that share of the stock Brace would have let go. Buildings saved round down, so the garrison never saves more than its share.
+3. **The cap:** Brace and garrison together can cut the unbraced loss by at most **60%**. At least 8% of buildings fall and at most 66% of stock is kept. The cap only bites at Brace level 2.
+
+| Brace | Garrison share | Buildings destroyed | Stock kept |
+|-------|----------------|---------------------|------------|
+| none | 20% | 16% | 32% |
+| none | near the 45% ceiling | about 11% | about 53% |
+| 1 | 20% | 12% | 44% |
+| 2 | 20% | 8% | 56% |
+| 2 | 40% or more | 8% (cap) | 66% (cap) |
+
+The catastrophe modal shows the real numbers after Brace and garrison, with a line for each; the Harbinger panel's Brace preview counts the garrison too. After an Endure the log says "Your garrison held the line: ...". See [Your garrison](catastrophe.md#your-garrison) and [Brace](harbinger.md#brace-soften-an-endure).
+
+The Last Passage in the Cosmic Era costs prestige points, not buildings or stock, and the garrison doesn't change it.
+
+### Worked example
+
+You hold 2,108,000 soldiers with no `military_power` bonus: defense 2,108,000 × 2 = 4,216,000.
+
+- **In the Classical Age** (threat 2.56M): 45% × 4.216M / (4.216M + 2.56M) = about **28%**. A war raid that would take 1,000 gold takes about 720; the Army panel says twice the garrison would blunt about 35%.
+- **In the Industrial Age** (threat 40.96M): 45% × 4.216M / (4.216M + 40.96M) = about **4%**. The same army barely matters four ages later.
+- **Endure at the Renaissance** (threat 10.24M) with Brace 1, 150 non-wonder buildings and 2,560,000 soldiers (defense 5.12M, half the threat): the garrison share is 15%. Brace 1 alone would destroy 22 buildings and keep 30% of stock; with the garrison, 19 fall (22 × 15% = 3.3, rounded down to 3 saved) and about 40% of stock is kept.
+
+---
+
+## 8. Military Milestones
 
 The five military milestones form a chain. Completing the full chain grants a permanent title plus, cumulatively, **+0.25 military_power** and **+0.25 production_all** — the late tiers now broaden into all-production bonuses so the chain lifts your whole economy, not just combat.
 
@@ -324,7 +430,7 @@ The five military milestones form a chain. Completing the full chain grants a pe
 
 ---
 
-## 8. Strategy
+## 9. Strategy
 
 ### Early game (Iron Age to Classical Age)
 
@@ -350,7 +456,13 @@ The five military milestones form a chain. Completing the full chain grants a pe
 
 ### Catastrophe defense
 
-Your **defense rating** (`soldierCount × 2.0 × (1 + militaryBonus)`) is checked against hostile epoch events. A higher defense rating reduces resource losses from events like Bandit Raid, Pirate Attack, and rival aggression. It does not prevent catastrophe events outright — but it significantly reduces the damage.
+Your **defense rating** (`soldierCount × 2.0 × (1 + militaryBonus)`) is measured against the raid threat of your age, and the resulting share (at most 45%) comes off raid events, war raids from civilizations at war with you, and the buildings and stock an Endure takes. It never stops a raid or a catastrophe from happening, and it does nothing against disasters such as plague or earthquakes. See [§7](#7-defense-what-your-army-blunts) for the numbers.
+
+- **Keep up with the age.** The threat doubles every age, so a garrison you stop growing fades fast. Adding the current age's military buildings keeps pace, since each tier's soldier cap doubles too.
+- **Look ahead to the passage.** An Endure is measured against the first age of the new epoch, where the threat is double what you see on the Army panel today. The Harbinger panel's Brace preview already counts this.
+- **Brace and garrison stack, up to a point.** Together they cut an Endure's losses by at most 60%. With Brace 2, a garrison that blunts 20% already reaches the building cap (8% fall), so extra soldiers mostly buy stock kept, up to 66%.
+- **Soldiers cost nothing to hold.** The stock has no upkeep; only the military workers producing it eat food and count toward the morale ratio below. You can staff up to bank a garrison, then move the workers back.
+- **Research `military_power`.** It multiplies the defense rating of the soldiers you already have.
 
 ### Balancing army size vs food drain
 
@@ -381,7 +493,7 @@ See [Morale](morale.md) for the full banded system.
 
 ---
 
-## 9. Tips & Common Mistakes
+## 10. Tips & Common Mistakes
 
 **Don't recruit past your food income.** A food deficit stalls all production (workers can't work when starving). Calculate the drain before `recruit max`.
 

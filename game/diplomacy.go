@@ -885,3 +885,10 @@ func raidMessage(def config.FactionDef, amount float64, resource string) string 
 	return fmt.Sprintf("[red]⚔ The %s raided you — lost %.0f %s.[-]",
 		def.Name, amount, resource)
 }
+
+// raidMessageDefended is raidMessage for a raid the garrison blunted: what the
+// player still lost, and what the army kept (guard is the share it blunted).
+func raidMessageDefended(def config.FactionDef, lost, kept float64, resource string, guard float64) string {
+	return fmt.Sprintf("[red]⚔ The %s raided you — lost %.0f %s.[-] [green]Your garrison kept %.0f %s from them (about %.0f%% of the raid).[-]",
+		def.Name, lost, resource, kept, resource, guard*100)
+}

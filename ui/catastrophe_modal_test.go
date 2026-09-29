@@ -17,7 +17,7 @@ func TestCatastropheModalLayoutFitsWidth(t *testing.T) {
 	inner := catastropheModalWidth - 2
 	for _, ep := range config.Epochs() {
 		for _, already := range []bool{false, true} {
-			l := buildCatastropheModalLayout(ep.Key, already, 0.50)
+			l := buildCatastropheModalLayout(ep.Key, already, 0.50, game.DefaultEndureOutcome())
 			rows := 0
 			for _, block := range []string{l.header, l.endure, l.succumb, l.hint} {
 				for _, line := range strings.Split(block, "\n") {
@@ -92,7 +92,7 @@ func TestCatastropheModalFloatsOverDashboard(t *testing.T) {
 	if y0 < 0 || x0 < 0 {
 		t.Fatal("modal box not found on screen")
 	}
-	l := buildCatastropheModalLayout("steel_era", false, 0)
+	l := buildCatastropheModalLayout("steel_era", false, 0, game.DefaultEndureOutcome())
 	for y := y0; y < y0+l.height; y++ {
 		for x := x0; x < x0+catastropheModalWidth; x++ {
 			if grid[y][x] == 'X' {

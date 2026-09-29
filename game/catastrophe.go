@@ -359,21 +359,31 @@ func (ge *GameEngine) Endure() error {
 		brace = 0
 	}
 	ge.pendingBraceLevel = 0
-	destroyPct, keep := braceDestroyPct[brace], braceKeepFrac[brace]
+	// Then the garrison, measured before the blow lands (soldiers are stock
+	// too, and fall with the rest).
+	outcome := ge.endurePreview(brace, ge.age)
+	keep := outcome.KeepFrac
 	ge.survivedEpochs[epochKey] = true
 	ge.setCatastropheOutcome(epochKey, CatastropheEndured)
 
 	catName, catFlavor := config.CatastropheInfo(epochKey)
 	epName := config.EpochByKey()[epochKey].Name
 
-	destroyable := ge.Buildings.DestroyableCount()
-	destroyCount := destroyable * destroyPct / 100
-	if destroyCount < 1 && destroyable > 0 {
-		destroyCount = 1
-	}
+	destroyCount := outcome.DestroyCount
 	destroyed, names := ge.Buildings.DestroyRandom(ge.gameRNG(), destroyCount)
 	ge.releaseWorkersFrom(destroyed)
 
+	// Stock the garrison kept: the difference between the braced keep and the
+	// garrison's keep, per resource (sorted, so the tally sums in one order).
+	var keptStock map[string]float64
+	if keep != outcome.BracedKeepFrac {
+		keptStock = make(map[string]float64)
+		for _, key := range sortedKeys(ge.Resources.resources) {
+			if r := ge.Resources.resources[key]; r != nil && ge.Resources.IsUnlocked(key) {
+				keptStock[key] = float64(r.Amount*keep) - float64(r.Amount*outcome.BracedKeepFrac)
+			}
+		}
+	}
 	for key, r := range ge.Resources.resources {
 		if r != nil && ge.Resources.IsUnlocked(key) {
 			r.Amount *= keep
@@ -397,7 +407,15 @@ func (ge *GameEngine) Endure() error {
 		ge.addLog("warning", fmt.Sprintf("  → %s lost", desc))
 	}
 	if brace > 0 {
-		ge.addLog("info", fmt.Sprintf("  Braced (level %d): %d%% of buildings lost instead of 20%%, %.0f%% of stock kept instead of 15%%.", brace, destroyPct, keep*100))
+		ge.addLog("info", fmt.Sprintf("  Braced (level %d): %d%% of buildings lost instead of 20%%, %.0f%% of stock kept instead of 15%%.", brace, braceDestroyPct[brace], outcome.BracedKeepFrac*100))
+	}
+	if line := endureGarrisonLine(outcome); line != "" {
+		ge.addLog("success", line)
+		t := ge.defenseTally()
+		t.Buildings += outcome.BuildingsSaved
+		for _, key := range sortedKeys(keptStock) {
+			ge.recordSavedResource(key, keptStock[key])
+		}
 	}
 	ge.addLog("warning", fmt.Sprintf("  All resources reduced to %.0f%% of stored amounts.", keep*100))
 	ge.addLog("warning", "  25% of workers lost.")

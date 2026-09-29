@@ -123,6 +123,27 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	out["ancient_memory_modal"] = draw()
 	d.closeAncientMemoryModal()
 
+	// The army: the Army panel with a garrison (the mitigation lines and the
+	// saved-this-run tally after an Endure), and the catastrophe modal whose
+	// Endure preview counts that garrison. Endured afterwards so nothing stays
+	// pending for the harbinger screens below, which then count it too.
+	engine.SetGarrisonForTest("iron_age", 640000)
+	if err := engine.ForceCatastropheForTest(); err != nil {
+		t.Fatal(err)
+	}
+	d.showCatastropheModal(engine.GetState().PendingCatastrophe)
+	out["catastrophe_modal_garrison"] = draw()
+	d.closeCatastropheModal()
+	if err := engine.Endure(); err != nil {
+		t.Fatal(err)
+	}
+	engine.SetGarrisonForTest("iron_age", 640000)
+	if !d.overlayMgr.Show("army", engine.GetState()) {
+		t.Fatal("overlay army not registered")
+	}
+	out["overlay:army_garrison"] = draw()
+	d.overlayMgr.Hide()
+
 	// Harbinger: the panel (severity, keycaps, affordable and unaffordable
 	// costs), the Epoch overlay's harbinger lines and the status-bar badge.
 	if err := engine.SummonHarbingerForTest("bronze_age"); err != nil {

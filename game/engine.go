@@ -1188,42 +1188,7 @@ func (ge *GameEngine) processEvents() {
 	for _, def := range triggered {
 		ge.addLog("debug", fmt.Sprintf("Event triggered: %s (sentiment: %s)", def.Name, def.Sentiment))
 		ge.addLog("event", def.LogMessage)
-		// Process instant and on-trigger effects.
-		// For timed events (Duration > 0) the losses are also recorded on the active event
-		// so that when it expires the "has ended" message includes a yellow summary.
-		isTimed := def.Duration > 0
-		for _, eff := range def.Effects {
-			switch eff.Type {
-			case "instant_resource":
-				ge.Resources.Add(eff.Target, eff.Value)
-				ge.addLog("debug", fmt.Sprintf("Event effect: %s %s %+.1f", eff.Type, eff.Target, eff.Value))
-			case "steal_resource":
-				current := ge.Resources.Get(eff.Target)
-				loss := eff.Value
-				if loss > current {
-					loss = current
-				}
-				ge.Resources.Remove(eff.Target, loss)
-				ge.addLog("debug", fmt.Sprintf("Event effect: %s %s -%.1f", eff.Type, eff.Target, loss))
-				if isTimed && loss > 0 {
-					ge.Events.RecordResourceLoss(def.Key, eff.Target, loss)
-				}
-			case "worker_loss":
-				// Value is a percentage (0.0–1.0) of total workers to remove
-				lost := int(float64(ge.Workers.TotalPop()) * eff.Value)
-				if lost < 1 {
-					lost = 1
-				}
-				ge.Workers.RemovePct(eff.Value)
-				if isTimed {
-					// Loss will be reported in the "has ended" summary; skip standalone log
-					ge.Events.RecordWorkerLoss(def.Key, lost)
-				} else {
-					ge.addLog("warning", fmt.Sprintf("%d workers fled or were lost.", lost))
-				}
-				ge.addLog("debug", fmt.Sprintf("Event effect: worker_loss %.0f%%", eff.Value*100))
-			}
-		}
+		ge.applyEventEffects(def)
 	}
 
 	for _, ae := range expired {
@@ -1332,24 +1297,7 @@ func (ge *GameEngine) processDiplomacy() {
 	for _, n := range ge.Diplomacy.TakePendingReturns() {
 		ge.Workers.KillWorker(n)
 	}
-	// Apply war raids (resource losses) and announce them. The announcement lives
-	// here rather than in DiplomacyManager.Tick because the flavour half is drawn
-	// off ge.rng, which the manager has no access to.
-	//
-	// Sorted by faction key first: pendingRaids is built by walking a MAP, so its
-	// order is randomised, and drawing prose in that order would make which raid
-	// got which sentence unreproducible from the seed.
-	raids := ge.Diplomacy.TakePendingRaids()
-	sort.Slice(raids, func(i, j int) bool { return raids[i].FactionKey < raids[j].FactionKey })
-	for _, raid := range raids {
-		ge.Resources.Remove(raid.Resource, raid.Amount)
-		ge.addLog("event", ge.raidLogLine(raid))
-		ge.Events.InjectEvent(ActiveEvent{
-			Key:       "war_raid",
-			Name:      "Under Raid",
-			TicksLeft: lendEventDisplayTicks,
-		})
-	}
+	ge.applyWarRaids()
 
 	// Embassies passively generate opinion toward non-hostile factions.
 	// Total/tick = Σ over embassy-type buildings of:
@@ -3735,6 +3683,13 @@ func (ge *GameEngine) GetState() GameState {
 	// snapshot here and graft the automatic-dispatch view on afterwards.
 	militarySnap := ge.Military.Snapshot(ge.age, ageOrder, soldierResource, int(ge.Resources.GetStorage("soldiers")), ge.Resources.GetRate("soldiers"), ge.Resources.GetAll(), militaryBonus, expeditionBonus)
 	militarySnap.AutoExpedition = ge.autoExpeditionSnapshot()
+	militarySnap.Threat = ge.ageThreat(ge.age)
+	militarySnap.Mitigation = config.DefenseMitigation(militarySnap.DefenseRating, militarySnap.Threat)
+	militarySnap.Saved = ge.Stats.Defense.clone()
+	var pendingEndure EndureOutcome
+	if ge.pendingCatastrophe != "" {
+		pendingEndure = ge.endurePreview(ge.pendingBraceLevel, ge.age)
+	}
 
 	// Wonder gate: show which wonder must be built before advancing
 	wonderKey := ge.progress.WonderForAge(ge.age)
@@ -3806,6 +3761,7 @@ func (ge *GameEngine) GetState() GameState {
 		EpochColor:            epochColor,
 		EpochSurvived:         ge.survivedEpochs[ge.currentEpoch],
 		PendingCatastrophe:    ge.pendingCatastrophe,
+		PendingEndure:         pendingEndure,
 		CatastropheOutlook:    ge.catastropheOutlook(),
 		PendingMemoryTech:     ge.pendingMemoryTech,
 		PendingMemoryTechName: ge.Research.defs[ge.pendingMemoryTech].Name,

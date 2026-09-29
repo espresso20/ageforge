@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -16,9 +17,10 @@ func militaryProvider(state game.GameState, _ int) string {
 
 	// === Army Overview ===
 	fmt.Fprintf(&sb, " [gold]═══ Army Overview ═══[-]\n\n")
-	fmt.Fprintf(&sb, " [gold]Soldiers:[-]  %d / %d\n", mil.SoldierCount, mil.SoldierCap)
+	fmt.Fprintf(&sb, " [gold]Soldiers:[-]  %s / %s\n", FormatNumber(float64(mil.SoldierCount)), FormatNumber(float64(mil.SoldierCap)))
 	fmt.Fprintf(&sb, " [gold]Training:[-]  %s/tick\n", FormatRate(mil.SoldierRate))
-	fmt.Fprintf(&sb, " [gold]Defense:[-]   %.1f\n", mil.DefenseRating)
+	fmt.Fprintf(&sb, " [gold]Defense:[-]   %s\n", FormatNumber(mil.DefenseRating))
+	writeGarrison(&sb, state)
 
 	if mil.MilitaryBonus > 0 {
 		fmt.Fprintf(&sb, " [green]Military Bonus: +%.0f%%[-]\n", mil.MilitaryBonus*100)
@@ -163,4 +165,70 @@ func formatExpeditionCost(cost map[string]float64) string {
 		parts = append(parts, fmt.Sprintf("%.0f %s", cost[k], k))
 	}
 	return strings.Join(parts, ", ")
+}
+
+// writeGarrison renders what the army does for the player: how much of a raid
+// the garrison would blunt against the current age's threat, and what it has
+// saved this run. Worded from the player's side.
+func writeGarrison(sb *strings.Builder, state game.GameState) {
+	mil := state.Military
+	capPct := config.DefenseMitigationCap * 100
+	ageName := state.AgeName
+	if ageName == "" {
+		ageName = state.Age
+	}
+	fmt.Fprintf(sb, " [gold]Threat:[-]    %s (raids in the %s)\n", FormatNumber(mil.Threat), ageName)
+	if mil.Mitigation <= 0 {
+		sb.WriteString(" [yellow]You have no garrison: raids hit you with full force.[-]\n")
+		fmt.Fprintf(sb, "   [gray]Soldiers blunt raids, war raids and what an Endure takes (up to %.0f%%).[-]\n", capPct)
+	} else {
+		fmt.Fprintf(sb, " [green]Your garrison would blunt about %.0f%% of a raid.[-]\n", mil.Mitigation*100)
+		sb.WriteString("   [gray]Raids, war raids and an Endure's losses all hit you that much softer.[-]\n")
+		twice := config.DefenseMitigation(mil.DefenseRating*2, mil.Threat)
+		fmt.Fprintf(sb, "   [gray]Twice the garrison: about %.0f%%. No army blunts more than %.0f%%.[-]\n", twice*100, capPct)
+	}
+	if line := garrisonSavedSummary(mil.Saved); line != "" {
+		fmt.Fprintf(sb, " [gold]Saved this run:[-] %s\n", line)
+	}
+}
+
+// garrisonSavedSummary is a one-line summary of what the army has saved this
+// run, largest resource amounts first (at most four), or "" when nothing.
+func garrisonSavedSummary(t *game.DefenseTally) string {
+	if t == nil {
+		return ""
+	}
+	var parts []string
+	if t.Buildings > 0 {
+		parts = append(parts, fmt.Sprintf("%d %s", t.Buildings, pluralize("building", t.Buildings)))
+	}
+	if t.Workers > 0 {
+		parts = append(parts, fmt.Sprintf("%d %s", t.Workers, pluralize("worker", t.Workers)))
+	}
+	keys := make([]string, 0, len(t.Resources))
+	for k, v := range t.Resources {
+		if v >= 1 {
+			keys = append(keys, k)
+		}
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if t.Resources[keys[i]] != t.Resources[keys[j]] {
+			return t.Resources[keys[i]] > t.Resources[keys[j]]
+		}
+		return keys[i] < keys[j]
+	})
+	if len(keys) > 4 {
+		keys = keys[:4]
+	}
+	for _, k := range keys {
+		parts = append(parts, FormatNumber(t.Resources[k])+" "+k)
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	out := strings.Join(parts, ", ")
+	if t.Raids > 0 {
+		out += fmt.Sprintf(" [gray](%d %s blunted)[-]", t.Raids, pluralize("raid", t.Raids))
+	}
+	return out
 }

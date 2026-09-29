@@ -47,6 +47,7 @@ type ConfigJSON struct {
 	Style       string  `json:"style,omitempty"`
 	LastPassage string  `json:"last_passage,omitempty"`
 	Deals       bool    `json:"deals,omitempty"`
+	Army        bool    `json:"army,omitempty"`
 }
 
 // PacingRow aggregates one (cycle, age) across seeds. Times are 1x seconds.
@@ -78,7 +79,7 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 			Seeds: cfg.Seeds, Catastrophe: cfg.Catastrophe, Harbinger: cfg.Harbinger, PrestigeAge: cfg.PrestigeAge,
 			Cycles: cfg.Cycles, FinalAge: cfg.FinalAge, DecideEvery: cfg.DecideEvery, CheckEvery: cfg.CheckEvery,
 			SoftlockSecs: cfg.SoftlockSpan.Seconds(), AgeTimeout: cfg.AgeTimeout.Seconds(), MaxSimSecs: cfg.MaxSim.Seconds(),
-			Pacing: cfg.Pacing, Style: cfg.Style, LastPassage: cfg.LastPassage, Deals: cfg.Deals,
+			Pacing: cfg.Pacing, Style: cfg.Style, LastPassage: cfg.LastPassage, Deals: cfg.Deals, Army: cfg.Army,
 		},
 	}
 	type key struct {
@@ -223,6 +224,9 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 	if s.Config.Deals {
 		sb.WriteString(", faction deals on")
 	}
+	if s.Config.Army {
+		sb.WriteString(", garrison kept")
+	}
 	fmt.Fprintf(&sb, ". Took %s of wall time.\n\n", time.Duration(s.WallMs)*time.Millisecond)
 	sb.WriteString("Times are simulated wall-clock at 1x speed (tick_speed bonuses included). ")
 	if s.Config.Pacing == PacingEnforce {
@@ -273,6 +277,7 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 			st.CatastrophesRolled, st.CatastrophesEndured, st.CatastrophesSuccumbed, countStr(st.EpochEvents),
 			st.Awakenings, st.Milestones, st.TechsResearched, st.BuildingsCompleted, countTotal(st.TimedEvents), st.StarvationDeaths)
 	}
+	s.writeDefense(&sb)
 	sb.WriteString("\nBot actions (successful / rejected), summed over seeds:\n\n")
 	acts, errs := map[string]int{}, map[string]int{}
 	for _, r := range s.Runs {
@@ -361,4 +366,30 @@ func countTotal(m map[string]int) int {
 		n += v
 	}
 	return n
+}
+
+// writeDefense is the army table: what each run lost to Endure and what its
+// garrison saved. Written only when some run endured a catastrophe or had a
+// garrison blunt a raid.
+func (s *Summary) writeDefense(sb *strings.Builder) {
+	any := false
+	for _, r := range s.Runs {
+		if r.Stats.CatastrophesEndured > 0 || r.Stats.RaidsBlunted > 0 {
+			any = true
+		}
+	}
+	if !any {
+		return
+	}
+	sb.WriteString("\n## Army\n\n| seed | endured | buildings lost to Endure | mean stock kept | mean garrison share | buildings saved | raids blunted | workers saved |\n|---|---|---|---|---|---|---|---|\n")
+	for _, r := range s.Runs {
+		st := r.Stats
+		kept, guard := "-", "-"
+		if n := float64(st.CatastrophesEndured); n > 0 {
+			kept = fmt.Sprintf("%.1f%%", st.EndureStockKept/n*100)
+			guard = fmt.Sprintf("%.1f%%", st.EndureGarrison/n*100)
+		}
+		fmt.Fprintf(sb, "| %d | %d | %d | %s | %s | %d | %d | %d |\n", r.Seed, st.CatastrophesEndured, st.EndureBuildingsLost,
+			kept, guard, st.DefenseBuildingsSaved, st.RaidsBlunted, st.DefenseWorkersSaved)
+	}
 }
