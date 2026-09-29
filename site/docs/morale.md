@@ -1,29 +1,29 @@
 # Morale
 
-Morale is a civilization-wide stat that reflects the mood and motivation of your population. It is shown as a percentage and acts as a **two-way dial centred on 50%**: keep it high and all production is rewarded with a bonus; let it crater and all production is penalised. Unlike Faith or Knowledge it is not a stored resource you spend — it is a multiplier on everything your workers do, and it must be actively managed.
+Morale is a civilization-wide stat for the mood of your population. It is shown as a percentage and works as a **two-way dial centered on 50%**: keep it high and all production gets a bonus; let it crater and all production takes a penalty. Unlike faith or knowledge it is not a stored resource you spend. It is a multiplier on everything your workers do, and you have to manage it.
 
-For how morale interacts with the worker production formula, see [Workers & Domains](workers-and-domains.md#morale).
+For how morale fits the worker production formula, see [Workers & Domains](workers-and-domains.md#morale).
 
 ---
 
 ## Why Morale Matters
 
-Morale multiplies **all worker-driven building output** every tick — food, knowledge, trade, soldiers, everything. The same buildings and the same worker assignments produce more when morale is high and less when it is low:
+Morale multiplies **all worker-driven building output** every tick: food, knowledge, trade, soldiers, everything. The same buildings and the same worker assignments produce more when morale is high and less when it is low:
 
 ```
 output = base_rate × building_count × (0.20 + 0.80 × assigned / total_capacity) × morale_multiplier
 ```
 
-It is the only stat that touches every domain at once, which makes it one of the highest-leverage things to keep an eye on.
+It is the only stat that touches every domain at once, so it is one of the most useful things to keep an eye on.
 
 ---
 
 ## The Scale
 
-- Morale is internally a float, displayed as a **percentage**.
+- Morale is shown as a **percentage**.
 - It **starts at 50% (neutral)** for a new civilization.
-- It has a hard **floor of 10%** — it can sink low, but never to zero.
-- Its **ceiling is 100% + 5% per Wonder built**. With no wonders the cap is 100%; build wonders and the cap rises, letting morale climb higher and unlock a larger production bonus.
+- It has a hard **floor of 10%**. It can sink low, but never to zero.
+- Its **ceiling is 100% + 5% per wonder built**. With no wonders the cap is 100%; each wonder raises it, letting morale climb higher and earn a larger production bonus.
 
 So a civilization with 4 wonders built can push morale as high as **120%**, while one with none tops out at **100%**.
 
@@ -31,19 +31,19 @@ So a civilization with 4 wonders built can push morale as high as **120%**, whil
 
 ## The Production Curve
 
-Morale's effect on production is a **continuous curve pivoted at 50%** — there is no neutral "dead zone". The multiplier moves the moment morale leaves 50%:
+Morale's effect on production is a **continuous curve centered on 50%**, with no neutral "dead zone". The multiplier moves as soon as morale leaves 50%:
 
 | Morale | Effect on All Production |
 |--------|--------------------------|
-| **At the 10% floor** | **×0.50** — half production (the worst case) |
-| **Below 50%** | **Penalty** — ramps linearly from ×0.50 (at the floor) up to ×1.00 (at 50%) |
-| **Exactly 50%** | **×1.00** — production runs at its normal baseline |
-| **Above 50%** | **Bonus** — ramps linearly from ×1.00 (at 50%) up to **+20%** (at the morale cap) |
-| **At the cap** | **+20%** — the full bonus (the best case) |
+| **At the 10% floor** | **×0.50**, half production (the worst case) |
+| **Below 50%** | **Penalty**, easing linearly from ×0.50 (at the floor) to ×1.00 (at 50%) |
+| **Exactly 50%** | **×1.00**, the normal baseline |
+| **Above 50%** | **Bonus**, rising linearly from ×1.00 (at 50%) to **+20%** (at the morale cap) |
+| **At the cap** | **+20%**, the full bonus (the best case) |
 
-The effect scales **smoothly and continuously**. Just off 50% it is tiny — at 52% the bonus is well under +1% — and it grows with distance, reaching the tuned endpoints only at the extremes (+20% at the cap, ×0.50 at the 10% floor).
+The effect scales **smoothly**. Just off 50% it is tiny (at 52% the bonus is well under +1%), and it grows with distance, reaching the endpoints only at the extremes: +20% at the cap, ×0.50 at the 10% floor.
 
-The two sides are **not symmetric**: the 10% floor is closer to 50% than the cap is, so the downside ramp is **steeper than the upside**. A morale crash costs you more per point than an equally-distant high earns — a collapse hurts more than a peak helps. There is no longer any range where morale "does nothing"; staying near 50% simply keeps the effect small.
+The two sides are **not symmetric**. The 10% floor is closer to 50% than the cap is, so the downside ramp is **steeper than the upside**: a point of morale lost below 50% costs more than a point gained above it earns. Every level of morale has some effect; staying near 50% keeps that effect small.
 
 ---
 
@@ -51,10 +51,10 @@ The two sides are **not symmetric**: the 10% floor is closer to 50% than the cap
 
 Morale **drifts gently back toward 50% every tick**. This is the most important thing to understand about it:
 
-- A high-morale **bonus must be earned and sustained**. If you stop building morale-restoring buildings, the bonus bleeds away as morale drifts back down to neutral. It is never a permanent freebie.
-- A low-morale **penalty is self-healing**. Once you remove whatever was dragging morale down (fix the food deficit, shed excess military workers), the drift pulls morale back up toward neutral on its own.
+- A high-morale **bonus has to be earned and kept up**. If you stop building morale-restoring buildings, the bonus fades as morale drifts back to neutral.
+- A low-morale **penalty heals itself**. Once you remove whatever was dragging morale down (fix the food deficit, shed excess military workers), the drift pulls morale back up toward neutral on its own.
 
-In short: neutral is the resting state. You have to spend effort to live above it, and the game forgives you for dipping below it as long as you stop the bleeding.
+Neutral is the resting state. Living above it takes effort, and the game forgives a dip below it once you stop the cause.
 
 ---
 
@@ -62,56 +62,55 @@ In short: neutral is the resting state. You have to spend effort to live above i
 
 | Source | Effect |
 |--------|--------|
-| **Morale-restoring buildings** | The main lever. Worship buildings (shrines, temples, and their later-age equivalents) and culture/entertainment buildings lift morale **each tick just by existing** — no workers required. |
-| **Faith production rate** | An active faith economy keeps spirits up. A small morale lift scales with your **faith produced per tick** (your faith *rate*, not your stored faith), so the more faith you are actively generating, the higher it nudges morale. The per-tick lift is **capped**, so a late-game faith firehose can't peg morale in a single step. |
-| **Good events** | A favourable event lifts morale. |
+| **Morale-restoring buildings** | The main lever. Worship buildings (shrines, temples and their later-age equivalents) and culture/entertainment buildings lift morale **each tick once built**, with no workers needed. |
+| **Faith production rate** | A small morale lift scales with your **faith produced per tick** (your faith *rate*, not your stored faith), so the more faith you are actively generating, the more it nudges morale up. The per-tick lift is **capped**, so a huge late-game faith rate can't max out morale in a single step. |
+| **Good events** | A favorable event lifts morale. |
 | **Advancing to a new age** | Reaching a new age gives a one-time morale boost. |
 
 ## What Lowers Morale
 
 | Source | Effect |
 |--------|--------|
-| **Food starvation** | Running out of food drains morale each tick. |
-| **Over-militarisation** | Military workers exceeding **30% of your population** drain morale — the further over the threshold, the faster the drain. |
+| **Starvation** | Running out of food drains morale each tick. |
+| **Too large an army** | Military workers above **30% of your population** drain morale; the further over, the faster the drain. |
 | **Idle workforce** | More than **50% of your workers sitting idle** drains morale each tick. |
-| **Bad events & catastrophes** | A negative event lowers morale; **enduring a catastrophe** costs morale. |
+| **Bad events & catastrophes** | A negative event lowers morale, and **enduring a catastrophe** costs morale. |
 
 ---
 
 ## The Key Lever: Morale-Restoring Buildings
 
-Because morale always drifts back to 50%, the only way to **actively push it up into the bonus zone and keep it there** is to build **morale-restoring buildings** — the era-appropriate worship buildings (shrine/temple line) and culture/entertainment buildings. They raise morale a little every tick simply by standing, with no workers assigned.
+Because morale always drifts back to 50%, the only way to **push it into the bonus zone and keep it there** is to build **morale-restoring buildings**: the worship buildings of each age (the shrine and temple line) and culture/entertainment buildings. They raise morale a little every tick once built, with no workers assigned.
 
-Stack enough of them and their per-tick lift outpaces the drift-to-neutral, parking your morale in the high band for a sustained **+20% to all production**. Stop building them and morale slides back to neutral. Everything else on the "raises morale" list (good events, age advances) is a one-time nudge — morale-restoring buildings are the steady, controllable source.
+Build enough of them and their per-tick lift outpaces the drift to neutral, holding morale high for a lasting bonus of up to **+20% to all production**. Stop building them and morale slides back to neutral. Good events and age advances are one-time nudges; morale-restoring buildings are the steady source you control.
 
 ---
 
 ## Where Morale Is Shown
 
-- **Workers panel** (`workers`) — a coloured morale bar.
-- **Villager sidebar** — the same coloured bar, always visible at a glance.
-- **Status bar** — the headline `Morale: NN%`, coloured by band, with a `+NN%` / `-NN%` tag when it is actively boosting or penalising production.
-- **Stats panel** (`stats`) — when morale is off-neutral it appears under **Active Multipliers** in the **All Production** breakdown as a `Morale ×N.NN` factor, shown alongside your research, wonder, prestige, and active-event bonuses on that line. Entries are colour-coded: a **green** headline (and fragment) is a net bonus, a **red** one a penalty, and a **white** headline marks a line that only shows because opposing sources cancel out. Each contributing source is listed and coloured individually, so a penalty (e.g. a famine event) is never hidden by a bonus on the same line. The panel lists **rate multipliers only** — capacity and storage bonuses (population cap, resource caps) are shown elsewhere, since they aren't rate multipliers.
-- **Load Game browser** — each save's detail pane shows its morale, so you can size up a civilization before loading it.
+- **Workers panel** (`workers`): a colored morale bar.
+- **Status bar**: `Morale: NN%`, colored by effect, with a `+NN%` / `-NN%` tag when it is boosting or penalizing production.
+- **Stats panel** (`stats`): when morale is off neutral it appears under **Active Multipliers** in the **All Production** line as a `Morale ×N.NN` factor, next to your research, wonder, prestige and active-event bonuses. A **green** headline is a net bonus, a **red** one a net penalty, and a **white** headline marks a line that shows only because opposing sources cancel out. Each source is listed and colored on its own, so a penalty (a famine event, say) is never hidden by a bonus on the same line. The panel lists **rate multipliers only**; housing and storage bonuses are shown elsewhere.
+- **Load Game browser**: each save's detail pane shows its morale, so you can size up a civilization before loading it.
 
-The bar is **green when morale is above 50%** (boosting production), **neutral exactly at 50%**, and **red when it is below 50%** (penalising production). On the colorblind-safe and high-contrast [themes](commands.md#themes) the boost/penalty colors become blue/orange instead of green/red.
+The bar is **green when morale is above 50%** (boosting production), **neutral at exactly 50%**, and **red below 50%** (penalizing production). On the colorblind-safe and high-contrast [themes](commands.md#themes) the boost and penalty colors are blue and orange instead.
 
 ---
 
-## Managing Morale — Strategy
+## Managing Morale: Strategy
 
-1. **50% is the safe baseline.** At exactly 50% there is no bonus and no penalty, so early on you can leave morale alone and spend your effort elsewhere. Just remember the curve is live the moment morale drifts off 50% — small at first, larger the further it goes.
-2. **Keep food positive.** Starvation is the most common cause of a morale slide into the penalty band. Fix the food deficit and the drift heals the rest.
-3. **Don't over-militarise.** Keep military workers comfortably under 30% of population — past that, morale drains faster the more lopsided your army gets. (See [Military](military.md).)
-4. **Don't park idle workers.** More than half your population sitting idle drains morale on top of wasting their food. Assign them or `dismiss` them.
-5. **Build worship and culture buildings to go positive.** When you want the +20% production swing, build morale-restoring buildings faster than morale drifts back to neutral. Sustaining the high band is an active choice, not a one-time purchase.
-6. **Build wonders to raise the ceiling.** Each wonder adds +5% to the cap, so the more wonders you have, the higher the bonus morale can reach. (See [Wonders](wonders.md).)
+1. **50% is the safe baseline.** At exactly 50% there is no bonus and no penalty, so early on you can leave morale alone and spend your effort elsewhere. The curve applies as soon as morale drifts off 50%, small at first and larger the further it goes.
+2. **Keep food positive.** Starvation is the most common reason morale slides into a penalty. Fix the food deficit and the drift heals the rest.
+3. **Keep the army in proportion.** Hold military workers comfortably under 30% of population; past that, morale drains faster the more lopsided your army gets. (See [Military](military.md).)
+4. **Don't leave workers idle.** More than half your population sitting idle drains morale on top of wasting their food. Assign them or `dismiss` them.
+5. **Build worship and culture buildings to go positive.** For the +20% production bonus, build morale-restoring buildings faster than morale drifts back to neutral. Holding it there is ongoing work, not a one-time purchase.
+6. **Build wonders to raise the ceiling.** Each wonder adds +5% to the cap, so the more wonders you have, the higher morale and its bonus can go. (See [Wonders](wonders.md).)
 
 ---
 
 ## See Also
 
-- [Workers & Domains](workers-and-domains.md#morale) — the production formula and how morale fits the worker system
-- [Military](military.md) — the military-ratio morale drain in detail
-- [Buildings](buildings.md) — which worship and culture buildings restore morale
-- [Wonders](wonders.md) — how wonders raise the morale ceiling
+- [Workers & Domains](workers-and-domains.md#morale): the production formula and how morale fits the worker system
+- [Military](military.md): the military-ratio morale drain in detail
+- [Buildings](buildings.md): which worship and culture buildings restore morale
+- [Wonders](wonders.md): how wonders raise the morale ceiling

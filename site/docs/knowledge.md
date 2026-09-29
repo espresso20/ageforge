@@ -1,6 +1,6 @@
 # Knowledge
 
-Knowledge is the fuel for all research. It accumulates over time and is consumed when you start researching a technology. Your knowledge generation rate and storage cap are the primary drivers of how quickly you can advance through the tech tree.
+Knowledge pays for all research. It accumulates over time and is spent when you start researching a technology. Your knowledge rate and storage decide how quickly you can move through the tech tree.
 
 ---
 
@@ -31,12 +31,12 @@ Story Circle → Elders' Hall → Scriptorium → Agora → Library → Monaster
 | Think Tank | Modern | 205 | 8 |
 | Innovation Hub | Information | 410 | 8 |
 | AI Research Lab | Digital | 819 | 10 |
-| Neuro Research Center | Cyberpunk | 1,640 | 10 |
-| Theoretical Institute | Fusion | 3,280 | 12 |
-| Deep Space Observatory | Space | 6,550 | 12 |
-| Xenology Institute | Interstellar | 13,100 | 15 |
-| Cosmic Research Station | Galactic | 26,200 | 15 |
-| Reality Academy | Quantum | 52,400 | 20 |
+| Neuro Research Center | Cyberpunk | 1.64K | 10 |
+| Theoretical Institute | Fusion | 3.28K | 12 |
+| Deep Space Observatory | Space | 6.55K | 12 |
+| Xenology Institute | Interstellar | 13.1K | 15 |
+| Cosmic Research Station | Galactic | 26.2K | 15 |
+| Reality Academy | Quantum | 52.4K | 20 |
 
 The first five tiers have hand-set rates. From the **Medieval to the Colonial Age**, buildings also cost knowledge, so knowledge counts as a construction resource and its producers follow the [Payback Rule](buildings.md#how-production-rates-are-set): fully staffed, each earns back its first copy's price within the age's payback time. That is why the Monastery Library, University and Natural Philosophy Hall jump so far ahead. From the Industrial Age on, nothing but research costs knowledge, and the lineage goes back to fixed rates that double each age. Your older halls and universities keep producing through all of this, so don't sell them. While knowledge is a construction resource (Medieval to Colonial), the market also trades it at parity with the age's other construction resources; see [Resources](resources.md#buying-at-the-market).
 
@@ -57,23 +57,23 @@ Workers are recruited generically (no domain argument). They become Knowledge wo
 knowledge/tick = base_rate × building_count × (0.20 + 0.80 × assigned / total_capacity)
 ```
 
-Buildings with zero workers assigned still contribute 20% of their base rate. Full assignment maximizes output.
+Buildings with no workers assigned still produce 20% of their base rate. Full assignment gives full output.
 
 ---
 
-## Knowledge Storage Cap
+## Knowledge Storage
 
-Knowledge is capped by your storage buildings. Build **Storage lineage** buildings (Stash → Storage Pit → Warehouse → Classical Vault → ...) to increase your cap. Without enough storage, knowledge production is wasted when the cap is reached. Always expand storage before starting a long research project.
+Knowledge is limited by your storage. Build **Storage lineage** buildings (Stash → Storage Pit → Warehouse → Classical Vault → ...) to raise it. Once knowledge hits its storage limit, further production is wasted. You can only pay for a tech with knowledge you hold, so your storage must be at least the tech's cost. Raise storage before you save up for an expensive one.
 
 ---
 
 ## The Research Queue
 
 ```
-research <tech_key>
+research <tech>
 ```
 
-Knowledge is deducted **upfront** (immediately when you issue the `research` command) — not per tick. Only one technology can be researched at a time. Research is age-gated — you must be in the correct age to unlock certain techs.
+The full knowledge cost is paid **up front**, the moment you issue the `research` command. Nothing is taken per tick while the research runs, so your stored knowledge can rise or fall afterwards without affecting it. Only one technology can be researched at a time, and techs are age-gated: you must be in the right age to research them.
 
 See [Technologies](technologies.md) for the full tech tree.
 
@@ -81,48 +81,34 @@ See [Technologies](technologies.md) for the full tech tree.
 
 ## Epoch Event Interactions
 
-Two epoch events directly affect knowledge:
+Three epoch transition events affect knowledge directly:
 
 | Event | Type | Effect |
 |-------|------|--------|
-| Grand Discovery | Good — Major | 3 technologies completed instantly (free) |
-| Dark Age | Challenging | Cancels current research, steals knowledge, applies −research debuff for 144 ticks |
+| The Grand Discovery | Good (Major) | 3 technologies completed at once, free |
+| Political Instability | Challenging | Knowledge -2/tick for 60 ticks (plus 60% of your faith lost) |
+| The Dark Age | Challenging | Cancels your current research (the knowledge paid for it is lost), removes 80% of your stored knowledge, then knowledge -3/tick for 144 ticks |
 
-The Dark Age is the most punishing event for knowledge-heavy civilizations. Maintaining high faith reduces the probability of all bad epoch events, including Dark Age. See [Faith](faith.md) and [Epochs](epochs.md).
+The Dark Age is the most punishing event for knowledge-heavy civilizations. High faith lowers the chance of every bad epoch event, the Dark Age included. See [Faith](faith.md) and [Epochs](epochs.md).
 
-There is also a prestige-run path to free research: early in a new run (Primitive or Stone age), the **Ancient Civilization Memory** cache can offer a single tech researched free of prerequisites and knowledge cost — at half speed. See [Prestige](prestige.md#ancient-civilization-memory).
+There is also a prestige-run path to free research: early in a new run (Primitive or Stone Age), the **Ancient Civilization Memory** cache can offer a single tech with no prerequisites and no knowledge cost, researched at half speed. See [Prestige](prestige.md#ancient-civilization-memory).
 
 ---
 
 ## Ancient Knowledge (Epoch Succumb Reward)
 
-Succumbing to a catastrophe grants **Ancient Knowledge** — a permanent +25% research speed bonus per distinct epoch succumbed (up to +150% from Iron to Cosmic) that persists through prestige resets. Players who plan to Succumb early gain a significant compounding research advantage across all future runs.
+Succumbing to a catastrophe grants **Ancient Knowledge**: a permanent +25% research speed per distinct epoch succumbed (up to +150% from Iron to Cosmic) that persists through prestige. Players who plan to Succumb early build a research advantage that carries into every later run.
 
 ---
 
-## Knowledge vs Culture
+## Knowledge and Culture
 
-Both are "soft power" resources that interact with each other:
-
-- **Knowledge** fuels technologies → permanent multipliers
-- **Culture** unlocks cultural thresholds → knowledge rate bonuses
-
-They synergize: high culture increases your knowledge production rate, which accelerates research. Investing in culture pays back in research speed.
-
-**Culture knowledge-rate bonuses:**
-
-| Culture Threshold | Knowledge Rate Bonus |
-|-------------------|---------------------|
-| 500 | +5% |
-| 2,500 | +10% |
-| 10,000 | +15% |
+Culture does not raise your knowledge rate. The link is indirect: culture fill above 40% at an epoch transition makes Major good events eligible, and one of them, The Grand Discovery, completes 3 techs for free. See [Epochs](epochs.md).
 
 ---
 
 ## Tips
 
-- Get your first Story Circle + 2 Knowledge workers before your first age advance — early research unlocks compound fast. The Stone Age itself asks for 150 knowledge and 5 Story Circles, the Bronze Age for 1.5K knowledge and 5 Elders' Halls
-- Keep knowledge capped before starting research; don't let it drain below the tech cost mid-research
-- Library and University unlock tiers have large capacity bonuses — prioritize them when they become available
-- The culture thresholds at 500, 2,500, and 10,000 each give +5/+10/+15% knowledge rate — culture investment directly pays off in research speed
-- If a Dark Age event fires, cancel non-essential production assignments temporarily to recover knowledge quickly
+- Get your first Story Circle and 2 Knowledge workers before your first age advance, because early research unlocks pay off quickly. The Stone Age asks for 150 knowledge and 5 Story Circles, the Bronze Age for 1.5K knowledge and 5 Elders' Halls.
+- Research is paid up front, so start a tech as soon as you can afford it. Knowledge that sits at its storage limit is wasted.
+- After a Dark Age, move spare workers onto knowledge buildings for a while to rebuild your stock, then restart the research it canceled.

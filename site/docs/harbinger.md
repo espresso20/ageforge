@@ -17,7 +17,7 @@ The speaker changes with the age. Each time you advance within the epoch, that a
 | Stone Era | the Wild Man, the Hermit, the Soothsayer | Iron Era |
 | Iron Era | the Desert Prophet, the Oracle, the Town Crier | Steel Era |
 | Steel Era | the Court Astrologer, the Pamphleteer, the Newsboy | Electric Era |
-| Electric Era | the Doomsayer, the Telegraph, the Civil Defence Broadcast | Digital Era |
+| Electric Era | the Doomsayer, the Telegraph, the Civil Defense Broadcast | Digital Era |
 | Digital Era | the Evening News, the Chain Email, the Viral Video | Neon Era |
 | Neon Era | the Ghost in the Net, the Reactor Warden, the Deep Space Monitor | Cosmic Era |
 | Cosmic Era | the Distress Beacon, the Elder Relay, your future self, your unmade self | the Last Passage (your next prestige) |
@@ -33,7 +33,7 @@ Rules:
 When a thread starts, or a new figure takes it up, you get:
 
 - a log entry naming the figure and the epoch it warns about, followed by its arrival and warning lines,
-- a toast ("... has come" for the first figure, "... takes up the warning" for the rest),
+- a toast announcing the figure (the first one arriving, or a later one taking up the warning),
 - a **⚑ HARBINGER** badge in the status bar for as long as the thread lasts.
 
 Type `harbinger` (or `harb`) to open the Harbinger panel. It shows the current figure and, after a handoff, who it took up the warning from.
@@ -48,7 +48,7 @@ Every age has a figure written for it, and all 22 appear in play: three for each
 
 | Age | Harbinger | Appears? | Forecast | False-prophet chance if it starts the thread | Who they are |
 |-----|-----------|----------|----------|----------------------------------------------|--------------|
-| Primitive | the Wild Man | Yes | Vague | 8/64 (12.5%) | A man who lives past the last fire walks in from the wilderness, grey with ash, to say what he has seen. |
+| Primitive | the Wild Man | Yes | Vague | 8/64 (12.5%) | A man who lives past the last fire walks in from the wilderness, gray with ash, to say what he has seen. |
 | Stone | the Hermit | Yes | Vague | 7/64 (10.9%) | Comes down from the high caves once in a generation, and never with good news. |
 | Bronze | the Soothsayer | Yes | Vague | 6/64 (9.4%) | Reads the future in knucklebones, sparrows and goat livers, and wants paying before and after. |
 | Iron | the Desert Prophet | Yes | Vague | 5/64 (7.8%) | Walks in from the dry country with sand in his beard and one message for the city. |
@@ -59,7 +59,7 @@ Every age has a figure written for it, and all 22 appear in play: three for each
 | Industrial | the Newsboy | Yes | Numeric | 0 | Shouts the late edition from the corner, and the late edition has the odds printed on it. |
 | Victorian | the Doomsayer | Yes | Numeric | 0 | Stands on a soap crate by the park railings with a sandwich board and a table of figures. |
 | Electric | the Telegraph | Yes | Numeric | 0 | Chatters all night at the post office with dispatches from stations that have stopped answering. |
-| Atomic | the Civil Defence Broadcast | Yes | Numeric | 0 | Three long notes on every wireless, then a calm voice reading the odds from a card. |
+| Atomic | the Civil Defense Broadcast | Yes | Numeric | 0 | Three long notes on every wireless, then a calm voice reading the odds from a card. |
 | Modern | the Evening News | Yes | Numeric | 0 | Leads with it at six, with a graphic, an expert and an anchor trying not to look worried. |
 | Information | the Chain Email | Yes | Numeric | 0 | Forward this to ten people or it happens to you. It has a spreadsheet attached. |
 | Digital | the Viral Video | Yes | Numeric | 0 | Shaky, portrait, a million views by lunch, and the odds on a whiteboard at the end. |
@@ -110,7 +110,7 @@ The figure's words tell you how bad the risk is. How much detail you get depends
 
 **Before the Industrial Age**, the panel shows only the figure's words and a vague severity: **low**, **medium** or **high risk**.
 
-**From the Industrial Age on**, the panel also prints the odds, for example `Odds published: 9%`. The number already includes any Appease you have bought. In the Steel Era this means the thread starts vague and becomes numeric when the Newsboy takes it up.
+**From the Industrial Age on**, the panel also prints the odds as a percentage. The number already includes any Appease you have bought. In the Steel Era this means the thread starts vague and becomes numeric when the Newsboy takes it up.
 
 The severity follows the catastrophe chance for the transition:
 
@@ -133,7 +133,7 @@ A thread may be a lie. It rolls once, when its first figure arrives, using that 
 | Steel Era (starts with the Court Astrologer) | 2/64, about 3.1% |
 | Electric, Digital, Neon and Cosmic Eras | none |
 
-A false thread claims **medium** or **high** risk (picked at random when it starts), whatever the real odds are. Every figure in that epoch repeats the same false claim, using the same warning lines a real harbinger would. The `catastrophe` command and the Epoch tab repeat the warning too, so you can't tell a false thread apart from the screen.
+A false thread claims **medium** or **high** risk (picked at random when it starts), whatever the real odds are. Every figure in that epoch repeats the same false claim, using the same warning lines a real harbinger would. The `catastrophe` command and the Epoch panel repeat the warning too, so nothing the game shows tells a false thread apart from a real one.
 
 The claim is kept as a fixed multiple of the real chance. Appease, a change in faith, or an Invite move it exactly as they would move a real warning. It never drops below low risk. A false Steel Era thread that reaches the Newsboy prints the claimed figure, not the real one.
 
@@ -191,15 +191,13 @@ Level 1 prices. Level 2 costs double.
 
 | Thread | Appease (level 1) | Brace (level 1) |
 |--------|-------------------|-----------------|
-| Stone Era | 59 faith | 9,600 food, 4,800 wood, 2,400 knowledge |
-| Iron Era | 5,400 faith | 26,400 knowledge, 26,400 stone, 6,360 iron, 21,600 gold |
+| Stone Era | 59 faith | 9.6K food, 4.8K wood, 2.4K knowledge |
+| Iron Era | 5.4K faith | 26.4K knowledge, 26.4K stone, 6.36K iron, 21.6K gold |
 | Steel Era | 74K faith, 770K culture | 3.6M knowledge, 1.8M gold, 288K steel |
 | Electric Era | 1.2M faith, 16M culture | 56.4M steel, 924K oil, 3.96M electricity |
 | Digital Era | 12M faith, 180M culture | 156M gold, 117.6B electricity, 19.2B data |
 | Neon Era | 130M faith, 2B culture | 288B electricity, 46.8B data, 3B crypto |
 | Cosmic Era | 1.2B faith, 19B culture | 1.56T dark matter, 75.6B titanium |
-
-Appease used to cost 15% of the passage storage (12,000 faith in the Stone Era, 147B in the Digital Era), which faith could almost never reach once ages became short.
 
 The Cosmic Era's passage is prestige, which you may take in any of its ages. Its Appease counts the Interstellar, Galactic and Quantum Ages, so if you prestige as soon as you arrive, Appease is out of reach; stay a day or two and it isn't. Its Brace is based on the most the Cosmic Era's own advances ask of each resource you have held since the Interstellar Age: 13T dark matter (for the Quantum Age) and 630B titanium (for the Galactic Age). Antimatter and quantum flux arrive later, so they are left out.
 
@@ -217,9 +215,9 @@ Yes, both, if you invest a little in faith. Faith can't be bought at the market 
 | Neon Era | 3.0 days | after 7 h (9%) | after 1 day (35%) |
 | Cosmic Era (to a Quantum Age prestige) | 3.3 days | after 11 h (14%) | after 1.8 days (57%) |
 
-From the Digital Era on, faith saved in earlier eras carries over (faith is never reduced at an advance), so Appease comes earlier in the thread. Brace is priced in construction resources and became affordable within 0 to 6 hours of each thread starting.
+From the Digital Era on, faith saved in earlier eras carries over (faith is never reduced at an advance), so Appease comes earlier in the thread. Brace is priced in construction resources and becomes affordable within 0 to 6 hours of each thread starting.
 
-Faith you spend on Appease is faith the gate can't use: keep what the next age asks for, and what the Sistine Chapel still needs, before you appease.
+Faith you spend on Appease is faith the next age requirement can't count: keep what the next age asks for, and what the Sistine Chapel still needs, before you appease.
 
 ### Invite: choose the catastrophe
 
@@ -251,13 +249,13 @@ When you cross into the next epoch the thread is settled, in the voice of the la
 
 If the catastrophe came and you had braced, the log also says what Endure will cost you at that Brace level. Then the thread ends and the catastrophe choice works as usual (see [Catastrophe System](catastrophe.md)). If the new epoch can also bring a catastrophe, its own thread starts with its first figure.
 
-The Epoch tab (`epoch`) shows the current thread's status and, for past threads this run, the whole chain of figures and the verdict.
+The Epoch panel (`epoch`) shows the current thread's status and, for past threads this run, the whole chain of figures and the verdict.
 
 ### The Last Passage
 
-The Cosmic Era's thread is settled when you confirm prestige, not at an age advance. The panel names its passage: "Warning of the Last Passage: the end of this civilization, when you next prestige." When the thread starts, the log reads `⚑ <Figure> has come, warning of the Last Passage.`
+The Cosmic Era's thread is settled when you confirm prestige, not at an age advance. The panel and the log both say the figure warns of the Last Passage: the end of this civilization at your next prestige.
 
-Confirming prestige rolls once, with the usual odds for the faith band (18%, 15% or 12%), times 0.6 per level of Appease, or certain if you invited it. If nothing comes, the verdict is Spared ("The Last Passage opens, and nothing comes through it. ...") and prestige completes. If it comes, prestige waits for you to Endure or Succumb. Endure keeps part of the run's points and Succumb grants the Cosmic Legacy. See [The Last Passage](prestige.md#the-last-passage).
+Confirming prestige rolls once, with the usual odds for the faith band (18%, 15% or 12%), times 0.6 per level of Appease, or certain if you invited it. If nothing comes, the verdict is Spared and prestige completes. If it comes, prestige waits for you to Endure or Succumb. Endure keeps part of the run's points and Succumb grants the Cosmic Legacy. See [The Last Passage](prestige.md#the-last-passage).
 
 ---
 

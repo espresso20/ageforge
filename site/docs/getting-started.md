@@ -8,10 +8,10 @@ AgeForge is a single static binary with no runtime dependencies.
 
 ```bash
 # Apple Silicon (M1/M2/M3)
-curl -L https://github.com/espresso20/ageforge/releases/latest/download/ageforge-darwin-arm64 -o ageforge
+curl -L https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-arm64 -o ageforge
 
 # Intel Mac
-curl -L https://github.com/espresso20/ageforge/releases/latest/download/ageforge-darwin-amd64 -o ageforge
+curl -L https://github.com/espresso20/ageforge/releases/latest/download/ageforge-macos-amd64 -o ageforge
 
 chmod +x ageforge
 ./ageforge
@@ -40,11 +40,11 @@ chmod +x ageforge
 
 Download `ageforge-windows-amd64.exe` from the [GitHub Releases](https://github.com/espresso20/ageforge/releases/latest) page and run it in **Windows Terminal**.
 
-> ⚠ Windows Terminal is strongly recommended. The classic `cmd.exe` does not support the ANSI escape codes AgeForge uses for colours and cursor positioning.
+> ⚠ Windows Terminal is strongly recommended. The classic `cmd.exe` does not support the ANSI escape codes AgeForge uses for colors and cursor positioning.
 
 ---
 
-## Build from Source
+## Build from source
 
 Requires **Go 1.24+**.
 
@@ -59,21 +59,16 @@ go build -o ageforge .
 
 ## Terminal requirements
 
-AgeForge draws a full-screen TUI. For the best experience:
+AgeForge draws a full-screen text interface. It works best with:
 
-- Terminal width of **at least 130 columns** (the game caps its content at 130)
-- ANSI 24-bit colour support (all modern terminals)
-- A **monospace font** — JetBrains Mono, Cascadia Code, or Fira Code are great choices
+- a terminal **at least 130 columns** wide (the game caps its content at 130)
+- 24-bit (truecolor) ANSI color, which modern terminals support
+- a **monospace font**, such as JetBrains Mono, Cascadia Code or Fira Code
 
 ---
 
 ## Save files
 
-Saves are stored at:
+The game keeps its data (accounts, saves and backups) in a `data/` folder next to the `ageforge` binary, on every platform. Keep the binary and its `data/` folder together when you move them. See [Saving & Loading](saving-and-loading.md) for the layout.
 
-| Platform | Path |
-|---|---|
-| macOS / Linux | `~/.local/share/ageforge/` |
-| Windows | `%APPDATA%\ageforge\` |
-
-Press `Esc` at any time to save, or the game auto-saves every 60 seconds.
+The game autosaves every 60 seconds. `Esc` closes the open panel; with no panel open, it saves, stops the game and returns to the main menu.

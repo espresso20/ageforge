@@ -1,6 +1,6 @@
-# Multiplier / Bonus System — Investigation & Proposed Redesign
+# Multiplier / Bonus System: Investigation & Proposed Redesign
 
-**Status:** **IMPLEMENTED.** The unified Modifier Resolver shipped — phases 1–5 of the
+**Status:** **IMPLEMENTED.** The unified Modifier Resolver shipped. Phases 1-5 of the
 migration below have landed:
 
 1. resolver core (`game/modifiers.go`) with unit tests for the `Total` combination math;
@@ -9,27 +9,27 @@ migration below have landed:
 4. the UI renders from `Breakdown` (the hand-maintained re-aggregation and dead `epoch` field deleted);
 5. the latent bugs are fixed.
 
-Both HIGH bugs are resolved — active (timed) event bonuses are now visible in the Active
+Both HIGH bugs are resolved: active (timed) event bonuses are now visible in the Active
 Multipliers panel (#1), and `build_cost` is finally consumed by `GetCost()` (#2). The related
-negative-debuff bug — the `>0` gate that silently swallowed the catastrophe Reconstruction
-Effort −10% production debuff — is also fixed: negative production modifiers now apply (floored
+negative-debuff bug (the `>0` gate that silently swallowed the catastrophe Reconstruction
+Effort −10% production debuff) is also fixed: negative production modifiers now apply (floored
 so production can't drop below 10% of base). Phase 6 (wiki/docs) is this update.
 
 The design content below is preserved for reference; it now describes the system as built rather
 than as proposed.
 
 **Author:** espresso + Claude
-**Trello:** Refactor — "INVESTIGATION: unified multiplier registry/resolver" (`hJPR8YJX`)
+**Trello:** Refactor, "INVESTIGATION: unified multiplier registry/resolver" (`hJPR8YJX`)
 
 ---
 
 ## 1. Motivation
 
-Every system in AgeForge produces or consumes multipliers — research, prestige,
+Every system in AgeForge produces or consumes multipliers: research, prestige,
 epoch events, wonders, milestones, catastrophes, morale, building effects. The
 machinery that tracks them is alpha-era layover: it grew one source at a time,
 and there is **no single contract**. The symptom surfaced while adding morale to
-the Active Multipliers panel — morale had to be wired in as *yet another* special
+the Active Multipliers panel: morale had to be wired in as *yet another* special
 case alongside `research.GetBonus()`, `prestige.GetBonuses()`, the
 `permanentBonuses` map, `SpeedMultiplier`, and a per-wonder loop.
 
@@ -39,24 +39,24 @@ cross-cutting edit. This doc maps the current reality and proposes a unified
 in-process **Modifier Resolver**.
 
 > Note on framing: this is a single Go process, not "microservices." The right
-> abstraction is an in-process registry/resolver — a concrete API that sources
+> abstraction is an in-process registry/resolver, a concrete API that sources
 > *contribute* to and consumers *query*. No service boundaries.
 
 ---
 
-## 2. Current state — three aggregation paths
+## 2. Current state: three aggregation paths
 
 The same totals are derived **three independent times**, and the three have drifted:
 
-1. **`recalculateRates()`** (`game/engine.go`) — the authoritative application.
+1. **`recalculateRates()`** (`game/engine.go`): the authoritative application.
    Combines building production × morale, then `production_all`, then per-resource
    `_rate`, then `gather_rate`, plus research/event flat production, diplomacy,
    storage. This is what actually hits the economy.
-2. **`GetState()` → `permanentBonuses` copy** — what is persisted and handed to
-   the UI. Critically, this is **only the permanent slice** — it omits active
+2. **`GetState()` → `permanentBonuses` copy**: what is persisted and handed to
+   the UI. Critically, this is **only the permanent slice**. It omits active
    (timed) event bonuses and the dynamically-computed wonder/prestige/morale
    contributions.
-3. **`overlay_stats.go` Active Multipliers (~L184–393)** — the UI **re-derives**
+3. **`overlay_stats.go` Active Multipliers (~L184-393)**: the UI **re-derives**
    attribution a third time, iterating milestone/research/prestige/legacy/wonder
    config defs to rebuild a `bonusAttrib` map, then displays totals from
    `state.PermanentBonuses`.
@@ -87,7 +87,7 @@ In use: `production_all`, `tick_speed`, `research_speed`, `population`,
 (storage), `<resource>` (storage), plus the non-bonus `speedMultiplier` divisor.
 
 Drift / mismatches:
-- `production_all` (multiplier) vs `production` (flat output) — same prefix,
+- `production_all` (multiplier) vs `production` (flat output): same prefix,
   different meaning, easy to confuse; the UI and the engine loop on different
   ones.
 - Legacy bonuses use `<resource>_rate` but render in a *separate* "Legacy"
@@ -100,14 +100,14 @@ Drift / mismatches:
 
 ## 3. Bug catalog (the "how broken is it" payload)
 
-> **All resolved.** Every entry below was fixed by the resolver migration (phases 1–5).
+> **All resolved.** Every entry below was fixed by the resolver migration (phases 1-5).
 > The table is retained as a record of what was wrong and how the resolver addressed it.
 
 | # | Severity | Status | Bug | Evidence |
 |---|----------|--------|-----|----------|
 | 1 | **HIGH** | ✅ Fixed | Active (timed) event bonuses **applied but were invisible** in Active Multipliers. They hit production in `recalculateRates` but the UI read only `state.PermanentBonuses`. Player saw "+20%" in the log; the panel showed 0%. Now events emit `Modifier`s and the panel renders from `Breakdown`, so they appear. | engine.go `recalculateRates` (production_all incl. active events) vs overlay_stats.go reading `state.PermanentBonuses[target]` |
-| 2 | **HIGH** | ✅ Fixed | `build_cost` bonus target was **defined but never consumed** — `GetCost()` applied no bonuses, so the 5 milestone rewards and 1 tech granting build-cost reductions did nothing. Now `GetCost()` multiplies by `(1 + Σ build_cost)`, floored at 10% of base; the reductions (currently ~−24% stacked) apply to both the displayed and charged cost. | config prestige/milestone/tech `build_cost` effects; `buildings.go GetCost()` had no bonus lookup |
-| 3 | MED | ✅ Fixed | `bonusAttrib.epoch` field was declared and checked in the UI but **never populated** — epoch permanent bonuses were misattributed. The hand-maintained field is deleted; epoch modifiers carry `Source:"epoch:..."` and `Breakdown` attributes them. | overlay_stats.go declared/checked `a.epoch`, nothing incremented it |
+| 2 | **HIGH** | ✅ Fixed | `build_cost` bonus target was **defined but never consumed**: `GetCost()` applied no bonuses, so the 5 milestone rewards and 1 tech granting build-cost reductions did nothing. Now `GetCost()` multiplies by `(1 + Σ build_cost)`, floored at 10% of base; the reductions (currently ~−24% stacked) apply to both the displayed and charged cost. | config prestige/milestone/tech `build_cost` effects; `buildings.go GetCost()` had no bonus lookup |
+| 3 | MED | ✅ Fixed | `bonusAttrib.epoch` field was declared and checked in the UI but **never populated**, so epoch permanent bonuses were misattributed. The hand-maintained field is deleted; epoch modifiers carry `Source:"epoch:..."` and `Breakdown` attributes them. | overlay_stats.go declared/checked `a.epoch`, nothing incremented it |
 | 4 | MED | ✅ Fixed | Morale multiplier was applied **outside** all bonus tracking, with a fragile order-of-operations dependency. It is now an `OpMul` modifier on `production.all`; combination order is defined once in `Total`. | engine.go morale applied first, production_all second |
 | 5 | MED | ✅ Fixed | Active-event `tick_speed` boosts (milestone chains) applied but had **no UI attribution** path. The same `Breakdown` mechanism now covers `tick_speed`. | tick speed recalculated from active events; no UI breakdown |
 | 6 | LOW | ✅ Fixed | Split-brain epoch application: some epoch events wrote `permanentBonuses` directly, others used `InjectEvent` timed effects. Both now surface as modifiers through one display path. | applyGoodEpochEvent: direct write vs InjectEvent |
@@ -115,13 +115,13 @@ Drift / mismatches:
 A seventh, related defect surfaced and was fixed in the same effort: a `>0` gate on the
 production-bonus pool silently swallowed **negative** `production_all` modifiers, so the
 catastrophe "Reconstruction Effort" −10% debuff only had an effect if the player happened to
-hold ≥10% of positive production bonuses to offset. The gate is gone — negative production
-modifiers now apply, floored so production can't drop below 10% of base — so enduring a
-catastrophe genuinely costs −10% production for its 216-tick window, as designed.
+hold ≥10% of positive production bonuses to offset. The gate is gone. Negative production
+modifiers now apply, floored so production can't drop below 10% of base, so enduring a
+catastrophe costs −10% production for its 216-tick window, as designed.
 
 ---
 
-## 4. Proposed design — a Modifier Resolver
+## 4. Proposed design: a Modifier Resolver
 
 A single registry that all sources contribute to and all consumers query.
 
@@ -178,7 +178,7 @@ func (ge *GameEngine) buildResolver() *Resolver {
     r.AddAll(ge.Prestige.Modifiers())
     r.AddAll(ge.wonderModifiers())
     r.AddAll(ge.permanentModifiers())   // milestones + legacy + epoch-permanent
-    r.AddAll(ge.Events.ActiveModifiers()) // timed events — now first-class
+    r.AddAll(ge.Events.ActiveModifiers()) // timed events, now first-class
     r.Add(Modifier{Source:"morale", Target:"production.all", Op:OpMul,
                    Value: ge.moraleMultiplier()})
     return r
@@ -196,8 +196,8 @@ expedition_reward       gather_rate             cost.all / cost.<resource>
 storage.all / storage.<resource>
 ```
 
-`speedMultiplier` (wonder gate) stays its own concept — it is a tick-interval
-divisor, not a percentage bonus — but is documented as such so nobody expects it
+`speedMultiplier` (wonder gate) stays its own concept (it is a tick-interval
+divisor, not a percentage bonus) but is documented as such so nobody expects it
 in the additive pool.
 
 ---
@@ -211,7 +211,7 @@ in the additive pool.
 - **#5 tick_speed attribution** → same `Breakdown` mechanism covers `tick_speed`.
 - **#6 split-brain epoch** → permanent vs timed epoch effects both surface as modifiers (permanent ones persist, timed ones expire by not being re-emitted); one display path.
 
-The UI's entire re-derivation (`overlay_stats.go` ~L184–393) collapses to
+The UI's entire re-derivation (`overlay_stats.go` ~L184-393) collapses to
 "render `resolver.Breakdown(target)` for each active target." ~200 lines of
 hand-aggregation deleted.
 
@@ -221,7 +221,7 @@ hand-aggregation deleted.
 
 1. **Introduce types + resolver** (`game/modifiers.go`) with unit tests for the
    `Total` combination math (Add summing, Mul product, mixed). No behavior change.
-2. **Sources emit `Modifiers()`** — add the method to research/prestige/wonders/
+2. **Sources emit `Modifiers()`**: add the method to research/prestige/wonders/
    events/permanent, each returning what it already computes, mapped to canonical
    targets. Golden test: resolver `Total` == the current scattered totals for a
    battery of game states (proves no economic drift before switching).
@@ -234,7 +234,7 @@ hand-aggregation deleted.
    `GetCost()` (#2), confirm active events show (#1).
 6. **Wiki/docs**: update the (now-accurate) Active Multipliers description.
 
-Phases 1–2 are pure addition (zero risk). The economic switch (3) is gated by the
+Phases 1-2 are pure addition (zero risk). The economic switch (3) is gated by the
 golden equality test, so "did we change the numbers" is answered mechanically.
 
 ---
@@ -242,18 +242,18 @@ golden equality test, so "did we change the numbers" is answered mechanically.
 ## 7. Open questions / risks
 
 - **Mul targets beyond morale?** Today only morale (and arguably speedMultiplier)
-  is genuinely independent-multiplicative. Confirm nothing else should be `OpMul`
+  is independent-multiplicative. Confirm nothing else should be `OpMul`
   before standardizing everything else as `OpAdd`.
 - **Per-resource vs all interaction.** `production.all` and `rate.food` stack
   multiplicatively today (`× (1+all) × (1+food_rate)`). The resolver must preserve
-  that — they are *different targets*, each resolved independently, applied in
+  that: they are *different targets*, each resolved independently, applied in
   sequence by the consumer. Document the consumer-side application order once.
 - **Save format.** `permanentBonuses` stays the persisted store for permanent
   modifiers (no save migration needed); the resolver is a runtime view rebuilt
   from it + live sources.
 - **Cost of per-tick rebuild.** Measure; add dirty-caching only if it shows up.
 - **Scope creep.** This is a *tracking/aggregation* refactor, not a balance
-  change — the golden test must prove the numbers are identical. Any intended
+  change, and the golden test must prove the numbers are identical. Any intended
   balance change rides separately.
 
 ---
@@ -261,7 +261,7 @@ golden equality test, so "did we change the numbers" is answered mechanically.
 ## 8. Recommendation
 
 Build it, phased as above. The two HIGH bugs (#1, #2) justify the work on their
-own; the architecture win — one contract, one source of truth, new sources plug
-in without touching consumers — is what stops the next morale-shaped paper cut.
-Estimated as a multi-PR effort (one per phase); phases 1–2 are low-risk
+own. The architecture win (one contract, one source of truth, new sources plug
+in without touching consumers) is what stops the next morale-shaped paper cut.
+Estimated as a multi-PR effort (one per phase); phases 1-2 are low-risk
 groundwork that can land independently.

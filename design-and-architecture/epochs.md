@@ -1,22 +1,22 @@
-# AgeForge — Epoch System
+# AgeForge: Epoch System
 
 ## Overview
 
-**Epochs** are the meta-progression layer above ages. The 21 ages group into **7 epochs of 3 ages each**.
-Epoch transitions are bigger civilizational milestones than age advances — they signal a fundamental
+**Epochs** are the meta-progression layer above ages. The 22 ages group into **7 epochs**: six of 3 ages and the Cosmic Era with 4.
+Epoch transitions are bigger civilizational milestones than age advances. They signal a fundamental
 shift in what resources matter, what events can occur, and what dangers your civilization faces.
 
 ```
-Ages 1–3   → Stone Era
-Ages 4–6   → Iron Era
-Ages 7–9   → Steel Era
-Ages 10–12 → Electric Era
-Ages 13–15 → Digital Era
-Ages 16–18 → Neon Era
-Ages 19–21 → Cosmic Era
+Ages 1-3   → Stone Era
+Ages 4-6   → Iron Era
+Ages 7-9   → Steel Era
+Ages 10-12 → Electric Era
+Ages 13-15 → Digital Era
+Ages 16-18 → Neon Era
+Ages 19-22 → Cosmic Era
 ```
 
-Every 3rd age advance = 1 epoch transition. 7 epochs × 3 ages = 21 ages exactly.
+Every 3rd age advance through the Space Age = 1 epoch transition (6 × 3 = 18 ages), and the Cosmic Era holds the last 4. It has no transition out; its passage is prestige (see [The Last Passage](#the-last-passage)).
 
 ---
 
@@ -30,25 +30,25 @@ Every 3rd age advance = 1 epoch transition. 7 epochs × 3 ages = 21 ages exactly
 | 4 | **Electric Era** | Victorian, Electric, Atomic | electricity, oil, uranium | Power age, nuclear dawn |
 | 5 | **Digital Era** | Modern, Information, Digital | titanium, data | Information revolution |
 | 6 | **Neon Era** | Cyberpunk, Fusion, Space | plasma, dark_matter | Post-human, megacorp wars, space |
-| 7 | **Cosmic Era** | Interstellar, Galactic, Quantum | antimatter, quantum_flux | Galactic civilization, reality manipulation |
+| 7 | **Cosmic Era** | Interstellar, Galactic, Quantum, Transcendent | antimatter, quantum_flux | Galactic civilization, reality manipulation |
 
 ### What Changes at an Epoch Transition
 
-1. **Primary building costs shift** — buildings in the new epoch are denominated in new resources
-2. **Extraction lineages switch output** — Organic and Geological lineages produce new resources
-3. **Metallurgy's processing chain advances** — new ore → new refined metal
-4. **Event pool changes** — epoch-exclusive events replace previous epoch's exclusive events
-5. **Catastrophe may strike** — from the Iron Era on, a bad transition roll can escalate into the Civilizational Catastrophe modal (see below)
-6. **UI epoch badge updates** — the epoch badge near the age indicator changes color and icon
-7. **New worker domains may unlock** — Hacker (Digital Era), Astronaut (Neon Era)
+1. **Primary building costs shift**: buildings in the new epoch are denominated in new resources
+2. **Extraction lineages switch output**: Organic and Geological lineages produce new resources
+3. **Metallurgy's processing chain advances**: new ore → new refined metal
+4. **Event pool changes**: epoch-exclusive events replace previous epoch's exclusive events
+5. **Catastrophe may strike**: from the Iron Era on, a bad transition roll can escalate into the Civilizational Catastrophe modal (see below)
+6. **UI epoch badge updates**: the epoch badge near the age indicator changes color and icon
+7. **New worker domains may unlock**: Hacker (Digital Era), Astronaut (Neon Era)
 
 ---
 
 ## Epoch Event System
 
-At each epoch transition, the game rolls a **major epoch event** — a single significant event
-that could be a boon or a disaster. Catastrophe is **not guaranteed** — it is one possible bad
-outcome among several, 12–18% per transition depending on faith, and never before the Iron Era.
+At each epoch transition, the game rolls a **major epoch event**, a single significant event
+that could be a boon or a disaster. Catastrophe is **not guaranteed**. It is one possible bad
+outcome among several, 12 to 18% per transition depending on faith, and never before the Iron Era.
 
 ### The Roll
 
@@ -56,7 +56,7 @@ outcome among several, 12–18% per transition depending on faith, and never bef
 Roll at each epoch transition:
 
   Faith < 25% cap:   40% Good / 60% Bad
-  Faith 25–75% cap:  50% Good / 50% Bad   ← baseline
+  Faith 25-75% cap:  50% Good / 50% Bad   ← baseline
   Faith > 75% cap:   60% Good / 40% Bad
 
   If GOOD → roll from Good Event pool (weighted by Culture level):
@@ -65,7 +65,7 @@ Roll at each epoch transition:
       High culture:   Minor, Major, or Legendary Good (rare)
 
   If BAD → roll from Bad pool (weighted):
-      70% → Challenging Event (severe but recoverable — 8 events)
+      70% → Challenging Event (severe but recoverable; 8 events)
       30% → Civilizational Catastrophe (the Endure / Succumb modal)
 ```
 
@@ -78,46 +78,46 @@ at every transition. This is a new strategic reason to invest in Faith buildings
 beyond its existing morale/cohesion/diplomacy uses.
 
 **Culture matters:** Culture level gates the tier of good events you can receive. High-culture
-civilizations occasionally receive Legendary Good events — powerful outcomes unavailable at
+civilizations occasionally receive Legendary Good events: powerful outcomes unavailable at
 lower culture levels.
 
 ### Good Epoch Events
 
-**Minor Good — available at any culture level:**
+**Minor Good (any culture level):**
 
-1. **Age of Plenty** — all resource production ×2 for 72 real hours
-2. **Population Surge** — all worker classes +15% count, immediately recruited
-3. **Ancient Cache** — fills 40% of every resource's storage cap with current resources
-4. **Trade Winds** — gold ×3 for 48h; all trade routes open regardless of requirements
-5. **Cultural Festival** — culture +30%, faith +20% instantly; morale bonus for 48h
+1. **Age of Plenty**: all resource production ×2 for 72 real hours
+2. **Population Surge**: all worker classes +15% count, immediately recruited
+3. **Ancient Cache**: fills 40% of every resource's storage cap with current resources
+4. **Trade Winds**: gold ×3 for 48h; all trade routes open regardless of requirements
+5. **Cultural Festival**: culture +30%, faith +20% instantly; morale bonus for 48h
 
-**Major Good — requires medium culture:**
+**Major Good (requires medium culture):**
 
-6. **The Grand Discovery** — 3 free techs from current epoch's research tree
-7. **Worker Innovation** — all worker output multipliers permanently +10% (stacks across events)
-8. **The Architect's Gift** — 10 free buildings of any current-age type, instant, no resource cost
-9. **Peaceful Century** — all negative random events suspended for 96h; all production +20%
+6. **The Grand Discovery**: 3 free techs from current epoch's research tree
+7. **Worker Innovation**: all worker output multipliers permanently +10% (stacks across events)
+8. **The Architect's Gift**: 10 free buildings of any current-age type, instant, no resource cost
+9. **Peaceful Century**: all negative random events suspended for 96h; all production +20%
 
-**Legendary Good — requires high culture, rare:**
+**Legendary Good (requires high culture, rare):**
 
-10. **Epoch Blessing** — permanent +15% production for current epoch's primary resource;
+10. **Epoch Blessing**: permanent +15% production for current epoch's primary resource;
     one unique epoch wonder unlocked (exclusive to this event, not in the normal wonder list);
     recorded in civilization history as a golden age entry
 
 ### Challenging Bad Epoch Events (70% of bad outcomes)
 
-Severe but recoverable — no reset, no modal. Applied immediately on epoch transition.
+Severe but recoverable, with no reset and no modal. Applied immediately on epoch transition.
 
-1. **The Famine** — food production -60% for 120 ticks; workers begin leaving if not corrected
-2. **Merchant Betrayal** — gold -50%; all trade routes suspended for 72 ticks
-3. **The Great Fire** — 8 random buildings destroyed; no targeted penalty on surrounding buildings
-4. **Epidemic** — worker count -20%; food drain +15% for 96h; faith influences severity
-5. **Resource Drought** — current epoch's primary output resource -70% for 90 ticks
-6. **Political Instability** — faith -60%; military output -40%; knowledge production paused 60 ticks
-7. **Economic Crash** — all gold halved; building costs +50% for 72h
-8. **The Dark Age** — knowledge production and all research paused for 48h; one random tech gains a knowledge debt that must be cleared before it can be used
+1. **The Famine**: food production -60% for 120 ticks; workers begin leaving if not corrected
+2. **Merchant Betrayal**: gold -50%; all trade routes suspended for 72 ticks
+3. **The Great Fire**: 8 random buildings destroyed; no targeted penalty on surrounding buildings
+4. **Epidemic**: worker count -20%; food drain +15% for 96h; faith influences severity
+5. **Resource Drought**: current epoch's primary output resource -70% for 90 ticks
+6. **Political Instability**: faith -60%; military output -40%; knowledge production paused 60 ticks
+7. **Economic Crash**: all gold halved; building costs +50% for 72h
+8. **The Dark Age**: knowledge production and all research paused for 48h; one random tech gains a knowledge debt that must be cleared before it can be used
 
-### Civilizational Catastrophe (30% of bad outcomes, 12–18% per transition)
+### Civilizational Catastrophe (30% of bad outcomes, 12-18% per transition)
 
 This section describes what is built (updated 2026-09-26). Ideas from the original design that
 were never built are kept under **Future ideas (not implemented)** at the end of it.
@@ -132,7 +132,7 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 - **No direct player trigger.** `catastrophe invoke` was removed (2026-09-26). Choosing to face
   a catastrophe is the Harbinger's **Invite** (see [Harbinger](#harbinger)), which arms
   `catastropheInvited`: the next transition into an allowed epoch produces a catastrophe instead
-  of rolling (consumed when honoured, kept while gated or something is pending, reset by
+  of rolling (consumed when honored, kept while gated or something is pending, reset by
   Succumb/prestige, saved as `catastrophe_invited`), and `CatastropheOutlook` reports probability
   1 while it is armed. The dev console's `/catastrophe` forces one for testing and respects the
   gate.
@@ -159,7 +159,7 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 ║                    ☄ The Great Plague                            ║
 ║     A devastating plague sweeps your cities. The streets…        ║
 ║                                                                  ║
-║ ── ENDURE — weather the catastrophe ──                           ║
+║ ── ENDURE: weather the catastrophe ──                            ║
 ║   • 20% of buildings destroyed (wonders are spared)              ║
 ║   • All resources reduced to 15%                                 ║
 ║   • 25% of workers lost; workers of destroyed buildings go idle  ║
@@ -167,7 +167,7 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 ║   ✓ Age, research, wonders and prestige preserved                ║
 ║   ✓ Survived marker on the epoch badge                           ║
 ║                                                                  ║
-║ ── SUCCUMB — let civilization fall ──                            ║
+║ ── SUCCUMB: let civilization fall ──                             ║
 ║   • Full reset to the Primitive Age: buildings, resources, …     ║
 ║   • No prestige points earned (level and upgrades are kept)      ║
 ║   ✓ Up to 8 buildings become ruins (50% output, max 24 ruins)    ║
@@ -179,7 +179,7 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 ╚══════════════════════════════════════════════════════════════════╝
 ```
 
-### ENDURE — Consequences
+### ENDURE: Consequences
 
 - `floor(non-wonder buildings / 5)` destroyed, at least 1 if any. Wonders are neither destroyed
   nor counted. With a Harbinger Brace (`pendingBraceLevel` 1 / 2) it is 15% / 10%, same floor.
@@ -191,7 +191,7 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 - "Survived" marker on the epoch badge and a civilization-log entry.
 - Research, wonders, age and prestige are untouched.
 
-### SUCCUMB — Consequences
+### SUCCUMB: Consequences
 
 - Up to 8 non-wonder buildings become ruins (50% base output, no workers). Ruins persist across
   Succumb and prestige, capped at **24**: past the cap the lowest-value ruins (earliest
@@ -233,7 +233,7 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 
 | | Regular Prestige | Catastrophe Succumb |
 |--|-----------------|---------------------|
-| Trigger | Player-initiated from the Modern Age | Random (12–18% per transition, Iron Era on; lowered by Appease), or guaranteed by the Harbinger's Invite |
+| Trigger | Player-initiated from the Modern Age | Random (12-18% per transition, Iron Era on; lowered by Appease), or guaranteed by the Harbinger's Invite |
 | Reset scope | Full | Full; up to 8 new ruins (24 max) carry forward |
 | Bonus pool | Prestige upgrade tree + points | Epoch legacy bonus + Ancient Knowledge |
 | Repeatable | Yes | Once per epoch per run; bonuses once per epoch ever |
@@ -248,11 +248,11 @@ Kept from the original design for reference. None of this exists in the game.
   hours; random events 20% harder during recovery.
 - **Endure permanent rewards:** a Reconstruction tech branch (5 epoch-specific recovery techs); a
   **Monument to the Fallen** wonder (free, +2,000 culture, +500 faith/tick, morale bonus); titles
-  such as "The Undying Iron Lords" shown in the Stats tab.
+  such as "The Undying Iron Lords" shown in the Stats panel.
 - **Succumb extras:** Ancient Knowledge scoped to the fallen epoch's tech tree; a Catastrophe Title;
   **Faster Return** (techs from 2 epochs below the catastrophe auto-complete next run); an
   **Exclusive Starting Event** in the first 10 ticks of the next run; ruins marked ☒ in the
-  Economy tab.
+  Economy panel.
 - **Exclusive uniques per catastrophe:** Meteor Fragment wonder; Ancient Immunity passive (events
   15% less severe) and a Plague Doctor worker class; War Doctrine tech and Armistice Monument;
   Fallout Shelter tech and Nuclear Vault; Ghost Protocol tech and Dead Drop Network; Phoenix
@@ -320,7 +320,7 @@ skipping the once-per-epoch rule but still needing `Possible`.
 - `ForecastPrecision` is per current figure: numeric from the Industrial Age, where the panel
   prints `HarbingerView.Probability`. For a false Steel Era thread that reaches the Newsboy this
   is the claimed figure. `HarbingerView` carries no false-prophet flag, and the UI's
-  `catastrophe` outlook and Epoch tab show the thread's tier and figure while one is live.
+  `catastrophe` outlook and Epoch panel show the thread's tier and figure while one is live.
 - Old saves with `FalseProphet` but no `claim_factor` load with `ClaimFactor = 1`.
 
 ### Actions and passage-based costs
@@ -355,7 +355,7 @@ Level-1 prices from the current config:
 Appease follows income, not storage (2026-09-27): faith is a flow resource at hand-set rates
 with no market, so the old 15%-of-passage-storage price was out of reach in most threads once
 the pacing rebalance shortened the ages. `TestAppeasePayableWithinThread` checks that the
-modelled income reaches level 1 before the thread ends and levels 1 and 2 by the passage. When storage cannot yet hold a price, `shortfall` adds "(your X storage must
+modeled income reaches level 1 before the thread ends and levels 1 and 2 by the passage. When storage cannot yet hold a price, `shortfall` adds "(your X storage must
 reach N first)" to the refusal.
 
 - **Appease** is applied through `harbingerAppeaseMultiplier()`, which scales
@@ -383,7 +383,7 @@ now". The verdict is spoken in the last figure's voice. Outcomes (`HarbingerReco
 
 It logs the verdict (and the braced Endure numbers if relevant), draws one flavor line, appends a
 `HarbingerRecord` (with `Age`/`Name` of the last figure and the full `Chain`) to
-`harbingerHistory`, and clears the live thread. The Epoch overlay lists each record's chain of
+`harbingerHistory`, and clears the live thread. The Epoch panel lists each record's chain of
 figures. The same `advanceAge` call then runs `harbingerOnAgeAdvance()`, which may start the new
 epoch's thread.
 
@@ -520,64 +520,64 @@ The existing universal events (drought, good harvest, plague, festival, trade wi
 active in all epochs and scale their magnitude to current epoch resource production rates. Each epoch
 adds 5 exclusive events that only appear during that epoch.
 
-### Stone Era — Exclusive Events
+### Stone Era: Exclusive Events
 
-1. **Sacred Grove Discovered** — an ancient forest is found; knowledge production +50% for 48 ticks
-2. **Wandering Tribe** — nomad group joins; +80 pop, +6 workers across primitive classes
-3. **Stone Idol** — workers uncover a carved idol; faith +300, morale +25% for 60 ticks
-4. **Cave Paintings** — ancient art discovered; culture +500, +1 culture/tick permanently from next
+1. **Sacred Grove Discovered**: an ancient forest is found; knowledge production +50% for 48 ticks
+2. **Wandering Tribe**: nomad group joins; +80 pop, +6 workers across primitive classes
+3. **Stone Idol**: workers uncover a carved idol; faith +300, morale +25% for 60 ticks
+4. **Cave Paintings**: ancient art discovered; culture +500, +1 culture/tick permanently from next
    culture building built
-5. **Bone Tools** — innovation event; wood production +100% for 30 ticks; one free early tech
+5. **Bone Tools**: innovation event; wood production +100% for 30 ticks; one free early tech
 
-### Iron Era — Exclusive Events
+### Iron Era: Exclusive Events
 
-1. **The Spreading Plague** — population -15%, workers -10%; faith above 60% cap halves the losses
-2. **Barbarian Horde** — military buildings take 40% damage unless military production > threshold
-3. **Silk Road Opens** — all trade route gold income +80% for 90 ticks
-4. **Philosopher's Academy** — knowledge production doubled for 60 ticks; one free knowledge tech
-5. **Bronze Uprising** — production halved for 36 ticks unless faith > 40% cap
+1. **The Spreading Plague**: population -15%, workers -10%; faith above 60% cap halves the losses
+2. **Barbarian Horde**: military buildings take 40% damage unless military production > threshold
+3. **Silk Road Opens**: all trade route gold income +80% for 90 ticks
+4. **Philosopher's Academy**: knowledge production doubled for 60 ticks; one free knowledge tech
+5. **Bronze Uprising**: production halved for 36 ticks unless faith > 40% cap
 
-### Steel Era — Exclusive Events
+### Steel Era: Exclusive Events
 
-1. **Industrial Accident** — 5 random Engineering buildings destroyed; surrounding output -20% for 48 ticks
-2. **Worker Strike** — factory output halved until faith restored to >50% or 72 ticks elapse
-3. **Colonial Gold Rush** — gold production ×3 for 60 ticks; 10 free Settler workers added
-4. **Railroad Connection** — all trade route income +50% permanently until next epoch transition
-5. **Colonial Revolt** — 20% of Colonial-era buildings damaged; gold income -30% for 60 ticks
+1. **Industrial Accident**: 5 random Engineering buildings destroyed; surrounding output -20% for 48 ticks
+2. **Worker Strike**: factory output halved until faith restored to >50% or 72 ticks elapse
+3. **Colonial Gold Rush**: gold production ×3 for 60 ticks; 10 free Settler workers added
+4. **Railroad Connection**: all trade route income +50% permanently until next epoch transition
+5. **Colonial Revolt**: 20% of Colonial-era buildings damaged; gold income -30% for 60 ticks
 
-### Electric Era — Exclusive Events
+### Electric Era: Exclusive Events
 
-1. **Nuclear Test Fallout** — food production -30% for 120 ticks; faith -20% (public fear)
-2. **Oil Crisis** — all electricity-dependent buildings offline for 36 ticks; oil building costs ×2 for 60 ticks
-3. **Space Race Ignition** — knowledge +150% for 90 ticks; one free tech in knowledge tree
-4. **Cold War Tension** — military production +60%, worker food drain +20% for 120 ticks (war footing)
-5. **Power Grid Failure** — all Electric Era buildings offline for 18 ticks, then +50% electricity output
+1. **Nuclear Test Fallout**: food production -30% for 120 ticks; faith -20% (public fear)
+2. **Oil Crisis**: all electricity-dependent buildings offline for 36 ticks; oil building costs ×2 for 60 ticks
+3. **Space Race Ignition**: knowledge +150% for 90 ticks; one free tech in knowledge tree
+4. **Cold War Tension**: military production +60%, worker food drain +20% for 120 ticks (war footing)
+5. **Power Grid Failure**: all Electric Era buildings offline for 18 ticks, then +50% electricity output
    on restoration (systems surge)
 
-### Digital Era — Exclusive Events
+### Digital Era: Exclusive Events
 
-1. **The Great Data Breach** — data -60%, crypto -30%; Hacker worker output -50% for 48 ticks
-2. **AI Anomaly** — 3 random buildings swap their output resources for 60 ticks (chaos event)
-3. **Biotech Breakthrough** — food production +100% for 90 ticks; biotech research branch available
-4. **Silicon Drought** — titanium building costs +50% for 60 ticks; titanium production +20%
-5. **Viral Memetic Storm** — culture and faith both halved for 48 ticks, then doubled for 48 ticks
+1. **The Great Data Breach**: data -60%, crypto -30%; Hacker worker output -50% for 48 ticks
+2. **AI Anomaly**: 3 random buildings swap their output resources for 60 ticks (chaos event)
+3. **Biotech Breakthrough**: food production +100% for 90 ticks; biotech research branch available
+4. **Silicon Drought**: titanium building costs +50% for 60 ticks; titanium production +20%
+5. **Viral Memetic Storm**: culture and faith both halved for 48 ticks, then doubled for 48 ticks
    (net neutral but timing matters for players near faith thresholds)
 
-### Neon Era — Exclusive Events
+### Neon Era: Exclusive Events
 
-1. **Corporate War** — plasma production -40%, dark_matter +40%; military output +60% for 90 ticks
-2. **Augmentation Rebellion** — 15% of workers revolt; food drain -10% permanently (fewer augmented workers)
-3. **Fusion Breakthrough** — plasma production ×3 for 120 ticks; one free Neon Era tech
-4. **Black Market Surge** — gold income +150% for 60 ticks; faith -20% (moral cost of dealings)
-5. **Consciousness Upload** — 12% of population digitized; housing freed, knowledge +60% permanently
+1. **Corporate War**: plasma production -40%, dark_matter +40%; military output +60% for 90 ticks
+2. **Augmentation Rebellion**: 15% of workers revolt; food drain -10% permanently (fewer augmented workers)
+3. **Fusion Breakthrough**: plasma production ×3 for 120 ticks; one free Neon Era tech
+4. **Black Market Surge**: gold income +150% for 60 ticks; faith -20% (moral cost of dealings)
+5. **Consciousness Upload**: 12% of population digitized; housing freed, knowledge +60% permanently
 
-### Cosmic Era — Exclusive Events
+### Cosmic Era: Exclusive Events
 
-1. **Alien Signal Received** — knowledge + data ×4 for 120 ticks; Xenology research branch unlocked
-2. **Stellar Phenomena** — dark_matter ×2 for 60 ticks; antimatter disrupted -50% for 30 ticks
-3. **Reality Distortion** — 5 random buildings swap output resources for 60 ticks (terrifying at scale)
-4. **Quantum Resonance** — quantum_flux ×5 for 30 ticks (spike fills storage; plan for it)
-5. **Dimensional Rift** — all production halted for 12 ticks, then ×3 for 60 ticks (terrifying/rewarding)
+1. **Alien Signal Received**: knowledge + data ×4 for 120 ticks; Xenology research branch unlocked
+2. **Stellar Phenomena**: dark_matter ×2 for 60 ticks; antimatter disrupted -50% for 30 ticks
+3. **Reality Distortion**: 5 random buildings swap output resources for 60 ticks (terrifying at scale)
+4. **Quantum Resonance**: quantum_flux ×5 for 30 ticks (spike fills storage; plan for it)
+5. **Dimensional Rift**: all production halted for 12 ticks, then ×3 for 60 ticks (terrifying/rewarding)
 
 ### Event Pool Summary
 
@@ -602,7 +602,7 @@ the regular random event pool. They fire exactly once per epoch transition, repl
 
 ---
 
-## UI — Epoch Badge
+## UI: Epoch Badge
 
 The epoch badge appears in the status bar / header area, near the age indicator. It updates on
 epoch transition with a brief color flash and a one-line status message.
@@ -633,7 +633,7 @@ scar marker: `⚒̶` or `[⚒ Iron Era · Survived]`.
 
 On epoch transition, the dashboard status bar briefly shows:
 ```
-[yellow]✦ The Steel Era Dawns — The Age of Iron gives way to industry and empire.[-]
+[yellow]✦ The Steel Era Dawns: The Age of Iron gives way to industry and empire.[-]
 ```
 (tview-styled, 5-second timeout, then normal display resumes)
 
@@ -703,14 +703,14 @@ candidateEvents = universalEvents + epochExclusiveEvents[currentEpoch]
 ```
 Previous epoch exclusive events are permanently removed from the pool on epoch transition.
 Epoch transition events (good/bad/catastrophe) are a separate pool, fired once per epoch
-transition — NOT drawn from the regular random event pool.
+transition, NOT drawn from the regular random event pool.
 
 ### Triggering (implementation)
 
 In game/catastrophe.go:
 - `triggerCatastrophe(epochKey, source)` sets `pendingCatastrophe`, appends an `EpochEventRecord`
   with `Outcome: "pending"`, and publishes `EventEpochEventFired` (`event_type: "catastrophe"`) so
-  the dashboard toast fires. Sources: the transition roll, an honoured invite, or the dev
+  the dashboard toast fires. Sources: the transition roll, an honored invite, or the dev
   console's `forceCatastrophe` (`/catastrophe`, via `game.DevConsoleCommand`).
 - The dashboard's refresh loop shows the modal once per pending catastrophe; Esc hides it until
   the `catastrophe` command (or a save load, via `EventGameLoaded`) brings it back.
