@@ -14,7 +14,7 @@ type TechDef struct {
 	ResearchTicks int // game ticks to complete (at 1x speed); scales with research_speed bonus
 }
 
-// Technologies returns all 52 tech definitions, ordered loosely by age.
+// Technologies returns every tech definition, ordered loosely by age.
 // Use TechByKey() for random access or TechsByAge() to group by age.
 func Technologies() []TechDef {
 	return normalizeResearchTicks([]TechDef{

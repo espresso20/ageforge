@@ -210,7 +210,7 @@ These milestones sit outside the chains and don't count toward any chain title.
 | Deep Thinker | Research 25 techs (Bronze Age) | +5% knowledge rate |
 | Philosophes | Research 35 techs (Classical Age) | +5% research speed |
 | Grand Library Built *(hidden)* | Build the Great Library (Classical Age) | +15% knowledge rate |
-| Tech Ascendant *(hidden)* | Research 52 techs (Quantum Age) | +20% research speed |
+| Tech Ascendant *(hidden)* | Research all 73 techs (Quantum Age) | +20% research speed |
 
 **Settlement**
 
