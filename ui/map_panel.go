@@ -153,38 +153,62 @@ func (p *mapPanel) Draw(scr tcell.Screen) {
 	p.drawBar(scr, mapstyle.Rect{X: x, Y: y + h - 1, W: w, H: 1}, st, f)
 }
 
-// drawBar is the key bar: the hint or note, then the keys.
+// barPart is one run of key-bar text in one style.
+type barPart struct {
+	text string
+	role int // 0 text, 1 key, 2 dim
+}
+
+// drawBar is the key bar: the hint or note, the inspected command, then
+// the keys. When it does not fit it drops the command, then shortens the
+// keys, so the hint and the keys always show.
 func (p *mapPanel) drawBar(scr tcell.Screen, r mapstyle.Rect, st mapstyle.Style, f mapstyle.Frame) {
 	bg := theme.Color(theme.RoleChip)
 	base := tcell.StyleDefault.Background(bg).Foreground(theme.Legible(theme.Color(theme.RoleText), bg, 4.5))
-	key := base.Foreground(theme.Legible(theme.Color(theme.RoleAccent), bg, 3)).Bold(true)
-	dim := base.Foreground(theme.Legible(theme.Color(theme.RoleDim), bg, 3))
-	cv := mapstyle.NewCanvas(scr, r, f.Tier, base)
-	x := 1
-	put := func(s string, sty tcell.Style) {
-		if x < r.W {
-			x = cv.Text(x, 0, r.W-x, s, sty)
-		}
+	styles := [3]tcell.Style{
+		base,
+		base.Foreground(theme.Legible(theme.Color(theme.RoleAccent), bg, 3)).Bold(true),
+		base.Foreground(theme.Legible(theme.Color(theme.RoleDim), bg, 3)),
 	}
+	var lead, cmd []barPart
 	if p.hint {
-		put(mapIconsHint, key)
-		put("  ", base)
+		lead = []barPart{{mapIconsHint, 1}, {"  ", 0}}
 	} else if p.note != "" {
-		put(p.note, key)
-		put("  ", base)
+		lead = []barPart{{p.note, 1}, {"  ", 0}}
 	}
 	if in, ok := st.Inspect(f); ok && in.Command != "" {
-		put("Enter", key)
-		put(" type ", dim)
-		put(in.Command, base)
-		put(" · ", dim)
+		cmd = []barPart{{"Enter", 1}, {" type ", 2}, {in.Command, 0}, {" · ", 2}}
 	}
-	put("s", key)
-	put(" style: "+styleTitle(p.mv.reg, p.set.Style)+" · ", dim)
-	put("g", key)
-	put(" glyphs: "+p.set.Tier.String()+" · ", dim)
-	put("Esc", key)
-	put(" close", dim)
+	full := []barPart{{"s", 1}, {" style: " + styleTitle(p.mv.reg, p.set.Style) + " · ", 2},
+		{"g", 1}, {" glyphs: " + p.set.Tier.String() + " · ", 2}, {"Esc", 1}, {" close", 2}}
+	short := []barPart{{"s", 1}, {" style · ", 2}, {"g", 1}, {" glyphs · ", 2}, {"Esc", 1}}
+	width := func(parts ...[]barPart) int {
+		n := 0
+		for _, ps := range parts {
+			for _, pt := range ps {
+				n += mapstyle.TextLen(pt.text)
+			}
+		}
+		return n
+	}
+	var parts [][]barPart
+	switch avail := r.W - 2; {
+	case width(lead, cmd, full) <= avail:
+		parts = [][]barPart{lead, cmd, full}
+	case width(lead, full) <= avail:
+		parts = [][]barPart{lead, full}
+	default:
+		parts = [][]barPart{lead, short}
+	}
+	cv := mapstyle.NewCanvas(scr, r, f.Tier, base)
+	x := 1
+	for _, ps := range parts {
+		for _, pt := range ps {
+			if x < r.W {
+				x = cv.Text(x, 0, r.W-x, pt.text, styles[pt.role])
+			}
+		}
+	}
 }
 
 // InputHandler routes keys: the panel's own first, then the style's.
@@ -218,7 +242,7 @@ func (p *mapPanel) handleKey(ev *tcell.EventKey) bool {
 		p.persist()
 		p.hint, p.note = false, "Glyphs: "+p.set.Tier.String()
 		if p.set.Tier == mapmodel.TierNerd {
-			p.note += " (boxes or question marks? type icons)"
+			p.note += " (boxes? type icons)"
 		}
 		return true
 	}

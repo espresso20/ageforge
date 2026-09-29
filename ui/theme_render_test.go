@@ -205,12 +205,14 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	return out
 }
 
-// pixelGlyph reports runes that are legitimately drawn with fg == bg: the
-// half-block map pixels ('▄' with equal upper/lower pixels is a solid fill).
+// pixelGlyph reports runes that are legitimately drawn with fg == bg:
+// half-block pixels (wonder icons, the skyline map), where '▄' with equal
+// upper and lower pixels is a solid fill.
 func pixelGlyph(r rune) bool { return r == '▄' || r == '▀' }
 
 // TestThemeRender_NoInvisibleText draws the dashboard, several overlays
-// (including the citymap and worldmap), the theme picker and a danger modal
+// (including the Map panel and the mini map in every style and glyph tier),
+// the theme picker and a danger modal
 // under EVERY theme and asserts:
 //
 //  1. no non-space glyph has fg == bg (invisible text — e.g. [red] on a red

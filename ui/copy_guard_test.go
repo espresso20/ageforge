@@ -26,7 +26,6 @@ var copyDirs = []string{"ui", "game", "boon"}
 var copyExemptFiles = map[string]string{
 	"game/devmode.go":                "dev console",
 	"game/devcmd.go":                 "dev console",
-	"ui/citymap/debug.go":            "debug overlay",
 	"game/updater.go":                "self-update plumbing, not game text",
 	"ui/splash_canvas.go":            "art",
 	"ui/braille.go":                  "chart glyphs",
