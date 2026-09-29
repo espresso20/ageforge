@@ -58,7 +58,7 @@ func BackupAccount(id string) (string, error) {
 	srcAccount := filepath.Join(slot, accountFileName)
 	if _, err := os.Stat(srcAccount); err != nil {
 		// No account.json in the slot → nothing to snapshot (absent or unreadable).
-		return "", fmt.Errorf("no such account: %s", id)
+		return "", fmt.Errorf("There is no account with the ID %s.", id)
 	}
 
 	// Resolve the display name READ-ONLY for the dir name; fall back to "account" when the slot

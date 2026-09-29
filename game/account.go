@@ -611,7 +611,7 @@ func SwitchAccount(id string) (*Account, error) {
 		return nil, err
 	}
 	if !found || acct == nil {
-		return nil, fmt.Errorf("no such account: %s", id)
+		return nil, fmt.Errorf("There is no account with the ID %s.", id)
 	}
 	// Commit the switch only after the slot is confirmed loadable, so a failed switch
 	// leaves the active account unchanged.
@@ -717,7 +717,7 @@ func ExportAccountByID(id string) ([]byte, error) {
 		return nil, err
 	}
 	if !found || acct == nil {
-		return nil, fmt.Errorf("no such account: %s", id)
+		return nil, fmt.Errorf("There is no account with the ID %s.", id)
 	}
 	return acct.ExportProgress()
 }
@@ -733,7 +733,7 @@ func RecoveryCodeForID(id string) (string, error) {
 		return "", err
 	}
 	if !found || acct == nil {
-		return "", fmt.Errorf("no such account: %s", id)
+		return "", fmt.Errorf("There is no account with the ID %s.", id)
 	}
 	return acct.RecoveryCode(), nil
 }
@@ -770,7 +770,7 @@ func AccountExportPath(id string) string {
 func WipeAccountByID(id string) (backupPath string, err error) {
 	if id == "" {
 		// Never remove accountDir("") — that is the shared <root>/accounts root, not a slot.
-		return "", fmt.Errorf("cannot wipe account: empty id")
+		return "", fmt.Errorf("Cannot wipe an account without an ID.")
 	}
 	// Snapshot first. Best-effort: a backup error is swallowed (backupPath stays "") so the
 	// player's confirmed wipe still proceeds; the snapshot lives outside the slot, so it
@@ -1125,7 +1125,7 @@ func crockfordDecode(s string, byteLen int) ([]byte, error) {
 	for i := 0; i < len(s); i++ {
 		v, ok := crockfordDecodeChar(s[i])
 		if !ok {
-			return nil, fmt.Errorf("invalid recovery code (bad character %q)", string(s[i]))
+			return nil, fmt.Errorf("That recovery code has a character it cannot contain ('%s'). Check it and try again.", string(s[i]))
 		}
 		buf = (buf << 5) | uint32(v)
 		bits += 5
@@ -1135,7 +1135,7 @@ func crockfordDecode(s string, byteLen int) ([]byte, error) {
 		}
 	}
 	if len(out) < byteLen {
-		return nil, fmt.Errorf("invalid recovery code (too short)")
+		return nil, fmt.Errorf("That recovery code is too short. Check it and try again.")
 	}
 	return out[:byteLen], nil
 }
@@ -1193,7 +1193,7 @@ func ImportRecoveryCode(code string) (*Account, error) {
 		norm = norm[len(p):]
 	}
 	if norm == "" {
-		return nil, fmt.Errorf("invalid recovery code (empty)")
+		return nil, fmt.Errorf("The recovery code is empty. Type account recover <code>.")
 	}
 
 	payload, err := crockfordDecode(norm, 18)
@@ -1203,7 +1203,7 @@ func ImportRecoveryCode(code string) (*Account, error) {
 	idBytes := payload[:16]
 	gotSum := uint16(payload[16])<<8 | uint16(payload[17])
 	if gotSum != crc16CCITT(idBytes) {
-		return nil, fmt.Errorf("invalid recovery code (checksum failed)")
+		return nil, fmt.Errorf("That recovery code does not check out (a character is probably wrong). Check it and try again.")
 	}
 
 	now := time.Now()
@@ -1333,15 +1333,15 @@ func (a *Account) ExportProgress() ([]byte, error) {
 func ImportAccountExport(blob []byte, merge bool) (*Account, error) {
 	var exp progressExport
 	if err := json.Unmarshal(blob, &exp); err != nil {
-		return nil, fmt.Errorf("invalid or corrupt progress export: %w", err)
+		return nil, fmt.Errorf("That file is not a readable progress export: %w", err)
 	}
 	// Verify integrity BEFORE touching the disk. An unsigned blob is rejected (an export is
 	// always signed by ExportProgress; a missing sig means it was not produced by us).
 	if !hmac.Equal([]byte(exp.Signature), []byte(signProgressExport(&exp))) {
-		return nil, fmt.Errorf("invalid or corrupt progress export (signature mismatch)")
+		return nil, fmt.Errorf("That progress export has been changed or damaged since it was made, so it cannot be imported.")
 	}
 	if exp.AccountID == "" {
-		return nil, fmt.Errorf("export is missing its account id (incompatible/old export)")
+		return nil, fmt.Errorf("That progress export has no account ID (it comes from an older version) and cannot be imported.")
 	}
 
 	// Resolve the blob's OWN slot without disturbing the active account.
