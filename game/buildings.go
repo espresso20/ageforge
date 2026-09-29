@@ -443,38 +443,42 @@ func (bm *BuildingManager) LoadCounts(counts map[string]int) {
 func (bm *BuildingManager) BankResource(wonderKey, resource string, amount float64, rm *ResourceManager) (float64, error) {
 	def, ok := bm.defs[wonderKey]
 	if !ok {
-		return 0, fmt.Errorf("unknown building: %s", wonderKey)
+		return 0, unknownKeyError("wonder", wonderKey, bm.defs, "Type wonders to see them.")
 	}
 	if def.Category != "wonder" {
 		return 0, fmt.Errorf("%s is not a wonder", def.Name)
 	}
 	if !bm.unlocked[wonderKey] {
-		return 0, fmt.Errorf("%s is not yet unlocked", def.Name)
+		return 0, fmt.Errorf("%s is not unlocked yet", def.Name)
 	}
 	if bm.counts[wonderKey] > 0 {
 		return 0, fmt.Errorf("%s is already built", def.Name)
 	}
 	required, exists := def.BaseCost[resource]
 	if !exists {
-		return 0, fmt.Errorf("%s doesn't need %s (it needs %s)", def.Name, resource, strings.Join(sortedKeys(def.BaseCost), ", "))
+		needs := make([]string, 0, len(def.BaseCost))
+		for _, k := range sortedKeys(def.BaseCost) {
+			needs = append(needs, ResourceName(k))
+		}
+		return 0, fmt.Errorf("%s doesn't need %s (it needs %s)", def.Name, ResourceName(resource), strings.Join(needs, ", "))
 	}
 	banked := bm.wonderBanks[wonderKey][resource]
 	remaining := required - banked
 	if remaining <= 0.001 {
-		return 0, fmt.Errorf("%s already has all the %s it needs", def.Name, resource)
+		return 0, fmt.Errorf("%s already has all the %s it needs", def.Name, ResourceName(resource))
 	}
 	if amount > remaining {
 		amount = remaining
 	}
 	have := rm.Get(resource)
 	if have < 0.001 {
-		return 0, fmt.Errorf("you have no %s to bank", resource)
+		return 0, fmt.Errorf("you have no %s to bank", ResourceName(resource))
 	}
 	if have < amount {
-		return 0, fmt.Errorf("not enough %s (have: %s, need: %s)", resource, textfmt.Number(have), textfmt.Number(amount))
+		return 0, fmt.Errorf("not enough %s: need %s, have %s", ResourceName(resource), textfmt.Number(amount), textfmt.Number(have))
 	}
 	if !rm.Pay(map[string]float64{resource: amount}) {
-		return 0, fmt.Errorf("not enough %s", resource)
+		return 0, fmt.Errorf("not enough %s", ResourceName(resource))
 	}
 	if bm.wonderBanks[wonderKey] == nil {
 		bm.wonderBanks[wonderKey] = make(map[string]float64)
@@ -868,7 +872,7 @@ func (bm *BuildingManager) LoadRuins(ruins map[string]int) {
 // become ruins). Workers assigned to the destroyed buildings are NOT touched
 // here; the engine releases them (see GameEngine.releaseWorkersFrom).
 // Returns building key → number destroyed, and human-readable descriptions for
-// the log (e.g. "3 Lumber Mill") in sorted key order.
+// the log (e.g. "3 Lumber Mills") in sorted key order.
 func (bm *BuildingManager) DestroyRandom(rng *rand.Rand, count int) (map[string]int, []string) {
 	destroyed := drawFromPool(rng, bm.destroyablePool(), count)
 	keys := make([]string, 0, len(destroyed))
@@ -884,7 +888,7 @@ func (bm *BuildingManager) DestroyRandom(rng *rand.Rand, count int) (map[string]
 			bm.counts[key] = 0
 		}
 		if def, ok := bm.defs[key]; ok {
-			names = append(names, fmt.Sprintf("%d %s", n, def.Name))
+			names = append(names, textfmt.Int(n)+" "+pluralName(n, def.Name))
 		}
 	}
 	return destroyed, names
