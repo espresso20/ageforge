@@ -21,7 +21,14 @@ import (
 // simulation code"), enforced. simPackages is the code a run's result depends
 // on: the game, its config and the packages it imports, and the smoke bot
 // (its decisions steer the runs the determinism check compares).
-var simPackages = []string{"boon", "config", "detmath", "flavor", "game", "smoke"}
+var simPackages = []string{"boon", "config", "detmath", "flavor", "game", "mapmodel", "smoke"}
+
+// mapRenderPackages are the map styles. What they draw is a function of the
+// map model and the animation frame, and it should look the same on every
+// machine, so they keep the no-transcendentals rule too (mapmodel.Sin, Cos,
+// Log2 and Noise are there for them). They are UI, not simulation, so the
+// FMA check does not cover them.
+var mapRenderPackages = []string{"ui/mapstyle", "ui/mapstyle/roguelike", "ui/mapstyle/skyline"}
 
 const modulePath = "github.com/espresso20/ageforge"
 
@@ -134,14 +141,15 @@ var transcendental = map[string]string{
 }
 
 // TestNoStdlibTranscendentals fails on a call to one of package math's
-// architecture-dependent functions from simulation code (tests excluded).
+// architecture-dependent functions from simulation code or the map styles
+// (tests excluded).
 // Sqrt, Floor, Ceil, Round, Abs, Mod, Min, Max and the like are exact and
 // allowed.
 func TestNoStdlibTranscendentals(t *testing.T) {
 	root := moduleRoot(t)
 	fset := token.NewFileSet()
 	var bad []string
-	for _, p := range simPackages {
+	for _, p := range append(append([]string(nil), simPackages...), mapRenderPackages...) {
 		if p == "detmath" {
 			continue // the implementation itself
 		}

@@ -190,6 +190,9 @@ type GameEngine struct {
 	harbingerArrived  map[string]bool
 	pendingBraceLevel int
 	harbingerHistory  []HarbingerRecord
+	// sessionStart is the state the loaded save left (see SessionMark); nil
+	// for a game that was not loaded. Not persisted.
+	sessionStart *SessionMark
 	// harbingerCheckedEpoch is the epoch the tick hook last looked for a
 	// thread in (harbingerTickCheck). Not persisted.
 	harbingerCheckedEpoch string
@@ -3678,6 +3681,7 @@ func (ge *GameEngine) Reset() {
 	defer ge.mu.Unlock()
 
 	ge.tick = 0
+	ge.sessionStart = nil
 	ge.age = "primitive_age"
 	ge.Resources = NewResourceManager()
 	ge.Buildings = NewBuildingManager()
@@ -3886,6 +3890,7 @@ func (ge *GameEngine) GetState() GameState {
 		PendingMemoryTechName: ge.Research.defs[ge.pendingMemoryTech].Name,
 		EpochEventHistory:     slices.Clone(ge.epochEventHistory), // setCatastropheOutcome edits records in place
 		Harbinger:             ge.harbingerView(),
+		SessionStart:          ge.sessionStart.clone(),
 		HarbingerHistory:      cloneHarbingerHistory(ge.harbingerHistory),
 		LegacyBonuses: func() map[string]bool {
 			out := make(map[string]bool, len(ge.legacyBonuses))
