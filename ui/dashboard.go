@@ -116,6 +116,8 @@ type Dashboard struct {
 	// map settings when no account is loaded (session only).
 	mapViews *mapViews
 	mapPanel *mapPanel
+	miniMap  *miniMap
+	mapDock  *mapDock
 	mapLocal *mapSettings
 	// mapOpen is set while the Map panel is open, so the refresh loop
 	// redraws it at the animation rate. Read off the UI goroutine.
@@ -132,6 +134,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		engine:             engine,
 		mapViews:           mv,
 		mapPanel:           newMapPanel(mv),
+		miniMap:            newMiniMap(mv),
 		pages:              pages,
 		stopCh:             make(chan struct{}),
 		histIdx:            -1,
@@ -390,6 +393,13 @@ func (d *Dashboard) build() {
 	// Weight 2 (vs resources 3 / construction 1) gives the log more headspace.
 	d.economyTab.AddToLeftColumn(d.logTV, 0, 2)
 
+	// The mini map docks above the Buildings list and hides itself when the
+	// terminal is too small for it (mapDock).
+	d.economyTab.WrapBuildings(func(list tview.Primitive) tview.Primitive {
+		d.mapDock = newMapDock(d.miniMap, list)
+		return d.mapDock
+	})
+
 	// Mini worker summary box — sits below the sidebar in the right column
 	d.workerMiniTV = tview.NewTextView().SetDynamicColors(true)
 	d.workerMiniTV.SetBorder(true).SetTitle(" Workers ")
@@ -609,6 +619,11 @@ func (d *Dashboard) refresh() {
 
 	// Economy tab is always visible as the permanent background
 	d.economyTab.Refresh(state)
+	// The mini map's model, only while it has room to show (before the
+	// first layout the dock has no size yet, so build it anyway).
+	if d.mapDock.wantsModel() {
+		d.miniMap.update(d.mapSettings(), &state)
+	}
 
 	// Update overlay content and sidebar highlight
 	d.overlayMgr.Refresh(state)

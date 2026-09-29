@@ -56,6 +56,12 @@ type Style interface {
 	SetOption(o Option, on bool)
 }
 
+// CompactNews is implemented by a style whose compact view prints the
+// since-last-visit news itself, so the mini map's frame does not repeat it.
+type CompactNews interface {
+	CompactShowsNews() bool
+}
+
 // Option is a view option several styles share, so a setting or a key
 // binding can drive any of them the same way.
 type Option uint8

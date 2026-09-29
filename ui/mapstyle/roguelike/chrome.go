@@ -312,6 +312,9 @@ func (v *view) drawLegend(cv *mapstyle.Canvas, x, y, w, h int) {
 	}
 }
 
+// CompactShowsNews: the compact view's last row is the news line.
+func (v *view) CompactShowsNews() bool { return true }
+
 // DrawCompact renders the glanceable mini view (designed for 40x15): a
 // header line, the settlement fitted to the space, and one news line.
 func (v *view) DrawCompact(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) {

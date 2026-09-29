@@ -11,6 +11,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -47,6 +48,9 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 
 	out := map[string][]tcell.SimCell{}
 	out["dashboard"] = draw()
+	if !d.mapDock.shown {
+		t.Fatalf("no mini map on the %dx%d dashboard", w, h)
+	}
 
 	// The prompt with ghost text: "adv" typed, "ance" drawn dim after it.
 	d.inputField.SetText("adv")
@@ -59,13 +63,30 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	d.inputField.SetText("")
 
 	state := engine.GetState()
-	for _, name := range []string{"stats", "help", "trade", "map"} {
+	for _, name := range []string{"stats", "help", "trade"} {
 		if !d.overlayMgr.Show(name, state) {
 			t.Fatalf("overlay %q not registered", name)
 		}
 		out["overlay:"+name] = draw()
 		d.overlayMgr.Hide()
 	}
+
+	// The Map panel and the mini map in every style and glyph tier.
+	saved := d.mapLocal
+	for _, style := range d.mapViews.reg.Names() {
+		for _, tier := range mapmodel.TierNames {
+			tr, _ := mapmodel.ParseTier(tier)
+			d.mapLocal = &mapSettings{Style: style, Tier: tr, HintShown: true}
+			d.refresh()
+			out["dashboard:"+style+"/"+tier] = draw()
+			if !d.overlayMgr.Show("map", engine.GetState()) {
+				t.Fatal("overlay map not registered")
+			}
+			out["overlay:map/"+style+"/"+tier] = draw()
+			d.overlayMgr.Hide()
+		}
+	}
+	d.mapLocal = saved
 
 	// The Factions panel with trade deals: a civ with open offers (one of
 	// them unaffordable) and a hostile one that offers none.
