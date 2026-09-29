@@ -26,7 +26,7 @@ The history report names five failures. This is how the skyline answers each.
 | No verb, hidden, passive | `i` puts a cursor on the skyline. The status line names the building under it with its count, its workers (`12/15`, or `idle`) and the exact `build <key>` command with its main cost. The minimap strip scrolls you anywhere in one keystroke, and the compact view sits on the main screen. |
 | Reviewed as PNGs | Every capture here is a tcell `SimulationScreen` read back cell by cell into `.txt` and `.html`. |
 | Static in a ticking game | The clock comes from the tick. Smoke and windows follow staffing, and traffic follows population, trade routes and wars. Beacons blink, windmills turn, ships sail the bay, and weather follows events. |
-| 20.7k lines of bespoke per-age art | One grammar: ~30 parametric forms plus 22 wonder routines. An age is a set of dials: material family, sky keyframes, road skin, mid-town roofline and form table. The render core is about 4.2k lines, and the lab also carries ~1k lines of tooling (generator, captures, viewer). |
+| 20.7k lines of bespoke per-age art | One grammar: ~30 parametric forms plus 22 wonder routines. An age is a set of dials: material family, sky keyframes, road skin, mid-town roofline and form table. The render core is ~5.5k lines, of which ~1.7k is art (forms + wonders); the lab adds ~1k lines of tooling (generator, captures, viewer, tests). That is over the 5k target; the forms and wonders are where it would be trimmed. |
 
 It's terminal-native in a way a top-down map isn't. ANSI art always was city
 skylines, logos and sunsets on a 16-colour palette, so this is the medium's own
@@ -67,9 +67,9 @@ count**.
 | Age advance | A new quarter opens at the east end, and the camera's "present" moves there. Old quarters keep their period architecture, but the road through the whole city is re-skinned to the current age (dirt, cobbles, rails, asphalt, neon, maglev), so history stands on today's street. Street lamps arrive in the Victorian age. |
 | Build queue | Cranes and scaffolding on the frontier, one per queued item. |
 | Trade routes (`ActiveRoutes`) | A caravan, train, truck or maglev in trade gold on the road for each route, plus ships in the bays. |
-| Factions at war | A red-bannered warband marches in from the west. |
+| Factions | Every civilisation you have met stands on the far ridge as a small town of its own, sized by its strength, with a pennant in a fixed relation colour (war red, rival orange, ally green, friendly/trading gold, neutral steel) and its name on the grid. A civ at war also sends a red-bannered warband marching in from the west. |
 | Harbinger | A cloaked figure on the far ridge with its name on the grid. The horizon bruises red as the catastrophe odds rise (`Pressure`). |
-| Pending catastrophe | An overlay per epoch: roof fires with black smoke (barbarians, industrial collapse), cracks in the sky (meltdown, reality fracture), or glitch bands and blackouts (digital collapse, solar event). |
+| Pending catastrophe | An overlay per epoch: roof fires with black smoke (barbarians, industrial collapse), cracks in the sky (meltdown, reality fracture), or glitch bands with the grid down, so almost every window goes dark (digital collapse, solar event). From the Digital Era the harbinger itself is a flickering cyan hologram. |
 | Events | Storms bring rain and lightning; floods, plague and blight bring rain; drought clears the sky. Otherwise the weather is seeded per in-game day. |
 | Idle time | The clock is `tick`-driven (a day is 1,800 ticks, one hour at 1x). A returning player sees the time of day move on, and the `▼` markers show what was built while they were away (diffed against a check-in snapshot). |
 | The save's seed | Placement jitter, material variants, mirroring and ridge shapes all hash from `GameState.Seed`, so two players in the same age get different skylines from different building mixes, counts and seeds. |
@@ -101,8 +101,8 @@ centred on its lot.
 
 ## Performance
 
-Measured on an M-series Mac at 160×45 in the Cyberpunk age (674 buildings): about
-**0.9 ms per frame** and 565 KB allocated per frame (the frame buffer and
+Measured on an M-series Mac at 160×45 in the Cyberpunk age (~615 buildings): about
+**0.3–0.9 ms per frame** and ~0.5 MB allocated per frame (the frame buffer and
 palette cache), plus **2.7 ms** to rebuild the world. The world is rebuilt only
 when the state's buildings change or the terminal resizes; per tick, only the
 snapshot fields change. The animation runs at about 8 fps, independent of the
@@ -111,7 +111,7 @@ static layers per (camera, time bucket).
 
 ## Integration
 
-- **Replace both `citymap` and `worldmap` with one metaphor.** The skyline is the city view. The world view is the same panorama widened: discovered factions appear as their own skylines on the far ridge (at war they are red-lit and send warbands, as allies they send caravans). The prototype has the warbands and caravans; the far-ridge civs are future work. There is one renderer and one grammar.
+- **Replace both `citymap` and `worldmap` with one metaphor.** The skyline is the city view, and the world view lives on its horizon: discovered civs are towns on the far ridge in relation colours (implemented), warbands and caravans come and go along the road (implemented). A production world view would widen this into its own panorama of those ridge towns. There is one renderer and one grammar.
 - **Commands.** `citymap` (or `skyline`) opens the full view. `citymap <building>` jumps the cursor to that building. On the main screen, the 40×15 compact view replaces the current map panel. The inspect status line always prints the real `build <key>`, so the view teaches the command vocabulary.
 - **Data.** Everything comes from `GameState`, and the renderer takes the snapshot only (no engine calls, so it's lock-safe). "New since your last visit" needs one thing the game doesn't have yet: a building-count snapshot saved at session end (a small addition to the save), which the renderer diffs against.
 - **Code.** `ui/skyline/` with `palette.go`, `sprite.go`, `arch.go`, `catalog.go`, `wonders.go`, `layout.go`, `render*.go`, `compact.go` and `chrome.go`, and a tview `Primitive` wrapping `render()` into the screen.
@@ -133,3 +133,20 @@ About **2–3 weeks for one engineer**:
 - **Fonts.** The HTML captures show hairline seams between half-block cells. Real terminals mostly don't, but some fonts render `▀▄` a pixel short. The art relies on half-blocks for slopes.
 - **Scale.** A max-level empire is ~1,000 buildings and ~5 screens of panorama. That's good for scrolling but not glanceable at full size, which is why the compact view and the minimap exist.
 - **It is a picture first.** The verb (inspect, `build <key>`, idle markers) makes it useful, but it will never be as dense as the economy tab. It should sell the fantasy and flag problems (dark districts, the harbinger, fires), not replace the numbers.
+
+## Running the prototype
+
+```bash
+go run ./lab/skyline -gen                 # replay the smoke bot (seed 7) and save states/ (about 10 min)
+go run ./lab/skyline -age industrial_age  # interactive viewer (keys above; [ ] walks the ages)
+go run ./lab/skyline -captures            # rewrite captures/ (index.html lists them)
+go run ./lab/skyline -sheet lab/skyline/captures/sprites   # sprite sheets of every form and wonder
+go test ./lab/skyline                     # exact size, determinism, stable placement
+```
+
+The states in `states/` are real `GameState` snapshots, taken from one greedy-bot
+playthrough (seed 7, trade routes opened as a player would). Each is taken at the
+moment its age became ready to advance, so it is as built-up as that age gets.
+Alongside them are `prev_<age>` (about two hours of play earlier, standing in for
+the last check-in), `primitive_early` (3 buildings), harbinger sightings, and one
+Digital Era catastrophe triggered through the dev force hook.

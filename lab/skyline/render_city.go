@@ -125,6 +125,13 @@ func textured(l *Lot, sl Slot, x, y int) bool {
 
 func (s *scene) windowLit(l *Lot, x, y int) bool {
 	on := hashf(l.Seed, x, y) < 0.15+0.8*l.Staff
+	if ep := s.w.St.PendingCatastrophe; ep != "" {
+		switch ep {
+		case "digital_era", "neon_era", "electric_era":
+			// the grid is down: a few generators and candles hold out
+			return hashf(l.Seed, x, y, 5) < 0.08
+		}
+	}
 	// a few windows change their minds every so often
 	if hash(l.Seed, x, y, s.v.Frame/48)%29 == 0 {
 		on = !on
