@@ -4,10 +4,10 @@
 
 - Always use `--ar 3:2 --chaos 55 --style raw --stylize 50`
 - Always append `--no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail`
-- River always occupies leftmost 25% of the image — rest is open terrain
+- River always occupies leftmost 25% of the image; the rest is open terrain
 - Save each output as the filename listed under each age
-- **Altitude**: 80,000 feet — SR-71 Blackbird altitude. Individual trees invisible. Forest = solid pixel color mass. Roads = hairline scratches. Rivers = thin colored lines.
-- **Style**: "pixel art format" at start + "in the old 2000's game view of Civilization 1" before the --no flag — this is what gives the Civ 1 tile aesthetic
+- **Altitude**: 80,000 feet (SR-71 Blackbird altitude). Individual trees invisible. Forest = solid pixel color mass. Roads = hairline scratches. Rivers = thin colored lines.
+- **Style**: "pixel art format" at start + "in the old 2000's game view of Civilization 1" before the --no flag. This is what gives the Civ 1 tile aesthetic
 
 ---
 
@@ -22,7 +22,7 @@ overhead map view in pixel art format, from 80,000 feet looking straight down, d
 
 ## stone_age
 
-    overhead map view in pixel art format, from 80,000 feet looking straight down, vast rocky dry plains region, terrain is a flat grey-brown-tan color wash with no individual boulders visible, scattered scrub as faint darker smudges across the ground, river as a thin pale line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, muted grey-brown-tan color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
+    overhead map view in pixel art format, from 80,000 feet looking straight down, vast rocky dry plains region, terrain is a flat gray-brown-tan color wash with no individual boulders visible, scattered scrub as faint darker smudges across the ground, river as a thin pale line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, muted gray-brown-tan color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
 **Dominant hex color:** `#7A6E55`
 **Output filename:** `assets/maps/stone_age.png`
@@ -49,7 +49,7 @@ overhead map view in pixel art format, from 80,000 feet looking straight down, v
 
 ## classical_age
 
-overhead map view in pixel art format, from 80,000 feet looking straight down, vast Mediterranean terrain region, terrain is a pale tan and limestone color wash, dark green scrub smudges scattered across warm sandy ground, no individual trees visible, river as a thin blue-grey line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, muted warm tan and sage green color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast Mediterranean terrain region, terrain is a pale tan and limestone color wash, dark green scrub smudges scattered across warm sandy ground, no individual trees visible, river as a thin blue-gray line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, muted warm tan and sage green color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
 **Dominant hex color:** `#C8B87A`
 **Output filename:** `assets/maps/classical_age.png`
@@ -85,7 +85,7 @@ overhead map view in pixel art format, from 80,000 feet looking straight down, v
 
 ## industrial_age
 
-overhead map view in pixel art format, from 80,000 feet looking straight down, vast brownfield terrain region, terrain is a grey-brown color wash, coal dust staining as darker smudge patches, hairline rail line scratches crossing the ground, no individual structures visible only tone variation, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, ash grey and dirty brown color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast brownfield terrain region, terrain is a gray-brown color wash, coal dust staining as darker smudge patches, hairline rail line scratches crossing the ground, no individual structures visible only tone variation, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, ash gray and dirty brown color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
 **Dominant hex color:** `#6B6B52`
 **Output filename:** `assets/maps/industrial_age.png`
@@ -94,7 +94,7 @@ overhead map view in pixel art format, from 80,000 feet looking straight down, v
 
 ## victorian_age
 
-overhead map view in pixel art format, from 80,000 feet looking straight down, vast semi-urban terrain region, terrain is a grey cobblestone color mass with small green park color squares, hairline avenue grid scratches barely visible, no individual trees only green smudge patches, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, warm grey-green color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast semi-urban terrain region, terrain is a gray cobblestone color mass with small green park color squares, hairline avenue grid scratches barely visible, no individual trees only green smudge patches, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, warm gray-green color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
 **Dominant hex color:** `#8A7E45`
 **Output filename:** `assets/maps/victorian_age.png`
@@ -103,7 +103,7 @@ overhead map view in pixel art format, from 80,000 feet looking straight down, v
 
 ## electric_age
 
-overhead map view in pixel art format, from 80,000 feet looking straight down, vast electrified city region, terrain is a warm amber and grey color mass, hairline telegraph wire grid scratches, early street grid barely visible, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, warm amber and dark grey color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast electrified city region, terrain is a warm amber and gray color mass, hairline telegraph wire grid scratches, early street grid barely visible, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, warm amber and dark gray color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
 **Dominant hex color:** `#8A7A4A`
 **Output filename:** `assets/maps/electric_age.png`
@@ -112,7 +112,7 @@ overhead map view in pixel art format, from 80,000 feet looking straight down, v
 
 ## modern_age
 
-overhead map view in pixel art format, from 80,000 feet looking straight down, vast urban region, terrain is a grey asphalt color mass with hairline street grid scratches, small green park color squares breaking the grey, no individual buildings visible only block-level tone variation, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, concrete grey with muted olive patches color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast urban region, terrain is a gray asphalt color mass with hairline street grid scratches, small green park color squares breaking the gray, no individual buildings visible only block-level tone variation, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, concrete gray with muted olive patches color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
 **Dominant hex color:** `#7A7A72`
 **Output filename:** `assets/maps/modern_age.png`
@@ -121,7 +121,7 @@ overhead map view in pixel art format, from 80,000 feet looking straight down, v
 
 ## atomic_age
 
-overhead map view in pixel art format, from 80,000 feet looking straight down, vast suburban grid region, terrain is a flat beige-grey color mass with regular hairline road grid scratches, small lawn green color squares, no individual structures visible only uniform tone, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, flat grey-beige color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast suburban grid region, terrain is a flat beige-gray color mass with regular hairline road grid scratches, small lawn green color squares, no individual structures visible only uniform tone, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, flat gray-beige color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
 **Dominant hex color:** `#8A9090`
 **Output filename:** `assets/maps/atomic_age.png`
@@ -139,7 +139,7 @@ overhead map view in pixel art format, from 80,000 feet looking straight down, v
 
 ## information_age
 
-overhead map view in pixel art format, from 80,000 feet looking straight down, vast dense city region, terrain is a cool steel-grey color mass with hairline street grid scratches, small blue-grey tone variation patches, tiny green plaza color squares, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, cool steel and slate color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast dense city region, terrain is a cool steel-gray color mass with hairline street grid scratches, small blue-gray tone variation patches, tiny green plaza color squares, river as a thin line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, cool steel and slate color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
 **Dominant hex color:** `#4A5E72`
 **Output filename:** `assets/maps/information_age.png`
@@ -148,7 +148,7 @@ overhead map view in pixel art format, from 80,000 feet looking straight down, v
 
 ## cyberpunk_age
 
-overhead map view in pixel art format, from 80,000 feet looking straight down, vast megacity region at night, terrain is a very dark grey color mass with faint neon purple and cyan color bleed patches, hairline street grid scratches glowing faintly, river as a thin dark line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, very dark grey with neon purple and cyan glow color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
+overhead map view in pixel art format, from 80,000 feet looking straight down, vast megacity region at night, terrain is a very dark gray color mass with faint neon purple and cyan color bleed patches, hairline street grid scratches glowing faintly, river as a thin dark line occupying only the leftmost 25% of the image, pure flat 2D top-down map texture, stylized painterly color washes, very dark gray with neon purple and cyan glow color field, in the old 2000's game view of Civilization 1 --no isometric 3D perspective characters buildings text UI labels icons people animals trees leaves roots individual plants close-up macro detail --ar 3:2 --chaos 55 --style raw --stylize 50
 
 **Dominant hex color:** `#1A1A2E`
 **Output filename:** `assets/maps/cyberpunk_age.png`

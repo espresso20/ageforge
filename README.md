@@ -7,7 +7,7 @@
 <h1 align="center">AgeForge</h1>
 
 <p align="center">
-  <em>Forge a civilization from nothing — all within your terminal.</em>
+  <em>Forge a civilization from nothing, all within your terminal.</em>
 </p>
 
 <p align="center">
@@ -38,11 +38,11 @@
 
 <br>
 
-AgeForge is a text-based idle/clicker game where you forge an empire from nothing, progressing through 22 ages of history — all within your terminal.
+AgeForge is a text-based idle/clicker game where you forge an empire from nothing and take it through 22 ages of history, all within your terminal.
 
 ## Overview
 
-Start in the Primitive Age with bare hands and 15 food. Gather resources, build structures, recruit villagers, research technologies, launch military expeditions, trade with factions, and advance through ages that span months of real-time play.
+A new game starts in the Primitive Age with 25 food and 50 wood. Gather resources, build structures, recruit workers, research technologies, send scouting expeditions and military campaigns, trade with other civilizations, and advance through ages that take days of real-time play.
 
 ## Features
 
@@ -50,18 +50,18 @@ Start in the Primitive Age with bare hands and 15 food. Gather resources, build 
 - **Building System**: 301 buildings (250 lineage buildings + 21 storage + 22 Wonders + 4 cultural monuments + 4 standalone: the Nano Foundry and 3 diplomatic buildings) with scaling costs and construction queues
 - **Worker System**: 12 domains (food, faith, knowledge, military, trade, engineering, hacker, astronaut, lumber, masonry, metallurgy, energy) with per-domain class progression and food economy
 - **Tech Tree**: 73 technologies with prerequisites and permanent bonuses
-- **Military**: 16 expeditions with risk/reward and defense ratings
+- **Military**: 13 campaigns that cost soldiers and 3 scouting expeditions that cost resources, each with a chance of failure and set rewards
 - **Epoch System**: 7 epochs with faith-gated event rolls, catastrophe choices from the Iron Era on (Endure/Succumb), and legacy bonuses that carry across runs
-- **Random Events**: 62 events (27 base + 35 epoch-exclusive) with streak balancing
+- **Random Events**: 61 events (26 base + 35 epoch-exclusive) with streak balancing
 - **Milestones**: 77 milestones across 6 chains with civilization titles and temporary speed boosts
-- **Age Progression**: 22 ages from Primitive to Transcendent with exponential requirements and building transformation on advance
+- **Age Progression**: 22 ages from Primitive to Transcendent with exponential requirements; on each advance, lineage buildings with a next tier can be upgraded to it (`upgrade`)
 - **Trade System**: 21 trade routes and resource exchange with supply/demand pressure
-- **Diplomacy**: 6 NPC factions with opinion tracking, gifts, and trade bonuses
+- **Diplomacy**: 11 civilizations with opinion tracking, gifts, alliances, trade deals and trade bonuses
 - **Prestige**: Reset-and-grow system with 9 upgrades and passive production bonuses (requires Modern Age)
-- **Speed System**: Wonder-based speed multipliers (+0.5x per wonder built)
-- **Full Wiki**: In-game wiki with live stats and complete documentation
-- **Tab-based TUI**: 10 tabs (Economy, Research, Military, Trade, Stats, Wiki, Map, Wonders, Logs, Epoch) with keyboard navigation
-- **Save/Load**: JSON save system with auto-save every 60s and offline progress
+- **Game Speed**: each wonder built raises the speed cap by 0.5x; set the speed with `speed`
+- **Command-driven interface**: everything is typed at one prompt; panels (research, army, trade, stats, wonders, logs, epoch, map and more) open by name, and `help` lists every command
+- **Wiki**: full player documentation at [ageforge.io/docs](https://ageforge.io/docs/)
+- **Save/Load**: JSON save system with auto-save every 60s and offline progress; saves live in `data/` next to the binary
 
 ## Build & Run
 
@@ -85,54 +85,60 @@ Or use `make`:
 ## How to Play
 
 ### Getting Started
-1. `gather wood` — collect wood (need 10 for first hut)
-2. `build hut` — build shelter (+2 population cap)
-3. `recruit worker` — recruit your first worker
-4. `assign worker food` — put them to work gathering food
-5. Keep ~1/3 of workers on food to sustain your population
+1. `build hut`: a hut costs 14 wood and gives +10 housing
+2. `recruit 5`: fill the new housing with workers
+3. `build gathering_camp`, then `assign gathering_camp 3`: put workers on food
+4. `gather wood`: top up by hand while production is small
+5. Workers eat food, so keep enough of them producing it
 
 ### Commands
-- `gather <resource> [n]` — manually gather resources
-- `build <building> [n]` — construct buildings
-- `recruit <type> [n]` — recruit villagers
-- `assign <building> [n|all]` — assign workers to a building
-- `unassign <building> [n|all]` — remove worker assignment
-- `research <tech_key>` — start researching a technology
-- `expedition <key>` — launch a military expedition
-- `trade <from> <to> <amount>` — exchange resources
-- `route start|stop <key>` — manage trade routes
-- `diplomacy <faction> <action>` — interact with factions
-- `upgrade <building>` — upgrade buildings to next tier
-- `prestige` — reset with bonuses (requires Modern Age)
-- `speed <multiplier>` — set game speed (requires wonders)
-- `status` — detailed overview
-- `save/load [name]` — save or load game
+The full list is in the in-game `help` panel and on the [Commands](https://ageforge.io/docs/#/commands) wiki page. The ones you will use most:
 
-### Navigation
-- F1-F9 — switch between tabs
-- F10 — Dev console tab (only visible after developer unlock)
-- ESC — auto-save and return to menu
-- Arrow keys / PgUp/PgDn — navigate wiki (in Wiki tab)
-- v — toggle verbose logs (in Logs tab)
+- `gather <food|wood|stone> [n]`: gather by hand (until the Medieval Age)
+- `build <building> [count|max]`: construct buildings
+- `upgrade`: list buildings you can upgrade; `upgrade <building> [count|all]` upgrades them to the next age tier
+- `recruit [count|max]`: recruit workers into free housing
+- `assign <building> [n|all]`: assign workers to a building
+- `unassign <building> [n|all]`: return workers to the idle pool
+- `research <tech>`: start researching a technology
+- `advance`: advance to the next age once it is ready (`plan advance` does it for you as soon as it is)
+- `plan`: queue builds, techs and trades that start when the resources come in
+- `campaign <key>`: wage a military campaign (costs soldiers)
+- `expedition <key>`: send a scouting expedition (costs resources)
+- `trade <give> <get> <amount to give>`: exchange resources
+- `trade route start|stop <route>`: manage trade routes
+- `factions` (alias `diplomacy`): open the Factions panel; `diplomacy ally|rival|gift|embargo|neutral <civ>` acts on a civilization
+- `wonder collect <resource|all> [amount|max]`: bank resources into the current wonder
+- `prestige`: view prestige status; `prestige confirm yes` resets with bonuses (requires Modern Age)
+- `speed [1.0|1.5|2.0|...]`: set game speed, up to your speed cap
+- `status` / `rates`: detailed overview / resource rate breakdown
+- `save [name]` / `load [name]` / `saves`: save, load or list saves
+- `quit`: save and quit
+
+### Keys
+- Tab / Shift+Tab: cycle command completions
+- ↑ / ↓: step through command history
+- PgUp / PgDn: scroll the main view
+- Esc: close the open panel; with no panel open, save, stop the game and return to the main menu
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the full dev guide — commit workflow, release process, test patterns, project structure, adding content, and how the math works.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the full dev guide: commit workflow, release process, test patterns, project structure, adding content, and how the math works.
 
-Active work is tracked on the [Project Board](https://trello.com/b/tf31C2cz/ageforge) — bugs, features, balance, and refactor work each have their own lane.
+Active work is tracked on the [Project Board](https://trello.com/b/tf31C2cz/ageforge). Bugs, features, balance and refactor work each have their own lane.
 
 ### Commit style
 
-Use `make commit` — it prompts you interactively and formats the message correctly:
+Use `make commit`. It prompts you interactively and formats the message correctly:
 
 ```
 What kind of change?
-  1  feat      — new feature or content
-  2  fix       — bug fix
-  3  balance   — tuning costs, rates, numbers
-  4  refactor  — cleanup, no behavior change
-  5  chore     — build/tooling/deps
-  6  docs      — docs/comments only
+  1  feat      - new feature or content
+  2  fix       - bug fix
+  3  balance   - tuning costs, rates, numbers
+  4  refactor  - cleanup, no behavior change
+  5  chore     - build/tooling/deps
+  6  docs      - docs/comments only
 
 Short summary (≤72 chars): add iron smeltery building
 Optional details (bullet then Enter, empty Enter when done):

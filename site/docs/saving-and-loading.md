@@ -1,22 +1,22 @@
 # Saving & Loading
 
-AgeForge keeps your civilization safe with named saves, a continuous autosave, and a full save browser. This page covers where saves live, the commands that manage them, and how to read the Load Game browser.
+AgeForge keeps your civilization in named saves, with a regular autosave and a save browser. This page covers where saves live, the commands that manage them, and how to read the Load Game browser.
 
 ---
 
 ## Starting a new game
 
-When you choose **New Game**, you're prompted to name your civilization — pre-filled with a randomly generated name. Press **Enter** to accept it, type your own, or press **Tab** to roll a fresh suggestion. That name becomes your active save, and the game autosaves into it from there.
+When you choose **New Game**, the game asks you to name your civilization and fills in a random name. Press **Enter** to accept it, type your own, or press **Tab** for a new suggestion. That name becomes your active save, and the game autosaves into it from then on.
 
 ---
 
 ## Where saves live
 
-Save files are written to **your active account's** saves folder — `data/accounts/<account_id>/saves/*.json`, relative to the directory you launch the game from. One file per save. The `save`/`load` commands and the **Load Game** browser all read and write the same files, so a save made one way shows up the other.
+Save files go in **your active account's** saves folder, `data/accounts/<account_id>/saves/*.json`, inside the `data/` folder next to the `ageforge` binary. There is one file per save. The `save`/`load` commands and the **Load Game** browser all read and write the same files, so a save made one way shows up the other.
 
 Saves are **per-account**: each account keeps its own `saves/` folder, so switching accounts changes which saves you see, and one account's saves never mix with another's. See [Account & Recovery](account.md) for how accounts and their slots are laid out.
 
-> **Upgrading from an older version?** Earlier builds kept a single flat `data/saves/` folder. On first launch the game **migrates that layout automatically and non-destructively** — your existing saves move into your account's `data/accounts/<id>/saves/` slot, and **nothing is deleted**. You don't have to do anything.
+> **Saves from an older version:** older builds kept a single flat `data/saves/` folder. On first launch the game moves those saves into your account's `data/accounts/<id>/saves/` slot. Nothing is deleted, and you don't have to do anything.
 
 ---
 
@@ -26,31 +26,31 @@ Saves are **per-account**: each account keeps its own `saves/` folder, so switch
 |---|---|
 | `save` | Opens an **Overwrite / Branch** prompt for your current run (see below) |
 | `save <name>` | **Branches** a new save with that name off your current run; autosave then follows it |
-| `load` | Opens the **Load Game** browser (your lineage tree) to pick which save/branch to load |
+| `load` | Opens the **Load Game** browser (your save tree) to pick which save or branch to load |
 | `load <name>` | Loads that named save directly |
 | `saves` (or `save list`) | List all save files |
-| `Esc` | Quick-save to your current (active) save |
+| `Esc` | Closes the open panel. With no panel open, saves to your active save, stops the game and returns to the main menu |
 
 ```
 save           # prompt: Overwrite this run, or Branch a new save?
 save hero      # branch a new save named "hero" off the current run
-load           # open the Load Game browser to pick a save/branch
+load           # open the Load Game browser to pick a save or branch
 load hero      # load the save named "hero" directly
 saves
 ```
 
-A bare `load` (no name) **opens the Load Game browser** — the lineage tree of every save — so you choose which save/branch to load instead of having a slot picked for you. You can open it mid-game; pressing `Esc` in the browser returns you to your current run without loading anything. `load <name>` skips the browser and loads that save directly.
+A bare `load` (no name) **opens the Load Game browser**, the tree of every save, so you choose which save or branch to load. You can open it mid-game; pressing `Esc` in the browser returns you to your current run without loading anything. `load <name>` skips the browser and loads that save directly.
 
 ---
 
 ## Active save slot
 
-The game remembers the last slot you explicitly saved to or `load`ed — your **active** save.
+The game remembers the last slot you saved to or `load`ed by name. That is your **active** save.
 
-- Until you've named a save or loaded one this session, the active slot defaults to `autosave`.
+- Until you've named a save or loaded one this session, the active slot is `autosave`.
 - Once you branch to `hero` or `load hero`, the active slot is `hero` and autosave follows it.
 
-The periodic autosave and `Esc` quick-save both write to your **active** save, continuously overwriting it. Your current game *is* the autosave — there's no separate slot quietly shadowing it.
+The periodic autosave and the save on `Esc` both write to your **active** save, overwriting it each time. Your current game *is* the autosave; there is no separate hidden slot.
 
 ---
 
@@ -58,30 +58,30 @@ The periodic autosave and `Esc` quick-save both write to your **active** save, c
 
 A bare `save` opens a prompt with two choices:
 
-- **Overwrite** — write your current run to the active slot now (the same thing autosave and `Esc` do, on demand).
-- **Branch new** — fork a brand-new save. You're given a generated name (editable; **Tab** rolls a fresh one, **Enter** confirms). The new save's *parent* is the save you branched from, and **autosave switches to follow the new branch** — so the old save is left frozen exactly at the branch point.
+- **Overwrite** writes your current run to the active slot now (what autosave does, on demand).
+- **Branch new** starts a new save. You get a generated name (edit it, press **Tab** for another, **Enter** to confirm). The new save's *parent* is the save you branched from, and **autosave switches to the new branch**, so the old save stays exactly as it was at the branch point.
 
 `save <name>` skips the prompt and branches straight to that name.
 
-This is the way to preserve a moment without stopping play: branch before a prestige, a risky catastrophe, or any decision you might want to revisit. Your old save stays as it was; you keep playing on the new branch. Branched saves are ordinary files — they appear in the `saves` list and the Load Game browser alongside everything else. (The save names must be valid and unique; branching to a name that's already taken is rejected.)
+Branching keeps a moment without stopping play: branch before a prestige, a risky catastrophe, or any decision you might want to revisit. Your old save stays as it was while you keep playing on the new branch. Branched saves are ordinary files and appear in the `saves` list and the Load Game browser alongside everything else. Save names must be valid and unique; branching to a name that's already taken is refused.
 
 ---
 
 ## Autosave
 
-The game autosaves periodically and whenever you press `Esc`, writing to your **active** save — so your current game is always kept up to date on disk. To preserve a specific point you don't want overwritten, save it under a new name (or duplicate it with `c` in the Load Game browser).
+The game autosaves every 60 seconds to your **active** save, and saves again when `Esc` takes you back to the main menu, so the file on disk is never more than about a minute behind your game. To keep a point you don't want overwritten, save it under a new name (or duplicate it with `c` in the Load Game browser).
 
 ---
 
 ## The Load Game browser
 
-Choosing **Load Game** from the main menu — or typing a bare `load` mid-game — opens a save browser that lists every save belonging to your **active account** (under `data/accounts/<id>/saves/`). Highlighting a save updates a **detail pane** showing everything you need to size up that save before loading it: its age and epoch, population, buildings, wonders, milestones, techs, soldiers, prestige, [morale](morale.md), its account attribution (*this account* / *another account* / *pre-account*), a ⚠ warning if a catastrophe is pending, the exact save time, and — for branched saves — a **Branched from** line naming the save it forked off. Opened mid-game, `Esc` returns you to your current run without loading anything.
+Choosing **Load Game** from the main menu, or typing a bare `load` mid-game, opens a browser that lists every save belonging to your **active account** (under `data/accounts/<id>/saves/`). Highlighting a save fills a **detail pane** with what you need to judge it before loading: its age and epoch, population, buildings, wonders, milestones, techs, soldiers, prestige, [morale](morale.md), which account made it (*this account* / *another account* / *pre-account*), a ⚠ warning if a catastrophe is pending, the exact save time, and for branched saves a **Branched from** line naming its parent. Opened mid-game, `Esc` returns you to your current run without loading anything.
 
-**The lineage tree.** Saves aren't shown as a flat list — they're arranged as a **lineage tree**. When you [branch](saving-and-loading.md#branching-your-save) a new save off your current run, it appears **indented beneath its parent** with tree connectors (`├─`, `└─`), so you can see at a glance which saves descend from which. Top-level roots (saves you started fresh, plus any orphans) are ordered most-recent first, and each parent's children are likewise ordered most-recent first.
+**The save tree.** Saves are arranged as a **tree**, not a flat list. When you [branch](saving-and-loading.md#branching-your-save) a new save off your current run, it appears **indented beneath its parent** with tree connectors (`├─`, `└─`), so you can see which saves descend from which. Top-level saves (ones you started fresh, plus any orphans) are ordered most recent first, and so are each parent's children.
 
-A **● active** marker shows which save your game is currently autosaving into — the save the periodic autosave and `Esc` quick-save follow.
+A **● active** marker shows which save your game is autosaving into.
 
-If a save's parent has been **deleted**, the child can no longer point at it, so it becomes an **orphan** and is promoted to the top level of the tree (its detail pane marks the lost parent as *detached*). **Renaming** a save, by contrast, **keeps its children attached** — they're automatically re-parented to the new name (and re-signed, so they don't load flagged as modified), so the lineage follows the rename intact. Children that are themselves flagged as *modified* are left untouched, so renaming never launders a tampered save's badge.
+If a save's parent is **deleted**, the child becomes an **orphan** and moves to the top level of the tree (its detail pane marks the lost parent as *detached*). **Renaming** a save keeps its children attached: they are re-pointed at the new name and re-signed, so they don't load flagged as modified. Children that are already flagged *modified* are left alone, so a rename never clears a tampered save's badge.
 
 **Keys inside the browser:**
 
@@ -92,18 +92,18 @@ If a save's parent has been **deleted**, the child can no longer point at it, so
 | `d` | Delete the highlighted save (asks you to confirm first) |
 | `r` | Rename the highlighted save |
 | `c` | Duplicate the highlighted save |
-| `Esc` | Return to where you opened it from — the main menu, or your current run if opened mid-game |
+| `Esc` | Return to where you opened it from: the main menu, or your current run if opened mid-game |
 
 ---
 
 ## Save badges
 
-Saves can carry a row tag in the list, explained on-screen in a bordered **Key** box:
+Saves can carry a tag in the list, explained on screen in a bordered **Key** box:
 
 | Tag | Meaning |
 |---|---|
 | ★ auto | The automatic save slot |
-| ● active | The save your game is autosaving into (the active slot the autosave follows) |
+| ● active | The save your game is autosaving into |
 | ⚠ modified | The save file was edited outside the game (integrity check failed) |
 | ⚠ corrupt | The file could not be read. It is still listed but dimmed, and cannot be loaded |
 
@@ -111,12 +111,12 @@ Saves can carry a row tag in the list, explained on-screen in a bordered **Key**
 
 ## Save integrity
 
-Saves are signed. If a save file is edited outside the game, the integrity check fails and the file is flagged `⚠ modified` in the browser. A `⚠ corrupt` file is one the game couldn't read at all — it stays in the list, dimmed, but cannot be loaded.
+Saves are signed. If a save file is edited outside the game, the integrity check fails and the browser flags the file `⚠ modified`. A `⚠ corrupt` file is one the game couldn't read at all; it stays in the list, dimmed, but cannot be loaded.
 
 ---
 
 ## Tips
 
-- **Branch at milestones.** `save iron_age_start` forks a new save at that moment and moves autosave onto it, freezing the old run where it was — your snapshot can't be overwritten.
-- **Duplicate before risky moves.** Press `c` in the Load Game browser to clone a save before a prestige, catastrophe, or any decision you might want to undo. (Branching does much the same, but keeps you playing on the new copy rather than the old one.)
-- **Your active save is overwritten constantly.** Autosave keeps your current game up to date — but that means it's not a snapshot. To keep a run exactly as it is right now, duplicate it (`c`) or save it under a new name before risky moves.
+- **Branch at milestones.** `save iron_age_start` makes a new save at that moment and moves autosave onto it. The old run stays where it was, and autosave can't overwrite it.
+- **Duplicate before risky moves.** Press `c` in the Load Game browser to copy a save before a prestige, a catastrophe, or any decision you might want to undo. Branching does much the same, but you keep playing on the new copy instead of the old one.
+- **Your active save is overwritten all the time.** Autosave keeps it matching your current game, so it is not a snapshot. To keep a run exactly as it is now, duplicate it (`c`) or save it under a new name.

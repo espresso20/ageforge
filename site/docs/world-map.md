@@ -1,20 +1,20 @@
 # The World Map
 
-Open it with `worldmap`. The **World Map** zooms out from your city to the **wider world** — a single **seeded world** drawn as one continent, with elevation, biomes, coastlines and rivers. That geography is **age-independent**: the same land, the same shoreline, the same mountain ranges and rivers turn up **every game on your account**. It is the strategic overview to the [City Map](city-map.md)'s close-up — where the City Map is *your city*, the World Map is *the world your city sits in*.
+Open it with `worldmap`. The **World Map** zooms out from your city to the **wider world**: one **seeded continent** with elevation, biomes, coastlines and rivers. The geography does not depend on your age. The same land, shoreline, mountain ranges and rivers turn up in **every game on your account**. The [City Map](city-map.md) shows *your city*; the World Map shows *the world your city sits in*.
 
-What changes as you advance is not the land but the **cartographic medium** it is drawn in. Each age renders the very same continent the way that era would have committed a map to a surface — scratched in charcoal, pecked into stone, inked on vellum, printed as a satellite mosaic, projected as a hologram. You are watching one world be re-drawn by seventeen different hands.
+What changes as you advance is the **medium** the map is drawn in. Each age renders the same continent the way that era would have put a map on a surface: scratched in charcoal, pecked into stone, inked on vellum, printed as a satellite mosaic, projected as a hologram. Over seventeen ages you see one world redrawn seventeen ways.
 
-> This page covers the **World Map** (`worldmap`), the wider-world view. For the top-down rendering of your own settlement, see [The City Map](city-map.md) — a separate view.
+> This page covers the **World Map** (`worldmap`). For the top-down view of your own settlement, see [The City Map](city-map.md).
 
 ---
 
-## Per-age cartographic mediums (ages 1–17)
+## Map styles by age (ages 1 to 17)
 
-For the seventeen planetary ages the World Map is a **map of land**. The continent never moves; only the medium does.
+For the seventeen planetary ages the World Map is a **map of land**. The continent never moves; only the medium changes.
 
 | Age | Medium | Look |
 |---|---|---|
-| **1 · Primitive** | Charcoal | Dark slate sea, grainy charcoal land, a broken chalk coast and ochre mountain carets — a cave sketch. |
+| **1 · Primitive** | Charcoal | Dark slate sea, grainy charcoal land, a broken chalk coast and ochre mountain carets, like a cave sketch. |
 | **2 · Stone** | Petroglyph | Light pecked sandstone, carved-groove coastline, red-ochre carvings. |
 | **3 · Bronze** | Clay tablet | Embossed terracotta, pressed cuneiform-style grooves, a broken-corner rim. |
 | **4 · Iron** | Hide | Tanned leather with burnt, scorched edges and a soot-ink coastline. |
@@ -25,42 +25,44 @@ For the seventeen planetary ages the World Map is a **map of land**. The contine
 | **9 · Industrial** | Ordnance survey | Brown contour isolines and a printed grid on drab paper. |
 | **10 · Victorian** | Tinted lithograph | Soft pastel biome washes laid over a fine black outline. |
 | **11 · Electric** | Blueprint | Deep Prussian-blue cyanotype, white technical linework, registration marks. |
-| **12 · Atomic** | Retro atlas | Bold flat mid-century poster colours and halftone dots. |
-| **13 · Modern** | Satellite | Photographic depth-banded ocean, natural greens, rock and snow — no outline. |
-| **14 · Information** | Vector / GPS | A pale, flat web-map threaded with an amber road network. |
+| **12 · Atomic** | Retro atlas | Bold flat mid-century poster colors and halftone dots. |
+| **13 · Modern** | Satellite | Photographic depth-banded ocean, natural greens, rock and snow, with no outline. |
+| **14 · Information** | Vector / GPS | A pale, flat web map threaded with an amber road network. |
 | **15 · Digital** | Pixel | Chunky 8-bit dithered blocks in a limited retro palette. |
 | **16 · Cyberpunk** | Neon | A black field under a cyan holographic grid and contour isolines, magenta bloom. |
 | **17 · Fusion** | Hologram | A volumetric gold/cyan contour projection with a scanline shimmer. |
 
 ---
 
-## Cosmic strategic views (ages 18–22)
+## Star maps (ages 18 to 22)
 
-Once you leave the planet the World Map **stops being a map of land**. There is no more coastline to draw — so from the Space Age on it becomes a **strategic star-map**: **your empire** against the **rival diplomacy factions** competing for control of the same space.
+Once you leave the planet there is no coastline left to draw, so from the Space Age on the World Map becomes a **strategic star map**: **your empire** against the **rival civilizations** you deal with in diplomacy, competing for the same space.
 
-Faction standing reads the **same everywhere**, through signal colours:
+Each civilization's status shows in the same colors on every star map:
 
-- **At war** — red
-- **Ally** — green
-- **Mercantile** — gold
-- **Neutral** — steel-blue
+| Status | Color |
+|---|---|
+| At war | Red |
+| Ally | Green |
+| Mercantile | Gold |
+| Neutral | Steel blue |
 
-Your own seat is always the **command hub** at the heart of the view.
+Your own seat is always the **command hub** at the center of the view.
 
-These views stay dark on every theme, light ones included — space is dark. On the planetary maps, civilization markers stay marker-bright against the map's own canvas whatever theme you use.
+These views stay dark on every theme, light ones included, because space is dark. On the planetary maps, civilization markers stay bright against the map's own canvas whatever theme you use.
 
 | Age | View | Shows |
 |---|---|---|
 | **18 · Space** | Home cluster | Your command hub and rival colonies, their spheres of influence, trade lanes (gold) and conflict lanes (dashed red). |
-| **19 · Interstellar** | Route network | Star systems webbed together by hyperspace lanes — connectivity is the whole picture. |
-| **20 · Galactic** | Galactic dominion | A spiral galaxy carved into territorial sectors by faction; your home empire commands the core. |
+| **19 · Interstellar** | Route network | Star systems linked by hyperspace lanes. The view is about who connects to whom. |
+| **20 · Galactic** | Galactic dominion | A spiral galaxy divided into territorial sectors by civilization, with your home empire holding the core. |
 | **21 · Quantum** | Superposition | Empires as ghosted probability clouds over a wave-interference field, contested where they overlap. |
-| **22 · Transcendent** | Ascension lattice | A luminous sacred-geometry mandala with empires woven onto its vertices, your ascended core at the centre. |
+| **22 · Transcendent** | Ascension lattice | A luminous sacred-geometry mandala with empires woven onto its vertices, your core at the center. |
 
 ---
 
-## Driven by your game, fixed to your account
+## Drawn from your game, fixed to your account
 
-The cosmic views are not decoration — they read your **real game state**. The factions on the star-map are the ones you have actually **discovered**; their size tracks their **strength**, their colour your **standing** with them, and the lanes between you your live **war status** and **trade**. Meet a new civilization, win or lose a war, sign a trade route, and the map redraws to match.
+The star maps read your **real game state**. The civilizations shown are the ones you have **discovered**. Their size follows their **strength**, their color your **status** with them, and the lanes between you show **war** and **trade** as they stand now. Meet a new civilization, win or lose a war, or start a trade route, and the map redraws to match.
 
-The geography underneath is the opposite kind of thing: **deterministic**. Your account is seeded to one continent, so every age re-draws the **same land** in a new medium — advance an age and you are looking at the world you already know, in a hand you have not seen before.
+The geography underneath does not change. Your account is seeded to one continent, so every age redraws the **same land** in a new medium: advance an age and you see the world you already know, drawn in a new style.

@@ -26,7 +26,7 @@ func Epochs() []EpochDef {
 			Icon: "◈", Color: "white",
 			PrimaryResource: "wood", EnergyResource: "food",
 			CatastropheKey: "meteor_impact",
-			Description:    "Humanity's first steps — wood, stone, and fire.",
+			Description:    "Humanity's first steps with wood, stone and fire.",
 		},
 		{
 			Name: "Iron Era", Key: "iron_era", Order: 1,
@@ -42,7 +42,7 @@ func Epochs() []EpochDef {
 			Icon: "⚙", Color: "yellow",
 			PrimaryResource: "steel", EnergyResource: "coal",
 			CatastropheKey: "industrial_collapse",
-			Description:    "Steam, steel, and global ambition.",
+			Description:    "Steam and steel carry trade around the globe.",
 		},
 		{
 			Name: "Electric Era", Key: "electric_era", Order: 3,
@@ -58,7 +58,7 @@ func Epochs() []EpochDef {
 			Icon: "▣", Color: "blue",
 			PrimaryResource: "data", EnergyResource: "electricity",
 			CatastropheKey: "digital_collapse",
-			Description:    "Data flows become the rivers of power.",
+			Description:    "Data becomes the thing everyone wants.",
 		},
 		{
 			Name: "Neon Era", Key: "neon_era", Order: 5,
@@ -116,7 +116,7 @@ func CatastropheInfo(epochKey string) (name, flavor string) {
 			"Industrial warfare tears civilization apart. The factories are ash."
 	case "electric_era":
 		return "The Nuclear Exchange",
-			"Nations unleash the atom. Cities become glass."
+			"Nations turn the atom on each other. Cities become glass."
 	case "digital_era":
 		return "The Great Hack",
 			"Every system falls silent. The AIs turn on their creators."
@@ -157,54 +157,54 @@ func GoodEpochEvents() []EpochEventDef {
 		// --- Minor (any culture level) ---
 		{
 			Key: "age_of_plenty", Name: "Age of Plenty", Type: "good_minor",
-			FlavorText: "Harvests overflow, rivers run clear. Production surges across all domains.",
+			FlavorText: "Harvests overflow and the rivers run clear. All production +100% for ~7m 12s.",
 			Duration:   216, // ~7 min real
 		},
 		{
 			Key: "population_surge", Name: "Population Surge", Type: "good_minor",
-			FlavorText: "A generation of plenty — workers flock to your banner.",
+			FlavorText: "A generation of plenty brings new hands. Your population grows by 15%.",
 			Duration:   0, // instant: +15% workers added
 		},
 		{
 			Key: "ancient_cache", Name: "Ancient Cache", Type: "good_minor",
-			FlavorText: "Explorers uncover a sealed vault of ancient stores.",
+			FlavorText: "Explorers open a sealed vault of ancient stores. Every unlocked resource gains 40% of its storage.",
 			Duration:   0, // instant: fills 40% of every resource's storage
 		},
 		{
 			Key: "trade_winds", Name: "Trade Winds", Type: "good_minor",
-			FlavorText: "A favorable wind opens all trade routes and multiplies gold income.",
+			FlavorText: "A steady wind fills the sails. Gold +5/tick for ~4m 48s.",
 			Duration:   144, // ~5 min
 		},
 		{
 			Key: "cultural_festival", Name: "Cultural Festival", Type: "good_minor",
-			FlavorText: "A grand festival unites your people. Culture and faith surge.",
+			FlavorText: "A grand festival brings everyone together. Culture +30% and faith +20% of what you hold, then culture +1/tick and faith +1/tick for ~4m 48s.",
 			Duration:   144, // ~5 min
 		},
 		// --- Major (medium culture required) ---
 		{
 			Key: "grand_discovery", Name: "The Grand Discovery", Type: "good_major",
-			FlavorText: "Scholars make a breakthrough. Three technologies complete themselves.",
+			FlavorText: "Scholars make a breakthrough. Up to 3 techs you can research now are completed for free.",
 			Duration:   0, // instant: complete 3 free techs
 		},
 		{
 			Key: "worker_innovation", Name: "Worker Innovation", Type: "good_major",
-			FlavorText: "A new method transforms your workforce — output climbs permanently.",
+			FlavorText: "A better way of working spreads through the workshops. All production +10%, permanently.",
 			Duration:   0, // instant: permanent +10% production_all
 		},
 		{
 			Key: "architects_gift", Name: "The Architect's Gift", Type: "good_major",
-			FlavorText: "A master architect offers designs freely. Ten buildings rise without cost.",
+			FlavorText: "A master architect gives away his designs. You get 10 free copies of the building you have the most of.",
 			Duration:   0, // instant: 10 free buildings
 		},
 		{
 			Key: "peaceful_century", Name: "Peaceful Century", Type: "good_major",
-			FlavorText: "An era of peace descends. No disasters. Production climbs.",
+			FlavorText: "An era of peace settles in. All production +20% for ~9m 36s.",
 			Duration:   288, // ~10 min
 		},
 		// --- Legendary (high culture, rare) ---
 		{
 			Key: "epoch_blessing", Name: "Epoch Blessing", Type: "good_legendary",
-			FlavorText: "The heavens smile on your civilization. A permanent golden age begins.",
+			FlavorText: "The heavens smile on your civilization. All production +15%, permanently.",
 			Duration:   0, // instant: permanent +15% production_all; recorded in history
 		},
 	}
@@ -215,42 +215,42 @@ func ChallengingEpochEvents() []EpochEventDef {
 	return []EpochEventDef{
 		{
 			Key: "the_famine", Name: "The Famine", Type: "bad_challenging",
-			FlavorText: "Crops wither. Granaries empty. Your people grow desperate.",
+			FlavorText: "Crops wither and the granaries run empty. Food -3/tick for ~4m.",
 			Duration:   120,
 		},
 		{
 			Key: "merchant_betrayal", Name: "Merchant Betrayal", Type: "bad_challenging",
-			FlavorText: "Your trading partners vanish with the gold. Markets collapse.",
+			FlavorText: "Your trading partners vanish with 50% of your gold. Gold -2/tick for ~2m 24s.",
 			Duration:   72,
 		},
 		{
 			Key: "the_great_fire", Name: "The Great Fire", Type: "bad_challenging",
-			FlavorText: "Flames sweep the city. Buildings crumble before the dawn.",
+			FlavorText: "Flames sweep the city. Up to 8 buildings burn down.",
 			Duration:   0, // instant: 8 random buildings destroyed
 		},
 		{
 			Key: "epidemic", Name: "Epidemic", Type: "bad_challenging",
-			FlavorText: "A plague moves swiftly through your population. Workers fall silent.",
+			FlavorText: "A plague moves through your population. 20% of your workers die, and food -1.5/tick for ~6m.",
 			Duration:   180,
 		},
 		{
 			Key: "resource_drought", Name: "Resource Drought", Type: "bad_challenging",
-			FlavorText: "The era's vital resource dries up. Supply chains buckle.",
+			FlavorText: "The epoch's main building material runs short. Its production -3/tick for ~3m.",
 			Duration:   90,
 		},
 		{
 			Key: "political_instability", Name: "Political Instability", Type: "bad_challenging",
-			FlavorText: "Factions tear at the throne. Faith collapses. The military is paralyzed.",
+			FlavorText: "Rival courts tear at the throne. You lose 60% of your faith, and knowledge -2/tick for ~2m.",
 			Duration:   60,
 		},
 		{
 			Key: "economic_crash", Name: "Economic Crash", Type: "bad_challenging",
-			FlavorText: "Markets implode. Gold vanishes. Building costs skyrocket.",
+			FlavorText: "Markets implode. You lose 50% of your gold, and gold -3/tick for ~7m 12s.",
 			Duration:   216,
 		},
 		{
 			Key: "the_dark_age", Name: "The Dark Age", Type: "bad_challenging",
-			FlavorText: "Knowledge fades. Research halts. Your scholars fall silent.",
+			FlavorText: "Your scholars fall silent. Current research is canceled with no refund, you lose 80% of your knowledge, and knowledge -3/tick for ~4m 48s.",
 			Duration:   144,
 		},
 	}

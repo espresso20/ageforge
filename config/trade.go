@@ -132,7 +132,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			TicksPerRun: 10,
 			Export:      map[string]float64{"food": 10},
 			Import:      map[string]float64{"wood": 8},
-			Description: "Trade surplus food for wood with nearby villages.",
+			Description: "Send surplus food to nearby villages for wood.",
 		},
 		{
 			Name: "Stone Trade", Key: "stone_trade",
@@ -140,7 +140,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			TicksPerRun: 12,
 			Export:      map[string]float64{"wood": 15},
 			Import:      map[string]float64{"stone": 12},
-			Description: "Exchange timber for quarried stone.",
+			Description: "Send wood to the quarries for stone.",
 		},
 		{
 			Name: "Gold Caravan", Key: "gold_caravan",
@@ -148,7 +148,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			TicksPerRun: 15,
 			Export:      map[string]float64{"stone": 50},
 			Import:      map[string]float64{"gold": 5},
-			Description: "Send stone caravans in exchange for gold.",
+			Description: "Send stone caravans out for gold.",
 		},
 		{
 			Name: "Silk Road", Key: "silk_road",
@@ -156,7 +156,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			TicksPerRun: 20,
 			Export:      map[string]float64{"gold": 30},
 			Import:      map[string]float64{"culture": 80},
-			Description: "Trade along the fabled Silk Road for cultural riches.",
+			Description: "Send gold along the Silk Road for culture.",
 		},
 		{
 			Name: "Spice Trade", Key: "spice_trade",
@@ -164,7 +164,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			TicksPerRun: 18,
 			Export:      map[string]float64{"gold": 100},
 			Import:      map[string]float64{"food": 200, "culture": 50},
-			Description: "Import exotic spices and cultural goods from distant lands.",
+			Description: "Pay gold to distant lands for spiced food and culture.",
 		},
 		{
 			Name: "Colonial Exports", Key: "colonial_exports",
@@ -172,7 +172,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			TicksPerRun: 15,
 			Export:      map[string]float64{"food": 500},
 			Import:      map[string]float64{"gold": 150},
-			Description: "Export food supplies to colonial settlements.",
+			Description: "Sell food to colonial settlements for gold.",
 		},
 		// --- Colonial → Industrial gap fillers (Trade Expansion) ---
 		// This band was thin (only spice_trade + colonial_exports). These six
@@ -184,7 +184,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			TicksPerRun: 16,
 			Export:      map[string]float64{"stone": 300, "wood": 200},
 			Import:      map[string]float64{"gold": 90},
-			Description: "Run armed convoys of bulk goods between city-states for coin.",
+			Description: "Run armed convoys of stone and wood between city-states for gold.",
 		},
 		{
 			Name: "Triangular Trade", Key: "triangular_trade",
@@ -192,7 +192,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			TicksPerRun: 18,
 			Export:      map[string]float64{"food": 400, "gold": 60},
 			Import:      map[string]float64{"culture": 120, "knowledge": 80},
-			Description: "A three-way colonial exchange of provisions, coin, and ideas.",
+			Description: "A three-way colonial exchange: send food and gold for culture and knowledge.",
 		},
 		{
 			Name: "Tea Clippers", Key: "tea_clippers",
@@ -200,7 +200,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			TicksPerRun: 20,
 			Export:      map[string]float64{"gold": 250},
 			Import:      map[string]float64{"food": 600, "culture": 90},
-			Description: "Fast clipper ships race exotic goods home from distant ports.",
+			Description: "Fast clippers trade gold in distant ports for food and culture.",
 		},
 		{
 			Name: "Coal Barges", Key: "coal_barges",
@@ -208,31 +208,31 @@ func BaseTradeRoutes() []TradeRouteDef {
 			TicksPerRun: 14,
 			Export:      map[string]float64{"coal": 300},
 			Import:      map[string]float64{"gold": 220, "iron": 150},
-			Description: "Barge coal downriver to foundries in exchange for gold and pig iron.",
+			Description: "Barge coal downriver to the foundries for gold and iron.",
 		},
 		{
 			Name: "Cotton Exchange", Key: "cotton_exchange",
-			MinAge: "industrial_age", RequiredBld: "seaport", MinCount: 1,
+			MinAge: "industrial_age", RequiredBld: "stock_exchange", MinCount: 1,
 			TicksPerRun: 16,
 			Export:      map[string]float64{"gold": 400},
 			Import:      map[string]float64{"culture": 200, "knowledge": 150},
-			Description: "Trade raw materials through the great industrial cotton exchange.",
+			Description: "Pay gold at the cotton exchange for culture and knowledge.",
 		},
 		{
 			Name: "Steamship Line", Key: "steamship_line",
-			MinAge: "industrial_age", RequiredBld: "seaport", MinCount: 2,
+			MinAge: "industrial_age", RequiredBld: "harbor_authority", MinCount: 2,
 			TicksPerRun: 18,
 			Export:      map[string]float64{"steel": 250, "coal": 200},
 			Import:      map[string]float64{"gold": 900},
-			Description: "A transoceanic steamship line hauling steel and fuel for heavy coin.",
+			Description: "A steamship line hauls steel and coal across the ocean for gold.",
 		},
 		{
 			Name: "Rail Freight", Key: "rail_freight",
-			MinAge: "industrial_age", RequiredBld: "steam_works", MinCount: 1,
+			MinAge: "industrial_age", RequiredBld: "iron_works_complex", MinCount: 1,
 			TicksPerRun: 12,
 			Export:      map[string]float64{"iron": 200},
 			Import:      map[string]float64{"gold": 100, "coal": 50},
-			Description: "Ship iron ore by rail for gold and coal.",
+			Description: "Ship iron by rail for gold and coal.",
 		},
 		{
 			Name: "Oil Pipeline", Key: "oil_pipeline",
@@ -240,7 +240,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			TicksPerRun: 15,
 			Export:      map[string]float64{"oil": 100},
 			Import:      map[string]float64{"gold": 300},
-			Description: "Pipe crude oil to refineries for gold.",
+			Description: "Pipe oil to the refineries for gold.",
 		},
 		{
 			Name: "Power Exchange", Key: "power_exchange",
@@ -248,7 +248,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			TicksPerRun: 10,
 			Export:      map[string]float64{"electricity": 500},
 			Import:      map[string]float64{"gold": 200},
-			Description: "Sell surplus electricity on the power grid.",
+			Description: "Sell surplus electricity on the grid for gold.",
 		},
 		{
 			Name: "Data Trade", Key: "data_trade",
@@ -256,7 +256,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			TicksPerRun: 10,
 			Export:      map[string]float64{"data": 100},
 			Import:      map[string]float64{"gold": 500},
-			Description: "Monetize data through digital marketplaces.",
+			Description: "Sell data on digital marketplaces for gold.",
 		},
 		{
 			Name: "Crypto Market", Key: "crypto_market",
@@ -264,7 +264,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			TicksPerRun: 8,
 			Export:      map[string]float64{"crypto": 50},
 			Import:      map[string]float64{"gold": 1000},
-			Description: "Trade cryptocurrency on underground exchanges.",
+			Description: "Sell crypto on underground exchanges for gold.",
 		},
 		{
 			Name: "Fusion Export", Key: "fusion_export",
@@ -272,23 +272,23 @@ func BaseTradeRoutes() []TradeRouteDef {
 			TicksPerRun: 12,
 			Export:      map[string]float64{"electricity": 200},
 			Import:      map[string]float64{"gold": 1000},
-			Description: "Export fusion energy to nearby civilizations.",
+			Description: "Sell fusion electricity to nearby civilizations for gold.",
 		},
 		{
 			Name: "Warp Commerce", Key: "warp_commerce",
-			MinAge: "space_age", RequiredBld: "warp_drive_plant", MinCount: 1,
+			MinAge: "interstellar_age", RequiredBld: "warp_drive_plant", MinCount: 1,
 			TicksPerRun: 15,
 			Export:      map[string]float64{"gold": 500},
 			Import:      map[string]float64{"dark_matter": 200},
-			Description: "Trade across warp gates for exotic matter.",
+			Description: "Send gold across the warp gates for dark matter.",
 		},
 		{
-			Name: "Stellar Exchange", Key: "stellar_exchange",
+			Name: "Stellar Freight", Key: "stellar_exchange",
 			MinAge: "galactic_age", RequiredBld: "galactic_trade_hub", MinCount: 1,
 			TicksPerRun: 20,
 			Export:      map[string]float64{"dark_matter": 100},
 			Import:      map[string]float64{"gold": 2000},
-			Description: "Conduct interstellar trade at galactic scale.",
+			Description: "Ship dark matter between star systems for gold.",
 		},
 		{
 			Name: "Quantum Trade", Key: "quantum_trade",
@@ -296,7 +296,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 			TicksPerRun: 10,
 			Export:      map[string]float64{"quantum_flux": 50},
 			Import:      map[string]float64{"gold": 5000},
-			Description: "Trade quantum flux across dimensional boundaries.",
+			Description: "Send quantum flux across dimensional boundaries for gold.",
 		},
 	}
 }
@@ -324,7 +324,7 @@ func BaseFactions() []FactionDef {
 			Name: "Riverlands Tribes", Key: "riverlands_tribes",
 			MinAge: "bronze_age", Specialty: "food", TradeBonus: 0.15,
 			Personality: "peaceful", Strength: 1,
-			Backstory:   "Fisherfolk and farmers of the great delta, generous with grain and slow to anger. They remember every neighbour who once shared a harvest.",
+			Backstory:   "Fisherfolk and farmers of the great delta, generous with grain and slow to anger. They remember every neighbor who once shared a harvest.",
 			Description: "Settled farming clans who prize hospitality above all.",
 		},
 		// --- Iron Era (founding civ) ---
@@ -332,7 +332,7 @@ func BaseFactions() []FactionDef {
 			Name: "Ironhold Clans", Key: "ironhold_clans",
 			MinAge: "medieval_age", Specialty: "iron", TradeBonus: 0.20,
 			Personality: "aggressive", Strength: 3,
-			Backstory:   "Mountain smiths and raiders who measure honour in steel. They respect strength and despise weakness — cross them and the war-horns sound.",
+			Backstory:   "Mountain smiths and raiders who measure honor in steel. They respect strength and despise weakness. Cross them and the war-horns sound.",
 			Description: "Warlike highland clans forged around the anvil.",
 		},
 		// --- Steel Era ---
@@ -355,7 +355,7 @@ func BaseFactions() []FactionDef {
 			Name: "Atomic Directorate", Key: "atomic_directorate",
 			MinAge: "atomic_age", Specialty: "steel", TradeBonus: 0.20,
 			Personality: "isolationist", Strength: 4,
-			Backstory:   "A secretive technocracy behind sealed borders, hoarding reactor science. They neither court nor provoke — they simply endure, watchful.",
+			Backstory:   "A secretive technocracy behind sealed borders, hoarding reactor science. They neither court nor provoke. They simply wait and watch.",
 			Description: "An insular technocracy guarding the secrets of the atom.",
 		},
 		// --- Digital Era ---
@@ -371,7 +371,7 @@ func BaseFactions() []FactionDef {
 			Name: "Shadow Syndicate", Key: "shadow_syndicate",
 			MinAge: "cyberpunk_age", Specialty: "crypto", TradeBonus: 0.25,
 			Personality: "aggressive", Strength: 3,
-			Backstory:   "An underground network dealing in digital currencies and quieter goods. They lend muscle to friends and unleash data-raids on enemies.",
+			Backstory:   "An underground network dealing in digital currencies and quieter goods. They lend muscle to friends and launch data raids on enemies.",
 			Description: "An underground network dealing in digital currencies.",
 		},
 		{
@@ -393,14 +393,14 @@ func BaseFactions() []FactionDef {
 			Name: "Void Reavers", Key: "void_reavers",
 			MinAge: "galactic_age", Specialty: "antimatter", TradeBonus: 0.28,
 			Personality: "aggressive", Strength: 5,
-			Backstory:   "Antimatter corsairs who strip dead stars and weaker empires alike. They take what they want — only overwhelming respect keeps their fleets at bay.",
+			Backstory:   "Antimatter corsairs who strip dead stars and weaker empires alike. They take what they want. Only overwhelming respect keeps their fleets at bay.",
 			Description: "Antimatter corsairs feared across the galactic rim.",
 		},
 		{
 			Name: "Quantum Collective", Key: "quantum_collective",
 			MinAge: "quantum_age", Specialty: "quantum_flux", TradeBonus: 0.30,
 			Personality: "isolationist", Strength: 5,
-			Backstory:   "Beings who exist across multiple dimensions, perceiving your civilization as a curiosity. Indifferent by nature — but their favour bends reality.",
+			Backstory:   "Beings who exist across multiple dimensions, perceiving your civilization as a curiosity. They are indifferent by nature, but their favor bends reality.",
 			Description: "Beings who exist across multiple dimensions.",
 		},
 	}

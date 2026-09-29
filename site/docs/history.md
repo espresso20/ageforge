@@ -1,24 +1,24 @@
 # Civilization History
 
-The Civilization History overlay gives you a live graphical view of how your civilization has grown and changed over time. Open it at any point by typing `history` at the command prompt.
+The Civilization History panel graphs how your civilization has changed over time. Type `history` at the prompt to open it.
 
 ---
 
 ## What it shows
 
-Seven metrics are tracked and graphed continuously:
+The game tracks and graphs seven metrics:
 
 | Metric | What it measures |
 |---|---|
 | **Population** | Total workers alive |
 | **Food Rate** | Net food per tick (positive = surplus, negative = deficit) |
-| **Knowledge Rate** | Knowledge production per tick |
+| **Knowledge** | Knowledge production per tick |
 | **Faith** | Total faith accumulated |
 | **Morale** | Civilization morale as a percentage (the production multiplier's input) |
-| **Prod Bonus** | Your current `production_all` permanent bonus percentage |
-| **Tick Speed** | Current tick speed multiplier |
+| **Prod Bonus** | Your permanent bonus to all production, as a percentage |
+| **Tick Speed** | Your tick speed bonus from techs, prestige and events (the `speed` setting is not included) |
 
-Each metric gets its own braille line graph showing the full rolling history. Beside each graph you'll see the current value, a trend arrow (↑ growing, ↓ shrinking, → stable), and the recorded min/max.
+Each metric gets its own braille line graph covering the whole stored history. Beside each graph is the current value, a trend arrow (↑ growing, ↓ shrinking, → stable), and the recorded min/max.
 
 ---
 
@@ -33,26 +33,22 @@ Population     ↑ 163workers  min:10.0    max:198.0
 10.0  ────────────────────────────────────────────────
 ```
 
-- **Y-axis labels** on the left show max, midpoint, and min values for the visible window
-- **`│` vertical markers** show where age advances occurred — all 7 graphs share the same markers so you can see how each metric responded to an age transition
-- **X-axis** represents cumulative ticks from oldest to newest sample (left = oldest, right = now)
+- The labels on the left show the max, midpoint and min of the visible window.
+- The `│` markers show where you advanced an age. All 7 graphs share the same markers, so you can see how each metric responded to the advance.
+- Time runs left to right, from the oldest sample to now.
 
 ---
 
 ## How history is collected
 
-- One sample is recorded every **10 ticks** (~13–20 seconds of real time depending on speed)
-- Up to **300 samples** are stored — roughly 1 hour of rolling history at 1.5× speed
-- When the buffer is full, the oldest sample is dropped to make room for the new one
-- Age advance events are stored as markers and displayed across all graphs
-- History is **saved and restored** automatically with your game save — it survives restarts
+The game records one sample every **10 ticks** (about 20 seconds at 1x) and keeps the last **300 samples**, about 100 minutes of history at 1x. When the store is full, each new sample replaces the oldest one. Age advances are stored as markers and drawn across all graphs. The history is saved with your game, so it survives restarts. The graphs appear once two samples exist.
 
 ---
 
 ## Tips
 
-- **Check history after an age advance** — the `│` marker makes it easy to see which metrics spiked or dipped at the transition
-- **Food Rate dipping below zero** shows up clearly as the line crossing the midpoint — useful for catching worker starvation before it becomes critical
-- **Prod Bonus flat-lining** means no new milestones or prestige upgrades have fired recently
-- **Tick Speed** shows the effect of wonders — each wonder built adds a visible step up in the graph
-- Scroll up/down in the overlay with arrow keys if all 7 graphs don't fit on screen
+- After an age advance, the `│` marker shows which metrics jumped or dipped at the change.
+- A **Food Rate** line that drops below zero is a food deficit. Catch it before your workers start to starve.
+- A flat **Prod Bonus** line means no milestone or prestige upgrade has added to your all-production bonus recently.
+- **Tick Speed** steps up when you finish a tech that grants tick speed. Wonders do not move it: they raise the speed cap, which you use with the `speed` command.
+- A taller terminal window fits all 7 graphs at once.
