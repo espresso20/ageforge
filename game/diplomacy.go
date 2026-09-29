@@ -5,6 +5,7 @@ import (
 	"math/rand"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // Diplomacy tuning constants. Kept here (not in config) because they govern
@@ -36,7 +37,25 @@ const (
 	// workers stay permanently).
 	lendDurationTicks    = 200
 	lendPermanentOpinion = 80
+
+	// Allying needs at least this opinion and costs allyGoldCost gold.
+	allyMinOpinion = 50
+	allyGoldCost   = 500.0
 )
+
+// errUnknownCiv is the refusal for a civ key that is not on the roster.
+func (dm *DiplomacyManager) errUnknownCiv(key string) error {
+	msg := fmt.Sprintf("No civilization called '%s'.", key)
+	if s := closestKey(key, dm.factionDefs); s != "" && s != key {
+		msg += fmt.Sprintf(" Did you mean '%s'?", s)
+	}
+	return fmt.Errorf("%s Type diplomacy deals to see the ones you have met.", msg)
+}
+
+// errNotMet is the refusal for a civ the player has not met yet.
+func errNotMet(name string) error {
+	return fmt.Errorf("You have not met the %s yet. Scouting expeditions make first contact.", name)
+}
 
 // DiplomacyManager handles NPC civilization discovery and diplomatic relations.
 // The 6 original factions plus 5 new civilizations form an 11-civ roster spanning
@@ -59,6 +78,10 @@ type DiplomacyManager struct {
 	pendingLends   []LendRequest
 	pendingReturns []int
 	pendingRaids   []RaidRequest
+
+	// notices are log lines raised outside Tick (an embargo that starts a
+	// war); the next Tick returns them first. Transient, not saved.
+	notices []string
 
 	// factionList / factionDefs are the static civ roster, built once at
 	// construction so the per-tick paths (Tick, GetTradeBonus via the resolver,
@@ -317,21 +340,21 @@ func (dm *DiplomacyManager) SetStatus(factionKey, status string, gold float64) (
 	defs := dm.factionDefs
 	def, ok := defs[factionKey]
 	if !ok {
-		return 0, fmt.Errorf("unknown faction: %s", factionKey)
+		return 0, dm.errUnknownCiv(factionKey)
 	}
 
 	fs, ok := dm.factions[factionKey]
 	if !ok || !fs.Discovered {
-		return 0, fmt.Errorf("%s has not been discovered yet", def.Name)
+		return 0, errNotMet(def.Name)
 	}
 
 	var cost float64
 	switch status {
 	case "allied":
-		if fs.Opinion < 50 {
-			return 0, fmt.Errorf("need opinion >= 50 to ally with %s (current: %d)", def.Name, fs.Opinion)
+		if fs.Opinion < allyMinOpinion {
+			return 0, fmt.Errorf("The %s need opinion %d before they will ally (now %d).", def.Name, allyMinOpinion, fs.Opinion)
 		}
-		cost = 500
+		cost = allyGoldCost
 	case "rival":
 		cost = 0
 	case "embargo":
@@ -339,17 +362,19 @@ func (dm *DiplomacyManager) SetStatus(factionKey, status string, gold float64) (
 	case "neutral":
 		cost = 0
 	default:
-		return 0, fmt.Errorf("invalid diplomatic status: %s (valid: allied, rival, embargo, neutral)", status)
+		return 0, fmt.Errorf("Unknown diplomatic status '%s'. Use allied, rival, embargo or neutral.", status)
 	}
 
 	if gold < cost {
-		return 0, fmt.Errorf("not enough gold (have: %.0f, need: %.0f)", gold, cost)
+		return 0, fmt.Errorf("Not enough gold to ally with the %s: need %s, have %s.", def.Name, textfmt.Number(cost), textfmt.Number(gold))
 	}
 
-	// Embargo is a provocation: track it and possibly trip a war if standing is
-	// already deeply hostile.
+	// Embargo is a provocation: track it and possibly trip a war if opinion is
+	// already deeply hostile. A war it starts is announced on the next tick.
 	if status == "embargo" && fs.Status != "embargo" {
-		dm.recordProvocation(fs, def, 0)
+		if dm.recordProvocation(fs, def, 0) {
+			dm.notices = append(dm.notices, fmt.Sprintf("The %s declared war on you.", def.Name))
+		}
 	}
 
 	fs.Status = status
@@ -382,11 +407,11 @@ func (dm *DiplomacyManager) RaidTradeRoute(factionKey string, tick int) (bool, e
 	defs := dm.factionDefs
 	def, ok := defs[factionKey]
 	if !ok {
-		return false, fmt.Errorf("unknown civilization: %s", factionKey)
+		return false, dm.errUnknownCiv(factionKey)
 	}
 	fs, ok := dm.factions[factionKey]
 	if !ok || !fs.Discovered {
-		return false, fmt.Errorf("%s has not been discovered yet", def.Name)
+		return false, errNotMet(def.Name)
 	}
 	// Raiding tanks opinion immediately, then registers the provocation.
 	fs.Opinion -= 20
@@ -403,23 +428,23 @@ func (dm *DiplomacyManager) SendTribute(factionKey string, gold, culture float64
 	defs := dm.factionDefs
 	def, ok := defs[factionKey]
 	if !ok {
-		return 0, 0, fmt.Errorf("unknown civilization: %s", factionKey)
+		return 0, 0, dm.errUnknownCiv(factionKey)
 	}
 	fs, ok := dm.factions[factionKey]
 	if !ok || !fs.Discovered {
-		return 0, 0, fmt.Errorf("%s has not been discovered yet", def.Name)
+		return 0, 0, errNotMet(def.Name)
 	}
 	if !fs.AtWar {
-		return 0, 0, fmt.Errorf("%s is not at war with you", def.Name)
+		return 0, 0, fmt.Errorf("The %s are not at war with you.", def.Name)
 	}
 	// Tribute cost scales with the civ's strength.
 	goldCost := 300.0 * float64(def.Strength)
 	cultureCost := 50.0 * float64(def.Strength)
 	if gold < goldCost {
-		return 0, 0, fmt.Errorf("not enough gold for tribute to %s (have: %.0f, need: %.0f)", def.Name, gold, goldCost)
+		return 0, 0, fmt.Errorf("Not enough gold for tribute to the %s: need %s, have %s.", def.Name, textfmt.Number(goldCost), textfmt.Number(gold))
 	}
 	if culture < cultureCost {
-		return 0, 0, fmt.Errorf("not enough culture for tribute to %s (have: %.0f, need: %.0f)", def.Name, culture, cultureCost)
+		return 0, 0, fmt.Errorf("Not enough culture for tribute to the %s: need %s, have %s.", def.Name, textfmt.Number(cultureCost), textfmt.Number(culture))
 	}
 	// Peace: end the war, reset provocations, nudge opinion up to a wary truce.
 	dm.endWar(fs)
@@ -448,17 +473,17 @@ func (dm *DiplomacyManager) SendGift(factionKey string, gold float64) (float64, 
 	defs := dm.factionDefs
 	def, ok := defs[factionKey]
 	if !ok {
-		return 0, fmt.Errorf("unknown faction: %s", factionKey)
+		return 0, dm.errUnknownCiv(factionKey)
 	}
 
 	fs, ok := dm.factions[factionKey]
 	if !ok || !fs.Discovered {
-		return 0, fmt.Errorf("%s has not been discovered yet", def.Name)
+		return 0, errNotMet(def.Name)
 	}
 
 	cost := 200.0
 	if gold < cost {
-		return 0, fmt.Errorf("not enough gold to send gift (have: %.0f, need: %.0f)", gold, cost)
+		return 0, fmt.Errorf("Not enough gold for a gift to the %s: need %s, have %s.", def.Name, textfmt.Number(cost), textfmt.Number(gold))
 	}
 
 	fs.Opinion += 15
@@ -531,7 +556,8 @@ func (dm *DiplomacyManager) DisruptedResources() map[string]bool {
 // queue side effects walk the factions in roster order (factionList), never
 // map order, so a seeded rng gives the same outcome on every run.
 func (dm *DiplomacyManager) Tick(rng *rand.Rand, age string, ageOrder map[string]int, tick int, tradedRecently bool) []string {
-	var messages []string
+	messages := dm.notices
+	dm.notices = nil
 
 	// Discover new civs and announce first contact.
 	discovered := dm.DiscoverFactions(age, ageOrder)
@@ -591,7 +617,7 @@ func (dm *DiplomacyManager) processLending(rng *rand.Rand, tick int) []string {
 			if d, ok := defs[b.FactionKey]; ok {
 				name = d.Name
 			}
-			messages = append(messages, fmt.Sprintf("%d lent workers returned home to the %s.", b.Count, name))
+			messages = append(messages, fmt.Sprintf("%s returned home to the %s.", textfmt.Count(b.Count, "lent worker", "lent workers"), name))
 			continue
 		}
 		kept = append(kept, b)
@@ -660,7 +686,7 @@ func (dm *DiplomacyManager) processWar(tick int) []string {
 		// Wait-them-out: peace after a provocation-free cooldown.
 		if tick-fs.LastProvocationTick >= warCooldownTicks {
 			dm.endWar(fs)
-			messages = append(messages, fmt.Sprintf("The war with the %s has burned out — an uneasy peace settles.", def.Name))
+			messages = append(messages, fmt.Sprintf("The war with the %s has burned out. An uneasy peace settles.", def.Name))
 			continue
 		}
 		// Raid every 40 ticks while at war. Severity scales with Strength.
@@ -850,22 +876,24 @@ func (dm *DiplomacyManager) GetLentBatchesForSave() []LentWorkerBatch {
 	return append([]LentWorkerBatch(nil), dm.lentBatches...)
 }
 
-// firstContactMessage builds the flavour line announced when a civ is first
-// discovered. It introduces the name, personality, and backstory.
+// firstContactMessage builds the line announced when a civ is first
+// discovered. It introduces the name, personality and backstory, then says
+// where to find their offers.
 func firstContactMessage(def config.FactionDef) string {
-	return fmt.Sprintf("[gold]✦ First contact: %s[-] [gray](%s)[-] — %s",
+	return fmt.Sprintf("[gold]✦ First contact: %s[-] [gray](%s)[-]. %s Type diplomacy to see their offers.",
 		def.Name, def.Personality, def.Backstory)
 }
 
-// lendMessage builds the flavour line for a worker loan, including a backstory
-// snippet and whether the loan is permanent.
+// lendMessage builds the line for a worker loan and says whether the workers
+// go home. The backstory belongs to first contact only, so it is not
+// repeated here. The duration is at base speed (the manager has no clock).
 func lendMessage(def config.FactionDef, count int, permanent bool) string {
-	tail := fmt.Sprintf("(returning in %d ticks)", lendDurationTicks)
+	tail := fmt.Sprintf("(they return in %s)", DurationText(lendDurationTicks, BaseTickInterval))
 	if permanent {
-		tail = "(they choose to stay — permanent!)"
+		tail = "(they stay for good)"
 	}
-	return fmt.Sprintf("[green]+%d workers from the %s[-] — %s %s",
-		count, def.Name, def.Backstory, tail)
+	return fmt.Sprintf("[green]+%s on loan from the %s[-] %s.",
+		textfmt.Count(count, "worker", "workers"), def.Name, tail)
 }
 
 // raidMessage builds the MECHANICAL line for a war raid resource loss: who, what,

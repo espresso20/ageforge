@@ -95,7 +95,7 @@ func TestPlanTrade_InvalidPairsAndMissingMarket(t *testing.T) {
 	if err := be.PlanAddTrade("wood", "stone", 0); err != nil {
 		t.Fatal(err)
 	}
-	if v := be.planViews(); len(v) != 1 || !strings.Contains(v[0].Note, "market") {
+	if v := be.planViews(); len(v) != 1 || !strings.Contains(v[0].Note, "Market") {
 		t.Errorf("view without a market = %+v", v)
 	}
 }
@@ -274,7 +274,7 @@ func TestOffline_TradesAsTimePasses(t *testing.T) {
 	if ge.Resources.Get("stone") <= 0 {
 		t.Error("two hours offline with a trade planned bought no stone")
 	}
-	if !logHas(ge, "While you were away your plan started: traded") {
+	if !logHasAll(ge, "While you were away", "traded ") {
 		t.Error("no offline trade summary")
 	}
 }
