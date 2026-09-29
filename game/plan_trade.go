@@ -11,20 +11,20 @@ import (
 // market as give comes in, until amount of get has been bought (no amount:
 // until removed). Note the amount counts the get side here, while
 // `trade <give> <get> <amount>` counts the give side. Internally the item
-// stores give as Key and get as To. It is how a plan gets the resources an age buys rather
-// than makes (stone after the Bronze Age, the Industrial Age's iron) while
-// the player is away, instead of one trade per visit.
+// stores give as Key and get as To. It is how a plan gets the resources an
+// age buys rather than makes (stone after the Bronze Age, the Industrial
+// Age's iron) while the player is away, instead of one trade per visit.
 //
 // Rules:
 //   - Like any item, it has the priority of its place in the plan: it holds
-//     back the from it will sell (what the items above leave free, up to
+//     back the give resource it will sell (what the items above leave free, up to
 //     what it still wants to buy), and items below it only see the rest.
 //   - It sells once the market has recovered from its last sale (the pair's
 //     supply pressure under planTradeRecovered), not every tick: every trade
 //     raises the pressure by the same step whatever its size, so selling in
 //     one lump a minute or so apart keeps the rate within a percent of the
 //     market's, where selling every tick would cost up to 30%.
-//   - It never buys more than to's store has room for (the rest would be
+//   - It never buys more than the get resource's store has room for (the rest would be
 //     lost), at the market's current rate (parity less the fee and the
 //     pressure), and only with a trade building standing, like `trade`.
 //   - It drops out when it has bought its amount, or when the pair no longer
@@ -58,6 +58,18 @@ func (ge *GameEngine) PlanAddTrade(give, get string, amount float64) error {
 	}
 	ge.plan = append(ge.plan, it)
 	return nil
+}
+
+// PlanTradeText words a trade item from the player's side, so the amount
+// reads as what is bought: "buy 500 gold with wood as wood comes in", or
+// with no amount "sell wood for gold as wood comes in, until gold storage is
+// full". The UI's confirmation uses it after "Plan: ".
+func PlanTradeText(give, get string, amount float64) string {
+	g, w := ResourceName(give), ResourceName(get)
+	if amount > 0 {
+		return fmt.Sprintf("buy %s with %s as %s comes in", Amount(amount, get), g, g)
+	}
+	return fmt.Sprintf("sell %s for %s as %s comes in, until %s storage is full", g, w, g, w)
 }
 
 // planTradeInvalid is why trade item it can never run in this age ("" if it

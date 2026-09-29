@@ -114,7 +114,7 @@ func TestHarbingerPanelKeys(t *testing.T) {
 	if press('b') != nil {
 		t.Error("B was not consumed")
 	}
-	if !strings.Contains(d.harbPanel.note, "cannot afford to brace") || d.harbPanel.noteGood {
+	if !strings.Contains(d.harbPanel.note, "Cannot afford to brace") || d.harbPanel.noteGood {
 		t.Errorf("brace note = %q", d.harbPanel.note)
 	}
 	if engine.GetState().Harbinger.BraceLevel != 0 {

@@ -164,7 +164,7 @@ func (tm *TradeManager) Exchange(give, get string, amount float64, resources *Re
 
 	// Check sender has enough
 	if resources.Get(from) < amount {
-		return 0, fmt.Errorf("You have %s, not the %s you offered to give.", Amount(resources.Get(from), from), textfmt.Number(amount))
+		return 0, fmt.Errorf("Not enough %s to give %s (you have %s).", ResourceName(from), textfmt.Number(amount), textfmt.Number(resources.Get(from)))
 	}
 
 	// Calculate received amount with supply pressure

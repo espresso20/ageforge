@@ -582,7 +582,7 @@ func TestNoHarbingerActionsWithoutOne(t *testing.T) {
 	for name, act := range map[string]func() error{
 		"appease": ge.HarbingerAppease, "brace": ge.HarbingerBrace, "invite": ge.HarbingerInvite,
 	} {
-		if err := act(); err == nil || !strings.Contains(err.Error(), "no harbinger") {
+		if err := act(); err == nil || !strings.Contains(err.Error(), "No harbinger") {
 			t.Errorf("%s without a harbinger: err = %v", name, err)
 		}
 	}
