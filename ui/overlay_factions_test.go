@@ -656,7 +656,7 @@ func TestDiplomacyDealCommands(t *testing.T) {
 	}
 	label := game.DealKindLabel(deals[0].Kind) + ": give "
 	if st := engine.GetState(); len(st.Plan) != 1 || st.Plan[0].Kind != game.PlanDeal ||
-		!strings.HasPrefix(st.Plan[0].Name, "deal with the Riverlands Tribes ("+label) || !strings.Contains(st.Plan[0].Name, " → get ") {
+		!strings.HasPrefix(st.Plan[0].Name, "deal with the Riverlands Tribes ("+label) || !strings.Contains(st.Plan[0].Name, ", get ") {
 		t.Errorf("plan after plan deal: %+v", st.Plan)
 	}
 	// Taking deal 1 either goes through or says what is short; a second
