@@ -114,7 +114,7 @@ func TestCatastropheModal_EndureCountsGarrison(t *testing.T) {
 	}
 
 	// Without soldiers the modal shows the old numbers and says so.
-	l := buildCatastropheModalLayout("iron_era", false, 0, game.DefaultEndureOutcome())
+	l := buildCatastropheModalLayout("iron_era", false, 0, game.DefaultEndureOutcome(), game.GameState{})
 	endure := untag(l.endure)
 	for _, want := range []string{"20% of buildings destroyed", "All resources reduced to 15%", "No garrison: soldiers would soften this"} {
 		if !strings.Contains(endure, want) {
@@ -131,7 +131,7 @@ func TestCatastropheModal_DefenseLinesFit(t *testing.T) {
 		{BraceLevel: 1, Garrison: 0.2, DestroyPct: 12, KeepFrac: 0.44, BracedDestroyPct: 15, BracedKeepFrac: 0.30},
 		{Garrison: 0.1, DestroyPct: 18, KeepFrac: 0.235, BracedDestroyPct: 20, BracedKeepFrac: 0.15, BuildingsSaved: 1},
 	} {
-		l := buildCatastropheModalLayout("steel_era", false, 0, o)
+		l := buildCatastropheModalLayout("steel_era", false, 0, o, game.GameState{})
 		for _, line := range strings.Split(l.endure, "\n") {
 			if w := tview.TaggedStringWidth(line); w > inner {
 				t.Errorf("line %q is %d cells, box interior is %d", line, w, inner)

@@ -1650,7 +1650,7 @@ func appendExpeditionGroup(lines *[]string, label string, exps []game.Expedition
 		if exp.SoldiersNeeded > 0 {
 			reqParts = append(reqParts, fmt.Sprintf("%d soldiers", exp.SoldiersNeeded))
 		}
-		if cost := formatExpeditionCost(exp.Cost); cost != "" {
+		if cost := formatExpeditionCost(exp.Cost, state); cost != "" {
 			reqParts = append(reqParts, cost)
 		}
 		// Duration is rolled per launch, so list the def's range, not one value.

@@ -124,7 +124,7 @@ func RandomEvents() []EventDef {
 			MinAge: "bronze_age", Weight: 10, MinTick: 60, Cooldown: 60,
 			Duration: 0, Raid: true, Sentiment: "bad",
 			Description: "Bandits attack and steal resources. They left a thank-you note, which is somehow worse.",
-			LogMessage:  "Bandits cleaned out the stores and left a polite thank-you note. Lost food and gold.",
+			LogMessage:  "Bandits cleaned out the stores and left a polite thank-you note.",
 			Effects: []Effect{
 				{Type: "steal_resource", Target: "food", Value: 10},
 				{Type: "steal_resource", Target: "gold", Value: 5},
@@ -216,7 +216,7 @@ func RandomEvents() []EventDef {
 			MinAge: "colonial_age", Weight: 7, MinTick: 320, Cooldown: 140,
 			Duration: 0, Raid: true, Sentiment: "bad",
 			Description: "Pirates raid your trade routes. They are, regrettably, very good at this.",
-			LogMessage:  "Pirates hit the trade lanes again. They're alarmingly professional about it. Lost gold and food.",
+			LogMessage:  "Pirates hit the trade lanes again. They're alarmingly professional about it.",
 			Effects: []Effect{
 				{Type: "steal_resource", Target: "gold", Value: 50},
 				{Type: "steal_resource", Target: "food", Value: 30},
@@ -248,7 +248,7 @@ func RandomEvents() []EventDef {
 			MinAge: "information_age", Weight: 6, MinTick: 600, Cooldown: 180,
 			Duration: 0, Raid: true, Sentiment: "bad",
 			Description: "Hackers steal your data reserves. The password was 'password.' It is always 'password.'",
-			LogMessage:  "Hackers walked in through the front door; the password was 'password' again. Lost data and gold.",
+			LogMessage:  "Hackers walked in through the front door. The password was 'password' again.",
 			Effects: []Effect{
 				{Type: "steal_resource", Target: "data", Value: 50},
 				{Type: "steal_resource", Target: "gold", Value: 100},
@@ -330,7 +330,7 @@ func EpochExclusiveEvents() []EventDef {
 			MinAge: "primitive_age", Weight: 10, MinTick: 10, Cooldown: 80,
 			Duration: 60, Raid: true, Sentiment: "bad",
 			Description: "Rival clans descend in the night, yelling things. The yelling, frankly, works.",
-			LogMessage:  "A rival clan raids in the dark, doing a lot of yelling. It works. Food down, stores stolen, workers flee.",
+			LogMessage:  "A rival clan raids in the dark, doing a lot of yelling. It works. Food production is down for a while.",
 			Effects: []Effect{
 				{Type: "production", Target: "food", Value: -0.15},
 				{Type: "steal_resource", Target: "food", Value: 8},
@@ -353,7 +353,7 @@ func EpochExclusiveEvents() []EventDef {
 			MinAge: "primitive_age", Weight: 8, MinTick: 15, Cooldown: 90,
 			Duration: 0, Raid: true, Sentiment: "bad",
 			Description: "Very large animals run through the settlement at speed. The fence had opinions about this. The fence lost.",
-			LogMessage:  "Enormous beasts stampeded straight through the fence, which lost the argument. Lost wood and food.",
+			LogMessage:  "Enormous beasts stampeded straight through the fence, which lost the argument.",
 			Effects: []Effect{
 				{Type: "steal_resource", Target: "wood", Value: 30},
 				{Type: "steal_resource", Target: "food", Value: 20},
@@ -553,7 +553,7 @@ func EpochExclusiveEvents() []EventDef {
 			MinAge: "information_age", Weight: 9, MinTick: 550, Cooldown: 120,
 			Duration: 120, Raid: true, Sentiment: "bad",
 			Description: "A sophisticated attack siphons terabytes of data. The intern clicked the link. Of course the intern clicked the link.",
-			LogMessage:  "Terabytes gone because someone clicked a link promising a free cruise. Lost data, knowledge output down, 120 ticks.",
+			LogMessage:  "Terabytes gone because someone clicked a link promising a free cruise. Knowledge production is down for a while.",
 			Effects: []Effect{
 				{Type: "steal_resource", Target: "data", Value: 5000},
 				{Type: "production", Target: "knowledge", Value: -0.20},
@@ -639,8 +639,8 @@ func EpochExclusiveEvents() []EventDef {
 			Name: "Corporate Espionage", Key: "corporate_espionage", EpochKey: "neon_era",
 			MinAge: "fusion_age", Weight: 8, MinTick: 760, Cooldown: 140,
 			Duration: 0, Raid: true, Sentiment: "bad",
-			Description: "A rival megacorp steals your best research. Their spy left a five-star review on the way out.",
-			LogMessage:  "A rival corp lifted our best research and the spy left a five-star review of our security. Lost gold and data.",
+			Description: "A rival megacorp steals gold and data. Their spy left a five-star review on the way out.",
+			LogMessage:  "A rival corp emptied the vaults and the data stores, and the spy left a five-star review of your security.",
 			Effects: []Effect{
 				{Type: "steal_resource", Target: "gold", Value: 10000},
 				{Type: "steal_resource", Target: "data", Value: 8000},

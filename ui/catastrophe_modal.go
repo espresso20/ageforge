@@ -36,8 +36,8 @@ type catastropheModalLayout struct {
 // Succumb in the same epoch grants no new legacy or research bonus),
 // researchNow is the current Succumb research bonus (e.g. 0.25), and eo is
 // what Endure would cost with the Harbinger's Brace and the garrison counted
-// (game.GameState.PendingEndure).
-func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNow float64, eo game.EndureOutcome) catastropheModalLayout {
+// (game.GameState.PendingEndure). st is the snapshot, for wall-clock durations.
+func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNow float64, eo game.EndureOutcome, st game.GameState) catastropheModalLayout {
 	catName, catFlavor := config.CatastropheInfo(epochKey)
 	ep := config.EpochByKey()[epochKey]
 	inner := catastropheModalWidth - 2
@@ -48,13 +48,14 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 	}
 
 	endureLines := []string{
-		"[white]── ENDURE — weather the catastrophe ──[-]",
+		"[white]── ENDURE: weather the catastrophe ──[-]",
 		fmt.Sprintf("  [red]• %s of buildings destroyed (wonders are spared)[-]", endurePct(eo.DestroyPct)),
 		fmt.Sprintf("  [red]• All resources reduced to %s[-]", endurePct(eo.KeepFrac*100)),
-		"  [red]• 25% of workers lost; workers of destroyed buildings go idle[-]",
-		"  [red]• Production -10% for 216 ticks, morale -10[-]",
+		fmt.Sprintf("  [red]• %.0f%% of workers lost; workers of destroyed buildings go idle[-]", game.EndureWorkerLoss*100),
+		fmt.Sprintf("  [red]• All production %.0f%% for %s, morale %+.0f points[-]",
+			game.EndureDebuffProduction*100, formatTicks(game.EndureDebuffTicks, st), game.EndureMoraleHit*100),
 		"  [green]✓ Age, research, wonders and prestige preserved[-]",
-		"  [green]✓ Survived marker on the epoch badge[-]",
+		"  [green]✓ The epoch badge records that you endured[-]",
 	}
 	endureLines = append(endureLines, endureDefenseLines(eo)...)
 	endure := strings.Join(endureLines, "\n")
@@ -67,7 +68,7 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 		legacyLine = fmt.Sprintf("  [gray]• %s legacy already held; no new legacy bonus[-]", ep.Name)
 	}
 	succumb := strings.Join([]string{
-		"[white]── SUCCUMB — let civilization fall ──[-]",
+		"[white]── SUCCUMB: let civilization fall ──[-]",
 		"  [red]• Full reset to the Primitive Age: buildings, resources, research[-]",
 		"  [red]• No prestige points earned (level and upgrades are kept)[-]",
 		fmt.Sprintf("  [green]✓ Up to %d buildings become ruins (50%% output, max %d ruins)[-]", game.SuccumbRuinCount, game.MaxRuins),
@@ -105,7 +106,7 @@ func buildLastPassageModalLayout(lp game.LastPassageState) catastropheModalLayou
 
 	keepLine := fmt.Sprintf("  [red]• You keep %d%% of this run's prestige points: %d of %d[-]", lp.KeepPct, lp.PointsIfEndured, lp.PointsNow)
 	endureLines := []string{
-		"[white]── ENDURE — pass through, diminished ──[-]",
+		"[white]── ENDURE: pass through, diminished ──[-]",
 		keepLine,
 	}
 	if lp.BraceLevel > 0 {
@@ -114,7 +115,7 @@ func buildLastPassageModalLayout(lp game.LastPassageState) catastropheModalLayou
 	endureLines = append(endureLines, "  [green]✓ Level, upgrades, legacies and ruins carry over as always[-]")
 
 	succumbLines := []string{
-		"[white]── SUCCUMB — let it take the run ──[-]",
+		"[white]── SUCCUMB: let it take the run ──[-]",
 		"  [red]• Prestige completes with no points from this run (level still rises)[-]",
 	}
 	if lp.CosmicLegacy {
@@ -208,7 +209,7 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		if st.PendingCatastrophe == key {
 			outcome = st.PendingEndure
 		}
-		l = buildCatastropheModalLayout(key, st.LegacyBonuses[key], st.SuccumbResearchBonus, outcome)
+		l = buildCatastropheModalLayout(key, st.LegacyBonuses[key], st.SuccumbResearchBonus, outcome, st)
 	}
 
 	btnEndure := tview.NewButton(tview.Escape("[E] ENDURE")).

@@ -45,7 +45,7 @@ func (ge *GameEngine) flavorStream() *flavor.Stream {
 const expeditionFlavorOdds = 3
 
 // expeditionFlavorLine returns the cosmetic line that rides ALONGSIDE a resolved
-// expedition's mechanical message ("<Name> succeeded! Gained loot."). It never
+// expedition's mechanical message ("<Name> succeeded. Loot: 60 food."). It never
 // carries mechanical information — the functional line is emitted first and
 // separately, exactly as the log-flavour layer does elsewhere.
 //

@@ -241,6 +241,23 @@ func TestWarRaid_GarrisonNeverMakesAMissLand(t *testing.T) {
 	if got := ge.Resources.Get("gold"); got != 150 {
 		t.Errorf("gold after a raid bigger than the stock = %v, want 150 (untouched, as without an army)", got)
 	}
+	if !logHas(ge, "found too little gold to carry off. You lost nothing.") || logHas(ge, "you lost 200") {
+		t.Error("a raid that took nothing must say so, not report a loss")
+	}
+}
+
+// A raid event logs what it actually took, in amounts, when it strikes.
+func TestRaidEvent_LogsActualLosses(t *testing.T) {
+	ge := catEngine(t, "iron_age", 1)
+	ge.Resources.UnlockResource("gold")
+	ge.Resources.AddStorage("food", 10000)
+	ge.Resources.AddStorage("gold", 10000)
+	ge.Resources.Add("food", 1000)
+	ge.Resources.Add("gold", 1000)
+	ge.applyEventEffects(eventDef(t, "bandit_raid"))
+	if !logHas(ge, "You lost 10 food and 5 gold.") {
+		t.Error("bandit raid does not log the amounts it took")
+	}
 }
 
 // --- Endure -----------------------------------------------------------------------

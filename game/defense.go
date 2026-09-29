@@ -277,16 +277,25 @@ func (ge *GameEngine) applyWarRaids() {
 		// raid bigger than the stock takes nothing (Remove refuses it), so
 		// only a raid that would have landed in full is blunted: an army
 		// never turns a raid that missed into one that lands.
-		if guard > 0 && ge.Resources.Get(raid.Resource) >= raid.Amount {
-			kept := float64(raid.Amount * guard)
-			raid.Amount -= kept
-			if def, ok := config.FactionByKey()[raid.FactionKey]; ok {
-				raid.Message = raidMessageDefended(def, raid.Amount, kept, raid.Resource, guard)
+		def, known := config.FactionByKey()[raid.FactionKey]
+		if !(ge.Resources.Get(raid.Resource) >= raid.Amount) {
+			// Remove would refuse: the raid takes nothing. Say so rather
+			// than report a loss that never happened.
+			if known {
+				raid.Message = raidMissedMessage(def, raid.Resource)
 			}
-			ge.recordSavedResource(raid.Resource, kept)
-			ge.defenseTally().Raids++
+		} else {
+			if guard > 0 {
+				kept := float64(raid.Amount * guard)
+				raid.Amount -= kept
+				if known {
+					raid.Message = raidMessageDefended(def, raid.Amount, kept, raid.Resource, guard)
+				}
+				ge.recordSavedResource(raid.Resource, kept)
+				ge.defenseTally().Raids++
+			}
+			ge.Resources.Remove(raid.Resource, raid.Amount)
 		}
-		ge.Resources.Remove(raid.Resource, raid.Amount)
 		ge.addLog("event", ge.raidLogLine(raid))
 		ge.Events.InjectEvent(ActiveEvent{
 			Key:       "war_raid",

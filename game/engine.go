@@ -3362,7 +3362,7 @@ func (ge *GameEngine) launchExpeditionLocked(key string) error {
 
 	def := ge.Military.ExpeditionDefByKey(key)
 	if def == nil {
-		return fmt.Errorf("unknown expedition: %s", key)
+		return fmt.Errorf("unknown expedition or campaign '%s'. Type expedition or campaign to see what you can send", key)
 	}
 
 	// --- Validate everything BEFORE any deduction so a failed launch never
@@ -3371,13 +3371,13 @@ func (ge *GameEngine) launchExpeditionLocked(key string) error {
 	// Soldiers resource check (soldiers are now a real resource, not workers).
 	haveSoldiers := int(ge.Resources.Get("soldiers"))
 	if haveSoldiers < def.SoldiersNeeded {
-		return fmt.Errorf("%s needs %d soldiers (have %d)", def.Name, def.SoldiersNeeded, haveSoldiers)
+		return fmt.Errorf("%s needs %d soldiers (you have %d). Military buildings train them; see the Army panel", def.Name, def.SoldiersNeeded, haveSoldiers)
 	}
 
 	// Additional resource cost check.
 	for res, amount := range def.Cost {
 		if ge.Resources.Get(res) < amount {
-			return fmt.Errorf("not enough %s: need %.0f, have %.0f", res, amount, ge.Resources.Get(res))
+			return fmt.Errorf("%s needs %s %s (you have %s)", def.Name, amountText(amount), resourceLabel(res), amountText(ge.Resources.Get(res)))
 		}
 	}
 
@@ -3395,7 +3395,11 @@ func (ge *GameEngine) launchExpeditionLocked(key string) error {
 	}
 
 	ge.addLog("debug", fmt.Sprintf("Expedition start: %s (soldiers spent: %d)", def.Name, def.SoldiersNeeded))
-	ge.addLog("info", fmt.Sprintf("Expedition launched: %s", def.Name))
+	if def.Category == ExpeditionMilitary {
+		ge.addLog("info", fmt.Sprintf("Campaign launched: %s (%d soldiers).", def.Name, def.SoldiersNeeded))
+	} else {
+		ge.addLog("info", fmt.Sprintf("Expedition sent: %s.", def.Name))
+	}
 	return nil
 }
 
