@@ -172,7 +172,7 @@ Additional milestones outside the main chains cover faith, trade, epoch longevit
 
 **Additional builder milestones:** First Storehouse, Storage Network, Granary Keeper, Lumber Operation, Early Builder, Mining Syndicate, Forge Master, Seasoned Builder, Wonder Empire *(hidden)*
 
-**Additional scholar milestones:** Deep Thinker, Philosophes, Grand Library Built *(hidden)*, Tech Ascendant *(hidden)*
+**Additional scholar milestones:** Deep Thinker, Philosophes, Grand Library Built *(hidden; build the Great Library)*, Tech Ascendant *(hidden; research all 73 techs)*
 
 **Additional settlement milestones:** Urban Sprawl *(hidden)*, Global City *(hidden)*
 

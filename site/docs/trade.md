@@ -153,15 +153,15 @@ The Trade overlay does not list civilizations. The one faction effect it shows i
 | `triangular_trade` | Triangular Trade | Colonial | Harbor ×1 | 400 food + 60 gold | 120 culture + 80 knowledge | 18 |
 | `tea_clippers` | Tea Clippers | Colonial | Harbor ×2 | 250 gold | 600 food + 90 culture | 20 |
 | `coal_barges` | Coal Barges | Industrial | Harbor ×2 | 300 coal | 220 gold + 150 iron | 14 |
-| `cotton_exchange` | Cotton Exchange | Industrial | Seaport ×1 | 400 gold | 200 culture + 150 knowledge | 16 |
-| `steamship_line` | Steamship Line | Industrial | Seaport ×2 | 250 steel + 200 coal | 900 gold | 18 |
-| `rail_freight` | Rail Freight | Industrial | Steam Works ×1 | 200 iron | 100 gold + 50 coal | 12 |
+| `cotton_exchange` | Cotton Exchange | Industrial | Stock Exchange ×1 | 400 gold | 200 culture + 150 knowledge | 16 |
+| `steamship_line` | Steamship Line | Industrial | Harbor Authority ×2 | 250 steel + 200 coal | 900 gold | 18 |
+| `rail_freight` | Rail Freight | Industrial | Integrated Steelworks ×1 | 200 iron | 100 gold + 50 coal | 12 |
 | `oil_pipeline` | Oil Pipeline | Victorian | Oil Derrick ×2 | 100 oil | 300 gold | 15 |
 | `power_exchange` | Power Exchange | Electric | Power Station ×1 | 500 electricity | 200 gold | 10 |
 | `data_trade` | Data Trade | Information | Server Farm ×1 | 100 data | 500 gold | 10 |
 | `crypto_market` | Crypto Market | Cyberpunk | Black Market ×1 | 50 crypto | 1,000 gold | 8 |
 | `fusion_export` | Fusion Export | Fusion | Fusion Reactor ×1 | 200 electricity | 1,000 gold | 12 |
-| `warp_commerce` | Warp Commerce | Space | Warp Drive Plant ×1 | 500 gold | 200 dark matter | 15 |
+| `warp_commerce` | Warp Commerce | Interstellar | Warp Drive Plant ×1 | 500 gold | 200 dark matter | 15 |
 | `stellar_exchange` | Stellar Exchange | Galactic | Galactic Trade Hub ×1 | 100 dark matter | 2,000 gold | 20 |
 | `quantum_trade` | Quantum Trade | Quantum | Reality Processor ×1 | 50 quantum flux | 5,000 gold | 10 |
 

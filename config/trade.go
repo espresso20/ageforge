@@ -212,7 +212,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 		},
 		{
 			Name: "Cotton Exchange", Key: "cotton_exchange",
-			MinAge: "industrial_age", RequiredBld: "seaport", MinCount: 1,
+			MinAge: "industrial_age", RequiredBld: "stock_exchange", MinCount: 1,
 			TicksPerRun: 16,
 			Export:      map[string]float64{"gold": 400},
 			Import:      map[string]float64{"culture": 200, "knowledge": 150},
@@ -220,7 +220,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 		},
 		{
 			Name: "Steamship Line", Key: "steamship_line",
-			MinAge: "industrial_age", RequiredBld: "seaport", MinCount: 2,
+			MinAge: "industrial_age", RequiredBld: "harbor_authority", MinCount: 2,
 			TicksPerRun: 18,
 			Export:      map[string]float64{"steel": 250, "coal": 200},
 			Import:      map[string]float64{"gold": 900},
@@ -228,7 +228,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 		},
 		{
 			Name: "Rail Freight", Key: "rail_freight",
-			MinAge: "industrial_age", RequiredBld: "steam_works", MinCount: 1,
+			MinAge: "industrial_age", RequiredBld: "iron_works_complex", MinCount: 1,
 			TicksPerRun: 12,
 			Export:      map[string]float64{"iron": 200},
 			Import:      map[string]float64{"gold": 100, "coal": 50},
@@ -276,7 +276,7 @@ func BaseTradeRoutes() []TradeRouteDef {
 		},
 		{
 			Name: "Warp Commerce", Key: "warp_commerce",
-			MinAge: "space_age", RequiredBld: "warp_drive_plant", MinCount: 1,
+			MinAge: "interstellar_age", RequiredBld: "warp_drive_plant", MinCount: 1,
 			TicksPerRun: 15,
 			Export:      map[string]float64{"gold": 500},
 			Import:      map[string]float64{"dark_matter": 200},
