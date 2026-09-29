@@ -4,10 +4,39 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"sync"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
+
+// milestoneKeyKinds records which progress labels are raw building or
+// resource keys: game.MilestoneProgress carries the key itself for those
+// conditions.
+var milestoneKeyKinds = sync.OnceValue(func() map[string]string {
+	m := map[string]string{}
+	for k := range config.ResourceByKey() {
+		m[k] = "resource"
+	}
+	for k := range config.BuildingByKey() {
+		m[k] = "building"
+	}
+	return m
+})
+
+// milestoneLabel turns a progress label that is a building or resource key
+// into its display name ("stone_pit" → "Stone Pit", "iron_ore" → "Iron ore").
+// Labels that are already words pass through.
+func milestoneLabel(label string) string {
+	switch milestoneKeyKinds()[label] {
+	case "building":
+		return game.BuildingName(label)
+	case "resource":
+		return textfmt.Capitalize(game.ResourceName(label))
+	}
+	return label
+}
 
 // milestonesProvider generates the milestones overlay text from the current game state.
 // This is lifted from StatsTab.refreshMilestones — identical logic, returning a string
@@ -100,11 +129,11 @@ func milestonesProvider(state game.GameState, _ int) string {
 				// Per-condition progress bars
 				for _, p := range m.Progress {
 					if p.Met {
-						fmt.Fprintf(&sb, "     [green]✓ %s[-]\n", p.Label)
+						fmt.Fprintf(&sb, "     [green]✓ %s[-]\n", milestoneLabel(p.Label))
 					} else {
 						bar := ProgressBar(p.Current, p.Target, 10)
 						fmt.Fprintf(&sb, "     [yellow]%s/%s %s %s[-]\n",
-							FormatNumber(p.Current), FormatNumber(p.Target), bar, p.Label)
+							FormatNumber(p.Current), FormatNumber(p.Target), bar, milestoneLabel(p.Label))
 					}
 				}
 				if m.RewardText != "" {

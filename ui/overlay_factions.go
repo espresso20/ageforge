@@ -504,7 +504,7 @@ func effectsSummary(effects []game.EventEffectInfo) (plain, colored string) {
 func effectMagnitude(eff game.EventEffectInfo) (plain, colored string) {
 	switch {
 	case eff.Type == "production":
-		plain = fmt.Sprintf("%s %s/tick", textfmt.Signed(eff.Value), game.ResourceName(eff.Target))
+		plain = rateNumber(eff.Value) + " " + game.ResourceName(eff.Target) + "/tick"
 	case eff.Type == "production_all":
 		plain = textfmt.SignedPercent(eff.Value) + " all production"
 	case eff.Type == "tick_speed":
