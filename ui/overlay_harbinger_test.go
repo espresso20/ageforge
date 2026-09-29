@@ -184,7 +184,7 @@ func TestHarbingerCommand(t *testing.T) {
 			t.Errorf("%q → %+v, want the harbinger overlay", cmd, r)
 		}
 	}
-	if r := HandleCommand("harbinger appease", engine); r.Type != "error" || !strings.Contains(r.Message, "no harbinger") {
+	if r := HandleCommand("harbinger appease", engine); r.Type != "error" || !strings.Contains(r.Message, "No harbinger") {
 		t.Errorf("appease with no harbinger → %+v", r)
 	}
 	if r := HandleCommand("harbinger dance", engine); r.Type != "info" || !strings.Contains(r.Message, "Usage") {
