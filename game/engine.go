@@ -4088,7 +4088,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 		ge.addLog("info", fmt.Sprintf("Overflow banked into %s: %s.", ge.Buildings.defs[bankedInto].Name, Amounts(banked)))
 	}
 	if !starts.empty() {
-		ge.addLog("info", "While you were away your plan started: "+starts.describe(ge.Buildings.defs))
+		ge.addLog("info", "While you were away, your plan "+starts.describe(ge.Buildings.defs)+".")
 	}
 }
 

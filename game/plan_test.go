@@ -35,6 +35,16 @@ func logHas(ge *GameEngine, sub string) bool {
 }
 
 // logHasAll reports whether one log line contains every sub.
+// logHasLine reports whether some log line is exactly want.
+func logHasLine(ge *GameEngine, want string) bool {
+	for _, l := range ge.log {
+		if l.Message == want {
+			return true
+		}
+	}
+	return false
+}
+
 func logHasAll(ge *GameEngine, subs ...string) bool {
 	for _, l := range ge.log {
 		all := true
@@ -315,8 +325,9 @@ func TestOffline_RunsThePlanAsResourcesComeIn(t *testing.T) {
 	if started < 8 {
 		t.Errorf("the plan started %d huts in an hour offline at %.2f wood/tick, want many more than one cap's worth", started, rate)
 	}
-	if !logHasAll(ge, "While you were away", "started building") {
-		t.Error("no offline plan summary")
+	want := "While you were away, your plan started building " + BuildingCount(started, "hut") + "."
+	if !logHasLine(ge, want) {
+		t.Errorf("no offline plan summary %q", want)
 	}
 	if got := ge.Buildings.GetCount("hut"); got == 0 {
 		t.Error("no hut finished construction offline")
