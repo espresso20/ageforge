@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // milestonesProvider generates the milestones overlay text from the current game state.
@@ -61,7 +62,7 @@ func milestonesProvider(state game.GameState, _ int) string {
 				fmt.Fprintf(&sb, " [green]★ %s[-] [%d/%d %s] [green]✓ %s[-]",
 					catName, chain.CompletedCount, chain.TotalCount, chainBar, chain.Title)
 				if chain.BoostActive {
-					sb.WriteString(" [cyan]⚡BOOST[-]")
+					sb.WriteString(" [cyan]⚡ boost active[-]")
 				}
 			} else {
 				fmt.Fprintf(&sb, " [gold]◆ %s[-] [%d/%d %s]",
@@ -102,8 +103,8 @@ func milestonesProvider(state game.GameState, _ int) string {
 						fmt.Fprintf(&sb, "     [green]✓ %s[-]\n", p.Label)
 					} else {
 						bar := ProgressBar(p.Current, p.Target, 10)
-						fmt.Fprintf(&sb, "     [yellow]%.0f/%.0f %s %s[-]\n",
-							p.Current, p.Target, bar, p.Label)
+						fmt.Fprintf(&sb, "     [yellow]%s/%s %s %s[-]\n",
+							FormatNumber(p.Current), FormatNumber(p.Target), bar, p.Label)
 					}
 				}
 				if m.RewardText != "" {
@@ -113,7 +114,7 @@ func milestonesProvider(state game.GameState, _ int) string {
 		}
 
 		if hiddenCount > 0 {
-			fmt.Fprintf(&sb, "   [gray]+ %d hidden milestone(s)[-]\n", hiddenCount)
+			fmt.Fprintf(&sb, "   [gray]+ %s[-]\n", textfmt.Count(hiddenCount, "hidden milestone", "hidden milestones"))
 		}
 		sb.WriteString("\n")
 	}

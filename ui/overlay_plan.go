@@ -211,7 +211,7 @@ func planPanelText(state game.GameState, sel int, note string, noteGood, clearAr
 
 	if len(state.Plan) == 0 {
 		sb.WriteString(" The plan is empty.\n\n")
-		sb.WriteString(" " + theme.Paint(theme.RoleLabel, lit("plan build <building> [count]")) + theme.Paint(theme.RoleDim, "   e.g. plan build hut 10") + "\n")
+		sb.WriteString(" " + theme.Paint(theme.RoleLabel, "plan build <building> [count[]") + theme.Paint(theme.RoleDim, "   e.g. plan build hut 10") + "\n")
 		sb.WriteString(" " + theme.Paint(theme.RoleLabel, "plan research <tech>") + theme.Paint(theme.RoleDim, "            techs start one at a time, in order") + "\n")
 	} else {
 		for i, v := range state.Plan {
@@ -247,7 +247,7 @@ func planPanelText(state game.GameState, sel int, note string, noteGood, clearAr
 // planListText is `plan list`: the plan as plain log lines.
 func planListText(state game.GameState) string {
 	if len(state.Plan) == 0 {
-		return lit("The plan is empty. Add items with: plan build <building> [count], or plan research <tech>.")
+		return "The plan is empty. Add items with: plan build <building> [count[], or plan research <tech>."
 	}
 	var sb strings.Builder
 	sb.WriteString(theme.Paint(theme.RoleAccent, "Build plan") + "\n")

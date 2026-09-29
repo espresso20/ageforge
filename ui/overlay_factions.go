@@ -385,7 +385,7 @@ const maxRosterRows = 6
 // Strength sits in a fixed column BEFORE the truncatable detail so it survives
 // on a narrow terminal; the specialty/personality tail is what gets clipped.
 func writeUndiscoveredRoster(sb *strings.Builder, pending []config.FactionDef, ages map[string]config.AgeDef, usable int) {
-	sb.WriteString("\n [yellow]── Not Yet Met ──[-]\n\n")
+	sb.WriteString("\n [yellow]── Not yet met ──[-]\n\n")
 
 	if len(pending) == 0 {
 		sb.WriteString(" [gray]Every civilization has been met.[-]\n")

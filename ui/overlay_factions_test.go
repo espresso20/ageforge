@@ -533,7 +533,7 @@ func TestExpeditionsProvider_ShowsSocietyStatus(t *testing.T) {
 			Active: true, Starved: true, Interval: 192, Count: 1,
 		}
 		line := lineContaining(expeditionsProvider(state, panelWidth), "Geographic Society")
-		if !strings.Contains(line, "too thin") {
+		if !strings.Contains(line, "cannot pay the expedition cost") {
 			t.Errorf("expeditions panel should flag a starved Society, got %q", line)
 		}
 	})
