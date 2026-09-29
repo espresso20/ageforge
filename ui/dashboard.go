@@ -15,7 +15,7 @@ import (
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
-	"github.com/espresso20/ageforge/ui/citymap"
+	"github.com/espresso20/ageforge/ui/mapstyle/all"
 )
 
 // shameMessages are randomly chosen at session start when the cheater badge is active.
@@ -111,14 +111,27 @@ type Dashboard struct {
 	themeProcessedKeys map[string]bool
 	themeSyncDone      bool
 
+	// The maps: the shared model builder and style registry, the Map panel
+	// and the dashboard's mini map. UI goroutine only. mapLocal holds the
+	// map settings when no account is loaded (session only).
+	mapViews *mapViews
+	mapPanel *mapPanel
+	mapLocal *mapSettings
+	// mapOpen is set while the Map panel is open, so the refresh loop
+	// redraws it at the animation rate. Read off the UI goroutine.
+	mapOpen atomic.Bool
+
 	stopCh chan struct{}
 }
 
 // NewDashboard creates the gameplay dashboard
 func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.Pages) *Dashboard {
+	mv := newMapViews(all.Registry())
 	d := &Dashboard{
 		app:                app,
 		engine:             engine,
+		mapViews:           mv,
+		mapPanel:           newMapPanel(mv),
 		pages:              pages,
 		stopCh:             make(chan struct{}),
 		histIdx:            -1,
@@ -170,17 +183,18 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.overlayMgr.Register("buildings", "Buildings", buildingsProvider)
 	d.overlayMgr.Register("help", "Help", helpProvider)
 
-	// Two map views. The city view is the player's own settlement; it registers under
-	// its new primary key "citymap" AND keeps "map" working as an alias (same instance,
-	// so the two keys share one cache) so existing muscle memory isn't broken.
-	cm := citymap.NewCityMap()
-	d.overlayMgr.RegisterWidget("citymap", "City Map", cm.Build, cm.Refresh, true)
-	d.overlayMgr.RegisterWidget("map", "City Map", cm.Build, cm.Refresh, true)
-
-	// The world view: a Game-of-Life-style field of settlements with your civ and the
-	// discovered diplomacy civs called out as labeled, relationship-colored dots.
-	wm := citymap.NewWorldMap()
-	d.overlayMgr.RegisterWidget("worldmap", "World Map", wm.Build, wm.Refresh, true)
+	// The Map panel: the active map style full screen (map, and its aliases
+	// citymap and worldmap). Its settings travel with the account.
+	d.mapPanel.settings = d.mapSettings
+	d.mapPanel.save = d.saveMapSettings
+	d.mapPanel.hintShown = d.markMapHintShown
+	d.mapPanel.stage = func(cmd string) {
+		// tview goroutine (a key handler): close the panel, then stage the
+		// command in the prompt for the player to run with Enter.
+		d.overlayMgr.Hide()
+		d.inputField.SetText(cmd)
+	}
+	d.overlayMgr.RegisterWidget("map", "Map", d.mapPanel.open, d.mapPanel.update, true)
 
 	return d
 }
@@ -447,7 +461,7 @@ func (d *Dashboard) updateSidebar(activeOverlay string) {
 }
 
 func buildSidebarText(active string) string {
-	commands := []string{"milestones", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders", "workers", "logs", "epoch", "harbinger", "history", "citymap", "worldmap", "help"}
+	commands := []string{"milestones", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders", "workers", "logs", "epoch", "harbinger", "history", "map", "help"}
 	var sb strings.Builder
 	sb.WriteString("\n")
 	for _, cmd := range commands {
@@ -474,12 +488,24 @@ func (d *Dashboard) StartUpdates() {
 	go func() {
 		ticker := time.NewTicker(500 * time.Millisecond)
 		defer ticker.Stop()
+		anim := time.NewTicker(mapAnimStep)
+		defer anim.Stop()
 		for {
 			select {
 			case <-ticker.C:
 				d.app.QueueUpdateDraw(func() {
 					d.refresh()
 				})
+			case <-anim.C:
+				// The open Map panel animates between refreshes: a redraw
+				// is enough, since its frame counter runs on the clock.
+				if d.mapOpen.Load() {
+					d.app.QueueUpdateDraw(func() {
+						if d.overlayMgr.ActiveName() != "map" {
+							d.mapOpen.Store(false)
+						}
+					})
+				}
 			case <-d.stopCh:
 				return
 			}
@@ -927,6 +953,13 @@ func (d *Dashboard) submitInput() {
 	}
 	if result.OverlayName == "plan" {
 		d.planPanel.reset()
+	}
+	if result.OverlayName == "map" {
+		d.mapPanel.world = result.MapWorld
+		d.mapOpen.Store(true)
+	}
+	if result.Icons {
+		d.startIcons()
 	}
 	if result.OverlayName != "" {
 		state := d.engine.GetState()

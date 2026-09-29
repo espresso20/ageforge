@@ -59,6 +59,13 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("           (irreversible ones, like sell, are only filled in: Enter again runs them)\n")
 	sb.WriteString("  [cyan]↑/↓[-]    - Command history\n")
 
+	sb.WriteString("\n[gold]═══ The Map panel ═══[-]\n")
+	sb.WriteString("[gray]The style's own keys move its cursor (arrows, Tab); these work in every style.[-]\n")
+	sb.WriteString("  [cyan]s[-]      - Next map style (roguelike, skyline); saved to your account\n")
+	sb.WriteString("  [cyan]g[-]      - Next glyph set (ascii, unicode, nerd); saved to your account\n")
+	sb.WriteString("  [cyan]Enter[-]  - Put the command for what the cursor is on in the prompt\n")
+	sb.WriteString("  [cyan]Esc[-]    - Close the panel\n")
+
 	sb.WriteString("\n[gold]═══ Shortcuts ═══[-]\n")
 	var short []string
 	for _, c := range reg {

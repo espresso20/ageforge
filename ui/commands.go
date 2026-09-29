@@ -297,6 +297,19 @@ func registry() []*Command {
 				{"theme <key>", "Switch to a theme by key"},
 			},
 			Subs: []*Command{sub("list", "theme list", "List themes with unlock status")}},
+		{Name: "map", Aliases: []string{"citymap", "worldmap"}, Section: secGame, BareOK: true,
+			Panel: "The map: your settlement and the known world (aliases: citymap, worldmap)",
+			Help: []Usage{
+				{"map", "Open the Map panel (worldmap opens it on the known world)"},
+			},
+			Subs: []*Command{
+				sub("style", "map style [roguelike|skyline]", "Show or set the map style (default roguelike)",
+					Arg{Kind: ArgWord, Words: []string{"roguelike", "skyline"}, Optional: true}),
+				sub("glyphs", "map glyphs [ascii|unicode|nerd]", "Show or set the map's glyphs (default unicode; nerd needs a Nerd Font)",
+					Arg{Kind: ArgWord, Words: []string{"ascii", "unicode", "nerd"}, Optional: true}),
+			}},
+		{Name: "icons", Section: secGame,
+			Help: []Usage{{"icons", "Check whether your font shows Nerd Font icons, and install one if it doesn't"}}},
 		{Name: "save", Section: secGame, Args: []Arg{{Kind: ArgText, Optional: true}},
 			Help: []Usage{{"save [name]", "Save (no name: overwrite or branch; a name: branch a new save)"}},
 			Subs: []*Command{sub("list", "save list", "Same as saves")}},
@@ -335,16 +348,13 @@ func registry() []*Command {
 		panel("epoch", "Epoch progress & catastrophe"),
 		panel("history", "Civilization history timeline"),
 		panel("buildings", "Built structures by lineage"),
-		panel("citymap", "Your settlement map (alias: map)"),
-		panel("map", ""),
-		panel("worldmap", "Known world: your civilization & the ones you have met"),
 	}
 }
 
 // panelOrder is the Help panel's Panels list order (the sidebar's, then the rest).
 var panelOrder = []string{
 	"milestones", "research", "plan", "expedition", "army", "trade", "factions", "stats", "wonders",
-	"workers", "logs", "epoch", "harbinger", "history", "buildings", "citymap", "worldmap", "theme", "help",
+	"workers", "logs", "epoch", "harbinger", "history", "buildings", "map", "theme", "help",
 }
 
 // devCommand is one dev-console command. They are not player commands: the

@@ -136,8 +136,9 @@ func treeWords(c *Command, out map[string]bool) {
 // notSubcommands are words handlers compare that are not typed after a
 // command name: comparisons in helpers reached while following calls.
 var notSubcommands = map[string]bool{
-	"":       true, // empty-argument checks
-	"allied": true, // a faction status the diplomacy status list checks
+	"":         true, // empty-argument checks
+	"allied":   true, // a faction status the diplomacy status list checks
+	"worldmap": true, // cmdMap checks which alias it was typed as (worldmap opens on the world)
 }
 
 // TestRegistryMatchesDispatcher holds the registry and HandleCommand

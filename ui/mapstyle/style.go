@@ -70,6 +70,10 @@ const (
 	OptLegend
 	// OptChanges highlights what is new since the last visit.
 	OptChanges
+	// OptWorld opens the view on the known world rather than the
+	// settlement (roguelike: the region zoom). Off returns to the
+	// settlement. Styles with one view ignore it.
+	OptWorld
 )
 
 // Entry describes one style for the registry.

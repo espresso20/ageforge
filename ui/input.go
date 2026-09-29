@@ -14,8 +14,10 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
+	"github.com/espresso20/ageforge/ui/mapstyle/all"
 )
 
 // CommandResult is the return value of HandleCommand. The caller (Dashboard)
@@ -28,6 +30,10 @@ type CommandResult struct {
 	OverlayName string // non-empty → dashboard should open this overlay panel
 	// OpenCatastrophe asks the dashboard to (re)open the pending catastrophe modal.
 	OpenCatastrophe bool
+	// MapWorld opens the Map panel (OverlayName "map") on the known world.
+	MapWorld bool
+	// Icons asks the dashboard to start the guided icons check.
+	Icons bool
 }
 
 // HandleCommand parses a raw command string and dispatches to the appropriate
@@ -122,13 +128,10 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return CommandResult{OverlayName: "history"}
 	case "buildings":
 		return CommandResult{OverlayName: "buildings"}
-	case "citymap":
-		return CommandResult{OverlayName: "citymap"}
-	case "map":
-		// Alias for the city view — preserves existing muscle memory.
-		return CommandResult{OverlayName: "map"}
-	case "worldmap":
-		return CommandResult{OverlayName: "worldmap"}
+	case "map", "citymap", "worldmap":
+		// citymap and worldmap are the old maps' commands, kept as aliases;
+		// worldmap opens on the known world.
+		return cmdMap(cmd, args, engine)
 	case "catastrophe", "cat":
 		return cmdCatastrophe(args, engine)
 	case "harbinger", "harb":
@@ -148,6 +151,11 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		return cmdAccount(args, engine)
 	case "theme":
 		return cmdTheme(args, engine)
+	case "icons":
+		if len(args) > 0 {
+			return CommandResult{Message: usageFor("icons"), Type: "error"}
+		}
+		return CommandResult{Icons: true}
 	default:
 		return CommandResult{Message: unknownCommandText(cmd), Type: "error"}
 	}
@@ -2251,4 +2259,78 @@ func planIndexArg(rest []string, sub string) (int, error) {
 		return 0, fmt.Errorf("plan %s takes one item number", sub)
 	}
 	return parseCount(rest[0])
+}
+
+// cmdMap handles map and its aliases citymap and worldmap. Bare, it opens
+// the Map panel (worldmap on the known world); "style" and "glyphs" read or
+// change the settings.
+func cmdMap(cmd string, args []string, engine *game.GameEngine) CommandResult {
+	if len(args) == 0 {
+		return CommandResult{OverlayName: "map", MapWorld: cmd == "worldmap"}
+	}
+	switch strings.ToLower(args[0]) {
+	case "style":
+		return cmdMapStyle(args[1:], engine)
+	case "glyphs":
+		return cmdMapGlyphs(args[1:], engine)
+	}
+	return CommandResult{Message: subUsage("map"), Type: "error"}
+}
+
+// mapNoAccount is the refusal when there is no account to keep a setting on.
+const mapNoAccount = "Map settings are kept on your account, and no account is loaded. Press s or g in the Map panel to change them for this session."
+
+func cmdMapStyle(args []string, engine *game.GameEngine) CommandResult {
+	reg := all.Registry()
+	acct := engine.Account()
+	cur := resolveMapSettings(acct, reg)
+	if len(args) == 0 {
+		return CommandResult{Type: "info", Message: fmt.Sprintf("Map style: %s. Styles: %s. Type map style <name> to switch.",
+			styleTitle(reg, cur.Style), strings.Join(reg.Names(), ", "))}
+	}
+	if len(args) > 1 {
+		return usageError(usageFor("map style"), fmt.Errorf("one style name, please"))
+	}
+	name := strings.ToLower(args[0])
+	switch name {
+	case "roguelike", "skyline":
+	default:
+		return usageError(usageFor("map style"), fmt.Errorf("there is no map style %q", args[0]))
+	}
+	if acct == nil {
+		return CommandResult{Type: "error", Message: mapNoAccount}
+	}
+	if err := acct.SetMapStyle(name); err != nil {
+		return errorResult(fmt.Errorf("the map style could not be saved: %w", err))
+	}
+	return CommandResult{Type: "info", Message: fmt.Sprintf("Map style set to %s.", styleTitle(reg, name))}
+}
+
+func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
+	acct := engine.Account()
+	cur := resolveMapSettings(acct, all.Registry())
+	if len(args) == 0 {
+		return CommandResult{Type: "info", Message: fmt.Sprintf("Map glyphs: %s. Tiers: %s. Type map glyphs <tier> to switch (icons checks your font for nerd).",
+			cur.Tier, strings.Join(mapmodel.TierNames, ", "))}
+	}
+	if len(args) > 1 {
+		return usageError(usageFor("map glyphs"), fmt.Errorf("one glyph tier, please"))
+	}
+	name := strings.ToLower(args[0])
+	switch name {
+	case "ascii", "unicode", "nerd":
+	default:
+		return usageError(usageFor("map glyphs"), fmt.Errorf("there is no glyph tier %q", args[0]))
+	}
+	if acct == nil {
+		return CommandResult{Type: "error", Message: mapNoAccount}
+	}
+	if err := acct.SetMapGlyphs(name); err != nil {
+		return errorResult(fmt.Errorf("the map glyphs could not be saved: %w", err))
+	}
+	msg := fmt.Sprintf("Map glyphs set to %s.", name)
+	if name == "nerd" {
+		msg += " If the map shows boxes or question marks, type icons."
+	}
+	return CommandResult{Type: "info", Message: msg}
 }

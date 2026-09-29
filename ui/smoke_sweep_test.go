@@ -49,13 +49,13 @@ var sweepOverlays = []struct{ cmd, overlay string }{
 	{"logs", "logs"},
 	{"epoch", "epoch"},
 	{"history", "history"},
-	{"citymap", "citymap"},
-	{"worldmap", "worldmap"},
+	{"map", "map"},
 	{"help", "help"},
 	// Not in the sidebar, still reachable by command.
 	{"buildings", "buildings"},
 	{"diplomacy", "factions"},
-	{"map", "map"},
+	{"citymap", "map"},
+	{"worldmap", "map"},
 	{"techs", "techs"},
 }
 

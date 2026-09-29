@@ -225,6 +225,13 @@ type AccountStats struct {
 // Phase 1 only round-trips these; SetActiveTheme et al. land in Phase 3.
 type AccountPrefs struct {
 	ActiveTheme string `json:"active_theme,omitempty"`
+	// Map settings (the Map panel and the dashboard mini map). Empty means
+	// the default: the first registered style, the unicode glyph tier.
+	MapStyle  string `json:"map_style,omitempty"`
+	MapGlyphs string `json:"map_glyphs,omitempty"`
+	// MapIconsHint records that the Map panel's one-time "Type icons" hint
+	// was shown, so it is shown once per account.
+	MapIconsHint bool `json:"map_icons_hint,omitempty"`
 }
 
 // Account is the per-player identity + meta-progression record, persisted to the active
@@ -1031,6 +1038,42 @@ func (a *Account) SetActiveTheme(key string) error {
 	return a.Save()
 }
 
+// MapPrefs returns the persisted map settings: the style key and glyph tier
+// name ("" for the defaults) and whether the icons hint was shown.
+func (a *Account) MapPrefs() (style, glyphs string, hintShown bool) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.Prefs.MapStyle, a.Prefs.MapGlyphs, a.Prefs.MapIconsHint
+}
+
+// SetMapStyle persists the map style key. Like SetActiveTheme it does not
+// validate the key: the UI owns the style registry.
+func (a *Account) SetMapStyle(key string) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.Prefs.MapStyle = key
+	return a.Save()
+}
+
+// SetMapGlyphs persists the map glyph tier name.
+func (a *Account) SetMapGlyphs(tier string) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.Prefs.MapGlyphs = tier
+	return a.Save()
+}
+
+// SetMapIconsHintShown records that the one-time icons hint was shown.
+func (a *Account) SetMapIconsHintShown() error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if a.Prefs.MapIconsHint {
+		return nil
+	}
+	a.Prefs.MapIconsHint = true
+	return a.Save()
+}
+
 // --- Recovery code (identity backup, accounts.md §3.5 / §8 / §9 Phase 4) ---
 //
 // The recovery code encodes IDENTITY ONLY — the 16-byte account_id plus a 2-byte
@@ -1390,6 +1433,14 @@ func ImportAccountExport(blob []byte, merge bool) (*Account, error) {
 		if target.Prefs.ActiveTheme == "" {
 			target.Prefs.ActiveTheme = exp.Prefs.ActiveTheme
 		}
+		// Map settings: the same rule.
+		if target.Prefs.MapStyle == "" {
+			target.Prefs.MapStyle = exp.Prefs.MapStyle
+		}
+		if target.Prefs.MapGlyphs == "" {
+			target.Prefs.MapGlyphs = exp.Prefs.MapGlyphs
+		}
+		target.Prefs.MapIconsHint = target.Prefs.MapIconsHint || exp.Prefs.MapIconsHint
 	}
 
 	// Save resolves through the scoped dataDirectory(), so point the active id at the target
