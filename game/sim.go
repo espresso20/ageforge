@@ -2,6 +2,8 @@ package game
 
 import (
 	"time"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // MeetFactionForTest discovers civ key at opinion and rolls its trade deals,
@@ -55,4 +57,20 @@ func (ge *GameEngine) SimulateOffline(elapsed time.Duration) {
 // suite's prestige scenario); not reachable from play.
 func (ge *GameEngine) ForceCatastropheForTest() error {
 	return ge.forceCatastrophe()
+}
+
+// SetGarrisonForTest moves the engine to age and gives it n soldiers (the
+// soldiers resource unlocked, its storage raised to fit), so a garrison
+// blunts raids. A test hook for other packages (the Army panel, catastrophe
+// modal and theme sweep tests); not reachable from play.
+func (ge *GameEngine) SetGarrisonForTest(age string, n float64) {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.age = age
+	ge.currentEpoch = config.EpochForAge(age)
+	ge.Resources.UnlockResource("soldiers")
+	if short := n - ge.Resources.GetStorage("soldiers"); short > 0 {
+		ge.Resources.AddStorage("soldiers", short)
+	}
+	ge.Resources.Add("soldiers", n-ge.Resources.Get("soldiers"))
 }

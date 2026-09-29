@@ -1,6 +1,7 @@
 package game
 
 import (
+	"fmt"
 	"math/rand"
 	"sort"
 	"strings"
@@ -339,34 +340,15 @@ func (em *EventManager) GetActiveForSave() []ActiveEvent {
 	return out
 }
 
-// RecordWorkerLoss accumulates workers lost for the active event matching key.
-func (em *EventManager) RecordWorkerLoss(key string, count int) {
-	for i := range em.active {
-		if em.active[i].Key == key {
-			em.active[i].WorkersLost += count
-			return
-		}
-	}
-}
-
-// RecordResourceLoss accumulates resource stolen for the active event matching key.
-func (em *EventManager) RecordResourceLoss(key string, resource string, amount float64) {
-	for i := range em.active {
-		if em.active[i].Key == key {
-			if em.active[i].ResourcesLost == nil {
-				em.active[i].ResourcesLost = make(map[string]float64)
-			}
-			em.active[i].ResourcesLost[resource] += amount
-			return
-		}
-	}
-}
-
-// buildLossSuffix returns a tview-colored summary of the resources an expired
-// event took, or "" if it took none. Worker losses are logged when the event
-// starts, so they are not repeated here.
+// buildLossSuffix returns a loss summary for an expired event, or "" if none
+// was recorded. Losses are logged when an event strikes now (see
+// applyEventEffects), so only timed events loaded from older saves still
+// carry recorded losses to report here.
 func buildLossSuffix(event ActiveEvent) string {
 	var parts []string
+	if event.WorkersLost > 0 {
+		parts = append(parts, fmt.Sprintf("[yellow]%d workers lost[-]", event.WorkersLost))
+	}
 	if len(event.ResourcesLost) > 0 {
 		keys := make([]string, 0, len(event.ResourcesLost))
 		for k := range event.ResourcesLost {
@@ -375,11 +357,81 @@ func buildLossSuffix(event ActiveEvent) string {
 		sort.Strings(keys)
 		for _, k := range keys {
 			amt := event.ResourcesLost[k]
-			parts = append(parts, "[yellow]"+Amount(amt, k)+" lost[-]")
+			parts = append(parts, fmt.Sprintf("[yellow]%s %s lost[-]", amountText(amt), resourceLabel(k)))
 		}
 	}
 	if len(parts) == 0 {
 		return ""
 	}
 	return " " + strings.Join(parts, ", ") + "."
+}
+
+// applyEventEffects applies a triggered random event's instant and on-trigger
+// effects, then logs what the player actually lost (amounts and workers, at
+// once, not when a timed event ends). A Raid event meets the garrison first,
+// and a second line says what it kept. Under the write lock.
+func (ge *GameEngine) applyEventEffects(def config.EventDef) {
+	// A raid meets the garrison: it blunts a share of what the raiders
+	// take (config/defense.go). 0 with no soldiers, and every loss below
+	// is then exactly what it always was.
+	guard := 0.0
+	if def.Raid {
+		guard = ge.raidMitigation()
+	}
+	var lostRes, keptRes map[string]float64
+	lostWorkers, keptWorkers := 0, 0
+	for _, eff := range def.Effects {
+		switch eff.Type {
+		case "instant_resource":
+			ge.Resources.Add(eff.Target, eff.Value)
+			ge.addLog("debug", fmt.Sprintf("Event effect: %s %s %+.1f", eff.Type, eff.Target, eff.Value))
+		case "steal_resource":
+			current := ge.Resources.Get(eff.Target)
+			loss := eff.Value
+			if loss > current {
+				loss = current
+			}
+			if guard > 0 && loss > 0 {
+				kept := float64(loss * guard)
+				loss -= kept
+				if keptRes == nil {
+					keptRes = make(map[string]float64)
+				}
+				keptRes[eff.Target] += kept
+			}
+			if loss > 0 && ge.Resources.Remove(eff.Target, loss) {
+				if lostRes == nil {
+					lostRes = make(map[string]float64)
+				}
+				lostRes[eff.Target] += loss
+			}
+			ge.addLog("debug", fmt.Sprintf("Event effect: %s %s -%.1f", eff.Type, eff.Target, loss))
+		case "worker_loss":
+			// Value is a share (0.0-1.0) of the worker pool to remove.
+			pct := eff.Value
+			if guard > 0 {
+				pct = float64(eff.Value * (1 - guard))
+				full := int(float64(ge.Workers.TotalPop()) * eff.Value)
+				if blunted := int(float64(ge.Workers.TotalPop()) * pct); blunted < full {
+					keptWorkers += full - blunted
+				}
+			}
+			before := ge.Workers.TotalPop()
+			ge.Workers.RemovePct(pct)
+			lostWorkers += before - ge.Workers.TotalPop()
+			ge.addLog("debug", fmt.Sprintf("Event effect: worker_loss %.0f%%", pct*100))
+		}
+	}
+	if parts := lossParts(lostRes, lostWorkers); len(parts) > 0 {
+		ge.addLog("warning", "  You lost "+joinAnd(parts)+".")
+	}
+	if line := garrisonSavedLine(guard, keptRes, keptWorkers); line != "" {
+		ge.addLog("success", line)
+		t := ge.defenseTally()
+		t.Raids++
+		t.Workers += keptWorkers
+		for _, res := range sortedKeys(keptRes) {
+			ge.recordSavedResource(res, keptRes[res])
+		}
+	}
 }

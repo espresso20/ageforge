@@ -2,8 +2,8 @@ package flavor
 
 // ExpeditionFailure — a party was sent out and it went badly.
 //
-// The log line directly above this one already says "<Name> failed! Partial loot
-// recovered." So none of the sentences here say that it failed, and none of them
+// The log line directly above this one already says "<Name> failed. You kept 30%
+// of the loot: ..." So none of the sentences here say that it failed, and none of them
 // weigh the loss against the recovery. They say who did not come home, what broke,
 // who is being blamed, what the map got wrong, and what the families were told.
 // See catalog.go for the rules, and catalog_exp_success.go for the voice.

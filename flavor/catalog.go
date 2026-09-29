@@ -26,7 +26,7 @@ import "sync"
 //     standard-deviation floor of seven words.
 //
 //  1. ORTHOGONAL TO THE MECHANICS. The line above this one in the log already
-//     says "Scout Party succeeded! Gained loot." The flavour must not say it
+//     says "Scout Party succeeded. Loot: 60 food, ..." The flavour must not say it
 //     again in a wry voice. It supplies a DETAIL: something someone did, something
 //     that came back, something that broke, a consequence, an image. The
 //     vocabulary of outcome-restating — pays out, closes out in profit, the

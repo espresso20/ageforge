@@ -4,6 +4,7 @@ import (
 	"strings"
 	"sync"
 
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
@@ -125,6 +126,12 @@ func safeTags(s string) string {
 		i = j + 1
 	}
 	return b.String()
+}
+
+// pluralize returns word or its regular plural for n ("building",
+// "buildings"). It is textfmt.Plural for nouns that just take an "s".
+func pluralize(word string, n int) string {
+	return textfmt.Plural(n, word, word+"s")
 }
 
 // lit escapes s completely so every bracket in it prints literally. Use it

@@ -22,15 +22,10 @@ var copyDirs = []string{"ui", "game", "boon"}
 
 // copyExemptFiles are skipped by every guard in this file.
 //   - dev-only consoles and dumps are read by us, not players;
-//   - the Army PR owns the military/catastrophe files and rewrites their text
-//     there. note: drop those four from this list once that PR lands.
+//   - art, glyphs and generated names are not sentences.
 var copyExemptFiles = map[string]string{
 	"game/devmode.go":           "dev console",
 	"game/devcmd.go":            "dev console",
-	"game/military.go":          "owned by the Army PR",
-	"game/catastrophe.go":       "owned by the Army PR",
-	"ui/catastrophe_modal.go":   "owned by the Army PR",
-	"ui/overlay_military.go":    "owned by the Army PR",
 	"ui/citymap/debug.go":       "debug overlay",
 	"game/updater.go":           "self-update plumbing, not game text",
 	"ui/splash_canvas.go":       "art",
@@ -42,10 +37,14 @@ var copyExemptFiles = map[string]string{
 	"game/expedition_flavor.go": "flavor catalog glue",
 }
 
-// copyExemptLiterals are literal substrings owned elsewhere (raid resolution
-// in game/diplomacy.go belongs to the Army PR).
+// copyExemptLiterals are literal substrings exempt from every guard.
+//   - The civilization-log markers in game/catastrophe.go are parsed back out
+//     of saved history by countCatastropheOutcomes, so rewording them would
+//     break the stats of existing saves. note: store the outcome as data
+//     first (audit systemic 15), then reword and drop these.
 var copyExemptLiterals = []string{
-	"raided you",
+	" — Endured ",
+	" — Succumbed to ",
 }
 
 type copyLit struct {
@@ -56,6 +55,22 @@ type copyLit struct {
 	// or a usage line in the log (safeTags); TestUsageFormsSurviveTview
 	// proves both, so the bracket guard skips them.
 	usageForm bool
+	// escaped: the literal is an argument to tview.Escape or lit(), so its
+	// brackets print as written.
+	escaped bool
+}
+
+// isEscapeCall reports whether c is tview.Escape(...) or lit(...).
+func isEscapeCall(c *ast.CallExpr) bool {
+	switch f := c.Fun.(type) {
+	case *ast.Ident:
+		return f.Name == "lit"
+	case *ast.SelectorExpr:
+		if pkg, ok := f.X.(*ast.Ident); ok {
+			return pkg.Name == "tview" && f.Sel.Name == "Escape"
+		}
+	}
+	return false
 }
 
 // collectCopyLiterals returns every string literal in the non-test Go files
@@ -91,6 +106,21 @@ func collectCopyLiterals(t *testing.T) []copyLit {
 				switch x := n.(type) {
 				case *ast.ImportSpec:
 					return false
+				case *ast.CallExpr:
+					// Text passed through tview.Escape or lit() prints its
+					// brackets literally, so it is not checked for them. The
+					// other guards still see it via the literal itself.
+					if isEscapeCall(x) {
+						for _, a := range x.Args {
+							if bl, ok := a.(*ast.BasicLit); ok && bl.Kind == token.STRING {
+								if s, err := strconv.Unquote(bl.Value); err == nil {
+									p := fset.Position(bl.Pos())
+									out = append(out, copyLit{pos: rel + ":" + strconv.Itoa(p.Line), text: s, escaped: true})
+								}
+							}
+						}
+						return false
+					}
 				case *ast.Field:
 					if x.Tag != nil {
 						ast.Inspect(x.Type, func(ast.Node) bool { return true })
@@ -174,7 +204,7 @@ var bracketWordRe = regexp.MustCompile(`\[([A-Za-z][A-Za-z0-9#:\-]*)\]`)
 // escaped ("[count[]") or pass the text through lit().
 func TestCopyNoEatenBrackets(t *testing.T) {
 	for _, l := range collectCopyLiterals(t) {
-		if l.usageForm {
+		if l.usageForm || l.escaped {
 			continue
 		}
 		for _, m := range bracketWordRe.FindAllStringSubmatchIndex(l.text, -1) {

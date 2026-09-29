@@ -33,9 +33,11 @@ type catastropheModalLayout struct {
 
 // buildCatastropheModalLayout assembles the text for epochKey's catastrophe.
 // alreadyLegacy says whether this epoch's legacy is already held (a repeat
-// Succumb in the same epoch grants no new legacy or research bonus), and
-// researchNow is the current Succumb research bonus (e.g. 0.25).
-func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNow float64) catastropheModalLayout {
+// Succumb in the same epoch grants no new legacy or research bonus),
+// researchNow is the current Succumb research bonus (e.g. 0.25), and eo is
+// what Endure would cost with the Harbinger's Brace and the garrison counted
+// (game.GameState.PendingEndure). st is the snapshot, for wall-clock durations.
+func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNow float64, eo game.EndureOutcome, st game.GameState) catastropheModalLayout {
 	catName, catFlavor := config.CatastropheInfo(epochKey)
 	ep := config.EpochByKey()[epochKey]
 	inner := catastropheModalWidth - 2
@@ -45,15 +47,18 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 		headerLines = append(headerLines, "[gray]"+tview.Escape(strings.TrimSpace(l))+"[-]")
 	}
 
-	endure := strings.Join([]string{
-		"[white]── ENDURE — weather the catastrophe ──[-]",
-		"  [red]• 20% of buildings destroyed (wonders are spared)[-]",
-		"  [red]• All resources reduced to 15%[-]",
-		"  [red]• 25% of workers lost; workers of destroyed buildings go idle[-]",
-		"  [red]• Production -10% for 216 ticks, morale -10[-]",
+	endureLines := []string{
+		"[white]── ENDURE: weather the catastrophe ──[-]",
+		fmt.Sprintf("  [red]• %s of buildings destroyed (wonders are spared)[-]", endurePct(eo.DestroyPct)),
+		fmt.Sprintf("  [red]• All resources reduced to %s[-]", endurePct(eo.KeepFrac*100)),
+		fmt.Sprintf("  [red]• %.0f%% of workers lost; workers of destroyed buildings go idle[-]", game.EndureWorkerLoss*100),
+		fmt.Sprintf("  [red]• All production %.0f%% for %s, morale %+.0f points[-]",
+			game.EndureDebuffProduction*100, formatTicks(game.EndureDebuffTicks, st), game.EndureMoraleHit*100),
 		"  [green]✓ Age, research, wonders and prestige preserved[-]",
-		"  [green]✓ Survived marker on the epoch badge[-]",
-	}, "\n")
+		"  [green]✓ The epoch badge records that you endured[-]",
+	}
+	endureLines = append(endureLines, endureDefenseLines(eo)...)
+	endure := strings.Join(endureLines, "\n")
 
 	per := game.SuccumbResearchBonusPerEpoch
 	researchLine := fmt.Sprintf("  [green]✓ Ancient Knowledge: research speed +%.0f%% (total +%.0f%%, permanent)[-]", per*100, (researchNow+per)*100)
@@ -63,7 +68,7 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 		legacyLine = fmt.Sprintf("  [gray]• %s legacy already held; no new legacy bonus[-]", ep.Name)
 	}
 	succumb := strings.Join([]string{
-		"[white]── SUCCUMB — let civilization fall ──[-]",
+		"[white]── SUCCUMB: let civilization fall ──[-]",
 		"  [red]• Full reset to the Primitive Age: buildings, resources, research[-]",
 		"  [red]• No prestige points earned (level and upgrades are kept)[-]",
 		fmt.Sprintf("  [green]✓ Up to %d buildings become ruins (50%% output, max %d ruins)[-]", game.SuccumbRuinCount, game.MaxRuins),
@@ -101,7 +106,7 @@ func buildLastPassageModalLayout(lp game.LastPassageState) catastropheModalLayou
 
 	keepLine := fmt.Sprintf("  [red]• You keep %d%% of this run's prestige points: %d of %d[-]", lp.KeepPct, lp.PointsIfEndured, lp.PointsNow)
 	endureLines := []string{
-		"[white]── ENDURE — pass through, diminished ──[-]",
+		"[white]── ENDURE: pass through, diminished ──[-]",
 		keepLine,
 	}
 	if lp.BraceLevel > 0 {
@@ -110,7 +115,7 @@ func buildLastPassageModalLayout(lp game.LastPassageState) catastropheModalLayou
 	endureLines = append(endureLines, "  [green]✓ Level, upgrades, legacies and ruins carry over as always[-]")
 
 	succumbLines := []string{
-		"[white]── SUCCUMB — let it take the run ──[-]",
+		"[white]── SUCCUMB: let it take the run ──[-]",
 		"  [red]• Prestige completes with no points from this run (level still rises)[-]",
 	}
 	if lp.CosmicLegacy {
@@ -200,7 +205,11 @@ func (d *Dashboard) showCatastropheModal(key string) {
 		endure, succumb = d.engine.EndureLastPassage, d.engine.SuccumbLastPassage
 		succumbOpen = !st.LastPassage.CosmicLegacy
 	} else {
-		l = buildCatastropheModalLayout(key, st.LegacyBonuses[key], st.SuccumbResearchBonus)
+		outcome := game.DefaultEndureOutcome()
+		if st.PendingCatastrophe == key {
+			outcome = st.PendingEndure
+		}
+		l = buildCatastropheModalLayout(key, st.LegacyBonuses[key], st.SuccumbResearchBonus, outcome, st)
 	}
 
 	btnEndure := tview.NewButton(tview.Escape("[E] ENDURE")).
@@ -333,4 +342,38 @@ func legacyBonusText(epochKey string) string {
 		parts = append(parts, fmt.Sprintf("%s +%.0f%%", res, bonuses[res]*100))
 	}
 	return strings.Join(parts, ", ")
+}
+
+// endurePct prints an Endure percentage: whole numbers plainly ("20%"), a
+// garrison-softened share to one decimal ("16.5%").
+func endurePct(p float64) string {
+	if p == float64(int(p)) {
+		return fmt.Sprintf("%d%%", int(p))
+	}
+	return fmt.Sprintf("%.1f%%", p)
+}
+
+// endureDefenseLines are the Endure lines about Brace and the garrison: what
+// each already took off the numbers above, from the player's side.
+func endureDefenseLines(o game.EndureOutcome) []string {
+	var lines []string
+	if o.BraceLevel > 0 {
+		lines = append(lines, fmt.Sprintf("  [green]✓ Braced (level %d): %s fall, %s kept, before your garrison[-]",
+			o.BraceLevel, endurePct(o.BracedDestroyPct), endurePct(o.BracedKeepFrac*100)))
+	}
+	if o.Garrison <= 0 {
+		lines = append(lines, "  [gray]• No garrison: soldiers would soften this (see the Army panel)[-]")
+		return lines
+	}
+	if o.BuildingsSaved > 0 {
+		lines = append(lines, fmt.Sprintf("  [green]✓ Your garrison saves %d %s and keeps %s of stock, not %s[-]",
+			o.BuildingsSaved, pluralize("building", o.BuildingsSaved), endurePct(o.KeepFrac*100), endurePct(o.BracedKeepFrac*100)))
+	} else {
+		lines = append(lines, fmt.Sprintf("  [green]✓ Your garrison keeps %s of stock, not %s, and softens the fall[-]",
+			endurePct(o.KeepFrac*100), endurePct(o.BracedKeepFrac*100)))
+	}
+	if o.Capped {
+		lines = append(lines, fmt.Sprintf("  [gray]• Brace and garrison together soften an Endure by at most %.0f%%[-]", config.EndureReductionCap*100))
+	}
+	return lines
 }

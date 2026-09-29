@@ -47,7 +47,7 @@
 // it never replaces the line that says what actually happened.
 //
 // Output is also ORTHOGONAL to it. The caller has already printed "Scout Party
-// succeeded! Gained loot."; a flavour line that says the venture paid out is
+// succeeded. Loot: ..."; a flavour line that says the venture paid out is
 // padding. These sentences supply a detail instead — what came back, who did not,
 // what broke, what the town did about it.
 //

@@ -269,9 +269,7 @@ var guardKeyEchoes = []*regexp.Regexp{
 }
 
 // guardKeyExemptPanels are panels whose text another change owns.
-var guardKeyExemptPanels = map[string]string{
-	"army": "owned by the Army PR (ui/overlay_military.go)",
-}
+var guardKeyExemptPanels = map[string]string{}
 
 // guardKeyWords are snake_case words that are English, not keys.
 var guardKeyWords = map[string]bool{}

@@ -35,8 +35,8 @@ func TestLastPassageModalBadgeAndReopen(t *testing.T) {
 	t.Logf("Last Passage modal:\n%s", modalCapture(screen, "The Last Passage"))
 	for _, want := range []string{
 		"✦ The Last Passage", "☄ The Last Passage", "Prestige waits on your answer",
-		"ENDURE — pass through, diminished", "You keep 50% of this run's prestige points",
-		"SUCCUMB — let it take the run", "no points from this run", "Cosmic Legacy: production +10%",
+		"ENDURE: pass through, diminished", "You keep 50% of this run's prestige points",
+		"SUCCUMB: let it take the run", "no points from this run", "Cosmic Legacy: production +10%",
 		"[E] ENDURE", "[S] SUCCUMB", "prestige waits · type 'catastrophe' to reopen",
 	} {
 		if !strings.Contains(screen, want) {
