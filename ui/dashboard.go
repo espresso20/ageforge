@@ -119,6 +119,8 @@ type Dashboard struct {
 	miniMap  *miniMap
 	mapDock  *mapDock
 	mapLocal *mapSettings
+	// icons is the guided icons check (icons.go).
+	icons *iconsFlow
 	// mapOpen is set while the Map panel is open, so the refresh loop
 	// redraws it at the animation rate. Read off the UI goroutine.
 	mapOpen atomic.Bool
@@ -198,6 +200,11 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		d.inputField.SetText(cmd)
 	}
 	d.overlayMgr.RegisterWidget("map", "Map", d.mapPanel.open, d.mapPanel.update, true)
+
+	// The icons check logs through the engine (safe off the UI goroutine)
+	// and brings the install's outcome back to the UI goroutine.
+	d.icons = newIconsFlow(func(kind, msg string) { d.engine.AddLog(kind, msg) }, d.setMapGlyphsNerd,
+		func(f func()) { d.app.QueueUpdateDraw(f) })
 
 	return d
 }
@@ -910,6 +917,11 @@ func (d *Dashboard) showDevUnlockModal() {
 // ghost completion runs when it makes a whole command, except a Dangerous
 // one, which is put in the field for a second Enter (completer.enterLine).
 func (d *Dashboard) submitInput() {
+	// An open icons question reads the line as its answer first.
+	if d.icons.waiting() && d.icons.answer(d.inputField.GetText()) {
+		d.inputField.SetText("")
+		return
+	}
 	text, run := d.inputField.comp.enterLine(d.inputField.GetText())
 	if !run {
 		d.inputField.SetText(text)
