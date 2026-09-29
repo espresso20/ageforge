@@ -66,7 +66,7 @@ A list of builds and techs the game starts for you, in order, as the resources c
 | `plan` | Open the **Plan** panel: the items, what each costs next and whether it can start. `↑`/`↓` select, `U`/`D` move the selected item, `X` removes it, `C` twice clears the plan. |
 | `plan build <building> [count]` | Add copies of a building of this age or the next (default 1). The next age's buildings wait for the advance. Adding more of the building at the end of the plan adds to that item. |
 | `plan research <tech>` | Add a tech. Techs start one at a time, in plan order; a prerequisite can be planned before it. |
-| `plan trade <give> <get> [amount to get]` | Sell `<give>` for `<get>` at the market as it comes in, until that much `<get>` is bought. With no amount, keep `<get>` at its storage cap until you remove the item. Needs a trade building. |
+| `plan trade <give> <get> [amount to get]` | Sell `<give>` for `<get>` at the market as it comes in, until that much `<get>` is bought. With no amount, it keeps buying `<get>` until you remove the item, never past your storage cap. Needs a trade building. |
 | `plan advance` | Advance to the next age as soon as its requirements are met. The next age's buildings and techs can be planned too; they wait for the advance. |
 | `plan deal <civ> <n>` | Take a civilization's trade deal `n` as soon as you can pay its price. While it waits it holds its price back from the items below, and it drops out if the offer rotates away. See [Trade deals](trade.md#trade-deals). |
 | `plan list` | Print the plan with each item's status |

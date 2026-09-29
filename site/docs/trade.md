@@ -433,7 +433,7 @@ There's little point rushing an alliance before you produce or import that resou
 
 ### Routes and diplomacy together
 
-Every completed route cycle raises opinion with every civilization you have met by 1, so five running routes add 5 opinion per round of cycles. More routes bring earlier alliances, alliances raise both production and route income of the ally's specialty, and the extra income pays for more routes. Plan routes and diplomacy together.
+Every completed route cycle raises opinion by 1 with every civilization you have met that isn't at war with you, so five running routes add 5 opinion per round of cycles. More routes bring earlier alliances, alliances raise both production and route income of the ally's specialty, and the extra income pays for more routes. Plan routes and diplomacy together.
 
 ### End-game
 
