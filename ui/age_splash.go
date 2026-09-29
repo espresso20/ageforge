@@ -21,7 +21,7 @@ func ShowAgeSplash(om *OverlayManager, oldAge, newAge string) {
 }
 
 // ShowAgeSplashFull is the full variant of ShowAgeSplash that also displays the
-// transformation summary and optional epoch event reveal.
+// available-upgrades summary and optional epoch event reveal.
 func ShowAgeSplashFull(om *OverlayManager, oldAge, newAge string,
 	summary game.AgeAdvanceSummary, epochChanged bool, epochEvent game.EpochEventRecord) {
 	// Age title overlay
@@ -124,16 +124,19 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 	for _, bKey := range newDef.UnlockBuildings {
 		if def, ok := allBuildings[bKey]; ok && def.Category == "wonder" {
 			fmt.Fprintf(&sb, "\n[gold::b]★ Wonder unlocked: %s[-]\n", def.Name)
-			fmt.Fprintf(&sb, "[white]Bank its cost, then build it. It raises the speed cap by 0.5x.[-]\n")
+			fmt.Fprintf(&sb, "[white]Bank its cost, then build it. It raises the speed cap by %sx.[-]\n",
+				config.FormatAmount(config.WonderSpeedCapStep))
 			break
 		}
 	}
 
-	// Transformation summary
+	// Upgrade summary. Advancing only offers these upgrades (the buildings
+	// stay as they are until the player runs `upgrade`), so say that.
 	if len(summary.BuildingsTransformed) > 0 || len(summary.BuildingsLegacy) > 0 {
 		fmt.Fprintf(&sb, "\n")
 		if len(summary.BuildingsTransformed) > 0 {
-			fmt.Fprintf(&sb, "[yellow]── Buildings upgraded ──[-]\n")
+			fmt.Fprintf(&sb, "[yellow]── Upgrades available ──[-]\n")
+			fmt.Fprintf(&sb, "  Type [cyan]upgrade[-] to see the costs, or [cyan]upgrade <building>[-] to upgrade one.\n")
 			for _, t := range summary.BuildingsTransformed {
 				oldName := t.OldName
 				if oldName == "" {
