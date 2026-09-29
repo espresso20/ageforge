@@ -226,7 +226,7 @@ func (sc *splashCanvas) Draw(screen tcell.Screen) {
 
 	// ── Prestige badge ────────────────────────────────────────────────────────
 	if sc.prestigeLevel > 0 {
-		badge := fmt.Sprintf("  ★  Prestige Level %d  ★  ", sc.prestigeLevel)
+		badge := fmt.Sprintf("  ★  Prestige level %d  ★  ", sc.prestigeLevel)
 		bly := tly + 2
 		blx := bx + (bw-len(badge))/2
 		if bly < by+bh {

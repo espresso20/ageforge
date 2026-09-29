@@ -67,7 +67,7 @@ func TestAncientMemoryModalButtonLabelsVisible(t *testing.T) {
 	d, pages := newLabelTestDashboard()
 	d.showAncientMemoryModal("fire_mastery", "")
 	screen := renderPages(t, pages, 160, 50)
-	for _, want := range []string{"[A] ACCEPT", "[D] Decline"} {
+	for _, want := range []string{"[A] Accept", "[D] Decline"} {
 		if !strings.Contains(screen, want) {
 			t.Errorf("ancient memory modal: button label %q not on screen\n%s", want, screen)
 		}

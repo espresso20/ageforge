@@ -36,7 +36,7 @@ func showAccountNameModal(app *tview.Application, pages *tview.Pages, restoreFoc
 	var openEntry func(prefill string)
 
 	openEntry = func(prefill string) {
-		showSaveNameModalOpts(app, pages, " Name Your AgeForge Account ", accountNamePage, restoreFocus, prefill, func(name string) {
+		showSaveNameModalOpts(app, pages, " Name your AgeForge account ", accountNamePage, restoreFocus, prefill, func(name string) {
 			// Don't create yet — confirm the name first, since it IS the identity.
 			showAccountNameConfirmModal(app, pages, name, onConfirm, func() {
 				// Re-type: reopen the entry modal pre-filled with what they typed.
@@ -55,7 +55,7 @@ func showAccountNameModal(app *tview.Application, pages *tview.Pages, restoreFoc
 // consistent with the entry modal's Esc-accepts policy.
 func showAccountNameConfirmModal(app *tview.Application, pages *tview.Pages, name string, onCreate func(name string), onRetype func()) {
 	modal := tview.NewModal().
-		SetText(fmt.Sprintf("Create your AgeForge account as %q?\nThis name is your identity — re-enter it exactly to restore your account on another device.", name)).
+		SetText(fmt.Sprintf("Create your AgeForge account as %q?\nThis name is your identity. To restore your account on another device, enter it exactly as written here.", name)).
 		AddButtons([]string{"Create", "Re-type"}).
 		SetDoneFunc(func(_ int, label string) {
 			pages.RemovePage(accountNameConfirmPage)
@@ -80,7 +80,7 @@ func showAccountNameConfirmModal(app *tview.Application, pages *tview.Pages, nam
 //
 // restoreFocus is the splash menu primitive to refocus on cancel.
 func showNewGameNameModal(app *tview.Application, pages *tview.Pages, restoreFocus tview.Primitive, onConfirm func(name string)) {
-	showSaveNameModal(app, pages, " Name Your Civilization ", newGameNamePage, restoreFocus, onConfirm)
+	showSaveNameModal(app, pages, " Name your civilization ", newGameNamePage, restoreFocus, onConfirm)
 }
 
 // showSaveNameModal pops a centered, bordered name-entry prompt. The input is

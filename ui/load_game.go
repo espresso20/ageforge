@@ -10,6 +10,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -63,7 +64,7 @@ func CreateLoadGamePage(app *tview.Application, pages *tview.Pages, engine *game
 	title := tview.NewTextView().
 		SetDynamicColors(true).
 		SetTextAlign(tview.AlignCenter).
-		SetText("[gold]═══ Load Game ═══[-]")
+		SetText("[gold]═══ Load game ═══[-]")
 
 	b.subtitle = tview.NewTextView().
 		SetDynamicColors(true).
@@ -138,7 +139,7 @@ func (b *loadGameBrowser) refresh(wantIdx int) {
 		// Surface it in the detail pane rather than crashing, and show an empty list.
 		b.saves = nil
 		b.list.Clear()
-		b.subtitle.SetText("[gray]" + savesDirLabel() + " — could not read saves[-]")
+		b.subtitle.SetText("[gray]" + savesDirLabel() + " · could not read saves[-]")
 		b.detail.SetText(fmt.Sprintf("[red]Could not read saves: %v[-]", err))
 		return
 	}
@@ -152,7 +153,7 @@ func (b *loadGameBrowser) refresh(wantIdx int) {
 		b.saves[i] = r.Info
 	}
 
-	b.subtitle.SetText(fmt.Sprintf("[gray]%s — %s[-]", savesDirLabel(), pluralSaves(len(saves))))
+	b.subtitle.SetText(fmt.Sprintf("[gray]%s · %s[-]", savesDirLabel(), pluralSaves(len(saves))))
 
 	b.list.Clear()
 	if len(rows) == 0 {
@@ -265,7 +266,7 @@ func (b *loadGameBrowser) doLoad() {
 		b.detail.SetText(detailText(s, b.parentPresent(s), b.engine.AccountID()) + fmt.Sprintf("\n\n[red]Load failed: %v[-]", err))
 		return
 	}
-	b.engine.AddLog("success", "Game loaded!")
+	b.engine.AddLog("success", "Game loaded.")
 	b.pages.RemovePage(loadGamePage)
 	b.pages.SwitchToPage("dashboard")
 	// From the splash this performs the first engine start; mid-game the engine is
@@ -392,7 +393,7 @@ func (b *loadGameBrowser) doRename() {
 		AddItem(tview.NewBox(), 1, 0, false).
 		AddItem(btnRow, 1, 0, false)
 	inner.SetBorder(true).
-		SetTitle(" Rename Save ").
+		SetTitle(" Rename save ").
 		SetTitleColor(theme.Color(theme.RoleAccent)).
 		SetBorderColor(theme.Color(theme.RoleAccent))
 
@@ -457,7 +458,7 @@ func (b *loadGameBrowser) selectByName(name string) {
 // is appended, separate from the gold ★ auto tag.
 func rowLabel(s game.SaveInfo, prefix string, active bool) string {
 	if s.Corrupt {
-		return fmt.Sprintf("[gray]%s%s   —   %s   ⚠ corrupt[-]", prefix, s.Name, relativeTime(s.Timestamp))
+		return fmt.Sprintf("[gray]%s%s   ·   %s   ⚠ corrupt[-]", prefix, s.Name, relativeTime(s.Timestamp))
 	}
 	age := ageDisplay(s.Age)
 	tag := rowTag(s)
@@ -502,7 +503,7 @@ func legendText() string {
 		"[gold]★ auto[-]      automatic save slot (overwritten on autosave)",
 		"[label]● active[-]    the save your game is autosaving into",
 		"[red]⚠ modified[-]  save file edited outside the game",
-		"[red]⚠ corrupt[-]   file could not be read — cannot be loaded",
+		"[red]⚠ corrupt[-]   file could not be read, so it cannot load",
 	}, "\n")
 }
 
@@ -529,7 +530,7 @@ const detailSep = " [gold]·[-] "
 func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) string {
 	if s.Corrupt {
 		return fmt.Sprintf(
-			"[red]⚠ Corrupt save — cannot be loaded[-]\n[gray]File time: %s[-]",
+			"[red]⚠ Corrupt save. It cannot be loaded.[-]\n[gray]File time: %s[-]",
 			s.Timestamp.Format("Jan 2, 2006 3:04 PM"),
 		)
 	}
@@ -550,26 +551,26 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 
 	// Line 2 — civilisation footprint.
 	lines = append(lines, strings.Join([]string{
-		fmt.Sprintf("[gray]Population[-] [white]%s[-]", commafy(s.Population)),
-		fmt.Sprintf("[gray]Buildings[-] [white]%s[-]", commafy(s.Buildings)),
-		fmt.Sprintf("[gray]Wonders[-] [white]%s[-]", commafy(s.Wonders)),
+		fmt.Sprintf("[gray]Population[-] [white]%s[-]", textfmt.Int(s.Population)),
+		fmt.Sprintf("[gray]Buildings[-] [white]%s[-]", textfmt.Int(s.Buildings)),
+		fmt.Sprintf("[gray]Wonders[-] [white]%s[-]", textfmt.Int(s.Wonders)),
 	}, detailSep))
 
 	// Line 3 — progress markers. Milestones show "done/total" only when the total
 	// is known (config accessor available).
-	milestones := commafy(s.MilestonesDone)
+	milestones := textfmt.Int(s.MilestonesDone)
 	if s.MilestonesTotal > 0 {
-		milestones = fmt.Sprintf("%s/%s", commafy(s.MilestonesDone), commafy(s.MilestonesTotal))
+		milestones = fmt.Sprintf("%s/%s", textfmt.Int(s.MilestonesDone), textfmt.Int(s.MilestonesTotal))
 	}
 	lines = append(lines, strings.Join([]string{
 		fmt.Sprintf("[gray]Milestones[-] [white]%s[-]", milestones),
-		fmt.Sprintf("[gray]Techs[-] [white]%s[-]", commafy(s.Techs)),
-		fmt.Sprintf("[gray]Soldiers[-] [white]%s[-]", commafy(s.Soldiers)),
+		fmt.Sprintf("[gray]Techs[-] [white]%s[-]", textfmt.Int(s.Techs)),
+		fmt.Sprintf("[gray]Soldiers[-] [white]%s[-]", textfmt.Int(s.Soldiers)),
 	}, detailSep))
 
 	// Line 4 — prestige + morale.
 	lines = append(lines, strings.Join([]string{
-		fmt.Sprintf("[gray]Prestige[-] [white]Lv %s[-] [gray](%s pts)[-]", commafy(s.PrestigeLevel), commafy(s.PrestigeTotal)),
+		fmt.Sprintf("[gray]Prestige[-] [white]level %s[-] [gray](%s points)[-]", textfmt.Int(s.PrestigeLevel), textfmt.Int(s.PrestigeTotal)),
 		fmt.Sprintf("[gray]Morale[-] [white]%.0f%%[-]", s.Morale*100),
 	}, detailSep))
 
@@ -578,7 +579,7 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 	// "(another account)". Only the short id prefix is shown — never the full id.
 	switch {
 	case s.AccountID == "":
-		lines = append(lines, "[gray]Account:[-] [gray]— (pre-account save)[-]")
+		lines = append(lines, "[gray]Account:[-] [gray]none (pre-account save)[-]")
 	case s.AccountID == currentAccountID && currentAccountID != "":
 		lines = append(lines, fmt.Sprintf("[gray]Account:[-] [white]%s[-] [gray](this account)[-]", shortAccountID(s.AccountID)))
 	default:
@@ -591,9 +592,10 @@ func detailText(s game.SaveInfo, parentPresent bool, currentAccountID string) st
 	}
 
 	// Line 6 — save metadata.
+	// note: the raw tick count used to ride here; ticks mean nothing to a player.
 	lines = append(lines, fmt.Sprintf(
-		"[gray]Saved[-] %s [gold]·[-] [gray]%s ticks[-]",
-		s.Timestamp.Format("Jan 2, 2006 3:04 PM"), commafy(s.Tick),
+		"[gray]Saved[-] %s",
+		s.Timestamp.Format("Jan 2, 2006 3:04 PM"),
 	))
 
 	// Line 7 — lineage. Shown only for branched saves. A parent that is no longer
@@ -629,10 +631,10 @@ func detailBadges(s game.SaveInfo) string {
 }
 
 // ageDisplay maps an age key to its display name (e.g. "stone_age" → "Stone Age").
-// Falls back to the raw key, or an em-dash when empty.
+// Falls back to the raw key, or "none" when empty.
 func ageDisplay(key string) string {
 	if key == "" {
-		return "—"
+		return "none"
 	}
 	if def, ok := config.AgeByKey()[key]; ok {
 		return def.Name
@@ -666,40 +668,6 @@ func relativeTime(t time.Time) string {
 		days := int(d / (24 * time.Hour))
 		return fmt.Sprintf("%d days ago", days)
 	}
-}
-
-// commafy formats a non-negative int with thousands separators (e.g. 12400 →
-// "12,400"). Negative inputs are formatted with a leading minus.
-func commafy(n int) string {
-	neg := n < 0
-	if neg {
-		n = -n
-	}
-	s := fmt.Sprintf("%d", n)
-	if len(s) <= 3 {
-		if neg {
-			return "-" + s
-		}
-		return s
-	}
-	var out strings.Builder
-	pre := len(s) % 3
-	if pre > 0 {
-		out.WriteString(s[:pre])
-		if len(s) > pre {
-			out.WriteByte(',')
-		}
-	}
-	for i := pre; i < len(s); i += 3 {
-		out.WriteString(s[i : i+3])
-		if i+3 < len(s) {
-			out.WriteByte(',')
-		}
-	}
-	if neg {
-		return "-" + out.String()
-	}
-	return out.String()
 }
 
 // pluralSaves renders the save-count label ("1 save" / "N saves").

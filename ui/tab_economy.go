@@ -86,7 +86,7 @@ func renderOnboarding() string {
 }
 
 // cultureThresholds defines the culture breakpoints at which rewards unlock.
-// The bar displayed in the economy tab measures progress towards the next threshold.
+// The bar displayed in the Economy panel measures progress towards the next threshold.
 var cultureThresholds = []float64{
 	500, 2500, 10000, 50000, 250000, 1_000_000, 5_000_000, 25_000_000, 100_000_000, 500_000_000, 1_000_000_000,
 }
@@ -163,20 +163,20 @@ type faithBand struct {
 // faithBandFor returns the appropriate faithBand based on pct (0.0–1.0).
 func faithBandFor(amount, storage float64) faithBand {
 	if storage <= 0 || amount == 0 {
-		return faithBand{"[red]✝ No Faith[-]", "40% good"}
+		return faithBand{"[red]✝ No faith[-]", "40% good"}
 	}
 	pct := amount / storage
 	switch {
 	case pct <= 0.25:
-		return faithBand{"[gray]◈ Dim Faith[-]", "40% good"}
+		return faithBand{"[gray]◈ Dim faith[-]", "40% good"}
 	case pct <= 0.50:
-		return faithBand{"[white]◈ Low Faith[-]", "50% good"}
+		return faithBand{"[white]◈ Low faith[-]", "50% good"}
 	case pct <= 0.75:
 		return faithBand{"[yellow]◈ Faith[-]", "50% good"}
 	case pct < 1.0:
-		return faithBand{"[green]◈ Strong Faith[-]", "60% good"}
+		return faithBand{"[green]◈ Strong faith[-]", "60% good"}
 	default:
-		return faithBand{"[gold]✦ Faith Full[-]", "60% good + prestige bonus"}
+		return faithBand{"[gold]✦ Faith full[-]", "60% good + prestige bonus"}
 	}
 }
 
@@ -233,7 +233,7 @@ func NewEconomyTab() *EconomyTab {
 	t.buildingTV.SetBorder(true).SetTitle(" Buildings ")
 
 	t.constructionTV = tview.NewTextView().SetDynamicColors(true)
-	t.constructionTV.SetBorder(true).SetTitle(" Under Construction ")
+	t.constructionTV.SetBorder(true).SetTitle(" Under construction ")
 
 	// Persistent tab chrome: enroll titles so a live theme switch restyles them.
 	theme.Track(func() {
@@ -276,7 +276,7 @@ func (t *EconomyTab) Refresh(state game.GameState) {
 
 // resourceLegend explains the glyphs and amount colors in the resource rows,
 // so neither carries meaning by color alone.
-const resourceLegend = " [gray]Amount color:[-] [green]rising[-] [red]falling[-] [yellow]90% full[-] [gray]·[-] [gold]◈[-] [gray]95% full ·[-] [red]▼[-] [gray]falling[-]\n"
+const resourceLegend = " [gray]Amount:[-] [green]rising[-] [gray]·[-] [red]falling[-] [gray]·[-] [yellow]90%+ full[-] [gray]·[-] [gold]◈[-] [gray]95%+ full ·[-] [red]▼[-] [gray]falling[-]\n"
 
 func (t *EconomyTab) refreshResources(state game.GameState) {
 	var sb strings.Builder
@@ -420,7 +420,7 @@ func (t *EconomyTab) refreshBuildings(state game.GameState) {
 				if newName == "" {
 					newName = bs.PendingUpgrade
 				}
-				fmt.Fprintf(&sb, "   [gold]↑ Upgrade available → %s  type: upgrade %s[-]\n", newName, key)
+				fmt.Fprintf(&sb, "   [gold]↑ Upgrade available: %s. Type: upgrade %s[-]\n", newName, key)
 			}
 		}
 		sb.WriteString("\n")

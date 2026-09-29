@@ -634,15 +634,14 @@ func (d *Dashboard) refreshWorkerMini(state game.GameState) {
 	var sb strings.Builder
 	fmt.Fprintf(&sb, "[yellow]%d[white]/[green]%d[-]  [gray]Idle:[white] %d[-]\n", w.TotalPop, w.MaxPop, w.TotalIdle)
 	fmt.Fprintf(&sb, "[gray]Housing left:[white] %d[-]\n", w.MaxPop-w.TotalPop)
-	fmt.Fprintf(&sb, "[gray]Food use:[red] -%s/tick[-]\n", textfmt.RateValue(w.FoodDrain))
+	// note: textfmt.Rate carries its own sign, so no manual "+"/"-" prefixes here.
+	fmt.Fprintf(&sb, "[gray]Food use:[red] %s[-]\n", textfmt.Rate(-w.FoodDrain))
 	if hasFoodRS {
 		netColor := "green"
-		prefix := "+"
 		if food.Rate < 0 {
 			netColor = "red"
-			prefix = ""
 		}
-		fmt.Fprintf(&sb, "[gray]Food net:[%s] %s%s/tick[-]\n", netColor, prefix, textfmt.RateValue(food.Rate))
+		fmt.Fprintf(&sb, "[gray]Food net:[%s] %s[-]\n", netColor, textfmt.Rate(food.Rate))
 	}
 	d.workerMiniTV.SetText(safeTags(sb.String()))
 }

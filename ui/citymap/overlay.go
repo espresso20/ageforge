@@ -434,7 +434,7 @@ func (p *overlayPlan) addTitle(state game.GameState, cols, rows int) {
 	}
 	title := name
 	if age != "" {
-		title = name + " — " + age
+		title = name + " · " + age
 	}
 	title = truncLabel(title, cols-1)
 	if title == "" {

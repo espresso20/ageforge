@@ -170,7 +170,7 @@ var retiredTerms = []struct {
 	{regexp.MustCompile(`\d/t\b`), "/tick"},
 	{regexp.MustCompile(`(?i)\bmilitary cap\b`), "soldier storage"},
 	{regexp.MustCompile(`(?i)unlocks \+0\.5x`), "raises the speed cap by 0.5x"},
-	{regexp.MustCompile(`(?i)\bESC to close\b`), "Esc to close"},
+	{regexp.MustCompile(`\bESC\b`), "Esc (e.g. \"(Esc to close)\")"},
 	{regexp.MustCompile(`\(s\)`), "a plural helper (textfmt.Count)"},
 }
 

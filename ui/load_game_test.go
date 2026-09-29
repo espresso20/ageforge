@@ -8,26 +8,6 @@ import (
 	"github.com/espresso20/ageforge/game"
 )
 
-func TestCommafy(t *testing.T) {
-	cases := map[int]string{
-		0:       "0",
-		7:       "7",
-		42:      "42",
-		999:     "999",
-		1000:    "1,000",
-		12400:   "12,400",
-		100000:  "100,000",
-		1234567: "1,234,567",
-		-1500:   "-1,500",
-		-12:     "-12",
-	}
-	for in, want := range cases {
-		if got := commafy(in); got != want {
-			t.Errorf("commafy(%d) = %q, want %q", in, got, want)
-		}
-	}
-}
-
 func TestRelativeTime(t *testing.T) {
 	now := time.Now()
 	cases := []struct {
@@ -136,7 +116,7 @@ func TestDetailTextPopulated(t *testing.T) {
 		"The Eternal", "Iron Era",
 		"Population", "Buildings", "Wonders",
 		"Milestones", "7/33", "Techs", "Soldiers",
-		"Prestige", "Lv 2", "1,500 pts", "Morale", "75%",
+		"Prestige", "level 2", "1.5K points", "Morale", "75%",
 		"Pending", "The Great Plague",
 	} {
 		if !contains(got, want) {
