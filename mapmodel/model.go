@@ -57,6 +57,12 @@ type Model struct {
 	Flows       Flows
 	Recap       Recap
 
+	// LayoutKey hashes everything a style's static layer depends on (what
+	// is placed, staffing, civs, routes, expeditions, the harbinger and
+	// catastrophe) but not the tick, so a style can keep its scene while
+	// only the clock moves.
+	LayoutKey uint64
+
 	Catalog *Catalog
 	byKey   map[string]*Building
 }
@@ -230,7 +236,44 @@ func (b *Builder) Build(st *game.GameState, since *Visit) *Model {
 	m.Recap = recap(m, st, since)
 	m.Flows = flowsFor(m, st)
 	m.Activity = activityFor(m)
+	m.LayoutKey = layoutKey(m)
 	return m
+}
+
+func layoutKey(m *Model) uint64 {
+	b2i := func(b bool) int64 {
+		if b {
+			return 1
+		}
+		return 0
+	}
+	h := Hash(m.Seed, int64(m.AgeIdx), int64(m.Workers.Staffed), int64(m.Workers.Idle), int64(m.Workers.Pop),
+		HashStr(m.Catastrophe.Pending), int64(m.Expeditions.Completed))
+	for _, b := range m.Buildings {
+		h = Hash(int64(h), HashStr(b.Key), int64(b.Count), int64(b.Ruins), int64(b.Workers), b2i(b.Legacy), int64(b.Delta))
+	}
+	for _, t := range m.Town.Tiles {
+		h = Hash(int64(h), int64(t.X), int64(t.Y), HashStr(t.Key), b2i(t.Fresh), b2i(t.Legacy), b2i(t.Ruin))
+	}
+	for _, w := range m.Wonders {
+		h = Hash(int64(h), HashStr(w.Key), b2i(w.Built), b2i(w.Delta))
+	}
+	for _, f := range m.Factions {
+		h = Hash(int64(h), HashStr(f.Key), b2i(f.Discovered), int64(f.Relation))
+	}
+	for _, r := range m.Routes {
+		h = Hash(int64(h), HashStr(r.Key), HashStr(r.Civ), b2i(r.Disrupted))
+	}
+	if e := m.Expeditions.Scout; e != nil {
+		h = Hash(int64(h), HashStr(e.Name))
+	}
+	if e := m.Expeditions.Military; e != nil {
+		h = Hash(int64(h), HashStr(e.Name), 2)
+	}
+	if m.Harbinger != nil {
+		h = Hash(int64(h), HashStr(m.Harbinger.Name))
+	}
+	return h
 }
 
 // Building returns the owned type with key k, or nil.

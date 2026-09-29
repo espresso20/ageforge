@@ -309,6 +309,20 @@ func TestFlows(t *testing.T) {
 	}
 }
 
+// TestLayoutKey: the clock moving keeps the layout key; a new building
+// changes it.
+func TestLayoutKey(t *testing.T) {
+	st := fixture.State(fixture.Options{Age: "medieval_age", Seed: 7})
+	a := build(t, st, nil)
+	st.Tick += 450
+	if b := build(t, st, nil); a.LayoutKey != b.LayoutKey {
+		t.Error("a tick changed the layout key")
+	}
+	if c := build(t, fixture.Grow(st, 1), nil); c.LayoutKey == a.LayoutKey {
+		t.Error("new buildings kept the layout key")
+	}
+}
+
 // TestMaths: the deterministic helpers are accurate enough.
 func TestMaths(t *testing.T) {
 	for _, c := range []struct{ turns, want float64 }{{0, 0}, {0.25, 1}, {0.5, 0}, {0.75, -1}, {1.0 / 12, 0.5}} {

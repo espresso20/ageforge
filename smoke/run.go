@@ -19,6 +19,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/mapmodel"
 )
 
 // Config controls one smoke session. Durations are simulated time at 1x.
@@ -228,6 +229,10 @@ type RunResult struct {
 	// every machine. Digests is the trail Config.DigestEvery asks for.
 	StateDigest string       `json:"state_digest,omitempty"`
 	Digests     []TickDigest `json:"digests,omitempty"`
+	// MapDigest is the map model's fingerprint of the final state
+	// (mapmodel.Model.Fingerprint): the maps must lay one state out the
+	// same way on every machine too.
+	MapDigest string `json:"map_digest,omitempty"`
 }
 
 // TickDigest is the engine's state digest at a tick (total across cycles).
@@ -468,8 +473,10 @@ func (r *runner) finish() {
 	}
 	func() {
 		defer func() { _ = recover() }() // the engine may be wedged after a panic
-		res.CosmicLegacy = r.ge.GetState().LastPassage.CosmicLegacy
+		st := r.ge.GetState()
+		res.CosmicLegacy = st.LastPassage.CosmicLegacy
 		res.StateDigest = r.ge.StateDigest()
+		res.MapDigest = mapmodel.NewBuilder(nil).Build(&st, nil).Fingerprint()
 	}()
 }
 

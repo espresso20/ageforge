@@ -34,7 +34,7 @@ fingerprint() {
 
 # runs prints one line per seed: seed, ticks, final digest.
 runs() {
-	jq -r '.scenarios[].progression[]?.runs[] | "seed \(.seed): \(.ticks) ticks, \(.final_age), state \(.state_digest)"' "$1/report.json"
+	jq -r '.scenarios[].progression[]?.runs[] | "seed \(.seed): \(.ticks) ticks, \(.final_age), state \(.state_digest), map \(.map_digest // "none")"' "$1/report.json"
 }
 
 # firstSplit prints, per seed, the first digest-trail entry where b differs

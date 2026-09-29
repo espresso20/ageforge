@@ -141,6 +141,9 @@ func recap(m *Model, st *game.GameState, v *Visit) Recap {
 	if v == nil {
 		return r
 	}
+	if ai, ok := m.Catalog.AgeIdx[v.Age]; ok && ai > m.AgeIdx {
+		return r // a baseline from before a prestige says nothing useful
+	}
 	r.HasBaseline = true
 	r.Since = m.Tick - v.Tick
 	if v.Age != "" && v.Age != m.Age {
@@ -164,8 +167,8 @@ func recap(m *Model, st *game.GameState, v *Visit) Recap {
 	sort.Strings(sorted)
 	for _, k := range sorted {
 		d := m.Catalog.Defs[k]
-		if d == nil {
-			continue
+		if d == nil || d.Wonder {
+			continue // wonders make their own news
 		}
 		delta := cur[k] - v.Buildings[k]
 		switch {

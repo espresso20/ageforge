@@ -29,8 +29,10 @@ func NewScreen(w, h int) tcell.SimulationScreen {
 	return s
 }
 
-// Text reads a screen back as plain text, trailing spaces trimmed.
+// Text shows the screen and reads it back as plain text, trailing spaces
+// trimmed.
 func Text(s tcell.SimulationScreen) string {
+	s.Show()
 	cells, w, h := s.GetContents()
 	var b strings.Builder
 	for y := 0; y < h; y++ {
@@ -51,6 +53,7 @@ func Text(s tcell.SimulationScreen) string {
 
 // Frame renders a screen's cells as HTML spans with inline colours.
 func Frame(s tcell.SimulationScreen) string {
+	s.Show()
 	cells, w, h := s.GetContents()
 	var b strings.Builder
 	for y := 0; y < h; y++ {

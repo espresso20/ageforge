@@ -10,25 +10,24 @@ import (
 // plus "monument" and "diplomacy" for the few buildings config leaves without
 // one, and "wonder".
 const (
-	LinHousing    = "housing"
-	LinFood       = "food"
-	LinWood       = "organic_extraction"
-	LinMines      = "geological_extraction"
-	LinMetal      = "metallurgy"
-	LinEngineer   = "engineering"
-	LinEnergy     = "energy"
-	LinHarbor     = "harbor"
-	LinHacker     = "hacker"
-	LinKnowledge  = "knowledge"
-	LinFaith      = "faith"
-	LinCulture    = "culture_arts"
-	LinMonument   = "monument"
-	LinTrade      = "trade"
-	LinStorage    = "storage"
-	LinMilitary   = "military"
-	LinDiplomacy  = "diplomacy"
-	LinWonder     = "wonder"
-	numLineageMax = 18
+	LinHousing   = "housing"
+	LinFood      = "food"
+	LinWood      = "organic_extraction"
+	LinMines     = "geological_extraction"
+	LinMetal     = "metallurgy"
+	LinEngineer  = "engineering"
+	LinEnergy    = "energy"
+	LinHarbor    = "harbor"
+	LinHacker    = "hacker"
+	LinKnowledge = "knowledge"
+	LinFaith     = "faith"
+	LinCulture   = "culture_arts"
+	LinMonument  = "monument"
+	LinTrade     = "trade"
+	LinStorage   = "storage"
+	LinMilitary  = "military"
+	LinDiplomacy = "diplomacy"
+	LinWonder    = "wonder"
 )
 
 // LineageOrder is the fixed order lineages are listed and laid out in. The
@@ -43,7 +42,7 @@ var LineageOrder = []string{
 var LineageNames = map[string]string{
 	LinHousing: "housing", LinFood: "farms and food", LinWood: "wood and fibre",
 	LinMines: "quarries and mines", LinMetal: "metalworks", LinEngineer: "engineering",
-	LinEnergy: "power", LinHarbor: "harbour", LinHacker: "hacker dens",
+	LinEnergy: "power", LinHarbor: "harbor", LinHacker: "hacker dens",
 	LinKnowledge: "knowledge", LinFaith: "faith", LinCulture: "culture", LinMonument: "monuments",
 	LinTrade: "trade", LinStorage: "storage", LinMilitary: "military", LinDiplomacy: "diplomacy",
 	LinWonder: "wonders",
