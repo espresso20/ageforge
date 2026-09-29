@@ -84,7 +84,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 500}},
 			BuildTicks:  10,
 			RequiredAge: "primitive_age",
-			Description: "A hidden pile of supplies. +500 storage.",
+			Description: "A hidden pile of supplies.",
 		},
 
 		// ===== STONE AGE (costs: 200-1000) =====
@@ -99,7 +99,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 2200}},
 			BuildTicks:  60,
 			RequiredAge: "stone_age",
-			Description: "A hole in the ground to stash things. +2200 storage.",
+			Description: "A hole in the ground to stash things.",
 		},
 
 		// ===== BRONZE AGE (costs: 1500-5000) =====
@@ -111,7 +111,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 11000}},
 			BuildTicks:  80,
 			RequiredAge: "bronze_age",
-			Description: "Proper storage building. +11000 storage.",
+			Description: "Proper storage building.",
 		},
 
 		// ===== IRON AGE (costs: 8k-25k) =====
@@ -123,7 +123,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 26000}},
 			BuildTicks:  120,
 			RequiredAge: "iron_age",
-			Description: "Organized supply storage. +26000 storage.",
+			Description: "Organized supply storage.",
 		},
 
 		// ===== CLASSICAL AGE (costs: 40k-120k) =====
@@ -135,12 +135,12 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 110000}},
 			BuildTicks:  150,
 			RequiredAge: "classical_age",
-			Description: "Stone vault for valuables. +110000 storage.",
+			Description: "Stone vault for valuables.",
 		},
 
 		// ===== MEDIEVAL AGE (costs: 200k-600k) =====
 		{
-			Name: "Keep", Key: "keep", Category: "storage",
+			Name: "Strongroom", Key: "keep", Category: "storage",
 			// note: cap was badly under-provisioned (60k vs a ~340k normalized stone
 			// cost) — copy #1 cost ~5.7x the storage it gave. Raised to 400k so the
 			// keep delivers storage worthy of its (unchanged) high price.
@@ -150,7 +150,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 410000}},
 			BuildTicks:  200,
 			RequiredAge: "medieval_age",
-			Description: "Fortified storehouse. +410000 storage.",
+			Description: "Fortified storehouse.",
 		},
 
 		// ===== RENAISSANCE AGE (costs: 1M-3M) =====
@@ -162,7 +162,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 2.7e6}},
 			BuildTicks:  250,
 			RequiredAge: "renaissance_age",
-			Description: "Ornate storage facility. +2.7M storage.",
+			Description: "Ornate storage facility.",
 		},
 
 		// ===== COLONIAL AGE (costs: 5M-15M) =====
@@ -174,7 +174,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 33e6}},
 			BuildTicks:  300,
 			RequiredAge: "colonial_age",
-			Description: "Trade goods warehouse. +33M storage.",
+			Description: "Trade goods warehouse.",
 		},
 
 		// ===== INDUSTRIAL AGE (costs: 25M-75M) =====
@@ -186,7 +186,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 170e6}},
 			BuildTicks:  400,
 			RequiredAge: "industrial_age",
-			Description: "Industrial-scale storage. +170M storage.",
+			Description: "Industrial-scale storage.",
 		},
 
 		// ===== VICTORIAN AGE (costs: 125M-375M) =====
@@ -198,7 +198,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 1.1e9}},
 			BuildTicks:  500,
 			RequiredAge: "victorian_age",
-			Description: "Reinforced vault. +1.1B storage.",
+			Description: "Reinforced vault.",
 		},
 
 		// ===== ELECTRIC AGE (costs: 600M-2B) =====
@@ -210,7 +210,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 3.5e9}},
 			BuildTicks:  600,
 			RequiredAge: "electric_age",
-			Description: "Climate-controlled storage. +3.5B storage.",
+			Description: "Climate-controlled storage.",
 		},
 
 		// ===== ATOMIC AGE (costs: 3B-10B) =====
@@ -225,7 +225,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 20e9}},
 			BuildTicks:  700,
 			RequiredAge: "atomic_age",
-			Description: "Radiation-shielded storage. +20B storage.",
+			Description: "Radiation-shielded storage.",
 		},
 
 		// ===== MODERN AGE (costs: 15B-50B) =====
@@ -237,7 +237,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 90e9}},
 			BuildTicks:  800,
 			RequiredAge: "modern_age",
-			Description: "Automated logistics center. +90B storage.",
+			Description: "Automated logistics center.",
 		},
 
 		// ===== INFORMATION AGE (costs: 75B-250B) =====
@@ -249,7 +249,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 790e9}},
 			BuildTicks:  900,
 			RequiredAge: "information_age",
-			Description: "Digital-physical storage hybrid. +790B storage.",
+			Description: "Digital-physical storage hybrid.",
 		},
 
 		// ===== DIGITAL AGE (costs: 400B-1.2T) =====
@@ -261,7 +261,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 1.5e12}},
 			BuildTicks:  1000,
 			RequiredAge: "digital_age",
-			Description: "Quantum-encrypted storage. +1.5T storage.",
+			Description: "Quantum-encrypted storage.",
 		},
 
 		// ===== CYBERPUNK AGE (costs: 2T-6T) =====
@@ -273,7 +273,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 8e12}},
 			BuildTicks:  1400,
 			RequiredAge: "cyberpunk_age",
-			Description: "Encrypted digital vault. +8T storage.",
+			Description: "Encrypted digital vault.",
 		},
 
 		// ===== FUSION AGE (costs: 10T-30T) =====
@@ -285,7 +285,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 30e12}},
 			BuildTicks:  2000,
 			RequiredAge: "fusion_age",
-			Description: "Plasma-shielded storage. +30T storage.",
+			Description: "Plasma-shielded storage.",
 		},
 
 		// ===== SPACE AGE (costs: 50T-150T) =====
@@ -297,7 +297,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 200e12}},
 			BuildTicks:  4000,
 			RequiredAge: "space_age",
-			Description: "Zero-gravity storage facility. +200T storage.",
+			Description: "Zero-gravity storage facility.",
 		},
 
 		// ===== INTERSTELLAR AGE (costs: 250T-750T) =====
@@ -313,7 +313,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 2e15}},
 			BuildTicks:  6000,
 			RequiredAge: "interstellar_age",
-			Description: "Pocket-dimension storage. +2Q storage.",
+			Description: "Pocket-dimension storage.",
 		},
 
 		// ===== GALACTIC AGE (costs: 1.25Q-3.75Q) =====
@@ -325,7 +325,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 20e15}},
 			BuildTicks:  10000,
 			RequiredAge: "galactic_age",
-			Description: "Galaxy-spanning storage network. +20Q storage.",
+			Description: "Galaxy-spanning storage network.",
 		},
 
 		// ===== QUANTUM AGE (costs: 6Q-20Q) =====
@@ -339,7 +339,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:     []Effect{{Type: "storage", Target: "all", Value: 200e15}},
 			BuildTicks:  12000,
 			RequiredAge: "quantum_age",
-			Description: "Stores matter in quantum superposition. +200Q storage.",
+			Description: "Stores matter in quantum superposition.",
 		},
 
 		// ===== TRANSCENDENT AGE =====
@@ -364,7 +364,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "primitive_age",
 			MaxCount:    1,
 			BuildTicks:  300,
-			Description: "An ancient clearing where nature's power flows. +0.02 knowledge, +0.05 food/tick. Unlocks +0.5x speed.",
+			Description: "An ancient clearing where nature's power flows.",
 		},
 		// Stone Age — normal costs: 200-1000
 		{
@@ -378,7 +378,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "stone_age",
 			MaxCount:    1,
 			BuildTicks:  800,
-			Description: "A towering stone pillar visible for miles. +0.05 knowledge/tick, +5000 storage. Unlocks +0.5x speed.",
+			Description: "A towering stone pillar visible for miles.",
 		},
 		// Bronze Age — normal costs: 1500-2500
 		{
@@ -392,7 +392,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "bronze_age",
 			MaxCount:    1,
 			BuildTicks:  1200,
-			Description: "Massive stone circle aligned to the cosmos. +0.8 knowledge, +0.6 faith/tick. Unlocks +0.5x speed.",
+			Description: "Massive stone circle aligned to the cosmos.",
 		},
 		// Iron Age — normal costs: 8k-12k
 		{
@@ -406,7 +406,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "iron_age",
 			MaxCount:    1,
 			BuildTicks:  2000,
-			Description: "Grand arena of blood and glory. +100 pop cap, +2.0 culture/tick. Unlocks +0.5x speed.",
+			Description: "Grand arena of blood and glory.",
 		},
 		// Classical Age — normal costs: 40k-80k
 		{
@@ -420,7 +420,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "classical_age",
 			MaxCount:    1,
 			BuildTicks:  2500,
-			Description: "Perfect temple of marble and wisdom. +2.0 culture, +1.2 knowledge/tick. Unlocks +0.5x speed.",
+			Description: "Perfect temple of marble and wisdom.",
 		},
 		// Medieval Age — normal costs: 180k-360k
 		{
@@ -434,7 +434,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "medieval_age",
 			MaxCount:    1,
 			BuildTicks:  3600,
-			Description: "Repository of all knowledge. +2.0 knowledge/tick, +30% knowledge rate. Unlocks +0.5x speed.",
+			Description: "Repository of all knowledge.",
 		},
 		// Renaissance Age — normal costs: 400k-600k
 		{
@@ -448,7 +448,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "renaissance_age",
 			MaxCount:    1,
 			BuildTicks:  5200,
-			Description: "Ceiling painted by divine hands. +3.5 culture, +1.8 faith/tick. Unlocks +0.5x speed.",
+			Description: "Ceiling painted by divine hands.",
 		},
 		// Colonial Age — normal costs: 1.2M-2M
 		{
@@ -462,7 +462,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "colonial_age",
 			MaxCount:    1,
 			BuildTicks:  6200,
-			Description: "Beacon visible across oceans. +5.0 gold/tick, +80% expedition rewards. Unlocks +0.5x speed.",
+			Description: "Beacon visible across oceans.",
 		},
 		// Industrial Age — normal costs: 12M-25M
 		{
@@ -476,7 +476,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "industrial_age",
 			MaxCount:    1,
 			BuildTicks:  9000,
-			Description: "Glass cathedral of industry. +15% all production, +8.0 gold/tick. Unlocks +0.5x speed.",
+			Description: "Glass cathedral of industry.",
 		},
 		// Victorian Age — normal costs: 90M-150M
 		{
@@ -490,7 +490,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "victorian_age",
 			MaxCount:    1,
 			BuildTicks:  14000,
-			Description: "Iron monument piercing the sky. +5.0 culture, +2.0 knowledge/tick. Unlocks +0.5x speed.",
+			Description: "Iron monument piercing the sky.",
 		},
 		// Electric Age — normal costs: 500M-1B
 		{
@@ -504,7 +504,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "electric_age",
 			MaxCount:    1,
 			BuildTicks:  24000,
-			Description: "Taming a river to power a nation. +10.0 electricity/tick, +20% all production. Unlocks +0.5x speed.",
+			Description: "Taming a river to power a nation.",
 		},
 		// Atomic Age — normal costs: 3B-10B
 		{
@@ -518,7 +518,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "atomic_age",
 			MaxCount:    1,
 			BuildTicks:  32000,
-			Description: "Smashes atoms for science. +10 knowledge, +1.5 uranium/tick. Unlocks +0.5x speed.",
+			Description: "Smashes atoms for science.",
 		},
 		// Modern Age — normal costs: 15B-40B
 		{
@@ -532,7 +532,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "modern_age",
 			MaxCount:    1,
 			BuildTicks:  46000,
-			Description: "Reaching for the stars. +6 knowledge, +8 culture/tick. Unlocks +0.5x speed.",
+			Description: "Reaching for the stars.",
 		},
 		// Information Age — normal costs: 75B-125B
 		{
@@ -546,7 +546,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "information_age",
 			MaxCount:    1,
 			BuildTicks:  63000,
-			Description: "Every mind connected. +30.0 data/tick, +30% knowledge rate. Unlocks +0.5x speed.",
+			Description: "Every mind connected.",
 		},
 		// Digital Age — normal costs: 400B-750B
 		{
@@ -560,7 +560,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "digital_age",
 			MaxCount:    1,
 			BuildTicks:  120000,
-			Description: "A digital twin of reality itself. +60 data, +15 knowledge/tick. Unlocks +0.5x speed.",
+			Description: "A digital twin of reality itself.",
 		},
 		// Cyberpunk Age — normal costs: 2T-4T
 		{
@@ -574,7 +574,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "cyberpunk_age",
 			MaxCount:    1,
 			BuildTicks:  360000,
-			Description: "A city within a city, lit by eternal neon. +10 crypto/tick, +500 pop cap. Unlocks +0.5x speed.",
+			Description: "A city within a city, lit by eternal neon.",
 		},
 		// Fusion Age — normal costs: 10T-15T
 		{
@@ -588,7 +588,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "fusion_age",
 			MaxCount:    1,
 			BuildTicks:  450000,
-			Description: "A miniature star harnessed for power. +15 plasma, +200 electricity/tick. Unlocks +0.5x speed.",
+			Description: "A miniature star harnessed for power.",
 		},
 		// Space Age — normal costs: 50T-80T
 		{
@@ -602,7 +602,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "space_age",
 			MaxCount:    1,
 			BuildTicks:  640000,
-			Description: "Framework for a Dyson sphere. +200 electricity, +30 plasma/tick. Unlocks +0.5x speed.",
+			Description: "Framework for a Dyson sphere.",
 		},
 		// Interstellar Age — normal costs: 250T-500T
 		{
@@ -616,7 +616,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "interstellar_age",
 			MaxCount:    1,
 			BuildTicks:  860000,
-			Description: "Hub of faster-than-light corridors. +8 dark matter/tick, +80% all production. Unlocks +0.5x speed.",
+			Description: "Hub of faster-than-light corridors.",
 		},
 		// Galactic Age — normal costs: 1Q-1.5Q
 		{
@@ -630,7 +630,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "galactic_age",
 			MaxCount:    1,
 			BuildTicks:  1860000,
-			Description: "A signal fire across the galaxy. +10 antimatter/tick, +50% all production. Unlocks +0.5x speed.",
+			Description: "A signal fire across the galaxy.",
 		},
 		// Quantum Age — normal costs: 2.5Q-5Q
 		{
@@ -644,7 +644,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "quantum_age",
 			MaxCount:    1,
 			BuildTicks:  2500000,
-			Description: "Stabilizes reality across dimensions. +15 quantum flux/tick, +50% all production. Unlocks +0.5x speed.",
+			Description: "Stabilizes reality across dimensions.",
 		},
 		// Transcendent Age
 		{
@@ -658,7 +658,7 @@ func baseBuildingsRaw() []BuildingDef {
 			RequiredAge: "transcendent_age",
 			MaxCount:    1,
 			BuildTicks:  8675309,
-			Description: "The final wonder. +200% all production, +20 quantum flux/tick. Unlocks +0.5x speed.",
+			Description: "The final wonder.",
 		},
 		// Diplomacy / foreign affairs — these act on the world rather than on a
 		// resource, so they live here in the admin/storage slice rather than a
@@ -677,7 +677,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:      []Effect{{Type: "opinion", Target: "opinion", Value: 0.05}},
 			BuildTicks:   3600,
 			RequiredAge:  "colonial_age",
-			Description:  "A diplomatic embassy. Assigned workers passively raise opinion with non-hostile factions (+0.05 opinion/worker/tick, 5 workers).",
+			Description:  "A diplomatic embassy.",
 			WorkerDomain: "trade", WorkerCapacity: 5,
 			EpochKey: "steel_era",
 		},
@@ -688,7 +688,7 @@ func baseBuildingsRaw() []BuildingDef {
 			Effects:      []Effect{{Type: "opinion", Target: "opinion", Value: 0.10}},
 			BuildTicks:   3600,
 			RequiredAge:  "industrial_age",
-			Description:  "A grand diplomatic complex. Twice the embassy's opinion rate (+0.10 opinion/worker/tick, 8 workers).",
+			Description:  "A grand diplomatic complex.",
 			WorkerDomain: "trade", WorkerCapacity: 8,
 			EpochKey: "steel_era",
 		},
@@ -712,7 +712,7 @@ func baseBuildingsRaw() []BuildingDef {
 			CostScale:    1.35,
 			BuildTicks:   3600,
 			RequiredAge:  "industrial_age",
-			Description:  "A chartered society of surveyors and cartographers. Dispatches scouting expeditions on its own — more societies, and fuller staffing, shorten the wait between parties (8 workers).",
+			Description:  "A chartered society of surveyors and cartographers. Sends out scouting expeditions on its own. More societies and more workers shorten the wait (8 workers).",
 			WorkerDomain: "military", WorkerCapacity: 8,
 			EpochKey: "steel_era",
 		},
@@ -1001,12 +1001,13 @@ func BaseBuildings() []BuildingDef {
 	// Normalize cost curves at the single chokepoint so every consumer
 	// (BuildingByKey, the engine, the audit tool) inherits flattened values,
 	// then derive production rates and build times from those prices and the
-	// age targets (pacing.go).
+	// age targets (pacing.go). The mechanical half of every Description is
+	// written last, from those final values (effect_text.go).
 	result = normalizeCostCurves(result)
 	result = normalizeProductionRates(result)
 	result = normalizeWonderCosts(result)
 	result = normalizeBuildTicks(result)
-	return syncDescriptionRates(result)
+	return appendEffectText(result)
 }
 
 // BuildingByKey returns a map of building key → BuildingDef, sourced from BaseBuildings().

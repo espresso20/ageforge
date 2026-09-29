@@ -31,12 +31,12 @@ func buildingsMonuments() []BuildingDef {
 			RequiredAge: "classical_age",
 			MaxCount:    1,
 			BuildTicks:  2000,
-			Description: "A carved obelisk celebrating your people's golden age. Costs 2,500 culture. Permanent +1% to all production.",
+			Description: "A carved obelisk celebrating your people's golden age.",
 			LineageKey:  "monument",
 		},
 		// Medieval Age — culture flows steadily from great halls and cathedrals.
 		{
-			Name: "Grand Amphitheatre", Key: "grand_amphitheatre_monument", Category: "monument",
+			Name: "Grand Amphitheater", Key: "grand_amphitheatre_monument", Category: "monument",
 			BaseCost:  map[string]float64{"culture": 25000, "stone": 400000, "gold": 120000},
 			CostScale: 1.0,
 			Effects: []Effect{
@@ -45,7 +45,7 @@ func buildingsMonuments() []BuildingDef {
 			RequiredAge: "medieval_age",
 			MaxCount:    1,
 			BuildTicks:  5000,
-			Description: "A monumental arena for the games and pageants of an age. Costs 25,000 culture. Permanent +2% to all production.",
+			Description: "A monumental arena for the games and pageants of an age.",
 			LineageKey:  "monument",
 		},
 		// Industrial Age — mass media and museums pour out culture; bigger sink.
@@ -59,7 +59,7 @@ func buildingsMonuments() []BuildingDef {
 			RequiredAge: "industrial_age",
 			MaxCount:    1,
 			BuildTicks:  9000,
-			Description: "A vast archive preserving the knowledge of every age. Costs 500,000 culture. Permanent +3% to all production.",
+			Description: "A vast archive preserving the knowledge of every age.",
 			LineageKey:  "monument",
 		},
 		// Modern Age — late-game culture runs to the billions; the heavy sink.
@@ -73,7 +73,7 @@ func buildingsMonuments() []BuildingDef {
 			RequiredAge: "modern_age",
 			MaxCount:    1,
 			BuildTicks:  15000,
-			Description: "A timeless edifice commemorating the whole span of your civilization. Costs 25,000,000 culture. Permanent +5% to all production.",
+			Description: "A timeless edifice commemorating the whole span of your civilization.",
 			LineageKey:  "monument",
 		},
 	}

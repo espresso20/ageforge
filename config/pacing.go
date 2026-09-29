@@ -2,7 +2,6 @@ package config
 
 import (
 	"math"
-	"regexp"
 	"sort"
 	"strconv"
 	"sync"
@@ -335,40 +334,6 @@ func normalizeResearchTicks(techs []TechDef) []TechDef {
 	}
 	return techs
 }
-
-// syncDescriptionRates rewrites every "+<n> <resource>/tick" in a building's
-// Description to the effect's actual value. The Payback Rule derives most
-// rates, so the numbers typed into the lineage files' descriptions would
-// otherwise go stale, and the description is where the build list shows
-// them.
-func syncDescriptionRates(defs []BuildingDef) []BuildingDef {
-	for i := range defs {
-		d := &defs[i]
-		if d.Description == "" {
-			continue
-		}
-		rates := map[string]float64{}
-		for _, e := range d.Effects {
-			if e.Type == "production" && e.Value > 0 {
-				if _, seen := rates[e.Target]; !seen {
-					rates[e.Target] = e.Value
-				}
-			}
-		}
-		d.Description = descRateRe.ReplaceAllStringFunc(d.Description, func(m string) string {
-			sub := descRateRe.FindStringSubmatch(m)
-			v, ok := rates[sub[2]]
-			if !ok {
-				return m
-			}
-			return "+" + FormatRateValue(v) + " " + sub[2] + "/tick"
-		})
-	}
-	return defs
-}
-
-// descRateRe matches "+<number> <resource>/tick" in a description.
-var descRateRe = regexp.MustCompile(`\+([0-9][0-9.,]*[KMBTQ]?)\s+([a-z_]+)/tick`)
 
 // FormatRateValue prints a per-tick rate with 3 significant figures and a
 // K/M/B/T/Q suffix from a thousand up (0.711, 44.8, 3.34K, 2.72M).
