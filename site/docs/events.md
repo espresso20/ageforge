@@ -218,7 +218,7 @@ logs
 
 Opens the Logs overlay. All event messages appear here with timestamps. Check it regularly — events fire while you're doing other things, and the log is the only record of what happened and what was lost.
 
-When a timed event ends, the expiry log entry shows accumulated losses in yellow (e.g. `3 workers fled`, `45 food stolen`). This tells you the actual cost of the event, not just the stated effect magnitude.
+When an event takes resources or workers, the next log line says exactly what you lost, at the moment it happens (e.g. `You lost 10 food and 5 gold.` or `You lost 8 food and 3 workers.`). It reports what actually left your stores: if you held less than the event would take, it says the smaller amount.
 
 ### Responding to Bad Events
 
