@@ -68,6 +68,10 @@ type Config struct {
 	// Off by default: deals are a side channel, and the pacing targets are
 	// graded on the bot that ignores them.
 	Deals bool
+	// Army turns on the bot's garrison policy (Bot.Army, -army=on). Off by
+	// default, like Deals: the pacing targets are graded on the bot that
+	// ignores the army.
+	Army bool
 
 	// Pacing is PacingReport (default) or PacingEnforce. In report mode an
 	// age past its timeout and a run out of MaxSim are pacing notes, not
@@ -203,6 +207,22 @@ type Stats struct {
 	HarbingerVerdicts map[string]int `json:"harbinger_verdicts"`
 	// FalseProphets counts resolved threads revealed as false.
 	FalseProphets int `json:"false_prophets_revealed"`
+
+	// Army defense. EndureBuildingsLost sums the buildings every Endure
+	// destroyed, EndureStockKept the stock share each Endure kept (summed:
+	// divide by CatastrophesEndured for the mean), EndureGarrison the
+	// garrison's share at each Endure (summed likewise). RaidsBlunted,
+	// DefenseBuildingsSaved and DefenseWorkersSaved come from the engine's
+	// GameStats.Defense tally, summed over prestige cycles.
+	EndureBuildingsLost   int     `json:"endure_buildings_lost"`
+	EndureStockKept       float64 `json:"endure_stock_kept_sum,omitempty"`
+	EndureGarrison        float64 `json:"endure_garrison_sum,omitempty"`
+	RaidsBlunted          int     `json:"raids_blunted,omitempty"`
+	DefenseBuildingsSaved int     `json:"defense_buildings_saved,omitempty"`
+	DefenseWorkersSaved   int     `json:"defense_workers_saved,omitempty"`
+	// defSeen is the last GameStats.Defense tally folded in (the engine's
+	// resets with the run at prestige or Succumb).
+	defSeen game.DefenseTally
 }
 
 // RunResult is the outcome of one seed.
@@ -339,6 +359,7 @@ func newRunner(cfg Config, seed int64, ge *game.GameEngine) *runner {
 	r.bot.CheckInTicks = cfg.CheckIn.Seconds() / game.BaseTickInterval.Seconds()
 	r.bot.UsePlan = cfg.CheckIn > 0 && !cfg.NoPlan
 	r.bot.Deals = cfg.Deals
+	r.bot.Army = cfg.Army
 	if cfg.NoOverflow {
 		ge.SetWonderOverflow(false)
 	}
@@ -423,6 +444,7 @@ func (r *runner) step() bool {
 		}
 		st := r.ge.GetState()
 		r.observe(st)
+		r.res.Stats.foldDefense(st.Military.Saved)
 		if r.ticks%r.cfg.CheckEvery < r.cfg.DecideEvery {
 			r.checkInvariants(st)
 		}
@@ -652,9 +674,14 @@ func (r *runner) control(st *game.GameState) bool {
 				r.succ++
 			}
 		} else {
+			before := totalBuilt(*st)
+			pending := st.PendingEndure
 			err = r.ge.Endure()
 			if err == nil {
 				r.res.Stats.CatastrophesEndured++
+				r.res.Stats.EndureBuildingsLost += before - totalBuilt(r.ge.GetState())
+				r.res.Stats.EndureStockKept += pending.KeepFrac
+				r.res.Stats.EndureGarrison += pending.Garrison
 			}
 		}
 		if err != nil {
@@ -765,4 +792,21 @@ func (r *runner) buyPrestigeUpgrades() {
 			return
 		}
 	}
+}
+
+// foldDefense adds what the engine's defense tally gained since the last look.
+// A tally smaller than the last one seen means the run reset (prestige or
+// Succumb) and counts from zero.
+func (s *Stats) foldDefense(t *game.DefenseTally) {
+	var cur game.DefenseTally
+	if t != nil {
+		cur = *t
+	}
+	if cur.Raids < s.defSeen.Raids || cur.Buildings < s.defSeen.Buildings || cur.Workers < s.defSeen.Workers {
+		s.defSeen = game.DefenseTally{}
+	}
+	s.RaidsBlunted += cur.Raids - s.defSeen.Raids
+	s.DefenseBuildingsSaved += cur.Buildings - s.defSeen.Buildings
+	s.DefenseWorkersSaved += cur.Workers - s.defSeen.Workers
+	s.defSeen = game.DefenseTally{Raids: cur.Raids, Buildings: cur.Buildings, Workers: cur.Workers}
 }

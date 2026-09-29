@@ -177,13 +177,17 @@ Brace spends the resources the epoch still asks of you. For each resource, the p
 
 Buildings destroyed are counted from your non-wonder buildings, rounded down, with at least 1 if you have any. Wonders are never destroyed. The rest of Endure (25% of workers lost, the 216-tick reconstruction debuff, −10 morale) is the same at every Brace level. See [Endure](catastrophe.md#endure).
 
+**Brace and your garrison.** The table is Brace alone. If you have soldiers, Brace applies first and then your garrison blunts its share of what Brace leaves: fewer buildings fall and more stock is kept. The garrison's share is measured against the raid threat of the age the catastrophe would strike in, the first age of the next epoch, where the threat has doubled. Brace and garrison together can cut the unbraced loss by at most **60%**: at least 8% of buildings fall and at most 66% of stock is kept. That cap only bites at level 2. For example, level 1 with a garrison that blunts 20% of a raid means 12% of buildings fall and 44% of stock is kept; level 2 with a strong garrison stops at 8% and 66%. See [Your garrison](catastrophe.md#your-garrison) and [Defense: what your army blunts](military.md#7-defense-what-your-army-blunts).
+
+The panel's Brace preview ("If it comes and you Endure: N% of buildings fall, N% of stock is kept", and the same for the next level) already counts your garrison, so it shows what you would actually face. A line under it says so: "Your garrison is counted: it blunts about N% of what Brace leaves." With no soldiers it reads "No garrison counted: soldiers would soften an Endure further (Army panel)." When the 60% cap cuts in, a further line says so.
+
 Things to know:
 
 - Two levels at most.
 - Brace only matters if the catastrophe comes **and** you choose Endure. If no catastrophe comes, or you Succumb, the resources are simply spent.
 - The Brace is attached to the pending catastrophe. If you close the choice with Esc and Endure later, or save and load in between, it still applies.
 - Brace is allowed after Invite.
-- **In the Cosmic Era, Brace protects points, not your civilization.** An Endure at the Last Passage keeps 50% of the run's prestige points unbraced, 70% at level 1 and 85% at level 2. The building and resource numbers above don't apply there. See [The Last Passage](prestige.md#the-last-passage).
+- **In the Cosmic Era, Brace protects points, not your civilization.** An Endure at the Last Passage keeps 50% of the run's prestige points unbraced, 70% at level 1 and 85% at level 2. The building and resource numbers above don't apply there, and your garrison doesn't count. See [The Last Passage](prestige.md#the-last-passage).
 
 ### What it costs, by epoch
 

@@ -195,9 +195,9 @@ func TestExpedition_ResolvesWithoutWorkerLoss(t *testing.T) {
 		}
 		clean++
 		switch {
-		case logContains(ge, "Trade Escort succeeded!"):
+		case logContains(ge, "Trade Escort succeeded. Loot:"):
 			won++
-		case logContains(ge, "Trade Escort failed!"):
+		case logContains(ge, "Trade Escort failed. You kept 30% of the loot:"):
 			lost++
 		}
 		if popAfter := ge.Workers.TotalPop(); popAfter != popBefore {

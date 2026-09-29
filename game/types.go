@@ -53,6 +53,9 @@ type GameState struct {
 	EpochColor         string // tview color tag
 	EpochSurvived      bool   // player endured a catastrophe this epoch
 	PendingCatastrophe string // epoch key if catastrophe modal should show; "" otherwise
+	// PendingEndure is what Endure would cost for the pending catastrophe,
+	// Brace and garrison included. Zero when none is pending.
+	PendingEndure EndureOutcome
 	// CatastropheOutlook reports the catastrophe odds at the NEXT passage: the
 	// epoch transition, or prestige in the final epoch (see
 	// GameEngine.CatastropheOutlook).
@@ -309,9 +312,17 @@ type MilitaryState struct {
 	// SoldierCap is the soldiers resource storage cap (sum of built military
 	// buildings' storage effects). SoldierRate is the per-tick soldiers
 	// production rate (net). Both are populated from the soldiers resource.
-	SoldierCap      int
-	SoldierRate     float64
-	DefenseRating   float64
+	SoldierCap    int
+	SoldierRate   float64
+	DefenseRating float64
+	// Threat is the current age's raid threat (config.AgeThreat) and
+	// Mitigation the share of a raid the garrison would blunt against it
+	// (config.DefenseMitigation, 0..config.DefenseMitigationCap).
+	Threat     float64
+	Mitigation float64
+	// Saved is what the garrison has saved this run; nil until it saves
+	// anything.
+	Saved           *DefenseTally
 	MilitaryBonus   float64
 	ExpeditionBonus float64
 	// ActiveScout / ActiveMilitary are the per-category active expeditions. A

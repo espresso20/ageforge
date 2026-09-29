@@ -60,6 +60,11 @@ type Bot struct {
 	// default: the greedy bot ignores them, and -deals=on measures what they
 	// are worth.
 	Deals bool
+	// Army makes the bot keep a modest garrison (keepGarrison): a few of the
+	// age's newest military buildings, bought from spare stock. Off by
+	// default: the greedy bot ignores the army beyond the buildings an age
+	// gate asks for, and -army=on measures what a garrison is worth.
+	Army bool
 	// UsePlan makes a check-in player leave a build plan for the hours until
 	// the next visit (planAhead). The idle style sets it; the greedy bot,
 	// always there, has no use for one.
@@ -276,7 +281,40 @@ func (b *Bot) Play(st game.GameState) {
 	if b.Deals {
 		b.takeDeals(p)
 	}
+	if b.Army {
+		b.keepGarrison(p)
+	}
 	b.gather(p)
+}
+
+// ArmyGarrison is how many of the age's newest military buildings the
+// -army=on bot keeps: a modest garrison, not a war machine.
+const ArmyGarrison = 4
+
+// keepGarrison is the -army=on policy, a player who keeps a modest standing
+// army: once soldiers exist (Iron Age on), hold ArmyGarrison of the current
+// age's newest military building, buying one per decision when its price is
+// at most a quarter of what the bot holds of everything it costs. The
+// buildings train soldiers unstaffed (20% rate), and the bot never spends
+// them, so the stock is a garrison that blunts raids and catastrophes.
+func (b *Bot) keepGarrison(p *plan) {
+	if r, ok := p.st.Resources["soldiers"]; !ok || !r.Unlocked {
+		return
+	}
+	best, tier := "", -1
+	for _, key := range sortedKeys(p.st.Buildings) {
+		def := b.defs[key]
+		if def.LineageKey != "military" || def.LineageTier <= tier || !b.buildable(p, key) {
+			continue
+		}
+		best, tier = key, def.LineageTier
+	}
+	if best == "" || p.st.Buildings[best].Count+b.queuedCount(p.st, best)+p.extra[best] >= ArmyGarrison {
+		return
+	}
+	if c := b.cost(p, best); p.cheapFor(c, 0.25) {
+		b.tryBuild(p, best, "build_army")
+	}
 }
 
 // takeDeals is the -deals=on policy, a player who reads the Factions panel:

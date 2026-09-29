@@ -523,6 +523,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 			GameStarted:     ge.Stats.GameStarted,
 			AgesReached:     agesReached,
 			SoldiersTrained: ge.Stats.SoldiersTrained,
+			Defense:         ge.Stats.Defense.clone(),
 		},
 		BuildQueue: queue,
 		Research: ResearchSave{
@@ -701,6 +702,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 			GameStarted:     save.Stats.GameStarted,
 			AgesReached:     ages,
 			SoldiersTrained: save.Stats.SoldiersTrained,
+			Defense:         save.Stats.Defense.clone(),
 		}
 	}
 	ge.buildQueue = save.BuildQueue

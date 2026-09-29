@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -16,9 +17,10 @@ func militaryProvider(state game.GameState, _ int) string {
 
 	// === Army Overview ===
 	fmt.Fprintf(&sb, " [gold]═══ Army Overview ═══[-]\n\n")
-	fmt.Fprintf(&sb, " [gold]Soldiers:[-]  %d / %d\n", mil.SoldierCount, mil.SoldierCap)
+	fmt.Fprintf(&sb, " [gold]Soldiers:[-]  %s / %s\n", FormatNumber(float64(mil.SoldierCount)), FormatNumber(float64(mil.SoldierCap)))
 	fmt.Fprintf(&sb, " [gold]Training:[-]  %s/tick\n", FormatRate(mil.SoldierRate))
-	fmt.Fprintf(&sb, " [gold]Defense:[-]   %.1f\n", mil.DefenseRating)
+	fmt.Fprintf(&sb, " [gold]Defense:[-]   %s\n", FormatNumber(mil.DefenseRating))
+	writeGarrison(&sb, state)
 
 	if mil.MilitaryBonus > 0 {
 		fmt.Fprintf(&sb, " [green]Military Bonus: +%.0f%%[-]\n", mil.MilitaryBonus*100)
@@ -58,15 +60,15 @@ func militaryProvider(state game.GameState, _ int) string {
 	} else {
 		writeActiveExpedition(&sb, "Campaign", mil.ActiveMilitary, state)
 	}
-	fmt.Fprintf(&sb, "\n [gray]Completed: %d expedition(s)[-]\n", mil.CompletedCount)
+	fmt.Fprintf(&sb, "\n [gray]Completed: %d (expeditions and campaigns)[-]\n", mil.CompletedCount)
 
 	// === Campaigns ===
 	// The Army panel lists only military campaigns (they cost soldiers).
 	sb.WriteString("\n [gold]═══ Campaigns ═══[-]\n\n")
 	if !hasCategory(mil.Expeditions, game.ExpeditionMilitary) {
-		sb.WriteString(" [gray]No campaigns available yet[-]\n")
-		sb.WriteString(" [gray]Reach Bronze Age and recruit soldiers[-]\n")
-		sb.WriteString(" [gray]to unlock campaigns.[-]\n")
+		sb.WriteString(" [gray]No campaigns available yet.[-]\n")
+		sb.WriteString(" [gray]Campaigns open in the Bronze Age and cost soldiers,[-]\n")
+		sb.WriteString(" [gray]which military buildings train from the Iron Age.[-]\n")
 	} else {
 		writeExpeditionGroup(&sb, "Campaigns", mil.Expeditions, game.ExpeditionMilitary, state)
 	}
@@ -89,7 +91,7 @@ func writeActiveExpedition(sb *strings.Builder, label string, exp *game.Expediti
 	}
 	fmt.Fprintf(sb, " [yellow]%s:[-] %s", label, exp.Name)
 	if exp.Soldiers > 0 {
-		fmt.Fprintf(sb, " — %d deployed", exp.Soldiers)
+		fmt.Fprintf(sb, ", %d soldiers deployed", exp.Soldiers)
 	}
 	fmt.Fprintf(sb, " (%s left)\n", formatTicks(exp.TicksLeft, state))
 }
@@ -125,9 +127,13 @@ func writeExpeditionGroup(sb *strings.Builder, label string, exps []game.Expedit
 		// Duration is rolled per launch, so preview the def's range rather than a
 		// single number.
 		durationStr := formatTickRange(exp.DurationMin, exp.DurationMax, state)
-		fmt.Fprintf(sb, "   Soldiers: %d  Duration: %s  Difficulty: [%s]%.0f%%[-]\n",
-			exp.SoldiersNeeded, durationStr, diffColor, exp.Difficulty*100)
-		if cost := formatExpeditionCost(exp.Cost); cost != "" {
+		soldiers := ""
+		if exp.SoldiersNeeded > 0 {
+			soldiers = fmt.Sprintf("Soldiers: %d  ", exp.SoldiersNeeded)
+		}
+		fmt.Fprintf(sb, "   %sDuration: %s  Difficulty: [%s]%.0f%%[-] (chance of failure before bonuses)\n",
+			soldiers, durationStr, diffColor, exp.Difficulty*100)
+		if cost := formatExpeditionCost(exp.Cost, state); cost != "" {
 			fmt.Fprintf(sb, "   Cost: %s\n", cost)
 		}
 
@@ -149,7 +155,7 @@ func writeExpeditionGroup(sb *strings.Builder, label string, exps []game.Expedit
 // formatExpeditionCost renders an expedition's resource cost in a readable,
 // player-facing form (e.g. "30 food, 30 wood"), with keys sorted for stable
 // output. Returns "" for a free (empty) cost so callers can omit the line.
-func formatExpeditionCost(cost map[string]float64) string {
+func formatExpeditionCost(cost map[string]float64, state game.GameState) string {
 	if len(cost) == 0 {
 		return ""
 	}
@@ -160,7 +166,82 @@ func formatExpeditionCost(cost map[string]float64) string {
 	sort.Strings(keys)
 	parts := make([]string, 0, len(keys))
 	for _, k := range keys {
-		parts = append(parts, fmt.Sprintf("%.0f %s", cost[k], k))
+		parts = append(parts, FormatNumber(cost[k])+" "+resourceDisplayName(state, k))
 	}
 	return strings.Join(parts, ", ")
+}
+
+// writeGarrison renders what the army does for the player: how much of a raid
+// the garrison would blunt against the current age's threat, and what it has
+// saved this run. Worded from the player's side.
+func writeGarrison(sb *strings.Builder, state game.GameState) {
+	mil := state.Military
+	capPct := config.DefenseMitigationCap * 100
+	ageName := state.AgeName
+	if ageName == "" {
+		ageName = state.Age
+	}
+	fmt.Fprintf(sb, " [gold]Threat:[-]    %s (raids in the %s)\n", FormatNumber(mil.Threat), ageName)
+	if mil.Mitigation <= 0 {
+		sb.WriteString(" [yellow]You have no garrison: raids hit you with full force.[-]\n")
+		fmt.Fprintf(sb, "   [gray]Soldiers blunt raids, war raids and what an Endure takes (up to %.0f%%).[-]\n", capPct)
+	} else {
+		fmt.Fprintf(sb, " [green]Your garrison would blunt about %.0f%% of a raid.[-]\n", mil.Mitigation*100)
+		sb.WriteString("   [gray]Raids, war raids and an Endure's losses all hit you that much softer.[-]\n")
+		twice := config.DefenseMitigation(mil.DefenseRating*2, mil.Threat)
+		fmt.Fprintf(sb, "   [gray]Twice the garrison: about %.0f%%. No army blunts more than %.0f%%.[-]\n", twice*100, capPct)
+	}
+	if line := garrisonSavedSummary(mil.Saved); line != "" {
+		fmt.Fprintf(sb, " [gold]Saved this run:[-] %s\n", line)
+	}
+}
+
+// garrisonSavedSummary is a one-line summary of what the army has saved this
+// run, largest resource amounts first (at most four), or "" when nothing.
+func garrisonSavedSummary(t *game.DefenseTally) string {
+	if t == nil {
+		return ""
+	}
+	var parts []string
+	if t.Buildings > 0 {
+		parts = append(parts, fmt.Sprintf("%d %s", t.Buildings, pluralize("building", t.Buildings)))
+	}
+	if t.Workers > 0 {
+		parts = append(parts, fmt.Sprintf("%d %s", t.Workers, pluralize("worker", t.Workers)))
+	}
+	keys := make([]string, 0, len(t.Resources))
+	for k, v := range t.Resources {
+		if v >= 1 {
+			keys = append(keys, k)
+		}
+	}
+	sort.Slice(keys, func(i, j int) bool {
+		if t.Resources[keys[i]] != t.Resources[keys[j]] {
+			return t.Resources[keys[i]] > t.Resources[keys[j]]
+		}
+		return keys[i] < keys[j]
+	})
+	if len(keys) > 4 {
+		keys = keys[:4]
+	}
+	for _, k := range keys {
+		parts = append(parts, FormatNumber(t.Resources[k])+" "+k)
+	}
+	if len(parts) == 0 {
+		return ""
+	}
+	out := strings.Join(parts, ", ")
+	if t.Raids > 0 {
+		out += fmt.Sprintf(" [gray](%d %s blunted)[-]", t.Raids, pluralize("raid", t.Raids))
+	}
+	return out
+}
+
+// resourceDisplayName is a resource's player-facing name in lower case ("dark
+// matter"), from the snapshot, or the key with spaces when it has none.
+func resourceDisplayName(state game.GameState, key string) string {
+	if r, ok := state.Resources[key]; ok && r.Name != "" {
+		return strings.ToLower(r.Name)
+	}
+	return strings.ReplaceAll(key, "_", " ")
 }
