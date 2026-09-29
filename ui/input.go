@@ -765,8 +765,8 @@ func cmdStatus(engine *game.GameEngine) CommandResult {
 
 	// Population
 	v := state.Workers
-	lines = append(lines, fmt.Sprintf("[gold]Population:[-] %d/%d (idle: %d, food drain: %.1f/tick)",
-		v.TotalPop, v.MaxPop, v.TotalIdle, v.FoodDrain))
+	lines = append(lines, fmt.Sprintf("[gold]Population:[-] %d/%d (idle: %d, food drain: %s/tick)",
+		v.TotalPop, v.MaxPop, v.TotalIdle, textfmt.Number(v.FoodDrain)))
 	for _, vt := range v.Types {
 		if !vt.Unlocked {
 			continue
