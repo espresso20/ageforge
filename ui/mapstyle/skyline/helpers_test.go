@@ -131,7 +131,7 @@ func TestSpotCaptures(t *testing.T) {
 			frames = append(frames, capture.Frame(scr))
 			if k == 0 {
 				txt = capture.Text(scr)
-				_ = writePNG(filepath.Join(dir, sh.name+".png"), scr)
+				_ = capture.PNG(filepath.Join(dir, sh.name+".png"), scr)
 			}
 		}
 		bg := capture.Hex(theme.Color(theme.RoleBackground))

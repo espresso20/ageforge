@@ -1,4 +1,4 @@
-package skyline
+package capture
 
 import (
 	"image"
@@ -9,10 +9,12 @@ import (
 	"github.com/gdamore/tcell/v2"
 )
 
-// writePNG renders a simulation screen as a colour thumbnail for review:
-// each cell is 6x12 pixels, blocks drawn as blocks, other glyphs as a
-// small mark in their ink. Review tooling only.
-func writePNG(path string, s tcell.SimulationScreen) error {
+// PNG writes a screen as a colour thumbnail for review: each cell is 6x12
+// pixels, blocks and shades drawn as themselves, other glyphs as a small
+// mark in their ink. It shows composition and colour, not letterforms; the
+// HTML captures are the real render.
+func PNG(path string, s tcell.SimulationScreen) error {
+	s.Show()
 	cells, w, h := s.GetContents()
 	const cw, ch = 6, 12
 	img := image.NewRGBA(image.Rect(0, 0, w*cw, h*ch))

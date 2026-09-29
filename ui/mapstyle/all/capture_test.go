@@ -212,6 +212,10 @@ func (c *capturer) shoot(s shot) {
 		f.Anim = i * 3
 		draw()
 		html = append(html, capture.Frame(scr))
+		if i == 0 {
+			_ = os.MkdirAll(filepath.Join(c.out, "png"), 0o755)
+			_ = capture.PNG(filepath.Join(c.out, "png", s.style+"_"+s.name+".png"), scr)
+		}
 		if i == 0 || n > 1 {
 			if n > 1 {
 				fmt.Fprintf(&txt, "--- frame %d\n", i)
