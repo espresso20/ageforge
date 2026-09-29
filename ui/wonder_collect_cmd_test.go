@@ -37,7 +37,7 @@ func TestWonderBankCommand(t *testing.T) {
 			want: map[string]float64{"wonder bank food all": 500, "wonder bank food 100": 100, "wonder bank food max": 500, "wonder bank food": 500, "wonder collect food all": 500}},
 		{name: "some food", food: 60,
 			want: map[string]float64{"wonder bank food all": 60, "wonder bank food max": 60, "wonder bank food": 60, "wonder collect food all": 60},
-			err:  "not enough food (have: 60, need: 100)"},
+			err:  "not enough food: need 100, have 60"},
 		{name: "no food", food: 0, err: "you have no food to bank"},
 		{name: "wonder doesn't need food", age: bronze, food: 50000, err: "Stonehenge doesn't need food (it needs iron, stone, wood)"},
 		{name: "food already banked", food: 50000, err: "Sacred Grove already has all the food it needs",
