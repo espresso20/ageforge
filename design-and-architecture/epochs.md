@@ -219,6 +219,11 @@ Constants and the reasoning for them are in `config/defense.go`; the engine side
   forward, so a player who never thinks about the army still holds a garrison. The threat base
   was calibrated on it: the greedy smoke bot blunts 8-19% of a raid from the Iron Age on, and a
   deliberate army (the `-army=on` bot) 25-40% from the Industrial Age.
+- **Endure timing**: a catastrophe strikes on entering an epoch's first age, when the threat has
+  just doubled, so a garrison sized for the age you left blunts little of an immediate Endure
+  (0-11% mean across the smoke seeds, with or without `-army=on`, which Endures at once). The
+  choice waits for the player and the modal preview is live, so training soldiers before
+  choosing Endure is how the garrison pays off there. Raids are where it works all age long.
 - **No upkeep**: soldiers cost nothing ongoing. Stockpiling is bounded by soldier storage and
   saturates at the cap, and measured runs show no pacing gain from a garrison (see the Decision
   Log), so upkeep would be a tax with nothing to correct.
