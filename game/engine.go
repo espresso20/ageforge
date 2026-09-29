@@ -12,6 +12,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/flavor"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 const (
@@ -343,7 +344,7 @@ func NewGameEngine() *GameEngine {
 	ge.Resources.Add("wood", 50)
 	// Startup flavor — the step-by-step onboarding now lives in the Buildings panel
 	// (main-screen polish part 1), so the log stays clean for live events.
-	ge.addLog("event", "Welcome to AgeForge! You have nothing but your hands.")
+	ge.addLog("event", "Welcome to AgeForge. You have nothing but your hands.")
 	// Subscribe to age advances to record markers in history.
 	// IMPORTANT: Bus handlers run under the engine write lock — do NOT call GetState().
 	ge.Bus.Subscribe(EventAgeAdvanced, func(e EventData) {
@@ -583,7 +584,8 @@ func (ge *GameEngine) updateMoraleTick() {
 	// Low morale warning (fires once, resets when morale recovers above 0.40)
 	if ge.morale < 0.40 && !ge.lowMoraleWarned {
 		ge.lowMoraleWarned = true
-		ge.addLog("warning", fmt.Sprintf("⚠ Morale critical: %.0f%% — worker output severely reduced", ge.morale*100))
+		ge.addLog("warning", fmt.Sprintf("⚠ Morale low (%s): all production %s. Faith output raises morale.",
+			textfmt.Percent(ge.morale), textfmt.SignedPercent(ge.moraleMultiplier()-1)))
 	} else if ge.morale >= 0.40 && ge.lowMoraleWarned {
 		ge.lowMoraleWarned = false
 	}
@@ -640,7 +642,7 @@ func (ge *GameEngine) Start() {
 			if time.Since(lastAutosave) >= AutosaveInterval {
 				if err := ge.SaveGame(ge.ActiveSaveName()); err != nil {
 					ge.mu.Lock()
-					ge.addLog("warning", fmt.Sprintf("Autosave failed: %v", err))
+					ge.addLog("warning", fmt.Sprintf("Autosave failed: could not write the save file (%v). Try saving by hand.", err))
 					ge.mu.Unlock()
 				} else {
 					ge.mu.Lock()
@@ -655,7 +657,7 @@ func (ge *GameEngine) Start() {
 				if acct := ge.Account(); acct != nil {
 					if err := acct.FlushIfDirty(); err != nil {
 						ge.mu.Lock()
-						ge.addLog("warning", fmt.Sprintf("Account flush failed: %v", err))
+						ge.addLog("warning", fmt.Sprintf("Could not save your lifetime stats (%v). The game tries again at the next autosave.", err))
 						ge.mu.Unlock()
 					}
 				}
@@ -677,7 +679,7 @@ func (ge *GameEngine) safeTick() {
 	defer func() {
 		if r := recover(); r != nil {
 			ge.mu.Lock()
-			ge.addLog("error", fmt.Sprintf("Tick recovered from panic: %v", r))
+			ge.addLog("error", fmt.Sprintf("This tick hit an error and was skipped. Save your game and report the bug: %v", r))
 			ge.mu.Unlock()
 		}
 	}()
@@ -699,7 +701,12 @@ func (ge *GameEngine) getTickInterval() time.Duration {
 // tickIntervalLocked is getTickInterval for callers that already hold ge.mu
 // (read or write).
 func (ge *GameEngine) tickIntervalLocked() time.Duration {
-	bonus := ge.tickSpeedBonus
+	return ge.tickIntervalWithBonusLocked(ge.tickSpeedBonus)
+}
+
+// tickIntervalWithBonusLocked is tickIntervalLocked for a given total
+// tick_speed bonus. Caller holds ge.mu (read or write).
+func (ge *GameEngine) tickIntervalWithBonusLocked(bonus float64) time.Duration {
 	mult := ge.speedMultiplier
 	if mult < 1.0 {
 		mult = 1.0
@@ -761,21 +768,28 @@ func (ge *GameEngine) MaxSpeedForAge() float64 {
 			wonderCount++
 		}
 	}
-	return 1.0 + float64(float64(wonderCount)*0.5)
+	return 1.0 + float64(float64(wonderCount)*wonderSpeedStep)
 }
+
+// wonderSpeedStep is how much each completed wonder raises the speed cap.
+const wonderSpeedStep = 0.5
+
+// starvationDeathInterval is how many ticks pass between starvation deaths
+// while food sits at zero.
+const starvationDeathInterval = 5
 
 // SetSpeedMultiplier sets the game speed multiplier (0.5 increments, capped by age)
 func (ge *GameEngine) SetSpeedMultiplier(mult float64) error {
 	// Validate it's a finite 0.5 increment and at least 1.0 (int() of an
 	// infinity is undefined, so rule those out before the increment check).
 	if math.IsNaN(mult) || math.IsInf(mult, 0) || mult < 1.0 || mult != float64(int(mult*2))/2 {
-		return fmt.Errorf("invalid speed: %.1f (must be 1.0, 1.5, 2.0, etc.)", mult)
+		return fmt.Errorf("Speed must be 1.0, 1.5, 2.0 and so on (got %g).", mult)
 	}
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
 	maxSpeed := ge.MaxSpeedForAge()
 	if mult > maxSpeed {
-		return fmt.Errorf("speed %.1fx not unlocked yet (max: %.1fx — build more wonders!)", mult, maxSpeed)
+		return fmt.Errorf("Speed %.1fx is above your cap of %.1fx. Each wonder raises the speed cap by %.1fx.", mult, maxSpeed, wonderSpeedStep)
 	}
 	ge.speedMultiplier = mult
 	ge.addLog("info", fmt.Sprintf("Game speed set to %.1fx", mult))
@@ -1002,7 +1016,7 @@ func (ge *GameEngine) doTick() {
 	// Process build queue
 	ge.processBuildQueue()
 	if len(ge.buildQueue) > 0 {
-		ge.addLog("debug", fmt.Sprintf("Build queue: %d item(s) in progress", len(ge.buildQueue)))
+		ge.addLog("debug", fmt.Sprintf("Build queue: %s in progress", textfmt.Count(len(ge.buildQueue), "item", "items")))
 	}
 
 	// Process research
@@ -1060,24 +1074,26 @@ func (ge *GameEngine) doTick() {
 		}
 	}
 
-	// Starvation: when food is at 0 with active drain, workers die every 5 ticks
+	// Starvation: when food is at 0 with active drain, one worker dies every
+	// starvationDeathInterval ticks.
 	if ge.Resources.Get("food") <= 0 && ge.Workers.FoodDrain() > 0 {
 		ge.starvationTicks++
 		if ge.starvationTicks == 1 {
-			ge.addLog("warning", "⚠ Your people are starving! Food has run out.")
+			ge.addLog("warning", fmt.Sprintf("⚠ Food has run out. One worker dies every %s until you have food again.",
+				ge.durationLocked(starvationDeathInterval)))
 			if q := config.PickLogFlavor(config.LogFlavorStarvation, ge.quipRNG()); q != "" {
 				ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
 			}
 		}
-		if ge.starvationTicks%5 == 0 && ge.Workers.TotalPop() > 0 {
+		if ge.starvationTicks%starvationDeathInterval == 0 && ge.Workers.TotalPop() > 0 {
 			killed := ge.Workers.KillWorker(1)
 			if killed > 0 {
-				ge.addLog("error", fmt.Sprintf("☠ A worker has died of starvation! (pop: %d)", ge.Workers.TotalPop()))
+				ge.addLog("error", fmt.Sprintf("☠ A worker starved to death. Population: %d.", ge.Workers.TotalPop()))
 			}
 		}
 	} else if ge.starvationTicks > 0 {
 		ge.starvationTicks = 0
-		ge.addLog("info", "✓ Food supply restored — starvation ended.")
+		ge.addLog("info", "✓ Food is back. Workers have stopped starving.")
 		if q := config.PickLogFlavor(config.LogFlavorStarvationEnded, ge.quipRNG()); q != "" {
 			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
 		}
@@ -1105,7 +1121,7 @@ func (ge *GameEngine) doTick() {
 		if !ge.ageReady {
 			ge.ageReady = true
 			nextName := ge.progress.GetAgeName(nextAge)
-			ge.addLog("event", fmt.Sprintf("✦ Ready to advance to the %s! Type 'advance' when you're ready.", nextName))
+			ge.addLog("event", fmt.Sprintf("✦ Ready to advance to the %s. Type 'advance' when you're ready.", nextName))
 		}
 	} else {
 		ge.ageReady = false // requirements dropped — not ready anymore
@@ -1167,7 +1183,7 @@ func (ge *GameEngine) advanceResearch(n int) bool {
 func (ge *GameEngine) finishResearch(completed string) {
 	def := ge.Research.defs[completed]
 	ge.addLog("debug", fmt.Sprintf("Research complete: %s", def.Name))
-	ge.addLog("success", fmt.Sprintf("Research complete: %s!", def.Name))
+	ge.addLog("success", fmt.Sprintf("Research complete: %s.", def.Name))
 	// Cosmetic flavour on roughly half of breakthroughs (varies, never spams).
 	if ge.quipRNG().Intn(2) == 0 {
 		if q := config.PickLogFlavor(config.LogFlavorResearchDone, ge.quipRNG()); q != "" {
@@ -1187,7 +1203,12 @@ func (ge *GameEngine) processEvents() {
 
 	for _, def := range triggered {
 		ge.addLog("debug", fmt.Sprintf("Event triggered: %s (sentiment: %s)", def.Name, def.Sentiment))
-		ge.addLog("event", def.LogMessage)
+		// Setbacks log as warnings so they don't read like windfalls.
+		if def.Sentiment == "bad" {
+			ge.addLog("warning", def.LogMessage)
+		} else {
+			ge.addLog("event", def.LogMessage)
+		}
 		// Process instant and on-trigger effects.
 		// For timed events (Duration > 0) the losses are also recorded on the active event
 		// so that when it expires the "has ended" message includes a yellow summary.
@@ -1209,17 +1230,17 @@ func (ge *GameEngine) processEvents() {
 					ge.Events.RecordResourceLoss(def.Key, eff.Target, loss)
 				}
 			case "worker_loss":
-				// Value is a percentage (0.0–1.0) of total workers to remove
-				lost := int(float64(ge.Workers.TotalPop()) * eff.Value)
-				if lost < 1 {
-					lost = 1
-				}
+				// Value is a percentage (0.0–1.0) of total workers to remove.
+				// Report the loss now, when it happens, and count what
+				// RemovePct actually took.
+				before := ge.Workers.TotalPop()
 				ge.Workers.RemovePct(eff.Value)
-				if isTimed {
-					// Loss will be reported in the "has ended" summary; skip standalone log
-					ge.Events.RecordWorkerLoss(def.Key, lost)
-				} else {
-					ge.addLog("warning", fmt.Sprintf("%d workers fled or were lost.", lost))
+				lost := before - ge.Workers.TotalPop()
+				if lost > 0 {
+					if isTimed {
+						ge.Events.RecordWorkerLoss(def.Key, lost)
+					}
+					ge.addLog("warning", fmt.Sprintf("%s lost.", textfmt.Count(lost, "worker", "workers")))
 				}
 				ge.addLog("debug", fmt.Sprintf("Event effect: worker_loss %.0f%%", eff.Value*100))
 			}
@@ -1427,7 +1448,11 @@ func (ge *GameEngine) checkMilestones() {
 
 	for _, ms := range completed {
 		rewardText := formatMilestoneRewards(ms.Rewards)
-		ge.addLog("success", fmt.Sprintf("Milestone achieved: %s!", ms.Name))
+		line := fmt.Sprintf("Milestone achieved: %s.", ms.Name)
+		if parts := milestoneRewardParts(ms.Rewards); parts != "" {
+			line += " " + parts + "."
+		}
+		ge.addLog("success", line)
 		// Cosmetic flavour quip on its own dim line (never replaces the reward text).
 		if ms.Flavor != "" {
 			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", ms.Flavor))
@@ -1456,7 +1481,9 @@ func (ge *GameEngine) checkMilestones() {
 	// Check chains
 	newChains := ge.Milestones.CheckChains()
 	for _, chain := range newChains {
-		ge.addLog("success", fmt.Sprintf("Chain complete: %s! Title: %s", chain.Name, chain.Title))
+		ge.addLog("success", fmt.Sprintf("Chain complete: %s. Title: %s. Game speed %s for %s.",
+			chain.Name, chain.Title, textfmt.SignedPercent(chain.BoostValue),
+			ge.durationWithSpeedBonusLocked(chain.BoostDuration, chain.BoostValue)))
 		// Cosmetic flavour quip on its own dim line (never replaces the title/boost).
 		if chain.Flavor != "" {
 			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", chain.Flavor))
@@ -1772,8 +1799,8 @@ func (ge *GameEngine) advanceAge(newAge string) {
 			NewKey: t.newKey, NewName: t.newName,
 			Count: t.count,
 		})
-		ge.addLog("info", fmt.Sprintf("↑ %s → %s available (×%d) — type: upgrade %s",
-			t.oldName, t.newName, t.count, t.oldKey))
+		ge.addLog("info", fmt.Sprintf("↑ %s can upgrade to %s. Type 'upgrade %s'.",
+			BuildingCount(t.count, t.oldKey), t.newName, t.oldKey))
 	}
 	// Mark buildings as legacy if their lineage now has a higher-tier unlocked equivalent.
 	for _, key := range sortedKeys(ge.Buildings.counts) {
@@ -1832,14 +1859,15 @@ func (ge *GameEngine) advanceAge(newAge string) {
 			r.Amount *= CarryoverResidualPct
 		}
 	}
-	ge.addLog("info", "Age transition: resources reduced to a starter head start")
+	ge.addLog("info", fmt.Sprintf("Stockpiles trimmed for the new age: each resource is capped at %d times the cost of the cheapest new building that uses it, other resources drop to %s, and faith is kept.",
+		CarryoverStarterBuildings, textfmt.Percent(CarryoverResidualPct)))
 
 	oldName := ge.progress.GetAgeName(oldAge)
 	newName := ge.progress.GetAgeName(newAge)
 	unlocks := ge.progress.GetUnlocks(newAge)
 	ge.addLog("debug", fmt.Sprintf("Age advance: %s → %s (unlocks: %d buildings, %d resources, %d workers)",
 		oldAge, newAge, len(unlocks.UnlockBuildings), len(unlocks.UnlockResources), len(unlocks.UnlockVillagers)))
-	ge.addLog("success", fmt.Sprintf("Advanced from %s to %s!", oldName, newName))
+	ge.addLog("success", fmt.Sprintf("Advanced from the %s to the %s.", oldName, newName))
 	// Cosmetic flavour echo in the log (distinct from the age splash quip — see ui/age_splash.go).
 	// Age transitions are rare, so it fires every time.
 	if q := config.PickLogFlavor(config.LogFlavorAgeAdvance, ge.quipRNG()); q != "" {
@@ -1849,7 +1877,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// Notify player about the wonder available in this age
 	for _, bKey := range unlocks.UnlockBuildings {
 		if def, ok := ge.Buildings.defs[bKey]; ok && def.Category == "wonder" {
-			ge.addLog("event", fmt.Sprintf("★ Wonder available: %s — build it to unlock a permanent +0.5x speed bonus!", def.Name))
+			ge.addLog("event", fmt.Sprintf("★ Wonder available: %s. Each wonder raises the speed cap by %.1fx (see speed).", def.Name, wonderSpeedStep))
 			break
 		}
 	}
@@ -4274,25 +4302,36 @@ func (ge *GameEngine) getResearchedTechMap() map[string]bool {
 	return m
 }
 
-// formatMilestoneRewards formats milestone reward effects for display
+// formatMilestoneRewards formats milestone reward effects for the toast:
+// "(+10% all production, +500 food)". Empty when there are no rewards.
 func formatMilestoneRewards(effects []config.Effect) string {
+	parts := milestoneRewardParts(effects)
+	if parts == "" {
+		return ""
+	}
+	return "(" + parts + ")"
+}
+
+// milestoneRewardParts lists milestone rewards with display names:
+// "+10% all production, +500 food".
+func milestoneRewardParts(effects []config.Effect) string {
 	var parts []string
 	for _, e := range effects {
 		switch e.Type {
 		case "instant_resource":
-			parts = append(parts, fmt.Sprintf("+%.0f %s", e.Value, e.Target))
+			parts = append(parts, "+"+Amount(e.Value, e.Target))
 		case "permanent_bonus":
-			if e.Value < 0 {
-				parts = append(parts, fmt.Sprintf("%.0f%% %s", e.Value*100, e.Target))
-			} else {
-				parts = append(parts, fmt.Sprintf("+%.0f%% %s", e.Value*100, e.Target))
-			}
+			parts = append(parts, textfmt.SignedPercent(e.Value)+" "+EffectTargetName(e.Target))
 		}
 	}
-	if len(parts) == 0 {
-		return ""
-	}
-	return "(" + strings.Join(parts, ", ") + ")"
+	return strings.Join(parts, ", ")
+}
+
+// durationWithSpeedBonusLocked is durationLocked for a span during which an
+// extra tick_speed bonus applies (a chain boost shortens its own wall-clock
+// length). Caller holds ge.mu.
+func (ge *GameEngine) durationWithSpeedBonusLocked(ticks int, extra float64) string {
+	return DurationText(ticks, ge.tickIntervalWithBonusLocked(ge.tickSpeedBonus+extra))
 }
 
 // formatCost formats a cost map for display

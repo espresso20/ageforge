@@ -9,6 +9,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/detmath"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // BuildingManager manages all buildings, including production buildings, wonders,
@@ -145,6 +146,40 @@ func editDistance(a, b string) int {
 		prev = curr
 	}
 	return prev[lb]
+}
+
+// closestKey returns the key nearest to input by edit distance (at most 2),
+// or "" if none is that close. Keys are compared in sorted order so a tie
+// always resolves to the same suggestion.
+func closestKey[V any](input string, keys map[string]V) string {
+	sorted := make([]string, 0, len(keys))
+	for k := range keys {
+		sorted = append(sorted, k)
+	}
+	sort.Strings(sorted)
+	best := ""
+	bestDist := 3
+	for _, k := range sorted {
+		if d := editDistance(input, k); d < bestDist {
+			bestDist = d
+			best = k
+		}
+	}
+	return best
+}
+
+// unknownKeyError is the refusal for a key the player mistyped:
+// "Unknown tech 'x'. Did you mean 'y'? Type research list to see what you can
+// research." The suggestion part is dropped when nothing is close.
+func unknownKeyError[V any](kind, input string, keys map[string]V, hint string) error {
+	msg := fmt.Sprintf("Unknown %s '%s'.", kind, input)
+	if s := closestKey(input, keys); s != "" && s != input {
+		msg += fmt.Sprintf(" Did you mean '%s'?", s)
+	}
+	if hint != "" {
+		msg += " " + hint
+	}
+	return fmt.Errorf("%s", msg)
 }
 
 // GetCount returns how many of a building exist
@@ -436,7 +471,7 @@ func (bm *BuildingManager) BankResource(wonderKey, resource string, amount float
 		return 0, fmt.Errorf("you have no %s to bank", resource)
 	}
 	if have < amount {
-		return 0, fmt.Errorf("not enough %s (have: %s, need: %s)", resource, formatPlanAmount(have), formatPlanAmount(amount))
+		return 0, fmt.Errorf("not enough %s (have: %s, need: %s)", resource, textfmt.Number(have), textfmt.Number(amount))
 	}
 	if !rm.Pay(map[string]float64{resource: amount}) {
 		return 0, fmt.Errorf("not enough %s", resource)

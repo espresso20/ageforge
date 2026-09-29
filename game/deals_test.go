@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // testDealEnv is a dealEnv for age with every resource the ages up to it
@@ -564,7 +565,7 @@ func TestDeals_Plan(t *testing.T) {
 // and the civ wanting your goods as your Sell; the log line and the plan
 // label carry the same terms.
 func TestDeals_Wording(t *testing.T) {
-	num := formatPlanAmount
+	num := textfmt.Number
 	for _, c := range []struct {
 		d    FactionDeal
 		want string

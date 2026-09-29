@@ -3,9 +3,9 @@ package ui
 import (
 	"fmt"
 	"math"
-	"sort"
 	"strings"
 
+	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
@@ -33,12 +33,23 @@ func FormatNumber(n float64) string {
 	return textfmt.Number(n)
 }
 
-// FormatRate formats a rate with sign and suffix notation.
-// Uses higher precision for small rates so values like 0.02 show as +0.02
-// rather than rounding to +0.0.
+// FormatRate formats a rate with sign and suffix notation and no unit, for
+// tables whose header or trailing text already says "/tick". Uses higher
+// precision for small rates so values like 0.02 show as +0.02 rather than
+// rounding to +0.0.
 func FormatRate(rate float64) string {
+	return formatRate(rate, "")
+}
+
+// FormatRateTick is FormatRate with the "/tick" unit inside the color tag:
+// "+3.25/tick". Use it wherever a rate stands on its own.
+func FormatRateTick(rate float64) string {
+	return formatRate(rate, "/tick")
+}
+
+func formatRate(rate float64, unit string) string {
 	if rate == 0 {
-		return "[gray]+0.0[-]"
+		return "[gray]+0.0" + unit + "[-]"
 	}
 	abs := math.Abs(rate)
 	sign := "+"
@@ -57,26 +68,18 @@ func FormatRate(rate float64) string {
 			}
 			prec++
 		}
-		return fmt.Sprintf("[%s]%s%.*f[-]", color, sign, prec, rate)
+		return fmt.Sprintf("[%s]%s%.*f%s[-]", color, sign, prec, rate, unit)
 	}
-	return fmt.Sprintf("[%s]%s%s[-]", color, sign, FormatNumber(rate))
+	return fmt.Sprintf("[%s]%s%s%s[-]", color, sign, FormatNumber(rate), unit)
 }
 
-// FormatCost formats a cost map as a string with stable ordering
+// FormatCost formats a cost map as "50 food, 30 wood" (display names, sorted
+// by key so the order is stable). An empty cost is "free".
 func FormatCost(cost map[string]float64) string {
 	if len(cost) == 0 {
 		return "free"
 	}
-	keys := make([]string, 0, len(cost))
-	for k := range cost {
-		keys = append(keys, k)
-	}
-	sort.Strings(keys)
-	parts := make([]string, 0, len(keys))
-	for _, k := range keys {
-		parts = append(parts, fmt.Sprintf("%s:%s", k, FormatNumber(cost[k])))
-	}
-	return strings.Join(parts, " ")
+	return game.Amounts(cost)
 }
 
 // FormatETA formats milliseconds into a human-readable duration string
