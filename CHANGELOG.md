@@ -109,7 +109,7 @@ All notable changes to AgeForge are documented here.
 - **Four trade routes opened before you could build what they need.** Cotton Exchange and Steamship Line wanted a Seaport (Modern Age) and Rail Freight wanted Steam Works (Victorian Age), all from the Industrial Age; Warp Commerce opened in the Space Age and wanted a Warp Drive Plant (Interstellar Age). Cotton Exchange now needs 1 Stock Exchange, Steamship Line 2 Harbor Authorities and Rail Freight 1 Integrated Steelworks, all Industrial Age buildings; Warp Commerce now opens in the Interstellar Age.
 
 ### Removed
-- **The old City Map and World Map** (`ui/citymap`, about 20.7k lines), replaced by the Map panel, along with the unused `assets/` embed package and the `map_demos/` PNGs. `citymap` and `worldmap` remain as aliases of `map`.
+- **The old City Map and World Map** (`ui/citymap`, about 29.7k lines with its tests), replaced by the Map panel, along with the unused `assets/` embed package and the `map_demos/` PNGs. `citymap` and `worldmap` remain as aliases of `map`.
 - **`catastrophe invoke`.** Deliberately facing a catastrophe (to Succumb for a legacy bonus) moves to the Harbinger's Invite. The command only ever worked in the Stone Era anyway, where it made a free invoke-and-Succumb loop. Developers can still force one with the dev console's `/catastrophe`.
 
 ### Fixed
