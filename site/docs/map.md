@@ -38,6 +38,8 @@ A **news line** on the Map lists what happened since the save was loaded: buildi
 
 The roguelike style draws your settlement as a small glyph world. Your town grows out of your **real buildings**, quarter by quarter, with streets, walls, wonders and people walking the streets. The same save always grows the same town, and new buildings join the existing streets instead of reshuffling them.
 
+This age's **wonder** appears on its plot, under scaffolding, once you start it: bank some of its cost or queue its construction. Until then its plot stays empty.
+
 **Walls** follow your age: none at first, a palisade from the Bronze Age, then a stone wall with towers, and later a ring boulevard. The ring grows in steps as the town outgrows it. Harbor buildings sit on the shore and read as piers or jetties; that is intended.
 
 ### Three zooms

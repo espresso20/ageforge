@@ -378,7 +378,9 @@ func (m *Model) buildings(st *game.GameState, since *Visit) {
 		}
 		return a.Rank < c.Rank
 	})
-	// Wonders: every one built, plus the one this age needs.
+	// Wonders: every one built, plus the one this age needs once it is under
+	// way (something banked, or its construction queued). Until then the
+	// maps show no plot for it.
 	for _, d := range cat.Wonders {
 		bs, ok := st.Buildings[d.Key]
 		built := ok && bs.Count > 0
@@ -392,9 +394,31 @@ func (m *Model) buildings(st *game.GameState, since *Visit) {
 			w.Delta = since != nil && since.Buildings[d.Key] == 0
 		} else {
 			w.Progress = bankProgress(bs)
+			if !wonderStarted(st, bs, d.Name) {
+				continue
+			}
 		}
 		m.Wonders = append(m.Wonders, w)
 	}
+}
+
+// wonderStarted reports whether an unbuilt wonder is under way: some of its
+// cost banked, or its construction in the build queue.
+func wonderStarted(st *game.GameState, bs game.BuildingState, name string) bool {
+	if bs.WonderBankFull {
+		return true
+	}
+	for _, v := range bs.WonderBank {
+		if v > 0 {
+			return true
+		}
+	}
+	for _, q := range st.BuildQueue {
+		if q.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 // bankProgress is how much of a wonder's cost is banked, 0..1.
