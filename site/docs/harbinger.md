@@ -32,11 +32,13 @@ Rules:
 
 When a thread starts, or a new figure takes it up, you get:
 
-- a log entry naming the figure and the epoch it warns about, followed by its arrival and warning lines,
+- a log entry naming the figure and saying it warns of impending doom, followed by its arrival and warning lines,
 - a toast announcing the figure (the first one arriving, or a later one taking up the warning),
 - a **⚑ HARBINGER** badge in the status bar for as long as the thread lasts.
 
 Type `harbinger` (or `harb`) to open the Harbinger panel. It shows the current figure and, after a handoff, who it took up the warning from.
+
+A harbinger never names the era its passage leads into. The figures could not know it, and you have not reached it yet, so the log, the panel and the toast all say the figure warns of **impending doom when the current era ends** (in the Cosmic Era, of the Last Passage). The table above is for reference; the game itself keeps the next era a surprise.
 
 ---
 
@@ -290,7 +292,7 @@ In the panel:
 | **I** | Invite. Press **I** twice to confirm, since it can't be undone. |
 | **Esc** | Close the panel |
 
-With no harbinger present, the panel says so and describes the outlook for your next passage in plain words.
+With no harbinger present, the panel says so and describes the outlook for your next passage in plain words ("The end of the Stone Era could bring a catastrophe. The risk is low."), again without naming the era to come.
 
 ---
 

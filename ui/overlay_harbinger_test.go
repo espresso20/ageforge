@@ -8,6 +8,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 )
 
@@ -44,15 +45,28 @@ func renderText(t *testing.T, pages *tview.Pages, w, h int) string {
 }
 
 func TestHarbingerPanelWithNoHarbinger(t *testing.T) {
-	engine := game.NewGameEngine() // Primitive Age: the Iron Era passage can roll
+	engine := game.NewGameEngine() // Primitive Age: the end of the Stone Era can roll
 	txt := untag(harbingerPanelText(engine.GetState(), "", false, false))
-	for _, want := range []string{"No harbinger is here", "Iron Era could bring a catastrophe", "The risk is"} {
+	for _, want := range []string{"No harbinger is here", "The end of the Stone Era could bring a catastrophe", "The risk is"} {
 		if !strings.Contains(txt, want) {
 			t.Errorf("panel missing %q:\n%s", want, txt)
 		}
 	}
 	if strings.Contains(txt, "%") {
 		t.Errorf("pre-industrial outlook must not print a figure:\n%s", txt)
+	}
+	assertNoLaterEras(t, txt, "stone_era")
+}
+
+// assertNoLaterEras fails when txt names an era after epochKey: the player
+// has not reached it (the no-spoiler rule).
+func assertNoLaterEras(t *testing.T, txt, epochKey string) {
+	t.Helper()
+	order := config.EpochByKey()[epochKey].Order
+	for _, ep := range config.Epochs() {
+		if ep.Order > order && strings.Contains(txt, ep.Name) {
+			t.Errorf("panel names %s, an era the player has not reached:\n%s", ep.Name, txt)
+		}
 	}
 }
 
@@ -64,8 +78,9 @@ func TestHarbingerPanelPreIndustrial(t *testing.T) {
 		t.Fatalf("bronze age harbinger = %+v", h)
 	}
 	txt := untag(harbingerPanelText(st, "", false, false))
+	assertNoLaterEras(t, txt, "stone_era")
 	for _, want := range []string{
-		"The Soothsayer", h.Description, "Iron Era", "Severity:", "The omens give no figure",
+		"The Soothsayer", h.Description, "Warning of impending doom when the Stone Era ends.", "Severity:", "The omens give no figure",
 		"Appease: " + h.AppeaseLabel, "Brace: " + h.BraceLabel, "Invite: " + h.InviteLabel,
 		"Level 0 / 2", "Next level costs:", "20% of buildings fall, 15% of stock is kept", "Next level: 15% fall, 30% kept",
 		" A ", " B ", " I ", "Esc",
