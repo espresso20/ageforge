@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // logsProvider generates the logs overlay text from the current game state.
@@ -14,14 +15,15 @@ import (
 func logsProvider(state game.GameState, _ int) string {
 	var sb strings.Builder
 
-	sb.WriteString("[gold]═══ Game log ═══[-]\n\n")
+	sb.WriteString("[gold]═══ Game log ═══[-]\n")
+	sb.WriteString(theme.Paint(theme.RoleDim, " Every line, routine confirmations (marked ·) included. The main log keeps the notable ones.") + "\n\n")
 
 	logs := state.Log
 
 	// Filter out debug entries and cap at last 50 visible entries
 	var visible []game.LogEntry
 	for _, entry := range logs {
-		if entry.Type == "debug" {
+		if !logsPanelShows(entry) {
 			continue
 		}
 		visible = append(visible, entry)
@@ -58,6 +60,10 @@ func logsProvider(state game.GameState, _ int) string {
 		case "info":
 			color = "cyan"
 			prefix = "[i[]"
+		case game.LogRoutine:
+			// Routine confirmations show only here (log_routing.go).
+			color = theme.TagName(theme.RoleText)
+			prefix = " · "
 		}
 		fmt.Fprintf(&sb, "[gray]T%-5d[-] [%s]%s %s[-]\n", entry.Tick, color, prefix, entry.Message)
 	}

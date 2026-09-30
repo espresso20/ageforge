@@ -652,7 +652,7 @@ func TestDiplomacyDealCommands(t *testing.T) {
 	if got := comp("diplomacy accept riv"); len(got) != 1 || strings.TrimSpace(got[0]) != "diplomacy accept riverlands_tribes" {
 		t.Errorf("civs suggested: %v", got)
 	}
-	if res := HandleCommand("plan deal riverlands_tribes 1", engine); res.Type != "info" {
+	if res := HandleCommand("plan deal riverlands_tribes 1", engine); res.Type != game.LogRoutine {
 		t.Errorf("plan deal: %+v", res)
 	}
 	label := game.DealKindLabel(deals[0].Kind) + ": give "

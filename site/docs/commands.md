@@ -18,6 +18,10 @@ As you type, the best completion of the line shows in dim text after the cursor:
 
 Commands that can't be undone are never run from a completion: `Enter` on `plan cle` fills in `plan clear` and waits, and a second `Enter` runs it. These are `sell`, `dismiss`, `research cancel`, `plan clear`, `load <name>`, `prestige confirm yes`, `festival confirm yes`, `harbinger invite`, `diplomacy raid`, `quit`, and `account switch`, `import`, `recover` and `wipe`. Typed in full, they run on the first `Enter` like anything else.
 
+## The log
+
+The log in the main window keeps what is worth noticing: events, milestones, finished research, age advances, harbingers, warnings and errors. A routine confirmation of something a panel already shows goes only to the **Logs** panel (`logs`), marked with a `·`: a build started, queued or finished, a sale, an upgrade, workers recruited, assigned, unassigned or dismissed, a gather, a wonder deposit, a trade, a trade route started or stopped, a research started, an expedition sent, a gift, a speed change, and a plan item added or started. A finished wonder still reaches the main log.
+
 ---
 
 ## Timers and durations
@@ -395,7 +399,7 @@ See [The Harbinger](harbinger.md) for the roster, false prophets and verdicts.
 | `theme list` | List every theme by name and key, marking the active one and noting each theme's light/dark variant and which are accessible |
 | `theme <key>` | Switch directly to a theme by key (e.g. `theme high_contrast`) |
 | `quit` | Save your game and quit |
-| `logs` | Open the **Logs** panel: recent game log entries |
+| `logs` | Open the **Logs** panel: recent game log entries, routine confirmations included (see [The log](#the-log)) |
 | `dump` | Export logs to a file for debugging, in the `logs/` folder of your active account (`data/accounts/<id>/logs/`). The export prints raw tick counts alongside the wall-clock readings |
 | `help` | Open the Help panel: full command reference and list of available panels |
 

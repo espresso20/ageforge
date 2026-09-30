@@ -293,7 +293,7 @@ func (ge *GameEngine) processAutoExpeditions() {
 
 	ge.autoExpeditionStarved = false
 	ge.autoExpeditionTicksLeft = interval
-	ge.addLog("info", fmt.Sprintf("%s dispatches a survey party: %s.", ge.autoExpeditionBuildingName(), def.Name))
+	ge.addLog(LogRoutine, fmt.Sprintf("%s dispatches a survey party: %s.", ge.autoExpeditionBuildingName(), def.Name))
 }
 
 // autoExpeditionBuildingName is the society's player-facing name, read from the

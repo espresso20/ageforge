@@ -825,10 +825,11 @@ func (d *Dashboard) refreshAgeProgress(state game.GameState) {
 
 func (d *Dashboard) refreshLog(state game.GameState) {
 	var sb strings.Builder
-	// Filter to only user-facing entries (skip debug)
+	// Notable entries only: routine confirmations and debug lines stay out
+	// (log_routing.go); the logs panel has the routine ones.
 	var visible []game.LogEntry
 	for _, entry := range state.Log {
-		if entry.Type != "debug" {
+		if mainLogShows(entry) {
 			visible = append(visible, entry)
 		}
 	}

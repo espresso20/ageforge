@@ -23,10 +23,11 @@ import (
 // CommandResult is the return value of HandleCommand. The caller (Dashboard)
 // logs Message if it is non-empty and Type != "success" (successes are
 // ephemeral and only shown as toast/log entries by the engine itself).
+// A routine confirmation (Type game.LogRoutine) goes only to the logs panel.
 // If OverlayName is set the Dashboard opens that named overlay panel.
 type CommandResult struct {
 	Message     string
-	Type        string // "info", "success", "error", "warning"
+	Type        string // "info", "success", "error", "warning", game.LogRoutine
 	OverlayName string // non-empty → dashboard should open this overlay panel
 	// OpenCatastrophe asks the dashboard to (re)open the pending catastrophe modal.
 	OpenCatastrophe bool
@@ -2165,7 +2166,7 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if added < count {
 			msg = fmt.Sprintf("Planned %s (the most its limit allows). It starts as soon as the resources are there.", game.BuildingCount(added, key))
 		}
-		return CommandResult{Message: msg, Type: "info"}
+		return CommandResult{Message: msg, Type: game.LogRoutine}
 	case "research", "res":
 		if len(rest) == 0 {
 			return CommandResult{Message: usageFor("plan research"), Type: "error"}
@@ -2174,7 +2175,7 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err := engine.PlanAddResearch(key); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: fmt.Sprintf("Planned research: %s. Techs start one at a time, in plan order.", config.TechByKey()[key].Name), Type: "info"}
+		return CommandResult{Message: fmt.Sprintf("Planned research: %s. Techs start one at a time, in plan order.", config.TechByKey()[key].Name), Type: game.LogRoutine}
 	case "list":
 		return CommandResult{Message: planListText(engine.GetState()), Type: "info"}
 	case "remove", "rm":
@@ -2186,7 +2187,7 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: "Removed " + what + " from the plan.", Type: "info"}
+		return CommandResult{Message: "Removed " + what + " from the plan.", Type: game.LogRoutine}
 	case "up", "down":
 		n, err := planIndexArg(rest, sub)
 		if err != nil {
@@ -2200,10 +2201,10 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: fmt.Sprintf("Plan item %d is now number %d.", n, to), Type: "info"}
+		return CommandResult{Message: fmt.Sprintf("Plan item %d is now number %d.", n, to), Type: game.LogRoutine}
 	case "clear":
 		n := engine.PlanClear()
-		return CommandResult{Message: fmt.Sprintf("Cleared the plan (%s).", textfmt.Count(n, "item", "items")), Type: "info"}
+		return CommandResult{Message: fmt.Sprintf("Cleared the plan (%s).", textfmt.Count(n, "item", "items")), Type: game.LogRoutine}
 	case "trade":
 		// plan trade <give> <get> [amount]: amount is how much of get to buy.
 		if len(rest) < 2 || len(rest) > 3 {
@@ -2223,10 +2224,10 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		}
 		if amount > 0 {
 			return CommandResult{Message: fmt.Sprintf("Plan: buy %s with %s as it comes in.",
-				game.Amount(amount, get), game.ResourceName(give)), Type: "info"}
+				game.Amount(amount, get), game.ResourceName(give)), Type: game.LogRoutine}
 		}
 		return CommandResult{Message: fmt.Sprintf("Plan: buy %s with %s as it comes in, until you remove the item.",
-			game.ResourceName(get), game.ResourceName(give)), Type: "info"}
+			game.ResourceName(get), game.ResourceName(give)), Type: game.LogRoutine}
 	case "deal":
 		usage := usageFor("plan deal")
 		if len(rest) < 2 {
@@ -2240,7 +2241,7 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err := engine.PlanAddDeal(civ, n); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: fmt.Sprintf("Planned: take deal %d with the %s as soon as its price is there.", n, game.CivName(civ)), Type: "info"}
+		return CommandResult{Message: fmt.Sprintf("Planned: take deal %d with the %s as soon as its price is there.", n, game.CivName(civ)), Type: game.LogRoutine}
 	case "advance":
 		if len(rest) != 0 {
 			return CommandResult{Message: usageFor("plan advance"), Type: "error"}
@@ -2248,7 +2249,7 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err := engine.PlanAddAdvance(); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: "Planned: advance as soon as the next age's requirements are met.", Type: "info"}
+		return CommandResult{Message: "Planned: advance as soon as the next age's requirements are met.", Type: game.LogRoutine}
 	}
 	return CommandResult{Message: subUsage("plan"), Type: "error"}
 }

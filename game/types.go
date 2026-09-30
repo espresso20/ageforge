@@ -257,8 +257,24 @@ type WorkerDomainState struct {
 type LogEntry struct {
 	Tick    int
 	Message string
-	Type    string // "info", "success", "warning", "error", "event"
+	// Type is the category: "info", "success", "warning", "error", "event",
+	// LogRoutine or "debug". It decides the color and which log shows it.
+	Type string
 }
+
+// LogRoutine is the log category for routine confirmations: a line whose
+// effect a panel already shows. A build started, queued or finished (a
+// wonder's completion excepted), a sale, an upgrade, workers recruited,
+// assigned, unassigned or dismissed, a gather, a wonder deposit, a trade, a
+// route started or stopped, a research started, an expedition sent, a gift,
+// a speed change, a plan item added or started.
+//
+// The rule, for any new line: routine confirmations go only to the logs
+// panel; the main window's log keeps notable events, warnings and errors.
+// Every other category shows in both logs, and "debug" in neither (dumps
+// only). Every command that succeeds still writes a line somewhere
+// (TestSuccessRepliesAreLogged).
+const LogRoutine = "routine"
 
 // StatsSnapshot is the stats for UI display
 type StatsSnapshot struct {
