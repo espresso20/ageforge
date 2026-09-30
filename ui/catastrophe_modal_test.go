@@ -159,8 +159,10 @@ func TestCatastropheCommandReopensOrReports(t *testing.T) {
 	if res.OpenCatastrophe || !strings.Contains(res.Message, "No catastrophe pending") {
 		t.Errorf("no pending: got %+v", res)
 	}
-	if !strings.Contains(res.Message, "Iron Era") {
-		t.Errorf("outlook should name the next epoch:\n%s", res.Message)
+	// The outlook names the passage by the era it ends, never the era it
+	// leads into: the player has not reached that one (spoilers.go).
+	if !strings.Contains(res.Message, "Next transition (the end of the Stone Era)") || strings.Contains(res.Message, "Iron Era") {
+		t.Errorf("outlook should name the end of the Stone Era and nothing past it:\n%s", res.Message)
 	}
 	// The player-facing invoke is gone: it only prints usage and triggers nothing.
 	r := HandleCommand("catastrophe invoke", eng)

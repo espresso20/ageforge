@@ -104,9 +104,9 @@ This keeps normal play from running into long lucky streaks or long runs of puni
 
 Type **`epoch`** to open the Epoch panel. It shows:
 
-- Current epoch name, icon, and primary/energy resources
+- Current epoch name, icon, and primary/energy resources, and its ages. An age past your next one is counted ("1 more to come"), not named
 - The result of your last epoch transition roll
-- Your catastrophe status for this epoch (pending, endured, succumbed), and the catastrophe odds for the next transition. In the Cosmic Era the next passage is prestige (the Last Passage), and the panel shows **THE LAST PASSAGE** while its choice is pending
+- Your catastrophe status for this epoch (pending, endured, succumbed), and the catastrophe odds for the next transition, "the end of" your current era: the panel never names an era you haven't reached. In the Cosmic Era the next passage is prestige (the Last Passage), and the panel shows **THE LAST PASSAGE** while its choice is pending
 - The current [harbinger](harbinger.md), if one is present, and for past harbinger threads this run the chain of figures and the verdict
 - Full epoch event history for the current run
 - Your legacy bonuses earned across all runs

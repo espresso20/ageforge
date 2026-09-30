@@ -23,10 +23,11 @@ import (
 // CommandResult is the return value of HandleCommand. The caller (Dashboard)
 // logs Message if it is non-empty and Type != "success" (successes are
 // ephemeral and only shown as toast/log entries by the engine itself).
+// A routine confirmation (Type game.LogRoutine) goes only to the logs panel.
 // If OverlayName is set the Dashboard opens that named overlay panel.
 type CommandResult struct {
 	Message     string
-	Type        string // "info", "success", "error", "warning"
+	Type        string // "info", "success", "error", "warning", game.LogRoutine
 	OverlayName string // non-empty → dashboard should open this overlay panel
 	// OpenCatastrophe asks the dashboard to (re)open the pending catastrophe modal.
 	OpenCatastrophe bool
@@ -1229,7 +1230,12 @@ func cmdTheme(args []string, engine *game.GameEngine) CommandResult {
 		}
 	}
 	if strings.ToLower(args[0]) == "list" {
-		return cmdThemeList(themeAccount(engine))
+		var st *game.GameState
+		if engine != nil {
+			s := engine.GetState()
+			st = &s
+		}
+		return cmdThemeList(themeAccount(engine), st)
 	}
 
 	key := strings.ToLower(args[0])
@@ -1276,8 +1282,9 @@ func themeAccount(engine *game.GameEngine) *game.Account {
 //
 // acct may be nil (accountless play / tests): with no account only the always-
 // available set (Accessible + Forge) is unlocked, so the flavor themes correctly
-// render as locked with their hints.
-func cmdThemeList(acct *game.Account) CommandResult {
+// render as locked with their hints. st, when set, keeps a hint from naming an
+// age the player cannot see yet (themeUnlockHint); nil shows the hints as written.
+func cmdThemeList(acct *game.Account, st *game.GameState) CommandResult {
 	activeKey := theme.Active().Key
 	var lines []string
 	lines = append(lines, "[gold]Themes:[-]")
@@ -1291,6 +1298,9 @@ func cmdThemeList(acct *game.Account) CommandResult {
 		case !themeAvailable(acct, t):
 			// Locked flavor theme: show the unlock condition rather than nothing.
 			hint := t.UnlockHint
+			if st != nil {
+				hint = themeUnlockHint(t, *st)
+			}
 			if hint == "" {
 				hint = "unlock via a milestone"
 			}
@@ -1511,7 +1521,7 @@ func cmdBlackMarketStatus(engine *game.GameEngine) CommandResult {
 	var lines []string
 	lines = append(lines, "[gold]Black Market[-]")
 	if !st.Available {
-		lines = append(lines, "  [gray]Smuggling networks open in the Colonial Age.[-]")
+		lines = append(lines, "  "+theme.Paint(theme.RoleDim, "Smuggling networks open in "+ageRef(engine.GetState(), "colonial_age")+"."))
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
 	lines = append(lines, "  Spend culture on a smuggling run: a gamble on a big haul of one resource.")
@@ -1605,7 +1615,7 @@ func cmdPrestigeStatus(engine *game.GameEngine) CommandResult {
 		lines = append(lines, lastPassageStatusLines(state)...)
 		lines = append(lines, "  Type [cyan]prestige confirm[-] to reset with bonuses.")
 	default:
-		lines = append(lines, fmt.Sprintf("\n  [yellow]Reach the %s to prestige (it would earn %s now).[-]", game.AgeName(game.PrestigeMinAge), textfmt.Count(p.PendingPoints, "point", "points")))
+		lines = append(lines, fmt.Sprintf("\n  [yellow]Reach %s to prestige (it would earn %s now).[-]", ageRef(state, game.PrestigeMinAge), textfmt.Count(p.PendingPoints, "point", "points")))
 	}
 
 	lines = append(lines, "\n  Type [cyan]prestige shop[-] to view upgrades.")
@@ -1919,6 +1929,13 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 	}
 }
 
+// notMetReply refuses civ, a civilization the player has not met. An unmet
+// civilization and a made-up one read alike, and neither is named, so the
+// refusal gives nothing away (spoilers.go).
+func notMetReply(civ string) CommandResult {
+	return CommandResult{Message: fmt.Sprintf("You have not met a civilization called '%s'. Type 'diplomacy deals' to see the ones you have met.", civ), Type: "error"}
+}
+
 // cmdDiplomacyDeals lists the trade deals of one civilization, or of every
 // one met when civ is "".
 func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
@@ -1931,7 +1948,7 @@ func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 		}
 		if !ok || !f.Discovered {
 			if civ != "" {
-				return CommandResult{Message: fmt.Sprintf("You have not met the %s yet. Scouting expeditions make first contact.", def.Name), Type: "error"}
+				return notMetReply(civ)
 			}
 			continue
 		}
@@ -1942,7 +1959,7 @@ func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 	}
 	if len(lines) == 0 {
 		if civ != "" {
-			return CommandResult{Message: fmt.Sprintf("No civilization called '%s'. Type 'diplomacy deals' to see the ones you have met.", civ), Type: "error"}
+			return notMetReply(civ)
 		}
 		return CommandResult{Message: "You have not met anyone to trade with yet. Scouting expeditions make first contact.", Type: "info"}
 	}
@@ -2104,10 +2121,11 @@ func catastropheOutlookText(state game.GameState) string {
 	case o.NextEpochKey == "":
 		sb.WriteString("  This is the final epoch: its passage is prestige, and the Last Passage cannot strike now.")
 	case !o.Possible:
-		fmt.Fprintf(&sb, "  Next transition (%s): no catastrophe possible.", config.EpochByKey()[o.NextEpochKey].Name)
+		fmt.Fprintf(&sb, "  Next transition (the end of the %s): no catastrophe possible.", currentEraName(state))
 	default:
-		fmt.Fprintf(&sb, "  Next transition (%s): %s, faith %.0f%% full.",
-			config.EpochByKey()[o.NextEpochKey].Name, outlookRiskText(state), o.FaithFill*100)
+		// The era it leads into stays unnamed until reached (spoilers.go).
+		fmt.Fprintf(&sb, "  Next transition (the end of the %s): %s, faith %.0f%% full.",
+			currentEraName(state), outlookRiskText(state), o.FaithFill*100)
 	}
 	return strings.TrimRight(sb.String(), "\n")
 }
@@ -2125,10 +2143,14 @@ func outlookRiskText(state game.GameState) string {
 		tier, numeric, prob, speaker = h.Tier, h.Numeric, h.Probability, h.Name
 	}
 	var risk string
-	if numeric {
+	switch {
+	case numeric:
 		risk = fmt.Sprintf("%.0f%% catastrophe chance (%s)", prob*100, tier)
-	} else {
-		risk = fmt.Sprintf("%s risk of catastrophe (no figures before the Industrial Age)", tier)
+	case game.SightOf(&state).Age("industrial_age"):
+		risk = fmt.Sprintf("%s risk of catastrophe (no figures before %s)", tier, ageRef(state, "industrial_age"))
+	default:
+		// The age that prints the odds is named only once the player can see it.
+		risk = fmt.Sprintf("%s risk of catastrophe (no figures this early)", tier)
 	}
 	if speaker != "" {
 		return fmt.Sprintf("%s warns of %s", capFirstUI(speaker), risk)
@@ -2165,7 +2187,7 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if added < count {
 			msg = fmt.Sprintf("Planned %s (the most its limit allows). It starts as soon as the resources are there.", game.BuildingCount(added, key))
 		}
-		return CommandResult{Message: msg, Type: "info"}
+		return CommandResult{Message: msg, Type: game.LogRoutine}
 	case "research", "res":
 		if len(rest) == 0 {
 			return CommandResult{Message: usageFor("plan research"), Type: "error"}
@@ -2174,7 +2196,7 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err := engine.PlanAddResearch(key); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: fmt.Sprintf("Planned research: %s. Techs start one at a time, in plan order.", config.TechByKey()[key].Name), Type: "info"}
+		return CommandResult{Message: fmt.Sprintf("Planned research: %s. Techs start one at a time, in plan order.", config.TechByKey()[key].Name), Type: game.LogRoutine}
 	case "list":
 		return CommandResult{Message: planListText(engine.GetState()), Type: "info"}
 	case "remove", "rm":
@@ -2186,7 +2208,7 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: "Removed " + what + " from the plan.", Type: "info"}
+		return CommandResult{Message: "Removed " + what + " from the plan.", Type: game.LogRoutine}
 	case "up", "down":
 		n, err := planIndexArg(rest, sub)
 		if err != nil {
@@ -2200,10 +2222,10 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: fmt.Sprintf("Plan item %d is now number %d.", n, to), Type: "info"}
+		return CommandResult{Message: fmt.Sprintf("Plan item %d is now number %d.", n, to), Type: game.LogRoutine}
 	case "clear":
 		n := engine.PlanClear()
-		return CommandResult{Message: fmt.Sprintf("Cleared the plan (%s).", textfmt.Count(n, "item", "items")), Type: "info"}
+		return CommandResult{Message: fmt.Sprintf("Cleared the plan (%s).", textfmt.Count(n, "item", "items")), Type: game.LogRoutine}
 	case "trade":
 		// plan trade <give> <get> [amount]: amount is how much of get to buy.
 		if len(rest) < 2 || len(rest) > 3 {
@@ -2223,10 +2245,10 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		}
 		if amount > 0 {
 			return CommandResult{Message: fmt.Sprintf("Plan: buy %s with %s as it comes in.",
-				game.Amount(amount, get), game.ResourceName(give)), Type: "info"}
+				game.Amount(amount, get), game.ResourceName(give)), Type: game.LogRoutine}
 		}
 		return CommandResult{Message: fmt.Sprintf("Plan: buy %s with %s as it comes in, until you remove the item.",
-			game.ResourceName(get), game.ResourceName(give)), Type: "info"}
+			game.ResourceName(get), game.ResourceName(give)), Type: game.LogRoutine}
 	case "deal":
 		usage := usageFor("plan deal")
 		if len(rest) < 2 {
@@ -2240,7 +2262,7 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err := engine.PlanAddDeal(civ, n); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: fmt.Sprintf("Planned: take deal %d with the %s as soon as its price is there.", n, game.CivName(civ)), Type: "info"}
+		return CommandResult{Message: fmt.Sprintf("Planned: take deal %d with the %s as soon as its price is there.", n, game.CivName(civ)), Type: game.LogRoutine}
 	case "advance":
 		if len(rest) != 0 {
 			return CommandResult{Message: usageFor("plan advance"), Type: "error"}
@@ -2248,7 +2270,7 @@ func cmdPlan(args []string, engine *game.GameEngine) CommandResult {
 		if err := engine.PlanAddAdvance(); err != nil {
 			return errorResult(err)
 		}
-		return CommandResult{Message: "Planned: advance as soon as the next age's requirements are met.", Type: "info"}
+		return CommandResult{Message: "Planned: advance as soon as the next age's requirements are met.", Type: game.LogRoutine}
 	}
 	return CommandResult{Message: subUsage("plan"), Type: "error"}
 }

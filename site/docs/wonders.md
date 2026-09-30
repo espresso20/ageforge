@@ -34,7 +34,7 @@ wonder overflow on
 
 The log says so when overflow finishes a resource's part of the bank (and when the bank is full), and the welcome-back summary adds up what it banked while you were away. The switch is saved with your game and survives prestige. The Wonders panel shows whether it is on.
 
-The **Wonders** panel (`wonders`) shows progress with a bar for each resource. Each completed wonder there has a small color thumbnail, a 2-character half-block icon taken from the wonder's sprite, so you can tell them apart at a glance.
+The **Wonders** panel (`wonders`) shows progress with a bar for each resource. Each completed wonder there has a small color thumbnail, a 2-character half-block icon taken from the wonder's sprite, so you can tell them apart at a glance. Locked wonders of ages past your next one are counted in one line, not listed, so the panel doesn't name ages you haven't reached.
 
 ---
 

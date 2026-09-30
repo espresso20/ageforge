@@ -26,8 +26,8 @@ func lineContaining(out, needle string) string {
 }
 
 // TestFactionsProvider_RendersAllFactions verifies the panel renders every
-// canonical faction (discovered as a card, undiscovered as a compact roster
-// line), shows status + opinion, and does not panic on a mixed-status snapshot.
+// met faction as a card and counts the unmet one without naming it, shows
+// status + opinion, and does not panic on a mixed-status snapshot.
 func TestFactionsProvider_RendersAllFactions(t *testing.T) {
 	// Build a snapshot covering each status branch plus an undiscovered faction.
 	statuses := []string{"neutral", "friendly", "allied", "rival", "embargo"}
@@ -58,16 +58,17 @@ func TestFactionsProvider_RendersAllFactions(t *testing.T) {
 		t.Fatal("factionsProvider returned empty output")
 	}
 
-	// Every faction name should appear (discovered or not).
-	for _, def := range defs {
-		if !strings.Contains(out, def.Name) {
-			t.Errorf("overlay output missing faction %q", def.Name)
+	// Every met faction's name appears; the unmet one's never does.
+	for i, def := range defs {
+		if met := i < len(defs)-1; strings.Contains(out, def.Name) != met {
+			t.Errorf("faction %q (met %v): named %v", def.Name, met, !met)
 		}
 	}
-	// Section headers, status labels and the undiscovered teaser marker.
+	// Section headers, status labels and the count of unmet civilizations.
 	for _, want := range []string{
 		"Factions", "Opinion", "Status", "allied",
-		"Boons and setbacks", "Geographic Society", "Civilizations you have met", "Not yet met", "met by expedition from the",
+		"Boons and setbacks", "Geographic Society", "Civilizations you have met", "Not yet met",
+		"1 civilization not yet discovered. Send expeditions to find it.",
 	} {
 		if !strings.Contains(out, want) {
 			t.Errorf("overlay output missing expected token %q", want)
@@ -90,13 +91,13 @@ func TestFactionsProvider_EmptyState(t *testing.T) {
 	if strings.Contains(out, "Colonial Age and build an Embassy") {
 		t.Error("empty-state overlay still carries the stale embassy-gated-diplomacy copy")
 	}
-	// All eleven civs are unmet, so the header counts and the roster tail agree.
+	// Every civ is unmet, so the header and the count agree.
 	total := len(config.BaseFactions())
 	if !strings.Contains(out, "0 met") {
 		t.Errorf("header should report 0 met on a zero state, got:\n%s", out)
 	}
-	if !strings.Contains(out, "… ") {
-		t.Errorf("roster of %d unmet civs should collapse with a '… N more' tail, got:\n%s", total, out)
+	if want := strconv.Itoa(total) + " civilizations not yet discovered. Send expeditions to find them."; !strings.Contains(out, want) {
+		t.Errorf("overlay should say %q, got:\n%s", want, out)
 	}
 }
 
@@ -251,8 +252,11 @@ func TestFactionsProvider_GeographicSocietyStates(t *testing.T) {
 		if !strings.Contains(out, "No Geographic Society") {
 			t.Errorf("missing the not-built hint, got:\n%s", out)
 		}
-		if !strings.Contains(out, "Industrial Age") {
-			t.Error("the not-built hint should name the age that unlocks the Society")
+		if strings.Contains(out, "Industrial Age") || !strings.Contains(out, "A later age brings one") {
+			t.Errorf("a new player's not-built hint must not name the Society's age, got:\n%s", out)
+		}
+		if next := factionsProvider(game.GameState{Age: "colonial_age"}, panelWidth); !strings.Contains(next, "The Industrial Age brings one") {
+			t.Errorf("one age before the Society, the hint should name its age, got:\n%s", next)
 		}
 		if strings.Contains(out, "Next dispatch") {
 			t.Error("no Society built, yet the panel is counting down to a dispatch")
@@ -305,42 +309,28 @@ func TestFactionsProvider_GeographicSocietyStates(t *testing.T) {
 	})
 }
 
-// TestFactionsProvider_UndiscoveredRosterIsCompact verifies unmet civs collapse
-// to one line each — the whole point of the roster, since eleven full-height
-// teasers overflow an 80x24 terminal — carrying the age teaser, specialty,
-// personality and strength, with a count for the tail.
-func TestFactionsProvider_UndiscoveredRosterIsCompact(t *testing.T) {
-	out := factionsProvider(game.GameState{}, panelWidth)
-
-	// One line per civ, at most maxRosterRows of them, then a count.
-	rows := 0
-	for _, line := range strings.Split(out, "\n") {
-		if strings.Contains(line, "met by expedition from the ") {
-			rows++
+// TestFactionsProvider_UnmetCivsAreOnlyCounted: the Not yet met section
+// counts the civilizations still out there and names none of them: no name,
+// no age, no specialty, no personality (playtest 2026-09-29).
+func TestFactionsProvider_UnmetCivsAreOnlyCounted(t *testing.T) {
+	out := factionsProvider(game.GameState{Age: "primitive_age"}, panelWidth)
+	section := out[strings.Index(out, "Not yet met"):]
+	for _, def := range config.BaseFactions() {
+		for _, leak := range []string{def.Name, def.Key, def.Personality} {
+			if strings.Contains(section, leak) {
+				t.Errorf("the Not yet met section gives away %q:\n%s", leak, section)
+			}
 		}
 	}
-	if rows != maxRosterRows {
-		t.Errorf("roster rendered %d rows, want the cap of %d", rows, maxRosterRows)
-	}
-	total := len(config.BaseFactions())
-	wantTail := "… " + strconv.Itoa(total-maxRosterRows) + " more"
-	if !strings.Contains(out, wantTail) {
-		t.Errorf("roster missing the %q tail, got:\n%s", wantTail, out)
-	}
-
-	// The first unmet civ is the Bronze Age one, and its line carries everything.
-	first := lineContaining(out, "Riverlands Tribes")
-	for _, want := range []string{"★☆☆☆☆", "met by expedition from the Bronze Age", "food", "peaceful"} {
-		if !strings.Contains(first, want) {
-			t.Errorf("roster line %q missing %q", first, want)
-		}
+	if strings.Contains(section, "met by expedition") || strings.Contains(section, " Age") {
+		t.Errorf("the Not yet met section names an age:\n%s", section)
 	}
 }
 
 // TestFactionsProvider_RendersStrength confirms the civ power rating — on the
 // snapshot since the civs were written, drawn nowhere until now — reaches the
-// screen for met and unmet civs alike, and that a snapshot carrying no strength
-// falls back to the definition rather than printing five hollow stars.
+// screen for met civs, and that a snapshot carrying no strength falls back to
+// the definition rather than printing five hollow stars.
 func TestFactionsProvider_RendersStrength(t *testing.T) {
 	state := game.GameState{Diplomacy: game.DiplomacyState{Factions: map[string]game.FactionInfo{
 		// Strength deliberately left at zero: an older save or a hand-built
@@ -352,10 +342,6 @@ func TestFactionsProvider_RendersStrength(t *testing.T) {
 	card := lineContaining(out, "Void Reavers")
 	if !strings.Contains(card, "★★★★★") {
 		t.Errorf("Void Reavers are Strength 5; card line %q should show five filled stars", card)
-	}
-	// And an unmet mid-strength civ on the roster.
-	if line := lineContaining(out, "Merchant Guild"); !strings.Contains(line, "★★☆☆☆") {
-		t.Errorf("Merchant Guild are Strength 2; roster line %q should show two filled stars", line)
 	}
 }
 
@@ -513,8 +499,11 @@ func TestFactionsOverlayWiring(t *testing.T) {
 func TestExpeditionsProvider_ShowsSocietyStatus(t *testing.T) {
 	t.Run("not built", func(t *testing.T) {
 		out := expeditionsProvider(game.GameState{}, panelWidth)
-		if !strings.Contains(out, "Geographic Society (Industrial Age)") {
-			t.Errorf("expeditions panel should hint at the Society, got:\n%s", out)
+		if !strings.Contains(out, "A Geographic Society scouts automatically. A later age brings it.") {
+			t.Errorf("expeditions panel should hint at the Society without naming its age, got:\n%s", out)
+		}
+		if next := expeditionsProvider(game.GameState{Age: "colonial_age"}, panelWidth); !strings.Contains(next, "The Industrial Age brings it.") {
+			t.Errorf("one age before the Society the hint should name its age, got:\n%s", next)
 		}
 	})
 	t.Run("running", func(t *testing.T) {
@@ -652,7 +641,7 @@ func TestDiplomacyDealCommands(t *testing.T) {
 	if got := comp("diplomacy accept riv"); len(got) != 1 || strings.TrimSpace(got[0]) != "diplomacy accept riverlands_tribes" {
 		t.Errorf("civs suggested: %v", got)
 	}
-	if res := HandleCommand("plan deal riverlands_tribes 1", engine); res.Type != "info" {
+	if res := HandleCommand("plan deal riverlands_tribes 1", engine); res.Type != game.LogRoutine {
 		t.Errorf("plan deal: %+v", res)
 	}
 	label := game.DealKindLabel(deals[0].Kind) + ": give "

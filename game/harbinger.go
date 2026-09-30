@@ -172,9 +172,15 @@ type HarbingerView struct {
 	// LastPassage is true for the final epoch's thread, whose passage is
 	// prestige: TargetEpochKey is "" and TargetEpochName is "the Last Passage".
 	// PassageCame is true once that passage has struck and waits for a choice.
-	LastPassage     bool
-	PassageCame     bool
-	TargetEpochKey  string
+	LastPassage bool
+	PassageCame bool
+	// TargetEpochKey is the epoch whose passage the thread warns of, for the
+	// engine's own readers (bots, tests). The UI must never name it: the
+	// player has not reached it.
+	TargetEpochKey string
+	// TargetEpochName is what the warning names on screen: "impending doom"
+	// for an epoch's passage, "the Last Passage" for the final epoch's. It is
+	// never the target era's name (harbingerWarningText).
 	TargetEpochName string
 	Lines           []string
 	// Tier and Probability are what the warning says: the live real odds for a
@@ -293,7 +299,7 @@ func (ge *GameEngine) harbingerArrive() bool {
 	ge.harbinger.Lines = ge.harbingerSpeak(def, announced)
 
 	ge.addLog("event", fmt.Sprintf("⚑ %s has come, warning of %s. Type 'harbinger' to answer.",
-		capFirst(def.Name), harbingerPassageText(out.NextEpochKey)))
+		capFirst(def.Name), harbingerWarningText(out.NextEpochKey)))
 	ge.harbingerLogLines()
 	ge.publishHarbinger(def, out.NextEpochKey, false)
 	return true
@@ -315,20 +321,22 @@ func (ge *GameEngine) harbingerHandoff() {
 	h.Lines = ge.harbingerSpeak(def, tier)
 
 	ge.addLog("event", fmt.Sprintf("⚑ %s takes up the warning of %s. Type 'harbinger' to answer.",
-		capFirst(def.Name), harbingerPassageText(h.TargetEpoch)))
+		capFirst(def.Name), harbingerWarningText(h.TargetEpoch)))
 	ge.harbingerLogLines()
 	ge.publishHarbinger(def, h.TargetEpoch, true)
 }
 
-// harbingerPassageText names the passage a thread warns of, for log lines:
-// "the passage into the Iron Era", or "the Last Passage" when targetEpoch is ""
-// (the final epoch, whose passage is prestige).
-func harbingerPassageText(targetEpoch string) string {
+// harbingerWarningText is what a thread warns of, for log lines and the
+// panel: "impending doom" for an epoch's passage, or "the Last Passage" when
+// targetEpoch is "" (the final epoch, whose passage is prestige). It never
+// names the era to come: the player has not reached it, and a wild man at the
+// last fire could not know what the next era will be called.
+func harbingerWarningText(targetEpoch string) string {
 	if targetEpoch == "" {
 		name, _ := config.LastPassageInfo()
 		return "the" + strings.TrimPrefix(name, "The")
 	}
-	return "the passage into the " + config.EpochByKey()[targetEpoch].Name
+	return "impending doom"
 }
 
 // harbingerSpeak draws the arrival and warning lines for def at tier.
@@ -727,9 +735,9 @@ func (ge *GameEngine) HarbingerInvite() error {
 		ge.addLog("warning", fmt.Sprintf("⚑ %s: you have invited it. Your next prestige will bring the Last Passage. This cannot be undone.",
 			def.InviteLabel))
 	} else {
-		target := config.EpochByKey()[h.TargetEpoch]
-		ge.addLog("warning", fmt.Sprintf("⚑ %s: you have invited it. The passage into the %s will bring the catastrophe. This cannot be undone.",
-			def.InviteLabel, target.Name))
+		// The thread's own era, never the one it leads into.
+		ge.addLog("warning", fmt.Sprintf("⚑ %s: you have invited it. The catastrophe will come when the %s ends. This cannot be undone.",
+			def.InviteLabel, config.EpochByKey()[h.EpochKey].Name))
 	}
 	ge.harbingerFlavorLog(flavor.HarbingerInvited, "")
 	return nil
@@ -863,7 +871,7 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 		LastPassage:     h.TargetEpoch == "",
 		PassageCame:     h.TargetEpoch == "" && ge.pendingLastPassage,
 		TargetEpochKey:  h.TargetEpoch,
-		TargetEpochName: config.EpochByKey()[h.TargetEpoch].Name,
+		TargetEpochName: harbingerWarningText(h.TargetEpoch),
 		Lines:           append([]string(nil), h.Lines...),
 		Tier:            tier,
 		Probability:     prob,
@@ -907,9 +915,6 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 	v.GarrisonCapped = cur.Capped || nxt.Capped
 	v.EndurePointsPct = int(math.Round(LastPassageKeepFor(h.BraceLevel) * 100))
 	v.NextEndurePointsPct = int(math.Round(LastPassageKeepFor(next) * 100))
-	if v.LastPassage {
-		v.TargetEpochName = harbingerPassageText("")
-	}
 	return v
 }
 

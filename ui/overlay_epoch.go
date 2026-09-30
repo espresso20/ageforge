@@ -43,9 +43,19 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 	if !ok {
 		fmt.Fprintf(sb, " [gold]%s %s[-]\n", state.EpochIcon, state.EpochName)
 	} else {
+		// Ages the player cannot see named yet are counted, not named.
+		sight := game.SightOf(&state)
 		ageNames := make([]string, 0, len(ep.Ages))
+		unseen := 0
 		for _, a := range ep.Ages {
-			ageNames = append(ageNames, game.AgeName(a))
+			if sight.Age(a) {
+				ageNames = append(ageNames, game.AgeName(a))
+			} else {
+				unseen++
+			}
+		}
+		if unseen > 0 {
+			ageNames = append(ageNames, fmt.Sprintf("%d more to come", unseen))
 		}
 		fmt.Fprintf(sb, " %s%s %s[-]   Ages: %s\n",
 			theme.NameTag(ep.Color), ep.Icon, ep.Name,
@@ -95,8 +105,7 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 		sb.WriteString(" Catastrophe: [red]the Last Passage. Type catastrophe to choose Endure or Succumb.[-]\n")
 		sb.WriteString(" [gray]  Prestige waits until you decide; nothing else does.[-]\n")
 	case !config.CatastropheAllowed(state.EpochKey):
-		gate := config.EpochByKey()[config.CatastropheGateEpoch].Name
-		fmt.Fprintf(sb, " Catastrophe: [gray]none before the %s[-]\n", gate)
+		fmt.Fprintf(sb, " Catastrophe: %s\n", theme.Paint(theme.RoleDim, "none in the "+currentEraName(state)))
 	default:
 		if r := latestCatastrophe(state.EpochEventHistory, state.EpochKey); r != nil {
 			fmt.Fprintf(sb, " Catastrophe: %s\n", catastropheOutcomeLabel(r.Outcome))
@@ -111,8 +120,9 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 		fmt.Fprintf(sb, " Next passage (prestige, the Last Passage): [yellow]%s[-] [gray](more faith, lower odds)[-]\n",
 			outlookRiskText(state))
 	} else if o.Possible {
-		fmt.Fprintf(sb, " Next transition (%s): [yellow]%s[-] [gray](more faith, lower odds)[-]\n",
-			config.EpochByKey()[o.NextEpochKey].Name, outlookRiskText(state))
+		// The era it leads into stays unnamed until reached (spoilers.go).
+		fmt.Fprintf(sb, " Next transition (the end of the %s): [yellow]%s[-] [gray](more faith, lower odds)[-]\n",
+			currentEraName(state), outlookRiskText(state))
 	}
 
 	// Harbinger status.

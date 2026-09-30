@@ -141,12 +141,12 @@ func TestThemeSwatchesLabelsEveryRole(t *testing.T) {
 func TestThemeDetailShowsAccessibleNoteAndGlyphs(t *testing.T) {
 	// Forge is not accessible — no glyph note. (Forge is always available.)
 	forge, _ := theme.ByKey("forge")
-	if d := themeDetailText(forge, true); strings.Contains(d, "Accessible") {
+	if d := themeDetailText(forge, true, nil); strings.Contains(d, "Accessible") {
 		t.Errorf("forge detail should not claim Accessible\ngot: %s", d)
 	}
 	// An accessible theme shows the note and its signed glyphs.
 	deut, _ := theme.ByKey("deuteranopia")
-	d := themeDetailText(deut, true)
+	d := themeDetailText(deut, true, nil)
 	if !strings.Contains(d, "Accessible") {
 		t.Errorf("deuteranopia detail should show the Accessible note\ngot: %s", d)
 	}

@@ -44,23 +44,21 @@ func factionsProvider(state game.GameState, w int) string {
 
 	factions := state.Diplomacy.Factions // may be nil; indexing nil maps is safe
 	defs := config.BaseFactions()
-	ages := config.AgeByKey()
 	usable := panelUsableWidth(w)
 	tally := tallyFactionEffects(state)
 
-	met := 0
-	var pending []config.FactionDef
+	met, pending := 0, 0
 	for _, def := range defs {
 		if f, ok := factions[def.Key]; ok && f.Discovered {
 			met++
 			continue
 		}
-		pending = append(pending, def)
+		pending++
 	}
 
 	// ─── Header ───
 	writeHeadedLine(&sb, usable, "gold", "═══ Factions ═══",
-		fmt.Sprintf("%d met · %d undiscovered", met, len(pending)))
+		fmt.Sprintf("%d met · %d undiscovered", met, pending))
 	sb.WriteString("\n")
 
 	writeLiveFactionEffects(&sb, state, defs, usable, tally)
@@ -84,13 +82,16 @@ func factionsProvider(state game.GameState, w int) string {
 	}
 	if met > 0 {
 		// Embassies no longer gate first contact, but they are still how you court
-		// a civ you have already met.
-		sb.WriteString(" [gray]Tip: assign workers to an Embassy (Colonial) or Grand Embassy[-]\n")
-		sb.WriteString(" [gray](Industrial) to passively raise opinion.[-]\n")
+		// a civ you have already met. Their ages are named only once the player
+		// can see them (spoilers.go).
+		sb.WriteString(theme.Paint(theme.RoleDim, fmt.Sprintf(" Tip: assign workers to an Embassy (%s) or a Grand Embassy",
+			ageRef(state, buildingAge(state, "embassy", "colonial_age")))) + "\n")
+		sb.WriteString(theme.Paint(theme.RoleDim, fmt.Sprintf(" (%s) to raise opinion over time.",
+			ageRef(state, buildingAge(state, "grand_embassy", "industrial_age")))) + "\n")
 	}
 
 	// ─── Not Yet Met ───
-	writeUndiscoveredRoster(&sb, pending, ages, usable)
+	writeUndiscoveredRoster(&sb, pending)
 
 	sb.WriteString("\n [gray]Commands: diplomacy ally/rival/embargo/gift/neutral/tribute/raid <civ>[-]\n")
 	sb.WriteString(" [gray]Deals: diplomacy deals <civ> · diplomacy accept <civ> <n> · plan deal <civ> <n>[-]\n")
@@ -220,8 +221,9 @@ func writeGeographicSociety(sb *strings.Builder, state game.GameState) {
 	sb.WriteString("\n [yellow]── Geographic Society ──[-]\n\n")
 
 	if !auto.Active {
-		sb.WriteString(" [gray]No Geographic Society. Build one (Industrial Age) to send[-]\n")
-		sb.WriteString(" [gray]scouts out on standing orders.[-]\n")
+		sb.WriteString(theme.Paint(theme.RoleDim, fmt.Sprintf(" No Geographic Society. %s brings one, and it sends",
+			ageRefCap(state, buildingAge(state, "geographic_society", "industrial_age")))) + "\n")
+		sb.WriteString(theme.Paint(theme.RoleDim, " scouts out on standing orders.") + "\n")
 		return
 	}
 
@@ -362,46 +364,21 @@ func writeFactionCard(sb *strings.Builder, def config.FactionDef, f game.Faction
 	}
 }
 
-// maxRosterRows caps the compact undiscovered roster. Eleven civilizations at
-// one line each still pushes the panel past a 24-row terminal once the sections
-// above it are drawn, so the tail collapses into a count.
-const maxRosterRows = 6
-
-// writeUndiscoveredRoster renders the civilizations you have not met as one
-// compact line each — name, strength, and the age that unlocks first contact —
-// rather than the full-height teaser card the panel used to draw for every one
-// of them.
-//
-// Strength sits in a fixed column BEFORE the truncatable detail so it survives
-// on a narrow terminal; the specialty/personality tail is what gets clipped.
-func writeUndiscoveredRoster(sb *strings.Builder, pending []config.FactionDef, ages map[string]config.AgeDef, usable int) {
+// writeUndiscoveredRoster says how many civilizations are still out there,
+// and nothing more: no names, ages, specialties or personalities. They are
+// the player's to discover (the no-spoiler rule, spoilers.go).
+func writeUndiscoveredRoster(sb *strings.Builder, pending int) {
 	sb.WriteString("\n [yellow]── Not yet met ──[-]\n\n")
-
-	if len(pending) == 0 {
+	if pending == 0 {
 		sb.WriteString(" [gray]Every civilization has been met.[-]\n")
 		return
 	}
-
-	const nameCol = 18
-	// 1 leading space + name column + space + 5 stars + 2 spaces.
-	detailBudget := usable - (nameCol + 9)
-	if detailBudget < 12 {
-		detailBudget = 12
+	them := "them"
+	if pending == 1 {
+		them = "it"
 	}
-
-	for i, def := range pending {
-		if i >= maxRosterRows {
-			fmt.Fprintf(sb, " [gray]… %d more[-]\n", len(pending)-maxRosterRows)
-			break
-		}
-		ageName := def.MinAge
-		if a, found := ages[def.MinAge]; found {
-			ageName = a.Name
-		}
-		detail := truncate(fmt.Sprintf("met by expedition from the %s · %s, %s", ageName, game.ResourceName(def.Specialty), def.Personality), detailBudget)
-		fmt.Fprintf(sb, " [cyan]%s[-] [gray]%s[-]  [gray]%s[-]\n",
-			padRight(truncate(def.Name, nameCol), nameCol), strengthStars(def.Strength), detail)
-	}
+	sb.WriteString(theme.Paint(theme.RoleDim, fmt.Sprintf(" %s not yet discovered. Send expeditions to find %s.",
+		textfmt.Count(pending, "civilization", "civilizations"), them)) + "\n")
 }
 
 // === shared formatting helpers ===

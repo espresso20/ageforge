@@ -284,7 +284,7 @@ func (p *themePicker) applyAndDetail(index int) {
 	// restyle registry; the caller owns any redraw.
 	_ = theme.SetActive(th.Key)
 	p.shown = th
-	p.detail.SetText(themeDetailText(th, themeAvailable(p.account(), th)))
+	p.detail.SetText(themeDetailText(th, themeAvailable(p.account(), th), p.state()))
 }
 
 // handleKey routes the picker's action keys. tview.List handles ↑/↓ natively; we
@@ -304,6 +304,16 @@ func (p *themePicker) handleKey(event *tcell.EventKey) *tcell.EventKey {
 		}
 	}
 	return event
+}
+
+// state is the game snapshot the unlock hints are worded for, or nil with no
+// engine (tests).
+func (p *themePicker) state() *game.GameState {
+	if p.engine == nil {
+		return nil
+	}
+	st := p.engine.GetState()
+	return &st
 }
 
 // account returns the picker's account, or nil when accountless. Centralizes the
@@ -397,8 +407,10 @@ func themeRowLabel(t theme.Theme, activeKey string, available bool) string {
 // available reports whether this theme is unlocked for the current account
 // (themeAvailable). A LOCKED theme shows a "🔒 Locked — <UnlockHint>" line above the
 // swatches (theming.md §7); the swatches and sample still render as a preview of
-// what the player will get, so the locked theme is enticing rather than blank.
-func themeDetailText(t theme.Theme, available bool) string {
+// what the player will get, so the locked theme is enticing rather than blank. st,
+// when set, words the hint for that game (themeUnlockHint: no age the player
+// cannot see yet); nil shows it as written.
+func themeDetailText(t theme.Theme, available bool, st *game.GameState) string {
 	var lines []string
 	lines = append(lines, fmt.Sprintf("[gold]%s[-]  [dim]%s theme · %s[-]", t.Name, t.Variant(), t.Group()))
 	if t.Blurb != "" {
@@ -419,6 +431,9 @@ func themeDetailText(t theme.Theme, available bool) string {
 		// that impossible for gated themes, but the detail pane shouldn't render an
 		// empty "Locked —" tail if it ever happens).
 		hint := t.UnlockHint
+		if st != nil {
+			hint = themeUnlockHint(t, *st) // never an age the player cannot see yet
+		}
 		if hint == "" {
 			hint = "unlocked by a milestone"
 		}

@@ -676,7 +676,7 @@ func (ge *GameEngine) AcceptFactionDeal(key string, n int) (FactionDeal, error) 
 	}
 	fs, ok := ge.Diplomacy.factions[key]
 	if !ok || !fs.Discovered {
-		return FactionDeal{}, errNotMet(def.Name)
+		return FactionDeal{}, ge.Diplomacy.errUnknownCiv(key)
 	}
 	if why := dealBlocked(*fs); why != "" {
 		return FactionDeal{}, fmt.Errorf("The %s won't trade: they are %s.", def.Name, why)

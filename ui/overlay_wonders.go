@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -116,11 +117,18 @@ func wondersProvider(state game.GameState, _ int) string {
 	fmt.Fprintf(&sb, " [cyan]Speed cap: %.1fx[-]   [gray]Each wonder raises the speed cap by %sx (set it with: speed %.1f).[-]\n\n",
 		maxSpeed, config.FormatAmount(config.WonderSpeedCapStep), 1.0+config.WonderSpeedCapStep)
 
-	// List each wonder
+	// List each wonder. A locked wonder of an age the player cannot see named
+	// yet is only counted (spoilers.go).
+	sight := game.SightOf(&state)
+	laterLocked := 0
 	for _, w := range wonders {
 		bs, hasBs := state.Buildings[w.key]
 		built := hasBs && bs.Count > 0
 		unlocked := hasBs && bs.Unlocked
+		if !built && !unlocked && !sight.Age(w.ageKey) {
+			laterLocked++
+			continue
+		}
 
 		if built {
 			fmt.Fprintf(&sb, " %s [gold]★ %s[-]   [gray]%s[-]\n", WonderSpriteIcon(w.key), w.name, w.ageName)
@@ -204,6 +212,9 @@ func wondersProvider(state game.GameState, _ int) string {
 		}
 
 		sb.WriteString("\n")
+	}
+	if laterLocked > 0 {
+		sb.WriteString(" " + theme.Paint(theme.RoleDim, fmt.Sprintf("? ???   %s in ages still to come, locked", textfmt.Count(laterLocked, "more wonder", "more wonders"))) + "\n\n")
 	}
 
 	// Speed summary footer

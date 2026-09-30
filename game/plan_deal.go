@@ -33,7 +33,7 @@ func (ge *GameEngine) PlanAddDeal(key string, n int) error {
 	}
 	fs, ok := ge.Diplomacy.factions[key]
 	if !ok || !fs.Discovered {
-		return errNotMet(def.Name)
+		return ge.Diplomacy.errUnknownCiv(key)
 	}
 	if fs.DealsFor != ge.age || n < 1 || n > len(fs.Deals) {
 		return fmt.Errorf("There is no deal %d with the %s (they offer %d). Type diplomacy deals to see them.", n, def.Name, len(dealInfos(fs, ge.age)))

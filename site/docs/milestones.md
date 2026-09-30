@@ -233,5 +233,6 @@ These milestones sit outside the chains and don't count toward any chain title.
 
 - **Scholar and Settlement chains** carry the biggest boosts (+300% tick speed for 180 ticks). Builder, Military, Trade and Ancient Ages each grant +250% for 150 ticks.
 - **Hidden milestones** appear in the Milestones panel once you have more than 50% progress toward them or have completed the preceding age.
+- **No spoilers:** a milestone that needs an age past your next one stays hidden (counted in the section's "+ N hidden milestones") until that age is your next one, or until you have reached it before on your account. The panel never names an age you haven't reached.
 - Chain boosts add to any other tick speed bonuses you hold, so two chains finishing close together overlap.
 - The **Military, Trade and Scholar** capstones pay out all production bonuses, so completing any of those chains helps your whole economy, not just its own domain.

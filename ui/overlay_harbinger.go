@@ -140,7 +140,9 @@ func harbingerPanelText(state game.GameState, note string, noteGood, inviteArmed
 // next transition's outlook in plain words.
 func harbingerAbsentText(sb *strings.Builder, state game.GameState) {
 	sb.WriteString(" No harbinger is here.\n\n")
-	sb.WriteString(theme.Paint(theme.RoleDim, " Harbingers walk through every epoch whose passage into the next could bring a\n catastrophe, one figure per age, from its first age until that passage. In the\n Cosmic Era the passage is prestige itself: the Last Passage.") + "\n\n")
+	// No era is named here but the current one: the player has not reached
+	// the others (the no-spoiler rule, spoilers.go).
+	sb.WriteString(theme.Paint(theme.RoleDim, " Harbingers walk through every era whose end could bring a catastrophe, one\n figure per age, from its first age until that passage. In the last era the\n passage is prestige itself: the Last Passage.") + "\n\n")
 
 	o := state.CatastropheOutlook
 	sb.WriteString(theme.Paint(theme.RoleAccent, "── Outlook ──") + "\n")
@@ -156,10 +158,10 @@ func harbingerAbsentText(sb *strings.Builder, state game.GameState) {
 	case o.NextEpochKey == "":
 		sb.WriteString(" This is the final epoch. Its passage is prestige, and no harbinger has come.\n")
 	case !o.Possible:
-		fmt.Fprintf(sb, " The passage into the %s cannot bring a catastrophe.\n", config.EpochByKey()[o.NextEpochKey].Name)
+		fmt.Fprintf(sb, " The end of the %s cannot bring a catastrophe.\n", currentEraName(state))
 	default:
-		fmt.Fprintf(sb, " The passage into the %s could bring a catastrophe. The risk is %s.\n",
-			config.EpochByKey()[o.NextEpochKey].Name, harbingerRiskWords(o.Tier))
+		fmt.Fprintf(sb, " The end of the %s could bring a catastrophe. The risk is %s.\n",
+			currentEraName(state), harbingerRiskWords(o.Tier))
 		if harbingerNumericAge(state.Age) {
 			fmt.Fprintf(sb, " Published odds: %s\n", theme.Paint(theme.RoleHighlight, harbingerPercent(o.Probability)))
 		}
@@ -184,7 +186,8 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 		fmt.Fprintf(sb, " Warning of %s: the end of this civilization, when you next prestige.\n\n",
 			theme.Paint(theme.RoleHighlight, h.TargetEpochName))
 	} else {
-		fmt.Fprintf(sb, " Warning of the passage into the %s.\n\n", theme.Paint(theme.RoleHighlight, h.TargetEpochName))
+		// TargetEpochName is the warning ("impending doom"), never the era to come.
+		fmt.Fprintf(sb, " Warning of %s when the %s ends.\n\n", theme.Paint(theme.RoleHighlight, h.TargetEpochName), currentEraName(state))
 	}
 
 	for _, l := range h.Lines {

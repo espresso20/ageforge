@@ -784,7 +784,7 @@ func planStaffSource(def config.BuildingDef) bool {
 func (ge *GameEngine) runPlanTick() {
 	var s planStarts
 	if ge.runPlan(&s) {
-		ge.addLog("info", "Plan: "+s.describe(ge.Buildings.defs)+".")
+		ge.addLog(LogRoutine, "Plan: "+s.describe(ge.Buildings.defs)+".")
 	}
 }
 

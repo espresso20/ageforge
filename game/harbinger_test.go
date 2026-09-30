@@ -215,8 +215,74 @@ func TestHarbingerThreadStartsOnEnteringFirstAge(t *testing.T) {
 		t.Fatalf("thread = %+v", h)
 	}
 	st := ge.GetState()
-	if st.Harbinger == nil || st.Harbinger.Name != figureName(t, "iron_age") || st.Harbinger.TargetEpochName != "Steel Era" {
+	if st.Harbinger == nil || st.Harbinger.Name != figureName(t, "iron_age") || st.Harbinger.TargetEpochName != "impending doom" {
 		t.Errorf("GetState harbinger = %+v", st.Harbinger)
+	}
+}
+
+// A harbinger never names the era its passage leads into, nor any age past
+// its own epoch: not in the arrival and handoff lines, the flavor lines, the
+// answers or the view the panel draws. The player has not reached them
+// (playtest 2026-09-29: "warning of the passage into the Iron Era").
+func TestHarbingerNeverNamesTheEraToCome(t *testing.T) {
+	for _, ep := range config.Epochs() {
+		if next, ok := config.NextEpoch(ep.Key); !ok || !config.CatastropheAllowed(next.Key) {
+			continue
+		}
+		t.Run(ep.Key, func(t *testing.T) {
+			ge := threadEngine(t, ep.Key, 3)
+			var forbidden []string
+			for _, other := range config.Epochs() {
+				if other.Key != ep.Key {
+					forbidden = append(forbidden, other.Name)
+				}
+			}
+			last := ep.Ages[len(ep.Ages)-1]
+			past := false
+			for _, a := range config.AgeOrder() {
+				if past {
+					forbidden = append(forbidden, config.AgeByKey()[a].Name)
+				}
+				past = past || a == last
+			}
+			var seen []string
+			look := func() {
+				if v := ge.GetState().Harbinger; v != nil {
+					seen = append(seen, v.TargetEpochName, v.AgeName)
+					seen = append(seen, v.Lines...)
+				}
+			}
+			look()
+			for _, a := range ep.Ages[1:] {
+				ge.advanceAge(a)
+				look()
+			}
+			stock := map[string][2]float64{}
+			for k := range harbingerAppeaseCost(ep.Key, HarbingerMaxAppease) {
+				stock[k] = [2]float64{1e12, 1e12}
+			}
+			for k := range harbingerBraceBasis(ep.Key) {
+				stock[k] = [2]float64{1e12, 1e12}
+			}
+			setStock(ge, stock)
+			_ = ge.HarbingerAppease()
+			_ = ge.HarbingerBrace()
+			if err := ge.HarbingerInvite(); err != nil {
+				t.Fatal(err)
+			}
+			look()
+			seen = append(seen, harbingerLines(ge)...)
+			if len(harbingerLines(ge)) == 0 {
+				t.Fatal("no harbinger lines were logged")
+			}
+			for _, line := range seen {
+				for _, name := range forbidden {
+					if strings.Contains(line, name) {
+						t.Errorf("%q names %s", line, name)
+					}
+				}
+			}
+		})
 	}
 }
 

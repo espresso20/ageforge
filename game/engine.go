@@ -795,7 +795,7 @@ func (ge *GameEngine) SetSpeedMultiplier(mult float64) error {
 		return fmt.Errorf("Speed %.1fx is above your cap of %.1fx. Each wonder raises the speed cap by %.1fx.", mult, maxSpeed, wonderSpeedStep)
 	}
 	ge.speedMultiplier = mult
-	ge.addLog("info", fmt.Sprintf("Game speed set to %.1fx.", mult))
+	ge.addLog(LogRoutine, fmt.Sprintf("Game speed set to %.1fx.", mult))
 	return nil
 }
 
@@ -2401,7 +2401,7 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 
 	ageOrder := ge.progress.GetAgeOrder()
 	if ageOrder[blackMarketMinAge] > ageOrder[ge.age] {
-		return false, 0, fmt.Errorf("The black market opens in the %s.", AgeName(blackMarketMinAge))
+		return false, 0, fmt.Errorf("The black market opens in %s.", ge.ageSightLocked().AgeRef(blackMarketMinAge))
 	}
 	if ge.tick < ge.blackMarketReadyTick {
 		return false, 0, fmt.Errorf("The smugglers are lying low. Try again in %s.", ge.durationLocked(ge.blackMarketReadyTick-ge.tick))
@@ -2589,12 +2589,18 @@ func (ge *GameEngine) finishBuild(item BuildQueueItem) {
 	}
 	def := ge.Buildings.defs[key]
 	ge.addLog("debug", fmt.Sprintf("Build complete: %s (count now %d)", def.Name, ge.Buildings.GetCount(key)))
-	ge.addLog("success", fmt.Sprintf("%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)))
+	done := buildDoneLog(def)
+	ge.addLog(done, fmt.Sprintf("%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)))
 	// Cosmetic flavour — present but not stale: ~1 in 3 completions get a quip,
-	// so a long build queue stays lively without turning into wallpaper.
+	// so a long build queue stays lively without turning into wallpaper. The
+	// quip goes where its line goes, so the main log never shows one alone.
 	if ge.quipRNG().Intn(3) == 0 {
 		if q := config.PickLogFlavor(config.LogFlavorBuildingComplete, ge.quipRNG()); q != "" {
-			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", q))
+			quip := "info"
+			if done == LogRoutine {
+				quip = LogRoutine
+			}
+			ge.addLog(quip, fmt.Sprintf("  [gray]%s[-]", q))
 		}
 	}
 	ge.Stats.RecordBuild()
@@ -2685,9 +2691,9 @@ func (ge *GameEngine) GatherResource(resource string, amount float64) (float64, 
 	case gained <= 0:
 		ge.addLog("warning", fmt.Sprintf("%s storage is full. Gathered nothing.", textfmt.Capitalize(ResourceName(resource))))
 	case gained < amount:
-		ge.addLog("success", fmt.Sprintf("Gathered %s (%s storage is now full).", Amount(gained, resource), ResourceName(resource)))
+		ge.addLog(LogRoutine, fmt.Sprintf("Gathered %s (%s storage is now full).", Amount(gained, resource), ResourceName(resource)))
 	default:
-		ge.addLog("success", fmt.Sprintf("Gathered %s.", Amount(gained, resource)))
+		ge.addLog(LogRoutine, fmt.Sprintf("Gathered %s.", Amount(gained, resource)))
 	}
 	return actual, nil
 }
@@ -2722,7 +2728,7 @@ func (ge *GameEngine) bankWonderLocked(wonderKey, resource string, amount float6
 	def := ge.Buildings.defs[wonderKey]
 	banked := ge.Buildings.wonderBanks[wonderKey][resource]
 	need := def.BaseCost[resource]
-	ge.addLog("info", fmt.Sprintf("Banked %s toward %s (%s of %s).",
+	ge.addLog(LogRoutine, fmt.Sprintf("Banked %s toward %s (%s of %s).",
 		Amount(deposited, resource), def.Name, textfmt.Number(banked), textfmt.Number(need)))
 
 	if ge.Buildings.IsWonderBankFull(wonderKey) {
@@ -2815,7 +2821,7 @@ func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
 			FromPlan:    quiet,
 		})
 		if !quiet {
-			ge.addLog("info", fmt.Sprintf("Started building %s (%s).", def.Name, ge.durationLocked(def.BuildTicks)))
+			ge.addLog(LogRoutine, fmt.Sprintf("Started building %s (%s).", def.Name, ge.durationLocked(def.BuildTicks)))
 		}
 	} else {
 		// Instant build
@@ -2825,7 +2831,7 @@ func (ge *GameEngine) startBuildLocked(key string, quiet bool) error {
 			ge.staffPlanCopy(key)
 		}
 		ge.recalculateRates()
-		ge.addLog("success", fmt.Sprintf("%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)))
+		ge.addLog(buildDoneLog(def), fmt.Sprintf("%s built (you have %d).", def.Name, ge.Buildings.GetCount(key)))
 		ge.Bus.Publish(EventData{
 			Type:    EventBuildingBuilt,
 			Payload: map[string]interface{}{"building": key},
@@ -2911,10 +2917,10 @@ func (ge *GameEngine) BuildMultiple(key string, count int) (int, error) {
 	}
 
 	if def.BuildTicks > 0 {
-		ge.addLog("info", fmt.Sprintf("Queued %s.", BuildingCount(built, key)))
+		ge.addLog(LogRoutine, fmt.Sprintf("Queued %s.", BuildingCount(built, key)))
 	} else {
 		ge.recalculateRates()
-		ge.addLog("success", fmt.Sprintf("Built %s (you have %d).", BuildingCount(built, key), ge.Buildings.GetCount(key)))
+		ge.addLog(buildDoneLog(def), fmt.Sprintf("Built %s (you have %d).", BuildingCount(built, key), ge.Buildings.GetCount(key)))
 	}
 	return built, nil
 }
@@ -2940,7 +2946,7 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 		return 0, fmt.Errorf("Could not recruit any workers.")
 	}
 	ge.Stats.RecordRecruit(available)
-	ge.addLog("info", fmt.Sprintf("Recruited %s (population %d/%d).",
+	ge.addLog(LogRoutine, fmt.Sprintf("Recruited %s (population %d/%d).",
 		textfmt.Count(available, "worker", "workers"), ge.Workers.TotalPop(), popCap))
 	return available, nil
 }
@@ -2970,7 +2976,7 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 	}
 	ge.Stats.RecordRecruit(count)
 	ge.addLog("debug", fmt.Sprintf("Recruit: %d (pop: %d/%d)", count, ge.Workers.TotalPop(), popCap))
-	ge.addLog("info", fmt.Sprintf("Recruited %s (population %d/%d).",
+	ge.addLog(LogRoutine, fmt.Sprintf("Recruited %s (population %d/%d).",
 		textfmt.Count(count, "worker", "workers"), ge.Workers.TotalPop(), popCap))
 	return nil
 }
@@ -3006,7 +3012,7 @@ func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
 	}
 	ge.recalculateRates()
 	ge.addLog("debug", fmt.Sprintf("Assign: %d → %s", count, buildingKey))
-	ge.addLog("info", fmt.Sprintf("Assigned %s to %s.", textfmt.Count(count, "worker", "workers"), def.Name))
+	ge.addLog(LogRoutine, fmt.Sprintf("Assigned %s to %s.", textfmt.Count(count, "worker", "workers"), def.Name))
 	return nil
 }
 
@@ -3038,7 +3044,7 @@ func (ge *GameEngine) AssignAll(buildingKey string) (int, error) {
 		return 0, fmt.Errorf("Could not assign workers to %s.", def.Name)
 	}
 	ge.recalculateRates()
-	ge.addLog("info", fmt.Sprintf("Assigned %s to %s.", textfmt.Count(toAssign, "worker", "workers"), def.Name))
+	ge.addLog(LogRoutine, fmt.Sprintf("Assigned %s to %s.", textfmt.Count(toAssign, "worker", "workers"), def.Name))
 	return toAssign, nil
 }
 
@@ -3059,7 +3065,7 @@ func (ge *GameEngine) UnassignAll(buildingKey string) (int, error) {
 		return 0, fmt.Errorf("Could not unassign workers from %s.", def.Name)
 	}
 	ge.recalculateRates()
-	ge.addLog("info", fmt.Sprintf("Unassigned %s from %s.", textfmt.Count(assigned, "worker", "workers"), def.Name))
+	ge.addLog(LogRoutine, fmt.Sprintf("Unassigned %s from %s.", textfmt.Count(assigned, "worker", "workers"), def.Name))
 	return assigned, nil
 }
 
@@ -3084,7 +3090,7 @@ func (ge *GameEngine) UnassignWorker(buildingKey string, count int) error {
 	}
 	ge.recalculateRates()
 	ge.addLog("debug", fmt.Sprintf("Unassign: %d ← %s", count, buildingKey))
-	ge.addLog("info", fmt.Sprintf("Unassigned %s from %s.", textfmt.Count(count, "worker", "workers"), def.Name))
+	ge.addLog(LogRoutine, fmt.Sprintf("Unassigned %s from %s.", textfmt.Count(count, "worker", "workers"), def.Name))
 	return nil
 }
 
@@ -3108,7 +3114,7 @@ func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) er
 		return fmt.Errorf("No workers are assigned to %s.", def.Name)
 	}
 	ge.recalculateRates()
-	ge.addLog("info", fmt.Sprintf("Dismissed %s from %s. They left your population (now %d).",
+	ge.addLog(LogRoutine, fmt.Sprintf("Dismissed %s from %s. They left your population (now %d).",
 		textfmt.Count(dismissed, "worker", "workers"), def.Name, ge.Workers.TotalPop()))
 	return nil
 }
@@ -3248,7 +3254,7 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 	if clipped {
 		line += " Storage was full, so part of the refund was lost."
 	}
-	ge.addLog("info", line)
+	ge.addLog(LogRoutine, line)
 	return nil
 }
 
@@ -3284,7 +3290,7 @@ func (ge *GameEngine) startResearchLocked(techKey string, quiet bool) error {
 	}
 	ge.addLog("debug", fmt.Sprintf("Research start: %s (cost: %.0f knowledge, %d ticks)", def.Name, def.Cost, ge.Research.totalTicks))
 	if !quiet {
-		ge.addLog("info", fmt.Sprintf("Started researching %s (%s).", def.Name, ge.durationLocked(ge.Research.totalTicks)))
+		ge.addLog(LogRoutine, fmt.Sprintf("Started researching %s (%s).", def.Name, ge.durationLocked(ge.Research.totalTicks)))
 	}
 	return nil
 }
@@ -3510,9 +3516,9 @@ func (ge *GameEngine) launchExpeditionLocked(key string) error {
 
 	ge.addLog("debug", fmt.Sprintf("Expedition start: %s (soldiers spent: %d)", def.Name, def.SoldiersNeeded))
 	if def.Category == ExpeditionMilitary {
-		ge.addLog("info", fmt.Sprintf("Campaign launched: %s (%d soldiers).", def.Name, def.SoldiersNeeded))
+		ge.addLog(LogRoutine, fmt.Sprintf("Campaign launched: %s (%d soldiers).", def.Name, def.SoldiersNeeded))
 	} else {
-		ge.addLog("info", fmt.Sprintf("Expedition sent: %s.", def.Name))
+		ge.addLog(LogRoutine, fmt.Sprintf("Expedition sent: %s.", def.Name))
 	}
 	return nil
 }
@@ -3531,7 +3537,7 @@ func (ge *GameEngine) DoPrestige() error {
 
 	ageOrder := ge.progress.GetAgeOrder()
 	if !ge.Prestige.CanPrestige(ge.age, ageOrder) {
-		return fmt.Errorf("You can prestige once you reach the %s.", AgeName(PrestigeMinAge))
+		return fmt.Errorf("You can prestige once you reach %s.", ge.ageSightLocked().AgeRef(PrestigeMinAge))
 	}
 
 	// In the final epoch prestige is the passage, and it can bring the Last
@@ -3742,6 +3748,7 @@ func (ge *GameEngine) GetState() GameState {
 	popCap := ge.Buildings.GetPopCapacity()
 	popCap += int(ge.Research.GetBonus("population") + ge.permanentBonuses["population"] + ge.Prestige.GetBonuses()["population"])
 	nextAge := ge.progress.GetNextAge(ge.age)
+	sight := ge.ageSightLocked()
 
 	// One epoch lookup per snapshot (was three full table rebuilds).
 	epochDef, epochOK := config.EpochByKey()[ge.currentEpoch]
@@ -3859,6 +3866,7 @@ func (ge *GameEngine) GetState() GameState {
 			WonderCount:     ge.countWonders(),
 			KnowledgeCount:  knowledgeCount,
 			ResearchedTechs: ge.getResearchedTechMap(),
+			Sight:           &sight,
 			activeEvents:    ge.Events.GetActive(),
 		}),
 		ActiveEvents:          ge.Events.GetActive(),
@@ -3944,7 +3952,17 @@ func (ge *GameEngine) GetState() GameState {
 	}
 }
 
-// addLog appends a log entry (must be called with lock held)
+// buildDoneLog is the log category for a finished copy of def: a wonder is
+// notable, any other building is routine (the Buildings panel shows its count).
+func buildDoneLog(def config.BuildingDef) string {
+	if def.Category == "wonder" {
+		return "success"
+	}
+	return LogRoutine
+}
+
+// addLog appends a log entry (must be called with lock held). logType is the
+// entry's category; see LogRoutine for which categories reach which log.
 func (ge *GameEngine) addLog(logType, message string) {
 	entry := LogEntry{
 		Tick:    ge.tick,
@@ -4070,7 +4088,7 @@ func (ge *GameEngine) ExchangeResources(from, to string, amount float64) (float6
 	if err != nil {
 		return 0, err
 	}
-	ge.addLog("info", fmt.Sprintf("Traded %s for %s.", Amount(amount, from), Amount(got, to)))
+	ge.addLog(LogRoutine, fmt.Sprintf("Traded %s for %s.", Amount(amount, from), Amount(got, to)))
 	return got, nil
 }
 
@@ -4083,7 +4101,7 @@ func (ge *GameEngine) StartTradeRoute(key string) error {
 	if err := ge.Trade.StartRoute(key, ge.Buildings, ge.age, ageOrder); err != nil {
 		return err
 	}
-	ge.addLog("info", fmt.Sprintf("Trade route started: %s.", RouteName(key)))
+	ge.addLog(LogRoutine, fmt.Sprintf("Trade route started: %s.", RouteName(key)))
 	return nil
 }
 
@@ -4095,7 +4113,7 @@ func (ge *GameEngine) StopTradeRoute(key string) error {
 	if err := ge.Trade.StopRoute(key); err != nil {
 		return err
 	}
-	ge.addLog("info", fmt.Sprintf("Trade route stopped: %s.", RouteName(key)))
+	ge.addLog(LogRoutine, fmt.Sprintf("Trade route stopped: %s.", RouteName(key)))
 	return nil
 }
 
@@ -4128,7 +4146,7 @@ func (ge *GameEngine) SendGift(factionKey string) error {
 		return err
 	}
 	ge.Resources.Remove("gold", cost)
-	ge.addLog("info", fmt.Sprintf("Sent the %s a gift: %s, opinion %s.",
+	ge.addLog(LogRoutine, fmt.Sprintf("Sent the %s a gift: %s, opinion %s.",
 		CivName(factionKey), Amount(cost, "gold"), textfmt.Signed(float64(ge.civOpinion(factionKey)-before))))
 	return nil
 }
@@ -4232,7 +4250,7 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	if costStr == "nothing" {
 		costStr = "free"
 	}
-	ge.addLog("success", fmt.Sprintf("Upgraded %s to %s. Cost: %s.",
+	ge.addLog(LogRoutine, fmt.Sprintf("Upgraded %s to %s. Cost: %s.",
 		BuildingCount(moved, key), pluralName(moved, newDef.Name), costStr))
 	return nil
 }

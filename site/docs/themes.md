@@ -48,6 +48,8 @@ theme daylight
 
 ### The picker
 
+The picker and `theme list` show a locked theme's unlock condition. One earned in an age past your next one reads "Reach a later age" instead of naming the age, so the list doesn't spoil ages you haven't reached (the table above has them all).
+
 The picker fills the window and **previews** each theme as you move to it. Themes are grouped under **Standard**, **Accessibility**, and **Unlockable** headings, and each row is tagged **light** or **dark**, **accessible**, or **locked** (`🔒`).
 
 | Key | Action |
