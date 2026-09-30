@@ -13,21 +13,37 @@ import (
 )
 
 // map_mini.go is the dashboard's mini map: the active style's compact view
-// (40x15 inside a border) docked above the Buildings list. It keeps its
-// own view of each style (separate from the Map panel's camera) and draws
-// from the model the last refresh built, so a redraw between refreshes
-// (typing at the prompt) costs only the compact draw. The since-last-visit
-// news goes in its bottom border when there is any.
+// in a border, docked above the Buildings list. It is short (at most
+// miniMaxInnerH rows inside the border, and never more than a quarter of
+// the column) so the list keeps most of the room, and the minimap setting
+// turns it off. It keeps its own view of each style (separate from the Map
+// panel's camera) and draws from the model the last refresh built, so a
+// redraw between refreshes (typing at the prompt) costs only the compact
+// draw. The since-last-visit news goes in its bottom border when there is
+// any.
 
 const (
-	miniInnerW = 40
-	miniInnerH = 15
-	miniW      = miniInnerW + 2 // with the border
-	miniH      = miniInnerH + 2
+	miniMaxInnerH = 9
+	miniMinInnerH = 6
+	// miniMinW is the narrowest column the mini map shows in, border
+	// included.
+	miniMinW = 42
 	// dockMinBody is the rows the Buildings list keeps under the mini map;
 	// with less room the mini map hides and the list gets it all.
-	dockMinBody = 10
+	dockMinBody = 18
 )
+
+// miniHeight is the mini map's height, border included, in a w x h dock:
+// a quarter of the column at most, capped at miniMaxInnerH rows inside,
+// and 0 (hidden) when that leaves it under miniMinInnerH rows or the
+// Buildings list under dockMinBody.
+func miniHeight(w, h int) int {
+	inner := min(miniMaxInnerH, (h-2)/4)
+	if w < miniMinW || inner < miniMinInnerH || h-inner-2 < dockMinBody {
+		return 0
+	}
+	return inner + 2
+}
 
 // miniMap is the mini map primitive (border included).
 type miniMap struct {
@@ -46,7 +62,7 @@ type miniMap struct {
 func newMiniMap(mv *mapViews) *miniMap {
 	m := &miniMap{Box: tview.NewBox(), mv: mv, styles: styleSet{reg: mv.reg}, now: time.Now}
 	m.start = m.now()
-	m.set = mapSettings{Style: mv.reg.Default(), Tier: mapmodel.TierUnicode}
+	m.set = defaultMapSettings(mv.reg)
 	return m
 }
 
@@ -97,14 +113,16 @@ func (m *miniMap) Draw(scr tcell.Screen) {
 }
 
 // mapDock stacks the mini map above a body (the Buildings list) and lays
-// the two out itself on every draw: the mini map shows only when the dock
-// has room for it and dockMinBody rows of body, so on a small terminal
-// (80x24) it hides and the body gets the whole column, with no flicker
-// between refreshes.
+// the two out itself on every draw: the mini map shows only when it is on
+// and the dock has room for it and dockMinBody rows of body, so on a small
+// terminal (80x24) it hides and the body gets the whole column, with no
+// flicker between refreshes.
 type mapDock struct {
 	*tview.Box
 	mini *miniMap
 	body tview.Primitive
+	// off is the minimap setting turned off: the body gets the column.
+	off bool
 	// shown reports whether the last draw showed the mini map; drawn that
 	// there was a draw at all (before it, the dock has no real size).
 	shown, drawn bool
@@ -114,23 +132,24 @@ func newMapDock(mini *miniMap, body tview.Primitive) *mapDock {
 	return &mapDock{Box: tview.NewBox(), mini: mini, body: body}
 }
 
-// wantsModel reports whether the mini map needs a model: it is showing, or
-// nothing has been laid out yet.
+// wantsModel reports whether the mini map needs a model: it is on and
+// showing, or nothing has been laid out yet.
 func (d *mapDock) wantsModel() bool {
 	_, _, w, h := d.GetRect()
-	return !d.drawn || d.fits(w, h)
+	return !d.off && (!d.drawn || miniHeight(w, h) > 0)
 }
-
-// fits reports whether a w x h dock has room for the mini map.
-func (d *mapDock) fits(w, h int) bool { return w >= miniW && h >= miniH+dockMinBody }
 
 func (d *mapDock) Draw(scr tcell.Screen) {
 	x, y, w, h := d.GetRect()
-	d.shown, d.drawn = d.fits(w, h), true
+	mh := miniHeight(w, h)
+	if d.off {
+		mh = 0
+	}
+	d.shown, d.drawn = mh > 0, true
 	if d.shown {
-		d.mini.SetRect(x, y, w, miniH)
+		d.mini.SetRect(x, y, w, mh)
 		d.mini.Draw(scr)
-		d.body.SetRect(x, y+miniH, w, h-miniH)
+		d.body.SetRect(x, y+mh, w, h-mh)
 	} else {
 		d.body.SetRect(x, y, w, h)
 	}

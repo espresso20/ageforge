@@ -98,7 +98,7 @@ The skyline style shows your empire **side-on**, as an ANSI-art panorama. It has
 
 ## Settings
 
-Two settings shape the Map. Both are saved **per account**, like your theme: they carry across saves and new games, and switching accounts swaps them. With no account loaded they last for the session.
+Three settings shape the Map. They are saved **per account**, like your theme: they carry across saves and new games, and switching accounts swaps them. With no account loaded they last for the session.
 
 | Command | What it does |
 |---|---|
@@ -110,6 +110,9 @@ Two settings shape the Map. Both are saved **per account**, like your theme: the
 | `map glyphs ascii` | Plain ASCII, for fonts with poor symbol coverage |
 | `map glyphs unicode` | Box drawing, blocks and widely supported symbols (the default) |
 | `map glyphs nerd` | Nerd Font icons. Needs a Nerd Font in your terminal; every icon has a Unicode fallback |
+| `minimap` | Show whether the dashboard's mini map is on |
+| `minimap off` | Hide the mini map, so the Buildings list gets the whole column |
+| `minimap on` | Show the mini map again (the default) |
 
 The `s` and `g` keys in the panel change the same settings.
 
@@ -118,6 +121,8 @@ The `s` and `g` keys in the panel change the same settings.
 ## The mini map
 
 The dashboard shows a compact view of the Map above the **Buildings** list, in a border titled "Map · Roguelike" or "Map · Skyline". It follows your `map style` and `map glyphs` settings and shows the since-last-visit news too (for the skyline, in its bottom border).
+
+It is kept short, at most 9 rows inside its border and about a quarter of the column, so the Buildings list keeps most of the room. `minimap off` hides it and gives the list the whole column; `minimap on` brings it back.
 
 The mini map needs room: it appears on terminals of about 120x40 and larger. On smaller terminals (80x24, 100x30) it hides and the Buildings list gets the space. Type `map` to open the full panel at any size.
 

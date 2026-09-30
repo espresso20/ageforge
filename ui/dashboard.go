@@ -631,10 +631,13 @@ func (d *Dashboard) refresh() {
 
 	// Economy tab is always visible as the permanent background
 	d.economyTab.Refresh(state)
-	// The mini map's model, only while it has room to show (before the
-	// first layout the dock has no size yet, so build it anyway).
+	// The mini map's model, only while it is on and has room to show
+	// (before the first layout the dock has no size yet, so build it
+	// anyway).
+	set := d.mapSettings()
+	d.mapDock.off = !set.Minimap
 	if d.mapDock.wantsModel() {
-		d.miniMap.update(d.mapSettings(), &state)
+		d.miniMap.update(set, &state)
 	}
 
 	// Update overlay content and sidebar highlight
@@ -988,6 +991,10 @@ func (d *Dashboard) submitInput() {
 	}
 	if result.Icons {
 		d.startIcons()
+	}
+	if result.MapPref.Key != "" {
+		d.applyMapPref(result.MapPref)
+		d.mapDock.off = !d.mapSettings().Minimap
 	}
 	if result.OverlayName != "" {
 		state := d.engine.GetState()

@@ -35,6 +35,11 @@ type CommandResult struct {
 	MapWorld bool
 	// Icons asks the dashboard to start the guided icons check.
 	Icons bool
+	// MapPref is a map setting change (map style, map glyphs, minimap) for
+	// the dashboard to apply at once. The command has already saved it to
+	// the account; with no account loaded the dashboard keeps it for the
+	// session.
+	MapPref mapPref
 }
 
 // HandleCommand parses a raw command string and dispatches to the appropriate
@@ -136,6 +141,8 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 	case "style":
 		// style is map style's shortcut: players reach for it first.
 		return cmdMapStyle(args, engine)
+	case "minimap":
+		return cmdMinimap(args, engine)
 	case "catastrophe", "cat":
 		return cmdCatastrophe(args, engine)
 	case "harbinger", "harb":
@@ -2302,8 +2309,9 @@ func cmdMap(cmd string, args []string, engine *game.GameEngine) CommandResult {
 	return CommandResult{Message: subUsage("map"), Type: "error"}
 }
 
-// mapNoAccount is the refusal when there is no account to keep a setting on.
-const mapNoAccount = "Map settings are kept on your account, and no account is loaded. Press s or g in the Map panel to change them for this session."
+// mapSessionOnly ends a map setting's reply when no account is loaded to
+// keep it on.
+const mapSessionOnly = " No account is loaded, so it lasts for this session."
 
 func cmdMapStyle(args []string, engine *game.GameEngine) CommandResult {
 	reg := all.Registry()
@@ -2322,13 +2330,16 @@ func cmdMapStyle(args []string, engine *game.GameEngine) CommandResult {
 	default:
 		return usageError(usageFor("map style"), fmt.Errorf("there is no map style %q", args[0]))
 	}
+	res := CommandResult{Type: "info", Message: fmt.Sprintf("Map style set to %s.", styleTitle(reg, name)),
+		MapPref: mapPref{Key: "style", Value: name}}
 	if acct == nil {
-		return CommandResult{Type: "error", Message: mapNoAccount}
+		res.Message += mapSessionOnly
+		return res
 	}
 	if err := acct.SetMapStyle(name); err != nil {
 		return errorResult(fmt.Errorf("the map style could not be saved: %w", err))
 	}
-	return CommandResult{Type: "info", Message: fmt.Sprintf("Map style set to %s.", styleTitle(reg, name))}
+	return res
 }
 
 func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
@@ -2347,15 +2358,51 @@ func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
 	default:
 		return usageError(usageFor("map glyphs"), fmt.Errorf("there is no glyph tier %q", args[0]))
 	}
+	res := CommandResult{Type: "info", Message: fmt.Sprintf("Map glyphs set to %s.", name),
+		MapPref: mapPref{Key: "glyphs", Value: name}}
+	if name == "nerd" {
+		res.Message += " If the map shows boxes or question marks, type icons."
+	}
 	if acct == nil {
-		return CommandResult{Type: "error", Message: mapNoAccount}
+		res.Message += mapSessionOnly
+		return res
 	}
 	if err := acct.SetMapGlyphs(name); err != nil {
 		return errorResult(fmt.Errorf("the map glyphs could not be saved: %w", err))
 	}
-	msg := fmt.Sprintf("Map glyphs set to %s.", name)
-	if name == "nerd" {
-		msg += " If the map shows boxes or question marks, type icons."
+	return res
+}
+
+// cmdMinimap shows or sets the minimap setting: the dashboard's mini map
+// above the Buildings list, on by default.
+func cmdMinimap(args []string, engine *game.GameEngine) CommandResult {
+	acct := engine.Account()
+	if len(args) == 0 {
+		state := "off"
+		if resolveMapSettings(acct, all.Registry()).Minimap {
+			state = "on"
+		}
+		return CommandResult{Type: "info", Message: "Mini map: " + state + ". Type minimap on or minimap off to change it."}
 	}
-	return CommandResult{Type: "info", Message: msg}
+	if len(args) > 1 {
+		return usageError(usageFor("minimap"), fmt.Errorf("on or off, please"))
+	}
+	val := strings.ToLower(args[0])
+	if val != "on" && val != "off" {
+		return usageError(usageFor("minimap"), fmt.Errorf("minimap takes on or off, not %q", args[0]))
+	}
+	on := val == "on"
+	res := CommandResult{Type: "info", Message: "Mini map off. Type minimap on to bring it back.",
+		MapPref: mapPref{Key: "minimap", Value: val}}
+	if on {
+		res.Message = "Mini map on. It shows above the Buildings list when the terminal has room (about 120x40 and up)."
+	}
+	if acct == nil {
+		res.Message += mapSessionOnly
+		return res
+	}
+	if err := acct.SetMinimap(on); err != nil {
+		return errorResult(fmt.Errorf("the minimap setting could not be saved: %w", err))
+	}
+	return res
 }

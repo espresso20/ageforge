@@ -251,6 +251,7 @@ The Map draws your empire from your real game state: your buildings and the work
 | `map` | Open the Map panel full screen |
 | `map style [roguelike\|skyline]` | Bare, show the current style. With a name, switch to it (default roguelike). Saved per account |
 | `style [roguelike\|skyline]` | Same as `map style` |
+| `minimap [on\|off]` | Bare, show whether the dashboard's mini map is on. `off` hides it so the Buildings list gets the whole column; `on` brings it back (default on). Saved per account |
 | `map glyphs [ascii\|unicode\|nerd]` | Bare, show the current glyph set. With a name, switch to it (default unicode). `nerd` needs a Nerd Font in your terminal; every icon has a Unicode fallback. Saved per account |
 | `citymap` | Same as `map` |
 | `worldmap` | Same as `map`, opened on the known world (the roguelike style's region zoom) |
@@ -261,11 +262,12 @@ map
 map style skyline
 style roguelike
 map glyphs ascii
+minimap off
 worldmap
 icons
 ```
 
-`map style` and `map glyphs` are saved per account, like your theme: they carry across saves and new games. With no account loaded they last for the session. On terminals of about 120x40 and larger the dashboard also shows a **mini map** of the active style above the Buildings list; on smaller terminals it hides.
+`map style`, `map glyphs` and `minimap` are saved per account, like your theme: they carry across saves and new games. With no account loaded they last for the session. On terminals of about 120x40 and larger the dashboard also shows a short **mini map** of the active style above the Buildings list; on smaller terminals it hides, and `minimap off` hides it anywhere.
 
 Keys in the Map panel, in every style:
 

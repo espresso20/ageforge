@@ -95,6 +95,75 @@ func TestMiniMapFitsAndHides(t *testing.T) {
 	}
 }
 
+// TestMiniMapSize: the mini map is short enough to leave the Buildings list
+// most of the column: at most 9 rows inside its border and about a quarter
+// of the column, hidden where it would leave the list under dockMinBody
+// rows. Adam found the old 17-row mini map crowding Buildings off a 160x48
+// screen.
+func TestMiniMapSize(t *testing.T) {
+	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
+	restoreForge(t)
+	d, pages := newMiniDashboard(t)
+	for _, sz := range [][2]int{{160, 48}, {120, 40}, {200, 60}} {
+		drawDashboard(t, d, pages, sz[0], sz[1])
+		d.refresh()
+		drawDashboard(t, d, pages, sz[0], sz[1])
+		_, _, _, dh := d.mapDock.GetRect()
+		_, _, _, mh := d.miniMap.GetRect()
+		if !d.mapDock.shown {
+			t.Fatalf("%dx%d: no mini map", sz[0], sz[1])
+		}
+		if mh > miniMaxInnerH+2 || (mh-2)*4 > dh-2 || dh-mh < dockMinBody {
+			t.Errorf("%dx%d: mini map %d rows of a %d-row column", sz[0], sz[1], mh, dh)
+		}
+	}
+	for _, c := range []struct{ w, h, want int }{{69, 39, 11}, {49, 32, 9}, {49, 26, 8}, {49, 25, 0}, {41, 39, 0}} {
+		if got := miniHeight(c.w, c.h); got != c.want {
+			t.Errorf("miniHeight(%d, %d) = %d, want %d", c.w, c.h, got, c.want)
+		}
+	}
+}
+
+// TestMinimapSetting: minimap off gives the Buildings list the whole
+// column and is saved to the account; minimap on brings the mini map back.
+func TestMinimapSetting(t *testing.T) {
+	d, eng := mapTestDashboard(t, true)
+	pages := tview.NewPages()
+	pages.AddPage("dashboard", d.Root(), true, true)
+	show := func() bool {
+		drawDashboard(t, d, pages, 160, 48)
+		d.refresh()
+		txt := drawDashboard(t, d, pages, 160, 48)
+		if strings.Contains(txt, " Map · ") != d.mapDock.shown {
+			t.Errorf("the map title on screen disagrees with shown=%v", d.mapDock.shown)
+		}
+		return d.mapDock.shown
+	}
+	if !show() {
+		t.Fatal("the mini map is not on by default")
+	}
+	if res := HandleCommand("minimap", eng); !strings.Contains(res.Message, "Mini map: on") {
+		t.Errorf("bare minimap: %+v", res)
+	}
+	d.runForTest("minimap off")
+	if show() {
+		t.Error("minimap off: the mini map still shows")
+	}
+	if eng.Account().MinimapOn() {
+		t.Error("minimap off was not saved to the account")
+	}
+	if d.mapDock.wantsModel() {
+		t.Error("the mini map still builds models while off")
+	}
+	d.runForTest("minimap on")
+	if !show() || !eng.Account().MinimapOn() {
+		t.Error("minimap on did not bring it back")
+	}
+	if res := HandleCommand("minimap sideways", eng); res.Type != "error" {
+		t.Errorf("minimap sideways: %+v", res)
+	}
+}
+
 // TestMiniMapFollowsSettings: map style switches the mini map too.
 func TestMiniMapFollowsSettings(t *testing.T) {
 	d, _ := mapTestDashboard(t, true)
@@ -141,7 +210,7 @@ func BenchmarkMiniMapDraw(b *testing.B) {
 			s.Style = style
 			st := d.engine.GetState()
 			d.miniMap.update(s, &st)
-			d.miniMap.SetRect(0, 0, 69, miniH)
+			d.miniMap.SetRect(0, 0, 69, miniMaxInnerH+2)
 			for i := 0; i < b.N; i++ {
 				d.miniMap.Draw(sim)
 			}

@@ -228,16 +228,18 @@ func TestMapSettingsPersist(t *testing.T) {
 	}
 }
 
-// TestMapSettingsWithoutAccount: with no account the keys still work for
-// the session and the commands say where settings live.
+// TestMapSettingsWithoutAccount: with no account the setting commands
+// still work, for the session, and say so.
 func TestMapSettingsWithoutAccount(t *testing.T) {
 	d, eng := mapTestDashboard(t, false)
-	d.runForTest("map")
-	d.mapPanel.handleKey(key('s'))
-	if s := d.mapSettings(); s.Style != "skyline" {
-		t.Errorf("session style %s, want skyline", s.Style)
+	for _, line := range []string{"map style skyline", "map glyphs ascii", "minimap off"} {
+		d.runForTest(line)
 	}
-	if res := HandleCommand("map style roguelike", eng); res.Type != "error" {
+	if s := d.mapSettings(); s.Style != "skyline" || s.Tier != mapmodel.TierASCII || s.Minimap {
+		t.Errorf("session settings %+v, want skyline, ascii, mini map off", s)
+	}
+	res := HandleCommand("map style roguelike", eng)
+	if res.Type != "info" || res.MapPref.Key != "style" || !strings.Contains(res.Message, "this session") {
 		t.Errorf("map style with no account: %+v", res)
 	}
 }

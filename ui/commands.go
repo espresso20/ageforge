@@ -311,6 +311,8 @@ func registry() []*Command {
 			}},
 		{Name: "style", Section: secGame, Args: []Arg{mapStyleArg},
 			Help: []Usage{{"style [roguelike|skyline]", "Same as map style"}}},
+		{Name: "minimap", Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
+			Help: []Usage{{"minimap [on|off]", "Show or set the mini map above the Buildings list (default on)"}}},
 		{Name: "icons", Section: secGame,
 			Help: []Usage{{"icons", "Check whether your font shows Nerd Font icons, and install one if it doesn't"}}},
 		{Name: "save", Section: secGame, Args: []Arg{{Kind: ArgText, Optional: true}},

@@ -99,7 +99,7 @@ type mapPanel struct {
 func newMapPanel(mv *mapViews) *mapPanel {
 	p := &mapPanel{Box: tview.NewBox(), mv: mv, styles: styleSet{reg: mv.reg}, now: time.Now}
 	p.start = p.now()
-	p.set = mapSettings{Style: mv.reg.Default(), Tier: mapmodel.TierUnicode}
+	p.set = defaultMapSettings(mv.reg)
 	return p
 }
 
