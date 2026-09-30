@@ -202,6 +202,10 @@ type Stats struct {
 	Actions               map[string]int `json:"bot_actions"`
 	ActionErrors          map[string]int `json:"bot_action_errors"`
 
+	// CatastrophesByCycle counts CatastrophesRolled per prestige cycle (the
+	// Last Passage included), for the catastrophes-per-run comparison.
+	CatastrophesByCycle map[int]int `json:"catastrophes_by_cycle,omitempty"`
+
 	HarbingerThreads  map[string]int `json:"harbinger_threads_by_target_epoch"`
 	HarbingerHandoffs map[string]int `json:"harbinger_handoffs_by_target_epoch"`
 	HarbingerVerdicts map[string]int `json:"harbinger_verdicts"`
@@ -239,6 +243,8 @@ type RunResult struct {
 	Anomalies  []*Anomaly         `json:"anomalies"`
 	Harbingers []*HarbingerThread `json:"harbingers"`
 	Stats      Stats              `json:"stats"`
+	// Fates is every era's hidden fate as the run lived it (FateRow).
+	Fates []*FateRow `json:"fates,omitempty"`
 	// Notes are non-failing observations (report-mode pacing timeouts,
 	// budget exhaustion).
 	Notes []string `json:"notes,omitempty"`
@@ -306,6 +312,8 @@ type runner struct {
 	timedOut   bool // the current age is past its timeout
 	byCheck    map[string]*Anomaly
 	thread     *HarbingerThread // live harbinger thread being tracked
+	fate       *FateRow         // the current era's fate row
+	fateTick   int              // the tick the fate row was last sampled at
 	stopReason string
 	// advancing is set while control calls AdvanceAge, so the age-advance
 	// bus handler leaves that advance to control.
@@ -347,6 +355,7 @@ func newRunner(cfg Config, seed int64, ge *game.GameEngine) *runner {
 	}
 	r.res.Stats.EpochEvents = make(map[string]int)
 	r.res.Stats.TimedEvents = make(map[string]int)
+	r.res.Stats.CatastrophesByCycle = make(map[int]int)
 	r.res.Stats.HarbingerThreads = make(map[string]int)
 	r.res.Stats.HarbingerHandoffs = make(map[string]int)
 	r.res.Stats.HarbingerVerdicts = make(map[string]int)
@@ -377,8 +386,11 @@ func (r *runner) subscribe() {
 		s.EpochEvents[t]++
 		if t == "catastrophe" {
 			s.CatastrophesRolled++
+			s.CatastrophesByCycle[r.cycle]++
 		}
 	})
+	bus.Subscribe(game.EventFateRolled, r.onFateRolled)
+	bus.Subscribe(game.EventFateResolved, r.onFateResolved)
 	bus.Subscribe(game.EventHarbingerArrived, func(e game.EventData) {
 		ep, _ := e.Payload["epoch_key"].(string)
 		if h, _ := e.Payload["handoff"].(bool); h {
@@ -490,6 +502,7 @@ func (r *runner) finish() {
 	res.FinalAge = r.age
 	res.Stats.Actions = r.bot.Actions
 	res.Stats.ActionErrors = r.bot.Errors
+	r.closeFate(FateOpen)
 	if r.stopReason != OutcomeDone {
 		res.Ages = append(res.Ages, r.split(true))
 	}
@@ -587,6 +600,7 @@ func (r *runner) observe(st game.GameState) {
 		r.prevEvt[ev.Key] = true
 	}
 	r.trackHarbinger(st)
+	r.sampleFate(st)
 	for _, l := range st.Log {
 		if l.Tick <= r.logTick {
 			continue

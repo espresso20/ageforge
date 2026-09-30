@@ -299,6 +299,7 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 		fmt.Fprintf(&sb, "- `%s`: %d / %d\n", k, acts[k], errs[k])
 	}
 
+	s.writeFates(&sb)
 	s.writeHarbingers(&sb)
 
 	sb.WriteString("\n## Anomalies\n\n")
