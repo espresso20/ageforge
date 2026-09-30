@@ -133,7 +133,8 @@ type GameEngine struct {
 	// Permanent bonuses from milestones
 	permanentBonuses map[string]float64
 
-	// Dynamic tick speed
+	// Dynamic tick speed. speedMultiplier is only ever above 1 through the dev
+	// console's /speed: players have no speed setting (see playerSpeedCap).
 	tickSpeedBonus  float64
 	speedMultiplier float64
 
@@ -692,8 +693,8 @@ func (ge *GameEngine) safeTick() {
 // getTickInterval computes the current tick interval from all speed sources.
 // Called by the tick goroutine between ticks, outside the write lock. It takes
 // the read lock because tickSpeedBonus and speedMultiplier are also written from
-// other goroutines (the `speed` command, the /speed dev command, Succumb/Prestige
-// via recalculateTickSpeed), not just inside doTick. Must NOT be called with
+// other goroutines (the /speed dev command, Succumb/Prestige via
+// recalculateTickSpeed, a load), not just inside doTick. Must NOT be called with
 // ge.mu held; use tickIntervalLocked there.
 func (ge *GameEngine) getTickInterval() time.Duration {
 	ge.mu.RLock()
@@ -760,58 +761,27 @@ func (ge *GameEngine) recalculateTickSpeed() {
 	}
 }
 
-// MaxSpeedForAge returns the maximum speed multiplier gated by wonders.
-// Each wonder built adds config.WonderSpeedCapStep on top of the 1.0x base, so players must
-// invest in wonders to unlock higher speed settings via the `speed` command.
-// NOTE: Caller must hold at least an RLock if called from outside the tick goroutine.
-func (ge *GameEngine) MaxSpeedForAge() float64 {
-	wonderCount := 0
-	for key, count := range ge.Buildings.counts {
-		if def, ok := ge.Buildings.defs[key]; ok && def.Category == "wonder" && count > 0 {
-			wonderCount++
-		}
-	}
-	return 1.0 + float64(float64(wonderCount)*wonderSpeedStep)
-}
+// playerSpeedCap is the most game speed a player runs at. Game speed is fixed
+// so the calendar paces the game: there is no player speed setting, and
+// wonders raise no cap. Only the dev console's /speed goes past it, for the
+// session: a load clamps the saved multiplier back (clampPlayerSpeed) and a
+// prestige, Succumb or wipe resets it.
+const playerSpeedCap = 1.0
 
-// wonderSpeedStep is how much each completed wonder raises the speed cap.
-const wonderSpeedStep = config.WonderSpeedCapStep
+// clampPlayerSpeed limits a saved speed multiplier to what a player may run
+// at: 1x at least (a NaN counts as 1x), playerSpeedCap at most. A save from
+// before the speed setting was retired carries whatever the player had set,
+// up to 12x with every wonder built.
+func clampPlayerSpeed(mult float64) float64 {
+	if !(mult >= 1.0) {
+		return 1.0
+	}
+	return min(mult, playerSpeedCap)
+}
 
 // starvationDeathInterval is how many ticks pass between starvation deaths
 // while food sits at zero.
 const starvationDeathInterval = 5
-
-// SetSpeedMultiplier sets the game speed multiplier (0.5 increments, capped by age)
-func (ge *GameEngine) SetSpeedMultiplier(mult float64) error {
-	// Validate it's a finite 0.5 increment and at least 1.0 (int() of an
-	// infinity is undefined, so rule those out before the increment check).
-	if math.IsNaN(mult) || math.IsInf(mult, 0) || mult < 1.0 || mult != float64(int(mult*2))/2 {
-		return fmt.Errorf("Speed must be 1.0, 1.5, 2.0 and so on (got %g).", mult)
-	}
-	ge.mu.Lock()
-	defer ge.mu.Unlock()
-	maxSpeed := ge.MaxSpeedForAge()
-	if mult > maxSpeed {
-		return fmt.Errorf("Speed %.1fx is above your cap of %.1fx. Each wonder raises the speed cap by %.1fx.", mult, maxSpeed, wonderSpeedStep)
-	}
-	ge.speedMultiplier = mult
-	ge.addLog(LogRoutine, fmt.Sprintf("Game speed set to %.1fx.", mult))
-	return nil
-}
-
-// GetSpeedMultiplier returns the current speed multiplier
-func (ge *GameEngine) GetSpeedMultiplier() float64 {
-	ge.mu.RLock()
-	defer ge.mu.RUnlock()
-	return ge.speedMultiplier
-}
-
-// GetMaxSpeed returns the max speed allowed for the current age (thread-safe)
-func (ge *GameEngine) GetMaxSpeed() float64 {
-	ge.mu.RLock()
-	defer ge.mu.RUnlock()
-	return ge.MaxSpeedForAge()
-}
 
 // ActiveSaveName is the slot a bare `save` writes to: the last name explicitly
 // saved or loaded this session, defaulting to AutosaveName until one is set.
@@ -1828,7 +1798,7 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// Notify player about the wonder available in this age
 	for _, bKey := range unlocks.UnlockBuildings {
 		if def, ok := ge.Buildings.defs[bKey]; ok && def.Category == "wonder" {
-			ge.addLog("event", fmt.Sprintf("★ Wonder available: %s. Each wonder raises the speed cap by %.1fx (see speed).", def.Name, wonderSpeedStep))
+			ge.addLog("event", fmt.Sprintf("★ Wonder available: %s. Bank its cost, then build it.", def.Name))
 			break
 		}
 	}
@@ -3881,7 +3851,6 @@ func (ge *GameEngine) GetState() GameState {
 		SaveExists:            SaveExists("autosave"),
 		TickSpeedBonus:        ge.tickSpeedBonus,
 		TickIntervalMs:        int(tickInterval.Milliseconds()),
-		SpeedMultiplier:       speedMult,
 		CheaterBadge:          ge.cheaterBadge,
 		EliteBadge:            ge.eliteBadge,
 		Seed:                  ge.seed,

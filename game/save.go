@@ -792,11 +792,10 @@ func (ge *GameEngine) LoadGame(filename string) error {
 		ge.Buildings.LoadPendingUpgrades(ge.rebuildPendingUpgrades(save.LegacyBuildings, save.Age))
 	}
 
-	// Restore speed multiplier
-	ge.speedMultiplier = save.SpeedMultiplier
-	if ge.speedMultiplier < 1.0 {
-		ge.speedMultiplier = 1.0
-	}
+	// Restore the speed multiplier, clamped to the player cap: a save written
+	// while wonders raised a speed cap (or with the dev console's /speed on)
+	// would otherwise load, and run its offline catch-up below, at that speed.
+	ge.speedMultiplier = clampPlayerSpeed(save.SpeedMultiplier)
 
 	// Restore badge state (verified above)
 	ge.cheaterBadge = save.CheaterBadge

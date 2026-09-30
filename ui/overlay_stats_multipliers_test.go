@@ -80,7 +80,6 @@ func TestSummarizeBreakdown_DropsNoops(t *testing.T) {
 // to be invisible because the old hand-aggregation never read events).
 func TestRenderActiveMultipliers_ActiveEvent(t *testing.T) {
 	state := game.GameState{
-		SpeedMultiplier: 1.0,
 		Modifiers: []game.Modifier{
 			{Source: "research", Target: "production_all", Op: game.OpAdd, Value: 0.10},
 			{Source: "wonders", Target: "production_all", Op: game.OpAdd, Value: 0.05},
@@ -102,21 +101,10 @@ func TestRenderActiveMultipliers_ActiveEvent(t *testing.T) {
 	}
 }
 
-func TestRenderActiveMultipliers_SpeedMultiplierLine(t *testing.T) {
-	state := game.GameState{
-		SpeedMultiplier: 2.0,
-		Modifiers:       nil,
-	}
-	out := renderActiveMultipliers(state)
-	if !strings.Contains(out, "Game speed") || !strings.Contains(out, "×2.00") {
-		t.Errorf("speed multiplier line missing:\n%s", out)
-	}
-}
-
 // TestRenderActiveMultipliers_Empty guards nil-safety on a fresh game: no
-// modifiers, no speed multiplier → the "No active multipliers" line, no panic.
+// modifiers → the "No active multipliers" line, no panic.
 func TestRenderActiveMultipliers_Empty(t *testing.T) {
-	state := game.GameState{SpeedMultiplier: 1.0, Modifiers: nil}
+	state := game.GameState{Modifiers: nil}
 	out := renderActiveMultipliers(state)
 	if !strings.Contains(out, "No active multipliers") {
 		t.Errorf("empty state should report no multipliers, got:\n%s", out)
@@ -127,7 +115,6 @@ func TestRenderActiveMultipliers_Empty(t *testing.T) {
 // effect is ×1.0 (e.g. only no-op contributions) does not render a line.
 func TestRenderActiveMultipliers_NoopTargetsHidden(t *testing.T) {
 	state := game.GameState{
-		SpeedMultiplier: 1.0,
 		Modifiers: []game.Modifier{
 			{Source: "morale", Target: "production_all", Op: game.OpMul, Value: 1.0},
 		},
@@ -142,7 +129,6 @@ func TestRenderActiveMultipliers_NoopTargetsHidden(t *testing.T) {
 // colored by its own sign: a positive source gets [green], a negative [red].
 func TestRenderActiveMultipliers_SignColors(t *testing.T) {
 	state := game.GameState{
-		SpeedMultiplier: 1.0,
 		Modifiers: []game.Modifier{
 			{Source: "research", Target: "production_all", Op: game.OpAdd, Value: 0.20},
 			{Source: "event:Famine", Target: "production_all", Op: game.OpAdd, Value: -0.05},
@@ -166,7 +152,6 @@ func TestRenderActiveMultipliers_SignColors(t *testing.T) {
 // both the positive and negative fragments visible.
 func TestRenderActiveMultipliers_OpposingSourcesStillRender(t *testing.T) {
 	state := game.GameState{
-		SpeedMultiplier: 1.0,
 		Modifiers: []game.Modifier{
 			{Source: "research", Target: "gather_rate", Op: game.OpAdd, Value: 0.10},
 			{Source: "event:Drought", Target: "gather_rate", Op: game.OpAdd, Value: -0.10},
@@ -193,7 +178,6 @@ func TestRenderActiveMultipliers_OpposingSourcesStillRender(t *testing.T) {
 // storage keys) are not rate multipliers and must not appear here as percents.
 func TestRenderActiveMultipliers_CapacityTargetsExcluded(t *testing.T) {
 	state := game.GameState{
-		SpeedMultiplier: 1.0,
 		Modifiers: []game.Modifier{
 			{Source: "prestige", Target: "population", Op: game.OpAdd, Value: 2.0},
 			{Source: "wonders", Target: "all", Op: game.OpAdd, Value: 20.0},
@@ -217,7 +201,6 @@ func TestRenderActiveMultipliers_CapacityTargetsExcluded(t *testing.T) {
 // negative production effect gets a [red] "food" line, a positive one [green].
 func TestStatsProvider_ActiveEventEffects(t *testing.T) {
 	state := game.GameState{
-		SpeedMultiplier: 1.0,
 		ActiveEvents: []game.ActiveEventState{
 			{
 				Name:      "Famine",

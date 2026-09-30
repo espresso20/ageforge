@@ -6,10 +6,10 @@ import (
 )
 
 // TestSpeedWritesVsTickLoop exercises the tick loop's getTickInterval read of
-// speedMultiplier/tickSpeedBonus while the player `speed` command and the
-// /speed dev command write them from another goroutine. It only fails under
-// -race (the read used to be unlocked); without -race it is a smoke test that
-// the loop keeps ticking and shuts down cleanly.
+// speedMultiplier/tickSpeedBonus while the /speed dev command writes them from
+// another goroutine. It only fails under -race (the read used to be
+// unlocked); without -race it is a smoke test that the loop keeps ticking and
+// shuts down cleanly.
 func TestSpeedWritesVsTickLoop(t *testing.T) {
 	isolateAccountDir(t)
 	prevDev := DevModeActive
@@ -38,9 +38,9 @@ func TestSpeedWritesVsTickLoop(t *testing.T) {
 	// Every tick re-arms its timer via getTickInterval while these writes land.
 	deadline := time.Now().Add(1 * time.Second)
 	for time.Now().Before(deadline) {
-		// Player path first, then straight back to 10x so the loop keeps
-		// ticking at the fast interval.
-		_ = ge.SetSpeedMultiplier(1.0)
+		// Down to 1x, then straight back to 10x so the loop keeps ticking at
+		// the fast interval.
+		DevExecCommand("/speed 1", ge)
 		DevExecCommand("/speed 10", ge)
 		time.Sleep(5 * time.Millisecond)
 	}

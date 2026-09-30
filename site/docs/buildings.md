@@ -382,7 +382,7 @@ Monuments are one way to spend culture; the `festival` command is another. See [
 
 Unlocked in the **Industrial Age**, the Geographic Society is the one building that plays part of the game for you. It costs gold, steel and coal, holds **8 military workers**, and produces no resource. Instead it **sends out scouting expeditions on its own**, so an empire left to run keeps exploring and keeps meeting the world's civilizations, which is where civilization boons come from.
 
-You can build as many as you like, and the pace scales with how many you've built and how fully you've staffed them: one unstaffed Society sends a party roughly every 900 ticks (about **30 minutes** at 1x speed), and six fully staffed ones bottom out at around one every 100 ticks (about **3m 20s**). These times shrink at higher game speed; the **Factions** panel shows the countdown to the next dispatch in wall-clock time. It sends **scouting parties only**, never military campaigns. It never runs two at once or bypasses the single scouting slot, and it pays the full resource cost of every party, skipping the cycle if you can't cover it.
+You can build as many as you like, and the pace scales with how many you've built and how fully you've staffed them: one unstaffed Society sends a party roughly every 900 ticks (about **30 minutes** at 1x speed), and six fully staffed ones bottom out at around one every 100 ticks (about **3m 20s**). These times shrink as your tick speed rises; the **Factions** panel shows the countdown to the next dispatch in wall-clock time. It sends **scouting parties only**, never military campaigns. It never runs two at once or bypasses the single scouting slot, and it pays the full resource cost of every party, skipping the cycle if you can't cover it.
 
 It is deliberately **slower than sending expeditions yourself**: even fully built and staffed, it runs at about 60% of the pace of a player chaining expeditions by hand. Treat it as a floor under your exploration rather than a substitute for it. Full details in [Military & Expeditions](military.md#automatic-dispatch-the-geographic-society).
 
@@ -399,7 +399,7 @@ build <wonder_key>                       start construction once it is fully fun
 
 You must build each age's wonder before you can advance to the next age. A wonder's price adds up to 40 **price units** of its age, where one price unit is what a typical building of that age charges in a single resource (valued at [price parity](#how-production-rates-are-set)); each wonder keeps its own mix of resources. A wonder takes at most 1/6 of the age's target time to build.
 
-Wonders give civilization-wide bonuses. Each completed wonder also raises your speed cap by 0.5x; set the game speed you want with `speed`.
+Wonders give civilization-wide bonuses.
 
 Endure never destroys wonders, and Succumb never turns them into ruins. They stay for the rest of the run.
 

@@ -124,8 +124,7 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 	for _, bKey := range newDef.UnlockBuildings {
 		if def, ok := allBuildings[bKey]; ok && def.Category == "wonder" {
 			fmt.Fprintf(&sb, "\n[gold::b]★ Wonder unlocked: %s[-]\n", def.Name)
-			fmt.Fprintf(&sb, "[white]Bank its cost, then build it. It raises the speed cap by %sx.[-]\n",
-				config.FormatAmount(config.WonderSpeedCapStep))
+			sb.WriteString("[white]Bank its cost, then build it.[-]\n")
 			break
 		}
 	}

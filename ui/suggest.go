@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"fmt"
 	"sort"
 	"strconv"
 	"strings"
@@ -437,8 +436,6 @@ func (c *completer) compute(k ArgKind, prev []string, st game.GameState) []strin
 		return activeTradeRouteKeys(st)
 	case ArgPrestigeUpgrade:
 		return prestigeUpgradeKeys(st)
-	case ArgSpeed:
-		return availableSpeedOptions(c.engine)
 	case ArgAccount:
 		return localAccountNames(c.engine)
 	case ArgDeal:
@@ -763,18 +760,6 @@ func unlockedThemeKeys(engine *game.GameEngine) []string {
 		}
 	}
 	return keys
-}
-
-// availableSpeedOptions returns the speed multipliers from 1.0 up to the
-// current max, in steps of config.WonderSpeedCapStep (the max rises that much
-// per wonder built).
-func availableSpeedOptions(engine *game.GameEngine) []string {
-	maxSpeed := engine.GetMaxSpeed()
-	var options []string
-	for s := 1.0; s <= maxSpeed; s += config.WonderSpeedCapStep {
-		options = append(options, fmt.Sprintf("%.1f", s))
-	}
-	return options
 }
 
 // upgradeableBuildingKeys returns the buildings with an upgrade available,

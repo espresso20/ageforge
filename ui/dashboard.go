@@ -726,10 +726,6 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 	if state.Prestige.Level > 0 {
 		prestigeStr = fmt.Sprintf("  [cyan]Prestige %d[-]", state.Prestige.Level)
 	}
-	speedStr := ""
-	if state.SpeedMultiplier > 1 {
-		speedStr = fmt.Sprintf("  [yellow]Speed %.1fx[-]", state.SpeedMultiplier)
-	}
 	titleStr := ""
 	if state.Milestones.CurrentTitle != "" {
 		titleStr = fmt.Sprintf("  [yellow]\"%s\"[-]", state.Milestones.CurrentTitle)
@@ -785,8 +781,8 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		acctStr = fmt.Sprintf("[gold]%s[-] · ", name)
 	}
 	d.statusTV.SetText(fmt.Sprintf(
-		"%s[gold]%s[-]%s%s%s%s%s%s  |  Pop: %d/%d%s  |  [gray]type a panel name to open it · Esc: close or menu[-]",
-		acctStr, state.AgeName, prestigeStr, titleStr, epochStr, catStr, speedStr, devStr,
+		"%s[gold]%s[-]%s%s%s%s%s  |  Pop: %d/%d%s  |  [gray]type a panel name to open it · Esc: close or menu[-]",
+		acctStr, state.AgeName, prestigeStr, titleStr, epochStr, catStr, devStr,
 		state.Workers.TotalPop, state.Workers.MaxPop, moraleStr,
 	))
 }

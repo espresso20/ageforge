@@ -16,7 +16,7 @@ The game tracks and graphs seven metrics:
 | **Faith** | Total faith accumulated |
 | **Morale** | Civilization morale as a percentage (the production multiplier's input) |
 | **Prod Bonus** | Your permanent bonus to all production, as a percentage |
-| **Tick Speed** | Your tick speed bonus from techs, prestige and events (the `speed` setting is not included) |
+| **Tick Speed** | Your tick speed bonus from techs, prestige and events |
 
 Each metric gets its own braille line graph covering the whole stored history. Beside each graph is the current value, a trend arrow (↑ growing, ↓ shrinking, → stable), and the recorded min/max.
 
@@ -50,5 +50,5 @@ The game records one sample every **10 ticks** (about 20 seconds at 1x) and keep
 - After an age advance, the `│` marker shows which metrics jumped or dipped at the change.
 - A **Food Rate** line that drops below zero is a food deficit. Catch it before your workers start to starve.
 - A flat **Prod Bonus** line means no milestone or prestige upgrade has added to your all-production bonus recently.
-- **Tick Speed** steps up when you finish a tech that grants tick speed. Wonders do not move it: they raise the speed cap, which you use with the `speed` command.
+- **Tick Speed** steps up when you finish a tech that grants tick speed. Wonders do not move it.
 - A taller terminal window fits all 7 graphs at once.

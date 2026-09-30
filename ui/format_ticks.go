@@ -16,10 +16,10 @@ import (
 // minutes and seconds and speaks it the same way.
 //
 // The conversion is deliberately anchored on state.TickIntervalMs, which GetState
-// computes as BaseTickInterval / ((1 + tickSpeedBonus) * speedMultiplier) — the
-// tick-speed bonus AND the speed multiplier are ALREADY folded into it. Do not
-// divide by state.SpeedMultiplier again here; that would double-count the very
-// thing the field exists to express. A consequence worth knowing: these readings
+// computes as BaseTickInterval / ((1 + tickSpeedBonus) * speedMultiplier): the
+// tick-speed bonus (and the dev console's /speed override) are ALREADY folded
+// into it. Do not scale it again here; that would double-count the very thing
+// the field exists to express. A consequence worth knowing: these readings
 // move as the player's tick speed does, which is correct — a research boost
 // really does shorten the wait.
 //

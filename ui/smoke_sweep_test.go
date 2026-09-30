@@ -63,7 +63,7 @@ var sweepOverlays = []struct{ cmd, overlay string }{
 // sweepCommands only read state (bare forms print a status or a list).
 var sweepCommands = []string{
 	"status", "rates", "build", "upgrade", "wonder", "festival", "blackmarket",
-	"prestige", "prestige shop", "speed", "catastrophe", "theme", "theme list",
+	"prestige", "prestige shop", "catastrophe", "theme", "theme list",
 	"saves", "account", "plan list", "wonder overflow", "map style", "map glyphs",
 }
 

@@ -253,7 +253,7 @@ var retiredTerms = []struct {
 	{regexp.MustCompile(`\bproduction_all\b`), "all production"},
 	{regexp.MustCompile(`\d/t\b`), "/tick"},
 	{regexp.MustCompile(`(?i)\bmilitary cap\b`), "soldier storage"},
-	{regexp.MustCompile(`(?i)unlocks \+0\.5x`), "raises the speed cap by 0.5x"},
+	{regexp.MustCompile(`(?i)\bspeed cap\b|unlocks \+0\.5x`), "nothing: there is no speed setting, the game runs at 1x and wonders raise no cap"},
 	{regexp.MustCompile(`\bESC\b`), "Esc (e.g. \"(Esc to close)\")"},
 	{regexp.MustCompile(`\(s\)`), "a plural helper (textfmt.Count)"},
 }

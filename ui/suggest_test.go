@@ -38,7 +38,7 @@ func TestAutoCompleter_NoRepeatAfterLastArg(t *testing.T) {
 		"expedition list ", "campaign list ",
 		"assign hut all ", "unassign hut all ", "dismiss hut all ",
 		"prestige confirm yes ", "prestige buy x ", "festival confirm yes ",
-		"speed 1.0 ", "save list ", "load x ", "gather food ",
+		"save list ", "load x ", "gather food ",
 		"account switch x ",
 	} {
 		if got := comp(line); len(got) != 0 {

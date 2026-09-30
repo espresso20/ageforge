@@ -157,7 +157,6 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 	for _, eff := range current.def.Effects {
 		fmt.Fprintf(&sb, "  %s\n", formatEffect(eff))
 	}
-	fmt.Fprintf(&sb, "  [gold]%s[-]\n", wonderSpeedCapText)
 
 	// Bank progress if not built
 	if !built {
@@ -197,23 +196,19 @@ func (wp *WonderPanel) UpdateState(state game.GameState) {
 		fmt.Fprintf(&sb, "\n[gray]Build time: %s[-]\n", formatTicks(current.def.BuildTicks, state))
 	}
 
-	// Wonder count / speed
+	// Wonder count
 	wonderCount := 0
 	for _, w := range getWonderList() {
 		if bs, ok := state.Buildings[w.key]; ok && bs.Count > 0 {
 			wonderCount++
 		}
 	}
-	maxSpeed := 1.0 + float64(wonderCount)*config.WonderSpeedCapStep
-	fmt.Fprintf(&sb, "\n[gold]Wonders built: %d[-] [gray]·[-] [cyan]Speed cap: %.1fx[-]", wonderCount, maxSpeed)
+	fmt.Fprintf(&sb, "\n[gold]Wonders built: %d[-]", wonderCount)
 
 	infoTV.SetText(safeTags(sb.String()))
 
 	wp.root.AddItem(infoTV, 0, 1, false)
 }
-
-// wonderSpeedCapText is the speed line every wonder card carries.
-var wonderSpeedCapText = "Raises the speed cap by " + config.FormatAmount(config.WonderSpeedCapStep) + "x"
 
 // wonderCollectHint is the registry's wonder collect form, escaped for tview.
 func wonderCollectHint() string {

@@ -49,8 +49,10 @@ func TestBuildingDescriptionsComeFromEffects(t *testing.T) {
 				}
 			}
 		}
-		if d.Category == "wonder" && !strings.Contains(d.Description, "speed cap") {
-			t.Errorf("%s: wonder description must say it raises the speed cap: %q", d.Key, d.Description)
+		// Game speed is fixed at 1x: wonders no longer raise a speed cap, so
+		// no description may promise one.
+		if d.Category == "wonder" && strings.Contains(strings.ToLower(d.Description), "speed cap") {
+			t.Errorf("%s: wonder description mentions a speed cap, which no longer exists: %q", d.Key, d.Description)
 		}
 	}
 }

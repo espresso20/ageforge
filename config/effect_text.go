@@ -19,11 +19,6 @@ import (
 // still written by hand, and the guard tests in effect_text_test.go check it
 // against the same helpers.
 
-// WonderSpeedCapStep is how far each built wonder raises the cap on the
-// `speed` setting. game.MaxSpeedForAge applies it; a game test pins the two
-// together.
-const WonderSpeedCapStep = 0.5
-
 // ResourceLabel is a resource's display name in running text: "iron ore",
 // "dark matter". Unknown keys fall back to the key with spaces.
 func ResourceLabel(key string) string {
@@ -135,9 +130,9 @@ func buildingEffectParts(d BuildingDef) []string {
 }
 
 // buildingEffectText is the mechanical sentence appended to a building's
-// flavor: "+1 food/tick (3 workers)." Wonders add the speed-cap line. It is
-// empty for a building with nothing to report (the Geographic Society, whose
-// work is done by the engine, not by an Effect).
+// flavor: "+1 food/tick (3 workers)." It is empty for a building with
+// nothing to report (the Geographic Society, whose work is done by the
+// engine, not by an Effect).
 func buildingEffectText(d BuildingDef) string {
 	parts := buildingEffectParts(d)
 	var sb strings.Builder
@@ -147,12 +142,6 @@ func buildingEffectText(d BuildingDef) string {
 			fmt.Fprintf(&sb, " (%d workers)", d.WorkerCapacity)
 		}
 		sb.WriteString(".")
-	}
-	if d.Category == "wonder" {
-		if sb.Len() > 0 {
-			sb.WriteString(" ")
-		}
-		fmt.Fprintf(&sb, "Raises the speed cap by %sx.", FormatAmount(WonderSpeedCapStep))
 	}
 	return sb.String()
 }
