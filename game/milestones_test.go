@@ -1,6 +1,7 @@
 package game
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
@@ -103,6 +104,9 @@ func TestMilestoneManager_RunCounters(t *testing.T) {
 				for k, n := range def.MinBuildings {
 					bm.counts[k] = n
 				}
+				if sum := def.MinBuildingSum; sum.Count > 0 {
+					bm.counts[sum.Keys[0]] += sum.Count
+				}
 				v := [4]int{def.MinTotalBuilt, def.MinSoldiersTrained, def.MinWonders, def.MinKnowledgeWorkers}
 				if short {
 					v[i]--
@@ -125,6 +129,78 @@ func TestMilestoneManager_RunCounters(t *testing.T) {
 	}
 	if checked == 0 {
 		t.Fatal("no milestone asks for a run counter")
+	}
+}
+
+// TestMilestoneManager_BuildingSum: a building sum counts every listed
+// building toward one total, in any mix, so upgrading one tier into the next
+// keeps the progress; one short holds the milestone back, and the progress
+// row names every building in it.
+func TestMilestoneManager_BuildingSum(t *testing.T) {
+	ageOrder := fullAgeOrder()
+	checked := 0
+	for _, def := range config.Milestones() {
+		sum := def.MinBuildingSum
+		if sum.Count <= 0 {
+			continue
+		}
+		checked++
+		if len(sum.Keys) < 2 {
+			t.Errorf("%s: a building sum over %d key(s) is just a building count", def.Key, len(sum.Keys))
+			continue
+		}
+		age := def.MinAge
+		if age == "" {
+			age = "primitive_age"
+		}
+		done := func(counts map[string]int) bool {
+			mm := NewMilestoneManager()
+			bm := NewBuildingManager()
+			for k, n := range def.MinBuildings {
+				bm.counts[k] = n
+			}
+			for k, n := range counts {
+				bm.counts[k] += n
+			}
+			for _, ms := range mm.CheckMilestones(def.MinTick, age, ageOrder, NewResourceManager(), bm,
+				def.MinPopulation, def.MinTechCount, def.MinTotalBuilt, nil, def.MinSoldiersTrained, def.MinWonders, def.MinKnowledgeWorkers) {
+				if ms.Key == def.Key {
+					return true
+				}
+			}
+			return false
+		}
+		first, last := sum.Keys[0], sum.Keys[len(sum.Keys)-1]
+		if !done(map[string]int{first: sum.Count}) {
+			t.Errorf("%s: %d %s alone should complete it", def.Key, sum.Count, first)
+		}
+		if !done(map[string]int{first: sum.Count / 2, last: sum.Count - sum.Count/2}) {
+			t.Errorf("%s: a split of %d across %s and %s should complete it", def.Key, sum.Count, first, last)
+		}
+		if done(map[string]int{first: sum.Count / 2, last: sum.Count - sum.Count/2 - 1}) {
+			t.Errorf("%s: one short of %d should not complete it", def.Key, sum.Count)
+		}
+
+		mm := NewMilestoneManager()
+		rows := mm.computeProgress(def, MilestoneSnapshotParams{Buildings: map[string]int{first: 3, last: 4}, AgeOrder: ageOrder, Age: age})
+		found := false
+		for _, r := range rows {
+			if r.Target != float64(sum.Count) || r.Current != 7 {
+				continue
+			}
+			found = true
+			for _, k := range sum.Keys {
+				if !strings.Contains(r.Label, BuildingName(k)) {
+					t.Errorf("%s: progress row %q should name %s", def.Key, r.Label, BuildingName(k))
+				}
+			}
+		}
+		if !found {
+			t.Errorf("%s: no progress row counts the sum (7 of %d)", def.Key, sum.Count)
+		}
+	}
+	if checked == 0 {
+		t.Skip("no milestone uses a building sum")
 	}
 }
 

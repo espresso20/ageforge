@@ -298,6 +298,21 @@ func TestConfig_MilestoneKeysExist(t *testing.T) {
 					ms.Key, ms.Name, bld, hintFromMap(bld, buildingKeys))
 			}
 		}
+		for _, bld := range ms.MinBuildingSum.Keys {
+			if _, ok := buildingKeys[bld]; !ok {
+				t.Errorf("\n"+
+					"  Bad building key in milestone requirements\n"+
+					"  File:     config/milestones.go\n"+
+					"  Milestone: %q (%s)\n"+
+					"  Field:    MinBuildingSum.Keys\n"+
+					"  Got:      %q  <-- this building doesn't exist\n"+
+					"  Fix:      Check config/buildings.go for valid building keys%s\n",
+					ms.Key, ms.Name, bld, hintFromMap(bld, buildingKeys))
+			}
+		}
+		if sum := ms.MinBuildingSum; (sum.Count > 0) != (len(sum.Keys) > 0) {
+			t.Errorf("%s: MinBuildingSum needs both keys and a count, got %d key(s) and count %d", ms.Key, len(sum.Keys), sum.Count)
+		}
 		for _, tech := range ms.RequiredTechs {
 			if _, ok := techKeys[tech]; !ok {
 				t.Errorf("\n"+

@@ -194,7 +194,7 @@ func TestMilestoneDescriptionNumbers(t *testing.T) {
 		for _, v := range m.MinResources {
 			ok[v] = true
 		}
-		for _, v := range []int{m.MinPopulation, m.MinTechCount, m.MinTotalBuilt,
+		for _, v := range []int{m.MinPopulation, m.MinTechCount, m.MinBuildingSum.Count, m.MinTotalBuilt,
 			m.MinSoldiersTrained, m.MinWonders, m.MinKnowledgeWorkers} {
 			if v > 0 {
 				ok[float64(v)] = true
@@ -208,26 +208,6 @@ func TestMilestoneDescriptionNumbers(t *testing.T) {
 		}
 		if strings.Contains(strings.ToLower(desc), " all ") {
 			t.Errorf("%s: %q says \"all\"; name the count instead", m.Key, m.Description)
-		}
-	}
-}
-
-// TestMilestonesAreFeasible: no milestone asks for more copies of a building
-// than may exist, or more techs than there are.
-func TestMilestonesAreFeasible(t *testing.T) {
-	bld := BuildingByKey()
-	techs := len(Technologies())
-	for _, m := range Milestones() {
-		if m.MinTechCount > techs {
-			t.Errorf("%s: asks for %d techs, there are %d", m.Key, m.MinTechCount, techs)
-		}
-		for key, n := range m.MinBuildings {
-			d, ok := bld[key]
-			if !ok {
-				t.Errorf("%s: unknown building %q", m.Key, key)
-			} else if d.MaxCount > 0 && n > d.MaxCount {
-				t.Errorf("%s: asks for %d %s, at most %d may exist", m.Key, n, key, d.MaxCount)
-			}
 		}
 	}
 }

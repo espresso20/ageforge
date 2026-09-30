@@ -123,6 +123,15 @@ func (mm *MilestoneManager) checkMilestone(
 			return false
 		}
 	}
+	if sum := def.MinBuildingSum; sum.Count > 0 {
+		have := 0
+		for _, bld := range sum.Keys {
+			have += buildings.GetCount(bld)
+		}
+		if have < sum.Count {
+			return false
+		}
+	}
 
 	// Check population
 	if def.MinPopulation > 0 && population < def.MinPopulation {
@@ -280,6 +289,21 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 			Current: current,
 			Target:  float64(required),
 			Met:     int(current) >= required,
+		})
+	}
+	// A building sum is one row: "Trading Posts and Merchant Quarters".
+	if sum := def.MinBuildingSum; sum.Count > 0 {
+		have := 0
+		names := make([]string, 0, len(sum.Keys))
+		for _, bld := range sum.Keys {
+			have += params.Buildings[bld]
+			names = append(names, pluralName(2, BuildingName(bld)))
+		}
+		progress = append(progress, MilestoneProgress{
+			Label:   textfmt.List(names),
+			Current: float64(have),
+			Target:  float64(sum.Count),
+			Met:     have >= sum.Count,
 		})
 	}
 

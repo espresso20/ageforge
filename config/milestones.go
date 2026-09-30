@@ -28,6 +28,9 @@ type MilestoneDef struct {
 	MinPopulation int                // state.Workers.TotalPop must be ≥ this
 	MinTechCount  int                // total number of completed research techs must be ≥ this
 	RequiredTechs []string           // all listed tech keys must be researched
+	// MinBuildingSum asks for a total across several building types (see
+	// BuildingSum).
+	MinBuildingSum BuildingSum
 	// Run counters the engine keeps. The first two reset with the run
 	// (prestige, Succumb) and only ever grow within it.
 	MinTotalBuilt       int // structures built this run (upgrades don't count, selling doesn't subtract)
@@ -36,6 +39,15 @@ type MilestoneDef struct {
 	MinKnowledgeWorkers int // workers staffing knowledge buildings right now
 	// Rewards — applied once when the milestone completes
 	Rewards []Effect
+}
+
+// BuildingSum asks for Count buildings across Keys between them, in any mix.
+// Milestones use it for consecutive tiers of one lineage, so upgrading a
+// building into the next tier keeps the progress. The zero value asks for
+// nothing.
+type BuildingSum struct {
+	Keys  []string
+	Count int
 }
 
 // MilestoneChainDef defines a set of milestones that, when all completed,
@@ -165,8 +177,9 @@ func MilestoneTitles() []TitleDef {
 	}
 }
 
-// Milestones returns all milestone definitions.
-// Total: 74 milestones across settlement, builder, scholar, military, trade, faith, epoch, and ages categories.
+// Milestones returns all milestone definitions, across the settlement,
+// builder, scholar, military, trade, faith, epoch and ages categories.
+// smoke/static_milestones.go proves every one can be completed.
 func Milestones() []MilestoneDef {
 	return []MilestoneDef{
 
@@ -185,84 +198,83 @@ func Milestones() []MilestoneDef {
 				{Type: "instant_resource", Target: "food", Value: 10},
 			},
 		},
-		// small_village: raised to 5,000 — requires real investment
+		// The population ladder (small_village to global_city) sits at most
+		// 40% of the housing ceiling of the age each rung is meant for
+		// (Primitive, Bronze, Classical, Renaissance, Industrial, Atomic,
+		// Digital). smoke/static_milestones.go proves every rung.
 		{
 			Name: "Small Village", Key: "small_village",
-			Description:   "Reach a population of 5,000.",
-			Flavor:        "Five thousand souls, and already someone wants to form a committee.",
+			Description:   "Reach a population of 250.",
+			Flavor:        "Two hundred and fifty souls, and already someone wants to form a committee.",
 			Category:      "settlement",
-			MinPopulation: 5000,
+			MinPopulation: 250,
 			Rewards: []Effect{
 				{Type: "instant_resource", Target: "wood", Value: 50},
 			},
 		},
-		// bustling_town: raised to 50,000
 		{
 			Name: "Bustling Town", Key: "bustling_town",
-			Description:   "Reach a population of 50,000.",
+			Description:   "Reach a population of 1,500.",
 			Flavor:        "A proper town now, with a market, a tavern, and at least one feud.",
 			Category:      "settlement",
-			MinPopulation: 50000,
+			MinPopulation: 1500,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "food_rate", Value: 0.05},
 			},
 		},
-		// growing_city: raised to 500,000; bronze_age gate maintained
 		{
 			Name: "Growing City", Key: "growing_city",
-			Description:   "Reach a population of 500,000.",
-			Flavor:        "Half a million people. The traffic has invented itself spontaneously.",
+			Description:   "Reach a population of 5,000.",
+			Flavor:        "Five thousand people. The traffic has invented itself spontaneously.",
 			Category:      "settlement",
 			MinAge:        "bronze_age",
-			MinPopulation: 500000,
+			MinPopulation: 5000,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "food_rate", Value: 0.10},
 			},
 		},
-		// metropolis: raised to 10M pop; iron_age gated
 		{
 			Name: "Metropolis", Key: "metropolis",
-			Description: "Reach a population of 10,000,000.",
-			Flavor:      "Ten million people. You have officially lost track of all their names.",
+			Description: "Reach a population of 15,000.",
+			Flavor:      "Fifteen thousand people. You have officially lost track of all their names.",
 			Category:    "settlement", Hidden: true,
 			MinAge:        "iron_age",
-			MinPopulation: 10000000,
+			MinPopulation: 15000,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.10},
 			},
 		},
-		// megalopolis: raised to 1B pop
 		{
 			Name: "Megalopolis", Key: "megalopolis",
-			Description: "Reach a population of 1,000,000,000.",
-			Flavor:      "A billion people. The census takers have requested early retirement.",
+			Description: "Reach a population of 250,000.",
+			Flavor:      "A quarter of a million people. The census takers have requested early retirement.",
 			Category:    "settlement", Hidden: true,
 			MinAge:        "classical_age",
-			MinPopulation: 1000000000,
+			MinPopulation: 250000,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.20},
 			},
 		},
-		// urban_sprawl — 100M pop, medieval_age gated
 		{
 			Name: "Urban Sprawl", Key: "urban_sprawl",
-			Description: "Reach a population of 100,000,000.",
+			Description: "Reach a population of 50,000.",
 			Flavor:      "The city has no edges anymore. It just sort of keeps being the city.",
 			Category:    "settlement", Hidden: true,
 			MinAge:        "medieval_age",
-			MinPopulation: 100000000,
+			MinPopulation: 50000,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.15},
 			},
 		},
-		// global_city — 10B pop, industrial_age gated
+		// global_city is the Digital Age rung, past the first prestige, so its
+		// age says so.
 		{
 			Name: "Global City", Key: "global_city",
-			Description: "Reach a population of 10,000,000,000.",
-			Flavor:      "Ten billion. The planet has filed a formal complaint about the crowding.",
+			Description: "Reach a population of 1,000,000.",
+			Flavor:      "A million people. The planet has filed a formal complaint about the crowding.",
 			Category:    "settlement", Hidden: true,
-			MinAge:        "industrial_age",
-			MinPopulation: 10000000000,
+			MinAge:        "digital_age",
+			MinPopulation: 1000000,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.20},
 			},
@@ -308,14 +320,15 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "food_rate", Value: 0.05},
 			},
 		},
-		// stone_mason: raised to 50 stone pits
+		// stone_mason: 30 stone pits. Stone Pits are built only in the Stone
+		// Age, where storage holds at most 40.
 		{
 			Name: "Stone Mason", Key: "stone_mason",
-			Description:  "Build 50 Stone Pits.",
-			Flavor:       "Fifty pits of honest stone. Your masons can finally stop improvising with mud.",
+			Description:  "Build 30 Stone Pits.",
+			Flavor:       "Thirty pits of honest stone. Your masons can finally stop improvising with mud.",
 			Category:     "builder",
 			MinAge:       "stone_age",
-			MinBuildings: map[string]int{"stone_pit": 50},
+			MinBuildings: map[string]int{"stone_pit": 30},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "stone_rate", Value: 0.10},
 			},
@@ -332,14 +345,17 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "wood_rate", Value: 0.10},
 			},
 		},
-		// early_builder: raised to 500 buildings
+		// The build-count ladder (early_builder, seasoned_builder,
+		// master_builder, grand_architect) is meant for the Bronze, Iron,
+		// Colonial and Modern Ages; smoke/static_milestones.go proves each
+		// fits a run.
 		{
 			Name: "Early Builder", Key: "early_builder",
-			Description:   "Build 500 structures total.",
-			Flavor:        "Five hundred buildings. You've stopped naming them and started numbering them.",
+			Description:   "Build 250 structures total.",
+			Flavor:        "Two hundred and fifty buildings. You've stopped naming them and started numbering them.",
 			Category:      "builder",
 			MinAge:        "bronze_age",
-			MinTotalBuilt: 500,
+			MinTotalBuilt: 250,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "build_cost", Value: -0.03},
 			},
@@ -369,25 +385,23 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "build_cost", Value: -0.03},
 			},
 		},
-		// seasoned_builder: raised to 2,000 buildings
 		{
 			Name: "Seasoned Builder", Key: "seasoned_builder",
-			Description:   "Build 2,000 structures total.",
-			Flavor:        "Two thousand buildings. You could get lost in your own civilization, and frequently do.",
+			Description:   "Build 500 structures total.",
+			Flavor:        "Five hundred buildings. You could get lost in your own civilization, and frequently do.",
 			Category:      "builder",
 			MinAge:        "iron_age",
-			MinTotalBuilt: 2000,
+			MinTotalBuilt: 500,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "build_cost", Value: -0.03},
 			},
 		},
-		// master_builder: raised to 5,000 buildings
 		{
 			Name: "Master Builder", Key: "master_builder",
-			Description:   "Build 5,000 structures total.",
-			Flavor:        "Five thousand structures. Future archaeologists will assume you were showing off.",
+			Description:   "Build 1,000 structures total.",
+			Flavor:        "A thousand structures. Future archaeologists will assume you were showing off.",
 			Category:      "builder",
-			MinTotalBuilt: 5000,
+			MinTotalBuilt: 1000,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "build_cost", Value: -0.05},
 			},
@@ -403,14 +417,13 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
 			},
 		},
-		// grand_architect: raised to 20,000 buildings
 		{
 			Name: "Grand Architect", Key: "grand_architect",
-			Description: "Build 20,000 structures total.",
-			Flavor:      "Twenty thousand buildings. The mapmakers have unionized and gone home.",
+			Description: "Build 2,000 structures total.",
+			Flavor:      "Two thousand buildings. The mapmakers have unionized and gone home.",
 			Category:    "builder", Hidden: true,
 			MinAge:        "medieval_age",
-			MinTotalBuilt: 20000,
+			MinTotalBuilt: 2000,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "build_cost", Value: -0.05},
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
@@ -428,13 +441,13 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.10},
 			},
 		},
-		// wonder_empire: raised to 15 wonders
+		// wonder_empire: 15 wonders, one per age, so the Digital Age.
 		{
 			Name: "Wonder Empire", Key: "wonder_empire",
 			Description: "Build 15 wonders.",
 			Flavor:      "Fifteen Wonders. At this point you're just collecting them, like a very expensive hobby.",
 			Category:    "builder", Hidden: true,
-			MinAge:     "modern_age",
+			MinAge:     "digital_age",
 			MinWonders: 15,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.15},
@@ -538,27 +551,29 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "knowledge_rate", Value: 0.15},
 			},
 		},
-		// tech_master: raised to 50 techs; industrial age gated.
-		// Capstone broadened — keeps research_speed, adds a touch of production_all.
+		// tech_master: 50 techs. The tech tree reaches 50 in the Information
+		// Age, so that is its age. Capstone broadened: keeps research_speed,
+		// adds a touch of production_all.
 		{
 			Name: "Tech Master", Key: "tech_master",
 			Description: "Research 50 techs.",
 			Flavor:      "Fifty technologies mastered. You now understand the universe well enough to be properly worried.",
 			Category:    "scholar", Hidden: true,
-			MinAge:       "industrial_age",
+			MinAge:       "information_age",
 			MinTechCount: 50,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "research_speed", Value: 0.10},
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
 			},
 		},
-		// tech_ascendant — every tech (the count follows the tech tree); quantum age gated
+		// tech_ascendant: every tech (the count follows the tech tree). The
+		// last ones are Transcendent Age techs, so that is its age.
 		{
 			Name: "Tech Ascendant", Key: "tech_ascendant",
 			Description: fmt.Sprintf("Research %d techs.", len(Technologies())),
 			Flavor:      "Every technology, researched. The tech tree is bald. You did this.",
 			Category:    "scholar", Hidden: true,
-			MinAge:       "quantum_age",
+			MinAge:       "transcendent_age",
 			MinTechCount: len(Technologies()),
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "research_speed", Value: 0.20},
@@ -701,15 +716,17 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
 			},
 		},
-		// trade_empire: capstone scaled to 30 trading posts + 12 merchant quarters;
-		// renaissance age. Broadened to production_all (was gold_rate).
+		// trade_empire: 20 of the trade lineage's Iron and Classical tiers
+		// standing in the Renaissance, in any mix, so upgrading posts into
+		// quarters keeps the progress. Broadened to production_all (was
+		// gold_rate).
 		{
 			Name: "Trade Empire", Key: "trade_empire",
-			Description: "Build 30 Trading Posts and 12 Merchant Quarters.",
+			Description: "Build 20 Trading Posts and Merchant Quarters in any mix.",
 			Flavor:      "A trade empire. Somewhere, a coin is changing hands in your name right now. And now. And now.",
 			Category:    "trade", Hidden: true,
-			MinAge:       "renaissance_age",
-			MinBuildings: map[string]int{"trading_post": 30, "merchant_quarter": 12},
+			MinAge:         "renaissance_age",
+			MinBuildingSum: BuildingSum{Keys: []string{"trading_post", "merchant_quarter"}, Count: 20},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.10},
 			},
@@ -798,14 +815,15 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "faith_rate", Value: 0.05},
 			},
 		},
-		// temple_city: raised to 50 temples; iron age
+		// temple_city: 25 temples. Temples are built only in the Iron Age,
+		// where storage holds at most 31.
 		{
 			Name: "Temple City", Key: "temple_city",
-			Description: "Build 50 Temples.",
-			Flavor:      "Fifty temples. A holy city, with surprisingly aggressive parking.",
+			Description: "Build 25 Temples.",
+			Flavor:      "Twenty-five temples. A holy city, with surprisingly aggressive parking.",
 			Category:    "faith", Hidden: true,
 			MinAge:       "iron_age",
-			MinBuildings: map[string]int{"temple": 50},
+			MinBuildings: map[string]int{"temple": 25},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "faith_rate", Value: 0.10},
 			},
@@ -886,14 +904,16 @@ func Milestones() []MilestoneDef {
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.10},
 			},
 		},
-		// power_grid: raised to 50 coal plants + 10 steam turbines; victorian age
+		// power_grid: 20 coal plants + 10 steam turbines; victorian age. Coal
+		// Plants are built only in the Industrial Age, where storage holds at
+		// most 29.
 		{
 			Name: "Power Grid", Key: "power_grid",
-			Description: "Build 50 Coal Plants and 10 Steam Turbines.",
+			Description: "Build 20 Coal Plants and 10 Steam Turbines.",
 			Flavor:      "The lights stay on all night now. Nobody is entirely sure this is an improvement.",
 			Category:    "epoch", Hidden: true,
 			MinAge:       "victorian_age",
-			MinBuildings: map[string]int{"coal_plant": 50, "steam_turbine": 10},
+			MinBuildings: map[string]int{"coal_plant": 20, "steam_turbine": 10},
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.10},
 			},
