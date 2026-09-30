@@ -2,6 +2,8 @@
 
 AgeForge has 77 milestones, and 33 of them form 6 chains. Completing every milestone in a chain grants your civilization a **title** and a **temporary tick speed boost**. Some milestones stay hidden until you make progress toward them.
 
+Every milestone and every chain can be completed. See [Can every milestone be done?](#can-every-milestone-be-done) below.
+
 > When a milestone or chain completes, the log shows the achievement, its reward, and a short cosmetic **flavor quip** on a dim line below ("You built a Wonder. Your neighbors are impressed. One is drafting a strongly worded letter."). The quip is only there for character; the reward text above it is the part that matters.
 
 ---
@@ -39,11 +41,13 @@ If no chain is completed, fallback titles apply:
 | Milestone | Condition | Reward |
 |---|---|---|
 | First Shelter | Build 1 Hut | +10 food |
-| Small Village | Population: 5,000 | +50 wood |
-| Bustling Town | Population: 50,000 | +5% food rate |
-| Growing City | Population: 500,000 (Bronze Age) | +10% food rate |
-| Metropolis *(hidden)* | Population: 10,000,000 (Iron Age) | +10% all production |
-| Megalopolis *(hidden)* | Population: 1,000,000,000 (Classical Age) | +20% all production |
+| Small Village | Population: 250 | +50 wood |
+| Bustling Town | Population: 1,500 | +5% food rate |
+| Growing City | Population: 5,000 (Bronze Age) | +10% food rate |
+| Metropolis *(hidden)* | Population: 15,000 (Iron Age) | +10% all production |
+| Megalopolis *(hidden)* | Population: 250,000 (Classical Age) | +20% all production |
+
+Housing caps your population, so the ladder climbs with the ages: Small Village comes around the Stone Age, Bustling Town the Bronze Age, Growing City the Classical Age, Metropolis the Renaissance and Megalopolis the Electric Age, well before prestige opens.
 
 **Chain reward:** Title "The Founders" · tick speed +300% for 180 ticks
 
@@ -60,7 +64,9 @@ If no chain is completed, fallback titles apply:
 | Tech Pioneer | Research 15 techs | +5% research speed |
 | Scholar's Haven | Build 3 Libraries and staff 50 knowledge workers | +10% knowledge rate |
 | Renaissance Mind *(hidden)* | Research 42 techs | +10% research speed |
-| Tech Master *(hidden)* | Research 50 techs | +10% research speed, +5% all production |
+| Tech Master *(hidden)* | Research 50 techs (Information Age) | +10% research speed, +5% all production |
+
+The tech tree reaches 50 techs in the Information Age, so finishing this chain means playing past the Modern Age before you prestige.
 
 **Chain reward:** Title "The Enlightened" · tick speed +300% for 180 ticks
 
@@ -72,11 +78,13 @@ If no chain is completed, fallback titles apply:
 
 | Milestone | Condition | Reward |
 |---|---|---|
-| Stone Mason | Build 50 Stone Pits | +10% stone rate |
-| Master Builder | Build 5,000 total structures | -5% build cost |
+| Stone Mason | Build 30 Stone Pits | +10% stone rate |
+| Master Builder | Build 1,000 total structures | -5% build cost |
 | Wonder Builder *(hidden)* | Build 1 wonder | +5% all production |
-| Grand Architect *(hidden)* | Build 20,000 structures (Medieval Age) | -5% build cost, +5% all production |
+| Grand Architect *(hidden)* | Build 2,000 structures (Medieval Age) | -5% build cost, +5% all production |
 | Wonder Collector *(hidden)* | Build 8 wonders (Colonial Age) | +10% all production |
+
+Stone Pits can only be built in the Stone Age, so build them before you advance. Structures count every building you finish this run, wonders included (upgrades don't count, and the count starts over when you prestige).
 
 The `-5% build cost` rewards here (Master Builder, Grand Architect) are real discounts: they reduce the actual cumulative cost of every building you queue, and the saving shows up in the cost the build menu displays. Stacked with the other build-cost rewards across the game (and the Civil Engineering tech), the reductions reach roughly −24%, floored at 10% of base. See [Buildings](buildings.md#build-cost-reductions).
 
@@ -116,10 +124,12 @@ One more military milestone sits outside the chain: train 100 soldiers and build
 | Market Town | Build 8 Markets (Iron Age) | +5% gold rate |
 | Caravan Network | Build 5 Trading Posts (Classical Age) | +10% gold rate |
 | Merchant Princes *(hidden)* | Build 12 Trading Posts and 4 Merchant Quarters (Medieval Age) | +5% all production |
-| Trade Empire *(hidden)* | Build 30 Trading Posts and 12 Merchant Quarters (Renaissance Age) | +10% all production |
+| Trade Empire *(hidden)* | Build 20 Trading Posts and Merchant Quarters in any mix (Renaissance Age) | +10% all production |
 | Maritime Empire *(hidden)* | Build 5 Harbors, 5 Ports and 2 Seaports (Modern Age) | +10% all production, +10% gold rate |
 
 **Chain reward:** Title "The Merchants" · tick speed +250% for 150 ticks
+
+Trade Empire counts Trading Posts and Merchant Quarters together, so upgrading posts into quarters keeps your progress; they must still be there in the Renaissance Age. Maritime Empire needs Seaports, a Modern Age building, so this chain finishes in the Modern Age.
 
 The last three milestones pay out all production, so completing the chain lifts every resource, not just your gold.
 
@@ -175,7 +185,7 @@ These milestones sit outside the chains and don't count toward any chain title.
 |---|---|---|
 | First Shrine | Build 1 Shrine | +10 faith |
 | Devout Settlement | Build 25 Shrines (Stone Age) | +5% faith rate |
-| Temple City *(hidden)* | Build 50 Temples (Iron Age) | +10% faith rate |
+| Temple City *(hidden)* | Build 25 Temples (Iron Age) | +10% faith rate |
 | Cathedral Age *(hidden)* | Build 10 Cathedrals (Medieval Age) | +10% faith rate, +5% knowledge rate |
 
 **Epoch and longevity**
@@ -187,7 +197,7 @@ These milestones sit outside the chains and don't count toward any chain title.
 | Enduring Civilization *(hidden)* | Reach tick 50K in a run | +5% all production |
 | Age Hopper | Reach the Classical Age and research 10 techs | +5% all production |
 | Industrial Titan *(hidden)* | Stockpile 10K coal and 5K iron ore (Industrial Age) | +10% all production |
-| Power Grid *(hidden)* | Build 50 Coal Plants and 10 Steam Turbines (Victorian Age) | +10% all production |
+| Power Grid *(hidden)* | Build 20 Coal Plants and 10 Steam Turbines (Victorian Age) | +10% all production |
 
 **Builder**
 
@@ -197,11 +207,11 @@ These milestones sit outside the chains and don't count toward any chain title.
 | Storage Network | Build 10 Storage Pits (Stone Age) | +5% food rate |
 | Granary Keeper | Build 25 Granaries (Bronze Age) | +5% food rate |
 | Lumber Operation | Build 25 Wood Camps (Stone Age) | +10% wood rate |
-| Early Builder | Build 500 structures (Bronze Age) | -3% build cost |
+| Early Builder | Build 250 structures (Bronze Age) | -3% build cost |
 | Mining Syndicate | Build 25 Stone Pits and 10 Iron Mines (Iron Age) | +10% iron rate |
 | Forge Master | Build 15 Smithies (Iron Age) | +5% iron rate, -3% build cost |
-| Seasoned Builder | Build 2,000 structures (Iron Age) | -3% build cost |
-| Wonder Empire *(hidden)* | Build 15 wonders (Modern Age) | +15% all production |
+| Seasoned Builder | Build 500 structures (Iron Age) | -3% build cost |
+| Wonder Empire *(hidden)* | Build 15 wonders (Digital Age) | +15% all production |
 
 **Scholar**
 
@@ -210,14 +220,14 @@ These milestones sit outside the chains and don't count toward any chain title.
 | Deep Thinker | Research 25 techs (Bronze Age) | +5% knowledge rate |
 | Philosophes | Research 35 techs (Classical Age) | +5% research speed |
 | Grand Library Built *(hidden)* | Build the Great Library (Classical Age) | +15% knowledge rate |
-| Tech Ascendant *(hidden)* | Research all 73 techs (Quantum Age) | +20% research speed |
+| Tech Ascendant *(hidden)* | Research all 73 techs (Transcendent Age) | +20% research speed |
 
 **Settlement**
 
 | Milestone | Condition | Reward |
 |---|---|---|
-| Urban Sprawl *(hidden)* | Population: 100,000,000 (Medieval Age) | +15% all production |
-| Global City *(hidden)* | Population: 10,000,000,000 (Industrial Age) | +20% all production |
+| Urban Sprawl *(hidden)* | Population: 50,000 (Medieval Age) | +15% all production |
+| Global City *(hidden)* | Population: 1,000,000 (Digital Age) | +20% all production |
 
 **Trade**
 
@@ -226,6 +236,20 @@ These milestones sit outside the chains and don't count toward any chain title.
 | Guildhall Master *(hidden)* | Build 10 Guildhalls (Renaissance Age) | +10% gold rate |
 | Colonial Trade Network *(hidden)* | Build 3 Ports and 5 Colonial Warehouses (Colonial Age) | +10% gold rate, +10% expedition reward |
 | Gold Hoard *(hidden)* | Accumulate 1,000,000 gold (Renaissance Age) | +10% gold rate |
+
+---
+
+## Can every milestone be done?
+
+Yes. A milestone that doesn't name a later age fits inside a normal run: everything it asks for can be reached by the end of the Atomic Age, before prestige opens in the Modern Age. A milestone that names a later age fits in that age. The game's test suite checks this against the game's numbers on every change, so a balance change can't quietly strand one.
+
+| Chain | Can be finished by |
+|---|---|
+| Settlement, Builder, Military, Ancient Ages | the Atomic Age (a normal run) |
+| Trade | the Modern Age (Maritime Empire's Seaports) |
+| Scholar | the Information Age (Tech Master's 50 techs) |
+
+Some milestones count buildings you can only build in their own age: Stone Pits, Temples, Trading Posts, Coal Plants, Castle Keeps and others. Build them before you advance. If a milestone still needs them in a later age (Devout Settlement's Shrines in the Stone Age, Power Grid's Coal Plants in the Victorian Age), don't upgrade them away when the game offers.
 
 ---
 

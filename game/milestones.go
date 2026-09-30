@@ -123,6 +123,15 @@ func (mm *MilestoneManager) checkMilestone(
 			return false
 		}
 	}
+	if sum := def.MinBuildingSum; sum.Count > 0 {
+		have := 0
+		for _, bld := range sum.Keys {
+			have += buildings.GetCount(bld)
+		}
+		if have < sum.Count {
+			return false
+		}
+	}
 
 	// Check population
 	if def.MinPopulation > 0 && population < def.MinPopulation {
@@ -141,60 +150,10 @@ func (mm *MilestoneManager) checkMilestone(
 		}
 	}
 
-	// Special checks based on milestone key
-	switch def.Key {
-	case "master_builder":
-		if totalBuilt < 5000 {
-			return false
-		}
-	case "early_builder":
-		if totalBuilt < 500 {
-			return false
-		}
-	case "seasoned_builder":
-		if totalBuilt < 2000 {
-			return false
-		}
-	case "grand_architect":
-		if totalBuilt < 20000 {
-			return false
-		}
-	case "first_soldiers":
-		if soldiersTrained < 5 {
-			return false
-		}
-	case "standing_army":
-		if soldiersTrained < 100 {
-			return false
-		}
-	case "war_machine":
-		if soldiersTrained < 250 {
-			return false
-		}
-	case "iron_legion":
-		if soldiersTrained < 500 {
-			return false
-		}
-	case "military_superpower":
-		if soldiersTrained < 2000 {
-			return false
-		}
-	case "wonder_builder":
-		if wonderCount < 1 {
-			return false
-		}
-	case "wonder_collector":
-		if wonderCount < 8 {
-			return false
-		}
-	case "wonder_empire":
-		if wonderCount < 15 {
-			return false
-		}
-	case "scholars_haven":
-		if knowledgeCount < 50 {
-			return false
-		}
+	// Run counters (zero asks for nothing)
+	if totalBuilt < def.MinTotalBuilt || soldiersTrained < def.MinSoldiersTrained ||
+		wonderCount < def.MinWonders || knowledgeCount < def.MinKnowledgeWorkers {
+		return false
 	}
 
 	return true
@@ -332,6 +291,21 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 			Met:     int(current) >= required,
 		})
 	}
+	// A building sum is one row: "Trading Posts and Merchant Quarters".
+	if sum := def.MinBuildingSum; sum.Count > 0 {
+		have := 0
+		names := make([]string, 0, len(sum.Keys))
+		for _, bld := range sum.Keys {
+			have += params.Buildings[bld]
+			names = append(names, pluralName(2, BuildingName(bld)))
+		}
+		progress = append(progress, MilestoneProgress{
+			Label:   textfmt.List(names),
+			Current: float64(have),
+			Target:  float64(sum.Count),
+			Met:     have >= sum.Count,
+		})
+	}
 
 	if def.MinPopulation > 0 {
 		progress = append(progress, MilestoneProgress{
@@ -351,99 +325,24 @@ func (mm *MilestoneManager) computeProgress(def config.MilestoneDef, params Mile
 		})
 	}
 
-	// Special conditions
-	switch def.Key {
-	case "early_builder":
-		progress = append(progress, MilestoneProgress{
-			Label:   "Buildings built",
-			Current: float64(params.TotalBuilt),
-			Target:  500,
-			Met:     params.TotalBuilt >= 500,
-		})
-	case "seasoned_builder":
-		progress = append(progress, MilestoneProgress{
-			Label:   "Buildings built",
-			Current: float64(params.TotalBuilt),
-			Target:  2000,
-			Met:     params.TotalBuilt >= 2000,
-		})
-	case "master_builder":
-		progress = append(progress, MilestoneProgress{
-			Label:   "Buildings built",
-			Current: float64(params.TotalBuilt),
-			Target:  5000,
-			Met:     params.TotalBuilt >= 5000,
-		})
-	case "grand_architect":
-		progress = append(progress, MilestoneProgress{
-			Label:   "Buildings built",
-			Current: float64(params.TotalBuilt),
-			Target:  20000,
-			Met:     params.TotalBuilt >= 20000,
-		})
-	case "first_soldiers":
-		progress = append(progress, MilestoneProgress{
-			Label:   "Soldiers trained",
-			Current: float64(params.SoldiersTrained),
-			Target:  5,
-			Met:     params.SoldiersTrained >= 5,
-		})
-	case "standing_army":
-		progress = append(progress, MilestoneProgress{
-			Label:   "Soldiers trained",
-			Current: float64(params.SoldiersTrained),
-			Target:  100,
-			Met:     params.SoldiersTrained >= 100,
-		})
-	case "war_machine":
-		progress = append(progress, MilestoneProgress{
-			Label:   "Soldiers trained",
-			Current: float64(params.SoldiersTrained),
-			Target:  250,
-			Met:     params.SoldiersTrained >= 250,
-		})
-	case "iron_legion":
-		progress = append(progress, MilestoneProgress{
-			Label:   "Soldiers trained",
-			Current: float64(params.SoldiersTrained),
-			Target:  500,
-			Met:     params.SoldiersTrained >= 500,
-		})
-	case "military_superpower":
-		progress = append(progress, MilestoneProgress{
-			Label:   "Soldiers trained",
-			Current: float64(params.SoldiersTrained),
-			Target:  2000,
-			Met:     params.SoldiersTrained >= 2000,
-		})
-	case "wonder_builder":
-		progress = append(progress, MilestoneProgress{
-			Label:   "Wonders",
-			Current: float64(params.WonderCount),
-			Target:  1,
-			Met:     params.WonderCount >= 1,
-		})
-	case "wonder_collector":
-		progress = append(progress, MilestoneProgress{
-			Label:   "Wonders",
-			Current: float64(params.WonderCount),
-			Target:  8,
-			Met:     params.WonderCount >= 8,
-		})
-	case "wonder_empire":
-		progress = append(progress, MilestoneProgress{
-			Label:   "Wonders",
-			Current: float64(params.WonderCount),
-			Target:  15,
-			Met:     params.WonderCount >= 15,
-		})
-	case "scholars_haven":
-		progress = append(progress, MilestoneProgress{
-			Label:   "Knowledge workers",
-			Current: float64(params.KnowledgeCount),
-			Target:  50,
-			Met:     params.KnowledgeCount >= 50,
-		})
+	// Run counters
+	for _, c := range []struct {
+		label         string
+		current, need int
+	}{
+		{"Buildings built", params.TotalBuilt, def.MinTotalBuilt},
+		{"Soldiers trained", params.SoldiersTrained, def.MinSoldiersTrained},
+		{"Wonders", params.WonderCount, def.MinWonders},
+		{"Knowledge workers", params.KnowledgeCount, def.MinKnowledgeWorkers},
+	} {
+		if c.need > 0 {
+			progress = append(progress, MilestoneProgress{
+				Label:   c.label,
+				Current: float64(c.current),
+				Target:  float64(c.need),
+				Met:     c.current >= c.need,
+			})
+		}
 	}
 
 	return progress

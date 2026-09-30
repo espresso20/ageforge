@@ -178,7 +178,7 @@ type Scenario struct {
 // Scenarios is the suite, in run order.
 func Scenarios() []Scenario {
 	return []Scenario{
-		{Name: "static", Desc: "Gate Covenant check from config alone: every age gate fits storage and has a source", Run: runStatic},
+		{Name: "static", Desc: "Gate Covenant check from config alone: every age gate fits storage and has a source, and every milestone can be completed", Run: runStatic},
 		{Name: "docsync", Desc: "site and README headline numbers, lineage count and command reference match config and the command table", Run: runDocsync},
 		{Name: "progression", Desc: "greedy bot plays seeds end to end: panics, soft-locks, invariants, and the pacing table", Paced: true, Run: runProgression},
 		{Name: "saveload", Desc: "save at a checkpoint per age, load into a fresh engine, continue, and compare against the uninterrupted run", Run: runSaveload},
