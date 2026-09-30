@@ -40,6 +40,9 @@ type CommandResult struct {
 	// the account; with no account loaded the dashboard keeps it for the
 	// session.
 	MapPref mapPref
+	// MapFlows asks the dashboard to turn the Map's flows overlay "on",
+	// "off" or over ("switch"); it then writes the reply.
+	MapFlows string
 }
 
 // HandleCommand parses a raw command string and dispatches to the appropriate
@@ -2305,8 +2308,35 @@ func cmdMap(cmd string, args []string, engine *game.GameEngine) CommandResult {
 		return cmdMapStyle(args[1:], engine)
 	case "glyphs":
 		return cmdMapGlyphs(args[1:], engine)
+	case "flows":
+		return cmdMapFlows(args[1:])
 	}
 	return CommandResult{Message: subUsage("map"), Type: "error"}
+}
+
+// cmdMapFlows turns the Map's flows overlay (full stores, understaffed
+// buildings, idle workers) on, off, or over when bare. It is a view option
+// for the session, applied by the dashboard.
+func cmdMapFlows(args []string) CommandResult {
+	if len(args) > 1 {
+		return usageError(usageFor("map flows"), fmt.Errorf("on or off, please"))
+	}
+	if len(args) == 0 {
+		return CommandResult{Type: "info", Message: "Flows overlay switched.", MapFlows: "switch"}
+	}
+	mode := strings.ToLower(args[0])
+	if mode != "on" && mode != "off" {
+		return usageError(usageFor("map flows"), fmt.Errorf("map flows takes on or off, not %q", args[0]))
+	}
+	return CommandResult{Type: "info", Message: flowsReply(mode == "on"), MapFlows: mode}
+}
+
+// flowsReply is the reply once the flows overlay is on or off.
+func flowsReply(on bool) string {
+	if on {
+		return "Flows overlay on: full stores, understaffed buildings and idle workers show on the Map."
+	}
+	return "Flows overlay off."
 }
 
 // mapSessionOnly ends a map setting's reply when no account is loaded to

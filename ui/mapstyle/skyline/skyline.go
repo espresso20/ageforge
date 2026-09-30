@@ -89,14 +89,16 @@ func (v *view) SetOption(o mapstyle.Option, on bool) {
 	}
 }
 
-// HandleKey: ← → h l scroll (or move the cursor while inspecting), H L half
-// a screen, Home End the oldest district and the present, i the cursor,
-// ↑ ↓ k j between depth rows and the ridge, Tab Shift-Tab through every
-// target, Esc puts the cursor away, f flows, c changes.
+// HandleKey takes only keys that print nothing, so typing reaches the
+// prompt: ← → scroll (or move the cursor while inspecting), Shift-← → or
+// PgUp PgDn half a screen, Home End the oldest district and the present,
+// ↑ ↓ between depth rows and the ridge while inspecting, Tab Shift-Tab
+// through every target (the first Tab puts the cursor out), Esc puts it
+// away. The flows overlay is the map flows command (SetOption).
 func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 	m := f.Model
 	w := v.viewW()
-	key, r := ev.Key(), ev.Rune()
+	key := ev.Key()
 	shift := ev.Modifiers()&tcell.ModShift != 0
 	scroll := func(dx int) {
 		v.follow = false
@@ -117,67 +119,31 @@ func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 		} else {
 			v.step(m, 0, 0, d)
 		}
-		return true
 	case key == tcell.KeyEscape:
 		if !v.inspect {
 			return false
 		}
 		v.inspect = false
-		return true
 	case key == tcell.KeyHome:
 		v.follow, v.cam = false, 0
-		return true
 	case key == tcell.KeyEnd:
 		v.follow = true
-		return true
-	case (key == tcell.KeyLeft || key == tcell.KeyRight) && shift:
-		if key == tcell.KeyLeft {
-			scroll(-w / 2)
-		} else {
-			scroll(w / 2)
-		}
-		return true
-	case key == tcell.KeyLeft || (key == tcell.KeyRune && r == 'h'):
-		if v.inspect && m != nil {
-			v.step(m, -1, 0, 0)
-		} else {
-			scroll(-4)
-		}
-		return true
-	case key == tcell.KeyRight || (key == tcell.KeyRune && r == 'l'):
-		if v.inspect && m != nil {
-			v.step(m, 1, 0, 0)
-		} else {
-			scroll(4)
-		}
-		return true
-	case key == tcell.KeyUp || (key == tcell.KeyRune && r == 'k'):
-		if !v.inspect || m == nil {
-			return false
-		}
-		v.step(m, 0, 1, 0)
-		return true
-	case key == tcell.KeyDown || (key == tcell.KeyRune && r == 'j'):
-		if !v.inspect || m == nil {
-			return false
-		}
-		v.step(m, 0, -1, 0)
-		return true
-	case key != tcell.KeyRune:
-		return false
-	}
-	switch r {
-	case 'H':
+	case key == tcell.KeyPgUp || key == tcell.KeyLeft && shift:
 		scroll(-w / 2)
-	case 'L':
+	case key == tcell.KeyPgDn || key == tcell.KeyRight && shift:
 		scroll(w / 2)
-	case 'i':
-		v.inspect = !v.inspect
-		v.reveal = v.inspect
-	case 'f':
-		v.flows = !v.flows
-	case 'c':
-		v.changes = !v.changes
+	case key == tcell.KeyLeft || key == tcell.KeyRight:
+		dx := map[bool]int{true: -1, false: 1}[key == tcell.KeyLeft]
+		if v.inspect && m != nil {
+			v.step(m, dx, 0, 0)
+		} else {
+			scroll(4 * dx)
+		}
+	case key == tcell.KeyUp || key == tcell.KeyDown:
+		if !v.inspect || m == nil {
+			return false
+		}
+		v.step(m, 0, map[bool]int{true: 1, false: -1}[key == tcell.KeyUp], 0)
 	default:
 		return false
 	}

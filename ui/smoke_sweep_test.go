@@ -27,6 +27,7 @@ import (
 	"github.com/gdamore/tcell/v2"
 
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/mapmodel"
 	"github.com/espresso20/ageforge/theme"
 )
 
@@ -235,27 +236,41 @@ func (s *sweeper) ghost(themeKey string) {
 	s.wait("prompt cleared", func() bool { return s.inputText() == "" })
 }
 
-// mapTour runs through the open Map panel's styles and glyph tiers with its
-// own keys (s, g), checking the screen after each, and ends where it began
-// (the settings are saved to the account, so a full cycle restores them).
+// mapTour runs through the open Map panel's styles and glyph tiers with the
+// setting commands, typed at the prompt while the panel stays open (the
+// command bar keeps working there), checking the screen after each, then
+// drives the map with its keys and sets the defaults back (the settings
+// are saved to the account).
 func (s *sweeper) mapTour(where string) {
 	s.t.Helper()
-	styles, tiers := len(s.a.dashboard.mapViews.reg.Names()), 3
-	for i := 0; i < styles; i++ {
-		for j := 0; j < tiers; j++ {
-			s.step = fmt.Sprintf("%s map style %d glyphs %d", where, i, j)
-			s.press(tcell.KeyRune, 'g')
-			s.ping()
-			if txt := s.liveScreen(); !strings.Contains(txt, "g glyphs") {
-				s.fail("the Map panel's key bar is missing\n%s", txt)
+	w, _ := s.sim.Size()
+	for _, style := range s.a.dashboard.mapViews.reg.Names() {
+		s.step = fmt.Sprintf("%s map style %s", where, style)
+		s.submit("map style " + style)
+		for _, tier := range mapmodel.TierNames {
+			s.step = fmt.Sprintf("%s map style %s glyphs %s", where, style, tier)
+			s.submit("map glyphs " + tier)
+			if ov := s.activeOverlay(); ov != "map" {
+				s.fail("a setting command closed the Map panel (active %q)", ov)
+			}
+			txt := s.liveScreen()
+			if !strings.Contains(txt, "map style") || w >= 120 && !strings.Contains(txt, "map glyphs "+tier) {
+				s.fail("the Map panel's key bar is missing or stale\n%s", txt)
 			}
 		}
-		s.press(tcell.KeyRune, 's')
+	}
+	s.step = where + " map keys"
+	for _, k := range []tcell.Key{tcell.KeyTab, tcell.KeyPgUp, tcell.KeyDown, tcell.KeyPgDn, tcell.KeyBacktab, tcell.KeyEnter} {
+		s.press(k, 0)
 		s.ping()
 	}
-	// Tab puts the cursor on a target; the panel must survive it.
-	s.press(tcell.KeyTab, 0)
-	s.ping()
+	if s.activeOverlay() != "map" {
+		s.fail("the map's keys closed the panel")
+	}
+	s.press(tcell.KeyCtrlU, 0) // clear what Enter may have staged
+	s.wait("an empty prompt", func() bool { return s.inputText() == "" })
+	s.submit("map style roguelike")
+	s.submit("map glyphs unicode")
 }
 
 // miniMapShown reports whether the dashboard's last draw showed the mini map.

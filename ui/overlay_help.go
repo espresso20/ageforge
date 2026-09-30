@@ -60,11 +60,15 @@ func helpProvider(_ game.GameState, _ int) string {
 	sb.WriteString("  [cyan]↑/↓[-]    - Command history\n")
 
 	sb.WriteString("\n[gold]═══ The Map panel ═══[-]\n")
-	sb.WriteString("[gray]The style's own keys move its cursor (arrows, Tab); these work in every style.[-]\n")
-	sb.WriteString("  [cyan]s[-]      - Next map style (roguelike, skyline); saved to your account\n")
-	sb.WriteString("  [cyan]g[-]      - Next glyph set (ascii, unicode, nerd); saved to your account\n")
-	sb.WriteString("  [cyan]Enter[-]  - Put the command for what the cursor is on in the prompt\n")
-	sb.WriteString("  [cyan]Esc[-]    - Close the panel\n")
+	sb.WriteString("[gray]The prompt keeps working while the Map is open: type commands as usual. The map takes the keys that print nothing.[-]\n")
+	sb.WriteString("  [cyan]Arrows[-]     - Move the cursor (roguelike) or scroll (skyline); Shift moves further\n")
+	sb.WriteString("  [cyan]Tab[-]        - Next building, wonder or civilization (Shift-Tab: the one before)\n")
+	sb.WriteString("  [cyan]PgUp/PgDn[-]  - Zoom out and in (roguelike) or scroll half a screen (skyline)\n")
+	sb.WriteString("  [cyan]Home/End[-]   - The town square (roguelike); the oldest district and the present (skyline)\n")
+	sb.WriteString("  [cyan]Enter[-]      - Put the command for what the cursor is on in the prompt\n")
+	sb.WriteString("               (with something typed, Tab and Enter act on the prompt instead)\n")
+	sb.WriteString("  [cyan]Esc[-]        - Close the panel\n")
+	sb.WriteString("[gray]Settings are commands: map style, map glyphs, map flows, minimap.[-]\n")
 
 	sb.WriteString("\n[gold]═══ Shortcuts ═══[-]\n")
 	var short []string

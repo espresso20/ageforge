@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"regexp"
+	"strings"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
@@ -12,11 +14,15 @@ import (
 	"github.com/espresso20/ageforge/ui/mapstyle"
 )
 
-// map_panel.go is the Map panel: the active map style full screen, opened
-// with map (aliases citymap and worldmap). The style draws everything but
-// the bottom row, a key bar with the panel's own keys (s style, g glyphs,
-// Enter stage the inspected command, Esc close). Every other key goes to
-// the style (its cursor, Tab through targets, zoom and toggles).
+// map_panel.go is the Map panel: the active map style over the whole
+// screen but the command bar, opened with map (aliases citymap and
+// worldmap). The command bar keeps the keyboard while the panel is open, so
+// commands work as they do anywhere: printable keys go to the prompt, and
+// the map takes only the keys that print nothing (routeKey): the arrows,
+// Tab and Shift-Tab, PgUp and PgDn, Home and End, and Enter on an empty
+// prompt, which types the inspected command. Style, glyphs and the flows
+// overlay are commands (map style, map glyphs, map flows). The style draws
+// everything but the panel's bottom row, a key bar.
 
 // mapAnimStep is the map animation frame length (about 8 frames a second).
 const mapAnimStep = 125 * time.Millisecond
@@ -84,16 +90,18 @@ type mapPanel struct {
 	now    func() time.Time // the animation clock (tests pin it)
 
 	world bool // the next open starts on the known world
+	flows bool // the flows overlay, in every style (map flows)
 	hint  bool // show the icons hint in the key bar while open
 	note  string
 
-	// settings reads the current settings; save persists a change.
+	// settings reads the current settings.
 	settings func() mapSettings
-	save     func(mapSettings)
 	// hintShown records that the icons hint was shown.
 	hintShown func()
-	// stage closes the panel and puts a command in the prompt.
+	// stage puts a command in the prompt, unrun, for the player's Enter.
 	stage func(cmd string)
+	// prompt reads the command bar ("" when it is empty).
+	prompt func() string
 }
 
 func newMapPanel(mv *mapViews) *mapPanel {
@@ -119,7 +127,12 @@ func (p *mapPanel) open(state game.GameState) tview.Primitive {
 		p.set.HintShown = true
 	}
 	p.update(state)
-	return p
+	// The panel leaves the command bar's rows to the dashboard underneath
+	// (a Flex does not clear the cells it leaves empty), so the prompt stays
+	// in sight, and in use, while the map is open.
+	return tview.NewFlex().SetDirection(tview.FlexRow).
+		AddItem(p, 0, 1, true).
+		AddItem(nil, promptRows, 0, false)
 }
 
 // update is the overlay's refresh (every UI tick while open).
@@ -132,7 +145,26 @@ func (p *mapPanel) update(state game.GameState) {
 	p.model = p.mv.model(&state)
 }
 
-func (p *mapPanel) current() mapstyle.Style { return p.styles.get(p.set.Style) }
+// current is the active style's view, with the panel's flows setting.
+func (p *mapPanel) current() mapstyle.Style {
+	st := p.styles.get(p.set.Style)
+	st.SetOption(mapstyle.OptFlows, p.flows)
+	return st
+}
+
+// setFlows turns the flows overlay on ("on"), off ("off") or over (anything
+// else) and reports whether it is now on.
+func (p *mapPanel) setFlows(mode string) bool {
+	switch mode {
+	case "on":
+		p.flows = true
+	case "off":
+		p.flows = false
+	default:
+		p.flows = !p.flows
+	}
+	return p.flows
+}
 
 func (p *mapPanel) frame() mapstyle.Frame {
 	return mapstyle.Frame{Model: p.model, Anim: int(p.now().Sub(p.start) / mapAnimStep), Tier: p.set.Tier}
@@ -159,9 +191,9 @@ type barPart struct {
 	role int // 0 text, 1 key, 2 dim
 }
 
-// drawBar is the key bar: the hint or note, the inspected command, then
-// the keys. When it does not fit it drops the command, then shortens the
-// keys, so the hint and the keys always show.
+// drawBar is the key bar: the hint or note, what Enter does, then the
+// setting commands and Esc. When it does not fit it drops what Enter does,
+// then shortens the rest, so the hint and Esc always show.
 func (p *mapPanel) drawBar(scr tcell.Screen, r mapstyle.Rect, st mapstyle.Style, f mapstyle.Frame) {
 	bg := theme.Color(theme.RoleChip)
 	base := tcell.StyleDefault.Background(bg).Foreground(theme.Legible(theme.Color(theme.RoleText), bg, 4.5))
@@ -176,12 +208,14 @@ func (p *mapPanel) drawBar(scr tcell.Screen, r mapstyle.Rect, st mapstyle.Style,
 	} else if p.note != "" {
 		lead = []barPart{{p.note, 1}, {"  ", 0}}
 	}
-	if in, ok := st.Inspect(f); ok && in.Command != "" {
-		cmd = []barPart{{"Enter", 1}, {" type ", 2}, {in.Command, 0}, {" · ", 2}}
+	if p.prompt != nil && p.prompt() != "" {
+		cmd = []barPart{{"Enter", 1}, {" runs the command below · ", 2}}
+	} else if in, ok := st.Inspect(f); ok && in.Command != "" {
+		cmd = []barPart{{"Enter", 1}, {" types ", 2}, {in.Command, 0}, {" · ", 2}}
 	}
-	full := []barPart{{"s", 1}, {" style: " + styleTitle(p.mv.reg, p.set.Style) + " · ", 2},
-		{"g", 1}, {" glyphs: " + p.set.Tier.String() + " · ", 2}, {"Esc", 1}, {" close", 2}}
-	short := []barPart{{"s", 1}, {" style · ", 2}, {"g", 1}, {" glyphs · ", 2}, {"Esc", 1}}
+	full := []barPart{{"map style", 1}, {" " + styleTitle(p.mv.reg, p.set.Style) + " · ", 2},
+		{"map glyphs", 1}, {" " + p.set.Tier.String() + " · ", 2}, {"Esc", 1}, {" close", 2}}
+	short := []barPart{{"map style", 1}, {" · ", 2}, {"Esc", 1}, {" close", 2}}
 	width := func(parts ...[]barPart) int {
 		n := 0
 		for _, ps := range parts {
@@ -198,6 +232,10 @@ func (p *mapPanel) drawBar(scr tcell.Screen, r mapstyle.Rect, st mapstyle.Style,
 	case width(lead, full) <= avail:
 		parts = [][]barPart{lead, full}
 	default:
+		// A long reply is clipped so the short keys always show.
+		if room := avail - width(short); len(lead) > 0 && width(lead) > room {
+			lead = []barPart{{mapmodel.Clip(lead[0].text, max(0, room-2)), lead[0].role}, {"  ", 0}}
+		}
 		parts = [][]barPart{lead, short}
 	}
 	cv := mapstyle.NewCanvas(scr, r, f.Tier, base)
@@ -211,18 +249,40 @@ func (p *mapPanel) drawBar(scr tcell.Screen, r mapstyle.Rect, st mapstyle.Style,
 	}
 }
 
-// InputHandler routes keys: the panel's own first, then the style's.
+// InputHandler takes the keys routeKey gives the map when the panel itself
+// has the focus (the command bar normally keeps it).
 func (p *mapPanel) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return p.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
-		p.handleKey(ev)
+		p.routeKey(ev, "")
 	})
 }
 
-// handleKey applies one key and reports whether anything used it. Esc is
-// the overlay's (it closes the panel before the key gets here).
+// routeKey decides who takes a key while the panel is open, given the
+// command bar's text: the map (it applies the key and reports true) or the
+// command bar (false). The map takes the keys that print nothing: the
+// arrows, PgUp and PgDn, Home and End, and, while the prompt is empty, Tab,
+// Shift-Tab and Enter. With something typed those three are the prompt's
+// (completion, run), and every printable key always is.
+func (p *mapPanel) routeKey(ev *tcell.EventKey, prompt string) bool {
+	switch ev.Key() {
+	case tcell.KeyUp, tcell.KeyDown, tcell.KeyLeft, tcell.KeyRight,
+		tcell.KeyPgUp, tcell.KeyPgDn, tcell.KeyHome, tcell.KeyEnd:
+	case tcell.KeyTab, tcell.KeyBacktab, tcell.KeyEnter:
+		if prompt != "" {
+			return false
+		}
+	default:
+		return false
+	}
+	p.handleKey(ev)
+	return true
+}
+
+// handleKey applies one map key and reports whether anything used it.
+// Enter types the inspected command into the prompt; the rest are the
+// style's. Esc is the dashboard's (it closes the panel).
 func (p *mapPanel) handleKey(ev *tcell.EventKey) bool {
-	switch {
-	case ev.Key() == tcell.KeyEnter:
+	if ev.Key() == tcell.KeyEnter {
 		in, ok := p.current().Inspect(p.frame())
 		if !ok || in.Command == "" {
 			p.note = "Nothing to type here. Move the cursor onto a building or a civilization."
@@ -231,19 +291,7 @@ func (p *mapPanel) handleKey(ev *tcell.EventKey) bool {
 		if p.stage != nil {
 			p.stage(in.Command)
 		}
-		return true
-	case ev.Key() == tcell.KeyRune && ev.Rune() == 's':
-		p.set.Style = nextStyle(p.mv.reg, p.set.Style)
-		p.persist()
-		p.hint, p.note = false, "Style: "+styleTitle(p.mv.reg, p.set.Style)
-		return true
-	case ev.Key() == tcell.KeyRune && ev.Rune() == 'g':
-		p.set.Tier = nextTier(p.set.Tier)
-		p.persist()
-		p.hint, p.note = false, "Glyphs: "+p.set.Tier.String()
-		if p.set.Tier == mapmodel.TierNerd {
-			p.note += " (boxes? type icons)"
-		}
+		p.note = ""
 		return true
 	}
 	used := p.current().HandleKey(ev, p.frame())
@@ -253,8 +301,17 @@ func (p *mapPanel) handleKey(ev *tcell.EventKey) bool {
 	return used
 }
 
-func (p *mapPanel) persist() {
-	if p.save != nil {
-		p.save(p.set)
+// barTags matches the color tags a reply may carry: the key bar prints
+// plain text.
+var barTags = regexp.MustCompile(`\[[a-zA-Z0-9#:,\-]*\]`)
+
+// reply puts what a command typed with the panel open did on the key bar,
+// since the log is behind the map: its first line, or that it ran.
+func (p *mapPanel) reply(cmd string, res CommandResult) {
+	msg, _, _ := strings.Cut(res.Message, "\n")
+	msg = strings.TrimSpace(barTags.ReplaceAllString(msg, ""))
+	if msg == "" {
+		msg = "Ran " + cmd + "."
 	}
+	p.hint, p.note = false, msg
 }

@@ -15,16 +15,23 @@ The Map shows only what you have reached. Civilizations you have not met are now
 
 ## The Map panel
 
-`map` opens the Map full screen. These keys work in every style:
+`map` opens the Map over the whole screen except the **command bar**, which keeps working: type any command while the Map is open, just as you would with it closed, and watch the map change. A command that opens another panel (say `research`) swaps the Map for it.
+
+Because typing goes to the command bar, the Map takes only the keys that print nothing. These work in every style:
 
 | Key | Action |
 |---|---|
-| `s` | Next style (roguelike, skyline) |
-| `g` | Next glyph set (ascii, unicode, nerd) |
+| Arrows | Move the cursor or scroll (see each style below) |
+| `Tab` / `Shift-Tab` | Jump to the next or previous thing to inspect |
+| `PgUp` / `PgDn` | Zoom out and in (roguelike) or scroll half a screen (skyline) |
 | `Enter` | Put the command for what the cursor is on into the prompt. It is not run: press Enter again to run it |
 | `Esc` | Close the Map |
 
-The bottom row is a **key bar**: it shows the current style and glyph set, the keys you can press, and the command for the thing under the cursor.
+Once you have typed something, `Tab`, `Shift-Tab` and `Enter` act on the prompt instead (complete the command, run it), as they do everywhere else. The arrows stay with the Map.
+
+The settings are commands you can type with the Map open: `map style`, `map glyphs`, `map flows` and `minimap` (see Settings below).
+
+The bottom row is a **key bar**: it shows what `Enter` will do, the current style and glyph set, and the reply to the last command you typed (the log is hidden behind the Map).
 
 ### The inspect cursor
 
@@ -32,7 +39,7 @@ In both styles a cursor picks out one thing at a time: a building, a wonder, a c
 
 ### Since your last visit
 
-A **news line** on the Map lists what happened since the save was loaded: buildings built, civilizations met, wars, new trade routes and so on. The cursor's details say it too ("+2 since your last visit"). In the roguelike style, `n` highlights everything that changed; in the skyline, `c` does.
+A **news line** on the Map lists what happened since the save was loaded: buildings built, civilizations met, wars, new trade routes and so on. The cursor's details say it too ("+2 since your last visit"), and both styles highlight what changed.
 
 ---
 
@@ -58,15 +65,14 @@ The district zoom names only a handful of building types at a time (those neares
 
 | Key | Action |
 |---|---|
-| `←` `→` `↑` `↓` or `h` `j` `k` `l` | Move the cursor |
-| `Shift`+arrow or `H` `J` `K` `L` | Move the cursor by 8 |
-| `z` | Zoom in |
-| `x` | Zoom out |
+| `←` `→` `↑` `↓` | Move the cursor |
+| `Shift`+arrow | Move the cursor by 8 |
+| `PgUp` | Zoom out (settlement, then region) |
+| `PgDn` | Zoom in (settlement, then district) |
 | `Tab` / `Shift-Tab` | Jump between buildings and wonders (and civilizations at region zoom) |
-| `c` | Center on the town square |
-| `f` | Flows overlay: full stores, understaffed buildings, idle workers |
-| `?` | Legend: what each glyph means |
-| `n` | Highlight what changed since your last visit |
+| `Home` | Center on the town square |
+
+The legend (what each glyph means) shows beside the map when there is room.
 
 ---
 
@@ -84,15 +90,12 @@ The skyline style shows your empire **side-on**, as an ANSI-art panorama. It has
 
 | Key | Action |
 |---|---|
-| `←` `→` or `h` `l` | Scroll (or move the cursor while inspecting) |
-| `H` `L` | Scroll half a screen |
+| `←` `→` | Scroll (or move the cursor while inspecting) |
+| `Shift`+`←` `→`, `PgUp` `PgDn` | Scroll half a screen |
 | `Home` | The oldest district |
 | `End` | The present |
-| `i` | Show or hide the inspect cursor |
-| `↑` `↓` or `k` `j` | Move between the building rows and the ridge |
-| `Tab` / `Shift-Tab` | Step through every target |
-| `f` | Flows: full stores, understaffed buildings, idle workers |
-| `c` | Highlight what changed since your last visit |
+| `Tab` / `Shift-Tab` | Put the inspect cursor out, then step through every target |
+| `↑` `↓` | Move between the building rows and the ridge (while inspecting) |
 
 ---
 
@@ -113,8 +116,9 @@ Three settings shape the Map. They are saved **per account**, like your theme: t
 | `minimap` | Show whether the dashboard's mini map is on |
 | `minimap off` | Hide the mini map, so the Buildings list gets the whole column |
 | `minimap on` | Show the mini map again (the default) |
+| `map flows` | The flows overlay: full stores, understaffed buildings, idle workers. `map flows on` and `map flows off` set it; bare, it switches. It lasts for the session |
 
-The `s` and `g` keys in the panel change the same settings.
+All of them work while the Map is open, so you see the change at once.
 
 ---
 

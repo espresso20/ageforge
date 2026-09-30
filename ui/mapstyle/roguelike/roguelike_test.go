@@ -392,6 +392,9 @@ func TestPlacementStable(t *testing.T) {
 	}
 }
 
+// TestKeys: the view takes only keys that print nothing (typing goes to
+// the prompt): the arrows move the cursor (Shift by 8), PgUp and PgDn zoom
+// out and in, Home centers, and no letter does anything.
 func TestKeys(t *testing.T) {
 	m := modelFor(t, fixture.Options{Age: "medieval_age", Seed: 1})
 	v := newView()
@@ -400,30 +403,31 @@ func TestKeys(t *testing.T) {
 		return v.HandleKey(tcell.NewEventKey(k, r, mod), f)
 	}
 	s := v.sceneFor(m)
-	if !key(tcell.KeyRune, 'z', 0) || v.zoom != zDistrict || !key(tcell.KeyRune, 'x', 0) || !key(tcell.KeyRune, 'x', 0) || v.zoom != zRegion {
+	if !key(tcell.KeyPgDn, 0, 0) || v.zoom != zDistrict || !key(tcell.KeyPgUp, 0, 0) || !key(tcell.KeyPgUp, 0, 0) || v.zoom != zRegion {
 		t.Errorf("zoom keys: zoom %d", v.zoom)
+	}
+	key(tcell.KeyPgUp, 0, 0)
+	if v.zoom != zRegion {
+		t.Errorf("PgUp past the region zoom: zoom %d", v.zoom)
 	}
 	v.zoom = zSettlement
 	key(tcell.KeyRight, 0, tcell.ModShift)
-	key(tcell.KeyRune, 'j', 0)
+	key(tcell.KeyDown, 0, 0)
 	if v.cur.X != s.w.CX+8 || v.cur.Y != s.w.CY+1 {
 		t.Errorf("cursor at %v, want %d,%d", v.cur, s.w.CX+8, s.w.CY+1)
 	}
-	key(tcell.KeyRune, 'H', 0)
-	key(tcell.KeyRune, 'c', 0)
+	key(tcell.KeyHome, 0, 0)
 	if v.cur.X != s.w.CX || v.cur.Y != s.w.CY {
-		t.Errorf("c did not centre: %v", v.cur)
+		t.Errorf("Home did not center: %v", v.cur)
 	}
-	for _, r := range "fn?" {
-		if !key(tcell.KeyRune, r, 0) {
-			t.Errorf("%q not handled", r)
+	for _, r := range "hjklHJKLzxcfn?sgq" {
+		if key(tcell.KeyRune, r, 0) {
+			t.Errorf("%q was used; letters belong to the prompt", r)
 		}
 	}
-	if !v.flows || v.changes || v.legend {
-		t.Errorf("toggles: flows %v changes %v legend %v", v.flows, v.changes, v.legend)
-	}
-	if key(tcell.KeyRune, 'q', 0) {
-		t.Error("q should not be handled")
+	v.SetOption(mapstyle.OptFlows, true)
+	if !v.flows || !v.changes || !v.legend {
+		t.Errorf("options: flows %v changes %v legend %v", v.flows, v.changes, v.legend)
 	}
 	if Entry().Name != "roguelike" || Entry().New().Name() != "roguelike" {
 		t.Error("entry")
