@@ -205,6 +205,14 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 		d.inputField.SetText(cmd)
 	}
 	d.mapPanel.prompt = func() string { return d.inputField.GetText() }
+	d.mapPanel.toPrompt = func(ev *tcell.EventKey) {
+		// The map itself had the keyboard: give it back to the prompt,
+		// starting with this key.
+		d.overlayMgr.FocusOn(d.inputField)
+		if h := d.inputField.InputHandler(); h != nil {
+			h(ev, func(p tview.Primitive) { d.app.SetFocus(p) })
+		}
+	}
 	d.overlayMgr.RegisterWidget("map", "Map", d.mapPanel.open, d.mapPanel.update, true)
 
 	// The icons check is a window of its own (icons.go). It logs through
@@ -1014,7 +1022,7 @@ func (d *Dashboard) submitInput() {
 		d.updateSidebar(result.OverlayName)
 		if result.OverlayName == "map" {
 			// The command bar keeps the keyboard while the map is open.
-			d.app.SetFocus(d.inputField)
+			d.overlayMgr.FocusOn(d.inputField)
 		}
 	} else if d.overlayMgr.ActiveName() == "map" {
 		// The log is behind the map: say what happened on its key bar, and

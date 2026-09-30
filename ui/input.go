@@ -2322,13 +2322,13 @@ func cmdMapFlows(args []string) CommandResult {
 		return usageError(usageFor("map flows"), fmt.Errorf("on or off, please"))
 	}
 	if len(args) == 0 {
-		return CommandResult{Type: "info", Message: "Flows overlay switched.", MapFlows: "switch"}
+		return CommandResult{Type: game.LogRoutine, Message: "Flows overlay switched.", MapFlows: "switch"}
 	}
 	mode := strings.ToLower(args[0])
 	if mode != "on" && mode != "off" {
 		return usageError(usageFor("map flows"), fmt.Errorf("map flows takes on or off, not %q", args[0]))
 	}
-	return CommandResult{Type: "info", Message: flowsReply(mode == "on"), MapFlows: mode}
+	return CommandResult{Type: game.LogRoutine, Message: flowsReply(mode == "on"), MapFlows: mode}
 }
 
 // flowsReply is the reply once the flows overlay is on or off.
@@ -2360,10 +2360,12 @@ func cmdMapStyle(args []string, engine *game.GameEngine) CommandResult {
 	default:
 		return usageError(usageFor("map style"), fmt.Errorf("there is no map style %q", args[0]))
 	}
-	res := CommandResult{Type: "info", Message: fmt.Sprintf("Map style set to %s.", styleTitle(reg, name)),
+	// A routine confirmation (the map shows the change); without an account
+	// the reply carries a caveat, so it stays in the main log.
+	res := CommandResult{Type: game.LogRoutine, Message: fmt.Sprintf("Map style set to %s.", styleTitle(reg, name)),
 		MapPref: mapPref{Key: "style", Value: name}}
 	if acct == nil {
-		res.Message += mapSessionOnly
+		res.Type, res.Message = "info", res.Message+mapSessionOnly
 		return res
 	}
 	if err := acct.SetMapStyle(name); err != nil {
@@ -2388,13 +2390,14 @@ func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
 	default:
 		return usageError(usageFor("map glyphs"), fmt.Errorf("there is no glyph tier %q", args[0]))
 	}
-	res := CommandResult{Type: "info", Message: fmt.Sprintf("Map glyphs set to %s.", name),
+	res := CommandResult{Type: game.LogRoutine, Message: fmt.Sprintf("Map glyphs set to %s.", name),
 		MapPref: mapPref{Key: "glyphs", Value: name}}
 	if name == "nerd" {
+		res.Type = "info" // the advice belongs in the main log
 		res.Message += " If the map shows boxes or question marks, type icons."
 	}
 	if acct == nil {
-		res.Message += mapSessionOnly
+		res.Type, res.Message = "info", res.Message+mapSessionOnly
 		return res
 	}
 	if err := acct.SetMapGlyphs(name); err != nil {
@@ -2422,13 +2425,13 @@ func cmdMinimap(args []string, engine *game.GameEngine) CommandResult {
 		return usageError(usageFor("minimap"), fmt.Errorf("minimap takes on or off, not %q", args[0]))
 	}
 	on := val == "on"
-	res := CommandResult{Type: "info", Message: "Mini map off. Type minimap on to bring it back.",
+	res := CommandResult{Type: game.LogRoutine, Message: "Mini map off. Type minimap on to bring it back.",
 		MapPref: mapPref{Key: "minimap", Value: val}}
 	if on {
 		res.Message = "Mini map on. It shows above the Buildings list when the terminal has room (about 120x40 and up)."
 	}
 	if acct == nil {
-		res.Message += mapSessionOnly
+		res.Type, res.Message = "info", res.Message+mapSessionOnly
 		return res
 	}
 	if err := acct.SetMinimap(on); err != nil {

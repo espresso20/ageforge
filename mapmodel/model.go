@@ -187,14 +187,16 @@ type Expeditions struct {
 	Auto            bool // a Geographic Society dispatches scouts
 }
 
-// Harbinger is the live harbinger. It carries no word of the era it warns
-// of: the maps never name an age or era the player has not reached.
+// Harbinger is the live harbinger.
 type Harbinger struct {
 	Key, Name   string
 	Tier        string
 	Probability float64
 	Numeric     bool
 	Invited     bool
+	// Warning is what it warns of, as the game words it ("impending doom",
+	// "the Last Passage"): never the era to come (game/spoilers.go).
+	Warning string
 }
 
 // Catastrophe is the pending catastrophe and the pressure toward one.
@@ -531,8 +533,9 @@ func (m *Model) world(st *game.GameState) {
 		}
 		f := Faction{Key: k, Site: i}
 		if !fi.Discovered {
-			// A civ not yet met is a key and a site slot, nothing more: no
-			// name, no traits, so no map can spoil who is out there.
+			// A civ not yet met (game/spoilers.go) is a key and a site slot,
+			// nothing more: no name, no traits, so no map can spoil who is
+			// out there.
 			m.Factions = append(m.Factions, f)
 			continue
 		}
@@ -573,7 +576,7 @@ func (m *Model) world(st *game.GameState) {
 	sort.Slice(m.Routes, func(i, j int) bool { return m.Routes[i].Key < m.Routes[j].Key })
 	if h := st.Harbinger; h != nil {
 		m.Harbinger = &Harbinger{Key: h.Key, Name: h.Name, Tier: string(h.Tier), Probability: h.Probability,
-			Numeric: h.Numeric, Invited: h.Invited}
+			Numeric: h.Numeric, Invited: h.Invited, Warning: h.TargetEpochName}
 	}
 	c := &m.Catastrophe
 	c.Tier = string(st.CatastropheOutlook.Tier)

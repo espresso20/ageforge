@@ -206,7 +206,7 @@ func (v *view) inspection(m *mapmodel.Model) (in inspectionData, ok bool) {
 			return in, false
 		}
 		in.title = h.Name
-		in.lines = append(in.lines, "warns of impending doom")
+		in.lines = append(in.lines, h.WarningLine())
 		if h.Numeric {
 			in.lines = append(in.lines, "odds "+strconv.Itoa(int(h.Probability*100+0.5))+"%")
 		} else if h.Tier != "" {

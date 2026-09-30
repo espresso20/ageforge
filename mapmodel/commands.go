@@ -31,6 +31,15 @@ func (m *Model) BuildingCommand(b *Building) string {
 	return "build " + b.Key
 }
 
+// WarningLine is the harbinger's inspect line: what it warns of, in the
+// game's words, never the era to come.
+func (h *Harbinger) WarningLine() string {
+	if h == nil || h.Warning == "" {
+		return "warns of impending doom"
+	}
+	return "warns of " + h.Warning
+}
+
 // WonderCommand is the command for a wonder: bank into the one rising,
 // otherwise open the wonders panel.
 func (m *Model) WonderCommand(w *Wonder) string {

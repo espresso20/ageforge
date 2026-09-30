@@ -102,6 +102,9 @@ type mapPanel struct {
 	stage func(cmd string)
 	// prompt reads the command bar ("" when it is empty).
 	prompt func() string
+	// toPrompt hands a key the map does not take to the command bar, and
+	// the keyboard with it, when the panel itself has the focus.
+	toPrompt func(ev *tcell.EventKey)
 }
 
 func newMapPanel(mv *mapViews) *mapPanel {
@@ -249,11 +252,18 @@ func (p *mapPanel) drawBar(scr tcell.Screen, r mapstyle.Rect, st mapstyle.Style,
 	}
 }
 
-// InputHandler takes the keys routeKey gives the map when the panel itself
-// has the focus (the command bar normally keeps it).
+// InputHandler is for when the panel itself has the focus (the command bar
+// normally keeps it): the map's own keys work, and anything else goes to the
+// command bar, which takes the keyboard back.
 func (p *mapPanel) InputHandler() func(event *tcell.EventKey, setFocus func(p tview.Primitive)) {
 	return p.WrapInputHandler(func(ev *tcell.EventKey, _ func(tview.Primitive)) {
-		p.routeKey(ev, "")
+		prompt := ""
+		if p.prompt != nil {
+			prompt = p.prompt()
+		}
+		if !p.routeKey(ev, prompt) && p.toPrompt != nil {
+			p.toPrompt(ev)
+		}
 	})
 }
 

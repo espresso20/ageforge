@@ -232,6 +232,17 @@ func (om *OverlayManager) Hide() {
 	}
 }
 
+// FocusOn makes p hold the keyboard while the active overlay shows, in place
+// of the overlay itself: the Map panel leaves it with the command bar, so a
+// window closing over the map gives the prompt its keys back (Focus).
+func (om *OverlayManager) FocusOn(p tview.Primitive) {
+	if om.active == "" {
+		return
+	}
+	om.focus = p
+	om.app.SetFocus(p)
+}
+
 // Focus gives the keyboard back to the active overlay, when a window that
 // opened over it closes. Reports whether an overlay was active.
 func (om *OverlayManager) Focus() bool {

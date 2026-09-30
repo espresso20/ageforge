@@ -441,3 +441,29 @@ func TestCommandBarWorksWithMapOpen(t *testing.T) {
 		t.Errorf("closing the map changed the prompt from %q to %q", staged, prompt)
 	}
 }
+
+// TestMapKeepsThePromptFocused: while the Map is open the prompt holds the
+// keyboard, even after a window over the map closes (the overlay manager
+// hands the keyboard back to what held it, the prompt); and if the panel
+// itself ever gets the focus, the first key that is not the map's goes to
+// the prompt and takes the keyboard back with it.
+func TestMapKeepsThePromptFocused(t *testing.T) {
+	d, _ := mapTestDashboard(t, true)
+	d.runForTest("map")
+	if d.app.GetFocus() != d.inputField {
+		t.Fatalf("the prompt does not have the focus with the map open (%T)", d.app.GetFocus())
+	}
+	d.app.SetFocus(d.mapPanel) // a window opened over the map took it
+	if !d.overlayMgr.Focus() || d.app.GetFocus() != d.inputField {
+		t.Errorf("the window closing gave the keyboard to %T, not the prompt", d.app.GetFocus())
+	}
+	d.app.SetFocus(d.mapPanel)
+	d.mapPanel.InputHandler()(key('b'), func(tview.Primitive) {})
+	if d.app.GetFocus() != d.inputField || d.inputField.GetText() != "b" {
+		t.Errorf("a letter typed with the map focused: focus %T, prompt %q", d.app.GetFocus(), d.inputField.GetText())
+	}
+	d.mapPanel.InputHandler()(tcell.NewEventKey(tcell.KeyPgUp, 0, tcell.ModNone), func(tview.Primitive) {})
+	if d.inputField.GetText() != "b" {
+		t.Errorf("PgUp reached the prompt: %q", d.inputField.GetText())
+	}
+}
