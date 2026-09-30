@@ -173,9 +173,9 @@ func statsProvider(state game.GameState, _ int) string {
 	if p.CanPrestige {
 		fmt.Fprintf(&sb, " [green]Prestige now for %s.[-]\n", textfmt.Count(p.PendingPoints, "point", "points"))
 	} else if p.Level == 0 {
-		fmt.Fprintf(&sb, " [gray]Reach the %s to prestige.[-]\n", game.AgeName(game.PrestigeMinAge))
+		fmt.Fprintf(&sb, " [gray]Reach %s to prestige.[-]\n", ageRef(state, game.PrestigeMinAge))
 	} else {
-		fmt.Fprintf(&sb, " [yellow]Reach the %s to prestige again.[-]\n", game.AgeName(game.PrestigeMinAge))
+		fmt.Fprintf(&sb, " [yellow]Reach %s to prestige again.[-]\n", ageRef(state, game.PrestigeMinAge))
 	}
 
 	upgradeKeys := []string{

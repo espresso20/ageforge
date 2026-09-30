@@ -506,6 +506,11 @@ func (mm *MilestoneManager) Snapshot(params MilestoneSnapshotParams) MilestoneSt
 				visible = true
 			}
 		}
+		// No spoilers: an unfinished milestone that needs an age the player
+		// cannot see named yet stays hidden, whatever its progress.
+		if !completed && def.MinAge != "" && params.Sight != nil && !params.Sight.Age(def.MinAge) {
+			visible = false
+		}
 
 		if visible {
 			visibleCount++

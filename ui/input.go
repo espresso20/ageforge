@@ -1230,7 +1230,12 @@ func cmdTheme(args []string, engine *game.GameEngine) CommandResult {
 		}
 	}
 	if strings.ToLower(args[0]) == "list" {
-		return cmdThemeList(themeAccount(engine))
+		var st *game.GameState
+		if engine != nil {
+			s := engine.GetState()
+			st = &s
+		}
+		return cmdThemeList(themeAccount(engine), st)
 	}
 
 	key := strings.ToLower(args[0])
@@ -1277,8 +1282,9 @@ func themeAccount(engine *game.GameEngine) *game.Account {
 //
 // acct may be nil (accountless play / tests): with no account only the always-
 // available set (Accessible + Forge) is unlocked, so the flavor themes correctly
-// render as locked with their hints.
-func cmdThemeList(acct *game.Account) CommandResult {
+// render as locked with their hints. st, when set, keeps a hint from naming an
+// age the player cannot see yet (themeUnlockHint); nil shows the hints as written.
+func cmdThemeList(acct *game.Account, st *game.GameState) CommandResult {
 	activeKey := theme.Active().Key
 	var lines []string
 	lines = append(lines, "[gold]Themes:[-]")
@@ -1292,6 +1298,9 @@ func cmdThemeList(acct *game.Account) CommandResult {
 		case !themeAvailable(acct, t):
 			// Locked flavor theme: show the unlock condition rather than nothing.
 			hint := t.UnlockHint
+			if st != nil {
+				hint = themeUnlockHint(t, *st)
+			}
 			if hint == "" {
 				hint = "unlock via a milestone"
 			}
@@ -1512,7 +1521,7 @@ func cmdBlackMarketStatus(engine *game.GameEngine) CommandResult {
 	var lines []string
 	lines = append(lines, "[gold]Black Market[-]")
 	if !st.Available {
-		lines = append(lines, "  [gray]Smuggling networks open in the Colonial Age.[-]")
+		lines = append(lines, "  "+theme.Paint(theme.RoleDim, "Smuggling networks open in "+ageRef(engine.GetState(), "colonial_age")+"."))
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
 	lines = append(lines, "  Spend culture on a smuggling run: a gamble on a big haul of one resource.")
@@ -1606,7 +1615,7 @@ func cmdPrestigeStatus(engine *game.GameEngine) CommandResult {
 		lines = append(lines, lastPassageStatusLines(state)...)
 		lines = append(lines, "  Type [cyan]prestige confirm[-] to reset with bonuses.")
 	default:
-		lines = append(lines, fmt.Sprintf("\n  [yellow]Reach the %s to prestige (it would earn %s now).[-]", game.AgeName(game.PrestigeMinAge), textfmt.Count(p.PendingPoints, "point", "points")))
+		lines = append(lines, fmt.Sprintf("\n  [yellow]Reach %s to prestige (it would earn %s now).[-]", ageRef(state, game.PrestigeMinAge), textfmt.Count(p.PendingPoints, "point", "points")))
 	}
 
 	lines = append(lines, "\n  Type [cyan]prestige shop[-] to view upgrades.")
@@ -1920,6 +1929,13 @@ func cmdDiplomacy(args []string, engine *game.GameEngine) CommandResult {
 	}
 }
 
+// notMetReply refuses civ, a civilization the player has not met. An unmet
+// civilization and a made-up one read alike, and neither is named, so the
+// refusal gives nothing away (spoilers.go).
+func notMetReply(civ string) CommandResult {
+	return CommandResult{Message: fmt.Sprintf("You have not met a civilization called '%s'. Type 'diplomacy deals' to see the ones you have met.", civ), Type: "error"}
+}
+
 // cmdDiplomacyDeals lists the trade deals of one civilization, or of every
 // one met when civ is "".
 func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
@@ -1932,7 +1948,7 @@ func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 		}
 		if !ok || !f.Discovered {
 			if civ != "" {
-				return CommandResult{Message: fmt.Sprintf("You have not met the %s yet. Scouting expeditions make first contact.", def.Name), Type: "error"}
+				return notMetReply(civ)
 			}
 			continue
 		}
@@ -1943,7 +1959,7 @@ func cmdDiplomacyDeals(civ string, engine *game.GameEngine) CommandResult {
 	}
 	if len(lines) == 0 {
 		if civ != "" {
-			return CommandResult{Message: fmt.Sprintf("No civilization called '%s'. Type 'diplomacy deals' to see the ones you have met.", civ), Type: "error"}
+			return notMetReply(civ)
 		}
 		return CommandResult{Message: "You have not met anyone to trade with yet. Scouting expeditions make first contact.", Type: "info"}
 	}
@@ -2105,10 +2121,11 @@ func catastropheOutlookText(state game.GameState) string {
 	case o.NextEpochKey == "":
 		sb.WriteString("  This is the final epoch: its passage is prestige, and the Last Passage cannot strike now.")
 	case !o.Possible:
-		fmt.Fprintf(&sb, "  Next transition (%s): no catastrophe possible.", config.EpochByKey()[o.NextEpochKey].Name)
+		fmt.Fprintf(&sb, "  Next transition (the end of the %s): no catastrophe possible.", currentEraName(state))
 	default:
-		fmt.Fprintf(&sb, "  Next transition (%s): %s, faith %.0f%% full.",
-			config.EpochByKey()[o.NextEpochKey].Name, outlookRiskText(state), o.FaithFill*100)
+		// The era it leads into stays unnamed until reached (spoilers.go).
+		fmt.Fprintf(&sb, "  Next transition (the end of the %s): %s, faith %.0f%% full.",
+			currentEraName(state), outlookRiskText(state), o.FaithFill*100)
 	}
 	return strings.TrimRight(sb.String(), "\n")
 }
@@ -2126,10 +2143,14 @@ func outlookRiskText(state game.GameState) string {
 		tier, numeric, prob, speaker = h.Tier, h.Numeric, h.Probability, h.Name
 	}
 	var risk string
-	if numeric {
+	switch {
+	case numeric:
 		risk = fmt.Sprintf("%.0f%% catastrophe chance (%s)", prob*100, tier)
-	} else {
-		risk = fmt.Sprintf("%s risk of catastrophe (no figures before the Industrial Age)", tier)
+	case game.SightOf(&state).Age("industrial_age"):
+		risk = fmt.Sprintf("%s risk of catastrophe (no figures before %s)", tier, ageRef(state, "industrial_age"))
+	default:
+		// The age that prints the odds is named only once the player can see it.
+		risk = fmt.Sprintf("%s risk of catastrophe (no figures this early)", tier)
 	}
 	if speaker != "" {
 		return fmt.Sprintf("%s warns of %s", capFirstUI(speaker), risk)

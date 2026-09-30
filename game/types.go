@@ -471,7 +471,10 @@ type MilestoneSnapshotParams struct {
 	WonderCount     int
 	KnowledgeCount  int
 	ResearchedTechs map[string]bool
-	activeEvents    []ActiveEventState // unexported — only set by engine
+	// Sight, when set, hides every unfinished milestone that needs an age the
+	// player cannot see named yet (spoilers.go). nil shows them all.
+	Sight        *AgeSight
+	activeEvents []ActiveEventState // unexported — only set by engine
 }
 
 // === Prestige Types ===

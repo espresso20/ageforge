@@ -146,7 +146,7 @@ func registry() []*Command {
 		{Name: "gather", Aliases: []string{"g"}, Section: secActions,
 			Args: []Arg{{Kind: ArgWord, Words: []string{"food", "wood", "stone"}}, optCount},
 			Help: []Usage{{"gather <food|wood|stone> [amount]", "Gather food, wood or stone by hand (default " + strconv.Itoa(int(gatherDefaultYield)) +
-				", max " + strconv.Itoa(int(gatherMaxYield)) + " per use; not after the Medieval Age)"}}},
+				", max " + strconv.Itoa(int(gatherMaxYield)) + " per use; the early ages only)"}}},
 		{Name: "build", Aliases: []string{"b"}, Section: secActions,
 			Args: []Arg{{Kind: ArgBuilding, Optional: true}, optCountMax},
 			Help: []Usage{{"build <building> [count|max]", "Build copies of a building (default 1)"}}},
@@ -234,7 +234,7 @@ func registry() []*Command {
 			}},
 		{Name: "blackmarket", Aliases: []string{"bm"}, Section: secTrade,
 			Args: []Arg{{Kind: ArgResource, Optional: true}},
-			Help: []Usage{{"blackmarket [resource]", "Smuggling run: gamble culture on a haul of one resource (from the Colonial Age)"}}},
+			Help: []Usage{{"blackmarket [resource]", "Smuggling run: gamble culture on a haul of one resource (bare blackmarket shows the odds, or when it opens)"}}},
 		{Name: "factions", Section: secTrade, Panel: "Boons, the Geographic Society & opinion of each civilization (alias: diplomacy)",
 			Help: []Usage{{"factions", "Open the Factions panel (boons, the Geographic Society, opinion)"}}},
 		{Name: "diplomacy", Aliases: []string{"dip"}, Section: secTrade, BareOK: true,

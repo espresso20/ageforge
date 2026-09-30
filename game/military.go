@@ -255,7 +255,7 @@ func (mm *MilitaryManager) LaunchExpedition(rng *rand.Rand, key, currentAge stri
 	}
 
 	if ageOrder[def.MinAge] > ageOrder[currentAge] {
-		return fmt.Errorf("%s needs the %s. Advance to send it", def.Name, ageLabel(def.MinAge))
+		return fmt.Errorf("%s needs %s. Advance to send it", def.Name, laterAgeRef(currentAge, def.MinAge))
 	}
 	if def.MaxAge != "" && ageOrder[currentAge] > ageOrder[def.MaxAge] {
 		return fmt.Errorf("%s ended with the %s. Type %s to see what you can send now", def.Name, ageLabel(def.MaxAge), categoryCommand(def.Category))

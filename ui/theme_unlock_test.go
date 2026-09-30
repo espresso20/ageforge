@@ -151,7 +151,7 @@ func TestThemeDetailShowsLockCondition(t *testing.T) {
 		t.Fatal("precondition: cyberpunk theme not registered")
 	}
 	// available=false → locked detail.
-	d := themeDetailText(cp, false)
+	d := themeDetailText(cp, false, nil)
 	if !strings.Contains(d, "🔒") || !strings.Contains(d, "Locked") {
 		t.Errorf("locked detail should show a lock marker\ngot: %s", d)
 	}
@@ -163,7 +163,7 @@ func TestThemeDetailShowsLockCondition(t *testing.T) {
 		t.Errorf("locked detail should still show swatch preview\ngot: %s", d)
 	}
 	// available=true → no lock line.
-	if d := themeDetailText(cp, true); strings.Contains(d, "Locked") {
+	if d := themeDetailText(cp, true, nil); strings.Contains(d, "Locked") {
 		t.Errorf("available detail must not show a Locked line\ngot: %s", d)
 	}
 }
@@ -174,7 +174,7 @@ func TestThemeDetailShowsLockCondition(t *testing.T) {
 func TestCmdThemeListShowsLockHints(t *testing.T) {
 	restoreForge(t)
 	acct := newIsolatedAccount(t) // owns only the default-unlock set
-	res := cmdThemeList(acct)
+	res := cmdThemeList(acct, nil)
 	if res.Type == "error" {
 		t.Fatalf("theme list errored: %q", res.Message)
 	}

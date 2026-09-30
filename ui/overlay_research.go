@@ -8,6 +8,7 @@ import (
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // formatTechEffect names a config.Effect in glossary words: "+10% all
@@ -180,9 +181,17 @@ func researchProvider(state game.GameState, _ int) string {
 	// === Tech tree ===
 	sb.WriteString("\n [gold]═══ Tech tree ═══[-]\n")
 
+	// Ages the player cannot see named yet are not listed, only counted: no
+	// age names and no tech names from past the next age (spoilers.go).
+	sight := game.SightOf(&state)
+	laterTechs := 0
 	for _, ageKey := range ageOrder {
 		ageTechs, ok := techsByAge[ageKey]
 		if !ok {
+			continue
+		}
+		if !sight.Age(ageKey) {
+			laterTechs += len(ageTechs)
 			continue
 		}
 
@@ -279,6 +288,10 @@ func researchProvider(state game.GameState, _ int) string {
 				}
 			}
 		}
+	}
+
+	if laterTechs > 0 {
+		sb.WriteString("\n  " + theme.Paint(theme.RoleDim, fmt.Sprintf("── Later ages (locked): %s ──", textfmt.Count(laterTechs, "more tech", "more techs"))) + "\n")
 	}
 
 	// === Footer ===

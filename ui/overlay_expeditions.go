@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // expeditionsProvider generates the Expeditions panel text: the civilian
@@ -38,7 +39,8 @@ func expeditionsProvider(state game.GameState, _ int) string {
 				formatTicks(auto.TicksLeft, state))
 		}
 	} else {
-		sb.WriteString("\n [gray]Build a Geographic Society (Industrial Age) to scout automatically.[-]\n")
+		sb.WriteString("\n" + theme.Paint(theme.RoleDim, fmt.Sprintf(" A Geographic Society scouts automatically. %s brings it.",
+			ageRefCap(state, buildingAge(state, "geographic_society", "industrial_age")))) + "\n")
 	}
 
 	// === Active expedition ===
@@ -53,7 +55,7 @@ func expeditionsProvider(state game.GameState, _ int) string {
 	sb.WriteString("\n [gold]═══ Available expeditions ═══[-]\n\n")
 	if !hasCategory(mil.Expeditions, game.ExpeditionScouting) {
 		sb.WriteString(" [gray]No expeditions available yet.[-]\n")
-		sb.WriteString(" [gray]Reach the Bronze Age to unlock more scouting.[-]\n")
+		sb.WriteString(theme.Paint(theme.RoleDim, fmt.Sprintf(" Reach %s to unlock more scouting.", ageRef(state, "bronze_age"))) + "\n")
 	} else {
 		writeExpeditionGroup(&sb, "Scouting", mil.Expeditions, game.ExpeditionScouting, state)
 	}

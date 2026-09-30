@@ -7,6 +7,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
+	"github.com/espresso20/ageforge/theme"
 )
 
 // militaryProvider generates the military overlay text from the current game state.
@@ -67,8 +68,13 @@ func militaryProvider(state game.GameState, _ int) string {
 	sb.WriteString("\n [gold]═══ Campaigns ═══[-]\n\n")
 	if !hasCategory(mil.Expeditions, game.ExpeditionMilitary) {
 		sb.WriteString(" [gray]No campaigns available yet.[-]\n")
-		sb.WriteString(" [gray]Campaigns open in the Bronze Age and cost soldiers,[-]\n")
-		sb.WriteString(" [gray]which military buildings train from the Iron Age.[-]\n")
+		// Ages are named only once the player can see them (spoilers.go).
+		train := " which military buildings train, once you can build them."
+		if game.SightOf(&state).Age("iron_age") {
+			train = " which military buildings train from " + ageRef(state, "iron_age") + "."
+		}
+		sb.WriteString(theme.Paint(theme.RoleDim, fmt.Sprintf(" Campaigns open in %s and cost soldiers,", ageRef(state, "bronze_age"))) + "\n")
+		sb.WriteString(theme.Paint(theme.RoleDim, train) + "\n")
 	} else {
 		writeExpeditionGroup(&sb, "Campaigns", mil.Expeditions, game.ExpeditionMilitary, state)
 	}

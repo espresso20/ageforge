@@ -47,18 +47,22 @@ const (
 	GiftOpinion = 15
 )
 
-// errUnknownCiv is the refusal for a civ key that is not on the roster.
+// errUnknownCiv is the refusal for a civ key the player has not met: one not
+// on the roster, or one not discovered yet. Both read alike, and the typo
+// suggestion looks only at civilizations already met, so a refusal never
+// names or confirms a civilization the player has not found (spoilers.go).
 func (dm *DiplomacyManager) errUnknownCiv(key string) error {
-	msg := fmt.Sprintf("No civilization called '%s'.", key)
-	if s := closestKey(key, dm.factionDefs); s != "" && s != key {
+	msg := fmt.Sprintf("You have not met a civilization called '%s'.", key)
+	met := map[string]bool{}
+	for k, fs := range dm.factions {
+		if fs.Discovered {
+			met[k] = true
+		}
+	}
+	if s := closestKey(key, met); s != "" && s != key {
 		msg += fmt.Sprintf(" Did you mean '%s'?", s)
 	}
-	return fmt.Errorf("%s Type diplomacy deals to see the ones you have met.", msg)
-}
-
-// errNotMet is the refusal for a civ the player has not met yet.
-func errNotMet(name string) error {
-	return fmt.Errorf("You have not met the %s yet. Scouting expeditions make first contact.", name)
+	return fmt.Errorf("%s Scouting expeditions make first contact; type diplomacy deals to see the ones you have met.", msg)
 }
 
 // DiplomacyManager handles NPC civilization discovery and diplomatic relations.
@@ -349,7 +353,7 @@ func (dm *DiplomacyManager) SetStatus(factionKey, status string, gold float64) (
 
 	fs, ok := dm.factions[factionKey]
 	if !ok || !fs.Discovered {
-		return 0, errNotMet(def.Name)
+		return 0, dm.errUnknownCiv(factionKey)
 	}
 
 	var cost float64
@@ -415,7 +419,7 @@ func (dm *DiplomacyManager) RaidTradeRoute(factionKey string, tick int) (bool, e
 	}
 	fs, ok := dm.factions[factionKey]
 	if !ok || !fs.Discovered {
-		return false, errNotMet(def.Name)
+		return false, dm.errUnknownCiv(factionKey)
 	}
 	// Raiding tanks opinion immediately, then registers the provocation.
 	fs.Opinion -= 20
@@ -436,7 +440,7 @@ func (dm *DiplomacyManager) SendTribute(factionKey string, gold, culture float64
 	}
 	fs, ok := dm.factions[factionKey]
 	if !ok || !fs.Discovered {
-		return 0, 0, errNotMet(def.Name)
+		return 0, 0, dm.errUnknownCiv(factionKey)
 	}
 	if !fs.AtWar {
 		return 0, 0, fmt.Errorf("The %s are not at war with you.", def.Name)
@@ -482,7 +486,7 @@ func (dm *DiplomacyManager) SendGift(factionKey string, gold float64) (float64, 
 
 	fs, ok := dm.factions[factionKey]
 	if !ok || !fs.Discovered {
-		return 0, errNotMet(def.Name)
+		return 0, dm.errUnknownCiv(factionKey)
 	}
 
 	cost := GiftCost

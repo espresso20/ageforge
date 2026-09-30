@@ -2401,7 +2401,7 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 
 	ageOrder := ge.progress.GetAgeOrder()
 	if ageOrder[blackMarketMinAge] > ageOrder[ge.age] {
-		return false, 0, fmt.Errorf("The black market opens in the %s.", AgeName(blackMarketMinAge))
+		return false, 0, fmt.Errorf("The black market opens in %s.", ge.ageSightLocked().AgeRef(blackMarketMinAge))
 	}
 	if ge.tick < ge.blackMarketReadyTick {
 		return false, 0, fmt.Errorf("The smugglers are lying low. Try again in %s.", ge.durationLocked(ge.blackMarketReadyTick-ge.tick))
@@ -3537,7 +3537,7 @@ func (ge *GameEngine) DoPrestige() error {
 
 	ageOrder := ge.progress.GetAgeOrder()
 	if !ge.Prestige.CanPrestige(ge.age, ageOrder) {
-		return fmt.Errorf("You can prestige once you reach the %s.", AgeName(PrestigeMinAge))
+		return fmt.Errorf("You can prestige once you reach %s.", ge.ageSightLocked().AgeRef(PrestigeMinAge))
 	}
 
 	// In the final epoch prestige is the passage, and it can bring the Last
@@ -3748,6 +3748,7 @@ func (ge *GameEngine) GetState() GameState {
 	popCap := ge.Buildings.GetPopCapacity()
 	popCap += int(ge.Research.GetBonus("population") + ge.permanentBonuses["population"] + ge.Prestige.GetBonuses()["population"])
 	nextAge := ge.progress.GetNextAge(ge.age)
+	sight := ge.ageSightLocked()
 
 	// One epoch lookup per snapshot (was three full table rebuilds).
 	epochDef, epochOK := config.EpochByKey()[ge.currentEpoch]
@@ -3865,6 +3866,7 @@ func (ge *GameEngine) GetState() GameState {
 			WonderCount:     ge.countWonders(),
 			KnowledgeCount:  knowledgeCount,
 			ResearchedTechs: ge.getResearchedTechMap(),
+			Sight:           &sight,
 			activeEvents:    ge.Events.GetActive(),
 		}),
 		ActiveEvents:          ge.Events.GetActive(),

@@ -63,7 +63,7 @@ func (rm *ResearchManager) StartResearchWithSpeed(key string, currentAge string,
 	}
 	// Check age requirement
 	if ageOrder[def.Age] > ageOrder[currentAge] {
-		return fmt.Errorf("%s needs the %s.", def.Name, AgeName(def.Age))
+		return fmt.Errorf("%s needs %s.", def.Name, laterAgeRef(currentAge, def.Age))
 	}
 	// Check prerequisites
 	for _, prereq := range def.Prerequisites {

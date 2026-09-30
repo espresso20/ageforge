@@ -83,7 +83,7 @@ Cancels the current research. **No refund.** The knowledge cost is lost. Only us
 ```
 research
 ```
-With no arguments, opens the **Research panel**. It groups techs by age: researched techs show as complete, available ones are highlighted, and locked ones are dimmed.
+With no arguments, opens the **Research panel**. It groups techs by age: researched techs show as complete, available ones are highlighted, and locked ones are dimmed. Ages past your next one are not listed: one line counts the techs they hold, so the tree never spoils an age you haven't reached.
 
 ---
 

@@ -214,7 +214,7 @@ func (tm *TradeManager) StartRoute(key string, buildings *BuildingManager, age s
 
 	// Check age requirement
 	if ageOrder[def.MinAge] > ageOrder[age] {
-		return fmt.Errorf("%s needs the %s.", def.Name, AgeName(def.MinAge))
+		return fmt.Errorf("%s needs %s.", def.Name, laterAgeRef(age, def.MinAge))
 	}
 
 	// Check building requirement
