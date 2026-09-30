@@ -254,12 +254,27 @@ func runAccounts(e *Env, res *Result) {
 		if err != nil {
 			return err
 		}
+		before, err := slotFiles(alpha.AccountID)
+		if err != nil {
+			return err
+		}
 		acct, err := game.ImportRecoveryCode(code)
 		if err != nil {
 			return err
 		}
 		if acct.AccountID != alpha.AccountID {
 			return fmt.Errorf("the recovery code restored id %s, want %s", acct.AccountID, alpha.AccountID)
+		}
+		// Recovering an account already on this machine opens it; it never resets it.
+		if !acct.HasTheme(themeKey) {
+			return fmt.Errorf("recovering alpha's own code dropped its theme unlock")
+		}
+		after, err := slotFiles(alpha.AccountID)
+		if err != nil {
+			return err
+		}
+		if d := firstDiff(before, after, nil); d != "" {
+			return fmt.Errorf("recovering alpha's own code changed alpha's files: %s", d)
 		}
 		if betaCode, err = game.RecoveryCodeForID(beta.AccountID); err != nil {
 			return err
@@ -320,12 +335,30 @@ func runAccounts(e *Env, res *Result) {
 		return nil
 	})
 	a.step("recover a wiped identity", func() error {
+		before, err := slotFiles(alpha.AccountID)
+		if err != nil {
+			return err
+		}
 		acct, err := game.ImportRecoveryCode(betaCode)
 		if err != nil {
 			return err
 		}
 		if acct.AccountID != beta.AccountID {
 			return fmt.Errorf("beta's code restored %s", acct.AccountID)
+		}
+		// The identity lands in beta's own slot; alpha, the active account, is untouched.
+		if !hasID(beta.AccountID) {
+			return fmt.Errorf("beta's recovered identity is not in the account list")
+		}
+		after, err := slotFiles(alpha.AccountID)
+		if err != nil {
+			return err
+		}
+		if d := firstDiff(before, after, nil); d != "" {
+			return fmt.Errorf("recovering beta's code changed alpha's files: %s", d)
+		}
+		if activeID() != alpha.AccountID {
+			return fmt.Errorf("recovering beta's code changed the active account to %q", activeID())
 		}
 		return nil
 	})

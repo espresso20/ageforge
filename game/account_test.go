@@ -3,6 +3,7 @@ package game
 import (
 	"encoding/json"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -247,9 +248,20 @@ func TestLoadOrCreateCorruptBacksUpAndRecreates(t *testing.T) {
 	if string(got) != "this is not json {{{" {
 		t.Errorf(".corrupt backup = %q, want the original garbage bytes", string(got))
 	}
-	// And the live file must parse + verify again.
-	if _, err := os.Stat(path); err != nil {
-		t.Errorf("fresh account.json not written after corrupt recovery: %v", err)
+	// The fresh account has its own ID, so it lives in its own slot and is the active
+	// account now; the old slot keeps only the .corrupt backup.
+	freshPath := filepath.Join(accountDir(fresh.AccountID), accountFileName)
+	if _, err := os.Stat(freshPath); err != nil {
+		t.Errorf("fresh account.json not written to its own slot after corrupt recovery: %v", err)
+	}
+	if got := getActiveAccountID(); got != fresh.AccountID {
+		t.Errorf("active account after corrupt recovery = %q, want the fresh account %q", got, fresh.AccountID)
+	}
+	if ptr, err := readActivePointer(); err != nil || ptr != fresh.AccountID {
+		t.Errorf("active pointer after corrupt recovery = %q (err %v), want %q", ptr, err, fresh.AccountID)
+	}
+	if _, err := os.Stat(path); !os.IsNotExist(err) {
+		t.Errorf("the corrupt slot still has an account.json (stat err = %v); only the backup should remain", err)
 	}
 }
 

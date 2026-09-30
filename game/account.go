@@ -37,10 +37,13 @@ const accountsDirName = "accounts"
 const activePointerFileName = "active-account"
 
 // activeAccountID is the process-global ID of the account whose scoped slot is live.
-// dataDirectory() (the SCOPED dir) resolves through it, so account.json + saves land in
-// <root>/accounts/<activeAccountID>/. It is "" before any account is named/loaded (the
-// brief first-run window) — see dataDirectory() for the empty-id behavior. Guarded by
-// activeAccountMu so the boot goroutine and the UI never race the pointer.
+// dataDirectory() (the SCOPED dir) resolves through it, so reading the active account,
+// listing saves and a run started under it resolve to <root>/accounts/<activeAccountID>/.
+// Writes never follow it: Account.Save writes each account to its own slot, and SaveGame
+// writes a run to the slot of the account that owns it. It is "" before any account is
+// named/loaded (the brief first-run window) — see dataDirectory() for the empty-id
+// behavior. Guarded by activeAccountMu so the boot goroutine and the UI never race the
+// pointer.
 var activeAccountID string
 
 // activeAccountMu guards activeAccountID. It is a distinct, lightweight lock with no
@@ -71,8 +74,9 @@ func accountDir(id string) string {
 }
 
 // dataDirectory is the SCOPED data dir: the active account's slot,
-// <root>/accounts/<activeID>/. accountPath() and the saves dir resolve through it, so
-// account.json and saves land inside the active account's slot (Phase A account-scoping).
+// <root>/accounts/<activeID>/. accountPath() and the saves dir resolve through it, so the
+// active account is read from, and a new run saves into, the active account's slot (Phase A
+// account-scoping). Account.Save does not use it (each account writes its own slot).
 //
 // When no account is active yet (empty id, the first-run window before a name is chosen),
 // it collapses to <root>/accounts. That is harmless: nothing writes a *named* artifact in
@@ -266,10 +270,13 @@ type Account struct {
 	// --- integrity (same scheme as saves) ---
 	Signature string `json:"_sig,omitempty"`
 
-	// Tampered is the in-memory, non-persisted cosmetic flag set when a loaded
-	// file's signature does not match (accounts.md §3.4). It mirrors the save
-	// CheaterBadge: signalling, not a lockout. json:"-" keeps it off disk.
-	Tampered bool `json:"-"`
+	// Tampered is the cosmetic flag set when a loaded file's signature does not match
+	// (accounts.md §3.4). It mirrors the save CheaterBadge: signalling, not a lockout.
+	// It is persisted (omitempty, so clean files keep their bytes and signatures) and
+	// covered by the signature, so it sticks: the next Save re-signs the file with the
+	// flag in it instead of laundering the edit, and deleting the key by hand breaks the
+	// signature and sets it again. Exports carry it too.
+	Tampered bool `json:"tampered,omitempty"`
 
 	// FreshlyCreated is the in-memory, non-persisted signal that LoadOrCreate just
 	// minted this account on its fresh-create path (no file existed). Boot code reads
@@ -452,10 +459,12 @@ func CreateNamedAccount(name string) (*Account, error) {
 		acct.Stats = prior.Stats
 		acct.Achievements = append([]string(nil), prior.Achievements...)
 		acct.Prefs = prior.Prefs
+		// Carried data keeps its tamper flag: re-keying must not launder an edited file.
+		acct.Tampered = prior.Tampered
 	}
 
-	// Switch the active account to the new name-derived id, then create its slot so the
-	// scoped Save lands at <root>/accounts/<id>/account.json.
+	// Switch the active account to the new name-derived id; Save writes into that
+	// account's own slot, <root>/accounts/<id>/account.json.
 	setActiveAccountID(acct.AccountID)
 	if err := os.MkdirAll(accountDir(acct.AccountID), 0755); err != nil {
 		return nil, fmt.Errorf("failed to create account slot: %w", err)
@@ -467,6 +476,18 @@ func CreateNamedAccount(name string) (*Account, error) {
 		return nil, err
 	}
 	return acct, nil
+}
+
+// makeActive makes the account in slot id the active one: the persisted pointer, then the
+// in-memory id, so saves list from its slot and the next boot resolves to it. The pointer
+// goes first so a failed write changes nothing. The caller has already confirmed the slot
+// holds an account.
+func makeActive(id string) error {
+	if err := writeActivePointer(id); err != nil {
+		return err
+	}
+	setActiveAccountID(id)
+	return nil
 }
 
 // accountPath resolves the full path to the ACTIVE account's account.json:
@@ -612,9 +633,10 @@ func ListAccounts() []AccountSummary {
 //
 // It verifies accountDir(id)/account.json exists first, erroring with "no such account" if
 // not (and leaving the active account unchanged). On success it sets the in-memory active
-// id AND persists the pointer, so subsequent Save()/SaveGame() auto-scope to the new slot
-// via dataDirectory() and the next boot resolves to it. Tamper/verify behavior is preserved
-// (the returned account carries Tampered=true if its signature is stale).
+// id AND persists the pointer, so the save list and new games scope to the new slot via
+// dataDirectory() and the next boot resolves to it. Tamper/verify behavior is preserved
+// (the returned account carries Tampered=true if its signature is stale or it was flagged
+// before). The engine's SwitchAccount wraps this with the live-account handling.
 func SwitchAccount(id string) (*Account, error) {
 	acct, found, err := loadAccountFromSlot(id)
 	if err != nil {
@@ -625,8 +647,7 @@ func SwitchAccount(id string) (*Account, error) {
 	}
 	// Commit the switch only after the slot is confirmed loadable, so a failed switch
 	// leaves the active account unchanged.
-	setActiveAccountID(id)
-	if err := writeActivePointer(id); err != nil {
+	if err := makeActive(id); err != nil {
 		return nil, err
 	}
 	return acct, nil
@@ -670,7 +691,7 @@ func CreateAccount(name string) (*Account, error) {
 		LastSeen:       now,
 		FreshlyCreated: true,
 	}
-	// Make it active BEFORE Save so the scoped Save lands at <root>/accounts/<id>/account.json.
+	// Make it active; Save writes into its own slot, <root>/accounts/<id>/account.json.
 	setActiveAccountID(id)
 	if err := os.MkdirAll(accountDir(id), 0755); err != nil {
 		return nil, fmt.Errorf("failed to create account slot: %w", err)
@@ -819,9 +840,11 @@ func shortID(id string) string {
 // It takes a pointer (not a value) so the sync.Mutex field is never copied — a
 // value copy would trip go vet's copylocks. The signed bytes are unchanged from a
 // value-based marshal: json.Marshal already ignores unexported fields (mu) and the
-// json:"-" Tampered/FreshlyCreated fields, and we build the payload from a
-// freshly-constructed struct literal that copies only the serializable fields,
-// with Signature/Tampered zeroed — so the signature covers exactly the on-disk data.
+// json:"-" FreshlyCreated field, and we build the payload from a freshly-constructed
+// struct literal that copies only the serializable fields, with Signature zeroed — so
+// the signature covers exactly the on-disk data. Tampered is part of that data: it is
+// omitempty, so an untampered account signs to the same bytes as before the flag was
+// persisted, and a flagged one cannot shed the flag without breaking the signature.
 func signAccount(a *Account) string {
 	payload := Account{
 		Version:      a.Version,
@@ -833,7 +856,8 @@ func signAccount(a *Account) string {
 		Stats:        a.Stats,
 		Achievements: a.Achievements,
 		Prefs:        a.Prefs,
-		// Signature deliberately zero; Tampered/FreshlyCreated/mu are json:"-"/unexported.
+		Tampered:     a.Tampered,
+		// Signature deliberately zero; FreshlyCreated/mu are json:"-"/unexported.
 	}
 	data, _ := json.Marshal(&payload)
 	return hmacSign(data, saveHMACKey)
@@ -849,11 +873,37 @@ func verifyAccount(a *Account) bool {
 	return hmac.Equal([]byte(a.Signature), []byte(signAccount(a)))
 }
 
+// validAccountID reports whether id has the shape every account ID has: 32 lowercase
+// hex characters (16 bytes, from newAccountID, accountIDFromName or a recovery code). An
+// ID names a directory under <root>/accounts/, so anything else (an empty ID, which
+// would collapse onto the shared accounts root, or a path from a hand-made export) is
+// refused before it reaches the disk.
+func validAccountID(id string) bool {
+	if len(id) != 32 {
+		return false
+	}
+	for i := 0; i < len(id); i++ {
+		c := id[i]
+		if (c < '0' || c > '9') && (c < 'a' || c > 'f') {
+			return false
+		}
+	}
+	return true
+}
+
 // Save signs the account with the shared HMAC helper and writes it atomically
-// (temp file + os.Rename), creating the data dir if missing. Mirrors SaveGame's
-// write discipline (accounts.md §3.4).
+// (temp file + os.Rename) into the account's OWN slot, <root>/accounts/<AccountID>/,
+// creating it if missing. Mirrors SaveGame's write discipline (accounts.md §3.4).
+//
+// It deliberately does not resolve through the active account: whichever account is
+// active, an account's data only ever lands in its own file. So an old account object
+// flushed after a switch, a recovery code restored while another account is active, or
+// an import aimed at another slot can never overwrite a different account.
 func (a *Account) Save() error {
-	dir := dataDirectory()
+	if !validAccountID(a.AccountID) {
+		return fmt.Errorf("cannot save an account with the ID %q", a.AccountID)
+	}
+	dir := accountDir(a.AccountID)
 	if err := os.MkdirAll(dir, 0755); err != nil {
 		return fmt.Errorf("failed to create data directory: %w", err)
 	}
@@ -864,9 +914,7 @@ func (a *Account) Save() error {
 		return fmt.Errorf("failed to marshal account: %w", err)
 	}
 
-	// Write to the resolved path (canonical, or the legacy CWD location if that is
-	// where the existing file lives) so we don't orphan a dev-run account.json.
-	path := accountPath()
+	path := filepath.Join(dir, accountFileName)
 	tmpPath := path + ".tmp"
 	if err := os.WriteFile(tmpPath, data, 0644); err != nil {
 		return fmt.Errorf("failed to write account: %w", err)
@@ -924,22 +972,16 @@ func LoadOrCreate() (*Account, error) {
 	var acct Account
 	if err := json.Unmarshal(data, &acct); err != nil {
 		// Corrupt / unparseable → back it up to <slot>/account.json.corrupt, then mint a
-		// fresh account and Save it back into the SAME active slot (accounts.md §7). The
-		// active id (and thus the pointer + slot path) is unchanged, so the fresh
-		// account.json lands beside its .corrupt sibling. The corrupt-recovery path is NOT
-		// a first run → FreshlyCreated stays false.
+		// fresh account (accounts.md §7). The fresh account has a new ID, so it gets its
+		// own slot and becomes the active account (pointer included), the same as the
+		// absent-file path; the .corrupt backup stays in the old slot. (It used to be saved
+		// into the old slot under its new ID, leaving a slot whose folder named a different
+		// account.) The corrupt-recovery path is NOT a first run → FreshlyCreated stays false.
 		backup := path + ".corrupt"
 		if renameErr := os.Rename(path, backup); renameErr != nil {
 			return nil, fmt.Errorf("account file is corrupt and could not be backed up: %w", renameErr)
 		}
-		fresh, newErr := newAccount()
-		if newErr != nil {
-			return nil, newErr
-		}
-		if saveErr := fresh.Save(); saveErr != nil {
-			return nil, saveErr
-		}
-		return fresh, nil
+		return createFreshActive(false)
 	}
 
 	if !verifyAccount(&acct) {
@@ -952,11 +994,11 @@ func LoadOrCreate() (*Account, error) {
 }
 
 // createFreshActive mints a fresh random-id account, makes it the active account, and
-// persists it into its own scoped slot plus the active pointer. It is the scoped
-// equivalent of the pre-Phase-A "absent file → create + Save" path: with a real id set as
-// active BEFORE Save, accountPath() resolves to <root>/accounts/<id>/account.json (never an
-// empty-id slot), and writeActivePointer records the choice for the next boot. The returned
-// account is flagged FreshlyCreated so boot code can surface the one-time first-run notice.
+// persists it into its own slot plus the active pointer. It is the scoped equivalent of
+// the pre-Phase-A "absent file → create + Save" path: Save writes to
+// <root>/accounts/<id>/account.json (never an empty-id slot), and writeActivePointer
+// records the choice for the next boot. freshlyCreated sets FreshlyCreated so boot code
+// can surface the one-time first-run notice.
 func createFreshActive(freshlyCreated bool) (*Account, error) {
 	acct, err := newAccount()
 	if err != nil {
@@ -1239,16 +1281,13 @@ func (a *Account) RecoveryCode() string {
 	return recoveryCodePrefix + "-" + body
 }
 
-// ImportRecoveryCode decodes a recovery code, verifies its checksum, and writes a
-// FRESH signed account.json carrying the recovered account ID with EMPTY data —
-// identity only, never restoring unlocks/stats (accounts.md §3.5/§8). It reuses the
-// normal signed atomic Save path; it never hand-rolls a second integrity scheme.
-//
-// Input is normalized leniently: uppercased, the AGEF- prefix stripped, dashes and
-// spaces removed, and ambiguous Crockford characters mapped (I/L→1, O→0, U→V). A
-// checksum mismatch returns a clear typo-guard error rather than silently minting a
-// wrong account.
-func ImportRecoveryCode(code string) (*Account, error) {
+// RecoveryCodeID decodes a recovery code, verifies its checksum, and returns the account
+// ID it carries, without touching the disk. Input is normalized leniently: uppercased,
+// the AGEF- prefix stripped, dashes and spaces removed, and ambiguous Crockford
+// characters mapped (I/L→1, O→0, U→V). A checksum mismatch returns a clear typo-guard
+// error rather than silently naming a wrong account. The UI uses it to check a code (and
+// to spot the player's own code) before asking for a confirm or changing anything.
+func RecoveryCodeID(code string) (string, error) {
 	// Normalize: drop spaces, uppercase, strip the AGEF- prefix, strip dashes.
 	norm := strings.ToUpper(strings.TrimSpace(code))
 	norm = strings.ReplaceAll(norm, " ", "")
@@ -1257,23 +1296,59 @@ func ImportRecoveryCode(code string) (*Account, error) {
 		norm = norm[len(p):]
 	}
 	if norm == "" {
-		return nil, fmt.Errorf("The recovery code is empty. Type account recover <code>.")
+		return "", fmt.Errorf("The recovery code is empty. Type account recover <code>.")
 	}
 
 	payload, err := crockfordDecode(norm, 18)
 	if err != nil {
-		return nil, err
+		return "", err
 	}
 	idBytes := payload[:16]
 	gotSum := uint16(payload[16])<<8 | uint16(payload[17])
 	if gotSum != crc16CCITT(idBytes) {
-		return nil, fmt.Errorf("That recovery code does not check out (a character is probably wrong). Check it and try again.")
+		return "", fmt.Errorf("That recovery code does not check out (a character is probably wrong). Check it and try again.")
+	}
+	return hex.EncodeToString(idBytes), nil
+}
+
+// ImportRecoveryCode restores the identity in a recovery code into THAT account's own
+// slot, <root>/accounts/<id>/ (accounts.md §3.5/§8), and returns the account there:
+//
+//   - The slot already holds an account (the code of an account on this machine, the
+//     player's own included): it is returned untouched. Recovering never overwrites an
+//     account.
+//   - The slot is empty: a FRESH signed account.json carrying the recovered ID with EMPTY
+//     data is written there. Identity only; unlocks, stats and achievements come back
+//     only from an export. An unreadable account.json already in the slot is moved aside
+//     to account.json.corrupt first, never overwritten.
+//
+// It never touches the active account or any other slot (it used to write the empty
+// account over whichever account was active). The engine's RecoverAccount switches to the
+// restored account afterwards. It reuses the normal signed atomic Save path; it never
+// hand-rolls a second integrity scheme.
+func ImportRecoveryCode(code string) (*Account, error) {
+	id, err := RecoveryCodeID(code)
+	if err != nil {
+		return nil, err
+	}
+	existing, found, err := loadAccountFromSlot(id)
+	if err != nil {
+		return nil, err
+	}
+	if found && existing != nil {
+		return existing, nil
+	}
+	path := filepath.Join(accountDir(id), accountFileName)
+	if _, statErr := os.Stat(path); statErr == nil {
+		if err := os.Rename(path, path+".corrupt"); err != nil {
+			return nil, fmt.Errorf("The account file for that code is damaged and could not be set aside: %w", err)
+		}
 	}
 
 	now := time.Now()
 	acct := &Account{
 		Version:   accountSchemaVersion,
-		AccountID: hex.EncodeToString(idBytes),
+		AccountID: id,
 		Created:   now,
 		LastSeen:  now,
 		// EMPTY data: identity only. Unlocks/Stats/Achievements/Prefs stay zero —
@@ -1297,7 +1372,8 @@ func ImportRecoveryCode(code string) (*Account, error) {
 // was active wrote B's data into A). Import is now the package function ImportAccountExport,
 // which resolves the blob's OWN slot by its AccountID and lands the data THERE — creating the
 // slot if absent, merging/replacing if present — without disturbing the active account. The
-// caller decides whether to switch to the restored account afterward.
+// engine's ImportAccountExport folds a backup of the account in use into the live object
+// instead. Neither switches accounts.
 
 // progressExport is the self-describing on-disk shape of an export blob: a format
 // version, the owning account's IDENTITY (AccountID + DisplayName), the DATA fields
@@ -1308,6 +1384,8 @@ func ImportRecoveryCode(code string) (*Account, error) {
 // export is a full single-account BACKUP (identity + progress), and import lands the
 // blob in that account's OWN slot rather than folding into whoever happens to be active.
 // The stats/achievements fields ride along so Phase 6 data exports without a format bump.
+// Tampered carries the account's tamper flag (omitempty, signed), so exporting an edited
+// account and importing it elsewhere keeps it flagged instead of laundering it.
 type progressExport struct {
 	Version      int            `json:"version"`
 	AccountID    string         `json:"account_id,omitempty"`
@@ -1316,13 +1394,15 @@ type progressExport struct {
 	Stats        AccountStats   `json:"stats,omitempty"`
 	Achievements []string       `json:"achievements,omitempty"`
 	Prefs        AccountPrefs   `json:"prefs,omitempty"`
+	Tampered     bool           `json:"tampered,omitempty"`
 	Signature    string         `json:"_sig,omitempty"`
 }
 
 // signProgressExport returns the HMAC-SHA256 hex of the export payload with Signature
 // zeroed, under saveHMACKey — identical construction to signAccount/signSave. The
 // signature COVERS AccountID + DisplayName, so an export cannot be re-attributed to a
-// different account without breaking the sig.
+// different account without breaking the sig, and Tampered, so the flag cannot be
+// dropped from a flagged export by hand.
 func signProgressExport(p *progressExport) string {
 	payload := progressExport{
 		Version:      p.Version,
@@ -1332,6 +1412,7 @@ func signProgressExport(p *progressExport) string {
 		Stats:        p.Stats,
 		Achievements: p.Achievements,
 		Prefs:        p.Prefs,
+		Tampered:     p.Tampered,
 		// Signature deliberately zero.
 	}
 	data, _ := json.Marshal(&payload)
@@ -1356,6 +1437,7 @@ func (a *Account) ExportProgress() ([]byte, error) {
 		Stats:        a.Stats,
 		Achievements: a.Achievements,
 		Prefs:        a.Prefs,
+		Tampered:     a.Tampered,
 	}
 	exp.Signature = signProgressExport(&exp)
 
@@ -1388,13 +1470,25 @@ func (a *Account) ExportProgress() ([]byte, error) {
 //     (AccountID + DisplayName) and the blob's DATA verbatim, MkdirAll its slot, and Save it in.
 //     merge vs replace is moot for a brand-new slot — there is no local data to fold into.
 //
-// ACTIVE-ID DISCIPLINE: Save resolves its path through the scoped dataDirectory(), so to write
-// the TARGET slot we briefly point activeAccountID at the blob's id around the Save — then
-// RESTORE the prior active id before returning. ImportAccountExport therefore never leaks a
-// switch: with account A active, importing B's backup leaves A active (the caller switches if
-// it wants). The active pointer file is NOT rewritten here; only the in-memory global is moved
-// and restored.
+// TAMPER: a flagged export flags the account it lands in (merge or replace), and a flagged
+// account stays flagged; see Account.Tampered.
+//
+// ACTIVE-ID DISCIPLINE: Save writes into the account's own slot, so import never touches the
+// process-global active account at all. (It used to point the global at the blob's slot for
+// the length of the write, and an autosave on the tick goroutine in that window wrote the
+// live game and account into the imported slot.) With account A active, importing B's backup
+// leaves A active; the caller switches if it wants.
 func ImportAccountExport(blob []byte, merge bool) (*Account, error) {
+	exp, err := decodeAccountExport(blob)
+	if err != nil {
+		return nil, err
+	}
+	return importExportToSlot(exp, merge)
+}
+
+// decodeAccountExport unmarshals and verifies an export blob: the integrity half of
+// ImportAccountExport, shared with the engine's live-account import. Nothing is written.
+func decodeAccountExport(blob []byte) (*progressExport, error) {
 	var exp progressExport
 	if err := json.Unmarshal(blob, &exp); err != nil {
 		return nil, fmt.Errorf("That file is not a readable progress export: %w", err)
@@ -1407,13 +1501,21 @@ func ImportAccountExport(blob []byte, merge bool) (*Account, error) {
 	if exp.AccountID == "" {
 		return nil, fmt.Errorf("That progress export has no account ID (it comes from an older version) and cannot be imported.")
 	}
+	// The ID names the slot the backup lands in, so it must be a real account ID, never a path.
+	if !validAccountID(exp.AccountID) {
+		return nil, fmt.Errorf("That progress export has an account ID the game cannot use, so it cannot be imported.")
+	}
+	return &exp, nil
+}
 
-	// Resolve the blob's OWN slot without disturbing the active account.
+// importExportToSlot lands a verified export in its account's own slot, read from disk:
+// merged into (or replacing) the account already there, or as a new account. See
+// ImportAccountExport.
+func importExportToSlot(exp *progressExport, merge bool) (*Account, error) {
 	target, found, err := loadAccountFromSlot(exp.AccountID)
 	if err != nil {
 		return nil, err
 	}
-
 	if !found || target == nil {
 		// No slot yet — mint one carrying the blob's identity + DATA verbatim. merge is moot.
 		now := time.Now()
@@ -1427,56 +1529,74 @@ func ImportAccountExport(blob []byte, merge bool) (*Account, error) {
 			Stats:        exp.Stats,
 			Achievements: append([]string(nil), exp.Achievements...),
 			Prefs:        exp.Prefs,
+			Tampered:     exp.Tampered,
 		}
-		if err := os.MkdirAll(accountDir(exp.AccountID), 0755); err != nil {
-			return nil, fmt.Errorf("failed to create account slot %s: %w", exp.AccountID, err)
-		}
-	} else if !merge {
-		// Existing slot, wholesale replace of the DATA fields; the slot's identity stays.
-		target.Unlocks = exp.Unlocks
-		target.Stats = exp.Stats
-		target.Achievements = append([]string(nil), exp.Achievements...)
-		target.Prefs = exp.Prefs
 	} else {
-		// Existing slot, merge: union themes (preserve local, add blob's).
-		target.Unlocks.Themes = unionStrings(target.Unlocks.Themes, exp.Unlocks.Themes)
-		// Union achievements.
-		target.Achievements = unionStrings(target.Achievements, exp.Achievements)
-		// Max each numeric lifetime stat — bests don't regress.
-		target.Stats.TotalPrestiges = maxInt(target.Stats.TotalPrestiges, exp.Stats.TotalPrestiges)
-		target.Stats.CivilizationsStarted = maxInt(target.Stats.CivilizationsStarted, exp.Stats.CivilizationsStarted)
-		target.Stats.SavesCompleted = maxInt(target.Stats.SavesCompleted, exp.Stats.SavesCompleted)
-		// HighestAge is a key, not a number: keep local unless empty, then adopt blob's.
-		if target.Stats.HighestAge == "" {
-			target.Stats.HighestAge = exp.Stats.HighestAge
-		}
-		// Active theme: keep local if set, else adopt the blob's.
-		if target.Prefs.ActiveTheme == "" {
-			target.Prefs.ActiveTheme = exp.Prefs.ActiveTheme
-		}
-		// Map settings: the same rule.
-		if target.Prefs.MapStyle == "" {
-			target.Prefs.MapStyle = exp.Prefs.MapStyle
-		}
-		if target.Prefs.MapGlyphs == "" {
-			target.Prefs.MapGlyphs = exp.Prefs.MapGlyphs
-		}
-		if target.Prefs.Minimap == "" {
-			target.Prefs.Minimap = exp.Prefs.Minimap
-		}
-		target.Prefs.MapIconsHint = target.Prefs.MapIconsHint || exp.Prefs.MapIconsHint
+		target.applyExportLocked(exp, merge) // target is private to this call; no lock needed
 	}
-
-	// Save resolves through the scoped dataDirectory(), so point the active id at the target
-	// slot for the duration of the write, then RESTORE it — import must not leak a switch.
-	prior := getActiveAccountID()
-	setActiveAccountID(exp.AccountID)
-	saveErr := target.Save()
-	setActiveAccountID(prior)
-	if saveErr != nil {
-		return nil, saveErr
+	if err := target.Save(); err != nil {
+		return nil, err
 	}
 	return target, nil
+}
+
+// applyExportLocked folds a verified export's DATA into a; identity (AccountID, DisplayName,
+// Created) stays a's. merge == true (the safe default) UNIONs themes and achievements, takes
+// the MAX of each numeric lifetime stat (bests never regress) and keeps a's HighestAge,
+// active theme and map settings unless empty (then adopts the blob's). merge == false
+// REPLACEs the DATA fields wholesale. A flagged export flags a; a flagged a stays flagged.
+// Callers hold a.mu when a is shared (the live account).
+func (a *Account) applyExportLocked(exp *progressExport, merge bool) {
+	a.Tampered = a.Tampered || exp.Tampered
+	if !merge {
+		a.Unlocks = exp.Unlocks
+		a.Stats = exp.Stats
+		a.Achievements = append([]string(nil), exp.Achievements...)
+		a.Prefs = exp.Prefs
+		return
+	}
+	// Union themes (preserve local, add blob's) and achievements.
+	a.Unlocks.Themes = unionStrings(a.Unlocks.Themes, exp.Unlocks.Themes)
+	a.Achievements = unionStrings(a.Achievements, exp.Achievements)
+	// Max each numeric lifetime stat — bests don't regress.
+	a.Stats.TotalPrestiges = maxInt(a.Stats.TotalPrestiges, exp.Stats.TotalPrestiges)
+	a.Stats.CivilizationsStarted = maxInt(a.Stats.CivilizationsStarted, exp.Stats.CivilizationsStarted)
+	a.Stats.SavesCompleted = maxInt(a.Stats.SavesCompleted, exp.Stats.SavesCompleted)
+	// HighestAge is a key, not a number: keep local unless empty, then adopt blob's.
+	if a.Stats.HighestAge == "" {
+		a.Stats.HighestAge = exp.Stats.HighestAge
+	}
+	// Active theme: keep local if set, else adopt the blob's.
+	if a.Prefs.ActiveTheme == "" {
+		a.Prefs.ActiveTheme = exp.Prefs.ActiveTheme
+	}
+	// Map settings: the same rule.
+	if a.Prefs.MapStyle == "" {
+		a.Prefs.MapStyle = exp.Prefs.MapStyle
+	}
+	if a.Prefs.MapGlyphs == "" {
+		a.Prefs.MapGlyphs = exp.Prefs.MapGlyphs
+	}
+	if a.Prefs.Minimap == "" {
+		a.Prefs.Minimap = exp.Prefs.Minimap
+	}
+	a.Prefs.MapIconsHint = a.Prefs.MapIconsHint || exp.Prefs.MapIconsHint
+}
+
+// importExport folds a verified export into this LIVE account and saves it: the engine's
+// path for a backup of the account in use. Working on the live object keeps records it has
+// not flushed yet, and leaves no second copy on disk for the live one to overwrite at its
+// next save. On a Save error the account stays dirty so the next flush retries.
+func (a *Account) importExport(exp *progressExport, merge bool) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.applyExportLocked(exp, merge)
+	if err := a.Save(); err != nil {
+		a.dirty = true
+		return err
+	}
+	a.dirty = false
+	return nil
 }
 
 // unionStrings returns the set union of a and b in a fresh slice, preserving a's order
