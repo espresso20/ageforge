@@ -13,41 +13,44 @@ import (
 
 // The Harbinger (Phase 9 follow-up).
 //
-// A harbinger thread belongs to an epoch whose outgoing transition can roll a
-// catastrophe. It starts when the player enters the epoch's first age (or on
-// the first tick or load that finds the epoch without one) and lasts until
-// that transition, which resolves it. The speaker changes with each age: the
-// current age's roster figure (config.HarbingerFor) takes up the warning, so
-// the Stone Era goes the Wild Man, the Hermit, the Soothsayer. The thread
-// never blocks anything and never expires. The Cosmic Era has no outgoing
-// transition: its passage is prestige, and its thread (TargetEpoch "") warns
-// of the Last Passage instead (last_passage.go), resolving when a prestige
-// from the Cosmic Era completes.
+// A harbinger comes only when doom is on its way. On entering an era from the
+// Iron Era on, a hidden roll decides whether a doom is fated there (fate.go);
+// if it is, a harbinger thread starts some while before the strike, with the
+// current age's roster figure (config.HarbingerFor), and lasts until the doom
+// strikes or is lifted. The speaker changes with each age the thread lives
+// through, so a doom foretold late in the Classical Age passes from the Oracle
+// to the Town Crier. The thread never blocks anything and never expires. What
+// the figure says about WHEN follows its config.ForecastTiming (fateWhen).
 //
-// Answers belong to the passage, not the figure, and carry across handoffs:
+// The Cosmic Era has no outgoing transition and no fate: its passage is
+// prestige, and its thread (TargetEpoch "") warns of the Last Passage
+// (last_passage.go) from the era's first age, as it always did, resolving when
+// a prestige from the Cosmic Era completes.
 //
-//   - Appease (faith + culture): each level multiplies the REAL catastrophe
-//     chance by harbingerAppeaseFactor. Two levels; the second costs double.
-//   - Brace (the epoch's core resources): softens an Endure if the catastrophe
-//     comes. Two levels, stored on the pending catastrophe so it still applies
-//     when Endure is chosen later.
-//   - Invite: arms catastropheInvited, guaranteeing the catastrophe. Free and
-//     final; Appease is pointless afterwards and refuses.
+// Answers belong to the doom, not the figure, and carry across handoffs:
 //
-// False prophets: the thread rolls once, at its first figure, against that
-// age's HarbingerDef.FalseProphetChance (non-zero for the Primitive, Iron and
-// Renaissance Ages among first ages). A false thread claims medium or high
-// whatever the odds, every figure repeats the claim, and the transition
-// reveals it. The claim is kept as a fixed multiple of the real chance
-// (ClaimFactor), so Appease, a faith change or an Invite move a false
-// warning exactly as they move a true one, and a false thread that reaches a
-// figure who prints odds (the Industrial Age) prints the claimed figure.
+//   - Appease (faith + culture): each level multiplies the REAL strike chance
+//     by harbingerAppeaseFactor. Two levels; the second costs double.
+//   - Brace (the epoch's core resources): softens an Endure if the doom
+//     strikes. Two levels, stored on the pending catastrophe so it still
+//     applies when Endure is chosen later.
+//   - Invite: makes the strike certain (it still comes when it was fated to).
+//     Free and final; Appease is pointless afterwards and refuses. In an era
+//     where nothing can be fated (the Stone Era) all three are refused.
 //
-// Randomness: a thread's start draws, in order, the false-prophet roll
-// (always), the claimed tier (only for a false thread), then the arrival and
-// warning lines from the engine's flavor Stream. A handoff draws two lines,
-// each action and the resolution one. All of it comes from the seeded ge.rng
-// under the write lock.
+// False prophets come from the fate too (fate.go): a false thread claims
+// medium or high whatever the odds, every figure repeats the claim, and it is
+// revealed once its foretold window passes. The claim is kept as a fixed
+// multiple of what a real doom's chance would be (ClaimFactor), so Appease, a
+// faith change or an Invite move a false warning exactly as they move a true
+// one, and a false thread that reaches a figure who prints odds (the
+// Industrial Age) prints the claimed figure.
+//
+// Randomness: a thread's start draws the arrival and warning lines from the
+// engine's flavor Stream (a Last Passage thread first draws its false-prophet
+// roll, always, and the claim only for a false thread). A handoff draws two
+// lines, each action and the resolution one. All of it comes from the seeded
+// ge.rng under the write lock.
 //
 // Unexported methods expect the write lock, except the read-only helpers used
 // by GetState (harbingerView, harbingerDisplay and the cost functions), which
@@ -118,10 +121,15 @@ type HarbingerSave struct {
 	// Chain lists the ages whose figures have spoken in this thread, first to
 	// current.
 	Chain []string `json:"chain,omitempty"`
-	// EpochKey is the thread's epoch; TargetEpoch is the epoch whose passage
-	// it warns about.
+	// EpochKey is the thread's epoch. TargetEpoch is the epoch whose doom it
+	// warns of: the same epoch (the doom strikes inside it), or "" for the
+	// Cosmic Era's Last Passage. Saves written before fates existed hold the
+	// next epoch here; restoreHarbingerState rewrites it.
 	EpochKey    string `json:"epoch_key"`
 	TargetEpoch string `json:"target_epoch"`
+	// When is what the current figure says about when the doom falls
+	// (WhenUntold, WhenThisAge, WhenThisEra).
+	When string `json:"when,omitempty"`
 	// FalseProphet is the thread's one roll. Never shown to the player.
 	FalseProphet bool `json:"false_prophet,omitempty"`
 	// AnnouncedTier is the tier of the latest warning line: the real tier for
@@ -158,6 +166,18 @@ type HarbingerRecord struct {
 	BraceLevel      int             `json:"brace_level,omitempty"`
 	Invited         bool            `json:"invited,omitempty"`
 	Tick            int             `json:"tick,omitempty"`
+	// When is the last figure's timing statement.
+	When string `json:"when,omitempty"`
+	// The doom's timing, known once it resolved (0 for a Last Passage
+	// thread): the tick the thread began, the tick the era was entered, the
+	// era's expected length, and the tick the doom was fated for (a false
+	// prophet's foretold moment). AtAdvance: it came at an advance the player
+	// reached first.
+	ArrivedTick int  `json:"arrived_tick,omitempty"`
+	EntryTick   int  `json:"entry_tick,omitempty"`
+	Window      int  `json:"window,omitempty"`
+	StrikeTick  int  `json:"strike_tick,omitempty"`
+	AtAdvance   bool `json:"at_advance,omitempty"`
 }
 
 // HarbingerView is the UI's picture of the live thread (GameState.Harbinger).
@@ -174,15 +194,21 @@ type HarbingerView struct {
 	// PassageCame is true once that passage has struck and waits for a choice.
 	LastPassage bool
 	PassageCame bool
-	// TargetEpochKey is the epoch whose passage the thread warns of, for the
-	// engine's own readers (bots, tests). The UI must never name it: the
-	// player has not reached it.
+	// TargetEpochKey is the epoch whose doom the thread warns of (the current
+	// one; "" for the Last Passage), for the engine's own readers (bots,
+	// tests).
 	TargetEpochKey string
 	// TargetEpochName is what the warning names on screen: "impending doom"
-	// for an epoch's passage, "the Last Passage" for the final epoch's. It is
-	// never the target era's name (harbingerWarningText).
+	// for an era's doom, "the Last Passage" for the final epoch's. It is
+	// never an era's name (harbingerWarningText).
 	TargetEpochName string
-	Lines           []string
+	// When is what the current figure says about when the doom falls
+	// (WhenUntold, WhenThisAge, WhenThisEra); WhenText says it in words
+	// ("before this age is out", "before the Iron Era ends", "" for no
+	// word). Always WhenUntold for the Last Passage, which comes at prestige.
+	When     string
+	WhenText string
+	Lines    []string
 	// Tier and Probability are what the warning says: the live real odds for a
 	// true thread, the claimed odds for a false one. Probability is only shown
 	// when Numeric.
@@ -221,19 +247,11 @@ type HarbingerView struct {
 
 // --- Thread start and handoff -----------------------------------------------------
 
-// maybeHarbingerArrive starts the current epoch's thread if none is running
-// and none has run this epoch this run. The transition must be able to roll
-// a catastrophe (harbingerArrive checks). Under the write lock.
-func (ge *GameEngine) maybeHarbingerArrive() {
-	if ge.harbinger != nil || ge.harbingerArrived[ge.currentEpoch] {
-		return
-	}
-	ge.harbingerArrive()
-}
-
 // harbingerOnAgeAdvance runs at the end of every age advance: the new age's
-// figure takes up a running thread, or a new epoch's thread starts. The epoch
-// transition has already resolved the old thread. Under the write lock.
+// figure takes up a running thread; otherwise the Cosmic Era's Last Passage
+// thread starts, or the new age's lead brings a fated doom's harbinger (a
+// longer age's lead can reach back past now). An epoch transition has already
+// rolled the new era's fate. Under the write lock.
 func (ge *GameEngine) harbingerOnAgeAdvance() {
 	if h := ge.harbinger; h != nil && h.EpochKey == ge.currentEpoch {
 		if h.Age != ge.age {
@@ -241,26 +259,48 @@ func (ge *GameEngine) harbingerOnAgeAdvance() {
 		}
 		return
 	}
-	ge.maybeHarbingerArrive()
+	if config.IsFinalEpoch(ge.currentEpoch) {
+		ge.maybeLastPassageArrive()
+		return
+	}
+	if ge.fateHarbingerDue() {
+		ge.fateArrive()
+	}
 }
 
-// harbingerTickCheck starts a thread on the first tick of an epoch that has
-// none: a new game, a Succumb, a prestige or a reset, none of which advance an
-// age. harbingerCheckedEpoch keeps it to one outlook check per epoch.
+// harbingerTickCheck is the harbinger's tick hook. In the final epoch it
+// starts the Last Passage thread on the first tick that finds none (a
+// Succumb, a prestige, a load), one check per epoch (harbingerCheckedEpoch).
+// Anywhere else it runs the era's fate: roll it if missing, bring the
+// harbinger when due, strike at the fated tick (fateTick).
 func (ge *GameEngine) harbingerTickCheck() {
+	if !config.IsFinalEpoch(ge.currentEpoch) {
+		ge.fateTick()
+		return
+	}
+	ge.fate = nil
 	if ge.harbinger != nil || ge.harbingerCheckedEpoch == ge.currentEpoch {
 		return
 	}
 	ge.harbingerCheckedEpoch = ge.currentEpoch
-	ge.maybeHarbingerArrive()
+	ge.maybeLastPassageArrive()
 }
 
-// harbingerArrive starts a thread with the current age's figure, if the next
-// transition can roll a catastrophe. Skips the once-per-epoch check;
-// maybeHarbingerArrive owns it. Reports whether one arrived.
-func (ge *GameEngine) harbingerArrive() bool {
+// maybeLastPassageArrive starts the final epoch's thread if none is running
+// and none has run this epoch this run.
+func (ge *GameEngine) maybeLastPassageArrive() {
+	if ge.harbinger != nil || ge.harbingerArrived[ge.currentEpoch] {
+		return
+	}
+	ge.harbingerArriveLastPassage()
+}
+
+// harbingerArriveLastPassage starts the Last Passage thread with the current
+// age's figure, if prestige from here can bring it. Skips the once-per-epoch
+// check; maybeLastPassageArrive owns it. Reports whether one arrived.
+func (ge *GameEngine) harbingerArriveLastPassage() bool {
 	out := ge.catastropheOutlook()
-	if !out.Possible {
+	if out.Passage != PassagePrestige || !out.Possible {
 		return false
 	}
 	def, ok := config.HarbingerFor(ge.age)
@@ -274,7 +314,7 @@ func (ge *GameEngine) harbingerArrive() bool {
 
 	rng := ge.gameRNG()
 	// Draw the false-prophet roll every time so the stream's shape does not
-	// depend on the age's chance.
+	// depend on the age's chance (zero in the Cosmic Era).
 	falseProphet := rng.Float64() < def.FalseProphetChance
 	announced := out.Tier
 	claim := 0.0
@@ -290,7 +330,7 @@ func (ge *GameEngine) harbingerArrive() bool {
 		Age:           def.Age,
 		Chain:         []string{def.Age},
 		EpochKey:      ge.currentEpoch,
-		TargetEpoch:   out.NextEpochKey,
+		TargetEpoch:   "",
 		FalseProphet:  falseProphet,
 		AnnouncedTier: announced,
 		ClaimFactor:   claim,
@@ -299,15 +339,15 @@ func (ge *GameEngine) harbingerArrive() bool {
 	ge.harbinger.Lines = ge.harbingerSpeak(def, announced)
 
 	ge.addLog("event", fmt.Sprintf("⚑ %s has come, warning of %s. Type 'harbinger' to answer.",
-		capFirst(def.Name), harbingerWarningText(out.NextEpochKey)))
+		capFirst(def.Name), harbingerWarningText("")))
 	ge.harbingerLogLines()
-	ge.publishHarbinger(def, out.NextEpochKey, false)
+	ge.publishHarbinger(def, "", false)
 	return true
 }
 
 // harbingerHandoff passes the running thread to the current age's figure: a
-// fresh arrival and warning line in the new voice. The claim, the levels and
-// the invite stay with the thread.
+// fresh arrival and warning line in the new voice, and its own word on when.
+// The claim, the levels and the invite stay with the thread.
 func (ge *GameEngine) harbingerHandoff() {
 	h := ge.harbinger
 	def, ok := config.HarbingerFor(ge.age)
@@ -316,21 +356,26 @@ func (ge *GameEngine) harbingerHandoff() {
 	}
 	h.Age = def.Age
 	h.Chain = append(h.Chain, def.Age)
+	warning := harbingerWarningText("")
+	if h.TargetEpoch != "" {
+		h.When = ge.fateWhen(def)
+		warning = ge.fateWarningText(h)
+	}
 	tier, _ := ge.harbingerDisplay()
 	h.AnnouncedTier = tier
 	h.Lines = ge.harbingerSpeak(def, tier)
 
 	ge.addLog("event", fmt.Sprintf("⚑ %s takes up the warning of %s. Type 'harbinger' to answer.",
-		capFirst(def.Name), harbingerWarningText(h.TargetEpoch)))
+		capFirst(def.Name), warning))
 	ge.harbingerLogLines()
 	ge.publishHarbinger(def, h.TargetEpoch, true)
 }
 
-// harbingerWarningText is what a thread warns of, for log lines and the
-// panel: "impending doom" for an epoch's passage, or "the Last Passage" when
-// targetEpoch is "" (the final epoch, whose passage is prestige). It never
-// names the era to come: the player has not reached it, and a wild man at the
-// last fire could not know what the next era will be called.
+// harbingerWarningText is what a thread warns of, without its timing, for
+// the view and the Last Passage's log lines: "impending doom" for an era's
+// doom, or "the Last Passage" when targetEpoch is "" (the final epoch, whose
+// passage is prestige). It never names an era: a wild man at the last fire
+// could not know what anything to come will be called.
 func harbingerWarningText(targetEpoch string) string {
 	if targetEpoch == "" {
 		name, _ := config.LastPassageInfo()
@@ -375,9 +420,12 @@ func (ge *GameEngine) publishHarbinger(def config.HarbingerDef, targetEpoch stri
 	})
 }
 
-// summonHarbinger is the dev console's /harbinger: start a thread now with the
-// current age's figure, ignoring the once-per-epoch rule (the transition must
-// still be able to roll a catastrophe). Takes the write lock.
+// summonHarbinger is the dev console's /harbinger: a harbinger arrives now
+// with the current age's figure. In an era that can be fated it fates a doom
+// that strikes one lead from now (the era's doom reopened if it had
+// resolved); in the Stone Era, where nothing can be fated, it sends a false
+// prophet; in the final epoch it starts the Last Passage thread. Takes the
+// write lock.
 func (ge *GameEngine) summonHarbinger() error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -388,16 +436,37 @@ func (ge *GameEngine) summonHarbinger() error {
 	if ep := config.EpochForAge(ge.age); ep != ge.currentEpoch {
 		ge.currentEpoch = ep
 	}
-	if !ge.harbingerArrive() {
-		return fmt.Errorf("The next passage cannot bring a catastrophe.")
+	if config.IsFinalEpoch(ge.currentEpoch) {
+		if !ge.harbingerArriveLastPassage() {
+			return fmt.Errorf("The next passage cannot bring a catastrophe.")
+		}
+		return nil
+	}
+	ge.ensureFate()
+	f := ge.fate
+	if f.LeadFrac <= 0 {
+		f.LeadFrac = (harbingerLeadMin + harbingerLeadMax) / 2
+	}
+	f.Fated = config.FateAllowed(f.EpochKey)
+	f.FalseProphet = !f.Fated
+	if f.FalseProphet && f.Claim == "" {
+		f.Claim = CatastropheTierMedium
+	}
+	f.Invited, f.Resolved, f.ResolvedTick, f.AtAdvance = false, "", 0, false
+	f.StrikeTick = ge.tick + int(f.LeadFrac*expectedAgeTicks(ge.age))
+	delete(ge.harbingerArrived, f.EpochKey)
+	if !ge.fateArrive() {
+		return fmt.Errorf("No harbinger could come in this age.")
 	}
 	return nil
 }
 
 // SummonHarbingerForTest is a test hook for other packages (the UI's panel
-// and theme-sweep tests): it places the engine in age, with that age's epoch
-// and unlocks, and starts a thread there the way the dev console's /harbinger
-// does. Not reachable from play. Takes the write lock.
+// and theme-sweep tests, the smoke report's price table): it places the
+// engine in age, with that age's epoch and unlocks, and brings a harbinger
+// there the way the dev console's /harbinger does (a fated doom, a false
+// prophet in the Stone Era, the Last Passage thread in the final epoch). Not
+// reachable from play. Takes the write lock.
 func (ge *GameEngine) SummonHarbingerForTest(age string) error {
 	ge.mu.Lock()
 	if _, ok := config.AgeByKey()[age]; !ok {
@@ -419,8 +488,8 @@ func (ge *GameEngine) SummonHarbingerForTest(age string) error {
 
 // --- Odds ---------------------------------------------------------------------
 
-// harbingerAppeaseMultiplier is the factor Appease applies to the catastrophe
-// chance: 1, 0.6 or 0.36. Read-only.
+// harbingerAppeaseMultiplier is the factor Appease applies to the strike (or
+// Last Passage) chance: 1, 0.6 or 0.36. Read-only.
 func (ge *GameEngine) harbingerAppeaseMultiplier() float64 {
 	if ge.harbinger == nil || ge.harbinger.AppeaseLevel <= 0 {
 		return 1
@@ -428,20 +497,32 @@ func (ge *GameEngine) harbingerAppeaseMultiplier() float64 {
 	return detmath.Pow(harbingerAppeaseFactor, float64(ge.harbinger.AppeaseLevel))
 }
 
-// harbingerDisplay is what the warning says now: the real tier and chance for
-// a true thread, the claimed ones (real × ClaimFactor, never "none") for a
-// false one. Read-only.
+// harbingerDisplay is what the live thread's warning says now: for an era's
+// doom the chance it strikes (strikeChance), for the Last Passage the chance
+// at prestige; the real tier and chance for a true thread, the claimed ones
+// (real × ClaimFactor, never "none") for a false one. With no thread it is
+// the Last Passage's odds. Read-only.
 func (ge *GameEngine) harbingerDisplay() (CatastropheTier, float64) {
-	out := ge.catastropheOutlook()
 	h := ge.harbinger
-	if h == nil || !h.FalseProphet {
-		return out.Tier, out.Probability
+	var p float64
+	tierOf := catastropheTierFor
+	if h != nil && h.TargetEpoch != "" {
+		p, tierOf = ge.strikeChance(), fateTierFor
+	} else {
+		out := ge.catastropheOutlook()
+		if out.Passage != PassagePrestige {
+			return CatastropheTierNone, 0
+		}
+		p = out.Probability
 	}
-	p := out.Probability * h.ClaimFactor
+	if h == nil || !h.FalseProphet {
+		return tierOf(p), p
+	}
+	p *= h.ClaimFactor
 	if p > 1 {
 		p = 1
 	}
-	t := catastropheTierFor(p)
+	t := tierOf(p)
 	if t == CatastropheTierNone {
 		t = CatastropheTierLow
 	}
@@ -520,6 +601,11 @@ func harbingerAppeaseCost(epochKey string, level int) map[string]float64 {
 		}
 		income := 0.0
 		for _, a := range harbingerAppeaseAges(epochKey) {
+			// An income, not a timing window: FlowIncome is the per-tick
+			// rate at the age's pacing target, so rate × target is what the
+			// age makes whatever its pace (a faster age makes more per tick
+			// for fewer ticks). It stays on the raw target on purpose;
+			// expectedAgeTicks is for durations.
 			income += float64(config.FlowIncome(k, a) * config.AgeTargetTicks(a))
 		}
 		if l1 := ceilSignificant(income*harbingerAppeaseIncomeShare, 2); l1 > 0 {
@@ -579,7 +665,7 @@ func harbingerBraceCost(epochKey string, level int) map[string]float64 {
 // harbingerActionCheck returns the common refusal for all three actions.
 func (ge *GameEngine) harbingerActionCheck() error {
 	if ge.harbinger == nil {
-		return fmt.Errorf("No harbinger is here. One comes in each epoch whose passage can bring a catastrophe.")
+		return fmt.Errorf("No harbinger is here. One comes only when doom is on its way.")
 	}
 	if ge.pendingLastPassage {
 		return fmt.Errorf("The Last Passage has already come. Type 'catastrophe' to answer it.")
@@ -591,6 +677,17 @@ func (ge *GameEngine) harbingerActionCheck() error {
 // is pending: the answers belonged to the passage, which has been rolled.
 const lastPassageCame = "the Last Passage has already come"
 
+// harbingerPowerless is the refusal every action shows for a thread in an era
+// where nothing can be fated (a false prophet in the Stone Era): no
+// catastrophe can strike there, so there is nothing to answer.
+func (ge *GameEngine) harbingerPowerless() string {
+	h := ge.harbinger
+	if h == nil || h.TargetEpoch == "" || config.FateAllowed(h.EpochKey) {
+		return ""
+	}
+	return "no catastrophe can strike in the " + config.EpochByKey()[h.EpochKey].Name
+}
+
 // appeaseBlocked explains why Appease cannot be bought now, or "".
 func (ge *GameEngine) appeaseBlocked() string {
 	h := ge.harbinger
@@ -599,6 +696,8 @@ func (ge *GameEngine) appeaseBlocked() string {
 		return "no harbinger is here"
 	case ge.pendingLastPassage:
 		return lastPassageCame
+	case ge.harbingerPowerless() != "":
+		return ge.harbingerPowerless()
 	case h.Invited:
 		return "you invited the catastrophe; it will come whatever you offer"
 	case h.AppeaseLevel >= HarbingerMaxAppease:
@@ -615,6 +714,8 @@ func (ge *GameEngine) braceBlocked() string {
 		return "no harbinger is here"
 	case ge.pendingLastPassage:
 		return lastPassageCame
+	case ge.harbingerPowerless() != "":
+		return ge.harbingerPowerless()
 	case h.BraceLevel >= HarbingerMaxBrace:
 		return "already braced as far as it goes"
 	}
@@ -629,6 +730,8 @@ func (ge *GameEngine) inviteBlocked() string {
 		return "no harbinger is here"
 	case ge.pendingLastPassage:
 		return lastPassageCame
+	case ge.harbingerPowerless() != "":
+		return ge.harbingerPowerless()
 	case h.Invited:
 		return "already invited"
 	}
@@ -678,7 +781,7 @@ func (ge *GameEngine) HarbingerAppease() error {
 	}
 	h.AppeaseLevel = level
 	def, _ := config.HarbingerFor(h.Age)
-	ge.addLog("success", fmt.Sprintf("⚑ %s (Appease %d/%d): paid %s. Catastrophe chance is now %.2fx its base.",
+	ge.addLog("success", fmt.Sprintf("⚑ %s (Appease %d/%d): paid %s. The chance it strikes is now %.2fx its base.",
 		def.AppeaseLabel, level, HarbingerMaxAppease, harbingerCostText(cost), ge.harbingerAppeaseMultiplier()))
 	ge.harbingerFlavorLog(flavor.HarbingerAppeased, "")
 	return nil
@@ -698,7 +801,7 @@ func (ge *GameEngine) HarbingerBrace() error {
 	level := h.BraceLevel + 1
 	cost := harbingerBraceCost(h.EpochKey, level)
 	if len(cost) == 0 {
-		return fmt.Errorf("Cannot brace: this passage asks nothing you can stockpile.")
+		return fmt.Errorf("Cannot brace: this era asks nothing you can stockpile.")
 	}
 	if !ge.Resources.Pay(cost) {
 		return fmt.Errorf("Cannot afford to brace: you need %s.", ge.shortfall(cost))
@@ -716,8 +819,10 @@ func (ge *GameEngine) HarbingerBrace() error {
 	return nil
 }
 
-// HarbingerInvite arms the invite: the coming transition brings the
-// catastrophe. Free and final. Takes the write lock.
+// HarbingerInvite makes the doom certain: an era's doom still strikes when it
+// was fated to (a false prophet's invented doom becomes real), the Last
+// Passage comes at the next prestige. Free and final, at most once per era:
+// there is one thread per era. Takes the write lock.
 func (ge *GameEngine) HarbingerInvite() error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -729,15 +834,23 @@ func (ge *GameEngine) HarbingerInvite() error {
 	}
 	h := ge.harbinger
 	h.Invited = true
-	ge.inviteCatastrophe()
 	def, _ := config.HarbingerFor(h.Age)
 	if h.TargetEpoch == "" {
+		ge.inviteCatastrophe()
 		ge.addLog("warning", fmt.Sprintf("⚑ %s: you have invited it. Your next prestige will bring the Last Passage. This cannot be undone.",
 			def.InviteLabel))
 	} else {
-		// The thread's own era, never the one it leads into.
-		ge.addLog("warning", fmt.Sprintf("⚑ %s: you have invited it. The catastrophe will come when the %s ends. This cannot be undone.",
-			def.InviteLabel, config.EpochByKey()[h.EpochKey].Name))
+		if f := ge.fate; f != nil && f.EpochKey == h.EpochKey {
+			f.Invited = true
+			f.Fated = true // a false prophet's doom is real now; the record still says it lied
+		}
+		// The thread's own era, never one to come.
+		when := fmt.Sprintf("before the %s ends", config.EpochByKey()[h.EpochKey].Name)
+		if h.When == WhenThisAge {
+			when = "before this age is out"
+		}
+		ge.addLog("warning", fmt.Sprintf("⚑ %s: you have invited it. The catastrophe will come %s. This cannot be undone.",
+			def.InviteLabel, when))
 	}
 	ge.harbingerFlavorLog(flavor.HarbingerInvited, "")
 	return nil
@@ -758,29 +871,37 @@ func (ge *GameEngine) harbingerFlavorLog(moment flavor.Moment, kind string) {
 
 // --- Resolution ---------------------------------------------------------------
 
-// resolveHarbinger settles the live thread at the transition into epochKey.
-// came reports whether this transition made a catastrophe pending. Logs the
-// verdict in the last figure's voice, hands the Brace level to the pending
-// catastrophe, records the outcome and clears the thread. Called by
-// detectEpochTransition right after the roll, under the write lock.
+// resolveHarbinger settles the live thread: epochKey is the era whose doom it
+// warned of, and came reports whether that doom struck (a catastrophe is now
+// pending). Called by fateStrike under the write lock.
 //
 // epochKey "" is the Last Passage (the final epoch's prestige): called by
 // completePrestige once the passage is settled, with came telling whether it
 // struck. Its Brace has already been applied to the points, so nothing is
 // handed on.
 func (ge *GameEngine) resolveHarbinger(epochKey string, came bool) {
+	ge.settleHarbinger(epochKey, came, "")
+}
+
+// settleHarbinger is resolveHarbinger with the verdict line given (verdict,
+// when not ""): a false prophet's reveal says which window passed. It logs
+// the verdict in the last figure's voice, hands the Brace level to a pending
+// catastrophe, records the outcome and clears the thread.
+func (ge *GameEngine) settleHarbinger(epochKey string, came bool, verdict string) {
 	h := ge.harbinger
 	if h == nil {
 		return
 	}
 	def, _ := config.HarbingerFor(h.Age)
+	name := capFirst(def.Name)
 	targetName := config.EpochByKey()[epochKey].Name
-	opens := fmt.Sprintf("The %s dawns untouched.", targetName)
+	spared := fmt.Sprintf("⚑ The doom %s foretold passed you by. The warning was real, and you were spared.", def.Name)
+	discredited := fmt.Sprintf("⚑ The doom %s foretold never came. The warning had been invented from the start.", def.Name)
 	if epochKey == "" {
 		targetName, _ = config.LastPassageInfo()
-		opens = "The Last Passage opens, and nothing comes through it."
+		spared = fmt.Sprintf("⚑ The Last Passage opens, and nothing comes through it. %s's warning was real, and you were spared.", name)
+		discredited = fmt.Sprintf("⚑ The Last Passage opens, and nothing comes through it. The warning had been invented from the start, and %s was the last to repeat it.", def.Name)
 	}
-	name := capFirst(def.Name)
 
 	var outcome, msg, kind string
 	var moment flavor.Moment
@@ -802,10 +923,13 @@ func (ge *GameEngine) resolveHarbinger(epochKey string, came bool) {
 		}
 	case h.FalseProphet:
 		outcome, moment = HarbingerOutcomeDiscredited, flavor.HarbingerDiscredited
-		msg = fmt.Sprintf("⚑ %s The warning had been invented from the start, and %s was the last to repeat it.", opens, def.Name)
+		msg = discredited
 	default:
 		outcome, moment = HarbingerOutcomeSpared, flavor.HarbingerSpared
-		msg = fmt.Sprintf("⚑ %s %s's warning was real, and you were spared.", opens, name)
+		msg = spared
+	}
+	if verdict != "" {
+		msg = verdict
 	}
 	ge.addLog("event", msg)
 	if came && h.BraceLevel > 0 && epochKey != "" {
@@ -815,13 +939,17 @@ func (ge *GameEngine) resolveHarbinger(epochKey string, came bool) {
 	}
 	ge.harbingerFlavorLog(moment, kind)
 
-	ge.harbingerHistory = append(ge.harbingerHistory, HarbingerRecord{
+	rec := HarbingerRecord{
 		Age: h.Age, Name: def.Name, Chain: append([]string(nil), h.Chain...),
 		EpochKey: h.EpochKey, TargetEpochKey: epochKey, TargetEpochName: targetName,
 		Outcome: outcome, FalseProphet: h.FalseProphet, AnnouncedTier: h.AnnouncedTier,
 		AppeaseLevel: h.AppeaseLevel, BraceLevel: h.BraceLevel, Invited: h.Invited,
-		Tick: ge.tick,
-	})
+		Tick: ge.tick, When: h.When, ArrivedTick: h.ArrivedTick,
+	}
+	if f := ge.fate; epochKey != "" && f != nil && f.EpochKey == epochKey {
+		rec.EntryTick, rec.Window, rec.StrikeTick, rec.AtAdvance = f.EntryTick, f.Window, f.StrikeTick, f.AtAdvance
+	}
+	ge.harbingerHistory = append(ge.harbingerHistory, rec)
 	ge.harbinger = nil
 }
 
@@ -840,12 +968,13 @@ func cloneHarbingerHistory(in []HarbingerRecord) []HarbingerRecord {
 }
 
 // clearHarbingerRun drops all per-run harbinger state: the live thread, the
-// once-per-epoch record, the invite and the Brace level handed to a pending
-// catastrophe. Called by Succumb, DoPrestige and Reset under the write lock;
-// the next tick starts the new run's thread. The outcome history is the
-// caller's business (it follows epochEventHistory).
+// era's fate, the once-per-epoch record, the invite and the Brace level
+// handed to a pending catastrophe. Called by Succumb, DoPrestige and Reset
+// under the write lock; the next tick rolls the new run's Stone Era fate. The
+// outcome history is the caller's business (it follows epochEventHistory).
 func (ge *GameEngine) clearHarbingerRun() {
 	ge.harbinger = nil
+	ge.fate = nil
 	ge.harbingerArrived = make(map[string]bool)
 	ge.harbingerCheckedEpoch = ""
 	ge.catastropheInvited = false
@@ -872,6 +1001,8 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 		PassageCame:     h.TargetEpoch == "" && ge.pendingLastPassage,
 		TargetEpochKey:  h.TargetEpoch,
 		TargetEpochName: harbingerWarningText(h.TargetEpoch),
+		When:            h.When,
+		WhenText:        harbingerWhenText(h),
 		Lines:           append([]string(nil), h.Lines...),
 		Tier:            tier,
 		Probability:     prob,
@@ -903,10 +1034,9 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 		next++
 	}
 	// The Endure numbers count the garrison too, measured against the threat
-	// of the age the catastrophe would strike in (the first age of the target
-	// epoch): what the player would actually face.
-	at := ge.passageAge(h.TargetEpoch)
-	cur, nxt := ge.endurePreview(h.BraceLevel, at), ge.endurePreview(next, at)
+	// of the current age: the doom strikes in it or later in the era (the
+	// Last Passage at prestige, from here).
+	cur, nxt := ge.endurePreview(h.BraceLevel, ge.age), ge.endurePreview(next, ge.age)
 	v.EndureDestroyPct = int(math.Round(cur.DestroyPct))
 	v.EndureKeepPct = int(math.Round(cur.KeepFrac * 100))
 	v.NextEndureDestroyPct = int(math.Round(nxt.DestroyPct))
@@ -916,6 +1046,18 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 	v.EndurePointsPct = int(math.Round(LastPassageKeepFor(h.BraceLevel) * 100))
 	v.NextEndurePointsPct = int(math.Round(LastPassageKeepFor(next) * 100))
 	return v
+}
+
+// harbingerWhenText says a thread's When in words: "before this age is out",
+// "before the Iron Era ends" (the thread's own era), or "" for no word.
+func harbingerWhenText(h *HarbingerSave) string {
+	switch h.When {
+	case WhenThisAge:
+		return "before this age is out"
+	case WhenThisEra:
+		return fmt.Sprintf("before the %s ends", config.EpochByKey()[h.EpochKey].Name)
+	}
+	return ""
 }
 
 // --- Persistence --------------------------------------------------------------
@@ -932,10 +1074,14 @@ func (ge *GameEngine) harbingerSaveCopy() *HarbingerSave {
 }
 
 // restoreHarbingerState loads the harbinger fields from a save (old saves have
-// none and load clean), then starts or hands off the thread for the loaded
-// age: a save from before the feature, sitting in any age of a qualifying
-// epoch, gets its thread here. Under the write lock, after the epoch and
-// catastrophe state are restored.
+// none and load clean). It starts nothing and draws nothing, so a save loads
+// to exactly the state it was written in; the next tick brings whatever is
+// due. A live thread from before fates existed (it warned of the transition
+// out of its era) is carried into the new rules: in an era that can be fated
+// it becomes the warning of that era's doom (restoreFateState fated it to
+// strike at the era's end at the latest); in the Stone Era, where nothing can
+// be fated now, it is dropped. Under the write lock, after the epoch,
+// catastrophe and fate state are restored.
 func (ge *GameEngine) restoreHarbingerState(save *GameSave) {
 	ge.harbinger = nil
 	ge.harbingerCheckedEpoch = ""
@@ -955,7 +1101,19 @@ func (ge *GameEngine) restoreHarbingerState(save *GameSave) {
 		if h.FalseProphet && h.ClaimFactor <= 0 {
 			h.ClaimFactor = 1
 		}
-		if _, ok := config.HarbingerFor(h.Age); ok {
+		keep := true
+		if save.Fate == nil && h.TargetEpoch != "" {
+			// Written before fates existed.
+			if ge.fate != nil && ge.fate.EpochKey == h.EpochKey {
+				h.TargetEpoch = h.EpochKey
+				if def, ok := config.HarbingerFor(h.Age); ok {
+					h.When = ge.fateWhen(def)
+				}
+			} else {
+				keep = false
+			}
+		}
+		if _, ok := config.HarbingerFor(h.Age); ok && keep {
 			ge.harbinger = &h
 		}
 	}
@@ -963,13 +1121,14 @@ func (ge *GameEngine) restoreHarbingerState(save *GameSave) {
 	if ge.harbingerArrived == nil {
 		ge.harbingerArrived = make(map[string]bool)
 	}
-	ge.catastropheInvited = save.CatastropheInvited
+	// The invite flag only arms the Last Passage now; an era's invite lives on
+	// its fate.
+	ge.catastropheInvited = save.CatastropheInvited && config.IsFinalEpoch(ge.currentEpoch)
 	ge.pendingBraceLevel = save.PendingBraceLevel
 	if ge.pendingBraceLevel < 0 || ge.pendingBraceLevel > HarbingerMaxBrace || ge.pendingCatastrophe == "" {
 		ge.pendingBraceLevel = 0
 	}
 	ge.harbingerHistory = append([]HarbingerRecord(nil), save.HarbingerHistory...)
-	ge.harbingerOnAgeAdvance()
 }
 
 // harbingerCostText renders a cost map in config order: "375 faith, 120 culture".

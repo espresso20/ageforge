@@ -9,6 +9,7 @@ import (
 
 	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/flavor"
+	"github.com/espresso20/ageforge/pkg/textfmt"
 )
 
 // --- helpers ------------------------------------------------------------------
@@ -37,29 +38,26 @@ func epochAges(t *testing.T, epochKey string) []string {
 }
 
 // threadEngine returns a seeded engine standing in epochKey's first age with
-// the epoch's thread just started: by the first tick for the Stone Era (a new
-// game), by the age advance into the epoch otherwise.
+// the epoch's thread just started: a doom fated for the era's last tick (so
+// the thread lives through every age) whose harbinger has come; a false
+// prophet in the Stone Era, where nothing can be fated; the Last Passage
+// thread in the final epoch.
 func threadEngine(t *testing.T, epochKey string, seed int64) *GameEngine {
 	t.Helper()
 	first := epochAges(t, epochKey)[0]
-	var ge *GameEngine
-	if first == "primitive_age" {
-		ge = catEngine(t, first, seed)
-		ge.harbingerTickCheck()
-	} else {
-		ge = catEngine(t, prevAge(t, first), seed)
-		// Unlocks are cumulative in play; catEngine only has the Primitive
-		// Age's.
-		for _, a := range config.AgeOrder() {
-			if a == first {
-				break
-			}
-			ge.applyAgeUnlocks(a)
+	ge := fateEngine(t, first, seed)
+	late := int(expectedEraTicks(epochKey)) - 1
+	switch {
+	case config.IsFinalEpoch(epochKey):
+		// The Last Passage thread started on the first tick.
+	case config.FateAllowed(epochKey):
+		forceFate(t, ge, late)
+		ge.fateArrive()
+	default:
+		if err := ge.ForceFalseProphetForTest(epochKey, late); err != nil {
+			t.Fatal(err)
 		}
-		ge.advanceAge(first)
-		// The transition into the epoch may have rolled its own catastrophe;
-		// clear it so it does not block later rolls in the test.
-		ge.pendingCatastrophe = ""
+		ge.fateArrive()
 	}
 	if ge.harbinger == nil {
 		t.Fatalf("no harbinger thread in %s", first)
@@ -138,7 +136,7 @@ func harbingerLines(ge *GameEngine) []string {
 }
 
 // flavorAfterVerdict returns the gray flavor line logged after the verdict
-// (the last "⚑" line before the new epoch's thread starts), without markup.
+// (the last "⚑" line that is not an arrival or a handoff), without markup.
 func flavorAfterVerdict(t *testing.T, ge *GameEngine) string {
 	t.Helper()
 	msgs := logMessages(ge)
@@ -179,61 +177,19 @@ func figureName(t *testing.T, age string) string {
 	return def.Name
 }
 
-// --- thread start ------------------------------------------------------------------
+// --- threads ------------------------------------------------------------------
 
-// A new game's first tick starts the Stone Era thread with the Wild Man.
-func TestHarbingerThreadStartsOnFirstTick(t *testing.T) {
-	ge := NewGameEngine()
-	var events []EventData
-	ge.Bus.Subscribe(EventHarbingerArrived, func(e EventData) { events = append(events, e) })
-	ge.doTick()
-	h := ge.harbinger
-	if h == nil || h.Age != "primitive_age" || h.EpochKey != "stone_era" || h.TargetEpoch != "iron_era" {
-		t.Fatalf("thread after first tick = %+v", h)
-	}
-	if len(h.Lines) != 2 || !reflect.DeepEqual(h.Chain, []string{"primitive_age"}) {
-		t.Errorf("lines %q chain %v", h.Lines, h.Chain)
-	}
-	if len(events) != 1 || events[0].Payload["handoff"] != false {
-		t.Errorf("bus events = %+v", events)
-	}
-	if countLogs(ge, capFirst(figureName(t, "primitive_age"))+" has come") != 1 {
-		t.Error("no arrival log line for the Wild Man")
-	}
-	ge.doTick()
-	if len(events) != 1 {
-		t.Error("a second tick started another thread")
-	}
-}
-
-// Entering an epoch's first age starts its thread with that age's figure.
-func TestHarbingerThreadStartsOnEnteringFirstAge(t *testing.T) {
-	ge := catEngine(t, "bronze_age", 1)
-	ge.advanceAge("iron_age")
-	h := ge.harbinger
-	if h == nil || h.Age != "iron_age" || h.EpochKey != "iron_era" || h.TargetEpoch != "steel_era" {
-		t.Fatalf("thread = %+v", h)
-	}
-	st := ge.GetState()
-	if st.Harbinger == nil || st.Harbinger.Name != figureName(t, "iron_age") || st.Harbinger.TargetEpochName != "impending doom" {
-		t.Errorf("GetState harbinger = %+v", st.Harbinger)
-	}
-}
-
-// A harbinger never names the era its passage leads into, nor any age past
-// its own epoch: not in the arrival and handoff lines, the flavor lines, the
-// answers or the view the panel draws. The player has not reached them
-// (playtest 2026-09-29: "warning of the passage into the Iron Era").
+// A harbinger never names an era to come, nor any age past its own epoch: not
+// in the arrival and handoff lines, the flavor lines, the answers or the view
+// the panel draws. The player has not reached them (playtest 2026-09-29:
+// "warning of the passage into the Iron Era"). Its own era it may name.
 func TestHarbingerNeverNamesTheEraToCome(t *testing.T) {
 	for _, ep := range config.Epochs() {
-		if next, ok := config.NextEpoch(ep.Key); !ok || !config.CatastropheAllowed(next.Key) {
-			continue
-		}
 		t.Run(ep.Key, func(t *testing.T) {
 			ge := threadEngine(t, ep.Key, 3)
 			var forbidden []string
 			for _, other := range config.Epochs() {
-				if other.Key != ep.Key {
+				if other.Order > ep.Order {
 					forbidden = append(forbidden, other.Name)
 				}
 			}
@@ -248,7 +204,7 @@ func TestHarbingerNeverNamesTheEraToCome(t *testing.T) {
 			var seen []string
 			look := func() {
 				if v := ge.GetState().Harbinger; v != nil {
-					seen = append(seen, v.TargetEpochName, v.AgeName)
+					seen = append(seen, v.TargetEpochName, v.AgeName, v.WhenText, v.AppeaseBlocked, v.BraceBlocked, v.InviteBlocked)
 					seen = append(seen, v.Lines...)
 				}
 			}
@@ -265,10 +221,10 @@ func TestHarbingerNeverNamesTheEraToCome(t *testing.T) {
 				stock[k] = [2]float64{1e12, 1e12}
 			}
 			setStock(ge, stock)
-			_ = ge.HarbingerAppease()
-			_ = ge.HarbingerBrace()
-			if err := ge.HarbingerInvite(); err != nil {
-				t.Fatal(err)
+			for _, act := range []func() error{ge.HarbingerAppease, ge.HarbingerBrace, ge.HarbingerInvite} {
+				if err := act(); err != nil {
+					seen = append(seen, err.Error())
+				}
 			}
 			look()
 			seen = append(seen, harbingerLines(ge)...)
@@ -291,7 +247,7 @@ func TestHarbingerNeverNamesTheEraToCome(t *testing.T) {
 func TestHarbingerSpeakerChangesEachAge(t *testing.T) {
 	for _, tc := range []struct {
 		epoch string
-	}{{"stone_era"}, {"neon_era"}} {
+	}{{"stone_era"}, {"iron_era"}, {"neon_era"}} {
 		t.Run(tc.epoch, func(t *testing.T) {
 			ge := threadEngine(t, tc.epoch, 2)
 			ages := epochAges(t, tc.epoch)
@@ -336,127 +292,89 @@ func TestHarbingerSpeakerChangesEachAge(t *testing.T) {
 	}
 }
 
-// Every epoch whose passage can bring a catastrophe has a thread, in every
-// age: the transition into an epoch past the Iron gate, or in the final epoch
-// prestige itself (the Last Passage).
-func TestHarbingerThreadFollowsCatastropheGate(t *testing.T) {
+// A quiet era sees no harbinger in any of its ages: harbingers come only when
+// a doom is on its way.
+func TestNoHarbingerInAQuietEra(t *testing.T) {
 	for _, ep := range config.Epochs() {
-		next, hasNext := config.NextEpoch(ep.Key)
-		want := (hasNext && config.CatastropheAllowed(next.Key)) ||
-			(config.IsFinalEpoch(ep.Key) && config.CatastropheAllowed(ep.Key))
-		var ge *GameEngine
-		if ep.Ages[0] == "primitive_age" {
-			ge = catEngine(t, "primitive_age", 3)
-			ge.harbingerTickCheck()
-		} else {
-			ge = catEngine(t, prevAge(t, ep.Ages[0]), 3)
-			ge.advanceAge(ep.Ages[0])
+		if !config.FateAllowed(ep.Key) {
+			continue
 		}
+		ge := fateEngine(t, ep.Ages[0], 3)
+		if err := ge.ForceQuietFateForTest(ep.Key); err != nil {
+			t.Fatal(err)
+		}
+		tick := 0
 		for _, age := range ep.Ages {
 			walkTo(t, ge, age)
-			ge.harbingerTickCheck()
-			if got := ge.harbinger != nil; got != want {
-				t.Errorf("%s (%s): thread present = %v, want %v", ep.Key, age, got, want)
+			for step := 0; step < 10; step++ {
+				tick += int(expectedAgeTicks(age)) / 10
+				tickTo(ge, tick)
+			}
+			if ge.harbinger != nil {
+				t.Errorf("%s (%s): a harbinger came in a quiet era: %+v", ep.Key, age, ge.harbinger)
 			}
 		}
 	}
-	ge := catEngine(t, "transcendent_age", 1)
-	if err := ge.summonHarbinger(); err != nil || ge.harbinger.TargetEpoch != "" {
-		t.Errorf("summoning in the final epoch: err %v thread %+v, want a Last Passage thread", err, ge.harbinger)
-	}
 }
 
-func TestNoHarbingerWhenTransitionCannotRoll(t *testing.T) {
-	ge := catEngine(t, "primitive_age", 1)
-	ge.epochEventFired["iron_era"] = true // the transition roll already happened
-	ge.harbingerTickCheck()
-	ge.advanceAge("stone_age")
-	if ge.harbinger != nil {
-		t.Error("thread started although the next transition cannot roll")
-	}
-}
-
+// One thread per era per run: once the era's doom has resolved, no other
+// harbinger comes in it.
 func TestHarbingerOncePerEpochPerRun(t *testing.T) {
-	ge := threadEngine(t, "stone_era", 2)
-	ge.harbinger = nil
-	ge.harbingerTickCheck()
-	ge.maybeHarbingerArrive()
-	ge.advanceAge("stone_age")
+	ge := threadEngine(t, "iron_era", 2)
+	ge.rng = riggedRNG(0.999)
+	ge.fate.StrikeTick = ge.tick
+	tickTo(ge, ge.tick)
+	if ge.harbinger != nil || ge.fate.Resolved != FateSpared {
+		t.Fatalf("setup: thread %+v fate %+v", ge.harbinger, ge.fate)
+	}
+	for tick := 0; tick < int(expectedEraTicks("iron_era")); tick += 500 {
+		tickTo(ge, tick)
+	}
+	ge.advanceAge("classical_age")
 	if ge.harbinger != nil {
-		t.Error("a second thread started in the same epoch")
+		t.Errorf("a second thread started in the same era: %+v", ge.harbinger)
 	}
 }
 
 // --- false prophets ------------------------------------------------------------------
 
-// The thread rolls once, at its first figure, with that age's chance.
-func TestFalseProphetRollPerThread(t *testing.T) {
-	rate := func(age string, n int) (float64, map[CatastropheTier]int) {
-		ge := catEngine(t, age, 11)
-		tiers := map[CatastropheTier]int{}
-		falseCount := 0
-		for i := 0; i < n; i++ {
-			ge.harbinger = nil
-			if !ge.harbingerArrive() {
-				t.Fatalf("%s: no thread", age)
+// Handoffs never re-roll: a false thread stays false, a true one true.
+func TestHandoffKeepsTheFalseProphetFlag(t *testing.T) {
+	for seed := int64(1); seed <= 20; seed++ {
+		for _, falseProphet := range []bool{false, true} {
+			ge := fateEngine(t, "iron_age", seed)
+			late := int(expectedEraTicks("iron_era")) - 1
+			var err error
+			if falseProphet {
+				err = ge.ForceFalseProphetForTest("iron_era", late)
+			} else {
+				err = ge.ForceFateForTest("iron_era", late)
 			}
-			h := ge.harbinger
-			if h.FalseProphet {
-				falseCount++
-				tiers[h.AnnouncedTier]++
-				if h.AnnouncedTier != CatastropheTierMedium && h.AnnouncedTier != CatastropheTierHigh {
-					t.Fatalf("%s: false thread claimed %q", age, h.AnnouncedTier)
-				}
-			} else if h.AnnouncedTier != ge.catastropheOutlook().Tier {
-				t.Fatalf("%s: true thread announced %q", age, h.AnnouncedTier)
+			if err != nil {
+				t.Fatal(err)
 			}
-		}
-		return float64(falseCount) / float64(n), tiers
-	}
-	for _, age := range []string{"primitive_age", "iron_age", "renaissance_age"} {
-		def, _ := config.HarbingerFor(age)
-		if def.FalseProphetChance == 0 {
-			t.Fatalf("%s should have a false-prophet chance", age)
-		}
-		got, tiers := rate(age, 4000)
-		if math.Abs(got-def.FalseProphetChance) > 0.025 {
-			t.Errorf("%s: false rate %.4f, want ≈ %.4f", age, got, def.FalseProphetChance)
-		}
-		if tiers[CatastropheTierMedium] == 0 || tiers[CatastropheTierHigh] == 0 {
-			t.Errorf("%s: want both medium and high claims, got %v", age, tiers)
-		}
-	}
-	for _, age := range []string{"victorian_age", "modern_age", "cyberpunk_age"} {
-		if got, _ := rate(age, 300); got != 0 {
-			t.Errorf("%s: false rate %.4f, want 0", age, got)
-		}
-	}
-
-	// Handoffs never re-roll: a false thread stays false, a true one true.
-	for seed := int64(1); seed <= 60; seed++ {
-		ge := threadEngine(t, "stone_era", seed)
-		was := ge.harbinger.FalseProphet
-		ge.advanceAge("stone_age")
-		ge.advanceAge("bronze_age")
-		if ge.harbinger.FalseProphet != was {
-			t.Fatalf("seed %d: the handoff changed the false-prophet flag", seed)
+			ge.fateArrive()
+			ge.advanceAge("classical_age")
+			ge.advanceAge("medieval_age")
+			if ge.harbinger.FalseProphet != falseProphet {
+				t.Fatalf("seed %d: the handoff changed the false-prophet flag", seed)
+			}
 		}
 	}
 }
 
-// A false thread's claim is a fixed multiple of the real chance, repeated by
-// every figure, moved by Appease like a real one, and printed as the claimed
-// figure once a numeric figure takes over.
+// A false thread's claim is a fixed multiple of what a real doom's strike
+// chance would be, repeated by every figure, moved by Appease like a real
+// one, and printed as the claimed figure once a numeric figure takes over.
 func TestFalseThreadClaim(t *testing.T) {
-	ge := threadEngine(t, "steel_era", 1)
-	setFaith(ge, 5e6, 1e7)
-	real := ge.catastropheOutlook().Probability // mid faith: 15%
-	ge.harbinger.FalseProphet = true
-	ge.harbinger.AnnouncedTier = CatastropheTierHigh
-	ge.harbinger.ClaimFactor = harbingerClaimBase[CatastropheTierHigh] / real
-
-	if tier, p := ge.harbingerDisplay(); tier != CatastropheTierHigh || math.Abs(p-0.18) > 1e-9 {
-		t.Errorf("claim = %s %.3f, want high 0.18", tier, p)
+	ge := fateEngine(t, "renaissance_age", 1)
+	setFaith(ge, 5e6, 1e7) // mid faith: a real doom would strike 75% of the time
+	if err := ge.ForceFalseProphetForTest("steel_era", int(expectedEraTicks("steel_era"))-1); err != nil {
+		t.Fatal(err)
+	}
+	ge.fateArrive()
+	if tier, p := ge.harbingerDisplay(); tier != CatastropheTierHigh || math.Abs(p-0.90) > 1e-9 {
+		t.Errorf("claim = %s %.3f, want high 0.90", tier, p)
 	}
 	ge.advanceAge("colonial_age")
 	if ge.harbinger.AnnouncedTier != CatastropheTierHigh {
@@ -465,17 +383,17 @@ func TestFalseThreadClaim(t *testing.T) {
 	ge.advanceAge("industrial_age")
 	setStock(ge, map[string][2]float64{"faith": {5e6, 1e7}, "culture": {1e7, 1e7}})
 	v := ge.GetState().Harbinger
-	if !v.Numeric || v.Tier != CatastropheTierHigh || math.Abs(v.Probability-0.18) > 1e-9 {
-		t.Errorf("industrial view of a false thread = numeric %v %s %.3f, want the claimed high 18%%", v.Numeric, v.Tier, v.Probability)
+	if !v.Numeric || v.Tier != CatastropheTierHigh || math.Abs(v.Probability-0.90) > 1e-9 {
+		t.Errorf("industrial view of a false thread = numeric %v %s %.3f, want the claimed high 90%%", v.Numeric, v.Tier, v.Probability)
 	}
-	// Appease ×0.6 moves the claim as it moves the real odds (read live, so a
-	// band change from the faith spend would count too).
+	// Appease ×0.6 moves the claim as it would move the real odds (read
+	// live, so a band change from the faith spend counts too).
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}
-	wantP := ge.catastropheOutlook().Probability * ge.harbinger.ClaimFactor
-	if _, p := ge.harbingerDisplay(); math.Abs(p-wantP) > 1e-9 || p >= 0.18 {
-		t.Errorf("claim after appease = %.4f, want %.4f (< 0.18)", p, wantP)
+	wantP := ge.strikeChance() * ge.harbinger.ClaimFactor
+	if _, p := ge.harbingerDisplay(); math.Abs(p-wantP) > 1e-9 || p >= 0.90 {
+		t.Errorf("claim after appease = %.4f, want %.4f (< 0.90)", p, wantP)
 	}
 	if err := ge.HarbingerInvite(); err != nil {
 		t.Fatal(err)
@@ -487,24 +405,38 @@ func TestFalseThreadClaim(t *testing.T) {
 
 // --- determinism ----------------------------------------------------------------------
 
+// The same seed plays the same era: the same fate, the same harbinger lines,
+// the same verdict.
 func TestHarbingerSameSeedSameOutcome(t *testing.T) {
 	type run struct {
+		fate    FateSave
 		history []HarbingerRecord
 		lines   []string
 	}
 	play := func(seed int64) run {
-		ge := threadEngine(t, "stone_era", seed)
-		ge.advanceAge("stone_age")
-		ge.advanceAge("bronze_age")
-		ge.advanceAge("iron_age")
-		return run{ge.harbingerHistory, harbingerLines(ge)}
+		ge := catEngine(t, "bronze_age", seed)
+		for _, a := range config.AgeOrder() {
+			ge.applyAgeUnlocks(a)
+			if a == "bronze_age" {
+				break
+			}
+		}
+		ge.advanceAge("iron_age") // rolls the Iron Era's fate
+		forceFate(t, ge, 9000)    // same doom every seed; the lines still differ
+		for tick := 0; tick <= 9000; tick += 100 {
+			if tick == 8900 {
+				ge.advanceAge("classical_age")
+			}
+			tickTo(ge, tick)
+		}
+		return run{*ge.fate, ge.harbingerHistory, harbingerLines(ge)}
 	}
 	a, b := play(42), play(42)
 	if !reflect.DeepEqual(a, b) {
-		t.Errorf("same seed, different threads:\n%+v\n%+v", a, b)
+		t.Errorf("same seed, different eras:\n%+v\n%+v", a, b)
 	}
-	if len(a.history) != 1 || !reflect.DeepEqual(a.history[0].Chain, []string{"primitive_age", "stone_age", "bronze_age"}) {
-		t.Errorf("history = %+v", a.history)
+	if len(a.history) != 1 || a.fate.Resolved == "" {
+		t.Errorf("the doom did not resolve: fate %+v history %+v", a.fate, a.history)
 	}
 	differs := false
 	for s := int64(43); s < 53 && !differs; s++ {
@@ -517,11 +449,11 @@ func TestHarbingerSameSeedSameOutcome(t *testing.T) {
 
 // --- costs ---------------------------------------------------------------------------
 
-// The price belongs to the passage: the same in every age of the epoch, and
+// The price belongs to the doom: the same in every age of the epoch, and
 // whatever the player's storage.
 func TestHarbingerCostSameAcrossEpoch(t *testing.T) {
 	for _, ep := range config.Epochs() {
-		if next, ok := config.NextEpoch(ep.Key); !ok || !config.CatastropheAllowed(next.Key) {
+		if !config.FateAllowed(ep.Key) && !config.IsFinalEpoch(ep.Key) {
 			continue
 		}
 		ge := threadEngine(t, ep.Key, 1)
@@ -593,29 +525,30 @@ func TestAppeaseCostsLevelsAndOdds(t *testing.T) {
 	ge := threadEngine(t, "steel_era", 4)
 	setStock(ge, map[string][2]float64{"faith": {6e5, 6e5}, "culture": {1e7, 1e7}})
 
-	// Level 1: 74K faith, 770K culture. Faith fill 0.877 → high band, base 12%.
+	// Level 1: 74K faith, 770K culture. Faith fill 0.877 → high band: a 60%
+	// strike, ×0.6.
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}
 	if f, c := ge.Resources.Get("faith"), ge.Resources.Get("culture"); f != 526000 || c != 9.23e6 {
 		t.Errorf("after level 1: faith %v culture %v", f, c)
 	}
-	if o := ge.CatastropheOutlook(); math.Abs(o.Probability-0.12*0.6) > 1e-9 {
-		t.Errorf("level 1 probability %v, want %v", o.Probability, 0.12*0.6)
+	if o := ge.CatastropheOutlook(); math.Abs(o.Probability-0.60*0.6) > 1e-9 {
+		t.Errorf("level 1 probability %v, want %v", o.Probability, 0.60*0.6)
 	}
 	if countLogs(ge, "Appease 1/2") != 1 {
 		t.Error("no Appease log line")
 	}
 
-	// Level 2 costs double. Fill 0.63 → mid band, base 15%.
+	// Level 2 costs double. Fill 0.63 → mid band: 75%, ×0.36.
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}
 	if f := ge.Resources.Get("faith"); f != 378000 {
 		t.Errorf("after level 2: faith %v", f)
 	}
-	if o := ge.CatastropheOutlook(); math.Abs(o.Probability-0.15*0.36) > 1e-9 {
-		t.Errorf("level 2 probability %v, want %v", o.Probability, 0.15*0.36)
+	if o := ge.CatastropheOutlook(); math.Abs(o.Probability-0.75*0.36) > 1e-9 {
+		t.Errorf("level 2 probability %v, want %v", o.Probability, 0.75*0.36)
 	}
 	if st := ge.GetState(); st.Harbinger.AppeaseLevel != 2 || st.Harbinger.AppeaseBlocked == "" || st.Harbinger.AppeaseCost != nil {
 		t.Errorf("view after cap = %+v", st.Harbinger)
@@ -629,11 +562,16 @@ func TestAppeaseCostsLevelsAndOdds(t *testing.T) {
 }
 
 func TestAppeaseRefusesWhenUnaffordable(t *testing.T) {
-	ge := threadEngine(t, "stone_era", 4) // appease: 59 faith
+	ge := threadEngine(t, "iron_era", 4)
+	need := harbingerAppeaseCost("iron_era", 1)["faith"]
+	if need <= 40 {
+		t.Fatalf("iron era appease costs %v faith", need)
+	}
 	setStock(ge, map[string][2]float64{"faith": {20, 40}})
 	err := ge.HarbingerAppease()
-	if err == nil || !strings.Contains(err.Error(), "39 more faith") || !strings.Contains(err.Error(), "storage must reach 59") {
-		t.Fatalf("err = %v, want the shortfall and the storage it needs", err)
+	want := textfmt.Number(need-20) + " more faith"
+	if err == nil || !strings.Contains(err.Error(), want) || !strings.Contains(err.Error(), "storage must reach "+textfmt.Number(need)) {
+		t.Fatalf("err = %v, want %q and the storage it needs", err, want)
 	}
 	if ge.Resources.Get("faith") != 20 || ge.harbinger.AppeaseLevel != 0 {
 		t.Error("a refused appease changed state")
@@ -657,34 +595,6 @@ func TestNoHarbingerActionsWithoutOne(t *testing.T) {
 	}
 }
 
-// Appease lowers the escalation threshold of the real roll.
-func TestAppeaseChangesTheRealRoll(t *testing.T) {
-	transition := func(appease bool) string {
-		ge := threadEngine(t, "stone_era", 5)
-		ge.advanceAge("stone_age")
-		ge.advanceAge("bronze_age")
-		// Faith fill ends at 0.5 either way (mid band), so only Appease differs.
-		setStock(ge, map[string][2]float64{"faith": {15000, 30000}})
-		if appease {
-			setStock(ge, map[string][2]float64{"faith": {15059, 30000}}) // 59 paid → 15000
-			if err := ge.HarbingerAppease(); err != nil {
-				t.Fatal(err)
-			}
-		}
-		// Bad roll, then an escalation draw of 0.2: under the unappeased 0.30
-		// threshold, over the appeased 0.18.
-		ge.rng = riggedRNG(0.99, 0.2)
-		ge.advanceAge("iron_age")
-		return ge.pendingCatastrophe
-	}
-	if got := transition(false); got != "iron_era" {
-		t.Errorf("unappeased: pending = %q, want iron_era", got)
-	}
-	if got := transition(true); got != "" {
-		t.Errorf("appeased: pending = %q, want none", got)
-	}
-}
-
 // --- Brace ---------------------------------------------------------------------------
 
 func TestBraceCostsAndSoftensALaterEndure(t *testing.T) {
@@ -699,16 +609,17 @@ func TestBraceCostsAndSoftensALaterEndure(t *testing.T) {
 	} {
 		t.Run(string(rune('0'+tc.level)), func(t *testing.T) {
 			t.Cleanup(SetDataDirForTest(t.TempDir()))
-			ge := threadEngine(t, "stone_era", 6)
-			fillBraceStock(ge, 100000)
+			ge := threadEngine(t, "iron_era", 6)
+			fillBraceStock(ge, 1e9)
+			price := harbingerBraceCost("iron_era", 1)
+			res := sortedKeys(price)[0]
 			for i := 1; i <= tc.level; i++ {
-				stockBefore := ge.Resources.Get("wood")
+				stockBefore := ge.Resources.Get(res)
 				if err := ge.HarbingerBrace(); err != nil {
 					t.Fatal(err)
 				}
-				want := 4800 * float64(i) // 12% of the 40000 wood the passage asks, × level
-				if got := stockBefore - ge.Resources.Get("wood"); got != want {
-					t.Errorf("level %d took %v wood, want %v", i, got, want)
+				if got, want := stockBefore-ge.Resources.Get(res), harbingerBraceCost("iron_era", i)[res]; got != want {
+					t.Errorf("level %d took %v %s, want %v", i, got, res, want)
 				}
 			}
 			if tc.level == HarbingerMaxBrace {
@@ -716,10 +627,9 @@ func TestBraceCostsAndSoftensALaterEndure(t *testing.T) {
 					t.Error("brace beyond the cap must be refused")
 				}
 			}
-			ge.advanceAge("stone_age")
-			ge.advanceAge("bronze_age")
-			ge.rng = badThenEscalate()
-			ge.advanceAge("iron_age")
+			ge.rng = riggedRNG(0.01)
+			ge.fate.StrikeTick = ge.tick
+			tickTo(ge, ge.tick)
 			if ge.pendingCatastrophe != "iron_era" {
 				t.Fatalf("no catastrophe: pending = %q", ge.pendingCatastrophe)
 			}
@@ -758,14 +668,17 @@ func TestBraceCostsAndSoftensALaterEndure(t *testing.T) {
 
 // --- Invite ----------------------------------------------------------------------------
 
+// Invite makes the doom certain, blocks Appease, leaves Brace open, survives
+// the handoffs, and the doom still comes when it must: here at the era's end,
+// which the player reaches first.
 func TestInviteForcesCatastropheAndDisablesAppease(t *testing.T) {
 	ge := threadEngine(t, "iron_era", 7)
 	setStock(ge, map[string][2]float64{"faith": {1e6, 1e6}})
 	if err := ge.HarbingerInvite(); err != nil {
 		t.Fatal(err)
 	}
-	if !ge.catastropheInvited || !ge.harbinger.Invited {
-		t.Fatal("invite not armed")
+	if !ge.fate.Invited || !ge.harbinger.Invited || ge.catastropheInvited {
+		t.Fatal("invite not armed on the fate")
 	}
 	if o := ge.CatastropheOutlook(); o.Probability != 1 || o.Tier != CatastropheTierHigh {
 		t.Errorf("invited outlook = %+v", o)
@@ -783,19 +696,19 @@ func TestInviteForcesCatastropheAndDisablesAppease(t *testing.T) {
 	if v.AppeaseBlocked == "" || v.InviteBlocked == "" || v.BraceBlocked != "" {
 		t.Errorf("view after invite = %+v", v)
 	}
-	fillBraceStock(ge, 1e7)
+	fillBraceStock(ge, 1e9)
 	if err := ge.HarbingerBrace(); err != nil {
 		t.Errorf("brace after invite: %v", err)
 	}
 	ge.advanceAge("classical_age")
 	ge.advanceAge("medieval_age")
-	if !ge.harbinger.Invited || !ge.catastropheInvited {
+	if !ge.harbinger.Invited || !ge.fate.Invited {
 		t.Fatal("the invite did not survive the handoffs")
 	}
-	ge.rng = riggedRNG(0.0) // a good roll: the invite overrides it
-	ge.advanceAge("renaissance_age")
-	if ge.pendingCatastrophe != "steel_era" {
-		t.Fatalf("invited catastrophe did not come: pending = %q", ge.pendingCatastrophe)
+	ge.rng = riggedRNG(0.999) // a miss under any odds: the invite overrides it
+	readyToAdvance(ge)
+	if err := ge.AdvanceAge(); err == nil || ge.pendingCatastrophe != "iron_era" {
+		t.Fatalf("invited doom at the era's end: err %v pending %q", err, ge.pendingCatastrophe)
 	}
 	if ge.pendingBraceLevel != 1 {
 		t.Errorf("Brace not handed to the invited catastrophe: %d", ge.pendingBraceLevel)
@@ -812,35 +725,38 @@ func TestHarbingerResolutionOutcomes(t *testing.T) {
 		name         string
 		falseProphet bool
 		invite       bool
-		rng          []float64
+		roll         float64
 		wantOutcome  string
 		wantMoment   flavor.Moment
 		wantPending  bool
 	}{
-		{"vindicated", false, false, []float64{0.99, 0.01}, HarbingerOutcomeVindicated, flavor.HarbingerVindicated, true},
-		{"spared", false, false, []float64{0.0}, HarbingerOutcomeSpared, flavor.HarbingerSpared, false},
-		{"discredited", true, false, []float64{0.0}, HarbingerOutcomeDiscredited, flavor.HarbingerDiscredited, false},
-		{"false prophet vindicated by chance", true, false, []float64{0.99, 0.01}, HarbingerOutcomeVindicated, flavor.HarbingerVindicated, true},
-		{"fulfilled", false, true, []float64{0.0}, HarbingerOutcomeFulfilled, flavor.HarbingerFulfilled, true},
-		{"fulfilled false prophet", true, true, []float64{0.0}, HarbingerOutcomeFulfilled, flavor.HarbingerFulfilled, true},
+		{"vindicated", false, false, 0.01, HarbingerOutcomeVindicated, flavor.HarbingerVindicated, true},
+		{"spared", false, false, 0.999, HarbingerOutcomeSpared, flavor.HarbingerSpared, false},
+		{"discredited", true, false, 0.01, HarbingerOutcomeDiscredited, flavor.HarbingerDiscredited, false},
+		{"fulfilled", false, true, 0.999, HarbingerOutcomeFulfilled, flavor.HarbingerFulfilled, true},
+		{"fulfilled false prophet", true, true, 0.999, HarbingerOutcomeFulfilled, flavor.HarbingerFulfilled, true},
 	}
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			ge := threadEngine(t, "stone_era", 9)
-			ge.advanceAge("stone_age")
-			ge.advanceAge("bronze_age")
-			ge.harbinger.FalseProphet = tc.falseProphet
-			ge.harbinger.ClaimFactor = 0
+			ge := fateEngine(t, "medieval_age", 9)
+			late := int(expectedEraTicks("iron_era")) - 1
 			if tc.falseProphet {
-				ge.harbinger.ClaimFactor = 1.2
+				if err := ge.ForceFalseProphetForTest("iron_era", late); err != nil {
+					t.Fatal(err)
+				}
+			} else {
+				forceFate(t, ge, late)
 			}
+			ge.fateArrive()
 			if tc.invite {
 				if err := ge.HarbingerInvite(); err != nil {
 					t.Fatal(err)
 				}
 			}
-			ge.rng = riggedRNG(tc.rng...)
-			ge.advanceAge("iron_age")
+			// The player reaches the era's end first: the doom settles there.
+			ge.rng = riggedRNG(tc.roll)
+			readyToAdvance(ge)
+			_ = ge.AdvanceAge()
 			if (ge.pendingCatastrophe != "") != tc.wantPending {
 				t.Fatalf("pending = %q", ge.pendingCatastrophe)
 			}
@@ -849,7 +765,7 @@ func TestHarbingerResolutionOutcomes(t *testing.T) {
 			}
 			r := ge.harbingerHistory[0]
 			if r.Outcome != tc.wantOutcome || r.FalseProphet != tc.falseProphet || r.TargetEpochKey != "iron_era" ||
-				r.Age != "bronze_age" || len(r.Chain) != 3 {
+				r.Age != "medieval_age" || !r.AtAdvance || r.Window == 0 {
 				t.Errorf("record = %+v", r)
 			}
 			line := flavorAfterVerdict(t, ge)
@@ -860,10 +776,6 @@ func TestHarbingerResolutionOutcomes(t *testing.T) {
 				if other != tc.wantMoment && fromMoment(line, other) {
 					t.Errorf("flavor line %q also matches %s", line, other)
 				}
-			}
-			// The Iron Era's own thread has started.
-			if ge.harbinger == nil || ge.harbinger.EpochKey != "iron_era" {
-				t.Errorf("iron era thread after resolution = %+v", ge.harbinger)
 			}
 		})
 	}
@@ -876,7 +788,7 @@ func TestHarbingerSaveLoadMidThread(t *testing.T) {
 	ge := threadEngine(t, "iron_era", 10)
 	ge.advanceAge("classical_age")
 	setStock(ge, map[string][2]float64{"faith": {1e6, 1e6}})
-	fillBraceStock(ge, 1e7)
+	fillBraceStock(ge, 1e9)
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}
@@ -886,9 +798,7 @@ func TestHarbingerSaveLoadMidThread(t *testing.T) {
 	if err := ge.HarbingerInvite(); err != nil {
 		t.Fatal(err)
 	}
-	ge.harbinger.FalseProphet = true
-	ge.harbinger.ClaimFactor = 1.1
-	want := *ge.harbinger
+	want, wantFate := *ge.harbinger, *ge.fate
 	if err := ge.SaveGame("harb_mid"); err != nil {
 		t.Fatal(err)
 	}
@@ -900,11 +810,11 @@ func TestHarbingerSaveLoadMidThread(t *testing.T) {
 	if ge2.cheaterBadge {
 		t.Error("save with a harbinger failed signature verification")
 	}
-	if ge2.harbinger == nil || !reflect.DeepEqual(*ge2.harbinger, want) {
-		t.Fatalf("thread after load = %+v, want %+v", ge2.harbinger, want)
+	if ge2.harbinger == nil || !reflect.DeepEqual(*ge2.harbinger, want) || *ge2.fate != wantFate {
+		t.Fatalf("thread after load = %+v fate %+v, want %+v / %+v", ge2.harbinger, ge2.fate, want, wantFate)
 	}
-	if !ge2.catastropheInvited || !ge2.harbingerArrived["iron_era"] {
-		t.Errorf("invite %v / arrived %v not restored", ge2.catastropheInvited, ge2.harbingerArrived)
+	if !ge2.harbingerArrived["iron_era"] || ge2.catastropheInvited {
+		t.Errorf("arrived %v / invite flag %v", ge2.harbingerArrived, ge2.catastropheInvited)
 	}
 	if countLogs(ge2, "has come")+countLogs(ge2, "takes up") != 0 {
 		t.Error("loading spoke again")
@@ -914,31 +824,9 @@ func TestHarbingerSaveLoadMidThread(t *testing.T) {
 	if !reflect.DeepEqual(ge2.harbinger.Chain, []string{"iron_age", "classical_age", "medieval_age"}) {
 		t.Errorf("chain after load and handoff = %v", ge2.harbinger.Chain)
 	}
-	ge2.rng = riggedRNG(0.0)
-	ge2.advanceAge("renaissance_age")
-	if ge2.pendingCatastrophe != "steel_era" || ge2.pendingBraceLevel != 1 {
-		t.Errorf("after transition: pending %q brace %d", ge2.pendingCatastrophe, ge2.pendingBraceLevel)
-	}
-}
-
-// A save with no harbinger keys (written before the feature) sitting in a
-// middle age of a qualifying epoch gets its thread on load, starting there.
-func TestOldSaveInMiddleAgeGetsThreadOnLoad(t *testing.T) {
-	t.Cleanup(SetDataDirForTest(t.TempDir()))
-	ge := catEngine(t, "classical_age", 1)
-	if ge.harbinger != nil {
-		t.Fatal("catEngine should not start a thread")
-	}
-	if err := ge.SaveGame("old_mid_age"); err != nil {
-		t.Fatal(err)
-	}
-	ge2 := NewGameEngine()
-	if err := ge2.LoadGame("old_mid_age"); err != nil {
-		t.Fatal(err)
-	}
-	h := ge2.harbinger
-	if h == nil || h.Age != "classical_age" || h.EpochKey != "iron_era" || !reflect.DeepEqual(h.Chain, []string{"classical_age"}) {
-		t.Errorf("thread after load = %+v", h)
+	readyToAdvance(ge2)
+	if err := ge2.AdvanceAge(); err == nil || ge2.pendingCatastrophe != "iron_era" || ge2.pendingBraceLevel != 1 {
+		t.Errorf("at the era's end: err %v pending %q brace %d", err, ge2.pendingCatastrophe, ge2.pendingBraceLevel)
 	}
 }
 
@@ -951,7 +839,7 @@ func TestHarbingerFieldsOmittedWhenAbsent(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, k := range []string{"harbinger", "catastrophe_invited", "pending_brace_level", "pending_last_passage", "cosmic_legacy"} {
+	for _, k := range []string{"harbinger", "catastrophe_invited", "pending_brace_level", "pending_last_passage", "cosmic_legacy", "fate"} {
 		if strings.Contains(string(raw), `"`+k) {
 			t.Errorf("save without a harbinger contains %q", k)
 		}
@@ -971,31 +859,27 @@ func TestHarbingerFieldsOmittedWhenAbsent(t *testing.T) {
 }
 
 func TestSuccumbAndPrestigeResetHarbinger(t *testing.T) {
-	ge := threadEngine(t, "stone_era", 12)
-	ge.advanceAge("stone_age")
-	ge.advanceAge("bronze_age")
-	ge.rng = badThenEscalate()
-	ge.advanceAge("iron_age")
-	if ge.pendingCatastrophe != "iron_era" || ge.harbinger == nil {
-		t.Fatalf("setup: pending %q thread %v", ge.pendingCatastrophe, ge.harbinger)
+	ge := threadEngine(t, "iron_era", 12)
+	ge.rng = riggedRNG(0.01)
+	ge.fate.StrikeTick = ge.tick
+	tickTo(ge, ge.tick)
+	if ge.pendingCatastrophe != "iron_era" {
+		t.Fatalf("setup: pending %q", ge.pendingCatastrophe)
 	}
 	ge.pendingBraceLevel = 2
-	if err := ge.HarbingerInvite(); err != nil { // the Iron Era thread
-		t.Fatal(err)
-	}
 	if err := ge.Succumb(); err != nil {
 		t.Fatal(err)
 	}
-	if ge.harbinger != nil || ge.catastropheInvited || ge.pendingBraceLevel != 0 || len(ge.harbingerArrived) != 0 {
-		t.Errorf("after Succumb: thread %v invited %v brace %d arrived %v",
-			ge.harbinger, ge.catastropheInvited, ge.pendingBraceLevel, ge.harbingerArrived)
+	if ge.harbinger != nil || ge.fate != nil || ge.catastropheInvited || ge.pendingBraceLevel != 0 || len(ge.harbingerArrived) != 0 {
+		t.Errorf("after Succumb: thread %v fate %v invited %v brace %d arrived %v",
+			ge.harbinger, ge.fate, ge.catastropheInvited, ge.pendingBraceLevel, ge.harbingerArrived)
 	}
 	if len(ge.harbingerHistory) != 1 {
 		t.Errorf("history should survive Succumb like the epoch history: %+v", ge.harbingerHistory)
 	}
 	ge.harbingerTickCheck()
-	if ge.harbinger == nil || ge.harbinger.Age != "primitive_age" {
-		t.Errorf("new run's first tick: thread = %+v", ge.harbinger)
+	if ge.fate == nil || ge.fate.EpochKey != "stone_era" {
+		t.Errorf("new run's first tick: fate = %+v, want the Stone Era's", ge.fate)
 	}
 
 	ge = threadEngine(t, "digital_era", 13)
@@ -1007,20 +891,21 @@ func TestSuccumbAndPrestigeResetHarbinger(t *testing.T) {
 	if err := ge.DoPrestige(); err != nil {
 		t.Fatal(err)
 	}
-	if ge.harbinger != nil || ge.catastropheInvited || len(ge.harbingerArrived) != 0 || ge.harbingerHistory != nil {
-		t.Errorf("after prestige: thread %v invited %v arrived %v history %v",
-			ge.harbinger, ge.catastropheInvited, ge.harbingerArrived, ge.harbingerHistory)
+	if ge.harbinger != nil || ge.fate != nil || ge.catastropheInvited || len(ge.harbingerArrived) != 0 || ge.harbingerHistory != nil {
+		t.Errorf("after prestige: thread %v fate %v invited %v arrived %v history %v",
+			ge.harbinger, ge.fate, ge.catastropheInvited, ge.harbingerArrived, ge.harbingerHistory)
 	}
 	ge.harbingerTickCheck()
-	if ge.harbinger == nil || ge.harbinger.Age != "primitive_age" {
-		t.Errorf("after prestige, first tick: thread = %+v", ge.harbinger)
+	if ge.fate == nil || ge.fate.EpochKey != "stone_era" {
+		t.Errorf("after prestige, first tick: fate = %+v", ge.fate)
 	}
 }
 
-// The Appease price is sized so a moderate faith (and culture) economy can
-// pay it: modelled at config.FlowIncome through the thread's ages at their
-// targets, level 1 must come before the thread's last age ends and level 2
-// (on top of it) by the passage, in every epoch.
+// The Appease price is sized to the era, not the thread: a moderate faith
+// (and culture) economy modelled at config.FlowIncome through the era's ages
+// at their targets makes level 1 before the era's last age ends and level 2
+// (on top of it) by the era's end, in every epoch. A thread lasts only its
+// lead, so faith banked through the era is what pays when a harbinger comes.
 func TestAppeasePayableWithinThread(t *testing.T) {
 	for _, ep := range config.Epochs() {
 		cost1, cost2 := harbingerAppeaseCost(ep.Key, 1), harbingerAppeaseCost(ep.Key, 2)

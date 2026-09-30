@@ -588,12 +588,23 @@ func (m *Model) world(st *game.GameState) {
 		}
 		c.Pressure = 1
 	} else {
+		// Pressure reads the odds on the passage scale (12% to 18% by faith).
+		// A fated doom's strike chance runs game.FateStrikeScale times that,
+		// so it is scaled back first; the Last Passage's odds already are.
 		p := 0.0
-		if st.CatastropheOutlook.Possible {
-			p = float64(st.CatastropheOutlook.Probability * 0.8)
+		if o := st.CatastropheOutlook; o.Possible {
+			odds := o.Probability
+			if o.Passage == game.PassageEpoch {
+				odds /= game.FateStrikeScale
+			}
+			p = float64(odds * 0.8)
 		}
 		if h := st.Harbinger; h != nil {
-			hp := 0.35 + float64(h.Probability*2)
+			odds := h.Probability
+			if !h.LastPassage {
+				odds /= game.FateStrikeScale
+			}
+			hp := 0.35 + float64(odds*2)
 			if hp > p {
 				p = hp
 			}

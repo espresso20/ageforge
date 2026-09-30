@@ -66,7 +66,7 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 
 	sb.WriteString("\n")
 
-	// Current epoch event
+	// Current epoch event (the transition's; a catastrophe is shown below)
 	currentEvent := findEpochEvent(state.EpochEventHistory, state.EpochKey)
 	if currentEvent == nil {
 		sb.WriteString(" Epoch event: [gray]No event this epoch[-]\n")
@@ -96,7 +96,9 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 
 	sb.WriteString("\n")
 
-	// Catastrophe status
+	// Catastrophe status. Only what the player has seen: a doom not yet
+	// foretold reads the same as none (the no-leak rule, game/fate.go).
+	o := state.CatastropheOutlook
 	switch {
 	case state.PendingCatastrophe != "":
 		sb.WriteString(" Catastrophe: [red]pending. Type catastrophe to choose Endure or Succumb.[-]\n")
@@ -109,25 +111,33 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 	default:
 		if r := latestCatastrophe(state.EpochEventHistory, state.EpochKey); r != nil {
 			fmt.Fprintf(sb, " Catastrophe: %s\n", catastropheOutcomeLabel(r.Outcome))
+		} else if r := eraDoomRecord(state); r != nil && r.Outcome == game.HarbingerOutcomeSpared {
+			sb.WriteString(" Catastrophe: [green]spared[-] [gray](nothing more will strike this era)[-]\n")
+		} else if o.Warned {
+			sb.WriteString(" Catastrophe: [yellow]foretold[-]\n")
 		} else {
-			sb.WriteString(" Catastrophe: [gray]not yet triggered[-]\n")
+			sb.WriteString(" Catastrophe: [gray]none so far[-]\n")
 		}
 	}
 
-	// Risk at the next transition (same wording the `catastrophe` command uses:
-	// a figure from the Industrial Age on, a severity before it).
-	if o := state.CatastropheOutlook; o.Possible && o.Passage == game.PassagePrestige {
+	// The outlook (same wording the `catastrophe` command uses: a figure from
+	// the Industrial Age on, a severity before it).
+	switch {
+	case o.Possible && o.Passage == game.PassagePrestige:
 		fmt.Fprintf(sb, " Next passage (prestige, the Last Passage): [yellow]%s[-] [gray](more faith, lower odds)[-]\n",
 			outlookRiskText(state))
-	} else if o.Possible {
-		// The era it leads into stays unnamed until reached (spoilers.go).
-		fmt.Fprintf(sb, " Next transition (the end of the %s): [yellow]%s[-] [gray](more faith, lower odds)[-]\n",
-			currentEraName(state), outlookRiskText(state))
+	case o.Warned:
+		fmt.Fprintf(sb, " Doom foretold: [yellow]%s[-] [gray](more faith, lower odds)[-]\n", doomWarningText(state))
+	case o.Possible:
+		sb.WriteString(" Outlook: [gray]no harbinger has come. Quiet, for now.[-]\n")
 	}
 
 	// Harbinger status.
 	if h := state.Harbinger; h != nil {
-		status := "waiting for the passage"
+		status := "no word of when"
+		if h.WhenText != "" {
+			status = "doom " + h.WhenText
+		}
 		switch {
 		case h.PassageCame:
 			status = "the Last Passage has come"
@@ -157,8 +167,9 @@ func epochProviderHarbingers(sb *strings.Builder, state game.GameState) {
 	}
 }
 
-// latestHarbinger returns the newest harbinger record whose passage led into
-// epochKey (the one resolved on entering it), or nil.
+// latestHarbinger returns the newest harbinger record of epochKey's doom, or
+// nil. (Saves from before fates held records keyed to the era the passage led
+// into; those match too, which is what they meant.)
 func latestHarbinger(history []game.HarbingerRecord, epochKey string) *game.HarbingerRecord {
 	for i := len(history) - 1; i >= 0; i-- {
 		if history[i].TargetEpochKey == epochKey {
@@ -206,7 +217,14 @@ func harbingerRecordText(r game.HarbingerRecord) string {
 			}
 		}
 	}
-	return fmt.Sprintf("%s → %s: %s%s", strings.Join(chain, ", "), r.TargetEpochName, verdict, extra)
+	target := r.TargetEpochName
+	if r.TargetEpochKey != "" && r.TargetEpochKey == r.EpochKey {
+		target = "doom in the " + r.TargetEpochName
+	}
+	if r.AtAdvance && r.Outcome != game.HarbingerOutcomeDiscredited {
+		extra += " [gray](settled as you advanced)[-]"
+	}
+	return fmt.Sprintf("%s → %s: %s%s", strings.Join(chain, ", "), target, verdict, extra)
 }
 
 // epochProviderHistory renders the epoch history section.
@@ -295,13 +313,24 @@ func epochProviderCivilizationLog(sb *strings.Builder, state game.GameState) {
 	}
 }
 
-// findEpochEvent returns the most recent EpochEventRecord for the given epoch key, or nil.
+// findEpochEvent returns the most recent transition event for the given epoch
+// key, or nil. A catastrophe strikes inside its era now, after the
+// transition's event, so it is skipped unless it is all the era has (saves
+// from before fates, when a catastrophe took the transition's place).
 func findEpochEvent(history []game.EpochEventRecord, epochKey string) *game.EpochEventRecord {
-	var last *game.EpochEventRecord
+	var last, cat *game.EpochEventRecord
 	for i := range history {
-		if history[i].EpochKey == epochKey {
+		if history[i].EpochKey != epochKey {
+			continue
+		}
+		if history[i].EventType == "catastrophe" {
+			cat = &history[i]
+		} else {
 			last = &history[i]
 		}
+	}
+	if last == nil {
+		return cat
 	}
 	return last
 }

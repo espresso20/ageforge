@@ -86,8 +86,9 @@ func (p *harbingerPanel) handleKey(event *tcell.EventKey, engine *game.GameEngin
 	case harbingerBrace:
 		err, ok = engine.HarbingerBrace(), "Braced. An Endure will cost you less."
 	case harbingerInvite:
+		st := engine.GetState()
 		if !p.inviteArmed {
-			if st := engine.GetState(); st.Harbinger == nil || st.Harbinger.InviteBlocked != "" {
+			if st.Harbinger == nil || st.Harbinger.InviteBlocked != "" {
 				err = harbingerInviteRefusal(st)
 				break
 			}
@@ -96,7 +97,11 @@ func (p *harbingerPanel) handleKey(event *tcell.EventKey, engine *game.GameEngin
 			return true
 		}
 		p.inviteArmed = false
-		err, ok = engine.HarbingerInvite(), "Invited. It will come at the passage."
+		ok = "Invited. It will come when it was fated to."
+		if st.Harbinger != nil && st.Harbinger.LastPassage {
+			ok = "Invited. It will come at your next prestige."
+		}
+		err = engine.HarbingerInvite()
 	}
 	if err != nil {
 		p.note, p.noteGood = err.Error(), false
@@ -136,13 +141,14 @@ func harbingerPanelText(state game.GameState, note string, noteGood, inviteArmed
 	return sb.String()
 }
 
-// harbingerAbsentText is the panel with nobody there: when one comes, and the
-// next transition's outlook in plain words.
+// harbingerAbsentText is the panel with nobody there: how harbingers come,
+// and the outlook in plain words. It reads only what the player has seen, so
+// an era with a doom fated and a quiet one look the same until one comes.
 func harbingerAbsentText(sb *strings.Builder, state game.GameState) {
 	sb.WriteString(" No harbinger is here.\n\n")
 	// No era is named here but the current one: the player has not reached
 	// the others (the no-spoiler rule, spoilers.go).
-	sb.WriteString(theme.Paint(theme.RoleDim, " Harbingers walk through every era whose end could bring a catastrophe, one\n figure per age, from its first age until that passage. In the last era the\n passage is prestige itself: the Last Passage.") + "\n\n")
+	sb.WriteString(theme.Paint(theme.RoleDim, " A harbinger comes only when doom is on its way, some while before it strikes,\n and the figure changes with each age it lives through. A quiet era is safe, for\n now. In the last era the doom is prestige itself: the Last Passage.") + "\n\n")
 
 	o := state.CatastropheOutlook
 	sb.WriteString(theme.Paint(theme.RoleAccent, "── Outlook ──") + "\n")
@@ -155,17 +161,16 @@ func harbingerAbsentText(sb *strings.Builder, state game.GameState) {
 		sb.WriteString(theme.Paint(theme.RoleDim, " More faith in storage makes it less likely.") + "\n")
 	case o.Passage == game.PassagePrestige && state.LastPassage.Pending:
 		sb.WriteString(" " + theme.Paint(theme.RoleNegative, "The Last Passage has come. Type 'catastrophe' to choose.") + "\n")
-	case o.NextEpochKey == "":
+	case o.Passage == game.PassagePrestige:
 		sb.WriteString(" This is the final epoch. Its passage is prestige, and no harbinger has come.\n")
-	case !o.Possible:
-		fmt.Fprintf(sb, " The end of the %s cannot bring a catastrophe.\n", currentEraName(state))
 	default:
-		fmt.Fprintf(sb, " The end of the %s could bring a catastrophe. The risk is %s.\n",
-			currentEraName(state), harbingerRiskWords(o.Tier))
-		if harbingerNumericAge(state.Age) {
-			fmt.Fprintf(sb, " Published odds: %s\n", theme.Paint(theme.RoleHighlight, harbingerPercent(o.Probability)))
+		sb.WriteString(" " + eraOutlookText(state) + "\n")
+		if o.Possible {
+			sb.WriteString(theme.Paint(theme.RoleDim, " Faith in storage makes a doom less likely to strike, and faith and culture\n pay for Appease if a harbinger comes.") + "\n")
 		}
-		sb.WriteString(theme.Paint(theme.RoleDim, " More faith in storage makes it less likely.") + "\n")
+		if r := eraDoomRecord(state); r != nil && r.Outcome == game.HarbingerOutcomeDiscredited {
+			sb.WriteString(theme.Paint(theme.RoleDim, " "+capFirstUI(r.Name)+"'s warning in this era was invented.") + "\n")
+		}
 	}
 }
 
@@ -182,12 +187,15 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 		sb.WriteString(" " + theme.Paint(theme.RoleDim, "Took up the warning from "+strings.Join(names, ", then ")+". Your answers stand.") + "\n")
 	}
 	sb.WriteString("\n")
-	if h.LastPassage {
+	switch {
+	case h.LastPassage:
 		fmt.Fprintf(sb, " Warning of %s: the end of this civilization, when you next prestige.\n\n",
 			theme.Paint(theme.RoleHighlight, h.TargetEpochName))
-	} else {
-		// TargetEpochName is the warning ("impending doom"), never the era to come.
-		fmt.Fprintf(sb, " Warning of %s when the %s ends.\n\n", theme.Paint(theme.RoleHighlight, h.TargetEpochName), currentEraName(state))
+	case h.WhenText != "":
+		// TargetEpochName is the warning ("impending doom"), never an era.
+		fmt.Fprintf(sb, " Warning of %s %s.\n\n", theme.Paint(theme.RoleHighlight, h.TargetEpochName), h.WhenText)
+	default:
+		fmt.Fprintf(sb, " Warning of %s. %s gives no word of when.\n\n", theme.Paint(theme.RoleHighlight, h.TargetEpochName), capFirstUI(h.Name))
 	}
 
 	for _, l := range h.Lines {
@@ -209,7 +217,7 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 	case h.Invited && h.LastPassage && !h.PassageCame:
 		sb.WriteString(" " + theme.Paint(theme.RoleNegative, "You have invited it. The Last Passage will come when you prestige.") + "\n")
 	case h.Invited && !h.LastPassage:
-		sb.WriteString(" " + theme.Paint(theme.RoleNegative, "You have invited it. The catastrophe will come at the passage.") + "\n")
+		sb.WriteString(" " + theme.Paint(theme.RoleNegative, "You have invited it. The catastrophe will come when it was fated to.") + "\n")
 	}
 
 	sb.WriteString("\n" + theme.Paint(theme.RoleAccent, "── Answers ──") + "\n\n")
@@ -217,7 +225,7 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 	// Appease.
 	fmt.Fprintf(sb, " %s %s   %s\n", theme.Keycap("A"), theme.Paint(theme.RoleBright, "Appease: "+h.AppeaseLabel),
 		harbingerLevelText(h.AppeaseLevel, game.HarbingerMaxAppease))
-	sb.WriteString(theme.Paint(theme.RoleDim, "     Each level multiplies the real catastrophe chance by 0.6.") + "\n")
+	sb.WriteString(theme.Paint(theme.RoleDim, "     Each level multiplies the real chance it strikes by 0.6.") + "\n")
 	harbingerCostLine(sb, state, h.AppeaseBlocked, h.AppeaseCost)
 	sb.WriteString("\n")
 
@@ -246,11 +254,13 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 	if h.LastPassage {
 		sb.WriteString(theme.Paint(theme.RoleDim, "     Guarantees the Last Passage at your next prestige; Succumb then earns the\n     Cosmic Legacy. Free. Cannot be undone.") + "\n")
 	} else {
-		sb.WriteString(theme.Paint(theme.RoleDim, "     Guarantees the catastrophe at this passage. Free. Cannot be undone.") + "\n")
+		sb.WriteString(theme.Paint(theme.RoleDim, "     Guarantees the catastrophe; it still comes when it was fated to. Free.\n     Cannot be undone.") + "\n")
 	}
 	switch {
-	case h.InviteBlocked != "":
+	case h.InviteBlocked != "" && h.Invited:
 		sb.WriteString("     " + theme.Paint(theme.RoleDim, "Done: "+h.InviteBlocked+".") + "\n")
+	case h.InviteBlocked != "":
+		sb.WriteString("     " + theme.Paint(theme.RoleDim, "Unavailable: "+h.InviteBlocked+".") + "\n")
 	case inviteArmed:
 		sb.WriteString("     " + theme.Paint(theme.RoleNegative, "Press I again to confirm.") + "\n")
 	}

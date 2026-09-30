@@ -12,16 +12,18 @@ import (
 
 // Civilizational catastrophes (Phase 9).
 //
-// A catastrophe strikes at an epoch transition (a bad epoch roll escalates).
+// A catastrophe strikes when a doom fated for its era comes (fate.go): at a
+// random tick anywhere in the era, or at an advance the player reached first.
 // Players cannot trigger one directly; the dev console's /catastrophe does, for
 // testing. Either way it only sets pendingCatastrophe: nothing is destroyed
-// until the player chooses Endure or Succumb. While a catastrophe is pending the game keeps running but AdvanceAge
-// and DoPrestige refuse, so the choice cannot be skipped or overwritten.
+// until the player chooses Endure or Succumb. While a catastrophe is pending
+// the game keeps running but AdvanceAge and DoPrestige refuse, so the choice
+// cannot be skipped or overwritten.
 //
 // Rules in one place:
 //   - No catastrophe before config.CatastropheGateEpoch (the Iron Era).
-//   - At most one random catastrophe per epoch per run: each epoch's
-//     transition rolls once (epochEventFired).
+//   - At most one doom per era per run: each era's fate rolls once, when it
+//     is entered, and resolves once.
 //   - All randomness comes from the seeded ge.rng over stable pools.
 //
 // Every method here that is not exported expects the engine write lock to be
@@ -35,9 +37,11 @@ const (
 	epochGoodChanceBase      = 0.50 // 25%–75%, or faith has no storage yet
 	epochGoodChanceHighFaith = 0.60 // faith fill > 75%
 
-	// catastropheChanceOnBadRoll is the chance a bad epoch roll escalates into a
-	// catastrophe. Overall odds per transition are (1-goodChance) × this:
-	// 18% at low faith, 15% at mid faith, 12% at high faith.
+	// catastropheChanceOnBadRoll is the old chance that a bad epoch roll
+	// escalated into a catastrophe. Transitions no longer bring catastrophes,
+	// but the passage chance it made, (1-goodChance) × this (18% at low faith,
+	// 15% mid, 12% high), is still the Last Passage's odds at prestige, and
+	// FateStrikeScale times it is a fated doom's strike chance.
 	catastropheChanceOnBadRoll = 0.30
 
 	// Endure consequences.
@@ -100,22 +104,33 @@ const (
 	catastropheTierHighAt   = 0.17
 )
 
-// CatastropheOutlook describes the catastrophe odds at the NEXT passage, given
-// the current faith fill and the rules above. The passage is the next epoch
-// transition, or in the final epoch (which has none) prestige itself, where the
-// Last Passage can strike (last_passage.go).
+// CatastropheOutlook is the catastrophe outlook as the player can know it. It
+// is built from what the player has seen, never from the hidden fate: in an
+// era whose doom has not been foretold it reads the same whether or not one
+// is fated (fate.go).
+//
+// In an era: the doom foretold by the harbinger present, if one is; otherwise
+// quiet (safe, for now) while the era can still bring one. In the final
+// epoch, whose passage is prestige: the Last Passage's odds (last_passage.go).
 type CatastropheOutlook struct {
 	// Passage is PassageEpoch, or PassagePrestige in the final epoch.
 	Passage string
 	// NextEpochKey is the epoch the next transition enters; "" in the final
-	// epoch, whose passage is prestige.
+	// epoch, whose passage is prestige. For the engine's own readers: the UI
+	// must not name it.
 	NextEpochKey string
-	// Possible is false when the next passage cannot bring a catastrophe at
-	// all: it is before the Iron-epoch gate, its transition roll already
-	// happened this run, or the Last Passage is already pending.
+	// Possible: a catastrophe could still come. In an era: it is past the
+	// Iron gate and its doom has neither struck nor been lifted (or a
+	// harbinger is warning of one). In the final epoch: prestige can bring
+	// the Last Passage and it is not already pending.
 	Possible bool
-	// Probability is the chance in [0,1] that the next passage produces a
-	// catastrophe. 0 when !Possible; 1 when a catastrophe has been invited.
+	// Warned: a harbinger is present warning of this era's doom. Always
+	// false in the final epoch (its thread is the Last Passage's).
+	Warned bool
+	// Probability is the chance in [0,1] as it can be known: while Warned,
+	// what the harbinger's warning says (the claim, for a false prophet); in a
+	// quiet era 0; in the final epoch the Last Passage's chance at prestige
+	// (1 when invited).
 	Probability float64
 	// Tier buckets Probability: none / low / medium / high.
 	Tier CatastropheTier
@@ -165,7 +180,12 @@ func (ge *GameEngine) faithFill() (float64, bool) {
 // epochGoodChance returns the chance that an epoch transition rolls a good
 // event, gated by faith fill. Read-only.
 func (ge *GameEngine) epochGoodChance() float64 {
-	fill, ok := ge.faithFill()
+	return goodChanceFor(ge.faithFill())
+}
+
+// goodChanceFor is the good-event chance at faith fill fill (ok false: faith
+// has no storage yet): the faith bands every catastrophe chance reads. Pure.
+func goodChanceFor(fill float64, ok bool) float64 {
 	switch {
 	case !ok:
 		return epochGoodChanceBase
@@ -177,13 +197,6 @@ func (ge *GameEngine) epochGoodChance() float64 {
 	return epochGoodChanceBase
 }
 
-// catastropheCanStrike reports whether a catastrophe may be triggered in
-// epochKey right now: past the Iron-epoch gate and nothing pending (a pending
-// catastrophe is never overwritten). Read-only.
-func (ge *GameEngine) catastropheCanStrike(epochKey string) bool {
-	return ge.pendingCatastrophe == "" && config.CatastropheAllowed(epochKey)
-}
-
 // catastropheBlockErr is the error AdvanceAge and DoPrestige return while a
 // catastrophe is pending. action is a gerund ("advancing", "prestiging").
 func (ge *GameEngine) catastropheBlockErr(action string) error {
@@ -193,14 +206,15 @@ func (ge *GameEngine) catastropheBlockErr(action string) error {
 
 // How a catastrophe came about; it only changes the log line and event name.
 const (
-	catastropheRolled  = ""        // bad transition roll escalated
+	catastropheRolled  = ""        // a fated doom's strike roll hit
 	catastropheForced  = "forced"  // dev console /catastrophe
-	catastropheInvited = "invited" // honoured invite (the Harbinger's Invite)
+	catastropheInvited = "invited" // an invited doom (the Harbinger's Invite)
 )
 
 // triggerCatastrophe makes epochKey's catastrophe pending: log line, history
-// record, and a bus event so the dashboard toast fires. Callers must check
-// catastropheCanStrike first. Must be called under the write lock; the bus
+// record, and a bus event so the dashboard toast fires. Callers make sure no
+// catastrophe is pending (one is never overwritten) and the era is past the
+// Iron gate. Must be called under the write lock; the bus
 // handlers it reaches must not take the engine lock (see CLAUDE.md).
 func (ge *GameEngine) triggerCatastrophe(epochKey, source string) {
 	ep := config.EpochByKey()[epochKey]
@@ -246,7 +260,8 @@ func (ge *GameEngine) setCatastropheOutcome(epochKey, outcome string) {
 // forceCatastrophe makes the current epoch's catastrophe pending right now.
 // It is a testing tool behind the dev console (/catastrophe), not a player
 // action. It still respects the Iron-epoch gate and never overwrites a pending
-// catastrophe, but it ignores the once-per-transition roll.
+// catastrophe, but it ignores the era's fate (a fated doom still comes later,
+// once this one is answered).
 func (ge *GameEngine) forceCatastrophe() error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
@@ -261,30 +276,20 @@ func (ge *GameEngine) forceCatastrophe() error {
 	return nil
 }
 
-// Invite (armed by the Harbinger's Invite action; see harbinger.go).
+// Invite of the Last Passage (armed by the Cosmic Era thread's Invite; see
+// harbinger.go). An era's doom keeps its invite on its fate (FateSave.Invited).
 //
-// catastropheInvited, when set, makes the next epoch transition into an epoch
-// allowed by the Iron gate produce a catastrophe instead of rolling. It is
-// consumed when honoured, kept while the target is gated or another
-// catastrophe is pending, persisted, and cleared by Succumb and prestige.
+// catastropheInvited, when set, makes the next prestige from the final epoch
+// bring the Last Passage instead of rolling (rollLastPassage). It is consumed
+// there, persisted, and cleared by Succumb and prestige.
 
-// inviteCatastrophe arms the invite. Must be called under the write lock.
+// inviteCatastrophe arms the Last Passage's invite. Must be called under the
+// write lock.
 func (ge *GameEngine) inviteCatastrophe() { ge.catastropheInvited = true }
 
-// honourInvite triggers the invited catastrophe for epochKey if the invite is
-// armed and the catastrophe can strike there. Reports whether it did. Called
-// by rollEpochEvent under the write lock.
-func (ge *GameEngine) honourInvite(epochKey string) bool {
-	if !ge.catastropheInvited || !ge.catastropheCanStrike(epochKey) {
-		return false
-	}
-	ge.catastropheInvited = false
-	ge.triggerCatastrophe(epochKey, catastropheInvited)
-	return true
-}
-
-// CatastropheOutlook reports the catastrophe odds at the next passage: the next
-// epoch transition, or prestige in the final epoch. Takes the read lock; use catastropheOutlook from code that already holds a lock.
+// CatastropheOutlook reports the catastrophe outlook as the player can know
+// it (see the type). Takes the read lock; use catastropheOutlook from code
+// that already holds a lock.
 func (ge *GameEngine) CatastropheOutlook() CatastropheOutlook {
 	ge.mu.RLock()
 	defer ge.mu.RUnlock()
@@ -292,32 +297,35 @@ func (ge *GameEngine) CatastropheOutlook() CatastropheOutlook {
 }
 
 // catastropheOutlook is the lock-free body of CatastropheOutlook. Read-only:
-// safe under either lock, and from GetState.
+// safe under either lock, and from GetState. It must never read whether a
+// doom is fated (the fate's Fated flag or strike tick): only the harbinger
+// present and what has already resolved in the open.
 func (ge *GameEngine) catastropheOutlook() CatastropheOutlook {
 	fill, _ := ge.faithFill()
 	out := CatastropheOutlook{Passage: PassageEpoch, Tier: CatastropheTierNone, FaithFill: fill}
-	next, ok := config.NextEpoch(ge.currentEpoch)
-	switch {
-	case ok:
+	if next, ok := config.NextEpoch(ge.currentEpoch); ok {
 		out.NextEpochKey = next.Key
-		if !config.CatastropheAllowed(next.Key) || ge.epochEventFired[next.Key] {
-			return out
-		}
-	case config.IsFinalEpoch(ge.currentEpoch):
+	}
+	if config.IsFinalEpoch(ge.currentEpoch) {
 		// The final epoch's passage is prestige: the Last Passage.
 		out.Passage = PassagePrestige
 		if !ge.lastPassageApplies() || ge.pendingLastPassage {
 			return out
 		}
-	default:
+		out.Possible = true
+		out.Probability = (1 - ge.epochGoodChance()) * catastropheChanceOnBadRoll * ge.harbingerAppeaseMultiplier()
+		if ge.catastropheInvited {
+			out.Probability = 1
+		}
+		out.Tier = catastropheTierFor(out.Probability)
 		return out
 	}
-	out.Possible = true
-	out.Probability = (1 - ge.epochGoodChance()) * catastropheChanceOnBadRoll * ge.harbingerAppeaseMultiplier()
-	if ge.catastropheInvited {
-		out.Probability = 1
+	if h := ge.harbinger; h != nil && h.TargetEpoch != "" && h.EpochKey == ge.currentEpoch {
+		out.Possible, out.Warned = true, true
+		out.Tier, out.Probability = ge.harbingerDisplay()
+		return out
 	}
-	out.Tier = catastropheTierFor(out.Probability)
+	out.Possible = config.FateAllowed(ge.currentEpoch) && ge.pendingCatastrophe == "" && !ge.fateSettled()
 	return out
 }
 
@@ -365,6 +373,9 @@ func (ge *GameEngine) Endure() error {
 	}
 	epochKey := ge.pendingCatastrophe
 	ge.pendingCatastrophe = ""
+	// The stock the next advance counted is mostly gone: the next tick (or
+	// the advance command) checks the requirements afresh.
+	ge.ageReady = false
 	// A Brace bought from the harbinger softens the blow.
 	brace := ge.pendingBraceLevel
 	if brace < 0 || brace > HarbingerMaxBrace {

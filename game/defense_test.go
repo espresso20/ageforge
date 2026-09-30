@@ -396,16 +396,17 @@ func TestEndure_GarrisonDeterministic(t *testing.T) {
 // --- Previews ---------------------------------------------------------------------
 
 func TestHarbingerViewCountsGarrison(t *testing.T) {
-	ge := catEngine(t, "bronze_age", 5)
-	if err := ge.SummonHarbingerForTest("bronze_age"); err != nil {
+	ge := catEngine(t, "iron_age", 5)
+	if err := ge.SummonHarbingerForTest("iron_age"); err != nil {
 		t.Fatal(err)
 	}
 	v := ge.GetState().Harbinger
 	if v == nil || v.GarrisonPct != 0 || v.EndureDestroyPct != 20 || v.EndureKeepPct != 15 {
 		t.Fatalf("no garrison: view = %+v, want 20%% / 15%% and no garrison", v)
 	}
-	// The catastrophe would strike in the Iron Age (the target epoch's first
-	// age): a garrison that matches that threat blunts half the cap.
+	// The doom strikes in this age or later in the era, so the garrison is
+	// measured against the current age's threat: one that matches it blunts
+	// half the cap.
 	giveSoldiers(ge, soldiersFor("iron_age"))
 	v = ge.GetState().Harbinger
 	if v.GarrisonPct != 23 || v.EndureDestroyPct >= 20 || v.EndureKeepPct <= 15 {
