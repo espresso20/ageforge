@@ -1,7 +1,7 @@
 package flavor
 
 // The third answer to a harbinger: invite it. The player chooses doom, and the
-// next transition is guaranteed to bring the catastrophe, usually because they
+// catastrophe is certain to come when it was fated to, usually because they
 // want to Succumb for the legacy bonuses.
 //
 //   - HarbingerInvited: the settlement's reaction to its leader asking for the

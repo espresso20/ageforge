@@ -391,7 +391,7 @@ A player with **no soldiers** takes exactly the losses they always did. From the
 
 ### Endure: Brace first, then the garrison
 
-A catastrophe arrives as you enter a new epoch, so it strikes in the first age of that epoch (Iron, Renaissance, Victorian, Modern, Cyberpunk or Interstellar), where the threat has just doubled. The Iron Era's catastrophe comes as soldiers first unlock, so in practice the garrison first matters at the Renaissance.
+A catastrophe strikes at a fated moment anywhere in its era (Iron to Neon), so the garrison meets the threat of whatever age you are in when it strikes. Soldiers first unlock in the Iron Age, so an Iron Era doom that strikes early in the Iron Age finds little garrison to count.
 
 1. **Brace** applies first: 20% / 15% / 10% of buildings fall and 15% / 30% / 45% of stock is kept at Brace 0 / 1 / 2.
 2. **The garrison** then blunts its share of what is left: the braced share of buildings destroyed shrinks by that share, and it keeps that share of the stock Brace would have let go. Buildings saved round down, so the garrison never saves more than its share.
@@ -466,7 +466,7 @@ The five military milestones form a chain. Completing all five grants a title, a
 The Army panel shows your **defense rating** (`soldiers × 2.0 × (1 + military power)`). It is measured against the raid threat of your age, and the resulting share (at most 45%) comes off raid events, war raids from civilizations at war with you, and the buildings and stock an Endure takes. It never stops a raid or a catastrophe from happening, and it does nothing against disasters such as plague or earthquakes. A civilization at war with you raids every 40 ticks and takes 50 × its strength (1-5) of its specialty resource; your garrison keeps its share of that, but only staying out of wars, or ending them with tribute, stops the raids: see [War & Peace](trade.md#war-amp-peace). See [§7](#7-defense-what-your-army-blunts) for the numbers.
 
 - **Keep up with the age.** The threat doubles every age, so a garrison you stop growing fades fast. Adding the current age's military buildings keeps pace, since each tier's soldier cap doubles too.
-- **Look ahead to the passage.** An Endure is measured against the first age of the new epoch, where the threat is double what you see on the Army panel today. The Harbinger panel's Brace preview already counts this.
+- **Mind the next age.** An Endure is measured against the age the doom strikes in. The Harbinger panel's Brace preview uses the age you are in; if you advance before the doom strikes, the threat doubles and your garrison blunts less than the preview showed.
 - **Brace and garrison stack, up to a point.** Together they cut an Endure's losses by at most 60%. With Brace 2, a garrison that blunts 20% already reaches the building cap (8% fall), so extra soldiers mostly buy stock kept, up to 66%.
 - **Soldiers cost nothing to hold.** The stock has no upkeep; only the military workers producing it eat food and count toward the morale ratio below. You can staff up to bank a garrison, then move the workers back.
 - **Research military power.** It multiplies the defense rating of the soldiers you already have.

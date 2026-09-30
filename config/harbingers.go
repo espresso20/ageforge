@@ -53,9 +53,9 @@ type HarbingerDef struct {
 	AppeaseLabel string
 	// BraceLabel names the action that spends resources to soften an Endure.
 	BraceLabel string
-	// InviteLabel names the action that chooses doom: the next transition is
-	// guaranteed to bring the catastrophe. For players who want to Succumb on
-	// purpose for the legacy bonuses. Deliberately a little unhinged.
+	// InviteLabel names the action that chooses doom: the fated catastrophe is
+	// certain to come. For players who want to Succumb on purpose for the
+	// legacy bonuses. Deliberately a little unhinged.
 	InviteLabel string
 	// ForecastPrecision is vague before the Industrial Age and numeric from it.
 	ForecastPrecision ForecastPrecision
@@ -282,9 +282,9 @@ var harbingerRoster = []HarbingerDef{
 }
 
 // harbingerTables is the roster, built once. Harbingers and HarbingerFor are
-// called from the transition path and from the UI; neither should rebuild the
-// age table or the index on every call (see the tick-path rebuild fix in
-// PR #108), and the roster is immutable after init anyway.
+// called from the tick and advance paths and from the UI; neither should
+// rebuild the age table or the index on every call (see the tick-path rebuild
+// fix in PR #108), and the roster is immutable after init anyway.
 var harbingerTables = sync.OnceValue(buildHarbingers)
 
 type harbingerIndex struct {

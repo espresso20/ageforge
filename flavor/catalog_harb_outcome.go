@@ -1,6 +1,7 @@
 package flavor
 
-// The three verdicts, logged after the transition resolves:
+// The verdicts, logged when the doom resolves (it strikes or passes by, or a
+// false prophet's window runs out):
 //
 //   - HarbingerVindicated: the harbinger warned and the catastrophe came. The
 //     caller sends Kind: KindFalseProphet when the warning had been invented,
