@@ -1,6 +1,10 @@
 package game
 
-import "github.com/espresso20/ageforge/config"
+import (
+	"sync"
+
+	"github.com/espresso20/ageforge/config"
+)
 
 // spoilers.go is the no-spoiler rule for player text (playtest 2026-09-29):
 // no screen, log line or refusal names an age the player cannot see yet, an
@@ -15,6 +19,29 @@ import "github.com/espresso20/ageforge/config"
 // Refusals from the managers (research, trade routes, expeditions) only know
 // the current age, so they name the next age at most (laterAgeRef).
 
+// ageOrders maps each age key to its order, and eraFirstAges each epoch key
+// to the order of its first age. Built once: config rebuilds its tables on
+// every call, and these are asked per milestone on every GetState.
+var (
+	ageOrders = sync.OnceValue(func() map[string]int {
+		m := map[string]int{}
+		for _, a := range config.Ages() {
+			m[a.Key] = a.Order
+		}
+		return m
+	})
+	eraFirstAges = sync.OnceValue(func() map[string]int {
+		ages := ageOrders()
+		m := map[string]int{}
+		for _, e := range config.Epochs() {
+			if len(e.Ages) > 0 {
+				m[e.Key] = ages[e.Ages[0]]
+			}
+		}
+		return m
+	})
+)
+
 // AgeSight is which ages and eras the player may see named.
 type AgeSight struct {
 	next    int // the furthest age order that may be named
@@ -24,18 +51,17 @@ type AgeSight struct {
 // newAgeSight is the sight of a player in current who has reached the ages
 // in reached this run and highest on their account ("" for none).
 func newAgeSight(current string, reached []string, highest string) AgeSight {
-	ages := config.AgeByKey()
-	far := ages[current].Order
-	for _, a := range append([]string{highest}, reached...) {
-		if def, ok := ages[a]; ok && def.Order > far {
-			far = def.Order
+	ages := ageOrders()
+	far := ages[current]
+	if o, ok := ages[highest]; ok && o > far {
+		far = o
+	}
+	for _, a := range reached {
+		if o, ok := ages[a]; ok && o > far {
+			far = o
 		}
 	}
-	next := far
-	if o := ages[current].Order + 1; o > next {
-		next = o
-	}
-	return AgeSight{next: next, reached: far}
+	return AgeSight{next: max(far, ages[current]+1), reached: far}
 }
 
 // SightOf is the sight of the player in the snapshot st.
@@ -60,18 +86,15 @@ func (ge *GameEngine) ageSightLocked() AgeSight {
 
 // Age reports whether the player may see age named. Unknown keys: no.
 func (s AgeSight) Age(age string) bool {
-	def, ok := config.AgeByKey()[age]
-	return ok && def.Order <= s.next
+	o, ok := ageOrders()[age]
+	return ok && o <= s.next
 }
 
 // Era reports whether the player may see the era named: they have reached
 // one of its ages.
 func (s AgeSight) Era(epoch string) bool {
-	def, ok := config.EpochByKey()[epoch]
-	if !ok || len(def.Ages) == 0 {
-		return false
-	}
-	return config.AgeByKey()[def.Ages[0]].Order <= s.reached
+	o, ok := eraFirstAges()[epoch]
+	return ok && o <= s.reached
 }
 
 // AgeRef names age for player text: "the Iron Age" when the player may see
