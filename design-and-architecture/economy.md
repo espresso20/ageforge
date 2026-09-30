@@ -364,6 +364,65 @@ Counts are the usual lever because the normalized cost curves (1.15 per copy, 1.
 housing and storage) made late copies explode: copy #80 costs 62,000× copy #1, so the
 old late-game counts of 50-500 were never reachable at any storage.
 
+### The Milestone Covenant (Law 1 applied to milestones)
+
+Milestones reset with every run, and nothing proved they fit one: seven could never be
+completed (the 50th Stone Pit costs 283K wood where the Stone Age stores at most 80K; a
+billion people need more housing than all 22 ages hold) while the old check only compared
+counts with MaxCount. The Milestone Covenant proves every milestone, chain and title from
+config with the Gate Covenant's model: the most storage buildable, undiscounted prices and
+the cold start.
+
+**Due age.** A milestone is due by the end of the last age a normal run plays (the age
+before `game.PrestigeMinAge`, the Atomic Age today), or by the end of its own `MinAge` when
+that is later. A milestone naming a later age is deep-run content and must be doable in
+that age: Tech Master names the Information Age because the tech tree reaches 50 there.
+
+Each requirement must fit by the due age:
+
+1. **Building counts:** a building is built only in its own age (the age lock), so the last
+   required copy must cost at most the most storage buildable in that age, in every
+   resource it costs, within MaxCount. `MinBuildingSum` (consecutive tiers of one lineage,
+   in any mix) fits the sum of those ceilings.
+2. **Population:** at most 40% (`MilestonePopShare`) of the housing ceiling, which is every
+   housing building so far at its storage limit, never upgraded, plus the techs' housing.
+   Nobody keeps every old tier maxed; the newest tier alone is about half the ceiling.
+3. **Structures built in the run:** at most 50% (`MilestoneBuildShare`) of the build
+   ceiling, which is every building of every age so far at its storage limit, each copy
+   built once (7,561 in the whole game and 4,361 in a run today). Selling and rebuilding,
+   which the counter also counts, and rebuilding after a catastrophe are churn and left out.
+4. **Resources:** the amount fits the most storage buildable with the gate's 1.25x
+   headroom, in an age from `MinAge` on that supplies it.
+5. **Techs:** a count, or named techs, researchable by then, counting prerequisites and the
+   knowledge storage each price needs.
+6. **Wonders:** one per age, each part fitting one full store (the gate's wonder rule).
+7. **Knowledge workers:** at most 40% of the worker slots in knowledge buildings, capped by
+   housing.
+8. **Soldiers trained:** what `FlowIncome` makes over the ages' pacing targets.
+
+Play time (`MinTick`) always passes. A chain fails when any of its milestones does, and the
+top title must not need more milestones than can be completed. Where the model simplifies,
+it errs low: build_cost discounts, the refund an upgrade gets, and upgrades that add copies
+of a building after its age can only add to what is possible.
+
+`smoke.StaticMilestones` implements it and `TestMilestonesAreFeasible`
+(smoke/static_milestones_test.go) fails `go test ./...` on any problem, naming the
+milestone, the requirement and the math. `TestMilestoneFeasibilityCatchesBrokenMilestones`
+feeds it the numbers master shipped before (the seven impossible milestones, three out of
+reach in a run, three that named an age too early) and checks each is caught, and
+`TestMilestoneFeasibilityFollowsPrestige` checks the due age moves with
+`game.PrestigeMinAge`. The `static` smoke scenario lists every milestone's earliest age and
+its tightest requirement.
+
+**Levers**, when a milestone breaks it:
+
+1. Lower the count, to at most about 80% of the proven ceiling.
+2. If the count is right but only fits after the run, move `MinAge` to the age where it
+   first fits, making it deep-run content (Tech Master, Wonder Empire, Tech Ascendant,
+   Global City).
+3. If it counts an old tier the game asks you to upgrade, count the lineage's consecutive
+   tiers with `MinBuildingSum` (Trade Empire), so upgrading keeps the progress.
+
 ---
 
 ## MaxCount Policy
