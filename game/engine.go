@@ -3594,6 +3594,9 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.Stats = NewGameStats()
 	// Bus intentionally kept — dashboard subscriptions must survive across resets.
 	ge.permanentBonuses = make(map[string]float64)
+	// A new run starts at 1x, as after a Succumb or a wipe: the dev console's
+	// /speed override does not carry into it.
+	ge.speedMultiplier = 1.0
 	ge.buildQueue = nil
 	ge.plan = nil
 	ge.log = nil

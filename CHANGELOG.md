@@ -87,6 +87,7 @@ All notable changes to AgeForge are documented here.
 - **Catastrophe odds are visible**: the bare `catastrophe` command and the Epoch tab show the chance for the next transition (12–18% by faith).
 
 ### Fixed
+- **Game speed carried across prestige.** Prestige reset everything but the speed setting, so a run that prestiged at 7x started the next run at 7x. A prestige now goes back to 1x, as Succumb and a wipe already did.
 - **The catastrophe modal showed the unbraced losses after you bought Brace.** Its Endure section now shows what Endure will actually cost, with Brace and your garrison applied, and says what each took off. The reconstruction debuff reads in minutes, not ticks.
 - **War raids reported losses that never happened.** A raid that finds less than it would carry off takes nothing, and the log now says so instead of "lost 150 dark_matter". Raid lines use resource names, not keys.
 - **Events never said how much they actually took.** Events that steal resources or drive off workers now log what left your stores when they strike ("You lost 10 food and 5 gold."), under the event line that gives the most it can take. Timed events used to report workers lost only when they ended.
