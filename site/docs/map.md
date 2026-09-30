@@ -80,7 +80,7 @@ The legend (what each glyph means) shows beside the map when there is room.
 
 ## Skyline
 
-The skyline style shows your empire **side-on**, as an ANSI-art panorama. It has one **district for every age** you have lived through: the oldest in the west, the present in the east, and your build queue as cranes on the frontier.
+The skyline style shows your empire **side-on**, as an ANSI-art panorama. It has one **district for every age** you have lived through: the oldest in the west, the present in the east, and your build queue going up on the frontier the way your era builds: poles and stick frames in the first ages, timber scaffolding and wooden jib cranes from the Iron Age, tower cranes from the Industrial Age.
 
 - **Windows light and chimneys smoke only where workers are staffed.** An unstaffed building stays dark.
 - **The sky** follows the game clock and the weather.
