@@ -1079,6 +1079,9 @@ func (b *Bot) trade(p *plan) {
 				from, rate, sell = x.From, x.Rate, n
 			}
 		}
+		if from != "" && sell > 0 && sell < 1 && room < rate && p.amt[from]-p.blockCost[from] >= 1 {
+			sell = 1 // less than one unit short: buy a little over (see tradeInto)
+		}
 		if from == "" || sell < 1 {
 			continue
 		}
@@ -1165,7 +1168,7 @@ func (b *Bot) tradeInto(p *plan, rates map[string]game.ExchangeRateInfo, want st
 	if short <= 0 || b.recently(b.sold, want) {
 		return false
 	}
-	from, best, sell := "", 0.0, 0.0
+	from, best, sell, fromSpare, fromRate := "", 0.0, 0.0, 0.0, 0.0
 	for _, k := range sortedKeys(rates) {
 		x := rates[k]
 		if x.To != want || x.Rate < x.BaseRate*0.6 || x.Rate <= 0 || b.recently(b.bought, x.From) {
@@ -1184,8 +1187,16 @@ func (b *Bot) tradeInto(p *plan, rates map[string]game.ExchangeRateInfo, want st
 		}
 		n := math.Min(math.Min(spare, 0.25*p.storage[x.From]), short/x.Rate)
 		if v := n * x.Rate; v > best {
-			from, best, sell = x.From, v, n
+			from, best, sell, fromSpare, fromRate = x.From, v, n, spare, x.Rate
 		}
+	}
+	// The market trades whole units. Short by less than one unit of the best
+	// source (the last stone a wonder bank lacks, bought with gold at several
+	// stone a coin), a player sells one and buys a little over; the bot does
+	// too, when that unit is spare, instead of waiting for income that may
+	// never come (an Endure can take an old resource's last producers).
+	if from != "" && sell > 0 && sell < 1 && short < fromRate && fromSpare >= 1 {
+		sell = 1
 	}
 	if from == "" || sell < 1 {
 		return false
