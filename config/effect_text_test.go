@@ -173,18 +173,6 @@ func TestPrestigeDescriptionsMatchPerTier(t *testing.T) {
 	}
 }
 
-// milestoneEngineThresholds mirrors the milestone conditions the engine
-// checks outside MilestoneDef (game/milestones.go): soldiers trained,
-// wonders built, structures built, knowledge workers staffed.
-var milestoneEngineThresholds = map[string][]float64{
-	"first_soldiers": {5}, "war_machine": {250}, "standing_army": {100},
-	"iron_legion": {500}, "military_superpower": {2000},
-	"wonder_collector": {8}, "wonder_empire": {15},
-	"early_builder": {500}, "seasoned_builder": {2000},
-	"master_builder": {5000}, "grand_architect": {20000},
-	"scholars_haven": {50},
-}
-
 var milestoneNumRe = regexp.MustCompile(`[0-9][0-9,]*`)
 
 // TestMilestoneDescriptionNumbers: every number in a milestone's description
@@ -206,10 +194,11 @@ func TestMilestoneDescriptionNumbers(t *testing.T) {
 		for _, v := range m.MinResources {
 			ok[v] = true
 		}
-		ok[float64(m.MinPopulation)] = m.MinPopulation > 0
-		ok[float64(m.MinTechCount)] = m.MinTechCount > 0
-		for _, v := range milestoneEngineThresholds[m.Key] {
-			ok[v] = true
+		for _, v := range []int{m.MinPopulation, m.MinTechCount, m.MinTotalBuilt,
+			m.MinSoldiersTrained, m.MinWonders, m.MinKnowledgeWorkers} {
+			if v > 0 {
+				ok[float64(v)] = true
+			}
 		}
 		for _, n := range milestoneNumRe.FindAllString(desc, -1) {
 			v, err := strconv.ParseFloat(strings.ReplaceAll(n, ",", ""), 64)

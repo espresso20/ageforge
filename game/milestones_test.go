@@ -55,15 +55,20 @@ func TestMilestoneManager_PopulationMilestone(t *testing.T) {
 	bm := NewBuildingManager()
 	ageOrder := fullAgeOrder()
 
-	// small_village requires pop 5,000 (hardened threshold)
-	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, 4999, 0, 0, nil, 0, 0, 0)
+	// small_village's threshold comes from config, so a retune can't strand
+	// this test on an old number.
+	need := config.MilestoneByKey()["small_village"].MinPopulation
+	if need <= 0 {
+		t.Fatal("small_village has no population threshold")
+	}
+	completed := mm.CheckMilestones(1, "primitive_age", ageOrder, rm, bm, need-1, 0, 0, nil, 0, 0, 0)
 	for _, ms := range completed {
 		if ms.Key == "small_village" {
-			t.Error("small_village should not trigger at pop 4999")
+			t.Errorf("small_village should not trigger at pop %d", need-1)
 		}
 	}
 
-	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, 5000, 0, 0, nil, 0, 0, 0)
+	completed = mm.CheckMilestones(2, "primitive_age", ageOrder, rm, bm, need, 0, 0, nil, 0, 0, 0)
 	found := false
 	for _, ms := range completed {
 		if ms.Key == "small_village" {
@@ -71,7 +76,55 @@ func TestMilestoneManager_PopulationMilestone(t *testing.T) {
 		}
 	}
 	if !found {
-		t.Error("small_village should trigger at pop 5000")
+		t.Errorf("small_village should trigger at pop %d", need)
+	}
+}
+
+// TestMilestoneManager_RunCounters: the structures-built, soldiers-trained,
+// wonder and knowledge-worker thresholds come from MilestoneDef, one short of
+// each holds the milestone back, and meeting it completes the milestone.
+func TestMilestoneManager_RunCounters(t *testing.T) {
+	ageOrder := fullAgeOrder()
+	checked := 0
+	for _, def := range config.Milestones() {
+		counters := []*int{&def.MinTotalBuilt, &def.MinSoldiersTrained, &def.MinWonders, &def.MinKnowledgeWorkers}
+		for i, c := range counters {
+			if *c <= 0 {
+				continue
+			}
+			checked++
+			age := def.MinAge
+			if age == "" {
+				age = "primitive_age"
+			}
+			run := func(short bool) bool {
+				mm := NewMilestoneManager()
+				bm := NewBuildingManager()
+				for k, n := range def.MinBuildings {
+					bm.counts[k] = n
+				}
+				v := [4]int{def.MinTotalBuilt, def.MinSoldiersTrained, def.MinWonders, def.MinKnowledgeWorkers}
+				if short {
+					v[i]--
+				}
+				for _, ms := range mm.CheckMilestones(def.MinTick, age, ageOrder, NewResourceManager(), bm,
+					def.MinPopulation, def.MinTechCount, v[0], nil, v[1], v[2], v[3]) {
+					if ms.Key == def.Key {
+						return true
+					}
+				}
+				return false
+			}
+			if run(true) {
+				t.Errorf("%s completed one short of its counter %d (%d)", def.Key, i, *c)
+			}
+			if !run(false) {
+				t.Errorf("%s did not complete at its counter %d (%d)", def.Key, i, *c)
+			}
+		}
+	}
+	if checked == 0 {
+		t.Fatal("no milestone asks for a run counter")
 	}
 }
 

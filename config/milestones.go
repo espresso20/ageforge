@@ -28,6 +28,12 @@ type MilestoneDef struct {
 	MinPopulation int                // state.Workers.TotalPop must be ≥ this
 	MinTechCount  int                // total number of completed research techs must be ≥ this
 	RequiredTechs []string           // all listed tech keys must be researched
+	// Run counters the engine keeps. The first two reset with the run
+	// (prestige, Succumb) and only ever grow within it.
+	MinTotalBuilt       int // structures built this run (upgrades don't count, selling doesn't subtract)
+	MinSoldiersTrained  int // soldiers trained this run (spending them doesn't subtract)
+	MinWonders          int // wonders standing
+	MinKnowledgeWorkers int // workers staffing knowledge buildings right now
 	// Rewards — applied once when the milestone completes
 	Rewards []Effect
 }
@@ -329,10 +335,11 @@ func Milestones() []MilestoneDef {
 		// early_builder: raised to 500 buildings
 		{
 			Name: "Early Builder", Key: "early_builder",
-			Description: "Build 500 structures total.",
-			Flavor:      "Five hundred buildings. You've stopped naming them and started numbering them.",
-			Category:    "builder",
-			MinAge:      "bronze_age",
+			Description:   "Build 500 structures total.",
+			Flavor:        "Five hundred buildings. You've stopped naming them and started numbering them.",
+			Category:      "builder",
+			MinAge:        "bronze_age",
+			MinTotalBuilt: 500,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "build_cost", Value: -0.03},
 			},
@@ -365,10 +372,11 @@ func Milestones() []MilestoneDef {
 		// seasoned_builder: raised to 2,000 buildings
 		{
 			Name: "Seasoned Builder", Key: "seasoned_builder",
-			Description: "Build 2,000 structures total.",
-			Flavor:      "Two thousand buildings. You could get lost in your own civilization, and frequently do.",
-			Category:    "builder",
-			MinAge:      "iron_age",
+			Description:   "Build 2,000 structures total.",
+			Flavor:        "Two thousand buildings. You could get lost in your own civilization, and frequently do.",
+			Category:      "builder",
+			MinAge:        "iron_age",
+			MinTotalBuilt: 2000,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "build_cost", Value: -0.03},
 			},
@@ -376,9 +384,10 @@ func Milestones() []MilestoneDef {
 		// master_builder: raised to 5,000 buildings
 		{
 			Name: "Master Builder", Key: "master_builder",
-			Description: "Build 5,000 structures total.",
-			Flavor:      "Five thousand structures. Future archaeologists will assume you were showing off.",
-			Category:    "builder",
+			Description:   "Build 5,000 structures total.",
+			Flavor:        "Five thousand structures. Future archaeologists will assume you were showing off.",
+			Category:      "builder",
+			MinTotalBuilt: 5000,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "build_cost", Value: -0.05},
 			},
@@ -389,6 +398,7 @@ func Milestones() []MilestoneDef {
 			Description: "Build your first wonder.",
 			Flavor:      "You built a Wonder. Your neighbors are impressed. One is drafting a strongly worded letter.",
 			Category:    "builder", Hidden: true,
+			MinWonders: 1,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
 			},
@@ -399,7 +409,8 @@ func Milestones() []MilestoneDef {
 			Description: "Build 20,000 structures total.",
 			Flavor:      "Twenty thousand buildings. The mapmakers have unionized and gone home.",
 			Category:    "builder", Hidden: true,
-			MinAge: "medieval_age",
+			MinAge:        "medieval_age",
+			MinTotalBuilt: 20000,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "build_cost", Value: -0.05},
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
@@ -411,7 +422,8 @@ func Milestones() []MilestoneDef {
 			Description: "Build 8 wonders.",
 			Flavor:      "Eight Wonders. Tourists from rival empires now visit just to feel inadequate.",
 			Category:    "builder", Hidden: true,
-			MinAge: "colonial_age",
+			MinAge:     "colonial_age",
+			MinWonders: 8,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.10},
 			},
@@ -422,7 +434,8 @@ func Milestones() []MilestoneDef {
 			Description: "Build 15 wonders.",
 			Flavor:      "Fifteen Wonders. At this point you're just collecting them, like a very expensive hobby.",
 			Category:    "builder", Hidden: true,
-			MinAge: "modern_age",
+			MinAge:     "modern_age",
+			MinWonders: 15,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.15},
 			},
@@ -468,10 +481,11 @@ func Milestones() []MilestoneDef {
 		// scholars_haven: raised to 50 knowledge workers + 3 libraries
 		{
 			Name: "Scholar's Haven", Key: "scholars_haven",
-			Description:  "Staff 50 knowledge workers and build 3 Libraries.",
-			Flavor:       "Three libraries, fifty scholars, and a fierce ongoing dispute about quiet hours.",
-			Category:     "scholar",
-			MinBuildings: map[string]int{"library": 3},
+			Description:         "Staff 50 knowledge workers and build 3 Libraries.",
+			Flavor:              "Three libraries, fifty scholars, and a fierce ongoing dispute about quiet hours.",
+			Category:            "scholar",
+			MinBuildings:        map[string]int{"library": 3},
+			MinKnowledgeWorkers: 50,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "knowledge_rate", Value: 0.10},
 			},
@@ -558,10 +572,11 @@ func Milestones() []MilestoneDef {
 		// NEW: first_soldiers — 5 soldiers; iron age (earliest military domain age)
 		{
 			Name: "First Soldiers", Key: "first_soldiers",
-			Description: "Train 5 soldiers.",
-			Flavor:      "Five soldiers. Technically an army, if you squint and don't ask them to march in step.",
-			Category:    "military",
-			MinAge:      "iron_age",
+			Description:        "Train 5 soldiers.",
+			Flavor:             "Five soldiers. Technically an army, if you squint and don't ask them to march in step.",
+			Category:           "military",
+			MinAge:             "iron_age",
+			MinSoldiersTrained: 5,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "military_power", Value: 0.05},
 			},
@@ -569,10 +584,11 @@ func Milestones() []MilestoneDef {
 		// war_machine: raised to 250 soldiers
 		{
 			Name: "War Machine", Key: "war_machine",
-			Description: "Train 250 soldiers.",
-			Flavor:      "Two hundred and fifty soldiers. The neighbors have started being noticeably more polite.",
-			Category:    "military",
-			MinAge:      "iron_age",
+			Description:        "Train 250 soldiers.",
+			Flavor:             "Two hundred and fifty soldiers. The neighbors have started being noticeably more polite.",
+			Category:           "military",
+			MinAge:             "iron_age",
+			MinSoldiersTrained: 250,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "military_power", Value: 0.10},
 			},
@@ -580,11 +596,12 @@ func Milestones() []MilestoneDef {
 		// standing_army: 100 soldiers + 10 barracks; classical age
 		{
 			Name: "Standing Army", Key: "standing_army",
-			Description:  "Train 100 soldiers and build 10 Barracks.",
-			Flavor:       "A standing army that actually stands where you tell it. Discipline is its own miracle.",
-			Category:     "military",
-			MinAge:       "classical_age",
-			MinBuildings: map[string]int{"barracks": 10},
+			Description:        "Train 100 soldiers and build 10 Barracks.",
+			Flavor:             "A standing army that actually stands where you tell it. Discipline is its own miracle.",
+			Category:           "military",
+			MinAge:             "classical_age",
+			MinBuildings:       map[string]int{"barracks": 10},
+			MinSoldiersTrained: 100,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "military_power", Value: 0.05},
 			},
@@ -596,8 +613,9 @@ func Milestones() []MilestoneDef {
 			Description: "Train 500 soldiers and build 10 Barracks.",
 			Flavor:      "Five hundred soldiers in iron. The blacksmiths request you stop, just for a week.",
 			Category:    "military", Hidden: true,
-			MinAge:       "classical_age",
-			MinBuildings: map[string]int{"barracks": 10},
+			MinAge:             "classical_age",
+			MinBuildings:       map[string]int{"barracks": 10},
+			MinSoldiersTrained: 500,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
 			},
@@ -623,7 +641,8 @@ func Milestones() []MilestoneDef {
 			Description: "Train 2,000 soldiers.",
 			Flavor:      "Two thousand troops. Diplomacy is now mostly other people agreeing with you, quickly.",
 			Category:    "military", Hidden: true,
-			MinAge: "industrial_age",
+			MinAge:             "industrial_age",
+			MinSoldiersTrained: 2000,
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.15},
 			},
