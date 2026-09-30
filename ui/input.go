@@ -43,6 +43,11 @@ type CommandResult struct {
 	// MapFlows asks the dashboard to turn the Map's flows overlay "on",
 	// "off" or over ("switch"); it then writes the reply.
 	MapFlows string
+	// ToMenu says the command ended the game in progress (an account switch or
+	// recovery stopped the tick loop and saved the run to the account it belongs
+	// to): the dashboard goes to the main menu, without saving again, and shows
+	// Message there, since the log it would go to belongs to the ended run.
+	ToMenu bool
 }
 
 // HandleCommand parses a raw command string and dispatches to the appropriate
@@ -816,11 +821,15 @@ func shortAccountID(id string) string {
 //
 //	account                 → show the short ID + recovery code + honest "identity,
 //	                          not progress" copy.
-//	account recover <code>  → re-create the local identity from a recovery code.
-//	                          Guarded: if the current account already holds unlocks,
-//	                          require `account recover <code> confirm` to overwrite.
+//	account switch <name>   → make another local account the live one. In a game this
+//	                          saves the game to its own account and returns to the menu.
+//	account import <path>   → restore a backup into its own account's slot. Never
+//	                          switches accounts.
+//	account recover <code>  → restore the identity in a recovery code and switch to it.
+//	                          Guarded: if the current account holds any progress,
+//	                          require `account recover <code> confirm` first.
 //
-// It talks to engine.Account()/SetAccount() directly — no GameState snapshot needed.
+// It talks to the engine's account methods directly — no GameState snapshot needed.
 func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 	acct := engine.Account()
 
@@ -893,13 +902,24 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		// Resolve name→id via the shared derivation, then switch only if that slot exists.
 		// A non-existent slot errors with guidance rather than minting an empty account
 		// (use the Accounts panel, or `account import`, to create/restore one).
-		name := strings.Join(args[1:], " ")
+		name := strings.TrimSpace(strings.Join(args[1:], " "))
 		id := game.AccountIDForName(name)
-		if err := engine.SwitchAccount(id); err != nil {
+		if !accountListed(engine, id) {
 			return CommandResult{
-				Message: fmt.Sprintf("No account named %q. Create it from the Accounts panel on the main menu, or type 'account list' to see yours.", strings.TrimSpace(name)),
+				Message: fmt.Sprintf("No account named %q. Create it from the Accounts panel on the main menu, or type 'account list' to see yours.", lit(name)),
 				Type:    "error",
 			}
+		}
+		if acct != nil && acct.AccountID == id {
+			return CommandResult{Message: fmt.Sprintf("You are already playing as %s.", lit(acct.Name())), Type: "info"}
+		}
+		// The game in progress belongs to the account in use: SwitchAccount saves it to
+		// that account and stops it before switching (endedRun), and the dashboard then
+		// goes to the main menu.
+		saveName := engine.ActiveSaveName()
+		endedRun, err := engine.SwitchAccount(id)
+		if err != nil {
+			return CommandResult{Message: "Could not switch accounts: " + textfmt.Sentence(err.Error()), Type: "error", ToMenu: endedRun}
 		}
 		// Re-resolve the active theme against the now-active account so the UI doesn't keep
 		// the prior account's theme after the swap (theming.md §6).
@@ -907,8 +927,9 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		// Info, not success: the engine logs nothing here, and the dashboard
 		// drops success replies.
 		return CommandResult{
-			Message: fmt.Sprintf("Now playing as %s (%s).", strings.TrimSpace(name), shortAccountID(id)),
+			Message: switchedReply(acct, engine.Account(), id, saveName, endedRun),
 			Type:    "info",
+			ToMenu:  endedRun,
 		}
 
 	case "export":
@@ -985,27 +1006,34 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 			return CommandResult{Message: fmt.Sprintf("Import failed: cannot read %s (%s).", path, shortIOError(err)), Type: "error"}
 		}
 		// An export is a single-account backup: it lands in its own account's slot (keyed by
-		// the blob's account id), not the active account. Restoring a backup means making that
-		// account current, so switch to it on success.
+		// the blob's account id). A backup of the account in use is folded into it. Import
+		// never switches accounts, so the game in progress carries on under the account it
+		// belongs to; switching is its own step.
 		imported, err := engine.ImportAccountExport(blob, merge)
 		if err != nil {
 			return CommandResult{Message: "Import failed: " + textfmt.Sentence(err.Error()), Type: "error"}
-		}
-		if err := engine.SwitchAccount(imported.AccountID); err != nil {
-			return CommandResult{Message: "Imported, but could not switch to the account: " + textfmt.Sentence(err.Error()), Type: "error"}
 		}
 		mode := "merged"
 		if !merge {
 			mode = "replaced"
 		}
-		name := imported.DisplayName
+		name := imported.Name()
 		if name == "" {
 			name = "(unnamed)"
 		}
-		themeCount := len(imported.UnlockedThemes())
+		themes := textfmt.Count(len(imported.UnlockedThemes()), "theme", "themes")
+		if imported.AccountID == acct.AccountID {
+			// The backup may carry a theme choice (replace, or a first theme): re-apply it.
+			applyAccountTheme(engine)
+			return CommandResult{
+				Message: fmt.Sprintf("Imported the backup into %q (%s), the account you are using: %s, progress %s.",
+					lit(name), shortAccountID(imported.AccountID), themes, mode),
+				Type: "info",
+			}
+		}
 		return CommandResult{
-			Message: fmt.Sprintf("Imported account %q (%s). It is now active: %s, progress %s.",
-				name, shortAccountID(imported.AccountID), textfmt.Count(themeCount, "theme", "themes"), mode),
+			Message: fmt.Sprintf("Imported account %q (%s): %s, progress %s. %s",
+				lit(name), shortAccountID(imported.AccountID), themes, mode, switchHint(imported)),
 			Type: "info",
 		}
 
@@ -1016,34 +1044,55 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		code := args[1]
 		confirmed := len(args) >= 3 && strings.EqualFold(args[2], "confirm")
 
-		// Overwrite guard: if the current account already has earned progress (unlocked
-		// themes), recovering would replace the local identity and the code does not
-		// carry that progress. Require an explicit confirm token before proceeding.
-		if acct != nil && len(acct.UnlockedThemes()) > 0 && !confirmed {
-			var lines []string
-			lines = append(lines, "[red]Warning:[-] this account has unlocked progress on this machine.")
-			lines = append(lines, "Recovering replaces the account ID on this machine.")
-			lines = append(lines, recoveryCodeNote...)
-			lines = append(lines, "Your unlocks and stats would no longer be attached to this account.")
-			lines = append(lines, "")
-			lines = append(lines, fmt.Sprintf("To go ahead anyway:  account recover %s confirm", code))
-			return CommandResult{Message: strings.Join(lines, "\n"), Type: "warning"}
-		}
-
-		restored, err := game.ImportRecoveryCode(code)
+		// Check the code before anything else, so a typo is refused before any question
+		// is asked or anything changes.
+		id, err := game.RecoveryCodeID(code)
 		if err != nil {
 			return errorResult(err)
 		}
-		engine.SetAccount(restored)
+		if acct != nil && acct.AccountID == id {
+			return CommandResult{
+				Message: fmt.Sprintf("That is the recovery code of the account you are using (%s), so there is nothing to restore.", accountLabel(acct)),
+				Type:    "info",
+			}
+		}
+		// Confirm guard: recovering switches this machine to another account. The account
+		// in use keeps everything in its own slot, but ask first whenever it holds any
+		// progress at all (theme unlocks, achievements or lifetime stats), and say what.
+		if acct != nil && !confirmed {
+			if held := accountHoldings(acct); held != "" {
+				var lines []string
+				lines = append(lines, fmt.Sprintf("[gold]Recovering switches accounts.[-] The code is for a different account from %s, the one you are using.", accountLabel(acct)))
+				lines = append(lines, fmt.Sprintf("%s keeps what it holds (%s) in its own slot. %s", accountLabel(acct), held, switchHint(acct)))
+				lines = append(lines, recoveryCodeNote...)
+				lines = append(lines, "A game in progress is saved to its own account first, and you go back to the main menu.")
+				lines = append(lines, "")
+				lines = append(lines, fmt.Sprintf("To go ahead:  account recover %s confirm", lit(code)))
+				return CommandResult{Message: strings.Join(lines, "\n"), Type: "warning"}
+			}
+		}
+
+		// The code's account lands in its own slot (an account already there is opened, never
+		// overwritten), then the switch works as account switch's does.
+		existed := accountListed(engine, id)
+		saveName := engine.ActiveSaveName()
+		restored, endedRun, err := engine.RecoverAccount(code)
+		if err != nil {
+			return CommandResult{Message: "Could not recover the account: " + textfmt.Sentence(err.Error()), Type: "error", ToMenu: endedRun}
+		}
 		// Re-resolve the active theme against the now-installed account so the UI
 		// doesn't keep the prior account's theme after an identity swap (theming.md
 		// §6). A recovery code carries identity only, so a fresh restore resolves to
 		// Forge; a restore of an account with a stored theme honors it.
 		applyAccountTheme(engine)
-		return CommandResult{
-			Message: fmt.Sprintf("Account ID restored: %s. Import a progress backup with 'account import <path>' to bring back unlocks and stats.", shortAccountID(restored.AccountID)),
-			Type:    "info",
+		msg := fmt.Sprintf("Account ID restored: %s. Import a progress backup with 'account import <path>' to bring back unlocks and stats.", shortAccountID(restored.AccountID))
+		if existed {
+			msg = fmt.Sprintf("That account was already on this machine, with its progress. Now playing as %s.", accountWithID(restored))
 		}
+		if endedRun {
+			msg = savedRunLine(acct, saveName) + " " + msg + " " + menuNextStep
+		}
+		return CommandResult{Message: msg, Type: "info", ToMenu: endedRun}
 
 	case "wipe":
 		// The destructive wipe lives behind the Accounts panel's type-your-name gate; we
@@ -1062,6 +1111,96 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 var recoveryCodeNote = []string{
 	"This code restores your account ID on another machine. It does not restore",
 	"progress (unlocks, stats, achievements). Back those up with account export.",
+}
+
+// menuNextStep ends the reply to an account change that ended a game in progress.
+const menuNextStep = "Load one of this account's games or start a new one."
+
+// accountListed reports whether a local account slot holds the account with this ID.
+func accountListed(engine *game.GameEngine, id string) bool {
+	for _, s := range engine.ListAccounts() {
+		if s.AccountID == id {
+			return true
+		}
+	}
+	return false
+}
+
+// accountLabel names an account in a reply: its display name, or its short ID when it
+// has none (an identity restored from a recovery code). Escaped for tview.
+func accountLabel(acct *game.Account) string {
+	if name := strings.TrimSpace(acct.Name()); name != "" {
+		return lit(name)
+	}
+	return shortAccountID(acct.AccountID)
+}
+
+// accountWithID is accountLabel plus the short ID in parentheses, when the label is a name.
+func accountWithID(acct *game.Account) string {
+	if strings.TrimSpace(acct.Name()) == "" {
+		return shortAccountID(acct.AccountID)
+	}
+	return fmt.Sprintf("%s (%s)", accountLabel(acct), shortAccountID(acct.AccountID))
+}
+
+// switchHint says how to switch to an account: by name when its ID comes from that name,
+// otherwise from the Accounts panel (an identity restored from a recovery code has no
+// name to type).
+func switchHint(acct *game.Account) string {
+	name := strings.TrimSpace(acct.Name())
+	if name != "" && game.AccountIDForName(name) == acct.AccountID {
+		return fmt.Sprintf("Switch to it any time with: account switch %s", lit(name))
+	}
+	return "Switch to it any time from the Accounts panel on the main menu."
+}
+
+// accountHoldings lists the progress an account holds, for the recover guard: theme
+// unlocks, achievements and every lifetime stat. "" when it holds none.
+func accountHoldings(acct *game.Account) string {
+	stats, achievements := acct.LifetimeStats()
+	var parts []string
+	if n := len(acct.UnlockedThemes()); n > 0 {
+		parts = append(parts, textfmt.Count(n, "theme unlock", "theme unlocks"))
+	}
+	if n := len(achievements); n > 0 {
+		parts = append(parts, textfmt.Count(n, "achievement", "achievements"))
+	}
+	if n := stats.TotalPrestiges; n > 0 {
+		parts = append(parts, textfmt.Count(n, "prestige", "prestiges"))
+	}
+	if stats.HighestAge != "" {
+		parts = append(parts, "highest age "+game.AgeName(stats.HighestAge))
+	}
+	if n := stats.CivilizationsStarted; n > 0 {
+		parts = append(parts, textfmt.Count(n, "civilization started", "civilizations started"))
+	}
+	if n := stats.SavesCompleted; n > 0 {
+		parts = append(parts, textfmt.Count(n, "save completed", "saves completed"))
+	}
+	return strings.Join(parts, ", ")
+}
+
+// savedRunLine says where the game an account change ended was saved: to the account it
+// belongs to (prev, the account in use before the change).
+func savedRunLine(prev *game.Account, saveName string) string {
+	if prev == nil {
+		return fmt.Sprintf("Saved your game %s.", lit(saveName))
+	}
+	return fmt.Sprintf("Saved your game %s to the account %s.", lit(saveName), accountLabel(prev))
+}
+
+// switchedReply is the reply to a successful account switch from prev to now. When the
+// switch ended a game in progress it says where that game was saved and what to do next.
+func switchedReply(prev, now *game.Account, id, saveName string, endedRun bool) string {
+	who := shortAccountID(id)
+	if now != nil {
+		who = accountWithID(now)
+	}
+	msg := fmt.Sprintf("Now playing as %s.", who)
+	if endedRun {
+		msg = savedRunLine(prev, saveName) + " " + msg + " " + menuNextStep
+	}
+	return msg
 }
 
 // shortIOError is an I/O error without the file path the OS puts in it:

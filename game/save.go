@@ -131,6 +131,11 @@ type GameSave struct {
 	// Integrity fields
 	CheaterBadge bool `json:"cheater_badge,omitempty"`
 	EliteBadge   bool `json:"elite_badge,omitempty"`
+	// DevTouched marks a run the developer console changed: it records nothing to the
+	// account. Kept through prestige and Succumb, cleared by a new game. omitempty, so
+	// clean saves keep their bytes and signatures; signed like every field, so removing
+	// it by hand marks the save modified.
+	DevTouched bool `json:"dev_touched,omitempty"`
 	// ParentName records the save this one branched from, for the save-lineage
 	// tree (Phase 1: plumbed through but always "" — branching lands in Phase 2).
 	// Legacy saves lack the field → "" → a root. omitempty keeps current saves
@@ -404,20 +409,22 @@ func savePath(filename string) string {
 // in the Load Game browser so it can't be confused with a player-named save.
 const AutosaveName = "autosave"
 
-// SaveGame serialises current engine state to filename.json in the save directory.
+// SaveGame serialises current engine state to filename.json in the save directory of
+// the account that owns the run (saveDirLocked): the active slot for a run started or
+// loaded there, and still that slot after a later account switch.
 // The save is written atomically (temp file + rename) to prevent corruption if
 // the process is killed mid-write. The payload is HMAC-signed before writing.
 // NOTE: SaveGame acquires only an RLock for the snapshot, so it can run
 // concurrently with reads but not concurrent writes (doTick).
 func (ge *GameEngine) SaveGame(filename string) error {
-	dir := saveDirectory()
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return fmt.Errorf("could not create the save folder: %w", err)
-	}
-
 	// Take the read lock for the snapshot + marshal so doTick cannot mutate
 	// maps/slices while json.Marshal is iterating over them.
 	ge.mu.RLock()
+	if ge.runOrphaned {
+		ge.mu.RUnlock()
+		return fmt.Errorf("the account this game belongs to was wiped, so the game was not saved")
+	}
+	dir := ge.saveDirLocked()
 	save := ge.buildSaveSnapshot()
 	// Sign the payload (sig/proof are empty in snapshot)
 	sig := signSave(save, saveHMACKey)
@@ -432,6 +439,9 @@ func (ge *GameEngine) SaveGame(filename string) error {
 
 	if err != nil {
 		return fmt.Errorf("could not encode the game state: %w", err)
+	}
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("could not create the save folder: %w", err)
 	}
 
 	// Atomic write: temp file + rename to prevent corruption on crash
@@ -582,6 +592,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		PendingUpgradesSaved:   true,
 		CheaterBadge:           ge.cheaterBadge,
 		EliteBadge:             ge.eliteBadge,
+		DevTouched:             ge.devTouched,
 		ParentName:             ge.activeParentName,
 		CurrentEpoch:           ge.currentEpoch,
 		EpochEventFired:        copyBoolMap(ge.epochEventFired),
@@ -603,7 +614,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		CosmicLegacy:           ge.cosmicLegacy,
 		Morale:                 ge.morale,
 		History:                ge.History,
-		AccountID:              ge.accountIDLocked(),
+		AccountID:              ge.saveAccountIDLocked(),
 		Plan:                   clonePlan(ge.plan),
 		WonderOverflowOff:      ge.wonderOverflowOff,
 	}
@@ -620,6 +631,28 @@ func (ge *GameEngine) accountIDLocked() string {
 		return ""
 	}
 	return ge.account.AccountID
+}
+
+// saveAccountIDLocked is the account a save of the run in memory belongs to: the run's
+// owner (runAccountID) once it was started or loaded under an account, else the held
+// account (the lazy stamp above). After an account switch the run still names the account
+// it came from. Callers hold ge.mu.
+func (ge *GameEngine) saveAccountIDLocked() string {
+	if ge.runAccountID != "" {
+		return ge.runAccountID
+	}
+	return ge.accountIDLocked()
+}
+
+// saveDirLocked is the directory a save of the run in memory is written to: the saves/ of
+// the account that owns the run, so a save can never land in another account's slot after
+// a switch. A run with no owner (a fresh engine, accountless play) uses the active slot.
+// Callers hold ge.mu.
+func (ge *GameEngine) saveDirLocked() string {
+	if ge.runAccountID != "" {
+		return filepath.Join(accountDir(ge.runAccountID), "saves")
+	}
+	return saveDirectory()
 }
 
 // BranchSave forks the current run into a NEW save named newName: its parent is
@@ -800,6 +833,18 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// Restore badge state (verified above)
 	ge.cheaterBadge = save.CheaterBadge
 	ge.eliteBadge = save.EliteBadge
+
+	// The dev console flag belongs to the run, like the badges. It is restored before
+	// the offline catch-up below, which can advance an age, so a dev-touched run stays
+	// out of the account's records then too. God mode still on from earlier play makes
+	// this run free to build, so it marks the run as well. The loaded run belongs to the
+	// held account from here on (its saves go to that account's slot).
+	ge.devTouched = save.DevTouched
+	if DevGodMode {
+		ge.markDevTouchedLocked()
+	}
+	ge.runAccountID = ge.accountIDLocked()
+	ge.runOrphaned = false
 
 	// Restore Phase 8: epoch system
 	if save.CurrentEpoch != "" {

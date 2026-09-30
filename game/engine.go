@@ -241,6 +241,24 @@ type GameEngine struct {
 	// LoadOrCreate failed at boot — account state is non-critical, the game runs anyway.
 	account *Account
 
+	// runAccountID is the account that owns the run in memory: the held account when the
+	// run was started (StartNewNamedGame) or loaded (LoadGame). SaveGame files the run in
+	// that account's slot and stamps it with that ID, and the run records to the account
+	// only while that account is the one held, so switching accounts can never file the run
+	// or its prestiges and age-ups under another account. "" when no run has been started
+	// or loaded under an account (a fresh engine, accountless play, most tests): saves then
+	// go to the active slot, as they always did. Reset clears it.
+	runAccountID string
+	// runOrphaned is set when the account that owns the run is wiped: the run has no slot
+	// left, so SaveGame refuses rather than recreate the wiped slot or write elsewhere.
+	// Starting or loading a run clears it.
+	runOrphaned bool
+
+	// devTouched marks a run the developer console has changed (markDevTouchedLocked).
+	// Saved with the run (GameSave.DevTouched), kept through prestige and Succumb, cleared
+	// only by a new game. A dev-touched run records nothing to the account.
+	devTouched bool
+
 	// Morale system — a managed two-way dial. Range [0.10, moraleCap()];
 	// starts at moraleNeutral (0.50). Drives production via moraleMultiplier().
 	morale          float64 // 0.10–moraleCap(); starts at moraleNeutral (0.50)
@@ -816,13 +834,22 @@ func (ge *GameEngine) SetActiveParentName(name string) {
 	ge.activeParentName = name
 }
 
-// SetAccount installs the per-player account, loaded once at boot. May be nil.
+// SetAccount installs the per-player account (at boot, and after a switch). May be nil.
 // The account is player-level state and survives Reset (new game / succumb), so it
 // is set here rather than in NewGameEngine or Reset (accounts.md §6).
+//
+// The account it replaces is flushed once detached, so records it gathered since the
+// last autosave are kept; Save writes them into that account's own file, never the new
+// one's. The flush runs outside ge.mu (it does file I/O). Never call it from a Bus
+// handler or with ge.mu held.
 func (ge *GameEngine) SetAccount(a *Account) {
 	ge.mu.Lock()
-	defer ge.mu.Unlock()
+	prev := ge.account
 	ge.account = a
+	ge.mu.Unlock()
+	if prev != nil && prev != a {
+		_ = prev.FlushIfDirty()
+	}
 }
 
 // Account returns the per-player account, or nil if none was loaded at boot.
@@ -854,36 +881,137 @@ func (ge *GameEngine) ListAccounts() []AccountSummary {
 	return ListAccounts()
 }
 
-// SwitchAccount makes account id active and installs it as ge.account (Phase B). It is a
-// start-screen operation: game.SwitchAccount repoints the active pointer + loads the slot,
-// then on success SetAccount swaps the live account under the write lock. It does NOT reset
-// running game state (the UI handles re-theming and any new-game flow). On error ge.account
-// is left as-is.
-func (ge *GameEngine) SwitchAccount(id string) error {
-	acct, err := SwitchAccount(id)
+// SwitchAccount makes the account in slot id the live account: the Accounts panel's switch
+// and the `account switch` command (Phase B). It checks the slot first and changes nothing if
+// it holds no account. Switching to the account already in use keeps the live object, so
+// records it has not flushed are not swapped for an older copy read from disk.
+//
+// Everything that belongs to the old account stays with it (see changeAccount): its pending
+// records are flushed into its own file, and a live run is stopped and saved into its
+// owner's slot before the switch. endedRun reports that a live run was stopped; the caller
+// takes the player back to the main menu, since the run cannot go on under another account.
+// On error nothing is switched.
+func (ge *GameEngine) SwitchAccount(id string) (endedRun bool, err error) {
+	next, found, err := loadAccountFromSlot(id)
 	if err != nil {
-		return err
+		return false, err
 	}
-	ge.SetAccount(acct)
-	return nil
+	if !found || next == nil {
+		return false, fmt.Errorf("There is no account with the ID %s.", id)
+	}
+	if cur := ge.Account(); cur != nil && cur.AccountID == id {
+		return false, makeActive(id)
+	}
+	return ge.changeAccount(next)
+}
+
+// RecoverAccount restores the identity in a recovery code and makes it the live account (the
+// `account recover` command). The code's account lands in its own slot: an account already
+// there is opened as it is, an empty slot gets a fresh identity-only account, and no other
+// slot is written (see ImportRecoveryCode). The switch then works as SwitchAccount's does, so
+// the account that was in use keeps everything it had. Recovering the code of the account in
+// use changes nothing and returns it. A code that fails its checksum changes nothing.
+func (ge *GameEngine) RecoverAccount(code string) (acct *Account, endedRun bool, err error) {
+	id, err := RecoveryCodeID(code)
+	if err != nil {
+		return nil, false, err
+	}
+	if cur := ge.Account(); cur != nil && cur.AccountID == id {
+		return cur, false, nil
+	}
+	next, err := ImportRecoveryCode(code)
+	if err != nil {
+		return nil, false, err
+	}
+	endedRun, err = ge.changeAccount(next)
+	if err != nil {
+		return nil, endedRun, err
+	}
+	return next, endedRun, nil
+}
+
+// changeAccount is the shared tail of SwitchAccount and RecoverAccount: it moves the engine
+// from the live account to next, a different account already saved in its own slot.
+//
+//  1. The live account's pending records are flushed into its own file. A failure stops
+//     here, with nothing changed.
+//  2. A live run is stopped and saved into its owner's slot (endLiveRun), so no tick,
+//     autosave or record from it can reach next.
+//  3. next becomes the active account (pointer included) and is installed; SetAccount
+//     flushes the old account once more after detaching it.
+func (ge *GameEngine) changeAccount(next *Account) (endedRun bool, err error) {
+	if cur := ge.Account(); cur != nil {
+		if err := cur.FlushIfDirty(); err != nil {
+			return false, fmt.Errorf("the lifetime records of the account in use could not be saved first: %w", err)
+		}
+	}
+	endedRun, err = ge.endLiveRun()
+	if err != nil {
+		return endedRun, err
+	}
+	if err := makeActive(next.AccountID); err != nil {
+		return endedRun, err
+	}
+	ge.SetAccount(next)
+	return endedRun, nil
+}
+
+// Running reports whether the tick loop is going, i.e. a game is being played (Start has
+// run and Stop has not). On the main menu and in headless play it is false.
+func (ge *GameEngine) Running() bool {
+	ge.mu.RLock()
+	defer ge.mu.RUnlock()
+	return ge.running
+}
+
+// endLiveRun stops a live run (the tick loop is going) and saves it into the slot of the
+// account that owns it, ahead of an account change, and reports whether it did. With no live
+// run (the main menu, headless play) it does nothing. If the save fails the loop is started
+// again and the error returned, so the game carries on as it was.
+func (ge *GameEngine) endLiveRun() (bool, error) {
+	if !ge.Running() {
+		return false, nil
+	}
+	ge.Stop()
+	if err := ge.SaveGame(ge.ActiveSaveName()); err != nil {
+		go ge.Start()
+		return false, fmt.Errorf("the game could not be saved first, so it carries on: %w", err)
+	}
+	return true, nil
 }
 
 // ImportAccountExport restores a single-account backup blob into the account's OWN slot
-// (Phase C) and returns the imported account. It is a thin passthrough to
-// game.ImportAccountExport: that function resolves the blob's target slot by its AccountID,
-// creates-or-merges the data there, and DELIBERATELY does not change the active account — so
-// importing account B's backup never disturbs the live account A. No ge.mu is taken: the work
-// is file I/O over the account slots, and it touches no engine state (it does NOT auto-install
-// the result as ge.account). The caller decides whether to SwitchAccount to the imported id.
+// (Phase C) and returns the account it landed in. It never changes which account is active
+// and never touches the run, so an import during play cannot move the game under another
+// account.
+//
+// A backup of the account in use is folded into the live account itself, keeping records
+// it has not flushed yet. (Folding it into a second copy read from disk would leave the live
+// object stale, and its next save would overwrite the import.) Any other backup lands in its
+// own slot through game.ImportAccountExport; the caller decides whether to switch to it.
 func (ge *GameEngine) ImportAccountExport(blob []byte, merge bool) (*Account, error) {
-	return ImportAccountExport(blob, merge)
+	exp, err := decodeAccountExport(blob)
+	if err != nil {
+		return nil, err
+	}
+	if live := ge.Account(); live != nil && live.AccountID == exp.AccountID {
+		if err := live.importExport(exp, merge); err != nil {
+			return nil, err
+		}
+		return live, nil
+	}
+	return importExportToSlot(exp, merge)
 }
 
 // CreateAccount creates (or, for an existing same-name slot, opens) a name-derived account
 // and installs it as ge.account (Phase B). It is the no-carry-over create: a brand-new
-// account starts empty (see game.CreateAccount). Like SwitchAccount it is a start-screen
-// operation — SetAccount swaps the live account under the write lock; no running-game reset.
+// account starts empty (see game.CreateAccount). It is a main-menu operation. The name of
+// the account in use opens that account, keeping the live object; otherwise SetAccount
+// flushes the account it replaces into that account's own file.
 func (ge *GameEngine) CreateAccount(name string) (*Account, error) {
+	if cur := ge.Account(); cur != nil && cur.AccountID == AccountIDForName(name) {
+		return cur, makeActive(cur.AccountID)
+	}
 	acct, err := CreateAccount(name)
 	if err != nil {
 		return nil, err
@@ -914,28 +1042,95 @@ func (ge *GameEngine) RecoveryCodeForID(id string) (string, error) {
 // id matches ge's current account we also detach ge.account (under the write lock) so the UI
 // re-prompts/refreshes rather than holding a now-orphaned account whose slot is gone. A
 // non-active wipe leaves ge.account alone.
+//
+// The live account is detached BEFORE the files go and without SetAccount's flush: a flush
+// would write the account straight back into the slot being wiped. If the wiped account owns
+// the run in memory, the run is marked orphaned so a later SaveGame (the exit handler's, say)
+// refuses instead of recreating the wiped slot.
 func (ge *GameEngine) WipeAccountByID(id string) (string, error) {
-	wasActive := ge.AccountID() == id && id != ""
+	ge.mu.Lock()
+	var held *Account
+	if id != "" && ge.account != nil && ge.account.AccountID == id {
+		held = ge.account
+		ge.account = nil
+	}
+	ownsRun := id != "" && ge.runAccountID == id
+	ge.mu.Unlock()
+
 	backupPath, err := WipeAccountByID(id)
 	if err != nil {
+		if held != nil {
+			ge.mu.Lock()
+			if ge.account == nil {
+				ge.account = held // the wipe failed: put the account back as it was
+			}
+			ge.mu.Unlock()
+		}
 		return backupPath, err
 	}
-	if wasActive {
-		ge.SetAccount(nil)
+	if ownsRun {
+		ge.mu.Lock()
+		ge.runOrphaned = true
+		ge.mu.Unlock()
 	}
 	return backupPath, nil
 }
 
 // StartNewNamedGame resets to a fresh game, makes `name` the active root save,
 // and writes the initial save file. It does NOT start the ticker — the caller
-// starts it. Returns the SaveGame error if any.
+// starts it. Returns the SaveGame error if any. The new run belongs to the account
+// held now (runAccountID), and its saves go to that account's slot.
 func (ge *GameEngine) StartNewNamedGame(name string) error {
 	ge.Reset()
 	// Set names AFTER Reset so it can't clobber them (Reset leaves them alone, but
 	// the ordering keeps that guarantee local to this call).
 	ge.SetActiveSaveName(name)
 	ge.SetActiveParentName("") // root of a new lineage
+	ge.mu.Lock()
+	ge.runAccountID = ge.accountIDLocked()
+	ge.runOrphaned = false
+	ge.mu.Unlock()
 	return ge.SaveGame(name)
+}
+
+// accountForRecordsLocked returns the account this run's achievements and lifetime stats go
+// to, or nil when the run records nothing: accountless play, a run the developer console has
+// touched (devTouched), or a run that belongs to another account (the game still in memory
+// after an account switch). The dashboard's theme unlocks follow the same rule through
+// GameState.AccountRecords. Callers hold ge.mu.
+func (ge *GameEngine) accountForRecordsLocked() *Account {
+	if ge.account == nil || ge.devTouched {
+		return nil
+	}
+	if ge.runAccountID != "" && ge.runAccountID != ge.account.AccountID {
+		return nil
+	}
+	return ge.account
+}
+
+// devTouchedLogLine is logged the first time the developer console changes a run.
+const devTouchedLogLine = "Developer commands used: this run won't count toward account records."
+
+// markDevTouchedLocked records that the developer console changed this run. From then on the
+// run records nothing to the account: no achievements, no lifetime stats and no theme
+// unlocks. The flag is saved with the run, kept through prestige and Succumb (a later run
+// inherits the prestige, upgrades and legacies a dev-touched run earned), and cleared only
+// by a new game. Dev mode alone does not set it: with the console unlocked but unused, a run
+// records as usual. The first mark logs one line. Callers hold ge.mu.
+func (ge *GameEngine) markDevTouchedLocked() {
+	if ge.devTouched {
+		return
+	}
+	ge.devTouched = true
+	ge.addLog("warning", devTouchedLogLine)
+}
+
+// markDevTouched is markDevTouchedLocked for callers that do not hold ge.mu (the dev
+// console's commands that lock inside their own helpers).
+func (ge *GameEngine) markDevTouched() {
+	ge.mu.Lock()
+	defer ge.mu.Unlock()
+	ge.markDevTouchedLocked()
 }
 
 // Stop halts the game tick loop and waits for it to exit: when Stop returns,
@@ -1753,8 +1948,9 @@ func (ge *GameEngine) advanceAge(newAge string) {
 	// engine; the persisting flush runs later in the autosave block (outside ge.mu).
 	// Order comes from the pure config age table (no locks) — the account stays
 	// config-free and ranks ages by this int rather than re-deriving order itself.
-	if ge.account != nil {
-		ge.account.RecordAgeReached(newAge, config.AgeByKey()[newAge].Order)
+	// A dev-touched run, or one that belongs to another account, records nothing.
+	if acct := ge.accountForRecordsLocked(); acct != nil {
+		acct.RecordAgeReached(newAge, config.AgeByKey()[newAge].Order)
 	}
 
 	// note: Age-transition carryover model (EPIC: age-pacing economy rebalance).
@@ -3631,9 +3827,10 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 
 	// Account lifetime stat (Phase 6): record the prestige IN-MEMORY only — we hold
 	// ge.mu here, so RecordPrestige must not do I/O or re-enter the engine. The write
-	// is deferred to FlushIfDirty in the autosave block (outside ge.mu).
-	if ge.account != nil {
-		ge.account.RecordPrestige()
+	// is deferred to FlushIfDirty in the autosave block (outside ge.mu). A dev-touched
+	// run, or one that belongs to another account, records nothing.
+	if acct := ge.accountForRecordsLocked(); acct != nil {
+		acct.RecordPrestige()
 	}
 
 	// Roll for an Ancient Memory cache — prestige level is now >= 1, the age is
@@ -3687,6 +3884,11 @@ func (ge *GameEngine) Reset() {
 
 	ge.cheaterBadge = false
 	ge.eliteBadge = false
+	// A new game is a new run: no dev console history, and no owner until
+	// StartNewNamedGame (or LoadGame) names one.
+	ge.devTouched = false
+	ge.runAccountID = ""
+	ge.runOrphaned = false
 	ge.wonderOverflowOff = false
 	ge.currentEpoch = config.EpochForAge("primitive_age")
 	ge.epochEventFired = make(map[string]bool)
@@ -3711,6 +3913,11 @@ func (ge *GameEngine) Reset() {
 
 	ge.addLog("event", "Game wiped. Starting fresh.")
 	ge.addLog("info", "Type [cyan]help[-] for commands.")
+	// God mode is process-wide and outlives the run it was turned on in; left on, it
+	// makes this run free to build, so the run starts dev-touched.
+	if DevGodMode {
+		ge.markDevTouchedLocked()
+	}
 }
 
 // GetState returns a snapshot of the game state for UI
@@ -3853,6 +4060,8 @@ func (ge *GameEngine) GetState() GameState {
 		TickIntervalMs:        int(tickInterval.Milliseconds()),
 		CheaterBadge:          ge.cheaterBadge,
 		EliteBadge:            ge.eliteBadge,
+		DevTouched:            ge.devTouched,
+		AccountRecords:        ge.accountForRecordsLocked() != nil,
 		Seed:                  ge.seed,
 		RNGDraws:              rngDraws,
 		QuipDraws:             quipDraws,

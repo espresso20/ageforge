@@ -242,7 +242,9 @@ func (p *accountsPanel) doSwitch() {
 	if !ok {
 		return
 	}
-	if err := p.engine.SwitchAccount(s.AccountID); err != nil {
+	// The panel lives on the main menu, where no game is running (Esc saved and stopped
+	// it), so the switch never has a live run to end.
+	if _, err := p.engine.SwitchAccount(s.AccountID); err != nil {
 		p.status.SetText(fmt.Sprintf("[red]Switch failed: %v[-]", err))
 		return
 	}
@@ -385,8 +387,9 @@ func (p *accountsPanel) doImport() {
 			return
 		}
 		// merge=true: fold the backup into its own slot, restoring without dropping any newer
-		// local unlock. ImportAccountExport keys the target slot off the blob's id and does NOT
-		// auto-switch, so the active account stays put; the list refresh surfaces the new slot.
+		// local unlock. ImportAccountExport keys the target slot off the blob's id (a backup
+		// of the active account folds into the live account) and does NOT auto-switch, so the
+		// active account stays put; the list refresh surfaces the new slot.
 		imported, err := p.engine.ImportAccountExport(blob, true)
 		if err != nil {
 			errTV.SetText(fmt.Sprintf("[red]%v[-]", err))
@@ -397,6 +400,12 @@ func (p *accountsPanel) doImport() {
 		p.app.SetFocus(p.list)
 		p.refresh(0)
 		p.selectByID(imported.AccountID)
+		if live := p.engine.Account(); live != nil && live.AccountID == imported.AccountID {
+			// A backup of the active account can bring a theme choice with it.
+			applyAccountTheme(p.engine)
+			p.status.SetText(fmt.Sprintf("[green]Imported the backup into %s, the active account.[-]", displayNameOrName(imported.Name())))
+			return
+		}
 		p.status.SetText(fmt.Sprintf("[green]Imported %s. Press Enter to switch to it.[-]", displayNameOrName(imported.DisplayName)))
 	}
 

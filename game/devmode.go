@@ -45,6 +45,10 @@ func CheckDevKey(input string) bool {
 //	/speed <n>         — set tick speed multiplier
 //	/god               — toggle godmode (free costs, instant builds)
 //	/ages              — list all age keys
+//
+// Every command that succeeds, except the read-only /ages, marks the run dev-touched
+// (markDevTouchedLocked): it then records nothing to the account. Turning /god off
+// counts too, since the run was just played with it on.
 func DevExecCommand(cmd string, ge *GameEngine) string {
 	if !DevModeActive {
 		return ""
@@ -74,6 +78,7 @@ func DevExecCommand(cmd string, ge *GameEngine) string {
 		ge.mu.Lock()
 		ge.age = key
 		ge.applyAgeUnlocks(key)
+		ge.markDevTouchedLocked()
 		ge.mu.Unlock()
 		return "jumped to " + key
 
@@ -83,6 +88,7 @@ func DevExecCommand(cmd string, ge *GameEngine) string {
 		for res, cap := range snap {
 			ge.Resources.Add(res, cap)
 		}
+		ge.markDevTouchedLocked()
 		ge.mu.Unlock()
 		return "all resources filled to cap"
 
@@ -96,6 +102,7 @@ func DevExecCommand(cmd string, ge *GameEngine) string {
 		}
 		ge.mu.Lock()
 		ge.Resources.Add(parts[1], amount)
+		ge.markDevTouchedLocked()
 		ge.mu.Unlock()
 		return fmt.Sprintf("gave %.0f %s", amount, parts[1])
 
@@ -113,6 +120,7 @@ func DevExecCommand(cmd string, ge *GameEngine) string {
 				count++
 			}
 		}
+		ge.markDevTouchedLocked()
 		ge.mu.Unlock()
 		return fmt.Sprintf("unlocked %d techs", count)
 
@@ -128,6 +136,7 @@ func DevExecCommand(cmd string, ge *GameEngine) string {
 		}
 		ge.Buildings.UnlockBuilding(key)
 		ge.Buildings.counts[key]++
+		ge.markDevTouchedLocked()
 		ge.mu.Unlock()
 		return "built " + key
 
@@ -141,6 +150,7 @@ func DevExecCommand(cmd string, ge *GameEngine) string {
 		}
 		ge.mu.Lock()
 		ge.Prestige.level = level
+		ge.markDevTouchedLocked()
 		ge.mu.Unlock()
 		return fmt.Sprintf("prestige level set to %d", level)
 
@@ -154,11 +164,13 @@ func DevExecCommand(cmd string, ge *GameEngine) string {
 		}
 		ge.mu.Lock()
 		ge.speedMultiplier = mult
+		ge.markDevTouchedLocked()
 		ge.mu.Unlock()
 		return fmt.Sprintf("tick speed set to %.0fx", mult)
 
 	case "/god":
 		DevGodMode = !DevGodMode
+		ge.markDevTouched()
 		if DevGodMode {
 			return "godmode ON — free costs, instant builds"
 		}
