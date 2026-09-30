@@ -114,9 +114,11 @@ func (d *Dashboard) showAncientMemoryModal(techKey, techName string) {
 	d.app.SetFocus(btnAccept)
 }
 
-// closeAncientMemoryModal removes the Ancient Memory overlay page. The engine
-// clears PendingMemoryTech on Accept/Decline, so the refresh loop will reset
-// memoryModalShown on the next tick and won't re-pop it.
+// closeAncientMemoryModal removes the Ancient Memory overlay page and hands
+// the keyboard back (returnFocus). The engine clears PendingMemoryTech on
+// Accept/Decline, so the refresh loop will reset memoryModalShown on the next
+// tick and won't re-pop it.
 func (d *Dashboard) closeAncientMemoryModal() {
 	d.pages.RemovePage(ancientMemoryPage)
+	d.returnFocus()
 }

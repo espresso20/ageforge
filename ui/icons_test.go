@@ -376,3 +376,15 @@ func TestIconsWindowGetsTheKeyboardBack(t *testing.T) {
 		t.Error("Esc did not close the window back to the prompt")
 	}
 }
+
+// The Ancient Memory offer gives the keyboard back when it closes: to the
+// prompt, not to a button that is no longer on screen (where every key was
+// lost until something else took focus).
+func TestAncientMemoryModalGivesTheKeyboardBack(t *testing.T) {
+	d, _, pages := iconsTestDashboard(t, nil, nil)
+	d.showAncientMemoryModal("tool_making", "Tool Making")
+	pressKey(d, pages, tcell.KeyRune, 'd') // Decline
+	if pages.HasPage(ancientMemoryPage) || !d.inputField.HasFocus() {
+		t.Errorf("after Decline: modal still there %v, prompt focused %v", pages.HasPage(ancientMemoryPage), d.inputField.HasFocus())
+	}
+}
