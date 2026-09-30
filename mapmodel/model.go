@@ -187,14 +187,14 @@ type Expeditions struct {
 	Auto            bool // a Geographic Society dispatches scouts
 }
 
-// Harbinger is the live harbinger.
+// Harbinger is the live harbinger. It carries no word of the era it warns
+// of: the maps never name an age or era the player has not reached.
 type Harbinger struct {
 	Key, Name   string
 	Tier        string
 	Probability float64
 	Numeric     bool
 	Invited     bool
-	Target      string // the epoch (or "the Last Passage") it warns of
 }
 
 // Catastrophe is the pending catastrophe and the pressure toward one.
@@ -529,9 +529,15 @@ func (m *Model) world(st *game.GameState) {
 		if !ok {
 			continue
 		}
-		f := Faction{Key: k, Name: fi.Name, Site: i, Discovered: fi.Discovered, Opinion: fi.Opinion,
-			Strength: fi.Strength, TradeCount: fi.TradeCount, Personality: fi.Personality,
-			Specialty: fi.Specialty, LentWorkers: fi.LentWorkers}
+		f := Faction{Key: k, Site: i}
+		if !fi.Discovered {
+			// A civ not yet met is a key and a site slot, nothing more: no
+			// name, no traits, so no map can spoil who is out there.
+			m.Factions = append(m.Factions, f)
+			continue
+		}
+		f.Name, f.Discovered, f.Opinion, f.Strength = fi.Name, true, fi.Opinion, fi.Strength
+		f.TradeCount, f.Personality, f.Specialty, f.LentWorkers = fi.TradeCount, fi.Personality, fi.Specialty, fi.LentWorkers
 		switch {
 		case fi.AtWar:
 			f.Relation = RelWar
@@ -567,7 +573,7 @@ func (m *Model) world(st *game.GameState) {
 	sort.Slice(m.Routes, func(i, j int) bool { return m.Routes[i].Key < m.Routes[j].Key })
 	if h := st.Harbinger; h != nil {
 		m.Harbinger = &Harbinger{Key: h.Key, Name: h.Name, Tier: string(h.Tier), Probability: h.Probability,
-			Numeric: h.Numeric, Invited: h.Invited, Target: h.TargetEpochName}
+			Numeric: h.Numeric, Invited: h.Invited}
 	}
 	c := &m.Catastrophe
 	c.Tier = string(st.CatastropheOutlook.Tier)

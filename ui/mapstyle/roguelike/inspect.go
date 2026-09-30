@@ -69,7 +69,7 @@ func (v *view) describe(s *scene, p mapmodel.Pt) insp {
 	switch {
 	case s.hasHb && p == s.harb && vis == 2:
 		h := m.Harbinger
-		in := insp{Title: h.Name, Command: mapmodel.CmdHarbinger, Lines: []string{"a harbinger of " + h.Target}}
+		in := insp{Title: h.Name, Command: mapmodel.CmdHarbinger, Lines: []string{"warns of impending doom"}}
 		if h.Numeric {
 			in.Lines = append(in.Lines, "odds "+strconv.Itoa(int(float64(h.Probability*100)+0.5))+"%")
 		}

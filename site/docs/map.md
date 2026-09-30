@@ -7,6 +7,8 @@ The Map has two **styles** you can switch between, both drawn from the same map 
 - **Roguelike** (the default): a glyph world seen from above. Every cell is one colored character that means something.
 - **Skyline**: your empire side-on as a panorama, one district for every age you have lived through.
 
+The Map shows only what you have reached. Civilizations you have not met are nowhere on it: no name, no town, no marker where they live. It names no age or era you have not reached either (the next age appears once it is within reach), and the harbinger on the map only "warns of impending doom".
+
 `citymap` and `worldmap` still work: both open the Map. `worldmap` opens it on the known world (the roguelike style's region zoom).
 
 ---
