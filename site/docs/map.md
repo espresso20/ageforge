@@ -120,19 +120,17 @@ The mini map needs room: it appears on terminals of about 120x40 and larger. On 
 
 ## Icons (Nerd Fonts)
 
-The `nerd` glyph set draws real icons, but only if your terminal uses a **Nerd Font**. The `icons` command walks you through it:
+The `nerd` glyph set draws real icons, but only if your terminal uses a **Nerd Font**. The `icons` command opens a window over the dashboard that walks you through it. The window has its own buttons: press a button's letter, or move with `Tab` or the arrow keys and press `Enter`. `Esc` closes it at any step.
 
-1. **Check.** It prints sample Nerd Font icons next to their Unicode fallbacks and asks whether you see icons or boxes (question marks). Answer `icons` or `boxes` at the prompt. If you see icons, it sets `map glyphs nerd` for you.
-2. **Install.** If you see boxes, it offers to install **JetBrains Mono Nerd Font** for your user (`y`/`n`). On `y` it downloads the official JetBrains Mono zip from the [Nerd Fonts v3.5.1 release](https://github.com/ryanoasis/nerd-fonts/releases) (about 130 MB), checks its SHA-256, and installs the 16 font files of the font's Nerd Font Mono variant for **your user only**, with no admin rights:
+1. **Check.** It shows sample Nerd Font icons next to their Unicode fallbacks. Press **I see icons** (`I`) or **I see boxes** (`B`). If you see icons, it sets `map glyphs nerd` for you.
+2. **Install.** If you see boxes, it offers to install **JetBrains Mono Nerd Font** for your user: **Install** (`Y`) or **No, show me how** (`N`). Install downloads the official JetBrains Mono zip from the [Nerd Fonts v3.5.1 release](https://github.com/ryanoasis/nerd-fonts/releases) (about 130 MB), checks its SHA-256, and installs the 16 font files of the font's Nerd Font Mono variant for **your user only**, with no admin rights:
    - **macOS:** `~/Library/Fonts`
    - **Linux:** `~/.local/share/fonts` (or `$XDG_DATA_HOME/fonts`), then `fc-cache -f` if it is available
    - **Windows:** `%LOCALAPPDATA%\Microsoft\Windows\Fonts`, plus per-user font entries in the registry (under HKCU, so no admin rights)
 
-   The install runs in the background with progress in the log, so you can keep playing. It never runs anything else and never edits your terminal's config files. If the download fails or the checksum does not match, it says so and changes nothing. On `n` it points you to [nerdfonts.com/font-downloads](https://www.nerdfonts.com/font-downloads) to install one yourself.
-3. **Select the font.** It detects your terminal (Terminal.app, iTerm2, VS Code, WezTerm, Windows Terminal, kitty, Alacritty, Konsole, GNOME Terminal; generic steps for anything else) and prints the two or three steps to select the font. It gives the font's exact name as your terminal lists it.
+   The install runs in the background with its progress in the window. You can close the window and keep playing: `icons` opens it again, and the log tells you when the install is done. It never runs anything else and never edits your terminal's config files. If the download fails or the checksum does not match, it says so, changes nothing and offers **Try again** (`R`). **No, show me how** points you to [nerdfonts.com/font-downloads](https://www.nerdfonts.com/font-downloads) to install one yourself.
+3. **Select the font.** It detects your terminal (Terminal.app, iTerm2, VS Code, WezTerm, Windows Terminal, kitty, Alacritty, Konsole, GNOME Terminal; generic steps for anything else) and shows the two or three steps to select the font. It gives the font's exact name as your terminal lists it.
 4. **Restart.** Restart your terminal, then run `icons` again to check.
-
-Typing anything other than an answer closes the check and runs what you typed as a command.
 
 The first time you open the Map it shows a one-time hint: "Want real icons on your map? Type icons." It is remembered per account.
 

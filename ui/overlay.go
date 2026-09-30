@@ -41,10 +41,13 @@ type OverlayManager struct {
 	entries       map[string]*overlayEntry
 	widgetEntries map[string]*widgetEntry
 	active        string // name of currently visible overlay; "" if none
-	pages         *tview.Pages
-	app           *tview.Application
-	onClose       func() // called after hide to restore focus to the command input field
-	screenW       int    // updated every frame via SetBeforeDrawFunc
+	// focus is what holds the keyboard while the active overlay shows (its
+	// TextView, or a widget overlay's root); nil with none.
+	focus   tview.Primitive
+	pages   *tview.Pages
+	app     *tview.Application
+	onClose func() // called after hide to restore focus to the command input field
+	screenW int    // updated every frame via SetBeforeDrawFunc
 }
 
 // NewOverlayManager creates an OverlayManager. onClose is called whenever an
@@ -193,6 +196,7 @@ func (om *OverlayManager) Show(name string, state game.GameState) bool {
 			om.pages.AddPage(name, e.root, true, true)
 			om.active = name
 		}
+		om.focus = e.tv
 		om.app.SetFocus(e.tv)
 		return true
 	}
@@ -207,6 +211,7 @@ func (om *OverlayManager) Show(name string, state game.GameState) bool {
 		}
 		om.pages.AddPage(name, root, true, true)
 		om.active = name
+		om.focus = root
 		om.app.SetFocus(root)
 		return true
 	}
@@ -221,9 +226,20 @@ func (om *OverlayManager) Hide() {
 	}
 	om.pages.RemovePage(om.active)
 	om.active = ""
+	om.focus = nil
 	if om.onClose != nil {
 		om.onClose()
 	}
+}
+
+// Focus gives the keyboard back to the active overlay, when a window that
+// opened over it closes. Reports whether an overlay was active.
+func (om *OverlayManager) Focus() bool {
+	if om.active == "" || om.focus == nil {
+		return false
+	}
+	om.app.SetFocus(om.focus)
+	return true
 }
 
 // Refresh updates the active overlay content with fresh state.
@@ -248,6 +264,7 @@ func (om *OverlayManager) Refresh(state game.GameState) {
 		root := om.buildWidgetRoot(we, prim)
 		om.pages.RemovePage(om.active)
 		om.pages.AddPage(om.active, root, true, true)
+		om.focus = root
 		om.app.SetFocus(root)
 	}
 }

@@ -96,6 +96,9 @@ type Dashboard struct {
 	// planPanel is the Plan panel's UI state (selection, feedback line,
 	// Clear confirmation). Owned by the tview goroutine.
 	planPanel planPanel
+	// iconsWin is the icons check's window (icons.go), built on first open.
+	// Owned by the tview goroutine.
+	iconsWin *iconsWindow
 
 	// Milestone-gated theme unlocks (theming.md §5; see theme_unlock.go). Both fields
 	// are owned by the UI goroutine — touched only from refresh(), which runs inside
@@ -145,7 +148,7 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	d.build()
 	d.overlayMgr = NewOverlayManager(d.pages, d.app, func() {
 		d.updateSidebar("")
-		d.app.SetFocus(d.inputField)
+		d.returnFocus()
 	})
 	d.overlayMgr.Register("milestones", "Milestones", milestonesProvider)
 	d.overlayMgr.Register("techs", "Research", researchProvider)
@@ -201,10 +204,12 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	}
 	d.overlayMgr.RegisterWidget("map", "Map", d.mapPanel.open, d.mapPanel.update, true)
 
-	// The icons check logs through the engine (safe off the UI goroutine)
-	// and brings the install's outcome back to the UI goroutine.
+	// The icons check is a window of its own (icons.go). It logs through
+	// the engine and brings the install's progress and outcome back to the
+	// UI goroutine.
 	d.icons = newIconsFlow(func(kind, msg string) { d.engine.AddLog(kind, msg) }, d.setMapGlyphsNerd,
 		func(f func()) { d.app.QueueUpdateDraw(f) })
+	d.icons.changed = d.refreshIconsWindow
 
 	return d
 }
@@ -918,11 +923,6 @@ func (d *Dashboard) showDevUnlockModal() {
 // ghost completion runs when it makes a whole command, except a Dangerous
 // one, which is put in the field for a second Enter (completer.enterLine).
 func (d *Dashboard) submitInput() {
-	// An open icons question reads the line as its answer first.
-	if d.icons.waiting() && d.icons.answer(d.inputField.GetText()) {
-		d.inputField.SetText("")
-		return
-	}
 	text, run := d.inputField.comp.enterLine(d.inputField.GetText())
 	if !run {
 		d.inputField.SetText(text)

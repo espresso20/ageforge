@@ -303,14 +303,13 @@ func (d *Dashboard) showCatastropheModal(key string) {
 }
 
 // closeCatastropheModal removes the catastrophe overlay page and hands focus
-// back to the command input. catModalShown stays set, so refresh() does not
-// re-pop the modal for the same pending catastrophe; `catastrophe` reopens it.
+// back (returnFocus: the icons window if open, else an open panel, else the
+// command input). catModalShown stays set, so refresh() does not re-pop the
+// modal for the same pending catastrophe; `catastrophe` reopens it.
 func (d *Dashboard) closeCatastropheModal() {
 	d.pages.RemovePage(catastrophePage)
 	d.catFocus = nil
-	if d.overlayMgr == nil || d.overlayMgr.ActiveName() == "" {
-		d.app.SetFocus(d.inputField)
-	}
+	d.returnFocus()
 }
 
 // reopenCatastropheModal shows the modal for the pending catastrophe or Last
