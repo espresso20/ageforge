@@ -318,8 +318,8 @@ func (v *view) terrain(x, y int, t mapmodel.Terrain, trampled bool) glyph {
 			g.r, id = '~', lgShallows
 		}
 		v.regG(id, g)
-		if mapmodel.Hash(int64(x), int64(y), int64(v.anim/2))%11 == 0 {
-			g.r = '≈' + '~' - g.r // swap the two
+		if mapmodel.Hash(int64(x), int64(y), int64(v.anim/2))%29 == 0 {
+			g.r = '≈' + '~' - g.r // a glint: swap the two, now and then
 		}
 	case mapmodel.TBeach:
 		g.r, g.sal = '·', 8
