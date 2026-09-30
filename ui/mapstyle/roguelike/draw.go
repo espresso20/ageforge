@@ -55,6 +55,13 @@ func (v *view) drawTiles(cv *mapstyle.Canvas, g geom) {
 // on draws one moving thing over the map, keeping the cell's background.
 // It never covers a building unless over is set.
 func (v *view) on(cv *mapstyle.Canvas, p mapmodel.Pt, r rune, c mapmodel.Class, over bool, id lgID) {
+	v.onBlink(cv, p, r, c, over, id, true)
+}
+
+// onBlink is on for a thing that flashes: in its off phase (lit false) it
+// draws nothing but still claims its legend row, so the legend never
+// flickers with it.
+func (v *view) onBlink(cv *mapstyle.Canvas, p mapmodel.Pt, r rune, c mapmodel.Class, over bool, id lgID, lit bool) {
 	s := v.sc
 	k := s.at(p.X, p.Y).k
 	cx, cy, ok := v.g.cellOf(p)
@@ -71,7 +78,9 @@ func (v *view) on(cv *mapstyle.Canvas, p mapmodel.Pt, r rune, c mapmodel.Class, 
 		g.bg = v.pal.FlowBg
 	}
 	st := v.style(g)
-	cv.Put(cx, cy, r, st)
+	if lit {
+		cv.Put(cx, cy, r, st)
+	}
 	v.reg(id, r, st)
 }
 
@@ -83,11 +92,17 @@ func (v *view) drawLife(cv *mapstyle.Canvas) {
 	if v.g.zoom != zRegion {
 		puffs := []rune(s.d.smoke)
 		for _, src := range s.smoke {
-			if ph := (f/2 + src.ph) % 7; ph < 3 && len(puffs) > 0 {
-				p := pt(src.p.X+ph/2, src.p.Y-1-ph)
-				if k := s.at(p.X, p.Y).k; k == kNone || k == kStreet {
-					v.on(cv, p, puffs[ph%len(puffs)], mapmodel.CMemory, false, lgSmoke)
-				}
+			if len(puffs) == 0 {
+				break
+			}
+			ph := (f/2 + src.ph) % 7
+			lit := ph < 3 // a puff rises for three steps, then the chimney rests
+			if !lit {
+				ph = 0
+			}
+			p := pt(src.p.X+ph/2, src.p.Y-1-ph)
+			if k := s.at(p.X, p.Y).k; k == kNone || k == kStreet {
+				v.onBlink(cv, p, puffs[ph%len(puffs)], mapmodel.CMemory, false, lgSmoke, lit)
 			}
 		}
 		for i, path := range s.walks { // there and back again
@@ -118,8 +133,10 @@ func (v *view) drawLife(cv *mapstyle.Canvas) {
 		}
 	}
 	for fi, fc := range m.Factions {
-		if tr := s.trails[fi]; fc.Relation == mapmodel.RelWar && len(tr) > 3 && (f/3)%2 == 0 {
-			v.on(cv, tr[len(tr)/2], sym(mapmodel.SymWar), mapmodel.CDanger, true, lgWar)
+		if tr := s.trails[fi]; fc.Relation == mapmodel.RelWar && len(tr) > 3 {
+			// The war mark flashes on the trail, but its legend row holds
+			// steady: the legend lists what is there, not this frame's phase.
+			v.onBlink(cv, tr[len(tr)/2], sym(mapmodel.SymWar), mapmodel.CDanger, true, lgWar, (f/3)%2 == 0)
 		}
 	}
 	if n := len(s.scout); n > 1 {
@@ -128,7 +145,7 @@ func (v *view) drawLife(cv *mapstyle.Canvas) {
 	if n := len(s.raid); n > 1 {
 		v.on(cv, s.raid[f%n], sym(mapmodel.SymRaider), mapmodel.CDanger, false, lgRaider)
 	}
-	if s.hasHb && (f/2)%4 != 3 { // the harbinger blinks
+	if s.hasHb { // the harbinger stands still: a blinking omen only nagged
 		v.on(cv, s.harb, sym(mapmodel.SymHarbinger), mapmodel.CCivic, true, lgHarbinger)
 	}
 	if hz := []rune(s.d.hazard); len(hz) > 0 { // the ring pulses
