@@ -250,6 +250,7 @@ The Map draws your empire from your real game state: your buildings and the work
 |---|---|
 | `map` | Open the Map panel full screen |
 | `map style [roguelike\|skyline]` | Bare, show the current style. With a name, switch to it (default roguelike). Saved per account |
+| `style [roguelike\|skyline]` | Same as `map style` |
 | `map glyphs [ascii\|unicode\|nerd]` | Bare, show the current glyph set. With a name, switch to it (default unicode). `nerd` needs a Nerd Font in your terminal; every icon has a Unicode fallback. Saved per account |
 | `citymap` | Same as `map` |
 | `worldmap` | Same as `map`, opened on the known world (the roguelike style's region zoom) |
@@ -258,6 +259,7 @@ The Map draws your empire from your real game state: your buildings and the work
 ```
 map
 map style skyline
+style roguelike
 map glyphs ascii
 worldmap
 icons

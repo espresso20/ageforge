@@ -101,6 +101,7 @@ Two settings shape the Map. Both are saved **per account**, like your theme: the
 | `map style` | Show the current style |
 | `map style roguelike` | Use the roguelike style (the default) |
 | `map style skyline` | Use the skyline style |
+| `style` | Same as `map style`: `style skyline` switches too |
 | `map glyphs` | Show the current glyph set |
 | `map glyphs ascii` | Plain ASCII, for fonts with poor symbol coverage |
 | `map glyphs unicode` | Box drawing, blocks and widely supported symbols (the default) |

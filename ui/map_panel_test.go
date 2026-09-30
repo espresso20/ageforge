@@ -243,7 +243,8 @@ func TestMapSettingsWithoutAccount(t *testing.T) {
 }
 
 // TestMapSettingWordsMatchRegistries: the registry's literal words for map
-// style and map glyphs are the style registry's and the glyph tiers'.
+// style (and its shortcut style) and map glyphs are the style registry's
+// and the glyph tiers'.
 func TestMapSettingWordsMatchRegistries(t *testing.T) {
 	c := lookup(registry(), "map")
 	want := map[string][]string{"style": all.Registry().Names(), "glyphs": mapmodel.TierNames}
@@ -255,5 +256,28 @@ func TestMapSettingWordsMatchRegistries(t *testing.T) {
 		if strings.Join(s.Args[0].Words, ",") != strings.Join(names, ",") {
 			t.Errorf("map %s takes %v, want %v", sub, s.Args[0].Words, names)
 		}
+	}
+	st := lookup(registry(), "style")
+	if st == nil || len(st.Args) != 1 {
+		t.Fatal("style is not registered with one slot")
+	}
+	if got, want := strings.Join(st.Args[0].Words, ","), strings.Join(all.Registry().Names(), ","); got != want {
+		t.Errorf("style takes %s, want %s", got, want)
+	}
+}
+
+// TestStyleShortcut: style is map style under a shorter name: it shows the
+// style bare and saves a new one to the account.
+func TestStyleShortcut(t *testing.T) {
+	d, eng := mapTestDashboard(t, true)
+	d.runForTest("style skyline")
+	if got, _, _ := eng.Account().MapPrefs(); got != "skyline" {
+		t.Errorf("style skyline saved %q, want skyline", got)
+	}
+	if res := HandleCommand("style", eng); res.Type != "info" || !strings.Contains(res.Message, "Map style: Skyline") {
+		t.Errorf("bare style: %+v", res)
+	}
+	if res := HandleCommand("style cubist", eng); res.Type != "error" {
+		t.Errorf("style cubist: %+v", res)
 	}
 }

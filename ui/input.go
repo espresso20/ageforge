@@ -133,6 +133,9 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		// citymap and worldmap are the old maps' commands, kept as aliases;
 		// worldmap opens on the known world.
 		return cmdMap(cmd, args, engine)
+	case "style":
+		// style is map style's shortcut: players reach for it first.
+		return cmdMapStyle(args, engine)
 	case "catastrophe", "cat":
 		return cmdCatastrophe(args, engine)
 	case "harbinger", "harb":
