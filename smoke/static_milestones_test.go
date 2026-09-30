@@ -96,7 +96,9 @@ func preCovenantMilestones(t *testing.T) []config.MilestoneDef {
 // 5,000 structures), and three named an age too early for their count (50
 // techs, 15 wonders, every tech).
 func TestMilestoneFeasibilityCatchesBrokenMilestones(t *testing.T) {
-	problems, _ := staticMilestones(preCovenantMilestones(t), config.MilestoneChains(), config.MilestoneTitles(), config.BuildingByKey(), game.PrestigeMinAge)
+	// Judged under the rules those numbers shipped with: prestige opened in
+	// the Modern Age. The prestige test covers moving it.
+	problems, _ := staticMilestones(preCovenantMilestones(t), config.MilestoneChains(), config.MilestoneTitles(), config.BuildingByKey(), "modern_age")
 	got := map[string]string{}
 	for _, p := range problems {
 		got[p.Key] = p.Kind
@@ -193,11 +195,14 @@ func TestMilestoneFeasibilityBoundaries(t *testing.T) {
 	techs.MinAge, techs.MinTechCount = m.ages[len(m.ages)-1].Key, len(config.Technologies())+1
 	expect("more techs than exist", techs, true, "whole game")
 
-	// Past the run, a milestone is due in its own age.
-	late := config.MilestoneDef{Name: "Late", Key: "late", MinAge: m.ages[end+2].Key, MinWonders: m.wonders[end+2]}
-	expect("wonders in their own age", late, false)
-	late.MinWonders++
-	expect("wonders past their own age", late, true, "wonders", game.AgeName(m.ages[end+2].Key))
+	// Past the run, a milestone is due in its own age. The probes below
+	// pick their ages from config, so moving prestige doesn't break them.
+	if after := end + 1; after < len(m.ages) {
+		late := config.MilestoneDef{Name: "Late", Key: "late", MinAge: m.ages[after].Key, MinWonders: m.wonders[after]}
+		expect("wonders in their own age", late, false)
+		late.MinWonders++
+		expect("wonders past their own age", late, true, "wonders", game.AgeName(m.ages[after].Key))
+	}
 
 	sum := config.MilestoneDef{Name: "Sum", Key: "sum", MinBuildingSum: config.BuildingSum{Keys: []string{"stone_pit", "granary"}, Count: c.n + g.n}}
 	expect("building sum at the ceiling", sum, false)
@@ -209,11 +214,12 @@ func TestMilestoneFeasibilityBoundaries(t *testing.T) {
 	expect("gold at the storage margin", hoard, false)
 	hoard.MinResources = map[string]float64{"gold": gold * 1.01}
 	expect("gold past the storage margin", hoard, true, "gold", "storage")
-	future := m.ages[end+1].Key // unlocks after the run: data comes with the Modern Age
-	if m.resAge["data"] != end+1 {
-		t.Fatalf("data unlocks in %s, the test wants the age after the run (%s)", m.ages[m.resAge["data"]].Key, future)
+	for _, r := range config.BaseResources() {
+		if m.resAge[r.Key] > end {
+			expect("a resource from after the run", config.MilestoneDef{Name: "Later", Key: "later", MinResources: map[string]float64{r.Key: 1}}, true, game.ResourceName(r.Key))
+			break
+		}
 	}
-	expect("a resource from after the run", config.MilestoneDef{Name: "Data", Key: "data", MinResources: map[string]float64{"data": 1}}, true, "data")
 
 	soldiers := config.MilestoneDef{Name: "Army", Key: "army", MinSoldiersTrained: int(m.soldiers[end])}
 	expect("soldiers at a moderate income", soldiers, false)
@@ -226,20 +232,15 @@ func TestMilestoneFeasibilityBoundaries(t *testing.T) {
 	scholars.MinKnowledgeWorkers = staff + 1
 	expect("knowledge workers past the share", scholars, true, "knowledge workers")
 
-	var afterRun string
 	for _, tc := range config.Technologies() {
-		if m.techAt[tc.Key] == end+1 {
-			afterRun = tc.Key
+		if a := m.techAt[tc.Key]; a > end && a < len(m.ages) {
+			named := config.MilestoneDef{Name: "Named", Key: "named", RequiredTechs: []string{tc.Key}}
+			expect("a tech from after the run", named, true, game.TechName(tc.Key), game.AgeName(m.ages[a].Key))
+			named.MinAge = m.ages[a].Key
+			expect("a tech in its own age", named, false)
 			break
 		}
 	}
-	if afterRun == "" {
-		t.Fatalf("no tech arrives in %s", future)
-	}
-	named := config.MilestoneDef{Name: "Named", Key: "named", RequiredTechs: []string{afterRun}}
-	expect("a tech from after the run", named, true, game.TechName(afterRun), game.AgeName(future))
-	named.MinAge = future
-	expect("a tech in its own age", named, false)
 
 	unknown := config.MilestoneDef{Name: "Typo", Key: "typo", MinBuildings: map[string]int{"stone_pits": 1}}
 	expect("unknown building", unknown, true, "stone_pits", "does not exist")
