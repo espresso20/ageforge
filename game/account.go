@@ -232,6 +232,9 @@ type AccountPrefs struct {
 	// MapIconsHint records that the Map panel's one-time "Type icons" hint
 	// was shown, so it is shown once per account.
 	MapIconsHint bool `json:"map_icons_hint,omitempty"`
+	// Minimap is the dashboard mini map setting: "on", "off", or empty for
+	// the default (on).
+	Minimap string `json:"minimap,omitempty"`
 }
 
 // Account is the per-player identity + meta-progression record, persisted to the active
@@ -1063,6 +1066,24 @@ func (a *Account) SetMapGlyphs(tier string) error {
 	return a.Save()
 }
 
+// MinimapOn reports whether the dashboard's mini map is on (the default).
+func (a *Account) MinimapOn() bool {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.Prefs.Minimap != "off"
+}
+
+// SetMinimap persists the mini map setting.
+func (a *Account) SetMinimap(on bool) error {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	a.Prefs.Minimap = "off"
+	if on {
+		a.Prefs.Minimap = "on"
+	}
+	return a.Save()
+}
+
 // SetMapIconsHintShown records that the one-time icons hint was shown.
 func (a *Account) SetMapIconsHintShown() error {
 	a.mu.Lock()
@@ -1439,6 +1460,9 @@ func ImportAccountExport(blob []byte, merge bool) (*Account, error) {
 		}
 		if target.Prefs.MapGlyphs == "" {
 			target.Prefs.MapGlyphs = exp.Prefs.MapGlyphs
+		}
+		if target.Prefs.Minimap == "" {
+			target.Prefs.Minimap = exp.Prefs.Minimap
 		}
 		target.Prefs.MapIconsHint = target.Prefs.MapIconsHint || exp.Prefs.MapIconsHint
 	}

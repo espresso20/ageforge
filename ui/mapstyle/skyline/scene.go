@@ -921,12 +921,13 @@ func (s *scene) streetFurniture() {
 	}
 }
 
-// frontier is where the city is still being built: a crane per queued
-// construction, scaffolding and all.
+// frontier is where the city is still being built: one construction per
+// queued build (four at most), in the way its era built. The first ages
+// raise poles and stick frames; from the Iron Age timber scaffolding and
+// wooden jib cranes go up; from the Industrial Age, steel tower cranes.
 func (s *scene) frontier() {
 	fx := s.m.Skyline.FrontierX - s.cam + 4
-	c := s.p.hue(theme.SkyCrane, mLit, 0)
-	sc := s.p.hue(theme.SkyScaffold, mLit, 0)
+	iron, industrial := s.m.Catalog.AgeIdx["iron_age"], s.m.Catalog.AgeIdx["industrial_age"]
 	for i := range s.m.Queue {
 		if i >= 4 {
 			break
@@ -935,19 +936,119 @@ func (s *scene) frontier() {
 		if x < -8 || x > s.W+2 {
 			continue
 		}
-		h := min(6+int(hash(i, 5)%4), s.groundY-1)
-		for y := s.groundY - h; y < s.groundY; y++ {
-			s.fb.fg(x, s.Y(y), '╫', c, dRow0)
+		p := s.m.Queue[i].Progress
+		switch {
+		case s.m.AgeIdx < iron:
+			s.stickFrame(x, i, p)
+		case s.m.AgeIdx < industrial:
+			s.timberWork(x, i, p)
+		default:
+			s.towerCrane(x, i, p)
 		}
-		for dx := -2; dx <= 4; dx++ {
-			s.fb.fg(x+dx, s.Y(s.groundY-h), '═', c, dRow0)
+	}
+}
+
+// stickFrame is early building: a tripod of poles lashed at the top with
+// hides going on, or two posts and a lintel with the wall rising between.
+func (s *scene) stickFrame(x, i int, p float64) {
+	wood := s.p.hue(theme.SkyScaffold, mLit, 0)
+	fill := s.p.hue(theme.SkyGroundSoil, mLit, 0)
+	g := s.groundY
+	if g < 4 {
+		return
+	}
+	put := func(dx, y int, r rune, c tcell.Color) { s.fb.fg(x+dx, s.Y(y), r, c, dRow0) }
+	if i%2 == 0 {
+		put(2, g-3, '┼', wood)
+		put(1, g-2, '╱', wood)
+		put(2, g-2, '│', wood)
+		put(3, g-2, '╲', wood)
+		put(0, g-1, '╱', wood)
+		put(2, g-1, '│', wood)
+		put(4, g-1, '╲', wood)
+		if p >= 0.4 {
+			put(1, g-1, '▒', fill)
+			put(3, g-1, '▒', fill)
 		}
-		s.fb.fg(x+3, s.Y(s.groundY-h+1+(s.anim/6+i)%3), '┴', c, dRow0)
-		built := int(s.m.Queue[i].Progress*3) + 1
-		for y := s.groundY - min(built, 3); y < s.groundY; y++ {
-			for dx := 1; dx <= 4; dx++ {
-				s.fb.fg(x+dx, s.Y(y), '┼', sc, dRow0)
+		return
+	}
+	put(0, g-3, '┬', wood)
+	put(1, g-3, '─', wood)
+	put(2, g-3, '─', wood)
+	put(3, g-3, '─', wood)
+	put(4, g-3, '┬', wood)
+	for y := g - 2; y < g; y++ {
+		put(0, y, '│', wood)
+		put(4, y, '│', wood)
+	}
+	for dx := 1; dx <= 1+int(p*3) && dx <= 3; dx++ {
+		put(dx, g-1, '▄', fill)
+	}
+}
+
+// timberWork is building from the Iron Age to the Industrial: a timber
+// scaffold round a rising wall, or a wooden jib crane with its load on a
+// rope.
+func (s *scene) timberWork(x, i int, p float64) {
+	wood := s.p.hue(theme.SkyScaffold, mLit, 0)
+	wall := s.p.hue(theme.SkyGroundCobble, mLit, 0)
+	g := s.groundY
+	if g < 6 {
+		return
+	}
+	put := func(dx, y int, r rune, c tcell.Color) { s.fb.fg(x+dx, s.Y(y), r, c, dRow0) }
+	if i%2 == 0 {
+		h := 3 + int(p*2) // the scaffold climbs with the wall
+		for y := g - h; y < g; y++ {
+			row := "├┼┼┤"
+			if y == g-h {
+				row = "┌┬┬┐"
 			}
+			for dx, r := range []rune(row) {
+				put(dx, y, r, wood)
+			}
+		}
+		for y := g - max(1, int(p*float64(h))); y < g; y++ {
+			put(1, y, '▓', wall)
+			put(2, y, '▓', wall)
+		}
+		return
+	}
+	put(0, g-4, '┌', wood)
+	put(1, g-4, '─', wood)
+	put(2, g-4, '─', wood)
+	put(3, g-4, '┐', wood)
+	for y := g - 3; y < g; y++ {
+		put(0, y, '│', wood)
+	}
+	load := g - 3 + (s.anim/6+i)%3 // the load goes up and down
+	for y := g - 3; y < load; y++ {
+		put(3, y, '┊', wood)
+	}
+	put(3, load, '▪', wall)
+	if p >= 0.5 {
+		put(1, g-1, '▓', wall)
+		put(2, g-1, '▓', wall)
+	}
+}
+
+// towerCrane is industrial building: a steel tower crane, its hook
+// swinging, over the scaffolded frame of what it builds.
+func (s *scene) towerCrane(x, i int, p float64) {
+	c := s.p.hue(theme.SkyCrane, mLit, 0)
+	sc := s.p.hue(theme.SkyScaffold, mLit, 0)
+	h := min(6+int(hash(i, 5)%4), s.groundY-1)
+	for y := s.groundY - h; y < s.groundY; y++ {
+		s.fb.fg(x, s.Y(y), '╫', c, dRow0)
+	}
+	for dx := -2; dx <= 4; dx++ {
+		s.fb.fg(x+dx, s.Y(s.groundY-h), '═', c, dRow0)
+	}
+	s.fb.fg(x+3, s.Y(s.groundY-h+1+(s.anim/6+i)%3), '┴', c, dRow0)
+	built := int(p*3) + 1
+	for y := s.groundY - min(built, 3); y < s.groundY; y++ {
+		for dx := 1; dx <= 4; dx++ {
+			s.fb.fg(x+dx, s.Y(y), '┼', sc, dRow0)
 		}
 	}
 }

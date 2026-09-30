@@ -149,9 +149,9 @@ func (v *view) bottom(cv *mapstyle.Canvas, W, H int) {
 	n, st := v.news(W - 2)
 	cv.Text(1, H-4, W-2, n, st)
 	dim := v.cls(mapmodel.CDim)
-	hints := "arrows or hjkl move  HJKL fast  z/x zoom  tab next  c center  f flows  n changes  ? legend"
+	hints := "arrows move  Shift fast  PgUp PgDn zoom  Tab next  Home center  map flows"
 	if W < 100 {
-		hints = "hjkl move  z/x zoom  tab next  f flows  ? legend"
+		hints = "arrows move  PgUp PgDn zoom  Tab next"
 	}
 	switch in, ok := v.Inspect(mapstyle.Frame{Model: v.sc.m, Anim: v.anim, Tier: v.tier}); {
 	case !ok:
@@ -160,7 +160,7 @@ func (v *view) bottom(cv *mapstyle.Canvas, W, H int) {
 	default:
 		cv.Text(1, H-3, W-2, "▸ "+strings.Join(append([]string{in.Title}, in.Lines...), " · "), v.role(theme.RoleBright).Bold(true))
 		if in.Command == "" {
-			cv.Text(3, H-2, W-4, "nothing to type here; tab jumps to the next building", dim)
+			cv.Text(3, H-2, W-4, "nothing to type here; Tab jumps to the next building", dim)
 		} else {
 			x := cv.Text(3, H-2, W-4, "type: ", dim)
 			cv.Text(x, H-2, W-x-1, in.Command, v.cls(mapmodel.CAccent).Bold(true))

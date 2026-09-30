@@ -76,7 +76,6 @@ type shot struct {
 }
 
 func key(k tcell.Key) *tcell.EventKey              { return tcell.NewEventKey(k, 0, tcell.ModNone) }
-func rk(r rune) *tcell.EventKey                    { return tcell.NewEventKey(tcell.KeyRune, r, tcell.ModNone) }
 func keys(ks ...*tcell.EventKey) []*tcell.EventKey { return ks }
 
 var reviewAges = []string{"primitive_age", "bronze_age", "medieval_age", "industrial_age", "victorian_age",
@@ -90,7 +89,7 @@ func (c *capturer) run() {
 	for _, age := range reviewAges {
 		a := short(age)
 		c.shoot(shot{name: a, style: "roguelike", state: age, since: true, w: 160, h: 48, tod: -1})
-		c.shoot(shot{name: a + "_region", style: "roguelike", state: age, since: true, w: 160, h: 48, tod: -1, keys: keys(rk('x')), note: "region zoom, epoch plate"})
+		c.shoot(shot{name: a + "_region", style: "roguelike", state: age, since: true, w: 160, h: 48, tod: -1, keys: keys(key(tcell.KeyPgUp)), note: "region zoom, epoch plate"})
 		c.shoot(shot{name: a + "_mini", style: "roguelike", state: age, since: true, w: 40, h: 15, compact: true, tod: -1})
 		c.shoot(shot{name: a, style: "skyline", state: age, since: true, w: 160, h: 48, tod: -1})
 		c.shoot(shot{name: a + "_night", style: "skyline", state: age, since: true, w: 160, h: 48, tod: 0.95})
@@ -105,7 +104,7 @@ func (c *capturer) run() {
 	c.shoot(shot{name: "space_anim", style: "skyline", state: "space_age", w: 160, h: 48, tod: 0.9, frames: 12})
 	c.shoot(shot{name: "galactic_anim", style: "skyline", state: "galactic_age", w: 160, h: 48, tod: 0.9, frames: 12})
 	c.shoot(shot{name: "medieval_anim", style: "roguelike", state: "medieval_age", w: 160, h: 48, tod: -1, frames: 10})
-	c.shoot(shot{name: "cyberpunk_region_anim", style: "roguelike", state: "cyberpunk_age", w: 160, h: 48, tod: -1, frames: 10, keys: keys(rk('x'))})
+	c.shoot(shot{name: "cyberpunk_region_anim", style: "roguelike", state: "cyberpunk_age", w: 160, h: 48, tod: -1, frames: 10, keys: keys(key(tcell.KeyPgUp))})
 	c.shoot(shot{name: "cyberpunk_mini_anim", style: "skyline", state: "cyberpunk_age", w: 40, h: 15, compact: true, tod: 0.95, frames: 12})
 	// small terminals
 	for _, st := range []string{"primitive_early", "medieval_age", "industrial_age", "cyberpunk_age"} {
@@ -118,12 +117,12 @@ func (c *capturer) run() {
 	c.shoot(shot{name: "primitive_early", style: "skyline", state: "primitive_early", w: 160, h: 48, tod: -1})
 	// inspect, flows, district
 	c.shoot(shot{name: "medieval_inspect", style: "roguelike", state: "medieval_age", since: true, w: 160, h: 48, tod: -1, keys: keys(tab, tab, tab)})
-	c.shoot(shot{name: "medieval_district", style: "roguelike", state: "medieval_age", since: true, w: 160, h: 48, tod: -1, keys: keys(tab, rk('z'))})
+	c.shoot(shot{name: "medieval_district", style: "roguelike", state: "medieval_age", since: true, w: 160, h: 48, tod: -1, keys: keys(tab, key(tcell.KeyPgDn))})
 	c.shoot(shot{name: "industrial_inspect", style: "skyline", state: "industrial_age", since: true, w: 160, h: 48, tod: 0.9, keys: keys(tab, tab, tab, tab)})
 	c.shoot(shot{name: "cyberpunk_inspect_civ", style: "skyline", state: "cyberpunk_age", w: 160, h: 48, tod: 0.95, keys: keys(key(tcell.KeyBacktab), key(tcell.KeyBacktab))})
 	for _, st := range []string{"industrial_age", "information_age"} {
-		c.shoot(shot{name: short(st) + "_flows", style: "roguelike", state: st, w: 160, h: 48, tod: -1, keys: keys(rk('f')), note: "flows toggle"})
-		c.shoot(shot{name: short(st) + "_flows", style: "skyline", state: st, w: 160, h: 48, tod: 0.9, keys: keys(rk('f')), note: "flows toggle"})
+		c.shoot(shot{name: short(st) + "_flows", style: "roguelike", state: st, w: 160, h: 48, tod: -1, opts: []mapstyle.Option{mapstyle.OptFlows}, note: "flows toggle"})
+		c.shoot(shot{name: short(st) + "_flows", style: "skyline", state: st, w: 160, h: 48, tod: 0.9, opts: []mapstyle.Option{mapstyle.OptFlows}, note: "flows toggle"})
 	}
 	// events
 	c.shoot(shot{name: "catastrophe_information", style: "roguelike", state: "catastrophe_information_age", w: 160, h: 48, tod: -1})
@@ -132,7 +131,7 @@ func (c *capturer) run() {
 	c.shoot(shot{name: "harbinger_iron", style: "roguelike", state: "harbinger_iron_age", w: 160, h: 48, tod: -1})
 	// light themes
 	c.shoot(shot{name: "medieval_light", style: "roguelike", state: "medieval_age", since: true, theme: "daylight", w: 160, h: 48, tod: -1})
-	c.shoot(shot{name: "industrial_region_parchment", style: "roguelike", state: "industrial_age", theme: "parchment", w: 160, h: 48, tod: -1, keys: keys(rk('x'))})
+	c.shoot(shot{name: "industrial_region_parchment", style: "roguelike", state: "industrial_age", theme: "parchment", w: 160, h: 48, tod: -1, keys: keys(key(tcell.KeyPgUp))})
 	c.shoot(shot{name: "industrial_light", style: "skyline", state: "industrial_age", since: true, theme: "daylight", w: 160, h: 48, tod: 0.45})
 	c.shoot(shot{name: "cyberpunk_night_light", style: "skyline", state: "cyberpunk_age", theme: "daylight", w: 160, h: 48, tod: 0.95})
 	c.shoot(shot{name: "medieval_mini_light", style: "roguelike", state: "medieval_age", theme: "daylight", w: 40, h: 15, compact: true, tod: -1})
@@ -143,7 +142,7 @@ func (c *capturer) run() {
 	for _, tr := range []mapmodel.GlyphTier{A, U, N} {
 		c.shoot(shot{name: "cyberpunk_glyphs_" + tr.String(), style: "skyline", state: "cyberpunk_age", w: 160, h: 48, tod: 0.95, tier: tr, frames: 6})
 		c.shoot(shot{name: "medieval_glyphs_" + tr.String(), style: "roguelike", state: "medieval_age", w: 160, h: 48, tod: -1, tier: tr})
-		c.shoot(shot{name: "medieval_region_glyphs_" + tr.String(), style: "roguelike", state: "medieval_age", w: 160, h: 48, tod: -1, tier: tr, keys: keys(rk('x'))})
+		c.shoot(shot{name: "medieval_region_glyphs_" + tr.String(), style: "roguelike", state: "medieval_age", w: 160, h: 48, tod: -1, tier: tr, keys: keys(key(tcell.KeyPgUp))})
 	}
 }
 

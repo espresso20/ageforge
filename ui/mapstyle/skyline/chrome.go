@@ -224,9 +224,8 @@ func (s *scene) status(bg tcell.Color) {
 	if di := m.Skyline.DistrictAt(s.cam + s.W/2); di >= 0 {
 		where = strings.ToLower(m.Catalog.AgeNames[m.Skyline.Districts[di].Age]) + " district"
 	}
-	s.segs(0, y, bg, []seg{{" ◄► ", theme.RoleAccent}, {"scroll  ", theme.RoleDim}, {"H L ", theme.RoleAccent},
+	s.segs(0, y, bg, []seg{{" ◄► ", theme.RoleAccent}, {"scroll  ", theme.RoleDim}, {"PgUp PgDn ", theme.RoleAccent},
 		{"half  ", theme.RoleDim}, {"Home End ", theme.RoleAccent}, {"oldest, present  ", theme.RoleDim},
-		{"i ", theme.RoleAccent}, {"inspect  ", theme.RoleDim}, {"Tab ", theme.RoleAccent}, {"next  ", theme.RoleDim},
-		{"f ", theme.RoleAccent}, {"flows  ", theme.RoleDim}, {"c ", theme.RoleAccent}, {"changes  ", theme.RoleDim},
+		{"Tab ", theme.RoleAccent}, {"inspect  ", theme.RoleDim}, {"map flows ", theme.RoleAccent}, {"flows  ", theme.RoleDim},
 		{"│ ", theme.RoleDim}, {where, theme.RoleLabel}})
 }

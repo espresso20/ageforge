@@ -6,24 +6,33 @@ import (
 	"github.com/espresso20/ageforge/ui/mapstyle"
 )
 
-// map_settings.go holds the two map settings, "map style" and "map glyphs".
-// They travel with the account (AccountPrefs, like the active theme), so a
-// save/load keeps them and an account switch swaps them. The game still runs
-// without an account: the dashboard then keeps them for the session only.
+// map_settings.go holds the map settings: "map style", "map glyphs" and
+// "minimap". They travel with the account (AccountPrefs, like the active
+// theme), so a save/load keeps them and an account switch swaps them. The
+// game still runs without an account: the dashboard then keeps them for
+// the session only.
 
-// mapSettings is the resolved setting pair, defaults filled in.
+// mapSettings is the resolved settings, defaults filled in.
 type mapSettings struct {
 	Style string
 	Tier  mapmodel.GlyphTier
+	// Minimap: the dashboard shows the mini map (the default).
+	Minimap bool
 	// HintShown: the one-time "Type icons" hint was shown on this account.
 	HintShown bool
 }
 
+// defaultMapSettings is the settings with nothing chosen.
+func defaultMapSettings(reg *mapstyle.Registry) mapSettings {
+	return mapSettings{Style: reg.Default(), Tier: mapmodel.TierUnicode, Minimap: true}
+}
+
 // resolveMapSettings reads the account's map settings against the style
 // registry. An empty or unknown style is the registry default (roguelike);
-// an empty or unknown tier is unicode. acct may be nil (defaults).
+// an empty or unknown tier is unicode; the mini map is on unless turned
+// off. acct may be nil (defaults).
 func resolveMapSettings(acct *game.Account, reg *mapstyle.Registry) mapSettings {
-	out := mapSettings{Style: reg.Default(), Tier: mapmodel.TierUnicode}
+	out := defaultMapSettings(reg)
 	if acct == nil {
 		return out
 	}
@@ -34,6 +43,7 @@ func resolveMapSettings(acct *game.Account, reg *mapstyle.Registry) mapSettings 
 	if t, ok := mapmodel.ParseTier(glyphs); ok {
 		out.Tier = t
 	}
+	out.Minimap = acct.MinimapOn()
 	out.HintShown = hint
 	return out
 }
@@ -86,9 +96,9 @@ func (d *Dashboard) mapSettings() mapSettings {
 	return *d.mapLocal
 }
 
-// saveMapSettings persists a style or glyph change from the Map panel's
-// keys. A failed write keeps the change for the session and says so in
-// the log (the account file is the only thing that failed).
+// saveMapSettings persists a settings change: to the account, or for the
+// session when no account is loaded. A failed write says so in the log
+// (the account file is the only thing that failed).
 func (d *Dashboard) saveMapSettings(s mapSettings) {
 	var acct *game.Account
 	if d.engine != nil {
@@ -98,17 +108,47 @@ func (d *Dashboard) saveMapSettings(s mapSettings) {
 		d.mapLocal = &s
 		return
 	}
-	style, glyphs, _ := acct.MapPrefs()
+	cur := resolveMapSettings(acct, d.mapViews.reg)
 	var err error
-	if style != s.Style {
+	if cur.Style != s.Style {
 		err = acct.SetMapStyle(s.Style)
 	}
-	if glyphs != s.Tier.String() && err == nil {
+	if cur.Tier != s.Tier && err == nil {
 		err = acct.SetMapGlyphs(s.Tier.String())
+	}
+	if cur.Minimap != s.Minimap && err == nil {
+		err = acct.SetMinimap(s.Minimap)
 	}
 	if err != nil {
 		d.engine.AddLog("warning", "The map setting could not be saved to your account: "+err.Error())
 	}
+}
+
+// mapPref is one map setting a command changed: "style", "glyphs" or
+// "minimap", and its new value. The zero value changes nothing.
+type mapPref struct{ Key, Value string }
+
+// apply writes the change into s.
+func (p mapPref) apply(s *mapSettings) {
+	switch p.Key {
+	case "style":
+		s.Style = p.Value
+	case "glyphs":
+		if t, ok := mapmodel.ParseTier(p.Value); ok {
+			s.Tier = t
+		}
+	case "minimap":
+		s.Minimap = p.Value == "on"
+	}
+}
+
+// applyMapPref applies a map command's setting change at once: for the
+// session when no account is loaded (with one, the command has already
+// saved it and this changes nothing).
+func (d *Dashboard) applyMapPref(p mapPref) {
+	s := d.mapSettings()
+	p.apply(&s)
+	d.saveMapSettings(s)
 }
 
 // markMapHintShown records that the icons hint was shown.

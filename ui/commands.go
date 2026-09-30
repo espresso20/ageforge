@@ -120,6 +120,8 @@ var (
 	optCountMax = Arg{Kind: ArgNumber, Words: []string{"max"}, Optional: true}
 	optCountAll = Arg{Kind: ArgNumber, Words: []string{"all"}, Optional: true}
 	civArg      = []Arg{{Kind: ArgFaction}}
+	// mapStyleArg is the one slot of map style and its shortcut style.
+	mapStyleArg = Arg{Kind: ArgWord, Words: []string{"roguelike", "skyline"}, Optional: true}
 )
 
 // sub builds a subcommand with one help row.
@@ -300,14 +302,19 @@ func registry() []*Command {
 		{Name: "map", Aliases: []string{"citymap", "worldmap"}, Section: secGame, BareOK: true,
 			Panel: "The map: your settlement and the known world (aliases: citymap, worldmap)",
 			Help: []Usage{
-				{"map", "Open the Map panel (worldmap opens it on the known world)"},
+				{"map", "Open the Map panel (worldmap opens it on the known world); the prompt keeps working while it is open"},
 			},
 			Subs: []*Command{
-				sub("style", "map style [roguelike|skyline]", "Show or set the map style (default roguelike)",
-					Arg{Kind: ArgWord, Words: []string{"roguelike", "skyline"}, Optional: true}),
+				sub("style", "map style [roguelike|skyline]", "Show or set the map style (default roguelike)", mapStyleArg),
 				sub("glyphs", "map glyphs [ascii|unicode|nerd]", "Show or set the map's glyphs (default unicode; nerd needs a Nerd Font)",
 					Arg{Kind: ArgWord, Words: []string{"ascii", "unicode", "nerd"}, Optional: true}),
+				sub("flows", "map flows [on|off]", "Turn the Map's flows overlay on or off (bare: switch it)",
+					Arg{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}),
 			}},
+		{Name: "style", Section: secGame, Args: []Arg{mapStyleArg},
+			Help: []Usage{{"style [roguelike|skyline]", "Same as map style"}}},
+		{Name: "minimap", Section: secGame, Args: []Arg{{Kind: ArgWord, Words: []string{"on", "off"}, Optional: true}},
+			Help: []Usage{{"minimap [on|off]", "Show or set the mini map above the Buildings list (default on)"}}},
 		{Name: "icons", Section: secGame,
 			Help: []Usage{{"icons", "Check whether your font shows Nerd Font icons, and install one if it doesn't"}}},
 		{Name: "save", Section: secGame, Args: []Arg{{Kind: ArgText, Optional: true}},

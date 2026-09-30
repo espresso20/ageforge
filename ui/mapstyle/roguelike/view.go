@@ -260,49 +260,38 @@ func (g *geom) cellOf(p mapmodel.Pt) (int, int, bool) {
 	return g.x + cx, g.y + cy, true
 }
 
-var (
-	runeMoves = map[rune][2]int{'h': {-1, 0}, 'l': {1, 0}, 'k': {0, -1}, 'j': {0, 1},
-		'H': {-8, 0}, 'L': {8, 0}, 'K': {0, -8}, 'J': {0, 8}}
-	keyMoves = map[tcell.Key][2]int{tcell.KeyLeft: {-1, 0}, tcell.KeyRight: {1, 0}, tcell.KeyUp: {0, -1}, tcell.KeyDown: {0, 1}}
-)
+var keyMoves = map[tcell.Key][2]int{tcell.KeyLeft: {-1, 0}, tcell.KeyRight: {1, 0}, tcell.KeyUp: {0, -1}, tcell.KeyDown: {0, 1}}
 
-// HandleKey: arrows or hjkl move the cursor (Shift or HJKL by 8), z and x
-// zoom in and out, Tab and Shift-Tab jump between buildings and wonders
-// (and civs at region zoom), c centers, f flows, ? legend, n changes.
+// HandleKey takes only keys that print nothing, so typing reaches the
+// prompt: the arrows move the cursor (Shift by 8), PgUp and PgDn zoom out
+// and in, Tab and Shift-Tab jump between buildings and wonders (and civs at
+// region zoom), and Home centers on the town square. The flows overlay is
+// the map flows command (SetOption).
 func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 	s := v.sceneFor(f.Model)
 	if ev == nil || s == nil {
 		return false
 	}
-	d, ok := keyMoves[ev.Key()]
-	if ok && ev.Modifiers()&tcell.ModShift != 0 {
-		d = [2]int{d[0] * 8, d[1] * 8}
-	}
 	switch ev.Key() {
 	case tcell.KeyTab, tcell.KeyBacktab:
 		v.jump(s, map[bool]int{true: 1, false: -1}[ev.Key() == tcell.KeyTab])
 		return true
-	case tcell.KeyRune:
-		r := ev.Rune()
-		d, ok = runeMoves[r]
-		switch r {
-		case 'z':
-			v.zoom = min(zDistrict, v.zoom+1)
-		case 'x':
-			v.zoom = max(zRegion, v.zoom-1)
-		case 'c':
-			v.cur, v.recentre = mapmodel.Pt{X: s.w.CX, Y: s.w.CY}, true
-		case 'f', '?', 'n':
-			p := map[rune]*bool{'f': &v.flows, '?': &v.legend, 'n': &v.changes}[r]
-			*p = !*p
-		default:
-			if !ok {
-				return false
-			}
-		}
+	case tcell.KeyPgUp:
+		v.zoom = max(zRegion, v.zoom-1)
+		return true
+	case tcell.KeyPgDn:
+		v.zoom = min(zDistrict, v.zoom+1)
+		return true
+	case tcell.KeyHome:
+		v.cur, v.recentre = mapmodel.Pt{X: s.w.CX, Y: s.w.CY}, true
+		return true
 	}
+	d, ok := keyMoves[ev.Key()]
 	if !ok {
-		return ev.Key() == tcell.KeyRune
+		return false
+	}
+	if ev.Modifiers()&tcell.ModShift != 0 {
+		d = [2]int{d[0] * 8, d[1] * 8}
 	}
 	if v.zoom == zRegion && v.g.zoom == zRegion && v.g.scale > 1 {
 		d = [2]int{d[0] * v.g.scale, d[1] * v.g.scale}

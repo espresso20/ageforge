@@ -35,6 +35,14 @@ type CommandResult struct {
 	MapWorld bool
 	// Icons asks the dashboard to start the guided icons check.
 	Icons bool
+	// MapPref is a map setting change (map style, map glyphs, minimap) for
+	// the dashboard to apply at once. The command has already saved it to
+	// the account; with no account loaded the dashboard keeps it for the
+	// session.
+	MapPref mapPref
+	// MapFlows asks the dashboard to turn the Map's flows overlay "on",
+	// "off" or over ("switch"); it then writes the reply.
+	MapFlows string
 }
 
 // HandleCommand parses a raw command string and dispatches to the appropriate
@@ -133,6 +141,11 @@ func HandleCommand(input string, engine *game.GameEngine) CommandResult {
 		// citymap and worldmap are the old maps' commands, kept as aliases;
 		// worldmap opens on the known world.
 		return cmdMap(cmd, args, engine)
+	case "style":
+		// style is map style's shortcut: players reach for it first.
+		return cmdMapStyle(args, engine)
+	case "minimap":
+		return cmdMinimap(args, engine)
 	case "catastrophe", "cat":
 		return cmdCatastrophe(args, engine)
 	case "harbinger", "harb":
@@ -2295,12 +2308,40 @@ func cmdMap(cmd string, args []string, engine *game.GameEngine) CommandResult {
 		return cmdMapStyle(args[1:], engine)
 	case "glyphs":
 		return cmdMapGlyphs(args[1:], engine)
+	case "flows":
+		return cmdMapFlows(args[1:])
 	}
 	return CommandResult{Message: subUsage("map"), Type: "error"}
 }
 
-// mapNoAccount is the refusal when there is no account to keep a setting on.
-const mapNoAccount = "Map settings are kept on your account, and no account is loaded. Press s or g in the Map panel to change them for this session."
+// cmdMapFlows turns the Map's flows overlay (full stores, understaffed
+// buildings, idle workers) on, off, or over when bare. It is a view option
+// for the session, applied by the dashboard.
+func cmdMapFlows(args []string) CommandResult {
+	if len(args) > 1 {
+		return usageError(usageFor("map flows"), fmt.Errorf("on or off, please"))
+	}
+	if len(args) == 0 {
+		return CommandResult{Type: game.LogRoutine, Message: "Flows overlay switched.", MapFlows: "switch"}
+	}
+	mode := strings.ToLower(args[0])
+	if mode != "on" && mode != "off" {
+		return usageError(usageFor("map flows"), fmt.Errorf("map flows takes on or off, not %q", args[0]))
+	}
+	return CommandResult{Type: game.LogRoutine, Message: flowsReply(mode == "on"), MapFlows: mode}
+}
+
+// flowsReply is the reply once the flows overlay is on or off.
+func flowsReply(on bool) string {
+	if on {
+		return "Flows overlay on: full stores, understaffed buildings and idle workers show on the Map."
+	}
+	return "Flows overlay off."
+}
+
+// mapSessionOnly ends a map setting's reply when no account is loaded to
+// keep it on.
+const mapSessionOnly = " No account is loaded, so it lasts for this session."
 
 func cmdMapStyle(args []string, engine *game.GameEngine) CommandResult {
 	reg := all.Registry()
@@ -2319,13 +2360,18 @@ func cmdMapStyle(args []string, engine *game.GameEngine) CommandResult {
 	default:
 		return usageError(usageFor("map style"), fmt.Errorf("there is no map style %q", args[0]))
 	}
+	// A routine confirmation (the map shows the change); without an account
+	// the reply carries a caveat, so it stays in the main log.
+	res := CommandResult{Type: game.LogRoutine, Message: fmt.Sprintf("Map style set to %s.", styleTitle(reg, name)),
+		MapPref: mapPref{Key: "style", Value: name}}
 	if acct == nil {
-		return CommandResult{Type: "error", Message: mapNoAccount}
+		res.Type, res.Message = "info", res.Message+mapSessionOnly
+		return res
 	}
 	if err := acct.SetMapStyle(name); err != nil {
 		return errorResult(fmt.Errorf("the map style could not be saved: %w", err))
 	}
-	return CommandResult{Type: "info", Message: fmt.Sprintf("Map style set to %s.", styleTitle(reg, name))}
+	return res
 }
 
 func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
@@ -2344,15 +2390,52 @@ func cmdMapGlyphs(args []string, engine *game.GameEngine) CommandResult {
 	default:
 		return usageError(usageFor("map glyphs"), fmt.Errorf("there is no glyph tier %q", args[0]))
 	}
+	res := CommandResult{Type: game.LogRoutine, Message: fmt.Sprintf("Map glyphs set to %s.", name),
+		MapPref: mapPref{Key: "glyphs", Value: name}}
+	if name == "nerd" {
+		res.Type = "info" // the advice belongs in the main log
+		res.Message += " If the map shows boxes or question marks, type icons."
+	}
 	if acct == nil {
-		return CommandResult{Type: "error", Message: mapNoAccount}
+		res.Type, res.Message = "info", res.Message+mapSessionOnly
+		return res
 	}
 	if err := acct.SetMapGlyphs(name); err != nil {
 		return errorResult(fmt.Errorf("the map glyphs could not be saved: %w", err))
 	}
-	msg := fmt.Sprintf("Map glyphs set to %s.", name)
-	if name == "nerd" {
-		msg += " If the map shows boxes or question marks, type icons."
+	return res
+}
+
+// cmdMinimap shows or sets the minimap setting: the dashboard's mini map
+// above the Buildings list, on by default.
+func cmdMinimap(args []string, engine *game.GameEngine) CommandResult {
+	acct := engine.Account()
+	if len(args) == 0 {
+		state := "off"
+		if resolveMapSettings(acct, all.Registry()).Minimap {
+			state = "on"
+		}
+		return CommandResult{Type: "info", Message: "Mini map: " + state + ". Type minimap on or minimap off to change it."}
 	}
-	return CommandResult{Type: "info", Message: msg}
+	if len(args) > 1 {
+		return usageError(usageFor("minimap"), fmt.Errorf("on or off, please"))
+	}
+	val := strings.ToLower(args[0])
+	if val != "on" && val != "off" {
+		return usageError(usageFor("minimap"), fmt.Errorf("minimap takes on or off, not %q", args[0]))
+	}
+	on := val == "on"
+	res := CommandResult{Type: game.LogRoutine, Message: "Mini map off. Type minimap on to bring it back.",
+		MapPref: mapPref{Key: "minimap", Value: val}}
+	if on {
+		res.Message = "Mini map on. It shows above the Buildings list when the terminal has room (about 120x40 and up)."
+	}
+	if acct == nil {
+		res.Type, res.Message = "info", res.Message+mapSessionOnly
+		return res
+	}
+	if err := acct.SetMinimap(on); err != nil {
+		return errorResult(fmt.Errorf("the minimap setting could not be saved: %w", err))
+	}
+	return res
 }

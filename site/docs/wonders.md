@@ -42,6 +42,8 @@ The **Wonders** panel (`wonders`) shows progress with a bar for each resource. E
 
 Completed wonders appear on the [Map](map.md) (`map` command) as landmarks, each drawn in its era's look. In the roguelike style they stand among your streets, and Tab jumps the cursor between buildings and wonders. In the skyline they stand among the age districts. Point the inspect cursor at one to see its name, the age it belongs to, and its details.
 
+This age's wonder shows up only once you start it: bank some of its cost or queue its construction, and the roguelike style marks its plot with scaffolding (the cursor shows how much is banked). Until then the Map shows nothing for it.
+
 ---
 
 ## Wonders and Age Advancement

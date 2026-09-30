@@ -32,6 +32,10 @@ var shameMessages = []string{
 // Dashboard is the main gameplay screen. The economy tab is the always-visible
 // background; named overlays (research, trade, military, etc.) are rendered on
 // top of it via tview.Pages. Only one overlay can be visible at a time.
+// promptRows is the command bar's height: one line inside its border. The
+// Map panel leaves these rows free, so the prompt works while it is open.
+const promptRows = 3
+
 type Dashboard struct {
 	app    *tview.Application
 	engine *game.GameEngine
@@ -194,13 +198,20 @@ func NewDashboard(app *tview.Application, engine *game.GameEngine, pages *tview.
 	// The Map panel: the active map style full screen (map, and its aliases
 	// citymap and worldmap). Its settings travel with the account.
 	d.mapPanel.settings = d.mapSettings
-	d.mapPanel.save = d.saveMapSettings
 	d.mapPanel.hintShown = d.markMapHintShown
 	d.mapPanel.stage = func(cmd string) {
-		// tview goroutine (a key handler): close the panel, then stage the
-		// command in the prompt for the player to run with Enter.
-		d.overlayMgr.Hide()
+		// tview goroutine (a key handler): stage the command in the prompt,
+		// under the still-open map, for the player to run with Enter.
 		d.inputField.SetText(cmd)
+	}
+	d.mapPanel.prompt = func() string { return d.inputField.GetText() }
+	d.mapPanel.toPrompt = func(ev *tcell.EventKey) {
+		// The map itself had the keyboard: give it back to the prompt,
+		// starting with this key.
+		d.overlayMgr.FocusOn(d.inputField)
+		if h := d.inputField.InputHandler(); h != nil {
+			h(ev, func(p tview.Primitive) { d.app.SetFocus(p) })
+		}
 	}
 	d.overlayMgr.RegisterWidget("map", "Map", d.mapPanel.open, d.mapPanel.update, true)
 
@@ -436,13 +447,19 @@ func (d *Dashboard) build() {
 		AddItem(d.toastTV, 1, 0, false).
 		AddItem(d.ageTV, 2, 0, false).
 		AddItem(d.contentArea, 0, 1, false).
-		AddItem(d.inputField, 3, 0, true) // 3 rows: 1 content + 2 border
+		AddItem(d.inputField, promptRows, 0, true)
 
 	// Global key handling
 	d.root.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		// Ctrl+K — open passphrase modal (dev unlock)
 		if event.Key() == tcell.KeyCtrlK {
 			d.showDevUnlockModal()
+			return nil
+		}
+		// The open Map panel takes the keys that print nothing; the rest
+		// reach the command bar, which keeps the focus (map_panel.go).
+		if d.overlayMgr != nil && d.overlayMgr.ActiveName() == "map" && d.inputField.HasFocus() &&
+			d.mapPanel.routeKey(event, d.inputField.GetText()) {
 			return nil
 		}
 		switch event.Key() {
@@ -631,10 +648,13 @@ func (d *Dashboard) refresh() {
 
 	// Economy tab is always visible as the permanent background
 	d.economyTab.Refresh(state)
-	// The mini map's model, only while it has room to show (before the
-	// first layout the dock has no size yet, so build it anyway).
+	// The mini map's model, only while it is on and has room to show
+	// (before the first layout the dock has no size yet, so build it
+	// anyway).
+	set := d.mapSettings()
+	d.mapDock.off = !set.Minimap
 	if d.mapDock.wantsModel() {
-		d.miniMap.update(d.mapSettings(), &state)
+		d.miniMap.update(set, &state)
 	}
 
 	// Update overlay content and sidebar highlight
@@ -989,10 +1009,26 @@ func (d *Dashboard) submitInput() {
 	if result.Icons {
 		d.startIcons()
 	}
+	if result.MapPref.Key != "" {
+		d.applyMapPref(result.MapPref)
+		d.mapDock.off = !d.mapSettings().Minimap
+	}
+	if result.MapFlows != "" {
+		result.Message = flowsReply(d.mapPanel.setFlows(result.MapFlows))
+	}
 	if result.OverlayName != "" {
 		state := d.engine.GetState()
 		d.overlayMgr.Show(result.OverlayName, state)
 		d.updateSidebar(result.OverlayName)
+		if result.OverlayName == "map" {
+			// The command bar keeps the keyboard while the map is open.
+			d.overlayMgr.FocusOn(d.inputField)
+		}
+	} else if d.overlayMgr.ActiveName() == "map" {
+		// The log is behind the map: say what happened on its key bar, and
+		// show the change now rather than at the next refresh.
+		d.mapPanel.reply(cmd, result)
+		d.mapPanel.update(d.engine.GetState())
 	}
 	if result.Message != "" && result.Type != "success" {
 		d.engine.AddLog(result.Type, result.Message)

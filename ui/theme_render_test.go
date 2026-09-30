@@ -76,7 +76,7 @@ func renderScreens(t *testing.T, w, h int) map[string][]tcell.SimCell {
 	for _, style := range d.mapViews.reg.Names() {
 		for _, tier := range mapmodel.TierNames {
 			tr, _ := mapmodel.ParseTier(tier)
-			d.mapLocal = &mapSettings{Style: style, Tier: tr, HintShown: true}
+			d.mapLocal = &mapSettings{Style: style, Tier: tr, Minimap: true, HintShown: true}
 			d.refresh()
 			out["dashboard:"+style+"/"+tier] = draw()
 			if !d.overlayMgr.Show("map", engine.GetState()) {

@@ -7,22 +7,31 @@ The Map has two **styles** you can switch between, both drawn from the same map 
 - **Roguelike** (the default): a glyph world seen from above. Every cell is one colored character that means something.
 - **Skyline**: your empire side-on as a panorama, one district for every age you have lived through.
 
+The Map shows only what you have reached. Civilizations you have not met are nowhere on it: no name, no town, no marker where they live. It names no age or era you have not reached either (the next age appears once it is within reach), and the harbinger on the map warns of impending doom (in the Cosmic Era, of the Last Passage), never of the era to come.
+
 `citymap` and `worldmap` still work: both open the Map. `worldmap` opens it on the known world (the roguelike style's region zoom).
 
 ---
 
 ## The Map panel
 
-`map` opens the Map full screen. These keys work in every style:
+`map` opens the Map over the whole screen except the **command bar**, which keeps working: type any command while the Map is open, just as you would with it closed, and watch the map change. A command that opens another panel (say `research`) swaps the Map for it.
+
+Because typing goes to the command bar, the Map takes only the keys that print nothing. These work in every style:
 
 | Key | Action |
 |---|---|
-| `s` | Next style (roguelike, skyline) |
-| `g` | Next glyph set (ascii, unicode, nerd) |
+| Arrows | Move the cursor or scroll (see each style below) |
+| `Tab` / `Shift-Tab` | Jump to the next or previous thing to inspect |
+| `PgUp` / `PgDn` | Zoom out and in (roguelike) or scroll half a screen (skyline) |
 | `Enter` | Put the command for what the cursor is on into the prompt. It is not run: press Enter again to run it |
 | `Esc` | Close the Map |
 
-The bottom row is a **key bar**: it shows the current style and glyph set, the keys you can press, and the command for the thing under the cursor.
+Once you have typed something, `Tab`, `Shift-Tab` and `Enter` act on the prompt instead (complete the command, run it), as they do everywhere else. The arrows stay with the Map.
+
+The settings are commands you can type with the Map open: `map style`, `map glyphs`, `map flows` and `minimap` (see Settings below).
+
+The bottom row is a **key bar**: it shows what `Enter` will do, the current style and glyph set, and the reply to the last command you typed (the log is hidden behind the Map).
 
 ### The inspect cursor
 
@@ -30,13 +39,17 @@ In both styles a cursor picks out one thing at a time: a building, a wonder, a c
 
 ### Since your last visit
 
-A **news line** on the Map lists what happened since the save was loaded: buildings built, civilizations met, wars, new trade routes and so on. The cursor's details say it too ("+2 since your last visit"). In the roguelike style, `n` highlights everything that changed; in the skyline, `c` does.
+A **news line** on the Map lists what happened since the save was loaded: buildings built, civilizations met, wars, new trade routes and so on. The cursor's details say it too ("+2 since your last visit"), and both styles highlight what changed.
 
 ---
 
 ## Roguelike
 
 The roguelike style draws your settlement as a small glyph world. Your town grows out of your **real buildings**, quarter by quarter, with streets, walls, wonders and people walking the streets. The same save always grows the same town, and new buildings join the existing streets instead of reshuffling them.
+
+The land comes from your save's seed: hills and forests, lakes and coasts ringed with shallows (`~`) round deeper water (`≈`), and rivers that wind from the high ground down to the sea or a lake. Your town always sits near a river.
+
+This age's **wonder** appears on its plot, under scaffolding, once you start it: bank some of its cost or queue its construction. Until then its plot stays empty.
 
 **Walls** follow your age: none at first, a palisade from the Bronze Age, then a stone wall with towers, and later a ring boulevard. The ring grows in steps as the town outgrows it. Harbor buildings sit on the shore and read as piers or jetties; that is intended.
 
@@ -54,21 +67,20 @@ The district zoom names only a handful of building types at a time (those neares
 
 | Key | Action |
 |---|---|
-| `←` `→` `↑` `↓` or `h` `j` `k` `l` | Move the cursor |
-| `Shift`+arrow or `H` `J` `K` `L` | Move the cursor by 8 |
-| `z` | Zoom in |
-| `x` | Zoom out |
+| `←` `→` `↑` `↓` | Move the cursor |
+| `Shift`+arrow | Move the cursor by 8 |
+| `PgUp` | Zoom out (settlement, then region) |
+| `PgDn` | Zoom in (settlement, then district) |
 | `Tab` / `Shift-Tab` | Jump between buildings and wonders (and civilizations at region zoom) |
-| `c` | Center on the town square |
-| `f` | Flows overlay: full stores, understaffed buildings, idle workers |
-| `?` | Legend: what each glyph means |
-| `n` | Highlight what changed since your last visit |
+| `Home` | Center on the town square |
+
+The legend (what each glyph means) shows beside the map when there is room.
 
 ---
 
 ## Skyline
 
-The skyline style shows your empire **side-on**, as an ANSI-art panorama. It has one **district for every age** you have lived through: the oldest in the west, the present in the east, and your build queue as cranes on the frontier.
+The skyline style shows your empire **side-on**, as an ANSI-art panorama. It has one **district for every age** you have lived through: the oldest in the west, the present in the east, and your build queue going up on the frontier the way your era builds: poles and stick frames in the first ages, timber scaffolding and wooden jib cranes from the Iron Age, tower cranes from the Industrial Age.
 
 - **Windows light and chimneys smoke only where workers are staffed.** An unstaffed building stays dark.
 - **The sky** follows the game clock and the weather.
@@ -80,39 +92,43 @@ The skyline style shows your empire **side-on**, as an ANSI-art panorama. It has
 
 | Key | Action |
 |---|---|
-| `←` `→` or `h` `l` | Scroll (or move the cursor while inspecting) |
-| `H` `L` | Scroll half a screen |
+| `←` `→` | Scroll (or move the cursor while inspecting) |
+| `Shift`+`←` `→`, `PgUp` `PgDn` | Scroll half a screen |
 | `Home` | The oldest district |
 | `End` | The present |
-| `i` | Show or hide the inspect cursor |
-| `↑` `↓` or `k` `j` | Move between the building rows and the ridge |
-| `Tab` / `Shift-Tab` | Step through every target |
-| `f` | Flows: full stores, understaffed buildings, idle workers |
-| `c` | Highlight what changed since your last visit |
+| `Tab` / `Shift-Tab` | Put the inspect cursor out, then step through every target |
+| `↑` `↓` | Move between the building rows and the ridge (while inspecting) |
 
 ---
 
 ## Settings
 
-Two settings shape the Map. Both are saved **per account**, like your theme: they carry across saves and new games, and switching accounts swaps them. With no account loaded they last for the session.
+Three settings shape the Map. They are saved **per account**, like your theme: they carry across saves and new games, and switching accounts swaps them. With no account loaded they last for the session.
 
 | Command | What it does |
 |---|---|
 | `map style` | Show the current style |
 | `map style roguelike` | Use the roguelike style (the default) |
 | `map style skyline` | Use the skyline style |
+| `style` | Same as `map style`: `style skyline` switches too |
 | `map glyphs` | Show the current glyph set |
 | `map glyphs ascii` | Plain ASCII, for fonts with poor symbol coverage |
 | `map glyphs unicode` | Box drawing, blocks and widely supported symbols (the default) |
 | `map glyphs nerd` | Nerd Font icons. Needs a Nerd Font in your terminal; every icon has a Unicode fallback |
+| `minimap` | Show whether the dashboard's mini map is on |
+| `minimap off` | Hide the mini map, so the Buildings list gets the whole column |
+| `minimap on` | Show the mini map again (the default) |
+| `map flows` | The flows overlay: full stores, understaffed buildings, idle workers. `map flows on` and `map flows off` set it; bare, it switches. It lasts for the session |
 
-The `s` and `g` keys in the panel change the same settings.
+All of them work while the Map is open, so you see the change at once.
 
 ---
 
 ## The mini map
 
 The dashboard shows a compact view of the Map above the **Buildings** list, in a border titled "Map · Roguelike" or "Map · Skyline". It follows your `map style` and `map glyphs` settings and shows the since-last-visit news too (for the skyline, in its bottom border).
+
+It is kept short, at most 9 rows inside its border and about a quarter of the column, so the Buildings list keeps most of the room. `minimap off` hides it and gives the list the whole column; `minimap on` brings it back.
 
 The mini map needs room: it appears on terminals of about 120x40 and larger. On smaller terminals (80x24, 100x30) it hides and the Buildings list gets the space. Type `map` to open the full panel at any size.
 

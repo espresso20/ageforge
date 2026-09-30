@@ -188,7 +188,7 @@ func State(o Options) game.GameState {
 	if o.Harbinger {
 		if hd, ok := config.HarbingerFor(o.Age); ok {
 			st.Harbinger = &game.HarbingerView{Key: hd.Key, Name: hd.Name, Age: o.Age, AgeName: st.AgeName,
-				Tier: game.CatastropheTierMedium, Probability: 0.2, TargetEpochName: "the next era"}
+				Tier: game.CatastropheTierMedium, Probability: 0.2, TargetEpochName: "impending doom"}
 		}
 	}
 	if o.Catastrophe {

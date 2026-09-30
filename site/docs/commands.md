@@ -248,8 +248,11 @@ The Map draws your empire from your real game state: your buildings and the work
 
 | Command | Description |
 |---|---|
-| `map` | Open the Map panel full screen |
+| `map` | Open the Map panel. It covers everything but the command bar, which keeps working while it is open |
 | `map style [roguelike\|skyline]` | Bare, show the current style. With a name, switch to it (default roguelike). Saved per account |
+| `map flows [on\|off]` | The Map's flows overlay (full stores, understaffed buildings, idle workers): on, off, or bare to switch it. Lasts for the session |
+| `style [roguelike\|skyline]` | Same as `map style` |
+| `minimap [on\|off]` | Bare, show whether the dashboard's mini map is on. `off` hides it so the Buildings list gets the whole column; `on` brings it back (default on). Saved per account |
 | `map glyphs [ascii\|unicode\|nerd]` | Bare, show the current glyph set. With a name, switch to it (default unicode). `nerd` needs a Nerd Font in your terminal; every icon has a Unicode fallback. Saved per account |
 | `citymap` | Same as `map` |
 | `worldmap` | Same as `map`, opened on the known world (the roguelike style's region zoom) |
@@ -258,23 +261,29 @@ The Map draws your empire from your real game state: your buildings and the work
 ```
 map
 map style skyline
+style roguelike
 map glyphs ascii
+map flows on
+minimap off
 worldmap
 icons
 ```
 
-`map style` and `map glyphs` are saved per account, like your theme: they carry across saves and new games. With no account loaded they last for the session. On terminals of about 120x40 and larger the dashboard also shows a **mini map** of the active style above the Buildings list; on smaller terminals it hides.
+`map style`, `map glyphs` and `minimap` are saved per account, like your theme: they carry across saves and new games. With no account loaded they last for the session. On terminals of about 120x40 and larger the dashboard also shows a short **mini map** of the active style above the Buildings list; on smaller terminals it hides, and `minimap off` hides it anywhere.
 
-Keys in the Map panel, in every style:
+The command bar keeps working while the Map is open: type commands as usual. The Map takes only the keys that print nothing, in every style:
 
 | Key | Action |
 |---|---|
-| `s` | Next style |
-| `g` | Next glyph set |
+| Arrows | Move the cursor or scroll |
+| `Tab` / `Shift-Tab` | Next or previous thing to inspect |
+| `PgUp` / `PgDn` | Zoom out and in (roguelike) or scroll half a screen (skyline) |
 | `Enter` | Put the command for what the cursor is on into the prompt (not run: press Enter again to run it) |
 | `Esc` | Close the Map |
 
-Each style adds its own keys: zoom, cursor movement, the flows overlay, the legend. The key bar on the bottom row lists them, and [The Map](map.md) has the full tables.
+With something typed, `Tab` and `Enter` act on the prompt instead.
+
+Each style lists its keys along its bottom edge, and [The Map](map.md) has the full tables.
 
 ---
 

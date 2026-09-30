@@ -447,25 +447,26 @@ func TestKeys(t *testing.T) {
 	if v.cam != 0 {
 		t.Errorf("Home: cam %d", v.cam)
 	}
-	key(tcell.KeyRune, 'L', 0)
+	key(tcell.KeyPgDn, 0, 0)
 	if v.cam != 50 {
-		t.Errorf("L scrolls half a screen: cam %d", v.cam)
+		t.Errorf("PgDn scrolls half a screen: cam %d", v.cam)
+	}
+	key(tcell.KeyPgUp, 0, 0)
+	if v.cam != 0 {
+		t.Errorf("PgUp scrolls back half a screen: cam %d", v.cam)
 	}
 	key(tcell.KeyEnd, 0, 0)
 	_ = draw(v, m, 100, 30, 0, mapmodel.TierUnicode, false)
 	if v.cam != present {
 		t.Errorf("End: cam %d, present %d", v.cam, present)
 	}
-	for _, r := range "ifc" {
-		if !key(tcell.KeyRune, r, 0) {
-			t.Errorf("key %q unused", r)
+	for _, r := range "hjklHLifcsgz" {
+		if key(tcell.KeyRune, r, 0) {
+			t.Errorf("%q was used; letters belong to the prompt", r)
 		}
 	}
-	if !v.inspect || !v.flows || v.changes {
-		t.Error("i f c did not toggle inspect, flows and changes")
-	}
-	if key(tcell.KeyRune, 'z', 0) {
-		t.Error("an unbound key was used")
+	if !key(tcell.KeyTab, 0, 0) || !v.inspect {
+		t.Error("Tab did not put the cursor out")
 	}
 	if !key(tcell.KeyEscape, 0, 0) || v.inspect {
 		t.Error("Esc did not put the cursor away")

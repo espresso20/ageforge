@@ -194,7 +194,9 @@ type Harbinger struct {
 	Probability float64
 	Numeric     bool
 	Invited     bool
-	Target      string // the epoch (or "the Last Passage") it warns of
+	// Warning is what it warns of, as the game words it ("impending doom",
+	// "the Last Passage"): never the era to come (game/spoilers.go).
+	Warning string
 }
 
 // Catastrophe is the pending catastrophe and the pressure toward one.
@@ -378,7 +380,9 @@ func (m *Model) buildings(st *game.GameState, since *Visit) {
 		}
 		return a.Rank < c.Rank
 	})
-	// Wonders: every one built, plus the one this age needs.
+	// Wonders: every one built, plus the one this age needs once it is under
+	// way (something banked, or its construction queued). Until then the
+	// maps show no plot for it.
 	for _, d := range cat.Wonders {
 		bs, ok := st.Buildings[d.Key]
 		built := ok && bs.Count > 0
@@ -392,9 +396,31 @@ func (m *Model) buildings(st *game.GameState, since *Visit) {
 			w.Delta = since != nil && since.Buildings[d.Key] == 0
 		} else {
 			w.Progress = bankProgress(bs)
+			if !wonderStarted(st, bs, d.Name) {
+				continue
+			}
 		}
 		m.Wonders = append(m.Wonders, w)
 	}
+}
+
+// wonderStarted reports whether an unbuilt wonder is under way: some of its
+// cost banked, or its construction in the build queue.
+func wonderStarted(st *game.GameState, bs game.BuildingState, name string) bool {
+	if bs.WonderBankFull {
+		return true
+	}
+	for _, v := range bs.WonderBank {
+		if v > 0 {
+			return true
+		}
+	}
+	for _, q := range st.BuildQueue {
+		if q.Name == name {
+			return true
+		}
+	}
+	return false
 }
 
 // bankProgress is how much of a wonder's cost is banked, 0..1.
@@ -505,9 +531,16 @@ func (m *Model) world(st *game.GameState) {
 		if !ok {
 			continue
 		}
-		f := Faction{Key: k, Name: fi.Name, Site: i, Discovered: fi.Discovered, Opinion: fi.Opinion,
-			Strength: fi.Strength, TradeCount: fi.TradeCount, Personality: fi.Personality,
-			Specialty: fi.Specialty, LentWorkers: fi.LentWorkers}
+		f := Faction{Key: k, Site: i}
+		if !fi.Discovered {
+			// A civ not yet met (game/spoilers.go) is a key and a site slot,
+			// nothing more: no name, no traits, so no map can spoil who is
+			// out there.
+			m.Factions = append(m.Factions, f)
+			continue
+		}
+		f.Name, f.Discovered, f.Opinion, f.Strength = fi.Name, true, fi.Opinion, fi.Strength
+		f.TradeCount, f.Personality, f.Specialty, f.LentWorkers = fi.TradeCount, fi.Personality, fi.Specialty, fi.LentWorkers
 		switch {
 		case fi.AtWar:
 			f.Relation = RelWar
@@ -543,7 +576,7 @@ func (m *Model) world(st *game.GameState) {
 	sort.Slice(m.Routes, func(i, j int) bool { return m.Routes[i].Key < m.Routes[j].Key })
 	if h := st.Harbinger; h != nil {
 		m.Harbinger = &Harbinger{Key: h.Key, Name: h.Name, Tier: string(h.Tier), Probability: h.Probability,
-			Numeric: h.Numeric, Invited: h.Invited, Target: h.TargetEpochName}
+			Numeric: h.Numeric, Invited: h.Invited, Warning: h.TargetEpochName}
 	}
 	c := &m.Catastrophe
 	c.Tier = string(st.CatastropheOutlook.Tier)

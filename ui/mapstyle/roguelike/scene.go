@@ -287,7 +287,8 @@ func (s *scene) site(f *mapmodel.Faction) (mapmodel.Pt, bool) {
 	return p, s.in(p.X, p.Y)
 }
 
-// trailsOut marks every civ's site and runs a trail to each one met.
+// trailsOut marks the site of every civ met and runs a trail to it. A civ
+// not yet met leaves no mark at all: its site is plain land until then.
 func (s *scene) trailsOut() {
 	w, m := s.w, s.m
 	s.trails = make([][]mapmodel.Pt, len(m.Factions))
@@ -303,7 +304,7 @@ func (s *scene) trailsOut() {
 	for fi := range m.Factions {
 		f := &m.Factions[fi]
 		site, ok := s.site(f)
-		if !ok {
+		if !ok || !f.Discovered {
 			continue
 		}
 		*s.at(site.X, site.Y) = cell{k: kSite, civ: int16(fi + 1), ref: int32(fi)}
