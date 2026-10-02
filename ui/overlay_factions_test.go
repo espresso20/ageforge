@@ -665,3 +665,58 @@ func TestDiplomacyDealCommands(t *testing.T) {
 		}
 	}
 }
+
+// TestFactionsProvider_ShowsBoonCrews: each crew a faction boon lent is its
+// own row under Boons and setbacks, saying who sent it, how many workers and
+// the time left. A crew takes no boon slot, and a crew from a civilization
+// the player has not met does not name it (spoilers.go).
+func TestFactionsProvider_ShowsBoonCrews(t *testing.T) {
+	state := game.GameState{
+		TickIntervalMs: 2000,
+		Diplomacy: game.DiplomacyState{
+			Factions: map[string]game.FactionInfo{
+				"merchant_guild":    {Name: "Merchant Guild", Discovered: true, Status: "friendly", Opinion: 40},
+				"riverlands_tribes": {Name: "Riverlands Tribes", Discovered: true, Status: "neutral"},
+				"ironhold_clans":    {Name: "Ironhold Clans", Discovered: false},
+			},
+			BoonCrews: []game.BoonWorkerLoan{
+				{FactionKey: "merchant_guild", Count: 5, TicksLeft: 142},   // ~4m 44s
+				{FactionKey: "riverlands_tribes", Count: 1, TicksLeft: 30}, // ~1m
+				{FactionKey: "merchant_guild", Count: 3, TicksLeft: 900},   // ~30m
+				{FactionKey: "ironhold_clans", Count: 4, TicksLeft: 60},    // ~2m
+			},
+		},
+	}
+	out := factionsProvider(state, panelWidth)
+
+	var rows []string
+	for _, line := range strings.Split(out, "\n") {
+		if strings.Contains(line, "crew on loan") {
+			rows = append(rows, line)
+		}
+	}
+	if len(rows) != 4 {
+		t.Fatalf("want 4 crew rows, got %d:\n%s", len(rows), out)
+	}
+	for i, want := range [][]string{
+		{"Merchant Guild", "5 workers", "~4m 44s"},
+		{"Riverlands Tribes", "1 worker", "~1m"},
+		{"Merchant Guild", "3 workers", "~30m"},
+		{"A civilization you have not met", "4 workers", "~2m"},
+	} {
+		for _, w := range want {
+			if !strings.Contains(rows[i], w) {
+				t.Errorf("crew row %d %q missing %q", i, rows[i], w)
+			}
+		}
+	}
+	if strings.Contains(out, "Ironhold Clans") {
+		t.Errorf("the panel names Ironhold Clans, a civilization not met yet:\n%s", out)
+	}
+	if !strings.Contains(out, "boons 0/") {
+		t.Errorf("boon crews take no boon slot, but the header counts them:\n%s", out)
+	}
+	if strings.Contains(out, "No boons or setbacks in play") {
+		t.Errorf("the panel says nothing is in play while crews are on loan:\n%s", out)
+	}
+}

@@ -602,6 +602,9 @@ type TradeRouteInfo struct {
 // DiplomacyState represents the diplomacy system state for UI
 type DiplomacyState struct {
 	Factions map[string]FactionInfo
+	// BoonCrews are the workers faction boons have lent (Extra Hands), one
+	// entry per crew, oldest first. They go home when TicksLeft runs out.
+	BoonCrews []BoonWorkerLoan
 }
 
 // FactionInfo represents an NPC civilization for UI

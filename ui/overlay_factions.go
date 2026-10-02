@@ -131,9 +131,10 @@ func tallyFactionEffects(state game.GameState) map[string]factionEffectTally {
 // active event the encounter engine attributes to a civ, with its magnitude and
 // wall-clock remainder, plus the occupancy of the two capacity pools.
 //
-// Workers on loan are listed here too. They are not events — they never expire
-// on a timer the way a boon does — but they ARE a live effect another civ is
-// having on your empire, and this is where a player looks for that.
+// Workers on loan are listed here too. Diplomatic loans are not events and
+// have no clock shown, but they ARE a live effect another civ is having on
+// your empire, and this is where a player looks for that. Crews a boon lent
+// are listed one by one with who sent them, how many and the time left.
 func writeLiveFactionEffects(sb *strings.Builder, state game.GameState, defs []config.FactionDef, usable int, tally map[string]factionEffectTally) {
 	boons, setbacks := 0, 0
 	for _, t := range tally {
@@ -204,6 +205,24 @@ func writeLiveFactionEffects(sb *strings.Builder, state game.GameState, defs []c
 			term = "permanent"
 		}
 		fmt.Fprintf(sb, " [green]↳ %d workers on loan from %s (%s)[-]\n", f.LentWorkers, def.Name, term)
+		wrote = true
+	}
+
+	// Boon crews: workers a boon lent for a set time (Extra Hands), one row
+	// per crew with its own countdown, laid out like the boons above. They
+	// take no boon slot, so they are not counted in the header.
+	for _, crew := range state.Diplomacy.BoonCrews {
+		civ := textfmt.Capitalize(civRef(state, crew.FactionKey))
+		prefix := fmt.Sprintf("↳ %s: ", civ)
+		desc := truncate("crew on loan", descCol-runeLen(prefix))
+		count := textfmt.Count(crew.Count, "worker", "workers")
+		remain := formatTicks(crew.TicksLeft, state)
+		fmt.Fprintf(sb, " [green]↳[-] [cyan]%s[-]: %s%s[green]%s[-]%s%s[gray]%s[-]\n",
+			civ, desc,
+			columnGap(descCol-runeLen(prefix)-runeLen(desc)),
+			count,
+			columnGap(magCol-runeLen(count)),
+			columnGap(timeCol-runeLen(remain)-1), remain)
 		wrote = true
 	}
 

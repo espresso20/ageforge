@@ -25,6 +25,18 @@ func ageRefCap(state game.GameState, age string) string {
 	return textfmt.Capitalize(ageRef(state, age))
 }
 
+// civRef names civilization key for player text in state: its name once
+// the player has met it, "a civilization you have not met" until then.
+func civRef(state game.GameState, key string) string {
+	if f, ok := state.Diplomacy.Factions[key]; ok && f.Discovered {
+		if f.Name != "" {
+			return f.Name
+		}
+		return game.CivName(key)
+	}
+	return "a civilization you have not met"
+}
+
 // buildingAge is the age that unlocks building key, from the snapshot, or
 // fallback when the snapshot does not list it.
 func buildingAge(state game.GameState, key, fallback string) string {
