@@ -102,8 +102,8 @@ type EndureOutcome struct {
 	// Garrison is the share the garrison would blunt of a raid of the age the
 	// catastrophe strikes in (before the combined cap).
 	Garrison float64
-	// DestroyPct is the share of non-wonder buildings destroyed after Brace
-	// and the garrison, in percent (e.g. 16.5).
+	// DestroyPct is the share of destroyable buildings (neither wonders nor
+	// storage) destroyed after Brace and the garrison, in percent (e.g. 16.5).
 	DestroyPct float64
 	// KeepFrac is the share of every stock kept (0.15 unbraced, no garrison).
 	KeepFrac float64

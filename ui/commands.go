@@ -153,7 +153,7 @@ func registry() []*Command {
 			Help: []Usage{{"build <building> [count|max]", "Build copies of a building (default 1)"}}},
 		{Name: "sell", Section: secActions, Dangerous: true,
 			Args: []Arg{{Kind: ArgBuiltBuilding}, optCount},
-			Help: []Usage{{"sell <building> [count]", "Demolish copies of a building and get back 50% of the build cost"}}},
+			Help: []Usage{{"sell <building> [count]", "Demolish copies of a building and get back 50% of the build cost (not wonders or storage)"}}},
 		{Name: "advance", Section: secActions,
 			Help: []Usage{{"advance", "Advance to the next age (when ready)"}}},
 		{Name: "upgrade", Section: secActions,

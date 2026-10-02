@@ -267,6 +267,19 @@ Quantum Age, and because of the age lock they can never be rebuilt later. The li
 are in `config/buildings.go`; the smoke report's "Tightest requirement per advance" table
 shows how much headroom each advance has.
 
+Storage is also permanent within a run, like wonders: no catastrophe takes it (Endure, the
+Great Fire and Succumb's ruins draw only on other buildings, see `isDestroyable` in
+`game/buildings.go`) and `sell` refuses it. Storage is what raises caps (techs add only a
+little), the age lock means an older age's storage can never be rebuilt, and the first
+copy of an age's storage can cost more than the storage left after a loss (a first
+Victorian Vault is about 210M steel). The nightly smoke run found the soft-lock this made:
+seed 1's second run entered the Victorian Age with 478M of storage, a Nuclear Exchange
+(Endure) destroyed both Industrial Depots and 11 older storage copies, and the 130M left
+could never hold a Victorian Vault. The caps could never rise again, so nothing the age
+required (academy, Bessemer plant, steam turbine) could ever be afforded, and a player had
+no way out but a wipe. Selling storage had the same risk: sell this age's storage just
+before advancing and you arrive unable to build the next age's.
+
 ### The Gate Covenant (Law 1 applied to age gates)
 
 Law 1 as written ("storage ≥ 2× the most expensive building expected at that stage") left

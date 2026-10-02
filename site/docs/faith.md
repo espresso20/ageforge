@@ -120,7 +120,7 @@ Before reaching the last age of an epoch (e.g. the Bronze Age before the Iron Er
 
 - Faith above 75% of storage for the 60% good roll
 - Culture above 40% of storage to make Major good events eligible; above 75% also gives a 15% chance at the Legendary one
-- Spare materials to rebuild with, in case The Great Fire destroys 8 buildings
+- Spare materials to rebuild with, in case The Great Fire destroys up to 8 buildings (never wonders or storage)
 - A gold income that can absorb Economic Crash or Merchant Betrayal, which each take half your gold and then drain more per tick
 
 See [Epochs](epochs.md) for the full event table and Catastrophe mechanics.

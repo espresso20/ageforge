@@ -41,7 +41,7 @@ Balance values are *defined* in ticks (a tech costs so many ticks of research, a
 | Command | Description |
 |---|---|
 | `build <building> [count\|max]` | Start constructing a building (default 1; `max` builds as many as you can afford, up to the building's limit) |
-| `sell <building> [count]` | Demolish a building and get back 50% of its build cost. Its workers go back to idle. |
+| `sell <building> [count]` | Demolish a building and get back 50% of its build cost. Its workers go back to idle. Wonders and storage can't be sold. |
 | `upgrade` | List the buildings you can upgrade now, with the cost of upgrading every copy |
 | `upgrade <building> [count\|all]` | Turn copies of a building into the next age's tier of the same line. With no count it upgrades all copies. You pay only the difference in cost: the new copy's cost minus half of what the old copy would sell for. It stops at the new building's max count. Storage buildings are never upgraded; older storage keeps counting. |
 | `advance` | Advance to the next age once its requirements are met. The age never advances by itself (see `plan advance` to queue it) |

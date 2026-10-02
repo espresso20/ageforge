@@ -177,7 +177,7 @@ Brace spends the resources the epoch still asks of you. For each resource, the p
 | 1 | 12% of the most the epoch asks of each of those resources | 15% | 30% |
 | 2 | 24% of the same | 10% | 45% |
 
-Buildings destroyed are counted from your non-wonder buildings, rounded down, with at least 1 if you have any. Wonders are never destroyed. The rest of Endure (25% of workers lost, the 216-tick reconstruction debuff, −10 morale) is the same at every Brace level. See [Endure](catastrophe.md#endure).
+Buildings destroyed are counted from your buildings other than wonders and storage, rounded down, with at least 1 if you have any. Wonders and storage are never destroyed. The rest of Endure (25% of workers lost, the 216-tick reconstruction debuff, −10 morale) is the same at every Brace level. See [Endure](catastrophe.md#endure).
 
 **Brace and your garrison.** The table is Brace alone. If you have soldiers, Brace applies first and then your garrison blunts its share of what Brace leaves: fewer buildings fall and more stock is kept. The garrison's share is measured against the raid threat of the age the catastrophe would strike in, the first age of the next epoch, where the threat has doubled. Brace and garrison together can cut the unbraced loss by at most **60%**: at least 8% of buildings fall and at most 66% of stock is kept. That cap only bites at level 2. For example, level 1 with a garrison that blunts 20% of a raid means 12% of buildings fall and 44% of stock is kept; level 2 with a strong garrison stops at 8% and 66%. See [Your garrison](catastrophe.md#your-garrison) and [Defense: what your army blunts](military.md#7-defense-what-your-army-blunts).
 

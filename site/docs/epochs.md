@@ -155,7 +155,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 |-------|--------|----------|
 | The Famine | Food -3/tick | 120 ticks |
 | Merchant Betrayal | Lose half your gold, then gold -2/tick | 72 ticks |
-| The Great Fire | 8 random buildings destroyed | Instant |
+| The Great Fire | Up to 8 random buildings destroyed (never wonders or storage) | Instant |
 | Epidemic | Lose 20% of workers, then food -1.5/tick | 180 ticks |
 | Resource Drought | Epoch's primary resource -3/tick | 90 ticks |
 | Political Instability | Lose 60% of your faith, then knowledge -2/tick | 60 ticks |
@@ -248,7 +248,7 @@ When a catastrophe hits, nothing happens until you choose. The game keeps runnin
 
 ### Endure: pay the price and keep your run
 
-- **20% of your non-wonder buildings** destroyed at random (wonders are spared and don't count)
+- **20% of your buildings** destroyed at random (wonders and storage are spared and don't count)
 - Workers of destroyed buildings go back to the idle pool
 - **All resources** reduced to 15% of current amounts
 - If you braced when the harbinger warned you, 15% or 10% of buildings are destroyed instead, and 30% or 45% of resources are kept. See [Brace](harbinger.md#brace-soften-an-endure)
@@ -260,7 +260,7 @@ Best when you've built a large, mature civilization that would be painful to res
 
 ### Succumb: reset and earn lasting power
 
-- **Up to 8 ruins** from your current buildings (50% base rate in later runs, no workers). Ruins are capped at 24 in total; past the cap the lowest-value ruins crumble first
+- **Up to 8 ruins** from your current buildings, never wonders or storage (50% base rate in later runs, no workers). Ruins are capped at 24 in total; past the cap the lowest-value ruins crumble first
 - **Legacy Bonus:** a permanent production bonus for this epoch's primary resource(s), active in all future runs including after prestige
 - **Ancient Knowledge:** a permanent +25% research speed per distinct epoch succumbed (a second Succumb in the same epoch adds nothing)
 - Full reset to the Primitive Age: resources, buildings, workers and research. No prestige points are earned; prestige level and upgrades are kept

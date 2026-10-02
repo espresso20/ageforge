@@ -105,12 +105,13 @@ sell <key>           demolish 1 copy, recover 50% of its price
 sell <key> <count>   demolish that many copies (most expensive first)
 ```
 
-You can sell non-wonder buildings from the **Stone Age onward**. Selling removes the most expensive copies first, and each copy refunds 50% of what it cost at its step of the cost curve.
+You can sell any building except wonders and storage from the **Stone Age onward**. Selling removes the most expensive copies first, and each copy refunds 50% of what it cost at its step of the cost curve.
 
 **Worker handling:** if selling leaves fewer worker slots than workers assigned, the extra workers are unassigned and go back to the idle pool. They are not dismissed, so your population stays the same.
 
 **Restrictions:**
 - Wonders cannot be sold.
+- Storage cannot be sold: once its age has passed, it can never be rebuilt.
 - You cannot sell a building while any copy of it is in the build queue.
 - Sell is not available in the Primitive Age.
 
@@ -361,6 +362,8 @@ A full stack of an age's storage (with every earlier age's) holds at least an ho
 
 Storage buildings **never upgrade** and are never offered as upgrades when you advance. Storage adds up: every storage building you have built keeps adding its capacity for the rest of the run, so the stashes from the Primitive Age still count in the Quantum Age. Like every other building, an older age's storage can no longer be built once you advance (the game tells you to build the current age's storage instead), so fill each tier while it is current.
 
+Storage is also permanent: catastrophes never destroy it or turn it into ruins, and it can't be sold.
+
 ---
 
 ## Cultural Monuments (4)
@@ -401,7 +404,7 @@ You must build each age's wonder before you can advance to the next age. A wonde
 
 Wonders give civilization-wide bonuses.
 
-Endure never destroys wonders, and Succumb never turns them into ruins. They stay for the rest of the run.
+Endure and the Great Fire never destroy wonders, and Succumb never turns them into ruins. They stay for the rest of the run, like storage.
 
 See [Wonders](wonders.md) for the full list with costs and effects.
 
@@ -409,7 +412,7 @@ See [Wonders](wonders.md) for the full list with costs and effects.
 
 ## Ruins
 
-Ruins are what is left of a previous civilization. You get them when you choose **Succumb** during a catastrophe: up to 8 of your buildings become ruins and carry forward into your new run. You can hold at most 24 ruins; when a new batch goes over, the lowest-value ruins (earliest age, then lowest output) crumble first.
+Ruins are what is left of a previous civilization. You get them when you choose **Succumb** during a catastrophe: up to 8 of your buildings (never wonders or storage) become ruins and carry forward into your new run. You can hold at most 24 ruins; when a new batch goes over, the lowest-value ruins (earliest age, then lowest output) crumble first.
 
 **How ruins differ from normal buildings:**
 
@@ -418,7 +421,7 @@ Ruins are what is left of a previous civilization. You get them when you choose 
 | Production | `base × count × (0.20 + 0.80 × fill)` | `base × count × 0.50` |
 | Workers | Needed for full output | Not needed (produces on its own) |
 | Can build more? | Yes | No |
-| Destroyed by Endure? | Yes (20% of buildings at random, fewer if you brace) | No |
+| Destroyed by Endure? | Yes (20% of buildings at random, fewer if you brace; never wonders or storage) | No |
 
 Ruins give your new run a free head start. They produce at 50% of base rate with no workers, so food, wood and stone (or whatever the ruined building made) trickle in from the first tick without any setup.
 

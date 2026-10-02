@@ -110,7 +110,7 @@ Severe but recoverable, with no reset and no modal. Applied immediately on epoch
 
 1. **The Famine**: food production -60% for 120 ticks; workers begin leaving if not corrected
 2. **Merchant Betrayal**: gold -50%; all trade routes suspended for 72 ticks
-3. **The Great Fire**: 8 random buildings destroyed; no targeted penalty on surrounding buildings
+3. **The Great Fire**: up to 8 random buildings destroyed (never wonders or storage); no targeted penalty on surrounding buildings
 4. **Epidemic**: worker count -20%; food drain +15% for 96h; faith influences severity
 5. **Resource Drought**: current epoch's primary output resource -70% for 90 ticks
 6. **Political Instability**: faith -60%; military output -40%; knowledge production paused 60 ticks
@@ -160,7 +160,7 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 ║     A devastating plague sweeps your cities. The streets…        ║
 ║                                                                  ║
 ║ ── ENDURE: weather the catastrophe ──                            ║
-║   • 20% of buildings destroyed (wonders are spared)              ║
+║   • 20% of buildings destroyed (wonders and storage are spared)  ║
 ║   • All resources reduced to 15%                                 ║
 ║   • 25% of workers lost; workers of destroyed buildings go idle  ║
 ║   • Production -10% for 216 ticks, morale -10                    ║
@@ -181,8 +181,9 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 
 ### ENDURE: Consequences
 
-- `floor(non-wonder buildings / 5)` destroyed, at least 1 if any. Wonders are neither destroyed
-  nor counted. With a Harbinger Brace (`pendingBraceLevel` 1 / 2) it is 15% / 10%, same floor.
+- `floor(destroyable buildings / 5)` destroyed, at least 1 if any. Wonders and storage
+  (`isDestroyable`, game/buildings.go) are neither destroyed nor counted. With a Harbinger Brace
+  (`pendingBraceLevel` 1 / 2) it is 15% / 10%, same floor.
 - Workers assigned to destroyed buildings return to the idle pool (same rule as selling).
 - All unlocked resources drop to 15% of their stored amounts (30% / 45% braced).
 - 25% of the single worker pool is lost; every building's assignment shrinks by the same share,
@@ -232,10 +233,10 @@ Constants and the reasoning for them are in `config/defense.go`; the engine side
 
 ### SUCCUMB: Consequences
 
-- Up to 8 non-wonder buildings become ruins (50% base output, no workers). Ruins persist across
-  Succumb and prestige, capped at **24**: past the cap the lowest-value ruins (earliest
-  `RequiredAge`, then lowest base output, then key) are dropped first. The cap also trims old saves
-  on load.
+- Up to 8 destroyable buildings (neither wonders nor storage) become ruins (50% base output, no
+  workers). Ruins persist across Succumb and prestige, capped at **24**: past the cap the
+  lowest-value ruins (earliest `RequiredAge`, then lowest base output, then key) are dropped
+  first. The cap also trims old saves on load.
 - The epoch's legacy flag is set. Its per-resource bonus goes into `permanentBonuses` via
   `reapplyLegacyBonuses` after every reset.
 - **Ancient Knowledge:** +25% `research_speed` per distinct legacy epoch. Derived from the flags,
@@ -377,7 +378,7 @@ caps would make the epoch's first age (smallest caps) a discount.
 | Action | Cost (level 1) | Effect | Cap |
 |--------|----------------|--------|-----|
 | Appease | `harbingerAppeaseIncomeShare` (1/4) of `config.FlowIncome` summed over `harbingerAppeaseAges` at their `AgeTargetTicks`, in faith, and in culture if culture is held since the start (Steel Era on); rounded up to 2 significant figures | Multiplies the real catastrophe chance by `harbingerAppeaseFactor` = 0.6 per level (0.36 at 2) | 2 |
-| Brace | 12% of `harbingerBraceBasis`: per resource held since the start, minus faith and culture, the largest `ResourceReqs` across `harbingerAdvanceAges` | Endure destroys 15% / 10% of non-wonder buildings and keeps 30% / 45% of resources (unbraced 20% / 15%) | 2 |
+| Brace | 12% of `harbingerBraceBasis`: per resource held since the start, minus faith and culture, the largest `ResourceReqs` across `harbingerAdvanceAges` | Endure destroys 15% / 10% of destroyable buildings (neither wonders nor storage) and keeps 30% / 45% of resources (unbraced 20% / 15%) | 2 |
 | Invite | free | Sets `HarbingerSave.Invited` and arms `catastropheInvited`; Appease refuses afterwards, Brace does not | once |
 
 Level-1 prices from the current config:
