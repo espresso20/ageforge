@@ -190,6 +190,7 @@ These stack on top of your purchased upgrade bonuses. A prestige level 5 player 
 - Milestones and milestone chains
 - Current epoch and epoch event history
 - Age (returns to Primitive Age)
+- The run's timers: the ready-to-advance notice, a famine in progress and the Geographic Society's survey countdown
 
 ### Persists Across Prestige
 - Prestige level and all purchased upgrade tiers

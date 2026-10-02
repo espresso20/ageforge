@@ -3783,6 +3783,12 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.pendingMemoryTech = ""
 	// The cooldowns are tick numbers and the tick counter just went back to 0.
 	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
+	// The run's timers start over, as in a new game. A stale ageReady let
+	// `advance` skip the Stone Age's requirements before the first tick.
+	ge.ageReady = false
+	ge.starvationTicks = 0
+	ge.autoExpeditionTicksLeft = 0
+	ge.autoExpeditionStarved = false
 
 	// Restore cross-run state
 	ge.Buildings.LoadRuins(savedRuins)
@@ -3910,6 +3916,10 @@ func (ge *GameEngine) Reset() {
 	ge.ancientMemoryUsed = false
 	ge.pendingMemoryTech = ""
 	ge.festivalReadyTick, ge.blackMarketReadyTick = 0, 0
+	ge.ageReady = false
+	ge.starvationTicks = 0
+	ge.autoExpeditionTicksLeft = 0
+	ge.autoExpeditionStarved = false
 	// A wiped game is a brand-new run: re-roll the master seed.
 	ge.SeedRNG(newSeed())
 
