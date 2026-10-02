@@ -29,8 +29,9 @@ const (
 
 type cell struct {
 	k     kind
-	major bool  // an avenue: the ring, or a trail through town
-	civ   int16 // faction index + 1 on a trail or a site
+	major bool // an avenue: the ring, or a trail through town
+	rail  bool // the railway runs here (over whatever the cell is)
+	civ   int8 // faction index + 1 on a trail or a site (a byte keeps a cell at 8 bytes)
 	ref   int32
 }
 
@@ -77,6 +78,13 @@ type scene struct {
 	smoke                     []smokeSrc
 	x0, y0, x1, y1            int // built bounds, for the compact fit
 	targets                   []mapmodel.Pt
+
+	// traffic (traffic.go)
+	rail      []mapmodel.Pt   // the railway, west to east; nil before it is laid
+	movers    []mover         // the age's traffic on its lanes
+	lanes     [][]mapmodel.Pt // lanes on the street network
+	lanesDone bool
+	roads     int // road cells movers may use
 }
 
 func (s *scene) in(x, y int) bool { return s.w.In(x, y) }
@@ -103,7 +111,12 @@ func rdist(ax, ay, bx, by int) float64 {
 
 func pt(x, y int) mapmodel.Pt { return mapmodel.Pt{X: x, Y: y} }
 
-func newScene(m *mapmodel.Model) *scene {
+func newScene(m *mapmodel.Model) *scene { return layScene(m, true) }
+
+// layScene builds a model's scene. With traffic false it leaves out the
+// railway and the movers, which the layout test uses to show that they
+// change nothing else on the map.
+func layScene(m *mapmodel.Model, traffic bool) *scene {
 	w, p := m.Town.World, m.Town.Plan
 	if w == nil || p == nil || len(p.Plaza) != w.W*w.H || len(p.Street) != w.W*w.H {
 		return nil
@@ -127,11 +140,17 @@ func newScene(m *mapmodel.Model) *scene {
 	s.streets()
 	s.walls()
 	s.trailsOut()
+	if traffic {
+		s.railway()
+	}
 	s.visibility()
 	s.life()
 	s.hazards()
 	s.harbinger()
 	s.bounds()
+	if traffic {
+		s.traffic()
+	}
 	return s
 }
 
@@ -307,11 +326,11 @@ func (s *scene) trailsOut() {
 		if !ok || !f.Discovered {
 			continue
 		}
-		*s.at(site.X, site.Y) = cell{k: kSite, civ: int16(fi + 1), ref: int32(fi)}
+		*s.at(site.X, site.Y) = cell{k: kSite, civ: int8(fi + 1), ref: int32(fi)}
 		for k, d := range [5][2]int{{-2, 0}, {2, 0}, {-1, 1}, {1, -1}, {-3, 1}} {
 			x, y := site.X+d[0], site.Y+d[1]
 			if int(mapmodel.Hash(w.Seed, 80, int64(fi), int64(k))%5) < f.Strength+1 && w.At(x, y).Land() && s.at(x, y).k == kNone {
-				*s.at(x, y) = cell{k: kSite, civ: int16(fi + 1), ref: -1}
+				*s.at(x, y) = cell{k: kSite, civ: int8(fi + 1), ref: -1}
 			}
 		}
 	}
@@ -325,14 +344,14 @@ func (s *scene) trailsOut() {
 			c := s.at(q.X, q.Y)
 			switch {
 			case c.k == kNone:
-				c.k, c.civ = kRoad, int16(fi+1)
+				c.k, c.civ = kRoad, int8(fi+1)
 				if w.At(q.X, q.Y).Water() {
 					c.k = kBridge
 				}
 			case roadLike(c.k):
 				c.major = c.major || c.k == kStreet || c.k == kBridge
 				if c.civ == 0 {
-					c.civ = int16(fi + 1)
+					c.civ = int8(fi + 1)
 				}
 			}
 		}

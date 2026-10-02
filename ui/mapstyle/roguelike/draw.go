@@ -90,8 +90,10 @@ func (v *view) onBlink(cv *mapstyle.Canvas, p mapmodel.Pt, r rune, c mapmodel.Cl
 // the walkers into a blur.
 const walkFrames = 5
 
-// drawLife puts the moving things on top: smoke, workers, idle hands,
-// caravans, war marks, scouts, raiders, the harbinger and the catastrophe.
+// drawLife puts the moving things on top: smoke, the traffic on the ground,
+// workers, idle hands, the traffic overhead, caravans, war marks, scouts,
+// raiders, the harbinger, the catastrophe and, once in a long while, a
+// visitor.
 func (v *view) drawLife(cv *mapstyle.Canvas) {
 	s, m, f := v.sc, v.sc.m, v.anim
 	sym := func(sy mapmodel.Sym) rune { return mapmodel.R(sy, v.tier) }
@@ -111,10 +113,9 @@ func (v *view) drawLife(cv *mapstyle.Canvas) {
 				v.onBlink(cv, p, puffs[ph%len(puffs)], mapmodel.CMemory, false, lgSmoke, lit)
 			}
 		}
+		v.drawTraffic(cv, false)
 		for i, path := range s.walks { // there and back again
-			n := len(path)
-			t := (f/walkFrames + int(mapmodel.Hash(int64(i), 3)%uint64(2*n-2))) % (2*n - 2)
-			v.on(cv, path[min(t, 2*n-2-t)], sym(mapmodel.SymWorker), mapmodel.CLife, false, lgWorker)
+			v.on(cv, path[walkAt(i, len(path), f)], sym(mapmodel.SymWorker), mapmodel.CLife, false, lgWorker)
 		}
 		for j, p := range s.idle {
 			r := sym(mapmodel.SymWorker)
@@ -123,6 +124,7 @@ func (v *view) drawLife(cv *mapstyle.Canvas) {
 			}
 			v.on(cv, p, r, mapmodel.CIdle, true, lgIdle)
 		}
+		v.drawTraffic(cv, true)
 	}
 	for ri, rt := range m.Routes {
 		fi := factionIndex(m, rt.Civ)
@@ -158,6 +160,9 @@ func (v *view) drawLife(cv *mapstyle.Canvas) {
 		for i, p := range s.hazard {
 			v.on(cv, p, hz[(f/2+int(mapmodel.Hash(int64(i), 5)%4))%len(hz)], mapmodel.CDanger, false, lgHazard)
 		}
+	}
+	if v.g.zoom != zRegion && !v.compact {
+		v.drawVisitor(cv)
 	}
 }
 

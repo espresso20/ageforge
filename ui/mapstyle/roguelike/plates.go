@@ -544,22 +544,29 @@ func (v *view) space(cx, cy int, d, ry float64) glyph {
 
 var starNames = []string{"Vega", "Altair", "Deneb", "Rigel", "Sirius", "Capella", "Arcturus", "Procyon", "Spica", "Antares"}
 
-// orbit draws habitats riding the inner ring, traffic on the outer one and
-// a few named stars.
+// orbit draws the orbital habitats riding the inner ring, satellites on the
+// outer one (the same movers the settlement sees overhead, with the same
+// legend rows) and a few named stars.
 func (v *view) orbit(cv *mapstyle.Canvas, g geom, wcx, wcy, rx, ry float64) {
-	put := func(a, r float64, sym mapmodel.Sym, c mapmodel.Class) {
+	put := func(a, r float64, k mapmodel.Mover) {
+		info := k.Info()
+		if !info.In(v.sc.m.AgeIdx) {
+			return
+		}
 		x := g.x + int(math.Floor(wcx+float64(mapmodel.Cos(a)*float64(r*rx))))
 		y := g.y + int(math.Floor(wcy+float64(mapmodel.Sin(a)*float64(r*ry))))
 		if x >= g.x && y >= g.y && x < g.x+g.w && y < g.y+g.h {
-			cv.Put(x, y, mapmodel.R(sym, v.tier), v.cls(c).Bold(true))
+			ch, st := mapmodel.R(info.Sym, v.tier), v.cls(info.Class).Bold(true)
+			cv.Put(x, y, ch, st)
 			v.occ[(y-g.y)*g.w+x-g.x] = true
+			v.reg(lgMover+lgID(k), ch, st)
 		}
 	}
 	for k := 0; k < 4; k++ {
 		if k < 3 {
-			put(float64(v.anim)*0.002+float64(k)/3, 1.18, mapmodel.SymHabitat, mapmodel.CWealth)
+			put(float64(v.anim)*0.002+float64(k)/3, 1.18, mapmodel.MoverHabitat)
 		}
-		put(-float64(v.anim)*0.004+float64(k)/4+0.1, 1.5, mapmodel.SymSatellite, mapmodel.CLife)
+		put(-float64(v.anim)*0.004+float64(k)/4+0.1, 1.5, mapmodel.MoverSatellite)
 	}
 	seed := v.sc.w.Seed
 	for k := int64(0); k < 6; k++ {

@@ -53,6 +53,24 @@ This age's **wonder** appears on its plot, under scaffolding, once you start it:
 
 **Walls** follow your age: none at first, a palisade from the Bronze Age, then a stone wall with towers, and later a ring boulevard. The ring grows in steps as the town outgrows it. Harbor buildings sit on the shore and read as piers or jetties; that is intended.
 
+### Traffic
+
+Every era brings its own traffic to the town. Nothing appears before the age that introduces it, and older traffic retires as its era passes, so the streets stay readable.
+
+| Era | What moves |
+|---|---|
+| Stone | Workers walking to work; hunters heading out to the woods and hills |
+| Iron | Ox carts and riders on the streets; rowboats on the river and lakes |
+| Steel | Wagons; sailing ships. From the Industrial Age a railway crosses the town, with steam trains trailing smoke |
+| Electric | Trams and steamships; from the Electric Age, the first motor cars |
+| Digital | Cars and trucks, planes overhead, container ships and freight trains; satellites cross the night sky |
+| Neon | Maglevs on the old railway, drones and hovercars; from the Space Age, shuttles lift off from the launch pad |
+| Cosmic | Orbital habitats drift overhead, and satellites are out day and night |
+
+People stroll. Carts are a little quicker, cars quicker still, and trains and maglevs the quickest. How much moves follows how big and busy your town is. The railway runs along one of the town's street rows, so it never moves as the town grows; a street it crosses stays a street. Traffic draws on streets, rails, water and open sky, never over a building or a name. The legend lists what is about, and the inspect cursor says what anything moving is ("A steam train, hauling ore.").
+
+Keep an eye on the sky in the late game.
+
 ### Three zooms
 
 | Zoom | What you see |
@@ -86,6 +104,7 @@ The skyline style shows your empire **side-on**, as an ANSI-art panorama. It has
 - **The sky** follows the game clock and the weather.
 - **The far ridge** holds the civilizations you have met, each drawn as a town, and the harbinger.
 - **Traffic follows real state.** Trade routes travel by land, sea or air depending on the route: harbor and ship routes sail the bays, warp and stellar routes fly once your age has aircraft, and rails and caravans stay on land.
+- **Vehicles arrive with their age.** The skyline and the roguelike share one list of what moves in which age, so a vehicle shows in neither style before the age that introduces it.
 - In the **Monochrome** and **Parchment** themes the skyline is drawn as a two-tone (duotone) picture.
 
 ### Skyline keys

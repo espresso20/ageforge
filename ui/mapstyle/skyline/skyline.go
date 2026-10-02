@@ -115,9 +115,9 @@ func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 		}
 		if !v.inspect {
 			v.inspect = true
-			v.step(m, 0, 0, 0)
+			v.step(m, f.Anim, 0, 0, 0)
 		} else {
-			v.step(m, 0, 0, d)
+			v.step(m, f.Anim, 0, 0, d)
 		}
 	case key == tcell.KeyEscape:
 		if !v.inspect {
@@ -135,7 +135,7 @@ func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 	case key == tcell.KeyLeft || key == tcell.KeyRight:
 		dx := map[bool]int{true: -1, false: 1}[key == tcell.KeyLeft]
 		if v.inspect && m != nil {
-			v.step(m, dx, 0, 0)
+			v.step(m, f.Anim, dx, 0, 0)
 		} else {
 			scroll(4 * dx)
 		}
@@ -143,7 +143,7 @@ func (v *view) HandleKey(ev *tcell.EventKey, f mapstyle.Frame) bool {
 		if !v.inspect || m == nil {
 			return false
 		}
-		v.step(m, 0, map[bool]int{true: 1, false: -1}[key == tcell.KeyUp], 0)
+		v.step(m, f.Anim, 0, map[bool]int{true: 1, false: -1}[key == tcell.KeyUp], 0)
 	default:
 		return false
 	}
@@ -154,11 +154,11 @@ func (v *view) Inspect(f mapstyle.Frame) (mapstyle.Inspection, bool) {
 	if !v.inspect || f.Model == nil {
 		return mapstyle.Inspection{}, false
 	}
-	in, ok := v.inspection(f.Model)
+	in, ok := v.inspection(f.Model, f.Anim)
 	if !ok {
 		return mapstyle.Inspection{}, false
 	}
-	return mapstyle.Inspection{Title: in.title, Lines: in.lines, Command: in.cmd}, true
+	return mapstyle.Inspection{Title: in.title, Lines: in.lines, Command: in.cmd, Kind: in.kind}, true
 }
 
 // Draw renders the full view; below 60x16 it falls back to the compact one.
@@ -220,7 +220,7 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 	}
 	if v.inspect {
 		ts := v.targetsFor(m, W, v.cam)
-		if i := v.resolve(m, ts); i >= 0 && v.reveal {
+		if i := v.resolve(m, ts, f.Anim); i >= 0 && v.reveal {
 			v.revealTarget(m, ts[i], W)
 		}
 	}
@@ -244,6 +244,7 @@ func (v *view) compose(f mapstyle.Frame, W, H int) *scene {
 	s.lots()
 	s.ground()
 	s.traffic()
+	s.visitor()
 	s.smoke()
 	s.weather()
 	s.catastrophe()

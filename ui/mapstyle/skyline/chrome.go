@@ -184,7 +184,7 @@ func (s *scene) status(bg tcell.Color) {
 	y := s.H - 1
 	m := s.m
 	if s.v.inspect {
-		if in, ok := s.v.inspection(m); ok {
+		if in, ok := s.v.inspection(m, s.anim); ok {
 			parts := []seg{{" ▲ ", theme.RoleAccent}, {in.title, theme.RoleText}}
 			for _, l := range in.lines {
 				parts = append(parts, seg{"  " + l, theme.RoleDim})

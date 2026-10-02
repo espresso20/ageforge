@@ -1280,6 +1280,15 @@ func (s *scene) cursor() {
 		if lv.ml.Wonder {
 			name = s.m.Catalog.Defs[lv.ml.Key].Name
 		}
+	case t.kind == tUFO:
+		if x, y, ok := saucerAt(s.m, s.anim, s.W); ok {
+			mark, my := '▼', y-1
+			if my < 0 {
+				mark, my = '▲', y+1
+			}
+			s.fb.fg(x+1, s.Y(my), mark, acc, dTop)
+		}
+		return
 	case t.kind != tLot:
 		for _, it := range s.ridge {
 			if (t.kind == tHarbinger && it.fac == nil) || (it.fac != nil && it.fac.Key == t.key) {
