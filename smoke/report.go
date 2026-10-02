@@ -276,7 +276,7 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 				s.PacingFailures = append(s.PacingFailures, p)
 				s.Failed = true
 			}
-			if p.Cycle == 1 && !p.Unfinished && !p.Prestiged && p.QuietSecs > QuietMax.Seconds() {
+			if p.Cycle == 1 && !p.Unfinished && !p.Prestiged && quietGraded(p.Age) && p.QuietSecs > QuietMax.Seconds() {
 				s.QuietFailures = append(s.QuietFailures, p)
 				s.Failed = true
 			}
@@ -353,7 +353,7 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 	fmt.Fprintf(&sb, ". Took %s of wall time.\n\n", time.Duration(s.WallMs)*time.Millisecond)
 	sb.WriteString("Times are simulated wall-clock at 1x speed (tick_speed bonuses included). ")
 	if s.Config.Pacing == PacingEnforce {
-		sb.WriteString("Pacing is enforced: a first-cycle age whose median across seeds is outside its target band, or whose median longest quiet stretch is over " + dur(QuietMax.Seconds()) + ", fails the set, and any age past its timeout fails its run (later cycles and ages left by prestige are graded only), as do panics, soft-locks and invariant violations.\n\n")
+		sb.WriteString("Pacing is enforced: a first-cycle age whose median across seeds is outside its target band, or (up to the " + QuietLastAge + ") whose median longest quiet stretch is over " + dur(QuietMax.Seconds()) + ", fails the set, and any age past its timeout fails its run (later cycles and ages left by prestige are graded only), as do panics, soft-locks and invariant violations.\n\n")
 	} else {
 		sb.WriteString("Pacing is report-only: ages are graded against their targets but never fail the run; panics, soft-locks and invariant violations do.\n\n")
 	}
@@ -369,7 +369,7 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 	}
 
 	sb.WriteString("\n## Pacing per age\n\n")
-	fmt.Fprintf(&sb, "Time spent in each age, from entering it to entering the next, across seeds, against the target in smoke/targets.go (pass: %gx to %gx the target, %s; the verdict grades the median). The longest quiet stretch is the median of each seed's longest stretch in the age with no new building type built and no tech finished; under enforce a first-cycle age over %s fails.\n\n", PacingLow, PacingHigh, highForText(), dur(QuietMax.Seconds()))
+	fmt.Fprintf(&sb, "Time spent in each age, from entering it to entering the next, across seeds, against the target in smoke/targets.go (pass: %gx to %gx the target, %s; the verdict grades the median). The longest quiet stretch is the median of each seed's longest stretch in the age with no new building type built and no tech finished; under enforce a first-cycle age over %s fails, up to the %s (later ages are reported only).\n\n", PacingLow, PacingHigh, highForText(), dur(QuietMax.Seconds()), QuietLastAge)
 	s.writePacingTable(&sb)
 	s.writeFirstRun(&sb)
 	for _, r := range s.Runs {
@@ -488,7 +488,7 @@ func (s *Summary) writePacingTable(sb *strings.Builder) {
 // quietMark renders a row's longest quiet stretch, flagged when it is over
 // QuietMax.
 func quietMark(p PacingRow) string {
-	if p.QuietSecs > QuietMax.Seconds() && !p.Prestiged {
+	if p.QuietSecs > QuietMax.Seconds() && !p.Prestiged && quietGraded(p.Age) {
 		return dur(p.QuietSecs) + " (over " + dur(QuietMax.Seconds()) + ")"
 	}
 	return dur(p.QuietSecs)

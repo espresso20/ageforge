@@ -166,3 +166,20 @@ func TestInformationBand(t *testing.T) {
 		t.Errorf("Digital at 1.3x: %q, want ok", v)
 	}
 }
+
+// TestQuietStretchScope: ages after QuietLastAge are reported, not failed.
+func TestQuietStretchScope(t *testing.T) {
+	enforce := DefaultConfig()
+	enforce.Pacing = PacingEnforce
+	space := PacingTargets["space_age"].Seconds()
+	runs := []*RunResult{
+		{Seed: 1, Ages: []AgeSplit{{Cycle: 1, Age: "space_age", Seconds: space, QuietSecs: 30 * 3600}}},
+		{Seed: 2, Ages: []AgeSplit{{Cycle: 1, Age: "space_age", Seconds: space, QuietSecs: 30 * 3600}}},
+	}
+	if sum := NewSummary("progression", enforce, time.Now(), runs); len(sum.QuietFailures) != 0 {
+		t.Errorf("space_age quiet stretch failed the set: %+v", sum.QuietFailures)
+	}
+	if !quietGraded("fusion_age") || !quietGraded("primitive_age") || quietGraded("space_age") {
+		t.Error("quietGraded scope is not Primitive to Fusion")
+	}
+}

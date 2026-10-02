@@ -230,7 +230,7 @@ Buildings without a worker domain (Housing, Culture/Arts) produce exactly `base_
 
 `base_rate` is the **fully staffed** rate, and it is the number each building's description shows.
 
-For **construction resources** (anything the buildings of an age cost: wood, stone, iron, gold, steel, coal, electricity, data and so on), rates follow the **Payback Rule**: a producer's output is set so that, fully staffed, it earns back the price of its first copy in its age's **payback time**. The payback time is a share of how long the age is meant to take, and that share grows through the game: about 1/16 of the age in the Primitive Age, about 1/7 in the Iron Age, a quarter in the Renaissance (stretched to about a third there; see below), about a third in the Victorian Age and about two thirds in the Space Age. Later ages repay more slowly because every building you put up in earlier ages keeps producing alongside the new tier.
+For **construction resources** (anything the buildings of an age cost: wood, stone, iron, gold, steel, coal, electricity, data and so on), rates follow the **Payback Rule**: a producer's output is set so that, fully staffed, it earns back the price of its first copy in its age's **payback time**. The payback time is a share of how long the age is meant to take, and that share grows through the game: about 1/16 of the age in the Primitive Age, about 1/7 in the Iron Age, a quarter in the Renaissance (stretched to about a third there, and shortened in the Information and Cyberpunk Ages; see below), about a third in the Victorian Age and about two thirds in the Space Age. Later ages repay more slowly because every building you put up in earlier ages keeps producing alongside the new tier.
 
 Output is valued at **price parity**. Each age has a price level for each resource (the typical first-copy price in that resource among the age's buildings), and resources are worth each other in the ratio of those levels. A building with two outputs splits its value between them. Because rates follow prices, they grow roughly 5 to 8x per age.
 
@@ -255,9 +255,9 @@ Output is valued at **price parity**. Each age has a price level for each resour
 | Electric | 26h | 10.2h | 4h 20m | 32m 30s |
 | Atomic | 31h 12m | 13.4h | 5h 12m | 39m |
 | Modern | 31h 12m | 14.6h | 5h 12m | 39m |
-| Information | 36h 24m | 18.4h | 6h 4m | 45m 30s |
+| Information | 36h 24m | 15.7h | 6h 4m | 45m 30s |
 | Digital | 41h 36m | 22.7h | 6h 56m | 52m |
-| Cyberpunk | 46h 48m | 27.5h | 7h 48m | 58m 30s |
+| Cyberpunk | 46h 48m | 23.3h | 7h 48m | 58m 30s |
 | Fusion | 52h | 32.7h | 8h 40m | 1h 5m |
 | Space | 57h 12m | 38.3h | 9h 32m | 1h 11m 30s |
 | Interstellar | 62h 24m | 44.4h | 10h 24m | 1h 18m |
@@ -266,6 +266,8 @@ Output is valued at **price parity**. Each age has a price level for each resour
 | Transcendent | 62h 24m | 52.5h | 10h 24m | 1h 18m |
 
 The Renaissance's payback is 1.3x what the curve gives (about 3.8 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target speed. Its University makes 79.9 knowledge/tick, Exchange 1.45K gold, Mill 200 steel, Foundry 273 steel and Coal Mine 111 coal.
+
+The Information and Cyberpunk Ages go the other way, at 0.85x: they ran 1.2 to 1.5x their targets, and the extra time was spent waiting.
 
 Times are game time at 1x speed (1 tick = 2 seconds). Some construction resources have no producer in certain ages (stone after the Bronze Age, for example); the market sells them at parity instead. See [Resources](resources.md#buying-at-the-market).
 
@@ -361,9 +363,9 @@ Every storage building is **capped at 25 copies** (Stash at 50). The cap is deli
 | Electric Warehouse | Electric | +3.9B | 25 |
 | Atomic Vault | Atomic | +20B | 25 |
 | Modern Depot | Modern | +90B | 25 |
-| Info Vault | Information | +930B | 25 |
+| Info Vault | Information | +1.1T | 25 |
 | Digital Archive | Digital | +1.5T | 25 |
-| Cyber Vault | Cyberpunk | +8.6T | 25 |
+| Cyber Vault | Cyberpunk | +10.3T | 25 |
 | Fusion Vault | Fusion | +30T | 25 |
 | Orbital Depot | Space | +200T | 25 |
 | Stellar Vault | Interstellar | +2Q | 25 |

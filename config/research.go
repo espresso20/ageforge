@@ -652,7 +652,7 @@ func Technologies() []TechDef {
 			// about 35 hours in, mid-way through the age's long build-up to
 			// its wonder.
 			Name: "Holography", Key: "holography",
-			Age: "cyberpunk_age", Cost: 16000000000, ResearchTicks: 50000,
+			Age: "cyberpunk_age", Cost: 12000000000, ResearchTicks: 50000,
 			Prerequisites: []string{"cybernetics", "blockchain"},
 			Description:   "Light learns to lie convincingly, and every wall becomes an ad. Opens the Holographic Theater.",
 			Effects: []Effect{
@@ -673,8 +673,13 @@ func Technologies() []TechDef {
 			},
 		},
 		{
+			// Pacing v2: Plasma Physics, Superconductors and Maglev Transit
+			// now run one after another (each needs the one before) and are
+			// priced in knowledge, which runs about 600 million an hour in
+			// this age, to finish about 17, 24 and 32 hours in. The age used
+			// to go 26 hours from its last tech to its wonder.
 			Name: "Plasma Physics", Key: "plasma_physics",
-			Age: "fusion_age", Cost: 9000000, ResearchTicks: 62000,
+			Age: "fusion_age", Cost: 10600000000, ResearchTicks: 62000,
 			Prerequisites: []string{"fusion_power"},
 			Description:   "Mastery of superheated matter states.",
 			Effects: []Effect{
@@ -683,13 +688,10 @@ func Technologies() []TechDef {
 			},
 		},
 		{
-			// Priced to finish about 22 hours into the Fusion Age (knowledge
-			// runs about 600 million an hour there), with Maglev Transit about
-			// ten hours after it: the age's quiet stretch, 26 hours from its
-			// last tech to its wonder, needed two marks to come under 12.
+			// Paced with Plasma Physics (see there).
 			Name: "Superconductors", Key: "superconductors",
-			Age: "fusion_age", Cost: 14500000000, ResearchTicks: 70000,
-			Prerequisites: []string{"fusion_power"},
+			Age: "fusion_age", Cost: 4800000000, ResearchTicks: 70000,
+			Prerequisites: []string{"plasma_physics"},
 			Description:   "Zero-resistance materials raise all production and storage.",
 			Effects: []Effect{
 				{Type: "bonus", Target: "production_all", Value: 0.5},
@@ -697,11 +699,11 @@ func Technologies() []TechDef {
 			},
 		},
 		{
-			// Mid-age unlock (Pacing v2): affordable some 11 hours after
-			// Superconductors starts, so it finishes about 31 hours in.
+			// Mid-age unlock (Pacing v2), paced with Plasma Physics (see
+			// there).
 			Name: "Maglev Transit", Key: "maglev_transit",
-			Age: "fusion_age", Cost: 6500000000, ResearchTicks: 70000,
-			Prerequisites: []string{"plasma_physics", "superconductors"},
+			Age: "fusion_age", Cost: 5400000000, ResearchTicks: 70000,
+			Prerequisites: []string{"superconductors"},
 			Description:   "Superconducting rails float the freight across the city at the speed of a mild panic. Opens the Energy Exchange.",
 			Effects: []Effect{
 				{Type: "production", Target: "plasma", Value: 1.0},

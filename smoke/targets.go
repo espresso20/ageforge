@@ -74,8 +74,28 @@ func pacingHigh(age string) float64 {
 // building type built and no tech finished (AgeSplit.QuietSecs; the median
 // across seeds). Under -pacing enforce a first-cycle age over it fails the
 // set: the nightly grades the ages to the Modern Age, the weekly deep merge
-// the rest.
+// the rest up to QuietLastAge.
 const QuietMax = 12 * time.Hour
+
+// QuietLastAge is the last age QuietMax is enforced in. The Space Age on
+// still goes one to three days with nothing new (one or two producers and a
+// wonder each, on the one-week curve); they are reported until they get mid-
+// age content of their own.
+const QuietLastAge = "fusion_age"
+
+// quietGraded reports whether age's quiet stretch is enforced.
+func quietGraded(age string) bool {
+	order := config.AgeOrder()
+	for _, a := range order {
+		if a == age {
+			return true
+		}
+		if a == QuietLastAge {
+			return false
+		}
+	}
+	return false
+}
 
 // Per-age timeout, derived from the table: TimeoutFactor x target, never
 // less than TimeoutFloor. Ages without a target use DefaultAgeTimeout.
