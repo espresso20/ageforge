@@ -1,12 +1,14 @@
 # Workers
 
-Workers are your civilization's workforce. They eat food each tick and drive production in every building they are assigned to. Workers are organized into a **12-domain system** tied directly to building lineages.
+Workers are your civilization's workforce. They eat food each tick and drive production in every building they are assigned to. Workers are organized into a **12-domain system** tied directly to building lineages. They arrive and go to work on their own, by your [worker shares](workers-and-domains.md#worker-shares), unless you take over by hand.
 
 ---
 
 ## Overview
 
 Workers come from a **single generic pool**: every worker is identical until you assign it to a building. An assigned worker takes on the class name for that building's domain at the current age. There are no separate domain pools; any worker can go to any building.
+
+You don't have to recruit or assign them yourself. With **auto-recruit** on (the default), the game recruits into empty worker slots while housing and food allow, and every 5 ticks (10 seconds at 1x) it puts idle workers to work by your **worker shares**: each domain's percent of your workforce. By default every domain is on auto, so workers follow your buildings' worker slots. Workers you place by hand stay where you put them. See [Worker Shares](workers-and-domains.md#worker-shares).
 
 **Production formula:**
 
@@ -124,7 +126,27 @@ Space: Cadet → Interstellar: Interstellar Pilot → Galactic: Galactic Explore
 
 ## Commands
 
-**Recruit workers:**
+**Set worker shares:**
+
+```
+workers share
+workers share <domain> [percent|auto]
+workers share auto
+```
+
+Examples: `workers share knowledge 40`, `workers share military 0`, `workers share knowledge auto`, `workers share auto`
+
+A share is a domain's percent of your whole workforce, from 0 to 100. Domains without one are on auto and split what the set shares leave by their worker slots, and 0 keeps a domain empty. Bare `workers share` lists each domain's share with its workers and slots. Setting a share moves workers once to match. See [Worker Shares](workers-and-domains.md#worker-shares) for the full rules.
+
+**Turn auto-recruit on or off:**
+
+```
+workers auto-recruit [on|off]
+```
+
+On by default: the game recruits into empty worker slots while housing and food allow. With it off you recruit by hand, and idle workers still go to work by your shares.
+
+**Recruit workers by hand:**
 
 ```
 recruit [count|max]
@@ -132,7 +154,7 @@ recruit [count|max]
 
 Examples: `recruit`, `recruit 5`, `recruit max`
 
-Workers are recruited from free housing, and you don't name a domain. A new worker has no class until you assign it; it then takes the class of that building's domain (a worker on a gathering_camp becomes a Forager, one on a story_circle a Shaman). You can recruit only up to your housing. Recruiting is free, but each new worker starts eating food the next tick.
+Workers are recruited from free housing, and you don't name a domain. A new worker has no class until it is assigned; it then takes the class of that building's domain (a worker on a gathering_camp becomes a Forager, one on a story_circle a Shaman). You can recruit only up to your housing. Recruiting is free, but each new worker starts eating food the next tick. New workers start idle: assign them, or a minute after your last worker command the game puts any still idle to work by your shares.
 
 **Assign workers to a building:**
 
@@ -142,7 +164,7 @@ assign <building> [count|all]
 
 Example: `assign gathering_camp 5`
 
-The domain comes from the building. A building with 15 worker slots, built 3 times, has 45 slots in total.
+The domain comes from the building. A building with 15 worker slots, built 3 times, has 45 slots in total. Your assignments stick: the game never moves a worker you placed, except out of a domain whose share is 0.
 
 **Unassign workers:**
 
@@ -150,7 +172,7 @@ The domain comes from the building. A building with 15 worker slots, built 3 tim
 unassign <building> [count|all]
 ```
 
-Returns workers to the idle pool. Idle workers still eat.
+Returns workers to the idle pool. Idle workers still eat, and a minute later the game puts any still idle back to work by your shares. To keep a domain empty, set its share to 0.
 
 **Permanently dismiss workers:**
 
@@ -158,7 +180,7 @@ Returns workers to the idle pool. Idle workers still eat.
 dismiss <building> [count|all]
 ```
 
-`dismiss` removes workers from a building **and** from your population. Unlike `unassign`, dismissed workers are gone. Use it to free housing or cut food drain when you have more workers than you can feed.
+`dismiss` removes workers from a building **and** from your population. Unlike `unassign`, dismissed workers are gone. Use it to free housing or cut food drain when you have more workers than you can feed. With auto-recruit on, the game recruits into the emptied slots again once housing and food allow.
 
 **View worker status:**
 
@@ -169,8 +191,9 @@ workers
 Opens the Workers panel:
 - **Morale**: the current morale as a colored bar
 - **Summary**: population and housing, idle count, housing left, food drain/tick, net food/tick (color-coded), and either how many workers your food can sustain or a food-deficit warning
-- **Slot Utilization**: filled vs. total slots across all worker buildings, a fill bar, and the buildings with the most free slots
-- **Domain Breakdown**: each domain's class name, with a bar per building showing assigned/slots
+- **Shares**: what auto-recruit is doing (recruiting, off, waiting after your last worker command, no housing left, every worker slot filled, waiting for food, or paused because food ran out), then each domain's share of the workforce (set, or auto), its workers and its slots
+- **Building slots**: filled vs. total slots across all worker buildings, a fill bar, and the buildings with the most free slots
+- **By domain**: each domain's class name, with a bar per building showing assigned/slots
 
 The Workers box in the sidebar is always visible and shows population, idle, housing left, drain and net food at a glance.
 
@@ -185,7 +208,7 @@ When food runs out while your workers are still eating, they begin dying:
 - Deaths are logged in red
 - As soon as there is food in stock again, starvation stops and a recovery message is logged
 
-Overpopulating without the food to back it up costs you workers. The fastest fix is to `dismiss` workers from low-priority buildings, which cuts drain at once, or to move workers onto food buildings with `unassign` and `assign`.
+Overpopulating without the food to back it up costs you workers. The fastest fix is to `dismiss` workers from low-priority buildings, which cuts drain at once, or to move workers onto food buildings with `unassign` and `assign`. Auto-recruit recruits nothing while workers are starving, and while food is short the game sends idle workers to food buildings first.
 
 ---
 
@@ -227,10 +250,11 @@ When you advance, the new rate applies to every worker at once. See [Workers & D
 
 ## Tips
 
-- **Prioritize food workers early.** Every worker eats. A food deficit stalls recruitment and can collapse your economy.
+- **Let the shares do the busywork.** Workers arrive and go to work on their own. Set a share when you want more workers in one domain (`workers share knowledge 40`) or none in it (`workers share military 0`), and `workers share auto` to go back.
+- **Prioritize food early.** Every worker eats. Auto-recruit recruits only while food allows, so early on your food buildings set the pace of growth. A food deficit stalls recruitment and can collapse your economy.
 - **Faith workers before epoch transitions.** Your faith level as a percentage of faith storage sets the epoch roll odds. Keep faith workers assigned ahead of predicted epoch events.
 - **Metallurgy needs both extraction and refining.** Assign masonry workers to extraction buildings to produce raw ore, then metallurgy workers to smelters to refine it.
 - **One pool.** All workers are in one pool regardless of which buildings they staff. Reassign freely between any buildings at any time.
-- **Check the idle count.** Type `status` (or `s`) to see it. Idle workers eat food and produce nothing.
+- **Check the idle count.** Type `status` (or `s`) to see it. Idle workers eat food and produce nothing. The game puts idle workers to work every 5 ticks (and waits a minute after your last worker command), so workers who stay idle have no free slot to go to outside domains set to 0: build more worker buildings.
 - **Use `dismiss` to cut population.** In a food deficit you can't fix, `dismiss` workers from non-critical buildings to reduce drain permanently. `unassign` alone does not help; idle workers still eat.
-- **Use `workers` for the full picture.** The panel shows net food/tick, how many workers your food can sustain, and the per-domain breakdown.
+- **Use `workers` for the full picture.** The panel shows net food/tick, how many workers your food can sustain, your worker shares, what auto-recruit is doing, and the per-domain breakdown.

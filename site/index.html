@@ -381,15 +381,16 @@
                     <div class="step" data-anim>
                         <div class="step-num">03</div>
                         <div class="step-body">
-                            <h3>Recruit and assign workers</h3>
+                            <h3>Staff your buildings</h3>
                             <p>
-                                Assigned workers produce resources every tick.
-                                Idle workers produce nothing.
+                                Workers arrive on their own as housing and food
+                                allow, and go to work by your worker shares.
+                                Steer the split, or assign by hand.
                             </p>
                             <div class="codeblock">
                                 <code
-                                    >recruit 5<br />assign gathering_camp
-                                    3</code
+                                    >workers<br />workers share knowledge
+                                    40</code
                                 >
                             </div>
                         </div>
@@ -486,6 +487,10 @@
                         <div class="cmd-row">
                             <code>unassign &lt;building&gt; [n|all]</code
                             ><span>Return workers to the idle pool</span>
+                        </div>
+                        <div class="cmd-row">
+                            <code>workers share &lt;domain&gt; [percent|auto]</code
+                            ><span>Set a domain's share of your workers</span>
                         </div>
                     </div>
                     <div class="cmd-group">

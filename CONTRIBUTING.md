@@ -250,6 +250,7 @@ go run ./cmd/smoke -scenario saveload -v     # one scenario (comma-separate seve
 go run ./cmd/smoke -scenario progression -seed-base 7 -seeds 1 -trace -v   # one seed, every bot action in smoke-report/trace-7.log
 go run ./cmd/smoke -scenario styles -style idle -tier full   # one play style
 go run ./cmd/smoke -scenario styles -style idle -check-in 8h -max-sim 2000h   # idle check-ins every 8 game-hours, to the first prestige
+go run ./cmd/smoke -scenario styles -style idle -no-shares   # the idle style recruiting and assigning by hand (auto-recruit off), to measure what worker shares are worth
 go run ./cmd/smoke -scenario progression -army on -v   # from the Iron Age the bot keeps 4 of the age's newest military building, bought when one costs at most a quarter of its stock (off by default: the pacing targets assume no army)
 go run ./cmd/smoke -scenario idle -tier full -pacing enforce   # the idle targets: 1h, 3h and 8h check-ins, 3 seeds each (about a minute)
 go run ./cmd/smoke -tier deep -merge a/report.json,b/report.json -pacing enforce   # pool per-seed reports and grade the median
@@ -269,8 +270,8 @@ go run ./cmd/smoke -h                        # every flag
 | `accounts` | fast | In a temp data dir: create two accounts with a save each, switch, export and import (the export must round-trip; tampered or garbage exports are refused), back up, recover from a recovery code (garbage and typo'd codes refused), wipe one account (the other's files stay byte-identical, a backup is written), wipe the active one and restore it from its export. |
 | `perf` | fast | The late-game `BenchmarkTick` and `BenchmarkGetState` (in `game/tick_perf_test.go`) against budgets (250µs and 1ms, generous for CI runners; actuals are reported), and a long run that samples the heap after GC and the size of every collection in `GameState`, failing on unbounded growth. |
 | `ui` | fast: the default and one light theme at 80x24; full: every theme at 80x24 and 100x30 | Runs `TestSmokeUISweep` (every theme at 180x56: splash pages, a new game, every overlay and read-only command) and `TestSmokeUISmallTerminals` (the dashboard and every overlay at small sizes, then live resizes) from `ui/smoke_sweep_test.go` (build tag `smoke`). A panic, a frozen event loop or a blank screen fails it. |
-| `styles` | full | The bot under six styles, 2 seeds each: `greedy`, `idle` (a player who checks in every 3 game-hours, `-check-in` to change it: each visit builds storage, plays rounds until nothing more is worth doing, then leaves a build plan for the hours until the next visit, with wonder overflow on), `harbinger` (buys Appease and Brace), `succumber` (Succumbs every catastrophe), `cosmic` (Invites the Cosmic Era's harbinger, then Succumbs the Last Passage), `army` (keeps a modest garrison, as `-army on`; report-only: graded, never fails). Reports pacing and outcomes per style. |
-| `idle` | full | Check-in players at 1h, 3h and 8h (3 seeds each) who leave a build plan at every visit, graded on the median time to the first prestige against `IdleTargets` in `smoke/idle_targets.go` (3.5, 5 and 8 days); under `-pacing enforce` a miss fails it. Reports the time in each age per interval. `-no-plan` and `-no-overflow` switch off the plan and wonder overflow, to measure what each is worth. |
+| `styles` | full | The bot under six styles, 2 seeds each: `greedy`, `idle` (a player who checks in every 3 game-hours, `-check-in` to change it: each visit builds storage, plays rounds until nothing more is worth doing, then leaves a build plan for the hours until the next visit, with wonder overflow on; it leaves its workers to the game's worker shares on auto, so the game recruits and staffs between visits, and never recruits or assigns by hand), `harbinger` (buys Appease and Brace), `succumber` (Succumbs every catastrophe), `cosmic` (Invites the Cosmic Era's harbinger, then Succumbs the Last Passage), `army` (keeps a modest garrison, as `-army on`; report-only: graded, never fails). Reports pacing and outcomes per style. |
+| `idle` | full | Check-in players at 1h, 3h and 8h (3 seeds each) who leave a build plan at every visit, graded on the median time to the first prestige against `IdleTargets` in `smoke/idle_targets.go` (3.5, 5 and 8 days); under `-pacing enforce` a miss fails it. Reports the time in each age per interval. `-no-plan`, `-no-overflow` and `-no-shares` switch off the plan, wonder overflow and worker shares (with `-no-shares` the bot recruits and assigns by hand at each check-in, with auto-recruit off), to measure what each is worth. |
 | `prestige` | full | Plays for two prestige cycles (reporting how far it got if the budget runs out first), then drives the same mechanics through the engine's test hooks: a Succumb for a legacy bonus and ruins, prestiges from the Modern Age checked against the formula, upgrades measured against a twin engine that bought none, a succumbed Last Passage for the Cosmic Legacy, and the prestiges it must survive. |
 
 #### Tiers and CI
@@ -447,7 +448,7 @@ Example with a 30-wood base cost and scale 1.3: 1st=30, 2nd=39, 3rd=50, 4th=66..
 
 ### Food Economy
 
-Workers: 0.10/tick · Soldiers: 0.25/tick · Astronauts: 0.40/tick. Keep ~⅓ of workforce on food.
+Workers: 0.10/tick · Soldiers: 0.25/tick · Astronauts: 0.40/tick. Keep ~⅓ of workforce on food. The worker shares routine recruits only while the net food rate stays above a small margin: one worker's food, or `recruitFoodMarginShare` (5%) of the food production if that is more (`game/shares.go`).
 
 ### Expeditions
 
@@ -484,9 +485,10 @@ offline_ticks = min(elapsed, 24h) / tick_interval
 # in steps of 30 ticks (game.OfflineStepTicks), each:
 resource_gain = rate × 30 × 0.5     # 50% efficiency, capped at storage; overflow to the wonder bank
 construction and research advance 30 ticks; the build plan starts what the step paid for
+the worker shares routine staffs idle workers and recruits into empty slots (shares.go)
 ```
 
-With an empty plan and nothing under construction this is the old lump sum. See `site/docs/plan.md`.
+With an empty plan, nothing under construction and nothing for the shares routine to do (no idle workers, no empty slot it may recruit into) this is the old lump sum. See `site/docs/plan.md` and `site/docs/workers-and-domains.md` (Worker Shares).
 
 ### Milestone Chains
 

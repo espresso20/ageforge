@@ -7,15 +7,14 @@ AgeForge is a **command-driven idle empire builder**. Resources accumulate passi
 ## The core loop
 
 ```
-Build → Recruit → Assign → Research → Advance → Repeat
+Build → Staff → Research → Advance → Repeat
 ```
 
 1. **Build** structures to add housing, storage and production
-2. **Recruit** workers to grow your population
-3. **Assign** workers to buildings so they produce
-4. **Research** technologies that multiply your output
-5. **Advance** to the next age with `advance` once its requirements are met and the age's wonder is built
-6. **Prestige** once you reach the Modern Age (or later) for permanent bonuses
+2. **Staff** them: workers arrive on their own while housing and food allow and go to work by your [worker shares](workers-and-domains.md#worker-shares). Steer the split with `workers share`, or `recruit` and `assign` by hand
+3. **Research** technologies that multiply your output
+4. **Advance** to the next age with `advance` once its requirements are met and the age's wonder is built
+5. **Prestige** once you reach the Modern Age (or later) for permanent bonuses
 
 ---
 
@@ -74,24 +73,24 @@ Resources hit their storage limit quickly. Add storage:
 build stash
 ```
 
-### 4. Recruit your first workers
+### 4. Watch your first workers arrive
+Once a hut stands, workers come on their own (auto-recruit) and go to the camps' empty slots, as long as your food income can feed them. See them in the Workers panel:
 ```
-recruit 2
+workers
 ```
-You don't pick a domain when you recruit. A worker takes the domain of the building you assign it to.
+A staffed camp makes **5x** what an empty one does (an unstaffed building runs at 20%). You don't pick a domain: a worker takes the domain of the building it works in. You can still `recruit` and `assign` by hand; workers you place stay where you put them.
 
-### 5. Assign food workers to a building
-Idle workers produce nothing. Assign them:
+### 5. Steer the split (optional)
+Every domain starts on auto, following your buildings' worker slots. To lean on one, give it a share of your workforce:
 ```
-assign gathering_camp 3
+workers share knowledge 40
 ```
-A staffed camp makes **5x** what an empty one does (an unstaffed building runs at 20%), so fill each camp's 3 slots.
+See [Worker Shares](workers-and-domains.md#worker-shares) for how the split works.
 
-### 6. Assign knowledge workers to a building
-Knowledge workers produce knowledge. Build a story circle and assign one:
+### 6. Build a story circle for knowledge
+Knowledge workers produce knowledge. Build a story circle and workers come to staff it:
 ```
 build story_circle
-assign story_circle 1
 ```
 A fully staffed story circle makes **+0.2 knowledge/tick**.
 
@@ -141,7 +140,7 @@ For the full morale system see [Morale](morale.md).
 
 ## Workers
 
-Workers fall into 12 domains, each tied to specific buildings. Recruit workers with `recruit [count|max]` and assign them with `assign <building> [count|all]`. A worker takes the domain of the building it is assigned to.
+Workers fall into 12 domains, each tied to specific buildings. Workers arrive on their own while housing and food allow and go to work by your worker shares (`workers share`; every domain on auto by default). You can also recruit with `recruit [count|max]` and assign with `assign <building> [count|all]`. A worker takes the domain of the building it is assigned to.
 
 **Core domains**: food, knowledge, faith, military, trade, engineering
 **Production domains**: lumber, masonry, metallurgy, energy

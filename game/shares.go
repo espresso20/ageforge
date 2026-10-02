@@ -615,7 +615,7 @@ func (ge *GameEngine) popCapLocked() int {
 
 // keepSharesLive is the routine's live run, from doTick: unless it is waiting
 // after a worker command, it staffs and recruits, recalculates the rates
-// when that changed anything, and logs what it did in the Logs panel.
+// when that changed anything, and logs what it did as a routine line.
 func (ge *GameEngine) keepSharesLive() {
 	if ge.workersHeld() {
 		return
@@ -629,7 +629,8 @@ func (ge *GameEngine) keepSharesLive() {
 	ge.addLog(LogRoutine, "Shares: "+c.describe(ge.Workers.TotalPop(), ge.popCapLocked())+".")
 	if before == 0 && c.hired > 0 {
 		// The first recruits of a run (or after everyone died): say once,
-		// where it is read, that this happens on its own.
+		// as a note rather than a routine line, that this happens on its
+		// own.
 		ge.addLog("info", "Workers arrive on their own: the game recruits into empty worker slots while housing and food allow, and puts them to work by your worker shares. Type workers to see them; workers auto-recruit off to recruit by hand.")
 	}
 }

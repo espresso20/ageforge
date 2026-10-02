@@ -85,8 +85,8 @@ Or use `make`:
 
 ### Getting Started
 1. `build hut`: a hut costs 14 wood and gives +10 housing
-2. `recruit 5`: fill the new housing with workers
-3. `build gathering_camp`, then `assign gathering_camp 3`: put workers on food
+2. `build gathering_camp`: workers arrive on their own to staff it, as housing and food allow
+3. `workers`: see them, and steer the split with `workers share knowledge 40`
 4. `gather wood`: top up by hand while production is small
 5. Workers eat food, so keep enough of them producing it
 
@@ -99,6 +99,7 @@ The full list is in the in-game `help` panel and on the [Commands](https://agefo
 - `recruit [count|max]`: recruit workers into free housing
 - `assign <building> [n|all]`: assign workers to a building
 - `unassign <building> [n|all]`: return workers to the idle pool
+- `workers share <domain> [percent|auto]`: set a domain's share of your workers (workers arrive and go to work on their own; every domain follows its buildings' slots until you set one)
 - `research <tech>`: start researching a technology
 - `advance`: advance to the next age once it is ready (`plan advance` does it for you as soon as it is)
 - `plan`: queue builds, techs and trades that start when the resources come in

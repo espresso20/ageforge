@@ -102,7 +102,7 @@ The bar is **green when morale is above 50%** (boosting production), **neutral a
 1. **50% is the safe baseline.** At exactly 50% there is no bonus and no penalty, so early on you can leave morale alone and spend your effort elsewhere. The curve applies as soon as morale drifts off 50%, small at first and larger the further it goes.
 2. **Keep food positive.** Starvation is the most common reason morale slides into a penalty. Fix the food deficit and the drift heals the rest.
 3. **Keep the army in proportion.** Hold military workers comfortably under 30% of population; past that, morale drains faster the more lopsided your army gets. (See [Military](military.md).)
-4. **Don't leave workers idle.** More than half your population sitting idle drains morale on top of wasting their food. Assign them or `dismiss` them.
+4. **Don't leave workers idle.** More than half your population sitting idle drains morale on top of wasting their food. The worker shares routine puts idle workers to work when there are free slots; with no free slots, build worker buildings or `dismiss` them.
 5. **Build worship and culture buildings to go positive.** For the +20% production bonus, build morale-restoring buildings faster than morale drifts back to neutral. Holding it there is ongoing work, not a one-time purchase.
 6. **Build wonders to raise the ceiling.** Each wonder adds +5% to the cap, so the more wonders you have, the higher morale and its bonus can go. (See [Wonders](wonders.md).)
 

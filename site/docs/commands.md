@@ -8,7 +8,7 @@ Command names and the game keys they take (buildings, techs, resources, civiliza
 
 ## The prompt
 
-As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now, affordable first; `plan build` and `plan research` the same, then the next age's; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `sell` buildings you have; `trade` and `plan trade` what the market buys and sells; `diplomacy` the civilizations you have met, and `diplomacy accept` and `plan deal` a civilization's open deal numbers after it; `theme` the themes you have unlocked; `load` your saves.
+As you type, the best completion of the line shows in dim text after the cursor: type `adv` and `ance` appears after it. Completions come from the game, not a fixed list: `build` offers only the buildings you can build in this age, the ones you can afford first; `research` the techs you can start now, affordable first; `plan build` and `plan research` the same, then the next age's; `assign` your built buildings with free worker slots first; `unassign` and `dismiss` buildings with workers in them; `workers share` the worker domains, the ones you have worker buildings in first, and `auto`; `sell` buildings you have; `trade` and `plan trade` what the market buys and sells; `diplomacy` the civilizations you have met, and `diplomacy accept` and `plan deal` a civilization's open deal numbers after it; `theme` the themes you have unlocked; `load` your saves.
 
 | Key | What it does |
 |---|---|
@@ -20,7 +20,7 @@ Commands that can't be undone are never run from a completion: `Enter` on `plan 
 
 ## The log
 
-The log in the main window says what each command did and what happened in the game: a build started, queued or finished, a gather, a sale, workers recruited or assigned, a trade, a research started, a plan item added, and events, milestones, age advances, harbingers, warnings and errors. Each line starts with what happened, with no tick number. Routine confirmations are in the plain text color, so events, warnings and errors stand out.
+The log in the main window says what each command did and what happened in the game: a build started, queued or finished, a gather, a sale, workers recruited or assigned, a worker share set, what the worker shares routine does (`Shares: recruited 3 workers (population 12/20), put 2 idle workers to work.`), a trade, a research started, a plan item added, and events, milestones, age advances, harbingers, warnings and errors. Each line starts with what happened, with no tick number. Routine confirmations are in the plain text color, so events, warnings and errors stand out.
 
 The **Logs** panel (`logs`) shows the same lines with the tick each one happened on and a mark for its kind: `[*]` an event, `[+]` a success, `[i]` a note, `[!]` a warning, `[X]` an error, and `·` a routine confirmation.
 
@@ -97,15 +97,19 @@ plan up 3
 
 | Command | Description |
 |---|---|
-| `recruit [count\|max]` | Recruit workers into free housing. New workers start idle; put them to work with `assign` |
+| `recruit [count\|max]` | Recruit workers into free housing. New workers start idle; put them to work with `assign`, or leave them: a minute later any still idle go to work by your worker shares |
 | `assign <building> [count\|all]` | Assign idle workers to a building (the building sets their domain) |
 | `unassign <building> [count\|all]` | Take workers out of a building and back to idle |
 | `dismiss <building> [count\|all]` | Remove workers from a building and from your population for good |
-| `workers` | Open the **Workers** panel (summary, slot use, domain breakdown) |
+| `workers` | Open the **Workers** panel (summary, worker shares and what auto-recruit is doing, slot use, domain breakdown) |
+| `workers share` | Print each domain's share of your workforce with its workers and slots (`Knowledge: 40% (set), 8 workers in 10 slots`), and whether auto-recruit is on |
+| `workers share <domain> [percent\|auto]` | With a percent from 0 to 100, set that domain's share of your workforce; decimals and a `%` sign are allowed (`workers share lumber 12.5%`), and 0 keeps the domain empty. With `auto`, put the domain back on auto. With neither, print its line |
+| `workers share auto` | Put every domain back on auto, the default: workers follow your buildings' worker slots |
+| `workers auto-recruit [on\|off]` (or `workers autorecruit`) | Bare, show whether auto-recruit is on. `on` (the default) lets the game recruit into empty worker slots while housing and food allow; `off` leaves recruiting to you |
 | `status` (or `s`) | Print a status summary: age and tick, every unlocked resource with amount, storage and rate, and your population by class with idle counts and assignments |
 | `rates` | Print where each resource's rate comes from: buildings, workers, research, events, trade, bonuses and food drain |
 
-You recruit workers into free housing and assign them to buildings, where they take that building's domain class (Gatherer, Lumberjack, etc.). `unassign` returns workers to idle; `dismiss` lowers your population.
+Workers take the domain class of the building they work in (Gatherer, Lumberjack, etc.). You don't have to recruit or assign them yourself. With auto-recruit on (the default), the game recruits into empty worker slots while housing and food allow, and every 5 ticks (10 seconds at 1x) it puts idle workers to work by your **worker shares**. A share is a domain's percent of your whole workforce. Domains without one are on auto and split the rest by their worker slots, so with no shares set your workers follow your buildings. The game never takes a worker out of a building to keep to the shares, except out of a domain set to 0, so your own `assign` and `unassign` stick. After any worker command it waits a minute before it places anyone. `unassign` returns workers to idle; `dismiss` lowers your population. The full rules are in [Worker Shares](workers-and-domains.md#worker-shares).
 
 ```
 recruit
@@ -118,6 +122,13 @@ unassign shrine all
 dismiss shrine 2
 dismiss barracks all
 workers
+workers share
+workers share knowledge 40
+workers share lumber 12.5%
+workers share military 0
+workers share knowledge auto
+workers share auto
+workers auto-recruit off
 ```
 
 See [Workers & Domains (Reference)](workers-and-domains.md) for the full domain table and efficiency formula.
