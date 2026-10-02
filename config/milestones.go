@@ -858,24 +858,26 @@ func Milestones() []MilestoneDef {
 				{Type: "instant_resource", Target: "food", Value: 30},
 			},
 		},
-		// survivor: raised to 10,000 ticks
+		// survivor: 10,000 ticks on the base curve, stretched with the ages
+		// (about 14h 26m on the one-week curve)
 		{
 			Name: "Survivor", Key: "survivor",
-			Description: "Play for ~5h 33m.",
-			Flavor:      "Ten thousand ticks survived. Whatever you're doing, it's apparently working.",
+			Description: "Play for ~14h 26m.",
+			Flavor:      "Twenty-six thousand ticks survived. Whatever you're doing, it's apparently working.",
 			Category:    "epoch",
-			MinTick:     10000,
+			MinTick:     int(10000 * PacingStretch),
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
 			},
 		},
-		// enduring_civilization: raised to 50,000 ticks
+		// enduring_civilization: 50,000 ticks on the base curve, stretched with
+		// the ages (about 3 days on the one-week curve)
 		{
 			Name: "Enduring Civilization", Key: "enduring_civilization",
-			Description: "Play for ~1d 3h.",
-			Flavor:      "Fifty thousand ticks. Other civilizations are now studying you in their history classes.",
+			Description: "Play for ~3d.",
+			Flavor:      "A hundred and thirty thousand ticks. Other civilizations are now studying you in their history classes.",
 			Category:    "epoch", Hidden: true,
-			MinTick: 50000,
+			MinTick: int(50000 * PacingStretch),
 			Rewards: []Effect{
 				{Type: "permanent_bonus", Target: "production_all", Value: 0.05},
 			},

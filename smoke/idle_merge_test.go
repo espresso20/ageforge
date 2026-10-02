@@ -85,8 +85,10 @@ func TestMergeProgression(t *testing.T) {
 		return &back
 	}
 	e := &Env{Tier: TierDeep, Pacing: PacingEnforce}
+	bronze := PacingTargets["bronze_age"].Seconds()
+	onTarget, near, slow := bronze, 1.1*bronze, 7.4*bronze
 	// One seed's Bronze Age is far too slow; the median of three is on target.
-	sess, err := MergeProgression(e, []*Session{part(1, 5400), part(2, 40000), part(3, 6000)})
+	sess, err := MergeSessions(e, []*Session{part(1, onTarget), part(2, slow), part(3, near)})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -98,10 +100,67 @@ func TestMergeProgression(t *testing.T) {
 		t.Fatalf("want 3 pooled runs, got %+v", prog)
 	}
 	// Two of three slow: the median fails.
-	if sess, _ = MergeProgression(e, []*Session{part(1, 40000), part(2, 40000), part(3, 6000)}); !sess.Failed {
+	if sess, _ = MergeSessions(e, []*Session{part(1, slow), part(2, slow), part(3, near)}); !sess.Failed {
 		t.Errorf("median past the band, want a failure")
 	}
-	if _, err := MergeProgression(e, []*Session{part(1, 5400), part(1, 5400)}); err == nil {
+	if _, err := MergeSessions(e, []*Session{part(1, onTarget), part(1, onTarget)}); err == nil {
 		t.Errorf("a seed reported twice must be refused")
+	}
+}
+
+// TestMergeShards: the nightly's shards merge into one session: progression
+// pooled across the shards that played it, static run again, every other
+// scenario carried over with its verdict, an empty shard (nothing selected)
+// contributing nothing, and a scenario from two shards refused.
+func TestMergeShards(t *testing.T) {
+	roundTrip := func(s *Session) *Session {
+		data, err := json.Marshal(s)
+		if err != nil {
+			t.Fatal(err)
+		}
+		var back Session
+		if err := json.Unmarshal(data, &back); err != nil {
+			t.Fatal(err)
+		}
+		return &back
+	}
+	prog := func(seed int64) *Session {
+		cfg := DefaultConfig()
+		cfg.Seeds = []int64{seed}
+		runs := []*RunResult{{Seed: seed, Outcome: OutcomeDone, FinalAge: "bronze_age", Ages: []AgeSplit{
+			{Cycle: 1, Age: "primitive_age", Seconds: 900}, {Cycle: 1, Age: "stone_age", Seconds: 2700},
+		}}}
+		res := &Result{Name: "progression", Status: StatusPass, Progression: []*Summary{NewSummary("progression", cfg, time.Now(), runs)}}
+		return roundTrip(&Session{Tier: TierFull, Pacing: PacingReport, Started: time.Now(), Scenarios: []*Result{res}})
+	}
+	other := func(results ...*Result) *Session {
+		return roundTrip(&Session{Tier: TierFull, Pacing: PacingEnforce, Started: time.Now(), Scenarios: results})
+	}
+	idle := &Result{Name: "idle", Status: StatusFail, Summary: "1h: slow", Failures: []Finding{{Check: "idle_target", Message: "slow"}}}
+	fuzz := &Result{Name: "fuzz", Status: StatusPass, Summary: "no crashes"}
+	empty := other()
+	e := &Env{Tier: TierFull, Pacing: PacingEnforce}
+	sess, err := MergeSessions(e, []*Session{prog(1), prog(2), other(idle), other(fuzz), empty})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var names []string
+	for _, r := range sess.Scenarios {
+		names = append(names, r.Name+":"+r.Status)
+	}
+	if got := strings.Join(names, " "); got != "static:pass progression:pass fuzz:pass idle:fail" {
+		t.Errorf("merged scenarios = %s", got)
+	}
+	if !sess.Failed {
+		t.Error("a carried failure (idle) did not fail the merged session")
+	}
+	if p := sess.pacing(); p == nil || len(p.Runs) != 2 {
+		t.Errorf("progression not pooled across the shards: %+v", p)
+	}
+	if _, err := MergeSessions(e, []*Session{other(fuzz), other(fuzz)}); err == nil {
+		t.Error("a scenario from two shards must be refused")
+	}
+	if _, err := MergeSessions(e, []*Session{empty, other()}); err == nil {
+		t.Error("shards holding nothing at all must be refused")
 	}
 }

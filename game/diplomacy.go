@@ -9,7 +9,10 @@ import (
 )
 
 // Diplomacy tuning constants. Kept here (not in config) because they govern
-// engine-side cadence rather than per-civ data.
+// engine-side cadence rather than per-civ data. Every tick count below is
+// typed for the base curve; Tick stretches it for the current age
+// (config.StretchTicks), so an age sees as much drift, lending and raiding as
+// it did before the one-week curve.
 const (
 	// Opinion bounds.
 	opinionMin = -100
@@ -18,6 +21,15 @@ const (
 	// Passive personality drift fires on this tick cadence (every 25 ticks ≈
 	// 50s of real time) so drift is gradual and does not swamp embassy gains.
 	driftInterval = 25
+
+	// A rival or embargoed civ loses 5 opinion every rivalDecayInterval
+	// ticks, and every discovered civ not at war drifts 1 toward 0 every
+	// opinionDecayInterval ticks.
+	rivalDecayInterval   = 50
+	opinionDecayInterval = 100
+
+	// A civ at war raids every warRaidInterval ticks.
+	warRaidInterval = 40
 
 	// War starts only when opinion is below this AND a provocation threshold is
 	// crossed. Both conditions are required — anger alone never starts a war.
@@ -581,22 +593,24 @@ func (dm *DiplomacyManager) Tick(rng *rand.Rand, age string, ageOrder map[string
 	}
 
 	// Personality drift on the slow cadence.
-	if tick%driftInterval == 0 {
+	if tick%config.StretchTicks(age, driftInterval) == 0 {
 		dm.applyPersonalityDrift(tradedRecently)
 	}
 
 	// Status-driven decay + natural drift toward 0.
+	rivalDecay, opinionDecay := config.StretchTicks(age, rivalDecayInterval), config.StretchTicks(age, opinionDecayInterval)
 	for _, fs := range dm.factions {
 		if !fs.Discovered {
 			continue
 		}
-		// Rival/embargo: -5 per 50 ticks.
-		if tick%50 == 0 && (fs.Status == "rival" || fs.Status == "embargo") {
+		// Rival/embargo: -5 per rivalDecayInterval ticks.
+		if tick%rivalDecay == 0 && (fs.Status == "rival" || fs.Status == "embargo") {
 			fs.Opinion -= 5
 			clampOpinion(fs)
 		}
-		// Natural drift toward 0 every 100 ticks (does not override war hostility).
-		if tick%100 == 0 && !fs.AtWar {
+		// Natural drift toward 0 every opinionDecayInterval ticks (does not
+		// override war hostility).
+		if tick%opinionDecay == 0 && !fs.AtWar {
 			if fs.Opinion > 0 {
 				fs.Opinion--
 			} else if fs.Opinion < 0 {
@@ -606,18 +620,19 @@ func (dm *DiplomacyManager) Tick(rng *rand.Rand, age string, ageOrder map[string
 	}
 
 	// Worker-lending lifecycle: return due batches, then maybe lend new ones.
-	messages = append(messages, dm.processLending(rng, tick)...)
+	messages = append(messages, dm.processLending(rng, tick, age)...)
 
 	// War: raids + auto-end (wait-them-out) timer.
-	messages = append(messages, dm.processWar(tick)...)
+	messages = append(messages, dm.processWar(tick, age)...)
 
 	return messages
 }
 
 // processLending returns any lent batches whose ReturnTick has passed (queuing
 // the worker removal), then rolls a small chance for high-opinion peaceful civs
-// to lend new workers. Returns log messages for both directions.
-func (dm *DiplomacyManager) processLending(rng *rand.Rand, tick int) []string {
+// to lend new workers. Returns log messages for both directions. The roll's
+// cadence and a loan's length are stretched for age.
+func (dm *DiplomacyManager) processLending(rng *rand.Rand, tick int, age string) []string {
 	var messages []string
 	defs := dm.factionDefs
 
@@ -639,9 +654,10 @@ func (dm *DiplomacyManager) processLending(rng *rand.Rand, tick int) []string {
 
 	// Roll a new lend: only on a slow cadence, and only for peaceful, friendly+
 	// civs with healthy opinion that aren't at war.
-	if tick%driftInterval != 0 {
+	if tick%config.StretchTicks(age, driftInterval) != 0 {
 		return messages
 	}
+	lendTicks := config.StretchTicks(age, lendDurationTicks)
 	for _, def := range dm.factionList {
 		key := def.Key
 		fs, ok := dm.factions[key]
@@ -664,11 +680,11 @@ func (dm *DiplomacyManager) processLending(rng *rand.Rand, tick int) []string {
 		batch := LentWorkerBatch{
 			FactionKey: key,
 			Count:      count,
-			ReturnTick: tick + lendDurationTicks,
+			ReturnTick: tick + lendTicks,
 			Permanent:  permanent,
 		}
 		dm.lentBatches = append(dm.lentBatches, batch)
-		msg := lendMessage(def, count, permanent)
+		msg := lendMessage(def, count, permanent, lendTicks)
 		dm.pendingLends = append(dm.pendingLends, LendRequest{FactionKey: key, Count: count, Message: msg})
 		messages = append(messages, msg)
 	}
@@ -687,9 +703,11 @@ func (dm *DiplomacyManager) hasLentBatch(factionKey string) bool {
 
 // processWar fires periodic raids from civs at war (scaled to their Strength)
 // and auto-ends wars that have gone warCooldownTicks without a fresh
-// provocation. Returns log messages; resource losses are queued for the engine.
-func (dm *DiplomacyManager) processWar(tick int) []string {
+// provocation, both stretched for age. Returns log messages; resource losses
+// are queued for the engine.
+func (dm *DiplomacyManager) processWar(tick int, age string) []string {
 	var messages []string
+	cooldown, raidEvery := config.StretchTicks(age, warCooldownTicks), config.StretchTicks(age, warRaidInterval)
 	for _, def := range dm.factionList {
 		key := def.Key
 		fs, ok := dm.factions[key]
@@ -697,13 +715,14 @@ func (dm *DiplomacyManager) processWar(tick int) []string {
 			continue
 		}
 		// Wait-them-out: peace after a provocation-free cooldown.
-		if tick-fs.LastProvocationTick >= warCooldownTicks {
+		if tick-fs.LastProvocationTick >= cooldown {
 			dm.endWar(fs)
 			messages = append(messages, fmt.Sprintf("The war with the %s has burned out. An uneasy peace settles.", def.Name))
 			continue
 		}
-		// Raid every 40 ticks while at war. Severity scales with Strength.
-		if tick%40 == 0 {
+		// Raid every warRaidInterval ticks while at war. Severity scales with
+		// Strength.
+		if tick%raidEvery == 0 {
 			res := def.Specialty
 			if res == "" {
 				res = "gold"
@@ -783,7 +802,7 @@ func (dm *DiplomacyManager) Snapshot(age string, ageOrder map[string]int) Diplom
 			info.AtWar = fs.AtWar
 			info.Deals = dealInfos(fs, age)
 			info.DealsBlocked = dealBlocked(*fs)
-			info.DealRefreshIn = max(dealRefreshTicks-fs.DealTicks, 0)
+			info.DealRefreshIn = max(dealRefreshFor(age)-fs.DealTicks, 0)
 		} else if ageOrder[age] >= ageOrder[def.MinAge] {
 			// Eligible (age floor met) but not yet met: discovery is triggered by
 			// running expeditions, with a late age fallback (see DiscoverFactions).
@@ -898,10 +917,10 @@ func firstContactMessage(def config.FactionDef) string {
 }
 
 // lendMessage builds the line for a worker loan and says whether the workers
-// go home. The backstory belongs to first contact only, so it is not
-// repeated here. The duration is at base speed (the manager has no clock).
-func lendMessage(def config.FactionDef, count int, permanent bool) string {
-	tail := fmt.Sprintf("(they return in %s)", DurationText(lendDurationTicks, BaseTickInterval))
+// go home after ticks. The backstory belongs to first contact only, so it is
+// not repeated here. The duration is at base speed (the manager has no clock).
+func lendMessage(def config.FactionDef, count int, permanent bool, ticks int) string {
+	tail := fmt.Sprintf("(they return in %s)", DurationText(ticks, BaseTickInterval))
 	if permanent {
 		tail = "(they stay for good)"
 	}

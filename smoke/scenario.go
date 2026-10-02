@@ -64,6 +64,12 @@ type Env struct {
 	Strict bool
 	// FuzzCommands overrides the fuzz scenario's command count when > 0.
 	FuzzCommands int
+	// Only and Skip narrow the scenarios RunScenarios picks (after the tier
+	// and the names asked for): with Only set, a scenario outside it is
+	// dropped, and one in Skip always is. The nightly's CI shards use them
+	// to split the full tier between jobs; a shard left with nothing writes
+	// an empty report.
+	Only, Skip []string
 	// Logf prints progress; nil is silent.
 	Logf func(format string, args ...interface{})
 }
@@ -230,14 +236,26 @@ func RunScenarios(e *Env, names []string) (*Session, error) {
 	for _, s := range Scenarios() {
 		known[s.Name] = true
 	}
-	for n := range want {
-		if !known[n] {
-			return nil, fmt.Errorf("unknown scenario %q (have: %s)", n, strings.Join(ScenarioNames(), ", "))
+	only, skip := map[string]bool{}, map[string]bool{}
+	for _, n := range e.Only {
+		only[n] = true
+	}
+	for _, n := range e.Skip {
+		skip[n] = true
+	}
+	for _, set := range []map[string]bool{want, only, skip} {
+		for n := range set {
+			if !known[n] {
+				return nil, fmt.Errorf("unknown scenario %q (have: %s)", n, strings.Join(ScenarioNames(), ", "))
+			}
 		}
 	}
 	sess := &Session{Tier: e.Tier, Pacing: e.Pacing, Started: time.Now()}
 	for _, sc := range Scenarios() {
 		if !all && !want[sc.Name] {
+			continue
+		}
+		if (len(only) > 0 && !only[sc.Name]) || skip[sc.Name] {
 			continue
 		}
 		res := &Result{Name: sc.Name}

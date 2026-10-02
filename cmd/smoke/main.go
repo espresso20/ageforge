@@ -36,9 +36,11 @@ func main() {
 
 func run() int {
 	tier := flag.String("tier", smoke.TierFast, "fast (per PR, a few minutes), full (nightly: every scenario, deeper, more seeds) or deep (weekly: progression to a Quantum Age prestige)")
-	merge := flag.String("merge", "", "comma-separated report.json files (or directories holding one) whose progression runs are pooled and graded again under -pacing, instead of running anything (the weekly job's per-seed shards)")
+	merge := flag.String("merge", "", "comma-separated report.json files (or directories holding one) to merge instead of running anything: progression runs are pooled and graded again under -pacing, static runs again, other scenarios carry over (the weekly job's per-seed jobs, the nightly's shards)")
 	mode := flag.String("mode", "", "deprecated alias for -tier (quick = fast, full = full)")
 	scenarios := flag.String("scenario", "all", "comma-separated scenarios to run, or all (the tier's set); see -list")
+	only := flag.String("only", "", "comma-separated scenarios: of those -scenario picks, run only these (a CI shard's share; nothing left writes an empty report)")
+	skip := flag.String("skip", "", "comma-separated scenarios: of those -scenario picks, leave these out (a CI shard's share)")
 	list := flag.Bool("list", false, "list the scenarios and exit")
 	pacing := flag.String("pacing", smoke.PacingReport, "report (grade ages against smoke/targets.go, never fail) or enforce (fail when a first-cycle age's median across seeds leaves the band, or any age passes its timeout; progression only)")
 	seeds := flag.Int("seeds", 0, "seeds per bot scenario (0 = the scenario's tier default)")
@@ -179,12 +181,8 @@ func run() int {
 		}
 	}
 
-	var names []string
-	for _, n := range strings.Split(*scenarios, ",") {
-		if n = strings.TrimSpace(n); n != "" {
-			names = append(names, n)
-		}
-	}
+	names := splitList(*scenarios)
+	env.Only, env.Skip = splitList(*only), splitList(*skip)
 	var sess *smoke.Session
 	var err error
 	if *merge != "" {
@@ -213,6 +211,9 @@ func run() int {
 	for _, r := range sess.Scenarios {
 		parts = append(parts, fmt.Sprintf("%s %s", r.Name, r.Status))
 	}
+	if len(parts) == 0 {
+		parts = append(parts, "no scenario selected")
+	}
 	fmt.Printf("smoke %s (%s tier, %s): %s. Report: %s\n", verdict, sess.Tier,
 		(time.Duration(sess.WallMs) * time.Millisecond).Round(time.Second), strings.Join(parts, ", "), filepath.Join(*outDir, "report.md"))
 	if sess.Failed {
@@ -222,7 +223,7 @@ func run() int {
 }
 
 // mergeReports reads the listed report.json files (a directory stands for
-// the report.json inside it) and merges their progression runs.
+// the report.json inside it) and merges them (smoke.MergeSessions).
 func mergeReports(env *smoke.Env, list string) (*smoke.Session, error) {
 	var parts []*smoke.Session
 	for _, p := range strings.Split(list, ",") {
@@ -241,7 +242,18 @@ func mergeReports(env *smoke.Env, list string) (*smoke.Session, error) {
 	if env.Logf != nil {
 		env.Logf("merging %d report(s)", len(parts))
 	}
-	return smoke.MergeProgression(env, parts)
+	return smoke.MergeSessions(env, parts)
+}
+
+// splitList splits a comma-separated flag value, dropping blanks.
+func splitList(v string) []string {
+	var out []string
+	for _, n := range strings.Split(v, ",") {
+		if n = strings.TrimSpace(n); n != "" {
+			out = append(out, n)
+		}
+	}
+	return out
 }
 
 // repoRoot walks up from the working directory to the directory holding

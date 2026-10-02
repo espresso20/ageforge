@@ -43,10 +43,11 @@ import (
 //   - Size. A lot is 1.5 price units of the age, times 0.9 + 0.1 per point of
 //     strength, the standing and personality factors and a 0.75-1.25 roll,
 //     capped so the goods fit in half your store and the price in 80% of it.
-//   - Refresh. Offers rotate every dealRefreshTicks ticks of play and on an
-//     age advance. The timer counts ticks of live play only: offline catch-up
-//     does not advance it, so a player who checks in finds the offers they
-//     left (and a plan can take one while they are away).
+//   - Refresh. Offers rotate every dealRefreshTicks ticks of play (stretched
+//     for the age, dealRefreshFor) and on an age advance. The timer counts
+//     ticks of live play only: offline catch-up does not advance it, so a
+//     player who checks in finds the offers they left (and a plan can take
+//     one while they are away).
 //   - Determinism. Rolls come off the engine's seeded rng in roster order,
 //     three draws per slot whether or not the slot yields a deal. A blocked
 //     civ draws nothing. Offers, taken flags and the timer are saved.
@@ -62,7 +63,7 @@ const (
 // Deal tuning, grouped so balancing is a data edit.
 const (
 	// dealRefreshTicks is how many ticks of live play an offer set lasts
-	// (an hour at 1x).
+	// (an hour at 1x) on the base curve; dealRefreshFor stretches it.
 	dealRefreshTicks = 1800
 
 	// dealHostileOpinion: at or below this opinion a civ will not trade.
@@ -529,22 +530,30 @@ func marketSellsFor(gives []string, res, age string) bool {
 	return false
 }
 
+// dealRefreshFor is how long an offer set lasts in age: dealRefreshTicks
+// stretched like the age (config.StretchTicks), so an age sees as many
+// rotations as it did before the one-week curve.
+func dealRefreshFor(age string) int {
+	return config.StretchTicks(age, dealRefreshTicks)
+}
+
 // ===== Engine side =====
 
 // tickFactionDeals advances every met civ's offer timer by a tick of live
 // play and re-rolls the offers that are due: never rolled, rolled for an
-// earlier age, or dealRefreshTicks old. Roster order, so the rng draws are
+// earlier age, or dealRefreshFor(age) old. Roster order, so the rng draws are
 // the same every run. Called from processDiplomacy under the write lock;
 // offline catch-up never calls it (see the rules above).
 func (ge *GameEngine) tickFactionDeals() {
 	var env *dealEnv
+	refresh := dealRefreshFor(ge.age)
 	for _, def := range ge.Diplomacy.factionList {
 		fs, ok := ge.Diplomacy.factions[def.Key]
 		if !ok || !fs.Discovered {
 			continue
 		}
 		fs.DealTicks++
-		if fs.DealRound > 0 && fs.DealsFor == ge.age && fs.DealTicks < dealRefreshTicks {
+		if fs.DealRound > 0 && fs.DealsFor == ge.age && fs.DealTicks < refresh {
 			continue
 		}
 		if env == nil {

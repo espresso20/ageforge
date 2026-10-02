@@ -14,7 +14,7 @@ prestige confirm yes
 
 You can prestige from the **Modern Age (Age 12)** or any later age. There is no upper limit: if you push on to the Quantum Age before prestiging, you earn more points.
 
-At 1x speed a run is paced to reach the Modern Age in about **3 days of game time** (the smoke-test bot gets there in about 2.4 days). The ages before it range from 15 minutes (Primitive) to 12 hours (Atomic); the Modern Age and the ages after it take 12 to 24 hours each. The game grants up to 24 hours of offline progress, so time away counts.
+At 1x speed a run is paced to reach the Modern Age in about **a week of game time** (the smoke-test bot gets there in about 5.3 days). The ages before it range from 15 minutes (Primitive) to 31h 12m (Atomic); the Modern Age and the ages after it take 31 to 62 hours each. The game grants up to 24 hours of offline progress, so time away counts.
 
 Prestige is refused while a [catastrophe](catastrophe.md) is pending. Type `catastrophe` and choose Endure or Succumb first. From the Digital or Neon Era, a doom fated for your era that hasn't struck yet ends with the run when you prestige.
 

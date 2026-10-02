@@ -4,6 +4,7 @@ import (
 	"math"
 	"strings"
 	"testing"
+	"time"
 )
 
 // TestAgeTargetsCoverEveryAge: every age has a target, so every building and
@@ -12,6 +13,77 @@ func TestAgeTargetsCoverEveryAge(t *testing.T) {
 	for _, a := range Ages() {
 		if AgeTargets[a.Key] <= 0 {
 			t.Errorf("age %s has no entry in AgeTargets", a.Key)
+		}
+	}
+}
+
+// TestAgeTargetsGolden pins the one-week curve: the base targets × 2.6 from
+// the Bronze Age on, the Primitive and Stone Ages as they were. A change here
+// changes every producer's rate, so it should be deliberate (and smoke's copy,
+// smoke/targets.go, must follow).
+func TestAgeTargetsGolden(t *testing.T) {
+	m, h := time.Minute, time.Hour
+	want := map[string]time.Duration{
+		"primitive_age": 15 * m, "stone_age": 45 * m, "bronze_age": 3*h + 54*m,
+		"iron_age": 6*h + 30*m, "classical_age": 9*h + 6*m, "medieval_age": 11*h + 42*m,
+		"renaissance_age": 15*h + 36*m, "colonial_age": 18*h + 12*m, "industrial_age": 20*h + 48*m,
+		"victorian_age": 23*h + 24*m, "electric_age": 26 * h, "atomic_age": 31*h + 12*m,
+		"modern_age": 31*h + 12*m, "information_age": 36*h + 24*m, "digital_age": 41*h + 36*m,
+		"cyberpunk_age": 46*h + 48*m, "fusion_age": 52 * h, "space_age": 57*h + 12*m,
+		"interstellar_age": 62*h + 24*m, "galactic_age": 62*h + 24*m, "quantum_age": 62*h + 24*m,
+		"transcendent_age": 62*h + 24*m,
+	}
+	if len(AgeTargets) != len(want) {
+		t.Errorf("AgeTargets has %d ages, want %d", len(AgeTargets), len(want))
+	}
+	for age, d := range want {
+		if got := AgeTargets[age]; got != d {
+			t.Errorf("AgeTargets[%s] = %v, want %v", age, got, d)
+		}
+	}
+	var toModern time.Duration
+	for _, a := range AgeOrder() {
+		if a == "modern_age" {
+			break
+		}
+		toModern += AgeTargets[a]
+	}
+	if toModern < 160*h || toModern > 175*h {
+		t.Errorf("targets to the Modern Age sum to %v; the curve is about a week", toModern)
+	}
+}
+
+// TestAgeStretch pins the clock factor: 1 for the Primitive and Stone Ages
+// and anything unknown, PacingStretch from the Bronze Age on, and
+// StretchTicks rounds to the nearest tick.
+func TestAgeStretch(t *testing.T) {
+	if PacingStretch != 2.6 {
+		t.Errorf("PacingStretch = %v, want 2.6 (the one-week curve)", PacingStretch)
+	}
+	for i, a := range AgeOrder() {
+		want := PacingStretch
+		if i < 2 {
+			want = 1
+		}
+		if got := AgeStretch(a); got != want {
+			t.Errorf("AgeStretch(%s) = %v, want %v", a, got, want)
+		}
+	}
+	for _, a := range []string{"", "no_such_age"} {
+		if got := AgeStretch(a); got != 1 {
+			t.Errorf("AgeStretch(%q) = %v, want 1", a, got)
+		}
+	}
+	for _, c := range []struct {
+		age        string
+		ticks, out int
+	}{
+		{"stone_age", 216, 216}, {"bronze_age", 216, 562}, {"iron_age", 25, 65}, {"atomic_age", 40, 104},
+		{"modern_age", 300, 780}, {"bronze_age", 150, 390}, {"bronze_age", 600, 1560}, {"iron_age", 0, 0},
+		{"iron_age", 10000, 26000}, {"iron_age", 50000, 130000},
+	} {
+		if got := StretchTicks(c.age, c.ticks); got != c.out {
+			t.Errorf("StretchTicks(%s, %d) = %d, want %d", c.age, c.ticks, got, c.out)
 		}
 	}
 }

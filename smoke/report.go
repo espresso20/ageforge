@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/game"
 )
 
 // Summary is a whole session: the config and every seed's result.
@@ -27,6 +28,107 @@ type Summary struct {
 	// PacingFailures are the first-cycle ages whose median across seeds left
 	// the band, under -pacing enforce (see NewSummary).
 	PacingFailures []PacingRow `json:"pacing_failures,omitempty"`
+	// FirstRun is the first run to the Modern Age (nil when no run got
+	// there, as in the fast tier, which stops at the Bronze Age).
+	// FirstRunFailed marks a median outside FirstRunLow-FirstRunHigh under
+	// -pacing enforce.
+	FirstRun       *FirstRunRow `json:"first_run,omitempty"`
+	FirstRunFailed bool         `json:"first_run_failed,omitempty"`
+}
+
+// FirstRunRow is the 1x time from a fresh start to entering the Modern Age
+// (the first prestige) in the first cycle, across seeds, against the band
+// FirstRunLow to FirstRunHigh. A run that never got there counts as slower
+// than every run that did, so most seeds missing it is a slow median.
+type FirstRunRow struct {
+	Samples    int     `json:"samples"`
+	Reached    int     `json:"reached"`
+	MinSecs    float64 `json:"min_seconds"`
+	MedianSecs float64 `json:"median_seconds"` // -1 when the median run never got there
+	MaxSecs    float64 `json:"max_seconds"`
+	Verdict    string  `json:"verdict"`
+}
+
+// firstRunToModern is the 1x time run r took from its start to entering the
+// Modern Age in its first cycle, and whether it got there: every first-cycle
+// age before the first visit to the Modern Age or later, replays (Succumb)
+// included.
+func firstRunToModern(r *RunResult, order map[string]int) (float64, bool) {
+	modern := order[game.PrestigeMinAge]
+	secs := 0.0
+	for _, a := range r.Ages {
+		if a.Cycle != 1 {
+			continue
+		}
+		if order[a.Age] >= modern {
+			return secs, true
+		}
+		secs += a.Seconds
+	}
+	return secs, false
+}
+
+// newFirstRun grades the runs' first runs to the Modern Age; nil when none
+// got there.
+func newFirstRun(runs []*RunResult, order map[string]int) *FirstRunRow {
+	var got []float64
+	missed := 0
+	for _, r := range runs {
+		if secs, ok := firstRunToModern(r, order); ok {
+			got = append(got, secs)
+		} else {
+			missed++
+		}
+	}
+	if len(got) == 0 {
+		return nil
+	}
+	lo, _, hi := spread(got)
+	row := &FirstRunRow{Samples: len(runs), Reached: len(got), MinSecs: lo, MaxSecs: hi}
+	// The median over every run, a missed one ranking after every reached one.
+	all := append([]float64(nil), got...)
+	sort.Float64s(all)
+	for i := 0; i < missed; i++ {
+		all = append(all, -1)
+	}
+	n := len(all)
+	mid := func(i int) float64 { return all[i] }
+	switch {
+	case n%2 == 1:
+		row.MedianSecs = mid(n / 2)
+	case mid(n/2) < 0 || mid(n/2-1) < 0:
+		row.MedianSecs = -1
+	default:
+		row.MedianSecs = (mid(n/2-1) + mid(n/2)) / 2
+	}
+	switch {
+	case row.MedianSecs < 0 || row.MedianSecs > FirstRunHigh.Seconds():
+		row.Verdict = VerdictSlow
+	case row.MedianSecs < FirstRunLow.Seconds():
+		row.Verdict = VerdictFast
+	default:
+		row.Verdict = VerdictOK
+	}
+	return row
+}
+
+// writeFirstRun renders the first-run line under a pacing table.
+func (s *Summary) writeFirstRun(sb *strings.Builder) {
+	f := s.FirstRun
+	if f == nil {
+		return
+	}
+	med := "never (most seeds did not get there)"
+	if f.MedianSecs >= 0 {
+		med = days(f.MedianSecs)
+	}
+	fmt.Fprintf(sb, "\nFirst run to the Modern Age: median %s (%s to %s; %d of %d seeds got there), band %s to %s: %s.\n",
+		med, days(f.MinSecs), days(f.MaxSecs), f.Reached, f.Samples, days(FirstRunLow.Seconds()), days(FirstRunHigh.Seconds()), verdictMark(f.Verdict))
+}
+
+// days formats 1x seconds as days to two decimals ("5.30 days").
+func days(secs float64) string {
+	return fmt.Sprintf("%.2f days", secs/86400)
 }
 
 // ConfigJSON is Config with durations in seconds.
@@ -69,6 +171,9 @@ type PacingRow struct {
 	Ratio      float64 `json:"ratio,omitempty"`
 	Verdict    string  `json:"verdict,omitempty"`
 	TimedOut   bool    `json:"timed_out,omitempty"`
+	// QuietSecs is the median across seeds of the age's longest quiet
+	// stretch (AgeSplit.QuietSecs; the longest of a seed's visits).
+	QuietSecs float64 `json:"quiet_median_seconds,omitempty"`
 }
 
 // NewSummary aggregates results.
@@ -92,18 +197,20 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 	s.Gates, s.Slack = StaticGates()
 	secs := map[key][]float64{}
 	ticks := map[key][]float64{}
+	quiet := map[key][]float64{}
 	timedOut := map[key]bool{}
 	for _, r := range runs {
 		s.Anomalies += len(r.Anomalies)
 		if r.Failed() {
 			s.Failed = true
 		}
-		// Sum repeated visits to an age (Succumb) into one sample per seed.
-		perSeed := map[key][2]float64{}
+		// Sum repeated visits to an age (Succumb) into one sample per seed;
+		// its quiet stretch is the longest of the visits.
+		perSeed := map[key][3]float64{}
 		for _, a := range r.Ages {
 			k := key{a.Cycle, a.Age, a.Unfinished, a.Prestiged}
 			v := perSeed[k]
-			perSeed[k] = [2]float64{v[0] + a.Seconds, v[1] + float64(a.Ticks)}
+			perSeed[k] = [3]float64{v[0] + a.Seconds, v[1] + float64(a.Ticks), max(v[2], a.QuietSecs)}
 			if a.TimedOut {
 				timedOut[k] = true
 			}
@@ -111,6 +218,7 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 		for k, v := range perSeed {
 			secs[k] = append(secs[k], v[0])
 			ticks[k] = append(ticks[k], v[1])
+			quiet[k] = append(quiet[k], v[2])
 		}
 	}
 	order := map[string]int{}
@@ -120,10 +228,11 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 	for k, v := range secs {
 		lo, med, hi := spread(v)
 		_, tmed, _ := spread(ticks[k])
+		_, qmed, _ := spread(quiet[k])
 		row := PacingRow{
 			Cycle: k.cycle, Age: k.age, Unfinished: k.open, Prestiged: k.prestiged, Samples: len(v),
 			MinSecs: lo, MedianSecs: med, MaxSecs: hi, MedianTicks: int(tmed),
-			Verdict: Verdict(k.age, med, !k.open), TimedOut: timedOut[k],
+			Verdict: Verdict(k.age, med, !k.open), TimedOut: timedOut[k], QuietSecs: qmed,
 		}
 		if k.prestiged {
 			row.Verdict = VerdictNone
@@ -165,6 +274,13 @@ func NewSummary(mode string, cfg Config, started time.Time, runs []*RunResult) *
 				s.Failed = true
 			}
 		}
+	}
+	// The first run to the Modern Age, graded like an age: on its median,
+	// and failing the set only under enforce (only the progression scenario
+	// runs paced; the styles scenario reports it).
+	s.FirstRun = newFirstRun(runs, order)
+	if s.FirstRun != nil && cfg.Pacing == PacingEnforce && s.FirstRun.Verdict != VerdictOK {
+		s.FirstRunFailed, s.Failed = true, true
 	}
 	return s
 }
@@ -246,8 +362,9 @@ func (s *Summary) WriteMarkdown(w io.Writer) error {
 	}
 
 	sb.WriteString("\n## Pacing per age\n\n")
-	fmt.Fprintf(&sb, "Time spent in each age, from entering it to entering the next, across seeds, against the target in smoke/targets.go (pass: %gx to %gx the target; the verdict grades the median).\n\n", PacingLow, PacingHigh)
+	fmt.Fprintf(&sb, "Time spent in each age, from entering it to entering the next, across seeds, against the target in smoke/targets.go (pass: %gx to %gx the target; the verdict grades the median). The longest quiet stretch is the median of each seed's longest stretch in the age with no new building type built and no tech finished (reported only).\n\n", PacingLow, PacingHigh)
 	s.writePacingTable(&sb)
+	s.writeFirstRun(&sb)
 	for _, r := range s.Runs {
 		for _, n := range r.Notes {
 			fmt.Fprintf(&sb, "- seed %d: %s\n", r.Seed, n)
@@ -339,7 +456,7 @@ func countStr(m map[string]int) string {
 // writePacingTable renders the per-age pacing rows with their targets and
 // verdicts.
 func (s *Summary) writePacingTable(sb *strings.Builder) {
-	sb.WriteString("| cycle | age | seeds | min | median | max | target | ratio | verdict |\n|---|---|---|---|---|---|---|---|---|\n")
+	sb.WriteString("| cycle | age | seeds | min | median | max | target | ratio | verdict | longest quiet |\n|---|---|---|---|---|---|---|---|---|---|\n")
 	for _, p := range s.Pacing {
 		age := p.Age
 		if p.Unfinished {
@@ -356,8 +473,8 @@ func (s *Summary) writePacingTable(sb *strings.Builder) {
 			target = dur(p.TargetSecs)
 			ratio = fmt.Sprintf("%.2gx", p.Ratio)
 		}
-		fmt.Fprintf(sb, "| %d | %s | %d | %s | %s | %s | %s | %s | %s |\n", p.Cycle, age, p.Samples,
-			dur(p.MinSecs), dur(p.MedianSecs), dur(p.MaxSecs), target, ratio, verdictMark(p.Verdict))
+		fmt.Fprintf(sb, "| %d | %s | %d | %s | %s | %s | %s | %s | %s | %s |\n", p.Cycle, age, p.Samples,
+			dur(p.MinSecs), dur(p.MedianSecs), dur(p.MaxSecs), target, ratio, verdictMark(p.Verdict), dur(p.QuietSecs))
 	}
 }
 

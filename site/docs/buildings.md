@@ -146,7 +146,7 @@ A handful of **milestone rewards** (Master Builder, Grand Architect and others) 
 
 ### Build times
 
-Build times are capped by the age's pace: nothing takes longer to build than **1/6 of its age's target time** (wonders included), and storage buildings take at most **1/48** of it (you can queue several copies at once, up to the cap). In practice that is 2 minutes in the Primitive Age, 1 hour in the Renaissance and 4 hours from the Interstellar Age on (storage: 19 seconds, 8 minutes and 30 minutes). The full per-age list is in the table under [How Production Rates Are Set](#how-production-rates-are-set).
+Build times are capped by the age's pace: nothing takes longer to build than **1/6 of its age's target time** (wonders included), and storage buildings take at most **1/48** of it (you can queue several copies at once, up to the cap). In practice that is 2m 30s in the Primitive Age, 2h 36m in the Renaissance and 10h 24m from the Interstellar Age on (storage: 18 seconds, 19m 30s and 1h 18m). The full per-age list is in the table under [How Production Rates Are Set](#how-production-rates-are-set).
 
 ---
 
@@ -228,30 +228,30 @@ Output is valued at **price parity**. Each age has a price level for each resour
 
 | Age | Target time | Payback (fully staffed) | Build-time cap | Storage build cap |
 |-----|-------------|-------------------------|----------------|-------------------|
-| Primitive | 15m | 56s | 2m | 19s |
-| Stone | 45m | 4m | 8m | 56s |
-| Bronze | 1.5h | 11m | 15m | 2m |
-| Iron | 2.5h | 22m | 25m | 3m |
-| Classical | 3.5h | 38m | 35m | 4m |
-| Medieval | 4.5h | 58m | 45m | 6m |
-| Renaissance | 6h | 1.9h | 1h | 8m |
-| Colonial | 7h | 2h | 1.2h | 9m |
-| Industrial | 8h | 2.5h | 1.3h | 10m |
-| Victorian | 9h | 3.2h | 1.5h | 11m |
-| Electric | 10h | 3.9h | 1.7h | 12m |
-| Atomic | 12h | 5.1h | 2h | 15m |
-| Modern | 12h | 5.6h | 2h | 15m |
-| Information | 14h | 7.1h | 2.3h | 18m |
-| Digital | 16h | 8.7h | 2.7h | 20m |
-| Cyberpunk | 18h | 10.6h | 3h | 22m |
-| Fusion | 20h | 12.6h | 3.3h | 25m |
-| Space | 22h | 14.7h | 3.7h | 28m |
-| Interstellar | 24h | 17.1h | 4h | 30m |
-| Galactic | 24h | 18.1h | 4h | 30m |
-| Quantum | 24h | 19.1h | 4h | 30m |
-| Transcendent | 24h | 20.2h | 4h | 30m |
+| Primitive | 15m | 56s | 2m 30s | 18s |
+| Stone | 45m | 4m | 7m 30s | 56s |
+| Bronze | 3h 54m | 28m | 39m | 4m 52s |
+| Iron | 6h 30m | 58m | 1h 5m | 8m 6s |
+| Classical | 9h 6m | 1.6h | 1h 31m | 11m 22s |
+| Medieval | 11h 42m | 2.5h | 1h 57m | 14m 36s |
+| Renaissance | 15h 36m | 5h | 2h 36m | 19m 30s |
+| Colonial | 18h 12m | 5.1h | 3h 2m | 22m 44s |
+| Industrial | 20h 48m | 6.6h | 3h 28m | 26m |
+| Victorian | 23h 24m | 8.3h | 3h 54m | 29m 14s |
+| Electric | 26h | 10.2h | 4h 20m | 32m 30s |
+| Atomic | 31h 12m | 13.4h | 5h 12m | 39m |
+| Modern | 31h 12m | 14.6h | 5h 12m | 39m |
+| Information | 36h 24m | 18.4h | 6h 4m | 45m 30s |
+| Digital | 41h 36m | 22.7h | 6h 56m | 52m |
+| Cyberpunk | 46h 48m | 27.5h | 7h 48m | 58m 30s |
+| Fusion | 52h | 32.7h | 8h 40m | 1h 5m |
+| Space | 57h 12m | 38.3h | 9h 32m | 1h 11m 30s |
+| Interstellar | 62h 24m | 44.4h | 10h 24m | 1h 18m |
+| Galactic | 62h 24m | 47.1h | 10h 24m | 1h 18m |
+| Quantum | 62h 24m | 49.8h | 10h 24m | 1h 18m |
+| Transcendent | 62h 24m | 52.5h | 10h 24m | 1h 18m |
 
-The Renaissance's payback is 1.3x what the curve gives (1.5 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target speed. Its University makes 208 knowledge/tick, Exchange 3.76K gold, Mill 520 steel, Foundry 711 steel and Coal Mine 289 coal.
+The Renaissance's payback is 1.3x what the curve gives (about 3.8 hours): it is where gold income jumps, and at the curve's rate the age would run at barely half its target speed. Its University makes 79.9 knowledge/tick, Exchange 1.45K gold, Mill 200 steel, Foundry 273 steel and Coal Mine 111 coal.
 
 Times are game time at 1x speed (1 tick = 2 seconds). Some construction resources have no producer in certain ages (stone after the Bronze Age, for example); the market sells them at parity instead. See [Resources](resources.md#buying-at-the-market).
 
@@ -356,7 +356,7 @@ Every storage building is **capped at 25 copies** (Stash at 50). The cap is deli
 | Galactic Vault | Galactic | +20Q | 25 |
 | Quantum Vault | Quantum | +200Q | 25 |
 
-A full stack of an age's storage (with every earlier age's) holds at least an hour and a half of that age's typical production of each resource it builds with, so a player who checks in every hour or so loses nothing to full storage. For longer absences the [build plan](plan.md) spends income as it arrives and [wonder overflow](wonders.md#overflow) banks what full storage would waste.
+A full stack of an age's storage (with every earlier age's) holds at least an hour and a half of that age's typical production of each resource it builds with (about 3.9 hours or more from the Bronze Age on, where each tick produces less), so a player who checks in every hour or so loses nothing to full storage. For longer absences the [build plan](plan.md) spends income as it arrives and [wonder overflow](wonders.md#overflow) banks what full storage would waste.
 
 > **Tip:** Stash is capped at 50. Build them out before you leave the Primitive Age, then start on Storage Pits as soon as you enter the Stone Age. Full storage stops all resource accumulation, so build storage first whenever you enter a new age.
 
@@ -385,7 +385,7 @@ Monuments are one way to spend culture; the `festival` command is another. See [
 
 Unlocked in the **Industrial Age**, the Geographic Society is the one building that plays part of the game for you. It costs gold, steel and coal, holds **8 military workers**, and produces no resource. Instead it **sends out scouting expeditions on its own**, so an empire left to run keeps exploring and keeps meeting the world's civilizations, which is where civilization boons come from.
 
-You can build as many as you like, and the pace scales with how many you've built and how fully you've staffed them: one unstaffed Society sends a party roughly every 900 ticks (about **30 minutes** at 1x speed), and six fully staffed ones bottom out at around one every 100 ticks (about **3m 20s**). These times shrink as your tick speed rises; the **Factions** panel shows the countdown to the next dispatch in wall-clock time. It sends **scouting parties only**, never military campaigns. It never runs two at once or bypasses the single scouting slot, and it pays the full resource cost of every party, skipping the cycle if you can't cover it.
+You can build as many as you like, and the pace scales with how many you've built and how fully you've staffed them: one unstaffed Society sends a party roughly every 2,340 ticks (about **1h 18m** at 1x speed), and six fully staffed ones bottom out at around one every 260 ticks (about **8m 40s**). These times shrink as your tick speed rises; the **Factions** panel shows the countdown to the next dispatch in wall-clock time. It sends **scouting parties only**, never military campaigns. It never runs two at once or bypasses the single scouting slot, and it pays the full resource cost of every party, skipping the cycle if you can't cover it.
 
 It is deliberately **slower than sending expeditions yourself**: even fully built and staffed, it runs at about 60% of the pace of a player chaining expeditions by hand. Treat it as a floor under your exploration rather than a substitute for it. Full details in [Military & Expeditions](military.md#automatic-dispatch-the-geographic-society).
 

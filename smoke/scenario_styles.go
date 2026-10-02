@@ -89,13 +89,17 @@ func runStyles(e *Env, res *Result) {
 	var rows []string
 	for _, style := range styles {
 		base := e.Base
-		base.Cycles, base.MaxSim = 1, 300*time.Hour
+		// One first run: about 167 hours of targets to the Modern Age on the
+		// one-week curve, more for the styles that take detours.
+		base.Cycles, base.MaxSim = 1, 800*time.Hour
 		switch style {
 		case StyleCosmic:
-			base.MaxSim = 600 * time.Hour
+			// To the Cosmic Era's first age and its Last Passage: the
+			// targets to the Interstellar Age sum to about 433 hours.
+			base.MaxSim = 1000 * time.Hour
 		case StyleIdle:
-			// Enough for a 3-hourly check-in player to reach the first
-			// prestige (about 18 days).
+			// 30 days: a 3-hourly check-in player reaches the first prestige
+			// in about 8, an 8-hourly one in about 10.
 			base.MaxSim = 720 * time.Hour
 		}
 		base.CheckIn = e.CheckIn

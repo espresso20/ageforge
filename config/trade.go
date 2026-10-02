@@ -13,6 +13,11 @@ type ExchangeRateDef struct {
 // TradeRouteDef defines a passive recurring trade route. Once started, the
 // engine automatically exports Export resources and adds Import resources every
 // TicksPerRun ticks. The route stops if Export resources are insufficient.
+//
+// TicksPerRun is typed for the base curve and stretched for the route's
+// MinAge (StretchTicks), so an age runs as many cycles as it did before the
+// one-week curve. Every route opens from the Bronze Age on, where the stretch
+// is the same in every later age (a config test holds that).
 type TradeRouteDef struct {
 	Name        string
 	Key         string
@@ -123,9 +128,10 @@ func ExchangeRateByKey() map[string]ExchangeRateDef {
 	return out
 }
 
-// BaseTradeRoutes returns all trade route definitions
+// BaseTradeRoutes returns all trade route definitions, with TicksPerRun
+// stretched for each route's MinAge.
 func BaseTradeRoutes() []TradeRouteDef {
-	return []TradeRouteDef{
+	defs := []TradeRouteDef{
 		{
 			Name: "Local Barter", Key: "local_barter",
 			MinAge: "bronze_age", RequiredBld: "market", MinCount: 1,
@@ -299,6 +305,10 @@ func BaseTradeRoutes() []TradeRouteDef {
 			Description: "Send quantum flux across dimensional boundaries for gold.",
 		},
 	}
+	for i := range defs {
+		defs[i].TicksPerRun = StretchTicks(defs[i].MinAge, defs[i].TicksPerRun)
+	}
+	return defs
 }
 
 // TradeRouteByKey returns trade routes keyed by route key

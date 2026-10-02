@@ -50,7 +50,7 @@ const (
 	// harbinger.go for the braced shares.
 	endureResourceKeep     = 0.15 // resources drop to 15% of stored amounts
 	endureWorkerLoss       = 0.25 // 25% of the worker pool is lost
-	endureDebuffTicks      = 216  // Reconstruction Effort duration
+	endureDebuffTicks      = 216  // Reconstruction Effort duration on the base curve (EndureDebuffTicksIn)
 	endureDebuffProduction = -0.10
 	endureMoraleHit        = -0.10
 
@@ -67,10 +67,17 @@ const (
 // from the numbers Endure applies rather than copies of them.
 const (
 	EndureWorkerLoss       = endureWorkerLoss
-	EndureDebuffTicks      = endureDebuffTicks
 	EndureDebuffProduction = endureDebuffProduction
 	EndureMoraleHit        = endureMoraleHit
 )
+
+// EndureDebuffTicksIn is how long Endure's Reconstruction Effort lasts in age:
+// endureDebuffTicks stretched like the age (config.StretchTicks), so the
+// debuff covers the same share of a longer age. Dooms strike from the Iron Era
+// on, so in play it is always the stretched length.
+func EndureDebuffTicksIn(age string) int {
+	return config.StretchTicks(age, endureDebuffTicks)
+}
 
 // Catastrophe record outcomes (EpochEventRecord.Outcome).
 const (
@@ -359,7 +366,7 @@ func (ge *GameEngine) releaseWorkersFrom(destroyed map[string]int) {
 //   - all unlocked resources drop to 15% of their stored amounts (30% / 45%
 //     braced)
 //   - 25% of the worker pool lost, spread proportionally over every building
-//   - Reconstruction Effort: production -10% for 216 ticks
+//   - Reconstruction Effort: production -10% for 216 ticks (stretched for the age)
 //   - morale -0.10
 //   - Survived marker for the epoch and a civilization-log entry
 //
@@ -418,10 +425,11 @@ func (ge *GameEngine) Endure() error {
 
 	ge.Workers.RemovePct(endureWorkerLoss)
 
+	debuff := EndureDebuffTicksIn(ge.age)
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       "endure_reconstruction",
 		Name:      "Reconstruction Effort",
-		TicksLeft: endureDebuffTicks,
+		TicksLeft: debuff,
 		Effects: []config.Effect{
 			{Type: "production_all", Value: endureDebuffProduction},
 		},
@@ -447,7 +455,7 @@ func (ge *GameEngine) Endure() error {
 	ge.addLog("warning", fmt.Sprintf("  All resources reduced to %.0f%% of stored amounts.", keep*100))
 	ge.addLog("warning", fmt.Sprintf("  %.0f%% of workers lost.", endureWorkerLoss*100))
 	ge.addLog("info", fmt.Sprintf("  Reconstruction: all production %.0f%% for %s. Morale %+.0f points.",
-		endureDebuffProduction*100, approxTicks(endureDebuffTicks, ge.tickIntervalLocked()), endureMoraleHit*100))
+		endureDebuffProduction*100, approxTicks(debuff, ge.tickIntervalLocked()), endureMoraleHit*100))
 	ge.addLog("success", fmt.Sprintf("  ✦ You endured the %s. Its badge records it.", epName))
 	// Cosmetic flavour — a wry beat after surviving the catastrophe.
 	if q := config.PickLogFlavor(config.LogFlavorCatastropheSurvived, ge.quipRNG()); q != "" {

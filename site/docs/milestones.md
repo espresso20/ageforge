@@ -21,6 +21,8 @@ When a chain is completed, its title overrides any count-based fallback. The boo
 | Trade | "The Merchants" | +250% for 150 ticks |
 | Ancient Ages | "The Ancients" | +250% for 150 ticks |
 
+These are the boosts' base lengths. A chain completed from the Bronze Age on, where ages and their clocks run 2.6 times as long, boosts for 468 or 390 ticks instead, so the boost saves the same share of the age.
+
 If no chain is completed, fallback titles apply:
 
 | Milestones completed | Title |
@@ -193,8 +195,8 @@ These milestones sit outside the chains and don't count toward any chain title.
 | Milestone | Condition | Reward |
 |---|---|---|
 | First Farmers | Build 3 Gathering Camps and reach tick 30 | +30 food |
-| Survivor | Reach tick 10K in a run | +5% all production |
-| Enduring Civilization *(hidden)* | Reach tick 50K in a run | +5% all production |
+| Survivor | Reach tick 26K in a run (~14h 26m of play) | +5% all production |
+| Enduring Civilization *(hidden)* | Reach tick 130K in a run (~3 days of play) | +5% all production |
 | Age Hopper | Reach the Classical Age and research 10 techs | +5% all production |
 | Industrial Titan *(hidden)* | Stockpile 10K coal and 5K iron ore (Industrial Age) | +10% all production |
 | Power Grid *(hidden)* | Build 20 Coal Plants and 10 Steam Turbines (Victorian Age) | +10% all production |

@@ -28,7 +28,10 @@ type ActiveEvent struct {
 // is forced good. This prevents extended lucky or punishing streaks.
 //
 // A global cooldown (nextEventTick) ensures at most one event fires per 5-20
-// minutes of real time, preventing event spam.
+// minutes of real time in the Primitive and Stone Ages, preventing event spam.
+// From the Bronze Age on the ages run config.PacingStretch times longer, and
+// so do the delay, each event's duration and its cooldown (config.StretchTicks
+// on the current age), so an age holds as many events as before.
 //
 // NOTE: InjectEvent bypasses all eligibility checks and fires immediately.
 // It is used for milestone chain boosts and epoch event effects; calling it
@@ -43,10 +46,19 @@ type EventManager struct {
 	badStreak     int // consecutive bad events (reset on good/mixed)
 }
 
+// The delay between random events before the age's stretch
+// (eventDelay applies it).
 const (
 	eventMinDelay = 150 // 5 minutes (150 ticks * 2s)
 	eventMaxDelay = 600 // 20 minutes (600 ticks * 2s)
 )
+
+// eventDelay draws the wait until the next random event in age: 150-600
+// ticks, times the age's stretch. One draw from rng whatever the age, so the
+// stream keeps its shape.
+func eventDelay(rng *rand.Rand, age string) int {
+	return config.StretchTicks(age, eventMinDelay+rng.Intn(eventMaxDelay-eventMinDelay+1))
+}
 
 // eventUnscheduled marks an EventManager whose first random event has not been
 // scheduled yet. The first delay is drawn on the first Tick, off the rng that
@@ -73,7 +85,7 @@ func NewEventManager() *EventManager {
 func (em *EventManager) Tick(rng *rand.Rand, tick int, currentAge string, ageOrder map[string]int, currentEpoch string) (triggered []config.EventDef, expired []ActiveEvent) {
 	if em.nextEventTick == eventUnscheduled {
 		// First event 150-600 ticks from the start of the run.
-		em.nextEventTick = eventMinDelay + rng.Intn(eventMaxDelay-eventMinDelay+1)
+		em.nextEventTick = eventDelay(rng, currentAge)
 	}
 
 	// Process active events first - decrement durations
@@ -127,13 +139,14 @@ func (em *EventManager) Tick(rng *rand.Rand, tick int, currentAge string, ageOrd
 				em.active = append(em.active, ActiveEvent{
 					Key:       def.Key,
 					Name:      def.Name,
-					TicksLeft: def.Duration,
+					TicksLeft: config.StretchTicks(currentAge, def.Duration),
 					Effects:   def.Effects,
 				})
 			}
 
-			// Schedule next event 5-20 minutes from now
-			em.nextEventTick = tick + eventMinDelay + rng.Intn(eventMaxDelay-eventMinDelay+1)
+			// Schedule the next event (5-20 minutes from now, times the
+			// age's stretch)
+			em.nextEventTick = tick + eventDelay(rng, currentAge)
 			break
 		}
 	}
@@ -203,9 +216,9 @@ func (em *EventManager) getEligible(tick int, currentAge string, ageOrder map[st
 		if ageOrder[def.MinAge] > ageOrder[currentAge] {
 			continue
 		}
-		// Check cooldown
+		// Check cooldown (stretched like the age)
 		if lastTick, ok := em.lastFired[def.Key]; ok {
-			if tick-lastTick < def.Cooldown {
+			if tick-lastTick < config.StretchTicks(currentAge, def.Cooldown) {
 				continue
 			}
 		}

@@ -391,9 +391,11 @@ func meanOfInts(xs []int) float64 {
 // --- the driver -------------------------------------------------------------
 
 // expDriver models one expedition category's launch/resolve loop, INCLUDING the
-// randomized per-launch duration the real game rolls.
+// randomized per-launch duration the real game rolls, stretched for the age the
+// way LaunchExpedition stretches it (expeditionTicks).
 type expDriver struct {
-	durMin     int // randomized range low end
+	age        string // the scenario's age: durations are stretched for it
+	durMin     int    // randomized range low end, as typed (base curve)
 	durMax     int
 	difficulty float64
 	gap        int
@@ -425,10 +427,11 @@ func effectiveExpeditionDuration(d ExpeditionDef) int {
 }
 
 // rollDuration draws one launch's active duration with the SAME rule
-// LaunchExpedition uses — a uniform value in [DurationMin, DurationMax] — but off
-// the harness's seeded rng so a scenario stays reproducible. Mirrors the runtime's
-// guards: a def without a real range pins at its floor, and the result is floored
-// at 1 so a malformed def cannot spin the driver.
+// LaunchExpedition uses — a uniform value in [DurationMin, DurationMax],
+// stretched for the age — but off the harness's seeded rng so a scenario stays
+// reproducible. Mirrors the runtime's guards: a def without a real range pins at
+// its floor, and the result is floored at 1 so a malformed def cannot spin the
+// driver.
 func (d *expDriver) rollDuration(rng *rand.Rand) int {
 	ticks := d.durMin
 	if d.durMax > d.durMin {
@@ -437,7 +440,7 @@ func (d *expDriver) rollDuration(rng *rand.Rand) int {
 	if ticks < 1 {
 		ticks = 1
 	}
-	return ticks
+	return expeditionTicks(d.age, ticks)
 }
 
 // newExpDriver picks the SHORTEST expedition available in a category at an age —
@@ -460,6 +463,7 @@ func newExpDriver(ge *GameEngine, category, age string, gap int, rng *rand.Rand)
 		}
 	}
 	d := expDriver{
+		age:        age,
 		durMin:     best.DurationMin,
 		durMax:     best.DurationMax,
 		difficulty: best.DifficultyBase,
@@ -483,11 +487,12 @@ func newAutoScoutDriver(ge *GameEngine, rng *rand.Rand) expDriver {
 		return expDriver{category: ExpeditionScouting}
 	}
 	count, fill := ge.autoExpeditionInvestment()
-	interval := autoExpeditionIntervalFor(count, fill)
+	interval := autoExpeditionIntervalIn(ge.age, count, fill)
 	if interval <= 0 {
 		return expDriver{category: ExpeditionScouting}
 	}
 	d := expDriver{
+		age:          ge.age,
 		durMin:       def.DurationMin,
 		durMax:       def.DurationMax,
 		difficulty:   def.DifficultyBase,
@@ -1032,8 +1037,9 @@ func TestBoonTuning_HarnessUsesRuntimeDurations(t *testing.T) {
 					category, age, got, want)
 			}
 
-			// Every rolled launch must fall in the runtime's own range. A def
-			// without a real range pins every roll at its floor (min 1).
+			// Every rolled launch must fall in the runtime's own range,
+			// stretched for the age. A def without a real range pins every
+			// roll at its floor (min 1).
 			lo, hi := d.durMin, d.durMax
 			if hi <= lo {
 				hi = lo
@@ -1041,6 +1047,7 @@ func TestBoonTuning_HarnessUsesRuntimeDurations(t *testing.T) {
 			if lo < 1 {
 				lo, hi = 1, 1
 			}
+			lo, hi = expeditionTicks(age, lo), expeditionTicks(age, hi)
 			for i := 0; i < 200; i++ {
 				if ticks := d.rollDuration(rng); ticks < lo || ticks > hi {
 					t.Fatalf("%s at %s: rolled duration %d outside runtime range [%d,%d]",

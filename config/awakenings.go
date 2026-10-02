@@ -34,16 +34,20 @@ type AwakeningDef struct {
 // and the Steel Era's Steam Breakthrough triggers on the Industrial Age where steam
 // power thematically arrives. The remaining five trigger on their epoch's first age.
 //
-// Duration tuning (1 tick ≈ 2s real time):
+// Duration tuning (1 tick ≈ 2s real time), on the base curve:
 //
 //	~250 ticks ≈ 8 min, ~500 ticks ≈ 16 min, ~200 ticks ≈ 6.5 min.
+//
+// Each typed Duration is stretched for its trigger age (StretchTicks: 2.6x
+// from the Bronze Age on, so every awakening but the Stone Age's), and
+// "{dur}" in the flavor text becomes the stretched duration.
 func Awakenings() []AwakeningDef {
-	return []AwakeningDef{
+	defs := []AwakeningDef{
 		{
 			Key:      "awakening_pottery_mastery",
 			EpochKey: "stone_era", TriggerAge: "stone_age",
 			Name:       "Pottery Mastery",
-			FlavorText: "Clay yields to patient hands. Sealed vessels hold the harvest through the lean months, and the surplus, for once, keeps. Food +1/tick, stone +0.5/tick for ~8m 20s.",
+			FlavorText: "Clay yields to patient hands. Sealed vessels hold the harvest through the lean months, and the surplus, for once, keeps. Food +1/tick, stone +0.5/tick for {dur}.",
 			Duration:   250,
 			Effects: []Effect{
 				{Type: "production", Target: "food", Value: 1.0},
@@ -54,7 +58,7 @@ func Awakenings() []AwakeningDef {
 			Key:      "awakening_metallurgy",
 			EpochKey: "iron_era", TriggerAge: "iron_age",
 			Name:       "Discovery of Metallurgy",
-			FlavorText: "The forge runs hotter than any fire before it, and the smiths cannot smelt fast enough. Iron +2/tick for ~16m 40s.",
+			FlavorText: "The forge runs hotter than any fire before it, and the smiths cannot smelt fast enough. Iron +2/tick for {dur}.",
 			Duration:   500,
 			Effects: []Effect{
 				{Type: "production", Target: "iron", Value: 2.0},
@@ -64,7 +68,7 @@ func Awakenings() []AwakeningDef {
 			Key:      "awakening_steam_breakthrough",
 			EpochKey: "steel_era", TriggerAge: "industrial_age",
 			Name:       "Steam Breakthrough",
-			FlavorText: "The first steam engine coughs, catches and roars. All production +25% for ~6m 40s.",
+			FlavorText: "The first steam engine coughs, catches and roars. All production +25% for {dur}.",
 			Duration:   200,
 			Effects: []Effect{
 				{Type: "production_all", Value: 0.25},
@@ -74,7 +78,7 @@ func Awakenings() []AwakeningDef {
 			Key:      "awakening_electrification",
 			EpochKey: "electric_era", TriggerAge: "victorian_age",
 			Name:       "The Grid Wakes",
-			FlavorText: "The grid hums to life, lamps come on across the skyline, and machines take up the night shift. Electricity +2/tick and all production +10% for ~10m.",
+			FlavorText: "The grid hums to life, lamps come on across the skyline, and machines take up the night shift. Electricity +2/tick and all production +10% for {dur}.",
 			Duration:   300,
 			Effects: []Effect{
 				{Type: "production", Target: "electricity", Value: 2.0},
@@ -85,7 +89,7 @@ func Awakenings() []AwakeningDef {
 			Key:      "awakening_information_age",
 			EpochKey: "digital_era", TriggerAge: "modern_age",
 			Name:       "Networks Wake",
-			FlavorText: "Knowledge stops being scarce. The networks come online and the archives open. Data +2/tick, knowledge +1/tick for ~10m.",
+			FlavorText: "Knowledge stops being scarce. The networks come online and the archives open. Data +2/tick, knowledge +1/tick for {dur}.",
 			Duration:   300,
 			Effects: []Effect{
 				{Type: "production", Target: "data", Value: 2.0},
@@ -96,7 +100,7 @@ func Awakenings() []AwakeningDef {
 			Key:      "awakening_cybernetic",
 			EpochKey: "neon_era", TriggerAge: "cyberpunk_age",
 			Name:       "Cybernetic Awakening",
-			FlavorText: "Flesh and circuit reach an accord, and augmented crews work without tiring. All production +20% for ~8m 20s.",
+			FlavorText: "Flesh and circuit reach an accord, and augmented crews work without tiring. All production +20% for {dur}.",
 			Duration:   250,
 			Effects: []Effect{
 				{Type: "production_all", Value: 0.20},
@@ -106,7 +110,7 @@ func Awakenings() []AwakeningDef {
 			Key:      "awakening_first_contact",
 			EpochKey: "cosmic_era", TriggerAge: "interstellar_age",
 			Name:       "First Contact Signal",
-			FlavorText: "A pattern threads through the static, too regular to be noise and too strange to be ours. Your engineers cannot stop listening. Dark matter +1.5/tick and all production +10% for ~13m 20s.",
+			FlavorText: "A pattern threads through the static, too regular to be noise and too strange to be ours. Your engineers cannot stop listening. Dark matter +1.5/tick and all production +10% for {dur}.",
 			Duration:   400,
 			Effects: []Effect{
 				{Type: "production", Target: "dark_matter", Value: 1.5},
@@ -114,6 +118,11 @@ func Awakenings() []AwakeningDef {
 			},
 		},
 	}
+	for i := range defs {
+		defs[i].Duration = StretchTicks(defs[i].TriggerAge, defs[i].Duration)
+		defs[i].FlavorText = withDuration(defs[i].FlavorText, defs[i].Duration)
+	}
+	return defs
 }
 
 // AwakeningByKey returns a map of awakening key -> AwakeningDef.

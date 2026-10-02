@@ -134,7 +134,7 @@ func TestCosmicThreadCostsAreFixedAcrossTheEpoch(t *testing.T) {
 	for _, age := range epochAges(t, "cosmic_era") {
 		ge := lpEngine(t, age, 5)
 		v := ge.GetState().Harbinger
-		if v.AppeaseCost["faith"] != 1200000000 || v.AppeaseCost["culture"] != 19000000000 {
+		if v.AppeaseCost["faith"] != 3100000000 || v.AppeaseCost["culture"] != 48000000000 {
 			t.Errorf("%s: appease = %v", age, v.AppeaseCost)
 		}
 		if v.BraceCost["dark_matter"] != 1560000000000 || v.BraceCost["titanium"] != 75600000000 || len(v.BraceCost) != 2 {

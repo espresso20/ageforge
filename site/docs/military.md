@@ -158,7 +158,7 @@ It sends the cheapest scouting mission your age offers that you can currently af
 
 Its parties are ordinary parties. They succeed and fail at the same odds, pay the same loot, and roll civilization encounters, boons and setbacks exactly like the ones you send.
 
-The more you invest, the faster it goes. A single unstaffed Society sends about one party every 900 ticks (about 30 minutes at 1x), roughly what you'd manage by remembering to send one now and then. Staffing it fully cuts that by about a third, and each extra Society shortens the wait again, down to a floor of about **one party every 100 ticks** (about 3m 20s) with six fully staffed Societies. More than that only helps when a party comes home late.
+The more you invest, the faster it goes. A single unstaffed Society sends about one party every 2,340 ticks (about 1h 18m at 1x), roughly what you'd manage by remembering to send one now and then. Staffing it fully cuts that by about a third, and each extra Society shortens the wait again, down to a floor of about **one party every 260 ticks** (about 8m 40s) with six fully staffed Societies. More than that only helps when a party comes home late.
 
 The pace is set in ticks, so the real-time figures above are approximate and shrink as your tick speed rises. The **Expeditions** panel (`expedition`) shows one line for it: the time until the next party leaves, or a warning that a party is due and your stores are too thin to outfit it. The full status (Societies built, staffing, the interval, and a countdown with a progress bar) is on the **Factions** panel (`factions`); see [The Factions panel](trade.md#the-factions-panel). Both show wall-clock time rather than ticks; see [Timers and durations](commands.md#timers-and-durations).
 
@@ -193,30 +193,30 @@ This table covers all 16 missions. The three scouting expeditions (`scout_party`
 
 | Key | Name | Min Age | Soldier Cost | Resource Cost | Duration | Difficulty | Rewards on Success |
 |-----|------|---------|--------------|---------------|----------|------------|-------------------|
-| `scout_party` | Scout Party | Primitive Age (last: Bronze Age) | 0 | 30 food, 30 wood | 100-160t | 0.20 | 60 food, 60 wood, 20 stone |
-| `scout_ruins` | Scout Nearby Ruins | Bronze Age | 0 | 40 food, 30 wood | 60-100t | 0.20 | 30 food, 20 wood, 15 stone |
-| `raid_bandits` | Raid Bandit Camp | Bronze Age | 5 | none | 60-100t | 0.40 | 30 gold, 15 iron, 20 food |
-| `trade_escort` | Trade Escort | Iron Age | 3 | none | 60-100t | 0.30 | 50 gold, 10 knowledge |
-| `conquer_territory` | Conquer Territory | Iron Age | 10 | none | 60-100t | 0.60 | 80 gold, 40 iron, 50 food |
-| `siege_castle` | Siege Enemy Castle | Medieval Age | 15 | none | 60-100t | 0.70 | 150 gold, 30 steel, 20 faith |
-| `naval_expedition` | Naval Expedition | Renaissance Age | 0 | 150 food, 100 wood | 60-100t | 0.50 | 200 gold, 30 culture, 40 knowledge |
-| `colonial_campaign` | Colonial Campaign | Industrial Age | 20 | none | 60-100t | 0.60 | 300 gold, 50 oil, 40 steel |
-| `world_domination` | World Domination | Modern Age | 50 | none | 60-100t | 0.80 | 1K gold, 200 electricity, 500 knowledge |
-| `cyber_raid` | Cyber Raid | Information Age | 30 | none | 60-100t | 0.60 | 200 data, 50 crypto, 500 gold |
-| `neon_heist` | Neon Heist | Cyberpunk Age | 25 | none | 60-100t | 0.55 | 100 crypto, 150 data, 800 gold |
-| `fusion_assault` | Fusion Plant Assault | Fusion Age | 35 | none | 60-100t | 0.65 | 120 plasma, 500 electricity, 50 uranium |
-| `orbital_strike` | Orbital Strike | Space Age | 40 | none | 60-100t | 0.70 | 100 titanium, 80 plasma, 300 knowledge |
-| `warp_invasion` | Warp Invasion | Interstellar Age | 60 | none | 65-105t | 0.75 | 50 dark matter, 200 titanium, 2K gold |
-| `galactic_conquest` | Galactic Conquest | Galactic Age | 80 | none | 80-130t | 0.80 | 30 antimatter, 100 dark matter, 5K gold |
-| `quantum_incursion` | Quantum Incursion | Quantum Age | 100 | none | 90-145t | 0.85 | 20 quantum flux, 50 antimatter, 5K knowledge |
+| `scout_party` | Scout Party | Primitive Age (last: Bronze Age) | 0 | 30 food, 30 wood | 100-160t (260-416t in the Bronze Age) | 0.20 | 60 food, 60 wood, 20 stone |
+| `scout_ruins` | Scout Nearby Ruins | Bronze Age | 0 | 40 food, 30 wood | 156-260t | 0.20 | 30 food, 20 wood, 15 stone |
+| `raid_bandits` | Raid Bandit Camp | Bronze Age | 5 | none | 156-260t | 0.40 | 30 gold, 15 iron, 20 food |
+| `trade_escort` | Trade Escort | Iron Age | 3 | none | 156-260t | 0.30 | 50 gold, 10 knowledge |
+| `conquer_territory` | Conquer Territory | Iron Age | 10 | none | 156-260t | 0.60 | 80 gold, 40 iron, 50 food |
+| `siege_castle` | Siege Enemy Castle | Medieval Age | 15 | none | 156-260t | 0.70 | 150 gold, 30 steel, 20 faith |
+| `naval_expedition` | Naval Expedition | Renaissance Age | 0 | 150 food, 100 wood | 156-260t | 0.50 | 200 gold, 30 culture, 40 knowledge |
+| `colonial_campaign` | Colonial Campaign | Industrial Age | 20 | none | 156-260t | 0.60 | 300 gold, 50 oil, 40 steel |
+| `world_domination` | World Domination | Modern Age | 50 | none | 156-260t | 0.80 | 1K gold, 200 electricity, 500 knowledge |
+| `cyber_raid` | Cyber Raid | Information Age | 30 | none | 156-260t | 0.60 | 200 data, 50 crypto, 500 gold |
+| `neon_heist` | Neon Heist | Cyberpunk Age | 25 | none | 156-260t | 0.55 | 100 crypto, 150 data, 800 gold |
+| `fusion_assault` | Fusion Plant Assault | Fusion Age | 35 | none | 156-260t | 0.65 | 120 plasma, 500 electricity, 50 uranium |
+| `orbital_strike` | Orbital Strike | Space Age | 40 | none | 156-260t | 0.70 | 100 titanium, 80 plasma, 300 knowledge |
+| `warp_invasion` | Warp Invasion | Interstellar Age | 60 | none | 169-273t | 0.75 | 50 dark matter, 200 titanium, 2K gold |
+| `galactic_conquest` | Galactic Conquest | Galactic Age | 80 | none | 208-338t | 0.80 | 30 antimatter, 100 dark matter, 5K gold |
+| `quantum_incursion` | Quantum Incursion | Quantum Age | 100 | none | 234-377t | 0.85 | 20 quantum flux, 50 antimatter, 5K knowledge |
 
 That is 3 scouting expeditions and 13 campaigns.
 
-The Duration column is each mission's range in ticks. The actual time is rolled evenly within that range at launch, so nothing resolves in under 60 ticks, and `scout_party` runs 100-160 ticks (about 130 on average). The time-left readout counts down the rolled value.
+The Duration column is each mission's range in ticks, as the panel shows it. From the Bronze Age on, where ages and their timers run 2.6 times as long, every range is 2.6 times its base length, so the column already includes that. The actual time is rolled evenly within that range at launch, so nothing resolves in under 100 ticks (156 from the Bronze Age on), and `scout_party` runs 100-160 ticks (about 130 on average; 260-416 in the Bronze Age). The time-left readout counts down the rolled value.
 
-There are no soldiers before the Iron Age, so scouting fills the gap. `scout_party` costs 30 food and 30 wood, runs 100-160 ticks and pays about 60 food, 60 wood and 20 stone, a net gain worth repeating through the Primitive, Stone and Bronze ages. It disappears once you reach the Iron Age. `scout_ruins` (Bronze Age, 40 food and 30 wood) carries scouting on from there, and `naval_expedition` (Renaissance Age, 150 food and 100 wood) is the late scouting option.
+There are no soldiers before the Iron Age, so scouting fills the gap. `scout_party` costs 30 food and 30 wood, runs 100-160 ticks (260-416 in the Bronze Age) and pays about 60 food, 60 wood and 20 stone, a net gain worth repeating through the Primitive, Stone and Bronze ages. It disappears once you reach the Iron Age. `scout_ruins` (Bronze Age, 40 food and 30 wood) carries scouting on from there, and `naval_expedition` (Renaissance Age, 150 food and 100 wood) is the late scouting option.
 
-`campaign trade_escort` (Iron Age, 3 soldiers, 60-100 ticks, 0.30 difficulty) is the cheap, repeatable early campaign for steady gold. For resources without soldiers, chain the scouting expeditions (`expedition scout_party`, then `expedition scout_ruins`). Durations are rolled, so keep one of each kind running rather than counting on a fixed timer.
+`campaign trade_escort` (Iron Age, 3 soldiers, 156-260 ticks, 0.30 difficulty) is the cheap, repeatable early campaign for steady gold. For resources without soldiers, chain the scouting expeditions (`expedition scout_party`, then `expedition scout_ruins`). Durations are rolled, so keep one of each kind running rather than counting on a fixed timer.
 
 ### Civilization encounters
 
@@ -231,15 +231,15 @@ Scouting expeditions find civilizations far more often than campaigns, and a suc
 | Campaign success | ~8% |
 | Campaign failure | ~2% |
 
-The chance is rolled once per resolved mission, and missions aren't quick: the shortest scouting run takes 60-100 ticks (about 2m to 3m 20s), rolled fresh each launch. A player who keeps a scouting party and a campaign in the field all the time meets someone about every **375 ticks** (about 12 minutes at 1x). Encounters are occasional, so the point of chaining missions is that the rewards you do get overlap.
+The chance is rolled once per resolved mission, and missions aren't quick: the shortest scouting run takes 156-260 ticks (about 5m 12s to 8m 40s), rolled fresh each launch. A player who keeps a scouting party and a campaign in the field all the time meets someone about every **975 ticks** (about 32 minutes at 1x). Encounters are occasional, so the point of chaining missions is that the rewards you do get overlap.
 
-From the Industrial Age a fully invested **Geographic Society** (see [Automatic dispatch](#automatic-dispatch-the-geographic-society)) keeps encounters coming while you're away, at about **60%** of the hands-on rate: about one meeting every 640 ticks (about 21 minutes at 1x). A single Society is slower, closer to one every 2,500 ticks (about 1h 23m). That gives three real paces: chaining missions yourself, letting the Societies work, and doing neither.
+From the Industrial Age a fully invested **Geographic Society** (see [Automatic dispatch](#automatic-dispatch-the-geographic-society)) keeps encounters coming while you're away, at about **60%** of the hands-on rate: about one meeting every 1,660 ticks (about 55 minutes at 1x). A single Society is slower, closer to one every 6,500 ticks (about 3h 36m). That gives three real paces: chaining missions yourself, letting the Societies work, and doing neither.
 
 An encounter from a **successful** mission can also grant a **boon**, a reward rolled from a shared catalog: a timed boost to one resource, to all production or to knowledge; a tick-speed surge; an instant lump of resources; or temporary workers. The roll is weighted by the civilization's character (personality, specialty and strength) and by its **opinion** of you. Allies give bigger boons, and rare ones. Instant gifts scale with your age, so a caravan of supplies is still worth having in the Quantum Age. The log names the civilization and the reward.
 
 **You can hold five boons at a time.** Only *timed* rewards take one of the five slots; an instant gift is used on arrival and holds nothing. While all five slots are full, a timed reward is turned away (the envoys are thanked, fed and sent home with their crates unopened), but an instant lump of resources or a gang of temporary workers still arrives, because neither needs a slot. A full set of boons costs you the buffs, never the goods.
 
-Timed boons last **750-3000 ticks** each, so slots free up on their own while you explore. A player who explores without a break gets a reward from about four encounters in five, has at least one boon running over 95% of the time, and has all five slots full only **12-18%** of the time. Only the sixth timed boon at once goes to waste.
+Timed boons last **1,950-7,800 ticks** each, so slots free up on their own while you explore. A player who explores without a break gets a reward from about four encounters in five, has at least one boon running over 95% of the time, and has all five slots full only **12-18%** of the time. Only the sixth timed boon at once goes to waste.
 
 **Setbacks.** Some encounters go badly and bring a **setback** instead of a boon:
 
@@ -444,13 +444,13 @@ The five military milestones form a chain. Completing all five grants a title, a
 - Before the Iron Age, run `expedition scout_party` on repeat. It costs 30 food and 30 wood and pays about 60 food, 60 wood and 20 stone, with no soldiers needed.
 - Build a **War Camp** in the Stone Age even though soldiers don't exist yet. It gives you soldier storage and starts producing as soon as soldiers unlock.
 - Soldiers unlock in the **Iron Age**. Staff your military buildings (the Hunting Lodge costs only 25 wood) and train 5 soldiers for `first_soldiers` and its +0.05 military power.
-- `campaign trade_escort` (3 soldiers, Iron Age, 60-100 ticks) is the best early campaign: cheap, with a fair gold reward.
+- `campaign trade_escort` (3 soldiers, Iron Age, 156-260 ticks) is the best early campaign: cheap, with a fair gold reward.
 - Workers in military buildings eat the same food as everyone else, but every worker you move there is one fewer farmer. Keep your food rate positive.
 
 ### Mid game (Classical to Industrial Age)
 
 - Go for `iron_legion` (train 500 soldiers, build 10 Barracks) for its +5% all production.
-- `campaign conquer_territory` (10 soldiers, 60-100 ticks, 0.60 difficulty) gives the most per soldier in this range. `expedition naval_expedition` is a scouting option (0 soldiers, 150 food and 100 wood, Renaissance Age, 60-100 ticks, 0.50 difficulty), so it doesn't touch your soldier stockpile.
+- `campaign conquer_territory` (10 soldiers, 156-260 ticks, 0.60 difficulty) gives the most per soldier in this range. `expedition naval_expedition` is a scouting option (0 soldiers, 150 food and 100 wood, Renaissance Age, 156-260 ticks, 0.50 difficulty), so it doesn't touch your soldier stockpile.
 - Build **Legion Forts** and **Military Academies** to raise your soldier storage. The cap doubles with each tier, so each new tier holds far more soldiers.
 - Research military techs as they appear. Even +0.2 military power makes a visible difference against 0.6-difficulty missions.
 
@@ -463,7 +463,7 @@ The five military milestones form a chain. Completing all five grants a title, a
 
 ### Defense rating
 
-The Army panel shows your **defense rating** (`soldiers × 2.0 × (1 + military power)`). It is measured against the raid threat of your age, and the resulting share (at most 45%) comes off raid events, war raids from civilizations at war with you, and the buildings and stock an Endure takes. It never stops a raid or a catastrophe from happening, and it does nothing against disasters such as plague or earthquakes. A civilization at war with you raids every 40 ticks and takes 50 × its strength (1-5) of its specialty resource; your garrison keeps its share of that, but only staying out of wars, or ending them with tribute, stops the raids: see [War & Peace](trade.md#war-amp-peace). See [§7](#7-defense-what-your-army-blunts) for the numbers.
+The Army panel shows your **defense rating** (`soldiers × 2.0 × (1 + military power)`). It is measured against the raid threat of your age, and the resulting share (at most 45%) comes off raid events, war raids from civilizations at war with you, and the buildings and stock an Endure takes. It never stops a raid or a catastrophe from happening, and it does nothing against disasters such as plague or earthquakes. A civilization at war with you raids every 104 ticks and takes 50 × its strength (1-5) of its specialty resource; your garrison keeps its share of that, but only staying out of wars, or ending them with tribute, stops the raids: see [War & Peace](trade.md#war-amp-peace). See [§7](#7-defense-what-your-army-blunts) for the numbers.
 
 - **Keep up with the age.** The threat doubles every age, so a garrison you stop growing fades fast. Adding the current age's military buildings keeps pace, since each tier's soldier cap doubles too.
 - **Mind the next age.** An Endure is measured against the age the doom strikes in. The Harbinger panel's Brace preview uses the age you are in; if you advance before the doom strikes, the threat doubles and your garrison blunts less than the preview showed.
@@ -512,6 +512,6 @@ See [Morale](morale.md) for the full system.
 
 **Plan Castle Keeps early for `fortress_state`.** It needs 20 Castle Keeps (Medieval Age), a large stone and iron investment, so start building them as soon as you reach the Medieval Age. The +0.10 military power and +5% all production are worth the cost.
 
-**Keep missions running.** There's no cooldown beyond the mission's own duration (60 to 160 ticks, rolled at launch). When one resolves, send the next.
+**Keep missions running.** There's no cooldown beyond the mission's own duration (100 to 160 ticks in the Primitive and Stone Ages, 156 to 416 from the Bronze Age on, rolled at launch). When one resolves, send the next.
 
 **Prestige keeps military strength.** The `military_power` upgrade (5 tiers × 0.05 = +0.25 military power) and `expedition_loot` (5 tiers × 5% = +25% rewards) both carry over through resets. Buy them early in your second and third runs.

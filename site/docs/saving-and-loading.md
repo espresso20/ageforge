@@ -18,6 +18,8 @@ Saves are **per-account**: each account keeps its own `saves/` folder, so switch
 
 > **Saves from an older version:** older builds kept a single flat `data/saves/` folder. On first launch the game moves those saves into your account's `data/accounts/<id>/saves/` slot. Nothing is deleted, and you don't have to do anything.
 
+> **Saves from before the one-week pacing:** a game saved before a first run took about a week loads as usual and carries on where you left it. On that first load the log says once that from the Bronze Age on each age, and its timers, now run about 2.6 times as long. Timers already running in the save finish at their old length.
+
 ---
 
 ## Commands

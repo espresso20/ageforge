@@ -231,7 +231,7 @@ Brace spends the resources the era asks of you. For each resource, the price is 
 | 1 | 12% of the most the era asks of each of those resources | 15% | 30% |
 | 2 | 24% of the same | 10% | 45% |
 
-Buildings destroyed are counted from your buildings other than wonders and storage, rounded down, with at least 1 if you have any. Wonders and storage are never destroyed. The rest of Endure (25% of workers lost, the 216-tick reconstruction debuff, −10 morale) is the same at every Brace level. See [Endure](catastrophe.md#endure).
+Buildings destroyed are counted from your buildings other than wonders and storage, rounded down, with at least 1 if you have any. Wonders and storage are never destroyed. The rest of Endure (25% of workers lost, the 562-tick reconstruction debuff, −10 morale) is the same at every Brace level. See [Endure](catastrophe.md#endure).
 
 **Brace and your garrison.** The table is Brace alone. If you have soldiers, Brace applies first and then your garrison blunts its share of what Brace leaves: fewer buildings fall and more stock is kept. The garrison's share is measured against the raid threat of the age the doom strikes in. The panel measures it against the age you are in now; if the doom strikes after you advance, the threat there is double and your garrison blunts less than the preview shows. Brace and garrison together can cut the unbraced loss by at most **60%**: at least 8% of buildings fall and at most 66% of stock is kept. That cap only bites at level 2. For example, level 1 with a garrison that blunts 20% of a raid means 12% of buildings fall and 44% of stock is kept; level 2 with a strong garrison stops at 8% and 66%. See [Your garrison](catastrophe.md#your-garrison) and [Defense: what your army blunts](military.md#7-defense-what-your-army-blunts).
 
@@ -252,12 +252,12 @@ Level 1 prices. Level 2 costs double.
 | Era | Appease (level 1) | Brace (level 1) |
 |-----|-------------------|-----------------|
 | Stone Era | refused: nothing can strike there | refused |
-| Iron Era | 5.4K faith | 26.4K knowledge, 26.4K stone, 6.36K iron, 21.6K gold |
-| Steel Era | 74K faith, 770K culture | 3.6M knowledge, 1.8M gold, 288K steel |
-| Electric Era | 1.2M faith, 16M culture | 56.4M steel, 924K oil, 3.96M electricity |
-| Digital Era | 12M faith, 180M culture | 156M gold, 117.6B electricity, 19.2B data |
-| Neon Era | 130M faith, 2B culture | 288B electricity, 46.8B data, 3B crypto |
-| Cosmic Era | 1.2B faith, 19B culture | 1.56T dark matter, 75.6B titanium |
+| Iron Era | 14K faith | 26.4K knowledge, 26.4K stone, 6.36K iron, 21.6K gold |
+| Steel Era | 190K faith, 2M culture | 3.6M knowledge, 1.8M gold, 288K steel |
+| Electric Era | 3M faith, 42M culture | 56.4M steel, 924K oil, 3.96M electricity |
+| Digital Era | 31M faith, 460M culture | 156M gold, 117.6B electricity, 19.2B data |
+| Neon Era | 340M faith, 5.2B culture | 288B electricity, 46.8B data, 3B crypto |
+| Cosmic Era | 3.1B faith, 48B culture | 1.56T dark matter, 75.6B titanium |
 
 The Cosmic Era's passage is prestige, which you may take in any of its ages. Its Appease counts the Interstellar, Galactic and Quantum Ages, so if you prestige as soon as you arrive, Appease is out of reach; stay a day or two and it isn't. Its Brace is based on the most the Cosmic Era's own advances ask of each resource you have held since the Interstellar Age: 13T dark matter (for the Quantum Age) and 630B titanium (for the Galactic Age). Antimatter and quantum flux arrive later, so they are left out.
 

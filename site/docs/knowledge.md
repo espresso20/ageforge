@@ -21,9 +21,9 @@ Story Circle → Elders' Hall → Scriptorium → Agora → Library → Monaster
 | Scriptorium | Bronze | 2.0 | 3 |
 | Agora | Iron | 1.6 | 3 |
 | Library | Classical | 3.2 | 4 |
-| Monastery Library | Medieval | 78.3 | 4 |
-| University | Renaissance | 208 | 5 |
-| Natural Philosophy Hall | Colonial | 772 | 5 |
+| Monastery Library | Medieval | 30.1 | 4 |
+| University | Renaissance | 79.9 | 5 |
+| Natural Philosophy Hall | Colonial | 297 | 5 |
 | Research Institute | Industrial | 12.8 | 6 |
 | Academy | Victorian | 25.6 | 6 |
 | Physics Laboratory | Electric | 51.2 | 7 |
@@ -86,8 +86,8 @@ Three epoch transition events affect knowledge directly:
 | Event | Type | Effect |
 |-------|------|--------|
 | The Grand Discovery | Good (Major) | 3 technologies completed at once, free |
-| Political Instability | Challenging | Knowledge -2/tick for 60 ticks (plus 60% of your faith lost) |
-| The Dark Age | Challenging | Cancels your current research (the knowledge paid for it is lost), removes 80% of your stored knowledge, then knowledge -3/tick for 144 ticks |
+| Political Instability | Challenging | Knowledge -2/tick for 156 ticks (plus 60% of your faith lost) |
+| The Dark Age | Challenging | Cancels your current research (the knowledge paid for it is lost), removes 80% of your stored knowledge, then knowledge -3/tick for 374 ticks |
 
 The Dark Age is the most punishing event for knowledge-heavy civilizations. High faith lowers the chance of every bad epoch event, the Dark Age included. See [Faith](faith.md) and [Epochs](epochs.md).
 

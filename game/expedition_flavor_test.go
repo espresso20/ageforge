@@ -176,7 +176,7 @@ func TestWarRaidIsLoggedOnce(t *testing.T) {
 	defer ge.mu.Unlock()
 	def := config.FactionByKey()["ironhold_clans"]
 	ge.Diplomacy.factions[def.Key] = &FactionState{Discovered: true, Opinion: -100, Status: "rival", AtWar: true}
-	ge.tick = 400
+	ge.tick = 4 * config.StretchTicks(ge.age, warRaidInterval) // a raid tick
 	ge.Diplomacy.factions[def.Key].LastProvocationTick = ge.tick
 	before := len(ge.log)
 	ge.processDiplomacy()

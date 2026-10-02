@@ -323,7 +323,7 @@ func TestAutoExpedition_CadenceScalesWithInvestment(t *testing.T) {
 	for i, tc := range cases {
 		ge := autoExpeditionTestEngine(t, "atomic_age", tc.count, tc.assigned, 1e12)
 		_, fill := ge.autoExpeditionInvestment()
-		want := autoExpeditionIntervalFor(tc.count, fill)
+		want := autoExpeditionIntervalIn(ge.age, tc.count, fill)
 
 		launched, _ := runAutoTicks(ge, ticks)
 		if launched == 0 {
@@ -334,7 +334,8 @@ func TestAutoExpedition_CadenceScalesWithInvestment(t *testing.T) {
 			tc.name, want, cycle, launched, ticks/1000)
 
 		// The observed cycle is max(interval, expedition duration), so it can only
-		// be LONGER than the formula, and by at most the duration span.
+		// be LONGER than the formula, and by at most the duration span (both are
+		// stretched for the age).
 		//
 		// The 2% slack on the low side is a finite-window artefact, not slop: the
 		// society's first party leaves the tick the doors open (the countdown starts
@@ -345,7 +346,7 @@ func TestAutoExpedition_CadenceScalesWithInvestment(t *testing.T) {
 			t.Errorf("%s: observed cycle %.1f is shorter than the interval %d — the countdown is leaking",
 				tc.name, cycle, want)
 		}
-		if cycle > float64(want)+120 {
+		if cycle > float64(want+config.StretchTicks(ge.age, 120)) {
 			t.Errorf("%s: observed cycle %.1f is far longer than the interval %d",
 				tc.name, cycle, want)
 		}
@@ -463,7 +464,7 @@ func TestAutoExpeditionSnapshot(t *testing.T) {
 		if got.Capacity != 16 {
 			t.Errorf("Capacity = %d, want 16 (2 societies x WorkerCapacity 8)", got.Capacity)
 		}
-		if want := autoExpeditionIntervalFor(2, 0.5); got.Interval != want {
+		if want := autoExpeditionIntervalIn("industrial_age", 2, 0.5); got.Interval != want {
 			t.Errorf("Interval = %d, want %d (the cadence formula at this investment)", got.Interval, want)
 		}
 		if got.TicksLeft <= 0 || got.TicksLeft > got.Interval {

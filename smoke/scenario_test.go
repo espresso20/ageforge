@@ -26,14 +26,20 @@ func TestTargetsCoverEveryAge(t *testing.T) {
 			t.Errorf("pacing target for unknown age %q", a)
 		}
 	}
-	if got := CumulativeTarget("modern_age"); got < 60*time.Hour || got > 90*time.Hour {
-		t.Errorf("targets to the Modern Age sum to %s; the plan is about 3 days", got)
+	if got := CumulativeTarget("modern_age"); got < 160*time.Hour || got > 175*time.Hour {
+		t.Errorf("targets to the Modern Age sum to %s; the plan is about a week", got)
+	}
+	if got := CumulativeTarget("modern_age"); got < FirstRunHigh {
+		t.Errorf("targets to the Modern Age sum to %s, under the first-run band's top %s", got, FirstRunHigh)
+	}
+	if FirstRunLow >= FirstRunHigh {
+		t.Errorf("first-run band %s-%s is empty", FirstRunLow, FirstRunHigh)
 	}
 	if got := AgeTimeout("primitive_age"); got != TimeoutFloor {
 		t.Errorf("primitive timeout %s, want the %s floor", got, TimeoutFloor)
 	}
-	if got := AgeTimeout("atomic_age"); got != 48*time.Hour {
-		t.Errorf("atomic timeout %s, want 4 x 12h", got)
+	if got := AgeTimeout("atomic_age"); got != 4*(31*time.Hour+12*time.Minute) {
+		t.Errorf("atomic timeout %s, want 4 x 31h12m", got)
 	}
 	target := PacingTargets["stone_age"].Seconds()
 	for _, c := range []struct {

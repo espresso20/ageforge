@@ -504,15 +504,16 @@ func TestHarbingerCostExamples(t *testing.T) {
 	}{
 		// Appease is a quarter of what FlowIncome makes over the thread's
 		// ages at their targets. Stone Era faith: 0.01, 0.03 and 0.07 a tick
-		// over 450, 1,350 and 2,700 ticks = 234; a quarter is 58.5 → 59.
-		{"stone_era", map[string]float64{"faith": 59}, map[string]float64{"food": 9600, "wood": 4800, "knowledge": 2400}},
-		{"steel_era", map[string]float64{"faith": 74000, "culture": 770000}, map[string]float64{"knowledge": 3600000, "gold": 1800000, "steel": 288000}},
+		// over 450, 1,350 and 7,020 ticks (the Bronze Age on the one-week
+		// curve) = 536.4; a quarter is 134.1 → 140.
+		{"stone_era", map[string]float64{"faith": 140}, map[string]float64{"food": 9600, "wood": 4800, "knowledge": 2400}},
+		{"steel_era", map[string]float64{"faith": 190000, "culture": 2000000}, map[string]float64{"knowledge": 3600000, "gold": 1800000, "steel": 288000}},
 		// The Cosmic Era's passage is prestige; Appease counts its ages but
 		// the last (Interstellar, Galactic, Quantum). Brace is priced off
 		// the era's own advances, for resources held from Interstellar (dark
 		// matter 13T, titanium 630B → 12%). Antimatter and quantum flux
 		// arrive later.
-		{"cosmic_era", map[string]float64{"faith": 1200000000, "culture": 19000000000}, map[string]float64{"dark_matter": 1560000000000, "titanium": 75600000000}},
+		{"cosmic_era", map[string]float64{"faith": 3100000000, "culture": 48000000000}, map[string]float64{"dark_matter": 1560000000000, "titanium": 75600000000}},
 	}
 	for _, c := range cases {
 		if got := harbingerAppeaseCost(c.epoch, 1); !reflect.DeepEqual(got, c.appease) {
@@ -528,14 +529,14 @@ func TestHarbingerCostExamples(t *testing.T) {
 
 func TestAppeaseCostsLevelsAndOdds(t *testing.T) {
 	ge := threadEngine(t, "steel_era", 4)
-	setStock(ge, map[string][2]float64{"faith": {6e5, 6e5}, "culture": {1e7, 1e7}})
+	setStock(ge, map[string][2]float64{"faith": {1.54e6, 1.54e6}, "culture": {2.6e7, 2.6e7}})
 
-	// Level 1: 74K faith, 770K culture. Faith fill 0.877 → high band: a 60%
+	// Level 1: 190K faith, 2M culture. Faith fill 0.877 → high band: a 60%
 	// strike, ×0.6.
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}
-	if f, c := ge.Resources.Get("faith"), ge.Resources.Get("culture"); f != 526000 || c != 9.23e6 {
+	if f, c := ge.Resources.Get("faith"), ge.Resources.Get("culture"); f != 1.35e6 || c != 2.4e7 {
 		t.Errorf("after level 1: faith %v culture %v", f, c)
 	}
 	if o := ge.CatastropheOutlook(); math.Abs(o.Probability-0.60*0.6) > 1e-9 {
@@ -549,7 +550,7 @@ func TestAppeaseCostsLevelsAndOdds(t *testing.T) {
 	if err := ge.HarbingerAppease(); err != nil {
 		t.Fatal(err)
 	}
-	if f := ge.Resources.Get("faith"); f != 378000 {
+	if f := ge.Resources.Get("faith"); f != 970000 {
 		t.Errorf("after level 2: faith %v", f)
 	}
 	if o := ge.CatastropheOutlook(); math.Abs(o.Probability-0.75*0.36) > 1e-9 {
@@ -561,7 +562,7 @@ func TestAppeaseCostsLevelsAndOdds(t *testing.T) {
 	if err := ge.HarbingerAppease(); err == nil || !strings.Contains(err.Error(), "as far as it goes") {
 		t.Errorf("third appease: err = %v", err)
 	}
-	if f := ge.Resources.Get("faith"); f != 378000 {
+	if f := ge.Resources.Get("faith"); f != 970000 {
 		t.Errorf("refused appease deducted faith: %v", f)
 	}
 }

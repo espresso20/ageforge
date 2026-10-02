@@ -154,14 +154,30 @@ type EpochEventDef struct {
 	Duration   int    // ticks the effect lasts; 0 = instant
 }
 
+// epochEventAge is the age epoch events are timed for. They fire on entering
+// an era, and the first era they can fire in, the Iron Era, already runs at
+// PacingStretch, so every one does.
+const epochEventAge = "iron_age"
+
+// stretchEpochEvents re-times epoch events for the pacing curve: each typed
+// Duration is the base-curve value, stretched by StretchTicks, and "{dur}"
+// in the flavor text becomes the stretched duration.
+func stretchEpochEvents(defs []EpochEventDef) []EpochEventDef {
+	for i := range defs {
+		defs[i].Duration = StretchTicks(epochEventAge, defs[i].Duration)
+		defs[i].FlavorText = withDuration(defs[i].FlavorText, defs[i].Duration)
+	}
+	return defs
+}
+
 // GoodEpochEvents returns the 10 good epoch transition events (minor/major/legendary).
 func GoodEpochEvents() []EpochEventDef {
-	return []EpochEventDef{
+	return stretchEpochEvents([]EpochEventDef{
 		// --- Minor (any culture level) ---
 		{
 			Key: "age_of_plenty", Name: "Age of Plenty", Type: "good_minor",
-			FlavorText: "Harvests overflow and the rivers run clear. All production +100% for ~7m 12s.",
-			Duration:   216, // ~7 min real
+			FlavorText: "Harvests overflow and the rivers run clear. All production +100% for {dur}.",
+			Duration:   216, // ~7 min on the base curve
 		},
 		{
 			Key: "population_surge", Name: "Population Surge", Type: "good_minor",
@@ -175,13 +191,13 @@ func GoodEpochEvents() []EpochEventDef {
 		},
 		{
 			Key: "trade_winds", Name: "Trade Winds", Type: "good_minor",
-			FlavorText: "A steady wind fills the sails. Gold +5/tick for ~4m 48s.",
-			Duration:   144, // ~5 min
+			FlavorText: "A steady wind fills the sails. Gold +5/tick for {dur}.",
+			Duration:   144, // ~5 min on the base curve
 		},
 		{
 			Key: "cultural_festival", Name: "Cultural Festival", Type: "good_minor",
-			FlavorText: "A grand festival brings everyone together. Culture +30% and faith +20% of what you hold, then culture +1/tick and faith +1/tick for ~4m 48s.",
-			Duration:   144, // ~5 min
+			FlavorText: "A grand festival brings everyone together. Culture +30% and faith +20% of what you hold, then culture +1/tick and faith +1/tick for {dur}.",
+			Duration:   144, // ~5 min on the base curve
 		},
 		// --- Major (medium culture required) ---
 		{
@@ -201,8 +217,8 @@ func GoodEpochEvents() []EpochEventDef {
 		},
 		{
 			Key: "peaceful_century", Name: "Peaceful Century", Type: "good_major",
-			FlavorText: "An era of peace settles in. All production +20% for ~9m 36s.",
-			Duration:   288, // ~10 min
+			FlavorText: "An era of peace settles in. All production +20% for {dur}.",
+			Duration:   288, // ~10 min on the base curve
 		},
 		// --- Legendary (high culture, rare) ---
 		{
@@ -210,20 +226,20 @@ func GoodEpochEvents() []EpochEventDef {
 			FlavorText: "The heavens smile on your civilization. All production +15%, permanently.",
 			Duration:   0, // instant: permanent +15% production_all; recorded in history
 		},
-	}
+	})
 }
 
 // ChallengingEpochEvents returns the 8 bad (non-catastrophe) epoch transition events.
 func ChallengingEpochEvents() []EpochEventDef {
-	return []EpochEventDef{
+	return stretchEpochEvents([]EpochEventDef{
 		{
 			Key: "the_famine", Name: "The Famine", Type: "bad_challenging",
-			FlavorText: "Crops wither and the granaries run empty. Food -3/tick for ~4m.",
+			FlavorText: "Crops wither and the granaries run empty. Food -3/tick for {dur}.",
 			Duration:   120,
 		},
 		{
 			Key: "merchant_betrayal", Name: "Merchant Betrayal", Type: "bad_challenging",
-			FlavorText: "Your trading partners vanish with 50% of your gold. Gold -2/tick for ~2m 24s.",
+			FlavorText: "Your trading partners vanish with 50% of your gold. Gold -2/tick for {dur}.",
 			Duration:   72,
 		},
 		{
@@ -233,30 +249,30 @@ func ChallengingEpochEvents() []EpochEventDef {
 		},
 		{
 			Key: "epidemic", Name: "Epidemic", Type: "bad_challenging",
-			FlavorText: "A plague moves through your population. 20% of your workers die, and food -1.5/tick for ~6m.",
+			FlavorText: "A plague moves through your population. 20% of your workers die, and food -1.5/tick for {dur}.",
 			Duration:   180,
 		},
 		{
 			Key: "resource_drought", Name: "Resource Drought", Type: "bad_challenging",
-			FlavorText: "The epoch's main building material runs short. Its production -3/tick for ~3m.",
+			FlavorText: "The epoch's main building material runs short. Its production -3/tick for {dur}.",
 			Duration:   90,
 		},
 		{
 			Key: "political_instability", Name: "Political Instability", Type: "bad_challenging",
-			FlavorText: "Rival courts tear at the throne. You lose 60% of your faith, and knowledge -2/tick for ~2m.",
+			FlavorText: "Rival courts tear at the throne. You lose 60% of your faith, and knowledge -2/tick for {dur}.",
 			Duration:   60,
 		},
 		{
 			Key: "economic_crash", Name: "Economic Crash", Type: "bad_challenging",
-			FlavorText: "Markets implode. You lose 50% of your gold, and gold -3/tick for ~7m 12s.",
+			FlavorText: "Markets implode. You lose 50% of your gold, and gold -3/tick for {dur}.",
 			Duration:   216,
 		},
 		{
 			Key: "the_dark_age", Name: "The Dark Age", Type: "bad_challenging",
-			FlavorText: "Your scholars fall silent. Current research is canceled with no refund, you lose 80% of your knowledge, and knowledge -3/tick for ~4m 48s.",
+			FlavorText: "Your scholars fall silent. Current research is canceled with no refund, you lose 80% of your knowledge, and knowledge -3/tick for {dur}.",
 			Duration:   144,
 		},
-	}
+	})
 }
 
 // EpochByKey returns a map of key -> EpochDef.

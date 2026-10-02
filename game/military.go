@@ -5,6 +5,8 @@ import (
 	"maps"
 	"math/rand"
 	"sort"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // Expedition categories. Scouting expeditions cost only resources (no soldiers)
@@ -261,10 +263,11 @@ func (mm *MilitaryManager) LaunchExpedition(rng *rand.Rand, key, currentAge stri
 		return fmt.Errorf("%s ended with the %s. Type %s to see what you can send now", def.Name, ageLabel(def.MaxAge), categoryCommand(def.Category))
 	}
 
-	// Roll a randomized active duration in [DurationMin, DurationMax] (inclusive).
-	// Every shipped def carries a valid range; the guards below only keep a
-	// malformed def from handing rng.Intn an arg <= 0 or pinning an expedition
-	// at 0 ticks (which would resolve it instantly, forever).
+	// Roll a randomized active duration in [DurationMin, DurationMax] (inclusive),
+	// stretched for the age (expeditionTicks). Every shipped def carries a valid
+	// range; the guards below only keep a malformed def from handing rng.Intn an
+	// arg <= 0 or pinning an expedition at 0 ticks (which would resolve it
+	// instantly, forever).
 	ticks := def.DurationMin
 	if def.DurationMax > def.DurationMin {
 		ticks = def.DurationMin + rng.Intn(def.DurationMax-def.DurationMin+1)
@@ -272,6 +275,7 @@ func (mm *MilitaryManager) LaunchExpedition(rng *rand.Rand, key, currentAge stri
 	if ticks <= 0 {
 		ticks = minExpeditionDurationTicks
 	}
+	ticks = expeditionTicks(currentAge, ticks)
 
 	mm.activeByCat[def.Category] = &ActiveExpedition{
 		Key:       key,
@@ -280,6 +284,15 @@ func (mm *MilitaryManager) LaunchExpedition(rng *rand.Rand, key, currentAge stri
 		TicksLeft: ticks,
 	}
 	return nil
+}
+
+// expeditionTicks re-times an expedition duration for age. The defs' ranges
+// are typed for the base curve; from the Bronze Age on the ages run
+// config.PacingStretch times longer and so do expeditions, so an age holds as
+// many of them (and their encounters) as it did. The roll is drawn in the
+// typed range first, so launching takes the same draws in every age.
+func expeditionTicks(age string, ticks int) int {
+	return config.StretchTicks(age, ticks)
 }
 
 // categoryNoun is the player-facing noun phrase for one mission of a
@@ -504,8 +517,8 @@ func (mm *MilitaryManager) Snapshot(currentAge string, ageOrder map[string]int, 
 			Key:               def.Key,
 			Category:          def.Category,
 			SoldiersNeeded:    def.SoldiersNeeded,
-			DurationMin:       def.DurationMin,
-			DurationMax:       def.DurationMax,
+			DurationMin:       expeditionTicks(currentAge, def.DurationMin),
+			DurationMax:       expeditionTicks(currentAge, def.DurationMax),
 			Difficulty:        def.DifficultyBase,
 			Cost:              maps.Clone(def.Cost), // def is the manager's table
 			Description:       def.Description,

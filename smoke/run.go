@@ -171,6 +171,13 @@ type AgeSplit struct {
 	TargetSecs float64 `json:"target_seconds_1x,omitempty"`
 	Verdict    string  `json:"verdict,omitempty"`
 	TimedOut   bool    `json:"timed_out,omitempty"`
+	// QuietSecs is the longest stretch of the age with nothing new to decide:
+	// no building type built for the first time this run and no tech
+	// finished (entering and leaving the age count as marks). QuietAfter is
+	// what came just before it ("entering iron_age", "tech", "new forge").
+	// Reported per age; Pacing v2's mid-age unlocks hold it to 12 hours.
+	QuietSecs  float64 `json:"quiet_seconds_1x,omitempty"`
+	QuietAfter string  `json:"quiet_after,omitempty"`
 }
 
 // CycleSplit is the time from a fresh start to prestige.
@@ -322,6 +329,15 @@ type runner struct {
 	fate       *FateRow         // the current era's fate row
 	fateTick   int              // the tick the fate row was last sampled at
 	stopReason string
+	// Quiet stretches (AgeSplit.QuietSecs): building types built so far this
+	// run and techs finished, the last new decision in this age, what it was,
+	// and the longest gap between two so far.
+	seenBld    map[string]bool
+	novTechs   int
+	quietMark  time.Duration
+	quietWhat  string
+	quietMax   time.Duration
+	quietAfter string
 	// advancing is set while control calls AdvanceAge, so the age-advance
 	// bus handler leaves that advance to control.
 	advancing bool
@@ -358,6 +374,7 @@ func newRunner(cfg Config, seed int64, ge *game.GameEngine) *runner {
 		ageIdx:  make(map[string]int),
 		byCheck: make(map[string]*Anomaly),
 		prevEvt: make(map[string]bool),
+		seenBld: make(map[string]bool),
 		cycle:   1,
 	}
 	r.res.Stats.EpochEvents = make(map[string]int)
@@ -538,7 +555,39 @@ func (r *runner) split(unfinished bool) AgeSplit {
 	if t, ok := Target(r.age); ok {
 		a.TargetSecs = t.Seconds()
 	}
+	// The stretch running to now (the age's end) counts too.
+	quiet, after := r.quietMax, r.quietAfter
+	if gap := r.sim - r.quietMark; gap > quiet {
+		quiet, after = gap, r.quietWhat
+	}
+	a.QuietSecs, a.QuietAfter = quiet.Seconds(), after
 	return a
+}
+
+// trackNovelty marks the new decisions in st (a building type built for the
+// first time this run, a tech finished) for the age's quiet stretches.
+func (r *runner) trackNovelty(st game.GameState) {
+	if st.Research.TotalResearched < r.novTechs {
+		// A new run (prestige or Succumb): every building type is new again.
+		r.novTechs = 0
+		r.seenBld = make(map[string]bool)
+	}
+	mark := func(what string) {
+		if gap := r.sim - r.quietMark; gap > r.quietMax {
+			r.quietMax, r.quietAfter = gap, r.quietWhat
+		}
+		r.quietMark, r.quietWhat = r.sim, what
+	}
+	if st.Research.TotalResearched > r.novTechs {
+		r.novTechs = st.Research.TotalResearched
+		mark("tech")
+	}
+	for _, k := range sortedKeys(st.Buildings) {
+		if st.Buildings[k].Count > 0 && !r.seenBld[k] {
+			r.seenBld[k] = true
+			mark("new " + k)
+		}
+	}
 }
 
 func (r *runner) panicked(rec interface{}, stack []byte) {
@@ -581,6 +630,8 @@ func (r *runner) enterAge(st game.GameState) {
 	r.hiBuild, r.hiTech, r.lastRes = -1, -1, -1
 	r.lastProg = r.sim
 	r.timedOut = false
+	r.quietMark, r.quietWhat = r.sim, "entering "+st.Age
+	r.quietMax, r.quietAfter = 0, ""
 }
 
 // closeAge records the age just completed. Its verdict is graded across
@@ -616,6 +667,7 @@ func (r *runner) observe(st game.GameState) {
 	}
 	r.trackHarbinger(st)
 	r.sampleFate(st)
+	r.trackNovelty(st)
 	for _, l := range st.Log {
 		if l.Tick <= r.logTick {
 			continue

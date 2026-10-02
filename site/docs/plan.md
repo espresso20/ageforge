@@ -66,4 +66,4 @@ The plan is saved with your game and comes back exactly as it was. Prestige, Suc
 ## See also
 
 - [Wonder overflow](wonders.md#overflow): what a full store would waste goes into the current wonder.
-- [Storage](buildings.md#storage-buildings-21-tiers): each age's storage holds about an hour and a half of its production.
+- [Storage](buildings.md#storage-buildings-21-tiers): each age's storage holds at least an hour and a half of its production (about 3.9 hours or more from the Bronze Age on).

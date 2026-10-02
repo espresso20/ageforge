@@ -8,6 +8,7 @@ import (
 	"testing"
 
 	"github.com/espresso20/ageforge/config"
+	"github.com/espresso20/ageforge/detmath"
 )
 
 // malus_test.go covers the negative half of the engine (Polarity, MalusCatalog,
@@ -310,15 +311,26 @@ func meanInstant(t *testing.T, age string, scale float64) float64 {
 
 // TestInstantLumpsScaleWithAge asserts monotonic growth across the whole age
 // order — a fixed 50–200 crate must not stay a rounding error into the late game.
+// Growth is measured in ticks of production, what a lump is tuned to: the lump
+// times its age's pacing stretch (from the Bronze Age on a tick makes
+// 1/config.PacingStretch as much, and the lump is divided by it).
 func TestInstantLumpsScaleWithAge(t *testing.T) {
 	order := config.AgeOrder()
-	prev := meanInstant(t, order[0], 1.0)
+	prev := meanInstant(t, order[0], 1.0) * config.AgeStretch(order[0])
 	for _, age := range order[1:] {
-		got := meanInstant(t, age, 1.0)
+		got := meanInstant(t, age, 1.0) * config.AgeStretch(age)
 		if got <= prev {
-			t.Fatalf("instant lump did not grow into %s: %.4f <= previous %.4f", age, got, prev)
+			t.Fatalf("instant lump did not grow into %s: %.4f <= previous %.4f (in base-curve units)", age, got, prev)
 		}
 		prev = got
+	}
+	// The stretch itself: the same roll in the Bronze Age, unstretched, is
+	// PacingStretch times what it pays.
+	p := DefaultProfile()
+	p.Age = "bronze_age"
+	want := float64(detmath.Pow(instantGrowthPerAge, 2)) / config.PacingStretch
+	if got := p.instantScale(); math.Abs(got-want) > 1e-9 {
+		t.Errorf("bronze instant scale = %v, want 2.2^2 / %v = %v", got, config.PacingStretch, want)
 	}
 }
 
