@@ -272,13 +272,16 @@ func (ge *GameEngine) harbingerOnAgeAdvance() {
 
 // harbingerTickCheck is the harbinger's tick hook. In the final epoch it
 // starts the Last Passage thread on the first tick that finds none (a
-// Succumb, a prestige, a load), one check per epoch (harbingerCheckedEpoch).
-// Then it runs the era's fate: roll it if missing, bring the harbinger when
-// due, strike at the fated tick (fateTick).
+// Succumb, a prestige, a load), one check per epoch (harbingerCheckedEpoch,
+// set in every epoch so the epoch lookup runs once, not every tick). Then it
+// runs the era's fate: roll it if missing, bring the harbinger when due,
+// strike at the fated tick (fateTick).
 func (ge *GameEngine) harbingerTickCheck() {
-	if config.IsFinalEpoch(ge.currentEpoch) && ge.harbingerCheckedEpoch != ge.currentEpoch {
+	if ge.harbingerCheckedEpoch != ge.currentEpoch {
 		ge.harbingerCheckedEpoch = ge.currentEpoch
-		ge.maybeLastPassageArrive()
+		if config.IsFinalEpoch(ge.currentEpoch) {
+			ge.maybeLastPassageArrive()
+		}
 	}
 	ge.fateTick()
 }
