@@ -16,7 +16,7 @@ AgeForge is a full-screen text interface built with Go and tview/tcell. It runs 
 | [Themes & Accessibility](themes.md) | Palettes, colorblind-safe and high-contrast themes |
 | [The 22 Ages](ages.md) | Every age, its requirements and unlocks |
 | [Buildings](buildings.md) | All 301 buildings including wonders |
-| [Technologies](technologies.md) | All 73 techs with effects |
+| [Technologies](technologies.md) | All 77 techs with effects |
 | [Prestige System](prestige.md) | Permanent upgrades across resets |
 
 ---
@@ -26,7 +26,7 @@ AgeForge is a full-screen text interface built with Go and tview/tcell. It runs 
 - **22 Ages**, Primitive to Transcendent
 - **26 Resources**, from food and wood up to Quantum Flux (soldiers included)
 - **301 Buildings**: a 14-lineage production system plus storage and wonders
-- **73 Technologies** in prerequisite chains, each tied to an age
+- **77 Technologies** in prerequisite chains, each tied to an age
 - **16 Expeditions** (scouting missions and military campaigns), each a gamble of cost against reward
 - **21 Trade routes** and an 11-civilization diplomacy roster
 - **77 Milestones** in 6 chains, with civilization titles

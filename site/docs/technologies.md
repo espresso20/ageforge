@@ -1,6 +1,6 @@
 # Technologies
 
-Research is your civilization's strongest long-term lever. 73 technologies span all 22 ages, and each one permanently changes your production, military strength, storage, or the pace of the game. Research is **sequential**: only one technology can be in progress at a time, and it must finish (or be canceled) before you can start the next.
+Research is your civilization's strongest long-term lever. 77 technologies span all 22 ages, and each one permanently changes your production, military strength, storage, or the pace of the game. Research is **sequential**: only one technology can be in progress at a time, and it must finish (or be canceled) before you can start the next.
 
 ---
 
@@ -96,6 +96,8 @@ With no arguments, opens the **Research panel**. It groups techs by age: researc
 Prerequisites are listed by tech key.
 
 Research time is capped at **one eighth of the tech's age target** (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)), so the handful of techs each age offers fits inside it. From the Bronze to the Colonial Age most techs sit below that cap, at their own research times; in every other age each tech sits at the cap, so all techs of that age share the same tick count. Ticks below are at 1× speed (one tick is 2 seconds), before any `research_speed` bonus.
+
+**Mid-age unlocks.** Four techs open a building partway through their age instead of at its start: Civilian Reactors (Atomic, the Nuclear Plant), Internet of Things (Information, the Smart Farm and the Smart Complex), Holography (Cyberpunk, the Holographic Theater) and Maglev Transit (Fusion, the Energy Exchange). Their knowledge cost is what times them: each is priced so a player affords it about halfway through the age, after its other techs, so a long stretch of saving up has something new in the middle. A gated building stays hidden from the build list until its tech is done; you can still add it to your build plan, where it waits for the tech. Buildings you already have stay built.
 
 ### Primitive Age (~2 min/tech at 1× speed)
 
@@ -223,6 +225,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 | `nuclear_fission` | Nuclear Fission | 500K kp | 7,020 | `power_distribution`, `chemical_engineering` | +5.0 electricity/tick, +0.5 uranium/tick |
 | `rocketry` | Rocketry | 400K kp | 7,020 | `rifling`, `chemical_engineering` | +100% military power, +50% expedition reward |
 | `nuclear_deterrence` | Nuclear Deterrence | 600K kp | 7,020 | `nuclear_fission`, `rocketry` | +150% military power |
+| `civilian_reactors` | Civilian Reactors | 3.4B kp | 7,020 | `nuclear_deterrence` | +5.0 electricity/tick, +0.5 uranium/tick; opens the Nuclear Plant |
 
 ---
 
@@ -245,6 +248,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 | `cybersecurity` | Cybersecurity | 1.8M kp | 8,190 | `computers` | +100% military power, +5K data storage |
 | `social_media` | Social Media | 1.5M kp | 8,190 | `internet` | +5.0 culture/tick, +5.0 gold/tick |
 | `medical_nanobots` | Medical Nanobots | 1.7M kp | 8,190 | `nanofabrication` | +10 housing, +8.0 food/tick |
+| `internet_of_things` | Internet of Things | 4.5B kp | 8,190 | `social_media`, `cybersecurity`, `medical_nanobots` | +3.0 data/tick, +8.0 food/tick; opens the Smart Farm and the Smart Complex |
 
 ---
 
@@ -265,6 +269,7 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 | `neural_interface` | Neural Interface | 6M kp | 10,530 | `machine_learning` | +30% worker output, +200% knowledge output |
 | `blockchain` | Blockchain | 5M kp | 10,530 | `cybersecurity`, `cloud_computing` | +2.0 crypto/tick, +200% gold output |
 | `cybernetics` | Cybernetics | 5.5M kp | 10,530 | `neural_interface` | +50% all production, +100% military power |
+| `holography` | Holography | 16B kp | 10,530 | `cybernetics`, `blockchain` | +5.0 culture/tick, +2.0 crypto/tick; opens the Holographic Theater |
 
 ---
 
@@ -274,7 +279,8 @@ Research time is capped at **one eighth of the tech's age target** (see [How Lon
 |---|---|---|---|---|---|
 | `fusion_power` | Fusion Power | 10M kp | 11,700 | `nuclear_fission`, `cybernetics` | +20.0 electricity/tick, +1.0 plasma/tick |
 | `plasma_physics` | Plasma Physics | 9M kp | 11,700 | `fusion_power` | +3.0 plasma/tick, +30% all production |
-| `superconductors` | Superconductors | 11M kp | 11,700 | `fusion_power` | +50% all production, +50K storage for every resource |
+| `superconductors` | Superconductors | 14.5B kp | 11,700 | `fusion_power` | +50% all production, +50K storage for every resource |
+| `maglev_transit` | Maglev Transit | 6.5B kp | 11,700 | `plasma_physics`, `superconductors` | +1.0 plasma/tick, +5.0 gold/tick; opens the Energy Exchange |
 
 ---
 
@@ -506,15 +512,19 @@ These techs add a flat amount to a resource's production each tick. Unlike the p
 | Electrification | electricity | +1.0/tick |
 | Power Distribution | electricity | +3.0/tick |
 | Nuclear Fission | electricity | +5.0/tick, uranium +0.5/tick |
+| Civilian Reactors | electricity | +5.0/tick, uranium +0.5/tick |
 | Advanced Electrics | electricity | +5.0/tick |
 | Radio | culture | +2.0/tick |
 | Social Media | culture | +5.0/tick, gold +5.0/tick |
+| Internet of Things | data | +3.0/tick, food +8.0/tick |
 | Chemical Engineering | oil | +1.0/tick |
 | Machine Learning | data | +5.0/tick |
 | Cloud Computing | data | +8.0/tick |
 | Blockchain | crypto | +2.0/tick |
+| Holography | culture | +5.0/tick, crypto +2.0/tick |
 | Fusion Power | electricity | +20.0/tick, plasma +1.0/tick |
 | Plasma Physics | plasma | +3.0/tick |
+| Maglev Transit | plasma | +1.0/tick, gold +5.0/tick |
 | Orbital Mechanics | titanium | +1.0/tick |
 | Space Mining | titanium | +3.0/tick, iron +20.0/tick |
 | Zero-G Manufacturing | steel | +10.0/tick |

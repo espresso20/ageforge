@@ -472,10 +472,10 @@ func Technologies() []TechDef {
 			// Mid-age unlock (Pacing v2): the Atomic Age's techs were done
 			// in its first third, then nothing new for most of a day. The
 			// cost is what holds it to the middle: knowledge runs about
-			// 200 million an hour here, so the bot affords it some 13 hours
+			// 200 million an hour here, so the bot affords it some 15 hours
 			// in and finishes it near the middle of the old quiet stretch.
 			Name: "Civilian Reactors", Key: "civilian_reactors",
-			Age: "atomic_age", Cost: 3000000000, ResearchTicks: 15000,
+			Age: "atomic_age", Cost: 3400000000, ResearchTicks: 15000,
 			Prerequisites: []string{"nuclear_deterrence"},
 			Description:   "The reactors built for the arms race find steadier work on the grid. Opens the Nuclear Plant.",
 			Effects: []Effect{
@@ -577,7 +577,7 @@ func Technologies() []TechDef {
 			Name: "Internet of Things", Key: "internet_of_things",
 			Age: "information_age", Cost: 4500000000, ResearchTicks: 26000,
 			Prerequisites: []string{"social_media", "cybersecurity", "medical_nanobots"},
-			Description:   "Every fridge, tractor and doorbell goes online and starts reporting back. Opens the Smart Farm and the Smart Complex.",
+			Description:   "The fridges and the tractors go online and start reporting back. Opens the Smart Farm and the Smart Complex.",
 			Effects: []Effect{
 				{Type: "production", Target: "data", Value: 3.0},
 				{Type: "production", Target: "food", Value: 8.0},
@@ -648,13 +648,13 @@ func Technologies() []TechDef {
 		},
 		{
 			// Mid-age unlock (Pacing v2): knowledge runs about 450 million
-			// an hour here, so it is afforded some 27 hours in and finishes
-			// about 31 hours in, mid-way through the age's long build-up to
+			// an hour here, so it is afforded some 30 hours in and finishes
+			// about 35 hours in, mid-way through the age's long build-up to
 			// its wonder.
 			Name: "Holography", Key: "holography",
-			Age: "cyberpunk_age", Cost: 14000000000, ResearchTicks: 50000,
+			Age: "cyberpunk_age", Cost: 16000000000, ResearchTicks: 50000,
 			Prerequisites: []string{"cybernetics", "blockchain"},
-			Description:   "Light learns to lie convincingly, and every wall becomes an advert. Opens the Holographic Theater.",
+			Description:   "Light learns to lie convincingly, and every wall becomes an ad. Opens the Holographic Theater.",
 			Effects: []Effect{
 				{Type: "production", Target: "culture", Value: 5.0},
 				{Type: "production", Target: "crypto", Value: 2.0},
@@ -683,12 +683,12 @@ func Technologies() []TechDef {
 			},
 		},
 		{
-			// Priced to finish about 20 hours into the Fusion Age (knowledge
+			// Priced to finish about 22 hours into the Fusion Age (knowledge
 			// runs about 600 million an hour there), with Maglev Transit about
 			// ten hours after it: the age's quiet stretch, 26 hours from its
 			// last tech to its wonder, needed two marks to come under 12.
 			Name: "Superconductors", Key: "superconductors",
-			Age: "fusion_age", Cost: 13000000000, ResearchTicks: 70000,
+			Age: "fusion_age", Cost: 14500000000, ResearchTicks: 70000,
 			Prerequisites: []string{"fusion_power"},
 			Description:   "Zero-resistance materials raise all production and storage.",
 			Effects: []Effect{

@@ -49,7 +49,7 @@ A new game starts in the Primitive Age with 25 food and 50 wood. Gather resource
 - **Resource Management**: 26 resources across 22 ages with storage limits and production chains
 - **Building System**: 301 buildings (250 lineage buildings + 21 storage + 22 Wonders + 4 cultural monuments + 4 standalone: the Nano Foundry and 3 diplomatic buildings) with scaling costs and construction queues
 - **Worker System**: 12 domains (food, faith, knowledge, military, trade, engineering, hacker, astronaut, lumber, masonry, metallurgy, energy) with per-domain class progression and food economy
-- **Tech Tree**: 73 technologies with prerequisites and permanent bonuses
+- **Tech Tree**: 77 technologies with prerequisites and permanent bonuses
 - **Military**: 13 campaigns that cost soldiers and 3 scouting expeditions that cost resources, each with a chance of failure and set rewards
 - **Epoch System**: 7 epochs with faith-gated event rolls, catastrophe choices from the Iron Era on (Endure/Succumb), and legacy bonuses that carry across runs
 - **Random Events**: 61 events (26 base + 35 epoch-exclusive) with streak balancing

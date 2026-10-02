@@ -148,6 +148,20 @@ A handful of **milestone rewards** (Master Builder, Grand Architect and others) 
 
 Build times are capped by the age's pace: nothing takes longer to build than **1/6 of its age's target time** (wonders included), and storage buildings take at most **1/48** of it (you can queue several copies at once, up to the cap). In practice that is 2m 30s in the Primitive Age, 2h 36m in the Renaissance and 10h 24m from the Interstellar Age on (storage: 18 seconds, 19m 30s and 1h 18m). The full per-age list is in the table under [How Production Rates Are Set](#how-production-rates-are-set).
 
+### Buildings a tech opens
+
+Most buildings unlock the moment you enter their age. Five wait for a tech from that same age instead, so the age has something new partway through:
+
+| Building | Age | Opened by |
+|---|---|---|
+| Nuclear Plant | Atomic | Civilian Reactors |
+| Smart Farm | Information | Internet of Things |
+| Smart Complex | Information | Internet of Things |
+| Holographic Theater | Cyberpunk | Holography |
+| Energy Exchange | Fusion | Maglev Transit |
+
+Until the tech is done the building is missing from the build list, and `build` and `upgrade` say which tech it needs. The build plan takes it early and waits. Copies you already have keep working. See [Technologies](technologies.md#tech-tree-by-age).
+
 ---
 
 ## Lineage System

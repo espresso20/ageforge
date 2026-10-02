@@ -96,14 +96,23 @@ func buildAgeSplashText(newAge string, summary game.AgeAdvanceSummary,
 	allBuildings := config.BuildingByKey()
 	if len(newDef.UnlockBuildings) > 0 {
 		bNames := make([]string, 0, len(newDef.UnlockBuildings))
+		var later []string // buildings a tech of this age opens later
+		techs := config.TechByKey()
 		for _, bKey := range newDef.UnlockBuildings {
-			if def, ok := allBuildings[bKey]; ok {
-				bNames = append(bNames, def.Name)
-			} else {
+			def, ok := allBuildings[bKey]
+			switch {
+			case !ok:
 				bNames = append(bNames, bKey)
+			case def.RequiredTech != "":
+				later = append(later, fmt.Sprintf("%s (%s)", def.Name, techs[def.RequiredTech].Name))
+			default:
+				bNames = append(bNames, def.Name)
 			}
 		}
 		fmt.Fprintf(&sb, "[cyan]New buildings:[-] %s\n", strings.Join(bNames, ", "))
+		if len(later) > 0 {
+			fmt.Fprintf(&sb, "[cyan]Opened later by research:[-] %s\n", strings.Join(later, ", "))
+		}
 	}
 	if len(newDef.UnlockResources) > 0 {
 		rNames := make([]string, 0, len(newDef.UnlockResources))
