@@ -49,6 +49,7 @@ func run() int {
 	checkIn := flag.Duration("check-in", 0, "idle style: simulated 1x time between check-ins (0 = 3h)")
 	noPlan := flag.Bool("no-plan", false, "idle style: leave no build plan at check-ins (to measure what the plan is worth)")
 	noOverflow := flag.Bool("no-overflow", false, "turn wonder overflow off for the bot runs (to measure what it is worth)")
+	noShares := flag.Bool("no-shares", false, "idle style: recruit and assign by hand at check-ins, with auto-recruit off, instead of leaving workers to worker shares (to measure what shares are worth)")
 	army := flag.String("army", "off", "bot policy for the army: off (ignore it beyond what age gates ask for, the default the pacing targets assume) or on (keep a modest garrison of the age's newest military buildings, bought from spare stock)")
 	deals := flag.String("deals", "off", "bot policy for faction trade deals: off (ignore them, the default the pacing targets assume) or on (take deals for what the age needs, paid from surplus)")
 	prestigeAge := flag.String("prestige-age", "", "progression: age at which to prestige (default: first age where prestige is allowed)")
@@ -101,7 +102,7 @@ func run() int {
 	base.Catastrophe = *catastrophe
 	base.Harbinger = *harbinger
 	base.Pacing = *pacing
-	base.NoPlan, base.NoOverflow = *noPlan, *noOverflow
+	base.NoPlan, base.NoOverflow, base.NoShares = *noPlan, *noOverflow, *noShares
 	switch *deals {
 	case "on", "off":
 		base.Deals = *deals == "on"

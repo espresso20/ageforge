@@ -69,6 +69,14 @@ type Bot struct {
 	// the next visit (planAhead). The idle style sets it; the greedy bot,
 	// always there, has no use for one.
 	UsePlan bool
+	// UseShares makes a check-in player leave its workers to the game's
+	// worker shares, on auto: the game recruits and staffs, between visits
+	// too, instead of the bot recruiting and assigning by hand at each
+	// visit. The idle style sets it (-no-shares turns it off). Setting
+	// shares once per age (domains the age doesn't need at 0, or a lean
+	// toward the slowest requirement's domain) measured no better than auto
+	// on the idle targets, so the bot keeps the default players get.
+	UseShares bool
 
 	// Actions counts successful player actions by kind; Errors counts
 	// rejected ones. Both feed the report.
@@ -271,8 +279,10 @@ func (b *Bot) Play(st game.GameState) {
 	if b.upgrade(p) {
 		p = b.newPlan(b.ge.GetState())
 	}
-	pop := b.recruit(p)
-	b.assign(p, pop)
+	if !b.UseShares {
+		pop := b.recruit(p)
+		b.assign(p, pop)
+	}
 	b.build(p)
 	b.bankWonder(p)
 	b.research(p)

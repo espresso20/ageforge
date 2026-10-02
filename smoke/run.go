@@ -64,6 +64,10 @@ type Config struct {
 	// measure what each is worth (-no-plan, -no-overflow).
 	NoPlan     bool
 	NoOverflow bool
+	// NoShares makes a check-in player recruit and assign by hand at each
+	// visit, with auto-recruit off, instead of leaving its workers to worker
+	// shares (Bot.UseShares), to measure what shares are worth (-no-shares).
+	NoShares bool
 	// Deals turns on the bot's faction-deal policy (Bot.Deals, -deals=on).
 	// Off by default: deals are a side channel, and the pacing targets are
 	// graded on the bot that ignores them.
@@ -371,6 +375,10 @@ func newRunner(cfg Config, seed int64, ge *game.GameEngine) *runner {
 	r.bot.HorizonTicks = cfg.Horizon.Seconds() / game.BaseTickInterval.Seconds()
 	r.bot.CheckInTicks = cfg.CheckIn.Seconds() / game.BaseTickInterval.Seconds()
 	r.bot.UsePlan = cfg.CheckIn > 0 && !cfg.NoPlan
+	r.bot.UseShares = cfg.CheckIn > 0 && !cfg.NoShares
+	if cfg.CheckIn > 0 && cfg.NoShares {
+		ge.SetAutoRecruit(false)
+	}
 	r.bot.Deals = cfg.Deals
 	r.bot.Army = cfg.Army
 	if cfg.NoOverflow {
