@@ -162,6 +162,8 @@ func TestRolledValuesWithinDefRanges(t *testing.T) {
 		p.Specialty = "iron"
 		p.MagnitudeScale = scale
 		instScale := p.instantScale()
+		// Durations are typed for the base curve and stretched for the age.
+		stretch := func(ticks int) int { return config.StretchTicks(p.Age, ticks) }
 
 		for i, b := range rollN(p, 123, 3000) {
 			d, ok := catalog[b.Name]
@@ -175,8 +177,8 @@ func TestRolledValuesWithinDefRanges(t *testing.T) {
 				if b.Magnitude < lo || b.Magnitude > hi {
 					t.Fatalf("%s magnitude %.6f outside [%.6f,%.6f] at scale %.2f", b.Name, b.Magnitude, lo, hi, scale)
 				}
-				if b.DurationTicks < d.DurMin || b.DurationTicks > d.DurMax {
-					t.Fatalf("%s duration %d outside [%d,%d]", b.Name, b.DurationTicks, d.DurMin, d.DurMax)
+				if b.DurationTicks < stretch(d.DurMin) || b.DurationTicks > stretch(d.DurMax) {
+					t.Fatalf("%s duration %d outside [%d,%d]", b.Name, b.DurationTicks, stretch(d.DurMin), stretch(d.DurMax))
 				}
 			case InstantResource:
 				lo := d.AmountMin*instScale - eps
@@ -192,8 +194,8 @@ func TestRolledValuesWithinDefRanges(t *testing.T) {
 				if b.InstantAmount < d.AmountMin-eps || b.InstantAmount > d.AmountMax+eps {
 					t.Fatalf("%s worker count %.4f outside [%.2f,%.2f]", b.Name, b.InstantAmount, d.AmountMin, d.AmountMax)
 				}
-				if b.DurationTicks < d.DurMin || b.DurationTicks > d.DurMax {
-					t.Fatalf("%s duration %d outside [%d,%d]", b.Name, b.DurationTicks, d.DurMin, d.DurMax)
+				if b.DurationTicks < stretch(d.DurMin) || b.DurationTicks > stretch(d.DurMax) {
+					t.Fatalf("%s duration %d outside [%d,%d]", b.Name, b.DurationTicks, stretch(d.DurMin), stretch(d.DurMax))
 				}
 			}
 			if b.Flavor == "" {

@@ -3,6 +3,8 @@ package game
 import (
 	"strings"
 	"testing"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // setResource unlocks a resource, gives it headroom, zeroes its production rate,
@@ -177,9 +179,10 @@ func TestExpedition_ResolvesWithoutWorkerLoss(t *testing.T) {
 		if err := ge.LaunchExpedition("trade_escort"); err != nil {
 			t.Fatalf("seed %d: LaunchExpedition error: %v", seed, err)
 		}
-		// trade_escort's active duration is randomized (up to ~100 ticks, Bug
-		// RQPHYAHC), so budget generously; the loop exits once it resolves.
-		for i := 0; i < 200 && ge.Military.HasActive(); i++ {
+		// trade_escort's active duration is randomized (up to ~100 ticks on
+		// the base curve, Bug RQPHYAHC, stretched 2.6x from the Bronze Age on),
+		// so budget generously; the loop exits once it resolves.
+		for i := 0; i < 2*config.StretchTicks("iron_age", 100) && ge.Military.HasActive(); i++ {
 			ge.mu.Lock()
 			ge.processExpeditions()
 			ge.mu.Unlock()

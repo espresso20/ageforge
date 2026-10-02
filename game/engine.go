@@ -46,7 +46,10 @@ const (
 	// rate, so the same ceiling does not apply.
 	productionCap = 3.0
 
-	// Festival (culture sink) tuning.
+	// Festival (culture sink) tuning. The tick counts here and the black
+	// market's cooldown are typed for the base curve and stretched for the
+	// current age (config.StretchTicks): from the Bronze Age on a festival
+	// lasts, and waits, PacingStretch times as long, so an age holds as many.
 	festivalBuffPercent   = 0.20 // +20% production_all while active
 	festivalBuffTicks     = 150  // ~5 minutes at 2s/tick
 	festivalCooldownTicks = 300  // ~10 minutes between festivals
@@ -1623,9 +1626,12 @@ func (ge *GameEngine) checkMilestones() {
 	// Check chains
 	newChains := ge.Milestones.CheckChains()
 	for _, chain := range newChains {
+		// The boost's length is typed for the base curve and stretched for
+		// the age it lands in, so it saves the same share of the age.
+		boost := ge.stretchTicks(chain.BoostDuration)
 		ge.addLog("success", fmt.Sprintf("Chain complete: %s. Title: %s. Game speed %s for %s.",
 			chain.Name, chain.Title, textfmt.SignedPercent(chain.BoostValue),
-			ge.durationWithSpeedBonusLocked(chain.BoostDuration, chain.BoostValue)))
+			ge.durationWithSpeedBonusLocked(boost, chain.BoostValue)))
 		// Cosmetic flavour quip on its own dim line (never replaces the title/boost).
 		if chain.Flavor != "" {
 			ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", chain.Flavor))
@@ -1634,7 +1640,7 @@ func (ge *GameEngine) checkMilestones() {
 		ge.Events.InjectEvent(ActiveEvent{
 			Key:       chain.Key + "_boost",
 			Name:      chain.Name + " Speed Boost",
-			TicksLeft: chain.BoostDuration,
+			TicksLeft: boost,
 			Effects: []config.Effect{
 				{Type: "tick_speed", Target: "tick_speed", Value: chain.BoostValue},
 			},
@@ -1643,10 +1649,11 @@ func (ge *GameEngine) checkMilestones() {
 		ge.Bus.Publish(EventData{
 			Type: EventChainCompleted,
 			Payload: map[string]interface{}{
-				"name":   chain.Name,
-				"key":    chain.Key,
-				"title":  chain.Title,
-				"flavor": chain.Flavor,
+				"name":        chain.Name,
+				"key":         chain.Key,
+				"title":       chain.Title,
+				"flavor":      chain.Flavor,
+				"boost_ticks": boost,
 			},
 		})
 	}
@@ -2449,6 +2456,12 @@ type FestivalStatus struct {
 	Ready         bool    // true when not on cooldown
 }
 
+// stretchTicks re-times a base-curve tick count for the current age
+// (config.StretchTicks). Caller holds ge.mu.
+func (ge *GameEngine) stretchTicks(ticks int) int {
+	return config.StretchTicks(ge.age, ticks)
+}
+
 // festivalCost returns the culture cost of a festival at the current progression:
 // max(festivalMinCost, festivalCostFraction × culture storage cap). It scales with
 // the player's culture cap so it stays a meaningful drain into the late game.
@@ -2474,8 +2487,8 @@ func (ge *GameEngine) FestivalStatus() FestivalStatus {
 		Cost:          ge.festivalCost(),
 		Culture:       ge.Resources.Get("culture"),
 		BuffPercent:   festivalBuffPercent,
-		BuffTicks:     festivalBuffTicks,
-		CooldownTicks: festivalCooldownTicks,
+		BuffTicks:     ge.stretchTicks(festivalBuffTicks),
+		CooldownTicks: ge.stretchTicks(festivalCooldownTicks),
 		CooldownLeft:  cd,
 		Ready:         cd == 0,
 	}
@@ -2498,15 +2511,16 @@ func (ge *GameEngine) DoFestival() error {
 		return fmt.Errorf("Not enough culture for a festival: need %s, have %s.", textfmt.Number(cost), textfmt.Number(have))
 	}
 	ge.Resources.Remove("culture", cost)
+	buff := ge.stretchTicks(festivalBuffTicks)
 	ge.Events.InjectEvent(ActiveEvent{
 		Key:       "cultural_festival",
 		Name:      "Cultural Festival",
-		TicksLeft: festivalBuffTicks,
+		TicksLeft: buff,
 		Effects:   []config.Effect{{Type: "production_all", Value: festivalBuffPercent}},
 	})
-	ge.festivalReadyTick = ge.tick + festivalCooldownTicks
+	ge.festivalReadyTick = ge.tick + ge.stretchTicks(festivalCooldownTicks)
 	ge.addLog("success", fmt.Sprintf("Held a cultural festival for %s: all production %s for %s.",
-		Amount(cost, "culture"), textfmt.SignedPercent(festivalBuffPercent), ge.durationLocked(festivalBuffTicks)))
+		Amount(cost, "culture"), textfmt.SignedPercent(festivalBuffPercent), ge.durationLocked(buff)))
 	return nil
 }
 
@@ -2577,7 +2591,7 @@ func (ge *GameEngine) BlackMarketStatus() BlackMarketStatus {
 		Culture:       ge.Resources.Get("culture"),
 		WinChance:     blackMarketWinChance,
 		WinMult:       blackMarketWinMult,
-		CooldownTicks: blackMarketCooldownTicks,
+		CooldownTicks: ge.stretchTicks(blackMarketCooldownTicks),
 		CooldownLeft:  cd,
 		Ready:         cd == 0 && available,
 	}
@@ -2615,7 +2629,7 @@ func (ge *GameEngine) DoBlackMarket(resource string) (bool, float64, error) {
 
 	// Culture is spent up front regardless of outcome — that's the risk.
 	ge.Resources.Remove("culture", cost)
-	ge.blackMarketReadyTick = ge.tick + blackMarketCooldownTicks
+	ge.blackMarketReadyTick = ge.tick + ge.stretchTicks(blackMarketCooldownTicks)
 
 	if ge.bmRandFloat() < blackMarketWinChance {
 		got := ge.gainResource(resource, reward)

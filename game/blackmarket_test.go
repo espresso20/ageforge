@@ -122,7 +122,7 @@ func TestBlackMarket_Cooldown(t *testing.T) {
 		t.Errorf("second deal should be blocked by cooldown")
 	}
 	// Advance past the cooldown → ready again (still need a fresh seed; reuse win).
-	ge.tick += blackMarketCooldownTicks
+	ge.tick += ge.stretchTicks(blackMarketCooldownTicks)
 	ge.blackMarketRand = blackMarketSeedWin()
 	if !ge.BlackMarketStatus().Ready {
 		t.Errorf("black market should be ready after cooldown elapses")

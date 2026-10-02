@@ -310,7 +310,8 @@ func (d *Dashboard) build() {
 		name, _ := e.Payload["name"].(string)
 		title, _ := e.Payload["title"].(string)
 		key, _ := e.Payload["key"].(string)
-		d.toastMgr.Show(chainToast(name, title, config.MilestoneChainByKey()[key]), "cyan", 5*time.Second)
+		boost, _ := e.Payload["boost_ticks"].(int)
+		d.toastMgr.Show(chainToast(name, title, config.MilestoneChainByKey()[key], boost), "cyan", 5*time.Second)
 	})
 	d.engine.Bus.Subscribe(game.EventEpochAdvanced, func(e game.EventData) {
 		epochName, _ := e.Payload["epoch_name"].(string)

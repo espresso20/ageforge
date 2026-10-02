@@ -93,6 +93,12 @@ func RollBoon(profile Profile, rng *rand.Rand) Boon {
 		b.Magnitude = rollFloatRange(rng, pick.MagMin, pick.MagMax) * profile.magScale()
 		b.DurationTicks = rollIntRange(rng, pick.DurMin, pick.DurMax)
 	}
+	// The table's durations are typed for the base curve. From the Bronze Age
+	// on the ages run config.PacingStretch times longer, and so do timed boons
+	// and setbacks, so each still covers the same share of an age (and the
+	// slot load the calibration notes in catalog.go describe is unchanged:
+	// expeditions, which bring the encounters, stretch alike).
+	b.DurationTicks = config.StretchTicks(profile.Age, b.DurationTicks)
 	b.Resource = resolveTarget(pick, profile, rng)
 	b.Flavor = rollFlavor(pick, b, rng, profile.tickInterval())
 	return b
@@ -123,9 +129,12 @@ func ageIndex(age string) int {
 
 // instantScale is the multiplier applied to an InstantResource lump: the per-age
 // growth factor compounded over the profile's age position, times the profile's
-// MagnitudeScale so standing and strength show up in the size of a gift.
+// MagnitudeScale so standing and strength show up in the size of a gift,
+// divided by the age's pacing stretch. A lump is tuned to a number of ticks of
+// production, and from the Bronze Age on a tick makes 1/config.PacingStretch
+// as much (the economy is paced to longer ages).
 func (p Profile) instantScale() float64 {
-	return detmath.Pow(instantGrowthPerAge, float64(ageIndex(p.Age))) * p.magScale()
+	return float64(detmath.Pow(instantGrowthPerAge, float64(ageIndex(p.Age)))*p.magScale()) / config.AgeStretch(p.Age)
 }
 
 // resolveTarget picks the concrete target resource for a Def under a profile.

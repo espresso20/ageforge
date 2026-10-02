@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"math"
 	"sort"
+
+	"github.com/espresso20/ageforge/config"
 )
 
 // Automatic expedition dispatch (Phase 3 of the faction redesign).
@@ -138,7 +140,7 @@ func (ge *GameEngine) autoExpeditionSnapshot() AutoExpeditionState {
 	return AutoExpeditionState{
 		Active:    true,
 		TicksLeft: ge.autoExpeditionTicksLeft,
-		Interval:  autoExpeditionIntervalFor(count, fill),
+		Interval:  autoExpeditionIntervalIn(ge.age, count, fill),
 		Starved:   ge.autoExpeditionStarved,
 		Count:     count,
 		Assigned:  ge.Workers.GetAssignedCount("worker", autoExpeditionBuildingKey),
@@ -166,6 +168,15 @@ func autoExpeditionIntervalFor(count int, fill float64) int {
 		interval = autoExpeditionMinInterval
 	}
 	return interval
+}
+
+// autoExpeditionIntervalIn is the dispatch interval in age: the cadence
+// formula, typed for the base curve, stretched like the age
+// (config.StretchTicks). Expeditions stretch the same way, so the society
+// still sends as many parties per age, and the engagement gradient measured
+// in boon_tuning_test.go holds.
+func autoExpeditionIntervalIn(age string, count int, fill float64) int {
+	return config.StretchTicks(age, autoExpeditionIntervalFor(count, fill))
 }
 
 // pickAutoScoutExpedition chooses which scouting expedition the society sends.
@@ -247,7 +258,7 @@ func (ge *GameEngine) processAutoExpeditions() {
 		return
 	}
 
-	interval := autoExpeditionIntervalFor(count, fill)
+	interval := autoExpeditionIntervalIn(ge.age, count, fill)
 
 	// Investment can rise mid-countdown (a new society finishes, workers are
 	// assigned). Clamp the outstanding wait DOWN to the new interval so the

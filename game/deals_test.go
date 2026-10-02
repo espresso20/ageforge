@@ -241,7 +241,7 @@ func TestDeals_NoneWhenHostile(t *testing.T) {
 	// At war, the next roll is empty.
 	ge.mu.Lock()
 	ge.Diplomacy.factions["riverlands_tribes"].AtWar = true
-	ge.Diplomacy.factions["riverlands_tribes"].DealTicks = dealRefreshTicks
+	ge.Diplomacy.factions["riverlands_tribes"].DealTicks = dealRefreshFor(ge.age)
 	ge.tickFactionDeals()
 	n := len(ge.Diplomacy.factions["riverlands_tribes"].Deals)
 	ge.mu.Unlock()
@@ -372,11 +372,15 @@ func TestDeals_StandingCap(t *testing.T) {
 	}
 }
 
-// TestDeals_Refresh: offers roll on first contact, hold for dealRefreshTicks
-// ticks of play, re-roll then and on an age advance, and do not move while
-// the player is offline.
+// TestDeals_Refresh: offers roll on first contact, hold for dealRefreshFor
+// (the base hour, stretched like the age) ticks of play, re-roll then and on
+// an age advance, and do not move while the player is offline.
 func TestDeals_Refresh(t *testing.T) {
 	ge := dealEngine(t, "colonial_age")
+	refresh := dealRefreshFor("colonial_age")
+	if refresh != config.StretchTicks("colonial_age", dealRefreshTicks) || refresh <= dealRefreshTicks {
+		t.Fatalf("colonial refresh = %d ticks, want the base %d stretched", refresh, dealRefreshTicks)
+	}
 	meet(ge, "merchant_guild", 20)
 	state := func() FactionState {
 		ge.mu.RLock()
@@ -396,7 +400,7 @@ func TestDeals_Refresh(t *testing.T) {
 		}
 		ge.mu.Unlock()
 	}
-	tick(dealRefreshTicks - 1)
+	tick(refresh - 1)
 	if s := state(); s.DealRound != 1 || !reflect.DeepEqual(s.Deals, first.Deals) {
 		t.Fatalf("offers rotated early: round %d", s.DealRound)
 	}
@@ -406,14 +410,14 @@ func TestDeals_Refresh(t *testing.T) {
 
 	// Offline: a day away moves neither the timer nor the offers.
 	ge.SimulateOffline(20 * time.Hour)
-	if s := state(); s.DealRound != 1 || s.DealTicks != dealRefreshTicks-1 || !reflect.DeepEqual(s.Deals, first.Deals) {
+	if s := state(); s.DealRound != 1 || s.DealTicks != refresh-1 || !reflect.DeepEqual(s.Deals, first.Deals) {
 		t.Fatalf("offline moved the offers: round %d, ticks %d", s.DealRound, s.DealTicks)
 	}
 
 	tick(1)
 	second := state()
 	if second.DealRound != 2 || second.DealTicks != 0 {
-		t.Fatalf("after %d ticks: round %d, ticks %d", dealRefreshTicks, second.DealRound, second.DealTicks)
+		t.Fatalf("after %d ticks: round %d, ticks %d", refresh, second.DealRound, second.DealTicks)
 	}
 	for _, d := range second.Deals {
 		if d.ID <= dealIDStride*2 || d.ID > dealIDStride*3 {
@@ -544,7 +548,7 @@ func TestDeals_Plan(t *testing.T) {
 		t.Fatal(err)
 	}
 	ge.mu.Lock()
-	ge.Diplomacy.factions["merchant_guild"].DealTicks = dealRefreshTicks
+	ge.Diplomacy.factions["merchant_guild"].DealTicks = dealRefreshFor(ge.age)
 	ge.tickFactionDeals()
 	ge.runPlanTick()
 	left = len(ge.plan)

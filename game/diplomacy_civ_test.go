@@ -241,7 +241,7 @@ func TestWorkerLending_AddsAndReturns(t *testing.T) {
 	// Advance the manager past the return tick; processLending should queue a return.
 	ge.mu.Lock()
 	dm := ge.Diplomacy
-	_ = dm.processLending(testRNG(), 100) // tick >= ReturnTick
+	_ = dm.processLending(testRNG(), 100, "stone_age") // tick >= ReturnTick
 	for _, n := range dm.TakePendingReturns() {
 		ge.Workers.KillWorker(n)
 	}
@@ -259,7 +259,7 @@ func TestWorkerLending_PermanentAtHighOpinion(t *testing.T) {
 	dm := NewDiplomacyManager()
 	// A permanent batch (as would be created at opinion > 80) must survive.
 	dm.lentBatches = []LentWorkerBatch{{FactionKey: "riverlands_tribes", Count: 4, ReturnTick: 50, Permanent: true}}
-	_ = dm.processLending(testRNG(), 10_000) // way past ReturnTick
+	_ = dm.processLending(testRNG(), 10_000, "stone_age") // way past ReturnTick
 	if returns := dm.TakePendingReturns(); len(returns) != 0 {
 		t.Errorf("permanent loan was returned: %v", returns)
 	}
@@ -286,7 +286,7 @@ func TestWorkerLending_PermanentFlagWhenOpinionAbove80(t *testing.T) {
 	// seeded, so this is the same sequence on every run.
 	rng := testRNG()
 	for tick := driftInterval; tick < driftInterval*400 && !dm.hasLentBatch(peaceful); tick += driftInterval {
-		_ = dm.processLending(rng, tick)
+		_ = dm.processLending(rng, tick, "stone_age")
 	}
 	if !dm.hasLentBatch(peaceful) {
 		t.Fatal("lend roll never fired in 400 seeded windows")
@@ -345,7 +345,7 @@ func TestWar_RaidsFireWhileAtWar(t *testing.T) {
 	dm := NewDiplomacyManager()
 	dm.factions[key] = &FactionState{Discovered: true, Status: "neutral", Opinion: -90, AtWar: true, LastProvocationTick: 0}
 
-	_ = dm.processWar(40) // raid cadence boundary
+	_ = dm.processWar(warRaidInterval, "stone_age") // raid cadence boundary
 	raids := dm.TakePendingRaids()
 	if len(raids) == 0 {
 		t.Fatal("no raid queued while at war on the raid tick")
@@ -389,7 +389,7 @@ func TestWar_WaitEndsWar(t *testing.T) {
 	fs := &FactionState{Discovered: true, Status: "neutral", Opinion: -90, AtWar: true, LastProvocationTick: 0}
 	dm.factions[key] = fs
 
-	_ = dm.processWar(warCooldownTicks) // exactly the cooldown later
+	_ = dm.processWar(warCooldownTicks, "stone_age") // exactly the cooldown later
 	if fs.AtWar {
 		t.Errorf("war did not auto-end after %d provocation-free ticks", warCooldownTicks)
 	}
