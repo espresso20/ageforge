@@ -8,10 +8,15 @@ name: Smoke
 #   - Nightly: the full tier, every scenario; progression stops at the
 #     Digital Age. The idle scenario enforces the check-in targets
 #     (smoke/idle_targets.go: first prestige at 1h, 3h and 8h check-ins).
+#     On the one-week curve it is about 4.5 hours of work, past one job's
+#     180 minutes, so it runs as four shards side by side (progression seeds
+#     1-4, seeds 5-8, styles and idle, the rest), then a merge job pools the
+#     progression runs, grades the median and carries the other shards'
+#     results into one report, like the weekly.
 #   - Weekly: the deep tier, progression to a Quantum Age prestige through
 #     the Last Passage, so every age from the Primitive to the Galactic is
-#     enforced. One seed per job (about 5 minutes each), then a merge job pools
-#     the runs and grades the median.
+#     enforced. One seed per job (about 13 minutes each), then a merge job
+#     pools the runs and grades the median.
 #
 # Run either by hand from the Actions tab (workflow_dispatch, "suite").
 
@@ -40,11 +45,69 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  smoke:
-    name: smoke (full tier)
+  nightly-shard:
+    name: nightly (${{ matrix.shard }})
     if: ${{ github.event.schedule == '17 6 * * *' || (github.event_name == 'workflow_dispatch' && inputs.suite == 'nightly') }}
     runs-on: ubuntu-latest
+    # The longest shard (styles and idle) takes about an hour on a runner.
     timeout-minutes: 180
+    permissions:
+      contents: read
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Report mode: the progression shards' pacing is graded in the
+          # merge job, on the median across all eight seeds. Panics,
+          # soft-locks and invariant violations still fail the shard.
+          - shard: progression seeds 1-4
+            id: progression-1
+            only: progression
+            args: -seed-base 1 -seeds 4 -pacing report
+          - shard: progression seeds 5-8
+            id: progression-2
+            only: progression
+            args: -seed-base 5 -seeds 4 -pacing report
+          - shard: styles and idle
+            id: styles-idle
+            only: styles,idle
+            args: -pacing enforce
+          - shard: the rest
+            id: rest
+            skip: progression,styles,idle
+            args: -pacing enforce
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+
+      # Every scenario on the schedule; a dispatch may pick some (the idle
+      # check-in targets alone: idle), and each shard runs its share of them
+      # (-only, -skip). A shard left with nothing writes an empty report.
+      - name: Smoke (${{ matrix.shard }})
+        env:
+          SCENARIOS: ${{ inputs.scenarios || 'all' }}
+          ONLY: ${{ matrix.only }}
+          SKIP: ${{ matrix.skip }}
+          ARGS: ${{ matrix.args }}
+        run: go run ./cmd/smoke -tier full -scenario "$SCENARIOS" -only "$ONLY" -skip "$SKIP" $ARGS -v -out smoke-report
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: smoke-nightly-${{ matrix.id }}
+          path: smoke-report/
+          if-no-files-found: warn
+
+  smoke:
+    name: smoke (full tier)
+    needs: nightly-shard
+    if: ${{ always() && needs.nightly-shard.result != 'skipped' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
     permissions:
       contents: read
     env:
@@ -59,13 +122,30 @@ jobs:
           go-version-file: go.mod
           cache: true
 
-      - name: Smoke (full tier)
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: smoke-nightly-*
+          path: shards
+
+      - name: Merge the shards and enforce pacing
         id: smoke
         env:
-          # All on the schedule; a dispatch may pick some (the idle check-in
-          # targets alone: idle).
-          SCENARIOS: ${{ inputs.scenarios || 'all' }}
-        run: go run ./cmd/smoke -tier full -scenario "$SCENARIOS" -pacing enforce -v -out smoke-report
+          SHARDS: 4
+          SHARD_JOBS: ${{ needs.nightly-shard.result }}
+        run: |
+          shopt -s nullglob
+          reports=(shards/*/report.json)
+          if [ "${#reports[@]}" -eq 0 ]; then
+            echo "::error::no shard wrote a report (shard jobs: $SHARD_JOBS)"
+            exit 1
+          fi
+          status=0
+          go run ./cmd/smoke -tier full -merge "$(IFS=,; echo "${reports[*]}")" -pacing enforce -v -out smoke-report || status=$?
+          if [ "${#reports[@]}" -lt "$SHARDS" ] || [ "$SHARD_JOBS" != "success" ]; then
+            echo "::error::${#reports[@]} of $SHARDS shards reported (shard jobs: $SHARD_JOBS)"
+            status=1
+          fi
+          exit "$status"
 
       - name: Job summary
         if: ${{ always() }}
@@ -114,8 +194,9 @@ jobs:
     name: deep (seed ${{ matrix.seed }})
     if: ${{ github.event.schedule == '41 3 * * 0' || (github.event_name == 'workflow_dispatch' && inputs.suite == 'weekly') }}
     runs-on: ubuntu-latest
-    # A seed takes about 5 minutes; a hang fails well before GitHub's 6-hour cap.
-    timeout-minutes: 60
+    # A seed takes about 13 minutes on the one-week curve; a hang fails well
+    # before GitHub's 6-hour cap.
+    timeout-minutes: 150
     permissions:
       contents: read
     strategy:
