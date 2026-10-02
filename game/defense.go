@@ -207,21 +207,6 @@ func (ge *GameEngine) endurePreview(brace int, age string) EndureOutcome {
 	return computeEndure(ge.Buildings.DestroyableCount(), brace, g)
 }
 
-// passageAge is the age a catastrophe at the passage into targetEpoch would
-// strike in: the first age of that epoch. "" (the Last Passage) or an unknown
-// epoch falls back to the current age.
-func (ge *GameEngine) passageAge(targetEpoch string) string {
-	if targetEpoch == "" {
-		return ge.age
-	}
-	for _, a := range config.AgeOrder() {
-		if config.EpochForAge(a) == targetEpoch {
-			return a
-		}
-	}
-	return ge.age
-}
-
 // garrisonSavedLine is the log line that tells the player what the garrison
 // kept from a raid event: m is the share it blunted, resources and workers
 // what it saved. Empty when it saved nothing.

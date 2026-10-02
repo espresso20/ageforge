@@ -255,6 +255,169 @@ func (r *runner) closeThread(st game.GameState) {
 	th.Outcome = "cleared"
 }
 
+// Fate outcomes of a FateRow beyond the engine's own (game.FateStruck,
+// game.FateSpared, game.FateRevealed).
+const (
+	FateQuiet   = "quiet"   // nothing fated, no false prophet
+	FateCleared = "cleared" // a prestige or Succumb ended the run before it resolved
+	FateOpen    = "open"    // the smoke run ended before it resolved
+)
+
+// Catastrophe baseline before fated dooms, measured on origin/master a116b82
+// with the greedy bot playing a first run to the Modern Age prestige on seeds
+// 1 to 49: the old transition rolls gave 0.72 expected catastrophes per first
+// run (four catastrophe-capable transitions at 18%: the bot keeps faith in the
+// low band) and 0.673 measured. FateChance is calibrated against it.
+const (
+	BaselineCatastrophesExpected = 0.72
+	BaselineCatastrophesMeasured = 0.673
+	BaselineSeeds                = 49
+	BaselineCommit               = "a116b82"
+)
+
+// FateRow is one era's hidden fate as the run lived it. It comes from the
+// engine's fate events (game.EventFateRolled, EventFateResolved), never from
+// anything the bot sees.
+type FateRow struct {
+	Cycle        int    `json:"cycle"`
+	Epoch        string `json:"epoch"`
+	Fated        bool   `json:"fated"`
+	FalseProphet bool   `json:"false_prophet,omitempty"`
+	EntryTick    int    `json:"entry_tick"`
+	Window       int    `json:"window_ticks"`
+	// StrikeFrac is the drawn strike tick (a false prophet's foretold
+	// moment) as a share of the era's window, from its entry.
+	StrikeFrac float64 `json:"strike_frac,omitempty"`
+	LeadFrac   float64 `json:"lead_frac,omitempty"`
+	// Outcome is game.FateStruck, FateSpared or FateRevealed, or FateQuiet,
+	// FateCleared or FateOpen.
+	Outcome string `json:"outcome"`
+	// AtAdvance: it resolved at an advance the player reached before the
+	// strike tick (the strike could not be outrun).
+	AtAdvance bool `json:"at_advance,omitempty"`
+	Invited   bool `json:"invited,omitempty"`
+	// WarningTicks is how long its harbinger was there before it resolved;
+	// WarningAgeFrac is that as a share of the resolving age's target.
+	WarningTicks   int     `json:"warning_ticks,omitempty"`
+	WarningAgeFrac float64 `json:"warning_age_frac,omitempty"`
+	ResolvedAge    string  `json:"resolved_age,omitempty"`
+	// Expected is the era's share of the run's expected catastrophes:
+	// game.FateChance × the strike chance averaged over the era's window at
+	// the faith the bot kept (a strike past the time it spent there lands at
+	// the transition, at the faith it left with). It does not depend on this
+	// era's own roll, so it measures the rules, not the luck.
+	Expected float64 `json:"expected"`
+
+	sumChance  float64 // Σ strike chance × ticks inside the window
+	lastChance float64
+}
+
+// onFateRolled starts the row for a newly rolled fate, closing the last one.
+// A bus handler: it runs under the engine lock and touches only the runner.
+func (r *runner) onFateRolled(e game.EventData) {
+	epoch, _ := e.Payload["epoch_key"].(string)
+	entry, _ := e.Payload["entry_tick"].(int)
+	// A roll for the Stone Era means a prestige or a Succumb reset the run;
+	// a roll for the next era means the last one was left by an advance,
+	// which settles any open doom first. So does a prestige from the final
+	// era (its passage); the prestige has already moved the cycle on.
+	next := FateCleared
+	if prev := r.fate; prev != nil {
+		byKey := config.EpochByKey()
+		advanced := byKey[epoch].Order == byKey[prev.Epoch].Order+1
+		prestiged := config.IsFinalEpoch(prev.Epoch) && r.cycle > prev.Cycle
+		if advanced || prestiged {
+			// A strike still to come would have landed at that passage: the
+			// new era's entry, or the last look before the prestige (the
+			// tick counter starts again after it).
+			left := entry
+			if prestiged {
+				left = r.fateTick
+			}
+			if lived := left - prev.EntryTick; lived < prev.Window && prev.Window > 0 {
+				prev.sumChance += float64(prev.lastChance * float64(prev.Window-lived))
+			}
+		}
+		if advanced {
+			next = FateOpen
+		}
+	}
+	r.closeFate(next)
+	row := &FateRow{Cycle: r.cycle, Epoch: epoch, EntryTick: entry, Outcome: FateQuiet}
+	row.Fated, _ = e.Payload["fated"].(bool)
+	row.FalseProphet, _ = e.Payload["false_prophet"].(bool)
+	row.Window, _ = e.Payload["window"].(int)
+	if row.Fated || row.FalseProphet {
+		row.Outcome = ""
+		strike, _ := e.Payload["strike_tick"].(int)
+		row.LeadFrac, _ = e.Payload["lead_frac"].(float64)
+		if row.Window > 0 {
+			row.StrikeFrac = float64(strike-entry) / float64(row.Window)
+		}
+	}
+	r.fate, r.fateTick = row, entry
+	r.res.Fates = append(r.res.Fates, row)
+}
+
+// onFateResolved records how the current fate ended. A bus handler.
+func (r *runner) onFateResolved(e game.EventData) {
+	f := r.fate
+	epoch, _ := e.Payload["epoch_key"].(string)
+	if f == nil || f.Epoch != epoch {
+		return
+	}
+	f.Outcome, _ = e.Payload["outcome"].(string)
+	f.AtAdvance, _ = e.Payload["at_advance"].(bool)
+	f.Invited, _ = e.Payload["invited"].(bool)
+	f.ResolvedAge, _ = e.Payload["age"].(string)
+	tick, _ := e.Payload["tick"].(int)
+	if arrived, ok := e.Payload["arrived_tick"].(int); ok && tick >= arrived {
+		f.WarningTicks = tick - arrived
+		if t := config.AgeTargetTicks(f.ResolvedAge); t > 0 {
+			f.WarningAgeFrac = float64(f.WarningTicks) / t
+		}
+	}
+}
+
+// sampleFate adds the time since the last look to the current fate row's
+// expected-catastrophe model, at the strike chance the faith (and any Appease
+// bought) gives now.
+func (r *runner) sampleFate(st game.GameState) {
+	f := r.fate
+	if f == nil || st.EpochKey != f.Epoch || f.Window <= 0 {
+		return
+	}
+	appease := 0
+	if h := st.Harbinger; h != nil && !h.LastPassage {
+		appease = h.AppeaseLevel
+	}
+	chance := game.StrikeChanceAt(st.CatastropheOutlook.FaithFill, st.Resources["faith"].Storage > 0, appease)
+	lo, hi := r.fateTick-f.EntryTick, st.Tick-f.EntryTick
+	if hi > f.Window {
+		hi = f.Window
+	}
+	if lo >= 0 && hi > lo {
+		f.sumChance += float64(chance * float64(hi-lo))
+	}
+	f.lastChance, r.fateTick = chance, st.Tick
+}
+
+// closeFate settles the current row: an unresolved doom or false prophet
+// becomes ifOpen (FateCleared or FateOpen), and its expected share is fixed.
+func (r *runner) closeFate(ifOpen string) {
+	f := r.fate
+	if f == nil {
+		return
+	}
+	r.fate = nil
+	if f.Outcome == "" {
+		f.Outcome = ifOpen
+	}
+	if f.Window > 0 && config.FateAllowed(f.Epoch) {
+		f.Expected = float64(game.FateChance*f.sumChance) / float64(f.Window)
+	}
+}
+
 // PriceRow is the static price of one epoch's harbinger answers against the
 // most storage the player can build before the passage.
 type PriceRow struct {
@@ -267,14 +430,15 @@ type PriceRow struct {
 	MaxStorage map[string]float64 `json:"max_storage_by_passage"`
 }
 
-// HarbingerPrices summons a harbinger on a scratch engine in each epoch that
-// has one (game.SummonHarbingerForTest; never on the played engine) and reads
-// the level-1 prices from its view, next to the most storage reachable by the
-// epoch's last age.
+// HarbingerPrices summons a harbinger on a scratch engine in each epoch whose
+// doom can be answered (game.SummonHarbingerForTest; never on the played
+// engine) and reads the level-1 prices from its view, next to the most
+// storage reachable by the epoch's last age. The Stone Era is skipped: only
+// false prophets come there, and nothing can strike.
 func HarbingerPrices() []PriceRow {
 	var rows []PriceRow
 	for _, ep := range config.Epochs() {
-		if len(ep.Ages) == 0 {
+		if len(ep.Ages) == 0 || !config.CatastropheAllowed(ep.Key) {
 			continue
 		}
 		ge := game.NewGameEngine()

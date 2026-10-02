@@ -325,7 +325,16 @@ var dismissKeys = []struct {
 // advanceAndCheck performs one real `advance` and checks the splash lifecycle.
 func (h *reproHarness) advanceAndCheck(i int, catChoice rune) {
 	h.t.Helper()
+	h.quietEra()
 	h.advanceAndCheckWith(i, catChoice, func() { h.submit("advance") })
+}
+
+// quietEra makes the current era's hidden fate quiet (no doom, no false
+// prophet), so a fated doom cannot hold an advance up at random: the walk
+// tests the splash sequence, not the fate (game/fate_test.go does).
+func (h *reproHarness) quietEra() {
+	h.t.Helper()
+	_ = h.eng.ForceQuietFateForTest(h.eng.GetState().EpochKey) // none in the final epoch
 }
 
 // advanceAndCheckWith runs doAdvance, waits for the age splash, then plays the
@@ -398,53 +407,33 @@ func TestReproAgeSplashAllAges(t *testing.T) {
 		if !h.grantNextAge() {
 			break
 		}
-		// Endure any random epoch catastrophe: pending blocks the next advance.
+		// 'e' would Endure a catastrophe; the quiet walk brings none.
 		h.advanceAndCheck(i, 'e')
 	}
 	st := h.eng.GetState()
 	if st.NextAge != "" {
 		t.Fatalf("did not reach final age: %s", st.Age)
 	}
-	// Every epoch but the Cosmic Era ran a harbinger thread to its passage: it
-	// started in the epoch's first age, handed off at each later age, and
-	// resolved at the passage, all without taking the front page or focus from the splash
-	// sequence checked above (it is non-blocking). The Stone Era's thread may
-	// start on the first tick or, if the first advance beats it, in the Stone
-	// Age.
+	// The walk kept every era quiet (quietEra), so the only harbinger is the
+	// Cosmic Era's, which warns of the Last Passage (prestige): it arrived on
+	// entering the era and handed off at each later age, all without taking
+	// the front page or focus from the splash sequence checked above (it is
+	// non-blocking), and is still running at the final age, voiced by the
+	// fourth figure.
 	epochs := config.Epochs()
-	if n := len(st.HarbingerHistory); n != len(epochs)-1 {
-		t.Fatalf("harbinger threads resolved on the walk = %d, want %d: %+v", n, len(epochs)-1, st.HarbingerHistory)
-	}
-	arrivals, handoffs := 0, 0
-	for i, r := range st.HarbingerHistory {
-		ages := epochs[i].Ages
-		want := ages
-		if i == 0 && len(r.Chain) == len(ages)-1 {
-			want = ages[1:]
-		}
-		if r.EpochKey != epochs[i].Key || strings.Join(r.Chain, ",") != strings.Join(want, ",") {
-			t.Errorf("thread %d: epoch %s chain %v, want %s %v", i, r.EpochKey, r.Chain, epochs[i].Key, want)
-		}
-		arrivals++
-		handoffs += len(r.Chain) - 1
-	}
-	// The Cosmic Era's thread warns of the Last Passage (prestige), so it is
-	// still running at the final age, voiced by the fourth figure.
 	cosmic := epochs[len(epochs)-1]
 	if h := st.Harbinger; h == nil || !h.LastPassage || h.Age != cosmic.Ages[len(cosmic.Ages)-1] ||
 		len(h.Earlier) != len(cosmic.Ages)-1 {
 		t.Errorf("final epoch harbinger = %+v, want the Last Passage thread in its last age", st.Harbinger)
-	} else {
-		arrivals++
-		handoffs += len(h.Earlier)
 	}
-	t.Logf("harbinger arrivals %d, handoffs %d", arrivals, handoffs)
+	if n := len(st.HarbingerHistory); n != 0 {
+		t.Errorf("a quiet walk resolved %d harbinger threads: %+v", n, st.HarbingerHistory)
+	}
 }
 
 // TestReproAgeSplashWithCatastrophe forces a pending catastrophe to surface in
-// the same refresh() as the age splash (exactly what happens when an epoch
-// transition rolls a catastrophe inside advanceAge) and resolves it with
-// Endure. Catastrophes only exist from the Iron Era on, and at most once per
+// the same refresh() as the age splash (a doom that struck just as the player
+// advanced, or the dev console's /catastrophe) and resolves it with Endure. Catastrophes only exist from the Iron Era on, and at most once per
 // epoch per run, so the walk goes far enough to cross two epoch boundaries.
 func TestReproAgeSplashWithCatastrophe(t *testing.T) {
 	if testing.Short() {
@@ -460,6 +449,7 @@ func TestReproAgeSplashWithCatastrophe(t *testing.T) {
 		// pending), atomically w.r.t. refresh() (both on the UI goroutine, like
 		// a typed command) so the splash and the modal surface in the same
 		// refresh.
+		h.quietEra()
 		h.advanceAndCheckWith(i, 'e', func() {
 			h.onUI(func() {
 				before := h.eng.GetState().EpochKey
@@ -480,8 +470,8 @@ func TestReproAgeSplashWithCatastrophe(t *testing.T) {
 	}
 }
 
-// reachBronze advances (enduring any random catastrophe) until the next
-// advance crosses into the Iron Era, where catastrophes become possible.
+// reachBronze advances until the next advance crosses into the Iron Era,
+// where catastrophes become possible.
 func (h *reproHarness) reachBronze() {
 	h.t.Helper()
 	for i := 0; h.eng.GetState().Age != "bronze_age"; i++ {
@@ -497,6 +487,7 @@ func (h *reproHarness) reachBronze() {
 func (h *reproHarness) advanceIntoIronWithCatastrophe() {
 	h.t.Helper()
 	h.grantNextAge()
+	h.quietEra()
 	h.onUI(func() {
 		if err := h.eng.AdvanceAge(); err != nil {
 			h.t.Errorf("AdvanceAge: %v", err)

@@ -263,6 +263,9 @@ func dealEngine(t *testing.T, age string) *GameEngine {
 	}
 	ge.advanceAge(age)
 	ge.pendingCatastrophe = ""
+	// The deals below are rolled from a fresh stream, so they do not move
+	// when the transition's own draws (its epoch event, the era's fate) do.
+	ge.SeedRNG(11)
 	for _, r := range ge.Resources.resources {
 		r.Storage = 1e15
 		r.Amount = 5e14

@@ -17,6 +17,12 @@ const (
 	EventEpochEventFired    = "epoch_event_fired"
 	EventAwakeningFired     = "awakening_fired"
 	EventHarbingerArrived   = "harbinger_arrived"
+	// EventFateRolled and EventFateResolved carry an era's hidden fate
+	// (fate.go publishFate), for the smoke report and tests. The UI must never
+	// subscribe to them: a fate may not show before its harbinger arrives
+	// (ui/fate_guard_test.go).
+	EventFateRolled   = "fate_rolled"
+	EventFateResolved = "fate_resolved"
 )
 
 // EventData carries data for an event

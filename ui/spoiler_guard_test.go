@@ -100,8 +100,9 @@ func checkSpoilers(t *testing.T, where, text string, terms []spoilerTerm) {
 	}
 }
 
-// freshSpoilerEngine is a new game one tick in: the Stone Era's harbinger
-// has come, and nothing else has happened.
+// freshSpoilerEngine is a new game one tick in, with a Stone Era harbinger (a
+// false prophet: nothing can be fated there) brought in so the guard reads
+// its text too, and nothing else happened.
 func freshSpoilerEngine(t *testing.T) *game.GameEngine {
 	t.Helper()
 	t.Cleanup(game.SetDataDirForTest(t.TempDir()))
@@ -109,7 +110,12 @@ func freshSpoilerEngine(t *testing.T) *game.GameEngine {
 	engine.SeedRNG(1)
 	engine.StepTicks(1)
 	if engine.GetState().Harbinger == nil {
-		t.Fatal("no harbinger on the first tick; the guard would miss its text")
+		if err := engine.SummonHarbingerForTest("primitive_age"); err != nil {
+			t.Fatal(err)
+		}
+	}
+	if engine.GetState().Harbinger == nil {
+		t.Fatal("no harbinger; the guard would miss its text")
 	}
 	return engine
 }

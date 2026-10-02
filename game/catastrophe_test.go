@@ -445,33 +445,35 @@ func TestNoCatastropheBeforeIronEpoch(t *testing.T) {
 	if config.CatastropheAllowed("stone_era") || !config.CatastropheAllowed("iron_era") || !config.CatastropheAllowed("cosmic_era") {
 		t.Fatal("gate: stone must be closed, iron and later open")
 	}
+	if config.FateAllowed("stone_era") || !config.FateAllowed("iron_era") || !config.FateAllowed("neon_era") || !config.FateAllowed("cosmic_era") {
+		t.Fatal("fates: none in the Stone Era, every era from the Iron Era to the Cosmic Era")
+	}
 	ge := catEngine(t, "bronze_age", 1)
 	if err := ge.forceCatastrophe(); err == nil {
 		t.Error("forcing a catastrophe in the Stone Era must be refused")
 	}
-	// A forced bad+escalate roll on a Stone Era transition stays a challenging event.
-	ge.rng = badThenEscalate()
-	ge.rollEpochEvent("stone_era")
-	if ge.pendingCatastrophe != "" {
-		t.Errorf("stone era roll produced a catastrophe: %q", ge.pendingCatastrophe)
+	// Nothing is ever fated in the Stone Era, whatever the roll.
+	g := catEngine(t, "primitive_age", 5)
+	for i := 0; i < 300; i++ {
+		g.rollFate()
+		if g.fate == nil || g.fate.EpochKey != "stone_era" || g.fate.Fated {
+			t.Fatalf("roll %d: stone era fate = %+v", i, g.fate)
+		}
 	}
-	last := ge.epochEventHistory[len(ge.epochEventHistory)-1]
-	if last.EventType != "bad_challenging" {
-		t.Errorf("stone era bad roll = %q, want bad_challenging", last.EventType)
-	}
-
-	// The same forced roll entering the Iron Era is a catastrophe, with a toast event.
+	// A transition never brings a catastrophe: a bad roll entering the Iron
+	// Era is a challenging event, and the era's doom is only fated.
 	var toast []EventData
 	ge.Bus.Subscribe(EventEpochEventFired, func(e EventData) { toast = append(toast, e) })
 	ge.rng = badThenEscalate()
 	ge.age = "iron_age"
 	ge.currentEpoch = "iron_era"
 	ge.rollEpochEvent("iron_era")
-	if ge.pendingCatastrophe != "iron_era" {
-		t.Fatalf("iron era forced roll: pending = %q", ge.pendingCatastrophe)
+	if ge.pendingCatastrophe != "" {
+		t.Fatalf("iron era transition roll: pending = %q", ge.pendingCatastrophe)
 	}
-	if len(toast) != 1 || toast[0].Payload["event_type"] != "catastrophe" {
-		t.Errorf("catastrophe bus event = %+v", toast)
+	last := ge.epochEventHistory[len(ge.epochEventHistory)-1]
+	if last.EventType != "bad_challenging" || len(toast) != 1 || toast[0].Payload["event_type"] != "bad_challenging" {
+		t.Errorf("iron era bad roll = %+v, events %+v; want one challenging event", last, toast)
 	}
 }
 
@@ -521,43 +523,21 @@ func TestDevCatastropheCommandRespectsGate(t *testing.T) {
 
 // --- Harbinger seam: invite ---------------------------------------------------
 
-func TestInvitedCatastropheStrikesAtNextAllowedTransition(t *testing.T) {
-	ge := catEngine(t, "bronze_age", 1)
+// The invite flag only arms the Last Passage now: an era's invite lives on its
+// fate (fate_test.go). Outside the final epoch it moves nothing, and Succumb
+// and prestige clear it.
+func TestInviteFlagArmsOnlyTheLastPassage(t *testing.T) {
+	ge := catEngine(t, "renaissance_age", 1)
+	ge.harbingerTickCheck()
+	before := ge.catastropheOutlook()
 	ge.inviteCatastrophe()
-	// Rigged to roll a good event: the invite must override it.
-	ge.rng = riggedRNG(0.0)
-	ge.currentEpoch = "iron_era"
-	ge.rollEpochEvent("iron_era")
-	if ge.pendingCatastrophe != "iron_era" {
-		t.Fatalf("invited catastrophe did not strike: pending=%q", ge.pendingCatastrophe)
+	if o := ge.catastropheOutlook(); o != before || o.Probability != 0 {
+		t.Errorf("invite flag in a quiet era moved the outlook: %+v, was %+v", o, before)
 	}
-	if ge.catastropheInvited {
-		t.Error("invite not consumed")
-	}
-	last := ge.epochEventHistory[len(ge.epochEventHistory)-1]
-	if last.EventType != "catastrophe" || !strings.Contains(last.EventName, "invited") {
-		t.Errorf("record = %+v", last)
-	}
-}
-
-func TestInviteWaitsWhileGatedOrPending(t *testing.T) {
-	ge := catEngine(t, "stone_age", 1)
-	ge.inviteCatastrophe()
-	ge.rng = riggedRNG(0.0)
-	ge.rollEpochEvent("stone_era") // gated
-	if ge.pendingCatastrophe != "" || !ge.catastropheInvited {
-		t.Fatalf("gated transition: pending=%q invited=%v; want none and kept", ge.pendingCatastrophe, ge.catastropheInvited)
-	}
-	ge.pendingCatastrophe = "iron_era"
-	ge.rollEpochEvent("steel_era") // something already pending
-	if ge.pendingCatastrophe != "iron_era" || !ge.catastropheInvited {
-		t.Fatalf("pending transition: pending=%q invited=%v; want iron_era and kept", ge.pendingCatastrophe, ge.catastropheInvited)
-	}
-	// The outlook reports a certain catastrophe while invited.
-	ge.pendingCatastrophe = ""
-	ge.currentEpoch = "steel_era" // next: electric, not rolled yet
-	if o := ge.catastropheOutlook(); !o.Possible || o.Probability != 1 || o.Tier != CatastropheTierHigh {
-		t.Errorf("invited outlook = %+v, want certain/high", o)
+	lp := catEngine(t, "quantum_age", 1)
+	lp.inviteCatastrophe()
+	if o := lp.catastropheOutlook(); !o.Possible || o.Probability != 1 || o.Tier != CatastropheTierHigh {
+		t.Errorf("invited Last Passage outlook = %+v, want certain/high", o)
 	}
 	// Succumb and prestige start a new run: the invite does not carry over.
 	succumbIn(t, ge, "iron_age")
@@ -710,6 +690,10 @@ func setFaith(ge *GameEngine, amount, storage float64) {
 	ge.Resources.LoadAmounts(map[string]float64{"faith": amount})
 }
 
+// The outlook is what the player can know. In a quiet era it reads the same
+// whether a doom is fated or not; once a harbinger warns, it says what the
+// warning says (the strike chance by faith band); the final epoch keeps the
+// Last Passage's odds.
 func TestCatastropheOutlook(t *testing.T) {
 	cases := []struct {
 		name          string
@@ -718,28 +702,51 @@ func TestCatastropheOutlook(t *testing.T) {
 		wantTier      CatastropheTier
 		wantFaithFill float64
 	}{
-		{"no faith storage", 0, 0, 0.15, CatastropheTierMedium, 0},
-		{"low faith", 10, 100, 0.18, CatastropheTierHigh, 0.10},
-		{"mid faith", 50, 100, 0.15, CatastropheTierMedium, 0.50},
-		{"high faith", 90, 100, 0.12, CatastropheTierLow, 0.90},
+		{"no faith storage", 0, 0, 0.75, CatastropheTierMedium, 0},
+		{"low faith", 10, 100, 0.90, CatastropheTierHigh, 0.10},
+		{"mid faith", 50, 100, 0.75, CatastropheTierMedium, 0.50},
+		{"high faith", 90, 100, 0.60, CatastropheTierLow, 0.90},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			ge := catEngine(t, "bronze_age", 1) // stone era; next transition → iron
-			setFaith(ge, c.faith, c.store)
-			o := ge.CatastropheOutlook()
-			if o.NextEpochKey != "iron_era" || !o.Possible {
-				t.Fatalf("outlook = %+v, want possible, next iron_era", o)
+			quiet := catEngine(t, "classical_age", 1)
+			fated := catEngine(t, "classical_age", 1)
+			if err := quiet.ForceQuietFateForTest("iron_era"); err != nil {
+				t.Fatal(err)
 			}
-			if math.Abs(o.Probability-c.wantP) > 1e-9 || o.Tier != c.wantTier || math.Abs(o.FaithFill-c.wantFaithFill) > 1e-9 {
-				t.Errorf("outlook = %+v, want p=%v tier=%s fill=%v", o, c.wantP, c.wantTier, c.wantFaithFill)
+			if err := fated.ForceFateForTest("iron_era", 20000); err != nil {
+				t.Fatal(err)
 			}
-			if st := ge.GetState(); st.CatastropheOutlook != o {
+			for _, ge := range []*GameEngine{quiet, fated} {
+				setFaith(ge, c.faith, c.store)
+			}
+			oq, of := quiet.CatastropheOutlook(), fated.CatastropheOutlook()
+			if oq != of {
+				t.Fatalf("the outlook tells a fated era from a quiet one:\nquiet %+v\nfated %+v", oq, of)
+			}
+			if !oq.Possible || oq.Warned || oq.Probability != 0 || oq.Tier != CatastropheTierNone || oq.NextEpochKey != "steel_era" ||
+				math.Abs(oq.FaithFill-c.wantFaithFill) > 1e-9 {
+				t.Errorf("quiet outlook = %+v, want possible, unwarned, no odds, fill %v", oq, c.wantFaithFill)
+			}
+			// A harbinger comes: the outlook says what its warning says.
+			if err := fated.SummonHarbingerForTest("classical_age"); err != nil {
+				t.Fatal(err)
+			}
+			setFaith(fated, c.faith, c.store)
+			o := fated.CatastropheOutlook()
+			if !o.Possible || !o.Warned || math.Abs(o.Probability-c.wantP) > 1e-9 || o.Tier != c.wantTier {
+				t.Errorf("warned outlook = %+v, want p=%v tier=%s", o, c.wantP, c.wantTier)
+			}
+			if st := fated.GetState(); st.CatastropheOutlook != o {
 				t.Errorf("GetState outlook %+v != %+v", st.CatastropheOutlook, o)
 			}
 		})
 	}
 
+	// Nothing can strike in the Stone Era.
+	if o := catEngine(t, "bronze_age", 1).CatastropheOutlook(); o.Possible || o.Warned {
+		t.Errorf("stone era outlook = %+v, want not possible", o)
+	}
 	// The final epoch's passage is prestige: the Last Passage, same odds.
 	ge := catEngine(t, "quantum_age", 1)
 	if o := ge.CatastropheOutlook(); !o.Possible || o.Passage != PassagePrestige || o.NextEpochKey != "" || o.Probability != 0.18 {
@@ -749,10 +756,19 @@ func TestCatastropheOutlook(t *testing.T) {
 	if o := ge.CatastropheOutlook(); o.Possible || o.Passage != PassagePrestige || o.Probability != 0 {
 		t.Errorf("final epoch outlook with the Last Passage pending = %+v, want not possible", o)
 	}
-	ge = catEngine(t, "medieval_age", 1)
-	ge.epochEventFired["steel_era"] = true
-	if o := ge.CatastropheOutlook(); o.Possible || o.NextEpochKey != "steel_era" {
-		t.Errorf("already-rolled next epoch outlook = %+v, want not possible", o)
+	// An era whose doom has been lifted has nothing more to bring.
+	spared := catEngine(t, "classical_age", 2)
+	if err := spared.SummonHarbingerForTest("classical_age"); err != nil {
+		t.Fatal(err)
+	}
+	spared.rng = riggedRNG(0.999)
+	spared.fate.StrikeTick = spared.tick
+	spared.harbingerTickCheck()
+	if spared.fate.Resolved != FateSpared {
+		t.Fatalf("setup: the doom was not spared: %+v", spared.fate)
+	}
+	if o := spared.CatastropheOutlook(); o.Possible || o.Warned {
+		t.Errorf("outlook after the era's doom was spared = %+v, want not possible", o)
 	}
 }
 

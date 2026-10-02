@@ -179,15 +179,23 @@ type GameEngine struct {
 	epochEventFired    map[string]bool
 	survivedEpochs     map[string]bool // epochs where player chose Endure
 	pendingCatastrophe string          // epoch key when catastrophe modal should show; "" otherwise
-	// catastropheInvited forces a catastrophe at the next allowed epoch
-	// transition (armed by the Harbinger's Invite; see honourInvite). Persisted.
+	// catastropheInvited makes the next prestige from the final epoch bring
+	// the Last Passage (armed by the Cosmic Era thread's Invite). Persisted.
 	catastropheInvited bool
+	// fate is the current era's hidden fate: whether a doom is fated, when it
+	// strikes, when its harbinger comes (fate.go). nil in the final epoch and
+	// until the first tick rolls it. Persisted; never shown to the player.
+	fate *FateSave
 	// Harbinger (see harbinger.go). harbinger is the live one, nil when none is
 	// present. harbingerArrived records the epochs a harbinger has come in this
 	// run (once per epoch). pendingBraceLevel is the Brace level handed to the
 	// pending catastrophe, applied by Endure. harbingerHistory holds resolved
 	// harbingers; like epochEventHistory it survives Succumb, not prestige.
-	harbinger         *HarbingerSave
+	harbinger *HarbingerSave
+	// parkedHarbinger is the Last Passage's thread while the Cosmic Era's
+	// fated doom has the floor (fate.go); it resumes when the doom resolves.
+	// Persisted.
+	parkedHarbinger   *HarbingerSave
 	harbingerArrived  map[string]bool
 	pendingBraceLevel int
 	harbingerHistory  []HarbingerRecord
@@ -1177,8 +1185,9 @@ func (ge *GameEngine) doTick() {
 
 	ge.tick++
 
-	// Harbinger: start the epoch's thread if nothing has (new game, Succumb,
-	// prestige, reset). One outlook check per epoch.
+	// Harbinger and fate: roll the era's fate if it has none (new game,
+	// Succumb, prestige, reset), bring a harbinger when one is due, strike at
+	// the fated tick; in the final epoch, start the Last Passage thread.
 	ge.harbingerTickCheck()
 
 	// Process build queue
@@ -2041,14 +2050,30 @@ func (ge *GameEngine) applyAgeUnlocks(ageKey string) {
 }
 
 // detectEpochTransition checks whether newAge belongs to a different epoch
-// and fires the epoch event roll when an epoch boundary is crossed. Must be
-// called at the end of advanceAge while the engine write lock is held.
-// Each epoch fires its roll at most once per civilisation cycle
-// (epochEventFired prevents double-fire on load or re-entry).
+// and, when an epoch boundary is crossed, fires the epoch event roll and
+// rolls the new era's hidden fate. Must be called at the end of advanceAge
+// while the engine write lock is held. Each epoch fires its event roll at
+// most once per civilisation cycle (epochEventFired prevents double-fire on
+// load or re-entry).
 func (ge *GameEngine) detectEpochTransition(newAge string) {
 	newEpoch := config.EpochForAge(newAge)
 	if newEpoch == ge.currentEpoch {
 		return // same epoch, no transition
+	}
+	// The advance commands settle the old era's doom before they advance
+	// (fateBeforeAdvance). A direct advance (tests, dev tools) may still
+	// leave a thread live; its era ends here, so settle it the same way.
+	if f := ge.fate; f.open() && f.EpochKey == ge.currentEpoch {
+		if ge.fateThread() != nil {
+			if f.lying() {
+				ge.revealFalseProphet(true)
+			} else if ge.pendingCatastrophe == "" {
+				ge.fateStrike(true)
+			}
+		}
+	}
+	if h := ge.harbinger; h != nil && h.TargetEpoch != "" && h.EpochKey == ge.currentEpoch {
+		ge.harbinger = nil // an era's thread cannot outlive its era
 	}
 	ge.currentEpoch = newEpoch
 	ep := config.EpochByKey()[newEpoch]
@@ -2061,10 +2086,9 @@ func (ge *GameEngine) detectEpochTransition(newAge string) {
 			"epoch_icon": ep.Icon,
 		},
 	})
-	hadPending := ge.pendingCatastrophe != ""
 	ge.rollEpochEvent(newEpoch)
-	// A harbinger resolves on the transition it warned about, whatever the roll.
-	ge.resolveHarbinger(newEpoch, !hadPending && ge.pendingCatastrophe == newEpoch)
+	// The new era's hidden fate, rolled on entry (none in the final epoch).
+	ge.rollFate()
 }
 
 // fireAwakening fires the one-time Age Awakening for newAge, if one triggers on that
@@ -2111,15 +2135,12 @@ func (ge *GameEngine) fireAwakening(newAge string) {
 
 // rollEpochEvent performs the epoch transition event roll.
 //   - Faith fill % gates good-event probability (see epochGoodChance).
-//   - On a bad roll, a further catastropheChanceOnBadRoll chance escalates to a
-//     catastrophe (modal prompt), but only in epochs allowed by the Iron-epoch
-//     gate, and never while another catastrophe is pending (it is never
-//     overwritten). An armed invite (honourInvite) skips the rolls and forces it.
-//   - Otherwise a challenging (non-catastrophe) bad event is applied immediately.
+//   - Otherwise a challenging (non-catastrophe) bad event is applied
+//     immediately. A transition never brings a catastrophe: an era's doom is
+//     fated on entry and strikes inside it (fate.go).
 //
-// Both rolls come from the seeded ge.rng, and the escalation roll is drawn on
-// every bad roll whether or not the gate allows it, so the stream's shape does
-// not depend on the gate. Must be called under engine write lock.
+// The roll comes from the seeded ge.rng. Must be called under engine write
+// lock.
 func (ge *GameEngine) rollEpochEvent(epochKey string) {
 	// Prevent double-fire per epoch
 	if ge.epochEventFired[epochKey] {
@@ -2127,19 +2148,8 @@ func (ge *GameEngine) rollEpochEvent(epochKey string) {
 	}
 	ge.epochEventFired[epochKey] = true
 
-	if ge.honourInvite(epochKey) {
-		return
-	}
-	rng := ge.gameRNG()
-	if rng.Float64() < ge.epochGoodChance() {
+	if ge.gameRNG().Float64() < ge.epochGoodChance() {
 		ge.rollGoodEpochEvent()
-		return
-	}
-	// Appease scales the escalation chance, so it lowers the real odds by the
-	// same factor the outlook reports.
-	escalate := rng.Float64() < catastropheChanceOnBadRoll*ge.harbingerAppeaseMultiplier()
-	if escalate && ge.catastropheCanStrike(epochKey) {
-		ge.triggerCatastrophe(epochKey, catastropheRolled)
 		return
 	}
 	ge.rollChallengingEpochEvent(epochKey)
@@ -2805,6 +2815,11 @@ func (ge *GameEngine) AdvanceAge() error {
 	nextAge := ge.progress.GetNextAge(ge.age)
 	if nextAge == "" {
 		return fmt.Errorf("You are already in the final age.")
+	}
+	// A fated doom cannot be outrun: it strikes (or its harbinger comes)
+	// before an advance that would carry the player past it.
+	if err := ge.fateBeforeAdvance(nextAge); err != nil {
+		return err
 	}
 	ge.advanceAge(nextAge)
 	return nil
@@ -3718,7 +3733,11 @@ func (ge *GameEngine) DoPrestige() error {
 
 	// In the final epoch prestige is the passage, and it can bring the Last
 	// Passage (last_passage.go). If it comes, prestige waits for the choice.
+	// The era's fated doom cannot be outrun past it: it settles first.
 	if ge.lastPassageApplies() {
+		if err := ge.fateBeforePrestige(); err != nil {
+			return err
+		}
 		if ge.rollLastPassage() {
 			return nil
 		}
@@ -4240,6 +4259,11 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	var starts planStarts
 	for done := 0; done < offlineTicks; {
 		n := min(OfflineStepTicks, offlineTicks-done)
+		// Stop at the fate's next event, so a harbinger arrives and a doom
+		// strikes at its own tick while the player is away.
+		if k := ge.fateNextEventIn(); k > 0 && k < n {
+			n = k
+		}
 		w := ge.overflowWonder()
 		ge.Resources.AddProduced(float64(n)*OfflineEfficiency,
 			func(res string, g float64) { gains[res] += g },
@@ -4260,6 +4284,9 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 			ge.recalculateRates()
 		}
 		ge.runPlan(&starts)
+		// A fated doom keeps its hour offline: the harbinger comes and the doom
+		// strikes at its tick, and a struck doom waits, pending, for the player.
+		ge.harbingerTickCheck()
 	}
 
 	if len(gains) > 0 {

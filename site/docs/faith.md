@@ -1,23 +1,24 @@
 # Faith
 
-Faith is a resource that accumulates from Faith lineage buildings and faith-domain workers. It does **not** drain on its own each tick; it goes down only when something spends or removes it (see [How Faith Decreases](#how-faith-decreases)). Your faith level as a percentage of your faith storage sets your [Epoch](epochs.md) event roll odds.
+Faith is a resource that accumulates from Faith lineage buildings and faith-domain workers. It does **not** drain on its own each tick; it goes down only when something spends or removes it (see [How Faith Decreases](#how-faith-decreases)). Your faith level as a percentage of your faith storage sets your [Epoch](epochs.md) event roll odds and the chance a fated [catastrophe](catastrophe.md) strikes.
 
 ---
 
 ## Why Faith Matters
 
 1. **Epoch roll odds.** Your faith % sets the chance of a good (rather than bad) event at each epoch transition.
-2. **Worker morale.** Producing faith lifts worker [morale](morale.md) a little each tick. The lift scales with your faith **production rate** (faith/tick), not your stored faith, and it is **capped** per tick, so even a huge late-game faith income can't max out morale in one step. A steady faith income is an ongoing morale source on top of the epoch odds.
+2. **Catastrophe odds.** When a doom fated for your era reaches its moment, your faith % at that moment sets the chance it strikes: 90%, 75% or 60%, from low faith to high. It sets the odds of the Last Passage at a Cosmic Era prestige the same way (18%, 15% or 12%).
+3. **Worker morale.** Producing faith lifts worker [morale](morale.md) a little each tick. The lift scales with your faith **production rate** (faith/tick), not your stored faith, and it is **capped** per tick, so even a huge late-game faith income can't max out morale in one step. A steady faith income is an ongoing morale source on top of the epoch odds.
 
 ---
 
 ## Faith Threshold Bands
 
-| Condition | Epoch Good-Roll Odds |
-|-----------|---------------------|
-| Faith < 25% of storage | 40% |
-| Faith 25 to 75% of storage | 50% |
-| Faith > 75% of storage | 60% |
+| Condition | Epoch Good-Roll Odds | Fated Doom Strikes | Last Passage |
+|-----------|---------------------|--------------------|--------------|
+| Faith < 25% of storage | 40% | 90% | 18% |
+| Faith 25 to 75% of storage (or no faith storage yet) | 50% | 75% | 15% |
+| Faith > 75% of storage | 60% | 60% | 12% |
 
 The Economy panel shows your current faith band alongside the epoch odds.
 
@@ -94,7 +95,7 @@ Two things ask for faith directly:
 | Entering the Renaissance Age | 8.1K, alongside 180K gold, 220K knowledge and 880 steel |
 | Sistine Chapel (Renaissance wonder) | 20K, alongside culture, gold and stone |
 
-Bank faith through the Medieval Age so the Renaissance requirement doesn't hold you up. The age requirement only checks your faith, and your faith carries into the new age untouched. The Sistine Chapel, which you must build before leaving the Renaissance Age, does spend it (through `wonder collect`). That lowers your faith % until it refills, so keep an eye on the epoch odds if an epoch boundary is close.
+Bank faith through the Medieval Age so the Renaissance requirement doesn't hold you up. The age requirement only checks your faith, and your faith carries into the new age untouched. The Sistine Chapel, which you must build before leaving the Renaissance Age, does spend it (through `wonder collect`). That lowers your faith % until it refills, so keep an eye on the odds if an epoch boundary is close or a harbinger has come.
 
 ---
 
@@ -104,13 +105,15 @@ Bank faith through the Medieval Age so the Renaissance requirement doesn't hold 
 |-------|-------------|
 | Early game | 1 Shrine + 2 or 3 Faith workers |
 | Mid game | Multiple Temples / Cathedrals with full Faith worker assignment |
-| Late game | Keep faith above 75% before every epoch boundary |
+| Late game | Keep faith above 75% before every epoch boundary and while a harbinger warns you |
 
 ---
 
 ## Common Mistake
 
 Players often neglect faith until the epoch notification appears, and by then it is too late to raise it before the roll. Build faith infrastructure at the **start** of each epoch, not the end.
+
+The same goes for a [harbinger](harbinger.md): it comes only part of an age before its doom strikes, so faith you haven't banked by then is hard to raise in time.
 
 ---
 

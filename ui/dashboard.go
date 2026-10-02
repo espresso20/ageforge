@@ -771,7 +771,7 @@ func (d *Dashboard) refreshStatus(state game.GameState) {
 		catStr = fmt.Sprintf("  %s ☄ Last Passage. Type catastrophe to choose. %s",
 			theme.TagFgBg(theme.RoleOnNegative, theme.RoleNegative), theme.Reset)
 	}
-	// Harbinger badge: present until the epoch transition resolves it. Nothing
+	// Harbinger badge: present until the doom it warns of resolves. Nothing
 	// expires, so the badge is the idle player's reminder that there is a
 	// choice waiting (it never blocks anything).
 	if state.Harbinger != nil {

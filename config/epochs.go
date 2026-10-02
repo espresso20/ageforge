@@ -3,7 +3,10 @@ package config
 // EpochDef defines a meta-progression era spanning multiple ages.
 // There are 7 epochs. Most span 3 ages; the final Cosmic Era spans 4.
 // At the boundary between epochs the engine rolls a special epoch event
-// (good/bad/catastrophe) that shapes the era's permanent flavour.
+// (good or challenging) that shapes the era's permanent flavour. A catastrophe
+// is not a transition event: on entering an era from the Iron Era on, a hidden
+// roll decides whether a doom is fated to strike somewhere inside it
+// (game/fate.go).
 type EpochDef struct {
 	Name            string
 	Key             string
@@ -290,10 +293,10 @@ func EpochForAge(ageKey string) string {
 }
 
 // CatastropheGateEpoch is the first epoch in which a civilizational catastrophe
-// can strike: the epoch that contains the Iron Age. Transitions into earlier
-// epochs (in practice only the Stone Era, which every run starts in) never roll
-// a catastrophe, and `catastrophe invoke` is refused there. Good and challenging
-// epoch events are unaffected by the gate.
+// can strike: the epoch that contains the Iron Age. Nothing is ever fated in
+// an earlier epoch (in practice only the Stone Era, which every run starts
+// in), and the dev console's /catastrophe is refused there. Good and
+// challenging epoch events are unaffected by the gate.
 const CatastropheGateEpoch = "iron_era"
 
 // CatastropheAllowed reports whether a catastrophe may occur in the given epoch
@@ -305,6 +308,14 @@ func CatastropheAllowed(epochKey string) bool {
 		return false
 	}
 	return ep.Order >= byKey[CatastropheGateEpoch].Order
+}
+
+// FateAllowed reports whether a doom can be fated inside epochKey: past the
+// Iron gate, the Cosmic Era included (its doom is the Reality Tear; the Last
+// Passage at prestige is separate, game/last_passage.go). Every epoch rolls a
+// fate on entry; before the gate it can only hold a false prophet.
+func FateAllowed(epochKey string) bool {
+	return CatastropheAllowed(epochKey)
 }
 
 // NextEpoch returns the epoch that follows epochKey in order, or ok=false when

@@ -2145,7 +2145,7 @@ func cmdDismiss(args []string, engine *game.GameEngine) CommandResult {
 func cmdCatastrophe(args []string, engine *game.GameEngine) CommandResult {
 	if len(args) > 0 {
 		return CommandResult{
-			Message: "Usage: catastrophe (reopens a pending catastrophe or Last Passage choice, or shows the odds at the next passage)",
+			Message: "Usage: catastrophe (reopens a pending catastrophe or Last Passage choice, or shows the outlook)",
 			Type:    "info",
 		}
 	}
@@ -2178,7 +2178,9 @@ func lastPassageStatusLines(state game.GameState) []string {
 func lastPassageRiskText(state game.GameState) string {
 	o := state.CatastropheOutlook
 	tier, numeric, prob := o.Tier, harbingerNumericAge(state.Age), o.Probability
-	if h := state.Harbinger; h != nil {
+	// Only the Last Passage's own thread: the Cosmic Era's fated doom, when
+	// it speaks instead, warns of something else.
+	if h := state.Harbinger; h != nil && h.LastPassage {
 		tier, numeric, prob = h.Tier, h.Numeric, h.Probability
 	}
 	if numeric {
@@ -2240,54 +2242,109 @@ func cmdHarbinger(args []string, engine *game.GameEngine) CommandResult {
 }
 
 // catastropheOutlookText renders the no-pending status line for the bare
-// `catastrophe` command: the risk at the next epoch transition, as precisely
-// as the current age can tell it (see outlookRiskText).
+// `catastrophe` command: what the player can know. In an era that can be
+// fated, a doom is only ever known through its harbinger, so with none here
+// the era reads quiet whether or not one is fated. In the final epoch it is
+// the Last Passage's odds at prestige.
 func catastropheOutlookText(state game.GameState) string {
 	o := state.CatastropheOutlook
 	var sb strings.Builder
 	sb.WriteString("No catastrophe pending.\n")
+	if o.Passage == game.PassagePrestige && o.Warned {
+		// The Cosmic Era's fated doom, foretold: it comes before the Last
+		// Passage can.
+		fmt.Fprintf(&sb, "  %s, faith %.0f%% full.\n", doomWarningText(state), o.FaithFill*100)
+	}
 	switch {
 	case o.Passage == game.PassagePrestige && o.Possible:
 		fmt.Fprintf(&sb, "  Next passage (prestige, the Last Passage): %s, faith %.0f%% full.",
 			outlookRiskText(state), o.FaithFill*100)
-	case o.NextEpochKey == "":
+	case o.Passage == game.PassagePrestige:
 		sb.WriteString("  This is the final epoch: its passage is prestige, and the Last Passage cannot strike now.")
-	case !o.Possible:
-		fmt.Fprintf(&sb, "  Next transition (the end of the %s): no catastrophe possible.", currentEraName(state))
+	case o.Warned:
+		fmt.Fprintf(&sb, "  %s, faith %.0f%% full.", doomWarningText(state), o.FaithFill*100)
 	default:
-		// The era it leads into stays unnamed until reached (spoilers.go).
-		fmt.Fprintf(&sb, "  Next transition (the end of the %s): %s, faith %.0f%% full.",
-			currentEraName(state), outlookRiskText(state), o.FaithFill*100)
+		sb.WriteString("  " + eraOutlookText(state))
 	}
 	return strings.TrimRight(sb.String(), "\n")
 }
 
-// outlookRiskText describes the next transition's catastrophe risk the way
-// the current age can know it. From the Industrial Age on the odds are
-// published: "14% catastrophe chance (medium)". Before it there is no figure,
-// only a severity. While a harbinger is present its severity is the one shown
-// everywhere, so no other screen can contradict (and so expose) a false
-// prophet.
-func outlookRiskText(state game.GameState) string {
-	o := state.CatastropheOutlook
-	tier, numeric, prob, speaker := o.Tier, harbingerNumericAge(state.Age), o.Probability, ""
-	if h := state.Harbinger; h != nil {
-		tier, numeric, prob, speaker = h.Tier, h.Numeric, h.Probability, h.Name
+// eraOutlookText is the outlook of an era with no harbinger present, in one
+// sentence. It reads only what the player has seen (the era's rule and its
+// harbinger history), so a fated era and a quiet one read the same until the
+// harbinger comes.
+func eraOutlookText(state game.GameState) string {
+	era := currentEraName(state)
+	switch {
+	case !config.CatastropheAllowed(state.EpochKey):
+		return fmt.Sprintf("No catastrophe can strike in the %s.", era)
+	case state.CatastropheOutlook.Possible:
+		return fmt.Sprintf("No harbinger has come: the %s is quiet, for now. A doom is always foretold before it strikes.", era)
 	}
-	var risk string
+	if r := eraDoomRecord(state); r != nil && r.Outcome == game.HarbingerOutcomeSpared {
+		return fmt.Sprintf("The doom %s foretold passed you by. Nothing more will strike before the %s ends.", r.Name, era)
+	}
+	return fmt.Sprintf("The %s's doom has come. Nothing more will strike before it ends.", era)
+}
+
+// eraDoomRecord is the newest resolved harbinger of the current era's doom,
+// or nil.
+func eraDoomRecord(state game.GameState) *game.HarbingerRecord {
+	for i := len(state.HarbingerHistory) - 1; i >= 0; i-- {
+		if r := &state.HarbingerHistory[i]; r.EpochKey == state.EpochKey && r.TargetEpochKey == state.EpochKey {
+			return r
+		}
+	}
+	return nil
+}
+
+// doomWarningText says what the harbinger present foretells of the era's
+// doom: who, when (as far as the figure can tell) and how likely.
+func doomWarningText(state game.GameState) string {
+	h := state.Harbinger
+	when := ", with no word of when"
+	if h.WhenText != "" {
+		when = " " + h.WhenText
+	}
+	return fmt.Sprintf("%s warns of doom%s: %s", capFirstUI(h.Name), when, riskText(state))
+}
+
+// outlookRiskText describes the Last Passage's risk the way the current age
+// can know it, with its thread as the speaker when that is the thread present
+// (the Cosmic Era's fated doom may be speaking instead).
+func outlookRiskText(state game.GameState) string {
+	if h := state.Harbinger; h != nil && h.LastPassage {
+		return fmt.Sprintf("%s warns of %s", capFirstUI(h.Name), riskText(state))
+	}
+	o := state.CatastropheOutlook
+	return riskFrom(state, o.Tier, harbingerNumericAge(state.Age), o.Probability)
+}
+
+// riskText is the risk the way the current age can know it. From the
+// Industrial Age on the odds are published: "75% catastrophe chance
+// (medium)". Before it there is no figure, only a severity. While a
+// harbinger is present its severity is the one shown everywhere, so no other
+// screen can contradict (and so expose) a false prophet.
+func riskText(state game.GameState) string {
+	o := state.CatastropheOutlook
+	tier, numeric, prob := o.Tier, harbingerNumericAge(state.Age), o.Probability
+	if h := state.Harbinger; h != nil {
+		tier, numeric, prob = h.Tier, h.Numeric, h.Probability
+	}
+	return riskFrom(state, tier, numeric, prob)
+}
+
+// riskFrom words a risk: the odds from the Industrial Age on, a severity
+// before it.
+func riskFrom(state game.GameState, tier game.CatastropheTier, numeric bool, prob float64) string {
 	switch {
 	case numeric:
-		risk = fmt.Sprintf("%.0f%% catastrophe chance (%s)", prob*100, tier)
+		return fmt.Sprintf("%.0f%% catastrophe chance (%s)", prob*100, tier)
 	case game.SightOf(&state).Age("industrial_age"):
-		risk = fmt.Sprintf("%s risk of catastrophe (no figures before %s)", tier, ageRef(state, "industrial_age"))
-	default:
-		// The age that prints the odds is named only once the player can see it.
-		risk = fmt.Sprintf("%s risk of catastrophe (no figures this early)", tier)
+		return fmt.Sprintf("%s risk of catastrophe (no figures before %s)", tier, ageRef(state, "industrial_age"))
 	}
-	if speaker != "" {
-		return fmt.Sprintf("%s warns of %s", capFirstUI(speaker), risk)
-	}
-	return risk
+	// The age that prints the odds is named only once the player can see it.
+	return fmt.Sprintf("%s risk of catastrophe (no figures this early)", tier)
 }
 
 // cmdPlan is the `plan` command. Bare `plan` opens the Plan panel.

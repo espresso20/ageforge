@@ -594,11 +594,11 @@ Knowledge costs rise steeply: from 800 kp (Primitive) to 500M kp (Transcendent).
 
 **Prerequisites stack.** Before typing `research mathematics`, check that you have both `primitive_writing` and `currency`. Use `research list` to see what's locked and why.
 
-**The Dark Age epoch event** cancels your active research and drains 80% of your knowledge stockpile. If an epoch catastrophe is imminent, consider whether to delay an expensive research start until after the event resolves.
+**The Dark Age epoch event** cancels your active research and drains 80% of your knowledge stockpile. If an epoch transition is close, consider whether to delay an expensive research start until after its event resolves.
 
 **Prestige resets research** entirely, with every tech and its bonus. The only research benefits that survive a prestige are the **Ancient Knowledge** bonus (+25% research speed per epoch) from Succumbing and the knowledge output bonus from the prestige upgrade shop.
 
-**Succumbing early is worth considering.** Succumbing to an epoch catastrophe right after entering the Iron Era (the earliest a catastrophe can strike) costs you a run but grants +25% research speed permanently, and each further epoch you Succumb in adds another +25%. Players who Succumb at least once and invest in the Research Speed prestige upgrade begin each subsequent run with noticeably faster research from tick one.
+**Succumbing early is worth considering.** Succumbing to a catastrophe in the Iron Era (the earliest era one can strike in) costs you a run but grants +25% research speed permanently, and each further epoch you Succumb in adds another +25%. Players who Succumb at least once and invest in the Research Speed prestige upgrade begin each subsequent run with noticeably faster research from tick one.
 
 **Don't overlook `civil_engineering`.** −5% build cost plus +100 storage for every resource is good value in the Classical Age and keeps helping for the rest of the run.
 

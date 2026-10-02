@@ -277,7 +277,7 @@ func registry() []*Command {
 			Help: []Usage{{"festival", "Spend culture for a temporary production boost"}},
 			Subs: []*Command{festivalConfirm}},
 		{Name: "catastrophe", Aliases: []string{"cat"}, Section: secWonders,
-			Help: []Usage{{"catastrophe", "Reopen a pending catastrophe or Last Passage (or show the odds)"}}},
+			Help: []Usage{{"catastrophe", "Reopen a pending catastrophe or Last Passage (or show the outlook)"}}},
 		{Name: "harbinger", Aliases: []string{"harb"}, Section: secWonders, BareOK: true,
 			Panel: "The harbinger's warning & your answers (alias: harb)",
 			Help: []Usage{
@@ -377,7 +377,7 @@ var devCommands = []devCommand{
 	{"/prestige", "/prestige <level 0-9>", "Set prestige level"},
 	{"/speed", "/speed <multiplier>", "Set the tick-speed multiplier"},
 	{"/catastrophe", "/catastrophe", "Force the current epoch's catastrophe (Iron Era on)"},
-	{"/harbinger", "/harbinger", "Bring the current age's harbinger now"},
+	{"/harbinger", "/harbinger", "Fate a doom now and bring its harbinger (a false prophet in the Stone Era)"},
 	{"/lastpassage", "/lastpassage", "Make the Last Passage pending (final epoch)"},
 }
 

@@ -16,7 +16,7 @@ Ages and epochs do different jobs: **ages are about what you build; epochs are a
 | 4 | ⚡ | Electric Era | Victorian → Electric → Atomic | steel | electricity | The Nuclear Exchange |
 | 5 | ▣ | Digital Era | Modern → Information → Digital | data | electricity | The Great Hack |
 | 6 | ◉ | Neon Era | Cyberpunk → Fusion → Space | plasma | plasma | Corporate Armageddon |
-| 7 | ✦ | Cosmic Era | Interstellar → Galactic → Quantum → Transcendent | dark_matter | antimatter | The Reality Tear |
+| 7 | ✦ | Cosmic Era | Interstellar → Galactic → Quantum → Transcendent | dark_matter | antimatter | The Reality Tear (and the Last Passage at prestige) |
 
 The Cosmic Era is the only epoch with 4 ages instead of 3.
 
@@ -36,7 +36,7 @@ Each age is paced to a target time at 1x speed, from 15 minutes for the Primitiv
 
 **◉ Neon Era.** Plasma is both the primary and the energy resource. Neural Uprising is the nastiest event outside the transition roll: it removes 20% of your workers, steals 500 food and drains food at the same time. Corporate Espionage steals 10K gold and 8K data at once. Keep reserves.
 
-**✦ Cosmic Era.** Dark matter and antimatter arrive in amounts that make earlier resources look small. The Transcendence Signal event (+100K knowledge, +50K culture) is the largest single windfall in the game. Reality fractures and entropy waves are manageable if your production is strong. The Reality Tear catastrophe is the hardest reset decision of the run. With no epoch after it, the Cosmic Era's passage is prestige itself: the **Last Passage**, which its harbingers warn of from the Interstellar Age on. See [The Last Passage](prestige.md#the-last-passage).
+**✦ Cosmic Era.** Dark matter and antimatter arrive in amounts that make earlier resources look small. The Transcendence Signal event (+100K knowledge, +50K culture) is the largest single windfall in the game. Reality fractures and entropy waves are manageable if your production is strong. The Reality Tear catastrophe is the hardest reset decision of the run. With no epoch after it, the Cosmic Era's passage is prestige itself: the **Last Passage**, which a second harbinger thread warns of from the Interstellar Age on. See [The Last Passage](prestige.md#the-last-passage).
 
 ---
 
@@ -74,9 +74,9 @@ The outcome is decided in steps.
 | 25-75% (Mid Faith) | 50% | 50% |
 | Over 75% (High Faith) | 60% | 40% |
 
-**Step 2: if the roll is bad,** there's a 30% chance it escalates to a **Catastrophe** (a modal prompt where you choose). The other 70% of bad rolls produce a Challenging event, applied at once with no choice. That makes the catastrophe chance 18% / 15% / 12% at low / mid / high faith. A bad roll never escalates on a transition into an epoch before the Iron Era, in an epoch that already had its catastrophe this run, or while another catastrophe is pending. See [Catastrophe](catastrophe.md).
+**Step 2: if the roll is bad,** you get a Challenging event, applied at once with no choice. A transition never brings a catastrophe. Instead, entering an era from the Iron Era on rolls in secret whether a doom is fated to strike somewhere inside it (27% of the time). See [Catastrophe](catastrophe.md#when-it-triggers).
 
-**The Harbinger.** Every epoch whose transition can bring a catastrophe has a harbinger thread: from the epoch's first age until the transition, each age's figure warns you of it. Appeasing it multiplies the catastrophe chance in Step 2 by 0.6 per level (two levels at most); inviting it makes the catastrophe certain. See [The Harbinger](harbinger.md). The Cosmic Era has no transition out, so its thread warns of the [Last Passage](prestige.md#the-last-passage) instead, which rolls with the same odds when you confirm prestige.
+**The Harbinger.** A fated doom never strikes unannounced: a harbinger comes some while before it, and each age's figure takes up the warning until it resolves. Appeasing it multiplies the chance the doom strikes by 0.6 per level (two levels at most); inviting it makes the strike certain. See [The Harbinger](harbinger.md). The Cosmic Era has no transition out, so a second thread there warns of the [Last Passage](prestige.md#the-last-passage), which rolls when you confirm prestige, after any open doom has settled.
 
 **Step 3: if the roll is good,** your culture, as a share of culture storage, decides which tiers you can draw from:
 
@@ -106,7 +106,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 
 - Current epoch name, icon, and primary/energy resources, and its ages. An age past your next one is counted ("1 more to come"), not named
 - The result of your last epoch transition roll
-- Your catastrophe status for this epoch (pending, endured, succumbed), and the catastrophe odds for the next transition, "the end of" your current era: the panel never names an era you haven't reached. In the Cosmic Era the next passage is prestige (the Last Passage), and the panel shows **THE LAST PASSAGE** while its choice is pending
+- Your catastrophe status for this era (none so far, foretold, spared, pending, endured or succumbed) and the outlook: the doom a harbinger present foretells, with what it says about when and how likely, or "no harbinger has come. Quiet, for now." The panel never names an era you haven't reached. In the Cosmic Era the next passage is prestige (the Last Passage): the panel shows its odds on a line of their own, below the Reality Tear's warning while that doom's harbinger speaks, and shows **THE LAST PASSAGE** while its choice is pending
 - The current [harbinger](harbinger.md), if one is present, and for past harbinger threads this run the chain of figures and the verdict
 - Full epoch event history for the current run
 - Your legacy bonuses earned across all runs
@@ -149,7 +149,7 @@ Type **`epoch`** to open the Epoch panel. It shows:
 
 ## Challenging Epoch Events
 
-8 bad events that fire when a bad roll doesn't escalate to a catastrophe. They apply at once, with no choice.
+8 bad events. Every bad transition roll brings one, applied at once, with no choice.
 
 | Event | Effect | Duration |
 |-------|--------|----------|
@@ -244,7 +244,7 @@ Apart from the transition roll, each epoch has 5 events that only enter the rand
 
 ## Endure vs Succumb
 
-When a catastrophe hits, nothing happens until you choose. The game keeps running, but **you can't advance ages or prestige while a catastrophe is pending**. Press Esc to close the choice and look around; a status-bar badge reminds you it is waiting, and typing `catastrophe` reopens it. There is no Defer button.
+A catastrophe strikes at its fated moment inside an era, not at a transition (see [Catastrophe](catastrophe.md#when-it-triggers)). When it hits, nothing happens until you choose. The game keeps running, but **you can't advance ages or prestige while a catastrophe is pending**. Press Esc to close the choice and look around; a status-bar badge reminds you it is waiting, and typing `catastrophe` reopens it. There is no Defer button.
 
 ### Endure: pay the price and keep your run
 
@@ -277,11 +277,11 @@ Best when you've built a large, mature civilization that would be painful to res
 | ◉ Neon Era | plasma +30%, dark_matter_crystals +30% |
 | ✦ Cosmic Era | dark_matter +35% |
 
-Best when you just entered the epoch (low reset cost) and don't hold its legacy bonus yet. Right after entering the Iron Era is the cheapest window.
+Best when the reset costs you little and you don't hold the era's legacy bonus yet. The Iron Era is the cheapest era to fall in.
 
 **The stacking math:** six epochs can be succumbed in (Iron to Cosmic), so Ancient Knowledge tops out at +150% research speed.
 
-**Choosing to fall:** you can't trigger a catastrophe directly, but when a harbinger comes you can **Invite** it, which guarantees the catastrophe at that transition. See [The Harbinger](harbinger.md).
+**Choosing to fall:** you can't trigger a catastrophe directly, but when a harbinger comes you can **Invite** it, which guarantees the strike when its moment comes. See [The Harbinger](harbinger.md).
 
 ---
 
@@ -307,15 +307,15 @@ A duration of 0 means the effect happens once. A duration above 0 means the even
 
 Keep faith at 50-70% of storage. Invest in culture buildings at a moderate pace. Take transition events as they come without over-optimizing.
 
-At 50% faith the odds are already a coin flip. With decent culture (over 40% of storage) you're eligible for Major events. You won't hit Legendary, but The Grand Discovery and Worker Innovation are both strong. With a steady 50% good rate, over the 6 transitions of a run you can expect about 3 good events, 2 or 3 challenging ones, and maybe one catastrophe.
+At 50% faith the odds are already a coin flip. With decent culture (over 40% of storage) you're eligible for Major events. You won't hit Legendary, but The Grand Discovery and Worker Innovation are both strong. With a steady 50% good rate, over the 6 transitions of a run you can expect about 3 good events and 3 challenging ones. Catastrophes come separately: at mid faith a first run can expect about 0.6 of them.
 
 Best for: a first or second run, players who don't want to commit hard to one strategy, relaxed sessions.
 
 ### Faith Maximizer
 
-Build faith production aggressively. Keep faith above 75% of storage going into every epoch transition.
+Build faith production aggressively. Keep faith above 75% of storage going into every epoch transition, and through each era, since a fated doom rolls on the faith you hold when it strikes.
 
-Going from 50% to over 75% faith moves your odds from 50/50 to 60/40. Over 6 transitions that's about 0.6 extra good events compared to a neutral run. It also cuts your catastrophe exposure: catastrophes are 30% of bad rolls, so the chance per transition drops from 15% to 12%.
+Going from 50% to over 75% faith moves your odds from 50/50 to 60/40. Over 6 transitions that's about 0.6 extra good events compared to a neutral run. It also cuts your catastrophe exposure: a fated doom strikes 60% of the time instead of 75%.
 
 Trade-offs: faith buildings typically draw on food workers, so you compete with your gathering and farming capacity. Don't let food go critical in the early Stone Era chasing faith.
 
@@ -363,7 +363,7 @@ The sweet spot is usually one extra age's worth of time (enough to build a few f
 
 ## Tips and Common Mistakes
 
-**Don't let faith sit near zero.** Below 25% of faith storage, your good-event odds are 40%. Every point of faith storage and production matters, and even basic faith buildings buy transition insurance. Check your faith storage: it's easy to underinvest in it while faith production looks fine.
+**Don't let faith sit near zero.** Below 25% of faith storage, your good-event odds are 40% and a fated doom strikes 90% of the time. Every point of faith storage and production matters, and even basic faith buildings buy insurance. Check your faith storage: it's easy to underinvest in it while faith production looks fine.
 
 **Culture storage matters as much as culture production.** The tier check uses the share of storage, not the raw amount. A small culture storage at 90% beats a large one at 10%. Don't build more culture storage than you can fill before the transition.
 
@@ -377,9 +377,9 @@ The sweet spot is usually one extra age's worth of time (enough to build a few f
 
 **Each epoch you Succumb in adds +25% research speed permanently.** Repeat Succumbs in the same epoch add nothing, so the value is in collecting different epochs. This is the main argument for a deliberate early Succumb in the Iron Era.
 
-**One catastrophe per epoch per run.** You can't chain catastrophes within an epoch, and none can strike before the Iron Era.
+**One doom per era per run.** Once an era's doom has struck or passed you by, nothing more strikes in that era. None can strike before the Iron Era. The Cosmic Era adds the Last Passage at prestige.
 
-**Listen to the harbinger.** It walks with you through every epoch whose transition can bring a catastrophe, and through the Cosmic Era toward the Last Passage. Its price is the same in every age of the epoch. Appease if you want to keep your run, Brace if Endure is the plan, Invite if you want the legacy bonus. See [The Harbinger](harbinger.md).
+**Listen to the harbinger.** It comes only when a doom is on its way (or, before the Industrial Age, now and then as a false prophet), and in the Cosmic Era a second thread warns of the Last Passage. It gives you only part of an age before the strike, so answer promptly: Appease if you want to keep your run, Brace if Endure is the plan, Invite if you want the legacy bonus. See [The Harbinger](harbinger.md).
 
 ---
 
@@ -387,7 +387,9 @@ The sweet spot is usually one extra age's worth of time (enough to build a few f
 
 **At epoch transitions (a normal age advance into a new epoch):**
 - Your civilization carries on: nothing resets and no resources are lost
+- A doom still open in the era you leave rolls first, at the advance (see [No Outrunning a Doom](harbinger.md#no-outrunning-a-doom))
 - The epoch event fires once (the transition roll)
+- From the Iron Era on, the new era's fate is rolled in secret: a doom is fated somewhere inside it 27% of the time
 - Active events from the previous epoch keep ticking down
 - The random event pool shifts to include the new epoch's exclusive events
 - The Epoch panel records the transition and its outcome
@@ -404,7 +406,7 @@ The sweet spot is usually one extra age's worth of time (enough to build a few f
 **After Prestige (end of a full run):**
 - Similar to Succumb, but chosen deliberately, from the Modern Age on, and it earns prestige points
 - Refused while a catastrophe is pending
-- From the Cosmic Era it can bring the [Last Passage](prestige.md#the-last-passage), which holds the prestige until you Endure (keep part of the run's points) or Succumb (no points, but the permanent Cosmic Legacy)
+- From the Cosmic Era it first settles an open doom, then can bring the [Last Passage](prestige.md#the-last-passage), which holds the prestige until you Endure (keep part of the run's points) or Succumb (no points, but the permanent Cosmic Legacy)
 - Legacy bonuses, Ancient Knowledge and ruins carry
 - The civilization log carries; the per-run epoch event history is cleared
 - Prestige upgrades available

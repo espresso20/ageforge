@@ -118,6 +118,14 @@ type GameSave struct {
 	CatastropheInvited bool              `json:"catastrophe_invited,omitempty"`
 	PendingBraceLevel  int               `json:"pending_brace_level,omitempty"`
 	HarbingerHistory   []HarbingerRecord `json:"harbinger_history,omitempty"`
+	// Fate is the current era's hidden fate (fate.go): whether a doom is
+	// fated, when it strikes, when its harbinger comes. omitempty, so saves
+	// without one keep their bytes and signatures; a save written before
+	// fates existed gets its era's fate on the first tick after loading.
+	Fate *FateSave `json:"fate,omitempty"`
+	// ParkedHarbinger is the Last Passage's thread while the Cosmic Era's
+	// fated doom speaks (fate.go). omitempty.
+	ParkedHarbinger *HarbingerSave `json:"parked_harbinger,omitempty"`
 	// The Last Passage (see last_passage.go). omitempty, so saves without it
 	// keep their bytes and signatures. PendingLastPassage is a prestige from
 	// the final epoch waiting for Endure or Succumb; CosmicLegacy is the
@@ -614,6 +622,8 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		CatastropheInvited:     ge.catastropheInvited,
 		PendingBraceLevel:      ge.pendingBraceLevel,
 		HarbingerHistory:       append([]HarbingerRecord(nil), ge.harbingerHistory...),
+		Fate:                   ge.fateSaveCopy(),
+		ParkedHarbinger:        copyHarbingerSave(ge.parkedHarbinger),
 		PendingLastPassage:     ge.pendingLastPassage,
 		CosmicLegacy:           ge.cosmicLegacy,
 		Morale:                 ge.morale,
@@ -896,6 +906,7 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	}
 	ge.catastropheHistory = save.CatastropheHistory
 	ge.restoreCatastropheState(&save)
+	ge.restoreFateState(&save)
 	ge.restoreHarbingerState(&save)
 
 	// Restore history collector

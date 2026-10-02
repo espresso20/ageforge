@@ -589,13 +589,14 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 	researchSeen := false
 	out := make([]PlanItem, 0, len(ge.plan))
 	advanceAt := -1
+	advanceIdx := 0
 	for i, it := range ge.plan {
 		if it.Kind == PlanAdvance {
 			if ge.planAdvanceBlocker() == "" {
 				// Ready: advance here, before the items below spend what the
 				// requirements count. The rest waits for the next tick,
 				// where what belonged to the old age drops out.
-				advanceAt = i
+				advanceAt, advanceIdx = i, len(out)
 				out = append(out, ge.plan[i+1:]...)
 				break
 			}
@@ -702,6 +703,17 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 		}
 		if it.Count > 0 {
 			out = append(out, it)
+		}
+	}
+	if advanceAt >= 0 {
+		next := ge.progress.GetNextAge(ge.age)
+		// A fated doom cannot be outrun by the plan either: it strikes, or
+		// its harbinger comes, first. If the advance must wait, the item goes
+		// back where it was and tries again next tick.
+		if err := ge.fateBeforeAdvance(next); err != nil {
+			ge.addLog("debug", fmt.Sprintf("Plan: advance waits: %v", err))
+			out = append(out[:advanceIdx], append([]PlanItem{ge.plan[advanceAt]}, out[advanceIdx:]...)...)
+			advanceAt = -1
 		}
 	}
 	if len(out) == 0 {

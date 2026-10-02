@@ -3,11 +3,12 @@ package config
 import "sync"
 
 // harbingers.go — the per-age roster of harbingers: the figure who turns up
-// before an epoch transition that can roll a catastrophe and says how worried
-// to be. This file is data only. The mechanic (when a harbinger appears, what
-// Appease / Brace / Invite cost and do, how the false-prophet roll works) lives
-// on the game side, and the prose lives in the flavor package, whose harbinger
-// Moments take Name as Request.Subject.
+// some while before a fated doom strikes and says how worried to be (and, from
+// the Classical Age on, roughly when). This file is data only. The mechanic
+// (the hidden fate roll, when a harbinger appears, what Appease / Brace /
+// Invite cost and do, how false prophets come) lives on the game side
+// (game/fate.go, game/harbinger.go), and the prose lives in the flavor
+// package, whose harbinger Moments take Name as Request.Subject.
 
 // ForecastPrecision is how much a harbinger's medium can tell you.
 type ForecastPrecision int
@@ -20,6 +21,19 @@ const (
 	// them, the wire carries them, the screen shows them. The UI shows the
 	// number; flavor lines refer to it and never print it.
 	ForecastNumeric
+)
+
+// ForecastTiming is how much a harbinger can say about WHEN the doom strikes.
+type ForecastTiming int
+
+const (
+	// TimingNone is a figure who gives no timing at all: doom is coming, and
+	// that is everything. Every age before the Classical Age.
+	TimingNone ForecastTiming = iota
+	// TimingAge is a figure who can tell whether the doom falls in the current
+	// age ("before this age is out") or later in the era ("before the era
+	// ends"). From the Classical Age on.
+	TimingAge
 )
 
 // HarbingerDef is one age's harbinger.
@@ -39,15 +53,19 @@ type HarbingerDef struct {
 	AppeaseLabel string
 	// BraceLabel names the action that spends resources to soften an Endure.
 	BraceLabel string
-	// InviteLabel names the action that chooses doom: the next transition is
-	// guaranteed to bring the catastrophe. For players who want to Succumb on
-	// purpose for the legacy bonuses. Deliberately a little unhinged.
+	// InviteLabel names the action that chooses doom: the fated catastrophe is
+	// certain to come. For players who want to Succumb on purpose for the
+	// legacy bonuses. Deliberately a little unhinged.
 	InviteLabel string
 	// ForecastPrecision is vague before the Industrial Age and numeric from it.
 	ForecastPrecision ForecastPrecision
-	// FalseProphetChance is the probability that this age's harbinger is lying:
-	// the warning reads exactly like a real one, and the game reveals the truth
-	// after the transition. See falseProphetChance for the curve.
+	// ForecastTiming is TimingNone before the Classical Age and TimingAge
+	// from it. See timingFor.
+	ForecastTiming ForecastTiming
+	// FalseProphetChance is the chance that an era entered at this age with no
+	// doom fated gets a false prophet anyway: a warning that reads exactly like
+	// a real one, revealed once its foretold window passes without a doom.
+	// Only an era's first age rolls it. See falseProphetChance for the curve.
 	FalseProphetChance float64
 }
 
@@ -65,9 +83,11 @@ type HarbingerDef struct {
 // curve over a line, and a line keeps each age's number legible: 1/64 per age,
 // exactly representable, so tests compare it with == rather than a tolerance.
 //
-// 1/8 at the start is a cap, not a target: one warning in eight being hollow is
-// enough that a player learns to doubt the Wild Man, and rare enough that
-// Appease is still usually money well spent. Colonial ends at 1/64, the
+// 1/8 at the start is a cap, not a target. Only an era's first age rolls it,
+// and only when nothing is fated there: one run in eight meets a hollow
+// warning in the Stone Era (where nothing can be fated), fewer in the Iron and
+// Steel Eras. Enough that a player learns to doubt the Wild Man, rare enough
+// that Appease is still usually money well spent. Colonial ends at 1/64, the
 // "trending to zero" the Industrial cut-off finishes.
 func falseProphetChance(ageIndex int) float64 {
 	const industrialIndex = 8
@@ -83,6 +103,22 @@ func precisionFor(ageIndex int) ForecastPrecision {
 		return ForecastNumeric
 	}
 	return ForecastVague
+}
+
+// timingFor is TimingAge from the Classical Age (index 4) on.
+//
+// Why there. The first era that can be fated is the Iron Era, and its opening
+// figure, the Desert Prophet, still gives no timing, so the first doom a new
+// player meets is as mysterious as the design wants it. The Oracle is the
+// first figure whose whole trade is prophecy, so she is the first to name a
+// time. Everything before her (the Wild Man, the Hermit, the Soothsayer, who
+// only ever come as false prophets now, and the Desert Prophet) says doom is
+// coming and nothing about when.
+func timingFor(ageIndex int) ForecastTiming {
+	if ageIndex >= 4 {
+		return TimingAge
+	}
+	return TimingNone
 }
 
 // harbingerRoster is the hand-written part of each entry, in age order. The
@@ -246,9 +282,9 @@ var harbingerRoster = []HarbingerDef{
 }
 
 // harbingerTables is the roster, built once. Harbingers and HarbingerFor are
-// called from the transition path and from the UI; neither should rebuild the
-// age table or the index on every call (see the tick-path rebuild fix in
-// PR #108), and the roster is immutable after init anyway.
+// called from the tick and advance paths and from the UI; neither should
+// rebuild the age table or the index on every call (see the tick-path rebuild
+// fix in PR #108), and the roster is immutable after init anyway.
 var harbingerTables = sync.OnceValue(buildHarbingers)
 
 type harbingerIndex struct {
@@ -275,6 +311,7 @@ func buildHarbingers() harbingerIndex {
 			panic("config: harbinger roster names unknown age " + h.Age)
 		}
 		h.ForecastPrecision = precisionFor(i)
+		h.ForecastTiming = timingFor(i)
 		h.FalseProphetChance = falseProphetChance(i)
 		idx.list = append(idx.list, h)
 		idx.byAge[h.Age] = h

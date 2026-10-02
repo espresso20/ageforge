@@ -16,9 +16,9 @@ You can prestige from the **Modern Age (Age 12)** or any later age. There is no 
 
 At 1x speed a run is paced to reach the Modern Age in about **3 days of game time** (the smoke-test bot gets there in about 2.4 days). The ages before it range from 15 minutes (Primitive) to 12 hours (Atomic); the Modern Age and the ages after it take 12 to 24 hours each. The game grants up to 24 hours of offline progress, so time away counts.
 
-Prestige is refused while a [catastrophe](catastrophe.md) is pending. Type `catastrophe` and choose Endure or Succumb first.
+Prestige is refused while a [catastrophe](catastrophe.md) is pending. Type `catastrophe` and choose Endure or Succumb first. From the Digital or Neon Era, a doom fated for your era that hasn't struck yet ends with the run when you prestige.
 
-In the Cosmic Era, confirming prestige can bring the [Last Passage](#the-last-passage). If it comes, the prestige waits until you choose Endure or Succumb.
+In the Cosmic Era, confirming prestige first settles the era's own doom if one is still open, then can bring the [Last Passage](#the-last-passage). If it comes, the prestige waits until you choose Endure or Succumb.
 
 To check your current prestige status:
 
@@ -72,13 +72,13 @@ Reaching the Modern Age for the first time usually pays **4 to 8 points**, depen
 
 ## The Last Passage
 
-Every epoch's [harbinger](harbinger.md) warns of its passage into the next epoch. The Cosmic Era has no next epoch, so its passage is prestige itself: the **Last Passage**. From the Interstellar Age on, a harbinger thread warns of it like any other, with a new figure each age: the Distress Beacon, the Elder Relay, your future self, then your unmade self.
+A [harbinger](harbinger.md) comes to warn of a doom fated inside your era, and the Cosmic Era can hold one too: the Reality Tear. But the Cosmic Era has no next epoch, so its passage is prestige itself: the **Last Passage**. A second harbinger thread warns of it from the moment you enter the era, with a new figure each age: the Distress Beacon, the Elder Relay, your future self, then your unmade self. While the Reality Tear's harbinger speaks, the Last Passage's thread waits behind it with its answers intact, and takes up the warning again once the doom has struck or passed you by.
 
 Prestige from before the Cosmic Era never rolls for it.
 
 ### The roll
 
-When you type `prestige confirm yes` in the Cosmic Era, the Last Passage rolls once, with the same odds as an epoch catastrophe (see [Faith and the Odds](catastrophe.md#faith-and-the-odds)):
+When you type `prestige confirm yes` in the Cosmic Era, an open Reality Tear settles first (see [The Reality Tear comes first](#the-reality-tear-comes-first)). Then the Last Passage rolls once, with odds set by your faith fill (see [Faith and the Odds](catastrophe.md#faith-and-the-odds)):
 
 | Faith fill | Chance of the Last Passage |
 |------------|----------------------------|
@@ -86,12 +86,20 @@ When you type `prestige confirm yes` in the Cosmic Era, the Last Passage rolls o
 | 25 to 75% | 15% |
 | over 75% | 12% |
 
-Each level of Appease multiplies the chance by 0.6 (two levels at most). Invite makes it certain.
+Each level of Appease on the Last Passage's thread multiplies the chance by 0.6 (two levels at most). Invite makes it certain.
 
 `prestige` shows the current chance and which figure is warning of it, for example `☄ The Last Passage: 18% chance (high) when you prestige.` `prestige confirm` spells out what Endure and Succumb would give you before you commit.
 
 - **Nothing comes.** The verdict is Spared, and prestige completes as normal.
 - **It comes.** Prestige does **not** complete yet. A choice opens, titled **✦ The Last Passage**, in the same style as the catastrophe choice.
+
+### The Reality Tear comes first
+
+Prestige is the Cosmic Era's passage, so its fated doom can't be outrun past it. If that doom is still open when you confirm prestige:
+
+- **No harbinger yet.** It comes at the prestige, and the prestige waits for one more try: "... Type 'harbinger' to answer, or confirm prestige again to meet it."
+- **Then the strike rolls,** before the Last Passage. A hit holds the prestige behind the pending Reality Tear: Endure it, then prestige again, which rolls the Last Passage (or Succumb, which resets the run with no prestige). A miss (spared) lets the same confirm go on to the Last Passage roll.
+- **Both pending at once.** If the two are ever pending together, the Reality Tear is answered first: the choice window shows it first, and the Last Passage's Endure and Succumb are refused until it is ("The Reality Tear came first. Answer it before the Last Passage.").
 
 ### While it is pending
 
@@ -117,7 +125,7 @@ The result is rounded down, so a small run can keep 0 points. Here Brace changes
 
 ### Choosing it on purpose
 
-Inviting the Cosmic Era's harbinger is how you take the Cosmic Legacy on purpose. Invite is free, can't be undone and closes Appease; your next prestige brings the Last Passage. Brace levels still raise the Endure share, in case you change your mind. See [Invite](harbinger.md#invite-choose-the-catastrophe).
+Inviting the Last Passage's thread is how you take the Cosmic Legacy on purpose. Invite is free, can't be undone and closes Appease; your next prestige brings the Last Passage. Brace levels still raise the Endure share, in case you change your mind. See [Invite](harbinger.md#invite-choose-the-catastrophe).
 
 ---
 
@@ -232,7 +240,7 @@ Each Succumb grants:
 
 These bonuses apply from **tick 1** of every new run, including after prestige. A player who has Succumbed in the Iron Era and Steel Era starts every run with iron, steel and coal production already multiplied, and +50% research speed.
 
-Succumbs in different epochs stack; a second Succumb in an epoch you already hold adds nothing. Catastrophes start in the Iron Era, so six legacy bonuses are reachable (the Stone Era one only exists on saves that earned it before that rule).
+Succumbs in different epochs stack; a second Succumb in an epoch you already hold adds nothing. Catastrophes strike from the Iron Era on, so six legacy bonuses are reachable (the Stone Era one only exists on saves that already hold it). The Cosmic Era's comes from Succumbing to the Reality Tear; Succumbing to the Last Passage grants the Cosmic Legacy instead.
 
 Legacy bonuses survive prestige the same way ruins do.
 
