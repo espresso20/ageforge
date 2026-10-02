@@ -84,6 +84,12 @@ func (v *view) onBlink(cv *mapstyle.Canvas, p mapmodel.Pt, r rune, c mapmodel.Cl
 	v.reg(id, r, st)
 }
 
+// walkFrames is how many animation frames a worker spends on each cell: at
+// about 8 frames a second that's a stroll of under two cells a second. It
+// runs on the wall clock, not game ticks, so prestige speed-ups never turn
+// the walkers into a blur.
+const walkFrames = 5
+
 // drawLife puts the moving things on top: smoke, workers, idle hands,
 // caravans, war marks, scouts, raiders, the harbinger and the catastrophe.
 func (v *view) drawLife(cv *mapstyle.Canvas) {
@@ -107,7 +113,7 @@ func (v *view) drawLife(cv *mapstyle.Canvas) {
 		}
 		for i, path := range s.walks { // there and back again
 			n := len(path)
-			t := (f/2 + int(mapmodel.Hash(int64(i), 3)%uint64(2*n-2))) % (2*n - 2)
+			t := (f/walkFrames + int(mapmodel.Hash(int64(i), 3)%uint64(2*n-2))) % (2*n - 2)
 			v.on(cv, path[min(t, 2*n-2-t)], sym(mapmodel.SymWorker), mapmodel.CLife, false, lgWorker)
 		}
 		for j, p := range s.idle {
