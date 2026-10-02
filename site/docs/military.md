@@ -40,7 +40,7 @@ assign war_camp 5       # staff a military building; it starts producing soldier
 assign barracks all     # fill a building for its full soldier output
 ```
 
-`recruit 5` recruits 5 workers into free housing, and `recruit max` fills all of it at once. Workers sit idle until you assign them. A worker assigned to a military building produces soldiers each tick.
+`recruit 5` recruits 5 workers into free housing, and `recruit max` fills all of it at once. Workers you leave idle go to work by your [worker shares](workers-and-domains.md#worker-shares) a minute later, and with auto-recruit on (the default) the game recruits into empty slots on its own, military buildings included. A worker assigned to a military building produces soldiers each tick. To keep workers out of military buildings, set `workers share military 0`.
 
 ### Food drain
 

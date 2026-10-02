@@ -733,33 +733,39 @@ func (ge *GameEngine) runPlan(starts *planStarts) bool {
 // staffPlanCopy fills key's empty worker slots. The plan calls it when a copy
 // it started completes: a player who plans a producer while away wants it
 // staffed, and otherwise it would run at the unstaffed 20% until they came
-// back. Idle workers go first. Then come workers in buildings an advance
-// superseded (legacy: a higher tier of their lineage is open), the same
-// lineage's first: after a `plan advance` the old age's copies have
-// usually taken every idle hand, and the new age's producers would otherwise
-// wait for the next visit. It never takes food workers (the move must not
-// starve anyone) or this age's (they are where the player put them), and it
-// never recruits (more mouths to feed is the player's call). Rates are
-// recalculated by the caller.
+// back. Idle workers go first: into the copy, or, with worker shares set,
+// wherever the shares say (shares.go; the copy's domain may already have its
+// share). Then come workers in buildings an advance superseded (legacy: a
+// higher tier of their lineage is open), the same lineage's first: after a
+// `plan advance` the old age's copies have usually taken every idle hand,
+// and the new age's producers would otherwise wait for the next visit. With
+// shares set, only the copy's own domain gives workers, so the split holds.
+// It never takes food workers (the move must not starve anyone) or this
+// age's (they are where the player put them). Recruiting is the shares
+// routine's job: it follows within a few ticks, as housing and food allow.
+// Rates are recalculated by the caller.
 func (ge *GameEngine) staffPlanCopy(key string) {
 	def := ge.Buildings.defs[key]
 	if def.WorkerCapacity <= 0 {
 		return
 	}
-	free := def.WorkerCapacity*ge.Buildings.GetCount(key) - ge.Workers.GetAssignedCount("worker", key)
-	if n := min(free, ge.Workers.IdleCount("worker")); n > 0 {
+	shares := len(ge.workerShares) > 0
+	if shares {
+		ge.placeIdle(ge.newStaffView())
+	} else if n := min(ge.slotsFree(key), ge.Workers.IdleCount("worker")); n > 0 {
 		ge.Workers.Assign("worker", key, n)
-		free -= n
 	}
-	if free <= 0 || ge.Buildings.IsLegacy(key) {
+	free := ge.slotsFree(key)
+	if p, set := ge.workerShares[def.WorkerDomain]; free <= 0 || ge.Buildings.IsLegacy(key) || set && p <= 0 {
 		return
 	}
 	var same, other []string
 	for _, src := range sortedKeys(ge.Buildings.legacyBuildings) {
-		if !ge.Buildings.legacyBuildings[src] || !planStaffSource(ge.Buildings.defs[src]) {
+		sdef := ge.Buildings.defs[src]
+		if !ge.Buildings.legacyBuildings[src] || !planStaffSource(sdef) || shares && sdef.WorkerDomain != def.WorkerDomain {
 			continue
 		}
-		if ge.Buildings.defs[src].LineageKey == def.LineageKey {
+		if sdef.LineageKey == def.LineageKey {
 			same = append(same, src)
 		} else {
 			other = append(other, src)

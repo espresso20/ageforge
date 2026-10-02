@@ -175,6 +175,15 @@ func (vm *WorkerManager) FoodDrain() float64 {
 	return cls.FoodCost * float64(rt.count)
 }
 
+// FoodCostPerWorker is the food each worker eats a tick in the current age:
+// every worker pays the food class's cost (0.1 when no class matches).
+func (vm *WorkerManager) FoodCostPerWorker() float64 {
+	if cls, ok := vm.foodClassFor(); ok {
+		return cls.FoodCost
+	}
+	return 0.1
+}
+
 // GetAssignedCount returns how many workers are assigned to buildingKey.
 // The domain argument is ignored — there is only one pool.
 func (vm *WorkerManager) GetAssignedCount(_, buildingKey string) int {

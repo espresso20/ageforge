@@ -162,8 +162,17 @@ type GameSave struct {
 	// and overflow on. Both omitempty, so those saves keep their bytes.
 	Plan              []PlanItem `json:"plan,omitempty"`
 	WonderOverflowOff bool       `json:"wonder_overflow_off,omitempty"`
-	Signature         string     `json:"_sig,omitempty"`
-	Proof             string     `json:"_proof,omitempty"`
+	// WorkerShares, AutoRecruitOff and StaffHoldUntil are the worker shares
+	// (shares.go): the split the player set (domain → percent; none means
+	// every domain is on auto), auto-recruit turned off (it is on by
+	// default), and the tick the routine's wait after a worker command ends.
+	// All omitempty, so saves from before them keep their bytes and load
+	// with every domain on auto and auto-recruit on.
+	WorkerShares   map[string]float64 `json:"worker_shares,omitempty"`
+	AutoRecruitOff bool               `json:"auto_recruit_off,omitempty"`
+	StaffHoldUntil int                `json:"staff_hold_until,omitempty"`
+	Signature      string             `json:"_sig,omitempty"`
+	Proof          string             `json:"_proof,omitempty"`
 }
 
 // hmacSign returns the HMAC-SHA256 of payload under key, hex-encoded. This is the
@@ -631,6 +640,9 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		AccountID:              ge.saveAccountIDLocked(),
 		Plan:                   clonePlan(ge.plan),
 		WonderOverflowOff:      ge.wonderOverflowOff,
+		WorkerShares:           cloneShares(ge.workerShares),
+		AutoRecruitOff:         ge.autoRecruitOff,
+		StaffHoldUntil:         ge.staffHoldUntil,
 	}
 }
 
@@ -929,6 +941,11 @@ func (ge *GameEngine) LoadGame(filename string) error {
 	// a log line, on the next tick.
 	ge.plan = loadPlan(save.Plan)
 	ge.wonderOverflowOff = save.WonderOverflowOff
+	// The worker shares: a hand-edited map keeps its known domains, each
+	// percent from 0 to 100, and the wait can't outlast one worker command.
+	ge.workerShares = cleanShares(save.WorkerShares)
+	ge.autoRecruitOff = save.AutoRecruitOff
+	ge.staffHoldUntil = min(max(save.StaffHoldUntil, 0), ge.tick+staffHoldTicks)
 
 	ge.recalculateRates()
 	ge.recalculateTickSpeed()

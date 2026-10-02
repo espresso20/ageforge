@@ -14,7 +14,7 @@ You're in the **Primitive Age**. The screen shows:
 
 The mini map draws your town from your real buildings, so it grows as you build. On smaller terminals it hides to leave the Buildings list room. Type `map` any time to open the full [Map](map.md) (Esc closes it), and `icons` if you want real icons on it.
 
-You have no workers, no housing and very few resources. Start by gathering.
+You have no workers, no housing and very few resources. Workers come on their own once you have housing and buildings for them to work in. Start by gathering.
 
 ```
 gather wood 25
@@ -36,13 +36,13 @@ build gathering_camp
 build wood_camp
 ```
 
-A gathering camp makes **+1.0 food/tick** and a wood camp about **+0.57 wood/tick** when fully staffed (3 workers each). An unstaffed building still runs at 20%, so a staffed camp makes **5x** what an empty one does. You'll staff them in Step 5.
+A gathering camp makes **+1.0 food/tick** and a wood camp about **+0.57 wood/tick** when fully staffed (3 workers each). An unstaffed building still runs at 20%, so a staffed camp makes **5x** what an empty one does. Workers come to staff them as soon as you have housing (Step 4).
 
 ---
 
 ## Step 2: Build housing
 
-Each hut adds 10 housing, and the Stone Age wants 10 huts. More housing means more workers.
+Each hut adds 10 housing, and the Stone Age wants 10 huts. More housing means more workers, and they come on their own.
 
 ```
 build hut
@@ -66,39 +66,40 @@ Build two stashes alongside huts: you need room for the 1K food and 1K wood the 
 
 ---
 
-## Step 4: Recruit workers
+## Step 4: Watch your workers arrive
 
-Once your huts are up, recruit some workers:
+Once a hut stands and your camps are built, workers arrive on their own. The game recruits into empty worker slots while housing and food allow, and puts each new worker to work: within seconds your camps are staffed. The first time, the log says so.
 
 ```
-recruit 5
+workers
 ```
 
-You don't pick a domain when recruiting. Workers become whatever you **assign** them to. Recruiting is free, but every worker eats food each tick from then on, so check that your food rate stays positive.
+`workers` opens the Workers panel: your population, idle count and food use, and the **Shares** section, which says what auto-recruit is doing (recruiting, no housing left, every worker slot filled, waiting for food) and how your workers are spread across the domains. Every worker eats food each tick, so the game recruits only while your food rate stays positive with a margin to spare. More huts make room for more workers, and more buildings give them more slots to fill.
+
+You don't pick a domain for a worker. It takes the class of the building it works in: a worker on a `gathering_camp` is a Forager, one on a `story_circle` a Shaman. Type `status` for population, idle count and food drain.
 
 ---
 
-## Step 5: Assign everyone
+## Step 5: Steer them (optional)
 
-This is the most important step. **Idle workers produce nothing and still eat food.**
+By default every domain is on auto: your workers spread across your buildings in proportion to their worker slots, so they follow what you build. With every slot filled, that is a full crew everywhere: 3 workers on each gathering camp and wood camp, 2 on each story circle and shrine.
+
+To put more of your workers on one kind of work, give it a share of the workforce:
 
 ```
-assign gathering_camp 3
+workers share knowledge 40
+```
+
+Now 40% of your workers go to knowledge, as far as your story circles have slots, and the other domains split the rest by their slots. `workers share knowledge auto` undoes it, and `workers share auto` puts every domain back on auto. Don't set food to 0: food is what lets the game recruit.
+
+You can also take over by hand. `assign` and `unassign` work as always, and the game never moves a worker you placed. After any worker command it waits a minute before placing anyone, so it won't grab the workers you are moving. If you'd rather recruit yourself, `workers auto-recruit off` stops automatic recruiting; idle workers still go to work by your shares.
+
+```
 assign story_circle 1
-assign shrine 1
+workers auto-recruit off
 ```
 
-A good split for the early game:
-- 3 workers on each gathering_camp (food; 3 is a full crew)
-- 2 workers on each story_circle (knowledge)
-- 1 worker on the shrine (faith)
-- Up to 3 workers on each wood_camp (wood)
-
-Fill a building's slots before spreading workers thin: a fully staffed camp makes 5x an empty one.
-
-A worker's class name comes from what it's assigned to: a worker on `gathering_camp` is a Forager, one on `story_circle` a Shaman. Type `workers` to see the breakdown by domain, or `status` for population, idle count and food drain.
-
-The Workers box in the sidebar should show **Idle: 0**. If it doesn't, keep assigning.
+The Workers box in the sidebar should show **Idle: 0**. The game recruits only into empty slots and puts idle workers to work within seconds; after a worker command of yours, it waits a minute first.
 
 ---
 
@@ -127,7 +128,7 @@ The Economy panel is always on screen. Look at the rate column:
 - `wood: +N/t` should be positive (each staffed wood camp adds about +0.57)
 - `knowledge: +N/t` should be positive (five staffed story circles make +1.0)
 
-If food is negative, build another gathering camp and staff it. If knowledge is zero, assign workers to story_circle or build more of them.
+If food is negative, build another gathering camp; workers come to staff it. If knowledge is low, build more story circles, or give knowledge a bigger share with `workers share knowledge 40`.
 
 ---
 
@@ -174,7 +175,7 @@ The second row always shows what you need for the **next age**. For the Stone Ag
 - Story Circles: 5
 - The Sacred Grove built
 
-Keep building huts and story circles, keep assigning workers and keep knowledge flowing. When every bar is full, type `advance`. The age never advances on its own. If you're stepping away, `plan advance` queues it and the plan advances for you once everything is ready.
+Keep building huts and story circles (new huts bring new workers) and keep knowledge flowing. When every bar is full, type `advance`. The age never advances on its own. If you're stepping away, `plan advance` queues it and the plan advances for you once everything is ready.
 
 ---
 
@@ -186,7 +187,7 @@ Before you advance, you should have:
 - [ ] The Sacred Grove built
 - [ ] 2-3 stashes
 - [ ] Staffed gathering camps and wood camps
-- [ ] 10+ workers, all assigned
+- [ ] 10+ workers, none idle
 - [ ] Food rate positive by at least +3/tick
 - [ ] Tool Making researched (optional)
 
@@ -206,7 +207,7 @@ When you reach the Stone Age:
 - **War Camp**: early military building
 - **Great Monolith**: the Stone Age wonder, required to reach the Bronze Age
 
-Your first priority: build **Stone Pits** and **Woodcutter Camps**, and assign workers to them. The Stone Age is tuned to take about **45 minutes**, and the Bronze Age needs 4K food, 8K wood, 4K stone, 1.5K knowledge, 15 longhouses, 5 stone pits, 5 elders' halls, and the Great Monolith.
+Your first priority: build **Stone Pits** and **Woodcutter Camps**, and **Longhouses** so workers have room to come and staff them. The Stone Age is tuned to take about **45 minutes**, and the Bronze Age needs 4K food, 8K wood, 4K stone, 1.5K knowledge, 15 longhouses, 5 stone pits, 5 elders' halls, and the Great Monolith.
 
 ---
 
@@ -220,16 +221,17 @@ Your first priority: build **Stone Pits** and **Woodcutter Camps**, and assign w
 | Build a stash | `build stash` |
 | Build a story circle | `build story_circle` |
 | Build a shrine | `build shrine` |
-| Recruit workers | `recruit [count]` or `recruit max` |
-| Assign workers to gathering camp | `assign gathering_camp 3` |
-| Assign workers to story circle | `assign story_circle 1` |
-| Unassign a worker from a building | `unassign gathering_camp 1` |
+| See your workers, their shares and what auto-recruit is doing | `workers` |
+| Put more workers on knowledge | `workers share knowledge 40` |
+| Put every domain back on auto | `workers share auto` |
+| Place a worker by hand | `assign story_circle 1` |
+| Take a worker out of a building | `unassign gathering_camp 1` |
+| Recruit by hand instead | `workers auto-recruit off`, then `recruit [count]` or `recruit max` |
 | Start first research | `research tool_making` |
 | Bank resources for the wonder | `wonder collect all` or `wonder collect <resource> [amount]` |
 | Build the wonder | `build sacred_grove` |
 | Advance to the next age | `advance` |
 | Check population, idle and food drain | `status` |
-| Check worker breakdown | `workers` |
 | Check logs | `logs` |
 | Open the map | `map` |
 | Queue builds for while you're away | `plan build hut 10`, `plan advance` |
@@ -237,4 +239,4 @@ Your first priority: build **Stone Pits** and **Woodcutter Camps**, and assign w
 
 ---
 
-> **Tip:** The game is idle, so you don't need to babysit it. Set up your assignments, then leave a [build plan](plan.md) before you step away: `plan build hut 10`, `plan research fire_mastery`, `plan advance`. The plan starts each item as the resources come in, while you play and while you are away, and pays for it only when it starts.
+> **Tip:** The game is idle, so you don't need to babysit it. It recruits workers and puts them to work by your [worker shares](workers-and-domains.md#worker-shares), while you are away too. Leave a [build plan](plan.md) before you step away: `plan build hut 10`, `plan research fire_mastery`, `plan advance`. The plan starts each item as the resources come in, while you play and while you are away, and pays for it only when it starts.

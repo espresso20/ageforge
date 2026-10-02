@@ -9,6 +9,7 @@ For a gentler introduction see [Workers](villagers.md).
 ## Overview
 
 - One pool of workers, all identical until assigned to a building
+- Workers arrive and go to work on their own, by your **worker shares** (every domain on auto by default, following your buildings' worker slots); see [Worker Shares](#worker-shares)
 - An assigned worker shows the **class name** for that building's domain at the current age (a label only)
 - **Production formula:** `base_rate × building_count × (0.20 + 0.80 × assigned / total_capacity)`
 - 20% floor: a building with no workers still produces something
@@ -29,6 +30,7 @@ An assigned worker takes on the **class name** for that building's domain at the
 What to know:
 
 - You don't choose a domain when recruiting.
+- Workers arrive on their own and go to work by your [worker shares](#worker-shares). You can also recruit and assign by hand.
 - Workers can move freely between any buildings that have worker slots.
 - The `status` command and the Economy panel show population, idle count and current food drain.
 - Your population is limited by housing (huts, longhouses and so on).
@@ -56,13 +58,82 @@ The full class progression for every domain is in [Worker Class Names by Age](#w
 
 ---
 
+## Worker Shares
+
+You don't have to recruit or assign workers yourself. The game recruits into empty worker slots while housing and food allow (**auto-recruit**, on by default), and puts idle workers to work by your **worker shares**: how your workforce splits across the 12 domains. You can steer the split, or take over by hand. A worker you place by hand stays where you put it.
+
+```
+workers share
+workers share <domain> [percent|auto]
+workers share auto
+workers auto-recruit [on|off]
+```
+
+| Command | Effect |
+|---------|--------|
+| `workers share` | List the shares: one line per domain that has worker buildings or a share set, and whether auto-recruit is on |
+| `workers share knowledge` | Show one domain's line |
+| `workers share knowledge 40` | Set knowledge to 40% of your workforce |
+| `workers share lumber 12.5%` | A share is 0 to 100; decimals and a `%` sign are allowed |
+| `workers share military 0` | Keep military empty |
+| `workers share knowledge auto` | Put knowledge back on auto |
+| `workers share auto` | Put every domain back on auto |
+| `workers auto-recruit` | Show whether auto-recruit is on |
+| `workers auto-recruit off` | Stop recruiting automatically; `on` starts it again (`workers autorecruit` works too) |
+
+Each line of `workers share` reads like `Knowledge: 40% (set), 8 workers in 10 slots` or `Food: 34% (auto), 12 workers in 15 slots`. The Workers panel (`workers`) shows the same in its **Shares** section, under a line that says what auto-recruit is doing: on, off, waiting after your last worker command, no housing left, every worker slot is filled, waiting for food, or paused because food ran out.
+
+### How the split works
+
+- A **share** is a percent of your whole workforce, idle workers included, for one domain.
+- Domains without a share are **on auto**: they split whatever the set shares leave, in proportion to their worker slots (the slots in that domain's built buildings). The default is every domain on auto, so your workers follow your buildings' slots.
+- Set shares that add up to more than 100% are each scaled down to fit: knowledge 80% and military 40% work as about 67% and 33%. The auto domains then get nothing, except overflow: when every domain with a share is full, extra workers go to auto domains with free slots.
+- A share of **0** keeps a domain empty. Its workers move to free slots elsewhere as room opens, and no new worker goes there. Setting food to 0 replies with a warning: "Food buildings get no workers now: watch your food."
+- A domain never holds more workers than its slots. Workers its share can't place go to other domains with free slots. If you set a share for a domain with no buildings yet, the reply says the share applies once you build one.
+
+**Example.** You have 30 worker slots in each of three domains and 40 workers:
+
+| Domain | Slots | All on auto | With `workers share knowledge 50` | Workers then |
+|--------|-------|-------------|-----------------------------------|--------------|
+| food | 30 | 33% (auto) | 25% (auto) | 10 |
+| lumber | 30 | 33% (auto) | 25% (auto) | 10 |
+| knowledge | 30 | 33% (auto) | 50% (set) | 20 |
+
+Knowledge takes its 50% first. Food and lumber split the other 50% by their slots, which are equal, so they get 25% each.
+
+### The shares routine
+
+Every 5 ticks (10 seconds at 1x), and once per step of the offline catch-up (one-minute steps), the game:
+
+1. moves workers out of domains set to 0 into free slots elsewhere,
+2. puts idle workers to work, each in the domain furthest below its share,
+3. with auto-recruit on, recruits into the empty worker slots as far as housing allows, while the net food rate stays at or above a margin: one worker's food, or 5% of the food production if that is more. It never recruits more workers than there are empty slots, so it never adds idle workers.
+
+Within a domain, buildings fill in this order: buildings that are not superseded before those that are (a building is superseded once a higher tier of its line is open), the newest age first, then the higher tier of its line.
+
+**Food safety.** A recruit your food income can't feed can still come as a food worker, if a food building has a free slot and the worker grows more food than they eat. A staffed food slot adds 80% of the building's food divided by its slots: a worker in a Primitive gathering camp grows about 0.27 food a tick and eats 0.06. So a small food share never stops growth; the extra recruits go to food buildings. While food is short, idle workers go to food buildings first. Nothing is recruited while food is at 0 and workers are starving. The manual `recruit max` still does not check food.
+
+**Your workers stay put.** The routine never takes a worker out of a building, except out of a domain set to 0, so your own `assign` and `unassign` stick. Setting or clearing a share (`workers share ...`) moves workers once to match the new shares: one at a time, from the domain furthest over its share to the one furthest under it that has a free slot. Food workers stay where moving them would make the food rate fall below zero.
+
+**The minute's wait.** After a worker command (`recruit`, `assign`, `unassign`, `dismiss`, `sell`, `upgrade`) the routine waits a minute (30 ticks), so it never grabs workers you are moving by hand. After that, workers still idle go to work by your shares. So `unassign` alone may keep a building empty for only a minute; to keep a domain empty, set its share to 0.
+
+**Auto-recruit off.** With `workers auto-recruit off`, nothing is recruited automatically, but idle workers still go to work by your shares after that minute. `workers auto-recruit on` starts recruiting again at once.
+
+**Logs.** What the routine does is a routine line in the log (plain text color, and marked `·` in the **Logs** panel): `Shares: recruited 3 workers (population 12/20), put 2 idle workers to work.` The replies to setting a share or switching auto-recruit are routine lines too, except the warning for food at 0. The first time workers arrive in a run (when your population was 0), a note says: "Workers arrive on their own: the game recruits into empty worker slots while housing and food allow, and puts them to work by your worker shares. Type workers to see them; workers auto-recruit off to recruit by hand." After time away, the welcome back adds what the routine did, for example "While you were away, your worker shares recruited 12 workers (population 40/50), put 3 idle workers to work."
+
+**Build plan.** A copy the [build plan](plan.md#how-it-runs) finishes is staffed from idle workers first: into the copy itself, or, with shares set, wherever the shares say. If idle workers run out, the plan moves workers out of superseded buildings, the same line's first; with shares set, only from the copy's own domain, so the split holds. It never moves food workers or workers in this age's buildings. The routine then recruits for what is still empty.
+
+**Saving.** Shares, the auto-recruit switch and the minute's wait are saved with your game. Prestige and Succumb put every share back on auto. Auto-recruit is a preference and stays as you set it across prestige and Succumb, like wonder overflow. A new game resets both: every domain on auto, auto-recruit on. Older saves load with every domain on auto and auto-recruit on.
+
+---
+
 ## Recruiting Workers
 
 ```
 recruit [count|max]
 ```
 
-Workers are recruited from free housing. You don't name a domain; workers are generic until assigned.
+Workers arrive on their own: with auto-recruit on (the default), the game recruits into empty worker slots while housing and food allow (see [Worker Shares](#worker-shares)). `recruit` still works when you want workers now, or when you turn auto-recruit off. Workers are recruited from free housing. You don't name a domain; workers are generic until assigned.
 
 | Command | Effect |
 |---------|--------|
@@ -70,11 +141,13 @@ Workers are recruited from free housing. You don't name a domain; workers are ge
 | `recruit 5` | Recruit 5 workers |
 | `recruit max` | Recruit as many as your housing allows |
 
+New workers start idle. Put them to work with `assign`, or leave them: a minute after your last worker command, the shares routine puts any still idle to work by your shares.
+
 **Food cost:** recruiting is free, but every worker eats food each tick from the moment it joins. The amount is the current age's rate for all workers, whatever building they staff: **0.06 food/tick** per worker in the Primitive Age. See [Food Drain](#food-drain).
 
-**`recruit max`** fills all your free housing. It does not check your food income, so it can recruit more workers than your food supports and put you into a deficit.
+**`recruit max`** fills all your free housing. It does not check your food income, so it can recruit more workers than your food supports and put you into a deficit. Auto-recruit does check it: it keeps a food margin and fills only empty worker slots.
 
-**Viewing workers:** type `workers` to open the Workers panel (morale, summary, slot utilization, domain breakdown), or `status` for a text summary. The Workers panel shows net food/tick in green or red (blue or orange on the accessible [themes](commands.md#themes)), how many workers your food can sustain or a deficit warning, and per-building fill bars. The Workers box in the sidebar is always visible and shows population, idle, housing left, drain and net food at a glance.
+**Viewing workers:** type `workers` to open the Workers panel (morale, summary, worker shares, building slots, workers by domain), or `status` for a text summary. The Workers panel shows net food/tick in green or red (blue or orange on the accessible [themes](commands.md#themes)), how many workers your food can sustain or a deficit warning, and per-building fill bars. The Workers box in the sidebar is always visible and shows population, idle, housing left, drain and net food at a glance.
 
 ---
 
@@ -85,6 +158,8 @@ assign <building> [count|all]
 ```
 
 Assigns workers from the idle pool to the building. The domain comes from the building; you never specify one.
+
+You don't have to assign: the shares routine puts idle workers to work every 5 ticks (10 seconds at 1x; see [Worker Shares](#worker-shares)). Assign by hand when you want workers in a particular building. Your assignments stick: the routine never takes a worker out of a building, except out of a domain whose share is 0. After `assign` it waits a minute before it places anyone, so it never grabs workers you are moving by hand.
 
 | Command | Effect |
 |---------|--------|
@@ -150,12 +225,12 @@ Removes workers from a building and returns them to the idle pool.
 | `unassign barracks all` | Remove all workers from barracks |
 | `unassign library 5` | Remove 5 workers from library |
 
-Unassigned workers go back to the idle pool at once and can be reassigned elsewhere. They keep eating while idle.
+Unassigned workers go back to the idle pool at once and can be reassigned elsewhere. They keep eating while idle. If you leave them idle, the shares routine puts them back to work by your shares a minute after your last worker command, possibly in the same domain.
 
 When to unassign:
 
-- To move workers from low-priority buildings to new, higher-tier ones after an age advance.
-- To pull military workers off military buildings once you've banked enough soldiers. Campaigns spend the `soldiers` resource, not workers, so idle military workers only cost food and morale.
+- To move workers from low-priority buildings to new, higher-tier ones after an age advance. Within a domain the routine fills the newer buildings first, so workers it places back in that domain go to the new ones.
+- To pull workers out of a domain for good, set its share to 0 instead (`workers share military 0`): `unassign` alone lasts only until the routine places them again. Campaigns spend the `soldiers` resource, not workers, so once you've banked enough soldiers, military workers only cost food and morale.
 
 ---
 
@@ -178,6 +253,8 @@ When to dismiss:
 - **Housing pressure.** Free housing for workers you'd rather have elsewhere.
 - **Late-game cleanup.** Remove workers from early buildings that no longer earn their housing.
 
+With auto-recruit on, the game recruits into empty worker slots again once housing and food allow, the slots you just emptied included. To keep a building empty, sell it, set its domain's share to 0, or turn auto-recruit off (`workers auto-recruit off`).
+
 ---
 
 ## Starvation
@@ -189,10 +266,10 @@ When food runs out while your workers are still eating, they begin dying:
 - Deaths are logged in red
 - As soon as there is food in stock again, deaths stop and a recovery message is logged
 
-Overpopulating without the food to back it up costs you workers. To recover:
+Overpopulating without the food to back it up costs you workers. Auto-recruit keeps a food margin and recruits nothing while workers are starving, but `recruit max`, a food share set too low, or the higher food rate after an age advance can still put you into a deficit. To recover:
 
 1. `dismiss` workers from low-priority buildings to cut drain at once
-2. Build more food buildings and assign workers to them
+2. Build more food buildings. While food is short, the shares routine sends idle workers to food buildings first.
 3. `unassign` workers from other buildings and `assign` them to food buildings
 
 ---
@@ -426,7 +503,7 @@ In the Primitive Age a worker eats **0.06 food/tick**. The rate rises 12% with e
 
 Practical advice:
 
-- Make sure food income exceeds food drain before recruiting more workers.
+- Make sure food income exceeds food drain before recruiting more workers. Auto-recruit does this for you (it keeps a margin of one worker's food, or 5% of food production if that is more); `recruit` by hand does not.
 - The `status` command and the Workers panel both show food drain per tick and net food/tick.
 - `unassign` returns workers to the idle pool, where they still eat. Use `dismiss` to remove workers from your population and reduce drain at once.
 
@@ -448,7 +525,7 @@ Key buildings that take workers, grouped by domain:
 | Barracks | `barracks` | military | 4 | Bronze Age |
 | Hunting Lodge | `hunting_lodge` | military | 5 | Iron Age |
 
-Worker slots are **per building**. If you have built 3 libraries, you have 3 × 4 = 12 slots. Use `assign library all` to fill them.
+Worker slots are **per building**. If you have built 3 libraries, you have 3 × 4 = 12 slots. The shares routine fills them as workers come, or use `assign library all` to fill them from your idle workers at once.
 
 For a full per-lineage building list see [Buildings](buildings.md).
 
@@ -458,30 +535,29 @@ For a full per-lineage building list see [Buildings](buildings.md).
 
 ### Early game (Primitive / Stone Age)
 
-Recruit 5-10 workers right away and assign them to `gathering_camp`. Each camp holds 3 workers, so build 2-3 camps before recruiting past 9. Foragers eat 0.06 food/tick each, and a fully staffed camp produces 1.0 food/tick, so it covers its own three workers' drain (0.18) several times over.
+Build 2-3 gathering camps and a few huts. Workers arrive on their own and staff the camps. Each camp holds 3 workers and auto-recruit fills only empty slots, so build camps as you build housing. Foragers eat 0.06 food/tick each, and a fully staffed camp produces 1.0 food/tick, so it covers its own three workers' drain (0.18) several times over.
 
 ```
 build gathering_camp
-recruit 3
-assign gathering_camp 3
+build hut
 build gathering_camp
-recruit 3
-assign gathering_camp 3
+build hut
+workers
 ```
 
-Once food is stable, assign some workers to `story_circle` (knowledge) to start on research.
+Once food is stable, build story circles (knowledge) to start on research; workers come to staff them too. For faster research, give knowledge a bigger share: `workers share knowledge 40`.
 
 ### Mid game (Bronze / Iron Age)
 
-- Staff lumber and masonry buildings as soon as they are built. Stone and wood go into most building costs.
-- Build a `war_camp` and staff it with workers. It produces the `soldiers` resource (from the Iron Age) that you spend on campaigns.
+- Lumber and masonry buildings are staffed as they finish, as far as housing and food allow. Stone and wood go into most building costs, so keep your housing ahead of your worker slots.
+- A `war_camp` produces the `soldiers` resource (from the Iron Age) that you spend on campaigns. On auto its slots draw workers like any other building's; if you don't need soldiers yet, `workers share military 0` keeps those workers for your producers.
 - Knowledge workers in libraries matter more and more. The `scholars_haven` milestone needs 50 knowledge workers and 3 libraries.
 
 ### Late game
 
-- As food buildings get more productive, move food workers to other domains.
+- As food buildings get more productive, you need fewer food workers. Give food a small share (not 0) to move the rest to other domains. The routine still sends extra recruits to food buildings when the food income can't feed them.
 - Every worker eats the age's rate, and that rate keeps rising, so a large late-game population needs a large food income. Scale food before you scale headcount.
-- Use `unassign <building> all` and then `assign <new building> all` to move your workforce quickly after an age advance.
+- After an age advance, the new buildings fill from idle workers and new recruits. When housing is full, `unassign <old building> all` frees workers, and a minute later the routine puts them to work by your shares, newer buildings first. Or `assign <new building> all` places them yourself.
 
 ### Milestone: scholars_haven
 
@@ -491,9 +567,11 @@ Needs **50 knowledge workers** assigned to knowledge buildings and **3 Libraries
 assign library 50
 ```
 
+Or give knowledge a large share (`workers share knowledge 60`) and let the routine fill your knowledge buildings as workers come.
+
 ### Specialize vs. spread
 
-Focusing on one domain can finish milestone chains faster. Spreading across domains protects you from resource shortages but delays milestones. Early on, food and knowledge are enough; add military when campaigns open up and trade when gold becomes the bottleneck.
+Focusing on one domain can finish milestone chains faster. Spreading across domains protects you from resource shortages but delays milestones. Worker shares are the lever: auto spreads your workers by worker slots, and a share focuses them (`workers share knowledge 50`). Early on, food and knowledge are enough; add military when campaigns open up and trade when gold becomes the bottleneck.
 
 ---
 
@@ -511,6 +589,11 @@ The prompt suggests completions for all worker commands, shown dim after the cur
 | `dismiss ` | only buildings that currently have workers assigned |
 | `dismiss barracks ` | `all` |
 | `recruit ` | `max` |
+| `workers ` | `share`, `auto-recruit` |
+| `workers share ` | the worker domains, the ones you have worker buildings in (or a share set for) first, then the rest, and `auto` |
+| `workers share kn` | `knowledge` |
+| `workers share knowledge ` | `auto` |
+| `workers auto-recruit ` | `off`, `on` |
 
 For `assign` the prompt only suggests buildings you have **built**, and for `unassign` and `dismiss` only buildings that have workers to remove.
 
@@ -525,6 +608,8 @@ recruit food            # INVALID: no domain argument
 recruit military 5      # INVALID: no domain argument
 assign food gathering_camp  # INVALID: the domain comes from the building
 unassign all food       # INVALID: name a building
+workers share gathering_camp 40  # INVALID: a share is for a domain, not a building
+workers share food 150  # INVALID: a share is a percent from 0 to 100
 ```
 
 ---

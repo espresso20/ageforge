@@ -174,16 +174,20 @@ func TestPlan_StaffsWhatItBuilds(t *testing.T) {
 }
 
 // A `plan advance` that fires while the player is away is followed by the
-// next age's producers, but the old age's copies took every idle worker. The
-// plan staffs the new ones with workers from the buildings the advance
-// superseded, leaves the food producers alone and recruits nobody.
-func TestOffline_PlanStaffsTheNewAgeAfterAnAdvance(t *testing.T) {
+// next age's producers, but the old age's copies took every idle worker.
+// planAdvanceAway sets that up: 60 workers in the Primitive Age's camps, a
+// plan to advance and build three stone camps, then an hour away.
+func planAdvanceAway(t *testing.T, autoRecruit bool) *GameEngine {
+	t.Helper()
 	ge := newSeededEngine(1)
 	ge.Buildings.counts["stash"] = 50
 	ge.Buildings.counts["hut"] = 10
 	ge.Buildings.counts["wood_camp"] = 10
 	ge.Buildings.counts["gathering_camp"] = 10
 	ge.recalculateRates()
+	if !autoRecruit {
+		ge.SetAutoRecruit(false)
+	}
 	if err := ge.RecruitWorker("worker", 60); err != nil {
 		t.Fatal(err)
 	}
@@ -215,10 +219,18 @@ func TestOffline_PlanStaffsTheNewAgeAfterAnAdvance(t *testing.T) {
 	if ge.age != "stone_age" {
 		t.Fatalf("age = %s, want the plan to have advanced to stone_age", ge.age)
 	}
-	camps := ge.Buildings.GetCount("stone_camp")
-	if camps != 3 {
+	if camps := ge.Buildings.GetCount("stone_camp"); camps != 3 {
 		t.Fatalf("stone camps built = %d, want 3", camps)
 	}
+	return ge
+}
+
+// With auto-recruit off, the plan staffs the new age's copies with workers
+// from the buildings the advance superseded, leaves the food producers alone
+// and recruits nobody.
+func TestOffline_PlanStaffsTheNewAgeAfterAnAdvance(t *testing.T) {
+	ge := planAdvanceAway(t, false)
+	camps := ge.Buildings.GetCount("stone_camp")
 	if got, want := ge.Workers.GetAssignedCount("worker", "stone_camp"), 3*camps; got != want {
 		t.Errorf("stone camps staffed with %d workers, want %d", got, want)
 	}
@@ -229,7 +241,26 @@ func TestOffline_PlanStaffsTheNewAgeAfterAnAdvance(t *testing.T) {
 		t.Errorf("wood camps have %d workers, want %d (the stone camps' workers came from them)", got, 30-3*camps)
 	}
 	if pop := ge.Workers.TotalPop(); pop != 60 {
-		t.Errorf("population = %d, want 60 (the plan never recruits)", pop)
+		t.Errorf("population = %d, want 60 (auto-recruit is off)", pop)
+	}
+}
+
+// With auto-recruit on (the default), the new age's copies are staffed and
+// the shares routine recruits into the slots the move left behind, as far as
+// the housing goes, so nothing waits for the next visit.
+func TestOffline_SharesStaffTheNewAgeAfterAnAdvance(t *testing.T) {
+	ge := planAdvanceAway(t, true)
+	for _, k := range []string{"stone_camp", "wood_camp", "gathering_camp"} {
+		if got, want := ge.Workers.GetAssignedCount("worker", k), ge.Buildings.defs[k].WorkerCapacity*ge.Buildings.GetCount(k); got != want {
+			t.Errorf("%s has %d of its %d workers after the hour away", k, got, want)
+		}
+	}
+	pop, popCap := ge.Workers.TotalPop(), ge.popCapLocked()
+	if pop <= 60 || pop > popCap {
+		t.Errorf("population = %d, want recruits past the 60, within the housing's %d", pop, popCap)
+	}
+	if r := ge.Resources.GetRate("food"); r <= 0 {
+		t.Errorf("food rate %v after the offline recruits", r)
 	}
 }
 
