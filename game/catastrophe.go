@@ -537,6 +537,7 @@ func (ge *GameEngine) Succumb() error {
 	// Fresh run after the fall: eligible to roll a new Ancient Memory.
 	ge.ancientMemoryUsed = false
 	ge.pendingMemoryTech = ""
+	ge.startRunShares()
 
 	// Restore persistent cross-run state
 	ge.Prestige = savedPrestige

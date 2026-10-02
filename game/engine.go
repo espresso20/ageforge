@@ -325,6 +325,15 @@ type GameEngine struct {
 	// the current age's wonder (overflow.go). The player's preference: saved,
 	// kept across prestige and Succumb, cleared by Reset.
 	wonderOverflowOff bool
+	// Worker shares (shares.go). workerShares is the split the player set,
+	// domain → percent (nil: every domain on auto); saved, put back on auto
+	// by prestige, Succumb and Reset. autoRecruitOff turns off the routine's
+	// recruiting; a preference like wonderOverflowOff. staffHoldUntil is the
+	// tick the routine's wait after a worker command ends; saved, so a loaded
+	// game waits as the saved one would have.
+	workerShares   map[string]float64
+	autoRecruitOff bool
+	staffHoldUntil int
 }
 
 // BuildQueueItem represents a building under construction
@@ -1229,6 +1238,12 @@ func (ge *GameEngine) doTick() {
 
 	// The build plan starts whatever this tick's income pays for (plan.go).
 	ge.runPlanTick()
+
+	// Worker shares (shares.go): idle workers go to work and recruits fill
+	// the empty slots, every few ticks.
+	if ge.tick%staffEveryTicks == 0 {
+		ge.keepSharesLive()
+	}
 
 	// Log net food rate and capped resources every 10 ticks
 	if ge.tick%10 == 0 {
@@ -3129,6 +3144,7 @@ func (ge *GameEngine) RecruitMax(vType string) (int, error) {
 		return 0, fmt.Errorf("Could not recruit any workers.")
 	}
 	ge.Stats.RecordRecruit(available)
+	ge.holdStaffing()
 	ge.addLog(LogRoutine, fmt.Sprintf("Recruited %s (population %d/%d).",
 		textfmt.Count(available, "worker", "workers"), ge.Workers.TotalPop(), popCap))
 	return available, nil
@@ -3158,6 +3174,7 @@ func (ge *GameEngine) RecruitWorker(vType string, count int) error {
 			textfmt.Count(count, "more worker", "more workers"), totalPop, popCap)
 	}
 	ge.Stats.RecordRecruit(count)
+	ge.holdStaffing()
 	ge.addLog("debug", fmt.Sprintf("Recruit: %d (pop: %d/%d)", count, ge.Workers.TotalPop(), popCap))
 	ge.addLog(LogRoutine, fmt.Sprintf("Recruited %s (population %d/%d).",
 		textfmt.Count(count, "worker", "workers"), ge.Workers.TotalPop(), popCap))
@@ -3193,6 +3210,7 @@ func (ge *GameEngine) AssignWorker(buildingKey string, count int) error {
 		return fmt.Errorf("Only %s idle (you asked for %d). Recruit more or unassign some elsewhere.",
 			textfmt.Count(idle, "worker is", "workers are"), count)
 	}
+	ge.holdStaffing()
 	ge.recalculateRates()
 	ge.addLog("debug", fmt.Sprintf("Assign: %d → %s", count, buildingKey))
 	ge.addLog(LogRoutine, fmt.Sprintf("Assigned %s to %s.", textfmt.Count(count, "worker", "workers"), def.Name))
@@ -3226,6 +3244,7 @@ func (ge *GameEngine) AssignAll(buildingKey string) (int, error) {
 	if !ge.Workers.Assign("worker", buildingKey, toAssign) {
 		return 0, fmt.Errorf("Could not assign workers to %s.", def.Name)
 	}
+	ge.holdStaffing()
 	ge.recalculateRates()
 	ge.addLog(LogRoutine, fmt.Sprintf("Assigned %s to %s.", textfmt.Count(toAssign, "worker", "workers"), def.Name))
 	return toAssign, nil
@@ -3247,6 +3266,7 @@ func (ge *GameEngine) UnassignAll(buildingKey string) (int, error) {
 	if !ge.Workers.Unassign("worker", buildingKey, assigned) {
 		return 0, fmt.Errorf("Could not unassign workers from %s.", def.Name)
 	}
+	ge.holdStaffing()
 	ge.recalculateRates()
 	ge.addLog(LogRoutine, fmt.Sprintf("Unassigned %s from %s.", textfmt.Count(assigned, "worker", "workers"), def.Name))
 	return assigned, nil
@@ -3271,6 +3291,7 @@ func (ge *GameEngine) UnassignWorker(buildingKey string, count int) error {
 		}
 		return fmt.Errorf("Only %s assigned to %s.", textfmt.Count(assigned, "worker is", "workers are"), def.Name)
 	}
+	ge.holdStaffing()
 	ge.recalculateRates()
 	ge.addLog("debug", fmt.Sprintf("Unassign: %d ← %s", count, buildingKey))
 	ge.addLog(LogRoutine, fmt.Sprintf("Unassigned %s from %s.", textfmt.Count(count, "worker", "workers"), def.Name))
@@ -3296,6 +3317,7 @@ func (ge *GameEngine) DismissWorkers(buildingKey string, count int, all bool) er
 	if dismissed == 0 {
 		return fmt.Errorf("No workers are assigned to %s.", def.Name)
 	}
+	ge.holdStaffing()
 	ge.recalculateRates()
 	ge.addLog(LogRoutine, fmt.Sprintf("Dismissed %s from %s. They left your population (now %d).",
 		textfmt.Count(dismissed, "worker", "workers"), def.Name, ge.Workers.TotalPop()))
@@ -3440,6 +3462,7 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 		}
 	}
 
+	ge.holdStaffing()
 	ge.recalculateRates()
 	line := fmt.Sprintf("Sold %s. Refund: %s.", BuildingCount(n, key), Amounts(got))
 	if clipped {
@@ -3816,6 +3839,7 @@ func (ge *GameEngine) completePrestige(how prestigeEnding) {
 	ge.starvationTicks = 0
 	ge.autoExpeditionTicksLeft = 0
 	ge.autoExpeditionStarved = false
+	ge.startRunShares()
 
 	// Restore cross-run state
 	ge.Buildings.LoadRuins(savedRuins)
@@ -3947,6 +3971,8 @@ func (ge *GameEngine) Reset() {
 	ge.starvationTicks = 0
 	ge.autoExpeditionTicksLeft = 0
 	ge.autoExpeditionStarved = false
+	ge.startRunShares()
+	ge.autoRecruitOff = false
 	// A wiped game is a brand-new run: re-roll the master seed.
 	ge.SeedRNG(newSeed())
 
@@ -4054,6 +4080,11 @@ func (ge *GameEngine) GetState() GameState {
 	endured, succumbed := countCatastropheOutcomes(ge.catastropheHistory)
 	rngDraws, quipDraws := ge.rngDraws()
 
+	workers := ge.Workers.Snapshot(popCap)
+	workers.Shares = cloneShares(ge.workerShares)
+	workers.AutoRecruit = !ge.autoRecruitOff
+	workers.HoldTicks = max(0, ge.staffHoldUntil-ge.tick)
+
 	return GameState{
 		Tick:                 ge.tick,
 		Age:                  ge.age,
@@ -4068,7 +4099,7 @@ func (ge *GameEngine) GetState() GameState {
 		Resources:            ge.Resources.Snapshot(),
 		Buildings:            ge.Buildings.Snapshot(ge.Resources, ge.buildQueue, ge.Workers.GetAssignedCount),
 		BuildQueue:           queue,
-		Workers:              ge.Workers.Snapshot(popCap),
+		Workers:              workers,
 		Research:             ge.Research.Snapshot(ge.age, ageOrder),
 		Military:             militarySnap,
 		Milestones: ge.Milestones.Snapshot(MilestoneSnapshotParams{
@@ -4225,9 +4256,11 @@ const (
 // applyOfflineProgress applies simulated progress for time spent offline
 // (must be called with lock held). Time passes in OfflineStepTicks steps, so
 // the build plan starts items as the resources for them come in, the caps
-// apply along the way, and construction and research finish while the player
-// is away. With an empty plan, nothing under construction and overflow off,
-// it pays exactly the old lump sum: rate x ticks x OfflineEfficiency, capped.
+// apply along the way, construction and research finish while the player is
+// away, and the worker shares routine staffs and recruits (shares.go). With
+// an empty plan, nothing under construction, overflow off and nothing for the
+// shares routine to do, it pays exactly the old lump sum: rate x ticks x
+// OfflineEfficiency, capped.
 func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	if elapsed < 5*time.Second {
 		return // too short to matter
@@ -4257,6 +4290,7 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	banked := make(map[string]float64)
 	bankedInto := ""
 	var starts planStarts
+	var staffed staffCounts
 	for done := 0; done < offlineTicks; {
 		n := min(OfflineStepTicks, offlineTicks-done)
 		// Stop at the fate's next event, so a harbinger arrives and a doom
@@ -4284,6 +4318,14 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 			ge.recalculateRates()
 		}
 		ge.runPlan(&starts)
+		// The shares routine staffs and recruits as the time passes, so
+		// what the plan builds gets workers and the workforce grows.
+		if !ge.workersHeld() {
+			if c := ge.staffByShares(true); c.any() {
+				ge.recalculateRates()
+				staffed.add(c)
+			}
+		}
 		// A fated doom keeps its hour offline: the harbinger comes and the doom
 		// strikes at its tick, and a struck doom waits, pending, for the player.
 		ge.harbingerTickCheck()
@@ -4300,6 +4342,9 @@ func (ge *GameEngine) applyOfflineProgress(elapsed time.Duration) {
 	}
 	if !starts.empty() {
 		ge.addLog("info", "While you were away, your plan "+starts.describe(ge.Buildings.defs)+".")
+	}
+	if staffed.any() {
+		ge.addLog("info", "While you were away, your worker shares "+staffed.describe(ge.Workers.TotalPop(), ge.popCapLocked())+".")
 	}
 }
 
@@ -4471,6 +4516,7 @@ func (ge *GameEngine) UpgradeBuilding(key string, count int, all bool) error {
 	// Perform partial transform
 	moved := ge.Buildings.PartialTransform(key, newKey, count, ge.Workers.RenameAssignment)
 	ge.rehomeUpgradedWorkers(key, newKey, oldDef, newDef)
+	ge.holdStaffing()
 
 	ge.recalculateRates()
 

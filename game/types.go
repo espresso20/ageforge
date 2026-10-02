@@ -249,6 +249,15 @@ type WorkerState struct {
 	MaxPop    int
 	TotalIdle int
 	FoodDrain float64
+	// Shares is the split of the workforce the player set (shares.go):
+	// domain → percent, only the domains set; nil when every domain is on
+	// auto. ShareRows works out what each domain gets.
+	Shares map[string]float64
+	// AutoRecruit reports whether the shares routine recruits.
+	AutoRecruit bool
+	// HoldTicks is how long the routine still waits after a worker command
+	// (0: it is running).
+	HoldTicks int
 }
 
 // WorkerDomainState represents one worker domain's state
