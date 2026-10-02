@@ -188,7 +188,7 @@ These milestones sit outside the chains and don't count toward any chain title.
 | Temple City *(hidden)* | Build 25 Temples (Iron Age) | +10% faith rate |
 | Cathedral Age *(hidden)* | Build 10 Cathedrals (Medieval Age) | +10% faith rate, +5% knowledge rate |
 
-**Epoch and longevity**
+**Epoch and longevity** (the Milestones panel's Epoch group)
 
 | Milestone | Condition | Reward |
 |---|---|---|
@@ -256,6 +256,7 @@ Some milestones count buildings you can only build in their own age: Stone Pits,
 ## Tips
 
 - **Scholar and Settlement chains** carry the biggest boosts (+300% tick speed for 180 ticks). Builder, Military, Trade and Ancient Ages each grant +250% for 150 ticks.
+- The **Milestones panel** (`milestones`) groups every milestone by category: Settlement, Builder, Scholar, Military, Trade, Faith, Epoch and Ages. A chain's progress sits on its group's heading.
 - **Hidden milestones** appear in the Milestones panel once you have more than 50% progress toward them or have completed the preceding age.
 - **No spoilers:** a milestone that needs an age past your next one stays hidden (counted in the section's "+ N hidden milestones") until that age is your next one, or until you have reached it before on your account. The panel never names an age you haven't reached.
 - Chain boosts add to any other tick speed bonuses you hold, so two chains finishing close together overlap.
