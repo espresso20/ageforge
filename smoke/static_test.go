@@ -42,8 +42,9 @@ func TestGateCovenant(t *testing.T) {
 }
 
 // TestStorageCovenant: the most storage buildable in every age holds
-// config.StorageHoldHours of the age's typical production of each of its
-// construction resources (economy.md, Law 1). A store that fills in minutes
+// config.StorageHold(age) hours of the age's typical production of each of
+// its construction resources (economy.md, Law 1): 4.5 from the Bronze Age
+// on, 1.5 in the Primitive and Stone Ages. A store that fills in minutes
 // throws away most of what a player makes between visits.
 func TestStorageCovenant(t *testing.T) {
 	rows := StaticStorage()
@@ -53,7 +54,7 @@ func TestStorageCovenant(t *testing.T) {
 	for _, r := range rows {
 		if !r.OK() {
 			t.Errorf("%s: the most %s storage buildable (%s) holds %.2f h of typical income (%s/tick), under %g h; raise the age's storage per copy",
-				r.Age, r.Resource, num(r.MaxStorage), r.Hours, num(r.Income), config.StorageHoldHours)
+				r.Age, r.Resource, num(r.MaxStorage), r.Hours, num(r.Income), r.Want())
 		}
 	}
 }
@@ -118,6 +119,49 @@ func TestStorageCovenantCatchesBrokenStorage(t *testing.T) {
 	}
 	if halved < 10 {
 		t.Errorf("halving every storage building flagged only %d ages", halved)
+	}
+
+	// The 4.5-hour threshold (Pacing v2's away-proofing). Each storage
+	// building it raised, put back alone on its old storage per copy, must
+	// leave its own age short: the raises were the least that pass, at two
+	// significant figures. Under the old 1.5-hour covenant none of them was.
+	before := map[string]float64{
+		"warehouse": 11e3, "classical_vault": 110e3, "keep": 410e3,
+		"colonial_warehouse": 33e6, "industrial_depot": 170e6, "victorian_vault": 1.1e9,
+		"electric_warehouse": 3.5e9, "info_vault": 790e9, "cyber_vault": 8e12,
+	}
+	for _, k := range sortedKeys(before) {
+		reverted := withStorage(func(key string, v float64) float64 {
+			if key == k {
+				return before[k]
+			}
+			return v
+		})
+		age := defsByKey[k].RequiredAge
+		for _, r := range staticStorage(reverted, config.TypicalIncome) {
+			if r.Age == age && r.OK() {
+				t.Errorf("%s back at %s per copy: %s still holds %.2f h of typical income; the 4.5-hour covenant should flag it", k, num(before[k]), age, r.Hours)
+			}
+		}
+	}
+}
+
+// TestStorageCovenantHours: the first hour of the game keeps its pace. The
+// Primitive and Stone Ages are graded at config.EarlyStorageHoldHours (the
+// Stone Age holds about 1.54 hours and keeps its storage), every later age
+// at config.StorageHoldHours.
+func TestStorageCovenantHours(t *testing.T) {
+	if config.StorageHoldHours != 4.5 || config.EarlyStorageHoldHours != 1.5 {
+		t.Fatalf("covenant hours %g and %g; the docs and the storage table say 4.5 and 1.5", config.StorageHoldHours, config.EarlyStorageHoldHours)
+	}
+	for _, r := range StaticStorage() {
+		want := config.StorageHoldHours
+		if r.Age == "primitive_age" || r.Age == "stone_age" {
+			want = config.EarlyStorageHoldHours
+		}
+		if r.Want() != want {
+			t.Errorf("%s is graded at %g h, want %g h", r.Age, r.Want(), want)
+		}
 	}
 }
 
