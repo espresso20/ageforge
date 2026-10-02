@@ -637,7 +637,7 @@ func Technologies() []TechDef {
 			},
 		},
 		{
-			// Pacing v2: priced to finish about 30 hours into the age
+			// Pacing v2: priced to finish about 26 hours into the age
 			// (knowledge runs about 450 million an hour here), with
 			// Holography after it near the end. The Cyberpunk Age's techs
 			// used to be done in its first 11 hours.
@@ -653,7 +653,7 @@ func Technologies() []TechDef {
 		{
 			// Mid-age unlock (Pacing v2), paced with Cybernetics: afforded
 			// about 14 hours after Cybernetics starts, so it finishes about
-			// 44 hours in, during the age's long saving-up for its wonder.
+			// 37 hours in, during the age's long saving-up for its wonder.
 			Name: "Holography", Key: "holography",
 			Age: "cyberpunk_age", Cost: 6300000000, ResearchTicks: 50000,
 			Prerequisites: []string{"cybernetics", "blockchain"},
