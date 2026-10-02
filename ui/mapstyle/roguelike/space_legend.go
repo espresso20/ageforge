@@ -54,6 +54,8 @@ const (
 	slFresh
 	slFlagged
 	slSparkle
+	slPulsar
+	slDebris
 	// slPart plus an index in mapmodel.LineageOrder is that lineage's part;
 	// slMover plus a skyMoverKind is that mover's row.
 	slPart
@@ -76,7 +78,7 @@ var skyLgInfo = [slPart]struct {
 	slPylon: {"docking pylon", 2}, slCloud: {"probability cloud", 0}, slEcho: {"echo of the old town", 0},
 	slEra: {"ring of an era", 1}, slCore: {"the core", 1}, slCiv: {"civ", 3}, slRuin: {"ruins", 4},
 	slLegacy: {"older section (dim)", 4}, slUnder: {"understaffed (dim)", 4}, slFresh: {"new since last visit", 4},
-	slFlagged: {"short of hands", 4}, slSparkle: {"transporter beam", 5},
+	slFlagged: {"short of hands", 4}, slSparkle: {"transporter beam", 5}, slPulsar: {"the pulsar", 0}, slDebris: {"debris", 0},
 }
 
 var skyLgGroups = [6]string{"space", "yours", "structures", "civs", "state", "traffic"}
@@ -158,7 +160,11 @@ func (v *skyView) legendCell(s *skyScene, c skyCell, l look) {
 	case skNebula:
 		v.reg(slNebula, l)
 	case skSun:
-		v.reg(slSun, l)
+		if s.sky == mapmodel.SkyGalaxy {
+			v.reg(slPulsar, look{r: '✦', ink: mapmodel.InkStarBright, lv: 3, bold: true})
+		} else {
+			v.reg(slSun, l)
+		}
 	case skOrbit:
 		v.reg(slOrbitLine, l)
 	case skColony:
@@ -182,6 +188,9 @@ func (v *skyView) legendCell(s *skyScene, c skyCell, l look) {
 	case skField:
 		v.reg(slField, l)
 	case skCiv:
+		if !c.bold {
+			break // a civ's seat stands for it, not its outskirts
+		}
 		if s.sky == mapmodel.SkyGalaxy {
 			v.reg(slSystem, l)
 		} else {

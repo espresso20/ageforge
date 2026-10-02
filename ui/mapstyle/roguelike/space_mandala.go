@@ -1,6 +1,7 @@
 package roguelike
 
 import (
+	"math"
 	"strconv"
 
 	"github.com/espresso20/ageforge/mapmodel"
@@ -231,4 +232,47 @@ func (v *skyView) describeMark(s *skyScene, c skyCell, p mapmodel.Pt) (mapstyle.
 		in.Command = mapmodel.CmdStatus
 	}
 	return in, true
+}
+
+// compactMandala draws the mandala for the mini view at its own scale (a
+// down-sampled one runs the rings together): as many rings as fit, the
+// outer eras outermost, each with a few of its marks, breathing like the
+// full one, round the core.
+func (v *skyView) compactMandala(cv *mapstyle.Canvas, w, h int) {
+	s := v.sc
+	cx, cy := float64(w)/2, 1+float64(h)/2
+	n := len(s.marks)
+	if n == 0 {
+		return
+	}
+	step := math.Max(0.9, (float64(h)/2-0.5)/float64(n))
+	for y := 1; y < 1+h; y++ {
+		for x := 0; x < w; x++ {
+			dx, dy := (float64(x)+0.5-cx)/mdAspect, float64(y)+0.5-cy
+			rr := math.Sqrt(dx*dx+dy*dy) / step
+			k := int(math.Round(rr)) - 1
+			c := skyCell{r: ' ', k: skVoid}
+			switch {
+			case rr < 0.45:
+				c = skyCell{r: '✦', ink: mapmodel.InkGlow, lv: 3, k: skCore, bold: true, fx: fxBreathe}
+			case k >= 0 && k < n && math.Abs(rr-float64(k+1)) < 0.3:
+				c = skyCell{r: '·', ink: mapmodel.InkFrameDim, lv: 1, k: skRing, ref: int32(k), fx: fxBreathe, ph: uint8(k)}
+				if marks := s.marks[k]; len(marks) > 0 {
+					t := turns(dx, dy)
+					j := int(t * float64(4+3*k))
+					if math.Abs(t*float64(4+3*k)-float64(j)-0.5) < 0.18 {
+						mk := marks[j%len(marks)]
+						c = skyCell{sym: mk.Sym, ink: mapmodel.InkLight, lv: 2, k: skMark, fx: fxBreathe, ph: uint8(k)}
+						if mk.Wonder {
+							c.ink = mapmodel.InkAccent
+						}
+					}
+				}
+			default:
+				c = starAt(s.b.seed, s.sky, x, y)
+			}
+			l := v.resolve(s, c, x, y)
+			cv.Put(x, y, l.r, v.style(l))
+		}
+	}
 }

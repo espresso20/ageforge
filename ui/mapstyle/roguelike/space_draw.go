@@ -561,6 +561,14 @@ func (v *skyView) freeAt(x, y, n int) bool {
 // drawOverlay draws what moves without being traffic: the orrery's planets
 // round the home sun.
 func (v *skyView) drawOverlay(cv *mapstyle.Canvas) {
+	if v.sc.sky == mapmodel.SkyOrbit {
+		for k := 0; k < orbDebris; k++ {
+			if p, ok := v.debrisAt(k); ok && v.putMover(cv, v.sc, p, '·', mapmodel.InkFrameDim, 2, false) {
+				v.reg(slDebris, look{r: '·', ink: mapmodel.InkFrameDim, lv: 2})
+			}
+		}
+		return
+	}
 	if v.sc.sky != mapmodel.SkyDeep {
 		return
 	}
@@ -586,4 +594,26 @@ func (v *skyView) orreryPlanet(k int) mapmodel.Pt {
 	o := deepOrbits[k]
 	t := mapmodel.HashF(v.sc.b.seed, 560, int64(k)) + float64(v.anim)/float64(deepPlanets[k].period)
 	return pt(int(math.Round(float64(deepSunX)+o[0]*mapmodel.Sin(t))), int(math.Round(float64(deepSunY)-o[1]*mapmodel.Cos(t))))
+}
+
+// orbDebris is how many specks of debris drift round the Space Age's
+// planet.
+const orbDebris = 7
+
+// debrisAt is where speck k of the debris is this frame: on a low orbit
+// over the limb, each at its own slow pace (a cell every second or two).
+func (v *skyView) debrisAt(k int) (mapmodel.Pt, bool) {
+	p := &v.sc.b.planet
+	seed := v.sc.b.seed
+	pace := 8 + int(mapmodel.Hash(seed, 680, int64(k))%9)
+	span := skyW + 40
+	x := (int(mapmodel.Hash(seed, 681, int64(k))%uint64(span)) + v.anim/pace) % span
+	if k%2 == 1 {
+		x = span - 1 - x
+	}
+	x -= 20
+	if x < 0 || x >= skyW {
+		return mapmodel.Pt{}, false
+	}
+	return pt(x, int(math.Round(p.limb(x)-7-float64(k%3)))), true
 }

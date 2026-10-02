@@ -272,6 +272,10 @@ func (v *skyView) DrawCompact(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Fram
 	}
 	v.compact = true
 	defer func() { v.compact = false }()
+	if s.sky == mapmodel.SkyMandala {
+		v.compactMandala(cv, r.W, mh)
+		return
+	}
 	sx := int(math.Ceil(float64(skyW) / float64(r.W)))
 	sy := int(math.Ceil(float64(skyH) / float64(mh)))
 	sc := max(1, sx, sy)

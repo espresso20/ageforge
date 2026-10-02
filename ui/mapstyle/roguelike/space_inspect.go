@@ -36,6 +36,14 @@ func (v *skyView) describe(s *skyScene, p mapmodel.Pt) mapstyle.Inspection {
 	if in, ok := v.moverAt(p); ok {
 		return in
 	}
+	if s.sky == mapmodel.SkyOrbit {
+		for k := 0; k < orbDebris; k++ {
+			if q, ok := v.debrisAt(k); ok && q == p {
+				return mapstyle.Inspection{Title: "Debris", Lines: []string{"spent stages and old satellites, still circling"},
+					Kind: mapstyle.KindMover}
+			}
+		}
+	}
 	if s.sky == mapmodel.SkyDeep {
 		for k := range deepOrbits {
 			if v.orreryPlanet(k) == p {
