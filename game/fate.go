@@ -11,8 +11,8 @@ import (
 // Fated dooms: when a catastrophe strikes is decided at random, in secret.
 //
 // On entering an era from the Iron Era on (config.FateAllowed: past the Iron
-// gate, and not the final era, whose only catastrophe is the Last Passage at
-// prestige), a hidden roll decides whether a doom is fated there. If it is, a
+// gate, the Cosmic Era included), a hidden roll decides whether a doom is
+// fated there. If it is, a
 // strike tick is drawn uniformly across the era's expected length
 // (expectedEraTicks: the sum of its ages' expectedAgeTicks) from the
 // tick it was entered, so the doom can fall anywhere in any of its ages,
@@ -40,7 +40,15 @@ import (
 // carry the player past it: the era's final transition, or any advance once
 // the figure speaking has said the doom falls before this age is out. If no
 // harbinger has come by then, it comes at that advance, which waits for one
-// more try: a doom is always foretold before it strikes.
+// more try: a doom is always foretold before it strikes. The Cosmic Era has
+// no transition out: its passage is prestige, so there the doom lands before
+// a prestige instead (fateBeforePrestige), ahead of the Last Passage.
+//
+// The Cosmic Era runs two threads: the Last Passage's, which starts on
+// entering it (harbinger.go, last_passage.go), and its fated doom's (the
+// Reality Tear). While the doom's thread speaks, the Last Passage's waits in
+// ge.parkedHarbinger with its answers intact, and takes up the warning again
+// when the doom resolves. If both come at once, the fated doom resolves first.
 //
 // False prophets. An era entered before the Industrial Age with nothing fated
 // rolls its first age's FalseProphetChance (the Stone Era, where nothing can
@@ -104,6 +112,8 @@ type FateSave struct {
 	// FalseProphet: nothing is fated, but a false prophet will come. An
 	// Invite makes its doom real (Fated), and the record still says it lied.
 	FalseProphet bool `json:"false_prophet,omitempty"`
+	// Arrived: its harbinger has come (one per era per run).
+	Arrived bool `json:"arrived,omitempty"`
 	// EntryTick is the tick the era was entered (or the fate rolled).
 	EntryTick int `json:"entry_tick,omitempty"`
 	// Window is the era's expected length in ticks (expectedEraTicks).
@@ -164,14 +174,10 @@ func (f *FateSave) open() bool {
 // real by an Invite.
 func (f *FateSave) lying() bool { return f.FalseProphet && !f.Fated }
 
-// rollFate rolls the current era's fate, entered now. The final era gets none.
-// Draws five values from ge.rng whatever the outcome.
+// rollFate rolls the current era's fate, entered now. Draws five values from
+// ge.rng whatever the outcome.
 func (ge *GameEngine) rollFate() {
 	ep := ge.currentEpoch
-	if config.IsFinalEpoch(ep) {
-		ge.fate = nil
-		return
-	}
 	window := int(math.Round(expectedEraTicks(ep)))
 	f := &FateSave{EpochKey: ep, EntryTick: ge.tick, Window: window}
 	rng := ge.gameRNG()
@@ -199,13 +205,19 @@ func (ge *GameEngine) rollFate() {
 // run (the Stone Era is never entered by a transition), and saves written
 // before fates existed.
 func (ge *GameEngine) ensureFate() {
-	if config.IsFinalEpoch(ge.currentEpoch) {
-		ge.fate = nil
-		return
-	}
 	if ge.fate == nil || ge.fate.EpochKey != ge.currentEpoch {
 		ge.rollFate()
 	}
+}
+
+// fateThread is the live thread of the current era's doom, or nil (none has
+// come, or the live thread is the Last Passage's). Read-only.
+func (ge *GameEngine) fateThread() *HarbingerSave {
+	f, h := ge.fate, ge.harbinger
+	if f == nil || h == nil || h.TargetEpoch == "" || h.TargetEpoch != f.EpochKey {
+		return nil
+	}
+	return h
 }
 
 // fateArrivalTick is when the fate's harbinger is due: the lead before the
@@ -215,10 +227,14 @@ func (ge *GameEngine) fateArrivalTick() int {
 	return f.StrikeTick - int(f.LeadFrac*expectedAgeTicks(ge.age))
 }
 
-// fateHarbingerDue reports whether the fate's harbinger should arrive now.
+// fateHarbingerDue reports whether the fate's harbinger should arrive now. A
+// Last Passage thread in the way is parked when it does (fateArrive).
 func (ge *GameEngine) fateHarbingerDue() bool {
 	f := ge.fate
-	if !f.open() || f.EpochKey != ge.currentEpoch || ge.harbinger != nil || ge.harbingerArrived[f.EpochKey] {
+	if !f.open() || f.EpochKey != ge.currentEpoch || f.Arrived {
+		return false
+	}
+	if h := ge.harbinger; h != nil && h.TargetEpoch != "" {
 		return false
 	}
 	return ge.tick >= ge.fateArrivalTick()
@@ -240,7 +256,7 @@ func (ge *GameEngine) fateTick() {
 	if ge.tick < f.StrikeTick || f.lying() || ge.pendingCatastrophe != "" {
 		return
 	}
-	if h := ge.harbinger; h == nil || h.EpochKey != f.EpochKey {
+	if ge.fateThread() == nil {
 		return // never unwarned: the harbinger comes first
 	}
 	ge.fateStrike(false)
@@ -260,7 +276,7 @@ func (ge *GameEngine) fateNextEventIn() int {
 			next = d
 		}
 	}
-	if ge.harbinger == nil && !ge.harbingerArrived[f.EpochKey] {
+	if !f.Arrived {
 		consider(ge.fateArrivalTick())
 	}
 	if !f.lying() {
@@ -278,10 +294,7 @@ func (ge *GameEngine) fateArrive() bool {
 	if !ok {
 		return false
 	}
-	if ge.harbingerArrived == nil {
-		ge.harbingerArrived = make(map[string]bool)
-	}
-	ge.harbingerArrived[f.EpochKey] = true
+	f.Arrived = true
 	h := &HarbingerSave{
 		Age:          def.Age,
 		Chain:        []string{def.Age},
@@ -298,6 +311,10 @@ func (ge *GameEngine) fateArrive() bool {
 		} else {
 			h.ClaimFactor = 1
 		}
+	}
+	if lp := ge.harbinger; lp != nil && lp.TargetEpoch == "" {
+		// The Last Passage's thread waits while the doom's speaks.
+		ge.parkedHarbinger = lp
 	}
 	ge.harbinger = h
 	// A doom is always foretold: never sooner than the shortest lead after
@@ -428,10 +445,10 @@ func (ge *GameEngine) fateStrike(atAdvance bool) bool {
 	return struck
 }
 
-// harbingerArrivedTick is the tick the current era's harbinger arrived, or -1
-// when none is here.
+// harbingerArrivedTick is the tick the current era's doom's harbinger
+// arrived, or -1 when none is here.
 func (ge *GameEngine) harbingerArrivedTick() int {
-	if h := ge.harbinger; h != nil && ge.fate != nil && h.EpochKey == ge.fate.EpochKey {
+	if h := ge.fateThread(); h != nil {
 		return h.ArrivedTick
 	}
 	return -1
@@ -444,7 +461,7 @@ func (ge *GameEngine) revealFalseProphet(eraEnds bool) {
 	f := ge.fate
 	f.Resolved, f.ResolvedTick, f.AtAdvance = FateRevealed, ge.tick, true
 	arrived := ge.harbingerArrivedTick()
-	if h := ge.harbinger; h != nil && h.EpochKey == f.EpochKey {
+	if h := ge.fateThread(); h != nil {
 		def, _ := config.HarbingerFor(h.Age)
 		window := "This age ends"
 		if eraEnds {
@@ -456,11 +473,12 @@ func (ge *GameEngine) revealFalseProphet(eraEnds bool) {
 	ge.publishFate(EventFateResolved, f.Resolved, arrived)
 }
 
-// errHarbingerAtGate is the refusal of an advance that brought a doom's
-// harbinger: the doom cannot be outrun, so it is foretold first.
-func errHarbingerAtGate(h *HarbingerSave, warning string) error {
+// errHarbingerAtGate is the refusal of an advance (or, in the final epoch, a
+// prestige) that brought a doom's harbinger: the doom cannot be outrun, so it
+// is foretold first. again says what to do to meet it.
+func errHarbingerAtGate(h *HarbingerSave, warning, again string) error {
 	def, _ := config.HarbingerFor(h.Age)
-	return fmt.Errorf("%s stands in your way, warning of %s. Type 'harbinger' to answer, or advance again to meet it.", capFirst(def.Name), warning)
+	return fmt.Errorf("%s stands in your way, warning of %s. Type 'harbinger' to answer, or %s again to meet it.", capFirst(def.Name), warning, again)
 }
 
 // fateBeforeAdvance runs before every age advance to next (the advance
@@ -477,30 +495,46 @@ func (ge *GameEngine) fateBeforeAdvance(next string) error {
 		return nil
 	}
 	leaving := config.EpochForAge(next) != ge.currentEpoch
-	h := ge.harbinger
-	if h != nil && h.EpochKey != f.EpochKey {
-		h = nil
-	}
+	h := ge.fateThread()
 	promised := h != nil && h.When == WhenThisAge
 	if !leaving && !promised {
 		return nil
 	}
-	// A doom not yet foretold is foretold now, and the advance waits. In an
+	return ge.fateAtPassage(leaving, "advance", "advancing")
+}
+
+// fateBeforePrestige runs before a prestige from the final epoch, whose
+// passage is prestige itself: its doom cannot be outrun past that either, so
+// it settles first, the same way, ahead of the Last Passage's roll. (A
+// prestige from an earlier era leaves its open doom behind with the run.)
+func (ge *GameEngine) fateBeforePrestige() error {
+	f := ge.fate
+	if !f.open() || f.EpochKey != ge.currentEpoch || !config.IsFinalEpoch(f.EpochKey) {
+		return nil
+	}
+	return ge.fateAtPassage(true, "confirm prestige", "prestiging")
+}
+
+// fateAtPassage settles the open doom at a passage the player reached first:
+// leaving says the passage ends the era; again and gerund word the refusal.
+func (ge *GameEngine) fateAtPassage(leaving bool, again, gerund string) error {
+	f := ge.fate
+	// A doom not yet foretold is foretold now, and the passage waits. In an
 	// era where nothing can strike (the Stone Era) a false prophet who has
 	// not come by its end never comes: holding the advance up for a warning
 	// the rules already rule out would only confuse.
-	if h == nil && !ge.harbingerArrived[f.EpochKey] && config.FateAllowed(f.EpochKey) && ge.fateArrive() {
-		return errHarbingerAtGate(ge.harbinger, ge.fateWarningText(ge.harbinger))
+	if ge.fateThread() == nil && !f.Arrived && config.FateAllowed(f.EpochKey) && ge.fateArrive() {
+		return errHarbingerAtGate(ge.harbinger, ge.fateWarningText(ge.harbinger), again)
 	}
 	if f.lying() {
 		ge.revealFalseProphet(leaving)
 		return nil
 	}
 	if ge.pendingCatastrophe != "" {
-		return ge.catastropheBlockErr("advancing")
+		return ge.catastropheBlockErr(gerund)
 	}
 	if ge.fateStrike(true) {
-		return ge.catastropheBlockErr("advancing")
+		return ge.catastropheBlockErr(gerund)
 	}
 	return nil
 }
@@ -548,7 +582,7 @@ func (ge *GameEngine) restoreFateState(save *GameSave) {
 	ge.fate = nil
 	if save.Fate != nil {
 		f := *save.Fate
-		if f.EpochKey == ge.currentEpoch && !config.IsFinalEpoch(f.EpochKey) {
+		if f.EpochKey == ge.currentEpoch {
 			if (f.Fated || f.FalseProphet) && f.LeadFrac <= 0 {
 				f.LeadFrac = harbingerLeadMin
 			}
@@ -560,6 +594,8 @@ func (ge *GameEngine) restoreFateState(save *GameSave) {
 	if h == nil || h.TargetEpoch == "" || h.EpochKey != ge.currentEpoch || !config.FateAllowed(h.EpochKey) {
 		return
 	}
+	// (A Last Passage thread, TargetEpoch "", keeps its rules: the Cosmic
+	// Era's own fate is rolled on the first tick.)
 	window := int(math.Round(expectedEraTicks(h.EpochKey)))
 	ge.fate = &FateSave{
 		EpochKey:     h.EpochKey,
@@ -573,6 +609,7 @@ func (ge *GameEngine) restoreFateState(save *GameSave) {
 		LeadFrac:   harbingerLeadMin,
 		Claim:      h.AnnouncedTier,
 		Invited:    save.CatastropheInvited,
+		Arrived:    true,
 	}
 }
 
@@ -606,9 +643,6 @@ func (ge *GameEngine) forceFate(epochKey string, fated, falseProphet bool, strik
 	if epochKey != ge.currentEpoch {
 		return fmt.Errorf("the current era is %s, not %s", ge.currentEpoch, epochKey)
 	}
-	if config.IsFinalEpoch(epochKey) {
-		return fmt.Errorf("the final era has no fate")
-	}
 	if fated && !config.FateAllowed(epochKey) {
 		return fmt.Errorf("nothing can be fated in %s", epochKey)
 	}
@@ -619,7 +653,7 @@ func (ge *GameEngine) forceFate(epochKey string, fated, falseProphet bool, strik
 	if f.LeadFrac <= 0 {
 		f.LeadFrac = (harbingerLeadMin + harbingerLeadMax) / 2
 	}
-	f.Fated, f.FalseProphet, f.Invited = fated, falseProphet, false
+	f.Fated, f.FalseProphet, f.Invited, f.Arrived = fated, falseProphet, false, false
 	f.Resolved, f.ResolvedTick, f.AtAdvance = "", 0, false
 	f.StrikeTick = f.EntryTick + strikeOffset
 	f.Claim = ""
@@ -629,11 +663,11 @@ func (ge *GameEngine) forceFate(epochKey string, fated, falseProphet bool, strik
 	if !fated && !falseProphet {
 		f.StrikeTick, f.LeadFrac = 0, 0
 	}
-	ge.fate = f
-	if ge.harbinger != nil && ge.harbinger.EpochKey == epochKey {
+	if ge.fateThread() != nil {
 		ge.harbinger = nil
+		ge.resumeLastPassageThread()
 	}
-	delete(ge.harbingerArrived, epochKey)
+	ge.fate = f
 	return nil
 }
 

@@ -370,3 +370,44 @@ func TestHarbingerHandoffToastAndEarlierFigures(t *testing.T) {
 		t.Errorf("panel does not name the earlier figures:\n%s", txt)
 	}
 }
+
+// In the Cosmic Era a fated doom (the Reality Tear) can speak while the Last
+// Passage's thread waits: the panel says so, and the catastrophe command and
+// the Epoch panel show both, each at its own odds.
+func TestCosmicDoomScreens(t *testing.T) {
+	_, engine, _ := harbDashboard(t, "galactic_age") // the Last Passage thread, over a quiet fate
+	if h := engine.GetState().Harbinger; h == nil || !h.LastPassage {
+		t.Fatalf("setup: harbinger %+v", h)
+	}
+	if err := engine.ForceFateForTest("cosmic_era", 2000); err != nil {
+		t.Fatal(err)
+	}
+	engine.StepTicks(1)
+	st := engine.GetState()
+	h := st.Harbinger
+	if h == nil || h.LastPassage || !h.LastPassageWaiting {
+		t.Fatalf("doom's harbinger = %+v", h)
+	}
+	panel := untag(harbingerPanelText(st, "", false, false))
+	if !strings.Contains(panel, "The Last Passage still waits at your next prestige.") {
+		t.Errorf("panel:\n%s", panel)
+	}
+	doomOdds := harbingerPercent(h.Probability)
+	passOdds := harbingerPercent(st.CatastropheOutlook.Probability)
+	if doomOdds == passOdds {
+		t.Fatalf("setup: the doom and the Last Passage share odds %s", doomOdds)
+	}
+	for name, txt := range map[string]string{
+		"catastrophe": untag(HandleCommand("catastrophe", engine).Message),
+		"epoch":       untag(epochProvider(st, 140)),
+	} {
+		if !strings.Contains(txt, "warns of doom") || !strings.Contains(txt, "Next passage (prestige, the Last Passage)") {
+			t.Errorf("%s should show the doom and the Last Passage:\n%s", name, txt)
+		}
+		for _, line := range strings.Split(txt, "\n") {
+			if strings.Contains(line, "Last Passage") && strings.Contains(line, doomOdds) {
+				t.Errorf("%s: the Last Passage line carries the doom's %s: %q", name, doomOdds, line)
+			}
+		}
+	}
+}

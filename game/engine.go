@@ -191,7 +191,11 @@ type GameEngine struct {
 	// run (once per epoch). pendingBraceLevel is the Brace level handed to the
 	// pending catastrophe, applied by Endure. harbingerHistory holds resolved
 	// harbingers; like epochEventHistory it survives Succumb, not prestige.
-	harbinger         *HarbingerSave
+	harbinger *HarbingerSave
+	// parkedHarbinger is the Last Passage's thread while the Cosmic Era's
+	// fated doom has the floor (fate.go); it resumes when the doom resolves.
+	// Persisted.
+	parkedHarbinger   *HarbingerSave
 	harbingerArrived  map[string]bool
 	pendingBraceLevel int
 	harbingerHistory  []HarbingerRecord
@@ -2060,7 +2064,7 @@ func (ge *GameEngine) detectEpochTransition(newAge string) {
 	// (fateBeforeAdvance). A direct advance (tests, dev tools) may still
 	// leave a thread live; its era ends here, so settle it the same way.
 	if f := ge.fate; f.open() && f.EpochKey == ge.currentEpoch {
-		if h := ge.harbinger; h != nil && h.EpochKey == f.EpochKey {
+		if ge.fateThread() != nil {
 			if f.lying() {
 				ge.revealFalseProphet(true)
 			} else if ge.pendingCatastrophe == "" {
@@ -3729,7 +3733,11 @@ func (ge *GameEngine) DoPrestige() error {
 
 	// In the final epoch prestige is the passage, and it can bring the Last
 	// Passage (last_passage.go). If it comes, prestige waits for the choice.
+	// The era's fated doom cannot be outrun past it: it settles first.
 	if ge.lastPassageApplies() {
+		if err := ge.fateBeforePrestige(); err != nil {
+			return err
+		}
 		if ge.rollLastPassage() {
 			return nil
 		}

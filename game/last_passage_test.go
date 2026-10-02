@@ -16,6 +16,7 @@ import (
 func lpEngine(t *testing.T, age string, seed int64) *GameEngine {
 	t.Helper()
 	ge := catEngine(t, age, seed)
+	quietFate(ge) // the Cosmic Era's own doom has its tests in fate_test.go
 	ge.harbingerTickCheck()
 	if ge.harbinger == nil || ge.harbinger.TargetEpoch != "" {
 		t.Fatalf("no Last Passage thread at %s: %+v", age, ge.harbinger)
@@ -315,6 +316,7 @@ func TestLastPassageSuccumbGrantsTheCosmicLegacy(t *testing.T) {
 	}
 	check("after a Modern Age prestige")
 	ge.age, ge.currentEpoch = "galactic_age", config.EpochForAge("galactic_age")
+	quietFate(ge)
 	ge.harbingerTickCheck()
 	makeLastPassagePending(t, ge)
 	// Owned already: Succumb is refused, Endure is the only answer.
@@ -507,6 +509,7 @@ func runEndingCorpus(age string) map[string]bool {
 func TestRunEndingLineAtEveryPrestige(t *testing.T) {
 	for _, age := range []string{"modern_age", "information_age", "cyberpunk_age", "space_age", "interstellar_age", "galactic_age", "quantum_age", "transcendent_age"} {
 		ge := catEngine(t, age, 10)
+		quietFate(ge)
 		ge.harbingerTickCheck()
 		ge.rng = rand.New(&seqSource{vals: []float64{0.99, 0.41, 0.07, 0.63, 0.29, 0.85}})
 		if err := ge.DoPrestige(); err != nil {

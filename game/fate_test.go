@@ -28,6 +28,12 @@ func fateEngine(t *testing.T, age string, seed int64) *GameEngine {
 	return ge
 }
 
+// quietFate gives ge's current era a quiet fate (nothing fated) without
+// drawing, so a later tick keeps it.
+func quietFate(ge *GameEngine) {
+	ge.fate = &FateSave{EpochKey: ge.currentEpoch, EntryTick: ge.tick, Window: int(math.Round(expectedEraTicks(ge.currentEpoch)))}
+}
+
 // forceFate fates a doom in ge's era striking offset ticks after it began.
 func forceFate(t *testing.T, ge *GameEngine, offset int) {
 	t.Helper()
@@ -148,15 +154,14 @@ func TestFalseProphetsOnlyBeforeIndustrialWithNothingFated(t *testing.T) {
 	if _, falses := count("renaissance_age", 3000); falses == 0 {
 		t.Error("steel era: no false prophet in 3000 rolls")
 	}
-	for _, age := range []string{"victorian_age", "modern_age", "cyberpunk_age"} {
+	for _, age := range []string{"victorian_age", "modern_age", "cyberpunk_age", "interstellar_age"} {
 		if _, falses := count(age, 800); falses != 0 {
 			t.Errorf("%s: %d false prophets, want none from the Industrial Age on", age, falses)
 		}
 	}
-	ge := catEngine(t, "interstellar_age", 1)
-	ge.harbingerTickCheck()
-	if ge.fate != nil {
-		t.Errorf("the final epoch rolled a fate: %+v", ge.fate)
+	// The Cosmic Era is fated like the rest (its doom is the Reality Tear).
+	if fated, _ := count("interstellar_age", 2000); math.Abs(float64(fated)/2000-FateChance) > 0.03 {
+		t.Errorf("cosmic era: %d fated in 2000, want about %.0f%%", fated, FateChance*100)
 	}
 }
 
@@ -302,17 +307,18 @@ func TestOldSavesMigrateToFates(t *testing.T) {
 	}
 }
 
-// Saves with no fate write no fate key (a final-epoch save), and a quiet era's
-// fate carries no strike.
+// A save with no fate yet writes no fate key, and a quiet era's fate carries
+// no strike.
 func TestFateSaveFields(t *testing.T) {
-	cosmic := catEngine(t, "galactic_age", 1)
-	cosmic.harbingerTickCheck()
-	raw, err := json.Marshal(cosmic.buildSaveSnapshot())
+	none := catEngine(t, "galactic_age", 1)
+	raw, err := json.Marshal(none.buildSaveSnapshot())
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(raw), `"fate"`) {
-		t.Errorf("a final-epoch save carries a fate: %s", raw)
+	for _, k := range []string{`"fate"`, `"parked_harbinger"`} {
+		if strings.Contains(string(raw), k) {
+			t.Errorf("a save with no fate carries %s", k)
+		}
 	}
 	quiet := fateEngine(t, "iron_age", 1)
 	if err := quiet.ForceQuietFateForTest("iron_era"); err != nil {
@@ -954,9 +960,9 @@ func TestOfflineCatchUpAcrossAStrike(t *testing.T) {
 
 // --- the Last Passage -----------------------------------------------------------------------
 
-// The Cosmic Era keeps its Last Passage thread from its first age and rolls no
-// fate: prestige there still brings the Last Passage as before.
-func TestLastPassageUnchangedByFates(t *testing.T) {
+// Entering the Cosmic Era rolls its fate like any era and starts the Last
+// Passage's thread as before.
+func TestCosmicEraRollsAFateBesideTheLastPassage(t *testing.T) {
 	ge := catEngine(t, "space_age", 20)
 	for _, a := range config.AgeOrder() {
 		ge.applyAgeUnlocks(a)
@@ -972,14 +978,191 @@ func TestLastPassageUnchangedByFates(t *testing.T) {
 	if err := ge.AdvanceAge(); err != nil {
 		t.Fatal(err)
 	}
-	if ge.fate != nil {
-		t.Errorf("the Cosmic Era rolled a fate: %+v", ge.fate)
+	if f := ge.fate; f == nil || f.EpochKey != "cosmic_era" || f.FalseProphet || f.Window != int(math.Round(expectedEraTicks("cosmic_era"))) {
+		t.Fatalf("cosmic fate = %+v", ge.fate)
 	}
-	if h := ge.harbinger; h == nil || h.TargetEpoch != "" || h.Age != "interstellar_age" || h.When != WhenUntold {
-		t.Fatalf("cosmic thread on entry = %+v", h)
+	lp := ge.lastPassageThread()
+	if lp == nil || lp.TargetEpoch != "" || lp.Age != "interstellar_age" || lp.When != WhenUntold {
+		t.Fatalf("Last Passage thread on entry = %+v", lp)
 	}
-	if o := ge.CatastropheOutlook(); o.Passage != PassagePrestige || !o.Possible || o.Warned {
+	if o := ge.CatastropheOutlook(); o.Passage != PassagePrestige || !o.Possible {
 		t.Errorf("cosmic outlook = %+v", o)
+	}
+}
+
+// cosmicDoom is a Cosmic Era engine with its Last Passage thread (Appease 1)
+// and a doom fated offset ticks in, not yet foretold.
+func cosmicDoom(t *testing.T, age string, offset int) *GameEngine {
+	t.Helper()
+	ge := lpEngine(t, age, 31)
+	ge.harbinger.AppeaseLevel = 1
+	forceFate(t, ge, offset)
+	return ge
+}
+
+// While the Cosmic Era's doom speaks, the Last Passage's thread waits with its
+// answers, and its odds keep its own Appease; when the doom resolves, the
+// Last Passage's thread takes up the warning again.
+func TestCosmicDoomParksTheLastPassageThread(t *testing.T) {
+	ge := cosmicDoom(t, "galactic_age", 60000)
+	setFaith(ge, 10, 100) // low faith: the Last Passage at 18%, the doom at 90%
+	tickTo(ge, arrivalTick(ge))
+	h, lp := ge.harbinger, ge.parkedHarbinger
+	if h == nil || h.TargetEpoch != "cosmic_era" || lp == nil || lp.TargetEpoch != "" || lp.AppeaseLevel != 1 {
+		t.Fatalf("after the doom's harbinger: live %+v parked %+v", h, lp)
+	}
+	v := ge.GetState().Harbinger
+	if !v.LastPassageWaiting || v.LastPassage || math.Abs(v.Probability-0.9) > 1e-9 {
+		t.Errorf("view of the doom = %+v", v)
+	}
+	o := ge.CatastropheOutlook()
+	if !o.Warned || o.Passage != PassagePrestige || math.Abs(o.Probability-0.18*0.6) > 1e-9 {
+		t.Errorf("outlook = %+v, want warned, the Last Passage at 18%% × 0.6", o)
+	}
+	if lp := ge.GetState().LastPassage; lp.Invited {
+		t.Errorf("Last Passage state = %+v", lp)
+	}
+	// Appease goes to the doom's thread; the Last Passage's keeps its level.
+	setStock(ge, map[string][2]float64{"faith": {5e10, 5e10}, "culture": {5e10, 5e10}})
+	if err := ge.HarbingerAppease(); err != nil {
+		t.Fatal(err)
+	}
+	if ge.harbinger.AppeaseLevel != 1 || ge.parkedHarbinger.AppeaseLevel != 1 {
+		t.Errorf("appease levels: doom %d, Last Passage %d", ge.harbinger.AppeaseLevel, ge.parkedHarbinger.AppeaseLevel)
+	}
+	// The age moves on while it waits, then the doom is spared.
+	ge.advanceAge("quantum_age")
+	ge.rng = riggedRNG(0.999)
+	tickTo(ge, ge.fate.StrikeTick)
+	if ge.fate.Resolved != FateSpared || ge.parkedHarbinger != nil {
+		t.Fatalf("after the strike: fate %+v parked %+v", ge.fate, ge.parkedHarbinger)
+	}
+	if h := ge.harbinger; h == nil || h.TargetEpoch != "" || h.AppeaseLevel != 1 || h.Age != "quantum_age" {
+		t.Errorf("the Last Passage thread resumed as %+v, want level 1 with the Quantum Age's figure", h)
+	}
+	if countLogs(ge, "takes up the warning of the Last Passage") != 1 {
+		t.Errorf("no handoff when the Last Passage resumed:\n%s", strings.Join(logMessages(ge), "\n"))
+	}
+}
+
+// A prestige from the Cosmic Era cannot outrun its doom: the harbinger comes
+// first and the prestige waits; then the strike rolls before the Last
+// Passage, and a hit holds the prestige behind it.
+func TestCosmicDoomSettlesBeforeThePrestige(t *testing.T) {
+	ge := cosmicDoom(t, "quantum_age", 170000)
+	err := ge.DoPrestige()
+	if err == nil || !strings.Contains(err.Error(), "confirm prestige again") || ge.fateThread() == nil {
+		t.Fatalf("first prestige: err %v thread %+v; want the doom's harbinger and a wait", err, ge.harbinger)
+	}
+	if ge.Prestige.GetLevel() != 0 || ge.pendingLastPassage {
+		t.Fatal("the prestige went ahead of the doom")
+	}
+	ge.rng = riggedRNG(0.01)
+	if err := ge.DoPrestige(); err == nil || ge.pendingCatastrophe != "cosmic_era" || ge.pendingLastPassage {
+		t.Fatalf("second prestige: err %v pending %q passage %v; want the Reality Tear first", err, ge.pendingCatastrophe, ge.pendingLastPassage)
+	}
+	if name, _ := config.CatastropheInfo(ge.pendingCatastrophe); name != "The Reality Tear" {
+		t.Errorf("pending %q", name)
+	}
+	if err := ge.Endure(); err != nil {
+		t.Fatal(err)
+	}
+	if h := ge.harbinger; h == nil || h.TargetEpoch != "" {
+		t.Errorf("the Last Passage thread did not resume: %+v", h)
+	}
+	ge.rng = riggedRNG(0.999) // the Last Passage misses
+	if err := ge.DoPrestige(); err != nil || ge.Prestige.GetLevel() != 1 {
+		t.Errorf("third prestige: err %v level %d", err, ge.Prestige.GetLevel())
+	}
+
+	// Spared at the prestige: the Last Passage rolls in the same confirm.
+	sp := cosmicDoom(t, "quantum_age", 170000)
+	_ = sp.DoPrestige() // the harbinger comes
+	sp.rng = riggedRNG(0.999, 0.999)
+	if err := sp.DoPrestige(); err != nil || sp.Prestige.GetLevel() != 1 {
+		t.Errorf("spared, then prestige: err %v level %d", err, sp.Prestige.GetLevel())
+	}
+}
+
+// If the Cosmic Era's doom strikes while the Last Passage waits, both are
+// pending, and the fated doom is answered first. (A prestige settles an open
+// doom before it rolls, so in play this takes a doom fated after the Last
+// Passage came: the test forces one.)
+func TestCosmicDoomAndLastPassageBothPending(t *testing.T) {
+	ge := lpEngine(t, "transcendent_age", 31)
+	makeLastPassagePending(t, ge)
+	forceFate(t, ge, 1000)
+	tickTo(ge, arrivalTick(ge))
+	if ge.fateThread() == nil || ge.parkedHarbinger == nil {
+		t.Fatalf("setup: live %+v parked %+v", ge.harbinger, ge.parkedHarbinger)
+	}
+	ge.rng = riggedRNG(0.01)
+	tickTo(ge, ge.fate.StrikeTick)
+	if ge.pendingCatastrophe != "cosmic_era" || !ge.pendingLastPassage {
+		t.Fatalf("pending %q passage %v; want both", ge.pendingCatastrophe, ge.pendingLastPassage)
+	}
+	if err := ge.EndureLastPassage(); err == nil || !strings.Contains(err.Error(), "came first") {
+		t.Errorf("Last Passage answered before the doom: %v", err)
+	}
+	level := ge.Prestige.GetLevel()
+	if err := ge.Endure(); err != nil {
+		t.Fatal(err)
+	}
+	if ge.pendingCatastrophe != "" || !ge.pendingLastPassage || ge.Prestige.GetLevel() != level {
+		t.Fatalf("Endure answered the wrong one: pending %q passage %v level %d", ge.pendingCatastrophe, ge.pendingLastPassage, ge.Prestige.GetLevel())
+	}
+	if err := ge.Endure(); err != nil || ge.pendingLastPassage || ge.Prestige.GetLevel() != level+1 {
+		t.Errorf("then the Last Passage: err %v passage %v level %d", err, ge.pendingLastPassage, ge.Prestige.GetLevel())
+	}
+}
+
+// A parked Last Passage thread is saved and loaded with the doom's thread.
+func TestParkedLastPassageThreadSurvivesSaveLoad(t *testing.T) {
+	t.Cleanup(SetDataDirForTest(t.TempDir()))
+	ge := cosmicDoom(t, "galactic_age", 60000)
+	tickTo(ge, arrivalTick(ge))
+	want, wantParked := *ge.harbinger, *ge.parkedHarbinger
+	if err := ge.SaveGame("parked"); err != nil {
+		t.Fatal(err)
+	}
+	ge2 := NewGameEngine()
+	if err := ge2.LoadGame("parked"); err != nil {
+		t.Fatal(err)
+	}
+	if ge2.harbinger == nil || ge2.parkedHarbinger == nil || !reflect.DeepEqual(*ge2.harbinger, want) || !reflect.DeepEqual(*ge2.parkedHarbinger, wantParked) {
+		t.Fatalf("after load: live %+v parked %+v", ge2.harbinger, ge2.parkedHarbinger)
+	}
+}
+
+// Until its harbinger comes, the Cosmic Era's doom shows nowhere either.
+func TestNoCosmicFateLeaksBeforeItsHarbinger(t *testing.T) {
+	mk := func(fated bool) *GameEngine {
+		ge := lpEngine(t, "galactic_age", 33)
+		if fated {
+			forceFate(t, ge, 150000)
+		}
+		return ge
+	}
+	a, b := mk(true), mk(false)
+	norm := func(st GameState) GameState {
+		st.Stats.GameStarted, st.Stats.PlayTime = time.Time{}, 0
+		return st
+	}
+	for i := 0; i < 200; i++ {
+		a.doTick()
+		b.doTick()
+	}
+	sa, sb := norm(a.GetState()), norm(b.GetState())
+	if sa.Harbinger == nil || !sa.Harbinger.LastPassage {
+		t.Fatalf("setup: harbinger %+v", sa.Harbinger)
+	}
+	if !reflect.DeepEqual(sa, sb) {
+		va, vb := reflect.ValueOf(sa), reflect.ValueOf(sb)
+		for i := 0; i < va.NumField(); i++ {
+			if !reflect.DeepEqual(va.Field(i).Interface(), vb.Field(i).Interface()) {
+				t.Errorf("GameState.%s differs between a fated Cosmic Era and a quiet one", va.Type().Field(i).Name)
+			}
+		}
 	}
 }
 

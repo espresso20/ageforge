@@ -2178,7 +2178,9 @@ func lastPassageStatusLines(state game.GameState) []string {
 func lastPassageRiskText(state game.GameState) string {
 	o := state.CatastropheOutlook
 	tier, numeric, prob := o.Tier, harbingerNumericAge(state.Age), o.Probability
-	if h := state.Harbinger; h != nil {
+	// Only the Last Passage's own thread: the Cosmic Era's fated doom, when
+	// it speaks instead, warns of something else.
+	if h := state.Harbinger; h != nil && h.LastPassage {
 		tier, numeric, prob = h.Tier, h.Numeric, h.Probability
 	}
 	if numeric {
@@ -2248,6 +2250,11 @@ func catastropheOutlookText(state game.GameState) string {
 	o := state.CatastropheOutlook
 	var sb strings.Builder
 	sb.WriteString("No catastrophe pending.\n")
+	if o.Passage == game.PassagePrestige && o.Warned {
+		// The Cosmic Era's fated doom, foretold: it comes before the Last
+		// Passage can.
+		fmt.Fprintf(&sb, "  %s, faith %.0f%% full.\n", doomWarningText(state), o.FaithFill*100)
+	}
 	switch {
 	case o.Passage == game.PassagePrestige && o.Possible:
 		fmt.Fprintf(&sb, "  Next passage (prestige, the Last Passage): %s, faith %.0f%% full.",
@@ -2302,13 +2309,15 @@ func doomWarningText(state game.GameState) string {
 	return fmt.Sprintf("%s warns of doom%s: %s", capFirstUI(h.Name), when, riskText(state))
 }
 
-// outlookRiskText describes the catastrophe risk the way the current age can
-// know it (riskText), with the harbinger present as its speaker.
+// outlookRiskText describes the Last Passage's risk the way the current age
+// can know it, with its thread as the speaker when that is the thread present
+// (the Cosmic Era's fated doom may be speaking instead).
 func outlookRiskText(state game.GameState) string {
-	if h := state.Harbinger; h != nil {
+	if h := state.Harbinger; h != nil && h.LastPassage {
 		return fmt.Sprintf("%s warns of %s", capFirstUI(h.Name), riskText(state))
 	}
-	return riskText(state)
+	o := state.CatastropheOutlook
+	return riskFrom(state, o.Tier, harbingerNumericAge(state.Age), o.Probability)
 }
 
 // riskText is the risk the way the current age can know it. From the
@@ -2322,6 +2331,12 @@ func riskText(state game.GameState) string {
 	if h := state.Harbinger; h != nil {
 		tier, numeric, prob = h.Tier, h.Numeric, h.Probability
 	}
+	return riskFrom(state, tier, numeric, prob)
+}
+
+// riskFrom words a risk: the odds from the Industrial Age on, a severity
+// before it.
+func riskFrom(state game.GameState, tier game.CatastropheTier, numeric bool, prob float64) string {
 	switch {
 	case numeric:
 		return fmt.Sprintf("%.0f%% catastrophe chance (%s)", prob*100, tier)

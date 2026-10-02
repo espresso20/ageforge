@@ -49,7 +49,11 @@ func threadEngine(t *testing.T, epochKey string, seed int64) *GameEngine {
 	late := int(expectedEraTicks(epochKey)) - 1
 	switch {
 	case config.IsFinalEpoch(epochKey):
-		// The Last Passage thread started on the first tick.
+		// The Last Passage thread started on the first tick; keep the era's
+		// own doom out of the way.
+		if err := ge.ForceQuietFateForTest(epochKey); err != nil {
+			t.Fatal(err)
+		}
 	case config.FateAllowed(epochKey):
 		forceFate(t, ge, late)
 		ge.fateArrive()
@@ -310,8 +314,9 @@ func TestNoHarbingerInAQuietEra(t *testing.T) {
 				tick += int(expectedAgeTicks(age)) / 10
 				tickTo(ge, tick)
 			}
-			if ge.harbinger != nil {
-				t.Errorf("%s (%s): a harbinger came in a quiet era: %+v", ep.Key, age, ge.harbinger)
+			// (The Cosmic Era's Last Passage thread is no doom's harbinger.)
+			if h := ge.harbinger; h != nil && h.TargetEpoch != "" {
+				t.Errorf("%s (%s): a harbinger came in a quiet era: %+v", ep.Key, age, h)
 			}
 		}
 	}
@@ -813,8 +818,8 @@ func TestHarbingerSaveLoadMidThread(t *testing.T) {
 	if ge2.harbinger == nil || !reflect.DeepEqual(*ge2.harbinger, want) || *ge2.fate != wantFate {
 		t.Fatalf("thread after load = %+v fate %+v, want %+v / %+v", ge2.harbinger, ge2.fate, want, wantFate)
 	}
-	if !ge2.harbingerArrived["iron_era"] || ge2.catastropheInvited {
-		t.Errorf("arrived %v / invite flag %v", ge2.harbingerArrived, ge2.catastropheInvited)
+	if !ge2.fate.Arrived || ge2.catastropheInvited {
+		t.Errorf("arrived %v / invite flag %v", ge2.fate.Arrived, ge2.catastropheInvited)
 	}
 	if countLogs(ge2, "has come")+countLogs(ge2, "takes up") != 0 {
 		t.Error("loading spoke again")

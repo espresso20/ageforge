@@ -201,6 +201,9 @@ func harbingerPresentText(sb *strings.Builder, state game.GameState, h *game.Har
 	for _, l := range h.Lines {
 		sb.WriteString(" " + theme.Paint(theme.RoleDim, "“"+l+"”") + "\n")
 	}
+	if h.LastPassageWaiting {
+		sb.WriteString(" " + theme.Paint(theme.RoleDim, "The Last Passage still waits at your next prestige. Your answers to it stand.") + "\n")
+	}
 	sb.WriteString("\n")
 
 	switch {

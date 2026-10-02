@@ -8,12 +8,14 @@ import (
 	"github.com/espresso20/ageforge/flavor"
 )
 
-// The Last Passage: the Cosmic Era's catastrophe.
+// The Last Passage: the Cosmic Era's passage.
 //
 // Every other epoch's passage is its transition into the next epoch. The Cosmic
 // Era has no next epoch, so its passage is prestige itself. A harbinger thread
-// runs through the Cosmic Era like any other (harbinger.go; its TargetEpoch is
-// ""), and confirming prestige there rolls the Last Passage:
+// warns of it from the era's first age (harbinger.go; its TargetEpoch is ""),
+// alongside the era's own fated doom, the Reality Tear (fate.go), which settles
+// first: before the roll at a prestige, and before the choice when both are
+// pending. Confirming prestige rolls the Last Passage:
 //
 //   - The odds are the epoch roll's: (1 - good chance by faith band) × 0.30 ×
 //     the Appease multiplier, or certain when invited. One ge.rng draw, always
@@ -202,10 +204,16 @@ func (ge *GameEngine) SuccumbLastPassage() error {
 	return ge.resolveLastPassage(lastPassageSuccumbed)
 }
 
-// resolveLastPassage completes the pending prestige the way how says.
+// resolveLastPassage completes the pending prestige the way how says. A
+// catastrophe pending beside it (the Cosmic Era's fated doom struck while
+// prestige waited) is answered first.
 func (ge *GameEngine) resolveLastPassage(how prestigeEnding) error {
 	if !ge.pendingLastPassage {
 		return fmt.Errorf("The Last Passage has not come.")
+	}
+	if ge.pendingCatastrophe != "" {
+		name, _ := config.CatastropheInfo(ge.pendingCatastrophe)
+		return fmt.Errorf("%s came first. Answer it before the Last Passage.", name)
 	}
 	if how == lastPassageSuccumbed && ge.cosmicLegacy {
 		return fmt.Errorf("You already carry the Cosmic Legacy, so the Last Passage can only be endured.")
@@ -215,11 +223,12 @@ func (ge *GameEngine) resolveLastPassage(how prestigeEnding) error {
 	return nil
 }
 
-// lastPassageBraceLevel is the Brace level bought in the live Cosmic Era
-// thread, 0 without one. Read-only.
+// lastPassageBraceLevel is the Brace level bought in the Cosmic Era's Last
+// Passage thread (live, or parked behind the era's fated doom), 0 without
+// one. Read-only.
 func (ge *GameEngine) lastPassageBraceLevel() int {
-	h := ge.harbinger
-	if h == nil || h.TargetEpoch != "" || h.BraceLevel < 0 || h.BraceLevel > HarbingerMaxBrace {
+	h := ge.lastPassageThread()
+	if h == nil || h.BraceLevel < 0 || h.BraceLevel > HarbingerMaxBrace {
 		return 0
 	}
 	return h.BraceLevel
@@ -327,7 +336,7 @@ func (ge *GameEngine) lastPassageState(pointsNow int) LastPassageState {
 		PointsNow:       pointsNow,
 		PointsIfEndured: int(math.Floor(float64(pointsNow) * keep)),
 	}
-	if h := ge.harbinger; h != nil && h.TargetEpoch == "" {
+	if h := ge.lastPassageThread(); h != nil {
 		s.Invited = h.Invited
 	}
 	return s

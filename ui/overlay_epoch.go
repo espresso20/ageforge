@@ -122,13 +122,14 @@ func epochProviderCurrentEpoch(sb *strings.Builder, state game.GameState) {
 
 	// The outlook (same wording the `catastrophe` command uses: a figure from
 	// the Industrial Age on, a severity before it).
+	if o.Warned {
+		fmt.Fprintf(sb, " Doom foretold: [yellow]%s[-] [gray](more faith, lower odds)[-]\n", doomWarningText(state))
+	}
 	switch {
 	case o.Possible && o.Passage == game.PassagePrestige:
 		fmt.Fprintf(sb, " Next passage (prestige, the Last Passage): [yellow]%s[-] [gray](more faith, lower odds)[-]\n",
 			outlookRiskText(state))
-	case o.Warned:
-		fmt.Fprintf(sb, " Doom foretold: [yellow]%s[-] [gray](more faith, lower odds)[-]\n", doomWarningText(state))
-	case o.Possible:
+	case o.Possible && !o.Warned && o.Passage == game.PassageEpoch:
 		sb.WriteString(" Outlook: [gray]no harbinger has come. Quiet, for now.[-]\n")
 	}
 

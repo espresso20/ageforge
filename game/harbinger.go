@@ -22,10 +22,12 @@ import (
 // to the Town Crier. The thread never blocks anything and never expires. What
 // the figure says about WHEN follows its config.ForecastTiming (fateWhen).
 //
-// The Cosmic Era has no outgoing transition and no fate: its passage is
-// prestige, and its thread (TargetEpoch "") warns of the Last Passage
-// (last_passage.go) from the era's first age, as it always did, resolving when
-// a prestige from the Cosmic Era completes.
+// The Cosmic Era has no outgoing transition: its passage is prestige, and a
+// second thread (TargetEpoch "") warns of the Last Passage (last_passage.go)
+// from the era's first age, resolving when a prestige from the Cosmic Era
+// completes. Its own fated doom (the Reality Tear) gets a thread like any
+// era's; while that one speaks, the Last Passage's waits in parkedHarbinger
+// with its answers, and resumes when the doom resolves (fate.go).
 //
 // Answers belong to the doom, not the figure, and carry across handoffs:
 //
@@ -208,7 +210,10 @@ type HarbingerView struct {
 	// word). Always WhenUntold for the Last Passage, which comes at prestige.
 	When     string
 	WhenText string
-	Lines    []string
+	// LastPassageWaiting: this is the Cosmic Era's fated doom, and the Last
+	// Passage's thread waits behind it with its answers.
+	LastPassageWaiting bool
+	Lines              []string
 	// Tier and Probability are what the warning says: the live real odds for a
 	// true thread, the claimed odds for a false one. Probability is only shown
 	// when Numeric.
@@ -248,20 +253,17 @@ type HarbingerView struct {
 // --- Thread start and handoff -----------------------------------------------------
 
 // harbingerOnAgeAdvance runs at the end of every age advance: the new age's
-// figure takes up a running thread; otherwise the Cosmic Era's Last Passage
-// thread starts, or the new age's lead brings a fated doom's harbinger (a
-// longer age's lead can reach back past now). An epoch transition has already
-// rolled the new era's fate. Under the write lock.
+// figure takes up the running thread; in the final epoch the Last Passage's
+// thread starts if it has not; and the new age's lead may bring a fated
+// doom's harbinger (a longer age's lead can reach back past now). An epoch
+// transition has already rolled the new era's fate. A parked Last Passage
+// thread keeps its figure until it resumes. Under the write lock.
 func (ge *GameEngine) harbingerOnAgeAdvance() {
-	if h := ge.harbinger; h != nil && h.EpochKey == ge.currentEpoch {
-		if h.Age != ge.age {
-			ge.harbingerHandoff()
-		}
-		return
+	if h := ge.harbinger; h != nil && h.EpochKey == ge.currentEpoch && h.Age != ge.age {
+		ge.harbingerHandoff()
 	}
 	if config.IsFinalEpoch(ge.currentEpoch) {
 		ge.maybeLastPassageArrive()
-		return
 	}
 	if ge.fateHarbingerDue() {
 		ge.fateArrive()
@@ -271,25 +273,44 @@ func (ge *GameEngine) harbingerOnAgeAdvance() {
 // harbingerTickCheck is the harbinger's tick hook. In the final epoch it
 // starts the Last Passage thread on the first tick that finds none (a
 // Succumb, a prestige, a load), one check per epoch (harbingerCheckedEpoch).
-// Anywhere else it runs the era's fate: roll it if missing, bring the
-// harbinger when due, strike at the fated tick (fateTick).
+// Then it runs the era's fate: roll it if missing, bring the harbinger when
+// due, strike at the fated tick (fateTick).
 func (ge *GameEngine) harbingerTickCheck() {
-	if !config.IsFinalEpoch(ge.currentEpoch) {
-		ge.fateTick()
+	if config.IsFinalEpoch(ge.currentEpoch) && ge.harbingerCheckedEpoch != ge.currentEpoch {
+		ge.harbingerCheckedEpoch = ge.currentEpoch
+		ge.maybeLastPassageArrive()
+	}
+	ge.fateTick()
+}
+
+// lastPassageThread is the Last Passage's thread, live or parked behind the
+// Cosmic Era's fated doom, or nil. Read-only.
+func (ge *GameEngine) lastPassageThread() *HarbingerSave {
+	if h := ge.harbinger; h != nil && h.TargetEpoch == "" {
+		return h
+	}
+	return ge.parkedHarbinger
+}
+
+// resumeLastPassageThread brings a parked Last Passage thread back once the
+// doom's thread has gone: the current age's figure takes up the warning again
+// if the age moved on while it waited.
+func (ge *GameEngine) resumeLastPassageThread() {
+	p := ge.parkedHarbinger
+	if p == nil || ge.harbinger != nil {
 		return
 	}
-	ge.fate = nil
-	if ge.harbinger != nil || ge.harbingerCheckedEpoch == ge.currentEpoch {
-		return
+	ge.parkedHarbinger = nil
+	ge.harbinger = p
+	if p.Age != ge.age {
+		ge.harbingerHandoff()
 	}
-	ge.harbingerCheckedEpoch = ge.currentEpoch
-	ge.maybeLastPassageArrive()
 }
 
 // maybeLastPassageArrive starts the final epoch's thread if none is running
 // and none has run this epoch this run.
 func (ge *GameEngine) maybeLastPassageArrive() {
-	if ge.harbinger != nil || ge.harbingerArrived[ge.currentEpoch] {
+	if ge.lastPassageThread() != nil || ge.harbingerArrived[ge.currentEpoch] {
 		return
 	}
 	ge.harbingerArriveLastPassage()
@@ -326,7 +347,7 @@ func (ge *GameEngine) harbingerArriveLastPassage() bool {
 		claim = harbingerClaimBase[announced] / out.Probability
 	}
 
-	ge.harbinger = &HarbingerSave{
+	lp := &HarbingerSave{
 		Age:           def.Age,
 		Chain:         []string{def.Age},
 		EpochKey:      ge.currentEpoch,
@@ -336,11 +357,19 @@ func (ge *GameEngine) harbingerArriveLastPassage() bool {
 		ClaimFactor:   claim,
 		ArrivedTick:   ge.tick,
 	}
-	ge.harbinger.Lines = ge.harbingerSpeak(def, announced)
+	lp.Lines = ge.harbingerSpeak(def, announced)
+	if ge.harbinger != nil {
+		// The era's doom is speaking: the Last Passage's thread waits.
+		ge.parkedHarbinger = lp
+	} else {
+		ge.harbinger = lp
+	}
 
 	ge.addLog("event", fmt.Sprintf("⚑ %s has come, warning of %s. Type 'harbinger' to answer.",
 		capFirst(def.Name), harbingerWarningText("")))
-	ge.harbingerLogLines()
+	for _, l := range lp.Lines {
+		ge.addLog("info", fmt.Sprintf("  [gray]%s[-]", l))
+	}
 	ge.publishHarbinger(def, "", false)
 	return true
 }
@@ -421,26 +450,26 @@ func (ge *GameEngine) publishHarbinger(def config.HarbingerDef, targetEpoch stri
 }
 
 // summonHarbinger is the dev console's /harbinger: a harbinger arrives now
-// with the current age's figure. In an era that can be fated it fates a doom
-// that strikes one lead from now (the era's doom reopened if it had
+// with the current age's figure. In the final epoch the Last Passage's thread
+// comes first if it has not. Otherwise, in an era that can be fated, it fates
+// a doom that strikes one lead from now (the era's doom reopened if it had
 // resolved); in the Stone Era, where nothing can be fated, it sends a false
-// prophet; in the final epoch it starts the Last Passage thread. Takes the
-// write lock.
+// prophet. Takes the write lock.
 func (ge *GameEngine) summonHarbinger() error {
 	ge.mu.Lock()
 	defer ge.mu.Unlock()
-	if ge.harbinger != nil {
-		return fmt.Errorf("A harbinger is already here.")
-	}
 	// /age jumps the age without the epoch; line them up first.
 	if ep := config.EpochForAge(ge.age); ep != ge.currentEpoch {
 		ge.currentEpoch = ep
 	}
-	if config.IsFinalEpoch(ge.currentEpoch) {
+	if config.IsFinalEpoch(ge.currentEpoch) && ge.lastPassageThread() == nil {
 		if !ge.harbingerArriveLastPassage() {
 			return fmt.Errorf("The next passage cannot bring a catastrophe.")
 		}
 		return nil
+	}
+	if ge.harbinger != nil && ge.harbinger.TargetEpoch != "" {
+		return fmt.Errorf("A harbinger is already here.")
 	}
 	ge.ensureFate()
 	f := ge.fate
@@ -452,9 +481,8 @@ func (ge *GameEngine) summonHarbinger() error {
 	if f.FalseProphet && f.Claim == "" {
 		f.Claim = CatastropheTierMedium
 	}
-	f.Invited, f.Resolved, f.ResolvedTick, f.AtAdvance = false, "", 0, false
+	f.Invited, f.Resolved, f.ResolvedTick, f.AtAdvance, f.Arrived = false, "", 0, false, false
 	f.StrikeTick = ge.tick + int(f.LeadFrac*expectedAgeTicks(ge.age))
-	delete(ge.harbingerArrived, f.EpochKey)
 	if !ge.fateArrive() {
 		return fmt.Errorf("No harbinger could come in this age.")
 	}
@@ -465,8 +493,9 @@ func (ge *GameEngine) summonHarbinger() error {
 // and theme-sweep tests, the smoke report's price table): it places the
 // engine in age, with that age's epoch and unlocks, and brings a harbinger
 // there the way the dev console's /harbinger does (a fated doom, a false
-// prophet in the Stone Era, the Last Passage thread in the final epoch). Not
-// reachable from play. Takes the write lock.
+// prophet in the Stone Era, the Last Passage thread in the final epoch, over
+// a quiet fate so it stays the one shown). Not reachable from play. Takes the
+// write lock.
 func (ge *GameEngine) SummonHarbingerForTest(age string) error {
 	ge.mu.Lock()
 	if _, ok := config.AgeByKey()[age]; !ok {
@@ -475,7 +504,11 @@ func (ge *GameEngine) SummonHarbingerForTest(age string) error {
 	}
 	ge.age = age
 	ge.currentEpoch = config.EpochForAge(age)
-	ge.harbinger = nil
+	ge.harbinger, ge.parkedHarbinger = nil, nil
+	if config.IsFinalEpoch(ge.currentEpoch) && (ge.fate == nil || ge.fate.EpochKey != ge.currentEpoch) {
+		// A quiet fate, so the Last Passage thread it brings is the one shown.
+		ge.fate = &FateSave{EpochKey: ge.currentEpoch, EntryTick: ge.tick, Window: int(math.Round(expectedEraTicks(ge.currentEpoch)))}
+	}
 	for _, a := range config.AgeOrder() {
 		ge.applyAgeUnlocks(a)
 		if a == age {
@@ -491,10 +524,16 @@ func (ge *GameEngine) SummonHarbingerForTest(age string) error {
 // harbingerAppeaseMultiplier is the factor Appease applies to the strike (or
 // Last Passage) chance: 1, 0.6 or 0.36. Read-only.
 func (ge *GameEngine) harbingerAppeaseMultiplier() float64 {
-	if ge.harbinger == nil || ge.harbinger.AppeaseLevel <= 0 {
+	return appeaseMultiplierOf(ge.harbinger)
+}
+
+// appeaseMultiplierOf is the factor h's Appease levels apply: 1, 0.6 or 0.36
+// (1 with no thread). Pure.
+func appeaseMultiplierOf(h *HarbingerSave) float64 {
+	if h == nil || h.AppeaseLevel <= 0 {
 		return 1
 	}
-	return detmath.Pow(harbingerAppeaseFactor, float64(ge.harbinger.AppeaseLevel))
+	return detmath.Pow(harbingerAppeaseFactor, float64(h.AppeaseLevel))
 }
 
 // harbingerDisplay is what the live thread's warning says now: for an era's
@@ -859,7 +898,11 @@ func (ge *GameEngine) HarbingerInvite() error {
 // harbingerFlavorLog writes one gray flavor line for moment in the current
 // figure's voice. Draws from ge.rng.
 func (ge *GameEngine) harbingerFlavorLog(moment flavor.Moment, kind string) {
-	h := ge.harbinger
+	ge.threadFlavorLog(ge.harbinger, moment, kind)
+}
+
+// threadFlavorLog is harbingerFlavorLog in h's voice.
+func (ge *GameEngine) threadFlavorLog(h *HarbingerSave, moment flavor.Moment, kind string) {
 	if h == nil {
 		return
 	}
@@ -888,7 +931,16 @@ func (ge *GameEngine) resolveHarbinger(epochKey string, came bool) {
 // the verdict in the last figure's voice, hands the Brace level to a pending
 // catastrophe, records the outcome and clears the thread.
 func (ge *GameEngine) settleHarbinger(epochKey string, came bool, verdict string) {
+	// The thread of that doom: the era's (TargetEpoch epochKey), or for ""
+	// the Last Passage's, live or parked behind the Cosmic Era's doom.
 	h := ge.harbinger
+	parked := false
+	if epochKey == "" {
+		h = ge.lastPassageThread()
+		parked = h != nil && h == ge.parkedHarbinger
+	} else if h != nil && h.TargetEpoch != epochKey {
+		h = nil
+	}
 	if h == nil {
 		return
 	}
@@ -937,7 +989,7 @@ func (ge *GameEngine) settleHarbinger(epochKey string, came bool, verdict string
 		ge.addLog("info", fmt.Sprintf("  Your preparations hold: if you Endure, %d%% of buildings fall and %.0f%% of stock is kept.",
 			braceDestroyPct[h.BraceLevel], braceKeepFrac[h.BraceLevel]*100))
 	}
-	ge.harbingerFlavorLog(moment, kind)
+	ge.threadFlavorLog(h, moment, kind)
 
 	rec := HarbingerRecord{
 		Age: h.Age, Name: def.Name, Chain: append([]string(nil), h.Chain...),
@@ -950,7 +1002,13 @@ func (ge *GameEngine) settleHarbinger(epochKey string, came bool, verdict string
 		rec.EntryTick, rec.Window, rec.StrikeTick, rec.AtAdvance = f.EntryTick, f.Window, f.StrikeTick, f.AtAdvance
 	}
 	ge.harbingerHistory = append(ge.harbingerHistory, rec)
+	if parked {
+		ge.parkedHarbinger = nil
+		return
+	}
 	ge.harbinger = nil
+	// The Last Passage's thread, if it waited behind this doom, speaks again.
+	ge.resumeLastPassageThread()
 }
 
 // cloneHarbingerHistory copies the records and each record's Chain, for a
@@ -974,6 +1032,7 @@ func cloneHarbingerHistory(in []HarbingerRecord) []HarbingerRecord {
 // outcome history is the caller's business (it follows epochEventHistory).
 func (ge *GameEngine) clearHarbingerRun() {
 	ge.harbinger = nil
+	ge.parkedHarbinger = nil
 	ge.fate = nil
 	ge.harbingerArrived = make(map[string]bool)
 	ge.harbingerCheckedEpoch = ""
@@ -996,22 +1055,23 @@ func (ge *GameEngine) harbingerView() *HarbingerView {
 		Key: def.Key, Name: def.Name, Description: def.Description,
 		Age: h.Age, AgeName: config.AgeByKey()[h.Age].Name,
 		AppeaseLabel: def.AppeaseLabel, BraceLabel: def.BraceLabel, InviteLabel: def.InviteLabel,
-		Numeric:         def.ForecastPrecision == config.ForecastNumeric,
-		LastPassage:     h.TargetEpoch == "",
-		PassageCame:     h.TargetEpoch == "" && ge.pendingLastPassage,
-		TargetEpochKey:  h.TargetEpoch,
-		TargetEpochName: harbingerWarningText(h.TargetEpoch),
-		When:            h.When,
-		WhenText:        harbingerWhenText(h),
-		Lines:           append([]string(nil), h.Lines...),
-		Tier:            tier,
-		Probability:     prob,
-		AppeaseLevel:    h.AppeaseLevel,
-		BraceLevel:      h.BraceLevel,
-		Invited:         h.Invited,
-		AppeaseBlocked:  ge.appeaseBlocked(),
-		BraceBlocked:    ge.braceBlocked(),
-		InviteBlocked:   ge.inviteBlocked(),
+		Numeric:            def.ForecastPrecision == config.ForecastNumeric,
+		LastPassage:        h.TargetEpoch == "",
+		PassageCame:        h.TargetEpoch == "" && ge.pendingLastPassage,
+		TargetEpochKey:     h.TargetEpoch,
+		TargetEpochName:    harbingerWarningText(h.TargetEpoch),
+		When:               h.When,
+		WhenText:           harbingerWhenText(h),
+		LastPassageWaiting: ge.parkedHarbinger != nil && h.TargetEpoch != "",
+		Lines:              append([]string(nil), h.Lines...),
+		Tier:               tier,
+		Probability:        prob,
+		AppeaseLevel:       h.AppeaseLevel,
+		BraceLevel:         h.BraceLevel,
+		Invited:            h.Invited,
+		AppeaseBlocked:     ge.appeaseBlocked(),
+		BraceBlocked:       ge.braceBlocked(),
+		InviteBlocked:      ge.inviteBlocked(),
 	}
 	for _, a := range h.Chain {
 		if a == h.Age {
@@ -1063,13 +1123,16 @@ func harbingerWhenText(h *HarbingerSave) string {
 // --- Persistence --------------------------------------------------------------
 
 // harbingerSaveCopy returns a deep copy of the live thread for a save, or nil.
-func (ge *GameEngine) harbingerSaveCopy() *HarbingerSave {
-	if ge.harbinger == nil {
+func (ge *GameEngine) harbingerSaveCopy() *HarbingerSave { return copyHarbingerSave(ge.harbinger) }
+
+// copyHarbingerSave is a deep copy of a thread, or nil.
+func copyHarbingerSave(in *HarbingerSave) *HarbingerSave {
+	if in == nil {
 		return nil
 	}
-	h := *ge.harbinger
-	h.Lines = append([]string(nil), ge.harbinger.Lines...)
-	h.Chain = append([]string(nil), ge.harbinger.Chain...)
+	h := *in
+	h.Lines = append([]string(nil), in.Lines...)
+	h.Chain = append([]string(nil), in.Chain...)
 	return &h
 }
 
@@ -1129,6 +1192,18 @@ func (ge *GameEngine) restoreHarbingerState(save *GameSave) {
 		ge.pendingBraceLevel = 0
 	}
 	ge.harbingerHistory = append([]HarbingerRecord(nil), save.HarbingerHistory...)
+	// The Last Passage's thread parked behind the Cosmic Era's doom: only
+	// while that doom's thread is live, else it is the live thread again.
+	ge.parkedHarbinger = nil
+	if p := save.ParkedHarbinger; p != nil && p.TargetEpoch == "" && config.IsFinalEpoch(ge.currentEpoch) {
+		if _, ok := config.HarbingerFor(p.Age); ok {
+			if ge.harbinger != nil && ge.harbinger.TargetEpoch != "" {
+				ge.parkedHarbinger = copyHarbingerSave(p)
+			} else if ge.harbinger == nil {
+				ge.harbinger = copyHarbingerSave(p)
+			}
+		}
+	}
 }
 
 // harbingerCostText renders a cost map in config order: "375 faith, 120 culture".

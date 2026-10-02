@@ -61,7 +61,7 @@ func (s *Summary) writeFates(sb *strings.Builder) {
 	if len(rows) == 0 {
 		return
 	}
-	fmt.Fprintf(sb, "\n## Fated dooms\n\nEvery era's hidden fate as the bot lived it, from the engine's fate events (the bot itself never sees them). On entering an era from the Iron Era to the Neon Era a doom is fated %.0f%% of the time, its strike tick drawn across the era's ages at their pacing targets; its harbinger comes a lead before it, and it strikes at its tick or at an advance the player reaches first.\n\n", game.FateChance*100)
+	fmt.Fprintf(sb, "\n## Fated dooms\n\nEvery era's hidden fate as the bot lived it, from the engine's fate events (the bot itself never sees them). On entering an era from the Iron Era on a doom is fated %.0f%% of the time, its strike tick drawn across the era's ages at their pacing targets; its harbinger comes a lead before it, and it strikes at its tick or at an advance the player reaches first.\n\n", game.FateChance*100)
 	sb.WriteString("| seed | eras entered | fated | false prophets | struck | spared | revealed | cleared or open | struck or spared at an advance | endured | succumbed | catastrophes in cycle 1 (expected) |\n|---|---|---|---|---|---|---|---|---|---|---|---|\n")
 	var perRun, expRun []float64
 	for _, r := range s.Runs {

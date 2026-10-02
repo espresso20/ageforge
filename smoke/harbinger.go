@@ -319,14 +319,28 @@ func (r *runner) onFateRolled(e game.EventData) {
 	entry, _ := e.Payload["entry_tick"].(int)
 	// A roll for the Stone Era means a prestige or a Succumb reset the run;
 	// a roll for the next era means the last one was left by an advance,
-	// which settles any open doom first.
+	// which settles any open doom first. So does a prestige from the final
+	// era (its passage); the prestige has already moved the cycle on.
 	next := FateCleared
-	if prev := r.fate; prev != nil && config.EpochByKey()[epoch].Order == config.EpochByKey()[prev.Epoch].Order+1 {
-		// A strike still to come would have landed at that advance.
-		if lived := entry - prev.EntryTick; lived < prev.Window && prev.Window > 0 {
-			prev.sumChance += float64(prev.lastChance * float64(prev.Window-lived))
+	if prev := r.fate; prev != nil {
+		byKey := config.EpochByKey()
+		advanced := byKey[epoch].Order == byKey[prev.Epoch].Order+1
+		prestiged := config.IsFinalEpoch(prev.Epoch) && r.cycle > prev.Cycle
+		if advanced || prestiged {
+			// A strike still to come would have landed at that passage: the
+			// new era's entry, or the last look before the prestige (the
+			// tick counter starts again after it).
+			left := entry
+			if prestiged {
+				left = r.fateTick
+			}
+			if lived := left - prev.EntryTick; lived < prev.Window && prev.Window > 0 {
+				prev.sumChance += float64(prev.lastChance * float64(prev.Window-lived))
+			}
 		}
-		next = FateOpen
+		if advanced {
+			next = FateOpen
+		}
 	}
 	r.closeFate(next)
 	row := &FateRow{Cycle: r.cycle, Epoch: epoch, EntryTick: entry, Outcome: FateQuiet}

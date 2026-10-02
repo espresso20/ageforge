@@ -310,11 +310,12 @@ func CatastropheAllowed(epochKey string) bool {
 	return ep.Order >= byKey[CatastropheGateEpoch].Order
 }
 
-// FateAllowed reports whether entering epochKey rolls a hidden fate for a
-// doom inside it: past the Iron gate, and not the final epoch, whose only
-// catastrophe is the Last Passage at prestige (game/last_passage.go).
+// FateAllowed reports whether a doom can be fated inside epochKey: past the
+// Iron gate, the Cosmic Era included (its doom is the Reality Tear; the Last
+// Passage at prestige is separate, game/last_passage.go). Every epoch rolls a
+// fate on entry; before the gate it can only hold a false prophet.
 func FateAllowed(epochKey string) bool {
-	return CatastropheAllowed(epochKey) && !IsFinalEpoch(epochKey)
+	return CatastropheAllowed(epochKey)
 }
 
 // NextEpoch returns the epoch that follows epochKey in order, or ok=false when

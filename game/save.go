@@ -123,6 +123,9 @@ type GameSave struct {
 	// without one keep their bytes and signatures; a save written before
 	// fates existed gets its era's fate on the first tick after loading.
 	Fate *FateSave `json:"fate,omitempty"`
+	// ParkedHarbinger is the Last Passage's thread while the Cosmic Era's
+	// fated doom speaks (fate.go). omitempty.
+	ParkedHarbinger *HarbingerSave `json:"parked_harbinger,omitempty"`
 	// The Last Passage (see last_passage.go). omitempty, so saves without it
 	// keep their bytes and signatures. PendingLastPassage is a prestige from
 	// the final epoch waiting for Endure or Succumb; CosmicLegacy is the
@@ -620,6 +623,7 @@ func (ge *GameEngine) buildSaveSnapshot() GameSave {
 		PendingBraceLevel:      ge.pendingBraceLevel,
 		HarbingerHistory:       append([]HarbingerRecord(nil), ge.harbingerHistory...),
 		Fate:                   ge.fateSaveCopy(),
+		ParkedHarbinger:        copyHarbingerSave(ge.parkedHarbinger),
 		PendingLastPassage:     ge.pendingLastPassage,
 		CosmicLegacy:           ge.cosmicLegacy,
 		Morale:                 ge.morale,

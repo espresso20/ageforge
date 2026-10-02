@@ -445,8 +445,8 @@ func TestNoCatastropheBeforeIronEpoch(t *testing.T) {
 	if config.CatastropheAllowed("stone_era") || !config.CatastropheAllowed("iron_era") || !config.CatastropheAllowed("cosmic_era") {
 		t.Fatal("gate: stone must be closed, iron and later open")
 	}
-	if config.FateAllowed("stone_era") || !config.FateAllowed("iron_era") || !config.FateAllowed("neon_era") || config.FateAllowed("cosmic_era") {
-		t.Fatal("fates: none in the Stone Era or the final epoch, every era from the Iron Era to the Neon Era")
+	if config.FateAllowed("stone_era") || !config.FateAllowed("iron_era") || !config.FateAllowed("neon_era") || !config.FateAllowed("cosmic_era") {
+		t.Fatal("fates: none in the Stone Era, every era from the Iron Era to the Cosmic Era")
 	}
 	ge := catEngine(t, "bronze_age", 1)
 	if err := ge.forceCatastrophe(); err == nil {

@@ -124,13 +124,14 @@ type CatastropheOutlook struct {
 	// harbinger is warning of one). In the final epoch: prestige can bring
 	// the Last Passage and it is not already pending.
 	Possible bool
-	// Warned: a harbinger is present warning of this era's doom. Always
-	// false in the final epoch (its thread is the Last Passage's).
+	// Warned: a harbinger is present warning of this era's fated doom (in
+	// the final epoch, its Reality Tear rather than the Last Passage).
 	Warned bool
 	// Probability is the chance in [0,1] as it can be known: while Warned,
 	// what the harbinger's warning says (the claim, for a false prophet); in a
-	// quiet era 0; in the final epoch the Last Passage's chance at prestige
-	// (1 when invited).
+	// quiet era 0; in the final epoch always the Last Passage's chance at
+	// prestige (1 when invited), whatever its fated doom says (that is on
+	// GameState.Harbinger).
 	Probability float64
 	// Tier buckets Probability: none / low / medium / high.
 	Tier CatastropheTier
@@ -307,13 +308,15 @@ func (ge *GameEngine) catastropheOutlook() CatastropheOutlook {
 		out.NextEpochKey = next.Key
 	}
 	if config.IsFinalEpoch(ge.currentEpoch) {
-		// The final epoch's passage is prestige: the Last Passage.
+		// The final epoch's passage is prestige: the Last Passage, at its
+		// own thread's Appease. Its fated doom shows only once foretold.
 		out.Passage = PassagePrestige
+		out.Warned = ge.fateThread() != nil
 		if !ge.lastPassageApplies() || ge.pendingLastPassage {
 			return out
 		}
 		out.Possible = true
-		out.Probability = (1 - ge.epochGoodChance()) * catastropheChanceOnBadRoll * ge.harbingerAppeaseMultiplier()
+		out.Probability = (1 - ge.epochGoodChance()) * catastropheChanceOnBadRoll * appeaseMultiplierOf(ge.lastPassageThread())
 		if ge.catastropheInvited {
 			out.Probability = 1
 		}
