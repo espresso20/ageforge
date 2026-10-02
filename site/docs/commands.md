@@ -293,7 +293,7 @@ Each style lists its keys along its bottom edge, and [The Map](map.md) has the f
 |---|---|
 | `prestige` | View prestige status and available points. In the Cosmic Era it also shows the chance of the Last Passage and which figure is warning of it, and shows the Cosmic Legacy if you hold it |
 | `prestige confirm` | Explain what confirming would do. In the Cosmic Era this includes what Endure (share of this run's points) and Succumb (the Cosmic Legacy) would give you if the Last Passage comes |
-| `prestige confirm yes` | Prestige now (requires the Modern Age). In the Cosmic Era it first rolls the Last Passage; if it comes, prestige waits for your choice |
+| `prestige confirm yes` | Prestige now (requires the Modern Age). In the Cosmic Era an open Reality Tear settles first, then it rolls the Last Passage; if either comes, prestige waits for your choice |
 | `prestige shop` | List the prestige upgrades |
 | `prestige buy <key>` | Buy a prestige upgrade |
 
@@ -347,7 +347,7 @@ The graphs appear once two samples exist (about 40 seconds at 1x). History is sa
 
 | Command | Description |
 |---|---|
-| `catastrophe` (or `cat`) | Reopen the Endure / Succumb choice for a pending catastrophe or Last Passage. With nothing pending, show the outlook as you can know it: the doom a harbinger present foretells, or that no harbinger has come and the era is quiet, for now (in the Cosmic Era, the odds of the Last Passage at your next prestige) |
+| `catastrophe` (or `cat`) | Reopen the Endure / Succumb choice for a pending catastrophe or Last Passage. With nothing pending, show the outlook as you can know it: the doom a harbinger present foretells, or that no harbinger has come and the era is quiet, for now (in the Cosmic Era, the odds of the Last Passage at your next prestige take that line's place) |
 
 A pending catastrophe blocks `advance` and `prestige confirm yes`, and holds up a `plan advance`, until you choose. A pending Last Passage blocks only `prestige confirm yes`. In the choice window, **E** endures, **S** succumbs and **Esc** closes it without choosing; the status bar shows a pending badge until you decide. There is no Defer option and no command to trigger a catastrophe directly; the harbinger's Invite (below) is the only way to choose one. See [Catastrophe](catastrophe.md).
 
@@ -359,10 +359,10 @@ A pending catastrophe blocks `advance` and `prestige confirm yes`, and holds up 
 |---|---|
 | `harbinger` (or `harb`) | Open the **Harbinger** panel. Also listed under Panels in the sidebar. With no harbinger present it says so, explains that one comes only when doom is on its way, some while before it strikes, and shows the outlook |
 | `harbinger appease` | Buy the next Appease level: a quarter of what a moderate faith economy makes over the era's ages, in faith, and the same for culture from the Steel Era on (level 2 double; see [Harbinger](harbinger.md#what-it-costs-by-epoch) for the prices). Each level multiplies the chance the doom strikes by 0.6. Two levels at most; refused after Invite |
-| `harbinger brace` | Buy the next Brace level: 12% of the most the era asks of each resource you had when it began, except faith and culture (24% for level 2). An Endure then destroys 15% / 10% of buildings and keeps 30% / 45% of stored resources (in the Cosmic Era it keeps 70% / 85% of the run's prestige points instead of 50%). Two levels at most |
-| `harbinger invite` | Guarantee the doom: it still strikes at its fated moment (in the Cosmic Era, the Last Passage comes at your next prestige). Free, and can't be undone |
+| `harbinger brace` | Buy the next Brace level: 12% of the most the era asks of each resource you had when it began, except faith and culture (24% for level 2). An Endure then destroys 15% / 10% of buildings and keeps 30% / 45% of stored resources (against the Last Passage it keeps 70% / 85% of the run's prestige points instead of 50%). Two levels at most |
+| `harbinger invite` | Guarantee the doom: it still strikes at its fated moment (on the Last Passage's thread, the Last Passage comes at your next prestige). Free, and can't be undone |
 
-A harbinger comes only when a doom is fated in your era (Iron to Neon Era), some while before it strikes, or before the Industrial Age as a false prophet. In the Stone Era, where nothing can strike, every harbinger is a false prophet and all three answers are refused. In the Cosmic Era a thread warns of the Last Passage (your next prestige) from the moment you enter the era. Each age's figure takes up the warning in turn until the doom resolves. The actions work in any age of the thread, cost the same in each, and carry over between figures.
+A harbinger comes only when a doom is fated in your era (Iron Era on), some while before it strikes, or before the Industrial Age as a false prophet. In the Stone Era, where nothing can strike, every harbinger is a false prophet and all three answers are refused. In the Cosmic Era a second thread warns of the Last Passage (your next prestige) from the moment you enter the era; while the era's own doom, the Reality Tear, has a harbinger speaking, the Last Passage's thread waits behind it with its answers intact, and the actions go to the thread that is speaking. Each age's figure takes up the warning in turn until the doom resolves. The actions work in any age of the thread, cost the same in each, and carry over between figures.
 
 **Keys in the Harbinger panel:**
 

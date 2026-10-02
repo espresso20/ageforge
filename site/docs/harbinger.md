@@ -1,6 +1,6 @@
 # The Harbinger
 
-Harbingers are figures who warn you that a [catastrophe](catastrophe.md) is coming, and tell you how worried to be. From the Iron Era to the Neon Era, a harbinger comes only when a doom is fated to strike in your era, some while before it does. In the Cosmic Era, the last one, they warn of your next prestige: the [Last Passage](#the-last-passage). You can pay to lower the odds, pay to soften the blow, or invite the catastrophe on purpose.
+Harbingers are figures who warn you that a [catastrophe](catastrophe.md) is coming, and tell you how worried to be. From the Iron Era on, a harbinger comes only when a doom is fated to strike in your era, some while before it does. In the Cosmic Era, the last one, a second thread also warns of your next prestige: the [Last Passage](#the-last-passage). You can pay to lower the odds, pay to soften the blow, or invite the catastrophe on purpose.
 
 A harbinger never blocks anything and never expires. You can ignore it completely and the game plays on as normal.
 
@@ -10,7 +10,7 @@ A harbinger never blocks anything and never expires. You can ignore it completel
 
 ### A doom fated in secret
 
-When you enter an era from the Iron Era to the Neon Era, a hidden roll decides whether a doom is fated there: 27% of the time, one is. Nothing is ever fated in the Stone Era or the Cosmic Era.
+When you enter an era from the Iron Era on, the Cosmic Era included, a hidden roll decides whether a doom is fated there: 27% of the time, one is. Nothing is ever fated in the Stone Era.
 
 A fated doom strikes at a random moment anywhere in the era: in any of its ages, early or late, mid-age included. The moment is drawn across the era's expected length, counted from when you entered it. The expected length is the target times of the era's ages added up (see [How Long Each Age Takes](ages.md#how-long-each-age-takes)):
 
@@ -22,7 +22,7 @@ A fated doom strikes at a random moment anywhere in the era: in any of its ages,
 | Electric Era | 31 h | the Doomsayer, the Telegraph, the Civil Defense Broadcast | Yes, 27% of the time |
 | Digital Era | 42 h | the Evening News, the Chain Email, the Viral Video | Yes, 27% of the time |
 | Neon Era | 60 h | the Ghost in the Net, the Reactor Warden, the Deep Space Monitor | Yes, 27% of the time |
-| Cosmic Era | no fate | the Distress Beacon, the Elder Relay, your future self, your unmade self | No. Its thread warns of [the Last Passage](#the-last-passage). |
+| Cosmic Era | 96 h | the Distress Beacon, the Elder Relay, your future self, your unmade self | Yes, 27% of the time: the Reality Tear. A second thread warns of [the Last Passage](#the-last-passage). |
 
 The fate is saved with your game, so reloading can't re-roll it.
 
@@ -41,6 +41,7 @@ A harbinger comes only when a doom is fated, or as a false prophet (see [False p
 | Electric Era | 1.8 to 5.4 hours (Victorian Age) | 2.4 to 7.2 hours (Atomic Age) |
 | Digital Era | 2.4 to 7.2 hours (Modern Age) | 3.2 to 9.6 hours (Digital Age) |
 | Neon Era | 3.6 to 10.8 hours (Cyberpunk Age) | 4.4 to 13.2 hours (Space Age) |
+| Cosmic Era | 4.8 to 14.4 hours (Interstellar Age) | 4.8 to 14.4 hours (Transcendent Age) |
 
 Rules:
 
@@ -49,7 +50,7 @@ Rules:
 - **Always some warning.** A doom always gets at least the shortest lead, 20% of the current age's target. If it was fated for the era's first moments, before any lead could reach back, the strike is held until that long after the harbinger arrives.
 - **One per era per run.** Once an era's doom has struck, passed you by, or been exposed as a false prophet's invention, no other harbinger comes in that era. Succumb and prestige start a new run, and each era rolls its fate again.
 - **Offline too.** While you are away, the harbinger arrives and the doom strikes at their own moments.
-- **The Cosmic Era warns of prestige.** Its thread starts when you enter the era and lasts until you prestige. See [The Last Passage](#the-last-passage).
+- **The Cosmic Era also warns of prestige.** Beside its fated doom, a second thread warns of the Last Passage from the moment you enter the era until you prestige. See [The Last Passage](#the-last-passage).
 
 ### The figures
 
@@ -63,13 +64,13 @@ When a harbinger arrives, or a new figure takes up the warning, you get:
 
 Type `harbinger` (or `harb`) to open the Harbinger panel. It shows the current figure and, after a handoff, who it took up the warning from.
 
-A harbinger never names an era you haven't reached. It warns of **impending doom** in the era you are in (in the Cosmic Era, of the Last Passage), and the only era it ever names is your current one.
+A harbinger never names an era you haven't reached. It warns of **impending doom** in the era you are in (in the Cosmic Era, also of the Last Passage), and the only era it ever names is your current one.
 
 ---
 
 ## The Roster
 
-Every age has a figure written for it, and all 22 appear in play: three for each era from the Stone Era to the Neon Era, and four for the Cosmic Era, whose thread warns of the Last Passage.
+Every age has a figure written for it, and all 22 appear in play: three for each era from the Stone Era to the Neon Era, and four for the Cosmic Era, who warn of its doom and of the Last Passage.
 
 ### Who they are
 
@@ -93,12 +94,12 @@ Every age has a figure written for it, and all 22 appear in play: three for each
 | Cyberpunk | the Ghost in the Net | Numeric | Age or era | 0 | A dead corporate AI that leaks internal risk memos through the net, glitching on every third word. |
 | Fusion | the Reactor Warden | Numeric | Age or era | 0 | The plant's safety intelligence, which has never before spoken outside a scheduled drill. |
 | Space | the Deep Space Monitor | Numeric | Age or era | 0 | A station behind the moon that has watched one patch of sky for forty years, and has just marked a packet urgent. |
-| Interstellar | the Distress Beacon | Numeric | At prestige | 0 | Still looping from a colony that went silent eighty years ago, and the loop has changed. |
-| Galactic | the Elder Relay | Numeric | At prestige | 0 | An alien relay older than the species that found it, speaking in geometry for the first time in an age. |
-| Quantum | your future self | Numeric | At prestige | 0 | A message in your handwriting, stamped nine years from now, that knows your passcode. |
-| Transcendent | your unmade self | Numeric | At prestige | 0 | A version of you from a branch that ended, come to see whether this one ends the same way. |
+| Interstellar | the Distress Beacon | Numeric | Age or era | 0 | Still looping from a colony that went silent eighty years ago, and the loop has changed. |
+| Galactic | the Elder Relay | Numeric | Age or era | 0 | An alien relay older than the species that found it, speaking in geometry for the first time in an age. |
+| Quantum | your future self | Numeric | Age or era | 0 | A message in your handwriting, stamped nine years from now, that knows your passcode. |
+| Transcendent | your unmade self | Numeric | Age or era | 0 | A version of you from a branch that ended, come to see whether this one ends the same way. |
 
-**Odds:** Vague figures give a severity only; Numeric figures also publish the chance. **Timing:** None means no word of when; Age or era means "before this age is out" or "before the era ends" (see [Reading the Warning](#reading-the-warning)). The Cosmic Era's figures warn of your next prestige.
+**Odds:** Vague figures give a severity only; Numeric figures also publish the chance. **Timing:** None means no word of when; Age or era means "before this age is out" or "before the era ends" (see [Reading the Warning](#reading-the-warning)). The Cosmic Era's figures also warn of the Last Passage, which needs no timing: it comes at your next prestige.
 
 Only the figure of an era's first age rolls its false-prophet chance, and only when nothing is fated there: the Wild Man for the Stone Era, the Desert Prophet for the Iron Era and the Court Astrologer for the Steel Era. The other ages' chances only come into play when a save from an older version loads partway through an era. See [False prophets](#false-prophets).
 
@@ -166,7 +167,7 @@ Without any Appease that works out to **low** at high faith (60%), **medium** at
 
 The Last Passage keeps its own scale: low under 14%, medium from 14% to under 17%, high at 17% or more.
 
-The `catastrophe` command and the Epoch panel repeat the warning in the same words, for example "The Oracle warns of doom before this age is out: medium risk of catastrophe (no figures this early), faith 40% full."
+The `catastrophe` command and the Epoch panel repeat the warning in the same words, for example "The Oracle warns of doom before this age is out: medium risk of catastrophe (no figures this early), faith 40% full." In the Cosmic Era they show the doom's warning while its harbinger speaks and, on a line of its own, the Last Passage at its own odds.
 
 ### False prophets
 
@@ -198,7 +199,7 @@ Appease and Brace bought against a false prophet buy nothing, since no doom is c
 
 ## Answering the Harbinger
 
-While a harbinger is present you can Appease, Brace or Invite, in any age of the era. Your answers belong to the doom, not to the figure: levels you buy and an Invite carry over when the next figure takes up the warning. Nothing expires, but a real doom's thread lasts only until the strike: usually its lead, 20% to 60% of an age, and less if an advance brings the strike forward (see [No Outrunning a Doom](#no-outrunning-a-doom)).
+While a harbinger is present you can Appease, Brace or Invite, in any age of the era. Your answers belong to the doom, not to the figure: levels you buy and an Invite carry over when the next figure takes up the warning. Nothing expires, but a real doom's thread lasts only until the strike: usually its lead, 20% to 60% of an age, and less if an advance brings the strike forward (see [No Outrunning a Doom](#no-outrunning-a-doom)). In the Cosmic Era your answers go to the thread that is speaking (see [The Last Passage](#the-last-passage)).
 
 The price is set by the era, so it is the same in every age of it. If your storage can't hold the price yet, the refusal tells you how much storage you need.
 
@@ -242,7 +243,7 @@ Things to know:
 - Brace only matters if the catastrophe comes **and** you choose Endure. If no catastrophe comes, or you Succumb, the resources are simply spent.
 - The Brace is attached to the pending catastrophe. If you close the choice with Esc and Endure later, or save and load in between, it still applies.
 - Brace is allowed after Invite.
-- **In the Cosmic Era, Brace protects points, not your civilization.** An Endure at the Last Passage keeps 50% of the run's prestige points unbraced, 70% at level 1 and 85% at level 2. The building and resource numbers above don't apply there, and your garrison doesn't count. See [The Last Passage](prestige.md#the-last-passage).
+- **Against the Last Passage, Brace protects points, not your civilization.** An Endure at the Last Passage keeps 50% of the run's prestige points unbraced, 70% at level 1 and 85% at level 2. The building and resource numbers above don't apply there, and your garrison doesn't count. See [The Last Passage](prestige.md#the-last-passage). Against the Cosmic Era's fated doom, the Reality Tear, Brace works as above, garrison included.
 
 ### What it costs, by epoch
 
@@ -260,6 +261,8 @@ Level 1 prices. Level 2 costs double.
 
 The Cosmic Era's passage is prestige, which you may take in any of its ages. Its Appease counts the Interstellar, Galactic and Quantum Ages, so if you prestige as soon as you arrive, Appease is out of reach; stay a day or two and it isn't. Its Brace is based on the most the Cosmic Era's own advances ask of each resource you have held since the Interstellar Age: 13T dark matter (for the Quantum Age) and 630B titanium (for the Galactic Age). Antimatter and quantum flux arrive later, so they are left out.
 
+Both Cosmic Era threads, the Reality Tear's and the Last Passage's, share the era's price. Each keeps its own levels, so answering one doesn't answer the other.
+
 #### Can you afford it?
 
 Brace is priced in the construction resources the era's advances already ask for. Appease is priced in faith, which the market doesn't sell (culture can be bought, gold → culture), and a harbinger's thread usually lasts only its lead: 20% to 60% of an age. So Appease is easiest when you have kept faith in storage beforehand. That faith also lowers the strike chance on its own.
@@ -272,12 +275,12 @@ Faith you spend on Appease is faith the next age requirement can't count: keep w
 - Guarantees the strike. It still comes at its fated moment, or at an advance that would outrun it.
 - **Can't be undone.** It stays with the thread when the next figure takes over.
 - After inviting, Appease is refused. Brace is still allowed.
-- Only while a harbinger is present, so at most once per era. In the Stone Era it is refused like the other answers.
+- Only while a harbinger is present, so at most once per era (in the Cosmic Era, once per thread). In the Stone Era it is refused like the other answers.
 - **Inviting a false prophet** makes its invented doom real: it strikes at the foretold moment (at once, if that moment has passed), the verdict is Fulfilled, and the log notes that the warning had been invented.
 
 Invite is for players who want to Succumb on purpose, to collect an era's legacy bonus and Ancient Knowledge. It is the only way to choose a catastrophe; there is no command to trigger one directly. You can't choose where a doom is fated, only answer one when its harbinger comes. See [Succumb](catastrophe.md#succumb).
 
-In the Cosmic Era, Invite means your next prestige brings the Last Passage. It is how you choose the [Cosmic Legacy](prestige.md#cosmic-legacy) on purpose.
+In the Cosmic Era, Invite answers the thread that is speaking. Invite the Reality Tear's harbinger and that doom is certain, like any era's. Invite the Last Passage's thread and your next prestige brings the Last Passage: it is how you choose the [Cosmic Legacy](prestige.md#cosmic-legacy) on purpose.
 
 ### Why the price is tied to the era
 
@@ -294,13 +297,14 @@ Advancing faster doesn't dodge a fated doom:
 - **No harbinger yet.** If you reach the era's last advance and no harbinger has come, it comes at that advance, and the advance waits for one more try: "The Town Crier stands in your way, warning of impending doom before this age is out. Type 'harbinger' to answer, or advance again to meet it." Your next advance brings the strike, or reveals a false prophet. In the Stone Era, where nothing can strike, a false prophet who hasn't come by the era's end never comes, and the advance goes through.
 - **The build plan** follows the same rules. A `plan advance` waits behind a pending catastrophe, and if a harbinger comes at the plan's advance, the plan tries again on the next tick.
 - **Offline** changes nothing: the harbinger arrives and the doom strikes at their own moments while you are away. A doom that strikes waits, pending, until you come back, and the log shows the warning and the strike.
-- **Prestige** ends the run: a doom that hasn't struck when you prestige is gone with it.
+- **Prestige from the Digital or Neon Era** ends the run: a doom that hasn't struck there is gone with it.
+- **Prestige from the Cosmic Era** is the era's passage, so an open doom settles before the Last Passage rolls. If its harbinger hasn't come, it comes at the prestige, and the prestige waits for one more try: "... Type 'harbinger' to answer, or confirm prestige again to meet it." Then the strike rolls first. A hit holds the prestige behind the pending Reality Tear: Endure it, then prestige again, which rolls the Last Passage (or Succumb, which resets the run with no prestige). A miss lets the same confirm go on to the Last Passage roll.
 
 ---
 
 ## When the Doom Resolves
 
-The thread is settled when its doom resolves: at the fated moment, at an advance that would outrun it, or, for a false prophet, when its foretold window passes. The last figure speaks the verdict, and the log records one of four:
+The thread is settled when its doom resolves: at the fated moment, at an advance (in the Cosmic Era, a prestige) that would outrun it, or, for a false prophet, when its foretold window passes. The last figure speaks the verdict, and the log records one of four:
 
 | Verdict | What happened |
 |---------|---------------|
@@ -317,17 +321,21 @@ The Epoch panel (`epoch`) shows the current thread's status and, for past thread
 
 ### The Last Passage
 
-The Cosmic Era's thread starts when you enter the era and is settled when you confirm prestige, not at an age advance. The panel and the log both say the figure warns of the Last Passage: the end of this civilization at your next prestige.
+The Cosmic Era runs two threads. Its fated doom, the Reality Tear, gets a harbinger like any era's. The Last Passage's thread starts when you enter the era and is settled when you confirm prestige, not at an age advance. The panel and the log both say its figure warns of the Last Passage: the end of this civilization at your next prestige.
 
-Confirming prestige rolls once, with the odds for your faith band (18%, 15% or 12%), times 0.6 per level of Appease, or certain if you invited it. If nothing comes, the verdict is Spared and prestige completes. If it comes, prestige waits for you to Endure or Succumb. Endure keeps part of the run's points and Succumb grants the Cosmic Legacy. See [The Last Passage](prestige.md#the-last-passage).
+While the Reality Tear's harbinger speaks, the Last Passage's thread waits behind it with its answers intact. Appease, Brace and Invite go to the thread that is speaking, and the panel says "The Last Passage still waits at your next prestige. Your answers to it stand." When the doom resolves (struck or spared), the Last Passage's thread takes up the warning again in the current age's voice, with a log line if the age moved on while it waited. The `catastrophe` command and the Epoch panel show both: the doom's warning, for example "Your future self warns of doom before this age is out: 90% catastrophe chance (high), faith 0% full.", and the Last Passage at its own odds.
+
+Confirming prestige settles an open doom first (see [No Outrunning a Doom](#no-outrunning-a-doom)). Then the Last Passage rolls once, with the odds for your faith band (18%, 15% or 12%), times 0.6 per level of Appease on its own thread, or certain if you invited it. If nothing comes, the verdict is Spared and prestige completes. If it comes, prestige waits for you to Endure or Succumb. Endure keeps part of the run's points and Succumb grants the Cosmic Legacy. See [The Last Passage](prestige.md#the-last-passage).
+
+If both are ever pending at once, the Reality Tear is answered first: the choice window shows it first, and the Last Passage's Endure and Succumb are refused until it is ("The Reality Tear came first. Answer it before the Last Passage.").
 
 ---
 
 ## Saving, Succumb and Prestige
 
-- Your current era's fate is saved with your game, so reloading can't re-roll it. So is the thread: the figures who have spoken, what the current one said, your Appease and Brace levels, and whether you invited the catastrophe. A Brace attached to a pending catastrophe is saved too.
+- Your current era's fate is saved with your game, so reloading can't re-roll it. So is the thread: the figures who have spoken, what the current one said, your Appease and Brace levels, whether you invited the catastrophe, and in the Cosmic Era a Last Passage thread waiting behind the doom's. A Brace attached to a pending catastrophe is saved too.
 - **Succumb** clears the live thread, the era's fate, the invite and any Brace. Past verdicts are kept, like the epoch event history. The new run's Stone Era rolls its fate on the first tick.
-- **Prestige** clears all of it, past verdicts included. A doom that hasn't struck ends with the run.
+- **Prestige** clears all of it, past verdicts included. From the Digital or Neon Era a doom that hasn't struck ends with the run; in the Cosmic Era it settles before the Last Passage rolls.
 - A pending Last Passage is saved with your game, and the choice is still waiting when you load.
 
 ---
@@ -357,9 +365,9 @@ With no harbinger present, the panel says so, explains that a harbinger comes on
 ## Strategy
 
 - **Bank faith before you need it.** A harbinger gives you 20% to 60% of an age's time before its doom strikes. Faith already in storage lowers the strike chance by itself and pays for Appease the moment the harbinger comes.
-- **Answer before the moment.** The price is the same in every age of the era, but the thread lasts only until the doom's moment, and advancing out of the era, or out of the age a figure named, brings the strike to that advance.
+- **Answer before the moment.** The price is the same in every age of the era, but the thread lasts only until the doom's moment, and advancing out of the era, or out of the age a figure named, brings the strike to that advance (in the Cosmic Era, so does prestige).
 - **Want to keep your run?** Appease is the direct answer. One level cuts the chance it strikes by 40%, and it can't hurt the odds.
 - **Worried but short on faith?** Brace instead. It doesn't lower the odds, but it makes Endure much cheaper if the catastrophe comes.
 - **Early warnings deserve a little doubt.** Before the Industrial Age a warning may be false: in the Stone Era it always is, and in the Iron and Steel Eras now and then. Your own faith fill tells you the real band (see [Faith and the Odds](catastrophe.md#faith-and-the-odds)).
-- **Prestiging from the Cosmic Era?** The Last Passage costs you points, not buildings. Appease to lower the odds, Brace to keep more points on an Endure, Invite if you want the Cosmic Legacy.
+- **Prestiging from the Cosmic Era?** An open Reality Tear settles first, so answer its harbinger if one is speaking. The Last Passage then costs you points, not buildings. On its thread, Appease to lower the odds, Brace to keep more points on an Endure, Invite if you want the Cosmic Legacy.
 - **Hunting legacy bonuses?** Invite, then Succumb when it strikes. Skip Appease; it is refused after Invite anyway. Brace only if you think you might change your mind and Endure. You can't choose where a doom is fated, so collecting every era's legacy takes several runs.

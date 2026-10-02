@@ -42,7 +42,7 @@ Effects are applied the tick the counter hits zero. You'll see a success message
 | Source | How much | Notes |
 |---|---|---|
 | **Tech bonuses** | None in the current tree | No tech has a research speed effect today |
-| **Ancient Knowledge** (Succumb) | +0.25 (25%) per epoch | Granted permanently for each distinct epoch you Succumb in (Iron to Neon in play, up to +125%); survives Succumb, prestige and save/load |
+| **Ancient Knowledge** (Succumb) | +0.25 (25%) per epoch | Granted permanently for each distinct epoch you Succumb in (Iron to Cosmic, up to +150%); survives Succumb, prestige and save/load |
 | **Prestige: Knowledge Production** | +0.05 per tier, max 5 tiers (+25%) | Raises knowledge output, not `research_speed` (see the note below) |
 
 > **Note on Prestige "Knowledge Production":** Despite its key (`research_speed`), this prestige upgrade raises knowledge output (how fast you make knowledge), not the `research_speed` bonus that cuts tick counts. More knowledge lets you afford techs sooner, but each tech still takes the same number of ticks.

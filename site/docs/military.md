@@ -391,7 +391,7 @@ A player with **no soldiers** takes exactly the losses they always did. From the
 
 ### Endure: Brace first, then the garrison
 
-A catastrophe strikes at a fated moment anywhere in its era (Iron to Neon), so the garrison meets the threat of whatever age you are in when it strikes. Soldiers first unlock in the Iron Age, so an Iron Era doom that strikes early in the Iron Age finds little garrison to count.
+A catastrophe strikes at a fated moment anywhere in its era (Iron to Cosmic), so the garrison meets the threat of whatever age you are in when it strikes. Soldiers first unlock in the Iron Age, so an Iron Era doom that strikes early in the Iron Age finds little garrison to count.
 
 1. **Brace** applies first: 20% / 15% / 10% of buildings fall and 15% / 30% / 45% of stock is kept at Brace 0 / 1 / 2.
 2. **The garrison** then blunts its share of what is left: the braced share of buildings destroyed shrinks by that share, and it keeps that share of the stock Brace would have let go. Buildings saved round down, so the garrison never saves more than its share.

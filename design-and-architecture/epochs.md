@@ -38,7 +38,7 @@ Every 3rd age advance through the Space Age = 1 epoch transition (6 × 3 = 18 ag
 2. **Extraction lineages switch output**: Organic and Geological lineages produce new resources
 3. **Metallurgy's processing chain advances**: new ore → new refined metal
 4. **Event pool changes**: epoch-exclusive events replace previous epoch's exclusive events
-5. **The new era's fate is rolled**: from the Iron Era to the Neon Era, a hidden roll decides whether a doom is fated to strike somewhere inside the era (see [Fated Dooms](#fated-dooms)). The transition itself never brings a catastrophe
+5. **The new era's fate is rolled**: from the Iron Era on, the Cosmic Era included, a hidden roll decides whether a doom is fated to strike somewhere inside the era (see [Fated Dooms](#fated-dooms)). The transition itself never brings a catastrophe
 6. **UI epoch badge updates**: the epoch badge near the age indicator changes color and icon
 7. **New worker domains may unlock**: Hacker (Digital Era), Astronaut (Neon Era)
 
@@ -47,8 +47,8 @@ Every 3rd age advance through the Space Age = 1 epoch transition (6 × 3 = 18 ag
 ## Epoch Event System
 
 At each epoch transition, the game rolls a **major epoch event**, a single significant event
-that could be a boon or a setback. A transition never brings a catastrophe: from the Iron Era to
-the Neon Era a doom is fated in secret on entering an era and strikes inside it (see
+that could be a boon or a setback. A transition never brings a catastrophe: from the Iron Era on a
+doom is fated in secret on entering an era and strikes inside it (see
 [Fated Dooms](#fated-dooms)).
 
 ### The Roll
@@ -127,22 +127,21 @@ were never built are kept under **Future ideas (not implemented)** at the end of
 
 **Rules**
 
-- **When it strikes.** At a fated moment inside an era, or at an advance that would outrun it,
-  never at a transition. See [Fated Dooms](#fated-dooms).
+- **When it strikes.** At a fated moment inside an era, or at an advance (in the final epoch, a
+  prestige) that would outrun it, never at a transition. See [Fated Dooms](#fated-dooms).
 - **Iron-epoch gate.** No catastrophe before the epoch containing the Iron Age
   (`config.CatastropheGateEpoch = "iron_era"`). The Stone Era never has one.
-  Good and challenging epoch events are unaffected. Nothing is fated in the final epoch either
-  (`config.FateAllowed`): its only catastrophe is the Last Passage at prestige, so the Reality Tear
-  (`cosmic_era`) never strikes in play and its legacy is out of reach; only the dev console's
-  `/catastrophe` can force it.
+  Good and challenging epoch events are unaffected. `config.FateAllowed` is the same gate, so the
+  final epoch can be fated too: its doom is the Reality Tear (`cosmic_era`), and the Last Passage
+  at prestige is a separate catastrophe beside it (see [The Last Passage](#the-last-passage)).
 - **One doom per era per run.** Each era's fate (`FateSave`) rolls once, on entry, and resolves
   once (`Resolved`: `struck`, `spared` or `revealed`). Succumb, prestige and a new game clear it
   (`clearHarbingerRun`).
 - **No direct player trigger.** `catastrophe invoke` was removed (2026-09-26). Choosing to face
   a catastrophe is the Harbinger's **Invite** (see [Harbinger](#harbinger)), which sets
   `FateSave.Invited` (and `Fated`, making a false prophet's invented doom real): the strike still
-  comes at `StrikeTick`, or at an advance gate, but it is certain. In the final epoch Invite arms
-  `catastropheInvited` for the Last Passage instead (consumed at prestige, reset by
+  comes at `StrikeTick`, or at an advance or prestige gate, but it is certain. Invite on the Last
+  Passage's thread arms `catastropheInvited` instead (consumed at prestige, reset by
   Succumb/prestige, saved as `catastrophe_invited`, kept on load only in the final epoch).
   `CatastropheOutlook` reports probability 1 while either is set. The dev console's `/catastrophe`
   forces one for testing, respects the gate and ignores the fate (a fated doom still comes later,
@@ -151,7 +150,9 @@ were never built are kept under **Future ideas (not implemented)** at the end of
   until the player chooses. The game keeps running, but `AdvanceAge`, the plan's advance and
   `DoPrestige` refuse while one is pending, and a strike due meanwhile waits: one is never
   overwritten. Endure clears `ageReady`, so the next advance checks its requirements against the
-  reduced stock.
+  reduced stock. `resolveLastPassage` refuses while a catastrophe is pending ("The Reality Tear
+  came first. Answer it before the Last Passage."), and the modal shows the pending catastrophe
+  first (`pendingChoiceKey`).
 - **No Defer.** The modal has two choices. Esc closes it without choosing; a status-bar badge
   shows the pending catastrophe and the bare `catastrophe` command reopens the modal. A save with a
   pending catastrophe shows the modal again on load.
@@ -164,9 +165,12 @@ were never built are kept under **Future ideas (not implemented)** at the end of
   and its doom has neither struck nor been spared (`fateSettled`), with probability 0: a fated era
   and a quiet one read the same until the harbinger comes. `FaithFill` is the current faith fill.
   It is read-only and lock-safe. `Passage` is `"epoch"` (`PassageEpoch`) or, in the final epoch,
-  `"prestige"` (`PassagePrestige`, with `NextEpochKey` empty), where it reports the Last Passage's
-  odds with the Appease multiplier and a coarse tier (none/low/medium/high: under 14%, under 17%,
-  17% and up). See [The Last Passage](#the-last-passage).
+  `"prestige"` (`PassagePrestige`, with `NextEpochKey` empty). There `Probability` and `Tier` are
+  always the Last Passage's odds at its own thread's Appease
+  (`appeaseMultiplierOf(lastPassageThread())`), with a coarse tier (none/low/medium/high: under
+  14%, under 17%, 17% and up), and `Warned` says the Reality Tear's harbinger is speaking
+  (`fateThread() != nil`); its warning is on `GameState.Harbinger`, and the UI shows both lines.
+  See [The Last Passage](#the-last-passage).
 
 **The modal** is a box floating over the dashboard, sized to its content:
 
@@ -273,7 +277,7 @@ Constants and the reasoning for them are in `config/defense.go`; the engine side
 | Electric Era | **The Nuclear Exchange** | Nations unleash the atom. Cities become glass. |
 | Digital Era | **The Great Hack** | Every system falls silent. The AIs turn on their creators. |
 | Neon Era | **Corporate Armageddon** | The megacorps end the world with a fusion bomb. |
-| Cosmic Era | **The Reality Tear** | Exotic matter destabilizes spacetime. Reality cracks open. Unreachable in play: nothing is fated in the final epoch (only `/catastrophe` forces it). |
+| Cosmic Era | **The Reality Tear** | Exotic matter destabilizes spacetime. Reality cracks open. |
 
 ### SUCCUMB Legacy Bonuses by Epoch (built)
 
@@ -285,20 +289,21 @@ Constants and the reasoning for them are in `config/defense.go`; the engine side
 | Electric Era | electricity +25%, uranium +25% |
 | Digital Era | data +30%, titanium_ore +30% |
 | Neon Era | plasma +30%, dark_matter_crystals +30% |
-| Cosmic Era | dark_matter +35% (out of reach in play: the Reality Tear never strikes) |
+| Cosmic Era | dark_matter +35% |
 
-Five legacies (Iron to Neon) are reachable in play, so Ancient Knowledge tops out at +125% there.
+Six legacies (Iron to Cosmic) are reachable, so Ancient Knowledge tops out at +150% (+175% with a
+Stone Era legacy from an older save).
 
 ### Catastrophe vs Regular Prestige
 
 | | Regular Prestige | Catastrophe Succumb |
 |--|-----------------|---------------------|
-| Trigger | Player-initiated from the Modern Age | A fated doom's strike: 27% of eras from Iron to Neon hold one, which then hits 60-90% by faith (lowered by Appease), or certain after the Harbinger's Invite |
+| Trigger | Player-initiated from the Modern Age | A fated doom's strike: 27% of eras from the Iron Era on hold one, which then hits 60-90% by faith (lowered by Appease), or certain after the Harbinger's Invite |
 | Reset scope | Full | Full; up to 8 new ruins (24 max) carry forward |
 | Bonus pool | Prestige upgrade tree + points | Epoch legacy bonus + Ancient Knowledge |
 | Repeatable | Yes | Once per era per run; bonuses once per epoch ever |
 | Blocked by a pending catastrophe | Yes | n/a |
-| Can bring a catastrophe | From the Cosmic Era: the Last Passage | n/a |
+| Can bring a catastrophe | From the Cosmic Era: the Last Passage, after an open Reality Tear settles | n/a |
 
 ### Future ideas (not implemented)
 
@@ -324,21 +329,23 @@ Kept from the original design for reference. None of this exists in the game.
 ## Fated Dooms
 
 A catastrophe strikes at a secret moment inside an era, never at a transition (changed
-2026-09-30). Code: `game/fate.go` (the fate, the strike, the advance gate, the false-prophet
-reveal), `game/catastrophe.go` (odds and outlook), `game/harbinger.go` (the thread). Player docs:
+2026-09-30). Code: `game/fate.go` (the fate, the strike, the advance and prestige gates, the
+false-prophet reveal), `game/catastrophe.go` (odds and outlook), `game/harbinger.go` (the threads,
+the Cosmic Era's parked one). Player docs:
 `site/docs/catastrophe.md` and `site/docs/harbinger.md`.
 
 ### The fate roll
 
-- `rollFate()` rolls the era's `FateSave` on entry: `detectEpochTransition` calls it after
+- Every epoch rolls a `FateSave` on entry (`rollFate()`): `detectEpochTransition` calls it after
   `rollEpochEvent`, and `ensureFate()` covers a run's first tick (the Stone Era is never entered by
-  a transition) and saves without a fate. The final epoch gets none.
-- `Fated = config.FateAllowed(epoch) && roll < FateChance` (0.27). `FateAllowed` is past the Iron
-  gate and not the final epoch: Iron through Neon.
+  a transition) and saves without a fate.
+- `Fated = config.FateAllowed(epoch) && roll < FateChance` (0.27). `FateAllowed` is the Iron gate
+  (`CatastropheAllowed`): Iron through Cosmic, the final epoch included, whose doom is the Reality
+  Tear. Before the gate a fate can only hold a false prophet.
 - A fated doom (or a false prophet) gets `StrikeTick = EntryTick + offset × Window`, with `offset`
   uniform in [0, 1) and `Window = expectedEraTicks(epoch)`, the sum of the era's
-  `expectedAgeTicks` (Iron 10.5 h, Steel 21 h, Electric 31 h, Digital 42 h, Neon 60 h at 1x). The
-  doom can fall in any of its ages, mid-age included.
+  `expectedAgeTicks` (Iron 10.5 h, Steel 21 h, Electric 31 h, Digital 42 h, Neon 60 h, Cosmic 96 h
+  at 1x). The doom can fall in any of its ages, mid-age included.
 - `LeadFrac` is uniform in [`harbingerLeadMin`, `harbingerLeadMax`] = [0.20, 0.60].
 - Five `ge.rng` draws every time (fated, false prophet, offset, lead, claim), whatever the outcome,
   so the stream's shape never depends on the fate.
@@ -358,11 +365,14 @@ reveal), `game/catastrophe.go` (odds and outlook), `game/harbinger.go` (the thre
 - Shortest warning: `fateArrive` moves `StrikeTick` to at least
   `now + harbingerLeadMin × expectedAgeTicks(age)`, so a strike fated for the era's first moments
   is held until the shortest lead has passed.
-- `harbingerArrived[epoch]` is set on arrival: one thread per era per run.
+- `FateSave.Arrived` is set on arrival: one doom's harbinger per era per run (`harbingerArrived`
+  marks only the Last Passage thread). `fateHarbingerDue` waits only for another doom's thread: a
+  live Last Passage thread is parked when the doom's harbinger comes (see
+  [The Cosmic Era's two threads](#the-cosmic-eras-two-threads)).
 
 ### The strike
 
-- At `StrikeTick`, with the era's harbinger present and nothing pending, `fateStrike` draws one
+- At `StrikeTick`, with the doom's harbinger present (`fateThread()`) and nothing pending, `fateStrike` draws one
   `ge.rng` value against `strikeChance()` = `strikeBase() × harbingerAppeaseMultiplier()`, where
   `strikeBase = (1 − epochGoodChance()) × catastropheChanceOnBadRoll × FateStrikeScale`: 90% / 75%
   / 60% at low / mid / high faith (the old passage chance × 5), read at that moment. Certain when
@@ -377,21 +387,51 @@ reveal), `game/catastrophe.go` (odds and outlook), `game/harbinger.go` (the thre
 
 `fateBeforeAdvance(next)` runs before every age advance: `AdvanceAge` (the `advance` command) and
 `runPlan` (the plan's `plan advance`). It acts when the fate is open and the advance leaves the
-era, or the figure speaking has said `WhenThisAge`:
+era, or the figure speaking has said `WhenThisAge`. In the final epoch, whose passage is prestige,
+`fateBeforePrestige()` runs in `DoPrestige` before `rollLastPassage()` and acts on any open fate.
+Both hand over to `fateAtPassage(leaving, again, gerund)`:
 
-1. No harbinger has come: `fateArrive()` now, and refuse with `errHarbingerAtGate` ("The Town Crier
-   stands in your way, warning of impending doom before this age is out. Type 'harbinger' to
-   answer, or advance again to meet it."). The plan puts its item back and tries again next tick,
+1. No harbinger has come: `fateArrive()` now, and refuse with `errHarbingerAtGate(h, warning,
+   again)` ("The Town Crier stands in your way, warning of impending doom before this age is out.
+   Type 'harbinger' to answer, or advance again to meet it."; at a prestige, "... or confirm
+   prestige again to meet it."). The plan puts its item back and tries again next tick,
    so a planned advance meets the strike one tick later. Not in the Stone Era, where nothing can
    strike: a false prophet who has not come by the era's end never comes.
 2. A false prophet not invited: `revealFalseProphet(leaving)`, and the advance goes on.
-3. A catastrophe already pending: refuse (`catastropheBlockErr`).
-4. Otherwise `fateStrike(true)`: a hit refuses the advance behind the pending catastrophe, a miss
-   lets it through. `AtAdvance` records it ("settled as you advanced" in the Epoch panel).
+3. A catastrophe already pending: refuse (`catastropheBlockErr(gerund)`).
+4. Otherwise `fateStrike(true)`: a hit refuses the advance or prestige behind the pending
+   catastrophe, a miss lets it through (at a prestige, on to the Last Passage roll). `AtAdvance`
+   records it ("settled as you advanced" in the Epoch panel).
 
 `detectEpochTransition` settles an open doom whose harbinger is here the same way for a direct
-advance (tests, dev tools), and drops an era's thread at the era's end. Prestige and Succumb drop
-an open fate with the run (`clearHarbingerRun`).
+advance (tests, dev tools), and drops an era's thread at the era's end. Succumb, and a prestige
+from an earlier era (the Digital or Neon Era), drop an open fate with the run
+(`clearHarbingerRun`).
+
+### The Cosmic Era's two threads
+
+The final epoch runs two threads: its fated doom's (the Reality Tear, `TargetEpoch` `cosmic_era`)
+and the Last Passage's (`TargetEpoch` `""`, started on entry by `maybeLastPassageArrive`).
+
+- `fateThread()` is the live thread of the current era's doom, or nil; `lastPassageThread()` is the
+  Last Passage's, live or parked.
+- `fateArrive` parks a live Last Passage thread in `ge.parkedHarbinger` while the doom's thread
+  speaks, and a Last Passage thread that starts while the doom's speaks is parked at once. Answers
+  go to `ge.harbinger`, the thread speaking; the parked one keeps its levels, its invite and its
+  figure until it resumes. `HarbingerView.LastPassageWaiting` makes the panel say "The Last
+  Passage still waits at your next prestige. Your answers to it stand."
+- When the doom resolves, `settleHarbinger` clears its thread and calls
+  `resumeLastPassageThread()`: the parked thread is live again, handed off to the current age's
+  figure (with its log line) if the age moved on.
+- The Last Passage reads its own thread wherever it is: its odds through
+  `appeaseMultiplierOf(lastPassageThread())`, its Endure share through `lastPassageBraceLevel()`,
+  its invite state, and `settleHarbinger("", ...)` at prestige picks the live or parked thread.
+- Both threads price at `cosmic_era`, each with its own levels. The doom's Brace preview shows the
+  usual Endure numbers with the garrison; the Last Passage's shows the points share.
+- `fateBeforePrestige` settles an open doom before `rollLastPassage`. If both are ever pending,
+  `resolveLastPassage` refuses until the catastrophe is answered.
+- `GameSave.ParkedHarbinger` persists a parked thread. On load it stays parked only while the
+  doom's thread is live; otherwise it becomes the live thread.
 
 ### Offline
 
@@ -412,7 +452,10 @@ Era is quiet, for now. A doom is always foretold before it strikes." in a quiet 
 ("The Oracle warns of doom before this age is out: medium risk of catastrophe (no figures this
 early), faith 40% full.") while a harbinger is here; "No catastrophe can strike in the Stone Era."
 there; and, once the doom has resolved, that nothing more will strike before the era ends. The
-Epoch panel shows "Catastrophe: spared (nothing more will strike this era)" after a miss.
+Epoch panel shows "Catastrophe: spared (nothing more will strike this era)" after a miss. In the
+final epoch both show the Reality Tear's warning while its harbinger speaks ("Your future self
+warns of doom before this age is out: 90% catastrophe chance (high), faith 0% full.") and, on a
+line of its own, the Last Passage at its own odds; there is no "quiet, for now" line there.
 
 ### Timing forecast and severity
 
@@ -443,25 +486,31 @@ A first run to the Modern Age prestige lives through three eras that can be fate
 Electric; the Digital Era's doom rarely strikes before that prestige): 3 × 0.27 × 0.90 = 0.73
 expected at low faith, 0.61 at mid, 0.49 at high. The transition roll this replaced met four
 catastrophe-capable transitions per first run at 12-18% each: the smoke bot (low faith) expected
-0.72 and measured 0.673 over 49 seeds. The smoke progression report's Fated dooms section tracks
-the new numbers (fated eras, strike offsets, warnings, struck, spared and outrun dooms).
+0.72 and measured 0.673 over 49 seeds; with fated dooms it measures 0.73 ± 0.12 over 49 seeds. A
+deep run to a Quantum Age prestige meets six fated eras: 6 × 0.27 × 0.90 ≈ 1.46 expected at low
+faith plus the Last Passage, against 6 × 0.18 = 1.08 plus the Last Passage under the transition
+rolls (the first-run calibration makes each era's doom a bit likelier than one old transition
+roll). The smoke progression report's Fated dooms section tracks the new numbers (fated eras,
+strike offsets, warnings, struck, spared and outrun dooms).
 
 ### Saves from before fates
 
 `restoreFateState` runs after the epoch is restored and before the harbinger. A save without
 `fate` but with a live thread in an era that can be fated gets a fate carrying it over (a false
 thread stays false unless invited) with `StrikeTick` at `MaxInt32`, so the era's final advance gate
-strikes it, and `restoreHarbingerState` points the thread's `TargetEpoch` at its own era. A Stone
-Era thread is dropped. Any other save gets its era's fate rolled on the first tick, from the
-current age.
+strikes it (`Arrived` set, since its harbinger is already here), and `restoreHarbingerState`
+points the thread's `TargetEpoch` at its own era. A Stone Era thread is dropped. A Last Passage
+thread keeps its rules. Any other save, the Cosmic Era included, gets its era's fate rolled on the
+first tick, from the current age.
 
 ### Test hooks and dev console
 
 `ForceFateForTest`, `ForceQuietFateForTest`, `ForceFalseProphetForTest` and `FateForTest` are for
 tests and the smoke suite only. The dev console's `/harbinger` (`summonHarbinger`) fates a doom
 that strikes one lead from now and brings its harbinger (reopening the era's doom if it had
-resolved); in the Stone Era it sends a false prophet, in the final epoch it starts the Last
-Passage thread.
+resolved); in the Stone Era it sends a false prophet. In the final epoch it starts the Last
+Passage thread first if it has not come, and otherwise fates a Reality Tear and brings its
+harbinger.
 
 ---
 
@@ -477,33 +526,37 @@ lines). Player docs: `site/docs/harbinger.md`.
 ### Threads, start and handoff
 
 A **thread** is one warning: an era's doom (`TargetEpoch` is its own `EpochKey`) or, in the Cosmic
-Era, the Last Passage (`TargetEpoch` `""`; see [The Last Passage](#the-last-passage)). It lasts
-until the doom resolves. The speaker is always the current age's roster figure, so all 22 figures
-can appear.
+Era, the Last Passage (`TargetEpoch` `""`; see [The Last Passage](#the-last-passage)). The Cosmic
+Era can hold both at once (see [The Cosmic Era's two threads](#the-cosmic-eras-two-threads)). A
+thread lasts until its doom resolves. The speaker is always the current age's roster figure, so all
+22 figures can appear.
 
 Hooks, all under the write lock:
 
-- `harbingerTickCheck()`, near the top of `doTick` and after each offline step. Outside the final
-  epoch it runs `fateTick()`: roll the era's fate if missing, bring the harbinger when due
-  (`fateArrive`), strike at `StrikeTick`. In the final epoch it clears any fate and starts the Last
-  Passage thread on the first tick that finds none (a Succumb, a prestige, a load), one check per
-  epoch (the unpersisted `harbingerCheckedEpoch`).
+- `harbingerTickCheck()`, near the top of `doTick` and after each offline step. In the final
+  epoch it first starts the Last Passage thread if none has come (a Succumb, a prestige, a load),
+  one check per epoch (the unpersisted `harbingerCheckedEpoch`). Then, in every epoch, it runs
+  `fateTick()`: roll the era's fate if missing, bring the harbinger when due (`fateArrive`), strike
+  at `StrikeTick`.
 - `harbingerOnAgeAdvance()`, at the end of `advanceAge` (after `detectEpochTransition` and
-  `fireAwakening`). A live thread of the current era whose `Age` differs from the new age is
-  handed off (`harbingerHandoff`). Otherwise the final epoch's thread starts
-  (`maybeLastPassageArrive`), or the new age's longer lead may already bring a fated doom's
-  harbinger (`fateHarbingerDue`).
-- `fateBeforeAdvance()` brings the harbinger at the gate when none has come (see
-  [No outrunning it](#no-outrunning-it)).
+  `fireAwakening`). The live thread of the current era (a doom's or the Last Passage's) is handed
+  off (`harbingerHandoff`) if its `Age` differs from the new age; a parked Last Passage thread
+  keeps its figure until it resumes. In the final epoch the Last Passage thread starts if it has not
+  (`maybeLastPassageArrive`). Then the new age's longer lead may bring a fated doom's harbinger
+  (`fateHarbingerDue`).
+- `fateBeforeAdvance()` and, in the final epoch, `fateBeforePrestige()` bring the harbinger at the
+  gate when none has come (see [No outrunning it](#no-outrunning-it)).
 - `restoreHarbingerState()` starts nothing and draws nothing: a save loads to exactly the state it
   was written in, and the next tick brings whatever is due.
 
 `fateArrive` builds the thread with the current figure, sets `When` (`fateWhen`), `AnnouncedTier`
 (`harbingerDisplay`) and the lines, and for a false prophet the `ClaimFactor`. It sets
-`harbingerArrived[epoch]`, logs "⚑ The Oracle has come, warning of impending doom before this age
-is out. Type 'harbinger' to answer." and publishes `EventHarbingerArrived`.
-`maybeLastPassageArrive` requires no live thread and `harbingerArrived[currentEpoch]` unset;
-`harbingerArriveLastPassage` then requires the Last Passage to be possible.
+`FateSave.Arrived`, parks a live Last Passage thread, logs "⚑ The Oracle has come, warning of
+impending doom before this age is out. Type 'harbinger' to answer." and publishes
+`EventHarbingerArrived`. `maybeLastPassageArrive` requires no Last Passage thread, live or parked
+(`lastPassageThread()`), and `harbingerArrived[currentEpoch]` unset; `harbingerArriveLastPassage`
+then requires the Last Passage to be possible, and parks the new thread at once if a doom's thread
+is speaking.
 
 A **handoff** appends the new age to `HarbingerSave.Chain`, sets `Age`, re-derives `When` and
 `AnnouncedTier` and draws a fresh arrival and warning line in the new voice. Levels, the invite,
@@ -555,13 +608,15 @@ caps would make the era's first age (smallest caps) a discount.
 |--------|----------------|--------|-----|
 | Appease | `harbingerAppeaseIncomeShare` (1/4) of `config.FlowIncome` summed over `harbingerAppeaseAges` at their `AgeTargetTicks`, in faith, and in culture if culture is held since the start (Steel Era on); rounded up to 2 significant figures | Multiplies the real strike chance by `harbingerAppeaseFactor` = 0.6 per level (0.36 at 2) | 2 |
 | Brace | 12% of `harbingerBraceBasis`: per resource held since the start, minus faith and culture, the largest `ResourceReqs` across `harbingerAdvanceAges` | Endure destroys 15% / 10% of destroyable buildings (neither wonders nor storage) and keeps 30% / 45% of resources (unbraced 20% / 15%) | 2 |
-| Invite | free | Sets `HarbingerSave.Invited` and `FateSave.Invited` (and `Fated`); the strike stays at its fated moment. In the final epoch it arms `catastropheInvited`. Appease refuses afterwards, Brace does not | once (one thread per era) |
+| Invite | free | Sets `HarbingerSave.Invited` and `FateSave.Invited` (and `Fated`); the strike stays at its fated moment. On the Last Passage's thread it arms `catastropheInvited`. Appease refuses afterwards, Brace does not | once per thread |
 
-All three are refused for a thread in an era where nothing can be fated (`harbingerPowerless`:
-the Stone Era's false prophets), and while the Last Passage is pending.
+All three go to `ge.harbinger`, the thread speaking, and are refused for a thread in an era where
+nothing can be fated (`harbingerPowerless`: the Stone Era's false prophets), and while the Last
+Passage is pending.
 
 Level-1 prices from the current config (the Stone Era's are never charged, since its answers are
-refused):
+refused; both Cosmic Era threads share the Cosmic price in [Costs](#costs), each with its own
+levels):
 
 | Thread | Appease | Brace |
 |--------|---------|-------|
@@ -580,24 +635,28 @@ its end. A thread usually lasts only its lead (20-60% of an age), so in practice
 banked before the harbinger came. When storage cannot yet hold a price, `shortfall` adds "(your X
 storage must reach N first)" to the refusal.
 
-- **Appease** is applied through `harbingerAppeaseMultiplier()`, which scales both the strike roll
-  (`strikeChance`) and the displayed odds (`harbingerDisplay`, `catastropheOutlook`), and the Last
-  Passage's chance, so the roll and the display cannot disagree. Worst case the faith spend drops
+- **Appease** is applied through `harbingerAppeaseMultiplier()` (the live thread's
+  `appeaseMultiplierOf`), which scales both the strike roll (`strikeChance`) and the displayed odds
+  (`harbingerDisplay`), so the two cannot disagree. The Last Passage's chance uses its own thread's
+  levels, live or parked (`appeaseMultiplierOf(lastPassageThread())`), in `catastropheOutlook` and
+  so in `rollLastPassage`. Worst case the faith spend drops
   the fill from the top band to the bottom (60% to 90% strike chance, x1.5), and x0.6 still leaves
   0.9x, so each level always lowers the odds.
 - **Brace** lives on `HarbingerSave.BraceLevel` until resolution, then moves to
   `ge.pendingBraceLevel` if the catastrophe came. `Endure` reads and clears it
   (`braceDestroyPct`, `braceKeepFrac`). Succumb ignores it. Keeping it on the pending catastrophe
   means Esc-then-Endure and save/load both keep the discount. The panel's preview counts the
-  garrison against the current age (`endurePreview(level, ge.age)`).
+  garrison against the current age (`endurePreview(level, ge.age)`). The Last Passage's Endure
+  share reads its own thread's level, live or parked (`lastPassageBraceLevel`).
 
 ### Resolution
 
 `fateStrike` calls `resolveHarbinger(epochKey, came)` when an era's doom resolves (at `StrikeTick`
 or at an advance gate), `came` telling whether it struck. `revealFalseProphet` calls
 `settleHarbinger` with its own verdict line when a false prophet's window passes. `completePrestige`
-resolves the Last Passage thread with `epochKey` `""`. The verdict is spoken in the last figure's
-voice. Outcomes (`HarbingerRecord.Outcome`):
+resolves the Last Passage thread with `epochKey` `""`, live or parked. After an era's doom thread
+is cleared, `resumeLastPassageThread()` brings back a parked Last Passage thread. The verdict is
+spoken in the last figure's voice. Outcomes (`HarbingerRecord.Outcome`):
 
 | Outcome | Condition |
 |---------|-----------|
@@ -632,18 +691,21 @@ CatastropheInvited bool              `json:"catastrophe_invited,omitempty"`
 PendingBraceLevel  int               `json:"pending_brace_level,omitempty"`
 HarbingerHistory   []HarbingerRecord `json:"harbinger_history,omitempty"`
 Fate               *FateSave         `json:"fate,omitempty"`
+ParkedHarbinger    *HarbingerSave    `json:"parked_harbinger,omitempty"`
 ```
 
 `HarbingerSave` carries `chain` (ages that have spoken, first to current), `when` and
 `claim_factor` (false threads only); `HarbingerRecord` carries `chain`, `when` and the doom's
 timing (`arrived_tick`, `entry_tick`, `window`, `strike_tick`, `at_advance`). `FateSave` holds
-`epoch_key`, `fated`, `false_prophet`, `entry_tick`, `window`, `strike_tick`, `lead_frac`,
-`claim`, `invited`, `resolved`, `resolved_tick` and `at_advance`. All `omitempty`.
+`epoch_key`, `fated`, `false_prophet`, `arrived`, `entry_tick`, `window`, `strike_tick`,
+`lead_frac`, `claim`, `invited`, `resolved`, `resolved_tick` and `at_advance`. All `omitempty`.
 
 On load, levels are clamped to 2, an empty `Chain` becomes `[Age]`, an unknown roster age drops
 the thread, `pendingBraceLevel` is zeroed unless a catastrophe is pending, and a fate for another
-era is dropped (the first tick rolls the current era's). `clearHarbingerRun` (live thread, fate,
-arrivals, `harbingerCheckedEpoch`, invite, pending Brace) runs on Succumb, prestige and reset, and
+era is dropped (the first tick rolls the current era's). A parked Last Passage thread stays parked
+only while the doom's thread is live; otherwise it loads as the live thread. `clearHarbingerRun`
+(live and parked threads, fate, arrivals, `harbingerCheckedEpoch`, invite, pending Brace) runs on
+Succumb, prestige and reset, and
 the next tick rolls the new run's Stone Era fate. `harbingerHistory` follows `epochEventHistory`:
 kept by Succumb, cleared by prestige.
 
@@ -656,19 +718,21 @@ Built 2026-09-26. Code: `game/last_passage.go`, with the Cosmic thread's pricing
 
 ### Prestige is the Cosmic Era's passage
 
-Earlier eras' catastrophes are fated inside the era (see [Fated Dooms](#fated-dooms)). The Cosmic
-Era has no next epoch and no fate, so its passage is prestige. `CatastropheOutlook.Passage` is
-`"prestige"` there and `NextEpochKey` is empty; `Possible` is false once the Last Passage is
-pending. The Cosmic Era gets a harbinger thread on entry, at the Interstellar Age, with the four
+The Cosmic Era has no next epoch, so its passage is prestige; its own fated doom, the Reality Tear,
+runs beside it (see [Fated Dooms](#fated-dooms)). `CatastropheOutlook.Passage` is `"prestige"`
+there and `NextEpochKey` is empty; `Possible` is false once the Last Passage is pending. The Cosmic
+Era gets a Last Passage thread on entry, at the Interstellar Age, with the four
 cosmic figures handing off per age (Distress Beacon, Elder Relay, your future self, your unmade
 self). Its figures are all past the Industrial Age, so no false prophets and numeric odds.
 
 ### The roll
 
-`DoPrestige`, once confirmed, calls `rollLastPassage()` when `lastPassageApplies()` (final epoch,
-past the Iron gate). One `ge.rng` `Float64()` is always drawn, so the stream's shape does not
-depend on the odds or on an invite. The chance is `catastropheOutlook().Probability`, the passage
-formula `(1 - good chance) × catastropheChanceOnBadRoll (0.30) × harbingerAppeaseMultiplier()`,
+`DoPrestige`, once confirmed, runs `fateBeforePrestige()` and then `rollLastPassage()` when
+`lastPassageApplies()` (final epoch, past the Iron gate): an open Reality Tear settles first (see
+[No outrunning it](#no-outrunning-it)), and a refusal there stops the prestige before the roll.
+One `ge.rng` `Float64()` is always drawn, so the stream's shape does not depend on the odds or on
+an invite. The chance is `catastropheOutlook().Probability`, the passage formula
+`(1 - good chance) × catastropheChanceOnBadRoll (0.30) × appeaseMultiplierOf(lastPassageThread())`,
 i.e. 18% / 15% / 12% by faith band, certain when `catastropheInvited` is armed (consumed on a hit).
 Prestige from any earlier epoch never rolls.
 
@@ -681,8 +745,10 @@ Prestige from any earlier epoch never rolls.
 `pendingLastPassage` blocks only `DoPrestige` (`lastPassageBlockErr`); `AdvanceAge`, building
 and everything else carry on. The dashboard shows the choice in the catastrophe modal
 (`✦ The Last Passage`), Esc hides it, the status bar carries a `☄ LAST PASSAGE` badge and the bare
-`catastrophe` command reopens it. The save list reports it as the pending choice. The dev
-console's `/lastpassage` (`forceLastPassage`) sets it for testing, final epoch only.
+`catastrophe` command reopens it. The save list reports it as the pending choice. If a
+catastrophe is pending beside it, that one is answered first: `pendingChoiceKey` shows it first and
+`resolveLastPassage` refuses ("The Reality Tear came first. Answer it before the Last Passage.").
+The dev console's `/lastpassage` (`forceLastPassage`) sets it for testing, final epoch only.
 
 ### Endure and Succumb
 
@@ -693,7 +759,8 @@ Both go through `resolveLastPassage` and complete the prestige; the level rises 
 | Endure | `floor(full × keep)`, minimum 0, where `keep` = `lastPassageKeepFrac[brace]` = 0.50 / 0.70 / 0.85 at Brace 0 / 1 / 2 | Verdict `vindicated` (`fulfilled` if invited) |
 | Succumb | 0 | Sets `cosmicLegacy` |
 
-Brace in the Cosmic Era changes only the points share; nothing survives prestige to destroy.
+Brace on the Last Passage's thread changes only the points share; nothing survives prestige to
+destroy. Brace on the Reality Tear's thread works like any era's.
 `recordLastPassageOutcome` appends a `catastropheHistory` entry carrying the Endured / Succumbed
 markers, so the Stats tallies count it.
 
@@ -704,7 +771,7 @@ derived from the flag and never stored as a bonus value, like the derived Succum
 held, the modal disables Succumb ("You already carry the Cosmic Legacy. Succumb is closed to
 you."), so Endure is the only choice.
 
-**Invite** in the Cosmic Era arms `catastropheInvited` for the next prestige. It is the deliberate
+**Invite** on the Last Passage's thread arms `catastropheInvited` for the next prestige. It is the deliberate
 path to the Cosmic Legacy; Appease is refused afterwards, Brace still raises the Endure share.
 
 ### The run's last lines
@@ -716,7 +783,8 @@ voice of the age the run ended in, with the age's harbinger as the subject in th
 
 ### Costs
 
-Fixed across the four Cosmic ages, level 2 at double:
+Fixed across the four Cosmic ages, level 2 at double, and shared by both Cosmic threads (each keeps
+its own levels):
 
 | Action | Level 1 | Basis |
 |--------|---------|-------|
@@ -736,6 +804,9 @@ excludes them from Brace.
 PendingLastPassage bool `json:"pending_last_passage,omitempty"`
 CosmicLegacy       bool `json:"cosmic_legacy,omitempty"`
 ```
+
+A Last Passage thread parked behind the Reality Tear's is saved as `ParkedHarbinger` (see
+[Persistence and resets](#persistence-and-resets)).
 
 ### Tuning constants
 
@@ -824,7 +895,7 @@ adds 5 exclusive events that only appear during that epoch.
 | Cosmic Era exclusive | 5 | Cosmic Era only |
 | Good epoch events (major epoch roll) | 10 | One fires per epoch transition (if good) |
 | Challenging bad epoch events (major epoch roll) | 8 | One fires per epoch transition (if bad) |
-| Catastrophe events | 7 (5 reachable in play) | Iron to Neon Era: at most one per era per run (a fated doom, inside the era) |
+| Catastrophe events | 7 (6 reachable) | Iron Era on: at most one per era per run (a fated doom, inside the era) |
 | **Total** | **88** | |
 
 Note: The 10 good + 8 bad events are **epoch transition events**, separate from the regular
@@ -976,6 +1047,6 @@ Epoch-system decisions. The project-wide log is in `README.md`.
 
 | Date | Decision | Rationale |
 |------|----------|-----------|
-| 2026-09-30 | Catastrophes are fated in secret on entering an era (27%, Iron to Neon) and strike at a random moment across the era's expected length; a transition rolls only a good or challenging event. A harbinger comes only for a fated doom (or a false prophet, now only in an era with nothing fated, before the Industrial Age), 20-60% of the current age's target before the strike, and the doom cannot be outrun by advancing. The strike rolls 90/75/60% by faith (the passage chance ×5), ×0.6 per Appease | Adam's "randomize the when" (approved 2026-09-29): with catastrophes only at epoch boundaries and a harbinger every epoch, players could learn the schedule, which killed the dread and the idle randomness. A harbinger now means a doom is coming, so answering it matters; what it says sharpens with the figures (no timing before the Oracle, age or era from her, odds from the Newsboy); every window follows the age pacing targets, so a pacing change carries through in one place; `FateChance` is calibrated so a first run meets about as many catastrophes as before (0.73 expected at low faith, was 0.72). The Reality Tear drops out of play: the Cosmic Era's danger stays the Last Passage |
+| 2026-09-30 | Catastrophes are fated in secret on entering an era (27%, Iron to Cosmic) and strike at a random moment across the era's expected length; a transition rolls only a good or challenging event. A harbinger comes only for a fated doom (or a false prophet, now only in an era with nothing fated, before the Industrial Age), 20-60% of the current age's target before the strike, and the doom cannot be outrun by advancing. The strike rolls 90/75/60% by faith (the passage chance ×5), ×0.6 per Appease | Adam's "randomize the when" (approved 2026-09-29): with catastrophes only at epoch boundaries and a harbinger every epoch, players could learn the schedule, which killed the dread and the idle randomness. A harbinger now means a doom is coming, so answering it matters; what it says sharpens with the figures (no timing before the Oracle, age or era from her, odds from the Newsboy); every window follows the age pacing targets, so a pacing change carries through in one place; `FateChance` is calibrated so a first run meets about as many catastrophes as before (0.73 expected at low faith, was 0.72). The Reality Tear stays, as the Cosmic Era's fated doom beside the Last Passage (decided 2026-10-01, so all six catastrophes remain for the planned badges) |
 | 2026-09-26 | Prestige is the Cosmic Era's passage (the Last Passage), rolled once at confirmed prestige with the epoch odds; pending blocks only prestige; Endure keeps 50/70/85% of the run's points by Brace; Succumb grants a one-time Cosmic Legacy (+10% `production_all`, derived from a flag) | The Cosmic Era's four harbingers had nothing to warn of because the epoch has no transition out; prestige is the only passage it has, and points are what a prestige can lose, so Endure and Brace act on them |
 | 2026-09-26 | Harbinger replaces invoke; epoch-long threads with the speaker changing each age; false prophets rolled once per thread (Stone, Iron, Steel Era); Appease x0.6 per level; Brace tiers (15%/30%, 10%/45%); costs priced off the passage | Choosing a catastrophe fits better as an answer to a warning than as a bare command; a thread gives the warning time to matter and uses 18 figures instead of 6; false prophets make early warnings worth doubting until the odds are printed; passage pricing keeps the price the same in every age so paying early is not a discount; x0.6 still lowers the odds after the worst faith-band drop the price can cause; Brace gives Endure-minded players something to buy without touching the odds |
