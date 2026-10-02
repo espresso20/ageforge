@@ -482,7 +482,8 @@ MaxCount is enforced on storage buildings only.
 
 Storage is never offered as an upgrade: each age's copies can only be
 built in that age (age lock), so trading one in for a capped slot of the next tier would
-only lower the most you can ever store.
+only lower the most you can ever store. For the same reason storage is never destroyed
+(Endure, the Great Fire, Succumb's ruins) and can't be sold (economy.md, Storage Design).
 
 **Storage Covenant check:** enforced per age gate by the Gate Covenant (economy.md) and
 `TestGateCovenant` in smoke/static_test.go.

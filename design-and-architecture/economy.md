@@ -267,6 +267,19 @@ Quantum Age, and because of the age lock they can never be rebuilt later. The li
 are in `config/buildings.go`; the smoke report's "Tightest requirement per advance" table
 shows how much headroom each advance has.
 
+Storage is also permanent within a run, like wonders: no catastrophe takes it (Endure, the
+Great Fire and Succumb's ruins draw only on other buildings, see `isDestroyable` in
+`game/buildings.go`) and `sell` refuses it. Storage is what raises caps (techs add only a
+little), the age lock means an older age's storage can never be rebuilt, and the first
+copy of an age's storage can cost more than the storage left after a loss (a first
+Victorian Vault is about 210M steel). The nightly smoke run found the soft-lock this made:
+seed 1's second run entered the Victorian Age with 478M of storage, a Nuclear Exchange
+(Endure) destroyed both Industrial Depots and 11 older storage copies, and the 130M left
+could never hold a Victorian Vault. The caps could never rise again, so nothing the age
+required (academy, Bessemer plant, steam turbine) could ever be afforded, and a player had
+no way out but a wipe. Selling storage had the same risk: sell this age's storage just
+before advancing and you arrive unable to build the next age's.
+
 ### The Gate Covenant (Law 1 applied to age gates)
 
 Law 1 as written ("storage ≥ 2× the most expensive building expected at that stage") left
@@ -326,6 +339,18 @@ discounts assumed**:
    culture). Faith has no market, so a faith requirement must fit A's own output: the
    Renaissance's old 44K faith at about 1.5 faith/tick and the Sistine Chapel's old 6M faith
    both fail it.
+7. **Storage ladder:** the first copy of B's storage building fits, with **1.25×** to spare
+   (`GateLadderMargin`), in the **least storage the gate into B forces** a player to hold,
+   not the most buildable. That is the gate's biggest single price: a resource requirement
+   (held all at once) or the last required copy of a building buildable in A (paid all at
+   once), undiscounted. The wonder is banked a deposit at a time and forces nothing. Every
+   storage building raises every cap alike, so one figure stands for all caps. Storage is
+   never lost (see Storage Buildings by Age), so that forced storage is the least anyone
+   enters B with, and the age lock leaves B's storage as the only storage they can build
+   there. Today every advance passes with room: the tightest is the Classical Age (the first
+   Classical Vault, 86K stone, against the 130K stone requirement), and the Victorian
+   Vault's 210M steel sits under the 381M stone of the 30th tenement the Victorian gate
+   requires.
 
 The same sourcing rule applies to every building on its own: nothing may cost a resource
 with no source in the building's own age (coal before the Renaissance, crypto before
@@ -337,7 +362,8 @@ fails `go test ./...` when a balance change breaks it, so it runs in CI on every
 `TestGateCovenantCatchesBrokenGates` feeds it the old broken numbers and checks each one is
 caught, and `TestGateCovenantCatchesColdStartTraps` does the same for the gold-priced trading
 post (and checks that a market required by the Iron Age gate would have carried over and
-fixed it).
+fixed it). `TestGateCovenantCatchesBrokenLadder` breaks the storage ladder (a Victorian gate
+cut to 10 tenements, a Victorian Vault at twice its price) and checks both are caught.
 
 **Gate size.** With Law 3 the time an age takes follows mostly from its gate (required
 buildings plus wonder, in price units) and the stock of older buildings. Gates that were

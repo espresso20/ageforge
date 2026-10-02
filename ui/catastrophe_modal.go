@@ -49,7 +49,7 @@ func buildCatastropheModalLayout(epochKey string, alreadyLegacy bool, researchNo
 
 	endureLines := []string{
 		"[white]── ENDURE: weather the catastrophe ──[-]",
-		fmt.Sprintf("  [red]• %s of buildings destroyed (wonders are spared)[-]", endurePct(eo.DestroyPct)),
+		fmt.Sprintf("  [red]• %s of buildings destroyed (wonders and storage are spared)[-]", endurePct(eo.DestroyPct)),
 		fmt.Sprintf("  [red]• All resources reduced to %s[-]", endurePct(eo.KeepFrac*100)),
 		fmt.Sprintf("  [red]• %.0f%% of workers lost; workers of destroyed buildings go idle[-]", game.EndureWorkerLoss*100),
 		fmt.Sprintf("  [red]• All production %.0f%% for %s, morale %+.0f points[-]",

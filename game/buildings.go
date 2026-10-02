@@ -693,16 +693,30 @@ func (bm *BuildingManager) PartialTransform(oldKey, newKey string, count int, re
 // replaces primitive rubble rather than being thrown away.
 const MaxRuins = 24
 
-// destroyablePool returns one entry per built non-wonder building instance, in a
-// stable order (keys sorted), so a seeded shuffle over it is reproducible.
-// Map iteration order must never leak into a random draw.
+// isDestroyable reports whether a catastrophe (Endure, the Great Fire, Succumb's
+// ruins) may take a building: anything but a wonder or storage. Both are
+// ageless and the age lock never lets an older one be rebuilt, so losing one
+// is for good. Storage matters most: it is what raises the caps, and an
+// age's first storage copy can cost more than the earlier storage holds once
+// some of it is gone (a first Victorian Vault is about 210M steel). A Nuclear
+// Exchange that took both Industrial Depots on the way into the Victorian Age
+// left 130M of storage, and with it no way to ever build a vault or anything
+// else the age asks for.
+func isDestroyable(def config.BuildingDef) bool {
+	return def.Category != "wonder" && def.Category != "storage"
+}
+
+// destroyablePool returns one entry per built destroyable building instance
+// (see isDestroyable), in a stable order (keys sorted), so a seeded shuffle
+// over it is reproducible. Map iteration order must never leak into a random
+// draw.
 func (bm *BuildingManager) destroyablePool() []string {
 	keys := make([]string, 0, len(bm.counts))
 	for key, c := range bm.counts {
 		if c <= 0 {
 			continue
 		}
-		if def, ok := bm.defs[key]; !ok || def.Category == "wonder" {
+		if def, ok := bm.defs[key]; !ok || !isDestroyable(def) {
 			continue
 		}
 		keys = append(keys, key)
@@ -718,14 +732,14 @@ func (bm *BuildingManager) destroyablePool() []string {
 }
 
 // DestroyableCount returns how many built building instances a catastrophe can
-// destroy or ruin: everything except wonders.
+// destroy or ruin: everything except wonders and storage (see isDestroyable).
 func (bm *BuildingManager) DestroyableCount() int {
 	n := 0
 	for key, c := range bm.counts {
 		if c <= 0 {
 			continue
 		}
-		if def, ok := bm.defs[key]; ok && def.Category != "wonder" {
+		if def, ok := bm.defs[key]; ok && isDestroyable(def) {
 			n += c
 		}
 	}
@@ -750,12 +764,13 @@ func drawFromPool(rng *rand.Rand, pool []string, n int) map[string]int {
 	return out
 }
 
-// GenerateRuins converts up to n randomly selected non-wonder building instances
-// into ruins on a Succumb catastrophe. Ruins are removed from counts (so they
-// no longer receive worker assignments) but continue to produce at 50% base
-// rate via the ruins map in WorkerScaledProduction. The draw uses rng over a
-// stable pool, so the same seed picks the same buildings. It does not apply the
-// ruin cap; call EnforceRuinCap afterwards.
+// GenerateRuins converts up to n randomly selected destroyable building
+// instances (see isDestroyable) into ruins on a Succumb catastrophe. Ruins are
+// removed from counts (so they no longer receive worker assignments) but
+// continue to produce at 50% base rate via the ruins map in
+// WorkerScaledProduction. The draw uses rng over a stable pool, so the same
+// seed picks the same buildings. It does not apply the ruin cap; call
+// EnforceRuinCap afterwards.
 // Returns a map of building key → number of ruins created (nil if none).
 func (bm *BuildingManager) GenerateRuins(rng *rand.Rand, n int) map[string]int {
 	newRuins := drawFromPool(rng, bm.destroyablePool(), n)
@@ -867,10 +882,11 @@ func (bm *BuildingManager) LoadRuins(ruins map[string]int) {
 
 // DestroyRandom destroys up to count individual building instances chosen
 // uniformly at random with rng from a stable pool (same seed → same picks).
-// Wonders are excluded because they represent one-off civilisation milestones.
-// Unlike GenerateRuins, destroyed buildings are removed entirely (they do not
-// become ruins). Workers assigned to the destroyed buildings are NOT touched
-// here; the engine releases them (see GameEngine.releaseWorkersFrom).
+// Wonders and storage are excluded (see isDestroyable): neither can be rebuilt
+// once its age has passed. Unlike GenerateRuins, destroyed buildings are
+// removed entirely (they do not become ruins). Workers assigned to the
+// destroyed buildings are NOT touched here; the engine releases them (see
+// GameEngine.releaseWorkersFrom).
 // Returns building key → number destroyed, and human-readable descriptions for
 // the log (e.g. "3 Lumber Mills") in sorted key order.
 func (bm *BuildingManager) DestroyRandom(rng *rand.Rand, count int) (map[string]int, []string) {

@@ -64,7 +64,7 @@ Pay a cost and keep your civilization. With no Brace and no soldiers, enduring c
 
 | Loss | Amount |
 |------|--------|
-| Buildings destroyed | 20% of your non-wonder buildings, rounded down (`floor(non-wonder buildings / 5)`), at least 1 if you have any. Wonders are never destroyed and don't count. Brace lowers this to 15% or 10%, and your garrison lowers it further. |
+| Buildings destroyed | 20% of your buildings other than wonders and storage, rounded down (`floor(those buildings / 5)`), at least 1 if you have any. Wonders and storage are never destroyed and don't count. Brace lowers this to 15% or 10%, and your garrison lowers it further. |
 | Stored resources | Every unlocked resource drops to 15% of its stored amount. Brace raises this to 30% or 45%, and your garrison raises it further. |
 | Workers | 25% of the worker pool is lost. |
 | Production | Reconstruction Effort: all production −10% for 216 ticks. |
@@ -126,7 +126,9 @@ If morale was already low, the −10 can push it into the low band, where output
 
 ### How the destruction is picked
 
-Every built non-wonder building goes into a pool in a fixed order (sorted by building key). The pool is shuffled with your run's seeded random generator and the first N are destroyed. Destroyed buildings are removed entirely; they don't become ruins. Because the generator is seeded per run, the same run state destroys the same buildings.
+Every built building except wonders and storage goes into a pool in a fixed order (sorted by building key). The pool is shuffled with your run's seeded random generator and the first N are destroyed. Destroyed buildings are removed entirely; they don't become ruins. Because the generator is seeded per run, the same run state destroys the same buildings.
+
+Storage is spared because it is what raises your caps, and once its age has passed it can never be rebuilt. Losing some could leave your caps too small to pay for this age's storage, and then they could never rise again.
 
 **Recovery checklist:**
 
@@ -140,7 +142,7 @@ Every built non-wonder building goes into a pool in a fixed order (sorted by bui
 
 Let the civilization fall, and keep something permanent.
 
-Up to 8 of your non-wonder buildings become **ruins**, picked at random from the same seeded, fixed-order pool as Endure. Ruins produce at 50% of base rate with no workers. They carry across Succumb and prestige, but the total is capped at 24. When new ruins push past the cap, the lowest-value ruins crumble first (earliest age first, then lowest base output), so a late-game fall replaces primitive rubble. A save loaded with more than 24 ruins is trimmed the same way.
+Up to 8 of your buildings other than wonders and storage become **ruins**, picked at random from the same seeded, fixed-order pool as Endure. Ruins produce at 50% of base rate with no workers. They carry across Succumb and prestige, but the total is capped at 24. When new ruins push past the cap, the lowest-value ruins crumble first (earliest age first, then lowest base output), so a late-game fall replaces primitive rubble. A save loaded with more than 24 ruins is trimmed the same way.
 
 You also get the epoch's **legacy bonus** (table below), permanently, and **Ancient Knowledge**: +25% research speed for each distinct epoch you have succumbed in. Succumbing twice in the same epoch doesn't add another 25%.
 

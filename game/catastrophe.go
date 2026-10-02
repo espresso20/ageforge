@@ -41,8 +41,9 @@ const (
 	catastropheChanceOnBadRoll = 0.30
 
 	// Endure consequences.
-	// Endure destroys 20% of non-wonder buildings (floor) unbraced; see
-	// braceDestroyPct in harbinger.go for the braced shares.
+	// Endure destroys 20% of destroyable buildings (floor) unbraced: every
+	// building but wonders and storage (isDestroyable). See braceDestroyPct in
+	// harbinger.go for the braced shares.
 	endureResourceKeep     = 0.15 // resources drop to 15% of stored amounts
 	endureWorkerLoss       = 0.25 // 25% of the worker pool is lost
 	endureDebuffTicks      = 216  // Reconstruction Effort duration
@@ -340,7 +341,8 @@ func (ge *GameEngine) releaseWorkersFrom(destroyed map[string]int) {
 }
 
 // Endure executes the Endure consequences for the pending catastrophe:
-//   - 20% of destroyable (non-wonder) buildings destroyed, at least 1 if any;
+//   - 20% of destroyable buildings (neither wonders nor storage) destroyed,
+//     at least 1 if any;
 //     workers assigned to them return to the idle pool (15% / 10% when the
 //     harbinger was braced at level 1 / 2)
 //   - all unlocked resources drop to 15% of their stored amounts (30% / 45%
@@ -446,7 +448,8 @@ func (ge *GameEngine) Endure() error {
 }
 
 // Succumb executes the Succumb consequences for the pending catastrophe:
-//   - up to 8 random non-wonder buildings become ruins (50% output, no workers),
+//   - up to 8 random destroyable buildings (neither wonders nor storage)
+//     become ruins (50% output, no workers),
 //     carried into the next run; the ruin total is capped at MaxRuins
 //   - the epoch's legacy flag is set: its per-resource legacy bonus and
 //     +25% research speed (per distinct epoch succumbed, stacking) are permanent

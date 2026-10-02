@@ -3372,6 +3372,14 @@ func (ge *GameEngine) SellBuilding(key string, n int) error {
 	if def.Category == "wonder" {
 		return fmt.Errorf("Wonders cannot be sold.")
 	}
+	// Storage is permanent, like wonders (see isDestroyable). Once its age has
+	// passed the age lock never lets it be rebuilt, and an age's first storage
+	// copy can cost more than the storage left after a sale, so a sold copy
+	// (even this age's, sold just before advancing) could leave no way to
+	// raise a cap ever again.
+	if def.Category == "storage" {
+		return fmt.Errorf("Storage cannot be sold: once its age has passed, it can never be rebuilt.")
+	}
 
 	current := ge.Buildings.GetCount(key)
 	if current == 0 {
