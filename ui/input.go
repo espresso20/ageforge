@@ -856,7 +856,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 			lines = append(lines, fmt.Sprintf("  %-33s %s", u.Form, u.Text))
 		}
 		lines = append(lines, "")
-		lines = append(lines, "[red]Wipe account[-] (delete an account's ID, unlocks and stats for good)")
+		lines = append(lines, "[red]Wipe account[-] (delete an account's ID, unlocks, stats and saves for good)")
 		lines = append(lines, "lives in the [gold]Accounts[-] panel on the main menu, behind a type-your-name confirmation.")
 		return CommandResult{Message: strings.Join(lines, "\n"), Type: "info"}
 	}
@@ -1098,7 +1098,7 @@ func cmdAccount(args []string, engine *game.GameEngine) CommandResult {
 		// The destructive wipe lives behind the Accounts panel's type-your-name gate; we
 		// deliberately do not wipe from a bare command. Direct the player there.
 		return CommandResult{
-			Message: "Wiping an account is permanent, so it lives in the Accounts panel on the main menu (press Esc, choose Accounts, then press w on the account). It deletes that account's ID, theme unlocks, lifetime stats and achievements. Game saves are not affected.",
+			Message: "Wiping an account is permanent, so it lives in the Accounts panel on the main menu (press Esc, choose Accounts, then press w on the account). It deletes that account's ID, theme unlocks, lifetime stats, achievements and every save in its slot. A backup goes to data/backups/ first; restoring it is manual.",
 			Type:    "warning",
 		}
 

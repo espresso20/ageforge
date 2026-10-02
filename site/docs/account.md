@@ -283,10 +283,11 @@ On confirmation, the wipe **permanently deletes** that account's:
 
 - **identity** (the account name and derived ID),
 - **theme unlocks**,
-- **lifetime stats**, and
-- **achievements**.
+- **lifetime stats**,
+- **achievements**, and
+- **every save** in its slot.
 
-**This cannot be undone**, and no server keeps a copy. The old identity comes back only if you wrote down its [recovery code](#the-recovery-code) beforehand, and its earned progress only if you [exported it](#exporting-amp-importing-accounts) first.
+**This cannot be undone in the game**, and no server keeps a copy. The game [backs up](#backups) the slot, saves included, to `data/backups/` first; restoring that copy is manual. Otherwise the old identity comes back only if you wrote down its [recovery code](#the-recovery-code) beforehand, and its earned progress only if you [exported it](#exporting-amp-importing-accounts) first.
 
 > Typing `account wipe` at the `>` prompt doesn't wipe anything. It tells you where to find the wipe in the Accounts panel, the only place it happens.
 

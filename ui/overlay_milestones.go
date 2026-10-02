@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/espresso20/ageforge/config"
 	"github.com/espresso20/ageforge/game"
 	"github.com/espresso20/ageforge/pkg/textfmt"
 )
@@ -35,19 +36,11 @@ func milestonesProvider(state game.GameState, _ int) string {
 		categoryMilestones[m.Category] = append(categoryMilestones[m.Category], m)
 	}
 
-	// Display categories in order — must stay in sync with config.MilestoneCategoryOrder.
-	catOrder := []string{"settlement", "builder", "scholar", "military", "trade", "faith", "ages"}
-	catNames := map[string]string{
-		"settlement": "Settlement",
-		"builder":    "Builder",
-		"scholar":    "Scholar",
-		"military":   "Military",
-		"trade":      "Trade",
-		"faith":      "Faith",
-		"ages":       "Ages",
-	}
+	// Categories in config order. A hand-kept copy here once dropped the
+	// epoch milestones, which the header still counted.
+	catNames := config.MilestoneCategoryNames()
 
-	for _, cat := range catOrder {
+	for _, cat := range config.MilestoneCategoryOrder() {
 		milestones := categoryMilestones[cat]
 		if len(milestones) == 0 {
 			continue
