@@ -407,7 +407,7 @@
     ],
     play: [
       ["ok", "A new run doesn't start in a browser tab. AgeForge opens full screen in your terminal."],
-      ["ok", "Your first campfire is one paste away."],
+      ["ok", "Paste the command above and your first campfire is a few seconds off."],
     ],
     "build hut": [
       ["err", "Cannot afford Hut: need 14 wood (have 0)."],
