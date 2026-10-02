@@ -23,6 +23,14 @@ data/
 
 The `data/active-account` pointer records which account is current. Each `data/accounts/<account_id>/` slot holds that account's `account.json` and its own `saves/` folder, so saves are **per-account** and never mix between accounts. (See [Saving & Loading](saving-and-loading.md) for the save layout.)
 
+**Each account only ever writes to its own slot.** Switching, importing or recovering never writes one account's data into another account's files, whichever account is active at the time.
+
+### Switching during a game
+
+A game belongs to the account it was started or loaded under. Its saves go to that account's slot, and its prestiges and age-ups count for that account only.
+
+You can switch accounts during a game with `account switch <name>`. The game is saved to the account it belongs to, and you go back to the main menu, where you load one of the new account's games or start a new one. The game you left never carries on under the other account. (The **Accounts** panel on the main menu switches the same way; there is no game running there.)
+
 ### Upgrading from an older version
 
 Older builds kept a single account at the top level (a flat `data/account.json` with saves in `data/saves/`). If the game finds that layout on first launch, it moves your account and its saves into their own `data/accounts/<id>/` slot and makes that account active. **Nothing is deleted**, and you don't have to do anything; your civilizations and unlocks come across intact. Just before the move, the game also copies your old flat data into `data/backups/pre-migration-<timestamp>/`, so your original files stay recoverable.
@@ -57,7 +65,7 @@ The main menu has an **Accounts** entry that opens a full-window panel listing *
 - the **highest age** that account has ever reached,
 - its **total prestiges**,
 - a **current** marker on the account that's active right now, and
-- a **modified** flag if that account's file was edited outside the game.
+- a **modified** flag if that account's file was edited outside the game. The flag stays once it is set: saving the account again, deleting the flag from the file by hand, or exporting and importing the account does not clear it.
 
 From the panel:
 
@@ -114,7 +122,9 @@ Import goes by the **account ID inside the backup**, and it always lands in **th
 - If **no account with that ID exists** locally, import **creates** it from the backup.
 - If that account **already exists** locally, import **merges** into it (the default; see below).
 
-**Import never overwrites a *different* account.** Because it goes by the ID inside the file, importing a backup **can't replace your current account**. At worst it updates the account the backup belongs to, creating it if needed. After importing, the account shows up in the **Accounts** list, ready to switch to; the `account import` command also **switches to it** for you.
+**Import never overwrites a *different* account.** Because it goes by the ID inside the file, importing a backup **can't replace your current account**. At worst it updates the account the backup belongs to, creating it if needed. After importing, the account shows up in the **Accounts** list, ready to switch to.
+
+**Import never switches accounts**, from the panel or the `account import` command. A game in progress carries on under the account it belongs to. To play as the imported account, switch to it with `account switch <name>` or from the Accounts panel. A backup of the account you are using goes straight into it, and anything that account earned since its last autosave is kept.
 
 By default the merge keeps the best of both:
 
@@ -129,7 +139,7 @@ To overwrite that account's progress entirely with the backup instead, add `repl
 account import /path/to/my-ageforge-backup.json replace
 ```
 
-If the file is missing or has been tampered with, the import is refused with an error and your accounts are left unchanged.
+If the file is missing or has been tampered with, the import is refused with an error and your accounts are left unchanged. A backup of an account flagged **modified** keeps the flag, and passes it to the account it lands in.
 
 > **No server, no copy elsewhere.** You can only recover progress you exported. If a machine's `data/` folder is gone and you never exported, that account's earned progress is gone too; there is no cloud copy to pull back.
 
@@ -221,7 +231,9 @@ Some progress is **account-wide**: it builds up across *every* game you play on 
 
 **Where to see them:** open the **Stats** panel (`stats`). Below the per-run Statistics there's a **Lifetime (Account)** section with your total prestiges, highest age ever reached, and the achievements you've unlocked. The game doesn't announce an achievement with a pop-up, so check the Stats panel to see what's unlocked.
 
-These stats update the moment you prestige or advance into a new age, and are saved to your account with the next autosave (and on a clean exit), so a fresh prestige is never lost.
+These stats update the moment you prestige or advance into a new age, and are saved to your account with the next autosave (and on a clean exit, or when you switch accounts), so a fresh prestige is never lost. They count for the account the game belongs to: a game started or loaded under one account never adds to another's.
+
+A game changed with the developer console (a testing tool) records nothing to the account: no achievements, lifetime stats or theme unlocks. The game logs one line when that starts, and the game keeps the mark through saves, loads and prestiges until you start a new game.
 
 ---
 
@@ -241,7 +253,12 @@ On the new machine (or after a reinstall), run:
 account recover AGEF-7Q2K-9X4M-ZJ31-…
 ```
 
-This restores the identity in the code. If the account currently on this machine already has theme unlocks, the command warns you first: recovering replaces the local identity, and the code doesn't carry those unlocks. Export them first if you want to keep them, then run `account recover <code> confirm` to go ahead.
+This restores the identity in the code and switches to it. The account lands in **its own slot**:
+
+- If that account is **already on this machine**, the game opens it as it is, progress included.
+- If not, the game creates it with the ID only (no unlocks or stats; bring those back with an [import](#exporting-amp-importing-accounts)).
+
+**Recovering never overwrites an account**, including the one you are using: that account keeps everything in its own slot, and you can switch back to it with `account switch <name>` or from the Accounts panel. If the account you are using holds any progress (theme unlocks, achievements or lifetime stats), the command first says what it holds and asks you to run `account recover <code> confirm`. During a game, the game is saved to its account first and you go back to the main menu. Recovering the code of the account you are using does nothing.
 
 **Recovery forgives copying mistakes:**
 

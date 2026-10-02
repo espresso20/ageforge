@@ -117,6 +117,10 @@ type Dashboard struct {
 	// grants), and only unlocks during live play afterward fire the toast.
 	themeProcessedKeys map[string]bool
 	themeSyncDone      bool
+	// themeAccountID is the account themeProcessedKeys and themeSyncDone belong to. When
+	// the account changes they start over, so the new account's own run is evaluated
+	// (silently on its first pass) instead of skipping keys another account processed.
+	themeAccountID string
 
 	// The maps: the shared model builder and style registry, the Map panel
 	// and the dashboard's mini map. UI goroutine only. mapLocal holds the
@@ -677,10 +681,23 @@ func (d *Dashboard) refresh() {
 // themeSyncDone==true, so a milestone completed during play toasts once. Each
 // completed key is recorded in themeProcessedKeys so it's evaluated only once per
 // process (idempotent regardless, since UnlockTheme is a no-op once owned).
+//
+// Only a run that records to the account grants themes (state.AccountRecords): not one
+// the developer console has touched, and not one that belongs to another account (the
+// game still in memory after an account switch, whose milestones are not this account's).
+// Such a run's keys are left unprocessed, so a clean run loaded later is still evaluated.
 func (d *Dashboard) processThemeUnlocks(state game.GameState) {
+	if !state.AccountRecords {
+		return
+	}
 	var acct *game.Account
 	if d.engine != nil {
 		acct = d.engine.Account()
+	}
+	if acct != nil && acct.AccountID != d.themeAccountID {
+		d.themeAccountID = acct.AccountID
+		d.themeProcessedKeys = make(map[string]bool)
+		d.themeSyncDone = false
 	}
 	firstSync := !d.themeSyncDone
 
@@ -934,6 +951,28 @@ func (d *Dashboard) showDevUnlockModal() {
 	d.app.SetFocus(field)
 }
 
+// accountNoticePage is the page of the notice leaveToMenu shows over the main menu.
+const accountNoticePage = "account_notice"
+
+// leaveToMenu takes the player from the dashboard to the main menu after a command
+// ended the game in progress: an account switch or recovery, where the engine already
+// stopped the run and saved it to the account it belongs to, so unlike Esc this does
+// not save. msg, the command's reply, is shown in a notice over the menu, since the
+// game log it would otherwise go to belongs to the run that just ended.
+func (d *Dashboard) leaveToMenu(msg string) {
+	if d.overlayMgr != nil && d.overlayMgr.HasActive() {
+		d.overlayMgr.Hide()
+	}
+	d.pages.SwitchToPage("splash")
+	notice := tview.NewModal().
+		SetText(safeTags(msg)).
+		AddButtons([]string{"OK"}).
+		SetDoneFunc(func(_ int, _ string) {
+			d.pages.RemovePage(accountNoticePage)
+		})
+	d.pages.AddPage(accountNoticePage, notice, true, true)
+}
+
 // submitInput runs the command in the input field, clears it and records it
 // in history. Called on Enter. A whole command runs as typed; otherwise the
 // ghost completion runs when it makes a whole command, except a Dangerous
@@ -989,6 +1028,10 @@ func (d *Dashboard) submitInput() {
 		return
 	}
 	result := HandleCommand(text, d.engine)
+	if result.ToMenu {
+		d.leaveToMenu(result.Message)
+		return
+	}
 	if result.OpenCatastrophe {
 		d.reopenCatastropheModal()
 	}

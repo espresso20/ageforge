@@ -385,6 +385,8 @@ A hidden dev console is available for playtesting without grinding through all 2
 
 The passphrase is stored as a SHA256 hash in `game/devmode.go`, never plain text. Dev mode never persists to disk; it resets on every restart.
 
+Any dev command that succeeds (all of the above except the read-only `/ages`, plus `/catastrophe`, `/harbinger` and `/lastpassage`) marks the run **dev-touched**: from then on it records nothing to the account (no achievements, lifetime stats or theme unlocks), and the log says so once. The mark is saved with the run (`dev_touched` in the save), kept through prestige and Succumb, and cleared only by a new game; a new game or a load with `/god` still on starts marked. Unlocking the console without using it marks nothing, so local builds with dev mode on still earn records.
+
 ---
 
 ## Adding Content
