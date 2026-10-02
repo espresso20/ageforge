@@ -290,12 +290,7 @@ func (v *view) drawLegend(cv *mapstyle.Canvas, x, y, w, h int) {
 	for grp := uint8(0); grp < uint8(len(lgGroups)); grp++ {
 		head := false
 		for id := lgID(0); id < numLg; id++ {
-			label, g := "", uint8(1)
-			if id < lgLineage {
-				label, g = lgInfo[id].label, lgInfo[id].group
-			} else if i := int(id - lgLineage); i < len(mapmodel.LineageOrder) {
-				label = lineageLabel(mapmodel.LineageOrder[i])
-			}
+			label, g := lgLabel(id)
 			if e := v.seen[id]; e.on && g == grp && label != "" {
 				if !head && row+1 < end {
 					cv.Text(x, row, w, lgGroups[grp], v.cls(mapmodel.CDim))
@@ -344,9 +339,9 @@ func (v *view) DrawCompact(scr tcell.Screen, r mapstyle.Rect, f mapstyle.Frame) 
 			g.zoom, g.scale, g.vx, g.vy = zRegion, sc, cx-r.W*sc/2, cy-mh*sc/2
 		}
 		saved := v.g
-		v.g = g
+		v.g, v.compact = g, true
 		v.drawTiles(cv, g)
 		v.drawLife(cv)
-		v.g = saved
+		v.g, v.compact = saved, false
 	}
 }

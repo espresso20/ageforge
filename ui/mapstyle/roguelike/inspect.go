@@ -66,6 +66,9 @@ func (v *view) describe(s *scene, p mapmodel.Pt) insp {
 		return insp{Title: "The edge of the known world"}
 	}
 	vis, c := s.seen(p), s.at(p.X, p.Y)
+	if in, ok := v.visitorAt(p); ok {
+		return in
+	}
 	switch {
 	case s.hasHb && p == s.harb && vis == 2:
 		h := m.Harbinger
@@ -89,7 +92,15 @@ func (v *view) describe(s *scene, p mapmodel.Pt) insp {
 		return insp{Title: "Scouts: " + m.Expeditions.Scout.Name, Command: mapmodel.CmdExpedition,
 			Lines: []string{strconv.Itoa(m.Expeditions.Scout.TicksLeft) + " ticks until they report back"}}
 	}
+	if vis == 2 && v.g.zoom != zRegion {
+		if in, ok := v.moverAt(p); ok {
+			return in
+		}
+	}
 	t := w.At(p.X, p.Y)
+	if c.rail && len(s.rail) > 0 && c.k != kTile && c.k != kWonder && c.k != kSite && c.k != kCentre {
+		return insp{Title: v.railName(), Lines: []string{v.railLine()}}
+	}
 	switch c.k {
 	case kTile:
 		return v.describeTile(s, &m.Town.Tiles[c.ref])

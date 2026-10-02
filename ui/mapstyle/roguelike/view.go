@@ -55,6 +55,14 @@ type view struct {
 	rbuf regionBuf
 	// names is how many building names the last district-zoom frame drew.
 	names int
+	// present caches which movers' lanes cross the view (traffic.go).
+	present struct {
+		sc  *scene
+		key [6]int
+		on  [mapmodel.NumMovers]bool
+	}
+	// compact is set while the mini view draws (no visitors there).
+	compact bool
 }
 
 func newView() *view { return &view{zoom: zSettlement, inspect: true, legend: true, changes: true} }

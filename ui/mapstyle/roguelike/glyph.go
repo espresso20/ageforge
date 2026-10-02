@@ -43,11 +43,17 @@ const (
 	lgHarbinger
 	lgHazard
 	lgSmoke
-	lgLineage // + index in mapmodel.LineageOrder
+	lgRail
+	lgGuideway
+	// lgMover plus a mapmodel.Mover is that mover's row (the walkers keep
+	// lgWorker); lgLineage plus an index in mapmodel.LineageOrder is that
+	// lineage's.
+	lgMover
+	lgLineage = lgMover + lgID(mapmodel.NumMovers)
 	numLg     = lgLineage + 18
 )
 
-var lgInfo = [lgLineage]struct {
+var lgInfo = [lgMover]struct {
 	label string
 	group uint8
 }{
@@ -57,9 +63,29 @@ var lgInfo = [lgLineage]struct {
 	{"understaffed (dim)", 4}, {"new since last visit", 4}, {"short of hands", 4}, {"civ settlement", 3},
 	{"worker at work", 5}, {"idle worker", 5}, {"caravan", 5}, {"route disrupted", 5}, {"scouts", 5}, {"raiders", 5},
 	{"war on this trail", 3}, {"harbinger", 4}, {"catastrophe", 4}, {"smoke over works", 5},
+	{"railway", 2}, {"maglev line", 2},
 }
 
-var lgGroups = [6]string{"land", "buildings", "ways and walls", "civs", "state", "life"}
+// lgTraffic is the legend group the movers list under.
+const lgTraffic = 6
+
+var lgGroups = [7]string{"land", "buildings", "ways and walls", "civs", "state", "life", "traffic"}
+
+// lgLabel is a legend row's label and group ("" for a row with none).
+func lgLabel(id lgID) (string, uint8) {
+	switch {
+	case id < lgMover:
+		return lgInfo[id].label, lgInfo[id].group
+	case id < lgLineage:
+		if k := mapmodel.Mover(id - lgMover); k != mapmodel.MoverWalker {
+			return k.Info().Name, lgTraffic
+		}
+		return "", lgTraffic
+	case int(id-lgLineage) < len(mapmodel.LineageOrder):
+		return lineageLabel(mapmodel.LineageOrder[id-lgLineage]), 1
+	}
+	return "", 1
+}
 
 type lgEntry struct {
 	on bool
@@ -150,6 +176,9 @@ func (v *view) tile(x, y int) glyph {
 	if s.vis[i] == 1 { // remembered, not in sight
 		g := v.terrain(x, y, t, false)
 		return glyph{r: g.r, c: mapmodel.CMemory, sal: min(g.sal, 1)}
+	}
+	if c.rail && len(s.rail) > 0 && c.k != kTile && c.k != kWonder && c.k != kSite && c.k != kCentre {
+		return v.railGlyph(t)
 	}
 	var g glyph
 	switch c.k {
@@ -356,6 +385,12 @@ func (v *view) rightHalf(x, y int, g glyph) glyph {
 	blank, c, east := glyph{r: ' ', bg: g.bg}, s.at(x, y), s.at(x+1, y).k
 	if s.vis[y*s.w.W+x] == 1 {
 		return blank
+	}
+	if c.rail && len(s.rail) > 0 && s.at(x+1, y).rail {
+		if g.r == '╪' {
+			g.r = '═' // sleepers on every other cell
+		}
+		return g
 	}
 	switch c.k {
 	case kStreet:
